@@ -104,10 +104,12 @@ async function listed(root: string): Promise<{ path: string; dir: boolean }[]> {
       })
     }
   }
-  // Elsewhere, what the list shows, as v1 sends it.
-  const tree = await invoke<Listed>('read_tree', { root, options: { showHidden: false } }).catch(
-    () => null,
-  )
+  // Elsewhere, what the list shows, as v1 sends it - and the papers page notes hold,
+  // which the list leaves out and which are as much the space's files as the notes.
+  const tree = await invoke<Listed>('read_tree', {
+    root,
+    options: { showHidden: false, papers: true },
+  }).catch(() => null)
   const out: { path: string; dir: boolean }[] = []
   const walk = (node: Listed) => {
     for (const child of node.children ?? []) {

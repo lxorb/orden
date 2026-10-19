@@ -54,7 +54,7 @@ pub(crate) const WORLD: &str = "nib";
 
 /// A script the engine is asked to register only to learn how far its own numbering has
 /// got. It is taken back with everything registered before it, so it never runs.
-#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
+#[cfg_attr(not(windows), allow(dead_code))]
 const MARK: &str = "void 0";
 
 /// The identifiers of every script registered before the one the engine just filed
@@ -66,20 +66,20 @@ const MARK: &str = "void 0";
 /// not a counting number is `None`, and then nothing is taken back: a tab that still
 /// carries the runtime's globals is where every web tab was before this existed, and a
 /// sweep that guessed could take back something it did not mean to.
-#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
+#[cfg_attr(not(windows), allow(dead_code))]
 fn taken_back(last: &str) -> Option<std::ops::RangeInclusive<u32>> {
     let last = last.trim().parse::<u32>().ok().filter(|one| *one > 0)?;
     Some(1..=last)
 }
 
 /// What the protocol is asked to register a script in nib's world with.
-#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
+#[cfg_attr(not(windows), allow(dead_code))]
 fn registering(source: &str) -> String {
     json!({ "source": source, "worldName": WORLD }).to_string()
 }
 
 /// The page's own frame, out of the protocol's frame tree.
-#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
+#[cfg_attr(not(windows), allow(dead_code))]
 fn frame_of(tree: &str) -> Option<String> {
     let said: Value = serde_json::from_str(tree).ok()?;
     said.pointer("/frameTree/frame/id")?
@@ -88,13 +88,13 @@ fn frame_of(tree: &str) -> Option<String> {
 }
 
 /// What the protocol is asked for nib's world in that frame with.
-#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
+#[cfg_attr(not(windows), allow(dead_code))]
 fn world_in(frame: &str) -> String {
     json!({ "frameId": frame, "worldName": WORLD }).to_string()
 }
 
 /// The world it answered with, as the context an evaluation is run in.
-#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
+#[cfg_attr(not(windows), allow(dead_code))]
 fn context_of(world: &str) -> Option<i64> {
     let said: Value = serde_json::from_str(world).ok()?;
     said.get("executionContextId")?.as_i64()
@@ -102,7 +102,7 @@ fn context_of(world: &str) -> Option<i64> {
 
 /// What the protocol is asked to run an expression in that world with: waiting for a
 /// promise, and answering with the value itself rather than a handle to it.
-#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
+#[cfg_attr(not(windows), allow(dead_code))]
 fn evaluating(expression: &str, context: i64) -> String {
     json!({
         "expression": expression,
@@ -121,26 +121,68 @@ fn evaluating(expression: &str, context: i64) -> String {
 /// `WebView2` puts it in a renderer of its own, which the protocol treats as a target of
 /// its own. Measured on the probe: a same-site frame had nib's world, and one from
 /// another site did not until this. Its links and its keys are the page's all the same.
-#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
-fn attaching() -> String {
+#[cfg_attr(not(windows), allow(dead_code))]
+const IN_THE_PAGE: &[&str] = &["iframe"];
+
+/// What such a frame's own session is asked to follow with: its frames, the same way,
+/// and its workers, which are let go the moment they are attached (see `attached`).
+///
+/// **A frame's session holds its workers whatever the filter says.** Asked to hold what
+/// it attaches at its start and to attach frames alone, a page's session keeps its
+/// workers out of it - and a frame's session, measured on `WebView2` 154, holds every
+/// dedicated worker the frame starts all the same, without attaching it, so nothing
+/// could ever let it go. Cloudflare's Turnstile works its challenge out in a worker its
+/// frame starts: the challenge never answered, Cloudflare's sign in button stayed
+/// disabled, and a minute later the widget gave up with *"There was a problem with
+/// verification"*. Emil, 2026-10-13: *"login button just wasn't clickable on
+/// cloudflare."* A worker that is attached can be let go, so a frame's workers are.
+#[cfg_attr(not(windows), allow(dead_code))]
+const IN_A_FRAME: &[&str] = &["iframe", "worker"];
+
+/// What the protocol is asked to follow `kinds` of target with, each held at its start.
+#[cfg_attr(not(windows), allow(dead_code))]
+fn attaching(kinds: &[&str]) -> String {
+    let filter: Vec<Value> = kinds.iter().map(|kind| json!({ "type": kind })).collect();
     json!({
         "autoAttach": true,
         "waitForDebuggerOnStart": true,
         "flatten": true,
-        "filter": [{ "type": "iframe" }],
+        "filter": filter,
     })
     .to_string()
 }
 
-/// The session of a frame the protocol has just attached to, out of the event that says
-/// so, or `None` for any other kind of target.
-#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
-fn attached_frame(event: &str) -> Option<String> {
+/// A target the protocol has just attached to, out of the event that says so.
+#[cfg_attr(not(windows), allow(dead_code))]
+#[derive(Debug, PartialEq, Eq)]
+enum Attached {
+    /// A frame from another site, by its session: given nib's world, then let go.
+    Frame(String),
+    /// Anything else the engine attached and is holding at its start, by its session:
+    /// let go at once, and nothing more.
+    Held(String),
+}
+
+/// What the protocol has just attached to, out of the event that says so: a frame from
+/// another site, anything else that is waiting for nib - a frame's worker, see
+/// `IN_A_FRAME` - or `None` for a target that is running already.
+#[cfg_attr(not(windows), allow(dead_code))]
+fn attached(event: &str) -> Option<Attached> {
     let said: Value = serde_json::from_str(event).ok()?;
-    if said.pointer("/targetInfo/type")?.as_str()? != "iframe" {
-        return None;
+    let session = said.get("sessionId")?.as_str()?.to_string();
+    if said.pointer("/targetInfo/type").and_then(Value::as_str) == Some("iframe") {
+        return Some(Attached::Frame(session));
     }
-    said.get("sessionId")?.as_str().map(str::to_string)
+    said.get("waitingForDebugger")
+        .and_then(Value::as_bool)
+        .unwrap_or(false)
+        .then_some(Attached::Held(session))
+}
+
+/// What a target held at its start is sent to start it.
+#[cfg_attr(not(windows), allow(dead_code))]
+fn let_go() -> (&'static str, String) {
+    ("Runtime.runIfWaitingForDebugger", "{}".to_string())
 }
 
 /// What a frame is sent once it is attached, in order, which is the order its session
@@ -148,7 +190,7 @@ fn attached_frame(event: &str) -> Option<String> {
 /// frames followed the same way, and then let go. The last is sent whatever became of
 /// the others, because a frame held at its start and never let go is a frame that never
 /// loads.
-#[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
+#[cfg_attr(not(windows), allow(dead_code))]
 fn in_frame(scripts: &str) -> [(&'static str, String); 4] {
     [
         ("Page.enable", "{}".to_string()),
@@ -156,8 +198,8 @@ fn in_frame(scripts: &str) -> [(&'static str, String); 4] {
             "Page.addScriptToEvaluateOnNewDocument",
             registering(scripts),
         ),
-        ("Target.setAutoAttach", attaching()),
-        ("Runtime.runIfWaitingForDebugger", "{}".to_string()),
+        ("Target.setAutoAttach", attaching(IN_A_FRAME)),
+        let_go(),
     ]
 }
 
@@ -196,12 +238,11 @@ impl Cleared {
     }
 }
 
-#[cfg(not(feature = "cef"))]
 pub use engine::sent;
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 pub use engine::{cleared, evaluate};
 
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 mod engine {
     use std::cell::RefCell;
     use std::rc::Rc;
@@ -215,8 +256,8 @@ mod engine {
     use windows_core::{Interface as _, HSTRING, PWSTR};
 
     use super::{
-        attached_frame, attaching, context_of, evaluating, frame_of, in_frame, registering,
-        taken_back, world_in, Cleared, MARK,
+        attached, attaching, context_of, evaluating, frame_of, in_frame, let_go, registering,
+        taken_back, world_in, Attached, Cleared, IN_THE_PAGE, MARK,
     };
 
     /// Clears a page of the app before it is sent to the site: the runtime's scripts
@@ -383,12 +424,14 @@ mod engine {
                     args.ParameterObjectAsJson(&raw mut event)?;
                     webview2_com::take_pwstr(event)
                 };
-                let Some(session) = attached_frame(&event) else {
-                    return Ok(());
+                let (session, said) = match attached(&event) {
+                    Some(Attached::Frame(session)) => (session, in_frame(&scripts).to_vec()),
+                    Some(Attached::Held(session)) => (session, vec![let_go()]),
+                    None => return Ok(()),
                 };
 
                 let session = HSTRING::from(session);
-                for (method, params) in in_frame(&scripts) {
+                for (method, params) in said {
                     let ignored =
                         CallDevToolsProtocolMethodCompletedHandler::create(Box::new(|_, _| Ok(())));
                     // Safe: the engine holds the handler until it answers, on this thread.
@@ -408,7 +451,7 @@ mod engine {
         // Safe: the engine holds the handler for as long as the webview lives.
         let listening =
             unsafe { receiver.add_DevToolsProtocolEventReceived(&handler, &raw mut token) };
-        listening.is_ok() && waited(core, "Target.setAutoAttach", &attaching())
+        listening.is_ok() && waited(core, "Target.setAutoAttach", &attaching(IN_THE_PAGE))
     }
 
     /// Runs one protocol method and waits for the engine to answer it, with a nested
@@ -516,176 +559,12 @@ mod engine {
     }
 }
 
-#[cfg(feature = "cef")]
-pub use engine::{asking, sent, value};
-
-/// nib's own Chromium: the same protocol `WebView2` is cleared with, spoken through the
-/// runtime's own door to the page's agent (see engine/devtools.rs). What the runtime puts
-/// in every page is two things there: a script it registers over the protocol, taken
-/// back here the way `WebView2`'s are, and `window.ipc`, which nib's own renderer never
-/// gives a page that is not the app's (see cef/src/helper.rs).
-#[cfg(feature = "cef")]
-mod engine {
-    use std::time::Duration;
-
-    use serde_json::{json, Value};
-    use tauri::{Url, Webview};
-
-    use crate::engine::devtools;
-
-    use super::{
-        attached_frame, attaching, context_of, evaluating, frame_of, in_frame, registering,
-        taken_back, world_in, Cleared, MARK,
-    };
-
-    /// How long one step of the clearing waits for the page's agent.
-    const PATIENCE: Duration = Duration::from_secs(10);
-
-    /// The one function nib's world has, and no other world: see `web_opens::BINDING`.
-    fn binding() -> Value {
-        json!({ "name": crate::web_opens::BINDING, "executionContextName": super::WORLD })
-    }
-
-    /// Hears what nib's world in the page asks through its bindings, for as long as the
-    /// page is open, and hands each call to `web_opens` or `web_swipe`.
-    pub fn asking(view: &Webview, app: &tauri::AppHandle, tab: &str, window: &str) {
-        let (app, tab, window) = (app.clone(), tab.to_string(), window.to_string());
-        let _ = devtools::hear(view, move |method, _session, params| {
-            if method != "Runtime.bindingCalled" {
-                return;
-            }
-            let Some(payload) = params.get("payload").and_then(Value::as_str) else {
-                return;
-            };
-            match params.get("name").and_then(Value::as_str) {
-                Some(crate::web_opens::BINDING) => {
-                    crate::web_opens::heard_on_chromium(&app, &window, &tab, payload);
-                }
-                Some(crate::web_swipe::BINDING) => {
-                    crate::web_swipe::heard(&app, &window, &tab, payload);
-                }
-                _ => {}
-            }
-        });
-    }
-
-    /// One call, its answer or `None`; the parameters as the helpers above write them.
-    fn called(view: &Webview, method: &str, params: &str) -> Option<Value> {
-        let params: Value = serde_json::from_str(params).ok()?;
-        devtools::call(view, None, method, &params, PATIENCE).ok()
-    }
-
-    /// Clears a page built on `about:blank` - the runtime's scripts taken back, nib's own
-    /// registered in nib's world, frames from other sites followed - and sends it to the
-    /// site. On a thread of its own: every step waits for the page's agent, whose answers
-    /// arrive on the window's thread.
-    ///
-    /// The runtime registers its script before the blank page loads, and the protocol
-    /// answers in the order it is asked, so the mark registered here is numbered after the
-    /// runtime's and every identifier up to it is the runtime's. The site is loaded
-    /// whatever the clearing says, as on `WebView2`.
-    pub fn sent(view: &Webview, url: &Url, scripts: &str) -> Cleared {
-        let enabled = called(view, "Page.enable", "{}").is_some();
-        let taken = called(
-            view,
-            "Page.addScriptToEvaluateOnNewDocument",
-            &json!({ "source": MARK }).to_string(),
-        )
-        .and_then(|said| said.get("identifier")?.as_str().map(str::to_string))
-        .as_deref()
-        .and_then(taken_back)
-        .map(|every| {
-            every
-                .filter(|id| {
-                    called(
-                        view,
-                        "Page.removeScriptToEvaluateOnNewDocument",
-                        &json!({ "identifier": id.to_string() }).to_string(),
-                    )
-                    .is_some()
-                })
-                .count()
-        });
-
-        // The binding first, so nib's world has it from its first document on; a binding
-        // the engine refused leaves the scripts in place all the same, asking nothing.
-        let _ = called(view, "Runtime.addBinding", &binding().to_string());
-        let _ = called(
-            view,
-            "Runtime.addBinding",
-            &crate::web_swipe::binding().to_string(),
-        );
-        let ours = scripts.is_empty()
-            || (enabled
-                && called(
-                    view,
-                    "Page.addScriptToEvaluateOnNewDocument",
-                    &registering(scripts),
-                )
-                .is_some());
-        let frames = scripts.is_empty() || following(view, scripts);
-
-        let _ = view.navigate(url.clone());
-        Cleared {
-            swept: taken.is_some(),
-            counted: taken,
-            ours,
-            frames,
-        }
-    }
-
-    /// Follows the page's frames from other sites and gives each nib's scripts before its
-    /// first document, as on `WebView2`: the frame's own session is told, in order and
-    /// without waiting, from inside the event that says it was attached.
-    fn following(view: &Webview, scripts: &str) -> bool {
-        let telling = view.clone();
-        let scripts = scripts.to_string();
-        let heard = devtools::hear(view, move |method, _session, params| {
-            if method != "Target.attachedToTarget" {
-                return;
-            }
-            let Some(session) = attached_frame(&params.to_string()) else {
-                return;
-            };
-            let said = [
-                ("Runtime.addBinding", binding()),
-                ("Runtime.addBinding", crate::web_swipe::binding()),
-            ]
-            .into_iter()
-            .chain(
-                in_frame(&scripts)
-                    .into_iter()
-                    .filter_map(|(method, params)| {
-                        Some((method, serde_json::from_str(&params).ok()?))
-                    }),
-            )
-            .collect();
-            devtools::tell(&telling, Some(&session), said);
-        });
-        heard.is_ok() && called(view, "Target.setAutoAttach", &attaching()).is_some()
-    }
-
-    /// Runs `expression` in nib's world in the page as it is now and answers what it came
-    /// to, or `None`. On a thread of its own, like `sent`: the page's own `fetch`, DOM
-    /// methods and globals are not the ones this uses, so a page neither sees the call nor
-    /// changes its answer, and nothing it leaves behind is the page's to see.
-    pub fn value(view: &Webview, expression: &str) -> Option<Value> {
-        let tree = called(view, "Page.getFrameTree", "{}")?;
-        let frame = frame_of(&tree.to_string())?;
-        let world = called(view, "Page.createIsolatedWorld", &world_in(&frame))?;
-        let context = context_of(&world.to_string())?;
-        called(view, "Runtime.evaluate", &evaluating(expression, context))?
-            .pointer("/result/value")
-            .cloned()
-    }
-}
-
 /// The name wry registers its message channel under on the two `WebKit` engines, which
 /// is what the page's `window.ipc` posts to.
-#[cfg(all(not(windows), not(feature = "cef")))]
+#[cfg(not(windows))]
 const CHANNEL: &str = "ipc";
 
-#[cfg(all(target_os = "macos", not(feature = "cef")))]
+#[cfg(target_os = "macos")]
 mod engine {
     use objc2::rc::Retained;
     use objc2::{MainThreadMarker, MainThreadOnly as _};
@@ -758,15 +637,12 @@ mod engine {
     }
 }
 
-#[cfg(all(
-    any(
-        target_os = "linux",
-        target_os = "dragonfly",
-        target_os = "freebsd",
-        target_os = "netbsd",
-        target_os = "openbsd"
-    ),
-    not(feature = "cef")
+#[cfg(any(
+    target_os = "linux",
+    target_os = "dragonfly",
+    target_os = "freebsd",
+    target_os = "netbsd",
+    target_os = "openbsd"
 ))]
 mod engine {
     use tauri::webview::PlatformWebview;
@@ -814,8 +690,8 @@ mod engine {
 #[cfg(test)]
 mod tests {
     use super::{
-        attached_frame, attaching, context_of, evaluating, frame_of, in_frame, registering,
-        taken_back, world_in, Cleared, WORLD,
+        attached, attaching, context_of, evaluating, frame_of, in_frame, let_go, registering,
+        taken_back, world_in, Attached, Cleared, IN_A_FRAME, IN_THE_PAGE, WORLD,
     };
 
     #[test]
@@ -875,17 +751,30 @@ mod tests {
 
     #[test]
     fn a_frame_from_another_site_is_followed_and_held_until_it_has_nib_s_world() {
-        let asked: serde_json::Value = serde_json::from_str(&attaching()).expect("json");
+        let asked: serde_json::Value = serde_json::from_str(&attaching(IN_THE_PAGE)).expect("json");
         assert_eq!(asked["autoAttach"], true);
         assert_eq!(asked["waitForDebuggerOnStart"], true);
         assert_eq!(asked["flatten"], true);
-        assert_eq!(asked["filter"][0]["type"], "iframe");
+        assert_eq!(asked["filter"], serde_json::json!([{ "type": "iframe" }]));
 
         let frame = r#"{"sessionId":"S1","targetInfo":{"targetId":"T1","type":"iframe","url":"https://b.example/"},"waitingForDebugger":true}"#;
-        assert_eq!(attached_frame(frame).as_deref(), Some("S1"));
-        let worker = r#"{"sessionId":"S2","targetInfo":{"targetId":"T2","type":"worker"}}"#;
-        assert_eq!(attached_frame(worker), None);
-        assert_eq!(attached_frame("{}"), None);
+        assert_eq!(attached(frame), Some(Attached::Frame("S1".into())));
+        assert_eq!(attached("{}"), None);
+        assert_eq!(attached("not json"), None);
+    }
+
+    #[test]
+    fn anything_else_held_at_its_start_is_let_go_and_given_nothing() {
+        // Turnstile's worker, attached by its frame's own following and held there.
+        let worker = r#"{"sessionId":"S2","targetInfo":{"targetId":"T2","type":"worker","url":"blob:https://challenges.cloudflare.com/1"},"waitingForDebugger":true}"#;
+        assert_eq!(attached(worker), Some(Attached::Held("S2".into())));
+        assert_eq!(let_go().0, "Runtime.runIfWaitingForDebugger");
+
+        // One that is running already is left alone.
+        let running = r#"{"sessionId":"S3","targetInfo":{"targetId":"T3","type":"worker"},"waitingForDebugger":false}"#;
+        assert_eq!(attached(running), None);
+        let unsaid = r#"{"sessionId":"S4","targetInfo":{"targetId":"T4","type":"service_worker"}}"#;
+        assert_eq!(attached(unsaid), None);
     }
 
     #[test]
@@ -898,11 +787,21 @@ mod tests {
                 "Page.enable",
                 "Page.addScriptToEvaluateOnNewDocument",
                 "Target.setAutoAttach",
-                "Runtime.runIfWaitingForDebugger",
+                let_go().0,
             ]
         );
         let registered: serde_json::Value = serde_json::from_str(&sent[1].1).expect("json");
         assert_eq!(registered["worldName"], WORLD);
+
+        // A frame's own session follows its workers as well, each held and so let go:
+        // one it holds without attaching is one nothing can let go.
+        let following: serde_json::Value = serde_json::from_str(&sent[2].1).expect("json");
+        assert_eq!(following["waitForDebuggerOnStart"], true);
+        assert_eq!(
+            following["filter"],
+            serde_json::json!([{ "type": "iframe" }, { "type": "worker" }])
+        );
+        assert_eq!(sent[2].1, attaching(IN_A_FRAME));
     }
 
     #[test]

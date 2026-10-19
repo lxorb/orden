@@ -2,6 +2,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
+import { inLanguageOrder } from '@nib/markdown/language-order'
 import { englishLabel, LABEL_KEYS } from '@nib/editor'
 import { de } from '../locales/de'
 import { fr } from '../locales/fr'
@@ -217,9 +218,59 @@ describe('the folder, the list and the loader', () => {
     expect(offered).toEqual([...CATALOGUE_IDS].sort())
   })
 
-  test('offer the system default first and English second', () => {
-    expect(LANGUAGES[0]?.id).toBe('system')
-    expect(LANGUAGES[1]?.id).toBe('en')
+  /** The list is written out in the shared order rather than sorted at start, so
+   *  the launch sorts nothing. A row added out of place fails here. */
+  test('are written in the order every language list keeps', () => {
+    expect(LANGUAGES.map((one) => one.id)).toEqual(inLanguageOrder(LANGUAGES).map((one) => one.id))
+  })
+
+  /** The system default, then the Latin names A to Z, then every other script
+   *  at the foot, one script at a time. Spelled out, so the order can be read. */
+  test('offer the system default first, then the Latin names, then the rest', () => {
+    expect(LANGUAGES.map((one) => one.id)).toEqual([
+      'system',
+      'id',
+      'ms',
+      'jv',
+      'de',
+      'en',
+      'es',
+      'fil',
+      'fr',
+      'ha',
+      'it',
+      'sw',
+      'pl',
+      'pt-BR',
+      'pt-PT',
+      'gsw',
+      'vi',
+      'tr',
+      'ru',
+      'uk',
+      'ur',
+      'ar',
+      'ps',
+      'fa',
+      'am',
+      'mr',
+      'hi',
+      'bn',
+      'pa',
+      'gu',
+      'ta',
+      'te',
+      'kn',
+      'ml',
+      'th',
+      'my',
+      'ko',
+      'ja',
+      'zh-Hans',
+      'yue',
+      'zh-Hant',
+      'zh-Hant-HK',
+    ])
   })
 
   /** The four that were written by hand say nothing about themselves; every

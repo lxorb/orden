@@ -57,12 +57,17 @@
   const listing = $derived(chat.listing && !wide)
   const empty = $derived(!chat.turns.length && !chat.busy && !chat.pending[head?.id ?? ''])
 
-  // The space in front is the panel's space: its threads, its open one.
-  // Untracked, so what the store reads while it changes threads is not something this
-  // effect waits on: only the space is.
+  // The space in front is where a new chat starts, and nothing more: the chats are one
+  // list, every space's, and the open one stays open as the space changes (#332).
+  // Untracked, so what the store reads while it changes threads is not something these
+  // effects wait on: only the space, and which spaces there are.
   $effect(() => {
     const space = workspace.activeSpaceId ?? ''
-    untrack(() => chat.enter(space))
+    untrack(() => chat.here(space))
+  })
+  $effect(() => {
+    const spaces = workspace.spaces.map((one) => one.id)
+    untrack(() => chat.know(spaces))
   })
 
   // A thread not yet sent asks whichever provider Ask is set to now.

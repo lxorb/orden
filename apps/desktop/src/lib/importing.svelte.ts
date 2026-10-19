@@ -36,9 +36,11 @@ export type Stage = 'waiting' | 'reading' | 'ready' | 'writing' | 'done'
 
 /** Names an exporter gives a file that say nothing about what is in it, so the
  *  import's folder is named after the app instead. `AppleJournalEntries` is the
- *  name Journal's own export has, for everybody, every time. */
+ *  name Journal's own export has, for everybody, every time. Only a whole word:
+ *  `Keepsakes` and `Graphic Design` are names somebody chose, and the start of
+ *  them is not an exporter's. */
 const MACHINE_MADE =
-  /^(applejournalentries|export|takeout|backup|notion|graph|roam|logseq|keep|archive)[\s_-]*/i
+  /^(applejournalentries|export|takeout|backup|notion|graph|roam|logseq|keep|archive)(?:[\s_-]+|$)/i
 
 class Importing {
   open = $state(false)
@@ -335,14 +337,20 @@ function saidBy(error: unknown): string {
  *  that is the name the reader recognises, and after the app it came out of when
  *  the file's name is one an exporter made up. */
 export function folderNameFor(picked: readonly Picked[], format: FormatId): string {
+  // Todoist's projects go where the Tasks panel lists projects, so its plan is written
+  // from the top of the space (import/todoist.ts).
+  if (format === 'todoist') return ''
   const first = picked[0]
   const named = pickedFolder(picked) ?? (picked.length === 1 && first ? stemOf(first) : '')
-  const stripped = named.replace(MACHINE_MADE, '').trim()
+  // Obsidian makes no exports, so a vault's name is always one its owner gave it:
+  // `Graph Theory` keeps its first word.
+  const stripped = (format === 'obsidian' ? named : named.replace(MACHINE_MADE, '')).trim()
 
   // `Export-9f1c2d3e.zip` leaves `9f1c2d3e`, which is the export's id rather than
   // a name anybody would give a folder, and `backup.zip` leaves nothing at all. A
-  // name has a word in it.
-  const wordy = /[A-Za-z]{3,}/.test(stripped) && !/^[0-9a-f-]+$/i.test(stripped)
+  // name has a word in it, in whatever script it is written: `Заметки`, `笔记` and
+  // `AI` are all names somebody gave their notes.
+  const wordy = /\p{L}{2,}/u.test(stripped) && !/^[0-9a-f-]+$/i.test(stripped)
 
   return wordy ? safeName(stripped) : nameOfFormat(format)
 }
@@ -377,7 +385,7 @@ function nameOfFormat(format: FormatId): string {
     case 'pdf-pages':
       return 'Papers'
     case 'todoist':
-      return 'Todoist'
+      return ''
     case 'table':
     case 'markdown':
     case 'pandoc':

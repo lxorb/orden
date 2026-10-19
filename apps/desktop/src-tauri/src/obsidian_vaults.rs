@@ -75,13 +75,34 @@ pub fn read_obsidian_file(vault: String, path: String) -> Result<String, String>
 
 /// The vaults `obsidian.json` names, wherever this platform's Obsidian keeps it.
 fn listed() -> Vec<PathBuf> {
-    for config in config_files() {
-        if let Ok(text) = fs::read_to_string(&config) {
-            return vaults_in(&text);
+    listed_in(&config_files())
+}
+
+/// The vaults of every one of these lists, each once. Every list is read rather
+/// than the first found, because a Linux reader who moved from the downloaded app to the
+/// Flatpak still has the old list, naming vaults long gone, beside the one Obsidian
+/// writes now.
+///
+/// Newest first across all of them, as within one: the leftover list is the older
+/// one, and its vaults would otherwise sit above the ones opened yesterday. A vault
+/// in two lists is as new as the newer of them says.
+fn listed_in(configs: &[PathBuf]) -> Vec<PathBuf> {
+    let mut found: Vec<(i64, PathBuf)> = Vec::new();
+
+    for config in configs {
+        let Ok(text) = fs::read_to_string(config) else {
+            continue;
+        };
+        for (when, vault) in dated_in(&text) {
+            match found.iter_mut().find(|(_, one)| *one == vault) {
+                Some(held) => held.0 = held.0.max(when),
+                None => found.push((when, vault)),
+            }
         }
     }
 
-    Vec::new()
+    found.sort_by_key(|(when, _)| std::cmp::Reverse(*when));
+    found.into_iter().map(|(_, path)| path).collect()
 }
 
 /// Where Obsidian writes `obsidian.json`: its config folder, which on Linux may also
@@ -104,7 +125,13 @@ fn config_files() -> Vec<PathBuf> {
 
 /// The vaults out of the file's text: `{"vaults": {"<id>": {"path", "ts"}}}`, the
 /// newest `ts` first, which is the order Obsidian's chooser lists them in.
+#[cfg(test)]
 fn vaults_in(text: &str) -> Vec<PathBuf> {
+    dated_in(text).into_iter().map(|(_, path)| path).collect()
+}
+
+/// The same, each with its `ts`, so lists can be put in one order.
+fn dated_in(text: &str) -> Vec<(i64, PathBuf)> {
     let Ok(said) = serde_json::from_str::<serde_json::Value>(text) else {
         return Vec::new();
     };
@@ -125,7 +152,7 @@ fn vaults_in(text: &str) -> Vec<PathBuf> {
         .collect();
 
     found.sort_by_key(|(when, _)| std::cmp::Reverse(*when));
-    found.into_iter().map(|(_, path)| path).collect()
+    found
 }
 
 /// The vault asked for, when it is one of those listed, spelled the way the list
@@ -164,7 +191,8 @@ fn file_in(root: &Path, path: &str) -> Result<PathBuf, String> {
 /// another program's business and are left, except Obsidian's own, which keeps the
 /// settings the vault was written under; inside that, the panes of the last
 /// machine, the plugins' code, themes and caches stay behind. So do `.git`,
-/// `node_modules` and Obsidian's own trash.
+/// `node_modules` and Obsidian's own trash. iCloud's placeholders are listed, so the
+/// import can say how many notes are still in iCloud; see `left`.
 fn files_of(root: &Path) -> Vec<VaultFile> {
     let mut found = Vec::new();
     walk(root, root, 0, &mut found);
@@ -208,37 +236,56 @@ fn walk(root: &Path, folder: &Path, depth: usize, found: &mut Vec<VaultFile>) {
     }
 }
 
-/// The path from the vault's top, with forward slashes.
+/// The path from the vault's top, with forward slashes. None for a name that is not
+/// UTF-8, an old Latin-1 download on Linux, say: written out it would be a name with
+/// a replacement character in it, which `read_obsidian_file` could then not find.
 fn relative(root: &Path, path: &Path) -> Option<String> {
     let rest = path.strip_prefix(root).ok()?;
-    let parts: Vec<String> = rest
+    let parts: Option<Vec<&str>> = rest
         .components()
-        .map(|part| part.as_os_str().to_string_lossy().into_owned())
+        .map(|part| part.as_os_str().to_str())
         .collect();
-    Some(parts.join("/"))
+    Some(parts?.join("/"))
 }
 
 /// Whether a path of the vault stays behind.
 fn left(relative: &str, is_dir: bool) -> bool {
     let name = relative.rsplit('/').next().unwrap_or(relative);
+    // The desktop's rubbish, inside Obsidian's folder as much as anywhere else.
+    // `Icon\r` is where Finder keeps a folder's own icon: hidden, empty, and named
+    // with a character Windows cannot write.
+    let rubbish =
+        name.starts_with('.') || name == "Thumbs.db" || name == "desktop.ini" || name == "Icon\r";
 
     if let Some(rest) = relative.strip_prefix(".obsidian/") {
         let top = rest.split('/').next().unwrap_or(rest);
-        return matches!(top, "plugins" | "themes" | "cache")
-            || (!rest.contains('/')
-                && name.starts_with("workspace")
-                && Path::new(name)
-                    .extension()
-                    .is_some_and(|extension| extension.eq_ignore_ascii_case("json")));
+        // `workspace.json` and `workspace-mobile.json` are the last machine's panes;
+        // `workspaces.json` is the layouts saved by name, which are the vault's own.
+        let panes = name.strip_suffix(".json").is_some_and(|stem| {
+            stem.eq_ignore_ascii_case("workspace")
+                || stem
+                    .get(..10)
+                    .is_some_and(|start| start.eq_ignore_ascii_case("workspace-"))
+        });
+        return rubbish
+            || matches!(top, "plugins" | "themes" | "cache")
+            || (!rest.contains('/') && panes);
     }
     if relative == ".obsidian" {
         return false;
     }
 
-    name.starts_with('.')
-        || (is_dir && name == "node_modules")
-        || name == "Thumbs.db"
-        || name == "desktop.ini"
+    // iCloud's placeholder for a note it took off this Mac, `.Plan.md.icloud`, is
+    // hidden but is not rubbish: it stands for one of the reader's own files, so it
+    // is listed and the import says how many are still in iCloud; see obsidian.ts.
+    // Spelled out here rather than asked of notes/icloud.rs, which is a Mac's alone,
+    // since a vault copied off a Mac holds them too.
+    let evicted = !is_dir
+        && name
+            .strip_prefix('.')
+            .and_then(|rest| rest.strip_suffix(".icloud"))
+            .is_some_and(|real| !real.is_empty());
+    (rubbish && !evicted) || (is_dir && name == "node_modules")
 }
 
 #[cfg(test)]
@@ -267,6 +314,85 @@ mod tests {
     fn a_file_obsidian_could_not_read_lists_nothing() {
         assert!(vaults_in("not json").is_empty());
         assert!(vaults_in(r#"{"other":1}"#).is_empty());
+    }
+
+    #[test]
+    fn every_list_obsidian_keeps_is_read_each_vault_once() {
+        let here = tempfile::tempdir().expect("a folder");
+        let native = here.path().join("native.json");
+        let flatpak = here.path().join("flatpak.json");
+        fs::write(
+            &native,
+            r#"{"vaults":{"a":{"path":"/gone/Old","ts":1},"b":{"path":"/home/me/Work","ts":2}}}"#,
+        )
+        .expect("the native list");
+        fs::write(
+            &flatpak,
+            r#"{"vaults":{"c":{"path":"/home/me/Notes","ts":3},"d":{"path":"/home/me/Work","ts":2}}}"#,
+        )
+        .expect("the Flatpak's list");
+
+        assert_eq!(
+            listed_in(&[native, here.path().join("missing.json"), flatpak]),
+            vec![
+                PathBuf::from("/home/me/Notes"),
+                PathBuf::from("/home/me/Work"),
+                PathBuf::from("/gone/Old"),
+            ]
+        );
+    }
+
+    #[test]
+    fn vaults_from_every_list_come_newest_first() {
+        let here = tempfile::tempdir().expect("a folder");
+        let native = here.path().join("native.json");
+        let flatpak = here.path().join("flatpak.json");
+        fs::write(
+            &native,
+            r#"{"vaults":{"a":{"path":"/home/me/Old","ts":1700000000000},"b":{"path":"/home/me/Work","ts":1600000000000}}}"#,
+        )
+        .expect("the native list");
+        fs::write(
+            &flatpak,
+            r#"{"vaults":{"c":{"path":"/home/me/Notes","ts":1790000000000},"d":{"path":"/home/me/Work","ts":1800000000000}}}"#,
+        )
+        .expect("the Flatpak's list");
+
+        assert_eq!(
+            listed_in(&[native, flatpak]),
+            vec![
+                PathBuf::from("/home/me/Work"),
+                PathBuf::from("/home/me/Notes"),
+                PathBuf::from("/home/me/Old"),
+            ]
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_name_that_is_not_utf8_is_not_listed_as_one_nobody_can_read() {
+        use std::os::unix::ffi::OsStrExt;
+
+        let here = tempfile::tempdir().expect("a folder");
+        let vault = here.path();
+        // macOS's file systems refuse such a name outright, so there it cannot be in
+        // a vault at all and there is nothing to test.
+        if fs::write(
+            vault.join(std::ffi::OsStr::from_bytes(b"Caf\xe9.md")),
+            "# Cafe",
+        )
+        .is_err()
+        {
+            return;
+        }
+        fs::write(vault.join("Read me.md"), "x").expect("a note");
+
+        let files = files_of(vault);
+        let paths: Vec<&str> = files.iter().map(|one| one.path.as_str()).collect();
+        assert_eq!(paths, vec!["Read me.md"]);
+        for file in &files {
+            assert!(file_in(vault, &file.path).is_ok());
+        }
     }
 
     #[test]
@@ -315,16 +441,27 @@ mod tests {
             ".obsidian/templates.json",
             ".obsidian/workspace.json",
             ".obsidian/workspace-mobile.json",
+            ".obsidian/workspaces.json",
+            ".obsidian/.DS_Store",
+            ".obsidian/._app.json",
+            ".obsidian/snippets/.DS_Store",
             ".obsidian/snippets/wide.css",
             ".obsidian/plugins/dataview/main.js",
             ".obsidian/themes/Minimal/theme.css",
             ".git/HEAD",
             ".trash/Old.md",
             ".DS_Store",
+            "Icon\r",
+            "Projects/Icon\r",
             "Projects/node_modules/x/index.js",
             "Projects/Sub/Plan.md",
             "Read me.md",
         ] {
+            // Finder's `Icon\r` is a name Windows cannot hold, so it is not there to
+            // leave behind.
+            if cfg!(windows) && file.ends_with('\r') {
+                continue;
+            }
             fs::write(vault.join(file), "x").expect("a file");
         }
 
@@ -335,9 +472,23 @@ mod tests {
                 ".obsidian/app.json",
                 ".obsidian/snippets/wide.css",
                 ".obsidian/templates.json",
+                ".obsidian/workspaces.json",
                 "Projects/Sub/Plan.md",
                 "Read me.md",
             ]
         );
+    }
+
+    #[test]
+    fn a_note_icloud_took_off_this_mac_is_listed_by_its_placeholder() {
+        let here = tempfile::tempdir().expect("a folder");
+        let vault = here.path();
+        fs::create_dir_all(vault.join(".obsidian")).expect("the settings");
+        fs::write(vault.join(".Plan.md.icloud"), "bplist00").expect("a placeholder");
+        fs::write(vault.join(".obsidian/.app.json.icloud"), "bplist00").expect("another");
+        fs::write(vault.join("Home.md"), "# Home").expect("a note");
+
+        let paths: Vec<String> = files_of(vault).into_iter().map(|one| one.path).collect();
+        assert_eq!(paths, vec![".Plan.md.icloud", "Home.md"]);
     }
 }

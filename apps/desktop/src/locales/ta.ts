@@ -10,21 +10,127 @@ export const ta: Dictionary = {
   'Do you write code?': 'நீங்கள் குறியீடு எழுதுவீர்களா?',
   Yes: 'ஆம்',
   No: 'இல்லை',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'பிற ஆப்களிலிருந்து: {key}',
+  'From other apps: set in your system settings':
+    'பிற ஆப்களிலிருந்து: சிஸ்டம் அமைப்புகளில் அமைக்கவும்',
+  'From other apps: bind {command} in your system settings':
+    'பிற ஆப்களிலிருந்து: சிஸ்டம் அமைப்புகளில் {command} ஐ இணைக்கவும்',
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'அத்தியாவசியங்கள்',
+  'Add to Essentials': 'அத்தியாவசியங்களில் சேர்',
+  'Remove from Essentials': 'அத்தியாவசியங்களிலிருந்து அகற்று',
+  'Add block to Essentials': 'தொகுதியை அத்தியாவசியங்களில் சேர்',
+  'Add blocks to Essentials': 'தொகுதிகளை அத்தியாவசியங்களில் சேர்',
+  'Add view to Essentials': 'காட்சியை அத்தியாவசியங்களில் சேர்',
+  'Open tabs and Essentials': 'தாவல்களையும் அத்தியாவசியங்களையும் திறத்தல்',
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor இப்போது Orden',
+  'Notes from nibeditor.com': 'nibeditor.com இலிருந்து குறிப்புகள்',
+  'Nothing there': 'அங்கே எதுவும் இல்லை',
+  // AI: the three permission modes
+  'Full permissions': 'முழு அனுமதிகள்',
+  'Auto mode': 'தானியங்கு பயன்முறை',
+  'Full permissions: nothing is asked first': 'முழு அனுமதிகள்: முன்னதாக எதுவும் கேட்கப்படாது',
+  // Import: Zen's tabs
+  'Import from Zen': 'Zen-இலிருந்து இறக்குமதி செய்',
+  'Containers stay in Zen': 'கண்டெய்னர்கள் Zen-இலேயே இருக்கும்',
+  'Zen’s tabs could not be read.': 'Zen தாவல்களைப் படிக்க முடியவில்லை.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'கண்டெய்னர்கள் Firefox-இலேயே இருக்கும்',
+  'Nothing could be read out of {browser}.': '{browser}-இலிருந்து எதையும் படிக்க முடியவில்லை.',
+  'Saved groups': 'சேமித்த குழுக்கள்',
+  'Tab group': 'தாவல் குழு',
+  'Bookmarks toolbar': 'புத்தகக்குறி கருவிப்பட்டி',
+  'Bookmarks menu': 'புத்தகக்குறி பட்டியல்',
+  'Other bookmarks': 'பிற புத்தகக்குறிகள்',
+  'Mobile bookmarks': 'மொபைல் புத்தகக்குறிகள்',
+  'Bookmarks bar': 'புத்தகக்குறிப் பட்டை',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} தன் திறந்த தாவல்களைப் பூட்டி வைக்கிறது, அதனால் புத்தகக்குறிகள் மட்டும் வந்தன.',
+  '{count} pages not on the web stay behind': {
+    one: 'இணையத்தில் இல்லாத {count} பக்கம் விடப்பட்டது',
+    other: 'இணையத்தில் இல்லாத {count} பக்கங்கள் விடப்பட்டன',
+  },
+  'Reading List': 'படிக்கும் பட்டியல்',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS Safari-இன் தாவல்களையும் புத்தகக்குறிகளையும் முழு வட்டு அணுகலுக்குப் பின்னால் வைத்திருக்கிறது. அங்கே Orden-ஐ இயக்கி, மீண்டும் கேளுங்கள்.',
+  // Settings: note types
+  'Page note': 'பக்கக் குறிப்பு',
+  'Web note': 'இணையக் குறிப்பு',
+  'Private tab': 'தனிப்பட்ட தாவல்',
+  'Note types': 'குறிப்பு வகைகள்',
+  // Tasks: Upcoming's weeks
+  'Previous week': 'முந்தைய வாரம்',
+  // Tasks: projects placed in the panel, and their folder
+  'Add project above': 'மேலே திட்டத்தைச் சேர்',
+  'Add project below': 'கீழே திட்டத்தைச் சேர்',
+  'Projects folder': 'திட்டங்கள் கோப்புறை',
+  // Tasks: a repeating task skipped or done for good
+  Skip: 'தவிர்',
+  'Complete forever': 'நிரந்தரமாக முடி',
+  // Tasks: comments
+  Comments: 'கருத்துகள்',
+  // Tasks: filters
+  Filters: 'வடிகட்டிகள்',
+  'Add filter': 'வடிகட்டியைச் சேர்',
+  'Edit filter': 'வடிகட்டியைத் திருத்து',
+  // Tasks: a project's sections
+  'Add section': 'பகுதியைச் சேர்',
+  '{name} (copy)': '{name} (நகல்)',
+  'Its tasks are deleted with it.': 'அதன் பணிகளும் சேர்ந்து நீக்கப்படும்.',
+  // Tasks: keys, selection and the undo toast
+  Completed: 'முடிந்தது',
+  'Remove date': 'தேதியை நீக்கு',
+  'Next task': 'அடுத்த பணி',
+  'Previous task': 'முந்தைய பணி',
+  'Add task at the top': 'மேலே பணியைச் சேர்',
+  '{count} selected': '{count} தேர்ந்தெடுக்கப்பட்டன',
+  // Tasks: the Display menu
+  Display: 'காட்சி',
+  'Completed tasks': 'முடிந்த பணிகள்',
+  // Tasks: several lines pasted into quick add
+  'One task': 'ஒரு பணி',
+  'One per line': 'வரிக்கு ஒன்று',
+  // Tasks: the projects in the panel
+  Favorites: 'பிடித்தவை',
+  'Add project': 'திட்டத்தைச் சேர்',
+  'Add sub-project': 'துணைத் திட்டத்தைச் சேர்',
+  // Tasks: the task view
+  'Sub-tasks': 'துணைப் பணிகள்',
+  'Add sub-task': 'துணைப் பணியைச் சேர்',
+  'New label': 'புதிய லேபிள்',
+  'No deadline': 'காலக்கெடு இல்லை',
+  // Tasks: the row's menu and the scheduler
+  Reschedule: 'மீண்டும் திட்டமிடு',
+  'Later this week': 'இந்த வாரம் பின்னர்',
+  'This weekend': 'இந்த வார இறுதி',
+  'Next weekend': 'அடுத்த வார இறுதி',
+  'Every week on {day}': 'ஒவ்வொரு வாரமும் {day}',
+  'Every month on day {day}': 'ஒவ்வொரு மாதமும் {day}ஆம் தேதி',
+  'Every year on {date}': 'ஒவ்வொரு ஆண்டும் {date}',
+  'Type a date': 'தேதியை எழுதுக',
+  'Previous month': 'முந்தைய மாதம்',
+  'Next month': 'அடுத்த மாதம்',
+  'No time': 'நேரம் இல்லை',
+  'No repeat': 'மீள்செயல் இல்லை',
+  Complete: 'முடி',
+  Reopen: 'மீண்டும் திற',
+  Schedule: 'திட்டமிடு',
+  'Open in note': 'குறிப்பில் திற',
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'வேறு ஆப்',
-  'Start fresh': 'புதிதாகத் தொடங்கு',
   'Import from Obsidian': 'Obsidian-இலிருந்து இறக்குமதி செய்',
   'Import from Notion': 'Notion-இலிருந்து இறக்குமதி செய்',
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'குறிப்புகள்',
   'Silent mode': 'அமைதி பயன்முறை',
-  'Sign in to keep your notes safe and on every device.':
-    'உங்கள் குறிப்புகள் பாதுகாப்பாகவும் எல்லா சாதனங்களிலும் இருக்க உள்நுழையவும்.',
   'See how your notes connect.': 'உங்கள் குறிப்புகள் எப்படி இணைந்துள்ளன என்று பாருங்கள்.',
   'Press {key} to find anything, notes and commands alike.':
     'குறிப்புகளும் கட்டளைகளும், எதையும் கண்டுபிடிக்க {key} அழுத்தவும்.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'எழுதும்போது மார்க்டவுனைக் காட்டு',
+  'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'சுட்டி',
   'Pointing hand on buttons': 'பொத்தான்களில் சுட்டும் கை',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
@@ -40,11 +146,13 @@ export const ta: Dictionary = {
   '{count} h': '{count} மணி',
   Inbox: 'இன்பாக்ஸ்',
   Date: 'தேதி',
+  'Start date': 'தொடக்கத் தேதி',
   Priority: 'முன்னுரிமை',
   Reminder: 'நினைவூட்டல்',
   Duration: 'கால அளவு',
   'Smart dates': 'ஸ்மார்ட் தேதிகள்',
   'From any app': 'எந்த ஆப்பிலிருந்தும்',
+  'Show tasks without a start date in Today': 'தொடக்கத் தேதி இல்லாத பணிகளை இன்று என்பதில் காட்டு',
   'Every day': 'தினமும்',
   'Every weekday': 'ஒவ்வொரு வேலை நாளும்',
   'Every week': 'ஒவ்வொரு வாரமும்',
@@ -61,6 +169,13 @@ export const ta: Dictionary = {
   Unsaved: 'சேமிக்கப்படவில்லை',
   'Save to': 'இங்கே சேமி',
   'Reloaded with the web data of {space}': '{space} இன் வலைத் தரவுடன் மீண்டும் ஏற்றப்பட்டது',
+  Separate: 'தனி',
+  'Share this note’s web data again?': 'இந்தக் குறிப்பின் வலைத் தரவை மீண்டும் பகிரவா?',
+  'What its pages are signed in to on this computer is deleted.':
+    'இந்தக் கணினியில் அதன் பக்கங்கள் உள்நுழைந்துள்ளவை நீக்கப்படும்.',
+  'Share again': 'மீண்டும் பகிர்',
+  'This note keeps its own web data now': 'இந்தக் குறிப்பு இப்போது தனக்கென வலைத் தரவை வைத்துள்ளது',
+  'Back on the shared web data': 'பகிரப்பட்ட வலைத் தரவுக்குத் திரும்பியது',
   'Add a page': 'பக்கம் சேர்',
   'Add a page after this': 'இதற்குப் பின் பக்கம் சேர்',
   'Delete this page': 'இந்தப் பக்கத்தை நீக்கு',
@@ -81,6 +196,8 @@ export const ta: Dictionary = {
   Dots: 'புள்ளிகள்',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'இரு விரல்களால் கேன்வாஸைச் சுழற்று',
+  'Turn upright': 'நேராக்கு',
   Canvas: 'கேன்வாஸ்',
   Card: 'அட்டை',
   'Note or picture': 'குறிப்பு அல்லது படம்',
@@ -95,7 +212,6 @@ export const ta: Dictionary = {
   'New window': 'புதிய சாளரம்',
   New: 'புதியது',
   'New space': 'புதிய இடம்',
-  '{name}: switch space': '{name}: இடம் மாற்று',
   Untitled: 'பெயரிலி',
   Space: 'இடம்',
   'Name the space': 'இடத்தின் பெயர்',
@@ -140,8 +256,6 @@ export const ta: Dictionary = {
   'Loading…': 'ஏற்றுகிறது…',
   'Create a space': 'இடத்தை உருவாக்கு',
   'Import a folder': 'கோப்புறையை இறக்குமதி செய்',
-  'Sign in to sync': 'ஒத்திசைக்க உள்நுழை',
-  'Create account': 'கணக்கை உருவாக்கு',
   'Delete space': 'இடத்தை நீக்கு',
   'Delete {name}?': '{name} நீக்கவா?',
   'Every note in this space is deleted from your computer.':
@@ -159,6 +273,10 @@ export const ta: Dictionary = {
   Unpin: 'பின் அகற்று',
   Close: 'மூடு',
   'Close pinned tab?': 'பின்செய்த தாவலை மூடவா?',
+  'Save changes to {name}?': '{name} இல் உள்ள மாற்றங்களைச் சேமிக்கவா?',
+  'Save changes to these tabs?': 'இந்தத் தாவல்களில் உள்ள மாற்றங்களைச் சேமிக்கவா?',
+  'Unsaved words go to Recently deleted.': 'சேமிக்காத சொற்கள் சமீபத்தில் நீக்கியவைக்குச் செல்லும்.',
+  'Don’t save': 'சேமிக்க வேண்டாம்',
   'Close others': 'மற்றவற்றை மூடு',
   'Close tabs to the right': 'வலதுபுறத் தாவல்களை மூடு',
   'Close tabs to the left': 'இடதுபுறத் தாவல்களை மூடு',
@@ -195,9 +313,6 @@ export const ta: Dictionary = {
   'Move this note': 'இந்தக் குறிப்பை நகர்த்து',
   'Move up': 'மேலே நகர்த்து',
   'Move down': 'கீழே நகர்த்து',
-  Bookmark: 'புத்தகக்குறி',
-  'Remove bookmark': 'புத்தகக்குறியை அகற்று',
-  'Leave out of search': 'தேடலில் சேர்க்க வேண்டாம்',
   'Search here again': 'இங்கே மீண்டும் தேடு',
   'Undo the last file change': 'கடைசி கோப்பு மாற்றத்தைச் செயல்தவிர்',
   'Undo moving {name}': '{name} நகர்த்தலைச் செயல்தவிர்',
@@ -247,7 +362,6 @@ export const ta: Dictionary = {
   'Remove group': 'குழுவை அகற்று',
   'Out of the group': 'குழுவிலிருந்து வெளியே',
   Make: 'உருவாக்கு',
-  'Bookmark this block': 'இந்தத் தொகுதியைப் புத்தகக்குறியிடு',
   Panels: 'பலகங்கள்',
   Outline: 'அவுட்லைன்',
   'Stay on this note': 'இந்தக் குறிப்பில் நிலைத்திரு',
@@ -510,8 +624,8 @@ export const ta: Dictionary = {
   'Sign in to ask a question.': 'கேள்வி கேட்க உள்நுழையவும்.',
   'Asking OpenAI which models this key can use': 'இந்தச் சாவியின் மாடல்களை OpenAI இல் கேட்கிறது',
   'Could not reach OpenAI': 'OpenAI ஐ அணுக முடியவில்லை',
-  'That key cannot use any of the models nibeditor asks for.':
-    'nibeditor கேட்கும் மாடல்கள் எதையும் அந்தச் சாவி பயன்படுத்த முடியாது.',
+  'That key cannot use any of the models Orden asks for.':
+    'Orden கேட்கும் மாடல்கள் எதையும் அந்தச் சாவி பயன்படுத்த முடியாது.',
   'No reasoning': 'பகுத்தறிதல் இல்லை',
   Minimal: 'மிகக் குறைவு',
   Low: 'குறைவு',
@@ -533,7 +647,7 @@ export const ta: Dictionary = {
   Mode: 'நிலை',
   // The window's own edges; see appearance.rs
   Window: 'சாளரம்',
-  'nibeditor’s own': 'nibeditor-இன் சொந்தம்',
+  'Orden’s own': 'Orden-இன் சொந்தம்',
   'The system’s': 'கணினியின்',
   'Window frame': 'சாளரச் சட்டம்',
   System: 'கணினி',
@@ -596,6 +710,7 @@ export const ta: Dictionary = {
   '{done} of {total}': '{total} இல் {done}',
   'Sync failed': 'ஒத்திசைவு தோல்வி',
   '{name} could not be written.': '{name} ஐ எழுத முடியவில்லை.',
+  '{name} could not be read.': '{name} ஐப் படிக்க முடியவில்லை.',
   'Text size': 'உரை அளவு',
   'Line spacing': 'வரி இடைவெளி',
   'Line width': 'வரி அகலம்',
@@ -656,8 +771,10 @@ export const ta: Dictionary = {
   '{used} of {limit} used.': '{limit} இல் {used} பயன்படுத்தப்பட்டது.',
   'That image does not fit in your storage.': 'உங்கள் சேமிப்பிடத்தில் அந்தப் படம் அடங்காது.',
   'out of space': 'சேமிப்பிடம் இல்லை',
-  'nibeditor {version} is ready to install.': 'nibeditor {version} நிறுவத் தயார்.',
+  'Orden {version} is ready to install.': 'Orden {version} நிறுவத் தயார்.',
+  'Orden {version} is available.': 'Orden {version} கிடைக்கிறது.',
   'Restart now': 'இப்போதே மீள்தொடங்கு',
+  'Move to Applications': 'பயன்பாடுகளுக்கு நகர்த்து',
   Later: 'பிறகு',
   More: 'மேலும்',
   'Open notes': 'குறிப்புகளைத் திற',
@@ -683,11 +800,9 @@ export const ta: Dictionary = {
   Continue: 'தொடர்',
   'Send a new code': 'புதிய குறியீட்டை அனுப்பு',
   'Code sent to': 'குறியீடு அனுப்பப்பட்டது',
-  'You already have notes on this computer.': 'இந்தக் கணினியில் ஏற்கெனவே உங்கள் குறிப்புகள் உள்ளன.',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
-    'வைத்திருந்தால் அவை உங்கள் கணக்கில் சேரும். அழித்தால் உங்கள் கணக்கில் ஏற்கெனவே உள்ளவை மட்டும் இருக்கும் - இதைத் திரும்பப் பெற முடியாது.',
-  'Keep them': 'வைத்திரு',
-  'Erase them': 'அழி',
+  'This device already has notes.': 'இந்தச் சாதனத்தில் ஏற்கனவே குறிப்புகள் உள்ளன.',
+  Merge: 'இணை',
+  'Keep separate': 'தனியாக வை',
   'Digit {number}': 'இலக்கம் {number}',
   'Resend in {seconds}s': '{seconds} வினாடியில் மீண்டும் அனுப்பு',
   'Last synced {time}.': 'கடைசியாக {time} ஒத்திசைக்கப்பட்டது.',
@@ -737,14 +852,14 @@ export const ta: Dictionary = {
   'Reads your notes.': 'உங்கள் குறிப்புகளைப் படிக்கும்.',
   'Reads and writes your notes.': 'உங்கள் குறிப்புகளைப் படிக்கும், எழுதும்.',
   Other: 'மற்றவை',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'AI உதவியாளர் உங்கள் குறிப்புகளைப் படிக்கலாம் - அனுமதித்தால் மாற்றவும் செய்யலாம். உங்கள் nibeditor மின்னஞ்சலால் உள்நுழையும்; ஒட்ட எதுவும் இல்லை.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'AI உதவியாளர் உங்கள் குறிப்புகளைப் படிக்கலாம் - அனுமதித்தால் மாற்றவும் செய்யலாம். உங்கள் Orden மின்னஞ்சலால் உள்நுழையும்; ஒட்ட எதுவும் இல்லை.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'Claude இல் Settings → Connectors திறந்து Add custom connector என்பதைக் கிளிக் செய்யவும்.',
   'Open Claude’s connectors': 'Claude இன் இணைப்பிகளைத் திற',
   'Fill in the two fields and click Add.': 'இரு புலங்களையும் நிரப்பி Add கிளிக் செய்யவும்.',
-  'Click Connect and sign in with your nibeditor email.':
-    'Connect கிளிக் செய்து உங்கள் nibeditor மின்னஞ்சலால் உள்நுழையவும்.',
+  'Click Connect and sign in with your Orden email.':
+    'Connect கிளிக் செய்து உங்கள் Orden மின்னஞ்சலால் உள்நுழையவும்.',
   'Using Claude Code instead?': 'Claude Code பயன்படுத்துகிறீர்களா?',
   Command: 'கட்டளை',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -755,16 +870,16 @@ export const ta: Dictionary = {
   'Open ChatGPT’s plugins': 'ChatGPT இன் செருகுநிரல்களைத் திற',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Plugins பிரிவு அல்லது கூட்டல் பொத்தான் இல்லையா? முதலில் Settings → Security and login இல் Developer mode ஆன் செய்யவும்.',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'ChatGPT கேட்கும்போது உங்கள் nibeditor மின்னஞ்சலால் உள்நுழையவும்.',
-  'To use it in a chat, type @ and pick nibeditor.':
-    'அரட்டையில் பயன்படுத்த @ தட்டச்சு செய்து nibeditor ஐத் தேர்ந்தெடுக்கவும்.',
+  'Sign in with your Orden email when ChatGPT asks.':
+    'ChatGPT கேட்கும்போது உங்கள் Orden மின்னஞ்சலால் உள்நுழையவும்.',
+  'To use it in a chat, type @ and pick Orden.':
+    'அரட்டையில் பயன்படுத்த @ தட்டச்சு செய்து Orden ஐத் தேர்ந்தெடுக்கவும்.',
   'Server URL': 'சேவையக URL',
   Authentication: 'அங்கீகாரம்',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'மேம்பட்ட OAuth அமைப்புகளை அப்படியே விட்டு “I understand and want to continue” என்பதைத் தேர்ந்தெடுக்கவும்.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'OAuth உடன் Streamable HTTP பேசும் எந்த MCP கிளையண்டும். URL கொடுத்தால் அது தானே பதிவுசெய்து nibeditor இன் உள்நுழைவுப் பக்கத்தைத் திறக்கும்.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'OAuth உடன் Streamable HTTP பேசும் எந்த MCP கிளையண்டும். URL கொடுத்தால் அது தானே பதிவுசெய்து Orden இன் உள்நுழைவுப் பக்கத்தைத் திறக்கும்.',
   'Show config': 'கட்டமைப்பைக் காட்டு',
   'For a client that takes a JSON block instead of a URL.':
     'URL க்குப் பதிலாக JSON தொகுதியை ஏற்கும் கிளையண்டுக்கு.',
@@ -837,7 +952,7 @@ export const ta: Dictionary = {
   'Display name': 'காட்டும் பெயர்',
   'Your name': 'உங்கள் பெயர்',
   Email: 'மின்னஞ்சல்',
-  'On nibeditor.com': 'nibeditor.com இல்',
+  'On orden.so': 'orden.so இல்',
   'Your own domain': 'உங்கள் சொந்த டொமைன்',
   'Switching gives up {name}.': 'மாற்றினால் {name} விடப்படும்.',
   Page: 'பக்கம்',
@@ -910,8 +1025,9 @@ export const ta: Dictionary = {
   'No footnotes in this note': 'இந்தக் குறிப்பில் அடிக்குறிப்பு இல்லை',
   'Stack tabs': 'தாவல்களை அடுக்கு',
   'Unstack tabs': 'தாவல் அடுக்கை நீக்கு',
-  'High contrast': 'உயர் மாறுபாடு',
+  Contrast: 'மாறுபாடு',
   Glass: 'கண்ணாடி',
+  Classic: 'கிளாசிக்',
   'Front matter': 'முன்தகவல்',
   'Front matter: {name}': 'முன்தகவல்: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':
@@ -922,6 +1038,7 @@ export const ta: Dictionary = {
   Comment: 'கருத்து',
   'Always on top': 'எப்போதும் மேலே',
   'What is new': 'புதியது என்ன',
+  'Download the app': 'செயலியைப் பதிவிறக்கு',
   'Report an issue': 'சிக்கலைத் தெரிவி',
   'Move the line up': 'வரியை மேலே நகர்த்து',
   'Move the line down': 'வரியை கீழே நகர்த்து',
@@ -1002,6 +1119,24 @@ export const ta: Dictionary = {
   'Layout: {name}': 'தளவமைப்பு: {name}',
   'Space: {name}': 'இடம்: {name}',
   'Theme: {name}': 'தீம்: {name}',
+  'AI account: {name}': 'AI கணக்கு: {name}',
+  Accounts: 'கணக்குகள்',
+  Access: 'அணுகல்',
+  Set: 'அமைக்கப்பட்டது',
+  'Start over': 'மீண்டும் தொடங்கு',
+  'Sign in here': 'இங்கே உள்நுழை',
+  '{device} wants your AI accounts': '{device} உங்கள் AI கணக்குகளைக் கேட்கிறது',
+  '{device} offers this device your AI vault':
+    '{device} இந்தச் சாதனத்திற்கு உங்கள் AI பெட்டகத்தை வழங்குகிறது',
+  Join: 'சேர்',
+  'Allow this device on another one': 'வேறொரு சாதனத்தில் இந்தச் சாதனத்தை அனுமதி',
+  'On every device you sign in to, end-to-end encrypted.':
+    'நீங்கள் உள்நுழையும் ஒவ்வொரு சாதனத்திலும், முனைக்கு முனை குறியாக்கம்.',
+  'Sign in to have them on every device.': 'ஒவ்வொரு சாதனத்திலும் பெற உள்நுழையவும்.',
+  'Agents on this computer connect on their own': 'இந்தக் கணினியின் முகவர்கள் தாமாக இணைகின்றன',
+  Helpers: 'உதவியாளர்கள்',
+  'Start helpers on your AI accounts': 'உங்கள் AI கணக்குகளில் உதவியாளர்களைத் தொடங்கு',
+  Delegated: 'ஒப்படைத்தது',
   'Code theme: {name}': 'குறியீட்டுத் தீம்: {name}',
   'Delete a layout': 'தளவமைப்பை நீக்கு',
   // Keyboards and modal editing
@@ -1070,6 +1205,7 @@ export const ta: Dictionary = {
   'Double-click to write': 'எழுத இருமுறை கிளிக்',
   'Another colour': 'வேறு நிறம்',
   'Turn into a note': 'குறிப்பாக மாற்று',
+  Arrange: 'ஒழுங்கமை',
   'Bring to front': 'முன்னால் கொண்டுவா',
   'Bring forward': 'ஒரு படி முன்',
   'Send backward': 'ஒரு படி பின்',
@@ -1091,6 +1227,13 @@ export const ta: Dictionary = {
   'Export as PNG': 'PNG ஆக ஏற்றுமதி செய்',
   'Export as SVG': 'SVG ஆக ஏற்றுமதி செய்',
   'Export as PDF': 'PDF ஆக ஏற்றுமதி செய்',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF இறக்குமதி',
+  'Choose how to add the pages to the canvas.':
+    'பக்கங்களை கேன்வாஸில் எப்படி சேர்க்க வேண்டும் என்பதைத் தேர்ந்தெடு.',
+  'Single page': 'ஒரு பக்கம்',
+  'All pages': 'எல்லா பக்கங்களும்',
+  'Choose a page': 'ஒரு பக்கத்தைத் தேர்ந்தெடு',
   // The canvas: what its own keys are called
   'Delete what is picked': 'தேர்ந்ததை நீக்கு',
   'Nudge left': 'இடப்புறம் தள்ளு',
@@ -1151,8 +1294,8 @@ export const ta: Dictionary = {
   'Release channel': 'வெளியீட்டு சேனல்',
   Stable: 'நிலையானது',
   Unstable: 'நிலையற்றது',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'நிலையானது அதிகாரப்பூர்வ வெளியீடுகளைப் பின்தொடரும்; நிலையற்றது main இல் ஒவ்வொரு புஷ்ஷையும் பின்தொடரும், உடையவும் கூடும்.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'நிலையானது வெளியிடப்பட்ட பதிப்புகளைப் பின்தொடரும்; நிலையற்றது edge பில்டுகளைப் பின்தொடரும், உடையவும் கூடும்.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'இறக்குமதி',
@@ -1210,14 +1353,16 @@ export const ta: Dictionary = {
     'குறிப்புகளுக்குள் உள்ள {count} அட்டவணைகள் வரவில்லை',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} இணைப்புகள் இந்த Mac இல் இல்லாமல் iCloud இல் உள்ளன',
+  '{count} files are in iCloud rather than on this Mac':
+    '{count} கோப்புகள் இந்த Mac இல் இல்லாமல் iCloud இல் உள்ளன',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS அந்தக் குறிப்புகளை Full Disk Access க்குப் பின் வைக்கிறது.',
   'There are no notes in Apple Notes on this Mac.':
     'இந்த Mac இல் Apple Notes இல் குறிப்புகள் இல்லை.',
   'Those notes could not be read.': 'அந்தக் குறிப்புகளைப் படிக்க முடியவில்லை.',
   'Read them from this Mac': 'இந்த Mac இல் இருந்து படி',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    'Full Disk Access இல் nibeditor ஐ இயக்கி, மீண்டும் கேள்.',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    'Full Disk Access இல் Orden ஐ இயக்கி, மீண்டும் கேள்.',
   'Open the setting': 'அமைப்பைத் திற',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'Apple Journal தானே ஏற்றுமதி செய்யும்: Journal, அமைப்புகள், ஏற்றுமதி. Apple Notes இல் ஏற்றுமதி இல்லை, எனவே அது உள்ள Mac இல் இல்லாதபோது, இங்கே இடுவது ஒரு ஏற்றுமதிக் கருவி எழுதிய கோப்புறை.',
@@ -1326,16 +1471,16 @@ export const ta: Dictionary = {
   'OpenAI-compatible': 'OpenAI இணக்கமானது',
   'Base URL': 'அடிப்படை URL',
   'API key': 'API சாவி',
-  'Set on this device': 'இந்தச் சாதனத்தில் அமைக்கப்பட்டது',
   Optional: 'விருப்பத்தேர்வு',
   'List models': 'மாடல்களைப் பட்டியலிடு',
   'Asking…': 'கேட்கிறது…',
   'No providers yet.': 'இன்னும் வழங்குநர்கள் இல்லை.',
   'Add {name}': '{name} சேர்',
-  'Keys stay in the secure store on this device.':
-    'சாவிகள் இந்தச் சாதனத்தின் பாதுகாப்பான சேமிப்பில் இருக்கும்.',
   'This browser holds the keys in its own storage.':
     'இந்த உலாவி சாவிகளைத் தன் சேமிப்பிடத்தில் வைத்திருக்கும்.',
+  'Keep this browser’s keys in the vault': 'இந்த உலாவியின் சாவிகளை பெட்டகத்தில் வை',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'அப்போது ஒவ்வொரு சாதனத்தின் சாவிகளும் இந்த உலாவியின் சேமிப்பில் வைக்கப்படும்; பக்கத்திற்குள் நுழைந்த ஒரு ஸ்கிரிப்ட் அவற்றைப் படிக்கக்கூடும்.',
   'AI can be wrong. Check the facts.': 'AI தவறாகலாம். உண்மைகளைச் சரிபார்க்கவும்.',
   'Used by the glasses': 'கண்ணாடி பயன்படுத்துவது',
   'Could not read the models.': 'மாடல்களைப் படிக்க முடியவில்லை.',
@@ -1378,7 +1523,6 @@ export const ta: Dictionary = {
   'A cited report': 'மேற்கோளிட்ட அறிக்கை',
   'A helper in the background': 'பின்னணியில் உதவியாளர்',
   'A side question': 'பக்கக் கேள்வி',
-  'Agent mode': 'ஏஜென்ட் பயன்முறை',
   'Agent profile': 'ஏஜென்ட் சுயவிவரம்',
   'Archive the thread': 'த்ரெட்டை காப்பகப்படுத்து',
   'Approve mode': 'ஒப்புதல் பயன்முறை',
@@ -1497,8 +1641,6 @@ export const ta: Dictionary = {
   // Web tabs
   Reload: 'மீண்டும் ஏற்று',
   'Hard reload': 'முழுமையாக மீண்டும் ஏற்று',
-  'Clip this page': 'இந்தப் பக்கத்தை எடு',
-  'Clip the link': 'இணைப்பை எடு',
   'Open in the browser': 'உலாவியில் திற',
   'Show it here': 'இங்கே காட்டு',
   Website: 'இணையதளம்',
@@ -1586,8 +1728,10 @@ export const ta: Dictionary = {
   'that is not a theme': 'அது தீம் இல்லை',
   'no such theme': 'அப்படி ஒரு தீம் இல்லை',
   'choose a model first': 'முதலில் ஒரு மாடலைத் தேர்ந்தெடுக்கவும்',
+  'set an OpenAI key in Orden’s settings first':
+    'முதலில் Orden அமைப்புகளில் OpenAI சாவியை அமைக்கவும்',
   'set an OpenAI key in nibeditor’s settings first':
-    'முதலில் nibeditor அமைப்புகளில் OpenAI சாவியை அமைக்கவும்',
+    'முதலில் Orden அமைப்புகளில் OpenAI சாவியை அமைக்கவும்',
   'that is a lot of questions - try again later': 'அது நிறைய கேள்விகள் - பிறகு முயற்சிக்கவும்',
   'that is too much audio': 'அது மிக அதிக ஒலி',
   'that is more than a spoken command': 'அது பேசும் கட்டளையைவிட அதிகம்',
@@ -1611,7 +1755,6 @@ export const ta: Dictionary = {
   Nothing: 'ஒன்றுமில்லை',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'இந்தக் காட்சியைப் புத்தகக்குறியிடு',
   Keep: 'வை',
 
   // Which side of the window a panel sits on.
@@ -1633,7 +1776,6 @@ export const ta: Dictionary = {
   'New tab': 'புதிய தாவல்',
   'Full screen': 'முழுத்திரை',
   'Print…': 'அச்சிடு…',
-  'Save page': 'பக்கத்தைச் சேமி',
   'Share…': 'பகிர்…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1678,7 +1820,6 @@ export const ta: Dictionary = {
   Blocked: 'தடுக்கப்பட்டது',
   'Reset permissions': 'அனுமதிகளை மீட்டமை',
   'Turn into': 'ஆக மாற்று',
-  'Bookmark these blocks': 'இந்தத் தொகுதிகளைப் புத்தகக்குறியிடு',
   Foldable: 'மடக்கக்கூடியது',
   'Starts folded': 'மடித்த நிலையில் தொடங்கும்',
   // Where a space keeps what websites store
@@ -1695,6 +1836,16 @@ export const ta: Dictionary = {
   'Bring all to front': 'அனைத்தையும் முன்னே கொண்டுவா',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'நகலெடுத்ததைச் செயல்தவிர்',
+  'Devices with your AI vault': 'உங்கள் AI பெட்டகம் உள்ள சாதனங்கள்',
+  'This device': 'இந்தச் சாதனம்',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'அந்தச் சாதனம் இனி உங்கள் AI கணக்குகளைப் படிக்க முடியாது, மற்றவை புதிய சாவியைப் பெறும்.',
+  'Also remove this device from your AI vault?':
+    'இந்தச் சாதனத்தை உங்கள் AI பெட்டகத்திலிருந்தும் நீக்கவா?',
+  'Remove and sign out': 'நீக்கி வெளியேறு',
+  'Undo making {name}': '{name} உருவாக்கலைச் செயல்தவிர்',
+  'Undo the deletion': 'நீக்கலைச் செயல்தவிர்',
+  'Undo the move': 'நகர்த்தலைச் செயல்தவிர்',
   'Redo the last file change': 'கடைசிக் கோப்பு மாற்றத்தை மீண்டும் செய்',
   'Select down': 'கீழ்நோக்கித் தேர்ந்தெடு',
   'Select up': 'மேல்நோக்கித் தேர்ந்தெடு',
@@ -1739,7 +1890,6 @@ export const ta: Dictionary = {
   '{key} in a terminal': 'முனையத்தில் {key}',
   'Always ask': 'எப்போதும் கேள்',
   'Open another': 'இன்னொன்றைத் திற',
-  'Open in terminal': 'முனையத்தில் திற',
   Clear: 'அழி',
   'Exited with code {code}': 'குறியீடு {code} உடன் முடிந்தது',
   'Could not start {shell}': '{shell} ஐத் தொடங்க முடியவில்லை',
@@ -1748,18 +1898,8 @@ export const ta: Dictionary = {
   'Stop what is running in {name}?': '{name} இல் இயங்குவதை நிறுத்தவா?',
   'Stop what is running in these terminals?': 'இந்த முனையங்களில் இயங்குவதை நிறுத்தவா?',
   'Paste {count} lines?': { one: '{count} வரியை ஒட்டவா?', other: '{count} வரிகளை ஒட்டவா?' },
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': 'இயல்புநிலை உலாவி',
-  // The engine web tabs run on
-  Engine: 'இன்ஜின்',
-  Relaunch: 'மீண்டும் தொடங்கு',
-  'Chromium did not start': 'Chromium தொடங்கவில்லை',
-  'No connection': 'இணைப்பு இல்லை',
-  'Not in this release': 'இந்த வெளியீட்டில் இல்லை',
-  'Needs an update': 'புதுப்பிப்பு தேவை',
-  'Signature did not match': 'கையொப்பம் பொருந்தவில்லை',
-  'Disk full': 'வட்டு நிரம்பியது',
-  'Could not be installed': 'நிறுவ முடியவில்லை',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} செய்த திருத்தங்களைச் செயல்தவிர்',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1863,8 +2003,7 @@ export const ta: Dictionary = {
   'Always on this site': 'இந்தத் தளத்தில் எப்போதும்',
   'Agents stopped': 'முகவர்கள் நிறுத்தப்பட்டன',
   'Agent tabs closed': 'முகவர் தாவல்கள் மூடப்பட்டன',
-  'nibeditor is still running for your agents':
-    'உங்கள் முகவர்களுக்காக nibeditor இன்னும் இயங்குகிறது',
+  'Orden is still running for your agents': 'உங்கள் முகவர்களுக்காக Orden இன்னும் இயங்குகிறது',
   '{client} wants to connect': '{client} இணைய விரும்புகிறது',
   // Web logins that travel, and the devices of an account
   'no such device': 'அப்படி ஒரு சாதனம் இல்லை',
@@ -1880,11 +2019,12 @@ export const ta: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'இந்தக் கணினியில் உள்ள முகவர்கள்',
   'Your account’s connector': 'உங்கள் கணக்கின் இணைப்பான்',
-  'nibeditor asks you once, the first time it connects.':
-    'முதல் முறை இணையும்போது nibeditor உங்களிடம் ஒருமுறை கேட்கும்.',
+  'Orden asks you once, the first time it connects.':
+    'முதல் முறை இணையும்போது Orden உங்களிடம் ஒருமுறை கேட்கும்.',
   'A client on another machine?': 'வேறு கணினியில் உள்ள கிளையன்ட்டா?',
   'Shown only once.': 'ஒருமுறை மட்டுமே காட்டப்படும்.',
   'Remove {name}?': '{name} ஐ அகற்றவா?',
+  'End {name}?': '{name} ஐ முடிக்கவா?',
   'Its token stops working.': 'அதன் டோக்கன் இனி வேலை செய்யாது.',
   'Added {date}': '{date} அன்று சேர்க்கப்பட்டது',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':
@@ -1905,7 +2045,6 @@ export const ta: Dictionary = {
   'Change notes': 'குறிப்புகளை மாற்றுதல்',
   'See what you are looking at': 'நீங்கள் பார்ப்பதைப் பார்த்தல்',
   'Move and rename files': 'கோப்புகளை நகர்த்துதல், பெயர் மாற்றுதல்',
-  'Open tabs and bookmarks': 'தாவல்கள், புக்மார்க்குகளைத் திறத்தல்',
   'Bring a tab to the front': 'ஒரு தாவலை முன்னுக்குக் கொண்டுவருதல்',
   'Browse in tabs of its own': 'சொந்தத் தாவல்களில் உலாவுதல்',
   'Read what pages load': 'பக்கங்கள் ஏற்றுவதைப் படித்தல்',
@@ -1927,14 +2066,11 @@ export const ta: Dictionary = {
   'Without your logins': 'உங்கள் உள்நுழைவுகள் இல்லாமல்',
   'Calls a minute': 'நிமிடத்திற்கு அழைப்புகள்',
   'Pages a minute': 'நிமிடத்திற்குப் பக்கங்கள்',
+  'Browser memory limit': 'உலாவி நினைவக வரம்பு',
   '{count} calls': {
     one: '{count} அழைப்பு',
     other: '{count} அழைப்புகள்',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': '{device} இல் திறந்துள்ளது',
-  'Use here': 'இங்கே பயன்படுத்து',
-  '{device} wants your web logins': '{device} உங்கள் இணைய உள்நுழைவுகளைக் கேட்கிறது',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'விரைவுக் கேள்வி',
@@ -2002,8 +2138,7 @@ export const ta: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'உறக்கநிலை',
   Reminders: 'நினைவூட்டல்கள்',
-  'Reminders ring while nibeditor is open':
-    'nibeditor திறந்திருக்கும்போது நினைவூட்டல்கள் ஒலிக்கும்',
+  'Reminders ring while Orden is open': 'Orden திறந்திருக்கும்போது நினைவூட்டல்கள் ஒலிக்கும்',
   Automatic: 'தானியங்கு',
   'Stay in the tray': 'ட்ரேயில் இருக்கவும்',
   'Exact alarms': 'துல்லியமான அலாரங்கள்',
@@ -2046,7 +2181,6 @@ export const ta: Dictionary = {
   'Any of them': 'ஏதேனும்',
   Compare: 'ஒப்பிடு',
   'Add a filter': 'வடிகட்டியைச் சேர்',
-  'Reschedule to today': 'இன்றைக்கு மாற்று',
   Collapse: 'சுருக்கு',
   Expand: 'விரி',
   Summary: 'சுருக்கம்',
@@ -2068,7 +2202,6 @@ export const ta: Dictionary = {
   Layout: 'தளவமைப்பு',
   Overdue: 'தாமதமானவை',
   Upcoming: 'வரவிருப்பவை',
-  Logbook: 'பதிவேடு',
   Project: 'திட்டம்',
   Label: 'லேபிள்',
   List: 'பட்டியல்',
@@ -2254,4 +2387,11 @@ export const ta: Dictionary = {
   'Search this chat': 'இந்த அரட்டையில் தேடு',
   'Add as task': 'பணியாகச் சேர்',
   'Save as note': 'குறிப்பாகச் சேமி',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'விடியல்',
+  Lagoon: 'காயல்',
+  Lilac: 'லைலாக்',
+  Peach: 'பீச்',
+  Sage: 'சேஜ்',
+  Mist: 'மூடுபனி',
 }

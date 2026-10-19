@@ -3,15 +3,17 @@ import { key, t } from './i18n.svelte'
 import { DIVIDER, type MenuEntry, trim } from './menu.svelte'
 import { prompt } from './prompt.svelte'
 import { canPublish, canShare, isShared, roleOf, share } from './sharing.svelte'
-import { isDesktop } from './tauri'
 import { type Space, workspace } from './workspace.svelte'
 
 /** The rows that open into a choice, fetched with the press; see space-choices.ts. */
 const choices = () => import('./space-choices')
 
+/** Putting a space away, fetched with the press; see space-archive.ts. */
+const archiving = () => import('./space-archive')
+
 /** Asks for a name and makes the space. Where it lives is the app's business,
  *  so that is the only question. Answers the space, or nothing where the question
- *  was dismissed; the space chooser goes on to put a first note in it. */
+ *  was dismissed. */
 export async function newSpace(): Promise<Space | undefined> {
   const name = await prompt.ask({
     title: t('Name the space'),
@@ -19,7 +21,12 @@ export async function newSpace(): Promise<Space | undefined> {
     confirmLabel: key('Create'),
   })
 
-  if (!name) return
+  return name ? madeSpace(name) : undefined
+}
+
+/** Makes a space called `name`, with what every new space starts with: the menu's
+ *  New space and a fresh start (first-space.svelte.ts) alike. */
+export async function madeSpace(name: string): Promise<Space | undefined> {
   const space = await workspace.addSpace(name)
   if (!space) return
   if (!__EVEN_PLUGIN__) await (await import('./agents-seed')).seedAgents(space.root)
@@ -40,7 +47,7 @@ export async function newSpace(): Promise<Space | undefined> {
  *
  *  One space is not a ring, and the key does nothing at all. */
 export function stepSpace(direction: number) {
-  const spaces = workspace.spaces
+  const spaces = workspace.shownSpaces
   if (spaces.length < 2) return
 
   const at = spaces.findIndex((one) => one.id === workspace.activeSpaceId)
@@ -68,9 +75,10 @@ async function moveSpace(id: string, beforeId: string | null) {
 function canNudge(space: Space, by: -1 | 1): boolean {
   if (roleOf(space.root) !== 'owner') return false
 
-  const at = workspace.spaces.findIndex((one) => one.id === space.id)
+  const shown = workspace.shownSpaces
+  const at = shown.findIndex((one) => one.id === space.id)
   const to = at + by
-  return at >= 0 && to >= 0 && to < workspace.spaces.length
+  return at >= 0 && to >= 0 && to < shown.length
 }
 
 /** One place up or down the list.
@@ -85,13 +93,14 @@ function canNudge(space: Space, by: -1 | 1): boolean {
  *  `moveSpace` places a space in front of another, so going down means going in
  *  front of the one after next. */
 async function nudgeSpace(space: Space, by: -1 | 1) {
-  const at = workspace.spaces.findIndex((one) => one.id === space.id)
+  const shown = workspace.shownSpaces
+  const at = shown.findIndex((one) => one.id === space.id)
   if (at < 0) return
 
   const to = at + by
-  if (to < 0 || to >= workspace.spaces.length) return
+  if (to < 0 || to >= shown.length) return
 
-  const before = by === -1 ? workspace.spaces[to] : workspace.spaces[to + 1]
+  const before = by === -1 ? shown[to] : shown[to + 1]
   await moveSpace(space.id, before?.id ?? null)
 }
 
@@ -113,17 +122,6 @@ export function spaceMenu(space: Space): MenuEntry[] {
     // Beside it, because it is the same question about the same folder: who
     // else may read this.
     ...(canPublish(space) ? [{ label: t('Publish'), run: () => publishSpace(space) }] : []),
-    // Where the space keeps what websites store. Only where a website is a tab with a
-    // store of its own behind it; in a browser build the page is the browser's.
-    ...(isDesktop
-      ? [
-          {
-            label: t('Web data'),
-            keep: true,
-            run: () => void choices().then((one) => one.showWebData(space)),
-          },
-        ]
-      : []),
     // What you are called in it, where anybody else is there to call you anything;
     // see people/nickname.ts.
     ...(!__EVEN_PLUGIN__ && (theirs || isShared(space.root))
@@ -146,6 +144,16 @@ export function spaceMenu(space: Space): MenuEntry[] {
       ? [{ label: t('Move down'), run: () => void nudgeSpace(space, 1) }]
       : []),
     DIVIDER,
+    // Put away whole, never deleted; offered where another space stays in sight, since a
+    // window has to be in one. See space-archive.ts.
+    ...(workspace.shownSpaces.length > 1 && !workspace.archivedSpaces.has(space.root)
+      ? [
+          {
+            label: t('Archive'),
+            run: () => void archiving().then((one) => one.archiveSpace(space)),
+          },
+        ]
+      : []),
     {
       label: theirs ? t('Leave space') : t('Delete space'),
       danger: true,

@@ -2,9 +2,9 @@ import { isAudioTarget, isImageTarget, isVideoTarget } from '@nib/markdown/links
 import { about } from './complete'
 import type { LinkWrite, NoteIndex } from './notes'
 
-/** Links to notes of the space, a line each: what a row dropped on the words writes,
- *  and a row's Copy link. A picture, a sound or a film is embedded, as `![[pic.png]]`
- *  shows one. Fetched by the first of those; see `noteLinksCode` in drop.ts. */
+/** Links to notes of the space, a line each: what a row dropped on the words writes.
+ *  A picture, a sound or a film is embedded, as `![[pic.png]]` shows one. Fetched by
+ *  the first drop; see `noteLinksCode` in drop.ts. */
 export function noteLinks(
   index: NoteIndex,
   paths: readonly string[],

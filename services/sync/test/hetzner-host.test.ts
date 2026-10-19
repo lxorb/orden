@@ -289,12 +289,12 @@ describe('a Hetzner machine', () => {
 describe('its names', () => {
   test('are its id’s, and only those are machine hostnames', () => {
     expect(namesOf(ID, 'nibeditor.com').hostname).toBe(HOSTNAME)
-    expect(isMachineHost(HOSTNAME, 'https://nibeditor.com')).toBe(true)
-    expect(
-      isMachineHost('M-0123456789ABCDEF0123456789ABCDEF.nibeditor.com', 'https://nibeditor.com'),
-    ).toBe(true)
-    expect(isMachineHost('m-blog.nibeditor.com', 'https://nibeditor.com')).toBe(false)
-    expect(isMachineHost(`${HOSTNAME}.evil.com`, 'https://nibeditor.com')).toBe(false)
-    expect(isMachineHost('nibeditor.com', 'https://nibeditor.com')).toBe(false)
+    expect(isMachineHost(HOSTNAME, 'nibeditor.com')).toBe(true)
+    expect(isMachineHost('M-0123456789ABCDEF0123456789ABCDEF.nibeditor.com', 'nibeditor.com')).toBe(
+      true,
+    )
+    expect(isMachineHost('m-blog.nibeditor.com', 'nibeditor.com')).toBe(false)
+    expect(isMachineHost(`${HOSTNAME}.evil.com`, 'nibeditor.com')).toBe(false)
+    expect(isMachineHost('nibeditor.com', 'nibeditor.com')).toBe(false)
   })
 })

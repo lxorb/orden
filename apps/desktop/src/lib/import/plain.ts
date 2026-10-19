@@ -14,7 +14,7 @@ import { htmlToMarkdown } from '@nib/markdown/from-html'
 
 import { key } from '../i18n.svelte'
 import { folderPlan, isJunk, isNoteFile } from './folder'
-import { Names, safeParts, withoutNotionId } from './names'
+import { keptName, Names, safeName, safeParts, withoutNotionId } from './names'
 import type { FormatId, ImportPlan } from './plan'
 import type { Source } from './sources'
 
@@ -30,6 +30,12 @@ export interface PlainOptions {
   /** A last look at a note's words: Bear rewrites its tags here, Logseq its
    *  properties. */
   words?: (text: string, source: Source) => string
+  /** Files an app keeps for itself rather than an export it wrote: an Obsidian
+   *  vault. Their names are the reader's own, so no exporter's id is taken off
+   *  them and none is shortened or respaced, since the vault's canvases name them
+   *  too, a note's words are kept to the byte, and an HTML file is a page
+   *  somebody saved, copied as it is rather than read as a note. */
+  asTheyAre?: boolean
 }
 
 export async function readPlain(
@@ -39,18 +45,46 @@ export async function readPlain(
   const names = new Names()
   let html = 0
 
+  // A vault's notes are its markdown and nothing else: Obsidian keeps a `.txt` as a
+  // file it does not open, and links name it with its extension, so it stays one.
+  const note = (path: string) =>
+    options.asTheyAre ? /\.(md|markdown)$/i.test(path) : isNoteFile(path)
+
+  /** Where a file goes, or null for one that is left behind. */
+  const target = (source: Source): string | null => {
+    if (isJunk(source.path) || options.skip?.(source.path)) return null
+
+    // A space in front of the whole path, which a vault uses to sort a note
+    // first, is one the space trims off when the file is written (see
+    // automation/inside.ts), so it comes off here, where a name it then shares
+    // with another file still steps aside and the links follow it.
+    const path = options.asTheyAre
+      ? (placedPath(source.path, undefined, keptName)?.trimStart() ?? null)
+      : placedPath(source.path, withoutNotionId)
+    if (path === null) return null
+
+    if (HTML.test(path) && !options.asTheyAre) return path.replace(HTML, '.md')
+    return note(path) ? path.replace(/\.txt$/i, '.md') : path
+  }
+
+  // A file whose name needs no change keeps it, whichever comes first: `Why?.png`
+  // made into `Why.png` for Windows is the one that steps aside from the vault's
+  // own `Why.png`, since a canvas, a base or another app names that one by it.
+  for (const source of sources) {
+    if (target(source) === source.path) names.keep(source.path)
+  }
+
   const plan = await folderPlan(sources, {
     format: options.format ?? 'markdown',
     place: (source) => {
-      if (isJunk(source.path) || options.skip?.(source.path)) return { to: null }
-
-      const path = placedPath(source.path)
+      const path = target(source)
       if (path === null) return { to: null }
+      const to = names.free(path, path === source.path)
 
-      if (HTML.test(path)) {
+      if (HTML.test(source.path) && !options.asTheyAre) {
         html += 1
         return {
-          to: names.free(path.replace(HTML, '.md')),
+          to,
           read: (text) => ({
             text: htmlToMarkdown(text, { fileTargets: true, appTargets: true }),
             title: null,
@@ -58,11 +92,15 @@ export async function readPlain(
         }
       }
 
-      if (!isNoteFile(path)) return { to: names.free(path) }
+      if (!note(path)) return { to }
 
       return {
-        to: names.free(path.replace(/\.txt$/i, '.md')),
-        read: (text, at) => ({ text: options.words?.(text, at) ?? text, title: null }),
+        to,
+        read: (text, at) => ({
+          text: options.words?.(text, at) ?? text,
+          title: null,
+          kept: options.asTheyAre === true,
+        }),
       }
     },
   })
@@ -83,12 +121,18 @@ export async function readPlain(
  *
  *  The folders are kept as they are, since somebody arranged them, and a name
  *  that no file may have is argued with one part at a time so a folder full of
- *  notes stays one folder. */
-function placedPath(path: string): string | null {
+ *  notes stays one folder. `each` is done to every part first: for an export, the
+ *  id Notion leaves on the end of names is taken off wherever it appears, since a
+ *  folder of markdown might have come from there through some other tool. */
+function placedPath(
+  path: string,
+  each?: (part: string) => string,
+  named: (part: string, extension?: string) => string = safeName,
+): string | null {
   if (BUNDLE_TEXT.test(path)) {
     // `Trips/Iceland.textbundle/text.md` is the note `Trips/Iceland.md`.
     const bundle = path.replace(/\/text\.(md|markdown|txt)$/i, '')
-    return `${tidyParts(bundle.replace(/\.textbundle$/i, ''))}.md`
+    return `${safeParts(bundle.replace(/\.textbundle$/i, ''), each, named)}.md`
   }
 
   const inside = /\.textbundle\/(.*)$/i.exec(path)
@@ -96,15 +140,8 @@ function placedPath(path: string): string | null {
     const rest = inside[1] ?? ''
     // A bundle's own metadata says what wrote it, which the note does not need.
     if (/^info\.json$/i.test(rest)) return null
-    return tidyParts(rest)
+    return safeParts(rest, each, named)
   }
 
-  return tidyParts(path)
-}
-
-/** Every part of a path made into something a file may be called, with the id
- *  Notion leaves on the end of names taken off wherever it appears: a folder of
- *  markdown might have come from there through some other tool. */
-function tidyParts(path: string): string {
-  return safeParts(path, withoutNotionId)
+  return safeParts(path, each, named)
 }

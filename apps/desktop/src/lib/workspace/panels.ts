@@ -9,15 +9,22 @@
  *  than doing it, which is what makes the rules - a panel moved while it was being
  *  read stays open over there, a side with nothing on it is not drawn - readable as
  *  rules and testable as arithmetic. The store writes the answer down; see
- *  `showPanel` and its neighbours in workspace.svelte.ts. */
+ *  `showPanel` and its neighbours in workspace.svelte.ts.
+ *
+ *  The right edge holds the right side or the scratchpad's card, never both (Emil,
+ *  2026-10-13). The card is the quick one, so it goes over the side the way Quick Note
+ *  goes over a window, and the side is back as it goes; the side asked for puts the card
+ *  away for good. That is `covered`, which every rule showing a right panel lifts. */
 
 import type { Panel, PanelSide } from '../workspace.svelte'
 
-/** The three, together: what is open on each side and what has been moved over. */
+/** The three, together: what is open on each side and what has been moved over; and
+ *  whether the card is over the right side, `rightPanel` kept under it. */
 export interface Sides {
   panel: Panel | null
   rightPanel: Panel | null
   right: Panel[]
+  covered?: boolean
 }
 
 /** Which side a panel lives on. Left unless it was moved. */
@@ -26,9 +33,20 @@ export function sideOf(right: readonly Panel[], panel: Panel): PanelSide {
 }
 
 /** The panel open on one side, which is what that side's tab strip marks and
- *  what its body draws. */
+ *  what its body draws: none on the right while the card is over it. */
 export function openOn(sides: Sides, side: PanelSide): Panel | null {
+  if (side === 'right') return sides.covered ? null : sides.rightPanel
+  return sides.panel
+}
+
+/** The panel a side holds, whether or not anything is over it. */
+function heldOn(sides: Sides, side: PanelSide): Panel | null {
   return side === 'right' ? sides.rightPanel : sides.panel
+}
+
+/** The card put away, where it was over the right side. */
+function uncovered(sides: Sides): Sides {
+  return sides.covered ? { ...sides, covered: false } : sides
 }
 
 /** Which tabs one side holds, in the order the strip shows them: the right
@@ -46,10 +64,10 @@ export function panelsOn(
 
 /** Showing a panel, or shutting it where it is already the one showing. On its own
  *  side, so a panel moved to the right opens over there and the side it left is not
- *  disturbed. */
+ *  disturbed. One kept under the card is not showing. */
 export function showing(sides: Sides, next: Panel): Sides {
   if (sideOf(sides.right, next) === 'right') {
-    return { ...sides, rightPanel: sides.rightPanel === next ? null : next }
+    return uncovered({ ...sides, rightPanel: openOn(sides, 'right') === next ? null : next })
   }
 
   return { ...sides, panel: sides.panel === next ? null : next }
@@ -72,17 +90,20 @@ export function moving(sides: Sides, panel: Panel, side: PanelSide): Sides {
   const was = sideOf(sides.right, panel)
   if (was === side) return sides
 
-  const open = openOn(sides, was) === panel
+  const open = heldOn(sides, was) === panel
 
   if (side === 'right') {
-    return {
+    const moved = {
+      ...sides,
       right: [...sides.right, panel],
       panel: open ? null : sides.panel,
       rightPanel: open ? panel : sides.rightPanel,
     }
+    return open ? uncovered(moved) : moved
   }
 
   return {
+    ...sides,
     right: sides.right.filter((one) => one !== panel),
     panel: open ? panel : sides.panel,
     rightPanel: open ? null : sides.rightPanel,

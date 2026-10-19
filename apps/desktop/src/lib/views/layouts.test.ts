@@ -1,4 +1,5 @@
 import { answer, type Base, builtinView, cellValue, readBase, type Row } from '@nib/bases'
+import { timeWords } from '@nib/editor/task-days'
 import { render } from 'svelte/server'
 import { describe, expect, test, vi } from 'vitest'
 
@@ -71,7 +72,8 @@ function kitOf(base: Base, rows: readonly Row[], spec = {}) {
 }
 
 const TASKS = [
-  taskRow('Errands.md', '- [ ] Call the bank [time:: 16:00] ⏫ 📅 2026-10-01', 2, {
+  // Overdue by its deadline (#371).
+  taskRow('Errands.md', '- [ ] Call the bank [time:: 16:00] [deadline:: 2026-10-01] ⏫', 2, {
     section: ['Errands'],
   }),
   taskRow('Errands.md', '  - [ ] Find the card', 3, { section: ['Errands'], parent: 2, indent: 2 }),
@@ -102,10 +104,10 @@ describe('the list', () => {
     const html = render(ListLayout, { props: { kit: kitOf(builtinView('today'), TASKS) } }).body
     expect(html).toContain('Overdue')
     expect(html.indexOf('Call the bank')).toBeLessThan(html.indexOf('Milk'))
-    expect(html).toContain('16:00')
+    expect(html).toContain(timeWords('16:00'))
     expect(html).toContain('Errands')
     expect(html.match(/Add task/g)?.length).toBe(2)
-    expect(html).toContain('Reschedule to today')
+    expect(html).toContain('Reschedule')
   })
 
   test('puts a sub-task under its parent in a project', () => {
@@ -264,14 +266,18 @@ describe('on a phone', () => {
 })
 
 describe('the frame', () => {
-  test('wears the head with its layout switch, its tools and the view', () => {
-    const html = render(ViewFrame, {
+  test('wears Todoist’s head over tasks, and the database’s tools over notes', () => {
+    const tasks = render(ViewFrame, {
       props: { kit: kitOf(builtinView('today'), TASKS), title: 'Today' },
     }).body
-    expect(html.match(/role="tab"/g)?.length).toBeGreaterThanOrEqual(6)
-    expect(html).toContain('aria-label="Filter"')
-    expect(html).toContain('aria-label="Sort"')
-    expect(html).toContain('aria-label="Group"')
-    expect(html).toContain('Call the bank')
+    expect(tasks).toContain('aria-label="Display"')
+    expect(tasks).not.toContain('aria-label="Filter"')
+    expect(tasks).toContain('Call the bank')
+
+    const notes = render(ViewFrame, { props: { kit: kitOf(BUGS, NOTES), title: 'Bugs' } }).body
+    expect(notes.match(/role="tab"/g)?.length).toBeGreaterThanOrEqual(6)
+    expect(notes).toContain('aria-label="Filter"')
+    expect(notes).toContain('aria-label="Sort"')
+    expect(notes).toContain('aria-label="Group"')
   })
 })

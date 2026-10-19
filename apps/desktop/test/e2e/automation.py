@@ -20,6 +20,8 @@ go beside this file under `shots/automation/`.
 
 from __future__ import annotations
 
+import contextlib
+
 import json
 from urllib.parse import quote
 
@@ -130,9 +132,19 @@ def fresh(browser: Browser) -> Page:
 
 def follow(page: Page, uri: str, label: str) -> dict:
     """Opens the app with one link in the address, the way the protocol handler
-    does, and answers what the app is showing once it has settled."""
+    does, and answers what the app is showing once it has settled.
+
+    The page before is let finish fetching first: the app fetches its later chunks
+    after its first paint, and a load that cuts one short is reported by WebKit as an
+    import that failed in the page being left - which is the drive's doing, not the
+    app's, and Chromium says nothing of it (#384)."""
+    with contextlib.suppress(Exception):
+        page.wait_for_load_state("networkidle", timeout=10_000)
     page.goto(f"{ORIGIN}/?nib={quote(uri, safe='')}", wait_until="domcontentloaded")
     ready(page, label)
+    # Read once the launch has got as far as the link, which comes off the address as
+    # it is read: later than the launch's last mark in a slower engine.
+    DRIVE.waited(page, "() => !location.search.includes('nib=')", f"[{label}] the link to be read")
     page.wait_for_timeout(900)
     return page.evaluate(STATE)
 

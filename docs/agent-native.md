@@ -299,7 +299,7 @@ unchanged. Built without the keyboard now, and the harness compares the handle.
 - **The control after five minutes.** The hidden page's interval came back to 63.8 a
   second after 330 s, with `requestAnimationFrame` still at 0 and the page still hidden.
   Nothing in the design depends on it and it is not explained here.
-- **macOS, Linux and CEF.** Section 12, measured.
+- **macOS and Linux.** Section 12, measured.
 
 ---
 
@@ -322,7 +322,7 @@ unchanged. Built without the keyboard now, and the harness compares the handle.
          - audit log, rate limits, stop                           approvals, watch, settings pane
                      │
                      ▼
-         WebView2 (CEF later): agent tabs out of sight, the reader's web tabs
+         WebView2: agent tabs out of sight, the reader's web tabs
 
  claude.ai / a phone ──https──► services/sync/src/mcp   (the account connector: notes only,
                                                           no live state, works with nib closed)
@@ -374,7 +374,7 @@ web tab of any space the grant reaches, on screen or not. A reader's tab needs
 | `browser_snapshot` | `tab`, `ref`? (a subtree), `max_chars`? | the accessibility tree as text: `- button "Save" [ref=e4812]`; refs are the engine's node ids, stable for as long as the element lives, `f2e17` inside a frame |
 | `browser_find` | `tab`, `text` or `role` and `name` | the refs that match |
 | `browser_read` | `tab`, `as`: `text`, `markdown` (default), `article`; `max_chars`? | the page as words, through the clipper's own converter (`@nib/markdown/from-html`), which the crate asks the window for (`agent.markdown`); the page's text when no window answers |
-| `browser_click` | `tab`, `ref`, `button`?, `count`?, `modifiers`? | scrolled into view, the engine's highlight for a beat, then pressed |
+| `browser_click` | `tab`, `ref` or `x` and `y`, `button`?, `count`?, `modifiers`? | scrolled into view, the engine's highlight for a beat, then pressed where it shows: its middle, or the middle of a quarter of it where something small sits over the middle. Or a point in the tab's viewport in CSS pixels (a pixel of `browser_screenshot` at its own scale), judged by the element there (#373) |
 | `browser_type` | `tab`, `ref`, `text`, `submit`?, `replace`? | into a field, as text rather than keys (`Input.insertText`); a date, time or colour field set through the page; refused on a password field and on every field of a sign-in form (9.4) |
 | `browser_press` | `tab`, `keys` (`Enter`, `Control+A`) | keys pressed **inside that page**: through the engine (`Input.dispatchKeyEvent`) in an agent's own tab, measured to move neither the window in front nor the keyboard; as the page's own key events in a reader's tab, whose page-first keys would hand an engine key to the window (7.2). Never through the system, never into the window, never a key that opens a picker |
 | `browser_scroll` | `tab`, `ref` or `dx`, `dy` | |
@@ -493,7 +493,7 @@ the AI sidebar, with the chat attached, and the answer comes back as a draft (de
 | `run_terminal` | `command`, `cwd`? | only when the terminal tab exists, and only with `terminal` (8.9) |
 | `read_terminal` | `tab`, `lines`? | one of the reader's terminal tabs as words: scrollback and screen, wrapped lines joined, marked as the terminal's; one not shown since a restart answers the lines it came back with. `context` (8.9) |
 | `type_terminal` | `tab`, `text`?, `enter`?, `keys`?, `wait_ms`? | one line typed into the reader's own shell, Enter unless told otherwise, then named keys (`Ctrl+C`, the arrows, `Tab`...); answers what it printed until it went quiet. `terminal`, and it asks like `run_terminal` (8.9) |
-| `run_command` | `id` | one row of the palette's registry, as `nib commands run` does; never the rows only somebody at the keyboard may press (`byHand`: recording, the camera, dictation, signing out), and the rows that publish, share or change settings ask (9.3) |
+| `run_command` | `id` | one row of the palette's registry, as `orden commands run` does; never the rows only somebody at the keyboard may press (`byHand`: recording, the camera, dictation, signing out), and the rows that publish, share or change settings ask (9.3) |
 | `attach_agent_log` | `note`, `session`? | this session's log, written into a note (9.5) |
 | `approval_status` | `id` | what the reader answered (9.3) |
 
@@ -629,10 +629,7 @@ risk at its worst (9.6). So:
 - A site can be set to **agent store only** in the agent's grant (mail, banking), and the
   grant's default can be flipped for a cautious agent.
 - On `WebView2` an agent store, and a twin, is a user data folder of its own, so a browser
-  process of its own while one of its tabs is open (about 100 MB), and nothing after. On
-  nib's own Chromium each is a profile in the one browser process. That same fact
-  is the one place an agent's pages could have switches of their own - but nothing in
-  section 3 needs one.
+  process of its own while one of its tabs is open (about 100 MB), and nothing after.
 
 ### 6.4 How many, and when they go
 
@@ -642,9 +639,12 @@ risk at its worst (9.6). So:
   (`pages.svelte.ts`), for the same reason: one page is about 180 MB on this machine.
 - **A tab nobody has called for ten minutes is parked**; an agent that disconnects has its
   tabs closed after the same ten minutes, so a reconnect finds them.
-- **A memory ceiling**: when the engine processes under the app are past 3 GB of working
-  set, `browser_open` is refused with the reason rather than making the reader's machine
-  slow.
+- **No memory ceiling unless the reader sets one.** A grant's Browser memory limit
+  (Settings, Agents, Limits; `limits.memory`, in MB) refuses that agent's `browser_open`
+  with the reason when the engine processes under the app are past it in working set. It
+  starts Off: the 3 GB that stood here for every agent refused tabs on machines with
+  memory to spare, and what a machine can hold is its owner's to say (#333). Windows
+  only, where the engine's processes can be counted.
 - Measured in the spike: two agent pages added two engine processes and 83 to 100 MB of
   working set on a small page; closing them gave it back (section 3).
 
@@ -677,8 +677,6 @@ is in: the listeners of a reader's tab are attached (keys, page-first, full scre
 permissions), the engine's dialogs, context menu and developer tools come back, and the
 agent keeps acting in it as in any reader's tab, with the frame (7.1), under either id.
 Nothing is ever handed back: a reader's tab is the agent's as much as its own are (7.3).
-On nib's own Chromium, where an agent's page has no window to move (12.1), the reader's
-tab loads the address again.
 
 ---
 
@@ -715,8 +713,7 @@ behind the tab in front unless it holds `workspace.focus`.
 Emil, 2026-10-05: *"an agent should be able to use any of a user's tabs, and it should not
 lose access just because the user does something in it."* The first build paused an agent
 on a tab the moment the reader pressed or typed in it, until the reader pressed its mark to
-give it back - `GotFocus` on `WebView2`, and on nib's own Chromium the window asked ten
-times a second which page had the keyboard. All of it is gone, and so are Take over and
+give it back - `GotFocus` on `WebView2`. All of it is gone, and so are Take over and
 Give back in the tab's menu and the `paused_by_reader` answer. Nobody that does this well
 locks the tab: Claude in Chrome, Comet, Browser Use and Playwright MCP's extension share it
 and re-read the page every step; Atlas's "take control" is the mode switch people wait on.
@@ -757,20 +754,16 @@ and re-read the page every step; Atlas's "take control" is the mode switch peopl
 
 ### 7.4 One session, one holder
 
-Under sync v2 a site's login is a lease: one device holds (store, site) while it is in use
-(`sync-v2.md` 6.2). An agent's tab in the reader's store needs the same lease, and the
-agent's activity counts as the device being active, so a laptop does not hand the session
-to the desktop in the middle of an agent's job. An agent never takes a lease another device
-is actively using: `browser_open` answers `in_use_elsewhere` with the device's name, and
-the agent can wait, or use its own store. An agent store is not synced and needs no lease.
+Under sync v2 a site's login was to be a lease: one device holding (store, site) while it
+was in use (`sync-v2.md` 6.2), and an agent's tab in the reader's store needing the same
+lease. As built, an agent never acquired or took one: the window told the crate which sites
+another computer held, and `browser_open` refused those with `in_use_elsewhere`.
 
-As built (lane `web-lease`): an agent never acquires or takes a lease at all. It cannot press
-Use here on the reader's behalf, and an ask of its own would be a handover the other
-computer's person was never asked about the moment they stepped away. So the window tells
-the crate which sites another computer holds (`web_lease_elsewhere`, see
-`src-tauri/src/agents/leases.rs`), `browser_open` refuses those, an agent at work counts as
-somebody at this computer (`web-tab/activity.ts`), and a site this computer has never asked
-about runs on its own state, as the reader's pages do while the hub is out of reach.
+**Removed (#393).** Web logins no longer travel between computers, so there is no lease
+and nothing for an agent to wait on: a site's login is this computer's, and an agent's tab
+in the reader's store runs on it as the reader's own tabs do. `in_use_elsewhere` is gone
+from the codes, and so is `web_lease_elsewhere`. Why it was taken out is `sync-v2.md`
+section 6.
 
 ---
 
@@ -969,7 +962,7 @@ Each agent holds:
 | sites | allow, deny, and "agent store only", by site (registrable domain, as `siteOf`) | none set |
 | mode | `unsupervised` or `confirm` | unsupervised |
 | asks | the categories in 9.3, each on or off | all on |
-| limits | tabs, calls a minute, pages a minute | 4 tabs, 600 calls, 60 navigations |
+| limits | tabs, calls a minute, pages a minute, browser memory | 4 tabs, 600 calls, 60 navigations, no memory limit |
 
 A third-party agent starts with `context` off, `browser.reader` off, both chats scopes off
 (a chat is other people's words) and `confirm` mode. A grant kept from before chats were
@@ -1089,14 +1082,30 @@ Prompt injection is unsolved, and nib does not pretend otherwise. What it does:
 | for | Claude Code, Claude Desktop, Codex on this machine | claude.ai, a phone, a machine where nib is closed |
 | auth | a grant made by the bubble in 9.1 | OAuth or a pasted `nib_` token, as today |
 
+**Connected on their own** (Emil, 2026-10-12: "[Claude Code] running on my machine should
+be able to connect to nib without me having to set up anything ... and do exactly the same
+thing as an agent that I am running IN nib"). After every launch the installed app adds
+itself to each agent program it finds, through the program's own command - `claude mcp
+add --scope user nib -- <nib> mcp`, `codex mcp add nib -- <nib> mcp` - the line below, run
+for the reader; the program writes its own config and nib never opens it. A program that
+already has a server called `nib` is left alone, whatever it points at; the switch in
+Settings > AI > Access ("Agents on this computer connect on their own", on by default)
+takes the entry out again, only where it names this app's program. Only the app somebody
+installed does this - a release under the shipped identifier, never a probe or a
+development build - and a test does it in homes of its own (`NIB_ENROLL_HOME`), never the
+reader's. The first call is the pairing in 9.1, allowed once and remembered; and a client
+paired since 2026-10-12 gets what the AI panel's own agent has: the terminal and helpers
+(`agents`, docs/ai.md "Helpers") as well as the rest of 9.1's defaults. Grants made before
+keep their terminal as they were. See `src-tauri/src/ai_cli/enroll.rs`.
+
 **`nib mcp` is the app's own binary in a mode with no window**: `main.rs` reads its
 arguments before anything of Tauri starts, and `mcp` is a loop over stdin and stdout that
 forwards each call to the running app's endpoint (the port and pid from `automation.json`,
-as `nib screenshot` finds them). It starts in a few milliseconds and opens no webview. If
+as `orden screenshot` finds them). It starts in a few milliseconds and opens no webview. If
 nib is not running it starts it minimised and waits for the endpoint. So the installed app
-is the whole of it: `claude mcp add nib -- "%LOCALAPPDATA%\nibeditor\nib.exe" mcp` (an
-install from before the product was renamed keeps `%LOCALAPPDATA%\Nib`, so a line
-pasted then still works), which Settings > Agents offers to copy. Not the Node CLI, which ships in no installer
+is the whole of it: `claude mcp add orden -- "%LOCALAPPDATA%\Orden\nib.exe" mcp` (an
+install from before a rename keeps `%LOCALAPPDATA%\Nib` or `%LOCALAPPDATA%\nibeditor`,
+so a line pasted then still works), which Settings > Agents offers to copy. Not the Node CLI, which ships in no installer
 (`docs/automation.md`); not a fixed HTTP port, which something else can be sitting on. A
 client that only speaks HTTP can be given the endpoint's own `/mcp` later; nothing here
 depends on it.
@@ -1192,72 +1201,18 @@ is still off, and an agent's token never reaches it.
 | | an agent's own tab | out of sight, unthrottled | reading, pressing, typing | screenshots | status |
 | --- | --- | --- | --- | --- | --- |
 | **`WebView2`** (Windows) | a shown child outside the window's client area | **measured** (3): 60 frames and 100 ticks a second | the `DevTools` Protocol: `Accessibility.getFullAXTree`, `Input.*` - trusted, inside the page | `Page.captureScreenshot`, 95 to 120 ms | every verb |
-| **nib's own Chromium** (CEF) | a **windowless** browser: Alloy style, off-screen rendering, no native window at all | **measured**: 60 and 100, with the reader's window shown, hidden or minimised | the same protocol, through the browser's own agent (`SendDevToolsMessage` and a message observer) | the same, 105 to 155 ms | every verb on Windows; on a Mac the page is never built yet (12.1) |
 | **`WKWebView`** (macOS) | none yet | **measured**: a child outside the window's content runs at the window's own rate while the window is on a screen, and stops with it minimised whatever `inactiveSchedulingPolicy` says | scripts in a `WKContentWorld`; an `NSEvent` sent to the view is trusted | `takeSnapshot`, even minimised | `unsupported_on_this_engine` |
 | **`WebKitGTK`** (Linux) | none yet | **measured**: a `GtkOffscreenWindow` runs at full rate; a child outside the window's content gets no frames | scripts in a script world; script events only | `webkit_web_view_get_snapshot` | `unsupported_on_this_engine` |
 
 Every tool answers `unsupported_on_this_engine` where it has no honest implementation,
 rather than a weaker one pretending.
 
-### 12.1 nib's own Chromium: a page with no window
+### 12.1 nib's own Chromium, while there was one
 
-`src-tauri/src/agents/engines/cef.rs`. An agent's tab is an Alloy-style browser with
-off-screen rendering, which CEF makes without any native window: nothing that could be on a
-screen, in front, or given the keyboard, and nothing the system can call hidden. It paints
-into a buffer nobody reads at a frame rate of its own (60), is told it is shown
-(`WasHidden(false)`), and is laid out at the tab's own size on a screen exactly that size at
-one pixel a CSS pixel, so nothing it asks says anything about the reader's screen. CEF mixes
-styles per browser, so the reader's tabs stay Chrome style beside it. Its `<select>` lists
-are paints of the page too, never windows.
-
-It is driven through the same protocol as `WebView2`'s, sent to the browser's own agent on
-CEF's UI thread and answered through one observer per browser (no port, no socket), so every
-verb in `browser.rs` and `page.rs` runs on it unchanged: `engines::View` is the one handle a
-verb holds a page by, a webview or a windowless browser. Quiet by its own handlers: dialogs
-held for `browser_dialog`, a window the page opens made another windowless agent tab with
-its opener kept, permissions refused, downloads into the agent's folder under the ceiling,
-the file chooser intercepted (and refused should one get past), a sign-in box and a client
-certificate refused and said, no context menu, no sound, and a site the agent may not visit
-stopped before it loads. A reader's tab on this engine is driven through
-`engine/devtools.rs`, exactly as on `WebView2`, and nothing about who has the keyboard is
-asked: the reader using a tab takes nothing from an agent (7.3).
-
-**Only for somebody who uses agents.** Off-screen rendering is a switch CEF reads once, as it
-starts, for the whole process, and its own documentation says it can cost browsers that never
-render off screen. So it is on only in a run that starts with an agent paired
-(`<config>/agents.json` names one); the first agent paired in a run gets its pages from the
-next launch, and `browser_open` tells it so. **Show** (6.7) cannot move a page with no window
-into the pane: the reader's tab loads the address again and the agent acts on there, under
-either id.
-
-Measured 2026-10-03 by `scripts/agent-tab-probe.py --chromium` through `run_probe`, on this
-machine (Snapdragon X Elite, Windows 11, CEF 152 for arm64, a probe build), every check of
-the probe passing, two runs:
-
-| | the windowless agent tab | `WebView2`'s, same probe, same day |
-| --- | --- | --- |
-| `browser_open`, a twin's cookies handed over first | 394 ms (1.6 s the first run, the twin's profile made) | 748 ms |
-| `requestAnimationFrame`, a 10 ms interval, a second | **60.0 to 60.1, 99.1 to 100.1**, visible | 60.0, 100.0 |
-| with the reader's window hidden, minimised | 59.9 and 99.8, 59.9 and 100.1, visible | 60.2 and 99.1, 60.1 and 100.0 |
-| the reader's own tab beside it | 59.8 to 59.9, 99.9 to 100.0 | 60.1, 99.9 |
-| keys through the engine | 145 to 150 ms each, every one trusted, Enter submits | the same |
-| a frame from another origin | its button `f1e8`, pressed in 160 ms | the same |
-| `alert`, `confirm`, `prompt`, `beforeunload` | each held and answered, about 200 ms | the same |
-| a popup | another agent tab, `window.opener` kept, the token posted back | the same |
-| a screenshot, 1280 by 800 | 105 to 155 ms; an element 44 to 57 ms | 95 to 120 ms (one of 30 s, after the window was hidden and shown) |
-| agent pixels in a picture of the whole window | **0** | 0 |
-| the window in front, the app thread's focus | never changed | never changed |
-| engine processes and working set | 9 processes and 705 MB before, 14 and 1557 MB with the tabs | 13 and 963 MB, 27 and 2059 MB |
-
-On runners, `cef.yml` runs `scripts/agent-engines-runner.py` against the engine build of
-Windows (x64) and a Mac (Apple silicon), as the reader's command line: the tab built, its
-rates, a picture, a press and a key. (Linux has no engine build: `docs/browser.md` 10.)
-2026-10-04: on Windows x64 the tab was built in 1.6 s (its twin's profile made), ran at 60.1
-and 100.0, was photographed in 103 ms, and its press and key arrived trusted. On the Mac the
-endpoint answered and `browser_open` did not: the page was never built (20 s), the same
-family as the Mac's web tab that never loads (`docs/browser.md` 0) - a browser asked of
-CEF's UI thread from a task posted there never arrives. Until a Mac is there to find that
-wait, an agent's tab on a Mac's Chromium answers `failed` with that reason.
+Up to 0.15 the app could also run on nib's own Chromium, where an agent's tab was a
+windowless browser with no native window at all (`agents/engines/cef.rs`), measured at 60
+frames and 100 ticks a second on Windows and never built on a Mac. That build is gone
+(#305, #313), and with it that row of the table; the history keeps what was measured.
 
 ### 12.2 `WKWebView` and `WebKitGTK`: measured, not built
 
@@ -1308,8 +1263,7 @@ the engine's delegate, which wry holds for the app's webviews - on a Mac an `<in
 type=file>` opens a file panel (`runOpenPanel`), a camera request is a system prompt
 (`requestMediaCapture`), `alert` returns at once unseen, a window the page opens is wry's to
 make - and `WebKitGTK`'s `run-file-chooser`, `permission-request`, `script-dialog` and `create`
-signals the same. An agent's page needs a delegate of nib's own on each (as `cef.rs` has
-handlers of its own) before it can be opened without one of those reaching the reader, and
+signals the same. An agent's page needs a delegate of nib's own on each before it can be opened without one of those reaching the reader, and
 then the subset: the accessibility snapshot as a script in the isolated world (the logic of
 Playwright's `ariaSnapshot`, Apache-2.0), presses and keys as `NSEvent`s on a Mac and as
 script events on Linux (said in the answer: `isTrusted` false), pictures, navigation, waits,
@@ -1344,7 +1298,7 @@ the app, is in `scripts/probe_app.py`'s `run_probe`).
 | `agent-workspace-tools` | `lib/automation/` agent verbs: tree, tabs, bookmarks, spaces without switching, search, versions, canvases, PDFs and highlights, settings allowlist, `capture_to_note`; `run_terminal` when the terminal lands | `agent-core`'s token and scope check | 2 |
 | `agent-activity-ui` | `lib/agents/` UI, lazy: the frame, the tab mark, the tab's Stop, the activity panel with thumbnails, the questions, Show, the stop key in the registry and globally | `agent-core`'s events (13.1); starts on a fake | 2 |
 | `agent-settings-ui` | Settings > Agents: the grants, the pairing bubble, sites, asks, mode, limits, the log viewer and Add to note, the copy line for `nib mcp`, locales | `agent-core`'s grant shape | 2 |
-| `agent-engines` | CEF's windowless agent tabs; `WKWebView` and `WebKitGTK` subsets behind the same verbs, measured first | `agent-core`; the `engine` lane's CEF switch | 3 |
+| `agent-engines` | `WKWebView` and `WebKitGTK` subsets behind the same verbs, measured first | `agent-core` | 3 |
 
 At most eight agents run at once and no wave needs more than five. Wave 1 can start now.
 
@@ -1436,10 +1390,10 @@ Each has a recommendation, and the design above assumes it.
     needs one.
 13. **An agent and sync v2's leases.** Recommendation: **an agent's tab in your store holds
     the site's lease like you do and counts as you being active, and never takes one from
-    another device you are using.**
-14. **Engine order.** Recommendation: **build on `WebView2` now**, which the spike proved,
-    and give CEF windowless agent tabs when the engine switch ships; the Mac and Linux
-    subsets last.
+    another device you are using.** Moot since #393: web logins no longer travel, so there
+    are no leases (7.4).
+14. **Engine order.** Recommendation: **build on `WebView2` now**, which the spike proved;
+    the Mac and Linux subsets last.
 
 ---
 

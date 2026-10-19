@@ -1,7 +1,7 @@
 # Automation
 
-Two ways to drive nibeditor from outside it: a `nib://` link, which is what a
-shortcut, a launcher or another program can hand the system, and `nib`, which is
+Two ways to drive Orden from outside it: a `nib://` link, which is what a
+shortcut, a launcher or another program can hand the system, and `orden`, which is
 the same app driven from a terminal.
 
 Both go through one dispatcher, and every verb in it goes through the call the app
@@ -38,7 +38,7 @@ out**. A link is written by anybody and followed by a click, so a microphone, a
 camera and who this machine is signed in as are not things a page on the web gets
 to reach by handing the system an address. The row itself says so - `byHand` in
 commands.ts - and the command line, which is behind this installation's own secret,
-runs all of them. `nib commands list` prints the lot.
+runs all of them. `orden commands list` prints the lot.
 
 One row neither may run: **New terminal**. A shell on this machine is not something
 another program opens in the app, because a terminal it could open is a terminal it
@@ -99,14 +99,17 @@ Nothing else, deliberately; see below.
   at `/?nib=<the link>`, the app follows it and takes it off the address so a
   reload does not follow it twice. Everything above works, spelled `web+nib://`.
 
-## `nib`, the command line
+## `orden`, the command line
 
-`nib` drives the app that is running. It is a Node script with no dependencies:
+`orden` drives the app that is running. It is a Node script with no dependencies:
 
 ```sh
 node apps/cli/nib.mjs files list
-pnpm --filter @nib/cli link --global && nib files list
+pnpm --filter @nib/cli link --global && orden files list
 ```
+
+`nib` is the same command under the name it had before, so a script that calls it
+keeps working.
 
 It ships in no installer, on purpose. The only way an installer can carry a command
 is as a sidecar, which is a second compiled binary in every bundle on every
@@ -114,7 +117,7 @@ platform for something almost nobody runs; a Node script adds nothing to any
 download. Node is already this repository's answer for driving nib without the app
 (`scripts/nib-sync.mjs`), so this sits beside it.
 
-There is no browser build of `nib` and there will not be: a tab has no socket to
+There is no browser build of `orden` and there will not be: a tab has no socket to
 listen on. Run against the web app it says so rather than failing to connect.
 
 ### Verbs
@@ -292,7 +295,7 @@ to `automation.json` in the app's own config folder:
 It holds the port, the secret, `eval`, and `pid` - which process is listening. The pid
 is written rather than read: the file is rewritten every launch, so the one in it is
 always the process that wrote it, and a pid from a launch that has ended names nothing or
-names somebody else's process. `nib screenshot` is the one caller that wants it.
+names somebody else's process. `orden screenshot` is the one caller that wants it.
 
 The secret is 32 bytes of system randomness as hex, kept across launches, and the
 file is `0600` where the platform has modes. Every request carries it as
@@ -322,10 +325,13 @@ Realities plugin does not carry the code for it at all.
 **A probe says where its notes go, because nothing else does.** Building under an
 identifier of its own - `--config '{"identifier":"ch.emilvinu.nib.probe"}'`, which is
 what every drive in `scripts/` does - moves the settings folder and the browsing
-profile, and says **nothing at all** about where the spaces are: `spaces_dir` resolves
-`Documents/Nib` whatever the identifier is. So a drive that makes itself a space to
-open makes it in the reader's own notes folder, beside their notes. That is not a
-hypothetical; it is what happened, and the space had to be deleted by hand.
+profile, and used to say **nothing at all** about where the spaces are: `spaces_dir`
+resolved `Documents/Nib` whatever the identifier was. So a drive that made itself a space
+to open made it in the reader's own notes folder, beside their notes. That is not a
+hypothetical; it is what happened, and the space had to be deleted by hand. A new install
+keeps its spaces in its own app data now (`Spaces` there, see below), which an identifier
+of its own does move - but an install that finds `Documents/Nib` already there keeps using
+it, a probe's included, so the variable is still the rule.
 
 So the spaces root is a variable, and every probe and drive sets it:
 
@@ -336,12 +342,26 @@ NIB_SPACES_DIR=/some/temp/folder
 | | |
 | --- | --- |
 | when it is set | it **is** the spaces root - used as given, with no `Nib` joined onto it |
-| when it wins | outright, and before the documents folder is asked for, so a drive needs no documents folder to exist |
+| when it wins | outright, and before the documents folder or the kept answer is asked for, so a drive needs neither to exist |
 | when it is read | at call time, so a drive sets it and starts the app, with nothing built again |
 | what is ignored | anything that is not an absolute path: a relative one would be read against whatever folder the app was started in, and an empty value is what a shell leaves behind when it clears a variable |
 
 A drive points it at a folder it made in the system's temp area and writes its space
-there, so a run touches nothing of anybody's. See `SPACES_DIR` and `spaces_named` in
+there, so a run touches nothing of anybody's.
+
+**Without it, the spaces folder is decided once per install** (#376), as the app starts
+(`decide_spaces` in `paths.rs`), and written to `spaces-folder` in the settings folder so
+the answer never changes under somebody's notes:
+
+| | |
+| --- | --- |
+| a new install | `Spaces` in the app's local data, under the identifier: `%LOCALAPPDATA%\ch.emilvinu.nib\Spaces` on Windows, `~/Library/Application Support/ch.emilvinu.nib/Spaces` on a Mac, `$XDG_DATA_HOME/ch.emilvinu.nib/Spaces` (`~/.local/share/...`) on Linux. Emil, 2026-10-17: the folder is nothing a person should reach directly, but through Orden |
+| an install that already has `Documents/Nib` | `Documents/Nib`, where every space used to be: nobody's spaces are moved |
+| `spaces-folder` there already | the folder it names, whatever appears in Documents later; a path written into it by hand is where the spaces are from the next launch |
+| a phone | `Documents/Nib` as before, which is inside the app's own container there |
+
+Every space is in the one folder, synced ones included: a space nib sync brings to this
+device is made there like any other. See `SPACES_DIR` and `spaces_named` in
 `src-tauri/src/paths.rs`, and `scripts/web-session-probe.py` for a drive that does it.
 
 **A probe never updates.** A build looks for a new version as it starts and runs the

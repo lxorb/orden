@@ -144,14 +144,25 @@ export class TypingPointer {
     this.show()
   }
 
+  /** Where the pointer was the first time it was heard while hidden. */
+  private at: { x: number; y: number } | null = null
+
+  /** A move that moves, by its movement or by where it is now: a still pointer is
+   *  re-read when the page moves under it, and WebKit can say a move moved nothing. */
   moved(event: PointerEvent): void {
-    if (event.movementX !== 0 || event.movementY !== 0) this.show()
+    const went = this.at !== null && (event.clientX !== this.at.x || event.clientY !== this.at.y)
+    if (event.movementX !== 0 || event.movementY !== 0 || went) {
+      this.show()
+      return
+    }
+    this.at ??= { x: event.clientX, y: event.clientY }
   }
 
   show(): void {
     if (!this.hidden) return
 
     this.hidden = false
+    this.at = null
     this.root.classList.remove(HIDDEN)
     this.listening.removeEventListener('pointermove', this, true)
   }

@@ -15,7 +15,7 @@
  *
  *  What the plugin sends is a question and nothing else. It holds no key, and
  *  `api.openai.com` is off its manifest's network whitelist: the one origin it may
- *  reach is nibeditor.com. That is the whole point of moving this.
+ *  reach is the service. That is the whole point of moving this.
  *
  *  **A guest cannot ask.** Not a special case: the session guard in index.ts opens
  *  only what `guestMayReach` names, everything account-wide is left out of that
@@ -108,7 +108,7 @@ ask.post('/', async (context) => {
   }
 
   const key = await keyFor(context.env, user.id)
-  if (!key) return context.json({ error: 'set an OpenAI key in nibeditor’s settings first' }, 400)
+  if (!key) return context.json({ error: 'set an OpenAI key in Orden’s settings first' }, 400)
 
   if (!(await mayAsk(context.env, user.id))) {
     return context.json({ error: 'that is a lot of questions - try again later' }, 429)

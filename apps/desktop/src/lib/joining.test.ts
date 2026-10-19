@@ -17,6 +17,7 @@ interface World {
     email: string | null
     asks: boolean
     from: string | null
+    note?: string | null
   } | null
   /** What walking through it answers. */
   through: Record<string, unknown>
@@ -32,6 +33,13 @@ interface World {
   passes: number
   /** What the address bar holds. */
   path: string
+  /** The files shared with this session on their own. */
+  shared: Record<string, unknown>[]
+  /** Which shared files were opened in a tab, and whether the link was still
+   *  held as each one opened. */
+  opened: { id: string; holding: boolean }[]
+  /** Whether the link is still held, asked of this test's own store. */
+  holding: () => boolean
 }
 
 const world = vi.hoisted((): World => ({
@@ -43,6 +51,9 @@ const world = vi.hoisted((): World => ({
   shown: null,
   passes: 0,
   path: '/',
+  shared: [],
+  opened: [],
+  holding: () => false,
 }))
 
 vi.mock('./api', async (importOriginal) => {
@@ -64,6 +75,8 @@ vi.mock('./api', async (importOriginal) => {
       },
       me: () => Promise.resolve({ guest: { id: 'g1', name: 'Windows wren' } }),
       listSpaces: () => Promise.resolve({ spaces: [], deleted: [] }),
+      shared: () => Promise.resolve({ shared: world.shared }),
+      readNote: () => Promise.resolve({ content: '{}' }),
     },
   }
 })
@@ -85,9 +98,10 @@ vi.mock('./workspace.svelte', () => ({
       world.shown = id
       return Promise.resolve()
     },
-    // A machine with nothing on it, so the question a fresh account's session
-    // asks about the notes already here has nothing to ask about; see settling.ts.
-    hasLocalContent: () => Promise.resolve(false),
+    showingShared: (id: string) => world.opened.some((one) => one.id === id),
+    openShared: (item: { id: string }) => {
+      world.opened.push({ id: item.id, holding: world.holding() })
+    },
   },
 }))
 
@@ -151,10 +165,13 @@ beforeEach(async () => {
   world.shown = null
   world.passes = 0
   world.path = `/join/${TOKEN}`
+  world.shared = []
+  world.opened = []
 
   vi.resetModules()
   ;({ joining } = await import('./joining.svelte'))
   ;({ account } = await import('./account.svelte'))
+  world.holding = () => !!joining.invitation
 })
 
 // Waiting on the owner asks again on a timer, and a timer left running would
@@ -475,5 +492,61 @@ describe('a link in an address bar that has none', () => {
 
     expect(joining.step).toBeNull()
     expect(world.asked).toEqual([])
+  })
+})
+
+/** One canvas out of somebody's space, as the listing and the link name it. */
+const board = {
+  id: 'note-1',
+  path: '/board.canvas',
+  name: 'board',
+  role: 'write',
+  updatedAt: 1,
+  owner: { name: 'Emil' },
+  space: { id: 'space-1', name: 'Plans' },
+}
+
+describe('a link to one file, followed with no account', () => {
+  beforeEach(() => {
+    world.about = { ...open, note: 'board' }
+    world.through = {
+      token: 'guest-session',
+      guest: { id: 'g1', name: 'Windows wren' },
+      item: board,
+    }
+    world.shared = [board]
+  })
+
+  test('opens the file, and holds the link until it has', async () => {
+    await joining.start()
+
+    // Held while the tab opened, because the link is what keeps the app's chrome
+    // away until the file is there; see alone.svelte.ts. Let go of after.
+    expect(world.opened).toEqual([{ id: 'note-1', holding: true }])
+    expect(joining.invitation).toBeNull()
+    expect(joining.step).toBeNull()
+  })
+})
+
+describe('a guest a link gave one file to, coming back', () => {
+  beforeEach(() => {
+    world.path = '/'
+    localStorage.setItem('nib:session', 'guest-session')
+  })
+
+  test('is back in the file, which no tab is kept of between launches', async () => {
+    world.shared = [board]
+    await account.restore()
+    await joining.start()
+
+    expect(world.opened.map((one) => one.id)).toEqual(['note-1'])
+  })
+
+  test('chooses from the list when there is more than one', async () => {
+    world.shared = [board, { ...board, id: 'note-2', name: 'plan' }]
+    await account.restore()
+    await joining.start()
+
+    expect(world.opened).toEqual([])
   })
 })

@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { readdirSync, readFileSync } from 'node:fs'
 import { DatabaseSync } from 'node:sqlite'
 import { fileURLToPath } from 'node:url'
@@ -253,9 +254,14 @@ export function testEnv(overrides: Partial<Env> = {}): TestEnv {
   return {
     DB: d1(database, loses, bound, justBefore) as unknown as D1Database,
     NOTES: notes as unknown as R2Bucket,
-    BLOG_ROOT: 'nibeditor.com',
-    BLOG_CNAME_TARGET: 'cname.nibeditor.com',
-    APP_ORIGIN: 'https://nibeditor.com',
+    // The service's names as wrangler.jsonc gives them, so every test runs
+    // where both are answered on; see src/hosts.ts and test/hosts.test.ts.
+    BLOG_ROOT: 'orden.so',
+    OTHER_BLOG_ROOTS: 'nibeditor.com',
+    BLOG_CNAME_TARGET: 'cname.orden.so',
+    APP_ORIGIN: 'https://orden.so',
+    OTHER_ORIGINS: 'https://nibeditor.com',
+    MACHINE_DOMAIN: 'nibeditor.com',
     ...overrides,
     db: database,
     losing: (sql) => {
@@ -631,4 +637,11 @@ export async function signIn(env: Env, email: string, guest?: string): Promise<s
 
   if (verified.status !== 200) throw new Error(`sign-in failed: ${verified.text}`)
   return verified.json.token
+}
+
+/** Bytes and the hash they are named by, the way the app names a file it uploads.
+ *  `seed` makes two files of one size two different files. */
+export function file(size: number, seed = 0): { bytes: Uint8Array; hash: string } {
+  const bytes = new Uint8Array(size).fill(seed)
+  return { bytes, hash: createHash('sha256').update(bytes).digest('hex') }
 }

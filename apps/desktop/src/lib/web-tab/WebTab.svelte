@@ -11,7 +11,8 @@
    *  `workspace.openWeb` for why.
    *
    *  The hole has to follow the pane exactly, so it is measured rather than
-   *  guessed: a resize observer for the pane being dragged, the window's own resize,
+   *  guessed, and its box is the one source of where the page goes: a resize observer
+   *  for its size, `watchShifts` for where it is, the window's own resize and scale,
    *  and a check after anything the app puts over it. A native webview draws above
    *  every pixel of HTML in the window, so what of the app's is over the page is cut
    *  out of it - otherwise a menu would come up behind it. See covers.ts. */
@@ -26,7 +27,7 @@
   import { dur } from '../motion'
   import { tabAsk, type TabAsk } from '../new-tab'
   import { overlays } from '../overlays'
-  import { settings } from '../settings.svelte'
+  import { hiddenKinds, settings } from '../settings.svelte'
   import { shareThisFile } from '../sharing.svelte'
   import { shortcuts } from '../shortcuts.svelte'
   import { startup } from '../startup.svelte'
@@ -35,17 +36,21 @@
   import { invoke, isDesktop, openExternal, platform } from '../tauri'
   import type { Tab } from '../workspace.svelte'
   import { workspace } from '../workspace.svelte'
-  import { plainOrigin, webAddress } from './address'
+  import { favicon, plainOrigin } from './address'
+  import { webAddress } from './typed'
+  import { upgradeOf } from './upgrade'
   import type { ZoomStep } from './bar-keys'
   import { clipPage } from './clip'
   import { filling } from './filling.svelte'
   import {
     ALL,
+    clearOf,
     cutOf,
     layersOver,
     moving,
     noticeRows,
     strangerOver,
+    watchArrivals,
     type Cut,
     type Layer,
   } from './covers'
@@ -56,12 +61,14 @@
   import { shownAddress } from './omnibox'
   import { type Frame, pages, type Rect, siteMark, type Step } from './pages.svelte'
   import { seek, shut, sought } from './seek'
+  import { watchScale, watchShifts } from './shifts'
   import { grants, siteOf } from './permissions.svelte'
   import { dialogs } from './dialogs.svelte'
   import { isMuted, keepZoom, zoomOf } from './sites'
   import { movedOn } from './used'
   import { visited } from './visited'
   import { webData } from './web-data.svelte'
+  import { apartOf } from './shortcut'
   import { searchEngine } from './search-engine.svelte'
   import { HISTORY_MARK, isOwnPage } from './own-pages'
   import { clearingAsked } from './clearing-asked.svelte'
@@ -72,7 +79,6 @@
   import WebExtensionPopup from './WebExtensionPopup.svelte'
   import WebExtensions from './WebExtensions.svelte'
   import { extensions, type Extension } from './extensions.svelte'
-  import WebLocked from './WebLocked.svelte'
   import WebSite from './WebSite.svelte'
   import NewHere from '../NewHere.svelte'
 
@@ -133,7 +139,8 @@
     }
   }
 
-  /** What of the page the app's own layers are over, or null for none of it.
+  /** Where the page goes in the hole at `box`, and what of it the app's own layers are
+   *  over there, or null for none of it.
    *
    *  A native webview draws above every pixel of HTML in the window: nothing of nib's
    *  can be drawn on top of a page. So a layer over the page is cut out of it in its own
@@ -150,17 +157,21 @@
    *  the carried tab hangs under the pointer over all of them: a page left in front
    *  hid both, so the tab vanished the moment it left the strip and nobody could see
    *  where it would land. The drag is asked rather than hit-tested because the page
-   *  has to go before the zones are there to be hit. */
-  function coverOf(box: Rect): Cut | null {
-    if (page.filling) return null
+   *  has to go before the zones are there to be hit.
+   *
+   *  An engine that cannot cut ends the page above the app's notices instead of hiding
+   *  it for them; see `clearOf`. */
+  function coverOf(box: Rect): { box: Rect; cut: Cut | null } {
+    if (page.filling) return { box, cut: null }
     // Another tab's page holds the screen, and this one would be drawn over it.
-    if (filling.by !== null || workspace.panes.dragging !== null) return ALL
-    if (!hole) return null
+    if (filling.by !== null || workspace.panes.dragging !== null) return { box, cut: ALL }
+    if (!hole) return { box, cut: null }
     // Something over the page nothing knows the shape of: a drawer, a deck.
-    if (strangerOver(hole)) return ALL
+    if (strangerOver(hole)) return { box, cut: ALL }
     const layers = layersOver(hole)
     watchLayers(layers)
-    return cutOf(box, layers)
+    const clear = pages.cuts ? { box, layers } : clearOf(box, layers)
+    return { box: clear.box, cut: cutOf(clear.box, clear.layers) }
   }
 
   /** The layers on the window, watched for a change of size as the hole is. A layer can
@@ -200,6 +211,9 @@
    *  anywhere in the window asks this question, and most presses have not moved
    *  anything. */
   let told = ''
+
+  /** What was told while the hole had no room for the page: the page out of sight. */
+  const NO_ROOM = 'no room'
 
   /** Where the hole was, the last time anybody looked.
    *
@@ -244,12 +258,18 @@
 
   // The hole, watched for as long as it is in the pane: from the mount, and from the
   // moment a tab on nib's own page is sent to a site, which is when the page is asked for.
+  // Its size by the resize observer, and where it is by `watchShifts`: the panes moved
+  // across the window without changing size are a page left behind otherwise (#246).
   $effect(() => {
     const room = hole
     if (!room || !watching) return
     watching.observe(room)
+    const unshift = watchShifts(room, follow)
     untrack(() => follow())
-    return () => watching.unobserve(room)
+    return () => {
+      watching.unobserve(room)
+      unshift()
+    }
   })
 
   /** Puts the page where the hole is. Coalesced onto a frame, because a pane being
@@ -279,10 +299,20 @@
     if (!isDesktop || !ready || own) return
 
     const box = rect()
-    if (!box) return
+    if (!box) {
+      // No room for the page at all: a window made too short for anything under the bar.
+      // The page goes out of sight where it was, still the tab in front, rather than
+      // staying drawn at the hole's last box over whatever is there now; it comes back
+      // with the room, because what was told is forgotten.
+      if (last && told !== NO_ROOM) {
+        told = NO_ROOM
+        void pages.place(tab.id, last, false)
+      }
+      return
+    }
 
-    last = box
-    const cut = coverOf(box)
+    const { box: at, cut } = coverOf(box)
+    last = at
     const visible = cut === null
 
     // A layer on its way out is on no list: it took itself off the overlay stack the
@@ -300,18 +330,20 @@
     if (!visible && hole && moving(hole)) follow()
 
     const frame = frameOf()
-    const said = JSON.stringify([box, cut, frame?.window])
+    // The scale is part of it: the same box on a screen of another scale is another page
+    // window, and nothing else in the layout says the scale changed.
+    const said = JSON.stringify([at, cut, frame?.window, devicePixelRatio])
     // Nothing has moved *and there is a page*. The second half is what keeps a tab from
     // being left on an empty pane for good: a pane measured under a layer on its way out
     // has said its rectangle already, and the page is the thing that is missing.
     if (said === told && page.live) return
 
     told = said
-    // Which space the tab is in, which decides the store its page is built in; said with
-    // the page rather than in an effect of its own, because a tab opened by hand asks for
-    // its page in the breath it mounts. See web-data.ts.
+    // Which space the tab is in, and before its first page whether its note keeps its own
+    // web data; said with the page, since a tab opened by hand asks for it as it mounts.
     page.space = space
-    void pages.show(tab.id, address, box, visible, { cut, frame })
+    if (!page.live) page.own = apart
+    void pages.show(tab.id, address, at, visible, { cut, frame })
   }
 
   /** Where this tab points: the address the page is on, else the one the session
@@ -345,7 +377,22 @@
    *  wherever it was opened from, and for a tab with no file the space it was opened
    *  in, kept across a switch to another. See `spaceOf` in workspace.svelte.ts. */
   const space = $derived(workspace.spaceOf(tab.note))
-  const book = $derived(webData.history(space))
+  const book = webData.history()
+
+  /** The tab's own web data, or null for the shared store; see `apartOf`. */
+  const apart = $derived(apartOf(tab))
+
+  // Turned on or off, here or on another computer, a running page moves store.
+  $effect(() => {
+    const now = apart
+    untrack(() => {
+      if (page.own === now || !page.live) return
+      const said = now
+        ? t('This note keeps its own web data now')
+        : t('Back on the shared web data')
+      void pages.rehouse(tab.id, now, said)
+    })
+  })
 
   onMount(() => {
     // The page is the last thing the launch does. Everything below is watching for the
@@ -364,6 +411,8 @@
     else void startup.turn('rooms').then(asking)
 
     window.addEventListener('resize', follow)
+    // A screen of another scale: the same box is another page window; see shifts.ts.
+    const unscale = watchScale(follow)
     // Anything the app opens over the page is opened by a press: after one, look
     // again at what is on top. Twice, because a sheet arrives over a transition.
     const pressed = () => {
@@ -386,16 +435,21 @@
     // press - a command from the palette opens the next overlay, and Escape closes one
     // - so the page cannot wait for a press to find out; see `coverOf`.
     const unwatch = overlays.watch(follow)
+    // And a layer that arrives by neither, or leaves by neither: a hint, a second toast,
+    // a card a row puts up under the pointer. See `watchArrivals`.
+    const unarrive = watchArrivals(follow)
 
     return () => {
       cancelAnimationFrame(scheduled)
       clearTimeout(late)
       watching?.disconnect()
       unwatch()
+      unarrive()
       // The tab is being left or closed: where its reading got to is written now rather
       // than a pause later. See keep.ts.
       if (tab.path !== null) keepNow(tab.path)
       window.removeEventListener('resize', follow)
+      unscale()
       window.removeEventListener('pointerdown', pressed, true)
       window.removeEventListener('keydown', pressed, true)
 
@@ -425,13 +479,13 @@
     }
   })
 
-  // The line that the page was built again in another space's web data, for four seconds
-  // of being seen: a tab moved out of sight is told when it is next looked at. See rehome.ts.
+  // The line that the page was built again in another store, for four seconds of being
+  // seen: a tab out of sight is told when it is next looked at. See `rehouse`.
   $effect(() => {
-    const said = page.rehomed
+    const said = page.notice
     if (said === null) return
     const gone = setTimeout(() => {
-      if (page.rehomed === said) page.rehomed = null
+      if (page.notice === said) page.notice = null
     }, 4000)
     return () => clearTimeout(gone)
   })
@@ -439,11 +493,18 @@
   // An agent began acting here or let go: the page moves in by the frame or back out.
   $effect(() => follow(worn !== null))
 
-  // Another computer's web login came or went. Going, the page is asked for again at
-  // once, which is what makes a page come back by itself when the site is free; see
-  // lease.svelte.ts.
+  // The page arrived. Whatever came or went over the hole while it was on its way, and
+  // whether the engine cuts, which the first page of a window is the first to hear, are
+  // looked at again; a look that comes to what was said already says nothing.
+  $effect(() => follow(page.live))
+
+  // And once more a frame after the mount, as if nothing had been said yet: by then the
+  // page asked for at the mount is there to be placed, and a placement's answer is how
+  // the window hears whether the engine cuts the app's layers out of a page (`web_place`,
+  // `cutting` in pages.svelte.ts). The look above comes to what the mount said and says
+  // nothing, so without this a menu over a page that just arrived hid the page instead
+  // of being cut out of it. Until #393 the web login's effect did this in passing.
   $effect(() => {
-    if (page.lock !== null) return
     untrack(() => {
       told = ''
       follow()
@@ -459,6 +520,10 @@
   // fingers, so the page is cut round it on every step and is whole again once it has
   // gone; see back-swipe/SwipeArrow.svelte and `coverOf`.
   $effect(() => follow(swiping.turn))
+  // And as one begins over this page, a fresh picture of it to stand under the arrow.
+  $effect(() => {
+    if (swiping.tab === tab.id && swiping.stage === 'tracking') untrack(() => pages.freshen(tab.id))
+  })
 
   // A page took the whole screen or gave it back, here or in another pane: the window
   // follows, and so does where this page is placed. See filling.svelte.ts.
@@ -524,7 +589,7 @@
     untrack(() =>
       keepPage({
         path,
-        text: tab.doc,
+        text: () => tab.doc,
         url,
         icon,
         wrote: (text: string) => tab.note.replace(text, false),
@@ -547,8 +612,8 @@
   /** Whether the list of downloads under the bar is open. */
   let showingDownloads = $state(false)
 
-  /** Whether this engine runs extensions: `WebView2`, and nib's own Chromium, which is
-   *  Windows' alone for now; see src-tauri/src/extensions.rs. */
+  /** Whether this engine runs extensions: `WebView2`, Windows' alone; see
+   *  src-tauri/src/extensions.rs. */
   const extending = isDesktop && platform() === 'windows'
 
   /** Whether the list of extensions under the puzzle is open. */
@@ -679,10 +744,12 @@
 
   /** Chrome's own rows, and what each of them does here; see menu.ts. */
   const actions: WebActions = {
-    newTab: () => workspace.openWebsite(),
-    newPrivate: isDesktop
-      ? () => void import('./private').then(({ openPrivate }) => openPrivate())
-      : undefined,
+    newTab: () => workspace.newTab(tab.paneId),
+    get newPrivate() {
+      return hiddenKinds.offers('private')
+        ? () => void import('./private').then(({ openPrivate }) => openPrivate())
+        : undefined
+    },
     history: () => void import('./history-open').then(({ openHistory }) => openHistory(tab)),
     clearData: () => clearingAsked.ask(tab.id),
     // Chrome's Bookmarks. Here they are the space's own kept files, at the top of the
@@ -694,7 +761,10 @@
       // be the size it now is.
       menu.replace(webRows(page, factor, actions))
     },
-    fullScreen: () => void fullscreen.toggle(tab.id),
+    fullScreen: () => {
+      workspace.activate(tab.id)
+      void fullscreen.toggle(workspace.panes)
+    },
     print: () => void pages.print(tab.id),
     find: isDesktop ? () => (page.find.open = true) : undefined,
     save: clip,
@@ -712,14 +782,14 @@
        this box rather than against the pane, because "under the bar" is what they mean:
        a rectangle the height of the whole pane would put them under the *page*, which is
        off the bottom of the window. -->
-  <div class="head" class:roomy={fullscreen.on} bind:this={head}>
+  <div class="head" class:gone={fullscreen.on} bind:this={head}>
     <WebBar
       {page}
+      tab={tab.id}
       ground={chrome.barOf(tab.id)}
       theme={chrome.barTheme(tab.id)}
       {focused}
       {book}
-      reads={isDesktop}
       onstep={(step: Step, press?: MouseEvent) => {
         const ask = press ? tabAsk(press) : 'plain'
         if (step === 'back') workspace.goBack(tab.id, ask)
@@ -730,24 +800,27 @@
         else void pages.step(tab.id, step)
       }}
       onhistory={showTrail}
-      onaddress={(typed: string, aside: boolean) => {
-        const url = webAddress(typed, searchEngine.url)
+      onaddress={(said: string, aside: boolean, typed: string) => {
+        const url = webAddress(said, searchEngine.url)
         if (!url) return
 
         // Typed, or chosen from what the field offered, which Chrome counts the same:
         // either way it is an address somebody went to on purpose. See visits.ts.
         if (!page.inPrivate) visited.typed(book, url)
+        // A host typed with no scheme, given https: plain http where nothing answers
+        // there. See upgrade.ts.
+        const upgrade = upgradeOf(typed || said, url)
         // Alt+Enter: a tab of its own, in front, and this one left where it was.
         if (aside) {
-          workspace.openPage(url, 'front', tab.id)
+          const opened = workspace.openPage(url, 'front', tab.id)
+          if (opened) pages.of(opened).upgrade = upgrade
           return
         }
-        void pages.go(tab.id, url)
+        void pages.go(tab.id, url, upgrade)
         // An address somebody typed is where the document points, and the file says
         // so. A link followed inside the page is not; see `workspace.webAimed`.
         void workspace.webAimed(tab, url)
       }}
-      onclip={clip}
       onmenu={(event: MouseEvent) =>
         menu.show(event, webRows(page, page.zoom, actions), { title: t('Website') })}
       onsite={() => {
@@ -791,21 +864,10 @@
         : null}
     />
 
-    <!-- A computer new to the account, waiting for one that has the web logins to let it
-         have them: which one, and the six digits both screens show. -->
-    <!-- Saved into a space that keeps its web data apart: built again there, which may
-         have signed the site out, so this says so for a moment. See `rehome`. -->
-    {#if page.rehomed !== null}
+    <!-- Built again in another store, which may have signed the site out. -->
+    {#if page.notice !== null}
       <p class="waiting" transition:fade={{ duration: dur(140) }}>
-        {t('Reloaded with the web data of {space}', { space: page.rehomed })}
-      </p>
-    {/if}
-    {#if pages.waiting}
-      <p class="waiting">
-        {t('Waiting for {who}', { who: pages.waiting.device })}
-        <span class="digits"
-          >{pages.waiting.digits.slice(0, 3)} {pages.waiting.digits.slice(3)}</span
-        >
+        {page.notice}
       </p>
     {/if}
 
@@ -864,11 +926,7 @@
        own layer. See WebClear.svelte. -->
   {#if clearingAsked.tab === tab.id}
     {#await import('./WebClear.svelte') then clear}
-      <clear.default
-        {space}
-        spaces={workspace.spaces.map((one) => one.id)}
-        onclose={() => clearingAsked.close()}
-      />
+      <clear.default apart={pages.apart()} onclose={() => clearingAsked.close()} />
     {/await}
   {/if}
 
@@ -905,11 +963,7 @@
       class:still={page.shot !== null}
       style:background-image={page.shot === null ? 'none' : `url(${page.shot})`}
       bind:this={hole}
-    >
-      {#if page.lock}
-        <WebLocked lock={page.lock} icon={page.icon ?? page.kept} {address} />
-      {/if}
-    </div>
+    ></div>
   {:else if page.framing === 'frame' && address}
     <!-- Glass reads what a page of the app's own origin stands on as it loads; see
          glass/reading.ts. -->
@@ -942,14 +996,9 @@
       style:--agent={worn?.colour}
     >
       {#if address}
-        {#if marked}
-          <img
-            class="mark"
-            src={siteMark(page.icon, address) ?? new URL('/favicon.ico', address).href}
-            alt=""
-            draggable="false"
-            onerror={() => (marked = false)}
-          />
+        {@const mark = siteMark(page.icon, address) ?? favicon(address)}
+        {#if marked && mark}
+          <img class="mark" src={mark} alt="" draggable="false" onerror={() => (marked = false)} />
         {/if}
         <p class="name">{page.title || plainOrigin(address)}</p>
         <p class="site">{plainOrigin(address)}</p>
@@ -993,12 +1042,10 @@
     flex: none;
   }
 
-  /* Full screen puts its way out in this corner, and a page draws above it: the bar
-     makes the room, down and across, so neither the page nor the dots sit under the
-     button. See `.leave` in App.svelte. */
-  .head.roomy {
-    min-height: calc(var(--leave-size) + var(--space-2) * 2);
-    padding-inline-end: calc(var(--leave-size) + var(--space-2) * 2);
+  /* Full screen is the page and nothing else, Chrome's F11: the bar goes with the rest
+     of the app, and the page takes its room. See fullscreen.svelte.ts. */
+  .head.gone {
+    display: none;
   }
 
   /* The page's own room. `--bg` rather than nothing, because for one frame between
@@ -1010,21 +1057,13 @@
     background: var(--bg);
   }
 
-  /* Quiet, under the bar: the one line a computer new to the account says while it
-     waits, with the digits in figures of one width so they read as a code. */
+  /* Quiet, under the bar: the one line a page built again in another store says. */
   .waiting {
     margin: 0;
     padding: var(--space-1) var(--space-3);
     color: var(--muted);
     font-family: var(--font-ui);
     font-size: var(--text-sm);
-  }
-
-  .digits {
-    margin-inline-start: var(--space-2);
-    color: var(--text-strong);
-    font-variant-numeric: tabular-nums;
-    letter-spacing: 0.04em;
   }
 
   /* The still picture of the page, from the top left corner at its own size: it was

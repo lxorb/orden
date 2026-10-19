@@ -31,7 +31,11 @@ interface Rig {
 
 /** A store over disks of notes, by absolute path. The open space is `open`, whose
  *  notes the link index already holds; every other space waits on `answer`. */
-function rig(disk: Record<string, string>, open: string | null = null): Rig {
+function rig(
+  disk: Record<string, string>,
+  open: string | null = null,
+  vaults: readonly string[] = [],
+): Rig {
   const files = new Map(Object.entries(disk))
   const waiting = new Map<string, () => void>()
   const notesOf = (root: string) =>
@@ -55,6 +59,7 @@ function rig(disk: Record<string, string>, open: string | null = null): Rig {
     }),
     breathe: () => Promise.resolve(),
     now: () => 42,
+    vault: (root) => Promise.resolve(vaults.includes(root)),
   }
 
   const store = new RowsStore(host)
@@ -83,6 +88,45 @@ const tasks = (rows: readonly Row[]) =>
     .map((row) => `${row.space}:${row.path}:${row.task?.text}`)
 
 describe('the rows of every space', () => {
+  /** A `📅` is a deadline in an Obsidian vault and a start date anywhere else (#371):
+   *  the rows say which, and a note saved later is read the same way. */
+  test("an Obsidian vault's tasks say their 📅 is a deadline", async () => {
+    const { store, answer, settled } = rig(
+      {
+        [`${WORK}/Plan.md`]: '- [ ] Ship it 📅 2026-10-06\n',
+        [`${HOME}/Errands.md`]: '- [ ] Descale 📅 2026-10-06\n',
+      },
+      null,
+      [HOME],
+    )
+    store.spacesAre([
+      { root: WORK, name: 'Work' },
+      { root: HOME, name: 'Home' },
+    ])
+    await settled()
+    answer(WORK)
+    await settled()
+    answer(HOME)
+    await settled()
+
+    const reads = () =>
+      store
+        .of()
+        .filter((row) => row.task)
+        .map((row) => [row.task?.text, row.task?.dueReads])
+    expect(reads()).toEqual([
+      ['Ship it', undefined],
+      ['Descale', 'deadline'],
+    ])
+
+    store.saved(`${HOME}/Errands.md`, '- [ ] Descale 📅 2026-10-07\n- [ ] Oil 📅 2026-10-08\n')
+    expect(reads()).toEqual([
+      ['Ship it', undefined],
+      ['Descale', 'deadline'],
+      ['Oil', 'deadline'],
+    ])
+  })
+
   test("the open space's rows are the link index's scan, and the others are read after", async () => {
     const { store, answer, settled } = rig(
       {

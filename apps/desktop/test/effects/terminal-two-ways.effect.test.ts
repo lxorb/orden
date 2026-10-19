@@ -66,6 +66,7 @@ const { workspace } = await import('../../src/lib/workspace.svelte')
 const { sessionOf } = await import('../../src/lib/terminal/sessions.svelte')
 const { shells } = await import('../../src/lib/terminal/shells.svelte')
 const { prompt } = await import('../../src/lib/prompt.svelte')
+const { shortcuts } = await import('../../src/lib/shortcuts.svelte')
 const PromptSheet = (await import('../../src/lib/PromptSheet.svelte')).default
 const { flushSync, mount, unmount } = await import('svelte')
 const { written } = await import('../../src/lib/parting')
@@ -97,13 +98,14 @@ async function opened(key: string): Promise<Opened> {
   return session
 }
 
-/** Ctrl and a letter, pressed with the terminal's keyboard. */
+/** Ctrl and a letter, or Ctrl+Space, pressed with the terminal's keyboard. */
 function press(session: Opened, letter: string) {
+  const space = letter === ' '
   session.term.textarea?.dispatchEvent(
     new KeyboardEvent('keydown', {
       key: letter,
-      code: `Key${letter.toUpperCase()}`,
-      keyCode: letter.toUpperCase().charCodeAt(0),
+      code: space ? 'Space' : `Key${letter.toUpperCase()}`,
+      keyCode: space ? 32 : letter.toUpperCase().charCodeAt(0),
       ctrlKey: true,
       bubbles: true,
       cancelable: true,
@@ -216,4 +218,60 @@ test('put away, the question gives the press to nobody', async () => {
   expect(typed).toEqual([])
   expect(heard).toEqual([])
   expect(shells.ways['app.scratchpad']).toBeUndefined()
+})
+
+/** Every app command on a key the shell reads is both (#426): the space switcher's
+ *  Ctrl+Space, which the shell reads as NUL, and Ctrl+W, which it deletes a word with and
+ *  which went to the shell unasked before. */
+test('Ctrl+Space asks too, and the shell chosen is given NUL', async () => {
+  const session = await opened('w6')
+  press(session, ' ')
+  await vi.waitFor(() => expect(prompt.open).toBe(true))
+  flushSync()
+  expect(prompt.title).toBe('Ctrl+Space in a terminal')
+
+  answer('Terminal')
+  await vi.waitFor(() => expect(typed).toEqual(['\x00']))
+  expect(shells.ways['space.switcher']).toBe('shell')
+})
+
+test('Ctrl+W asks too, and Ctrl+C never does', async () => {
+  const session = await opened('w7')
+  press(session, 'c')
+  flushSync()
+  expect(prompt.open).toBe(false)
+
+  press(session, 'w')
+  await vi.waitFor(() => expect(prompt.open).toBe(true))
+  flushSync()
+  expect(prompt.title).toBe('Ctrl+W in a terminal')
+})
+
+/** A command put on a function key is on a key the program in the terminal reads too -
+ *  htop and mc are worked with them - so it is asked about, and the program, chosen, is
+ *  given the key as xterm would have sent it. */
+test('a command put on F9 asks, and the shell chosen is given F9', async () => {
+  shortcuts.set('app.scratchpad', 'F9')
+  try {
+    const session = await opened('w8')
+    session.term.textarea?.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'F9',
+        code: 'F9',
+        keyCode: 120,
+        bubbles: true,
+        cancelable: true,
+      }),
+    )
+    flushSync()
+    await vi.waitFor(() => expect(prompt.open).toBe(true))
+    flushSync()
+    expect(prompt.title).toBe('F9 in a terminal')
+
+    answer('Terminal')
+    await vi.waitFor(() => expect(typed).toEqual(['\x1b[20~']))
+    expect(shells.ways['app.scratchpad']).toBe('shell')
+  } finally {
+    shortcuts.reset('app.scratchpad')
+  }
 })

@@ -47,24 +47,26 @@
   import CanvasHands from './CanvasHands.svelte'
   import CanvasInk from './CanvasInk.svelte'
   import CanvasNode from './CanvasNode.svelte'
+  import CanvasPicked from './CanvasPicked.svelte'
   import PagesPage from './PagesPage.svelte'
   import PagesSlot from './PagesSlot.svelte'
   import PagesZoom from './PagesZoom.svelte'
-  import { type Camera, graphPoint, NOTCH, wheelZoom } from './camera'
-  import { toolPressed } from './canvas/actions'
-  import { movedBy, removed, withText } from './canvas/edits'
+  import { type Camera, ctrlWheelZoom, graphPoint, heldGestures, NOTCH, pinching } from './camera'
+  import { putWords, toolPressed, wordsAt } from './canvas/actions'
+  import { coloured, copied, movedBy, pickedBox, removed, withText } from './canvas/edits'
   import { freshId, type InkPoint, type InkStroke } from './canvas/format'
   import { Contacts, hovering, penKind, Stylus } from './canvas/contacts'
   import { hand } from './canvas/hand.svelte'
   import { erased, leadPoint, penFelt, strokesInLasso, tidied } from './canvas/ink'
-  import { readPalette } from './canvas/palette'
+  import { DEFAULT_INK, readPalette } from './canvas/palette'
   import { pens } from './canvas/pens.svelte'
   import { inks, type Tool } from './canvas/pointer'
   import { tick } from './canvas/tick'
   import { tools } from './canvas/tools.svelte'
   import { type Point } from './canvas/geometry'
   import { pageAt } from '@nib/markdown/pages'
-  import { DIVIDER, type MenuEntry } from './menu.svelte'
+  import { longPress } from './longpress'
+  import { DIVIDER, menu, type MenuEntry } from './menu.svelte'
   import { stillness } from './motion'
   import { forgetPaper } from './pages/paper'
   import {
@@ -109,7 +111,14 @@
 
   /** The tools a page note has. The five that mean something on paper; a connector and
    *  a frame are a plane's, and there is nothing on a sheet to join. */
-  const PAPER_TOOLS: ReadonlySet<Tool> = new Set<Tool>(['select', 'hand', 'draw', 'erase', 'lasso'])
+  const PAPER_TOOLS: ReadonlySet<Tool> = new Set<Tool>([
+    'select',
+    'hand',
+    'draw',
+    'erase',
+    'lasso',
+    'words',
+  ])
 
   /** How soon after a gesture began a second finger is the paper rather than a
    *  palm, in milliseconds. The canvas's own number and the canvas's own reason: a
@@ -199,6 +208,14 @@
     if (store.framed || !width || !height || !store.widest) return
 
     store.fitWidth(false)
+  })
+
+  // The hand is shared with the plane, so a card or a shape picked up on a canvas is
+  // still in it when a page note opens - and nothing on paper answers to one, so every
+  // press would do nothing and no button on the bar would be lit. The arrow instead,
+  // which is what a press on paper is when no pen is out (#350).
+  $effect(() => {
+    if (!PAPER_TOOLS.has(tools.which)) tools.choose('select')
   })
 
   // Words that changed under the surface: a version restored, a copy a sync brought
@@ -368,6 +385,31 @@
   /** What is picked, dragged by however far the drag has carried it. */
   const dragging = $derived(gesture?.kind === 'drag' ? gesture.offset : { x: 0, y: 0 })
 
+  /** The ink as it is drawn: carried along with the drag while one is under way, so
+   *  writing caught by the lasso moves under the hand rather than jumping when it
+   *  lets go. */
+  const shownInk = $derived(
+    dragging.x || dragging.y
+      ? movedBy(canvas, store.picked, dragging.x, dragging.y).ink
+      : canvas.ink,
+  )
+
+  /** The box round the ink that is picked, a little larger than the strokes: a line of
+   *  writing is a few units tall, and a press on it should not have to be exact. */
+  const caught = $derived.by(() => {
+    const wanted = new Set(store.picked)
+    const strokes = canvas.ink.filter((one) => wanted.has(one.id)).map((one) => one.id)
+    const box = pickedBox(canvas, strokes)
+    if (!box) return null
+    const slack = 12 * unit
+    return {
+      x: box.x - slack,
+      y: box.y - slack,
+      width: box.width + 2 * slack,
+      height: box.height + 2 * slack,
+    }
+  })
+
   /** A pen sample, in plane units, with everything the digitiser said about it. The
    *  same normalisation the canvas does, so an S Pen, a Pencil and a USI pen all
    *  arrive as the same six numbers. */
@@ -410,6 +452,8 @@
     // anything that does not ask for it as mouse input, and a mouse contact while a
     // nib is on the glass is that nib, not a second hand.
     if (contacts.echo(event)) return
+    // A lasso held on its key is a held one now, however short the hold (#349).
+    tools.used()
 
     // The right button on a mouse starts nothing; the menu is the browser's own
     // event. A pen holding its button is the eraser and not a right button at all.
@@ -491,6 +535,13 @@
 
     if (!writable) return
 
+    // Words, typed onto the paper where it was pressed (#421); see `putWords`.
+    if (tool === 'words') {
+      event.preventDefault()
+      putWords(store, wordsAt(point))
+      return
+    }
+
     if (tool === 'draw') {
       const nib = tools.ink
       gesture = {
@@ -513,6 +564,20 @@
     if (tool === 'erase') {
       gesture = { kind: 'erase', id: event.pointerId, run: freshId() }
       rub(point, gesture.run)
+      return
+    }
+
+    // A press inside what the lasso caught moves it, with the lasso still in hand or
+    // the arrow: the ink it caught could otherwise only ever be deleted, and only from
+    // a keyboard (#350). The plane's own rule; see `lasso` in canvas/pointer.ts.
+    if ((tool === 'lasso' || tool === 'select') && caught && inside(point, caught)) {
+      gesture = {
+        kind: 'drag',
+        id: event.pointerId,
+        from: point,
+        offset: { x: 0, y: 0 },
+        moved: false,
+      }
       return
     }
 
@@ -547,6 +612,130 @@
       offset: { x: 0, y: 0 },
       moved: false,
     }
+  }
+
+  /** How much room the bar over what is picked wants above it before it hangs
+   *  under the pick instead, in pixels. The canvas's own number. */
+  const ROOM = 72
+
+  /** Where the bar over the ink the lasso caught goes: over the middle of it, on
+   *  screen, or under it against the top of the pane - the canvas's bar, so paper and
+   *  plane colour, copy and delete what is picked the same way, with a finger as
+   *  well as a key (#350). Nothing while a gesture is under way. */
+  const overPicked = $derived.by(() => {
+    const box = caught
+    if (!box || gesture || store.editing !== null) return null
+
+    const left = width / 2 + (box.x + box.width / 2 - view.x) * view.scale
+    const above = height / 2 + (box.y - view.y) * view.scale
+    const under = height / 2 + (box.y + box.height - view.y) * view.scale
+    const below = above < ROOM
+
+    return { at: { x: left, y: below ? under : above }, below }
+  })
+
+  /** The colour the picked ink is written in, or nothing where it is the page's own. */
+  const pickedColour = $derived.by(() => {
+    const first = canvas.ink.find((one) => store.isPicked(one.id))
+    return !first || first.color === DEFAULT_INK ? null : first.color
+  })
+
+  /** The picked ink in a colour; nothing at all is the page's own ink, since there
+   *  is no paper showing through a line. */
+  function colourPicked(colour: string | null) {
+    store.edit(coloured(canvas, store.picked, colour ?? DEFAULT_INK))
+  }
+
+  function duplicatePicked() {
+    if (!writable || !store.picked.length) return
+    const made = copied(canvas, store.picked)
+    store.edit(made.canvas)
+    store.pickAll(made.ids)
+  }
+
+  /** What is picked, gone - never a page, which is taken away from the navigator. */
+  function deletePicked() {
+    if (!writable) return
+    const going = store.picked.filter((id) => !pages.some((page) => page.id === id))
+    if (!going.length) return
+    store.edit(removed(canvas, going))
+    store.clearPicked()
+  }
+
+  /** One row of the app's own, pressed: an export or printing, which the File menu and
+   *  the palette already have and which load most of what the app can load. */
+  function command(id: string, label: string): MenuEntry {
+    return {
+      label,
+      run: () =>
+        void import('./commands').then(({ appCommands, exportCommands }) => {
+          const row = [...exportCommands(), ...appCommands()].find((one) => one.id === id)
+          if (row && !row.disabled) row.run()
+        }),
+    }
+  }
+
+  /** What a right click or a finger held still on the paper offers: what can be done
+   *  to the ink that is picked, a page after the one under it, the two fits, and the
+   *  note out as a PDF or on paper. Only what would do something here (#350). */
+  function pagesMenu(point: Point): MenuEntry[] {
+    const page = pageAt(pages, point)
+    const ink = writable && store.picked.some((id) => canvas.ink.some((one) => one.id === id))
+    const groups: MenuEntry[][] = [
+      ink
+        ? [
+            { label: t('Duplicate'), run: duplicatePicked },
+            { label: t('Delete'), danger: true, run: deletePicked },
+          ]
+        : [],
+      page && writable
+        ? [
+            {
+              label: t('Add a page after this'),
+              run: () => {
+                const at = store.addPage(page.id)
+                if (at) store.glideTo(at)
+              },
+            },
+          ]
+        : [],
+      // The two fits and one to one, which is the size the page prints at: what the
+      // percentage on the bar offered before the bar stopped zooming (#401).
+      [
+        { label: t('Fit width'), run: () => store.fitAgain() },
+        { label: t('Fit page'), run: () => store.fitPage() },
+        { label: '100%', run: () => store.zoomTo(1) },
+      ],
+      [command('export-pdf', t('Export as PDF')), command('print', t('Print'))],
+    ]
+    return groups
+      .filter((one) => one.length)
+      .flatMap((one, index) => (index ? [DIVIDER, ...one] : one))
+  }
+
+  function showMenu(event: MouseEvent) {
+    menu.show(event, pagesMenu(planeAt(event)), {
+      title: t('Pages'),
+      near: viewport.touch,
+    })
+  }
+
+  /** A right click. The mouse's: a pen's barrel button is the eraser on paper, and a
+   *  finger held still is `longPress` below, so a menu never opens twice for one hold. */
+  function oncontextmenu(event: MouseEvent) {
+    event.preventDefault()
+    const kind = (event as PointerEvent).pointerType
+    if (kind === 'touch' || kind === 'pen') return
+    showMenu(event)
+  }
+
+  /** A finger held still on the paper - unless it is writing, which is a stroke that
+   *  has not moved yet rather than a press. */
+  function held(event: MouseEvent) {
+    const busy = gesture?.kind
+    if (busy === 'draw' || busy === 'erase' || busy === 'lasso') return
+    gesture = null
+    showMenu(event)
   }
 
   function onpointermove(event: PointerEvent) {
@@ -837,6 +1026,16 @@
     pull = { ...pull, raw: 0, holding: false }
   }
 
+  // A Mac's trackpad pinch, which WebKit tells as gestures rather than the wheel (#410).
+  $effect(() => {
+    const element = host
+    if (!element) return
+    return heldGestures(element, (at, by) => {
+      store.halt()
+      store.zoomAt(screenAt(at), by)
+    })
+  })
+
   function onwheel(event: WheelEvent) {
     event.preventDefault()
     store.halt()
@@ -844,7 +1043,7 @@
     // Ctrl or the pinch a trackpad reports as one: the zoom. Everything else is a
     // scroll down the column, which is how a page note is read.
     if (event.ctrlKey || event.metaKey) {
-      store.zoomAt(screenAt(event), wheelZoom(event.deltaY))
+      if (!pinching()) store.zoomAt(screenAt(event), ctrlWheelZoom(event))
       return
     }
 
@@ -887,7 +1086,7 @@
     const wanted = toolPressed(event)
     if (wanted && PAPER_TOOLS.has(wanted)) {
       event.preventDefault()
-      tools.choose(wanted)
+      tools.pressed(wanted, event)
       return
     }
 
@@ -959,21 +1158,6 @@
     if (fitted && Math.abs(camera.scale - fitted) < fitted * 0.005) store.fitPage()
     else store.fitAgain()
   }
-
-  /** What the percentage on the bar offers: the two fits and one to one.
-   *
-   *  A page note has more than one answer to "fit", which is why the number opens a
-   *  menu here and simply fits on a plane: a sheet of paper has a width to read at
-   *  and a page to see whole, and 100% is the one value worth naming because it is
-   *  the size the page will print at. */
-  function zoomRows(): MenuEntry[] {
-    return [
-      { label: t('Fit width'), run: () => store.fitAgain() },
-      { label: t('Fit page'), run: () => store.fitPage() },
-      DIVIDER,
-      { label: '100%', run: () => store.zoomTo(1) },
-    ]
-  }
 </script>
 
 <!-- Named by how much paper is on it rather than by what it is, the way the canvas is
@@ -996,7 +1180,11 @@
   {onpointercancel}
   {onwheel}
   {onkeydown}
+  onkeyup={(event) => tools.released(event)}
   {ondblclick}
+  {oncontextmenu}
+  use:longPress={held}
+  style:cursor={!viewport.touch && tools.which === 'lasso' ? 'crosshair' : undefined}
 >
   <!-- The column, moved by one transform: the pages are elements at their own
        coordinates and a scroll is composited, whether there are two pages or four
@@ -1040,7 +1228,15 @@
     {/each}
 
     {#if store.hands.length}
-      <CanvasHands hands={store.hands} {unit} {palette} />
+      <CanvasHands
+        hands={store.hands}
+        {unit}
+        {palette}
+        camera={view}
+        {width}
+        {height}
+        ongo={(at: { x: number; y: number }) => (store.camera = { ...camera, x: at.x, y: at.y })}
+      />
     {/if}
   </div>
 
@@ -1048,7 +1244,7 @@
        the stroke under the pen above. The very same component a canvas draws with,
        so a stroke means the same thing on paper as on a plane. -->
   <CanvasInk
-    ink={canvas.ink}
+    ink={shownInk}
     {live}
     camera={view}
     {width}
@@ -1059,16 +1255,28 @@
 
   <PagesZoom zoom={camera.scale} />
 
+  {#if overPicked}
+    <CanvasPicked
+      at={overPicked.at}
+      below={overPicked.below}
+      colour={pickedColour}
+      recent={pens.recent}
+      grouping={null}
+      oncolour={colourPicked}
+      onduplicate={duplicatePicked}
+      ondelete={deletePicked}
+      ongroup={() => undefined}
+      onmore={(event: MouseEvent) => showMenu(event)}
+    />
+  {/if}
+
   <CanvasBar
     canundo={store.canUndo}
     canredo={store.canRedo}
-    zoom={camera.scale}
-    {zoomRows}
+    places={false}
     onundo={() => store.undo()}
     onredo={() => store.redo()}
     onerase={() => store.edit({ ...canvas, ink: [] })}
-    onzoom={(by: number) => store.zoomBy(by)}
-    onfit={() => store.fitAgain()}
   />
 </div>
 

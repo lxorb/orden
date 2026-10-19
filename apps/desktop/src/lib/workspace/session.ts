@@ -22,6 +22,7 @@ import type { Panel, Space } from '../workspace.svelte'
 import type { TabKind } from './documents.svelte'
 import { type Along, type Frame, pane } from './pane-tree'
 import { PANELS } from './panels'
+import { isTabKind } from './tab-kinds'
 
 /** The shape this version writes. */
 const VERSION = 2
@@ -47,6 +48,8 @@ export interface Draft {
   /** Whether the tab was showing the note as it reads. Absent for one that was
    *  being written in, which is what a tab is unless it says otherwise. */
   reading?: boolean | undefined
+  /** Source mode; absent means the default. */
+  source?: boolean | undefined
   /** Whether the tab was held at the front of its strip. Absent for the tabs
    *  that were not, which is most of them. */
   pinned?: boolean | undefined
@@ -57,6 +60,9 @@ export interface Draft {
   /** For a website: the address it was on, which may not be the one its file says.
    *  Absent for every other kind of tab. */
   address?: string | undefined
+  /** For a website with no file made at a web note's page: that note's own web data;
+   *  see `apart` in documents.svelte.ts. */
+  apart?: string | undefined
   /** For a tab with no file: the space it was opened in, by id; see `home` in
    *  documents.svelte.ts. */
   space?: string | undefined
@@ -150,19 +156,6 @@ export function isPanel(value: unknown): value is Panel {
   return PANELS.some((panel) => panel === value)
 }
 
-const TAB_KINDS: readonly TabKind[] = [
-  'note',
-  'graph',
-  'pdf',
-  'canvas',
-  'pages',
-  'web',
-  'terminal',
-  'view',
-  'chat',
-  'channel',
-]
-
 /** Which kind of tab an entry is, which is its file's name first and what the entry
  *  claims second.
  *
@@ -178,7 +171,7 @@ const TAB_KINDS: readonly TabKind[] = [
  *  that is the graph, and a new tab with no file yet. Everything else a name has no opinion
  *  about - a paper being read - it keeps. */
 function tabKind(value: unknown, path: unknown): TabKind {
-  const said = TAB_KINDS.find((kind) => kind === value) ?? 'note'
+  const said = isTabKind(value) ? value : 'note'
   if (typeof path !== 'string') return said
 
   // A website first of all, because its name is the whole of what it is: a shortcut
@@ -236,7 +229,7 @@ export function readDraft(value: unknown): Draft | null {
   if (!isRecord(value)) return null
 
   const { kind, path, name, doc, dirty, cursor, scroll, anchor, share, reading } = value
-  const { folds, page, zoom, pinned, address, space } = value
+  const { folds, page, zoom, pinned, address, space, source, apart } = value
   if (typeof name !== 'string' || typeof doc !== 'string') return null
   if (path !== null && typeof path !== 'string') return null
 
@@ -254,11 +247,13 @@ export function readDraft(value: unknown): Draft | null {
     ...(shut ? { folds: shut } : {}),
     ...(isString(share) ? { share } : {}),
     ...(reading === true ? { reading: true } : {}),
+    ...(typeof source === 'boolean' ? { source } : {}),
     ...(pinned === true ? { pinned: true } : {}),
     ...(isNumber(page) && page >= 1 ? { page } : {}),
     ...(isNumber(zoom) && zoom > 0 ? { zoom } : {}),
     ...(isString(address) ? { address } : {}),
     ...(path === null && isString(space) ? { space } : {}),
+    ...(path === null && isString(apart) ? { apart } : {}),
   }
 }
 

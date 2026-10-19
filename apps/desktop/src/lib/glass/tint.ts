@@ -17,6 +17,11 @@
  *  keeps every word on it at AA over every colour the material can be - the same sums
  *  wallpaper's scrim is held to; see legibility.ts.
  *
+ *  And where nothing open has a colour of its own to give - a note, a canvas, a chat,
+ *  the settings, an empty pane - the frame is glass's own pair (pairs.ts): a soft
+ *  diagonal of two colours, held to the same sums over every colour the blend passes
+ *  through, and over the faint grain laid on it so a long blend draws no bands.
+ *
  *  Pure; see tint.test.ts. */
 
 import { type PaperInks, paperFloor } from '../content-ground'
@@ -32,6 +37,7 @@ import {
   type Span,
 } from '../legibility'
 import type { Palette } from '../wallpaper/floors'
+import { along, type Stops } from './pairs'
 
 export type Scheme = 'dark' | 'light'
 
@@ -57,6 +63,9 @@ export interface Source {
 export interface Frame {
   scheme: Scheme
   tint: string
+  /** The bottom right corner's colour, where the frame is glass's own pair; `tint` is
+   *  then the top left's. */
+  second?: string
   wash: number
   floor: number
   paper: number
@@ -110,10 +119,24 @@ export function spanUnder(material: Material, scheme: Scheme, paper: Rgb): Span 
  *  stronger of which is what has to read. */
 const HOVER = 0.1
 
-/** Every stack a word on the frame stands on, above the tint. */
-function stacks(side: Palette): Lift[][] {
+/** How much grain lies over glass's own pair: enough to break up the bands an eight-bit
+ *  screen draws a long soft blend in, too little to be seen as a texture. Its lightest
+ *  and darkest specks are white and black at this much; glass.css paints it, and
+ *  tint.test.ts holds the two to each other. */
+export const GRAIN = 0.025
+
+const WHITE: Rgb = [255, 255, 255]
+const BLACK: Rgb = [0, 0, 0]
+
+/** Every stack a word on the frame stands on, above the tint: with grain under each,
+ *  its lightest speck and its darkest. */
+function stacks(side: Palette, grain = 0): Lift[][] {
   const hover = { colour: side.text, alpha: HOVER }
-  return [[], [hover], [side.layer], [side.layer, hover]]
+  const own = [[], [hover], [side.layer], [side.layer, hover]]
+  if (grain <= 0) return own
+  return [WHITE, BLACK].flatMap((speck) =>
+    own.map((stack) => [{ colour: speck, alpha: grain }, ...stack]),
+  )
 }
 
 function other(scheme: Scheme): Scheme {
@@ -126,8 +149,10 @@ function other(scheme: Scheme): Scheme {
 const AIM = AA + 0.1
 
 /** The least scrim under which one side's words read over a span, on every stack. */
-function floorOf(side: Palette, scrim: Rgb, span: Span, aim = AIM): number {
-  return Math.max(...stacks(side).map((lifts) => scrimFloor(side.ink, scrim, span, lifts, aim)))
+function floorOf(side: Palette, scrim: Rgb, span: Span, aim = AIM, grain = 0): number {
+  return Math.max(
+    ...stacks(side, grain).map((lifts) => scrimFloor(side.ink, scrim, span, lifts, aim)),
+  )
 }
 
 /** What a page's bar stands on: its own colour where the words of one side read on it,
@@ -204,6 +229,75 @@ export function frameFor(
   return {
     scheme,
     tint: hexOf(tint),
+    wash,
+    floor,
+    paper: inks ? paperFloor(inks, under) : 1,
+    terminal: inks ? paperFloor(inks, under, true) : 1,
+  }
+}
+
+/** The two colours as a screen is handed them. */
+function written(colour: Rgb): Rgb {
+  return rgbOf(hexOf(colour)) ?? colour
+}
+
+/** The least box every colour in `colours` lies in, channel by channel. */
+function boxOf(colours: readonly Rgb[]): Span {
+  const pick = (choose: (...all: number[]) => number) =>
+    [0, 1, 2].map((at) => choose(...colours.map((one) => one[at] ?? 0))) as unknown as Rgb
+  return { least: pick(Math.min), most: pick(Math.max) }
+}
+
+/** What the frame wears where it is glass's own pair: the two colours toned by the Tint
+ *  dial into the reader's own chrome, always in the reader's own scheme.
+ *
+ *  Every colour the blend passes through has to carry the words solid, at the aim, with
+ *  the grain on it; where one does not, both corners are taken toward the chrome by the
+ *  same least amount that makes all of them do, so the two keep their likeness to each
+ *  other. The wash over the material is then never under the floor of the neediest of
+ *  them, and the paper a note is read on is measured over the whole blend. */
+export function pairFor(
+  stops: Stops,
+  app: Scheme,
+  material: Material,
+  sides: Sides,
+  paper: Rgb,
+  dials: Dials = DIALS,
+  inks: PaperInks | null = null,
+): Frame & { second: string } {
+  const span = spanUnder(material, app, paper)
+  const aim = material === 'clear' ? SHARP + (AIM - AA) : AIM
+  const strength = Math.min(1, Math.max(0, dials.strength))
+  const side = sides[app]
+
+  const toned = stops.map((one) => written(over(one, strength, side.scrim)))
+  const lift = Math.max(
+    ...along([toned[0] ?? side.scrim, toned[1] ?? side.scrim]).map((one) =>
+      floorOf(side, side.scrim, { least: one, most: one }, aim, GRAIN),
+    ),
+  )
+  const [first, second] = toned.map((one) =>
+    lift > 0 ? written(over(side.scrim, lift, one)) : one,
+  ) as [Rgb, Rgb]
+
+  const blend = along([first, second])
+  const floor = Math.max(...blend.map((one) => floorOf(side, one, span, aim, GRAIN)))
+  const wash = Math.max(Math.min(1, material ? dials.opacity : 1), floor)
+
+  // What the paper stands on: every colour of the blend over every colour the material
+  // can be, the blend itself where its corners lie thicker, and the grain either way.
+  const box = boxOf([
+    ...blend.flatMap((one) => [over(one, wash, span.least), over(one, wash, span.most)]),
+    ...blend,
+  ])
+  const under: Span = {
+    least: over(BLACK, GRAIN, box.least),
+    most: over(WHITE, GRAIN, box.most),
+  }
+  return {
+    scheme: app,
+    tint: hexOf(first),
+    second: hexOf(second),
     wash,
     floor,
     paper: inks ? paperFloor(inks, under) : 1,

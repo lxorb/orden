@@ -1,7 +1,7 @@
 //! The window's own edges: who draws the frame, and whether the desk shows through.
 //!
 //! Two choices, and both of them are about this machine rather than about the notes.
-//! Nib draws its own frame by default - one bar holding the menu, the sidebar toggle,
+//! Orden draws its own frame by default - one bar holding the menu, the sidebar toggle,
 //! the tabs and the window's three buttons, which is the shape the whole shell is built
 //! round - and somebody who would rather have their system's titlebar can have it. The
 //! second is the material: the window's ground becomes what the platform composites
@@ -71,6 +71,11 @@ pub fn set_frame(app: AppHandle, system: bool) -> Result<(), String> {
         let changed = window.set_decorations(system);
 
         changed.map_err(|error| format!("the frame could not be changed: {error}"))?;
+
+        // Nib's own frame back means a new top edge strip from Tauri, made as if the
+        // window were in its own size; see top_edge.rs.
+        #[cfg(not(target_os = "macos"))]
+        crate::top_edge::mind(&window);
 
         #[cfg(target_os = "macos")]
         {
@@ -254,13 +259,21 @@ mod material {
 #[cfg(not(any(target_os = "windows", target_os = "macos")))]
 mod material {
     use super::Kind;
-    use tauri::Window;
+    use tauri::utils::config::Color;
+    use tauri::{Manager, Window};
 
-    pub fn apply(
-        _window: &Window,
-        _dark: Option<bool>,
-        _kind: Kind,
-    ) -> Result<&'static str, String> {
+    pub fn apply(window: &Window, _dark: Option<bool>, kind: Kind) -> Result<&'static str, String> {
+        // The desk itself is the one thing every compositor has: the window is
+        // transparent already, and whether what shows is blurred is the desktop's. The
+        // webview is said to be clear outright, because the runtime reads no colour at
+        // all as white there.
+        if kind == Kind::Clear {
+            if let Some(view) = window.app_handle().get_webview_window(window.label()) {
+                let _ = view.set_background_color(Some(Color(0, 0, 0, 0)));
+            }
+            return Ok("clear");
+        }
+
         Err("this platform has no translucency to turn on".to_string())
     }
 

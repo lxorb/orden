@@ -10,21 +10,126 @@ export const ps: Dictionary = {
   'Do you write code?': 'ایا تاسو کوډ لیکئ؟',
   Yes: 'هو',
   No: 'نه',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'له نورو اپونو: {key}',
+  'From other apps: set in your system settings': 'له نورو اپونو: د سیسټم په ترتیباتو کې یې وټاکئ',
+  'From other apps: bind {command} in your system settings':
+    'له نورو اپونو: {command} د سیسټم په ترتیباتو کې وټاکئ',
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'اړین',
+  'Add to Essentials': 'اړینو ته ورگډ کړه',
+  'Remove from Essentials': 'له اړینو لرې کړه',
+  'Add block to Essentials': 'بلاک اړینو ته ورگډ کړه',
+  'Add blocks to Essentials': 'بلاکونه اړینو ته ورگډ کړه',
+  'Add view to Essentials': 'لید اړینو ته ورگډ کړه',
+  'Open tabs and Essentials': 'ټبونه او اړین پرانیستل',
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor اوس Orden دی',
+  'Notes from nibeditor.com': 'له nibeditor.com څخه یادښتونه',
+  'Nothing there': 'هلته هیڅ نشته',
+  // AI: the three permission modes
+  'Full permissions': 'بشپړې اجازې',
+  'Auto mode': 'خپلکاره حالت',
+  'Full permissions: nothing is asked first': 'بشپړې اجازې: مخکې هیڅ نه پوښتل کېږي',
+  // Import: Zen's tabs
+  'Import from Zen': 'له Zen څخه واردول',
+  'Containers stay in Zen': 'کانټینرونه په Zen کې پاتې کېږي',
+  'Zen’s tabs could not be read.': 'د Zen ټبونه ونه لوستل شول.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'کانټینرونه په Firefox کې پاتې کېږي',
+  'Nothing could be read out of {browser}.': 'له {browser} څخه هېڅ ونه لوستل شو.',
+  'Saved groups': 'خوندي شوې ډلې',
+  'Tab group': 'د ټب ډله',
+  'Bookmarks toolbar': 'د نښو توکپټه',
+  'Bookmarks menu': 'د نښو مېنو',
+  'Other bookmarks': 'نورې نښې',
+  'Mobile bookmarks': 'د موبایل نښې',
+  'Bookmarks bar': 'د نښو پټه',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} خپل پرانیستي ټبونه تړلي ساتي، نو یوازې نښې یې راغلې.',
+  '{count} pages not on the web stay behind': {
+    one: '{count} پاڼه چې په وېب کې نه ده پاتې شوه',
+    other: '{count} پاڼې چې په وېب کې نه دي پاتې شوې',
+  },
+  'Reading List': 'د لوستلو لېست',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS د Safari ټبونه او نښې د ډیسک بشپړ لاسرسي شاته ساتي. هلته Orden چالان کړئ، بیا بیا وغواړئ.',
+  // Settings: note types
+  'Page note': 'د مخونو يادښت',
+  'Web note': 'ویب يادښت',
+  'Private tab': 'شخصي ټب',
+  'Note types': 'د يادښت ډولونه',
+  // Tasks: Upcoming's weeks
+  'Previous week': 'تېره اونۍ',
+  // Tasks: projects placed in the panel, and their folder
+  'Add project above': 'پورته پروژه ورزيات کړئ',
+  'Add project below': 'لاندې پروژه ورزيات کړئ',
+  'Projects folder': 'د پروژو فولډر',
+  // Tasks: a repeating task skipped or done for good
+  Skip: 'تېر شئ',
+  'Complete forever': 'د تل لپاره بشپړ کړئ',
+  // Tasks: comments
+  Comments: 'تبصرې',
+  // Tasks: filters
+  Filters: 'چاڼونه',
+  'Add filter': 'چاڼ ورزيات کړئ',
+  'Edit filter': 'چاڼ سم کړئ',
+  // Tasks: a project's sections
+  'Add section': 'برخه ورزيات کړئ',
+  '{name} (copy)': '{name} (کاپي)',
+  'Its tasks are deleted with it.': 'دندې یې هم ورسره ړنګېږي.',
+  // Tasks: keys, selection and the undo toast
+  Completed: 'بشپړ شو',
+  'Remove date': 'نېټه لرې کړئ',
+  'Next task': 'راتلونکې دنده',
+  'Previous task': 'پخوانۍ دنده',
+  'Add task at the top': 'پورته دنده ورزيات کړئ',
+  '{count} selected': '{count} ټاکل شوي',
+  // Tasks: the Display menu
+  Display: 'ښودنه',
+  'Completed tasks': 'بشپړې دندې',
+  // Tasks: several lines pasted into quick add
+  'One task': 'یوه دنده',
+  'One per line': 'په هره کرښه کې یوه',
+  // Tasks: the projects in the panel
+  Favorites: 'خوښې',
+  'Add project': 'پروژه ورزیاته کړئ',
+  'Add sub-project': 'فرعي پروژه ورزیاته کړئ',
+  // Tasks: the task view
+  'Sub-tasks': 'فرعي دندې',
+  'Add sub-task': 'فرعي دنده ورزیاته کړئ',
+  'New label': 'نوی لیبل',
+  'No deadline': 'وروستۍ نېټه نشته',
+  // Tasks: the row's menu and the scheduler
+  Reschedule: 'بیا مهالویش',
+  'Later this week': 'د دې اونۍ وروسته',
+  'This weekend': 'د دې اونۍ پای',
+  'Next weekend': 'د راتلونکې اونۍ پای',
+  'Every week on {day}': 'هره اونۍ {day}',
+  'Every month on day {day}': 'هره میاشت په {day} نېټه',
+  'Every year on {date}': 'هر کال {date}',
+  'Type a date': 'نېټه ولیکئ',
+  'Previous month': 'تېره میاشت',
+  'Next month': 'راتلونکې میاشت',
+  'No time': 'وخت نشته',
+  'No repeat': 'تکرار نشته',
+  Complete: 'بشپړ کړئ',
+  Reopen: 'بیا پرانیزئ',
+  Schedule: 'مهالویش',
+  'Open in note': 'په یادښت کې پرانیزئ',
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'بل اپ',
-  'Start fresh': 'له سره پیل کړئ',
   'Import from Obsidian': 'له Obsidian څخه واردول',
   'Import from Notion': 'له Notion څخه واردول',
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'لارښوونې',
   'Silent mode': 'چوپ حالت',
-  'Sign in to keep your notes safe and on every device.':
-    'ننوځئ چې ستاسو یادښتونه خوندي او په هر وسیله کې وي.',
   'See how your notes connect.': 'وګورئ چې ستاسو یادښتونه څنګه سره تړلي دي.',
   'Press {key} to find anything, notes and commands alike.':
     'د هر څه موندلو لپاره، یادښتونه او امرونه، {key} کېکاږئ.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'د لیکلو پر مهال مارک ډاون ښکاره کړه',
+  'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'نښه ګر',
   'Pointing hand on buttons': 'په تڼیو باندې اشاره کوونکی لاس',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
@@ -40,11 +145,13 @@ export const ps: Dictionary = {
   '{count} h': '{count} ساعته',
   Inbox: 'راغلي',
   Date: 'نېټه',
+  'Start date': 'د پیل نېټه',
   Priority: 'لومړیتوب',
   Reminder: 'یادونه',
   Duration: 'موده',
   'Smart dates': 'هوښیارې نېټې',
   'From any app': 'له هر اپ څخه',
+  'Show tasks without a start date in Today': 'هغه دندې چې د پیل نېټه نه لري په نن کې وښایاست',
   'Every day': 'هره ورځ',
   'Every weekday': 'هره کاري ورځ',
   'Every week': 'هره اونۍ',
@@ -61,6 +168,13 @@ export const ps: Dictionary = {
   Unsaved: 'نه دی خوندي شوی',
   'Save to': 'خوندي کړئ په',
   'Reloaded with the web data of {space}': 'د {space} د ویب معلوماتو سره بیا پورته شو',
+  Separate: 'جلا',
+  'Share this note’s web data again?': 'د دې یادښت ویب ډېټا بیا شریکه کړئ؟',
+  'What its pages are signed in to on this computer is deleted.':
+    'په دې کمپیوټر کې د هغې پاڼې چې ورته ننوتې دي، ړنګېږي.',
+  'Share again': 'بیا شریکول',
+  'This note keeps its own web data now': 'دا یادښت اوس خپله ویب ډېټا ساتي',
+  'Back on the shared web data': 'بېرته شریکې ویب ډېټا ته',
   'Add a page': 'مخ ورزياتول',
   'Add a page after this': 'له دې وروسته مخ ورزياتول',
   'Delete this page': 'دا مخ ړنګول',
@@ -81,6 +195,8 @@ export const ps: Dictionary = {
   Dots: 'ټکي',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'کینوس په دوو ګوتو وګرځوئ',
+  'Turn upright': 'سم یې کړئ',
   Canvas: 'تخته',
   Card: 'کارت',
   'Note or picture': 'يادښت يا انځور',
@@ -95,7 +211,6 @@ export const ps: Dictionary = {
   'New window': 'نوې کړکۍ',
   New: 'نوی',
   'New space': 'نوې ځای',
-  '{name}: switch space': '{name}: ځای بدلول',
   Untitled: 'بې سرليک',
   Space: 'ځای',
   'Name the space': 'ځای ته نوم',
@@ -140,8 +255,6 @@ export const ps: Dictionary = {
   'Loading…': 'د راوړلو په حال کې…',
   'Create a space': 'ځای جوړول',
   'Import a folder': 'فولډر واردول',
-  'Sign in to sync': 'د همغږۍ لپاره ننوتل',
-  'Create account': 'حساب جوړول',
   'Delete space': 'ځای ړنګول',
   'Delete {name}?': '{name} ړنګ شي؟',
   'Every note in this space is deleted from your computer.':
@@ -159,6 +272,10 @@ export const ps: Dictionary = {
   Unpin: 'نښلون ليرې کول',
   Close: 'بندول',
   'Close pinned tab?': 'نښلول شوې ټوټه بنده شي؟',
+  'Save changes to {name}?': 'په {name} کې بدلونونه خوندي شي؟',
+  'Save changes to these tabs?': 'په دې ټبونو کې بدلونونه خوندي شي؟',
+  'Unsaved words go to Recently deleted.': 'ناخوندي شوي ټکي وروستي ړنګ شوو ته ځي.',
+  'Don’t save': 'مه یې خوندي کوه',
   'Close others': 'نور بندول',
   'Close tabs to the right': 'ښي خوا ټبونه بندول',
   'Close tabs to the left': 'کيڼ اړخ ټبونه بندول',
@@ -195,9 +312,6 @@ export const ps: Dictionary = {
   'Move this note': 'دا يادښت خوځول',
   'Move up': 'پورته خوځول',
   'Move down': 'ښکته خوځول',
-  Bookmark: 'نښانه',
-  'Remove bookmark': 'نښانه ليرې کول',
-  'Leave out of search': 'له لټون بهر پرېښودل',
   'Search here again': 'بيا دلته لټون',
   'Undo the last file change': 'د دوتنې وروستی بدلون بېرته کول',
   'Undo moving {name}': 'د {name} خوځښت بېرته کول',
@@ -247,7 +361,6 @@ export const ps: Dictionary = {
   'Remove group': 'ډله ليرې کول',
   'Out of the group': 'له ډلې بهر',
   Make: 'جوړول',
-  'Bookmark this block': 'دې بلاک ته نښانه',
   Panels: 'تختې',
   Outline: 'چوکاټ',
   'Stay on this note': 'پر دې يادښت پاتې کېدل',
@@ -511,8 +624,8 @@ export const ps: Dictionary = {
   'Asking OpenAI which models this key can use':
     'له OpenAI پوښتنه چې دا کيلي کوم ماډلونه کارولی شي',
   'Could not reach OpenAI': 'OpenAI ته ونه رسېدل',
-  'That key cannot use any of the models nibeditor asks for.':
-    'هغه کيلي هيڅ يو له هغو ماډلونو نه کارولی شي چې nibeditor غواړي.',
+  'That key cannot use any of the models Orden asks for.':
+    'هغه کيلي هيڅ يو له هغو ماډلونو نه کارولی شي چې Orden غواړي.',
   'No reasoning': 'استدلال نشته',
   Minimal: 'ډېر لږ',
   Low: 'ټيټ',
@@ -534,7 +647,7 @@ export const ps: Dictionary = {
   Mode: 'حالت',
   // The window's own edges; see appearance.rs
   Window: 'کړکۍ',
-  'nibeditor’s own': 'د nibeditor خپل',
+  'Orden’s own': 'د Orden خپل',
   'The system’s': 'د سيستم',
   'Window frame': 'د کړکۍ چوکاټ',
   System: 'غونډال',
@@ -597,6 +710,7 @@ export const ps: Dictionary = {
   '{done} of {total}': '{done} له {total}',
   'Sync failed': 'همغږي پاتې راغله',
   '{name} could not be written.': '{name} ونه ليکل شو.',
+  '{name} could not be read.': '{name} ونه لوستل شو.',
   'Text size': 'د متن کچه',
   'Line spacing': 'د کرښو واټن',
   'Line width': 'د کرښې پلنوالی',
@@ -657,8 +771,10 @@ export const ps: Dictionary = {
   '{used} of {limit} used.': 'له {limit} څخه {used} کارول شوی.',
   'That image does not fit in your storage.': 'هغه انځور ستاسو په زېرمه کې نه ځايېږي.',
   'out of space': 'زېرمه ډکه',
-  'nibeditor {version} is ready to install.': 'nibeditor {version} د لګولو لپاره تيار دی.',
+  'Orden {version} is ready to install.': 'Orden {version} د لګولو لپاره تيار دی.',
+  'Orden {version} is available.': 'Orden {version} شته دی.',
   'Restart now': 'اوس بيا پيلول',
+  'Move to Applications': 'اپلیکیشنونو ته یې ولېږدوئ',
   Later: 'وروسته',
   More: 'نور',
   'Open notes': 'يادښتونه پرانيستل',
@@ -683,11 +799,9 @@ export const ps: Dictionary = {
   Continue: 'دوام',
   'Send a new code': 'نوې کوډ لېږل',
   'Code sent to': 'کوډ ولېږل شو',
-  'You already have notes on this computer.': 'تاسو دمخه پر دې کمپيوټر يادښتونه لرئ.',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
-    'وساتئ يې او ستاسو حساب سره يوځای شي. ورک کړئ يې او يوازې هغه پاتې شي چې ستاسو حساب لري - دا بېرته نه شي کېدی.',
-  'Keep them': 'وساتئ',
-  'Erase them': 'ورک کړئ',
+  'This device already has notes.': 'دا وسیله دمخه یادښتونه لري.',
+  Merge: 'یوځای کول',
+  'Keep separate': 'جلا ساتل',
   'Digit {number}': 'ګڼه {number}',
   'Resend in {seconds}s': 'په {seconds} ثانيو کې بيا لېږل',
   'Last synced {time}.': 'وروستې همغږي {time}.',
@@ -735,14 +849,14 @@ export const ps: Dictionary = {
   'Reads your notes.': 'ستاسو يادښتونه لولي.',
   'Reads and writes your notes.': 'ستاسو يادښتونه لولي او ليکي.',
   Other: 'بل',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'د مصنوعي ځيرکتيا مرستيال ستاسو يادښتونه لوستلی شي - او که پرېښودل شي، بدلولی هم شي. ستاسو د nibeditor برېښناليک سره ننوځي؛ د نښلولو لپاره هيڅ نشته.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'د مصنوعي ځيرکتيا مرستيال ستاسو يادښتونه لوستلی شي - او که پرېښودل شي، بدلولی هم شي. ستاسو د Orden برېښناليک سره ننوځي؛ د نښلولو لپاره هيڅ نشته.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'په Claude کې Settings → Connectors پرانيځئ او Add custom connector کليک کړئ.',
   'Open Claude’s connectors': 'د Claude نښلونکي پرانيستل',
   'Fill in the two fields and click Add.': 'دواړه ځايونه ډک کړئ او Add کليک کړئ.',
-  'Click Connect and sign in with your nibeditor email.':
-    'Connect کليک کړئ او د nibeditor برېښناليک سره ننوځئ.',
+  'Click Connect and sign in with your Orden email.':
+    'Connect کليک کړئ او د Orden برېښناليک سره ننوځئ.',
   'Using Claude Code instead?': 'Claude Code کاروئ؟',
   Command: 'کړنه',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -753,16 +867,16 @@ export const ps: Dictionary = {
   'Open ChatGPT’s plugins': 'د ChatGPT پلګينونه پرانيستل',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'د Plugins برخه يا د زياتون تڼۍ نشته؟ لومړی Developer mode په Settings → Security and login کې ولاړ کړئ.',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'کله چې ChatGPT پوښتنه وکړي، د nibeditor برېښناليک سره ننوځئ.',
-  'To use it in a chat, type @ and pick nibeditor.':
-    'په خبرو کې د کارولو لپاره @ وليکئ او nibeditor وټاکئ.',
+  'Sign in with your Orden email when ChatGPT asks.':
+    'کله چې ChatGPT پوښتنه وکړي، د Orden برېښناليک سره ننوځئ.',
+  'To use it in a chat, type @ and pick Orden.':
+    'په خبرو کې د کارولو لپاره @ وليکئ او Orden وټاکئ.',
   'Server URL': 'د سرور پته',
   Authentication: 'اعتبار پېژندنه',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'پرمختللې د OAuth امستنې همداسې پرېږدئ او “I understand and want to continue” ونښئ.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'هر هغه MCP پيرودونکی چې Streamable HTTP له OAuth سره کاروي. پته ورکړئ: خپله ځان ثبتوي او د nibeditor د ننوتلو مخ پرانيځي.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'هر هغه MCP پيرودونکی چې Streamable HTTP له OAuth سره کاروي. پته ورکړئ: خپله ځان ثبتوي او د Orden د ننوتلو مخ پرانيځي.',
   'Show config': 'سازونه ښودل',
   'For a client that takes a JSON block instead of a URL.':
     'د هغه پيرودونکي لپاره چې د پتې پر ځای د JSON بلاک اخلي.',
@@ -829,7 +943,7 @@ export const ps: Dictionary = {
   'Display name': 'ښودلو نوم',
   'Your name': 'ستاسو نوم',
   Email: 'برېښناليک',
-  'On nibeditor.com': 'پر nibeditor.com',
+  'On orden.so': 'پر orden.so',
   'Your own domain': 'خپل ډومېن',
   'Switching gives up {name}.': 'بدلول {name} پرېږدي.',
   Page: 'مخ',
@@ -900,8 +1014,9 @@ export const ps: Dictionary = {
   'No footnotes in this note': 'په دې یادښت کې لمنلیک نشته',
   'Stack tabs': 'ټوپونه په ستنو کې کېښکېنه',
   'Unstack tabs': 'د ټوپونو ستنې لرې کړه',
-  'High contrast': 'لوړ تضاد',
+  Contrast: 'تضاد',
   Glass: 'ښیښه',
+  Classic: 'کلاسیک',
   'Front matter': 'سرمنځپانګه',
   'Front matter: {name}': 'سرلیک معلومات: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':
@@ -912,6 +1027,7 @@ export const ps: Dictionary = {
   Comment: 'څرګندونه',
   'Always on top': 'هميشه پورته',
   'What is new': 'نوي څه دي',
+  'Download the app': 'اپلیکیشن ښکته کړئ',
   'Report an issue': 'ستونزه راپور کول',
   'Move the line up': 'کرښه پورته خوځول',
   'Move the line down': 'کرښه ښکته خوځول',
@@ -991,6 +1107,23 @@ export const ps: Dictionary = {
   'Layout: {name}': 'اوډون: {name}',
   'Space: {name}': 'ځای: {name}',
   'Theme: {name}': 'بڼه: {name}',
+  'AI account: {name}': 'د AI حساب: {name}',
+  Accounts: 'حسابونه',
+  Access: 'لاسرسی',
+  Set: 'ټاکل شوی',
+  'Start over': 'بیا پیل',
+  'Sign in here': 'دلته ننوځئ',
+  '{device} wants your AI accounts': '{device} ستاسو د AI حسابونه غواړي',
+  '{device} offers this device your AI vault': '{device} دې وسیلې ته ستاسو د AI خزانه وړاندې کوي',
+  Join: 'یوځای کېدل',
+  'Allow this device on another one': 'په بل وسیله دا وسیله اجازه کړئ',
+  'On every device you sign in to, end-to-end encrypted.':
+    'په هره وسیله چې ننوځئ، له سره تر سره کوډ شوي.',
+  'Sign in to have them on every device.': 'ننوځئ چې په هره وسیله یې ولرئ.',
+  'Agents on this computer connect on their own': 'په دې کمپیوټر استازي پخپله نښلي',
+  Helpers: 'مرستندويان',
+  'Start helpers on your AI accounts': 'ستاسو د AI په حسابونو مرستندويان پیل کړئ',
+  Delegated: 'وسپارل شو',
   'Code theme: {name}': 'د کوډ بڼه: {name}',
   'Delete a layout': 'اوډون ړنګول',
   // Keyboards and modal editing
@@ -1059,6 +1192,7 @@ export const ps: Dictionary = {
   'Double-click to write': 'د ليکلو لپاره دوه ځله کليک',
   'Another colour': 'بل رنګ',
   'Turn into a note': 'يادښت ته بدلول',
+  Arrange: 'ترتیب',
   'Bring to front': 'تر ټولو مخکې راوستل',
   'Bring forward': 'مخکې راوستل',
   'Send backward': 'وروسته لېږل',
@@ -1080,6 +1214,12 @@ export const ps: Dictionary = {
   'Export as PNG': 'لکه PNG صادرول',
   'Export as SVG': 'لکه SVG صادرول',
   'Export as PDF': 'لکه PDF صادرول',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF واردول',
+  'Choose how to add the pages to the canvas.': 'وټاکه چې مخونه څنګه په تخته کې اضافه شي.',
+  'Single page': 'يو مخ',
+  'All pages': 'ټول مخونه',
+  'Choose a page': 'يو مخ وټاکه',
   // The canvas: what its own keys are called
   'Delete what is picked': 'ټاکل شوی ړنګول',
   'Nudge left': 'کيڼ ته ټېل',
@@ -1140,8 +1280,8 @@ export const ps: Dictionary = {
   'Release channel': 'د خپرونې کانال',
   Stable: 'ټينګ',
   Unstable: 'نا ټينګ',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'ټينګ رسمي خپرونې تعقيبوي، نا ټينګ هره main ته لېږنه او ماتېدی شي.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'ټينګ خپاره شوې نسخې تعقيبوي، نا ټينګ د څنډې جوړښتونه او ماتېدی شي.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'واردول',
@@ -1198,13 +1338,15 @@ export const ps: Dictionary = {
   '{count} tables inside notes do not come over': 'په يادښتونو کې {count} جدولونه نه راځي',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} ملګړي په iCloud کې دي نه پر دې Mac',
+  '{count} files are in iCloud rather than on this Mac':
+    '{count} فایلونه په iCloud کې دي نه پر دې Mac',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS هغه يادښتونه د Full Disk Access تر شا ساتي.',
   'There are no notes in Apple Notes on this Mac.': 'پر دې Mac په Apple Notes کې يادښت نشته.',
   'Those notes could not be read.': 'هغه يادښتونه ونه لوستل شول.',
   'Read them from this Mac': 'له دې Mac ولولئ',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    'nibeditor په Full Disk Access کې ولاړ کړئ، بيا هڅه وکړئ.',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    'Orden په Full Disk Access کې ولاړ کړئ، بيا هڅه وکړئ.',
   'Open the setting': 'امستنه پرانيستل',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'Apple Journal پخپله صادروي: Journal، امستنې، صادرول. Apple Notes صادرول نه لري، نو له هغه Mac لرې چې پرې دي، دلته هغه دوتنپوښ غورځول کېږي چې يو صادرونکي ليکلی.',
@@ -1310,15 +1452,15 @@ export const ps: Dictionary = {
   'OpenAI-compatible': 'له OpenAI سره برابر',
   'Base URL': 'بنسټيزه پته',
   'API key': 'د API کيلي',
-  'Set on this device': 'پر دې وسيله ټاکل شوی',
   Optional: 'اختياري',
   'List models': 'ماډلونه راوړل',
   'Asking…': 'پوښتنه کېږي…',
   'No providers yet.': 'تر اوسه برابرونکي نشته.',
   'Add {name}': '{name} ورزياتول',
-  'Keys stay in the secure store on this device.':
-    'کيليانې پر دې وسيله په خوندي زېرمه کې پاتې کېږي.',
   'This browser holds the keys in its own storage.': 'دا کوټګر کيليانې په خپله زېرمه کې ساتي.',
+  'Keep this browser’s keys in the vault': 'د دې براوزر کلیدونه په خزانه کې وساته',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'بیا به د هرې وسیلې کلیدونه د دې براوزر په زېرمه کې وساتل شي، چېرته چې یو سکرېپټ چې پاڼې ته ننوتی وي هغه لوستلی شي.',
   'AI can be wrong. Check the facts.': 'مصنوعي ځيرکتيا تېروتنه کولی شي. حقايق وڅېړئ.',
   'Used by the glasses': 'عينکې يې کاروي',
   'Could not read the models.': 'ماډلونه ونه لوستل شول.',
@@ -1360,7 +1502,6 @@ export const ps: Dictionary = {
   'A cited report': 'یو حواله شوی راپور',
   'A helper in the background': 'په شالید کې یو مرسته کوونکی',
   'A side question': 'یو اړخیزه پوښتنه',
-  'Agent mode': 'د اېجنټ حالت',
   'Agent profile': 'د اېجنټ پروفایل',
   'Archive the thread': 'تار آرشیف کړه',
   'Approve mode': 'د منظورۍ حالت',
@@ -1479,8 +1620,6 @@ export const ps: Dictionary = {
   // Web tabs
   Reload: 'بېرته راوړل',
   'Hard reload': 'بشپړ بېرته راوړل',
-  'Clip this page': 'دا مخ خوندول',
-  'Clip the link': 'تړنه خوندول',
   'Open in the browser': 'په کوټګر کې پرانيستل',
   'Show it here': 'دلته ښودل',
   Website: 'ټاټوبی',
@@ -1565,8 +1704,9 @@ export const ps: Dictionary = {
   'that is not a theme': 'هغه بڼه نه ده',
   'no such theme': 'داسې بڼه نشته',
   'choose a model first': 'لومړی ماډل وټاکئ',
+  'set an OpenAI key in Orden’s settings first': 'لومړی د Orden په امستنو کې د OpenAI کيلي کېږدئ',
   'set an OpenAI key in nibeditor’s settings first':
-    'لومړی د nibeditor په امستنو کې د OpenAI کيلي کېږدئ',
+    'لومړی د Orden په امستنو کې د OpenAI کيلي کېږدئ',
   'that is a lot of questions - try again later': 'هغه ډېرې پوښتنې دي - وروسته بيا هڅه وکړئ',
   'that is too much audio': 'هغه ډېر غږ دی',
   'that is more than a spoken command': 'هغه له يوې غږيزې کړنې ډېر دی',
@@ -1590,7 +1730,6 @@ export const ps: Dictionary = {
   Nothing: 'هیڅ',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'دا لید نښه کول',
   Keep: 'ساتل',
 
   // Which side of the window a panel sits on.
@@ -1612,7 +1751,6 @@ export const ps: Dictionary = {
   'New tab': 'نوی ټب',
   'Full screen': 'بشپړ پرده',
   'Print…': 'چاپ…',
-  'Save page': 'مخ خوندول',
   'Share…': 'شريکول…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1656,7 +1794,6 @@ export const ps: Dictionary = {
   Blocked: 'بند شوی',
   'Reset permissions': 'اجازې بیا تنظیمول',
   'Turn into': 'بدلول په',
-  'Bookmark these blocks': 'دې بلاکونو ته نښانه',
   Foldable: 'د غونډولو وړ',
   'Starts folded': 'غونډ پیل کیږي',
   // Where a space keeps what websites store
@@ -1673,6 +1810,15 @@ export const ps: Dictionary = {
   'Bring all to front': 'ټول مخې ته راوړه',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'لمېسه بېرته کول',
+  'Devices with your AI vault': 'ستاسو د AI خزانې لرونکې وسیلې',
+  'This device': 'دا وسیله',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'وسیله به نور ستاسو د AI حسابونه ونه لوستلای شي، او نورې به نوې کیلي ترلاسه کړي.',
+  'Also remove this device from your AI vault?': 'دا وسیله له خپلې AI خزانې هم لرې کړئ؟',
+  'Remove and sign out': 'لرې کړئ او ووځئ',
+  'Undo making {name}': 'د {name} جوړول بېرته کول',
+  'Undo the deletion': 'ړنګون بېرته کول',
+  'Undo the move': 'خوځښت بېرته کول',
   'Redo the last file change': 'د دوتنې وروستی بدلون بيا کول',
   'Select down': 'ښکته ټاکل',
   'Select up': 'پورته ټاکل',
@@ -1716,7 +1862,6 @@ export const ps: Dictionary = {
   '{key} in a terminal': 'په ټرمینل کې {key}',
   'Always ask': 'تل وپوښتئ',
   'Open another': 'بل یو پرانیزئ',
-  'Open in terminal': 'په ټرمینل کې پرانیزئ',
   Clear: 'پاکول',
   'Exited with code {code}': 'د {code} کوډ سره پای ته ورسید',
   'Could not start {shell}': '{shell} پیل نشو',
@@ -1725,18 +1870,8 @@ export const ps: Dictionary = {
   'Stop what is running in {name}?': 'په {name} کې روان کار ودرول شي؟',
   'Stop what is running in these terminals?': 'په دې ټرمینلونو کې روان کار ودرول شي؟',
   'Paste {count} lines?': { one: '{count} کرښه ولګول شي؟', other: '{count} کرښې ولګول شي؟' },
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': 'اصلي کوټګر',
-  // The engine web tabs run on
-  Engine: 'انجن',
-  Relaunch: 'بيا پیلول',
-  'Chromium did not start': 'Chromium پیل نه شو',
-  'No connection': 'اړیکه نشته',
-  'Not in this release': 'په دې خپرونه کې نشته',
-  'Needs an update': 'تازه کول پکار دي',
-  'Signature did not match': 'لاسلیک سمون نه خوري',
-  'Disk full': 'ډیسک ډک دی',
-  'Could not be installed': 'نصب نه شو',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'د {name} سمونونه بېرته واخلئ',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1839,7 +1974,7 @@ export const ps: Dictionary = {
   'Always on this site': 'په دې سایټ تل',
   'Agents stopped': 'اېجنټان ودرول شول',
   'Agent tabs closed': 'د اېجنټانو ټبونه وتړل شول',
-  'nibeditor is still running for your agents': 'nibeditor لا هم ستاسو د اېجنټانو لپاره چلېږي',
+  'Orden is still running for your agents': 'Orden لا هم ستاسو د اېجنټانو لپاره چلېږي',
   '{client} wants to connect': '{client} غواړي وصل شي',
   // Web logins that travel, and the devices of an account
   'no such device': 'داسې وسیله نشته',
@@ -1855,11 +1990,12 @@ export const ps: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'په دې کمپیوټر کې اجنټان',
   'Your account’s connector': 'ستاسو د حساب نښلونکی',
-  'nibeditor asks you once, the first time it connects.':
-    'nibeditor له تاسو یو ځل پوښتي، کله چې لومړی ځل وصلېږي.',
+  'Orden asks you once, the first time it connects.':
+    'Orden له تاسو یو ځل پوښتي، کله چې لومړی ځل وصلېږي.',
   'A client on another machine?': 'په بل ماشين کې پېرېدونکی؟',
   'Shown only once.': 'یوازې یو ځل ښودل کېږي.',
   'Remove {name}?': '{name} لرې شي؟',
+  'End {name}?': '{name} پای ته ورسيږي؟',
   'Its token stops working.': 'د هغه ټوکن به کار نه کوي.',
   'Added {date}': 'په {date} زیات شو',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':
@@ -1880,7 +2016,6 @@ export const ps: Dictionary = {
   'Change notes': 'یادښتونه بدلول',
   'See what you are looking at': 'هغه لیدل چې تاسو یې ګورئ',
   'Move and rename files': 'فایلونه لېږدول او نوم بدلول',
-  'Open tabs and bookmarks': 'ټبونه او نښانې پرانیستل',
   'Bring a tab to the front': 'یو ټب مخې ته راوستل',
   'Browse in tabs of its own': 'په خپلو ټبونو کې لټون',
   'Read what pages load': 'هغه لوستل چې پاڼې یې بار کوي',
@@ -1902,14 +2037,11 @@ export const ps: Dictionary = {
   'Without your logins': 'ستاسو له ننوتلو پرته',
   'Calls a minute': 'په دقیقه کې غوښتنې',
   'Pages a minute': 'په دقیقه کې پاڼې',
+  'Browser memory limit': 'د براوزر د حافظې حد',
   '{count} calls': {
     one: '{count} غوښتنه',
     other: '{count} غوښتنې',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'په {device} کې پرانیستی',
-  'Use here': 'دلته یې وکاروئ',
-  '{device} wants your web logins': '{device} ستاسو د ویب ننوتنې غواړي',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'چټکه پوښتنه',
@@ -1976,7 +2108,7 @@ export const ps: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'ځنډول',
   Reminders: 'یادونې',
-  'Reminders ring while nibeditor is open': 'یادونې تر هغه وخته غږېږي چې nibeditor پرانیستی وي',
+  'Reminders ring while Orden is open': 'یادونې تر هغه وخته غږېږي چې Orden پرانیستی وي',
   Automatic: 'اتومات',
   'Stay in the tray': 'په سیستم ټرې کې پاتې شه',
   'Exact alarms': 'دقیق الارمونه',
@@ -2019,7 +2151,6 @@ export const ps: Dictionary = {
   'Any of them': 'هر یو',
   Compare: 'پرتله',
   'Add a filter': 'چاڼګر ورزیات کړئ',
-  'Reschedule to today': 'نن ته یې یوسئ',
   Collapse: 'راټول کړئ',
   Expand: 'پراخ کړئ',
   Summary: 'لنډیز',
@@ -2041,7 +2172,6 @@ export const ps: Dictionary = {
   Layout: 'ترتیب',
   Overdue: 'ځنډېدلې',
   Upcoming: 'راتلونکې',
-  Logbook: 'د کارونو کتاب',
   Project: 'پروژه',
   Label: 'لیبل',
   List: 'لړلیک',
@@ -2227,4 +2357,11 @@ export const ps: Dictionary = {
   'Search this chat': 'په دې چټ کې لټون',
   'Add as task': 'د دندې په توګه زیاتول',
   'Save as note': 'د یادښت په توګه ساتل',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'سهار',
+  Lagoon: 'جهيل',
+  Lilac: 'ليلک',
+  Peach: 'شفتالو',
+  Sage: 'سيج',
+  Mist: 'لړه',
 }

@@ -1,7 +1,7 @@
-//! The browser verbs, answered on `WebView2` and nib's own Chromium alike - both speak the
-//! `DevTools` Protocol, and `engines` hands every verb the page whichever it is
-//! (docs/agent-native.md 5.2 and 12): which tab, whether
-//! this agent may act there, what the page says it would be doing, and then the act.
+//! The browser verbs, answered on `WebView2` - it speaks the `DevTools` Protocol, and
+//! `engines` hands every verb the page (docs/agent-native.md 5.2 and 12): which tab,
+//! whether this agent may act there, what the page says it would be doing, and then the
+//! act.
 //!
 //! Every verb on a tab goes through the same gate, in this order: the tab is this agent's
 //! own or a reader's tab it may reach (`browser.reader`, its spaces); the page is not
@@ -146,12 +146,6 @@ fn open_tab(app: &AppHandle, caller: &Caller, open: &super::verbs::Open) -> Answ
         Store::Agent => Some(format!("agent_{}", caller.id())),
         Store::Reader | Store::Space => {
             let reader = store_for(app, open.space.as_deref(), &open.url);
-            // The lease is the reader's store's: the twin carries its logins.
-            if let Err(why) =
-                super::leases::lease_needed(reader.as_deref(), &policy::site_of(&host))
-            {
-                return Answer::error(Code::InUseElsewhere, why);
-            }
             Some(engines::twin_of(reader.as_deref()))
         }
     };
@@ -159,11 +153,23 @@ fn open_tab(app: &AppHandle, caller: &Caller, open: &super::verbs::Open) -> Answ
         Caller::Agent(grant) => usize::try_from(grant.limits.tabs).unwrap_or(4),
         Caller::Reader => 4,
     };
+    let ceiling = match caller {
+        Caller::Agent(grant) => grant.limits.memory,
+        Caller::Reader => 0,
+    };
     let size = (
         open.width.unwrap_or(tabs::WIDTH),
         open.height.unwrap_or(tabs::HEIGHT),
     );
-    match tabs::open(app, caller.id(), &open.url, store, store_name, size, most) {
+    match tabs::open(
+        app,
+        caller.id(),
+        &open.url,
+        store,
+        store_name,
+        size,
+        (most, ceiling),
+    ) {
         Ok(tab) => Answer::ok(Opened { tab: tab.id, store }),
         Err(refused) => refused,
     }
@@ -430,6 +436,24 @@ fn ask(
     )
 }
 
+/// An agent's own tab shown to the reader without a question, for an agent that asks
+/// nothing: its Show, answered as it is raised, which the window shows the tab for.
+fn shown(app: &AppHandle, grant: &Grant, own: &Tab, summary: String, key: &str) {
+    approvals::granted(
+        app,
+        Asking {
+            agent: &grant.id,
+            name: &grant.name,
+            category: Category::Showing,
+            summary,
+            site: policy::host_of(&own.url).map(|host| policy::site_of(&host)),
+            tab: Some(own.id.clone()),
+            key: key.to_string(),
+        },
+        super::verbs::ApprovalAnswer::Allowed,
+    );
+}
+
 /// The hosts a page and its frames have talked to, for the payment processors.
 fn page_hosts(page: &Page<'_>) -> Vec<String> {
     let heard = super::cdp::heard(&page.label);
@@ -571,21 +595,38 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 }))
             }
             Verb::Click(click) => {
-                let target = element(page, &click.element)?;
-                let facts = page.facts(&target)?;
-                let key = approvals::key("browser_click", Some(&tab), Some(&click.element));
-                judged(app, caller, page, place, &facts, Act::Press, &key)?;
                 let button = match click.button {
                     super::verbs::Button::Left => "left",
                     super::verbs::Button::Right => "right",
                     super::verbs::Button::Middle => "middle",
                 };
-                page.click(
-                    &target,
-                    button,
-                    click.count.unwrap_or(1).clamp(1, 3),
-                    modifiers(&click.modifiers),
-                )?;
+                let count = click.count.unwrap_or(1).clamp(1, 3);
+                let held = modifiers(&click.modifiers);
+                match (&click.element, click.x, click.y) {
+                    (Some(reference), None, None) => {
+                        let target = element(page, reference)?;
+                        let facts = page.facts(&target)?;
+                        let key = approvals::key("browser_click", Some(&tab), Some(reference));
+                        judged(app, caller, page, place, &facts, Act::Press, &key)?;
+                        page.click(&target, button, count, held)?;
+                    }
+                    // A point instead, which the press is judged by what lands there, as
+                    // a press on that element by ref would be (#373).
+                    (None, Some(x), Some(y)) => {
+                        let target = page.element_at((x, y))?;
+                        let facts = page.facts(&target)?;
+                        let reference = format!("e{}", target.backend);
+                        let key = approvals::key("browser_click", Some(&tab), Some(&reference));
+                        judged(app, caller, page, place, &facts, Act::Press, &key)?;
+                        page.click_at((x, y), button, count, held)?;
+                    }
+                    _ => {
+                        return Err(Answer::error(
+                            Code::BadArguments,
+                            "say a ref, or an x and a y in the tab: one of the two",
+                        ));
+                    }
+                }
                 acted(page)
             }
             Verb::Type(typing) => {
@@ -848,6 +889,11 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 } else {
                     own.title.clone()
                 };
+                // Full permissions: shown at once, the question answered as it is raised.
+                if grant.asks_nothing() {
+                    shown(app, grant, own, format!("Show {title}"), &key);
+                    return Ok(acted(page));
+                }
                 ask(
                     app,
                     grant,
@@ -866,6 +912,15 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                     ));
                 };
                 let key = approvals::key("browser_takeover", Some(&tab), Some(&takeover.reason));
+                // Full permissions asks the reader nothing (#372): an agent's own tab is
+                // put in front of the reader at once, as Show puts it, and the agent goes
+                // on, waiting for the page to show the step done (`browser_wait`).
+                if grant.asks_nothing() {
+                    if let Place::Own(own) = place {
+                        shown(app, grant, own, takeover.reason.clone(), &key);
+                    }
+                    return Ok(acted(page));
+                }
                 // A question and nothing more: the agent keeps the tab, and goes on
                 // when the page shows the step done.
                 ask(

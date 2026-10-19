@@ -68,7 +68,7 @@ ERRANDS = """# Errands
 THESIS = """# Thesis
 
 - [/] Draft the talk [duration:: 2h] ⏳ {soon}
-- [ ] Renew passport 🔺 📅 {lastweek}
+- [ ] Renew passport [deadline:: {yesterday}] 🔺 📅 {lastweek}
 """
 
 SYNC = "---\nstatus: Doing\ndue: {soon}\npoints: 3\n---\n# Sync loses a rename\n"
@@ -156,6 +156,7 @@ def the_panel(page: Page) -> None:
     for wanted in ["Inbox", "Today", "Upcoming", "Bugs", "Errands", "Thesis", "admin"]:
         if not any(one.startswith(wanted) for one in rows):
             wrong(f"the panel has no {wanted} row")
+    # Overdue is a deadline past (#371): the passport's.
     late = page.evaluate("!!document.querySelector('.tasks .nib-row-meta.late')")
     if not late:
         wrong("Today's count is not in the danger tone while something is overdue")
@@ -170,7 +171,7 @@ def open_builtin(page: Page, name: str) -> None:
 
 def today_and_upcoming(page: Page) -> None:
     open_builtin(page, "today")
-    words = texts(page, ".view-tab .line .words")
+    words = texts(page, ".view-tab .task .words")
     say(f"[today] {json.dumps(words, ensure_ascii=False)}")
     for wanted in ["Call the bank", "Water the plants", "Renew passport"]:
         if wanted not in words:
@@ -181,13 +182,12 @@ def today_and_upcoming(page: Page) -> None:
     shot(page, "02-today")
 
     open_builtin(page, "upcoming")
-    words = texts(page, ".view-tab .line .words")
+    words = texts(page, ".view-tab .task .words")
     say(f"[upcoming] {json.dumps(words, ensure_ascii=False)}")
-    for wanted in ["Milk", "Draft the talk"]:
+    # Todoist's Upcoming: every day from today on, today's tasks first.
+    for wanted in ["Water the plants", "Milk", "Draft the talk"]:
         if wanted not in words:
             wrong(f"Upcoming does not hold {wanted}")
-    if "Water the plants" in words:
-        wrong("Upcoming holds a task of today")
     shot(page, "03-upcoming")
 
 
@@ -373,7 +373,7 @@ def at_phone_width(browser: Browser) -> None:
     DRIVE.open(page)
     seed(page)
     open_builtin(page, "today")
-    words = texts(page, ".view-tab .line .words")
+    words = texts(page, ".view-tab .task .words")
     if "Call the bank" not in words:
         wrong(f"Today at phone width holds {words}")
     shot(page, "10-phone-today")

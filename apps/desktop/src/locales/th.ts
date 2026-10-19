@@ -10,21 +10,123 @@ export const th: Dictionary = {
   'Do you write code?': 'คุณเขียนโค้ดไหม?',
   Yes: 'ใช่',
   No: 'ไม่',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'จากแอปอื่น: {key}',
+  'From other apps: set in your system settings': 'จากแอปอื่น: ตั้งในการตั้งค่าระบบ',
+  'From other apps: bind {command} in your system settings':
+    'จากแอปอื่น: กำหนด {command} ในการตั้งค่าระบบ',
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'Essentials',
+  'Add to Essentials': 'เพิ่มไปยัง Essentials',
+  'Remove from Essentials': 'นำออกจาก Essentials',
+  'Add block to Essentials': 'เพิ่มบล็อกไปยัง Essentials',
+  'Add blocks to Essentials': 'เพิ่มบล็อกทั้งหมดไปยัง Essentials',
+  'Add view to Essentials': 'เพิ่มมุมมองไปยัง Essentials',
+  'Open tabs and Essentials': 'เปิดแท็บและ Essentials',
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor เปลี่ยนชื่อเป็น Orden แล้ว',
+  'Notes from nibeditor.com': 'โน้ตจาก nibeditor.com',
+  'Nothing there': 'ไม่มีอะไรที่นั่น',
+  // AI: the three permission modes
+  'Full permissions': 'สิทธิ์เต็ม',
+  'Auto mode': 'โหมดอัตโนมัติ',
+  'Full permissions: nothing is asked first': 'สิทธิ์เต็ม: ไม่ถามอะไรก่อน',
+  // Import: Zen's tabs
+  'Import from Zen': 'นำเข้าจาก Zen',
+  'Containers stay in Zen': 'คอนเทนเนอร์ยังอยู่ใน Zen',
+  'Zen’s tabs could not be read.': 'อ่านแท็บของ Zen ไม่ได้',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'คอนเทนเนอร์ยังอยู่ใน Firefox',
+  'Nothing could be read out of {browser}.': 'ไม่สามารถอ่านสิ่งใดจาก {browser} ได้',
+  'Saved groups': 'กลุ่มที่บันทึกไว้',
+  'Tab group': 'กลุ่มแท็บ',
+  'Bookmarks toolbar': 'แถบบุ๊กมาร์ก',
+  'Bookmarks menu': 'เมนูบุ๊กมาร์ก',
+  'Other bookmarks': 'บุ๊กมาร์กอื่นๆ',
+  'Mobile bookmarks': 'บุ๊กมาร์กบนมือถือ',
+  'Bookmarks bar': 'แถบบุ๊กมาร์ก',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} ล็อกแท็บที่เปิดอยู่ไว้ จึงนำมาได้เฉพาะบุ๊กมาร์ก',
+  '{count} pages not on the web stay behind': 'หน้าที่ไม่ได้อยู่บนเว็บ {count} หน้าไม่ได้นำมา',
+  'Reading List': 'รายการอ่าน',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS เก็บแท็บและบุ๊กมาร์กของ Safari ไว้หลังการเข้าถึงดิสก์เต็มรูปแบบ เปิด Orden ที่นั่นแล้วลองอีกครั้ง',
+  // Settings: note types
+  'Page note': 'โน้ตแบบหน้า',
+  'Web note': 'โน้ตเว็บ',
+  'Private tab': 'แท็บส่วนตัว',
+  'Note types': 'ประเภทโน้ต',
+  // Tasks: Upcoming's weeks
+  'Previous week': 'สัปดาห์ก่อนหน้า',
+  // Tasks: projects placed in the panel, and their folder
+  'Add project above': 'เพิ่มโปรเจกต์ด้านบน',
+  'Add project below': 'เพิ่มโปรเจกต์ด้านล่าง',
+  'Projects folder': 'โฟลเดอร์โปรเจกต์',
+  // Tasks: a repeating task skipped or done for good
+  Skip: 'ข้าม',
+  'Complete forever': 'เสร็จถาวร',
+  // Tasks: comments
+  Comments: 'ความคิดเห็น',
+  // Tasks: filters
+  Filters: 'ตัวกรอง',
+  'Add filter': 'เพิ่มตัวกรอง',
+  'Edit filter': 'แก้ไขตัวกรอง',
+  // Tasks: a project's sections
+  'Add section': 'เพิ่มส่วน',
+  '{name} (copy)': '{name} (สำเนา)',
+  'Its tasks are deleted with it.': 'งานในนั้นจะถูกลบไปด้วย',
+  // Tasks: keys, selection and the undo toast
+  Completed: 'เสร็จแล้ว',
+  'Remove date': 'เอาวันที่ออก',
+  'Next task': 'งานถัดไป',
+  'Previous task': 'งานก่อนหน้า',
+  'Add task at the top': 'เพิ่มงานไว้บนสุด',
+  '{count} selected': 'เลือกแล้ว {count}',
+  // Tasks: the Display menu
+  Display: 'การแสดงผล',
+  'Completed tasks': 'งานที่เสร็จแล้ว',
+  // Tasks: several lines pasted into quick add
+  'One task': 'งานเดียว',
+  'One per line': 'บรรทัดละงาน',
+  // Tasks: the projects in the panel
+  Favorites: 'รายการโปรด',
+  'Add project': 'เพิ่มโปรเจกต์',
+  'Add sub-project': 'เพิ่มโปรเจกต์ย่อย',
+  // Tasks: the task view
+  'Sub-tasks': 'งานย่อย',
+  'Add sub-task': 'เพิ่มงานย่อย',
+  'New label': 'ป้ายใหม่',
+  'No deadline': 'ไม่มีกำหนดส่ง',
+  // Tasks: the row's menu and the scheduler
+  Reschedule: 'กำหนดเวลาใหม่',
+  'Later this week': 'ภายหลังในสัปดาห์นี้',
+  'This weekend': 'สุดสัปดาห์นี้',
+  'Next weekend': 'สุดสัปดาห์หน้า',
+  'Every week on {day}': 'ทุกสัปดาห์ วัน{day}',
+  'Every month on day {day}': 'ทุกเดือน วันที่ {day}',
+  'Every year on {date}': 'ทุกปี วันที่ {date}',
+  'Type a date': 'พิมพ์วันที่',
+  'Previous month': 'เดือนก่อน',
+  'Next month': 'เดือนถัดไป',
+  'No time': 'ไม่มีเวลา',
+  'No repeat': 'ไม่ทำซ้ำ',
+  Complete: 'ทำเสร็จ',
+  Reopen: 'เปิดอีกครั้ง',
+  Schedule: 'กำหนดเวลา',
+  'Open in note': 'เปิดในโน้ต',
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'แอปอื่น',
-  'Start fresh': 'เริ่มใหม่',
   'Import from Obsidian': 'นำเข้าจาก Obsidian',
   'Import from Notion': 'นำเข้าจาก Notion',
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'คำแนะนำ',
   'Silent mode': 'โหมดเงียบ',
-  'Sign in to keep your notes safe and on every device.':
-    'ลงชื่อเข้าใช้เพื่อให้โน้ตของคุณปลอดภัยและอยู่บนทุกอุปกรณ์',
   'See how your notes connect.': 'ดูว่าโน้ตของคุณเชื่อมโยงกันอย่างไร',
   'Press {key} to find anything, notes and commands alike.':
     'กด {key} เพื่อค้นหาทุกอย่าง ทั้งโน้ตและคำสั่ง',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'แสดง Markdown ขณะเขียน',
+  'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'ตัวชี้',
   'Pointing hand on buttons': 'มือชี้บนปุ่ม',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
@@ -40,11 +142,13 @@ export const th: Dictionary = {
   '{count} h': '{count} ชม.',
   Inbox: 'กล่องรับเข้า',
   Date: 'วันที่',
+  'Start date': 'วันที่เริ่ม',
   Priority: 'ความสำคัญ',
   Reminder: 'การเตือน',
   Duration: 'ระยะเวลา',
   'Smart dates': 'วันที่อัจฉริยะ',
   'From any app': 'จากแอปใดก็ได้',
+  'Show tasks without a start date in Today': 'แสดงงานที่ไม่มีวันที่เริ่มในวันนี้',
   'Every day': 'ทุกวัน',
   'Every weekday': 'ทุกวันทำงาน',
   'Every week': 'ทุกสัปดาห์',
@@ -61,6 +165,13 @@ export const th: Dictionary = {
   Unsaved: 'ยังไม่บันทึก',
   'Save to': 'บันทึกไปที่',
   'Reloaded with the web data of {space}': 'โหลดใหม่ด้วยข้อมูลเว็บของ {space}',
+  Separate: 'แยกกัน',
+  'Share this note’s web data again?': 'แชร์ข้อมูลเว็บของโน้ตนี้อีกครั้งไหม',
+  'What its pages are signed in to on this computer is deleted.':
+    'สิ่งที่หน้าเว็บของโน้ตนี้ลงชื่อเข้าใช้ไว้ในคอมพิวเตอร์เครื่องนี้จะถูกลบ',
+  'Share again': 'แชร์อีกครั้ง',
+  'This note keeps its own web data now': 'ตอนนี้โน้ตนี้มีข้อมูลเว็บของตัวเองแล้ว',
+  'Back on the shared web data': 'กลับมาใช้ข้อมูลเว็บที่แชร์แล้ว',
   'Add a page': 'เพิ่มหน้า',
   'Add a page after this': 'เพิ่มหน้าถัดจากนี้',
   'Delete this page': 'ลบหน้านี้',
@@ -81,6 +192,8 @@ export const th: Dictionary = {
   Dots: 'จุด',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'หมุนแคนวาสด้วยสองนิ้ว',
+  'Turn upright': 'จัดให้ตรง',
   Canvas: 'แคนวาส',
   Card: 'การ์ด',
   'Note or picture': 'โน้ตหรือรูป',
@@ -95,7 +208,6 @@ export const th: Dictionary = {
   'New window': 'หน้าต่างใหม่',
   New: 'ใหม่',
   'New space': 'พื้นที่ใหม่',
-  '{name}: switch space': '{name}: สลับพื้นที่',
   Untitled: 'ไม่มีชื่อ',
   Space: 'พื้นที่',
   'Name the space': 'ตั้งชื่อพื้นที่',
@@ -140,8 +252,6 @@ export const th: Dictionary = {
   'Loading…': 'กำลังโหลด…',
   'Create a space': 'สร้างพื้นที่',
   'Import a folder': 'นำเข้าโฟลเดอร์',
-  'Sign in to sync': 'เข้าสู่ระบบเพื่อซิงก์',
-  'Create account': 'สร้างบัญชี',
   'Delete space': 'ลบพื้นที่',
   'Delete {name}?': 'ลบ {name}?',
   'Every note in this space is deleted from your computer.':
@@ -159,6 +269,10 @@ export const th: Dictionary = {
   Unpin: 'เลิกปักหมุด',
   Close: 'ปิด',
   'Close pinned tab?': 'ปิดแท็บที่ปักหมุดไว้?',
+  'Save changes to {name}?': 'บันทึกการเปลี่ยนแปลงใน {name} ไหม',
+  'Save changes to these tabs?': 'บันทึกการเปลี่ยนแปลงในแท็บเหล่านี้ไหม',
+  'Unsaved words go to Recently deleted.': 'คำที่ยังไม่ได้บันทึกจะไปอยู่ในลบล่าสุด',
+  'Don’t save': 'ไม่บันทึก',
   'Close others': 'ปิดอันอื่น',
   'Close tabs to the right': 'ปิดแท็บทางขวา',
   'Close tabs to the left': 'ปิดแท็บทางซ้าย',
@@ -195,9 +309,6 @@ export const th: Dictionary = {
   'Move this note': 'ย้ายโน้ตนี้',
   'Move up': 'ย้ายขึ้น',
   'Move down': 'ย้ายลง',
-  Bookmark: 'บุ๊กมาร์ก',
-  'Remove bookmark': 'ลบบุ๊กมาร์ก',
-  'Leave out of search': 'ไม่รวมในการค้นหา',
   'Search here again': 'ค้นหาที่นี่อีกครั้ง',
   'Undo the last file change': 'เลิกทำการเปลี่ยนไฟล์ล่าสุด',
   'Undo moving {name}': 'เลิกย้าย {name}',
@@ -247,7 +358,6 @@ export const th: Dictionary = {
   'Remove group': 'ลบกลุ่ม',
   'Out of the group': 'เอาออกจากกลุ่ม',
   Make: 'สร้าง',
-  'Bookmark this block': 'บุ๊กมาร์กบล็อกนี้',
   Panels: 'แผง',
   Outline: 'เค้าโครง',
   'Stay on this note': 'อยู่ที่โน้ตนี้',
@@ -510,8 +620,8 @@ export const th: Dictionary = {
   'Sign in to ask a question.': 'เข้าสู่ระบบเพื่อถามคำถาม',
   'Asking OpenAI which models this key can use': 'กำลังถาม OpenAI ว่าคีย์นี้ใช้โมเดลอะไรได้',
   'Could not reach OpenAI': 'ติดต่อ OpenAI ไม่ได้',
-  'That key cannot use any of the models nibeditor asks for.':
-    'คีย์นี้ใช้โมเดลที่ nibeditor ต้องการไม่ได้เลย',
+  'That key cannot use any of the models Orden asks for.':
+    'คีย์นี้ใช้โมเดลที่ Orden ต้องการไม่ได้เลย',
   'No reasoning': 'ไม่ให้เหตุผล',
   Minimal: 'น้อยสุด',
   Low: 'ต่ำ',
@@ -533,7 +643,7 @@ export const th: Dictionary = {
   Mode: 'โหมด',
   // The window's own edges; see appearance.rs
   Window: 'หน้าต่าง',
-  'nibeditor’s own': 'ของ nibeditor',
+  'Orden’s own': 'ของ Orden',
   'The system’s': 'ของระบบ',
   'Window frame': 'กรอบหน้าต่าง',
   System: 'ระบบ',
@@ -593,6 +703,7 @@ export const th: Dictionary = {
   '{done} of {total}': '{done} จาก {total}',
   'Sync failed': 'ซิงก์ไม่สำเร็จ',
   '{name} could not be written.': 'เขียน {name} ไม่ได้',
+  '{name} could not be read.': 'อ่าน {name} ไม่ได้',
   'Text size': 'ขนาดตัวอักษร',
   'Line spacing': 'ระยะบรรทัด',
   'Line width': 'ความกว้างบรรทัด',
@@ -652,8 +763,10 @@ export const th: Dictionary = {
   '{used} of {limit} used.': 'ใช้ {used} จาก {limit}',
   'That image does not fit in your storage.': 'ที่เก็บข้อมูลของคุณไม่พอสำหรับรูปนั้น',
   'out of space': 'ที่เก็บข้อมูลเต็ม',
-  'nibeditor {version} is ready to install.': 'nibeditor {version} พร้อมติดตั้ง',
+  'Orden {version} is ready to install.': 'Orden {version} พร้อมติดตั้ง',
+  'Orden {version} is available.': 'Orden {version} พร้อมให้ใช้งานแล้ว',
   'Restart now': 'เริ่มใหม่เดี๋ยวนี้',
+  'Move to Applications': 'ย้ายไปที่แอปพลิเคชัน',
   Later: 'ภายหลัง',
   More: 'เพิ่มเติม',
   'Open notes': 'โน้ตที่เปิดอยู่',
@@ -678,11 +791,9 @@ export const th: Dictionary = {
   Continue: 'ต่อไป',
   'Send a new code': 'ส่งรหัสใหม่',
   'Code sent to': 'ส่งรหัสไปที่',
-  'You already have notes on this computer.': 'คุณมีโน้ตอยู่บนเครื่องนี้แล้ว',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
-    'เก็บไว้แล้วโน้ตจะรวมเข้าบัญชีของคุณ ลบทิ้งแล้วจะเหลือแค่สิ่งที่บัญชีมีอยู่ - ย้อนกลับไม่ได้',
-  'Keep them': 'เก็บไว้',
-  'Erase them': 'ลบทิ้ง',
+  'This device already has notes.': 'อุปกรณ์นี้มีโน้ตอยู่แล้ว',
+  Merge: 'รวม',
+  'Keep separate': 'แยกไว้',
   'Digit {number}': 'หลัก {number}',
   'Resend in {seconds}s': 'ส่งอีกใน {seconds} วิ',
   'Last synced {time}.': 'ซิงก์ล่าสุด {time}',
@@ -727,14 +838,14 @@ export const th: Dictionary = {
   'Reads your notes.': 'อ่านโน้ตของคุณ',
   'Reads and writes your notes.': 'อ่านและเขียนโน้ตของคุณ',
   Other: 'อื่นๆ',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'ผู้ช่วย AI อ่านโน้ตของคุณได้ และแก้ได้ถ้าคุณอนุญาต มันเข้าสู่ระบบด้วยอีเมล nibeditor ของคุณ ไม่ต้องวางอะไร',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'ผู้ช่วย AI อ่านโน้ตของคุณได้ และแก้ได้ถ้าคุณอนุญาต มันเข้าสู่ระบบด้วยอีเมล Orden ของคุณ ไม่ต้องวางอะไร',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'ใน Claude เปิด Settings → Connectors แล้วคลิก Add custom connector',
   'Open Claude’s connectors': 'เปิด Connectors ของ Claude',
   'Fill in the two fields and click Add.': 'กรอกสองช่องแล้วคลิก Add',
-  'Click Connect and sign in with your nibeditor email.':
-    'คลิก Connect แล้วเข้าสู่ระบบด้วยอีเมล nibeditor ของคุณ',
+  'Click Connect and sign in with your Orden email.':
+    'คลิก Connect แล้วเข้าสู่ระบบด้วยอีเมล Orden ของคุณ',
   'Using Claude Code instead?': 'ใช้ Claude Code อยู่?',
   Command: 'คำสั่ง',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -745,15 +856,15 @@ export const th: Dictionary = {
   'Open ChatGPT’s plugins': 'เปิด Plugins ของ ChatGPT',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'ไม่เห็นส่วน Plugins หรือปุ่มบวก? เปิด Developer mode ก่อนที่ Settings → Security and login',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'เข้าสู่ระบบด้วยอีเมล nibeditor เมื่อ ChatGPT ถาม',
-  'To use it in a chat, type @ and pick nibeditor.': 'ใช้ในแชตโดยพิมพ์ @ แล้วเลือก nibeditor',
+  'Sign in with your Orden email when ChatGPT asks.':
+    'เข้าสู่ระบบด้วยอีเมล Orden เมื่อ ChatGPT ถาม',
+  'To use it in a chat, type @ and pick Orden.': 'ใช้ในแชตโดยพิมพ์ @ แล้วเลือก Orden',
   'Server URL': 'URL เซิร์ฟเวอร์',
   Authentication: 'การยืนยันตัวตน',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'ปล่อยการตั้งค่า OAuth ขั้นสูงไว้ตามเดิม แล้วติ๊ก “I understand and want to continue”',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'ไคลเอนต์ MCP ที่รองรับ Streamable HTTP พร้อม OAuth ให้ URL นี้ไป มันจะลงทะเบียนเองและเปิดหน้าเข้าสู่ระบบของ nibeditor',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'ไคลเอนต์ MCP ที่รองรับ Streamable HTTP พร้อม OAuth ให้ URL นี้ไป มันจะลงทะเบียนเองและเปิดหน้าเข้าสู่ระบบของ Orden',
   'Show config': 'แสดงคอนฟิก',
   'For a client that takes a JSON block instead of a URL.':
     'สำหรับไคลเอนต์ที่รับบล็อก JSON แทน URL',
@@ -820,7 +931,7 @@ export const th: Dictionary = {
   'Display name': 'ชื่อที่แสดง',
   'Your name': 'ชื่อของคุณ',
   Email: 'อีเมล',
-  'On nibeditor.com': 'บน nibeditor.com',
+  'On orden.so': 'บน orden.so',
   'Your own domain': 'โดเมนของคุณ',
   'Switching gives up {name}.': 'การเปลี่ยนจะปล่อย {name}',
   Page: 'หน้า',
@@ -891,8 +1002,9 @@ export const th: Dictionary = {
   'No footnotes in this note': 'บันทึกนี้ไม่มีเชิงอรรถ',
   'Stack tabs': 'เรียงแท็บเป็นคอลัมน์',
   'Unstack tabs': 'เลิกเรียงแท็บ',
-  'High contrast': 'คอนทราสต์สูง',
+  Contrast: 'คอนทราสต์',
   Glass: 'กระจก',
+  Classic: 'คลาสสิก',
   'Front matter': 'ส่วนหัวเอกสาร',
   'Front matter: {name}': 'ข้อมูลส่วนหัว: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':
@@ -903,6 +1015,7 @@ export const th: Dictionary = {
   Comment: 'ความคิดเห็น',
   'Always on top': 'อยู่บนสุดเสมอ',
   'What is new': 'มีอะไรใหม่',
+  'Download the app': 'ดาวน์โหลดแอป',
   'Report an issue': 'แจ้งปัญหา',
   'Move the line up': 'ย้ายบรรทัดขึ้น',
   'Move the line down': 'ย้ายบรรทัดลง',
@@ -979,6 +1092,23 @@ export const th: Dictionary = {
   'Layout: {name}': 'เลย์เอาต์: {name}',
   'Space: {name}': 'พื้นที่: {name}',
   'Theme: {name}': 'ธีม: {name}',
+  'AI account: {name}': 'บัญชี AI: {name}',
+  Accounts: 'บัญชี',
+  Access: 'การเข้าถึง',
+  Set: 'ตั้งค่าแล้ว',
+  'Start over': 'เริ่มใหม่',
+  'Sign in here': 'ลงชื่อเข้าใช้ที่นี่',
+  '{device} wants your AI accounts': '{device} ขอบัญชี AI ของคุณ',
+  '{device} offers this device your AI vault': '{device} เสนอห้องนิรภัย AI ของคุณให้อุปกรณ์นี้',
+  Join: 'เข้าร่วม',
+  'Allow this device on another one': 'อนุญาตอุปกรณ์นี้จากอุปกรณ์อื่น',
+  'On every device you sign in to, end-to-end encrypted.':
+    'บนทุกอุปกรณ์ที่คุณลงชื่อเข้าใช้ เข้ารหัสแบบต้นทางถึงปลายทาง',
+  'Sign in to have them on every device.': 'ลงชื่อเข้าใช้เพื่อให้มีในทุกอุปกรณ์',
+  'Agents on this computer connect on their own': 'เอเจนต์ในคอมพิวเตอร์นี้เชื่อมต่อเอง',
+  Helpers: 'ผู้ช่วย',
+  'Start helpers on your AI accounts': 'เริ่มผู้ช่วยในบัญชี AI ของคุณ',
+  Delegated: 'มอบหมายแล้ว',
   'Code theme: {name}': 'ธีมโค้ด: {name}',
   'Delete a layout': 'ลบเลย์เอาต์',
   // Keyboards and modal editing
@@ -1047,6 +1177,7 @@ export const th: Dictionary = {
   'Double-click to write': 'ดับเบิลคลิกเพื่อเขียน',
   'Another colour': 'สีอื่น',
   'Turn into a note': 'เปลี่ยนเป็นโน้ต',
+  Arrange: 'จัดเรียง',
   'Bring to front': 'ไปหน้าสุด',
   'Bring forward': 'ขึ้นหนึ่งชั้น',
   'Send backward': 'ลงหนึ่งชั้น',
@@ -1068,6 +1199,12 @@ export const th: Dictionary = {
   'Export as PNG': 'ส่งออกเป็น PNG',
   'Export as SVG': 'ส่งออกเป็น SVG',
   'Export as PDF': 'ส่งออกเป็น PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'นำเข้า PDF',
+  'Choose how to add the pages to the canvas.': 'เลือกวิธีเพิ่มหน้าลงบนแคนวาส',
+  'Single page': 'หน้าเดียว',
+  'All pages': 'ทุกหน้า',
+  'Choose a page': 'เลือกหน้า',
   // The canvas: what its own keys are called
   'Delete what is picked': 'ลบสิ่งที่เลือก',
   'Nudge left': 'ขยับซ้าย',
@@ -1128,8 +1265,8 @@ export const th: Dictionary = {
   'Release channel': 'ช่องทางอัปเดต',
   Stable: 'เสถียร',
   Unstable: 'ไม่เสถียร',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'เสถียรตามรุ่นที่ปล่อยจริง ไม่เสถียรตามทุกการพุชเข้า main และอาจเสีย',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'เสถียรตามรุ่นที่ปล่อยแล้ว ไม่เสถียรตามบิลด์ edge และอาจเสีย',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'นำเข้า',
@@ -1179,13 +1316,15 @@ export const th: Dictionary = {
   '{count} tables inside notes do not come over': 'ตาราง {count} ตารางในโน้ตไม่ถูกนำมา',
   '{count} attachments are in iCloud rather than on this Mac':
     'ไฟล์แนบ {count} ไฟล์อยู่ใน iCloud ไม่ได้อยู่บน Mac เครื่องนี้',
+  '{count} files are in iCloud rather than on this Mac':
+    'ไฟล์ {count} ไฟล์อยู่ใน iCloud ไม่ได้อยู่บน Mac เครื่องนี้',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS เก็บโน้ตเหล่านั้นไว้หลังการเข้าถึงดิสก์ทั้งหมด',
   'There are no notes in Apple Notes on this Mac.': 'บน Mac เครื่องนี้ไม่มีโน้ตใน Apple Notes',
   'Those notes could not be read.': 'อ่านโน้ตเหล่านั้นไม่ได้',
   'Read them from this Mac': 'อ่านจาก Mac เครื่องนี้',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    'เปิด nibeditor ในการเข้าถึงดิสก์ทั้งหมดแล้วลองอีกครั้ง',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    'เปิด Orden ในการเข้าถึงดิสก์ทั้งหมดแล้วลองอีกครั้ง',
   'Open the setting': 'เปิดการตั้งค่า',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'Apple Journal ส่งออกเอง: Journal, การตั้งค่า, ส่งออก. Apple Notes ไม่มีการส่งออก จึงเมื่ออยู่ห่างจาก Mac ที่เก็บไว้ สิ่งที่ต้องวางคือโฟลเดอร์ที่ตัวส่งออกเขียนไว้',
@@ -1283,14 +1422,15 @@ export const th: Dictionary = {
   'OpenAI-compatible': 'เข้ากันได้กับ OpenAI',
   'Base URL': 'URL หลัก',
   'API key': 'คีย์ API',
-  'Set on this device': 'ตั้งไว้บนอุปกรณ์นี้',
   Optional: 'ไม่บังคับ',
   'List models': 'ดึงรายการโมเดล',
   'Asking…': 'กำลังถาม…',
   'No providers yet.': 'ยังไม่มีผู้ให้บริการ',
   'Add {name}': 'เพิ่ม {name}',
-  'Keys stay in the secure store on this device.': 'คีย์อยู่ในที่เก็บนิรภัยของอุปกรณ์นี้',
   'This browser holds the keys in its own storage.': 'เบราว์เซอร์นี้เก็บคีย์ไว้ในที่เก็บของตัวเอง',
+  'Keep this browser’s keys in the vault': 'เก็บคีย์ของเบราว์เซอร์นี้ไว้ในห้องนิรภัย',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'จากนั้นคีย์ของทุกอุปกรณ์จะถูกเก็บไว้ในพื้นที่จัดเก็บของเบราว์เซอร์นี้ ซึ่งสคริปต์ที่แทรกเข้ามาในหน้าอาจอ่านได้',
   'AI can be wrong. Check the facts.': 'AI อาจผิดพลาดได้ โปรดตรวจสอบข้อเท็จจริง',
   'Used by the glasses': 'แว่นใช้อยู่',
   'Could not read the models.': 'อ่านรายการโมเดลไม่ได้',
@@ -1330,7 +1470,6 @@ export const th: Dictionary = {
   'A cited report': 'รายงานพร้อมอ้างอิง',
   'A helper in the background': 'ผู้ช่วยเบื้องหลัง',
   'A side question': 'คำถามข้างเคียง',
-  'Agent mode': 'โหมดเอเจนต์',
   'Agent profile': 'โปรไฟล์เอเจนต์',
   'Archive the thread': 'เก็บเธรดถาวร',
   'Approve mode': 'โหมดอนุมัติ',
@@ -1449,8 +1588,6 @@ export const th: Dictionary = {
   // Web tabs
   Reload: 'โหลดใหม่',
   'Hard reload': 'โหลดใหม่ทั้งหมด',
-  'Clip this page': 'เก็บหน้านี้',
-  'Clip the link': 'เก็บลิงก์',
   'Open in the browser': 'เปิดในเบราว์เซอร์',
   'Show it here': 'แสดงที่นี่',
   Website: 'เว็บไซต์',
@@ -1534,8 +1671,8 @@ export const th: Dictionary = {
   'that is not a theme': 'นั่นไม่ใช่ธีม',
   'no such theme': 'ไม่มีธีมนั้น',
   'choose a model first': 'เลือกโมเดลก่อน',
-  'set an OpenAI key in nibeditor’s settings first':
-    'ตั้งคีย์ OpenAI ในการตั้งค่าของ nibeditor ก่อน',
+  'set an OpenAI key in Orden’s settings first': 'ตั้งคีย์ OpenAI ในการตั้งค่าของ Orden ก่อน',
+  'set an OpenAI key in nibeditor’s settings first': 'ตั้งคีย์ OpenAI ในการตั้งค่าของ Orden ก่อน',
   'that is a lot of questions - try again later': 'คำถามมากเกินไป - ลองใหม่ภายหลัง',
   'that is too much audio': 'เสียงยาวเกินไป',
   'that is more than a spoken command': 'นั่นเกินกว่าคำสั่งเสียงหนึ่งคำสั่ง',
@@ -1559,7 +1696,6 @@ export const th: Dictionary = {
   Nothing: 'ไม่มี',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'บุ๊กมาร์กมุมมองนี้',
   Keep: 'เก็บ',
 
   // Which side of the window a panel sits on.
@@ -1581,7 +1717,6 @@ export const th: Dictionary = {
   'New tab': 'แท็บใหม่',
   'Full screen': 'เต็มหน้าจอ',
   'Print…': 'พิมพ์…',
-  'Save page': 'บันทึกหน้า',
   'Share…': 'แชร์…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1624,7 +1759,6 @@ export const th: Dictionary = {
   Blocked: 'ถูกบล็อก',
   'Reset permissions': 'รีเซ็ตสิทธิ์',
   'Turn into': 'เปลี่ยนเป็น',
-  'Bookmark these blocks': 'บุ๊กมาร์กบล็อกเหล่านี้',
   Foldable: 'พับได้',
   'Starts folded': 'เริ่มแบบพับ',
   // Where a space keeps what websites store
@@ -1641,6 +1775,15 @@ export const th: Dictionary = {
   'Bring all to front': 'นำทั้งหมดมาไว้ด้านหน้า',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'เลิกทำการคัดลอก',
+  'Devices with your AI vault': 'อุปกรณ์ที่มีห้องนิรภัย AI ของคุณ',
+  'This device': 'อุปกรณ์นี้',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'อุปกรณ์นั้นจะอ่านบัญชี AI ของคุณไม่ได้อีก และอุปกรณ์อื่นจะได้กุญแจใหม่',
+  'Also remove this device from your AI vault?': 'นำอุปกรณ์นี้ออกจากห้องนิรภัย AI ด้วยไหม',
+  'Remove and sign out': 'นำออกและออกจากระบบ',
+  'Undo making {name}': 'เลิกสร้าง {name}',
+  'Undo the deletion': 'เลิกลบ',
+  'Undo the move': 'เลิกย้าย',
   'Redo the last file change': 'ทำซ้ำการเปลี่ยนแปลงไฟล์ล่าสุด',
   'Select down': 'เลือกลง',
   'Select up': 'เลือกขึ้น',
@@ -1684,7 +1827,6 @@ export const th: Dictionary = {
   '{key} in a terminal': '{key} ในเทอร์มินัล',
   'Always ask': 'ถามทุกครั้ง',
   'Open another': 'เปิดอีกอัน',
-  'Open in terminal': 'เปิดในเทอร์มินัล',
   Clear: 'ล้าง',
   'Exited with code {code}': 'จบด้วยรหัส {code}',
   'Could not start {shell}': 'ไม่สามารถเริ่ม {shell}',
@@ -1693,18 +1835,8 @@ export const th: Dictionary = {
   'Stop what is running in {name}?': 'หยุดสิ่งที่กำลังทำงานใน {name} หรือไม่',
   'Stop what is running in these terminals?': 'หยุดสิ่งที่กำลังทำงานในเทอร์มินัลเหล่านี้หรือไม่',
   'Paste {count} lines?': 'วาง {count} บรรทัดหรือไม่',
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': 'เบราว์เซอร์ค่าเริ่มต้น',
-  // The engine web tabs run on
-  Engine: 'เอนจิน',
-  Relaunch: 'เปิดใหม่',
-  'Chromium did not start': 'Chromium ไม่เริ่มทำงาน',
-  'No connection': 'ไม่มีการเชื่อมต่อ',
-  'Not in this release': 'ไม่มีในรุ่นนี้',
-  'Needs an update': 'ต้องอัปเดต',
-  'Signature did not match': 'ลายเซ็นไม่ตรงกัน',
-  'Disk full': 'ดิสก์เต็ม',
-  'Could not be installed': 'ติดตั้งไม่ได้',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'เลิกทำการแก้ไขของ {name}',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1804,7 +1936,7 @@ export const th: Dictionary = {
   'Always on this site': 'เสมอในเว็บไซต์นี้',
   'Agents stopped': 'หยุดเอเจนต์แล้ว',
   'Agent tabs closed': 'ปิดแท็บของเอเจนต์แล้ว',
-  'nibeditor is still running for your agents': 'nibeditor ยังทำงานอยู่เพื่อเอเจนต์ของคุณ',
+  'Orden is still running for your agents': 'Orden ยังทำงานอยู่เพื่อเอเจนต์ของคุณ',
   '{client} wants to connect': '{client} ต้องการเชื่อมต่อ',
   // Web logins that travel, and the devices of an account
   'no such device': 'ไม่มีอุปกรณ์นี้',
@@ -1820,11 +1952,12 @@ export const th: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'เอเจนต์ในคอมพิวเตอร์เครื่องนี้',
   'Your account’s connector': 'ตัวเชื่อมต่อของบัญชีคุณ',
-  'nibeditor asks you once, the first time it connects.':
-    'nibeditor จะถามคุณครั้งเดียว เมื่อเชื่อมต่อครั้งแรก',
+  'Orden asks you once, the first time it connects.':
+    'Orden จะถามคุณครั้งเดียว เมื่อเชื่อมต่อครั้งแรก',
   'A client on another machine?': 'ไคลเอนต์บนเครื่องอื่นใช่ไหม',
   'Shown only once.': 'แสดงเพียงครั้งเดียว',
   'Remove {name}?': 'นำ {name} ออกไหม',
+  'End {name}?': 'สิ้นสุด {name} ไหม',
   'Its token stops working.': 'โทเค็นของมันจะใช้งานไม่ได้อีก',
   'Added {date}': 'เพิ่มเมื่อ {date}',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':
@@ -1845,7 +1978,6 @@ export const th: Dictionary = {
   'Change notes': 'แก้ไขโน้ต',
   'See what you are looking at': 'เห็นสิ่งที่คุณกำลังดู',
   'Move and rename files': 'ย้ายและเปลี่ยนชื่อไฟล์',
-  'Open tabs and bookmarks': 'เปิดแท็บและบุ๊กมาร์ก',
   'Bring a tab to the front': 'นำแท็บขึ้นมาด้านหน้า',
   'Browse in tabs of its own': 'ท่องเว็บในแท็บของตัวเอง',
   'Read what pages load': 'อ่านสิ่งที่หน้าเว็บโหลด',
@@ -1867,11 +1999,8 @@ export const th: Dictionary = {
   'Without your logins': 'ไม่ใช้การลงชื่อเข้าใช้ของคุณ',
   'Calls a minute': 'การเรียกต่อนาที',
   'Pages a minute': 'หน้าต่อนาที',
+  'Browser memory limit': 'ขีดจำกัดหน่วยความจำของเบราว์เซอร์',
   '{count} calls': '{count} การเรียก',
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'เปิดอยู่บน {device}',
-  'Use here': 'ใช้ที่นี่',
-  '{device} wants your web logins': '{device} ต้องการการเข้าสู่ระบบเว็บของคุณ',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'คำถามด่วน',
@@ -1935,7 +2064,7 @@ export const th: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'เลื่อนปลุก',
   Reminders: 'การเตือน',
-  'Reminders ring while nibeditor is open': 'การเตือนจะดังขณะที่ nibeditor เปิดอยู่',
+  'Reminders ring while Orden is open': 'การเตือนจะดังขณะที่ Orden เปิดอยู่',
   Automatic: 'อัตโนมัติ',
   'Stay in the tray': 'อยู่ในถาดระบบ',
   'Exact alarms': 'การปลุกที่แม่นยำ',
@@ -1978,7 +2107,6 @@ export const th: Dictionary = {
   'Any of them': 'อย่างใดอย่างหนึ่ง',
   Compare: 'เปรียบเทียบ',
   'Add a filter': 'เพิ่มตัวกรอง',
-  'Reschedule to today': 'ย้ายมาวันนี้',
   Collapse: 'ยุบ',
   Expand: 'ขยาย',
   Summary: 'สรุป',
@@ -2000,7 +2128,6 @@ export const th: Dictionary = {
   Layout: 'เค้าโครง',
   Overdue: 'เลยกำหนด',
   Upcoming: 'ที่จะมาถึง',
-  Logbook: 'บันทึกงานที่ทำ',
   Project: 'โปรเจกต์',
   Label: 'ป้าย',
   List: 'รายการ',
@@ -2186,4 +2313,11 @@ export const th: Dictionary = {
   'Search this chat': 'ค้นหาในแชทนี้',
   'Add as task': 'เพิ่มเป็นงาน',
   'Save as note': 'บันทึกเป็นโน้ต',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'รุ่งอรุณ',
+  Lagoon: 'ลากูน',
+  Lilac: 'ไลแลค',
+  Peach: 'พีช',
+  Sage: 'เสจ',
+  Mist: 'หมอก',
 }

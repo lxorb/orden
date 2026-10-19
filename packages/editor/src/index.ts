@@ -126,7 +126,6 @@ export {
 export { trustedMarkupEffect } from './markup'
 export { type PreviewMount, type PreviewNote } from './wikilink/hover'
 export { renderNote } from './wikilink/preview'
-export { noteLinksCode } from './wikilink/drop'
 export { setBlocks, type SlashBlock } from './slash'
 export { embedClicks, htmlFrameDocument, loadEmbed } from './web-frame'
 export { isSpellWord, LONGEST_WORD } from './spelling'

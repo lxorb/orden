@@ -3,9 +3,10 @@
   import AppMenu from './AppMenu.svelte'
   import { chrome } from './glass/chrome.svelte'
   import { i18n, t } from './i18n.svelte'
+  import { keepFocus } from './focus'
   import { modes } from './modes.svelte'
   import SidebarToggle from './SidebarToggle.svelte'
-  import SpaceSwitcher from './SpaceSwitcher.svelte'
+  import FileMark from './FileMark.svelte'
   import TabMark from './TabMark.svelte'
   import UnsavedDot from './UnsavedDot.svelte'
   import { askPlace } from './save-place/door'
@@ -68,8 +69,9 @@
   /** A phone and a tablet show one document, so the bar says which one. The mark in
    *  front of the name is the same one the desktop's tab wears, because this bar is
    *  that strip on a screen that holds one document; see TabMark.svelte. */
-  const title = $derived(workspace.active?.shown ?? 'nibeditor')
-  const showing = $derived(workspace.active)
+  const title = $derived(pad.on ? t('Scratchpad') : (workspace.active?.shown ?? 'Orden'))
+  /** None while the scratchpad, which is no tab, is the note there; see scratchpad/pad.ts. */
+  const showing = $derived(viewport.touch && pad.on ? null : workspace.active)
 
   async function minimize() {
     if (isDesktop) await (await currentWindow()).minimize()
@@ -92,7 +94,8 @@
       aria-pressed={pad.on}
       title={shortcuts.tooltip(t('Scratchpad'), 'app.scratchpad')}
       aria-label={t('Scratchpad')}
-      onpointerdown={(event) => event.preventDefault()}
+      onpointerdown={keepFocus}
+      onmousedown={keepFocus}
       onclick={() => pad.toggle()}
     >
       <svg viewBox="0 0 14 14"
@@ -116,24 +119,16 @@
     <AppMenu {view} {onpalette} {onhistory} />
   {/if}
 
-  <!-- Not while there is no space and no tab: the space chooser's scrim covers the
-       panel then. Asked of the workspace, since the chooser is fetched with its card. -->
+  <!-- Not while there is no space and no tab: a list of nothing, in the moment before a
+       fresh start's space is made (fresh-start.ts). -->
   {#if !listless}
     <SidebarToggle />
-  {/if}
-
-  <!-- With the list shut, the space's mark stands here: the switcher, bare, and
-       outside the drag region so a press on it is never a drag. -->
-  {#if !viewport.touch && !workspace.panel && workspace.activeSpace}
-    <div class="space">
-      <SpaceSwitcher bare />
-    </div>
   {/if}
 
   {#if viewport.touch}
     <!-- One document at a time: its mark and name instead of a strip of tabs. -->
     <h1 class="title" data-save-anchor>
-      {#if showing}<TabMark tab={showing} />{/if}
+      {#if showing}<TabMark tab={showing} />{:else if pad.on}<FileMark mark="note" />{/if}
       <span class="name">{title}</span>
       {#if showing && isDraft(showing.note)}
         <button class="nib-glyph" aria-label={t('Save')} onclick={() => askPlace(showing.id)}
@@ -211,6 +206,12 @@
     box-shadow: inset 0 -1px var(--line);
   }
 
+  /* With tabs in it, the strip draws the line, leaving the open tab out. */
+  header:has(:global([data-region='tabs'])) {
+    box-shadow: none;
+    overflow-x: clip;
+  }
+
   /* The three lights and the gap after them, the room a Mac's own apps leave. On the
      left whichever way the words run: the lights are the system's, about the screen
      rather than about reading, and AppKit keeps them at the window's left edge. */
@@ -232,7 +233,9 @@
     width: var(--space-5);
   }
 
+  /* Placed, so a lit button is drawn over the strip's line. */
   .controls {
+    position: relative;
     flex: none;
     display: flex;
     opacity: 0.45;
@@ -310,16 +313,6 @@
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-  }
-
-  /* The bar's height and positioned: the list of spaces drops from its bottom edge. */
-  .space {
-    position: relative;
-    flex: none;
-    display: flex;
-    align-items: center;
-    /* So it does not read as the first tab. */
-    margin-inline-end: var(--space-2);
   }
 
   /* A phone has no window to drag and a thumb to hit this with. The bar grows

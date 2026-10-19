@@ -1,10 +1,10 @@
 /** A page, reduced to the part worth keeping: the one article extractor.
  *
- *  Everything here works on a DOM and nothing here knows about markdown. Three
- *  callers hand it one, and all three get the same answer: the clipper's content
- *  script the live page, the app a snapshot its web tab's page wrote of itself
- *  (`readSnapshot`, below), and the tests saved pages parsed by jsdom. So the same
- *  page clips to the same note from the extension and from a tab. What comes out is
+ *  Everything here works on a DOM and nothing here knows about markdown. Two
+ *  callers hand it one, and both get the same answer: the app a snapshot its web
+ *  tab's page wrote of itself (`readSnapshot`, below), and the tests saved pages
+ *  parsed by jsdom, as a live page's DOM. So the same page clips to the same note
+ *  however it was read. What comes out is
  *  an HTML string whose every address is absolute, so the note reads the same from
  *  anywhere.
  *

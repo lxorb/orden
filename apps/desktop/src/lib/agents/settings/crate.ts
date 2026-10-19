@@ -89,6 +89,7 @@ const SCOPES: readonly Scope[] = [
   'browser.storage',
   'settings',
   'terminal',
+  'agents',
 ]
 
 const CATEGORIES: readonly Category[] = [
@@ -159,6 +160,7 @@ export function readGrant(value: unknown): Grant | null {
       tabs: count(limited.tabs, 4),
       calls: count(limited.calls, 600),
       navigations: count(limited.navigations, 60),
+      memory: count(limited.memory, 0),
     },
     created: count(created, 0),
   }

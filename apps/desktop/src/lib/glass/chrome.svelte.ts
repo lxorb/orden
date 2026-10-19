@@ -30,6 +30,8 @@ export interface Ground {
 export interface Worn {
   scheme: Scheme
   tint: string
+  /** Glass's own pair's second colour. */
+  second?: string
   wash: number
   paper?: number
   terminal?: number
@@ -47,6 +49,7 @@ const KEY = 'nib:glass-chrome'
 /** Every token the frame's answer is painted as on the root. */
 const PAINTED = [
   '--glass-tint',
+  '--glass-tint-2',
   '--glass-tinted',
   '--content-alpha',
   '--terminal-alpha',
@@ -61,6 +64,8 @@ function isScheme(value: unknown): value is Scheme {
   return value === 'dark' || value === 'light'
 }
 
+const HEX = /^#[0-9a-f]{6}$/i
+
 function isGround(value: unknown): value is Ground {
   return isRecord(value) && isString(value.colour) && isScheme(value.scheme)
 }
@@ -68,12 +73,12 @@ function isGround(value: unknown): value is Ground {
 function kept(): Kept | null {
   const said = stored(KEY)
   if (!isRecord(said) || !isScheme(said.app) || !isScheme(said.scheme)) return null
-  if (!isString(said.tint) || !/^#[0-9a-f]{6}$/i.test(said.tint) || !isNumber(said.wash))
-    return null
+  if (!isString(said.tint) || !HEX.test(said.tint) || !isNumber(said.wash)) return null
   return {
     app: said.app,
     scheme: said.scheme,
     tint: said.tint,
+    ...(isString(said.second) && HEX.test(said.second) ? { second: said.second } : {}),
     wash: said.wash,
     ...(isNumber(said.paper) ? { paper: said.paper } : {}),
     ...(isNumber(said.terminal) ? { terminal: said.terminal } : {}),
@@ -162,6 +167,7 @@ class Chrome {
     this.bars = {}
     const root = document.documentElement
     delete root.dataset.tinted
+    delete root.dataset.paired
     for (const token of PAINTED) root.style.removeProperty(token)
   }
 
@@ -199,8 +205,10 @@ class Chrome {
    *  every rule under it is worked out from. */
   private paint(worn: Worn): void {
     const style = document.documentElement.style
+    document.documentElement.toggleAttribute('data-paired', worn.second !== undefined)
     const said: Record<(typeof PAINTED)[number], string> = {
       '--glass-tint': worn.tint,
+      '--glass-tint-2': worn.second ?? worn.tint,
       '--glass-tinted': percent(worn.wash),
       '--content-alpha': percent(worn.paper ?? 1),
       '--terminal-alpha': percent(worn.terminal ?? 1),

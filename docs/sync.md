@@ -10,7 +10,8 @@ disagree, what a reader can see about any of it, and the two things that are abo
 the account rather than the notes.
 
 `docs/sync-v2.md` is the design that replaces the pass, the conflict rules and the
-copies beside a note described below, and adds web logins that follow the person.
+copies beside a note described below. (It also added web logins that follow the person;
+those were taken out, #393.)
 Until it ships, this page is what runs.
 
 ## What a pass is
@@ -236,6 +237,35 @@ halfway through a pass is a room the rest of that pass knows about.
 Which is the whole of the promise, stated as one sentence: **no write anywhere -
 not a pass, not a room, not a push - ever replaces a copy that is not the copy both
 sides started from.** Where it cannot merge, it keeps.
+
+## Signing back in
+
+Signing out lets go of the session and nothing else. What this device knows about
+the account stays: each space's cursor, and for every note its version and the hash
+of the words the last pass left. Sync v2 writes the same record on its way out. So
+signing back in to the same account is not a first meeting; the pass resumes the way
+Git fast-forwards, and nobody is asked anything.
+
+| Notes on this device | The account since | What happens | Asks |
+| --- | --- | --- | --- |
+| last in step with this account, untouched | changed | the account's copy comes down | no |
+| this account's, written in while signed out | unchanged | they go up | no |
+| this account's, both written in | changed | merged against the words both last agreed on; where the two edits overlap, the conflict rule (a copy beside the note) | no |
+| another account's, or never synced, and some note would meet other words at the same path in the account's space of that name | - | **Merge** or **Keep separate** | yes |
+| another account's or never synced, and nothing would meet | - | they join: same words pair, older copies come up to date, the rest goes up | no |
+| nothing written here | - | the account comes down | no |
+
+The words both last agreed on are found in this device's own versions first and the
+account's after (`/v1/notes/:id/said/:hash`). A copy with no record at all - storage
+wiped, a folder paired for the first time - is asked about by its hash
+(`/v1/notes/said`): word for word something its note once said is only behind, and is
+brought up to date rather than kept beside.
+
+**Merge** pairs spaces of one name and settles them note by note as above. **Keep
+separate** names each space that would meet `Name 2` first, so it goes up as a space
+of its own beside the account's. Closing the question keeps them separate: nothing is
+mixed into the account's spaces that nobody agreed to, and neither answer loses a
+word. See `apps/desktop/src/lib/sync/returning.ts`, `meeting.ts` and `ancestry.ts`.
 
 ## Other sync tools
 

@@ -97,6 +97,8 @@ export const AGENT_WINDOW_VERBS: Readonly<Record<string, Scope | null>> = {
   draft_message: 'chats.write',
   post_message: 'chats.write',
   react: 'chats.write',
+  run_agent: 'agents',
+  agent_result: 'agents',
 }
 
 /** The window's verbs the crate asks on an agent's behalf. Each is optional: a window
@@ -133,6 +135,7 @@ export type Scope =
   | 'browser.network'
   | 'browser.storage'
   | 'settings'
+  | 'agents'
   | 'terminal'
 
 /** What a question is about (9.3), and the questions nib asks for itself. */
@@ -170,7 +173,8 @@ export interface Grant {
   always: Record<string, Category[]>
   /** The programs `run_terminal` starts without asking. */
   programs: string[]
-  limits: { tabs: number; calls: number; navigations: number }
+  /** `memory` is the browser's MB past which it opens no tab; 0 is none (#333). */
+  limits: { tabs: number; calls: number; navigations: number; memory: number }
   /** Milliseconds since 1970. */
   created: number
 }
@@ -198,7 +202,6 @@ export type Code =
   | 'failed'
   | 'no_dialog'
   | 'denied'
-  | 'in_use_elsewhere'
 
 /** A dialog a page is holding open. */
 export interface Dialog {

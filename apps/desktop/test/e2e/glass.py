@@ -23,7 +23,9 @@ scripts/glass-probe.py, which photographs the probe build.
 
 And the rest of what the theme promises: the paper under the note is opaque, the tab
 that is open runs down into it, the reader's accent is still the reader's, and
-Appearance has no Translucency row left, since glass is what it meant.
+Appearance has no Translucency row left, since glass is what it meant. And it is what a
+new reader opens in, in green and following the system (`FIRST_LOOK` in
+theme.svelte.ts), which every other drive is kept off by harness.py's `BUILT_IN`.
 
 Run it from the repository root:
 
@@ -258,7 +260,7 @@ FIRST_FRAME = """
 })()
 """
 
-TOLERATED = ("nibeditor.com", "Failed to load resource", "net::ERR")
+TOLERATED = ("orden.so", "nibeditor.com", "Failed to load resource", "net::ERR")
 
 finished: set[object] = set()
 
@@ -356,18 +358,100 @@ def stand(page: Page, desk: str, material: str | None) -> None:
 
 
 def read_over(page: Page, where: str, unders: list[str]) -> None:
+    # Where the frame is glass's own pair the shell is a blend, not a colour: every word
+    # on it is read over each of its two corners instead.
+    paired = page.evaluate("() => document.documentElement.hasAttribute('data-paired')")
+    grounds = ["--glass-from", "--glass-to"] if paired else ["--shell-ground"]
+    readings = [
+        (f"{what} ({ground})" if paired else what, ink, [ground if one == "--shell-ground" else one for one in layers])
+        for what, ink, layers in READINGS
+        for ground in grounds
+    ]
     for under in unders:
-        for what, ratio in page.evaluate(MEASURE, [READINGS, under]):
+        for what, ratio in page.evaluate(MEASURE, [readings, under]):
             holds(f"[{where} over {under}] {what}", ratio)
 
 
 def main() -> int:
     with DRIVE.session() as browser:
         for scheme in ("dark", "light"):
+            first_look(browser, scheme)
             drive(browser, scheme)
         scrolling(browser)
 
     return DRIVE.verdict("every reading held")
+
+
+def first_look(browser: Browser, scheme: str) -> None:
+    """A browser that has never opened nib: glass, the green accent, the system's
+    scheme, with glass's sheet worn and the theme not yet written down as a choice."""
+    context = browser.new_context(
+        viewport={"width": 1240, "height": 760},
+        color_scheme=scheme,
+        device_scale_factor=1,
+        reduced_motion="reduce",
+        first_look=True,
+    )
+    page = context.new_page()
+    page.goto(ORIGIN, wait_until="domcontentloaded")
+    wait_for(page, "window.nibApp && window.nibApp.workspace.activeSpace", "a space")
+    wait_for(
+        page,
+        "getComputedStyle(document.documentElement).getPropertyValue('--glass-chrome')",
+        "glass's sheet",
+    )
+    look = page.evaluate(
+        "() => ({ id: window.nibApp.theme.id, accent: window.nibApp.theme.accent,"
+        " scheme: window.nibApp.theme.scheme, current: window.nibApp.theme.current,"
+        " kept: localStorage.getItem('nib:theme') })"
+    )
+    shows(f"[{scheme}] a first launch is glass", look["id"], "glass")
+    shows(f"[{scheme}] in green", look["accent"], "green")
+    shows(f"[{scheme}] following the system", look["scheme"], "system")
+    shows(f"[{scheme}] which here is {scheme}", look["current"], scheme)
+    shows(f"[{scheme}] and nothing is written down as chosen", look["kept"], None)
+    page.wait_for_timeout(400)
+    shot(page, f"{scheme}-first-look")
+    done_with(page)
+
+    # An install an older build left on the built-in, with an accent of its own: moved to
+    # glass once, keeping the accent, and left alone after that.
+    context = browser.new_context(color_scheme=scheme, first_look=True)
+    context.add_init_script(
+        "try { if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1');"
+        " localStorage.setItem('nib:theme', 'default');"
+        " localStorage.setItem('nib:theme-settings', JSON.stringify({ '*': { accent: 'teal' } })) } }"
+        " catch {}"
+    )
+    page = context.new_page()
+    page.goto(ORIGIN, wait_until="domcontentloaded")
+    wait_for(page, "window.nibApp && window.nibApp.workspace.activeSpace", "a space")
+    read = "() => [window.nibApp.theme.id, window.nibApp.theme.accent]"
+    shows(f"[{scheme}] an older install on the built-in moves to glass", page.evaluate(read), ["glass", "teal"])
+    page.evaluate("() => window.nibApp.theme.select('default')")
+    page.reload(wait_until="domcontentloaded")
+    wait_for(page, "window.nibApp && window.nibApp.workspace.activeSpace", "a space")
+    shows(f"[{scheme}] and Classic chosen again stays", page.evaluate(read), ["default", "teal"])
+    done_with(page)
+
+    # An install the day's first look gave yellow, the theme never written down: green
+    # once, and a yellow picked after that stays.
+    context = browser.new_context(color_scheme=scheme, first_look=True)
+    context.add_init_script(
+        "try { if (!sessionStorage.getItem('seeded')) { sessionStorage.setItem('seeded', '1');"
+        " localStorage.setItem('nib:theme-moved', 'yes');"
+        " localStorage.setItem('nib:theme-settings', JSON.stringify({ '*': { accent: 'yellow' } })) } }"
+        " catch {}"
+    )
+    page = context.new_page()
+    page.goto(ORIGIN, wait_until="domcontentloaded")
+    wait_for(page, "window.nibApp && window.nibApp.workspace.activeSpace", "a space")
+    shows(f"[{scheme}] the first look's yellow turns green", page.evaluate(read), ["glass", "green"])
+    page.evaluate("() => window.nibApp.theme.setAccent('yellow')")
+    page.reload(wait_until="domcontentloaded")
+    wait_for(page, "window.nibApp && window.nibApp.workspace.activeSpace", "a space")
+    shows(f"[{scheme}] and a yellow picked after stays", page.evaluate(read), ["glass", "yellow"])
+    done_with(page)
 
 
 def drive(browser: Browser, scheme: str) -> None:
@@ -439,6 +523,35 @@ def drive(browser: Browser, scheme: str) -> None:
         False,
     )
     shot(page, f"{scheme}-glass-settings")
+
+    # Glass's own pair, chosen in its row: the pairs it offers, the accent, and two dots
+    # for two colours of one's own, each the platform's picker. One picked is kept with
+    # the other as the row showed it, and the frame wears the two at once.
+    row = page.locator(".nib-setting", has_text="Tint colour")
+    shows(f"[{scheme}] the pair row offers seven and two of one's own", row.locator(".swatch").count(), 9)
+    row.scroll_into_view_if_needed()
+    shot(page, f"{scheme}-glass-pairs", clip=row.bounding_box())
+    row.locator("input[type=color]").first.evaluate(
+        "(one) => { one.value = '#ffd6a5'; one.dispatchEvent(new Event('change', { bubbles: true })) }"
+    )
+    page.wait_for_timeout(300)
+    kept = page.evaluate("() => window.nibApp.theme.values.pair")
+    shows(f"[{scheme}] a colour picked is kept with the other", bool(re.fullmatch(r"#ffd6a5 #[0-9a-f]{6}", str(kept))), True)
+    shows(
+        f"[{scheme}] and both of them are worn as one's own",
+        row.locator(".swatch.picked.active").count(),
+        2,
+    )
+    shot(page, f"{scheme}-glass-pairs-own", clip=row.bounding_box())
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(400)
+    shows(
+        f"[{scheme}] the frame is a pair",
+        page.evaluate("() => document.documentElement.hasAttribute('data-paired')"),
+        True,
+    )
+    shot(page, f"{scheme}-glass-own-pair")
+    page.evaluate("() => window.nibApp.theme.set('pair', 'dawn')")
 
     # A launch that opens on glass wears it from its first frame rather than the
     # built-in's for a moment first. And without the sheet it wore last time it would

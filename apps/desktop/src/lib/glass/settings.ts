@@ -3,7 +3,9 @@
  *
  *  Windows Terminal is the role model for what is offered: which material, and how much
  *  of the window's colour lies over it, all the way to none of the desk at all. Arc's
- *  theme is the one for the colour: follow what is open, or one colour of the reader's.
+ *  theme is the one for the colour: follow what is open, and where nothing open has a
+ *  colour, glass's own two (pairs.ts) - one of the pairs it offers, or two of the
+ *  reader's own.
  *  What glass adds is the floor: the Opacity dial's track is grey below the least wash
  *  the frame's words read on over the material, and the knob stops there; see tint.ts.
  *
@@ -15,8 +17,9 @@ import { t } from '../i18n.svelte'
 import { isDesktop, platform } from '../tauri'
 import { theme } from '../theme.svelte'
 import type { ThemeSetting, ThemeValue } from '../themes/settings'
-import { contentSetting, rangeSetting, tintColourSetting } from '../translucent-settings'
+import { contentSetting, rangeSetting } from '../translucent-settings'
 import { chrome } from './chrome.svelte'
+import { ACCENT_PAIR, DAWN, isOwn, ownOf, PAIRS, shownOf, swatchOf } from './pairs'
 import { DIALS, type Dials } from './tint'
 
 /** The theme's id, which is also the drawer its dials are kept in. */
@@ -41,16 +44,11 @@ function hasMaterial(): boolean {
  *  is where each starts. */
 export function glassValues(): Record<string, ThemeValue> {
   const values: Record<string, ThemeValue> = {}
-  for (const id of ['material', 'opacity', 'follow', 'tint', 'colour', 'tab', 'content']) {
+  for (const id of ['material', 'opacity', 'follow', 'tint', 'pair', 'tab', 'content']) {
     const said = theme.values[id] ?? theme.keptFor(GLASS, id)
     if (said !== undefined) values[id] = said
   }
   return values
-}
-
-/** Whether the frame is following what is open. */
-function following(): boolean {
-  return glassValues().follow !== false
 }
 
 export function glassSettings(): ThemeSetting[] {
@@ -83,7 +81,28 @@ export function glassSettings(): ThemeSetting[] {
       paint: () => ({}),
     },
     rangeSetting('tint', t('Tint'), 0, 100, Math.round(DIALS.strength * 100), '%'),
-    tintColourSetting('colour', () => !following()),
+    {
+      id: 'pair',
+      label: t('Tint colour'),
+      own: true,
+      kind: 'colour',
+      initial: DAWN.id,
+      options: [
+        ...PAIRS.map((pair) => ({
+          value: pair.id,
+          name: t(pair.name),
+          dark: swatchOf(pair, 'dark'),
+          light: swatchOf(pair, 'light'),
+        })),
+        { value: ACCENT_PAIR, name: t('Accent'), dark: 'var(--accent)', light: 'var(--accent)' },
+      ],
+      pair: {
+        accepts: isOwn,
+        colours: (held, scheme) => shownOf(held, scheme, theme.accent),
+        of: ownOf,
+      },
+      paint: () => ({}),
+    },
     {
       id: 'tab',
       label: t('Coloured tab'),

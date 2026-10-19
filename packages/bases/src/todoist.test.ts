@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest'
+import { describe, expect, test, vi } from 'vitest'
 import { compileFilter } from './filter'
 import { contextAt, taskRow } from './fixtures/rows'
 import { fromTodoist } from './todoist'
@@ -12,12 +12,8 @@ const options = {
 /** Todoist's documented filters, and the tree each one compiles to. */
 const TREES: [string, Filter[]][] = [
   ['today', ['task.date == today()']],
-  [
-    'overdue',
-    [
-      'task.date < today() || (task.date == today() && task.time && task.time < now().format("HH:mm"))',
-    ],
-  ],
+  // Only a deadline makes a task late (#371).
+  ['overdue', ['task.deadline < today()']],
   ['no date', ['!task.date']],
   ['!no date', [{ not: ['!task.date'] }]],
   [
@@ -30,7 +26,8 @@ const TREES: [string, Filter[]][] = [
   ['date before: May 5', ['task.date < date("2026-05-05")']],
   ['date after: May 5', ['task.date > date("2026-05-05")']],
   ['date before: +4 hours', ['task.at < now() + "4h"']],
-  ['due before: May 5', ['task.due < date("2026-05-05")']],
+  // Todoist's due date is the day a task starts.
+  ['due before: May 5', ['task.date < date("2026-05-05")']],
   ['no deadline', ['!task.deadline']],
   ['deadline: today', ['task.deadline == today()']],
   ['deadline before: today', ['task.deadline < today()']],
@@ -113,7 +110,7 @@ const TREES: [string, Filter[]][] = [
 ]
 
 function TREES_OVERDUE(): string {
-  return 'task.date < today() || (task.date == today() && task.time && task.time < now().format("HH:mm"))'
+  return 'task.deadline < today()'
 }
 
 describe("Todoist's documented filters", () => {
@@ -126,6 +123,24 @@ describe("Todoist's documented filters", () => {
       'task.date == date("2026-06-10")',
     ])
   })
+
+  test("a date with no year and no today given takes this machine's year, not UTC's", () => {
+    // Just after midnight on New Year's Day in Auckland it is still the last day
+    // of the old year in UTC, and `jan 3` is the one coming, not the one gone.
+    const zone = process.env.TZ
+    process.env.TZ = 'Pacific/Auckland'
+    vi.useFakeTimers()
+    try {
+      vi.setSystemTime(new Date(2027, 0, 1, 0, 30))
+      expect(fromTodoist('date: Jan 3', { isNote: options.isNote })).toEqual([
+        'task.date == date("2027-01-03")',
+      ])
+    } finally {
+      vi.useRealTimers()
+      if (zone === undefined) delete process.env.TZ
+      else process.env.TZ = zone
+    }
+  })
 })
 
 describe('what a filter it compiles to keeps', () => {
@@ -135,6 +150,7 @@ describe('what a filter it compiles to keeps', () => {
     taskRow('Home.md', '- [ ] Paint [assignee:: Emil] 📅 2026-10-08', 0),
     taskRow('Home.md', '- [ ] Someday', 1),
     taskRow('Home.md', '- [ ] Call [time:: 09:00] 📅 2026-10-04', 2),
+    taskRow('Home.md', '- [ ] Pay rent [deadline:: 2026-10-01]', 3),
   ]
   const context = contextAt()
   const kept = (source: string) =>
@@ -146,7 +162,8 @@ describe('what a filter it compiles to keeps', () => {
 
   test.each<[string, (string | undefined)[]]>([
     ['today', ['Write report', 'Call']],
-    ['overdue', ['Old thing', 'Call']],
+    // A start date past is not late; a deadline past is.
+    ['overdue', ['Pay rent']],
     ['no date', ['Someday']],
     ['7 days', ['Write report', 'Paint', 'Call']],
     ['p1', ['Write report']],
@@ -155,9 +172,9 @@ describe('what a filter it compiles to keeps', () => {
     ['%email', ['Old thing']],
     ['assigned to: me', ['Paint']],
     ['search: paint', ['Paint']],
-    ['today | overdue', ['Write report', 'Old thing', 'Call']],
-    ['!#Work & !no date', ['Paint', 'Call']],
-    ['date before: +4 hours', ['Old thing', 'Write report', 'Call'].sort()],
+    ['today | overdue', ['Write report', 'Call', 'Pay rent']],
+    ['!#Work & !no date', ['Paint', 'Call', 'Pay rent']],
+    ['date before: +4 hours', ['Old thing', 'Write report', 'Call', 'Pay rent'].sort()],
   ])('%s keeps %j', (source, expected) => {
     expect(kept(source).sort()).toEqual([...expected].sort())
   })

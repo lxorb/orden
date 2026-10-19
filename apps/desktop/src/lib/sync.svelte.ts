@@ -7,7 +7,7 @@ import { api, ApiError } from './api'
 import { arriving } from './arriving.svelte'
 import { without } from './records'
 import { log } from './log'
-import { isRecord, keep, stored, storedText } from './stored'
+import { keep, stored, storedText } from './stored'
 import { nudgeDelay, pollDelay, RECONCILE_INTERVAL } from './backoff'
 import type { Pairing } from './space-pairing'
 import { untrack } from 'svelte'
@@ -17,7 +17,14 @@ import { rooms } from './rooms.svelte'
 import { t } from './i18n.svelte'
 import { modes } from './modes.svelte'
 import { invoke, joinPath } from './tauri'
-import { type Mirror, newMirror, readMirror, type Tracked, within } from './sync/mirror'
+import {
+  MIRRORS_KEY,
+  type Mirror,
+  newMirror,
+  savedRecord,
+  type Tracked,
+  within,
+} from './sync/mirror'
 import type { Joined, Waiting } from './sync/pass'
 import { record } from './sync/record.svelte'
 import type { Folded } from './sync/web-copies'
@@ -25,7 +32,7 @@ import { workspace } from './workspace.svelte'
 import type { FileOp } from './workspace/file-ops'
 import { samePath } from './space-paths'
 
-export const STORAGE_KEY = 'nib:mirrors'
+export const STORAGE_KEY = MIRRORS_KEY
 
 /** `offline` is v2's: the account cannot be reached, which the light says hollow and
  *  never red. */
@@ -87,6 +94,9 @@ class Sync {
    *  a cursor cannot answer it: a space this machine uploaded and never pulled
    *  anything from has a cursor of nought for as long as it exists. */
   private seen = false
+  /** Whose the mirrors are: whoever was signed in when the loop started, so a pass
+   *  that lands after a sign-out does not write them down as nobody's. */
+  private owner: string | null = null
 
   /** The mirrors, as space-pairing.ts reads and writes a pairing. */
   private readonly pairing: Pairing = {
@@ -180,7 +190,8 @@ class Sync {
   }
 
   private startV1() {
-    const held = this.load(account.user?.id ?? null)
+    this.owner = account.user?.id ?? null
+    const held = this.load(this.owner)
     this.mirrors = held.mirrors
     this.seen = held.seen
     this.quiet = 0
@@ -730,7 +741,7 @@ class Sync {
 
       // A browser opens the welcome note because on a first visit there is
       // nothing else to read. Once an account has brought its own notes down
-      // there is, and leaving somebody looking at "Welcome to Nib" beside their
+      // there is, and leaving somebody looking at "Welcome to Orden" beside their
       // own writing is the app failing to notice it has been introduced.
       if (moved) await workspace.leaveTheWelcomeNote()
 
@@ -794,31 +805,16 @@ class Sync {
   /** What this machine has written down about its relationship with an account:
    *  the mirrors, and whether a pass has ever finished. */
   private load(accountId: string | null): { mirrors: Record<string, Mirror>; seen: boolean } {
-    const saved = stored(STORAGE_KEY)
-    if (!isRecord(saved)) return { mirrors: {}, seen: false }
-
-    // An older version wrapped the mirrors in an object of their own, and one
-    // older still kept no account beside them: what is there belongs to
-    // whoever is signing in now, which is what the next pass writes down.
-    const held = isRecord(saved.mirrors) ? saved.mirrors : saved
-    const whose = typeof saved.account === 'string' ? saved.account : null
+    const saved = savedRecord(stored(STORAGE_KEY))
+    if (!saved) return { mirrors: {}, seen: false }
 
     // A mirror is this machine's relationship with one account. Another
     // account's mirrors are not spaces that went; they are nothing to do with
     // this account at all, and reading them as absences would reach into the
     // disk on the strength of somebody else's listing.
-    if (whose !== null && whose !== accountId) return { mirrors: {}, seen: false }
+    if (saved.whose !== null && saved.whose !== accountId) return { mirrors: {}, seen: false }
 
-    const mirrors: Record<string, Mirror> = {}
-    for (const [root, one] of Object.entries(held)) {
-      const mirror = readMirror(root, one)
-      if (mirror) mirrors[root] = mirror
-    }
-
-    // Absent in what an older version wrote. A machine that has mirrors from
-    // before this field existed has plainly seen the account, and reading it as
-    // unseen would hold the app back once, on the next launch only.
-    return { mirrors, seen: saved.seen === true || Object.keys(mirrors).length > 0 }
+    return { mirrors: saved.mirrors, seen: saved.seen }
   }
 
   /** Reads what this machine wrote down again, and fills in whatever it did not
@@ -843,7 +839,7 @@ class Sync {
    *  cursor is left alone for the same reason - a note this replays is a note
    *  found already agreeing, which costs a hash and no writing at all. */
   reread() {
-    const held = this.load(account.user?.id ?? null)
+    const held = this.load(this.owner)
     let grew = !this.seen && held.seen
     this.seen = this.seen || held.seen
 
@@ -933,7 +929,7 @@ class Sync {
     return keep(
       STORAGE_KEY,
       JSON.stringify({
-        account: account.user?.id ?? null,
+        account: this.owner,
         seen: this.seen,
         mirrors,
       }),

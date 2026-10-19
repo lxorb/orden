@@ -5,6 +5,7 @@ import { stamped } from '@nib/markdown/canvas-merge'
 import { awarenessUpdate, receive, subprotocol, syncStep1, syncUpdate, TEXT } from '@nib/rooms'
 import { pushPlane, readPlane } from '@nib/rooms/plane'
 import * as Y from 'yjs'
+import { sha256 } from '../src/crypto'
 import { roomsRevoked } from '../src/rooms'
 import { MOST_DOCUMENT_BYTES, TOO_LARGE_IN_A_ROOM } from '../src/rooms/state'
 import { writesOf } from '../src/rooms/kind'
@@ -837,6 +838,52 @@ describe('the door to a room', () => {
       headers: { upgrade: 'websocket', 'sec-websocket-protocol': subprotocol(outside) },
     })
     expect(refused.status).toBe(404)
+  })
+
+  test('tells the room the device the session proves, the way a tree op names it (#413)', async () => {
+    const door = doorway()
+    env.close()
+    env = testEnv({ ROOMS: door.ROOMS })
+
+    const token = await signIn(env, 'owner@example.com')
+    const space = await call(env, '/v1/spaces', { token, body: { name: 'Notes' } })
+    const spaceId = space.json.space.id
+    const note = await call(env, `/v1/spaces/${spaceId}/notes`, {
+      token,
+      body: { path: 'mine.md', content: 'mine' },
+    })
+    const noteId = note.json.note.id
+    const told = async (device: string) => {
+      const answer = await call(env, `/rooms/${noteId}`, {
+        headers: {
+          upgrade: 'websocket',
+          'sec-websocket-protocol': `${subprotocol(token)}, nib.device.${device}`,
+        },
+      })
+      expect(answer.status).toBe(200)
+      return door.asked.at(-1)?.get('x-nib-device-id')
+    }
+
+    // A device that has not said hello to its hub is named by its session, as the
+    // tree's ops name it, whatever its socket says.
+    const hash = await sha256(token)
+    expect(await told('laptop')).toBe(`session:${hash.slice(0, 16)}`)
+
+    // Once bound to the session, it is the device the session is bound to.
+    const session = env.db
+      .prepare('select id, user_id from sessions where token_hash = ?')
+      .get(hash) as {
+      id: string
+      user_id: string
+    }
+    env.db
+      .prepare(
+        `insert into devices (id, user_id, session_id, name, platform, created_at)
+         values ('laptop', ?, ?, 'Laptop', 'web', 1)`,
+      )
+      .run(session.user_id, session.id)
+    expect(await told('laptop')).toBe('laptop')
+    expect(await told('somebody-else')).toBe('laptop')
   })
 
   test('lets in a guest a link let in, at what the link said', async () => {

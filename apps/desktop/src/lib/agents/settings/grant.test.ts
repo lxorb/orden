@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 
 import type { Grant, Scope } from '../verbs'
+import { readGrant } from './crate'
 import {
   askApplies,
   asks,
@@ -29,7 +30,7 @@ const own = () => ownGrant('claude-code', 'Claude Code', 1)
 const only = (...scopes: Scope[]): Grant => ({ ...own(), scopes })
 
 describe('the defaults', () => {
-  it('are Emil’s for his own client: everything but scripts, storage, settings and the terminal', () => {
+  it('are Emil’s for his own client: everything but scripts, storage and settings', () => {
     const grant = own()
     expect(grant.scopes).toEqual([
       'context',
@@ -43,10 +44,12 @@ describe('the defaults', () => {
       'browser',
       'browser.reader',
       'browser.network',
+      'terminal',
+      'agents',
     ])
     expect(grant.spaces).toBe('all')
     expect(grant.mode).toBe('unsupervised')
-    expect(grant.limits).toEqual({ tabs: 4, calls: 600, navigations: 60 })
+    expect(grant.limits).toEqual({ tabs: 4, calls: 600, navigations: 60, memory: 0 })
     expect(asks(grant, 'paying')).toBe(true)
   })
 
@@ -65,12 +68,12 @@ describe('the defaults', () => {
       fileURLToPath(new URL('../../../../src-tauri/src/agents/grants.rs', import.meta.url)),
       'utf8',
     )
-    // The four scopes `Grant::own` leaves out, and the two `third_party` takes away.
+    // The three scopes `Grant::own` leaves out, and the ones `third_party` takes away.
     expect(crate).toMatch(
-      /Scope::BrowserScript\s*\|\s*Scope::BrowserStorage\s*\|\s*Scope::Settings\s*\|\s*Scope::Terminal/,
+      /Scope::BrowserScript\s*\|\s*Scope::BrowserStorage\s*\|\s*Scope::Settings\s*\)/,
     )
-    expect(crate).toMatch(/Scope::Context \| Scope::BrowserReader/)
-    expect(crate).toMatch(/tabs: 4,\s*calls: 600,\s*navigations: 60/)
+    expect(crate).toMatch(/Scope::Context\s*\|\s*Scope::BrowserReader/)
+    expect(crate).toMatch(/tabs: 4,\s*calls: 600,\s*navigations: 60,\s*memory: 0,/)
   })
 })
 
@@ -116,9 +119,14 @@ describe('a switch means what it says', () => {
 
 describe('the AI sidebar’s own agents', () => {
   it('are told apart by the name the crate gives them, and ask as their thread’s mode says', () => {
-    expect(sidebars(ownGrant('nib-anthropic', 'nib · Claude', 1))).toBe(true)
+    expect(sidebars(ownGrant('nib-anthropic', 'Orden · Claude', 1))).toBe(true)
     expect(sidebars(own())).toBe(false)
     expect(sidebars(ownGrant('nib-notes', 'Nib Notes', 1))).toBe(false)
+  })
+
+  it('are told apart under the name a crate from before the rename filed them by', () => {
+    expect(sidebars(ownGrant('nib-anthropic', 'nib · Claude', 1))).toBe(true)
+    expect(sidebars(ownGrant('nib-notes', 'nib notes · Claude', 1))).toBe(false)
   })
 })
 
@@ -133,8 +141,8 @@ describe('the rest of a grant', () => {
   it('offers a question only where it can come up', () => {
     expect(askApplies(only('notes.read'), 'paying')).toBe(false)
     expect(askApplies(only('browser.reader'), 'paying')).toBe(true)
-    expect(askApplies(own(), 'terminal')).toBe(false)
-    expect(askApplies(only('terminal'), 'terminal')).toBe(true)
+    expect(askApplies(own(), 'settings')).toBe(false)
+    expect(askApplies(only('settings'), 'settings')).toBe(true)
   })
 
   it('names itself, but never with nothing', () => {
@@ -146,6 +154,28 @@ describe('the rest of a grant', () => {
     expect(withLimit(own(), 'tabs', 12).limits.tabs).toBe(8)
     expect(withLimit(own(), 'calls', 95).limits.calls).toBe(120)
     expect(withLimit(own(), 'navigations', 0).limits.navigations).toBe(10)
+    expect(withLimit(own(), 'memory', 5000).limits.memory).toBe(5120)
+    expect(withLimit(own(), 'memory', 99999).limits.memory).toBe(32768)
+  })
+
+  /** #333: the browser's memory was capped at 3 GB for every agent, whatever the
+   *  machine had. No grant starts with a ceiling, a grant written before there was one
+   *  reads as none, and the reader can still set one and take it away again. */
+  it('sets no memory ceiling unless the reader does', () => {
+    expect(own().limits.memory).toBe(0)
+    expect(thirdPartyGrant('script', 'A script', 1).limits.memory).toBe(0)
+    const set = withLimit(own(), 'memory', 4096)
+    expect(set.limits.memory).toBe(4096)
+    expect(withLimit(set, 'memory', 0).limits.memory).toBe(0)
+    const before = { tabs: 4, calls: 600, navigations: 60 }
+    expect(readGrant({ ...own(), limits: before })?.limits.memory).toBe(0)
+    expect(readGrant(set)?.limits.memory).toBe(4096)
+    const crate = readFileSync(
+      fileURLToPath(new URL('../../../../src-tauri/src/agents/memory.rs', import.meta.url)),
+      'utf8',
+    )
+    expect(crate).not.toMatch(/const CEILING/)
+    expect(crate).toMatch(/if ceiling == 0 \{\s*return None;/)
   })
 
   it('leaves every space for the spaces there are, then one at a time', () => {

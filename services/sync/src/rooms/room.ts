@@ -1309,7 +1309,7 @@ export class NoteRoom implements DurableObject {
 
     if (crossing || (await sha256(settled)) !== held.hash) {
       if (file.deleted) {
-        await revive(this.env, held.spaceId, this.settlingDevice, held.noteId)
+        await revive(this.env, held.spaceId, this.settlingDevice, held.noteId, 'stays deleted')
         file = await this.env.DB.prepare('select * from notes where id = ? and deleted = 0')
           .bind(held.noteId)
           .first<Note>()

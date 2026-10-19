@@ -30,7 +30,11 @@
   import type { Kit } from './kit'
   import { switched } from './layout'
   import type { Builder } from './live.svelte'
-  import { ADD_MARK, FILTER_MARK, GROUP_MARK, LAYOUT_MARKS, LOCK_MARK } from './marks'
+  import { ADD_MARK, DISPLAY_MARK, FILTER_MARK, GROUP_MARK, LAYOUT_MARKS, LOCK_MARK } from './marks'
+  import DisplayBuilder from './DisplayBuilder.svelte'
+  import { onlyOf } from './display'
+  import { builtinBase } from './source'
+  import { asShipped } from './spec'
   import FormulaBuilder from './FormulaBuilder.svelte'
   import NameBuilder from './NameBuilder.svelte'
   import OptionsBuilder from './OptionsBuilder.svelte'
@@ -38,6 +42,10 @@
   import { templates } from './templates'
   import Popover from './Popover.svelte'
   import { copyToBase } from './save'
+  import { focusSoon } from './focus-soon'
+  import { projectAt, renameProject } from './project-actions'
+  import { addSection, projectOf } from './section-actions'
+  import { prompt } from '../prompt.svelte'
   import { type Layout, LAYOUTS, layoutName, layoutOf } from './words'
 
   const {
@@ -66,7 +74,13 @@
     ),
   )
 
-  let open = $state<'filter' | 'sort' | 'group' | null>(null)
+  let open = $state<'filter' | 'sort' | 'group' | 'display' | null>(null)
+  /** The project the view is of, whose name is its note's. */
+  const project = $derived(projectOf(kit))
+  /** A view of tasks wears Todoist's head: its name, the search, Display and the plus;
+   *  a base of notes keeps the database's tools. */
+  const tasky = $derived(kit.spec.builtin !== undefined || view?.nib.rows === 'tasks')
+  const narrowed = $derived(view ? Object.keys(onlyOf(view)).length > 0 : false)
   const notes = $derived((view?.nib.rows ?? 'notes') === 'notes')
 
   /** What each builder is called, for the layer that holds it. */
@@ -119,7 +133,14 @@
   }
   let renaming = $state(false)
 
-  const toggle = (which: 'filter' | 'sort' | 'group') => (open = open === which ? null : which)
+  const toggle = (which: 'filter' | 'sort' | 'group' | 'display') =>
+    (open = open === which ? null : which)
+
+  /** A view nib ships, the way it came. */
+  function reset() {
+    open = null
+    kit.change(() => builtinBase(asShipped(kit.spec)))
+  }
 
   function pick(next: Layout) {
     kit.change((one, at) => switched(one, at, next, live.rows))
@@ -129,6 +150,22 @@
     if (!base) return
     const views = base.views
     const items: MenuEntry[] = [
+      // A project's own: its note named again, a section added, the note itself.
+      ...(project
+        ? [
+            { label: t('Rename'), run: () => (renaming = true) },
+            {
+              label: t('Add section'),
+              asks: true,
+              run: () =>
+                void prompt
+                  .ask({ title: t('Add section'), confirmLabel: t('Add section') })
+                  .then((words) => (words?.trim() ? addSection(kit, words) : undefined)),
+            },
+            { label: t('Open in note'), run: () => void workspace.open(project.path) },
+            DIVIDER,
+          ]
+        : []),
       ...(views.length > 1
         ? [
             ...views.map((one, at) => ({
@@ -139,7 +176,7 @@
             DIVIDER,
           ]
         : []),
-      ...(kit.spec.builtin === undefined || views.length > 1
+      ...(!project && (kit.spec.builtin === undefined || views.length > 1)
         ? [{ label: t('Rename'), run: () => (renaming = true) }]
         : []),
       { label: t('New view'), run: () => kit.change((one, at) => addView(one, at, 'table')) },
@@ -239,12 +276,11 @@
 
 <div class="head" class:compact={kit.compact}>
   {#if renaming}
-    <!-- svelte-ignore a11y_autofocus -->
     <input
       class="nib-field rename"
-      value={view?.name ?? ''}
+      value={project ? named : (view?.name ?? '')}
       aria-label={t('Rename')}
-      autofocus
+      use:focusSoon
       onkeydown={(event) => {
         if (event.key === 'Enter') event.currentTarget.blur()
         if (event.key === 'Escape') {
@@ -256,7 +292,10 @@
       onblur={(event) => {
         const name = event.currentTarget.value
         renaming = false
-        kit.change((one, at) => renameView(one, at, name))
+        if (project) {
+          if (name.trim() && name.trim() !== project.name)
+            void renameProject(projectAt(project.path), name)
+        } else kit.change((one, at) => renameView(one, at, name))
       }}
     />
   {:else}
@@ -309,48 +348,52 @@
     {/key}
   {/if}
 
-  <div class="nib-segmented layouts" role="tablist" aria-label={t('Layout')} use:segmented>
-    {#each offered as one (one)}
-      <button
-        type="button"
-        role="tab"
-        class:on={layout === one}
-        aria-selected={layout === one}
-        title={layoutName(one)}
-        aria-label={layoutName(one)}
-        onclick={() => pick(one)}
-      >
-        <svg viewBox="0 0 13 13"><path d={LAYOUT_MARKS[one]} /></svg>
-      </button>
-    {/each}
-  </div>
+  {#if !tasky}
+    <div class="nib-segmented layouts" role="tablist" aria-label={t('Layout')} use:segmented>
+      {#each offered as one (one)}
+        <button
+          type="button"
+          role="tab"
+          class:on={layout === one}
+          aria-selected={layout === one}
+          title={layoutName(one)}
+          aria-label={layoutName(one)}
+          onclick={() => pick(one)}
+        >
+          <svg viewBox="0 0 13 13"><path d={LAYOUT_MARKS[one]} /></svg>
+        </button>
+      {/each}
+    </div>
+  {/if}
 
   <span class="spring"></span>
 
-  {#each [{ id: 'filter', mark: FILTER_MARK, label: t('Filter') }, { id: 'sort', mark: ORDER_MARK, label: t('Sort') }, { id: 'group', mark: GROUP_MARK, label: t('Group') }] as const as tool (tool.id)}
-    <div class="tool">
-      <button
-        type="button"
-        class="nib-glyph"
-        class:set={active[tool.id]}
-        class:open={open === tool.id}
-        data-opens-popover
-        title={tool.label}
-        aria-label={tool.label}
-        aria-expanded={open === tool.id}
-        onclick={() => toggle(tool.id)}
-      >
-        <svg viewBox="0 0 13 13"><path d={tool.mark} /></svg>
-      </button>
-      <Popover open={open === tool.id} label={tool.label} onclose={() => (open = null)}>
-        {#if tool.id === 'filter'}
-          <FilterBuilder {kit} />
-        {:else}
-          <ArrangeBuilder {kit} part={tool.id} />
-        {/if}
-      </Popover>
-    </div>
-  {/each}
+  {#if !tasky}
+    {#each [{ id: 'filter', mark: FILTER_MARK, label: t('Filter') }, { id: 'sort', mark: ORDER_MARK, label: t('Sort') }, { id: 'group', mark: GROUP_MARK, label: t('Group') }] as const as tool (tool.id)}
+      <div class="tool">
+        <button
+          type="button"
+          class="nib-glyph"
+          class:set={active[tool.id]}
+          class:open={open === tool.id}
+          data-opens-popover
+          title={tool.label}
+          aria-label={tool.label}
+          aria-expanded={open === tool.id}
+          onclick={() => toggle(tool.id)}
+        >
+          <svg viewBox="0 0 13 13"><path d={tool.mark} /></svg>
+        </button>
+        <Popover open={open === tool.id} label={tool.label} onclose={() => (open = null)}>
+          {#if tool.id === 'filter'}
+            <FilterBuilder {kit} />
+          {:else}
+            <ArrangeBuilder {kit} part={tool.id} />
+          {/if}
+        </Popover>
+      </div>
+    {/each}
+  {/if}
 
   {#if !kit.compact}
     <label class="nib-field search">
@@ -372,6 +415,27 @@
         }}
       />
     </label>
+  {/if}
+
+  {#if tasky}
+    <div class="tool">
+      <button
+        type="button"
+        class="nib-glyph"
+        class:set={narrowed}
+        class:open={open === 'display'}
+        data-opens-popover
+        title={t('Display')}
+        aria-label={t('Display')}
+        aria-expanded={open === 'display'}
+        onclick={() => toggle('display')}
+      >
+        <svg viewBox="0 0 13 13"><path d={DISPLAY_MARK} /></svg>
+      </button>
+      <Popover open={open === 'display'} label={t('Display')} onclose={() => (open = null)}>
+        <DisplayBuilder {kit} onreset={kit.spec.builtin !== undefined ? reset : undefined} />
+      </Popover>
+    </div>
   {/if}
 
   <button

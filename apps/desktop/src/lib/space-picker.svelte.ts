@@ -2,9 +2,9 @@
  *  Ctrl+Shift+Space (Cmd+Shift+Space on a Mac).
  *
  *  Emil, 2026-10-03: a key that opens a modal just for switching to another space, a
- *  digit switching at once and a name with Enter. The rows are the title bar's own
- *  (SpaceList.svelte), in the middle of the window rather than hanging from a mark,
- *  because a hand on the keyboard is not looking at the corner the mark is in.
+ *  digit switching at once and a name with Enter. The rows are the panel header's own
+ *  (SpaceList.svelte), in the middle of the window rather than hanging from the header,
+ *  because a hand on the keyboard is not looking at the corner the header is in.
  *
  *  The same key again puts it away, as Shift Shift puts the palette away. On a phone
  *  there is no keyboard to type a number with, so the key - from a keyboard plugged

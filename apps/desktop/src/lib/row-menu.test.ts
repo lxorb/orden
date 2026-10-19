@@ -45,20 +45,9 @@ vi.mock('./sharing.svelte', () => ({
   shareThisFile: () => undefined,
 }))
 
-const copied: string[] = []
-vi.mock('./clipboard', () => ({
-  copyText: (text: string) => {
-    copied.push(text)
-    return Promise.resolve()
-  },
-}))
-
 const { rowMenu } = await import('./row-menu')
 const { workspace } = await import('./workspace.svelte')
-// Copy link fetches the code that spells a link the first time it is pressed. Fetched
-// here, so the press waits on no module's first load: on a busy machine that alone is
-// longer than a wait for the clipboard.
-await (await import('@nib/editor')).noteLinksCode()
+const { viewport } = await import('./viewport.svelte')
 type Entry = import('./workspace.svelte').Entry
 
 function note(path: string): Entry {
@@ -125,14 +114,29 @@ describe('every row', () => {
     expect(Object.keys(de)).not.toContain('Folder')
   })
 
-  test('opens, renames, moves and deletes, in that order', () => {
+  test('opens, renames and deletes, in that order', () => {
     for (const entry of rows) {
       const said = labels(entry)
 
       expect(said[0], entry.path).toBe('Open')
       expect(said, entry.path).toContain('Rename')
-      expect(said, entry.path).toContain('Move')
       expect(said.at(-1), entry.path).toBe('Delete')
+    }
+  })
+
+  // A row is dragged into a folder or onto a space in the switcher, and the palette
+  // asks where (#303); a finger has no drag, and its held press opens this menu.
+  test('moves on a touch screen only', () => {
+    for (const entry of rows) expect(labels(entry), entry.path).not.toContain('Move')
+
+    viewport.device = 'phone'
+    try {
+      for (const entry of rows) expect(labels(entry), entry.path).toContain('Move')
+      workspace.select('/s/loose.md')
+      workspace.toggleSelect('/s/paper.pdf')
+      expect(labels(loose)).toContain('Move')
+    } finally {
+      viewport.device = 'desktop'
     }
   })
 })
@@ -145,13 +149,10 @@ describe('a note', () => {
       'Open to the side',
       'New note inside',
       'Rename',
-      'Move',
       'Choose an icon',
       'Set cover',
-      'Bookmark',
-      'Leave out of search',
+      'Add to Essentials',
       'Archive',
-      'Copy link',
       'Duplicate',
       'Delete',
     ])
@@ -198,11 +199,8 @@ describe('a paper', () => {
       'Open in new tab',
       'Open to the side',
       'Rename',
-      'Move',
-      'Bookmark',
-      'Leave out of search',
+      'Add to Essentials',
       'Archive',
-      'Copy link',
       'Duplicate',
       'Delete',
     ])
@@ -221,14 +219,11 @@ describe('a file the account has a copy of', () => {
       'Open to the side',
       'New note inside',
       'Rename',
-      'Move',
       'Choose an icon',
       'Set cover',
-      'Bookmark',
-      'Leave out of search',
+      'Add to Essentials',
       'Archive',
       'Share',
-      'Copy link',
       'Duplicate',
       'Delete',
     ])
@@ -245,14 +240,11 @@ describe('a file the account has a copy of', () => {
       'Open to the side',
       'New note inside',
       'Rename',
-      'Move',
       'Choose an icon',
       'Set cover',
-      'Bookmark',
-      'Leave out of search',
+      'Add to Essentials',
       'Archive',
       'Share',
-      'Copy link',
       'Duplicate',
       'Delete',
     ])
@@ -266,12 +258,9 @@ describe('a file the account has a copy of', () => {
       'Open in new tab',
       'Open to the side',
       'Rename',
-      'Move',
-      'Bookmark',
-      'Leave out of search',
+      'Add to Essentials',
       'Archive',
       'Share',
-      'Copy link',
       'Duplicate',
       'Delete',
     ])
@@ -283,14 +272,7 @@ describe('a row that is part of a selection of several', () => {
     workspace.select('/s/loose.md')
     workspace.toggleSelect('/s/paper.pdf')
 
-    expect(labels(loose)).toEqual([
-      'Open all',
-      'Move',
-      'Bookmark',
-      'Archive',
-      'Copy link',
-      'Delete 2 items',
-    ])
+    expect(labels(loose)).toEqual(['Open all', 'Add to Essentials', 'Archive', 'Delete 2 items'])
   })
 
   test('and bookmarks the lot with one press, or takes the lot out once all are in', () => {
@@ -301,26 +283,13 @@ describe('a row that is part of a selection of several', () => {
       rowMenu(loose)
         .find((one) => one?.label === label)
         ?.run()
-    press('Bookmark')
+    press('Add to Essentials')
 
     expect(workspace.bookmarks.list.map((one) => one.path)).toEqual(['loose.md', 'A/A.md'])
-    expect(labels(loose)).toContain('Remove bookmark')
+    expect(labels(loose)).toContain('Remove from Essentials')
 
-    press('Remove bookmark')
+    press('Remove from Essentials')
     expect(workspace.bookmarks.list).toEqual([])
-  })
-
-  test('and copies a link a line, in the spelling the Links setting asks for', async () => {
-    workspace.select('/s/loose.md')
-    workspace.toggleSelect('/s/A')
-    copied.length = 0
-
-    rowMenu(loose)
-      .find((one) => one?.label === 'Copy link')
-      ?.run()
-    await vi.waitFor(() => {
-      expect(copied).toEqual(['[[loose]]\n[[A]]'])
-    })
   })
 
   test('while a selection of one is an ordinary row', () => {
@@ -399,5 +368,44 @@ describe('another sync tool’s copy', () => {
 
   test('is the plain menu once the note it was made of has gone', () => {
     expect(labels(orphan)).toEqual(labels(loose))
+  })
+})
+
+/** Nothing on a row leaves it out of search any more; Archive puts a note out of the
+ *  way. A row a space left out before keeps the way back, so nothing stays out with
+ *  none. See `searchAgainEntry`. */
+describe('search', () => {
+  test('is never left out from a row', () => {
+    for (const entry of [nested, plain, loose, paper]) {
+      expect(labels(entry)).not.toContain('Search here again')
+    }
+  })
+
+  test('but a row left out before can be searched again, and only that row', () => {
+    workspace.excluded.toggle(plain.path)
+    const inside = plain.children[0]
+
+    expect(labels(plain)).toContain('Search here again')
+    expect(inside && labels(inside)).not.toContain('Search here again')
+
+    rowMenu(plain)
+      .find((one) => one?.label === 'Search here again')
+      ?.run()
+    expect(workspace.excluded.has(plain.path)).toBe(false)
+    expect(labels(plain)).not.toContain('Search here again')
+  })
+})
+
+/** Undo is Ctrl+Z on the list, the toast and the palette's row, never a row of
+ *  this menu. */
+describe('the undo', () => {
+  test('is not in a row’s menu, nor a selection’s', () => {
+    const undo = vi.spyOn(workspace, 'undoLabel', 'get').mockReturnValue('Undo deleting plan')
+
+    expect(labels(loose).at(-1)).toBe('Delete')
+    workspace.select('/s/loose.md')
+    workspace.toggleSelect('/s/paper.pdf')
+    expect(labels(loose).at(-1)).toBe('Delete 2 items')
+    undo.mockRestore()
   })
 })

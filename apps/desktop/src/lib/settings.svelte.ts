@@ -1,10 +1,13 @@
 import { setSnippets } from '@nib/editor'
+import { account } from './account.svelte'
+import { modes } from './modes.svelte'
 import { connectors } from './connectors.svelte'
 import { message } from './i18n.svelte'
 import { DEFAULT_ID_FORMAT, ID_FORMATS } from './note-id'
 import { DEFAULT_PAGE_SETUP, ORIENTATIONS, type PageSetup, PAPER_SIZES } from './paper'
-import { isRecord, isString, keep, stored, storedText } from './stored'
+import { isRecord, isString, keep, stored, storedText, stringList } from './stored'
 import { invoke, isDesktop, isNative } from './tauri'
+import { viewport } from './viewport.svelte'
 
 const PAGE_KEY = 'nib:page'
 const APPEARANCE_KEY = 'nib:export-appearance'
@@ -16,6 +19,7 @@ type ExportAppearance = 'light' | 'dark' | 'app'
 export type Section =
   | 'general'
   | 'editor'
+  | 'kinds'
   | 'shortcuts'
   | 'mobile'
   | 'spelling'
@@ -41,6 +45,8 @@ class Settings {
   listing = $state(true)
   /** The version-history sheet, which is its own overlay. */
   historyOpen = $state(false)
+  /** The first run's optional questions: -1 all set, else the one asked; Personalize.svelte. */
+  setup = $state<number | null>(null)
 
   /** Whether pandoc is on this machine, which decides the export list. */
   pandoc = $state(false)
@@ -148,10 +154,17 @@ class Settings {
     }
   }
 
+  /** Where in a pane it was asked to open: Access, for what used to be panes of their
+   *  own. Read and cleared by the part it names. */
+  at = $state<'access' | null>(null)
+
   /** Opens on General, or on the list of panes where the screen is a phone's.
-   *  Asked for by name, a pane opens straight away on both. */
+   *  Asked for by name, a pane opens straight away on both. Agents and LLM access are
+   *  Settings > AI's Access now, and a link to either still lands there. */
   show(section?: Section) {
-    this.section = section ?? 'general'
+    const moved = section === 'agents' || section === 'llm'
+    this.at = moved ? 'access' : null
+    this.section = moved ? 'ai' : (section ?? 'general')
     this.listing = section === undefined
     this.open = true
     this.error = null
@@ -160,3 +173,49 @@ class Settings {
 }
 
 export const settings = new Settings()
+
+/** Kinds of tab Settings › Note types turned off: nothing offers to make one, and a file
+ *  of one still opens. Here, with the settings the first paint reads; set and synced in
+ *  kind-choice.ts. */
+export const KINDS_KEY = 'nib:hidden-kinds'
+
+export type KindName =
+  'note' | 'canvas' | 'pages' | 'chat' | 'terminal' | 'remote' | 'online' | 'web' | 'private'
+
+export function kindsHere(): KindName[] {
+  if (__EVEN_PLUGIN__) return ['note', 'canvas', 'pages']
+
+  const web = !viewport.touch
+  const here: KindName[] = ['note', 'canvas', 'pages']
+  if (account.accountToken) here.push('chat')
+  // Every terminal is for somebody who writes code; see `developer` in modes.svelte.ts.
+  if (isDesktop && modes.coder) here.push('terminal', 'remote')
+  if (modes.coder) here.push('online')
+  if (web) here.push('web')
+  if (web && isDesktop) here.push('private')
+  return here
+}
+
+/** Or the first, if none is left. */
+export function shownOf(here: readonly KindName[], hidden: readonly string[]): KindName[] {
+  const shown = here.filter((kind) => !hidden.includes(kind))
+  return shown.length ? shown : here.slice(0, 1)
+}
+
+class HiddenKinds {
+  hidden = $state<readonly string[]>([])
+
+  get shown(): KindName[] {
+    return shownOf(kindsHere(), this.hidden)
+  }
+
+  offers(kind: KindName): boolean {
+    return this.shown.includes(kind)
+  }
+
+  restore() {
+    this.hidden = stringList(stored(KINDS_KEY)) ?? []
+  }
+}
+
+export const hiddenKinds = new HiddenKinds()

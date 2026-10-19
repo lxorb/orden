@@ -10,21 +10,123 @@ export const ko: Dictionary = {
   'Do you write code?': '코드를 작성하시나요?',
   Yes: '예',
   No: '아니요',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': '다른 앱에서: {key}',
+  'From other apps: set in your system settings': '다른 앱에서: 시스템 설정에서 지정',
+  'From other apps: bind {command} in your system settings':
+    '다른 앱에서: 시스템 설정에서 {command} 지정',
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: '에센셜',
+  'Add to Essentials': '에센셜에 추가',
+  'Remove from Essentials': '에센셜에서 제거',
+  'Add block to Essentials': '블록을 에센셜에 추가',
+  'Add blocks to Essentials': '블록들을 에센셜에 추가',
+  'Add view to Essentials': '보기를 에센셜에 추가',
+  'Open tabs and Essentials': '탭과 에센셜 열기',
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor가 Orden으로 바뀌었습니다',
+  'Notes from nibeditor.com': 'nibeditor.com의 노트',
+  'Nothing there': '아무것도 없습니다',
+  // AI: the three permission modes
+  'Full permissions': '전체 권한',
+  'Auto mode': '자동 모드',
+  'Full permissions: nothing is asked first': '전체 권한: 미리 묻지 않습니다',
+  // Import: Zen's tabs
+  'Import from Zen': 'Zen에서 가져오기',
+  'Containers stay in Zen': '컨테이너는 Zen에 남습니다',
+  'Zen’s tabs could not be read.': 'Zen의 탭을 읽을 수 없습니다.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': '컨테이너는 Firefox에 남습니다',
+  'Nothing could be read out of {browser}.': '{browser}에서 아무것도 읽지 못했습니다.',
+  'Saved groups': '저장된 그룹',
+  'Tab group': '탭 그룹',
+  'Bookmarks toolbar': '북마크 도구 모음',
+  'Bookmarks menu': '북마크 메뉴',
+  'Other bookmarks': '기타 북마크',
+  'Mobile bookmarks': '모바일 북마크',
+  'Bookmarks bar': '북마크바',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser}는 열린 탭을 잠가 두므로 북마크만 가져왔습니다.',
+  '{count} pages not on the web stay behind': '웹에 없는 페이지 {count}개는 가져오지 않습니다',
+  'Reading List': '읽기 목록',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS는 Safari의 탭과 북마크를 전체 디스크 접근 권한 뒤에 둡니다. 그곳에서 Orden을 켠 다음 다시 시도하세요.',
+  // Settings: note types
+  'Page note': '페이지 노트',
+  'Web note': '웹 노트',
+  'Private tab': '비공개 탭',
+  'Note types': '노트 유형',
+  // Tasks: Upcoming's weeks
+  'Previous week': '이전 주',
+  // Tasks: projects placed in the panel, and their folder
+  'Add project above': '위에 프로젝트 추가',
+  'Add project below': '아래에 프로젝트 추가',
+  'Projects folder': '프로젝트 폴더',
+  // Tasks: a repeating task skipped or done for good
+  Skip: '건너뛰기',
+  'Complete forever': '영구 완료',
+  // Tasks: comments
+  Comments: '댓글',
+  // Tasks: filters
+  Filters: '필터',
+  'Add filter': '필터 추가',
+  'Edit filter': '필터 편집',
+  // Tasks: a project's sections
+  'Add section': '섹션 추가',
+  '{name} (copy)': '{name} (사본)',
+  'Its tasks are deleted with it.': '안의 작업도 함께 삭제됩니다.',
+  // Tasks: keys, selection and the undo toast
+  Completed: '완료됨',
+  'Remove date': '날짜 제거',
+  'Next task': '다음 작업',
+  'Previous task': '이전 작업',
+  'Add task at the top': '맨 위에 할 일 추가',
+  '{count} selected': '{count}개 선택됨',
+  // Tasks: the Display menu
+  Display: '보기',
+  'Completed tasks': '완료된 작업',
+  // Tasks: several lines pasted into quick add
+  'One task': '작업 하나',
+  'One per line': '줄마다 하나',
+  // Tasks: the projects in the panel
+  Favorites: '즐겨찾기',
+  'Add project': '프로젝트 추가',
+  'Add sub-project': '하위 프로젝트 추가',
+  // Tasks: the task view
+  'Sub-tasks': '하위 작업',
+  'Add sub-task': '하위 작업 추가',
+  'New label': '새 라벨',
+  'No deadline': '마감 없음',
+  // Tasks: the row's menu and the scheduler
+  Reschedule: '일정 변경',
+  'Later this week': '이번 주 후반',
+  'This weekend': '이번 주말',
+  'Next weekend': '다음 주말',
+  'Every week on {day}': '매주 {day}',
+  'Every month on day {day}': '매월 {day}일',
+  'Every year on {date}': '매년 {date}',
+  'Type a date': '날짜 입력',
+  'Previous month': '이전 달',
+  'Next month': '다음 달',
+  'No time': '시간 없음',
+  'No repeat': '반복 없음',
+  Complete: '완료',
+  Reopen: '다시 열기',
+  Schedule: '일정 잡기',
+  'Open in note': '노트에서 열기',
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': '다른 앱',
-  'Start fresh': '새로 시작',
   'Import from Obsidian': 'Obsidian에서 가져오기',
   'Import from Notion': 'Notion에서 가져오기',
   // Hints: Silent mode and the cards that point at a feature
   Hints: '힌트',
   'Silent mode': '조용한 모드',
-  'Sign in to keep your notes safe and on every device.':
-    '로그인하면 노트를 안전하게, 모든 기기에서 볼 수 있어요.',
   'See how your notes connect.': '노트가 어떻게 연결되는지 보세요.',
   'Press {key} to find anything, notes and commands alike.':
     '{key}를 누르면 노트와 명령을 모두 찾을 수 있어요.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': '작성 중 마크다운 표시',
+  'Open notes in source mode': '노트를 소스 모드로 열기',
   Pointer: '포인터',
   'Pointing hand on buttons': '버튼 위에서 손가락 포인터',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
@@ -40,11 +142,13 @@ export const ko: Dictionary = {
   '{count} h': '{count}시간',
   Inbox: '받은 편지함',
   Date: '날짜',
+  'Start date': '시작일',
   Priority: '우선순위',
   Reminder: '알림',
   Duration: '소요 시간',
   'Smart dates': '스마트 날짜',
   'From any app': '어느 앱에서나',
+  'Show tasks without a start date in Today': '시작일이 없는 할 일을 오늘에 표시',
   'Every day': '매일',
   'Every weekday': '평일마다',
   'Every week': '매주',
@@ -61,6 +165,13 @@ export const ko: Dictionary = {
   Unsaved: '저장 안 됨',
   'Save to': '저장 위치',
   'Reloaded with the web data of {space}': '{space}의 웹 데이터로 다시 불러옴',
+  Separate: '별도',
+  'Share this note’s web data again?': '이 노트의 웹 데이터를 다시 공유할까요?',
+  'What its pages are signed in to on this computer is deleted.':
+    '이 컴퓨터에서 이 노트의 페이지가 로그인한 정보가 삭제됩니다.',
+  'Share again': '다시 공유',
+  'This note keeps its own web data now': '이 노트는 이제 자체 웹 데이터를 사용합니다',
+  'Back on the shared web data': '공유 웹 데이터로 돌아왔습니다',
   'Add a page': '페이지 추가',
   'Add a page after this': '이 뒤에 페이지 추가',
   'Delete this page': '이 페이지 삭제',
@@ -81,6 +192,8 @@ export const ko: Dictionary = {
   Dots: '점',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': '두 손가락으로 캔버스 회전',
+  'Turn upright': '똑바로 세우기',
   Canvas: '캔버스',
   Card: '카드',
   'Note or picture': '노트 또는 그림',
@@ -95,7 +208,6 @@ export const ko: Dictionary = {
   'New window': '새 창',
   New: '새로 만들기',
   'New space': '새 공간',
-  '{name}: switch space': '{name}: 공간 바꾸기',
   Untitled: '제목 없음',
   Space: '공간',
   'Name the space': '공간 이름 지정',
@@ -140,8 +252,6 @@ export const ko: Dictionary = {
   'Loading…': '불러오는 중…',
   'Create a space': '공간 만들기',
   'Import a folder': '폴더 가져오기',
-  'Sign in to sync': '로그인하여 동기화',
-  'Create account': '계정 만들기',
   'Delete space': '공간 삭제',
   'Delete {name}?': '{name}을 삭제할까요？',
   'Every note in this space is deleted from your computer.':
@@ -159,6 +269,10 @@ export const ko: Dictionary = {
   Unpin: '고정 해제',
   Close: '닫기',
   'Close pinned tab?': '고정된 탭을 닫을까요？',
+  'Save changes to {name}?': '{name}의 변경 사항을 저장할까요?',
+  'Save changes to these tabs?': '이 탭들의 변경 사항을 저장할까요?',
+  'Unsaved words go to Recently deleted.': '저장하지 않은 글은 최근 삭제된 항목으로 갑니다.',
+  'Don’t save': '저장 안 함',
   'Close others': '나머지 닫기',
   'Close tabs to the right': '오른쪽 탭 닫기',
   'Close tabs to the left': '왼쪽 탭 닫기',
@@ -195,9 +309,6 @@ export const ko: Dictionary = {
   'Move this note': '이 노트 이동',
   'Move up': '위로 이동',
   'Move down': '아래로 이동',
-  Bookmark: '북마크',
-  'Remove bookmark': '북마크 제거',
-  'Leave out of search': '검색에서 제외',
   'Search here again': '여기서 다시 검색',
   'Undo the last file change': '마지막 파일 변경 취소',
   'Undo moving {name}': '{name} 이동 취소',
@@ -247,7 +358,6 @@ export const ko: Dictionary = {
   'Remove group': '그룹 제거',
   'Out of the group': '그룹에서 빼기',
   Make: '만들기',
-  'Bookmark this block': '이 블록 북마크',
   Panels: '패널',
   Outline: '개요',
   'Stay on this note': '이 노트에 머무르기',
@@ -510,8 +620,8 @@ export const ko: Dictionary = {
   'Sign in to ask a question.': '질문하려면 로그인하세요.',
   'Asking OpenAI which models this key can use': '이 키로 쓸 수 있는 모델을 OpenAI에 확인 중',
   'Could not reach OpenAI': 'OpenAI에 연결할 수 없습니다',
-  'That key cannot use any of the models nibeditor asks for.':
-    '그 키로는 nibeditor가 요청하는 모델을 하나도 쓸 수 없습니다.',
+  'That key cannot use any of the models Orden asks for.':
+    '그 키로는 Orden이 요청하는 모델을 하나도 쓸 수 없습니다.',
   'No reasoning': '추론 없음',
   Minimal: '최소',
   Low: '낮음',
@@ -533,7 +643,7 @@ export const ko: Dictionary = {
   Mode: '모드',
   // The window's own edges; see appearance.rs
   Window: '창',
-  'nibeditor’s own': 'nibeditor의 것',
+  'Orden’s own': 'Orden의 것',
   'The system’s': '시스템의 것',
   'Window frame': '창 테두리',
   System: '시스템',
@@ -593,6 +703,7 @@ export const ko: Dictionary = {
   '{done} of {total}': '{total} 중 {done}',
   'Sync failed': '동기화 실패',
   '{name} could not be written.': '{name}을(를) 쓸 수 없었습니다.',
+  '{name} could not be read.': '{name}을(를) 읽을 수 없었습니다.',
   'Text size': '글자 크기',
   'Line spacing': '줄 간격',
   'Line width': '줄 너비',
@@ -653,8 +764,10 @@ export const ko: Dictionary = {
   '{used} of {limit} used.': '{limit} 중 {used} 사용.',
   'That image does not fit in your storage.': '그 이미지는 저장 공간에 들어가지 않습니다.',
   'out of space': '저장 공간 부족',
-  'nibeditor {version} is ready to install.': 'nibeditor {version}을 설치할 수 있습니다.',
+  'Orden {version} is ready to install.': 'Orden {version}을 설치할 수 있습니다.',
+  'Orden {version} is available.': 'Orden {version}을 사용할 수 있습니다.',
   'Restart now': '지금 다시 시작',
+  'Move to Applications': '응용 프로그램으로 이동',
   Later: '나중에',
   More: '더 보기',
   'Open notes': '노트 열기',
@@ -679,11 +792,9 @@ export const ko: Dictionary = {
   Continue: '계속',
   'Send a new code': '새 코드 보내기',
   'Code sent to': '코드를 보낸 곳',
-  'You already have notes on this computer.': '이 컴퓨터에 이미 노트가 있습니다.',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
-    '남겨 두면 계정에 합쳐집니다. 지우면 계정에 이미 있는 것만 남습니다 - 되돌릴 수 없습니다.',
-  'Keep them': '남겨 두기',
-  'Erase them': '지우기',
+  'This device already has notes.': '이 기기에 이미 노트가 있습니다.',
+  Merge: '병합',
+  'Keep separate': '따로 유지',
   'Digit {number}': '{number}번째 자리',
   'Resend in {seconds}s': '{seconds}초 후 다시 보내기',
   'Last synced {time}.': '마지막 동기화 {time}.',
@@ -728,14 +839,14 @@ export const ko: Dictionary = {
   'Reads your notes.': '노트를 읽습니다.',
   'Reads and writes your notes.': '노트를 읽고 씁니다.',
   Other: '기타',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'AI 도우미가 노트를 읽을 수 있고, 허용하면 바꿀 수도 있습니다. nibeditor 이메일로 로그인하므로 붙여넣을 것은 없습니다.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'AI 도우미가 노트를 읽을 수 있고, 허용하면 바꿀 수도 있습니다. Orden 이메일로 로그인하므로 붙여넣을 것은 없습니다.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'Claude에서 Settings → Connectors를 열고 Add custom connector를 누르세요.',
   'Open Claude’s connectors': 'Claude의 커넥터 열기',
   'Fill in the two fields and click Add.': '두 칸을 채우고 Add를 누르세요.',
-  'Click Connect and sign in with your nibeditor email.':
-    'Connect를 누르고 nibeditor 이메일로 로그인하세요.',
+  'Click Connect and sign in with your Orden email.':
+    'Connect를 누르고 Orden 이메일로 로그인하세요.',
   'Using Claude Code instead?': 'Claude Code를 쓰시나요？',
   Command: '명령',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -746,16 +857,15 @@ export const ko: Dictionary = {
   'Open ChatGPT’s plugins': 'ChatGPT의 플러그인 열기',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Plugins 항목이나 더하기 버튼이 없나요. Settings → Security and login에서 Developer mode를 먼저 켜세요.',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'ChatGPT가 물으면 nibeditor 이메일로 로그인하세요.',
-  'To use it in a chat, type @ and pick nibeditor.':
-    '대화에서 쓰려면 @를 입력하고 nibeditor를 고르세요.',
+  'Sign in with your Orden email when ChatGPT asks.':
+    'ChatGPT가 물으면 Orden 이메일로 로그인하세요.',
+  'To use it in a chat, type @ and pick Orden.': '대화에서 쓰려면 @를 입력하고 Orden을 고르세요.',
   'Server URL': '서버 URL',
   Authentication: '인증',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     '고급 OAuth 설정은 그대로 두고 “I understand and want to continue”에 표시하세요.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'OAuth와 Streamable HTTP를 쓰는 모든 MCP 클라이언트. URL만 주면 스스로 등록하고 nibeditor 로그인 페이지를 엽니다.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'OAuth와 Streamable HTTP를 쓰는 모든 MCP 클라이언트. URL만 주면 스스로 등록하고 Orden 로그인 페이지를 엽니다.',
   'Show config': '설정 보기',
   'For a client that takes a JSON block instead of a URL.':
     'URL 대신 JSON 블록을 받는 클라이언트용.',
@@ -823,7 +933,7 @@ export const ko: Dictionary = {
   'Display name': '표시 이름',
   'Your name': '이름',
   Email: '이메일',
-  'On nibeditor.com': 'nibeditor.com에서',
+  'On orden.so': 'orden.so에서',
   'Your own domain': '내 도메인',
   'Switching gives up {name}.': '바꾸면 {name}을 포기합니다.',
   Page: '페이지',
@@ -895,8 +1005,9 @@ export const ko: Dictionary = {
   'No footnotes in this note': '이 노트에 각주가 없습니다',
   'Stack tabs': '탭을 나란히',
   'Unstack tabs': '탭 나란히 해제',
-  'High contrast': '고대비',
+  Contrast: '대비',
   Glass: '유리',
+  Classic: '클래식',
   'Front matter': '프런트 매터',
   'Front matter: {name}': '프런트 매터: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':
@@ -907,6 +1018,7 @@ export const ko: Dictionary = {
   Comment: '주석',
   'Always on top': '항상 위에',
   'What is new': '새로운 점',
+  'Download the app': '앱 다운로드',
   'Report an issue': '문제 신고',
   'Move the line up': '줄을 위로 이동',
   'Move the line down': '줄을 아래로 이동',
@@ -985,6 +1097,23 @@ export const ko: Dictionary = {
   'Layout: {name}': '레이아웃: {name}',
   'Space: {name}': '공간: {name}',
   'Theme: {name}': '테마: {name}',
+  'AI account: {name}': 'AI 계정: {name}',
+  Accounts: '계정',
+  Access: '접근',
+  Set: '설정됨',
+  'Start over': '처음부터 다시',
+  'Sign in here': '여기서 로그인',
+  '{device} wants your AI accounts': '{device}에서 AI 계정을 요청합니다',
+  '{device} offers this device your AI vault': '{device}에서 이 기기에 AI 보관함을 제공합니다',
+  Join: '참여',
+  'Allow this device on another one': '다른 기기에서 이 기기를 허용하세요',
+  'On every device you sign in to, end-to-end encrypted.':
+    '로그인하는 모든 기기에서, 종단 간 암호화.',
+  'Sign in to have them on every device.': '로그인하면 모든 기기에서 쓸 수 있습니다.',
+  'Agents on this computer connect on their own': '이 컴퓨터의 에이전트가 스스로 연결',
+  Helpers: '도우미',
+  'Start helpers on your AI accounts': 'AI 계정에서 도우미 시작',
+  Delegated: '맡김',
   'Code theme: {name}': '코드 테마: {name}',
   'Delete a layout': '레이아웃 삭제',
   // Keyboards and modal editing
@@ -1053,6 +1182,7 @@ export const ko: Dictionary = {
   'Double-click to write': '두 번 클릭해 쓰기',
   'Another colour': '다른 색',
   'Turn into a note': '노트로 바꾸기',
+  Arrange: '정렬',
   'Bring to front': '맨 앞으로',
   'Bring forward': '앞으로',
   'Send backward': '뒤로',
@@ -1074,6 +1204,12 @@ export const ko: Dictionary = {
   'Export as PNG': 'PNG로 내보내기',
   'Export as SVG': 'SVG로 내보내기',
   'Export as PDF': 'PDF로 내보내기',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF 가져오기',
+  'Choose how to add the pages to the canvas.': '페이지를 캔버스에 어떻게 추가할지 고르세요.',
+  'Single page': '한 페이지',
+  'All pages': '모든 페이지',
+  'Choose a page': '페이지 고르기',
   // The canvas: what its own keys are called
   'Delete what is picked': '선택한 것 삭제',
   'Nudge left': '왼쪽으로 조금',
@@ -1134,8 +1270,8 @@ export const ko: Dictionary = {
   'Release channel': '릴리스 채널',
   Stable: '안정',
   Unstable: '불안정',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    '안정은 공식 릴리스를 따르고, 불안정은 main에 올라간 모든 것을 따르며 깨질 수 있습니다.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    '안정은 출시된 버전을 따르고, 불안정은 엣지 빌드를 따르며 깨질 수 있습니다.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: '가져오기',
@@ -1186,13 +1322,15 @@ export const ko: Dictionary = {
   '{count} tables inside notes do not come over': '노트 안의 표 {count}개는 넘어오지 않습니다',
   '{count} attachments are in iCloud rather than on this Mac':
     '첨부 {count}개가 이 Mac이 아니라 iCloud에 있습니다',
+  '{count} files are in iCloud rather than on this Mac':
+    '파일 {count}개가 이 Mac이 아니라 iCloud에 있습니다',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS는 그 노트를 전체 디스크 접근 권한 뒤에 둡니다.',
   'There are no notes in Apple Notes on this Mac.': '이 Mac의 Apple 메모에 노트가 없습니다.',
   'Those notes could not be read.': '그 노트를 읽을 수 없었습니다.',
   'Read them from this Mac': '이 Mac에서 읽기',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    '전체 디스크 접근 권한에서 nibeditor를 켠 뒤 다시 시도하세요.',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    '전체 디스크 접근 권한에서 Orden을 켠 뒤 다시 시도하세요.',
   'Open the setting': '설정 열기',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'Apple 저널은 스스로 내보냅니다. 저널, 설정, 내보내기. Apple 메모에는 내보내기가 없으므로, 메모가 있는 Mac이 아닌 곳에서는 내보내기 도구가 쓴 폴더를 여기에 놓습니다.',
@@ -1291,14 +1429,15 @@ export const ko: Dictionary = {
   'OpenAI-compatible': 'OpenAI 호환',
   'Base URL': '기본 URL',
   'API key': 'API 키',
-  'Set on this device': '이 기기에 설정됨',
   Optional: '선택 사항',
   'List models': '모델 목록 가져오기',
   'Asking…': '묻는 중…',
   'No providers yet.': '아직 공급자가 없습니다.',
   'Add {name}': '{name} 추가',
-  'Keys stay in the secure store on this device.': '키는 이 기기의 보안 저장소에 남습니다.',
   'This browser holds the keys in its own storage.': '이 브라우저는 키를 자체 저장소에 보관합니다.',
+  'Keep this browser’s keys in the vault': '이 브라우저의 키를 보관함에 두기',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    '그러면 모든 기기의 키가 이 브라우저의 저장소에 보관되며, 페이지에 들어온 스크립트가 이를 읽을 수 있습니다.',
   'AI can be wrong. Check the facts.': 'AI는 틀릴 수 있습니다. 사실을 확인하세요.',
   'Used by the glasses': '글래스가 사용',
   'Could not read the models.': '모델 목록을 읽을 수 없었습니다.',
@@ -1340,7 +1479,6 @@ export const ko: Dictionary = {
   'A cited report': '인용된 보고서',
   'A helper in the background': '백그라운드의 도우미',
   'A side question': '곁가지 질문',
-  'Agent mode': '에이전트 모드',
   'Agent profile': '에이전트 프로필',
   'Archive the thread': '스레드 보관',
   'Approve mode': '승인 모드',
@@ -1459,8 +1597,6 @@ export const ko: Dictionary = {
   // Web tabs
   Reload: '다시 불러오기',
   'Hard reload': '강력 새로고침',
-  'Clip this page': '이 페이지 저장',
-  'Clip the link': '링크 저장',
   'Open in the browser': '브라우저에서 열기',
   'Show it here': '여기에 표시',
   Website: '웹사이트',
@@ -1545,8 +1681,8 @@ export const ko: Dictionary = {
   'that is not a theme': '테마가 아닙니다',
   'no such theme': '그런 테마가 없습니다',
   'choose a model first': '먼저 모델을 고르세요',
-  'set an OpenAI key in nibeditor’s settings first':
-    '먼저 nibeditor 설정에서 OpenAI 키를 지정하세요',
+  'set an OpenAI key in Orden’s settings first': '먼저 Orden 설정에서 OpenAI 키를 지정하세요',
+  'set an OpenAI key in nibeditor’s settings first': '먼저 Orden 설정에서 OpenAI 키를 지정하세요',
   'that is a lot of questions - try again later': '질문이 너무 많습니다 - 나중에 다시 하세요',
   'that is too much audio': '음성이 너무 깁니다',
   'that is more than a spoken command': '음성 명령으로는 너무 깁니다',
@@ -1570,7 +1706,6 @@ export const ko: Dictionary = {
   Nothing: '없음',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': '이 보기를 북마크',
   Keep: '남기기',
 
   // Which side of the window a panel sits on.
@@ -1592,7 +1727,6 @@ export const ko: Dictionary = {
   'New tab': '새 탭',
   'Full screen': '전체화면',
   'Print…': '인쇄…',
-  'Save page': '페이지 저장',
   'Share…': '공유…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1635,7 +1769,6 @@ export const ko: Dictionary = {
   Blocked: '차단됨',
   'Reset permissions': '권한 재설정',
   'Turn into': '형식 바꾸기',
-  'Bookmark these blocks': '이 블록들 북마크',
   Foldable: '접을 수 있음',
   'Starts folded': '접힌 채로 시작',
   // Where a space keeps what websites store
@@ -1652,6 +1785,15 @@ export const ko: Dictionary = {
   'Bring all to front': '모두 앞으로 가져오기',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': '복사 실행 취소',
+  'Devices with your AI vault': 'AI 보관함이 있는 기기',
+  'This device': '이 기기',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    '이 기기는 더 이상 AI 계정을 읽을 수 없고, 다른 기기는 새 키를 받습니다.',
+  'Also remove this device from your AI vault?': '이 기기를 AI 보관함에서도 제거할까요?',
+  'Remove and sign out': '제거하고 로그아웃',
+  'Undo making {name}': '{name} 만들기 취소',
+  'Undo the deletion': '삭제 취소',
+  'Undo the move': '이동 취소',
   'Redo the last file change': '마지막 파일 변경 다시 실행',
   'Select down': '아래로 선택',
   'Select up': '위로 선택',
@@ -1695,7 +1837,6 @@ export const ko: Dictionary = {
   '{key} in a terminal': '터미널에서 {key}',
   'Always ask': '항상 묻기',
   'Open another': '하나 더 열기',
-  'Open in terminal': '터미널에서 열기',
   Clear: '지우기',
   'Exited with code {code}': '코드 {code}(으)로 종료됨',
   'Could not start {shell}': '{shell}을(를) 시작할 수 없음',
@@ -1704,18 +1845,8 @@ export const ko: Dictionary = {
   'Stop what is running in {name}?': '{name}에서 실행 중인 것을 중지할까요?',
   'Stop what is running in these terminals?': '이 터미널들에서 실행 중인 것을 중지할까요?',
   'Paste {count} lines?': '{count}줄을 붙여넣을까요?',
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': '기본 브라우저',
-  // The engine web tabs run on
-  Engine: '엔진',
-  Relaunch: '다시 시작',
-  'Chromium did not start': 'Chromium이 시작되지 않았습니다',
-  'No connection': '연결 없음',
-  'Not in this release': '이 릴리스에 없음',
-  'Needs an update': '업데이트 필요',
-  'Signature did not match': '서명이 일치하지 않음',
-  'Disk full': '디스크 가득 참',
-  'Could not be installed': '설치할 수 없음',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name}의 편집 실행 취소',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1816,7 +1947,7 @@ export const ko: Dictionary = {
   'Always on this site': '이 사이트에서 항상',
   'Agents stopped': '에이전트가 중지됨',
   'Agent tabs closed': '에이전트 탭이 닫힘',
-  'nibeditor is still running for your agents': '에이전트를 위해 nibeditor가 계속 실행 중입니다',
+  'Orden is still running for your agents': '에이전트를 위해 Orden이 계속 실행 중입니다',
   '{client} wants to connect': '{client}이(가) 연결하려고 합니다',
   // Web logins that travel, and the devices of an account
   'no such device': '그런 기기가 없습니다',
@@ -1832,11 +1963,11 @@ export const ko: Dictionary = {
   // to connect one more.
   'Agents on this computer': '이 컴퓨터의 에이전트',
   'Your account’s connector': '계정의 커넥터',
-  'nibeditor asks you once, the first time it connects.':
-    '처음 연결할 때 nibeditor가 한 번 묻습니다.',
+  'Orden asks you once, the first time it connects.': '처음 연결할 때 Orden이 한 번 묻습니다.',
   'A client on another machine?': '다른 기기의 클라이언트인가요?',
   'Shown only once.': '한 번만 표시됩니다.',
   'Remove {name}?': '{name}을(를) 제거할까요?',
+  'End {name}?': '{name}을(를) 종료할까요?',
   'Its token stops working.': '토큰이 더 이상 작동하지 않습니다.',
   'Added {date}': '{date}에 추가됨',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':
@@ -1857,7 +1988,6 @@ export const ko: Dictionary = {
   'Change notes': '노트 변경',
   'See what you are looking at': '보고 있는 내용 보기',
   'Move and rename files': '파일 이동 및 이름 변경',
-  'Open tabs and bookmarks': '탭과 북마크 열기',
   'Bring a tab to the front': '탭을 앞으로 가져오기',
   'Browse in tabs of its own': '자체 탭에서 탐색',
   'Read what pages load': '페이지가 불러오는 내용 읽기',
@@ -1879,11 +2009,8 @@ export const ko: Dictionary = {
   'Without your logins': '내 로그인 없이',
   'Calls a minute': '분당 호출',
   'Pages a minute': '분당 페이지',
+  'Browser memory limit': '브라우저 메모리 한도',
   '{count} calls': '호출 {count}회',
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': '{device}에서 열려 있음',
-  'Use here': '여기에서 사용',
-  '{device} wants your web logins': '{device}에서 웹 로그인을 요청합니다',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': '빠른 질문',
@@ -1947,7 +2074,7 @@ export const ko: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: '다시 알림',
   Reminders: '리마인더',
-  'Reminders ring while nibeditor is open': 'nibeditor가 열려 있는 동안 리마인더가 울립니다',
+  'Reminders ring while Orden is open': 'Orden이 열려 있는 동안 리마인더가 울립니다',
   Automatic: '자동',
   'Stay in the tray': '트레이에 상주',
   'Exact alarms': '정확한 알람',
@@ -1990,7 +2117,6 @@ export const ko: Dictionary = {
   'Any of them': '하나라도',
   Compare: '비교',
   'Add a filter': '필터 추가',
-  'Reschedule to today': '오늘로 옮기기',
   Collapse: '접기',
   Expand: '펼치기',
   Summary: '요약',
@@ -2012,7 +2138,6 @@ export const ko: Dictionary = {
   Layout: '레이아웃',
   Overdue: '기한 지남',
   Upcoming: '다가오는 일',
-  Logbook: '기록',
   Project: '프로젝트',
   Label: '라벨',
   List: '목록',
@@ -2198,4 +2323,11 @@ export const ko: Dictionary = {
   'Search this chat': '이 채팅에서 검색',
   'Add as task': '할 일로 추가',
   'Save as note': '노트로 저장',
+  // Appearance: glass's own pairs of colours
+  Dawn: '새벽',
+  Lagoon: '라군',
+  Lilac: '라일락',
+  Peach: '피치',
+  Sage: '세이지',
+  Mist: '안개',
 }

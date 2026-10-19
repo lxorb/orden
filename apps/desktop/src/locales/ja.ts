@@ -10,21 +10,123 @@ export const ja: Dictionary = {
   'Do you write code?': 'コードを書きますか？',
   Yes: 'はい',
   No: 'いいえ',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': '他のアプリから: {key}',
+  'From other apps: set in your system settings': '他のアプリから: システム設定で指定',
+  'From other apps: bind {command} in your system settings':
+    '他のアプリから: システム設定で {command} を割り当て',
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'Essentials',
+  'Add to Essentials': 'Essentialsに追加',
+  'Remove from Essentials': 'Essentialsから削除',
+  'Add block to Essentials': 'ブロックをEssentialsに追加',
+  'Add blocks to Essentials': 'ブロックをまとめてEssentialsに追加',
+  'Add view to Essentials': 'この表示をEssentialsに追加',
+  'Open tabs and Essentials': 'タブとEssentialsを開く',
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditorはOrdenになりました',
+  'Notes from nibeditor.com': 'nibeditor.comのノート',
+  'Nothing there': '何もありません',
+  // AI: the three permission modes
+  'Full permissions': 'フルアクセス',
+  'Auto mode': '自動モード',
+  'Full permissions: nothing is asked first': 'フルアクセス: 事前に何も確認しません',
+  // Import: Zen's tabs
+  'Import from Zen': 'Zen から読み込む',
+  'Containers stay in Zen': 'コンテナは Zen に残ります',
+  'Zen’s tabs could not be read.': 'Zen のタブを読み込めませんでした。',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'コンテナは Firefox に残ります',
+  'Nothing could be read out of {browser}.': '{browser} から何も読み取れませんでした。',
+  'Saved groups': '保存したグループ',
+  'Tab group': 'タブグループ',
+  'Bookmarks toolbar': 'ブックマークツールバー',
+  'Bookmarks menu': 'ブックマークメニュー',
+  'Other bookmarks': 'その他のブックマーク',
+  'Mobile bookmarks': 'モバイルのブックマーク',
+  'Bookmarks bar': 'ブックマークバー',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} は開いているタブを暗号化して保存しているため、ブックマークだけを取り込みました。',
+  '{count} pages not on the web stay behind': 'Web 上にないページ {count} 件は持ち込みません',
+  'Reading List': 'リーディングリスト',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS は Safari のタブとブックマークをフルディスクアクセスの内側に置いています。そこで Orden をオンにしてから、もう一度お試しください。',
+  // Settings: note types
+  'Page note': 'ページノート',
+  'Web note': 'ウェブノート',
+  'Private tab': 'プライベート タブ',
+  'Note types': 'ノートの種類',
+  // Tasks: Upcoming's weeks
+  'Previous week': '前の週',
+  // Tasks: projects placed in the panel, and their folder
+  'Add project above': '上にプロジェクトを追加',
+  'Add project below': '下にプロジェクトを追加',
+  'Projects folder': 'プロジェクトのフォルダ',
+  // Tasks: a repeating task skipped or done for good
+  Skip: 'スキップ',
+  'Complete forever': '完全に完了',
+  // Tasks: comments
+  Comments: 'コメント',
+  // Tasks: filters
+  Filters: 'フィルター',
+  'Add filter': 'フィルターを追加',
+  'Edit filter': 'フィルターを編集',
+  // Tasks: a project's sections
+  'Add section': 'セクションを追加',
+  '{name} (copy)': '{name}（コピー）',
+  'Its tasks are deleted with it.': '中のタスクも一緒に削除されます。',
+  // Tasks: keys, selection and the undo toast
+  Completed: '完了',
+  'Remove date': '日付を外す',
+  'Next task': '次のタスク',
+  'Previous task': '前のタスク',
+  'Add task at the top': '先頭にタスクを追加',
+  '{count} selected': '{count} 件を選択',
+  // Tasks: the Display menu
+  Display: '表示',
+  'Completed tasks': '完了したタスク',
+  // Tasks: several lines pasted into quick add
+  'One task': '1つのタスク',
+  'One per line': '1行に1つ',
+  // Tasks: the projects in the panel
+  Favorites: 'お気に入り',
+  'Add project': 'プロジェクトを追加',
+  'Add sub-project': 'サブプロジェクトを追加',
+  // Tasks: the task view
+  'Sub-tasks': 'サブタスク',
+  'Add sub-task': 'サブタスクを追加',
+  'New label': '新しいラベル',
+  'No deadline': '期限なし',
+  // Tasks: the row's menu and the scheduler
+  Reschedule: '日程を変更',
+  'Later this week': '今週の後半',
+  'This weekend': '今週末',
+  'Next weekend': '来週末',
+  'Every week on {day}': '毎週{day}',
+  'Every month on day {day}': '毎月{day}日',
+  'Every year on {date}': '毎年{date}',
+  'Type a date': '日付を入力',
+  'Previous month': '前の月',
+  'Next month': '次の月',
+  'No time': '時刻なし',
+  'No repeat': '繰り返しなし',
+  Complete: '完了にする',
+  Reopen: '再開',
+  Schedule: '予定を設定',
+  'Open in note': 'ノートで開く',
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'ほかのアプリ',
-  'Start fresh': '新しく始める',
   'Import from Obsidian': 'Obsidian から読み込む',
   'Import from Notion': 'Notion から読み込む',
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'ヒント',
   'Silent mode': 'サイレントモード',
-  'Sign in to keep your notes safe and on every device.':
-    'サインインすると、ノートを安全に保ち、すべてのデバイスで使えます。',
   'See how your notes connect.': 'ノート同士のつながりを見る。',
   'Press {key} to find anything, notes and commands alike.':
     '{key} を押すと、ノートもコマンドも何でも探せます。',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': '入力中に Markdown を表示',
+  'Open notes in source mode': 'ノートをソースモードで開く',
   Pointer: 'ポインタ',
   'Pointing hand on buttons': 'ボタン上で指差しカーソル',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
@@ -40,11 +142,13 @@ export const ja: Dictionary = {
   '{count} h': '{count} 時間',
   Inbox: '受信箱',
   Date: '日付',
+  'Start date': '開始日',
   Priority: '優先度',
   Reminder: 'リマインダー',
   Duration: '所要時間',
   'Smart dates': 'スマート日付',
   'From any app': 'どのアプリからでも',
+  'Show tasks without a start date in Today': '開始日のないタスクを今日に表示',
   'Every day': '毎日',
   'Every weekday': '毎平日',
   'Every week': '毎週',
@@ -61,6 +165,13 @@ export const ja: Dictionary = {
   Unsaved: '未保存',
   'Save to': '保存先',
   'Reloaded with the web data of {space}': '{space} のウェブデータで再読み込みしました',
+  Separate: '個別',
+  'Share this note’s web data again?': 'このノートのウェブデータを再び共有しますか？',
+  'What its pages are signed in to on this computer is deleted.':
+    'このコンピュータでこのノートのページがサインインしている情報は削除されます。',
+  'Share again': '再び共有',
+  'This note keeps its own web data now': 'このノートは独自のウェブデータを持つようになりました',
+  'Back on the shared web data': '共有のウェブデータに戻りました',
   'Add a page': 'ページを追加',
   'Add a page after this': 'この後にページを追加',
   'Delete this page': 'このページを削除',
@@ -81,6 +192,8 @@ export const ja: Dictionary = {
   Dots: 'ドット',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': '2本指でキャンバスを回転',
+  'Turn upright': 'まっすぐに戻す',
   Canvas: 'キャンバス',
   Card: 'カード',
   'Note or picture': 'ノートまたは画像',
@@ -95,7 +208,6 @@ export const ja: Dictionary = {
   'New window': '新しいウィンドウ',
   New: '新規',
   'New space': '新しいスペース',
-  '{name}: switch space': '{name}: スペースを切り替え',
   Untitled: '無題',
   Space: 'スペース',
   'Name the space': 'スペースに名前を付ける',
@@ -140,8 +252,6 @@ export const ja: Dictionary = {
   'Loading…': '読み込み中…',
   'Create a space': 'スペースを作る',
   'Import a folder': 'フォルダを読み込む',
-  'Sign in to sync': 'サインインして同期',
-  'Create account': 'アカウントを作成',
   'Delete space': 'スペースを削除',
   'Delete {name}?': '{name} を削除しますか？',
   'Every note in this space is deleted from your computer.':
@@ -159,6 +269,10 @@ export const ja: Dictionary = {
   Unpin: 'ピン留めを外す',
   Close: '閉じる',
   'Close pinned tab?': 'ピン留めしたタブを閉じますか？',
+  'Save changes to {name}?': '{name} の変更を保存しますか？',
+  'Save changes to these tabs?': 'これらのタブの変更を保存しますか？',
+  'Unsaved words go to Recently deleted.': '保存していない文字は「最近削除した項目」に移ります。',
+  'Don’t save': '保存しない',
   'Close others': '他を閉じる',
   'Close tabs to the right': '右側のタブを閉じる',
   'Close tabs to the left': '左側のタブを閉じる',
@@ -195,9 +309,6 @@ export const ja: Dictionary = {
   'Move this note': 'このノートを移動',
   'Move up': '上へ',
   'Move down': '下へ',
-  Bookmark: 'ブックマーク',
-  'Remove bookmark': 'ブックマークを削除',
-  'Leave out of search': '検索から除く',
   'Search here again': '再び検索する',
   'Undo the last file change': '直前のファイル操作を元に戻す',
   'Undo moving {name}': '{name} の移動を元に戻す',
@@ -247,7 +358,6 @@ export const ja: Dictionary = {
   'Remove group': 'グループを削除',
   'Out of the group': 'グループから出す',
   Make: '作成',
-  'Bookmark this block': 'このブロックをブックマーク',
   Panels: 'パネル',
   Outline: 'アウトライン',
   'Stay on this note': 'このノートに留まる',
@@ -511,8 +621,8 @@ export const ja: Dictionary = {
   'Asking OpenAI which models this key can use':
     'このキーで使えるモデルを OpenAI に問い合わせています',
   'Could not reach OpenAI': 'OpenAI に接続できません',
-  'That key cannot use any of the models nibeditor asks for.':
-    'このキーでは nibeditor が必要とするモデルを使えません。',
+  'That key cannot use any of the models Orden asks for.':
+    'このキーでは Orden が必要とするモデルを使えません。',
   'No reasoning': '推論なし',
   Minimal: '最小',
   Low: '低',
@@ -534,7 +644,7 @@ export const ja: Dictionary = {
   Mode: 'モード',
   // The window's own edges; see appearance.rs
   Window: 'ウィンドウ',
-  'nibeditor’s own': 'nibeditor のもの',
+  'Orden’s own': 'Orden のもの',
   'The system’s': 'システムのもの',
   'Window frame': 'ウィンドウの枠',
   System: 'システム',
@@ -594,6 +704,7 @@ export const ja: Dictionary = {
   '{done} of {total}': '{total} 件中 {done} 件',
   'Sync failed': '同期に失敗しました',
   '{name} could not be written.': '{name} を書き込めませんでした。',
+  '{name} could not be read.': '{name} を読み込めませんでした。',
   'Text size': '文字サイズ',
   'Line spacing': '行間',
   'Line width': '行幅',
@@ -654,8 +765,10 @@ export const ja: Dictionary = {
   '{used} of {limit} used.': '{limit} 中 {used} を使用中。',
   'That image does not fit in your storage.': 'この画像を保存する空き容量がありません。',
   'out of space': '空き容量がありません',
-  'nibeditor {version} is ready to install.': 'nibeditor {version} をインストールできます。',
+  'Orden {version} is ready to install.': 'Orden {version} をインストールできます。',
+  'Orden {version} is available.': 'Orden {version} が利用可能です。',
   'Restart now': '今すぐ再起動',
+  'Move to Applications': 'アプリケーションに移動',
   Later: '後で',
   More: 'その他',
   'Open notes': '開いているノート',
@@ -680,11 +793,9 @@ export const ja: Dictionary = {
   Continue: '続ける',
   'Send a new code': '新しいコードを送る',
   'Code sent to': 'コードの送信先',
-  'You already have notes on this computer.': 'このコンピューターにはすでにノートがあります。',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
-    '残せばアカウントに加わります。消すとアカウントにあるものだけが残ります - これは元に戻せません。',
-  'Keep them': '残す',
-  'Erase them': '消す',
+  'This device already has notes.': 'このデバイスにはすでにノートがあります。',
+  Merge: '統合',
+  'Keep separate': '別々に保つ',
   'Digit {number}': '{number} 桁目',
   'Resend in {seconds}s': '{seconds} 秒後に再送',
   'Last synced {time}.': '最終同期 {time}。',
@@ -729,14 +840,14 @@ export const ja: Dictionary = {
   'Reads your notes.': 'ノートを読めます。',
   'Reads and writes your notes.': 'ノートの読み書きができます。',
   Other: 'その他',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'AI アシスタントがノートを読めるようになります。許可すれば書き換えも可能です。nibeditor のメールアドレスでサインインするので、貼り付けるものはありません。',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'AI アシスタントがノートを読めるようになります。許可すれば書き換えも可能です。Orden のメールアドレスでサインインするので、貼り付けるものはありません。',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'Claude で 設定 → コネクタ を開き、「カスタムコネクタを追加」をクリックします。',
   'Open Claude’s connectors': 'Claude のコネクタを開く',
   'Fill in the two fields and click Add.': '二つの欄を埋めて「追加」をクリックします。',
-  'Click Connect and sign in with your nibeditor email.':
-    '「接続」をクリックし、nibeditor のメールアドレスでサインインします。',
+  'Click Connect and sign in with your Orden email.':
+    '「接続」をクリックし、Orden のメールアドレスでサインインします。',
   'Using Claude Code instead?': 'Claude Code を使う場合は？',
   Command: 'コマンド',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -747,16 +858,16 @@ export const ja: Dictionary = {
   'Open ChatGPT’s plugins': 'ChatGPT のプラグインを開く',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'プラグインの項目やプラスボタンが見当たらない場合は、まず設定 → セキュリティとログインで開発者モードをオンにします。',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'ChatGPT に求められたら、nibeditor のメールアドレスでサインインします。',
-  'To use it in a chat, type @ and pick nibeditor.':
-    'チャットで使うには @ を入力して nibeditor を選びます。',
+  'Sign in with your Orden email when ChatGPT asks.':
+    'ChatGPT に求められたら、Orden のメールアドレスでサインインします。',
+  'To use it in a chat, type @ and pick Orden.':
+    'チャットで使うには @ を入力して Orden を選びます。',
   'Server URL': 'サーバー URL',
   Authentication: '認証',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'OAuth の詳細設定はそのままにして、「理解した上で続行する」にチェックを入れます。',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'Streamable HTTP と OAuth に対応した MCP クライアントなら何でも使えます。URL を渡すと自分で登録し、nibeditor のサインインページを開きます。',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'Streamable HTTP と OAuth に対応した MCP クライアントなら何でも使えます。URL を渡すと自分で登録し、Orden のサインインページを開きます。',
   'Show config': '設定を表示',
   'For a client that takes a JSON block instead of a URL.':
     'URL ではなく JSON ブロックを受け取るクライアント向けです。',
@@ -826,7 +937,7 @@ export const ja: Dictionary = {
   'Display name': '表示名',
   'Your name': 'あなたの名前',
   Email: 'メール',
-  'On nibeditor.com': 'nibeditor.com 上',
+  'On orden.so': 'orden.so 上',
   'Your own domain': '独自ドメイン',
   'Switching gives up {name}.': '切り替えると {name} を手放します。',
   Page: 'ページ',
@@ -898,8 +1009,9 @@ export const ja: Dictionary = {
   'No footnotes in this note': 'このノートに脚注はありません',
   'Stack tabs': 'タブを並べる',
   'Unstack tabs': 'タブを並べない',
-  'High contrast': 'ハイコントラスト',
+  Contrast: 'コントラスト',
   Glass: 'ガラス',
+  Classic: 'クラシック',
   'Front matter': 'フロントマター',
   'Front matter: {name}': 'フロントマター: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':
@@ -910,6 +1022,7 @@ export const ja: Dictionary = {
   Comment: 'コメント',
   'Always on top': '常に手前に表示',
   'What is new': '更新情報',
+  'Download the app': 'アプリをダウンロード',
   'Report an issue': '問題を報告',
   'Move the line up': '行を上へ移動',
   'Move the line down': '行を下へ移動',
@@ -990,6 +1103,24 @@ export const ja: Dictionary = {
   'Layout: {name}': 'レイアウト: {name}',
   'Space: {name}': 'スペース: {name}',
   'Theme: {name}': 'テーマ: {name}',
+  'AI account: {name}': 'AI アカウント: {name}',
+  Accounts: 'アカウント',
+  Access: 'アクセス',
+  Set: '設定済み',
+  'Start over': '最初からやり直す',
+  'Sign in here': 'ここでサインイン',
+  '{device} wants your AI accounts': '{device} が AI アカウントを求めています',
+  '{device} offers this device your AI vault':
+    '{device} がこのデバイスに AI 保管庫を提供しています',
+  Join: '参加',
+  'Allow this device on another one': '別のデバイスでこのデバイスを許可',
+  'On every device you sign in to, end-to-end encrypted.':
+    'サインインするすべてのデバイスで、エンドツーエンド暗号化。',
+  'Sign in to have them on every device.': 'サインインするとすべてのデバイスで使えます。',
+  'Agents on this computer connect on their own': 'このコンピューターのエージェントは自動で接続',
+  Helpers: 'ヘルパー',
+  'Start helpers on your AI accounts': 'AI アカウントでヘルパーを起動',
+  Delegated: '依頼',
   'Code theme: {name}': 'コードテーマ: {name}',
   'Delete a layout': 'レイアウトを削除',
   // Keyboards and modal editing
@@ -1058,6 +1189,7 @@ export const ja: Dictionary = {
   'Double-click to write': 'ダブルクリックで書く',
   'Another colour': '別の色',
   'Turn into a note': 'ノートにする',
+  Arrange: '整列',
   'Bring to front': '最前面へ',
   'Bring forward': '前面へ',
   'Send backward': '背面へ',
@@ -1079,6 +1211,12 @@ export const ja: Dictionary = {
   'Export as PNG': 'PNG で書き出す',
   'Export as SVG': 'SVG で書き出す',
   'Export as PDF': 'PDF で書き出す',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF をインポート',
+  'Choose how to add the pages to the canvas.': 'ページをキャンバスにどう追加するか選びます。',
+  'Single page': '1 ページだけ',
+  'All pages': 'すべてのページ',
+  'Choose a page': 'ページを選ぶ',
   // The canvas: what its own keys are called
   'Delete what is picked': '選択したものを削除',
   'Nudge left': '左へ少し動かす',
@@ -1139,8 +1277,8 @@ export const ja: Dictionary = {
   'Release channel': 'リリースチャンネル',
   Stable: '安定版',
   Unstable: '不安定版',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    '安定版は公式リリースを、不安定版は main への毎回のプッシュを追うので壊れることがあります。',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    '安定版は公開されたバージョンを、不安定版はエッジビルドを追うので壊れることがあります。',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'インポート',
@@ -1191,13 +1329,15 @@ export const ja: Dictionary = {
   '{count} tables inside notes do not come over': 'メモの中の {count} 件の表は入りません',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} 件の添付は iCloud にあり、この Mac にはありません',
+  '{count} files are in iCloud rather than on this Mac':
+    '{count} 件のファイルは iCloud にあり、この Mac にはありません',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS はそのメモをフルディスクアクセスの内側に置いています。',
   'There are no notes in Apple Notes on this Mac.': 'この Mac の Apple メモにメモはありません。',
   'Those notes could not be read.': 'そのメモは読めませんでした。',
   'Read them from this Mac': 'この Mac から読む',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    'フルディスクアクセスで nibeditor を有効にして、もう一度お試しください。',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    'フルディスクアクセスで Orden を有効にして、もう一度お試しください。',
   'Open the setting': '設定を開く',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'Apple Journal には書き出しがあります: ジャーナル、設定、書き出し。Apple メモに書き出しはないので、そのメモがある Mac 以外では、書き出しツールが作ったフォルダを渡してください。',
@@ -1296,15 +1436,16 @@ export const ja: Dictionary = {
   'OpenAI-compatible': 'OpenAI 互換',
   'Base URL': 'ベース URL',
   'API key': 'API キー',
-  'Set on this device': 'この端末に設定済み',
   Optional: '任意',
   'List models': 'モデルを取得',
   'Asking…': '問い合わせ中…',
   'No providers yet.': 'プロバイダはまだありません。',
   'Add {name}': '{name} を追加',
-  'Keys stay in the secure store on this device.': 'キーはこの端末の安全な保管領域に残ります。',
   'This browser holds the keys in its own storage.':
     'このブラウザはキーを自身のストレージに保持します。',
+  'Keep this browser’s keys in the vault': 'このブラウザのキーを保管庫に入れる',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'その場合、すべてのデバイスのキーがこのブラウザのストレージに保存され、ページに入り込んだスクリプトに読まれるおそれがあります。',
   'AI can be wrong. Check the facts.': 'AI は間違えることがあります。事実を確認してください。',
   'Used by the glasses': 'グラスが使用',
   'Could not read the models.': 'モデルを読み取れませんでした。',
@@ -1346,7 +1487,6 @@ export const ja: Dictionary = {
   'A cited report': '出典付きレポート',
   'A helper in the background': '裏で動くヘルパー',
   'A side question': '補助質問',
-  'Agent mode': 'エージェントモード',
   'Agent profile': 'エージェントプロフィール',
   'Archive the thread': 'スレッドをアーカイブ',
   'Approve mode': '承認モード',
@@ -1465,8 +1605,6 @@ export const ja: Dictionary = {
   // Web tabs
   Reload: '再読み込み',
   'Hard reload': 'ハード再読み込み',
-  'Clip this page': 'このページを保存',
-  'Clip the link': 'リンクを保存',
   'Open in the browser': 'ブラウザーで開く',
   'Show it here': 'ここに表示',
   Website: 'ウェブサイト',
@@ -1556,8 +1694,9 @@ export const ja: Dictionary = {
   'that is not a theme': 'それはテーマではありません',
   'no such theme': 'そのテーマはありません',
   'choose a model first': '先にモデルを選んでください',
+  'set an OpenAI key in Orden’s settings first': '先にOrdenの設定でOpenAIキーを設定してください',
   'set an OpenAI key in nibeditor’s settings first':
-    '先にnibeditorの設定でOpenAIキーを設定してください',
+    '先にOrdenの設定でOpenAIキーを設定してください',
   'that is a lot of questions - try again later':
     '質問が多すぎます。しばらくしてからお試しください',
   'that is too much audio': '音声が長すぎます',
@@ -1583,7 +1722,6 @@ export const ja: Dictionary = {
   Nothing: 'なし',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'この表示を保存',
   Keep: '残す',
 
   // Which side of the window a panel sits on.
@@ -1605,7 +1743,6 @@ export const ja: Dictionary = {
   'New tab': '新しいタブ',
   'Full screen': '全画面表示',
   'Print…': '印刷…',
-  'Save page': 'ページを保存',
   'Share…': '共有…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1649,7 +1786,6 @@ export const ja: Dictionary = {
   Blocked: 'ブロック',
   'Reset permissions': '権限をリセット',
   'Turn into': '種類を変える',
-  'Bookmark these blocks': 'これらのブロックをブックマーク',
   Foldable: '折りたためる',
   'Starts folded': '折りたたんで開く',
   // Where a space keeps what websites store
@@ -1666,6 +1802,15 @@ export const ja: Dictionary = {
   'Bring all to front': 'すべてを手前に移動',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'コピーを元に戻す',
+  'Devices with your AI vault': 'AI 保管庫を持つデバイス',
+  'This device': 'このデバイス',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'そのデバイスは AI アカウントを読めなくなり、ほかのデバイスには新しい鍵が渡ります。',
+  'Also remove this device from your AI vault?': 'このデバイスを AI 保管庫からも外しますか？',
+  'Remove and sign out': '外してサインアウト',
+  'Undo making {name}': '{name} の作成を元に戻す',
+  'Undo the deletion': '削除を元に戻す',
+  'Undo the move': '移動を元に戻す',
   'Redo the last file change': '直前のファイル操作をやり直す',
   'Select down': '下へ選択',
   'Select up': '上へ選択',
@@ -1710,7 +1855,6 @@ export const ja: Dictionary = {
   '{key} in a terminal': 'ターミナルでの {key}',
   'Always ask': '毎回確認する',
   'Open another': 'もう一つ開く',
-  'Open in terminal': 'ターミナルで開く',
   Clear: 'クリア',
   'Exited with code {code}': 'コード {code} で終了しました',
   'Could not start {shell}': '{shell} を起動できませんでした',
@@ -1719,18 +1863,8 @@ export const ja: Dictionary = {
   'Stop what is running in {name}?': '{name} で実行中のものを停止しますか？',
   'Stop what is running in these terminals?': 'これらのターミナルで実行中のものを停止しますか？',
   'Paste {count} lines?': '{count} 行を貼り付けますか？',
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': '既定のブラウザ',
-  // The engine web tabs run on
-  Engine: 'エンジン',
-  Relaunch: '再起動',
-  'Chromium did not start': 'Chromium を起動できませんでした',
-  'No connection': '接続がありません',
-  'Not in this release': 'このリリースにはありません',
-  'Needs an update': 'アップデートが必要です',
-  'Signature did not match': '署名が一致しません',
-  'Disk full': 'ディスクがいっぱいです',
-  'Could not be installed': 'インストールできませんでした',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} の編集を元に戻す',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1830,7 +1964,7 @@ export const ja: Dictionary = {
   'Always on this site': 'このサイトでは常に',
   'Agents stopped': 'エージェントを停止しました',
   'Agent tabs closed': 'エージェントのタブを閉じました',
-  'nibeditor is still running for your agents': 'nibeditor はエージェントのために動き続けています',
+  'Orden is still running for your agents': 'Orden はエージェントのために動き続けています',
   '{client} wants to connect': '{client} が接続しようとしています',
   // Web logins that travel, and the devices of an account
   'no such device': 'そのデバイスはありません',
@@ -1846,11 +1980,12 @@ export const ja: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'このコンピューターのエージェント',
   'Your account’s connector': 'アカウントのコネクタ',
-  'nibeditor asks you once, the first time it connects.':
-    '初めて接続したときに、nibeditor が一度だけ確認します。',
+  'Orden asks you once, the first time it connects.':
+    '初めて接続したときに、Orden が一度だけ確認します。',
   'A client on another machine?': '別のマシンのクライアントですか？',
   'Shown only once.': '一度だけ表示されます。',
   'Remove {name}?': '{name} を削除しますか？',
+  'End {name}?': '{name} を終了しますか？',
   'Its token stops working.': 'そのトークンは使えなくなります。',
   'Added {date}': '{date} に追加',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':
@@ -1871,7 +2006,6 @@ export const ja: Dictionary = {
   'Change notes': 'ノートを変更する',
   'See what you are looking at': '見ているものを確認する',
   'Move and rename files': 'ファイルの移動と名前変更',
-  'Open tabs and bookmarks': 'タブとブックマークを開く',
   'Bring a tab to the front': 'タブを前面に出す',
   'Browse in tabs of its own': '専用のタブで閲覧する',
   'Read what pages load': 'ページが読み込む内容を読む',
@@ -1893,11 +2027,8 @@ export const ja: Dictionary = {
   'Without your logins': 'あなたのログインなし',
   'Calls a minute': '1 分あたりの呼び出し',
   'Pages a minute': '1 分あたりのページ',
+  'Browser memory limit': 'ブラウザのメモリ上限',
   '{count} calls': '{count} 件の呼び出し',
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': '{device} で開いています',
-  'Use here': 'ここで使う',
-  '{device} wants your web logins': '{device} が Web のログインを求めています',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'ちょっと質問',
@@ -1961,7 +2092,7 @@ export const ja: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'スヌーズ',
   Reminders: 'リマインダー',
-  'Reminders ring while nibeditor is open': 'リマインダーは nibeditor が開いている間に鳴ります',
+  'Reminders ring while Orden is open': 'リマインダーは Orden が開いている間に鳴ります',
   Automatic: '自動',
   'Stay in the tray': 'トレイに常駐',
   'Exact alarms': '正確なアラーム',
@@ -2004,7 +2135,6 @@ export const ja: Dictionary = {
   'Any of them': 'いずれか',
   Compare: '比較',
   'Add a filter': 'フィルターを追加',
-  'Reschedule to today': '今日に変更',
   Collapse: '折りたたむ',
   Expand: '展開',
   Summary: '集計',
@@ -2026,7 +2156,6 @@ export const ja: Dictionary = {
   Layout: 'レイアウト',
   Overdue: '期限切れ',
   Upcoming: '近日予定',
-  Logbook: 'ログブック',
   Project: 'プロジェクト',
   Label: 'ラベル',
   List: 'リスト',
@@ -2212,4 +2341,11 @@ export const ja: Dictionary = {
   'Search this chat': 'このチャットを検索',
   'Add as task': 'タスクとして追加',
   'Save as note': 'ノートとして保存',
+  // Appearance: glass's own pairs of colours
+  Dawn: '夜明け',
+  Lagoon: 'ラグーン',
+  Lilac: 'ライラック',
+  Peach: 'ピーチ',
+  Sage: 'セージ',
+  Mist: 'ミスト',
 }

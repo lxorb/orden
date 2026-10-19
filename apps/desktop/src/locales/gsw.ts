@@ -10,21 +10,127 @@ export const gsw: Dictionary = {
   'Do you write code?': 'Schriibsch du Code?',
   Yes: 'Ja',
   No: 'Nei',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'Us andere Apps: {key}',
+  'From other apps: set in your system settings':
+    'Us andere Apps: i de Systemiistellige feschtlege',
+  'From other apps: bind {command} in your system settings':
+    'Us andere Apps: {command} i de Systemiistellige zuewiise',
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'Essentials',
+  'Add to Essentials': 'Zu de Essentials tue',
+  'Remove from Essentials': 'Us de Essentials neh',
+  'Add block to Essentials': 'Block zu de Essentials tue',
+  'Add blocks to Essentials': 'Blöck zu de Essentials tue',
+  'Add view to Essentials': 'Aasicht zu de Essentials tue',
+  'Open tabs and Essentials': 'Tabs und Essentials uftue',
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor heisst jetzt Orden',
+  'Notes from nibeditor.com': 'Notize vo nibeditor.com',
+  'Nothing there': 'Det häts nüt',
+  // AI: the three permission modes
+  'Full permissions': 'Volli Berächtigunge',
+  'Auto mode': 'Automatische Modus',
+  'Full permissions: nothing is asked first': 'Volli Berächtigunge: Es wird nüt vorher gfrogt',
+  // Import: Zen's tabs
+  'Import from Zen': 'Us Zen importiere',
+  'Containers stay in Zen': 'D Container blibe im Zen',
+  'Zen’s tabs could not be read.': 'D Tabs vo Zen hend nöd chöne gläse werde.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'D Container blibe im Firefox',
+  'Nothing could be read out of {browser}.': 'Us {browser} het sich nüüt lo läse.',
+  'Saved groups': 'Gspeichereti Gruppe',
+  'Tab group': 'Tab-Gruppe',
+  'Bookmarks toolbar': 'Lesezeiche-Symbolleischte',
+  'Bookmarks menu': 'Lesezeiche-Menü',
+  'Other bookmarks': 'Wiiteri Lesezeiche',
+  'Mobile bookmarks': 'Mobili Lesezeiche',
+  'Bookmarks bar': 'Lesezeicheleischte',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} haltet sini offene Tabs verschlosse, drum sind nur d Lesezeiche cho.',
+  '{count} pages not on the web stay behind': {
+    one: '{count} Siite usserhalb vom Web blibt zrugg',
+    other: '{count} Siite usserhalb vom Web blibed zrugg',
+  },
+  'Reading List': 'Leseliste',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS bhaltet d Tabs und Lesezeiche vo Safari hinter em Vollzuegriff uf d Festplatte. Schalt Orden det ii und probiers nomal.',
+  // Settings: note types
+  'Page note': 'Siitenotiz',
+  'Web note': 'Webnotiz',
+  'Private tab': 'Private Tab',
+  'Note types': 'Notiztype',
+  // Tasks: Upcoming's weeks
+  'Previous week': 'Vorherigi Wuche',
+  // Tasks: projects placed in the panel, and their folder
+  'Add project above': 'Projekt drüber hinzuefüege',
+  'Add project below': 'Projekt drunder hinzuefüege',
+  'Projects folder': 'Projektordner',
+  // Tasks: a repeating task skipped or done for good
+  Skip: 'Überspringe',
+  'Complete forever': 'Für immer erledige',
+  // Tasks: comments
+  Comments: 'Kommentär',
+  // Tasks: filters
+  Filters: 'Filter',
+  'Add filter': 'Filter hinzuefüege',
+  'Edit filter': 'Filter bearbeite',
+  // Tasks: a project's sections
+  'Add section': 'Abschnitt hinzuefüege',
+  '{name} (copy)': '{name} (Kopie)',
+  'Its tasks are deleted with it.': 'Sini Ufgabe wärded mitglöscht.',
+  // Tasks: keys, selection and the undo toast
+  Completed: 'Erledigt',
+  'Remove date': 'Datum entfärne',
+  'Next task': 'Nächschti Ufgaab',
+  'Previous task': 'Vorherigi Ufgaab',
+  'Add task at the top': 'Ufgaab obe hinzuefüege',
+  '{count} selected': '{count} uusgwäält',
+  // Tasks: the Display menu
+  Display: 'Aazeig',
+  'Completed tasks': 'Erledigti Ufgabe',
+  // Tasks: several lines pasted into quick add
+  'One task': 'Ei Ufgab',
+  'One per line': 'Eini pro Ziile',
+  // Tasks: the projects in the panel
+  Favorites: 'Favorite',
+  'Add project': 'Projekt dezuetue',
+  'Add sub-project': 'Underprojekt dezuetue',
+  // Tasks: the task view
+  'Sub-tasks': 'Underufgabe',
+  'Add sub-task': 'Underufgab dezuetue',
+  'New label': 'Neus Label',
+  'No deadline': 'Kei Frischt',
+  // Tasks: the row's menu and the scheduler
+  Reschedule: 'Neu plane',
+  'Later this week': 'Spöter die Wuche',
+  'This weekend': 'Das Wuchenänd',
+  'Next weekend': 'Nächschts Wuchenänd',
+  'Every week on {day}': 'Jedi Wuche am {day}',
+  'Every month on day {day}': 'Jede Monet am {day}.',
+  'Every year on {date}': 'Jedes Jahr am {date}',
+  'Type a date': 'Datum iitippe',
+  'Previous month': 'Vorige Monet',
+  'Next month': 'Nächschte Monet',
+  'No time': 'Kei Ziit',
+  'No repeat': 'Kei Widerholig',
+  Complete: 'Erledige',
+  Reopen: 'Wider uftue',
+  Schedule: 'Plane',
+  'Open in note': 'I de Notiz uftue',
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'Anderi App',
-  'Start fresh': 'Nöi aafange',
   'Import from Obsidian': 'Us Obsidian importiere',
   'Import from Notion': 'Us Notion importiere',
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'Hiwiis',
   'Silent mode': 'Ruemodus',
-  'Sign in to keep your notes safe and on every device.':
-    'Mäld di aa, dass dini Notize sicher und uf jedem Grät sind.',
   'See how your notes connect.': 'Lueg, wie dini Notize zämehanged.',
   'Press {key} to find anything, notes and commands alike.':
     'Drück {key}, zum alles finde, Notize wie Befähl.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'Markdown bim Schriibe zeige',
+  'Open notes in source mode': 'Notize im Quälltextmodus öffne',
   Pointer: 'Muuszeiger',
   'Pointing hand on buttons': 'Zeigendi Hand über Chnöpf',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
@@ -40,11 +146,13 @@ export const gsw: Dictionary = {
   '{count} h': '{count} Std.',
   Inbox: 'Iigang',
   Date: 'Datum',
+  'Start date': 'Aafangsdatum',
   Priority: 'Priorität',
   Reminder: 'Erinnerig',
   Duration: 'Duur',
   'Smart dates': 'Gschiidi Date',
   'From any app': 'Us jedere App',
+  'Show tasks without a start date in Today': 'Ufgaabe ohni Aafangsdatum in Heute zeige',
   'Every day': 'Jede Tag',
   'Every weekday': 'Jede Wärchtig',
   'Every week': 'Jedi Wuche',
@@ -61,6 +169,13 @@ export const gsw: Dictionary = {
   Unsaved: 'Nöd gspeicheret',
   'Save to': 'Speichere under',
   'Reloaded with the web data of {space}': 'Mit de Webdate vo {space} neu glade',
+  Separate: 'Separat',
+  'Share this note’s web data again?': 'D Webdate vo dere Notiz wider teile?',
+  'What its pages are signed in to on this computer is deleted.':
+    'Wo iri Siite uf däm Computer aagmäldet sind, wird glöscht.',
+  'Share again': 'Wider teile',
+  'This note keeps its own web data now': 'Die Notiz het jetzt eigeni Webdate',
+  'Back on the shared web data': 'Wider bi de gmeinsame Webdate',
   'Add a page': 'Siite hinzuefüege',
   'Add a page after this': 'Siite dernaa hinzuefüege',
   'Delete this page': 'Die Siite lösche',
@@ -81,6 +196,8 @@ export const gsw: Dictionary = {
   Dots: 'Pünkt',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'Liiwand mit zwei Finger drähe',
+  'Turn upright': 'Grad richte',
   Canvas: 'Liinwand',
   Card: 'Chärtli',
   'Note or picture': 'Notiz oder Bild',
@@ -95,7 +212,6 @@ export const gsw: Dictionary = {
   'New window': 'Nöis Fänschter',
   New: 'Nöi',
   'New space': 'Nöii Ablag',
-  '{name}: switch space': '{name}: Ablag wächsle',
   Untitled: 'Ohni Titel',
   Space: 'Ablag',
   'Name the space': 'Ablag benänne',
@@ -140,8 +256,6 @@ export const gsw: Dictionary = {
   'Loading…': 'Wird glade…',
   'Create a space': 'Ablag mache',
   'Import a folder': 'Ordner importiere',
-  'Sign in to sync': 'Aamelde zum Synchronisiere',
-  'Create account': 'Konto mache',
   'Delete space': 'Ablag lösche',
   'Delete {name}?': '{name} lösche?',
   'Every note in this space is deleted from your computer.':
@@ -159,6 +273,10 @@ export const gsw: Dictionary = {
   Unpin: 'Löse',
   Close: 'Zuemache',
   'Close pinned tab?': 'Aagheftete Tab zuemache?',
+  'Save changes to {name}?': 'Änderige a {name} speichere?',
+  'Save changes to these tabs?': 'Änderige i dene Tabs speichere?',
+  'Unsaved words go to Recently deleted.': 'Ungspeichereti Wörter landed in „Zletscht glöscht“.',
+  'Don’t save': 'Nöd speichere',
   'Close others': 'Anderi zuemache',
   'Close tabs to the right': 'Tabs rächts zuemache',
   'Close tabs to the left': 'Tabs links zuemache',
@@ -195,9 +313,6 @@ export const gsw: Dictionary = {
   'Move this note': 'Die Notiz verschiebe',
   'Move up': 'Ufe',
   'Move down': 'Abe',
-  Bookmark: 'Lesezeiche',
-  'Remove bookmark': 'Lesezeiche wegnäh',
-  'Leave out of search': 'Us der Suech näh',
   'Search here again': 'Wieder durchsueche',
   'Undo the last file change': 'Letschti Dateiänderig zrugg',
   'Undo moving {name}': '{name} zrugg verschiebe',
@@ -247,7 +362,6 @@ export const gsw: Dictionary = {
   'Remove group': 'Gruppe entferne',
   'Out of the group': 'Us de Gruppe nää',
   Make: 'Mache',
-  'Bookmark this block': 'Dää Block merke',
   Panels: 'Beriich',
   Outline: 'Gliederig',
   'Stay on this note': 'Bi dere Notiz bliibe',
@@ -511,8 +625,8 @@ export const gsw: Dictionary = {
   'Asking OpenAI which models this key can use':
     'OpenAI wird gfragt, weli Modäll de Schlüssel darf',
   'Could not reach OpenAI': 'OpenAI nöd erreichbar',
-  'That key cannot use any of the models nibeditor asks for.':
-    'De Schlüssel darf kes vo de Modäll, wo nibeditor bruucht.',
+  'That key cannot use any of the models Orden asks for.':
+    'De Schlüssel darf kes vo de Modäll, wo Orden bruucht.',
   'No reasoning': 'Ohni Naadänke',
   Minimal: 'Minimal',
   Low: 'Weniig',
@@ -534,7 +648,7 @@ export const gsw: Dictionary = {
   Mode: 'Modus',
   // The window's own edges; see appearance.rs
   Window: 'Fänschter',
-  'nibeditor’s own': 'Vo nibeditor',
+  'Orden’s own': 'Vo Orden',
   'The system’s': 'Vom Syschtem',
   'Window frame': 'Fänschterrahme',
   System: 'System',
@@ -597,6 +711,7 @@ export const gsw: Dictionary = {
   '{done} of {total}': '{done} vo {total}',
   'Sync failed': 'Synchronisierig het nod klappt',
   '{name} could not be written.': '{name} het sich nöd schriibe laa.',
+  '{name} could not be read.': '{name} het sich nöd läse laa.',
   'Text size': 'Textgrössi',
   'Line spacing': 'Ziilenabstand',
   'Line width': 'Ziilenbreiti',
@@ -657,8 +772,10 @@ export const gsw: Dictionary = {
   '{used} of {limit} used.': '{used} vo {limit} bruucht.',
   'That image does not fit in your storage.': 'Das Bild hät nöd meh Platz i dim Spycher.',
   'out of space': 'kei Platz meh',
-  'nibeditor {version} is ready to install.': 'nibeditor {version} isch parat zum Installiere.',
+  'Orden {version} is ready to install.': 'Orden {version} isch parat zum Installiere.',
+  'Orden {version} is available.': 'Orden {version} isch verfüegbar.',
   'Restart now': 'Jetzt neu starte',
+  'Move to Applications': 'In „Programme“ verschiebe',
   Later: 'Spöter',
   More: 'Meh',
   'Open notes': 'Offni Notize',
@@ -683,11 +800,9 @@ export const gsw: Dictionary = {
   Continue: 'Wiiter',
   'Send a new code': 'Nöie Code schicke',
   'Code sent to': 'Code gschickt a',
-  'You already have notes on this computer.': 'Du häsch scho Notize uf däm Computer.',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
-    'Behalt sie und sie chömed i dis Konto. Lösch sie und es bliibt nume, was dis Konto scho het - das cha me nöd rückgängig mache.',
-  'Keep them': 'Behalte',
-  'Erase them': 'Lösche',
+  'This device already has notes.': 'Das Gerät het scho Notize.',
+  Merge: 'Zämefüere',
+  'Keep separate': 'Getrennt laa',
   'Digit {number}': 'Ziffer {number}',
   'Resend in {seconds}s': 'Nomal i {seconds}s',
   'Last synced {time}.': 'Zletscht abgliche am {time}.',
@@ -735,14 +850,14 @@ export const gsw: Dictionary = {
   'Reads your notes.': 'Liist dini Notize.',
   'Reads and writes your notes.': 'Liist und schriibt dini Notize.',
   Other: 'Anderi',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'En KI-Assistent cha dini Notize läse - und ändere, wenn du s erlaubsch. Er mäldet sich mit dinere nibeditor-E-Mail aa; es muess nüt iigfüegt wärde.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'En KI-Assistent cha dini Notize läse - und ändere, wenn du s erlaubsch. Er mäldet sich mit dinere Orden-E-Mail aa; es muess nüt iigfüegt wärde.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'Mach i Claude Iistellige → Connectors uf und klick uf Eigene Connector hinzuefüege.',
   'Open Claude’s connectors': 'Connectors i Claude uufmache',
   'Fill in the two fields and click Add.': 'Füll di zwei Fälder uus und klick uf Hinzuefüege.',
-  'Click Connect and sign in with your nibeditor email.':
-    'Klick uf Verbinde und mäld di mit dinere nibeditor-E-Mail aa.',
+  'Click Connect and sign in with your Orden email.':
+    'Klick uf Verbinde und mäld di mit dinere Orden-E-Mail aa.',
   'Using Claude Code instead?': 'Lieber Claude Code?',
   Command: 'Befehl',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -753,16 +868,16 @@ export const gsw: Dictionary = {
   'Open ChatGPT’s plugins': 'Plugins in ChatGPT öffne',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Kei Bereich Plugins oder kei Plus? Schalt zerscht de Entwicklermodus ii, under Iistellige → Sicherheit und Aamäldig.',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'Mäld di mit dinere nibeditor-E-Mail aa, wenn ChatGPT dernaa fröget.',
-  'To use it in a chat, type @ and pick nibeditor.':
-    'Tipp in eme Chat @ und wähl nibeditor, zum s bruuche.',
+  'Sign in with your Orden email when ChatGPT asks.':
+    'Mäld di mit dinere Orden-E-Mail aa, wenn ChatGPT dernaa fröget.',
+  'To use it in a chat, type @ and pick Orden.':
+    'Tipp in eme Chat @ und wähl Orden, zum s bruuche.',
   'Server URL': 'Server-URL',
   Authentication: 'Authentifizierig',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'Laa di erwiiterete OAuth-Iistellige, wie si sind, und hagg „Ich verstehe und möchte fortfahren“ aa.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'Jede MCP-Client mit Streamable HTTP und OAuth. Gib em d URL: Er registriert sich sälber und macht d Aamäldsiite vo nibeditor uf.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'Jede MCP-Client mit Streamable HTTP und OAuth. Gib em d URL: Er registriert sich sälber und macht d Aamäldsiite vo Orden uf.',
   'Show config': 'Konfiguration aazeige',
   'For a client that takes a JSON block instead of a URL.':
     'Für en Client, wo statt ere URL en JSON-Block nimmt.',
@@ -831,7 +946,7 @@ export const gsw: Dictionary = {
   'Display name': 'Aazeigname',
   'Your name': 'Din Name',
   Email: 'E-Mail',
-  'On nibeditor.com': 'Uf nibeditor.com',
+  'On orden.so': 'Uf orden.so',
   'Your own domain': 'Eigeni Domain',
   'Switching gives up {name}.': 'Bim Wächsle gisch du {name} uf.',
   Page: 'Siite',
@@ -903,8 +1018,9 @@ export const gsw: Dictionary = {
   'No footnotes in this note': 'Kei Fuessnote i dere Notiz',
   'Stack tabs': 'Tabs stapla',
   'Unstack tabs': 'Tabs nöd stapla',
-  'High contrast': 'Hohe Kontrascht',
+  Contrast: 'Kontrascht',
   Glass: 'Glas',
+  Classic: 'Klassisch',
   'Front matter': 'Chopfdate',
   'Front matter: {name}': 'Chopfdate: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':
@@ -915,6 +1031,7 @@ export const gsw: Dictionary = {
   Comment: 'Kommentar',
   'Always on top': 'Immer vorne',
   'What is new': 'Was isch neu',
+  'Download the app': 'App abelade',
   'Report an issue': 'Problem mälde',
   'Move the line up': 'D Zile ufe schiebe',
   'Move the line down': 'D Zile abe schiebe',
@@ -995,6 +1112,23 @@ export const gsw: Dictionary = {
   'Layout: {name}': 'Layout: {name}',
   'Space: {name}': 'Ablag: {name}',
   'Theme: {name}': 'Design: {name}',
+  'AI account: {name}': 'KI-Konto: {name}',
+  Accounts: 'Konten',
+  Access: 'Zuegriff',
+  Set: 'Gsetzt',
+  'Start over': 'Nöi aafange',
+  'Sign in here': 'Da aamälde',
+  '{device} wants your AI accounts': '{device} wott dini KI-Konte',
+  '{device} offers this device your AI vault': '{device} bietet däm Grät din KI-Tresor aa',
+  Join: 'Biiträte',
+  'Allow this device on another one': 'Das Grät uf emne andere zueloo',
+  'On every device you sign in to, end-to-end encrypted.':
+    'Uf jedem Grät, wo du aagmäldet bisch, Änd-zu-Änd-verschlüsslet.',
+  'Sign in to have them on every device.': 'Mälde dich aa, zum sie uf jedem Grät ha.',
+  'Agents on this computer connect on their own': 'Agänte uf däm Computer verbinde sich sälber',
+  Helpers: 'Helfer',
+  'Start helpers on your AI accounts': 'Helfer uf dine KI-Konte starte',
+  Delegated: 'Übergeh',
   'Code theme: {name}': 'Code-Design: {name}',
   'Delete a layout': 'Es Layout lösche',
   // Keyboards and modal editing
@@ -1063,6 +1197,7 @@ export const gsw: Dictionary = {
   'Double-click to write': 'Zum Schriibe doppelklicke',
   'Another colour': 'Anderi Farb',
   'Turn into a note': 'I e Notiz umwandle',
+  Arrange: 'Aaordne',
   'Bring to front': 'Ganz nach vorne',
   'Bring forward': 'Nach vorne hole',
   'Send backward': 'Nach hine schiebe',
@@ -1084,6 +1219,12 @@ export const gsw: Dictionary = {
   'Export as PNG': 'Als PNG exportiere',
   'Export as SVG': 'Als SVG exportiere',
   'Export as PDF': 'Als PDF exportiere',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF importiere',
+  'Choose how to add the pages to the canvas.': 'Wähl, wie d Siite uf d Liinwand chöme.',
+  'Single page': 'Einzelni Siite',
+  'All pages': 'Alli Siite',
+  'Choose a page': 'Siite uswähle',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Uswahl lösche',
   'Nudge left': 'Nach links schiebe',
@@ -1144,8 +1285,8 @@ export const gsw: Dictionary = {
   'Release channel': 'Update-Kanal',
   Stable: 'Stabil',
   Unstable: 'Instabil',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Stabil folgt de offizielle Releases, Instabil jedem Push uf main und cha kaputt gaa.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Stabil folgt de veröffentlichte Versione, Instabil de Edge-Builds und cha kaputt gaa.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Importiere',
@@ -1202,13 +1343,15 @@ export const gsw: Dictionary = {
   '{count} tables inside notes do not come over': '{count} Tabelle i Notize chömed nöd mit',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} Aahäng sind i iCloud und nöd uf dem Mac',
+  '{count} files are in iCloud rather than on this Mac':
+    '{count} Dateie sind i iCloud und nöd uf dem Mac',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS haltet die Notize hinder Festplattevollzuegriff.',
   'There are no notes in Apple Notes on this Mac.': 'Uf dem Mac git s kei Notize in Apple Notize.',
   'Those notes could not be read.': 'Die Notize hend sich nöd läse laa.',
   'Read them from this Mac': 'Vo dem Mac läse',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    'nibeditor bi Festplattevollzuegriff aaschalte, denn no mal frage.',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    'Orden bi Festplattevollzuegriff aaschalte, denn no mal frage.',
   'Open the setting': 'Iistellig ufmache',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'Apple Journal exportiert sälber: Journal, Iistellige, Exportiere. Apple Notize het kei Export: wäg vom Mac, wo si druf sind, ghört de Ordner vo eme Exporter do häre.',
@@ -1314,16 +1457,16 @@ export const gsw: Dictionary = {
   'OpenAI-compatible': 'OpenAI-kompatibel',
   'Base URL': 'Basis-URL',
   'API key': 'API-Schlüssel',
-  'Set on this device': 'Uf däm Grät gsetzt',
   Optional: 'Optional',
   'List models': 'Modäll abrüefe',
   'Asking…': 'Wird gfragt…',
   'No providers yet.': 'Na kei Aabieter.',
   'Add {name}': '{name} dezuetue',
-  'Keys stay in the secure store on this device.':
-    'Schlüssel bliibe im sichere Speicher vo däm Grät.',
   'This browser holds the keys in its own storage.':
     'Dä Browser bhaltet d Schlüssel in sim eigene Speicher.',
+  'Keep this browser’s keys in the vault': 'D Schlüssel vo däm Browser im Tresor ufbewahre',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'Denn sind d Schlüssel vo allne Grät im Speicher vo däm Browser, wo sie es Skript, wo i d Siite inecho isch, chönnt läse.',
   'AI can be wrong. Check the facts.': 'KI cha sich irre. Fakte prüefe.',
   'Used by the glasses': 'Vo de Brille gnutzt',
   'Could not read the models.': 'D Modäll händ sich nöd läse laa.',
@@ -1364,7 +1507,6 @@ export const gsw: Dictionary = {
   'A cited report': 'E zitierte Bericht',
   'A helper in the background': 'E Helfer im Hintergrund',
   'A side question': 'E Nebenfrage',
-  'Agent mode': 'Agent-Modus',
   'Agent profile': 'Agent-Profil',
   'Archive the thread': 'Thread archiviere',
   'Approve mode': 'Gnehmigungs-Modus',
@@ -1483,8 +1625,6 @@ export const gsw: Dictionary = {
   // Web tabs
   Reload: 'Neu lade',
   'Hard reload': 'Vollständig neu lade',
-  'Clip this page': 'Die Siite spichere',
-  'Clip the link': 'De Link spichere',
   'Open in the browser': 'Im Browser ufmache',
   'Show it here': 'Da azeige',
   Website: 'Webssite',
@@ -1572,8 +1712,10 @@ export const gsw: Dictionary = {
   'that is not a theme': 'Das isch kes Design',
   'no such theme': 'Das Design gits nöd',
   'choose a model first': 'Wähl zerscht es Modäll',
+  'set an OpenAI key in Orden’s settings first':
+    'Leg zerscht en OpenAI-Schlüssel i de Iistellige vo Orden ab',
   'set an OpenAI key in nibeditor’s settings first':
-    'Leg zerscht en OpenAI-Schlüssel i de Iistellige vo nibeditor ab',
+    'Leg zerscht en OpenAI-Schlüssel i de Iistellige vo Orden ab',
   'that is a lot of questions - try again later': 'Das sind vil Frage - probier s spöter nomal',
   'that is too much audio': 'Das isch z vil Audio',
   'that is more than a spoken command': 'Das isch mee als en Sprachbefehl',
@@ -1597,7 +1739,6 @@ export const gsw: Dictionary = {
   Nothing: 'Nüt',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Die Asicht merke',
   Keep: 'Behalte',
 
   // Which side of the window a panel sits on.
@@ -1619,7 +1760,6 @@ export const gsw: Dictionary = {
   'New tab': 'Nöie Tab',
   'Full screen': 'Vollbild',
   'Print…': 'Drucke…',
-  'Save page': 'Siite spichere',
   'Share…': 'Teile…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1663,7 +1803,6 @@ export const gsw: Dictionary = {
   Blocked: 'Blockiert',
   'Reset permissions': 'Brächtigunge zrugsetze',
   'Turn into': 'Umwandle i',
-  'Bookmark these blocks': 'Die Block merke',
   Foldable: 'Zämmefaltbar',
   'Starts folded': 'Faht zuegfaltet aa',
   // Where a space keeps what websites store
@@ -1680,6 +1819,15 @@ export const gsw: Dictionary = {
   'Bring all to front': 'Alli nach vorne bringä',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Kopie zurücknehmen',
+  'Devices with your AI vault': 'Grät mit dim KI-Tresor',
+  'This device': 'Das Grät',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'Das Grät cha dini KI-Konte nüme läse, und di andere überchömed en neue Schlüssel.',
+  'Also remove this device from your AI vault?': 'Das Grät au us dim KI-Tresor entferne?',
+  'Remove and sign out': 'Entferne und abmelde',
+  'Undo making {name}': '{name} wider ewägnäh',
+  'Undo the deletion': 'Lösche zrugnäh',
+  'Undo the move': 'Verschiebe zrugnäh',
   'Redo the last file change': 'Letzte Dateiänderung wiederholen',
   'Select down': 'Nach unten auswählen',
   'Select up': 'Nach oben auswählen',
@@ -1723,7 +1871,6 @@ export const gsw: Dictionary = {
   '{key} in a terminal': '{key} im Terminal',
   'Always ask': 'Immer frööge',
   'Open another': 'No eis ufmache',
-  'Open in terminal': 'Im Terminal ufmache',
   Clear: 'Leere',
   'Exited with code {code}': 'Beändet mit Code {code}',
   'Could not start {shell}': '{shell} het nöd chöne gstartet wärde',
@@ -1732,18 +1879,8 @@ export const gsw: Dictionary = {
   'Stop what is running in {name}?': 'Beände, was i {name} lauft?',
   'Stop what is running in these terminals?': 'Beände, was i dene Terminals lauft?',
   'Paste {count} lines?': { one: '{count} Ziile iifüege?', other: '{count} Ziile iifüege?' },
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': 'Standardbrowser',
-  // The engine web tabs run on
-  Engine: 'Engine',
-  Relaunch: 'Neu starte',
-  'Chromium did not start': 'Chromium isch nöd gstartet',
-  'No connection': 'Kei Verbindig',
-  'Not in this release': 'Nöd i dere Version',
-  'Needs an update': 'Bruucht es Update',
-  'Signature did not match': 'Signatur stimmt nöd',
-  'Disk full': 'Festplatte voll',
-  'Could not be installed': 'Het nöd chöne installiert wärde',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Änderige vo {name} rückgängig mache',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1846,7 +1983,7 @@ export const gsw: Dictionary = {
   'Always on this site': 'Immer uf dere Websiite',
   'Agents stopped': 'Agänte aaghalte',
   'Agent tabs closed': 'Agänte-Tabs zuegmacht',
-  'nibeditor is still running for your agents': 'nibeditor lauft für dini Agänte wiiter',
+  'Orden is still running for your agents': 'Orden lauft für dini Agänte wiiter',
   '{client} wants to connect': '{client} wott sich verbinde',
   // Web logins that travel, and the devices of an account
   'no such device': 'Das Gerät gits nöd',
@@ -1862,11 +1999,12 @@ export const gsw: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'Agänte uf däm Computer',
   'Your account’s connector': 'Connector vo dim Konto',
-  'nibeditor asks you once, the first time it connects.':
-    'nibeditor fragt di einisch, wenn er sich s erscht Mal verbindet.',
+  'Orden asks you once, the first time it connects.':
+    'Orden fragt di einisch, wenn er sich s erscht Mal verbindet.',
   'A client on another machine?': 'En Client uf eme andere Grät?',
   'Shown only once.': 'Wird nume einisch azeigt.',
   'Remove {name}?': '{name} entferne?',
+  'End {name}?': '{name} beände?',
   'Its token stops working.': 'Sis Token funktioniert dänn nüm.',
   'Added {date}': 'Dezuegfüegt am {date}',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':
@@ -1887,7 +2025,6 @@ export const gsw: Dictionary = {
   'Change notes': 'Notize ändere',
   'See what you are looking at': 'Gseh, was du grad aaluegsch',
   'Move and rename files': 'Dateie verschiebe und umbenänne',
-  'Open tabs and bookmarks': 'Tabs und Läsezeiche öffne',
   'Bring a tab to the front': 'En Tab nach vorne hole',
   'Browse in tabs of its own': 'I eigete Tabs surfe',
   'Read what pages load': 'Läse, was Siite lade',
@@ -1909,14 +2046,11 @@ export const gsw: Dictionary = {
   'Without your logins': 'Ohni dini Aamäldige',
   'Calls a minute': 'Ufrüef pro Minute',
   'Pages a minute': 'Siite pro Minute',
+  'Browser memory limit': 'Arbeitsspeicher-Gränze vom Browser',
   '{count} calls': {
     one: '{count} Ufruef',
     other: '{count} Ufrüef',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'Offe uf {device}',
-  'Use here': 'Da bruuche',
-  '{device} wants your web logins': '{device} wott dini Web-Aamäldige',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'Schnälli Frag',
@@ -1984,7 +2118,7 @@ export const gsw: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'Schlummere',
   Reminders: 'Erinnerige',
-  'Reminders ring while nibeditor is open': 'Erinnerige lüütet, solang nibeditor offe isch',
+  'Reminders ring while Orden is open': 'Erinnerige lüütet, solang Orden offe isch',
   Automatic: 'Automatisch',
   'Stay in the tray': 'Im Infobereich bliibe',
   'Exact alarms': 'Gnaui Wecker',
@@ -2027,7 +2161,6 @@ export const gsw: Dictionary = {
   'Any of them': 'Eini devo',
   Compare: 'Vergliich',
   'Add a filter': 'Filter dezuefüege',
-  'Reschedule to today': 'Uf hüt verschiebe',
   Collapse: 'Iichlappe',
   Expand: 'Uusklappe',
   Summary: 'Zämefassig',
@@ -2049,7 +2182,6 @@ export const gsw: Dictionary = {
   Layout: 'Layout',
   Overdue: 'Überfällig',
   Upcoming: 'Demnächscht',
-  Logbook: 'Logbuech',
   Project: 'Projekt',
   Label: 'Label',
   List: 'Liste',
@@ -2235,4 +2367,11 @@ export const gsw: Dictionary = {
   'Search this chat': 'Dä Chat dursueche',
   'Add as task': 'Als Ufgab hinzuefüege',
   'Save as note': 'Als Notiz speichere',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'Morgerot',
+  Lagoon: 'Lagune',
+  Lilac: 'Flieder',
+  Peach: 'Pfirsich',
+  Sage: 'Salbei',
+  Mist: 'Näbel',
 }

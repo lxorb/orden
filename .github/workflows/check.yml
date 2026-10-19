@@ -1,9 +1,16 @@
 name: check
 
+# On a pull request into main once it is ready for review, and on main itself, which
+# is what the deploy below is gated on. Not on `unstable`: its pushes are built by
+# release.yml, and checked here when they come to main as a pull request.
 on:
   push:
     branches: [main]
   pull_request:
+    branches: [main]
+    # `ready_for_review` too: a draft runs nothing, and the full run starts the moment
+    # it is marked ready (see docs/conventions.md, "CI").
+    types: [opened, synchronize, reopened, ready_for_review]
 
 concurrency:
   group: check-${{ github.ref }}
@@ -20,6 +27,8 @@ permissions:
 
 jobs:
   test:
+    # Not on a draft; see the `pull_request` trigger above.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     # Every job in this file says what its token may do, and every one of them
     # only reads: nothing here writes a release, opens a pull request or touches
@@ -50,6 +59,8 @@ jobs:
   # three read the source and nothing else, and one after the other they were a
   # minute and a half of the test job's wall time.
   lint:
+    # Not on a draft; see the `pull_request` trigger above.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -74,6 +85,16 @@ jobs:
       - name: Dead code and unused dependencies
         run: pnpm knip
 
+      # The rename's notice is the README's first line, word for word, for as long as
+      # people still arrive looking for nibeditor (docs/backlog.md, Q19).
+      - name: The README opens with the rename
+        run: |
+          expected='> Important: NibEditor is now Orden. We decided to change the name but everything else is still the same :)'
+          if [ "$(head -n 1 README.md)" != "$expected" ]; then
+            echo "README.md must open with: $expected" >&2
+            exit 1
+          fi
+
   # Sync v2's engine as every device of the simulator, ten thousand seeds of the unkind
   # network against the reference account (docs/sync-v2.md section 12): the same seeds
   # every run, so a change that breaks one is caught on its own push. Beside the tests
@@ -81,6 +102,8 @@ jobs:
   # run walks new seeds (walks.yml). Not in front of the deploy: v2 is behind
   # `sync_version`.
   walks:
+    # Not on a draft; see the `pull_request` trigger above.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -114,6 +137,8 @@ jobs:
   # night in drives.yml, which is far too long for a pull request; the floor is what
   # a pull request can afford. See apps/desktop/test/e2e/smoke.py.
   smoke:
+    # Not on a draft; see the `pull_request` trigger above.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -129,7 +154,7 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      # The runner's own Python, the way cef.yml takes it: one package, and the
+      # The runner's own Python: one package, and the
       # browser it drives. `--with-deps` because a bare Chromium on a runner is
       # missing half the shared libraries it needs to start.
       - name: The browser the drive holds
@@ -166,6 +191,14 @@ jobs:
       - name: The launch hands the thread back
         run: NIB_SKIP_BUILD=1 python3 apps/desktop/test/e2e/long-tasks.py
 
+      # And whether anything on screen is laid out so it cannot be read: every pane of
+      # the settings and the big surfaces, at three desktop widths and a phone, light and
+      # dark, signed out and with an account, on the same build. A name drawn a letter
+      # to a line beside a control too wide for its row passed every gate above three
+      # times and was found by Emil each time. See apps/desktop/test/e2e/layout-sweep.py.
+      - name: Nothing is laid out so it cannot be read
+        run: NIB_SKIP_BUILD=1 python3 apps/desktop/test/e2e/layout-sweep.py
+
       # And the half of that rule a test over source text cannot prove: that a real
       # release does not carry the handle. `window.nibApp` is the whole workspace,
       # and the page it sits on renders other people's HTML, so "the bundler removed
@@ -186,7 +219,89 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: smoke-shots
-          path: apps/desktop/test/e2e/shots/smoke
+          path: |
+            apps/desktop/test/e2e/shots/smoke
+            apps/desktop/test/e2e/shots/layout-sweep
+          if-no-files-found: ignore
+
+  # The drives a Mac breaks first, in WebKit, which is what a Mac, an iPhone and Linux
+  # run the app in. Everything above is Chromium's, and Chromium is WebView2: the editor
+  # once stopped drawing after the first keystroke on every Mac (`cancelIdleCallback`,
+  # which WebKit does not have), with every gate here green. `NIB_ENGINE=webkit` presses
+  # every key the way a Mac does - Cmd for Ctrl, Option for a word, the registry's own
+  # Mac key where it has one - so these also say that each of those keys works there.
+  # On Linux, where WebKit is cheap; the same drives on a Mac's own WebKit are below.
+  # See apps/desktop/test/e2e/harness.py and test/webkit.test.ts for the static half.
+  webkit:
+    # Not on a draft; see the `pull_request` trigger above.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: The browser the drives hold
+        run: |
+          python3 -m pip install --quiet --break-system-packages playwright
+          python3 -m playwright install --with-deps webkit
+
+      - name: The core drives, as a Mac
+        env:
+          NIB_ENGINE: webkit
+        run: python3 apps/desktop/test/e2e/run-all.py --jobs 2 --retries 1 --only smoke,keyboard,new-tabs,find-bar,hover-preview,frames,handed,callouts,highlights-links-breaks,task-rows
+
+      - if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: webkit-shots
+          path: apps/desktop/test/e2e/shots
+          if-no-files-found: ignore
+
+  # The floor in a Mac's own WebKit, on a Mac: what WKWebView draws with, which the
+  # Linux port above is not - its fonts, its scrollbars, its keyboard events.
+  webkit-mac:
+    # Not on a draft; see the `pull_request` trigger above.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
+    runs-on: macos-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: The browser the drives hold
+        run: |
+          python3 -m pip install --quiet --break-system-packages playwright
+          python3 -m playwright install webkit
+
+      - name: The floor, on a Mac
+        env:
+          NIB_ENGINE: webkit
+        run: python3 apps/desktop/test/e2e/run-all.py --jobs 2 --retries 1 --only smoke,keyboard,find-bar,hover-preview
+
+      - if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: webkit-mac-shots
+          path: apps/desktop/test/e2e/shots
           if-no-files-found: ignore
 
   # All three platforms, because the crate is not one body of code. The taskbar's
@@ -196,6 +311,8 @@ jobs:
   # runner does not compile is code no lint reads and no test runs. No row waits
   # on another: a lint that only fires on one platform should say which.
   rust:
+    # Not on a draft; see the `pull_request` trigger above.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     permissions:
       contents: read
     strategy:
@@ -280,6 +397,8 @@ jobs:
   # first push to a branch all leave nothing to compare against, and spending ten
   # minutes for nothing is cheaper than letting a broken manifest through.
   android-touched:
+    # Not on a draft; see the `pull_request` trigger above.
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -411,8 +530,11 @@ jobs:
             echo "R8 wrote no mapping folder"
           fi
 
-  # Whatever is on main is what nibeditor.com serves. Gated on the tests above,
-  # so a red build never reaches anyone.
+  # Whatever is on main is what orden.so and nibeditor.com serve. Gated on the tests above,
+  # so a red build never reaches anyone. The web carries the edge of `unstable` beside it
+  # for whoever asks for it (services/sync/src/channel.ts), and web-unstable.yml refreshes
+  # that half on every push there; this one builds it too, so neither deploy drops the
+  # other's.
   deploy:
     # The types, the tests and the static checks. Clippy guards the desktop app,
     # which is not what this deploys, and coupling the two would let a lint stop a fix.
@@ -448,6 +570,29 @@ jobs:
       - name: Build the web app
         run: pnpm --filter @nib/desktop build
 
+      # The edge of `unstable`, as it stands, beside it: in a worktree of its own, outside
+      # this one, so that nothing either build looks up on the way - a lockfile, a
+      # config - is the other's. A broken edge is no reason to hold a release back, so a
+      # failure here deploys the release alone, and the Worker serves the release to the
+      # browsers that asked for the edge until the next push to `unstable` mends it.
+      - name: Build the unstable web app
+        id: unstable
+        continue-on-error: true
+        run: |
+          git fetch --no-tags --depth=1 origin unstable
+          git worktree add --detach "$RUNNER_TEMP/unstable" FETCH_HEAD
+          cd "$RUNNER_TEMP/unstable"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          pnpm install --frozen-lockfile
+          VITE_ORDEN_CHANNEL=unstable pnpm --filter @nib/desktop build
+
+      # Refused only before the unstable pages are in place, so the release is whole either way.
+      - name: Put the two builds together
+        id: together
+        if: steps.unstable.outcome == 'success'
+        continue-on-error: true
+        run: bash scripts/web-channels.sh apps/desktop/dist "$RUNNER_TEMP/unstable/apps/desktop/dist"
+
       # Schema first. A new Worker may read a column the old schema lacks, and
       # the reverse - an unused new column - breaks nothing.
       #
@@ -461,7 +606,14 @@ jobs:
       - name: Build nibd for the machine image
         run: pnpm --filter @nib/machine build
 
+      # The version says which main it is, in full, because a push to `unstable` deploys
+      # the Worker again with the edge's new pages and has to deploy this same main to do
+      # it: the one whose migrations ran. See web-unstable.yml.
       - name: Deploy the Worker
-        run: pnpm --filter @nib/sync run deploy
+        run: |
+          pnpm --filter @nib/sync run deploy \
+            --tag "main-${GITHUB_SHA::12}" \
+            --message "main $GITHUB_SHA unstable ${UNSTABLE_SHA:0:12}"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          UNSTABLE_SHA: ${{ steps.together.outcome == 'success' && steps.unstable.outputs.sha || 'none' }}

@@ -11,7 +11,8 @@
 //!   whole screen, and the engine can only give it the whole of the webview, which was
 //!   the pane. `WebView2` says when a page holds a full screen element, and the window
 //!   answers by going full screen with the page over all of it. Escape and F11 give the
-//!   screen back, as in Chrome; they are the engine's to hear, so they are heard here.
+//!   screen back, as in Chrome; they are the engine's to hear, so they are heard here,
+//!   and F11 is nib's own full screen only while no video holds the screen (`web_keys.rs`).
 //! - **Zoom.** Ctrl and the wheel, Ctrl and a sign, or a pinch zoom the page inside the
 //!   engine (switched on for a web tab's page in `web_tabs.rs`), and the menu's
 //!   percentage never knew. The engine says when it changes, so the window can show it
@@ -24,6 +25,10 @@
 //!   which is no zoom at all; so Ctrl+0 is the page's first and then nib's, the way the
 //!   find keys are (see `web_opens.rs`), and `actual_size` answers it.
 //!
+//! And **how a page arrived**: where a navigation of its own frame ended and, when it did
+//! not arrive, why - the word the bar's https-first waits for (web-tab/upgrade.ts). Emil,
+//! 2026-10-13 (#235): a host typed with no scheme was tried over https alone.
+//!
 //! All of it is said to the window as one event, `nib://web-page`, carrying the tab.
 //! `WebView2`'s alone: elsewhere nothing is said, a video fills its pane as it did, and
 //! a mute is the page's own media elements told to be quiet.
@@ -32,11 +37,11 @@ use serde::Serialize;
 use tauri::AppHandle;
 
 /// The event the window hears on.
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(not(windows), allow(dead_code))]
 const SAID: &str = "nib://web-page";
 
 /// What the engine said about one page.
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(not(windows), allow(dead_code))]
 #[derive(Clone, Debug, PartialEq, Serialize)]
 #[serde(tag = "said", rename_all = "lowercase")]
 pub enum Said {
@@ -46,10 +51,29 @@ pub enum Said {
     Fill { on: bool },
     /// How large the page is drawn: 1 is a hundred per cent.
     Zoom { factor: f64 },
+    /// Where a navigation of the page's own frame ended, and why it did not arrive when
+    /// it did not. The bar's https-first settles on it; see `failure_of`.
+    Arrived {
+        url: String,
+        failure: Option<Failure>,
+    },
+}
+
+/// Why a page did not arrive, in the three kinds that decide anything: nothing answered
+/// on the connection, so plain http is worth trying for an address the bar gave
+/// `https:` (web-tab/upgrade.ts); the certificate was wrong, which is shown and never
+/// stepped round; or anything else.
+#[cfg_attr(not(windows), allow(dead_code))]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Failure {
+    Unreachable,
+    Certificate,
+    Other,
 }
 
 /// One of those, with the tab it is about.
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(not(windows), allow(dead_code))]
 #[derive(Clone, Serialize)]
 struct Heard {
     tab: String,
@@ -59,21 +83,21 @@ struct Heard {
 
 /// Whether a key gives the screen back from a page holding it: Escape or F11, pressed
 /// rather than let go of, and nothing held with it.
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(not(windows), allow(dead_code))]
 pub fn leaves(vk: u32, down: bool) -> bool {
     down && matches!(vk, 0x1B | 0x7A)
 }
 
 /// What a page is told when its sound is turned off or on, on an engine that cannot
 /// mute a page itself: every media element in it, as it is now.
-#[cfg_attr(any(windows, feature = "cef"), allow(dead_code))]
+#[cfg_attr(windows, allow(dead_code))]
 const QUIET: &str =
     "document.querySelectorAll('audio, video').forEach(function (one) { one.muted = __MUTED__ })";
 
 /// Draws a tab's page at a hundred per cent, for Ctrl+0 pressed inside it that nothing
 /// in the page took, and tells the window, which forgets the site's size: a zoom the app
 /// sets is one the engine says nothing about. See the top of this file.
-#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
+#[cfg_attr(not(windows), allow(dead_code))]
 pub fn actual_size(app: &AppHandle, window: &str, tab: &str) {
     use tauri::Emitter;
 
@@ -104,25 +128,102 @@ pub fn web_unfill(app: AppHandle, tab: String) -> Result<(), String> {
         .map_err(|error| format!("that page could not be reached: {error}"))
 }
 
-#[cfg(all(windows, not(feature = "cef")))]
-pub use heard::{listen, mute};
+#[cfg(windows)]
+pub use heard::{holds_screen, listen, mute};
 
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 mod heard {
     use tauri::webview::PlatformWebview;
     use tauri::{AppHandle, Emitter, Webview};
     use webview2_com::Microsoft::Web::WebView2::Win32::{
-        ICoreWebView2, ICoreWebView2_8, COREWEBVIEW2_KEY_EVENT_KIND,
+        ICoreWebView2, ICoreWebView2Controller, ICoreWebView2NavigationCompletedEventArgs,
+        ICoreWebView2NavigationCompletedEventArgs2, ICoreWebView2_8, COREWEBVIEW2_KEY_EVENT_KIND,
         COREWEBVIEW2_KEY_EVENT_KIND_KEY_DOWN, COREWEBVIEW2_KEY_EVENT_KIND_SYSTEM_KEY_DOWN,
+        COREWEBVIEW2_WEB_ERROR_STATUS, COREWEBVIEW2_WEB_ERROR_STATUS_CANNOT_CONNECT,
+        COREWEBVIEW2_WEB_ERROR_STATUS_CERTIFICATE_COMMON_NAME_IS_INCORRECT,
+        COREWEBVIEW2_WEB_ERROR_STATUS_CERTIFICATE_EXPIRED,
+        COREWEBVIEW2_WEB_ERROR_STATUS_CERTIFICATE_IS_INVALID,
+        COREWEBVIEW2_WEB_ERROR_STATUS_CERTIFICATE_REVOKED,
+        COREWEBVIEW2_WEB_ERROR_STATUS_CLIENT_CERTIFICATE_CONTAINS_ERRORS,
+        COREWEBVIEW2_WEB_ERROR_STATUS_CONNECTION_ABORTED,
+        COREWEBVIEW2_WEB_ERROR_STATUS_CONNECTION_RESET, COREWEBVIEW2_WEB_ERROR_STATUS_DISCONNECTED,
+        COREWEBVIEW2_WEB_ERROR_STATUS_ERROR_HTTP_INVALID_SERVER_RESPONSE,
+        COREWEBVIEW2_WEB_ERROR_STATUS_SERVER_UNREACHABLE, COREWEBVIEW2_WEB_ERROR_STATUS_TIMEOUT,
+        COREWEBVIEW2_WEB_ERROR_STATUS_UNKNOWN,
     };
     use webview2_com::{
         AcceleratorKeyPressedEventHandler, ContainsFullScreenElementChangedEventHandler,
         ExecuteScriptCompletedHandler, IsDocumentPlayingAudioChangedEventHandler,
-        IsMutedChangedEventHandler, ZoomFactorChangedEventHandler,
+        IsMutedChangedEventHandler, NavigationCompletedEventHandler, ZoomFactorChangedEventHandler,
     };
-    use windows_core::{Interface, BOOL};
+    use windows_core::{Interface, BOOL, PWSTR};
 
-    use super::{leaves, Heard, Said, SAID};
+    use super::{leaves, Failure, Heard, Said, SAID};
+
+    /// Why a navigation did not arrive, out of the engine's own status for it and the
+    /// HTTP status the server answered with, 0 where nothing answered.
+    ///
+    /// Unreachable is the connection itself failing: refused, reset, cut off, timed out,
+    /// no route to the server, or something on the other end that answered without
+    /// speaking TLS - which is what a server serving plain http on the port does, and
+    /// what Chrome falls back from too. Measured on `WebView2` 154: a refused connection
+    /// and a server that does not speak TLS are both `UNKNOWN`, and so are a 404 and a
+    /// 500 - which are a server answering - so a server that answered is never
+    /// unreachable, whatever the status. A name that does not resolve is not among them:
+    /// it resolves no better over http. Each certificate status is the certificate.
+    pub(super) fn failure_of(status: COREWEBVIEW2_WEB_ERROR_STATUS, answered: i32) -> Failure {
+        match status {
+            COREWEBVIEW2_WEB_ERROR_STATUS_CERTIFICATE_COMMON_NAME_IS_INCORRECT
+            | COREWEBVIEW2_WEB_ERROR_STATUS_CERTIFICATE_EXPIRED
+            | COREWEBVIEW2_WEB_ERROR_STATUS_CERTIFICATE_IS_INVALID
+            | COREWEBVIEW2_WEB_ERROR_STATUS_CERTIFICATE_REVOKED
+            | COREWEBVIEW2_WEB_ERROR_STATUS_CLIENT_CERTIFICATE_CONTAINS_ERRORS => {
+                Failure::Certificate
+            }
+            _ if answered > 0 => Failure::Other,
+            COREWEBVIEW2_WEB_ERROR_STATUS_UNKNOWN
+            | COREWEBVIEW2_WEB_ERROR_STATUS_CANNOT_CONNECT
+            | COREWEBVIEW2_WEB_ERROR_STATUS_CONNECTION_ABORTED
+            | COREWEBVIEW2_WEB_ERROR_STATUS_CONNECTION_RESET
+            | COREWEBVIEW2_WEB_ERROR_STATUS_DISCONNECTED
+            | COREWEBVIEW2_WEB_ERROR_STATUS_SERVER_UNREACHABLE
+            | COREWEBVIEW2_WEB_ERROR_STATUS_TIMEOUT
+            | COREWEBVIEW2_WEB_ERROR_STATUS_ERROR_HTTP_INVALID_SERVER_RESPONSE => {
+                Failure::Unreachable
+            }
+            _ => Failure::Other,
+        }
+    }
+
+    /// Where a navigation ended and why it did not arrive, out of the engine's event.
+    #[allow(unsafe_code, reason = "the event's own COM objects, on this thread")]
+    fn arrived(
+        core: Option<&ICoreWebView2>,
+        args: Option<&ICoreWebView2NavigationCompletedEventArgs>,
+    ) -> Option<Said> {
+        // Safe: the engine's own objects, handed to its event on the window's thread.
+        unsafe {
+            let mut url = PWSTR::null();
+            core?.Source(&raw mut url).ok()?;
+            let url = webview2_com::take_pwstr(url);
+            let args = args?;
+            let mut success = BOOL::default();
+            args.IsSuccess(&raw mut success).ok()?;
+            let failure = if success.as_bool() {
+                None
+            } else {
+                let mut status = COREWEBVIEW2_WEB_ERROR_STATUS::default();
+                args.WebErrorStatus(&raw mut status).ok()?;
+                // What the server said, where the runtime can say: 0 for nothing at all.
+                let mut answered = 0i32;
+                if let Ok(two) = args.cast::<ICoreWebView2NavigationCompletedEventArgs2>() {
+                    let _ = two.HttpStatusCode(&raw mut answered);
+                }
+                Some(failure_of(status, answered))
+            };
+            Some(Said::Arrived { url, failure })
+        }
+    }
 
     /// Starts listening on one page. Called on the window's thread, once, as the page is
     /// built; `window` is the label of the window it is in.
@@ -208,6 +309,17 @@ mod heard {
             let mut token = 0i64;
             let _ = controller.add_AcceleratorKeyPressed(&keys, &raw mut token);
 
+            // How each navigation of the page's own frame ended; see `arrived`.
+            let told = tell.clone();
+            let ended = NavigationCompletedEventHandler::create(Box::new(move |sender, args| {
+                if let Some(said) = arrived(sender.as_ref(), args.as_ref()) {
+                    told(said);
+                }
+                Ok(())
+            }));
+            let mut token = 0i64;
+            let _ = core.add_NavigationCompleted(&ended, &raw mut token);
+
             // Only a zoom made in the page is heard: one the app sets says nothing, so
             // setting this one again cannot come back round. See the top of this file.
             let zoomed = ZoomFactorChangedEventHandler::create(Box::new(move |sender, _| {
@@ -240,6 +352,14 @@ mod heard {
                 muted: muted.as_bool(),
             })
         }
+    }
+
+    /// Whether something in the page a key arrived at holds the whole screen, so the
+    /// key is this file's to hear; see `web_keys.rs`.
+    #[allow(unsafe_code, reason = "the engine is asked through its COM interfaces")]
+    pub fn holds_screen(controller: &ICoreWebView2Controller) -> bool {
+        // Safe: the controller is the page's own, asked on its own thread.
+        unsafe { controller.CoreWebView2() }.is_ok_and(|core| filling(&core))
     }
 
     /// Whether something in the page holds the whole screen.
@@ -276,14 +396,14 @@ mod heard {
 }
 
 /// Tells a page's media elements to be quiet, or not.
-#[cfg_attr(any(windows, feature = "cef"), allow(dead_code))]
+#[cfg_attr(windows, allow(dead_code))]
 fn quieted(view: &tauri::Webview, muted: bool) -> Result<(), String> {
     view.eval(QUIET.replace("__MUTED__", if muted { "true" } else { "false" }))
         .map_err(|error| format!("that page could not be reached: {error}"))
 }
 
 /// Every other engine says nothing about a page; see the top of this file.
-#[cfg(any(not(windows), feature = "cef"))]
+#[cfg(not(windows))]
 pub fn listen(
     _webview: &tauri::webview::PlatformWebview,
     _app: AppHandle,
@@ -293,23 +413,9 @@ pub fn listen(
 }
 
 /// Every other engine mutes what the page is playing now.
-#[cfg(all(not(windows), not(feature = "cef")))]
+#[cfg(not(windows))]
 pub fn mute(view: &tauri::Webview, muted: bool) -> Result<(), String> {
     quieted(view, muted)
-}
-
-/// nib's own Chromium mutes the page the way Chrome's tab strip does: the browser's own
-/// sound off, whatever the page plays next, and nothing said to the page.
-#[cfg(feature = "cef")]
-pub fn mute(view: &tauri::Webview, muted: bool) -> Result<(), String> {
-    use cef::{ImplBrowser as _, ImplBrowserHost as _};
-    use tauri_runtime_cef::WebviewCefExt as _;
-    view.with_cef_webview(move |page| {
-        if let Some(host) = page.browser().host() {
-            host.set_audio_muted(i32::from(muted));
-        }
-    })
-    .map_err(|error| format!("that page could not be reached: {error}"))
 }
 
 #[cfg(test)]
@@ -359,5 +465,90 @@ mod tests {
     fn a_page_is_quieted_through_its_own_media() {
         assert!(QUIET.contains("audio, video"));
         assert!(QUIET.contains("__MUTED__"));
+    }
+}
+
+#[cfg(all(test, windows))]
+mod arrivals {
+    use super::heard::failure_of;
+    use super::Failure;
+    use webview2_com::Microsoft::Web::WebView2::Win32::{
+        COREWEBVIEW2_WEB_ERROR_STATUS_CANNOT_CONNECT,
+        COREWEBVIEW2_WEB_ERROR_STATUS_CERTIFICATE_EXPIRED,
+        COREWEBVIEW2_WEB_ERROR_STATUS_CERTIFICATE_IS_INVALID,
+        COREWEBVIEW2_WEB_ERROR_STATUS_HOST_NAME_NOT_RESOLVED,
+        COREWEBVIEW2_WEB_ERROR_STATUS_OPERATION_CANCELED, COREWEBVIEW2_WEB_ERROR_STATUS_TIMEOUT,
+        COREWEBVIEW2_WEB_ERROR_STATUS_UNKNOWN,
+    };
+
+    #[test]
+    fn nothing_answering_on_the_connection_is_unreachable() {
+        // A refused connection and a server that does not speak TLS, as measured.
+        assert_eq!(
+            failure_of(COREWEBVIEW2_WEB_ERROR_STATUS_UNKNOWN, 0),
+            Failure::Unreachable
+        );
+        assert_eq!(
+            failure_of(COREWEBVIEW2_WEB_ERROR_STATUS_CANNOT_CONNECT, 0),
+            Failure::Unreachable
+        );
+        assert_eq!(
+            failure_of(COREWEBVIEW2_WEB_ERROR_STATUS_TIMEOUT, 0),
+            Failure::Unreachable
+        );
+    }
+
+    #[test]
+    fn a_server_that_answered_is_never_unreachable() {
+        // A 404 and a 500 over https are `UNKNOWN` too: the server answered.
+        assert_eq!(
+            failure_of(COREWEBVIEW2_WEB_ERROR_STATUS_UNKNOWN, 404),
+            Failure::Other
+        );
+        assert_eq!(
+            failure_of(COREWEBVIEW2_WEB_ERROR_STATUS_UNKNOWN, 500),
+            Failure::Other
+        );
+    }
+
+    #[test]
+    fn a_wrong_certificate_is_the_certificate() {
+        assert_eq!(
+            failure_of(COREWEBVIEW2_WEB_ERROR_STATUS_CERTIFICATE_EXPIRED, 0),
+            Failure::Certificate
+        );
+        assert_eq!(
+            failure_of(COREWEBVIEW2_WEB_ERROR_STATUS_CERTIFICATE_IS_INVALID, 0),
+            Failure::Certificate
+        );
+    }
+
+    #[test]
+    fn a_name_that_does_not_resolve_or_a_stop_is_something_else() {
+        assert_eq!(
+            failure_of(COREWEBVIEW2_WEB_ERROR_STATUS_HOST_NAME_NOT_RESOLVED, 0),
+            Failure::Other
+        );
+        assert_eq!(
+            failure_of(COREWEBVIEW2_WEB_ERROR_STATUS_OPERATION_CANCELED, 0),
+            Failure::Other
+        );
+    }
+
+    #[test]
+    fn it_is_said_to_the_window_in_the_words_upgrade_ts_reads() {
+        let said = serde_json::to_value(super::Said::Arrived {
+            url: "https://a.example/".into(),
+            failure: Some(Failure::Unreachable),
+        })
+        .expect("json");
+        assert_eq!(said["said"], "arrived");
+        assert_eq!(said["failure"], "unreachable");
+        let fine = serde_json::to_value(super::Said::Arrived {
+            url: "https://a.example/".into(),
+            failure: None,
+        })
+        .expect("json");
+        assert!(fine["failure"].is_null());
     }
 }

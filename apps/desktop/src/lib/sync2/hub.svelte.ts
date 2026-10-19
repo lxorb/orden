@@ -1,20 +1,20 @@
 /** The one socket this device keeps to its account's hub.
  *
- *  Every signed-in device holds one, whether or not its web logins travel: it is where
- *  the account pokes a device about a space that moved (sync v2's engine listens for
- *  `poke`), where a web login is leased (web-tab/lease.svelte.ts), and where a new
- *  computer asks for the web key. One per device and not one per window: the hub
+ *  Every signed-in device holds one: it is where the account pokes a device about a
+ *  space that moved (sync v2's engine listens for `poke`), a chat, the AI accounts or
+ *  the online machine's sessions, and where a device says whether somebody is at it.
+ *  One per device and not one per window: the hub
  *  replaces a device's socket when a second one arrives, so two windows each holding
  *  one would take it from each other for ever. So the first window to ask holds it - a
  *  Web Lock, which the next window inherits the moment this one goes - and every other
  *  window speaks through that one over a channel, hearing what it hears.
  *
  *  What it sends: `hello` as it opens (this device's id, its name, its platform, the
- *  app's version, and its public key once web logins travel), `beat` every ten seconds,
- *  which the service answers without waking the hub, and whatever a listener asks to
- *  send. What it hears is read at the boundary (hub-frames.ts) and handed to whoever
- *  asked with `on`. It comes back on its own after a drop, the way a room's socket does,
- *  and goes when the session does. See docs/sync-v2.md sections 5.12, 6.2 and 7. */
+ *  app's version), `beat` every ten seconds, which the service answers without waking
+ *  the hub, and whatever a listener asks to send. What it hears is read at the boundary
+ *  (hub-frames.ts) and handed to whoever asked with `on`. It comes back on its own after
+ *  a drop, the way a room's socket does, and goes when the session does. See
+ *  docs/sync-v2.md sections 5.12 and 7. */
 
 import { untrack } from 'svelte'
 import { account } from '../account.svelte'
@@ -85,11 +85,6 @@ type Relayed =
   | { k: 'send'; frame: FromDevice }
   | { k: 'ask' }
 
-/** What `introduce` adds to `hello`: the public key, once web logins travel. */
-export interface Introduction {
-  pub?: string
-}
-
 type Listener = (frame: FromHub) => void
 
 export class Hub {
@@ -108,7 +103,6 @@ export class Hub {
   private leading = false
   private electing = false
   private channel: HubChannel | null = null
-  private introduction: (() => Promise<Introduction>) | null = null
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- who is listening; nothing renders from it
   private readonly listeners = new Map<HubType, Set<Listener>>()
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- likewise
@@ -160,8 +154,7 @@ export class Hub {
   }
 
   /** Whether this window is the one holding the socket: what says the device's own
-   *  things - that somebody is at it, the road to the web key - once rather than once a
-   *  window. */
+   *  things - that somebody is at it - once rather than once a window. */
   get leads(): boolean {
     return this.leading
   }
@@ -175,13 +168,6 @@ export class Hub {
       return true
     }
     return this.write(JSON.stringify(frame))
-  }
-
-  /** What `hello` carries besides the device itself; said again at once if the socket
-   *  is already up. */
-  introduce(introduction: () => Promise<Introduction>): void {
-    this.introduction = introduction
-    if (this.leading && this.state === 'open') void this.hello()
   }
 
   /** Joins the other windows' channel, once. */
@@ -276,7 +262,6 @@ export class Hub {
     const device = this.device
     if (!device) return
 
-    const extra: Introduction = (await this.introduction?.().catch(() => ({}))) ?? {}
     const name = await this.world.name().catch(() => '')
     const sent = this.write(
       JSON.stringify({
@@ -285,7 +270,6 @@ export class Hub {
         name: name || platform() || 'nib',
         platform: platform() || 'web',
         app: __APP_VERSION__,
-        ...(extra.pub ? { pub: extra.pub } : {}),
       } satisfies FromDevice),
     )
     if (!sent) return
@@ -387,8 +371,8 @@ async function deviceName(): Promise<string> {
 
 /** A clock that is not slowed while the window is hidden. A browser throttles a hidden
  *  page's own timers to once a minute after a few minutes, and a hub that hears one
- *  beat a minute counts the device gone after thirty seconds - so a minimised window
- *  would lose every web login it holds. A worker's timers are not throttled that way,
+ *  beat a minute counts the device gone after thirty seconds, a minimised window
+ *  among them. A worker's timers are not throttled that way,
  *  so the beat is kept by one, and the page's own timer is what is left where there is
  *  no worker. */
 function ticking(ms: number, tick: () => void): () => void {

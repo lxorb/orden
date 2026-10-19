@@ -47,7 +47,7 @@ mcp.post('/', async (context) => {
   // was only given the URL finds the OAuth server on its own.
   if (!token) {
     return context.json({ error: SIGN_IN }, 401, {
-      'www-authenticate': challenge(context.env, !!header),
+      'www-authenticate': challenge(context.env, context.req.url, !!header),
     })
   }
 
@@ -66,7 +66,7 @@ mcp.post('/', async (context) => {
       return reply({
         protocolVersion: PROTOCOL,
         capabilities: { tools: {} },
-        serverInfo: { name: 'nib', version: '1.0.0' },
+        serverInfo: { name: 'orden', version: '1.0.0' },
       })
 
     // Notifications carry no id and expect no answer.

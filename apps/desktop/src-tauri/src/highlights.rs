@@ -1,9 +1,9 @@
 //! The highlights someone has drawn on a PDF, in a file beside it.
 //!
 //! Never inside the PDF: a PDF in a space is the file the reader put there, and
-//! Nib does not rewrite it. The marks live in `paper.pdf.highlights.json`, which
+//! Orden does not rewrite it. The marks live in `paper.pdf.highlights.json`, which
 //! syncs like a note, travels with the PDF when it is renamed or moved, and goes
-//! when the PDF goes - see `move_highlights` in `paths`.
+//! when the PDF goes - see `move_held` in `paths`.
 //!
 //! This module owns the two commands that read and write that one file. What is
 //! in it belongs to the window, which is the only thing that reads it; here it is

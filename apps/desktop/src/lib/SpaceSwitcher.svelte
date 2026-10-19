@@ -11,10 +11,7 @@
    *  always the top of the list, so the list of spaces is the width of the list
    *  of notes and needs no measuring, no flipping at an edge and no second sheet
    *  written for a phone. A drawer is a panel too, so a thumb gets exactly what a
-   *  pointer gets.
-   *
-   *  With the panel shut it sits in the title bar, `bare`: the mark and no name,
-   *  opening the same list; see Titlebar.svelte. */
+   *  pointer gets. */
   import { arrive, leave } from './slide'
   import NameField from './NameField.svelte'
   import { overlays } from './overlays'
@@ -27,15 +24,10 @@
   import { isShared } from './sharing.svelte'
   import { workspace } from './workspace.svelte'
 
-  const { bare = false }: { bare?: boolean } = $props()
-
   let open = $state(false)
 
   const here = $derived(workspace.activeSpace)
   const name = $derived(here?.name ?? t('Spaces'))
-
-  /** The bare mark's words, for its tooltip and a screen reader. */
-  const called = $derived(here ? t('{name}: switch space', { name: here.name }) : t('Spaces'))
 
   /** The names the switcher already holds, so the field can say a name is taken;
    *  a space keeping its own name is not taking it from itself. */
@@ -48,8 +40,17 @@
   let wrong = $state(false)
 
   // Escape closes it, the way Escape closes everything else the app opens over
-  // what is under it; see overlays.ts.
-  $effect(() => (open ? overlays.show(() => (open = false)) : undefined))
+  // what is under it, and so does a press past the list and its header, or the window
+  // losing the focus - which is how a press into a web page beside it is heard; see
+  // overlays.ts.
+  $effect(() =>
+    open
+      ? overlays.show(
+          () => (open = false),
+          () => [...document.querySelectorAll('[data-spaces-open], [data-space-drop="switcher"]')],
+        )
+      : undefined,
+  )
 
   // What a space wears in its badge, and which set has to be fetched to draw it,
   // are the badge's own business: SpaceBadge.svelte.
@@ -78,7 +79,7 @@
   {/if}
 {/snippet}
 
-{#if !bare && here && workspace.naming?.path === here.root}
+{#if here && workspace.naming?.path === here.root}
   <!-- Renaming a space happens where its name is written, in the same field a row
        in the list uses: the header keeps its height, its weight and its chevron,
        and only the name becomes editable. See NameField.svelte. -->
@@ -94,27 +95,23 @@
     <svg class="chevron" viewBox="0 0 13 13"><path d="M3.6 5.2 6.5 8.1l2.9-2.9" /></svg>
   </div>
 {:else}
-  <!-- Bare, it is the bar's own square button, `.nib-glyph`, with the badge in it. -->
   <button
-    class={bare ? 'nib-glyph bare' : 'name'}
+    class="name"
     class:open
     data-space-drop="switcher"
-    title={shortcuts.tooltip(bare ? called : name, 'space.switcher')}
-    aria-label={bare ? called : undefined}
+    title={shortcuts.tooltip(name, 'space.switcher')}
     aria-haspopup="menu"
     aria-expanded={open}
     onclick={() => (open = !open)}
   >
     {@render mark()}
-    {#if !bare}
-      <span class="nib-row-label">{name}</span>
-      <!-- Said on the header as well as on the row, so a space being shared is a
-           fact you can see without opening the list of spaces to look for it. -->
-      {#if here && isShared(here.root)}
-        <SharedMark />
-      {/if}
-      <svg class="chevron" viewBox="0 0 13 13"><path d="M3.6 5.2 6.5 8.1l2.9-2.9" /></svg>
+    <span class="nib-row-label">{name}</span>
+    <!-- Said on the header as well as on the row, so a space being shared is a
+         fact you can see without opening the list of spaces to look for it. -->
+    {#if here && isShared(here.root)}
+      <SharedMark />
     {/if}
+    <svg class="chevron" viewBox="0 0 13 13"><path d="M3.6 5.2 6.5 8.1l2.9-2.9" /></svg>
   </button>
 {/if}
 
@@ -123,7 +120,7 @@
        the first paint, and warmed at the launch's last turn so that press finds it
        here; see SpaceMenu.svelte and surfaces.svelte.ts. -->
   {#await spacesMenu() then SpaceMenu}
-    <SpaceMenu {bare} close={() => (open = false)} />
+    <SpaceMenu close={() => (open = false)} />
   {/await}
 {/if}
 
@@ -166,19 +163,6 @@
   .name:active,
   .name.open {
     background: var(--surface-press);
-  }
-
-  /* `.nib-glyph` draws it; it stays pressed while its list is open, as the header does. */
-  button.bare {
-    align-self: center;
-  }
-
-  button.bare.open {
-    background: var(--surface-press);
-  }
-
-  button.bare .mark {
-    margin: 0;
   }
 
   /* The box the space's mark sits in, in front of its name. A box of its own

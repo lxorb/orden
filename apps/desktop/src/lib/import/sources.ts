@@ -24,6 +24,9 @@ export interface Source {
   bytes(): Promise<Uint8Array>
 }
 
+/** A vault's settings folder, at the top of what was picked or one folder in. */
+const VAULT = /^([^/]+\/)?\.obsidian\//
+
 /** How deep a zip inside a zip is followed. Notion splits a large export into
  *  `Part-1.zip` and the rest, and nothing anybody exports nests deeper than
  *  that; a cap is also what stops a zip that holds itself. */
@@ -76,6 +79,10 @@ export function insideFolder(picked: readonly Picked[]): Picked[] {
 /** Every file behind what the reader picked, zips opened. */
 export async function sourcesFrom(picked: readonly Picked[]): Promise<Source[]> {
   const found: Source[] = []
+  // A folder that is an Obsidian vault holds its zips as attachments, which a note
+  // links and the vault list brings whole, rather than exports to open. See VAULT in
+  // read.ts, which knows a vault the same way.
+  const vault = picked.some((one) => VAULT.test(tidyPath((one.webkitRelativePath ?? '').trim())))
 
   for (const one of picked) {
     // The relative path when the browser gave one, and the bare name when it
@@ -83,7 +90,13 @@ export async function sourcesFrom(picked: readonly Picked[]): Promise<Source[]> 
     const inside = (one.webkitRelativePath ?? '').trim()
     const path = tidyPath(inside.length ? inside : one.name)
     const bytes = new Uint8Array(await one.arrayBuffer())
-    found.push(...(await expand(path, bytes, 0)))
+    // A file out of a picked folder is opened only when its name says zip, the way
+    // a zip inside a zip is: the folder is what was picked, and a mind map or a
+    // Sketch file kept in a vault is a zip underneath that nobody meant unpacked.
+    // A file picked on its own may be an export whatever it is called.
+    if (inside.length && (vault || !path.toLowerCase().endsWith('.zip')))
+      found.push(sourceOf(path, bytes))
+    else found.push(...(await expand(path, bytes, 0)))
   }
 
   return found
@@ -102,7 +115,11 @@ async function expand(path: string, bytes: Uint8Array, depth: number): Promise<S
   if (__EVEN_PLUGIN__) throw new Error('no import in the Even Realities plugin')
 
   const { default: JSZip } = await import('jszip')
-  const zip = await JSZip.loadAsync(bytes)
+  const zip = await JSZip.loadAsync(bytes, { decodeFileName: zipName }).catch(() => null)
+  // A zip that does not open - empty, cut short, or a file that only starts the way
+  // one does - is a file like any other: one broken attachment in a vault is not a
+  // reason to bring none of the rest.
+  if (!zip) return [sourceOf(path, bytes)]
   const inside: Source[] = []
   const entries: { path: string; read: () => Promise<Uint8Array> }[] = []
 
@@ -111,10 +128,14 @@ async function expand(path: string, bytes: Uint8Array, depth: number): Promise<S
     entries.push({ path: tidyPath(entryPath), read: () => entry.async('uint8array') })
   })
 
+  // A zipped vault holds its zips as attachments, as a vault picked as a folder does,
+  // rather than exports to open.
+  const vault = entries.some((entry) => VAULT.test(entry.path))
+
   for (const entry of entries) {
     // A zip inside a zip is read now, because knowing whether one holds notes
     // means reading it, and the sheet counts what it is about to write.
-    if (entry.path.toLowerCase().endsWith('.zip')) {
+    if (!vault && entry.path.toLowerCase().endsWith('.zip')) {
       inside.push(...(await expand(entry.path, await entry.read(), depth + 1)))
       continue
     }
@@ -123,6 +144,60 @@ async function expand(path: string, bytes: Uint8Array, depth: number): Promise<S
   }
 
   return inside
+}
+
+/** The upper half of IBM code page 437, which the zip format names for a file name
+ *  not marked UTF-8, and which Windows' own "Compressed (zipped) folder" writes in. */
+const CP437 =
+  'ÇüéâäàåçêëèïîìÄÅÉæÆôöòûùÿÖÜ¢£¥₧ƒáíóúñÑªº¿⌐¬½¼¡«»░▒▓│┤╡╢╖╕╣║╗╝╜╛┐└┴┬├─┼╞╟╚╔╩╦╠═╬╧╨╤╥╙╘╒╓╫╪┘┌█▄▌▐▀αßΓπΣσµτΦΘΩδ∞φε∩≡±≥≤⌠⌡÷≈°∙·√ⁿ²■\u00a0'
+
+/** The code page Windows' "Compressed (zipped) folder" writes names in on a system
+ *  set to each language: its OEM code page, which is 437 only on an American one.
+ *  Only those a browser can read; every other language is read as 437, which keeps
+ *  the accented letters of the Western European ones. */
+const OEM: Record<string, string> = {
+  ja: 'shift_jis',
+  zh: 'gbk',
+  'zh-tw': 'big5',
+  'zh-hk': 'big5',
+  'zh-mo': 'big5',
+  'zh-hant': 'big5',
+  ko: 'euc-kr',
+  ru: 'ibm866',
+  uk: 'ibm866',
+  be: 'ibm866',
+  bg: 'ibm866',
+  kk: 'ibm866',
+  th: 'windows-874',
+}
+
+/** The code page of this system's own Windows, by the language it is set to. A zip
+ *  that does not say how its names are written was most likely made on the machine
+ *  importing it, or one set up like it, and nothing in the zip says otherwise. */
+function oemCodePage(): string | null {
+  const tag = (typeof navigator === 'undefined' ? '' : navigator.language).toLowerCase()
+  const parts = tag.split('-')
+  return OEM[parts.slice(0, 2).join('-')] ?? OEM[parts[0] ?? ''] ?? null
+}
+
+/** A name in a zip that does not say it is UTF-8. macOS writes UTF-8 without saying
+ *  so, and its names read as UTF-8; a name that does not is in the code page of the
+ *  Windows that wrote it, `メモ.md` in Shift-JIS on a Japanese one and `Café.md` in
+ *  437 on an American one, so each arrives as itself rather than as broken letters
+ *  that no link to it matches. */
+function zipName(bytes: Uint8Array | readonly unknown[]): string {
+  const said = Uint8Array.from(bytes as ArrayLike<number>)
+  for (const page of ['utf-8', oemCodePage()]) {
+    if (page === null) continue
+    try {
+      return new TextDecoder(page, { fatal: true }).decode(said)
+    } catch {
+      // Not that code page; the next one is tried.
+    }
+  }
+  return Array.from(said, (one) =>
+    one < 0x80 ? String.fromCharCode(one) : (CP437[one - 0x80] ?? ''),
+  ).join('')
 }
 
 /** A file whose bytes are only decompressed when a reader asks for them, kept
@@ -140,12 +215,24 @@ function lazily(path: string, read: () => Promise<Uint8Array>): Source {
   }
 }
 
-/** The two bytes every zip starts with, so a `.enex` somebody renamed is still
- *  read as what it is and a zip with no extension is still opened. */
+/** Files that are zips inside and documents to whoever opens them: Office's,
+ *  OpenDocument's, Apple's iWork and an EPUB. A vault keeps them as attachments and
+ *  pandoc reads them whole, so their parts are never what was meant. */
+const ZIPPED_DOCUMENT =
+  /\.(docx|docm|dotx|xlsx|xlsm|pptx|pptm|odt|ods|odp|odg|epub|pages|numbers|key|vsdx)$/i
+
+/** The four bytes every zip starts with, so a `.enex` somebody renamed is still
+ *  read as what it is and a zip with no extension is still opened. All four, not
+ *  the `PK` in front: a note that opens with "PKI is" starts with those two. A
+ *  document that is a zip underneath is not one, because its name says what it is. */
 function isZip(path: string, bytes: Uint8Array): boolean {
-  const named = path.toLowerCase().endsWith('.zip')
-  const stamped = bytes[0] === 0x50 && bytes[1] === 0x4b
-  return stamped || (named && bytes.length === 0)
+  if (!path.toLowerCase().endsWith('.zip') && ZIPPED_DOCUMENT.test(path)) return false
+  // A file's own first entry, or the end of an archive with nothing in it.
+  return (
+    bytes[0] === 0x50 &&
+    bytes[1] === 0x4b &&
+    ((bytes[2] === 0x03 && bytes[3] === 0x04) || (bytes[2] === 0x05 && bytes[3] === 0x06))
+  )
 }
 
 /** Windows separators as slashes, no leading one, and the `./` a few exporters

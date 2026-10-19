@@ -15,6 +15,9 @@ export const LAYOUT_MARKS: Record<Layout, string> = {
   form: 'M2 2.5h9M2 4.5h9v1.8H2zM2 8h9M8 10.2h3v1.3H8z',
 }
 
+/** Two sliders: how a view is shown, Todoist's Display. */
+export const DISPLAY_MARK = 'M1.5 4h10M1.5 9h10M4.5 2.5v3M8.5 7.5v3'
+
 /** A funnel: what is let through. */
 export const FILTER_MARK = 'M1.5 2.5h10l-4 4.6v4l-2-1.1V7.1z'
 
@@ -22,7 +25,7 @@ export const FILTER_MARK = 'M1.5 2.5h10l-4 4.6v4l-2-1.1V7.1z'
 export const GROUP_MARK = 'M1.5 2.2h10M1.5 4.6h6.5M1.5 8.3h10M1.5 10.7h6.5'
 
 /** The rows of the panel: Inbox a tray, Today a sun-less clock face, Upcoming a
- *  calendar, Logbook a tick, a view the grid of a base, a project a page with a box,
+ *  calendar, Completed a tick, a view the grid of a base, a project a page with a box,
  *  a label the hash. */
 export const INBOX_MARK = 'M1.5 7.5h3l1 1.7h2l1-1.7h3M1.5 7.5l1.6-5h6.8l1.6 5v3h-10z'
 export const TODAY_MARK = 'M6.5 1.5a5 5 0 1 0 0 10 5 5 0 0 0 0-10zM6.5 3.8v2.7l1.8 1.2'

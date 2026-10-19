@@ -46,13 +46,14 @@ export function webHref(href: string): string | null {
   return isWebAddress(said) ? said : null
 }
 
-/** Whether this build has anywhere to put a page. A phone hands the address to the
- *  system browser instead, which is the answer rather than a gap - that browser has
- *  their logins, their extensions and their ad blocking, and Tauri has no child
- *  webviews there anyway - and in front of a pair of glasses there is no page at all.
+/** Whether this build has anywhere to put a page. A phone and a tablet hand the
+ *  address to the system browser instead, which is the answer rather than a gap -
+ *  that browser has their logins, their extensions and their ad blocking, and Tauri
+ *  has no child webviews there anyway - and in front of a pair of glasses there is no
+ *  page at all.
  *  A web note leaves everywhere but the desktop app; see docs/web-tabs.md. */
 function holdsPages(): boolean {
-  return !isPlugin() && viewport.device !== 'phone'
+  return !isPlugin() && !viewport.touch
 }
 
 /** Where one press on one link goes: the whole of the decision, and pure, so which
@@ -75,8 +76,19 @@ export function placeFor(href: string, ask: TabAsk, pages = holdsPages()): LinkP
   return ask === 'behind' ? 'behind' : 'here'
 }
 
+/** The settings pane a link opens: `nib://settings/import`, the welcome note's last
+ *  line (welcome.ts), and no other. Not in the plugin, which has no Import. */
+export function settingsPane(href: string): 'import' | null {
+  return !__EVEN_PLUGIN__ && /^nib:\/\/settings\/import\/?$/i.test(href.trim()) ? 'import' : null
+}
+
 /** A link the reader pressed, followed. What every surface hands its own event to. */
 export function followHref(href: string, press: LinkPress): void {
+  const pane = settingsPane(href)
+  if (pane) {
+    void import('./settings.svelte').then(({ settings }) => settings.show(pane))
+    return
+  }
   const ask = tabAsk(press, true)
   // A chat's message (docs/chats.md 4.13).
   if (/^nib:\/\/chat\//i.test(href)) {

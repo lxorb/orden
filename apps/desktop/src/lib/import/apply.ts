@@ -8,7 +8,7 @@
  *
  *  Every path is judged here before any of them is written, by the same
  *  `insideOnly` a `nib://` link's path goes through. Each format reader already
- *  puts every part of a name through `safeName`, so this catches nothing an
+ *  puts every part of a name through `safeName` or `keptName`, so this catches nothing an
  *  honest reader does: what it catches is a new reader that forwards a zip
  *  entry's own name, which is a path somebody else wrote and which nothing
  *  further along would refuse - `write_note` and `write_bytes` take whatever path
@@ -31,13 +31,19 @@ import { freePath } from '@nib/markdown/paths'
 import { insideOnly } from '../automation/inside'
 import { key } from '../i18n.svelte'
 import { log } from '../log'
-import { folderOf, relativePath } from '../space-paths'
-import { joinPath } from '../tauri'
+import { invoke, joinPath } from '../tauri'
 import { toBase64 } from '../bytes'
 import { workspace } from '../workspace.svelte'
 import { writeBytes, writeFile } from '../workspace/write-file'
 
+import { nameKey } from './names'
 import type { ImportPlan, Planned } from './plan'
+import { canvasFollowed, isCanvas, linksFollowed } from './rewrite'
+
+/** What the writing needs of a plan: its files. What was lost has been said by then,
+ *  and the format is the reader's business; an import that is not read out of an
+ *  export, Zen's tabs, has neither. */
+type Written = Pick<ImportPlan, 'files'>
 
 /** Where an import lands: a space, and a folder inside it. */
 export interface ImportTarget {
@@ -61,12 +67,11 @@ export interface Writing {
 }
 
 export async function applyImport(
-  plan: ImportPlan,
+  plan: Written,
   target: ImportTarget,
   options: Writing = {},
 ): Promise<Landed> {
-  const stamped = restamped(plan, takenIn(target), target.folder)
-  const files = judged(stamped.files)
+  const { files, stepped } = await restampedOnDisk(plan, target)
   const paths: string[] = []
   let done = 0
 
@@ -77,7 +82,7 @@ export async function applyImport(
       if (file.kind === 'note') await writeFile(path, file.text)
       else await writeBytes(path, toBase64(file.bytes))
 
-      paths.push(path)
+      paths.push(...(file.kind === 'file' && file.pages ? await asPages(path) : [path]))
       done += 1
       options.onWritten?.(done, files.length)
     }
@@ -89,7 +94,15 @@ export async function applyImport(
     if (paths.length) await landed(paths)
   }
 
-  return { paths, stepped: stamped.stepped }
+  return { paths, stepped }
+}
+
+/** A paper that has landed, as the page note it becomes: what the import wrote, and
+ *  what undoing it takes away, the paper the note holds with it. The paper itself
+ *  where it could not be made one, which is a PDF in the space like any other. See
+ *  pages/from-pdf.ts. */
+async function asPages(path: string): Promise<string[]> {
+  return [(await workspace.pageNoteForPdf(path)) ?? path]
 }
 
 /** What an import that wrote something owes the rest of the app. */
@@ -123,8 +136,41 @@ function judged(files: readonly Planned[]): Planned[] {
 
 const ESCAPING = key('That import would have landed outside the space, so nothing was written.')
 
-/** Every path the space already holds, lowercased, so a name that is taken can be
- *  recognised however it is spelled. */
+/** The plan restamped, its paths judged, and nothing landing on a file that is
+ *  already there. The file list knows only the open space, and only what a tab can
+ *  hold, so a picture, a file in `.obsidian/` or any file of another space is not
+ *  in it: the disk is asked about every path the import would write as well, and a
+ *  path it holds is taken like any other, until no path the import would write is
+ *  one. A disk that cannot be asked, a page in a browser, has the list's word. */
+async function restampedOnDisk(
+  plan: Written,
+  target: ImportTarget,
+): Promise<{ files: Planned[]; stepped: number }> {
+  const taken = takenIn(target)
+  const there = new Map<string, boolean>()
+
+  for (;;) {
+    const stamped = restamped(plan, taken, target.folder)
+    const files = judged(stamped.files)
+
+    const asking = [...new Set(files.map((file) => file.path))].filter((path) => !there.has(path))
+    const answers = await Promise.all(asking.map((path) => onDisk(joinPath(target.root, path))))
+    asking.forEach((path, at) => there.set(path, answers[at] === true))
+
+    const held = files.filter((file) => there.get(file.path))
+    if (!held.length) return { files, stepped: stamped.stepped }
+    for (const file of held) taken.add(nameKey(file.path))
+  }
+}
+
+/** Whether a file is at this path: `file_stamp` answers nothing where there is none. */
+async function onDisk(path: string): Promise<boolean> {
+  const stamp = await invoke<unknown>('file_stamp', { path }).catch(() => null)
+  return stamp !== null && stamp !== undefined
+}
+
+/** Every path the space already holds, as the one name it is (see `nameKey`), so a
+ *  name that is taken can be recognised however it is spelled. */
 function takenIn(target: ImportTarget): Set<string> {
   const taken = new Set<string>()
   const root = target.root
@@ -132,11 +178,12 @@ function takenIn(target: ImportTarget): Set<string> {
   for (const entry of workspace.files) {
     if (!entry.path.startsWith(root)) continue
     taken.add(
-      entry.path
-        .slice(root.length)
-        .replace(/^[\\/]+/, '')
-        .replace(/\\/g, '/')
-        .toLowerCase(),
+      nameKey(
+        entry.path
+          .slice(root.length)
+          .replace(/^[\\/]+/, '')
+          .replace(/\\/g, '/'),
+      ),
     )
   }
 
@@ -147,70 +194,37 @@ function takenIn(target: ImportTarget): Set<string> {
  *  that is taken, and every link inside the import pointing at where its target
  *  actually went. */
 export function restamped(
-  plan: ImportPlan,
+  plan: Written,
   taken: ReadonlySet<string>,
   folder: string,
 ): { files: Planned[]; stepped: number } {
   const under = folder.replace(/^\/+|\/+$/g, '')
-  // Lowercased on the way in, because two names that differ only in case are one
-  // name on Windows and on a Mac.
-  const held = new Set([...taken].map((one) => one.toLowerCase()))
+  // Keyed on the way in, because two names that differ only in case are one name on
+  // Windows and on a Mac, and two that differ only in how an accent is composed are
+  // one name on a Mac.
+  const held = new Set([...taken].map(nameKey))
   const moved = new Map<string, string>()
   const placed: { file: Planned; was: string; now: string }[] = []
 
   for (const file of plan.files) {
     const wanted = under ? `${under}/${file.path}` : file.path
-    const free = freePath(wanted, (candidate) => held.has(candidate.toLowerCase()))
-    held.add(free.toLowerCase())
+    const free = freePath(wanted, (candidate) => held.has(nameKey(candidate)))
+    held.add(nameKey(free))
 
     if (free !== wanted) moved.set(file.path, under ? free.slice(under.length + 1) : free)
     placed.push({ file, was: file.path, now: free })
   }
 
+  const paths = plan.files.map((file) => file.path)
   const files = placed.map(({ file, was, now }) => {
-    if (file.kind === 'file') return { ...file, path: now }
-    const text = moved.size ? followed(file.text, was, moved) : file.text
+    if (file.kind === 'file') {
+      // A canvas's cards follow the same way, since they name the import's files too.
+      const bytes = moved.size && isCanvas(was) ? canvasFollowed(file.bytes, moved) : file.bytes
+      return { ...file, path: now, bytes }
+    }
+    const text = moved.size ? linksFollowed(file.text, was, moved, paths) : file.text
     return { ...file, path: now, text }
   })
 
   return { files, stepped: moved.size }
-}
-
-/** A note's links, pointing at where the import's own files ended up.
- *
- *  Only what moved is touched, and it is touched in the two spellings the import
- *  wrote: a note by its name in a wikilink, and a file by the path from this
- *  note's own folder. */
-function followed(text: string, was: string, moved: ReadonlyMap<string, string>): string {
-  let said = text
-
-  for (const [from, to] of moved) {
-    if (isNote(from)) {
-      const before = nameOf(from)
-      const after = nameOf(to)
-      if (before === after) continue
-
-      said = said.replaceAll(`[[${before}]]`, `[[${after}]]`)
-      said = said.replaceAll(`[[${before}|`, `[[${after}|`)
-      said = said.replaceAll(`[[${before}#`, `[[${after}#`)
-      continue
-    }
-
-    const here = folderOf(was)
-    const before = relativePath(here, from).replace(/ /g, '%20')
-    const after = relativePath(here, to).replace(/ /g, '%20')
-    if (before === after) continue
-
-    said = said.replaceAll(`](${before})`, `](${after})`)
-  }
-
-  return said
-}
-
-function isNote(path: string): boolean {
-  return /\.(md|markdown)$/i.test(path)
-}
-
-function nameOf(path: string): string {
-  return (path.split('/').pop() ?? path).replace(/\.(md|markdown)$/i, '')
 }

@@ -14,8 +14,9 @@ import SavePlace from './SavePlace.svelte'
 let open: { tab: string; close: () => void } | null = null
 
 /** Asks where the tab goes and under what name: the tab named, else the one in
- *  front. A tab that has a file already has nothing to ask. */
-export function askPlace(tabId: string | null): void {
+ *  front. A tab that has a file already has nothing to ask. `saved` is called once the
+ *  file is written, and never if the layer is let go of. */
+export function askPlace(tabId: string | null, saved?: () => void): void {
   const tab = workspace.tabs.find((one) => one.id === (tabId ?? workspace.activeTabId))
   if (!tab || !isUnsaved(tab.note) || open?.tab === tab.id) return
   open?.close()
@@ -31,7 +32,7 @@ export function askPlace(tabId: string | null): void {
 
   shown = mount(SavePlace, {
     target: document.body,
-    props: { tab, anchor: anchorOf(tab.id), onclose: close },
+    props: { tab, anchor: anchorOf(tab.id), onclose: close, onsaved: saved },
   })
   open = { tab: tab.id, close }
 }

@@ -173,6 +173,49 @@ describe('Silent mode on an account', () => {
   })
 })
 
+describe('the tasks with no start date in Today, on an account', () => {
+  test('is on or off', async () => {
+    expect((await patch({ undatedInToday: true })).json.settings.undatedInToday).toBe(true)
+    expect((await patch({ undatedInToday: false })).json.settings.undatedInToday).toBe(false)
+  })
+
+  test('is nothing else', async () => {
+    const refused = await patch({ undatedInToday: 'yes' })
+    expect(refused.status).toBe(400)
+    expect(refused.json.error).toBe('undatedInToday must be true or false')
+  })
+})
+
+describe('the spaces an account put away', () => {
+  test('are a list of space ids', async () => {
+    const kept = await patch({ archivedSpaces: ['a1B2-c3', 'x_9'] })
+    expect(kept.json.settings.archivedSpaces).toEqual(['a1B2-c3', 'x_9'])
+    expect((await patch({ archivedSpaces: [] })).json.settings.archivedSpaces).toEqual([])
+  })
+
+  test('and nothing else', async () => {
+    expect((await patch({ archivedSpaces: 'a1' })).status).toBe(400)
+    expect((await patch({ archivedSpaces: ['a/b'] })).status).toBe(400)
+    expect((await patch({ archivedSpaces: ['a1', 'a1'] })).status).toBe(400)
+    expect(
+      (await patch({ archivedSpaces: Array.from({ length: 101 }, (_, at) => `s${at}`) })).status,
+    ).toBe(400)
+  })
+})
+
+describe('turning a canvas with two fingers, on an account (#351)', () => {
+  test('is on or off', async () => {
+    expect((await patch({ canvasTurns: true })).json.settings.canvasTurns).toBe(true)
+    expect((await patch({ canvasTurns: false })).json.settings.canvasTurns).toBe(false)
+  })
+
+  test('is nothing else', async () => {
+    const refused = await patch({ canvasTurns: 'yes' })
+    expect(refused.status).toBe(400)
+    expect(refused.json.error).toBe('canvasTurns must be true or false')
+  })
+})
+
 describe('modal editing on an account', () => {
   test('is on or off', async () => {
     expect((await patch({ vim: true })).json.settings.vim).toBe(true)
@@ -410,6 +453,37 @@ describe('a name that is not a setting', () => {
     })
 
     expect((await call(env, '/v1/settings', { token })).json.settings).toEqual({ ligatures: true })
+  })
+})
+
+describe('the kinds an account turned off', () => {
+  test('are kept as a list of words', async () => {
+    const set = await patch({ hiddenKinds: ['canvas', 'online'] })
+    expect(set.status).toBe(200)
+    expect((await call(env, '/v1/settings', { token })).json.settings.hiddenKinds).toEqual([
+      'canvas',
+      'online',
+    ])
+  })
+
+  test('take null, which is every kind offered', async () => {
+    expect((await patch({ hiddenKinds: null })).status).toBe(200)
+    expect((await call(env, '/v1/settings', { token })).json.settings.hiddenKinds).toBeNull()
+  })
+
+  test('keep a kind this version has never heard of', async () => {
+    expect((await patch({ hiddenKinds: ['something-new'] })).status).toBe(200)
+  })
+
+  test('refuse what is not a list of kinds', async () => {
+    expect((await patch({ hiddenKinds: 'canvas' })).status).toBe(400)
+    expect((await patch({ hiddenKinds: ['Canvas'] })).status).toBe(400)
+    expect((await patch({ hiddenKinds: ['canvas', 'canvas'] })).status).toBe(400)
+    expect((await patch({ hiddenKinds: [1] })).status).toBe(400)
+    // Thirty-three different words, one more than an account carries.
+    const letter = (at: number) => String.fromCharCode(97 + at)
+    const many = Array.from({ length: 33 }, (_, at) => `k${letter(at % 26)}${letter(at >> 4)}`)
+    expect((await patch({ hiddenKinds: many })).status).toBe(400)
   })
 })
 

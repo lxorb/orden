@@ -120,7 +120,11 @@ describe('the note, where the list is the floor', () => {
    *  across to show it: the list the phone was opened on was covered by the note,
    *  with the sidebar button still saying the list was out. */
   test('is inert while it is slid off to uncover the list', () => {
-    expect(note).toContain('inert={viewport.narrow && viewport.drawer && !!workspace.panel}')
+    // Not while the document is all there is (full screen, or a guest's one file),
+    // where no list is drawn for it to uncover; see alone.svelte.ts.
+    expect(note).toContain(
+      'inert={viewport.narrow && viewport.drawer && !!workspace.panel && !bare}',
+    )
   })
 
   test('on the condition that slides it', () => {

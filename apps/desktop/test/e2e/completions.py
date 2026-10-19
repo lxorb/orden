@@ -155,7 +155,17 @@ def rows_holding(page: Page, holds: str, patience: float = 15) -> list[str]:
 
         if not found and not again and time.monotonic() > until - patience + 4:
             say("[asked again] the popup came back empty; asking the space once more")
-            page.keyboard.press("Control+Space")
+            # The last character taken back and typed again, which is a reader typing
+            # one more letter without changing what was typed. Not Ctrl+Space, the
+            # library's own key for the popup: that is the space switcher now (Emil,
+            # 2026-10-04; completing.ts in the editor), and it took the keyboard away
+            # from the note, so every key after it went into the switcher.
+            last = page.evaluate(
+                "() => { const s = window.nib.state, at = s.selection.main.head;"
+                " return s.doc.sliceString(at - 1, at) }"
+            )
+            page.keyboard.press("Backspace")
+            page.keyboard.type(last)
             again = True
 
         page.wait_for_timeout(200)
@@ -247,7 +257,7 @@ def drive_headings(page: Page, names: list[str]) -> None:
     # than counted, because a count cannot tell a missing note from an extra one -
     # the list used to lose a whole note's headings on about one launch in twenty
     # and still have four rows in it, which is how long that went unseen. A fifth
-    # row for "Welcome to nibeditor" belongs here: the browser seeds every new space with
+    # row for "Welcome to Orden" belongs here: the browser seeds every new space with
     # a note of that name, and it is in this space like any other.
     for note, heading in headings_of(names):
         if not any(one.startswith(heading) and one.endswith(note) for one in every):

@@ -296,7 +296,7 @@
 <style>
   /* The settings pane's own shapes. A section in its own component does not
      inherit the panel's styles - those are scoped to it - so the ones this pane
-     uses are here with the panel's values, the way McpSetup and RecentlyDeleted
+     uses are here with the panel's values, the way AccountSteps and RecentlyDeleted
      carry theirs. See SettingsPanel.svelte. */
   h3 {
     margin: var(--space-3) 0 calc(-1 * var(--space-2));
@@ -314,7 +314,6 @@
 
   .setting .name {
     flex: 1;
-    min-width: 0;
   }
 
   /* A value at the right of its row: what this row says rather than what it

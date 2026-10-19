@@ -237,8 +237,8 @@ def tab(name: str) -> str:
 
 def tooltips(page: Page) -> None:
     say("the tooltips")
-    keyed(page, "header .toggle", "Hide sidebar", "Ctrl+Shift+L")
-    keyed(page, ".tabs .new", "New", "Ctrl+T")
+    keyed(page, "header .toggle", "Hide left sidebar", "Ctrl+Shift+L")
+    keyed(page, ".tabs .new", "New tab", "Ctrl+T")
     keyed(page, ".tab.active .shut", "Close", "Ctrl+W")
     keyed(page, '[data-region="panels"] [role="tab"]', "Files", "Ctrl+Shift+E")
     keyed(page, '.foot button[aria-label="Settings"]', "Settings", "Ctrl+,")
@@ -247,10 +247,10 @@ def tooltips(page: Page) -> None:
     # the brackets with it.
     page.evaluate("() => window.nibApp.shortcuts.set('app.sidebar', 'Mod-Alt-j')")
     page.wait_for_timeout(60)
-    keyed(page, "header .toggle", "Hide sidebar", "Ctrl+Alt+J")
+    keyed(page, "header .toggle", "Hide left sidebar", "Ctrl+Alt+J")
     page.evaluate("() => window.nibApp.shortcuts.set('app.sidebar', null)")
     page.wait_for_timeout(60)
-    if title(page, "header .toggle") != "Hide sidebar":
+    if title(page, "header .toggle") != "Hide left sidebar":
         wrong("a key taken away still shows in the sidebar toggle's tooltip")
     page.evaluate("() => window.nibApp.shortcuts.reset('app.sidebar')")
 
@@ -586,9 +586,6 @@ def main() -> int:
         with sync_playwright() as play:
             browser = play.chromium.launch(channel="chrome")
             context = browser.new_context(viewport={"width": 1280, "height": 820})
-            # A reader who has been here before, as every drive's browser is; see
-            # ANSWERED in harness.py.
-            context.add_init_script("try { localStorage.setItem('nib:first-visit', 'answered') } catch {}")
             page = context.new_page()
             page.on("pageerror", lambda error: wrong(f"page error: {error}"))
             page.on("console", lambda message: say(f"console {message.type}: {message.text[:200]}") if message.type in ("error", "warning") else None)

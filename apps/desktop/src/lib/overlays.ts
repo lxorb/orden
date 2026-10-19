@@ -10,12 +10,32 @@
  *  file list clears the selection, Escape in the editor steps off a picture, and
  *  Escape leaves full screen, and all three still get their turn.
  *
+ *  **A popup also closes when it is pressed past.** One that says what is its own -
+ *  itself, and the button that opened it - is closed by a press anywhere else, and by
+ *  the window losing the focus, which is also how a press into a web page is heard:
+ *  the page is a native webview whose presses never reach the app's HTML, and all it
+ *  tells the app is that the keyboard went (#382). The press that opened it does not
+ *  close it, and a press in a popup opened over it - a submenu, a list - closes
+ *  neither. A sheet says nothing of the kind, and is closed by its own scrim.
+ *  The press that closed one does not open it again; see `clicked`.
+ *
  *  **Only what is drawn over the note belongs here**, because the stack also decides
  *  whether a web page, a native webview, must hide. Full screen wants Escape and is
  *  a mode, so it is in `onKeydown` in App.svelte; see overlays.test.ts. */
 
 interface Open {
   close: () => void
+  /** What a press may land on without closing it, for a popup; none for a sheet. */
+  holds: Holds | null
+}
+
+/** What a popup holds: whatever a press may land in and leave it open. An element, as
+ *  far as being inside one goes; the ones not drawn yet are nothing. */
+type Holds = () => readonly (Pick<Element, 'contains'> | null | undefined)[]
+
+/** A press, as much of one as `pressed` reads. */
+interface Pointed {
+  target: EventTarget | null
 }
 
 /** As much of an Escape as this needs: enough to say the press is spent. */
@@ -26,6 +46,9 @@ interface Press {
 
 class Overlays {
   private readonly stack: Open[] = []
+
+  /** What the popups the last press shut held, until its click is read. */
+  private shutBy: Holds[] = []
 
   /** Who wants to hear that the stack changed.
    *
@@ -40,9 +63,11 @@ class Overlays {
   private readonly watchers = new Set<() => void>()
 
   /** Puts an overlay on top, and answers how to take it off again - so the
-   *  effect that opened it can hand that straight back to Svelte. */
-  show(close: () => void): () => void {
-    const entry: Open = { close }
+   *  effect that opened it can hand that straight back to Svelte. `holds` makes it a
+   *  popup: what a press may land on and leave it open - the popup, and whatever
+   *  opened it, so pressing that again is that button's own to answer. */
+  show(close: () => void, holds?: Holds): () => void {
+    const entry: Open = { close, holds: holds ?? null }
     this.stack.push(entry)
     this.said()
 
@@ -68,6 +93,53 @@ class Overlays {
     return this.stack.length
   }
 
+  /** A press somewhere in the window: every popup on top that it is past closes, down
+   *  to the first that holds it or is not a popup. Called from the window on the way
+   *  down, before anything under the press can decide otherwise, and so before anything
+   *  under it can open a popup either: the press that opens one - on its way down, on
+   *  its way up, or as rows asked for first come back (issue #244) - has always been read
+   *  by then, and never closes it. See App.svelte.
+   *
+   *  Read by order, not by the press's own time: a press carries the time it was taken,
+   *  and one that waited behind a long task carries a time from before a popup that
+   *  opened in the meantime, which its time would read as the press that opened it. */
+  pressed(press: Pointed) {
+    this.shutBy = []
+    const target = nodeOf(press)
+
+    for (let at = this.stack.length - 1; at >= 0; at--) {
+      const one = this.stack[at]
+      if (!one?.holds) return
+      if (target && one.holds().some((held) => holds(held, target))) return
+      this.shutBy.push(one.holds)
+      this.shut(one)
+    }
+  }
+
+  /** A tap's click lands where the finger was once a popup's catch has gone: on the
+   *  button that opened it, it is spent, or it opens the popup again (#411). */
+  clicked(click: Pointed & Press) {
+    const shut = this.shutBy
+    this.shutBy = []
+    const target = nodeOf(click)
+    if (!target || !shut.some((holds) => holds().some((held) => held?.contains(target)))) return
+
+    click.preventDefault()
+    click.stopImmediatePropagation()
+  }
+
+  /** The window lost the focus: to another window, or to a web page, which is the one
+   *  word a press into a page sends. Every popup on top closes. */
+  away() {
+    for (let top = this.stack.at(-1); top?.holds; top = this.stack.at(-1)) this.shut(top)
+  }
+
+  private shut(one: Open) {
+    this.stack.splice(this.stack.indexOf(one), 1)
+    this.said()
+    one.close()
+  }
+
   /** Closes the one on top. Answers whether there was one, so Escape can go on
    *  to mean whatever else it means when there was not.
    *
@@ -91,6 +163,32 @@ class Overlays {
     top.close()
     return true
   }
+}
+
+/** Whether a press on `target` is in what `held` draws. Not the bare box round a popup and
+ *  its button, where nothing is drawn: the canvas's pens and their panel sit in a strip
+ *  the width of the pane, and a press beside the panel landed in it and left it open
+ *  (#382). */
+function holds(held: Pick<Element, 'contains'> | null | undefined, target: Node): boolean {
+  if (!held?.contains(target)) return false
+  return held !== target || typeof getComputedStyle !== 'function' || !bare(target)
+}
+
+/** An element that draws nothing of its own: no background and no border. */
+function bare(node: Node): boolean {
+  if (typeof Element === 'undefined' || !(node instanceof Element)) return false
+  const style = getComputedStyle(node)
+  const none = (value: string) => value === 'none' || value === ''
+  return (
+    style.backgroundColor === 'rgba(0, 0, 0, 0)' &&
+    none(style.backgroundImage) &&
+    none(style.borderTopStyle)
+  )
+}
+
+/** What a press landed on, where it is a node at all. */
+function nodeOf(press: Pointed): Node | null {
+  return typeof Node !== 'undefined' && press.target instanceof Node ? press.target : null
 }
 
 export const overlays = new Overlays()

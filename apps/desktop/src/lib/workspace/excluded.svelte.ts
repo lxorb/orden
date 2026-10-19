@@ -6,7 +6,7 @@
  *  still there to open and still syncs; it simply stops answering questions asked
  *  of the space.
  *
- *  Paths, not patterns. The way in is a row's own menu, and a row always names a
+ *  Paths, not patterns. The way in was a row's own menu, and a row always names a
  *  note or a folder; a folder stands for everything under it, which is the only
  *  pattern a file tree needs. A text field of globs would be a second language to
  *  learn beside the search's own, in a settings pane nobody asked for.

@@ -3,8 +3,7 @@
  *  The page's own script is kept small on purpose. It runs inside somebody else's
  *  page, so all it does is write down the document as the reader sees it - scripted
  *  content included, scripts and styles left out, every field's value taken off - and
- *  the window reads that with the same extractor the clipper extension runs on a live
- *  page; see `readSnapshot` in `article.ts`. The script is `READER` in
+ *  the window reads that with the same extractor a live page goes through; see `readSnapshot` in `article.ts`. The script is `READER` in
  *  `apps/desktop/src-tauri/src/web_tabs.rs`, which writes the two marks below.
  *
  *  Its own module, and a tiny one, because whoever receives a page's HTML has to

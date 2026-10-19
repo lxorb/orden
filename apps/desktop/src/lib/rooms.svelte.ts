@@ -20,7 +20,7 @@ import type { PlaneSurface } from './canvas/shared'
 import { busy } from './busy.svelte'
 import { sha256 } from './bytes'
 import { without } from './records'
-import { roomKind } from './rooms/kind'
+import { roomKindOf } from './rooms/kind'
 import type { Seen } from './rooms/peers'
 import type { PlaneRoom } from './rooms/plane'
 import type { Room } from './rooms/room'
@@ -167,7 +167,7 @@ class Rooms {
       const still = wanted.get(key)
       if (
         still?.noteId === joined.noteId &&
-        roomKind(still.note.path) === joined.kind &&
+        roomKindOf(still.note) === joined.kind &&
         this.ready(still) &&
         !this.answered(joined, still)
       ) {
@@ -281,7 +281,7 @@ class Rooms {
    *  wrong thing into it. The file sync carries it in the meantime, exactly as it
    *  does for a note nobody else has open. */
   private ready(open: Open): boolean {
-    return roomKind(open.note.path) === 'words' || this.planes.has(open.key)
+    return roomKindOf(open.note) === 'words' || this.planes.has(open.key)
   }
 
   /** Whether a room that was waiting on a reader may be joined again.
@@ -386,7 +386,7 @@ class Rooms {
 
     // Which shape of room this file wants is its name, and nothing about the tab; see
     // rooms/kind.ts, and `ready` above, which is what promises the plane is there.
-    const kind = roomKind(open.note.path)
+    const kind = roomKindOf(open.note)
     const surface = this.planes.get(key)
     if (kind === 'plane' && surface) {
       this.held.set(key, {

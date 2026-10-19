@@ -10,21 +10,126 @@ export const bn: Dictionary = {
   'Do you write code?': 'আপনি কি কোড লেখেন?',
   Yes: 'হ্যাঁ',
   No: 'না',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'অন্য অ্যাপ থেকে: {key}',
+  'From other apps: set in your system settings': 'অন্য অ্যাপ থেকে: সিস্টেম সেটিংসে ঠিক করুন',
+  'From other apps: bind {command} in your system settings':
+    'অন্য অ্যাপ থেকে: সিস্টেম সেটিংসে {command} যুক্ত করুন',
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'প্রয়োজনীয়',
+  'Add to Essentials': 'প্রয়োজনীয়-তে যোগ করুন',
+  'Remove from Essentials': 'প্রয়োজনীয় থেকে সরান',
+  'Add block to Essentials': 'ব্লকটি প্রয়োজনীয়-তে যোগ করুন',
+  'Add blocks to Essentials': 'ব্লকগুলো প্রয়োজনীয়-তে যোগ করুন',
+  'Add view to Essentials': 'ভিউটি প্রয়োজনীয়-তে যোগ করুন',
+  'Open tabs and Essentials': 'ট্যাব ও প্রয়োজনীয় খোলা',
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor এখন Orden',
+  'Notes from nibeditor.com': 'nibeditor.com থেকে নোট',
+  'Nothing there': 'সেখানে কিছু নেই',
+  // AI: the three permission modes
+  'Full permissions': 'সম্পূর্ণ অনুমতি',
+  'Auto mode': 'স্বয়ংক্রিয় মোড',
+  'Full permissions: nothing is asked first': 'সম্পূর্ণ অনুমতি: আগে কিছুই জিজ্ঞাসা করা হয় না',
+  // Import: Zen's tabs
+  'Import from Zen': 'Zen থেকে ইমপোর্ট',
+  'Containers stay in Zen': 'কন্টেইনারগুলো Zen-এ থেকে যায়',
+  'Zen’s tabs could not be read.': 'Zen-এর ট্যাবগুলো পড়া গেল না।',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'কন্টেইনারগুলো Firefox-এ থেকে যায়',
+  'Nothing could be read out of {browser}.': '{browser} থেকে কিছুই পড়া যায়নি।',
+  'Saved groups': 'সংরক্ষিত গ্রুপ',
+  'Tab group': 'ট্যাব গ্রুপ',
+  'Bookmarks toolbar': 'বুকমার্ক টুলবার',
+  'Bookmarks menu': 'বুকমার্ক মেনু',
+  'Other bookmarks': 'অন্যান্য বুকমার্ক',
+  'Mobile bookmarks': 'মোবাইল বুকমার্ক',
+  'Bookmarks bar': 'বুকমার্ক বার',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} তার খোলা ট্যাবগুলো লক করে রাখে, তাই শুধু বুকমার্কগুলো এসেছে।',
+  '{count} pages not on the web stay behind': {
+    one: 'ওয়েবে নেই এমন {count}টি পাতা থেকে গেছে',
+    other: 'ওয়েবে নেই এমন {count}টি পাতা থেকে গেছে',
+  },
+  'Reading List': 'রিডিং লিস্ট',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS Safari-র ট্যাব আর বুকমার্ক ফুল ডিস্ক অ্যাক্সেসের পেছনে রাখে। সেখানে Orden চালু করুন, তারপর আবার চেষ্টা করুন।',
+  // Settings: note types
+  'Page note': 'পাতার নোট',
+  'Web note': 'ওয়েব নোট',
+  'Private tab': 'ব্যক্তিগত ট্যাব',
+  'Note types': 'নোটের ধরন',
+  // Tasks: Upcoming's weeks
+  'Previous week': 'আগের সপ্তাহ',
+  // Tasks: projects placed in the panel, and their folder
+  'Add project above': 'উপরে প্রকল্প যোগ করুন',
+  'Add project below': 'নিচে প্রকল্প যোগ করুন',
+  'Projects folder': 'প্রকল্পের ফোল্ডার',
+  // Tasks: a repeating task skipped or done for good
+  Skip: 'এড়িয়ে যান',
+  'Complete forever': 'চিরতরে সম্পন্ন করুন',
+  // Tasks: comments
+  Comments: 'মন্তব্য',
+  // Tasks: filters
+  Filters: 'ফিল্টার',
+  'Add filter': 'ফিল্টার যোগ করুন',
+  'Edit filter': 'ফিল্টার সম্পাদনা',
+  // Tasks: a project's sections
+  'Add section': 'অংশ যোগ করুন',
+  '{name} (copy)': '{name} (অনুলিপি)',
+  'Its tasks are deleted with it.': 'এর কাজগুলোও মুছে যাবে।',
+  // Tasks: keys, selection and the undo toast
+  Completed: 'সম্পন্ন',
+  'Remove date': 'তারিখ সরান',
+  'Next task': 'পরের কাজ',
+  'Previous task': 'আগের কাজ',
+  'Add task at the top': 'উপরে কাজ যোগ করুন',
+  '{count} selected': '{count}টি নির্বাচিত',
+  // Tasks: the Display menu
+  Display: 'প্রদর্শন',
+  'Completed tasks': 'সম্পন্ন কাজ',
+  // Tasks: several lines pasted into quick add
+  'One task': 'একটি কাজ',
+  'One per line': 'প্রতি লাইনে একটি',
+  // Tasks: the projects in the panel
+  Favorites: 'প্রিয়',
+  'Add project': 'প্রকল্প যোগ করুন',
+  'Add sub-project': 'উপ-প্রকল্প যোগ করুন',
+  // Tasks: the task view
+  'Sub-tasks': 'উপ-কাজ',
+  'Add sub-task': 'উপ-কাজ যোগ করুন',
+  'New label': 'নতুন লেবেল',
+  'No deadline': 'শেষ সময়সীমা নেই',
+  // Tasks: the row's menu and the scheduler
+  Reschedule: 'পুনরায় নির্ধারণ',
+  'Later this week': 'এই সপ্তাহে পরে',
+  'This weekend': 'এই সপ্তাহান্তে',
+  'Next weekend': 'পরের সপ্তাহান্তে',
+  'Every week on {day}': 'প্রতি সপ্তাহে {day}',
+  'Every month on day {day}': 'প্রতি মাসের {day} তারিখে',
+  'Every year on {date}': 'প্রতি বছর {date}',
+  'Type a date': 'একটি তারিখ লিখুন',
+  'Previous month': 'আগের মাস',
+  'Next month': 'পরের মাস',
+  'No time': 'সময় নেই',
+  'No repeat': 'পুনরাবৃত্তি নেই',
+  Complete: 'সম্পন্ন করুন',
+  Reopen: 'আবার খুলুন',
+  Schedule: 'নির্ধারণ করুন',
+  'Open in note': 'নোটে খুলুন',
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'অন্য অ্যাপ',
-  'Start fresh': 'নতুন করে শুরু',
   'Import from Obsidian': 'Obsidian থেকে ইমপোর্ট',
   'Import from Notion': 'Notion থেকে ইমপোর্ট',
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'ইঙ্গিত',
   'Silent mode': 'নীরব মোড',
-  'Sign in to keep your notes safe and on every device.':
-    'আপনার নোট নিরাপদ রাখতে এবং প্রতিটি ডিভাইসে পেতে সাইন ইন করুন।',
   'See how your notes connect.': 'দেখুন আপনার নোটগুলো কীভাবে যুক্ত।',
   'Press {key} to find anything, notes and commands alike.':
     'নোট ও কমান্ড, যেকোনো কিছু খুঁজতে {key} চাপুন।',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'লেখার সময় মার্কডাউন দেখান',
+  'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'পয়েন্টার',
   'Pointing hand on buttons': 'বোতামের উপর নির্দেশক হাত',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
@@ -40,11 +145,15 @@ export const bn: Dictionary = {
   '{count} h': '{count} ঘণ্টা',
   Inbox: 'ইনবক্স',
   Date: 'তারিখ',
+  'Start date': 'শুরুর তারিখ',
   Priority: 'অগ্রাধিকার',
   Reminder: 'অনুস্মারক',
   Duration: 'সময়কাল',
   'Smart dates': 'স্মার্ট তারিখ',
   'From any app': 'যেকোনো অ্যাপ থেকে',
+  'Rotate a canvas with two fingers': 'দুই আঙুলে ক্যানভাস ঘোরান',
+  'Turn upright': 'সোজা করুন',
+  'Show tasks without a start date in Today': 'শুরুর তারিখ ছাড়া কাজগুলো আজ-এ দেখান',
   'Every day': 'প্রতিদিন',
   'Every weekday': 'প্রতি কর্মদিবস',
   'Every week': 'প্রতি সপ্তাহ',
@@ -61,6 +170,13 @@ export const bn: Dictionary = {
   Unsaved: 'সংরক্ষিত নয়',
   'Save to': 'এখানে সংরক্ষণ করুন',
   'Reloaded with the web data of {space}': '{space}-এর ওয়েব ডেটা দিয়ে আবার লোড হয়েছে',
+  Separate: 'আলাদা',
+  'Share this note’s web data again?': 'এই নোটের ওয়েব ডেটা আবার শেয়ার করবেন?',
+  'What its pages are signed in to on this computer is deleted.':
+    'এই কম্পিউটারে এর পেজগুলো যেখানে সাইন ইন করা আছে তা মুছে যাবে।',
+  'Share again': 'আবার শেয়ার করুন',
+  'This note keeps its own web data now': 'এই নোট এখন নিজের ওয়েব ডেটা রাখে',
+  'Back on the shared web data': 'আবার শেয়ার করা ওয়েব ডেটায়',
   'Add a page': 'পাতা যোগ করুন',
   'Add a page after this': 'এর পরে পাতা যোগ করুন',
   'Delete this page': 'এই পাতা মুছুন',
@@ -95,7 +211,6 @@ export const bn: Dictionary = {
   'New window': 'নতুন উইন্ডো',
   New: 'নতুন',
   'New space': 'নতুন স্পেস',
-  '{name}: switch space': '{name}: স্পেস বদলান',
   Untitled: 'শিরোনামহীন',
   Space: 'স্পেস',
   'Name the space': 'স্পেসের নাম',
@@ -140,8 +255,6 @@ export const bn: Dictionary = {
   'Loading…': 'লোড হচ্ছে…',
   'Create a space': 'স্পেস তৈরি',
   'Import a folder': 'ফোল্ডার ইমপোর্ট',
-  'Sign in to sync': 'সিংকের জন্য সাইন ইন',
-  'Create account': 'অ্যাকাউন্ট তৈরি',
   'Delete space': 'স্পেস মুছুন',
   'Delete {name}?': '{name} মুছবেন?',
   'Every note in this space is deleted from your computer.':
@@ -159,6 +272,10 @@ export const bn: Dictionary = {
   Unpin: 'পিন সরান',
   Close: 'বন্ধ',
   'Close pinned tab?': 'পিন করা ট্যাব বন্ধ করবেন?',
+  'Save changes to {name}?': '{name}-এর পরিবর্তন সেভ করবেন?',
+  'Save changes to these tabs?': 'এই ট্যাবগুলোর পরিবর্তন সেভ করবেন?',
+  'Unsaved words go to Recently deleted.': 'সেভ না করা লেখা সম্প্রতি মোছা-তে যাবে।',
+  'Don’t save': 'সেভ করবেন না',
   'Close others': 'বাকিগুলো বন্ধ',
   'Close tabs to the right': 'ডানের ট্যাবগুলি বন্ধ করুন',
   'Close tabs to the left': 'বাঁয়ের ট্যাবগুলি বন্ধ করুন',
@@ -195,9 +312,6 @@ export const bn: Dictionary = {
   'Move this note': 'এই নোট সরান',
   'Move up': 'উপরে সরান',
   'Move down': 'নিচে সরান',
-  Bookmark: 'বুকমার্ক',
-  'Remove bookmark': 'বুকমার্ক সরান',
-  'Leave out of search': 'খোঁজ থেকে বাদ',
   'Search here again': 'এখানে আবার খোঁজ',
   'Undo the last file change': 'শেষ ফাইল বদল আনডু',
   'Undo moving {name}': '{name} সরানো আনডু',
@@ -247,7 +361,6 @@ export const bn: Dictionary = {
   'Remove group': 'গ্রুপ সরান',
   'Out of the group': 'গ্রুপের বাইরে',
   Make: 'বানান',
-  'Bookmark this block': 'এই ব্লক বুকমার্ক',
   Panels: 'প্যানেল',
   Outline: 'আউটলাইন',
   'Stay on this note': 'এই নোটে থাকুন',
@@ -511,8 +624,8 @@ export const bn: Dictionary = {
   'Asking OpenAI which models this key can use':
     'এই কী কোন মডেল ব্যবহার করতে পারে, OpenAI-কে জিজ্ঞাসা করা হচ্ছে',
   'Could not reach OpenAI': 'OpenAI-তে পৌঁছানো গেল না',
-  'That key cannot use any of the models nibeditor asks for.':
-    'nibeditor যে মডেলগুলো চায়, এই কী তার কোনোটিই ব্যবহার করতে পারে না।',
+  'That key cannot use any of the models Orden asks for.':
+    'Orden যে মডেলগুলো চায়, এই কী তার কোনোটিই ব্যবহার করতে পারে না।',
   'No reasoning': 'রিজনিং নেই',
   Minimal: 'সামান্য',
   Low: 'কম',
@@ -534,7 +647,7 @@ export const bn: Dictionary = {
   Mode: 'মোড',
   // The window's own edges; see appearance.rs
   Window: 'উইন্ডো',
-  'nibeditor’s own': 'nibeditor-এর নিজের',
+  'Orden’s own': 'Orden-এর নিজের',
   'The system’s': 'সিস্টেমের',
   'Window frame': 'উইন্ডোর ফ্রেম',
   System: 'সিস্টেম',
@@ -597,6 +710,7 @@ export const bn: Dictionary = {
   '{done} of {total}': '{total}-এর {done}',
   'Sync failed': 'সিংক ব্যর্থ',
   '{name} could not be written.': '{name} লেখা গেল না।',
+  '{name} could not be read.': '{name} পড়া গেল না।',
   'Text size': 'টেক্সটের আকার',
   'Line spacing': 'লাইন ফাঁক',
   'Line width': 'লাইনের চওড়া',
@@ -657,8 +771,10 @@ export const bn: Dictionary = {
   '{used} of {limit} used.': '{limit}-এর {used} ব্যবহৃত।',
   'That image does not fit in your storage.': 'এই ছবি আপনার স্টোরেজে জায়গা পাবে না।',
   'out of space': 'জায়গা নেই',
-  'nibeditor {version} is ready to install.': 'nibeditor {version} ইনস্টলের জন্য তৈরি।',
+  'Orden {version} is ready to install.': 'Orden {version} ইনস্টলের জন্য তৈরি।',
+  'Orden {version} is available.': 'Orden {version} পাওয়া যাচ্ছে।',
   'Restart now': 'এখনই রিস্টার্ট',
+  'Move to Applications': 'অ্যাপ্লিকেশনে সরান',
   Later: 'পরে',
   More: 'আরও',
   'Open notes': 'খোলা নোট',
@@ -683,11 +799,9 @@ export const bn: Dictionary = {
   Continue: 'চালিয়ে যান',
   'Send a new code': 'নতুন কোড পাঠান',
   'Code sent to': 'কোড পাঠানো হয়েছে',
-  'You already have notes on this computer.': 'এই কম্পিউটারে আপনার নোট আগেই আছে।',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
-    'রাখলে সেগুলো আপনার অ্যাকাউন্টে যোগ হবে। মুছে ফেললে শুধু অ্যাকাউন্টে যা আছে তাই থাকবে - এটি আর ফেরানো যাবে না।',
-  'Keep them': 'রাখুন',
-  'Erase them': 'মুছে ফেলুন',
+  'This device already has notes.': 'এই ডিভাইসে আগে থেকেই নোট আছে।',
+  Merge: 'একত্র করুন',
+  'Keep separate': 'আলাদা রাখুন',
   'Digit {number}': 'সংখ্যা {number}',
   'Resend in {seconds}s': '{seconds}s পরে আবার পাঠান',
   'Last synced {time}.': 'শেষ সিংক {time}।',
@@ -735,14 +849,14 @@ export const bn: Dictionary = {
   'Reads your notes.': 'আপনার নোট পড়ে।',
   'Reads and writes your notes.': 'আপনার নোট পড়ে ও লেখে।',
   Other: 'অন্য',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'একটি AI সহকারী আপনার নোট পড়তে পারে - আর অনুমতি দিলে বদলাতেও পারে। এটি আপনার nibeditor ইমেইল দিয়ে সাইন ইন করে; পেস্ট করার কিছু নেই।',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'একটি AI সহকারী আপনার নোট পড়তে পারে - আর অনুমতি দিলে বদলাতেও পারে। এটি আপনার Orden ইমেইল দিয়ে সাইন ইন করে; পেস্ট করার কিছু নেই।',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'Claude-এ Settings → Connectors খুলে Add custom connector-এ ক্লিক করুন।',
   'Open Claude’s connectors': 'Claude-এর কানেক্টর খুলুন',
   'Fill in the two fields and click Add.': 'দুটি ঘর পূরণ করে Add-এ ক্লিক করুন।',
-  'Click Connect and sign in with your nibeditor email.':
-    'Connect-এ ক্লিক করে আপনার nibeditor ইমেইল দিয়ে সাইন ইন করুন।',
+  'Click Connect and sign in with your Orden email.':
+    'Connect-এ ক্লিক করে আপনার Orden ইমেইল দিয়ে সাইন ইন করুন।',
   'Using Claude Code instead?': 'বদলে Claude Code ব্যবহার করছেন?',
   Command: 'কমান্ড',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -753,15 +867,15 @@ export const bn: Dictionary = {
   'Open ChatGPT’s plugins': 'ChatGPT-এর প্লাগিন খুলুন',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Plugins অংশ বা প্লাস বোতাম নেই? আগে Settings → Security and login-এ গিয়ে Developer mode চালু করুন।',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'ChatGPT চাইলে আপনার nibeditor ইমেইল দিয়ে সাইন ইন করুন।',
-  'To use it in a chat, type @ and pick nibeditor.': 'চ্যাটে ব্যবহার করতে @ লিখে nibeditor বাছুন।',
+  'Sign in with your Orden email when ChatGPT asks.':
+    'ChatGPT চাইলে আপনার Orden ইমেইল দিয়ে সাইন ইন করুন।',
+  'To use it in a chat, type @ and pick Orden.': 'চ্যাটে ব্যবহার করতে @ লিখে Orden বাছুন।',
   'Server URL': 'সার্ভার URL',
   Authentication: 'প্রমাণীকরণ',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'উন্নত OAuth সেটিংস যেমন আছে তেমন রেখে “I understand and want to continue” টিক করুন।',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'OAuth সহ Streamable HTTP বোঝে এমন যেকোনো MCP ক্লায়েন্ট। URL দিন: এটি নিজেই নিবন্ধন করে nibeditor-এর সাইন ইন পাতা খোলে।',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'OAuth সহ Streamable HTTP বোঝে এমন যেকোনো MCP ক্লায়েন্ট। URL দিন: এটি নিজেই নিবন্ধন করে Orden-এর সাইন ইন পাতা খোলে।',
   'Show config': 'কনফিগ দেখান',
   'For a client that takes a JSON block instead of a URL.':
     'যে ক্লায়েন্ট URL-এর বদলে JSON ব্লক নেয়, তার জন্য।',
@@ -828,7 +942,7 @@ export const bn: Dictionary = {
   'Display name': 'প্রদর্শন নাম',
   'Your name': 'আপনার নাম',
   Email: 'ইমেইল',
-  'On nibeditor.com': 'nibeditor.com-এ',
+  'On orden.so': 'orden.so-এ',
   'Your own domain': 'নিজের ডোমেইন',
   'Switching gives up {name}.': 'বদলালে {name} ছেড়ে দিতে হবে।',
   Page: 'পৃষ্ঠা',
@@ -900,8 +1014,9 @@ export const bn: Dictionary = {
   'No footnotes in this note': 'এই নোটে কোনো পাদটীকা নেই',
   'Stack tabs': 'ট্যাব স্তূপ করুন',
   'Unstack tabs': 'ট্যাব স্তূপ সরান',
-  'High contrast': 'উচ্চ বৈসাদৃশ্য',
+  Contrast: 'বৈসাদৃশ্য',
   Glass: 'কাচ',
+  Classic: 'ক্লাসিক',
   'Front matter': 'ফ্রন্ট ম্যাটার',
   'Front matter: {name}': 'ফ্রন্ট ম্যাটার: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':
@@ -912,6 +1027,7 @@ export const bn: Dictionary = {
   Comment: 'মন্তব্য',
   'Always on top': 'সবসময় উপরে',
   'What is new': 'কী নতুন',
+  'Download the app': 'অ্যাপটি ডাউনলোড করুন',
   'Report an issue': 'সমস্যা জানান',
   'Move the line up': 'লাইন উপরে সরান',
   'Move the line down': 'লাইন নিচে সরান',
@@ -991,6 +1107,23 @@ export const bn: Dictionary = {
   'Layout: {name}': 'লেআউট: {name}',
   'Space: {name}': 'স্পেস: {name}',
   'Theme: {name}': 'থিম: {name}',
+  'AI account: {name}': 'এআই অ্যাকাউন্ট: {name}',
+  Accounts: 'অ্যাকাউন্ট',
+  Access: 'অ্যাক্সেস',
+  Set: 'সেট করা',
+  'Start over': 'আবার শুরু করুন',
+  'Sign in here': 'এখানে সাইন ইন করুন',
+  '{device} wants your AI accounts': '{device} আপনার এআই অ্যাকাউন্ট চায়',
+  '{device} offers this device your AI vault': '{device} এই ডিভাইসকে আপনার AI ভল্ট দিচ্ছে',
+  Join: 'যোগ দিন',
+  'Allow this device on another one': 'অন্য ডিভাইসে এই ডিভাইসকে অনুমতি দিন',
+  'On every device you sign in to, end-to-end encrypted.':
+    'যে ডিভাইসেই সাইন ইন করুন, এন্ড-টু-এন্ড এনক্রিপ্টেড।',
+  'Sign in to have them on every device.': 'প্রতিটি ডিভাইসে পেতে সাইন ইন করুন।',
+  'Agents on this computer connect on their own': 'এই কম্পিউটারের এজেন্টরা নিজেরাই যুক্ত হয়',
+  Helpers: 'সহায়ক',
+  'Start helpers on your AI accounts': 'আপনার এআই অ্যাকাউন্টে সহায়ক চালু করুন',
+  Delegated: 'অর্পণ করা হয়েছে',
   'Code theme: {name}': 'কোড থিম: {name}',
   'Delete a layout': 'লেআউট মুছুন',
   // Keyboards and modal editing
@@ -1059,6 +1192,7 @@ export const bn: Dictionary = {
   'Double-click to write': 'লিখতে দুবার ক্লিক',
   'Another colour': 'আরেকটি রং',
   'Turn into a note': 'নোটে বদলান',
+  Arrange: 'সাজান',
   'Bring to front': 'একেবারে সামনে',
   'Bring forward': 'সামনে আনুন',
   'Send backward': 'পিছনে পাঠান',
@@ -1080,6 +1214,12 @@ export const bn: Dictionary = {
   'Export as PNG': 'PNG হিসেবে এক্সপোর্ট',
   'Export as SVG': 'SVG হিসেবে এক্সপোর্ট',
   'Export as PDF': 'PDF হিসেবে এক্সপোর্ট',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF ইমপোর্ট',
+  'Choose how to add the pages to the canvas.': 'পৃষ্ঠাগুলি ক্যানভাসে কীভাবে যোগ হবে বেছে নিন।',
+  'Single page': 'একটি পৃষ্ঠা',
+  'All pages': 'সব পৃষ্ঠা',
+  'Choose a page': 'পৃষ্ঠা বেছে নিন',
   // The canvas: what its own keys are called
   'Delete what is picked': 'নির্বাচিত অংশ মুছুন',
   'Nudge left': 'বাঁয়ে ঠেলুন',
@@ -1140,8 +1280,8 @@ export const bn: Dictionary = {
   'Release channel': 'রিলিজ চ্যানেল',
   Stable: 'স্টেবল',
   Unstable: 'আনস্টেবল',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'স্টেবল অফিসিয়াল রিলিজ অনুসরণ করে, আনস্টেবল main-এ প্রতিটি পুশ, আর ভেঙে যেতে পারে।',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'স্টেবল প্রকাশিত সংস্করণ অনুসরণ করে, আনস্টেবল এজ বিল্ড অনুসরণ করে, আর ভেঙে যেতে পারে।',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'ইমপোর্ট',
@@ -1196,13 +1336,15 @@ export const bn: Dictionary = {
   '{count} tables inside notes do not come over': 'নোটের ভিতরে {count}টি টেবিল আসে না',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count}টি সংযুক্তি এই Mac-এ নয়, iCloud-এ আছে',
+  '{count} files are in iCloud rather than on this Mac':
+    '{count}টি ফাইল এই Mac-এ নয়, iCloud-এ আছে',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS ওই নোটগুলো Full Disk Access-এর পিছনে রাখে।',
   'There are no notes in Apple Notes on this Mac.': 'এই Mac-এ Apple Notes-এ কোনো নোট নেই।',
   'Those notes could not be read.': 'ওই নোটগুলো পড়া গেল না।',
   'Read them from this Mac': 'এই Mac থেকে পড়ুন',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    'Full Disk Access-এ nibeditor চালু করুন, তারপর আবার চেষ্টা করুন।',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    'Full Disk Access-এ Orden চালু করুন, তারপর আবার চেষ্টা করুন।',
   'Open the setting': 'সেটিং খুলুন',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'Apple Journal নিজেই রপ্তানি করে: Journal, সেটিংস, রপ্তানি। Apple Notes-এ রপ্তানি নেই, তাই যে Mac-এ তা আছে তার থেকে দূরে, এখানে ফেলার জিনিস হলো কোনো রপ্তানিকারকের লেখা ফোল্ডার।',
@@ -1307,14 +1449,15 @@ export const bn: Dictionary = {
   'OpenAI-compatible': 'OpenAI-সঙ্গতিপূর্ণ',
   'Base URL': 'মূল URL',
   'API key': 'API কী',
-  'Set on this device': 'এই ডিভাইসে দেওয়া',
   Optional: 'ঐচ্ছিক',
   'List models': 'মডেল আনুন',
   'Asking…': 'জিজ্ঞাসা করা হচ্ছে…',
   'No providers yet.': 'এখনও কোনো প্রদানকারী নেই।',
   'Add {name}': '{name} যোগ করুন',
-  'Keys stay in the secure store on this device.': 'কী এই ডিভাইসের নিরাপদ ভাণ্ডারে থাকে।',
   'This browser holds the keys in its own storage.': 'এই ব্রাউজার কী নিজের ভাণ্ডারে রাখে।',
+  'Keep this browser’s keys in the vault': 'এই ব্রাউজারের কী ভল্টে রাখুন',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'তখন প্রতিটি ডিভাইসের কী এই ব্রাউজারের স্টোরেজে রাখা হবে, যেখানে পৃষ্ঠায় ঢুকে পড়া কোনো স্ক্রিপ্ট সেগুলো পড়তে পারে।',
   'AI can be wrong. Check the facts.': 'AI ভুল করতে পারে। তথ্যগুলো যাচাই করুন।',
   'Used by the glasses': 'চশমা ব্যবহার করে',
   'Could not read the models.': 'মডেল পড়া গেল না।',
@@ -1355,7 +1498,6 @@ export const bn: Dictionary = {
   'A cited report': 'উদ্ধৃত প্রতিবেদন',
   'A helper in the background': 'পেছনে চলা সহকারী',
   'A side question': 'পার্শ্ব প্রশ্ন',
-  'Agent mode': 'এজেন্ট মোড',
   'Agent profile': 'এজেন্ট প্রোফাইল',
   'Archive the thread': 'থ্রেড আর্কাইভ করুন',
   'Approve mode': 'অনুমোদন মোড',
@@ -1474,8 +1616,6 @@ export const bn: Dictionary = {
   // Web tabs
   Reload: 'আবার লোড করুন',
   'Hard reload': 'পুরোপুরি আবার লোড করুন',
-  'Clip this page': 'এই পাতা রাখুন',
-  'Clip the link': 'লিঙ্ক রাখুন',
   'Open in the browser': 'ব্রাউজারে খুলুন',
   'Show it here': 'এখানে দেখান',
   Website: 'ওয়েবসাইট',
@@ -1560,7 +1700,8 @@ export const bn: Dictionary = {
   'that is not a theme': 'এটি থিম নয়',
   'no such theme': 'এমন থিম নেই',
   'choose a model first': 'আগে একটি মডেল বাছুন',
-  'set an OpenAI key in nibeditor’s settings first': 'আগে nibeditor-এর সেটিংসে একটি OpenAI কী দিন',
+  'set an OpenAI key in Orden’s settings first': 'আগে Orden-এর সেটিংসে একটি OpenAI কী দিন',
+  'set an OpenAI key in nibeditor’s settings first': 'আগে Orden-এর সেটিংসে একটি OpenAI কী দিন',
   'that is a lot of questions - try again later': 'অনেক প্রশ্ন - পরে আবার চেষ্টা করুন',
   'that is too much audio': 'এটি অনেক বেশি অডিও',
   'that is more than a spoken command': 'এটি একটি বলা কমান্ডের চেয়ে বেশি',
@@ -1584,7 +1725,6 @@ export const bn: Dictionary = {
   Nothing: 'কিছুই নয়',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'এই ভিউ বুকমার্ক করুন',
   Keep: 'রাখুন',
 
   // Which side of the window a panel sits on.
@@ -1606,7 +1746,6 @@ export const bn: Dictionary = {
   'New tab': 'নতুন ট্যাব',
   'Full screen': 'পূর্ণ স্ক্রীণ',
   'Print…': 'প্রিন্ট…',
-  'Save page': 'পৃষ্ঠা সেভ করুন',
   'Share…': 'শেয়ার…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1649,7 +1788,6 @@ export const bn: Dictionary = {
   Blocked: 'অবরুদ্ধ',
   'Reset permissions': 'অনুমতি রিসেট করুন',
   'Turn into': 'বদলান',
-  'Bookmark these blocks': 'এই ব্লকগুলো বুকমার্ক',
   Foldable: 'ভাঁজযোগ্য',
   'Starts folded': 'ভাঁজ করা শুরু',
   // Where a space keeps what websites store
@@ -1666,6 +1804,15 @@ export const bn: Dictionary = {
   'Bring all to front': 'সব সামনে আনুন',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'কপি আনডু করুন',
+  'Devices with your AI vault': 'আপনার AI ভল্ট থাকা ডিভাইস',
+  'This device': 'এই ডিভাইস',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'ডিভাইসটি আর আপনার AI অ্যাকাউন্ট পড়তে পারবে না, আর বাকিরা নতুন কী পাবে।',
+  'Also remove this device from your AI vault?': 'এই ডিভাইসটিকে আপনার AI ভল্ট থেকেও সরাবেন?',
+  'Remove and sign out': 'সরান ও সাইন আউট',
+  'Undo making {name}': '{name} তৈরি আনডু',
+  'Undo the deletion': 'মোছা আনডু',
+  'Undo the move': 'সরানো আনডু',
   'Redo the last file change': 'ফাইলের শেষ পরিবর্তন রিডু করুন',
   'Select down': 'নিচের দিকে নির্বাচন',
   'Select up': 'উপরের দিকে নির্বাচন',
@@ -1709,7 +1856,6 @@ export const bn: Dictionary = {
   '{key} in a terminal': 'টার্মিনালে {key}',
   'Always ask': 'সবসময় জিজ্ঞাসা করুন',
   'Open another': 'আরেকটি খুলুন',
-  'Open in terminal': 'টার্মিনালে খুলুন',
   Clear: 'মুছুন',
   'Exited with code {code}': 'কোড {code} দিয়ে বন্ধ হয়েছে',
   'Could not start {shell}': '{shell} চালু করা যায়নি',
@@ -1721,18 +1867,8 @@ export const bn: Dictionary = {
     one: '{count}টি লাইন পেস্ট করবেন?',
     other: '{count}টি লাইন পেস্ট করবেন?',
   },
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': 'ডিফল্ট ব্রাউজার',
-  // The engine web tabs run on
-  Engine: 'ইঞ্জিন',
-  Relaunch: 'আবার চালু করুন',
-  'Chromium did not start': 'Chromium চালু হয়নি',
-  'No connection': 'সংযোগ নেই',
-  'Not in this release': 'এই রিলিজে নেই',
-  'Needs an update': 'আপডেট দরকার',
-  'Signature did not match': 'স্বাক্ষর মেলেনি',
-  'Disk full': 'ডিস্ক পূর্ণ',
-  'Could not be installed': 'ইনস্টল করা যায়নি',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name}-এর সম্পাদনা পূর্বাবস্থায় ফেরান',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1835,7 +1971,7 @@ export const bn: Dictionary = {
   'Always on this site': 'এই সাইটে সবসময়',
   'Agents stopped': 'এজেন্ট থামানো হয়েছে',
   'Agent tabs closed': 'এজেন্টের ট্যাব বন্ধ হয়েছে',
-  'nibeditor is still running for your agents': 'আপনার এজেন্টদের জন্য nibeditor এখনও চলছে',
+  'Orden is still running for your agents': 'আপনার এজেন্টদের জন্য Orden এখনও চলছে',
   '{client} wants to connect': '{client} সংযোগ করতে চায়',
   // Web logins that travel, and the devices of an account
   'no such device': 'এমন ডিভাইস নেই',
@@ -1851,11 +1987,12 @@ export const bn: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'এই কম্পিউটারের এজেন্ট',
   'Your account’s connector': 'আপনার অ্যাকাউন্টের কানেক্টর',
-  'nibeditor asks you once, the first time it connects.':
-    'প্রথমবার সংযোগের সময় nibeditor আপনাকে একবার জিজ্ঞাসা করে।',
+  'Orden asks you once, the first time it connects.':
+    'প্রথমবার সংযোগের সময় Orden আপনাকে একবার জিজ্ঞাসা করে।',
   'A client on another machine?': 'অন্য মেশিনের ক্লায়েন্ট?',
   'Shown only once.': 'শুধু একবার দেখানো হয়।',
   'Remove {name}?': '{name} সরাবেন?',
+  'End {name}?': '{name} শেষ করবেন?',
   'Its token stops working.': 'এর টোকেন আর কাজ করবে না।',
   'Added {date}': '{date} তারিখে যোগ করা',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':
@@ -1876,7 +2013,6 @@ export const bn: Dictionary = {
   'Change notes': 'নোট বদলানো',
   'See what you are looking at': 'আপনি কী দেখছেন তা দেখা',
   'Move and rename files': 'ফাইল সরানো ও নাম বদলানো',
-  'Open tabs and bookmarks': 'ট্যাব ও বুকমার্ক খোলা',
   'Bring a tab to the front': 'কোনো ট্যাব সামনে আনা',
   'Browse in tabs of its own': 'নিজের ট্যাবে ব্রাউজ করা',
   'Read what pages load': 'পেজ কী লোড করে তা পড়া',
@@ -1898,14 +2034,11 @@ export const bn: Dictionary = {
   'Without your logins': 'আপনার লগইন ছাড়া',
   'Calls a minute': 'প্রতি মিনিটে কল',
   'Pages a minute': 'প্রতি মিনিটে পেজ',
+  'Browser memory limit': 'ব্রাউজারের মেমরি সীমা',
   '{count} calls': {
     one: '{count}টি কল',
     other: '{count}টি কল',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': '{device}-এ খোলা',
-  'Use here': 'এখানে ব্যবহার করুন',
-  '{device} wants your web logins': '{device} আপনার ওয়েব লগইন চায়',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'ছোট প্রশ্ন',
@@ -1972,7 +2105,7 @@ export const bn: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'স্নুজ',
   Reminders: 'রিমাইন্ডার',
-  'Reminders ring while nibeditor is open': 'nibeditor খোলা থাকলে রিমাইন্ডার বাজে',
+  'Reminders ring while Orden is open': 'Orden খোলা থাকলে রিমাইন্ডার বাজে',
   Automatic: 'স্বয়ংক্রিয়',
   'Stay in the tray': 'ট্রেতে থাকুন',
   'Exact alarms': 'নির্ভুল অ্যালার্ম',
@@ -2015,7 +2148,6 @@ export const bn: Dictionary = {
   'Any of them': 'যেকোনো',
   Compare: 'তুলনা',
   'Add a filter': 'ফিল্টার যোগ করুন',
-  'Reschedule to today': 'আজকে সরান',
   Collapse: 'গুটান',
   Expand: 'প্রসারিত করুন',
   Summary: 'সারাংশ',
@@ -2037,7 +2169,6 @@ export const bn: Dictionary = {
   Layout: 'লেআউট',
   Overdue: 'মেয়াদোত্তীর্ণ',
   Upcoming: 'আসন্ন',
-  Logbook: 'লগবুক',
   Project: 'প্রকল্প',
   Label: 'লেবেল',
   List: 'তালিকা',
@@ -2223,4 +2354,11 @@ export const bn: Dictionary = {
   'Search this chat': 'এই চ্যাটে খুঁজুন',
   'Add as task': 'কাজ হিসেবে যোগ করুন',
   'Save as note': 'নোট হিসেবে সংরক্ষণ করুন',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'ভোর',
+  Lagoon: 'উপহ্রদ',
+  Lilac: 'লাইলাক',
+  Peach: 'পিচ',
+  Sage: 'সেজ',
+  Mist: 'কুয়াশা',
 }

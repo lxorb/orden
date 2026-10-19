@@ -151,7 +151,7 @@
 
 <style>
   /* The settings pane's own shapes, said once here for this pane and the host page in
-     it, since the panel's rules are scoped to the panel; see AgentsPane.svelte, which
+     it, since the panel's rules are scoped to the panel; see access/Access.svelte, which
      does the same. */
   .remote,
   .page {
@@ -177,7 +177,6 @@
 
   .remote :global(.nib-setting .name) {
     flex: 1;
-    min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 1px;

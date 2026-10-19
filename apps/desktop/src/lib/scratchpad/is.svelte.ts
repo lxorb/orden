@@ -1,3 +1,4 @@
+import type { EditorView } from '@nib/editor'
 /** The scratchpad by name in no space, and its card: up or not, and how wide. Eager, so
  *  a card left up has its column before the note is drawn. See pad.ts. */
 
@@ -13,13 +14,17 @@ export function isScratchpad(path: string | null | undefined): boolean {
   return !!path && nameOf(path) === SCRATCHPAD && workspace.outside(path)
 }
 
-const inCard = () => !!document.activeElement?.closest('[data-scratchpad]')
+// Guarded for the workspace's tests, which have no page.
+const inCard = () =>
+  typeof document !== 'undefined' && !!document.activeElement?.closest('[data-scratchpad]')
 
 class Shown {
   on = $state(false)
   width = $state(WIDTH)
   /** A person asked: the card takes the keyboard. */
   calling = $state(false)
+  /** The card's editor while it is up (#404). */
+  view = $state.raw<EditorView | null>(null)
   from: HTMLElement | null = null
 
   constructor() {

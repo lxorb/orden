@@ -15,6 +15,10 @@
     move: t('Moved'),
     archive: t('Archived'),
     unarchive: t('Unarchived'),
+    done: t('Completed'),
+    scheduled: t('Scheduled'),
+    moved: t('Moved'),
+    deleted: t('Deleted'),
   })
 
   // What is on the stack already, before this was on the page, is nobody's news.

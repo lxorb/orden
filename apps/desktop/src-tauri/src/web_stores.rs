@@ -17,10 +17,10 @@
 /// each. Beside rather than inside, because `web` is a `WebView2` user data folder and
 /// what is inside it is the engine's.
 #[cfg_attr(
-    any(feature = "cef", target_os = "macos"),
+    target_os = "macos",
     allow(
         dead_code,
-        reason = "a Mac's own engine is handed an identifier rather than a folder, and nib's own Chromium keeps every store in its primary profile; the folder is what Windows and Linux use"
+        reason = "a Mac's own engine is handed an identifier rather than a folder; the folder is what Windows and Linux use"
     )
 )]
 pub(crate) const STORES: &str = "web-stores";
@@ -32,8 +32,10 @@ const LONGEST: usize = 160;
 /// The store a tab was asked to be in, checked: `None` for the one every space
 /// shares, which is what nothing and an empty name both mean.
 ///
-/// A name becomes a folder name, so it is held to the two shapes the window writes -
-/// `space_` or `site_` and then lower case letters, digits, `.`, `-` and `_`. That
+/// A name becomes a folder name, so it is held to the shapes the window writes -
+/// `note_`, for a web note that keeps its own (#239), or `space_` or `site_`, the stores a
+/// space kept before that, which are only ever read to be merged - and then lower case
+/// letters, digits, `.`, `-` and `_`. That
 /// leaves nothing that climbs out of the stores folder or means something to a file
 /// system, `nul` and `con` included, rather than trying to list what does.
 pub(crate) fn named(asked: Option<&str>) -> Result<Option<&str>, String> {
@@ -42,7 +44,7 @@ pub(crate) fn named(asked: Option<&str>) -> Result<Option<&str>, String> {
     };
 
     let fine = name.len() <= LONGEST
-        && (name.starts_with("space_") || name.starts_with("site_"))
+        && (name.starts_with("note_") || name.starts_with("space_") || name.starts_with("site_"))
         && name.bytes().all(|byte| {
             byte.is_ascii_lowercase() || byte.is_ascii_digit() || matches!(byte, b'.' | b'-' | b'_')
         })
@@ -62,7 +64,7 @@ pub(crate) fn named(asked: Option<&str>) -> Result<Option<&str>, String> {
 /// So they come from the name and from nothing else - two FNV-1a hashes of it, which
 /// are fixed by their definition and not by this build's hasher, whose seed changes
 /// from run to run. A store's cookies depend on these bytes never changing.
-#[cfg(any(test, all(target_os = "macos", not(feature = "cef"))))]
+#[cfg(any(test, target_os = "macos"))]
 pub(crate) fn identifier(name: &str) -> [u8; 16] {
     /// FNV-1a over the name, from a given start.
     fn hashed(name: &str, start: u64) -> u64 {
@@ -90,9 +92,14 @@ mod tests {
         assert_eq!(named(Some("")), Ok(None));
     }
 
-    /// The two shapes the window writes are taken as they are.
+    /// The shapes the window writes are taken as they are.
     #[test]
-    fn a_space_and_a_site_are_names() {
+    fn a_note_a_space_and_a_site_are_names() {
+        assert_eq!(
+            named(Some("note_3f9a0c17e2b4d685")),
+            Ok(Some("note_3f9a0c17e2b4d685"))
+        );
+        assert!(named(Some("note_")).is_err());
         assert_eq!(named(Some("space_0-k3j9x2")), Ok(Some("space_0-k3j9x2")));
         assert_eq!(
             named(Some("site_0-k3j9x2_ethz.ch")),

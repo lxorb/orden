@@ -10,21 +10,129 @@ export const pl: Dictionary = {
   'Do you write code?': 'Piszesz kod?',
   Yes: 'Tak',
   No: 'Nie',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'Z innych aplikacji: {key}',
+  'From other apps: set in your system settings':
+    'Z innych aplikacji: ustaw w ustawieniach systemu',
+  'From other apps: bind {command} in your system settings':
+    'Z innych aplikacji: przypisz {command} w ustawieniach systemu',
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'Niezbędne',
+  'Add to Essentials': 'Dodaj do niezbędnych',
+  'Remove from Essentials': 'Usuń z niezbędnych',
+  'Add block to Essentials': 'Dodaj blok do niezbędnych',
+  'Add blocks to Essentials': 'Dodaj bloki do niezbędnych',
+  'Add view to Essentials': 'Dodaj widok do niezbędnych',
+  'Open tabs and Essentials': 'Otwieranie kart i niezbędnych',
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor to teraz Orden',
+  'Notes from nibeditor.com': 'Notatki z nibeditor.com',
+  'Nothing there': 'Nic tam nie ma',
+  // AI: the three permission modes
+  'Full permissions': 'Pełne uprawnienia',
+  'Auto mode': 'Tryb automatyczny',
+  'Full permissions: nothing is asked first': 'Pełne uprawnienia: o nic nie pyta wcześniej',
+  // Import: Zen's tabs
+  'Import from Zen': 'Importuj z Zen',
+  'Containers stay in Zen': 'Kontenery zostają w Zen',
+  'Zen’s tabs could not be read.': 'Nie udało się odczytać kart Zen.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'Kontenery zostają w Firefox',
+  'Nothing could be read out of {browser}.': 'Nie udało się nic odczytać z przeglądarki {browser}.',
+  'Saved groups': 'Zapisane grupy',
+  'Tab group': 'Grupa kart',
+  'Bookmarks toolbar': 'Pasek zakładek',
+  'Bookmarks menu': 'Menu zakładek',
+  'Other bookmarks': 'Inne zakładki',
+  'Mobile bookmarks': 'Zakładki z telefonu',
+  'Bookmarks bar': 'Pasek zakładek',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} trzyma otwarte karty pod kluczem, więc przyszły tylko zakładki.',
+  '{count} pages not on the web stay behind': {
+    few: 'Stron spoza sieci, które zostają: {count}',
+    many: 'Stron spoza sieci, które zostają: {count}',
+    one: 'Stron spoza sieci, które zostają: {count}',
+    other: 'Stron spoza sieci, które zostają: {count}',
+  },
+  'Reading List': 'Lista Czytelnia',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS trzyma karty i zakładki Safari za Pełnym dostępem do dysku. Włącz tam Orden, a potem spróbuj ponownie.',
+  // Settings: note types
+  'Page note': 'Notatka ze stronami',
+  'Web note': 'Notatka internetowa',
+  'Private tab': 'Karta prywatna',
+  'Note types': 'Typy notatek',
+  // Tasks: Upcoming's weeks
+  'Previous week': 'Poprzedni tydzień',
+  // Tasks: projects placed in the panel, and their folder
+  'Add project above': 'Dodaj projekt powyżej',
+  'Add project below': 'Dodaj projekt poniżej',
+  'Projects folder': 'Folder projektów',
+  // Tasks: a repeating task skipped or done for good
+  Skip: 'Pomiń',
+  'Complete forever': 'Ukończ na zawsze',
+  // Tasks: comments
+  Comments: 'Komentarze',
+  // Tasks: filters
+  Filters: 'Filtry',
+  'Add filter': 'Dodaj filtr',
+  'Edit filter': 'Edytuj filtr',
+  // Tasks: a project's sections
+  'Add section': 'Dodaj sekcję',
+  '{name} (copy)': '{name} (kopia)',
+  'Its tasks are deleted with it.': 'Jej zadania zostaną usunięte razem z nią.',
+  // Tasks: keys, selection and the undo toast
+  Completed: 'Ukończono',
+  'Remove date': 'Usuń datę',
+  'Next task': 'Następne zadanie',
+  'Previous task': 'Poprzednie zadanie',
+  'Add task at the top': 'Dodaj zadanie na górze',
+  '{count} selected': 'Zaznaczono: {count}',
+  // Tasks: the Display menu
+  Display: 'Wyświetlanie',
+  'Completed tasks': 'Ukończone zadania',
+  // Tasks: several lines pasted into quick add
+  'One task': 'Jedno zadanie',
+  'One per line': 'Jedno na wiersz',
+  // Tasks: the projects in the panel
+  Favorites: 'Ulubione',
+  'Add project': 'Dodaj projekt',
+  'Add sub-project': 'Dodaj podprojekt',
+  // Tasks: the task view
+  'Sub-tasks': 'Podzadania',
+  'Add sub-task': 'Dodaj podzadanie',
+  'New label': 'Nowa etykieta',
+  'No deadline': 'Bez terminu',
+  // Tasks: the row's menu and the scheduler
+  Reschedule: 'Zmień termin',
+  'Later this week': 'Później w tym tygodniu',
+  'This weekend': 'W ten weekend',
+  'Next weekend': 'W następny weekend',
+  'Every week on {day}': 'Co tydzień: {day}',
+  'Every month on day {day}': 'Co miesiąc dnia {day}',
+  'Every year on {date}': 'Co roku {date}',
+  'Type a date': 'Wpisz datę',
+  'Previous month': 'Poprzedni miesiąc',
+  'Next month': 'Następny miesiąc',
+  'No time': 'Bez godziny',
+  'No repeat': 'Bez powtarzania',
+  Complete: 'Ukończ',
+  Reopen: 'Otwórz ponownie',
+  Schedule: 'Zaplanuj',
+  'Open in note': 'Otwórz w notatce',
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'Inna aplikacja',
-  'Start fresh': 'Zacznij od nowa',
   'Import from Obsidian': 'Importuj z Obsidiana',
   'Import from Notion': 'Importuj z Notion',
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'Wskazówki',
   'Silent mode': 'Tryb cichy',
-  'Sign in to keep your notes safe and on every device.':
-    'Zaloguj się, aby Twoje notatki były bezpieczne i na każdym urządzeniu.',
   'See how your notes connect.': 'Zobacz, jak łączą się Twoje notatki.',
   'Press {key} to find anything, notes and commands alike.':
     'Naciśnij {key}, aby znaleźć wszystko, notatki i polecenia.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'Pokazuj Markdown podczas pisania',
+  'Open notes in source mode': 'Otwieraj notatki w trybie źródłowym',
   Pointer: 'Wskaźnik',
   'Pointing hand on buttons': 'Wskazująca dłoń nad przyciskami',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
@@ -40,11 +148,13 @@ export const pl: Dictionary = {
   '{count} h': '{count} godz.',
   Inbox: 'Skrzynka odbiorcza',
   Date: 'Data',
+  'Start date': 'Data rozpoczęcia',
   Priority: 'Priorytet',
   Reminder: 'Przypomnienie',
   Duration: 'Czas trwania',
   'Smart dates': 'Inteligentne daty',
   'From any app': 'Z dowolnej aplikacji',
+  'Show tasks without a start date in Today': 'Pokazuj w Dzisiaj zadania bez daty rozpoczęcia',
   'Every day': 'Codziennie',
   'Every weekday': 'W każdy dzień roboczy',
   'Every week': 'Co tydzień',
@@ -61,6 +171,13 @@ export const pl: Dictionary = {
   Unsaved: 'Niezapisane',
   'Save to': 'Zapisz w',
   'Reloaded with the web data of {space}': 'Wczytano ponownie z danymi sieciowymi {space}',
+  Separate: 'Osobne',
+  'Share this note’s web data again?': 'Znowu udostępniać dane witryn tej notatki?',
+  'What its pages are signed in to on this computer is deleted.':
+    'To, do czego jej strony są zalogowane na tym komputerze, zostanie usunięte.',
+  'Share again': 'Udostępniaj znowu',
+  'This note keeps its own web data now': 'Ta notatka ma teraz własne dane witryn',
+  'Back on the shared web data': 'Znowu na wspólnych danych witryn',
   'Add a page': 'Dodaj stronę',
   'Add a page after this': 'Dodaj stronę po tej',
   'Delete this page': 'Usuń tę stronę',
@@ -81,6 +198,8 @@ export const pl: Dictionary = {
   Dots: 'Kropki',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'Obracaj płótno dwoma palcami',
+  'Turn upright': 'Wyprostuj',
   Canvas: 'Kanwa',
   Card: 'Karta',
   'Note or picture': 'Notatka lub obraz',
@@ -95,7 +214,6 @@ export const pl: Dictionary = {
   'New window': 'Nowe okno',
   New: 'Nowy',
   'New space': 'Nowa przestrzeń',
-  '{name}: switch space': '{name}: zmień przestrzeń',
   Untitled: 'Bez tytułu',
   Space: 'Przestrzeń',
   'Name the space': 'Nazwa przestrzeni',
@@ -140,8 +258,6 @@ export const pl: Dictionary = {
   'Loading…': 'Wczytywanie…',
   'Create a space': 'Utwórz przestrzeń',
   'Import a folder': 'Zaimportuj folder',
-  'Sign in to sync': 'Zaloguj się, by synchronizować',
-  'Create account': 'Utwórz konto',
   'Delete space': 'Usuń przestrzeń',
   'Delete {name}?': 'Usunąć {name}?',
   'Every note in this space is deleted from your computer.':
@@ -159,6 +275,10 @@ export const pl: Dictionary = {
   Unpin: 'Odepnij',
   Close: 'Zamknij',
   'Close pinned tab?': 'Zamknąć przypiętą kartę?',
+  'Save changes to {name}?': 'Zapisać zmiany w {name}?',
+  'Save changes to these tabs?': 'Zapisać zmiany w tych kartach?',
+  'Unsaved words go to Recently deleted.': 'Niezapisane słowa trafią do Ostatnio usuniętych.',
+  'Don’t save': 'Nie zapisuj',
   'Close others': 'Zamknij pozostałe',
   'Close tabs to the right': 'Zamknij karty po prawej',
   'Close tabs to the left': 'Zamknij karty po lewej',
@@ -195,9 +315,6 @@ export const pl: Dictionary = {
   'Move this note': 'Przenieś tę notatkę',
   'Move up': 'Przenieś w górę',
   'Move down': 'Przenieś w dół',
-  Bookmark: 'Zakładka',
-  'Remove bookmark': 'Usuń zakładkę',
-  'Leave out of search': 'Wyłącz z wyszukiwania',
   'Search here again': 'Szukaj tu znowu',
   'Undo the last file change': 'Cofnij ostatnią zmianę plików',
   'Undo moving {name}': 'Cofnij przeniesienie {name}',
@@ -247,7 +364,6 @@ export const pl: Dictionary = {
   'Remove group': 'Usuń grupę',
   'Out of the group': 'Poza grupę',
   Make: 'Utwórz',
-  'Bookmark this block': 'Dodaj zakładkę do bloku',
   Panels: 'Panele',
   Outline: 'Konspekt',
   'Stay on this note': 'Zostań na tej notatce',
@@ -534,10 +650,10 @@ export const pl: Dictionary = {
   'that key could not be saved': 'nie udało się zapisać tego klucza',
   'Sign in to ask a question.': 'Zaloguj się, aby zadać pytanie.',
   'Asking OpenAI which models this key can use':
-    'nibeditor pyta OpenAI, których modeli może użyć ten klucz',
+    'Orden pyta OpenAI, których modeli może użyć ten klucz',
   'Could not reach OpenAI': 'Brak połączenia z OpenAI',
-  'That key cannot use any of the models nibeditor asks for.':
-    'Ten klucz nie może użyć żadnego z modeli, o które prosi nibeditor.',
+  'That key cannot use any of the models Orden asks for.':
+    'Ten klucz nie może użyć żadnego z modeli, o które prosi Orden.',
   'No reasoning': 'Bez rozumowania',
   Minimal: 'Minimalne',
   Low: 'Niskie',
@@ -559,7 +675,7 @@ export const pl: Dictionary = {
   Mode: 'Tryb',
   // The window's own edges; see appearance.rs
   Window: 'Okno',
-  'nibeditor’s own': 'nibeditor',
+  'Orden’s own': 'Orden',
   'The system’s': 'Systemowa',
   'Window frame': 'Ramka okna',
   System: 'Systemowy',
@@ -629,6 +745,7 @@ export const pl: Dictionary = {
   '{done} of {total}': '{done} z {total}',
   'Sync failed': 'Synchronizacja nieudana',
   '{name} could not be written.': 'Nie udało się zapisać {name}.',
+  '{name} could not be read.': 'Nie udało się odczytać {name}.',
   'Text size': 'Rozmiar tekstu',
   'Line spacing': 'Interlinia',
   'Line width': 'Szerokość wiersza',
@@ -689,8 +806,10 @@ export const pl: Dictionary = {
   '{used} of {limit} used.': 'Użyto {used} z {limit}.',
   'That image does not fit in your storage.': 'Ten obraz nie mieści się w pamięci.',
   'out of space': 'brak miejsca',
-  'nibeditor {version} is ready to install.': 'nibeditor {version} jest gotowy do instalacji.',
+  'Orden {version} is ready to install.': 'Orden {version} jest gotowy do instalacji.',
+  'Orden {version} is available.': 'Orden {version} jest dostępny.',
   'Restart now': 'Uruchom ponownie teraz',
+  'Move to Applications': 'Przenieś do Programów',
   Later: 'Później',
   More: 'Więcej',
   'Open notes': 'Otwarte notatki',
@@ -715,11 +834,9 @@ export const pl: Dictionary = {
   Continue: 'Kontynuuj',
   'Send a new code': 'Wyślij nowy kod',
   'Code sent to': 'Kod wysłany na',
-  'You already have notes on this computer.': 'Na tym komputerze są już notatki.',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
-    'Zachowaj je i dołączą do konta. Wymaż je i zostanie tylko to, co konto już ma - tego nie można cofnąć.',
-  'Keep them': 'Zachowaj je',
-  'Erase them': 'Wymaż je',
+  'This device already has notes.': 'To urządzenie ma już notatki.',
+  Merge: 'Scal',
+  'Keep separate': 'Zachowaj osobno',
   'Digit {number}': 'Cyfra {number}',
   'Resend in {seconds}s': 'Ponów za {seconds} s',
   'Last synced {time}.': 'Ostatnia synchronizacja {time}.',
@@ -769,14 +886,14 @@ export const pl: Dictionary = {
   'Reads your notes.': 'Czyta notatki.',
   'Reads and writes your notes.': 'Czyta i zapisuje notatki.',
   Other: 'Inne',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'Asystent AI może czytać notatki - i zmieniać je, jeśli na to pozwolisz. Loguje się adresem e-mail z nibeditor; nie ma czego wklejać.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'Asystent AI może czytać notatki - i zmieniać je, jeśli na to pozwolisz. Loguje się adresem e-mail z Orden; nie ma czego wklejać.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'W Claude otwórz Ustawienia → Łączniki i kliknij Dodaj własny łącznik.',
   'Open Claude’s connectors': 'Otwórz łączniki Claude',
   'Fill in the two fields and click Add.': 'Wypełnij dwa pola i kliknij Dodaj.',
-  'Click Connect and sign in with your nibeditor email.':
-    'Kliknij Podłącz i zaloguj się adresem e-mail z nibeditor.',
+  'Click Connect and sign in with your Orden email.':
+    'Kliknij Podłącz i zaloguj się adresem e-mail z Orden.',
   'Using Claude Code instead?': 'Wolisz Claude Code?',
   Command: 'Polecenie',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -787,16 +904,15 @@ export const pl: Dictionary = {
   'Open ChatGPT’s plugins': 'Otwórz wtyczki ChatGPT',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Brak sekcji Wtyczki albo przycisku plus? Włącz najpierw tryb dla programistów w Ustawienia → Bezpieczeństwo i logowanie.',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'Zaloguj się adresem e-mail z nibeditor, gdy ChatGPT o to poprosi.',
-  'To use it in a chat, type @ and pick nibeditor.':
-    'Aby użyć go w czacie, wpisz @ i wybierz nibeditor.',
+  'Sign in with your Orden email when ChatGPT asks.':
+    'Zaloguj się adresem e-mail z Orden, gdy ChatGPT o to poprosi.',
+  'To use it in a chat, type @ and pick Orden.': 'Aby użyć go w czacie, wpisz @ i wybierz Orden.',
   'Server URL': 'Adres serwera',
   Authentication: 'Uwierzytelnianie',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'Zostaw zaawansowane ustawienia OAuth bez zmian i zaznacz „Rozumiem i chcę kontynuować”.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'Dowolny klient MCP mówiący Streamable HTTP z OAuth. Podaj mu adres: zarejestruje się sam i otworzy stronę logowania nibeditor.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'Dowolny klient MCP mówiący Streamable HTTP z OAuth. Podaj mu adres: zarejestruje się sam i otworzy stronę logowania Orden.',
   'Show config': 'Pokaż konfigurację',
   'For a client that takes a JSON block instead of a URL.':
     'Dla klienta, który przyjmuje blok JSON zamiast adresu.',
@@ -864,7 +980,7 @@ export const pl: Dictionary = {
   'Display name': 'Nazwa wyświetlana',
   'Your name': 'Twoje imię',
   Email: 'E-mail',
-  'On nibeditor.com': 'Na nibeditor.com',
+  'On orden.so': 'Na orden.so',
   'Your own domain': 'Własna domena',
   'Switching gives up {name}.': 'Zmiana oznacza rezygnację z {name}.',
   Page: 'Strona',
@@ -936,8 +1052,9 @@ export const pl: Dictionary = {
   'No footnotes in this note': 'Brak przypisów w tej notatce',
   'Stack tabs': 'Ułóż karty w kolumny',
   'Unstack tabs': 'Rozłóż karty',
-  'High contrast': 'Wysoki kontrast',
+  Contrast: 'Kontrast',
   Glass: 'Szkło',
+  Classic: 'Klasyczny',
   'Front matter': 'Nagłówek YAML',
   'Front matter: {name}': 'Metadane: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':
@@ -948,6 +1065,7 @@ export const pl: Dictionary = {
   Comment: 'Komentarz',
   'Always on top': 'Zawsze na wierzchu',
   'What is new': 'Co nowego',
+  'Download the app': 'Pobierz aplikację',
   'Report an issue': 'Zgłoś problem',
   'Move the line up': 'Przenieś wiersz wyżej',
   'Move the line down': 'Przenieś wiersz niżej',
@@ -1028,6 +1146,23 @@ export const pl: Dictionary = {
   'Layout: {name}': 'Układ: {name}',
   'Space: {name}': 'Przestrzeń: {name}',
   'Theme: {name}': 'Motyw: {name}',
+  'AI account: {name}': 'Konto AI: {name}',
+  Accounts: 'Konta',
+  Access: 'Dostęp',
+  Set: 'Ustawiony',
+  'Start over': 'Zacznij od nowa',
+  'Sign in here': 'Zaloguj się tutaj',
+  '{device} wants your AI accounts': '{device} prosi o twoje konta AI',
+  '{device} offers this device your AI vault': '{device} oferuje temu urządzeniu Twój sejf AI',
+  Join: 'Dołącz',
+  'Allow this device on another one': 'Zezwól na to urządzenie na innym',
+  'On every device you sign in to, end-to-end encrypted.':
+    'Na każdym urządzeniu, na którym się zalogujesz, szyfrowane end-to-end.',
+  'Sign in to have them on every device.': 'Zaloguj się, aby mieć je na każdym urządzeniu.',
+  'Agents on this computer connect on their own': 'Agenci na tym komputerze łączą się sami',
+  Helpers: 'Pomocnicy',
+  'Start helpers on your AI accounts': 'Uruchamiać pomocników na twoich kontach AI',
+  Delegated: 'Zlecono',
   'Code theme: {name}': 'Motyw kodu: {name}',
   'Delete a layout': 'Usuń układ',
   // Keyboards and modal editing
@@ -1096,6 +1231,7 @@ export const pl: Dictionary = {
   'Double-click to write': 'Kliknij dwukrotnie, aby pisać',
   'Another colour': 'Inny kolor',
   'Turn into a note': 'Zamień w notatkę',
+  Arrange: 'Rozmieść',
   'Bring to front': 'Na wierzch',
   'Bring forward': 'Wyżej',
   'Send backward': 'Niżej',
@@ -1117,6 +1253,12 @@ export const pl: Dictionary = {
   'Export as PNG': 'Eksportuj do PNG',
   'Export as SVG': 'Eksportuj do SVG',
   'Export as PDF': 'Eksportuj do PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'Importuj PDF',
+  'Choose how to add the pages to the canvas.': 'Wybierz, jak dodać strony do kanwy.',
+  'Single page': 'Jedna strona',
+  'All pages': 'Wszystkie strony',
+  'Choose a page': 'Wybierz stronę',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Usuń zaznaczenie',
   'Nudge left': 'Przesuń w lewo',
@@ -1177,8 +1319,8 @@ export const pl: Dictionary = {
   'Release channel': 'Kanał wydań',
   Stable: 'Stabilny',
   Unstable: 'Niestabilny',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Stabilny idzie za oficjalnymi wydaniami, Niestabilny za każdym pushem na main i może się psuć.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Stabilny idzie za wydanymi wersjami, Niestabilny za buildami edge i może się psuć.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Importuj',
@@ -1249,13 +1391,15 @@ export const pl: Dictionary = {
     'Tabel wewnątrz notatek, które się nie przenoszą: {count}',
   '{count} attachments are in iCloud rather than on this Mac':
     'Załączników w iCloud, a nie na tym Macu: {count}',
+  '{count} files are in iCloud rather than on this Mac':
+    'Plików w iCloud, a nie na tym Macu: {count}',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS trzyma te notatki za Pełnym dostępem do dysku.',
   'There are no notes in Apple Notes on this Mac.': 'Na tym Macu nie ma notatek w Apple Notatkach.',
   'Those notes could not be read.': 'Nie udało się odczytać tych notatek.',
   'Read them from this Mac': 'Odczytaj z tego Maca',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    'Włącz nibeditor w Pełnym dostępie do dysku i spróbuj ponownie.',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    'Włącz Orden w Pełnym dostępie do dysku i spróbuj ponownie.',
   'Open the setting': 'Otwórz ustawienie',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'Apple Dziennik eksportuje się sam: Dziennik, Ustawienia, Eksport. Apple Notatki nie mają eksportu, więc poza Macem, na którym są, upuszcza się tutaj folder zapisany przez eksporter.',
@@ -1377,16 +1521,16 @@ export const pl: Dictionary = {
   'OpenAI-compatible': 'Zgodny z OpenAI',
   'Base URL': 'Podstawowy adres URL',
   'API key': 'Klucz API',
-  'Set on this device': 'Ustawiony na tym urządzeniu',
   Optional: 'Opcjonalnie',
   'List models': 'Pobierz modele',
   'Asking…': 'Pytanie…',
   'No providers yet.': 'Jeszcze brak dostawców.',
   'Add {name}': 'Dodaj {name}',
-  'Keys stay in the secure store on this device.':
-    'Klucze zostają w bezpiecznym magazynie tego urządzenia.',
   'This browser holds the keys in its own storage.':
     'Ta przeglądarka trzyma klucze we własnym magazynie.',
+  'Keep this browser’s keys in the vault': 'Przechowuj klucze tej przeglądarki w sejfie',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'Wtedy klucze wszystkich urządzeń są przechowywane w pamięci tej przeglądarki, gdzie skrypt, który dostał się na stronę, mógłby je odczytać.',
   'AI can be wrong. Check the facts.': 'AI może się mylić. Sprawdzaj fakty.',
   'Used by the glasses': 'Używany przez okulary',
   'Could not read the models.': 'Nie udało się odczytać modeli.',
@@ -1427,7 +1571,6 @@ export const pl: Dictionary = {
   'A cited report': 'Raport z cytatami',
   'A helper in the background': 'Pomocnik w tle',
   'A side question': 'Poboczne pytanie',
-  'Agent mode': 'Tryb agenta',
   'Agent profile': 'Profil agenta',
   'Archive the thread': 'Archiwizuj wątek',
   'Approve mode': 'Tryb zatwierdzania',
@@ -1546,8 +1689,6 @@ export const pl: Dictionary = {
   // Web tabs
   Reload: 'Odśwież',
   'Hard reload': 'Twarde przeładowanie',
-  'Clip this page': 'Zapisz tę stronę',
-  'Clip the link': 'Zapisz odnośnik',
   'Open in the browser': 'Otwórz w przeglądarce',
   'Show it here': 'Pokaż tutaj',
   Website: 'Witryna',
@@ -1635,8 +1776,9 @@ export const pl: Dictionary = {
   'that is not a theme': 'to nie jest motyw',
   'no such theme': 'brak takiego motywu',
   'choose a model first': 'najpierw wybierz model',
+  'set an OpenAI key in Orden’s settings first': 'najpierw ustaw klucz OpenAI w ustawieniach Orden',
   'set an OpenAI key in nibeditor’s settings first':
-    'najpierw ustaw klucz OpenAI w ustawieniach nibeditor',
+    'najpierw ustaw klucz OpenAI w ustawieniach Orden',
   'that is a lot of questions - try again later': 'to dużo pytań - spróbuj później',
   'that is too much audio': 'to za dużo dźwięku',
   'that is more than a spoken command': 'to więcej niż komenda głosowa',
@@ -1660,7 +1802,6 @@ export const pl: Dictionary = {
   Nothing: 'Nic',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Dodaj ten widok do zakładek',
   Keep: 'Zachowaj',
 
   // Which side of the window a panel sits on.
@@ -1682,7 +1823,6 @@ export const pl: Dictionary = {
   'New tab': 'Nowa karta',
   'Full screen': 'Pełny ekran',
   'Print…': 'Drukuj…',
-  'Save page': 'Zapisz stronę',
   'Share…': 'Udostępnij…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1726,7 +1866,6 @@ export const pl: Dictionary = {
   Blocked: 'Zablokowane',
   'Reset permissions': 'Zresetuj uprawnienia',
   'Turn into': 'Zamień na',
-  'Bookmark these blocks': 'Dodaj zakładki do bloków',
   Foldable: 'Zwijalny',
   'Starts folded': 'Zaczyna zwinięty',
   // Where a space keeps what websites store
@@ -1743,6 +1882,15 @@ export const pl: Dictionary = {
   'Bring all to front': 'Przenieś wszystko na wierzch',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Cofnij kopiowanie',
+  'Devices with your AI vault': 'Urządzenia z Twoim sejfem AI',
+  'This device': 'To urządzenie',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'To urządzenie nie odczyta już Twoich kont AI, a pozostałe dostaną nowy klucz.',
+  'Also remove this device from your AI vault?': 'Usunąć to urządzenie także z sejfu AI?',
+  'Remove and sign out': 'Usuń i wyloguj się',
+  'Undo making {name}': 'Cofnij utworzenie {name}',
+  'Undo the deletion': 'Cofnij usunięcie',
+  'Undo the move': 'Cofnij przeniesienie',
   'Redo the last file change': 'Ponów ostatnią zmianę plików',
   'Select down': 'Zaznacz w dół',
   'Select up': 'Zaznacz w górę',
@@ -1787,7 +1935,6 @@ export const pl: Dictionary = {
   '{key} in a terminal': '{key} w terminalu',
   'Always ask': 'Zawsze pytaj',
   'Open another': 'Otwórz kolejny',
-  'Open in terminal': 'Otwórz w terminalu',
   Clear: 'Wyczyść',
   'Exited with code {code}': 'Zakończono z kodem {code}',
   'Could not start {shell}': 'Nie udało się uruchomić {shell}',
@@ -1801,18 +1948,8 @@ export const pl: Dictionary = {
     many: 'Wkleić {count} wierszy?',
     other: 'Wkleić {count} wiersza?',
   },
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': 'Domyślna przeglądarka',
-  // The engine web tabs run on
-  Engine: 'Silnik',
-  Relaunch: 'Uruchom ponownie',
-  'Chromium did not start': 'Chromium się nie uruchomił',
-  'No connection': 'Brak połączenia',
-  'Not in this release': 'Nie ma w tym wydaniu',
-  'Needs an update': 'Wymaga aktualizacji',
-  'Signature did not match': 'Podpis się nie zgadza',
-  'Disk full': 'Dysk pełny',
-  'Could not be installed': 'Nie udało się zainstalować',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Cofnij zmiany {name}',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1917,7 +2054,7 @@ export const pl: Dictionary = {
   'Always on this site': 'Zawsze w tej witrynie',
   'Agents stopped': 'Agenci zatrzymani',
   'Agent tabs closed': 'Karty agentów zamknięte',
-  'nibeditor is still running for your agents': 'nibeditor nadal działa dla twoich agentów',
+  'Orden is still running for your agents': 'Orden nadal działa dla twoich agentów',
   '{client} wants to connect': '{client} chce się połączyć',
   // Web logins that travel, and the devices of an account
   'no such device': 'nie ma takiego urządzenia',
@@ -1932,11 +2069,12 @@ export const pl: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'Agenci na tym komputerze',
   'Your account’s connector': 'Łącznik twojego konta',
-  'nibeditor asks you once, the first time it connects.':
-    'nibeditor zapyta cię raz, przy pierwszym połączeniu.',
+  'Orden asks you once, the first time it connects.':
+    'Orden zapyta cię raz, przy pierwszym połączeniu.',
   'A client on another machine?': 'Klient na innym komputerze?',
   'Shown only once.': 'Pokazywany tylko raz.',
   'Remove {name}?': 'Usunąć {name}?',
+  'End {name}?': 'Zakończyć {name}?',
   'Its token stops working.': 'Jego token przestanie działać.',
   'Added {date}': 'Dodano {date}',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':
@@ -1957,7 +2095,6 @@ export const pl: Dictionary = {
   'Change notes': 'Zmieniać notatki',
   'See what you are looking at': 'Widzieć, na co patrzysz',
   'Move and rename files': 'Przenosić pliki i zmieniać ich nazwy',
-  'Open tabs and bookmarks': 'Otwierać karty i zakładki',
   'Bring a tab to the front': 'Przenosić kartę na wierzch',
   'Browse in tabs of its own': 'Przeglądać we własnych kartach',
   'Read what pages load': 'Czytać, co ładują strony',
@@ -1979,16 +2116,13 @@ export const pl: Dictionary = {
   'Without your logins': 'Bez twoich logowań',
   'Calls a minute': 'Wywołania na minutę',
   'Pages a minute': 'Strony na minutę',
+  'Browser memory limit': 'Limit pamięci przeglądarki',
   '{count} calls': {
     one: '{count} wywołanie',
     few: '{count} wywołania',
     many: '{count} wywołań',
     other: '{count} wywołania',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'Otwarte na {device}',
-  'Use here': 'Użyj tutaj',
-  '{device} wants your web logins': '{device} prosi o Twoje logowania do stron',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'Szybkie pytanie',
@@ -2057,7 +2191,7 @@ export const pl: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'Drzemka',
   Reminders: 'Przypomnienia',
-  'Reminders ring while nibeditor is open': 'Przypomnienia dzwonią, gdy nibeditor jest otwarty',
+  'Reminders ring while Orden is open': 'Przypomnienia dzwonią, gdy Orden jest otwarty',
   Automatic: 'Automatycznie',
   'Stay in the tray': 'Zostań w zasobniku',
   'Exact alarms': 'Dokładne alarmy',
@@ -2100,7 +2234,6 @@ export const pl: Dictionary = {
   'Any of them': 'Dowolny',
   Compare: 'Porównanie',
   'Add a filter': 'Dodaj filtr',
-  'Reschedule to today': 'Przenieś na dziś',
   Collapse: 'Zwiń',
   Expand: 'Rozwiń',
   Summary: 'Podsumowanie',
@@ -2122,7 +2255,6 @@ export const pl: Dictionary = {
   Layout: 'Układ',
   Overdue: 'Zaległe',
   Upcoming: 'Nadchodzące',
-  Logbook: 'Dziennik',
   Project: 'Projekt',
   Label: 'Etykieta',
   List: 'Lista',
@@ -2308,4 +2440,11 @@ export const pl: Dictionary = {
   'Search this chat': 'Szukaj na tym czacie',
   'Add as task': 'Dodaj jako zadanie',
   'Save as note': 'Zapisz jako notatkę',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'Świt',
+  Lagoon: 'Laguna',
+  Lilac: 'Liliowy',
+  Peach: 'Brzoskwinia',
+  Sage: 'Szałwia',
+  Mist: 'Mgła',
 }

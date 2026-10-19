@@ -11,10 +11,11 @@
   import { LAYER } from '../motion'
   import { overlays } from '../overlays'
   import TerminalMark from '../terminal/TerminalMark.svelte'
+  import TickBox from '../TickBox.svelte'
   import { trap } from '../trap'
   import { quitAsk } from './state.svelte'
 
-  const NAME = 'nibeditor'
+  const NAME = 'Orden'
 
   const title = $derived(
     quitAsk.why === 'quit'
@@ -74,10 +75,11 @@
     </ul>
 
     <div class="row">
-      <label class="never">
-        <input type="checkbox" class="nib-checkbox" bind:checked={quitAsk.never} />
-        {t("Don't ask again")}
-      </label>
+      <TickBox
+        label={t("Don't ask again")}
+        checked={quitAsk.never}
+        onchange={(on: boolean) => (quitAsk.never = on)}
+      />
       <!-- Cancel takes the keyboard, so Enter keeps everything running. -->
       <button type="button" class="nib-button is-quiet" data-lands onclick={stay}
         >{t('Cancel')}</button
@@ -140,14 +142,5 @@
     display: flex;
     align-items: center;
     gap: var(--space-2);
-  }
-
-  .never {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    margin-inline-end: auto;
-    font-size: var(--text-sm);
-    color: var(--muted-strong);
   }
 </style>

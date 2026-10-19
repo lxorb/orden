@@ -52,6 +52,29 @@ describe('what a value is worth', () => {
     expect(valueOf(depth, 3)).toBe('flat')
     expect(valueOf(blur, Number.NaN)).toBe(18)
   })
+
+  test('a colour row holds two of the reader’s own where it says it can, and only those', () => {
+    const swatches = [{ value: 'dawn', name: 'Dawn', dark: '#000000', light: '#ffffff' }]
+    const plain: ThemeSetting = {
+      id: 'colour',
+      label: 'Colour',
+      kind: 'colour',
+      options: swatches,
+      initial: 'dawn',
+      paint: () => ({}),
+    }
+    const paired: ThemeSetting = {
+      ...plain,
+      pair: {
+        accepts: (held) => /^#[0-9a-f]{6} #[0-9a-f]{6}$/.test(held),
+        colours: () => ['#000000', '#ffffff'],
+        of: (first, second) => `${first} ${second}`,
+      },
+    }
+    expect(valueOf(plain, '#aabbcc #112233')).toBe('dawn')
+    expect(valueOf(paired, '#aabbcc #112233')).toBe('#aabbcc #112233')
+    expect(valueOf(paired, '#aabbcc')).toBe('dawn')
+  })
 })
 
 describe('what goes onto the page', () => {

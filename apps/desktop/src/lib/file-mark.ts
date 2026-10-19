@@ -37,7 +37,7 @@ import Server from 'lucide/dist/esm/icons/server.mjs'
 import SquareTerminal from 'lucide/dist/esm/icons/square-terminal.mjs'
 import Table from 'lucide/dist/esm/icons/table-2.mjs'
 import { isMarkdownPath } from './space-paths'
-import type { TabKind } from './workspace/documents.svelte'
+import { type TabKind, TAB_KINDS } from './workspace/tab-kinds'
 
 /** The canvas: Lucide's `workflow`, on the grid the rest of the set is drawn on.
  *
@@ -125,9 +125,7 @@ export function fileMark(name: string): FileMark {
  *  still a note. The graph wears none: it is a picture drawn from the space, not
  *  a file in it. */
 export function markOf(kind: TabKind): FileMark | null {
-  if (kind === 'view') return 'base'
-  if (kind === 'channel') return 'chat'
-  return kind === 'graph' || kind === 'chat' ? null : kind
+  return TAB_KINDS[kind].mark
 }
 
 /** The drawing each mark is.
@@ -171,4 +169,26 @@ export const MARKS: Record<FileMark, IconNode> = {
   base: Table,
   // A speech bubble: a chat (docs/chats.md).
   chat: MessageSquare,
+}
+
+/** What an essential's tile wears: its file's mark, or for a note that chose no icon
+ *  its first letter, since a grid of identical pages cannot be read without hovering
+ *  every tile. See BookmarkTile.svelte. */
+export function faceOf(mark: FileMark, chosen: boolean): 'mark' | 'letter' {
+  return mark === 'note' && !chosen ? 'letter' : 'mark'
+}
+
+const GRAPHEMES = new Intl.Segmenter()
+
+/** The first letter or digit of a name, one grapheme, in capitals; the first
+ *  character of a name with none. */
+export function initialOf(name: string): string {
+  let first: string | null = null
+
+  for (const { segment } of GRAPHEMES.segment(name.trim())) {
+    first ??= segment
+    if (/[\p{L}\p{N}]/u.test(segment)) return segment.toLocaleUpperCase()
+  }
+
+  return first ?? ''
 }

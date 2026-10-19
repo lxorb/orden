@@ -1,7 +1,0 @@
-{
-  "name": { "message": "nibeditor" },
-  "description": { "message": "Klip halaman, pilihan atau pautan ke dalam nota nibeditor anda." },
-  "clipPage": { "message": "Klip halaman" },
-  "clipSelection": { "message": "Klip pilihan" },
-  "clipLink": { "message": "Klip pautan" }
-}

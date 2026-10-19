@@ -7,10 +7,8 @@ import { account } from '../account.svelte'
 import { identifier } from '../identifier'
 import { samePath } from '../space-paths'
 import { invoke } from '../tauri'
-import { isUntouchedAgents } from '../agents-seed'
-import { isUntouchedWelcome } from '../welcome'
 import type { Space } from '../workspace.svelte'
-import { type HoldsSpaces, loadSpaces, selectSpace } from './spaces'
+import { type HoldsSpaces, selectSpace } from './spaces'
 
 /** Creates a space folder under the one the app owns. The name is the only
  *  thing asked for; where it lives is not a decision worth making. */
@@ -91,52 +89,6 @@ export async function renameSpace(ws: HoldsSpaces, id: string, name: string) {
   await ws.fileMoved(from, renamed.path, 'space')
 
   if (ws.activeSpaceId === id) await ws.loadTree()
-  ws.persist()
-}
-
-/** True as soon as one note on this machine has something written in it.
- *  Stops at the first, so a large space costs no more than a small one. */
-export async function hasLocalContent(ws: HoldsSpaces): Promise<boolean> {
-  for (const note of ws.notes) {
-    const doc = await invoke<string>('read_note', { path: note.path }).catch(() => '')
-    if (!doc.trim()) continue
-
-    // The welcome note exactly as the app wrote it is not writing, and the
-    // question this answers is about writing: syncing already refuses to carry
-    // an untouched seed up (sync/pass.ts), so keeping it joins nothing to the
-    // account and erasing it throws away nothing anybody wrote. Asked, it would
-    // be the first thing a new reader ever sees - a warning that cannot be
-    // undone, about the only note on screen. See welcome.ts and settling.ts.
-    if (isUntouchedWelcome(note.path, doc)) continue
-    // Nor is the AGENTS.md a new space is made with; see agents-seed.ts.
-    if (isUntouchedAgents(note.path, doc)) continue
-
-    return true
-  }
-
-  return false
-}
-
-/** Removes every space on this machine. Only ever called with an explicit
- *  yes, since nothing here can be undone. */
-export async function eraseLocalSpaces(ws: HoldsSpaces) {
-  for (const space of [...ws.spaces]) {
-    await invoke('delete_space', { path: space.root }).catch(() => undefined)
-  }
-
-  for (const tab of [...ws.tabs]) ws.close(tab.id)
-
-  ws.tree = null
-  // `loadSpaces` settles which space is open from what the folder still
-  // holds: none, once they have all gone, or one another window made
-  // meanwhile. It does not need to be cleared here first.
-  await loadSpaces(ws)
-  if (ws.activeSpaceId) await ws.loadTree()
-
-  // What the account holds lands in the tree, so the tree is brought up to
-  // show it arriving. A blank page with no sign of anything on its way
-  // reads as the notes being gone for good.
-  ws.panel = 'tree'
   ws.persist()
 }
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** `nib`: the running app, from a terminal.
+/** `orden`, and `nib` under the name it had before: the running app, from a terminal.
  *
  *  What it is, in one line: a request to the socket the app opened on 127.0.0.1,
  *  with the secret out of the app's own config folder, and whatever the app said
@@ -11,7 +11,7 @@
  *  What is deliberately not here: any knowledge of what a verb does. This script
  *  turns words into `{ verb, args, rest }`, sends it, and prints. That is why it
  *  can stay this short, and why it cannot come to a different answer from the app
- *  about anything. `nib help` asks the app for the list of verbs, so even the help
+ *  about anything. `orden help` asks the app for the list of verbs, so even the help
  *  is the app's answer rather than a second copy of it.
  *
  *  Where it ships: nowhere, on purpose, and that is the lightest thing it could be.
@@ -23,7 +23,7 @@
  *  `pnpm --filter @nib/cli link --global`.
  *
  *  There is no browser build of this and there never will be: a tab has no socket
- *  to listen on. `nib` against the web app says so rather than failing to connect.
+ *  to listen on. `orden` against the web app says so rather than failing to connect.
  *
  *  Usage, and the security notes: docs/automation.md. */
 
@@ -57,42 +57,61 @@ function endpointFile() {
 
 /** The words a caller typed, as something to send.
  *
- *  `nib files read notes/plan.md --json` becomes the verb `files`, the rest
+ *  `orden files read notes/plan.md --json` becomes the verb `files`, the rest
  *  `['read', 'notes/plan.md']` and the flag `json`, which is this script's rather
  *  than the app's. The app joins the first two into `files.read` itself, because
  *  the app is the one that knows which verbs are written as two words; see
  *  `dispatch` in the automation folder.
  *
  *  `--name value` is a named argument; `--name` on its own is a yes, the same way a
- *  query string writes one. */
+ *  query string writes one. A value may start with dashes - a note's front matter
+ *  opens with `---` - so only a word that reads as a flag ends one.
+ *
+ *  `--help` and `-h` ask for the help only where a flag goes: the value of a flag is
+ *  that value, so `orden append log.md --content -h` appends `-h`. And a bare `--` is
+ *  the end of the flags, as everywhere else on a command line: every word after it is
+ *  a word, whatever it starts with. */
+const FLAG = /^--[a-z]/i
+
 function parseArgv(argv) {
-  const mine = { json: false, out: null, yes: false }
+  const mine = { json: false, out: null, yes: false, help: false }
   const args = {}
   const rest = []
   let verb = null
+  let flags = true
 
   for (let at = 0; at < argv.length; at++) {
     const word = argv[at]
 
-    if (word === '--json') {
-      mine.json = true
-      continue
-    }
-    if (word === '--yes' || word === '-y') {
-      mine.yes = true
-      args.yes = true
-      continue
-    }
-    if (word === '--out') {
-      mine.out = argv[++at] ?? null
-      continue
-    }
-    if (word.startsWith('--')) {
-      const [name, ...value] = word.slice(2).split('=')
-      if (value.length) args[name] = value.join('=')
-      else if (argv[at + 1] !== undefined && !argv[at + 1].startsWith('--')) args[name] = argv[++at]
-      else args[name] = ''
-      continue
+    if (flags) {
+      if (word === '--') {
+        flags = false
+        continue
+      }
+      if (word === '--help' || word === '-h') {
+        mine.help = true
+        continue
+      }
+      if (word === '--json') {
+        mine.json = true
+        continue
+      }
+      if (word === '--yes' || word === '-y') {
+        mine.yes = true
+        args.yes = true
+        continue
+      }
+      if (word === '--out') {
+        mine.out = argv[++at] ?? null
+        continue
+      }
+      if (word.startsWith('--')) {
+        const [name, ...value] = word.slice(2).split('=')
+        if (value.length) args[name] = value.join('=')
+        else if (argv[at + 1] !== undefined && !FLAG.test(argv[at + 1])) args[name] = argv[++at]
+        else args[name] = ''
+        continue
+      }
     }
 
     if (verb === null) {
@@ -106,11 +125,11 @@ function parseArgv(argv) {
   return { verb, args, rest, ...mine }
 }
 
-/** What `nib --help` prints when the app is not there to answer. Short on purpose:
+/** What `orden --help` prints when the app is not there to answer. Short on purpose:
  *  the reference is docs/automation.md, and the list of verbs is the app's. */
-const USAGE = `nib - drive the running nibeditor
+const USAGE = `orden - drive the running Orden
 
-  nib <verb> [words...] [--name value] [--json] [--yes]
+  orden <verb> [words...] [--name value] [--json] [--yes]
 
   open <path> [--heading H] [--block B]
   new <name> [--content TEXT] [--append] [--prepend] [--silent]
@@ -149,13 +168,13 @@ const USAGE = `nib - drive the running nibeditor
   Every verb takes --space to work in a space other than the one that is open.
   --json answers as JSON rather than as words. Anything that changes a note needs
   --yes, and eval is off until this installation's endpoint file says otherwise.
-  See docs/automation.md.`
+  nib is the same command. See docs/automation.md.`
 
 async function main() {
   const argv = process.argv.slice(2)
   const asked = parseArgv(argv)
 
-  if (!asked.verb || asked.verb === 'help' || argv.includes('--help') || argv.includes('-h')) {
+  if (!asked.verb || asked.verb === 'help' || asked.help) {
     return help()
   }
 
@@ -208,7 +227,7 @@ async function ask(verb, args, rest) {
     },
     body: JSON.stringify({ verb, args, rest }),
   }).catch((error) => {
-    throw new Error(`nibeditor is not answering on 127.0.0.1:${port}: ${error.message}`)
+    throw new Error(`Orden is not answering on 127.0.0.1:${port}: ${error.message}`)
   })
 
   const said = await response.text()
@@ -223,7 +242,7 @@ async function endpoint() {
   const held = await readFile(path, 'utf8').catch(() => null)
   if (held === null) {
     throw new Error(
-      `no endpoint file at ${path}: open nibeditor once, and note that the browser build has no command line`,
+      `no endpoint file at ${path}: open Orden once, and note that the browser build has no command line`,
     )
   }
 

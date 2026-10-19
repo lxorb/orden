@@ -1,9 +1,11 @@
 name: validate-linux-packaging
 
 # Everything under packaging/ that targets Linux, built the way the package
-# managers themselves build it: makepkg in an Arch container, flatpak-builder
-# and flatpak-builder-lint against the Flathub runtime, snapcraft in LXD, and
-# `nix build`. Run by hand, because it only matters when a release moves.
+# managers themselves build it: makepkg in an Arch container and snapcraft in LXD.
+# Not Flathub, which Orden is not published on; its manifest under
+# packaging/flathub is kept for reference and built by nothing here.
+# Run by hand, because it only matters when a release moves. Nix has a workflow
+# of its own, nix.yml, which runs on every change to the flake.
 on:
   workflow_dispatch:
     inputs:
@@ -39,9 +41,12 @@ jobs:
       - name: Fetch the release .debs
         run: |
           mkdir -p dl
+          # Called Orden from 0.15, Nib before.
           for arch in x64 arm64; do
-            curl -fsSL -o "dl/Nib-$VERSION-linux-$arch.deb" \
-              "https://github.com/lxorb/nibeditor/releases/download/v$VERSION/Nib-$VERSION-linux-$arch.deb"
+            for name in Orden Nib; do
+              curl -fsSL -o "dl/Nib-$VERSION-linux-$arch.deb" \
+                "https://github.com/lxorb/orden/releases/download/v$VERSION/$name-$VERSION-linux-$arch.deb" && break
+            done
           done
           sha256sum dl/*.deb
 
@@ -80,7 +85,8 @@ jobs:
       - name: Tauri's own .desktop entry
         run: |
           dpkg-deb -x "dl/Nib-$VERSION-linux-x64.deb" x
-          # Named after the product: Nib.desktop up to 0.11, nibeditor.desktop since.
+          # Named after the product: Nib.desktop up to 0.11, nibeditor.desktop up to
+          # 0.13, Orden.desktop since.
           entry=$(ls x/usr/share/applications/*.desktop | head -1)
           cat "$entry"
           # Not a gate: this is the file the packaging replaces, and it is
@@ -89,10 +95,12 @@ jobs:
           file x/usr/bin/nib
           objdump -p x/usr/bin/nib | grep NEEDED
 
-      - name: What the AppImage bundles, in case Flathub cannot use the .deb
+      - name: What the AppImage bundles
         run: |
-          curl -fsSL -o Nib.AppImage \
-            "https://github.com/lxorb/nibeditor/releases/download/v$VERSION/Nib-$VERSION-linux-x64.AppImage"
+          for name in Orden Nib; do
+            curl -fsSL -o Nib.AppImage \
+              "https://github.com/lxorb/orden/releases/download/v$VERSION/$name-$VERSION-linux-x64.AppImage" && break
+          done
           chmod +x Nib.AppImage
           ./Nib.AppImage --appimage-extract >/dev/null
           echo "::group::AppDir"
@@ -103,8 +111,8 @@ jobs:
       - name: The .desktop entries the packaging ships instead
         run: |
           desktop-file-validate packaging/aur/nib-bin/nib.desktop
-          desktop-file-validate packaging/nix/nib.desktop
-          desktop-file-validate packaging/flathub/ch.emilvinu.nib.desktop
+          desktop-file-validate packaging/nix/orden.desktop
+          desktop-file-validate packaging/flathub/so.orden.Orden.desktop
 
   aur:
     runs-on: ubuntu-latest
@@ -156,7 +164,9 @@ jobs:
           install -d /check
           bsdtar -xf ./*.pkg.tar.zst -C /check
           test -f /check/usr/share/applications/nib.desktop
-          test ! -e /check/usr/share/applications/Nib.desktop
+          for tauri in Nib nibeditor Orden; do
+            test ! -e "/check/usr/share/applications/$tauri.desktop"
+          done
           test -f /check/usr/share/icons/hicolor/256x256/apps/nib.png
           test ! -e /check/usr/share/icons/hicolor/256x256@2
           test -x /check/usr/bin/nib
@@ -175,130 +185,6 @@ jobs:
           name: srcinfo
           path: out/SRCINFO
           if-no-files-found: warn
-
-  # The only package here built from source rather than from the release .deb,
-  # because Flathub requires it. The whole Cargo and npm trees are vendored, so
-  # this row compiles the app inside the sandbox with no network at all.
-  flatpak:
-    runs-on: ubuntu-latest
-    timeout-minutes: 180
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-
-      # A from-source build wants the runtime, the SDK, the vendored crates and
-      # a release target directory all at once. Not /opt/hostedtoolcache: it is
-      # millions of small files and deleting it costs more than it frees.
-      - name: Room on the disk
-        run: |
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
-            /usr/local/share/boost || true
-          df -h /
-
-      - name: flatpak, appstream and the Flathub builder
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y flatpak appstream desktop-file-utils dbus xvfb
-          # Ubuntu 24.04 blocks unprivileged user namespaces, which bubblewrap
-          # needs; the Flathub builder cannot run a build without it.
-          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
-          flatpak remote-add --if-not-exists --user flathub https://dl.flathub.org/repo/flathub.flatpakrepo
-          flatpak install --user -y --noninteractive flathub org.flatpak.Builder
-
-      - name: AppStream and desktop entry on their own
-        run: |
-          appstreamcli validate --explain packaging/flathub/ch.emilvinu.nib.metainfo.xml
-          desktop-file-validate packaging/flathub/ch.emilvinu.nib.desktop
-
-      - name: flatpak-builder-lint on the manifest and the metainfo
-        run: |
-          flatpak run --command=flatpak-builder-lint org.flatpak.Builder manifest \
-            packaging/flathub/ch.emilvinu.nib.yml
-          flatpak run --command=flatpak-builder-lint org.flatpak.Builder appstream \
-            packaging/flathub/ch.emilvinu.nib.metainfo.xml
-
-      # A copy on the host as well as the one the builder installs for
-      # itself, so the next step can look inside the runtime's own files.
-      - name: The runtime the manifest asks for
-        run: flatpak install --user -y --noninteractive flathub org.gnome.Platform//50 org.gnome.Sdk//50
-
-      # The builder runs in a sandbox with a flatpak installation of its
-      # own, invisible to the host, so it has to install the runtime again
-      # for itself - which it cannot do without a session bus to ask.
-      # `--sandbox` is what makes this the real test: no network and no host
-      # filesystem while the crates and the npm packages are compiled.
-      - name: Build, the way Flathub builds it
-        working-directory: packaging/flathub
-        run: >-
-          dbus-run-session -- flatpak run org.flatpak.Builder --force-clean --sandbox --user
-          --install-deps-from=flathub
-          --mirror-screenshots-url=https://dl.flathub.org/media/
-          --repo=repo builddir ch.emilvinu.nib.yml
-
-      - name: Install it out of the repo it just wrote
-        run: |
-          flatpak remote-add --user --no-gpg-verify nib-local packaging/flathub/repo
-          flatpak install --user -y --noninteractive nib-local ch.emilvinu.nib
-
-      - name: Does the runtime carry webkit2gtk-4.1 at all
-        run: |
-          echo "::group::org.gnome.Platform libraries matching webkit/javascriptcore/soup"
-          find ~/.local/share/flatpak/runtime/org.gnome.Platform -maxdepth 8 \
-            \( -name '*webkit*' -o -name '*javascriptcore*' -o -name 'libsoup*' \) -printf '%p\n' | sort
-          echo "::endgroup::"
-          # The real gate: every library the binary asks for has to resolve
-          # inside the sandbox.
-          flatpak run --devel --command=ldd ch.emilvinu.nib /app/bin/nib | tee ldd.txt
-          if grep -q 'not found' ldd.txt; then
-            echo "::error::unresolved libraries in the sandbox"
-            grep 'not found' ldd.txt
-            exit 1
-          fi
-          echo 'every library resolves'
-
-      # Nib has no --version to ask, so this is a launch: what matters is that
-      # the app the sandbox built comes up and stays up.
-      - name: It starts and stays up
-        run: |
-          xvfb-run -a flatpak run ch.emilvinu.nib > nib.log 2>&1 &
-          running=$!
-          sleep 30
-          if kill -0 "$running" 2>/dev/null; then
-            echo 'still running after 30s'
-            kill "$running" || true
-          else
-            echo "::error::the app exited on its own"
-            cat nib.log
-            exit 1
-          fi
-          cat nib.log
-          ! grep -qiE "could not start|error while loading shared libraries" nib.log
-
-      - name: What the build made of the screenshot
-        working-directory: packaging/flathub
-        run: |
-          find builddir/files/share/app-info -type f | sort
-          du -sh builddir/files/share/app-info
-          for f in builddir/files/share/app-info/xmls/*; do
-            echo "::group::$f"
-            zcat "$f" 2>/dev/null || cat "$f"
-            echo "::endgroup::"
-          done
-
-      - name: flatpak-builder-lint on the built repo
-        working-directory: packaging/flathub
-        run: |
-          flatpak run --command=flatpak-builder-lint org.flatpak.Builder repo repo > lint.json || true
-          cat lint.json
-          # Everything the catalogue needs is in it - the screenshot is
-          # fetched and scaled, the icons are cached and remote - but the
-          # paths stay relative to media_baseurl until Flathub's own build
-          # service rewrites them absolute. The linter skips both mirror
-          # checks inside that pipeline; outside it they are the only two
-          # errors allowed to fire.
-          jq -r '.errors[]?' lint.json
-          jq -e '(.errors // []) - ["appstream-external-screenshot-url", "appstream-remote-icon-not-mirrored"] | length == 0' lint.json
 
   snap:
     permissions:
@@ -323,6 +209,17 @@ jobs:
           grep -q "libwebkit2gtk-4[.]1[.]so[.]0$" webkit.txt
           echo "webkit2gtk-4.1 comes from the platform snap"
 
+      # snapcraft reads one checksum line, amd64's as committed; the arm64 row takes
+      # the arm64 digest the file keeps beside it. See packaging/linux.md.
+      - name: This architecture's checksum
+        if: matrix.arch == 'arm64'
+        working-directory: packaging/snap
+        run: |
+          own=$(sed -nE 's/^ *# *on arm64: (sha256\/[0-9a-f]{64})$/\1/p' snapcraft.yaml)
+          [ -n "$own" ] || { echo "::error::snapcraft.yaml keeps no arm64 digest"; exit 1; }
+          sed -i -E "s|^( *source-checksum: ).*|\1$own|" snapcraft.yaml
+          grep -n 'source-checksum' snapcraft.yaml
+
       - uses: snapcore/action-build@3bdaa03e1ba6bf59a65f84a751d943d549a54e79 # v1.3.0
         id: build
         with:
@@ -334,38 +231,8 @@ jobs:
           unsquashfs -d /tmp/snapx "${{ steps.build.outputs.snap }}" >/dev/null
           cat /tmp/snapx/meta/snap.yaml
           test -f /tmp/snapx/usr/share/applications/nib.desktop
-          test ! -e /tmp/snapx/usr/share/applications/Nib.desktop
+          for tauri in Nib nibeditor Orden; do
+            test ! -e "/tmp/snapx/usr/share/applications/$tauri.desktop"
+          done
           ls /tmp/snapx/meta/gui/ || true
           find /tmp/snapx -name 'libwebkit2gtk*' -o -name 'libgtk-3*' | head
-
-  nix:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-      - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
-        with:
-          extra_nix_config: |
-            experimental-features = nix-command flakes
-      - name: nix build
-        run: |
-          nix build --print-build-logs "path:$PWD/packaging/nix#nib"
-          ls -la result/bin result/share/applications result/share/icons/hicolor/*/apps
-      # Nib has no --version to ask, so this is a launch: what matters is
-      # that the FHS environment resolves every library the AppImage needs.
-      - name: Nothing is missing from the wrapper
-        run: |
-          sudo apt-get update && sudo apt-get install -y xvfb
-          # appimageTools wraps the app in a bubblewrap FHS environment, and
-          # Ubuntu 24.04 blocks unprivileged user namespaces by default.
-          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0 || true
-          timeout 20 xvfb-run -a ./result/bin/nib > nib.log 2>&1 || true
-          cat nib.log
-          ! grep -qiE "error while loading shared libraries|cannot open shared object" nib.log
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        if: always()
-        with:
-          name: flake-lock
-          path: packaging/nix/flake.lock
-          if-no-files-found: warn

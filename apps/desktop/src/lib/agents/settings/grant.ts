@@ -34,6 +34,7 @@ export const SCOPE_GROUPS = [
   { id: 'scripts', scopes: ['browser.script'] },
   { id: 'settings', scopes: ['settings'] },
   { id: 'terminal', scopes: ['terminal'] },
+  { id: 'helpers', scopes: ['agents'] },
 ] as const satisfies readonly { id: string; scopes: readonly Scope[] }[]
 
 export type ScopeGroup = (typeof SCOPE_GROUPS)[number]['id']
@@ -55,6 +56,7 @@ const ALL_SCOPES: readonly Scope[] = [
   'browser.storage',
   'settings',
   'terminal',
+  'agents',
 ]
 
 /** The questions the reader may turn off, and what an agent needs to hold for the
@@ -72,17 +74,20 @@ export const ASKS: readonly { category: Category; needs: readonly Scope[] }[] = 
 ]
 
 /** The limits a slider may set: the crate's defaults sit inside each. Eight tabs is the
- *  most every agent together keeps open (6.4). */
+ *  most every agent together keeps open (6.4). Memory is the browser's, in MB, past
+ *  which the agent opens no tab: 0, where it starts, is no ceiling at all, because a
+ *  machine's memory is its owner's to spend (#333). */
 export const LIMITS = {
   tabs: { min: 1, max: 8, step: 1 },
   calls: { min: 60, max: 1200, step: 60 },
   navigations: { min: 10, max: 300, step: 10 },
+  memory: { min: 0, max: 32768, step: 1024 },
 } as const
 
 export type Limit = keyof typeof LIMITS
 
 /** The limits in the order the pane shows them. */
-export const LIMIT_NAMES: readonly Limit[] = ['tabs', 'calls', 'navigations']
+export const LIMIT_NAMES: readonly Limit[] = ['tabs', 'calls', 'navigations', 'memory']
 
 const holds = (scopes: readonly Scope[], scope: Scope) => scopes.includes(scope)
 
@@ -131,9 +136,15 @@ export function withAsk(grant: Grant, category: Category, on: boolean): Grant {
   return { ...grant, asks: on ? rest : { ...rest, [category]: false } }
 }
 
-/** Whether the grant is the AI sidebar's own agent for a provider ("nib · Claude",
- *  src-tauri/src/ai_agent.rs): how much it asks is the thread's mode, not the grant's. */
-export const sidebars = (grant: Grant): boolean => grant.client.startsWith('nib · ')
+/** How the AI sidebar's own agent for a provider is filed: "Orden · Claude"
+ *  (src-tauri/src/ai_agent.rs), and "nib · Claude" by a crate from before the rename,
+ *  until it has rewritten its grants. */
+const SIDEBAR = ['Orden · ', 'nib · ']
+
+/** Whether the grant is the AI sidebar's own agent for a provider: how much it asks
+ *  is the thread's mode, not the grant's. */
+export const sidebars = (grant: Grant): boolean =>
+  SIDEBAR.some((prefix) => grant.client.startsWith(prefix))
 
 export const withMode = (grant: Grant, confirm: boolean): Grant => ({
   ...grant,
@@ -232,7 +243,7 @@ export function ownGrant(id: string, client: string, created: number): Grant {
     name: client,
     client,
     scopes: ALL_SCOPES.filter(
-      (one) => !['browser.script', 'browser.storage', 'settings', 'terminal'].includes(one),
+      (one) => !['browser.script', 'browser.storage', 'settings'].includes(one),
     ),
     spaces: 'all',
     sites: {},
@@ -241,7 +252,7 @@ export function ownGrant(id: string, client: string, created: number): Grant {
     asks: {},
     always: {},
     programs: [],
-    limits: { tabs: 4, calls: 600, navigations: 60 },
+    limits: { tabs: 4, calls: 600, navigations: 60, memory: 0 },
     created,
   }
 }
@@ -255,7 +266,10 @@ export function thirdPartyGrant(id: string, client: string, created: number): Gr
   return {
     ...own,
     scopes: own.scopes.filter(
-      (one) => !['context', 'browser.reader', 'chats.read', 'chats.write'].includes(one),
+      (one) =>
+        !['context', 'browser.reader', 'chats.read', 'chats.write', 'agents', 'terminal'].includes(
+          one,
+        ),
     ),
     mode: 'confirm',
   }

@@ -179,7 +179,7 @@ def heard(message: object) -> None:
     if message.type != "error":  # type: ignore[attr-defined]
         return
 
-    where = message.location().get("url", "")  # type: ignore[attr-defined]
+    where = message.location.get("url", "")  # type: ignore[attr-defined]
     if where and not where.startswith(ORIGIN):
         say(f"[the frame said] {message.text}")  # type: ignore[attr-defined]
         return
@@ -548,7 +548,7 @@ def drive_canvas(page: Page) -> None:
             edges: [],
           }
           window.nibApp.workspace.openShared(
-            { id: 'plane', name: 'Plane.canvas', canvas: true },
+            { id: 'plane', name: 'Plane.canvas', path: 'Plane.canvas' },
             JSON.stringify(plane),
           )
         }"""

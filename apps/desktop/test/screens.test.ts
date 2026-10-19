@@ -115,13 +115,14 @@ describe('every layer in the middle of the window', () => {
       'lib/SettingsPanel.svelte',
       'lib/Sheet.svelte',
       'lib/SignIn.svelte',
-      'lib/SpaceChooser.svelte',
       'lib/SpacePicker.svelte',
       'lib/ThemeStore.svelte',
       'lib/quick-add/QuickAddSheet.svelte',
       'lib/quitting/QuitSheet.svelte',
       'lib/remote/HostPicker.svelte',
+      'lib/settings/BrowserThemes.svelte',
       'lib/theme-picker/ThemePicker.svelte',
+      'lib/views/task-view/TaskSheet.svelte',
     ])
   })
 

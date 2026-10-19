@@ -29,21 +29,22 @@ import { blockCommands, exportCommands } from './commands'
 import { fullscreen } from './fullscreen.svelte'
 import { EXPORT_FORMATS, EXPORT_VARIANTS } from './export/formats'
 import { EXPORT_EXTRAS } from './export/offer'
-import { canPrint, printNote } from './export/print'
+import { canPrint, printable, printOpen } from './export/print'
 import { t } from './i18n.svelte'
 import { DIVIDER, type MenuGroup, type MenuItem, type MenuRow } from './menu-item'
 import { modes } from './modes.svelte'
 import { shortcuts } from './shortcuts.svelte'
 import { toggleFill } from './tab-fill/fill'
 import { present } from './slides/present.svelte'
-import { isDesktop, openExternal } from './tauri'
+import { DOWNLOAD_URL } from './links'
+import { isDesktop, isNative, openExternal } from './tauri'
 import { updates } from './updates.svelte'
 import { viewport } from './viewport.svelte'
 import { workspace } from './workspace.svelte'
 
 /** Where the app is developed, which is the whole of "about" for an open
  *  source editor. */
-export const SOURCE_URL = 'https://github.com/lxorb/nibeditor'
+export const SOURCE_URL = 'https://github.com/lxorb/orden'
 
 /** Where a bug goes, and where a new version says what changed. Both are pages
  *  of the same repository, so neither is a second address to keep in step. */
@@ -186,8 +187,8 @@ export function appMenu(context: Context): MenuGroup[] {
                 label: t('Print'),
                 ...keyed('app.print'),
                 asks: true,
-                disabled: workspace.active?.kind !== 'note',
-                run: () => busy.start(t('Printing'), () => printNote()),
+                disabled: !printable(workspace.active?.kind),
+                run: () => busy.start(t('Printing'), () => printOpen()),
               },
             ]
           : []),
@@ -438,7 +439,7 @@ export function appMenu(context: Context): MenuGroup[] {
         {
           label: t('Source mode'),
           ...keyed('app.source'),
-          checked: modes.source,
+          checked: modes.sourceIn(view),
           run: () => modes.toggleSource(view),
         },
         {
@@ -459,7 +460,7 @@ export function appMenu(context: Context): MenuGroup[] {
           label: t('Fullscreen'),
           ...keyed('app.fullscreen'),
           checked: fullscreen.on,
-          run: () => void fullscreen.toggle(workspace.activeTabId),
+          run: () => void fullscreen.toggle(workspace.panes),
         },
         // The tab alone in the window, which stays a window; see lib/tab-fill. A phone
         // and a tablet show one document already.
@@ -519,7 +520,7 @@ export function appMenu(context: Context): MenuGroup[] {
         {
           label: t('Right sidebar'),
           ...keyed('app.right-sidebar'),
-          checked: !!workspace.rightPanel,
+          checked: !!workspace.openOn('right'),
           disabled: !workspace.right.length,
           run: () => workspace.toggleSidebar('right'),
         },
@@ -529,7 +530,9 @@ export function appMenu(context: Context): MenuGroup[] {
           run: () => workspace.showPanel('tree'),
         },
         { label: t('Outline'), run: () => workspace.showPanel('outline') },
-        { label: t('Ask'), ...keyed('app.ask'), run: () => workspace.showPanel('ask') },
+        ...(viewport.touch
+          ? []
+          : [{ label: t('Ask'), ...keyed('app.ask'), run: () => workspace.showPanel('ask') }]),
         DIVIDER,
         // Folding is a view operation, so these rows stand whether the note can
         // be written in or not.
@@ -576,7 +579,12 @@ export function appMenu(context: Context): MenuGroup[] {
         {
           label: account.user ? t('Sign out') : t('Sign in'),
           asks: !account.user,
-          run: () => (account.user ? void account.signOut() : (account.open = true)),
+          run: () =>
+            account.user
+              ? __EVEN_PLUGIN__
+                ? void account.signOut()
+                : void import('./ai/vault/leaving').then((one) => one.signOut())
+              : (account.open = true),
         },
         DIVIDER,
         // Through the store, so what it finds is offered rather than downloaded
@@ -584,6 +592,10 @@ export function appMenu(context: Context): MenuGroup[] {
         ...(isDesktop
           ? [{ label: t('Check for updates'), asks: true, run: () => void updates.check() }]
           : []),
+        // In a browser, the app itself, which nothing else in the page offers.
+        ...(isNative
+          ? []
+          : [{ label: t('Download the app'), run: () => void openExternal(DOWNLOAD_URL) }]),
         { label: t('What is new'), run: () => void openExternal(RELEASES_URL) },
         { label: t('Report an issue'), run: () => void openExternal(ISSUES_URL) },
         { label: t('Source code'), run: () => void openExternal(SOURCE_URL) },

@@ -50,6 +50,13 @@ body {
   overscroll-behavior: none;
 }
 
+/* A drag that is not about words selects none on its way: a divider, a sidebar's edge,
+   a row carried. Both spellings, because a Mac's WebKit reads only the prefixed one. */
+.nib-unselectable {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 /* A button is pressed, not read. WebKit selects the words on one held down, and
    on an iPhone a long press on a button's label came up selected, with Copy and
    Look Up over it. */
@@ -475,8 +482,9 @@ select option {
    the pointer. */
 .nib-setting {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-1) var(--space-3);
   width: 100%;
   min-height: 38px;
   margin: 0;
@@ -510,6 +518,36 @@ select option {
   overflow-wrap: anywhere;
 }
 
+/* But never below a width a name can be read at, whatever sits beside it.
+
+   A name that gives way all the way gives way to nothing: a control as wide as the
+   row - an action that is a line across a card, a dropdown that is 100% of what it
+   is in - left the name 0px, and its words were drawn a letter to a line. Settings >
+   Online terminal did it with Restart, Glasses with the OpenAI key, and Account with
+   Clear after, each one found by Emil. Each pane's own rule said `min-width: 0` for
+   the name, which is what let it go to nothing, so the floor here is `!important`:
+   it is the one thing a row promises that no pane may take back.
+
+   The floor is where the row breaks instead. It wraps, and what does not fit beside
+   the name goes onto a line of its own under it, at the end where every control
+   sits - so a control too wide for the row costs a line, the way a long name does,
+   and never the name. Nine rems is the longest English name a row holds at the
+   small size; a word longer than that, which German has, may still break, and only
+   there. */
+.nib-setting > .name {
+  flex: 1 1 0;
+  min-inline-size: min(9rem, 100%) !important;
+}
+
+.nib-setting > .name + * {
+  margin-inline-start: auto;
+}
+
+/* And what sits at the end is never wider than the row it ends. */
+.nib-setting > .name ~ * {
+  max-inline-size: 100%;
+}
+
 /* ── Layers over the app ───────────────────── */
 
 /* What a layer is put up over: the app, dimmed and softened, so the surface in
@@ -535,11 +573,13 @@ select option {
   inset: 0;
   z-index: calc(var(--scrim-z, var(--z-sheet)) - 1);
   background: color-mix(in srgb, var(--bg) var(--scrim-ink, 62%), transparent);
+  -webkit-backdrop-filter: blur(var(--scrim-blur, 3px));
   backdrop-filter: blur(var(--scrim-blur, 3px));
 }
 
 .nib-scrim.is-clear {
   background: none;
+  -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
 
@@ -791,6 +831,178 @@ select option {
   background: var(--surface-selected);
   box-shadow: inset 0 0 0 1px var(--accent);
   color: var(--text-strong);
+}
+
+/* ── A tile ────────────────────────────────── */
+
+/* The Essentials above the file list, Zen's: a grid of soft cards, each wearing only
+   its file's face, the open one lifted. At least `--tile-least` a tile and the rest
+   shared out, so a narrow panel holds four, a wide one more and two tiles are two
+   halves; a thumb's row tall under a finger. See Bookmarks.svelte. */
+.nib-tiles {
+  --tile-least: var(--space-7);
+  --tile-height: calc(var(--row-height) + var(--space-4));
+  --tile-gap: var(--space-1);
+
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(var(--tile-least), 1fr));
+  gap: var(--tile-gap);
+  margin: var(--space-1) var(--space-1) var(--space-3);
+  padding: 0;
+  list-style: none;
+}
+
+[data-touch] .nib-tiles {
+  --tile-least: calc(var(--space-7) + var(--space-4));
+  --tile-height: var(--touch-row);
+  --tile-gap: var(--space-2);
+}
+
+.nib-tiles > li {
+  min-width: 0;
+}
+
+/* The place for a first tile while a tab that could be one is carried. */
+.nib-tiles .is-empty {
+  height: var(--tile-height);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-md);
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+
+.nib-tiles.is-taking .is-empty {
+  border-color: var(--accent);
+  background: var(--surface-selected);
+}
+
+.nib-tile {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  min-width: 0;
+  height: var(--tile-height);
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--surface-hover);
+  color: var(--muted-strong);
+  font-family: var(--font-ui);
+  cursor: default;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+/* Hover and press as a veil of the text's own colour, so the step is the same on a
+   dark panel, a light one and a pane of glass, lifted or not. */
+.nib-tile::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--text-strong);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+@media (hover: hover) {
+  .nib-tile:hover {
+    color: var(--text-strong);
+  }
+
+  .nib-tile:hover::after {
+    opacity: 0.05;
+  }
+}
+
+/* The card gives under the press, as a key does. */
+.nib-tile:active {
+  transform: scale(0.96);
+  color: var(--text-strong);
+}
+
+.nib-tile:active::after {
+  opacity: 0.1;
+}
+
+/* The open one, lifted: the accent's wash over the card, a ring of the accent fading
+   into its quiet line - where Zen draws one out of the favicon's colours - and the
+   small shadow a raised card wears. */
+.nib-tile.is-on {
+  background:
+    linear-gradient(var(--surface-selected), var(--surface-selected)), var(--surface-hover);
+  box-shadow: var(--shadow-sm);
+  color: var(--accent);
+}
+
+/* The ring, masked out of a full card so the wash inside it stays; it fades in. */
+.nib-tile::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 1.5px;
+  border-radius: inherit;
+  background: linear-gradient(
+    135deg,
+    var(--accent),
+    color-mix(in srgb, var(--accent) 45%, var(--text-strong)) 45%,
+    var(--accent-line)
+  );
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box xor,
+    linear-gradient(#000 0 0);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-fast) var(--ease-out);
+}
+
+.nib-tile.is-on::before {
+  opacity: 1;
+}
+
+/* Where a drop would land: a line in the gap, as a list draws one between rows. */
+.nib-tile.is-before::before,
+.nib-tile.is-after::before {
+  inset: var(--space-1) auto;
+  width: 2px;
+  padding: 0;
+  border-radius: 1px;
+  background: var(--accent);
+  mask: none;
+  -webkit-mask: none;
+  opacity: 1;
+}
+
+.nib-tile.is-before::before {
+  inset-inline-start: calc(-1 * var(--tile-gap) / 2 - 1px);
+}
+
+.nib-tile.is-after::before {
+  inset-inline-end: calc(-1 * var(--tile-gap) / 2 - 1px);
+}
+
+/* The face a size up from a row's mark, which reads `--icon-md`; and the letter a
+   note that chose no icon wears, at the same size. */
+.nib-tile-face {
+  --icon-md: var(--icon-lg);
+
+  display: grid;
+  place-items: center;
+}
+
+.nib-tile-letter {
+  font-size: var(--icon-lg);
+  font-weight: var(--weight-strong);
+  line-height: 1;
 }
 
 /* ── A glyph that is a button ──────────────── */
@@ -1634,7 +1846,7 @@ select:focus-visible,
 
    A grid of equal halves rather than a row of `flex: 1` ones. A row asked how wide it
    wanted to be answered with the sum of its words and then shared that out evenly, so
-   the longer word got less than it needed and broke: "nibeditor's own" over two lines
+   the longer word got less than it needed and broke: "Orden's own" over two lines
    in a groove exactly as wide as both words. Equal columns are each as wide as the
    widest word, so a groove left to its own width is one where no half wraps; where a
    row is too narrow for that, the halves give way together as they always did. */
@@ -1660,8 +1872,8 @@ select:focus-visible,
      tokens.css, and a theme that restates the surfaces moves this with them.
 
      Said with the attribute because the app states it on the document on every
-     change of theme - see theme.svelte.ts - and so do an export, a deck and the
-     clipper. A published page is the one carrier that leaves it off and reads the
+     change of theme - see theme.svelte.ts - and so do an export and a deck. A
+     published page is the one carrier that leaves it off and reads the
      system instead, and no published page has a control like this on it: anything
      that puts one there has to answer the scheme the way blog-css.ts does. */
   --segment-raised: var(--surface-3);

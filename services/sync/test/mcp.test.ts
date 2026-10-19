@@ -87,7 +87,7 @@ describe('the connector', () => {
   test('introduces itself', async () => {
     const response = await rpc(await connector(), 'initialize')
 
-    expect(response.json.result.serverInfo.name).toBe('nib')
+    expect(response.json.result.serverInfo.name).toBe('orden')
     expect(response.json.result.capabilities.tools).toBeDefined()
   })
 

@@ -38,11 +38,12 @@ SHOTS = DRIVE.shots
 
 # A real picture, small enough to write into a note as a `data:` URL and wide enough
 # to have a top and a bottom worth dragging between: a 4 by 8 PNG of two colours.
-# Built by hand so nothing here depends on a file in the repository.
+# Built by hand so nothing here depends on a file in the repository; the drive checks
+# the browser decoded it, because the bytes that were here for a while were not a PNG
+# at all and every shot showed a broken-picture icon in the band without a word said.
 WIDE = (
     "data:image/png;base64,"
-    "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAICAYAAADwZCxbAAAAKUlEQVR4nGP8z8DAwPCfgYHhPwMDA8"
-    "N/BgYGhv8MDAz/GRgYGP4zMDAwAAAxPwUCnZ0uVQAAAABJRU5ErkJggg=="
+    "iVBORw0KGgoAAAANSUhEUgAAAAQAAAAICAYAAADeM14FAAAAGklEQVR42mPQyt/wHxkzkCHwoMvmPzImQwAAFNxO0ZYNS9QAAAAASUVORK5CYII="
 )
 
 COVERED = f"---\ntitle: Covered\ncover: {WIDE}\n---\n\n# Covered\n\nWords under the band.\n"
@@ -67,6 +68,13 @@ async (starts) => {
 }
 """
 
+# Whether the band's picture is one the browser decoded, rather than a broken one.
+DECODED = (
+    "(() => { const one = document.querySelector('#write .nib-cover img');"
+    " return !!one && one.complete && one.naturalWidth > 0 })()"
+)
+
+
 # What the page says about the band: whether there is one, where its picture's band
 # sits, and whether it is above the properties and the first heading.
 BANNER = """
@@ -80,6 +88,7 @@ BANNER = """
     handle: !!cover?.querySelector('.nib-cover-drag'),
     position: picture ? getComputedStyle(picture).objectPosition : null,
     tall: picture ? Math.round(picture.getBoundingClientRect().height) : 0,
+    loaded: !!picture && picture.complete && picture.naturalWidth > 0,
     first: !!cover && !!heading
       ? cover.compareDocumentPosition(heading) === Node.DOCUMENT_POSITION_FOLLOWING
       : null,
@@ -130,8 +139,10 @@ def open_note(page: Page, starts: str) -> None:
 
 def the_editor(page: Page) -> None:
     open_note(page, "Covered")
+    DRIVE.waited(page, DECODED, "the cover's picture in the editor", patience=10)
     banner = page.evaluate(BANNER)
     say(f"[editor] {json.dumps(banner)}")
+    is_true(banner["loaded"], "the editor's band shows no picture")
 
     is_true(banner["there"], "the editor draws no banner for a note that names a cover")
     is_true(banner["handle"], "the banner has nothing to take hold of")
@@ -197,8 +208,10 @@ def the_reading_view(page: Page) -> None:
     wait_for(page, "document.querySelector('article#write')", "the reading view")
     quiet(page)
 
+    DRIVE.waited(page, DECODED, "the cover's picture in the reading view", patience=10)
     banner = page.evaluate(BANNER)
     say(f"[reading] {json.dumps(banner)}")
+    is_true(banner["loaded"], "the reading view's band shows no picture")
     is_true(banner["there"], "the reading view draws no banner")
     is_true(banner["first"], "the banner is not above the note in the reading view")
     is_true(not banner["handle"], "the reading view offers a drag handle it cannot honour")

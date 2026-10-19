@@ -5,8 +5,7 @@
  *  The script is the very file the crate runs (`src-tauri/src/web_tabs/reader.js`), with
  *  the two words filled in the way `web_tabs::reader` fills them. What it hands over has
  *  to come out of the extractor as exactly what the extractor makes of the live page,
- *  because that is what the clipper extension clips: one page, one note, whichever of the
- *  two clipped it. */
+ *  because that is the extractor's own answer: one page, one note, however it was read. */
 
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'

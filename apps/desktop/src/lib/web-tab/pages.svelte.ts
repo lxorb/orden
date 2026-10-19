@@ -31,9 +31,12 @@ import { landed } from '../glass/chrome.svelte'
 import { isNumber, isRecord, isString, stored, storedText } from '../stored'
 import { invoke, isDesktop } from '../tauri'
 import { isWebAddress } from './address'
+import { ASK_AGAIN, NOT_ANSWERING } from './answering'
 import type { Cut } from './covers'
 import { Latest } from './latest'
 import { placeOf, placeKept } from './place'
+import type { Upgrade } from './upgrade'
+import type { HalfTyped } from './typed'
 
 /** This device's history, asked for by the first page that says where it is rather
  *  than carried: this store is in front of the first paint, because the workspace
@@ -44,8 +47,8 @@ function history(): Promise<typeof import('./visited').visited> {
   return import('./visited').then((module) => module.visited)
 }
 
-/** Which store each space keeps its web data in, asked for the same way and for the
- *  same reason: the first page is the first thing that needs it. See web-data.ts. */
+/** Which store a page keeps its web data in, asked for the same way and for the same
+ *  reason: the first page is the first thing that needs it. See web-data.svelte.ts. */
 function stores(): Promise<typeof import('./web-data.svelte').webData> {
   return import('./web-data.svelte').then((module) => module.webData)
 }
@@ -86,15 +89,6 @@ export const OUT_OF_THE_WAY = 20_000
  *  two overlays in a row share one and a page that has scrolled since is
  *  photographed again. */
 const SHOT_KEEPS = 400
-
-/** What the crate says when a page's browser did not answer and the page was left where
- *  it was rather than the app waiting on it; see src-tauri/src/web_answers.rs. */
-const NOT_ANSWERING = 'that page is not answering'
-
-/** How long before a page whose browser did not answer is placed again. A second: a
- *  browser busy with one heavy page is usually back by then, and each try costs the
- *  crate a moment of asking at most. */
-const ASK_AGAIN = 1000
 
 /** How long the page is given to say where it is before it is parked anyway. Half a
  *  second: the answer is a line of script in the page's own document, and a page that
@@ -182,7 +176,8 @@ function painted(): Promise<void> {
 }
 
 /** Whether the crate cuts the app's layers out of a page rather than hiding it, which
- *  it says with every placement: the system's engine on Windows does. Until it has said,
+ *  it says with every page it builds and every placement: the system's engine on Windows
+ *  does. Until it has said,
  *  a page under a layer is hidden behind its picture, which every build can do. */
 let cutting = false
 
@@ -219,23 +214,6 @@ interface Wanted {
   covering: boolean
   /** What else the pane said; see `Over`. */
   over: Over
-}
-
-/** A web login another computer is using, over a tab of that site: the computer's name,
- *  whether Use here is being answered, and Use here itself. See lease.svelte.ts. */
-export interface Lock {
-  device: string
-  pressed: boolean
-  take(): void
-}
-
-/** What a web login asks of a page's life (lease.svelte.ts), set once web logins
- *  travel: whether a page may be built or sent somewhere, where each page says it is,
- *  and which tabs have gone. Absent, every page runs as it always did. */
-interface PageWatch {
-  admit(tab: string, page: Page): Promise<boolean>
-  moved(tab: string, page: Page, settled: boolean): void
-  closed(tab: string): void
 }
 
 /** What a browser build is showing in the pane: the card that stands for the page,
@@ -317,6 +295,13 @@ export class Page {
   url = $state<string | null>(null)
   /** What the page calls itself, or the empty string before it has said. */
   title = $state('')
+  /** An address half typed into the tab's field, waiting while another tab is in front
+   *  (#381): the tab's own, gone with it. Plain, since only the field reads it, as it is
+   *  built. See AddressField.svelte. */
+  halfTyped: HalfTyped | null = null
+  /** See WebBar.svelte (#381). */
+  keyboard: 'address' | 'page' | null = null
+  seen = false
   /** The site's own mark as the page shows it now, as an address the window draws
    *  without fetching anything: the picture the engine chose for the page, from inside
    *  the page's own profile. It follows the page, so a site that redraws its mark with
@@ -375,6 +360,11 @@ export class Page {
    *  app's layers. Not drawn. */
   under: { pane: Rect; over: Over } | null = null
 
+  /** The https address the bar chose for a host typed with no scheme, while the page has
+   *  not yet arrived there: plain http is tried when nothing answers. Not drawn; see
+   *  upgrade.ts. */
+  upgrade: Upgrade | null = null
+
   /** Set while the address field is being typed in, so the page reporting a new
    *  title does not rewrite what somebody is halfway through typing. */
   typing = $state(false)
@@ -428,17 +418,19 @@ export class Page {
    *  is the tab a browser closes again; see `downloaded`. Not drawn. */
   titled = false
 
-  /** Which space the tab belongs to, which decides the store its page is built in and
-   *  the history it adds to. Set by the pane, which knows the space the way it knows the
-   *  file; see web-data.ts. */
+  /** Which space the tab belongs to. Set by the pane, which knows the space the way it
+   *  knows the file. */
   space: string | null = null
+
+  /** The web note's own web data, as its file says; see web-data.svelte.ts. */
+  own: string | null = null
 
   /** Where the pane last put the page, so a page built again in another store goes back
    *  where it was; see `restore`. */
   pane: Rect | null = null
 
-  /** The space whose web data the page was just built again in; see rehome.ts. */
-  rehomed = $state<string | null>(null)
+  /** Said under the bar for a moment; see `rehouse`. */
+  notice = $state<string | null>(null)
 
   /** When this tab was last looked at: when it went out of sight, for one that has. */
   looked = Date.now()
@@ -463,6 +455,8 @@ export class Page {
   inPrivate = false
   /** The store the page was built in; see `restore`. */
   store: string | null | undefined
+  /** Every move to another store, one after the other; see `rehouse`. */
+  rehousing = Promise.resolve()
 
   /** The page's mark has changed. Empty is a page with none, which leaves the tab
    *  the file's mark again and the file its own. */
@@ -476,10 +470,6 @@ export class Page {
   loaded(loading: boolean) {
     this.arriving = loading ? Infinity : Date.now() + ARRIVES
   }
-
-  /** Another computer's web login over this tab, or null. Drawn by the pane in place of
-   *  the page; see WebLocked.svelte. */
-  lock = $state<Lock | null>(null)
 
   /** Whether the tab is on screen in its pane, page or no page. Not drawn. */
   onScreen = false
@@ -513,14 +503,7 @@ class Pages {
    *  about every page in it through one listener. */
   private listening = false
 
-  /** The web login's say over pages, once web logins travel; see `PageWatch`. */
-  watch: PageWatch | null = null
-
-  /** The computer this one waits on for the web key, and the six digits both show, for
-   *  the quiet line under a web tab's bar. See approval.svelte.ts. */
-  waiting = $state<{ device: string; digits: string } | null>(null)
-
-  /** Every tab's page, for the web login to walk. */
+  /** Every tab's page, for whatever walks them all. */
   each(): [string, Page][] {
     return [...this.held.entries()]
   }
@@ -548,6 +531,11 @@ class Pages {
    *  Never makes a page, so a row of the file list may ask it; see chosen-icon.ts. */
   iconOf(tabId: string): string | null {
     return this.held.get(tabId)?.icon ?? null
+  }
+
+  /** Whether a tab's page is on its way somewhere. Never makes a page. */
+  loadingOf(tabId: string): boolean {
+    return this.held.get(tabId)?.loading ?? false
   }
 
   /** What the tab is pointing at, for the session and for the bar. */
@@ -660,15 +648,6 @@ class Pages {
     // say something else while it happens; the tail below applies whichever came last.
     if (!visible) page.wanted = { pane, visible, covering: true, over }
 
-    // A site whose login another computer is using runs nowhere but there: the pane
-    // shows who has it instead. Asked while the page counts as on its way, so the pane's
-    // next look waits for this answer rather than asking again. See lease.svelte.ts.
-    if (this.watch && !page.inPrivate && !(await this.watch.admit(tabId, page))) {
-      page.opening = false
-      page.wanted = null
-      return
-    }
-
     // Where this tab was left, if it is the page being opened: a parked tab comes back
     // at the place it was parked at, and a note opened again tomorrow comes back at the
     // place the reading got to. The crate restores it inside the page as it loads,
@@ -684,18 +663,24 @@ class Pages {
     // The address this build is for. A new tab's first build has none and is refused,
     // and an address typed while that refusal is on its way is a page to build next.
     const tried = page.url
+    // And the web data it is for: a note turned Separate or back while this page is on its
+    // way has it moved once it arrives, below.
+    const forOwn = page.own
 
     try {
-      // Which store the site's cookies and storage go in, which is its space's choice;
-      // see web-data.ts.
-      const store = page.inPrivate ? null : await (await stores()).store(page.space, page.url)
-      await invoke('web_open', {
+      // The note's own store, or the shared one; see web-data.svelte.ts.
+      const store = page.inPrivate ? null : await (await stores()).store(forOwn)
+      const cuts = await invoke<boolean | undefined>('web_open', {
         tab: tabId,
         url: page.url,
         pane,
         revived: { place, trail, at: kept?.at ?? Math.max(0, trail.length - 1) },
         profile: { store, private: page.inPrivate },
       })
+      // Said with the page as well as with every placement, because the first page of a
+      // window is built before anything has been placed, and a layer over it then would
+      // be answered as though the engine could not cut.
+      cutting = cuts === true
       page.live = true
       page.openable = true
       page.frozen = false
@@ -746,19 +731,22 @@ class Pages {
       return
     }
 
-    // The site's login went to another computer while its page was on its way here, which
-    // the pane now says instead: the page is put away as it lands. See lease.svelte.ts.
-    if (page.lock !== null) {
-      await this.park(tabId)
-      return
-    }
+    // Its note was turned Separate or back while it was on its way, which `rehouse` could
+    // not move a page that was not there yet for. Not waited for: a move builds a page.
+    if (page.own !== forOwn && !page.inPrivate) void this.rehouse(tabId, page.own)
 
     if (!wanted) return
     if (wanted.visible) await this.place(tabId, wanted.pane, true, false, wanted.over)
-    // Something of the app's is over the hole. Out of sight and still the tab in front,
-    // so nothing counts down for it - and nothing is photographed either: a page that
-    // has this moment been built has nothing on it worth standing in for it.
-    else if (wanted.covering) await this.place(tabId, wanted.pane, false, false, wanted.over)
+    // Something of the app's is over the hole. Where the engine cuts, the layer is cut
+    // out of the page as it would be out of a page that had been there all along. It
+    // used to be hidden outright here, and the pane had nothing to say again - its box
+    // was the box it had said - so a page that arrived under the update notice, or under
+    // the card of the tab just pressed, was an empty pane until the layer went (Emil,
+    // 2026-10-13: "completely black until you click it away"). Where it cannot, the page
+    // is out of sight, still the tab in front so nothing counts down for it, and nothing
+    // is photographed: a page built this moment has nothing on it worth standing in.
+    else if (wanted.covering)
+      await this.place(tabId, wanted.pane, false, cutting && wanted.over.cut !== null, wanted.over)
     // Out of sight, and counting down to being frozen: the countdown that should have
     // started when the tab was switched away from found no page to start it on.
     else this.hide(tabId, wanted.pane)
@@ -1089,22 +1077,38 @@ class Pages {
     }
   }
 
+  /** A swipe begun over the page, which stands as its picture under the arrow: one older
+   *  than `SHOT_KEEPS` put aside for a fresh one, which a page scrolled since would jump
+   *  back from. See back-swipe/SwipeArrow.svelte. */
+  freshen(tabId: string): void {
+    const page = this.held.get(tabId)
+    if (!page || (page.shot && Date.now() - page.shotAt < SHOT_KEEPS)) return
+    page.shot = null
+    void this.shoot(tabId)
+  }
+
   /** The picture itself, raced against a clock. Split from `shoot` so that the one
    *  going on at the moment is something a second caller can wait for. */
   private async photograph(page: Page, tabId: string): Promise<void> {
+    const { url, pane, shotAt } = page
+    const same = (now: Rect | null) => now?.width === pane?.width && now?.height === pane?.height
+    const asked = invoke<string | null>('web_shot', { tab: tabId })
+    // Kept if late, unless the page moved on: else an empty pane under the menu.
+    void asked.then(
+      (said) => {
+        if (said && page.shotAt === shotAt && page.url === url && same(page.pane)) {
+          page.shot = said
+          page.shotAt = Date.now()
+        }
+      },
+      () => undefined,
+    )
     try {
       // Raced against a clock, because the overlay is behind the page until this
       // answers: the engine photographs itself in a handful of milliseconds or it is
       // not going to, and a menu waiting on a picture is worse than a menu over an
       // empty pane.
-      const said = await Promise.race([
-        invoke<string | null>('web_shot', { tab: tabId }),
-        new Promise<null>((go) => setTimeout(() => go(null), SHOT_WAITS)),
-      ])
-      if (said) {
-        page.shot = said
-        page.shotAt = Date.now()
-      }
+      await Promise.race([asked, new Promise<null>((go) => setTimeout(() => go(null), SHOT_WAITS))])
     } catch {
       // A platform with no way to photograph a webview. The hole keeps its own
       // ground, which is what it held before there was a picture to hold.
@@ -1125,10 +1129,13 @@ class Pages {
   }
 
   /** Somewhere else, in this tab. */
-  async go(tabId: string, url: string): Promise<void> {
+  async go(tabId: string, url: string, upgrade: Upgrade | null = null): Promise<void> {
     const page = this.of(tabId)
     if (!isWebAddress(url)) return
 
+    // Only the visit the bar chose https for may fall back from it; any other is the
+    // address it says. See upgrade.ts.
+    page.upgrade = upgrade
     page.url = url
     page.openable = true
     // The title, the mark and the picture all belonged to the page that was there.
@@ -1149,12 +1156,6 @@ class Pages {
 
     if (!page.live) return
 
-    // Another site may be another computer's login; see `build`.
-    if (this.watch && !page.inPrivate && !(await this.watch.admit(tabId, page))) {
-      await this.park(tabId)
-      return
-    }
-
     try {
       await invoke('web_navigate', { tab: tabId, url })
     } catch {
@@ -1169,6 +1170,8 @@ class Pages {
   async step(tabId: string, step: Step, by = 1): Promise<void> {
     const page = this.held.get(tabId)
     if (!isDesktop || !page?.live) return
+    // Back, forward or reload is a visit of its own; see `go`.
+    page.upgrade = null
 
     // Nor is a refused step; see `place`.
     await invoke('web_step', { tab: tabId, step, by }).catch(() => undefined)
@@ -1227,29 +1230,60 @@ class Pages {
   private async saw(tabId: string, url: string, title: string): Promise<void> {
     // A private tab writes no history; see private.ts.
     if (this.held.get(tabId)?.inPrivate) return
-    const space = this.held.get(tabId)?.space ?? null
     const [visited, webData] = await Promise.all([history(), stores()])
-    visited.saw(webData.history(space), tabId, url, title)
+    visited.saw(webData.history(), tabId, url, title)
   }
 
-  /** Every running page of a space built again, in whichever store the space now keeps
-   *  its web data in. A webview's store is fixed when it is built, so a choice made in
-   *  the space's menu is a choice for the pages built after it - and a tab left in the
-   *  store it was opened in would be a setting that did nothing on screen. Each is parked
-   *  first, so it comes back on the page and at the place it was at; the one on screen is
-   *  built again where it was, the others as they are next looked at. A page whose store
-   *  the choice did not change is left running: that is no reason to load it again. */
-  async restore(space: string): Promise<void> {
-    const data = await stores()
-    const running = [...this.held.entries()].filter(
-      ([, page]) => page.live && page.space === space && !page.inPrivate,
-    )
-    for (const [tabId, page] of running) {
-      if ((await data.store(space, page.url)) === page.store) continue
-      const shown = page.shown ? page.pane : null
+  /** The web notes kept apart among the tabs; see clearing.ts. */
+  apart(): string[] {
+    return [...this.held.values()].map((page) => page.own).filter((one) => one !== null)
+  }
+
+  /** The web note keeps its own web data now, or no longer does: a running page is
+   *  parked and built again in that store, where it was, and `said` shown for a moment,
+   *  since the site may have signed out. A webview's store is fixed when it is built.
+   *
+   *  **One move at a time, each finding the page where the last one left it** (#409).
+   *  Turning a note Separate asks twice - the menu that wrote the file (own-data.ts), and
+   *  the pane that read the file change (WebTab.svelte) - and the two used to run side
+   *  by side. The second parked a page the first was already parking: it asked the
+   *  closing page where it had got to, waited out `LOOK_WAITS` for an answer that never
+   *  came, and then closed the page the first had just built in the new store - which
+   *  the first went on to call live. The tab believed in a page that had gone, spinning
+   *  on the load it had begun, until somebody closed it by hand. Now the second finds the
+   *  page already in the store it asks for, and does nothing. */
+  rehouse(tabId: string, own: string | null, said: string | null = null): Promise<void> {
+    const page = this.held.get(tabId)
+    if (!page) return Promise.resolve()
+    page.own = own
+    const moving = page.rehousing.then(() => this.moved(tabId, page, said))
+    page.rehousing = moving.catch(() => undefined)
+    return moving
+  }
+
+  /** One of `rehouse`'s moves. The page counts as on its way for the whole of it, from
+   *  the park to the build: the pane looks again the moment the old page is no longer
+   *  live, and that look says where the new page goes rather than asking for a second
+   *  one beside it; see `show`. */
+  private async moved(tabId: string, page: Page, said: string | null): Promise<void> {
+    if (this.held.get(tabId) !== page || page.inPrivate) return
+    const store = await (await stores()).store(page.own)
+    if (!page.live || store === page.store) return
+
+    const shown = page.shown ? page.pane : null
+    page.opening = true
+    try {
       await this.park(tabId)
-      if (shown && page.url) await this.show(tabId, page.url, shown)
+    } finally {
+      page.opening = false
     }
+
+    const wanted = page.wanted
+    page.wanted = null
+    const pane = wanted?.pane ?? shown
+    if (pane && page.url && this.held.get(tabId) === page)
+      await this.build(tabId, page, pane, wanted?.visible ?? true, wanted?.over)
+    page.notice = said
   }
 
   /** The tab has closed. The webview goes with it, and so does the trail: a tab
@@ -1262,7 +1296,6 @@ class Pages {
     clearTimeout(page.resting)
     void history().then((visited) => visited.left(tabId))
     this.asked.delete(tabId)
-    this.watch?.closed(tabId)
 
     if (!isDesktop || !page.live) {
       this.held.delete(tabId)
@@ -1428,8 +1461,14 @@ class Pages {
         )
       }
     })
-    // Sound, full screen, zoom and find; see heard.ts.
-    await (await import('./heard')).listening(listen, (tab) => this.held.get(tab))
+    // Sound, full screen, zoom and find, and a page that did not arrive; see heard.ts.
+    await (
+      await import('./heard')
+    ).listening(
+      listen,
+      (tab) => this.held.get(tab),
+      (tab, url) => void this.go(tab, url),
+    )
     await listen('nib://web-tab', (event) => {
       const said = readMoved(event.payload)
       if (!said) return
@@ -1472,9 +1511,6 @@ class Pages {
       }
       // And what the page stands on, which glass's frame takes; see glass/chrome.svelte.ts.
       if ((was || moved) && !said.loading) landed(said.tab)
-      // A link can lead to another site, and so to another web login; and a page that
-      // has finished loading is a moment worth keeping its login at. See lease.svelte.ts.
-      this.watch?.moved(said.tab, page, was && !said.loading)
     })
   }
 }

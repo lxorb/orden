@@ -10,21 +10,129 @@ export const uk: Dictionary = {
   'Do you write code?': 'Ви пишете код?',
   Yes: 'Так',
   No: 'Ні',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'З інших застосунків: {key}',
+  'From other apps: set in your system settings':
+    'З інших застосунків: задається в налаштуваннях системи',
+  'From other apps: bind {command} in your system settings':
+    'З інших застосунків: призначте {command} у налаштуваннях системи',
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'Основне',
+  'Add to Essentials': 'Додати до основного',
+  'Remove from Essentials': 'Вилучити з основного',
+  'Add block to Essentials': 'Додати блок до основного',
+  'Add blocks to Essentials': 'Додати блоки до основного',
+  'Add view to Essentials': 'Додати вигляд до основного',
+  'Open tabs and Essentials': 'Відкривати вкладки й основне',
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor тепер називається Orden',
+  'Notes from nibeditor.com': 'Нотатки з nibeditor.com',
+  'Nothing there': 'Там нічого немає',
+  // AI: the three permission modes
+  'Full permissions': 'Повний доступ',
+  'Auto mode': 'Автоматичний режим',
+  'Full permissions: nothing is asked first': 'Повний доступ: нічого не питається заздалегідь',
+  // Import: Zen's tabs
+  'Import from Zen': 'Імпорт з Zen',
+  'Containers stay in Zen': 'Контейнери залишаються в Zen',
+  'Zen’s tabs could not be read.': 'Не вдалося прочитати вкладки Zen.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'Контейнери залишаються в Firefox',
+  'Nothing could be read out of {browser}.': 'З {browser} нічого не вдалося прочитати.',
+  'Saved groups': 'Збережені групи',
+  'Tab group': 'Група вкладок',
+  'Bookmarks toolbar': 'Панель закладок',
+  'Bookmarks menu': 'Меню закладок',
+  'Other bookmarks': 'Інші закладки',
+  'Mobile bookmarks': 'Мобільні закладки',
+  'Bookmarks bar': 'Панель закладок',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} тримає відкриті вкладки під замком, тож прийшли лише закладки.',
+  '{count} pages not on the web stay behind': {
+    few: 'Сторінок не з інтернету, що лишаються: {count}',
+    many: 'Сторінок не з інтернету, що лишаються: {count}',
+    one: 'Сторінок не з інтернету, що лишаються: {count}',
+    other: 'Сторінок не з інтернету, що лишаються: {count}',
+  },
+  'Reading List': 'Список читання',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS тримає вкладки й закладки Safari за повним доступом до диска. Увімкніть там Orden і спробуйте знову.',
+  // Settings: note types
+  'Page note': 'Нотатка зі сторінками',
+  'Web note': 'Вебнотатка',
+  'Private tab': 'Приватна вкладка',
+  'Note types': 'Типи нотаток',
+  // Tasks: Upcoming's weeks
+  'Previous week': 'Попередній тиждень',
+  // Tasks: projects placed in the panel, and their folder
+  'Add project above': 'Додати проєкт вище',
+  'Add project below': 'Додати проєкт нижче',
+  'Projects folder': 'Тека проєктів',
+  // Tasks: a repeating task skipped or done for good
+  Skip: 'Пропустити',
+  'Complete forever': 'Виконати назавжди',
+  // Tasks: comments
+  Comments: 'Коментарі',
+  // Tasks: filters
+  Filters: 'Фільтри',
+  'Add filter': 'Додати фільтр',
+  'Edit filter': 'Змінити фільтр',
+  // Tasks: a project's sections
+  'Add section': 'Додати розділ',
+  '{name} (copy)': '{name} (копія)',
+  'Its tasks are deleted with it.': 'Завдання розділу видаляться разом із ним.',
+  // Tasks: keys, selection and the undo toast
+  Completed: 'Виконано',
+  'Remove date': 'Прибрати дату',
+  'Next task': 'Наступне завдання',
+  'Previous task': 'Попереднє завдання',
+  'Add task at the top': 'Додати завдання нагору',
+  '{count} selected': 'Вибрано: {count}',
+  // Tasks: the Display menu
+  Display: 'Вигляд',
+  'Completed tasks': 'Виконані завдання',
+  // Tasks: several lines pasted into quick add
+  'One task': 'Одне завдання',
+  'One per line': 'По одному на рядок',
+  // Tasks: the projects in the panel
+  Favorites: 'Вибране',
+  'Add project': 'Додати проєкт',
+  'Add sub-project': 'Додати підпроєкт',
+  // Tasks: the task view
+  'Sub-tasks': 'Підзавдання',
+  'Add sub-task': 'Додати підзавдання',
+  'New label': 'Нова мітка',
+  'No deadline': 'Без терміну',
+  // Tasks: the row's menu and the scheduler
+  Reschedule: 'Перенести',
+  'Later this week': 'Пізніше цього тижня',
+  'This weekend': 'Цих вихідних',
+  'Next weekend': 'Наступних вихідних',
+  'Every week on {day}': 'Щотижня: {day}',
+  'Every month on day {day}': 'Щомісяця {day}-го числа',
+  'Every year on {date}': 'Щороку {date}',
+  'Type a date': 'Введіть дату',
+  'Previous month': 'Попередній місяць',
+  'Next month': 'Наступний місяць',
+  'No time': 'Без часу',
+  'No repeat': 'Без повторення',
+  Complete: 'Виконати',
+  Reopen: 'Відкрити знову',
+  Schedule: 'Запланувати',
+  'Open in note': 'Відкрити в нотатці',
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'Інший застосунок',
-  'Start fresh': 'Почати з нуля',
   'Import from Obsidian': 'Імпорт з Obsidian',
   'Import from Notion': 'Імпорт з Notion',
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'Підказки',
   'Silent mode': 'Тихий режим',
-  'Sign in to keep your notes safe and on every device.':
-    'Увійдіть, щоб нотатки були в безпеці та на кожному пристрої.',
   'See how your notes connect.': 'Подивіться, як пов’язані ваші нотатки.',
   'Press {key} to find anything, notes and commands alike.':
     'Натисніть {key}, щоб знайти будь-що: нотатки й команди.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'Показувати Markdown під час набору',
+  'Open notes in source mode': 'Відкривати нотатки в режимі вихідного коду',
   Pointer: 'Вказівник',
   'Pointing hand on buttons': 'Вказівна рука над кнопками',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
@@ -40,11 +148,13 @@ export const uk: Dictionary = {
   '{count} h': '{count} год',
   Inbox: 'Вхідні',
   Date: 'Дата',
+  'Start date': 'Дата початку',
   Priority: 'Пріоритет',
   Reminder: 'Нагадування',
   Duration: 'Тривалість',
   'Smart dates': 'Розумні дати',
   'From any app': 'З будь-якого застосунку',
+  'Show tasks without a start date in Today': 'Показувати в «Сьогодні» завдання без дати початку',
   'Every day': 'Щодня',
   'Every weekday': 'Щоробочого дня',
   'Every week': 'Щотижня',
@@ -61,6 +171,13 @@ export const uk: Dictionary = {
   Unsaved: 'Не збережено',
   'Save to': 'Зберегти в',
   'Reloaded with the web data of {space}': 'Перезавантажено з вебданими простору {space}',
+  Separate: 'Окремі',
+  'Share this note’s web data again?': 'Знову зробити вебдані цієї нотатки спільними?',
+  'What its pages are signed in to on this computer is deleted.':
+    'Те, у що її сторінки ввійшли на цьому комп’ютері, буде видалено.',
+  'Share again': 'Знову зробити спільними',
+  'This note keeps its own web data now': 'Ця нотатка тепер має власні вебдані',
+  'Back on the shared web data': 'Знову на спільних вебданих',
   'Add a page': 'Додати сторінку',
   'Add a page after this': 'Додати сторінку після цієї',
   'Delete this page': 'Видалити цю сторінку',
@@ -81,6 +198,8 @@ export const uk: Dictionary = {
   Dots: 'Точки',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'Обертати полотно двома пальцями',
+  'Turn upright': 'Вирівняти',
   Canvas: 'Полотно',
   Card: 'Картка',
   'Note or picture': 'Нотатка або малюнок',
@@ -95,7 +214,6 @@ export const uk: Dictionary = {
   'New window': 'Нове вікно',
   New: 'Створити',
   'New space': 'Новий простір',
-  '{name}: switch space': '{name}: змінити простір',
   Untitled: 'Без назви',
   Space: 'Простір',
   'Name the space': 'Назвати простір',
@@ -140,8 +258,6 @@ export const uk: Dictionary = {
   'Loading…': 'Завантаження…',
   'Create a space': 'Створити простір',
   'Import a folder': 'Імпорт теки',
-  'Sign in to sync': 'Увійти для синхронізації',
-  'Create account': 'Створити обліковий запис',
   'Delete space': 'Видалити простір',
   'Delete {name}?': 'Видалити {name}?',
   'Every note in this space is deleted from your computer.':
@@ -159,6 +275,10 @@ export const uk: Dictionary = {
   Unpin: 'Відкріпити',
   Close: 'Закрити',
   'Close pinned tab?': 'Закрити закріплену вкладку?',
+  'Save changes to {name}?': 'Зберегти зміни в {name}?',
+  'Save changes to these tabs?': 'Зберегти зміни в цих вкладках?',
+  'Unsaved words go to Recently deleted.': 'Незбережені слова потраплять до «Нещодавно видалених».',
+  'Don’t save': 'Не зберігати',
   'Close others': 'Закрити інші',
   'Close tabs to the right': 'Закрити вкладки праворуч',
   'Close tabs to the left': 'Закрити вкладки ліворуч',
@@ -195,9 +315,6 @@ export const uk: Dictionary = {
   'Move this note': 'Перемістити нотатку',
   'Move up': 'Перемістити вище',
   'Move down': 'Перемістити нижче',
-  Bookmark: 'Закладка',
-  'Remove bookmark': 'Прибрати закладку',
-  'Leave out of search': 'Виключити з пошуку',
   'Search here again': 'Знову шукати тут',
   'Undo the last file change': 'Скасувати останню зміну файлів',
   'Undo moving {name}': 'Скасувати переміщення {name}',
@@ -247,7 +364,6 @@ export const uk: Dictionary = {
   'Remove group': 'Прибрати групу',
   'Out of the group': 'З групи',
   Make: 'Створити',
-  'Bookmark this block': 'Додати блок до закладок',
   Panels: 'Панелі',
   Outline: 'Структура',
   'Stay on this note': 'Залишатися на цій нотатці',
@@ -535,8 +651,8 @@ export const uk: Dictionary = {
   'Sign in to ask a question.': 'Щоб запитати, потрібно увійти.',
   'Asking OpenAI which models this key can use': 'Запит до OpenAI: які моделі доступні цьому ключу',
   'Could not reach OpenAI': 'Не вдалося зв’язатися з OpenAI',
-  'That key cannot use any of the models nibeditor asks for.':
-    'Цьому ключу недоступна жодна з моделей, які запитує nibeditor.',
+  'That key cannot use any of the models Orden asks for.':
+    'Цьому ключу недоступна жодна з моделей, які запитує Orden.',
   'No reasoning': 'Без міркувань',
   Minimal: 'Мінімальне',
   Low: 'Низьке',
@@ -558,7 +674,7 @@ export const uk: Dictionary = {
   Mode: 'Режим',
   // The window's own edges; see appearance.rs
   Window: 'Вікно',
-  'nibeditor’s own': 'nibeditor',
+  'Orden’s own': 'Orden',
   'The system’s': 'Системна',
   'Window frame': 'Рамка вікна',
   System: 'Системна',
@@ -628,6 +744,7 @@ export const uk: Dictionary = {
   '{done} of {total}': '{done} з {total}',
   'Sync failed': 'Збій синхронізації',
   '{name} could not be written.': 'Не вдалося записати {name}.',
+  '{name} could not be read.': 'Не вдалося прочитати {name}.',
   'Text size': 'Розмір тексту',
   'Line spacing': 'Міжрядковий інтервал',
   'Line width': 'Ширина рядка',
@@ -688,8 +805,10 @@ export const uk: Dictionary = {
   '{used} of {limit} used.': 'Зайнято {used} з {limit}.',
   'That image does not fit in your storage.': 'Це зображення не вміщується у сховище.',
   'out of space': 'немає місця',
-  'nibeditor {version} is ready to install.': 'nibeditor {version} готовий до встановлення.',
+  'Orden {version} is ready to install.': 'Orden {version} готовий до встановлення.',
+  'Orden {version} is available.': 'Доступна версія Orden {version}.',
   'Restart now': 'Перезапустити',
+  'Move to Applications': 'Перемістити в «Програми»',
   Later: 'Пізніше',
   More: 'Ще',
   'Open notes': 'Відкриті нотатки',
@@ -714,11 +833,9 @@ export const uk: Dictionary = {
   Continue: 'Продовжити',
   'Send a new code': 'Надіслати новий код',
   'Code sent to': 'Код надіслано на',
-  'You already have notes on this computer.': 'На цьому комп’ютері вже є нотатки.',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
-    'Якщо залишити, вони увійдуть до акаунта. Якщо видалити, залишиться лише те, що вже є в акаунті - це незворотно.',
-  'Keep them': 'Залишити',
-  'Erase them': 'Видалити',
+  'This device already has notes.': 'На цьому пристрої вже є нотатки.',
+  Merge: 'Об’єднати',
+  'Keep separate': 'Залишити окремо',
   'Digit {number}': 'Цифра {number}',
   'Resend in {seconds}s': 'Повтор через {seconds} с',
   'Last synced {time}.': 'Остання синхронізація {time}.',
@@ -769,14 +886,14 @@ export const uk: Dictionary = {
   'Reads your notes.': 'Читає нотатки.',
   'Reads and writes your notes.': 'Читає та змінює нотатки.',
   Other: 'Інше',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'ШІ-асистент може читати нотатки - і змінювати їх, якщо дозволити. Він входить за адресою пошти nibeditor, вставляти нічого не потрібно.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'ШІ-асистент може читати нотатки - і змінювати їх, якщо дозволити. Він входить за адресою пошти Orden, вставляти нічого не потрібно.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'У Claude відкрийте Settings → Connectors і натисніть Add custom connector.',
   'Open Claude’s connectors': 'Відкрити коннектори Claude',
   'Fill in the two fields and click Add.': 'Заповніть два поля й натисніть Add.',
-  'Click Connect and sign in with your nibeditor email.':
-    'Натисніть Connect і увійдіть за адресою пошти nibeditor.',
+  'Click Connect and sign in with your Orden email.':
+    'Натисніть Connect і увійдіть за адресою пошти Orden.',
   'Using Claude Code instead?': 'Використовуєте Claude Code?',
   Command: 'Команда',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -787,16 +904,16 @@ export const uk: Dictionary = {
   'Open ChatGPT’s plugins': 'Відкрити плагіни ChatGPT',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Немає розділу Plugins або кнопки з плюсом? Спершу увімкніть Developer mode у Settings → Security and login.',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'Коли ChatGPT запитає, увійдіть за адресою пошти nibeditor.',
-  'To use it in a chat, type @ and pick nibeditor.':
-    'Щоб скористатися цим у чаті, введіть @ і виберіть nibeditor.',
+  'Sign in with your Orden email when ChatGPT asks.':
+    'Коли ChatGPT запитає, увійдіть за адресою пошти Orden.',
+  'To use it in a chat, type @ and pick Orden.':
+    'Щоб скористатися цим у чаті, введіть @ і виберіть Orden.',
   'Server URL': 'Адреса сервера',
   Authentication: 'Аутентифікація',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'Залиште розширені налаштування OAuth як є і позначте “I understand and want to continue”.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'Будь-який клієнт MCP, що вміє Streamable HTTP з OAuth. Дайте йому адресу: він зареєструється сам і відкриє сторінку входу nibeditor.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'Будь-який клієнт MCP, що вміє Streamable HTTP з OAuth. Дайте йому адресу: він зареєструється сам і відкриє сторінку входу Orden.',
   'Show config': 'Показати конфіг',
   'For a client that takes a JSON block instead of a URL.':
     'Для клієнта, якому потрібен блок JSON замість адреси.',
@@ -864,7 +981,7 @@ export const uk: Dictionary = {
   'Display name': 'Відображуване ім’я',
   'Your name': 'Ваше ім’я',
   Email: 'Пошта',
-  'On nibeditor.com': 'На nibeditor.com',
+  'On orden.so': 'На orden.so',
   'Your own domain': 'Свій домен',
   'Switching gives up {name}.': 'Перемикання звільнить {name}.',
   Page: 'Сторінка',
@@ -936,8 +1053,9 @@ export const uk: Dictionary = {
   'No footnotes in this note': 'У цій нотатці немає виносок',
   'Stack tabs': 'Розставити вкладки в стовпці',
   'Unstack tabs': 'Прибрати стовпці вкладок',
-  'High contrast': 'Висока контрастність',
+  Contrast: 'Контраст',
   Glass: 'Скло',
+  Classic: 'Класика',
   'Front matter': 'Метадані',
   'Front matter: {name}': 'Метадані: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':
@@ -948,6 +1066,7 @@ export const uk: Dictionary = {
   Comment: 'Коментар',
   'Always on top': 'Поверх усіх вікон',
   'What is new': 'Що нового',
+  'Download the app': 'Завантажити застосунок',
   'Report an issue': 'Повідомити про проблему',
   'Move the line up': 'Перемістити рядок вище',
   'Move the line down': 'Перемістити рядок нижче',
@@ -1028,6 +1147,23 @@ export const uk: Dictionary = {
   'Layout: {name}': 'Макет: {name}',
   'Space: {name}': 'Простір: {name}',
   'Theme: {name}': 'Тема: {name}',
+  'AI account: {name}': 'Обліковий запис ШІ: {name}',
+  Accounts: 'Облікові записи',
+  Access: 'Доступ',
+  Set: 'Задано',
+  'Start over': 'Почати знову',
+  'Sign in here': 'Увійти тут',
+  '{device} wants your AI accounts': '{device} запитує ваші облікові записи ШІ',
+  '{device} offers this device your AI vault': '{device} пропонує цьому пристрою ваше сховище ШІ',
+  Join: 'Приєднатися',
+  'Allow this device on another one': 'Дозвольте цей пристрій на іншому',
+  'On every device you sign in to, end-to-end encrypted.':
+    'На кожному пристрої, де ви ввійшли, з наскрізним шифруванням.',
+  'Sign in to have them on every device.': 'Увійдіть, щоб мати їх на кожному пристрої.',
+  'Agents on this computer connect on their own': 'Агенти на цьому комп’ютері підключаються самі',
+  Helpers: 'Помічники',
+  'Start helpers on your AI accounts': 'Запускати помічників на ваших облікових записах ШІ',
+  Delegated: 'Доручено',
   'Code theme: {name}': 'Тема коду: {name}',
   'Delete a layout': 'Видалити макет',
   // Keyboards and modal editing
@@ -1096,6 +1232,7 @@ export const uk: Dictionary = {
   'Double-click to write': 'Подвійний клік для письма',
   'Another colour': 'Інший колір',
   'Turn into a note': 'Перетворити в нотатку',
+  Arrange: 'Упорядкувати',
   'Bring to front': 'На передній план',
   'Bring forward': 'Перемістити вперед',
   'Send backward': 'Перемістити назад',
@@ -1117,6 +1254,12 @@ export const uk: Dictionary = {
   'Export as PNG': 'Експорт у PNG',
   'Export as SVG': 'Експорт у SVG',
   'Export as PDF': 'Експорт у PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'Імпорт PDF',
+  'Choose how to add the pages to the canvas.': 'Виберіть, як додати сторінки на полотно.',
+  'Single page': 'Одна сторінка',
+  'All pages': 'Усі сторінки',
+  'Choose a page': 'Вибрати сторінку',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Видалити вибране',
   'Nudge left': 'Зсунути ліворуч',
@@ -1177,8 +1320,8 @@ export const uk: Dictionary = {
   'Release channel': 'Канал випусків',
   Stable: 'Стабільний',
   Unstable: 'Нестабільний',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Стабільний слідує офіційним випускам, нестабільний - кожному пушу в main і може ламатися.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Стабільний слідує випущеним версіям, нестабільний - збіркам edge і може ламатися.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Імпорт',
@@ -1248,13 +1391,15 @@ export const uk: Dictionary = {
   '{count} tables inside notes do not come over': 'Таблиць у нотатках, що не переносяться: {count}',
   '{count} attachments are in iCloud rather than on this Mac':
     'Вкладень в iCloud, а не на цьому Mac: {count}',
+  '{count} files are in iCloud rather than on this Mac':
+    'Файлів в iCloud, а не на цьому Mac: {count}',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS тримає ці нотатки за повним доступом до диска.',
   'There are no notes in Apple Notes on this Mac.': 'На цьому Mac в Apple Нотатках немає нотаток.',
   'Those notes could not be read.': 'Ці нотатки не вдалося прочитати.',
   'Read them from this Mac': 'Прочитати з цього Mac',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    'Увімкніть nibeditor у повному доступі до диска й спробуйте знову.',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    'Увімкніть Orden у повному доступі до диска й спробуйте знову.',
   'Open the setting': 'Відкрити налаштування',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'Apple Щоденник експортує себе сам: Щоденник, Налаштування, Експорт. В Apple Нотаток експорту немає, тож поза тим Mac, де вони лежать, тут кидають теку, записану експортером.',
@@ -1375,15 +1520,15 @@ export const uk: Dictionary = {
   'OpenAI-compatible': 'Сумісний з OpenAI',
   'Base URL': 'Базова адреса',
   'API key': 'Ключ API',
-  'Set on this device': 'Задано на цьому пристрої',
   Optional: 'Необов’язково',
   'List models': 'Отримати моделі',
   'Asking…': 'Запит…',
   'No providers yet.': 'Постачальників ще немає.',
   'Add {name}': 'Додати {name}',
-  'Keys stay in the secure store on this device.':
-    'Ключі залишаються в захищеному сховищі цього пристрою.',
   'This browser holds the keys in its own storage.': 'Цей браузер тримає ключі у власному сховищі.',
+  'Keep this browser’s keys in the vault': 'Зберігати ключі цього браузера у сховищі',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'Тоді ключі всіх пристроїв зберігатимуться в пам’яті цього браузера, де їх зможе прочитати скрипт, що потрапив на сторінку.',
   'AI can be wrong. Check the facts.': 'ШІ може помилятися. Перевіряйте факти.',
   'Used by the glasses': 'Використовується окулярами',
   'Could not read the models.': 'Не вдалося прочитати моделі.',
@@ -1424,7 +1569,6 @@ export const uk: Dictionary = {
   'A cited report': 'Звіт із цитуванням',
   'A helper in the background': 'Помічник у фоновому режимі',
   'A side question': 'Додаткове питання',
-  'Agent mode': 'Режим агента',
   'Agent profile': 'Профіль агента',
   'Archive the thread': 'Архівувати гілку',
   'Approve mode': 'Режим схвалення',
@@ -1543,8 +1687,6 @@ export const uk: Dictionary = {
   // Web tabs
   Reload: 'Оновити',
   'Hard reload': 'Жорстке перезавантаження',
-  'Clip this page': 'Зберегти цю сторінку',
-  'Clip the link': 'Зберегти посилання',
   'Open in the browser': 'Відкрити в браузері',
   'Show it here': 'Показати тут',
   Website: 'Сайт',
@@ -1628,8 +1770,9 @@ export const uk: Dictionary = {
   'that is not a theme': 'це не тема',
   'no such theme': 'такої теми немає',
   'choose a model first': 'спершу виберіть модель',
+  'set an OpenAI key in Orden’s settings first': 'спершу задайте ключ OpenAI у налаштуваннях Orden',
   'set an OpenAI key in nibeditor’s settings first':
-    'спершу задайте ключ OpenAI у налаштуваннях nibeditor',
+    'спершу задайте ключ OpenAI у налаштуваннях Orden',
   'that is a lot of questions - try again later': 'надто багато питань - спробуйте пізніше',
   'that is too much audio': 'надто багато звуку',
   'that is more than a spoken command': 'це більше, ніж голосова команда',
@@ -1654,7 +1797,6 @@ export const uk: Dictionary = {
   Nothing: 'Нічого',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Додати цей вигляд до закладок',
   Keep: 'Залишити',
 
   // Which side of the window a panel sits on.
@@ -1676,7 +1818,6 @@ export const uk: Dictionary = {
   'New tab': 'Нова вкладка',
   'Full screen': 'На весь екран',
   'Print…': 'Друк…',
-  'Save page': 'Зберегти сторінку',
   'Share…': 'Поділитися…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1719,7 +1860,6 @@ export const uk: Dictionary = {
   Blocked: 'Заблоковано',
   'Reset permissions': 'Скинути дозволи',
   'Turn into': 'Перетворити в',
-  'Bookmark these blocks': 'Додати блоки до закладок',
   Foldable: 'Згортуваний',
   'Starts folded': 'Відкривається згорнутим',
   // Where a space keeps what websites store
@@ -1736,6 +1876,15 @@ export const uk: Dictionary = {
   'Bring all to front': 'Усе на передній план',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Скасувати копіювання',
+  'Devices with your AI vault': 'Пристрої з вашим сховищем ШІ',
+  'This device': 'Цей пристрій',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'Пристрій більше не зможе читати ваші облікові записи ШІ, а решта отримають новий ключ.',
+  'Also remove this device from your AI vault?': 'Прибрати цей пристрій і зі сховища ШІ?',
+  'Remove and sign out': 'Прибрати й вийти',
+  'Undo making {name}': 'Скасувати створення {name}',
+  'Undo the deletion': 'Скасувати видалення',
+  'Undo the move': 'Скасувати переміщення',
   'Redo the last file change': 'Повторити останню зміну файлів',
   'Select down': 'Виділити вниз',
   'Select up': 'Виділити вгору',
@@ -1779,7 +1928,6 @@ export const uk: Dictionary = {
   '{key} in a terminal': '{key} у терміналі',
   'Always ask': 'Завжди питати',
   'Open another': 'Відкрити ще один',
-  'Open in terminal': 'Відкрити в терміналі',
   Clear: 'Очистити',
   'Exited with code {code}': 'Завершено з кодом {code}',
   'Could not start {shell}': 'Не вдалося запустити {shell}',
@@ -1793,18 +1941,8 @@ export const uk: Dictionary = {
     many: 'Вставити {count} рядків?',
     other: 'Вставити {count} рядка?',
   },
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': 'Браузер за умовчанням',
-  // The engine web tabs run on
-  Engine: 'Рушій',
-  Relaunch: 'Перезапустити',
-  'Chromium did not start': 'Chromium не запустився',
-  'No connection': 'Немає з’єднання',
-  'Not in this release': 'Немає в цьому випуску',
-  'Needs an update': 'Потрібне оновлення',
-  'Signature did not match': 'Підпис не збігається',
-  'Disk full': 'Диск заповнений',
-  'Could not be installed': 'Не вдалося встановити',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Скасувати правки {name}',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1909,7 +2047,7 @@ export const uk: Dictionary = {
   'Always on this site': 'Завжди на цьому сайті',
   'Agents stopped': 'Агентів зупинено',
   'Agent tabs closed': 'Вкладки агентів закрито',
-  'nibeditor is still running for your agents': 'nibeditor і далі працює для ваших агентів',
+  'Orden is still running for your agents': 'Orden і далі працює для ваших агентів',
   '{client} wants to connect': '{client} хоче під’єднатися',
   // Web logins that travel, and the devices of an account
   'no such device': 'Такого пристрою немає',
@@ -1924,11 +2062,12 @@ export const uk: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'Агенти на цьому комп’ютері',
   'Your account’s connector': 'Конектор вашого акаунта',
-  'nibeditor asks you once, the first time it connects.':
-    'nibeditor спитає вас один раз, під час першого підключення.',
+  'Orden asks you once, the first time it connects.':
+    'Orden спитає вас один раз, під час першого підключення.',
   'A client on another machine?': 'Клієнт на іншому комп’ютері?',
   'Shown only once.': 'Показується лише один раз.',
   'Remove {name}?': 'Видалити {name}?',
+  'End {name}?': 'Завершити {name}?',
   'Its token stops working.': 'Його токен перестане працювати.',
   'Added {date}': 'Додано {date}',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':
@@ -1949,7 +2088,6 @@ export const uk: Dictionary = {
   'Change notes': 'Змінювати нотатки',
   'See what you are looking at': 'Бачити, на що ви дивитеся',
   'Move and rename files': 'Переміщувати й перейменовувати файли',
-  'Open tabs and bookmarks': 'Відкривати вкладки й закладки',
   'Bring a tab to the front': 'Виводити вкладку на передній план',
   'Browse in tabs of its own': 'Переглядати у власних вкладках',
   'Read what pages load': 'Читати, що завантажують сторінки',
@@ -1971,16 +2109,13 @@ export const uk: Dictionary = {
   'Without your logins': 'Без ваших входів',
   'Calls a minute': 'Викликів на хвилину',
   'Pages a minute': 'Сторінок на хвилину',
+  'Browser memory limit': 'Межа пам’яті браузера',
   '{count} calls': {
     one: '{count} виклик',
     few: '{count} виклики',
     many: '{count} викликів',
     other: '{count} виклику',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'Відкрито на {device}',
-  'Use here': 'Використати тут',
-  '{device} wants your web logins': '{device} просить ваші входи на сайти',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'Швидке запитання',
@@ -2049,7 +2184,7 @@ export const uk: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'Відкласти',
   Reminders: 'Нагадування',
-  'Reminders ring while nibeditor is open': 'Нагадування лунають, поки nibeditor відкритий',
+  'Reminders ring while Orden is open': 'Нагадування лунають, поки Orden відкритий',
   Automatic: 'Автоматично',
   'Stay in the tray': 'Залишатися в треї',
   'Exact alarms': 'Точні будильники',
@@ -2092,7 +2227,6 @@ export const uk: Dictionary = {
   'Any of them': 'Будь-яке',
   Compare: 'Порівняння',
   'Add a filter': 'Додати фільтр',
-  'Reschedule to today': 'Перенести на сьогодні',
   Collapse: 'Згорнути',
   Expand: 'Розгорнути',
   Summary: 'Підсумок',
@@ -2114,7 +2248,6 @@ export const uk: Dictionary = {
   Layout: 'Макет',
   Overdue: 'Прострочено',
   Upcoming: 'Найближчі',
-  Logbook: 'Журнал',
   Project: 'Проєкт',
   Label: 'Мітка',
   List: 'Список',
@@ -2300,4 +2433,11 @@ export const uk: Dictionary = {
   'Search this chat': 'Шукати в цьому чаті',
   'Add as task': 'Додати як завдання',
   'Save as note': 'Зберегти як нотатку',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'Світанок',
+  Lagoon: 'Лагуна',
+  Lilac: 'Бузок',
+  Peach: 'Персик',
+  Sage: 'Шавлія',
+  Mist: 'Туман',
 }

@@ -14,7 +14,7 @@
    *  and gone with it, the way the hover card's is (preview-card.ts). Written a pause
    *  after the typing stops, and at once as the card goes or the window does - no dot,
    *  nothing to save. Its edge widens it; Escape puts it away. See pad.ts. */
-  import { createEditor, EditorView, modeEffects } from '@nib/editor'
+  import { createEditor, EditorView } from '@nib/editor'
   import { onMount } from 'svelte'
   import { SAVE_DELAY } from '../backoff'
   import { pickedLink } from '../composer'
@@ -30,6 +30,7 @@
   import { writeFile } from '../workspace/write-file'
   import { scratchpad } from './pad'
   import { shown, WIDTH } from './is.svelte'
+  import { viewport } from '../viewport.svelte'
 
   const NARROWEST = 240
   const WIDEST = 560
@@ -75,8 +76,12 @@
         // Where pastes from anywhere go, so its markup is never run.
         trustedMarkup: false,
       })
-      made.dispatch({ effects: modeEffects(modes.settings) })
+      // Every mode a note's editor wears, the width of its column and its leading too,
+      // and kept up to date with them: on a phone this is the note on screen, and it
+      // reads as any other note there does (#404).
+      modes.apply(made)
       view = made
+      shown.view = made
       scratchpad.live = made
       owing = flush
     })()
@@ -86,7 +91,9 @@
       flush()
       owing = null
       scratchpad.live = null
+      if (shown.view === view) shown.view = null
       caret = view?.state.selection.main.head ?? caret
+      if (view) modes.forget(view)
       view?.destroy()
     }
   })
@@ -149,34 +156,34 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="card nib-layer" class:resizing onkeydown={onKey}>
-  <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
-  <div
-    class="edge"
-    role="separator"
-    aria-orientation="vertical"
-    aria-label={t('Panel width')}
-    aria-valuemin={NARROWEST}
-    aria-valuemax={WIDEST}
-    aria-valuenow={shown.width}
-    tabindex="0"
-    title={t('Drag to resize')}
-    onpointerdown={grab}
-    ondblclick={() => shown.resize(WIDTH)}
-    onkeydown={onEdgeKey}
-  ></div>
+  <!-- No width to drag on a phone or a tablet, where the card is the one note there is. -->
+  {#if !viewport.touch}
+    <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
+    <div
+      class="edge"
+      role="separator"
+      aria-orientation="vertical"
+      aria-label={t('Panel width')}
+      aria-valuemin={NARROWEST}
+      aria-valuemax={WIDEST}
+      aria-valuenow={shown.width}
+      tabindex="0"
+      title={t('Drag to resize')}
+      onpointerdown={grab}
+      ondblclick={() => shown.resize(WIDTH)}
+      onkeydown={onEdgeKey}
+    ></div>
+  {/if}
   <div class="host" bind:this={host}></div>
 </div>
 
 <style>
-  /* The column App.svelte keeps for the card: its width is the card's own. */
+  /* The column PadColumn.svelte keeps for the card, and over the note where the panels
+     are drawers or the window is too narrow for two columns. */
   :global([data-scratchpad]) {
-    flex: none;
     max-width: 60%;
-    padding: var(--space-2);
   }
 
-  /* Where the panels are drawers, or the window is too narrow for two columns, over
-     the note. */
   :global(:is([data-drawer], [data-narrow]) [data-scratchpad]) {
     position: absolute;
     inset-block: 0;
@@ -185,12 +192,38 @@
     max-width: 100%;
   }
 
+  /* A phone and a tablet open one note at a time, and the scratchpad is that note while
+     it is up: the whole of where the note is, never a card beside it (Emil, #206: "it
+     shouldn't side-display, it should display as the only open note on mobile"). */
+  :global(html:not([data-device='desktop']) [data-scratchpad]) {
+    position: absolute;
+    inset: 0;
+    z-index: var(--z-lifted);
+    max-width: none;
+  }
+
+  :global(html:not([data-device='desktop']) [data-scratchpad]) .card {
+    width: 100%;
+    margin: 0;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    background: var(--bg);
+  }
+
+  /* Held at its width while the column slides. */
+  :global([data-scratchpad]:is(.moving, .coming)) .card {
+    min-width: calc(var(--pad-width) - 2 * var(--space-2));
+  }
+
   /* A note, so it stands on the paper a note stands on (Pane.svelte), not the surface a
      menu floats on: the page's own ground in every theme, and under glass and the
      wallpaper as see-through as the Content row leaves the note beside it. */
   .card {
     position: relative;
-    height: 100%;
+    flex: none;
+    width: calc(100% - 2 * var(--space-2));
+    margin: var(--space-2);
     display: flex;
     min-width: 0;
     overflow: hidden;
@@ -215,8 +248,9 @@
     background: none;
   }
 
-  /* A card's worth of margin rather than a page's. */
-  .host :global(#write) {
+  /* A card's worth of margin rather than a page's - on a desktop, where it is a card.
+     On a phone and a tablet it is the note on the screen, on a note's own page. */
+  :global(html[data-device='desktop']) .host :global(#write) {
     max-width: none;
     margin: 0 var(--space-4);
     padding: var(--space-4) 0 var(--space-7);

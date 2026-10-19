@@ -4,8 +4,9 @@
  *  - **When it runs.** After the first paint, at the launch's `rooms` turn, never
  *    before. A pass over a space when the account's hub pokes about it (about a second
  *    after another device wrote), when something changed here, when the window comes
- *    back, and every five minutes in case a poke went missing; at v1's cadence while
- *    the hub cannot be reached (docs/sync-v2.md 5.12).
+ *    back, every thirty seconds while visible in case a poke went missing (five minutes
+ *    while hidden), and at v1's cadence while the hub cannot be reached
+ *    (docs/sync-v2.md 5.12).
  *  - **Which folder is which space**, worked out as v1 does (space-pairing.ts), kept in
  *    the sync store; a space's first pass is migrate.ts.
  *  - **What this device does**, heard as the workspace says it (workspace/file-ops.ts),
@@ -27,7 +28,7 @@ import { isRecord, keep, stored } from '../stored'
 import { workspace } from '../workspace.svelte'
 import type { FileOp } from '../workspace/file-ops'
 import { owesLast, writing } from '../parting'
-import { isDesktop } from '../tauri'
+import { isDesktop, joinPath } from '../tauri'
 import { waited } from '../timing'
 import { appWorld, type Telling } from './app-world'
 import type { NoteDoc } from '../workspace/documents.svelte'
@@ -53,8 +54,10 @@ type Light = 'off' | 'idle' | 'syncing' | 'error' | 'offline'
  *  pass. */
 const NUDGE = 2_000
 
-/** How often a space is passed with nothing said about it, while the hub can poke. */
-const FALLBACK = 5 * 60_000
+/** The hub's poke is immediate; this catches one that went missing while someone is
+ *  looking at the window. Hidden windows keep the quieter five-minute fallback. */
+const FALLBACK = 30_000
+const HIDDEN_FALLBACK = 5 * 60_000
 
 /** v1's mirrors: what the first pass of each space starts from, never written while v2
  *  runs, and written from the store only when the account goes back to v1 or this device
@@ -401,7 +404,9 @@ class Runner {
     const delay = waiting
       ? NUDGE
       : hub.state === 'open'
-        ? FALLBACK
+        ? document.hidden
+          ? HIDDEN_FALLBACK
+          : FALLBACK
         : pollDelay(this.quiet, document.hidden)
     this.timer = setTimeout(() => this.kick(), delay)
   }
@@ -562,6 +567,10 @@ class Runner {
       this.own.add(`removed:${path}`)
       try {
         await workspace.fileGone(path, kind)
+        // Remote deletions update every path-based store above, but unlike a
+        // downloaded document they do not call `written`. Refresh the sidebar
+        // after the deletion has reached those stores so its row disappears now.
+        this.treeStale()
       } finally {
         this.own.delete(`removed:${path}`)
       }
@@ -642,6 +651,16 @@ class Runner {
     return null
   }
 
+  /** The file on this disk an entry of the account is, by its id: null for one that is
+   *  not on this disk, or in no space this device syncs. */
+  fileOf(id: string): string | null {
+    for (const space of this.engine?.core.spaces.values() ?? []) {
+      const local = space.entries.get(id)?.local_path
+      if (local && space.isLive(id)) return joinPath(space.row.root, local)
+    }
+    return null
+  }
+
   /** What the account holds for a note on this disk: its id, its version, and the digest
    *  of what nib last wrote. */
   tracked(path: string): { id: string; version: number; hash: string } | null {
@@ -662,22 +681,30 @@ class Runner {
     if (engine && space) await engine.core.commit(engine.core.forgetSpace(space.id))
   }
 
-  /** A device's name, by its id on the account. */
-  private names: Map<string, string> | null = null
+  /** A device's name, by its id on the account: the account's list, asked for once by
+   *  everyone who wants a name while it is coming, and kept only once it came. A list
+   *  that could not be had is asked for again next time, rather than every device being
+   *  nameless for the rest of the session. */
+  private names: Promise<Map<string, string>> | null = null
   private async nameOf(device: string | null): Promise<string> {
     if (!device) return ''
+    const token = account.token
+    if (!token) return ''
     if (!this.names) {
-      this.names = new Map()
-      const token = account.token
-      if (token) {
+      const asked = (async () => {
         const { request } = await import('../api')
         const listed = await request<{ devices?: { id: string; name: string }[] }>('/v2/devices', {
           token,
-        }).catch(() => ({ devices: [] }))
-        for (const one of listed.devices ?? []) this.names.set(one.id, one.name)
-      }
+        })
+        return new Map((listed.devices ?? []).map((one) => [one.id, one.name]))
+      })()
+      this.names = asked
+      asked.catch(() => {
+        if (this.names === asked) this.names = null
+      })
     }
-    return this.names.get(device) ?? ''
+    const names = await this.names.catch(() => null)
+    return names?.get(device) ?? ''
   }
 
   // -------------------------------------------------------------------------

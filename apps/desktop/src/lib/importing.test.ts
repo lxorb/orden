@@ -17,6 +17,12 @@ describe('the folder an import makes for itself', () => {
     expect(folderNameFor([picked('My notes.zip')], 'markdown')).toBe('My notes')
   })
 
+  test('is named after the file that was picked, in whatever script its name is', () => {
+    expect(folderNameFor([picked('Заметки.zip')], 'obsidian')).toBe('Заметки')
+    expect(folderNameFor([picked('笔记.zip')], 'obsidian')).toBe('笔记')
+    expect(folderNameFor([picked('AI.zip')], 'obsidian')).toBe('AI')
+  })
+
   test('is named after the folder that was dropped', () => {
     expect(
       folderNameFor([picked('2026_01_02.md', 'My graph/journals/2026_01_02.md')], 'logseq'),
@@ -27,6 +33,18 @@ describe('the folder an import makes for itself', () => {
     expect(folderNameFor([picked('Export-9f1c2d3e.zip')], 'notion')).toBe('Notion')
     expect(folderNameFor([picked('takeout-20260102.zip')], 'keep')).toBe('Google Keep')
     expect(folderNameFor([picked('backup.zip')], 'bear')).toBe('Bear')
+  })
+
+  test('keeps a name that only starts with an exporter’s word', () => {
+    expect(folderNameFor([picked('Keepsakes.zip')], 'obsidian')).toBe('Keepsakes')
+    expect(folderNameFor([picked('Graphic Design.zip')], 'obsidian')).toBe('Graphic Design')
+    expect(folderNameFor([picked('Archived Recipes.zip')], 'obsidian')).toBe('Archived Recipes')
+    expect(folderNameFor([picked('Exports Of Thought.zip')], 'obsidian')).toBe('Exports Of Thought')
+  })
+
+  test('keeps a vault’s whole name, an exporter’s word first and all', () => {
+    expect(folderNameFor([picked('Graph Theory.zip')], 'obsidian')).toBe('Graph Theory')
+    expect(folderNameFor([picked('Archive.zip')], 'obsidian')).toBe('Archive')
   })
 
   test('is the app it came out of when several files were picked', () => {
@@ -41,8 +59,8 @@ describe('the folder an import makes for itself', () => {
 /** A folder picked whole, the way the sheet's button and a drop both hand one over:
  *  every file's path starts with the folder's own name. The import's folder is named
  *  after it, so the files inside must not carry that name again - a folder called
- *  Vault became Vault/Vault/Home.md, and one called Bear, Bear/Bear. The first-run
- *  card has always taken the name off for the same reason; see first-space.svelte.ts. */
+ *  Vault became Vault/Vault/Home.md, and one called Bear, Bear/Bear. Settings' Import
+ *  takes the name off for the same reason; see `pickedFolder` in import/sources.ts. */
 describe('a folder picked whole', () => {
   function inFolder(path: string, words: string): Picked {
     const bytes = new TextEncoder().encode(words)

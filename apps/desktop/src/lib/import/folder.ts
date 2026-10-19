@@ -10,9 +10,9 @@
  *  a Roam JSON - build their plans themselves, because there is nothing to map. */
 
 import type { Meta } from './meta'
-import { noteText } from './meta'
+import { keptText, noteText } from './meta'
 import type { FormatId, ImportPlan, Lost, Planned } from './plan'
-import { ExportFiles, rewriteLinks } from './rewrite'
+import { canvasFollowed, ExportFiles, isCanvas, rewriteLinks } from './rewrite'
 import type { Source } from './sources'
 
 /** What a note's file says, once the format has had a look at it. */
@@ -22,6 +22,9 @@ interface Written {
    *  they are, which is right for a format that already writes its own heading. */
   title?: string | null
   meta?: Meta
+  /** The words are a file an app kept for itself rather than an export it wrote,
+   *  so nothing goes above them and nothing around them is tidied. */
+  kept?: boolean
 }
 
 interface Placement {
@@ -44,6 +47,9 @@ export async function folderPlan(
 ): Promise<ImportPlan> {
   const placed: { source: Source; to: string; read: Placement['read'] }[] = []
   const files = new ExportFiles()
+  // What the import renamed on the way in, by the path the export gave it, which is
+  // how a canvas in the export names it.
+  const renamed = new Map<string, string>()
 
   // Everything is placed before anything is read, because a link in the first
   // note can point at the last file in the export.
@@ -53,22 +59,30 @@ export async function folderPlan(
 
     placed.push({ source, to: placement.to, read: placement.read })
     files.add(source.path, { path: placement.to, name: nameFor(placement.to) })
+    if (placement.to !== source.path) renamed.set(source.path, placement.to)
   }
 
   const written: Planned[] = []
 
   for (const one of placed) {
     if (!one.read) {
-      written.push({ kind: 'file', path: one.to, bytes: await one.source.bytes() })
+      const bytes = await one.source.bytes()
+      const kept = renamed.size && isCanvas(one.to) ? canvasFollowed(bytes, renamed) : bytes
+      written.push({ kind: 'file', path: one.to, bytes: kept })
       continue
     }
 
     const said = await one.read(await one.source.text(), one.source)
-    const body = rewriteLinks(said.text, { was: one.source.path, now: one.to }, files.find)
+    const body = rewriteLinks(
+      said.text,
+      { was: one.source.path, now: one.to },
+      files.find,
+      files.reaches,
+    )
     written.push({
       kind: 'note',
       path: one.to,
-      text: noteText(said.title ?? null, body, said.meta ?? {}),
+      text: said.kept ? keptText(body) : noteText(said.title ?? null, body, said.meta ?? {}),
     })
   }
 
@@ -88,14 +102,23 @@ export function isNoteFile(path: string): boolean {
   return /\.(md|markdown|mdown|mkd|txt)$/i.test(path)
 }
 
+/** Whether a file is hidden, or inside a hidden folder: `.git` and its objects, a
+ *  `.gitignore`, the `.trash/` Obsidian keeps for notes thrown away. Another
+ *  program's business, which the space's file list and sync leave out as well. */
+export function isHidden(path: string): boolean {
+  return path.split('/').some((part) => part.startsWith('.'))
+}
+
 /** Files no export meant to hand over: a folder's own metadata, the rubbish two
- *  desktops leave in every folder they touch. */
+ *  desktops leave in every folder they touch. `Icon\r` is where Finder keeps a
+ *  folder's own icon, named with a character Windows cannot write. */
 export function isJunk(path: string): boolean {
   const name = path.split('/').pop() ?? path
   return (
     name === '.DS_Store' ||
     name === 'Thumbs.db' ||
     name === 'desktop.ini' ||
+    name === 'Icon\r' ||
     name.startsWith('._') ||
     path.startsWith('__MACOSX/') ||
     path.includes('/__MACOSX/')

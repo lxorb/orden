@@ -10,21 +10,123 @@ export const yue: Dictionary = {
   'Do you write code?': '你寫唔寫程式？',
   Yes: '係',
   No: '唔係',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': '喺其他 App：{key}',
+  'From other apps: set in your system settings': '喺其他 App：喺系統設定度設定',
+  'From other apps: bind {command} in your system settings':
+    '喺其他 App：喺系統設定度綁定 {command}',
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'Essentials',
+  'Add to Essentials': '加入 Essentials',
+  'Remove from Essentials': '從 Essentials 移除',
+  'Add block to Essentials': '將區塊加入 Essentials',
+  'Add blocks to Essentials': '將區塊全部加入 Essentials',
+  'Add view to Essentials': '將檢視加入 Essentials',
+  'Open tabs and Essentials': '開分頁同 Essentials',
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor而家叫做Orden',
+  'Notes from nibeditor.com': '嚟自nibeditor.com嘅筆記',
+  'Nothing there': '嗰度乜都冇',
+  // AI: the three permission modes
+  'Full permissions': '完整權限',
+  'Auto mode': '自動模式',
+  'Full permissions: nothing is asked first': '完整權限：乜都唔會事先問',
+  // Import: Zen's tabs
+  'Import from Zen': '由 Zen 匯入',
+  'Containers stay in Zen': '容器留喺 Zen',
+  'Zen’s tabs could not be read.': '讀唔到 Zen 嘅分頁。',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': '容器留喺 Firefox',
+  'Nothing could be read out of {browser}.': '讀唔到 {browser} 入面任何嘢。',
+  'Saved groups': '已儲存嘅群組',
+  'Tab group': '分頁群組',
+  'Bookmarks toolbar': '書籤列',
+  'Bookmarks menu': '書籤選單',
+  'Other bookmarks': '其他書籤',
+  'Mobile bookmarks': '流動裝置書籤',
+  'Bookmarks bar': '書籤列',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} 將開咗嘅分頁鎖住咗，所以淨係帶到書籤。',
+  '{count} pages not on the web stay behind': '唔喺網上嘅 {count} 個頁面留低咗',
+  'Reading List': '閱讀列表',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS 將 Safari 嘅分頁同書籤放咗喺「完全磁碟取用權限」後面。喺嗰度開咗 Orden，再試多次。',
+  // Settings: note types
+  'Page note': '分頁筆記',
+  'Web note': '網頁筆記',
+  'Private tab': '私人分頁',
+  'Note types': '筆記類型',
+  // Tasks: Upcoming's weeks
+  'Previous week': '上一個星期',
+  // Tasks: projects placed in the panel, and their folder
+  'Add project above': '喺上面加項目',
+  'Add project below': '喺下面加項目',
+  'Projects folder': '項目資料夾',
+  // Tasks: a repeating task skipped or done for good
+  Skip: '跳過',
+  'Complete forever': '永久完成',
+  // Tasks: comments
+  Comments: '留言',
+  // Tasks: filters
+  Filters: '篩選',
+  'Add filter': '加篩選',
+  'Edit filter': '改篩選',
+  // Tasks: a project's sections
+  'Add section': '加分區',
+  '{name} (copy)': '{name}（副本）',
+  'Its tasks are deleted with it.': '入面嘅任務會一齊刪除。',
+  // Tasks: keys, selection and the undo toast
+  Completed: '已完成',
+  'Remove date': '移除日期',
+  'Next task': '下一個任務',
+  'Previous task': '上一個任務',
+  'Add task at the top': '喺最頂加任務',
+  '{count} selected': '揀咗 {count} 個',
+  // Tasks: the Display menu
+  Display: '顯示',
+  'Completed tasks': '已完成任務',
+  // Tasks: several lines pasted into quick add
+  'One task': '一個任務',
+  'One per line': '每行一個',
+  // Tasks: the projects in the panel
+  Favorites: '最愛',
+  'Add project': '加專案',
+  'Add sub-project': '加子專案',
+  // Tasks: the task view
+  'Sub-tasks': '子任務',
+  'Add sub-task': '加子任務',
+  'New label': '新標籤',
+  'No deadline': '冇限期',
+  // Tasks: the row's menu and the scheduler
+  Reschedule: '改期',
+  'Later this week': '今個禮拜遲啲',
+  'This weekend': '今個週末',
+  'Next weekend': '下個週末',
+  'Every week on {day}': '每個禮拜{day}',
+  'Every month on day {day}': '每個月{day}號',
+  'Every year on {date}': '每年{date}',
+  'Type a date': '輸入日期',
+  'Previous month': '上個月',
+  'Next month': '下個月',
+  'No time': '冇時間',
+  'No repeat': '唔重複',
+  Complete: '完成',
+  Reopen: '重新打開',
+  Schedule: '排期',
+  'Open in note': '喺筆記度打開',
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': '其他 app',
-  'Start fresh': '重新開始',
   'Import from Obsidian': '由 Obsidian 匯入',
   'Import from Notion': '由 Notion 匯入',
   // Hints: Silent mode and the cards that point at a feature
   Hints: '提示',
   'Silent mode': '靜音模式',
-  'Sign in to keep your notes safe and on every device.':
-    '登入咗,你啲筆記就會安全,喺每部裝置都有。',
   'See how your notes connect.': '睇吓你啲筆記點樣連埋一齊。',
   'Press {key} to find anything, notes and commands alike.':
     '撳 {key} 就搵到任何嘢,筆記同指令都得。',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': '寫嘢嗰陣顯示 Markdown',
+  'Open notes in source mode': '用源代碼模式打開筆記',
   Pointer: '指標',
   'Pointing hand on buttons': '喺按鈕上面顯示指住嘅手',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
@@ -40,11 +142,13 @@ export const yue: Dictionary = {
   '{count} h': '{count}個鐘',
   Inbox: '收件匣',
   Date: '日期',
+  'Start date': '開始日期',
   Priority: '優先次序',
   Reminder: '提醒',
   Duration: '所需時間',
   'Smart dates': '智能日期',
   'From any app': '喺任何 App',
+  'Show tasks without a start date in Today': '喺今日顯示冇開始日期嘅任務',
   'Every day': '每日',
   'Every weekday': '每個工作日',
   'Every week': '每個禮拜',
@@ -61,6 +165,13 @@ export const yue: Dictionary = {
   Unsaved: '未儲存',
   'Save to': '儲存到',
   'Reloaded with the web data of {space}': '已用 {space} 嘅網頁資料重新載入',
+  Separate: '獨立',
+  'Share this note’s web data again?': '再次共用呢份筆記嘅網絡數據？',
+  'What its pages are signed in to on this computer is deleted.':
+    '呢部電腦上佢啲頁面登入咗嘅資料會被刪除。',
+  'Share again': '再次共用',
+  'This note keeps its own web data now': '呢份筆記而家有自己嘅網絡數據',
+  'Back on the shared web data': '返返去共用嘅網絡數據',
   'Add a page': '加一頁',
   'Add a page after this': '喺呢頁之後加一頁',
   'Delete this page': '刪除呢頁',
@@ -81,6 +192,8 @@ export const yue: Dictionary = {
   Dots: '點陣',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': '用兩隻手指轉畫布',
+  'Turn upright': '擺返正',
   Canvas: '畫布',
   Card: '卡片',
   'Note or picture': '筆記或圖片',
@@ -95,7 +208,6 @@ export const yue: Dictionary = {
   'New window': '新增視窗',
   New: '新增',
   'New space': '新增空間',
-  '{name}: switch space': '{name}：轉空間',
   Untitled: '未命名',
   Space: '空間',
   'Name the space': '空間名稱',
@@ -140,8 +252,6 @@ export const yue: Dictionary = {
   'Loading…': '載入中…',
   'Create a space': '建立空間',
   'Import a folder': '匯入資料夾',
-  'Sign in to sync': '登入嚟同步',
-  'Create account': '開帳戶',
   'Delete space': '刪除空間',
   'Delete {name}?': '刪除{name}？',
   'Every note in this space is deleted from your computer.':
@@ -159,6 +269,10 @@ export const yue: Dictionary = {
   Unpin: '取消固定',
   Close: '關閉',
   'Close pinned tab?': '關閉已固定嘅標籤頁？',
+  'Save changes to {name}?': '要唔要儲存 {name} 嘅改動？',
+  'Save changes to these tabs?': '要唔要儲存呢啲分頁嘅改動？',
+  'Unsaved words go to Recently deleted.': '未儲存嘅字會去最近刪除。',
+  'Don’t save': '唔儲存',
   'Close others': '關閉其他',
   'Close tabs to the right': '關閉右邊嘅標籤頁',
   'Close tabs to the left': '關閉左邊嘅標籤頁',
@@ -195,9 +309,6 @@ export const yue: Dictionary = {
   'Move this note': '移動呢篇筆記',
   'Move up': '上移',
   'Move down': '下移',
-  Bookmark: '加入書籤',
-  'Remove bookmark': '移除書籤',
-  'Leave out of search': '從搜尋中排除',
   'Search here again': '重新納入搜尋',
   'Undo the last file change': '復原上一次檔案更改',
   'Undo moving {name}': '復原移動{name}',
@@ -247,7 +358,6 @@ export const yue: Dictionary = {
   'Remove group': '移除分組',
   'Out of the group': '移出分組',
   Make: '建立',
-  'Bookmark this block': '為呢個區塊加書籤',
   Panels: '面板',
   Outline: '大綱',
   'Stay on this note': '停留喺呢篇筆記',
@@ -509,8 +619,7 @@ export const yue: Dictionary = {
   'Sign in to ask a question.': '請登入後提問。',
   'Asking OpenAI which models this key can use': '正在向OpenAI查詢呢個密鑰可用嘅模型',
   'Could not reach OpenAI': '冇辦法連上OpenAI',
-  'That key cannot use any of the models nibeditor asks for.':
-    '呢個密鑰用唔到nibeditor所需嘅任何模型。',
+  'That key cannot use any of the models Orden asks for.': '呢個密鑰用唔到Orden所需嘅任何模型。',
   'No reasoning': '唔推理',
   Minimal: '最低',
   Low: '低',
@@ -532,7 +641,7 @@ export const yue: Dictionary = {
   Mode: '模式',
   // The window's own edges; see appearance.rs
   Window: '視窗',
-  'nibeditor’s own': 'nibeditor 自己嘅',
+  'Orden’s own': 'Orden 自己嘅',
   'The system’s': '系統嘅',
   'Window frame': '視窗邊框',
   System: '系統',
@@ -592,6 +701,7 @@ export const yue: Dictionary = {
   '{done} of {total}': '{done}/{total}',
   'Sync failed': '同步失敗',
   '{name} could not be written.': '冇辦法寫入 {name}。',
+  '{name} could not be read.': '冇辦法讀取 {name}。',
   'Text size': '字體大小',
   'Line spacing': '行距',
   'Line width': '行寬',
@@ -651,8 +761,10 @@ export const yue: Dictionary = {
   '{used} of {limit} used.': '已用{used}，共{limit}。',
   'That image does not fit in your storage.': '儲存空間唔夠，放唔落呢張圖片。',
   'out of space': '儲存空間已滿',
-  'nibeditor {version} is ready to install.': 'nibeditor{version}已可安裝。',
+  'Orden {version} is ready to install.': 'Orden{version}已可安裝。',
+  'Orden {version} is available.': 'Orden{version}已推出。',
   'Restart now': '即刻重新啟動',
+  'Move to Applications': '搬去「應用程式」',
   Later: '遲啲',
   More: '更多',
   'Open notes': '開啟中嘅筆記',
@@ -677,11 +789,9 @@ export const yue: Dictionary = {
   Continue: '繼續',
   'Send a new code': '重新發送驗證碼',
   'Code sent to': '驗證碼已發送至',
-  'You already have notes on this computer.': '呢部電腦上已經有筆記喇。',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
-    '保留佢哋，佢哋會併入你嘅帳戶。清除佢哋，則只留下帳戶中已有嘅內容，呢個操作冇辦法復原。',
-  'Keep them': '保留',
-  'Erase them': '清除',
+  'This device already has notes.': '呢部裝置已經有筆記。',
+  Merge: '合併',
+  'Keep separate': '分開保留',
   'Digit {number}': '第{number}位',
   'Resend in {seconds}s': '{seconds}秒後可重發',
   'Last synced {time}.': '上次同步於{time}。',
@@ -726,13 +836,13 @@ export const yue: Dictionary = {
   'Reads your notes.': '讀取你嘅筆記。',
   'Reads and writes your notes.': '讀取並寫入你嘅筆記。',
   Other: '其他',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'AI助手可以讀取你嘅筆記，若你允許，都能修改。佢用你嘅nibeditor電郵登入，唔需要貼上任何嘢。',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'AI助手可以讀取你嘅筆記，若你允許，都能修改。佢用你嘅Orden電郵登入，唔需要貼上任何嘢。',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     '喺Claude中開啟「設定→連接器」，點擊「新增自定義連接器」。',
   'Open Claude’s connectors': '開啟Claude嘅連接器',
   'Fill in the two fields and click Add.': '填好呢兩個欄位，然後點擊「新增」。',
-  'Click Connect and sign in with your nibeditor email.': '點擊「連接」，用你嘅nibeditor電郵登入。',
+  'Click Connect and sign in with your Orden email.': '點擊「連接」，用你嘅Orden電郵登入。',
   'Using Claude Code instead?': '改用Claude Code？',
   Command: '命令',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -743,15 +853,14 @@ export const yue: Dictionary = {
   'Open ChatGPT’s plugins': '開啟ChatGPT嘅插件',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     '冇「插件」一節或加號按鈕？請先喺「設定→安全同登入」中開啟開發者模式。',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'ChatGPT詢問時，用你嘅nibeditor電郵登入。',
-  'To use it in a chat, type @ and pick nibeditor.': '喺對話中輸入@並揀nibeditor就可以用。',
+  'Sign in with your Orden email when ChatGPT asks.': 'ChatGPT詢問時，用你嘅Orden電郵登入。',
+  'To use it in a chat, type @ and pick Orden.': '喺對話中輸入@並揀Orden就可以用。',
   'Server URL': '伺服器網址',
   Authentication: '驗證方式',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     '進階OAuth設定維持原樣，並勾選「我明白並要繼續」。',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    '任何支援Streamable HTTP同OAuth嘅MCP客戶端。將網址畀佢：佢會自行註冊並開啟nibeditor嘅登入頁面。',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    '任何支援Streamable HTTP同OAuth嘅MCP客戶端。將網址畀佢：佢會自行註冊並開啟Orden嘅登入頁面。',
   'Show config': '顯示設定檔',
   'For a client that takes a JSON block instead of a URL.': '適用於接受JSON設定而非網址嘅客戶端。',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
@@ -817,7 +926,7 @@ export const yue: Dictionary = {
   'Display name': '顯示名稱',
   'Your name': '你嘅名字',
   Email: '電郵',
-  'On nibeditor.com': '喺nibeditor.com上',
+  'On orden.so': '喺orden.so上',
   'Your own domain': '你自己嘅域名',
   'Switching gives up {name}.': '切換就會放棄{name}。',
   Page: '頁面',
@@ -888,8 +997,9 @@ export const yue: Dictionary = {
     '屬性用列嘅形式顯示同就地編輯；原始碼係輸入時嘅 YAML。',
   Source: '原始碼',
   Hidden: '隱藏',
-  'High contrast': '高對比',
+  Contrast: '對比',
   Glass: '玻璃',
+  Classic: '經典',
   'Go to the mark': '跳去標記',
   'Go to the definition': '跳去註腳內容',
   'Nothing points at this one': '冇嘢指向呢個',
@@ -900,6 +1010,7 @@ export const yue: Dictionary = {
   Comment: '註釋',
   'Always on top': '永遠喺最上層',
   'What is new': '更新內容',
+  'Download the app': '下載應用程式',
   'Report an issue': '報告問題',
   'Move the line up': '呢行上移',
   'Move the line down': '呢行下移',
@@ -976,6 +1087,22 @@ export const yue: Dictionary = {
   'Layout: {name}': '佈局：{name}',
   'Space: {name}': '空間：{name}',
   'Theme: {name}': '主題：{name}',
+  'AI account: {name}': 'AI 帳戶：{name}',
+  Accounts: '帳戶',
+  Access: '存取',
+  Set: '已設定',
+  'Start over': '重新開始',
+  'Sign in here': '喺呢度登入',
+  '{device} wants your AI accounts': '{device} 想要你嘅 AI 帳戶',
+  '{device} offers this device your AI vault': '{device} 將你嘅 AI 保險庫提供畀呢部裝置',
+  Join: '加入',
+  'Allow this device on another one': '喺另一部裝置度允許呢部',
+  'On every device you sign in to, end-to-end encrypted.': '喺你登入嘅每部裝置，端對端加密。',
+  'Sign in to have them on every device.': '登入就可以喺每部裝置用。',
+  'Agents on this computer connect on their own': '呢部電腦嘅代理自動連線',
+  Helpers: '助手',
+  'Start helpers on your AI accounts': '喺你嘅 AI 帳戶度開助手',
+  Delegated: '交咗出去',
   'Code theme: {name}': '代碼主題：{name}',
   'Delete a layout': '刪除佈局',
   // Keyboards and modal editing
@@ -1044,6 +1171,7 @@ export const yue: Dictionary = {
   'Double-click to write': '雙擊開始書寫',
   'Another colour': '其他顏色',
   'Turn into a note': '轉為筆記',
+  Arrange: '排列',
   'Bring to front': '移到最上層',
   'Bring forward': '上移一層',
   'Send backward': '下移一層',
@@ -1065,6 +1193,12 @@ export const yue: Dictionary = {
   'Export as PNG': '匯出為PNG',
   'Export as SVG': '匯出為SVG',
   'Export as PDF': '匯出為PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': '匯入 PDF',
+  'Choose how to add the pages to the canvas.': '揀頁面點樣擺上畫布。',
+  'Single page': '單一頁',
+  'All pages': '所有頁面',
+  'Choose a page': '揀一頁',
   // The canvas: what its own keys are called
   'Delete what is picked': '刪除揀咗嘅範圍',
   'Nudge left': '向左微移',
@@ -1125,8 +1259,8 @@ export const yue: Dictionary = {
   'Release channel': '發佈通道',
   Stable: '穩定版',
   Unstable: '開發版',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    '穩定版跟着正式發佈走，開發版跟着main嘅每次推送，可能會壞掉。',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    '穩定版跟着已發佈嘅版本走，開發版跟着edge建置，可能會壞掉。',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: '匯入',
@@ -1175,13 +1309,14 @@ export const yue: Dictionary = {
   '{count} tables inside notes do not come over': '筆記內嘅 {count} 個表格唔會轉入',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} 個附件喺 iCloud，唔係喺呢部 Mac',
+  '{count} files are in iCloud rather than on this Mac': '{count} 個檔案喺 iCloud，唔係喺呢部 Mac',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS 將呢啲筆記放喺「完整磁碟存取權」之後。',
   'There are no notes in Apple Notes on this Mac.': '呢部 Mac 嘅「備忘錄」入面冇筆記。',
   'Those notes could not be read.': '讀唔到呢啲筆記。',
   'Read them from this Mac': '從呢部 Mac 讀取',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    '喺「完整磁碟存取權」開啟 nibeditor，然後再試一次。',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    '喺「完整磁碟存取權」開啟 Orden，然後再試一次。',
   'Open the setting': '開啟設定',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     '「日誌」可以自己匯出：日誌、設定、匯出。「備忘錄」冇匯出，所以喺筆記所在嘅 Mac 以外，要拖入嘅係匯出工具寫出嘅資料夾。',
@@ -1278,14 +1413,15 @@ export const yue: Dictionary = {
   'OpenAI-compatible': 'OpenAI兼容',
   'Base URL': '基礎網址',
   'API key': 'API密鑰',
-  'Set on this device': '已喺呢部裝置設定',
   Optional: '可選',
   'List models': '列出模型',
   'Asking…': '詢問中…',
   'No providers yet.': '仲冇服務商。',
   'Add {name}': '新增{name}',
-  'Keys stay in the secure store on this device.': '密鑰留喺呢部裝置嘅安全儲存區中。',
   'This browser holds the keys in its own storage.': '呢個瀏覽器將密鑰放喺自己嘅儲存空間入面。',
+  'Keep this browser’s keys in the vault': '將呢個瀏覽器嘅密鑰放喺保險庫',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    '噉樣每部裝置嘅密鑰都會儲喺呢個瀏覽器嘅儲存空間，混入頁面嘅腳本可以讀到。',
   'AI can be wrong. Check the facts.': 'AI可能會出錯，請核實事實。',
   'Used by the glasses': '供眼鏡用',
   'Could not read the models.': '冇辦法讀取模型列表。',
@@ -1324,7 +1460,6 @@ export const yue: Dictionary = {
   'A cited report': '有引文嘅報告',
   'A helper in the background': '背景助手',
   'A side question': '旁枝問題',
-  'Agent mode': '代理模式',
   'Agent profile': '代理設定檔',
   'Archive the thread': '封存討論串',
   'Approve mode': '批准模式',
@@ -1443,8 +1578,6 @@ export const yue: Dictionary = {
   // Web tabs
   Reload: '重新載入',
   'Hard reload': '強制重新載入',
-  'Clip this page': '儲存呢頁',
-  'Clip the link': '儲存連結',
   'Open in the browser': '喺瀏覽器開啟',
   'Show it here': '喺呢度顯示',
   Website: '網站',
@@ -1527,7 +1660,8 @@ export const yue: Dictionary = {
   'that is not a theme': '呢個唔係主題',
   'no such theme': '冇嗰個主題',
   'choose a model first': '請先揀模型',
-  'set an OpenAI key in nibeditor’s settings first': '請先喺nibeditor嘅設定中填入OpenAI密鑰',
+  'set an OpenAI key in Orden’s settings first': '請先喺Orden嘅設定中填入OpenAI密鑰',
+  'set an OpenAI key in nibeditor’s settings first': '請先喺Orden嘅設定中填入OpenAI密鑰',
   'that is a lot of questions - try again later': '問得太頻密喇，請等一陣再試',
   'that is too much audio': '音頻太長',
   'that is more than a spoken command': '呢個超過一句語音命令嘅長度',
@@ -1551,7 +1685,6 @@ export const yue: Dictionary = {
   Nothing: '無',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': '將呢個檢視加入書籤',
   Keep: '保留',
 
   // Which side of the window a panel sits on.
@@ -1573,7 +1706,6 @@ export const yue: Dictionary = {
   'New tab': '新分頁',
   'Full screen': '全螢幕',
   'Print…': '打印…',
-  'Save page': '儲存網頁',
   'Share…': '分享…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1616,7 +1748,6 @@ export const yue: Dictionary = {
   Blocked: '已封鎖',
   'Reset permissions': '重設權限',
   'Turn into': '轉換為',
-  'Bookmark these blocks': '為呢啲區塊加書籤',
   Foldable: '可摺疊',
   'Starts folded': '預設摺疊',
   // Where a space keeps what websites store
@@ -1633,6 +1764,15 @@ export const yue: Dictionary = {
   'Bring all to front': '全部擺到最前',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': '復原複製',
+  'Devices with your AI vault': '有你 AI 保險庫嘅裝置',
+  'This device': '呢部裝置',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    '嗰部裝置之後讀唔到你嘅 AI 帳戶，其他裝置會攞到新鎖匙。',
+  'Also remove this device from your AI vault?': '都將呢部裝置移出你嘅 AI 保險庫？',
+  'Remove and sign out': '移除並登出',
+  'Undo making {name}': '復原建立{name}',
+  'Undo the deletion': '復原刪除',
+  'Undo the move': '復原移動',
   'Redo the last file change': '重做上一次檔案變更',
   'Select down': '向下選取',
   'Select up': '向上選取',
@@ -1676,7 +1816,6 @@ export const yue: Dictionary = {
   '{key} in a terminal': '喺終端機度嘅 {key}',
   'Always ask': '次次都問',
   'Open another': '再開一個',
-  'Open in terminal': '喺終端機度開',
   Clear: '清除',
   'Exited with code {code}': '以代碼 {code} 結束咗',
   'Could not start {shell}': '開唔到 {shell}',
@@ -1685,18 +1824,8 @@ export const yue: Dictionary = {
   'Stop what is running in {name}?': '要停止 {name} 入面運行緊嘅嘢嗎？',
   'Stop what is running in these terminals?': '要停止呢啲終端機入面運行緊嘅嘢嗎？',
   'Paste {count} lines?': '要貼上 {count} 行嗎？',
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': '預設瀏覽器',
-  // The engine web tabs run on
-  Engine: '引擎',
-  Relaunch: '重新啟動',
-  'Chromium did not start': 'Chromium 開唔到',
-  'No connection': '冇連線',
-  'Not in this release': '呢個版本冇',
-  'Needs an update': '要更新',
-  'Signature did not match': '簽名唔對',
-  'Disk full': '磁碟滿咗',
-  'Could not be installed': '裝唔到',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '復原 {name} 嘅編輯',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1796,7 +1925,7 @@ export const yue: Dictionary = {
   'Always on this site': '喺呢個網站一直咁做',
   'Agents stopped': '啲代理停咗',
   'Agent tabs closed': '代理嘅分頁閂咗',
-  'nibeditor is still running for your agents': 'nibeditor 仲喺度幫你啲代理做嘢',
+  'Orden is still running for your agents': 'Orden 仲喺度幫你啲代理做嘢',
   '{client} wants to connect': '{client} 想連接',
   // Web logins that travel, and the devices of an account
   'no such device': '冇呢部裝置',
@@ -1810,11 +1939,11 @@ export const yue: Dictionary = {
   // to connect one more.
   'Agents on this computer': '呢部電腦上面嘅代理',
   'Your account’s connector': '你帳戶嘅連接器',
-  'nibeditor asks you once, the first time it connects.':
-    '第一次連線嘅時候，nibeditor 會問你一次。',
+  'Orden asks you once, the first time it connects.': '第一次連線嘅時候，Orden 會問你一次。',
   'A client on another machine?': '另一部機器上面嘅用戶端？',
   'Shown only once.': '只會顯示一次。',
   'Remove {name}?': '移除 {name}？',
+  'End {name}?': '結束 {name}？',
   'Its token stops working.': '佢嘅權杖會失效。',
   'Added {date}': '喺 {date} 加入',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':
@@ -1835,7 +1964,6 @@ export const yue: Dictionary = {
   'Change notes': '改筆記',
   'See what you are looking at': '睇到你睇緊乜',
   'Move and rename files': '搬同改名檔案',
-  'Open tabs and bookmarks': '開標籤頁同書籤',
   'Bring a tab to the front': '將標籤頁擺去最前',
   'Browse in tabs of its own': '喺自己嘅標籤頁瀏覽',
   'Read what pages load': '讀網頁載入嘅嘢',
@@ -1857,11 +1985,8 @@ export const yue: Dictionary = {
   'Without your logins': '唔用你嘅登入',
   'Calls a minute': '每分鐘呼叫次數',
   'Pages a minute': '每分鐘頁數',
+  'Browser memory limit': '瀏覽器記憶體上限',
   '{count} calls': '{count} 次呼叫',
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': '喺 {device} 開咗',
-  'Use here': '喺呢度用',
-  '{device} wants your web logins': '{device} 想要你嘅網頁登入',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': '快問',
@@ -1925,7 +2050,7 @@ export const yue: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: '稍後提醒',
   Reminders: '提醒',
-  'Reminders ring while nibeditor is open': 'nibeditor 開住嘅時候提醒先會響',
+  'Reminders ring while Orden is open': 'Orden 開住嘅時候提醒先會響',
   Automatic: '自動',
   'Stay in the tray': '留喺系統匣',
   'Exact alarms': '準確鬧鐘',
@@ -1967,7 +2092,6 @@ export const yue: Dictionary = {
   'Any of them': '任何一個',
   Compare: '比較',
   'Add a filter': '加篩選',
-  'Reschedule to today': '改去今日',
   Collapse: '收埋',
   Expand: '打開',
   Summary: '總結',
@@ -1989,7 +2113,6 @@ export const yue: Dictionary = {
   Layout: '版面',
   Overdue: '過咗期',
   Upcoming: '就嚟',
-  Logbook: '紀錄',
   Project: '專案',
   Label: '標籤',
   List: '清單',
@@ -2174,4 +2297,11 @@ export const yue: Dictionary = {
   'Search this chat': '喺呢個傾偈度搵',
   'Add as task': '加做任務',
   'Save as note': '儲存做筆記',
+  // Appearance: glass's own pairs of colours
+  Dawn: '黎明',
+  Lagoon: '潟湖',
+  Lilac: '丁香',
+  Peach: '蜜桃',
+  Sage: '鼠尾草',
+  Mist: '薄霧',
 }

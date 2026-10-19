@@ -23,7 +23,7 @@ export function pickFiles(): Promise<Picked[]> {
 }
 
 /** A whole folder, every file in it with its path inside: Obsidian's "Open folder as
- *  vault", which is how the space chooser brings one in. The webview's own folder
+ *  vault", which is how Settings' Import brings one in. The webview's own folder
  *  dialog, for the reason above - it hands back bytes, where a path would have to be
  *  read back out through the crate, and paths.rs keeps the crate to the spaces.
  *

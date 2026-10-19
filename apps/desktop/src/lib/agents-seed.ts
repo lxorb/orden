@@ -7,7 +7,7 @@
  *  heading is here already, as `/memory` makes it. Not translated: the model reads it,
  *  and the writer's own language is the first thing it says to use.
  *
- *  Made with the space from the switcher and the first screen, not with an import,
+ *  Made with the space from the switcher and a fresh start, not with an import,
  *  which brings what the folder had. */
 
 import { joinPath } from './tauri'

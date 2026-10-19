@@ -14,7 +14,7 @@
  *  | Delete browsing data | Chrome's dialog, over the engine's own call |
  *  | Zoom | the engine's own zoom, on Chrome's own ladder of steps |
  *  | Find | nib's find bar, over the engine's own find |
- *  | Save page | the clipper: the page, written into the space as a note |
+ *  | Save page | Save as a note: the clipper, the page written into the space as a note |
  *  | Share | nib's share sheet |
  *  | Settings | the app's settings |
  *
@@ -124,7 +124,7 @@ export function webRows(page: Page, zoom: number, actions: WebActions): MenuEntr
       : []),
     DIVIDER,
     { label: t('History'), hint: shortcuts.hint('web.history'), run: actions.history },
-    { label: t('Bookmarks'), run: actions.bookmarks },
+    { label: t('Essentials'), run: actions.bookmarks },
     {
       label: t('Delete browsing data…'),
       hint: shortcuts.hint('web.clear-data'),
@@ -160,7 +160,7 @@ export function webRows(page: Page, zoom: number, actions: WebActions): MenuEntr
       ? [{ label: t('Find'), hint: shortcuts.hint('edit.find'), disabled: !has, run: actions.find }]
       : []),
     DIVIDER,
-    { label: t('Save page'), disabled: !has, run: actions.save },
+    { label: t('Save as a note'), disabled: !has, run: actions.save },
     { label: t('Share…'), disabled: !has, run: actions.share },
     {
       label: t('Copy link'),

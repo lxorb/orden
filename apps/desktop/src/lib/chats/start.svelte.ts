@@ -56,10 +56,11 @@ function pointersIn(entry: Entry | null, out: string[] = []): string[] {
 }
 
 $effect.root(() => {
-  // A pointer the space's sync brought: its chat listed and placed.
+  // A pointer the space's sync brought, or took away: its chat listed and placed, or let go.
   $effect(() => {
     const pointers = pointersIn(workspace.tree)
-    untrack(() => chats.pointersSeen(pointers))
+    const root = workspace.activeSpace?.root ?? null
+    untrack(() => chats.pointersSeen(root, pointers))
   })
   $effect(() => {
     // Whoever is signed in now, user or guest; the store stops the last one first.

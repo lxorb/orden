@@ -19,6 +19,10 @@ interface World {
   answers: { id: string; note: string; path: string; at: number; answers: Record<string, string> }[]
   /** Whether the site's forms have stopped taking answers. */
   full: boolean
+  /** The installed theme's file, as reading it from disk answers. */
+  sheet: string
+  /** What was sent up as a blob, by its hash. */
+  blobs: Record<string, string>
 }
 
 const world = vi.hoisted((): World => ({
@@ -29,6 +33,8 @@ const world = vi.hoisted((): World => ({
   domain: { state: 'pending', dns: [], detail: null },
   answers: [],
   full: false,
+  sheet: '',
+  blobs: {},
 }))
 
 vi.mock('./api', async (importOriginal) => {
@@ -48,7 +54,7 @@ vi.mock('./api', async (importOriginal) => {
       publish: (_token: string, id: string, settings: Record<string, unknown>) =>
         answer(`publish ${id} ${JSON.stringify(settings)}`, {
           space: {},
-          dns: [{ type: 'CNAME', name: 'notes', value: 'nibeditor.com' }],
+          dns: [{ type: 'CNAME', name: 'notes', value: 'cname.orden.so' }],
         }),
       unpublish: (_token: string, id: string) => answer(`unpublish ${id}`, { ok: true }),
       site: (_token: string, id: string, settings: Record<string, unknown>) =>
@@ -69,7 +75,20 @@ vi.mock('./api', async (importOriginal) => {
         answer(`forget ${one} of ${id}`, { ok: true as const }),
       verifyDomain: (_token: string, id: string) => answer(`verify ${id}`, world.domain),
       listSpaces: () => Promise.resolve({ spaces: account.spaces, deleted: [] }),
+      putBlob: (_token: string, hash: string, _type: string, bytes: ArrayBuffer) => {
+        world.blobs[hash] = new TextDecoder().decode(bytes)
+        return answer(`blob ${hash.slice(0, 8)}`, { ok: true })
+      },
     },
+  }
+})
+
+vi.mock('./tauri', async (importOriginal) => {
+  const original = await importOriginal<typeof import('./tauri')>()
+  return {
+    ...original,
+    invoke: (command: string, args?: Record<string, unknown>) =>
+      command === 'read_theme' ? Promise.resolve(world.sheet) : original.invoke(command, args),
   }
 })
 
@@ -95,6 +114,7 @@ vi.mock('./i18n.svelte', () => ({
 import { account } from './account.svelte'
 import { publish } from './publishing.svelte'
 import { canPublish } from './sharing.svelte'
+import { theme } from './theme.svelte'
 import type { RemoteSpace } from './api'
 
 /** A space on the account, with only the fields any of this reads. */
@@ -125,6 +145,9 @@ beforeEach(() => {
   world.domain = { state: 'pending', dns: [], detail: null }
   world.answers = []
   world.full = false
+  world.sheet = ''
+  world.blobs = {}
+  theme.files = []
 
   account.token = 'session'
   account.user = { id: 'u1', email: 'owner@example.com', name: 'Emil' }
@@ -252,7 +275,7 @@ describe('the Publish sheet', () => {
 
   test('takes a space back off the web, and forgets its records', async () => {
     publish.show(local('Notes'))
-    publish.dns = [{ type: 'CNAME', name: 'notes', value: 'nibeditor.com' }]
+    publish.dns = [{ type: 'CNAME', name: 'notes', value: 'cname.orden.so' }]
     await publish.unpublish()
 
     expect(world.asked).toEqual(['unpublish space-1'])
@@ -484,5 +507,74 @@ describe('the answers a site has collected', () => {
 
     expect(world.asked).toContain('answers.csv space-1')
     expect(csv).toContain('"when"')
+  })
+})
+
+describe("the site's theme", () => {
+  const WARM = [
+    ':root { --font-content: Georgia, serif; }',
+    "[data-theme='light'] { color-scheme: light; --bg: #faf6ee; }",
+    "[data-theme='dark'] { color-scheme: dark; --bg: #1c1814; }",
+    '#write blockquote { font-style: italic; }',
+  ].join('\n')
+
+  function dressed(held?: { name: string; hash: string }) {
+    const rules = { include: [], exclude: [], otherwise: 'all' }
+    account.spaces = [
+      remote('space-1', 'owner', { site: { rules, ...(held ? { theme: held } : {}) } }),
+    ]
+    theme.files = [
+      { id: 'warm-paper.css', name: 'Warm Paper', variants: ['light', 'dark'], path: 'warm.css' },
+    ]
+    world.sheet = WARM
+    publish.show(local('Notes'))
+    publish.fill(publish.blog)
+    publish.themeName = 'Warm Paper'
+  }
+
+  const sent = () => Object.values(world.blobs)
+
+  test('goes up as a page wears it, so a reader who follows the system gets both sides', async () => {
+    dressed()
+    await publish.publish()
+
+    expect(publish.error).toBe(null)
+    expect(sent()).toHaveLength(1)
+    const [sheet = ''] = sent()
+    expect(sheet).toContain(':root { --font-content: Georgia, serif; }')
+    expect(sheet).toContain(':root { color-scheme: light; --bg: #faf6ee; }')
+    expect(sheet).toContain(
+      "@media (prefers-color-scheme: dark) { :root:not([data-theme='light']) { color-scheme: dark; --bg: #1c1814; } }",
+    )
+    expect(sheet).toContain('#write blockquote { font-style: italic; }')
+    expect(world.asked.find((one) => one.startsWith('site '))).toContain('"name":"Warm Paper"')
+  })
+
+  test('is not sent again while it has not changed, and is once it has', async () => {
+    dressed()
+    await publish.publish()
+    const [hash = ''] = Object.keys(world.blobs)
+
+    dressed({ name: 'Warm Paper', hash })
+    world.blobs = {}
+    world.asked = []
+    await publish.publish()
+    expect(sent()).toEqual([])
+    expect(world.asked.find((one) => one.startsWith('site '))).toContain(hash)
+
+    // The store updated the theme since: the site gets the new one.
+    world.sheet = WARM.replace('#1c1814', '#1b1713')
+    await publish.publish()
+    expect(sent()).toHaveLength(1)
+    expect(sent()[0]).toContain('#1b1713')
+  })
+
+  test('keeps what the site wears on a device that does not have the theme', async () => {
+    dressed({ name: 'Warm Paper', hash: 'held' })
+    theme.files = []
+    await publish.publish()
+
+    expect(sent()).toEqual([])
+    expect(world.asked.find((one) => one.startsWith('site '))).toContain('"hash":"held"')
   })
 })

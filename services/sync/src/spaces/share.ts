@@ -6,7 +6,7 @@
  *  every route that names a space; and how they got in is in `join.ts`.
  *
  *  Two kinds of person show up in the one sheet. A member is an address rather
- *  than an account, so somebody with no Nib account can be given a space today
+ *  than an account, so somebody with no Orden account can be given a space today
  *  and find it waiting the first time they prove that address. A guest is
  *  whoever followed the space's own link, which names nobody and so has no
  *  address to write down: what the owner sees of them is the name their device

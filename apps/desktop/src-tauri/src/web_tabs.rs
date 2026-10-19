@@ -39,18 +39,18 @@ use std::sync::Mutex;
 use serde::{Deserialize, Serialize};
 use tauri::webview::{NewWindowResponse, PageLoadEvent};
 use tauri::{
-    AppHandle, Emitter, LogicalPosition, LogicalSize, Manager, Url, Webview, WebviewBuilder,
+    AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize, Url, Webview, WebviewBuilder,
     WebviewUrl,
 };
 
 /// What a web tab's webview is labelled: this in front of the tab's own id, so a
 /// label says which tab it belongs to and nothing else in the window can be
 /// mistaken for one.
-const LABEL: &str = "web-";
+pub(crate) const LABEL: &str = "web-";
 
 /// Whether a webview is one of the web's own - a tab's page, or the page that holds
 /// the session open - rather than the app's.
-#[cfg(all(any(windows, target_os = "macos"), not(feature = "cef")))]
+#[cfg(any(windows, target_os = "macos"))]
 pub(crate) fn is_page(label: &str) -> bool {
     label.starts_with(LABEL) || adopted_label(label)
 }
@@ -82,7 +82,7 @@ fn adopted_label(label: &str) -> bool {
 /// permission bubble. The window places it as it places any tab's page, with `web_place`,
 /// and `web_open` finds it there rather than building another.
 #[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
+    not(windows),
     allow(dead_code, reason = "only WebView2 has agent tabs to show")
 )]
 pub(crate) fn hand_page_to(app: &AppHandle, tab: &str, label: &str, store: Option<String>) {
@@ -92,7 +92,7 @@ pub(crate) fn hand_page_to(app: &AppHandle, tab: &str, label: &str, store: Optio
     }
     listening(app, tab, store, None);
     // Its loads and its title, said to the window as a built page's are.
-    #[cfg(all(windows, not(feature = "cef")))]
+    #[cfg(windows)]
     reported(app, tab, label);
 }
 
@@ -101,7 +101,7 @@ pub(crate) fn hand_page_to(app: &AppHandle, tab: &str, label: &str, store: Optio
 /// the agent's, so these are the engine's events on the page itself, answered on the
 /// window's thread from what the engine hands the event rather than by asking the
 /// webview, which from inside an engine event would wait on itself.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 #[allow(
     unsafe_code,
     reason = "a page's loads and title are WebView2's own events, reached through its COM interfaces"
@@ -178,7 +178,7 @@ fn reported(app: &AppHandle, tab: &str, label: &str) {
 /// A window an adopted page asked for, handed to the window as a tab beside it: the
 /// page's own handler for that belonged to the agent. Nothing for a page no tab took.
 #[cfg_attr(
-    not(all(windows, not(feature = "cef"))),
+    not(windows),
     allow(dead_code, reason = "only WebView2 has agent tabs to show")
 )]
 pub(crate) fn opened_from_adopted(app: &AppHandle, label: &str, url: &str) {
@@ -230,10 +230,7 @@ const MOVED: &str = "nib://web-tab";
 ///
 /// Only `WebView2` and `WKWebView` raise the request this carries, so on Linux nothing
 /// emits it; the same `cfg_attr` `pdf.rs` uses for its own platform-only type.
-#[cfg_attr(
-    any(not(any(windows, target_os = "macos")), feature = "cef"),
-    allow(dead_code)
-)]
+#[cfg_attr(not(any(windows, target_os = "macos")), allow(dead_code))]
 const ASKED: &str = "nib://web-ask";
 
 /// The event the window hears when a page asks for a window of its own, carrying
@@ -242,8 +239,7 @@ const ASKED: &str = "nib://web-ask";
 const OPENED: &str = "nib://web-open";
 
 /// The largest page a clip reads, in characters. A note the account would refuse
-/// is worse than a clip that stops early, and 4 MB is what the API takes; see
-/// `MAX_NOTE_BYTES` in the clipper.
+/// is worse than a clip that stops early, and 4 MB is what the API takes.
 const LONGEST_PAGE: usize = 4_000_000;
 
 /// The page a tab's webview is built on before it is sent anywhere.
@@ -404,7 +400,7 @@ impl Trail {
 /// the system's engine on Windows and on a Mac - a window that waits, as it closes, for
 /// its tabs' logins to be made to last; see `web_cookies.rs`.
 pub fn managed(builder: tauri::Builder<crate::Engine>) -> tauri::Builder<crate::Engine> {
-    #[cfg(all(any(windows, target_os = "macos"), not(feature = "cef")))]
+    #[cfg(any(windows, target_os = "macos"))]
     let builder = builder.on_window_event(crate::web_cookies::leaving);
     builder
         .on_window_event(crate::web_follow::heard)
@@ -529,7 +525,7 @@ struct Opening {
 /// What a window a page asked for at a size of its own is labelled, in front of a
 /// number. Neither `web-`, so nothing takes it for a tab's page, nor anything the
 /// capabilities name, so it is granted nothing; see `popup`.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 const POPUP: &str = "popup-";
 
 /// Where a page was left, and where it is put back.
@@ -574,10 +570,7 @@ struct Looked {
 /// Built only where a permission request is raised, which is Windows and macOS; on
 /// Linux the ask module is a stub and nothing constructs this, so it is allowed to be
 /// dead there.
-#[cfg_attr(
-    any(not(any(windows, target_os = "macos")), feature = "cef"),
-    allow(dead_code)
-)]
+#[cfg_attr(not(any(windows, target_os = "macos")), allow(dead_code))]
 #[derive(Clone, Serialize)]
 struct Asked {
     tab: String,
@@ -626,7 +619,7 @@ pub enum Step {
 /// system knows would hand the page to another application, and the app's own
 /// origins would put nib inside the tab with the site's script beside it. What
 /// somebody typed is turned into an address by the window (see
-/// `lib/web-tab/address.ts`); this is the rule that cannot be talked round,
+/// `lib/web-tab/typed.ts`); this is the rule that cannot be talked round,
 /// because it is also what every link inside the page is judged by, and every
 /// link another program hands nib as the browser (`web_handed.rs`).
 pub(crate) fn allowed(url: &Url) -> bool {
@@ -670,22 +663,6 @@ pub(crate) fn open_as_tab(app: &AppHandle, window: &str, tab: &str, url: &Url) {
     let _ = app.emit_to(window, OPENED, payload);
 }
 
-/// Opens `url` in a tab beside `tab`, behind it or in front: what the window does with a
-/// window a page asked for, and what nib's own Chromium does with a link pressed for a
-/// tab of its own, which never becomes a window request there; see `web_opens.rs`.
-#[cfg(feature = "cef")]
-pub(crate) fn opened_beside(app: &AppHandle, window: &str, tab: &str, url: &str, behind: bool) {
-    let Some(address) = Url::parse(url).ok().as_ref().and_then(handed_over) else {
-        return;
-    };
-    let payload = Opening {
-        tab: tab.to_string(),
-        url: address,
-        behind,
-    };
-    let _ = app.emit_to(window, OPENED, payload);
-}
-
 /// The address the window opens as a tab of its own for a window the page asked
 /// for, or `None` for a window it does not get.
 ///
@@ -714,7 +691,7 @@ fn handed_over(url: &Url) -> Option<String> {
 /// kind that breaks on a global it did not expect - and labelled so it is granted
 /// nothing. What it asks for in turn opens as a tab beside the page that opened it. It
 /// closes when its page does; see `WindowCloseRequested` in wry.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 fn popup(
     app: &AppHandle,
     url: &Url,
@@ -735,6 +712,9 @@ fn popup(
     let building = tauri::WebviewWindowBuilder::new(app, label, WebviewUrl::External(blank))
         .window_features(features)
         .title(url.host_str().unwrap_or_default())
+        // The page takes its own drops, as a tab's does, and a file dropped on a site
+        // is no pick in the system's dialog; see `window_builder` in launch.rs.
+        .disable_drag_drop_handler()
         .on_navigation(allowed)
         .on_new_window(move |url, _| {
             if let Some(address) = handed_over(&url) {
@@ -793,8 +773,7 @@ pub(crate) fn reader(selection: bool) -> String {
 /// place the reading was left at. Empty for a page that needs none of them.
 ///
 /// They run in nib's own world, where the page can neither see them nor trip over them;
-/// see `web_worlds.rs`. Under nib's own Chromium they run in the page's own world, as the
-/// builder's initialization script.
+/// see `web_worlds.rs`.
 ///
 /// One string, because a builder is handed one script and two calls to it on one
 /// builder is a thing this crate should not have to be sure about.
@@ -803,18 +782,13 @@ fn opening(place: Option<Place>, url: &str) -> String {
         serde_json::to_string(&serde_json::json!({ "url": url, "x": one.x, "y": one.y })).ok()
     });
 
-    // And on Windows' two engines, what a swipe over the page says; see web_swipe.rs.
-    #[cfg(all(windows, not(feature = "cef")))]
+    // And on `WebView2`, what a swipe over the page says; see web_swipe.rs.
+    #[cfg(windows)]
     let mut scripts = vec![
         crate::web_opens::SCRIPT.to_string(),
         crate::web_swipe::script().to_string(),
     ];
-    #[cfg(feature = "cef")]
-    let mut scripts = vec![
-        crate::web_opens::script(),
-        crate::web_swipe::script().to_string(),
-    ];
-    #[cfg(all(not(windows), not(feature = "cef")))]
+    #[cfg(not(windows))]
     let mut scripts: Vec<String> = Vec::new();
 
     if let Some(one) = want {
@@ -859,9 +833,6 @@ fn opening(place: Option<Place>, url: &str) -> String {
 /// thread. The first environment is captured in `listening`, once, as the page is
 /// built.
 ///
-/// The system engine's only: under nib's own Chromium there is nothing to share, because
-/// that runtime is one browser process by construction. See src/engine.rs.
-///
 /// **One per store.** A space that keeps its web data apart has stores of its own (see
 /// `web_stores.rs`), each a user data folder of its own and so an environment of its own:
 /// one folder is one environment, and the engine refuses a webview built on another
@@ -875,7 +846,7 @@ fn opening(place: Option<Place>, url: &str) -> String {
 /// kept all the same, because a session cookie is given an expiry as a page loads (see
 /// `web_cookies.rs`) - so the environment it was built on is let go when its process
 /// ends, and the next tab of that store starts a new one.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 mod session {
     use std::cell::RefCell;
     use std::collections::HashMap;
@@ -1044,22 +1015,34 @@ fn page_built(
     store: Option<&str>,
 ) -> Result<(), String> {
     let _doing = crate::stall::doing("web_open: building the page");
-    #[cfg(all(windows, not(feature = "cef")))]
+    #[cfg(windows)]
     let builder = {
         session::answering(app, store)?;
         on_shared_session(builder, window, app, store)
     };
-    #[cfg(not(all(windows, not(feature = "cef"))))]
+    #[cfg(not(windows))]
     let _ = (app, store);
 
-    window
+    // Edge by edge in the screen's pixels, as every placement after it; see web_follow.rs.
+    // In GTK's own pixels on Linux, where the page is then laid over the window's.
+    let bounds = crate::web_follow::Bounds::from(pane);
+    let scale = window.scale_factor().unwrap_or(1.0);
+    #[cfg(target_os = "linux")]
+    let scale_built = 1.0;
+    #[cfg(not(target_os = "linux"))]
+    let scale_built = scale;
+    let (left, top, width, height) = crate::web_follow::edges(bounds, scale_built);
+    let view = window
         .add_child(
             builder,
-            LogicalPosition::new(pane.x, pane.y),
-            LogicalSize::new(pane.width, pane.height),
+            PhysicalPosition::new(left, top),
+            PhysicalSize::new(width, height),
         )
-        .map(|_| ())
-        .map_err(|error| format!("that page could not be opened: {error}"))
+        .map_err(|error| format!("that page could not be opened: {error}"))?;
+    crate::page_style::worn(&view);
+    crate::web_follow::put(&view, bounds, scale)
+        .map_err(|error| format!("that page could not be placed: {error}"))?;
+    Ok(())
 }
 
 /// Starts the browser process every web tab shares while the window's own page is still
@@ -1068,7 +1051,7 @@ fn page_built(
 /// and the window's thread spends a third of a second and more on it. Done here it
 /// overlaps the window's page coming up instead of following it; the tab's own build
 /// then finds it there. See `ahead::start`, which says whether a website is coming.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 pub(crate) fn warm(app: &AppHandle) {
     let anchoring = app.clone();
     let _ = app.run_on_main_thread(move || {
@@ -1081,7 +1064,7 @@ pub(crate) fn warm(app: &AppHandle) {
 }
 
 /// Every other engine starts nothing ahead.
-#[cfg(all(desktop, not(all(windows, not(feature = "cef")))))]
+#[cfg(all(desktop, not(windows)))]
 pub(crate) fn warm(_app: &AppHandle) {}
 
 /// The builder, pointed at the one session its store shares - and the shared store's
@@ -1091,11 +1074,7 @@ pub(crate) fn warm(_app: &AppHandle) {}
 /// past the last tab closing, and the environment every tab of a store is then built on. On the window's
 /// own thread, because that is where a page is built and the only thread the engine's own
 /// objects may be touched from.
-///
-/// The system engine's only, like `session` itself: under nib's own Chromium there is no
-/// environment to hand round - that runtime is one browser process by construction - and
-/// `tauri::Wry` is not even a type there. See src/engine.rs.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 pub(crate) fn on_shared_session(
     builder: WebviewBuilder<tauri::Wry>,
     window: &tauri::Window,
@@ -1112,7 +1091,7 @@ pub(crate) fn on_shared_session(
 
 /// Keeps the environment a page of an agent's was built on as its store's, the way a
 /// tab's page is kept in `listening`, so the store's next page shares its session.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 pub(crate) fn keep_session(store: Option<&str>, platform: &tauri::webview::PlatformWebview) {
     session::keep(store, platform.environment());
 }
@@ -1125,8 +1104,8 @@ pub struct Profile {
     store: Option<String>,
     /// A private tab's page, which keeps nothing anywhere: the engine's own private mode -
     /// `WebView2`'s `InPrivate` profile on the shared session, a data store of the page's
-    /// own that nothing writes to disk on a Mac and on Linux, a profile with no folder on
-    /// nib's own Chromium - in the store every space shares, which it reads nothing of and
+    /// own that nothing writes to disk on a Mac and on Linux - in the store every space
+    /// shares, which it reads nothing of and
     /// writes nothing to. See lib/web-tab/private.ts.
     #[serde(default)]
     private: bool,
@@ -1166,6 +1145,11 @@ impl Profile {
 /// answer coming back over a channel once the controller exists. Calling `add_child`
 /// straight from this thread would post the same message without waiting, which
 /// loses the one thing the window needs to know - whether there is a page to place.
+///
+/// The answer says whether this build cuts the app's layers out of a page
+/// (`web_cut.rs`), as `web_place`'s does: the first page of a window is built before
+/// anything has been placed, and a layer it arrives under is cut round from its first
+/// frame.
 #[tauri::command]
 pub async fn web_open(
     webview: Webview,
@@ -1175,7 +1159,7 @@ pub async fn web_open(
     pane: Pane,
     revived: Revived,
     profile: Profile,
-) -> Result<(), String> {
+) -> Result<bool, String> {
     let address = address(&url)?;
     let (store, private) = profile.checked()?;
     let label = label_of(&tab);
@@ -1186,7 +1170,7 @@ pub async fn web_open(
         // the file is in; a tab opened again in the meantime has its page already. And an
         // agent's page the reader was shown is already this tab's page, loaded.
         if crate::downloads::revive(&app, &tab) || adopted_label(&label) {
-            return Ok(());
+            return Ok(crate::web_cut::CUTS);
         }
         return Err("that tab already has a page".into());
     }
@@ -1202,8 +1186,8 @@ pub async fn web_open(
 
     // nib's own scripts for the page, and where the page is built: on the blank page, and
     // sent to the site once the runtime's scripts are off it and these are in nib's own
-    // world, on either engine (see `listening` and web_worlds.rs).
-    let scripts = opening(revived.place, &url);
+    // world (see `listening` and web_worlds.rs).
+    let scripts = crate::page_style::with(opening(revived.place, &url));
     let (built_on, onward) = (
         Url::parse(BLANK).map_err(|error| format!("that page could not be opened: {error}"))?,
         Some((address, scripts)),
@@ -1231,7 +1215,7 @@ pub async fn web_open(
     // for, and still off in the app's own page, where Ctrl and the wheel size a note's
     // words. `WebView2`'s alone: elsewhere Tauri would put a zoom script of its own into
     // the site. What the zoom is kept as is web_page.rs's.
-    #[cfg(all(windows, not(feature = "cef")))]
+    #[cfg(windows)]
     let builder = builder.zoom_hotkeys_enabled(true);
 
     // Where the site's own storage goes, decided once by the engine this build runs
@@ -1246,10 +1230,8 @@ pub async fn web_open(
     let opening = app.clone();
     let asking = tab.clone();
     let holder = webview.window().label().to_string();
-    // What the page asked for, unnamed: the type is the runtime's, and on nib's
-    // own Chromium it carries two type parameters where the system's engine's
-    // carries none. The closure infers it either way; naming it would compile on
-    // one engine only. See src/engine.rs and docs/browser.md.
+    // What the page asked for, unnamed: the type is the runtime's, and the closure
+    // infers it.
     let builder = builder.on_new_window(move |url: Url, features| {
         // A window the page asks for - `target="_blank"`, `window.open`, a Ctrl+click
         // or the middle button on a link - becomes a tab in this window, which is what
@@ -1262,22 +1244,32 @@ pub async fn web_open(
         // the interface instead, and the interface opens a tab beside the one that
         // asked - behind it or in front, as the press said; see web_opens.rs and
         // `openPage` in workspace.svelte.ts.
+        //
+        // Read before anything is refused, so it is about this request and no later one.
+        #[cfg(windows)]
+        let hushed = crate::extensions::welcome::taken(&asking);
         let Some(address) = handed_over(&url) else {
             return NewWindowResponse::Deny;
         };
         let said = crate::web_opens::taken(&asking);
+        // Nobody pressed for it, and an extension has just arrived in this store: the page
+        // it opens about its own install, which never opens; see extensions/welcome.rs.
+        #[cfg(windows)]
+        if hushed {
+            return NewWindowResponse::Deny;
+        }
 
         // Unless nobody pressed anything and the page asked for a size: a sign-in or a
         // share dialog, whose page talks to the one that opened it and closes itself.
         // That is a window of its own, as in a browser; see `popup`.
-        #[cfg(all(windows, not(feature = "cef")))]
+        #[cfg(windows)]
         if said.is_none() && features.size().is_some() {
             // One that could not be built is a tab, like any other window asked for.
             if let Some(window) = popup(&opening, &url, features, &asking, &holder) {
                 return NewWindowResponse::Create { window };
             }
         }
-        #[cfg(not(all(windows, not(feature = "cef"))))]
+        #[cfg(not(windows))]
         let _ = features;
 
         let payload = Opening {
@@ -1329,12 +1321,12 @@ pub async fn web_open(
 
     // One notch of the wheel over the page is one notch, wherever the keyboard is; from
     // the first page of the run. See web_wheel.rs.
-    #[cfg(all(windows, not(feature = "cef")))]
+    #[cfg(windows)]
     crate::web_wheel::arm();
 
     listening(&app, &tab, store, onward);
     tabs.walked(&tab, &url);
-    Ok(())
+    Ok(crate::web_cut::CUTS)
 }
 
 /// A tab's builder, with what the page does said to the window: each load started and
@@ -1348,18 +1340,12 @@ fn reporting(
     private: bool,
 ) -> WebviewBuilder<crate::Engine> {
     // Only the engines whose cookies are given an expiry have anything to leave alone.
-    #[cfg(not(all(any(windows, target_os = "macos"), not(feature = "cef"))))]
+    #[cfg(not(any(windows, target_os = "macos")))]
     let _ = private;
     let moved = tab.to_string();
     let sending = app.clone();
-    // Where the page last said it was, for the title to be reported against.
-    let seen = std::sync::Arc::new(Mutex::new(String::new()));
-    let noting = seen.clone();
     let builder = builder.on_page_load(move |view, payload| {
         let loading = matches!(payload.event(), PageLoadEvent::Started);
-        if let Ok(mut last) = noting.lock() {
-            payload.url().as_str().clone_into(&mut last);
-        }
         say(
             &sending,
             &view,
@@ -1372,11 +1358,12 @@ fn reporting(
         if loading {
             return;
         }
+        crate::page_style::worn(&view);
 
         // Every step of a sign-in that goes through pages ends here, so this is where
         // a login it left in a session cookie is made to last; see web_cookies.rs.
         // Never a private page's: what it signed in to ends with it.
-        #[cfg(all(any(windows, target_os = "macos"), not(feature = "cef")))]
+        #[cfg(any(windows, target_os = "macos"))]
         if !private {
             let _ = view.with_webview(|platform| crate::web_cookies::keep(&platform, || ()));
         }
@@ -1384,7 +1371,7 @@ fn reporting(
         // An engine that cannot say when the page's mark changes is asked for it once
         // the page is there, which is when a browser puts the site's icon on the tab.
         // `WebView2` says so itself, from inside the page's own profile; see web_icons.rs.
-        #[cfg(all(not(windows), not(feature = "cef")))]
+        #[cfg(not(windows))]
         {
             let marked = sending.clone();
             let named = moved.clone();
@@ -1396,52 +1383,21 @@ fn reporting(
                 }
             });
         }
-        // nib's own Chromium asks in nib's world, from a thread of its own; see
-        // web_worlds.rs.
-        #[cfg(feature = "cef")]
-        {
-            let marked = sending.clone();
-            let named = moved.clone();
-            let holder = view.window().label().to_string();
-            let asking = view.clone();
-            std::thread::spawn(move || {
-                let declaring = crate::web_worlds::value(&asking, crate::web_icons::ASK)
-                    .and_then(|said| serde_json::from_value(said).ok())
-                    .unwrap_or_default();
-                if let Some(icon) = crate::web_icons::best(&declaring) {
-                    crate::web_icons::said(&marked, &holder, &named, &icon);
-                }
-            });
-        }
     });
 
     let titled = tab.to_string();
     let naming = app.clone();
     builder.on_document_title_changed(move |view, title| {
-        let url = address_now(&view, &seen);
+        let url = address_now(&view);
         say(&naming, &view, &titled, &url, Some(title), false);
     })
 }
 
-/// Where a page is, asked from inside one of its own events.
-///
-/// The system's engine answers `url()` from the webview at once, and does so for a page
-/// that moved without loading (an address a site's own script wrote), so it is asked.
-/// nib's own Chromium runs a page's events on the thread that `url()` would wait on - a
-/// question that never comes back, and a window that never answers again: measured on
-/// Windows as the whole app wedged a second after its first web tab, on a fresh profile
-/// every time. There the page's last load says where it is instead.
-fn address_now(view: &Webview, seen: &Mutex<String>) -> String {
-    #[cfg(not(feature = "cef"))]
-    {
-        let _ = seen;
-        view.url().map(|one| one.to_string()).unwrap_or_default()
-    }
-    #[cfg(feature = "cef")]
-    {
-        let _ = view;
-        seen.lock().map(|last| last.clone()).unwrap_or_default()
-    }
+/// Where a page is, asked from inside one of its own events. The engine answers `url()`
+/// from the webview at once, and does so for a page that moved without loading (an
+/// address a site's own script wrote), so it is asked.
+fn address_now(view: &Webview) -> String {
+    view.url().map(|one| one.to_string()).unwrap_or_default()
 }
 
 /// Starts listening for what the site in this tab asks to be given, and then sends the
@@ -1460,47 +1416,12 @@ fn address_now(view: &Webview, seen: &Mutex<String>) -> String {
 fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(Url, String)>) {
     // Only `WebView2` keeps an environment per store; see `session`. And only the
     // system's engines build on the blank page; see web_worlds.rs.
-    #[cfg(not(all(windows, not(feature = "cef"))))]
+    #[cfg(not(windows))]
     let _ = store;
 
     let Some(view) = app.get_webview(&label_of(tab)) else {
         return;
     };
-
-    // nib's own Chromium clears the page and sends it on from a thread of its own, since
-    // every step waits for the page's agent, which answers on the window's thread.
-    #[cfg(feature = "cef")]
-    if let Some((address, scripts)) = onward.clone() {
-        let clearing = view.clone();
-        let (hearing, named, holder) = (
-            app.clone(),
-            tab.to_string(),
-            view.window().label().to_string(),
-        );
-        #[cfg(windows)]
-        {
-            use cef::{ImplBrowser as _, ImplBrowserHost as _};
-            use tauri_runtime_cef::WebviewCefExt as _;
-            let (keyed, label) = (holder.clone(), view.label().to_string());
-            let _ = view.with_cef_webview(move |page| {
-                if let Some(host) = page.browser().host() {
-                    crate::web_keys::chromium::page(
-                        &label,
-                        host.window_handle().0 as isize,
-                        &keyed,
-                    );
-                    // Where the keyboard goes back to as the window comes back; see
-                    // keyboard.rs.
-                    crate::keyboard::chromium_page(&label, &keyed, host);
-                }
-            });
-        }
-        std::thread::spawn(move || {
-            crate::web_worlds::asking(&clearing, &hearing, &named, &holder);
-            let cleared = crate::web_worlds::sent(&clearing, &address, &scripts);
-            crate::trace::mark(&format!("web tab: {}", cleared.said()));
-        });
-    }
 
     let window = view.window().label().to_string();
     let label = view.label().to_string();
@@ -1511,12 +1432,17 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
         // on, captured here once and handed to every tab after it, so a note closed and
         // opened again keeps its login; see `session`. Kept before `ask` looks at the
         // page because both want the one thread this runs on.
-        #[cfg(all(windows, not(feature = "cef")))]
+        #[cfg(windows)]
         session::keep(store.as_deref(), platform.environment());
         // The store's extensions, handed to its profile the first time a page is built
         // there this run; see extensions/webview2.rs.
-        #[cfg(all(windows, not(feature = "cef")))]
+        #[cfg(windows)]
         crate::extensions::webview2::seen(&asking, store.as_deref(), &platform);
+        // And a window asked for in it while an extension arrives, held back unless a
+        // person asked: the page an extension opens about its own install; see
+        // extensions/welcome.rs.
+        #[cfg(windows)]
+        crate::extensions::welcome::listen(&platform, store.as_deref(), &named);
         // The browser's own chords, which the page is never offered, on a page in any
         // store; see web_keys.rs.
         crate::web_keys::listen(&platform, asking.clone(), window.clone());
@@ -1536,7 +1462,6 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
         crate::web_dialogs::listen(&platform, asking.clone(), named.clone(), window.clone());
         ask::listen(&platform, asking, named, window);
 
-        #[cfg(not(feature = "cef"))]
         if let Some((address, scripts)) = onward {
             let cleared = crate::web_worlds::sent(&platform, address.as_str(), &scripts);
             crate::trace::mark(&format!("web tab: {}", cleared.said()));
@@ -1627,7 +1552,7 @@ fn origin_of(url: &str) -> String {
 /// development build. Nothing at all is nobody: a request with no origin to speak of is
 /// not the app's.
 #[cfg_attr(
-    any(not(any(windows, target_os = "macos")), feature = "cef"),
+    not(any(windows, target_os = "macos")),
     allow(
         dead_code,
         reason = "only the WebView2 and WKWebView handlers ask this; see `own` in `ask`"
@@ -1645,7 +1570,7 @@ fn is_ours(known: &[String], asked: &str) -> bool {
 /// The kinds a `WKWebView` capture request is, in the window's words, in the order
 /// they are asked about. Both at once is two questions, one after the other, because
 /// the window's bubble - like Chrome's - remembers each for the site on its own.
-#[cfg(any(test, all(target_os = "macos", not(feature = "cef"))))]
+#[cfg(any(test, target_os = "macos"))]
 fn capture_kinds(kind: isize) -> &'static [&'static str] {
     match kind {
         0 => &["camera"],
@@ -1658,7 +1583,7 @@ fn capture_kinds(kind: isize) -> &'static [&'static str] {
 
 /// The origin a frame's request came from, the way `WebView2` writes it: the
 /// scheme, the host, and the port where it is not the scheme's own.
-#[cfg(any(test, all(target_os = "macos", not(feature = "cef"))))]
+#[cfg(any(test, target_os = "macos"))]
 fn origin_written(protocol: &str, host: &str, port: isize) -> String {
     if port > 0 {
         format!("{protocol}://{host}:{port}")
@@ -1694,9 +1619,8 @@ fn say(
     title: Option<String>,
     loading: bool,
 ) {
-    // Neither is a page anybody sent the tab to: the blank page it is built on, and the
-    // one nib's own Chromium builds every browser on before that; see engine.rs.
-    if url == BLANK || crate::engine::internal(url) {
+    // Not a page anybody sent the tab to: the blank page it is built on.
+    if url == BLANK {
         return;
     }
 
@@ -1781,18 +1705,23 @@ pub fn web_place(
     // Where the layout the window measured puts the page at the window's size now, which
     // is where it was measured unless the window has been resized since; see
     // web_follow.rs.
+    let window = view.window();
     let bounds = crate::web_follow::placed(
-        &view.window(),
+        &window,
         view.label(),
         crate::web_follow::Bounds::from(&pane),
         frame,
         visible,
     );
+    let scale = window
+        .scale_factor()
+        .map_err(|error| format!("that page could not be placed: {error}"))?;
+    let (_, _, width, height) = crate::web_follow::edges(bounds, scale);
     // Each step says itself while it runs, so a stall names the one that waited; see
     // stall.rs.
     {
         let _doing = crate::stall::doing("web_place: bounds");
-        view.set_bounds(crate::web_follow::rect_of(bounds))
+        crate::web_follow::put(&view, bounds, scale)
             .map_err(|error| format!("that page could not be placed: {error}"))?;
     }
 
@@ -1801,7 +1730,7 @@ pub fn web_place(
     // a layer never draws a frame over it.
     if visible {
         let _doing = crate::stall::doing("web_place: cut");
-        crate::web_cut::apply(&view, cut.clone(), bounds.width, bounds.height);
+        crate::web_cut::apply(&view, cut.clone(), width, height, scale);
     }
 
     {
@@ -1971,7 +1900,7 @@ pub fn web_zoom(app: AppHandle, tab: String, factor: f64) -> Result<(), String> 
 pub async fn web_print(app: AppHandle, tab: String) -> Result<(), String> {
     let view = found(&app, &tab)?;
 
-    #[cfg(all(target_os = "macos", not(feature = "cef")))]
+    #[cfg(target_os = "macos")]
     return view
         .with_webview(|platform| {
             if let Err(error) = crate::pdf::print_sheet(&platform) {
@@ -1980,7 +1909,7 @@ pub async fn web_print(app: AppHandle, tab: String) -> Result<(), String> {
         })
         .map_err(|error| format!("that page could not be printed: {error}"));
 
-    #[cfg(not(all(target_os = "macos", not(feature = "cef"))))]
+    #[cfg(not(target_os = "macos"))]
     view.eval("window.print()")
         .map_err(|error| format!("that page could not be printed: {error}"))
 }
@@ -1996,8 +1925,8 @@ pub fn web_devtools(app: AppHandle, tab: String) -> Result<(), String> {
 
 /// The page, read for a clip.
 ///
-/// In nib's own world where the engine offers one - `WebView2`'s and nib's Chromium's,
-/// through the protocol (see `web_worlds.rs`) - so a page that has wrapped `cloneNode`,
+/// In nib's own world where the engine offers one - `WebView2`'s, through the protocol
+/// (see `web_worlds.rs`) - so a page that has wrapped `cloneNode`,
 /// `querySelectorAll` or `getSelection` neither sees the read nor changes what it
 /// answers. In the page's own world otherwise, and wherever that world would not
 /// answer: a clip read a little less privately is better than no clip.
@@ -2018,19 +1947,8 @@ pub async fn web_clip(app: AppHandle, tab: String, selection: bool) -> Result<Cl
     in_the_page(&view, script).await
 }
 
-/// The reader's answer from nib's world in the page, or `None` where this engine has no
-/// such world or it did not answer.
-#[cfg(feature = "cef")]
-async fn in_our_world(view: &Webview, script: &str) -> Option<serde_json::Value> {
-    let (view, script) = (view.clone(), script.to_string());
-    tauri::async_runtime::spawn_blocking(move || crate::web_worlds::value(&view, &script))
-        .await
-        .ok()
-        .flatten()
-}
-
 /// The reader's answer from nib's world in the page, through `WebView2`'s protocol.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 #[allow(
     unsafe_code,
     reason = "a page's world is reached through WebView2's COM interfaces"
@@ -2063,7 +1981,7 @@ async fn in_our_world(view: &Webview, script: &str) -> Option<serde_json::Value>
 /// The two `WebKit` engines put nib's scripts in a world of nib's own as the page is
 /// built, and offer no way to run one there afterwards through what wry hands out; see
 /// `web_worlds.rs`. A clip there is read in the page's world.
-#[cfg(all(not(windows), not(feature = "cef")))]
+#[cfg(not(windows))]
 #[allow(
     clippy::unused_async,
     reason = "the same call as on the engines that do wait for a world"
@@ -2138,8 +2056,6 @@ pub async fn web_close(
             crate::keyboard::closed(view.label());
             crate::web_follow::unfollow(view.label());
             crate::web_cut::uncut(view.label());
-            #[cfg(feature = "cef")]
-            let_go(view.label());
             // A page whose browser does not answer is put out of sight now and closed
             // once it does, rather than the app waiting on it; see web_answers.rs.
             if !crate::web_answers::answers(&view) {
@@ -2183,12 +2099,13 @@ pub async fn web_close(
 /// asks for this first, paints it in the hole, and then hides the webview, so what is
 /// behind the menu is the page.
 ///
-/// `WebView2` has `CapturePreview` and `WKWebView` has `takeSnapshot`, which are the
-/// engine photographing itself and the only way to get at those pixels: the app's own
-/// webview cannot draw the page and nothing outside the process may copy the screen.
-/// On Linux there is nothing to call - `WebKitGTK`'s snapshot is not reachable through
-/// what wry hands out - and the answer is `None`, which the window reads as "keep your
-/// own ground". Said in docs/web-tabs.md rather than hidden here.
+/// `WebView2` has `CapturePreview`, `WKWebView` has `takeSnapshot` and `WebKitGTK` has
+/// `webkit_web_view_get_snapshot`, which are the engine photographing itself and the only
+/// way to get at those pixels: the app's own webview cannot draw the page and nothing
+/// outside the process may copy the screen - least of all on Wayland. Without one the page
+/// went under every menu with nothing in its place, an empty pane under the menu bar's
+/// menus (Hyprland, 2026-10-14). Where there is no way in at all - the BSDs -
+/// the answer is `None`, which the window reads as "keep your own ground".
 #[tauri::command]
 pub async fn web_shot(app: AppHandle, tab: String) -> Result<Option<String>, String> {
     let view = found(&app, &tab)?;
@@ -2232,23 +2149,11 @@ pub fn web_answer(app: AppHandle, id: u64, allow: bool) {
 /// `web_close`.
 pub(crate) fn close_page(app: &AppHandle, tab: &str) {
     if let Some(view) = app.get_webview(&label_of(tab)) {
-        #[cfg(feature = "cef")]
-        let_go(view.label());
         crate::keyboard::closed(view.label());
         crate::web_follow::unfollow(view.label());
         crate::web_cut::uncut(view.label());
         let _ = view.close();
     }
-}
-
-/// What nib's own Chromium keeps about a page it speaks to, let go of as the page closes,
-/// so a tab opened again under the same label is a new page to it; see
-/// `engine/devtools.rs` and `web_keys.rs`.
-#[cfg(feature = "cef")]
-fn let_go(label: &str) {
-    crate::engine::devtools::let_go_of(label);
-    #[cfg(windows)]
-    crate::web_keys::chromium::page_closed(label);
 }
 
 /// The webview for a tab, or a reason there is none. A tab whose page has been
@@ -2282,12 +2187,9 @@ pub(crate) fn found(app: &AppHandle, tab: &str) -> Result<Webview, String> {
 ///   choices live - this device's own storage, per origin - so the crate asks and does
 ///   not remember. See `lib/web-tab/permissions.svelte.ts`.
 //
-// `WebView2`'s own, reached through its controller - so not on nib's own Chromium,
-// where the webview `with_webview` hands out is the runtime's erased one and has no
-// controller to ask. Under that flag the stub below answers instead, the way it does on
-// a Mac, and Chromium's own prompt is what replaces it; see src/engine.rs, and section
-// 5 of docs/browser.md, where a browser asking for the camera is the browser's job.
-#[cfg(all(windows, not(feature = "cef")))]
+// `WebView2`'s own, reached through its controller. Elsewhere the stub below answers
+// instead.
+#[cfg(windows)]
 mod ask {
     use std::cell::RefCell;
     use std::collections::HashMap;
@@ -2531,7 +2433,7 @@ mod ask {
 // unchanged. `WebKit` asks a delegate which methods it has once, as it is set, so the
 // forwarding says yes to exactly what wry's delegate says yes to, and the one method
 // this module has.
-#[cfg(all(target_os = "macos", not(feature = "cef")))]
+#[cfg(target_os = "macos")]
 mod ask {
     use std::cell::RefCell;
     use std::collections::HashMap;
@@ -2815,7 +2717,7 @@ mod ask {
 // Every build but the two system engines that can be asked: Linux, and nib's own
 // Chromium, where the erased webview has no controller to reach through. See the two
 // above.
-#[cfg(any(not(any(windows, target_os = "macos")), feature = "cef"))]
+#[cfg(not(any(windows, target_os = "macos")))]
 mod ask {
     use tauri::webview::PlatformWebview;
     use tauri::AppHandle;
@@ -2835,11 +2737,8 @@ mod ask {
     pub fn answer(_id: u64, _allow: bool) {}
 }
 
-// `CapturePreview` is `WebView2`'s, reached through its controller, so this is the
-// same story as `ask` above: not on nib's own Chromium, where the stub answers `None`
-// and the window keeps its own ground under an overlay. Chromium can photograph a page
-// over the DevTools Protocol, which is batch 8's; see docs/browser.md.
-#[cfg(all(windows, not(feature = "cef")))]
+// `CapturePreview` is `WebView2`'s, reached through its controller, as `ask` above is.
+#[cfg(windows)]
 mod shot {
     use tauri::async_runtime::Sender;
     use tauri::webview::PlatformWebview;
@@ -2932,7 +2831,7 @@ mod shot {
 // `WKWebView`'s own snapshot, on the system's engine on a Mac: the same still picture
 // `CapturePreview` takes on Windows, so an overlay over a page shows the page rather than
 // a blank pane.
-#[cfg(all(target_os = "macos", not(feature = "cef")))]
+#[cfg(target_os = "macos")]
 mod shot {
     use block2::RcBlock;
     use objc2::rc::Retained;
@@ -2996,19 +2895,158 @@ mod shot {
 
 /// A picture out of the stream the engine wrote it into, for the favicon a page is
 /// showing as much as for a photograph of it; see `web_icons.rs`.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 pub(crate) use shot::png as read_stream;
 
-// Every build but the two system engines that can photograph a page: Linux, and nib's
-// own Chromium. See the two above.
-#[cfg(any(not(any(windows, target_os = "macos")), feature = "cef"))]
+// WebKitGTK: the engine photographing itself, as `webkit_web_view_get_snapshot` does it,
+// which wry hands out as the page's own `WebView`.
+#[cfg(target_os = "linux")]
+mod shot {
+    use gtk::cairo;
+    use tauri::async_runtime::Sender;
+    use tauri::webview::PlatformWebview;
+    use webkit2gtk::{SnapshotOptions, SnapshotRegion, WebViewExt as _};
+
+    /// What of the page is on screen, as the engine draws it, handed to `done` as a PNG:
+    /// the pixels copied on the window's thread, where the engine answers, and turned
+    /// into a PNG on a thread of their own, so the window's thread spends a copy on it
+    /// and no more.
+    #[allow(
+        clippy::unnecessary_wraps,
+        reason = "the signature matches the Windows photograph, which does fail"
+    )]
+    pub fn photograph(
+        webview: &PlatformWebview,
+        done: Sender<Option<Vec<u8>>>,
+    ) -> Result<(), String> {
+        webview.inner().snapshot(
+            SnapshotRegion::Visible,
+            SnapshotOptions::NONE,
+            None::<&gtk::gio::Cancellable>,
+            move |taken| {
+                let taken = taken.map_err(|error| eprintln!("web_shot: {error}")).ok();
+                let Some(pixels) = taken.and_then(copied) else {
+                    let _ = done.try_send(None);
+                    return;
+                };
+                let _ = std::thread::Builder::new()
+                    .name("web shot".into())
+                    .spawn(move || {
+                        let _ = done.try_send(png(&pixels));
+                    });
+            },
+        );
+        Ok(())
+    }
+
+    /// A picture's pixels as cairo keeps them: premultiplied, blue first, rows `stride`
+    /// apart.
+    pub struct Pixels {
+        /// Across, in pixels.
+        pub width: u32,
+        /// Down, in pixels.
+        pub height: u32,
+        /// How many bytes one row takes, padding and all.
+        pub stride: usize,
+        /// The rows.
+        pub data: Vec<u8>,
+    }
+
+    fn copied(surface: cairo::Surface) -> Option<Pixels> {
+        let image = cairo::ImageSurface::try_from(surface).ok()?;
+        let opaque = match image.format() {
+            cairo::Format::ARgb32 => false,
+            cairo::Format::Rgb24 => true,
+            _ => return None,
+        };
+        let mut data = Vec::new();
+        image
+            .with_data(|bytes| data.extend_from_slice(bytes))
+            .ok()?;
+        // A picture with no alpha leaves the fourth byte to chance.
+        if opaque {
+            for alpha in data.iter_mut().skip(3).step_by(4) {
+                *alpha = 255;
+            }
+        }
+        Some(Pixels {
+            width: u32::try_from(image.width()).ok()?,
+            height: u32::try_from(image.height()).ok()?,
+            stride: usize::try_from(image.stride()).ok()?,
+            data,
+        })
+    }
+
+    /// The pixels as a PNG.
+    pub fn png(pixels: &Pixels) -> Option<Vec<u8>> {
+        let rgba = straight(pixels)?;
+        let mut out = Vec::new();
+        {
+            let mut encoder = ::png::Encoder::new(&mut out, pixels.width, pixels.height);
+            encoder.set_color(::png::ColorType::Rgba);
+            encoder.set_depth(::png::BitDepth::Eight);
+            // A picture that stands in for a moment under a menu: fast over small.
+            encoder.set_compression(::png::Compression::Fastest);
+            let mut writer = encoder.write_header().ok()?;
+            writer.write_image_data(&rgba).ok()?;
+        }
+        Some(out)
+    }
+
+    /// The pixels in straight colour, red first, row after row with nothing between.
+    pub fn straight(pixels: &Pixels) -> Option<Vec<u8>> {
+        let wide = usize::try_from(pixels.width).ok()?;
+        let tall = usize::try_from(pixels.height).ok()?;
+        let mut rgba = Vec::with_capacity(wide * 4 * tall);
+        for row in pixels.data.chunks(pixels.stride.max(1)).take(tall) {
+            for &[blue, green, red, alpha] in row.get(..wide * 4)?.as_chunks::<4>().0 {
+                let unmixed = |value: u8| {
+                    if alpha == 0 {
+                        0
+                    } else {
+                        u8::try_from(u16::from(value) * 255 / u16::from(alpha)).unwrap_or(255)
+                    }
+                };
+                rgba.extend_from_slice(&[unmixed(red), unmixed(green), unmixed(blue), alpha]);
+            }
+        }
+        (rgba.len() == wide * 4 * tall).then_some(rgba)
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::{png, straight, Pixels};
+
+        /// Two pixels and a byte of padding a row: magenta, and half of it see-through.
+        #[test]
+        fn a_picture_comes_out_red_first_in_straight_colour() {
+            let pixels = Pixels {
+                width: 2,
+                height: 1,
+                stride: 12,
+                data: vec![255, 0, 255, 255, 64, 0, 64, 128, 9, 9, 9, 9],
+            };
+            assert_eq!(
+                straight(&pixels),
+                Some(vec![255, 0, 255, 255, 127, 0, 127, 128])
+            );
+            let made = png(&pixels).expect("a picture");
+            assert_eq!(
+                &made[..8],
+                &[0x89, b'P', b'N', b'G', 0x0d, 0x0a, 0x1a, 0x0a]
+            );
+        }
+    }
+}
+
+// The BSDs: no way in, so the window keeps its own ground under an overlay there; see
+// the note on `web_shot`.
+#[cfg(not(any(windows, target_os = "macos", target_os = "linux")))]
 mod shot {
     use tauri::async_runtime::Sender;
     use tauri::webview::PlatformWebview;
 
-    /// No way in. `WebKitGTK`'s snapshot is not reachable through what wry hands out,
-    /// so the window keeps its own ground under an overlay here; see the note on
-    /// `web_shot`.
+    /// No way in.
     ///
     /// The `Result` is never an `Err` here, which clippy would flag on its own - but the
     /// signature has to match the Windows one `web_shot` calls, where the engine's own
@@ -3281,10 +3319,9 @@ mod tests {
     /// nib's own scripts for a page declare nothing and touch nothing of the page's
     /// world: no global written, deleted or redefined, no prototype patched, none of the
     /// runtime's names. Each is a function called on the spot, so it leaves no name
-    /// behind at the top level of whichever world it runs in - the page's own, under
-    /// nib's own Chromium. What a browser asks about - the camera, the
-    /// microphone, the hardware buses, the credential store - is the engine's to raise
-    /// and the window's to answer, never a script's to hide; see `ask`.
+    /// behind at the top level of whichever world it runs in. What a browser asks about -
+    /// the camera, the microphone, the hardware buses, the credential store - is the
+    /// engine's to raise and the window's to answer, never a script's to hide; see `ask`.
     #[test]
     fn nib_s_page_scripts_leave_the_page_s_world_alone() {
         for scripts in [
@@ -3314,7 +3351,7 @@ mod tests {
     /// On `WebView2` a page opened for the first time is handed the keys and the middle
     /// button, and what a swipe over it says, in nib's own world, and nothing else; see
     /// `web_worlds.rs`.
-    #[cfg(all(windows, not(feature = "cef")))]
+    #[cfg(windows)]
     #[test]
     fn a_page_is_handed_the_keys_script_and_nothing_else() {
         assert_eq!(
@@ -3327,25 +3364,9 @@ mod tests {
         );
     }
 
-    /// nib's own Chromium hands a page the same script, asking through its binding.
-    #[cfg(feature = "cef")]
-    #[test]
-    fn a_page_on_chromium_is_handed_the_keys_script_and_nothing_else() {
-        assert_eq!(
-            opening(None, "https://a.example/page"),
-            format!(
-                "{};
-{};
-",
-                crate::web_opens::script(),
-                crate::web_swipe::script()
-            )
-        );
-    }
-
     /// And every other engine is handed nothing at all until there is a place to put
     /// back.
-    #[cfg(all(not(windows), not(feature = "cef")))]
+    #[cfg(not(windows))]
     #[test]
     fn a_page_is_handed_nothing() {
         assert_eq!(opening(None, "https://a.example/page"), "");

@@ -1,12 +1,16 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorSelection, EditorState } from '@codemirror/state'
 import { loadFor } from '@nib/markdown/engines'
-import { describe, expect, test } from 'vitest'
+import { beforeAll, describe, expect, test } from 'vitest'
 import { parsed } from '../test/parsed'
-import { copiedFlavours } from './copy'
+import { copiedFlavours, readyToCopy } from './copy'
 import { nibMarkdownExtensions } from './markdown/extensions'
 import { delimitedToTable, pastedMarkdown } from './paste'
 import { linkedPaste } from './paste-link'
+
+// The renderer a copy writes its HTML with is fetched by the first selection; a test
+// has none, so it waits for it here.
+beforeAll(() => readyToCopy())
 
 /** The conversion itself is `@nib/markdown/from-html`, tested there. What is
  *  tested here is the choosing: a clipboard carries two flavours at once, and

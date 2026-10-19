@@ -17,6 +17,12 @@ describe('a link to a note', () => {
     expect(formatLink({ ...PLAN, shown: 'Plan' }, 'wikilink')).toBe('[[Plan]]')
   })
 
+  test('keeps the name it shows when it goes to a heading, which bare would show too', () => {
+    expect(formatLink({ ...PLAN, fragment: 'Budget', shown: 'Plan' }, 'wikilink')).toBe(
+      '[[Plan#Budget|Plan]]',
+    )
+  })
+
   test('carries the heading or the block after the target', () => {
     expect(formatLink({ ...PLAN, fragment: 'Next steps' }, 'wikilink')).toBe('[[Plan#Next steps]]')
     expect(formatLink({ ...PLAN, fragment: '^a1b2c3' }, 'wikilink')).toBe('[[Plan#^a1b2c3]]')
@@ -33,6 +39,12 @@ describe('the three markdown spellings', () => {
     expect(formatLink(PLAN, 'shortest')).toBe('[Plan](Plan.md)')
     expect(formatLink(PLAN, 'relative')).toBe('[Plan](../ideas/Plan.md)')
     expect(formatLink(PLAN, 'absolute')).toBe('[Plan](ideas/Plan.md)')
+  })
+
+  test('write the folder in the shortest name when the name needs it to say which', () => {
+    expect(formatLink({ ...PLAN, name: 'ideas/Plan' }, 'shortest')).toBe(
+      '[ideas/Plan](ideas/Plan.md)',
+    )
   })
 
   test('always show something, since a markdown link with no words shows none', () => {

@@ -40,6 +40,9 @@ vi.stubGlobal('localStorage', memoryStorage())
  *  mocked below - so an empty object is the whole of what this needs to be. */
 vi.stubGlobal('window', {})
 
+/** A frame, for a cut that waits for the frame that draws its layer; see `cover`. */
+vi.stubGlobal('requestAnimationFrame', (go: () => void) => setTimeout(go, 0))
+
 /** What `web_open` is waiting for. The test resolves it, so "while the page is
  *  being built" is a state this file can stand in and look around from. */
 let building: (() => void) | null = null
@@ -53,11 +56,24 @@ let looked: Record<string, unknown> | null = null
 /** A freeze or a thaw the crate has not answered yet, while a test holds one. */
 let pausing: Promise<void> | null = null
 
+/** Whether a page asked where it has got to holds its answer, and the answers held: a
+ *  page being closed under the question never gives one, and the store waits out its
+ *  clock instead. See `whereIs`. */
+let holdingLooks = false
+const heldLooks: (() => void)[] = []
+
 /** Whether the engine refuses to freeze a page, as WebView2 does one in a call. */
 let refusing = false
 
 /** A photograph the engine has not answered yet, while a test holds one. */
 let photographing: Promise<void> | null = null
+
+/** The picture the engine hands back for a photograph. */
+let photo: string | null = null
+
+/** Whether the crate says it cuts the app's layers out of a page, as the system's engine
+ *  on Windows does; see src-tauri/src/web_cut.rs. */
+let cuts = false
 
 vi.mock('../tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../tauri')>()),
@@ -66,16 +82,19 @@ vi.mock('../tauri', async (importOriginal) => ({
     calls.push({ command, args: args ?? {} })
     if (command === 'web_pause' && pausing) await pausing
     if (command === 'web_shot' && photographing) await photographing
+    if (command === 'web_shot') return photo
     if (command === 'web_pause') return !(refusing && args?.paused === true)
+    if (command === 'web_look' && holdingLooks) await new Promise<void>((go) => heldLooks.push(go))
     if (command === 'web_look') {
       if (!looked) throw new Error('that page said nothing')
       return looked
     }
+    if (command === 'web_place') return cuts
     if (command !== 'web_open') return undefined
 
     await new Promise<void>((go) => (building = go))
     if (refuse) throw new Error('no webview to be had here')
-    return undefined
+    return cuts
   },
 }))
 
@@ -116,6 +135,16 @@ async function asked(): Promise<() => void> {
     await new Promise<void>((go) => setTimeout(go, 0))
   }
   throw new Error('no page was ever asked for')
+}
+
+/** Waits until a page has been asked where it has got to and is holding the answer. */
+async function looks(): Promise<() => void> {
+  for (let tries = 0; tries < 200; tries += 1) {
+    const held = heldLooks.shift()
+    if (held) return held
+    await new Promise<void>((go) => setTimeout(go, 0))
+  }
+  throw new Error('no page was ever asked where it was')
 }
 
 /** Waits until the window is listening for `name`, and hands back what it heard with.
@@ -160,6 +189,9 @@ beforeEach(async () => {
   building = null
   refuse = false
   looked = null
+  holdingLooks = false
+  heldLooks.length = 0
+  cuts = false
   localStorage.clear()
 })
 
@@ -257,115 +289,6 @@ test('a page that was built is placed and shown', async () => {
   expect(last('web_open')).toMatchObject({ tab: 'a', url: SITE, pane: PANE })
 })
 
-/** A web login another of the person's computers is using: the page is asked about
- *  before it is built, and one it may not run is never built at all, so nothing of the
- *  site's runs here. See lease.svelte.ts. */
-describe("a site whose login is another computer's", () => {
-  afterEach(() => {
-    pages.watch = null
-  })
-
-  test('is never built', async () => {
-    const admitted: string[] = []
-    pages.watch = {
-      admit: (tab) => {
-        admitted.push(tab)
-        return Promise.resolve(false)
-      },
-      moved: () => undefined,
-      closed: () => undefined,
-    }
-
-    await pages.show('a', SITE, PANE)
-    await settle()
-
-    expect(admitted).toEqual(['a'])
-    expect(commands()).not.toContain('web_open')
-    expect(pages.of('a').live).toBe(false)
-  })
-
-  test('is built once the login is this computer’s', async () => {
-    pages.watch = {
-      admit: () => Promise.resolve(true),
-      moved: () => undefined,
-      closed: () => undefined,
-    }
-
-    const shown = pages.show('a', SITE, PANE)
-    const arrive = await asked()
-    arrive()
-    await shown
-
-    expect(pages.of('a').live).toBe(true)
-  })
-
-  test('hears where each page goes, whether it settled, and each tab that closed', async () => {
-    const moved: [string, boolean][] = []
-    const closed: string[] = []
-    pages.watch = {
-      admit: () => Promise.resolve(true),
-      moved: (tab, _page, settled) => moved.push([tab, settled]),
-      closed: (tab) => closed.push(tab),
-    }
-
-    const shown = pages.show('a', SITE, PANE)
-    const arrive = await asked()
-    arrive()
-    await shown
-    await settle()
-
-    const tell = await hearing('nib://web-tab')
-    const load = (loading: boolean) =>
-      tell({ payload: { tab: 'a', url: SITE, title: '', back: false, forward: false, loading } })
-    load(true)
-    load(false)
-    pages.forget('a')
-
-    expect(moved).toEqual([
-      ['a', false],
-      ['a', true],
-    ])
-    expect(closed).toEqual(['a'])
-  })
-
-  test('a page whose login went elsewhere while it was being built is put away as it lands', async () => {
-    pages.watch = {
-      admit: () => Promise.resolve(true),
-      moved: () => undefined,
-      closed: () => undefined,
-    }
-
-    const shown = pages.show('a', SITE, PANE)
-    const arrive = await asked()
-    pages.of('a').lock = { device: 'Laptop', pressed: false, take: () => undefined }
-    arrive()
-    await shown
-    await settle()
-
-    expect(pages.of('a').live).toBe(false)
-    expect(last('web_close')).toMatchObject({ tab: 'a', keep: true })
-    pages.of('a').lock = null
-  })
-
-  test('typed into the bar of a running page stops the page instead of sending it', async () => {
-    const shown = pages.show('a', SITE, PANE)
-    const arrive = await asked()
-    arrive()
-    await shown
-    pages.watch = {
-      admit: () => Promise.resolve(false),
-      moved: () => undefined,
-      closed: () => undefined,
-    }
-
-    await pages.go('a', 'https://elsewhere.example/')
-    await settle()
-
-    expect(commands()).not.toContain('web_navigate')
-    expect(last('web_close')).toMatchObject({ tab: 'a', keep: true })
-  })
-})
-
 /** A tab whose pane is measured while something of the app's is still over it.
  *
  *  This is what "browser tabs take an eternity to load" was. Every way of opening a
@@ -402,6 +325,28 @@ describe('a page asked for while something is over the pane', () => {
     // And nothing is photographed: a page built this moment has nothing on it worth
     // standing in for it, and a photograph is the most expensive thing the crate does.
     expect(commands()).not.toContain('web_shot')
+  })
+
+  /** Emil, 2026-10-13: the page of a tab opened while the update notice was up, or
+   *  while the card of the tab just pressed was, stayed an empty pane until the layer
+   *  went. The page arrived hidden, and the pane, whose box had not changed, never said
+   *  anything again. */
+  test('and where the engine cuts, it arrives with the layer cut out of it', async () => {
+    cuts = true
+    const over = {
+      cut: { all: false, hollows: [{ x: 500, y: 520, width: 280, height: 60, radius: 8 }] },
+      frame: null,
+    }
+    const shown = pages.show('a', SITE, PANE, false, over)
+    const arrive = await asked()
+    arrive()
+    await shown
+    await vi.waitFor(() => expect(last('web_place')).toMatchObject({ visible: true }))
+
+    expect(last('web_place')).toMatchObject({ tab: 'a', pane: PANE, cut: over.cut })
+    expect(calls.some((one) => one.command === 'web_place' && one.args.visible === false)).toBe(
+      false,
+    )
   })
 
   test('and is shown the moment nothing is over it any more', async () => {
@@ -628,7 +573,7 @@ describe('where a page keeps what the site stores', () => {
     expect(last('web_open')).toMatchObject({ tab: 'a', profile: { store: null, private: true } })
   })
 
-  test('in the store every space shares, until its space keeps its own', async () => {
+  test('in the store every page shares, until its web note keeps its own', async () => {
     pages.of('a').space = 'w'
     const shown = pages.show('a', SITE, PANE)
     ;(await asked())()
@@ -637,10 +582,20 @@ describe('where a page keeps what the site stores', () => {
     expect(last('web_open')).toMatchObject({ tab: 'a', profile: { store: null, private: false } })
   })
 
-  test('a choice made for the space builds its open pages again in the new store', async () => {
-    const { webData } = await import('./web-data.svelte')
-    pages.of('a').space = 'w'
-    pages.of('b').space = 'h'
+  test('a web note kept apart is built in its own store', async () => {
+    pages.of('a').own = '3f9a0c17e2b4d685'
+    const shown = pages.show('a', SITE, PANE)
+    ;(await asked())()
+    await shown
+
+    expect(last('web_open')).toMatchObject({
+      tab: 'a',
+      profile: { store: 'note_3f9a0c17e2b4d685', private: false },
+    })
+    pages.of('a').own = null
+  })
+
+  test('a note turned apart builds its open page again in its own store, and says so', async () => {
     for (const tab of ['a', 'b']) {
       const shown = pages.show(tab, SITE, PANE)
       ;(await asked())()
@@ -649,37 +604,112 @@ describe('where a page keeps what the site stores', () => {
     }
     calls.length = 0
 
-    webData.set('w', 'space')
-    const rebuilt = pages.restore('w')
+    const rebuilt = pages.rehouse('a', '3f9a0c17e2b4d685', 'kept apart')
     ;(await asked())()
     await rebuilt
     await settle()
 
-    // The page in the space that chose is built again, where it was, in the space's own
-    // store; the other space's page is left alone.
+    // The note's page is built again, where it was, in its own store; the other is left.
     expect(calls.filter((one) => one.command === 'web_close').map((one) => one.args.tab)).toEqual([
       'a',
     ])
-    expect(last('web_open')).toMatchObject({ tab: 'a', profile: { store: 'space_w' }, pane: PANE })
-    webData.set('w', 'global')
+    expect(last('web_open')).toMatchObject({
+      tab: 'a',
+      profile: { store: 'note_3f9a0c17e2b4d685' },
+      pane: PANE,
+    })
+    expect(pages.of('a').notice).toBe('kept apart')
+    pages.of('a').own = null
   })
 
-  test('a choice that leaves a page in the store it was built in loads nothing again', async () => {
-    const { webData } = await import('./web-data.svelte')
-    webData.set('w', 'space')
-    pages.of('a').space = 'w'
+  /** #409: "when I switch an open tab to separate web data, it then loads forever until I
+   *  close and reopen it". The menu and the pane both ask for the move; the second used to
+   *  close the page the first had just built in the new store. */
+  test('a note turned apart twice at once is moved once, and its new page stays', async () => {
+    const shown = pages.show('a', SITE, PANE)
+    ;(await asked())()
+    building = null
+    await shown
+    calls.length = 0
+    holdingLooks = true
+
+    // The menu that wrote the file, and the pane that read it change.
+    const fromMenu = pages.rehouse('a', '3f9a0c17e2b4d685', 'kept apart')
+    const fromPane = pages.rehouse('a', '3f9a0c17e2b4d685', 'kept apart')
+    // The first look answers; any other is held until the page is being built again, which
+    // is when the closing page's silence used to run out.
+    ;(await looks())()
+    const rebuilt = await asked()
+    holdingLooks = false
+    for (const go of heldLooks.splice(0)) go()
+    await settle()
+    rebuilt()
+    await Promise.all([fromMenu, fromPane])
+    await settle()
+
+    const said = commands()
+    expect(said.filter((one) => one === 'web_open')).toHaveLength(1)
+    expect(said.filter((one) => one === 'web_close')).toHaveLength(1)
+    expect(said.lastIndexOf('web_close')).toBeLessThan(said.lastIndexOf('web_open'))
+    expect(last('web_open')).toMatchObject({ profile: { store: 'note_3f9a0c17e2b4d685' } })
+    expect(pages.of('a').live).toBe(true)
+    expect(pages.of('a').notice).toBe('kept apart')
+  })
+
+  test('a pane that looks again while its page moves gets the one page', async () => {
+    const shown = pages.show('a', SITE, PANE)
+    ;(await asked())()
+    building = null
+    await shown
+    calls.length = 0
+    holdingLooks = true
+
+    const moving = pages.rehouse('a', '3f9a0c17e2b4d685')
+    ;(await looks())()
+    holdingLooks = false
+    // The old page is no longer live, and the pane looks again, as WebTab.svelte does.
+    await vi.waitFor(() => expect(pages.of('a').live).toBe(false))
+    const looking = pages.show('a', SITE, MOVED)
+    ;(await asked())()
+    await Promise.all([moving, looking])
+    await settle()
+
+    expect(commands().filter((one) => one === 'web_open')).toHaveLength(1)
+    expect(last('web_open')).toMatchObject({ profile: { store: 'note_3f9a0c17e2b4d685' } })
+    expect(pages.of('a').live).toBe(true)
+  })
+
+  test('a note turned apart while its page is on its way is moved once it arrives', async () => {
+    const shown = pages.show('a', SITE, PANE)
+    const first = await asked()
+    building = null
+    // Not live yet: there is nothing to move, and the page is built where it set out for.
+    void pages.rehouse('a', '3f9a0c17e2b4d685', 'kept apart')
+    first()
+    await shown
+    ;(await asked())()
+    await settle()
+
+    const opened = calls.filter((one) => one.command === 'web_open')
+    expect(opened.map((one) => (one.args.profile as { store: unknown }).store)).toEqual([
+      null,
+      'note_3f9a0c17e2b4d685',
+    ])
+    expect(pages.of('a').live).toBe(true)
+  })
+
+  test('a rehouse that leaves a page in the store it was built in loads nothing again', async () => {
     const shown = pages.show('a', SITE, PANE)
     ;(await asked())()
     await shown
     calls.length = 0
 
-    // What an agent writing the same choice again does; see agents/workspace/settings.ts.
-    await pages.restore('w')
+    await pages.rehouse('a', null, 'nothing moved')
     await settle()
 
     expect(commands()).not.toContain('web_close')
     expect(pages.of('a').live).toBe(true)
-    webData.set('w', 'global')
+    expect(pages.of('a').notice).toBeNull()
   })
 })
 
@@ -695,6 +725,7 @@ describe('a page out of sight', () => {
     pausing = null
     refusing = false
     photographing = null
+    photo = null
     for (const tab of TABS) pages.forget(tab)
     const { saver } = await import('./saver.svelte')
     saver.set('off')
@@ -838,6 +869,25 @@ describe('a page out of sight', () => {
     expect(order).toEqual(['web_pause true', 'web_pause false', 'web_place true'])
   })
 
+  test('a swipe begun over a page puts an old picture aside and takes a fresh one', async () => {
+    await built('t0')
+    const page = pages.of('t0')
+    page.shot = 'data:image/png;base64,old'
+    page.shotAt = Date.now() - 5_000
+    calls.length = 0
+    pages.freshen('t0')
+    expect(page.shot).toBeNull()
+    expect(commands()).toContain('web_shot')
+
+    // One from a moment ago is the page as it is, and stays.
+    page.shot = 'data:image/png;base64,new'
+    page.shotAt = Date.now()
+    calls.length = 0
+    pages.freshen('t0')
+    expect(page.shot).toBe('data:image/png;base64,new')
+    expect(commands()).not.toContain('web_shot')
+  })
+
   test('a page left while it is being photographed is hidden once the picture is in', async () => {
     await built('t0')
     let landed = (): void => undefined
@@ -857,6 +907,36 @@ describe('a page out of sight', () => {
     await shooting
     await settle()
     expect(last('web_place')).toMatchObject({ tab: 't0', pane: PANE, visible: false })
+  })
+
+  test('a picture the engine took longer over than the clock stands in once it lands', async () => {
+    await built('t0')
+    let landed = (): void => undefined
+    photographing = new Promise<void>((go) => (landed = go))
+    photo = 'data:image/png;base64,late'
+    pages.of('t0').shot = null
+
+    // The clock runs out first, and the menu goes up over the pane with no picture yet.
+    await pages.shoot('t0')
+    expect(pages.of('t0').shot).toBeNull()
+
+    landed()
+    await settle()
+    expect(pages.of('t0').shot).toBe('data:image/png;base64,late')
+  })
+
+  test('a late picture of a page that has gone elsewhere since is not kept', async () => {
+    await built('t0')
+    let landed = (): void => undefined
+    photographing = new Promise<void>((go) => (landed = go))
+    photo = 'data:image/png;base64,late'
+    pages.of('t0').shot = null
+    await pages.shoot('t0')
+
+    pages.of('t0').url = 'https://example.org/'
+    landed()
+    await settle()
+    expect(pages.of('t0').shot).toBeNull()
   })
 
   test('a freeze the engine refused leaves the page running, and is asked again later', async () => {

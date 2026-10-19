@@ -78,6 +78,7 @@ import {
   type Refusal,
   REFUSALS,
   type ServerFrame,
+  type SessionNow,
   text,
 } from '@nib/online/wire'
 import { reachAgain } from './reach'
@@ -137,6 +138,9 @@ const SEEN_EVERY = MINUTE
 const OPENS_A_MINUTE = 10
 const CALLBACKS_A_MINUTE = 10
 
+/** How long Settings' list waits for `nibd` to say what it has. */
+const LIST_WAIT = 3_000
+
 /** How often a machine that is always on is asked for `nibd` while it is set up or comes
  *  back; how long its first boot may take (cloud-init installs everything, a few
  *  minutes); how long one that stopped answering is waited for before it is
@@ -166,6 +170,8 @@ const RECENT = 'recent'
 const METERED = 'metered'
 const GRACE = 'grace'
 const RESTORED = 'restored'
+/** Sessions ended while there was no link to say it on, said on the next one. */
+const ENDING = 'ending'
 
 /** What a wake reads of the machine's row: its snapshot and backup. */
 interface Booted {
@@ -278,6 +284,8 @@ export class Machine implements DurableObject {
   private relinked = 0
   /** A sleep that backs the home up whatever its age: before the machine moves host. */
   private backupNow = false
+  /** Settings' lists waiting for `nibd` to say every session it has. */
+  private listing: ((sessions: SessionNow[] | null) => void)[] = []
 
   constructor(
     private readonly ctx: DurableObjectState,
@@ -335,7 +343,7 @@ export class Machine implements DurableObject {
         this.revoke(headers.get('x-nib-who') ?? '', headers.get('x-nib-role'), headers)
         return new Response(null, { status: 204 })
       case 'end':
-        this.end(headers.get('x-nib-session') ?? '')
+        await this.end(headers.get('x-nib-session') ?? '')
         return new Response(null, { status: 204 })
       case 'erase':
         return await this.erase(headers.get('x-nib-id'))
@@ -348,6 +356,8 @@ export class Machine implements DurableObject {
       case 'host':
         await this.move(headers.get('x-nib-host') === 'hetzner' ? 'hetzner' : 'cloudflare')
         return Response.json({ state: await this.state() })
+      case 'sessions':
+        return Response.json({ sessions: await this.sessions() })
       default:
         return new Response('not something a machine does', { status: 400 })
     }
@@ -664,11 +674,30 @@ export class Machine implements DurableObject {
   private opened = new Set<string>()
 
   /** The session open in `nibd`, at the size it should be, once per link - and not while
-   *  the home is being put back, which would leave its shell in the home being replaced. */
+   *  the home is being put back, which would leave its shell in the home being replaced.
+   *  Nor for a watcher on a session whose shell ended: `open` on an ended session starts
+   *  its shell again (nibd.ts), which is `start`'s to ask for and refused to whoever may
+   *  not type, so a reader or a link's guest opening the terminal, or coming back to it,
+   *  would otherwise start the owner's program for them. They watch it ended. */
   private ensureOpen(viewer: Viewer): void {
     if (!this.link || this.restoring || this.opened.has(viewer.session)) return
+    if (!maySocketType(viewer) && this.news.get(viewer.session)?.ended) return
     this.opened.add(viewer.session)
     this.tell(viewer.session, { t: 'open', session: viewer.session, ...this.sizeFor(viewer) })
+  }
+
+  /** Every session `nibd` has, tabs open on it or not, for Settings' list; null where
+   *  there is no link to ask (a machine asleep, or one being made again). */
+  private sessions(): Promise<SessionNow[] | null> {
+    if (!this.link) return Promise.resolve(null)
+    const answered = new Promise<SessionNow[] | null>((resolve) => {
+      this.listing.push(resolve)
+      setTimeout(() => {
+        resolve(null)
+      }, LIST_WAIT)
+    })
+    this.tell('', { t: 'list' })
+    return answered
   }
 
   /** One frame down the link, if there is one. */
@@ -730,6 +759,12 @@ export class Machine implements DurableObject {
       this.pulse(link, beat)
     }, PING_EVERY)
 
+    // An End said while the link was down: `nibd` ends the session now, so its program
+    // does not run on in its holder with nobody left to reach it.
+    for (const session of (await this.ctx.storage.get<string[]>(ENDING)) ?? []) {
+      this.tell(session, { t: 'close', session })
+    }
+    await this.ctx.storage.delete(ENDING)
     this.reopen()
   }
 
@@ -755,8 +790,11 @@ export class Machine implements DurableObject {
     if (!this.link || this.restoring) return
     const sessions = new Map<string, Viewer>()
     for (const socket of this.ctx.getWebSockets()) {
+      // Somebody who may type before a watcher, whose `open` an ended session would not take.
       const viewer = viewerOf(socket)
-      if (viewer && !sessions.has(viewer.session)) sessions.set(viewer.session, viewer)
+      const held = viewer && sessions.get(viewer.session)
+      if (viewer && (!held || (!maySocketType(held) && maySocketType(viewer))))
+        sessions.set(viewer.session, viewer)
     }
     for (const viewer of sessions.values()) {
       this.ensureOpen(viewer)
@@ -804,6 +842,9 @@ export class Machine implements DurableObject {
         this.news.set(frame.session, { ...this.news.get(frame.session), ended: said })
         this.opened.delete(frame.session)
         this.toSession(frame.session, said)
+        // Settings' list says which sessions have a shell running.
+        const me = await this.me()
+        if (me) await askHub(this.env, me.user, 'terms')
         return
       }
       case 'activity':
@@ -813,6 +854,9 @@ export class Machine implements DurableObject {
         this.saved?.()
         return
       case 'pong':
+        return
+      case 'sessions':
+        for (const resolve of this.listing.splice(0)) resolve(frame.sessions)
         return
       case 'browse':
         this.browse(frame.session, frame.url)
@@ -917,8 +961,8 @@ export class Machine implements DurableObject {
       await audit(this.env, me.id, 'relink')
       this.everybody({ t: 'machine', state: 'awake' })
       // Only a link that went quiet says anything about `nibd`: one that closed was the
-      // way to it (the edge, the tunnel), and restarting `nibd` for that would end every
-      // shell on the machine for nothing (issue 208).
+      // way to it (the edge, the tunnel), and restarting `nibd` for that would redraw every
+      // terminal on the machine for nothing (issue 208).
       if (silent) await this.quietAgain(me)
       return
     } catch (error) {
@@ -930,8 +974,9 @@ export class Machine implements DurableObject {
   /** A `nibd` whose link went quiet again within minutes of the last one that did answers
    *  its link but not much else - a loop starved, a session wedged in it - so it is
    *  restarted: told down the fresh link, it saves every screen and its supervisor
-   *  starts it again in a moment, and the link is made again after it (4.14). Only on a
-   *  machine that is always on; a container is restarted whole instead. */
+   *  starts it again in a moment, and the link is made again after it (4.14). Every
+   *  program goes on in its holder meanwhile (4.16). Only on a machine that is always on;
+   *  a container is restarted whole instead. */
   private async quietAgain(me: Me): Promise<void> {
     const now = Date.now()
     const again = now - this.relinked < SILENT_AGAIN
@@ -943,7 +988,8 @@ export class Machine implements DurableObject {
   }
 
   /** The owner's Restart on a machine that is always on, which stops nothing else: `nibd`
-   *  saves every screen and starts again, ending the shells, and the link is made again. */
+   *  saves every screen and starts again, every program going on in its holder (4.16),
+   *  and the link is made again. */
   private async restartNibd(who: string | null): Promise<void> {
     const me = await this.me()
     if (!me || !this.link) return
@@ -1539,9 +1585,14 @@ export class Machine implements DurableObject {
     }
   }
 
-  /** A session ended by its owner: the shell closed and every socket on it with it. */
-  private end(session: string): void {
-    this.tell(session, { t: 'close', session })
+  /** A session ended by its owner: the shell closed and every socket on it with it. With
+   *  no link just now, said on the next one. */
+  private async end(session: string): Promise<void> {
+    if (this.link) this.tell(session, { t: 'close', session })
+    else {
+      const ending = (await this.ctx.storage.get<string[]>(ENDING)) ?? []
+      await this.ctx.storage.put(ENDING, [...new Set([...ending, session])])
+    }
     this.opened.delete(session)
     for (const socket of this.ctx.getWebSockets(session)) {
       this.say(socket, { t: 'ended', code: null })

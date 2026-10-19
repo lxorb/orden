@@ -5,6 +5,7 @@
    *  Its own component rather than snippets of AiPane's, because only a desktop has a
    *  plan to offer (see `offeredKinds`), and the glasses' plugin leaves a component out
    *  whole where it would carry a snippet's words and every module behind them. */
+  import { vault } from './vault/start.svelte'
   import { slide } from 'svelte/transition'
   import { USAGE } from './chatgpt'
   import ChatGptMark from './ChatGptMark.svelte'
@@ -56,15 +57,15 @@
   /** Claude Code's or Codex's own login, in a terminal tab; the pane closes so the tab
    *  can be seen, and the program is asked until it says it is signed in. */
   async function signInTo(kind: LocalKind) {
-    const program = plans.local[kind].program
-    if (!program) return
+    const plan = plans.of(provider.id)
+    if (!plan.program) return
     const [{ signIn }, { settings }] = await Promise.all([
       import('./local/signin'),
       import('../settings.svelte'),
     ])
     settings.open = false
-    await signIn(kind, program)
-    plans.watch(kind)
+    await signIn(kind, plan.program, plan.home)
+    plans.watch({ id: provider.id, kind })
   }
 
   /** Sign in with ChatGPT: the browser, and back. */
@@ -111,7 +112,7 @@
 <!-- Where a program on this machine stands: not installed, signed out, or whose plan it
      is signed in with. -->
 {#snippet program(kind: LocalKind)}
-  {@const plan = plans.local[kind]}
+  {@const plan = plans.of(provider.id)}
   <div class="nib-setting setting">
     <span class="name">{t('Account')}</span>
     <div class="row">
@@ -122,7 +123,10 @@
         <button class="nib-chip" onclick={() => void openExternal(INSTALL[kind])}>
           {t('Install')}
         </button>
-        <button class="nib-chip is-quiet" onclick={() => void plans.check(kind)}>
+        <button
+          class="nib-chip is-quiet"
+          onclick={() => void plans.check({ id: provider.id, kind })}
+        >
           {t('Check again')}
         </button>
       {:else if plan.state === 'in'}
@@ -133,6 +137,12 @@
               ? t('{plan} plan', { plan: plan.plan })
               : t('Signed in')}
         </span>
+      {:else if vault.seen[provider.id]}
+        <!-- Signed in on another of the reader's devices: who as, and one press here. -->
+        <span class="hint">{vault.seen[provider.id]}</span>
+        <button class="nib-chip" disabled={!plan.program} onclick={() => void signInTo(kind)}>
+          {t('Sign in here')}
+        </button>
       {:else}
         <button class="nib-chip" disabled={!plan.program} onclick={() => void signInTo(kind)}>
           {t('Sign in')}
@@ -169,7 +179,8 @@
           {t('Sign out')}
         </button>
       {:else if plans.chatgpt === null}
-        {#if signingIn}<span class="hint">{t('Asking…')}</span>{/if}
+        {#if signingIn}<span class="hint">{t('Asking…')}</span>
+        {:else if vault.seen[provider.id]}<span class="hint">{vault.seen[provider.id]}</span>{/if}
         <button class="nib-chip continue" onclick={() => void continueWithChatgpt()}>
           <ChatGptMark />
           {t('Continue with ChatGPT')}
@@ -205,7 +216,6 @@
      own; the values are AiPane's, which has them from the settings panel. */
   .setting .name {
     flex: 1;
-    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

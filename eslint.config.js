@@ -21,6 +21,7 @@ export default tseslint.config(
       // The build the drives against the real Worker load; see
       // apps/desktop/test/e2e/harness.py.
       '**/dist-worker/**',
+      '**/dist-handoff/**',
       '**/target/**',
       // What the drives photograph, and the builds some of them make beside the
       // pictures: `layers.py` leaves a whole `main-dist` in there. Git ignores the
@@ -35,13 +36,6 @@ export default tseslint.config(
       'packaging/**',
       'apps/desktop/src-tauri/gen/**',
       'docs/**',
-      // A proof, not a product: `spike/` holds throwaway crates and the fixtures
-      // they load, built only by the workflow that measures them. The JavaScript
-      // in there is an unpacked extension loaded by a Chromium under test, so it
-      // is in no tsconfig project for the type-aware rules to read and its
-      // globals are an extension's rather than a page's. Prettier still formats
-      // it. See docs/browser.md.
-      'spike/**',
     ],
   },
   js.configs.recommended,

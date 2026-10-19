@@ -10,21 +10,127 @@ export const ml: Dictionary = {
   'Do you write code?': 'നിങ്ങൾ കോഡ് എഴുതാറുണ്ടോ?',
   Yes: 'അതെ',
   No: 'ഇല്ല',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'മറ്റ് ആപ്പുകളിൽ നിന്ന്: {key}',
+  'From other apps: set in your system settings':
+    'മറ്റ് ആപ്പുകളിൽ നിന്ന്: സിസ്റ്റം ക്രമീകരണങ്ങളിൽ സജ്ജമാക്കുക',
+  'From other apps: bind {command} in your system settings':
+    'മറ്റ് ആപ്പുകളിൽ നിന്ന്: സിസ്റ്റം ക്രമീകരണങ്ങളിൽ {command} ചേർക്കുക',
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'അവശ്യങ്ങൾ',
+  'Add to Essentials': 'അവശ്യങ്ങളിലേക്ക് ചേർക്കുക',
+  'Remove from Essentials': 'അവശ്യങ്ങളിൽ നിന്ന് നീക്കുക',
+  'Add block to Essentials': 'ബ്ലോക്ക് അവശ്യങ്ങളിലേക്ക് ചേർക്കുക',
+  'Add blocks to Essentials': 'ബ്ലോക്കുകൾ അവശ്യങ്ങളിലേക്ക് ചേർക്കുക',
+  'Add view to Essentials': 'കാഴ്ച അവശ്യങ്ങളിലേക്ക് ചേർക്കുക',
+  'Open tabs and Essentials': 'ടാബുകളും അവശ്യങ്ങളും തുറക്കുക',
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor ഇപ്പോൾ Orden ആണ്',
+  'Notes from nibeditor.com': 'nibeditor.com-ൽ നിന്നുള്ള കുറിപ്പുകൾ',
+  'Nothing there': 'അവിടെ ഒന്നുമില്ല',
+  // AI: the three permission modes
+  'Full permissions': 'പൂർണ്ണ അനുമതികൾ',
+  'Auto mode': 'ഓട്ടോ മോഡ്',
+  'Full permissions: nothing is asked first': 'പൂർണ്ണ അനുമതികൾ: ഒന്നും മുൻകൂട്ടി ചോദിക്കില്ല',
+  // Import: Zen's tabs
+  'Import from Zen': 'Zen-ൽ നിന്ന് ഇംപോർട്ട് ചെയ്യുക',
+  'Containers stay in Zen': 'കണ്ടെയ്‌നറുകൾ Zen-ൽ തന്നെ തുടരും',
+  'Zen’s tabs could not be read.': 'Zen-ന്റെ ടാബുകൾ വായിക്കാനായില്ല.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'കണ്ടെയ്‌നറുകൾ Firefox-ൽ തന്നെ തുടരും',
+  'Nothing could be read out of {browser}.': '{browser}-ൽ നിന്ന് ഒന്നും വായിക്കാനായില്ല.',
+  'Saved groups': 'സംരക്ഷിച്ച ഗ്രൂപ്പുകൾ',
+  'Tab group': 'ടാബ് ഗ്രൂപ്പ്',
+  'Bookmarks toolbar': 'ബുക്ക്‌മാർക്ക് ടൂൾബാർ',
+  'Bookmarks menu': 'ബുക്ക്‌മാർക്ക് മെനു',
+  'Other bookmarks': 'മറ്റ് ബുക്ക്‌മാർക്കുകൾ',
+  'Mobile bookmarks': 'മൊബൈൽ ബുക്ക്‌മാർക്കുകൾ',
+  'Bookmarks bar': 'ബുക്ക്‌മാർക്ക് ബാർ',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} തുറന്ന ടാബുകൾ പൂട്ടി സൂക്ഷിക്കുന്നു, അതിനാൽ ബുക്ക്‌മാർക്കുകൾ മാത്രം വന്നു.',
+  '{count} pages not on the web stay behind': {
+    one: 'വെബിൽ ഇല്ലാത്ത {count} പേജ് ഒഴിവാക്കി',
+    other: 'വെബിൽ ഇല്ലാത്ത {count} പേജുകൾ ഒഴിവാക്കി',
+  },
+  'Reading List': 'വായനാ ലിസ്റ്റ്',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS Safari-യുടെ ടാബുകളും ബുക്ക്‌മാർക്കുകളും ഫുൾ ഡിസ്ക് ആക്സസിന് പിന്നിൽ സൂക്ഷിക്കുന്നു. അവിടെ Orden ഓൺ ചെയ്ത്, വീണ്ടും ശ്രമിക്കുക.',
+  // Settings: note types
+  'Page note': 'താൾ കുറിപ്പ്',
+  'Web note': 'വെബ് കുറിപ്പ്',
+  'Private tab': 'സ്വകാര്യ ടാബ്',
+  'Note types': 'കുറിപ്പ് തരങ്ങൾ',
+  // Tasks: Upcoming's weeks
+  'Previous week': 'മുൻപത്തെ ആഴ്ച',
+  // Tasks: projects placed in the panel, and their folder
+  'Add project above': 'മുകളിൽ പ്രോജക്റ്റ് ചേർക്കുക',
+  'Add project below': 'താഴെ പ്രോജക്റ്റ് ചേർക്കുക',
+  'Projects folder': 'പ്രോജക്റ്റുകളുടെ ഫോൾഡർ',
+  // Tasks: a repeating task skipped or done for good
+  Skip: 'ഒഴിവാക്കുക',
+  'Complete forever': 'എന്നേക്കുമായി പൂർത്തിയാക്കുക',
+  // Tasks: comments
+  Comments: 'അഭിപ്രായങ്ങൾ',
+  // Tasks: filters
+  Filters: 'ഫിൽട്ടറുകൾ',
+  'Add filter': 'ഫിൽട്ടർ ചേർക്കുക',
+  'Edit filter': 'ഫിൽട്ടർ തിരുത്തുക',
+  // Tasks: a project's sections
+  'Add section': 'വിഭാഗം ചേർക്കുക',
+  '{name} (copy)': '{name} (പകർപ്പ്)',
+  'Its tasks are deleted with it.': 'അതിലെ ജോലികളും ഒപ്പം ഇല്ലാതാകും.',
+  // Tasks: keys, selection and the undo toast
+  Completed: 'പൂർത്തിയായി',
+  'Remove date': 'തീയതി നീക്കുക',
+  'Next task': 'അടുത്ത ജോലി',
+  'Previous task': 'മുൻപത്തെ ജോലി',
+  'Add task at the top': 'മുകളിൽ ടാസ്ക് ചേർക്കുക',
+  '{count} selected': '{count} തിരഞ്ഞെടുത്തു',
+  // Tasks: the Display menu
+  Display: 'പ്രദർശനം',
+  'Completed tasks': 'പൂർത്തിയായ ജോലികൾ',
+  // Tasks: several lines pasted into quick add
+  'One task': 'ഒരു ജോലി',
+  'One per line': 'ഓരോ വരിക്കും ഒന്ന്',
+  // Tasks: the projects in the panel
+  Favorites: 'പ്രിയപ്പെട്ടവ',
+  'Add project': 'പ്രോജക്റ്റ് ചേർക്കുക',
+  'Add sub-project': 'ഉപ പ്രോജക്റ്റ് ചേർക്കുക',
+  // Tasks: the task view
+  'Sub-tasks': 'ഉപജോലികൾ',
+  'Add sub-task': 'ഉപജോലി ചേർക്കുക',
+  'New label': 'പുതിയ ലേബൽ',
+  'No deadline': 'അവസാന തീയതിയില്ല',
+  // Tasks: the row's menu and the scheduler
+  Reschedule: 'വീണ്ടും ക്രമീകരിക്കുക',
+  'Later this week': 'ഈ ആഴ്ച പിന്നീട്',
+  'This weekend': 'ഈ വാരാന്ത്യം',
+  'Next weekend': 'അടുത്ത വാരാന്ത്യം',
+  'Every week on {day}': 'എല്ലാ ആഴ്ചയും {day}',
+  'Every month on day {day}': 'എല്ലാ മാസവും {day}-ാം തീയതി',
+  'Every year on {date}': 'എല്ലാ വർഷവും {date}',
+  'Type a date': 'തീയതി ടൈപ്പ് ചെയ്യുക',
+  'Previous month': 'കഴിഞ്ഞ മാസം',
+  'Next month': 'അടുത്ത മാസം',
+  'No time': 'സമയമില്ല',
+  'No repeat': 'ആവർത്തനമില്ല',
+  Complete: 'പൂർത്തിയാക്കുക',
+  Reopen: 'വീണ്ടും തുറക്കുക',
+  Schedule: 'സമയം നിശ്ചയിക്കുക',
+  'Open in note': 'കുറിപ്പിൽ തുറക്കുക',
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'മറ്റൊരു ആപ്പ്',
-  'Start fresh': 'പുതുതായി തുടങ്ങുക',
   'Import from Obsidian': 'Obsidian-ൽ നിന്ന് ഇംപോർട്ട് ചെയ്യുക',
   'Import from Notion': 'Notion-ൽ നിന്ന് ഇംപോർട്ട് ചെയ്യുക',
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'സൂചനകൾ',
   'Silent mode': 'നിശബ്ദ മോഡ്',
-  'Sign in to keep your notes safe and on every device.':
-    'നിങ്ങളുടെ കുറിപ്പുകൾ സുരക്ഷിതമായും എല്ലാ ഉപകരണത്തിലും ലഭിക്കാൻ സൈൻ ഇൻ ചെയ്യുക.',
   'See how your notes connect.': 'നിങ്ങളുടെ കുറിപ്പുകൾ എങ്ങനെ ബന്ധപ്പെട്ടിരിക്കുന്നു എന്ന് കാണുക.',
   'Press {key} to find anything, notes and commands alike.':
     'കുറിപ്പുകളും കമാൻഡുകളും, എന്തും കണ്ടെത്താൻ {key} അമർത്തുക.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'എഴുതുമ്പോൾ മാർക്ക്ഡൗൺ കാണിക്കുക',
+  'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'പോയിന്റർ',
   'Pointing hand on buttons': 'ബട്ടണുകളിൽ ചൂണ്ടുന്ന കൈ',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
@@ -40,11 +146,14 @@ export const ml: Dictionary = {
   '{count} h': '{count} മണി',
   Inbox: 'ഇൻബോക്സ്',
   Date: 'തീയതി',
+  'Start date': 'ആരംഭ തീയതി',
   Priority: 'മുൻഗണന',
   Reminder: 'ഓർമ്മപ്പെടുത്തൽ',
   Duration: 'ദൈർഘ്യം',
   'Smart dates': 'സ്മാർട്ട് തീയതികൾ',
   'From any app': 'ഏത് ആപ്പിൽ നിന്നും',
+  'Show tasks without a start date in Today':
+    'ആരംഭ തീയതി ഇല്ലാത്ത ടാസ്കുകൾ ഇന്ന് എന്നതിൽ കാണിക്കുക',
   'Every day': 'എല്ലാ ദിവസവും',
   'Every weekday': 'എല്ലാ പ്രവൃത്തിദിവസവും',
   'Every week': 'എല്ലാ ആഴ്ചയും',
@@ -61,6 +170,13 @@ export const ml: Dictionary = {
   Unsaved: 'സേവ് ചെയ്തിട്ടില്ല',
   'Save to': 'ഇവിടെ സേവ് ചെയ്യുക',
   'Reloaded with the web data of {space}': '{space}-ന്റെ വെബ് ഡാറ്റ ഉപയോഗിച്ച് വീണ്ടും ലോഡ് ചെയ്തു',
+  Separate: 'വേറിട്ട്',
+  'Share this note’s web data again?': 'ഈ കുറിപ്പിന്റെ വെബ് ഡാറ്റ വീണ്ടും പങ്കിടണോ?',
+  'What its pages are signed in to on this computer is deleted.':
+    'ഈ കമ്പ്യൂട്ടറിൽ ഇതിന്റെ പേജുകൾ സൈൻ ഇൻ ചെയ്തിരിക്കുന്നത് ഇല്ലാതാക്കും.',
+  'Share again': 'വീണ്ടും പങ്കിടുക',
+  'This note keeps its own web data now': 'ഈ കുറിപ്പ് ഇപ്പോൾ സ്വന്തം വെബ് ഡാറ്റ സൂക്ഷിക്കുന്നു',
+  'Back on the shared web data': 'പങ്കിട്ട വെബ് ഡാറ്റയിലേക്ക് തിരികെ',
   'Add a page': 'താൾ ചേർക്കുക',
   'Add a page after this': 'ഇതിനു ശേഷം താൾ ചേർക്കുക',
   'Delete this page': 'ഈ താൾ മായ്ക്കുക',
@@ -81,6 +197,8 @@ export const ml: Dictionary = {
   Dots: 'കുത്തുകൾ',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'രണ്ട് വിരലുകൾ കൊണ്ട് ക്യാൻവാസ് തിരിക്കുക',
+  'Turn upright': 'നേരെയാക്കുക',
   Canvas: 'ക്യാൻവാസ്',
   Card: 'കാർഡ്',
   'Note or picture': 'കുറിപ്പ് അല്ലെങ്കിൽ ചിത്രം',
@@ -95,7 +213,6 @@ export const ml: Dictionary = {
   'New window': 'പുതിയ വിൻഡോ',
   New: 'പുതിയത്',
   'New space': 'പുതിയ സ്പേസ്',
-  '{name}: switch space': '{name}: സ്പേസ് മാറ്റുക',
   Untitled: 'പേരില്ലാത്തത്',
   Space: 'സ്പേസ്',
   'Name the space': 'സ്പേസിന്റെ പേര്',
@@ -140,8 +257,6 @@ export const ml: Dictionary = {
   'Loading…': 'ലോഡ് ചെയ്യുന്നു…',
   'Create a space': 'സ്പേസ് സൃഷ്ടിക്കുക',
   'Import a folder': 'ഫോൾഡർ ഇംപോർട്ട് ചെയ്യുക',
-  'Sign in to sync': 'സിങ്കിനായി സൈൻ ഇൻ',
-  'Create account': 'അക്കൗണ്ട് സൃഷ്ടിക്കുക',
   'Delete space': 'സ്പേസ് ഇല്ലാതാക്കുക',
   'Delete {name}?': '{name} ഇല്ലാതാക്കണോ?',
   'Every note in this space is deleted from your computer.':
@@ -159,6 +274,11 @@ export const ml: Dictionary = {
   Unpin: 'പിൻ നീക്കുക',
   Close: 'അടയ്ക്കുക',
   'Close pinned tab?': 'പിൻ ചെയ്ത ടാബ് അടയ്ക്കണോ?',
+  'Save changes to {name}?': '{name}-ലെ മാറ്റങ്ങൾ സേവ് ചെയ്യണോ?',
+  'Save changes to these tabs?': 'ഈ ടാബുകളിലെ മാറ്റങ്ങൾ സേവ് ചെയ്യണോ?',
+  'Unsaved words go to Recently deleted.':
+    'സേവ് ചെയ്യാത്ത വാക്കുകൾ അടുത്തിടെ ഇല്ലാതാക്കിയവയിലേക്ക് പോകും.',
+  'Don’t save': 'സേവ് ചെയ്യേണ്ട',
   'Close others': 'മറ്റുള്ളവ അടയ്ക്കുക',
   'Close tabs to the right': 'വലതുവശത്തെ ടാബുകൾ അടയ്ക്കുക',
   'Close tabs to the left': 'ഇടതുവശത്തെ ടാബുകൾ അടയ്ക്കുക',
@@ -195,9 +315,6 @@ export const ml: Dictionary = {
   'Move this note': 'ഈ കുറിപ്പ് നീക്കുക',
   'Move up': 'മുകളിലേക്ക് നീക്കുക',
   'Move down': 'താഴേക്ക് നീക്കുക',
-  Bookmark: 'ബുക്ക്‌മാർക്ക്',
-  'Remove bookmark': 'ബുക്ക്‌മാർക്ക് നീക്കുക',
-  'Leave out of search': 'തിരയലിൽ ഒഴിവാക്കുക',
   'Search here again': 'ഇവിടെ വീണ്ടും തിരയുക',
   'Undo the last file change': 'അവസാന ഫയൽ മാറ്റം പഴയപടിയാക്കുക',
   'Undo moving {name}': '{name} നീക്കിയത് പഴയപടിയാക്കുക',
@@ -247,7 +364,6 @@ export const ml: Dictionary = {
   'Remove group': 'ഗ്രൂപ്പ് നീക്കുക',
   'Out of the group': 'ഗ്രൂപ്പിന് പുറത്ത്',
   Make: 'ഉണ്ടാക്കുക',
-  'Bookmark this block': 'ഈ ബ്ലോക്ക് ബുക്ക്‌മാർക്ക് ചെയ്യുക',
   Panels: 'പാനലുകൾ',
   Outline: 'ഔട്ട്‌ലൈൻ',
   'Stay on this note': 'ഈ കുറിപ്പിൽ തന്നെ നിൽക്കുക',
@@ -514,8 +630,8 @@ export const ml: Dictionary = {
   'Asking OpenAI which models this key can use':
     'ഈ കീ ഏത് മോഡലുകൾ ഉപയോഗിക്കാമെന്ന് OpenAIയോട് ചോദിക്കുന്നു',
   'Could not reach OpenAI': 'OpenAIയിൽ എത്താനായില്ല',
-  'That key cannot use any of the models nibeditor asks for.':
-    'nibeditor ചോദിക്കുന്ന ഒരു മോഡലും ആ കീക്ക് ഉപയോഗിക്കാനാകില്ല.',
+  'That key cannot use any of the models Orden asks for.':
+    'Orden ചോദിക്കുന്ന ഒരു മോഡലും ആ കീക്ക് ഉപയോഗിക്കാനാകില്ല.',
   'No reasoning': 'യുക്തിചിന്ത ഇല്ല',
   Minimal: 'വളരെ കുറവ്',
   Low: 'കുറവ്',
@@ -537,7 +653,7 @@ export const ml: Dictionary = {
   Mode: 'മോഡ്',
   // The window's own edges; see appearance.rs
   Window: 'വിൻഡോ',
-  'nibeditor’s own': 'nibeditor-ന്റെ സ്വന്തം',
+  'Orden’s own': 'Orden-ന്റെ സ്വന്തം',
   'The system’s': 'സിസ്റ്റത്തിന്റെ',
   'Window frame': 'വിൻഡോയുടെ ചട്ടക്കൂട്',
   System: 'സിസ്റ്റം',
@@ -600,6 +716,7 @@ export const ml: Dictionary = {
   '{done} of {total}': '{total}ൽ {done}',
   'Sync failed': 'സിങ്ക് പരാജയപ്പെട്ടു',
   '{name} could not be written.': '{name} എഴുതാനായില്ല.',
+  '{name} could not be read.': '{name} വായിക്കാനായില്ല.',
   'Text size': 'ടെക്സ്റ്റ് വലുപ്പം',
   'Line spacing': 'വരി അന്തരം',
   'Line width': 'വരി വീതി',
@@ -660,8 +777,10 @@ export const ml: Dictionary = {
   '{used} of {limit} used.': '{limit}ൽ {used} ഉപയോഗിച്ചു.',
   'That image does not fit in your storage.': 'നിങ്ങളുടെ സ്റ്റോറേജിൽ ആ ചിത്രം ഒതുങ്ങില്ല.',
   'out of space': 'സ്റ്റോറേജ് ഇല്ല',
-  'nibeditor {version} is ready to install.': 'nibeditor {version} ഇൻസ്റ്റാൾ ചെയ്യാൻ തയ്യാർ.',
+  'Orden {version} is ready to install.': 'Orden {version} ഇൻസ്റ്റാൾ ചെയ്യാൻ തയ്യാർ.',
+  'Orden {version} is available.': 'Orden {version} ലഭ്യമാണ്.',
   'Restart now': 'ഇപ്പോൾ റീസ്റ്റാർട്ട്',
+  'Move to Applications': 'ആപ്ലിക്കേഷനുകളിലേക്ക് നീക്കുക',
   Later: 'പിന്നീട്',
   More: 'കൂടുതൽ',
   'Open notes': 'കുറിപ്പുകൾ തുറക്കുക',
@@ -686,12 +805,9 @@ export const ml: Dictionary = {
   Continue: 'തുടരുക',
   'Send a new code': 'പുതിയ കോഡ് അയയ്ക്കുക',
   'Code sent to': 'കോഡ് അയച്ച വിലാസം',
-  'You already have notes on this computer.':
-    'ഈ കമ്പ്യൂട്ടറിൽ നിങ്ങൾക്ക് ഇപ്പോൾ തന്നെ കുറിപ്പുകളുണ്ട്.',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
-    'സൂക്ഷിച്ചാൽ അവ നിങ്ങളുടെ അക്കൗണ്ടിൽ ചേരും. മായ്ച്ചാൽ അക്കൗണ്ടിൽ ഇപ്പോഴുള്ളത് മാത്രം ശേഷിക്കും - ഇത് പഴയപടിയാക്കാനാകില്ല.',
-  'Keep them': 'സൂക്ഷിക്കുക',
-  'Erase them': 'മായ്ക്കുക',
+  'This device already has notes.': 'ഈ ഉപകരണത്തിൽ ഇതിനകം കുറിപ്പുകളുണ്ട്.',
+  Merge: 'ലയിപ്പിക്കുക',
+  'Keep separate': 'വേറിട്ട് സൂക്ഷിക്കുക',
   'Digit {number}': 'അങ്കം {number}',
   'Resend in {seconds}s': '{seconds} സെക്കൻഡിൽ വീണ്ടും അയയ്ക്കുക',
   'Last synced {time}.': 'അവസാന സിങ്ക് {time}.',
@@ -741,14 +857,14 @@ export const ml: Dictionary = {
   'Reads your notes.': 'നിങ്ങളുടെ കുറിപ്പുകൾ വായിക്കുന്നു.',
   'Reads and writes your notes.': 'നിങ്ങളുടെ കുറിപ്പുകൾ വായിക്കുകയും എഴുതുകയും ചെയ്യുന്നു.',
   Other: 'മറ്റുള്ളവ',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'ഒരു AI സഹായിക്ക് നിങ്ങളുടെ കുറിപ്പുകൾ വായിക്കാം - അനുവദിച്ചാൽ മാറ്റാനും കഴിയും. നിങ്ങളുടെ nibeditor ഇമെയിലിൽ സൈൻ ഇൻ ചെയ്യും; ഒട്ടിക്കാൻ ഒന്നുമില്ല.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'ഒരു AI സഹായിക്ക് നിങ്ങളുടെ കുറിപ്പുകൾ വായിക്കാം - അനുവദിച്ചാൽ മാറ്റാനും കഴിയും. നിങ്ങളുടെ Orden ഇമെയിലിൽ സൈൻ ഇൻ ചെയ്യും; ഒട്ടിക്കാൻ ഒന്നുമില്ല.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'Claudeൽ Settings → Connectors തുറന്ന് Add custom connector ക്ലിക്ക് ചെയ്യുക.',
   'Open Claude’s connectors': 'Claude കണക്ടറുകൾ തുറക്കുക',
   'Fill in the two fields and click Add.': 'രണ്ട് ഫീൽഡുകൾ പൂരിപ്പിച്ച് Add ക്ലിക്ക് ചെയ്യുക.',
-  'Click Connect and sign in with your nibeditor email.':
-    'Connect ക്ലിക്ക് ചെയ്ത് നിങ്ങളുടെ nibeditor ഇമെയിലിൽ സൈൻ ഇൻ ചെയ്യുക.',
+  'Click Connect and sign in with your Orden email.':
+    'Connect ക്ലിക്ക് ചെയ്ത് നിങ്ങളുടെ Orden ഇമെയിലിൽ സൈൻ ഇൻ ചെയ്യുക.',
   'Using Claude Code instead?': 'Claude Code ഉപയോഗിക്കുന്നുണ്ടോ?',
   Command: 'കമാൻഡ്',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -759,16 +875,16 @@ export const ml: Dictionary = {
   'Open ChatGPT’s plugins': 'ChatGPT പ്ലഗിനുകൾ തുറക്കുക',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Plugins വിഭാഗമോ പ്ലസ് ബട്ടണോ ഇല്ലേ? ആദ്യം Settings → Security and loginൽ Developer mode ഓൺ ചെയ്യുക.',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'ChatGPT ചോദിക്കുമ്പോൾ നിങ്ങളുടെ nibeditor ഇമെയിലിൽ സൈൻ ഇൻ ചെയ്യുക.',
-  'To use it in a chat, type @ and pick nibeditor.':
-    'ചാറ്റിൽ ഉപയോഗിക്കാൻ @ ടൈപ്പ് ചെയ്ത് nibeditor തിരഞ്ഞെടുക്കുക.',
+  'Sign in with your Orden email when ChatGPT asks.':
+    'ChatGPT ചോദിക്കുമ്പോൾ നിങ്ങളുടെ Orden ഇമെയിലിൽ സൈൻ ഇൻ ചെയ്യുക.',
+  'To use it in a chat, type @ and pick Orden.':
+    'ചാറ്റിൽ ഉപയോഗിക്കാൻ @ ടൈപ്പ് ചെയ്ത് Orden തിരഞ്ഞെടുക്കുക.',
   'Server URL': 'സെർവർ URL',
   Authentication: 'പ്രാമാണീകരണം',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'വിപുല OAuth സെറ്റിംഗ്സ് അതേപടി വിട്ട് “I understand and want to continue” ടിക്ക് ചെയ്യുക.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'OAuthനോടൊപ്പം Streamable HTTP സംസാരിക്കുന്ന ഏത് MCP ക്ലയന്റും. URL നൽകിയാൽ അത് സ്വയം രജിസ്റ്റർ ചെയ്ത് nibeditorന്റെ സൈൻ ഇൻ പേജ് തുറക്കും.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'OAuthനോടൊപ്പം Streamable HTTP സംസാരിക്കുന്ന ഏത് MCP ക്ലയന്റും. URL നൽകിയാൽ അത് സ്വയം രജിസ്റ്റർ ചെയ്ത് Ordenന്റെ സൈൻ ഇൻ പേജ് തുറക്കും.',
   'Show config': 'കോൺഫിഗ് കാണിക്കുക',
   'For a client that takes a JSON block instead of a URL.':
     'URLന് പകരം JSON ബ്ലോക്ക് എടുക്കുന്ന ക്ലയന്റിന്.',
@@ -837,7 +953,7 @@ export const ml: Dictionary = {
   'Display name': 'ഡിസ്പ്ലേ പേര്',
   'Your name': 'നിങ്ങളുടെ പേര്',
   Email: 'ഇമെയിൽ',
-  'On nibeditor.com': 'nibeditor.comൽ',
+  'On orden.so': 'orden.soൽ',
   'Your own domain': 'നിങ്ങളുടെ സ്വന്തം ഡൊമെയ്ൻ',
   'Switching gives up {name}.': 'മാറിയാൽ {name} വിട്ടുപോകും.',
   Page: 'പേജ്',
@@ -910,8 +1026,9 @@ export const ml: Dictionary = {
   'No footnotes in this note': 'ഈ കുറിപ്പിൽ അടിക്കുറിപ്പുകളില്ല',
   'Stack tabs': 'ടാബുകൾ അടുക്കുക',
   'Unstack tabs': 'ടാബ് അടുക്കൽ മാറ്റുക',
-  'High contrast': 'ഉയർന്ന കോൺട്രാസ്റ്റ്',
+  Contrast: 'കോൺട്രാസ്റ്റ്',
   Glass: 'ഗ്ലാസ്',
+  Classic: 'ക്ലാസിക്',
   'Front matter': 'ഫ്രന്റ് മാറ്റർ',
   'Front matter: {name}': 'ഫ്രണ്ട് മാറ്റർ: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':
@@ -922,6 +1039,7 @@ export const ml: Dictionary = {
   Comment: 'കമന്റ്',
   'Always on top': 'എപ്പോഴും മുകളിൽ',
   'What is new': 'പുതിയത് എന്ത്',
+  'Download the app': 'ആപ്പ് ഡൗൺലോഡ് ചെയ്യുക',
   'Report an issue': 'പ്രശ്നം അറിയിക്കുക',
   'Move the line up': 'വരി മുകളിലേക്ക് നീക്കുക',
   'Move the line down': 'വരി താഴേക്ക് നീക്കുക',
@@ -1002,6 +1120,24 @@ export const ml: Dictionary = {
   'Layout: {name}': 'ലേഔട്ട്: {name}',
   'Space: {name}': 'സ്പേസ്: {name}',
   'Theme: {name}': 'തീം: {name}',
+  'AI account: {name}': 'AI അക്കൗണ്ട്: {name}',
+  Accounts: 'അക്കൗണ്ടുകൾ',
+  Access: 'ആക്സസ്',
+  Set: 'സജ്ജമാക്കി',
+  'Start over': 'വീണ്ടും തുടങ്ങുക',
+  'Sign in here': 'ഇവിടെ സൈൻ ഇൻ ചെയ്യുക',
+  '{device} wants your AI accounts': '{device} നിങ്ങളുടെ AI അക്കൗണ്ടുകൾ ആവശ്യപ്പെടുന്നു',
+  '{device} offers this device your AI vault':
+    '{device} ഈ ഉപകരണത്തിന് നിങ്ങളുടെ AI വോൾട്ട് നൽകുന്നു',
+  Join: 'ചേരുക',
+  'Allow this device on another one': 'മറ്റൊരു ഉപകരണത്തിൽ ഈ ഉപകരണം അനുവദിക്കുക',
+  'On every device you sign in to, end-to-end encrypted.':
+    'നിങ്ങൾ സൈൻ ഇൻ ചെയ്യുന്ന എല്ലാ ഉപകരണത്തിലും, എൻഡ്-ടു-എൻഡ് എൻക്രിപ്റ്റഡ്.',
+  'Sign in to have them on every device.': 'എല്ലാ ഉപകരണത്തിലും ലഭിക്കാൻ സൈൻ ഇൻ ചെയ്യുക.',
+  'Agents on this computer connect on their own': 'ഈ കമ്പ്യൂട്ടറിലെ ഏജന്റുകൾ സ്വയം ബന്ധിപ്പിക്കും',
+  Helpers: 'സഹായികൾ',
+  'Start helpers on your AI accounts': 'നിങ്ങളുടെ AI അക്കൗണ്ടുകളിൽ സഹായികളെ ആരംഭിക്കുക',
+  Delegated: 'ഏൽപ്പിച്ചു',
   'Code theme: {name}': 'കോഡ് തീം: {name}',
   'Delete a layout': 'ലേഔട്ട് ഇല്ലാതാക്കുക',
   // Keyboards and modal editing
@@ -1070,6 +1206,7 @@ export const ml: Dictionary = {
   'Double-click to write': 'എഴുതാൻ രണ്ടുതവണ ക്ലിക്ക്',
   'Another colour': 'മറ്റൊരു നിറം',
   'Turn into a note': 'കുറിപ്പാക്കി മാറ്റുക',
+  Arrange: 'ക്രമീകരിക്കുക',
   'Bring to front': 'മുന്നിലേക്ക് കൊണ്ടുവരുക',
   'Bring forward': 'ഒരു പടി മുന്നോട്ട്',
   'Send backward': 'ഒരു പടി പിന്നോട്ട്',
@@ -1091,6 +1228,13 @@ export const ml: Dictionary = {
   'Export as PNG': 'PNG ആയി എക്സ്പോർട്ട് ചെയ്യുക',
   'Export as SVG': 'SVG ആയി എക്സ്പോർട്ട് ചെയ്യുക',
   'Export as PDF': 'PDF ആയി എക്സ്പോർട്ട് ചെയ്യുക',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF ഇംപോർട്ട് ചെയ്യുക',
+  'Choose how to add the pages to the canvas.':
+    'പേജുകൾ ക്യാൻവാസിൽ എങ്ങനെ ചേർക്കണമെന്ന് തിരഞ്ഞെടുക്കുക.',
+  'Single page': 'ഒരു പേജ്',
+  'All pages': 'എല്ലാ പേജുകളും',
+  'Choose a page': 'ഒരു പേജ് തിരഞ്ഞെടുക്കുക',
   // The canvas: what its own keys are called
   'Delete what is picked': 'തിരഞ്ഞെടുത്തത് ഇല്ലാതാക്കുക',
   'Nudge left': 'ഇടത്തേക്ക് ചെറുതായി നീക്കുക',
@@ -1151,8 +1295,8 @@ export const ml: Dictionary = {
   'Release channel': 'റിലീസ് ചാനൽ',
   Stable: 'സ്ഥിരം',
   Unstable: 'അസ്ഥിരം',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'സ്ഥിരം ഔദ്യോഗിക റിലീസുകൾ പിന്തുടരുന്നു; അസ്ഥിരം mainലേക്കുള്ള എല്ലാ പുഷും പിന്തുടരുന്നു, തകരാനും മതി.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'സ്ഥിരം റിലീസ് ചെയ്ത പതിപ്പുകൾ പിന്തുടരുന്നു; അസ്ഥിരം എഡ്ജ് ബിൽഡുകൾ പിന്തുടരുന്നു, തകരാനും മതി.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'ഇംപോർട്ട്',
@@ -1209,13 +1353,15 @@ export const ml: Dictionary = {
   '{count} tables inside notes do not come over': 'കുറിപ്പുകൾക്കുള്ളിലെ {count} പട്ടികകൾ വരില്ല',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} അനുബന്ധങ്ങൾ ഈ Mac-ൽ അല്ല, iCloud-ൽ ആണ്',
+  '{count} files are in iCloud rather than on this Mac':
+    '{count} ഫയലുകൾ ഈ Mac-ൽ അല്ല, iCloud-ൽ ആണ്',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS ആ കുറിപ്പുകൾ Full Disk Access-നു പിന്നിൽ വയ്ക്കുന്നു.',
   'There are no notes in Apple Notes on this Mac.': 'ഈ Mac-ൽ Apple Notes-ൽ കുറിപ്പുകളില്ല.',
   'Those notes could not be read.': 'ആ കുറിപ്പുകൾ വായിക്കാനായില്ല.',
   'Read them from this Mac': 'ഈ Mac-ൽ നിന്ന് വായിക്കുക',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    'Full Disk Access-ൽ nibeditor ഓൺ ചെയ്ത്, വീണ്ടും ചോദിക്കുക.',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    'Full Disk Access-ൽ Orden ഓൺ ചെയ്ത്, വീണ്ടും ചോദിക്കുക.',
   'Open the setting': 'ക്രമീകരണം തുറക്കുക',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'Apple Journal സ്വയം കയറ്റുമതി ചെയ്യും: Journal, ക്രമീകരണങ്ങൾ, കയറ്റുമതി. Apple Notes-ന് കയറ്റുമതി ഇല്ല, അതിനാൽ അത് ഉള്ള Mac-ൽ നിന്ന് മാറി, ഇവിടെ ഇടേണ്ടത് ഏതെങ്കിലും കയറ്റുമതി ഉപകരണം എഴുതിയ ഫോൾഡർ ആണ്.',
@@ -1321,16 +1467,16 @@ export const ml: Dictionary = {
   'OpenAI-compatible': 'OpenAI അനുയോജ്യം',
   'Base URL': 'ബേസ് URL',
   'API key': 'API കീ',
-  'Set on this device': 'ഈ ഉപകരണത്തിൽ സെറ്റ് ചെയ്തു',
   Optional: 'നിർബന്ധമല്ല',
   'List models': 'മോഡലുകളുടെ പട്ടിക',
   'Asking…': 'ചോദിക്കുന്നു…',
   'No providers yet.': 'ഇനിയും പ്രൊവൈഡർമാരില്ല.',
   'Add {name}': '{name} ചേർക്കുക',
-  'Keys stay in the secure store on this device.':
-    'കീകൾ ഈ ഉപകരണത്തിലെ സുരക്ഷിത സ്റ്റോറിൽ ഇരിക്കും.',
   'This browser holds the keys in its own storage.':
     'ഈ ബ്രൗസർ കീകൾ സ്വന്തം സ്റ്റോറേജിൽ സൂക്ഷിക്കുന്നു.',
+  'Keep this browser’s keys in the vault': 'ഈ ബ്രൗസറിന്റെ കീകൾ വോൾട്ടിൽ സൂക്ഷിക്കുക',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'അപ്പോൾ ഓരോ ഉപകരണത്തിന്റെയും കീകൾ ഈ ബ്രൗസറിന്റെ സംഭരണത്തിൽ സൂക്ഷിക്കും, പേജിൽ കടന്നുകൂടിയ ഒരു സ്ക്രിപ്റ്റിന് അവ വായിക്കാനാകും.',
   'AI can be wrong. Check the facts.': 'AI-ക്ക് തെറ്റുപറ്റാം. വസ്തുതകൾ പരിശോധിക്കുക.',
   'Used by the glasses': 'കണ്ണട ഉപയോഗിക്കുന്നത്',
   'Could not read the models.': 'മോഡലുകൾ വായിക്കാനായില്ല.',
@@ -1372,7 +1518,6 @@ export const ml: Dictionary = {
   'A cited report': 'ഉദ്ധൃതമായ റിപ്പോർട്ട്',
   'A helper in the background': 'പശ്ചാത്തലത്തിലെ ഒരു സഹായകൻ',
   'A side question': 'ഒരു അനുബന്ധ ചോദ്യം',
-  'Agent mode': 'ഏജന്റ് മോഡ്',
   'Agent profile': 'ഏജന്റ് പ്രൊഫൈൽ',
   'Archive the thread': 'ത്രെഡ് ആർക്കൈവ് ചെയ്യുക',
   'Approve mode': 'അംഗീകാര മോഡ്',
@@ -1491,8 +1636,6 @@ export const ml: Dictionary = {
   // Web tabs
   Reload: 'വീണ്ടും എടുക്കുക',
   'Hard reload': 'പൂർണ്ണമായി വീണ്ടും എടുക്കുക',
-  'Clip this page': 'ഈ താൾ എടുക്കുക',
-  'Clip the link': 'കണ്ണി എടുക്കുക',
   'Open in the browser': 'ബ്രൗസറിൽ തുറക്കുക',
   'Show it here': 'ഇവിടെ കാണിക്കുക',
   Website: 'വെബ്‌സൈറ്റ്',
@@ -1580,8 +1723,10 @@ export const ml: Dictionary = {
   'that is not a theme': 'അത് ഒരു തീം അല്ല',
   'no such theme': 'അങ്ങനെയൊരു തീം ഇല്ല',
   'choose a model first': 'ആദ്യം ഒരു മോഡൽ തിരഞ്ഞെടുക്കുക',
+  'set an OpenAI key in Orden’s settings first':
+    'ആദ്യം Orden സെറ്റിംഗ്സിൽ OpenAI കീ സെറ്റ് ചെയ്യുക',
   'set an OpenAI key in nibeditor’s settings first':
-    'ആദ്യം nibeditor സെറ്റിംഗ്സിൽ OpenAI കീ സെറ്റ് ചെയ്യുക',
+    'ആദ്യം Orden സെറ്റിംഗ്സിൽ OpenAI കീ സെറ്റ് ചെയ്യുക',
   'that is a lot of questions - try again later': 'അത് വളരെയധികം ചോദ്യങ്ങൾ - പിന്നീട് ശ്രമിക്കുക',
   'that is too much audio': 'അത് വളരെയധികം ഓഡിയോ',
   'that is more than a spoken command': 'അത് ഒരു സംസാര കമാൻഡിനെക്കാൾ കൂടുതൽ',
@@ -1605,7 +1750,6 @@ export const ml: Dictionary = {
   Nothing: 'ഒന്നുമില്ല',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'ഈ കാഴ്ച ബുക്ക്‌മാർക്ക് ചെയ്യുക',
   Keep: 'സൂക്ഷിക്കുക',
 
   // Which side of the window a panel sits on.
@@ -1627,7 +1771,6 @@ export const ml: Dictionary = {
   'New tab': 'പുതിയ ടാബ്',
   'Full screen': 'പൂർണ്ണ സ്ക്രീൻ',
   'Print…': 'പ്രിന്റ് ചെയ്യുക…',
-  'Save page': 'പേജ് സംരക്ഷിക്കുക',
   'Share…': 'പങ്കിടുക…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1672,7 +1815,6 @@ export const ml: Dictionary = {
   Blocked: 'തടഞ്ഞു',
   'Reset permissions': 'അനുമതികൾ പുനഃസജ്ജീകരിക്കുക',
   'Turn into': 'ആയി മാറ്റുക',
-  'Bookmark these blocks': 'ഈ ബ്ലോക്കുകൾ ബുക്ക്‌മാർക്ക് ചെയ്യുക',
   Foldable: 'മടക്കാവുന്നത്',
   'Starts folded': 'മടക്കി തുടങ്ങുന്നു',
   // Where a space keeps what websites store
@@ -1689,6 +1831,16 @@ export const ml: Dictionary = {
   'Bring all to front': 'എല്ലാം മുന്നിലേക്ക് കൊണ്ടുവരിക',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'പകർപ്പ് പഴയപടിയാക്കുക',
+  'Devices with your AI vault': 'നിങ്ങളുടെ AI വോൾട്ടുള്ള ഉപകരണങ്ങൾ',
+  'This device': 'ഈ ഉപകരണം',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'ആ ഉപകരണത്തിന് ഇനി നിങ്ങളുടെ AI അക്കൗണ്ടുകൾ വായിക്കാനാവില്ല, മറ്റുള്ളവയ്ക്ക് പുതിയ കീ ലഭിക്കും.',
+  'Also remove this device from your AI vault?':
+    'ഈ ഉപകരണത്തെ നിങ്ങളുടെ AI വോൾട്ടിൽ നിന്നും നീക്കണോ?',
+  'Remove and sign out': 'നീക്കി സൈൻ ഔട്ട് ചെയ്യുക',
+  'Undo making {name}': '{name} ഉണ്ടാക്കിയത് പഴയപടിയാക്കുക',
+  'Undo the deletion': 'ഇല്ലാതാക്കിയത് പഴയപടിയാക്കുക',
+  'Undo the move': 'നീക്കിയത് പഴയപടിയാക്കുക',
   'Redo the last file change': 'അവസാന ഫയൽ മാറ്റം വീണ്ടും ചെയ്യുക',
   'Select down': 'താഴേക്ക് തിരഞ്ഞെടുക്കുക',
   'Select up': 'മുകളിലേക്ക് തിരഞ്ഞെടുക്കുക',
@@ -1732,7 +1884,6 @@ export const ml: Dictionary = {
   '{key} in a terminal': 'ടെർമിനലിൽ {key}',
   'Always ask': 'എപ്പോഴും ചോദിക്കുക',
   'Open another': 'മറ്റൊന്ന് തുറക്കുക',
-  'Open in terminal': 'ടെർമിനലിൽ തുറക്കുക',
   Clear: 'മായ്ക്കുക',
   'Exited with code {code}': 'കോഡ് {code} ഉപയോഗിച്ച് അവസാനിച്ചു',
   'Could not start {shell}': '{shell} ആരംഭിക്കാനായില്ല',
@@ -1741,18 +1892,8 @@ export const ml: Dictionary = {
   'Stop what is running in {name}?': '{name}-ൽ പ്രവർത്തിക്കുന്നത് നിർത്തണോ?',
   'Stop what is running in these terminals?': 'ഈ ടെർമിനലുകളിൽ പ്രവർത്തിക്കുന്നത് നിർത്തണോ?',
   'Paste {count} lines?': { one: '{count} വരി ഒട്ടിക്കണോ?', other: '{count} വരികൾ ഒട്ടിക്കണോ?' },
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': 'ഡിഫോൾട്ട് ബ്രൗസർ',
-  // The engine web tabs run on
-  Engine: 'എഞ്ചിൻ',
-  Relaunch: 'വീണ്ടും തുടങ്ങുക',
-  'Chromium did not start': 'Chromium തുടങ്ങിയില്ല',
-  'No connection': 'കണക്ഷനില്ല',
-  'Not in this release': 'ഈ റിലീസിൽ ഇല്ല',
-  'Needs an update': 'അപ്ഡേറ്റ് വേണം',
-  'Signature did not match': 'ഒപ്പ് പൊരുത്തപ്പെട്ടില്ല',
-  'Disk full': 'ഡിസ്ക് നിറഞ്ഞു',
-  'Could not be installed': 'ഇൻസ്റ്റാൾ ചെയ്യാനായില്ല',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} വരുത്തിയ തിരുത്തലുകൾ പഴയപടിയാക്കുക',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1856,8 +1997,8 @@ export const ml: Dictionary = {
   'Always on this site': 'ഈ സൈറ്റിൽ എപ്പോഴും',
   'Agents stopped': 'ഏജന്റുകളെ നിർത്തി',
   'Agent tabs closed': 'ഏജന്റ് ടാബുകൾ അടച്ചു',
-  'nibeditor is still running for your agents':
-    'നിങ്ങളുടെ ഏജന്റുകൾക്കായി nibeditor ഇപ്പോഴും പ്രവർത്തിക്കുന്നു',
+  'Orden is still running for your agents':
+    'നിങ്ങളുടെ ഏജന്റുകൾക്കായി Orden ഇപ്പോഴും പ്രവർത്തിക്കുന്നു',
   '{client} wants to connect': '{client} കണക്റ്റ് ചെയ്യാൻ ആഗ്രഹിക്കുന്നു',
   // Web logins that travel, and the devices of an account
   'no such device': 'അങ്ങനെയൊരു ഉപകരണമില്ല',
@@ -1873,11 +2014,12 @@ export const ml: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'ഈ കമ്പ്യൂട്ടറിലെ ഏജന്റുകൾ',
   'Your account’s connector': 'നിങ്ങളുടെ അക്കൗണ്ടിന്റെ കണക്ടർ',
-  'nibeditor asks you once, the first time it connects.':
-    'ആദ്യമായി കണക്റ്റ് ചെയ്യുമ്പോൾ nibeditor നിങ്ങളോട് ഒരിക്കൽ ചോദിക്കും.',
+  'Orden asks you once, the first time it connects.':
+    'ആദ്യമായി കണക്റ്റ് ചെയ്യുമ്പോൾ Orden നിങ്ങളോട് ഒരിക്കൽ ചോദിക്കും.',
   'A client on another machine?': 'മറ്റൊരു മെഷീനിലെ ക്ലയന്റ്?',
   'Shown only once.': 'ഒരിക്കൽ മാത്രം കാണിക്കും.',
   'Remove {name}?': '{name} നീക്കം ചെയ്യണോ?',
+  'End {name}?': '{name} അവസാനിപ്പിക്കണോ?',
   'Its token stops working.': 'അതിന്റെ ടോക്കൺ ഇനി പ്രവർത്തിക്കില്ല.',
   'Added {date}': '{date}-ന് ചേർത്തു',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':
@@ -1898,7 +2040,6 @@ export const ml: Dictionary = {
   'Change notes': 'കുറിപ്പുകൾ മാറ്റൽ',
   'See what you are looking at': 'നിങ്ങൾ കാണുന്നത് കാണൽ',
   'Move and rename files': 'ഫയലുകൾ നീക്കലും പേരുമാറ്റലും',
-  'Open tabs and bookmarks': 'ടാബുകളും ബുക്ക്‌മാർക്കുകളും തുറക്കൽ',
   'Bring a tab to the front': 'ഒരു ടാബ് മുന്നിലേക്ക് കൊണ്ടുവരൽ',
   'Browse in tabs of its own': 'സ്വന്തം ടാബുകളിൽ ബ്രൗസ് ചെയ്യൽ',
   'Read what pages load': 'പേജുകൾ ലോഡ് ചെയ്യുന്നത് വായിക്കൽ',
@@ -1920,14 +2061,11 @@ export const ml: Dictionary = {
   'Without your logins': 'നിങ്ങളുടെ ലോഗിനുകളില്ലാതെ',
   'Calls a minute': 'മിനിറ്റിൽ കോളുകൾ',
   'Pages a minute': 'മിനിറ്റിൽ പേജുകൾ',
+  'Browser memory limit': 'ബ്രൗസർ മെമ്മറി പരിധി',
   '{count} calls': {
     one: '{count} കോൾ',
     other: '{count} കോളുകൾ',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': '{device}-ൽ തുറന്നിരിക്കുന്നു',
-  'Use here': 'ഇവിടെ ഉപയോഗിക്കുക',
-  '{device} wants your web logins': '{device} നിങ്ങളുടെ വെബ് ലോഗിനുകൾ ആവശ്യപ്പെടുന്നു',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'പെട്ടെന്നുള്ള ചോദ്യം',
@@ -1994,8 +2132,7 @@ export const ml: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'സ്നൂസ്',
   Reminders: 'ഓർമ്മപ്പെടുത്തലുകൾ',
-  'Reminders ring while nibeditor is open':
-    'nibeditor തുറന്നിരിക്കുമ്പോൾ ഓർമ്മപ്പെടുത്തലുകൾ മുഴങ്ങും',
+  'Reminders ring while Orden is open': 'Orden തുറന്നിരിക്കുമ്പോൾ ഓർമ്മപ്പെടുത്തലുകൾ മുഴങ്ങും',
   Automatic: 'സ്വയമേവ',
   'Stay in the tray': 'ട്രേയിൽ തുടരുക',
   'Exact alarms': 'കൃത്യമായ അലാറങ്ങൾ',
@@ -2038,7 +2175,6 @@ export const ml: Dictionary = {
   'Any of them': 'ഏതെങ്കിലും',
   Compare: 'താരതമ്യം',
   'Add a filter': 'ഫിൽട്ടർ ചേർക്കുക',
-  'Reschedule to today': 'ഇന്നത്തേക്ക് മാറ്റുക',
   Collapse: 'ചുരുക്കുക',
   Expand: 'വികസിപ്പിക്കുക',
   Summary: 'സംഗ്രഹം',
@@ -2060,7 +2196,6 @@ export const ml: Dictionary = {
   Layout: 'ലേഔട്ട്',
   Overdue: 'കാലാവധി കഴിഞ്ഞവ',
   Upcoming: 'വരാനിരിക്കുന്നവ',
-  Logbook: 'ലോഗ്ബുക്ക്',
   Project: 'പ്രോജക്റ്റ്',
   Label: 'ലേബൽ',
   List: 'പട്ടിക',
@@ -2246,4 +2381,11 @@ export const ml: Dictionary = {
   'Search this chat': 'ഈ ചാറ്റിൽ തിരയുക',
   'Add as task': 'ജോലിയായി ചേർക്കുക',
   'Save as note': 'കുറിപ്പായി സംരക്ഷിക്കുക',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'പുലരി',
+  Lagoon: 'കായൽ',
+  Lilac: 'ലൈലാക്',
+  Peach: 'പീച്ച്',
+  Sage: 'സേജ്',
+  Mist: 'മൂടൽമഞ്ഞ്',
 }

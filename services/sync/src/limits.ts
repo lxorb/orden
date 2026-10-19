@@ -3,9 +3,9 @@
  *  Three of the ways in here cost the service something it cannot take back:
  *  mail leaves the building, a registration writes a row, an owner is told
  *  somebody is waiting. Each already had a gate on the one person it is about -
- *  an address hears from Nib at most every thirty seconds - and none of them had
+ *  an address hears from Orden at most every thirty seconds - and none of them had
  *  a ceiling on the whole: one machine could ask for a code for ten thousand
- *  addresses, and every one of those sends is Nib's reputation as a sender.
+ *  addresses, and every one of those sends is Orden's reputation as a sender.
  *
  *  So this module holds the ceilings. `within` is the general one, counting
  *  arrivals per scope and key inside a window; `mailCeilings` is the set that
@@ -30,7 +30,7 @@ const A_DAY = 24 * AN_HOUR
 const MAIL_FROM_ONE_MACHINE = 20
 
 /** How many people the service writes to in a day. Every address that has heard
- *  from Nib today counts once, however often it heard; past this, an address
+ *  from Orden today counts once, however often it heard; past this, an address
  *  that has not heard yet waits for tomorrow. */
 const ADDRESSES_A_DAY = 500
 
@@ -103,7 +103,7 @@ async function withinTheDay(env: Env, address: string): Promise<boolean> {
     .bind(day, address)
     .first<{ many: number; held: number | null }>()
 
-  // Somebody who has already heard from Nib today is not one more person to
+  // Somebody who has already heard from Orden today is not one more person to
   // write to, so the ceiling has nothing to say about them.
   if (!counted?.held && (counted?.many ?? 0) >= ADDRESSES_A_DAY) return false
 
@@ -136,10 +136,10 @@ export function mayTellTheOwner(env: Env, spaceId: string): Promise<boolean> {
 /** How many questions one account may ask the model in an hour, and how many
  *  utterances it may have turned into words.
  *
- *  These cost somebody money - the account's own OpenAI credit, or Nib's own Workers
+ *  These cost somebody money - the account's own OpenAI credit, or Orden's own Workers
  *  AI allowance where an account has no key - and the Worker is what spends it now
  *  that the key never leaves the Worker. So the ceiling is not
- *  about Nib's reputation like the mail ones; it is about a bug, or a phone in a
+ *  about Orden's reputation like the mail ones; it is about a bug, or a phone in a
  *  pocket, not being able to run through a month's credit in an afternoon.
  *
  *  Sixty questions is far more than a person walking around asks and far less than a
@@ -267,33 +267,6 @@ export async function mayGuess(
 }
 
 const A_MINUTE = 60 * 1000
-
-/** How often one device may ask its hub for a web login, and how often one site's
- *  login may be written, and how often an account may ask for its web key.
- *
- *  Each is a loop's ceiling rather than a person's: a tab flapping between two
- *  states asks for its lease every frame, a capture that never settles uploads on
- *  every page load, and a new computer that keeps reconnecting asks for the key
- *  each time. Thirty a minute is a handover every two seconds; sixty an hour is
- *  one a minute, which is what capturing while active does at most; five requests
- *  an hour is somebody asking again after a no, not a script walking the digits.
- *  Keyed under the account so that deleting it takes the rows with it; see
- *  erase.ts. See docs/sync-v2.md section 8. */
-const LEASES_A_MINUTE = 30
-const WEB_UPLOADS_AN_HOUR = 60
-const WEB_KEY_REQUESTS_AN_HOUR = 5
-
-export function mayAcquire(env: Env, userId: string, deviceId: string): Promise<boolean> {
-  return within(env, 'lease', `${userId}:${deviceId}`, LEASES_A_MINUTE, A_MINUTE)
-}
-
-export function mayUploadWebState(env: Env, userId: string, key: string): Promise<boolean> {
-  return within(env, 'web-up', `${userId}:${key}`, WEB_UPLOADS_AN_HOUR, AN_HOUR)
-}
-
-export function mayAskForWebKey(env: Env, userId: string): Promise<boolean> {
-  return within(env, 'web-key', userId, WEB_KEY_REQUESTS_AN_HOUR, AN_HOUR)
-}
 
 /** How many requests that change a tree, and how many that push documents, one
  *  account (or one guest) may make in a minute. Each request carries up to two hundred

@@ -9,28 +9,36 @@
  *  same edit, as the editor's box does. A move of whole lines is this lane's own, in
  *  lines.ts. */
 
-import { tick } from '@nib/bases'
-import type { Row } from '@nib/bases'
+import { finish, skip, taskHash, tick } from '@nib/bases'
+import type { Row, TaskChange } from '@nib/bases'
 import { appliedEdits, oneEdit } from '@nib/markdown/edits'
+import { blockIds, freeBlockId } from '@nib/markdown/links'
 import { taskLine as lineWords } from '@nib/markdown/task-edits'
 import type { TaskFields } from '@nib/markdown/task-line'
 import { rows } from '../rows/rows.svelte'
 import { changed, type RowChange } from '../rows/write'
+import type { Change } from '../search/apply'
 import { changeOf } from '../search/replace'
 import { insideSpace, samePath } from '../space-paths'
 import { workspace } from '../workspace.svelte'
 import { noteText, replaceInNotes } from '../workspace/note-text'
-import { dayOf } from './days'
+import { type Said, undoToast } from '../undo-toast.svelte'
+import { dayOf, nowOf } from './days'
 import type { Drop } from './drop'
 import {
   cutBlock,
+  duplicatedBlock,
   indentedBlock,
   lineOfAnchor,
   movedBeside,
   movedBlock,
+  editedLines,
   movedUnder,
+  outermost,
   withLines,
+  withoutBlock,
 } from './lines'
+import { withComment, withDescription, withoutComment, withSubtask } from './task-body'
 
 /** Where a row's note is on this disk, or null for a space no longer here. */
 function pathOf(row: Row): string | null {
@@ -39,16 +47,48 @@ function pathOf(row: Row): string | null {
 }
 
 /** One note written from what it said to what it says now; false where nothing
- *  changed or the note could not be read. */
-async function rewrite(path: string, after: (before: string) => string | null): Promise<boolean> {
+ *  changed or the note could not be read. `said` is what the undo toast calls it. */
+async function rewrite(
+  path: string,
+  after: (before: string) => string | null,
+  said?: Said,
+): Promise<boolean> {
   const before = await noteText(workspace, path)
   if (before === null) return false
   const next = after(before)
   if (next === null) return false
   const edit = oneEdit(before, next)
   if (!edit) return false
-  await replaceInNotes(workspace, [changeOf(path, before, [edit])])
+  await replaced([changeOf(path, before, [edit])], said)
   return true
+}
+
+/** Notes (on this disk) each written from what it said to what `after` makes of it, as
+ *  one write, so one undo takes all of it back: a section added, renamed, carried to
+ *  another project (sections.ts). A note `after` answers null for is left as it is. */
+export async function rewriteNotes(
+  edits: readonly { path: string; after: (before: string) => string | null }[],
+  said?: Said,
+): Promise<boolean> {
+  const changes = []
+  for (const { path, after } of edits) {
+    const before = await noteText(workspace, path)
+    if (before === null) continue
+    const next = after(before)
+    const edit = next === null ? null : oneEdit(before, next)
+    if (edit) changes.push(changeOf(path, before, [edit]))
+  }
+  if (!changes.length) return false
+  await replaced(changes, said)
+  return true
+}
+
+/** A write of notes, as one undo; `said` is the word the undo toast offers it back
+ *  under, where it is one a view's tasks were given (undo-toast.svelte.ts). */
+async function replaced(changes: readonly Change[], said?: Said): Promise<void> {
+  await replaceInNotes(workspace, changes)
+  const last = workspace.undone.last
+  if (said && last) undoToast.tell(last, said, workspace.undone.stack)
 }
 
 /** A property of a row's note or a field of its task: the one write path. */
@@ -56,19 +96,14 @@ export function writeRow(row: Row, change: RowChange): Promise<boolean> {
   return rows.write(row, change)
 }
 
-/** One change made to many rows as one write, so one undo takes all of it back:
- *  Today's "Reschedule to today" over every overdue task. Each note is read once and
- *  every change in it made on its words in turn. */
-export function writeRows(many: readonly Row[], change: RowChange): Promise<boolean> {
-  return writeEach(many.map((row) => ({ row, change })))
-}
-
-/** A change of its own to each of many rows, as one write: an option renamed in every
- *  note that holds it, ids given to a base's rows. `join` makes it one undo with the
+/** A change of its own to each of many rows, as one write, so one undo takes all of it
+ *  back: Overdue's Reschedule, an option renamed in every note that holds it, ids given
+ *  to a base's rows. `join` makes it one undo with the
  *  write just before, where it follows from that one (an automation). */
 export async function writeEach(
   pairs: readonly { row: Row; change: RowChange }[],
   join = false,
+  said?: Said,
 ): Promise<boolean> {
   const byNote = new Map<string, { row: Row; change: RowChange }[]>()
   for (const pair of pairs) {
@@ -86,7 +121,7 @@ export async function writeEach(
     if (edit) changes.push(changeOf(path, before, [edit]))
   }
   if (!changes.length) return false
-  await replaceInNotes(workspace, changes)
+  await replaced(changes, said)
   if (join) (await import('../workspace/undo-join')).joinLast(workspace.undone)
   return true
 }
@@ -97,12 +132,16 @@ export async function tickRow(row: Row, today = dayOf(new Date())): Promise<bool
   const anchor = row.anchor
   const path = pathOf(row)
   if (!anchor || path === null) return false
-  return rewrite(path, (before) => {
-    const line = lineOfAnchor(before, anchor)
-    if (line === null) return null
-    const edits = tick(before, line, today)
-    return edits.length ? appliedEdits(before, edits) : null
-  })
+  return rewrite(
+    path,
+    (before) => {
+      const line = lineOfAnchor(before, anchor)
+      if (line === null) return null
+      const edits = tick(before, line, today)
+      return edits.length ? appliedEdits(before, edits) : null
+    },
+    row.task && !row.task.done ? 'done' : undefined,
+  )
 }
 
 /** Alt+↑ and Alt+↓: the task and everything under it past its sibling. */
@@ -131,6 +170,172 @@ export async function moveBeside(row: Row, target: Row, after: boolean): Promise
   return rewrite(path, (before) => movedBeside(before, anchor, there, after))
 }
 
+/** Many tasks' notes, each with the rows it holds; a row of a space no longer here or
+ *  of no line left out. */
+function byNote(many: readonly Row[]): Map<string, Anchored[]> {
+  const out = new Map<string, Anchored[]>()
+  for (const row of many) {
+    const path = pathOf(row)
+    const anchor = row.anchor
+    if (path !== null && anchor) out.set(path, [...(out.get(path) ?? []), { row, anchor }])
+  }
+  return out
+}
+
+interface Anchored {
+  row: Row
+  anchor: { line: number; hash: string }
+}
+
+/** Each note of many tasks rewritten by `after`, as one write: one undo. */
+async function rewriteEach(
+  many: readonly Row[],
+  after: (before: string, inNote: Anchored[]) => string,
+  said?: Said,
+): Promise<boolean> {
+  const changes = []
+  for (const [path, inNote] of byNote(many)) {
+    const before = await noteText(workspace, path)
+    if (before === null) continue
+    const edit = oneEdit(before, after(before, inNote))
+    if (edit) changes.push(changeOf(path, before, [edit]))
+  }
+  if (!changes.length) return false
+  await replaced(changes, said)
+  return true
+}
+
+/** Many tasks ticked as one write, from the last of each note up, so a recurring task's
+ *  next occurrence written above one leaves the lines above it where the anchors say. */
+export function tickRows(many: readonly Row[], today = dayOf(new Date())): Promise<boolean> {
+  const opening = many.some((row) => row.task && !row.task.done)
+  return rewriteEach(
+    many,
+    (before, inNote) => {
+      let text = before
+      const upward = [...inNote].sort((a, b) => b.anchor.line - a.anchor.line)
+      for (const { anchor } of upward) {
+        const line = lineOfAnchor(text, anchor)
+        const edits = line === null ? [] : tick(text, line, today)
+        if (edits.length) text = appliedEdits(text, edits)
+      }
+      return text
+    },
+    opening ? 'done' : undefined,
+  )
+}
+
+/** Each of many tasks' lines rewritten by `edit` (edits of the line alone, offsets in
+ *  it), as one write: one undo. */
+function editLines(
+  many: readonly Row[],
+  edit: (line: string) => { from: number; to: number; insert: string }[],
+  said?: Said,
+): Promise<boolean> {
+  return rewriteEach(
+    many,
+    (before, inNote) =>
+      editedLines(
+        before,
+        inNote.map((one) => one.anchor),
+        edit,
+      ),
+    said,
+  )
+}
+
+/** Recurring tasks moved on to their next occurrence without being done: Todoist's
+ *  Skip (Postpone, in its scheduler). */
+export function skipRows(many: readonly Row[], today = dayOf(new Date())): Promise<boolean> {
+  const repeating = many.filter((row) => row.task?.recurrence)
+  return editLines(repeating, (line) => skip(line, today), 'scheduled')
+}
+
+/** Recurring tasks done for good: ticked, the rule taken off, no next occurrence. */
+export function finishRows(many: readonly Row[], today = dayOf(new Date())): Promise<boolean> {
+  const repeating = many.filter((row) => row.task?.recurrence)
+  return editLines(repeating, (line) => finish(line, today), 'done')
+}
+
+/** Many tasks deleted as one write, so one undo brings all of them back: the bulk
+ *  bar's Delete. Each note is cut from its last task up, so the lines above a cut are
+ *  where the anchors say. */
+export function deleteRows(many: readonly Row[]): Promise<boolean> {
+  return rewriteEach(
+    many,
+    (before, inNote) =>
+      outermost(before, inNote).reduce(
+        (text, { anchor }) => withoutBlock(text, anchor) ?? text,
+        before,
+      ),
+    'deleted',
+  )
+}
+
+/** Tasks written again just under themselves, with everything under them: Duplicate. */
+export function duplicateRows(many: readonly Row[]): Promise<boolean> {
+  return rewriteEach(many, (before, inNote) =>
+    outermost(before, inNote).reduce(
+      (text, { anchor }) => duplicatedBlock(text, anchor) ?? text,
+      before,
+    ),
+  )
+}
+
+/** Many tasks moved to the end of one note (`target`, on this disk), each with its
+ *  lines, in the order they stood: the bulk bar's and the row menu's Move to, and `v`.
+ *  The note has to be there. Every note written as one write, so one undo puts all of
+ *  them back. */
+export async function moveRowsTo(many: readonly Row[], target: string): Promise<boolean> {
+  const was = await noteText(workspace, target)
+  if (was === null) return false
+  let there = was
+  const changes = []
+  for (const [path, inNote] of byNote(many)) {
+    if (samePath(path, target)) continue
+    const before = await noteText(workspace, path)
+    if (before === null) continue
+    let rest = before
+    const blocks: string[][] = []
+    for (const { anchor } of outermost(before, inNote)) {
+      const cut = cutBlock(rest, anchor)
+      if (!cut) continue
+      rest = cut.rest
+      blocks.unshift(cut.block)
+    }
+    const leave = oneEdit(before, rest)
+    if (!leave) continue
+    changes.push(changeOf(path, before, [leave]))
+    there = withLines(there, blocks.flat())
+  }
+  const arrive = oneEdit(was, there)
+  if (arrive) changes.push(changeOf(target, was, [arrive]))
+  if (!changes.length) return false
+  await replaced(changes, 'moved')
+  return true
+}
+
+/** The link to a task, Obsidian's block reference: the task's block name, given it the
+ *  first time it is asked for (one edit, `^` and the name at the end of its line), and
+ *  `[[Note#^name]]`, which opens the task here and in Obsidian. Null where the task is
+ *  not in its note any more. */
+export async function linkToRow(row: Row): Promise<string | null> {
+  const anchor = row.anchor
+  const path = pathOf(row)
+  if (!anchor || path === null) return null
+  const note = row.path.replace(/\.md$/i, '')
+  if (row.task?.block) return `[[${note}#^${row.task.block}]]`
+
+  const before = await noteText(workspace, path)
+  if (before === null) return null
+  const id = freeBlockId(new Set(blockIds(before).map((one) => one.id)))
+  const after = changed(before, row, { task: { block: id } })
+  if (after === null) return null
+  const edit = oneEdit(before, after)
+  if (edit) await replaceInNotes(workspace, [changeOf(path, before, [edit])])
+  return `[[${note}#^${id}]]`
+}
+
 /** Tab and Shift+Tab: a sub-task of the task above it, or lifted out a level. */
 export async function indentRow(row: Row, deeper: boolean): Promise<boolean> {
   const anchor = row.anchor
@@ -151,7 +356,7 @@ async function moveRowTo(row: Row, to: { path?: string; heading?: string }): Pro
   if (target === null || samePath(target, from)) {
     if (to.heading === undefined) return false
     const heading = to.heading
-    return rewrite(from, (before) => movedUnder(before, anchor, heading))
+    return rewrite(from, (before) => movedUnder(before, anchor, heading), 'moved')
   }
 
   const [before, there] = await Promise.all([
@@ -168,7 +373,7 @@ async function moveRowTo(row: Row, to: { path?: string; heading?: string }): Pro
   const arrive = oneEdit(there ?? '', after)
   if (leave) changes.push(changeOf(from, before, [leave]))
   if (arrive) changes.push(changeOf(target, there ?? '', [arrive]))
-  await replaceInNotes(workspace, changes)
+  await replaced(changes, 'moved')
   return true
 }
 
@@ -224,5 +429,59 @@ export async function pressRow(row: Row, change: RowChange, task?: string): Prom
     const set = Object.keys(change.note ?? {}).length ? changed(before, row, change) : before
     if (set === null) return null
     return task?.trim() ? withLines(set, [`- [ ] ${task.trim()}`]) : set
+  })
+}
+/** A task's description written as these words, under its line and indented to be its
+ *  own; the task view's editor, a moment after the typing stops. `path` is on this disk. */
+export function describe(
+  path: string,
+  anchor: { line: number; hash: string },
+  words: string,
+): Promise<boolean> {
+  return rewrite(path, (before) => withDescription(before, anchor, words))
+}
+
+/** A sub-task, a whole line already written, at the end of what a task holds. */
+export async function addSubtask(row: Row, line: string): Promise<boolean> {
+  const anchor = row.anchor
+  const path = pathOf(row)
+  if (!anchor || path === null) return false
+  return rewrite(path, (before) => withSubtask(before, anchor, line))
+}
+
+/** A comment written under a task, stamped with this moment: the task view's composer. */
+export async function addComment(row: Row, words: string): Promise<boolean> {
+  const anchor = row.anchor
+  const path = pathOf(row)
+  if (!anchor || path === null) return false
+  const stamp = nowOf(new Date()).slice(0, 16)
+  return rewrite(path, (before) => withComment(before, anchor, words, stamp))
+}
+
+/** A task's comment deleted, the one on that line of its note. */
+export async function deleteComment(row: Row, line: number): Promise<boolean> {
+  const anchor = row.anchor
+  const path = pathOf(row)
+  if (!anchor || path === null) return false
+  return rewrite(path, (before) => withoutComment(before, anchor, line))
+}
+
+/** A task changed the way the field that edits it says: its line and, where the field
+ *  held a description, the words under it, as one edit and so one undo. */
+export async function editTask(
+  row: Row,
+  change: TaskChange,
+  description: string | null,
+): Promise<boolean> {
+  const anchor = row.anchor
+  const path = pathOf(row)
+  if (!anchor || path === null || !row.task) return false
+  const words = change.text ?? row.task.text
+  return rewrite(path, (before) => {
+    const after = changed(before, row, { task: change }) ?? before
+    if (description === null) return after
+    return (
+      withDescription(after, { line: anchor.line, hash: taskHash(words) }, description) ?? after
+    )
   })
 }

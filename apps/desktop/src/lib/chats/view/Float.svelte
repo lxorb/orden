@@ -47,17 +47,9 @@
       : { left: 0, top: 0 },
   )
 
-  $effect(() => (at ? overlays.show(onclose) : undefined))
+  // Closed by Escape, a press past it and the window losing the focus; see overlays.ts.
+  $effect(() => (at ? overlays.show(onclose, () => [layer]) : undefined))
   $effect(() => closeOnBack(!!at, onclose))
-  $effect(() => {
-    if (!at) return
-    const outside = (event: PointerEvent) => {
-      if (event.target instanceof Node && layer?.contains(event.target)) return
-      onclose()
-    }
-    window.addEventListener('pointerdown', outside, true)
-    return () => window.removeEventListener('pointerdown', outside, true)
-  })
 </script>
 
 {#if at}

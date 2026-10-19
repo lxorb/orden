@@ -14,7 +14,7 @@ the same name - the folder-note convention Obsidian's plugins read - and the
 folders somebody else's vault arrived with are still folders. The filesystem is
 the filesystem; only the interface stopped talking about it. `read_tree` and
 `paths.rs` needed no change, and neither did sync, rooms, links, search, publish,
-exports, the glasses or the clipper: all of them go on seeing files in folders.
+exports or the glasses: all of them go on seeing files in folders.
 
 ## One row, and what it does
 
@@ -23,7 +23,7 @@ exports, the glasses or the clipper: all of them go on seeing files in folders.
 | the mark in front | what kind of file the row is: a page with writing on it for a note, two cards for a canvas, a book for a paper, a globe for a website, a plain page for a name nobody has written under yet. There is no folder mark, because no row is a folder; see `file-mark.ts`. Every mark comes off the name, the globe included: a website is a shortcut file, `Svelte docs.url`, which is the format Explorer and every browser write. It used to be a note with `url:` in its front matter, and the row had to ask the link index what the file said; see docs/web-tabs.md |
 | the name | the note's, or the folder's for a row that is a folder - so a row whose note is somebody else's `index.md` is still called after its place |
 | a click | opens what the row is |
-| the twist at the far end | shows what the row holds, and only appears when it holds something |
+| the twist at the far end | shows what the row holds, and only appears when it holds something; a press anywhere in the row's height a step either side of it counts, and opens nothing (#402) |
 | right, left | the twist for a keyboard: `tree.into` and `tree.out`, labelled "Show what it holds" and "Hide what it holds" |
 | Enter, Space | open, the way a click does. Never fold: what a row holds is the arrows' business |
 | a drag onto it | nests what was dragged inside it. A drag to the space under the last row un-nests. In Manual, the thin band at the top or the bottom of the row is the space between rows instead, and a drop there is a new order |
@@ -52,11 +52,25 @@ name is the note, the caret beside it is what it holds. A row that opened on a
 click in one place and folded on a click in another would be two kinds of row
 wearing one design.
 
-## What a bookmark may be
+## What an Essential may be
 
-The row above the list keeps notes, folders, headings, blocks, searches, groups -
+Called Essentials on screen since 2026-10-13, Zen's word, and bookmarks in the code
+and in everything stored, so a list kept before the rename is read as it was.
+
+The Essentials above the list keep notes, folders, headings, blocks, searches, groups -
 and one view of the space's graph. Each says where it points the way a link does,
 relative to the space, so the list travels to every machine signed in.
+
+**A file kept there is not in the list as well** (#345). Emil: *"Anything added to
+Essentials should appear only under Essentials, not in the explorer's file list as
+well."* A note, a canvas, a page note or a website is in one of the two at any time:
+kept, its row leaves the list; let go of, the row is back. Only what is drawn changes -
+`shownTree` leaves it out, so the rows, the arrows and a Shift-click agree, while the
+disk, a search, the links and the quick open still have every file. Asked to show it,
+the list shows the panel its tile is in. Since the list is the account's, every machine
+signed in leaves out the same rows. A folder, a heading or a block kept there leaves the
+list alone: the note they are in, and what the folder holds, are still listed. See
+`unkept` in workspace.svelte.ts.
 
 A graph bookmark points at nothing on disk. It carries a whole set of graph
 settings - the filter, the colour groups, the spread, the arrows, the sizes, how
@@ -72,6 +86,71 @@ A build older than this one draws no row for a kind it has never heard of, and
 writes the list back without it: a graph view made here disappears from a device
 running an older nib rather than arriving broken. See
 `workspace/bookmarks.svelte.ts` and `workspace/graph-settings.svelte.ts`.
+
+### The files among them are tiles
+
+Emil, 2026-10-13: the bookmarks should look like Zen's Essentials, and be called that. Zen and Arc, whose
+Favorites it copies, keep a grid of soft cards at the top of the sidebar, each wearing
+nothing but the site's mark, the one that is open lifted out of the rest. So does nib,
+for what has a face of its own: every file kept at the top of the list - a note, a
+website, a canvas, a PDF - is a tile, and everything that is only words stays a row
+under the grid: a heading, a block, a search, a graph view, a folder, a group and what
+is in it.
+
+- **The face** is the mark the file wears everywhere else, a size up: a website's
+  favicon, the icon a note chose, a canvas's two cards. A note that chose nothing
+  wears its first letter rather than the plain page, because a grid of identical
+  pages is a grid nobody can read without hovering every tile; Chrome's new tab page
+  does the same. The name is the tooltip and what a screen reader says.
+- **The grid** gives a tile at least 48 pixels (64 under a thumb) and shares out the
+  rest, so the default panel holds four, a wide one more, and two tiles are two
+  halves. There is no limit of its own: Zen stops at twelve, which people ask it to
+  lift, so the grid simply wraps and the list's own sixty is the limit.
+- **In place, not in a tab.** Emil, 2026-10-13: *"essentials should not open as
+  tabs"*. A press shows the file where a tab shows and puts nothing in the strip; another
+  tab or tile then takes the pane and the essential stays loaded behind it, and the next
+  press on its tile comes back to it where it was left - following a link inside it
+  stays inside it. Ctrl or the middle button on a tile, or Open in new tab in its menu,
+  opens an ordinary tab. A file already open in a tab of the strip gets a view of its own,
+  sharing the one document, so the tab there stays where it is. In a split, an essential
+  shows in the pane being worked in, and comes back in whichever pane it is already
+  showing in: one essential, one view, as Zen's split view keeps an essential in its
+  half. Taken out of the Essentials while it is open, it goes back to being a tab of the
+  strip, which is what Zen does. A pane whose strip empties stays while it is showing an
+  essential, and one that closes hands its essentials to the pane taking its room. An
+  essential is not written into the session: a restart starts it fresh from its tile.
+  Per space, as the Essentials themselves are - Zen shares its Essentials across a
+  profile's spaces, but a space here is a folder of its own - and a space switched away
+  keeps its essentials loaded with the rest of its tabs. A phone and a tablet hold one
+  document at a time, so there a press shows it in place of what was there. See
+  `essentials.ts`.
+- **The open one** wears the accent's wash, a ring of the accent fading into its
+  quiet line, and a small shadow. Zen draws the ring out of the favicon's colours; the
+  accent is what the open row of every other list says "open" in.
+- **By hand**: a tile dragged among the others lands in front of the one it is let go
+  of over, or after it past its middle; a row of the file list or a tab carried out of
+  the strip is bookmarked where it is let go of over the grid, which keeps an empty
+  place for a tab while there is no tile yet. A tile dragged onto a group goes into it
+  and is a row there; a row out of a group dragged onto the grid comes out and is a
+  tile. The arrows walk the grid by its rows and columns and step off its foot onto
+  the rows under it.
+- **Between the list and the grid, both ways** (#412). A file dragged out of the list
+  onto the grid is kept there, the grid showing an empty place for it while there is no
+  tile yet, and leaves the list; a selection goes together. A tile dragged onto the list
+  lands in the folder it is let go of in - the folder's row or the stretch under the
+  rows lights as a drop there does - which opens to show it, and leaves the grid; let
+  go of in the folder it is already in, it only leaves the grid. Either way is one
+  Ctrl+Z, both halves of it (`keep` in `workspace/undo.svelte.ts`), and Ctrl+Shift+Z
+  does it again. It moves as it goes: the rows slide out of the way and the one that
+  came back fades in where it lands (`arrive` in `tree-lift.ts`), and the tiles scale
+  in and out and slide over; for a reader who asked for less motion, none of it. A tile
+  lands where the folder's order puts it, not between two rows of a Manual order.
+- **The list** is the other way of looking at all of it, for somebody who keeps a lot
+  of notes there and reads them by name: Appearance, File list, Essentials: Grid or
+  List in Settings, kept on this machine. A settings search for the old word,
+  bookmarks, finds it, in English and in the reader's own language. Ctrl+1 to 9 stay the tabs', as they are in every browser but Arc.
+
+See `essentials.ts`, `BookmarkTile.svelte` and `tab-strip/bookmark-drop.ts`.
 
 ## A folder somebody else made
 
@@ -167,10 +246,12 @@ the names still read as one column. See `move-targets.ts`.
 **A delete or a move can be taken back at once.** For six seconds after one, a
 toast under the list says `Deleted` or `Moved` beside `Undo`, the way Gmail and
 Notion do, and stays while the pointer is on it. Deleting or moving a selection is
-one gesture, so Undo takes the whole selection back. It is the same undo as the
-row menu's last row, off the same stack, so an undo from either takes the toast
-away. A folder deleted with what it held is not offered: there is no snapshot of a
-folder to put back. See `undo-toast.svelte.ts`.
+one gesture, so Undo takes the whole selection back. It is the same undo as Ctrl+Z
+and the palette's row, off the same stack, so an undo from any of them takes the
+toast away. A folder deleted with what it held comes back whole: out of this
+device's trash, or, signed in, from the words of its notes, kept as it went (the
+pictures and dotted files beside them are the account's Recently deleted's to give
+back). See `undo-toast.svelte.ts`.
 
 ## Copying something
 
@@ -192,11 +273,17 @@ note stays one: `Trip/` copies to `Trip copy/`, and the note inside is renamed
 `Trip copy.md` to match.
 
 Every copy goes through the one write (`workspace/write-file.ts`), so `[[links]]` to
-it resolve at once, and is one thing to undo however many rows it made. Ctrl+Z with
-the list focused undoes the last file change, Ctrl+Y (Ctrl+Shift+Z, Cmd+Shift+Z on a
-Mac) does it again. A move, a rename, a deletion and a copy can be done again; a
-merge, a split and a replacement kept only the way back, so a redo stops there. See
-`workspace/copying.ts` and `workspace/redoing.ts`.
+it resolve at once, and is one thing to undo however many rows it made. Ctrl+Z
+undoes the last file change and Ctrl+Y (Ctrl+Shift+Z, Cmd+Shift+Z on a Mac) does it
+again, while the list has the keyboard or was the last thing pressed or typed in: a
+row deleted takes the keyboard with it, and a row renamed or made hands it to the
+note in front, which keeps its own undo once somebody presses or types in it (#399;
+`sidebarKey` in `workspace/undo.svelte.ts`). A delete, a move, a rename, a new file
+and a copy can be done again, and a selection, or a delete with the unnesting it
+caused, is one step either way; a merge, a split and a replacement kept only the way
+back, so a redo stops there. Only what was done on this device is on the stack: what
+sync brings in from another is not. See `workspace/copying.ts` and
+`workspace/redoing.ts`.
 
 ## The order it is read in
 

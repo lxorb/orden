@@ -24,7 +24,7 @@ import { agentMarks } from '../agent-marks.svelte'
 import { copyText } from '../clipboard'
 import { plural, t } from '../i18n.svelte'
 import { archiveEntry, DIVIDER, shareEntry, stackEntries, type MenuEntry } from '../menu.svelte'
-import { bookmarkAll } from '../row-menu'
+import { bookmarkAll, webDataEntry } from '../row-menu'
 import { shortcuts } from '../shortcuts.svelte'
 import { shownName } from '../note-name'
 import { nameOf, withinSpace } from '../space-paths'
@@ -41,6 +41,13 @@ import { askPlace } from '../save-place/door'
 import { duplicateTab, moveToOtherPane, renameFromTab } from './ops'
 import { spaceEntry } from './to-space'
 import { chosen, duplicateMany, moveManyToOtherPane, pinMany } from './picking.svelte'
+
+/** Move to space, on a touch screen only (#303). Under a pointer a tab is carried onto
+ *  the space in the switcher, and the palette's Move to space asks which; a held finger
+ *  opens this menu where a pointer would start the carry. */
+function movedToSpace(tabs: readonly Tab[]): MenuEntry[] {
+  return viewport.touch ? spaceEntry(tabs) : []
+}
 
 /** An agent acting in the tab (docs/agent-native.md 7.3, 9.5): Stop stops that agent,
  *  as its row in the activity panel does, and Resume lets it go on. Nothing hands the
@@ -146,6 +153,7 @@ function pageEntries(tab: Tab): MenuEntry[] {
       disabled: url === null,
       run: () => void muting(tab.id),
     },
+    ...(tab.path === null ? [] : webDataEntry({ path: tab.path, is_dir: false })),
     DIVIDER,
   ]
 }
@@ -329,7 +337,7 @@ function pickMenu(tabs: readonly Tab[], paneId: string): MenuEntry[] {
       run: () => pinMany(tabs),
     },
     ...bookmarkAll(paths),
-    ...spaceEntry(tabs),
+    ...movedToSpace(tabs),
     DIVIDER,
     {
       label: t('Close'),
@@ -402,7 +410,7 @@ export function tabMenu(tab: Tab, paneId: string): MenuEntry[] {
     ...shellEntries(tab),
     ...tabEntries(tab),
     ...inListEntry(tab),
-    ...spaceEntry([tab]),
+    ...movedToSpace([tab]),
     // Putting away what the tab shows, which closes it; see archiving.ts.
     ...archiveEntry(tab.path),
     DIVIDER,

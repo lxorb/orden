@@ -8,7 +8,7 @@ import {
   standardBindings,
   tableBindings,
 } from '@nib/editor'
-import { sameCombination } from './keys'
+import { parseCombination, sameCombination } from './keys'
 import { BROWSER_KEYS, SYSTEM_KEYS } from './shortcuts/registry'
 
 /** The store writes to the browser's storage and asks the browser what kind
@@ -46,7 +46,7 @@ await Promise.all([
 ])
 
 /** A keyboard by its name, handed over the way the Settings sheet hands one over. */
-const { presetById } = await import('./shortcuts/presets')
+const { PRESETS, presetById } = await import('./shortcuts/presets')
 const keyboard = (id: string) => {
   const found = presetById(id)
   if (!found) throw new Error(`no keyboard called ${id}`)
@@ -131,6 +131,57 @@ describe('every shortcut there is', () => {
   test('gives every app-level one something to run', () => {
     const idle = registry.SHORTCUTS.filter((one) => one.scope === 'app' && !one.run)
     expect(idle.map((one) => one.id)).toEqual([])
+  })
+
+  /** A Mac's chords are Cmd's. `Mod` is Cmd there, so a key written with `Ctrl` reaches a
+   *  Mac as Control - the key a person from Windows reaches for and a Mac person never
+   *  does - unless the entry says on purpose what a Mac presses instead (Ctrl+Tab and
+   *  Ctrl+[ are the Mac's own, as in Safari). And Option with a letter alone is a
+   *  character on a Mac's keyboard, `å` or `∂`, so it is never a key there either. */
+  test('holds no Windows or Super key on Windows and Linux, by default or in a keyboard', () => {
+    const windowsKey = (key: string | null, platform: 'win' | 'linux') =>
+      key !== null && parseCombination(key, platform)?.meta === true
+    for (const platform of ['win', 'linux'] as const) {
+      const defaults = registry.SHORTCUTS.filter((one) =>
+        windowsKey(defaultKeyFor(one, platform), platform),
+      )
+      expect(
+        defaults.map((one) => one.id),
+        platform,
+      ).toEqual([])
+      const editor = [
+        ...nibBindings,
+        ...standardBindings,
+        ...tableBindings,
+        ...imageBindings,
+      ].filter((one) => windowsKey(defaultKeyFor(one, platform), platform))
+      expect(
+        editor.map((one) => one.id),
+        platform,
+      ).toEqual([])
+      for (const preset of PRESETS) {
+        const held = Object.entries(preset.keys).filter(([, key]) => windowsKey(key, platform))
+        expect(held, `${preset.id} on ${platform}`).toEqual([])
+      }
+    }
+  })
+
+  test('on a Mac, holds Cmd rather than Control unless the entry says what a Mac presses', () => {
+    // Ctrl+Alt+Space on every system, on purpose: see the entry in registry.ts.
+    const everywhere = new Set(['app.quick-add'])
+    const control = registry.SHORTCUTS.filter((one) => {
+      const key = defaultKeyFor(one, 'mac')
+      return key !== null && /(^|-)Ctrl-/.test(key) && one.mac === undefined
+    })
+    expect(control.map((one) => one.id).filter((id) => !everywhere.has(id))).toEqual([])
+
+    // Read off the whole window or the note. The AI field's Option+P and Option+T are
+    // Claude Code's own on a Mac too, and only that field hears them.
+    const typed = registry.SHORTCUTS.filter((one) => {
+      const key = defaultKeyFor(one, 'mac')
+      return one.scope !== 'panel' && key !== null && /^(Alt-)+(Shift-)?[a-z0-9]$/.test(key)
+    })
+    expect(typed.map((one) => `${one.id} ${String(defaultKeyFor(one, 'mac'))}`)).toEqual([])
   })
 
   /** Not a desktop here, and a window of its own is a desktop's alone: the phone's
@@ -256,6 +307,23 @@ describe('choosing a key', () => {
 
     expect(shortcuts.overrides).toEqual({})
     expect(shortcuts.keyFor('app.new')).toBe('Mod-Alt-n')
+  })
+
+  /** The Windows key belongs to the desktop on Windows and Linux: a Hyprland launcher on
+   *  Super+Space was taken by Orden. Recorded or not, it is refused there, and a Mac's
+   *  Cmd is its own modifier and stays. */
+  test('is refused where it holds the Windows key, outside a Mac', () => {
+    const { shortcuts } = registry
+    const on = (platform: string, key: string) => {
+      const one = Object.create(shortcuts) as typeof shortcuts
+      Object.defineProperty(one, 'platform', { value: platform })
+      return one.refuse(key)
+    }
+    for (const platform of ['win', 'linux']) {
+      expect(on(platform, 'Meta-Space'), platform).not.toBeNull()
+      expect(on(platform, 'Ctrl-Meta-k'), platform).not.toBeNull()
+    }
+    expect(on('mac', 'Meta-k')).toBeNull()
   })
 
   test('is refused where it would fire while typing', () => {
@@ -1354,5 +1422,24 @@ describe('off a Mac', () => {
     expect(shortcuts.hint('tree.delete')).toBe('Del')
     expect(shortcuts.pressed('tree.delete.alt', press('Backspace'))).toBe(true)
     expect(appCommands().find((one) => one.id === 'focus')?.hint).toBe('F8')
+  })
+})
+
+describe('a view’s keys', () => {
+  /** Put in with the first view rather than the first paint (views/task-keys.ts), and
+   *  held to everything the rest of the list is held to once they are in. */
+  test('join the list when a view is drawn, named, grouped and on ids of their own', async () => {
+    expect(registry.SHORTCUTS.some((one) => one.id === 'tasks.complete')).toBe(false)
+    await import('./views/task-keys')
+    const ids = registry.SHORTCUTS.map((one) => one.id)
+    expect(new Set(ids).size).toBe(ids.length)
+    const groups = new Set(registry.CATEGORIES.map((one) => one.id))
+    const tasks = registry.SHORTCUTS.filter((one) => one.id.startsWith('tasks.'))
+    expect(tasks.length).toBeGreaterThan(20)
+    for (const one of tasks) {
+      expect(groups.has(one.category), one.id).toBe(true)
+      expect(one.label(), one.id).not.toBe(one.id)
+    }
+    expect(registry.shortcuts.keyFor('tasks.complete')).toBe('e')
   })
 })

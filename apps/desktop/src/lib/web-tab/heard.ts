@@ -2,7 +2,8 @@
  *
  *  Four things, each of them something a browser shows without being asked: the page is
  *  playing sound, or is muted; something in it holds the whole screen; it was zoomed
- *  inside the page; and how many matches a find found and which one is lit. The crate
+ *  inside the page; and how many matches a find found and which one is lit. And how a
+ *  page arrived, which settles an address the bar gave `https:` to; see upgrade.ts. The crate
  *  says them (see web_page.rs and web_find.rs); this reads them, because an event is a
  *  boundary like any other, and puts them where the tab strip, the bar and the find bar
  *  read them. And what the page asks: its find or its address field, when its own keys
@@ -21,13 +22,17 @@ import type { Page } from './pages.svelte'
 import { siteOf } from './permissions.svelte'
 import { answer, readAsk } from './passed.svelte'
 import { isMuted, keepZoom } from './sites'
+import { settled, type Failure } from './upgrade'
 
 /** What the crate said about one tab's page. */
 export type Said = { tab: string } & (
   | { said: 'sound'; playing: boolean; muted: boolean }
   | { said: 'fill'; on: boolean }
   | { said: 'zoom'; factor: number }
+  | { said: 'arrived'; url: string; failure: Failure | null }
 )
+
+const FAILURES: readonly string[] = ['unreachable', 'certificate', 'other'] satisfies Failure[]
 
 /** How many matches a find has and which is lit, from nought, or -1 for none. */
 export interface Found {
@@ -47,6 +52,10 @@ export function readSaid(value: unknown): Said | null {
   if (said === 'zoom' && typeof value.factor === 'number' && value.factor > 0) {
     return { tab, said, factor: value.factor }
   }
+  if (said === 'arrived' && typeof value.url === 'string') {
+    const failure = FAILURES.includes(value.failure as string) ? (value.failure as Failure) : null
+    return { tab, said, url: value.url, failure }
+  }
   return null
 }
 
@@ -58,7 +67,10 @@ export function readFound(value: unknown): Found | null {
   return { tab, count: Math.max(0, count), at: count > 0 && at >= 0 ? at : -1 }
 }
 
-export function heard(page: Page, said: Said): void {
+/** Where a page that did not arrive is sent instead: the tab and the address. */
+export type Go = (tab: string, url: string) => void
+
+export function heard(page: Page, said: Said, go?: Go): void {
   switch (said.said) {
     case 'sound': {
       // When it fell quiet, which a page out of sight is not frozen for a while after;
@@ -80,6 +92,17 @@ export function heard(page: Page, said: Said): void {
       page.zoom = said.factor
       keepZoom(siteOf(page.url), said.factor)
       return
+    case 'arrived': {
+      // The https the bar chose for a host typed without a scheme, and nothing answered
+      // there: plain http, as Chrome goes. See upgrade.ts.
+      const upgrade = page.upgrade
+      if (!upgrade) return
+      const now = settled(upgrade, said.url, said.failure)
+      if (now === 'unrelated') return
+      page.upgrade = null
+      if (now === 'fallback') go?.(said.tab, upgrade.fallback)
+      return
+    }
   }
 }
 
@@ -88,17 +111,18 @@ export function found(page: Page, said: Found): void {
   page.find.at = said.at
 }
 
-/** The three events, heard for every page in the window: `page` is the tab's state, or
+/** The events, heard for every page in the window: `page` is the tab's state, or
  *  nothing for a tab that has gone. Started with the first page; see `listen` in
  *  pages.svelte.ts. */
 export async function listening(
   listen: typeof Listen,
   page: (tab: string) => Page | undefined,
+  go: Go,
 ): Promise<void> {
   await listen('nib://web-page', (event) => {
     const said = readSaid(event.payload)
     const one = said && page(said.tab)
-    if (one) heard(one, said)
+    if (one) heard(one, said, go)
   })
   await listen('nib://web-found', (event) => {
     const said = readFound(event.payload)

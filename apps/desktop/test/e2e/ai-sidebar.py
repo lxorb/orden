@@ -18,7 +18,7 @@ What it proves, in order (docs/ai-sidebar.md 4 and 6.2, lane 4):
 - Ctrl+Shift+A pressed again in the field shows the thread list, which searches, opens
   with Enter, and archives with Delete;
 - the ring's tray lists the bands;
-- and the whole of it in one thread: Approve answers, Agent mode edits a note as the
+- and the whole of it in one thread: Approve answers, Auto mode edits a note as the
   provider's agent while its answer runs, the changes bar keeps one edit and undoes the
   other, the clock on a message rewinds notes and conversation to before it, and Up
   on the empty field sends an edited message again, which leaves arrows between the
@@ -192,6 +192,14 @@ def waited(page: Page, expression: str, what: str, patience: float = 30) -> bool
     return DRIVE.waited(page, expression, what, patience)
 
 
+def keyboard_in_the_list(page: Page) -> bool:
+    """Until the thread list's field has the keyboard. It takes it a frame after the
+    list is drawn (Threads.svelte), so a key pressed the moment the list is there went
+    to the composer instead, now and then on a busy machine: the search typed nowhere,
+    and a Delete archived nothing."""
+    return waited(page, "document.activeElement?.closest('.ask .threads')", "the list's field to take the keyboard")
+
+
 def idle(page: Page) -> bool:
     return waited(page, "!document.querySelector('.ask .go[aria-label=\"Stop\"]')", "the answer to end")
 
@@ -252,7 +260,7 @@ def drive(browser: Browser, scheme: str) -> None:
     # The thinking row opens to what the provider said of it.
     page.locator(".ask .row .line").first.click()
     page.wait_for_timeout(250)
-    if "at the note" not in page.locator(".ask .row .detail").first.inner_text():
+    if "at the note" not in (page.locator(".ask .row .detail").first.text_content() or ""):
         wrong("the thinking row does not open to the summary")
 
     # Escape stops an answer; what arrived stays.
@@ -343,10 +351,46 @@ def drive(browser: Browser, scheme: str) -> None:
     page.locator(FIELD).click()
     page.keyboard.press("Shift+Tab")
     page.wait_for_timeout(150)
-    if page.locator(".ask .controls .mode").text_content().strip() != "Agent":
-        wrong("Shift+Tab did not step Approve to Agent")
+    if page.locator(".ask .controls .mode").text_content().strip() != "Auto":
+        wrong("Shift+Tab did not step Approve to Auto")
     page.keyboard.press("Shift+Tab")
+    if page.locator(".ask .controls .mode").text_content().strip() != "Plan":
+        wrong("Shift+Tab did not step Auto to Plan")
     page.keyboard.press("Shift+Tab")
+    if page.locator(".ask .controls .mode").text_content().strip() != "Approve":
+        wrong("Shift+Tab went into Full permissions instead of back to Approve")
+
+    # The mode's own menu: the three permission modes and Plan, Full permissions a row like
+    # the others, and choosing it says so in the button's tooltip and never in red (#372).
+    page.locator(".ask .controls .mode").click()
+    waited(page, "document.querySelector('.menu [role=menuitem]')", "the mode menu")
+    rows = page.locator(".menu [role=menuitem]").all_inner_texts()
+    say(f"[modes] {rows}")
+    if [one.replace("✓", "").strip() for one in rows] != ["Approve", "Auto", "Full permissions", "Plan"]:
+        wrong(f"the mode menu is not Approve, Auto, Full permissions and Plan: {rows}")
+    page.wait_for_timeout(300)
+    shot(page, f"{tag}04b-modes")
+    page.locator(".menu [role=menuitem]", has_text="Full permissions").click()
+    full = "document.querySelector('.ask .controls .mode')?.title.startsWith('Full permissions')"
+    waited(page, full, "Full permissions on the button")
+    red = page.evaluate(
+        """() => {
+          const mode = document.querySelector('.ask .controls .mode')
+          const probe = document.createElement('span')
+          probe.style.color = 'var(--danger)'
+          mode.parentElement.append(probe)
+          const danger = getComputedStyle(probe).color
+          probe.remove()
+          return getComputedStyle(mode).color === danger
+        }"""
+    )
+    if red:
+        wrong("Full permissions is drawn in the danger tone")
+    page.wait_for_timeout(300)
+    shot(page, f"{tag}04c-full")
+    page.locator(".ask .controls .mode").click()
+    page.locator(".menu [role=menuitem]", has_text="Approve").click()
+    waited(page, f"!({full})", "Approve again")
 
     # The ring's tray.
     page.locator(".ask .knob").click()
@@ -418,6 +462,7 @@ def drive(browser: Browser, scheme: str) -> None:
     page.locator(FIELD).click()
     page.keyboard.press("Control+Shift+A")
     waited(page, "document.querySelectorAll('.ask .threads .row').length === 2", "two threads")
+    keyboard_in_the_list(page)
     page.keyboard.type("heron")
     page.wait_for_timeout(200)
     found = page.locator(".ask .threads .row .title").all_inner_texts()
@@ -428,6 +473,7 @@ def drive(browser: Browser, scheme: str) -> None:
     page.locator(FIELD).click()
     page.keyboard.press("Control+Shift+A")
     waited(page, "document.querySelector('.ask .threads')", "the thread list again")
+    keyboard_in_the_list(page)
     page.keyboard.press("Delete")
     waited(page, "document.querySelector('.ask .threads .group.archived')", "the archived group")
     shot(page, f"{tag}11-archived")
@@ -458,11 +504,11 @@ def flow(browser: Browser) -> None:
     waited(page, "document.querySelector('.ask .answer a[href=\"#cite-1\"]')", "a cited answer")
     idle(page)
 
-    # Agent mode, and two edits made as the provider's agent while the answer runs.
+    # Auto mode, and two edits made as the provider's agent while the answer runs.
     page.locator(FIELD).click()
     page.keyboard.press("Shift+Tab")
-    if page.locator(".ask .controls .mode").text_content().strip() != "Agent":
-        wrong("Shift+Tab did not reach Agent")
+    if page.locator(".ask .controls .mode").text_content().strip() != "Auto":
+        wrong("Shift+Tab did not reach Auto")
     Model.words = [f"done{one} " for one in range(25)]
     Model.pause = 0.08
     type_and_send(page, "Shout the heron's verbs")
@@ -649,18 +695,18 @@ def shape(browser: Browser, scheme: str) -> None:
     for row in ("Add photos and files", "Web search", "Mention", "Commands"):
         if row not in rows:
             wrong(f"the + menu has no {row!r}: {rows}")
-    if any(mode in rows for mode in ("Approve", "Agent", "Plan")):
+    if any(mode in rows for mode in ("Approve", "Auto", "Full permissions", "Plan")):
         wrong(f"the + menu still holds the modes: {rows}")
     page.keyboard.press("Escape")
     page.locator(".ask .controls .mode").click()
-    waited(page, "document.querySelectorAll('.menu [role=menuitem]').length === 3", "the modes")
+    waited(page, "document.querySelectorAll('.menu [role=menuitem]').length === 4", "the modes")
     shot(page, f"{tag}03-modes")
     menu_row(page, "Plan").click()
     page.wait_for_timeout(200)
     if page.locator(".ask .controls .mode").text_content().strip() != "Plan":
         wrong("a mode picked from its menu is not the one it says")
     page.locator(".ask .controls .mode").click()
-    menu_row(page, "Agent").click()
+    menu_row(page, "Auto").click()
 
     # Ask again, with another model from its menu.
     Model.thoughts = []
@@ -698,12 +744,14 @@ def shape(browser: Browser, scheme: str) -> None:
     shot(page, f"{tag}04-worked-side")
     page.locator(".ask .answer.last .worked .line").click()
     waited(page, "document.querySelector('.ask .answer.last .work')", "the steps")
-    verbs = page.locator(".ask .answer.last .work .verb").all_inner_texts()
+    # Read as text rather than as what is drawn: WebKit draws nothing of a row while it
+    # is still sliding open, and innerText is only what is drawn.
+    verbs = page.locator(".ask .answer.last .work .verb").all_text_contents()
     if verbs != ["Thought", "Explored", "Ran", "Edited"]:
         wrong(f"the steps are not Codex's rows: {verbs}")
     page.locator(".ask .answer.last .work .line", has_text="Ran").click()
     waited(page, "document.querySelector('.ask .work .detail.said')", "the command's output")
-    said = page.locator(".ask .work .detail.said").inner_text()
+    said = page.locator(".ask .work .detail.said").text_content() or ""
     if "$ wc -w Herons.md" not in said or "19 Herons.md" not in said:
         wrong(f"a command does not open to its output: {said!r}")
     page.locator(".ask .card .bar .what").click()

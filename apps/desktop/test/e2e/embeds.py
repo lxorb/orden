@@ -25,6 +25,7 @@ import json
 
 from playwright.sync_api import Browser, Page
 
+import harness
 from harness import Drive
 
 DRIVE = Drive(__file__)
@@ -162,6 +163,14 @@ def fresh(browser: Browser, finger: bool) -> Page:
             else {}
         ),
     )
+    # The provider's player is not under test, only the frame the card puts it in. And
+    # WebKit hands the errors its scripts throw in their own frame to the page, as the
+    # page's (#384), so there it is a page of nothing.
+    if harness.WEBKIT:
+        context.route(
+            "https://www.youtube-nocookie.com/**",
+            lambda route: route.fulfill(content_type="text/html", body="<!doctype html><title>Player</title>"),
+        )
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page)
@@ -260,7 +269,9 @@ def drive(browser: Browser) -> None:
     else:
         if "youtube-nocookie.com/embed/dQw4w9WgXcQ" not in (frame["src"] or ""):
             wrong(f"the frame points at {frame['src']}")
-        if frame["sandbox"] != "allow-scripts allow-same-origin allow-presentation":
+        # WebKit has no Presentation API, and is not asked for its flag; see web-frame.ts.
+        asked = "allow-scripts allow-same-origin" + ("" if harness.WEBKIT else " allow-presentation")
+        if frame["sandbox"] != asked:
             wrong(f"the frame's sandbox is {frame['sandbox']!r}")
         if frame["referrer"] != "origin":
             wrong(f"the frame tells the provider more than the origin: {frame['referrer']!r}")

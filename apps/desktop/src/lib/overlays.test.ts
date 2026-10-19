@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { describe, expect, test } from 'vitest'
+import { afterEach, describe, expect, test, vi } from 'vitest'
 import { overlays } from './overlays'
 
 /** One overlay: whether it is open, and how it is closed. */
@@ -139,6 +139,169 @@ describe('escape', () => {
   })
 })
 
+/** A popup closes when it is pressed past, and when the window loses the focus - which
+ *  is also how a press into a web page is heard (#382). */
+describe('a press past a popup', () => {
+  /** Enough of a DOM for `contains`: a node, and the nodes inside it. */
+  class Box {
+    readonly inside: Box[] = []
+    constructor(readonly parent: Box | null = null) {
+      parent?.inside.push(this)
+    }
+    contains(other: unknown): boolean {
+      for (let at = other; at instanceof Box; at = at.parent) if (at === this) return true
+      return false
+    }
+  }
+
+  vi.stubGlobal('Node', Box)
+
+  /** A popup on the stack: itself, the button that opened it, and whether it is open. */
+  function popup(opener = new Box()) {
+    const box = new Box()
+    const it = { open: true, box, opener }
+    const off = overlays.show(
+      () => (it.open = false),
+      () => [box, opener],
+    )
+    return { it, off }
+  }
+
+  const press = (target: unknown) => ({ target: target as EventTarget })
+
+  afterEach(() => {
+    while (overlays.escape()) {
+      // Whatever a test left open.
+    }
+  })
+
+  test('closes on a press anywhere else', () => {
+    const { it } = popup()
+    overlays.pressed(press(new Box()))
+
+    expect(it.open).toBe(false)
+    expect(overlays.depth).toBe(0)
+  })
+
+  test('stays open for a press inside it, and on the button that opened it', () => {
+    const { it, off } = popup()
+    overlays.pressed(press(new Box(it.box)))
+    overlays.pressed(press(it.opener))
+
+    expect(it.open).toBe(true)
+    off()
+  })
+
+  /** The press that opens one is read on its way down, before anything under it has
+   *  opened anything; the popup is on the stack only after. */
+  test('is not closed by the press that opened it', () => {
+    const opener = new Box()
+    overlays.pressed(press(opener))
+    const { it, off } = popup(opener)
+
+    expect(it.open).toBe(true)
+    off()
+  })
+
+  /** A press that waited behind a long task carries a time from before the popup
+   *  opened, and is still a press past it. */
+  test('is closed by a press however long it waited to be read', () => {
+    const { it } = popup()
+    const queued = { target: new Box() as unknown as EventTarget, timeStamp: 0 }
+    overlays.pressed(queued)
+
+    expect(it.open).toBe(false)
+  })
+
+  test('a press in a submenu leaves both open, and one past both closes both', () => {
+    const parent = popup()
+    const child = popup(new Box(parent.it.box))
+
+    overlays.pressed(press(new Box(child.it.box)))
+    expect([parent.it.open, child.it.open]).toEqual([true, true])
+
+    // On the parent, past the submenu: the submenu goes and the parent stays.
+    overlays.pressed(press(new Box(parent.it.box)))
+    expect([parent.it.open, child.it.open]).toEqual([true, false])
+
+    overlays.pressed(press(new Box()))
+    expect(parent.it.open).toBe(false)
+  })
+
+  test('a sheet is closed by its own scrim, and keeps what is under it', () => {
+    const under = popup()
+    const off = overlays.show(() => undefined)
+
+    overlays.pressed(press(new Box()))
+    expect(under.it.open).toBe(true)
+    expect(overlays.depth).toBe(2)
+    off()
+  })
+
+  /** #411: a popup that lays a catch over the window is closed on the tap's way down,
+   *  and the click that tap goes on to make lands on whatever is under the finger once
+   *  the catch is gone - on a phone, the button that opened it. */
+  describe('and the click of the press that closed it', () => {
+    const click = (target: unknown) => {
+      const said = { target: target as EventTarget, spent: false }
+      return {
+        ...said,
+        get spent() {
+          return said.spent
+        },
+        preventDefault: () => (said.spent = true),
+        stopImmediatePropagation: () => (said.spent = true),
+      }
+    }
+
+    test('is spent on the button that opened it, so it does not open it again', () => {
+      const { it } = popup()
+      overlays.pressed(press(new Box()))
+      const landed = click(it.opener)
+      overlays.clicked(landed)
+
+      expect(it.open).toBe(false)
+      expect(landed.spent).toBe(true)
+    })
+
+    test('is left alone anywhere else, and so is the next press s click', () => {
+      const { it } = popup()
+      overlays.pressed(press(new Box()))
+      const elsewhere = click(new Box())
+      overlays.clicked(elsewhere)
+      expect(elsewhere.spent).toBe(false)
+
+      // The press after, on the button: its own, which opens it again.
+      overlays.pressed(press(it.opener))
+      const again = click(it.opener)
+      overlays.clicked(again)
+      expect(again.spent).toBe(false)
+    })
+
+    test('a press on the button itself closes nothing and spends nothing', () => {
+      const { it, off } = popup()
+      overlays.pressed(press(it.opener))
+      const own = click(it.opener)
+      overlays.clicked(own)
+
+      expect(it.open).toBe(true)
+      expect(own.spent).toBe(false)
+      off()
+    })
+  })
+
+  test('the window losing the focus closes every popup on top, and no sheet', () => {
+    const offSheet = overlays.show(() => undefined)
+    const one = popup()
+    const two = popup(new Box(one.it.box))
+
+    overlays.away()
+    expect([one.it.open, two.it.open]).toEqual([false, false])
+    expect(overlays.depth).toBe(1)
+    offSheet()
+  })
+})
+
 /** The second question the stack answers: whether a web page has to be out of sight.
  *
  *  A web tab's page is a native webview, which draws above every pixel of HTML in the
@@ -158,8 +321,10 @@ describe('what hides a web page', () => {
     'App.svelte': 'a panel slid over the note as a drawer',
     'lib/AppMenuPanel.svelte': 'menu',
     'lib/CanvasBar.svelte': 'dropdown',
+    'lib/CanvasPicked.svelte': "the colours of what is picked, over the plane's own bar",
     'lib/ContextMenu.svelte': 'menu',
     'lib/GraphControls.svelte': 'dropdown',
+    'lib/GuestCorner.svelte': "a guest's name and Sign in, under their corner",
     'lib/History.svelte': 'sheet',
     'lib/IconPicker.svelte': 'sheet',
     'lib/Palette.svelte': 'dialog',
@@ -174,6 +339,8 @@ describe('what hides a web page', () => {
     'lib/SpaceSwitcher.svelte': 'menu',
     'lib/ThemeStore.svelte': 'sheet',
     'lib/agents/ui/PairingBubble.svelte': 'a program asking to become an agent, under the bar',
+    'lib/ai/sidebar/Composer.svelte': "the AI's model or context, over its composer",
+    'lib/ai/vault/VaultApprove.svelte': 'another of your devices asking for your AI accounts',
     'lib/chats/view/Float.svelte': "a chat's small layer: the emoji picker, the pins, the members",
     'lib/chats/view/Lightbox.svelte': "a message's pictures, one at a time, over everything",
     'lib/people/ProfileCard.svelte': "a person's card, beside the face that was pressed",
@@ -183,10 +350,13 @@ describe('what hides a web page', () => {
     // Only while it would hang over a page, and gone the moment the pointer leaves.
     'lib/tab-strip/hover-card.svelte.ts': 'the card under a tab the pointer rests on',
     'lib/save-place/SavePlace.svelte': 'where a tab with no file is saved, under the tab',
+    'lib/settings/BrowserThemes.svelte': 'sheet',
     'lib/theme-picker/ThemePicker.svelte': 'the theme picker, over the switch or the note',
     'lib/views/Popover.svelte': 'the filter, sort or group of a view, under its button',
+    'lib/views/ToneDot.svelte': "a tone's colours, beside its dot",
+    'lib/views/schedule/SchedulePicker.svelte': "a task's scheduler, beside what asked for it",
+    'lib/views/task-view/TaskSheet.svelte': "a task's own view, over the window",
     'lib/web-tab/AddressField.svelte': 'the suggestions under the address',
-    'lib/web-tab/WebApprove.svelte': 'another computer asking for the web logins, under the bar',
     'lib/web-tab/WebAsk.svelte': "a site's question, under the bar",
     'lib/web-tab/WebDialog.svelte': "a page's own dialog, at the top of the page",
     'lib/web-tab/WebDownloads.svelte': 'bubble',
@@ -198,6 +368,7 @@ describe('what hides a web page', () => {
   /** What stays up without being asked for, and so may never hide a page. */
   const FURNITURE = [
     'lib/UpdateNotice.svelte',
+    'lib/RenameNotice.svelte',
     'lib/StorageWarning.svelte',
     'lib/RecordingPill.svelte',
   ]
@@ -233,7 +404,13 @@ describe('what hides a web page', () => {
     const end = row.indexOf('{/snippet}')
 
     expect(end).toBeGreaterThan(0)
-    for (const name of ['StorageWarning', 'RecordingPill', 'UpdateNotice', 'UndoToast']) {
+    for (const name of [
+      'StorageWarning',
+      'RecordingPill',
+      'UpdateNotice',
+      'RenameNotice',
+      'UndoToast',
+    ]) {
       expect(row.slice(0, end), name).toContain(`<${name}`)
       expect(app.split(`<${name}`).length - 1, name).toBe(1)
     }
@@ -245,7 +422,7 @@ describe('what hides a web page', () => {
    *  hidden; see web-tab/covers.ts. */
   test('the row floats over the panes rather than taking room from them', () => {
     const app = read('App.svelte')
-    const panes = app.slice(app.indexOf('<div class="panes" data-panes>'))
+    const panes = app.slice(app.indexOf('<div class="panes" data-panes'))
     const inPanes = panes.slice(0, panes.indexOf('\n        </div>'))
     expect(inPanes).toContain('{#if !viewport.drawer}\n            {@render notices()}')
 

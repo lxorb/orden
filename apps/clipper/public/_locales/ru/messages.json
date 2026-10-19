@@ -1,9 +1,0 @@
-{
-  "name": { "message": "nibeditor" },
-  "description": {
-    "message": "Вырезайте страницу, выделение или ссылку в свои заметки nibeditor."
-  },
-  "clipPage": { "message": "Вырезать страницу" },
-  "clipSelection": { "message": "Вырезать выделение" },
-  "clipLink": { "message": "Вырезать ссылку" }
-}

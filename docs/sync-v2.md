@@ -5,6 +5,14 @@ devices for the next several years, and it ends in a plan that eight agents can 
 parallel. `docs/sync.md` and `docs/collaboration.md` describe what ships today; this is
 what replaces the parts of them that hand people conflict files.
 
+**Web logins no longer travel (#393, 2026-10-17).** They were built - the lease, the
+sealed bundle, the web key and its pairing - and switched on for no account, and then
+taken out: Google binds its sessions to the device they were made on (DBSC, with IP and
+browser checks besides), so a Google login carried to another computer stopped working
+there within minutes, and that is most of what anybody would carry. Each computer keeps
+its own web logins, as a browser does. What this document says about them is kept as the
+design it was, marked where it stands; section 6 says what went and what stayed.
+
 Emil, 2026-09-30:
 
 > I want to rework the entire syncing backend of our application. Our goal with the
@@ -50,6 +58,8 @@ Emil, 2026-09-30:
 7. **Pokes instead of polling.** One hibernating socket per device to a per-account Durable
    Object; a change reaches the other devices in about a second, and an idle socket costs
    nothing.
+*Items 8 to 10 were removed (#393); see section 6.*
+
 8. **A web login is a lease.** What is locked is the site's session in its web store (a
    Gmail note and a Calendar note share one Google login, so they lock together). A device
    holds it while it is in use, beats every 10 s, and loses it 30 s after it stops beating
@@ -272,7 +282,7 @@ protected by DPAPI on Windows (app-bound since Chrome 127) and by the Keychain o
 ([app-bound][appbound], [DPAPI][dpapi]).
 
 **What an engine will hand out.** The DevTools Protocol, which WebView2 exposes through
-`CallDevToolsProtocolMethod` and CEF through `ExecuteDevToolsMethod`, can read and write
+`CallDevToolsProtocolMethod`, can read and write
 cookies with their partition key (`Storage.getCookies`, `Storage.setCookies`) and
 localStorage (`DOMStorage.setDOMStorageItem`), but can only **read** IndexedDB and Cache
 Storage (`IndexedDB.requestData`, `CacheStorage.requestEntries`; there is no put)
@@ -398,6 +408,9 @@ lifetime. (One row in every catalogue.)
 
 ### Web notes
 
+**Removed (#393).** A web note's login is the computer's own now, and none of the cases below
+happen: every site runs here on this computer's state. Kept as the design was.
+
 | case | what happens | on screen |
 | --- | --- | --- |
 | open a site nobody else is using | the lease is taken silently, the latest state is already here (prefetched) or restored first | the page |
@@ -433,9 +446,11 @@ top right, the shape the site-permission bubble uses:
 ```
 
 and on the new computer, where the pages are, a quiet line in the web tab's bar area:
-`Waiting for Laptop  482 913`. The six digits are derived from the new computer's public
-key; they must match on both screens. (Three rows: `{device} wants your web logins`,
-`Waiting for {device}`, and the existing `Don't allow` / `Allow`.)
+`Waiting for Laptop  482 913`. The six digits come out of both computers' keys and a nonce
+from each, once the other computer has answered (6.6); they must match on both screens. (Three rows: `{device} wants your web logins`,
+`Waiting for {device}`, and the existing `Don't allow` / `Allow`.) Once allowed, the same
+line says `Laptop offers this computer your web logins [ Join ]`, and the key is taken on
+Join (6.6).
 
 ---
 
@@ -803,8 +818,8 @@ Every device keeps one socket to its account's hub (section 6.2). After any writ
 a space's cursor (a push, a settle, a tree op, a blob list), the Worker tells the hub of every
 account that can reach the space (the owner, members, guests: one query) and the hubs poke
 their devices: `{space, seq}`. A poked device runs a pass for that space at once. Polling
-stays as the fallback at a fixed 5 minutes, and a device whose hub socket is down polls at
-today's cadence.
+stays as the fallback every 30 seconds while the window is visible (every 5 minutes while
+hidden), and a device whose hub socket is down polls at today's cadence.
 
 ### 5.13 In the autosave-only world
 
@@ -821,13 +836,56 @@ today's cadence.
   note (`sync.svelte.ts` `refresh` goes). Ctrl+S is a flush, and v2 makes it a push as well.
 - Web tabs are ephemeral until kept. The lease is about the site session (section 6.1), so
   an ephemeral tab on a site is covered exactly like a web note, and keeping it as a `.url`
-  changes nothing about the lease - unless it is kept into a space whose store is another,
-  when the page is built again in that store and the lease follows it, asked the one way a
-  page's store is (`web-tab/rehome.ts`).
+  changes nothing about the lease. (Since #239 every page shares one store and no space
+  keeps its own; see docs/web-tabs.md, "Where a page keeps its web data".)
 
 ---
 
 ## 6. Web notes: the architecture
+
+**Removed (#393).** Web logins that travelled between computers were built from this section,
+switched on for no account (`users.web_sync`, section 11), and taken out on 2026-10-17.
+
+**Why.** Google binds its sessions to the device they were made on: Device Bound Session
+Credentials, with IP and browser checks besides (6.4 already said a DBSC-bound session
+"cannot refresh anywhere but where they were made"). A copied Google login stopped working
+on the other computer within minutes, and the Google login - mail, calendar, documents - is
+most of what a person would want to carry. What was left was a large, delicate piece of
+machinery for the sites that do not bind their sessions, so it went.
+
+**What went.**
+
+- On the desktop: the capture and restore of a site's state into a sealed bundle, the
+  device key and the web key in the keychain, the leases and the lock surface with
+  **Use here**, the pairing of a new computer by six digits and its **Join**, the hand-back
+  as a window closes, the agents' `in_use_elsewhere`, and the commands behind them
+  (`web_state_*` but `web_merge`, `web_key_*`, `web_lease_elsewhere`).
+- On the service: the hub's lease and web key frames (only `hello`, `active` and `idle`
+  are read from a device now; anything else is dropped, so an older app's lease or key
+  frame is answered with nothing), the `/v2/web` routes, `PUT /v2/spaces/:id/web-store`,
+  `webSync` in `/v1/me` and `webKey` in `/v2/devices`, their rate limits and the mail.
+
+**What stayed.**
+
+- Every web store on this computer, as before: the shared one, a web note's own and private
+  pages (`web_stores.rs`), and the session cookies made to last (`web_cookies.rs`).
+- The merge of the stores a space kept into the shared one (#239,
+  `src-tauri/src/web_state/merge.rs`), which moves cookies and storage between two stores on
+  one computer through the same per-engine parts 6.4 describes: the cookie stores, the
+  isolated worlds and the hidden page. That is all `src-tauri/src/web_state/` is now.
+- The shared pairing module (`lib/pairing.ts`, `services/sync/src/pairing.ts`): the AI
+  vault pairs a device the way 6.6 describes, and keeps it.
+- Whether somebody is at a computer (`people/here.ts`, `presence.rs`), which the faces in
+  chats show.
+- **Data, for a later clean-up.** The tables and columns stay as they are, unread and
+  unwritten: `users.web_sync`, `devices.public_key`, `web_states`, `web_chunks`,
+  `web_keys`, `spaces.web_store` (D1), and `web` in a device's sync store (9.2). So do
+  any `web/<user>/` objects in R2, which deleting an account still empties, a web key in a
+  computer's keychain, and the bundle folders under the app's data. A migration that drops
+  them is a separate change.
+
+The rest of this section is the design as it was built, kept for the record and because
+the vault's pairing (6.6) and the merge's engine parts (6.4) still follow it.
 
 ### 6.1 What is locked: a site session
 
@@ -948,8 +1006,8 @@ continues where it left off. Each row, and whether it travels:
 | the HTTP cache | yes | no | a cache |
 | Origin Private File System | yes | no, for now | rare; the same page-script route can add it |
 | WebSQL | removed from Chromium | no | |
-| passwords and autofill | Chrome syncs these | no | Chromium's own under CEF, a separate decision |
-| extensions' own storage | no (Chrome syncs it through Google) | no | `browser.md` already says so |
+| passwords and autofill | Chrome syncs these | no | a separate decision |
+| extensions' own storage | no (Chrome syncs it through Google) | no | |
 
 ### 6.4 How, per engine
 
@@ -958,14 +1016,14 @@ user (DPAPI or app-bound on Windows, the Keychain on a Mac), and origin storage 
 engine- and version-specific. So everything moves through APIs into a neutral bundle, which
 also makes it portable between a Windows WebView2 and a Mac WebKit.
 
-| | WebView2 (Windows today) | WKWebView (macOS) | WebKitGTK (Linux) | CEF (the planned engine) |
-| --- | --- | --- | --- | --- |
-| cookies out | `Storage.getCookies` over `CallDevToolsProtocolMethod` (has `partitionKey`), filtered to the site | `WKHTTPCookieStore.getAllCookies` | `webkit_cookie_manager_get_all_cookies` (2.42+) | `Storage.getCookies` over `ExecuteDevToolsMethod`, or `CefCookieManager::VisitAllCookies` |
-| cookies in | `Storage.setCookies` after `Storage.clearCookies` for the site's domains | `setCookie`, `deleteCookie` | `webkit_cookie_manager_replace_cookies` for the site | `Storage.setCookies` |
-| localStorage, sessionStorage, IndexedDB out | a script in an **isolated world** of a page on the origin (`Page.createIsolatedWorld` + `Runtime.evaluate`) | a script in a `WKContentWorld` | a script in an isolated world (`webkit_script_world_new`) | as WebView2 |
-| the same in | a hidden restore view in the same store, navigated to `https://<origin>/__nib_restore`, answered with an empty page by `WebResourceRequested`, then the script writes | a hidden view given `loadHTMLString("", baseURL: origin)`, which runs as that origin | `webkit_web_view_load_html("", origin)` | a `CefResourceRequestHandler` answering the restore address |
-| sessionStorage in | a document-created script on the tab's first load after a restore, guarded by origin | the same with a `WKUserScript` at document start | a user script | the same |
-| trail and scroll | nib's own (`place.ts`) | nib's own (`interactionState` is WebKit-only and opaque, so not used) | nib's own | the engine's back-forward list, restored by navigation |
+| | WebView2 (Windows today) | WKWebView (macOS) | WebKitGTK (Linux) |
+| --- | --- | --- | --- |
+| cookies out | `Storage.getCookies` over `CallDevToolsProtocolMethod` (has `partitionKey`), filtered to the site | `WKHTTPCookieStore.getAllCookies` | `webkit_cookie_manager_get_all_cookies` (2.42+) |
+| cookies in | `Storage.setCookies` after `Storage.clearCookies` for the site's domains | `setCookie`, `deleteCookie` | `webkit_cookie_manager_replace_cookies` for the site |
+| localStorage, sessionStorage, IndexedDB out | a script in an **isolated world** of a page on the origin (`Page.createIsolatedWorld` + `Runtime.evaluate`) | a script in a `WKContentWorld` | a script in an isolated world (`webkit_script_world_new`) |
+| the same in | a hidden restore view in the same store, navigated to `https://<origin>/__nib_restore`, answered with an empty page by `WebResourceRequested`, then the script writes | a hidden view given `loadHTMLString("", baseURL: origin)`, which runs as that origin | `webkit_web_view_load_html("", origin)` |
+| sessionStorage in | a document-created script on the tab's first load after a restore, guarded by origin | the same with a `WKUserScript` at document start | a user script |
+| trail and scroll | nib's own (`place.ts`) | nib's own (`interactionState` is WebKit-only and opaque, so not used) | nib's own |
 
 The dump script walks `indexedDB.databases()`, each store's schema (key path,
 auto-increment, indexes) and its records by cursor, and encodes values with a tagged
@@ -1025,13 +1083,38 @@ and the account holds only ciphertext and opaque names.
 - **Bundles** are XChaCha20-Poly1305 with a random nonce per object and the store, site and
   generation as associated data; lease keys and chunk names are HMAC-SHA256 under a key
   derived from the web key.
-- **A new computer** registers its public key and asks its hub for the web key. The hub
-  relays the request to the account's other computers, which show the approval prompt with
-  six digits derived from the new public key (`SHA-256(pub)` read as a number, mod 10^6),
-  while the new computer shows the same digits. **Allow** wraps the web key to that public
-  key. A server that substituted its own key would show different digits. Until it is
-  approved, a computer takes no leases and uploads nothing (it cannot name a lease without
-  the key): its pages run on its own fresh state, signed out, like a new browser.
+- **A new computer** asks its hub for the web key in three steps, the AI vault's
+  (`lib/pairing.ts`), so that nobody between the two screens - the hub included - can
+  choose a key that shows the same digits:
+  1. It sends a commitment to its public key and a nonce, `SHA-256(pub || nonce)`, and
+     not the key. The hub holds the request (and says so, `key-asked`) and relays it to
+     the account's computers that hold the key.
+  2. One of them answers with a random nonce of its own and its own public key. The
+     first answer stands.
+  3. Only then does the new computer reveal its key and nonce. The hub takes them only
+     if they are what it committed to, and passes them to the computer that answered.
+  Both screens then show the same six digits, `SHA-256` over what they are for, the new
+  key, its nonce, the answering nonce and the answering key, mod 10^6: the new computer
+  under the bar, the answering one in the approval prompt. **Allow** wraps the web key to
+  exactly the key the digits came from, and the hub takes an Allow only of a computer that
+  revealed. A key swapped in had to be committed to before the answering nonce existed, so
+  it shows the same digits one time in a million. Until it is approved, a computer takes
+  no leases and uploads nothing (it cannot name a lease without the key): its pages run on
+  its own fresh state, signed out, like a new browser.
+- **Computers from before the commitment** ask with their public key straight away. A hub
+  that pairs by commitment does not relay that: it tells the computer to update, and tells
+  the computers with the key that it asked, so their bubble says to update it there. A
+  computer that pairs by commitment on a hub from before it is never answered, and after a
+  few seconds says it cannot be paired yet. Computers that already hold the key are not
+  affected either way: they are handed it on every `hello`, and move on a generation, as
+  before. So pairing a new computer needs the hub and both computers to be this version
+  or later.
+- **Joining.** A computer handed the key for the first time does not take it by itself: the
+  line in the web tab's bar area says *"Laptop offers this computer your web logins"*, with
+  **Join**, and only Join takes the key and so puts this computer's own logins under it. A
+  key somebody else made first and offered would otherwise have taken them without a word.
+  A computer that already holds the account's key - after a reconnect, or when the key moves
+  on a generation - takes it as before.
 - **No recovery code.** If every computer is gone, the new one makes a fresh web key and
   the person signs in to their sites again; the old bundles are deleted. Losing web state is
   losing logins, not writing.
@@ -1106,14 +1189,23 @@ parts), because base64 would cost a third more on every update.
 
 ### Hub
 
+**Removed (#393).** Of the frames below a device's hub now reads `hello` (without `pub`), `active`
+and `idle`, and sends `poke`, `terms`, `ai`, `machine` and the chats' pokes; the lease and
+web key frames, `refused`, the `/v2/web` routes, `PUT /v2/spaces/:id/web-store` and `webKey`
+in `/v2/devices` are gone (section 6). The lists are kept as they were built.
+
 - `GET /v2/hub`, upgraded, with the token and `nib.device.<id>` in the subprotocol. Text
   frames: `beat` (auto-answered `ok`), `{t:'hello', device, name, platform, app}`,
   `{t:'active'}`, `{t:'idle'}`, `{t:'acquire', key, take}`, `{t:'release', key, version}`,
-  `{t:'flushed', key, version}`, `{t:'want-key', pub}`, `{t:'grant-key', to, wrapped,
-  generation}`, `{t:'deny-key', to}`; and from the hub `{t:'poke', space, seq}`,
-  `{t:'granted', key, fence, version}`, `{t:'busy', key, device}`, `{t:'flush', key,
-  fence}`, `{t:'lost', key, device}`, `{t:'free', key}`, `{t:'state', key, version}`,
-  `{t:'key-wanted', device, name, pub}`, `{t:'key', wrapped, generation}`, `{t:'key-denied'}`.
+  `{t:'flushed', key, version}`, `{t:'want-key', commitment}`, `{t:'answer-key', to, nonce,
+  pub}`, `{t:'reveal-key', pub, nonce}`, `{t:'grant-key', to, wrapped, generation}`,
+  `{t:'deny-key', to}`; and from the hub `{t:'poke', space, seq}`, `{t:'granted', key, fence,
+  version}`, `{t:'busy', key, device}`, `{t:'flush', key, fence}`, `{t:'lost', key, device}`,
+  `{t:'free', key}`, `{t:'state', key, version}`, `{t:'key-asked'}`, `{t:'key-wanted', device,
+  name, commitment}`, `{t:'key-answered', from, nonce, pub}`, `{t:'key-revealed', device, pub,
+  nonce}`, `{t:'key-wanted-old', device, name}`, `{t:'key', wrapped, generation}`,
+  `{t:'key-denied'}`. A `want-key` that carries `pub` is a computer from before the
+  commitment, answered `{t:'refused', to:'want-key-old'}`.
 - `PUT /v2/web/:key` (header `x-nib-fence`), the manifest; `PUT /v2/web/chunks/:name`, a
   chunk; `GET` of both. `409 fenced`, `413` past the ceilings, `507` past the web quota.
 - `GET /v2/devices`, `PATCH /v2/devices/:id` (a name), `DELETE /v2/devices/:id` (ends its
@@ -1163,7 +1255,8 @@ parts), because base64 would cost a third more on every update.
   reach no reader and stay English, which also keeps the glasses package under its 8 MiB.
 
 **As built** (lane `web-lease`: `lib/sync2/hub.svelte.ts`, `lib/web-tab/lease.svelte.ts` and
-the files beside it), where it adds to or decides what sections 4 and 6 leave open:
+the files beside it), where it adds to or decides what sections 4 and 6 leave open.
+**Removed (#393).** All of it but the one socket per device and the beat's worker clock:
 
 - **The switch.** `users.web_sync` (migration `0043`), answered by `/v1/me` as `webSync` and
   read nowhere else; the app keeps the last answer (`nib:web-sync`) so a launch goes by it
@@ -1178,8 +1271,8 @@ the files beside it), where it adds to or decides what sections 4 and 6 leave op
 - **Keyed means the hub said so.** A computer holds the web key once its hub hands it
   `key`; a key in the keychain the account does not know would name leases no other
   computer can see. The first computer makes the key as its socket opens (a `grant-key`
-  to itself); one on an account where another holds it sends `want-key` and shows the
-  waiting line; the bubble shows on every computer that holds it. Only the window holding
+  to itself); one on an account where another holds it sends `want-key` with its
+  commitment, reveals once answered, and shows the waiting line; the bubble shows on every computer that holds it. Only the window holding
   the socket walks this road and says `active`/`idle`.
 - **Before a page runs.** A held lease answers at once. Otherwise the page waits for the
   hub's answer at most `LEASE_WAITS` (800 ms) and then runs on this computer's state; a
@@ -1217,7 +1310,7 @@ the files beside it), where it adds to or decides what sections 4 and 6 leave op
   `in_use_elsewhere` with that computer's name; an agent at work keeps this computer
   active. A site this computer has never asked about is run on its own state, as the
   reader's pages are while the hub is out of reach. See docs/agent-native.md 7.4.
-- **Measured** with `scripts/web-lease-probe.py` (two probe builds on one account under
+- **Measured** with the lease probe, removed with the rest (two probe builds on one account under
   `wrangler dev`, 2026-09-30, a loaded Snapdragon X Elite): Use here to the other computer's
   page signed in with the first one's cookies and storage 0.8 s, and 8.7 s with a debugging
   port open on every browser process and other builds running, nearly all of it the restore;
@@ -1225,8 +1318,7 @@ the files beside it), where it adds to or decides what sections 4 and 6 leave op
   later, on the hub's 30 s liveness; its next upload was fenced, and it stopped its pages.
 - **Not built.** Moving everybody to a new key generation after a computer is ended: the
   device list carries no public keys, so no computer can wrap the new generation to the
-  others; `granted`'s `rotate` is read and nothing is done with it yet. And nib's own
-  Chromium (`cef`) has no capture, so there leases never start.
+  others; `granted`'s `rotate` is read and nothing is done with it yet.
 
 **As built** (lane `sync-server-docs`, `services/sync/src/sync2/` and `src/rooms/`),
 where it adds to the routes of this section:
@@ -1475,6 +1567,9 @@ fails until it is), the R2 names go into `leftovers` in the same batch (`crdt/<n
 
 ### Durable Objects
 
+**Removed (#393).** `AccountHub` keeps the devices, pokes and presence; its leases and key relay
+are gone, and the web tables below stay unread (section 6).
+
 - `NoteRoom` (existing class, no new tag): HTTP `push`, `pull`, `keep` for its note; durable
   log writes for HTTP pushes; `ACK` and `EPOCH` messages; the R2 snapshot at each settle;
   `ingest(text, baseVersion?)` for whole-text writers (v1 PUT, connector, rollback,
@@ -1526,7 +1621,8 @@ fails until it is), the R2 names go into `leftovers` in the same batch (`crdt/<n
   every file in a space, which is the one visible change. Document snapshots and versions
   are the service's cost, capped at twice the note (the room's existing ceiling) and not
   counted.
-- Web state has a quota of its own, 512 MB per account, and 32 MB per bundle.
+- Web state has a quota of its own, 512 MB per account, and 32 MB per bundle. (Removed,
+  #393, with the lease and key rows below and the mail.)
 - New `limits` rows: tree ops and document pushes per account per minute (600 each), lease
   acquisitions per device per minute (30), web uploads per key per hour (60), key requests
   per account per hour (5).
@@ -1548,6 +1644,8 @@ devices this is a few thousand requests a day, cents a month.
 
 Files that do not exist yet are named from their package: `lib/` is the app's
 `src/lib`, `src-tauri/` is the app's crate, `src/` beside "the Worker" is `services/sync/src`.
+The rows for web leases and web state are gone from the app (#393, section 6) and kept
+here as they were planned.
 
 | where | what | lane |
 | --- | --- | --- |
@@ -1702,10 +1800,9 @@ browser (a Web Locks leader) rather than one per tab.
 - **Program tokens** reach no v2 write route (section 7).
 - **Documents** are bounded: an update above 4 MB is refused, a document past twice the
   note's ceiling is closed with 1009 as today.
-- **Web state** is end-to-end encrypted with matching-digit approval (6.6); the hub and D1
-  see opaque keys; a revoked device is removed from every future key generation.
-- **Leases** cannot be stolen by a device of another account (keyed by account, socket
-  authenticated), and a device's own stale writes are fenced.
+- **Web state** was end-to-end encrypted with matching-digit approval (6.6), and leases
+  could not be taken by a device of another account; both went with web logins that travel
+  (#393). A computer's web logins never leave it now.
 - **Sign-out** empties the vault as today, deletes the sync store, forgets the device key
   and leaves the local web stores (they are the person's browser, and Emil's earlier rule
   keeps browsing data apart from the account).
@@ -1750,7 +1847,10 @@ browser (a Web Locks leader) rather than one per tab.
 - `sync_version` per account: 1 (v1), 2 (v2). Flipped for Emil's account first, then
   accounts whose devices all run a v2 app (the hub knows every device's `app` version),
   then everybody (see "Rollout to everybody" below). The client reads it at start; a change takes effect at the next launch.
-- `web_sync` per account, separately, desktop only, after `sync_version = 2`.
+- `web_sync` per account, separately, desktop only, after `sync_version = 2`. It was never
+  turned on for an account, and web logins that travel were taken out (#393, section 6):
+  Google binds its sessions to the device, so a carried Google login stopped working on the
+  other computer within minutes. Nothing reads the column now, and no app asks for it.
 - **Rollback**: setting 1 again makes the client rebuild `nib:mirrors` from the store (each
   note's id, version and the hash of its confirmed text) before the v1 loop starts, so v1
   resumes without a conflict copy.
@@ -1812,8 +1912,7 @@ gets 409 and the v1 app does what it does today (a copy beside the note). Its pa
 become `rename`/`move` ops, its creates become `create` ops with a server id, and its
 deletes go into Recently deleted exactly as today, because a v1 delete names no version to
 judge an edit against. It joins rooms over y-protocols
-exactly as today. It never takes a web lease, so a v1 computer can run a site at the same
-time as a v2 one; the updater nudges it. v1 routes stay for at least six months after the
+exactly as today. The updater nudges it. v1 routes stay for at least six months after the
 last flip, and `keptBeside` and `noteBeside` are deleted with them.
 
 The glasses plugin stays on v1: it reads, and writes whole notes through the connector
@@ -1875,6 +1974,8 @@ front matter, long lines, emoji and CJK for surrogate pairs):
   delete a note edited after the delete's `seen`.
 
 ### Leases, crashes and expiry
+
+**Removed (#393).** These tests and both probes went with the leases (section 6).
 
 `hub.test.ts` in the Worker's tests, with a fake clock and fake sockets: acquire free;
 acquire held-active is `busy`; `take` hands over, with `flush` before `granted` and the fence
@@ -1957,7 +2058,9 @@ then `web_sync`.
 
 ## 14. Open questions for Emil
 
-Only product decisions; each has a recommendation, and the design above assumes it.
+Only product decisions; each has a recommendation, and the design above assumes it. The
+questions about web logins (1 to 4, 10) were answered and then made moot when web logins
+stopped travelling (#393, section 6).
 
 1. **What exactly locks.** A web note, or the login behind it? Recommendation: **the login**
    (the site in its store), because two notes on one site share one session and running it

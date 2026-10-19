@@ -19,6 +19,7 @@
   import { links } from '../../link-index.svelte'
   import { DIVIDER, menu } from '../../menu.svelte'
   import { dur } from '../../motion'
+  import { overlays } from '../../overlays'
   import { shortcuts } from '../../shortcuts.svelte'
   import { withinSpace } from '../../space-paths'
   import { views } from '../../views.svelte'
@@ -40,7 +41,8 @@
   import Rewinding from '../review/Rewinding.svelte'
   import { commandIn, commandsFor, matching, rowNamed } from './seams'
   import Suggest from './Suggest.svelte'
-  import { MODES, FIRST_MODE, modeWord } from '../modes'
+  import { grow } from '../../grow'
+  import { MODES, FIRST_MODE, type Mode, modeWord } from '../modes'
 
   let field = $state<HTMLTextAreaElement>()
   let caret = $state(0)
@@ -202,14 +204,19 @@
     return inside && at > 0 ? inside.slice(0, at) : ''
   }
 
-  /** A popover is put away by a press anywhere else, and by Escape wherever the
-   *  keyboard is in the foot. */
-  function outside(event: PointerEvent) {
-    if (!chat.popover) return
-    const target = event.target instanceof Element ? event.target : null
-    if (target?.closest('.pop, .tray, .picker .chip, .knob')) return
-    chat.popover = null
-  }
+  let foot = $state<HTMLElement>()
+
+  /** A popover is put away by a press anywhere but on it and what opens it, by the
+   *  window losing the focus, and by Escape; see overlays.ts. Escape wherever the
+   *  keyboard is in the foot is the foot's own, below, which hands the keyboard back. */
+  $effect(() =>
+    chat.popover
+      ? overlays.show(
+          () => (chat.popover = null),
+          () => [...(foot?.querySelectorAll('.pop, .tray, .picker .chip, .knob') ?? [])],
+        )
+      : undefined,
+  )
 
   function footKey(event: KeyboardEvent) {
     if (event.key !== 'Escape' || !chat.popover) return
@@ -390,19 +397,23 @@
 
   // ── Mode ──────────────────────────────────────────────
 
-  /** The modes as rows, the one in force ticked, Codex's approval menu. The key that
-   *  steps them is the button's tooltip rather than a hint on every row, where it would
-   *  say the same thing thrice. */
+  /** The modes as rows, the one in force ticked, Codex's approval menu: the three
+   *  permission modes, least to most, then Plan under a rule. Full permissions is a row
+   *  like the others and never red (#372): it is chosen on purpose, and the button's
+   *  tooltip says it asks for nothing. The key that steps them is the button's tooltip
+   *  rather than a hint on every row. */
   function modeMenu(event: MouseEvent) {
-    menu.show(
-      event,
-      MODES.map((mode) => ({
-        label: t(modeWord(mode)),
-        checked: head?.mode === mode,
-        run: () => chat.setMode(mode),
-      })),
-    )
+    const row = (mode: Mode) => ({
+      label: t(modeWord(mode)),
+      checked: head?.mode === mode,
+      run: () => chat.setMode(mode),
+    })
+    menu.show(event, [...MODES.filter((one) => one !== 'plan').map(row), DIVIDER, row('plan')], {
+      title: t('Permissions'),
+    })
   }
+
+  const mode = $derived(head?.mode ?? FIRST_MODE)
 
   // ── "+" ───────────────────────────────────────────────
 
@@ -490,10 +501,8 @@
   }
 </script>
 
-<svelte:window onpointerdown={outside} />
-
 <!-- svelte-ignore a11y_no_static_element_interactions -->
-<div class="foot" onkeydown={footKey}>
+<div class="foot" bind:this={foot} onkeydown={footKey}>
   <Queue />
 
   {#if thread}
@@ -624,6 +633,7 @@
       <textarea
         bind:this={field}
         bind:value={chat.text}
+        use:grow={chat.text}
         data-entry
         rows="1"
         placeholder={t('Ask anything, @ to add, / for more')}
@@ -649,13 +659,15 @@
         <!-- How much the agent may do without asking, Codex's permissions beside "+". -->
         <button
           class="mode"
-          title={shortcuts.tooltip(t('Next mode'), 'ai.mode')}
+          title={mode === 'full'
+            ? t('Full permissions: nothing is asked first')
+            : shortcuts.tooltip(t('Next mode'), 'ai.mode')}
           aria-haspopup="menu"
           onclick={modeMenu}
           disabled={!head}
         >
-          <ModeMark mode={head?.mode ?? FIRST_MODE} />
-          <span>{t(modeWord(head?.mode ?? FIRST_MODE))}</span>
+          <ModeMark {mode} />
+          <span>{t(modeWord(mode))}</span>
           <svg class="caret" viewBox="0 0 13 13"><path d="M3.8 5.2l2.7 2.7 2.7-2.7" /></svg>
         </button>
         <span class="gap"></span>

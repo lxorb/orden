@@ -8,11 +8,15 @@
    *  edit (drop.ts); carried within its column it keeps the base's own manual order
    *  (`nib.order`). Grouped by status, a task line's box is the column: To do, Doing,
    *  Done. Every card is one height, so a column of two thousand cards mounts the
-   *  dozen on screen and scrolls at the screen's own rate. */
+   *  dozen on screen and scrolls at the screen's own rate.
+   *
+   *  A project's board is Todoist's: a column per section, each with the section's menu
+   *  (section-actions.ts), the tasks in no section first, and Add section at the end. */
   import { cellValue, groupName, type Group, type Row, rowId, type Value } from '@nib/bases'
   import { linkModifier } from '@nib/editor'
   import { t } from '../i18n.svelte'
   import { menu } from '../menu.svelte'
+  import { prompt } from '../prompt.svelte'
   import { viewport } from '../viewport.svelte'
   import AddRow from './AddRow.svelte'
   import { chipsOf, toneColour, valueText } from './chips'
@@ -22,20 +26,50 @@
   import { dropInto } from './drop'
   import { setHidden, setManualOrder } from './edit'
   import { plain } from './inline'
-  import { laneKeys } from './list-items'
+  import { laneKeys, withEveryDay, withEverySection, withinDays } from './list-items'
   import type { Kit } from './kit'
   import TaskBox from './TaskBox.svelte'
-  import { groupLabel } from './words'
+  import { dayHead, groupLabel } from './words'
   import BoardColumn from './BoardColumn.svelte'
+  import {
+    addSection,
+    projectOf,
+    renameSection,
+    placeSection,
+    sectionMenu,
+    sectionsHere,
+  } from './section-actions'
+  import { reorderDrag } from './reorder-drag'
+  import { isTitle } from './sections'
+  import { ADD_MARK } from './marks'
 
-  const { kit }: { kit: Kit } = $props()
+  const {
+    kit,
+    days,
+  }: {
+    kit: Kit
+    /** Every day from one through another a column, empty ones too: Upcoming's board. */
+    days?: { from: string; through: string } | undefined
+  } = $props()
 
   const live = $derived(kit.live)
   const view = $derived(live.view)
   const property = $derived(view?.groupBy?.property)
   const sub = $derived(view?.nib.subGroupBy?.property)
   const hidden = $derived(view?.nib.hidden ?? [])
-  const groups = $derived(live.answer?.groups ?? [])
+  /** The project the board is of, its columns its sections. */
+  const project = $derived(property === 'task.section' ? projectOf(kit) : null)
+  const groups = $derived(
+    project
+      ? withEverySection(live.answer?.groups ?? [], sectionsHere(project.relative), project.name)
+      : days
+        ? withinDays(
+            withEveryDay(live.answer?.groups ?? [], days.from, days.through),
+            days.from,
+            days.through,
+          )
+        : (live.answer?.groups ?? []),
+  )
   const shownGroups = $derived(groups.filter((group) => !hidden.includes(groupName(group.key))))
   const hiddenGroups = $derived(groups.filter((group) => hidden.includes(groupName(group.key))))
 
@@ -49,17 +83,45 @@
       .slice(0, 2),
   )
 
+  /** The section a column is, or null for one that is none: no heading, or the title. */
+  function sectionOf(group: Group): string | null {
+    const key = group.key
+    if (!project || typeof key !== 'string' || !key || isTitle(key, project.name)) return null
+    return key
+  }
+
+  /** What a column is called: a project's tasks in no section are that, not its title. */
+  function columnName(group: Group): string {
+    if (project && sectionOf(group) === null) return t('None')
+    if (days) return dayHead(group.key, live.today)
+    return groupLabel(property, group.key, live.today)
+  }
+
+  /** A name asked for, then written. */
+  function ask(title: string, value: string, write: (words: string) => void) {
+    void prompt
+      .ask({ title, value, confirmLabel: title })
+      .then((words) => (words?.trim() ? write(words) : undefined))
+  }
+
   function columnMenu(event: MouseEvent, group: Group) {
-    menu.show(
-      event,
-      [
-        {
-          label: t('Hide'),
-          run: () => kit.change((base, at) => setHidden(base, at, groupName(group.key), true)),
-        },
-      ],
-      { title: groupLabel(property, group.key, live.today) },
-    )
+    const hide = {
+      label: t('Hide'),
+      run: () => kit.change((base, at) => setHidden(base, at, groupName(group.key), true)),
+    }
+    const section = sectionOf(group)
+    if (section !== null) {
+      sectionMenu(
+        event,
+        kit,
+        section,
+        group.rows.length,
+        () => ask(t('Rename'), section, (words) => renameSection(kit, section, words)),
+        [hide],
+      )
+      return
+    }
+    menu.show(event, [hide], { title: columnName(group) })
   }
 
   /** A card let go over a column (or a lane of it), at a place among its cards. */
@@ -116,9 +178,9 @@
     tabindex="0"
     style:--tone={row.task ? priorityTone(row.task.priority) : null}
     use:draggable={{ row, label: title }}
-    onclick={(event) => kit.open(row, linkModifier(event) ? 'tab' : 'aside')}
+    onclick={(event) => kit.choose(row, linkModifier(event))}
     onkeydown={(event) => {
-      if (event.key === 'Enter') kit.open(row, 'aside')
+      if (event.key === 'Enter') kit.choose(row)
     }}
   >
     <div class="title">
@@ -149,17 +211,32 @@
 {/snippet}
 
 {#snippet column(group: Group, laneKey: Value | undefined, rows: readonly Row[])}
-  <div class="column" use:droppable={(row, at, place) => land(row, group, laneKey, at, place)}>
+  {@const section = laneKey === undefined ? sectionOf(group) : null}
+  <div
+    class="column"
+    data-section={section ?? undefined}
+    use:droppable={(row, at, place) => land(row, group, laneKey, at, place)}
+  >
     {#if laneKey === undefined}
       <!-- svelte-ignore a11y_no_static_element_interactions -->
-      <div class="head" oncontextmenu={(event) => columnMenu(event, group)}>
+      <div
+        class="head"
+        class:carries={section !== null}
+        oncontextmenu={(event) => columnMenu(event, group)}
+        use:reorderDrag={{
+          id: section ?? '',
+          among: 'section',
+          across: true,
+          place: (moving, target, after) => placeSection(kit, moving, target, after),
+        }}
+      >
         <span
           class="dot"
           style:background={live.base && property && typeof group.key === 'string'
             ? toneColour(toneOf(live.base, property, group.key))
             : null}
         ></span>
-        <span class="name">{groupLabel(property, group.key, live.today)}</span>
+        <span class="name">{columnName(group)}</span>
         <span class="count">{rows.length}</span>
       </div>
     {/if}
@@ -203,6 +280,16 @@
     {#each shownGroups as group (groupName(group.key))}
       {@render column(group, undefined, group.rows)}
     {/each}
+  {/if}
+  {#if project && !kit.compact}
+    <button
+      type="button"
+      class="add-column"
+      onclick={() => ask(t('Add section'), '', (words) => addSection(kit, words))}
+      ><svg viewBox="0 0 13 13" aria-hidden="true"><path d={ADD_MARK} /></svg>{t(
+        'Add section',
+      )}</button
+    >
   {/if}
   {#each hiddenGroups as group (groupName(group.key))}
     <button
@@ -263,6 +350,77 @@
     border-radius: var(--radius-md);
     background: var(--surface-2);
     transition: box-shadow var(--dur-fast) var(--ease-out);
+  }
+
+  /* Where the next section would stand: a column's width, quiet until pointed at. */
+  .add-column {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    align-self: flex-start;
+    width: 272px;
+    height: var(--row-height);
+    padding: 0 var(--space-3);
+    border: none;
+    border-radius: var(--radius-md);
+    background: none;
+    color: var(--muted);
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+    transition:
+      background var(--dur-fast) var(--ease-out),
+      color var(--dur-fast) var(--ease-out);
+  }
+
+  .add-column svg {
+    width: var(--icon-sm);
+    height: var(--icon-sm);
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.4;
+    stroke-linecap: round;
+  }
+
+  @media (hover: hover) {
+    .add-column:hover {
+      background: var(--surface-2);
+      color: var(--text);
+    }
+  }
+
+  /* A section's column is carried by its head; where it would land, a line on that side. */
+  .head.carries {
+    cursor: grab;
+  }
+
+  .column:global(.is-carried) {
+    opacity: 0.45;
+  }
+
+  .column:global(.is-before),
+  .column:global(.is-after) {
+    position: relative;
+  }
+
+  .column:global(.is-before)::before,
+  .column:global(.is-after)::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    border-radius: 1px;
+    background: var(--accent);
+    pointer-events: none;
+  }
+
+  .column:global(.is-before)::before {
+    left: calc(var(--space-3) / -2 - 1px);
+  }
+
+  .column:global(.is-after)::after {
+    right: calc(var(--space-3) / -2 - 1px);
   }
 
   .column:global(.is-taking) {

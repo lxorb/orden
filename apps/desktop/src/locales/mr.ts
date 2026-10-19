@@ -10,21 +10,126 @@ export const mr: Dictionary = {
   'Do you write code?': 'तुम्ही कोड लिहिता का?',
   Yes: 'हो',
   No: 'नाही',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'इतर ॲप्समधून: {key}',
+  'From other apps: set in your system settings': 'इतर ॲप्समधून: सिस्टम सेटिंग्जमध्ये ठरवा',
+  'From other apps: bind {command} in your system settings':
+    'इतर ॲप्समधून: सिस्टम सेटिंग्जमध्ये {command} जोडा',
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'आवश्यक',
+  'Add to Essentials': 'आवश्यकमध्ये जोडा',
+  'Remove from Essentials': 'आवश्यकमधून काढा',
+  'Add block to Essentials': 'ब्लॉक आवश्यकमध्ये जोडा',
+  'Add blocks to Essentials': 'ब्लॉक्स आवश्यकमध्ये जोडा',
+  'Add view to Essentials': 'दृश्य आवश्यकमध्ये जोडा',
+  'Open tabs and Essentials': 'टॅब आणि आवश्यक उघडणे',
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor आता Orden आहे',
+  'Notes from nibeditor.com': 'nibeditor.com वरील नोट्स',
+  'Nothing there': 'तिथे काहीही नाही',
+  // AI: the three permission modes
+  'Full permissions': 'पूर्ण परवानग्या',
+  'Auto mode': 'स्वयंचलित मोड',
+  'Full permissions: nothing is asked first': 'पूर्ण परवानग्या: आधी काहीही विचारले जात नाही',
+  // Import: Zen's tabs
+  'Import from Zen': 'Zen मधून इंपोर्ट करा',
+  'Containers stay in Zen': 'कंटेनर Zen मध्येच राहतात',
+  'Zen’s tabs could not be read.': 'Zen चे टॅब वाचता आले नाहीत.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'कंटेनर Firefox मध्येच राहतात',
+  'Nothing could be read out of {browser}.': '{browser} मधून काहीही वाचता आले नाही.',
+  'Saved groups': 'जतन केलेले गट',
+  'Tab group': 'टॅब गट',
+  'Bookmarks toolbar': 'बुकमार्क टूलबार',
+  'Bookmarks menu': 'बुकमार्क मेनू',
+  'Other bookmarks': 'इतर बुकमार्क',
+  'Mobile bookmarks': 'मोबाइल बुकमार्क',
+  'Bookmarks bar': 'बुकमार्क बार',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} आपले उघडे टॅब लॉक करून ठेवतो, म्हणून फक्त बुकमार्क आले.',
+  '{count} pages not on the web stay behind': {
+    one: 'वेबवर नसलेले {count} पान मागे राहिले',
+    other: 'वेबवर नसलेली {count} पाने मागे राहिली',
+  },
+  'Reading List': 'वाचन सूची',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS Safari चे टॅब आणि बुकमार्क फुल डिस्क ॲक्सेसच्या मागे ठेवतो. तिथे Orden सुरू करा, मग पुन्हा प्रयत्न करा.',
+  // Settings: note types
+  'Page note': 'पानांची नोंद',
+  'Web note': 'वेब नोंद',
+  'Private tab': 'खाजगी टॅब',
+  'Note types': 'नोंदीचे प्रकार',
+  // Tasks: Upcoming's weeks
+  'Previous week': 'मागील आठवडा',
+  // Tasks: projects placed in the panel, and their folder
+  'Add project above': 'वर प्रकल्प जोडा',
+  'Add project below': 'खाली प्रकल्प जोडा',
+  'Projects folder': 'प्रकल्पांचे फोल्डर',
+  // Tasks: a repeating task skipped or done for good
+  Skip: 'वगळा',
+  'Complete forever': 'कायमचे पूर्ण करा',
+  // Tasks: comments
+  Comments: 'टिप्पण्या',
+  // Tasks: filters
+  Filters: 'फिल्टर',
+  'Add filter': 'फिल्टर जोडा',
+  'Edit filter': 'फिल्टर संपादित करा',
+  // Tasks: a project's sections
+  'Add section': 'विभाग जोडा',
+  '{name} (copy)': '{name} (प्रत)',
+  'Its tasks are deleted with it.': 'त्यातील कार्येही सोबत हटवली जातील.',
+  // Tasks: keys, selection and the undo toast
+  Completed: 'पूर्ण झाले',
+  'Remove date': 'तारीख काढा',
+  'Next task': 'पुढील कार्य',
+  'Previous task': 'मागील कार्य',
+  'Add task at the top': 'वर कार्य जोडा',
+  '{count} selected': '{count} निवडली',
+  // Tasks: the Display menu
+  Display: 'प्रदर्शन',
+  'Completed tasks': 'पूर्ण कार्ये',
+  // Tasks: several lines pasted into quick add
+  'One task': 'एक कार्य',
+  'One per line': 'प्रत्येक ओळीला एक',
+  // Tasks: the projects in the panel
+  Favorites: 'आवडते',
+  'Add project': 'प्रकल्प जोडा',
+  'Add sub-project': 'उप-प्रकल्प जोडा',
+  // Tasks: the task view
+  'Sub-tasks': 'उप-कार्ये',
+  'Add sub-task': 'उप-कार्य जोडा',
+  'New label': 'नवीन लेबल',
+  'No deadline': 'अंतिम मुदत नाही',
+  // Tasks: the row's menu and the scheduler
+  Reschedule: 'पुन्हा ठरवा',
+  'Later this week': 'या आठवड्यात नंतर',
+  'This weekend': 'या आठवड्याच्या शेवटी',
+  'Next weekend': 'पुढच्या आठवड्याच्या शेवटी',
+  'Every week on {day}': 'दर आठवड्याला {day}',
+  'Every month on day {day}': 'दर महिन्याच्या {day} तारखेला',
+  'Every year on {date}': 'दर वर्षी {date}',
+  'Type a date': 'तारीख लिहा',
+  'Previous month': 'मागील महिना',
+  'Next month': 'पुढील महिना',
+  'No time': 'वेळ नाही',
+  'No repeat': 'पुनरावृत्ती नाही',
+  Complete: 'पूर्ण करा',
+  Reopen: 'पुन्हा उघडा',
+  Schedule: 'वेळ ठरवा',
+  'Open in note': 'नोंदीत उघडा',
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'दुसरे ॲप',
-  'Start fresh': 'नव्याने सुरू करा',
   'Import from Obsidian': 'Obsidian मधून इंपोर्ट करा',
   'Import from Notion': 'Notion मधून इंपोर्ट करा',
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'सूचना',
   'Silent mode': 'शांत मोड',
-  'Sign in to keep your notes safe and on every device.':
-    'तुमच्या नोट्स सुरक्षित आणि प्रत्येक डिव्हाइसवर ठेवण्यासाठी साइन इन करा.',
   'See how your notes connect.': 'तुमच्या नोट्स कशा जोडलेल्या आहेत ते पाहा.',
   'Press {key} to find anything, notes and commands alike.':
     'नोट्स आणि आदेश, काहीही शोधण्यासाठी {key} दाबा.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'लिहिताना मार्कडाउन दाखवा',
+  'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'पॉइंटर',
   'Pointing hand on buttons': 'बटणांवर निर्देश करणारा हात',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
@@ -40,11 +145,13 @@ export const mr: Dictionary = {
   '{count} h': '{count} तास',
   Inbox: 'इनबॉक्स',
   Date: 'तारीख',
+  'Start date': 'सुरुवातीची तारीख',
   Priority: 'प्राधान्य',
   Reminder: 'स्मरणपत्र',
   Duration: 'कालावधी',
   'Smart dates': 'स्मार्ट तारखा',
   'From any app': 'कोणत्याही ॲपमधून',
+  'Show tasks without a start date in Today': 'सुरुवातीची तारीख नसलेली कार्ये आज मध्ये दाखवा',
   'Every day': 'दररोज',
   'Every weekday': 'प्रत्येक कामाच्या दिवशी',
   'Every week': 'दर आठवड्याला',
@@ -61,6 +168,13 @@ export const mr: Dictionary = {
   Unsaved: 'जतन केलेले नाही',
   'Save to': 'येथे जतन करा',
   'Reloaded with the web data of {space}': '{space} च्या वेब डेटासह पुन्हा लोड केले',
+  Separate: 'वेगळा',
+  'Share this note’s web data again?': 'या नोटचा वेब डेटा पुन्हा शेअर करायचा?',
+  'What its pages are signed in to on this computer is deleted.':
+    'या संगणकावर तिची पाने जिथे साइन इन आहेत ते हटवले जाईल.',
+  'Share again': 'पुन्हा शेअर करा',
+  'This note keeps its own web data now': 'ही नोट आता स्वतःचा वेब डेटा ठेवते',
+  'Back on the shared web data': 'पुन्हा शेअर केलेल्या वेब डेटावर',
   'Add a page': 'पान जोडा',
   'Add a page after this': 'याच्या नंतर पान जोडा',
   'Delete this page': 'हे पान काढा',
@@ -81,6 +195,8 @@ export const mr: Dictionary = {
   Dots: 'ठिपके',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'दोन बोटांनी कॅनव्हास फिरवा',
+  'Turn upright': 'सरळ करा',
   Canvas: 'कॅनव्हास',
   Card: 'कार्ड',
   'Note or picture': 'नोंद किंवा चित्र',
@@ -95,7 +211,6 @@ export const mr: Dictionary = {
   'New window': 'नवीन विंडो',
   New: 'नवीन',
   'New space': 'नवीन स्पेस',
-  '{name}: switch space': '{name}: स्पेस बदला',
   Untitled: 'नाव नाही',
   Space: 'स्पेस',
   'Name the space': 'स्पेसचे नाव',
@@ -140,8 +255,6 @@ export const mr: Dictionary = {
   'Loading…': 'लोड होत आहे…',
   'Create a space': 'स्पेस तयार करा',
   'Import a folder': 'फोल्डर इंपोर्ट करा',
-  'Sign in to sync': 'सिंकसाठी साइन इन',
-  'Create account': 'खाते तयार करा',
   'Delete space': 'स्पेस हटवा',
   'Delete {name}?': '{name} हटवा?',
   'Every note in this space is deleted from your computer.':
@@ -159,6 +272,10 @@ export const mr: Dictionary = {
   Unpin: 'पिन काढा',
   Close: 'बंद करा',
   'Close pinned tab?': 'पिन केलेला टॅब बंद करायचा?',
+  'Save changes to {name}?': '{name} मधील बदल सेव्ह करायचे?',
+  'Save changes to these tabs?': 'या टॅबमधील बदल सेव्ह करायचे?',
+  'Unsaved words go to Recently deleted.': 'सेव्ह न केलेले शब्द अलीकडे हटवलेले मध्ये जातील.',
+  'Don’t save': 'सेव्ह करू नका',
   'Close others': 'इतर बंद करा',
   'Close tabs to the right': 'उजवीकडील टॅब बंद करा',
   'Close tabs to the left': 'डावीकडील टॅब बंद करा',
@@ -195,9 +312,6 @@ export const mr: Dictionary = {
   'Move this note': 'ही नोंद हलवा',
   'Move up': 'वर हलवा',
   'Move down': 'खाली हलवा',
-  Bookmark: 'बुकमार्क',
-  'Remove bookmark': 'बुकमार्क काढा',
-  'Leave out of search': 'शोधातून वगळा',
   'Search here again': 'येथे पुन्हा शोधा',
   'Undo the last file change': 'शेवटचा फाइल बदल पूर्ववत करा',
   'Undo moving {name}': '{name} हलवणे पूर्ववत करा',
@@ -247,7 +361,6 @@ export const mr: Dictionary = {
   'Remove group': 'गट काढा',
   'Out of the group': 'गटाबाहेर',
   Make: 'करा',
-  'Bookmark this block': 'हा ब्लॉक बुकमार्क करा',
   Panels: 'पॅनेल',
   Outline: 'रूपरेषा',
   'Stay on this note': 'याच नोंदीवर राहा',
@@ -511,8 +624,8 @@ export const mr: Dictionary = {
   'Asking OpenAI which models this key can use':
     'ही किल्ली कोणती मॉडेल वापरू शकते ते OpenAI ला विचारत आहे',
   'Could not reach OpenAI': 'OpenAI पर्यंत पोहोचता आले नाही',
-  'That key cannot use any of the models nibeditor asks for.':
-    'nibeditor मागत असलेले एकही मॉडेल ती किल्ली वापरू शकत नाही.',
+  'That key cannot use any of the models Orden asks for.':
+    'Orden मागत असलेले एकही मॉडेल ती किल्ली वापरू शकत नाही.',
   'No reasoning': 'तर्क नाही',
   Minimal: 'किमान',
   Low: 'कमी',
@@ -534,7 +647,7 @@ export const mr: Dictionary = {
   Mode: 'मोड',
   // The window's own edges; see appearance.rs
   Window: 'विंडो',
-  'nibeditor’s own': 'nibeditor चे स्वतःचे',
+  'Orden’s own': 'Orden चे स्वतःचे',
   'The system’s': 'सिस्टमचे',
   'Window frame': 'विंडोची चौकट',
   System: 'सिस्टम',
@@ -597,6 +710,7 @@ export const mr: Dictionary = {
   '{done} of {total}': '{total} पैकी {done}',
   'Sync failed': 'सिंक अयशस्वी',
   '{name} could not be written.': '{name} लिहिता आले नाही.',
+  '{name} could not be read.': '{name} वाचता आले नाही.',
   'Text size': 'मजकूर आकार',
   'Line spacing': 'ओळ अंतर',
   'Line width': 'ओळ रुंदी',
@@ -657,8 +771,10 @@ export const mr: Dictionary = {
   '{used} of {limit} used.': '{limit} पैकी {used} वापरले.',
   'That image does not fit in your storage.': 'ती प्रतिमा तुमच्या स्टोरेजमध्ये बसत नाही.',
   'out of space': 'जागा उरली नाही',
-  'nibeditor {version} is ready to install.': 'nibeditor {version} इन्स्टॉलसाठी तयार आहे.',
+  'Orden {version} is ready to install.': 'Orden {version} इन्स्टॉलसाठी तयार आहे.',
+  'Orden {version} is available.': 'Orden {version} उपलब्ध आहे.',
   'Restart now': 'आता रीस्टार्ट करा',
+  'Move to Applications': 'ॲप्लिकेशन्समध्ये हलवा',
   Later: 'नंतर',
   More: 'अधिक',
   'Open notes': 'नोंदी उघडा',
@@ -683,11 +799,9 @@ export const mr: Dictionary = {
   Continue: 'पुढे चला',
   'Send a new code': 'नवीन कोड पाठवा',
   'Code sent to': 'कोड पाठवला',
-  'You already have notes on this computer.': 'या संगणकावर तुमच्या नोंदी आधीच आहेत.',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
-    'ठेवल्या तर त्या तुमच्या खात्यात जोडल्या जातील. पुसल्या तर खात्यात आधीच आहे तेवढेच राहील - हे पूर्ववत होणार नाही.',
-  'Keep them': 'ठेवा',
-  'Erase them': 'पुसा',
+  'This device already has notes.': 'या डिव्हाइसवर आधीच नोट्स आहेत.',
+  Merge: 'एकत्र करा',
+  'Keep separate': 'वेगळे ठेवा',
   'Digit {number}': 'अंक {number}',
   'Resend in {seconds}s': '{seconds} सेकंदांत पुन्हा पाठवा',
   'Last synced {time}.': 'शेवटचे सिंक {time}.',
@@ -735,14 +849,14 @@ export const mr: Dictionary = {
   'Reads your notes.': 'तुमच्या नोंदी वाचते.',
   'Reads and writes your notes.': 'तुमच्या नोंदी वाचते आणि लिहिते.',
   Other: 'इतर',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'AI सहायक तुमच्या नोंदी वाचू शकतो - आणि परवानगी दिली तर बदलूही शकतो. तो तुमच्या nibeditor ईमेलने साइन इन करतो; काही पेस्ट करायचे नाही.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'AI सहायक तुमच्या नोंदी वाचू शकतो - आणि परवानगी दिली तर बदलूही शकतो. तो तुमच्या Orden ईमेलने साइन इन करतो; काही पेस्ट करायचे नाही.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'Claude मध्ये Settings → Connectors उघडा आणि Add custom connector वर क्लिक करा.',
   'Open Claude’s connectors': 'Claude चे कनेक्टर उघडा',
   'Fill in the two fields and click Add.': 'दोन्ही रकाने भरा आणि Add वर क्लिक करा.',
-  'Click Connect and sign in with your nibeditor email.':
-    'Connect वर क्लिक करा आणि तुमच्या nibeditor ईमेलने साइन इन करा.',
+  'Click Connect and sign in with your Orden email.':
+    'Connect वर क्लिक करा आणि तुमच्या Orden ईमेलने साइन इन करा.',
   'Using Claude Code instead?': 'त्याऐवजी Claude Code?',
   Command: 'कमांड',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -753,16 +867,15 @@ export const mr: Dictionary = {
   'Open ChatGPT’s plugins': 'ChatGPT चे प्लगिन उघडा',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Plugins विभाग किंवा प्लस बटण दिसत नाही? आधी Settings → Security and login मध्ये Developer mode चालू करा.',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'ChatGPT विचारेल तेव्हा तुमच्या nibeditor ईमेलने साइन इन करा.',
-  'To use it in a chat, type @ and pick nibeditor.':
-    'चॅटमध्ये वापरण्यासाठी @ लिहा आणि nibeditor निवडा.',
+  'Sign in with your Orden email when ChatGPT asks.':
+    'ChatGPT विचारेल तेव्हा तुमच्या Orden ईमेलने साइन इन करा.',
+  'To use it in a chat, type @ and pick Orden.': 'चॅटमध्ये वापरण्यासाठी @ लिहा आणि Orden निवडा.',
   'Server URL': 'सर्व्हर URL',
   Authentication: 'प्रमाणीकरण',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'प्रगत OAuth सेटिंग्ज तशीच ठेवा आणि “I understand and want to continue” वर खूण करा.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'OAuth सह Streamable HTTP बोलणारा कोणताही MCP क्लायंट. त्याला URL द्या: तो स्वतः नोंदणी करून nibeditor चे साइन इन पान उघडतो.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'OAuth सह Streamable HTTP बोलणारा कोणताही MCP क्लायंट. त्याला URL द्या: तो स्वतः नोंदणी करून Orden चे साइन इन पान उघडतो.',
   'Show config': 'कॉन्फिग दाखवा',
   'For a client that takes a JSON block instead of a URL.':
     'URL ऐवजी JSON ब्लॉक घेणाऱ्या क्लायंटसाठी.',
@@ -829,7 +942,7 @@ export const mr: Dictionary = {
   'Display name': 'दिसणारे नाव',
   'Your name': 'तुमचे नाव',
   Email: 'ईमेल',
-  'On nibeditor.com': 'nibeditor.com वर',
+  'On orden.so': 'orden.so वर',
   'Your own domain': 'तुमचे स्वतःचे डोमेन',
   'Switching gives up {name}.': 'बदलल्यास {name} सुटेल.',
   Page: 'पान',
@@ -901,8 +1014,9 @@ export const mr: Dictionary = {
   'No footnotes in this note': 'या टिपणात तळटीप नाही',
   'Stack tabs': 'टॅब स्तंभांत ठेवा',
   'Unstack tabs': 'टॅब स्तंभ काढा',
-  'High contrast': 'उच्च कॉन्ट्रास्ट',
+  Contrast: 'कॉन्ट्रास्ट',
   Glass: 'काच',
+  Classic: 'क्लासिक',
   'Front matter': 'फ्रंट मॅटर',
   'Front matter: {name}': 'शीर्षमाहिती: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':
@@ -913,6 +1027,7 @@ export const mr: Dictionary = {
   Comment: 'टिप्पणी',
   'Always on top': 'नेहमी वर',
   'What is new': 'नवीन काय',
+  'Download the app': 'ॲप डाउनलोड करा',
   'Report an issue': 'अडचण सांगा',
   'Move the line up': 'ओळ वर हलवा',
   'Move the line down': 'ओळ खाली हलवा',
@@ -991,6 +1106,23 @@ export const mr: Dictionary = {
   'Layout: {name}': 'मांडणी: {name}',
   'Space: {name}': 'स्पेस: {name}',
   'Theme: {name}': 'थीम: {name}',
+  'AI account: {name}': 'एआय खाते: {name}',
+  Accounts: 'खाती',
+  Access: 'प्रवेश',
+  Set: 'सेट केले',
+  'Start over': 'पुन्हा सुरू करा',
+  'Sign in here': 'येथे साइन इन करा',
+  '{device} wants your AI accounts': '{device} ला तुमची एआय खाती हवी आहेत',
+  '{device} offers this device your AI vault': '{device} या डिव्हाइसला तुमचा AI व्हॉल्ट देत आहे',
+  Join: 'सामील व्हा',
+  'Allow this device on another one': 'दुसऱ्या डिव्हाइसवर या डिव्हाइसला परवानगी द्या',
+  'On every device you sign in to, end-to-end encrypted.':
+    'तुम्ही साइन इन कराल त्या प्रत्येक डिव्हाइसवर, एंड-टू-एंड एन्क्रिप्टेड.',
+  'Sign in to have them on every device.': 'प्रत्येक डिव्हाइसवर मिळवण्यासाठी साइन इन करा.',
+  'Agents on this computer connect on their own': 'या संगणकावरील एजंट आपोआप जोडले जातात',
+  Helpers: 'सहाय्यक',
+  'Start helpers on your AI accounts': 'तुमच्या एआय खात्यांवर सहाय्यक सुरू करा',
+  Delegated: 'सोपवले',
   'Code theme: {name}': 'कोड थीम: {name}',
   'Delete a layout': 'मांडणी हटवा',
   // Keyboards and modal editing
@@ -1059,6 +1191,7 @@ export const mr: Dictionary = {
   'Double-click to write': 'लिहिण्यासाठी दोनदा क्लिक',
   'Another colour': 'दुसरा रंग',
   'Turn into a note': 'नोंद करा',
+  Arrange: 'मांडणी करा',
   'Bring to front': 'सर्वात पुढे आणा',
   'Bring forward': 'पुढे आणा',
   'Send backward': 'मागे पाठवा',
@@ -1080,6 +1213,12 @@ export const mr: Dictionary = {
   'Export as PNG': 'PNG म्हणून एक्सपोर्ट करा',
   'Export as SVG': 'SVG म्हणून एक्सपोर्ट करा',
   'Export as PDF': 'PDF म्हणून एक्सपोर्ट करा',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF इंपोर्ट करा',
+  'Choose how to add the pages to the canvas.': 'पानं कॅनव्हासवर कशी जोडायची ते निवडा.',
+  'Single page': 'एक पान',
+  'All pages': 'सर्व पानं',
+  'Choose a page': 'पान निवडा',
   // The canvas: what its own keys are called
   'Delete what is picked': 'निवडलेले हटवा',
   'Nudge left': 'थोडे डावीकडे',
@@ -1140,8 +1279,8 @@ export const mr: Dictionary = {
   'Release channel': 'रिलीज चॅनेल',
   Stable: 'स्थिर',
   Unstable: 'अस्थिर',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'स्थिर अधिकृत रिलीज घेतो, अस्थिर main वरील प्रत्येक पुश घेतो आणि तुटू शकतो.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'स्थिर प्रकाशित आवृत्त्या घेतो, अस्थिर एज बिल्ड घेतो आणि तुटू शकतो.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'इंपोर्ट',
@@ -1196,13 +1335,15 @@ export const mr: Dictionary = {
   '{count} tables inside notes do not come over': 'नोंदींतील {count} तक्ते येत नाहीत',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} जोडपत्रे या Mac वर नसून iCloud मध्ये आहेत',
+  '{count} files are in iCloud rather than on this Mac':
+    '{count} फायली या Mac वर नसून iCloud मध्ये आहेत',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS त्या नोंदी Full Disk Access च्या मागे ठेवते.',
   'There are no notes in Apple Notes on this Mac.': 'या Mac वर Apple Notes मध्ये नोंदी नाहीत.',
   'Those notes could not be read.': 'त्या नोंदी वाचता आल्या नाहीत.',
   'Read them from this Mac': 'या Mac वरून वाचा',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    'Full Disk Access मध्ये nibeditor चालू करा, मग पुन्हा विचारा.',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    'Full Disk Access मध्ये Orden चालू करा, मग पुन्हा विचारा.',
   'Open the setting': 'सेटिंग उघडा',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'Apple Journal स्वतः निर्यात करते: Journal, सेटिंग्ज, निर्यात. Apple Notes ला निर्यात नाही, म्हणून ज्या Mac वर ते आहे त्यापासून दूर, येथे टाकायची गोष्ट म्हणजे एखाद्या निर्यातकाने लिहिलेला फोल्डर.',
@@ -1308,14 +1449,15 @@ export const mr: Dictionary = {
   'OpenAI-compatible': 'OpenAI शी सुसंगत',
   'Base URL': 'मूळ URL',
   'API key': 'API कळ',
-  'Set on this device': 'या उपकरणावर ठरवलेली',
   Optional: 'ऐच्छिक',
   'List models': 'मॉडेल आणा',
   'Asking…': 'विचारत आहे…',
   'No providers yet.': 'अद्याप पुरवठादार नाही.',
   'Add {name}': '{name} जोडा',
-  'Keys stay in the secure store on this device.': 'कळा या उपकरणाच्या सुरक्षित साठ्यात राहतात.',
   'This browser holds the keys in its own storage.': 'हा ब्राउझर कळा स्वतःच्या साठ्यात ठेवतो.',
+  'Keep this browser’s keys in the vault': 'या ब्राउझरच्या की व्हॉल्टमध्ये ठेवा',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'मग प्रत्येक डिव्हाइसच्या की या ब्राउझरच्या स्टोरेजमध्ये ठेवल्या जातील, जिथे पेजमध्ये शिरलेली स्क्रिप्ट त्या वाचू शकते.',
   'AI can be wrong. Check the facts.': 'AI चुकू शकते. तथ्ये तपासा.',
   'Used by the glasses': 'चष्मा वापरतो',
   'Could not read the models.': 'मॉडेल वाचता आले नाहीत.',
@@ -1357,7 +1499,6 @@ export const mr: Dictionary = {
   'A cited report': 'उद्धृत अहवाल',
   'A helper in the background': 'पार्श्वभूमीत मदतनीस',
   'A side question': 'उपप्रश्न',
-  'Agent mode': 'एजंट मोड',
   'Agent profile': 'एजंट प्रोफाइल',
   'Archive the thread': 'थ्रेड संग्रहित करा',
   'Approve mode': 'मंजुरी मोड',
@@ -1476,8 +1617,6 @@ export const mr: Dictionary = {
   // Web tabs
   Reload: 'पुन्हा लोड करा',
   'Hard reload': 'पूर्णपणे पुन्हा लोड करा',
-  'Clip this page': 'हे पान जतन करा',
-  'Clip the link': 'दुवा जतन करा',
   'Open in the browser': 'ब्राउझरमध्ये उघडा',
   'Show it here': 'येथे दाखवा',
   Website: 'संस्थळ',
@@ -1566,8 +1705,9 @@ export const mr: Dictionary = {
   'that is not a theme': 'ती थीम नाही',
   'no such theme': 'अशी थीम नाही',
   'choose a model first': 'आधी मॉडेल निवडा',
+  'set an OpenAI key in Orden’s settings first': 'आधी Orden च्या सेटिंग्जमध्ये OpenAI किल्ली ठेवा',
   'set an OpenAI key in nibeditor’s settings first':
-    'आधी nibeditor च्या सेटिंग्जमध्ये OpenAI किल्ली ठेवा',
+    'आधी Orden च्या सेटिंग्जमध्ये OpenAI किल्ली ठेवा',
   'that is a lot of questions - try again later': 'फार प्रश्न झाले - नंतर पुन्हा पाहा',
   'that is too much audio': 'हा ऑडिओ फार जास्त आहे',
   'that is more than a spoken command': 'हे एका बोललेल्या कमांडपेक्षा जास्त आहे',
@@ -1591,7 +1731,6 @@ export const mr: Dictionary = {
   Nothing: 'काहीही नाही',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'हे दृश्य बुकमार्क करा',
   Keep: 'ठेवा',
 
   // Which side of the window a panel sits on.
@@ -1613,7 +1752,6 @@ export const mr: Dictionary = {
   'New tab': 'नवीन टॅब',
   'Full screen': 'फुल स्क्रीन',
   'Print…': 'प्रिंट करा…',
-  'Save page': 'पेज सेव्ह करा',
   'Share…': 'शेअर करा…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1656,7 +1794,6 @@ export const mr: Dictionary = {
   Blocked: 'ब्लॉक केले',
   'Reset permissions': 'परवानग्या रीसेट करा',
   'Turn into': 'मध्ये बदला',
-  'Bookmark these blocks': 'हे ब्लॉक बुकमार्क करा',
   Foldable: 'दुमडता येईल',
   'Starts folded': 'दुमडलेले सुरू',
   // Where a space keeps what websites store
@@ -1673,6 +1810,15 @@ export const mr: Dictionary = {
   'Bring all to front': 'सर्व पुढे आणा',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'कॉपी पूर्ववत करा',
+  'Devices with your AI vault': 'तुमचा AI व्हॉल्ट असलेली डिव्हाइसेस',
+  'This device': 'हे डिव्हाइस',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'ते डिव्हाइस आता तुमची AI खाती वाचू शकणार नाही, आणि बाकीच्यांना नवी की मिळेल.',
+  'Also remove this device from your AI vault?': 'हे डिव्हाइस तुमच्या AI व्हॉल्टमधूनही काढायचे?',
+  'Remove and sign out': 'काढा आणि साइन आउट करा',
+  'Undo making {name}': '{name} बनवणे पूर्ववत करा',
+  'Undo the deletion': 'हटवणे पूर्ववत करा',
+  'Undo the move': 'हलवणे पूर्ववत करा',
   'Redo the last file change': 'फाइलमधील शेवटचा बदल पुन्हा करा',
   'Select down': 'खाली निवडा',
   'Select up': 'वर निवडा',
@@ -1716,7 +1862,6 @@ export const mr: Dictionary = {
   '{key} in a terminal': 'टर्मिनलमध्ये {key}',
   'Always ask': 'नेहमी विचारा',
   'Open another': 'आणखी एक उघडा',
-  'Open in terminal': 'टर्मिनलमध्ये उघडा',
   Clear: 'साफ करा',
   'Exited with code {code}': 'कोड {code} सह बंद झाले',
   'Could not start {shell}': '{shell} सुरू करता आले नाही',
@@ -1725,18 +1870,8 @@ export const mr: Dictionary = {
   'Stop what is running in {name}?': '{name} मध्ये चालू असलेले थांबवायचे?',
   'Stop what is running in these terminals?': 'या टर्मिनलमध्ये चालू असलेले थांबवायचे?',
   'Paste {count} lines?': { one: '{count} ओळ पेस्ट करायची?', other: '{count} ओळी पेस्ट करायच्या?' },
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': 'मूळ ब्राउझर',
-  // The engine web tabs run on
-  Engine: 'इंजीन',
-  Relaunch: 'पुन्हा सुरू करा',
-  'Chromium did not start': 'Chromium सुरू झाले नाही',
-  'No connection': 'कनेक्शन नाही',
-  'Not in this release': 'या रिलीझमध्ये नाही',
-  'Needs an update': 'अपडेट हवे',
-  'Signature did not match': 'स्वाक्षरी जुळली नाही',
-  'Disk full': 'डिस्क भरली',
-  'Could not be installed': 'इंस्टॉल करता आले नाही',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ची संपादने पूर्ववत करा',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1839,7 +1974,7 @@ export const mr: Dictionary = {
   'Always on this site': 'या साइटवर नेहमी',
   'Agents stopped': 'एजंट थांबवले',
   'Agent tabs closed': 'एजंट टॅब बंद झाले',
-  'nibeditor is still running for your agents': 'तुमच्या एजंटसाठी nibeditor अजूनही चालू आहे',
+  'Orden is still running for your agents': 'तुमच्या एजंटसाठी Orden अजूनही चालू आहे',
   '{client} wants to connect': '{client} जोडू इच्छितो',
   // Web logins that travel, and the devices of an account
   'no such device': 'असे डिव्हाइस नाही',
@@ -1855,11 +1990,12 @@ export const mr: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'या संगणकावरील एजंट',
   'Your account’s connector': 'तुमच्या खात्याचा कनेक्टर',
-  'nibeditor asks you once, the first time it connects.':
-    'पहिल्यांदा जोडले जाताना nibeditor तुम्हाला एकदाच विचारते.',
+  'Orden asks you once, the first time it connects.':
+    'पहिल्यांदा जोडले जाताना Orden तुम्हाला एकदाच विचारते.',
   'A client on another machine?': 'दुसऱ्या मशीनवरील क्लायंट?',
   'Shown only once.': 'फक्त एकदाच दाखवले जाते.',
   'Remove {name}?': '{name} काढायचा?',
+  'End {name}?': '{name} संपवायचा?',
   'Its token stops working.': 'त्याचा टोकन काम करणे थांबवेल.',
   'Added {date}': '{date} रोजी जोडले',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':
@@ -1880,7 +2016,6 @@ export const mr: Dictionary = {
   'Change notes': 'नोंदी बदलणे',
   'See what you are looking at': 'तुम्ही काय पाहत आहात ते पाहणे',
   'Move and rename files': 'फाइल्स हलवणे आणि नाव बदलणे',
-  'Open tabs and bookmarks': 'टॅब आणि बुकमार्क उघडणे',
   'Bring a tab to the front': 'एखादा टॅब पुढे आणणे',
   'Browse in tabs of its own': 'स्वतःच्या टॅबमध्ये ब्राउझ करणे',
   'Read what pages load': 'पाने काय लोड करतात ते वाचणे',
@@ -1902,14 +2037,11 @@ export const mr: Dictionary = {
   'Without your logins': 'तुमच्या लॉग-इनशिवाय',
   'Calls a minute': 'प्रति मिनिट कॉल',
   'Pages a minute': 'प्रति मिनिट पाने',
+  'Browser memory limit': 'ब्राउझर मेमरी मर्यादा',
   '{count} calls': {
     one: '{count} कॉल',
     other: '{count} कॉल',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': '{device} वर उघडे आहे',
-  'Use here': 'येथे वापरा',
-  '{device} wants your web logins': '{device} ला तुमचे वेब लॉगिन हवे आहेत',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'झटपट प्रश्न',
@@ -1976,7 +2108,7 @@ export const mr: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'स्नूझ',
   Reminders: 'स्मरणपत्रे',
-  'Reminders ring while nibeditor is open': 'nibeditor उघडे असताना स्मरणपत्रे वाजतात',
+  'Reminders ring while Orden is open': 'Orden उघडे असताना स्मरणपत्रे वाजतात',
   Automatic: 'स्वयंचलित',
   'Stay in the tray': 'ट्रेमध्ये राहा',
   'Exact alarms': 'अचूक अलार्म',
@@ -2019,7 +2151,6 @@ export const mr: Dictionary = {
   'Any of them': 'कोणतेही',
   Compare: 'तुलना',
   'Add a filter': 'फिल्टर जोडा',
-  'Reschedule to today': 'आजवर हलवा',
   Collapse: 'संकुचित करा',
   Expand: 'विस्तारा',
   Summary: 'सारांश',
@@ -2041,7 +2172,6 @@ export const mr: Dictionary = {
   Layout: 'मांडणी',
   Overdue: 'मुदत संपलेली',
   Upcoming: 'आगामी',
-  Logbook: 'लॉगबुक',
   Project: 'प्रकल्प',
   Label: 'लेबल',
   List: 'यादी',
@@ -2227,4 +2357,11 @@ export const mr: Dictionary = {
   'Search this chat': 'या चॅटमध्ये शोधा',
   'Add as task': 'काम म्हणून जोडा',
   'Save as note': 'नोंद म्हणून जतन करा',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'पहाट',
+  Lagoon: 'खाडी',
+  Lilac: 'लायलॅक',
+  Peach: 'पीच',
+  Sage: 'सेज',
+  Mist: 'धुके',
 }

@@ -10,21 +10,127 @@ export const sw: Dictionary = {
   'Do you write code?': 'Je, unaandika msimbo?',
   Yes: 'Ndiyo',
   No: 'Hapana',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'Kutoka programu nyingine: {key}',
+  'From other apps: set in your system settings':
+    'Kutoka programu nyingine: weka kwenye mipangilio ya mfumo',
+  'From other apps: bind {command} in your system settings':
+    'Kutoka programu nyingine: unganisha {command} kwenye mipangilio ya mfumo',
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'Muhimu',
+  'Add to Essentials': 'Ongeza kwenye Muhimu',
+  'Remove from Essentials': 'Ondoa kwenye Muhimu',
+  'Add block to Essentials': 'Ongeza kizuizi kwenye Muhimu',
+  'Add blocks to Essentials': 'Ongeza vizuizi kwenye Muhimu',
+  'Add view to Essentials': 'Ongeza mwonekano kwenye Muhimu',
+  'Open tabs and Essentials': 'Kufungua vichupo na Muhimu',
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor sasa ni Orden',
+  'Notes from nibeditor.com': 'Madokezo kutoka nibeditor.com',
+  'Nothing there': 'Hakuna kitu hapo',
+  // AI: the three permission modes
+  'Full permissions': 'Ruhusa kamili',
+  'Auto mode': 'Hali ya kiotomatiki',
+  'Full permissions: nothing is asked first': 'Ruhusa kamili: hakuna kinachoulizwa kwanza',
+  // Import: Zen's tabs
+  'Import from Zen': 'Ingiza kutoka Zen',
+  'Containers stay in Zen': 'Kontena zinabaki ndani ya Zen',
+  'Zen’s tabs could not be read.': 'Vichupo vya Zen havikuweza kusomwa.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'Kontena zinabaki ndani ya Firefox',
+  'Nothing could be read out of {browser}.': 'Hakuna kilichoweza kusomwa kutoka {browser}.',
+  'Saved groups': 'Vikundi vilivyohifadhiwa',
+  'Tab group': 'Kikundi cha vichupo',
+  'Bookmarks toolbar': 'Upau wa alamisho',
+  'Bookmarks menu': 'Menyu ya alamisho',
+  'Other bookmarks': 'Alamisho zingine',
+  'Mobile bookmarks': 'Alamisho za simu',
+  'Bookmarks bar': 'Upau wa alamisho',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} hufunga vichupo vyake vilivyo wazi, kwa hivyo alamisho zake pekee zimekuja.',
+  '{count} pages not on the web stay behind': {
+    one: 'Ukurasa {count} usio kwenye wavuti umebaki',
+    other: 'Kurasa {count} zisizo kwenye wavuti zimebaki',
+  },
+  'Reading List': 'Orodha ya Kusoma',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS huweka vichupo na alamisho za Safari nyuma ya Ufikiaji Kamili wa Diski. Washa Orden hapo, kisha uombe tena.',
+  // Settings: note types
+  'Page note': 'Dokezo la kurasa',
+  'Web note': 'Dokezo la wavuti',
+  'Private tab': 'Kichupo cha faragha',
+  'Note types': 'Aina za madokezo',
+  // Tasks: Upcoming's weeks
+  'Previous week': 'Wiki iliyopita',
+  // Tasks: projects placed in the panel, and their folder
+  'Add project above': 'Ongeza mradi juu',
+  'Add project below': 'Ongeza mradi chini',
+  'Projects folder': 'Folda ya miradi',
+  // Tasks: a repeating task skipped or done for good
+  Skip: 'Ruka',
+  'Complete forever': 'Kamilisha kabisa',
+  // Tasks: comments
+  Comments: 'Maoni',
+  // Tasks: filters
+  Filters: 'Vichujio',
+  'Add filter': 'Ongeza kichujio',
+  'Edit filter': 'Hariri kichujio',
+  // Tasks: a project's sections
+  'Add section': 'Ongeza sehemu',
+  '{name} (copy)': '{name} (nakala)',
+  'Its tasks are deleted with it.': 'Kazi zake zinafutwa pamoja nayo.',
+  // Tasks: keys, selection and the undo toast
+  Completed: 'Imekamilika',
+  'Remove date': 'Ondoa tarehe',
+  'Next task': 'Kazi inayofuata',
+  'Previous task': 'Kazi iliyopita',
+  'Add task at the top': 'Ongeza kazi juu',
+  '{count} selected': '{count} zimechaguliwa',
+  // Tasks: the Display menu
+  Display: 'Mwonekano',
+  'Completed tasks': 'Kazi zilizokamilika',
+  // Tasks: several lines pasted into quick add
+  'One task': 'Kazi moja',
+  'One per line': 'Moja kwa kila mstari',
+  // Tasks: the projects in the panel
+  Favorites: 'Vipendwa',
+  'Add project': 'Ongeza mradi',
+  'Add sub-project': 'Ongeza mradi mdogo',
+  // Tasks: the task view
+  'Sub-tasks': 'Kazi ndogo',
+  'Add sub-task': 'Ongeza kazi ndogo',
+  'New label': 'Lebo mpya',
+  'No deadline': 'Hakuna tarehe ya mwisho',
+  // Tasks: the row's menu and the scheduler
+  Reschedule: 'Panga upya',
+  'Later this week': 'Baadaye wiki hii',
+  'This weekend': 'Wikendi hii',
+  'Next weekend': 'Wikendi ijayo',
+  'Every week on {day}': 'Kila wiki siku ya {day}',
+  'Every month on day {day}': 'Kila mwezi tarehe {day}',
+  'Every year on {date}': 'Kila mwaka tarehe {date}',
+  'Type a date': 'Andika tarehe',
+  'Previous month': 'Mwezi uliopita',
+  'Next month': 'Mwezi ujao',
+  'No time': 'Hakuna saa',
+  'No repeat': 'Hakuna kurudia',
+  Complete: 'Kamilisha',
+  Reopen: 'Fungua tena',
+  Schedule: 'Panga',
+  'Open in note': 'Fungua kwenye dokezo',
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'Programu nyingine',
-  'Start fresh': 'Anza upya',
   'Import from Obsidian': 'Ingiza kutoka Obsidian',
   'Import from Notion': 'Ingiza kutoka Notion',
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'Vidokezo',
   'Silent mode': 'Hali ya kimya',
-  'Sign in to keep your notes safe and on every device.':
-    'Ingia ili madokezo yako yawe salama na kwenye kila kifaa.',
   'See how your notes connect.': 'Tazama jinsi madokezo yako yanavyounganika.',
   'Press {key} to find anything, notes and commands alike.':
     'Bonyeza {key} kupata chochote, madokezo na amri pia.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'Onyesha Markdown unapoandika',
+  'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'Kielekezi',
   'Pointing hand on buttons': 'Mkono unaoelekeza kwenye vitufe',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
@@ -40,11 +146,13 @@ export const sw: Dictionary = {
   '{count} h': '{count} saa',
   Inbox: 'Kikasha',
   Date: 'Tarehe',
+  'Start date': 'Tarehe ya kuanza',
   Priority: 'Kipaumbele',
   Reminder: 'Kikumbusho',
   Duration: 'Muda',
   'Smart dates': 'Tarehe mahiri',
   'From any app': 'Kutoka programu yoyote',
+  'Show tasks without a start date in Today': 'Onyesha kazi zisizo na tarehe ya kuanza katika Leo',
   'Every day': 'Kila siku',
   'Every weekday': 'Kila siku ya kazi',
   'Every week': 'Kila wiki',
@@ -61,6 +169,13 @@ export const sw: Dictionary = {
   Unsaved: 'Haijahifadhiwa',
   'Save to': 'Hifadhi kwenye',
   'Reloaded with the web data of {space}': 'Imepakiwa upya kwa data ya wavuti ya {space}',
+  Separate: 'Tofauti',
+  'Share this note’s web data again?': 'Shiriki tena data ya wavuti ya dokezo hili?',
+  'What its pages are signed in to on this computer is deleted.':
+    'Kile ambacho kurasa zake zimeingia kwenye kompyuta hii kitafutwa.',
+  'Share again': 'Shiriki tena',
+  'This note keeps its own web data now': 'Dokezo hili sasa lina data yake ya wavuti',
+  'Back on the shared web data': 'Imerudi kwenye data ya wavuti iliyoshirikiwa',
   'Add a page': 'Ongeza ukurasa',
   'Add a page after this': 'Ongeza ukurasa baada ya huu',
   'Delete this page': 'Futa ukurasa huu',
@@ -81,6 +196,8 @@ export const sw: Dictionary = {
   Dots: 'Vitone',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'Zungusha turubai kwa vidole viwili',
+  'Turn upright': 'Nyoosha',
   Canvas: 'Turubai',
   Card: 'Kadi',
   'Note or picture': 'Dokezo au picha',
@@ -95,7 +212,6 @@ export const sw: Dictionary = {
   'New window': 'Dirisha jipya',
   New: 'Mpya',
   'New space': 'Nafasi mpya',
-  '{name}: switch space': '{name}: badili nafasi',
   Untitled: 'Bila jina',
   Space: 'Nafasi',
   'Name the space': 'Pa nafasi jina',
@@ -140,8 +256,6 @@ export const sw: Dictionary = {
   'Loading…': 'Inapakia…',
   'Create a space': 'Unda nafasi',
   'Import a folder': 'Ingiza folda',
-  'Sign in to sync': 'Ingia ili kusawazisha',
-  'Create account': 'Unda akaunti',
   'Delete space': 'Futa nafasi',
   'Delete {name}?': 'Futa {name}?',
   'Every note in this space is deleted from your computer.':
@@ -159,6 +273,11 @@ export const sw: Dictionary = {
   Unpin: 'Ondoa bandiko',
   Close: 'Funga',
   'Close pinned tab?': 'Funga kichupo kilichobandikwa?',
+  'Save changes to {name}?': 'Hifadhi mabadiliko katika {name}?',
+  'Save changes to these tabs?': 'Hifadhi mabadiliko katika vichupo hivi?',
+  'Unsaved words go to Recently deleted.':
+    'Maneno yasiyohifadhiwa huenda kwenye Vilivyofutwa hivi karibuni.',
+  'Don’t save': 'Usihifadhi',
   'Close others': 'Funga nyingine',
   'Close tabs to the right': 'Funga vichupo vya kulia',
   'Close tabs to the left': 'Funga vichupo vya kushoto',
@@ -195,9 +314,6 @@ export const sw: Dictionary = {
   'Move this note': 'Hamisha dokezo hili',
   'Move up': 'Panda juu',
   'Move down': 'Shuka chini',
-  Bookmark: 'Alamisho',
-  'Remove bookmark': 'Ondoa alamisho',
-  'Leave out of search': 'Acha nje ya utafutaji',
   'Search here again': 'Tafuta hapa tena',
   'Undo the last file change': 'Tendua badiliko la mwisho la faili',
   'Undo moving {name}': 'Tendua kuhamisha {name}',
@@ -247,7 +363,6 @@ export const sw: Dictionary = {
   'Remove group': 'Ondoa kundi',
   'Out of the group': 'Toa kwenye kundi',
   Make: 'Tengeneza',
-  'Bookmark this block': 'Alamisha kizuizi hiki',
   Panels: 'Paneli',
   Outline: 'Muhtasari',
   'Stay on this note': 'Baki kwenye dokezo hili',
@@ -514,8 +629,8 @@ export const sw: Dictionary = {
   'Asking OpenAI which models this key can use':
     'Inauliza OpenAI modeli zipi kitufe hiki kinaweza kutumia',
   'Could not reach OpenAI': 'OpenAI haikufikiwa',
-  'That key cannot use any of the models nibeditor asks for.':
-    'Kitufe hicho haiwezi kutumia modeli yoyote ambayo nibeditor inaomba.',
+  'That key cannot use any of the models Orden asks for.':
+    'Kitufe hicho haiwezi kutumia modeli yoyote ambayo Orden inaomba.',
   'No reasoning': 'Hakuna ufikirio',
   Minimal: 'Kidogo sana',
   Low: 'Chini',
@@ -537,7 +652,7 @@ export const sw: Dictionary = {
   Mode: 'Hali',
   // The window's own edges; see appearance.rs
   Window: 'Dirisha',
-  'nibeditor’s own': 'Ya nibeditor',
+  'Orden’s own': 'Ya Orden',
   'The system’s': 'Ya mfumo',
   'Window frame': 'Fremu ya dirisha',
   System: 'Mfumo',
@@ -600,6 +715,7 @@ export const sw: Dictionary = {
   '{done} of {total}': '{done} ya {total}',
   'Sync failed': 'Usawazishaji umeshindikana',
   '{name} could not be written.': '{name} haikuandikwa.',
+  '{name} could not be read.': '{name} haikusomeka.',
   'Text size': 'Ukubwa wa maandishi',
   'Line spacing': 'Nafasi kati ya mistari',
   'Line width': 'Upana wa mstari',
@@ -660,8 +776,10 @@ export const sw: Dictionary = {
   '{used} of {limit} used.': '{used} kati ya {limit} zimetumika.',
   'That image does not fit in your storage.': 'Picha hiyo haitoshi kwenye hifadhi yako.',
   'out of space': 'hifadhi imeisha',
-  'nibeditor {version} is ready to install.': 'nibeditor {version} iko tayari kusakinishwa.',
+  'Orden {version} is ready to install.': 'Orden {version} iko tayari kusakinishwa.',
+  'Orden {version} is available.': 'Orden {version} inapatikana.',
   'Restart now': 'Anzisha tena sasa',
+  'Move to Applications': 'Hamishia kwenye Programu',
   Later: 'Baadaye',
   More: 'Zaidi',
   'Open notes': 'Fungua madokezo',
@@ -686,11 +804,9 @@ export const sw: Dictionary = {
   Continue: 'Endelea',
   'Send a new code': 'Tuma kodi mpya',
   'Code sent to': 'Kodi imetumwa kwa',
-  'You already have notes on this computer.': 'Una madokezo tayari kwenye kompyuta hii.',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
-    'Yahifadhi na yataingia kwenye akaunti yako. Yafute na kile akaunti yako inacho pekee kitasalia - hili haliwezi kutendua.',
-  'Keep them': 'Yahifadhi',
-  'Erase them': 'Yafute',
+  'This device already has notes.': 'Kifaa hiki tayari kina madokezo.',
+  Merge: 'Unganisha',
+  'Keep separate': 'Weka kando',
   'Digit {number}': 'Tarakimu {number}',
   'Resend in {seconds}s': 'Tuma tena baada ya {seconds}s',
   'Last synced {time}.': 'Usawazishaji wa mwisho {time}.',
@@ -739,14 +855,14 @@ export const sw: Dictionary = {
   'Reads your notes.': 'Husoma madokezo yako.',
   'Reads and writes your notes.': 'Husoma na kuandika madokezo yako.',
   Other: 'Nyingine',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'Msaidizi wa AI anaweza kusoma madokezo yako - na kuyabadilisha, ukikubali. Huingia kwa barua pepe yako ya nibeditor; hakuna kitu cha kubandika.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'Msaidizi wa AI anaweza kusoma madokezo yako - na kuyabadilisha, ukikubali. Huingia kwa barua pepe yako ya Orden; hakuna kitu cha kubandika.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'Katika Claude, fungua Settings → Connectors na bofya Add custom connector.',
   'Open Claude’s connectors': 'Fungua viunganishi vya Claude',
   'Fill in the two fields and click Add.': 'Jaza sehemu mbili na bofya Add.',
-  'Click Connect and sign in with your nibeditor email.':
-    'Bofya Connect na uingie kwa barua pepe yako ya nibeditor.',
+  'Click Connect and sign in with your Orden email.':
+    'Bofya Connect na uingie kwa barua pepe yako ya Orden.',
   'Using Claude Code instead?': 'Unatumia Claude Code?',
   Command: 'Amri',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -757,16 +873,15 @@ export const sw: Dictionary = {
   'Open ChatGPT’s plugins': 'Fungua programu-jalizi za ChatGPT',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Hakuna sehemu ya Plugins au kitufe cha kuongeza? Washa Developer mode kwanza, chini ya Settings → Security and login.',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'Ingia kwa barua pepe yako ya nibeditor ChatGPT ikiuliza.',
-  'To use it in a chat, type @ and pick nibeditor.':
-    'Kuitumia kwenye gumzo, andika @ na chagua nibeditor.',
+  'Sign in with your Orden email when ChatGPT asks.':
+    'Ingia kwa barua pepe yako ya Orden ChatGPT ikiuliza.',
+  'To use it in a chat, type @ and pick Orden.': 'Kuitumia kwenye gumzo, andika @ na chagua Orden.',
   'Server URL': 'URL ya seva',
   Authentication: 'Uthibitishaji',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'Acha mipangilio ya juu ya OAuth kama ilivyo na tia alama “I understand and want to continue”.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'Mteja yeyote wa MCP anayetumia Streamable HTTP na OAuth. Mpe URL: hujiandikisha mwenyewe na kufungua ukurasa wa kuingia wa nibeditor.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'Mteja yeyote wa MCP anayetumia Streamable HTTP na OAuth. Mpe URL: hujiandikisha mwenyewe na kufungua ukurasa wa kuingia wa Orden.',
   'Show config': 'Onyesha usanidi',
   'For a client that takes a JSON block instead of a URL.':
     'Kwa mteja anayechukua kizuizi cha JSON badala ya URL.',
@@ -836,7 +951,7 @@ export const sw: Dictionary = {
   'Display name': 'Jina la kuonyesha',
   'Your name': 'Jina lako',
   Email: 'Barua pepe',
-  'On nibeditor.com': 'Kwenye nibeditor.com',
+  'On orden.so': 'Kwenye orden.so',
   'Your own domain': 'Kikoa chako',
   'Switching gives up {name}.': 'Kubadili kunaacha {name}.',
   Page: 'Ukurasa',
@@ -908,8 +1023,9 @@ export const sw: Dictionary = {
   'No footnotes in this note': 'Hakuna tanbihi katika dokezo hili',
   'Stack tabs': 'Panga vichupo safu',
   'Unstack tabs': 'Ondoa safu za vichupo',
-  'High contrast': 'Utofautishaji wa juu',
+  Contrast: 'Utofautishaji',
   Glass: 'Kioo',
+  Classic: 'Asili',
   'Front matter': 'Front matter',
   'Front matter: {name}': 'Data ya kichwa: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':
@@ -920,6 +1036,7 @@ export const sw: Dictionary = {
   Comment: 'Maoni',
   'Always on top': 'Juu kila wakati',
   'What is new': 'Mapya',
+  'Download the app': 'Pakua programu',
   'Report an issue': 'Ripoti tatizo',
   'Move the line up': 'Panda mstari juu',
   'Move the line down': 'Shusha mstari chini',
@@ -1000,6 +1117,24 @@ export const sw: Dictionary = {
   'Layout: {name}': 'Mpangilio: {name}',
   'Space: {name}': 'Nafasi: {name}',
   'Theme: {name}': 'Mandhari: {name}',
+  'AI account: {name}': 'Akaunti ya AI: {name}',
+  Accounts: 'Akaunti',
+  Access: 'Ufikiaji',
+  Set: 'Imewekwa',
+  'Start over': 'Anza upya',
+  'Sign in here': 'Ingia hapa',
+  '{device} wants your AI accounts': '{device} inaomba akaunti zako za AI',
+  '{device} offers this device your AI vault': '{device} inakipa kifaa hiki kasha lako la AI',
+  Join: 'Jiunge',
+  'Allow this device on another one': 'Ruhusu kifaa hiki kwenye kingine',
+  'On every device you sign in to, end-to-end encrypted.':
+    'Kwenye kila kifaa unachoingia, kimesimbwa mwisho hadi mwisho.',
+  'Sign in to have them on every device.': 'Ingia ili uwe nazo kwenye kila kifaa.',
+  'Agents on this computer connect on their own':
+    'Mawakala kwenye kompyuta hii hujiunganisha wenyewe',
+  Helpers: 'Wasaidizi',
+  'Start helpers on your AI accounts': 'Anzisha wasaidizi kwenye akaunti zako za AI',
+  Delegated: 'Imekabidhiwa',
   'Code theme: {name}': 'Mandhari ya kodi: {name}',
   'Delete a layout': 'Futa mpangilio',
   // Keyboards and modal editing
@@ -1068,6 +1203,7 @@ export const sw: Dictionary = {
   'Double-click to write': 'Bofya mara mbili kuandika',
   'Another colour': 'Rangi nyingine',
   'Turn into a note': 'Fanya dokezo',
+  Arrange: 'Panga',
   'Bring to front': 'Lete mbele kabisa',
   'Bring forward': 'Lete mbele',
   'Send backward': 'Rudisha nyuma',
@@ -1089,6 +1225,12 @@ export const sw: Dictionary = {
   'Export as PNG': 'Toa kama PNG',
   'Export as SVG': 'Toa kama SVG',
   'Export as PDF': 'Toa kama PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'Ingiza PDF',
+  'Choose how to add the pages to the canvas.': 'Chagua jinsi ya kuongeza kurasa kwenye turubai.',
+  'Single page': 'Ukurasa mmoja',
+  'All pages': 'Kurasa zote',
+  'Choose a page': 'Chagua ukurasa',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Futa kilichoteuliwa',
   'Nudge left': 'Sukuma kushoto',
@@ -1149,8 +1291,8 @@ export const sw: Dictionary = {
   'Release channel': 'Njia ya matoleo',
   Stable: 'Imara',
   Unstable: 'Isiyo imara',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Imara hufuata matoleo rasmi, Isiyo imara hufuata kila usukumo kwenye main na inaweza kuvunjika.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Imara hufuata matoleo yaliyotolewa, Isiyo imara hufuata builds za edge na inaweza kuvunjika.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Ingiza',
@@ -1208,14 +1350,16 @@ export const sw: Dictionary = {
   '{count} tables inside notes do not come over': 'Majedwali {count} ndani ya madokezo hayavuki',
   '{count} attachments are in iCloud rather than on this Mac':
     'Viambatisho {count} viko kwenye iCloud badala ya kwenye Mac hii',
+  '{count} files are in iCloud rather than on this Mac':
+    'Faili {count} ziko kwenye iCloud badala ya kwenye Mac hii',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS huweka madokezo hayo nyuma ya Full Disk Access.',
   'There are no notes in Apple Notes on this Mac.':
     'Hakuna madokezo katika Apple Notes kwenye Mac hii.',
   'Those notes could not be read.': 'Madokezo hayo hayakuweza kusomwa.',
   'Read them from this Mac': 'Yasome kutoka Mac hii',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    'Washa nibeditor katika Full Disk Access, kisha jaribu tena.',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    'Washa Orden katika Full Disk Access, kisha jaribu tena.',
   'Open the setting': 'Fungua mpangilio',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'Apple Journal hujitoa yenyewe: Journal, Mipangilio, Toa. Apple Notes haina utoaji, kwa hivyo mbali na Mac iliyo nayo, kinachoachwa hapa ni folda iliyoandikwa na kitoaji.',
@@ -1324,16 +1468,16 @@ export const sw: Dictionary = {
   'OpenAI-compatible': 'Inaoana na OpenAI',
   'Base URL': 'URL ya msingi',
   'API key': 'Kitufe cha API',
-  'Set on this device': 'Imewekwa kwenye kifaa hiki',
   Optional: 'Si lazima',
   'List models': 'Pata modeli',
   'Asking…': 'Inauliza…',
   'No providers yet.': 'Hakuna watoa huduma bado.',
   'Add {name}': 'Ongeza {name}',
-  'Keys stay in the secure store on this device.':
-    'Vitufe vinasalia kwenye hifadhi salama ya kifaa hiki.',
   'This browser holds the keys in its own storage.':
     'Kivinjari hiki huhifadhi vitufe kwenye hifadhi yake.',
+  'Keep this browser’s keys in the vault': 'Weka funguo za kivinjari hiki kwenye kasha',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'Kisha funguo za kila kifaa zitahifadhiwa kwenye hifadhi ya kivinjari hiki, ambapo hati iliyoingia kwenye ukurasa inaweza kuzisoma.',
   'AI can be wrong. Check the facts.': 'AI inaweza kukosea. Hakiki ukweli.',
   'Used by the glasses': 'Inatumiwa na miwani',
   'Could not read the models.': 'Modeli hazikusomwa.',
@@ -1375,7 +1519,6 @@ export const sw: Dictionary = {
   'A cited report': 'Ripoti yenye vyanzo',
   'A helper in the background': 'Msaidizi nyuma ya pazia',
   'A side question': 'Swali la pembeni',
-  'Agent mode': 'Hali ya wakala',
   'Agent profile': 'Wasifu wa wakala',
   'Archive the thread': 'Hifadhi uzi',
   'Approve mode': 'Hali ya kuidhinisha',
@@ -1494,8 +1637,6 @@ export const sw: Dictionary = {
   // Web tabs
   Reload: 'Pakia tena',
   'Hard reload': 'Pakia upya kabisa',
-  'Clip this page': 'Hifadhi ukurasa huu',
-  'Clip the link': 'Hifadhi kiungo',
   'Open in the browser': 'Fungua kwenye kivinjari',
   'Show it here': 'Ionyeshe hapa',
   Website: 'Tovuti',
@@ -1588,8 +1729,10 @@ export const sw: Dictionary = {
   'that is not a theme': 'hiyo si mandhari',
   'no such theme': 'hakuna mandhari hiyo',
   'choose a model first': 'chagua modeli kwanza',
+  'set an OpenAI key in Orden’s settings first':
+    'weka kitufe cha OpenAI kwenye mipangilio ya Orden kwanza',
   'set an OpenAI key in nibeditor’s settings first':
-    'weka kitufe cha OpenAI kwenye mipangilio ya nibeditor kwanza',
+    'weka kitufe cha OpenAI kwenye mipangilio ya Orden kwanza',
   'that is a lot of questions - try again later': 'hayo ni maswali mengi - jaribu tena baadaye',
   'that is too much audio': 'hiyo ni sauti nyingi mno',
   'that is more than a spoken command': 'hiyo ni zaidi ya amri inayosemwa',
@@ -1613,7 +1756,6 @@ export const sw: Dictionary = {
   Nothing: 'Hakuna',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Weka alama mwonekano huu',
   Keep: 'Weka',
 
   // Which side of the window a panel sits on.
@@ -1635,7 +1777,6 @@ export const sw: Dictionary = {
   'New tab': 'Kichupo kipya',
   'Full screen': 'Skrini nzima',
   'Print…': 'Chapisha…',
-  'Save page': 'Hifadhi ukurasa',
   'Share…': 'Shiriki…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1679,7 +1820,6 @@ export const sw: Dictionary = {
   Blocked: 'Imezuiwa',
   'Reset permissions': 'Badilisha ruhusa',
   'Turn into': 'Badilisha kuwa',
-  'Bookmark these blocks': 'Alamisha vizuizi hivi',
   Foldable: 'Inaweza kukunjwa',
   'Starts folded': 'Huanza imekunjwa',
   // Where a space keeps what websites store
@@ -1696,6 +1836,15 @@ export const sw: Dictionary = {
   'Bring all to front': 'Leta zote mbele',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Tendua unakili',
+  'Devices with your AI vault': 'Vifaa vyenye kasha lako la AI',
+  'This device': 'Kifaa hiki',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'Kifaa hicho hakitaweza tena kusoma akaunti zako za AI, na vingine vitapata ufunguo mpya.',
+  'Also remove this device from your AI vault?': 'Ondoa pia kifaa hiki kwenye kasha lako la AI?',
+  'Remove and sign out': 'Ondoa na utoke',
+  'Undo making {name}': 'Tendua kuunda {name}',
+  'Undo the deletion': 'Tendua ufutaji',
+  'Undo the move': 'Tendua uhamishaji',
   'Redo the last file change': 'Rudia badiliko la mwisho la faili',
   'Select down': 'Teua kwenda chini',
   'Select up': 'Teua kwenda juu',
@@ -1740,7 +1889,6 @@ export const sw: Dictionary = {
   '{key} in a terminal': '{key} kwenye terminali',
   'Always ask': 'Uliza kila mara',
   'Open another': 'Fungua nyingine',
-  'Open in terminal': 'Fungua kwenye terminali',
   Clear: 'Futa',
   'Exited with code {code}': 'Imemalizika kwa msimbo {code}',
   'Could not start {shell}': 'Imeshindwa kuanzisha {shell}',
@@ -1749,18 +1897,8 @@ export const sw: Dictionary = {
   'Stop what is running in {name}?': 'Simamisha kinachoendeshwa katika {name}?',
   'Stop what is running in these terminals?': 'Simamisha kinachoendeshwa katika terminali hizi?',
   'Paste {count} lines?': { one: 'Bandika mstari {count}?', other: 'Bandika mistari {count}?' },
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': 'Kivinjari chaguomsingi',
-  // The engine web tabs run on
-  Engine: 'Injini',
-  Relaunch: 'Zindua upya',
-  'Chromium did not start': 'Chromium haikuanza',
-  'No connection': 'Hakuna muunganisho',
-  'Not in this release': 'Haipo katika toleo hili',
-  'Needs an update': 'Inahitaji sasisho',
-  'Signature did not match': 'Sahihi hailingani',
-  'Disk full': 'Diski imejaa',
-  'Could not be installed': 'Imeshindwa kusakinishwa',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Tendua mabadiliko ya {name}',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1864,8 +2002,7 @@ export const sw: Dictionary = {
   'Always on this site': 'Daima kwenye tovuti hii',
   'Agents stopped': 'Mawakala wamesimamishwa',
   'Agent tabs closed': 'Vichupo vya mawakala vimefungwa',
-  'nibeditor is still running for your agents':
-    'nibeditor bado inaendelea kwa ajili ya mawakala wako',
+  'Orden is still running for your agents': 'Orden bado inaendelea kwa ajili ya mawakala wako',
   '{client} wants to connect': '{client} anataka kuunganishwa',
   // Web logins that travel, and the devices of an account
   'no such device': 'hakuna kifaa kama hicho',
@@ -1881,11 +2018,12 @@ export const sw: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'Mawakala kwenye kompyuta hii',
   'Your account’s connector': 'Kiunganishi cha akaunti yako',
-  'nibeditor asks you once, the first time it connects.':
-    'nibeditor hukuuliza mara moja, mara ya kwanza inapounganishwa.',
+  'Orden asks you once, the first time it connects.':
+    'Orden hukuuliza mara moja, mara ya kwanza inapounganishwa.',
   'A client on another machine?': 'Kiteja kwenye mashine nyingine?',
   'Shown only once.': 'Huonyeshwa mara moja tu.',
   'Remove {name}?': 'Ondoa {name}?',
+  'End {name}?': 'Maliza {name}?',
   'Its token stops working.': 'Tokeni yake itaacha kufanya kazi.',
   'Added {date}': 'Iliongezwa {date}',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':
@@ -1906,7 +2044,6 @@ export const sw: Dictionary = {
   'Change notes': 'Kubadilisha madokezo',
   'See what you are looking at': 'Kuona unachotazama',
   'Move and rename files': 'Kuhamisha na kubadilisha majina ya faili',
-  'Open tabs and bookmarks': 'Kufungua vichupo na alamisho',
   'Bring a tab to the front': 'Kuleta kichupo mbele',
   'Browse in tabs of its own': 'Kuvinjari katika vichupo vyake',
   'Read what pages load': 'Kusoma kile kurasa zinapakia',
@@ -1928,14 +2065,11 @@ export const sw: Dictionary = {
   'Without your logins': 'Bila kuingia kwako',
   'Calls a minute': 'Simu kwa dakika',
   'Pages a minute': 'Kurasa kwa dakika',
+  'Browser memory limit': 'Kikomo cha kumbukumbu ya kivinjari',
   '{count} calls': {
     one: 'simu {count}',
     other: 'simu {count}',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'Imefunguliwa kwenye {device}',
-  'Use here': 'Tumia hapa',
-  '{device} wants your web logins': '{device} inaomba kuingia kwako kwenye wavuti',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'Swali la haraka',
@@ -2002,7 +2136,7 @@ export const sw: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'Ahirisha',
   Reminders: 'Vikumbusho',
-  'Reminders ring while nibeditor is open': 'Vikumbusho hulia nibeditor ikiwa wazi',
+  'Reminders ring while Orden is open': 'Vikumbusho hulia Orden ikiwa wazi',
   Automatic: 'Kiotomatiki',
   'Stay in the tray': 'Baki kwenye trei',
   'Exact alarms': 'Kengele sahihi',
@@ -2045,7 +2179,6 @@ export const sw: Dictionary = {
   'Any of them': 'Yoyote',
   Compare: 'Linganisha',
   'Add a filter': 'Ongeza kichujio',
-  'Reschedule to today': 'Hamishia leo',
   Collapse: 'Kunja',
   Expand: 'Panua',
   Summary: 'Muhtasari',
@@ -2067,7 +2200,6 @@ export const sw: Dictionary = {
   Layout: 'Mpangilio',
   Overdue: 'Zimechelewa',
   Upcoming: 'Zijazo',
-  Logbook: 'Kumbukumbu',
   Project: 'Mradi',
   Label: 'Lebo',
   List: 'Orodha',
@@ -2253,4 +2385,11 @@ export const sw: Dictionary = {
   'Search this chat': 'Tafuta katika mazungumzo haya',
   'Add as task': 'Ongeza kama kazi',
   'Save as note': 'Hifadhi kama dokezo',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'Alfajiri',
+  Lagoon: 'Ziwa',
+  Lilac: 'Zambarau',
+  Peach: 'Pichi',
+  Sage: 'Sage',
+  Mist: 'Ukungu',
 }

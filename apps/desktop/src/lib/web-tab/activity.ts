@@ -1,10 +1,8 @@
-/** Whether somebody is at this computer: what lets a web login stay here while it is in
- *  use and go to another computer without anybody pressing anything once it is not.
+/** Whether somebody is at this computer: the dot on this person's face that the others
+ *  see, and whether a chat's notice is wanted here (people/here.ts).
  *
- *  Active while a key was pressed or the pointer moved in nib in the last five minutes,
- *  or a page is playing sound, or an agent is at work here (docs/agent-native.md 7.4);
- *  idle otherwise. The hub is told on the change and only then, which is what it decides
- *  a handover by; see docs/sync-v2.md section 6.2.
+ *  Active while a key was pressed or the pointer moved in nib in the last five minutes;
+ *  idle otherwise. The hub is told on the change and only then.
  *
  *  Two ears, because one would miss most of it. The app's own page hears its own keys
  *  and pointer, and nothing that goes to a web page: a page is a webview of its own, so
@@ -26,9 +24,6 @@ export interface ActivityWorld {
   now(): number
   /** The system's answer, or null where it has none. */
   system(): Promise<SystemInput | null>
-  /** Whether something other than a hand keeps the computer in use: a page playing
-   *  sound, an agent at work. */
-  busy(): boolean
   /** Hears input in the app's own page; answers how to stop. */
   listen(heard: () => void): () => void
   /** A clock; answers how to stop it. */
@@ -88,7 +83,7 @@ export class Activity {
     const system = await this.world.system().catch(() => null)
     if (system?.front) this.last = Math.max(this.last, this.world.now() - system.idleMs)
 
-    this.become(this.world.busy() || this.world.now() - this.last < IDLE_AFTER)
+    this.become(this.world.now() - this.last < IDLE_AFTER)
   }
 
   private become(active: boolean): void {

@@ -1,7 +1,8 @@
 # Conventions
 
 What the code is held to, and how to check it before a commit. CI runs the
-same commands on every push to `main`.
+same commands on every pull request into `main` that is ready for review, and on
+every push to `main`; see "CI" below.
 
 ## Product
 
@@ -24,14 +25,14 @@ same commands on every push to `main`.
 | Package | What it owns |
 | --- | --- |
 | `packages/editor` | The CodeMirror 6 live-preview editor: parsing, decorations, widgets, commands. No app concerns. |
-| `packages/markdown` | The renderer used for export and publishing, and the converter back the other way that a paste and the clipper share. Pure functions between markdown and HTML. |
+| `packages/markdown` | The renderer used for export and publishing, and the converter back the other way that a paste and a web tab's clip share. Pure functions between markdown and HTML. |
 | `packages/bases` | Rows, views and the Bases expression language: a note or a task line as a row, Obsidian's `.base` file read and written, filters, formulas, groups and summaries, recurrence, and Todoist's filter language. Pure, no DOM; see `docs/tasks.md`. The task line itself is `packages/markdown`'s (`task-line.ts`, `task-edits.ts`). |
 | `packages/themes` | Design tokens and the stylesheets, shared by the editor, the app and published pages. |
 | `packages/glasses` | A note as pages of pixels for the Even Realities G2. Pure but for the rasteriser; see `docs/even.md`. |
 | `packages/chats` | The chats' shared half, `@nib/chats` (`docs/chats.md`): the types the app, the Worker's `ChatLog` and the connector meet at (`types.ts`), the one reducer every end applies a chat's events with (`reduce.ts`), who may do what (`roles.ts`), the search language (`search.ts`), mentions, ids, a `.chat` pointer's text, message links, the limits, and every frame and HTTP shape with its check (`wire.ts`). Pure, no DOM, no dependencies. |
 | `packages/online` | The online terminal's shared half, `@nib/online` (`docs/online-terminal.md`): the types the app, the Worker's `Machine` and the machine's `nibd` meet at (`types.ts`), every frame of both sockets with its check (`wire.ts`), a `.term` file's text (`term.ts`), and the rules all three decide by: `awake` (whether a machine stays awake), `sizeOf` (whose size the pty takes), `mayType` (who types), and a month's usage and its price (`usage.ts`). Pure, no DOM; a shape any two of them share is spelled here and nowhere else. |
 | `apps/desktop` | The Svelte 5 app (stores in `src/lib/*.svelte.ts`, components in `src/lib/*.svelte`), the browser shim in `src/lib/web`, and the Tauri crate in `src-tauri`. |
-| `apps/cli` | `nib`, which drives the running app over its local endpoint. One Node script, no dependencies, and no knowledge of what any verb does; see `docs/automation.md`. |
+| `apps/cli` | `orden` (and `nib`, its old name), which drives the running app over its local endpoint. One Node script, no dependencies, and no knowledge of what any verb does; see `docs/automation.md`. |
 | `services/sync` | The Cloudflare Worker: sync, publishing, MCP, accounts, and the theme store's catalogue. Tests run routes against real SQL. A published page is the note; see `docs/publishing.md`. |
 
 One file, one responsibility. A file that has to explain two jobs in its
@@ -54,6 +55,7 @@ kind; a second copy is the bug the file's own header describes.
 | What does a button's tooltip say? | `shortcuts.tooltip(name, id)` in `apps/desktop/src/lib/shortcuts.svelte.ts`: the name and the key the registry holds for that command now, `Back (Alt+←)`, and the name alone on a touch screen or where no key is held. A `title` that names a command with a key goes through it. |
 | What is a row of a menu? | `apps/desktop/src/lib/menu-item.ts`: `MenuItem` and `DIVIDER`, for a row's own menu, the app menu and the palette alike. What a row *draws* stays each list's own - a hint is a `kbd` in one and a word in another. |
 | Dropping a key from a map? | `apps/desktop/src/lib/records.ts`: `without`, `withOrWithout`. |
+| Something floating over the app, opened from a button? | `apps/desktop/src/lib/overlays.ts`: `overlays.show(close, holds)`. Escape closes it, and so do a press past what `holds` names - the popup and the button that opened it - and the window losing the focus, which is also how a press into a web page is heard. The press that opened it never closes it, and one in a popup opened over it closes neither. A sheet passes no `holds` and is closed by its own scrim. No window listener of a popup's own. |
 | Fetching a part the first time it is asked for? | `packages/markdown/src/door.ts`: `door`, which keeps one fetch, tries twice and forgets a failure; `held` and `latched` in `apps/desktop/src/lib/surfaces.svelte.ts` for a component. A chunk the browser will not fetch again is `apps/desktop/src/lib/reloading.svelte.ts`'s. |
 
 ### The workspace store
@@ -281,6 +283,44 @@ The Rust crate: `cargo fmt --check`, `cargo clippy -- -D warnings` (the lint
 policy lives in `Cargo.toml`), `cargo test`. It does not compile on every
 machine; CI is the reference.
 
+## CI
+
+What runs, and when. The repository is public, so GitHub's own runners are all of it.
+
+| when | what runs |
+| --- | --- |
+| a pull request into `main`, ready for review | `check.yml`: types, tests, lint, prettier, knip, the sync walks, the smoke, launch and layout drives, WebKit's core drives on Linux and on a Mac, the crate on all three systems, and the Android build where the crate changed. With it, whichever of `nix.yml`, `agents.yml`, `machine.yml`, `mac-update.yml`, `upgrade.yml` and `agent-engines.yml` the change touches the paths of |
+| a draft pull request | nothing |
+| a push to `main` | `check.yml` again, which the deploy of the Worker and the web app waits for; `publish-even.yml` where the glasses' manifest changed |
+| a push to `unstable` | `release.yml` (the `edge` build) and `publish-mobile.yml` (the phones'). Nothing checks it on the push: `unstable` is checked when it comes to `main`, and by the night's drives |
+| a tag `v*` | `release.yml` and `publish-mobile.yml`, at once |
+| every night | `drives.yml` (every drive, on `unstable`'s head, on a night something was pushed to it), `walks.yml` (new seeds), `agents.yml`'s scenarios |
+
+**A draft is not checked.** Every pull request workflow skips a draft, and the whole run
+starts the moment it is marked ready for review (`ready_for_review` is one of the events
+each listens for). So a long-lived pull request such as #362 runs nothing until it is
+marked ready, and is checked in full from then on; mark it a draft again to stop.
+
+**A burst of pushes to `unstable` builds once.** `release.yml`'s `settle` waits until the
+branch has been still for `NIB_CI_SETTLE_S` seconds (a repository variable, 300 by
+default), counted from the push, and then builds only if the push is still the branch's
+head: the newest push of a burst builds, and the ones before it end there. A tag or a
+dispatch does not wait. And a push to `unstable` that changes only documents, Markdown
+or tests (`paths-ignore` in `release.yml`) builds nothing at all; a tag always builds.
+
+Most workflows also take a dispatch, `gh workflow run <file>`, for a run by hand.
+
+**An edge build is compiled faster than a release.** Every build that is not a tag's
+compiles the crate with thin LTO over 16 codegen units (`scripts/edge-profile.sh`), where
+a tag keeps `[profile.release]` in the crate's Cargo.toml exactly: fat LTO over one
+codegen unit, which was six of Windows arm's twelve minutes. Edge's binary is a little
+larger and may be a little slower; a release's is not touched. The Mac is built as its
+two architectures at once (`mac`) and put together with `lipo` (`macos`). The crate's
+caches are saved by `unstable` alone, which only builds edge, and a tag reads none of
+them, so the two profiles never share one; and `release.yml`'s `caches` job keeps one
+generation of each on `unstable` (`scripts/prune-caches.sh`), so the repository's 10 GB
+holds today's caches and not yesterday's beside them.
+
 ## Drives
 
 `apps/desktop/test/e2e/*.py` is a drive each: it opens the built web app in
@@ -289,7 +329,17 @@ it found into `apps/desktop/test/e2e/shots/`. A drive that checks something exit
 non-zero when it does not find it; the rest print what they saw. They are not in
 `pnpm test`, because each one is a build and a browser. They run every night
 instead, in `.github/workflows/drives.yml`, and whenever that workflow is
-dispatched; `smoke.py` alone also runs on every change, in `check.yml`.
+dispatched. The night drives `unstable`, where the work is, rather than `main`,
+which only takes releases - a schedule runs from `main`, and the workflow checks
+out `unstable`'s head - and only when something was pushed to `unstable` since the
+night before; a dispatch drives the branch it names
+(`gh workflow run drives.yml --ref unstable`), always; `smoke.py` and `layout-sweep.py` also run on every pull request into
+`main`, in `check.yml`. The sweep holds every settings pane and the big surfaces, at three
+desktop widths and a phone, light and dark, signed out and in, to the facts a layout
+keeps: no word broken across lines, nothing past the window or spilling out of its
+box, nothing drawn over its neighbour, no control at no size, a row's name readable.
+Run it after any change to what is drawn (`--only desktop-out --widths 720` for one
+corner of it), and a surface it does not reach yet is one to add to it.
 
 Everything round a drive's steps is `apps/desktop/test/e2e/harness.py`'s, so a new
 drive is its steps and nothing else:
@@ -332,7 +382,10 @@ What that one import gives it, so that no drive writes any of it again:
   own; `DRIVE.side` starts a second server, such as a fake OpenAI-compatible
   provider.
 - **The browser CI has.** Playwright's own Chromium, headless; `NIB_BROWSER=chrome`
-  drives the machine's own Chrome instead.
+  drives the machine's own Chrome instead. `NIB_ENGINE=webkit` drives Playwright's
+  WebKit, which is what a Mac, an iPhone and Linux run the app in: every key a drive
+  presses is the Mac's (Cmd for Ctrl, and the registry's own Mac key where it has one),
+  and a drive that needs Chromium's DevTools is skipped there, saying so.
 - **The app's own word, not a clock.** `DRIVE.open` returns once the handle, the
   space and the launch order's last mark (`nib: launch order finished`, see
   `apps/desktop/src/lib/startup.svelte.ts`) are there, `DRIVE.open_note` once the
@@ -351,7 +404,7 @@ What that one import gives it, so that no drive writes any of it again:
   in, the mail it would have sent, and every process under it ended with it.
   `--local` switches the remote bindings off, so no Cloudflare token is wanted. The
   app such a drive loads is a build of its own, `dist-worker`, that asks its own
-  origin for the API - as the web app at nibeditor.com does - so one build serves
+  origin for the API - as the web app at orden.so does - so one build serves
   every Worker on any port, several drives run their Workers side by side, and
   `dist` is never rebuilt under a drive that is still fetching from it.
 - **A native probe**, `harness.Native(DRIVE, exe)`: through `scripts/probe_app.py`'s
@@ -484,9 +537,7 @@ cannot be, by construction:
   the primary screen. Under the switch the process hooks the making of every window on
   every thread (an in-context event hook), and every top-level window is born or sent
   to the corner a minimised window is parked in, and held there through every move and
-  show that would put a pixel of it on a screen. nib's own Chromium's GPU process and
-  utilities do the same, and the engine is started with `--noerrdialogs` and
-  `--disable-hang-monitor`, so the dialogs it can be talked out of are never raised.
+  show that would put a pixel of it on a screen.
   The boxes the system raises for a process - "has stopped working", a missing disk -
   are not the process's windows; `run_probe` starts every probe with an error mode
   that raises none of them, as Chromium's own test runner does.
@@ -524,12 +575,11 @@ window had a taskbar button and could be activated (`WS_EX_APPWINDOW`); now it a
 other top-level window of the process, tao's and the single-instance plugin's included,
 are `WS_EX_NOACTIVATE` and `WS_EX_TOOLWINDOW`.
 
-Measured 2026-10-03, nib's own Chromium started with `--load-extension` of a folder with
-no manifest, every window of the family looked at every twenty milliseconds: before the
-hook, the load error's box was on the primary screen 254 ms and one second into two
-launches; with the hook but the switches not yet reaching Chromium (the runtime takes a bare switch only with its dashes), five launches of five raised it, and in
-every look it was at -32000,-32000; with both on, twenty launches of twenty logged the
-error, raised no box, and had nothing on a screen.
+Measured 2026-10-03, on nib's own Chromium while there was one, started with
+`--load-extension` of a folder with no manifest, every window of the family looked at every
+twenty milliseconds: before the hook, the load error's box was on the primary screen 254 ms
+and one second into two launches; with the hook, five launches of five raised it, and in
+every look it was at -32000,-32000.
 
 ## The launch
 
@@ -542,7 +592,7 @@ app's log folder - `%LOCALAPPDATA%\ch.emilvinu.nib\logs` on Windows,
 on Linux:
 
 ```powershell
-setx NIB_TRACE_STARTUP 1      # then start Nib the way you always do
+setx NIB_TRACE_STARTUP 1      # then start Orden the way you always do
 setx NIB_TRACE_STARTUP ""     # and off again
 ```
 
@@ -721,7 +771,7 @@ machine this fast the page's own work is a quarter of a launch.
 What is next, in the order the table asks. The webview's start, the largest phase of
 every launch, overlapped with building the window rather than after it - a change to
 the crate's engine and window builder (`engine.rs`, `launch.rs` and the builder in
-`lib.rs`, under `apps/desktop/src-tauri/src`) that waits for the engine switch. Then the restored note on a slow device, 0.3 s of the
+`lib.rs`, under `apps/desktop/src-tauri/src`). Then the restored note on a slow device, 0.3 s of the
 slowed launch over five thousand notes: the note drawn as it reads first and its editor
 mounted a frame later, with nothing moving and the caret where it was. Then the listing
 of a big space, 0.2 s slowed. Tried and not kept: dropping the JavaScript side of Vite's
@@ -878,8 +928,7 @@ app through `t()`; every key is translated in every catalogue.
 `apps/desktop/src/lib/i18n.svelte.ts` is the whole mechanism, and
 `apps/desktop/src/locales/` holds one catalogue per language. **The English
 string is its own key**, so nothing can come out blank: a language that has not
-translated a row shows the English. The clipper says the same thing in the same
-languages with its own rows; see *The clipper's half* below.
+translated a row shows the English.
 
 ### Adding a string
 
@@ -966,35 +1015,6 @@ Two things to keep in mind while writing a string:
    which way each mark points, and that the note did not follow the interface, so
    add the id to `RIGHT_TO_LEFT` there as well as in `direction.ts`.
 
-### The clipper's half
-
-The extension says the same thing in the same languages, with its own sixty rows:
-`apps/clipper/src/lib/translate.ts` is the mechanism and `apps/clipper/src/locales/`
-holds the catalogues. The language list, the tags a browser is answered under and
-the shape of a count row are the app's, row for row, and a change to one of the
-three belongs in both files - a deliberate copy rather than a shared package,
-because an extension bundle and an app bundle have nothing else in common and the
-two catalogues hold different rows. The pages wrap it in a rune the way the app
-does; the service worker, which Chrome stops between clips, asks `words()` for a
-catalogue and translates without one.
-
-A language is added the same way, and the rows the app already has for it are
-**lifted from `apps/desktop/src/locales/<id>.ts`** rather than translated again:
-half the extension's rows are words the app already says, and one word per term is
-the whole point. `apps/clipper/src/lib/i18n.test.ts` is the gate, and
-`python apps/clipper/test/e2e/locales.py` photographs the popup at the width Chrome
-gives it and the options page at its own, in the same five hard languages.
-
-The handful of words **Chrome** draws rather than the extension - the tile on
-`chrome://extensions`, the store listing, the shortcut list - live in
-`apps/clipper/public/_locales/<tag>/messages.json`, because Chrome's own mechanism
-is the only one those surfaces have and it picks the folder by the browser's
-interface language, not by what somebody chose in the options page. Only languages
-Chrome has an interface in can be folders there, which is thirty-one of the
-thirty-nine; the rest read the whole extension in their own language with Chrome's
-tile beside it in English. The gate holds the two halves to the same languages and
-checks that every `__MSG_*` the manifest asks for is answered.
-
 Keep one word per term. nib's own vocabulary, and what to follow:
 
 | nib's word | What it is | Precedent |
@@ -1015,7 +1035,7 @@ Keep one word per term. nib's own vocabulary, and what to follow:
 | chat | a channel people write in together, kept as a `.chat` file in a space; never "channel", "conversation" or "DM" on screen | Slack's *channel*. de `Chat`, fr `Discussion` |
 | reply | a message written under another, in the replies pane; never "thread", which is an AI conversation's word | Slack's *reply*. de `Antwort`, fr `Réponse` |
 
-`Nib`, `nibeditor`, format names (`Markdown`, `PDF`, `HTML`), other products
+`Orden` and its old names `nibeditor` and `Nib`, format names (`Markdown`, `PDF`, `HTML`), other products
 (`Obsidian`, `Notion`, `OpenAI`) and key names (`Ctrl`, `Enter`, `⌘`) are never
 translated.
 

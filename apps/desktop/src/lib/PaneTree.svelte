@@ -7,6 +7,7 @@
    *  exactly the number the tree holds and the divider is a real line rather
    *  than a gap between two floats. */
 
+  import { alone } from './alone.svelte'
   import Pane from './Pane.svelte'
   import PaneTree from './PaneTree.svelte'
   import { type Frame, paneIn, type Split } from './workspace/pane-tree'
@@ -22,7 +23,7 @@
   /** Which side holds the pane filling the window, where this split holds it: the other
    *  side and the divider go while it does. See lib/tab-fill. */
   const kept = $derived.by(() => {
-    const fills = workspace.panes.fills
+    const fills = workspace.panes.fills ?? alone.pane
     return split && fills ? split.sides.findIndex((side) => paneIn(side, fills)) : -1
   })
 
@@ -53,7 +54,7 @@
     handle.setPointerCapture(event.pointerId)
     workspace.panes.sliding = split.id
     document.body.style.cursor = along === 'row' ? 'col-resize' : 'row-resize'
-    document.body.style.userSelect = 'none'
+    document.body.classList.add('nib-unselectable')
 
     const move = (moved: PointerEvent) => {
       const room = along === 'row' ? box.width : box.height
@@ -70,7 +71,7 @@
       handle.removeEventListener('pointercancel', stop)
 
       document.body.style.cursor = ''
-      document.body.style.userSelect = ''
+      document.body.classList.remove('nib-unselectable')
       workspace.panes.settle()
     }
 

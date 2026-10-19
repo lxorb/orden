@@ -2,8 +2,8 @@
  *
  *  It writes the document down as the reader sees it - what a script wrote into it
  *  included, since a page that writes itself has already written itself - and nothing
- *  more. Finding the article in it is the window's, with the very extractor the clipper
- *  extension runs on a live page (`readSnapshot` in packages/markdown/src/article.ts), so
+ *  more. Finding the article in it is the window's, with the article extractor
+ *  (`readSnapshot` in packages/markdown/src/article.ts), so
  *  the same page clips to the same note from a tab and from the extension. See
  *  packages/markdown/src/snapshot.ts for the two marks this writes.
  *

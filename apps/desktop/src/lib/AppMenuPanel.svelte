@@ -184,9 +184,16 @@
     }
   }
 
-  // Escape closes it, like everything else the app puts over a note; see
-  // overlays.ts.
-  $effect(() => (open ? overlays.show(() => (open = false)) : undefined))
+  // Escape closes it, like everything else the app puts over a note, and so do a press
+  // past it and the window losing the focus; see overlays.ts.
+  $effect(() =>
+    open
+      ? overlays.show(
+          () => (open = false),
+          () => [surface, ...document.querySelectorAll('[data-opens="app-menu"]')],
+        )
+      : undefined,
+  )
   $effect(() => closeOnBack(open, () => (open = false)))
 
   // Every open starts on the first group with nothing lit: a new list of groups is a
@@ -447,6 +454,7 @@
      desktop's is. */
   :global([data-touch]) .scrim.is-clear {
     background: color-mix(in srgb, var(--bg) var(--scrim-ink), transparent);
+    -webkit-backdrop-filter: blur(var(--scrim-blur));
     backdrop-filter: blur(var(--scrim-blur));
   }
 

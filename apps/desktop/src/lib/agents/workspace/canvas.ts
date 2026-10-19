@@ -33,6 +33,7 @@ import { type Call, done, maybe, need } from './call'
 import { readablePages } from './pages-ops'
 import { Refused } from './problem'
 import { namedTab } from './tab-target'
+import { kindsWhere } from '../../workspace/tab-kinds'
 import { judged, judgedForWriting, onDisk, type Place, placeFor, sharedSource } from './spaces'
 
 /** A canvas a call names: a `.canvas` or `.pages` file of a space it may reach, by its
@@ -65,10 +66,13 @@ function canvasOf(call: Call, writing: boolean): Target {
   return { place, relative, path, draft: null }
 }
 
+/** The kinds a canvas verb takes a tab of: the two planes. */
+const PLANES = kindsWhere((one) => one.plane)
+
 /** The canvas or page note in a tab: by its file when it has one, as though the path
  *  had been said, and otherwise the document the tab holds. */
 function canvasInTab(call: Call, writing: boolean): Target {
-  const { tab, place, relative } = namedTab(call, ['canvas', 'pages'], 'a canvas or page note')
+  const { tab, place, relative } = namedTab(call, PLANES, 'a canvas or page note')
   if (relative !== null) {
     return canvasOf({ ...call, args: { ...call.args, tab: null, path: relative } }, writing)
   }

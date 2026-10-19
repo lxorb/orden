@@ -1,26 +1,26 @@
 name: publish-mobile
 
-# The phone builds, on the same two occasions the desktop ones happen: every push
-# to main, and a tag `v*`. A tag puts them on that version's own release beside
-# the installers; a build of main goes on a rolling pre-release of its own,
-# `mobile-edge`, rather than the desktop's `edge`, because release.yml deletes and
+# The phone builds, on version tags and every push to `unstable`. A tag puts
+# them on that version's own release beside the installers; an unstable build
+# goes on a rolling pre-release of its own, `mobile-edge`, rather than the
+# desktop's `edge`, because release.yml deletes and
 # remakes that one on every push and would take an APK uploaded beside it with it.
 #
 # There is no store account behind either platform. The Android side is an APK to
-# sideload; the iOS side is a simulator build, because putting Nib on a real iPhone
+# sideload; the iOS side is a simulator build, because putting Orden on a real iPhone
 # needs an Apple developer account. See docs/mobile.md for what to add when there
 # is one.
 on:
   push:
     tags: ['v*']
-    branches: [main]
+    branches: [unstable]
   workflow_dispatch:
 
-# A newer push to main supersedes the build of an older one. A tag is a release
+# A newer push to unstable supersedes the build of an older one. A tag is a release
 # of its own and is never cancelled.
 concurrency:
   group: publish-mobile-${{ github.ref }}
-  cancel-in-progress: ${{ github.ref == 'refs/heads/main' }}
+  cancel-in-progress: ${{ github.ref == 'refs/heads/unstable' }}
 
 # The floor, so a job added below without a block of its own still only reads.
 # Every job states its own as well, because what a job may do is part of what the
@@ -31,6 +31,7 @@ permissions:
 jobs:
   # What this build is called; see scripts/build-version.sh.
   version:
+    if: github.ref == 'refs/heads/unstable' || startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     # All but one of the jobs below may only read; the one that writes says so.
     permissions:
@@ -42,7 +43,7 @@ jobs:
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
-          # The whole history, so the newest tag can be found from main.
+          # The whole history, so the newest released tag can be found.
           fetch-depth: 0
 
       - id: decide
@@ -128,7 +129,7 @@ jobs:
             alias=nib
             keytool -genkeypair -keystore "$store" -alias "$alias" -keyalg RSA -keysize 2048 \
               -validity 10000 -storepass "$password" -keypass "$password" \
-              -dname 'CN=Nib, O=Emil Vinu'
+              -dname 'CN=Orden, O=Emil Vinu'
           fi
 
           {
@@ -139,7 +140,7 @@ jobs:
           } >keystore.properties
 
       # The version is passed in rather than read from tauri.conf.json, so a
-      # build of main is named after the build it came from.
+      # unstable build is named after the build it came from.
       - name: Build the APK
         run: |
           pnpm --filter @nib/desktop exec tauri android build --apk \
@@ -260,11 +261,11 @@ jobs:
           if-no-files-found: error
           path: out/*.zip
 
-  # Only a build of main or of a tag has a release to go on: a manual run on a
+  # Only a build of unstable or of a tag has a release to go on: a manual run on a
   # branch is somebody checking that the builds work.
   publish:
     needs: [version, android, ios]
-    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
+    if: github.ref == 'refs/heads/unstable' || startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     # The one job that writes: the release and its files are the point of it.
     permissions:
@@ -272,6 +273,7 @@ jobs:
     env:
       TAG: ${{ needs.version.outputs.tag }}
       VERSION: ${{ needs.version.outputs.version }}
+      ROLLING: ${{ needs.version.outputs.rolling }}
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
@@ -289,24 +291,32 @@ jobs:
             case "$name" in
               # Tauri names an APK after the architectures inside it, wrapped in
               # an `app-` and a `-release` that say nothing to anybody who is
-              # about to download one.
+              # about to download one. The universal one is the APK, for any phone.
+              app-universal-release.apk)
+                name=android.apk
+                ;;
               app-*-release.apk)
                 name=${name#app-}
                 name="android-${name%-release.apk}.apk"
                 ;;
+              # A simulator build installs on no phone, so a release's page, which
+              # is its installers, goes without it; `mobile-edge` has it.
+              *.app.zip)
+                [ "$ROLLING" = true ] || continue
+                ;;
             esac
-            cp "$file" "uploads/Nib_${VERSION}_$name"
+            cp "$file" "uploads/Orden-$VERSION-$name"
           done
           ls -l uploads
 
       # The rolling release is remade rather than added to, so an old build's
       # files never sit under a newer one's name.
-      - name: Replace the build of main
+      - name: Replace the mobile edge build
         if: needs.version.outputs.rolling == 'true'
         run: |
           gh release delete "$TAG" --cleanup-tag --yes || true
           gh release create "$TAG" --prerelease --target "$GITHUB_SHA" \
-            --title "main on a phone · $VERSION" \
+            --title "unstable on a phone · $VERSION" \
             --notes ""
 
       - name: Publish the release

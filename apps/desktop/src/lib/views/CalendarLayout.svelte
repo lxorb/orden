@@ -9,6 +9,7 @@
    *  left is what has no date, Todoist's no-date sidebar: carried out of it a task gets
    *  one. A repeating task's next occurrences are drawn faded, and today wears the
    *  accent. */
+  import { startField } from '@nib/markdown/task-dates'
   import { cellValue, type Row, rowId, type TaskChange } from '@nib/bases'
   import { untrack } from 'svelte'
   import { i18n, t } from '../i18n.svelte'
@@ -98,7 +99,9 @@
     }
     const box = place.getBoundingClientRect()
     const minutes = Math.round((((at.y - box.top) / HOUR) * 60) / 15) * 15
-    kit.write(row, { task: { due: day, time: timeOf(minutes) } })
+    // The day it starts, where the line already holds that day (#371).
+    const field = startField(row.task, row.task.dueReads)
+    kit.write(row, { task: { [field]: day, time: timeOf(minutes) } })
   }
 
   /** A task's length as the change that writes it. Set rather than spelled as a key:
@@ -155,9 +158,9 @@
       ? `${Math.max(18, (one.minutes / 60) * HOUR)}px`
       : null}
     use:draggable={{ row: one.row, label, disabled: one.ghost === true }}
-    onclick={(event) => kit.open(one.row, linkModifier(event) ? 'tab' : 'aside')}
+    onclick={(event) => kit.choose(one.row, linkModifier(event))}
     onkeydown={(event) => {
-      if (event.key === 'Enter') kit.open(one.row, 'aside')
+      if (event.key === 'Enter') kit.choose(one.row)
     }}
   >
     {#if one.row.task?.recurrence}<span class="repeat" aria-hidden="true">↻</span>{/if}

@@ -10,21 +10,123 @@ export const zhHans: Dictionary = {
   'Do you write code?': '你写代码吗？',
   Yes: '是',
   No: '否',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': '从其他应用：{key}',
+  'From other apps: set in your system settings': '从其他应用：在系统设置中设定',
+  'From other apps: bind {command} in your system settings':
+    '从其他应用：在系统设置中绑定 {command}',
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: '常驻项',
+  'Add to Essentials': '添加到常驻项',
+  'Remove from Essentials': '从常驻项中移除',
+  'Add block to Essentials': '将块添加到常驻项',
+  'Add blocks to Essentials': '将这些块添加到常驻项',
+  'Add view to Essentials': '将视图添加到常驻项',
+  'Open tabs and Essentials': '打开标签页和常驻项',
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor现已更名为Orden',
+  'Notes from nibeditor.com': '来自nibeditor.com的笔记',
+  'Nothing there': '那里什么都没有',
+  // AI: the three permission modes
+  'Full permissions': '完全权限',
+  'Auto mode': '自动模式',
+  'Full permissions: nothing is asked first': '完全权限：事先不会询问任何事',
+  // Import: Zen's tabs
+  'Import from Zen': '从 Zen 导入',
+  'Containers stay in Zen': '容器保留在 Zen 中',
+  'Zen’s tabs could not be read.': '无法读取 Zen 的标签页。',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': '容器保留在 Firefox 中',
+  'Nothing could be read out of {browser}.': '无法从 {browser} 读取任何内容。',
+  'Saved groups': '已保存的组',
+  'Tab group': '标签页组',
+  'Bookmarks toolbar': '书签工具栏',
+  'Bookmarks menu': '书签菜单',
+  'Other bookmarks': '其他书签',
+  'Mobile bookmarks': '移动设备书签',
+  'Bookmarks bar': '书签栏',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} 将打开的标签页加密保存，所以只带来了书签。',
+  '{count} pages not on the web stay behind': '{count} 个不在网上的页面没有带来',
+  'Reading List': '阅读列表',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS 将 Safari 的标签页和书签放在“完全磁盘访问权限”之后。请在那里打开 Orden，然后再试一次。',
+  // Settings: note types
+  'Page note': '分页笔记',
+  'Web note': '网页笔记',
+  'Private tab': '无痕标签页',
+  'Note types': '笔记类型',
+  // Tasks: Upcoming's weeks
+  'Previous week': '上一周',
+  // Tasks: projects placed in the panel, and their folder
+  'Add project above': '在上方添加项目',
+  'Add project below': '在下方添加项目',
+  'Projects folder': '项目文件夹',
+  // Tasks: a repeating task skipped or done for good
+  Skip: '跳过',
+  'Complete forever': '永久完成',
+  // Tasks: comments
+  Comments: '评论',
+  // Tasks: filters
+  Filters: '筛选器',
+  'Add filter': '添加筛选器',
+  'Edit filter': '编辑筛选器',
+  // Tasks: a project's sections
+  'Add section': '添加分区',
+  '{name} (copy)': '{name}（副本）',
+  'Its tasks are deleted with it.': '其中的任务会一并删除。',
+  // Tasks: keys, selection and the undo toast
+  Completed: '已完成',
+  'Remove date': '移除日期',
+  'Next task': '下一个任务',
+  'Previous task': '上一个任务',
+  'Add task at the top': '在顶部添加任务',
+  '{count} selected': '已选 {count} 项',
+  // Tasks: the Display menu
+  Display: '显示',
+  'Completed tasks': '已完成任务',
+  // Tasks: several lines pasted into quick add
+  'One task': '一个任务',
+  'One per line': '每行一个',
+  // Tasks: the projects in the panel
+  Favorites: '收藏',
+  'Add project': '添加项目',
+  'Add sub-project': '添加子项目',
+  // Tasks: the task view
+  'Sub-tasks': '子任务',
+  'Add sub-task': '添加子任务',
+  'New label': '新标签',
+  'No deadline': '无截止日期',
+  // Tasks: the row's menu and the scheduler
+  Reschedule: '重新安排',
+  'Later this week': '本周晚些时候',
+  'This weekend': '本周末',
+  'Next weekend': '下周末',
+  'Every week on {day}': '每周{day}',
+  'Every month on day {day}': '每月{day}日',
+  'Every year on {date}': '每年{date}',
+  'Type a date': '输入日期',
+  'Previous month': '上个月',
+  'Next month': '下个月',
+  'No time': '无时间',
+  'No repeat': '不重复',
+  Complete: '完成',
+  Reopen: '重新打开',
+  Schedule: '安排',
+  'Open in note': '在笔记中打开',
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': '其他应用',
-  'Start fresh': '从头开始',
   'Import from Obsidian': '从 Obsidian 导入',
   'Import from Notion': '从 Notion 导入',
   // Hints: Silent mode and the cards that point at a feature
   Hints: '提示',
   'Silent mode': '安静模式',
-  'Sign in to keep your notes safe and on every device.':
-    '登录后,你的笔记将安全保存并在所有设备上可用。',
   'See how your notes connect.': '查看你的笔记如何相互关联。',
   'Press {key} to find anything, notes and commands alike.':
     '按 {key} 查找任何内容,笔记和命令皆可。',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': '书写时显示 Markdown',
+  'Open notes in source mode': '以源码模式打开笔记',
   Pointer: '指针',
   'Pointing hand on buttons': '按钮上显示手形指针',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
@@ -40,11 +142,13 @@ export const zhHans: Dictionary = {
   '{count} h': '{count}小时',
   Inbox: '收件箱',
   Date: '日期',
+  'Start date': '开始日期',
   Priority: '优先级',
   Reminder: '提醒',
   Duration: '时长',
   'Smart dates': '智能日期',
   'From any app': '从任意应用',
+  'Show tasks without a start date in Today': '在今天中显示没有开始日期的任务',
   'Every day': '每天',
   'Every weekday': '每个工作日',
   'Every week': '每周',
@@ -61,6 +165,13 @@ export const zhHans: Dictionary = {
   Unsaved: '未保存',
   'Save to': '保存到',
   'Reloaded with the web data of {space}': '已使用 {space} 的网页数据重新加载',
+  Separate: '独立',
+  'Share this note’s web data again?': '再次共享这条笔记的网页数据？',
+  'What its pages are signed in to on this computer is deleted.':
+    '此电脑上其页面已登录的内容将被删除。',
+  'Share again': '再次共享',
+  'This note keeps its own web data now': '这条笔记现在有自己的网页数据',
+  'Back on the shared web data': '已回到共享的网页数据',
   'Add a page': '添加一页',
   'Add a page after this': '在此页后添加一页',
   'Delete this page': '删除此页',
@@ -81,6 +192,8 @@ export const zhHans: Dictionary = {
   Dots: '点阵',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': '用双指旋转画布',
+  'Turn upright': '摆正',
   Canvas: '画布',
   Card: '卡片',
   'Note or picture': '笔记或图片',
@@ -95,7 +208,6 @@ export const zhHans: Dictionary = {
   'New window': '新建窗口',
   New: '新建',
   'New space': '新建空间',
-  '{name}: switch space': '{name}：切换空间',
   Untitled: '未命名',
   Space: '空间',
   'Name the space': '空间名称',
@@ -140,8 +252,6 @@ export const zhHans: Dictionary = {
   'Loading…': '加载中…',
   'Create a space': '创建空间',
   'Import a folder': '导入文件夹',
-  'Sign in to sync': '登录以同步',
-  'Create account': '创建账户',
   'Delete space': '删除空间',
   'Delete {name}?': '删除{name}？',
   'Every note in this space is deleted from your computer.':
@@ -159,6 +269,10 @@ export const zhHans: Dictionary = {
   Unpin: '取消固定',
   Close: '关闭',
   'Close pinned tab?': '关闭已固定的标签页？',
+  'Save changes to {name}?': '要保存对 {name} 的更改吗？',
+  'Save changes to these tabs?': '要保存这些标签页的更改吗？',
+  'Unsaved words go to Recently deleted.': '未保存的文字会移到“最近删除”。',
+  'Don’t save': '不保存',
   'Close others': '关闭其他',
   'Close tabs to the right': '关闭右侧标签页',
   'Close tabs to the left': '关闭左侧标签页',
@@ -195,9 +309,6 @@ export const zhHans: Dictionary = {
   'Move this note': '移动此笔记',
   'Move up': '上移',
   'Move down': '下移',
-  Bookmark: '加入书签',
-  'Remove bookmark': '移除书签',
-  'Leave out of search': '从搜索中排除',
   'Search here again': '重新纳入搜索',
   'Undo the last file change': '撤销上一次文件更改',
   'Undo moving {name}': '撤销移动{name}',
@@ -247,7 +358,6 @@ export const zhHans: Dictionary = {
   'Remove group': '移除分组',
   'Out of the group': '移出分组',
   Make: '创建',
-  'Bookmark this block': '为此块加书签',
   Panels: '面板',
   Outline: '大纲',
   'Stay on this note': '停留在此笔记',
@@ -509,8 +619,7 @@ export const zhHans: Dictionary = {
   'Sign in to ask a question.': '请登录后提问。',
   'Asking OpenAI which models this key can use': '正在向OpenAI查询此密钥可用的模型',
   'Could not reach OpenAI': '无法连接OpenAI',
-  'That key cannot use any of the models nibeditor asks for.':
-    '此密钥无法使用nibeditor所需的任何模型。',
+  'That key cannot use any of the models Orden asks for.': '此密钥无法使用Orden所需的任何模型。',
   'No reasoning': '不推理',
   Minimal: '最低',
   Low: '低',
@@ -532,7 +641,7 @@ export const zhHans: Dictionary = {
   Mode: '模式',
   // The window's own edges; see appearance.rs
   Window: '窗口',
-  'nibeditor’s own': 'nibeditor 自己的',
+  'Orden’s own': 'Orden 自己的',
   'The system’s': '系统的',
   'Window frame': '窗口边框',
   System: '系统',
@@ -592,6 +701,7 @@ export const zhHans: Dictionary = {
   '{done} of {total}': '{done}/{total}',
   'Sync failed': '同步失败',
   '{name} could not be written.': '无法写入 {name}。',
+  '{name} could not be read.': '无法读取 {name}。',
   'Text size': '字号',
   'Line spacing': '行距',
   'Line width': '行宽',
@@ -651,8 +761,10 @@ export const zhHans: Dictionary = {
   '{used} of {limit} used.': '已用{used}，共{limit}。',
   'That image does not fit in your storage.': '存储空间不足，放不下这张图片。',
   'out of space': '存储空间已满',
-  'nibeditor {version} is ready to install.': 'nibeditor{version}已可安装。',
+  'Orden {version} is ready to install.': 'Orden{version}已可安装。',
+  'Orden {version} is available.': 'Orden{version}已发布。',
   'Restart now': '立即重启',
+  'Move to Applications': '移到“应用程序”',
   Later: '稍后',
   More: '更多',
   'Open notes': '打开的笔记',
@@ -677,11 +789,9 @@ export const zhHans: Dictionary = {
   Continue: '继续',
   'Send a new code': '重新发送验证码',
   'Code sent to': '验证码已发送至',
-  'You already have notes on this computer.': '这台电脑上已经有笔记了。',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
-    '保留它们，它们会并入你的账户。清除它们，则只留下账户中已有的内容，此操作无法撤销。',
-  'Keep them': '保留',
-  'Erase them': '清除',
+  'This device already has notes.': '此设备上已有笔记。',
+  Merge: '合并',
+  'Keep separate': '分开保留',
   'Digit {number}': '第{number}位',
   'Resend in {seconds}s': '{seconds}秒后可重发',
   'Last synced {time}.': '上次同步于{time}。',
@@ -726,13 +836,13 @@ export const zhHans: Dictionary = {
   'Reads your notes.': '读取你的笔记。',
   'Reads and writes your notes.': '读取并写入你的笔记。',
   Other: '其他',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'AI助手可以读取你的笔记，若你允许，也能修改它们。它用你的nibeditor邮箱登录，无需粘贴任何内容。',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'AI助手可以读取你的笔记，若你允许，也能修改它们。它用你的Orden邮箱登录，无需粘贴任何内容。',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     '在Claude中打开“设置→连接器”，点击“添加自定义连接器”。',
   'Open Claude’s connectors': '打开Claude的连接器',
   'Fill in the two fields and click Add.': '填写这两个字段，然后点击“添加”。',
-  'Click Connect and sign in with your nibeditor email.': '点击“连接”，用你的nibeditor邮箱登录。',
+  'Click Connect and sign in with your Orden email.': '点击“连接”，用你的Orden邮箱登录。',
   'Using Claude Code instead?': '改用Claude Code？',
   Command: '命令',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -743,15 +853,14 @@ export const zhHans: Dictionary = {
   'Open ChatGPT’s plugins': '打开ChatGPT的插件',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     '没有“插件”一节或加号按钮？请先在“设置→安全与登录”中开启开发者模式。',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'ChatGPT询问时，用你的nibeditor邮箱登录。',
-  'To use it in a chat, type @ and pick nibeditor.': '在对话中输入@并选择nibeditor即可使用。',
+  'Sign in with your Orden email when ChatGPT asks.': 'ChatGPT询问时，用你的Orden邮箱登录。',
+  'To use it in a chat, type @ and pick Orden.': '在对话中输入@并选择Orden即可使用。',
   'Server URL': '服务器URL',
   Authentication: '身份验证',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     '高级OAuth设置保持不变，并勾选“我了解并希望继续”。',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    '任何支持Streamable HTTP与OAuth的MCP客户端。把该URL交给它：它会自行注册并打开nibeditor的登录页面。',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    '任何支持Streamable HTTP与OAuth的MCP客户端。把该URL交给它：它会自行注册并打开Orden的登录页面。',
   'Show config': '显示配置',
   'For a client that takes a JSON block instead of a URL.': '适用于接受JSON配置而非URL的客户端。',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
@@ -817,7 +926,7 @@ export const zhHans: Dictionary = {
   'Display name': '显示名称',
   'Your name': '你的名称',
   Email: '邮箱',
-  'On nibeditor.com': '在nibeditor.com上',
+  'On orden.so': '在orden.so上',
   'Your own domain': '你自己的域名',
   'Switching gives up {name}.': '切换会放弃{name}。',
   Page: '页面',
@@ -888,8 +997,9 @@ export const zhHans: Dictionary = {
   'No footnotes in this note': '这则笔记没有脚注',
   'Stack tabs': '并排标签页',
   'Unstack tabs': '取消并排标签页',
-  'High contrast': '高对比度',
+  Contrast: '对比度',
   Glass: '玻璃',
+  Classic: '经典',
   'Front matter': '前置元数据',
   'Front matter: {name}': '前置数据：{name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':
@@ -900,6 +1010,7 @@ export const zhHans: Dictionary = {
   Comment: '注释',
   'Always on top': '始终置顶',
   'What is new': '更新内容',
+  'Download the app': '下载应用',
   'Report an issue': '报告问题',
   'Move the line up': '上移此行',
   'Move the line down': '下移此行',
@@ -975,6 +1086,22 @@ export const zhHans: Dictionary = {
   'Layout: {name}': '布局：{name}',
   'Space: {name}': '空间：{name}',
   'Theme: {name}': '主题：{name}',
+  'AI account: {name}': 'AI 账户：{name}',
+  Accounts: '账户',
+  Access: '访问',
+  Set: '已设置',
+  'Start over': '重新开始',
+  'Sign in here': '在此登录',
+  '{device} wants your AI accounts': '{device} 请求你的 AI 账户',
+  '{device} offers this device your AI vault': '{device} 向此设备提供你的 AI 保险库',
+  Join: '加入',
+  'Allow this device on another one': '在另一台设备上允许此设备',
+  'On every device you sign in to, end-to-end encrypted.': '在你登录的每台设备上，端到端加密。',
+  'Sign in to have them on every device.': '登录即可在每台设备上使用。',
+  'Agents on this computer connect on their own': '此电脑上的智能体自动连接',
+  Helpers: '助手',
+  'Start helpers on your AI accounts': '在你的 AI 账户上启动助手',
+  Delegated: '已委派',
   'Code theme: {name}': '代码主题：{name}',
   'Delete a layout': '删除布局',
   // Keyboards and modal editing
@@ -1043,6 +1170,7 @@ export const zhHans: Dictionary = {
   'Double-click to write': '双击开始书写',
   'Another colour': '其他颜色',
   'Turn into a note': '转为笔记',
+  Arrange: '排列',
   'Bring to front': '置于顶层',
   'Bring forward': '上移一层',
   'Send backward': '下移一层',
@@ -1064,6 +1192,12 @@ export const zhHans: Dictionary = {
   'Export as PNG': '导出为PNG',
   'Export as SVG': '导出为SVG',
   'Export as PDF': '导出为PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': '导入 PDF',
+  'Choose how to add the pages to the canvas.': '选择页面怎么加到画布上。',
+  'Single page': '单页',
+  'All pages': '所有页面',
+  'Choose a page': '选择一页',
   // The canvas: what its own keys are called
   'Delete what is picked': '删除所选',
   'Nudge left': '向左微移',
@@ -1124,8 +1258,8 @@ export const zhHans: Dictionary = {
   'Release channel': '发布通道',
   Stable: '稳定版',
   Unstable: '开发版',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    '稳定版跟随正式发布，开发版跟随main的每次推送，可能出问题。',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    '稳定版跟随已发布的版本，开发版跟随edge构建，可能出问题。',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: '导入',
@@ -1175,13 +1309,15 @@ export const zhHans: Dictionary = {
   '{count} tables inside notes do not come over': '笔记内的 {count} 个表格不会转入',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} 个附件在 iCloud 上，而不在这台 Mac 上',
+  '{count} files are in iCloud rather than on this Mac':
+    '{count} 个文件在 iCloud 上，而不在这台 Mac 上',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS 将这些笔记放在「完全磁盘访问权限」之后。',
   'There are no notes in Apple Notes on this Mac.': '这台 Mac 上的「备忘录」中没有笔记。',
   'Those notes could not be read.': '无法读取这些笔记。',
   'Read them from this Mac': '从这台 Mac 读取',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    '在「完全磁盘访问权限」中打开 nibeditor，然后再试一次。',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    '在「完全磁盘访问权限」中打开 Orden，然后再试一次。',
   'Open the setting': '打开设置',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     '「日记」可自行导出：日记、设置、导出。「备忘录」没有导出，因此在笔记所在的 Mac 之外，要拖入的是导出工具写出的文件夹。',
@@ -1278,14 +1414,15 @@ export const zhHans: Dictionary = {
   'OpenAI-compatible': 'OpenAI兼容',
   'Base URL': '基础URL',
   'API key': 'API密钥',
-  'Set on this device': '已在此设备设置',
   Optional: '可选',
   'List models': '获取模型列表',
   'Asking…': '询问中…',
   'No providers yet.': '还没有服务商。',
   'Add {name}': '添加{name}',
-  'Keys stay in the secure store on this device.': '密钥保存在此设备的安全存储中。',
   'This browser holds the keys in its own storage.': '此浏览器把密钥保存在自己的存储中。',
+  'Keep this browser’s keys in the vault': '将此浏览器的密钥保存在保险库中',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    '这样，每台设备的密钥都会保存在此浏览器的存储中，混入页面的脚本可能读取它们。',
   'AI can be wrong. Check the facts.': 'AI可能会出错，请核实事实。',
   'Used by the glasses': '供眼镜使用',
   'Could not read the models.': '无法读取模型列表。',
@@ -1325,7 +1462,6 @@ export const zhHans: Dictionary = {
   'A cited report': '带引用的报告',
   'A helper in the background': '后台助手',
   'A side question': '附带问题',
-  'Agent mode': '代理模式',
   'Agent profile': '代理配置',
   'Archive the thread': '归档线程',
   'Approve mode': '批准模式',
@@ -1444,8 +1580,6 @@ export const zhHans: Dictionary = {
   // Web tabs
   Reload: '重新加载',
   'Hard reload': '硬性重新加载',
-  'Clip this page': '保存此页',
-  'Clip the link': '保存链接',
   'Open in the browser': '在浏览器中打开',
   'Show it here': '在此显示',
   Website: '网站',
@@ -1528,7 +1662,8 @@ export const zhHans: Dictionary = {
   'that is not a theme': '这不是一个主题',
   'no such theme': '没有该主题',
   'choose a model first': '请先选择模型',
-  'set an OpenAI key in nibeditor’s settings first': '请先在nibeditor设置中填入OpenAI密钥',
+  'set an OpenAI key in Orden’s settings first': '请先在Orden设置中填入OpenAI密钥',
+  'set an OpenAI key in nibeditor’s settings first': '请先在Orden设置中填入OpenAI密钥',
   'that is a lot of questions - try again later': '提问过于频繁，请稍后重试',
   'that is too much audio': '音频过长',
   'that is more than a spoken command': '这超出了一条语音命令的长度',
@@ -1552,7 +1687,6 @@ export const zhHans: Dictionary = {
   Nothing: '无',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': '把此视图加入书签',
   Keep: '保留',
 
   // Which side of the window a panel sits on.
@@ -1574,7 +1708,6 @@ export const zhHans: Dictionary = {
   'New tab': '新建标签页',
   'Full screen': '全屏',
   'Print…': '打印…',
-  'Save page': '保存页面',
   'Share…': '共享…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1617,7 +1750,6 @@ export const zhHans: Dictionary = {
   Blocked: '已阻止',
   'Reset permissions': '重置权限',
   'Turn into': '转换为',
-  'Bookmark these blocks': '为这些块加书签',
   Foldable: '可折叠',
   'Starts folded': '默认折叠',
   // Where a space keeps what websites store
@@ -1634,6 +1766,15 @@ export const zhHans: Dictionary = {
   'Bring all to front': '前置全部窗口',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': '撤销复制',
+  'Devices with your AI vault': '拥有你 AI 保险库的设备',
+  'This device': '此设备',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    '该设备将无法再读取你的 AI 账户，其他设备会得到新密钥。',
+  'Also remove this device from your AI vault?': '也将此设备从你的 AI 保险库中移除？',
+  'Remove and sign out': '移除并退出登录',
+  'Undo making {name}': '撤销新建{name}',
+  'Undo the deletion': '撤销删除',
+  'Undo the move': '撤销移动',
   'Redo the last file change': '重做上一次文件更改',
   'Select down': '向下选择',
   'Select up': '向上选择',
@@ -1677,7 +1818,6 @@ export const zhHans: Dictionary = {
   '{key} in a terminal': '终端中的 {key}',
   'Always ask': '每次询问',
   'Open another': '再打开一个',
-  'Open in terminal': '在终端中打开',
   Clear: '清除',
   'Exited with code {code}': '已退出，代码 {code}',
   'Could not start {shell}': '无法启动 {shell}',
@@ -1686,18 +1826,8 @@ export const zhHans: Dictionary = {
   'Stop what is running in {name}?': '停止 {name} 中正在运行的内容？',
   'Stop what is running in these terminals?': '停止这些终端中正在运行的内容？',
   'Paste {count} lines?': '粘贴 {count} 行？',
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': '默认浏览器',
-  // The engine web tabs run on
-  Engine: '引擎',
-  Relaunch: '重新启动',
-  'Chromium did not start': 'Chromium 未能启动',
-  'No connection': '无连接',
-  'Not in this release': '此版本中没有',
-  'Needs an update': '需要更新',
-  'Signature did not match': '签名不匹配',
-  'Disk full': '磁盘已满',
-  'Could not be installed': '无法安装',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '撤销 {name} 的编辑',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1797,7 +1927,7 @@ export const zhHans: Dictionary = {
   'Always on this site': '在此网站始终',
   'Agents stopped': '已停止智能体',
   'Agent tabs closed': '已关闭智能体标签页',
-  'nibeditor is still running for your agents': 'nibeditor 仍在为你的智能体运行',
+  'Orden is still running for your agents': 'Orden 仍在为你的智能体运行',
   '{client} wants to connect': '{client} 想要连接',
   // Web logins that travel, and the devices of an account
   'no such device': '没有这个设备',
@@ -1811,10 +1941,11 @@ export const zhHans: Dictionary = {
   // to connect one more.
   'Agents on this computer': '这台电脑上的代理',
   'Your account’s connector': '你账号的连接器',
-  'nibeditor asks you once, the first time it connects.': '首次连接时，nibeditor 会问你一次。',
+  'Orden asks you once, the first time it connects.': '首次连接时，Orden 会问你一次。',
   'A client on another machine?': '另一台机器上的客户端？',
   'Shown only once.': '只显示一次。',
   'Remove {name}?': '移除 {name}？',
+  'End {name}?': '结束 {name}？',
   'Its token stops working.': '它的令牌将失效。',
   'Added {date}': '添加于 {date}',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':
@@ -1835,7 +1966,6 @@ export const zhHans: Dictionary = {
   'Change notes': '修改笔记',
   'See what you are looking at': '查看你正在看的内容',
   'Move and rename files': '移动和重命名文件',
-  'Open tabs and bookmarks': '打开标签页和书签',
   'Bring a tab to the front': '将标签页置于前台',
   'Browse in tabs of its own': '在自己的标签页中浏览',
   'Read what pages load': '读取页面加载的内容',
@@ -1857,11 +1987,8 @@ export const zhHans: Dictionary = {
   'Without your logins': '不使用你的登录',
   'Calls a minute': '每分钟调用次数',
   'Pages a minute': '每分钟页面数',
+  'Browser memory limit': '浏览器内存上限',
   '{count} calls': '{count} 次调用',
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': '已在 {device} 上打开',
-  'Use here': '在此使用',
-  '{device} wants your web logins': '{device} 请求你的网页登录',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': '快速提问',
@@ -1925,7 +2052,7 @@ export const zhHans: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: '稍后提醒',
   Reminders: '提醒',
-  'Reminders ring while nibeditor is open': '提醒仅在 nibeditor 打开时响起',
+  'Reminders ring while Orden is open': '提醒仅在 Orden 打开时响起',
   Automatic: '自动',
   'Stay in the tray': '保留在托盘中',
   'Exact alarms': '精确闹钟',
@@ -1967,7 +2094,6 @@ export const zhHans: Dictionary = {
   'Any of them': '任一',
   Compare: '比较',
   'Add a filter': '添加筛选',
-  'Reschedule to today': '改到今天',
   Collapse: '折叠',
   Expand: '展开',
   Summary: '汇总',
@@ -1989,7 +2115,6 @@ export const zhHans: Dictionary = {
   Layout: '布局',
   Overdue: '已逾期',
   Upcoming: '即将到来',
-  Logbook: '日志',
   Project: '项目',
   Label: '标签',
   List: '列表',
@@ -2174,4 +2299,11 @@ export const zhHans: Dictionary = {
   'Search this chat': '在此聊天中搜索',
   'Add as task': '添加为任务',
   'Save as note': '保存为笔记',
+  // Appearance: glass's own pairs of colours
+  Dawn: '黎明',
+  Lagoon: '泻湖',
+  Lilac: '丁香',
+  Peach: '蜜桃',
+  Sage: '鼠尾草',
+  Mist: '薄雾',
 }

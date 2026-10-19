@@ -1,4 +1,4 @@
-import { Hono, type MiddlewareHandler } from 'hono'
+import { type Context, Hono, type MiddlewareHandler } from 'hono'
 import { SIGN_IN, SIGN_IN_TO_DO_THAT } from './refused'
 import { cors } from 'hono/cors'
 import { account } from './account'
@@ -7,6 +7,8 @@ import { accountById, auth, presentUser, requireWhoever, sessions } from './auth
 import { readBody } from './body'
 import { blobs, publicBlobs } from './blobs'
 import { hostnameOf, serveBlog, spaceForHost } from './blog'
+import { blogRootOf, isOwnOrigin } from './hosts'
+import { serveApp, servePage, switchChannel } from './channel'
 import { cleanPersonName, NAME_LIMIT } from './crypto'
 import { failed } from './failed'
 import { bearer } from './mcp/tokens'
@@ -23,7 +25,6 @@ import { sweepVersions } from './versions'
 import { expireGuests, guestMayReach, presentGuest, renameGuest } from './guests'
 import { mcp, mcpAdmin } from './mcp'
 import { notes } from './notes'
-import { tasks } from './tasks'
 import { chatDoor } from './chats/door'
 import { chats } from './chats/routes'
 import { sweepChats } from './chats/sweep'
@@ -31,15 +32,14 @@ import { oauth, oauthMetadata } from './oauth'
 import { expireClients } from './oauth/clients'
 import { rooms } from './rooms'
 import { devices } from './hub/devices'
+import { aiVault } from './ai/vault'
 import { hubDoor } from './hub/door'
 import { onlineAdmin } from './machines/admin'
 import { sweepAudit } from './machines/audit'
 import { machineBundle } from './machines/bundle'
 import { onlineDoor } from './machines/door'
-import { isMachineHost } from './machines/hetzner-host'
+import { isMachineHost, machineDomain } from './machines/hetzner-host'
 import { online } from './machines/routes'
-import { web } from './hub/web'
-import { webStore } from './spaces/web-store'
 import { settings } from './settings'
 import { v2Docs, v2Spaces } from './sync2'
 import { syncAdmin } from './sync2/admin'
@@ -63,30 +63,21 @@ const app = new Hono<{ Bindings: Env; Variables: Variables }>()
 app.onError(failed)
 
 /** The desktop app is not served from the API's origin, so it needs to be let in
- *  by name. Auth rides on a bearer token, never on cookies. */
+ *  by name. Auth rides on a bearer token, never on cookies. Each of the service's
+ *  own names is let in as well, because the web app on one of them may be a build
+ *  that asks the API at the other; see hosts.ts. */
 const appOrigins = cors({
-  origin: (origin) =>
-    /^(https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?|tauri:\/\/localhost|https?:\/\/tauri\.localhost|https:\/\/nibeditor\.com)$/.test(
+  origin: (origin, context: Context<{ Bindings: Env }>) =>
+    /^(https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?|tauri:\/\/localhost|https?:\/\/tauri\.localhost)$/.test(
       origin,
-    )
+    ) || isOwnOrigin(context.env, origin)
       ? origin
       : '',
   // `x-nib-device` is what a version the account keeps says it came from; a
   // header that is not named here is dropped by the browser before the request
   // leaves, which is a thing that only shows up on the builds whose origin is
   // not the service's own. See versions.ts and apps/desktop/src/lib/device.ts.
-  // The other three are what a web state is uploaded under; see hub/web.ts.
-  allowHeaders: [
-    'authorization',
-    'content-type',
-    'x-nib-device',
-    'x-nib-fence',
-    'x-nib-generation',
-    'x-nib-chunks',
-  ],
-  // And what a downloaded web state says about itself, which a page may only read
-  // when it is named.
-  exposeHeaders: ['x-nib-version', 'x-nib-fence', 'x-nib-generation'],
+  allowHeaders: ['authorization', 'content-type', 'x-nib-device'],
   allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   maxAge: 86400,
 })
@@ -119,9 +110,9 @@ app.route('/mcp', mcp)
 // subprotocol and is let in ahead of the guard below; see rooms/index.ts.
 app.route('/rooms', rooms)
 
-// The account's hub, the one socket every signed-in device keeps: pokes, web leases
-// and the web key's relay. A socket for the same reason as a room's, so it is let
-// in ahead of the guard as well; see hub/door.ts.
+// The account's hub, the one socket every signed-in device keeps: pokes, and whether
+// somebody is at it. A socket for the same reason as a room's, so it is let in ahead of
+// the guard as well; see hub/door.ts.
 app.route('/v2/hub', hubDoor)
 
 // A chat's socket, for the same reason: only `/:chat/socket` is answered here, and
@@ -213,15 +204,14 @@ app.get('/v1/me', async (context) => {
   // name, which is all a guest has and all the other people in a note need.
   if (who.kind === 'guest') return context.json({ guest: presentGuest(who.guest) })
 
-  // Which sync engine the account's devices run, and whether its web logins travel
-  // between its computers: two switches flipped one account at a time (docs/sync-v2.md
-  // section 11). Read here and not on every request's user: the app asks once, as it
-  // starts, and a change takes effect at its next launch.
-  const flags = await context.env.DB.prepare(
-    'select web_sync, sync_version from users where id = ?',
-  )
+  // Which sync engine the account's devices run: a switch flipped one account at a time
+  // (docs/sync-v2.md section 11). Read here and not on every request's user: the app
+  // asks once, as it starts, and a change takes effect at its next launch. The
+  // `web_sync` beside it was for web logins that travelled between computers, which
+  // were removed (#393); it is no longer read.
+  const flags = await context.env.DB.prepare('select sync_version from users where id = ?')
     .bind(who.user.id)
-    .first<{ web_sync: number; sync_version: number }>()
+    .first<{ sync_version: number }>()
   // And the profile as its owner edits it, with what it is called in each space where
   // it chose something else; see people/.
   const [profile, nicks] = await Promise.all([
@@ -233,7 +223,6 @@ app.get('/v1/me', async (context) => {
   return context.json({
     user: {
       ...presentUser(who.user),
-      webSync: flags?.web_sync === 1,
       syncVersion: flags?.sync_version === 2 ? 2 : 1,
       ...(profile ? presentOwnProfile(profile, Date.now()) : {}),
       nicks: Object.fromEntries(nicks.results.map((row) => [row.space_id, row.nick])),
@@ -298,15 +287,12 @@ app.route('/v1/second', second)
 // Deleting the account, which takes fresh codes and not only the session; see
 // account.ts.
 app.route('/v1/account', account)
-app.route('/v1', tasks)
 app.route('/v1', notes)
 
-// Sync v2, the hub's half: a site's web state and its chunks, the account's
-// devices, and which web store a space's pages live in. See hub/web.ts,
-// hub/devices.ts and spaces/web-store.ts.
-app.route('/v2/web', web)
+// Sync v2, the hub's half: the account's devices. See hub/devices.ts.
 app.route('/v2/devices', devices)
-app.route('/v2/spaces', webStore)
+// The reader's AI accounts, end to end between their devices; see ai/vault.ts.
+app.route('/v2/ai', aiVault)
 
 // Sync v2, the documents' half: a space's tree and its feed, documents in batches,
 // and a space's files. See sync2/index.ts and docs/sync-v2.md section 7.
@@ -341,15 +327,13 @@ app.get('/health', (context) => context.json({ ok: true }))
  *  the assets router's not-found handling would answer `/even/` with the
  *  editor's own page, so the path is named here and asked for by file name.
  *  Registered ahead of the catch-all for that reason. See docs/even.md. */
-app.get('/even', (context) => servePlugin(context.env, context.req.url))
-app.get('/even/', (context) => servePlugin(context.env, context.req.url))
+app.get('/even', (context) => servePlugin(context.env, context.req.raw))
+app.get('/even/', (context) => servePlugin(context.env, context.req.raw))
 
-function servePlugin(env: Env, from: string): Promise<Response> | Response {
+/** The plugin's page from the build this browser asked for; see channel.ts. */
+function servePlugin(env: Env, request: Request): Promise<Response> | Response {
   if (!env.ASSETS) return new Response('Not found', { status: 404 })
-
-  const url = new URL(from)
-  url.pathname = '/even.html'
-  return env.ASSETS.fetch(new Request(url, { headers: { accept: 'text/html' } }))
+  return servePage(env.ASSETS, request, '/even.html')
 }
 
 /** Anything that is not the API is either a published space, looked up by
@@ -364,14 +348,19 @@ app.all('*', async (context) => {
   // show, and the editor does not live there either. Temporary, because the
   // name may be taken tomorrow. Read through the same normalising as above, so
   // one spelling of a host cannot be a blog and another the app.
-  if (hostnameOf(url.host).endsWith(`.${context.env.BLOG_ROOT}`)) {
-    return context.redirect(context.env.APP_ORIGIN, 302)
-  }
+  const hostname = hostnameOf(url.host)
+  const root = blogRootOf(context.env, hostname)
+  if (root && hostname !== root) return context.redirect(context.env.APP_ORIGIN, 302)
+
+  // `?channel=` switches this browser between the release and the edge of `unstable`,
+  // and the cookie it leaves picks the build below; see channel.ts.
+  const switched = switchChannel(context.req.raw)
+  if (switched) return switched
 
   // The web build of the editor. It stores notes in the browser until someone
   // signs in, so it is served to anyone who asks.
   const assets = context.env.ASSETS
-  if (assets) return unframed(await assets.fetch(context.req.raw))
+  if (assets) return unframed(await serveApp(assets, context.req.raw))
 
   return context.text('Not found', 404)
 })
@@ -452,7 +441,7 @@ function scheduled(event: ScheduledEvent, env: Env, context: ExecutionContext) {
  *  how `Machine`'s link reaches `nibd` whichever way Cloudflare routes it, and anybody
  *  else meets Access and `nibd`'s own secret there, never the Worker. */
 function serve(request: Request, env: Env, context?: ExecutionContext) {
-  if (isMachineHost(new URL(request.url).hostname, env.APP_ORIGIN)) return fetch(request)
+  if (isMachineHost(new URL(request.url).hostname, machineDomain(env))) return fetch(request)
   return app.fetch(request, env, context)
 }
 

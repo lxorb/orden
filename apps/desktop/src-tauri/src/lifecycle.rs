@@ -56,17 +56,25 @@ pub fn managed(builder: tauri::Builder<crate::Engine>) -> tauri::Builder<crate::
 /// `App::run` in lib.rs.
 pub fn on_event(app: &AppHandle, event: RunEvent) {
     match event {
-        // A link clicked in another program, once nib is the browser: a Mac never
-        // puts one on the command line. `nib://` links arrive here too, and are the
-        // deep-link plugin's; see uris.rs. A document the Finder hands over is among
-        // them only if somebody forced it on nib - no file type is declared - and it
+        // A link clicked in another program, once nib is the browser, and a PDF opened
+        // with nib: a Mac never puts either on the command line. `nib://` links arrive
+        // here too, and are the deep-link plugin's; see uris.rs. Any other document the
+        // Finder hands over was forced on nib - no other file type is declared - and it
         // is nothing to open; see launch.rs.
         #[cfg(target_os = "macos")]
-        RunEvent::Opened { urls } => launch::hand_over(
-            app,
-            launch::Handed::Pages,
-            crate::web_handed::pages_among(&urls),
-        ),
+        RunEvent::Opened { urls } => {
+            launch::hand_over(
+                app,
+                launch::Handed::Pages,
+                crate::web_handed::pages_among(&urls),
+            );
+            let pdfs = crate::handed_pdfs::pdfs_among(&urls);
+            launch::hand_over(
+                app,
+                launch::Handed::Pdfs,
+                crate::handed_pdfs::admitted(app, pdfs),
+            );
+        }
 
         // Once there is an application delegate to teach: tao sets it as the loop
         // is built, and this is the loop's first event.
@@ -102,9 +110,6 @@ pub fn on_event(app: &AppHandle, event: RunEvent) {
             crate::terminal::end_all(app);
             // Nor any Claude Code or Codex a question started; see ai_cli.rs.
             crate::ai_cli::end_all(app);
-            // And the next launch, where the engine is being switched; see
-            // engine_switch.rs.
-            crate::engine_switch::on_leaving();
             // And no notice left on the screen to answer into a nib that has gone; see
             // notices.rs.
             crate::notices::clear_all(app);
@@ -253,9 +258,9 @@ pub fn quit_now(app: &AppHandle) {
         // there is still only the one question, and a Cancel after it leaves nothing
         // but a login that lasts, which every page load does anyway. See
         // web_cookies.rs.
-        #[cfg(all(any(windows, target_os = "macos"), not(feature = "cef")))]
+        #[cfg(any(windows, target_os = "macos"))]
         crate::web_cookies::kept(&window, ask);
-        #[cfg(not(all(any(windows, target_os = "macos"), not(feature = "cef"))))]
+        #[cfg(not(any(windows, target_os = "macos")))]
         ask();
     }
 }
@@ -265,13 +270,12 @@ pub fn quit_now(app: &AppHandle) {
 /// than finishing a quit nobody still wants.
 #[tauri::command]
 pub fn keep_running(app: AppHandle) {
-    crate::engine_switch::relaunch_called_off();
     let quitting = state(&app);
     if quitting.now() == ASKING || quitting.now() == CONFIRMING {
         quitting.set(RUNNING);
     }
     // And whatever asked for the quit is told it is off: a logout or a restart
-    // stops, where the system's own wording says Nib stopped it.
+    // stops, where the system's own wording says Orden stopped it.
     #[cfg(target_os = "macos")]
     asked_to_quit::answer(&app, false);
 }
@@ -289,7 +293,7 @@ pub fn keep_running(app: AppHandle) {
 ///
 /// Wait, not no. The answer goes back to whatever asked, and a logout, a restart
 /// or a shutdown hears "no" as the app stopping it: it was, every time, with
-/// nothing unsaved anywhere, and the reader had to start it again once Nib had quit
+/// nothing unsaved anywhere, and the reader had to start it again once Orden had quit
 /// by itself a moment later. Only a Cancel over an unsaved note calls one off now,
 /// which is what every Mac document app does.
 #[cfg(target_os = "macos")]
@@ -398,7 +402,7 @@ mod asked_to_quit {
 fn leave(app: &AppHandle) {
     state(app).set(LEAVING);
     // A quit `AppKit` asked about is ended by `AppKit`, which is also what tells a
-    // logout that Nib is out of its way.
+    // logout that Orden is out of its way.
     #[cfg(target_os = "macos")]
     if asked_to_quit::answer(app, true) {
         return;

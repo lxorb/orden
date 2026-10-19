@@ -16,6 +16,7 @@
   import { shownColour } from './canvas/palette'
   import { tick } from './canvas/tick'
   import { t } from './i18n.svelte'
+  import { overlays } from './overlays'
 
   const {
     at,
@@ -51,29 +52,52 @@
   let colouring = $state(false)
   let over = $state<HTMLElement>()
 
+  /** How wide the bar is with whatever hangs off it, and how wide the plane it stands
+   *  on, both in pixels. */
+  let wide = $state(0)
+  let room = $state(0)
+
+  /** Reads values for their own sake, so the effect around them follows them. */
+  const follows = (..._values: unknown[]) => undefined
+
+  /** How far the bar keeps from either side of the plane, in pixels. */
+  const MARGIN = 8
+
+  /** Where the middle of the bar goes: over the middle of what is picked, unless that
+   *  would hang the bar or its colours off the side of the pane - a card against the
+   *  left edge of a phone had its first colour out of reach (#350). Where the plane
+   *  is narrower than the bar, its middle. */
+  const left = $derived.by(() => {
+    if (!wide || !room) return at.x
+    if (room < wide + 2 * MARGIN) return room / 2
+    return Math.min(Math.max(at.x, wide / 2 + MARGIN), room - wide / 2 - MARGIN)
+  })
+
+  // The plane is the bar's own parent, measured whenever the bar moves or changes
+  // size: often enough, since a plane that changes width moves what is picked too.
+  $effect(() => {
+    follows(at.x, wide)
+    room = over?.parentElement?.clientWidth ?? 0
+  })
+
   function pick(next: string | null) {
     colouring = false
     oncolour(next)
   }
 
-  // A press anywhere but on this bar puts the colours away, which is how every other
-  // panel in the app closes. Caught on the way down rather than waited for on the way
-  // up: the plane below stops the event at itself for its own gestures, and a panel
-  // that only shuts when nothing else spoke first is a panel that does not shut.
-  $effect(() => {
-    const shut = (event: PointerEvent) => {
-      const target = event.target
-      if (target instanceof Node && over?.contains(target)) return
-
-      colouring = false
-    }
-
-    window.addEventListener('pointerdown', shut, { capture: true })
-    return () => window.removeEventListener('pointerdown', shut, { capture: true })
-  })
+  // A press anywhere but on this bar puts the colours away, and so do Escape and the
+  // window losing the focus, which is how every other panel in the app closes; see
+  // overlays.ts. Caught on the way down rather than waited for on the way up: the plane
+  // below stops the event at itself for its own gestures.
+  $effect(() =>
+    colouring
+      ? overlays.show(
+          () => (colouring = false),
+          () => [over],
+        )
+      : undefined,
+  )
 </script>
-
-<svelte:window onblur={() => (colouring = false)} />
 
 <!-- Every pointer stops here: the plane behind would read a press as a gesture and
      clear the very selection this bar is about. -->
@@ -82,7 +106,8 @@
   class="over"
   class:below
   bind:this={over}
-  style:left="{at.x}px"
+  bind:offsetWidth={wide}
+  style:left="{left}px"
   style:top="{at.y}px"
   onpointerdown={(event) => event.stopPropagation()}
   onpointermove={(event) => event.stopPropagation()}
@@ -176,6 +201,10 @@
   .over {
     position: absolute;
     z-index: var(--z-bars);
+    /* Its own width rather than what is left of the plane past its left edge, which is
+       what an absolute box shrinks to: the left is worked out from the width, and a
+       width that followed the left would chase it. */
+    width: max-content;
     display: flex;
     flex-direction: column;
     align-items: center;

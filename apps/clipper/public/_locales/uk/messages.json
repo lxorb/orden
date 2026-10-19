@@ -1,9 +1,0 @@
-{
-  "name": { "message": "nibeditor" },
-  "description": {
-    "message": "Вирізайте сторінку, виділення або посилання у свої нотатки nibeditor."
-  },
-  "clipPage": { "message": "Вирізати сторінку" },
-  "clipSelection": { "message": "Вирізати виділення" },
-  "clipLink": { "message": "Вирізати посилання" }
-}

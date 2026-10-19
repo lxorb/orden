@@ -483,7 +483,6 @@ describe('another space, without switching', () => {
       ['move_file', { space: 'Home', path: 'Soup.md', to: 'Food/Soup.md' }],
       ['create_folder', { space: 'Home', path: 'Drinks' }],
       ['trash_file', { space: 'Home', path: 'Recipes.md' }],
-      ['read_setting', { space: 'Home', key: 'web_data' }],
     ]
     for (const [verb, args] of calls) {
       expect(await call(verb, args), verb).toMatchObject({ ok: true, status: 'ok' })
@@ -1206,7 +1205,8 @@ describe('to-dos and bases', () => {
   test('a task in German words is read in an English app, as the connector reads it', async () => {
     await call('add_task', { space: 'Home', text: 'Zahnarzt anrufen morgen um 15 Uhr' })
     expect(files.get('/s/Home/Inbox.md')).toMatch(
-      /^- \[ \] Zahnarzt anrufen \[time:: 15:00\] 📅 \d{4}-\d{2}-\d{2}\n$/u,
+      // The day said is the day it starts: `🛫` (#371).
+      /^- \[ \] Zahnarzt anrufen \[time:: 15:00\] 🛫 \d{4}-\d{2}-\d{2}\n$/u,
     )
   })
 

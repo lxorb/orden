@@ -11,6 +11,7 @@
  *  paint, and the glasses carry the add and the tick but not the list. */
 
 import type { TaskOut } from '@nib/bases/tasks'
+import { modes } from './modes.svelte'
 import { changeOf } from './search/replace'
 import { insideSpace } from './space-paths'
 import { workspace } from './workspace.svelte'
@@ -83,7 +84,7 @@ export async function listed(filter?: string): Promise<{ total: number; tasks: T
   const { rows } = await import('./rows/rows.svelte')
   if (!filter) {
     const { clockOf, taskOut, todayTasks } = await import('@nib/bases/tasks')
-    const today = todayTasks(rows.of(), clockOf(new Date()).today)
+    const today = todayTasks(rows.of(), clockOf(new Date()).today, modes.undatedInToday)
     return { total: today.length, tasks: today.slice(0, 50).map(taskOut) }
   }
 

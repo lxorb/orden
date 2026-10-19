@@ -110,6 +110,7 @@ function sources(over: Partial<MenuBarSources> = {}): MenuBarSources {
     settings: row('Settings', 'app.settings'),
     windowRows: [row('Next note', 'app.next-note')],
     helpRows: [row('Keyboard shortcuts', 'app.keys')],
+    viewRows: [],
     keyFor: (command) => KEYS[command] ?? null,
     isWindowCommand: (command) => command.startsWith('app.'),
     words: WORDS,
@@ -373,6 +374,31 @@ describe('the strip', () => {
       anywhere: true,
       key: null,
     })
+  })
+
+  /** #344: a web tab's page holding the keyboard is never offered Cmd+R, and
+   *  `WKWebView` has no reload of its own on it, so the key reaches the app only as a row
+   *  - one that runs with the keyboard in the page, which is where it goes after the
+   *  first reload. */
+  test('ends View with reloading a web tab, on its keys, from anywhere', () => {
+    const reloading = sources({
+      viewRows: [row('Reload', 'web.reload'), row('Hard reload', 'web.fresh', { disabled: true })],
+      keyFor: (command) =>
+        ({ 'web.reload': 'Mod-r', 'web.fresh': 'Mod-Shift-r' })[command] ?? KEYS[command] ?? null,
+      isWindowCommand: (command) => command.startsWith('app.') || command.startsWith('web.'),
+    })
+    const view = menu(describeMenuBar(reloading).entries, 'view')
+    expect(itemIn(view, 'Reload')).toMatchObject({
+      accelerator: 'Cmd+R',
+      anywhere: true,
+      enabled: true,
+    })
+    expect(itemIn(view, 'Hard reload')).toMatchObject({
+      accelerator: 'Cmd+Shift+R',
+      enabled: false,
+    })
+    expect(view.items.map((one) => one.kind)).toEqual(['item', 'rule', 'item', 'item'])
+    expect(keyRuns(itemIn(view, 'Reload').anywhere, 'away')).toBe(true)
   })
 
   test('runs each row’s own function, by the row’s id', () => {

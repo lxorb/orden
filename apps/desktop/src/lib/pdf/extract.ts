@@ -21,8 +21,11 @@
  *  The pages go through papers.ts, which is what a search reads and what writes
  *  them down. */
 
-import { isPdfTarget } from '@nib/markdown/links'
+import { isPagesTarget, isPdfTarget } from '@nib/markdown/links'
 import { breathe } from '../breathe'
+import { holderOf } from '../pages/held'
+import { pathKey } from '../space-paths'
+import { invoke } from '../tauri'
 import { startup } from '../startup.svelte'
 import { mark } from '../trace'
 import type { Entry } from '../workspace.svelte'
@@ -64,6 +67,17 @@ export async function readPapers(root: string, files: readonly Entry[]): Promise
   await startup.turn('search')
   if (reading !== root) return
 
+  // A paper a page note holds is the note's and is not in the list, but its words are
+  // the space's as much as any PDF's; so the list is asked for them once, here, where
+  // nothing on screen waits. See pages/held.ts.
+  if (files.some((one) => isPagesTarget(one.name))) {
+    const held = await heldPapers(root, files)
+    if (reading !== root) return
+    for (const one of held) stamps.set(one.path, one.modified)
+    if (held.length) papersListed(root, stamps)
+    papers.push(...held)
+  }
+
   // What earlier sittings took down, first: it is a read of a row rather than of a
   // PDF, and it is what makes the first search of a space answer about papers.
   mark(`papers: ${papers.length} in the space`)
@@ -83,6 +97,27 @@ export async function readPapers(root: string, files: readonly Entry[]): Promise
   }
 
   mark('papers read')
+}
+
+/** The papers the page notes among `files` hold, as the list has them when asked for
+ *  them too. */
+export async function heldPapers(root: string, files: readonly Entry[]): Promise<Entry[]> {
+  const notes = new Set(
+    files.filter((one) => isPagesTarget(one.name)).map((one) => pathKey(one.path)),
+  )
+  const tree = await invoke<Entry>('read_tree', { root, options: { papers: true } }).catch(
+    () => null,
+  )
+  const out: Entry[] = []
+  const walk = (entry: Entry) => {
+    for (const child of entry.children) {
+      const holder = holderOf(child.path)
+      if (holder && notes.has(pathKey(holder))) out.push(child)
+      if (child.is_dir) walk(child)
+    }
+  }
+  if (tree) walk(tree)
+  return out
 }
 
 /** One paper, page by page. Its words are held in memory as they arrive, the way

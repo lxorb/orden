@@ -21,7 +21,12 @@
   import { offeredName } from '../workspace/drafts'
   import { fileFor, placesFor, startingPlace } from './places'
 
-  const { tab, anchor, onclose }: { tab: Tab; anchor: DOMRect | null; onclose: () => void } =
+  const {
+    tab,
+    anchor,
+    onclose,
+    onsaved,
+  }: { tab: Tab; anchor: DOMRect | null; onclose: () => void; onsaved?: (() => void) | undefined } =
     $props()
 
   /** How many places the list shows at once: enough to pick from without the layer
@@ -39,7 +44,11 @@
   // svelte-ignore state_referenced_locally
   let name = $state(offeredName(tab.note, title))
 
-  const places = placesFor(workspace.tree, workspace.spaces, workspace.activeSpace?.root ?? null)
+  const places = placesFor(
+    workspace.tree,
+    workspace.shownSpaces,
+    workspace.activeSpace?.root ?? null,
+  )
   const home = workspace.spaces.find((one) => one.id === workspace.spaceOf(tab.note))?.root
   let place = $state(startingPlace(places, home ?? null))
 
@@ -65,8 +74,10 @@
 
   // Escape leaves it, like everything else the app puts over a note; and while it is
   // up a web tab's page is out of sight, since a page is drawn over everything the
-  // window draws. See overlays.ts.
-  onMount(() => overlays.show(onclose))
+  // window draws. See overlays.ts. And a press past it, and the window losing the focus,
+  // as every popup does.
+  let bubble = $state<HTMLElement>()
+  onMount(() => overlays.show(onclose, () => [bubble]))
 
   function pick(index = cursor) {
     const chosen = matches[index]
@@ -99,7 +110,9 @@
     // Gone at once, with the row arriving in the list as it goes: what is left is a
     // write, and a write that fails says so where every write says it.
     onclose()
-    void workspace.save(tab, folder, file)
+    void workspace.save(tab, folder, file).then((path) => {
+      if (path !== null) onsaved?.()
+    })
   }
 </script>
 
@@ -107,6 +120,7 @@
 <div class="nib-scrim is-clear scrim" onclick={onclose}></div>
 
 <div
+  bind:this={bubble}
   class="nib-layer bubble"
   role="dialog"
   aria-label={t('Save')}

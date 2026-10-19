@@ -865,6 +865,7 @@
   font-size: var(--text-xs);
   text-decoration: none;
   vertical-align: 1px;
+  -webkit-user-select: none;
   user-select: none;
 }
 
@@ -898,6 +899,17 @@
 
 .nib-read-only .nib-task-chip {
   pointer-events: none;
+}
+
+/* A comment's when and who: said, not picked. A press goes to the words, which bring
+   the fields back to be edited. */
+.nib-comment-chips .nib-task-chip {
+  cursor: text;
+}
+
+.nib-comment-chips .nib-task-chip:hover {
+  background: none;
+  color: inherit;
 }
 
 /* A date typed at the end of a task, offered: Tab takes it. See task-hint.ts. */
@@ -2284,6 +2296,7 @@
   place-items: center;
   padding: 4vh 4vw;
   background: color-mix(in srgb, var(--bg) 88%, transparent);
+  -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
   cursor: zoom-out;
   animation: fade-in var(--dur-base) var(--ease-out);
@@ -2574,6 +2587,15 @@
    place is placed by taking hold of it. Transparent, so nothing is drawn over the
    photograph until a pointer is on it, and focusable, so the arrow keys reach it
    for anybody who is not holding a pointer. */
+
+/* The block the editor measures, holding the band and the room under it. A margin
+   is outside the box CodeMirror measures a block by, so the band's margin is kept
+   inside this one rather than collapsing through it, and a click under the cover
+   lands on the line it was made on; see cover.ts in the editor. */
+#write .nib-cover-block {
+  display: flow-root;
+}
+
 #write .nib-cover {
   position: relative;
   animation: settle-in var(--dur-base) var(--ease-out);

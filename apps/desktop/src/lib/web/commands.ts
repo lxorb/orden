@@ -1,6 +1,7 @@
 /** The desktop app's command surface, served from the browser's own storage.
  *  Same names, same shapes - so every call site works on both. */
 
+import { holderOf, paperOf } from '../pages/held'
 import { SIDECAR } from '../pdf/highlights'
 import { staleSnapshots } from '../recovery'
 import { markedPlane, type PlaneMarks, planeMarks } from '../scan-canvas'
@@ -39,6 +40,9 @@ interface Entry {
 
 interface TreeOptions {
   showHidden?: boolean
+  /** The papers page notes hold, which the list leaves out; see `papers` in the
+   *  desktop's tree.rs. */
+  papers?: boolean
 }
 
 const now = () => Date.now()
@@ -171,6 +175,13 @@ async function tree(root: string, options: TreeOptions = {}): Promise<Entry> {
   }
 
   const top = make(base)
+  // A page note's paper is part of the note beside it, so the list shows the note;
+  // one whose note has gone is a PDF again. See pages/held.ts.
+  const present = new Set(rows.map((row) => row.path))
+  const held = (path: string) => {
+    const holder = holderOf(path)
+    return holder !== null && present.has(holder)
+  }
 
   for (const row of rows) {
     if (basename(row.path) === KEEP) {
@@ -181,6 +192,7 @@ async function tree(root: string, options: TreeOptions = {}): Promise<Entry> {
 
     if (!listed(row.path)) continue
     if (!options.showHidden && basename(row.path).startsWith('.')) continue
+    if (!options.papers && held(row.path)) continue
 
     make(parent(row.path)).children.push({
       name: basename(row.path),
@@ -228,7 +240,7 @@ async function renameNote(from: string, to: string) {
   const target = normalise(to)
   if (source === target) return
 
-  await moveAssets(source, target)
+  const pictures = await moveAssets(source, target)
 
   // `occupied` and not `files.get`: a folder has no row of its own, so asking
   // only about an exact path would let a note be renamed onto a folder and
@@ -239,6 +251,12 @@ async function renameNote(from: string, to: string) {
     (row) => row.path === source || row.path.startsWith(`${source}/`),
   )
 
+  // A PDF on its own is a row of the asset store alone, and has moved already; its
+  // highlights follow it, as they do on a desktop.
+  if (!rows.length && pictures) {
+    if (isPdf(source)) await moveHighlights(source, target)
+    return
+  }
   if (!rows.length) throw new Error('nothing to rename')
 
   // One transaction for the lot. Row by row, a browser closed halfway through
@@ -248,6 +266,27 @@ async function renameNote(from: string, to: string) {
     rows.map((row) => ({ ...row, path: target + row.path.slice(source.length), modified: now() })),
     rows.map((row) => row.path),
   )
+
+  // A page note's paper follows the note, as `move_held` has it on a desktop.
+  if (isPages(source)) await renamePaper(paperOf(source), paperOf(target))
+}
+
+/** A page note's paper, and the paper's own highlights, under the note's new name.
+ *  Quiet where there is none, and where the name is taken: the note has moved, and a
+ *  paper that could not follow is listed as the PDF it is rather than lost. */
+async function renamePaper(source: string, target: string) {
+  const paper = await assets.get(source)
+  if (!paper || (await assets.get(target))) return
+
+  await assets.put({ ...paper, path: target, modified: now() })
+  await assets.remove(source)
+  await moveHighlights(source, target)
+}
+
+/** A PDF's highlights, under the name the PDF has now. */
+async function moveHighlights(source: string, target: string) {
+  const side = await files.get(sidecarOf(source))
+  if (side) await files.move([{ ...side, path: sidecarOf(target), modified: now() }], [side.path])
 }
 
 /** The desktop's `copy_path`: a note, a file or a folder and everything under it,
@@ -275,6 +314,20 @@ async function copyPath(from: string, to: string) {
     await files.put({ ...row, path: copied(row.path), created: now(), modified: now() })
   }
   for (const row of pictures) await assets.put({ ...row, path: copied(row.path), modified: now() })
+
+  await copyHeld(source, target)
+}
+
+/** What a file holds, copied with it: a PDF's highlights, and a page note's paper
+ *  with the paper's own highlights. */
+async function copyHeld(source: string, target: string) {
+  if (isPages(source)) {
+    const paper = await assets.get(paperOf(source))
+    if (!paper || (await assets.get(paperOf(target)))) return
+    await assets.put({ ...paper, path: paperOf(target), modified: now() })
+    await copyHeld(paperOf(source), paperOf(target))
+    return
+  }
 
   const side = isPdf(source) ? await files.get(sidecarOf(source)) : undefined
   if (side) await files.put({ ...side, path: sidecarOf(target), created: now(), modified: now() })
@@ -304,8 +357,9 @@ async function removeEmptyFolder(path: string) {
 
 /** The files beside the notes, moved with them. A PDF is a row in the asset store
  *  rather than in the note store, so a rename that only walked the notes would
- *  leave the paper behind under a folder that no longer exists. */
-async function moveAssets(source: string, target: string) {
+ *  leave the paper behind under a folder that no longer exists. Answers how many
+ *  moved. */
+async function moveAssets(source: string, target: string): Promise<number> {
   const rows = (await assets.all()).filter(
     (row) => row.path === source || row.path.startsWith(`${source}/`),
   )
@@ -314,6 +368,7 @@ async function moveAssets(source: string, target: string) {
     await assets.put({ ...row, path: target + row.path.slice(source.length), modified: now() })
     await assets.remove(row.path)
   }
+  return rows.length
 }
 
 /** Recently deleted, the browser's way: rows move under `/.trash/<id>/` and a
@@ -792,8 +847,13 @@ export async function webInvoke<T>(
     case 'delete_note':
       await files.remove(normalise(path))
       await assets.remove(normalise(path))
-      // A PDF's highlights are part of it and have nothing left to describe.
+      // A PDF's highlights are part of it, and a page note's paper is part of the
+      // note, and neither has anything left to describe.
       if (isPdf(path)) await files.remove(sidecarOf(path))
+      if (isPages(path)) {
+        await assets.remove(paperOf(normalise(path)))
+        await files.remove(sidecarOf(paperOf(path)))
+      }
       return undefined as T
 
     case 'rename_note':
@@ -1062,8 +1122,7 @@ async function hasContent(): Promise<boolean> {
  *  down, and written down whichever way this went: a device that already had notes
  *  has been introduced too. See seeded.ts and welcome.ts.
  *
- *  Answers whether it wrote the note just now, which is what a first visit is; see
- *  first-visit.svelte.ts. */
+ *  Answers whether it wrote the note just now, which is what a first visit is. */
 export async function seed(): Promise<boolean> {
   if (await wasSeeded()) return false
 

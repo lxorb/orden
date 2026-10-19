@@ -10,21 +10,127 @@ export const te: Dictionary = {
   'Do you write code?': 'మీరు కోడ్ రాస్తారా?',
   Yes: 'అవును',
   No: 'కాదు',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'ఇతర యాప్‌ల నుండి: {key}',
+  'From other apps: set in your system settings':
+    'ఇతర యాప్‌ల నుండి: సిస్టమ్ సెట్టింగ్‌లలో సెట్ చేయండి',
+  'From other apps: bind {command} in your system settings':
+    'ఇతర యాప్‌ల నుండి: సిస్టమ్ సెట్టింగ్‌లలో {command} జోడించండి',
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'అత్యవసరాలు',
+  'Add to Essentials': 'అత్యవసరాలకు జోడించు',
+  'Remove from Essentials': 'అత్యవసరాల నుండి తీసివేయి',
+  'Add block to Essentials': 'బ్లాక్‌ను అత్యవసరాలకు జోడించు',
+  'Add blocks to Essentials': 'బ్లాక్‌లను అత్యవసరాలకు జోడించు',
+  'Add view to Essentials': 'వీక్షణను అత్యవసరాలకు జోడించు',
+  'Open tabs and Essentials': 'ట్యాబ్‌లు మరియు అత్యవసరాలు తెరవడం',
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor ఇప్పుడు Orden',
+  'Notes from nibeditor.com': 'nibeditor.com నుండి నోట్స్',
+  'Nothing there': 'అక్కడ ఏమీ లేదు',
+  // AI: the three permission modes
+  'Full permissions': 'పూర్తి అనుమతులు',
+  'Auto mode': 'ఆటో మోడ్',
+  'Full permissions: nothing is asked first': 'పూర్తి అనుమతులు: ముందుగా ఏమీ అడగదు',
+  // Import: Zen's tabs
+  'Import from Zen': 'Zen నుండి ఇంపోర్ట్ చేయి',
+  'Containers stay in Zen': 'కంటైనర్‌లు Zen లోనే ఉంటాయి',
+  'Zen’s tabs could not be read.': 'Zen ట్యాబ్‌లను చదవలేకపోయాము.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'కంటైనర్‌లు Firefox లోనే ఉంటాయి',
+  'Nothing could be read out of {browser}.': '{browser} నుండి ఏమీ చదవలేకపోయాము.',
+  'Saved groups': 'సేవ్ చేసిన గ్రూప్‌లు',
+  'Tab group': 'ట్యాబ్ గ్రూప్',
+  'Bookmarks toolbar': 'బుక్‌మార్క్‌ల టూల్‌బార్',
+  'Bookmarks menu': 'బుక్‌మార్క్‌ల మెనూ',
+  'Other bookmarks': 'ఇతర బుక్‌మార్క్‌లు',
+  'Mobile bookmarks': 'మొబైల్ బుక్‌మార్క్‌లు',
+  'Bookmarks bar': 'బుక్‌మార్క్‌ల బార్',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} తన తెరిచిన ట్యాబ్‌లను లాక్ చేసి ఉంచుతుంది, కాబట్టి బుక్‌మార్క్‌లు మాత్రమే వచ్చాయి.',
+  '{count} pages not on the web stay behind': {
+    one: 'వెబ్‌లో లేని {count} పేజీ వదిలివేయబడింది',
+    other: 'వెబ్‌లో లేని {count} పేజీలు వదిలివేయబడ్డాయి',
+  },
+  'Reading List': 'పఠన జాబితా',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS Safari ట్యాబ్‌లు, బుక్‌మార్క్‌లను పూర్తి డిస్క్ యాక్సెస్ వెనుక ఉంచుతుంది. అక్కడ Orden ను ఆన్ చేసి, మళ్లీ అడగండి.',
+  // Settings: note types
+  'Page note': 'పేజీ నోట్',
+  'Web note': 'వెబ్ నోట్',
+  'Private tab': 'ప్రైవేట్ ట్యాబ్',
+  'Note types': 'నోట్ రకాలు',
+  // Tasks: Upcoming's weeks
+  'Previous week': 'మునుపటి వారం',
+  // Tasks: projects placed in the panel, and their folder
+  'Add project above': 'పైన ప్రాజెక్ట్ జోడించు',
+  'Add project below': 'కింద ప్రాజెక్ట్ జోడించు',
+  'Projects folder': 'ప్రాజెక్ట్‌ల ఫోల్డర్',
+  // Tasks: a repeating task skipped or done for good
+  Skip: 'దాటవేయి',
+  'Complete forever': 'శాశ్వతంగా పూర్తి చేయి',
+  // Tasks: comments
+  Comments: 'వ్యాఖ్యలు',
+  // Tasks: filters
+  Filters: 'ఫిల్టర్లు',
+  'Add filter': 'ఫిల్టర్ జోడించు',
+  'Edit filter': 'ఫిల్టర్ సవరించు',
+  // Tasks: a project's sections
+  'Add section': 'విభాగం జోడించు',
+  '{name} (copy)': '{name} (నకలు)',
+  'Its tasks are deleted with it.': 'దాని పనులు కూడా తొలగించబడతాయి.',
+  // Tasks: keys, selection and the undo toast
+  Completed: 'పూర్తయింది',
+  'Remove date': 'తేదీ తీసివేయి',
+  'Next task': 'తదుపరి పని',
+  'Previous task': 'మునుపటి పని',
+  'Add task at the top': 'పైన పని జోడించు',
+  '{count} selected': '{count} ఎంచుకోబడ్డాయి',
+  // Tasks: the Display menu
+  Display: 'ప్రదర్శన',
+  'Completed tasks': 'పూర్తయిన పనులు',
+  // Tasks: several lines pasted into quick add
+  'One task': 'ఒక పని',
+  'One per line': 'ప్రతి పంక్తికి ఒకటి',
+  // Tasks: the projects in the panel
+  Favorites: 'ఇష్టమైనవి',
+  'Add project': 'ప్రాజెక్ట్ జోడించు',
+  'Add sub-project': 'ఉప ప్రాజెక్ట్ జోడించు',
+  // Tasks: the task view
+  'Sub-tasks': 'ఉప పనులు',
+  'Add sub-task': 'ఉప పని జోడించు',
+  'New label': 'కొత్త లేబుల్',
+  'No deadline': 'గడువు లేదు',
+  // Tasks: the row's menu and the scheduler
+  Reschedule: 'మళ్లీ షెడ్యూల్ చేయి',
+  'Later this week': 'ఈ వారం తర్వాత',
+  'This weekend': 'ఈ వారాంతం',
+  'Next weekend': 'వచ్చే వారాంతం',
+  'Every week on {day}': 'ప్రతి వారం {day}',
+  'Every month on day {day}': 'ప్రతి నెల {day}వ తేదీ',
+  'Every year on {date}': 'ప్రతి సంవత్సరం {date}',
+  'Type a date': 'తేదీ రాయండి',
+  'Previous month': 'గత నెల',
+  'Next month': 'వచ్చే నెల',
+  'No time': 'సమయం లేదు',
+  'No repeat': 'పునరావృతం లేదు',
+  Complete: 'పూర్తి చేయి',
+  Reopen: 'మళ్లీ తెరువు',
+  Schedule: 'షెడ్యూల్ చేయి',
+  'Open in note': 'నోట్‌లో తెరువు',
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'వేరే యాప్',
-  'Start fresh': 'కొత్తగా మొదలుపెట్టు',
   'Import from Obsidian': 'Obsidian నుండి ఇంపోర్ట్ చేయి',
   'Import from Notion': 'Notion నుండి ఇంపోర్ట్ చేయి',
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'సూచనలు',
   'Silent mode': 'నిశ్శబ్ద మోడ్',
-  'Sign in to keep your notes safe and on every device.':
-    'మీ నోట్‌లు సురక్షితంగా, ప్రతి పరికరంలో ఉండేందుకు సైన్ ఇన్ చేయండి.',
   'See how your notes connect.': 'మీ నోట్‌లు ఎలా అనుసంధానమై ఉన్నాయో చూడండి.',
   'Press {key} to find anything, notes and commands alike.':
     'నోట్‌లు, ఆదేశాలు, ఏదైనా కనుగొనడానికి {key} నొక్కండి.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'రాస్తున్నప్పుడు మార్క్‌డౌన్ చూపించు',
+  'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'పాయింటర్',
   'Pointing hand on buttons': 'బటన్‌లపై సూచించే చేయి',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
@@ -40,11 +146,13 @@ export const te: Dictionary = {
   '{count} h': '{count} గం',
   Inbox: 'ఇన్‌బాక్స్',
   Date: 'తేదీ',
+  'Start date': 'ప్రారంభ తేదీ',
   Priority: 'ప్రాధాన్యత',
   Reminder: 'రిమైండర్',
   Duration: 'వ్యవధి',
   'Smart dates': 'స్మార్ట్ తేదీలు',
   'From any app': 'ఏ యాప్ నుండైనా',
+  'Show tasks without a start date in Today': 'ప్రారంభ తేదీ లేని పనులను ఈ రోజులో చూపించు',
   'Every day': 'ప్రతిరోజు',
   'Every weekday': 'ప్రతి పనిదినం',
   'Every week': 'ప్రతి వారం',
@@ -61,6 +169,13 @@ export const te: Dictionary = {
   Unsaved: 'సేవ్ కాలేదు',
   'Save to': 'ఇక్కడ సేవ్ చేయి',
   'Reloaded with the web data of {space}': '{space} వెబ్ డేటాతో మళ్లీ లోడ్ అయింది',
+  Separate: 'వేరుగా',
+  'Share this note’s web data again?': 'ఈ నోట్ వెబ్ డేటాను మళ్లీ షేర్ చేయాలా?',
+  'What its pages are signed in to on this computer is deleted.':
+    'ఈ కంప్యూటర్‌లో దీని పేజీలు సైన్ ఇన్ అయి ఉన్నవి తొలగించబడతాయి.',
+  'Share again': 'మళ్లీ షేర్ చేయండి',
+  'This note keeps its own web data now': 'ఈ నోట్ ఇప్పుడు సొంత వెబ్ డేటాను ఉంచుకుంటుంది',
+  'Back on the shared web data': 'షేర్ చేసిన వెబ్ డేటాకు తిరిగి',
   'Add a page': 'పేజీ చేర్చు',
   'Add a page after this': 'ఇది తర్వాత పేజీ చేర్చు',
   'Delete this page': 'ఈ పేజీ తొలగించు',
@@ -81,6 +196,8 @@ export const te: Dictionary = {
   Dots: 'చుక్కలు',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'రెండు వేళ్లతో కాన్వాస్‌ను తిప్పండి',
+  'Turn upright': 'నిటారుగా చేయండి',
   Canvas: 'క్యాన్వాస్',
   Card: 'కార్డ్',
   'Note or picture': 'నోట్ లేదా చిత్రం',
@@ -95,7 +212,6 @@ export const te: Dictionary = {
   'New window': 'కొత్త విండో',
   New: 'కొత్తది',
   'New space': 'కొత్త స్పేస్',
-  '{name}: switch space': '{name}: స్పేస్ మార్చు',
   Untitled: 'పేరు లేనిది',
   Space: 'స్పేస్',
   'Name the space': 'స్పేస్ పేరు',
@@ -140,8 +256,6 @@ export const te: Dictionary = {
   'Loading…': 'లోడ్ అవుతోంది…',
   'Create a space': 'స్పేస్ సృష్టించు',
   'Import a folder': 'ఫోల్డర్ ఇంపోర్ట్ చేయి',
-  'Sign in to sync': 'సింక్ కోసం సైన్ ఇన్',
-  'Create account': 'ఖాతా సృష్టించు',
   'Delete space': 'స్పేస్ తొలగించు',
   'Delete {name}?': '{name} తొలగించాలా?',
   'Every note in this space is deleted from your computer.':
@@ -159,6 +273,10 @@ export const te: Dictionary = {
   Unpin: 'పిన్ తీసివేయి',
   Close: 'మూసివేయి',
   'Close pinned tab?': 'పిన్ చేసిన ట్యాబ్ మూసివేయాలా?',
+  'Save changes to {name}?': '{name}లో మార్పులను సేవ్ చేయాలా?',
+  'Save changes to these tabs?': 'ఈ ట్యాబ్‌లలో మార్పులను సేవ్ చేయాలా?',
+  'Unsaved words go to Recently deleted.': 'సేవ్ చేయని పదాలు ఇటీవల తొలగించినవికి వెళ్తాయి.',
+  'Don’t save': 'సేవ్ చేయవద్దు',
   'Close others': 'ఇతరాలను మూసివేయి',
   'Close tabs to the right': 'కుడివైపు ట్యాబ్‌లను మూసివేయి',
   'Close tabs to the left': 'ఎడమవైపు ట్యాబ్‌లను మూసివేయి',
@@ -195,9 +313,6 @@ export const te: Dictionary = {
   'Move this note': 'ఈ నోట్‌ను తరలించు',
   'Move up': 'పైకి తరలించు',
   'Move down': 'కిందికి తరలించు',
-  Bookmark: 'బుక్‌మార్క్',
-  'Remove bookmark': 'బుక్‌మార్క్ తీసివేయి',
-  'Leave out of search': 'వెతుకులాటలో వదిలివేయి',
   'Search here again': 'ఇక్కడ మళ్లీ వెతుకు',
   'Undo the last file change': 'చివరి ఫైల్ మార్పును చర్యరద్దు చేయి',
   'Undo moving {name}': '{name} తరలింపును చర్యరద్దు చేయి',
@@ -247,7 +362,6 @@ export const te: Dictionary = {
   'Remove group': 'గ్రూప్ తీసివేయి',
   'Out of the group': 'గ్రూప్ నుండి బయటకు',
   Make: 'తయారుచేయి',
-  'Bookmark this block': 'ఈ బ్లాక్‌ను బుక్‌మార్క్ చేయి',
   Panels: 'ప్యానెల్‌లు',
   Outline: 'ఔట్‌లైన్',
   'Stay on this note': 'ఈ నోట్‌పైనే ఉండు',
@@ -510,8 +624,8 @@ export const te: Dictionary = {
   'Sign in to ask a question.': 'ప్రశ్న అడగడానికి సైన్ ఇన్ చేయండి.',
   'Asking OpenAI which models this key can use': 'ఈ కీ ఏ మోడల్‌లను వాడగలదో OpenAIని అడుగుతోంది',
   'Could not reach OpenAI': 'OpenAIని చేరుకోలేకపోయింది',
-  'That key cannot use any of the models nibeditor asks for.':
-    'nibeditor అడిగే మోడల్‌లలో ఏదీ ఆ కీ వాడలేదు.',
+  'That key cannot use any of the models Orden asks for.':
+    'Orden అడిగే మోడల్‌లలో ఏదీ ఆ కీ వాడలేదు.',
   'No reasoning': 'తార్కికత లేదు',
   Minimal: 'అతి తక్కువ',
   Low: 'తక్కువ',
@@ -533,7 +647,7 @@ export const te: Dictionary = {
   Mode: 'మోడ్',
   // The window's own edges; see appearance.rs
   Window: 'విండో',
-  'nibeditor’s own': 'nibeditor సొంతం',
+  'Orden’s own': 'Orden సొంతం',
   'The system’s': 'సిస్టమ్‌ది',
   'Window frame': 'విండో ఫ్రేమ్',
   System: 'సిస్టమ్',
@@ -596,6 +710,7 @@ export const te: Dictionary = {
   '{done} of {total}': '{total}లో {done}',
   'Sync failed': 'సింక్ విఫలమైంది',
   '{name} could not be written.': '{name} రాయలేకపోయింది.',
+  '{name} could not be read.': '{name} చదవలేకపోయింది.',
   'Text size': 'టెక్స్ట్ పరిమాణం',
   'Line spacing': 'పంక్తి అంతరం',
   'Line width': 'పంక్తి వెడల్పు',
@@ -656,8 +771,10 @@ export const te: Dictionary = {
   '{used} of {limit} used.': '{limit}లో {used} వాడబడింది.',
   'That image does not fit in your storage.': 'మీ స్టోరేజ్‌లో ఆ చిత్రం సరిపోదు.',
   'out of space': 'స్టోరేజ్ లేదు',
-  'nibeditor {version} is ready to install.': 'nibeditor {version} ఇన్‌స్టాల్‌కు సిద్ధం.',
+  'Orden {version} is ready to install.': 'Orden {version} ఇన్‌స్టాల్‌కు సిద్ధం.',
+  'Orden {version} is available.': 'Orden {version} అందుబాటులో ఉంది.',
   'Restart now': 'ఇప్పుడే రీస్టార్ట్',
+  'Move to Applications': 'అప్లికేషన్‌లకు తరలించు',
   Later: 'తర్వాత',
   More: 'మరిన్ని',
   'Open notes': 'నోట్‌లు తెరువు',
@@ -682,11 +799,9 @@ export const te: Dictionary = {
   Continue: 'కొనసాగు',
   'Send a new code': 'కొత్త కోడ్ పంపు',
   'Code sent to': 'కోడ్ పంపిన చిరునామా',
-  'You already have notes on this computer.': 'ఈ కంప్యూటర్‌లో మీకు ఇప్పటికే నోట్‌లు ఉన్నాయి.',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
-    'ఉంచితే అవి మీ ఖాతాలో చేరతాయి. తుడిచేస్తే మీ ఖాతాలో ఇప్పటికే ఉన్నవి మాత్రమే మిగులుతాయి - ఇది తిరిగి పొందలేరు.',
-  'Keep them': 'ఉంచు',
-  'Erase them': 'తుడిచేయి',
+  'This device already has notes.': 'ఈ పరికరంలో ఇప్పటికే నోట్స్ ఉన్నాయి.',
+  Merge: 'విలీనం చేయి',
+  'Keep separate': 'వేరుగా ఉంచు',
   'Digit {number}': 'అంకె {number}',
   'Resend in {seconds}s': '{seconds} సెకన్లలో మళ్లీ పంపు',
   'Last synced {time}.': 'చివరి సింక్ {time}.',
@@ -735,14 +850,14 @@ export const te: Dictionary = {
   'Reads your notes.': 'మీ నోట్‌లను చదువుతుంది.',
   'Reads and writes your notes.': 'మీ నోట్‌లను చదువుతుంది, రాస్తుంది.',
   Other: 'ఇతరం',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'AI అసిస్టెంట్ మీ నోట్‌లను చదవగలదు - అనుమతిస్తే మార్చగలదు కూడా. మీ nibeditor ఇమెయిల్‌తో సైన్ ఇన్ అవుతుంది; అతికించడానికి ఏమీ లేదు.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'AI అసిస్టెంట్ మీ నోట్‌లను చదవగలదు - అనుమతిస్తే మార్చగలదు కూడా. మీ Orden ఇమెయిల్‌తో సైన్ ఇన్ అవుతుంది; అతికించడానికి ఏమీ లేదు.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'Claudeలో Settings → Connectors తెరిచి Add custom connector క్లిక్ చేయండి.',
   'Open Claude’s connectors': 'Claude కనెక్టర్‌లు తెరువు',
   'Fill in the two fields and click Add.': 'రెండు ఫీల్డ్‌లు నింపి Add క్లిక్ చేయండి.',
-  'Click Connect and sign in with your nibeditor email.':
-    'Connect క్లిక్ చేసి మీ nibeditor ఇమెయిల్‌తో సైన్ ఇన్ చేయండి.',
+  'Click Connect and sign in with your Orden email.':
+    'Connect క్లిక్ చేసి మీ Orden ఇమెయిల్‌తో సైన్ ఇన్ చేయండి.',
   'Using Claude Code instead?': 'Claude Code వాడుతున్నారా?',
   Command: 'కమాండ్',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -753,16 +868,15 @@ export const te: Dictionary = {
   'Open ChatGPT’s plugins': 'ChatGPT ప్లగిన్‌లు తెరువు',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Plugins విభాగం లేదా ప్లస్ బటన్ లేదా? ముందు Settings → Security and loginలో Developer mode ఆన్ చేయండి.',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'ChatGPT అడిగినప్పుడు మీ nibeditor ఇమెయిల్‌తో సైన్ ఇన్ చేయండి.',
-  'To use it in a chat, type @ and pick nibeditor.':
-    'చాట్‌లో వాడేందుకు @ టైప్ చేసి nibeditor ఎంచుకోండి.',
+  'Sign in with your Orden email when ChatGPT asks.':
+    'ChatGPT అడిగినప్పుడు మీ Orden ఇమెయిల్‌తో సైన్ ఇన్ చేయండి.',
+  'To use it in a chat, type @ and pick Orden.': 'చాట్‌లో వాడేందుకు @ టైప్ చేసి Orden ఎంచుకోండి.',
   'Server URL': 'సర్వర్ URL',
   Authentication: 'ప్రామాణీకరణ',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'అధునాతన OAuth సెట్టింగ్‌లను అలాగే ఉంచి “I understand and want to continue” టిక్ చేయండి.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'OAuthతో Streamable HTTP మాట్లాడే ఏ MCP క్లయింట్ అయినా. URL ఇస్తే అది తనను నమోదు చేసుకుని nibeditor సైన్ ఇన్ పేజీ తెరుస్తుంది.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'OAuthతో Streamable HTTP మాట్లాడే ఏ MCP క్లయింట్ అయినా. URL ఇస్తే అది తనను నమోదు చేసుకుని Orden సైన్ ఇన్ పేజీ తెరుస్తుంది.',
   'Show config': 'కాన్ఫిగ్ చూపు',
   'For a client that takes a JSON block instead of a URL.':
     'URLకి బదులు JSON బ్లాక్ తీసుకునే క్లయింట్ కోసం.',
@@ -831,7 +945,7 @@ export const te: Dictionary = {
   'Display name': 'ప్రదర్శన పేరు',
   'Your name': 'మీ పేరు',
   Email: 'ఇమెయిల్',
-  'On nibeditor.com': 'nibeditor.comలో',
+  'On orden.so': 'orden.soలో',
   'Your own domain': 'మీ సొంత డొమైన్',
   'Switching gives up {name}.': 'మారితే {name} వదులుకుంటారు.',
   Page: 'పేజీ',
@@ -903,8 +1017,9 @@ export const te: Dictionary = {
   'No footnotes in this note': 'ఈ నోట్‌లో ఫుట్‌నోట్‌లు లేవు',
   'Stack tabs': 'ట్యాబ్‌లను నిలువుగా పెట్టు',
   'Unstack tabs': 'ట్యాబ్ నిలువు తీసివేయి',
-  'High contrast': 'అధిక కాంట్రాస్ట్',
+  Contrast: 'కాంట్రాస్ట్',
   Glass: 'గాజు',
+  Classic: 'క్లాసిక్',
   'Front matter': 'ఫ్రంట్ మేటర్',
   'Front matter: {name}': 'ముందుమాట సమాచారం: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':
@@ -915,6 +1030,7 @@ export const te: Dictionary = {
   Comment: 'వ్యాఖ్య',
   'Always on top': 'ఎప్పుడూ పైన',
   'What is new': 'కొత్తది ఏమిటి',
+  'Download the app': 'యాప్‌ను డౌన్‌లోడ్ చేయండి',
   'Report an issue': 'సమస్య తెలియజేయి',
   'Move the line up': 'పంక్తిని పైకి తరలించు',
   'Move the line down': 'పంక్తిని కిందికి తరలించు',
@@ -995,6 +1111,24 @@ export const te: Dictionary = {
   'Layout: {name}': 'లేఅవుట్: {name}',
   'Space: {name}': 'స్పేస్: {name}',
   'Theme: {name}': 'థీమ్: {name}',
+  'AI account: {name}': 'AI ఖాతా: {name}',
+  Accounts: 'ఖాతాలు',
+  Access: 'యాక్సెస్',
+  Set: 'సెట్ చేయబడింది',
+  'Start over': 'మళ్లీ ప్రారంభించండి',
+  'Sign in here': 'ఇక్కడ సైన్ ఇన్ చేయండి',
+  '{device} wants your AI accounts': '{device} మీ AI ఖాతాలను కోరుతోంది',
+  '{device} offers this device your AI vault': '{device} ఈ పరికరానికి మీ AI వాల్ట్‌ను అందిస్తోంది',
+  Join: 'చేరండి',
+  'Allow this device on another one': 'మరొక పరికరంలో ఈ పరికరాన్ని అనుమతించండి',
+  'On every device you sign in to, end-to-end encrypted.':
+    'మీరు సైన్ ఇన్ చేసే ప్రతి పరికరంలో, ఎండ్-టు-ఎండ్ ఎన్‌క్రిప్ట్.',
+  'Sign in to have them on every device.': 'ప్రతి పరికరంలో పొందడానికి సైన్ ఇన్ చేయండి.',
+  'Agents on this computer connect on their own':
+    'ఈ కంప్యూటర్‌లోని ఏజెంట్లు స్వయంగా కనెక్ట్ అవుతాయి',
+  Helpers: 'సహాయకులు',
+  'Start helpers on your AI accounts': 'మీ AI ఖాతాలలో సహాయకులను ప్రారంభించండి',
+  Delegated: 'అప్పగించారు',
   'Code theme: {name}': 'కోడ్ థీమ్: {name}',
   'Delete a layout': 'లేఅవుట్ తొలగించు',
   // Keyboards and modal editing
@@ -1063,6 +1197,7 @@ export const te: Dictionary = {
   'Double-click to write': 'రాయడానికి రెండుసార్లు క్లిక్',
   'Another colour': 'మరో రంగు',
   'Turn into a note': 'నోట్‌గా మార్చు',
+  Arrange: 'అమర్చు',
   'Bring to front': 'ముందుకు తే',
   'Bring forward': 'ఒక అడుగు ముందుకు',
   'Send backward': 'ఒక అడుగు వెనుకకు',
@@ -1084,6 +1219,12 @@ export const te: Dictionary = {
   'Export as PNG': 'PNGగా ఎక్స్‌పోర్ట్ చేయి',
   'Export as SVG': 'SVGగా ఎక్స్‌పోర్ట్ చేయి',
   'Export as PDF': 'PDFగా ఎక్స్‌పోర్ట్ చేయి',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF ఇంపోర్ట్ చేయి',
+  'Choose how to add the pages to the canvas.': 'పేజీలను క్యాన్వాస్‌కు ఎలా జోడించాలో ఎంచుకో.',
+  'Single page': 'ఒక పేజీ',
+  'All pages': 'అన్ని పేజీలు',
+  'Choose a page': 'ఒక పేజీని ఎంచుకో',
   // The canvas: what its own keys are called
   'Delete what is picked': 'ఎంచుకున్నది తొలగించు',
   'Nudge left': 'ఎడమకు జరుపు',
@@ -1144,8 +1285,8 @@ export const te: Dictionary = {
   'Release channel': 'రిలీజ్ ఛానెల్',
   Stable: 'స్థిరం',
   Unstable: 'అస్థిరం',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'స్థిరం అధికారిక రిలీజ్‌లను అనుసరిస్తుంది; అస్థిరం mainకు ప్రతి పుష్‌ను అనుసరిస్తుంది, విరిగిపోవచ్చు.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'స్థిరం విడుదలైన వెర్షన్‌లను అనుసరిస్తుంది; అస్థిరం edge బిల్డ్‌లను అనుసరిస్తుంది, విరిగిపోవచ్చు.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'ఇంపోర్ట్',
@@ -1201,13 +1342,15 @@ export const te: Dictionary = {
   '{count} tables inside notes do not come over': 'నోట్ల లోపలి {count} పట్టికలు రావు',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} జోడింపులు ఈ Mac లో కాక iCloud లో ఉన్నాయి',
+  '{count} files are in iCloud rather than on this Mac':
+    '{count} ఫైళ్లు ఈ Mac లో కాక iCloud లో ఉన్నాయి',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS ఆ నోట్లను Full Disk Access వెనుక ఉంచుతుంది.',
   'There are no notes in Apple Notes on this Mac.': 'ఈ Mac లో Apple Notes లో నోట్లు లేవు.',
   'Those notes could not be read.': 'ఆ నోట్లను చదవలేకపోయాం.',
   'Read them from this Mac': 'ఈ Mac నుండి చదువు',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    'Full Disk Access లో nibeditor ఆన్ చేసి, మళ్ళీ అడుగు.',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    'Full Disk Access లో Orden ఆన్ చేసి, మళ్ళీ అడుగు.',
   'Open the setting': 'అమరిక తెరువు',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'Apple Journal తానే ఎగుమతి చేస్తుంది: Journal, అమరికలు, ఎగుమతి. Apple Notes కు ఎగుమతి లేదు, కాబట్టి అది ఉన్న Mac కు దూరంగా, ఇక్కడ వదలాల్సింది ఒక ఎగుమతిదారు రాసిన ఫోల్డర్.',
@@ -1313,14 +1456,15 @@ export const te: Dictionary = {
   'OpenAI-compatible': 'OpenAI అనుకూలం',
   'Base URL': 'బేస్ URL',
   'API key': 'API కీ',
-  'Set on this device': 'ఈ పరికరంలో సెట్ అయింది',
   Optional: 'ఐచ్ఛికం',
   'List models': 'మోడల్‌ల జాబితా',
   'Asking…': 'అడుగుతోంది…',
   'No providers yet.': 'ఇంకా ప్రొవైడర్‌లు లేవు.',
   'Add {name}': '{name} జోడించు',
-  'Keys stay in the secure store on this device.': 'కీలు ఈ పరికరంలోని సురక్షిత స్టోర్‌లో ఉంటాయి.',
   'This browser holds the keys in its own storage.': 'ఈ బ్రౌజర్ కీలను తన స్టోరేజ్‌లో ఉంచుతుంది.',
+  'Keep this browser’s keys in the vault': 'ఈ బ్రౌజర్ కీలను వాల్ట్‌లో ఉంచు',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'అప్పుడు ప్రతి పరికరం కీలు ఈ బ్రౌజర్ నిల్వలో ఉంటాయి, పేజీలోకి చొరబడిన స్క్రిప్ట్ వాటిని చదవగలదు.',
   'AI can be wrong. Check the facts.': 'AI తప్పు కావచ్చు. వాస్తవాలను సరిచూసుకోండి.',
   'Used by the glasses': 'అద్దాలు వాడేది',
   'Could not read the models.': 'మోడల్‌లను చదవలేకపోయింది.',
@@ -1362,7 +1506,6 @@ export const te: Dictionary = {
   'A cited report': 'ఉల్లేఖిత నివేదిక',
   'A helper in the background': 'నేపథ్యంలో సహాయకుడు',
   'A side question': 'పక్క ప్రశ్న',
-  'Agent mode': 'ఏజెంట్ మోడ్',
   'Agent profile': 'ఏజెంట్ ప్రొఫైల్',
   'Archive the thread': 'థ్రెడ్‌ను ఆర్కైవ్ చేయండి',
   'Approve mode': 'ఆమోద మోడ్',
@@ -1481,8 +1624,6 @@ export const te: Dictionary = {
   // Web tabs
   Reload: 'మళ్ళీ లోడ్ చేయి',
   'Hard reload': 'పూర్తిగా మళ్ళీ లోడ్ చేయి',
-  'Clip this page': 'ఈ పేజీ ఒడిసిపట్టు',
-  'Clip the link': 'లింక్ ఒడిసిపట్టు',
   'Open in the browser': 'బ్రౌజర్‌లో తెరువు',
   'Show it here': 'ఇక్కడ చూపు',
   Website: 'వెబ్‌సైట్',
@@ -1568,8 +1709,9 @@ export const te: Dictionary = {
   'that is not a theme': 'అది థీమ్ కాదు',
   'no such theme': 'అలాంటి థీమ్ లేదు',
   'choose a model first': 'ముందు ఒక మోడల్ ఎంచుకోండి',
+  'set an OpenAI key in Orden’s settings first': 'ముందు Orden సెట్టింగ్‌లలో OpenAI కీ సెట్ చేయండి',
   'set an OpenAI key in nibeditor’s settings first':
-    'ముందు nibeditor సెట్టింగ్‌లలో OpenAI కీ సెట్ చేయండి',
+    'ముందు Orden సెట్టింగ్‌లలో OpenAI కీ సెట్ చేయండి',
   'that is a lot of questions - try again later': 'అవి చాలా ప్రశ్నలు - తర్వాత ప్రయత్నించండి',
   'that is too much audio': 'అది చాలా ఎక్కువ ఆడియో',
   'that is more than a spoken command': 'అది మాట్లాడే కమాండ్ కంటే ఎక్కువ',
@@ -1593,7 +1735,6 @@ export const te: Dictionary = {
   Nothing: 'ఏమీ లేదు',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'ఈ వీక్షణను బుక్‌మార్క్ చేయండి',
   Keep: 'ఉంచండి',
 
   // Which side of the window a panel sits on.
@@ -1615,7 +1756,6 @@ export const te: Dictionary = {
   'New tab': 'కొత్త ట్యాబ్',
   'Full screen': 'ఫుల్-స్క్రీన్',
   'Print…': 'ప్రింట్ చేయి…',
-  'Save page': 'పేజీని సేవ్ చేయి',
   'Share…': 'షేర్ చేయి…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1659,7 +1799,6 @@ export const te: Dictionary = {
   Blocked: 'బ్లాక్ అయింది',
   'Reset permissions': 'అనుమతులను రీసెట్ చేయండి',
   'Turn into': 'గా మార్చు',
-  'Bookmark these blocks': 'ఈ బ్లాక్‌లను బుక్‌మార్క్ చేయి',
   Foldable: 'ముడుచుకోగలదు',
   'Starts folded': 'ముడుచుకుని మొదలు',
   // Where a space keeps what websites store
@@ -1676,6 +1815,15 @@ export const te: Dictionary = {
   'Bring all to front': 'అన్నింటినీ ముందుకు తీసుకురా',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'కాపీని చర్యరద్దు చేయి',
+  'Devices with your AI vault': 'మీ AI వాల్ట్ ఉన్న పరికరాలు',
+  'This device': 'ఈ పరికరం',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'ఆ పరికరం ఇకపై మీ AI ఖాతాలను చదవలేదు, మిగతా వాటికి కొత్త కీ వస్తుంది.',
+  'Also remove this device from your AI vault?': 'ఈ పరికరాన్ని మీ AI వాల్ట్ నుండి కూడా తీసివేయాలా?',
+  'Remove and sign out': 'తీసివేసి సైన్ అవుట్ చేయి',
+  'Undo making {name}': '{name} సృష్టిని చర్యరద్దు చేయి',
+  'Undo the deletion': 'తొలగింపును చర్యరద్దు చేయి',
+  'Undo the move': 'తరలింపును చర్యరద్దు చేయి',
   'Redo the last file change': 'చివరి ఫైల్ మార్పును మళ్లీ చేయి',
   'Select down': 'కిందికి ఎంచుకో',
   'Select up': 'పైకి ఎంచుకో',
@@ -1719,7 +1867,6 @@ export const te: Dictionary = {
   '{key} in a terminal': 'టెర్మినల్‌లో {key}',
   'Always ask': 'ఎల్లప్పుడూ అడుగు',
   'Open another': 'మరొకటి తెరువు',
-  'Open in terminal': 'టెర్మినల్‌లో తెరువు',
   Clear: 'క్లియర్ చేయి',
   'Exited with code {code}': 'కోడ్ {code}తో ముగిసింది',
   'Could not start {shell}': '{shell}ను ప్రారంభించలేకపోయాము',
@@ -1731,18 +1878,8 @@ export const te: Dictionary = {
     one: '{count} పంక్తిని అతికించాలా?',
     other: '{count} పంక్తులను అతికించాలా?',
   },
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': 'డిఫాల్ట్ బ్రౌజర్',
-  // The engine web tabs run on
-  Engine: 'ఇంజిన్',
-  Relaunch: 'మళ్లీ ప్రారంభించు',
-  'Chromium did not start': 'Chromium ప్రారంభం కాలేదు',
-  'No connection': 'కనెక్షన్ లేదు',
-  'Not in this release': 'ఈ విడుదలలో లేదు',
-  'Needs an update': 'అప్‌డేట్ అవసరం',
-  'Signature did not match': 'సంతకం సరిపోలలేదు',
-  'Disk full': 'డిస్క్ నిండింది',
-  'Could not be installed': 'ఇన్‌స్టాల్ చేయలేకపోయింది',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} చేసిన సవరణలను రద్దు చేయి',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1845,7 +1982,7 @@ export const te: Dictionary = {
   'Always on this site': 'ఈ సైట్‌లో ఎల్లప్పుడూ',
   'Agents stopped': 'ఏజెంట్లు ఆపబడ్డాయి',
   'Agent tabs closed': 'ఏజెంట్ ట్యాబ్‌లు మూసివేయబడ్డాయి',
-  'nibeditor is still running for your agents': 'మీ ఏజెంట్ల కోసం nibeditor ఇంకా నడుస్తోంది',
+  'Orden is still running for your agents': 'మీ ఏజెంట్ల కోసం Orden ఇంకా నడుస్తోంది',
   '{client} wants to connect': '{client} కనెక్ట్ కావాలనుకుంటోంది',
   // Web logins that travel, and the devices of an account
   'no such device': 'అలాంటి పరికరం లేదు',
@@ -1861,11 +1998,12 @@ export const te: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'ఈ కంప్యూటర్‌లోని ఏజెంట్‌లు',
   'Your account’s connector': 'మీ ఖాతా కనెక్టర్',
-  'nibeditor asks you once, the first time it connects.':
-    'మొదటిసారి కనెక్ట్ అయినప్పుడు nibeditor మిమ్మల్ని ఒకసారి అడుగుతుంది.',
+  'Orden asks you once, the first time it connects.':
+    'మొదటిసారి కనెక్ట్ అయినప్పుడు Orden మిమ్మల్ని ఒకసారి అడుగుతుంది.',
   'A client on another machine?': 'వేరే మెషీన్‌లో క్లయింట్ ఉందా?',
   'Shown only once.': 'ఒక్కసారి మాత్రమే చూపబడుతుంది.',
   'Remove {name}?': '{name}ని తీసివేయాలా?',
+  'End {name}?': '{name}ని ముగించాలా?',
   'Its token stops working.': 'దాని టోకెన్ ఇక పని చేయదు.',
   'Added {date}': '{date}న జోడించబడింది',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':
@@ -1886,7 +2024,6 @@ export const te: Dictionary = {
   'Change notes': 'నోట్‌లు మార్చడం',
   'See what you are looking at': 'మీరు చూస్తున్నది చూడటం',
   'Move and rename files': 'ఫైల్‌లను తరలించడం, పేరు మార్చడం',
-  'Open tabs and bookmarks': 'ట్యాబ్‌లు, బుక్‌మార్క్‌లు తెరవడం',
   'Bring a tab to the front': 'ఒక ట్యాబ్‌ను ముందుకు తేవడం',
   'Browse in tabs of its own': 'సొంత ట్యాబ్‌లలో బ్రౌజ్ చేయడం',
   'Read what pages load': 'పేజీలు లోడ్ చేసేది చదవడం',
@@ -1908,14 +2045,11 @@ export const te: Dictionary = {
   'Without your logins': 'మీ లాగిన్‌లు లేకుండా',
   'Calls a minute': 'నిమిషానికి కాల్‌లు',
   'Pages a minute': 'నిమిషానికి పేజీలు',
+  'Browser memory limit': 'బ్రౌజర్ మెమరీ పరిమితి',
   '{count} calls': {
     one: '{count} కాల్',
     other: '{count} కాల్‌లు',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': '{device}లో తెరిచి ఉంది',
-  'Use here': 'ఇక్కడ ఉపయోగించండి',
-  '{device} wants your web logins': '{device} మీ వెబ్ లాగిన్‌లను కోరుతోంది',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'చిన్న ప్రశ్న',
@@ -1982,7 +2116,7 @@ export const te: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'స్నూజ్',
   Reminders: 'రిమైండర్‌లు',
-  'Reminders ring while nibeditor is open': 'nibeditor తెరిచి ఉన్నప్పుడు రిమైండర్‌లు మోగుతాయి',
+  'Reminders ring while Orden is open': 'Orden తెరిచి ఉన్నప్పుడు రిమైండర్‌లు మోగుతాయి',
   Automatic: 'స్వయంచాలకం',
   'Stay in the tray': 'ట్రేలో ఉండు',
   'Exact alarms': 'ఖచ్చితమైన అలారాలు',
@@ -2025,7 +2159,6 @@ export const te: Dictionary = {
   'Any of them': 'ఏదైనా',
   Compare: 'పోల్చు',
   'Add a filter': 'ఫిల్టర్ జోడించు',
-  'Reschedule to today': 'ఈ రోజుకి మార్చు',
   Collapse: 'కుదించు',
   Expand: 'విస్తరించు',
   Summary: 'సారాంశం',
@@ -2047,7 +2180,6 @@ export const te: Dictionary = {
   Layout: 'లేఅవుట్',
   Overdue: 'గడువు దాటినవి',
   Upcoming: 'రాబోయేవి',
-  Logbook: 'లాగ్‌బుక్',
   Project: 'ప్రాజెక్ట్',
   Label: 'లేబుల్',
   List: 'జాబితా',
@@ -2233,4 +2365,11 @@ export const te: Dictionary = {
   'Search this chat': 'ఈ చాట్‌లో వెతుకు',
   'Add as task': 'పనిగా జోడించు',
   'Save as note': 'గమనికగా సేవ్ చేయి',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'వేకువ',
+  Lagoon: 'లగూన్',
+  Lilac: 'లైలాక్',
+  Peach: 'పీచ్',
+  Sage: 'సేజ్',
+  Mist: 'పొగమంచు',
 }

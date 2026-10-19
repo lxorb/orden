@@ -1,8 +1,8 @@
 /** The two notes a web tab has anything to do with.
  *
  *  **A clip**, which is a note this app composes out of a page: the page's words,
- *  under front matter that says `source:` and `clipped:`, exactly as the clipper
- *  extension writes one. A clip is the words as they were rather than a window on the
+ *  under front matter that says `source:` and `clipped:`, in `@nib/markdown/clip-note`'s
+ *  shape. A clip is the words as they were rather than a window on the
  *  site, so it is a note and always will be. See clip.ts.
  *
  *  **A website, as it used to be written**: a `.md` file whose front matter said
@@ -77,8 +77,8 @@ export function keptBody(text: string): string | null {
  *  Judged rather than merely present, and by the same rule the tab itself is held to:
  *  what is not the web is not somewhere a clip can have come from, because it is not
  *  somewhere the tab could have been. The page's own address wins over the tab's, which
- *  is what the reader is looking at. See clip.ts, which refuses on this, and
- *  WebBar.svelte, where the glyph is not offered while there is nothing to clip. */
+ *  is what the reader is looking at. See clip.ts, which refuses on this, and the menu's
+ *  Save as a note row (menu.ts), greyed out where there is no site to save. */
 export function clipSource(
   read: string | null | undefined,
   fallback: string | null,
@@ -97,9 +97,9 @@ interface Read {
 /** What a page's HTML holds worth keeping, and what the page is called and tagged.
  *
  *  A web tab's page hands over a snapshot of itself (see
- *  `@nib/markdown/snapshot`), and the snapshot goes through the extractor the
- *  clipper extension runs - the article, or the selection the page marked - so a tab
- *  and the extension clip the same page to the same words. Anything else is already
+ *  `@nib/markdown/snapshot`), and the snapshot goes through the article
+ *  extractor - the article, or the selection the page marked - which a live page's DOM
+ *  goes through too, so a page clips to the same words however it was read. Anything else is already
  *  the part worth keeping: a page an agent read whole, or the nothing a browser
  *  build's frame gives, which is a link card.
  *

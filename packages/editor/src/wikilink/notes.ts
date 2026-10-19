@@ -93,6 +93,9 @@ export interface NoteIndex {
    *  Relative to the space, like every path here. Null for a note with no home
    *  yet. */
   path: string | null
+  /** What a task's `📅` means in this space: a deadline in an Obsidian vault, else -
+   *  absent - a start date (`@nib/markdown/task-dates`). */
+  dueReads?: 'deadline'
   /** Every tag of the space, most used first, for the `#` popup. Empty where the
    *  editor is standing on its own, which offers nothing rather than nothing
    *  useful. Here rather than in a facet of its own because it is the same fact
@@ -188,8 +191,15 @@ export interface TaskHelp {
   /** The edits that tick the task on line `line` (from zero), or open it again;
    *  offsets into `note`, in order, one undo. */
   tick(note: string, line: number): Promise<readonly TextEdit[]>
-  /** A chip pressed: its field's choices over `at`, the pick handed to `change`. */
-  pick(field: string, fields: TaskFields, at: DOMRect, change: (change: TaskChange) => void): void
+  /** A chip pressed: its field's choices over `at`, the pick handed to `change`. `due`
+   *  is what a `📅` means in the note's space (`@nib/markdown/task-dates`). */
+  pick(
+    field: string,
+    fields: TaskFields,
+    at: DOMRect,
+    due: 'start' | 'deadline',
+    change: (change: TaskChange) => void,
+  ): void
   /** A day said in words at the end of `text`; null, too, while the reader of one is
    *  still on its way. */
   dayAtEnd(text: string): DayTyped | null
@@ -341,7 +351,7 @@ const OWN = /\.(md|markdown|mdown|mkd|url|webloc)$/i
 
 /** A path as something to compare: `/` separators, no extension of our own, and
  *  folded case and composed letters (`foldName`). Obsidian matches a link to a
- *  note by name whatever the case, and so do the two filesystems Nib runs on. */
+ *  note by name whatever the case, and so do the two filesystems Orden runs on. */
 function comparable(path: string): string {
   return foldName(path.replace(/\\/g, '/').replace(OWN, ''))
 }
@@ -468,7 +478,7 @@ export function resolveLink(index: NoteIndex, link: Wikilink, kind: LinkKind): N
  *  following it makes the note.
  *
  *  A PDF and a canvas resolve through the files rather than the notes, because
- *  those are what Nib can open beside a note. Any other file is left unresolved:
+ *  those are what Orden can open beside a note. Any other file is left unresolved:
  *  a link that cannot be followed should not look as though it can. */
 export function resolves(index: NoteIndex, link: Wikilink, kind: LinkKind): boolean {
   if (!link.target) return true

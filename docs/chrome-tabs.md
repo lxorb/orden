@@ -14,6 +14,7 @@ nib's. Source paths are under `chrome/browser/ui/`.
 | Concave foot where the active tab meets the toolbar | radius 12 (`GetBottomCornerRadius`), outside the tab body | `horizontal_tab_style_views.cc` `GetPath` | `--radius-md` |
 | Active tab fill | the toolbar's colour; the path runs 1 DIP into the toolbar, so no line under it | `tab_style.cc`, `kTabstripToolbarOverlap` | the colour of what is under the strip; the bar's hairline stops under it |
 | Underline on the active tab | none | | none (was a 2 px accent line) |
+| Stroke round the active tab | only where the tab and the frame are under 1.3:1, or under 0.2 apart in luminance | `TabStrip::ShouldDrawStrokes`, `kTabOutlinesInLowContrastThemes` | always: `--tab-edge`, the bar's hairline rising round the feet, sides and top, held to 1.5:1 on every frame a built-in theme can put behind it (`test/tab-edge.test.ts`); faded in with the fill over `--dur-fast` |
 | Hover fill | a detached rounded rectangle: top 6 down, 6 + 1 short of the bottom, every corner rounded, in the header's hover tone (`kColorSysStateHeaderHover`, a tone past the frame) | `GetPath(kHighlight)`, `material_tab_strip_color_mixer.cc` | the same box, 5 from the top and from the bar, in `--tab-hover`: the ink lifted 8% off the frame, which the plus and the steps light in too |
 | Contents | centred in the hover's box: the strip's padding above and below (`GetContentsInsets`), not the active body's middle | `tab_style.cc` | `.pick` padded `--tab-top` above and below, so the middle of the strip, level with the bar's own buttons |
 | Hover in / out | 200 ms, ease-out in, ease-in out | `glow_hover_controller.cc` | `--dur-fast` |
@@ -79,11 +80,19 @@ Move sheet offers, starting on the root of the space it was opened in. A tab dro
 row of the file list is saved there. A web tab nobody has kept wears no dot - a browser
 tab has nothing unwritten in it - and is saved the same way. See `workspace/drafts.ts`.
 
-**Closing one asks nothing**, as a browser asks nothing: an empty one just goes, and one
-with words keeps them twice over, on the closed stack for Ctrl+Shift+T and in Recently
-deleted for fourteen days, from where it is restored as the note it would have been
-(`trash_words` in `trash.rs`, `workspace/placing.ts`). VS Code and Notepad ask "Save
-changes?" here; nib has no such question anywhere.
+**Closing one with words in it asks first**, as VS Code and Notepad ask "Save changes?".
+Emil, 2026-10-15 (#359): _"when closing something that's unsaved (e.g. a note) then you
+should get a warning modal"_. One question for every such tab a gesture closes (the cross,
+Ctrl+W, the menu's rows, a pane): **Save** gives it a file and then closes it - one tab is
+asked where in the layer Ctrl+S puts under it and closes once saved, several are each
+saved where Save offers first; **Don't save** closes it with its words kept twice over, on
+the closed stack for Ctrl+Shift+T and in Recently deleted for fourteen days, from where it
+is restored as the note it would have been (`trash_words` in `trash.rs`,
+`workspace/placing.ts`); **Cancel**, the key Enter lands on, keeps it. An empty one just
+goes, a note with a file writes itself and is never asked about, and a pinned one closed
+by key asks this rather than whether to close a pinned tab. The window closing asks
+nothing about them: the next window brings every tab with no file back with its words.
+See `workspace/closing-unsaved.ts`.
 
 **A session brings every tab back, whatever its kind.** A tab is written down as a
 `Draft` (`workspace/session.ts`): its kind, its file or none, its words where the disk
@@ -97,7 +106,7 @@ them there rather than keeping a second record.
 ### A space's own tabs
 
 **A space shares the window's tabs or keeps its own: Tabs, Global or Space, in the space's
-menu under Web data**, the same row built the same way with the same two words. Emil,
+menu**, built the way a web note's Web data row is, with the same word for the shared one. Emil,
 2026-10-01: *"there should be an option whether the tabs are global or only for the space.
 Only for the space means the whole open configuration is saved for that space, and it
 changes automatically when you switch to another space."* Every space is Global until
@@ -138,11 +147,18 @@ See `workspace/sets.ts` for the rules and `workspace/sets.svelte.ts` for the sto
 
 ### Move to space
 
-**Any tab moves to another space: Move to space in its menu (a pick of tabs too), in the
-palette, or the tab carried onto the space switcher**, which opens under it after 450 ms,
-as a folder opens under a held file, and lights the space it would land in. Emil,
-2026-10-03: *"It should be possible to move a tab to another space (e.g. relevant for
-terminal tabs that you can't just close and reopen without losing progress)."*
+**Any tab moves to another space: the tab carried onto the space switcher**, which opens
+under it after 450 ms, as a folder opens under a held file, and lights the space it would
+land in, **or Move to space in the palette**. Emil, 2026-10-03: *"It should be possible
+to move a tab to another space (e.g. relevant for terminal tabs that you can't just close
+and reopen without losing progress)."* A row of the file list - a note, a folder, a
+selection - is carried onto the switcher the same way, and moves as a drop into a folder
+does, with its Undo (#303). Leaving the list, or Escape, closes it and nothing moves.
+
+The right-click menus of a tab and of a row no longer say Move to space or Move (#303):
+the drag does it, and the palette asks where. On a touch screen, where a held finger opens
+the menu and the file list has no drag outside the Manual order, the menus still offer
+both.
 
 - **The same tab.** Nothing closes and opens again: a terminal is the same shell, its
   process and its screen; a page keeps its place; an unsaved note keeps its words and its
@@ -161,12 +177,9 @@ terminal tabs that you can't just close and reopen without losing progress)."*
   no file is given the other space as its home: saved there, searched there, a terminal's
   last lines kept under it (docs/terminal.md). A file in no space and a note shared on its
   own move as the tab alone. A file of that name already there stays, and so does its tab.
-- **A page's web data is its new space's**, as a web note's is the space holding it.
-  Where the two spaces share a store the page goes on as it was - Chrome moving a tab
-  between two windows of a profile; where they do not, it is built again in the new one
-  on the address it was on, and the line under the bar says so for four seconds of being
-  seen, as a web tab saved into such a space does (`web-tab/rehome.ts`). Arc asks first;
-  nib says it after, as everywhere else.
+- **A page goes on as it was**: every space shares one store of web data (#239), so a
+  page moved between spaces is Chrome moving a tab between two windows of a profile. A
+  web note that keeps its own takes it along, since the choice is in its file.
 - **Never** into a space that may not be written in, nor a file out of one.
 
 See `workspace/space-move.ts` for the rules and `workspace/moving-space.ts` for the move.
@@ -299,6 +312,14 @@ so a width change lays out that one tab and nothing beside it.
   Chrome's last. A place past the end does nothing, as in Chrome.
 - **Colours are nib's tokens**; the strip's ground is `--surface-2` so the active
   tab has something to be cut out of.
+- **The active tab is always stroked** (lxorb, issue #242), where Chrome strokes it only
+  in a theme whose tab and frame are too alike. Every nib palette is under Chrome's 1.3:1
+  there, and under glass or a picture the open tab's fill can be the frame's own colour.
+  The stroke is the bar's own hairline, a lift of the ink (`--tab-edge`, `--line` in the
+  contrast theme), which leaves the open tab out of it: the line either side is drawn by
+  the tab itself (see `.edge` in Tabs.svelte), so under a see-through fill there is no
+  line showing through it. Edge's lift and Arc's pill were the other answers looked at;
+  both leave the tab off the page below, which is what makes it the open one.
 - **The cross turns the danger colour on hover**, over Chrome's grey circle: nib's
   own close.
 - **A web tab's active fill is the bar's `--surface`, a note's is the page's

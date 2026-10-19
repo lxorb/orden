@@ -1,51 +1,51 @@
-/** What the space chooser's own rows do: make the first space, or open the sign-in.
- *  Obsidian's ways out of its vault chooser; the rows that bring notes over from
- *  another app are migrating.svelte.ts, which Settings and the palette share.
+/** A fresh start: the first space, made without a question, open on the welcome note.
  *
- *  Fetched with the card rather than carried by the window; whether the card is up
- *  at all is space-chooser.svelte.ts. */
+ *  Emil, 2026-10-13, on the first screen that asked where somebody's notes come from:
+ *  "rather welcome note instead". Bringing notes over from Obsidian or Notion is
+ *  Settings > Import, and the welcome note's last line links there (welcome.ts).
+ *
+ *  What the browser build has always opened on, on every build: a space called what the
+ *  browser's is, with the note in it, open, and the file list beside it where there is
+ *  room - which is where Obsidian lands after creating a vault. When it happens is
+ *  fresh-start.ts; the window asks for this only then, see App.svelte.
+ *
+ *  The welcome note goes in once per device, the rule the browser build keeps, so
+ *  somebody who deleted it and later their last space is given a space again and not
+ *  the note; an untouched welcome never travels to an account. See welcome.ts. */
 
-import { account } from './account.svelte'
+import { type Moment, startsFresh } from './fresh-start'
 import { markSeeded, wasSeeded } from './seeded'
+import { settings } from './settings.svelte'
+import { madeSpace } from './space-actions'
 import { joinPath } from './tauri'
 import { viewport } from './viewport.svelte'
-import { WELCOME, WELCOME_NAME } from './welcome'
+import { WELCOME, WELCOME_NAME, WELCOME_SPACE } from './welcome'
 import { writeFile } from './workspace/write-file'
 import { type Space, workspace } from './workspace.svelte'
 
 class FirstSpace {
-  /** Set while a row's work is under way, so a second press does not make a second
-   *  space. */
-  working = $state(false)
+  /** Set while the space is being made, so a second ask in that moment does not make
+   *  a second space. */
+  private working = false
 
-  /** Create: a name, then the space, then the welcome note in it, open, with the file
-   *  list beside it - which is where Obsidian lands after creating a vault. */
-  async create() {
-    await this.while(async () => {
-      const { newSpace } = await import('./space-actions')
-      const space = await newSpace()
-      if (space) await this.arrive(space, await this.welcome(space))
-    })
-  }
-
-  /** Both doors lead to the same emailed code; the sheet only says which was taken. */
-  signIn(mode: 'sign-in' | 'create') {
-    account.ask(mode)
-  }
-
-  private async while(work: () => Promise<void>) {
-    if (this.working) return
+  /** Makes the space, if `now` is a fresh start; see fresh-start.ts. */
+  async start(now: Moment) {
+    if (!startsFresh(now) || this.working || workspace.spaces.length) return
     this.working = true
     try {
-      await work()
+      const space = await madeSpace(WELCOME_SPACE)
+      if (!space) return
+      const note = await this.welcome(space)
+      await this.arrive(space, note)
+      // The first time on this device: the optional questions beside the note.
+      if (note) settings.setup = -1
     } finally {
       this.working = false
     }
   }
 
-  /** The welcome note, into the first space this device makes: once per device, the
-   *  same rule the browser build keeps, so somebody who deleted it is not handed it
-   *  again with their next space. Answers where it was written, or null. */
+  /** The welcome note, into the space, once per device. Answers where it was written,
+   *  or null. */
   private async welcome(space: Space): Promise<string | null> {
     if (await wasSeeded()) return null
 

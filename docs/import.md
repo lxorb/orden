@@ -40,20 +40,18 @@ cannot read a list of four thousand notes.
 ## Coming from another app
 
 The import above is for notes arriving in a space somebody already writes in.
-Somebody arriving *themselves* is asked first, on the first screen: the iPhone's
-"Transfer Your Apps & Data", one row per place the notes could come from and the
-fresh start under them. Obsidian, Notion, and every other app as one row, since
-the format is read off the file either way. Each brings its notes in as a space of
-their own, named after what came in, and lands in it.
+Somebody arriving *themselves* brings theirs in through Settings > Import: the
+iPhone's "Transfer Your Apps & Data", one row per place the notes could come from.
+Obsidian, Notion, and every other app as one row, since the format is read off the
+file either way. Each brings its notes in as a space of their own, named after what
+came in, and lands in it.
 
-- **Where it is asked.** The space chooser on the desktop and the phone, which is
-  up while there is no space; the browser build's first visit, beside the welcome
-  note's space, where "Start fresh" stays on that note and a browser that has
-  answered is not asked again (`first-visit.svelte.ts`; every drive's browser has
-  answered, see `ANSWERED` in `test/e2e/harness.py`).
-  Later, the same rows are Settings > Import (Notion's place for them) and the
-  palette's Import from Obsidian and Import from Notion. See `MigrateRows.svelte`
-  and `migrating.svelte.ts`.
+- **Where it is.** Nothing asks on the way in. Emil, 2026-10-13: "rather welcome
+  note instead of the where do your notes come from". A fresh start opens on the
+  welcome note, in a space made for it (`fresh-start.ts`, `first-space.svelte.ts`),
+  and the note's last line is a link to Settings > Import (`nib://settings/import`,
+  see `settingsPane` in `open-link.ts`). The same rows are the palette's Import from
+  Obsidian and Import from Notion. See `MigrateRows.svelte` and `migrating.svelte.ts`.
 - **Obsidian's vaults by name.** On a desktop the Obsidian row lists the vaults
   Obsidian itself lists in `obsidian.json`, newest first, the way Arc's first run
   lists the browsers it found. The crate reads a vault only when Obsidian lists it,
@@ -68,6 +66,89 @@ their own, named after what came in, and lands in it.
   Notion, markdown hidden while writing, properties as a panel and Notion's keys.
   Each through the setter Settings uses, so it is saved and shared like a choice.
   An import into an existing space carries none. See `import/carry.ts`.
+- **Zen's spaces as spaces** (Emil, 2026-10-13). On a desktop the Zen row reads the
+  browser's own sidebar out of the profile: `profiles.ini` in Zen's folder lists the
+  profiles (the one Zen opens first in front, a list where there are several), and
+  `zen-sessions.jsonlz4` holds every space, pinned tab, Essential and folder, with
+  Zen's backups and Firefox's `recovery.jsonlz4` behind it for a profile from before
+  that file. Read and never written, while Zen runs; the crate hands over those few
+  files of a listed profile and nothing else (`zen_profiles.rs`), the app unpacks
+  Mozilla's LZ4 (`import/mozlz4.ts`) and reads the lists (`import/zen.ts`). Each Zen
+  space becomes the nib space of its name, with its icon (an emoji as it is, Zen's
+  drawings as Lucide's) and its colour as the nearest accent; each tab a web note in
+  the place the sidebar has it and that order kept as the list's arranged order; a
+  folder a folder, an empty one an empty note; a pinned tab's address it goes back
+  to the note's home; the Essentials web notes at the top of the first space (or of
+  their container's) and bookmarks of it. Pages that are not on the web stay behind,
+  and so do containers, which nib's one browsing profile has nothing to become; the
+  line says so. Importing again brings only what is new: a space of the same name is
+  the same space, and a web note already there pointing at the same page is not
+  written twice. Cookies and logins are not read. See `import/zen-plan.ts` and
+  `import/zen-landing.ts`, and `scripts/zen-import-probe.py`, which reads a Zen of
+  its own through `NIB_ZEN_DIR`.
+- **Every other browser's tabs and bookmarks** (#377). On a desktop there is a row for
+  each browser the machine has a profile of: Firefox, then Chrome, Edge, Brave,
+  Chromium and Vivaldi, which are all Chromium and keep the same files. Each browser's
+  own list of profiles is read - Firefox's `profiles.ini`, a Chromium's `Local State` -
+  and a browser with several shows them by name, the way Zen's are. A profile becomes
+  one space, named for the browser (and for the profile where there are several), and
+  comes in the shape Zen's spaces do, because it is read into the same sidebar
+  (`import/sidebar.ts`) and written the same way (`sidebar-plan.ts`,
+  `sidebar-landing.ts`):
+  - **the open tabs**, every ordinary window's in their order, each a web note; a
+    private window's never;
+  - **a pinned tab** one of the Essentials, which is what stays put above everything;
+  - **a tab group** a folder of its name where its first tab is (one nobody named is
+    `Tab group`); its colour has nothing to become;
+  - **Firefox's saved groups** each a folder in `Saved groups`;
+  - **the bookmarks** a folder called `Bookmarks` after everything else, a folder in it
+    for each of the browser's roots that holds any (the bar or toolbar, Firefox's
+    menu, the other bookmarks, the phone's), every bookmark folder a folder and each
+    bookmark a web note kept on the day it was bookmarked. The bar's bookmarks are not
+    made Essentials. Separators, Firefox's tags and smart folders, bookmarklets and
+    folders with nothing on the web in them stay behind, and the line counts the
+    pages among them: a tab on the browser's own pages, a file, a bookmarklet.
+
+  Firefox's session is `sessionstore-backups/recovery.jsonlz4` (then `sessionstore` and
+  `previous`), read like Zen's (`import/firefox.ts`); its bookmarks are `places.sqlite`,
+  which Firefox holds open, so the crate copies it with its log into a temporary folder
+  and reads the copy (`firefox_profiles.rs`), with the newest daily copy in
+  `bookmarkbackups/` behind it. A Chromium's session is `Sessions/Session_*`, an SNSS
+  file: a log of commands replayed to the windows it leaves (`import/snss.ts`), and its
+  bookmarks are the JSON file `Bookmarks` (`import/chromium.ts`). A group a Chromium
+  closed and saved lives in its sync database, not its session, and does not come. Newer
+  Chromium writes its session encrypted as well (`Sessions_Encrypted/`, the key in the
+  system's keychain); where only that one is there, the profile brings its bookmarks and
+  the line says the open tabs stayed locked. Containers stay in Firefox, and the line
+  says so. The crate hands over only the files it listed for a profile it listed
+  (`browser_profiles.rs`, `chromium_profiles.rs`), never a cookie, a password or the
+  history, and `scripts/browser-import-probe.py` reads browsers of its own through
+  `NIB_BROWSERS_DIR`. Importing again brings only what is new, as Zen's does.
+- **Safari** (#394), on a Mac, first among the browsers, since it is the Mac's own.
+  Safari keeps no list of profiles; what is read is three files of the home folder,
+  which the crate reads whole and hands over as JSON (`safari.rs`), and
+  `import/safari.ts` reads into the same sidebar:
+  - **the open tabs** are `SafariTabs.db` (Safari 15 on), in Safari's container: a
+    tree of folders and tabs, copied with its log and read the way Firefox's
+    `places.sqlite` is. A folder that holds tabs is a tab group and becomes a folder of
+    its name; a group's `TopScopedBookmarkList` holds its pinned tabs, which are the
+    Essentials; the window's own tabs, in the folder Safari calls `Local`, come at the
+    top of the space. Rows marked deleted, blank tabs and Safari's own lists
+    (`com.apple.…`, its iCloud tabs among them) stay behind. An older Safari's windows
+    are `LastSession.plist` instead, a private window never;
+  - **the bookmarks** are `Bookmarks.plist`, a binary property list (the `plist` crate
+    reads it): the Bookmarks folder holds Favorites, which is Safari's name for its bar,
+    the Bookmarks menu, and every other list of the root by its title; History is a
+    list there too, and stays;
+  - **the Reading List**, the root's `com.apple.ReadingList`, is a folder of its own
+    after the bookmarks, each page kept on the day it was added.
+
+  macOS keeps all three behind Full Disk Access, so the first read is refused: the
+  crate answers `no access`, as it does for Apple Notes, and the app opens System
+  Settings > Privacy & Security > Full Disk Access and says in its line to turn Orden
+  on there and ask again. The layout of `SafariTabs.db` is the one a macOS 15 Safari
+  writes, as forensic readers of it document; the tests hold the reader to files written
+  after it, since no Mac wrote them here.
 - **More apps** are a row and a case in `carriedBy`; the readers are already there.
 
 ## Where it lands
@@ -87,8 +168,14 @@ version history has them, the file list has the rows before the sheet closes, an
 none of it knows whether it is running on a desktop, in a browser or on a phone.
 
 **Nothing is written over.** A name that is taken steps aside the way a new note's
-does - `Plan 2.md` - and the links inside the import follow it, so an import that
-landed beside notes of the same name still points at its own notes.
+does - `Plan 2.md` - and the links inside the import follow it, a canvas's cards
+among them, so an import that landed beside notes of the same name still points at
+its own notes. A link written as an example in code is words, and stays as it was.
+Within the import, a file whose name needs no change keeps it: `Why?.png` made into
+`Why.png` for Windows is the one that steps aside from a vault's own `Why.png`.
+What is taken is asked of the disk too, for every path the import would write, so a
+picture, a file in `.obsidian/` or a note of a space that is not the one open is
+never written over either, though the file list shows none of them.
 
 **The whole import is one thing to undo.** However many thousand files it wrote,
 what somebody did was import once. Undoing takes the files away outright rather
@@ -173,16 +260,31 @@ in a folder of its own.
 **Obsidian.** A vault is markdown in folders, which is nib's own spelling already:
 wikilinks, embeds, callouts, block ids, `%%comments%%`, `==highlights==`, `.canvas`
 and `.base` files all read as they are, so the notes go through the plain reader
-below untouched. What is Obsidian's alone is `.obsidian/` at the top, which is also
-how a vault is known (before the folder shapes, so a vault with a `pages/` folder
-is not taken for Logseq). It comes along, so Obsidian still opens the space, minus
+below untouched. The files are the reader's own rather than an export's, so none
+loses the 32-character tail a Notion name would, none is shortened or respaced the
+way a title made into a name is, since a `.canvas` names them too, and a saved
+`.html` page arrives as the page, not as a note. What is Obsidian's alone is `.obsidian/` at the top, which is also
+how a vault is known (before anything else, so a vault with a `pages/` folder is
+not taken for Logseq, nor one with an old `.enex` kept in it for Evernote). A zip whose one entry is the vault has it one folder
+down, and that folder is taken off every path, so the vault lands at the top of the
+space and the paths a `.canvas` names still lead somewhere. It comes along, so Obsidian still opens the space, minus
 what is about one machine rather than the vault: `workspace.json`, the installed
-plugins and themes, the cache, and Obsidian's own `.trash/`. See `import/obsidian.ts`.
+plugins and themes, the cache, and Obsidian's own `.trash/`. Every other hidden
+file or folder, `.git` among them, and `node_modules` stay behind too, the same
+whether the vault came from the list, a folder or a zip. The one hidden file that is
+the reader's own is iCloud's placeholder for a note it took off the Mac to save
+space (`.Plan.md.icloud`): it stays behind as well, since the note is not there to
+bring, and the sheet, or the line across the top for a vault made into a space,
+says how many files are in iCloud rather than on this Mac. See
+`import/obsidian.ts`.
 
 **Craft**, **Ulysses**, **iA Writer** and anything else that writes
 markdown are read as what they are: files in folders, some notes and the rest the
 pictures those notes point at. A TextBundle is unwrapped on the way past, so
 `Iceland.textbundle/text.md` is the note `Iceland.md` with its assets beside it.
+Hidden files and folders stay behind, as they do from a vault: a folder of notes
+kept in git, or a vault whose `.obsidian/` never came along, holds `.git` and a
+`.trash/` of notes somebody threw away, and none of it is anybody's writing.
 
 **OneNote** only through an HTML export, and it says so: the words are kept and
 the look is not. Which is the honest summary of every HTML import.

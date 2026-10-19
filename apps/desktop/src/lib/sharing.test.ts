@@ -64,7 +64,7 @@ interface World {
   /** The words each of those files comes down with. */
   words: Record<string, string>
   /** Every shared file that was opened, and every one whose tabs were closed. */
-  opened: { id: string; name: string; canvas: boolean; text: string }[]
+  opened: { id: string; name: string; path: string; text: string }[]
   closed: string[]
   /** Which shared files have a tab right now, as the workspace would answer. */
   showing: string[]
@@ -198,8 +198,8 @@ vi.mock('./workspace.svelte', () => ({
     get tabs() {
       return world.tabs
     },
-    openShared: (item: { id: string; name: string; canvas: boolean }, text: string) =>
-      world.opened.push({ ...item, text }),
+    openShared: (item: { id: string; name: string; path: string }, text: string) =>
+      world.opened.push({ id: item.id, name: item.name, path: item.path, text }),
     closeShared: (id: string) => world.closed.push(id),
     showingShared: (id: string) => world.showing.includes(id),
   },
@@ -452,8 +452,8 @@ describe('whether somebody else is in a note', () => {
  *  itself is trust.ts; this is the app answering it about a real space. */
 describe('where a document’s words came from', () => {
   /** As much of a document as any of this reads. */
-  const document = (path: string | null, pasted = false) =>
-    ({ path, key: 'k1', pasted }) as unknown as NoteDoc
+  const document = (path: string | null, pasted = false, shared: string | null = null) =>
+    ({ path, key: 'k1', pasted, shared }) as unknown as NoteDoc
 
   test('is the reader’s own, for a note in a space nobody else is in', () => {
     world.mirrors = { Notes: 'space-1' }
@@ -483,6 +483,14 @@ describe('where a document’s words came from', () => {
     account.spaces = [remote('space-1', 'read')]
 
     expect(originOfDocument(document('Notes/plan.md'))).toBe('space')
+  })
+
+  /** A file somebody shared on its own has no path here - there is no copy of
+   *  it on this machine - so where it sits cannot say whose it is. Its share
+   *  does: it is one note out of somebody else's space. */
+  test('is the space, for one file somebody shared with the reader on its own', () => {
+    expect(originOfDocument(document(null, false, 'item-1'))).toBe('space')
+    expect(trustsHtmlIn(document(null, false, 'item-1'))).toBe(false)
   })
 
   test('is a paste, once markup has been put in from outside', () => {
@@ -1044,8 +1052,8 @@ describe('the files other people shared with you', () => {
     await sharedWithYou.open(world.shared[1]!)
 
     expect(world.opened).toEqual([
-      { id: 'n1', name: 'meeting', canvas: false, text: '# the meeting' },
-      { id: 'n3', name: 'b.canvas', canvas: true, text: '{}' },
+      { id: 'n1', name: 'meeting', path: 'Plans/meeting.md', text: '# the meeting' },
+      { id: 'n3', name: 'b.canvas', path: 'Work/b.canvas', text: '{}' },
     ])
   })
 

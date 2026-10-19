@@ -145,7 +145,7 @@ export class SidebarWidth {
     // The document keeps its own cursor and selection out of the way for the
     // length of the drag.
     document.body.style.cursor = 'col-resize'
-    document.body.style.userSelect = 'none'
+    document.body.classList.add('nib-unselectable')
 
     const move = (moved: PointerEvent) => {
       const moving = (moved.clientX - startX) * this.towards
@@ -162,7 +162,7 @@ export class SidebarWidth {
 
       this.dragging = false
       document.body.style.cursor = ''
-      document.body.style.userSelect = ''
+      document.body.classList.remove('nib-unselectable')
       if (this.pixels !== null) write(this.side, this.pixels)
     }
 

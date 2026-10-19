@@ -49,6 +49,7 @@ import { deckOf, slideAt } from '@nib/markdown/slides'
 import { present } from './slides/present.svelte'
 import { account } from './account.svelte'
 import { busy } from './busy.svelte'
+import { turnedOff } from './kind-choice'
 import { composerCommands } from './composer-commands'
 import { key, t } from './i18n.svelte'
 import { links } from './link-index.svelte'
@@ -58,7 +59,7 @@ import { look, openTarget, renderOptions } from './export/context'
 import { type ExportId, exportKindOf, isNoteFormat, labelOf, offeredBy } from './export/offer'
 import type { RunOptions } from './export/run'
 import { PANDOC_FORMATS } from './export-formats'
-import { canPrint, printNote } from './export/print'
+import { canPrint, printable, printOpen } from './export/print'
 import { imagePath } from './images'
 import { canDictate, dictating, toggleDictation } from './mobile/dictation'
 import { canInsertPicture, canTakePhoto, insertPicture, takePhoto } from './insert-picture'
@@ -70,6 +71,7 @@ import { revealPanel, stepRegionFocus } from './focus'
 import { newSpace, publishSpace, shareSpace, stepSpace } from './space-actions'
 import { spacePicker } from './space-picker.svelte'
 import { askQuickly } from './ai/quick-door'
+import { switchableAccounts, switchAccount } from './ai/switching'
 import { toggleScratchpad } from './scratchpad/is.svelte'
 import { canPublish, canShare, canShareItem, shareThisFile } from './sharing.svelte'
 import { archiveEntry, DIVIDER } from './menu.svelte'
@@ -77,7 +79,7 @@ import { updates } from './updates.svelte'
 import { modes } from './modes.svelte'
 import { PROPERTIES_MODES } from '@nib/markdown/properties'
 import { PROPERTIES_WORDS } from './properties-words'
-import { settings } from './settings.svelte'
+import { type KindName, settings } from './settings.svelte'
 import { touchedBy } from './agents/docs/touched'
 import { agentMarks } from './agent-marks.svelte'
 import { shortcuts } from './shortcuts.svelte'
@@ -314,9 +316,10 @@ function importCommand(): Command | null {
 }
 
 /** Obsidian and Notion by name, the two apps most people arrive from: each brings
- *  its notes in as a space of their own, with the app's habits in the settings,
- *  the way the first screen does. Settings' Import pane holds the same rows; see
- *  migrating.svelte.ts. Obsidian opens that pane, where the vaults it lists are. */
+ *  its notes in as a space of their own, with the app's habits in the settings.
+ *  Settings' Import pane holds the same rows; see migrating.svelte.ts. Obsidian opens
+ *  that pane, where the vaults it lists are, and so does Zen, the browser, whose spaces
+ *  arrive as spaces. */
 function migrateCommands(): Command[] {
   if (__EVEN_PLUGIN__) return []
 
@@ -336,6 +339,20 @@ function migrateCommands(): Command[] {
         void import('./migrating.svelte').then(({ migrating }) => migrating.files())
       },
     },
+    // Zen's tabs are on this machine's disk, which only the desktop reads. In the
+    // Import pane, where a list of its profiles has room.
+    ...(isDesktop
+      ? [
+          {
+            id: 'import-zen',
+            label: t('Import from Zen'),
+            run: () => {
+              settings.show('import')
+              void import('./migrating.svelte').then(({ migrating }) => migrating.zen())
+            },
+          },
+        ]
+      : []),
   ]
 }
 
@@ -479,7 +496,7 @@ function tabCommands(): Command[] {
       run: () => void tabOps().then((ops) => ops.renameFromTab(id)),
     },
     // Left out with one space; see tab-strip/to-space.ts, fetched with the press.
-    ...(tab && workspace.spaces.length > 1
+    ...(tab && workspace.shownSpaces.length > 1
       ? [
           {
             id: 'move-to-space',
@@ -959,7 +976,7 @@ function moveCommand(): Command | null {
   const targets = moveTargets({
     moving: path,
     tree: workspace.tree,
-    spaces: workspace.spaces,
+    spaces: workspace.shownSpaces,
     here: workspace.activeSpace?.root ?? null,
   })
   if (!targets.length) return null
@@ -996,8 +1013,8 @@ function spaceCommands(): Command[] {
     // pointer's way in; this is the keyboard's, and the only one there is while
     // the panel is shut. A row each, with the one you are in ticked, which is
     // how the palette offers every other set of things to pick from.
-    ...(workspace.spaces.length > 1
-      ? workspace.spaces.map((one) => ({
+    ...(workspace.shownSpaces.length > 1
+      ? workspace.shownSpaces.map((one) => ({
           id: `space:${one.id}`,
           label: t('Space: {name}', { name: one.name }),
           checked: one.id === space.id,
@@ -1055,7 +1072,7 @@ export function appCommands(view?: EditorView): Command[] {
 
   const unsaved = workspace.active && isUnsaved(workspace.active.note) ? workspace.active : null
 
-  return [
+  return without([
     // Only for a tab with no file, which is the one thing Save still means: where it
     // goes and under what name. A web tab kept as a web note is the same row. See
     // save-place/ask.ts.
@@ -1099,7 +1116,7 @@ export function appCommands(view?: EditorView): Command[] {
       label: t('New note from template'),
       run: () => void import('./views/templates').then((one) => one.pickTemplate()),
     },
-    ...(viewport.device === 'phone'
+    ...(viewport.touch
       ? []
       : [
           {
@@ -1114,8 +1131,8 @@ export function appCommands(view?: EditorView): Command[] {
           {
             // The other way round: a tab with an address field and nothing in it yet,
             // for somebody who has the address and no name in mind. Nothing is
-            // written while it is only browsed; the row below keeps it. A phone has no
-            // web tab at all - there the system browser is the answer.
+            // written while it is only browsed; the row below keeps it. A phone and a
+            // tablet have no web tab at all - there the system browser is the answer.
             id: 'new-website',
             label: t('Open a website'),
             run: () => workspace.openWebsite(),
@@ -1205,8 +1222,8 @@ export function appCommands(view?: EditorView): Command[] {
             id: 'print',
             label: t('Print'),
             hint: shortcuts.hint('app.print'),
-            disabled: workspace.active?.kind !== 'note',
-            run: () => busy.start(t('Printing'), () => printNote()),
+            disabled: !printable(workspace.active?.kind),
+            run: () => busy.start(t('Printing'), () => printOpen()),
           },
         ]
       : []),
@@ -1272,7 +1289,7 @@ export function appCommands(view?: EditorView): Command[] {
       id: 'new-private',
       label: t('New private tab'),
       hint: shortcuts.hint('app.new-private'),
-      disabled: !isDesktop || viewport.device === 'phone',
+      disabled: !isDesktop || viewport.touch,
       run: () => void import('./web-tab/private').then(({ openPrivate }) => openPrivate()),
     },
     // Chrome's History, from anywhere: a tab of its own in the space on screen. Named
@@ -1281,7 +1298,7 @@ export function appCommands(view?: EditorView): Command[] {
       id: 'web-history',
       label: t('Browsing history'),
       hint: shortcuts.hint('web.history'),
-      disabled: viewport.device === 'phone',
+      disabled: viewport.touch,
       run: () => void import('./web-tab/history-open').then((one) => one.openHistory()),
     },
     {
@@ -1342,7 +1359,11 @@ export function appCommands(view?: EditorView): Command[] {
           label: `${t('Sign out')} ${account.user.email}`.trim(),
           // Who this machine is signed in as is not a link's business.
           byHand: true,
-          run: () => void account.signOut(),
+          // Asking first whether this device leaves the AI vault too (#389).
+          run: () =>
+            __EVEN_PLUGIN__
+              ? void account.signOut()
+              : void import('./ai/vault/leaving').then((one) => one.signOut()),
         }
       : { id: 'signin', label: t('Sign in'), run: () => (account.open = true) },
 
@@ -1381,7 +1402,7 @@ export function appCommands(view?: EditorView): Command[] {
     },
     {
       id: 'source',
-      label: modes.source ? t('Leave source mode') : t('Source mode'),
+      label: modes.sourceIn(view) ? t('Leave source mode') : t('Source mode'),
       hint: shortcuts.hint('app.source'),
       run: () => modes.toggleSource(view),
     },
@@ -1498,6 +1519,14 @@ export function appCommands(view?: EditorView): Command[] {
       label: t('Theme: {name}', { name: t(item.name) }),
       checked: item.id === theme.id,
       run: () => theme.select(item.id),
+    })),
+    // The AI accounts of a provider that has more than one, the one in use ticked as a
+    // theme is: a switch of account without a trip to Settings. See ai/switching.ts.
+    ...switchableAccounts().map((one) => ({
+      id: `ai-account:${one.id}`,
+      label: t('AI account: {name}', { name: one.label }),
+      checked: one.active,
+      run: () => switchAccount(one.id),
     })),
     // Whether the app is dark, light, or whatever the system is asking for. A
     // row each rather than one that flips, so the keyboard reaches the same
@@ -1632,12 +1661,17 @@ export function appCommands(view?: EditorView): Command[] {
       hint: shortcuts.hint('app.properties'),
       run: () => revealPanel('properties'),
     },
-    {
-      id: 'ask-panel',
-      label: t('Ask'),
-      hint: shortcuts.hint('app.ask'),
-      run: () => revealPanel('ask'),
-    },
+    // A phone and a tablet have no AI panel (#403).
+    ...(viewport.touch
+      ? []
+      : [
+          {
+            id: 'ask-panel',
+            label: t('Ask'),
+            hint: shortcuts.hint('app.ask'),
+            run: () => revealPanel('ask'),
+          },
+        ]),
     {
       id: 'quick-question',
       label: t('Quick question'),
@@ -1652,7 +1686,7 @@ export function appCommands(view?: EditorView): Command[] {
     },
     {
       id: 'right-sidebar',
-      label: workspace.rightPanel ? t('Hide right sidebar') : t('Show right sidebar'),
+      label: workspace.openOn('right') ? t('Hide right sidebar') : t('Show right sidebar'),
       hint: shortcuts.hint('app.right-sidebar'),
       disabled: !workspace.right.length,
       run: () => workspace.toggleSidebar('right'),
@@ -1702,14 +1736,14 @@ export function appCommands(view?: EditorView): Command[] {
       id: 'space-next',
       label: t('Next space'),
       hint: shortcuts.hint('space.next'),
-      disabled: workspace.spaces.length < 2,
+      disabled: workspace.shownSpaces.length < 2,
       run: () => stepSpace(1),
     },
     {
       id: 'space-previous',
       label: t('Previous space'),
       hint: shortcuts.hint('space.previous'),
-      disabled: workspace.spaces.length < 2,
+      disabled: workspace.shownSpaces.length < 2,
       run: () => stepSpace(-1),
     },
     {
@@ -1720,5 +1754,28 @@ export function appCommands(view?: EditorView): Command[] {
     },
 
     ...composerCommands(view),
-  ]
+  ])
+}
+
+/** The rows that make a kind of tab, by the kind; see kind-choice.ts. */
+const MAKES: Record<string, KindName> = {
+  new: 'note',
+  'new-unique': 'note',
+  'new-from-template': 'note',
+  'new-canvas': 'canvas',
+  'new-pages': 'pages',
+  'new-web-note': 'web',
+  'new-website': 'web',
+  'new-terminal': 'terminal',
+  'new-remote': 'remote',
+  'new-online-terminal': 'online',
+  'new-private': 'private',
+}
+
+/** Without the rows of a kind Settings turned off. */
+function without(rows: Command[]): Command[] {
+  return rows.filter((row) => {
+    const kind = MAKES[row.id]
+    return !kind || !turnedOff(kind)
+  })
 }

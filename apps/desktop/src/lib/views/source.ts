@@ -10,19 +10,30 @@
  *
  *  Each answers a `Source` (live.svelte.ts), so the view on screen never knows which. */
 
-import { type Base, builtinView, readBase, type Row, writeBase } from '@nib/bases'
+import { type Base, builtinView, readBase, type Row, todayAs, writeBase } from '@nib/bases'
 import { links } from '../link-index.svelte'
+import { modes } from '../modes.svelte'
 import { rows } from '../rows/rows.svelte'
 import { insideSpace, samePath, within } from '../space-paths'
 import { workspace } from '../workspace.svelte'
 import type { Tab } from '../workspace/documents.svelte'
 import { noteText, writeNoteText } from '../workspace/note-text'
+import { keepProjectView } from './kept-views'
 import type { Source } from './live.svelte'
 import { readSpec, type ViewSpec, writeSpec } from './spec'
 
+/** Today as Settings has it: with the tasks that have no start date in it, or not (#408). */
+function today(): Base {
+  return builtinView('today', { undated: modes.undatedInToday })
+}
+
 /** The base a built-in spec asks for: as the tab changed it, else as nib ships it. */
 export function builtinBase(spec: ViewSpec): Base {
-  if (spec.yaml !== undefined) return readBase(spec.yaml)
+  if (spec.yaml !== undefined) {
+    const base = readBase(spec.yaml)
+    // A Today the tab changed still follows the switch; see `todayAs`.
+    return spec.builtin === 'today' ? todayAs(base, modes.undatedInToday) : base
+  }
   switch (spec.builtin) {
     case 'project':
       return builtinView('project', {
@@ -32,14 +43,14 @@ export function builtinBase(spec: ViewSpec): Base {
       return builtinView('label', { tag: spec.tag ?? '' })
     case 'inbox':
       return builtinView('inbox', { inboxes: rows.inboxes() })
-    case 'today':
     case 'upcoming':
     case 'logbook':
       return builtinView(spec.builtin)
+    case 'today':
     case undefined:
-      return builtinView('today')
+      return today()
   }
-  return builtinView('today')
+  return today()
 }
 
 /** The space a path on this disk is in, by name. */
@@ -98,7 +109,11 @@ export function tabSource(tab: Tab): Source {
     scope: null,
     load: () => Promise.resolve(builtinBase(spec())),
     save(next) {
-      tab.note.replace(writeSpec({ ...spec(), yaml: writeBase(next) }), false)
+      const now = spec()
+      const yaml = writeBase(next)
+      tab.note.replace(writeSpec({ ...now, yaml }), false)
+      // A project is laid out again as it was left, the next time it is opened here.
+      if (now.builtin === 'project') keepProjectView(now.space ?? '', now.path ?? '', yaml)
       workspace.scheduleSession()
       return Promise.resolve()
     },

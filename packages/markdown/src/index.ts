@@ -1,4 +1,5 @@
 import { Marked, Renderer } from 'marked'
+import { hardBreaks } from './breaks'
 import type { Token, Tokens } from 'marked'
 import { chartFigure } from './chart'
 import { captionIn, languageIn } from './code'
@@ -16,7 +17,7 @@ import { htmlBlockCard, ownMarkup } from './html-block'
 import { isNoteTarget, slugify, withoutBlockIds } from './links'
 import { firstStart, lineStart, matchesAt } from './starts'
 import { hashtags, type TagHref } from './tags'
-import { iframeCard, isIframeTag, webCard } from './web-embed'
+import { iframeCard, isIframeTag, splitIframe, webCard } from './web-embed'
 import {
   type EmbedResolver,
   type Embeds,
@@ -114,28 +115,9 @@ export interface RenderOptions {
   headings?: Heading[]
 }
 
-/** Whether a single newline breaks the line, for every caller that has no answer
- *  of its own.
- *
- *  Here rather than threaded through two dozen call sites, because the point of
- *  the setting is that a note cannot look different on two surfaces: the reading
- *  view, an export, a card on a canvas, the clipboard's HTML flavour and a hover
- *  preview all go through this module, and all of them should say the same thing
- *  without each remembering to ask. The app sets it once; see modes.svelte.ts.
- *
- *  A deck passes `breaks: true` and is unaffected either way, and the Worker that
- *  publishes a note passes the author's answer per request rather than setting it
- *  here - one isolate serves many readers, and a global would leak between
- *  them. */
-let hard = false
-
-export function setHardBreaks(on: boolean) {
-  hard = on
-}
-
-export function hardBreaks(): boolean {
-  return hard
-}
+/** Whether a single newline breaks the line, for every caller with no answer of its
+ *  own: its own module, so the app can set it at launch without this renderer. */
+export { hardBreaks, setHardBreaks } from './breaks'
 
 export interface CodeBlock {
   language: string
@@ -354,7 +336,9 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
        *  points somewhere a note has no business pointing - `javascript:`, a page
        *  of this app's own, a plain http page read over the reader's shoulder -
        *  and its closing half goes the same way, or the card would be followed by
-       *  a stray `</iframe>`.
+       *  a stray `</iframe>`. Only the frame, though: a block runs on to the next
+       *  blank line, and a caption written under the frame is the note's own
+       *  markup, decided about below like any other. See `splitIframe`.
        *
        *  Everything else is the note's own markup, and whether that is markup or
        *  characters is `escapeHtml`: a document of the reader's own is markup, and
@@ -366,10 +350,17 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
        *  block in a frame of its own when pressed - never in the app - and in one
        *  that is not it was already escaped by the line above. See html-block.ts. */
       html(token: Tokens.HTML | Tokens.Tag) {
-        if (isIframeTag(token.text)) return iframeCard(token.text) ?? ''
-        if (options.escapeHtml) return escape(token.text)
+        let text = token.text
+        let cards = ''
+        while (isIframeTag(text)) {
+          const { tag, rest } = splitIframe(text)
+          cards += iframeCard(tag) ?? ''
+          text = rest
+        }
+        if (text !== token.text && !text.trim()) return cards
+        if (options.escapeHtml) return cards + escape(text)
 
-        return htmlBlockCard(token.text) ?? ownMarkup(token.text)
+        return cards + (htmlBlockCard(text) ?? ownMarkup(text))
       },
     },
   })
@@ -498,16 +489,23 @@ export function renderMarkdown(source: string, options: RenderOptions = {}): str
   // two shared ones above serve a deck as well as a document: marked merges a
   // call's options over the instance's and leaves the instance alone. A caller
   // that says nothing gets the reader's own answer; see `setHardBreaks`.
-  let html = marked.parse(body, { async: false, breaks: options.breaks ?? hard })
+  let html = marked.parse(body, { async: false, breaks: options.breaks ?? hardBreaks() })
 
   html = markAbbreviations(html, collectAbbreviations(body))
 
-  if (options.toc) html = html.replace(TOC_MARK, tableOfContents(headings))
+  // Both put in by a function rather than as a string, because a string is a
+  // pattern: a `$&` or a `$'` in a heading or in an embedded note would be read
+  // as the marker, or as the whole of the page after it.
+  if (options.toc) {
+    const contents = tableOfContents(headings)
+    html = html.replace(TOC_MARK, () => contents)
+  }
 
   // The notes inside embeds, rendered after the document around them so that
   // nothing re-enters the parser mid-parse.
   embeds.sections.forEach((section, at) => {
-    html = html.replace(embeds.marker(at), renderMarkdown(section, inside(options)))
+    const embedded = renderMarkdown(section, inside(options))
+    html = html.replace(embeds.marker(at), () => embedded)
   })
 
   if (options.footnotes) {
@@ -589,7 +587,9 @@ function markAbbreviations(html: string, terms: Map<string, string>): string {
     .map((term) => term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
     .join('|')
 
-  const skip = /<(code|pre|abbr|script|style)\b[\s\S]*?<\/\1>|<[^>]+>/g
+  // Code, tags, and character references: `&amp;` is one character written as a
+  // word, and an abbreviation wrapped around the word would break it in two.
+  const skip = /<(code|pre|abbr|script|style)\b[\s\S]*?<\/\1>|<[^>]+>|&[#\w]+;/g
   const word = new RegExp(`\\b(${pattern})\\b`, 'g')
 
   let out = ''
@@ -617,7 +617,7 @@ export { withoutComments } from './comments'
  *  needs as well: one number, so a note that will not fit the panel in the app
  *  does not fit the page either. The extensions themselves are not passed on -
  *  they are this renderer's own parts. */
-export { MOST_EMS } from './extensions'
+export { MOST_EMS } from './engines'
 
 /** The link grammar is its own module - `@nib/markdown/links` - so the editor can
  *  have it without the renderer that stands on it, and everything that wants the

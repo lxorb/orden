@@ -86,7 +86,7 @@ describe("a domain of one's own", () => {
       expect.objectContaining({
         type: 'CNAME',
         name: 'notes.example.com',
-        value: 'cname.nibeditor.com',
+        value: 'cname.orden.so',
       }),
       expect.objectContaining({ type: 'TXT', name: '_nib-verify.notes.example.com' }),
     ])
@@ -495,7 +495,7 @@ describe('what to add at the registrar', () => {
       expect.objectContaining({
         type: 'CNAME',
         name: 'notes.example.com',
-        value: 'cname.nibeditor.com',
+        value: 'cname.orden.so',
       }),
       expect.objectContaining({ type: 'TXT', name: '_nib-verify.notes.example.com' }),
     ])
@@ -506,7 +506,7 @@ describe('what to add at the registrar', () => {
 
     expect(response.json.dns).toHaveLength(2)
     expect(response.json.dns[0]!.type).toBe('CNAME')
-    expect(response.json.dns[0]!.value).toBe('cname.nibeditor.com')
+    expect(response.json.dns[0]!.value).toBe('cname.orden.so')
     expect(response.json.dns[0]!.note).toMatch(/ALIAS/)
     expect(response.json.dns[1]!.name).toBe('_nib-verify.example.com')
   })

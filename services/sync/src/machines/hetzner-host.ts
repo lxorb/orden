@@ -102,7 +102,7 @@ export function setupOf(env: Env, mayCost: MayCost): Setup | null {
       env.MACHINE_ACCESS_TEAM && env.MACHINE_ACCESS_AUD
         ? { team: env.MACHINE_ACCESS_TEAM, aud: env.MACHINE_ACCESS_AUD }
         : null,
-    domain: new URL(origin).hostname,
+    domain: machineDomain(env),
     origin,
     mayCost,
     fetcher: (input, init) => fetch(input, init),
@@ -123,10 +123,16 @@ export function namesOf(id: string, domain: string) {
   }
 }
 
-/** Whether a hostname is a machine's own (`namesOf`), under the app's domain. */
-export function isMachineHost(hostname: string, origin: string): boolean {
-  const domain = new URL(origin).hostname.replaceAll('.', '\\.')
-  return new RegExp(`^m-[0-9a-f]{32}\\.${domain}$`).test(hostname.toLowerCase())
+/** The domain the machines' hostnames are made in: where their DNS records are,
+ *  which stays put when the app's links move to another name. */
+export function machineDomain(env: Env): string {
+  return env.MACHINE_DOMAIN ?? new URL(env.APP_ORIGIN).hostname
+}
+
+/** Whether a hostname is a machine's own (`namesOf`), under `domain`. */
+export function isMachineHost(hostname: string, domain: string): boolean {
+  const escaped = domain.toLowerCase().replaceAll('.', '\\.')
+  return new RegExp(`^m-[0-9a-f]{32}\\.${escaped}$`).test(hostname.toLowerCase())
 }
 
 /** The firewall's inbound rules: none at all, which lets nothing in, or SSH alone while

@@ -1,17 +1,19 @@
 //! Starting up and opening windows: what the app is handed, and the extra windows
 //! someone asks for while it is running.
 //!
-//! What is handed to the app is web pages, because nib can be the browser: a link
-//! clicked in another program arrives on a command line, which is how Windows and Linux
-//! hand one over; as a second launch, which is the same thing reaching an app that is
-//! already open; and on a Mac as the system's own "open these"; see lifecycle.rs. Which
-//! of what arrived is a page is `web_handed.rs`.
+//! What is handed to the app is web pages, because nib can be the browser, and PDFs,
+//! because nib reads them: a link clicked in another program or a PDF opened with nib
+//! arrives on a command line, which is how Windows and Linux hand one over; as a second
+//! launch, which is the same thing reaching an app that is already open; and on a Mac
+//! as the system's own "open these"; see lifecycle.rs. Which of what arrived is a page
+//! is `web_handed.rs`, and which is a PDF is `handed_pdfs.rs`.
 //!
-//! Never a file. nib opens nothing from outside its spaces, so it claims no file type
-//! anywhere, and a path that reaches it all the same - an "Open with" the system still
-//! remembers, a note dropped on the Dock icon, a path typed after `nib` in a terminal -
-//! is nothing to open. A note is reached through the app itself, or through a `nib://`
-//! link, which names it inside a space; see uris.rs.
+//! Never a note. nib opens nothing from outside its spaces, so it claims no note's file
+//! type anywhere, and a note's path that reaches it all the same - an "Open with" the
+//! system still remembers, a note dropped on the Dock icon, a path typed after `nib` in
+//! a terminal - is nothing to open. A note is reached through the app itself, or
+//! through a `nib://` link, which names it inside a space; see uris.rs. A PDF is the one
+//! file taken, and it is brought into a space before it is read.
 //!
 //! What arrives before a window can take it waits here until one asks, and what arrives
 //! after goes to the window in front, the way a link clicked elsewhere lands in the
@@ -31,12 +33,14 @@ static WINDOWS: AtomicU32 = AtomicU32::new(0);
 /// The label of the window the app starts with.
 const MAIN: &str = "main";
 
-/// The kinds of thing the system hands the app, which is one: a file is never among
-/// them (see the top of this file).
+/// The kinds of thing the system hands the app: a note is never among them (see the
+/// top of this file).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Handed {
     /// Web pages to show in tabs of their own; see `web_handed.rs`.
     Pages,
+    /// PDFs to read in nib's own viewer; see `handed_pdfs.rs`.
+    Pdfs,
 }
 
 impl Handed {
@@ -44,6 +48,7 @@ impl Handed {
     fn event(self) -> &'static str {
         match self {
             Self::Pages => "nib://open-pages",
+            Self::Pdfs => "nib://open-pdfs",
         }
     }
 }
@@ -57,6 +62,7 @@ pub struct Pending(Mutex<Waiting>);
 #[derive(Default)]
 struct Waiting {
     pages: Road,
+    pdfs: Road,
     /// Whether the launch has built its own window. Until it has, whatever finds no
     /// window waits for that one rather than opening another.
     launched: bool,
@@ -77,6 +83,7 @@ impl Waiting {
     fn road(&mut self, handed: Handed) -> &mut Road {
         match handed {
             Handed::Pages => &mut self.pages,
+            Handed::Pdfs => &mut self.pdfs,
         }
     }
 }
@@ -103,6 +110,7 @@ impl Pending {
     pub fn forget(&self, label: &str) {
         if let Ok(mut waiting) = self.0.lock() {
             waiting.pages.listening.remove(label);
+            waiting.pdfs.listening.remove(label);
         }
     }
 
@@ -132,12 +140,21 @@ impl Pending {
     }
 }
 
-/// What a command line hands the app: the pages it asks for, and nothing else. A path
-/// on it is no note to open; see the top of this file. And a launch Windows made for a
-/// link is about that one address, which `pages_in` reads whole; see `for_a_link` in
-/// `web_handed.rs`.
+/// The pages a command line asks for. A path on it is no note to open; see the top of
+/// this file. And a launch Windows made for a link is about that one address, which
+/// `pages_in` reads whole; see `for_a_link` in `web_handed.rs`.
 pub fn handed_by(args: &[String]) -> Vec<String> {
     crate::web_handed::pages_in(args)
+}
+
+/// What a command line hands the app, each kind put aside for the window: its pages,
+/// and the PDFs it names, read from where the launch was made.
+pub fn hold_handed(app: &AppHandle, args: &[String], cwd: &std::path::Path) {
+    if let Some(pending) = app.try_state::<Pending>() {
+        pending.hold(Handed::Pages, handed_by(args));
+        let pdfs = crate::handed_pdfs::pdfs_in(args, cwd);
+        pending.hold(Handed::Pdfs, crate::handed_pdfs::admitted(app, pdfs));
+    }
 }
 
 /// Handed to the window once it is ready: the links the app was started for, and from
@@ -152,14 +169,26 @@ pub fn take_startup_pages(
     pending.take(Handed::Pages, window.label())
 }
 
+/// The same for the PDFs another program opened with nib; see lib/pdf/handed.ts.
+#[tauri::command]
+pub fn take_startup_pdfs(window: tauri::Window, pending: tauri::State<'_, Pending>) -> Vec<String> {
+    pending.take(Handed::Pdfs, window.label())
+}
+
 /// A second launch of the app, as the single instance plugin hears it: inside the window
-/// procedure its message arrived in. On nib's own Chromium a question to a window from in
-/// there - is it focused? - is answered by running the event loop's handler again inside
-/// the one already running, which never returns (measured: the running app stopped
-/// answering, and the second launch never ended, since it waits for the message to be
-/// handled). So the launch is handed to the event loop, to be answered in a turn of its
-/// own, on either engine; see `second_launch`.
+/// procedure its message arrived in. A question to a window from in there - is it
+/// focused? - can run the event loop's handler again inside the one already running,
+/// which never returns (measured on nib's own Chromium, while there was one: the running
+/// app stopped answering, and the second launch never ended, since it waits for the
+/// message to be handled). So the launch is handed to the event loop, to be answered in
+/// a turn of its own; see `second_launch`.
 pub fn second_launch_heard(app: &AppHandle, argv: Vec<String>, cwd: String) {
+    // The compositor's token for the launch, kept for the window it brings forward,
+    // whichever of the handlers below gets there first; see linux.rs.
+    #[cfg(target_os = "linux")]
+    if let Some(token) = token_in(&argv) {
+        crate::linux::token_arrived(token);
+    }
     // Asked for from a thread of its own, because from inside the window procedure the
     // runtime runs a task at once, in the middle of the message it is handling.
     let later = app.clone();
@@ -171,7 +200,19 @@ pub fn second_launch_heard(app: &AppHandle, argv: Vec<String>, cwd: String) {
 
 /// A second launch of the app, which belongs to the one already open: its window
 /// comes forward and takes whatever the launch was asked to open.
-fn second_launch(app: &AppHandle, argv: &[String], _cwd: &str) {
+fn second_launch(app: &AppHandle, argv: &[String], cwd: &str) {
+    // `--quick-add` and `--stop-agents`: a key from any app, pressed by a desktop's own
+    // shortcut where no key reaches the app otherwise; see hotkeys.rs. The key's own
+    // window is what comes forward, if any.
+    let pressed = crate::hotkeys::Which::asked_by(argv);
+    if !pressed.is_empty() {
+        for which in pressed {
+            crate::hotkeys::pressed(app, which, None);
+        }
+        return;
+    }
+    let argv = &without_ours(argv);
+
     // The window, not the webview window, which a window holding a page in a tab
     // is not; see web_tabs.rs. Not for a reminder's press, which the deep link hands
     // to the reminders: a Done is answered out of sight, and a press on the
@@ -189,7 +230,41 @@ fn second_launch(app: &AppHandle, argv: &[String], _cwd: &str) {
     }
 
     hand_over(app, Handed::Pages, handed_by(argv));
+    let pdfs = crate::handed_pdfs::pdfs_in(argv, std::path::Path::new(cwd));
+    hand_over(app, Handed::Pdfs, crate::handed_pdfs::admitted(app, pdfs));
 }
+
+/// Whether the window's page is up and its engine still there: it asked for its pages
+/// once its space restored, and the process behind it has not gone since (stall.rs).
+pub fn page_up(app: &AppHandle, label: &str) -> bool {
+    app.try_state::<Pending>()
+        .is_some_and(|pending| pending.is_listening(label))
+        && !crate::stall::page_gone(label)
+}
+
+/// The compositor's token a second launch carried, where it had one; see handover.rs.
+#[cfg_attr(
+    not(target_os = "linux"),
+    allow(dead_code, reason = "only a Wayland launch carries a token")
+)]
+fn token_in(argv: &[String]) -> Option<String> {
+    argv.iter()
+        .skip(1)
+        .find_map(|one| one.strip_prefix(TOKEN_FLAG))
+        .filter(|token| !token.is_empty())
+        .map(str::to_owned)
+}
+
+/// A launch's arguments without the app's own, which no page or file is.
+fn without_ours(argv: &[String]) -> Vec<String> {
+    argv.iter()
+        .filter(|one| !one.starts_with(TOKEN_FLAG) && !crate::hotkeys::Which::is_flag(one))
+        .cloned()
+        .collect()
+}
+
+/// How a second launch's token travels with its arguments.
+pub const TOKEN_FLAG: &str = "--activation-token=";
 
 /// What arrived for the app, from whichever way it came, opened in the window in
 /// front.
@@ -281,9 +356,15 @@ fn window_builder<'a>(
     label: &str,
 ) -> WebviewWindowBuilder<'a, crate::Engine, AppHandle> {
     let builder = WebviewWindowBuilder::new(app, label, WebviewUrl::default())
-        .title("nibeditor")
+        .title("Orden")
         .inner_size(1180.0, 760.0)
-        .min_inner_size(520.0, 400.0);
+        .min_inner_size(520.0, 400.0)
+        // The page takes its own drops (src/lib/drops.ts), as the first window's
+        // `dragDropEnabled: false` says for it. Tauri's handler would keep them from the
+        // page, and would add every file dropped to the asset protocol's scope, which
+        // `paths::hear_picks` takes for a pick in the system's own dialog: the dropped
+        // file's whole folder would then be written to as though the reader had chosen it.
+        .disable_drag_drop_handler();
 
     // Not a Mac: Tauri only offers a Mac a see-through window behind its
     // `macos-private-api` feature, and the first window's `transparent` in the
@@ -296,7 +377,7 @@ fn window_builder<'a>(
 
     // The same switches as the first window, which is running on the same user data
     // folder and would refuse a webview started any other way; see `engine::BROWSER_ARGS`.
-    #[cfg(all(windows, not(feature = "cef")))]
+    #[cfg(windows)]
     let builder = builder.additional_browser_args(crate::engine::BROWSER_ARGS);
 
     builder
@@ -307,6 +388,7 @@ fn opened(builder: WebviewWindowBuilder<'_, crate::Engine, AppHandle>) -> Result
     // Where the first window was sent off the screen, every other goes after it.
     let window = crate::placement::built(building)
         .map_err(|error| format!("could not open another window: {error}"))?;
+    crate::pinch::let_through(window.as_ref());
 
     // Shown here only where it was not sent away: `built_away` has shown it already,
     // without bringing it forward, which showing it again would.
@@ -434,7 +516,10 @@ fn free_label(app: &AppHandle) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{handed_by, is_document_window, receiver, Handed, Handover, Pending, Seen};
+    use super::{
+        handed_by, is_document_window, receiver, token_in, without_ours, Handed, Handover, Pending,
+        Seen,
+    };
 
     fn window(label: &str, focused: bool, listening: bool) -> Seen {
         Seen {
@@ -508,6 +593,23 @@ mod tests {
     }
 
     #[test]
+    fn pdfs_wait_on_a_road_of_their_own() {
+        let pending = Pending::default();
+        pending.hold(Handed::Pdfs, vec![r"C:\Downloads\a.pdf".into()]);
+
+        assert!(pending.take(Handed::Pages, "main").is_empty());
+        assert!(!pending.hears(Handed::Pdfs, "main"));
+        assert_eq!(
+            pending.take(Handed::Pdfs, "main"),
+            vec![r"C:\Downloads\a.pdf".to_owned()]
+        );
+        assert!(pending.hears(Handed::Pdfs, "main"));
+
+        pending.forget("main");
+        assert!(!pending.hears(Handed::Pdfs, "main"));
+    }
+
+    #[test]
     fn a_window_that_went_listens_for_nothing() {
         let pending = Pending::default();
         pending.take(Handed::Pages, "nib-2");
@@ -516,10 +618,29 @@ mod tests {
         assert!(!pending.is_listening("nib-2"));
     }
 
-    /// nib opens nothing from outside its spaces, so a path on a command line is no
-    /// note: not on its own, not beside a page, and not smuggled into a link's.
     #[test]
-    fn a_command_line_hands_over_pages_and_never_a_file() {
+    fn a_launch_token_travels_with_the_arguments_and_is_taken_off_them() {
+        let argv: Vec<String> = [
+            "nib",
+            "https://orden.so",
+            "--activation-token=abc",
+            "--quick-add",
+        ]
+        .map(String::from)
+        .into();
+        assert_eq!(token_in(&argv).as_deref(), Some("abc"));
+        assert_eq!(
+            without_ours(&argv),
+            vec!["nib".to_owned(), "https://orden.so".to_owned()]
+        );
+        let bare: Vec<String> = ["nib", "--activation-token="].map(String::from).into();
+        assert_eq!(token_in(&bare), None);
+    }
+
+    /// nib opens nothing from outside its spaces, so a note's path on a command line is
+    /// no note: not on its own, not beside a page, and not smuggled into a link's.
+    #[test]
+    fn a_command_line_hands_over_pages_and_never_a_note() {
         let dir = tempfile::tempdir().expect("a temp folder");
         let note = dir.path().join("Idea.md");
         std::fs::write(&note, "# Idea").expect("a note");
@@ -540,5 +661,49 @@ mod tests {
         ]);
         assert_eq!(pages.len(), 1);
         assert!(pages[0].starts_with("https://example.com/"));
+    }
+
+    /// Every webview the crate builds takes no drops through Tauri's own handler, as the
+    /// first window's `dragDropEnabled: false` says for it. With the handler on, a file
+    /// dropped on the window is added to the asset protocol's scope, which `hear_picks`
+    /// in paths.rs takes for a pick in the system's own dialog - so the dropped file's
+    /// whole folder would be written to as though the reader had chosen it - and the
+    /// page's own drops (src/lib/drops.ts) are never handed to it. Read off the source,
+    /// counted per file, because a window that forgets is a New window like any other.
+    #[test]
+    fn every_webview_takes_its_own_drops() {
+        let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
+        let mut sources = vec![root.clone()];
+        let mut taken = Vec::new();
+        while let Some(at) = sources.pop() {
+            for entry in std::fs::read_dir(&at)
+                .expect("the crate's source")
+                .flatten()
+            {
+                let path = entry.path();
+                if path.is_dir() {
+                    sources.push(path);
+                    continue;
+                }
+                let name = path
+                    .strip_prefix(&root)
+                    .expect("under the source")
+                    .to_string_lossy()
+                    .replace('\\', "/");
+                // Up to its tests, which read these words off the source and build nothing.
+                let text = std::fs::read_to_string(&path).unwrap_or_default();
+                let text = text.split("#[cfg(test)]").next().unwrap_or_default();
+                let built = text.matches("WebviewWindowBuilder::new(").count()
+                    + text.matches("WebviewBuilder::new(").count();
+                if text.matches(".disable_drag_drop_handler()").count() < built {
+                    taken.push(name);
+                }
+            }
+        }
+        taken.sort();
+        assert!(
+            taken.is_empty(),
+            "a webview built with Tauri's drop handler on: {taken:?}"
+        );
     }
 }

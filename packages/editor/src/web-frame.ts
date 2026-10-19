@@ -90,6 +90,19 @@ export function frameSandbox(written: string | undefined): string {
   return allowed(written, SANDBOX, ' ')
 }
 
+/** The sandbox tokens this engine knows: WebKit has no `allow-presentation`, and says
+ *  so on the console for every card pressed. All of them where it cannot say. */
+function known(frame: HTMLIFrameElement, sandbox: string): string {
+  try {
+    return sandbox
+      .split(' ')
+      .filter((one) => frame.sandbox.supports(one))
+      .join(' ')
+  } catch {
+    return sandbox
+  }
+}
+
 /** The permissions a card may actually be granted, whatever it asked for. */
 export function framePermissions(written: string | undefined): string {
   return allowed(written, ALLOW, '; ')
@@ -103,7 +116,7 @@ function pageFrame(card: HTMLElement, title: string): HTMLIFrameElement | null {
 
   const frame = document.createElement('iframe')
   frame.className = 'embed-frame'
-  frame.setAttribute('sandbox', frameSandbox(card.dataset.sandbox))
+  frame.setAttribute('sandbox', known(frame, frameSandbox(card.dataset.sandbox)))
   const permissions = framePermissions(card.dataset.allow)
   if (permissions) frame.setAttribute('allow', permissions)
   frame.referrerPolicy = FRAME_REFERRER

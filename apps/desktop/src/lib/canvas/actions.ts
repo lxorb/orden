@@ -43,15 +43,20 @@ import type { Palette } from './paint'
 import type { Hit, PendingStroke, PutTool, Tool } from './pointer'
 import type { CanvasStore } from './store.svelte'
 import { tools } from './tools.svelte'
+import { NOTCH, turned, turnOf, zoomed } from '../camera'
+import type { Keystroke } from '../keys'
 import { shortcuts } from '../shortcuts.svelte'
-import { storeImage } from '../assets'
+import { accountAddress, storeImage } from '../assets'
 import { chooseFiles, PICTURES } from '../choose-files'
 import { t, key } from '../i18n.svelte'
 import { DIVIDER, type MenuEntry } from '../menu.svelte'
 import { prompt } from '../prompt.svelte'
 import { folderOf, insideSpace, relativeTo } from '../space-paths'
+import { spaceRelative } from '../recorder/paths'
 import { openHref } from '../open-link'
 import { workspace } from '../workspace.svelte'
+import { pdfjs } from '../pdf/document'
+import { PDF_TO_CSS } from '../pdf/pages'
 
 /** How far a nudge moves a card: one pixel with a bare arrow key, one grid step
  *  with Shift, which is the pair every drawing program has. */
@@ -278,13 +283,119 @@ export const run = {
     if (!stored) return
 
     const root = workspace.activeSpace?.root
-    const relative = root && !stored.startsWith('http') ? relativeTo(root, stored) : stored
+    // Kept by the account, the card names its whole address: the web app's API is its
+    // own origin and answers `/i/…`, which read as a path in the space was a file
+    // nowhere, and every picture pasted by somebody signed in was "Nothing here" (#364).
+    const relative =
+      accountAddress(stored) ?? (root && notePath ? spaceRelative(root, notePath, stored) : stored)
+    if (!relative) return
     const size = ownSize('picture')
     // A box says exactly where and how big; a point is a paste or a drop, which is
     // centred on it at the size a picture starts at.
     const box = 'width' in where ? where : placedAt(where, size.width, size.height)
 
     putFile(store, relative, box)
+  },
+
+  /** A PDF dropped on the plane: choose one page or lay every page out in order.
+   *  Each imported sheet becomes a picture, so it can be moved and resized like
+   *  any other image on the canvas. */
+  async dropPdf(store: CanvasStore, file: File, at: Point, notePath: string | null) {
+    if (!notePath) return
+    const mode = await prompt.choose({
+      title: t('Import PDF'),
+      detail: t('Choose how to add the pages to the canvas.'),
+      options: [
+        { id: 'single', label: t('Single page'), primary: true },
+        { id: 'all', label: t('All pages') },
+      ],
+    })
+    if (!mode) return
+
+    const bytes = new Uint8Array(await file.arrayBuffer())
+    const library = await pdfjs()
+    const task = library.getDocument({ data: bytes })
+    const doc = await task.promise
+    let pages: number[]
+    if (mode === 'single') {
+      const selected =
+        doc.numPages === 1
+          ? '1'
+          : await prompt.find({
+              title: t('Choose a page'),
+              placeholder: t('Search'),
+              options: Array.from({ length: doc.numPages }, (_, index) => ({
+                id: String(index + 1),
+                label: `${t('Page')} ${index + 1}`,
+              })),
+            })
+      if (!selected) {
+        await task.destroy().catch(() => undefined)
+        return
+      }
+      pages = [Number(selected)]
+    } else {
+      pages = Array.from({ length: doc.numPages }, (_, index) => index + 1)
+    }
+
+    const root = workspace.activeSpace?.root
+    if (!root) {
+      await task.destroy().catch(() => undefined)
+      return
+    }
+
+    try {
+      let next = store.canvas
+      const ids: string[] = []
+      let y = at.y
+      for (const number of pages) {
+        const page = await doc.getPage(number)
+        const natural = page.getViewport({ scale: PDF_TO_CSS })
+        const area = natural.width * natural.height * 4
+        const scale = area > 16 * 1024 * 1024 ? 2 * Math.sqrt((16 * 1024 * 1024) / area) : 2
+        const viewport = page.getViewport({ scale: PDF_TO_CSS * scale })
+        const canvas = document.createElement('canvas')
+        canvas.width = Math.max(1, Math.round(viewport.width))
+        canvas.height = Math.max(1, Math.round(viewport.height))
+        const context = canvas.getContext('2d')
+        if (!context) {
+          page.cleanup()
+          continue
+        }
+        await page.render({ canvas, canvasContext: context, viewport }).promise
+        page.cleanup()
+        const blob = await new Promise<Blob | null>((resolve) =>
+          canvas.toBlob(resolve, 'image/png'),
+        )
+        if (!blob) continue
+
+        const image = new File([blob], `${file.name.replace(/\.pdf$/i, '')}-page-${number}.png`, {
+          type: 'image/png',
+        })
+        const stored = await storeImage(image, notePath)
+        if (!stored) continue
+        const relative = stored.startsWith('http') ? stored : spaceRelative(root, notePath, stored)
+        if (!relative) continue
+
+        const width = Math.round(natural.width)
+        const height = Math.round(natural.height)
+        const box =
+          mode === 'single'
+            ? placedAt(at, width, height)
+            : placedAt({ x: at.x, y: y + height / 2 }, width, height)
+        const id = freshId()
+        next = withNode(next, { ...box, id, type: 'file', file: relative })
+        ids.push(id)
+        y += height + GRID
+      }
+
+      if (ids.length) {
+        store.edit(next)
+        store.pickAll(ids)
+      }
+    } finally {
+      await task.destroy().catch(() => undefined)
+    }
   },
 
   /** What a double click means, wherever it landed. */
@@ -373,14 +484,17 @@ export const run = {
   keys(store: CanvasStore, event: KeyboardEvent, view: KeyView): boolean {
     const tool = toolPressed(event)
     if (tool) {
-      tools.choose(tool)
+      tools.pressed(tool, event)
       return true
     }
 
     // Shift makes a nudge a grid step, which is the pair every drawing program
     // has. The key itself is the registry's; the modifier is what it means.
+    // The key is matched without the Shift: a bare arrow is what is bound, and a Shift
+    // the binding never named would otherwise match nothing at all (#350).
     const step = event.shiftKey ? GRID : NUDGE
-    const nudge = NUDGES.find(([id]) => shortcuts.pressed(id, event))
+    const arrow = { ...keystroke(event), shiftKey: false }
+    const nudge = NUDGES.find(([id]) => shortcuts.pressed(id, arrow))
     if (nudge) {
       if (!store.picked.length) return false
 
@@ -428,6 +542,7 @@ const TOOL_KEYS: readonly (readonly [string, Tool])[] = [
   ['canvas.tool.erase', 'erase'],
   ['canvas.tool.lasso', 'lasso'],
   ['canvas.tool.text', 'text'],
+  ['canvas.tool.words', 'words'],
   ['canvas.tool.file', 'file'],
   ['canvas.tool.picture', 'picture'],
   ['canvas.tool.link', 'link'],
@@ -440,6 +555,20 @@ const TOOL_KEYS: readonly (readonly [string, Tool])[] = [
   ['canvas.tool.arrow', 'arrow'],
   ['canvas.tool.elbow', 'elbow'],
 ]
+
+/** A key event as the shortcut table reads one: its own fields, copied, since an
+ *  event's fields are getters on its prototype and a spread of one carries none. */
+function keystroke(event: KeyboardEvent): Keystroke {
+  return {
+    key: event.key,
+    code: event.code,
+    ctrlKey: event.ctrlKey,
+    metaKey: event.metaKey,
+    altKey: event.altKey,
+    shiftKey: event.shiftKey,
+    isComposing: event.isComposing,
+  }
+}
 
 /** Which way each nudge goes. */
 const NUDGES: readonly (readonly [string, number, number])[] = [
@@ -459,6 +588,10 @@ const ACTS: readonly (readonly [string, (store: CanvasStore, view: KeyView) => u
   ['canvas.group', (store) => run.group(store)],
   ['canvas.ungroup', (store) => run.ungroup(store)],
   ['canvas.fit', (store, view) => store.fit(view.width, view.height)],
+  ['canvas.zoom.in', (store, view) => zoomedBy(store, view, NOTCH)],
+  ['canvas.zoom.out', (store, view) => zoomedBy(store, view, 1 / NOTCH)],
+  ['canvas.zoom.actual', (store, view) => actualSize(store, view)],
+  ['canvas.upright', (store, view) => upright(store, view)],
   ['canvas.frame', (store, view) => store.frame(view.width, view.height)],
   ['canvas.find', (_store, view) => view.onfind()],
   ['canvas.front', (store) => run.order(store, 'front')],
@@ -466,6 +599,30 @@ const ACTS: readonly (readonly [string, (store: CanvasStore, view: KeyView) => u
   ['canvas.back', (store) => run.order(store, 'back')],
   ['canvas.backward', (store) => run.order(store, 'backward')],
 ]
+
+/** A turned view upright again about its middle, keeping what is there there (#351);
+ *  false where it is upright already, so the key is let go. */
+function upright(store: CanvasStore, view: { width: number; height: number }): boolean {
+  const turn = turnOf(store.camera)
+  if (!turn) return false
+
+  const { width, height } = view
+  store.camera = turned(store.camera, width, height, width / 2, height / 2, -turn)
+  return true
+}
+
+/** One notch of the zoom, about the middle of the view. */
+/** The plane at its actual size, 100%, about the middle of the view: what the zoom's
+ *  reading on the bar does when pressed (#369). */
+export function actualSize(store: CanvasStore, view: { width: number; height: number }) {
+  const { width, height } = view
+  store.camera = zoomed(store.camera, width, height, width / 2, height / 2, 1 / store.camera.scale)
+}
+
+function zoomedBy(store: CanvasStore, view: KeyView, by: number) {
+  const { width, height } = view
+  store.camera = zoomed(store.camera, width, height, width / 2, height / 2, by)
+}
 
 export interface KeyView {
   width: number
@@ -482,6 +639,18 @@ function putText(store: CanvasStore, text: string, box: Box, writing = false) {
   store.pick(id)
   // A card made by hand is a card somebody is about to write in.
   if (writing) store.editing = id
+}
+
+/** Words on the plane with no card round them, the Text tool's (#421): put where the
+ *  press was, at the start of a line, and written in at once, as Miro's text tool and a
+ *  PDF viewer's do. Left empty, it goes again, as an empty card does. The arrow is in
+ *  hand after it, so the next press picks rather than starting another. */
+export function putWords(store: CanvasStore, box: Box) {
+  const id = freshId()
+  store.edit(withNode(store.canvas, { ...box, id, type: 'text', text: '', bare: true }))
+  store.pick(id)
+  store.editing = id
+  tools.choose('select')
 }
 
 function putLink(store: CanvasStore, url: string, box: Box) {
@@ -518,6 +687,8 @@ function ownSize(tool: PutTool): { width: number; height: number } {
   switch (tool) {
     case 'text':
       return { width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT }
+    case 'words':
+      return { width: GRID * 12, height: GRID * 2 }
     case 'file':
       return { width: DEFAULT_WIDTH, height: GRID * 9 }
     case 'picture':
@@ -539,7 +710,19 @@ export interface Putting {
 /** What a tool puts on the plane where it was pressed, at its own size. */
 export async function place(store: CanvasStore, tool: PutTool, at: Point, putting: Putting) {
   const size = ownSize(tool)
-  await putDown(store, tool, placedAt(at, size.width, size.height), putting)
+  await putDown(
+    store,
+    tool,
+    tool === 'words' ? wordsAt(at) : placedAt(at, size.width, size.height),
+    putting,
+  )
+}
+
+/** Where words pressed down go: their line starting where the press was, as a caret
+ *  goes where text is clicked. */
+export function wordsAt(at: Point): Box {
+  const { width, height } = ownSize('words')
+  return { x: Math.round(at.x), y: Math.round(at.y - height / 2), width, height }
 }
 
 /** What a tool puts on the plane at the size it was dragged out to. The one
@@ -578,6 +761,9 @@ async function putDown(
   switch (tool) {
     case 'text':
       putText(store, '', box, true)
+      return
+    case 'words':
+      putWords(store, box)
       return
     case 'group': {
       const id = freshId()
@@ -627,10 +813,31 @@ async function putDown(
 export interface MenuView extends KeyView {
   narrowed: boolean
   onnarrow: () => void
+  /** Whether the menu was asked for on bare plane rather than about something:
+   *  only then is putting something down where it was asked one of its rows. The
+   *  bar over what is picked opens it about the pick, and a right click on a card
+   *  is about the card. */
+  bare: boolean
+  /** Rows shown in the menu's place, where it was opened: what pressing Arrange does. */
+  again: (rows: MenuEntry[], title: string) => void
 }
 
-/** The menu, which is the whole of what a canvas can do, written down. What a
- *  reader cannot find a key for they find here. */
+/** Groups of rows with a rule between each, leaving out the groups with nothing in
+ *  them: a rule round nothing is two rules. */
+function sections(...groups: readonly MenuEntry[][]): MenuEntry[] {
+  return groups
+    .filter((one) => one.length)
+    .flatMap((one, index) => (index ? [DIVIDER, ...one] : one))
+}
+
+/** The menu, which is the whole of what a canvas can do here, written down. What a
+ *  reader cannot find a key for they find here.
+ *
+ *  Only the rows that would do something (#350). A greyed row is a row read past on
+ *  every opening: on bare plane the menu was seventeen of them out of twenty-eight,
+ *  and taller than a laptop's window, so the export at its foot was below the fold.
+ *  Lining up, spreading out and the order of the stack go behind one row, Arrange,
+ *  which is where every drawing program keeps them. */
 export function canvasMenu(store: CanvasStore, at: Point, view: MenuView): MenuEntry[] {
   const picked = store.picked.length > 0
   const several = store.picked.length > 1
@@ -644,62 +851,100 @@ export function canvasMenu(store: CanvasStore, at: Point, view: MenuView): MenuE
   )
   const putting = { colour: tools.colour, path: view.path }
 
-  return [
-    { label: t('Card'), run: () => void place(store, 'text', at, putting) },
-    { label: t('Note'), run: () => void place(store, 'file', at, putting) },
-    { label: t('Picture'), run: () => void place(store, 'picture', at, putting) },
-    { label: t('Link'), run: () => void place(store, 'link', at, putting) },
-    { label: t('Frame'), run: () => void place(store, 'group', at, putting) },
-    DIVIDER,
-    { label: t('Duplicate'), disabled: !picked, run: () => run.duplicate(store) },
-    { label: t('Delete'), danger: true, disabled: !picked, run: () => run.remove(store) },
-    ...(onCard
-      ? [{ label: t('Turn into a note'), run: () => void run.toNote(store, view.path) }]
-      : []),
-    DIVIDER,
-    { label: t('Group'), disabled: !picked, run: () => run.group(store) },
-    { label: t('Ungroup'), disabled: !onFrame, run: () => run.ungroup(store) },
-    DIVIDER,
-    { label: t('Bring to front'), disabled: !picked, run: () => run.order(store, 'front') },
-    { label: t('Bring forward'), disabled: !picked, run: () => run.order(store, 'forward') },
-    { label: t('Send backward'), disabled: !picked, run: () => run.order(store, 'backward') },
-    { label: t('Send to back'), disabled: !picked, run: () => run.order(store, 'back') },
-    DIVIDER,
-    { label: t('Align left'), disabled: !several, run: () => run.align(store, 'left') },
-    { label: t('Align centre'), disabled: !several, run: () => run.align(store, 'centre') },
-    { label: t('Align right'), disabled: !several, run: () => run.align(store, 'right') },
-    { label: t('Align top'), disabled: !several, run: () => run.align(store, 'top') },
-    { label: t('Align middle'), disabled: !several, run: () => run.align(store, 'middle') },
-    { label: t('Align bottom'), disabled: !several, run: () => run.align(store, 'bottom') },
-    { label: t('Spread across'), disabled: !many, run: () => run.distribute(store, 'x') },
-    { label: t('Spread down'), disabled: !many, run: () => run.distribute(store, 'y') },
-    ...(onEdge
+  const arranging = arrangeRows(store, several, many)
+
+  return sections(
+    view.bare
       ? [
-          DIVIDER,
+          { label: t('Card'), run: () => void place(store, 'text', at, putting) },
+          { label: t('Note'), run: () => void place(store, 'file', at, putting) },
+          { label: t('Picture'), run: () => void place(store, 'picture', at, putting) },
+          { label: t('Link'), run: () => void place(store, 'link', at, putting) },
+          { label: t('Frame'), run: () => void place(store, 'group', at, putting) },
+        ]
+      : [],
+    picked
+      ? [
+          { label: t('Duplicate'), run: () => run.duplicate(store) },
+          { label: t('Delete'), danger: true, run: () => run.remove(store) },
+          ...(onCard
+            ? [{ label: t('Turn into a note'), run: () => void run.toNote(store, view.path) }]
+            : []),
+          { label: t('Group'), run: () => run.group(store) },
+          ...(onFrame ? [{ label: t('Ungroup'), run: () => run.ungroup(store) }] : []),
+          {
+            label: t('Arrange'),
+            more: () => Promise.resolve(arranging),
+            run: () => view.again(arranging, t('Arrange')),
+          },
+        ]
+      : [],
+    onEdge
+      ? [
           { label: t('Arrow at the end'), run: () => run.ends(store, false, true) },
           { label: t('Arrow at the start'), run: () => run.ends(store, true, false) },
           { label: t('Arrows at both ends'), run: () => run.ends(store, true, true) },
           { label: t('No arrows'), run: () => run.ends(store, false, false) },
         ]
-      : []),
-    DIVIDER,
-    { label: t('Find on the canvas'), run: view.onfind },
-    { label: t('Fit the canvas'), run: () => store.fit(view.width, view.height) },
-    {
-      label: t('Zoom to what is picked'),
-      disabled: !picked,
-      run: () => store.frame(view.width, view.height),
-    },
-    {
-      label: view.narrowed ? t('Show the whole canvas') : t('Narrow to what is picked'),
-      disabled: !picked && !view.narrowed,
-      run: view.onnarrow,
-    },
-    DIVIDER,
-    { label: t('Export as PNG'), run: () => void exportAs(store, view, 'png') },
-    { label: t('Export as SVG'), run: () => void exportAs(store, view, 'svg') },
-    { label: t('Export as PDF'), run: () => void exportAs(store, view, 'pdf') },
-  ]
+      : [],
+    [
+      { label: t('Find on the canvas'), run: view.onfind },
+      { label: t('Fit the canvas'), run: () => store.fit(view.width, view.height) },
+      ...(turnOf(store.camera)
+        ? [{ label: t('Turn upright'), run: () => void upright(store, view) }]
+        : []),
+      ...(picked
+        ? [
+            {
+              label: t('Zoom to what is picked'),
+              run: () => store.frame(view.width, view.height),
+            },
+          ]
+        : []),
+      ...(picked || view.narrowed
+        ? [
+            {
+              label: view.narrowed ? t('Show the whole canvas') : t('Narrow to what is picked'),
+              run: view.onnarrow,
+            },
+          ]
+        : []),
+    ],
+    [
+      { label: t('Export as PNG'), run: () => void exportAs(store, view, 'png') },
+      { label: t('Export as SVG'), run: () => void exportAs(store, view, 'svg') },
+      { label: t('Export as PDF'), run: () => void exportAs(store, view, 'pdf') },
+    ],
+  )
+}
+
+/** What Arrange holds for what is picked: the order of the stack for anything,
+ *  lining up for two or more, spreading out for three or more. */
+function arrangeRows(store: CanvasStore, several: boolean, many: boolean): MenuEntry[] {
+  return sections(
+    [
+      { label: t('Bring to front'), run: () => run.order(store, 'front') },
+      { label: t('Bring forward'), run: () => run.order(store, 'forward') },
+      { label: t('Send backward'), run: () => run.order(store, 'backward') },
+      { label: t('Send to back'), run: () => run.order(store, 'back') },
+    ],
+    several
+      ? [
+          { label: t('Align left'), run: () => run.align(store, 'left') },
+          { label: t('Align centre'), run: () => run.align(store, 'centre') },
+          { label: t('Align right'), run: () => run.align(store, 'right') },
+          { label: t('Align top'), run: () => run.align(store, 'top') },
+          { label: t('Align middle'), run: () => run.align(store, 'middle') },
+          { label: t('Align bottom'), run: () => run.align(store, 'bottom') },
+        ]
+      : [],
+    many
+      ? [
+          { label: t('Spread across'), run: () => run.distribute(store, 'x') },
+          { label: t('Spread down'), run: () => run.distribute(store, 'y') },
+        ]
+      : [],
+  )
 }
 
 async function exportAs(store: CanvasStore, view: MenuView, how: 'png' | 'svg' | 'pdf') {

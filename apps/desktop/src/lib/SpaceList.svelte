@@ -1,6 +1,6 @@
 <script lang="ts">
   /** Every space as a row to switch to, a digit away, with what has been typed found in
-   *  them: the rows the title bar's menu and the switcher in the middle of the window
+   *  them: the rows the panel header's menu and the switcher in the middle of the window
    *  both are. The list around them, its keys and where it stands are the caller's;
    *  what is typed is a SpaceTyping the caller holds, since it is the caller's list the
    *  keys arrive at. See SpaceSwitcher.svelte and SpacePicker.svelte.
@@ -30,7 +30,7 @@
 
   const shown = $derived(
     typing.reading.shown.flatMap((at) => {
-      const space = workspace.spaces[at]
+      const space = workspace.shownSpaces[at]
       return space ? [{ space, at }] : []
     }),
   )

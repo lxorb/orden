@@ -18,6 +18,7 @@ export const GROUP_WORDS: Record<ScopeGroup, () => string> = {
   scripts: () => t('Scripts'),
   settings: () => t('Settings'),
   terminal: () => t('Terminal'),
+  helpers: () => t('Helpers'),
 }
 
 export const SCOPE_WORDS: Record<Scope, () => string> = {
@@ -27,7 +28,7 @@ export const SCOPE_WORDS: Record<Scope, () => string> = {
   'chats.write': () => t('Post in chats'),
   context: () => t('See what you are looking at'),
   tree: () => t('Move and rename files'),
-  workspace: () => t('Open tabs and bookmarks'),
+  workspace: () => t('Open tabs and Essentials'),
   'workspace.focus': () => t('Bring a tab to the front'),
   browser: () => t('Browse in tabs of its own'),
   'browser.network': () => t('Read what pages load'),
@@ -36,6 +37,7 @@ export const SCOPE_WORDS: Record<Scope, () => string> = {
   'browser.script': () => t('Run scripts in pages'),
   settings: () => t('Change settings'),
   terminal: () => t('Run commands'),
+  agents: () => t('Start helpers on your AI accounts'),
 }
 
 /** The questions, as the thing the agent is about to do. */
@@ -65,4 +67,11 @@ export const LIMIT_WORDS: Record<Limit, () => string> = {
   tabs: () => t('Tabs'),
   calls: () => t('Calls a minute'),
   navigations: () => t('Pages a minute'),
+  memory: () => t('Browser memory limit'),
+}
+
+/** A limit's value as its row says it: memory in GB, and Off where there is none. */
+export function limitValue(limit: Limit, value: number): string {
+  if (limit !== 'memory') return String(value)
+  return value === 0 ? t('Off') : `${String(Math.round((value / 1024) * 10) / 10)} GB`
 }

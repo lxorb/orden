@@ -8,8 +8,8 @@ What it proves, in order:
 * **Paragraph needs no chord**: Ctrl+1 on a line that is already a first-level heading
   turns it back into prose, and again makes it a heading. That is what freed
   Ctrl+Shift+P for the palette.
-* **Ctrl+T is a new tab** (Emil, issue #213): a web tab whose address field has the
-  keyboard, and under it the kinds a tab can be, in three lines, each with its letter.
+* **Ctrl+T is a new tab** (Emil, issue #213), called New tab (issue #241): a web tab
+  whose address field has the keyboard, and under it the kinds a tab can be, in three lines, each with its letter.
   A letter typed is the address field's; once Escape has let go of the field, the letter
   makes its kind, in the new tab's place. The plus makes the same tab, and hangs no menu.
 * **Every kind opens as a tab and writes nothing**: a plane, a deck of pages and a
@@ -116,6 +116,15 @@ NEW_TAB = """
     letters: here ? [...here.querySelectorAll('.kind kbd')].map((one) => one.textContent) : [],
     menu: !!document.querySelector('.menu'),
   }
+}
+"""
+
+# What the tab in front is called, in the strip and on the window.
+CALLED = """
+() => {
+  const id = window.nibApp.workspace.active?.id
+  const label = document.querySelector(`[data-tab="${id}"] .label`)?.textContent.trim()
+  return { label, title: document.title.split(' - ')[0] }
 }
 """
 
@@ -264,6 +273,13 @@ def chooser(page) -> None:
         say(f"the lines              -> {new['lines']}")
     if new["letters"] != ["N", "C", "P", "O", "W"]:
         wrong(f"the cards do not wear their letters: {new['letters']}")
+    # Issue #241: called what it is, in the strip and on the window, as a browser's is.
+    settles(page, f"() => ({CALLED})().title === 'New tab'")
+    called = page.evaluate(CALLED)
+    if called != {"label": "New tab", "title": "New tab"}:
+        wrong(f"the new tab is not called New tab: {called}")
+    else:
+        say("its name               -> New tab, in the strip and on the window")
     page.screenshot(path=str(SHOTS / "new-tab.png"))
 
     # A letter typed is the address's, and makes nothing.
@@ -303,15 +319,22 @@ def chooser(page) -> None:
     else:
         say("the plus               -> a new tab, no menu")
 
-    # A press on a card is the same as its letter: a web note makes a fresh new tab in
-    # this one's place, the address field taking the keyboard again.
+    # A press on a card is the same as its letter: a web note lands on the search
+    # engine this device chose, in this new tab's place, as a browser's new tab does.
+    # Emil, #354; see the web row in new-kinds.ts. It used to make a fresh new tab, the
+    # same card again, which was a press that answered nothing.
     page.locator('[data-new-here] .kind:has-text("New web note")').first.click()
-    page.wait_for_timeout(400)
+    settles(page, f"() => window.nibApp.workspace.active?.kind === 'web' && !({NEW_TAB})().newTab")
     state = page.evaluate(STATE)
-    if len(state["tabs"]) != before + 1 or not page.evaluate(NEW_TAB)["typing"]:
-        wrong(f"a web note chosen on a new tab was not a new tab in its place: {state['tabs']}")
+    address = page.evaluate("() => window.nibApp.workspace.active?.address ?? ''")
+    if (
+        len(state["tabs"]) != before + 1
+        or page.evaluate(NEW_TAB)["newTab"]
+        or not address.startswith(("https://", "http://"))
+    ):
+        wrong(f"a web note chosen on a new tab did not open the search engine in its place: {address!r} {state['tabs']}")
     else:
-        say("New web note pressed   -> a new tab in its place")
+        say(f"New web note pressed   -> {address}, in its place")
     page.keyboard.press("Control+KeyW")
     page.wait_for_timeout(300)
 

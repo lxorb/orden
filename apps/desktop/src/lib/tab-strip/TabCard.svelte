@@ -118,7 +118,7 @@
     max-width: 50%;
   }
 
-  /* The space's badge, the switcher's and the title bar's, at the size of a line of the
+  /* The space's badge, the switcher's and the panel header's, at the size of a line of the
      card: its corner and its letter follow the height it is given. */
   .mark {
     --row-height-sm: var(--icon-md);

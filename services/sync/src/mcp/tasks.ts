@@ -34,6 +34,7 @@ import { rowsOfText } from '@nib/bases/rows'
 import { taskHash } from '@nib/bases'
 import { appliedEdits } from '@nib/markdown/edits'
 import { taskLine } from '@nib/markdown/task-edits'
+import { objectIn } from '../body'
 import { cleanPath } from '../notes'
 import { blobKey } from '../sync2/files'
 import type { Env } from '../types'
@@ -63,7 +64,7 @@ export const TASK_TOOLS = [
   {
     name: 'add_task',
     description:
-      "Add a to-do line to the space's Inbox.md, or to `note` under the heading `under`. `text` may carry Tasks plugin marks (📅 2026-10-06 ⏫ 🔁 every week); `fields` takes what update_task does. Answers its `at`.",
+      "Add a to-do line to the space's Inbox.md, or to `note` under the heading `under`. `text` may carry Tasks plugin marks (🛫 2026-10-06 the day it starts, [deadline:: 2026-10-20] its deadline, ⏫ 🔁 every week); `fields` takes what update_task does. Answers its `at`.",
     inputSchema: {
       type: 'object',
       properties: {
@@ -239,6 +240,15 @@ async function readBaseAt(env: Env, space: Space, asked: string) {
   }
 }
 
+/** Whether the account's Today holds a task with no start date, as the app's does
+ *  (#408): one key out of the settings blob, read per call; off where it never said. */
+async function undatedInToday(env: Env, user: string): Promise<boolean> {
+  const row = await env.DB.prepare('select settings from users where id = ?')
+    .bind(user)
+    .first<{ settings: string | null }>()
+  return objectIn(row?.settings)?.undatedInToday === true
+}
+
 async function list(env: Env, token: TokenRow, args: Args): Promise<unknown> {
   const spaces =
     args.space === undefined || args.space === null
@@ -261,6 +271,9 @@ async function list(env: Env, token: TokenRow, args: Args): Promise<unknown> {
       ...(filter ? { filter } : {}),
       ...(typeof args.limit === 'number' ? { limit: args.limit } : {}),
       inboxes: spaces.map((space) => ({ space: space.name, path: 'Inbox.md' })),
+      ...(view?.trim().toLowerCase() === 'today' && (await undatedInToday(env, token.user_id))
+        ? { undated: true }
+        : {}),
       isNote: (name) => names.has(name.toLowerCase()),
     },
     contextNow(),
@@ -278,7 +291,7 @@ async function spaceOf(env: Env, token: TokenRow, args: Args): Promise<Space> {
 /** The space a write names, refused where the token or the share may not write. */
 async function writableSpace(env: Env, token: TokenRow, args: Args): Promise<Space> {
   if (token.read_only)
-    throw new Said('This token may only read. Allow writing in nibeditor’s settings first.')
+    throw new Said('This token may only read. Allow writing in Orden’s settings first.')
   const space = await spaceOf(env, token, args)
   if (space.role === 'read')
     throw new Said(`${space.name} was shared with you to read, not to write.`)
@@ -289,13 +302,13 @@ async function add(env: Env, token: TokenRow, args: Args): Promise<unknown> {
   return addTaskTo(env, await writableSpace(env, token, args), args)
 }
 
-/** The space a task goes to, as both the connector and the clipper's route have it. */
+/** The space a task goes to. */
 type Writable = Pick<Space, 'id' | 'name' | 'user_id'>
 
 /** A task added to a space the caller may write: to its Inbox.md, or to `note` under
- *  `under`. The connector's `add_task` and the clipper's "As a task" (tasks.ts) both
- *  come here. Throws the sentence to answer with where it cannot. */
-export async function addTaskTo(
+ *  `under`: the connector's `add_task`. Throws the sentence to answer with where it
+ *  cannot. */
+async function addTaskTo(
   env: Env,
   space: Writable,
   args: Args,
@@ -411,9 +424,8 @@ const RUNS: Record<string, (env: Env, token: TokenRow, args: Args) => Promise<un
   add_row: addRow,
 }
 
-/** A sentence a task tool answered with rather than a task: what the clipper's route
- *  hands back as its refusal. */
-export function refusalOf(error: unknown): string | null {
+/** A sentence a task tool answered with rather than a task. */
+function refusalOf(error: unknown): string | null {
   return error instanceof Said || error instanceof AgentError ? error.message : null
 }
 

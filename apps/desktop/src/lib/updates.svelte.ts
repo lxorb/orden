@@ -1,6 +1,14 @@
 import { keep, storedText } from './stored'
 import { isDesktop } from './tauri'
-import { asChannel, type Channel, discard, stageUpdate, stagedVersion } from './updater'
+import {
+  announcedVersion,
+  asChannel,
+  type Channel,
+  discard,
+  managedBy,
+  stageUpdate,
+  stagedVersion,
+} from './updater'
 
 /** How often the app looks for a new version while it is running.
  *
@@ -18,7 +26,7 @@ const EVERY = 6 * 60 * 60 * 1000
 const TICK = 10 * 60 * 1000
 
 /** Which channel this machine follows, written here rather than sent up to the
- *  account: one machine can run the build of main while another stays on the
+ *  account: one machine can run the unstable build while another stays on the
  *  releases, which is the whole point of the choice. */
 const CHANNEL_KEY = 'nib:channel'
 
@@ -27,6 +35,10 @@ const CHANNEL_KEY = 'nib:channel'
 function keepChannel(channel: Channel) {
   keep(CHANNEL_KEY, channel)
 }
+
+/** The last version an install a package manager keeps was told of, so it is told once
+ *  and not on every launch after: the notice there is news, with nothing to press. */
+const TOLD_KEY = 'nib:update-told'
 
 /** How long since the last keystroke before the notice may appear. A box that
  *  arrives between two words is a box in the way; the update is in no hurry, so
@@ -41,6 +53,9 @@ const QUIET = 5000
  *  its own. This is only the offer to get there sooner, and dismissing it costs
  *  nothing - what was downloaded is still installed on the way out.
  *
+ *  Except where a package manager keeps the install, which is the manager's to
+ *  update: there the notice only says a newer version is out, once per version.
+ *
  *  Later holds against the looks nobody asked for, and only those. Asking by name
  *  is somebody wanting the answer, so it shows the notice for what is waiting
  *  whatever was pressed before, as VS Code, Chrome's About page and Obsidian do. */
@@ -49,11 +64,20 @@ class Updates {
    *  when there is nothing new, which is most of the time. */
   ready = $state<string | null>(null)
 
+  /** Whether a package manager keeps this install, so the notice only says what is
+   *  out; see updater.ts. */
+  managed = $state(false)
+
   /** Which stream of releases this machine follows; see updater.ts. Stable, until
    *  somebody asks for the other one on this machine. */
   /** What was chosen here last, or the stable channel for a machine that has
    *  never chosen - which is also what a machine that cannot remember follows. */
-  channel = $state<Channel>(asChannel(storedText(CHANNEL_KEY)))
+  // A prerelease build is already on the unstable stream. This also covers
+  // edge packages installed outside the app's own updater, regardless of the
+  // package manager that delivered them or a stale saved channel preference.
+  channel = $state<Channel>(
+    __APP_VERSION__.includes('-') ? 'unstable' : asChannel(storedText(CHANNEL_KEY)),
+  )
 
   /** When the last look happened, so that however often the timer and the window
    *  being come back to ask, nothing looks twice inside one interval. Zero before
@@ -119,7 +143,7 @@ class Updates {
    *  Nothing waiting says nothing, as it always has. */
   async check() {
     await this.look()
-    const waiting = stagedVersion()
+    const waiting = stagedVersion() ?? announcedVersion()
     if (waiting) this.show(waiting)
   }
 
@@ -163,6 +187,10 @@ class Updates {
       return
     }
 
+    // A package manager's install is told of each version once, across launches.
+    this.managed = (await managedBy()) !== null
+    if (this.managed && storedText(TOLD_KEY) === found) return
+
     // Only ever set, never cleared: a second look answers nothing for the
     // version it downloaded on the first, and clearing the notice then would
     // take away the offer while the update sat there waiting.
@@ -173,10 +201,10 @@ class Updates {
    *  the choice answers instead of waiting hours for the next look.
    *
    *  Whatever was downloaded from the stream being left is thrown away rather than
-   *  installed: a build of main is not what somebody who has just asked for the
+   *  installed: an unstable build is not what somebody who has just asked for the
    *  releases wants started next time. Nothing is installed the other way round
    *  either - the updater only ever offers a higher version, so a machine on a
-   *  build of main that asks for the releases stays on it until a release passes
+   *  unstable build that asks for the releases stays on it until a release passes
    *  it, while one on a release is offered the next push. */
   setChannel(channel: Channel) {
     if (channel === this.channel) return
@@ -203,6 +231,7 @@ class Updates {
   private show(version: string) {
     clearTimeout(this.waiting)
     this.ready = version
+    if (this.managed) keep(TOLD_KEY, version)
   }
 
   dismiss() {

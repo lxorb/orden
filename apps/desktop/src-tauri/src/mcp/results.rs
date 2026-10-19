@@ -194,7 +194,7 @@ fn refusal(body: &Value) -> String {
         .and_then(Value::as_str)
         .map(str::to_owned)
         .or_else(|| body.as_str().map(str::to_owned))
-        .unwrap_or_else(|| "nib did not say why".to_owned())
+        .unwrap_or_else(|| "Orden did not say why".to_owned())
 }
 
 /// A tool call's result: the text a model reads, and the contract's answer beside it.
@@ -310,6 +310,7 @@ fn done(tool: &str, args: &Value, result: &Value, untrusted: Option<&str>) -> Ve
         tool if CHATS.contains(&tool) && result.is_string() => {
             vec![text(result.as_str().unwrap_or_default())]
         }
+        "run_agent" | "agent_result" => vec![text(&helper(result))],
         _ => {
             let said = shared::text(tool, args, result).unwrap_or_else(|| result.to_string());
             if from_outside {
@@ -321,11 +322,64 @@ fn done(tool: &str, args: &Value, result: &Value, untrusted: Option<&str>) -> Ve
     }
 }
 
+/// Where a helper stands, as the model that started it reads it: its answer once it has
+/// one, and how to wait for it while it works (src/lib/ai/helpers/run.ts says the same for
+/// the sidebar's own loop).
+pub fn helper(result: &Value) -> String {
+    let words = |key: &str| result.get(key).and_then(Value::as_str).unwrap_or_default();
+    let model = [words("model"), words("provider")]
+        .into_iter()
+        .find(|one| !one.is_empty())
+        .unwrap_or("another model");
+    let who = format!("helper {} ({model})", words("agent"));
+    match words("state") {
+        "running" => format!(
+            "{who} is still working. Call agent_result with agent \"{}\" to wait for its answer.",
+            words("agent")
+        ),
+        "done" if !words("answer").is_empty() => words("answer").to_owned(),
+        "done" => format!("{who} finished without a word."),
+        "stopped" if !words("answer").is_empty() => format!(
+            "{who} was stopped. What it said so far:
+
+{}",
+            words("answer")
+        ),
+        "stopped" => format!("{who} was stopped."),
+        _ => {
+            let why = words("error");
+            format!(
+                "{who} failed: {}",
+                if why.is_empty() {
+                    "it did not answer"
+                } else {
+                    why
+                }
+            )
+        }
+    }
+}
+
+/// Whether a helper's answer says it is still working, which `nib mcp` waits on.
+pub fn still_working(outcome: &Outcome) -> Option<String> {
+    let Outcome::Done { result, .. } = outcome else {
+        return None;
+    };
+    (result.get("state").and_then(Value::as_str) == Some("running"))
+        .then(|| {
+            result
+                .get("agent")
+                .and_then(Value::as_str)
+                .map(str::to_owned)
+        })
+        .flatten()
+}
+
 /// What a call that asked says.
 fn asked(tool: &str, args: &Value, approval: &str, summary: &str) -> String {
     let tab = args.get("tab").and_then(Value::as_str);
     let about = marked(
-        &tab.map_or_else(|| "nib".to_owned(), |tab| format!("tab {tab}")),
+        &tab.map_or_else(|| "Orden".to_owned(), |tab| format!("tab {tab}")),
         summary,
     );
     if tool == "browser_takeover" {
@@ -334,7 +388,7 @@ fn asked(tool: &str, args: &Value, approval: &str, summary: &str) -> String {
         );
     }
     format!(
-        "Not done yet: nib asked the reader first (approval {approval}):\n{about}\nCarry on with other work. approval_status with id \"{approval}\" says when they answer; once it says allowed, make this same call again."
+        "Not done yet: Orden asked the reader first (approval {approval}):\n{about}\nCarry on with other work. approval_status with id \"{approval}\" says when they answer; once it says allowed, make this same call again."
     )
 }
 
@@ -343,19 +397,16 @@ fn asked(tool: &str, args: &Value, approval: &str, summary: &str) -> String {
 fn failed(code: &str, message: &str) -> String {
     let next = match code {
         "no_such_ref" => "Take a new browser_snapshot and use its refs.",
-        "no_such_tab" => "browser_tabs lists the browser's tabs, get_context every tab of nib's.",
+        "no_such_tab" => "browser_tabs lists the browser's tabs, get_context every tab of Orden's.",
         "stopped" => "The reader pressed stop: stop working and tell the user.",
         "password_field" => "Never type a password: ask the reader with browser_takeover.",
-        "not_granted" => "The reader has not granted this; they can in nib's Settings > Agents.",
+        "not_granted" => "The reader has not granted this; they can in Orden's Settings > Agents.",
         "denied" => "The reader said no: do not ask again for the same thing.",
-        "in_use_elsewhere" => {
-            "Another of the reader's devices is using this site: wait, or open with store \"agent\"."
-        }
         "limit" => "Close tabs you no longer need, or slow down.",
         _ => "",
     };
     let said = if message.is_empty() {
-        "nib did not say why"
+        "Orden did not say why"
     } else {
         message
     };
@@ -388,6 +439,37 @@ fn held(dialog: &Dialog) -> String {
 mod tests {
     use super::*;
     use crate::agents::verbs::{Answer, Code, DialogKind, Snapped};
+
+    #[test]
+    fn a_helper_is_its_answer_once_it_has_one_and_says_how_to_wait_until_then() {
+        let done = Outcome::Done {
+            result: json!({"agent": "h1", "state": "done", "model": "gpt-6-astra", "answer": "Two herons."}),
+            untrusted: None,
+            dialog: None,
+        };
+        assert_eq!(
+            rendered("run_agent", &json!({}), &done)["content"][0]["text"],
+            "Two herons."
+        );
+        assert_eq!(still_working(&done), None);
+
+        let running = Outcome::Done {
+            result: json!({"agent": "h1", "state": "running", "model": "gpt-6-astra"}),
+            untrusted: None,
+            dialog: None,
+        };
+        assert_eq!(still_working(&running).as_deref(), Some("h1"));
+        let said = rendered("agent_result", &json!({}), &running);
+        let words = said["content"][0]["text"].as_str().expect("words");
+        assert!(
+            words.contains("agent_result") && words.contains("\"h1\""),
+            "{words}"
+        );
+
+        let failed =
+            json!({"agent": "h1", "state": "failed", "provider": "codex", "error": "signed out"});
+        assert_eq!(helper(&failed), "helper h1 (codex) failed: signed out");
+    }
 
     fn contract(answer: &Answer) -> Outcome {
         Outcome::from_endpoint(200, &serde_json::to_value(answer).expect("json"))

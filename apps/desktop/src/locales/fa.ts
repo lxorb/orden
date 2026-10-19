@@ -10,21 +10,126 @@ export const fa: Dictionary = {
   'Do you write code?': 'آیا کد می‌نویسید؟',
   Yes: 'بله',
   No: 'نه',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'از برنامه‌های دیگر: {key}',
+  'From other apps: set in your system settings': 'از برنامه‌های دیگر: در تنظیمات سیستم تعیین کنید',
+  'From other apps: bind {command} in your system settings':
+    'از برنامه‌های دیگر: {command} را در تنظیمات سیستم اختصاص دهید',
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'ضروری‌ها',
+  'Add to Essentials': 'افزودن به ضروری‌ها',
+  'Remove from Essentials': 'حذف از ضروری‌ها',
+  'Add block to Essentials': 'افزودن بلوک به ضروری‌ها',
+  'Add blocks to Essentials': 'افزودن بلوک‌ها به ضروری‌ها',
+  'Add view to Essentials': 'افزودن نما به ضروری‌ها',
+  'Open tabs and Essentials': 'باز کردن زبانه‌ها و ضروری‌ها',
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor اکنون Orden است',
+  'Notes from nibeditor.com': 'یادداشت‌ها از nibeditor.com',
+  'Nothing there': 'آنجا چیزی نیست',
+  // AI: the three permission modes
+  'Full permissions': 'دسترسی کامل',
+  'Auto mode': 'حالت خودکار',
+  'Full permissions: nothing is asked first': 'دسترسی کامل: پیش از هیچ کاری پرسیده نمی‌شود',
+  // Import: Zen's tabs
+  'Import from Zen': 'درون‌آوری از Zen',
+  'Containers stay in Zen': 'کانتینرها در Zen می‌مانند',
+  'Zen’s tabs could not be read.': 'زبانه‌های Zen خوانده نشدند.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'کانتینرها در Firefox می‌مانند',
+  'Nothing could be read out of {browser}.': 'هیچ چیزی از {browser} خوانده نشد.',
+  'Saved groups': 'گروه‌های ذخیره‌شده',
+  'Tab group': 'گروه زبانه',
+  'Bookmarks toolbar': 'نوار نشانک‌ها',
+  'Bookmarks menu': 'منوی نشانک‌ها',
+  'Other bookmarks': 'نشانک‌های دیگر',
+  'Mobile bookmarks': 'نشانک‌های تلفن همراه',
+  'Bookmarks bar': 'نوار نشانک‌ها',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} زبانه‌های باز خود را قفل نگه می‌دارد، پس فقط نشانک‌هایش آمد.',
+  '{count} pages not on the web stay behind': {
+    one: '{count} صفحه که روی وب نیست جا ماند',
+    other: '{count} صفحه که روی وب نیستند جا ماندند',
+  },
+  'Reading List': 'فهرست مطالعه',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS زبانه‌ها و نشانک‌های Safari را پشت دسترسی کامل به دیسک نگه می‌دارد. Orden را آنجا روشن کنید و دوباره بخواهید.',
+  // Settings: note types
+  'Page note': 'یادداشت صفحه‌ای',
+  'Web note': 'یادداشت وب',
+  'Private tab': 'برگه خصوصی',
+  'Note types': 'انواع یادداشت',
+  // Tasks: Upcoming's weeks
+  'Previous week': 'هفتهٔ پیشین',
+  // Tasks: projects placed in the panel, and their folder
+  'Add project above': 'افزودن پروژه در بالا',
+  'Add project below': 'افزودن پروژه در پایین',
+  'Projects folder': 'پوشهٔ پروژه‌ها',
+  // Tasks: a repeating task skipped or done for good
+  Skip: 'رد کردن',
+  'Complete forever': 'انجام برای همیشه',
+  // Tasks: comments
+  Comments: 'یادداشت‌ها',
+  // Tasks: filters
+  Filters: 'پالایه‌ها',
+  'Add filter': 'افزودن پالایه',
+  'Edit filter': 'ویرایش پالایه',
+  // Tasks: a project's sections
+  'Add section': 'افزودن بخش',
+  '{name} (copy)': '{name} (رونوشت)',
+  'Its tasks are deleted with it.': 'کارهایش هم با آن حذف می‌شوند.',
+  // Tasks: keys, selection and the undo toast
+  Completed: 'انجام شد',
+  'Remove date': 'حذف تاریخ',
+  'Next task': 'کار پسین',
+  'Previous task': 'کار پیشین',
+  'Add task at the top': 'افزودن کار در بالا',
+  '{count} selected': '{count} گزیده',
+  // Tasks: the Display menu
+  Display: 'نمایش',
+  'Completed tasks': 'کارهای انجام‌شده',
+  // Tasks: several lines pasted into quick add
+  'One task': 'یک کار',
+  'One per line': 'یکی برای هر خط',
+  // Tasks: the projects in the panel
+  Favorites: 'برگزیده‌ها',
+  'Add project': 'افزودن پروژه',
+  'Add sub-project': 'افزودن زیرپروژه',
+  // Tasks: the task view
+  'Sub-tasks': 'زیرکارها',
+  'Add sub-task': 'افزودن زیرکار',
+  'New label': 'برچسب تازه',
+  'No deadline': 'بدون مهلت',
+  // Tasks: the row's menu and the scheduler
+  Reschedule: 'زمان‌بندی دوباره',
+  'Later this week': 'اواخر همین هفته',
+  'This weekend': 'همین آخر هفته',
+  'Next weekend': 'آخر هفتهٔ بعد',
+  'Every week on {day}': 'هر هفته {day}',
+  'Every month on day {day}': 'هر ماه روز {day}',
+  'Every year on {date}': 'هر سال {date}',
+  'Type a date': 'تاریخی بنویسید',
+  'Previous month': 'ماه قبل',
+  'Next month': 'ماه بعد',
+  'No time': 'بدون ساعت',
+  'No repeat': 'بدون تکرار',
+  Complete: 'انجام شد',
+  Reopen: 'بازگشایی',
+  Schedule: 'زمان‌بندی',
+  'Open in note': 'باز کردن در یادداشت',
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'برنامهٔ دیگر',
-  'Start fresh': 'شروع از نو',
   'Import from Obsidian': 'درون‌آوری از Obsidian',
   'Import from Notion': 'درون‌آوری از Notion',
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'راهنماها',
   'Silent mode': 'حالت بی‌صدا',
-  'Sign in to keep your notes safe and on every device.':
-    'وارد شوید تا یادداشت‌هایتان امن و روی همه دستگاه‌ها باشند.',
   'See how your notes connect.': 'ببینید یادداشت‌هایتان چگونه به هم پیوسته‌اند.',
   'Press {key} to find anything, notes and commands alike.':
     'برای یافتن هر چیزی، یادداشت یا فرمان، {key} را بزنید.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'نمایش مارک‌داون هنگام نوشتن',
+  'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'اشاره‌گر',
   'Pointing hand on buttons': 'دست اشاره روی دکمه‌ها',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
@@ -40,11 +145,15 @@ export const fa: Dictionary = {
   '{count} h': '{count} ساعت',
   Inbox: 'صندوق ورودی',
   Date: 'تاریخ',
+  'Start date': 'تاریخ شروع',
   Priority: 'اولویت',
   Reminder: 'یادآوری',
   Duration: 'مدت',
   'Smart dates': 'تاریخ‌های هوشمند',
   'From any app': 'از هر برنامه‌ای',
+  'Rotate a canvas with two fingers': 'چرخاندن بوم با دو انگشت',
+  'Turn upright': 'صاف کردن',
+  'Show tasks without a start date in Today': 'نمایش کارهای بدون تاریخ شروع در امروز',
   'Every day': 'هر روز',
   'Every weekday': 'هر روز کاری',
   'Every week': 'هر هفته',
@@ -61,6 +170,13 @@ export const fa: Dictionary = {
   Unsaved: 'ذخیره‌نشده',
   'Save to': 'ذخیره در',
   'Reloaded with the web data of {space}': 'با داده‌های وب {space} دوباره بارگذاری شد',
+  Separate: 'جداگانه',
+  'Share this note’s web data again?': 'داده‌های وب این یادداشت دوباره مشترک شود؟',
+  'What its pages are signed in to on this computer is deleted.':
+    'آنچه صفحه‌هایش در این رایانه به آن وارد شده‌اند حذف می‌شود.',
+  'Share again': 'اشتراک دوباره',
+  'This note keeps its own web data now': 'این یادداشت اکنون داده‌های وب خودش را نگه می‌دارد',
+  'Back on the shared web data': 'بازگشت به داده‌های وب مشترک',
   'Add a page': 'افزودن صفحه',
   'Add a page after this': 'افزودن صفحه پس از این',
   'Delete this page': 'حذف این صفحه',
@@ -95,7 +211,6 @@ export const fa: Dictionary = {
   'New window': 'پنجره تازه',
   New: 'تازه',
   'New space': 'فضای تازه',
-  '{name}: switch space': '{name}: تغییر فضا',
   Untitled: 'بی‌عنوان',
   Space: 'فضا',
   'Name the space': 'نام فضا',
@@ -140,8 +255,6 @@ export const fa: Dictionary = {
   'Loading…': 'در حال بارگذاری…',
   'Create a space': 'ساختن فضا',
   'Import a folder': 'درون‌آوری پوشه',
-  'Sign in to sync': 'ورود برای همگام‌سازی',
-  'Create account': 'ساختن حساب',
   'Delete space': 'حذف فضا',
   'Delete {name}?': '{name} حذف شود؟',
   'Every note in this space is deleted from your computer.':
@@ -159,6 +272,10 @@ export const fa: Dictionary = {
   Unpin: 'برداشتن سنجاق',
   Close: 'بستن',
   'Close pinned tab?': 'زبانه سنجاق‌شده بسته شود؟',
+  'Save changes to {name}?': 'تغییرات {name} ذخیره شود؟',
+  'Save changes to these tabs?': 'تغییرات این زبانه‌ها ذخیره شود؟',
+  'Unsaved words go to Recently deleted.': 'واژه‌های ذخیره‌نشده به «اخیراً حذف‌شده» می‌روند.',
+  'Don’t save': 'ذخیره نکن',
   'Close others': 'بستن بقیه',
   'Close tabs to the right': 'بستن زبانه‌های سمت راست',
   'Close tabs to the left': 'بستن زبانه‌های سمت چپ',
@@ -195,9 +312,6 @@ export const fa: Dictionary = {
   'Move this note': 'جابه‌جایی این یادداشت',
   'Move up': 'جابه‌جایی به بالا',
   'Move down': 'جابه‌جایی به پایین',
-  Bookmark: 'نشانک',
-  'Remove bookmark': 'برداشتن نشانک',
-  'Leave out of search': 'کنار گذاشتن از جست‌وجو',
   'Search here again': 'جست‌وجوی دوباره اینجا',
   'Undo the last file change': 'واگرد آخرین تغییر پرونده',
   'Undo moving {name}': 'واگرد جابه‌جایی {name}',
@@ -247,7 +361,6 @@ export const fa: Dictionary = {
   'Remove group': 'برداشتن گروه',
   'Out of the group': 'بیرون از گروه',
   Make: 'ساختن',
-  'Bookmark this block': 'نشانک این بلوک',
   Panels: 'تخته‌ها',
   Outline: 'رئوس',
   'Stay on this note': 'ماندن روی این یادداشت',
@@ -511,8 +624,8 @@ export const fa: Dictionary = {
   'Asking OpenAI which models this key can use':
     'پرسیدن از OpenAI که این کلید چه مدل‌هایی را می‌تواند به کار برد',
   'Could not reach OpenAI': 'OpenAI در دسترس نبود',
-  'That key cannot use any of the models nibeditor asks for.':
-    'آن کلید هیچ‌یک از مدل‌هایی که nibeditor می‌خواهد را نمی‌تواند به کار برد.',
+  'That key cannot use any of the models Orden asks for.':
+    'آن کلید هیچ‌یک از مدل‌هایی که Orden می‌خواهد را نمی‌تواند به کار برد.',
   'No reasoning': 'بی‌استدلال',
   Minimal: 'کمینه',
   Low: 'کم',
@@ -534,7 +647,7 @@ export const fa: Dictionary = {
   Mode: 'حالت',
   // The window's own edges; see appearance.rs
   Window: 'پنجره',
-  'nibeditor’s own': 'خودِ nibeditor',
+  'Orden’s own': 'خودِ Orden',
   'The system’s': 'سیستم',
   'Window frame': 'قاب پنجره',
   System: 'سامانه',
@@ -597,6 +710,7 @@ export const fa: Dictionary = {
   '{done} of {total}': '{done} از {total}',
   'Sync failed': 'همگام‌سازی نشد',
   '{name} could not be written.': '{name} نوشته نشد.',
+  '{name} could not be read.': '{name} خوانده نشد.',
   'Text size': 'اندازه نوشته',
   'Line spacing': 'فاصله خط',
   'Line width': 'پهنای خط',
@@ -657,8 +771,10 @@ export const fa: Dictionary = {
   '{used} of {limit} used.': '{used} از {limit} به کار رفته.',
   'That image does not fit in your storage.': 'آن تصویر در انبار شما جا نمی‌شود.',
   'out of space': 'انبار پر است',
-  'nibeditor {version} is ready to install.': 'nibeditor {version} آماده نصب است.',
+  'Orden {version} is ready to install.': 'Orden {version} آماده نصب است.',
+  'Orden {version} is available.': 'Orden {version} در دسترس است.',
   'Restart now': 'راه‌اندازی دوباره همین حالا',
+  'Move to Applications': 'انتقال به برنامه‌ها',
   Later: 'بعداً',
   More: 'بیشتر',
   'Open notes': 'گشودن یادداشت‌ها',
@@ -683,11 +799,9 @@ export const fa: Dictionary = {
   Continue: 'ادامه',
   'Send a new code': 'فرستادن کد تازه',
   'Code sent to': 'کد فرستاده شد به',
-  'You already have notes on this computer.': 'شما هم‌اکنون روی این رایانه یادداشت دارید.',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
-    'نگه‌شان دارید و به حساب شما می‌پیوندند. پاک‌شان کنید و تنها آنچه حساب شما دارد می‌ماند - این واگرد نمی‌شود.',
-  'Keep them': 'نگه داشتن',
-  'Erase them': 'پاک کردن',
+  'This device already has notes.': 'این دستگاه از قبل یادداشت دارد.',
+  Merge: 'ادغام',
+  'Keep separate': 'جدا نگه دار',
   'Digit {number}': 'رقم {number}',
   'Resend in {seconds}s': 'فرستادن دوباره در {seconds} ثانیه',
   'Last synced {time}.': 'آخرین همگام‌سازی {time}.',
@@ -736,14 +850,14 @@ export const fa: Dictionary = {
   'Reads your notes.': 'یادداشت‌های شما را می‌خواند.',
   'Reads and writes your notes.': 'یادداشت‌های شما را می‌خواند و می‌نویسد.',
   Other: 'دیگر',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'یک دستیار هوش مصنوعی می‌تواند یادداشت‌های شما را بخواند - و اگر اجازه دهید، تغییرشان دهد. با رایانامه nibeditor شما وارد می‌شود؛ چیزی برای چسباندن نیست.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'یک دستیار هوش مصنوعی می‌تواند یادداشت‌های شما را بخواند - و اگر اجازه دهید، تغییرشان دهد. با رایانامه Orden شما وارد می‌شود؛ چیزی برای چسباندن نیست.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'در Claude، Settings → Connectors را بگشایید و Add custom connector را بزنید.',
   'Open Claude’s connectors': 'گشودن رابط‌های Claude',
   'Fill in the two fields and click Add.': 'دو خانه را پر کنید و Add را بزنید.',
-  'Click Connect and sign in with your nibeditor email.':
-    'Connect را بزنید و با رایانامه nibeditor خود وارد شوید.',
+  'Click Connect and sign in with your Orden email.':
+    'Connect را بزنید و با رایانامه Orden خود وارد شوید.',
   'Using Claude Code instead?': 'از Claude Code استفاده می‌کنید؟',
   Command: 'فرمان',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -754,16 +868,16 @@ export const fa: Dictionary = {
   'Open ChatGPT’s plugins': 'گشودن افزونه‌های ChatGPT',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'بخش Plugins یا دکمه افزودن نیست؟ نخست Developer mode را در Settings → Security and login روشن کنید.',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'هنگامی که ChatGPT پرسید، با رایانامه nibeditor خود وارد شوید.',
-  'To use it in a chat, type @ and pick nibeditor.':
-    'برای به‌کار بردن در گفت‌وگو، @ را بنویسید و nibeditor را برگزینید.',
+  'Sign in with your Orden email when ChatGPT asks.':
+    'هنگامی که ChatGPT پرسید، با رایانامه Orden خود وارد شوید.',
+  'To use it in a chat, type @ and pick Orden.':
+    'برای به‌کار بردن در گفت‌وگو، @ را بنویسید و Orden را برگزینید.',
   'Server URL': 'نشانی کارساز',
   Authentication: 'اصالت‌سنجی',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'تنظیم‌های پیشرفته OAuth را همان‌گونه بگذارید و “I understand and want to continue” را بزنید.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'هر کارخواه MCP که Streamable HTTP با OAuth را می‌فهمد. نشانی را به آن بدهید: خودش را ثبت می‌کند و صفحه ورود nibeditor را می‌گشاید.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'هر کارخواه MCP که Streamable HTTP با OAuth را می‌فهمد. نشانی را به آن بدهید: خودش را ثبت می‌کند و صفحه ورود Orden را می‌گشاید.',
   'Show config': 'نمایش پیکربندی',
   'For a client that takes a JSON block instead of a URL.':
     'برای کارخواهی که به جای نشانی، بلوک JSON می‌گیرد.',
@@ -830,7 +944,7 @@ export const fa: Dictionary = {
   'Display name': 'نام نمایشی',
   'Your name': 'نام شما',
   Email: 'رایانامه',
-  'On nibeditor.com': 'روی nibeditor.com',
+  'On orden.so': 'روی orden.so',
   'Your own domain': 'دامنه خودتان',
   'Switching gives up {name}.': 'تغییر دادن {name} را رها می‌کند.',
   Page: 'صفحه',
@@ -902,8 +1016,9 @@ export const fa: Dictionary = {
   'No footnotes in this note': 'در این یادداشت پانویسی نیست',
   'Stack tabs': 'چیدن زبانه‌ها در ستون',
   'Unstack tabs': 'برچیدن ستون زبانه‌ها',
-  'High contrast': 'کنتراست بالا',
+  Contrast: 'کنتراست',
   Glass: 'شیشه',
+  Classic: 'کلاسیک',
   'Front matter': 'پیش‌داده',
   'Front matter: {name}': 'فرامتن: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':
@@ -914,6 +1029,7 @@ export const fa: Dictionary = {
   Comment: 'یادداشت کنار',
   'Always on top': 'همیشه رو',
   'What is new': 'تازه‌ها',
+  'Download the app': 'بارگیری برنامه',
   'Report an issue': 'گزارش مشکل',
   'Move the line up': 'جابه‌جایی خط به بالا',
   'Move the line down': 'جابه‌جایی خط به پایین',
@@ -994,6 +1110,24 @@ export const fa: Dictionary = {
   'Layout: {name}': 'چیدمان: {name}',
   'Space: {name}': 'فضا: {name}',
   'Theme: {name}': 'پوسته: {name}',
+  'AI account: {name}': 'حساب هوش مصنوعی: {name}',
+  Accounts: 'حساب‌ها',
+  Access: 'دسترسی',
+  Set: 'تنظیم شده',
+  'Start over': 'شروع دوباره',
+  'Sign in here': 'اینجا وارد شوید',
+  '{device} wants your AI accounts': '{device} حساب‌های هوش مصنوعی شما را می‌خواهد',
+  '{device} offers this device your AI vault':
+    '{device} گاوصندوق هوش مصنوعی شما را به این دستگاه پیشنهاد می‌کند',
+  Join: 'پیوستن',
+  'Allow this device on another one': 'این دستگاه را روی دستگاه دیگری مجاز کنید',
+  'On every device you sign in to, end-to-end encrypted.':
+    'روی هر دستگاهی که وارد شوید، با رمزگذاری سرتاسری.',
+  'Sign in to have them on every device.': 'وارد شوید تا روی هر دستگاهی داشته باشید.',
+  'Agents on this computer connect on their own': 'عامل‌های این رایانه خودشان وصل می‌شوند',
+  Helpers: 'دستیارها',
+  'Start helpers on your AI accounts': 'اجرای دستیار روی حساب‌های هوش مصنوعی شما',
+  Delegated: 'واگذار شد',
   'Code theme: {name}': 'پوسته کد: {name}',
   'Delete a layout': 'حذف چیدمان',
   // Keyboards and modal editing
@@ -1062,6 +1196,7 @@ export const fa: Dictionary = {
   'Double-click to write': 'دو بار کلیک برای نوشتن',
   'Another colour': 'رنگ دیگر',
   'Turn into a note': 'تبدیل به یادداشت',
+  Arrange: 'چیدمان',
   'Bring to front': 'آوردن به جلوترین',
   'Bring forward': 'آوردن به جلو',
   'Send backward': 'بردن به عقب',
@@ -1083,6 +1218,12 @@ export const fa: Dictionary = {
   'Export as PNG': 'برون‌بری به PNG',
   'Export as SVG': 'برون‌بری به SVG',
   'Export as PDF': 'برون‌بری به PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'درون‌آوری PDF',
+  'Choose how to add the pages to the canvas.': 'انتخاب کنید صفحه‌ها چطور به بوم اضافه شوند.',
+  'Single page': 'یک صفحه',
+  'All pages': 'همهٔ صفحه‌ها',
+  'Choose a page': 'یک صفحه انتخاب کنید',
   // The canvas: what its own keys are called
   'Delete what is picked': 'حذف گزیده',
   'Nudge left': 'تکان به چپ',
@@ -1143,8 +1284,8 @@ export const fa: Dictionary = {
   'Release channel': 'کانال انتشار',
   Stable: 'پایدار',
   Unstable: 'ناپایدار',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'پایدار انتشارهای رسمی را پی می‌گیرد، ناپایدار هر فرستادن به main را و می‌تواند بشکند.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'پایدار نسخه‌های منتشرشده را پی می‌گیرد، ناپایدار ساخت‌های لبه را و می‌تواند بشکند.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'درون‌آوری',
@@ -1197,13 +1338,15 @@ export const fa: Dictionary = {
   '{count} tables inside notes do not come over': '{count} جدول درون یادداشت‌ها نمی‌آید',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} پیوست در iCloud است و نه روی این Mac',
+  '{count} files are in iCloud rather than on this Mac':
+    '{count} فایل در iCloud است و نه روی این Mac',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS آن یادداشت‌ها را پشت Full Disk Access نگه می‌دارد.',
   'There are no notes in Apple Notes on this Mac.': 'روی این Mac در Apple Notes یادداشتی نیست.',
   'Those notes could not be read.': 'آن یادداشت‌ها خوانده نشد.',
   'Read them from this Mac': 'از این Mac بخوان',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    'nibeditor را در Full Disk Access روشن کنید و دوباره بیازمایید.',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    'Orden را در Full Disk Access روشن کنید و دوباره بیازمایید.',
   'Open the setting': 'گشودن تنظیم',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'Apple Journal خودش برون‌بری می‌کند: Journal، تنظیمات، برون‌بری. Apple Notes برون‌بری ندارد، پس دور از Macی که رویش است، آنچه اینجا انداخته می‌شود پوشه‌ای است که یک برون‌بر نوشته.',
@@ -1309,15 +1452,16 @@ export const fa: Dictionary = {
   'OpenAI-compatible': 'سازگار با OpenAI',
   'Base URL': 'نشانی پایه',
   'API key': 'کلید API',
-  'Set on this device': 'گذاشته‌شده روی این دستگاه',
   Optional: 'دلخواه',
   'List models': 'گرفتن مدل‌ها',
   'Asking…': 'در حال پرسیدن…',
   'No providers yet.': 'هنوز فراهم‌کننده‌ای نیست.',
   'Add {name}': 'افزودن {name}',
-  'Keys stay in the secure store on this device.': 'کلیدها در انبار امن این دستگاه می‌مانند.',
   'This browser holds the keys in its own storage.':
     'این مرورگر کلیدها را در انبار خودش نگه می‌دارد.',
+  'Keep this browser’s keys in the vault': 'کلیدهای این مرورگر را در گاوصندوق نگه دار',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'در این صورت کلیدهای همهٔ دستگاه‌ها در حافظهٔ این مرورگر نگه داشته می‌شوند، جایی که اسکریپتی که به صفحه راه یافته می‌تواند آن‌ها را بخواند.',
   'AI can be wrong. Check the facts.': 'هوش مصنوعی ممکن است اشتباه کند. واقعیت‌ها را بررسی کنید.',
   'Used by the glasses': 'عینک به کار می‌برد',
   'Could not read the models.': 'مدل‌ها خوانده نشدند.',
@@ -1358,7 +1502,6 @@ export const fa: Dictionary = {
   'A cited report': 'گزارش با ارجاع',
   'A helper in the background': 'کمک‌یار در پس‌زمینه',
   'A side question': 'پرسش جانبی',
-  'Agent mode': 'حالت عامل',
   'Agent profile': 'پروفایل عامل',
   'Archive the thread': 'بایگانی رشته',
   'Approve mode': 'حالت تأیید',
@@ -1477,8 +1620,6 @@ export const fa: Dictionary = {
   // Web tabs
   Reload: 'بارگذاری دوباره',
   'Hard reload': 'بارگذاری دوباره کامل',
-  'Clip this page': 'ذخیره این صفحه',
-  'Clip the link': 'ذخیره پیوند',
   'Open in the browser': 'گشودن در مرورگر',
   'Show it here': 'نمایش اینجا',
   Website: 'وب‌گاه',
@@ -1564,7 +1705,8 @@ export const fa: Dictionary = {
   'that is not a theme': 'آن پوسته نیست',
   'no such theme': 'چنین پوسته‌ای نیست',
   'choose a model first': 'نخست مدلی برگزینید',
-  'set an OpenAI key in nibeditor’s settings first': 'نخست در تنظیم nibeditor کلید OpenAI بگذارید',
+  'set an OpenAI key in Orden’s settings first': 'نخست در تنظیم Orden کلید OpenAI بگذارید',
+  'set an OpenAI key in nibeditor’s settings first': 'نخست در تنظیم Orden کلید OpenAI بگذارید',
   'that is a lot of questions - try again later': 'آن پرسش بسیار است - بعداً بیازمایید',
   'that is too much audio': 'آن صدای بسیار است',
   'that is more than a spoken command': 'آن بیش از یک فرمان گفتاری است',
@@ -1588,7 +1730,6 @@ export const fa: Dictionary = {
   Nothing: 'هیچ',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'نشانک‌گذاری این نما',
   Keep: 'نگه داشتن',
 
   // Which side of the window a panel sits on.
@@ -1610,7 +1751,6 @@ export const fa: Dictionary = {
   'New tab': 'زبانه جدید',
   'Full screen': 'تمام صفحه',
   'Print…': 'چاپ…',
-  'Save page': 'ذخیره صفحه',
   'Share…': 'هم‌رسانی…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1653,7 +1793,6 @@ export const fa: Dictionary = {
   Blocked: 'مسدود است',
   'Reset permissions': 'بازنشانی اجازه‌ها',
   'Turn into': 'تبدیل به',
-  'Bookmark these blocks': 'نشانک این بلوک‌ها',
   Foldable: 'تاشو',
   'Starts folded': 'تاشده آغاز می‌شود',
   // Where a space keeps what websites store
@@ -1670,6 +1809,16 @@ export const fa: Dictionary = {
   'Bring all to front': 'آوردن همه به جلو',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'واگرد رونوشت',
+  'Devices with your AI vault': 'دستگاه‌های دارای گاوصندوق هوش مصنوعی شما',
+  'This device': 'این دستگاه',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'این دستگاه دیگر نمی‌تواند حساب‌های هوش مصنوعی شما را بخواند و بقیه کلید تازه می‌گیرند.',
+  'Also remove this device from your AI vault?':
+    'این دستگاه از گاوصندوق هوش مصنوعی هم برداشته شود؟',
+  'Remove and sign out': 'برداشتن و خروج',
+  'Undo making {name}': 'واگرد ساختن {name}',
+  'Undo the deletion': 'واگرد حذف',
+  'Undo the move': 'واگرد جابه‌جایی',
   'Redo the last file change': 'ازنو کردن آخرین تغییر پرونده',
   'Select down': 'گزینش به پایین',
   'Select up': 'گزینش به بالا',
@@ -1714,7 +1863,6 @@ export const fa: Dictionary = {
   '{key} in a terminal': '{key} در ترمینال',
   'Always ask': 'همیشه بپرس',
   'Open another': 'باز کردن یکی دیگر',
-  'Open in terminal': 'باز کردن در ترمینال',
   Clear: 'پاک کردن',
   'Exited with code {code}': 'با کد {code} پایان یافت',
   'Could not start {shell}': '{shell} اجرا نشد',
@@ -1723,18 +1871,8 @@ export const fa: Dictionary = {
   'Stop what is running in {name}?': 'آنچه در {name} اجرا می‌شود متوقف شود؟',
   'Stop what is running in these terminals?': 'آنچه در این ترمینال‌ها اجرا می‌شود متوقف شود؟',
   'Paste {count} lines?': { one: '{count} خط چسبانده شود؟', other: '{count} خط چسبانده شود؟' },
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': 'مرورگر پیش‌فرض',
-  // The engine web tabs run on
-  Engine: 'موتور',
-  Relaunch: 'راه‌اندازی دوباره',
-  'Chromium did not start': 'Chromium اجرا نشد',
-  'No connection': 'اتصال برقرار نیست',
-  'Not in this release': 'در این نسخه نیست',
-  'Needs an update': 'به‌روزرسانی لازم است',
-  'Signature did not match': 'امضا مطابقت ندارد',
-  'Disk full': 'دیسک پر است',
-  'Could not be installed': 'نصب نشد',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'واگرد ویرایش‌های {name}',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1837,7 +1975,7 @@ export const fa: Dictionary = {
   'Always on this site': 'همیشه در این سایت',
   'Agents stopped': 'عامل‌ها ایستانده شدند',
   'Agent tabs closed': 'زبانه‌های عامل‌ها بسته شدند',
-  'nibeditor is still running for your agents': 'nibeditor هنوز برای عامل‌های شما کار می‌کند',
+  'Orden is still running for your agents': 'Orden هنوز برای عامل‌های شما کار می‌کند',
   '{client} wants to connect': '{client} می‌خواهد وصل شود',
   // Web logins that travel, and the devices of an account
   'no such device': 'چنین دستگاهی نیست',
@@ -1853,11 +1991,12 @@ export const fa: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'عامل‌های این رایانه',
   'Your account’s connector': 'رابط حساب شما',
-  'nibeditor asks you once, the first time it connects.':
-    'nibeditor یک بار، هنگام نخستین اتصال، از شما می‌پرسد.',
+  'Orden asks you once, the first time it connects.':
+    'Orden یک بار، هنگام نخستین اتصال، از شما می‌پرسد.',
   'A client on another machine?': 'کلاینتی روی دستگاهی دیگر؟',
   'Shown only once.': 'فقط یک بار نشان داده می‌شود.',
   'Remove {name}?': '{name} حذف شود؟',
+  'End {name}?': '{name} پایان یابد؟',
   'Its token stops working.': 'توکن آن دیگر کار نمی‌کند.',
   'Added {date}': 'افزوده در {date}',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':
@@ -1878,7 +2017,6 @@ export const fa: Dictionary = {
   'Change notes': 'تغییر یادداشت‌ها',
   'See what you are looking at': 'دیدن آنچه نگاه می‌کنید',
   'Move and rename files': 'جابه‌جایی و تغییر نام فایل‌ها',
-  'Open tabs and bookmarks': 'باز کردن زبانه‌ها و نشانک‌ها',
   'Bring a tab to the front': 'آوردن یک زبانه به جلو',
   'Browse in tabs of its own': 'مرور در زبانه‌های خودش',
   'Read what pages load': 'خواندن آنچه صفحه‌ها بار می‌کنند',
@@ -1900,14 +2038,11 @@ export const fa: Dictionary = {
   'Without your logins': 'بدون ورودهای شما',
   'Calls a minute': 'فراخوان در دقیقه',
   'Pages a minute': 'صفحه در دقیقه',
+  'Browser memory limit': 'سقف حافظهٔ مرورگر',
   '{count} calls': {
     one: '{count} فراخوان',
     other: '{count} فراخوان',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'باز در {device}',
-  'Use here': 'اینجا استفاده کن',
-  '{device} wants your web logins': '{device} ورودهای وب شما را می‌خواهد',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'پرسش کوتاه',
@@ -1974,7 +2109,7 @@ export const fa: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'تعویق',
   Reminders: 'یادآورها',
-  'Reminders ring while nibeditor is open': 'یادآورها تا وقتی nibeditor باز است به صدا درمی‌آیند',
+  'Reminders ring while Orden is open': 'یادآورها تا وقتی Orden باز است به صدا درمی‌آیند',
   Automatic: 'خودکار',
   'Stay in the tray': 'ماندن در سینی سیستم',
   'Exact alarms': 'هشدارهای دقیق',
@@ -2017,7 +2152,6 @@ export const fa: Dictionary = {
   'Any of them': 'هر کدام',
   Compare: 'مقایسه',
   'Add a filter': 'افزودن فیلتر',
-  'Reschedule to today': 'انتقال به امروز',
   Collapse: 'جمع کردن',
   Expand: 'باز کردن',
   Summary: 'خلاصه',
@@ -2039,7 +2173,6 @@ export const fa: Dictionary = {
   Layout: 'چیدمان',
   Overdue: 'عقب‌افتاده',
   Upcoming: 'پیش رو',
-  Logbook: 'دفتر ثبت',
   Project: 'پروژه',
   Label: 'برچسب',
   List: 'فهرست',
@@ -2225,4 +2358,11 @@ export const fa: Dictionary = {
   'Search this chat': 'جستجو در این گفتگو',
   'Add as task': 'افزودن به‌عنوان کار',
   'Save as note': 'ذخیره به‌عنوان یادداشت',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'سپیده‌دم',
+  Lagoon: 'مرداب',
+  Lilac: 'یاسی',
+  Peach: 'هلو',
+  Sage: 'مریم‌گلی',
+  Mist: 'مه',
 }

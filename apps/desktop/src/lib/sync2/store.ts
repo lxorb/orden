@@ -95,7 +95,8 @@ export interface FileStateRow {
   state: string
 }
 
-/** A web lease this device has seen. */
+/** A web lease this device had seen. Nothing writes it since web logins stopped
+ *  travelling (#393); the table stays until a migration takes it away. */
 export interface WebRow {
   key: string
   fence: number | null

@@ -216,6 +216,14 @@ describe('the catalogue', () => {
     expect(asked).toHaveLength(2)
   })
 
+  test('has no card for a theme the app ships with', async () => {
+    serving([entry(), entry({ id: 'contrast', name: 'Contrast' })])
+
+    await store.load(true)
+
+    expect(store.themes.map((one) => one.id)).toEqual(['warm-paper'])
+  })
+
   test('a registry that will not answer says so and shows nothing', async () => {
     vi.stubGlobal('fetch', () => Promise.resolve(new Response('nope', { status: 500 })))
 

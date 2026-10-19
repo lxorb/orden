@@ -1,29 +1,34 @@
 /** The document, and nothing else.
  *
  *  Full screen takes the app away and leaves what is being read or drawn: the
- *  the file list with its spaces, the title bar and the status bar all go,
- *  and the document fills the screen behind whatever the system keeps for its
- *  clock and its gesture bar. Where there is a window to ask, the window goes
- *  full screen too, so a desktop loses its frame and a browser tab loses the
- *  browser.
- *
- *  One command for both halves, which is `app.fullscreen` and F11 - see
- *  shortcuts/registry.ts - reached from the View menu, from the three dots on a
- *  phone and a tablet, and from the one small button that stays behind.
- *
- *  Nothing about it is remembered. It belongs to the document it was entered on
- *  and to this sitting: closing that document brings the app back, and so does
- *  starting it again. A reader who cannot find their way out of a screen with
- *  nothing on it is the one thing this must never do, which is why there are four
- *  ways back - the button, Escape, back on Android, and the menu row it was
- *  turned on from. */
+ *  tab in front of the pane worked in, alone, as Full window fills it, and the window
+ *  full screen: Chrome's F11 for any tab (docs/keyboard.md, "Full screen"). Nothing
+ *  about it is remembered, and there are five ways back: the button (never over a web
+ *  page), Escape, back on Android, the menu row, and F11. */
 
 import { currentWindow } from './tauri'
 import { afterQuiet } from './timing'
 
+/** `workspace.panes`, as far as full screen reads and writes it. */
+export interface Panes {
+  fills: string | null
+  readonly focusedId: string
+  readonly focused: { readonly activeTabId: string | null }
+}
+
 /** How long the way out stays lit after the last thing moved. Long enough to
  *  find, short enough that a page being read is not sharing it with a button. */
 export const IDLE = 2600
+
+const FIELDS = new Set(['INPUT', 'TEXTAREA', 'SELECT'])
+
+/** Escape gives the screen back unless it was `spent` or a field or shell has it. */
+export function escapeLeaves(
+  spent: boolean,
+  holder: { readonly tagName?: string } | null,
+): boolean {
+  return !spent && !FIELDS.has(holder?.tagName ?? '')
+}
 
 /** How often a moving pointer is allowed to re-arm that: a pointer crossing the
  *  screen says the same thing sixty times a second. */
@@ -32,8 +37,6 @@ const STIR = 400
 class FullScreen {
   /** Whether the app is out of the way. */
   on = $state(false)
-  /** The document it was entered on, by tab. */
-  of = $state<string | null>(null)
   /** Whether the way out has faded back: still there, still reachable by a key,
    *  no longer part of what is being read. */
   idle = $state(false)
@@ -41,17 +44,21 @@ class FullScreen {
   /** The way out fades once nothing has moved for a while; see `wake`. */
   private readonly fading = afterQuiet(() => (this.idle = true), IDLE)
   private stirred = 0
+  private panes: Panes | null = null
+  private filledBefore: string | null = null
 
-  async toggle(tabId: string | null) {
+  async toggle(panes: Panes) {
     if (this.on) await this.leave()
-    else await this.enter(tabId)
+    else await this.enter(panes)
   }
 
-  async enter(tabId: string | null) {
-    if (this.on) return
+  async enter(panes: Panes) {
+    if (this.on || panes.focused.activeTabId === null) return
 
     this.on = true
-    this.of = tabId
+    this.panes = panes
+    this.filledBefore = panes.fills
+    panes.fills = panes.focusedId
     this.wake()
     await this.window(true)
   }
@@ -60,10 +67,26 @@ class FullScreen {
     if (!this.on) return
 
     this.on = false
-    this.of = null
     this.idle = false
     this.fading.cancel()
+    const panes = this.panes
+    if (panes) panes.fills = this.filledBefore === panes.focusedId ? this.filledBefore : null
+    this.panes = null
+    this.filledBefore = null
+    if (typeof document !== 'undefined')
+      document.removeEventListener('fullscreenchange', this.given)
     await this.window(false)
+  }
+
+  /** The browser's own full screen, ended by the browser. A browser that granted it
+   *  keeps Escape for itself - the key never reaches the page, and the page is told only
+   *  that the document left full screen - so the app was left out of the way in a
+   *  window that was not full screen any more, until a second Escape. The window going
+   *  is the reader asking for the screen back, the way the key would have. */
+  private readonly given = () => {
+    if (document.fullscreenElement !== null) return
+    document.removeEventListener('fullscreenchange', this.given)
+    void this.leave()
   }
 
   /** Something moved, so the way out is lit again and fades once nothing has
@@ -76,13 +99,13 @@ class FullScreen {
     this.wake()
   }
 
-  /** Whether the document this belongs to is still open. Full screen goes with
-   *  it: a window with no document in it and no app around it is a window with
-   *  nothing at all. */
-  watch(openTabIds: readonly string[]) {
-    if (!this.on || this.of === null || openTabIds.includes(this.of)) return
+  /** The screen follows the pane worked in, and is given back once it shows nothing. */
+  follow() {
+    const panes = this.panes
+    if (!this.on || !panes) return
 
-    void this.leave()
+    if (panes.focused.activeTabId === null) void this.leave()
+    else if (panes.fills !== panes.focusedId) panes.fills = panes.focusedId
   }
 
   private wake() {
@@ -98,6 +121,11 @@ class FullScreen {
     try {
       const window = await currentWindow()
       await window.setFullscreen(on)
+      // Only a browser's document is ever full screen; the desktop's frame is the
+      // window's, and a webview on a phone has none to give.
+      if (on && this.on && typeof document !== 'undefined' && document.fullscreenElement) {
+        document.addEventListener('fullscreenchange', this.given)
+      }
     } catch {
       // Nothing to say to the reader: the document is full screen either way.
     }

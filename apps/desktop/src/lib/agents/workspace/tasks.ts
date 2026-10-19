@@ -38,6 +38,7 @@ import { appliedEdits } from '@nib/markdown/edits'
 import { taskLine } from '@nib/markdown/task-edits'
 import { taskHash } from '@nib/bases'
 import type { AgentAnswer } from '../../automation/caller'
+import { modes } from '../../modes.svelte'
 import { isShared } from '../../sharing.svelte'
 import { folderOf, nameOf } from '../../space-paths'
 import { invoke } from '../../tauri'
@@ -127,6 +128,7 @@ export async function listTasks(call: Call): Promise<AgentAnswer> {
         ...(maybe(call, 'filter') ? { filter: need(call, 'filter') } : {}),
         ...(typeof call.args.limit === 'number' ? { limit: call.args.limit } : {}),
         inboxes: rows.inboxes().filter((one) => reached.has(one.space)),
+        undated: modes.undatedInToday,
         isNote: (name) => names.has(name.toLowerCase()),
       },
       await contextOf(),

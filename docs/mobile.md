@@ -1,10 +1,11 @@
-# Nib on a phone
+# Orden on a phone
 
 The same app, the same crate and the same notes, built as a native Android and
 iOS app with Tauri 2. Nothing about it is a separate product: the phone layout,
 the drawer, the sheets and the docked formatting bar are the ones the web build
-already has on a small screen, and the notes are the same files under the
-documents folder that the desktop reads.
+already has on a small screen, and the notes are the same files the desktop reads,
+in `Documents/Nib` inside the app's own container (a desktop's are in its app data;
+see docs/automation.md).
 
 ## Identity
 
@@ -13,7 +14,7 @@ One identity across every build, from `src-tauri/tauri.conf.json`.
 | | |
 | --- | --- |
 | Bundle identifier | `ch.emilvinu.nib`, which is also the Android package name |
-| Name | Nib |
+| Name | Orden |
 | Publisher | Emil Vinu |
 | Icons | `src-tauri/icons/android` and `src-tauri/icons/ios`, from `tauri icon` |
 | Minimum Android | API 24, and API 36 is what it is compiled against |
@@ -25,7 +26,7 @@ shows the colour the app is about to paint rather than a white flash.
 
 ## What is built, and where it goes
 
-`.github/workflows/publish-mobile.yml`, on every push to main and on every tag
+`.github/workflows/publish-mobile.yml`, on every push to unstable and on every tag
 `v*`, the way `release.yml` builds the desktop.
 
 - **Android**, on `ubuntu-latest`: `tauri android build --apk` for
@@ -37,14 +38,14 @@ shows the colour the app is about to paint rather than a white flash.
   the part that could break is still built.
 
 A tag puts all of them on that version's own release, beside the desktop
-installers. A build of main goes on a rolling pre-release called `mobile-edge`,
+installers. A build of unstable goes on a rolling pre-release called `mobile-edge`,
 not the desktop's `edge`, because `release.yml` deletes and remakes that one on
 every push and would take an APK uploaded beside it with it.
 
 ## Installing the APK on a phone
 
-1. Open the [`mobile-edge` release](https://github.com/lxorb/nibeditor/releases/tag/mobile-edge)
-   in the phone's browser and download `Nib_<version>_android-universal.apk`. It
+1. Open the [`mobile-edge` release](https://github.com/lxorb/orden/releases/tag/mobile-edge)
+   in the phone's browser and download `Orden-<version>-android.apk`. It
    carries both architectures, so it is the right file for any phone and for an
    emulator; it is around 19 MB.
 2. Tap the download. Android asks once whether this browser may install apps;
@@ -52,7 +53,10 @@ every push and would take an APK uploaded beside it with it.
    under Settings, Apps.
 3. Play Protect will say it does not recognise the app. Install anyway.
 
-Every build of main is signed with a key the workflow generates for that run, so
+Every build is signed with the release key in the `ANDROID_KEYSTORE` secrets (set on
+2026-10-18; the keystore is kept outside the repository), so each APK installs over the
+last one and keeps the app's data. Before that, every build of unstable was signed with a
+key the workflow generated for that run, so
 Android sees each one as a different app and refuses to install it over the last.
 Uninstall the old one first, or add the release keystore below, after which every
 build replaces the one before it. The version code comes from the version number
@@ -149,9 +153,9 @@ them is state a new install needs, so the reader carries them across themselves,
 by sync or by file.
 
 `res/xml/file_paths.xml` is the other half of the same rule: it names the folders
-Nib may hand another app a file out of, and those are Nib's own. Tauri's template
+Orden may hand another app a file out of, and those are Orden's own. Tauri's template
 names the root of shared storage instead, which would offer every photo and
-download on the phone under Nib's authority.
+download on the phone under Orden's authority.
 
 `apps/desktop/test/android.test.ts` holds both switches, and the rules resource,
 so a manifest edited for something else cannot quietly turn the backup back on.
@@ -701,7 +705,7 @@ machine.
 A phone has no keyboard to hang a shortcut off and no room for a row of buttons
 along the top, and there is exactly one movement a thumb can make that means
 nothing else: pulling a surface that is already at its top further down. Obsidian
-spends it on the command palette. Nib spends it on whichever command the reader
+spends it on the command palette. Orden spends it on whichever command the reader
 names in **Settings > Mobile**, and offers **Search this space** to begin with -
 what a thumb reaches for on a phone is a note, and search is how a note is found.
 `none` is a choice too, for somebody who pulls lists about without meaning

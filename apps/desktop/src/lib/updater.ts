@@ -1,3 +1,4 @@
+import { log } from './log'
 import { GIVE_UP, settleUp, written } from './parting'
 import { isNumber, isRecord, isString } from './stored'
 import { invoke, isDesktop } from './tauri'
@@ -26,6 +27,25 @@ export const ready = () => staged !== null
 /** The version waiting to be installed, if one has been downloaded. */
 export const stagedVersion = () => staged?.version ?? null
 
+/** The package manager that keeps this install - `scoop`, `brew` and the rest - or null
+ *  where the app updates itself. Asked once, by the first look rather than the launch;
+ *  see src-tauri/src/package_manager.rs. */
+let keeper: Promise<string | null> | null = null
+
+export function managedBy(): Promise<string | null> {
+  keeper ??= invoke<string | null>('install_manager').then(
+    (name) => name ?? null,
+    () => null,
+  )
+  return keeper
+}
+
+/** The newer version an install a package manager keeps was told of. Never downloaded:
+ *  the manager installs it. */
+let announced: string | null = null
+
+export const announcedVersion = () => announced
+
 /** What `check_update` answers with: the fields the updater plugin builds its own
  *  `Update` from, `rid` being the update itself, kept in the crate. */
 interface Found {
@@ -47,7 +67,8 @@ function found(value: unknown): Found | null {
   return { rid, currentVersion, version, rawJson }
 }
 
-/** Fetches a new version in the background if the channel has one.
+/** Fetches a new version in the background if the channel has one; where a package
+ *  manager keeps the install, only finds it.
  *
  *  Only downloads: installing here would restart the app under whoever is
  *  typing. The installer runs on quit instead, so the new version is simply
@@ -68,45 +89,22 @@ export async function stageUpdate(channel: Channel): Promise<string | null> {
     const { Update } = await import('@tauri-apps/plugin-updater')
     const update = new Update(one)
 
+    // Its manager's to install, so only said; and, like a download, said once a run.
+    if (await managedBy()) {
+      void update.close().catch(() => undefined)
+      if (update.version === announced) return null
+      announced = update.version
+      return update.version
+    }
+
     await update.download()
     staged = update
-    void engineFor(update.version)
     return update.version
   } catch {
     // No network, no release yet, or a signature that did not verify. Any of
     // those simply means carrying on with the version already installed.
     return null
   }
-}
-
-/** Where nib runs on its own Chromium, that engine for the version about to be
- *  installed, fetched now rather than when the new version starts - so the two are
- *  never out of step, which is what JetBrains' runtimes get wrong. Nothing where the
- *  system's engine is chosen; and a fetch that fails leaves the next launch on the
- *  system's engine, where the Browser row offers it again. See
- *  src-tauri/src/engine_switch/fetch.rs. */
-async function engineFor(version: string) {
-  try {
-    const state = await invoke<{ chosen: string }>('engine_state')
-    if (state.chosen === 'chromium') await fetchEngineFor(version)
-  } catch {
-    // The launch after the update runs on the system's engine and says so.
-  }
-}
-
-/** The fetch of one version's Chromium in flight, which a second asker waits for
- *  rather than being told one is already running: the update staging and the Browser
- *  row can both want the update's at once. */
-let fetching: { version: string; done: Promise<unknown> } | null = null
-
-export function fetchEngineFor(version: string): Promise<unknown> {
-  if (fetching?.version !== version) {
-    const done: Promise<unknown> = invoke('engine_fetch', { version }).finally(() => {
-      if (fetching?.done === done) fetching = null
-    })
-    fetching = { version, done }
-  }
-  return fetching.done
 }
 
 /** Throws away what was downloaded instead of installing it.
@@ -118,6 +116,7 @@ export function fetchEngineFor(version: string): Promise<unknown> {
 export async function discard() {
   const going = staged
   staged = null
+  announced = null
 
   try {
     await going?.close()
@@ -138,7 +137,8 @@ export async function restartToUpdate() {
   if (!__EVEN_PLUGIN__ && !(await (await import('./quitting/ask')).mayStop('restart'))) return
   settleUp()
   await Promise.race([written(), waited(GIVE_UP)])
-  await installStaged()
+  // Not on a failed install, which would start the same version again.
+  if (!(await installStaged())) return
 
   try {
     const { relaunch } = await import('@tauri-apps/plugin-process')
@@ -150,15 +150,17 @@ export async function restartToUpdate() {
 }
 
 /** Runs the staged installer. Called as the app closes, so nothing is
- *  interrupted; the update is in place for the next launch. */
-export async function installStaged() {
-  if (!staged) return
+ *  interrupted; the update is in place for the next launch. Answers whether it was. */
+export async function installStaged(): Promise<boolean> {
+  if (!staged) return false
 
   try {
     await staged.install()
-  } catch {
-    // A failed install leaves the working version alone, which is the right
-    // outcome - it will be offered again next time.
+    return true
+  } catch (error) {
+    // The working version stays, and is offered again; said, so a failure is seen.
+    log('error', `update: ${error instanceof Error ? error.message : String(error)}`)
+    return false
   } finally {
     staged = null
   }

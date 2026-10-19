@@ -27,8 +27,10 @@ import { hostOf } from '../../web-tab/web-data'
 import { agentMarks } from '../../agent-marks.svelte'
 import { lend, unlend } from '../../web-tab/lending'
 import { pages } from '../../web-tab/pages.svelte'
+import { apartOf } from '../../web-tab/shortcut'
 import { type Tab, workspace } from '../../workspace.svelte'
 import { fileNamed, isDraft, isUnsaved } from '../../workspace/drafts'
+import { TAB_KINDS } from '../../workspace/tab-kinds'
 import type { ReaderTab } from '../verbs'
 import { ACTIVE_FOR } from '../ui/marks'
 import { TYPING } from '../docs/edit'
@@ -113,12 +115,11 @@ function inNote(tab: Tab) {
  *  select that nib can see - a web page's selection is the page's, which `browser_`
  *  tools read. */
 async function selectionIn(tab: Tab): Promise<unknown> {
-  switch (tab.kind) {
-    case 'note':
+  switch (TAB_KINDS[tab.kind].selection) {
+    case 'words':
       return inNote(tab)
 
-    case 'canvas':
-    case 'pages': {
+    case 'drawing': {
       const { CanvasStore } = await import('../../canvas/store.svelte')
       const drawn = CanvasStore.drawing(tab.note, workspace.tabs)
       return drawn ? { picked: drawn.picked } : null
@@ -129,15 +130,11 @@ async function selectionIn(tab: Tab): Promise<unknown> {
       return terminalSelection(tab)
     }
 
-    case 'pdf':
+    case 'page':
       return tab.page === undefined ? null : { page: tab.page }
 
     // A view's rows are the tasks verbs' to read; a view has no selection of its own.
-    case 'web':
-    case 'graph':
-    case 'view':
-    case 'chat':
-    case 'channel':
+    case null:
       return null
   }
 }
@@ -166,7 +163,7 @@ export async function getContext(call: Call): Promise<AgentAnswer> {
 /** Whether a tab's title is somebody else's words: a page's, or the program a terminal
  *  is running. */
 function namedOutside(): boolean {
-  return workspace.tabs.some((one) => one.kind === 'web' || one.kind === 'terminal')
+  return workspace.tabs.some((one) => TAB_KINDS[one.kind].outsideTitle)
 }
 
 /** The tab a call names by id. */
@@ -520,6 +517,7 @@ export async function lendTab(id: string): Promise<null> {
   page.space ??= workspace.spaceOf(tab.note)
   page.path = tab.path
   page.pinned = tab.pinned
+  if (!page.live) page.own = apartOf(tab)
   await lend(tab.id)
   setTimeout(() => {
     if (!(tab.id in agentMarks.on)) unlend(tab.id)

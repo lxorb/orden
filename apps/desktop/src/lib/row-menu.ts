@@ -13,24 +13,22 @@
  *  the component is the row itself: the press, the drag, the keys.
  *
  *  Everything here asks the workspace as it stands, because a menu is built at the
- *  moment it is opened: what the undo would take back, which rows are selected and
- *  what a row can be moved into are all true only then. */
+ *  moment it is opened: which rows are selected, what is archived and what a row
+ *  can be moved into are all true only then. */
 
-import { noteLinksCode } from '@nib/editor'
 import { foreignCopy } from '@nib/sync-core/foreign'
 import { account } from './account.svelte'
-import { copyText } from './clipboard'
-import { pickedLink } from './composer'
-import { folderNote, linkedFiles, nestedIn } from './folder-notes'
+import { folderNote, nestedIn } from './folder-notes'
+import { hiddenKinds, type KindName } from './settings.svelte'
+import { kindLabel } from './kind-words'
 import { key, plural, t } from './i18n.svelte'
-import { links } from './link-index.svelte'
 import {
   archiveEntry,
   bookmarkEntry,
   coverEntries,
   DIVIDER,
-  excludeEntry,
   iconEntries,
+  searchAgainEntry,
   type MenuEntry,
   shareEntry,
 } from './menu.svelte'
@@ -39,12 +37,24 @@ import { howFor } from './new-tab'
 import { rowName } from './note-name'
 import { shortcuts } from './shortcuts.svelte'
 import { folderOf, isMarkdownPath, isPicturePath, relativeTo } from './space-paths'
-import { modes } from './modes.svelte'
 import { isDesktop, joinPath, platform } from './tauri'
 import { entryAt } from './tree-edits'
 import { viewport } from './viewport.svelte'
 import type { Entry } from './workspace.svelte'
 import { workspace } from './workspace.svelte'
+
+/** A `.url` web note's web data, shared or its own (#239); see web-tab/own-data.ts. */
+export function webDataEntry(entry: { path: string; is_dir: boolean }): MenuEntry[] {
+  if (!isDesktop || entry.is_dir || !/\.url$/i.test(entry.path)) return []
+  const path = entry.path
+  return [
+    {
+      label: t('Web data'),
+      keep: true,
+      run: () => void import('./web-tab/own-data').then((one) => one.showWebData(path)),
+    },
+  ]
+}
 
 export function rowMenu(entry: Entry): MenuEntry[] {
   const several = selectionMenu(entry)
@@ -69,7 +79,7 @@ export function rowMenu(entry: Entry): MenuEntry[] {
     ...openElsewhere(entry, own),
     ...compareEntry(entry),
     DIVIDER,
-    ...(holds
+    ...(holds && hiddenKinds.offers('note')
       ? [{ label: t('New note inside'), run: () => void workspace.createInside(entry.path) }]
       : []),
     DIVIDER,
@@ -83,10 +93,10 @@ export function rowMenu(entry: Entry): MenuEntry[] {
     ...coverEntries(marked.path),
     ...wallpaperEntry(entry),
     ...bookmarkEntry(workspace.bookmarks.forEntry(marked)),
-    // On the row's own path, folder and all: a row that holds notes stands for
-    // everything under it, so leaving it out leaves out what is nested in it. See
-    // workspace/excluded.svelte.ts.
-    ...excludeEntry(entry.path),
+    ...webDataEntry(entry),
+    // Only for a row already left out of search, so nothing stays out with no way
+    // back; see `searchAgainEntry`.
+    ...searchAgainEntry(entry.path),
     // Putting it away, on the row's own path for the same reason: a folder goes with
     // everything under it. See archiving.ts.
     ...archiveEntry(entry.path),
@@ -95,9 +105,6 @@ export function rowMenu(entry: Entry): MenuEntry[] {
     // copy of: a folder is not one, and a folder with no note has nothing to
     // share. See `shareEntry` and sharing.svelte.ts.
     ...shareEntry(marked.path),
-    // A link to the row, spelled the way the Links setting says and the `[[`
-    // popup writes it, to paste into any note.
-    { label: t('Copy link'), run: () => void copyLinks([entry.path]) },
     ...sendEntry(marked),
     // A copy of the bytes, so a PDF duplicates as a PDF and a row that is a folder
     // as the folder with its note renamed to match; see workspace/copying.ts.
@@ -107,10 +114,8 @@ export function rowMenu(entry: Entry): MenuEntry[] {
       run: () => void workspace.duplicate(entry.path),
     },
     ...revealEntry(entry),
-    ...terminalEntry(entry),
     DIVIDER,
     { label: t('Delete'), danger: true, run: () => void removeRow(entry, marked, inside) },
-    ...undoEntry(),
   ]
 }
 
@@ -152,10 +157,9 @@ function selectionMenu(entry: Entry): MenuEntry[] | null {
   return [
     { label: t('Open all'), run: () => void openAll(paths) },
     DIVIDER,
-    { label: t('Move'), run: () => void moveAllTo(paths) },
+    ...(viewport.touch ? [{ label: t('Move'), run: () => void moveAllTo(paths) }] : []),
     ...bookmarkAll(paths),
     ...archiveAll(paths),
-    { label: t('Copy link'), run: () => void copyLinks(paths) },
     DIVIDER,
     {
       label: plural(count, { one: 'Delete {count} item', other: 'Delete {count} items' }),
@@ -163,7 +167,6 @@ function selectionMenu(entry: Entry): MenuEntry[] | null {
       disabled: count === 0,
       run: () => void workspace.removeMany(paths),
     },
-    ...undoEntry(),
   ]
 }
 
@@ -227,7 +230,7 @@ export function bookmarkAll(paths: readonly string[]): MenuEntry[] {
   const all = marks.every((mark) => workspace.bookmarks.has(mark))
   return [
     {
-      label: all ? t('Remove bookmark') : t('Bookmark'),
+      label: all ? t('Remove from Essentials') : t('Add to Essentials'),
       run: () => workspace.bookmarks.toggleAll(marks),
     },
   ]
@@ -249,18 +252,6 @@ function archiveAll(paths: readonly string[]): MenuEntry[] {
       ]
 }
 
-/** A link to each row, a line each, written through the app's one writer; see
- *  composer.ts. From nowhere in particular, so a relative link starts at the top of
- *  the space. */
-async function copyLinks(rows: readonly string[]) {
-  const root = workspace.activeSpace?.root
-  if (!root) return
-
-  const paths = linkedFiles(workspace.tree, root, rows)
-  const { noteLinks } = await noteLinksCode()
-  if (paths.length) await copyText(noteLinks(links.index(null), paths, pickedLink))
-}
-
 /** Moving a row, said rather than dragged.
  *
  *  A held finger opens this menu before a drag could start, and the browser fires
@@ -268,8 +259,13 @@ async function copyLinks(rows: readonly string[]) {
  *  only way a row moves at all. It is offered under a pointer too: a drag across a
  *  long list, into a note that is folded shut, is a gesture that can be missed,
  *  and the places a row can land read faster as a list than as a target to aim at.
- *  Which places those are is move-targets.ts. */
+ *  Which places those are is move-targets.ts.
+ *
+ *  Not under a pointer any more (#303): a row is dragged into a folder or onto a space
+ *  in the switcher, and the palette's Move this note asks where. The right-click menu
+ *  was long, and Move was the row in it a drag already does. */
 function moveEntry(entry: Entry): MenuEntry[] {
+  if (!viewport.touch) return []
   const targets = moveTargets({
     moving: entry.path,
     tree: workspace.tree,
@@ -373,26 +369,23 @@ function revealEntry(entry: Entry): MenuEntry[] {
   return [{ label, run: () => void import('./reveal').then((one) => one.reveal(entry.path)) }]
 }
 
-/** A terminal in the row's folder - or the folder a file is in - which is VS Code's
- *  Open in Integrated Terminal and Explorer's Open in Terminal. A desktop's alone, like
- *  every terminal; see docs/terminal.md. */
-function terminalEntry(entry: Entry): MenuEntry[] {
-  if (__EVEN_PLUGIN__ || !isDesktop || !modes.coder) return []
-
-  const folder = entry.is_dir ? entry.path : folderOf(entry.path)
-  return [
-    {
-      label: t('Open in terminal'),
-      run: () =>
-        void import('./terminal/open').then(({ openTerminal }) =>
-          openTerminal(undefined, { folder }),
-        ),
-    },
-  ]
+/** What the file list's own New rows make: a named file, as its row waiting for a name,
+ *  of each kind that is a file and that Settings › Note types offers. The new tab's
+ *  gesture is the other one, a tab first and a file when saved; see new-kinds.ts. A shell
+ *  and a private tab are tabs and never files. */
+const MAKERS: Partial<Record<KindName, () => unknown>> = {
+  note: () => workspace.createNote(),
+  canvas: () => workspace.createCanvas(),
+  pages: () => workspace.createPages(),
+  web: () => workspace.createWebsite(),
+  ...(__EVEN_PLUGIN__
+    ? {}
+    : { chat: () => import('./chats/view/open').then(({ makeChat }) => makeChat()) }),
 }
 
-/** Only offered once there is something to take back. */
-function undoEntry(): MenuEntry[] {
-  const label = workspace.undoLabel
-  return label ? [DIVIDER, { label, run: () => void workspace.undoFileAction() }] : []
+export function newFileRows(): MenuEntry[] {
+  return hiddenKinds.shown.flatMap((kind) => {
+    const make = MAKERS[kind]
+    return make ? [{ label: kindLabel(kind), run: () => void make() }] : []
+  })
 }

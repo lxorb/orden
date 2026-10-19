@@ -6,7 +6,6 @@
  *  out. */
 
 import { account } from '../account.svelte'
-import { reach } from '../agents/settings/reach.svelte'
 import { modes } from '../modes.svelte'
 import { isPlugin } from '../plugin'
 import { t } from '../i18n.svelte'
@@ -26,6 +25,8 @@ export const ICONS: Record<string, string> = {
   general:
     'M2 4h2.4M7.6 4H14M2 8h4.4M9.6 8H14M2 12h6.4M11.6 12H14M4.4 4a1.6 1.6 0 1 0 3.2 0 1.6 1.6 0 1 0-3.2 0M6.4 8a1.6 1.6 0 1 0 3.2 0 1.6 1.6 0 1 0-3.2 0M8.4 12a1.6 1.6 0 1 0 3.2 0 1.6 1.6 0 1 0-3.2 0',
   editor: 'M2 12.6l1.6-.4 8-8a1.4 1.4 0 0 0-2-2l-8 8zM2 14.2h12',
+  // Four tiles, one of them a plus: the kinds a new tab offers, and the one being made.
+  kinds: 'M2.5 2.5h4.5v4.5H2.5zM9 2.5h4.5v4.5H9zM2.5 9h4.5v4.5H2.5zM11.25 9v4.5M9 11.25h4.5',
   // A keyboard: the row of keys is the shortcut, not the writing.
   shortcuts: 'M2 4.5h12v7H2zM4.4 7h.01M6.9 7h.01M9.4 7h.01M11.9 7h.01M5.4 9.4h5.2',
   // A phone, upright, with the bar this pane is about across the bottom of it.
@@ -65,11 +66,8 @@ export const ICONS: Record<string, string> = {
 
 /** The panes, in their groups.
  *
- *  The LLM connector is a thing an account owns, and it is off until deliberately
- *  turned on. Until there is an account it has nothing to show but an instruction
- *  to sign in, so it stays out of the list rather than sitting there offering
- *  nothing. Glasses is the same argument from the other side: somebody who has
- *  never had a pair in front of the plugin has no glasses to set anything about.
+ *  Glasses is only there for somebody who has had a pair in front of the plugin:
+ *  anybody else has no glasses to set anything about.
  *
  *  Publishing a space is not here at all: it is a sheet opened from the space's
  *  own menu, beside sharing it; see PublishSheet.svelte. */
@@ -78,6 +76,8 @@ export function sectionGroups(): Item[][] {
     [
       { id: 'general', label: t('General') },
       { id: 'editor', label: t('Editor') },
+      // Which kinds of tab anything offers to make; see kind-choice.ts.
+      { id: 'kinds', label: t('Note types') },
       { id: 'shortcuts', label: t('Shortcuts') },
       // The bar over the keyboard on a phone, and the pull on its lists. Here on
       // every device rather than only where there is a thumb: it goes on the
@@ -87,17 +87,12 @@ export function sectionGroups(): Item[][] {
       { id: 'spelling', label: t('Spelling') },
       { id: 'markdown', label: t('Markdown') },
       { id: 'appearance', label: t('Appearance') },
-      // The providers a note's `ai` block and the rewrites reach, and where their
-      // keys went. Always here: unlike the connector below, nothing about it needs
-      // an account, and the pane's own first row is how one is added.
+      // Everything about a model, on one page: the accounts a note's `ai` block, the
+      // rewrites and the AI panel ask, and Access, everything that can reach the notes -
+      // the agents on this machine and the apps connected through the account. Always
+      // here: nothing about it needs an account, and its first row is how one is added.
+      // See AiPane.svelte and access/Access.svelte.
       { id: 'ai', label: t('AI') },
-      // The agents on this machine, and what each may do: a desktop's alone, because
-      // an agent reaches nib through the installed app's own program. Beside AI,
-      // since both are about a model; the account's connector is its other half,
-      // under the account. See agents/settings/reach.svelte.ts.
-      ...(!__EVEN_PLUGIN__ && reach.offered
-        ? [{ id: 'agents' as Section, label: t('Agents') }]
-        : []),
       // The machines a remote terminal reaches: a desktop's alone, as a terminal is.
       // Both only for somebody who writes code; see `developer` in modes.svelte.ts.
       ...(!__EVEN_PLUGIN__ && isDesktop && modes.coder
@@ -121,7 +116,6 @@ export function sectionGroups(): Item[][] {
       // Only with an account: a pane about what syncs where has nothing to say
       // until there is somewhere for notes to sync to.
       ...(account.user ? [{ id: 'sync' as Section, label: t('Sync') }] : []),
-      ...(account.user ? [{ id: 'llm' as Section, label: t('LLM access') }] : []),
     ],
     [
       { id: 'trash', label: t('Recently deleted') },

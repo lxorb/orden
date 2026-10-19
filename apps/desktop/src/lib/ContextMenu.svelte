@@ -6,6 +6,8 @@
   import { type Spelling, spelled } from './list-keys'
   import { DIVIDER, menu, trim, type MenuEntry, type MenuItem } from './menu.svelte'
   import { overlays } from './overlays'
+  import { released } from './menu-release'
+  import { spendClick } from './spent-click'
   import { pullsAway } from './sheet-pull'
   import { trap } from './trap'
   import { viewport } from './viewport.svelte'
@@ -62,9 +64,18 @@
     }
   }
 
-  // Escape closes it, like everything else the app puts over a note; see
-  // overlays.ts.
-  $effect(() => (menu.open ? overlays.show(() => menu.hide()) : undefined))
+  // Escape closes it, like everything else the app puts over a note, and so does a press
+  // past it and the window losing the focus; see overlays.ts. The press that opened it
+  // does not: a menu whose rows had to be asked for opens while that press is still on
+  // its way, and a press is read against the moment the menu opened.
+  $effect(() =>
+    menu.open
+      ? overlays.show(
+          () => menu.hide(),
+          () => [element],
+        )
+      : undefined,
+  )
 
   // A desktop menu opens at the pointer and is flipped back inside the
   // window when it would run off an edge. A phone's callout goes above the
@@ -166,6 +177,28 @@
     item.run()
   }
 
+  /** The press that opened the menu, let go of: on a row it chooses it, as a Mac's and
+   *  Linux's own menus do (#368); see menu-release.ts. Read at the point it came up at,
+   *  since a canvas keeps the pointer it was pressed with. */
+  function onRelease(event: PointerEvent) {
+    const from = menu.heldAt
+    menu.heldAt = null
+    if (!from || !menu.open || !element || event.pointerType !== 'mouse') return
+
+    const there = document.elementFromPoint(event.clientX, event.clientY)
+    const row = there?.closest<HTMLButtonElement>('[role="menuitem"]')
+    const on = row && element.contains(row) && !row.disabled ? row : null
+    const under = on ? 'row' : there && element.contains(there) ? 'menu' : 'outside'
+    const said = released(from, { x: event.clientX, y: event.clientY }, under)
+    if (said === 'stay') return
+
+    if (said === 'choose') on?.click()
+    else menu.hide()
+    // The click this release goes on to make is the press's, and lands on what both its
+    // halves were over: never the row, and not something to press either.
+    spendClick(event, true)
+  }
+
   /** What has been spelled, and when. A menu that opens is a fresh word: the letters
    *  belong to the list in front of somebody, not to the one before it. */
   let spelling: Spelling = { typed: '', typedAt: 0 }
@@ -234,11 +267,7 @@
   }
 </script>
 
-<svelte:window
-  onclick={() => menu.hide()}
-  onblur={() => menu.hide()}
-  onresize={() => menu.hide()}
-/>
+<svelte:window onresize={() => menu.hide()} onpointerupcapture={onRelease} />
 
 {#if menu.open}
   {#if viewport.touch}

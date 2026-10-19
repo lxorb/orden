@@ -63,6 +63,8 @@ export interface ListAsk {
   limit?: number
   /** Each space's inbox note, for the Inbox. */
   inboxes?: { space: string; path: string }[]
+  /** Whether Today holds a task with no start date; see `BuiltinParams`. */
+  undated?: boolean
   isNote?: TodoistOptions['isNote']
 }
 
@@ -83,7 +85,10 @@ export function listTasks(
     if (!(VIEWS as readonly string[]).includes(name)) {
       throw new AgentError('bad_arguments', `view is ${VIEWS.join(', ')} or a .base path`)
     }
-    base = builtinView(name as BuiltinName, { inboxes: ask.inboxes ?? [] })
+    base = builtinView(name as BuiltinName, {
+      inboxes: ask.inboxes ?? [],
+      ...(ask.undated ? { undated: true } : {}),
+    })
   } else {
     base = everything()
   }

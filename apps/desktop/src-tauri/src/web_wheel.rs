@@ -22,7 +22,7 @@
 //! tab just switched to - the wheel is delivered to the window under the pointer, the
 //! legacy window, and the page scrolls double. That much is read off the two ends rather
 //! than watched, because no real wheel ever reaches a probe that is never on the screen;
-//! and the fix below holds whichever window Windows picks. Nib's own page meets the same
+//! and the fix below holds whichever window Windows picks. Orden's own page meets the same
 //! thing the other way round, over a note while the keyboard is in a site.
 //!
 //! **What this does.** It sends the wheel where Chrome's goes. A low-level mouse hook
@@ -44,9 +44,7 @@
 //! thread of its own that does nothing else, so a mouse message is answered in a few
 //! microseconds and no busy moment in the window can hold the pointer up.
 //!
-//! `WebView2`'s alone. Nib's own Chromium puts every page and the interface in one
-//! browser process with the focus, which is Chrome's arrangement, and a Mac or Linux
-//! engine has no legacy window.
+//! `WebView2`'s alone: a Mac or Linux engine has no legacy window.
 
 /// The class of the engine's input window over a page. Chromium's own name for it,
 /// `ui::kLegacyRenderWidgetHostHwnd`, unchanged since the window was introduced.
@@ -150,10 +148,10 @@ pub fn delta(mouse_data: u32) -> i16 {
     i16::from_le_bytes([low, high])
 }
 
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 pub use hook::arm;
 
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 #[allow(
     unsafe_code,
     reason = "a wheel is seen before Windows delivers it only through a low-level hook, and the windows it is aimed at are asked through user32"

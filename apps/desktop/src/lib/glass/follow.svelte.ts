@@ -13,9 +13,7 @@
 import { glassCss } from '@nib/themes/glass'
 import { untrack } from 'svelte'
 import { accentColour } from '../accents'
-import { chosenTint } from '../chosen-icon'
 import { hexOf, type Rgb, rgbOf } from '../legibility'
-import { links } from '../link-index.svelte'
 import { isDesktop } from '../tauri'
 import { theme } from '../theme.svelte'
 import { paletteOf } from '../wallpaper/floors'
@@ -27,14 +25,22 @@ import { grounds } from './grounds.svelte'
 import { pixelsOf } from './pictures'
 import { groundOf } from './reading'
 import { alphaFor, layered, linkOf, type PaperInks } from '../content-ground'
-import { ACCENT_SWATCH, contentOf } from '../translucent-settings'
+import { contentOf } from '../translucent-settings'
 import { PAPER, schemeTokens } from '../scheme-tokens'
 import { dialsOf, glassValues } from './settings'
-import { barFor, frameFor, type Material, type Sides, type Source } from './tint'
+import { type Stops, stopsOf } from './pairs'
+import { barFor, frameFor, type Material, pairFor, type Sides, type Source } from './tint'
 
 /** How long after a page's last news it is read: a page lands, then names itself, then
  *  shows its mark, all in the same breath. */
 const SETTLES = 250
+
+/** How long after its first read a page is asked once more: an app that draws itself
+ *  after it has loaded - Spotify's player, Proton's pages, which name their colour from
+ *  script - has nothing of its own along its top yet, and was left in its mark's colour or
+ *  the bare canvas's white, a light or grey frame over a dark page (issue #238). Three
+ *  style lookups in the page; a page that said the same twice changes nothing. */
+const LATER = 1500
 
 /** A mark is counted at this size: a favicon's own, and plenty for a cover's colour. */
 const MARK = { width: 24, height: 24 }
@@ -67,32 +73,6 @@ function markColour(src: string | null): Rgb | null {
   return null
 }
 
-/** Moved to look for a cover again, while the editor has not drawn it yet. */
-let looked = $state(0)
-/** How many frames a cover is looked for before the note is taken to have none drawn. */
-const LOOKS = 30
-// eslint-disable-next-line svelte/prefer-svelte-reactivity -- bookkeeping nothing draws
-const looks = new Map<string, number>()
-
-/** The cover of the note in a pane, as the editor drew it: the picture the window
- *  already has, so nothing is fetched or resolved twice. A note just opened has not
- *  drawn it yet, so it is looked for again on the next frames, a few times. */
-function coverIn(pane: string, path: string): string | null {
-  // Read, so the effect asking runs again on the frame that looks once more.
-  if (looked < 0) return null
-  const drawn = document.querySelectorAll<HTMLImageElement>(
-    `[data-pane="${CSS.escape(pane)}"] .nib-cover img`,
-  )
-  for (const one of drawn) if (one.offsetParent !== null && one.currentSrc) return one.currentSrc
-
-  const tries = looks.get(path) ?? 0
-  if (tries < LOOKS) {
-    looks.set(path, tries + 1)
-    requestAnimationFrame(() => looked++)
-  }
-  return null
-}
-
 /** What the window stands on behind the frame. */
 function materialOf(said: string | null): Material {
   return said === 'mica' || said === 'acrylic' || said === 'clear' ? said : null
@@ -108,6 +88,12 @@ function paper(): Rgb {
  *  a page for a tab that has none open. */
 function addressOf(tab: string, written: string | undefined): string | null {
   return pages.addressOf(tab) ?? written ?? null
+}
+
+/** What a tab's page stands on now: what it said here, or what this device saw here
+ *  before, or while it loads somewhere new, what it said last (`grounds.last`). */
+function groundNow(tab: string, address: string | null): Rgb | null {
+  return grounds.of(tab, address) ?? (pages.loadingOf(tab) ? grounds.last(tab) : null)
 }
 
 /** Each tab's read, waiting for its page to settle. */
@@ -146,19 +132,14 @@ function inksOf(sides: Sides): PaperInks {
   return inks
 }
 
-/** What is in front, as the colour the frame takes: what is open, or - with the frame
- *  not following - the reader's own colour, as strong as a page's. */
-function sourceOf(): Source {
+/** What is in front, as the colour the frame takes: a page's own, a site's mark while
+ *  its page has said nothing, and everywhere else - or everywhere, with the frame not
+ *  following - glass's own pair. */
+function sourceOf(sides: Sides): Source | Stops {
   const tab = workspace.active
-  const app = chrome.app
-  const accent = rgbOf(accentColour(theme.accent, app)) ?? [124, 107, 245]
-
   const values = glassValues()
-  if (values.follow === false) {
-    const chosen = String(values.colour ?? ACCENT_SWATCH)
-    const colour = chosen === ACCENT_SWATCH ? accent : rgbOf(accentColour(chosen, app))
-    return { colour: colour ?? accent, page: true }
-  }
+  const pair = () => stopsOf(values.pair, chrome.app, theme.accent, sides.dark.scrim)
+  if (values.follow === false) return pair()
 
   if (tab?.kind === 'web') {
     const address = addressOf(tab.id, tab.address)
@@ -168,26 +149,14 @@ function sourceOf(): Source {
     // now, once for each address. A browser's frame says so itself as it loads.
     if (isDesktop && !page.loading && !grounds.heard(tab.id, address)) askOnce(tab.id, address)
 
-    const ground = grounds.of(tab.id, address)
+    const ground = groundNow(tab.id, address)
     if (ground) return { colour: ground, page: true }
 
     const mark = markColour(siteMark(page.icon, address))
-    return { colour: mark ?? accent, page: false }
+    if (mark) return { colour: mark, page: false }
   }
 
-  const path = tab?.path ?? null
-  if (tab && path) {
-    // Read so a cover written or taken away is followed; the picture is the editor's.
-    const covered = tab.kind === 'note' && links.coverOf(path) !== null
-    const cover = covered ? markColour(coverIn(tab.paneId, path)) : null
-    if (cover) return { colour: cover, page: false }
-
-    const tint = chosenTint(path)
-    const icon = tint ? rgbOf(accentColour(tint, app)) : null
-    if (icon) return { colour: icon, page: false }
-  }
-
-  return { colour: accent, page: false }
+  return pair()
 }
 
 /** Every web tab whose page has said what it stands on, with its bar: none while the
@@ -197,7 +166,7 @@ function barsOf(sides: Sides): Record<string, Ground> {
   if (glassValues().tab === false) return bars
   for (const tab of workspace.tabs) {
     if (tab.kind !== 'web') continue
-    const ground = grounds.of(tab.id, addressOf(tab.id, tab.address))
+    const ground = groundNow(tab.id, addressOf(tab.id, tab.address))
     if (ground) bars[tab.id] = barFor(ground, chrome.app, sides)
   }
   return bars
@@ -217,21 +186,23 @@ export function follow(): void {
     $effect(() => {
       if (!chrome.on) return
       const material = materialOf(chrome.material)
-      const frame = frameFor(
-        sourceOf(),
+      const source = sourceOf(sides)
+      const around = [
         chrome.app,
         material,
         sides,
         paper(),
         dialsOf(glassValues()),
         material ? inksOf(sides) : null,
-      )
+      ] as const
+      const frame = 'page' in source ? frameFor(source, ...around) : pairFor(source, ...around)
       // The Content row's level over the floors; paper on paper is the paper itself.
       const level = material ? contentOf(glassValues().content) : 'opaque'
       const laid = alphaFor(level, frame.paper)
       const worn = {
         scheme: frame.scheme,
         tint: frame.tint,
+        ...(frame.second ? { second: frame.second } : {}),
         wash: frame.wash,
         paper: laid,
         terminal: layered(alphaFor(level, frame.terminal), laid),
@@ -247,6 +218,22 @@ export function follow(): void {
   })
 }
 
+/** A page's ground, read and said; and `again`, read once more a moment later unless
+ *  the page has landed somewhere else meanwhile, which is read on its own. */
+function read(tab: string, again: boolean): void {
+  if (!chrome.on) return
+  const written = workspace.tabs.find((one) => one.id === tab)?.address
+  void groundOf(tab).then((ground) => {
+    if (ground === undefined) return
+    grounds.said(tab, addressOf(tab, written), ground)
+    if (again) {
+      setTimeout(() => {
+        if (!waiting.has(tab)) read(tab, false)
+      }, LATER)
+    }
+  })
+}
+
 /** A page has landed or moved: its ground is read once it has settled. */
 export function landed(tab: string): void {
   clearTimeout(waiting.get(tab))
@@ -254,11 +241,7 @@ export function landed(tab: string): void {
     tab,
     setTimeout(() => {
       waiting.delete(tab)
-      if (!chrome.on) return
-      const written = workspace.tabs.find((one) => one.id === tab)?.address
-      void groundOf(tab).then((ground) => {
-        if (ground !== undefined) grounds.said(tab, addressOf(tab, written), ground)
-      })
+      read(tab, true)
     }, SETTLES),
   )
 }

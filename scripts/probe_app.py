@@ -104,8 +104,8 @@ SWP_NOACTIVATE = 0x0010
 
 #: Windows a process keeps for messages alone: visible by their style and 13 pixels
 #: square in the corner of the primary screen, and never drawn. tao's event loop has one,
-#: winit's has its twin under nib's own Chromium (see src-tauri/cef), and the single
-#: instance plugin one named after the identifier with `-sic` on the end.
+#: winit's has its twin, and the single instance plugin one named after the identifier
+#: with `-sic` on the end.
 UNDRAWN = frozenset({"Tao Thread Event Target", "Winit Thread Event Target"})
 UNDRAWN_SUFFIX = "-sic"
 
@@ -253,6 +253,7 @@ def run_probe(
     quiet: bool = False,
     args: Sequence[str] = (),
     piped: bool = False,
+    errors: Any = None,
 ) -> subprocess.Popen[bytes]:
     """Starts a probe build off the screen and without the keyboard, and watches that it
     and every process under it stay there for as long as they run.
@@ -263,7 +264,8 @@ def run_probe(
     command line after the program, the way the system writes one for a link or a file:
     a second launch hands it to the probe already running and exits, watched all the
     same. `piped` hands the drive the process's stdin and stdout, which is how `nib mcp`
-    is spoken to."""
+    is spoken to. `errors`, a file, takes what the app says on stderr instead of the
+    drive's own stderr, for a drive that reads it."""
 
     refuse_updating(exe)
     environment = {**(os.environ if env is None else env), OFF_SCREEN: "1"}
@@ -282,7 +284,7 @@ def run_probe(
         startupinfo=shown,
         stdin=subprocess.PIPE if piped else None,
         stdout=subprocess.PIPE if piped else output,
-        stderr=output,
+        stderr=output if errors is None else errors,
     )
     threading.Thread(target=_watch, args=(app,), name="off-screen watch", daemon=True).start()
     return app

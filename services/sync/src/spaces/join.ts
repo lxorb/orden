@@ -390,7 +390,7 @@ join.post('/:token', async (context) => {
 })
 
 /** The mailed link, opening the account it was written to. The whole of what
- *  somebody with no Nib account does: they press the link. */
+ *  somebody with no Orden account does: they press the link. */
 async function redeemInvitation(context: Reply, found: Leads, guest: Guest | null) {
   if (found.kind !== 'invite') return context.json({ error: EXPIRED }, 404)
 

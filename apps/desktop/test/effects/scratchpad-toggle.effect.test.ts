@@ -259,6 +259,11 @@ test("a note in a space keeps the rows the scratchpad's switch leaves out", asyn
   if (!plan) throw new Error('no tab for the note')
   undo.push(() => workspace.close(plan.id, false))
 
+  // Every one of them but Move to space, which a pointer's menu leaves to carrying the
+  // tab onto the switcher and to the palette (#303); a held finger's menu still has it.
   const rows = labels(tabMenu(plan, plan.paneId))
-  for (const row of A_FILES_ROWS) expect(rows).toContain(row)
+  for (const row of A_FILES_ROWS.filter((one) => one !== 'Move to space')) {
+    expect(rows).toContain(row)
+  }
+  expect(rows).not.toContain('Move to space')
 })

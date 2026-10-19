@@ -86,6 +86,8 @@ export function taskRowsOf(
       dependsOn: fields.dependsOn.length ? fields.dependsOn : NONE,
       fields: Object.keys(fields.fields).length ? fields.fields : NO_FIELDS,
       ...(parent === undefined ? {} : { parent }),
+      ...(scanned.description === undefined ? {} : { description: scanned.description }),
+      ...(scanned.comments === undefined ? {} : { comments: scanned.comments }),
     })
     rows.push({
       kind: 'task',

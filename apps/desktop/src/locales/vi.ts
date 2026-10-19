@@ -10,21 +10,123 @@ export const vi: Dictionary = {
   'Do you write code?': 'Bạn có viết code không?',
   Yes: 'Có',
   No: 'Không',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'Từ ứng dụng khác: {key}',
+  'From other apps: set in your system settings': 'Từ ứng dụng khác: đặt trong cài đặt hệ thống',
+  'From other apps: bind {command} in your system settings':
+    'Từ ứng dụng khác: gán {command} trong cài đặt hệ thống',
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'Mục chính',
+  'Add to Essentials': 'Thêm vào mục chính',
+  'Remove from Essentials': 'Gỡ khỏi mục chính',
+  'Add block to Essentials': 'Thêm khối vào mục chính',
+  'Add blocks to Essentials': 'Thêm các khối vào mục chính',
+  'Add view to Essentials': 'Thêm chế độ xem vào mục chính',
+  'Open tabs and Essentials': 'Mở thẻ và mục chính',
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor giờ là Orden',
+  'Notes from nibeditor.com': 'Ghi chú từ nibeditor.com',
+  'Nothing there': 'Không có gì ở đó',
+  // AI: the three permission modes
+  'Full permissions': 'Toàn quyền',
+  'Auto mode': 'Chế độ tự động',
+  'Full permissions: nothing is asked first': 'Toàn quyền: không hỏi trước điều gì',
+  // Import: Zen's tabs
+  'Import from Zen': 'Nhập từ Zen',
+  'Containers stay in Zen': 'Các ngăn chứa vẫn ở lại Zen',
+  'Zen’s tabs could not be read.': 'Không thể đọc các thẻ của Zen.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'Các ngăn chứa vẫn ở lại Firefox',
+  'Nothing could be read out of {browser}.': 'Không đọc được gì từ {browser}.',
+  'Saved groups': 'Nhóm đã lưu',
+  'Tab group': 'Nhóm thẻ',
+  'Bookmarks toolbar': 'Thanh dấu trang',
+  'Bookmarks menu': 'Menu dấu trang',
+  'Other bookmarks': 'Dấu trang khác',
+  'Mobile bookmarks': 'Dấu trang trên di động',
+  'Bookmarks bar': 'Thanh dấu trang',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} khóa các thẻ đang mở, nên chỉ dấu trang được mang sang.',
+  '{count} pages not on the web stay behind': '{count} trang không có trên web được để lại',
+  'Reading List': 'Danh sách đọc',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS giữ các tab và dấu trang của Safari sau Quyền truy cập toàn bộ ổ đĩa. Hãy bật Orden ở đó rồi thử lại.',
+  // Settings: note types
+  'Page note': 'Ghi chú nhiều trang',
+  'Web note': 'Ghi chú web',
+  'Private tab': 'Thẻ riêng tư',
+  'Note types': 'Loại ghi chú',
+  // Tasks: Upcoming's weeks
+  'Previous week': 'Tuần trước',
+  // Tasks: projects placed in the panel, and their folder
+  'Add project above': 'Thêm dự án phía trên',
+  'Add project below': 'Thêm dự án phía dưới',
+  'Projects folder': 'Thư mục dự án',
+  // Tasks: a repeating task skipped or done for good
+  Skip: 'Bỏ qua',
+  'Complete forever': 'Hoàn thành vĩnh viễn',
+  // Tasks: comments
+  Comments: 'Bình luận',
+  // Tasks: filters
+  Filters: 'Bộ lọc',
+  'Add filter': 'Thêm bộ lọc',
+  'Edit filter': 'Sửa bộ lọc',
+  // Tasks: a project's sections
+  'Add section': 'Thêm mục',
+  '{name} (copy)': '{name} (bản sao)',
+  'Its tasks are deleted with it.': 'Các việc trong đó cũng bị xoá theo.',
+  // Tasks: keys, selection and the undo toast
+  Completed: 'Đã xong',
+  'Remove date': 'Bỏ ngày',
+  'Next task': 'Việc sau',
+  'Previous task': 'Việc trước',
+  'Add task at the top': 'Thêm việc lên đầu',
+  '{count} selected': 'Đã chọn {count}',
+  // Tasks: the Display menu
+  Display: 'Hiển thị',
+  'Completed tasks': 'Việc đã xong',
+  // Tasks: several lines pasted into quick add
+  'One task': 'Một việc',
+  'One per line': 'Mỗi dòng một việc',
+  // Tasks: the projects in the panel
+  Favorites: 'Yêu thích',
+  'Add project': 'Thêm dự án',
+  'Add sub-project': 'Thêm dự án con',
+  // Tasks: the task view
+  'Sub-tasks': 'Việc con',
+  'Add sub-task': 'Thêm việc con',
+  'New label': 'Nhãn mới',
+  'No deadline': 'Không có hạn chót',
+  // Tasks: the row's menu and the scheduler
+  Reschedule: 'Lên lịch lại',
+  'Later this week': 'Mấy hôm nữa trong tuần',
+  'This weekend': 'Cuối tuần này',
+  'Next weekend': 'Cuối tuần sau',
+  'Every week on {day}': 'Hằng tuần vào {day}',
+  'Every month on day {day}': 'Hằng tháng vào ngày {day}',
+  'Every year on {date}': 'Hằng năm vào {date}',
+  'Type a date': 'Nhập ngày',
+  'Previous month': 'Tháng trước',
+  'Next month': 'Tháng sau',
+  'No time': 'Không có giờ',
+  'No repeat': 'Không lặp lại',
+  Complete: 'Hoàn thành',
+  Reopen: 'Mở lại',
+  Schedule: 'Lên lịch',
+  'Open in note': 'Mở trong ghi chú',
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'Ứng dụng khác',
-  'Start fresh': 'Bắt đầu mới',
   'Import from Obsidian': 'Nhập từ Obsidian',
   'Import from Notion': 'Nhập từ Notion',
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'Gợi ý',
   'Silent mode': 'Chế độ im lặng',
-  'Sign in to keep your notes safe and on every device.':
-    'Đăng nhập để giữ ghi chú an toàn và có trên mọi thiết bị.',
   'See how your notes connect.': 'Xem các ghi chú của bạn liên kết với nhau thế nào.',
   'Press {key} to find anything, notes and commands alike.':
     'Nhấn {key} để tìm mọi thứ, cả ghi chú lẫn lệnh.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'Hiện Markdown khi viết',
+  'Open notes in source mode': 'Mở ghi chú ở chế độ nguồn',
   Pointer: 'Con trỏ',
   'Pointing hand on buttons': 'Bàn tay chỉ trên các nút',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
@@ -40,11 +142,13 @@ export const vi: Dictionary = {
   '{count} h': '{count} giờ',
   Inbox: 'Hộp thư đến',
   Date: 'Ngày',
+  'Start date': 'Ngày bắt đầu',
   Priority: 'Ưu tiên',
   Reminder: 'Lời nhắc',
   Duration: 'Thời lượng',
   'Smart dates': 'Ngày thông minh',
   'From any app': 'Từ bất kỳ ứng dụng nào',
+  'Show tasks without a start date in Today': 'Hiện việc không có ngày bắt đầu trong Hôm nay',
   'Every day': 'Mỗi ngày',
   'Every weekday': 'Mỗi ngày làm việc',
   'Every week': 'Mỗi tuần',
@@ -61,6 +165,13 @@ export const vi: Dictionary = {
   Unsaved: 'Chưa lưu',
   'Save to': 'Lưu vào',
   'Reloaded with the web data of {space}': 'Đã tải lại bằng dữ liệu web của {space}',
+  Separate: 'Riêng',
+  'Share this note’s web data again?': 'Chia sẻ lại dữ liệu web của ghi chú này?',
+  'What its pages are signed in to on this computer is deleted.':
+    'Những gì các trang của nó đã đăng nhập trên máy tính này sẽ bị xóa.',
+  'Share again': 'Chia sẻ lại',
+  'This note keeps its own web data now': 'Ghi chú này giờ có dữ liệu web riêng',
+  'Back on the shared web data': 'Đã quay lại dữ liệu web dùng chung',
   'Add a page': 'Thêm một trang',
   'Add a page after this': 'Thêm một trang sau trang này',
   'Delete this page': 'Xoá trang này',
@@ -81,6 +192,8 @@ export const vi: Dictionary = {
   Dots: 'Dấu chấm',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'Xoay canvas bằng hai ngón tay',
+  'Turn upright': 'Đặt thẳng lại',
   Canvas: 'Canvas',
   Card: 'Thẻ',
   'Note or picture': 'Ghi chú hoặc ảnh',
@@ -95,7 +208,6 @@ export const vi: Dictionary = {
   'New window': 'Cửa sổ mới',
   New: 'Mới',
   'New space': 'Không gian mới',
-  '{name}: switch space': '{name}: đổi không gian',
   Untitled: 'Không tên',
   Space: 'Không gian',
   'Name the space': 'Đặt tên không gian',
@@ -140,8 +252,6 @@ export const vi: Dictionary = {
   'Loading…': 'Đang tải…',
   'Create a space': 'Tạo không gian',
   'Import a folder': 'Nhập một thư mục',
-  'Sign in to sync': 'Đăng nhập để đồng bộ',
-  'Create account': 'Tạo tài khoản',
   'Delete space': 'Xoá không gian',
   'Delete {name}?': 'Xoá {name}?',
   'Every note in this space is deleted from your computer.':
@@ -159,6 +269,10 @@ export const vi: Dictionary = {
   Unpin: 'Bỏ ghim',
   Close: 'Đóng',
   'Close pinned tab?': 'Đóng tab đã ghim?',
+  'Save changes to {name}?': 'Lưu thay đổi trong {name}?',
+  'Save changes to these tabs?': 'Lưu thay đổi trong các thẻ này?',
+  'Unsaved words go to Recently deleted.': 'Chữ chưa lưu sẽ vào Đã xóa gần đây.',
+  'Don’t save': 'Không lưu',
   'Close others': 'Đóng các tab khác',
   'Close tabs to the right': 'Đóng các tab bên phải',
   'Close tabs to the left': 'Đóng các tab bên trái',
@@ -195,9 +309,6 @@ export const vi: Dictionary = {
   'Move this note': 'Chuyển ghi chú này',
   'Move up': 'Chuyển lên',
   'Move down': 'Chuyển xuống',
-  Bookmark: 'Dấu trang',
-  'Remove bookmark': 'Bỏ dấu trang',
-  'Leave out of search': 'Loại khỏi tìm kiếm',
   'Search here again': 'Tìm ở đây lại',
   'Undo the last file change': 'Hoàn tác thay đổi tệp cuối',
   'Undo moving {name}': 'Hoàn tác chuyển {name}',
@@ -247,7 +358,6 @@ export const vi: Dictionary = {
   'Remove group': 'Xoá nhóm',
   'Out of the group': 'Ra khỏi nhóm',
   Make: 'Tạo',
-  'Bookmark this block': 'Đánh dấu khối này',
   Panels: 'Ngăn',
   Outline: 'Đề mục',
   'Stay on this note': 'Giữ ở ghi chú này',
@@ -510,8 +620,8 @@ export const vi: Dictionary = {
   'Sign in to ask a question.': 'Đăng nhập để đặt câu hỏi.',
   'Asking OpenAI which models this key can use': 'Đang hỏi OpenAI khoá này dùng được mô hình nào',
   'Could not reach OpenAI': 'Không kết nối được OpenAI',
-  'That key cannot use any of the models nibeditor asks for.':
-    'Khoá này không dùng được mô hình nào nibeditor cần.',
+  'That key cannot use any of the models Orden asks for.':
+    'Khoá này không dùng được mô hình nào Orden cần.',
   'No reasoning': 'Không suy luận',
   Minimal: 'Tối thiểu',
   Low: 'Thấp',
@@ -533,7 +643,7 @@ export const vi: Dictionary = {
   Mode: 'Chế độ',
   // The window's own edges; see appearance.rs
   Window: 'Cửa sổ',
-  'nibeditor’s own': 'Của nibeditor',
+  'Orden’s own': 'Của Orden',
   'The system’s': 'Của hệ thống',
   'Window frame': 'Khung cửa sổ',
   System: 'Hệ thống',
@@ -593,6 +703,7 @@ export const vi: Dictionary = {
   '{done} of {total}': '{done} trên {total}',
   'Sync failed': 'Đồng bộ thất bại',
   '{name} could not be written.': 'Không ghi được {name}.',
+  '{name} could not be read.': 'Không đọc được {name}.',
   'Text size': 'Cỡ chữ',
   'Line spacing': 'Giãn dòng',
   'Line width': 'Bề rộng dòng',
@@ -653,8 +764,10 @@ export const vi: Dictionary = {
   '{used} of {limit} used.': 'Đã dùng {used} trên {limit}.',
   'That image does not fit in your storage.': 'Ảnh đó không vừa dung lượng của bạn.',
   'out of space': 'hết dung lượng',
-  'nibeditor {version} is ready to install.': 'nibeditor {version} đã sẵn sàng để cài.',
+  'Orden {version} is ready to install.': 'Orden {version} đã sẵn sàng để cài.',
+  'Orden {version} is available.': 'Đã có Orden {version}.',
   'Restart now': 'Khởi động lại ngay',
+  'Move to Applications': 'Chuyển vào Ứng dụng',
   Later: 'Để sau',
   More: 'Thêm',
   'Open notes': 'Ghi chú đang mở',
@@ -679,11 +792,9 @@ export const vi: Dictionary = {
   Continue: 'Tiếp tục',
   'Send a new code': 'Gửi mã mới',
   'Code sent to': 'Mã đã gửi tới',
-  'You already have notes on this computer.': 'Bạn đã có ghi chú trên máy này.',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
-    'Giữ lại thì chúng nhập vào tài khoản của bạn. Xoá đi thì chỉ còn những gì tài khoản đã có - không thể hoàn tác.',
-  'Keep them': 'Giữ lại',
-  'Erase them': 'Xoá đi',
+  'This device already has notes.': 'Thiết bị này đã có ghi chú.',
+  Merge: 'Hợp nhất',
+  'Keep separate': 'Giữ riêng',
   'Digit {number}': 'Chữ số {number}',
   'Resend in {seconds}s': 'Gửi lại sau {seconds}s',
   'Last synced {time}.': 'Đồng bộ lần cuối {time}.',
@@ -729,14 +840,14 @@ export const vi: Dictionary = {
   'Reads your notes.': 'Đọc ghi chú của bạn.',
   'Reads and writes your notes.': 'Đọc và ghi ghi chú của bạn.',
   Other: 'Khác',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'Trợ lý AI có thể đọc ghi chú của bạn - và sửa, nếu bạn cho phép. Nó đăng nhập bằng email nibeditor của bạn; không cần dán gì.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'Trợ lý AI có thể đọc ghi chú của bạn - và sửa, nếu bạn cho phép. Nó đăng nhập bằng email Orden của bạn; không cần dán gì.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'Trong Claude, mở Settings → Connectors rồi bấm Add custom connector.',
   'Open Claude’s connectors': 'Mở Connectors của Claude',
   'Fill in the two fields and click Add.': 'Điền hai ô rồi bấm Add.',
-  'Click Connect and sign in with your nibeditor email.':
-    'Bấm Connect rồi đăng nhập bằng email nibeditor của bạn.',
+  'Click Connect and sign in with your Orden email.':
+    'Bấm Connect rồi đăng nhập bằng email Orden của bạn.',
   'Using Claude Code instead?': 'Dùng Claude Code thay vì thế?',
   Command: 'Lệnh',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -747,16 +858,15 @@ export const vi: Dictionary = {
   'Open ChatGPT’s plugins': 'Mở Plugins của ChatGPT',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Không thấy mục Plugins hay nút dấu cộng? Bật Developer mode trước, ở Settings → Security and login.',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'Đăng nhập bằng email nibeditor khi ChatGPT hỏi.',
-  'To use it in a chat, type @ and pick nibeditor.':
-    'Để dùng trong một đoạn chat, gõ @ rồi chọn nibeditor.',
+  'Sign in with your Orden email when ChatGPT asks.': 'Đăng nhập bằng email Orden khi ChatGPT hỏi.',
+  'To use it in a chat, type @ and pick Orden.':
+    'Để dùng trong một đoạn chat, gõ @ rồi chọn Orden.',
   'Server URL': 'URL máy chủ',
   Authentication: 'Xác thực',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'Để nguyên các cài đặt OAuth nâng cao và tích “I understand and want to continue”.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'Mọi ứng dụng MCP nói Streamable HTTP với OAuth. Đưa nó URL: nó tự đăng ký và mở trang đăng nhập của nibeditor.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'Mọi ứng dụng MCP nói Streamable HTTP với OAuth. Đưa nó URL: nó tự đăng ký và mở trang đăng nhập của Orden.',
   'Show config': 'Hiện cấu hình',
   'For a client that takes a JSON block instead of a URL.':
     'Cho ứng dụng nhận một khối JSON thay vì URL.',
@@ -824,7 +934,7 @@ export const vi: Dictionary = {
   'Display name': 'Tên hiển thị',
   'Your name': 'Tên của bạn',
   Email: 'Email',
-  'On nibeditor.com': 'Trên nibeditor.com',
+  'On orden.so': 'Trên orden.so',
   'Your own domain': 'Tên miền riêng',
   'Switching gives up {name}.': 'Chuyển đổi là từ bỏ {name}.',
   Page: 'Trang',
@@ -895,8 +1005,9 @@ export const vi: Dictionary = {
   'No footnotes in this note': 'Ghi chú này không có chú thích cuối trang',
   'Stack tabs': 'Xếp thẻ thành cột',
   'Unstack tabs': 'Bỏ xếp cột thẻ',
-  'High contrast': 'Tương phản cao',
+  Contrast: 'Tương phản',
   Glass: 'Kính',
+  Classic: 'Cổ điển',
   'Front matter': 'Phần đầu tệp',
   'Front matter: {name}': 'Siêu dữ liệu: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':
@@ -907,6 +1018,7 @@ export const vi: Dictionary = {
   Comment: 'Bình luận',
   'Always on top': 'Luôn ở trên',
   'What is new': 'Có gì mới',
+  'Download the app': 'Tải ứng dụng',
   'Report an issue': 'Báo lỗi',
   'Move the line up': 'Chuyển dòng lên',
   'Move the line down': 'Chuyển dòng xuống',
@@ -986,6 +1098,23 @@ export const vi: Dictionary = {
   'Layout: {name}': 'Bố cục: {name}',
   'Space: {name}': 'Không gian: {name}',
   'Theme: {name}': 'Chủ đề: {name}',
+  'AI account: {name}': 'Tài khoản AI: {name}',
+  Accounts: 'Tài khoản',
+  Access: 'Quyền truy cập',
+  Set: 'Đã đặt',
+  'Start over': 'Bắt đầu lại',
+  'Sign in here': 'Đăng nhập tại đây',
+  '{device} wants your AI accounts': '{device} muốn dùng tài khoản AI của bạn',
+  '{device} offers this device your AI vault': '{device} đề nghị thiết bị này dùng kho AI của bạn',
+  Join: 'Tham gia',
+  'Allow this device on another one': 'Cho phép thiết bị này trên thiết bị khác',
+  'On every device you sign in to, end-to-end encrypted.':
+    'Trên mọi thiết bị bạn đăng nhập, mã hóa đầu cuối.',
+  'Sign in to have them on every device.': 'Đăng nhập để có chúng trên mọi thiết bị.',
+  'Agents on this computer connect on their own': 'Tác tử trên máy này tự kết nối',
+  Helpers: 'Trợ thủ',
+  'Start helpers on your AI accounts': 'Chạy trợ thủ trên tài khoản AI của bạn',
+  Delegated: 'Đã giao',
   'Code theme: {name}': 'Chủ đề mã: {name}',
   'Delete a layout': 'Xoá một bố cục',
   // Keyboards and modal editing
@@ -1054,6 +1183,7 @@ export const vi: Dictionary = {
   'Double-click to write': 'Nhấp đôi để viết',
   'Another colour': 'Màu khác',
   'Turn into a note': 'Biến thành ghi chú',
+  Arrange: 'Sắp xếp',
   'Bring to front': 'Đưa lên trước nhất',
   'Bring forward': 'Đưa lên một bậc',
   'Send backward': 'Đưa xuống một bậc',
@@ -1075,6 +1205,12 @@ export const vi: Dictionary = {
   'Export as PNG': 'Xuất thành PNG',
   'Export as SVG': 'Xuất thành SVG',
   'Export as PDF': 'Xuất thành PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'Nhập PDF',
+  'Choose how to add the pages to the canvas.': 'Chọn cách thêm các trang vào canvas.',
+  'Single page': 'Một trang',
+  'All pages': 'Tất cả các trang',
+  'Choose a page': 'Chọn một trang',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Xoá phần đã chọn',
   'Nudge left': 'Nhích sang trái',
@@ -1135,8 +1271,8 @@ export const vi: Dictionary = {
   'Release channel': 'Kênh phát hành',
   Stable: 'Ổn định',
   Unstable: 'Không ổn định',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Ổn định theo các bản phát hành chính thức, Không ổn định theo mọi lần push vào main và có thể lỗi.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Ổn định theo các bản đã phát hành, Không ổn định theo các bản dựng edge và có thể lỗi.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Nhập',
@@ -1187,14 +1323,16 @@ export const vi: Dictionary = {
   '{count} tables inside notes do not come over': '{count} bảng trong ghi chú không chuyển sang',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} tệp kèm nằm trên iCloud chứ không phải trên Mac này',
+  '{count} files are in iCloud rather than on this Mac':
+    '{count} tệp nằm trên iCloud chứ không phải trên Mac này',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS giữ các ghi chú đó sau Quyền truy cập toàn bộ ổ đĩa.',
   'There are no notes in Apple Notes on this Mac.':
     'Trên Mac này Apple Notes không có ghi chú nào.',
   'Those notes could not be read.': 'Không đọc được các ghi chú đó.',
   'Read them from this Mac': 'Đọc từ Mac này',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    'Bật nibeditor trong Quyền truy cập toàn bộ ổ đĩa rồi thử lại.',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    'Bật Orden trong Quyền truy cập toàn bộ ổ đĩa rồi thử lại.',
   'Open the setting': 'Mở cài đặt',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'Apple Journal tự xuất: Journal, Cài đặt, Xuất. Apple Notes không có chức năng xuất, nên ở ngoài chiếc Mac chứa nó, thứ cần kéo vào đây là thư mục do một trình xuất ghi ra.',
@@ -1293,16 +1431,16 @@ export const vi: Dictionary = {
   'OpenAI-compatible': 'Tương thích OpenAI',
   'Base URL': 'URL gốc',
   'API key': 'Khoá API',
-  'Set on this device': 'Đã đặt trên thiết bị này',
   Optional: 'Không bắt buộc',
   'List models': 'Lấy danh sách mô hình',
   'Asking…': 'Đang hỏi…',
   'No providers yet.': 'Chưa có nhà cung cấp nào.',
   'Add {name}': 'Thêm {name}',
-  'Keys stay in the secure store on this device.':
-    'Khoá được giữ trong kho bảo mật của thiết bị này.',
   'This browser holds the keys in its own storage.':
     'Trình duyệt này giữ khoá trong bộ lưu trữ của chính nó.',
+  'Keep this browser’s keys in the vault': 'Giữ khóa của trình duyệt này trong kho',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'Khi đó, khóa của mọi thiết bị sẽ được lưu trong bộ nhớ của trình duyệt này, nơi một đoạn mã lọt vào trang có thể đọc được.',
   'AI can be wrong. Check the facts.': 'AI có thể sai. Hãy kiểm tra lại thông tin.',
   'Used by the glasses': 'Kính đang dùng',
   'Could not read the models.': 'Không đọc được danh sách mô hình.',
@@ -1343,7 +1481,6 @@ export const vi: Dictionary = {
   'A cited report': 'Báo cáo có trích dẫn',
   'A helper in the background': 'Trợ lý nền',
   'A side question': 'Câu hỏi phụ',
-  'Agent mode': 'Chế độ tác nhân',
   'Agent profile': 'Hồ sơ tác nhân',
   'Archive the thread': 'Lưu trữ luồng',
   'Approve mode': 'Chế độ duyệt',
@@ -1462,8 +1599,6 @@ export const vi: Dictionary = {
   // Web tabs
   Reload: 'Tải lại',
   'Hard reload': 'Tải lại toàn bộ',
-  'Clip this page': 'Lưu trang này',
-  'Clip the link': 'Lưu liên kết',
   'Open in the browser': 'Mở trong trình duyệt',
   'Show it here': 'Hiện ở đây',
   Website: 'Trang web',
@@ -1551,8 +1686,9 @@ export const vi: Dictionary = {
   'that is not a theme': 'cái đó không phải chủ đề',
   'no such theme': 'không có chủ đề đó',
   'choose a model first': 'chọn mô hình trước',
+  'set an OpenAI key in Orden’s settings first': 'đặt khoá OpenAI trong cài đặt của Orden trước',
   'set an OpenAI key in nibeditor’s settings first':
-    'đặt khoá OpenAI trong cài đặt của nibeditor trước',
+    'đặt khoá OpenAI trong cài đặt của Orden trước',
   'that is a lot of questions - try again later': 'nhiều câu hỏi quá - thử lại sau',
   'that is too much audio': 'âm thanh quá dài',
   'that is more than a spoken command': 'cái đó dài hơn một lệnh nói',
@@ -1576,7 +1712,6 @@ export const vi: Dictionary = {
   Nothing: 'Không có gì',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Đánh dấu khung nhìn này',
   Keep: 'Giữ',
 
   // Which side of the window a panel sits on.
@@ -1598,7 +1733,6 @@ export const vi: Dictionary = {
   'New tab': 'Thẻ mới',
   'Full screen': 'Toàn màn hình',
   'Print…': 'In…',
-  'Save page': 'Lưu trang',
   'Share…': 'Chia sẻ…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1642,7 +1776,6 @@ export const vi: Dictionary = {
   Blocked: 'Bị chặn',
   'Reset permissions': 'Đặt lại quyền',
   'Turn into': 'Biến thành',
-  'Bookmark these blocks': 'Đánh dấu các khối này',
   Foldable: 'Có thể gập',
   'Starts folded': 'Mở ra đã gập',
   // Where a space keeps what websites store
@@ -1659,6 +1792,15 @@ export const vi: Dictionary = {
   'Bring all to front': 'Đưa tất cả ra trước',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Hoàn tác việc sao chép',
+  'Devices with your AI vault': 'Thiết bị có kho AI của bạn',
+  'This device': 'Thiết bị này',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'Thiết bị đó sẽ không đọc được tài khoản AI của bạn nữa, và các thiết bị khác nhận khoá mới.',
+  'Also remove this device from your AI vault?': 'Gỡ cả thiết bị này khỏi kho AI của bạn?',
+  'Remove and sign out': 'Gỡ và đăng xuất',
+  'Undo making {name}': 'Hoàn tác tạo {name}',
+  'Undo the deletion': 'Hoàn tác xoá',
+  'Undo the move': 'Hoàn tác chuyển',
   'Redo the last file change': 'Làm lại thay đổi tệp gần nhất',
   'Select down': 'Chọn xuống',
   'Select up': 'Chọn lên',
@@ -1702,7 +1844,6 @@ export const vi: Dictionary = {
   '{key} in a terminal': '{key} trong terminal',
   'Always ask': 'Luôn hỏi',
   'Open another': 'Mở thêm một cái',
-  'Open in terminal': 'Mở trong terminal',
   Clear: 'Xóa',
   'Exited with code {code}': 'Đã thoát với mã {code}',
   'Could not start {shell}': 'Không thể khởi động {shell}',
@@ -1711,18 +1852,8 @@ export const vi: Dictionary = {
   'Stop what is running in {name}?': 'Dừng những gì đang chạy trong {name}?',
   'Stop what is running in these terminals?': 'Dừng những gì đang chạy trong các terminal này?',
   'Paste {count} lines?': 'Dán {count} dòng?',
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': 'Trình duyệt mặc định',
-  // The engine web tabs run on
-  Engine: 'Công cụ',
-  Relaunch: 'Khởi chạy lại',
-  'Chromium did not start': 'Chromium không khởi động được',
-  'No connection': 'Không có kết nối',
-  'Not in this release': 'Không có trong bản phát hành này',
-  'Needs an update': 'Cần cập nhật',
-  'Signature did not match': 'Chữ ký không khớp',
-  'Disk full': 'Ổ đĩa đầy',
-  'Could not be installed': 'Không thể cài đặt',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Hoàn tác các chỉnh sửa của {name}',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1822,7 +1953,7 @@ export const vi: Dictionary = {
   'Always on this site': 'Luôn trên trang này',
   'Agents stopped': 'Đã dừng tác tử',
   'Agent tabs closed': 'Đã đóng các tab của tác tử',
-  'nibeditor is still running for your agents': 'nibeditor vẫn chạy cho các tác tử của bạn',
+  'Orden is still running for your agents': 'Orden vẫn chạy cho các tác tử của bạn',
   '{client} wants to connect': '{client} muốn kết nối',
   // Web logins that travel, and the devices of an account
   'no such device': 'không có thiết bị đó',
@@ -1838,11 +1969,12 @@ export const vi: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'Tác tử trên máy tính này',
   'Your account’s connector': 'Trình kết nối của tài khoản',
-  'nibeditor asks you once, the first time it connects.':
-    'nibeditor hỏi bạn một lần, khi nó kết nối lần đầu.',
+  'Orden asks you once, the first time it connects.':
+    'Orden hỏi bạn một lần, khi nó kết nối lần đầu.',
   'A client on another machine?': 'Một ứng dụng khách trên máy khác?',
   'Shown only once.': 'Chỉ hiện một lần.',
   'Remove {name}?': 'Gỡ {name}?',
+  'End {name}?': 'Kết thúc {name}?',
   'Its token stops working.': 'Mã thông báo của nó sẽ ngừng hoạt động.',
   'Added {date}': 'Đã thêm {date}',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':
@@ -1863,7 +1995,6 @@ export const vi: Dictionary = {
   'Change notes': 'Sửa ghi chú',
   'See what you are looking at': 'Thấy thứ bạn đang xem',
   'Move and rename files': 'Di chuyển và đổi tên tệp',
-  'Open tabs and bookmarks': 'Mở tab và dấu trang',
   'Bring a tab to the front': 'Đưa một tab lên trước',
   'Browse in tabs of its own': 'Duyệt trong tab riêng',
   'Read what pages load': 'Đọc những gì trang tải',
@@ -1885,11 +2016,8 @@ export const vi: Dictionary = {
   'Without your logins': 'Không dùng đăng nhập của bạn',
   'Calls a minute': 'Lượt gọi mỗi phút',
   'Pages a minute': 'Trang mỗi phút',
+  'Browser memory limit': 'Giới hạn bộ nhớ trình duyệt',
   '{count} calls': '{count} lượt gọi',
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'Đang mở trên {device}',
-  'Use here': 'Dùng ở đây',
-  '{device} wants your web logins': '{device} muốn các thông tin đăng nhập web của bạn',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'Câu hỏi nhanh',
@@ -1954,7 +2082,7 @@ export const vi: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'Báo lại',
   Reminders: 'Lời nhắc',
-  'Reminders ring while nibeditor is open': 'Lời nhắc chỉ đổ chuông khi nibeditor đang mở',
+  'Reminders ring while Orden is open': 'Lời nhắc chỉ đổ chuông khi Orden đang mở',
   Automatic: 'Tự động',
   'Stay in the tray': 'Ở lại khay hệ thống',
   'Exact alarms': 'Báo thức chính xác',
@@ -1997,7 +2125,6 @@ export const vi: Dictionary = {
   'Any of them': 'Bất kỳ',
   Compare: 'So sánh',
   'Add a filter': 'Thêm bộ lọc',
-  'Reschedule to today': 'Dời sang hôm nay',
   Collapse: 'Thu gọn',
   Expand: 'Mở rộng',
   Summary: 'Tóm tắt',
@@ -2019,7 +2146,6 @@ export const vi: Dictionary = {
   Layout: 'Bố cục',
   Overdue: 'Quá hạn',
   Upcoming: 'Sắp tới',
-  Logbook: 'Nhật ký',
   Project: 'Dự án',
   Label: 'Nhãn',
   List: 'Danh sách',
@@ -2205,4 +2331,11 @@ export const vi: Dictionary = {
   'Search this chat': 'Tìm trong cuộc trò chuyện này',
   'Add as task': 'Thêm thành việc cần làm',
   'Save as note': 'Lưu thành ghi chú',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'Bình minh',
+  Lagoon: 'Đầm phá',
+  Lilac: 'Tử đinh hương',
+  Peach: 'Đào',
+  Sage: 'Xô thơm',
+  Mist: 'Sương mù',
 }

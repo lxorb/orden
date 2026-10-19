@@ -69,6 +69,11 @@ function store(action: FileAction): PutsBack & { loaded: number; wrote: number }
       return Promise.resolve()
     },
     reload: (path: string) => void told.push(`reloaded ${path}`),
+    // A creation undone goes to Recently deleted, which keeps it under an id.
+    bin: (path: string) => {
+      told.push(`binned ${path}`)
+      return Promise.resolve({ content: '# new', trashId: `t-${path}` })
+    },
     retarget: (from: string, to: string) => {
       told.push(`retargeted ${from} -> ${to}`)
       return Promise.resolve(1)
@@ -405,5 +410,180 @@ describe('an archiving put back', () => {
 
     expect(changes).toEqual([['/s', ['Old'], ['Old/Notes.md']]])
     expect(ws.undone.ahead).toHaveLength(1)
+  })
+})
+
+/** What was done in the sidebar as one gesture, and what it made, taken back and done
+ *  again (#399). */
+describe('a gesture of several', () => {
+  test('is recorded as one step, and one that recorded one is that one', async () => {
+    const undone = new FileActions()
+    await undone.batch(() => {
+      undone.record({ kind: 'delete', path: '/s/a.md', content: '# a' })
+      undone.record({ kind: 'delete', path: '/s/b.md', content: '# b' })
+      return Promise.resolve()
+    })
+    await undone.batch(() => {
+      undone.record({ kind: 'move', from: '/s/c.md', to: '/s/W/c.md' })
+      return Promise.resolve()
+    })
+
+    expect(undone.stack.map((one) => one.kind)).toEqual(['many', 'move'])
+    expect(undone.label).toBe('Undo moving c')
+    undone.stack = undone.stack.slice(0, 1)
+    expect(undone.label).toBe('Undo the deletion')
+  })
+
+  test('is said as its first step where it mixed kinds, and keeps a trash id', async () => {
+    const undone = new FileActions()
+    await undone.batch(() => {
+      undone.record({ kind: 'delete', path: '/s/A/b.md', content: '# b' })
+      undone.trashed('/s/A/b.md', 'id-b')
+      undone.record({ kind: 'move', from: '/s/A/A.md', to: '/s/A.md', follows: true })
+      return Promise.resolve()
+    })
+
+    expect(undone.label).toBe('Undo deleting b')
+    const [step] = undone.stack
+    expect(step?.kind === 'many' && step.steps[0]).toMatchObject({ trashId: 'id-b' })
+
+    // Restored from Recently deleted instead: that step goes, and the rest stays.
+    undone.forget('id-b')
+    expect(undone.stack).toEqual([
+      { kind: 'many', steps: [{ kind: 'move', from: '/s/A/A.md', to: '/s/A.md', follows: true }] },
+    ])
+  })
+
+  test('goes back newest first, and is one step to do again', async () => {
+    const ws = store({
+      kind: 'many',
+      steps: [
+        { kind: 'delete', path: '/s/A/b.md', content: '# b' },
+        { kind: 'move', from: '/s/A/A.md', to: '/s/A.md', follows: true },
+      ],
+    })
+    await undoLastFileAction(ws)
+
+    expect(sent.map((one) => `${one.command} ${one.path}`)).toEqual([
+      'rename_note ',
+      'write_note /s/A/b.md',
+    ])
+    expect(told).toEqual(['moved /s/A.md -> /s/A/A.md', 'back /s/A/b.md'])
+    expect(ws.undone.stack).toEqual([])
+    expect(ws.undone.next?.kind).toBe('many')
+  })
+
+  test('that stops half way keeps what is left on the stack', async () => {
+    refused.add('/s/A/b.md')
+    const ws = store({
+      kind: 'many',
+      steps: [
+        { kind: 'delete', path: '/s/A/b.md', content: '# b' },
+        { kind: 'move', from: '/s/c.md', to: '/s/W/c.md' },
+      ],
+    })
+    await undoLastFileAction(ws)
+
+    expect(ws.undone.stack).toEqual([
+      { kind: 'many', steps: [{ kind: 'delete', path: '/s/A/b.md', content: '# b' }] },
+    ])
+    expect(ws.undone.ahead).toEqual([])
+  })
+
+  test('done again asks for each step but the ones the others cause', async () => {
+    const ws = store({
+      kind: 'many',
+      steps: [
+        { kind: 'delete', path: '/s/A/b.md', content: '# b' },
+        { kind: 'move', from: '/s/A/A.md', to: '/s/A.md', follows: true },
+        { kind: 'move', from: '/s/c.md', to: '/s/W/c.md' },
+      ],
+    })
+    const asked: string[] = []
+    const does = Object.assign(ws, {
+      move: (from: string, into: string) => {
+        asked.push(`move ${from} -> ${into}`)
+        ws.undone.record({ kind: 'move', from, to: `${into}/c.md` })
+        return Promise.resolve()
+      },
+      remove: (path: string, folder: boolean) => {
+        asked.push(`remove ${path}${folder ? ' folder' : ''}`)
+        ws.undone.record({ kind: 'delete', path, content: '' })
+        return Promise.resolve()
+      },
+      rename: () => Promise.resolve(),
+    }) as unknown as PutsBack & import('./redoing').DoesAgain
+
+    await undoLastFileAction(does)
+    await redoLastFileAction(does)
+
+    expect(asked).toEqual(['remove /s/A/b.md', 'move /s/c.md -> /s/W'])
+    expect(does.undone.stack.map((one) => one.kind)).toEqual(['many'])
+    expect(does.undone.ahead).toEqual([])
+  })
+})
+
+describe('something made, taken back', () => {
+  test('goes to Recently deleted, and comes back out of it when done again', async () => {
+    const ws = store({ kind: 'create', path: '/s/New.md' })
+    const does = Object.assign(ws, {
+      move: () => Promise.resolve(),
+      rename: () => Promise.resolve(),
+      remove: () => Promise.resolve(),
+    }) as unknown as PutsBack & import('./redoing').DoesAgain
+
+    await undoLastFileAction(does)
+    expect(told).toEqual(['binned /s/New.md', 'gone /s/New.md'])
+    expect(does.undone.next).toEqual({
+      kind: 'create',
+      path: '/s/New.md',
+      content: '# new',
+      trashId: 't-/s/New.md',
+    })
+
+    told.length = 0
+    await redoLastFileAction(does)
+    expect(sent.at(-1)).toMatchObject({ command: 'restore_trash' })
+    expect(told).toEqual(['back /s/New.md'])
+    expect(does.undone.last).toEqual({ kind: 'create', path: '/s/New.md' })
+  })
+
+  test('and a folder a nesting made goes with the note that went into it', async () => {
+    const ws = store({ kind: 'move', from: '/s/A.md', to: '/s/A/A.md', nests: true })
+    await undoLastFileAction(ws)
+
+    expect(sent.map((one) => `${one.command} ${one.path}`)).toEqual([
+      'rename_note ',
+      'remove_empty_folder /s/A',
+    ])
+  })
+})
+
+describe('a folder deleted', () => {
+  test('signed in comes back as the folders and the words it held', async () => {
+    const ws = store({
+      kind: 'delete',
+      path: '/s/A',
+      content: '',
+      folder: true,
+      notes: [{ path: '/s/A/B/b.md', content: '# b' }],
+      folders: ['/s/A/B'],
+    })
+    await undoLastFileAction(ws)
+
+    expect(sent.map((one) => `${one.command} ${one.path}`)).toEqual([
+      'create_folder /s/A',
+      'create_folder /s/A/B',
+      'write_note /s/A/B/b.md',
+    ])
+    expect(told.at(-1)).toBe('back /s/A')
+  })
+
+  test('signed out comes back out of the trash whole', async () => {
+    const ws = store({ kind: 'delete', path: '/s/A', content: '', folder: true, trashId: 'f1' })
+    await undoLastFileAction(ws)
+
+    expect(sent).toEqual([{ command: 'restore_trash', path: '', content: '' }])
+    expect(told.at(-1)).toBe('back /s/A')
   })
 })

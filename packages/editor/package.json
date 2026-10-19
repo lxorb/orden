@@ -6,6 +6,7 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
+    "./flow": "./src/live-preview/flow.ts",
     "./menu": "./src/menu.ts",
     "./review": "./src/review/marks.ts",
     "./task-days": "./src/task-days.ts"
@@ -42,6 +43,7 @@
   "devDependencies": {
     "@nib/lang-html": "workspace:*",
     "@types/node": "^24.13.3",
+    "jsdom": "^28.1.0",
     "typescript": "^5.9.3",
     "vitest": "^5.0.0"
   }

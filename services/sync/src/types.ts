@@ -11,7 +11,7 @@ export interface Env {
   ROOMS?: DurableObjectNamespace
 
   /** One hub per account (and per guest): the socket every signed-in device keeps
-   *  open, for pokes, web leases and the web key's relay; see hub/hub.ts. Absent in
+   *  open, for pokes; see hub/hub.ts. Absent in
    *  the route tests that do not ask for it, and every caller copes: a poke with no
    *  hub is a poke nobody hears, which polling covers. */
   HUB?: DurableObjectNamespace
@@ -54,11 +54,24 @@ export interface Env {
 
   /** Root domain that hands out free blog subdomains. */
   BLOG_ROOT: string
+  /** The other roots the same subdomains are served under, comma-separated: the
+   *  service's other name, so `x.<either>` is one site. See hosts.ts. */
+  OTHER_BLOG_ROOTS?: string
   /** The host a domain of one's own is CNAMEd to. One fixed name inside
    *  BLOG_ROOT that publishes nothing itself; its label is reserved. Also the
    *  zone's fallback origin for Cloudflare for SaaS. */
   BLOG_CNAME_TARGET: string
+  /** The origin every link the service writes names. */
   APP_ORIGIN: string
+  /** The other origins the service answers on as itself, comma-separated: the
+   *  name it had, which installed apps, connectors and links already sent keep
+   *  using. Answered directly, never redirected; see hosts.ts. */
+  OTHER_ORIGINS?: string
+  /** The domain the machines' hostnames are made in: the zone CF_ZONE_ID names,
+   *  which holds their DNS records. Its own var because nobody types a machine's
+   *  name, so it stays where its records are when the app's name moves. Absent,
+   *  it is APP_ORIGIN's host. See machines/hetzner-host.ts. */
+  MACHINE_DOMAIN?: string
 
   /** Cloudflare for SaaS, which issues certificates for domains people bring:
    *  the zone that holds the custom hostnames, and a token allowed to edit
@@ -212,10 +225,6 @@ export interface Space {
   /** What the site made of this space decides, as one JSON object; see
    *  spaces/site.ts. `{}` until something about it is chosen. */
   site: string
-  /** Which web store its pages live in on every computer; see spaces/web-store.ts.
-   *  `global` until the owner chooses. Optional because a space made in this very
-   *  request has not been read back, and it is `global` then too. */
-  web_store?: string
   /** When a v2 device first asked for its tree as rows; null before. From then on
    *  every write that places a note keeps the rows current; see src/sync2/prepare.ts.
    *  Optional for the same reason as the web store. */

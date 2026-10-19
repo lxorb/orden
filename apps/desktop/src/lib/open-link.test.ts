@@ -1,6 +1,7 @@
-import { describe, expect, test } from 'vitest'
+import { afterEach, describe, expect, test } from 'vitest'
 import { type Press, tabAsk } from './new-tab'
-import { type LinkPlace, opensLink, placeFor, webHref } from './open-link'
+import { type LinkPlace, opensLink, placeFor, settingsPane, webHref } from './open-link'
+import { viewport } from './viewport.svelte'
 
 /** Which press on a link goes where.
  *
@@ -82,6 +83,29 @@ describe('what never becomes a tab', () => {
   })
 })
 
+/** Which builds have somewhere to put a page, read off the device when nobody says:
+ *  the desktop alone. A tablet hands a page to the system's browser as a phone does
+ *  (#206), where it used to draw it in a frame inside nib. */
+describe('where a page may go', () => {
+  const was = viewport.device
+  afterEach(() => {
+    viewport.device = was
+  })
+
+  test('a desktop puts it in a tab', () => {
+    viewport.device = 'desktop'
+    expect(placeFor('https://svelte.dev/docs', 'plain')).toBe('here')
+  })
+
+  test('a phone and a tablet hand it to the system', () => {
+    viewport.device = 'phone'
+    expect(placeFor('https://svelte.dev/docs', 'plain')).toBe('system')
+    viewport.device = 'tablet'
+    expect(placeFor('https://svelte.dev/docs', 'plain')).toBe('system')
+    expect(placeFor('https://svelte.dev/docs', 'behind')).toBe('system')
+  })
+})
+
 describe('the address a link means', () => {
   test('a protocol-relative address is https, which is what a browser makes of it', () => {
     expect(webHref('//example.com/a')).toBe('https://example.com/a')
@@ -103,5 +127,21 @@ describe('reading the press', () => {
     expect(opensLink({ button: 0, ctrlKey: false, metaKey: false, shiftKey: false })).toBe(true)
     expect(opensLink({ button: 1, ctrlKey: false, metaKey: false, shiftKey: false })).toBe(true)
     expect(opensLink({ button: 2, ctrlKey: false, metaKey: false, shiftKey: false })).toBe(false)
+  })
+})
+
+/** The welcome note's last line, which opens Settings > Import rather than leaving the
+ *  app for a scheme nobody else answers. See welcome.ts. */
+describe('a link to a settings pane', () => {
+  test('opens Import, however it is spelled', () => {
+    expect(settingsPane('nib://settings/import')).toBe('import')
+    expect(settingsPane(' NIB://Settings/Import/ ')).toBe('import')
+  })
+
+  test('and nothing else is one', () => {
+    expect(settingsPane('nib://settings/account')).toBeNull()
+    expect(settingsPane('nib://settings/import/more')).toBeNull()
+    expect(settingsPane('https://example.com/settings/import')).toBeNull()
+    expect(settingsPane('nib://open?path=settings/import')).toBeNull()
   })
 })

@@ -9,7 +9,8 @@ foot, and one session opened as its calls.
 What it checks on the way, and fails on: the trifecta line is on the agent that reads
 notes and browses, and not on the one that does not; a switch pressed is in the
 crate's grant, and so is what it needs; a site typed as an address is kept as its
-site; a right-to-left language turns the pane round.
+site; the browser's memory has no limit until one is set, and one set is in the grant
+(#333); a right-to-left language turns the pane round.
 
 From the repository root; the harness builds the app with its handle on the page
 the first time and serves it (see harness.py):
@@ -53,6 +54,28 @@ def check(what: str, held: bool) -> None:
         wrong(what)
 
 
+def switch(page, name: str) -> None:
+    """Presses the switch of that name, brought to the middle of the column first. A
+    click scrolls what it presses into view by itself in Chromium; in WebKit it did not
+    reach into the sheet's column, so the press landed below the window, on nothing,
+    and the switch never moved. Then until the switch says it moved, which is the
+    grant written back through the crate's stand-in and drawn again: on a busy runner
+    in WebKit that was now and then more than the 200 ms the drive used to give it."""
+    row = page.locator(".agents [role=switch]", has_text=name)
+    row.evaluate("(one) => one.scrollIntoView({ block: 'center', behavior: 'instant' })")
+    quiet(page)
+    was = row.get_attribute("aria-checked")
+    row.click()
+    moved = row.evaluate(
+        "(one, was) => new Promise((done) => { const at = Date.now(); const look = () =>"
+        " one.getAttribute('aria-checked') !== was ? done(true) : Date.now() - at > 5000 ?"
+        " done(false) : setTimeout(look, 50); look() })",
+        was,
+    )
+    if not moved:
+        say(f"     the switch {name!r} did not move when pressed")
+
+
 def body_to(page, where: str) -> None:
     """Scrolls the pane's column to the top, the middle or the foot."""
     page.evaluate(
@@ -65,6 +88,44 @@ def body_to(page, where: str) -> None:
         where,
     )
     quiet(page)
+
+
+MEMORY = ".agents .nib-setting.sliding:has-text('Browser memory limit')"
+
+SLIDE = """
+([label, value]) => {
+  const row = [...document.querySelectorAll('.agents .nib-setting.sliding')].find(
+    (one) => one.querySelector('.name')?.textContent?.trim() === label,
+  )
+  const range = row.querySelector('input[type=range]')
+  range.value = String(value)
+  range.dispatchEvent(new Event('input', { bubbles: true }))
+  range.dispatchEvent(new Event('change', { bubbles: true }))
+}
+"""
+
+
+def memory_limit(page, name: str) -> None:
+    """#333: there was a 3 GB ceiling on the browser for every agent. The row starts at
+    Off, which is no ceiling, and a limit the reader sets is in the grant, and can be
+    taken away again."""
+    row = page.locator(MEMORY)
+    row.scroll_into_view_if_needed()
+    quiet(page)
+    # The words in the row, not what is drawn of them: WebKit has no innerText for a
+    # row its scroller has not drawn yet, and Chromium does (#384).
+    said = lambda: (row.locator(".value").text_content() or "").strip()  # noqa: E731
+    check(f"[{name}] the memory limit starts Off", said() == "Off")
+    check(f"[{name}] and the grant holds no ceiling", page.evaluate(GRANT, "claude-code")["limits"]["memory"] == 0)
+    page.evaluate(SLIDE, ["Browser memory limit", 4096])
+    page.wait_for_timeout(200)
+    quiet(page)
+    check(f"[{name}] a limit set is in the grant", page.evaluate(GRANT, "claude-code")["limits"]["memory"] == 4096)
+    check(f"[{name}] and its row says it", said() == "4 GB")
+    shot(page, f"{name}-memory-limit")
+    page.evaluate(SLIDE, ["Browser memory limit", 0])
+    page.wait_for_timeout(200)
+    check(f"[{name}] and taken away again", page.evaluate(GRANT, "claude-code")["limits"]["memory"] == 0)
 
 
 def look(browser, scheme: str, language: str) -> None:
@@ -127,20 +188,24 @@ def look(browser, scheme: str, language: str) -> None:
     quiet(page)
     photograph("session")
     page.locator(".agents .session").first.click()
+    # Until the calls have slid away: the rows below rise as they go, and in WebKit a
+    # press made while they rose went down on one row and up on another, which is no
+    # click at all (#384).
+    page.wait_for_selector(".agents .calls", state="detached")
     quiet(page)
 
     if language == "en":
         # A switch pressed is in the crate, with what it needs: scripts need a browser,
         # and Claude Code's is on, so scripts alone come on.
-        page.locator(".agents [role=switch]", has_text="Run scripts in pages").click()
+        switch(page, "Run scripts in pages")
         page.wait_for_timeout(200)
         grant = page.evaluate(GRANT, "claude-code")
         check(f"[{name}] a switch pressed is in the crate's grant", "browser.script" in grant["scopes"])
 
         # Turning the reader's tabs off takes their cookies with them.
-        page.locator(".agents [role=switch]", has_text="Read your cookies").click()
+        switch(page, "Read your cookies")
         page.wait_for_timeout(200)
-        page.locator(".agents [role=switch]", has_text="Act in your tabs").click()
+        switch(page, "Act in your tabs")
         page.wait_for_timeout(200)
         grant = page.evaluate(GRANT, "claude-code")
         check(
@@ -148,8 +213,10 @@ def look(browser, scheme: str, language: str) -> None:
             "browser.reader" not in grant["scopes"] and "browser.storage" not in grant["scopes"],
         )
 
-        # A site typed as an address from the bar is kept as its site.
-        field = page.locator(".agents .card .add").nth(1)
+        # A site typed as an address from the bar is kept as its site. The Sites card's
+        # own field, named by its heading: counting fields found the terminal's list of
+        # programs instead, once the agent's terminal was on and drew it above.
+        field = page.locator(".agents h3:text-is('Sites') + .card .add")
         field.press_sequentially("https://login.bank2.example/sign-in?next=/")
         field.press("Enter")
         page.wait_for_function(
@@ -157,6 +224,8 @@ def look(browser, scheme: str, language: str) -> None:
         )
         grant = page.evaluate(GRANT, "claude-code")
         check(f"[{name}] a typed address is kept as its site", grant["sites"].get("bank2.example") == "deny")
+
+        memory_limit(page, name)
 
     body_to(page, "middle")
     photograph("agent-middle")

@@ -12,6 +12,7 @@ import { api, type AccountSettings } from './api'
 import { t } from './i18n.svelte'
 import {
   currentPlatform,
+  type Keystroke,
   matchesCombination,
   parseCombination,
   sameCombination,
@@ -174,6 +175,8 @@ class Shortcuts {
   refuse(key: string): string | null {
     const combination = parseCombination(key, this.platform)
     if (!combination) return t('That is not a key combination.')
+    // The Windows key is the desktop's own outside a Mac.
+    if (combination.meta && this.platform !== 'mac') return t('That is not a key combination.')
 
     const bare = !combination.ctrl && !combination.meta && !combination.alt
     // Named the way the platform names them: a Mac prints its keys as signs, and
@@ -280,7 +283,7 @@ class Shortcuts {
   /** Whether a keystroke is the one an entry holds. What a panel with keys of
    *  its own asks, since those fire where the focus is rather than on the
    *  window. */
-  pressed(id: string, event: KeyboardEvent): boolean {
+  pressed(id: string, event: Keystroke): boolean {
     const key = this.keyFor(id)
     return !!key && matchesCombination(key, event, this.platform)
   }

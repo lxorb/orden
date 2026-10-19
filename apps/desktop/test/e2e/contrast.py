@@ -1,8 +1,8 @@
-"""Contrast, measured: the high contrast theme the app ships with, on both of its sides.
+"""Contrast, measured: the contrast theme the app ships with, on both of its sides.
 
 Contrast was a switch beside the mode, and what it did was restate the palette over
 whichever theme was in force. It is a theme now - one of the two the app ships with,
-`High contrast` in the Style row and `contrast` in the palette - so what is measured
+`Contrast` in the Style row and `contrast` in the palette - so what is measured
 here is a theme: every colour that has to be read, against the page it is read on, in
 the dark and in the light, plus the syntax inside a code fence, which no theme could
 reach at all until the four `--syntax-*` tokens existed and which is the reason the
@@ -10,10 +10,8 @@ switch existed in the first place.
 
 The theme is chosen through the app itself, `theme.select('contrast')`, because it is
 built in: nothing is fetched, nothing is installed, and a first launch with no network
-at all is answered with it. The same palette is published as `contrast` in
-lxorb/nib-themes for a reader who wants to update it separately, and installing that
-copy still works; what this drive measures is the copy that is always there. See
-contrast.css in @nib/themes.
+at all is answered with it. It is the only Contrast: the copy lxorb/orden-themes had
+is gone, and one still installed is read as this one. See contrast.css in @nib/themes.
 
 Serves the built web app and drives it in Chromium. The build has
 to be one a drive may steer - `--mode drive` - or `window.nib` and `window.nibApp`
@@ -144,10 +142,10 @@ FLOORS = {
     "--success": 4.5,
 }
 
-# The catalogue is behind nibeditor.com and this run is not about reaching it. A
+# The catalogue is behind the service and this run is not about reaching it. A
 # console error that is the browser reporting a request nobody could answer is not
 # the app going wrong.
-TOLERATED = ("nibeditor.com", "Failed to load resource", "net::ERR")
+TOLERATED = ("orden.so", "nibeditor.com", "Failed to load resource", "net::ERR")
 
 
 def listen(page: Page, label: str) -> None:
@@ -200,7 +198,7 @@ def ratios(page: Page) -> dict:
 
 
 def wear_the_theme(page: Page) -> None:
-    """Chooses the built-in high contrast theme, which is all it takes: the palette
+    """Chooses the built-in contrast theme, which is all it takes: the palette
     ships with the app, so nothing is fetched and nothing is installed."""
     page.evaluate("() => window.nibApp.theme.select('contrast')")
     page.wait_for_timeout(400)
@@ -308,7 +306,7 @@ def drive_offered(browser: Browser) -> None:
         wrong("a system asking for more contrast was not answered")
     # The theme itself, not a card to fetch one from: it ships with the app.
     if page.evaluate("() => window.nibApp.theme.id") != "contrast":
-        wrong("the launch did not choose the high contrast theme")
+        wrong("the launch did not choose the contrast theme")
     if page.evaluate("() => localStorage.getItem('nib:theme')") != "contrast":
         wrong("the choice was not written down, so the next launch would forget it")
     if page.evaluate("() => window.nibApp.settings.section") != "appearance":

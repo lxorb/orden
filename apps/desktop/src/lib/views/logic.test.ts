@@ -23,10 +23,13 @@ import { expressionOf, filterOf, literal, rowOf, rowsOf } from './filter-rows'
 import { noteRow, taskRow } from './fixture'
 import { pieces, plain } from './inline'
 import { switched } from './layout'
-import { listItems } from './list-items'
+import { listItems, withEveryDay, withinDays, withPicked } from './list-items'
 import { panelCounts } from './panel'
+import { shortcuts } from '../shortcuts.svelte'
 import { rowKey } from './row-keys'
+import './task-keys'
 import { readSpec, sameView, writeSpec } from './spec'
+import { swiped } from './swipe-row'
 import { barOf, dragged, spanOf } from './timeline'
 
 const TODAY = '2026-10-04'
@@ -198,8 +201,9 @@ describe('a drop into a group', () => {
     expect(dropInto('formula.day', { kind: 'date', iso: '2026-10-09' }, bank, TODAY)).toEqual({
       change: { task: { due: '2026-10-09' } },
     })
+    // Out of overdue is a deadline of today: only a deadline makes a task late (#371).
     expect(dropInto('formula.overdue', false, bank, TODAY)).toEqual({
-      change: { task: { due: TODAY } },
+      change: { task: { deadline: TODAY } },
     })
     expect(dropInto('formula.overdue', true, bank, TODAY)).toBeNull()
     expect(dropInto('task.priority', 1, bank, TODAY)).toEqual({ change: { task: { priority: 1 } } })
@@ -242,6 +246,79 @@ describe('a task’s lines moved', () => {
     expect(cutBlock(note, a)?.block).toEqual(['- [ ] A', '  - [ ] A1'])
     expect(withLines('', ['- [ ] New'])).toBe('- [ ] New\n')
     expect(withLines('# P\n\n- [ ] A\n\n', ['- [ ] New'])).toBe('# P\n\n- [ ] A\n- [ ] New\n\n')
+  })
+
+  test('many at once take a parent with its sub-tasks, from the last up', async () => {
+    const { outermost } = await import('./lines')
+    const note = '- [ ] A\n  - [ ] A1\n- [ ] B\n'
+    const anchor = (line: string, at: number) => {
+      const found = taskRow('P.md', line, at).anchor
+      if (!found) throw new Error('fixture')
+      return found
+    }
+    const a = { id: 'a', anchor: anchor('- [ ] A', 0) }
+    const a1 = { id: 'a1', anchor: anchor('  - [ ] A1', 1) }
+    const b = { id: 'b', anchor: anchor('- [ ] B', 2) }
+    expect(outermost(note, [a1, a, b]).map((one) => one.id)).toEqual(['b', 'a'])
+    expect(outermost(note, [a1]).map((one) => one.id)).toEqual(['a1'])
+  })
+})
+
+describe('Upcoming as a board', () => {
+  test('is a column for every day of its two weeks, what is overdue first', () => {
+    const groups = [
+      { key: 'overdue', rows: [], summaries: {} },
+      { key: { kind: 'date' as const, iso: '2026-10-04' }, rows: [], summaries: {} },
+      { key: { kind: 'date' as const, iso: '2026-10-30' }, rows: [], summaries: {} },
+    ]
+    const days = withinDays(
+      withEveryDay(groups, '2026-10-11', '2026-10-24'),
+      '2026-10-11',
+      '2026-10-24',
+    )
+    expect(days).toHaveLength(15)
+    expect(days[0]?.key).toBe('overdue')
+  })
+})
+
+describe('a repeating task', () => {
+  test('is skipped to its next day, or done for good, each line on its own', async () => {
+    const { editedLines } = await import('./lines')
+    const { finish, skip } = await import('@nib/bases')
+    const note = '- [ ] Water 🔁 every week 📅 2026-10-12\n- [ ] Read\n'
+    const water = taskRow('P.md', '- [ ] Water 🔁 every week 📅 2026-10-12', 0).anchor
+    if (!water) throw new Error('fixture')
+    expect(editedLines(note, [water], (line) => skip(line, '2026-10-13'))).toBe(
+      '- [ ] Water 🔁 every week 📅 2026-10-19\n- [ ] Read\n',
+    )
+    expect(editedLines(note, [water], (line) => finish(line, '2026-10-13'))).toBe(
+      '- [x] Water 📅 2026-10-12 ✅ 2026-10-13\n- [ ] Read\n',
+    )
+  })
+})
+
+describe('selecting rows', () => {
+  const order = ['a', 'b', 'c', 'd']
+
+  test('a press toggles one, and Shift takes in every row from the last one', () => {
+    const one = withPicked(new Set(), order, 'b', null)
+    expect([...one]).toEqual(['b'])
+    expect([...withPicked(one, order, 'b', null)]).toEqual([])
+    expect([...withPicked(one, order, 'd', 'b')].sort()).toEqual(['b', 'c', 'd'])
+    expect([...withPicked(one, order, 'a', 'gone')].sort()).toEqual(['a', 'b'])
+  })
+
+  test('a project carried onto another lands on the half it is over', async () => {
+    const { landsAfter } = await import('./reorder-drag')
+    expect(landsAfter(5, 0, 28)).toBe(false)
+    expect(landsAfter(20, 0, 28)).toBe(true)
+  })
+
+  test('a swipe is done a third of the way across, or a hand’s breadth', () => {
+    expect(swiped(100, 300)).toBe('right')
+    expect(swiped(-100, 300)).toBe('left')
+    expect(swiped(99, 300)).toBeNull()
+    expect(swiped(130, 1200)).toBe('right')
   })
 })
 
@@ -318,21 +395,22 @@ describe('the calendar', () => {
 
 describe('the timeline', () => {
   const read = () => null
-  test('runs a task from its start to its due date and writes what a drag moved', () => {
+  test('runs a task from its start to its deadline and writes what a drag moved', () => {
+    // Beside a `🛫`, a `📅` is the deadline (#371).
     const talk = taskRow('T.md', '- [ ] Talk 🛫 2026-10-05 📅 2026-10-08')
     const bar = barOf(talk, {}, read)
     expect(bar).toMatchObject({
       start: '2026-10-05',
       end: '2026-10-08',
       from: 'task.start',
-      to: 'task.due',
+      to: 'task.deadline',
     })
     if (!bar) throw new Error('bar')
     expect(dragged(bar, 'move', 2)).toEqual({
       'task.start': '2026-10-07',
-      'task.due': '2026-10-10',
+      'task.deadline': '2026-10-10',
     })
-    expect(dragged(bar, 'end', -5)).toEqual({ 'task.due': '2026-10-05' })
+    expect(dragged(bar, 'end', -5)).toEqual({ 'task.deadline': '2026-10-05' })
     const one = barOf(taskRow('T.md', '- [ ] One 📅 2026-10-08'), {}, read)
     if (!one) throw new Error('bar')
     expect(dragged(one, 'start', -2)).toEqual({ 'task.start': '2026-10-06' })
@@ -433,21 +511,45 @@ describe('the keys of a row', () => {
     ...extra,
   })
 
+  const keyFor = (id: string) => shortcuts.defaultFor(id)
+  const on = (key: string, extra: Partial<KeyboardEvent> = {}, mac = false) =>
+    rowKey(press(key, extra), keyFor, mac ? 'mac' : 'win')
+
   test('are Todoist’s', () => {
-    expect(rowKey(press('t'), false)).toEqual({ kind: 'due', when: 'today' })
-    expect(rowKey(press('T', { shiftKey: true }), false)).toEqual({ kind: 'due', when: 'tomorrow' })
-    expect(rowKey(press('M', { shiftKey: true }), false)).toEqual({ kind: 'due', when: 'monday' })
-    expect(rowKey(press('2'), false)).toEqual({ kind: 'priority', priority: 2 })
-    expect(rowKey(press('Enter', { ctrlKey: true }), false)).toEqual({ kind: 'tick' })
-    expect(rowKey(press('Enter', { metaKey: true }), true)).toEqual({ kind: 'tick' })
-    expect(rowKey(press('ArrowUp', { altKey: true }), false)).toEqual({ kind: 'move', up: true })
-    expect(rowKey(press('Tab', { shiftKey: true }), false)).toEqual({
-      kind: 'indent',
-      deeper: false,
-    })
-    expect(rowKey(press('q'), false)).toEqual({ kind: 'add' })
-    expect(rowKey(press('5'), false)).toBeNull()
-    expect(rowKey(press('t', { ctrlKey: true }), false)).toBeNull()
+    expect(on('ArrowDown')).toEqual({ kind: 'step', by: 1 })
+    expect(on('k')).toEqual({ kind: 'step', by: -1 })
+    expect(on('Enter')).toEqual({ kind: 'open' })
+    expect(on(' ')).toEqual({ kind: 'note' })
+    expect(on('e')).toEqual({ kind: 'tick' })
+    expect(on('Enter', { ctrlKey: true })).toEqual({ kind: 'tick' })
+    expect(on('Enter', { metaKey: true }, true)).toEqual({ kind: 'tick' })
+    expect(on('t')).toEqual({ kind: 'schedule' })
+    expect(on('T', { shiftKey: true })).toEqual({ kind: 'undate' })
+    expect(on('2')).toEqual({ kind: 'priority', priority: 2 })
+    expect(on('y')).toEqual({ kind: 'priorities' })
+    expect(on('l')).toEqual({ kind: 'labels' })
+    expect(on('v')).toEqual({ kind: 'project' })
+    expect(on('.')).toEqual({ kind: 'more' })
+    expect(on('x')).toEqual({ kind: 'pick' })
+    expect(on('Escape')).toEqual({ kind: 'unpick' })
+    expect(on('e', { ctrlKey: true })).toEqual({ kind: 'edit' })
+    expect(on(']', { ctrlKey: true })).toEqual({ kind: 'indent', deeper: true })
+    expect(on('Tab', { shiftKey: true })).toEqual({ kind: 'indent', deeper: false })
+    expect(on('ArrowUp', { altKey: true })).toEqual({ kind: 'move', up: true })
+    expect(on('ArrowDown', { ctrlKey: true })).toEqual({ kind: 'move', up: false })
+    expect(on('E', { shiftKey: true })).toEqual({ kind: 'fold' })
+    expect(on('Delete', { shiftKey: true })).toEqual({ kind: 'delete' })
+    expect(on('C', { ctrlKey: true, shiftKey: true })).toEqual({ kind: 'link' })
+    expect(on('q')).toEqual({ kind: 'add' })
+    expect(on('A', { shiftKey: true })).toEqual({ kind: 'add', where: 'top' })
+    expect(on('5')).toBeNull()
+    expect(on('t', { ctrlKey: true })).toBeNull()
+  })
+
+  test('follow a key put somewhere else', () => {
+    const moved = (id: string) => (id === 'tasks.complete' ? 'd' : keyFor(id))
+    expect(rowKey(press('d'), moved, 'win')).toEqual({ kind: 'tick' })
+    expect(rowKey(press('e'), moved, 'win')).toBeNull()
   })
 })
 
@@ -469,14 +571,17 @@ describe('the panel', () => {
   test('counts Inbox, Today and Upcoming as their views answer them, and the projects and labels', () => {
     const rows = [
       taskRow('Inbox.md', '- [ ] Idea'),
-      taskRow('Errands.md', '- [ ] Late #admin 📅 2026-10-01'),
+      // Late by its deadline: a start date past is never late (#371).
+      taskRow('Errands.md', '- [ ] Late #admin [deadline:: 2026-10-01]'),
       taskRow('Errands.md', '- [ ] Now 📅 2026-10-04', 1),
       taskRow('Thesis.md', '- [ ] Later #admin 📅 2026-10-09'),
       taskRow('Thesis.md', '- [x] Done ✅ 2026-10-01', 1),
     ]
     const counts = panelCounts(rows, TODAY, [{ space: 'Notes', path: 'Inbox.md' }])
-    expect(counts).toMatchObject({ inbox: 1, today: 2, overdue: true, upcoming: 1 })
-    expect(counts.projects.map((one) => `${one.name} ${one.count}`).sort()).toEqual([
+    expect(counts).toMatchObject({ inbox: 1, today: 2, overdue: true, upcoming: 3 })
+    // With the tasks that have no start date in Today, as Settings can have it (#408).
+    expect(panelCounts(rows, TODAY, [{ space: 'Notes', path: 'Inbox.md' }], true).today).toBe(3)
+    expect(counts.notes.map((one) => `${one.name} ${one.count}`).sort()).toEqual([
       'Errands 2',
       'Inbox 1',
       'Thesis 1',

@@ -13,11 +13,16 @@
 //! was handed is written down beside the list (`applied.json`), and a store whose version
 //! is behind the list's is handed the new folder, which replaces the old one by id.
 //!
+//! **Once per store** (#409): a store already holding an extension at the list's version
+//! is handed nothing, and one on its way in is not handed again until its answer is in;
+//! see given.rs. And the store is quiet while one arrives, so the page an extension opens
+//! about its own install never opens; see welcome.rs.
+//!
 //! Everything here runs on the window's own thread, where the engine's objects live and
 //! its answers arrive.
 
 use std::cell::RefCell;
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap, HashSet};
 use std::sync::Once;
 
 use tauri::webview::PlatformWebview;
@@ -33,12 +38,24 @@ use windows_core::{Interface as _, HSTRING, PWSTR};
 
 use super::library::{self, Kept};
 
+/// A store's profile, the environment it was reached through and the browser process
+/// that draws its pages.
+#[derive(Clone)]
+struct Open {
+    profile: ICoreWebView2Profile7,
+    environment: usize,
+    browser: u32,
+}
+
 thread_local! {
     /// The profile of every store with a page open this run, by store - the shared one
     /// under the empty name - with the environment it was reached through, so a store
     /// whose browser process ended and started again is reconciled again.
-    static OPEN: RefCell<HashMap<String, (ICoreWebView2Profile7, usize)>> =
-        RefCell::new(HashMap::new());
+    static OPEN: RefCell<HashMap<String, Open>> = RefCell::new(HashMap::new());
+
+    /// The extensions on their way into each store, as store and id, from the moment the
+    /// folder is handed over until the engine answers.
+    static ADDING: RefCell<HashSet<(String, String)>> = RefCell::new(HashSet::new());
 }
 
 /// The folders nothing names any more go once a run, off the window's thread.
@@ -55,15 +72,22 @@ pub fn seen(app: &AppHandle, store: Option<&str>, platform: &PlatformWebview) {
     };
     let key = store.unwrap_or_default().to_owned();
     let environment = platform.environment().as_raw() as usize;
-    let fresh = OPEN.with_borrow_mut(|open| {
-        let fresh = open.get(&key).is_none_or(|(_, seen)| *seen != environment);
+    let open = Open {
+        profile,
+        environment,
+        browser: browser_of(platform),
+    };
+    let fresh = OPEN.with_borrow_mut(|all| {
+        let fresh = all
+            .get(&key)
+            .is_none_or(|seen| seen.environment != environment);
         if fresh {
-            open.insert(key.clone(), (profile.clone(), environment));
+            all.insert(key.clone(), open.clone());
         }
         fresh
     });
     if fresh {
-        reconcile(app, &key, &profile);
+        reconcile(app, &key, &open);
     }
 
     let tidying = app.clone();
@@ -76,13 +100,13 @@ pub fn seen(app: &AppHandle, store: Option<&str>, platform: &PlatformWebview) {
 pub fn apply(app: &AppHandle) {
     let handle = app.clone();
     let _ = app.run_on_main_thread(move || {
-        let open: Vec<(String, ICoreWebView2Profile7)> = OPEN.with_borrow(|open| {
+        let open: Vec<(String, Open)> = OPEN.with_borrow(|open| {
             open.iter()
-                .map(|(key, (profile, _))| (key.clone(), profile.clone()))
+                .map(|(key, one)| (key.clone(), one.clone()))
                 .collect()
         });
-        for (key, profile) in open {
-            reconcile(&handle, &key, &profile);
+        for (key, one) in open {
+            reconcile(&handle, &key, &one);
         }
     });
 }
@@ -108,18 +132,31 @@ fn profile_of(platform: &PlatformWebview) -> Option<ICoreWebView2Profile7> {
     }
 }
 
+/// The browser process drawing a page, or 0 where the engine will not say.
+#[allow(unsafe_code, reason = "WebView2's own COM interface")]
+fn browser_of(platform: &PlatformWebview) -> u32 {
+    let mut browser = 0u32;
+    // Safe: the controller is this page's, asked on the thread it was built on.
+    unsafe {
+        if let Ok(core) = platform.controller().CoreWebView2() {
+            let _ = core.BrowserProcessId(&raw mut browser);
+        }
+    }
+    browser
+}
+
 /// Makes `store`'s profile hold what the list holds.
 #[allow(
     unsafe_code,
     reason = "the extensions are read, added, turned on and off and removed through WebView2's own COM interfaces"
 )]
-fn reconcile(app: &AppHandle, store: &str, profile: &ICoreWebView2Profile7) {
+fn reconcile(app: &AppHandle, store: &str, open: &Open) {
     let Ok(root) = super::root(app) else {
         return;
     };
     let list = super::kept(app);
     let store = store.to_owned();
-    let adding = profile.clone();
+    let (adding_to, browser) = (open.profile.clone(), open.browser);
 
     let handler =
         ProfileGetBrowserExtensionsCompletedHandler::create(Box::new(move |result, extensions| {
@@ -129,25 +166,32 @@ fn reconcile(app: &AppHandle, store: &str, profile: &ICoreWebView2Profile7) {
             let installed = extensions.map(|all| listed(&all)).unwrap_or_default();
             let applied = library::applied(&root);
             let given = applied.get(&store).cloned().unwrap_or_default();
+            let adding: BTreeSet<String> = ADDING.with_borrow(|all| {
+                all.iter()
+                    .filter(|(into, _)| *into == store)
+                    .map(|(_, id)| id.clone())
+                    .collect()
+            });
+            let ids: BTreeSet<String> = installed.keys().cloned().collect();
+            let plan = super::given::plan(&list, &ids, &given, &adding);
 
-            for kept in &list {
-                match installed.get(&kept.id) {
-                    Some(extension) if given.get(&kept.id) == Some(&kept.version) => {
-                        switched(extension, kept.enabled);
-                    }
-                    _ => add(&adding, &root, &store, kept),
+            for kept in plan.switch {
+                if let Some(extension) = installed.get(&kept.id) {
+                    switched(extension, kept.enabled);
                 }
             }
-            let mut stale = Vec::new();
-            for (id, extension) in &installed {
-                if !list.iter().any(|kept| &kept.id == id) {
+            for kept in plan.add {
+                add(&adding_to, &root, &store, kept, browser);
+            }
+            let stale = plan.remove;
+            for id in &stale {
+                if let Some(extension) = installed.get(id) {
                     // Safe: the extension is this profile's, on the window's thread.
                     unsafe {
                         let _ = extension.Remove(&BrowserExtensionRemoveCompletedHandler::create(
                             Box::new(|_| Ok(())),
                         ));
                     }
-                    stale.push(id.clone());
                 }
             }
             if !stale.is_empty() {
@@ -161,7 +205,7 @@ fn reconcile(app: &AppHandle, store: &str, profile: &ICoreWebView2Profile7) {
         }));
     // Safe: the profile is the page's, on the window's thread.
     unsafe {
-        let _ = profile.GetBrowserExtensions(&handler);
+        let _ = open.profile.GetBrowserExtensions(&handler);
     }
 }
 
@@ -206,8 +250,19 @@ fn switched(extension: &ICoreWebView2BrowserExtension, enabled: bool) {
 }
 
 /// Hands a profile one extension's folder, and writes down the version once it took it.
+///
+/// The store is quiet from the moment the folder is handed over, and again as the engine
+/// answers, which is when the extension's `onInstalled` has run or is running; see
+/// welcome.rs. And the extension is on its way in until then, so nothing hands it over a
+/// second time meanwhile; see given.rs.
 #[allow(unsafe_code, reason = "WebView2's own COM interface")]
-fn add(profile: &ICoreWebView2Profile7, root: &std::path::Path, store: &str, kept: &Kept) {
+fn add(
+    profile: &ICoreWebView2Profile7,
+    root: &std::path::Path,
+    store: &str,
+    kept: &Kept,
+    browser: u32,
+) {
     let folder = library::folder_of(root, &kept.id, &kept.version);
     if !folder.join("manifest.json").is_file() {
         super::went_wrong(&kept.id, "its files are missing");
@@ -220,8 +275,14 @@ fn add(profile: &ICoreWebView2Profile7, root: &std::path::Path, store: &str, kep
         kept.version.clone(),
         kept.enabled,
     );
+    let on_its_way = (store.clone(), id.clone());
+    super::welcome::adding(&store, browser);
+    ADDING.with_borrow_mut(|all| all.insert(on_its_way.clone()));
+    let arrived = on_its_way.clone();
     let handler =
         ProfileAddBrowserExtensionCompletedHandler::create(Box::new(move |result, extension| {
+            ADDING.with_borrow_mut(|all| all.remove(&arrived));
+            super::welcome::adding(&store, browser);
             match (result, extension) {
                 (Ok(()), Some(extension)) => {
                     if !enabled {
@@ -244,6 +305,7 @@ fn add(profile: &ICoreWebView2Profile7, root: &std::path::Path, store: &str, kep
     unsafe {
         if let Err(error) = profile.AddBrowserExtension(&HSTRING::from(folder.as_path()), &handler)
         {
+            ADDING.with_borrow_mut(|all| all.remove(&on_its_way));
             super::went_wrong(&kept.id, &error.message());
         }
     }

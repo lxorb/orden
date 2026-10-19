@@ -63,8 +63,8 @@ tunnel's route again, so Access can also be added later.
 
 ### 4. Check what the Worker sees
 
-`GET https://nibeditor.com/v2/online/admin` signed in as Emil: `hetzner.missing` is `[]`.
-`GET https://nibeditor.com/v2/online/machine/current` answers 64 hex characters.
+`GET https://orden.so/v2/online/admin` signed in as Emil: `hetzner.missing` is `[]`.
+`GET https://orden.so/v2/online/machine/current` answers 64 hex characters.
 
 ### 5. Move Emil's machine (this is when it starts to cost money)
 
@@ -90,8 +90,9 @@ tunnel's route again, so Access can also be added later.
    `systemctl is-active nibd cloudflared` both active; `sudo cat /var/log/cloud-init-output.log | grep -c NIBD_SECRET` is 0.
 3. Close every tab, wait an hour, open one: the same shell, `sleep 9999` still running (no
    sleep on a server).
-4. `sudo systemctl kill -s KILL nibd`: within seconds `relink`; the shells end with it and the
-   screens come back (systemd restarts nibd).
+4. `sudo systemctl kill -s KILL nibd` with `sleep 9999` running in a terminal: within seconds
+   `relink`, and the same `sleep` still running on the same screen (systemd restarts nibd; the
+   sleep's holder is not in its unit, `docs/online-terminal.md` 4.16).
 5. Settings > Online terminal > **Restart**: a `restart` row, the terminal back in seconds.
 6. Admin Reboot, `POST /v2/online/admin/machines/<id>/reboot`: `reboot`, then `wake restart`
    a minute or two later; the files are all there.
@@ -232,9 +233,9 @@ the backup and snapshot are skipped (the dev host keeps none). workerd has no ju
 so with `MACHINE_DEV_NIBD` set the `Machine` objects are asked outside the EU one (ask.ts).
 
 `scripts/online-e2e.mjs` is all of this in one command, against a machine booted from the
-image: CI's machine workflow runs it on every change to the image, nibd or the Worker's
-machines (a session made as sync v1 makes one, typing, a reconnect with `since`, a late
-joiner's screen).
+image: CI's machine workflow runs it on every pull request into `main` that changes the
+image, nibd or the Worker's machines (a session made as sync v1 makes one, typing, a
+reconnect with `since`, a late joiner's screen).
 
 ## Kill switches, for reference
 

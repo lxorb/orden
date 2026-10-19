@@ -26,7 +26,7 @@ import { searchFrom } from '../search.svelte'
 import { askQuickly } from '../ai/quick-door'
 import { showQuickAdd } from '../surfaces.svelte'
 import { toggleScratchpad } from '../scratchpad/is.svelte'
-import { settings } from '../settings.svelte'
+import { hiddenKinds, settings } from '../settings.svelte'
 // The space actions are already in the first chunk, since the sidebar and the app
 // menu both reach them, so this costs nothing to load early.
 import { stepSpace } from '../space-actions'
@@ -61,6 +61,7 @@ export type Category =
   | 'pages'
   | 'table'
   | 'picture'
+  | 'tasks'
   | 'fixed'
 
 export const CATEGORIES: { id: Category; label: () => string }[] = [
@@ -300,7 +301,9 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'file',
     scope: 'app',
     key: 'Mod-Alt-n',
-    run: () => workspace.openBlank(),
+    run: () => {
+      if (hiddenKinds.offers('note')) workspace.openBlank()
+    },
   },
   // Ctrl+T is a new tab, as in every browser: the kinds a tab can be under an address
   // field that has the keyboard, which is what the plus makes too (Emil, issue #213).
@@ -337,7 +340,10 @@ const APP_ENTRIES: Shortcut[] = [
     category: 'file',
     scope: 'app',
     key: 'Mod-Shift-n',
-    run: () => void import('../web-tab/private').then(({ openPrivate }) => openPrivate()),
+    run: () => {
+      if (hiddenKinds.offers('private'))
+        void import('../web-tab/private').then((one) => one.openPrivate())
+    },
     desktop: true,
   },
   // Obsidian's Random note. No key out of the box, as there; see random-note.ts.
@@ -821,7 +827,7 @@ const APP_ENTRIES: Shortcut[] = [
   // names for the key. See runHandlers in @codemirror/view.
   //
   // Obsidian ships `file-explorer:open` and `outline:open` with no key at all and
-  // Notion has nothing of the kind, so three of these are Nib's own; Ctrl+Shift+E
+  // Notion has nothing of the kind, so three of these are Orden's own; Ctrl+Shift+E
   // for the files is what VS Code puts its explorer on, and Ctrl+Shift+F for
   // search is already Obsidian's.
   {
@@ -937,12 +943,14 @@ const APP_ENTRIES: Shortcut[] = [
   },
   // The selection into the AI panel's field as `@Note:12-14`, Claude Code's Alt+K: the
   // words as they are now, which go with the next message whatever is selected then.
+  // Cmd+Opt+K on a Mac, where Option+K types a character (a German keyboard's °).
   {
     id: 'app.ask-selection',
     label: () => t('Selection to the AI panel'),
     category: 'view',
     scope: 'app',
     key: 'Alt-k',
+    mac: 'Mod-Alt-k',
     run: () => {
       if (!__EVEN_PLUGIN__) void import('../ai/sidebar/quote').then((one) => one.quoteSelection())
     },
@@ -1462,6 +1470,9 @@ const CANVAS_ENTRIES: Shortcut[] = (
     ['canvas.tool.erase', () => t('Erase'), 'e'],
     ['canvas.tool.lasso', () => t('Lasso'), 'q'],
     ['canvas.tool.text', () => t('Card'), 'c'],
+    // Words with no card round them (#421). Not T, which Triangle has had since the
+    // shapes came: W for the words, free on every board this one is read beside.
+    ['canvas.tool.words', () => t('Text'), 'w'],
     ['canvas.tool.file', () => t('Note'), 'n'],
     ['canvas.tool.picture', () => t('Picture'), 'i'],
     ['canvas.tool.link', () => t('Link'), 'k'],
@@ -1486,6 +1497,16 @@ const CANVAS_ENTRIES: Shortcut[] = (
     // the words from one key. The same trade the plane's Ctrl+1 makes under the
     // Obsidian preset; see presets.ts.
     ['canvas.fit', () => t('Fit the canvas'), 'Mod-Alt-0'],
+    // And the zoom itself on the two keys beside it, the page note's own: the bar no
+    // longer has buttons for it, and a reader without a wheel or a pinch still zooms
+    // (#401).
+    ['canvas.zoom.in', () => t('Zoom in'), 'Mod-Alt-='],
+    ['canvas.zoom.out', () => t('Zoom out'), 'Mod-Alt--'],
+    // Back to 100% (#369): the bar's reading of the zoom does it, and a reader who wants
+    // a key gives it one. Ctrl+0 is the app's text size, and Ctrl+Alt+0 the fit.
+    ['canvas.zoom.actual', () => t('Actual size'), null],
+    // Upright again (#351).
+    ['canvas.upright', () => t('Turn upright'), 'Mod-Alt-r'],
     ['canvas.frame', () => t('Zoom to what is picked'), 'Mod-1'],
     ['canvas.find', () => t('Find on the canvas'), 'Mod-f'],
     ['canvas.front', () => t('Bring to front'), 'Mod-Shift-]'],

@@ -24,14 +24,21 @@
  *  Any one of them fixes Emil's complaint. All three are here because each is a
  *  different way of being wrong about the same thing. */
 
-/** Where the shim writes it, in the virtual file system's own absolute form. */
-export const WELCOME_PATH = '/Notes/Read me.md'
+/** The space it is written into: the browser build's only one, and the one a fresh
+ *  start makes on the others (first-space.svelte.ts). */
+export const WELCOME_SPACE = 'Notes'
 
 /** What it is called inside its space, which is the shape syncing sees. */
 export const WELCOME_NAME = 'Read me.md'
 
+/** Where the shim writes it, in the virtual file system's own absolute form. */
+export const WELCOME_PATH = `/${WELCOME_SPACE}/${WELCOME_NAME}`
+
+/** The way to Settings > Import, which every seed before 2026-10-13 was without. */
+const IMPORT_LINE = '\n[Import from Obsidian or Notion](nib://settings/import)\n'
+
 /** Written by every build - see first-space.svelte.ts - so it names none. */
-export const WELCOME = `# Welcome to nibeditor
+export const WELCOME = `# Welcome to Orden
 
 Your notes live on this device until you sign in
 and turn on syncing, and then they follow you everywhere.
@@ -48,15 +55,18 @@ const hello = 'world'
 | ---- | ----- |
 | Notes | this device |
 | Synced notes | your account |
-`
+${IMPORT_LINE}`
 
-/** The seed as it was written while the app was still called Nib. */
-const AS_NIB = WELCOME.replace('# Welcome to nibeditor', '# Welcome to Nib')
+/** The seed as it was written while the app was called nibeditor, and before that
+ *  Nib. Word for word, because that is what an untouched one is. */
+const AS_NIBEDITOR = WELCOME.replace('# Welcome to Orden', '# Welcome to nibeditor')
+const AS_NIB = WELCOME.replace('# Welcome to Orden', '# Welcome to Nib')
 
 /** What earlier versions wrote. Still untouched on the devices they seeded: every
- *  one of them before the name, and the browser's before its words stopped saying
- *  which build they were in. */
+ *  one of them under either earlier name, and the browser's before its words
+ *  stopped saying which build they were in. */
 const EARLIER = [
+  AS_NIBEDITOR,
   AS_NIB,
   AS_NIB.replace(
     'Your notes live on this device',
@@ -72,5 +82,8 @@ const EARLIER = [
  *  wrote. */
 export function isUntouchedWelcome(path: string, content: string): boolean {
   const name = path.split(/[\\/]/u).at(-1) ?? ''
-  return name === WELCOME_NAME && (content === WELCOME || EARLIER.includes(content))
+  if (name !== WELCOME_NAME) return false
+  return [WELCOME, ...EARLIER].some(
+    (seed) => content === seed || content === seed.replace(IMPORT_LINE, ''),
+  )
 }

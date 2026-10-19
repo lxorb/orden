@@ -1,5 +1,5 @@
 /** What a thread did to files rather than to words (docs/ai-sidebar.md 4.5): a note
- *  moved or renamed, a note sent to Recently deleted. Agent mode does these without
+ *  moved or renamed, a note sent to Recently deleted. Auto and Full permissions do these without
  *  asking, so each is on the changes list beside the edits, with Undo and Keep, and a
  *  rewind takes them back too. Read off the thread's own tool rows, which say what each
  *  call did in the verb's own answer. Pure. */
@@ -14,7 +14,7 @@ export type FileChange =
 
 type Tool = Extract<Part, { kind: 'tool' }>
 
-/** A tool's name as nib's verbs say it: Claude Code calls it `mcp__nib__move_file`. */
+/** A tool's name as the app's verbs say it: Claude Code calls it `mcp__orden__move_file`. */
 export function verbOf(name: string): string {
   const at = name.lastIndexOf('__')
   return at < 0 ? name : name.slice(at + 2)

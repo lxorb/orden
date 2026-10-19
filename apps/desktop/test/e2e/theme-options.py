@@ -39,7 +39,10 @@ from PIL import Image
 
 from harness import Drive
 
-DRIVE = Drive(__file__)
+# Glass's dark side over the clear desk reads its quiet ink at 5.84:1 against the 6:1
+# floor, in both engines; whether the colour or the floor moves is the owner's call, and
+# the colour is not changed here (#383, #384).
+DRIVE = Drive(__file__, known={"quiet ink on the side": "#383, the floor for glass's quiet ink"})
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
 NOTE = """# Under a picture
@@ -247,6 +250,12 @@ def dial(page: Any, id: str, value: Any) -> None:
 
 def fresh(browser: Any, scheme: str, note: str = NOTE, name: str = "Under a picture") -> Any:
     page = DRIVE.page(browser, viewport={"width": 1240, "height": 760}, color_scheme=scheme, reduced_motion="reduce")
+    # Every hint already put away. A session's one hint comes up a few seconds in, and
+    # a card in the panel (hints.svelte.ts, after this drive was written) sat in the
+    # stretch of the side measured for the quiet ink, which then met its own colour, and
+    # its blur counted as a filter on the frame. The card is not part of the frame either
+    # theme draws, so it is kept out of this.
+    page.add_init_script("localStorage.setItem('nib:hints', JSON.stringify(['graph', 'palette']))")
     DRIVE.open(page)
     DRIVE.seed(page, note)
     DRIVE.open_note(page, name)

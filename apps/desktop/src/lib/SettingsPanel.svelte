@@ -10,15 +10,14 @@
   import { arrive, segmented } from './slide'
   import CanvasIcon from './CanvasIcon.svelte'
   import DefaultBrowser from './settings/DefaultBrowser.svelte'
-  import EngineRow from './settings/EngineRow.svelte'
+  import BrowserThemes from './settings/BrowserThemes.svelte'
   import ExtensionRows from './settings/ExtensionRows.svelte'
-  import { systemName } from './settings/engine'
   import { enginesFor } from './web-tab/engines'
   import { CUSTOM, searchEngine } from './web-tab/search-engine.svelte'
   import Hint from './Hint.svelte'
+  import Icon from './Icon.svelte'
   import { i18n, message, plural, t } from './i18n.svelte'
   import AiPane from './AiPane.svelte'
-  import McpSetup from './McpSetup.svelte'
   import { SEARCH_MARK } from './panel-marks'
   import Security from './Security.svelte'
   import SyncPane from './SyncPane.svelte'
@@ -27,6 +26,8 @@
   import Select from './Select.svelte'
   import { settings, type Section } from './settings.svelte'
   import { CATEGORIES, SHORTCUTS, shortcuts } from './shortcuts.svelte'
+  // A view's keys are in the list from the first view on; here they are in it anyway.
+  import './views/task-keys'
   import { runnable } from './shortcuts/registry'
   import { glyphFor, lowMark, markFor, nameFor, toolbar } from './toolbar.svelte'
   import { NOTHING, pull } from './pull.svelte'
@@ -34,6 +35,7 @@
   import { showCombination } from './keys'
   import { prompt } from './prompt.svelte'
   import { Rebind } from './settings/rebind.svelte'
+  import { globalKeys, noteFor } from './global-keys.svelte'
   import { hearTaps } from './tapped'
   import { landing } from './settings/landing.svelte'
   import { places as paneRows } from './settings/places'
@@ -70,9 +72,6 @@
   let customising = $state(false)
   let customBad = $state(false)
 
-  /** Why the engine row's last try did not work, in its own words; see EngineRow. */
-  let engineProblem = $state('')
-
   /** Whether the Delete account row has been pressed, which is what opens its flow. */
   let leaving = $state(false)
 
@@ -85,6 +84,8 @@
   const titleOf = (id: Section) => SECTIONS.find((one) => one.id === id)?.label ?? ''
 
   let query = $state('')
+  /** Whether Settings > AI shows one agent's grant in place of its accounts. */
+  let accessDetail = $state(false)
 
   /** The generated panes, rebuilt as things change so every control shows the
    *  value it actually has. */
@@ -393,6 +394,12 @@
     if (!settings.open || settings.section !== 'shortcuts') rebind.forget()
   })
 
+  // What reaches the app from other apps, asked the first time the pane is open; see
+  // global-keys.svelte.ts.
+  $effect(() => {
+    if (settings.open && settings.section === 'shortcuts') globalKeys.follow()
+  })
+
   /** A window that grows into place on a desktop; a page that rises from the
    *  bottom on a phone. */
   function appear(node: Element) {
@@ -561,6 +568,11 @@
      showing it out of context. One snippet, so the glyph lands in the same slot
      after the label on every kind of row and a row without one does not shift. -->
 {#snippet named(field: Field, where?: string)}
+  <!-- The thing the row is about, drawn as every other list draws it: a kind of tab in
+       Note types wears its file's mark. -->
+  {#if field.icon}
+    <span class="glyph" aria-hidden="true"><Icon icon={null} fallback={field.icon} /></span>
+  {/if}
   <span class="name">
     <span class="what"
       >{field.label}{#if field.hint}<Hint text={field.hint} />{/if}</span
@@ -577,23 +589,29 @@
          three times, and a segmented control twice per option. Inside the branch
          rather than above it, so each kind's answer is that kind's own type. -->
     {@const held = field.get()}
+    {@const locked = field.locked?.() ?? false}
     <!-- The whole row is the switch, so there is nothing to miss. A switch and
          not a button, because a row may carry the `i` that explains it and a
-         button may hold nothing else anybody can press. -->
+         button may hold nothing else anybody can press. A locked one is the
+         last kind of tab still offered, and stays as it is. -->
     <div
-      class="nib-setting setting pressable"
+      class="nib-setting setting"
+      class:pressable={!locked}
       role="switch"
       tabindex="0"
       aria-checked={held}
-      onclick={() => field.set(!field.get())}
+      aria-disabled={locked || undefined}
+      onclick={() => {
+        if (!locked) field.set(!field.get())
+      }}
       onkeydown={(event) => {
         if (event.key !== ' ' && event.key !== 'Enter') return
         event.preventDefault()
-        field.set(!field.get())
+        if (!locked) field.set(!field.get())
       }}
     >
       {@render named(field, where)}
-      <span class="nib-switch" class:on={held} aria-hidden="true"></span>
+      <span class="nib-switch" class:on={held} class:off={locked} aria-hidden="true"></span>
     </div>
   {:else if field.kind === 'slider'}
     {@const least = field.least?.() ?? field.min}
@@ -654,6 +672,7 @@
         label={field.label}
         chosen={field.get()}
         onchoose={(value: string) => field.set(value)}
+        pair={field.pair}
       />
     </div>
   {:else if field.kind === 'picture'}
@@ -737,7 +756,7 @@
   {/if}
 {/snippet}
 
-<!-- Nib as the browser links from other programs open in: a desktop's alone, since a
+<!-- Orden as the browser links from other programs open in: a desktop's alone, since a
      phone's links are its own browser's and a page in a browser is inside one already.
      The control is its own component because it asks the system and listens for the
      window coming back; see settings/DefaultBrowser.svelte. -->
@@ -748,19 +767,6 @@
       <span class="name">{t('Default browser')}</span>
       <DefaultBrowser />
     </div>
-    <!-- Which engine the pages run on; see settings/EngineRow.svelte. A row only where
-         there is a choice, which is Windows for now; see `systemName`. -->
-    {#if systemName(platform())}
-      <div class="nib-setting setting">
-        <span class="name">
-          {t('Engine')}
-          {#if engineProblem}<small class="warn" transition:slide={{ duration: dur(160) }}
-              >{t(engineProblem)}</small
-            >{/if}
-        </span>
-        <EngineRow onproblem={(said: string) => (engineProblem = said)} />
-      </div>
-    {/if}
     <!-- Where a few words typed in the address field go: Chrome's list for the reader's
          region, and a custom one with `%s` where the words go. See web-tab/engines.ts. -->
     <div class="nib-setting setting">
@@ -979,7 +985,12 @@
       <Security />
 
       <div class="card">
-        <button class="nib-action is-danger" onclick={() => account.signOut()}
+        <button
+          class="nib-action is-danger"
+          onclick={() =>
+            __EVEN_PLUGIN__
+              ? void account.signOut()
+              : void import('./ai/vault/leaving').then((one) => one.signOut())}
           >{t('Sign out')}</button
         >
         <!-- Fetched by the press, like the sheets: nobody opening the settings needs
@@ -1041,17 +1052,18 @@
     <!-- Its own component, for the same reason as the connector's: what syncing
          is doing is a small report with two decisions in it. -->
     <SyncPane />
-  {:else if settings.section === 'ai'}
-    <!-- Its own component: a provider is two or three fields and a list fetched
-         from a server, not a row of settings. -->
-    <AiPane />
-  {:else if !__EVEN_PLUGIN__ && settings.section === 'agents'}
-    <!-- Fetched as it is opened: nothing of the agents is in the app until somebody
-         looks at them, or one connects, and nothing at all in the glasses' plugin,
-         which has no agents. See agents/settings/AgentsPane.svelte. -->
-    {#await import('./agents/settings/AgentsPane.svelte') then agents}
-      <agents.default />
-    {/await}
+  {:else if settings.section === 'ai' || settings.section === 'agents' || settings.section === 'llm'}
+    <!-- One page: the accounts, in a component of their own since a provider is two or
+         three fields and a list fetched from a server; then Access, everything that can
+         reach the notes, fetched as the page opens - nothing of the agents is in the app
+         until somebody looks at them, and none of it in the glasses' plugin. While an
+         agent's grant is open, it is the page. See access/Access.svelte. -->
+    {#if !accessDetail}<AiPane />{/if}
+    {#if !__EVEN_PLUGIN__}
+      {#await import('./access/Access.svelte') then access}
+        <access.default ondetail={(open: boolean) => (accessDetail = open)} />
+      {/await}
+    {/if}
   {:else if !__EVEN_PLUGIN__ && settings.section === 'online'}
     <!-- Fetched as it is opened; see online/OnlinePane.svelte. -->
     {#await import('./online/OnlinePane.svelte') then pane}
@@ -1062,9 +1074,6 @@
     {#await import('./remote/RemotePane.svelte') then pane}
       <pane.default />
     {/await}
-  {:else if settings.section === 'llm'}
-    <!-- Its own component: the pane is a small guide, not a list of settings. -->
-    <McpSetup />
   {:else if settings.section === 'trash'}
     <RecentlyDeleted />
   {:else if !__EVEN_PLUGIN__ && settings.section === 'import'}
@@ -1139,12 +1148,18 @@
       {#each group.rows as entry (entry.id)}
         {@const key = shortcuts.keyFor(entry.id)}
         {@const warning = entry.scope === 'fixed' ? null : shortcuts.warning(key)}
+        {@const reach = noteFor(globalKeys.keys, entry.id, shown(key))}
         <div class="nib-setting setting shortcut">
           <span class="name">
             {entry.label()}
             {#if entry.alias}<small>{t('Second key')}</small>{/if}
             {#if entry.why}<small>{entry.why()}</small>{/if}
             {#if warning}<small class="caution">{warning}</small>{/if}
+            {#if reach}<small class="reach"
+                >{reach.text}{#if reach.change}
+                  <button class="link" onclick={() => globalKeys.change()}>{t('Change')}</button
+                  >{/if}</small
+              >{/if}
             {#if rebind.turnedDown?.id === entry.id}<small class="warn"
                 >{rebind.turnedDown.reason}</small
               >{/if}
@@ -1435,6 +1450,7 @@
       <button class="nib-action" onclick={() => theme.reload()}
         >{t('Reload themes and custom CSS')}</button
       >
+      <BrowserThemes />
 
       {#if isWindows}
         {@render row({
@@ -1594,9 +1610,20 @@
 
   /* Name on the left, control on the right, one line each. */
 
+  /* A row's own mark, at the size and weight the file list draws it; see
+     FileMark.svelte. */
+  .setting .glyph {
+    flex: none;
+    width: var(--icon-md);
+    height: var(--icon-md);
+    font-size: var(--icon-md);
+    color: var(--muted);
+    stroke: currentColor;
+    stroke-width: 1.6;
+  }
+
   .setting .name {
     flex: 1;
-    min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 1px;
@@ -1859,6 +1886,21 @@
      nobody has done yet reads as breakage. Quiet is `--muted-strong`, which is a
      colour somebody can read; the mix it used to be came out at 1.2:1 against
      the surface, which is a warning nobody can. */
+  /* What reaches the app from other apps, where the system decides that: a command
+     to bind can be long, and wraps rather than widening the row. */
+  .setting .name small.reach {
+    overflow-wrap: anywhere;
+  }
+
+  .setting .name small.reach .link {
+    padding: 0;
+    border: none;
+    background: none;
+    font: inherit;
+    color: var(--accent);
+    cursor: default;
+  }
+
   .setting .name small.caution {
     color: var(--muted-strong);
   }

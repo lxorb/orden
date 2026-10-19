@@ -268,7 +268,7 @@ Who draws the frame is the reader's, in Settings ▸ Appearance ▸ Window, and 
 machine's rather than the account's: which titlebar somebody wants is a question about
 the desk the window is on.
 
-**Frame.** Nib's own, or the system's. Nib's own is the default and stays the default -
+**Frame.** Orden's own, or the system's. Orden's own is the default and stays the default -
 `--titlebar-height` is the measurement the whole shell is taken from, and the bar it
 names holds the menu, the sidebar toggle, the tabs and the window's three buttons. Under
 the system's frame that bar stays exactly where it is and loses only the three buttons,
@@ -284,6 +284,22 @@ apps and a Mac's Finder and Notes have no such switch either: the material is pa
 the app's look, and the system's own Transparency effects or Reduce transparency turns
 it off everywhere. So the glass theme is the translucent one; a reader who had the row on
 under the built-in theme is given glass once.
+
+And glass is what nib opens in: a first launch is glass, in green, following the system
+(Emil, 2026-10-12; green since 2026-10-13, yellow the day before). The theme is not
+written down until somebody chooses one, so an install that never has stays on that look
+and can still be offered the contrast theme; the accent is, because it follows the
+reader to whatever theme they choose next. An install an older build left on the
+built-in - which it wrote down for everybody, chosen or not - is moved to glass once,
+keeping its accent and scheme (the first look's accent only where it never chose one),
+and `nib:theme-moved` says so, so picking the built-in again sticks (Emil, 2026-10-13).
+The built-in is called Classic now that it is not the default; its id stays `default`,
+which stored choices, theme files and the registry name. And the accent the first look
+gives is kept as given (`nib:accent-given`) until one is picked, so a later first look's
+accent replaces it once and never replaces a pick; an install from the yellow day,
+before that key, counts its yellow as given only while its theme was never written down
+and no older build kept an accent under the old key. See `FIRST_LOOK` in
+theme.svelte.ts.
 
 It wears Mica Alt on Windows 11 - the Mica Microsoft asks of an app whose tabs are in
 its title bar - plain Mica on the first Windows 11 and Acrylic on 10, tinted by the
@@ -308,10 +324,25 @@ or the points disagree - the top rows of the still the window already took as th
 landed. The frame is that colour over the material, and the web bar and the open tab are it
 solid, so tab, bar and page are one surface: the active web tab does take the page's colour,
 as Safari's compact tab does, because in nib the bar between the tab and the page takes it
-too, and a neutral tab over a coloured bar would cut the one surface in two. A mark is Chrome's
-and Arc's: a note's cover, its icon's colour, a site's favicon while its page has said
-nothing, else the accent, as a tone mixed into the scheme's own chrome, so a note's frame
-stays calm. Nib's spaces have no colour of their own, so there is no space step.
+too, and a neutral tab over a coloured bar would cut the one surface in two. A site's favicon,
+while its page has said nothing, is Chrome's and Arc's: a tone of it mixed into the scheme's
+own chrome. Orden's spaces have no colour of their own, so there is no space step.
+
+**Everywhere else glass is its own two colours** (lxorb, 2026-10-13: *"two colors with some
+sort of very very nice looking blur ... light blue at the top left and at the opposite corner
+the other one ... it should not be too aufdringlich though"*). A note, a canvas, a chat, the
+settings and an empty pane stand on a soft diagonal: the first colour in the top left corner,
+the second in the bottom right, under a faint glow of each in its own corner and a grain that
+keeps an eight-bit screen from drawing the blend in bands - a Mac's wallpaper behind its
+translucent windows, Arc's space gradients, iOS's mesh gradients. One picture painted once on
+`main`, nothing per frame. The default, Dawn, is a light blue to a soft pink-purple
+(`#d2e7fc` to `#eed7f2`; at night `#1d2a3d` to `#30243d`, deeper and greyer), the app icon's
+pair; Tint colour offers five more, the accent, and two dots that open the platform's colour
+picker for two of one's own. Each pair is as strong as it can be while the quietest word on
+a hovered row reads at AA over every colour of the blend with the grain on it, and while no
+more than four fifths of it lies over Mica, so the material still shows (`glass/pairs.ts`,
+`pairFor` in `glass/tint.ts`, held by `tint.test.ts` and read back by `test/e2e/glass.py`).
+With Follow the page off, the pair is everywhere.
 
 Words always read. The frame wears whichever scheme's words read on the colour - `data-theme`
 on the title bar, the strips, the side panels, the foot row and the web bar, so every token
@@ -326,6 +357,20 @@ never on a frame; `main`, the bar and the tab ease to the new colour over `--dur
 working out is behind a door glass alone opens (`glass/follow.svelte.ts`); the first frame
 of a launch wears the colour it was left on (`glass/chrome.svelte.ts`). Grounds are kept per
 page and origin like favicons, so a tab opened again is its colour before it loads.
+
+**A dark page wears a dark frame** (lxorb, issue #238: *"on some dark themed websites, glass
+theme will be pretty light"*). Three ways it used not to. A page whose `theme-color` is a grey
+of the other lightness from what it paints along its top - YouTube names a near-white bar in
+the dark, react.dev a near-black one in the light - has left that colour behind, and the top
+it paints wins; a colour with a hue in it is a brand's and still does (`stale` in
+`glass/colours.ts`). A still too busy for one colour is what it all averages to rather than
+nothing, so a dark hero image is dark. And every page is read once more a moment after it
+lands: an app that draws itself afterwards - Spotify's player, Proton's pages, which name
+their violet from script (the owner's own example) - has nothing of its own along its top
+yet, and was left in its favicon's tone or the bare canvas's white for good. While a tab loads an address
+nobody has read, the frame keeps the colour it had and changes once, when the new page has
+said its own, rather than passing through the site's mark (`groundNow` in
+`glass/follow.svelte.ts`).
 
 **Glass's dials** (Emil, 2026-10-03: *"the blur can't be entirely turned off; the blur
 option is too limited"*). Windows Terminal is the model for what is offered and Arc's theme
@@ -359,16 +404,40 @@ own, mixed into `--bg` rather than laid over nothing. The terminal lays the rest
 way to a floor of its own on top, with xterm.js pulling a program's colours to 5.5 from
 the paper while it is see-through, so every one of the sixteen reads at AA on the ground
 under it. A web page, a PDF's pages and a page note's sheets paint their own: a page is
-printed paper. The settings and every other sheet stay opaque: they float over content,
-and what would show through is a second layer of words (Windows' own dialogs are solid
-for the same reason). The list and the AI panel are the frame already. Nothing is
+printed paper. The settings and every other sheet are as good as opaque: they float over
+content, and what would show through is a second layer of words (Windows' own dialogs are
+solid for the same reason), so the frost on them keeps nine tenths of the surface. The list and the AI panel are the frame already. Nothing is
 filtered: a see-through paper is one more layer to composite, and
 `apps/desktop/test/e2e/theme-options.py` counts the frames of a long note scrolled and
 typed into on the built-in theme, glass and the wallpaper, all at a median of one frame.
 
 Glass is offered on every platform: Windows puts Mica Alt, Mica or Acrylic under the colour;
 macOS (whose webview is opaque without the private API), Linux, the browser and a phone stand
-it on the paper. Nothing scrolls under nib's frame, so no `backdrop-filter` is spent anywhere.
+it on the paper. Nothing scrolls under nib's frame, so no `backdrop-filter` is spent on it;
+the one place glass spends one is a layer that floats, below.
+
+**Glass is a material, and it is Orden's** (2026-10-14: *"more like revolut and like apple
+liquid glass, but still the unique orden theme"*). The colour alone read as a wash over the
+built-in, so glass has a shape of its own as well, all of it in `glass.css` and none of it
+in another theme. What floats - a menu, the palette and the small modal, a bar over a
+selection, a bubble, a notice, a drawer over the note - is a frosted pane under a lit rim:
+a hairline of light round the edge and a brighter one along the top. Each keeps nine
+tenths of the palette's own surface under the blur, so where the blur is not drawn
+(WebKitGTK without compositing, a headless Chromium) the words under it are a ghost and
+never a second line of reading; a system asking for less transparency gets the surface
+solid. The paper is a card on the frame, flush with the open tab and a step off the other
+three sides, and the side panels are panes of glass with the paper's corners and gutters,
+so a desktop window reads as three cards on Dawn. Every control a finger or a pointer
+presses is a capsule: a glyph is a circle, a button, a segmented control, a switch and a
+field one line tall are pills, and the row you are on is a chip of glass lifted off the
+list rather than a wash of the accent.
+
+What keeps it from being anybody's glass is the icon: four capsules of ink on Dawn. A
+space's badge is that tile, ink on Dawn in both schemes; the row you are on in a side
+panel carries one of the capsules, in the accent, at its leading edge; a bookmark's card is
+a piece of the same glass. The type is set with Revolut's confidence and none of its sizes:
+the space's name heavier and tighter, the note's first two headings tighter than the
+built-in's, spacing only, so nothing is laid out again.
 
 Two tokens carry it. `--window-ground` is `--bg` in every window there has ever been,
 and `transparent` over the material; `html` and `body` are painted with it.
@@ -674,8 +743,8 @@ list carries, and the three references all spend a filled row on it.
 
 Who answers how much contrast the page has? The theme does, and only the theme.
 There is one palette per look, and asking for more contrast is asking for a
-different look, so it is the `contrast` theme in the store and not a switch beside
-the mode. A switch was the old answer, and it had to restate the whole palette
+different look, so it is the Contrast theme the app ships with and not a switch
+beside the mode. A switch was the old answer, and it had to restate the whole palette
 over whichever theme was in force: two answers to every colour question, with a
 theme author having no say in the second one.
 
@@ -690,9 +759,11 @@ read while Highlighting follows the theme, which is what it does unless somebody
 changes it: a reader who pinned GitHub or Dracula pinned that palette's colours
 with it.
 
-A system that asks for more contrast is shown that theme once, on a fresh install,
-on the card it would be installed from. Nothing installs itself, and nothing asks
-twice.
+A system that asks for more contrast is answered with that theme once, on a fresh
+install, chosen and shown in Appearance so putting it back is one press. Nothing
+asks twice. There is one Contrast: the theme store had a copy of it, and two in the
+dropdown were one too many (Emil, 2026-10-13), so the copy is gone from the store
+and one still installed is read as the built-in.
 
 ### The floor under the default palette
 
@@ -728,7 +799,7 @@ says the same thing the heading already says; prose does not.
 
 The accent cannot be both the ink and the fill: a colour bright enough to be read
 on the dark page is too bright to carry white, which came to 3.98 to one on every
-primary button and to 2.67 on the High contrast theme. So what is written on a fill
+primary button and to 2.67 on the Contrast theme. So what is written on a fill
 of the accent is a token of its own, `--accent-ink`, answered per scheme the way
 Material's `onPrimary` is: the page's darkest ink on the dark side, white on the
 light one. Every filled accent surface reads it - a button's words, the plus that
@@ -739,8 +810,8 @@ that is on, a bar's button under the pointer, the match find is on, a caret's na
 | --- | --- | --- | --- |
 | dark | 4.89 | 5.99 | 7.28 |
 | light | 5.95 | 7.04 | 8.60 |
-| High contrast, dark | 7.29 | 9.23 | 5.91 |
-| High contrast, light | 9.18 | 11.09 | 13.36 |
+| Contrast, dark | 7.29 | 9.23 | 5.91 |
+| Contrast, light | 9.18 | 11.09 | 13.36 |
 
 On the dark side `--accent-press` moved away from the page, which is lighter, rather
 than towards it: under a dark ink a press that darkened the fill dimmed the words as
@@ -868,10 +939,9 @@ switcher Ctrl+Space stands in the middle of the window both draw: the badge, wea
 the space's number at its corner only once a digit is typed or while Alt is held
 (`.nib-keytip`, the tab's Alt number's own look, so it moves nothing as it comes), the
 name with what was typed in bold, and the shared mark -
-an eye instead where the space is somebody else's and yours only to read. The title bar is that same switcher, bare: the badge and no
-name, because the badge already says which space it is and the tabs want the room,
-and a press on it drops the same list from the bar's bottom edge at the panel's
-width. The name is in its tooltip and in what a screen reader hears. Changing space crosses the header's mark into the next one
+an eye instead where the space is somebody else's and yours only to read. The title bar names no space (Emil, 2026-10-13: "remove this
+space switcher here"): with the panel shut, Ctrl+Space and the palette are the way
+to another space. Changing space crosses the header's mark into the next one
 rather than swapping the drawing between two frames: `arrive` and `leave` with
 nothing to slip, in the box the two share so the name beside them does not move.
 
@@ -964,9 +1034,15 @@ beside the control it lives behind, the way Google Docs and Notion point at thei
 one line saying what it does, pressed to do it, and a cross to put it away. At most
 one a session, not before the window has been open twenty seconds, never again once
 put away (`nib:hints`, per device), and none at all in Silent mode (Settings > General,
-off out of the box, an account setting). There are three, in order: signing in, the
-graph, and the palette's keys. The store is `hints.svelte.ts`, the card
-`HintCard.svelte`, and both are fetched through a door, since no launch draws one.
+off out of the box, an account setting). There are two, in order: the graph, and the
+palette's keys. The store is `hints.svelte.ts`, the card `HintCard.svelte`, and both
+are fetched through a door, since no launch draws one.
+
+A hint points at a feature or a key, never at an account. Nothing unasked tells
+somebody to sign in, make an account or turn on syncing (#415): signing in is the
+account row at the foot of the panel, Settings > Account, Sign in in the Help menu and
+the palette, and, for a guest, their corner. The web app's download button in the
+panel's foot is a control, not a card, and stays.
 
 ### Section labels
 
@@ -1182,7 +1258,7 @@ a home:
 
 | What the rail did | Where it is now |
 | --- | --- |
-| Which space you are in | The panel's header, and the space's badge in the title bar while the panel is shut, which opens the same switcher |
+| Which space you are in | The panel's header; with the panel shut, Ctrl+Space and the palette |
 | Switching to another one | Rows in that header's switcher, each with the space's own mark and a dot where somebody else is in it |
 | Making one | A row at the foot of the same list, where a workspace switcher keeps it - and in the palette, as before |
 | A space's own menu | The same entries, on the space's own row: a button at the end of it, a right click, or a held finger |

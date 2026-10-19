@@ -15,6 +15,7 @@ import type { Camera } from '../camera'
 import { identifier } from '../identifier'
 import { t } from '../i18n.svelte'
 import { draftName, shownName, TITLE_CHARS } from '../note-name'
+import { type TabKind, TAB_KINDS } from './tab-kinds'
 
 /** The name a note nobody has named carries. It is never on screen: such a note
  *  is called after its own first words instead, so a window of drafts is a window
@@ -22,6 +23,9 @@ import { draftName, shownName, TITLE_CHARS } from '../note-name'
  *  session holds for a tab that never had a file, and what tells a draft's first
  *  file to take its name from its words; see drafts.ts. */
 export const UNTITLED = 'Untitled'
+
+/** Where a new tab starts; modes.svelte.ts writes it. */
+export const opening = { source: false }
 
 /** What a tab holds. Almost always a note. The graph of the space is a tab
  *  without one, because a picture of the notes belongs beside them rather than in
@@ -34,9 +38,10 @@ export const UNTITLED = 'Untitled'
  *  words are which one and where; see docs/terminal.md. A view is a question about the
  *  rows of the spaces (Today, a project, a `.base` file's board), and its words are which
  *  question; see lib/views/spec.ts and docs/tasks.md 5.5. A chat is the AI panel; a channel is
- *  a chat people write in, a `.chat` file's (docs/chats.md). */
-export type TabKind =
-  'note' | 'graph' | 'pdf' | 'canvas' | 'pages' | 'web' | 'terminal' | 'view' | 'chat' | 'channel'
+ *  a chat people write in, a `.chat` file's (docs/chats.md).
+ *
+ *  Each kind is an entry in tab-kinds.ts, which says what it does as well. */
+export type { TabKind }
 
 /** Whether a tab's words are a file's words: a note, a canvas, and a page note,
  *  whose words are the JSON in them.
@@ -53,7 +58,7 @@ export type TabKind =
  *  whose words are a document, which is why a web tab has no collaboration and
  *  needs no switch to say so. See `workspace.openNotes`. */
 export function holdsWords(kind: TabKind): boolean {
-  return kind === 'note' || kind === 'canvas' || kind === 'pages'
+  return TAB_KINDS[kind].words
 }
 
 export interface DocumentStart {
@@ -199,7 +204,7 @@ export class NoteDoc {
   /** What this document is called wherever it is listed: its tab, a row in the
    *  file list, a menu's heading, the window title.
    *
-   *  Its file's name without the extension Nib keeps its own documents under -
+   *  Its file's name without the extension Orden keeps its own documents under -
    *  or, for a note nobody has named, the words at the top of it, so three drafts
    *  open at once read as three notes rather than three Untitleds. */
   readonly shown = $derived(
@@ -410,11 +415,19 @@ export class Tab {
    *  this strip in this pane. */
   pinned = $state(false)
 
+  /** The file in the Essentials this tab was made for by a press on its tile, or null
+   *  for a tab of the strip, which leaves an essential out. The file it was made for,
+   *  since a link followed inside an essential stays in it; see essentials.ts. */
+  essential = $state<string | null>(null)
+
   /** Whether this tab is showing the note as it reads rather than as it is
    *  written. Per tab, because a note can be read in one pane while it is being
    *  written in another, and because which face is up is about this sitting with
    *  this note - a note always opens for writing. */
   reading = $state(false)
+
+  /** Source mode, per tab as in Obsidian (#232). */
+  source = $state(opening.source)
 
   /** Whether this tab is holding a place for a note whose words have not come
    *  down yet: a row the account's first pass named and the pass has not fetched.
@@ -432,12 +445,23 @@ export class Tab {
    *  one canvas can be looked at from two places in two panes. */
   camera = $state<Camera | undefined>(undefined)
 
+  /** For a page note: whether that camera's zoom is the reader's own rather than the
+   *  paper fitted across the pane. Beside the camera, on the tab, because the surface
+   *  is made again every time the tab comes back to the front, and a zoom it forgot was
+   *  the paper fitted again the moment it was measured (#421). See pages/store.svelte.ts. */
+  zoomChosen = false
+
   /** For a website: the address the tab is on, which is not always the one its file
    *  says. Following a link in the page is browsing rather than editing, so the
    *  file keeps the address it was written with and the tab keeps where it went.
    *  Per tab, since the same site can be open at two pages in two panes, and
    *  written into the session so a restart comes back on the page it was on. */
   address = $state<string | undefined>(undefined)
+
+  /** For a website with no file made at a web note's page - a second tab of it, a link
+   *  out of it: that note's own web data, so the page stays signed in where the note is.
+   *  Read through `apartOf` in web-tab/shortcut.ts, never on its own. */
+  apart = $state<string | null>(null)
 
   /** For a website: a private tab, whose page writes nothing down and is never written
    *  down itself - not in the session, not on the closed stack, never saved as a web
@@ -492,10 +516,17 @@ export class Tab {
     this.note.name = to
   }
 
+  /** A web tab with no file and no address: what Ctrl+T makes. See `isNewTab`. */
+  get nowhere(): boolean {
+    return this.kind === 'web' && this.path === null && !this.address
+  }
+
   /** What the strip, the tooltip and this tab's own menu call it. See
    *  NoteDoc.shown: `name` is the file, this is the document - or, for a terminal,
-   *  what runs in it. */
+   *  what runs in it. A tab with nowhere to go is a New tab, as a browser's is; read
+   *  here, not written down, so a sitting before says it too. Issue #241. */
   get shown(): string {
+    if (this.nowhere) return t('New tab')
     return this.running?.name ?? this.note.shown
   }
 

@@ -93,6 +93,15 @@ export interface TaskRow extends TaskFields {
   parent?: number
   /** Columns of indentation, a tab counted as one. */
   indent: number
+  /** The first line of what is written under it, before its sub-tasks: what a row
+   *  shows under the words (docs/tasks.md 5.1). */
+  description?: string
+  /** How many comments are written under it: list items that are not tasks. */
+  comments?: number
+  /** What a `📅` on it means: a deadline in an Obsidian vault, else - absent - a start
+   *  date. Said by whatever made the rows, which knows the space; see
+   *  `@nib/markdown/task-dates`. */
+  dueReads?: 'deadline'
 }
 
 /** A note, or a task in a note. */

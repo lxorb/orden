@@ -10,6 +10,9 @@ dist-even/
 # The build the drives against the real Worker load, pointed at that Worker; see
 # apps/desktop/test/e2e/harness.py.
 dist-worker/
+# The build the handoff drive plays both web addresses with; see
+# apps/desktop/test/e2e/handoff.py.
+dist-handoff/
 target/
 # What Tauri generates for the mobile targets. The Android project is source:
 # its manifest, its theme and MainActivity are edited by hand, and the files
@@ -41,9 +44,6 @@ services/mcp/target/
 apps/desktop/src-tauri/binaries/*
 !apps/desktop/src-tauri/binaries/.gitkeep
 
-# What the clipper's build packs for the Chrome Web Store, beside its dist
-apps/clipper/*.zip
-
 # Claude Code worktrees of this repo
 .claude/worktrees/
 *.nupkg
@@ -55,17 +55,3 @@ __pycache__/
 # one to exercise the second factor and takes it away again.
 .dev.vars
 
-# What the browser spike downloads and unpacks: a CEF binary distribution, which
-# is 300 MB of Chromium and belongs in a cache rather than in a repository. See
-# docs/browser.md.
-spike/browser/.cef-cache/
-spike/browser/third_party/
-spike/browser/stage/
-spike-out/
-
-.cef/
-
-# What the gate writes when it runs. The Tauri checkout it builds against needs no
-# line here: `apps/desktop/src-tauri/cef/upstream.py` puts it inside `target`. See
-# docs/browser.md.
-gate-out/

@@ -3,7 +3,7 @@ import { NOT_A_PATH, NO_SUCH_NOTE, OUT_OF_SPACE, ROOM_AWAY } from './refused'
 import { mergeCanvasFiles } from '@nib/markdown/canvas-merge'
 import { isCanvasTarget } from '@nib/markdown/links'
 import { conflictPath, numbered } from '@nib/markdown/paths'
-import { readBody } from './body'
+import { objectBody, readBody } from './body'
 import { readFront, titleFrom, writeFront } from './blog/front'
 import { rememberOldPaths } from './blog/paths'
 import { keepWords } from './blog/words'
@@ -32,6 +32,8 @@ import {
   keepVersion,
   ROLLBACK_AT_ONCE,
   presentVersion,
+  saidAs,
+  saidOnce,
   versionAt,
   versionsAt,
   versionsOf,
@@ -569,6 +571,42 @@ notes.get('/notes/:id/versions/:at', async (context) => {
   return context.json({ at: asked, content })
 })
 
+/** The most notes one ancestry question names: a page of changes is a few hundred,
+ *  and the device asks a page at a time. */
+export const MOST_ASKED = 100
+
+/** Which of these copies a device holds are words its note once said: the device
+ *  signing back in with no record of where it left off (docs/sync.md, "Signing back
+ *  in"). A note nobody here can reach answers the same as one that never said it. */
+notes.post('/notes/said', async (context) => {
+  const body = await objectBody(context)
+  const asked = Array.isArray(body?.notes) ? body.notes : null
+  if (!asked || asked.length > MOST_ASKED) return context.json({ error: 'which notes' }, 400)
+
+  const said: string[] = []
+  for (const one of asked) {
+    const note = one as { id?: unknown; hash?: unknown } | null
+    if (typeof note?.id !== 'string' || typeof note.hash !== 'string') {
+      return context.json({ error: 'which notes' }, 400)
+    }
+    const found = await reachedNote(context.env, context.get('who'), note.id)
+    if (found && (await saidOnce(context.env, found.note, note.hash))) said.push(note.id)
+  }
+
+  return context.json({ said })
+})
+
+/** What a note said when its words hashed to this: the ancestor a device merges its
+ *  own writing and the account's against. */
+notes.get('/notes/:id/said/:hash', async (context) => {
+  const found = await reachedNote(context.env, context.get('who'), context.req.param('id'))
+  if (!found) return context.json({ error: NO_SUCH_NOTE }, 404)
+
+  const content = await saidAs(context.env, found.note.id, context.req.param('hash'))
+  if (content === null) return context.json({ error: 'no such version' }, 404)
+  return context.json({ content })
+})
+
 /** Putting a space, or one folder of it, back to how it read at a moment.
  *
  *  What it writes is a new version of every note that has changed since, which is
@@ -687,6 +725,15 @@ notes.put('/notes/:id', async (context) => {
     return context.json({ error: 'this note was shared with you, not its folder' }, 403)
   }
 
+  // A note moved, or brought back from Recently deleted, onto a path another live note
+  // holds is a create onto that path, and gets the answer a create would. In a space
+  // whose tree is rows the path is not this write's to change, so it is the note's own.
+  const lands = note.name_key ? note.path : path
+  const there = await noteAt(context.env, space.id, lands)
+  if (there && there.id !== note.id) {
+    return context.json({ error: 'a note already lives there', note: presentNote(there) }, 409)
+  }
+
   // Reassigned when a canvas has to be put back together with the copy the
   // server already holds; see the note above.
   let content = sent ?? ''
@@ -717,11 +764,21 @@ notes.put('/notes/:id', async (context) => {
   // tree makes; see sync2/ops.ts.
   const placed = !!note.name_key
   const device = await deviceOf(context)
-  const written = await writeWords(context.env, note, content, placed ? note.path : path, {
-    name: deviceIn(context.req.header('x-nib-device')),
-    device,
-    ...(base === undefined ? {} : { base }),
-  })
+  // The check above is not the guarantee; the space's unique index is, and a note that
+  // took the path in between is the same 409 a moment later. Read again rather than
+  // told apart by the error's words, as the create above does.
+  let written: Awaited<ReturnType<typeof writeWords>>
+  try {
+    written = await writeWords(context.env, note, content, placed ? note.path : path, {
+      name: deviceIn(context.req.header('x-nib-device')),
+      device,
+      ...(base === undefined ? {} : { base }),
+    })
+  } catch (error) {
+    const won = await noteAt(context.env, space.id, lands)
+    if (!won || won.id === note.id) throw error
+    return context.json({ error: 'a note already lives there', note: presentNote(won) }, 409)
+  }
 
   // The room the note is in could not be reached; the client asks again.
   if (written === null) return context.json({ error: ROOM_AWAY }, 503, { 'retry-after': '1' })

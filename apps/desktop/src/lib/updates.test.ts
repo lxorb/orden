@@ -34,6 +34,10 @@ const world = vi.hoisted(() => ({
    *  waits for `land` instead of answering at once. */
   slow: false,
   land: null as (() => void) | null,
+  /** The package manager that keeps the install, null where it updates itself. */
+  managed: null as string | null,
+  /** The version such an install was told of this run; see updater.ts. */
+  announced: null as string | null,
 }))
 
 vi.mock('./updater', () => ({
@@ -41,6 +45,12 @@ vi.mock('./updater', () => ({
   stageUpdate: (channel: string) => {
     world.looks++
     world.channels.push(channel)
+    // Found and never fetched, and found once a run, as the real one does.
+    if (world.managed) {
+      if (!world.version || world.version === world.announced) return Promise.resolve(null)
+      world.announced = world.version
+      return Promise.resolve(world.announced)
+    }
     if (world.staged) return Promise.resolve(null)
 
     const landed = () => (world.staged = world.version)
@@ -51,6 +61,8 @@ vi.mock('./updater', () => ({
     })
   },
   stagedVersion: () => world.staged,
+  announcedVersion: () => world.announced,
+  managedBy: () => Promise.resolve(world.managed),
   discard: () => {
     world.discards++
     world.staged = null
@@ -118,6 +130,8 @@ beforeEach(async () => {
   world.discards = 0
   world.slow = false
   world.land = null
+  world.managed = null
+  world.announced = null
   storage.clear()
   stubWindow()
   vi.stubGlobal('localStorage', storage)
@@ -490,6 +504,105 @@ describe('the channel', () => {
     await settle()
 
     expect(world.channels).toEqual(['stable', 'unstable'])
+    stop()
+  })
+})
+
+/** An install a package manager keeps: told of a newer version, once, and nothing to
+ *  press. The manager installs it; see updater.ts. */
+describe('where a package manager keeps the install', () => {
+  /** The app quit and started again: a new process, which has told nothing yet. */
+  async function relaunch() {
+    world.announced = null
+    vi.resetModules()
+    vi.doMock('./tauri', () => ({ isDesktop: true }))
+    return (await import('./updates.svelte')).updates
+  }
+
+  test('says what is out, as news', async () => {
+    world.managed = 'scoop'
+    world.version = '1.4.0'
+    const stop = updates.start()
+    await settle()
+
+    expect(updates.ready).toBe('1.4.0')
+    expect(updates.managed).toBe(true)
+    stop()
+  })
+
+  test('says it once, not again on the next launch', async () => {
+    world.managed = 'brew'
+    world.version = '1.4.0'
+    const stop = updates.start()
+    await settle()
+    expect(updates.ready).toBe('1.4.0')
+    stop()
+
+    const next = await relaunch()
+    const stopNext = next.start()
+    await settle()
+
+    expect(world.looks).toBe(2)
+    expect(next.ready).toBe(null)
+    stopNext()
+  })
+
+  test('nor later in the same run, once it has gone', async () => {
+    world.managed = 'apt'
+    world.version = '1.4.0'
+    const stop = updates.start()
+    await settle()
+    updates.dismiss()
+
+    asleep(EVERY)
+    fire('focus')
+    await settle()
+
+    expect(world.looks).toBe(2)
+    expect(updates.ready).toBe(null)
+    stop()
+  })
+
+  test('says the next version when it comes', async () => {
+    world.managed = 'flatpak'
+    world.version = '1.4.0'
+    const stop = updates.start()
+    await settle()
+    updates.dismiss()
+
+    world.version = '1.5.0'
+    asleep(EVERY)
+    fire('focus')
+    await settle()
+
+    expect(updates.ready).toBe('1.5.0')
+    stop()
+  })
+
+  test('asked for by name, says it again', async () => {
+    world.managed = 'choco'
+    world.version = '1.4.0'
+    const stop = updates.start()
+    await settle()
+    stop()
+
+    const next = await relaunch()
+    const stopNext = next.start()
+    await settle()
+    await next.check()
+
+    expect(next.ready).toBe('1.4.0')
+    stopNext()
+  })
+
+  test('an install that updates itself is offered the update as before', async () => {
+    world.version = '1.4.0'
+    const stop = updates.start()
+    await settle()
+
+    expect(updates.ready).toBe('1.4.0')
+    expect(updates.managed).toBe(false)
+    expect(storage.getItem('nib:update-told')).toBe(null)
     stop()
   })
 })

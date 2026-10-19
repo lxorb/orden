@@ -21,8 +21,6 @@ exception is an online terminal, whose shell is a machine of the reader's in the
   See docs/keyboard.md, _Ctrl+T is a new tab_.
 - **An empty pane**: the same card.
 - **The palette**: _New terminal_.
-- **A row of the file list**: _Open in terminal_, in the row's folder - VS Code's _Open
-  in Integrated Terminal_, Explorer's _Open in Terminal_.
 - **A terminal's own tab**: _Open another_, beside it in the same folder; the chevron
   lists the other shells.
 - **Split right, Split down** on a terminal's tab: another shell in the new pane, in the
@@ -61,8 +59,8 @@ it with no field of their own - the one path every tab with no file comes back b
 duplicate is given a key of its own the first time it is drawn, so two tabs never write
 one file.
 
-**After a restart** - the app quit, the window closed, the engine switched, an update
-put in place, a crash - it comes back in its place in the strip, under its name, with its
+**After a restart** - the app quit, the window closed, an update put in place, a crash -
+it comes back in its place in the strip, under its name, with its
 shell, in **the folder it was last in**, with **its last thousand lines** above a fresh
 prompt and one dim line between the two saying when they are from: VS Code's revive,
 Windows Terminal's restored buffer, Warp's restoration. The folder is the one people miss
@@ -100,8 +98,8 @@ General, Terminal, Restore history** turned off writes nothing and forgets every
 there is at that moment - Warp's switch stops recording and leaves the database where it
 was. The tab itself, its shell and its folder still come back, as every tab does.
 
-**Moved to another space** (Move to space, in the tab's menu or the palette, or the tab
-carried onto the space switcher; docs/chrome-tabs.md), a terminal is the same tab with the
+**Moved to another space** (Move to space in the palette, or the tab carried onto the
+space switcher; docs/chrome-tabs.md), a terminal is the same tab with the
 same shell: the process goes on, its screen and scrollback with it, and its current
 folder is the one it was in. What changes is which space it is in - whose set it is in,
 where a restart puts it - and where its last lines are kept: read, written under the new
@@ -553,7 +551,7 @@ test/weight.test.ts).
 - **A shell that survives a restart.** iTerm2 runs every session inside a server of its
   own and VS Code every terminal inside a pty host, so a crash or an upgrade reconnects to
   the running shell. Every restart nib has - a crash, an update (the installer takes the
-  process down), the engine switch's relaunch - ends the one process that holds the
+  process down) - ends the one process that holds the
   pseudo consoles, and a console ends with its owner; keeping shells alive would be a
   second long-lived program with the rules under _Who may_ proved again across a pipe to
   it. The one event the crate outlives is the page loading again, which in a release is
@@ -569,7 +567,7 @@ test/weight.test.ts).
 | `apps/desktop/src-tauri/src/terminal/session.rs`   | one shell in one pty, and its four threads                                                                                                                                                                                       |
 | `apps/desktop/src-tauri/src/terminal/process.rs`   | whether anything besides the shell runs, and where it is                                                                                                                                                                         |
 | `apps/desktop/src/lib/new-kinds.ts`                | the terminal as a kind a new tab can be, and its chevron                                                                                                                                                                         |
-| `apps/desktop/src/lib/terminal/two-ways.ts`        | Ctrl+T and Ctrl+N in a terminal, which are both the app's and the shell's: asked once, and the answer kept (docs/keyboard.md, _A terminal_) |
+| `apps/desktop/src/lib/terminal/two-ways.ts`        | every app command on a key a shell reads, in a terminal - Ctrl+T, Ctrl+N, Ctrl+W, Ctrl+Space and the rest: asked once, and the answer kept per command (docs/keyboard.md, _A terminal_; #426) |
 | `apps/desktop/src/lib/terminal/open.ts`            | making one: which shell, which folder, where in the strip                                                                                                                                                                        |
 | `apps/desktop/src/lib/terminal/spec.ts`            | what a terminal tab's words say, and where one starts                                                                                                                                                                            |
 | `apps/desktop/src/lib/terminal/sessions.svelte.ts` | the screens and their shells                                                                                                                                                                                                     |

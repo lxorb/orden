@@ -1,7 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
   "ignore": [
-    "spike/**",
     "apps/desktop/src-tauri/src/web_state/scripts/*.js",
     "apps/desktop/src-tauri/src/web_tabs/*.js",
     "apps/desktop/src-tauri/src/web_swipe.js"
@@ -30,6 +29,8 @@
         "src/presenter.ts",
         "quick-add.html",
         "src/quick-add.ts",
+        "handoff.html",
+        "src/handoff.ts",
         "src/site/site.ts",
         "src/lib/ai/review/index.ts"
       ],
@@ -38,23 +39,12 @@
     "apps/cli": {
       "ignoreBinaries": ["screencapture"]
     },
-    "apps/clipper": {
-      "entry": [
-        "src/**/*.svelte",
-        "src/popup/main.ts",
-        "src/options/main.ts",
-        "src/background/index.ts",
-        "src/content/index.ts",
-        "vite.content.config.ts"
-      ],
-      "ignoreDependencies": ["@nib/themes"]
-    },
     "services/sync": {
       "entry": ["src/machines/entry.ts"],
       "ignoreDependencies": ["cloudflare"]
     },
     "services/machine": {
-      "entry": ["src/main.ts", "vitest.image.config.ts", "test/**/*.drive.ts"]
+      "entry": ["src/main.ts", "src/hold.ts", "vitest.image.config.ts", "test/**/*.drive.ts"]
     },
     "packages/themes": {}
   }

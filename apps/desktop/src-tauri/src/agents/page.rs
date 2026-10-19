@@ -50,6 +50,11 @@ const STILL: Duration = Duration::from_millis(80);
 /// How long the element about to be pressed in a reader's tab is lit first (7.1).
 const LIT: Duration = Duration::from_millis(300);
 
+/// Whether what a press lands on (`this`) is the element meant (`target`): it, inside it,
+/// round it, its label, or a frame it may be in. Across shadow roots, which `contains`
+/// stops at: a button inside a web component is pressed through its host.
+const INSIDE: &str = "function (target) { const up = (one) => one.parentNode || (one instanceof ShadowRoot ? one.host : null); const holds = (outer, inner) => { for (let one = inner; one; one = up(one)) if (one === outer) return true; return false }; const el = this.nodeType === 1 ? this : this.parentElement; if (!el) return true; if (holds(target, el) || holds(el, target)) return true; const label = el.closest('label'); if (label && (label.control === target || holds(label, target))) return true; return el.tagName === 'IFRAME' || el.tagName === 'FRAME' }";
+
 /// The tallest full-page picture, in CSS pixels.
 const TALLEST: f64 = 16_384.0;
 
@@ -535,6 +540,14 @@ impl Page<'_> {
 
     /// Where an element's middle is in the page's viewport, scrolled into view first.
     fn point(&self, element: &Element) -> Result<(f64, f64), Answer> {
+        Ok(self.points(element)?[0])
+    }
+
+    /// Where an element can be pressed in the page's viewport, scrolled into view first:
+    /// its middle, and then the middles of its four quarters, for an element whose
+    /// middle something small of the page's sits over - a badge, a count, an icon's
+    /// overlay.
+    fn points(&self, element: &Element) -> Result<Vec<(f64, f64)>, Answer> {
         let _ = self.call_on(
             element,
             "DOM.scrollIntoViewIfNeeded",
@@ -545,18 +558,13 @@ impl Page<'_> {
             "DOM.getContentQuads",
             &json!({ "backendNodeId": element.backend }),
         )?;
-        let (x, y) = quads
+        let quad = quads
             .get("quads")
             .and_then(Value::as_array)
             .and_then(|all| {
                 all.iter().find_map(|quad| {
                     let at: Vec<f64> = quad.as_array()?.iter().filter_map(Value::as_f64).collect();
-                    (at.len() == 8 && area(&at) > 1.0).then(|| {
-                        (
-                            (at[0] + at[2] + at[4] + at[6]) / 4.0,
-                            (at[1] + at[3] + at[5] + at[7]) / 4.0,
-                        )
-                    })
+                    (at.len() == 8 && area(&at) > 1.0).then_some(at)
                 })
             })
             .ok_or_else(|| {
@@ -566,7 +574,75 @@ impl Page<'_> {
                 )
             })?;
         let (dx, dy) = self.frame_offset(element)?;
-        Ok((x + dx, y + dy))
+        Ok(pressable(&quad)
+            .into_iter()
+            .map(|(x, y)| (x + dx, y + dy))
+            .collect())
+    }
+
+    /// The first of an element's points that a press lands on, or why none does: what
+    /// covers its middle.
+    fn landing(&self, element: &Element) -> Result<(f64, f64), Answer> {
+        let points = self.points(element)?;
+        let mut first = None;
+        for point in &points {
+            match self.lands_on(element, *point) {
+                Ok(()) => return Ok(*point),
+                Err(covered) => {
+                    first.get_or_insert(covered);
+                }
+            }
+        }
+        Err(first.unwrap_or_else(|| {
+            Answer::error(
+                Code::Failed,
+                "the element is not visible: nothing of it is on the page",
+            )
+        }))
+    }
+
+    /// How far the page's own frame is scrolled, in CSS pixels: `DOM.getNodeForLocation`
+    /// counts from the page's top left and not the viewport's, so a point in the viewport
+    /// is that far further in. Asked with the viewport's point, a page scrolled down
+    /// answered with whatever was that far from the top of the page - a header, a menu -
+    /// and every press there was refused as covered by it (#373).
+    fn scrolled(&self) -> (f64, f64) {
+        let Ok(metrics) = self.call("Page.getLayoutMetrics", &json!({})) else {
+            return (0.0, 0.0);
+        };
+        let get = |path: &str| {
+            metrics
+                .pointer(path)
+                .and_then(Value::as_f64)
+                .unwrap_or_default()
+        };
+        (
+            get("/cssLayoutViewport/pageX"),
+            get("/cssLayoutViewport/pageY"),
+        )
+    }
+
+    /// The node a press at a point in the page's viewport lands on.
+    fn node_at(&self, (x, y): (f64, f64)) -> Option<u64> {
+        let (left, top) = self.scrolled();
+        let hit = self
+            .call(
+                "DOM.getNodeForLocation",
+                &json!({ "x": whole(x + left), "y": whole(y + top), "includeUserAgentShadowDOM": false, "ignorePointerEventsNone": true }),
+            )
+            .ok()?;
+        hit.get("backendNodeId").and_then(Value::as_u64)
+    }
+
+    /// What a press at a point in the page's viewport lands on, as an element.
+    pub fn element_at(&self, point: (f64, f64)) -> Result<Element, Answer> {
+        self.node_at(point)
+            .map(|backend| Element {
+                session: None,
+                frame: None,
+                backend,
+            })
+            .ok_or_else(|| Answer::error(Code::Failed, "nothing of the page is at that point"))
     }
 
     /// Where a frame in a process of its own sits in the page, for its elements' points.
@@ -596,13 +672,7 @@ impl Page<'_> {
         if element.session.is_some() {
             return Ok(());
         }
-        let Ok(hit) = self.call(
-            "DOM.getNodeForLocation",
-            &json!({ "x": whole(x), "y": whole(y), "includeUserAgentShadowDOM": false, "ignorePointerEventsNone": true }),
-        ) else {
-            return Ok(());
-        };
-        let Some(hit) = hit.get("backendNodeId").and_then(Value::as_u64) else {
+        let Some(hit) = self.node_at((x, y)) else {
             return Ok(());
         };
         if hit == element.backend {
@@ -619,7 +689,7 @@ impl Page<'_> {
             "Runtime.callFunctionOn",
             &json!({
                 "objectId": above,
-                "functionDeclaration": "function (target) { const el = this.nodeType === 1 ? this : this.parentElement; if (!el) return true; if (target === el || target.contains(el) || el.contains(target)) return true; const label = el.closest('label'); if (label && (label.control === target || label.contains(target))) return true; return el.tagName === 'IFRAME' || el.tagName === 'FRAME' }",
+                "functionDeclaration": INSIDE,
                 "arguments": [{ "objectId": target }],
                 "returnByValue": true,
             }),
@@ -634,7 +704,7 @@ impl Page<'_> {
             .unwrap_or_default();
         Err(Answer::error(
             Code::Failed,
-            format!("e{} is covered by e{hit} (\u{201c}{what}\u{201d}) where it would be pressed: deal with that first", element.backend),
+            format!("e{} is covered by e{hit} (\u{201c}{what}\u{201d}) where it would be pressed: deal with that first, or, where the element is what shows there, press there with browser_click's x and y", element.backend),
         ))
     }
 
@@ -701,11 +771,52 @@ impl Page<'_> {
                 "that opens a list of the engine's own: set it with browser_select or browser_fill_form",
             ));
         }
-        let point = self.point(element)?;
-        self.lands_on(element, point)?;
+        let point = self.landing(element)?;
         if !self.own {
             self.light(element);
         }
+        self.press_at(point, button, count, modifiers)
+    }
+
+    /// The engine's own press at a point in the tab's viewport, in CSS pixels - one image
+    /// pixel of `browser_screenshot` at its own scale: what an agent falls back on where a
+    /// press by ref cannot say what it lands on. Refused where it lands on a field whose
+    /// list is a window, as a press by ref is.
+    pub fn click_at(
+        &self,
+        point: (f64, f64),
+        button: &str,
+        count: u8,
+        modifiers: u8,
+    ) -> Result<(), Answer> {
+        let (width, height, _, _) = self.viewport()?;
+        if !(0.0..width).contains(&point.0) || !(0.0..height).contains(&point.1) {
+            return Err(Answer::error(
+                Code::BadArguments,
+                format!(
+                    "{}, {} is outside the tab, which is {width} by {height}",
+                    point.0, point.1
+                ),
+            ));
+        }
+        if let Ok(element) = self.element_at(point) {
+            if self.facts(&element).is_ok_and(|facts| facts.picker()) {
+                return Err(Answer::error(
+                    Code::BadArguments,
+                    "that opens a list of the engine's own: set it with browser_select or browser_fill_form",
+                ));
+            }
+        }
+        self.press_at(point, button, count, modifiers)
+    }
+
+    fn press_at(
+        &self,
+        point: (f64, f64),
+        button: &str,
+        count: u8,
+        modifiers: u8,
+    ) -> Result<(), Answer> {
         let before = self.navigations();
         self.mouse("mouseMoved", point, "none", 0, modifiers)?;
         for press in 1..=count.max(1) {
@@ -1897,6 +2008,29 @@ fn collect_frames(tree: &Value, top: bool, out: &mut Vec<String>) {
 }
 
 /// A quad's area, to skip the empty ones an inline element has.
+/// Where a quad (eight numbers, four corners) can be pressed: its middle, then half way
+/// from the middle to each corner.
+fn pressable(quad: &[f64]) -> Vec<(f64, f64)> {
+    let corners: Vec<(f64, f64)> = quad
+        .as_chunks::<2>()
+        .0
+        .iter()
+        .map(|&[x, y]| (x, y))
+        .collect();
+    let middle = (
+        corners.iter().map(|one| one.0).sum::<f64>() / 4.0,
+        corners.iter().map(|one| one.1).sum::<f64>() / 4.0,
+    );
+    std::iter::once(middle)
+        .chain(corners.iter().map(|corner| {
+            (
+                f64::midpoint(middle.0, corner.0),
+                f64::midpoint(middle.1, corner.1),
+            )
+        }))
+        .collect()
+}
+
 fn area(at: &[f64]) -> f64 {
     let mut twice = 0.0;
     for corner in 0..4 {
@@ -2014,6 +2148,21 @@ fn strip_tags(html: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn a_press_tries_the_middle_and_then_each_quarter() {
+        let points = pressable(&[0.0, 0.0, 100.0, 0.0, 100.0, 40.0, 0.0, 40.0]);
+        assert_eq!(
+            points,
+            vec![
+                (50.0, 20.0),
+                (25.0, 10.0),
+                (75.0, 10.0),
+                (75.0, 30.0),
+                (25.0, 30.0)
+            ]
+        );
+    }
 
     #[test]
     fn an_empty_quad_is_no_place_to_press() {

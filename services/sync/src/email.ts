@@ -138,7 +138,7 @@ function cloudflare(binding: EmailSender, from: string): Mailer {
 }
 
 /** `MAIL_FROM` as the binding takes it. The variable is written the way a
- *  person writes a sender, `Nib <nib@nibeditor.com>`, and Email Sending wants
+ *  person writes a sender, `Orden <nib@nibeditor.com>`, and Email Sending wants
  *  the name and the address apart: handed the whole line as a string, it is
  *  asked to send from an address that has a space and two brackets in it. */
 export function sender(from: string): string | { name: string; email: string } {
@@ -174,7 +174,7 @@ function codeMail(code: string, subject: string, what: string, unasked: string) 
 export function codeMessage(code: string) {
   return codeMail(
     code,
-    `${code} is your nibeditor code`,
+    `${code} is your Orden code`,
     'Your sign-in code',
     'If you did not ask for it, ignore this message.',
   )
@@ -187,8 +187,8 @@ export function codeMessage(code: string) {
 export function leavingMessage(code: string) {
   return codeMail(
     code,
-    `${code} deletes your nibeditor account`,
-    'Your code to delete your nibeditor account',
+    `${code} deletes your Orden account`,
+    'Your code to delete your Orden account',
     'If you did not ask for it, somebody is signed in as you: end every other session in Settings, Account.',
   )
 }
@@ -196,12 +196,12 @@ export function leavingMessage(code: string) {
 /** The receipt for a deleted account: that it happened, what it did not touch, and
  *  what to do if it was not the person reading it. */
 export function goneMessage() {
-  const said = 'Your nibeditor account and everything it synced have been deleted.'
+  const said = 'Your Orden account and everything it synced have been deleted.'
   const stays = 'The notes on your devices are still there.'
   const unasked = 'If you did not do this, somebody had your mailbox: secure it first.'
 
   return {
-    subject: 'Your nibeditor account has been deleted',
+    subject: 'Your Orden account has been deleted',
     text: `${said} ${stays}\n\n${unasked}`,
     html: `<div style="font-family:ui-sans-serif,system-ui,sans-serif;font-size:15px;color:#1a1d23">
   <p>${said} ${stays}</p>
@@ -265,27 +265,10 @@ export function inviteMessage(invite: {
     subject: oneLine(`${invite.from} shared ${named} with you`),
     ...letter(
       [
-        `${invite.from} shared the ${kind} ${named} with you on nibeditor, and you can ${what}.`,
-        'Open it below. nibeditor emails you a code to check the address, and asks for nothing else.',
+        `${invite.from} shared the ${kind} ${named} with you on Orden, and you can ${what}.`,
+        'Open it below. Orden emails you a code to check the address, and asks for nothing else.',
       ],
       { label: `Open the ${kind}`, href: invite.link },
-    ),
-  }
-}
-
-/** A computer was given the account's web key: the one moment somebody who had
- *  taken the mailbox and a session would need, and the one sync mail there is. Like
- *  a bank's new-device mail, it says what happened and where to undo it. See
- *  hub/keys.ts and docs/sync-v2.md section 6.6. */
-export function webKeyMessage(device: string, link: string) {
-  return {
-    subject: oneLine(`${device} was given your web logins`),
-    ...letter(
-      [
-        `Another of your computers allowed ${device} to open the sites you are signed in to in Nib.`,
-        'If that was not you, end it in Settings, Account.',
-      ],
-      { label: 'Open Nib', href: link },
     ),
   }
 }
@@ -296,7 +279,7 @@ export function requestMessage(request: { space: string; who: string; link: stri
     subject: oneLine(`${request.who} would like to join ${request.space}`),
     ...letter(
       [`${request.who} followed your link to ${request.space} and is waiting to be let in.`],
-      { label: 'Open nibeditor', href: request.link },
+      { label: 'Open Orden', href: request.link },
     ),
   }
 }

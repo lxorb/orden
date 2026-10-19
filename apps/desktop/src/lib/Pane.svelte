@@ -27,10 +27,12 @@
     setReadOnlyMode,
   } from '@nib/editor'
   import { untrack } from 'svelte'
+  import { alone } from './alone.svelte'
   import { isDeck } from '@nib/markdown/slide-breaks'
   import type { Tab } from './workspace.svelte'
   import type { Pane } from './workspace/pane-tree'
   import type { Landing } from './workspace/panes.svelte'
+  import { TAB_KINDS } from './workspace/tab-kinds'
   import { dragged, isTreeDrag } from './drag-paths'
   import Editor from './Editor.svelte'
   import { key, message, t } from './i18n.svelte'
@@ -54,7 +56,6 @@
     findBar,
     graphSurface,
     pagesSurface,
-    pdfSurface,
     readingSurface,
     terminalSurface,
     viewSurface,
@@ -88,33 +89,22 @@
    *  nothing here is worked out until a graph tab is open. */
   const picture = $derived.by(() => without(links.pictureOf(attachments), workspace.leftOut))
   const archived = $derived(tab?.path ? workspace.archive.has(tab.path) : false)
-  /** Every note this pane holds. The editor keeps a state for each one it has
-   *  shown, and this is what tells it which of them are still open. The tabs
-   *  themselves, because a tab is what a state is kept under; see
-   *  editor-states.ts. */
-  const strip = $derived(workspace.tabsIn(pane.id))
+  /** Every note this pane holds, the essentials shown in it among them. The editor
+   *  keeps a state for each one it has shown, and this is what tells it which of them
+   *  are still open. The tabs themselves, because a tab is what a state is kept
+   *  under; see editor-states.ts. */
+  const held = $derived(workspace.heldIn(pane.id))
   /** The strips live in the panes as soon as there is more than one of them.
    *  With one pane the window's own strip is in the titlebar, where a browser
    *  puts it and where it has been all along - as it is for a pane filling the window. */
-  const stripped = $derived(workspace.panes.count > 1 && !workspace.panes.fills)
+  const stripped = $derived(workspace.panes.count > 1 && !workspace.panes.fills && !alone.on)
   /** Whether what is showing takes a dropped note itself; see `answers`. A terminal
    *  types its path. */
-  const ownSurface = $derived(tab?.kind === 'canvas' || tab?.kind === 'terminal')
+  const ownSurface = $derived(!!tab && TAB_KINDS[tab.kind].takesDrops)
   /** Whether the surface in this pane is the editor, which is the one that has
    *  no find bar of its own. The same question the branch chain below asks, asked
    *  once so the bar above it and the editor under it cannot disagree. */
-  const writing = $derived(
-    !!tab &&
-      tab.kind !== 'graph' &&
-      tab.kind !== 'canvas' &&
-      tab.kind !== 'pages' &&
-      tab.kind !== 'pdf' &&
-      tab.kind !== 'web' &&
-      tab.kind !== 'terminal' &&
-      tab.kind !== 'view' &&
-      tab.kind !== 'chat' &&
-      !tab.reading,
-  )
+  const writing = $derived(!!tab && TAB_KINDS[tab.kind].editor && !tab.reading)
 
   /** The notes this pane lays out as columns, or none where it lays out none.
    *
@@ -537,17 +527,6 @@
         {@render unreachable()}
       {/await}
     {/key}
-  {:else if tab?.kind === 'pdf'}
-    <!-- A paper being read, beside the notes about it. Keyed like the reading
-         view: a PDF is a document of its own and nothing about it is swapped
-         into an editor. -->
-    {#key tab.id}
-      {#await pdfSurface() then Pdf}
-        <Pdf {tab} focused={workspace.panes.focusedId === pane.id} />
-      {:catch}
-        {@render unreachable()}
-      {/await}
-    {/key}
   {:else if tab?.kind === 'web'}
     <!-- A website, in the note's place. Keyed like the others: the page is a webview
          of its own placed over this pane, and nothing about it is swapped into an
@@ -646,7 +625,7 @@
               bind:view={columnViews[one.id]}
               tab={one}
               focused={workspace.panes.focusedId === pane.id && one.id === pane.activeTabId}
-              kept={strip}
+              kept={held}
               onimage={saveImage}
               resolveimage={resolveImage}
               openlink={followHref}
@@ -680,7 +659,7 @@
         bind:view
         {tab}
         focused={workspace.panes.focusedId === pane.id}
-        kept={strip}
+        kept={held}
         onimage={saveImage}
         resolveimage={resolveImage}
         openlink={followHref}
@@ -775,10 +754,10 @@
     align-items: stretch;
     flex: none;
     height: var(--titlebar-height);
-    /* The window's own bar, again: the frame the tabs are cut out of, and the line
-       inside it that the active tab covers. See Titlebar.svelte. */
+    /* The window's own bar, again: the frame the tabs are cut out of, whose line the
+       strip draws. See Titlebar.svelte. */
     background: var(--tab-frame);
-    box-shadow: inset 0 -1px var(--line);
+    overflow-x: clip;
   }
 
   .editor {

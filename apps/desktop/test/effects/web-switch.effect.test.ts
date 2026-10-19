@@ -32,6 +32,10 @@ let refuses: string | null = null
  *  on Windows does, rather than having the window hide the page behind its picture. */
 let cuts = false
 
+/** How many questions a page answers about where it has got to before it goes quiet, as
+ *  a page being closed under the question does; null for every one. See `whereIs`. */
+let answersLooks: number | null = null
+
 vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
   isDesktop: true,
@@ -40,6 +44,8 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
     asked.push({ command, args })
     if (command === refuses) return Promise.reject(new Error(`${command} was refused`))
     if (command === 'web_open' && holding) return holding
+    if (command === 'web_look' && answersLooks !== null && answersLooks-- <= 0)
+      return new Promise(() => undefined)
     if (command === 'web_place') return Promise.resolve(cuts)
     return Promise.resolve(undefined)
   },
@@ -194,6 +200,7 @@ const WebTab = (await import('../../src/lib/web-tab/WebTab.svelte')).default
 await Promise.all([
   import('../../src/lib/web-tab/visited'),
   import('../../src/lib/web-tab/web-data.svelte'),
+  import('../../src/lib/web-tab/merged'),
   import('../../src/lib/web-tab/keys'),
   import('../../src/lib/web-tab/downloads.svelte'),
 ])
@@ -217,6 +224,7 @@ beforeEach(() => {
   holding = null
   refuses = null
   cuts = false
+  answersLooks = null
   target = document.createElement('div')
   document.body.append(target)
 })
@@ -860,4 +868,110 @@ test('a picture of the page goes when the page is shown at another size', async 
   expect(pages.of(tab.id).shot).toBeNull()
 
   void unmount(app)
+})
+
+/** The hole's box is the one source of where the page goes, and that includes a box with
+ *  no room in it: a window made too short for anything under the bar. The pane used to
+ *  say nothing then, and the page stayed drawn at the hole's last box over the bar and
+ *  whatever else had taken its place; and when the room came back at the same box, the
+ *  pane had already said that box and said nothing again (#246). */
+test('a hole with no room puts its page out of sight, and the room back brings it back', async () => {
+  const { tab, app } = await opened('https://example.com/no-room')
+  const hole = target.querySelector('.hole')
+  if (!hole) throw new Error('no hole')
+
+  asked.length = 0
+  hole.setAttribute('data-box', JSON.stringify({ x: 0, y: 40, width: 800, height: 0 }))
+  resized(hole)
+  await frames()
+
+  const hidden = asked.filter((one) => one.command === 'web_place')
+  expect(hidden.at(-1)?.args.visible).toBe(false)
+  // Still the tab in front: nothing counts down to freezing it.
+  expect(pages.of(tab.id).onScreen).toBe(true)
+
+  asked.length = 0
+  hole.setAttribute('data-box', JSON.stringify({ x: 0, y: 40, width: 800, height: 560 }))
+  resized(hole)
+  await frames()
+
+  const shown = asked.filter((one) => one.command === 'web_place')
+  expect(shown.at(-1)?.args.visible).toBe(true)
+  expect(shown.at(-1)?.args.pane).toEqual({ x: 0, y: 40, width: 800, height: 560 })
+
+  void unmount(app)
+})
+
+/** A window moved to a screen of another scale keeps its size in its own pixels, so the
+ *  hole's box and the window's size are what they were - and the page's window, in the
+ *  screen's pixels, is not. The scale is part of what the pane tells, so it is told again. */
+test('a screen of another scale places the page again', async () => {
+  const { app } = await opened('https://example.com/scale')
+  const scale = Object.getOwnPropertyDescriptor(window, 'devicePixelRatio')
+
+  asked.length = 0
+  window.dispatchEvent(new Event('resize'))
+  await frames()
+  expect(asked.filter((one) => one.command === 'web_place')).toHaveLength(0)
+
+  Object.defineProperty(window, 'devicePixelRatio', { value: 1.5, configurable: true })
+  try {
+    window.dispatchEvent(new Event('resize'))
+    await frames()
+    expect(asked.filter((one) => one.command === 'web_place')).toHaveLength(1)
+  } finally {
+    if (scale) Object.defineProperty(window, 'devicePixelRatio', scale)
+    else Reflect.deleteProperty(window, 'devicePixelRatio')
+  }
+
+  void unmount(app)
+})
+
+/** #409, mounted: "when I switch an open tab to separate web data, it then loads forever
+ *  until I close and reopen it". The menu asks for the move and the pane hears the tab's
+ *  web data change and asks too (own-data.ts, WebTab.svelte). The second ask used to wait
+ *  out a page that was closing under its question and then close the page the first had
+ *  built in the new store, which the window went on believing in. */
+test('a tab turned Separate is built again once, in its own store, and stays', async () => {
+  await launched()
+
+  workspace.openWebsite()
+  const tab = workspace.tabs.at(-1)
+  if (!tab) return
+  pages.of(tab.id).url = 'https://example.com/apart'
+
+  const app = mount(WebTab, { target, props: { tab, focused: true } })
+  flushSync()
+  await frames()
+  expect(pages.of(tab.id).live).toBe(true)
+
+  asked.length = 0
+  let built: () => void = () => undefined
+  holding = new Promise<void>((go) => (built = go))
+  answersLooks = 1
+
+  const own = '3f9a0c17e2b4d685'
+  // What own-data.ts does for a tab with no file: the tab takes the web data, which the
+  // pane hears, and the move is asked for.
+  tab.apart = own
+  flushSync()
+  const fromMenu = pages.rehouse(tab.id, own, 'kept apart')
+  // Past the clock a page that does not answer is given, with the new page still on its way.
+  await vi.advanceTimersByTimeAsync(1000)
+  built()
+  holding = null
+  await frames()
+  await fromMenu
+  await frames()
+
+  const said = asked.map((one) => one.command)
+  expect(said.filter((one) => one === 'web_open')).toHaveLength(1)
+  expect(said.lastIndexOf('web_close')).toBeLessThan(said.lastIndexOf('web_open'))
+  expect(asked.filter((one) => one.command === 'web_open').at(-1)?.args).toMatchObject({
+    profile: { store: `note_${own}` },
+  })
+  expect(pages.of(tab.id).live).toBe(true)
+
+  void unmount(app)
+  pages.forget(tab.id)
 })

@@ -6,7 +6,9 @@
    *  of notes sits between two bars that match. Three things and no more: the
    *  account at the left, where a sidebar names its owner in every app that has
    *  one; the theme and the settings at the right, where a switch goes. The
-   *  source link is not here - it is a row in the Help menu.
+   *  source link is not here - it is a row in the Help menu. In a browser a fourth:
+   *  the app to download, which a new reader at orden.so otherwise had to find in
+   *  the Help menu.
    *
    *  One component on every device. A drawer is the sidebar, so a phone gets
    *  this row at the bottom of the drawer, clear of the gesture bar, and it is
@@ -14,13 +16,14 @@
   import { fade } from 'svelte/transition'
   import { account } from './account.svelte'
   import { BASE } from './api'
+  import { DOWNLOAD_URL } from './links'
   import { arriving } from './arriving.svelte'
   import { initial } from './icons'
   import { longPress } from './longpress'
   import { dur } from './motion'
   import { settings } from './settings.svelte'
-  import { startup } from './startup.svelte'
   import { t } from './i18n.svelte'
+  import { isNative, openExternal } from './tauri'
   import { theme } from './theme.svelte'
   import { shortcuts } from './shortcuts.svelte'
 
@@ -39,19 +42,6 @@
 <!-- A region of the window, so F6 reaches the account, the theme and the settings
      without a pointer; see focus.ts. -->
 <div class="foot" data-region="foot">
-  <!-- Notes on this device alone until somebody signs in, which nothing on screen
-       says: the one hint that is about not losing anything, so the first a session
-       offers. Not in the glasses' plugin, which signs in through the phone. -->
-  {#if !__EVEN_PLUGIN__ && startup.settled}
-    {#await import('./HintCard.svelte') then card}
-      <card.default
-        hint="sign-in"
-        text={t('Sign in to keep your notes safe and on every device.')}
-        when={!account.restoring && !account.signedIn}
-        onpress={() => settings.show('account')}
-      />
-    {/await}
-  {/if}
   <!-- The account, which is a row rather than a glyph: a name is what says whose
        notes these are. Signed in or not, it opens the same pane - signing in,
        the name the others in a shared space see, storage and signing out are all
@@ -94,6 +84,17 @@
   {/if}
 
   <div class="acts">
+    {#if !isNative && !__EVEN_PLUGIN__}
+      <button
+        class="nib-glyph act"
+        title={t('Download the app')}
+        aria-label={t('Download the app')}
+        onclick={() => void openExternal(DOWNLOAD_URL)}
+      >
+        <svg viewBox="0 0 14 14"><path d="M7 1.5v7.5M3.8 6l3.2 3.2L10.2 6M2 12.5h10" /></svg>
+      </button>
+    {/if}
+
     <!-- Off while the theme in force has only the one scheme: there is no other
          side of it to show, and swapping it for a built-in is not the switch
          anybody pressed. See theme.svelte.ts. Said rather than `disabled`, which

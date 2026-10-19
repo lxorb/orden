@@ -113,7 +113,7 @@ describe('the mirror of the crate agent verbs', () => {
       asks: { sending: false },
       always: {},
       programs: [],
-      limits: { tabs: 4, calls: 600, navigations: 60 },
+      limits: { tabs: 4, calls: 600, navigations: 60, memory: 0 },
       created: 0,
     }
     const minted: Minted = { grant, token: 'f'.repeat(64) }

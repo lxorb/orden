@@ -74,11 +74,15 @@ pub enum Scope {
     /// The terminal.
     #[serde(rename = "terminal")]
     Terminal,
+    /// Helpers on the reader's AI accounts: another model, Claude's or `OpenAI`'s, started
+    /// on a task, whose answer comes back (`run_agent`; docs/ai.md, "Helpers").
+    #[serde(rename = "agents")]
+    Agents,
 }
 
 impl Scope {
     /// Every scope, in the settings pane's order.
-    pub const ALL: [Scope; 15] = [
+    pub const ALL: [Scope; 16] = [
         Scope::Context,
         Scope::NotesRead,
         Scope::NotesWrite,
@@ -94,6 +98,7 @@ impl Scope {
         Scope::BrowserStorage,
         Scope::Settings,
         Scope::Terminal,
+        Scope::Agents,
     ];
 }
 
@@ -147,9 +152,10 @@ pub enum Mode {
     Unsupervised,
     /// Every write asks, batched.
     Confirm,
-    /// Nothing asks but paying: the AI sidebar's Agent mode (docs/ai-sidebar.md 4.4),
-    /// whose safety is that every change can be undone. Only ever a call's, laid over the
-    /// built-in grant by `ai_agent.rs`; never kept (`Grants::replace`).
+    /// Nothing asks, whatever the act: the AI sidebar's Full permissions (docs/ai-sidebar.md
+    /// 4.4, #372). Paying included, and a tab shown or a step handed to the reader goes
+    /// ahead without a question. Only ever a call's, laid over the built-in grant by
+    /// `ai_agent.rs`; never kept (`Grants::replace`).
     Autonomous,
 }
 
@@ -162,6 +168,11 @@ pub struct Limits {
     pub calls: u32,
     /// Navigations a minute.
     pub navigations: u32,
+    /// The browser's memory, in MB, past which this agent opens no more tabs; 0, the
+    /// default, is no ceiling at all (#333). A grant written before there was one has
+    /// none.
+    #[serde(default)]
+    pub memory: u32,
 }
 
 impl Default for Limits {
@@ -170,6 +181,7 @@ impl Default for Limits {
             tabs: 4,
             calls: 600,
             navigations: 60,
+            memory: 0,
         }
     }
 }
@@ -215,8 +227,9 @@ pub struct Grant {
 
 impl Grant {
     /// A grant for one of the reader's own clients, paired on this machine, with Emil's
-    /// defaults (9.1): everything but scripts, the reader's storage, settings and the
-    /// terminal; every space; unsupervised; every question on.
+    /// defaults (9.1): everything but scripts, the reader's storage and settings; every
+    /// space; unsupervised; every question on. The terminal and helpers are in since
+    /// 2026-10-12, so an agent outside nib does what the AI panel's own agent does.
     pub fn own(id: String, client: &str) -> Self {
         Grant {
             id,
@@ -227,10 +240,7 @@ impl Grant {
                 .filter(|one| {
                     !matches!(
                         one,
-                        Scope::BrowserScript
-                            | Scope::BrowserStorage
-                            | Scope::Settings
-                            | Scope::Terminal
+                        Scope::BrowserScript | Scope::BrowserStorage | Scope::Settings
                     )
                 })
                 .collect(),
@@ -254,7 +264,12 @@ impl Grant {
         grant.scopes.retain(|one| {
             !matches!(
                 one,
-                Scope::Context | Scope::BrowserReader | Scope::ChatsRead | Scope::ChatsWrite
+                Scope::Context
+                    | Scope::BrowserReader
+                    | Scope::ChatsRead
+                    | Scope::ChatsWrite
+                    | Scope::Agents
+                    | Scope::Terminal
             )
         });
         grant.mode = Mode::Confirm;
@@ -266,11 +281,17 @@ impl Grant {
         self.scopes.contains(&scope)
     }
 
-    /// Whether a category asks for this agent: on unless the reader turned it off. An
-    /// autonomous agent asks only before paying, the one thing no undo takes back.
+    /// Whether a category asks for this agent: on unless the reader turned it off, and never
+    /// for an autonomous one (#372: Full permissions asks for nothing, paying included).
     pub fn asks(&self, category: Category) -> bool {
         let on = self.asks.get(&category).copied().unwrap_or(true);
-        on && (self.mode != Mode::Autonomous || category == Category::Paying)
+        on && self.mode != Mode::Autonomous
+    }
+
+    /// Whether this agent goes ahead without asking the reader anything at all, a tab shown
+    /// or a step handed over included: Full permissions.
+    pub fn asks_nothing(&self) -> bool {
+        self.mode == Mode::Autonomous
     }
 
     /// Whether the reader said "always" for this category on this site.
@@ -299,6 +320,40 @@ struct File {
     /// absent in a file written before chats were.
     #[serde(default)]
     chats: bool,
+    /// Whether its grants have been given helpers, which came after them.
+    #[serde(default)]
+    helpers: bool,
+    /// Whether the AI sidebar's own grants have been called by the product's name since
+    /// the rename: absent in a file written while it was still nib.
+    #[serde(default)]
+    orden: bool,
+}
+
+/// What the AI sidebar's own grants are called before the provider's name:
+/// `Orden · Claude`.
+pub(crate) const SIDEBAR: &str = "Orden · ";
+
+/// What they were called until the product was renamed Orden, which a file written
+/// before then still says.
+const SIDEBAR_BEFORE: &str = "nib · ";
+
+/// A grant kept from before the rename, called what a new one is: its client and the
+/// name it is listed under, each where it still begins with the old word. A name the
+/// reader gave it is the reader's, and stays.
+fn as_orden(grant: &mut Grant) {
+    for label in [&mut grant.client, &mut grant.name] {
+        if let Some(rest) = label.strip_prefix(SIDEBAR_BEFORE) {
+            *label = format!("{SIDEBAR}{rest}");
+        }
+    }
+}
+
+/// A grant kept from before helpers, given them as a new grant of its kind would be: the
+/// reader's own clients (they see the screen) start helpers, somebody else's tool does not.
+fn with_helpers(grant: &mut Grant) {
+    if grant.holds(Scope::Context) && !grant.holds(Scope::Agents) {
+        grant.scopes.push(Scope::Agents);
+    }
 }
 
 /// A grant kept from before chats, given them the way it holds notes: a grant of the
@@ -481,6 +536,16 @@ fn read(path: &std::path::Path) -> Vec<Kept> {
                     with_chats(&mut one.grant);
                 }
             }
+            if !file.helpers {
+                for one in &mut agents {
+                    with_helpers(&mut one.grant);
+                }
+            }
+            if !file.orden {
+                for one in &mut agents {
+                    as_orden(&mut one.grant);
+                }
+            }
             agents
         })
         .unwrap_or_default()
@@ -494,6 +559,8 @@ fn write(path: &std::path::Path, kept: &[Kept]) -> Result<(), String> {
     let text = serde_json::to_string_pretty(&File {
         agents: kept.to_vec(),
         chats: true,
+        helpers: true,
+        orden: true,
     })
     .map_err(|error| format!("could not write the agents: {error}"))?;
     write_privately(path, text.as_bytes())
@@ -645,6 +712,8 @@ mod tests {
                 token: hashed("t"),
             }],
             chats: true,
+            helpers: true,
+            orden: true,
         })
         .expect("json");
         let back: File = serde_json::from_str(&text).expect("read");
@@ -661,6 +730,60 @@ mod tests {
             .as_array()
             .expect("scopes")
             .contains(&"browser.reader".into()));
+    }
+
+    /// The sidebar's grants from before the rename are called Orden once; a name the
+    /// reader gave one, and every other grant, keep theirs. Once the file is written with
+    /// the mark, nothing is renamed again.
+    #[test]
+    fn a_sidebar_grant_from_before_the_rename_is_called_orden_once() {
+        let kept = |id: &str, client: &str, name: &str| {
+            let mut grant = Grant::own(id.into(), client);
+            grant.name = name.into();
+            Kept {
+                grant,
+                token: hashed("t"),
+            }
+        };
+        let text = serde_json::json!({
+            "agents": [
+                kept("nib-anthropic", "nib · Claude", "nib · Claude"),
+                kept("nib-openai", "nib · OpenAI", "My own OpenAI"),
+                kept("claude-code", "Claude Code", "Claude Code"),
+                kept("x", "nibbler · X", "nib ·X"),
+            ],
+            "chats": true,
+            "helpers": true,
+        })
+        .to_string();
+        let dir = std::env::temp_dir().join(format!("nib-grants-orden-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).expect("dir");
+        let path = dir.join("agents.json");
+        std::fs::write(&path, text).expect("write");
+
+        let read = read(&path);
+        let labels: Vec<(&str, &str)> = read
+            .iter()
+            .map(|one| (one.grant.client.as_str(), one.grant.name.as_str()))
+            .collect();
+        assert_eq!(
+            labels,
+            [
+                ("Orden · Claude", "Orden · Claude"),
+                ("Orden · OpenAI", "My own OpenAI"),
+                ("Claude Code", "Claude Code"),
+                ("nibbler · X", "nib ·X"),
+            ]
+        );
+        // The ids stay: they are how the sidebar finds its grant again.
+        assert_eq!(read[0].grant.id, "nib-anthropic");
+
+        // Written with the mark, a grant somebody calls `nib · ...` from then on is theirs.
+        let mut named = read.clone();
+        named[2].grant.name = "nib · mine".into();
+        write(&path, &named).expect("write again");
+        assert_eq!(super::read(&path)[2].grant.name, "nib · mine");
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]
@@ -719,8 +842,11 @@ mod tests {
         assert!(!own.holds(Scope::BrowserScript));
         assert!(!own.holds(Scope::BrowserStorage));
         assert!(!own.holds(Scope::Settings));
-        assert!(!own.holds(Scope::Terminal));
+        // What the AI panel's own agent has, terminal and all (Emil, 2026-10-12: an agent
+        // outside nib does "exactly the same thing as an agent that I am running IN nib").
+        assert!(own.holds(Scope::Terminal));
         assert!(own.holds(Scope::ChatsRead) && own.holds(Scope::ChatsWrite));
+        assert!(own.holds(Scope::Agents));
         assert_eq!(own.mode, Mode::Unsupervised);
         assert!(own.asks(Category::Paying));
         assert_eq!(
@@ -728,7 +854,8 @@ mod tests {
             Limits {
                 tabs: 4,
                 calls: 600,
-                navigations: 60
+                navigations: 60,
+                memory: 0
             }
         );
 
@@ -736,6 +863,7 @@ mod tests {
         assert!(!other.holds(Scope::Context));
         assert!(!other.holds(Scope::BrowserReader));
         assert!(!other.holds(Scope::ChatsRead) && !other.holds(Scope::ChatsWrite));
+        assert!(!other.holds(Scope::Agents));
         assert_eq!(other.mode, Mode::Confirm);
     }
 

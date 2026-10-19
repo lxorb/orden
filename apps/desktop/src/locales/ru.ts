@@ -10,21 +10,129 @@ export const ru: Dictionary = {
   'Do you write code?': 'Вы пишете код?',
   Yes: 'Да',
   No: 'Нет',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'Из других приложений: {key}',
+  'From other apps: set in your system settings':
+    'Из других приложений: задаётся в настройках системы',
+  'From other apps: bind {command} in your system settings':
+    'Из других приложений: назначьте {command} в настройках системы',
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'Важное',
+  'Add to Essentials': 'Добавить в важное',
+  'Remove from Essentials': 'Удалить из важного',
+  'Add block to Essentials': 'Добавить блок в важное',
+  'Add blocks to Essentials': 'Добавить блоки в важное',
+  'Add view to Essentials': 'Добавить вид в важное',
+  'Open tabs and Essentials': 'Открывать вкладки и важное',
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor теперь называется Orden',
+  'Notes from nibeditor.com': 'Заметки с nibeditor.com',
+  'Nothing there': 'Там ничего нет',
+  // AI: the three permission modes
+  'Full permissions': 'Полный доступ',
+  'Auto mode': 'Автоматический режим',
+  'Full permissions: nothing is asked first': 'Полный доступ: ничего не спрашивается заранее',
+  // Import: Zen's tabs
+  'Import from Zen': 'Импорт из Zen',
+  'Containers stay in Zen': 'Контейнеры остаются в Zen',
+  'Zen’s tabs could not be read.': 'Не удалось прочитать вкладки Zen.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'Контейнеры остаются в Firefox',
+  'Nothing could be read out of {browser}.': 'Из {browser} ничего не удалось прочитать.',
+  'Saved groups': 'Сохранённые группы',
+  'Tab group': 'Группа вкладок',
+  'Bookmarks toolbar': 'Панель закладок',
+  'Bookmarks menu': 'Меню закладок',
+  'Other bookmarks': 'Другие закладки',
+  'Mobile bookmarks': 'Мобильные закладки',
+  'Bookmarks bar': 'Панель закладок',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} хранит открытые вкладки под замком, поэтому пришли только закладки.',
+  '{count} pages not on the web stay behind': {
+    few: 'Страниц не из интернета, которые остаются: {count}',
+    many: 'Страниц не из интернета, которые остаются: {count}',
+    one: 'Страниц не из интернета, которые остаются: {count}',
+    other: 'Страниц не из интернета, которые остаются: {count}',
+  },
+  'Reading List': 'Список для чтения',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS держит вкладки и закладки Safari за полным доступом к диску. Включите там Orden и попробуйте снова.',
+  // Settings: note types
+  'Page note': 'Заметка со страницами',
+  'Web note': 'Веб-заметка',
+  'Private tab': 'Приватная вкладка',
+  'Note types': 'Типы заметок',
+  // Tasks: Upcoming's weeks
+  'Previous week': 'Предыдущая неделя',
+  // Tasks: projects placed in the panel, and their folder
+  'Add project above': 'Добавить проект выше',
+  'Add project below': 'Добавить проект ниже',
+  'Projects folder': 'Папка проектов',
+  // Tasks: a repeating task skipped or done for good
+  Skip: 'Пропустить',
+  'Complete forever': 'Выполнить навсегда',
+  // Tasks: comments
+  Comments: 'Комментарии',
+  // Tasks: filters
+  Filters: 'Фильтры',
+  'Add filter': 'Добавить фильтр',
+  'Edit filter': 'Изменить фильтр',
+  // Tasks: a project's sections
+  'Add section': 'Добавить раздел',
+  '{name} (copy)': '{name} (копия)',
+  'Its tasks are deleted with it.': 'Задачи раздела удалятся вместе с ним.',
+  // Tasks: keys, selection and the undo toast
+  Completed: 'Выполнено',
+  'Remove date': 'Убрать дату',
+  'Next task': 'Следующая задача',
+  'Previous task': 'Предыдущая задача',
+  'Add task at the top': 'Добавить задачу наверх',
+  '{count} selected': 'Выбрано: {count}',
+  // Tasks: the Display menu
+  Display: 'Вид',
+  'Completed tasks': 'Выполненные задачи',
+  // Tasks: several lines pasted into quick add
+  'One task': 'Одна задача',
+  'One per line': 'По одной на строку',
+  // Tasks: the projects in the panel
+  Favorites: 'Избранное',
+  'Add project': 'Добавить проект',
+  'Add sub-project': 'Добавить подпроект',
+  // Tasks: the task view
+  'Sub-tasks': 'Подзадачи',
+  'Add sub-task': 'Добавить подзадачу',
+  'New label': 'Новая метка',
+  'No deadline': 'Без срока',
+  // Tasks: the row's menu and the scheduler
+  Reschedule: 'Перенести',
+  'Later this week': 'Позже на этой неделе',
+  'This weekend': 'В эти выходные',
+  'Next weekend': 'В следующие выходные',
+  'Every week on {day}': 'Каждую неделю: {day}',
+  'Every month on day {day}': 'Каждый месяц {day}-го числа',
+  'Every year on {date}': 'Каждый год {date}',
+  'Type a date': 'Введите дату',
+  'Previous month': 'Предыдущий месяц',
+  'Next month': 'Следующий месяц',
+  'No time': 'Без времени',
+  'No repeat': 'Без повтора',
+  Complete: 'Выполнить',
+  Reopen: 'Открыть снова',
+  Schedule: 'Запланировать',
+  'Open in note': 'Открыть в заметке',
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'Другое приложение',
-  'Start fresh': 'Начать с нуля',
   'Import from Obsidian': 'Импорт из Obsidian',
   'Import from Notion': 'Импорт из Notion',
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'Подсказки',
   'Silent mode': 'Тихий режим',
-  'Sign in to keep your notes safe and on every device.':
-    'Войдите, чтобы заметки были в безопасности и на всех устройствах.',
   'See how your notes connect.': 'Посмотрите, как связаны ваши заметки.',
   'Press {key} to find anything, notes and commands alike.':
     'Нажмите {key}, чтобы найти что угодно: заметки и команды.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'Показывать Markdown при наборе',
+  'Open notes in source mode': 'Открывать заметки в режиме исходного кода',
   Pointer: 'Указатель',
   'Pointing hand on buttons': 'Указывающая рука над кнопками',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
@@ -40,11 +148,13 @@ export const ru: Dictionary = {
   '{count} h': '{count} ч',
   Inbox: 'Входящие',
   Date: 'Дата',
+  'Start date': 'Дата начала',
   Priority: 'Приоритет',
   Reminder: 'Напоминание',
   Duration: 'Длительность',
   'Smart dates': 'Умные даты',
   'From any app': 'Из любого приложения',
+  'Show tasks without a start date in Today': 'Показывать в «Сегодня» задачи без даты начала',
   'Every day': 'Каждый день',
   'Every weekday': 'Каждый будний день',
   'Every week': 'Каждую неделю',
@@ -61,6 +171,13 @@ export const ru: Dictionary = {
   Unsaved: 'Не сохранено',
   'Save to': 'Сохранить в',
   'Reloaded with the web data of {space}': 'Перезагружено с веб-данными пространства {space}',
+  Separate: 'Отдельные',
+  'Share this note’s web data again?': 'Снова сделать веб-данные этой заметки общими?',
+  'What its pages are signed in to on this computer is deleted.':
+    'То, во что её страницы вошли на этом компьютере, будет удалено.',
+  'Share again': 'Снова сделать общими',
+  'This note keeps its own web data now': 'У этой заметки теперь свои веб-данные',
+  'Back on the shared web data': 'Снова на общих веб-данных',
   'Add a page': 'Добавить страницу',
   'Add a page after this': 'Добавить страницу после этой',
   'Delete this page': 'Удалить эту страницу',
@@ -81,6 +198,8 @@ export const ru: Dictionary = {
   Dots: 'Точки',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'Вращать холст двумя пальцами',
+  'Turn upright': 'Выровнять',
   Canvas: 'Полотно',
   Card: 'Карточка',
   'Note or picture': 'Заметка или картинка',
@@ -95,7 +214,6 @@ export const ru: Dictionary = {
   'New window': 'Новое окно',
   New: 'Создать',
   'New space': 'Новое пространство',
-  '{name}: switch space': '{name}: сменить пространство',
   Untitled: 'Без названия',
   Space: 'Пространство',
   'Name the space': 'Назвать пространство',
@@ -140,8 +258,6 @@ export const ru: Dictionary = {
   'Loading…': 'Загрузка…',
   'Create a space': 'Создать пространство',
   'Import a folder': 'Импорт папки',
-  'Sign in to sync': 'Войти для синхронизации',
-  'Create account': 'Создать аккаунт',
   'Delete space': 'Удалить пространство',
   'Delete {name}?': 'Удалить {name}?',
   'Every note in this space is deleted from your computer.':
@@ -159,6 +275,10 @@ export const ru: Dictionary = {
   Unpin: 'Открепить',
   Close: 'Закрыть',
   'Close pinned tab?': 'Закрыть закреплённую вкладку?',
+  'Save changes to {name}?': 'Сохранить изменения в {name}?',
+  'Save changes to these tabs?': 'Сохранить изменения в этих вкладках?',
+  'Unsaved words go to Recently deleted.': 'Несохранённые слова попадут в «Недавно удалённые».',
+  'Don’t save': 'Не сохранять',
   'Close others': 'Закрыть остальные',
   'Close tabs to the right': 'Закрыть вкладки справа',
   'Close tabs to the left': 'Закрыть вкладки слева',
@@ -195,9 +315,6 @@ export const ru: Dictionary = {
   'Move this note': 'Переместить заметку',
   'Move up': 'Переместить выше',
   'Move down': 'Переместить ниже',
-  Bookmark: 'Закладка',
-  'Remove bookmark': 'Убрать закладку',
-  'Leave out of search': 'Исключить из поиска',
   'Search here again': 'Снова искать здесь',
   'Undo the last file change': 'Отменить последнее изменение файлов',
   'Undo moving {name}': 'Отменить перемещение {name}',
@@ -247,7 +364,6 @@ export const ru: Dictionary = {
   'Remove group': 'Убрать группу',
   'Out of the group': 'Из группы',
   Make: 'Создать',
-  'Bookmark this block': 'Добавить блок в закладки',
   Panels: 'Панели',
   Outline: 'Структура',
   'Stay on this note': 'Оставаться на этой заметке',
@@ -536,8 +652,8 @@ export const ru: Dictionary = {
   'Asking OpenAI which models this key can use':
     'Запрос к OpenAI: какие модели доступны этому ключу',
   'Could not reach OpenAI': 'Не удалось связаться с OpenAI',
-  'That key cannot use any of the models nibeditor asks for.':
-    'Этому ключу недоступна ни одна из моделей, которые запрашивает nibeditor.',
+  'That key cannot use any of the models Orden asks for.':
+    'Этому ключу недоступна ни одна из моделей, которые запрашивает Orden.',
   'No reasoning': 'Без рассуждений',
   Minimal: 'Минимальное',
   Low: 'Низкое',
@@ -559,7 +675,7 @@ export const ru: Dictionary = {
   Mode: 'Режим',
   // The window's own edges; see appearance.rs
   Window: 'Окно',
-  'nibeditor’s own': 'nibeditor',
+  'Orden’s own': 'Orden',
   'The system’s': 'Системная',
   'Window frame': 'Рамка окна',
   System: 'Системная',
@@ -629,6 +745,7 @@ export const ru: Dictionary = {
   '{done} of {total}': '{done} из {total}',
   'Sync failed': 'Сбой синхронизации',
   '{name} could not be written.': 'Не удалось записать {name}.',
+  '{name} could not be read.': 'Не удалось прочитать {name}.',
   'Text size': 'Размер текста',
   'Line spacing': 'Межстрочный интервал',
   'Line width': 'Ширина строки',
@@ -689,8 +806,10 @@ export const ru: Dictionary = {
   '{used} of {limit} used.': 'Занято {used} из {limit}.',
   'That image does not fit in your storage.': 'Это изображение не помещается в хранилище.',
   'out of space': 'нет места',
-  'nibeditor {version} is ready to install.': 'nibeditor {version} готов к установке.',
+  'Orden {version} is ready to install.': 'Orden {version} готов к установке.',
+  'Orden {version} is available.': 'Доступен Orden {version}.',
   'Restart now': 'Перезапустить',
+  'Move to Applications': 'Переместить в «Программы»',
   Later: 'Позже',
   More: 'Ещё',
   'Open notes': 'Открытые заметки',
@@ -715,11 +834,9 @@ export const ru: Dictionary = {
   Continue: 'Продолжить',
   'Send a new code': 'Отправить новый код',
   'Code sent to': 'Код отправлен на',
-  'You already have notes on this computer.': 'На этом компьютере уже есть заметки.',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
-    'Если оставить, они войдут в аккаунт. Если удалить, останется только то, что уже есть в аккаунте - это необратимо.',
-  'Keep them': 'Оставить',
-  'Erase them': 'Удалить',
+  'This device already has notes.': 'На этом устройстве уже есть заметки.',
+  Merge: 'Объединить',
+  'Keep separate': 'Оставить отдельно',
   'Digit {number}': 'Цифра {number}',
   'Resend in {seconds}s': 'Повтор через {seconds} с',
   'Last synced {time}.': 'Последняя синхронизация {time}.',
@@ -770,14 +887,14 @@ export const ru: Dictionary = {
   'Reads your notes.': 'Читает заметки.',
   'Reads and writes your notes.': 'Читает и изменяет заметки.',
   Other: 'Другое',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'ИИ-ассистент может читать заметки - и менять их, если разрешить. Он входит по адресу почты nibeditor, вставлять ничего не нужно.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'ИИ-ассистент может читать заметки - и менять их, если разрешить. Он входит по адресу почты Orden, вставлять ничего не нужно.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'В Claude откройте Settings → Connectors и нажмите Add custom connector.',
   'Open Claude’s connectors': 'Открыть коннекторы Claude',
   'Fill in the two fields and click Add.': 'Заполните два поля и нажмите Add.',
-  'Click Connect and sign in with your nibeditor email.':
-    'Нажмите Connect и войдите по адресу почты nibeditor.',
+  'Click Connect and sign in with your Orden email.':
+    'Нажмите Connect и войдите по адресу почты Orden.',
   'Using Claude Code instead?': 'Используете Claude Code?',
   Command: 'Команда',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -788,16 +905,16 @@ export const ru: Dictionary = {
   'Open ChatGPT’s plugins': 'Открыть плагины ChatGPT',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Нет раздела Plugins или кнопки с плюсом? Сначала включите Developer mode в Settings → Security and login.',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'Когда ChatGPT спросит, войдите по адресу почты nibeditor.',
-  'To use it in a chat, type @ and pick nibeditor.':
-    'Чтобы использовать это в чате, введите @ и выберите nibeditor.',
+  'Sign in with your Orden email when ChatGPT asks.':
+    'Когда ChatGPT спросит, войдите по адресу почты Orden.',
+  'To use it in a chat, type @ and pick Orden.':
+    'Чтобы использовать это в чате, введите @ и выберите Orden.',
   'Server URL': 'Адрес сервера',
   Authentication: 'Аутентификация',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'Оставьте расширенные настройки OAuth как есть и отметьте “I understand and want to continue”.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'Любой клиент MCP, который умеет Streamable HTTP с OAuth. Дайте ему адрес: он зарегистрируется сам и откроет страницу входа nibeditor.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'Любой клиент MCP, который умеет Streamable HTTP с OAuth. Дайте ему адрес: он зарегистрируется сам и откроет страницу входа Orden.',
   'Show config': 'Показать конфиг',
   'For a client that takes a JSON block instead of a URL.':
     'Для клиента, которому нужен блок JSON вместо адреса.',
@@ -865,7 +982,7 @@ export const ru: Dictionary = {
   'Display name': 'Отображаемое имя',
   'Your name': 'Ваше имя',
   Email: 'Почта',
-  'On nibeditor.com': 'На nibeditor.com',
+  'On orden.so': 'На orden.so',
   'Your own domain': 'Свой домен',
   'Switching gives up {name}.': 'Переключение освободит {name}.',
   Page: 'Страница',
@@ -937,8 +1054,9 @@ export const ru: Dictionary = {
   'No footnotes in this note': 'В этой заметке нет сносок',
   'Stack tabs': 'Расставить вкладки в столбцы',
   'Unstack tabs': 'Убрать столбцы вкладок',
-  'High contrast': 'Высокая контрастность',
+  Contrast: 'Контраст',
   Glass: 'Стекло',
+  Classic: 'Классика',
   'Front matter': 'Метаданные',
   'Front matter: {name}': 'Метаданные: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':
@@ -949,6 +1067,7 @@ export const ru: Dictionary = {
   Comment: 'Комментарий',
   'Always on top': 'Поверх всех окон',
   'What is new': 'Что нового',
+  'Download the app': 'Скачать приложение',
   'Report an issue': 'Сообщить о проблеме',
   'Move the line up': 'Переместить строку выше',
   'Move the line down': 'Переместить строку ниже',
@@ -1029,6 +1148,24 @@ export const ru: Dictionary = {
   'Layout: {name}': 'Макет: {name}',
   'Space: {name}': 'Пространство: {name}',
   'Theme: {name}': 'Тема: {name}',
+  'AI account: {name}': 'Аккаунт ИИ: {name}',
+  Accounts: 'Аккаунты',
+  Access: 'Доступ',
+  Set: 'Задан',
+  'Start over': 'Начать заново',
+  'Sign in here': 'Войти здесь',
+  '{device} wants your AI accounts': '{device} запрашивает ваши аккаунты ИИ',
+  '{device} offers this device your AI vault':
+    '{device} предлагает этому устройству ваше хранилище ИИ',
+  Join: 'Присоединиться',
+  'Allow this device on another one': 'Разрешите это устройство на другом',
+  'On every device you sign in to, end-to-end encrypted.':
+    'На каждом устройстве, где вы вошли, со сквозным шифрованием.',
+  'Sign in to have them on every device.': 'Войдите, чтобы они были на каждом устройстве.',
+  'Agents on this computer connect on their own': 'Агенты на этом компьютере подключаются сами',
+  Helpers: 'Помощники',
+  'Start helpers on your AI accounts': 'Запускать помощников на ваших аккаунтах ИИ',
+  Delegated: 'Поручено',
   'Code theme: {name}': 'Тема кода: {name}',
   'Delete a layout': 'Удалить макет',
   // Keyboards and modal editing
@@ -1097,6 +1234,7 @@ export const ru: Dictionary = {
   'Double-click to write': 'Двойной щелчок для письма',
   'Another colour': 'Другой цвет',
   'Turn into a note': 'Превратить в заметку',
+  Arrange: 'Упорядочить',
   'Bring to front': 'На передний план',
   'Bring forward': 'Переместить вперёд',
   'Send backward': 'Переместить назад',
@@ -1118,6 +1256,12 @@ export const ru: Dictionary = {
   'Export as PNG': 'Экспорт в PNG',
   'Export as SVG': 'Экспорт в SVG',
   'Export as PDF': 'Экспорт в PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'Импорт PDF',
+  'Choose how to add the pages to the canvas.': 'Выберите, как добавить страницы на полотно.',
+  'Single page': 'Одна страница',
+  'All pages': 'Все страницы',
+  'Choose a page': 'Выбрать страницу',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Удалить выбранное',
   'Nudge left': 'Сдвинуть влево',
@@ -1178,8 +1322,8 @@ export const ru: Dictionary = {
   'Release channel': 'Канал выпусков',
   Stable: 'Стабильный',
   Unstable: 'Нестабильный',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Стабильный следует официальным выпускам, нестабильный - каждому пушу в main и может ломаться.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Стабильный следует выпущенным версиям, нестабильный - сборкам edge и может ломаться.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Импорт',
@@ -1251,13 +1395,15 @@ export const ru: Dictionary = {
     'Таблиц внутри заметок, которые не переносятся: {count}',
   '{count} attachments are in iCloud rather than on this Mac':
     'Вложений в iCloud, а не на этом Mac: {count}',
+  '{count} files are in iCloud rather than on this Mac':
+    'Файлов в iCloud, а не на этом Mac: {count}',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS держит эти заметки за полным доступом к диску.',
   'There are no notes in Apple Notes on this Mac.': 'На этом Mac в Apple Заметках нет заметок.',
   'Those notes could not be read.': 'Эти заметки не удалось прочитать.',
   'Read them from this Mac': 'Прочитать с этого Mac',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    'Включите nibeditor в полном доступе к диску и попробуйте снова.',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    'Включите Orden в полном доступе к диску и попробуйте снова.',
   'Open the setting': 'Открыть настройку',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'Apple Дневник экспортирует себя сам: Дневник, Настройки, Экспорт. У Apple Заметок экспорта нет, поэтому вне того Mac, где они лежат, сюда бросают папку, записанную экспортёром.',
@@ -1378,16 +1524,16 @@ export const ru: Dictionary = {
   'OpenAI-compatible': 'Совместимый с OpenAI',
   'Base URL': 'Базовый адрес',
   'API key': 'Ключ API',
-  'Set on this device': 'Задан на этом устройстве',
   Optional: 'Необязательно',
   'List models': 'Получить модели',
   'Asking…': 'Запрос…',
   'No providers yet.': 'Поставщиков пока нет.',
   'Add {name}': 'Добавить {name}',
-  'Keys stay in the secure store on this device.':
-    'Ключи остаются в защищённом хранилище этого устройства.',
   'This browser holds the keys in its own storage.':
     'Этот браузер держит ключи в собственном хранилище.',
+  'Keep this browser’s keys in the vault': 'Хранить ключи этого браузера в хранилище',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'Тогда ключи всех устройств будут храниться в памяти этого браузера, где их сможет прочитать скрипт, проникший на страницу.',
   'AI can be wrong. Check the facts.': 'ИИ может ошибаться. Проверяйте факты.',
   'Used by the glasses': 'Используется очками',
   'Could not read the models.': 'Не удалось прочитать модели.',
@@ -1428,7 +1574,6 @@ export const ru: Dictionary = {
   'A cited report': 'Отчёт с цитатами',
   'A helper in the background': 'Помощник на фоне',
   'A side question': 'Побочный вопрос',
-  'Agent mode': 'Режим агента',
   'Agent profile': 'Профиль агента',
   'Archive the thread': 'Архивировать тред',
   'Approve mode': 'Режим одобрения',
@@ -1547,8 +1692,6 @@ export const ru: Dictionary = {
   // Web tabs
   Reload: 'Обновить',
   'Hard reload': 'Жёсткая перезагрузка',
-  'Clip this page': 'Сохранить эту страницу',
-  'Clip the link': 'Сохранить ссылку',
   'Open in the browser': 'Открыть в браузере',
   'Show it here': 'Показать здесь',
   Website: 'Сайт',
@@ -1633,8 +1776,9 @@ export const ru: Dictionary = {
   'that is not a theme': 'это не тема',
   'no such theme': 'такой темы нет',
   'choose a model first': 'сначала выберите модель',
+  'set an OpenAI key in Orden’s settings first': 'сначала задайте ключ OpenAI в настройках Orden',
   'set an OpenAI key in nibeditor’s settings first':
-    'сначала задайте ключ OpenAI в настройках nibeditor',
+    'сначала задайте ключ OpenAI в настройках Orden',
   'that is a lot of questions - try again later': 'слишком много вопросов - попробуйте позже',
   'that is too much audio': 'слишком много звука',
   'that is more than a spoken command': 'это больше, чем голосовая команда',
@@ -1658,7 +1802,6 @@ export const ru: Dictionary = {
   Nothing: 'Ничего',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Добавить этот вид в закладки',
   Keep: 'Оставить',
 
   // Which side of the window a panel sits on.
@@ -1680,7 +1823,6 @@ export const ru: Dictionary = {
   'New tab': 'Новая вкладка',
   'Full screen': 'Полноэкранный режим',
   'Print…': 'Печать…',
-  'Save page': 'Сохранить страницу',
   'Share…': 'Поделиться…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1724,7 +1866,6 @@ export const ru: Dictionary = {
   Blocked: 'Заблокировано',
   'Reset permissions': 'Сбросить разрешения',
   'Turn into': 'Превратить в',
-  'Bookmark these blocks': 'Добавить блоки в закладки',
   Foldable: 'Сворачиваемый',
   'Starts folded': 'Открывается свёрнутым',
   // Where a space keeps what websites store
@@ -1741,6 +1882,15 @@ export const ru: Dictionary = {
   'Bring all to front': 'Все окна на передний план',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Отменить копирование',
+  'Devices with your AI vault': 'Устройства с вашим хранилищем ИИ',
+  'This device': 'Это устройство',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'Устройство больше не сможет читать ваши аккаунты ИИ, а остальные получат новый ключ.',
+  'Also remove this device from your AI vault?': 'Убрать это устройство и из хранилища ИИ?',
+  'Remove and sign out': 'Убрать и выйти',
+  'Undo making {name}': 'Отменить создание {name}',
+  'Undo the deletion': 'Отменить удаление',
+  'Undo the move': 'Отменить перемещение',
   'Redo the last file change': 'Повторить последнее изменение файлов',
   'Select down': 'Выделить вниз',
   'Select up': 'Выделить вверх',
@@ -1784,7 +1934,6 @@ export const ru: Dictionary = {
   '{key} in a terminal': '{key} в терминале',
   'Always ask': 'Всегда спрашивать',
   'Open another': 'Открыть ещё один',
-  'Open in terminal': 'Открыть в терминале',
   Clear: 'Очистить',
   'Exited with code {code}': 'Завершено с кодом {code}',
   'Could not start {shell}': 'Не удалось запустить {shell}',
@@ -1798,18 +1947,8 @@ export const ru: Dictionary = {
     many: 'Вставить {count} строк?',
     other: 'Вставить {count} строки?',
   },
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': 'Браузер по умолчанию',
-  // The engine web tabs run on
-  Engine: 'Движок',
-  Relaunch: 'Перезапустить',
-  'Chromium did not start': 'Chromium не запустился',
-  'No connection': 'Нет подключения',
-  'Not in this release': 'Нет в этом выпуске',
-  'Needs an update': 'Нужно обновление',
-  'Signature did not match': 'Подпись не совпадает',
-  'Disk full': 'Диск заполнен',
-  'Could not be installed': 'Не удалось установить',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Отменить правки {name}',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1914,7 +2053,7 @@ export const ru: Dictionary = {
   'Always on this site': 'Всегда на этом сайте',
   'Agents stopped': 'Агенты остановлены',
   'Agent tabs closed': 'Вкладки агентов закрыты',
-  'nibeditor is still running for your agents': 'nibeditor продолжает работать для ваших агентов',
+  'Orden is still running for your agents': 'Orden продолжает работать для ваших агентов',
   '{client} wants to connect': '{client} хочет подключиться',
   // Web logins that travel, and the devices of an account
   'no such device': 'Такого устройства нет',
@@ -1930,11 +2069,12 @@ export const ru: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'Агенты на этом компьютере',
   'Your account’s connector': 'Коннектор вашего аккаунта',
-  'nibeditor asks you once, the first time it connects.':
-    'nibeditor спросит вас один раз, при первом подключении.',
+  'Orden asks you once, the first time it connects.':
+    'Orden спросит вас один раз, при первом подключении.',
   'A client on another machine?': 'Клиент на другом компьютере?',
   'Shown only once.': 'Показывается только один раз.',
   'Remove {name}?': 'Удалить {name}?',
+  'End {name}?': 'Завершить {name}?',
   'Its token stops working.': 'Его токен перестанет работать.',
   'Added {date}': 'Добавлен {date}',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':
@@ -1955,7 +2095,6 @@ export const ru: Dictionary = {
   'Change notes': 'Менять заметки',
   'See what you are looking at': 'Видеть, на что вы смотрите',
   'Move and rename files': 'Перемещать и переименовывать файлы',
-  'Open tabs and bookmarks': 'Открывать вкладки и закладки',
   'Bring a tab to the front': 'Выводить вкладку на передний план',
   'Browse in tabs of its own': 'Ходить по сайтам в своих вкладках',
   'Read what pages load': 'Читать, что загружают страницы',
@@ -1977,16 +2116,13 @@ export const ru: Dictionary = {
   'Without your logins': 'Без ваших входов',
   'Calls a minute': 'Вызовов в минуту',
   'Pages a minute': 'Страниц в минуту',
+  'Browser memory limit': 'Предел памяти браузера',
   '{count} calls': {
     one: '{count} вызов',
     few: '{count} вызова',
     many: '{count} вызовов',
     other: '{count} вызова',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'Открыто на {device}',
-  'Use here': 'Использовать здесь',
-  '{device} wants your web logins': '{device} запрашивает ваши входы на сайты',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'Быстрый вопрос',
@@ -2055,7 +2191,7 @@ export const ru: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'Отложить',
   Reminders: 'Напоминания',
-  'Reminders ring while nibeditor is open': 'Напоминания звучат, пока nibeditor открыт',
+  'Reminders ring while Orden is open': 'Напоминания звучат, пока Orden открыт',
   Automatic: 'Автоматически',
   'Stay in the tray': 'Оставаться в трее',
   'Exact alarms': 'Точные будильники',
@@ -2098,7 +2234,6 @@ export const ru: Dictionary = {
   'Any of them': 'Любое',
   Compare: 'Сравнение',
   'Add a filter': 'Добавить фильтр',
-  'Reschedule to today': 'Перенести на сегодня',
   Collapse: 'Свернуть',
   Expand: 'Развернуть',
   Summary: 'Итог',
@@ -2120,7 +2255,6 @@ export const ru: Dictionary = {
   Layout: 'Макет',
   Overdue: 'Просрочено',
   Upcoming: 'Предстоящие',
-  Logbook: 'Журнал',
   Project: 'Проект',
   Label: 'Метка',
   List: 'Список',
@@ -2306,4 +2440,11 @@ export const ru: Dictionary = {
   'Search this chat': 'Искать в этом чате',
   'Add as task': 'Добавить как задачу',
   'Save as note': 'Сохранить как заметку',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'Рассвет',
+  Lagoon: 'Лагуна',
+  Lilac: 'Сирень',
+  Peach: 'Персик',
+  Sage: 'Шалфей',
+  Mist: 'Туман',
 }

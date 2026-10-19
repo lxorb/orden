@@ -1,7 +1,0 @@
-{
-  "name": { "message": "nibeditor" },
-  "description": { "message": "Clip a page, a selection or a link into your nibeditor notes." },
-  "clipPage": { "message": "Clip the page" },
-  "clipSelection": { "message": "Clip the selection" },
-  "clipLink": { "message": "Clip the link" }
-}

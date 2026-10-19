@@ -18,10 +18,6 @@ export interface Account {
   email: string
   /** Shown on anything the account publishes. Null until chosen. */
   name: string | null
-  /** Whether the account's web logins travel between its computers: a switch flipped
-   *  one account at a time, answered by `/v1/me` alone; see lib/sync2/connect.svelte.ts
-   *  and docs/sync-v2.md section 11. */
-  webSync?: boolean
   /** Which sync engine the account's devices run: 1 for every account until it is
    *  moved, 2 once it is. Read as the app starts; see sync.svelte.ts and
    *  docs/sync-v2.md section 11. */
@@ -195,9 +191,6 @@ export interface RemoteSpace {
   /** What this account may do here. Everything the app offers in a space asks
    *  this first, so a reader is never shown a button that would be refused. */
   role: SpaceRole
-  /** Which web store its pages live in on every computer, while web logins travel;
-   *  absent from a build of the service older than this app. See web-data.svelte.ts. */
-  webStore?: string
   /** Whether anybody besides the owner is in it, which is the dot on its row in
    *  the switcher. About the space itself: a file of it shared on its own is a
    *  mark on that row, and does not make the whole space shared. */
@@ -412,6 +405,12 @@ export interface AccountSettings {
   attachments?: string
   /** The automatic reminder's minutes before a task's time, -1 for none. */
   remindBefore?: number
+  /** Whether Today holds a task with no start date, as one whose start date has come. */
+  undatedInToday?: boolean
+  /** The spaces put away whole, by their ids; see space-archive.ts. */
+  archivedSpaces?: string[]
+  /** Whether two fingers turn a canvas (#351). */
+  canvasTurns?: boolean
   /** What pings for every chat at once (docs/chats.md 4.11): words that call for the
    *  reader as their name does, the hours pings are let through (null for every hour),
    *  and whether a notification shows the words and makes a sound. See
@@ -436,6 +435,8 @@ export interface AccountSettings {
    *  default that changes later reach everybody who never chose; see
    *  toolbar.svelte.ts. */
   toolbar?: string[] | null
+  /** See kind-choice.ts. */
+  hiddenKinds?: string[] | null
   /** Which command pulling a list or a note down past its top runs: an id from
    *  the same registry, `none` for no gesture at all, or null for the one the app
    *  offers. See pull.svelte.ts. */
@@ -949,6 +950,16 @@ export const routes = {
 
   noteVersion: (token: string, id: string, at: number) =>
     request<{ at: number; content: string }>(`/v1/notes/${id}/versions/${at}`, { token }),
+
+  /** Which of these copies are words their note once said, by id: a copy that is
+   *  only behind the account's. At most a hundred at a time; see sync/ancestry.ts. */
+  said: (token: string, notes: readonly { id: string; hash: string }[]) =>
+    request<{ said: string[] }>('/v1/notes/said', { token, body: { notes } }),
+
+  /** What a note said when its words hashed to `hash`: the base a merge is made
+   *  against. */
+  saidAs: (token: string, id: string, hash: string) =>
+    request<{ content: string }>(`/v1/notes/${id}/said/${hash}`, { token }),
 
   /** A space, or one folder of it, back to how it read at a moment. `dry` asks
    *  what would change and changes nothing. */

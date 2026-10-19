@@ -1,22 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import { dotCom, isWebAddress, plainOrigin, webAddress } from './address'
-
-/** Ctrl+Enter in the address field, which every browser has had for thirty years. */
-describe('the dot-com press', () => {
-  test('makes one word a site', () => {
-    expect(dotCom('svelte')).toBe('https://www.svelte.com')
-    expect(dotCom('  example  ')).toBe('https://www.example.com')
-  })
-
-  test('leaves anything that already reads as an address to the ordinary press', () => {
-    expect(dotCom('svelte.dev')).toBe(null)
-    expect(dotCom('https://svelte.dev')).toBe(null)
-    expect(dotCom('localhost:1425')).toBe(null)
-    expect(dotCom('svelte docs')).toBe(null)
-    expect(dotCom('a/b')).toBe(null)
-    expect(dotCom('')).toBe(null)
-  })
-})
+import { favicon, isWebAddress, plainOrigin } from './address'
+import { webAddress } from './typed'
 
 describe('what a web tab may open', () => {
   test('takes http and https', () => {
@@ -57,45 +41,6 @@ describe('what a web tab may open', () => {
   })
 })
 
-describe('what somebody typed', () => {
-  test('nothing means nothing', () => {
-    expect(webAddress('')).toBeNull()
-    expect(webAddress('   ')).toBeNull()
-  })
-
-  test('an address is taken as written', () => {
-    expect(webAddress('https://svelte.dev/docs')).toBe('https://svelte.dev/docs')
-    expect(webAddress('http://localhost:5173/')).toBe('http://localhost:5173/')
-  })
-
-  test('a scheme no tab opens means nothing rather than a search', () => {
-    expect(webAddress('javascript:alert(1)')).toBeNull()
-    expect(webAddress('file:///etc/passwd')).toBeNull()
-  })
-
-  test('a host is given https', () => {
-    expect(webAddress('svelte.dev')).toBe('https://svelte.dev')
-    expect(webAddress('svelte.dev/docs?a=1#b')).toBe('https://svelte.dev/docs?a=1#b')
-    expect(webAddress('localhost:1425')).toBe('https://localhost:1425')
-    expect(webAddress('//svelte.dev')).toBe('https://svelte.dev')
-  })
-
-  test('words are a search', () => {
-    expect(webAddress('svelte docs')).toBe('https://www.google.com/search?q=svelte%20docs')
-    // One word with no dot is a word: a browser searches for `svelte` too.
-    expect(webAddress('svelte')).toBe('https://www.google.com/search?q=svelte')
-  })
-
-  test('on the engine the reader chose', () => {
-    expect(webAddress('a & b', 'https://duckduckgo.com/?q=%s')).toBe(
-      'https://duckduckgo.com/?q=a%20%26%20b',
-    )
-    // An address is an address whichever engine searches words.
-    expect(webAddress('svelte.dev', 'https://duckduckgo.com/?q=%s')).toBe('https://svelte.dev')
-    expect(webAddress('javascript:alert(1)', 'https://duckduckgo.com/?q=%s')).toBeNull()
-  })
-})
-
 describe('the origin, plainly', () => {
   test('is the host', () => {
     expect(plainOrigin('https://svelte.dev/docs/introduction')).toBe('svelte.dev')
@@ -114,4 +59,13 @@ describe('the origin, plainly', () => {
   test('answers with what it was given when that is not an address', () => {
     expect(plainOrigin('not an address')).toBe('not an address')
   })
+})
+
+test("a site's own picture is looked for at its root, and an address with no root has none", () => {
+  expect(favicon('https://pass.proton.me/onboarding?x=1')).toBe(
+    'https://pass.proton.me/favicon.ico',
+  )
+  // What a tab can hold before its page is an address, which once threw in the pane.
+  expect(favicon('pass.proton.me/onboarding')).toBeNull()
+  expect(favicon('about:blank')).toBeNull()
 })

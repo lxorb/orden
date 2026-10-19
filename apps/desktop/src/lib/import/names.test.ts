@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import { hasNotionId, Names, safeName, titleFrom, withoutNotionId } from './names'
+import { hasNotionId, keptName, Names, safeName, titleFrom, withoutNotionId } from './names'
 
 describe('a title as a file name', () => {
   test('loses what no file may be called, keeping the words', () => {
@@ -23,6 +23,30 @@ describe('a title as a file name', () => {
     expect(safeName('con')).toBe('con-')
     expect(safeName('LPT1')).toBe('LPT1-')
     expect(safeName('console')).toBe('console')
+  })
+
+  test('steps around them in front of the first dot too, which is where Windows looks', () => {
+    expect(safeName('Con. Law')).toBe('Con-. Law')
+    expect(keptName('Aux. verbs')).toBe('Aux-. verbs')
+    expect(keptName('aux.config')).toBe('aux-.config')
+    expect(keptName('Cons. Law')).toBe('Cons. Law')
+  })
+
+  test('kept from disk keeps a dot or a space before its extension, which Windows keeps', () => {
+    expect(keptName('Wait for it...', '.md')).toBe('Wait for it...')
+    expect(keptName('Draft ', '.md')).toBe('Draft ')
+    // A space that stands in for a forbidden character at the end still comes off.
+    expect(keptName('Why?', '.md')).toBe('Why')
+    // A folder's name has nothing after it, so Windows would drop them there.
+    expect(keptName('Drafts.')).toBe('Drafts')
+  })
+
+  test('kept from disk loses a forbidden character at its start, keeping a space it opened with', () => {
+    expect(keptName('"Ship it"', '.md')).toBe('Ship it')
+    expect(keptName('<Draft>', '.md')).toBe('Draft')
+    expect(keptName('*Inbox', '.md')).toBe('Inbox')
+    expect(keptName(' Inbox', '.md')).toBe(' Inbox')
+    expect(keptName(' ?Inbox', '.md')).toBe(' Inbox')
   })
 
   test('is short enough to leave room for the folders above it', () => {

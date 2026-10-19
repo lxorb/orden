@@ -81,7 +81,7 @@ function jumpOpen(path: string) {
  *  name, as a note is. Signed out it asks for the account. */
 export async function makeChat(folder?: string, named?: string): Promise<void> {
   if (!account.accountToken) {
-    account.ask('sign-in')
+    account.ask()
     return
   }
   const dir = folder ?? workspace.activeSpace?.root

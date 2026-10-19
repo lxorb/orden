@@ -493,7 +493,7 @@ sessions.delete('/:id', async (context) => {
 
   // And whatever that device had open, which a deleted row does not reach: a socket
   // is not a request. See `roomsSignedOut`. The device behind the session is ended
-  // with it - its hub socket and the web key wrapped to it; see hub/devices.ts.
+  // with it, and its hub socket closed; see hub/devices.ts.
   if (gone.meta.changes) {
     await roomsSignedOut(context.env, user.id)
     await devicesEnded(context.env, user.id, [context.req.param('id')])
@@ -524,7 +524,7 @@ sessions.delete('/', async (context) => {
   // The rooms as well, which is the whole point of the row for a laptop that has
   // gone missing: its session is ended and its socket is closed. This device's own
   // rooms are closed with them and rejoin at once; see `roomsSignedOut`. And the
-  // devices behind those sessions, with the web key wrapped to each.
+  // devices behind those sessions.
   if (gone.meta.changes) {
     await roomsSignedOut(context.env, user.id)
     await devicesEnded(

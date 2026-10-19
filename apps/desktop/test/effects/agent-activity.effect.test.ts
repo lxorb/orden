@@ -1,5 +1,5 @@
 import { flushSync, mount, unmount } from 'svelte'
-import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { agentMarks } from '../../src/lib/agent-marks.svelte'
 import ActivityPanel from '../../src/lib/agents/ui/ActivityPanel.svelte'
 import { FakeCrate } from '../../src/lib/agents/ui/fake'
@@ -215,6 +215,24 @@ describe('the activity panel', () => {
     await settled()
     expect(fake.asked.at(-1)).toEqual({ command: 'stop', args: ['claude'] })
     expect(target.querySelector('.head .nib-glyph')?.getAttribute('aria-label')).toBe('Continue')
+  })
+})
+
+describe('Full permissions', () => {
+  /** #372: an agent with Full permissions asks nothing, a Show included; the crate answers
+   *  its Show as it raises it, and the window that holds the pages puts the tab up. */
+  test('an agent that asks nothing has its tab shown without a question', async () => {
+    fake.connect('claude', 'Claude Code')
+    const tab = fake.open('claude', 'https://shop.example/', 'Shop')
+    await settled()
+    fake.granted('claude', 'showing', 'Show Shop', tab.id)
+    await settled()
+
+    expect(agentMarks.waiting).toBe(0)
+    await vi.waitFor(() =>
+      expect(fake.asked.find((one) => one.command === 'adopt')?.args[0]).toBe(tab.id),
+    )
+    expect(fake.asked.some((one) => one.command === 'answer')).toBe(false)
   })
 })
 

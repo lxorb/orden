@@ -93,3 +93,9 @@ export function treeStep(
 
   return null
 }
+
+/** Whether a press landed on a row's twist, or the strip round it a pointer is given
+ *  (#402): that press shows or hides what the row holds, and opens nothing. */
+export function onTwist(event: Event): boolean {
+  return event.target instanceof Element && event.target.closest('.twist') !== null
+}

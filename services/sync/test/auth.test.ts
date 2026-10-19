@@ -408,6 +408,7 @@ describe('who may call the API from a browser', () => {
   test('the app itself may', async () => {
     for (const origin of [
       'https://nibeditor.com',
+      'https://orden.so',
       'http://localhost:1420',
       'tauri://localhost',
       'http://127.0.0.1:5173',
@@ -421,8 +422,12 @@ describe('who may call the API from a browser', () => {
     for (const origin of [
       'https://evil.example',
       'https://nibeditor.com.evil.example',
+      'https://orden.so.evil.example',
       'http://localhost.evil.example',
       'https://www.nibeditor.com',
+      'https://www.orden.so',
+      'http://orden.so',
+      'null',
     ]) {
       const response = await call(env, '/v1/me', { headers: { origin } })
       expect(response.headers.get('access-control-allow-origin'), origin).toBeNull()

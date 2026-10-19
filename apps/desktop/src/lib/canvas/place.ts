@@ -41,10 +41,13 @@ export interface KeptView extends Camera {
 function readView(value: unknown): KeptView | null {
   if (!isRecord(value)) return null
 
-  const { x, y, scale, chose } = value
+  const { x, y, scale, chose, turn } = value
   if (typeof x !== 'number' || typeof y !== 'number' || typeof scale !== 'number') return null
 
-  return chose === true ? { x, y, scale, chose: true } : { x, y, scale }
+  // How far the view was turned, where it was (#351): this device's, beside the place,
+  // never in the file.
+  const turning = typeof turn === 'number' && Number.isFinite(turn) && turn ? { turn } : {}
+  return chose === true ? { x, y, scale, chose: true, ...turning } : { x, y, scale, ...turning }
 }
 
 /** Every view this device remembers, read once. */

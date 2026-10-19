@@ -372,18 +372,18 @@ Legend: `[x]` done · `[~]` partial · `[ ]` todo · `[-]` deliberately skipped
 - [x] Custom fonts (via a theme)
 - [x] Custom CSS injection separate from themes
 - [x] Code block themes
-- [x] A high contrast mode, which is a theme the app ships with. Asking for more
+- [x] A contrast mode, which is a theme the app ships with. Asking for more
       contrast asks for a different look, so it is a whole palette rather than a
-      switch beside the mode: `High contrast` in the Style row and `Theme: High
-      contrast` in the palette, one of the two themes that are always there, with no
+      switch beside the mode: `Contrast` in the Style row and `Theme: Contrast` in
+      the palette, one of the two themes that are always there, with no
       file to fetch and nothing to install. Measured against the page it is read on -
       text at 21:1 in both schemes, the muted words at 8 and 11.5, the hairlines at
       3.6 and up, an accent of its own at 7.9 and 9.2 - and measured by a drive that
       reads the ratios back off the real page rather than by a claim in a file; see
       apps/desktop/test/e2e/contrast.py. It states the four `--syntax-*` tokens too,
-      so the syntax inside a fence is a theme's to answer as well. The same palette
-      is published as `contrast` in the theme store for anybody who wants to update it
-      separately, and installing that copy still works. A fresh install whose system
+      so the syntax inside a fence is a theme's to answer as well. It is the one
+      Contrast: the theme store's copy is gone, and one still installed is read as
+      it. A fresh install whose system
       asks for more contrast is answered with the theme itself, chosen there and then
       and shown in Appearance so putting it back is one press - once, and never asked
       again; a reader who has already chosen a theme is not overruled by their system
@@ -432,9 +432,10 @@ Still pandoc's, and offered only where pandoc is installed:
       Craft, OneNote, Tomboy, Airtable and any folder of markdown, read from the
       export the reader already has, in one sheet, on every platform. See
       docs/import.md and section 17
-- [x] A PDF, as pages to write on. One more row of the same sheet: the paper goes
-      into the space byte for byte, so Obsidian still opens it, and a `.pages` note
-      lands beside it whose pages are that paper's pages. Nothing is baked in - no
+- [x] A PDF, as pages to write on. One more row of the same sheet, and what a drop
+      or a first open makes of a PDF too: a `.pages` note whose pages are that
+      paper's pages, holding the paper byte for byte, so Obsidian still opens it.
+      The list shows the note alone. Nothing is baked in - no
       folder of PNGs - each page names the file and the page, and the picture is
       rendered from the paper when it comes near the view. Which is also the answer
       to Samsung Notes, GoodNotes, Notability and Apple Notes, none of which
@@ -444,7 +445,7 @@ Still pandoc's, and offered only where pandoc is installed:
 ## 16. System integration
 
 - [x] Multiple windows, and a window that stays over every other application
-- [x] Open from the shell: `nib://` links and the `nib` command, which name a note
+- [x] Open from the shell: `nib://` links and the `orden` command, which name a note
       inside a space. A path on the command line is not read (Emil, 2026-09-30:
       nib opens nothing from outside its spaces)
 - [ ] ~~File association for `.md`~~ - taken away on purpose, and an install over an
@@ -954,8 +955,9 @@ Features Typora does not have, which are the reason this exists.
 - [x] A space leaves notes and folders out of what it says about itself: the
       search does not walk them, the picture of its links does not draw them, and
       the mentions of a note do not count them. They are still there to open and
-      still sync; the space has simply stopped asking them things. The way in is a
-      row's own menu, and the rows say so quietly. Paths rather than patterns,
+      still sync; the space has simply stopped asking them things. The way in was a
+      row's own menu; since #252 a row offers only the way back, and Archive is how
+      a note is put out of the way. Paths rather than patterns,
       because a row always names a note or a folder and a folder stands for
       everything under it, which is the only pattern a file tree needs; a glob
       would be a second language beside the search's own, in a settings pane
@@ -1175,9 +1177,9 @@ Features Typora does not have, which are the reason this exists.
       palette copies a correct link to what is open, with the heading the caret is
       in on it, which is also how anybody finds out the scheme is there
 - [x] A command line that drives the app that is running, the way Obsidian's does:
-      `nib files read`, `nib search`, `nib backlinks`, `nib orphans`,
-      `nib properties set`, `nib outline`, `nib words`, `nib commands run`,
-      `nib sync now`, `nib screenshot`, twenty-six verbs in all. Over a socket the
+      `orden files read`, `orden search`, `orden backlinks`, `orden orphans`,
+      `orden properties set`, `orden outline`, `orden words`, `orden commands run`,
+      `orden sync now`, `orden screenshot`, twenty-six verbs in all. Over a socket the
       app opens on 127.0.0.1 on a port the system hands out at every launch, behind
       a secret in the app's own config folder, and nothing that changes a note runs
       without `--yes` - which the app enforces rather than the script. The same
@@ -1208,8 +1210,8 @@ Features Typora does not have, which are the reason this exists.
       - convert on the first open, or all at once from the palette, and a note that
       had words of its own beyond the link stays a note beside its shortcut. No room
       and no collaboration: there are no words in it to share
-- [x] Clip the page a tab is showing into the space, through the same converter the
-      browser extension uses: the selection, or the article, as markdown under
+- [x] Clip the page a tab is showing into the space, through the converter a paste
+      uses: the selection, or the article, as markdown under
       `source:` and `date:`. On a desktop the page is read in the document as the
       reader sees it, through the engine's own script callback rather than through the
       app's IPC, so the page is read without being given anything to call

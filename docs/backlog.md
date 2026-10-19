@@ -42,7 +42,7 @@ the session scratchpad under `backlog\lanes\<lane>.md`.
 | 10 | `naming-docs` - one name, true docs | 3 | S | naming now, docs after the wave | display strings, `packaging/`, `docs/`, `README.md` |
 | 11 | `security-2` - the lows and the CSP | 4 | M | now; a migration number agreed with #43 | `worker/`, `apps/desktop/src/csp.ts`, the HTML entries |
 | 12 | `rust-hardening` - the crate's leftovers | 5 | M | after #39 | `rs/notes.rs`, `trash.rs`, `updates.rs`, `downloads.rs`, `themes.rs`, `tree.rs` |
-| 13 | `clipper-import` - one extractor | 3 | M | after #40 | `apps/clipper`, `md/`, `lib/web-tab/clip.ts`, `rs/apple_text.rs` |
+| 13 | `clipper-import` - one extractor | 3 | M | after #40 | `md/`, `lib/web-tab/clip.ts`, `rs/apple_text.rs` (the extension itself went in #366) |
 | 14 | `iphone-platform` - what Android has | 4 | XL | after Emil answers Q6 | the iOS project, `lib/mobile/`, `apps/desktop/public/sw.js` |
 
 ## The top fifteen
@@ -108,8 +108,8 @@ own colour at 46 ms warm; round 2 was queued for a quiet machine and never ran.
 ## 4. browser-parity - Chrome's own features
 
 What `nib-browser-vision.md` (2026-09-13) keeps inside the browser and nib still lacks.
-Everything here waits for the injection rework, the scroll fix, the engine switch and the
-default-browser work, which all rewrite the same files.
+Everything here waits for the injection rework, the scroll fix and the default-browser
+work, which all rewrite the same files.
 
 | item | asked | done means | size | value | deps |
 | --- | --- | --- | --- | --- | --- |
@@ -176,6 +176,7 @@ id (80b9de44) landed; two faults are left.
 | The name a reader sees is nibeditor: the welcome note (the old text still recognised as untouched), the sign-in and invite mails, the Mac menu bar, window titles, the OAuth resource name, the AUR and Nix `.desktop` files | `nibeditor-naming-and-launch.md`, 2026-09-08; hunt #123 | no "Nib" a reader sees; bundle id, winget ids and asset names untouched | S | med | Q18 |
 | The docs made true: `docs/typora-parity.md` still has the mermaid-on-pages and Lines rows open (both built) and says Reveal is not built (it is, as Show in folder); `docs/power-user.md`'s "In progress" row is done; the "What is left" lists refreshed once the wave lands | this audit | every open row open, every done row done | S | med | the wave |
 | README: a winget row once PR 429968 merges; the comparison's iOS cell once an installable iPhone app exists | batches #40, #49 | rows match what ships | S | low | external |
+| The web handoff's **Notes from nibeditor.com** row and `/handoff` come out twelve months after the rename; the nibeditor.com API, its zone and its registration stay for good | rebrand plan, 2026-10-12 | the row gone, every API route on nibeditor.com still answering | S | low | 2027-10 |
 
 ## 11. security-2 - the lows and the CSP
 
@@ -200,8 +201,7 @@ id (80b9de44) landed; two faults are left.
 
 | item | asked | done means | size | value | deps |
 | --- | --- | --- | --- | --- | --- |
-| Mozilla's Readability moves out of the clipper into the markdown package (`packages/markdown/src/article.ts`) so a web tab's Clip uses it too | `docs/web-tabs.md` "What is left" | one extractor, both clips produce the same note from the same page | M | med | #40 |
-| The clipper's fortieth catalogue: `yue` still answers Hong Kong written Chinese | batches, fixer C2, 2026-09-14 | 40 catalogues, the same negotiation as the app | S | low | none |
+| Mozilla's Readability moves out of the browser extension (gone since, #366) into the markdown package (`packages/markdown/src/article.ts`) so a web tab's Clip uses it too | `docs/web-tabs.md` "What is left" | one extractor, both clips produce the same note from the same page | M | med | #40 |
 | Apple Notes tables, drawings and scans are counted, not converted | batches #95, 2026-09-12 | tables as markdown tables, drawings and scans as pictures where the database holds them | M | low | none |
 
 ## 14. iphone-platform - what Android has
@@ -235,8 +235,9 @@ The unmerged branches, all 482 commits behind `main`: `worktree-agent-archive` i
 reference, `worktree-agent-right-sidebar` #47's, `worktree-agent-adf3a62186e99c1e5` (CEF
 batch 2) #46's, and `worktree-agent-crash-recovery` is dropped below.
 
-Blocked on #46's verdict rather than a lane now: Chrome extensions, `chrome://` pages as
-tabs, Translate, the extension list on the account, PDF export under CEF.
+Gone with nib's own Chromium (#305, #313), which #46's verdict was about: `chrome://`
+pages as tabs, Translate, the extension list on the account, PDF export under CEF. Chrome
+extensions came on `WebView2` instead.
 
 ## Waiting on Emil, not code
 
@@ -271,6 +272,7 @@ otherwise.
 | Q16 | Ink on an accent fill in dark mode | A per-scheme ink token |
 | Q17 | Delete the three finished migrations | Yes; every v0.5-era install has updated since |
 | Q18 | The display name is nibeditor everywhere a reader sees it, identifiers untouched | Yes, per 2026-09-08 |
+| Q19 | The name is Orden (2026-10-12): Orden and orden.so wherever a reader sees it, nibeditor.com answering the API for good, identifiers (`ch.emilvinu.nib`, `Documents/Nib`, the `nib` binary, the `Nib-` release assets) untouched | Yes, per 2026-10-12 |
 
 ## Dropped
 

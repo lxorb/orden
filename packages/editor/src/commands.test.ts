@@ -28,6 +28,7 @@ import {
   toggleTask,
   toggleTaskList,
   toggleWrap,
+  tickTaskAtCaret,
 } from './commands'
 import { selectWord } from './keymap'
 import { parsed } from '../test/parsed'
@@ -215,6 +216,21 @@ describe('line prefixes', () => {
     expect(run(toggleBulletList, '- |item')).toBe('item')
   })
 
+  // The indent is what nests an item under the one above it, so a bullet that is
+  // traded or taken off leaves it where it was: a list made over a selection that
+  // already holds a nested item keeps that item nested.
+  test('keeps a nested bullet nested when the list is made over it', () => {
+    const doc = '- a\n  - b\nc'
+    expect(apply(toggleBulletList, doc, 0, doc.length).doc).toBe('- a\n  - b\n- c')
+  })
+
+  // And a task's box is part of what makes the line a list item, so taking the list
+  // off takes the box with the bullet, rather than leaving `[ ]` in the words.
+  test('takes off a nested bullet and a task box without the indent', () => {
+    const doc = '- a\n  - [ ] b\n  - c'
+    expect(apply(toggleBulletList, doc, 0, doc.length).doc).toBe('a\n  b\n  c')
+  })
+
   test('numbers an ordered list across lines', () => {
     expect(run(toggleOrderedList, '[one\ntwo\nthree]')).toBe('1. one\n2. two\n3. three')
   })
@@ -349,6 +365,14 @@ describe('a task list', () => {
     expect(apply(toggleTaskList, doc, 0, doc.length).doc).toBe('one\ntwo')
   })
 
+  // The `>` says the line is in a quote, and a box in front of it would take the
+  // line out of the quote and make a task of a line that starts with `>`.
+  test('puts the box inside a quote, and takes it off again', () => {
+    expect(run(toggleTaskList, '> |c')).toBe('> - [ ] c')
+    expect(at(toggleTaskList, '> - [ ] c', 8)).toBe('> c')
+    expect(run(toggleTaskList, '> > - |c')).toBe('> > - [ ] c')
+  })
+
   test('makes tasks of every line when only some of them are', () => {
     const doc = '- [x] one\ntwo'
     expect(apply(toggleTaskList, doc, 0, doc.length).doc).toBe('- [ ] one\n- [ ] two')
@@ -398,6 +422,37 @@ describe('ticking the task under the caret', () => {
     // Offsets rather than marks, because a table is written with the caret's mark.
     const table = '| a | b |\n| - | - |\n| 1 | 2 |'
     expect(apply(toggleTask, table, table.length - 2).took).toBe(false)
+  })
+})
+
+/** Enter in Vim's normal mode, which ticks a task and is Vim's own on every other line;
+ *  see vim-mode.ts. */
+describe('ticking the task the caret is on, and nothing else', () => {
+  test('ticks an empty box and clears a ticked one, wherever on the line the caret is', () => {
+    expect(apply(tickTaskAtCaret, '- [ ] wash up', 0).doc).toBe('- [x] wash up')
+    expect(apply(tickTaskAtCaret, '- [x] wash up', 13).doc).toBe('- [ ] wash up')
+    expect(apply(tickTaskAtCaret, '  - [ ] nested', 9).doc).toBe('  - [x] nested')
+  })
+
+  test('only the line the caret is on', () => {
+    expect(apply(tickTaskAtCaret, '- [ ] one\n- [ ] two', 12).doc).toBe('- [ ] one\n- [x] two')
+  })
+
+  test('leaves a line that is not a task alone, and says so', () => {
+    for (const doc of ['just words', '- a bullet', '1. a number', '']) {
+      const done = apply(tickTaskAtCaret, doc, doc.length)
+      expect(done.took, doc).toBe(false)
+      expect(done.doc).toBe(doc)
+    }
+  })
+
+  test('gives way in code, where a box is not a box', () => {
+    expect(took(tickTaskAtCaret, '```\n- [ ] still code|\n```')).toBe(false)
+  })
+
+  test('leaves a selection over more than one line alone', () => {
+    const doc = '- [ ] one\n- [ ] two'
+    expect(apply(tickTaskAtCaret, doc, 0, doc.length).took).toBe(false)
   })
 })
 

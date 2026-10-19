@@ -19,7 +19,7 @@ use tauri::AppHandle;
 use crate::carry::move_whole;
 use crate::clock;
 use crate::paths::{
-    folded, free_spot, in_spaces, inside, is_reserved, made, move_highlights, spaces_dir,
+    folded, free_spot, in_spaces, inside, is_reserved, made, move_held, spaces_dir,
     write_atomically, TRASH,
 };
 
@@ -60,7 +60,7 @@ pub struct TrashEntry {
 #[tauri::command(async)]
 pub fn trash_item(app: AppHandle, path: String, kind: String) -> Result<TrashEntry, String> {
     if !KINDS.contains(&kind.as_str()) {
-        return Err(format!("{kind} is not something nibeditor can delete"));
+        return Err(format!("{kind} is not something Orden can delete"));
     }
 
     // Refuses anything outside the notes folder, and the trash itself: what is
@@ -84,9 +84,9 @@ pub fn trash_item(app: AppHandle, path: String, kind: String) -> Result<TrashEnt
         return Err(error);
     }
 
-    // A deleted PDF takes its highlights into the same folder, so putting it
-    // back puts them back with it.
-    move_highlights(&source, &held);
+    // A deleted PDF takes its highlights into the same folder, and a page note its
+    // paper, so putting it back puts them back with it.
+    move_held(&source, &held);
 
     let entry = TrashEntry {
         id,
@@ -102,7 +102,7 @@ pub fn trash_item(app: AppHandle, path: String, kind: String) -> Result<TrashEnt
     // where one taken away with the slot would not be.
     recorded(&dir, entry, || {
         if move_whole(&held, &source, "restore").is_ok() {
-            move_highlights(&held, &source);
+            move_held(&held, &source);
             let _ = fs::remove_dir(&slot);
         }
     })
@@ -117,7 +117,7 @@ pub fn trash_item(app: AppHandle, path: String, kind: String) -> Result<TrashEnt
 pub fn trash_words(app: AppHandle, path: String, content: String) -> Result<TrashEntry, String> {
     let (_, from, name) = placed(&app, &path)?;
     if !is_name(&name) {
-        return Err(format!("{name} is not a name nibeditor can keep"));
+        return Err(format!("{name} is not a name Orden can keep"));
     }
 
     let _guard = locked();
@@ -227,9 +227,10 @@ pub fn restore_trash(app: AppHandle, id: String) -> Result<String, String> {
     }
 
     move_whole(&held, &target, "restore")?;
-    // The highlights come back under whatever name the PDF landed under, which
-    // is not the old one when something has taken its place in the meantime.
-    move_highlights(&held, &target);
+    // The highlights come back under whatever name the PDF landed under, and a
+    // paper under its page note's, which is not the old one when something has
+    // taken its place in the meantime.
+    move_held(&held, &target);
     let _ = fs::remove_dir_all(&slot);
 
     entries.remove(position);
@@ -361,7 +362,7 @@ fn purge(dir: &Path, entries: &mut Vec<TrashEntry>, id: &str) {
 /// a name rather than a path.
 fn restore_target(base: &Path, entry: &TrashEntry) -> Result<PathBuf, String> {
     if !is_name(&entry.name) {
-        return Err("that is not a name nibeditor stored".into());
+        return Err("that is not a name Orden stored".into());
     }
 
     let wanted = folded(&base.join(entry.from.replace('/', MAIN_SEPARATOR_STR)));

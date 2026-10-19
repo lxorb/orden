@@ -297,6 +297,39 @@ export async function versionAt(env: Env, noteId: string, at: number): Promise<s
   return object ? await object.text() : null
 }
 
+/** Whether a note ever said the words that hash to `hash`, as far as the account
+ *  still remembers: one of its versions, or what it says now.
+ *
+ *  What a device signing back in asks about a copy it has no record for (a storage
+ *  wiped, a first pairing). A copy the account once held word for word is behind,
+ *  not beside: there is nothing in it the account has not seen, so it is brought up
+ *  to date rather than kept as a second copy. See `pull` in the app's sync/pass.ts. */
+export async function saidOnce(
+  env: Env,
+  note: Pick<Note, 'id' | 'hash'>,
+  hash: string,
+): Promise<boolean> {
+  if (note.hash === hash) return true
+
+  const row = await env.DB.prepare(
+    'select 1 as one from note_versions where note_id = ? and hash = ? limit 1',
+  )
+    .bind(note.id, hash)
+    .first<{ one: number }>()
+
+  return row !== null
+}
+
+/** The words a note said when they hashed to `hash`, or null when no version of it
+ *  is kept: the ancestor a device merges against when both it and the account wrote
+ *  since they last agreed. */
+export async function saidAs(env: Env, noteId: string, hash: string): Promise<string | null> {
+  if (!(await saidOnce(env, { id: noteId, hash: '' }, hash))) return null
+
+  const object = await env.NOTES.get(versionKey(hash))
+  return object ? await object.text() : null
+}
+
 /** What the path of every note inside a folder starts with: the folder and a
  *  slash, or nothing for the whole space.
  *

@@ -46,7 +46,12 @@ vi.mock('../tauri', async (original) => ({
   invoke: fakeInvoke,
   isDesktop: true,
 }))
-vi.mock('./keys', () => ({ readKey: () => Promise.resolve('sk-key') }))
+// The rest of the module as it is: the AI vault starts with the AI store and listens
+// for keys moving, whatever this test asks of the key.
+vi.mock('./keys', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./keys')>()),
+  readKey: () => Promise.resolve('sk-key'),
+}))
 
 /** Every request the page made itself, and what the provider streams back. */
 const fetched: { url: string; init: RequestInit }[] = []
@@ -76,7 +81,7 @@ beforeEach(() => {
   hold = false
   missing = false
   held = null
-  for (const one of [...ai.providers]) ai.remove(one.id)
+  for (const one of [...ai.accounts]) ai.remove(one.id)
 })
 
 describe('which provider a feature asks', () => {
@@ -97,12 +102,26 @@ describe('which provider a feature asks', () => {
   test('a provider taken away takes its features back to the default', () => {
     ai.add('openai')
     ai.update('openai', { model: 'gpt-5' })
-    ai.add('codex')
-    ai.use('rewrite', 'codex')
-    ai.remove('codex')
+    ai.add('claude-code')
+    ai.use('rewrite', 'claude-code')
+    ai.remove('claude-code')
 
     expect(ai.uses).toEqual({})
     expect(ai.providerFor('rewrite')?.id).toBe('openai')
+  })
+
+  test('a feature asks a provider, and its active account answers', () => {
+    ai.add('openai')
+    ai.update('openai', { model: 'gpt-5' })
+    ai.add('codex')
+    ai.use('rewrite', 'codex')
+
+    // Codex is OpenAI's second account, so OpenAI's active one answers until it is chosen.
+    expect(ai.providerFor('rewrite')?.id).toBe('openai')
+    ai.activate('codex')
+    expect(ai.providerFor('rewrite')?.id).toBe('codex')
+    expect(ai.providerFor('ask')?.id).toBe('codex')
+    expect(ai.providers.map((one) => one.id)).toEqual(['codex'])
   })
 
   test('a program on this machine needs no model to be asked', () => {
@@ -176,7 +195,7 @@ describe('Claude Code on this machine', () => {
     await expect(complete({ provider: CLAUDE_CODE, model: '', messages: ASKED })).rejects.toThrow(
       'Your Claude plan is at its limit for now.',
     )
-    expect(plans.local['claude-code'].limit?.state).toBe('reached')
+    expect(plans.of('claude-code').limit?.state).toBe('reached')
   })
 
   test('a program that is not installed says so', async () => {

@@ -12,9 +12,20 @@ let refusing: string | null = null
 /** What the import handed the undo stack. */
 const recorded: unknown[] = []
 
+/** What each note was written as. */
+const said = new Map<string, string>()
+
+/** What is on the disk already, which the file list may not show: a picture, a file
+ *  in a hidden folder, a file of a space that is not the one open. */
+const onDisk = new Set<string>()
+
 vi.mock('../tauri', () => ({
   invoke: (command: string, args: Record<string, unknown>) => {
+    if (command === 'file_stamp') {
+      return Promise.resolve(onDisk.has(String(args.path)) ? { modified: 1, len: 1 } : null)
+    }
     if (args.path === refusing) return Promise.reject(new Error('the disk is full'))
+    if (command === 'write_note') said.set(String(args.path), String(args.content))
     wrote.push({ command, path: String(args.path) })
     return Promise.resolve()
   },
@@ -50,6 +61,8 @@ beforeEach(() => {
   heard.length = 0
   recorded.length = 0
   refusing = null
+  onDisk.clear()
+  said.clear()
 })
 
 function planOf(files: Planned[]): ImportPlan {
@@ -117,6 +130,47 @@ describe('a name that is already taken', () => {
     expect(textAt(stamped.files, 'Trip.md')).toBe('![](assets/shot%202.png)')
   })
 
+  test('a picture a reference names follows it', () => {
+    const taken = new Set(['assets/shot.png'])
+    const stamped = restamped(
+      planOf([note('Trip.md', '![shot][s]\n\n[s]: assets/shot.png\n'), file('assets/shot.png')]),
+      taken,
+      '',
+    )
+
+    expect(textAt(stamped.files, 'Trip.md')).toBe('![shot][s]\n\n[s]: assets/shot%202.png\n')
+  })
+
+  test('a wikilink escaped with a backslash is words, and stays as it was', () => {
+    const taken = new Set(['plan.md'])
+    const stamped = restamped(
+      planOf([
+        note('Help.md', 'Write \\[[Plan]] to link the plan: [[Plan]].\n'),
+        note('Plan.md', '# Plan'),
+      ]),
+      taken,
+      '',
+    )
+
+    expect(textAt(stamped.files, 'Help.md')).toBe(
+      'Write \\[[Plan]] to link the plan: [[Plan 2]].\n',
+    )
+  })
+
+  test('a picture a vault embeds by its name follows it, its size and all', () => {
+    const taken = new Set(['brain/photo.png', 'brain/home.md'])
+    const stamped = restamped(
+      planOf([note('Home.md', 'Look: ![[photo.png]] and ![[photo.png|300]]\n'), file('photo.png')]),
+      taken,
+      'Brain',
+    )
+
+    expect(stamped.files.map((one) => one.path)).toEqual(['Brain/Home 2.md', 'Brain/photo 2.png'])
+    expect(textAt(stamped.files, 'Brain/Home 2.md')).toBe(
+      'Look: ![[photo 2.png]] and ![[photo 2.png|300]]\n',
+    )
+  })
+
   test('a link from a note in a folder follows it too', () => {
     const taken = new Set(['assets/shot.png'])
     const stamped = restamped(
@@ -126,6 +180,36 @@ describe('a name that is already taken', () => {
     )
 
     expect(textAt(stamped.files, 'Deep/Trip.md')).toBe('![](../assets/shot%202.png)')
+  })
+
+  test('a link written as an example in code stays as it was written', () => {
+    const guide = 'Type `[[Plan]]` to link, or [[Plan]].\n\n```\n[[Plan]] and ![](shot.png)\n```\n'
+    const stamped = restamped(
+      planOf([note('Guide.md', guide), note('Plan.md', '# Plan'), file('shot.png')]),
+      new Set(['plan.md', 'shot.png']),
+      '',
+    )
+
+    expect(textAt(stamped.files, 'Guide.md')).toBe(
+      'Type `[[Plan]]` to link, or [[Plan 2]].\n\n```\n[[Plan]] and ![](shot.png)\n```\n',
+    )
+  })
+
+  test('a canvas card follows the note it shows', () => {
+    const board = '{"nodes":[{"id":"a","type":"file","file":"Plan.md"}],"edges":[]}'
+    const stamped = restamped(
+      planOf([
+        note('Plan.md', '# Plan'),
+        { kind: 'file', path: 'Board.canvas', bytes: new TextEncoder().encode(board) },
+      ]),
+      new Set(['plan.md']),
+      '',
+    )
+    const canvas = stamped.files.find((one) => one.path === 'Board.canvas')
+
+    expect(canvas?.kind === 'file' && new TextDecoder().decode(canvas.bytes)).toBe(
+      board.replace('Plan.md', 'Plan 2.md'),
+    )
   })
 
   test('two of the import1s own notes cannot land on one name', () => {
@@ -139,6 +223,150 @@ describe('a name that is already taken', () => {
     const stamped = restamped(planOf([note('Plan.md', 'x')]), new Set(['PLAN.MD']), '')
 
     expect(stamped.files[0]?.path).toBe('Plan 2.md')
+  })
+
+  test('counts as taken however its accents are composed', () => {
+    const decomposed = 'Cafe\u0301.md'
+    const stamped = restamped(planOf([note(decomposed, 'x')]), new Set(['caf\u00e9.md']), '')
+
+    expect(stamped.files[0]?.path).toBe('Cafe\u0301 2.md')
+  })
+})
+
+/** A vault read and then landed in the folder `Inbox` of a space that already holds
+ *  `taken`. */
+async function vaultLanded(taken: string[], ...files: [string, string?][]): Promise<Planned[]> {
+  const { readAs } = await import('./read')
+  const { sourceOf } = await import('./sources')
+  const sources = [['.obsidian/app.json', '{}'] as const, ...files].map(([path, body]) =>
+    sourceOf(path, new TextEncoder().encode(body ?? 'x')),
+  )
+  return restamped(await readAs('obsidian', sources), new Set(taken), 'Inbox').files
+}
+
+describe('a vault landed beside notes of the same name', () => {
+  test('keeps a link to the root Plan on it when only Projects/Plan steps aside', async () => {
+    const files = await vaultLanded(
+      ['inbox/projects/plan.md'],
+      ['Plan.md', '# The root plan'],
+      ['Projects/Plan.md', '# The project plan'],
+      ['Home.md', 'Start with [[Plan]].'],
+    )
+
+    expect(files.map((one) => one.path)).toContain('Inbox/Projects/Plan 2.md')
+    expect(textAt(files, 'Inbox/Home.md')).toBe('Start with [[Plan]].\n')
+  })
+
+  test('has a link that names the folder follow its note when it steps aside', async () => {
+    const files = await vaultLanded(
+      ['inbox/projects/plan.md'],
+      ['Plan.md', '# The root plan'],
+      ['Projects/Plan.md', '# The project plan'],
+      ['Home.md', 'See [[Projects/Plan]].'],
+    )
+
+    expect(textAt(files, 'Inbox/Home.md')).toBe('See [[Projects/Plan 2]].\n')
+  })
+
+  test('has a link written in another case follow its note, in the case it was written', async () => {
+    const files = await vaultLanded(
+      ['inbox/kit.md'],
+      ['Kit.md', '# Kit'],
+      ['Trip.md', 'Pack the [[kit]].'],
+    )
+
+    expect(files.map((one) => one.path)).toContain('Inbox/Kit 2.md')
+    expect(textAt(files, 'Inbox/Trip.md')).toBe('Pack the [[kit 2]].\n')
+  })
+
+  test('has a link with words in a table follow its note when it steps aside', async () => {
+    const files = await vaultLanded(
+      ['inbox/kit.md'],
+      ['Kit.md', '# Kit'],
+      ['Trip.md', '| What | Where |\n| --- | --- |\n| [[Kit\\|the kit]] | hall |\n'],
+    )
+
+    expect(textAt(files, 'Inbox/Trip.md')).toBe(
+      '| What | Where |\n| --- | --- |\n| [[Kit 2\\|the kit]] | hall |\n',
+    )
+  })
+
+  test('has a markdown link to a picture follow it with its title kept', async () => {
+    const files = await vaultLanded(
+      ['inbox/shot.png'],
+      ['shot.png'],
+      ['Trip.md', '![](shot.png "The view")'],
+    )
+
+    expect(files.map((one) => one.path)).toContain('Inbox/shot 2.png')
+    expect(textAt(files, 'Inbox/Trip.md')).toBe('![](shot%202.png "The view")\n')
+  })
+
+  test('has a markdown link to a page of a PDF follow it with the page kept', async () => {
+    const files = await vaultLanded(
+      ['inbox/paper.pdf'],
+      ['Paper.pdf'],
+      ['Trip.md', 'Read [page 3](Paper.pdf#page=3).'],
+    )
+
+    expect(textAt(files, 'Inbox/Trip.md')).toBe('Read [page 3](Paper%202.pdf#page=3).\n')
+  })
+
+  test('has a picture whose name holds brackets follow it when it steps aside', async () => {
+    const files = await vaultLanded(
+      ['inbox/screenshot (1).png'],
+      ['Screenshot (1).png'],
+      ['Trip.md', '![](Screenshot%20(1).png)'],
+    )
+
+    expect(files.map((one) => one.path)).toContain('Inbox/Screenshot (1) 2.png')
+    expect(textAt(files, 'Inbox/Trip.md')).toBe('![](Screenshot%20%281%29%202.png)\n')
+  })
+})
+
+describe('an import into a space that already holds an earlier copy', () => {
+  test('does not write over a picture the file list does not show', async () => {
+    // A picture is not in the file list, which lists only what a tab can hold.
+    onDisk.add('/Space/Brain/photo.png')
+    onDisk.add('/Space/Brain/.obsidian/app.json')
+    const landed = await applyImport(
+      planOf([
+        note('Home.md', 'Look: ![[photo.png]]\n'),
+        file('photo.png'),
+        file('.obsidian/app.json'),
+      ]),
+      { root: '/Space', folder: 'Brain' },
+    )
+
+    expect(landed.paths).toEqual([
+      '/Space/Brain/Home.md',
+      '/Space/Brain/photo 2.png',
+      '/Space/Brain/.obsidian/app 2.json',
+    ])
+    expect(landed.stepped).toBe(2)
+  })
+
+  test('has the note follow the picture that stepped aside', async () => {
+    onDisk.add('/Space/Brain/photo.png')
+    await applyImport(planOf([note('Home.md', 'Look: ![[photo.png]]\n'), file('photo.png')]), {
+      root: '/Space',
+      folder: 'Brain',
+    })
+
+    expect(said.get('/Space/Brain/Home.md')).toBe('Look: ![[photo 2.png]]\n')
+    expect(wrote.map((one) => one.path)).not.toContain('/Space/Brain/photo.png')
+  })
+
+  test('does not write over notes of a space that is not the one open', async () => {
+    // The file list is the open space's; this one is only on the disk.
+    onDisk.add('/Other/Brain/Home.md')
+    onDisk.add('/Other/Brain/Home 2.md')
+    const landed = await applyImport(planOf([note('Home.md', '# Home, the new copy\n')]), {
+      root: '/Other',
+      folder: 'Brain',
+    })
+
+    expect(landed.paths).toEqual(['/Other/Brain/Home 3.md'])
   })
 })
 

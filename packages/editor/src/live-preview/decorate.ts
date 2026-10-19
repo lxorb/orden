@@ -145,6 +145,7 @@ class Decorator {
         return true
       case 'ListItem':
         this.markLines(node, 'nib-li', true)
+        this.commentFields(this.state.doc.lineAt(node.from))
         return true
       case 'HeaderMark':
       case 'QuoteMark':
@@ -568,7 +569,10 @@ class Decorator {
   /** A task's fields hidden the way marks are and said again as chips after its words,
    *  the source back with the caret on its line; see task-chips.ts. */
   private taskFields(line: Line) {
-    const drawn = chipsFor(line.text)?.taskDrawing(line.text)
+    const drawn = chipsFor(line.text)?.taskDrawing(
+      line.text,
+      this.state.facet(noteIndex).dueReads ?? 'start',
+    )
     if (!drawn || !chips) return
 
     const shown = lineRevealed(this.state, line.from)
@@ -579,6 +583,22 @@ class Decorator {
         widget: new chips.TaskChipsWidget(drawn.chips, line.from),
         side: 1,
       }).range(line.to),
+    )
+  }
+
+  /** A task's comment (`[at::]`, `[by::]`) drawn as its words and a quiet chip of when
+   *  and by whom, the fields back with the caret on its line; see task-chips.ts. */
+  private commentFields(line: Line) {
+    if (!line.text.includes('::')) return
+    const drawn = chipsFor(line.text)?.commentDrawing(line.text)
+    if (!drawn || !chips) return
+    const shown = lineRevealed(this.state, line.from)
+    for (const span of drawn.hide) this.conceal(line.from + span.from, line.from + span.to, shown)
+    if (shown) return
+    this.marks.push(
+      Decoration.widget({ widget: new chips.CommentChipsWidget(drawn.chips), side: 1 }).range(
+        line.to,
+      ),
     )
   }
 

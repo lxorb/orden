@@ -5,8 +5,9 @@
  *  values rather than words (Today groups by whether a task is overdue), and this is
  *  where a value becomes what the reader reads, in their language. */
 
-import { groupName, type Value } from '@nib/bases'
-import { key, t } from '../i18n.svelte'
+import { addDays, groupName, type Value } from '@nib/bases'
+import { i18n, key, t } from '../i18n.svelte'
+import { dateAt } from './days'
 import { bare } from './columns'
 import { dayWords } from '@nib/editor/task-days'
 import type { ChartKind, Measure } from './chart'
@@ -17,7 +18,7 @@ const BUILTIN_NAMES: Record<Builtin, string> = {
   inbox: key('Inbox'),
   today: key('Today'),
   upcoming: key('Upcoming'),
-  logbook: key('Logbook'),
+  logbook: key('Completed'),
   project: key('Project'),
   label: key('Label'),
 }
@@ -80,7 +81,7 @@ const FIELD_NAMES: Record<string, string> = {
   'task.status': key('Status'),
   'task.done': key('Done'),
   'task.due': key('Due'),
-  'task.date': key('Date'),
+  'task.date': key('Start date'),
   'task.scheduled': key('Scheduled'),
   'task.start': key('Start'),
   'task.deadline': key('Deadline'),
@@ -110,6 +111,7 @@ export const priorityName = (priority: number): string => `p${priority}`
 /** What a group of a view is called. */
 export function groupLabel(property: string | undefined, value: Value, today: string): string {
   if (property === 'formula.overdue') return value === true ? t('Overdue') : t('Today')
+  if (value === 'overdue') return t('Overdue')
   if (value === null || value === '') return t('None')
   if (property === 'task.status' && typeof value === 'string') {
     const known = STATUS_NAMES[value]
@@ -121,6 +123,16 @@ export function groupLabel(property: string | undefined, value: Value, today: st
   if (day !== null && (typeof value !== 'string' || value.length === 10))
     return dayWords(day, today)
   return groupName(value)
+}
+
+/** A day of Upcoming said the way Todoist heads it: the date and its weekday, and Today
+ *  or Tomorrow beside the two that are; a group that is no day by its own word. */
+export function dayHead(value: Value, today: string): string {
+  const day = dayIn(value)
+  if (day === null) return value === 'overdue' ? t('Overdue') : groupName(value)
+  const date = i18n.when(dateAt(day), { weekday: 'short', day: 'numeric', month: 'short' })
+  const near = dayWords(day, today)
+  return day === today || day === addDays(today, 1) ? `${date} · ${near}` : date
 }
 
 /** A status character as its word. */

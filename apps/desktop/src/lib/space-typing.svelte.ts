@@ -2,7 +2,7 @@
  *  may be in.
  *
  *  No field holds it: the letters show in the rows as the hits they are, and Backspace
- *  takes one back. One of these per open list, the title bar's and the ones in the
+ *  takes one back. One of these per open list, the panel header's and the ones in the
  *  middle of the window alike, so a key does the same in each. What a key means is
  *  space-pick.ts; this is the part with a clock.
  *
@@ -122,9 +122,9 @@ export class SpaceTyping extends ListTyping {
   /** `go` switches to a space, and puts the list away. */
   constructor(go: (space: Space) => void) {
     super(
-      () => workspace.spaces.map((space) => space.name),
+      () => workspace.shownSpaces.map((space) => space.name),
       (at) => {
-        const space = workspace.spaces[at]
+        const space = workspace.shownSpaces[at]
         if (space) go(space)
       },
     )

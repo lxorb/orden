@@ -3,7 +3,7 @@
  *  A row saying `blog_domain = 'notes.example.com'` is not a claim to that name;
  *  it is a sentence somebody typed. Taken as one it did two things wrong: the
  *  first person to type a domain held it for ever, so the real owner was told
- *  "that domain is taken" by somebody who had never owned it, and Nib went and
+ *  "that domain is taken" by somebody who had never owned it, and Orden went and
  *  asked Cloudflare for a certificate for a name belonging to a stranger.
  *
  *  What holding a domain actually means is being able to write a record in it. So
@@ -39,7 +39,7 @@ const PROVED_FOR = 7 * 24 * 60 * 60 * 1000
 /** And how old it may get while the record is not answering, before the domain
  *  stops being served. Three weeks, so a record deleted by accident is something
  *  the owner has time to notice, and a domain that has really changed hands stops
- *  answering as Nib inside the month. */
+ *  answering as Orden inside the month. */
 const TRUSTED_FOR = 3 * PROVED_FOR
 
 /** One sentence, for both of the ways this fails.

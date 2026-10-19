@@ -144,19 +144,13 @@
     }
   }
 
-  // Tapping anywhere else closes it, the way a menu closes.
-  function outside(event: PointerEvent) {
-    if (open && host && !host.contains(event.target as Node)) close()
-  }
-
   // Back closes the sheet before it leaves the app.
   // A dropdown can be over another overlay - one inside the settings, say -
-  // so Escape closes it and leaves what is underneath standing.
-  $effect(() => (open ? overlays.show(close) : undefined))
+  // so Escape closes it and leaves what is underneath standing. Tapping anywhere else
+  // closes it too, the way a menu closes, and so does the window losing the focus.
+  $effect(() => (open ? overlays.show(close, () => [host]) : undefined))
   $effect(() => closeOnBack(open && viewport.touch, close))
 </script>
-
-<svelte:window onpointerdown={outside} />
 
 <!-- One row's name, with the footnote mark a choice can carry after it. Written
      once and rendered in both lists - the dropdown and the phone's sheet - because
@@ -261,6 +255,15 @@
     width: 100%;
   }
 
+  /* The borderless one is a value at the end of a row, so it is as wide as the value
+     where a row holds it straight, and as wide as its box where a box holds it. At the
+     whole width of a row it took the row, and left the name beside it nothing:
+     Settings > Account drew Clear after a letter to a line. */
+  .plain {
+    width: auto;
+    min-width: 0;
+  }
+
   /* The closed control reads like every other input in the app. */
   .trigger {
     width: 100%;
@@ -359,9 +362,11 @@
     color: var(--muted-strong);
   }
 
+  /* As long as its words, and shorter with an ellipsis where the row has less: the
+     chevron is beside the words, so words held at the whole width put them past the
+     end of the control. */
   .plain .trigger .text {
-    flex: none;
-    max-width: 100%;
+    flex: 0 1 auto;
   }
 
   .plain.open .trigger {

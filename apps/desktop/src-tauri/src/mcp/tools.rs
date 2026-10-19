@@ -422,10 +422,10 @@ mod tests {
         assert!(!after.contains("edit_note"));
     }
 
-    /// Emil's own defaults (9.1) reach everything but scripts, the reader's storage,
-    /// settings and the terminal.
+    /// Emil's own defaults (9.1) reach everything but scripts, the reader's storage and
+    /// settings: the terminal is in since 2026-10-12, as the AI panel's own agent has it.
     #[test]
-    fn emils_defaults_list_all_but_four_kinds() {
+    fn emils_defaults_list_all_but_three_kinds() {
         let every: BTreeSet<String> = AGENT_VERBS
             .iter()
             .map(|(one, _)| (*one).to_owned())
@@ -437,12 +437,7 @@ mod tests {
             .collect();
         assert_eq!(
             hidden,
-            BTreeSet::from([
-                "browser_evaluate",
-                "run_terminal",
-                "type_terminal",
-                "write_setting"
-            ])
+            BTreeSet::from(["browser_evaluate", "write_setting"])
         );
     }
 
@@ -461,7 +456,11 @@ mod tests {
     /// directly edit my todos"): seven tools, 3 767 characters, about 950 tokens. Raised
     /// to 33 000 on 2026-10-07 for chats (docs/chats.md 4.14, "the agent reads and posts",
     /// Emil's ask): six tools, 2 101 characters, about 530 tokens, and listed only to a
-    /// grant holding chats.read or chats.write.
+    /// grant holding chats.read or chats.write. Raised to 34 500 on 2026-10-12 for helpers
+    /// (Emil: "claude can create subagents of openai models"): two tools, about 1 000
+    /// characters, listed only to a grant holding agents. Raised to 35 000 on 2026-10-18
+    /// for a task's start date and deadline (#371): `add_task` names both marks, 56
+    /// characters, from a table at 34 499.
     #[test]
     fn the_table_stays_small() {
         let mut sizes = BTreeMap::new();
@@ -470,7 +469,7 @@ mod tests {
         }
         let total: usize = sizes.values().sum();
         assert!(
-            total < 33_000,
+            total < 35_000,
             "the tools are {total} characters: {sizes:?}"
         );
         for (name, size) in &sizes {

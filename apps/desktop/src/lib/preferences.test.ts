@@ -1,4 +1,5 @@
 import { beforeAll, afterAll, describe, expect, test, vi } from 'vitest'
+import { inLanguageOrder } from '@nib/markdown/language-order'
 import type { Pane } from './preferences'
 
 /** The declarations the settings panes are drawn from.
@@ -106,12 +107,51 @@ describe('the Markdown pane', () => {
   })
 })
 
+describe('the Note types pane', () => {
+  /** One switch per kind this device has, under the line the new tab draws it in, each
+   *  wearing its mark; and the last one on cannot be turned off. */
+  test('switches each kind, in its line', () => {
+    const kinds = preferences().find((one) => one.id === 'kinds')
+    expect(kinds?.groups.map((group) => group.title)).toEqual(['Notes', 'Terminal', 'Web'])
+    expect(kinds?.groups.flatMap((group) => group.fields.map((one) => one.label))).toEqual([
+      'Note',
+      'Canvas',
+      'Page note',
+      'Online terminal',
+      'Web note',
+    ])
+    expect(kinds && resettable(kinds)).toBe(true)
+
+    const fields = kinds?.groups.flatMap((group) => group.fields) ?? []
+    for (const one of fields) expect(one.icon).toBeDefined()
+    const [last, ...rest] = [...fields].reverse()
+    for (const one of rest) if (one.kind === 'switch') one.set(false)
+
+    expect(last?.kind === 'switch' && last.get()).toBe(true)
+    expect(last?.kind === 'switch' && last.locked?.()).toBe(true)
+    for (const one of rest) if (one.kind === 'switch') one.set(true)
+    expect(last?.kind === 'switch' && last.locked?.()).toBe(false)
+  })
+
+  /** #355: somebody who wants a kind gone from Ctrl+T looks for it by Ctrl+T. */
+  test('is found by the new tab and its key', async () => {
+    const { search } = await import('./settings-search')
+    for (const query of ['Ctrl+T', 'new tab']) {
+      const hits = search(query, preferences(), [])
+      expect(
+        hits.some((hit) => hit.kind === 'field' && hit.pane.id === 'kinds'),
+        query,
+      ).toBe(true)
+    }
+  })
+})
+
 describe('the Appearance pane', () => {
   test('chooses the theme with a dropdown, the built-in first', () => {
     const one = field('appearance', 'Style')
     if (one.kind !== 'select') throw new Error('the theme is a dropdown')
 
-    expect(one.options[0]).toEqual({ value: 'default', label: 'Default' })
+    expect(one.options[0]).toEqual({ value: 'default', label: 'Classic' })
     expect(one.options.map((option) => option.value)).not.toContain('dark')
     expect(one.options.map((option) => option.value)).not.toContain('light')
   })
@@ -269,8 +309,14 @@ describe('the release channel', () => {
     const hint = row().hint ?? ''
 
     readsAsOneSentence(hint, 'Release channel')
-    // The sentence is the whole warning: it names what unstable follows.
-    expect(hint).toContain('main')
+    // The sentence is the whole warning, so it has to do three things: name both
+    // streams, since the two words in the control are all a reader has, and say
+    // which of them can break. What Unstable follows is the edge build, not a
+    // branch: it is built from unstable, and this used to pin the word `main`
+    // back when that was where it came from.
+    expect(hint).toContain('Stable')
+    expect(hint).toContain('Unstable')
+    expect(hint).toContain('break')
   })
 
   test('is a group of its own under General, where the app itself is set up', () => {
@@ -320,11 +366,34 @@ describe('the language picker', () => {
       .options.filter((one) => !one.note)
       .map((one) => one.value)
 
-    expect(plain).toEqual(['system', 'en', 'de', 'gsw', 'fr', 'ja'])
+    expect(plain).toEqual(['system', 'de', 'en', 'fr', 'gsw', 'ja'])
   })
 
   test('says the same thing on every marked row, in the caption’s own words', () => {
     const said = new Set(row().options.flatMap((one) => (one.note ? [one.note] : [])))
     expect([...said]).toEqual([SAID])
+  })
+})
+
+describe('the spelling dictionary', () => {
+  /** The same order the app's language list keeps: the default, the Latin
+   *  names A to Z, Japanese at the foot. */
+  test('is offered in the order every language list keeps', () => {
+    const one = field('spelling', 'Language')
+    if (one.kind !== 'select') throw new Error('the dictionary is a dropdown')
+
+    const shown = one.options.map((option) => ({ id: option.value, name: option.label }))
+    expect(shown).toEqual(inLanguageOrder(shown))
+    expect(one.options.map((option) => option.value)).toEqual([
+      'system',
+      'de',
+      'en',
+      'es',
+      'fr',
+      'it',
+      'nl',
+      'pt',
+      'ja',
+    ])
   })
 })

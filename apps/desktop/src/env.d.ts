@@ -41,8 +41,8 @@ declare const __EVEN_PLUGIN__: boolean
  *  See vite.config.ts, and smoke.py, which drives both. */
 declare const __DRIVEABLE__: boolean
 
-/** The version the installer carries, out of `src-tauri/tauri.conf.json`. Shown under
- *  the name on the space chooser; see vite.config.ts. */
+/** The version the installer carries, out of `src-tauri/tauri.conf.json`; see
+ *  vite.config.ts. */
 declare const __APP_VERSION__: string
 
 /** Whether this build offers Claude Code in Settings > AI.
@@ -68,4 +68,9 @@ interface ImportMetaEnv {
    *  before it is published: a local folder, or the registry's raw files.
    *  Unset in a normal build, which reads it through the sync service. */
   readonly VITE_NIB_THEMES?: string
+  /** Where the browser build lives, and where it lived before the rename: the two
+   *  ends of taking its notes over (lib/web/handoff.ts). Set only by a drive, which
+   *  plays both on local origins; a normal build has orden.so and nibeditor.com. */
+  readonly VITE_NIB_WEB?: string
+  readonly VITE_NIB_LEGACY_WEB?: string
 }

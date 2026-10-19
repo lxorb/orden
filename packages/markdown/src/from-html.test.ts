@@ -785,7 +785,7 @@ describe('a page as markdown', () => {
 
   /** A picture says two things here and no more. A title would be a third string
    *  to break out of, and the quote that opens it is on any page that quotes
-   *  somebody; it would also sit between the brackets the clipper fills its
+   *  somebody; it would also sit between the brackets a caller fills its
    *  numbers in by. So the page's own is dropped. */
   test('a title is not markdown a page can write', () => {
     expect(
@@ -793,8 +793,8 @@ describe('a page as markdown', () => {
     ).toBe('![a](a.png)')
   })
 
-  /** What the clipper needs: the bytes are still on the site when the conversion
-   *  runs, so it numbers the pictures and fills the addresses in afterwards. */
+  /** What a caller with no address for a picture yet needs: it numbers the pictures
+   *  and fills the addresses in afterwards. */
   test('a caller can say what a picture becomes', () => {
     const seen: string[] = []
     const markdown = htmlToMarkdown(
@@ -813,5 +813,23 @@ describe('a page as markdown', () => {
 
   test('runs of blank lines are one blank line', () => {
     expect(htmlToMarkdown('<p>one</p><p></p><p></p><p>two</p>')).toBe('one\n\ntwo')
+  })
+
+  /** Code is the one place every character is the author's: a diff clipped off a
+   *  page is only a diff while its blank lines and its trailing blanks are where
+   *  they were. The tidying is for the prose around it. */
+  test('the blank lines and trailing blanks inside code are left as they were', () => {
+    const code = 'one  \n\n\n\ntwo\t\n   \nthree'
+
+    expect(htmlToMarkdown(`<pre><code>${code}</code></pre>`)).toBe(`\`\`\`\n${code}\n\`\`\``)
+    expect(htmlToMarkdown(`<p>before</p><pre><code>${code}</code></pre><p>after</p>`)).toBe(
+      `before\n\n\`\`\`\n${code}\n\`\`\`\n\nafter`,
+    )
+  })
+
+  /** Two blanks at the end of a line are how turndown writes a `<br>`, and taking
+   *  them off made the two lines one. */
+  test('a line break inside a paragraph is still a line break', () => {
+    expect(htmlToMarkdown('<p>line one<br>line two</p>')).toBe('line one  \nline two')
   })
 })

@@ -4,8 +4,8 @@
 //! **Why this is allowed and the other way is not.** `OpenAI` offers "`ChatGPT` plan usage"
 //! to open-source and locally hosted apps (<https://developers.openai.com/siwc/token-sharing-open-source>):
 //! the app registers itself through the reader's own sign-in and calls the Responses API
-//! at `api.openai.com` with the token it is given. nibeditor is open source and the
-//! desktop app runs here, so it qualifies; the web app at nibeditor.com is hosted and does
+//! at `api.openai.com` with the token it is given. Orden is open source and the
+//! desktop app runs here, so it qualifies; the web app at orden.so is hosted and does
 //! not, and never offers this. What is *not* done is what several tools did before this
 //! existed - borrowing the Codex CLI's own client id and calling `ChatGPT`'s private
 //! `backend-api` - which is somebody else's identity. See docs/ai.md.
@@ -34,6 +34,11 @@ use oauth::{Attempt, Callback, Tokens};
 /// Where the refresh token is kept: the keychain's nibeditor service, under a name no
 /// provider id can be.
 const REFRESH: &str = "chatgpt.refresh";
+
+/// Where a copy of the installation is kept beside it, so the sign-in outlives the app's
+/// data folder: an uninstall that took the folder with it left the refresh token in the
+/// keychain and the client it belongs to nowhere, which was a sign-in lost.
+const KEPT: &str = "chatgpt.installation";
 
 /// The port the first sign-in listens on, as `OpenAI`'s own example has it; any free port
 /// after that, since only the port may change between sign-ins.
@@ -97,6 +102,16 @@ fn installation(app: &AppHandle) -> Result<Installation, String> {
     {
         return Ok(found);
     }
+    // The folder went and the keychain stayed: the installation is the one kept there.
+    if let Some(found) = kept_entry()
+        .ok()
+        .and_then(|entry| entry.get_password().ok())
+        .and_then(|text| serde_json::from_str::<Installation>(&text).ok())
+        .filter(|found| !found.host.is_empty())
+    {
+        let _ = std::fs::write(&file, serde_json::to_vec(&found).unwrap_or_default());
+        return Ok(found);
+    }
     let mut random = [0_u8; 16];
     getrandom::fill(&mut random).map_err(|error| error.to_string())?;
     let made = Installation {
@@ -109,7 +124,15 @@ fn installation(app: &AppHandle) -> Result<Installation, String> {
 
 fn keep(app: &AppHandle, installation: &Installation) -> Result<(), String> {
     let text = serde_json::to_vec(installation).map_err(|error| error.to_string())?;
+    // A copy in the keychain first, best effort: the file is what is read.
+    if let (Ok(entry), Ok(words)) = (kept_entry(), std::str::from_utf8(&text)) {
+        let _ = entry.set_password(words);
+    }
     std::fs::write(installation_file(app)?, text).map_err(|error| error.to_string())
+}
+
+fn kept_entry() -> Result<keyring::Entry, String> {
+    keyring::Entry::new(crate::secrets::SERVICE, KEPT).map_err(|error| error.to_string())
 }
 
 fn refresh_entry() -> Result<keyring::Entry, String> {
@@ -125,8 +148,7 @@ fn refresh_token() -> Result<Option<String>, String> {
 }
 
 fn client() -> Result<reqwest::Client, String> {
-    // Rustls with no provider of its own, as the updater builds it; see
-    // engine_switch/fetch.rs.
+    // Rustls with no provider of its own, as the updater builds it.
     let _ = rustls::crypto::ring::default_provider().install_default();
     reqwest::Client::builder()
         .timeout(Duration::from_secs(30))
@@ -199,18 +221,18 @@ fn answer_callback(
     let (status, words, result) = match oauth::callback(&line, state) {
         Callback::Code { code, client } => (
             "200 OK",
-            "nibeditor is signed in to ChatGPT. This tab can be closed.",
+            "Orden is signed in to ChatGPT. This tab can be closed.",
             Some(Ok((code, client))),
         ),
         Callback::Refused(why) => (
             "200 OK",
-            "nibeditor was not signed in to ChatGPT.",
+            "Orden was not signed in to ChatGPT.",
             Some(Err(why)),
         ),
         Callback::Other => ("404 Not Found", "", None),
     };
     let page = format!(
-        "<!doctype html><meta charset=utf-8><title>nibeditor</title>\
+        "<!doctype html><meta charset=utf-8><title>Orden</title>\
          <p style=\"font:16px system-ui;margin:3em;text-align:center\">{words}</p>"
     );
     let _ = write!(

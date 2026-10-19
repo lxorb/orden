@@ -28,6 +28,7 @@ import { isCanvasTarget, isPagesTarget } from '@nib/markdown/links'
 import { movedTo, nameOf, samePath, within } from '../space-paths'
 import type { DocumentStart, NoteDoc, Tab } from './documents.svelte'
 import type { FileOp } from './file-ops'
+import { TAB_KINDS } from './tab-kinds'
 
 export class OpenDocuments {
   /** Opens whose file has not come back yet, by the path being opened. The one
@@ -206,7 +207,7 @@ export class OpenDocuments {
     const kind =
       path === null ? null : isPagesTarget(path) ? 'pages' : isCanvasTarget(path) ? 'canvas' : null
     if (path === null || kind === null || kind === note.kind) return
-    if (note.kind !== 'canvas' && note.kind !== 'pages') return
+    if (!TAB_KINDS[note.kind].plane) return
 
     const fresh = this.make({ kind, path, name: note.name, text: note.latest, dirty: note.dirty })
     for (const tab of this.showing()) if (tab.note === note) tab.note = fresh

@@ -24,6 +24,7 @@
 
 import { spawn } from 'node:child_process'
 import { readFileSync, writeFileSync } from 'node:fs'
+import { basename, join } from 'node:path'
 import { createInterface } from 'node:readline'
 
 const [tool, ...args] = process.argv.slice(2)
@@ -46,6 +47,41 @@ async function question() {
 function refuse(why) {
   process.stderr.write(`fake-ai-cli: ${why}\n`)
   process.exitCode = 2
+}
+
+/** `mcp get`, `mcp add` and `mcp remove`, as both programs spell them, kept in a file of
+ *  the program's home (`CLAUDE_CONFIG_DIR` or `CODEX_HOME`, else `HOME`): what a test of
+ *  nib connecting itself to the agents on a machine reads back. Never a real config. */
+function mcp(home) {
+  const file = join(home, 'fake-mcp.json')
+  let servers = {}
+  try {
+    servers = JSON.parse(readFileSync(file, 'utf8'))
+  } catch {
+    // No servers yet.
+  }
+  const rest = args.slice(1).filter((one) => one !== '--scope' && one !== 'user')
+  const [verb, name] = rest
+  if (verb === 'get') {
+    if (!servers[name]) {
+      process.stderr.write(`No MCP server found with name: ${name}\n`)
+      process.exitCode = 1
+      return
+    }
+    console.log(`${name}:\n  Command: ${servers[name].join(' ')}`)
+    return
+  }
+  if (verb === 'add') {
+    if (servers[name]) {
+      process.stderr.write(`MCP server ${name} already exists\n`)
+      process.exitCode = 1
+      return
+    }
+    servers[name] = rest.slice(rest.indexOf('--') + 1)
+  } else if (verb === 'remove') {
+    servers = Object.fromEntries(Object.entries(servers).filter(([one]) => one !== name))
+  } else return refuse(`mcp ${verb} is not faked`)
+  writeFileSync(file, JSON.stringify(servers))
 }
 
 /** Starts a child that ends only with its family, and never ends either on its own. */
@@ -96,14 +132,22 @@ async function claude() {
     console.log(CLAUDE_HELP)
     return
   }
+  // A second account's home says so in its email, and a key left in the environment
+  // says so in its method, which is how a test sees the home and the key reach it.
+  const home = process.env.CLAUDE_CONFIG_DIR
+  if (args[0] === 'mcp') return mcp(home ?? process.env.HOME ?? '.')
+  if (args[0] === 'auth' && args[1] === 'logout') {
+    if (home) writeFileSync(join(home, 'signed-out'), '')
+    return
+  }
   if (args[0] === 'auth' && args[1] === 'status') {
     const signedIn = mode !== 'signed-out'
     const status = signedIn
       ? {
           loggedIn: true,
-          authMethod: 'claude.ai',
+          authMethod: process.env.ANTHROPIC_API_KEY ? 'api_key' : 'claude.ai',
           subscriptionType: 'max',
-          email: 'reader@example.com',
+          email: home ? `reader+${basename(home)}@example.com` : 'reader@example.com',
         }
       : { loggedIn: false, authMethod: 'none' }
     console.log(JSON.stringify(status, null, 2))
@@ -192,10 +236,10 @@ function claudeServers() {
   if (!file) return []
   const config = JSON.parse(readFileSync(file, 'utf8'))
   const names = Object.keys(config.mcpServers ?? {})
-  if (names.length !== 1 || names[0] !== 'nib') throw new Error(`servers ${names.join(', ')}`)
-  const nib = config.mcpServers.nib
+  if (names.length !== 1 || names[0] !== 'orden') throw new Error(`servers ${names.join(', ')}`)
+  const nib = config.mcpServers.orden
   if (nib.args?.join(' ') !== 'mcp' || nib.env) throw new Error('nib is not run as nib mcp')
-  return has('--safe-mode') ? [] : [{ name: 'nib', status: 'connected' }]
+  return has('--safe-mode') ? [] : [{ name: 'orden', status: 'connected' }]
 }
 
 /** A Claude Code kept open: a `user` message per turn, control requests between. */
@@ -207,7 +251,7 @@ function claudeSession() {
     return refuse(`asked with ${error.message}`)
   }
   const allowed = (after('--allowedTools') ?? '').split(',').filter(Boolean)
-  if (allowed.some((one) => !one.startsWith('mcp__nib'))) return refuse('asked with tools')
+  if (allowed.some((one) => !one.startsWith('mcp__orden'))) return refuse('asked with tools')
   if (after('--permission-mode') !== 'dontAsk') return refuse('asked with a permission mode')
   if (has('--safe-mode') || has('--dangerously-skip-permissions')) return refuse('asked unsafely')
 
@@ -345,7 +389,7 @@ function claudeSession() {
         message: {
           model: state.model,
           content: [
-            { type: 'tool_use', id, name: 'mcp__nib__read_note', input: { path: 'Herons.md' } },
+            { type: 'tool_use', id, name: 'mcp__orden__read_note', input: { path: 'Herons.md' } },
           ],
         },
       })
@@ -424,6 +468,11 @@ async function codex() {
     console.log('codex-cli 9.9.9')
     return
   }
+  if (args[0] === 'mcp') return mcp(process.env.CODEX_HOME ?? process.env.HOME ?? '.')
+  if (args[0] === 'logout') {
+    if (process.env.CODEX_HOME) writeFileSync(join(process.env.CODEX_HOME, 'signed-out'), '')
+    return
+  }
   if (args[0] === 'login' && args[1] === 'status') {
     const signedIn = mode !== 'signed-out'
     process.stderr.write(signedIn ? 'Logged in using ChatGPT\n' : 'Not logged in\n')
@@ -459,12 +508,12 @@ function appServer() {
     if (params.approvalPolicy !== 'never') return fail(id, 'asks somebody')
     if (params.ephemeral !== true) return fail(id, 'kept on disk')
     const config = params.config ?? {}
-    if (Object.keys(config).some((key) => !key.startsWith('mcp_servers.nib.')))
+    if (Object.keys(config).some((key) => !key.startsWith('mcp_servers.orden.')))
       return fail(id, 'configured beyond nib')
-    if (config['mcp_servers.nib.command']) {
-      if (config['mcp_servers.nib.args']?.join(' ') !== 'mcp') return fail(id, 'not nib mcp')
+    if (config['mcp_servers.orden.command']) {
+      if (config['mcp_servers.orden.args']?.join(' ') !== 'mcp') return fail(id, 'not nib mcp')
       if (
-        !config['mcp_servers.nib.env_vars']?.includes('NIB_MCP_TOKEN') ||
+        !config['mcp_servers.orden.env_vars']?.includes('NIB_MCP_TOKEN') ||
         !process.env.NIB_MCP_TOKEN
       )
         return fail(id, 'nib mcp has no token')
@@ -473,7 +522,7 @@ function appServer() {
     reply(id, {
       thread,
       model: params.model ?? 'gpt-fake',
-      told: { enabled_tools: config['mcp_servers.nib.enabled_tools'] ?? null },
+      told: { enabled_tools: config['mcp_servers.orden.enabled_tools'] ?? null },
     })
     tell('thread/started', { thread })
   }

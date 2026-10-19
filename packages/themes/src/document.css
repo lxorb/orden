@@ -251,6 +251,10 @@
   display: block;
   width: 100%;
   height: var(--cover-height);
+  /* The band is the picture, edge to edge: base.css gives a picture in the words
+     room above and below it, which here drew a strip of the band's own grey over
+     and under the photograph. */
+  margin: 0;
   object-fit: cover;
   /* The note writes the vertical half of this; the horizontal half is the middle,
      because a cover is only ever dragged up and down. */

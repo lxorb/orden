@@ -42,7 +42,7 @@
   import { preferences } from './preferences'
   import { search } from './search.svelte'
   import { paletteWords } from './surfaces.svelte'
-  import { settings } from './settings.svelte'
+  import { hiddenKinds, settings } from './settings.svelte'
   import { landing } from './settings/landing.svelte'
   import { places } from './settings/places'
   import { ICONS, sectionGroups } from './settings/sections'
@@ -56,6 +56,7 @@
   import { viewport } from './viewport.svelte'
   import { shownAddress } from './web-tab/omnibox'
   import { pages } from './web-tab/pages.svelte'
+  import { upgradeOf } from './web-tab/upgrade'
   import { visited } from './web-tab/visited'
   import { visitKey } from './web-tab/visits'
   import { webData } from './web-tab/web-data.svelte'
@@ -89,9 +90,10 @@
   const mode = $derived(asked.mode)
   const term = $derived(asked.term)
 
-  /** A phone has no web tab, so it has no pages to go to either; nor has the glasses'
-   *  plugin on any screen, whose package leaves the history and the address rows out. */
-  const browses = $derived(!__EVEN_PLUGIN__ && viewport.device !== 'phone')
+  /** A phone and a tablet have no web tab, so no pages to go to either; nor has the
+   *  glasses' plugin on any screen, whose package leaves the history and the address
+   *  rows out. */
+  const browses = $derived(!__EVEN_PLUGIN__ && !viewport.touch)
 
   /** Something was taken out of the history or the list of things used: the one
    *  change the stores below do not say themselves. */
@@ -149,7 +151,7 @@
       recent: workspace.recent,
       bookmarks: workspace.bookmarks.list,
       commands,
-      pages: browses ? visited.all(webData.history(workspace.activeSpaceId)) : [],
+      pages: browses ? visited.all(webData.history()) : [],
       settings: settingRows,
       hosts,
       worth: (key) => frecency.worth(key),
@@ -191,7 +193,10 @@
 
   /** The note Shift+Enter would make out of what was typed, whatever else answers:
    *  only where the words read as a name, and not one the space already has. */
-  const makes = $derived(mode === 'everything' && root ? makeable(term, taken) : null)
+  // Not where Settings turned notes off; see kind-choice.ts.
+  const makes = $derived(
+    mode === 'everything' && root && hiddenKinds.offers('note') ? makeable(term, taken) : null,
+  )
 
   /** An address typed, where it is one. */
   const address = $derived.by(() => {
@@ -430,7 +435,11 @@
   const hands: Hands = {
     openEntry: (path, how) => void workspace.openEntry(path, how),
     openAside: (path) => void workspace.openAside(path),
-    openPage: (url, ask) => workspace.openPage(url, ask),
+    openPage: (url, ask) => {
+      const opened = workspace.openPage(url, ask)
+      // A host typed with no scheme, given https: plain http where nothing answers.
+      if (opened) pages.of(opened).upgrade = upgradeOf(term, url)
+    },
     activate: (tab) => workspace.activate(tab),
     openAtHeading: (path, heading, how) => void workspace.openAtHeading(path, heading, how),
     openAtBlock: (target, how) => void workspace.openAtBlock(target, how),
@@ -488,7 +497,7 @@
     if (row.kind === 'note') workspace.device.unremember(row.entry.path)
     if (row.kind === 'tab' && row.tab.path) workspace.device.unremember(row.tab.path)
     if (!__EVEN_PLUGIN__ && row.kind === 'page') {
-      visited.remove(webData.history(workspace.activeSpaceId), row.url)
+      visited.remove(webData.history(), row.url)
     }
     forgotten++
   }

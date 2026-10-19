@@ -8,7 +8,13 @@ import {
   graphPoint,
   nodeAt,
   NOTCH,
+  panned,
+  screenPoint as onScreen,
+  settledTurn,
   SMALLEST_DOT,
+  TURN_DEADBAND,
+  turned,
+  Twist,
   wheelZoom,
   zoomed,
 } from './camera'
@@ -196,5 +202,85 @@ describe('what is under the pointer', () => {
 
   test('nothing at all, in an empty graph', () => {
     expect(nodeAt(at(), at(), at(), camera, WIDTH, HEIGHT, 10, 10)).toBe(-1)
+  })
+})
+
+describe('a turned view (#351)', () => {
+  const camera = { x: 40, y: -20, scale: 1.5, turn: Math.PI / 6 }
+  const W = 800
+  const H = 600
+
+  test('a point of the plane and where it is on screen are one transform, both ways', () => {
+    for (const point of [
+      { x: 0, y: 0 },
+      { x: 120, y: -75 },
+      { x: -300, y: 410 },
+    ]) {
+      const seen = onScreen(camera, W, H, point)
+      const back = graphPoint(camera, W, H, seen.x, seen.y)
+      expect(back.x).toBeCloseTo(point.x)
+      expect(back.y).toBeCloseTo(point.y)
+    }
+  })
+
+  test('a quarter turn clockwise puts what was to the right below', () => {
+    const quarter = { x: 0, y: 0, scale: 1, turn: Math.PI / 2 }
+    const seen = onScreen(quarter, W, H, { x: 100, y: 0 })
+    expect(seen.x).toBeCloseTo(W / 2)
+    expect(seen.y).toBeCloseTo(H / 2 + 100)
+  })
+
+  test('a click on a card turned with the view lands on the card', () => {
+    const card = { x: 100, y: 50, width: 200, height: 80 }
+    const middle = onScreen(camera, W, H, { x: 200, y: 90 })
+    const under = graphPoint(camera, W, H, middle.x, middle.y)
+    expect(under.x).toBeGreaterThan(card.x)
+    expect(under.x).toBeLessThan(card.x + card.width)
+    expect(under.y).toBeGreaterThan(card.y)
+    expect(under.y).toBeLessThan(card.y + card.height)
+  })
+
+  test('turned about a point keeps what is under it there, and the turn adds up', () => {
+    const at = { x: 610, y: 140 }
+    const before = graphPoint(camera, W, H, at.x, at.y)
+    const next = turned(camera, W, H, at.x, at.y, Math.PI / 4)
+    const after = graphPoint(next, W, H, at.x, at.y)
+    expect(after.x).toBeCloseTo(before.x)
+    expect(after.y).toBeCloseTo(before.y)
+    expect(next.turn).toBeCloseTo(Math.PI / 6 + Math.PI / 4)
+    expect(next.scale).toBe(camera.scale)
+  })
+
+  test('turned all the way back is upright, with no turn left on it', () => {
+    const next = turned(camera, W, H, W / 2, H / 2, -Math.PI / 6)
+    expect(next.turn).toBeUndefined()
+    expect(settledTurn(3 * Math.PI)).toBeCloseTo(Math.PI)
+  })
+
+  test('zoomed, it keeps its turn and what is under the pointer', () => {
+    const before = graphPoint(camera, W, H, 120, 500)
+    const next = zoomed(camera, W, H, 120, 500, 2)
+    const after = graphPoint(next, W, H, 120, 500)
+    expect(next.turn).toBe(camera.turn)
+    expect(after.x).toBeCloseTo(before.x)
+    expect(after.y).toBeCloseTo(before.y)
+  })
+
+  test('panned, the plane goes with the hand whichever way the view is turned', () => {
+    const under = onScreen(camera, W, H, { x: 10, y: 10 })
+    const next = panned(camera, 30, -12)
+    const moved = onScreen(next, W, H, { x: 10, y: 10 })
+    expect(moved.x - under.x).toBeCloseTo(30)
+    expect(moved.y - under.y).toBeCloseTo(-12)
+  })
+
+  test('a trackpad turn waits out the deadband, then follows every degree from there', () => {
+    const twist = new Twist()
+    const degree = Math.PI / 180
+    expect(twist.to(0)).toBe(0)
+    expect(twist.to(3 * degree)).toBe(0)
+    expect(twist.to(8 * degree)).toBeCloseTo(8 * degree)
+    expect(twist.to(10 * degree)).toBeCloseTo(2 * degree)
+    expect(TURN_DEADBAND).toBeGreaterThan(3 * degree)
   })
 })

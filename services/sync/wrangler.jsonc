@@ -84,10 +84,16 @@
   // are the same bytes for everyone and no blog ever asks for them, so they
   // are served straight from the edge instead of billing a Worker invocation
   // each. That is most of the requests a page load makes.
+  //
+  // The directory holds two builds: the release at the root and the edge of
+  // `unstable` under `/_unstable/`, with both bundles in `/assets/`; a cookie picks
+  // which pages a browser gets (src/channel.ts, scripts/web-channels.sh). So no
+  // not-found page here: the binding could only name the release's `index.html`,
+  // and the Worker answers a path neither build has with the asking build's own.
   "assets": {
     "directory": "../../apps/desktop/dist",
     "binding": "ASSETS",
-    "not_found_handling": "single-page-application",
+    "not_found_handling": "none",
     "run_worker_first": ["/*", "!/assets/*"],
   },
 
@@ -137,11 +143,19 @@
   // each moves across on its next good code and on the next nightly run, and after
   // that night OPENAI_KEY_SECRET can be rotated freely. See src/second.ts.
   "vars": {
-    "BLOG_ROOT": "nibeditor.com",
-    "BLOG_CNAME_TARGET": "cname.nibeditor.com",
+    "BLOG_ROOT": "orden.so",
+    "BLOG_CNAME_TARGET": "cname.orden.so",
     "CF_ZONE_ID": "46c1a42759c6af60043e590f581544c0",
-    "APP_ORIGIN": "https://nibeditor.com",
-    "MAIL_FROM": "nibeditor <nib@nibeditor.com>",
+    "APP_ORIGIN": "https://orden.so",
+    // The service's name before the rename, answered on as itself for good and
+    // never redirected for a machine (builds before 0.14, connectors, sockets),
+    // and the same blog subdomains under it; see src/hosts.ts.
+    "OTHER_ORIGINS": "https://nibeditor.com",
+    "OTHER_BLOG_ROOTS": "nibeditor.com",
+    // Where the machines' hostnames are made: CF_ZONE_ID's zone, whatever
+    // APP_ORIGIN says. See machines/hetzner-host.ts.
+    "MACHINE_DOMAIN": "nibeditor.com",
+    "MAIL_FROM": "Orden <nib@nibeditor.com>",
     // How a machine's traffic leaves it: `open` or `web`; see machines/host.ts.
     "MACHINE_EGRESS": "open",
     // The account the Hetzner machines' Cloudflare Tunnels are made in (4.15). Their
@@ -181,6 +195,11 @@
   "routes": [
     { "pattern": "nibeditor.com/*", "zone_name": "nibeditor.com" },
     { "pattern": "*.nibeditor.com/*", "zone_name": "nibeditor.com" },
+    // The service's other name, answered on as itself (src/hosts.ts): the app,
+    // the API and the blogs under it. Its records are proxied AAAA 100:: for
+    // `orden.so`, `*.orden.so` and `cname.orden.so`, with nothing behind them.
+    { "pattern": "orden.so/*", "zone_name": "orden.so" },
+    { "pattern": "*.orden.so/*", "zone_name": "orden.so" },
     // A custom domain whose zone is in this Cloudflare account needs no SaaS:
     // a proxied record plus a route here. Routes not listed are removed on
     // every deploy, so the shortcut has to live in this file.

@@ -95,6 +95,16 @@ export const MOST_RUB = 64
 /** And how wide it is when nobody has said. */
 export const RUB = 10
 
+/** The width a stroke drawn now is written with, on the plane, for a pen of `size`
+ *  with the view at `scale`. Zoomed in, the width is the one on the screen: a hand
+ *  zooms in to write small, and a pen of half a unit was four pixels wide at 800% and
+ *  could write nothing finer (#369) - as Miro and FigJam do. At the actual size and
+ *  further out it is the pen's own, so what was drawn there keeps the width it had. */
+export function drawnWidth(size: number, scale: number): number {
+  if (!(scale > 1)) return size
+  return Math.max(0.1, Math.round((size / scale) * 100) / 100)
+}
+
 export function clampSize(value: number): number {
   if (!Number.isFinite(value)) return 3
   return Math.min(MOST_WIDTH, Math.max(LEAST_WIDTH, Math.round(value * 10) / 10))

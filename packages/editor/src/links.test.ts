@@ -8,10 +8,15 @@ describe('what a link target is to a browser', () => {
     expect(hrefOf('mailto:a@b.dev')).toBe('mailto:a@b.dev')
   })
 
-  test('a message in a chat passes through, and no other nib address', () => {
+  test('a message in a chat passes through, and no other nib address but one', () => {
     const link = 'nib://chat/c_3f9a0c1e5b7d4f2a8c6e0b1d3f5a7c9e/01K6Z8Q3V8A0000000000000AB'
     expect(hrefOf(link)).toBe(link)
     expect(hrefOf('nib://open?path=Plan')).toBeNull()
+  })
+
+  test("the welcome note's way to Settings > Import passes through, and no other pane", () => {
+    expect(hrefOf('nib://settings/import')).toBe('nib://settings/import')
+    expect(hrefOf('nib://settings/account')).toBeNull()
   })
 
   test('a www address is given its scheme', () => {

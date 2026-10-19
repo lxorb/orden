@@ -218,6 +218,11 @@ const KNOWN: Record<string, Check> = {
   shortcuts: shortcutMap,
   toolbar: buttonList,
   pull: pulledCommand,
+  hiddenKinds: kindList,
+  // The spaces the reader put away whole (#352), by their ids: per person rather than on
+  // the space, because a space somebody shared with you is yours to put away and still
+  // theirs to keep in sight. Read for its shape; an id nobody has is simply never met.
+  archivedSpaces: spaceList,
   recoveryEvery: oneOf('recoveryEvery', RECOVERY_MINUTES),
   recoveryDays: oneOf('recoveryDays', RECOVERY_DAYS),
   // How long the account keeps what a note said before: a month, or a year.
@@ -229,6 +234,11 @@ const KNOWN: Record<string, Check> = {
   // The automatic reminder, in minutes before a task's time, -1 for none. Read by the
   // push as well as the app, so only the choices the app offers; see push/reminders.ts.
   remindBefore: oneOf('remindBefore', REMIND_BEFORE),
+  // Whether Today holds a task with no start date, as one whose start date has come
+  // (#408). Read by the MCP's Today as well as the app's; see mcp/tasks.ts.
+  undatedInToday: switched('undatedInToday'),
+  // Whether two fingers turn a canvas as well as moving and zooming it (#351).
+  canvasTurns: switched('canvasTurns'),
   // Which colour the highlight button writes. A palette tone by number, or null
   // for a highlight with no colour of its own; the app decides what a tone it has
   // never heard of means, which is the plain one. See highlights.ts in
@@ -346,6 +356,51 @@ function buttonList(value: unknown): string | null {
     seen.add(id)
   }
 
+  return null
+}
+
+/** How many kinds a reader may turn off, and how a kind is named: a short word of the
+ *  app's own (`canvas`, `online`). Well past the nine there are. */
+const MOST_KINDS = 32
+const KIND = /^[a-z][a-z-]{0,23}$/
+
+/** The kinds of tab a reader turned off in Settings, so nothing offers to make one; or
+ *  null, for every kind offered. Read for its shape rather than against a list, for the
+ *  reason a command id is: the kinds are the app's, and a newer one's word has to
+ *  travel through this column to the newer build on another device. */
+function kindList(value: unknown): string | null {
+  if (value === null) return null
+  if (!Array.isArray(value)) return 'hiddenKinds must be a list of kinds or null'
+  if (value.length > MOST_KINDS) return `hiddenKinds holds at most ${MOST_KINDS} kinds`
+
+  const seen = new Set<string>()
+  for (const kind of value as unknown[]) {
+    if (typeof kind !== 'string' || !KIND.test(kind)) return `${String(kind)} is not a kind`
+    if (seen.has(kind)) return `${kind} is in hiddenKinds twice`
+    seen.add(kind)
+  }
+
+  return null
+}
+
+/** How many spaces may be put away, and what a space's id looks like: far past
+ *  anybody's, inside what the whole column may hold (`MOST_BYTES`, a hundred ids being
+ *  under four kilobytes), and the ids `newId` makes. */
+const MOST_ARCHIVED_SPACES = 100
+const SPACE_ID = /^[A-Za-z0-9_-]{1,64}$/
+
+/** The spaces put away: a list of ids, each once. */
+function spaceList(value: unknown): string | null {
+  if (!Array.isArray(value)) return 'archivedSpaces must be a list of space ids'
+  if (value.length > MOST_ARCHIVED_SPACES) {
+    return `archivedSpaces holds at most ${MOST_ARCHIVED_SPACES} spaces`
+  }
+  const seen = new Set<string>()
+  for (const id of value as unknown[]) {
+    if (typeof id !== 'string' || !SPACE_ID.test(id)) return `${String(id)} is not a space id`
+    if (seen.has(id)) return `${id} is in archivedSpaces twice`
+    seen.add(id)
+  }
   return null
 }
 

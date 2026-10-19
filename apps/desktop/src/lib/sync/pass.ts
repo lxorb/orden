@@ -32,6 +32,7 @@ import { syncMark } from '../surfaces.svelte'
 import { invoke, joinPath } from '../tauri'
 import { settleShortcuts } from '../web-tab/settle'
 import { isUntouchedWelcome } from '../welcome'
+import { baseOf, behind, unixLines } from './ancestry'
 import { type Clash, type ConflictRule, DEFAULT_RULE } from './conflicts'
 import { fileStamp, type Mirror, type Tracked, type TrackedFile, within } from './mirror'
 import { type Folded, foldWebCopies } from './web-copies'
@@ -88,7 +89,7 @@ async function holdsSameWords(local: string, hash: string): Promise<boolean> {
   if ((await sha256(local)) === hash) return true
   if (!local.includes('\r')) return false
 
-  return (await sha256(local.replace(/\r\n/gu, '\n'))) === hash
+  return (await sha256(unixLines(local))) === hash
 }
 
 /** Two copies of a file that settle into one without a copy beside it, or null for
@@ -313,8 +314,10 @@ export async function pull(
       // Whether the file here also carries writing the account has never seen, which
       // is the other half of a disagreement. With an entry to compare against the
       // answer is exact: a file whose words have moved since the last pass was
-      // written here. Without one there is nothing to compare and the safe answer is
-      // that it was.
+      // written here. Without one - a storage wiped, a folder paired for the first
+      // time - the account is asked whether the note ever said these words: a copy
+      // that is only behind the account's is brought up to date, and any other is
+      // kept beside it. See sync/ancestry.ts.
       //
       // A note in a room is the exception either way: the room settled the two
       // character by character before either of them ever became a file. And the
@@ -324,7 +327,9 @@ export async function pull(
         news &&
         !joined.has(remote.id) &&
         !isUntouchedWelcome(remote.path, local) &&
-        (tracked === undefined || !(await holdsSameWords(local, tracked.hash)))
+        (tracked === undefined
+          ? !(await onlyBehind(token, remote.id, local))
+          : !(await holdsSameWords(local, tracked.hash)))
 
       // Nothing up there this machine has not said, and a file that has moved on
       // since it said it. The version is written down so the pass stops asking, and
@@ -371,6 +376,20 @@ export async function pull(
             version: remote.version,
             hash: remote.hash,
           }
+          waiting?.wrote?.(target)
+          continue
+        }
+
+        // Both wrote since the words they last agreed on, and those words are known:
+        // edits that meet nowhere are one note again, under every rule, because there
+        // is nothing to choose between. What the file said is kept as a version on the
+        // way past, and the push below sends the merge on top of the account's copy.
+        const merged = tracked
+          ? await mergedOver(token, target, remote.id, tracked.hash, local, content)
+          : null
+        if (merged !== null) {
+          await writeDown(target, merged, local)
+          mirror.notes[remote.path] = { id: remote.id, version: remote.version, hash: remote.hash }
           waiting?.wrote?.(target)
           continue
         }
@@ -432,6 +451,40 @@ export async function pull(
   }
 
   return moved
+}
+
+/** Whether a file with no entry is word for word something its note once said on the
+ *  account, so only behind it. Either line ending, as `holdsSameWords` reads one. */
+async function onlyBehind(token: string, id: string, local: string): Promise<boolean> {
+  const hashes = [await sha256(local)]
+  if (local.includes('\r')) hashes.push(await sha256(unixLines(local)))
+
+  const found = await behind(
+    token,
+    hashes.map((hash) => ({ id, hash })),
+  )
+  return found.has(id)
+}
+
+/** The file here and the account's copy as one note, merged against the words both
+ *  last agreed on (`base`, a hash), or null where the two overlap or that base was
+ *  never kept. Planes and web notes are settled before this is asked. Never in the
+ *  glasses' plugin, which keeps both copies; see merging.ts. */
+async function mergedOver(
+  token: string,
+  path: string,
+  id: string,
+  base: string,
+  local: string,
+  remote: string,
+): Promise<string | null> {
+  if (__EVEN_PLUGIN__) return null
+
+  const ancestor = await baseOf(token, path, id, base)
+  if (ancestor === null) return null
+
+  const { mergedCleanly } = await import('./merging')
+  return mergedCleanly(ancestor, unixLines(local), remote)
 }
 
 /** A note another device deleted, taken off this one - unless this one has written
@@ -623,7 +676,11 @@ export async function push(
   const held = sending.held ?? new Set<string>()
   // Read once, for the same reason as in `pull`.
   const root = mirror.root
-  const tree = await invoke<Entry>('read_tree', { root }).catch(() => null)
+  // With the papers page notes hold, which the list leaves out: a paper goes up the
+  // way any PDF does, below.
+  const tree = await invoke<Entry>('read_tree', { root, options: { papers: true } }).catch(
+    () => null,
+  )
   if (!tree) return false
 
   // The copies of web notes earlier passes made, folded back into their notes before
@@ -712,7 +769,7 @@ export async function push(
       // from before the request, for the reason `Joined` gives.
       if (joined.has(tracked.id) && caughtUpWith(mirror, path, error.body)) continue
 
-      await keepBoth(mirror, path, tracked, error.body, token)
+      await keepBoth(mirror, path, tracked, error.body, token, tracked.hash)
     }
   }
 
@@ -897,7 +954,7 @@ async function create(
 
     // Two notes at one path with different words is the conflict this file has
     // always had an answer for: neither is dropped.
-    await keepBoth(mirror, path, tracked, body, token)
+    await keepBoth(mirror, path, tracked, body, token, null)
     return true
   }
 }
@@ -926,6 +983,9 @@ async function keepBoth(
   tracked: Tracked,
   conflict: unknown,
   token: string,
+  /** The hash of the words both sides last agreed on, when there are any: a write
+   *  refused because the account moved on, as opposed to two notes made at one path. */
+  base: string | null,
 ) {
   // The body of a 409 is whatever the server sent; only a real version to
   // base the next write on makes this worth doing at all.
@@ -942,6 +1002,14 @@ async function keepBoth(
   if (together !== null) {
     await writeDown(here, together, ours)
     const { note } = await api.writeNote(token, tracked.id, path, together, theirs.version)
+    mirror.notes[path] = { id: note.id, version: note.version, hash: note.hash }
+    return
+  }
+
+  const merged = base === null ? null : await mergedOver(token, here, tracked.id, base, ours, sent)
+  if (merged !== null) {
+    await writeDown(here, merged, ours)
+    const { note } = await api.writeNote(token, tracked.id, path, merged, theirs.version)
     mirror.notes[path] = { id: note.id, version: note.version, hash: note.hash }
     return
   }

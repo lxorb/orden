@@ -327,17 +327,23 @@ def drive(page, url: str, scheme: str, report: dict, failures: list) -> None:
     shots.append(shoot(page, "tab-refused", scheme))
 
     # 6. Back to a page that frames, and clip it. In a browser the frame's words
-    #    belong to the site, so the clip is the link - which is what the glyph said.
+    #    belong to the site, so the clip is the link. The scissors are off the bar
+    #    (#405): the clipper is Save as a note, behind the dots.
     page.fill(ADDRESS, f"{url.rstrip('/')}{FRAMED}")
     page.keyboard.press("Enter")
     page.wait_for_timeout(2000)
 
-    clip = page.locator('.webbar button[aria-label="Clip the link"]')
-    report[f"{scheme}: what the clip glyph says"] = clip.count() and "Clip the link"
-    if not clip.count():
-        failures.append(f"{scheme}: the clip glyph does not say it will keep the link")
+    if page.locator('.webbar button[aria-label^="Clip"]').count():
+        failures.append(f"{scheme}: the bar still wears the scissors")
+    page.click('.webbar button[aria-label="More"]')
+    page.wait_for_timeout(400)
+    save = page.locator("[role=menu] [role=menuitem]", has_text="Save as a note").first
+    report[f"{scheme}: the dots save the page as a note"] = bool(save.count())
+    if not save.count():
+        failures.append(f"{scheme}: the dots have no Save as a note row")
+        page.keyboard.press("Escape")
     else:
-        clip.click()
+        save.click()
         page.wait_for_timeout(1500)
 
     files = dict(page.evaluate(FILES))

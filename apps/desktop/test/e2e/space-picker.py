@@ -86,7 +86,12 @@ def switching(page: Page, scheme: str) -> None:
         wrong(f"[{scheme}] the tabs' Alt numbers showed beside the space numbers")
     if [one[0] for one in rows] != [str(at + 1) for at in range(len(names))]:
         wrong(f"[{scheme}] Alt did not number the rows 1 to {len(names)}: {rows}")
-    page.wait_for_timeout(200)
+    # The numbers fade out over frames, and a frame of WebKit's on a busy machine can
+    # be most of a second: waited for, and then held to it (#384).
+    try:
+        page.wait_for_function(f"!({ROWS})().some((one) => one[0] != null)", timeout=3000, polling=50)
+    except Exception:  # noqa: BLE001 - still there, which the check below says
+        pass
     if any(one[0] is not None for one in page.evaluate(ROWS)):
         wrong(f"[{scheme}] the numbers stayed after Alt was let go of")
 
@@ -162,19 +167,12 @@ def switching(page: Page, scheme: str) -> None:
     if page.evaluate(HERE) != names[11]:
         wrong(f"[{scheme}] closing it changed the space")
 
-    # From the space's own mark in the title bar, which a press left the keyboard on:
-    # Ctrl+Space is the switcher there too, never a click on the mark.
+    # With the panel shut, where the title bar holds no space of its own: the key is
+    # the way to another space there, and it is the same switcher.
     page.evaluate("() => { window.nibApp.workspace.panel = null }")
-    mark = page.locator("[data-space-drop='switcher']").first
-    if mark.count():
-        mark.focus()
-        opened(page, scheme, "from the title bar's mark")
-        if page.locator(".nib-layer.spaces").count():
-            wrong(f"[{scheme}] Ctrl+Space on the mark dropped the title bar's list")
-        page.keyboard.press("Escape")
-        gone(page, scheme, "from the mark")
-    else:
-        say(f"[{scheme}] no title-bar mark to stand on; skipped")
+    opened(page, scheme, "with the panel shut")
+    page.keyboard.press("Escape")
+    gone(page, scheme, "with the panel shut")
 
 
 def drive(browser: Browser) -> None:

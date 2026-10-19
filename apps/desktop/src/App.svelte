@@ -1,8 +1,6 @@
 <script lang="ts">
-  import { onDestroy, tick } from 'svelte'
+  import { onDestroy, tick, untrack } from 'svelte'
   import { t } from './lib/i18n.svelte'
-  import { firstVisit } from './lib/first-visit.svelte'
-  import { setup } from './lib/setup.svelte'
   import { scanHeadings } from './lib/outline'
   import { moveSection } from './lib/sections'
   import { pageHeight, scrollerOf, showField, viewport } from './lib/viewport.svelte'
@@ -20,6 +18,7 @@
   import StorageWarning from './lib/StorageWarning.svelte'
   import { watchTextSize } from './lib/text-size'
   import UpdateNotice from './lib/UpdateNotice.svelte'
+  import { renamed } from './lib/renamed.svelte'
   import { account } from './lib/account.svelte'
   import { joining } from './lib/joining.svelte'
   import { arriving } from './lib/arriving.svelte'
@@ -27,7 +26,8 @@
   import FirstSync from './lib/FirstSync.svelte'
   import Progress from './lib/Progress.svelte'
   import { drawer, rightDrawer } from './lib/drawer.svelte'
-  import { fullscreen } from './lib/fullscreen.svelte'
+  import { escapeLeaves, fullscreen } from './lib/fullscreen.svelte'
+  import { alone } from './lib/alone.svelte'
   import { chrome } from './lib/glass/chrome.svelte'
   import { paintCodePalette } from './lib/highlight'
   import { linkScroll, type ScrollEnd } from './lib/linked-scroll'
@@ -39,12 +39,13 @@
   import { said } from './lib/said.svelte'
   import { search } from './lib/search.svelte'
   import { prompt } from './lib/prompt.svelte'
-  import { settings } from './lib/settings.svelte'
+  import { hiddenKinds, settings } from './lib/settings.svelte'
   import {
     contextMenu,
     fillBar,
     formatBar as formatBarDoor,
     fullscreenWayOut,
+    guestCorner,
     historySheet,
     iconPicker,
     joinSheet,
@@ -58,13 +59,13 @@
     quickAddSheet,
     quickSheet,
     recordingPill,
+    renameNotice,
     rewriteSheet,
-    scratchpadCard,
     settingsSheet,
     shareSheet,
     signInSheet,
     slidesStage,
-    spaceChooserCard,
+    firstSpaceDoor,
     menuBarDoor,
     undoToastNotice,
   } from './lib/surfaces.svelte'
@@ -78,15 +79,16 @@
   import { links } from './lib/link-index.svelte'
   import { updates } from './lib/updates.svelte'
   import { usage } from './lib/usage.svelte'
-  import { invoke, isDesktop, platform } from './lib/tauri'
+  import { invoke, isDesktop, isNative, platform } from './lib/tauri'
   import { theme } from './lib/theme.svelte'
   import { views } from './lib/views.svelte'
   import { workspace } from './lib/workspace.svelte'
+  import { sidebarKey, used } from './lib/workspace/undo.svelte'
   import { saveFront } from './lib/save-place/door'
+  import PadColumn from './lib/scratchpad/PadColumn.svelte'
   import { shown as pad } from './lib/scratchpad/is.svelte'
-  import { scale } from 'svelte/transition'
-  import { LAYER } from './lib/motion'
   import { isDraft } from './lib/workspace/drafts'
+  import { type TabKind, TAB_KINDS } from './lib/workspace/tab-kinds'
   import { shortcuts } from './lib/shortcuts.svelte'
   import { toolbar } from './lib/toolbar.svelte'
   import { pull } from './lib/pull.svelte'
@@ -94,10 +96,21 @@
   import { type AppContext, runEntry } from './lib/shortcuts/registry'
   import { writeNew } from './lib/write-new'
 
+  // The app's new name, on the one launch that says it.
+  if (renamed.showing) void renameNotice.ask()
+
   /** The editor of the pane that has the focus, which is what every key, every
    *  menu and the palette act on. Each pane leaves its own here; see
    *  views.svelte.ts. */
   const view = $derived(views.of(workspace.panes.focusedId))
+
+  /** The scratchpad as the one note on a touch screen (#404). */
+  const padOver = $derived(viewport.touch && pad.on)
+
+  /** What commands and the keyboard's strip act on. */
+  const writingIn = $derived(padOver ? (pad.view ?? view) : view)
+
+  const fabLabel = $derived(hiddenKinds.offers('note') ? t('New note') : t('New tab'))
 
   // Where a right click keeps the Mac's own menu; see system-menu.ts.
   let keepsSystemMenu: typeof import('./lib/system-menu').keepsSystemMenu = () => false
@@ -113,6 +126,7 @@
   const canWriteHere = $derived(canWriteIn(workspace.active?.note))
   /** Whether a tab fills the window; see lib/tab-fill. */
   const filled = $derived(workspace.panes.fills !== null)
+  const bare = $derived(fullscreen.on || alone.on)
   /** Whether each side's panel is built. Once it has been open it stays built, shut
    *  or not, and the launch's last turns build it shut where it never was: opening
    *  it is then a column sliding open over rows already laid out, never a panel made
@@ -216,7 +230,10 @@
         shortcuts.receive(remote)
         toolbar.receive(remote)
         pull.receive(remote)
+        void import('./lib/kind-choice').then((one) => one.receive(remote))
         recovery.receive(remote)
+        // Which spaces are put away, the same on every device; see lib/space-archive.ts.
+        void import('./lib/space-archive').then((one) => one.receive(remote))
         // What pings for every chat, fetched with the chats rather than in front of the
         // first paint; see lib/chats/hush.svelte.ts.
         if (!__EVEN_PLUGIN__)
@@ -245,6 +262,23 @@
     return () => {
       views.onSelection = null
     }
+  })
+
+  // A fresh start opens on the welcome note; see fresh-start.ts. Fetched only with no
+  // space, and what it reads is read here, so a change to any of it asks again.
+  $effect(() => {
+    if (__EVEN_PLUGIN__ || !workspace.restored || workspace.spaces.length) return
+    const now = {
+      native: isNative,
+      plugin: false,
+      restored: true,
+      spaces: 0,
+      restoring: account.restoring,
+      signedIn: account.signedIn,
+      invited: joining.invitation !== null || joining.step !== null,
+      tabs: workspace.tabs.length,
+    }
+    void firstSpaceDoor().then(({ firstSpace }) => firstSpace.start(now))
   })
 
   // Ctrl and the wheel over the note, which a trackpad pinch also arrives as.
@@ -360,7 +394,7 @@
   // The same for the other side, which is a drawer over the note wherever the
   // left one is; see the right-hand rules in the stylesheet below.
   $effect(() =>
-    viewport.drawer && workspace.rightPanel
+    viewport.drawer && workspace.openOn('right')
       ? overlays.show(() => workspace.closePanel('right'))
       : undefined,
   )
@@ -378,7 +412,7 @@
   // only wakes what reads it when its own value changes, so a drawer that stays
   // open through three panels is one layer and one entry.
   const covered = $derived(!!workspace.panel)
-  const coveredRight = $derived(!!workspace.rightPanel)
+  const coveredRight = $derived(!!workspace.openOn('right'))
 
   $effect(() => closeOnBack(covered, () => workspace.closePanel()))
   $effect(() => closeOnBack(coveredRight, () => workspace.closePanel('right')))
@@ -406,9 +440,8 @@
   // document has to be as easy to leave as everything else. Escape is in `onKeydown`.
   $effect(() => closeOnBack(fullscreen.on, () => void fullscreen.leave()))
 
-  // And it belongs to the document it was entered on: closing that brings the app
-  // back rather than leaving a window with nothing in it. See fullscreen.svelte.ts.
-  $effect(() => fullscreen.watch(workspace.tabs.map((tab) => tab.id)))
+  // And it keeps to the pane worked in; see fullscreen.svelte.ts.
+  $effect(() => fullscreen.follow())
 
   // Both drawers follow the finger, the way a phone app's do; see
   // drawer-follow.ts, which is one engine for the two edges. Only where the
@@ -418,7 +451,7 @@
   // first drag is a thumb that arrives well after the first paint.
   $effect(() => {
     const host = middle
-    if (!host || !viewport.drawer) return
+    if (!host || !viewport.drawer || bare) return
 
     let stop: (() => void) | null = null
     let live = true
@@ -434,14 +467,28 @@
 
   // Syncing only runs while there is an account behind it - and not before a
   // fresh sign-in has settled what happens to the notes already here.
+  //
+  // Keyed on whose sync it is and which engine, and nothing else. The effect used to
+  // run again whenever anything it read changed - the account's user read back a
+  // moment after signing in, say - and each run started a second loop over the first:
+  // two first passes, the second finding the first already running and lifting the
+  // waiting state with nothing counted, while the notes went on arriving behind it
+  // (test/e2e/signin.py).
+  const syncing = $derived(
+    account.syncable ? `${account.user?.id ?? ''}:${account.user?.syncVersion === 2}` : null,
+  )
   $effect(() => {
-    if (account.syncable) {
-      sync.start()
-      // The bytes are an account's, and a guest is writing into somebody else's.
-      if (account.user) void usage.refresh()
+    if (syncing !== null) {
+      untrack(() => {
+        sync.start()
+        // The bytes are an account's, and a guest is writing into somebody else's.
+        if (account.user) void usage.refresh()
+      })
     } else {
-      sync.stop()
-      rooms.clear()
+      untrack(() => {
+        sync.stop()
+        rooms.clear()
+      })
     }
   })
 
@@ -506,6 +553,9 @@
         // The update notice, which only a release server puts up; see
         // test/e2e/notices.py.
         updates,
+        // The questions the app asks, so a drive can put up one only a terminal raises -
+        // Ctrl+N in a terminal - in a browser that has none; see test/e2e/layout-sweep.py.
+        prompt,
         workspace,
         search,
         settings,
@@ -577,19 +627,34 @@
                 ]).then(([{ chats }, open]) => ({ chats, ...open })),
           agents: { standIn },
           ai,
+          // The AI accounts on every device, which a drive of two devices reads and
+          // steers; see test/e2e/ai-vault.py.
+          aiVault: () =>
+            __EVEN_PLUGIN__
+              ? Promise.reject(new Error('no AI vault in the Even Realities plugin'))
+              : Promise.all([import('./lib/ai/vault/start.svelte'), import('./lib/ai/keys')]).then(
+                  ([{ vault }, keys]) => ({
+                    vault,
+                    writeKey: keys.writeKey,
+                    readSecret: keys.readSecret,
+                  }),
+                ),
           importing,
           publish,
           rewriting,
           sync2,
           wallpaper,
           themeStore: store,
+          // A web tab's downloads, which only a download puts a button up for; see
+          // test/e2e/popups.py.
+          downloads: () => import('./lib/web-tab/downloads.svelte').then((one) => one.downloads),
         })
       },
     )
   }
 
   /** A canvas and a page note, which have a bar of their own with a way to add. */
-  const ownBar = (kind: string | undefined) => kind === 'canvas' || kind === 'pages'
+  const ownBar = (kind: TabKind | undefined) => kind !== undefined && TAB_KINDS[kind].ownBar
 
   /** Every pair of panes in a list of them, each pair once. */
   function pairs(ids: string[]): [string, string][] {
@@ -739,6 +804,15 @@
     return () => cancelAnimationFrame(frame)
   })
 
+  /** Ctrl+Z for what was done in a sidebar; see `sidebarKey`. */
+  function sidebarUndo(event: KeyboardEvent) {
+    const own = sidebarKey(event, (id) => shortcuts.pressed(id, event))
+    if (!own) return
+    event.preventDefault()
+    event.stopPropagation()
+    void (own === 'undo' ? workspace.undoFileAction() : workspace.redoFileAction())
+  }
+
   /** Every app-level key comes from one registry, so a rebind reaches the
    *  keyboard, the menus and the palette at once. The one thing it cannot reach
    *  on its own is here: the palette is this component's own state. */
@@ -753,10 +827,12 @@
 
     // Then full screen, which is a mode and not a layer: on the stack it hid a web
     // tab's page, the thing it is meant to fill the screen with. See overlays.ts.
+    // Decided once the press has been everywhere; see `escapeLeaves`.
     if (event.key === 'Escape' && fullscreen.on) {
-      event.preventDefault()
-      event.stopImmediatePropagation()
-      void fullscreen.leave()
+      const holder = document.activeElement
+      queueMicrotask(() => {
+        if (escapeLeaves(event.defaultPrevented, holder)) void fullscreen.leave()
+      })
       return
     }
 
@@ -790,7 +866,7 @@
    *  showing. */
   function appContext(): AppContext {
     return {
-      view,
+      view: writingIn,
       palette: (mode, again) => {
         // Shift Shift over the palette puts it away, as Escape does, and the keyboard
         // goes back where it was; see `tapped` in the registry.
@@ -800,7 +876,7 @@
       },
       // The document alone, with the app out of the way and the window's own
       // frame with it; see fullscreen.svelte.ts.
-      fullscreen: () => void fullscreen.toggle(workspace.activeTabId),
+      fullscreen: () => void fullscreen.toggle(workspace.panes),
     }
   }
   // On a Mac the app's menu is the menu bar across the top of the screen, which is
@@ -839,6 +915,7 @@
 <!-- Nothing in the app ever shows the browser's own menu. -->
 <svelte:window
   onkeydown={onKeydown}
+  onkeydowncapture={sidebarUndo}
   oncontextmenucapture={(event: MouseEvent) => {
     // A Mac's text field keeps the system's own menu, which has Look Up and the
     // spelling in it as well as the four; see system-menu.ts. Every other field gets
@@ -849,6 +926,12 @@
     if (!keepsSystemMenu(event.target, platform())) event.preventDefault()
   }}
   onmousedown={onMouse}
+  onpointerdowncapture={(event: PointerEvent) => {
+    overlays.pressed(event)
+    used(event.target)
+  }}
+  onclickcapture={(event: MouseEvent) => overlays.clicked(event)}
+  onblur={() => overlays.away()}
   onpointermove={() => fullscreen.stir()}
   onpointerdown={() => fullscreen.stir()}
 />
@@ -857,7 +940,7 @@
      all on a desktop: the phone's title bar draws the name as an `h1` and a desktop
      draws it on a tab, so anything reading the page down found a window with no
      top to it. Said and not shown, because the name is already on screen twice. -->
-<h1 class="nib-said">{workspace.active?.shown ?? 'nibeditor'}</h1>
+<h1 class="nib-said">{workspace.active?.shown ?? 'Orden'}</h1>
 
 <!-- What just happened, for whoever is listening rather than looking. On the page
      before there is anything in it and outside everything that can be made inert,
@@ -875,7 +958,7 @@
      the bar with it, off the top, and the format bar out of sight. See pageHeight. -->
 <main
   class:focus={modes.focus}
-  class:full={fullscreen.on}
+  class:full={bare}
   inert={workspace.nothingToShow}
   style:height={pageHeight()}
 >
@@ -893,7 +976,7 @@
          bars. Left out rather than slid away, so nothing in them can be reached
          by a key while they are gone; see fullscreen.svelte.ts. A tab filling the
          window leaves the same, and its bar at the top edge; see lib/tab-fill. -->
-    {#if !fullscreen.on && !filled}
+    {#if !bare && !filled}
       <div
         class="panels"
         data-chrome="start"
@@ -921,10 +1004,10 @@
          drag drives both; only which layer it moves differs. -->
     <!-- Off to the side, the note is out of reach as a shut drawer is. WebKit
          scrolls even this page to show what takes the focus: the note taking it
-         as Nib started slid it across, over the list the phone had open. -->
+         as Orden started slid it across, over the list the phone had open. -->
     <div
       class="document"
-      inert={viewport.narrow && viewport.drawer && !!workspace.panel}
+      inert={viewport.narrow && viewport.drawer && !!workspace.panel && !bare}
       class:open={!!workspace.panel}
       class:held={drawer.held}
       class:dragging={drawer.at !== null}
@@ -936,7 +1019,7 @@
       style:--shade={drawer.progress === null ? undefined : 1 - drawer.progress}
       ontransitionend={(event) => drawer.arrived(event)}
     >
-      {#if (workspace.panel ?? workspace.rightPanel) !== null && !fullscreen.on}
+      {#if (workspace.panel ?? workspace.openOn('right')) !== null && !bare}
         <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
         <!-- One scrim for both drawers, which is why it fades with whichever of
              them a finger is on. Only one can be moving: a gesture belongs to one
@@ -945,7 +1028,7 @@
              was drawn over the drawer it was meant to be under. -->
         <div
           class="scrim"
-          class:over={!!workspace.rightPanel}
+          class:over={!!workspace.openOn('right')}
           class:held={drawer.held || rightDrawer.held}
           class:dragging={drawer.at !== null || rightDrawer.at !== null}
           style:opacity={drawer.progress ?? rightDrawer.progress ?? undefined}
@@ -959,7 +1042,7 @@
       <!-- The three dots at the right end of it open the whole of the app on a
            phone and a tablet, which is why the bar is handed what the menu needs;
            see AppMenu.svelte. -->
-      {#if !fullscreen.on}
+      {#if !bare}
         {#if filled}
           {#await fillBar() then FillBar}
             <FillBar>{@render bar()}</FillBar>
@@ -989,7 +1072,7 @@
       <div class="body">
         <!-- One pane, or up to four of them; see PaneTree.svelte. Anything slow
              enough to be waited for draws a line along the top of them. -->
-        <div class="panes" data-panes>
+        <div class="panes" data-panes class:under-pad={padOver} inert={padOver}>
           <Progress />
           <PaneTree frame={workspace.panes.frame} />
           <!-- The note the window was left on, as it was left, until its editor is up;
@@ -1005,24 +1088,17 @@
         </div>
 
         <!-- Docked, so a web page narrows rather than covers it; see scratchpad/pad.ts. -->
-        {#if pad.on && !fullscreen.on && !filled && !__EVEN_PLUGIN__}
-          <div
-            class="pad"
-            data-scratchpad
-            style:width="{pad.width}px"
-            transition:scale={{ duration: LAYER.rise, start: LAYER.start }}
-          >
-            {#await scratchpadCard() then Card}<Card />{/await}
-          </div>
+        {#if !bare && !filled && !__EVEN_PLUGIN__}
+          <PadColumn />
         {/if}
 
-        {#if workspace.right.length && !fullscreen.on && !filled}
+        {#if workspace.right.length && !bare && !filled}
           <div
             class="panels right"
             data-chrome="end"
             data-theme={chrome.theme}
-            inert={viewport.drawer && !workspace.rightPanel}
-            class:open={!!workspace.rightPanel}
+            inert={viewport.drawer && !workspace.openOn('right')}
+            class:open={!!workspace.openOn('right')}
             class:held={rightDrawer.held}
             class:dragging={rightDrawer.at !== null}
             class:settling={rightDrawer.settle !== null}
@@ -1043,7 +1119,7 @@
            words for it to count, so it is left out rather than drawn empty and F6
            steps straight past it. One rule, in regions.ts, which is also what the
            keyboard's own table describes. -->
-      {#if hasStatusBar(workspace.active?.kind) && !fullscreen.on && !filled}
+      {#if hasStatusBar(workspace.active?.kind) && !bare && !filled}
         <StatusBar
           doc={workspace.active?.doc ?? ''}
           reading={modes.readOnly || !canWriteHere}
@@ -1055,16 +1131,23 @@
            thing you came to do is write a note. Out of the way while the
            keyboard is up, because then you are already writing one, and over a
            canvas or a page note, where it read as adding to the page. -->
-      {#if viewport.touch && !workspace.panel && !viewport.typing && !ownBar(workspace.active?.kind) && !fullscreen.on}
-        <button class="fab" aria-label={t('New note')} onclick={writeNew}>
+      {#if viewport.touch && !workspace.panel && !viewport.typing && !ownBar(workspace.active?.kind) && !bare}
+        <button class="fab" aria-label={fabLabel} onclick={writeNew}>
           <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
         </button>
       {/if}
 
-      <!-- The way back out of full screen; see FullscreenLeave.svelte. -->
-      {#if fullscreen.on}
+      <!-- The way back out of full screen; see FullscreenLeave.svelte. Never over a
+           web page, which would draw over it. -->
+      {#if fullscreen.on && workspace.active?.kind !== 'web'}
         {#await fullscreenWayOut() then WayOut}
           <WayOut />
+        {/await}
+      {:else if alone.on && account.guest}
+        <!-- A guest alone in one shared file: their name, and the way to an account,
+             which the panel's foot held; see GuestCorner.svelte. -->
+        {#await guestCorner() then Corner}
+          <Corner />
         {/await}
       {/if}
     </div>
@@ -1090,8 +1173,17 @@
         <RecordingPill />
       {/await}
     {/if}
+    {#if renamed.showing && renameNotice.asked}
+      {#await renameNotice.asked then RenameNotice}
+        <RenameNotice />
+      {/await}
+    {/if}
     {#if updates.ready}
-      <UpdateNotice version={updates.ready} ondismiss={() => updates.dismiss()} />
+      <UpdateNotice
+        version={updates.ready}
+        managed={updates.managed}
+        ondismiss={() => updates.dismiss()}
+      />
     {/if}
     {#if reloading.offered}
       <!-- A chunk the network lost; see reloading.svelte.ts. -->
@@ -1135,13 +1227,9 @@
     <Palette bind:this={paletteScreen} bind:open={palette} {view} ongoto={goto} />
   {/await}
 {/if}
-<!-- What a fresh install opens on, until there is a space, and its optional questions
-     after (setup.svelte.ts). Fetched only then; the card decides the rest itself, and
-     the plugin never shows it, so its build does not carry it. See SpaceChooser.svelte
-     and space-choice.ts. -->
-{#if !__EVEN_PLUGIN__ && workspace.restored && (!workspace.spaces.length || firstVisit.asking || setup.armed)}
-  {#await spaceChooserCard() then SpaceChooser}
-    <SpaceChooser />
+{#if !__EVEN_PLUGIN__ && settings.setup !== null}
+  {#await import('./lib/Personalize.svelte') then Personalize}
+    <Personalize.default />
   {/await}
 {/if}
 {#if quickAddSheet.asked}
@@ -1172,7 +1260,7 @@
 {/if}
 {#if formatBarDoor.asked}
   {#await formatBarDoor.asked then FormatBar}
-    <FormatBar bind:this={formatBar} {view} context={appContext} />
+    <FormatBar bind:this={formatBar} view={writingIn} context={appContext} />
   {/await}
 {/if}
 {#if historySheet.asked}
@@ -1238,8 +1326,7 @@
 
 <style>
   main {
-    /* The way out of full screen, which a web tab's bar makes room for; see `.head`
-       in lib/web-tab/WebTab.svelte. */
+    /* The way out of full screen; see FullscreenLeave.svelte. */
     --leave-size: 30px;
     display: flex;
     flex-direction: column;
@@ -1286,14 +1373,6 @@
     display: flex;
   }
 
-  .pad {
-    transform-origin: top right;
-  }
-
-  :global([dir='rtl']) .pad {
-    transform-origin: top left;
-  }
-
   /* Positioned, so the line that says the app is busy draws along the top of
      the panes rather than over the window's own bar. */
   .panes {
@@ -1302,6 +1381,10 @@
     min-width: 0;
     min-height: 0;
     display: flex;
+  }
+
+  .panes.under-pad {
+    visibility: hidden;
   }
 
   /* Start, middle and end, whichever of them is up; each card names its track.

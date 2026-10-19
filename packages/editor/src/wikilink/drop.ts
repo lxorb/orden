@@ -10,7 +10,7 @@ export const noteCarrier = Facet.define<
 >({ combine: (values) => values[0] ?? (() => []) })
 
 /** The writer, fetched by the first drop. */
-export const noteLinksCode = () => import('./note-links')
+const noteLinksCode = () => import('./note-links')
 
 export const noteDrops: Extension = EditorView.domEventHandlers({
   dragover(event, view) {

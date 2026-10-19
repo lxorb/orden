@@ -73,16 +73,16 @@ build switch, on by default, off with `NIB_CLAUDE_CODE=off` (read by `vite.confi
 OpenAI, [ChatGPT plan usage](https://developers.openai.com/siwc/token-sharing-open-source),
 checked 2026-09-30: an open-source app may "request permission to use the user's ChatGPT
 plan for eligible Responses API requests"; "If you're interested in offering it in a paid
-or remotely hosted app, complete the interest form." nibeditor is open source and free,
+or remotely hosted app, complete the interest form." Orden is open source and free,
 and the desktop app is hosted on the reader's own machine, so the desktop app offers
 **ChatGPT**: **Continue with ChatGPT** opens the browser on OpenAI's own sign-in, which
 registers this installation the documented way (`client_id=dynamic_agent_client`, the
-installation's `ext_agent_host_id`, `agent_name_hint=nibeditor`, PKCE, a loopback
+installation's `ext_agent_host_id`, `agent_name_hint=Orden`, PKCE, a loopback
 callback on `127.0.0.1`), and questions go to `api.openai.com/v1/responses` with the token
 it hands back - [sign-in](https://developers.openai.com/siwc/token-sharing-open-source/sign-in),
 [models and inference](https://developers.openai.com/siwc/token-sharing-open-source/models-and-inference),
 [preview limitations](https://developers.openai.com/siwc/token-sharing-open-source/preview-limitations).
-The web app at nibeditor.com is remotely hosted and does not offer it. Never the Codex
+The web app at orden.so is remotely hosted and does not offer it. Never the Codex
 CLI's own client id, and never `chatgpt.com/backend-api`: that is the route tools used
 before this existed, and it is somebody else's identity.
 
@@ -168,10 +168,81 @@ Settings > AI. Six kinds, the three plans on a desktop only:
 | OpenAI | An OpenAI API key | `api.openai.com/v1/models` |
 | OpenAI-compatible | A base URL, and a key if the server wants one | `<base>/v1/models` |
 
-One of each but the last, because there is one of each API, key, program and plan.
 As many compatible ones as you have servers: Ollama on this machine,
 LM Studio beside it, OpenRouter behind both, a gateway at work. Each gets a name
 so the list reads as what they are.
+
+### One page
+
+Settings > AI is one page in two groups. **Accounts**: the providers and their accounts
+below, and Used for. **Access**: everything that can reach the notes, in one list - the
+agents on this computer, through `nib mcp` (docs/agent-native.md 9.1, 10), and the apps
+connected through the account's connector - each row saying what it reaches and when it
+was last used; an agent's row opens its grant. Under the list, one **Connect** chooser
+over both roads (Claude Code, Codex, Claude, ChatGPT, Other), each way only where it
+applies (`lib/access/choices.ts`). Until 2026-10-12 these were three panes, AI, Agents and
+LLM access, split by plumbing rather than by what a reader wants; a link to either of the
+last two (`settings.show('agents')`, the palette, `/mcp`) still lands on Access, and the
+settings search still finds them by their old words.
+
+### Accounts
+
+Emil, 2026-10-12: "you should for example be able to have multiple claude accounts. of
+course if you have multiple accounts for the same provider then only one will be active.
+still, openai and claude could be active at the same time."
+
+A **provider** is who serves the model: Claude (through Claude Code or an Anthropic key),
+OpenAI (through Codex, ChatGPT or an OpenAI key), and each compatible server on its own.
+Each row above is an **account** of one, and a provider may have several: a work key
+beside one's own, two Claude Code sign-ins. Exactly one account of each provider is in
+use, and every provider is in use at once. Everything that asks a model asks a provider -
+a thread, a feature in Used for, the default - and is answered by the account in use now
+(`ai.provider(id)` in `store.svelte.ts`, `resolve` in `accounts.ts`), so a switch reaches
+every thread on that provider at its next question. A question already being answered
+finishes on the account it started on, as Roo Code keeps a task's profile for its life.
+A provider of several accounts is a row of its own over them in Settings > AI, **Use** on
+each one not in use; the palette lists `AI account: Claude · Work` for each, the one in
+use ticked.
+
+The accounts are one file, `<local data>/ai/accounts.json` (`src-tauri/src/ai_accounts.rs`),
+not the page's storage, which is one browsing profile's: while the app could run on nib's
+own Chromium as well, the two engines were two profiles, and before this file an engine
+switch started with no providers while every key was still in the keychain. Every window
+and every space read the same file; a write names the stamp of the text it changed, is refused over a newer one
+and made again over it, and is heard by every window. A build under another identifier (a
+probe) has a file of its own, which is what keeps a test away from the reader's accounts.
+The window still keeps a copy (`nib:ai-accounts`) to start from before the crate answers;
+a browser has only that.
+
+Nobody signs in or types a key again for any of this. The first window that finds no file
+writes it out of the rows it kept before (`nib:ai`, which is left alone for an older
+build), each row keeping its id, so its key is found under that id, its grant (`nib-<id>`)
+is the same grant and every thread still names it. A second profile that kept rows of its
+own adds the ones the file lacks, once.
+
+**A second sign-in to a program** is an account whose program keeps its login in a home
+of nib's, `<local data>/ai/homes/<id>`; the first Claude Code and the first Codex are the
+reader's own `~/.claude` and `~/.codex`, as they always were. Both programs document the
+one variable for this - Anthropic: "To stay signed in to multiple accounts at once ...
+give each account its own configuration directory" with `CLAUDE_CONFIG_DIR`
+([authentication](https://code.claude.com/docs/en/authentication)), and Codex's
+`CODEX_HOME` - so nib sets it on the unmodified program it starts and on the program's
+own login, which **Sign in** types into a terminal tab as `set "CLAUDE_CONFIG_DIR=..." &&
+claude auth login`. The program signs the reader in through its maker's flow, keeps the
+login there and refreshes it itself; nib names the folder and never opens what is in it,
+which keeps everything under "Your own plan" true. The window names an account, never the
+folder: the crate finds the account in the file and derives its home
+(`src-tauri/src/ai_cli/home.rs`). A Codex home of nib's starts with
+`cli_auth_credentials_store = "keyring"`, so its login is in the system's own store,
+keyed by the home; Claude Code keeps its own `.credentials.json` in the folder on
+Windows and Linux (mode 0600), and a Keychain entry keyed by the folder on a Mac. For
+such a home the variables that would outrank its login (`ANTHROPIC_API_KEY`,
+`ANTHROPIC_AUTH_TOKEN`, `CLAUDE_CODE_OAUTH_TOKEN`, `OPENAI_API_KEY`, `CODEX_API_KEY`) are
+taken out of the program's environment, or the reader's shell would pick the account.
+Switching is instant - the next start names another folder - and a thread's session is
+the account's it was opened in: after a switch the next message opens one in the new
+account, seeded from nib's transcript. **Remove** on a second sign-in runs the program's
+own sign-out in its home (`claude auth logout`, `codex logout`) and deletes the folder.
 
 Claude Code and Codex are found where their installers put them - the `PATH`,
 `~/.local/bin`, npm's global folder, Homebrew, Bun, Volta, mise, and on a Mac and Linux
@@ -250,6 +321,135 @@ secure would be worse than a key that could not be saved.
 Keys are read back, because the request is made by the page. They are never
 cached in a variable, never written to a note, never synced, never logged, and
 never put in an error message.
+
+### Every device
+
+Emil, 2026-10-13: "ai should be connected once and then keep connected across nib
+sessions." So the accounts reach every device the reader signs in to with their nib
+account, end to end (`lib/ai/vault`, `services/sync/src/ai/vault.ts`):
+
+- **What travels**: the accounts, the one in use per provider, what each feature asks,
+  every API key, and who each program or ChatGPT sign-in was signed in as. Sealed with
+  AES-256-GCM under the **vault key**, 32 random bytes only the reader's devices hold; the
+  account stores the sealed vault and nothing it can open.
+- **What does not**: Claude Code's and Codex's logins and the ChatGPT refresh token.
+  Anthropic does not let an app carry a Claude.ai login, and a refresh token used on two
+  devices breaks its own rotation. On another device such an account is there with who it
+  was signed in as, and **Sign in here** runs that program's own login, in that account's
+  home where it has one.
+- **A device**: an ECDH P-256 key pair, the private half in the device's secret store
+  (`ai-vault-device`: keychain, Keystore, or the browser's storage). The vault key is held
+  on the account only wrapped to each device's public key (ephemeral ECDH, HKDF-SHA256 with
+  both public keys as salt, AES-256-GCM): the shape web logins used (docs/sync-v2.md 6.6),
+  in WebCrypto, so a phone and a browser carry it too.
+- **Connecting a new device**, in three steps so that nobody between the two screens - the
+  account's service included - can choose a key that shows the same digits:
+  1. The new device registers a commitment, `SHA-256(pub || nonce)`, and not its key.
+  2. A device that has the vault key answers with a random nonce of its own. The first
+     answer stands, and the bubble comes up on the device that gave it.
+  3. Only then does the new device reveal its key and nonce. The service and the
+     answering device both check that they hash to the commitment, and that the key hashes
+     to the device's id.
+  Both screens then show the same six digits: `SHA-256` over the new key, its nonce, the
+  answering nonce and the answering key, mod 10^6. The new one shows them in Settings > AI;
+  the answering one shows a bubble, *"Phone wants your AI accounts 482 913"*, with Don't
+  allow and Allow, and Allow wraps the key to exactly the key those digits came from - a key
+  the account lists differently by then is wrapped to nothing. A key swapped in had to be
+  committed to before the answering nonce existed, so it shows the same digits one time in
+  a million, and every try is a bubble the reader sees. Nothing is typed.
+- **Joining**: a device the key was wrapped to does not open the vault by itself. Settings >
+  AI says *"Laptop offers this device your AI vault"*, with the digits, and only **Join**
+  opens it, takes what is in it and puts this device's own keys in. A vault somebody else
+  made first - a stolen session, on an account that had none yet - and offered would
+  otherwise have taken them without a word. Which vault a device joined is kept beside its
+  device key in the secret store, so a restart or a reinstall does not ask again; a vault
+  started over is a new one, and is asked about again.
+- **The first device** of an account makes the key without a word, and joins what it made;
+  it never makes one beside a vault that is there. The same device after an update, an
+  engine switch or a reinstall opens at once: its device key is in the keychain, which
+  outlives the app.
+- **Who may change it**: only a device that has the vault key. The vault is made with a
+  token derived from the key (HKDF), the account keeps only the token's hash, and answering
+  a device, wrapping the key to one, writing the vault, turning an allowed device away and
+  letting the vault go each send it. A session alone - a stolen one included - can register
+  a device and ask, which the reader sees as a bubble, and change nothing else.
+- **Letting a device go** (#389): Settings > AI lists the devices that hold the key,
+  *Devices with your AI vault*, each with **Remove**, and signing out on one that holds it
+  beside others asks *Also remove this device from your AI vault?* Removing changes the
+  key: a device that has it makes a new one, seals the vault under it, wraps it to every
+  allowed device but the one going, and sends all of it at once (`PUT /v2/ai/rotate`) with
+  the old token and the new one. The account takes it only over the revision it was read
+  at and the token whose hash it holds, swaps in the new hash, writes the new wraps and
+  lets the going device go, all in one batch, so two devices changing the key at once
+  cannot both win and the loser reads again. The device let go of keeps the old key, which
+  opens the vault as it was and nothing written after; its old token changes nothing any
+  more. An allowed device the change did not name - let in between its read and its write
+  - is put back to asking rather than left with a key that opens nothing, and so is a
+  device still asking that the device going had answered. An allowed device is only let
+  go of this way: deleting one beside others is refused. The last device takes the vault
+  with it, since nobody would be left to hold a new key.
+- **The same vault under a new key**: the sealed words remember the vaults they were
+  changed from (`before`, a fingerprint of each old token, the last twenty), so a device
+  that joined the vault opens it under its new key without being offered it again, even
+  after several changes it was away for. A vault started over remembers none, and is
+  offered.
+- **A browser** keeps its keys in the vault only once the reader turns on *Keep this
+  browser's keys in the vault* in Settings > AI, which says what it costs: every device's
+  keys are then in the browser's own storage, where a script that got into the page could
+  read them. Turned off, the browser lets go of its place in the vault and keeps what it
+  holds. A desktop and a phone keep theirs in the platform's secret store, and are in the
+  vault once somebody signs in.
+- **When no device is left to allow one**: **Start over**. The old vault is let go of,
+  this device's accounts become the vault, and every other device is allowed again from
+  here. The account takes it only from a device with the key or once no device is allowed
+  any more, so a device still waiting for an answer cannot take the vault away from the
+  others. Keys only that vault held are typed again; programs' sign-ins are each machine's
+  own and stay. There is no recovery code, for the reason web logins had none: losing
+  it costs a key typed again, never writing.
+- **Two devices at once**: a write names the revision it read and is refused over a newer
+  one; the device then meets the two three ways against what both last agreed on
+  (`vault/merge.ts`), keys compared by fingerprint, and writes again. Every write tells the
+  account's hub, and each other device reads again within a second.
+
+On one machine nothing disconnects: the accounts file and the homes are in the app's data
+folder, keys and the device key in the keychain, which updates, engine switches and
+reinstalls all keep. ChatGPT's installation is kept in the keychain beside its refresh
+token too, since an uninstall that takes the data folder used to leave the token with no
+client to use it.
+
+## Helpers
+
+Emil, 2026-10-12: "claude can create subagents of openai models. e.g. claude opus 5.5
+creating an astra subagent in the same way as it would create a subagent of claude."
+
+`run_agent` is one of nib's tools, shaped like Claude Code's own `Agent` tool and Codex's
+`spawn_agent`: a few words of `description`, the whole task as `prompt`, a `model` (`opus`,
+`sonnet`, `gpt-6-astra`, `astra`, or nothing for the asking agent's own), an `effort`, and
+a `subagent_type` naming an agent profile (a note whose front matter says `agent:`, 4.7 in
+docs/ai-sidebar.md). The helper is a thread of its own on the provider that model is on,
+answered by that provider's account in use: titled `↳ description` in the thread list, its
+answer this call's result. So Opus in the AI panel starts an Astra helper the way it would
+start a subagent, Astra starts a Claude one the same way, and an API key's loop, Claude
+Code and Codex all call the same tool (`lib/ai/helpers`). The sidebar's Claude Code has no
+subagent tool of its own (`--tools ""`), so this is its subagent tool.
+
+- **Which model**: each provider in use is asked what it lists, the asking agent's own
+  first; an exact id or name wins, then one that holds the word; a word nobody has is
+  refused with the models there are (`helpers/route.ts`).
+- **How it is waited for**: a call waits twenty seconds in the window, under the half
+  minute the endpoint gives it; `nib mcp` then holds the call open and asks `agent_result`
+  until the helper has ended, up to nine of the ten minutes each program gives a tool, and
+  the model is told to call `agent_result` past that. The API loop waits outright.
+- **Which thread**: a panel session's `nib mcp` is told its thread beside its token
+  (`NIB_MCP_THREAD`, per Claude Code session and per Codex thread), so a helper is its
+  thread's: in its mode, and stopped with it.
+- **Limits**: two deep under the thread the reader started (Claude Code's own is three),
+  four at once under one, fifteen minutes each, the API loop's step limit; a helper works in
+  its parent's mode and never more, with its own provider's built-in grant. Stop on a thread
+  stops every helper under it; a helper that ends takes its own with it.
+- **Who may**: the grant scope `agents`, "Start helpers on your AI accounts": on for the
+  sidebar's own agents and the reader's own clients, off for somebody else's tool. A grant
+  made before helpers is given it as a new one of its kind would be.
 
 ## The block
 
@@ -520,7 +720,9 @@ only the provider knows.
 | `apps/desktop/src/lib/ai/keys.ts` | Where a key lives, per platform |
 | `apps/desktop/src/lib/ai/chatgpt.ts` | A ChatGPT plan's token of the hour, and its refusals in nib's words |
 | `apps/desktop/src/lib/ai/local/` | Claude Code and Codex: a question put, their lines read, their state, their sign-in |
-| `apps/desktop/src/lib/ai/store.svelte.ts` | The providers, the default, and which one each feature asks |
+| `apps/desktop/src/lib/ai/accounts.ts` | What an account is: providers, the one in use, ids, the move from the window's own rows |
+| `apps/desktop/src/lib/ai/accounts-file.ts` | Where the accounts are kept: the crate's file, or a browser's storage |
+| `apps/desktop/src/lib/ai/store.svelte.ts` | The accounts as the app reads them: the one each provider answers with, the default, and which one each feature asks |
 | `apps/desktop/src/lib/ai/ask.ts` | What the block asks, and who answers |
 | `apps/desktop/src/lib/ai/rewrite.ts` | The four verbs, and what each sends |
 | `apps/desktop/src/lib/ai/rewriting.svelte.ts` | One rewrite, start to accepted |
@@ -531,6 +733,7 @@ only the provider knows.
 | `apps/desktop/src/lib/AiPane.svelte` | Settings > AI |
 | `apps/desktop/src/lib/RewriteSheet.svelte` | The diff, and the two answers |
 | `apps/desktop/src-tauri/src/secrets.rs` | The desktop keychain, and the iPhone's |
+| `apps/desktop/src-tauri/src/ai_accounts.rs` | The accounts' one file, stamped, for every window |
 | `apps/desktop/src-tauri/src/ai_cli.rs` | Claude Code and Codex run: found, argued, started, streamed, ended |
 | `apps/desktop/src-tauri/src/chatgpt.rs` | Sign in with ChatGPT: the loopback, the tokens, the refresh, the sign-out |
 

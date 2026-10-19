@@ -161,7 +161,7 @@ function asked(file: string): string[] {
  *
  *  This is where a hundred and twenty-six kilobytes were hiding. `raw.ts` in
  *  @nib/themes holds seven stylesheets as text for what an export and a deck bake into
- *  the file they write, the shell wanted one of them - the high contrast palette, three
+ *  the file they write, the shell wanted one of them - the contrast palette, three
  *  kilobytes - and a module is the unit a chunk is made of, so the shell got all seven.
  *  The module's own source is a dozen lines of comment, so the budget above saw nothing
  *  at all: 1.21 megabytes of built JavaScript in front of the first paint measured on
@@ -598,9 +598,184 @@ function holds(tail: string): boolean {
  *  pointing hand on buttons (said on the root as the window comes up), and Silent mode,
  *  with the moment a session has settled (startup.svelte.ts) that the hint cards wait
  *  for. The hints themselves, their store and their cards, and the AGENTS.md a new
- *  space is made with are behind doors and in none of this. Measured 3,222,295 and 378. */
-const BUDGET = 3_225_000
-const MOST_FILES = 381
+ *  space is made with are behind doors and in none of this. Measured 3,222,295 and 378.
+ *
+ *  Raised 2026-10-13, to 3,225,500, from a main at 3,224,855 (145 bytes under) for two
+ *  fixes to the link writer every rename and import goes through (link-format.ts,
+ *  link-rewrite.ts): a link to a heading keeps the words it shows, a shortest link to a
+ *  name two files share keeps its folder, and a target with a bracket in its name is
+ *  written out so the bracket does not end the link. The Obsidian import that found them
+ *  is behind its door. Measured 3,225,105 and 378.
+ *
+ *  Raised 2026-10-13, to 3,227,500, from a main at 3,225,414 (86 bytes under) for source
+ *  mode per tab (issue #232): which tab each pane's editor shows, the face a restored tab
+ *  is dressed in before its first frame, and where a new tab starts. No module more; the
+ *  1,707 bytes are in modes.svelte.ts, Editor.svelte and the tab and its session.
+ *  Measured 3,227,121 and 379.
+ *
+ *  Raised again 2026-10-13, to 3,230,000, from a main at 3,227,563 (63 bytes over, the
+ *  page cut round every card of the notices row, web-tab/covers.ts) for the one question
+ *  that has to be asked before anything of a launch is written: whether an earlier
+ *  version left settings here, which is who is told the name is now Orden
+ *  (renamed.svelte.ts, its code and nothing else). The card that says it is behind a
+ *  door and fetched for that one launch (RenameNotice.svelte), and the browser build's
+ *  handoff is behind the space chooser's. Measured 3,229,321.
+ *
+ *  Lowered the same day, to 3,195,000, from that main, which every queued pull request
+ *  was failing by a hundred bytes to seven kilobytes before the raise. Not a raise for
+ *  any of them: room, made by taking the renderer out of the first paint. `@nib/markdown`'s
+ *  own entry and what only it reads - marked's extensions, the block grammars, the
+ *  comments, the wikilinks and the starts they read with, sixty-six kilobytes of source
+ *  over six modules, and the whole of marked in the built figure - was there for five
+ *  small things, none of them a render: the
+ *  line-break switch the app sets as it starts (breaks.ts now), the formulas' size
+ *  ceiling (beside the engine in engines.ts), the front matter an image path is read
+ *  out of (its own module already), a hover preview (async already, so it fetches the
+ *  renderer with the formula engine) and the clipboard's HTML flavour, which is the one
+ *  caller that cannot wait: it is fetched by the first selection, which no copy can
+ *  come before, and the reading view's door brings it at the launch's last turn anyway
+ *  (`warmDoors` in surfaces.svelte.ts). The charts and the web cards stay: the live
+ *  preview draws those itself. Measured 3,163,402 and 375, and the ceiling is one per
+ *  cent over that again.
+ *
+ *  Raised 2026-10-17, to 3,200,600, from an unstable at 3,194,026 (974 bytes under), for
+ *  the TabKind registry: the kinds' traits moved into one table read on first paint
+ *  (workspace/tab-kinds.ts), which holdsWords, the pane, the tab's mark and the status
+ *  bar ask, in place of the chains of `kind === ...` they each kept. Its comments are cut
+ *  to a line a trait; what is left is the table. Measured 3,199,582.
+ *
+ *  Raised 2026-10-17, to 3,202,400, from an unstable at 3,199,582 (1,018 under), for
+ *  modes: each default said once in DEFAULTS, read on first paint. The store's forty
+ *  fields start from that one table and its restore falls back to it, where each wrote
+ *  its default twice and some three times; Settings' reset reads it too, off the first
+ *  paint. Measured 3,201,397.
+ *
+ *  Raised 2026-10-17, to 3,206,000, from an unstable at 3,201,397 (1,003 under), for
+ *  bug-burn-down re-landed: security fixes in the first paint. What a flow fence may do
+ *  is fetched with flowchart.js instead (live-preview/flow.ts, 1,735 bytes); what is
+ *  left is the live preview's and the editor's own fixes, which every note is drawn
+ *  through: the iframe card's caption and a raw block's trust (web-embed.ts,
+ *  html-block.ts), the editor's list, paste and fence commands (commands.ts), a table
+ *  sort's currency (table/model.ts) and a file shared on its own read as somebody
+ *  else's words (sharing.svelte.ts). Measured 3,204,981.
+ *
+ *  Raised 2026-10-17, to 3,207,500, from an unstable at 3,205,991 (9 under), for Wayland
+ *  #387: a late still picture stands in under menus (photograph in web-tab/pages.svelte.ts
+ *  keeps a picture that lands after its clock), and Super refused as a global key outside
+ *  a Mac (refuse in shortcuts.svelte.ts, accelerator.ts). Their comments are cut to a line
+ *  each. Measured 3,206,501.
+ *
+ *  Raised 2026-10-17, to 3,214,800, from an unstable at 3,207,078 (422 under), for share
+ *  #386 again: a page note and a chat shared on their own open as themselves
+ *  (`sharedKind` in openers.ts, 336 bytes), and nobody in a note is out of sight - a
+ *  caret's name stays, and one scrolled away is held at the edge of the page
+ *  (`heldCarets` in carets.ts, the rest). The editor draws every note, so the layer is in
+ *  front of the first paint with it. Measured 3,213,845.
+ *
+ *  Raised 2026-10-17, to 3,216,600, from an unstable at 3,214,464 (336 under), for share
+ *  #386 once more: a caret's name held at the edge of the page goes to that caret when it
+ *  is pressed (`heldCarets` in carets.ts), in the editor every note is drawn with.
+ *  Measured 3,215,593.
+ *
+ *  Raised 2026-10-17, to 3,218,100, from an unstable at 3,215,776 (824 under), for the
+ *  phone #206: a web note held in a tab off the desktop app goes to the browser and the
+ *  tab with it (`handedOut` in workspace.svelte.ts), a sitting put back there leaves web
+ *  notes' tabs out, and the scratchpad is the one note on a phone's screen, named in the
+ *  bar (Titlebar.svelte, scratchpad/). Their comments are cut to a line each. Measured
+ *  3,217,083.
+ *
+ *  Lowered 2026-10-17, to 3,212,500, from an unstable at 3,217,083, for #393: web logins no
+ *  longer travel between computers, so the hand-back a closing window waited for and the
+ *  web key's lines under a web tab's bar are gone from the first paint. Measured 3,211,503.
+ *
+ *  Raised 2026-10-18, to 3,215,500, from an unstable at 3,212,280 (220 under), for #382:
+ *  every popup closes when it is pressed past or the window loses the focus, by one rule
+ *  on the overlay stack (`pressed` and `away` in overlays.ts) that the shell calls from
+ *  the window; the menus, the space switcher and the app menu that are drawn with the
+ *  shell say what they hold, and the copies of a window listener each kept are gone.
+ *  Measured 3,214,496.
+ *
+ *  Raised 2026-10-18, to 3,217,100, from an unstable at 3,214,496 (1,004 under), for the
+ *  seven held back after 0.16.0, landed together. Three weigh on the first paint: #317,
+ *  the question Ctrl+N asks in a terminal draws its box to tick with TickBox.svelte, one
+ *  box shared with quitting's (198 bytes); #359, closing a tab with unsaved words asks to
+ *  save, don't save or cancel (workspace/closing-unsaved.ts, read by the workspace, 528);
+ *  #371, a note's task chips say a start date only while it is to come, and a date typed
+ *  or picked there is written as one (link-index.svelte.ts, quick-add/task-pick.ts, 907).
+ *  #372's Full permissions, #333's browser memory, #360's quick question inset and #376's
+ *  spaces in app data add nothing to it. Measured 3,216,129.
+ *
+ *  Raised 2026-10-18, to 3,222,400, from an unstable at 3,216,426 (674 under), for #399:
+ *  Ctrl+Z takes back what was done in the sidebar wherever the keyboard went. Who the
+ *  key is for is decided on the way down, before the note the app handed the keyboard
+ *  to (`sidebarKey` and `used` in workspace/undo.svelte.ts, read by App.svelte and the
+ *  sidebar's `data-sidebar`); a gesture of several is one step (`batch` and `many`),
+ *  a new file and a folder deleted are steps too (`bin` in workspace.svelte.ts), and
+ *  undos and redos take turns. What a step means going back and forth is still fetched
+ *  with the first undo (undoing.ts, redoing.ts). Its comments are cut to a line each.
+ *  Measured 3,221,381.
+ *
+ *  Raised 2026-10-18, to 3,223,700, from an unstable at 3,221,698 (702 under), for #402:
+ *  a row's twist is pressed on the row's whole height and a step either side of it,
+ *  a strip drawn nowhere in the file list's own stylesheet (Tree.svelte, which the
+ *  first paint draws), and a press there only turns the row, double or middle
+ *  (`onTwist` in tree-keys.ts). The tag tree's is off the first paint. Measured
+ *  3,222,679.
+ *
+ *  Raised 2026-10-18, to 3,225,100, for #404 and #403 landing together: a phone's
+ *  scratchpad puts the panes out of reach and points the format bar at its own editor
+ *  (App.svelte, scratchpad/is.svelte.ts), and a touch screen offers no Ask panel
+ *  (`offers` in workspace.svelte.ts, asked by the panel paths and focus.ts). Measured
+ *  3,224,067.
+ *
+ *  Raised 2026-10-18, to 3,228,200, for #409 on top of #345: a tab's web data moves
+ *  once, the moves queued per page and the page counted as on its way between the old
+ *  page closing and the new one opening (`rehousing` and `moved` in pages.svelte.ts),
+ *  and a file in the Essentials kept out of the file list (`unkept` in
+ *  workspace.svelte.ts). Measured 3,227,260.
+ *
+ *  Raised 2026-10-18, to 3,229,600, for #414: a note's cover is handed to the editor
+ *  inside a block that holds the margin under it, and that block has the editor measure
+ *  again when its height changes by itself (`toDOM` in the editor's
+ *  live-preview/cover.ts), so a click under a cover lands on the line it was made on.
+ *  Measured 3,228,558.
+ *
+ *  Raised 2026-10-18, to 3,233,100, for #412: a tile dragged back onto the file list
+ *  and a file dragged into the Essentials, each one undo step (`unkeepInto` and the
+ *  `keep` kind of undo), with the list's rows slid into place (`arrive` in
+ *  tree-lift.ts). Measured 3,232,059.
+ *
+ *  Raised 2026-10-18, to 3,235,600, and by one module, for #352: which spaces are put
+ *  away has to be known to the first paint's switcher (`shownSpaces`, from
+ *  workspace/archived-spaces.svelte.ts); archiving and the account's side of it
+ *  (space-archive.ts) are behind the press. Measured 3,234,549 in 381 modules.
+ *
+ *  Raised 2026-10-18, to 3,237,200, for #411: the press that closed a popup has its
+ *  click spent when it lands on what opened it, so a tap on the space switcher's button
+ *  closes the list rather than opening it again (`clicked` in overlays.ts, asked by
+ *  App.svelte). Measured 3,236,191.
+ *
+ *  Raised 2026-10-18, to 3,238,500, for #384: a finger's press on the title bar, the
+ *  format bar, a suggestion or quick add is let through (`keepFocus` in focus.ts), or
+ *  WebKit sends no click and an iPhone's tap does nothing. Measured 3,237,468.
+ *
+ *  Raised 2026-10-19, to 3,239,700, for #364: a picture pasted onto a canvas by somebody
+ *  signed in is named by the account's whole address (`accountAddress` in assets.ts,
+ *  which the first paint carries for the editor's paste), where it was read as a path in
+ *  the space and drawn as "Nothing here". Measured 3,238,704.
+ *
+ *  Raised 2026-10-19, to 3,240,800, for #381: a web tab keeps where the keyboard was as
+ *  it is left - its address field, by what the last press landed on, or its page - and
+ *  gives it back to that and nothing else as it comes back (`keyboard` and `seen` on a
+ *  page in pages.svelte.ts, `pressedOn` in AddressField.svelte). Measured 3,239,774.
+ *
+ *  Raised 2026-10-19, to 3,242,100, for #254: Developer mode has to be known to the
+ *  first paint's new-tab kinds (`developer` and `coder` in modes.svelte.ts, read by
+ *  `kindsHere`), and the window has to know when to fetch the first run's optional
+ *  questions (`setup` in settings.svelte.ts); the card itself is behind a door
+ *  (Personalize.svelte). Measured 3,241,040. */
+const BUDGET = 3_242_100
+const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.
@@ -957,6 +1132,10 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/recorder/container.ts', 'whether this device can record at all'],
     ['/lib/first-screen/keep.svelte.ts', "what keeps a note's first screen"],
     ['/lib/search/warm.svelte.ts', "the search's hold on the space"],
+    // And the renderer itself, which no window needs to draw its first frame: what the
+    // launch read off it is in breaks.ts and engines.ts, and the copy, the hover and
+    // the reading view fetch it (copy.ts and wikilink/preview.ts in @nib/editor).
+    ['/markdown/src/index.ts', 'the renderer'],
   ])('nor %s (%s)', (tail) => {
     expect(holds(tail), tail).toBe(false)
   })
@@ -969,7 +1148,7 @@ describe('what the app evaluates before it draws anything', () => {
     ['/lib/Editor.svelte', 'the editor'],
     ['/lib/Tree.svelte', 'the file list'],
     ['/editor/src/editor.ts', "the editor's own state"],
-    ['/markdown/src/index.ts', 'the renderer'],
+    ['/markdown/src/breaks.ts', 'the line-break switch the renderer reads'],
     ['/markdown/src/engines.ts', 'the holder the two heavy libraries arrive in'],
     // The doors of the four above, which are the other half of each claim: a boundary
     // nothing reaches is a subsystem somebody deleted rather than one somebody moved.
@@ -1140,6 +1319,9 @@ describe('what reading a note fetches', () => {
   const READING = fileURLToPath(new URL('../src/lib/reading/render.ts', import.meta.url))
   const SLIDES = fileURLToPath(new URL('../src/lib/slides/render.ts', import.meta.url))
   const EXPORTER = fileURLToPath(new URL('../src/lib/export.ts', import.meta.url))
+  const RENDERER = fileURLToPath(
+    new URL('../../../packages/markdown/src/index.ts', import.meta.url),
+  )
 
   /** The module a surface waits for before it renders, named by its own source. */
   function waitedFor(surface: string): string {
@@ -1160,6 +1342,10 @@ describe('what reading a note fetches', () => {
    *  is on screen before either surface is asked for, so the bundler has it in a chunk
    *  the page already has. What a reader waits for is the part that is new. */
   const already = new Set(graph.files)
+  // And the renderer, which every surface that draws a note fetches first and the
+  // launch's last turn has already brought (the reading view's door): the exporter is
+  // what this is about, and the renderer was in the first paint when it was written.
+  for (const one of eagerGraph(RENDERER).files) already.add(one)
 
   function newBytes(files: readonly string[]): number {
     return files

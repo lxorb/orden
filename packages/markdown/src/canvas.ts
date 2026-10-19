@@ -1,7 +1,7 @@
 /** A canvas file, read and written.
  *
  *  Two halves. The first is JSON Canvas 1.0, which is somebody else's and is
- *  public: jsoncanvas.org/spec/1.0/. A canvas Nib writes opens in Obsidian and
+ *  public: jsoncanvas.org/spec/1.0/. A canvas Orden writes opens in Obsidian and
  *  comes back unchanged, which is the whole reason for using it, so every field
  *  in that half is a field the spec defines and nothing written there is an
  *  invention of ours.
@@ -13,7 +13,7 @@
  *  `nodes` asks every other reader of the format to guess. Under this key the
  *  file is the spec exactly, plus something no other app has to look at.
  *
- *  Here rather than in the app because three parts of Nib read it: the surface
+ *  Here rather than in the app because three parts of Orden read it: the surface
  *  somebody draws on, the sync client that has to put two copies of a file back
  *  together, and the worker that notices the two copies in the first place. One
  *  reading of the format, so the three cannot drift.
@@ -74,6 +74,10 @@ interface TextNode extends NodeBase {
   type: 'text'
   /** Plain text, with markdown syntax. */
   text: string
+  /** Words on the plane with no card round them: the Text tool's, as Miro's and a PDF
+   *  viewer's text tool put them (#421). A card to Obsidian, which reads `nodes` only;
+   *  which cards are bare is listed under `nib.words`. */
+  bare?: true
 }
 
 interface FileNode extends NodeBase {
@@ -360,7 +364,16 @@ function readNode(value: unknown): CanvasNode | null {
 
   switch (value.type) {
     case 'text':
-      return isString(value.text) ? { ...base, type: 'text', text: value.text } : null
+      // `bare` is never in a file's own record - the file lists them under `nib` - but
+      // a room keeps the node's fields as they are, and reads them back through here.
+      return isString(value.text)
+        ? {
+            ...base,
+            type: 'text',
+            text: value.text,
+            ...(value.bare === true ? { bare: true } : {}),
+          }
+        : null
     case 'file':
       if (!isString(value.file) || !value.file) return null
       return {
@@ -696,6 +709,14 @@ export function readCanvas(text: string): Canvas {
 
   const nib = isRecord(parsed.nib) ? parsed.nib : {}
 
+  // The cards that are words with no card round them; see `bare`.
+  if (Array.isArray(nib.words)) {
+    const bare = new Set(nib.words.filter(isString))
+    for (const [at, node] of nodes.entries()) {
+      if (node.type === 'text' && bare.has(node.id)) nodes[at] = { ...node, bare: true }
+    }
+  }
+
   if (Array.isArray(nib.shapes)) {
     for (const entry of nib.shapes) {
       const shape = readShape(entry)
@@ -853,7 +874,7 @@ function writtenEdge(edge: CanvasEdge): Record<string, unknown> {
 }
 
 /** How the parts of a canvas that are not the spec's are written. Bumped only
- *  when an older Nib could no longer read a newer file, which so far it can. */
+ *  when an older Orden could no longer read a newer file, which so far it can. */
 const NIB_VERSION = 1
 
 /** Tabs to a depth: the indentation `JSON.stringify(value, null, '\t')` gives a
@@ -981,6 +1002,9 @@ export function canvasRuns(canvas: Canvas): string[][] {
   // canvas of nothing but cards stacks in the order `nodes` already gives, and
   // a second list saying so again is noise in the file.
   const order = shapes.length ? canvas.nodes.map((node) => node.id) : []
+  const words = canvas.nodes
+    .filter((node) => node.type === 'text' && node.bare)
+    .map((node) => node.id)
   const at = Object.keys(canvas.at).length ? timeLines(canvas.at) : null
   const gone = Object.keys(canvas.gone).length ? timeLines(canvas.gone) : null
   // First in `nib`, because it is the one key in there a person would ever open the
@@ -990,7 +1014,7 @@ export function canvasRuns(canvas: Canvas): string[][] {
     canvas.icon && canvas.iconColor ? `,\n\t\t"iconColor": ${JSON.stringify(canvas.iconColor)}` : ''
   const nib =
     icon !== '' ||
-    [pages, canvas.ink, shapes, order].some((list) => list.length > 0) ||
+    [pages, canvas.ink, shapes, order, words].some((list) => list.length > 0) ||
     at !== null ||
     gone !== null
 
@@ -1017,6 +1041,7 @@ export function canvasRuns(canvas: Canvas): string[][] {
     [
       closes(2, shapes.length) +
         (order.length ? `,\n\t\t"order": ${printed(order, 2)}` : '') +
+        (words.length ? `,\n\t\t"words": ${printed(words, 2)}` : '') +
         (at ? ',\n\t\t"at": ' : ''),
     ],
     at ?? [],
@@ -1033,7 +1058,7 @@ export function canvasRuns(canvas: Canvas): string[][] {
  *  above; canvas.test.ts holds the two to each other.
  *
  *  Nothing of ours is written into a canvas that has none: a plane of plain
- *  cards is exactly the file the spec describes, with no key of Nib's in it. */
+ *  cards is exactly the file the spec describes, with no key of Orden's in it. */
 export function writeCanvas(canvas: Canvas): string {
   return canvasRuns(canvas)
     .map((run) => run.join(''))
@@ -1054,7 +1079,7 @@ export function blankCanvas(): string {
  *  question for a note; this is its twin for the format that has no front matter.
  *
  *  The file is read and written back, because `nib.icon` sits in JSON rather than
- *  on a line of its own. That costs nothing for a canvas Nib wrote - writing one
+ *  on a line of its own. That costs nothing for a canvas Orden wrote - writing one
  *  is exact, so the only characters that differ are the key - and for a canvas
  *  written by hand it comes out as the file reformatted, which is what any change
  *  to it would have been anyway.
@@ -1085,7 +1110,7 @@ function isCanvasJson(text: string): boolean {
 }
 
 /** How long an id is. Sixteen hex characters is what Obsidian writes, so a
- *  canvas Nib made looks native there rather than obviously foreign. */
+ *  canvas Orden made looks native there rather than obviously foreign. */
 const ID_LENGTH = 16
 
 /** A fresh id for anything on a canvas. Random rather than counted, because two

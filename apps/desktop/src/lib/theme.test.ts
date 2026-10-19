@@ -212,6 +212,11 @@ function installed(id: string, name: string, css: string, version = '1.0.0') {
 beforeEach(() => {
   vi.unstubAllGlobals()
   stubs()
+  // An install that has been opened before, on the built-in, and already moved to the
+  // first look once, which is what every test here is about but the first look's own;
+  // see 'a first launch' and 'an install on the built-in'.
+  kept.setItem('nib:theme', 'default')
+  kept.setItem('nib:theme-moved', 'yes')
 
   folder.files.clear()
   folder.listing = true
@@ -240,8 +245,8 @@ describe('what the dropdown offers', () => {
       'file:rose',
       'file:warm-paper',
     ])
-    expect(theme.all[0]?.name).toBe('Default')
-    expect(theme.all[1]?.name).toBe('High contrast')
+    expect(theme.all[0]?.name).toBe('Classic')
+    expect(theme.all[1]?.name).toBe('Contrast')
     expect(theme.all[2]?.name).toBe('Glass')
   })
 
@@ -253,7 +258,7 @@ describe('what the dropdown offers', () => {
     expect(theme.all).toHaveLength(4)
   })
 
-  /** High contrast is a mode in every sense that matters and a theme in the way it is
+  /** Contrast is a mode in every sense that matters and a theme in the way it is
    *  built, which is what keeps it out of every other theme's way. It carries its own
    *  stylesheet, so a first launch with no network can still be answered with it. */
   test('the built-in contrast theme brings its own palette rather than a file', () => {
@@ -439,10 +444,11 @@ describe('what an older device wrote down', () => {
     expect(theme.scheme).toBe('system')
   })
 
-  test('nothing written down at all means the same', () => {
+  test('nothing written down at all is a first launch, and not the built-in', () => {
+    kept.removeItem('nib:theme')
     theme.init()
 
-    expect(theme.id).toBe('default')
+    expect(theme.id).toBe('glass')
     expect(theme.scheme).toBe('system')
   })
 
@@ -568,6 +574,22 @@ describe('a look shown and not kept', () => {
     // Following the system again, which is asking for the dark.
     expect(dataset.theme).toBe('dark')
   })
+
+  // The palette tries on the row under its arrows each time its rows are worked out,
+  // and a theme's rows are worked out from what it wears: a preview that wore the look
+  // again looped until Svelte gave up on the page.
+  test('the look already on is not put on again', async () => {
+    installed('rose', 'Rose', PAIR)
+    await theme.reload()
+
+    theme.preview('file:rose', 'dark', 'teal')
+    await settled(() => injected().includes('--bg: #000'))
+    style!.textContent = 'worn once'
+    theme.preview('file:rose', 'dark', 'teal')
+    await Promise.resolve()
+
+    expect(injected()).toBe('worn once')
+  })
 })
 
 describe('an installed theme across a restart', () => {
@@ -581,8 +603,8 @@ describe('an installed theme across a restart', () => {
     await theme.reload()
 
     expect(theme.all.map((one) => one.name)).toEqual([
-      'Default',
-      'High contrast',
+      'Classic',
+      'Contrast',
       'Glass',
       'Wallpaper',
       'Rose',
@@ -590,6 +612,51 @@ describe('an installed theme across a restart', () => {
     expect(theme.id).toBe('file:rose')
     expect(theme.current).toBe('light')
     expect(theme.installed.has('rose')).toBe(true)
+  })
+})
+
+/** The store had a copy of the contrast theme under the same id, and two Contrasts in
+ *  the dropdown were one too many (Emil, 2026-10-13). A copy still in the folder is the
+ *  built-in: not listed, not offered an update, and nobody who chose it loses it. */
+describe('a store copy of the contrast theme', () => {
+  test('is not a second card', async () => {
+    installed('contrast', 'Contrast', PAIR, '2.0.1')
+    installed('rose', 'Rose', PAIR)
+    await theme.reload()
+
+    expect(theme.all.map((one) => one.name)).toEqual([
+      'Classic',
+      'Contrast',
+      'Glass',
+      'Wallpaper',
+      'Rose',
+    ])
+    expect(theme.installed.has('contrast')).toBe(false)
+  })
+
+  test('and a reader who had it chosen is on the built-in after a restart', async () => {
+    installed('contrast', 'Contrast', PAIR, '2.0.1')
+    kept.setItem('nib:theme', 'file:contrast')
+    kept.setItem('nib:theme-scheme', 'light')
+
+    theme.init()
+    await theme.reload()
+
+    expect(theme.id).toBe('contrast')
+    expect(kept.getItem('nib:theme')).toBe('contrast')
+    expect(theme.current).toBe('light')
+    expect(injected()).toContain('--text: #000000')
+  })
+
+  test('while a hand-made contrast.css is a theme of its own', async () => {
+    folder.files.set('contrast', PAIR)
+    kept.setItem('nib:theme', 'file:contrast')
+
+    theme.init()
+    await theme.reload()
+
+    expect(theme.id).toBe('file:contrast')
+    expect(theme.all.map((one) => one.id)).toContain('file:contrast')
   })
 })
 
@@ -674,6 +741,204 @@ const settled = async (done?: () => boolean) => {
     if (!done || done()) return
   }
 }
+
+/** Emil, 2026-10-12: glass, following the system, is what nib opens in until somebody
+ *  chooses otherwise, and nobody who has chosen anything is moved off it. In green since
+ *  2026-10-13, and in yellow the day before. */
+describe('a first launch', () => {
+  beforeEach(() => {
+    kept.removeItem('nib:theme')
+  })
+
+  test('is glass, in green, following the system', async () => {
+    theme.init()
+    await settled(() => injected() === glassCss)
+
+    expect(theme.id).toBe('glass')
+    expect(theme.scheme).toBe('system')
+    expect(theme.accent).toBe('green')
+    expect(injected()).toBe(glassCss)
+    expect(painted['--accent']).toBe('#3fcf8e')
+    // On the material, where there is one.
+    expect(host.asked.at(-1)?.on).toBe(true)
+  })
+
+  test('writes the accent down and not the theme, which nobody has chosen yet', () => {
+    theme.init()
+
+    expect(kept.getItem('nib:theme')).toBe(null)
+    expect(kept.getItem('nib:theme-settings')).toBe(JSON.stringify({ '*': { accent: 'green' } }))
+    expect(kept.getItem('nib:accent-given')).toBe('green')
+  })
+
+  test('and the next launch is the same look', () => {
+    theme.init()
+    theme.init()
+
+    expect(theme.id).toBe('glass')
+    expect(theme.accent).toBe('green')
+  })
+
+  test('keeps the green on any theme chosen after it, since the accent is the reader’s', () => {
+    theme.init()
+    theme.select('default')
+    theme.init()
+
+    expect(theme.id).toBe('default')
+    expect(theme.accent).toBe('green')
+  })
+
+  test('and an accent chosen on it outlives the next launch', () => {
+    theme.init()
+    theme.setAccent('teal')
+    theme.init()
+
+    expect(theme.id).toBe('glass')
+    expect(theme.accent).toBe('teal')
+    expect(kept.getItem('nib:accent-given')).toBe('')
+  })
+
+  test('nor over an accent an older device kept under a key of its own', () => {
+    kept.setItem('nib:accent', 'green')
+    theme.init()
+
+    expect(theme.accent).toBe('green')
+  })
+
+  test('still offers the contrast theme to a system that asks for it, then or later', () => {
+    theme.init()
+    expect(theme.offerContrast).toBe(false)
+
+    media.contrast = true
+    theme.init()
+
+    expect(theme.offerContrast).toBe(true)
+    expect(theme.id).toBe('contrast')
+  })
+})
+
+/** Emil, 2026-10-13: an install an older build left on the built-in - which it wrote
+ *  down for everybody, chosen or not - moves to the first look once, keeping what the
+ *  reader did choose, and is never moved again. */
+describe('an install on the built-in', () => {
+  beforeEach(() => {
+    kept.removeItem('nib:theme-moved')
+  })
+
+  test('moves to glass once, in green where no accent was ever chosen', () => {
+    theme.init()
+
+    expect(theme.id).toBe('glass')
+    expect(theme.accent).toBe('green')
+    expect(kept.getItem('nib:theme')).toBe(null)
+    expect(kept.getItem('nib:theme-moved')).toBe('yes')
+  })
+
+  test('keeps the accent and the scheme it chose', () => {
+    kept.setItem('nib:theme-settings', JSON.stringify({ '*': { accent: 'teal' } }))
+    kept.setItem('nib:theme-scheme', 'light')
+    theme.init()
+
+    expect(theme.id).toBe('glass')
+    expect(theme.accent).toBe('teal')
+    expect(theme.scheme).toBe('light')
+  })
+
+  test('the old spellings of the built-in move too', () => {
+    kept.setItem('nib:theme', 'dark')
+    theme.init()
+
+    expect(theme.id).toBe('glass')
+    expect(theme.scheme).toBe('dark')
+  })
+
+  test('and one who picks the built-in again afterwards keeps it', () => {
+    theme.init()
+    theme.select('default')
+    theme.init()
+    theme.init()
+
+    expect(theme.id).toBe('default')
+  })
+
+  test('a new install that later picks the built-in keeps it too', () => {
+    kept.removeItem('nib:theme')
+    theme.init()
+    theme.select('default')
+    theme.init()
+
+    expect(theme.id).toBe('default')
+  })
+
+  test('any other theme stays where it is', () => {
+    kept.setItem('nib:theme', 'contrast')
+    theme.init()
+
+    expect(theme.id).toBe('contrast')
+    expect(theme.accent).toBe('violet')
+  })
+})
+
+/** Emil, 2026-10-13: the first look's accent is green, and an install yellow only
+ *  because the first look gave it that turns green once; a yellow somebody picked stays. */
+describe('an accent the first look gave', () => {
+  beforeEach(() => {
+    kept.removeItem('nib:theme')
+  })
+
+  const given = (accent: string) =>
+    kept.setItem('nib:theme-settings', JSON.stringify({ '*': { accent } }))
+
+  test('the day’s yellow, on an install still on the first look, turns green once', () => {
+    given('yellow')
+    theme.init()
+
+    expect(theme.id).toBe('glass')
+    expect(theme.accent).toBe('green')
+    expect(kept.getItem('nib:accent-given')).toBe('green')
+
+    theme.setAccent('yellow')
+    theme.init()
+
+    expect(theme.accent).toBe('yellow')
+  })
+
+  test('but not once a theme was chosen, which is somebody in Appearance', () => {
+    kept.setItem('nib:theme', 'glass')
+    given('yellow')
+    theme.init()
+
+    expect(theme.accent).toBe('yellow')
+    expect(kept.getItem('nib:accent-given')).toBe('')
+  })
+
+  test('nor where an older device kept its yellow under the old key', () => {
+    kept.setItem('nib:accent', 'yellow')
+    theme.init()
+
+    expect(theme.accent).toBe('yellow')
+  })
+
+  test('nor any other accent an install from before the marker holds', () => {
+    given('teal')
+    theme.init()
+
+    expect(theme.accent).toBe('teal')
+  })
+
+  test('follows whatever the first look gives now, on any theme, until one is picked', () => {
+    kept.setItem('nib:theme', 'wallpaper')
+    kept.setItem('nib:accent-given', 'teal')
+    given('teal')
+    theme.init()
+
+    expect(theme.accent).toBe('green')
+
+    theme.select('default')
+    theme.setAccent('green')
+    expect(kept.getItem('nib:accent-given')).toBe('')
+  })
+})
 
 /** A theme that declares one dial of its own, and the answer the cascade would
  *  give for it. Both halves, because a declaration is a name in the file and a
@@ -909,7 +1174,7 @@ describe('the glass theme', () => {
     await settled(() => theme.settings.some((one) => one.id === 'opacity'))
 
     const own = theme.settings.filter((one) => one.own === true).map((one) => one.id)
-    expect(own).toEqual(['material', 'opacity', 'follow', 'tint', 'colour', 'tab', 'content'])
+    expect(own).toEqual(['material', 'opacity', 'follow', 'tint', 'pair', 'tab', 'content'])
     const opacity = theme.settings.find((one) => one.id === 'opacity')
     expect(opacity?.kind === 'range' && typeof opacity.least).toBe('function')
   })

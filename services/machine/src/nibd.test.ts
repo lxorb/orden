@@ -29,6 +29,8 @@ function machine(
     cgroups: null,
     activityEvery: 60_000,
     homeEvery: 60_000,
+    // No test here starts a shell.
+    holder: '',
     call,
     ...(restart ? { restart } : {}),
   })
@@ -102,7 +104,10 @@ test('a pasted picture is answered with where it was written, once its last part
       t: 'image',
       session: 's_1',
       id,
-      path: expect.stringMatching(/\.cache\/nib\/images\/0123456789abcdef0123\.png$/) as string,
+      // Either separator: the machine's is `/`, a developer's computer may say `\`.
+      path: expect.stringMatching(
+        /\.cache[\\/]nib[\\/]images[\\/]0123456789abcdef0123\.png$/,
+      ) as string,
     },
   ])
 })
@@ -112,4 +117,11 @@ test('every report says the disk the home is on', () => {
   const disk = nibd.activity().disk
   expect(disk?.total).toBeGreaterThan(0)
   expect(disk?.used).toBeLessThanOrEqual(disk?.total ?? 0)
+})
+
+test('asked for its sessions, answers every one it has: none yet', async () => {
+  const { nibd, said, attach } = machine()
+  attach()
+  await nibd.receive({ t: 'list' })
+  expect(said).toEqual([{ t: 'sessions', sessions: [] }])
 })

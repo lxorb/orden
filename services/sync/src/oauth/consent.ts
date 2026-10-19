@@ -23,7 +23,7 @@ function escape(text: string): string {
   return text.replace(/[&<>"']/g, (character) => ESCAPES[character] ?? character)
 }
 
-/** The app's own palette, both ways round, so the page reads as Nib's. */
+/** The app's own palette, both ways round, so the page reads as Orden's. */
 const STYLE = `
 :root{--bg:#fbfcfd;--fg:#1a1d23;--strong:#0e1013;--muted:#6b7482;--line:#e1e6ed;--line-strong:#ccd4de;--surface:#f3f5f8;--accent:#5b4be0;--accent-hover:#4e3ed6;--danger:#d92b34}
 @media(prefers-color-scheme:dark){:root{--bg:#0e1013;--fg:#c9cfd8;--strong:#eef1f5;--muted:#8a93a2;--line:#232830;--line-strong:#2f3641;--surface:#14171c;--accent:#7c6bf5;--accent-hover:#8d7ef7;--danger:#f2555a}}
@@ -56,10 +56,10 @@ export function page(env: Env, body: string, status: 200 | 400 | 409 = 200): Res
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>nibeditor</title>
+<title>Orden</title>
 <style>${STYLE}</style>
 <main>
-<div class="brand"><a href="${escape(env.APP_ORIGIN)}" style="color:inherit;text-decoration:none">nibeditor</a></div>
+<div class="brand"><a href="${escape(env.APP_ORIGIN)}" style="color:inherit;text-decoration:none">Orden</a></div>
 ${body}
 </main>
 </html>`

@@ -10,20 +10,125 @@ export const am: Dictionary = {
   'Do you write code?': 'ኮድ ይጽፋሉ?',
   Yes: 'አዎ',
   No: 'አይ',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'ከሌሎች መተግበሪያዎች፦ {key}',
+  'From other apps: set in your system settings': 'ከሌሎች መተግበሪያዎች፦ በስርዓት ቅንብሮች ውስጥ ያዘጋጁ',
+  'From other apps: bind {command} in your system settings':
+    'ከሌሎች መተግበሪያዎች፦ {command}ን በስርዓት ቅንብሮች ውስጥ ይመድቡ',
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'አስፈላጊዎች',
+  'Add to Essentials': 'ወደ አስፈላጊዎች አክል',
+  'Remove from Essentials': 'ከአስፈላጊዎች አስወግድ',
+  'Add block to Essentials': 'ብሎኩን ወደ አስፈላጊዎች አክል',
+  'Add blocks to Essentials': 'ብሎኮቹን ወደ አስፈላጊዎች አክል',
+  'Add view to Essentials': 'እይታውን ወደ አስፈላጊዎች አክል',
+  'Open tabs and Essentials': 'ትሮችን እና አስፈላጊዎችን መክፈት',
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor አሁን Orden ነው',
+  'Notes from nibeditor.com': 'ከnibeditor.com የመጡ ማስታወሻዎች',
+  'Nothing there': 'እዚያ ምንም የለም',
+  // AI: the three permission modes
+  'Full permissions': 'ሙሉ ፈቃዶች',
+  'Auto mode': 'ራስ-ሰር ሁነታ',
+  'Full permissions: nothing is asked first': 'ሙሉ ፈቃዶች፦ ምንም አስቀድሞ አይጠየቅም',
+  // Import: Zen's tabs
+  'Import from Zen': 'ከZen አምጣ',
+  'Containers stay in Zen': 'ኮንቴይነሮች በZen ውስጥ ይቀራሉ',
+  'Zen’s tabs could not be read.': 'የZen ትሮች ሊነበቡ አልቻሉም።',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'ኮንቴይነሮች በFirefox ውስጥ ይቀራሉ',
+  'Nothing could be read out of {browser}.': 'ከ{browser} ምንም ሊነበብ አልቻለም።',
+  'Saved groups': 'የተቀመጡ ቡድኖች',
+  'Tab group': 'የትር ቡድን',
+  'Bookmarks toolbar': 'የዕልባቶች መሣሪያ አሞሌ',
+  'Bookmarks menu': 'የዕልባቶች ምናሌ',
+  'Other bookmarks': 'ሌሎች ዕልባቶች',
+  'Mobile bookmarks': 'የሞባይል ዕልባቶች',
+  'Bookmarks bar': 'የዕልባቶች አሞሌ',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} የተከፈቱ ትሮቹን ቆልፎ ያስቀምጣል፣ ስለዚህ ዕልባቶቹ ብቻ መጥተዋል።',
+  '{count} pages not on the web stay behind': {
+    one: 'በድር ላይ ያልሆነ {count} ገጽ ቀርቷል',
+    other: 'በድር ላይ ያልሆኑ {count} ገጾች ቀርተዋል',
+  },
+  'Reading List': 'የንባብ ዝርዝር',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS የSafari ትሮችን እና ዕልባቶችን ከሙሉ የዲስክ መዳረሻ ጀርባ ያስቀምጣል። እዚያ Ordenን ያብሩ፣ ከዚያ እንደገና ይጠይቁ።',
+  // Settings: note types
+  'Page note': 'የገጾች ማስታወሻ',
+  'Web note': 'የድረ ገጽ ማስታወሻ',
+  'Private tab': 'የግል ትር',
+  'Note types': 'የማስታወሻ ዓይነቶች',
+  // Tasks: Upcoming's weeks
+  'Previous week': 'ያለፈው ሳምንት',
+  // Tasks: projects placed in the panel, and their folder
+  'Add project above': 'ከላይ ፕሮጀክት አክል',
+  'Add project below': 'ከታች ፕሮጀክት አክል',
+  'Projects folder': 'የፕሮጀክቶች አቃፊ',
+  // Tasks: a repeating task skipped or done for good
+  Skip: 'ዝለል',
+  'Complete forever': 'ለዘለቄታው አጠናቅ',
+  // Tasks: comments
+  Comments: 'አስተያየቶች',
+  // Tasks: filters
+  Filters: 'ማጣሪያዎች',
+  'Add filter': 'ማጣሪያ አክል',
+  'Edit filter': 'ማጣሪያ አርትዕ',
+  // Tasks: a project's sections
+  'Add section': 'ክፍል አክል',
+  '{name} (copy)': '{name} (ቅጂ)',
+  'Its tasks are deleted with it.': 'ተግባራቱ አብረው ይጠፋሉ።',
+  // Tasks: keys, selection and the undo toast
+  Completed: 'ተጠናቋል',
+  'Remove date': 'ቀኑን አስወግድ',
+  'Next task': 'ቀጣይ ተግባር',
+  'Previous task': 'ቀዳሚ ተግባር',
+  'Add task at the top': 'ከላይ ተግባር አክል',
+  '{count} selected': '{count} ተመርጠዋል',
+  // Tasks: the Display menu
+  Display: 'አቀራረብ',
+  'Completed tasks': 'የተጠናቀቁ ተግባራት',
+  // Tasks: several lines pasted into quick add
+  'One task': 'አንድ ተግባር',
+  'One per line': 'በየመስመሩ አንድ',
+  // Tasks: the projects in the panel
+  Favorites: 'ተወዳጆች',
+  'Add project': 'ፕሮጀክት አክል',
+  'Add sub-project': 'ንዑስ ፕሮጀክት አክል',
+  // Tasks: the task view
+  'Sub-tasks': 'ንዑስ ተግባራት',
+  'Add sub-task': 'ንዑስ ተግባር አክል',
+  'New label': 'አዲስ መለያ',
+  'No deadline': 'የመጨረሻ ቀን የለም',
+  // Tasks: the row's menu and the scheduler
+  Reschedule: 'እንደገና መድብ',
+  'Later this week': 'በዚህ ሳምንት በኋላ',
+  'This weekend': 'በዚህ ሳምንት መጨረሻ',
+  'Next weekend': 'በሚቀጥለው ሳምንት መጨረሻ',
+  'Every week on {day}': 'በየሳምንቱ {day}',
+  'Every month on day {day}': 'በየወሩ ቀን {day}',
+  'Every year on {date}': 'በየዓመቱ {date}',
+  'Type a date': 'ቀን ይጻፉ',
+  'Previous month': 'ያለፈው ወር',
+  'Next month': 'የሚቀጥለው ወር',
+  'No time': 'ሰዓት የለም',
+  'No repeat': 'ድግግሞሽ የለም',
+  Complete: 'አጠናቅቅ',
+  Reopen: 'እንደገና ክፈት',
+  Schedule: 'መድብ',
+  'Open in note': 'በማስታወሻው ውስጥ ክፈት',
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'ሌላ መተግበሪያ',
-  'Start fresh': 'አዲስ ጀምር',
   'Import from Obsidian': 'ከObsidian አምጣ',
   'Import from Notion': 'ከNotion አምጣ',
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'ጠቃሚ ምክሮች',
   'Silent mode': 'ጸጥታ ሁነታ',
-  'Sign in to keep your notes safe and on every device.':
-    'ማስታወሻዎችዎ ደህና እንዲሆኑ እና በሁሉም መሣሪያ ላይ እንዲገኙ ይግቡ።',
   'See how your notes connect.': 'ማስታወሻዎችዎ እንዴት እንደሚገናኙ ይመልከቱ።',
   'Press {key} to find anything, notes and commands alike.': 'ማስታወሻዎችንም ትዕዛዞችንም ለማግኘት {key} ይጫኑ።',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'ማርክዳውን በመጻፍ ጊዜ አሳይ',
+  'Open notes in source mode': 'Open notes in source mode',
   Pointer: 'ጠቋሚ',
   'Pointing hand on buttons': 'በአዝራሮች ላይ የሚጠቁም እጅ',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
@@ -39,11 +144,15 @@ export const am: Dictionary = {
   '{count} h': '{count} ሰ',
   Inbox: 'የገቢ ሳጥን',
   Date: 'ቀን',
+  'Start date': 'የመጀመሪያ ቀን',
   Priority: 'ቅድሚያ',
   Reminder: 'ማስታወሻ',
   Duration: 'የጊዜ ርዝመት',
   'Smart dates': 'ብልህ ቀኖች',
   'From any app': 'ከማንኛውም መተግበሪያ',
+  'Rotate a canvas with two fingers': 'ሸራን በሁለት ጣቶች አዙር',
+  'Turn upright': 'ቀጥ አድርግ',
+  'Show tasks without a start date in Today': 'የመጀመሪያ ቀን የሌላቸውን ተግባሮች በዛሬ አሳይ',
   'Every day': 'በየቀኑ',
   'Every weekday': 'በየሥራ ቀኑ',
   'Every week': 'በየሳምንቱ',
@@ -60,6 +169,12 @@ export const am: Dictionary = {
   Unsaved: 'ያልተቀመጠ',
   'Save to': 'አስቀምጥ ወደ',
   'Reloaded with the web data of {space}': 'በ{space} የድር ውሂብ እንደገና ተጭኗል',
+  Separate: 'ለብቻ',
+  'Share this note’s web data again?': 'የዚህን ማስታወሻ የድር ውሂብ እንደገና ይጋሩ?',
+  'What its pages are signed in to on this computer is deleted.': 'ገጾቹ በዚህ ኮምፒውተር ላይ የገቡበት ይሰረዛል።',
+  'Share again': 'እንደገና አጋራ',
+  'This note keeps its own web data now': 'ይህ ማስታወሻ አሁን የራሱን የድር ውሂብ ይይዛል',
+  'Back on the shared web data': 'ወደ የጋራ የድር ውሂብ ተመልሷል',
   'Add a page': 'ገጽ ጨምር',
   'Add a page after this': 'ከዚህ በኋላ ገጽ ጨምር',
   'Delete this page': 'ይህን ገጽ አጥፋ',
@@ -94,7 +209,6 @@ export const am: Dictionary = {
   'New window': 'አዲስ መስኮት',
   New: 'አዲስ',
   'New space': 'አዲስ ቦታ',
-  '{name}: switch space': '{name}: ቦታ ቀይር',
   Untitled: 'ርዕስ የለውም',
   Space: 'ቦታ',
   'Name the space': 'ለቦታው ስም ስጥ',
@@ -139,8 +253,6 @@ export const am: Dictionary = {
   'Loading…': 'በመጫን ላይ…',
   'Create a space': 'ቦታ ፍጠር',
   'Import a folder': 'አቃፊ አምጣ',
-  'Sign in to sync': 'ለማመሳሰል ግባ',
-  'Create account': 'መለያ ፍጠር',
   'Delete space': 'ቦታ አጥፋ',
   'Delete {name}?': '{name} ይጥፋ?',
   'Every note in this space is deleted from your computer.':
@@ -158,6 +270,10 @@ export const am: Dictionary = {
   Unpin: 'ቸንካር አንሳ',
   Close: 'ዝጋ',
   'Close pinned tab?': 'የተቸነከረው ትር ይዘጋ?',
+  'Save changes to {name}?': 'በ{name} ያሉ ለውጦች ይቀመጡ?',
+  'Save changes to these tabs?': 'በእነዚህ ትሮች ያሉ ለውጦች ይቀመጡ?',
+  'Unsaved words go to Recently deleted.': 'ያልተቀመጡ ቃላት ወደ በቅርቡ የተሰረዙ ይሄዳሉ።',
+  'Don’t save': 'አታስቀምጥ',
   'Close others': 'ሌሎቹን ዝጋ',
   'Close tabs to the right': 'በቀኝ ያሉትን ትሮች ዝጋ',
   'Close tabs to the left': 'በግራ ያሉትን ትሮች ዝጋ',
@@ -194,9 +310,6 @@ export const am: Dictionary = {
   'Move this note': 'ይህን ማስታወሻ አንቀሳቅስ',
   'Move up': 'ወደ ላይ አንቀሳቅስ',
   'Move down': 'ወደ ታች አንቀሳቅስ',
-  Bookmark: 'ምልክት',
-  'Remove bookmark': 'ምልክት አስወግድ',
-  'Leave out of search': 'ከፍለጋ አግልል',
   'Search here again': 'እዚህ እንደገና ፈልግ',
   'Undo the last file change': 'የመጨረሻውን የፋይል ለውጥ መልስ',
   'Undo moving {name}': '{name} ማንቀሳቀስን መልስ',
@@ -246,7 +359,6 @@ export const am: Dictionary = {
   'Remove group': 'ቡድን አስወግድ',
   'Out of the group': 'ከቡድኑ አውጣ',
   Make: 'አድርግ',
-  'Bookmark this block': 'ይህን ብሎክ ምልክት አድርግ',
   Panels: 'ሰሌዳዎች',
   Outline: 'አስተዋይ',
   'Stay on this note': 'በዚህ ማስታወሻ ላይ ቆይ',
@@ -508,8 +620,8 @@ export const am: Dictionary = {
   'Sign in to ask a question.': 'ጥያቄ ለመጠየቅ ግባ።',
   'Asking OpenAI which models this key can use': 'ይህ ቁልፍ የትኞቹን ሞዴሎች መጠቀም እንደሚችል OpenAIን በመጠየቅ ላይ',
   'Could not reach OpenAI': 'OpenAI ላይ መድረስ አልተቻለም',
-  'That key cannot use any of the models nibeditor asks for.':
-    'ያ ቁልፍ nibeditor የሚጠይቃቸውን ሞዴሎች አንዱንም መጠቀም አይችልም።',
+  'That key cannot use any of the models Orden asks for.':
+    'ያ ቁልፍ Orden የሚጠይቃቸውን ሞዴሎች አንዱንም መጠቀም አይችልም።',
   'No reasoning': 'አመክንዮ የለም',
   Minimal: 'አነስተኛ',
   Low: 'ዝቅተኛ',
@@ -531,7 +643,7 @@ export const am: Dictionary = {
   Mode: 'ዘዴ',
   // The window's own edges; see appearance.rs
   Window: 'መስኮት',
-  'nibeditor’s own': 'የnibeditor ራሱ',
+  'Orden’s own': 'የOrden ራሱ',
   'The system’s': 'የሥርዓቱ',
   'Window frame': 'የመስኮት ክፈፍ',
   System: 'ሥርዓት',
@@ -594,6 +706,7 @@ export const am: Dictionary = {
   '{done} of {total}': 'ከ{total} {done}',
   'Sync failed': 'ማመሳሰል አልተሳካም',
   '{name} could not be written.': '{name} መጻፍ አልተቻለም።',
+  '{name} could not be read.': '{name} ማንበብ አልተቻለም።',
   'Text size': 'የጽሑፍ መጠን',
   'Line spacing': 'የመስመር ክፍተት',
   'Line width': 'የመስመር ስፋት',
@@ -653,8 +766,10 @@ export const am: Dictionary = {
   '{used} of {limit} used.': 'ከ{limit} {used} ተጠቅሟል።',
   'That image does not fit in your storage.': 'ያ ምስል በማከማቻህ ውስጥ አይገባም።',
   'out of space': 'ማከማቻ ሞልቷል',
-  'nibeditor {version} is ready to install.': 'nibeditor {version} ለመጫን ተዘጋጅቷል።',
+  'Orden {version} is ready to install.': 'Orden {version} ለመጫን ተዘጋጅቷል።',
+  'Orden {version} is available.': 'Orden {version} ይገኛል።',
   'Restart now': 'አሁን እንደገና አስነሳ',
+  'Move to Applications': 'ወደ መተግበሪያዎች ውሰድ',
   Later: 'ቆይቶ',
   More: 'ተጨማሪ',
   'Open notes': 'ማስታወሻዎችን ክፈት',
@@ -679,11 +794,9 @@ export const am: Dictionary = {
   Continue: 'ቀጥል',
   'Send a new code': 'አዲስ ኮድ ላክ',
   'Code sent to': 'ኮድ የተላከለት',
-  'You already have notes on this computer.': 'በዚህ ኮምፒውተር ላይ አስቀድሞ ማስታወሻዎች አሉህ።',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
-    'አስቀምጣቸው ከመዝገብህ ጋር ይጣመራሉ። አጥፋቸው መዝገብህ አስቀድሞ የያዘው ብቻ ይቀራል - ይህ መመለስ አይቻልም።',
-  'Keep them': 'አስቀምጣቸው',
-  'Erase them': 'አጥፋቸው',
+  'This device already has notes.': 'ይህ መሣሪያ አስቀድሞ ማስታወሻዎች አሉት።',
+  Merge: 'አዋህድ',
+  'Keep separate': 'ለየብቻ አቆይ',
   'Digit {number}': 'አሃዝ {number}',
   'Resend in {seconds}s': 'በ{seconds} ሰከንድ እንደገና ላክ',
   'Last synced {time}.': 'የመጨረሻ ማመሳሰል {time}።',
@@ -731,13 +844,13 @@ export const am: Dictionary = {
   'Reads your notes.': 'ማስታወሻዎችህን ያነባል።',
   'Reads and writes your notes.': 'ማስታወሻዎችህን ያነባል እና ይጽፋል።',
   Other: 'ሌላ',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'የAI አጋዥ ማስታወሻዎችህን ማንበብ ይችላል - ካፈቀድህም መቀየር። በnibeditor ኢሜይልህ ይገባል፤ የሚለጠፍ ምንም የለም።',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'የAI አጋዥ ማስታወሻዎችህን ማንበብ ይችላል - ካፈቀድህም መቀየር። በOrden ኢሜይልህ ይገባል፤ የሚለጠፍ ምንም የለም።',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'በClaude ውስጥ Settings → Connectors ክፈት እና Add custom connector ጫን።',
   'Open Claude’s connectors': 'የClaude አገናኞች ክፈት',
   'Fill in the two fields and click Add.': 'ሁለቱን ሳጥኖች ሙላ እና Add ጫን።',
-  'Click Connect and sign in with your nibeditor email.': 'Connect ጫን እና በnibeditor ኢሜይልህ ግባ።',
+  'Click Connect and sign in with your Orden email.': 'Connect ጫን እና በOrden ኢሜይልህ ግባ።',
   'Using Claude Code instead?': 'Claude Code ትጠቀማለህ?',
   Command: 'ትዕዛዝ',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -748,14 +861,14 @@ export const am: Dictionary = {
   'Open ChatGPT’s plugins': 'የChatGPT ተሰኪዎች ክፈት',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'የPlugins ክፍል ወይም የመደመር ቁልፍ የለም? መጀመሪያ በSettings → Security and login ውስጥ Developer mode አብራ።',
-  'Sign in with your nibeditor email when ChatGPT asks.': 'ChatGPT ሲጠይቅ በnibeditor ኢሜይልህ ግባ።',
-  'To use it in a chat, type @ and pick nibeditor.': 'በውይይት ለመጠቀም @ ጻፍ እና nibeditor ምረጥ።',
+  'Sign in with your Orden email when ChatGPT asks.': 'ChatGPT ሲጠይቅ በOrden ኢሜይልህ ግባ።',
+  'To use it in a chat, type @ and pick Orden.': 'በውይይት ለመጠቀም @ ጻፍ እና Orden ምረጥ።',
   'Server URL': 'የአገልጋይ አድራሻ',
   Authentication: 'ማረጋገጫ',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'የላቁ የOAuth ማስተካከያዎች እንዳሉ ተው እና “I understand and want to continue” ላይ ምልክት አድርግ።',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'ከOAuth ጋር Streamable HTTP የሚናገር ማንኛውም MCP ደንበኛ። አድራሻውን ስጠው፦ ራሱን ይመዘግባል እና የnibeditor መግቢያ ገጽ ይከፍታል።',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'ከOAuth ጋር Streamable HTTP የሚናገር ማንኛውም MCP ደንበኛ። አድራሻውን ስጠው፦ ራሱን ይመዘግባል እና የOrden መግቢያ ገጽ ይከፍታል።',
   'Show config': 'ውቅር አሳይ',
   'For a client that takes a JSON block instead of a URL.': 'በአድራሻ ምትክ የJSON ብሎክ ለሚቀበል ደንበኛ።',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
@@ -821,7 +934,7 @@ export const am: Dictionary = {
   'Display name': 'የሚታይ ስም',
   'Your name': 'ስምህ',
   Email: 'ኢሜይል',
-  'On nibeditor.com': 'በnibeditor.com ላይ',
+  'On orden.so': 'በorden.so ላይ',
   'Your own domain': 'የራስህ ጎራ',
   'Switching gives up {name}.': 'መቀየር {name}ን ያስለቅቃል።',
   Page: 'ገጽ',
@@ -892,8 +1005,9 @@ export const am: Dictionary = {
   'No footnotes in this note': 'በዚህ ማስታወሻ ውስጥ የግርጌ ማስታወሻ የለም',
   'Stack tabs': 'ትሮችን አደራድር',
   'Unstack tabs': 'ትሮችን አታደራድር',
-  'High contrast': 'ከፍተኛ ንፅፅር',
+  Contrast: 'ንፅፅር',
   Glass: 'መስታወት',
+  Classic: 'ክላሲክ',
   'Front matter': 'Front matter',
   'Front matter: {name}': 'ራስጌ መረጃ: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':
@@ -904,6 +1018,7 @@ export const am: Dictionary = {
   Comment: 'አስተያየት',
   'Always on top': 'ዘወትር ከላይ',
   'What is new': 'አዲሱ ምን ነው',
+  'Download the app': 'መተግበሪያውን አውርድ',
   'Report an issue': 'ችግር አሳውቅ',
   'Move the line up': 'መስመሩን ወደ ላይ አንቀሳቅስ',
   'Move the line down': 'መስመሩን ወደ ታች አንቀሳቅስ',
@@ -981,6 +1096,23 @@ export const am: Dictionary = {
   'Layout: {name}': 'አቀማመጥ: {name}',
   'Space: {name}': 'ቦታ: {name}',
   'Theme: {name}': 'ገጽታ: {name}',
+  'AI account: {name}': 'የAI መለያ: {name}',
+  Accounts: 'መለያዎች',
+  Access: 'መዳረሻ',
+  Set: 'ተቀናብሯል',
+  'Start over': 'እንደገና ጀምር',
+  'Sign in here': 'እዚህ ይግቡ',
+  '{device} wants your AI accounts': '{device} የAI መለያዎችዎን ይፈልጋል',
+  '{device} offers this device your AI vault': '{device} የAI ካዝናዎን ለዚህ መሣሪያ ያቀርባል',
+  Join: 'ተቀላቀል',
+  'Allow this device on another one': 'ይህን መሣሪያ በሌላ ላይ ይፍቀዱ',
+  'On every device you sign in to, end-to-end encrypted.':
+    'በሚገቡበት እያንዳንዱ መሣሪያ ላይ፣ ከጫፍ እስከ ጫፍ የተመሰጠረ።',
+  'Sign in to have them on every device.': 'በእያንዳንዱ መሣሪያ ላይ እንዲኖሩ ይግቡ።',
+  'Agents on this computer connect on their own': 'በዚህ ኮምፒውተር ላይ ያሉ ወኪሎች በራሳቸው ይገናኛሉ',
+  Helpers: 'ረዳቶች',
+  'Start helpers on your AI accounts': 'በAI መለያዎችዎ ላይ ረዳቶችን ያስጀምሩ',
+  Delegated: 'ተሰጥቷል',
   'Code theme: {name}': 'የኮድ ገጽታ: {name}',
   'Delete a layout': 'አቀማመጥ አጥፋ',
   // Keyboards and modal editing
@@ -1049,6 +1181,7 @@ export const am: Dictionary = {
   'Double-click to write': 'ለመጻፍ ሁለት ጊዜ ጫን',
   'Another colour': 'ሌላ ቀለም',
   'Turn into a note': 'ወደ ማስታወሻ ቀይር',
+  Arrange: 'አደራጅ',
   'Bring to front': 'ወደ ፊት አምጣ',
   'Bring forward': 'አንድ ወደ ፊት አምጣ',
   'Send backward': 'አንድ ወደ ኋላ ላክ',
@@ -1070,6 +1203,12 @@ export const am: Dictionary = {
   'Export as PNG': 'እንደ PNG ላክ',
   'Export as SVG': 'እንደ SVG ላክ',
   'Export as PDF': 'እንደ PDF ላክ',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF አምጣ',
+  'Choose how to add the pages to the canvas.': 'ገጾቹ ወደ ሸራው እንዴት እንዲጨመሩ ይምረጡ።',
+  'Single page': 'ነጠላ ገጽ',
+  'All pages': 'ሁሉም ገጾች',
+  'Choose a page': 'ገጽ ይምረጡ',
   // The canvas: what its own keys are called
   'Delete what is picked': 'የተመረጠውን አጥፋ',
   'Nudge left': 'ወደ ግራ ገፋ',
@@ -1130,8 +1269,8 @@ export const am: Dictionary = {
   'Release channel': 'የልቀት መስመር',
   Stable: 'የተረጋጋ',
   Unstable: 'ያልተረጋጋ',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'የተረጋጋ ይፋዊ ልቀቶችን ይከተላል፣ ያልተረጋጋ ወደ main የሚገባውን ሁሉ ይከተላል እና ሊሰበር ይችላል።',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'የተረጋጋ የተለቀቁ ዕትሞችን ይከተላል፣ ያልተረጋጋ የዳር ግንባታዎችን ይከተላል እና ሊሰበር ይችላል።',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'አምጣ',
@@ -1183,13 +1322,15 @@ export const am: Dictionary = {
   '{count} tables inside notes do not come over': 'በማስታወሻዎች ውስጥ ያሉ {count} ሰንጠረዞች አይሻገሩም',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} አባሪዎች በዚህ Mac ላይ ሳይሆን በiCloud ውስጥ ናቸው',
+  '{count} files are in iCloud rather than on this Mac':
+    '{count} ፋይሎች በዚህ Mac ላይ ሳይሆን በiCloud ውስጥ ናቸው',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS እነዚያን ማስታወሻዎች ከFull Disk Access ጀርባ ያስቀምጣል።',
   'There are no notes in Apple Notes on this Mac.': 'በዚህ Mac ላይ በApple Notes ውስጥ ማስታወሻ የለም።',
   'Those notes could not be read.': 'እነዚያ ማስታወሻዎች መነበብ አልቻሉም።',
   'Read them from this Mac': 'ከዚህ Mac አንብባቸው',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    'nibeditorን በFull Disk Access ውስጥ አብራ፣ ከዚያ በድጋሚ ጠይቅ።',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    'Ordenን በFull Disk Access ውስጥ አብራ፣ ከዚያ በድጋሚ ጠይቅ።',
   'Open the setting': 'ማስተካከያውን ክፈት',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'Apple Journal ራሱን ይልካል፦ Journal፣ ማስተካከያ፣ መላክ። Apple Notes መላክ የለውም፣ ስለዚህ ካለበት Mac ርቆ የሚጣለው ላኪ የጻፈው ፎልደር ነው።',
@@ -1291,14 +1432,15 @@ export const am: Dictionary = {
   'OpenAI-compatible': 'ከOpenAI ጋር ተስማሚ',
   'Base URL': 'መሠረታዊ አድራሻ',
   'API key': 'የAPI ቁልፍ',
-  'Set on this device': 'በዚህ መሣሪያ ላይ ተዘጋጅቷል',
   Optional: 'አማራጭ',
   'List models': 'ሞዴሎች አምጣ',
   'Asking…': 'በመጠየቅ ላይ…',
   'No providers yet.': 'እስካሁን አቅራቢ የለም።',
   'Add {name}': '{name} ጨምር',
-  'Keys stay in the secure store on this device.': 'ቁልፎች በዚህ መሣሪያ አስተማማኝ ማከማቻ ውስጥ ይቀራሉ።',
   'This browser holds the keys in its own storage.': 'ይህ አሳሽ ቁልፎቹን በራሱ ማከማቻ ይይዛል።',
+  'Keep this browser’s keys in the vault': 'የዚህን አሳሽ ቁልፎች በካዝናው ውስጥ አቆይ',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'ከዚያ የእያንዳንዱ መሣሪያ ቁልፎች በዚህ አሳሽ ማከማቻ ውስጥ ይቀመጣሉ፤ ወደ ገጹ የገባ ስክሪፕት ሊያነባቸው ይችላል።',
   'AI can be wrong. Check the facts.': 'AI ሊሳሳት ይችላል። እውነታዎቹን አረጋግጥ።',
   'Used by the glasses': 'መነጽሩ ይጠቀማል',
   'Could not read the models.': 'ሞዴሎቹን ማንበብ አልተቻለም።',
@@ -1338,7 +1480,6 @@ export const am: Dictionary = {
   'A cited report': 'ምንጭ የተጠቀሰበት ዘገባ',
   'A helper in the background': 'ከበስተጀርባ ያለ ረዳት',
   'A side question': 'የጎን ጥያቄ',
-  'Agent mode': 'የወኪል ሁነታ',
   'Agent profile': 'የወኪል መገለጫ',
   'Archive the thread': 'ውይይቱን አስቀምጥ',
   'Approve mode': 'የማጽደቅ ሁነታ',
@@ -1457,8 +1598,6 @@ export const am: Dictionary = {
   // Web tabs
   Reload: 'እንደገና ጫን',
   'Hard reload': 'ሙሉ በሙሉ እንደገና ጫን',
-  'Clip this page': 'ይህን ገጽ አስቀምጥ',
-  'Clip the link': 'አገናኙን አስቀምጥ',
   'Open in the browser': 'በአሳሽ ክፈት',
   'Show it here': 'እዚህ አሳይ',
   Website: 'ድረ ገጽ',
@@ -1542,7 +1681,8 @@ export const am: Dictionary = {
   'that is not a theme': 'ያ ገጽታ አይደለም',
   'no such theme': 'እንዲህ ያለ ገጽታ የለም',
   'choose a model first': 'መጀመሪያ ሞዴል ምረጥ',
-  'set an OpenAI key in nibeditor’s settings first': 'መጀመሪያ በnibeditor ማስተካከያ ውስጥ የOpenAI ቁልፍ አዘጋጅ',
+  'set an OpenAI key in Orden’s settings first': 'መጀመሪያ በOrden ማስተካከያ ውስጥ የOpenAI ቁልፍ አዘጋጅ',
+  'set an OpenAI key in nibeditor’s settings first': 'መጀመሪያ በOrden ማስተካከያ ውስጥ የOpenAI ቁልፍ አዘጋጅ',
   'that is a lot of questions - try again later': 'ያ ብዙ ጥያቄ ነው - ቆይተህ ሞክር',
   'that is too much audio': 'ያ በጣም ብዙ ድምፅ ነው',
   'that is more than a spoken command': 'ያ ከአንድ የድምፅ ትዕዛዝ በለጠ',
@@ -1566,7 +1706,6 @@ export const am: Dictionary = {
   Nothing: 'ምንም',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'ይህን እይታ ዕልባት አድርግ',
   Keep: 'አቆይ',
 
   // Which side of the window a panel sits on.
@@ -1588,7 +1727,6 @@ export const am: Dictionary = {
   'New tab': 'አዲስ ትር',
   'Full screen': 'ሙሉ ማያ ገፅ',
   'Print…': 'አትም…',
-  'Save page': 'ገፅ አስቀምጥ',
   'Share…': 'አጋራ…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1631,7 +1769,6 @@ export const am: Dictionary = {
   Blocked: 'ታግዷል',
   'Reset permissions': 'ፈቃዶችን ዳግም ያቀናብሩ',
   'Turn into': 'ቀይር',
-  'Bookmark these blocks': 'እነዚህን ብሎኮች ምልክት አድርግ',
   Foldable: 'ሊታጠፍ የሚችል',
   'Starts folded': 'ተጣጥፎ ይጀምራል',
   // Where a space keeps what websites store
@@ -1648,6 +1785,15 @@ export const am: Dictionary = {
   'Bring all to front': 'ሁሉንም ወደ ፊት አምጣ',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'ቅጂውን መልስ',
+  'Devices with your AI vault': 'የAI ካዝናዎ ያላቸው መሣሪያዎች',
+  'This device': 'ይህ መሣሪያ',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'መሣሪያው የAI መለያዎችዎን ከእንግዲህ ማንበብ አይችልም፣ ሌሎቹም አዲስ ቁልፍ ያገኛሉ።',
+  'Also remove this device from your AI vault?': 'ይህን መሣሪያ ከAI ካዝናዎም ያስወግዱ?',
+  'Remove and sign out': 'አስወግድና ውጣ',
+  'Undo making {name}': '{name} መፍጠርን መልስ',
+  'Undo the deletion': 'ማጥፋቱን መልስ',
+  'Undo the move': 'ማንቀሳቀሱን መልስ',
   'Redo the last file change': 'የመጨረሻውን የፋይል ለውጥ እንደገና አድርግ',
   'Select down': 'ወደ ታች ምረጥ',
   'Select up': 'ወደ ላይ ምረጥ',
@@ -1691,7 +1837,6 @@ export const am: Dictionary = {
   '{key} in a terminal': '{key} በተርሚናል ውስጥ',
   'Always ask': 'ሁልጊዜ ጠይቅ',
   'Open another': 'ሌላ ክፈት',
-  'Open in terminal': 'በተርሚናል ክፈት',
   Clear: 'አጽዳ',
   'Exited with code {code}': 'በኮድ {code} ተጠናቋል',
   'Could not start {shell}': '{shell}ን ማስጀመር አልተቻለም',
@@ -1700,18 +1845,8 @@ export const am: Dictionary = {
   'Stop what is running in {name}?': 'በ{name} ውስጥ የሚሰራው ይቁም?',
   'Stop what is running in these terminals?': 'በእነዚህ ተርሚናሎች ውስጥ የሚሰራው ይቁም?',
   'Paste {count} lines?': { one: '{count} መስመር ይለጠፍ?', other: '{count} መስመሮች ይለጠፉ?' },
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': 'ነባር አሳሽ',
-  // The engine web tabs run on
-  Engine: 'ሞተር',
-  Relaunch: 'እንደገና አስጀምር',
-  'Chromium did not start': 'Chromium አልጀመረም',
-  'No connection': 'ግንኙነት የለም',
-  'Not in this release': 'በዚህ ልቀት ውስጥ የለም',
-  'Needs an update': 'ማዘመን ያስፈልጋል',
-  'Signature did not match': 'ፊርማው አልተዛመደም',
-  'Disk full': 'ዲስኩ ሞልቷል',
-  'Could not be installed': 'መጫን አልተቻለም',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ያደረጋቸውን ለውጦች ቀልብስ',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1814,7 +1949,7 @@ export const am: Dictionary = {
   'Always on this site': 'በዚህ ጣቢያ ሁልጊዜ',
   'Agents stopped': 'ወኪሎች ቆመዋል',
   'Agent tabs closed': 'የወኪል ትሮች ተዘግተዋል',
-  'nibeditor is still running for your agents': 'nibeditor ለወኪሎችዎ አሁንም እየሰራ ነው',
+  'Orden is still running for your agents': 'Orden ለወኪሎችዎ አሁንም እየሰራ ነው',
   '{client} wants to connect': '{client} መገናኘት ይፈልጋል',
   // Web logins that travel, and the devices of an account
   'no such device': 'እንዲህ ያለ መሣሪያ የለም',
@@ -1829,11 +1964,11 @@ export const am: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'በዚህ ኮምፒውተር ላይ ያሉ ወኪሎች',
   'Your account’s connector': 'የመለያዎ ማገናኛ',
-  'nibeditor asks you once, the first time it connects.':
-    'nibeditor ለመጀመሪያ ጊዜ ሲገናኝ አንድ ጊዜ ይጠይቅዎታል።',
+  'Orden asks you once, the first time it connects.': 'Orden ለመጀመሪያ ጊዜ ሲገናኝ አንድ ጊዜ ይጠይቅዎታል።',
   'A client on another machine?': 'በሌላ ማሽን ላይ ያለ ደንበኛ?',
   'Shown only once.': 'አንድ ጊዜ ብቻ ይታያል።',
   'Remove {name}?': '{name} ይወገድ?',
+  'End {name}?': '{name} ይብቃ?',
   'Its token stops working.': 'ቶከኑ መሥራት ያቆማል።',
   'Added {date}': 'በ{date} ታክሏል',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':
@@ -1854,7 +1989,6 @@ export const am: Dictionary = {
   'Change notes': 'ማስታወሻዎችን መቀየር',
   'See what you are looking at': 'የሚያዩትን ማየት',
   'Move and rename files': 'ፋይሎችን ማንቀሳቀስ እና እንደገና መሰየም',
-  'Open tabs and bookmarks': 'ትሮችን እና ዕልባቶችን መክፈት',
   'Bring a tab to the front': 'ትርን ወደ ፊት ማምጣት',
   'Browse in tabs of its own': 'በራሱ ትሮች ማሰስ',
   'Read what pages load': 'ገጾች የሚጭኑትን ማንበብ',
@@ -1876,14 +2010,11 @@ export const am: Dictionary = {
   'Without your logins': 'ያለ እርስዎ መግቢያዎች',
   'Calls a minute': 'በደቂቃ ጥሪዎች',
   'Pages a minute': 'በደቂቃ ገጾች',
+  'Browser memory limit': 'የአሳሽ ማህደረ ትውስታ ገደብ',
   '{count} calls': {
     one: '{count} ጥሪ',
     other: '{count} ጥሪዎች',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'በ{device} ላይ ክፍት ነው',
-  'Use here': 'እዚህ ተጠቀም',
-  '{device} wants your web logins': '{device} የድር መግቢያዎችህን ይፈልጋል',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'ፈጣን ጥያቄ',
@@ -1950,7 +2081,7 @@ export const am: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'አሸልብ',
   Reminders: 'አስታዋሾች',
-  'Reminders ring while nibeditor is open': 'አስታዋሾች nibeditor ክፍት ሲሆን ይደውላሉ',
+  'Reminders ring while Orden is open': 'አስታዋሾች Orden ክፍት ሲሆን ይደውላሉ',
   Automatic: 'ራስ-ሰር',
   'Stay in the tray': 'በትሪው ውስጥ ቆይ',
   'Exact alarms': 'ትክክለኛ ማንቂያዎች',
@@ -1992,7 +2123,6 @@ export const am: Dictionary = {
   'Any of them': 'ማንኛውም',
   Compare: 'አወዳድር',
   'Add a filter': 'ማጣሪያ አክል',
-  'Reschedule to today': 'ወደ ዛሬ አዛውር',
   Collapse: 'ሰብስብ',
   Expand: 'ዘርጋ',
   Summary: 'ማጠቃለያ',
@@ -2014,7 +2144,6 @@ export const am: Dictionary = {
   Layout: 'አቀማመጥ',
   Overdue: 'ያለፈባቸው',
   Upcoming: 'የሚመጡ',
-  Logbook: 'መዝገብ',
   Project: 'ፕሮጀክት',
   Label: 'መለያ',
   List: 'ዝርዝር',
@@ -2199,4 +2328,11 @@ export const am: Dictionary = {
   'Search this chat': 'በዚህ ውይይት ፈልግ',
   'Add as task': 'እንደ ተግባር አክል',
   'Save as note': 'እንደ ማስታወሻ አስቀምጥ',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'ንጋት',
+  Lagoon: 'ሐይቅ',
+  Lilac: 'ሊላክ',
+  Peach: 'ኮክ',
+  Sage: 'ሴጅ',
+  Mist: 'ጭጋግ',
 }

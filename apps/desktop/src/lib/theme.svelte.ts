@@ -45,7 +45,7 @@ interface ThemeInfo {
    *  states whatever its author wrote, which may be one of them. */
   variants: Scheme[]
   path?: string
-  /** The stylesheet itself: high contrast's, a file's as `reload` last read it, or
+  /** The stylesheet itself: contrast's, a file's as `reload` last read it, or
    *  glass's once it has arrived. Held, so choosing or pointing paints at once. */
   css?: string
   /** A built-in's stylesheet behind a door: glass's. */
@@ -86,12 +86,7 @@ const SHEET_KEY = 'nib:theme-sheet'
 /** That the contrast theme has been offered, so it is offered once and never
  *  again. Absent means the offer has not been made yet; see `offerContrast`. */
 const OFFERED_KEY = 'nib:contrast-offered'
-/** The high contrast theme's own id. The same word the registry knows it under, and
- *  deliberately: the theme in the store is this palette, published so a reader can
- *  update it without waiting for a release of the app, and a card there that installed
- *  a theme under a different name would be a second Contrast in the dropdown. An
- *  installed copy is a file and carries `file:` in front of its id, so the two can sit
- *  beside each other without either becoming the other. */
+/** The contrast theme's id, the one the store's copy had too; see `isBuiltIn`. */
 const CONTRAST_THEME = 'contrast'
 
 /** The one built-in theme: the app's own tokens, which state both schemes.
@@ -104,23 +99,16 @@ const CONTRAST_THEME = 'contrast'
 const DEFAULT_ID = 'default'
 const DEFAULT_THEME: ThemeInfo = {
   id: DEFAULT_ID,
-  name: 'Default',
+  name: 'Classic',
   variants: ['dark', 'light'],
 }
 
-/** And the second: high contrast, which the app ships with rather than fetches.
- *
- *  A mode in every sense that matters - one row in Appearance, one row in the palette,
- *  and what a system asking for more contrast is answered with - and a theme in the
- *  way it is built, which is what keeps it out of every other theme's way. It states
- *  an accent of its own, so the reader's accent is not painted over the palette the
- *  row showed; see `paintsOver` in themes/settings.ts.
- *
- *  Offline, because the launch that needs it most is a first launch. See
- *  contrast.css in @nib/themes. */
+/** And the second: contrast, shipped rather than fetched, because the launch that
+ *  needs it most is a first one. Its own accent, so the reader's is not painted over
+ *  it; see `paintsOver` in themes/settings.ts and contrast.css in @nib/themes. */
 const CONTRAST: ThemeInfo = {
   id: CONTRAST_THEME,
-  name: 'High contrast',
+  name: 'Contrast',
   variants: ['dark', 'light'],
   css: contrastCss,
 }
@@ -148,6 +136,15 @@ const GLASS: ThemeInfo = {
   own: () => import('./glass/settings').then((module) => module.glassSettings),
 }
 
+/** What opens until a look is chosen (Emil); the accent is kept, as it follows. */
+const FIRST_LOOK = __EVEN_PLUGIN__ ? null : { theme: GLASS_THEME, accent: 'green' }
+/** The accent the first look gave, empty once one is picked; see `giveAccent`. */
+const GIVEN_KEY = 'nib:accent-given'
+/** What it gave before that key: yellow, on 2026-10-13. */
+const GIVEN_BEFORE = 'yellow'
+/** Older builds wrote the built-in for all: moved to the first look once. */
+const MOVED_KEY = 'nib:theme-moved'
+
 /** And wallpaper: the reader's picture, in its sheet (wallpaper/sheet.ts). */
 const WALLPAPER: ThemeInfo = {
   id: 'wallpaper',
@@ -156,6 +153,12 @@ const WALLPAPER: ThemeInfo = {
   pictured: true,
   load: () => import('./wallpaper/sheet').then((module) => module.wallpaperSheet()),
   own: () => import('./wallpaper/settings').then((module) => module.wallpaperSettings),
+}
+
+/** Whether an id is one of the app's own themes. A store copy of one is that theme:
+ *  not listed, offered no update, and whoever chose it is moved onto it. */
+export function isBuiltIn(id: string): boolean {
+  return [DEFAULT_THEME, CONTRAST, GLASS, WALLPAPER].some((one) => one.id === id)
 }
 
 const LIGHT = '(prefers-color-scheme: light)'
@@ -179,6 +182,9 @@ function earlySheet(): { id: string; css: string } | null {
   if (!isRecord(held) || typeof held.id !== 'string' || typeof held.css !== 'string') return null
   return { id: held.id, css: held.css }
 }
+
+/** Whether a file is the store's copy of a built-in; see `isBuiltIn`. */
+const copiesBuiltIn = (file: ThemeInfo) => file.stamp !== undefined && isBuiltIn(file.stamp.id)
 
 function isScheme(value: unknown): value is Scheme {
   return value === 'dark' || value === 'light'
@@ -228,6 +234,9 @@ class Themes {
 
   readonly accents = ACCENTS
 
+  /** The folder's themes but a built-in's copy. */
+  private readonly fromFolder = $derived(this.files.filter((file) => !copiesBuiltIn(file)))
+
   /** The built-in first, then what is installed, in the order the folder gave
    *  them - both platforms list a folder by name, so the order is the same on
    *  every machine and does not move as themes are used. */
@@ -236,7 +245,7 @@ class Themes {
     CONTRAST,
     ...(__EVEN_PLUGIN__ ? [] : [this.withLoaded(GLASS)]),
     ...(__EVEN_PLUGIN__ ? [] : [this.withLoaded(WALLPAPER)]),
-    ...this.files,
+    ...this.fromFolder,
   ])
 
   readonly active = $derived(this.all.find((one) => one.id === this.id) ?? DEFAULT_THEME)
@@ -257,7 +266,9 @@ class Themes {
   /** What the store has put in the folder, by the id the registry knows it
    *  under, so the gallery can mark a card installed and offer an update. */
   readonly installed = $derived(
-    new Map(this.files.flatMap((file) => (file.stamp ? [[file.stamp.id, file] as const] : []))),
+    new Map(
+      this.fromFolder.flatMap((file) => (file.stamp ? [[file.stamp.id, file] as const] : [])),
+    ),
   )
 
   init() {
@@ -268,9 +279,10 @@ class Themes {
       if (this.scheme === 'system') this.apply()
     })
 
-    this.restoreChoice()
+    const unwritten = storedText(STORAGE_KEY) === null
+    const first = this.restoreChoice()
     this.offerTheContrastTheme()
-    this.restoreSettings()
+    this.restoreSettings(first, unwritten)
     this.early = earlySheet()
     // What the crate put back behind the window before the page started, said on the
     // first frame; and a launch that stood on it, or cannot tell, asks for it off
@@ -306,7 +318,7 @@ class Themes {
 
   /** Every answer, the accent's old key read into the app's drawer and left for an
    *  older build. Nothing is trusted: `valueOf` reads each against its setting. */
-  private restoreSettings() {
+  private restoreSettings(first: boolean, unwritten: boolean) {
     const drawers: ChosenSettings = Object.fromEntries(
       Object.entries(recordOf(stored(SETTINGS_KEY), isRecord)).map(([owner, values]) => [
         owner,
@@ -319,7 +331,32 @@ class Themes {
       drawers[SHARED] = { ...drawers[SHARED], accent }
     }
 
+    this.giveAccent(drawers, first, unwritten)
     this.chosen = drawers
+    this.trying = {}
+  }
+
+  /** The first look's accent, to an install with none or with one an earlier first look
+   *  gave and nobody picked since. Before the key, a yellow counts as given only while
+   *  the theme was never written down and the old key holds nothing. */
+  private giveAccent(drawers: ChosenSettings, first: boolean, unwritten: boolean) {
+    if (!FIRST_LOOK) return
+
+    const held = drawers[SHARED]?.accent
+    const given =
+      storedText(GIVEN_KEY) ?? (unwritten && storedText(ACCENT_KEY) === null ? GIVEN_BEFORE : '')
+    const stillGiven = held === undefined ? first : held === given
+
+    if (stillGiven && held !== FIRST_LOOK.accent) {
+      drawers[SHARED] = { ...drawers[SHARED], accent: FIRST_LOOK.accent }
+      keep(SETTINGS_KEY, JSON.stringify(drawers))
+    }
+    keep(GIVEN_KEY, stillGiven ? FIRST_LOOK.accent : '')
+  }
+
+  /** Whether the theme was chosen: older builds wrote the built-in down for everybody. */
+  private chose(): boolean {
+    return storedText(STORAGE_KEY) !== null && this.id !== DEFAULT_ID
   }
 
   /** A reader who had the old Translucency switch on under the built-in is given glass;
@@ -336,22 +373,31 @@ class Themes {
    *
    *  Written back in the new spelling at once, so nothing further along has to
    *  know there was an old one. */
-  private restoreChoice() {
-    const saved = storedText(STORAGE_KEY) ?? ''
+  private restoreChoice(): boolean {
+    const saved = storedText(STORAGE_KEY)
     const chosen = storedText(SCHEME_KEY)
+    const id = !saved || saved === 'null' || isChoice(saved) ? DEFAULT_ID : saved
+    const moved = saved && storedText(MOVED_KEY)
 
     this.scheme = isChoice(chosen) ? chosen : isChoice(saved) ? saved : 'system'
-
-    this.id = !saved || saved === 'null' || isChoice(saved) ? DEFAULT_ID : saved
-
-    keep(STORAGE_KEY, this.id)
     keep(SCHEME_KEY, this.scheme)
+    keep(MOVED_KEY, 'yes')
+
+    if (FIRST_LOOK && id === DEFAULT_ID && !moved) {
+      this.id = FIRST_LOOK.theme
+      forget(STORAGE_KEY)
+      return true
+    }
+
+    this.id = id
+    keep(STORAGE_KEY, this.id)
+    return false
   }
 
   /** Whether to answer a system asking for more contrast, which happens once or not
    *  at all.
    *
-   *  High contrast is a theme the app ships with, so the answer is the theme itself:
+   *  Contrast is a theme the app ships with, so the answer is the theme itself:
    *  it is chosen, on the frame the launch happens on, with nothing to fetch and no
    *  network to depend on. That is the whole reason it is built in - the launch that
    *  needs more contrast most is a first launch, and a reader who cannot read the
@@ -373,9 +419,9 @@ class Themes {
 
     // A reader who has already chosen a theme has answered the question about how
     // their screen looks, and repainting it because their system asks for contrast
-    // would be the app overruling them. The question is marked answered: High contrast
+    // would be the app overruling them. The question is marked answered: Contrast
     // is a row in Appearance and in the palette, there whenever they want it.
-    if (this.id !== DEFAULT_ID) {
+    if (this.chose()) {
       keep(OFFERED_KEY, 'yes')
       return
     }
@@ -434,14 +480,19 @@ class Themes {
         // spelled it rather than worked out from the file name.
         ...(stamp ? { name: stamp.name, stamp } : {}),
         variants: variantsOf(css),
+        // A file that says what it is over the desk is asking to stand on it.
+        ...(css.includes('[data-translucent]') ? { translucent: true } : {}),
         ...(whole ? { css } : {}),
       }
     })
 
+    // A built-in's copy, chosen, is the built-in.
+    const copy = this.files.find((file) => file.id === this.id && copiesBuiltIn(file))
+    if (copy?.stamp) this.select(copy.stamp.id)
     // A theme file may have been deleted while it was selected. Only ever
     // decided on a folder that answered: until one has, a theme the storage
     // names is one not found yet rather than one that is gone.
-    if (!this.all.some((theme) => theme.id === this.id)) this.select(DEFAULT_ID)
+    else if (!this.all.some((theme) => theme.id === this.id)) this.select(DEFAULT_ID)
     // Otherwise applied again now that the folder has been read: at launch the
     // theme was chosen before the files were known, so a file theme had nothing
     // to apply and whatever it declared was nobody's yet.
@@ -482,6 +533,18 @@ class Themes {
   /** Shows a look and keeps nothing: what the picker points at. Leaving it is this
    *  again, with what was kept; see theme-picker/picking.svelte.ts. */
   preview(id: string, scheme: SchemeChoice, accent: string) {
+    // The look already on is not put on again. The palette tries on the row under its
+    // arrows whenever its rows are worked out again, and a theme's own rows are worked
+    // out from what it wears: wearing it afresh worked them out afresh, which tried it
+    // on again, until Svelte gave up on the page - Wallpaper did it on every hover.
+    const tried = Object.keys(this.trying)
+    if (
+      this.id === id &&
+      this.scheme === scheme &&
+      tried.length === 1 &&
+      this.trying.accent === accent
+    )
+      return
     this.id = id
     this.scheme = scheme
     this.trying = { accent }
@@ -564,6 +627,7 @@ class Themes {
     this.chosen = { ...this.chosen, [drawer]: { ...this.chosen[drawer], [id]: value } }
     this.trying = Object.fromEntries(Object.entries(this.trying).filter(([one]) => one !== id))
     keep(SETTINGS_KEY, JSON.stringify(this.chosen))
+    if (id === 'accent') keep(GIVEN_KEY, '')
     this.paintSettings()
     if (setting.reapplies === true) this.apply()
   }
@@ -667,7 +731,8 @@ class Themes {
     if (!__EVEN_PLUGIN__ && isDesktop && (translucent || this.material)) {
       this.material = true
       const dark = this.current === 'dark'
-      const kind = this.materialAsked()
+      // A file brings its own tints, so what it asks for under them is the desk.
+      const kind = theme.path ? 'clear' : this.materialAsked()
       void import('./material').then(({ wearMaterial }) =>
         wearMaterial(translucent, dark, kept, kind),
       )
@@ -720,6 +785,8 @@ class Themes {
     if (css === null) return
 
     this.inject(css)
+    // And what it says of the pages in web tabs, which is the crate's to put there.
+    if (isDesktop) void invoke('wear_page_styles', { css }).catch(() => undefined)
     const sheet = css.replace(STAMP_LINE, '')
     // A sheet read again keeps its dials until they are read again.
     if (sheet !== this.sheet && (this.wearing !== this.id || !declares(sheet))) this.declared = []

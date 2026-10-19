@@ -10,21 +10,127 @@ export const tr: Dictionary = {
   'Do you write code?': 'Kod yazıyor musunuz?',
   Yes: 'Evet',
   No: 'Hayır',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'Diğer uygulamalardan: {key}',
+  'From other apps: set in your system settings':
+    'Diğer uygulamalardan: sistem ayarlarında belirlenir',
+  'From other apps: bind {command} in your system settings':
+    'Diğer uygulamalardan: {command} komutunu sistem ayarlarında atayın',
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'Temel öğeler',
+  'Add to Essentials': 'Temel öğelere ekle',
+  'Remove from Essentials': 'Temel öğelerden kaldır',
+  'Add block to Essentials': 'Bloğu temel öğelere ekle',
+  'Add blocks to Essentials': 'Blokları temel öğelere ekle',
+  'Add view to Essentials': 'Görünümü temel öğelere ekle',
+  'Open tabs and Essentials': 'Sekmeleri ve temel öğeleri açma',
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor artık Orden',
+  'Notes from nibeditor.com': 'nibeditor.com’daki notlar',
+  'Nothing there': 'Orada hiçbir şey yok',
+  // AI: the three permission modes
+  'Full permissions': 'Tam izinler',
+  'Auto mode': 'Otomatik mod',
+  'Full permissions: nothing is asked first': 'Tam izinler: önceden hiçbir şey sorulmaz',
+  // Import: Zen's tabs
+  'Import from Zen': 'Zen’den içe aktar',
+  'Containers stay in Zen': 'Kapsayıcılar Zen’de kalır',
+  'Zen’s tabs could not be read.': 'Zen’in sekmeleri okunamadı.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'Kapsayıcılar Firefox’ta kalır',
+  'Nothing could be read out of {browser}.': '{browser} içinden hiçbir şey okunamadı.',
+  'Saved groups': 'Kaydedilen gruplar',
+  'Tab group': 'Sekme grubu',
+  'Bookmarks toolbar': 'Yer imleri araç çubuğu',
+  'Bookmarks menu': 'Yer imleri menüsü',
+  'Other bookmarks': 'Diğer yer imleri',
+  'Mobile bookmarks': 'Mobil yer imleri',
+  'Bookmarks bar': 'Yer işareti çubuğu',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} açık sekmelerini kilitli tutuyor, bu yüzden yalnızca yer işaretleri geldi.',
+  '{count} pages not on the web stay behind': {
+    one: 'Web’de olmayan {count} sayfa geride kalıyor',
+    other: 'Web’de olmayan {count} sayfa geride kalıyor',
+  },
+  'Reading List': 'Okuma Listesi',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS, Safari’nin sekmelerini ve yer işaretlerini Tam Disk Erişimi’nin arkasında tutar. Orden’ı orada açıp yeniden deneyin.',
+  // Settings: note types
+  'Page note': 'Sayfalı not',
+  'Web note': 'Web notu',
+  'Private tab': 'Gizli sekme',
+  'Note types': 'Not türleri',
+  // Tasks: Upcoming's weeks
+  'Previous week': 'Önceki hafta',
+  // Tasks: projects placed in the panel, and their folder
+  'Add project above': 'Üste proje ekle',
+  'Add project below': 'Alta proje ekle',
+  'Projects folder': 'Proje klasörü',
+  // Tasks: a repeating task skipped or done for good
+  Skip: 'Atla',
+  'Complete forever': 'Kalıcı olarak tamamla',
+  // Tasks: comments
+  Comments: 'Yorumlar',
+  // Tasks: filters
+  Filters: 'Filtreler',
+  'Add filter': 'Filtre ekle',
+  'Edit filter': 'Filtreyi düzenle',
+  // Tasks: a project's sections
+  'Add section': 'Bölüm ekle',
+  '{name} (copy)': '{name} (kopya)',
+  'Its tasks are deleted with it.': 'Görevleri de onunla birlikte silinir.',
+  // Tasks: keys, selection and the undo toast
+  Completed: 'Tamamlandı',
+  'Remove date': 'Tarihi kaldır',
+  'Next task': 'Sonraki görev',
+  'Previous task': 'Önceki görev',
+  'Add task at the top': 'En üste görev ekle',
+  '{count} selected': '{count} seçildi',
+  // Tasks: the Display menu
+  Display: 'Görünüm',
+  'Completed tasks': 'Tamamlanan görevler',
+  // Tasks: several lines pasted into quick add
+  'One task': 'Tek görev',
+  'One per line': 'Satır başına bir',
+  // Tasks: the projects in the panel
+  Favorites: 'Favoriler',
+  'Add project': 'Proje ekle',
+  'Add sub-project': 'Alt proje ekle',
+  // Tasks: the task view
+  'Sub-tasks': 'Alt görevler',
+  'Add sub-task': 'Alt görev ekle',
+  'New label': 'Yeni etiket',
+  'No deadline': 'Son tarih yok',
+  // Tasks: the row's menu and the scheduler
+  Reschedule: 'Yeniden planla',
+  'Later this week': 'Bu hafta daha sonra',
+  'This weekend': 'Bu hafta sonu',
+  'Next weekend': 'Gelecek hafta sonu',
+  'Every week on {day}': 'Her hafta {day}',
+  'Every month on day {day}': 'Her ayın {day}. günü',
+  'Every year on {date}': 'Her yıl {date}',
+  'Type a date': 'Bir tarih yazın',
+  'Previous month': 'Önceki ay',
+  'Next month': 'Sonraki ay',
+  'No time': 'Saat yok',
+  'No repeat': 'Tekrar yok',
+  Complete: 'Tamamla',
+  Reopen: 'Yeniden aç',
+  Schedule: 'Planla',
+  'Open in note': 'Notta aç',
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': 'Başka bir uygulama',
-  'Start fresh': 'Sıfırdan başla',
   'Import from Obsidian': 'Obsidian’dan içe aktar',
   'Import from Notion': 'Notion’dan içe aktar',
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'İpuçları',
   'Silent mode': 'Sessiz mod',
-  'Sign in to keep your notes safe and on every device.':
-    'Notlarınızı güvende ve her cihazda tutmak için oturum açın.',
   'See how your notes connect.': 'Notlarınızın nasıl bağlandığını görün.',
   'Press {key} to find anything, notes and commands alike.':
     'Notlar ve komutlar, her şeyi bulmak için {key} tuşlarına basın.',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': 'Yazarken Markdown’u göster',
+  'Open notes in source mode': 'Notları kaynak kipinde aç',
   Pointer: 'İşaretçi',
   'Pointing hand on buttons': 'Düğmelerde işaret eden el',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
@@ -40,11 +146,13 @@ export const tr: Dictionary = {
   '{count} h': '{count} sa',
   Inbox: 'Gelen kutusu',
   Date: 'Tarih',
+  'Start date': 'Başlangıç tarihi',
   Priority: 'Öncelik',
   Reminder: 'Hatırlatıcı',
   Duration: 'Süre',
   'Smart dates': 'Akıllı tarihler',
   'From any app': 'Herhangi bir uygulamadan',
+  'Show tasks without a start date in Today': 'Başlangıç tarihi olmayan görevleri Bugün’de göster',
   'Every day': 'Her gün',
   'Every weekday': 'Her iş günü',
   'Every week': 'Her hafta',
@@ -61,6 +169,13 @@ export const tr: Dictionary = {
   Unsaved: 'Kaydedilmedi',
   'Save to': 'Şuraya kaydet',
   'Reloaded with the web data of {space}': '{space} alanının web verileriyle yeniden yüklendi',
+  Separate: 'Ayrı',
+  'Share this note’s web data again?': 'Bu notun web verileri yeniden paylaşılsın mı?',
+  'What its pages are signed in to on this computer is deleted.':
+    'Sayfalarının bu bilgisayarda oturum açtığı her şey silinir.',
+  'Share again': 'Yeniden paylaş',
+  'This note keeps its own web data now': 'Bu not artık kendi web verilerini tutuyor',
+  'Back on the shared web data': 'Yeniden paylaşılan web verilerinde',
   'Add a page': 'Sayfa ekle',
   'Add a page after this': 'Bundan sonra sayfa ekle',
   'Delete this page': 'Bu sayfayı sil',
@@ -81,6 +196,8 @@ export const tr: Dictionary = {
   Dots: 'Noktalı',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'Tuvali iki parmakla döndür',
+  'Turn upright': 'Düzelt',
   Canvas: 'Tuval',
   Card: 'Kart',
   'Note or picture': 'Not veya resim',
@@ -95,7 +212,6 @@ export const tr: Dictionary = {
   'New window': 'Yeni pencere',
   New: 'Yeni',
   'New space': 'Yeni alan',
-  '{name}: switch space': '{name}: alanı değiştir',
   Untitled: 'Adsız',
   Space: 'Alan',
   'Name the space': 'Alana ad ver',
@@ -140,8 +256,6 @@ export const tr: Dictionary = {
   'Loading…': 'Yükleniyor…',
   'Create a space': 'Alan oluştur',
   'Import a folder': 'Klasör içe aktar',
-  'Sign in to sync': 'Eşitlemek için oturum aç',
-  'Create account': 'Hesap oluştur',
   'Delete space': 'Alanı sil',
   'Delete {name}?': '{name} silinsin mi?',
   'Every note in this space is deleted from your computer.':
@@ -159,6 +273,10 @@ export const tr: Dictionary = {
   Unpin: 'Sabitlemeyi kaldır',
   Close: 'Kapat',
   'Close pinned tab?': 'Sabitlenmiş sekme kapatılsın mı?',
+  'Save changes to {name}?': '{name} içindeki değişiklikler kaydedilsin mi?',
+  'Save changes to these tabs?': 'Bu sekmelerdeki değişiklikler kaydedilsin mi?',
+  'Unsaved words go to Recently deleted.': 'Kaydedilmemiş sözcükler Son silinenler’e gider.',
+  'Don’t save': 'Kaydetme',
   'Close others': 'Diğerlerini kapat',
   'Close tabs to the right': 'Sağdaki sekmeleri kapat',
   'Close tabs to the left': 'Soldaki sekmeleri kapat',
@@ -195,9 +313,6 @@ export const tr: Dictionary = {
   'Move this note': 'Bu notu taşı',
   'Move up': 'Yukarı taşı',
   'Move down': 'Aşağı taşı',
-  Bookmark: 'Yer imi',
-  'Remove bookmark': 'Yer imini kaldır',
-  'Leave out of search': 'Aramadan çıkar',
   'Search here again': 'Burada yine ara',
   'Undo the last file change': 'Son dosya değişikliğini geri al',
   'Undo moving {name}': '{name} taşımasını geri al',
@@ -247,7 +362,6 @@ export const tr: Dictionary = {
   'Remove group': 'Grubu kaldır',
   'Out of the group': 'Gruptan çıkar',
   Make: 'Yap',
-  'Bookmark this block': 'Bu bloğa yer imi koy',
   Panels: 'Paneller',
   Outline: 'Anahat',
   'Stay on this note': 'Bu notta kal',
@@ -511,8 +625,8 @@ export const tr: Dictionary = {
   'Asking OpenAI which models this key can use':
     'Bu anahtarın hangi modelleri kullanabileceği OpenAI’ye soruluyor',
   'Could not reach OpenAI': 'OpenAI’ye ulaşılamadı',
-  'That key cannot use any of the models nibeditor asks for.':
-    'Bu anahtar nibeditor’un istediği modellerin hiçbirini kullanamıyor.',
+  'That key cannot use any of the models Orden asks for.':
+    'Bu anahtar Orden’in istediği modellerin hiçbirini kullanamıyor.',
   'No reasoning': 'Akıl yürütme yok',
   Minimal: 'En az',
   Low: 'Düşük',
@@ -534,7 +648,7 @@ export const tr: Dictionary = {
   Mode: 'Kip',
   // The window's own edges; see appearance.rs
   Window: 'Pencere',
-  'nibeditor’s own': 'nibeditor’un kendi',
+  'Orden’s own': 'Orden’in kendi',
   'The system’s': 'Sistemin',
   'Window frame': 'Pencere çerçevesi',
   System: 'Sistem',
@@ -597,6 +711,7 @@ export const tr: Dictionary = {
   '{done} of {total}': '{total} içinde {done}',
   'Sync failed': 'Eşitleme başarısız',
   '{name} could not be written.': '{name} yazılamadı.',
+  '{name} could not be read.': '{name} okunamadı.',
   'Text size': 'Metin boyutu',
   'Line spacing': 'Satır aralığı',
   'Line width': 'Satır genişliği',
@@ -657,8 +772,10 @@ export const tr: Dictionary = {
   '{used} of {limit} used.': '{limit} içinde {used} kullanıldı.',
   'That image does not fit in your storage.': 'Bu resim depolamanıza sığmıyor.',
   'out of space': 'yer kalmadı',
-  'nibeditor {version} is ready to install.': 'nibeditor {version} kurulmaya hazır.',
+  'Orden {version} is ready to install.': 'Orden {version} kurulmaya hazır.',
+  'Orden {version} is available.': 'Orden {version} kullanıma sunuldu.',
   'Restart now': 'Şimdi yeniden başlat',
+  'Move to Applications': 'Uygulamalar’a taşı',
   Later: 'Sonra',
   More: 'Daha',
   'Open notes': 'Notları aç',
@@ -683,11 +800,9 @@ export const tr: Dictionary = {
   Continue: 'Devam',
   'Send a new code': 'Yeni kod gönder',
   'Code sent to': 'Kod şuraya gönderildi',
-  'You already have notes on this computer.': 'Bu bilgisayarda zaten notlarınız var.',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
-    'Tutarsanız hesabınıza katılır. Silerseniz yalnızca hesabınızda olan kalır - bu geri alınamaz.',
-  'Keep them': 'Tut',
-  'Erase them': 'Sil',
+  'This device already has notes.': 'Bu cihazda zaten notlar var.',
+  Merge: 'Birleştir',
+  'Keep separate': 'Ayrı tut',
   'Digit {number}': '{number}. hane',
   'Resend in {seconds}s': '{seconds} sn sonra yeniden gönder',
   'Last synced {time}.': 'Son eşitleme {time}.',
@@ -736,14 +851,14 @@ export const tr: Dictionary = {
   'Reads your notes.': 'Notlarınızı okur.',
   'Reads and writes your notes.': 'Notlarınızı okur ve yazar.',
   Other: 'Diğer',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'Bir yapay zekâ yardımcısı notlarınızı okuyabilir - izin verirseniz değiştirebilir de. nibeditor e-postanızla oturum açar; yapıştırılacak bir şey yok.',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'Bir yapay zekâ yardımcısı notlarınızı okuyabilir - izin verirseniz değiştirebilir de. Orden e-postanızla oturum açar; yapıştırılacak bir şey yok.',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     'Claude’da Settings → Connectors açın ve Add custom connector’a tıklayın.',
   'Open Claude’s connectors': 'Claude’un bağlayıcılarını aç',
   'Fill in the two fields and click Add.': 'İki alanı doldurup Add’e tıklayın.',
-  'Click Connect and sign in with your nibeditor email.':
-    'Connect’e tıklayıp nibeditor e-postanızla oturum açın.',
+  'Click Connect and sign in with your Orden email.':
+    'Connect’e tıklayıp Orden e-postanızla oturum açın.',
   'Using Claude Code instead?': 'Bunun yerine Claude Code mu kullanıyorsunuz?',
   Command: 'Komut',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -754,16 +869,16 @@ export const tr: Dictionary = {
   'Open ChatGPT’s plugins': 'ChatGPT’nin eklentilerini aç',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     'Plugins bölümü veya artı düğmesi yok mu? Önce Settings → Security and login altında Developer mode’u açın.',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'ChatGPT sorduğunda nibeditor e-postanızla oturum açın.',
-  'To use it in a chat, type @ and pick nibeditor.':
-    'Bir sohbette kullanmak için @ yazıp nibeditor’u seçin.',
+  'Sign in with your Orden email when ChatGPT asks.':
+    'ChatGPT sorduğunda Orden e-postanızla oturum açın.',
+  'To use it in a chat, type @ and pick Orden.':
+    'Bir sohbette kullanmak için @ yazıp Orden’i seçin.',
   'Server URL': 'Sunucu URL’si',
   Authentication: 'Kimlik doğrulama',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     'Gelişmiş OAuth ayarlarını olduğu gibi bırakıp “I understand and want to continue”ı işaretleyin.',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    'OAuth ile Streamable HTTP konuşan her MCP istemcisi. URL’yi verin: kendini kaydeder ve nibeditor’un oturum açma sayfasını açar.',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    'OAuth ile Streamable HTTP konuşan her MCP istemcisi. URL’yi verin: kendini kaydeder ve Orden’in oturum açma sayfasını açar.',
   'Show config': 'Yapılandırmayı göster',
   'For a client that takes a JSON block instead of a URL.':
     'URL yerine bir JSON bloğu alan istemciler için.',
@@ -830,7 +945,7 @@ export const tr: Dictionary = {
   'Display name': 'Görünen ad',
   'Your name': 'Adınız',
   Email: 'E-posta',
-  'On nibeditor.com': 'nibeditor.com üzerinde',
+  'On orden.so': 'orden.so üzerinde',
   'Your own domain': 'Kendi alan adınız',
   'Switching gives up {name}.': 'Değiştirmek {name} adresinden vazgeçmek demektir.',
   Page: 'Sayfa',
@@ -902,8 +1017,9 @@ export const tr: Dictionary = {
   'No footnotes in this note': 'Bu notta dipnot yok',
   'Stack tabs': 'Sekmeleri yan yana diz',
   'Unstack tabs': 'Sekme dizilişini kaldır',
-  'High contrast': 'Yüksek karşıtlık',
+  Contrast: 'Karşıtlık',
   Glass: 'Cam',
+  Classic: 'Klasik',
   'Front matter': 'Ön bilgi',
   'Front matter: {name}': 'Ön bilgi: {name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':
@@ -914,6 +1030,7 @@ export const tr: Dictionary = {
   Comment: 'Açıklama',
   'Always on top': 'Her zaman üstte',
   'What is new': 'Yenilikler',
+  'Download the app': 'Uygulamayı indir',
   'Report an issue': 'Sorun bildir',
   'Move the line up': 'Satırı yukarı taşı',
   'Move the line down': 'Satırı aşağı taşı',
@@ -994,6 +1111,24 @@ export const tr: Dictionary = {
   'Layout: {name}': 'Düzen: {name}',
   'Space: {name}': 'Alan: {name}',
   'Theme: {name}': 'Tema: {name}',
+  'AI account: {name}': 'Yapay zekâ hesabı: {name}',
+  Accounts: 'Hesaplar',
+  Access: 'Erişim',
+  Set: 'Ayarlı',
+  'Start over': 'Baştan başla',
+  'Sign in here': 'Burada oturum aç',
+  '{device} wants your AI accounts': '{device} yapay zekâ hesaplarını istiyor',
+  '{device} offers this device your AI vault': '{device}, bu cihaza yapay zekâ kasanızı sunuyor',
+  Join: 'Katıl',
+  'Allow this device on another one': 'Bu cihaza başka bir cihazdan izin verin',
+  'On every device you sign in to, end-to-end encrypted.':
+    'Oturum açtığın her cihazda, uçtan uca şifreli.',
+  'Sign in to have them on every device.': 'Her cihazda olmaları için oturum aç.',
+  'Agents on this computer connect on their own':
+    'Bu bilgisayardaki ajanlar kendiliğinden bağlanır',
+  Helpers: 'Yardımcılar',
+  'Start helpers on your AI accounts': 'Yapay zekâ hesaplarında yardımcı başlat',
+  Delegated: 'Devredildi',
   'Code theme: {name}': 'Kod teması: {name}',
   'Delete a layout': 'Bir düzeni sil',
   // Keyboards and modal editing
@@ -1062,6 +1197,7 @@ export const tr: Dictionary = {
   'Double-click to write': 'Yazmak için iki kez tıkla',
   'Another colour': 'Başka bir renk',
   'Turn into a note': 'Nota dönüştür',
+  Arrange: 'Düzenle',
   'Bring to front': 'En öne getir',
   'Bring forward': 'Öne getir',
   'Send backward': 'Arkaya gönder',
@@ -1083,6 +1219,12 @@ export const tr: Dictionary = {
   'Export as PNG': 'PNG olarak aktar',
   'Export as SVG': 'SVG olarak aktar',
   'Export as PDF': 'PDF olarak aktar',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF içe aktar',
+  'Choose how to add the pages to the canvas.': 'Sayfaların tuvale nasıl ekleneceğini seçin.',
+  'Single page': 'Tek sayfa',
+  'All pages': 'Tüm sayfalar',
+  'Choose a page': 'Bir sayfa seçin',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Seçileni sil',
   'Nudge left': 'Sola it',
@@ -1143,8 +1285,8 @@ export const tr: Dictionary = {
   'Release channel': 'Sürüm kanalı',
   Stable: 'Kararlı',
   Unstable: 'Kararsız',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Kararlı resmî sürümleri izler, Kararsız main’e her gönderimi izler ve bozulabilir.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Kararlı yayımlanan sürümleri izler, Kararsız edge yapılarını izler ve bozulabilir.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'İçe aktar',
@@ -1201,13 +1343,15 @@ export const tr: Dictionary = {
   '{count} tables inside notes do not come over': 'Notların içindeki {count} tablo geçmez',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} ek, bu Mac’te değil iCloud’dadır',
+  '{count} files are in iCloud rather than on this Mac':
+    '{count} dosya, bu Mac’te değil iCloud’dadır',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS bu notları Tüm Disk Erişimi’nin ardında tutar.',
   'There are no notes in Apple Notes on this Mac.': 'Bu Mac’te Apple Notlar’da not yok.',
   'Those notes could not be read.': 'Bu notlar okunamadı.',
   'Read them from this Mac': 'Bu Mac’ten oku',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    'nibeditor’ü Tüm Disk Erişimi’nde açıp yeniden deneyin.',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    'Orden’i Tüm Disk Erişimi’nde açıp yeniden deneyin.',
   'Open the setting': 'Ayarı aç',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     'Apple Günlük kendini dışa aktarır: Günlük, Ayarlar, Dışa Aktar. Apple Notlar’da dışa aktarma yoktur; bu yüzden notların bulunduğu Mac’ten uzaktayken buraya bırakılacak olan, bir dışa aktarıcının yazdığı klasördür.',
@@ -1309,15 +1453,16 @@ export const tr: Dictionary = {
   'OpenAI-compatible': 'OpenAI uyumlu',
   'Base URL': 'Temel URL',
   'API key': 'API anahtarı',
-  'Set on this device': 'Bu aygıtta ayarlı',
   Optional: 'İsteğe bağlı',
   'List models': 'Modelleri getir',
   'Asking…': 'Soruluyor…',
   'No providers yet.': 'Henüz sağlayıcı yok.',
   'Add {name}': '{name} ekle',
-  'Keys stay in the secure store on this device.': 'Anahtarlar bu aygıtın güvenli deposunda kalır.',
   'This browser holds the keys in its own storage.':
     'Bu tarayıcı anahtarları kendi deposunda tutar.',
+  'Keep this browser’s keys in the vault': 'Bu tarayıcının anahtarlarını kasada tut',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'O zaman her cihazın anahtarları bu tarayıcının depolama alanında tutulur; sayfaya sızan bir betik onları okuyabilir.',
   'AI can be wrong. Check the facts.': 'YZ yanılabilir. Bilgileri doğrulayın.',
   'Used by the glasses': 'Gözlük kullanır',
   'Could not read the models.': 'Modeller okunamadı.',
@@ -1359,7 +1504,6 @@ export const tr: Dictionary = {
   'A cited report': 'Alıntılı bir rapor',
   'A helper in the background': 'Arka planda bir yardımcı',
   'A side question': 'Yan bir soru',
-  'Agent mode': 'Ajan modu',
   'Agent profile': 'Ajan profili',
   'Archive the thread': 'Konuşmayı arşivle',
   'Approve mode': 'Onay modu',
@@ -1478,8 +1622,6 @@ export const tr: Dictionary = {
   // Web tabs
   Reload: 'Yeniden yükle',
   'Hard reload': 'Sert yeniden yükleme',
-  'Clip this page': 'Bu sayfayı sakla',
-  'Clip the link': 'Bağlantıyı sakla',
   'Open in the browser': 'Tarayıcıda aç',
   'Show it here': 'Burada göster',
   Website: 'Web sitesi',
@@ -1567,8 +1709,10 @@ export const tr: Dictionary = {
   'that is not a theme': 'bu bir tema değil',
   'no such theme': 'böyle bir tema yok',
   'choose a model first': 'önce bir model seçin',
+  'set an OpenAI key in Orden’s settings first':
+    'önce Orden ayarlarında bir OpenAI anahtarı ayarlayın',
   'set an OpenAI key in nibeditor’s settings first':
-    'önce nibeditor ayarlarında bir OpenAI anahtarı ayarlayın',
+    'önce Orden ayarlarında bir OpenAI anahtarı ayarlayın',
   'that is a lot of questions - try again later': 'bu çok soru - sonra yine deneyin',
   'that is too much audio': 'bu çok fazla ses',
   'that is more than a spoken command': 'bu bir sesli komuttan fazlası',
@@ -1592,7 +1736,6 @@ export const tr: Dictionary = {
   Nothing: 'Hiçbiri',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': 'Bu görünümü yer imlerine ekle',
   Keep: 'Sakla',
 
   // Which side of the window a panel sits on.
@@ -1614,7 +1757,6 @@ export const tr: Dictionary = {
   'New tab': 'Yeni sekme',
   'Full screen': 'Tam ekran',
   'Print…': 'Yazdır…',
-  'Save page': 'Sayfayı kaydet',
   'Share…': 'Paylaş…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1657,7 +1799,6 @@ export const tr: Dictionary = {
   Blocked: 'Engelleniyor',
   'Reset permissions': 'İzinleri sıfırla',
   'Turn into': 'Şuna dönüştür',
-  'Bookmark these blocks': 'Bu bloklara yer imi koy',
   Foldable: 'Katlanabilir',
   'Starts folded': 'Katlı başlar',
   // Where a space keeps what websites store
@@ -1674,6 +1815,16 @@ export const tr: Dictionary = {
   'Bring all to front': 'Tümünü öne getir',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Kopyalamayı geri al',
+  'Devices with your AI vault': 'Yapay zekâ kasanız olan cihazlar',
+  'This device': 'Bu cihaz',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'Cihaz artık yapay zekâ hesaplarınızı okuyamaz, diğerleri yeni bir anahtar alır.',
+  'Also remove this device from your AI vault?':
+    'Bu cihaz yapay zekâ kasanızdan da kaldırılsın mı?',
+  'Remove and sign out': 'Kaldır ve oturumu kapat',
+  'Undo making {name}': '{name} oluşturmasını geri al',
+  'Undo the deletion': 'Silmeyi geri al',
+  'Undo the move': 'Taşımayı geri al',
   'Redo the last file change': 'Son dosya değişikliğini yinele',
   'Select down': 'Aşağı doğru seç',
   'Select up': 'Yukarı doğru seç',
@@ -1717,7 +1868,6 @@ export const tr: Dictionary = {
   '{key} in a terminal': 'Terminalde {key}',
   'Always ask': 'Her zaman sor',
   'Open another': 'Bir tane daha aç',
-  'Open in terminal': 'Terminalde aç',
   Clear: 'Temizle',
   'Exited with code {code}': '{code} koduyla sonlandı',
   'Could not start {shell}': '{shell} başlatılamadı',
@@ -1729,18 +1879,8 @@ export const tr: Dictionary = {
     one: '{count} satır yapıştırılsın mı?',
     other: '{count} satır yapıştırılsın mı?',
   },
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': 'Öntanımlı tarayıcı',
-  // The engine web tabs run on
-  Engine: 'Motor',
-  Relaunch: 'Yeniden başlat',
-  'Chromium did not start': 'Chromium başlamadı',
-  'No connection': 'Bağlantı yok',
-  'Not in this release': 'Bu sürümde yok',
-  'Needs an update': 'Güncelleme gerekiyor',
-  'Signature did not match': 'İmza eşleşmedi',
-  'Disk full': 'Disk dolu',
-  'Could not be installed': 'Yüklenemedi',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} düzenlemelerini geri al',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1843,7 +1983,7 @@ export const tr: Dictionary = {
   'Always on this site': 'Bu sitede her zaman',
   'Agents stopped': 'Ajanlar durduruldu',
   'Agent tabs closed': 'Ajan sekmeleri kapatıldı',
-  'nibeditor is still running for your agents': 'nibeditor ajanlarınız için çalışmaya devam ediyor',
+  'Orden is still running for your agents': 'Orden ajanlarınız için çalışmaya devam ediyor',
   '{client} wants to connect': '{client} bağlanmak istiyor',
   // Web logins that travel, and the devices of an account
   'no such device': 'böyle bir cihaz yok',
@@ -1859,11 +1999,11 @@ export const tr: Dictionary = {
   // to connect one more.
   'Agents on this computer': 'Bu bilgisayardaki ajanlar',
   'Your account’s connector': 'Hesabının bağlayıcısı',
-  'nibeditor asks you once, the first time it connects.':
-    'nibeditor ilk bağlandığında sana bir kez sorar.',
+  'Orden asks you once, the first time it connects.': 'Orden ilk bağlandığında sana bir kez sorar.',
   'A client on another machine?': 'Başka bir makinedeki bir istemci mi?',
   'Shown only once.': 'Yalnızca bir kez gösterilir.',
   'Remove {name}?': '{name} kaldırılsın mı?',
+  'End {name}?': '{name} bitirilsin mi?',
   'Its token stops working.': 'Belirteci artık çalışmaz.',
   'Added {date}': '{date} tarihinde eklendi',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':
@@ -1884,7 +2024,6 @@ export const tr: Dictionary = {
   'Change notes': 'Notları değiştirmek',
   'See what you are looking at': 'Neye baktığını görmek',
   'Move and rename files': 'Dosyaları taşımak ve yeniden adlandırmak',
-  'Open tabs and bookmarks': 'Sekme ve yer imi açmak',
   'Bring a tab to the front': 'Bir sekmeyi öne getirmek',
   'Browse in tabs of its own': 'Kendi sekmelerinde gezinmek',
   'Read what pages load': 'Sayfaların yüklediklerini okumak',
@@ -1906,14 +2045,11 @@ export const tr: Dictionary = {
   'Without your logins': 'Oturumların olmadan',
   'Calls a minute': 'Dakikada çağrı',
   'Pages a minute': 'Dakikada sayfa',
+  'Browser memory limit': 'Tarayıcı bellek sınırı',
   '{count} calls': {
     one: '{count} çağrı',
     other: '{count} çağrı',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': '{device} üzerinde açık',
-  'Use here': 'Burada kullan',
-  '{device} wants your web logins': '{device} web oturum açma bilgilerinizi istiyor',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'Hızlı soru',
@@ -1980,7 +2116,7 @@ export const tr: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: 'Ertele',
   Reminders: 'Hatırlatıcılar',
-  'Reminders ring while nibeditor is open': 'Hatırlatıcılar nibeditor açıkken çalar',
+  'Reminders ring while Orden is open': 'Hatırlatıcılar Orden açıkken çalar',
   Automatic: 'Otomatik',
   'Stay in the tray': 'Sistem tepsisinde kal',
   'Exact alarms': 'Tam zamanlı alarmlar',
@@ -2023,7 +2159,6 @@ export const tr: Dictionary = {
   'Any of them': 'Herhangi biri',
   Compare: 'Karşılaştır',
   'Add a filter': 'Filtre ekle',
-  'Reschedule to today': 'Bugüne taşı',
   Collapse: 'Daralt',
   Expand: 'Genişlet',
   Summary: 'Özet',
@@ -2045,7 +2180,6 @@ export const tr: Dictionary = {
   Layout: 'Düzen',
   Overdue: 'Gecikmiş',
   Upcoming: 'Yaklaşan',
-  Logbook: 'Kayıt defteri',
   Project: 'Proje',
   Label: 'Etiket',
   List: 'Liste',
@@ -2231,4 +2365,11 @@ export const tr: Dictionary = {
   'Search this chat': 'Bu sohbette ara',
   'Add as task': 'Görev olarak ekle',
   'Save as note': 'Not olarak kaydet',
+  // Appearance: glass's own pairs of colours
+  Dawn: 'Şafak',
+  Lagoon: 'Lagün',
+  Lilac: 'Leylak',
+  Peach: 'Şeftali',
+  Sage: 'Adaçayı',
+  Mist: 'Sis',
 }

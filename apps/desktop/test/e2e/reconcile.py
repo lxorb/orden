@@ -38,6 +38,9 @@ import json
 import harness
 from harness import Drive
 
+#: A pass that carries every note up, in WebKit; see `first_pass` below.
+BUDGET = 1500
+
 DRIVE = Drive(__file__, served=False)
 say = DRIVE.say
 ORIGIN = harness.worker_origin()
@@ -174,10 +177,15 @@ def drive(browser, token: str) -> dict[str, object]:
     # The first pass coming back, which is when the space itself exists on the
     # account: a local space with no mirror is `plan.upload`, and that pass creates
     # the space and pairs it. The notes go up after it.
+    # Where the space is paired before the first pass starts - WebKit, here - that pass
+    # is the one that carries the five thousand notes up, one request each, and comes
+    # back after six to seven minutes rather than in seconds; so it is given fifteen
+    # (#384). The number said is the finding either way.
     first_pass = when(
         "() => { const s = window.nibApp?.sync;"
         " return !!s && !s.running && (s.reconciledAt ?? 0) > 0 }",
         "the first pass has come back",
+        patience=900_000 if harness.WEBKIT else 420_000,
     )
 
     # And then every note. This is the reconcile item two is about: five thousand

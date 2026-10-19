@@ -52,6 +52,12 @@ export async function storeImage(file: File, notePath: string | null): Promise<s
   return storeBeside(bytes, notePath, `${hash.slice(0, 16)}.${extension}`)
 }
 
+/** A picture the account keeps, as an address any page can load; see canvas/actions.ts. */
+export function accountAddress(stored: string): string | null {
+  if (!stored.startsWith(`${BASE}/i/`)) return null
+  return /^https?:\/\//i.test(stored) ? stored : new URL(stored, location.href).href
+}
+
 /** What one dropped file may weigh. It crosses into the Rust side as an array of
  *  numbers, which is the one place the write is not free, and it travels through sync
  *  to every device the space is on - the ceiling a recording keeps to, for the same two

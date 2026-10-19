@@ -22,7 +22,8 @@ import {
   type TaskFields,
 } from '@nib/markdown/task-line'
 import { label } from '../labels'
-import { dayWords, todayHere } from '../task-days'
+import { dayWords, timeWords, todayHere } from '../task-days'
+import { deadlineOf, type DueReads, startOf } from '@nib/markdown/task-dates'
 import { noteIndex } from '../wikilink/notes'
 import { NibWidget } from './widget'
 
@@ -84,23 +85,31 @@ const minutes = (count: number) => {
   return hours ? (rest ? `${hours}h${rest}m` : `${hours}h`) : `${rest}m`
 }
 
-/** The chips a task's fields make, in the order 5.7 draws them. */
-export function chipsOf(fields: TaskFields, today: string): TaskChip[] {
+/** The chips a task's fields make, in the order 5.7 draws them. The day it starts is
+ *  said while that is still to come and never as late; once it has come only its time
+ *  is; only a deadline is late (#371). `due` is what a `📅` means in the note's space. */
+export function chipsOf(fields: TaskFields, today: string, due: DueReads = 'start'): TaskChip[] {
   const day = (iso: string, time?: string) => dayWords(iso, today, time)
   const out: TaskChip[] = []
-  const date = fields.due ?? fields.scheduled ?? fields.start
-  if (date !== undefined) {
-    const late = date < today && !fields.done && !fields.cancelled
-    out.push({ field: 'date', text: day(date, fields.time), ...(late ? { tone: 'overdue' } : {}) })
-  }
+  const open = !fields.done && !fields.cancelled
+  const date = startOf(fields, due) ?? fields.scheduled
+  if (date !== undefined && date > today) out.push({ field: 'date', text: day(date, fields.time) })
+  else if (fields.time !== undefined) out.push({ field: 'date', text: timeWords(fields.time) })
   if (fields.recurrence) out.push({ field: 'recurrence', text: `↻ ${fields.recurrence}` })
   const flag = PRIORITY[fields.priority]
   if (flag) out.push({ field: 'priority', ...flag })
   if (fields.remind.length) out.push({ field: 'remind', text: '🔔' })
   if (fields.duration !== undefined)
     out.push({ field: 'duration', text: `⏱ ${minutes(fields.duration)}` })
-  if (fields.deadline !== undefined)
-    out.push({ field: 'deadline', text: `⚑ ${day(fields.deadline)}` })
+  const deadline = deadlineOf(fields, due)
+  if (deadline !== undefined) {
+    const late = open && deadline < today
+    out.push({
+      field: 'deadline',
+      text: `⚑ ${day(deadline)}`,
+      ...(late ? { tone: 'overdue' } : {}),
+    })
+  }
   if (fields.assignee) out.push({ field: 'assignee', text: `+${fields.assignee}` })
   if (fields.completed !== undefined) {
     out.push({ field: 'done', text: label('taskDoneOn').replace('{date}', day(fields.completed)) })
@@ -147,6 +156,7 @@ export class TaskChipsWidget extends NibWidget {
         target.dataset.field ?? '',
         parsed.fields,
         target.getBoundingClientRect(),
+        view.state.facet(noteIndex).dueReads ?? 'start',
         (change) => {
           const now = view.state.doc.lineAt(Math.min(this.at, view.state.doc.length))
           const edits = writeTask(now.text, change)
@@ -176,8 +186,65 @@ export class TaskChipsWidget extends NibWidget {
  *  line that is not a task. Offsets into the line. */
 export function taskDrawing(
   line: string,
+  due: DueReads = 'start',
 ): { hide: { from: number; to: number }[]; chips: TaskChip[] } | null {
   const parsed = parseTask(line)
   if (!parsed) return null
-  return { hide: fieldSpans(line, parsed), chips: chipsOf(parsed.fields, todayHere()) }
+  return { hide: fieldSpans(line, parsed), chips: chipsOf(parsed.fields, todayHere(), due) }
+}
+
+/** A comment's own fields (\`[at:: 2026-10-13T09:30]\`, \`[by:: Lu]\`), written by the task
+ *  view's composer under a task: hidden like a mark, and said after its words as a
+ *  quiet chip - when, and by whom. Nothing to pick, so nothing to press. */
+const COMMENT_FIELD = /[ \t]*\[(at|by)::[ \t]*([^\]]*?)[ \t]*\]/g
+
+/** A list item that is a task, which draws its own fields. */
+const TASK_ITEM = /^[ \t]*(?:[-*+]|\d{1,9}[.)])[ \t]+\[.\]/
+
+/** What a comment's line hides and says again, or null for a line with no such field. */
+export function commentDrawing(
+  line: string,
+  today = todayHere(),
+): { hide: { from: number; to: number }[]; chips: string[] } | null {
+  if (TASK_ITEM.test(line)) return null
+  const hide: { from: number; to: number }[] = []
+  const chips: string[] = []
+  for (const found of line.matchAll(COMMENT_FIELD)) {
+    const [whole, key, value = ''] = found
+    if (!value) continue
+    hide.push({ from: found.index, to: found.index + whole.length })
+    if (key === 'by') chips.push(value)
+    else {
+      const [day = '', time] = value.split('T')
+      chips.push(/^\d{4}-\d{2}-\d{2}$/.test(day) ? dayWords(day, today, time?.slice(0, 5)) : value)
+    }
+  }
+  return hide.length ? { hide, chips } : null
+}
+
+/** The when and the who after a comment's words, in the task chips' quiet ink. */
+export class CommentChipsWidget extends NibWidget {
+  constructor(readonly chips: readonly string[]) {
+    super()
+  }
+
+  override eq(other: CommentChipsWidget) {
+    return other.chips.join('\n') === this.chips.join('\n')
+  }
+
+  toDOM() {
+    const row = document.createElement('span')
+    row.className = 'nib-task-chips nib-comment-chips'
+    for (const text of this.chips) {
+      const one = document.createElement('span')
+      one.className = 'nib-task-chip'
+      one.textContent = text
+      row.append(one)
+    }
+    return row
+  }
+
+  override ignoreEvent() {
+    return false
+  }
 }

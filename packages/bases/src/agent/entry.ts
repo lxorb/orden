@@ -40,7 +40,8 @@ export function taskOf(entry: Entry): TaskFields {
     dependsOn: [],
     fields: {},
   }
-  if (fields.due !== undefined) task.due = fields.due
+  // A task's date is the day it starts (#371).
+  if (fields.due !== undefined) task.start = fields.due
   if (fields.time !== undefined) task.time = fields.time
   if (fields.recurrence !== undefined) task.recurrence = fields.recurrence
   if (fields.assignee !== undefined) task.assignee = fields.assignee

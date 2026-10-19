@@ -31,7 +31,7 @@ export type Property = FrontMatterRow[1]
 
 /** A front matter block, or nothing at all when there is nothing to say. Which
  *  rows there are is decided here - only what the export knew - and how each value
- *  is spelled is @nib/markdown/front-matter's, shared with the clipper so that a
+ *  is spelled is @nib/markdown/front-matter's, shared with a web tab's clip so that a
  *  clipped page and an imported note say the same thing the same way. */
 export function frontMatterFor(meta: Meta): string {
   const rows: FrontMatterRow[] = []
@@ -65,11 +65,22 @@ function said(value: Property): boolean {
  *  with nothing at the top. A body that already opens with a heading keeps its
  *  own. */
 export function noteText(title: string | null, body: string, meta: Meta = {}): string {
-  const words = body.replace(/^\s+/, '').replace(/\s+$/, '')
+  // Only the blank lines above the words go: the first line's own indent is what
+  // makes a note that opens with an indented code block open with code.
+  const words = body.replace(/^(?:[ \t]*\r?\n)+/, '').replace(/\s+$/, '')
   const heads = /^#{1,6}\s/.test(words)
   const head = title && !heads ? `# ${title}\n\n` : ''
 
   return `${frontMatterFor(meta)}${head}${words}${words ? '\n' : ''}`
+}
+
+/** A note's words as the app that kept them wrote them, to the byte. The blank
+ *  lines above them stay, because a `---` that is not on the first line is a rule
+ *  and not properties, and so does every line ending, a Windows one included. Only
+ *  a last line ending is added where there was none, of the note's own kind. */
+export function keptText(body: string): string {
+  if (!body || body.endsWith('\n')) return body
+  return `${body}${body.includes('\r\n') ? '\r\n' : '\n'}`
 }
 
 /** A property name YAML will read as one word, for a column called

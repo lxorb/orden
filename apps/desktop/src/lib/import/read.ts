@@ -5,7 +5,8 @@
  *  one of these formats says what it is if you look. So the sheet looks, names
  *  what it found, and shows what it is about to make.
  *
- *  The order below is the order of certainty: a `.enex` can only be Evernote, a
+ *  The order below is the order of certainty: a `.obsidian/` folder can only be
+ *  a vault, whatever else is in it, a `.enex` can only be Evernote, a
  *  32-character id on every file name can only be Notion, and a folder of
  *  markdown is what is left when nothing more specific fits. */
 
@@ -17,6 +18,9 @@ import type { Rows } from './table'
 /** How many files are opened to work out what an export is. Enough to be sure,
  *  few enough that a zip of six thousand notes is not unpacked to answer it. */
 const PEEK = 20
+
+/** One of Bear's closed tags, as `CLOSED_TAG` in convert.ts reads them. */
+const CLOSED_TAG = /(^|[\s(])#[^\s#`[\]\n](?:[^#`[\]\n]{0,58}[^\s#`[\]\n])?#(?![\w#])/m
 
 /** Obsidian's own folder at the top of a vault, or one folder down. */
 const VAULT = /^([^/]+\/)?\.obsidian\//
@@ -37,14 +41,16 @@ export async function detect(sources: readonly Source[]): Promise<FormatId | nul
   const paths = sources.map((one) => one.path)
   const has = (pattern: RegExp) => paths.some((one) => pattern.test(one))
 
+  // Obsidian keeps its settings in `.obsidian/` at the top of a vault, and nothing
+  // else writes that folder. Asked first, because a vault is somebody's whole set of
+  // files: a `.enex` kept in one is an old export lying in the vault, not the thing
+  // being imported, and a vault with a `pages/` folder in it is still a vault and
+  // not a Logseq graph. One folder deep as well, for a zip whose only entry is the
+  // vault itself.
+  if (has(VAULT)) return 'obsidian'
+
   if (has(/\.enex$/i)) return 'evernote'
   if (has(/\.note$/i)) return 'tomboy'
-
-  // Obsidian keeps its settings in `.obsidian/` at the top of a vault, and nothing
-  // else writes that folder. Asked before the folder shapes below, because a vault
-  // with a `pages/` folder in it is still a vault and not a Logseq graph. One folder
-  // deep as well, for a zip whose only entry is the vault itself.
-  if (has(VAULT)) return 'obsidian'
 
   // Papers and nothing else: somebody's own PDF, to be written on rather than
   // converted. Before everything below, because a `.pdf` is the one extension on this
@@ -59,14 +65,23 @@ export async function detect(sources: readonly Source[]): Promise<FormatId | nul
   // every entry, which nothing else does.
   if (await looksLikeJournal(sources)) return 'journal'
 
-  // Takeout names the folder, and a Keep note says what it is even loose.
-  if (has(/(^|\/)Keep\//i)) return 'keep'
+  // Takeout names the folder, and a Keep note says what it is even loose. The folder
+  // with a note of Keep's in it: a folder of somebody's own notes called Keep is still
+  // theirs, and read as Keep it would bring none of them.
+  if (has(/(^|\/)Keep\/[^/]+\.json$/i)) return 'keep'
 
   const json = await jsonKind(sources)
   if (json) return json
 
-  if (has(/^(journals|pages|logseq)\//i) || has(/\/(journals|pages)\//i)) return 'logseq'
-  if (paths.some((one) => hasNotionId(one.split('/').pop() ?? one))) return 'notion'
+  // At the top, or one folder down for a zip whose one entry is the graph. Not
+  // deeper: a `pages/` folder four folders into somebody's notes is a website's
+  // pages, and reading the whole folder as Logseq would turn every `- TODO` in it
+  // into a checkbox. Logseq's own `logseq/` or its `pages/`, named in lower case as
+  // Logseq names them, and not a `journals/` folder alone: somebody's Obsidian notes
+  // keep their days in `Journals/2024/01/` as often, and read as Logseq those would
+  // be flattened and given the wrong dates.
+  if (has(/^([^/]+\/)?logseq\//i) || has(/^([^/]+\/)?pages\//)) return 'logseq'
+  if (looksLikeNotion(paths)) return 'notion'
 
   const markdown = paths.filter((one) => /\.(md|markdown|txt)$/i.test(one))
   const html = paths.filter((one) => /\.html?$/i.test(one))
@@ -86,6 +101,19 @@ export async function detect(sources: readonly Source[]): Promise<FormatId | nul
   if (has(PANDOC)) return 'pandoc'
 
   return null
+}
+
+/** Notion's id on the end of every page's name. Every one, because a single page
+ *  somebody exported once and kept among their own notes is one of those notes, and
+ *  read as Notion the lines under each title would all become properties. A page is
+ *  a note or a web page, bar the `index.html` an HTML export opens on; an export of
+ *  nothing but databases has its id on each table instead. */
+function looksLikeNotion(paths: readonly string[]): boolean {
+  const named = (path: string) => hasNotionId(path.split('/').pop() ?? path)
+  const pages = paths.filter(
+    (one) => /\.(md|markdown|html?)$/i.test(one) && !/(^|\/)index\.html$/i.test(one),
+  )
+  return pages.length ? pages.every(named) : paths.some(named)
 }
 
 /** What wrote a TextBundle, which the bundle itself says. */
@@ -136,12 +164,14 @@ async function jsonKind(sources: readonly Source[]): Promise<FormatId | null> {
 
 /** Bear's closed tags, which nothing else writes: `#two words#`. One is enough to
  *  say where a folder of markdown came from, and the only difference it makes is
- *  that those tags are tidied. */
+ *  that those tags are tidied. Held to what convert.ts reads as one, with no space
+ *  just inside either hash, so two ordinary tags on a line, `#project #work`, are
+ *  not taken for one. */
 async function looksLikeBear(sources: readonly Source[]): Promise<boolean> {
   const notes = sources.filter((one) => /\.(md|markdown)$/i.test(one.path)).slice(0, PEEK)
 
   for (const note of notes) {
-    if (/(^|[\s(])#[^#\s][^#\n]{0,60}#/m.test(await note.text())) return true
+    if (CLOSED_TAG.test(await note.text())) return true
   }
 
   return false
@@ -262,15 +292,22 @@ export async function readAs(
     }
     case 'obsidian': {
       const { readPlain } = await import('./plain')
-      const { leftInVault } = await import('./obsidian')
-      return readPlain(sources, { format, skip: leftInVault })
+      const { atVaultTop, leftInVault, lostInVault } = await import('./obsidian')
+      const vault = atVaultTop(sources)
+      const plan = await readPlain(vault, { format, skip: leftInVault, asTheyAre: true })
+      plan.lost.push(...lostInVault(vault))
+      return plan
     }
     case 'craft':
     case 'onenote':
     case 'apple-notes':
     case 'markdown': {
       const { readPlain } = await import('./plain')
-      return readPlain(sources, { format })
+      const { isHidden } = await import('./folder')
+      // Hidden files stay behind, as they do from a vault: a folder of notes kept in
+      // git, or a vault whose `.obsidian/` was never synced, holds `.git` and a
+      // `.trash/` of notes somebody threw away, and none of it is anybody's writing.
+      return readPlain(sources, { format, skip: isHidden })
     }
     case 'pandoc': {
       // Pandoc is a program on the machine rather than a reader in here, and the

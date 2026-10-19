@@ -4,7 +4,7 @@ import { spaceForHost } from './blog'
 import { readSite, SVG_POLICY } from './blog/site'
 import { now } from './crypto'
 import { readSpaceFiles } from './spaces/files'
-import { BYTES } from './sync2/files'
+import { BYTES, hashOf, hashOfBytes, held, WRONG_BYTES } from './sync2/files'
 import { fits } from './storage'
 import type { Env, Variables } from './types'
 
@@ -69,25 +69,36 @@ blobs.put('/:hash', async (context) => {
   const declared = Number(context.req.header('content-length') ?? 0)
   if (declared > limit) return context.json({ error: 'that file is too big' }, 413)
 
-  const already = await context.env.DB.prepare(
-    'select hash from blobs where hash = ? and user_id = ?',
-  )
-    .bind(hash, user.id)
-    .first()
-
-  if (already) return context.json({ hash, stored: false })
+  const { mine, there } = await held(context.env, user.id, hash)
+  if (mine) return context.json({ hash, stored: false })
 
   const body = await context.req.arrayBuffer()
   if (!body.byteLength) return context.json({ error: 'nothing to store' }, 400)
   if (body.byteLength > limit) return context.json({ error: 'that file is too big' }, 413)
 
+  // The name is a promise about the bytes, and every account that keeps the same
+  // file is served the one object: bytes that are not that hash would be somebody
+  // else's picture, or their site's stylesheet or script, replaced for all of them.
+  // The one name that is not the hash of what it holds is a drawn diagram's, which
+  // is named by its fence and its space (packages/markdown/src/diagrams.ts) - a
+  // name no page prints, so nobody but the space's own devices can write to it.
+  const verified = (await hashOfBytes(body)) === hash
+  if (!verified && type !== 'image/svg+xml') return context.json({ error: WRONG_BYTES }, 400)
+  // Nor is that name a way to claim a drawing somebody else made: a row is what lets
+  // a post or a file entry name a blob, and it is only ever had for the bytes.
+  if (!verified && there) return context.json({ error: WRONG_BYTES }, 400)
+
   if (!(await fits(context.env, user.id, body.byteLength))) {
     return context.json({ error: OUT_OF_SPACE }, 507)
   }
 
-  // The object may already be there from someone else; writing it again is the
-  // same bytes either way, and cheaper than asking first.
-  await context.env.NOTES.put(key(hash), body, { httpMetadata: { contentType: type } })
+  // An object already there stays as it is, with the type it was first stored as:
+  // it is the same bytes, and this account keeps it too. Unless it is not the same
+  // bytes - something put there under a hash before the bytes were checked - and
+  // these are: then the right bytes take its place, for everybody who keeps them.
+  if (!there || (verified && !(await holdsItsName(context.env, hash)))) {
+    await context.env.NOTES.put(key(hash), body, { httpMetadata: { contentType: type } })
+  }
   // And the row may already be this account's by the time this runs: the check
   // above is not a lock, and a paste that went up twice at once used to answer
   // the second one with a 500. The same bytes under the same hash are the same
@@ -101,6 +112,12 @@ blobs.put('/:hash', async (context) => {
 
   return context.json({ hash, stored: true }, 201)
 })
+
+/** Whether the object under a hash is the bytes that hash names. */
+async function holdsItsName(env: Env, hash: string): Promise<boolean> {
+  const object = await env.NOTES.get(key(hash))
+  return object !== null && (await hashOf(object)) === hash
+}
 
 /** Gives a file back and stops keeping it. The object survives while any other
  *  account still references it. */
@@ -135,14 +152,14 @@ export async function letGo(env: Env, userId: string, hash: string): Promise<voi
  *  Which is a real cost, and worth writing down rather than leaving as an
  *  assumption. A hash is the same for the same bytes whoever holds them, and it
  *  is derivable from the bytes: anybody who already has a copy of a document can
- *  work out its hash and ask this route whether Nib is holding it, and be given
+ *  work out its hash and ask this route whether Orden is holding it, and be given
  *  it. And a hash learned once - out of a note somebody was shown, off a
  *  published page, out of a proxy log - keeps working for ever, including for
  *  somebody who has since been taken out of the space it came from. Two ways out
  *  of that were considered:
  *
  *  **A salt per account in the key.** `blobs/<sha256(salt + hash)>` would make one
- *  account's URL unrelated to another's, which closes the "does Nib hold this
+ *  account's URL unrelated to another's, which closes the "does Orden hold this
  *  document" question: knowing the bytes is no longer knowing the address. It
  *  costs the deduplication - the same picture in two accounts becomes two objects
  *  in R2, and the quota counts it twice - and it costs a migration of every object
@@ -152,15 +169,15 @@ export async function letGo(env: Env, userId: string, hash: string): Promise<voi
  *  **An access check here, by space membership.** The right answer in principle,
  *  and mostly impossible: an `<img>` tag cannot carry an `Authorization` header,
  *  auth here is a bearer token and never a cookie, and the URL of a picture is
- *  written into the note's own markdown - so the editor, an export, a published
- *  page and the clipper all fetch these with no session at all. Checking the
+ *  written into the note's own markdown - so the editor, an export and a published
+ *  page all fetch these with no session at all. Checking the
  *  requester would break every picture in the app before it stopped anybody.
  *
  *  So the capability stands for pictures, and what is checked is the thing that
  *  can be: a PDF is a whole document rather than an illustration inside a note,
  *  and the only thing that ever fetches one of those from here is a published
- *  page. The app opens the file in the space's own folder, the web build reads it
- *  out of its own store, and the clipper deals in pictures. So a PDF is served
+ *  page. The app opens the file in the space's own folder, and the web build reads it
+ *  out of its own store. So a PDF is served
  *  where a published page could link to it and nowhere else, and a paper in a
  *  private space is not something a hash gets anybody any more. */
 export const publicBlobs = new Hono<{ Bindings: Env }>()

@@ -1,14 +1,16 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { readSpaceFiles } from '../src/spaces/files'
-import { call, mail, signIn, testEnv, type ShareView, type TestEnv } from './harness'
+import { call, file, mail, signIn, testEnv, type ShareView, type TestEnv } from './harness'
 
 let env: TestEnv
 let token: string
 let space: string
 
-/** A hash is 64 hex characters; what is behind it never matters here. */
-const PAPER = 'a'.repeat(64)
-const OTHER = 'b'.repeat(64)
+/** Three files and the hashes they are named by; `bytesOf` gives each one's bytes
+ *  back, since an upload is refused unless they are what the hash names. */
+const FILES = [file(64, 1), file(64, 2), file(64, 3)]
+const [PAPER, OTHER, THIRD] = FILES.map((one) => one.hash) as [string, string, string]
+const bytesOf = (hash: string) => FILES.find((one) => one.hash === hash)!.bytes
 
 beforeEach(async () => {
   env = testEnv()
@@ -22,11 +24,11 @@ afterEach(() => env.close())
 
 /** The bytes of a PDF, the way the app sends them up before recording where the
  *  file sits. */
-function upload(hash: string, bytes = 2048, type = 'application/pdf') {
+function upload(hash: string, type = 'application/pdf') {
   return call(env, `/v1/blobs/${hash}`, {
     method: 'PUT',
     token,
-    raw: new Uint8Array(bytes),
+    raw: bytesOf(hash),
     headers: { 'content-type': type },
   })
 }
@@ -94,7 +96,7 @@ describe('a PDF as a blob', () => {
   })
 
   test('while a picture is served to whoever holds its hash, as it always was', async () => {
-    await upload(PAPER, 64, 'image/png')
+    await upload(PAPER, 'image/png')
 
     const response = await call(env, `/i/${PAPER}.png`)
     expect(response.status).toBe(200)
@@ -102,14 +104,14 @@ describe('a PDF as a blob', () => {
   })
 
   test('with the parameters after the type left off', async () => {
-    expect((await upload(PAPER, 64, 'application/pdf; charset=binary')).status).toBe(201)
+    expect((await upload(PAPER, 'application/pdf; charset=binary')).status).toBe(201)
   })
 
   test('up to a size a whole scanned paper fits in', async () => {
     const response = await call(env, `/v1/blobs/${PAPER}`, {
       method: 'PUT',
       token,
-      raw: new Uint8Array(8),
+      raw: bytesOf(PAPER),
       headers: { 'content-type': 'application/pdf', 'content-length': String(48 * 1024 * 1024) },
     })
 
@@ -120,7 +122,7 @@ describe('a PDF as a blob', () => {
     const response = await call(env, `/v1/blobs/${PAPER}`, {
       method: 'PUT',
       token,
-      raw: new Uint8Array(8),
+      raw: bytesOf(PAPER),
       headers: { 'content-type': 'application/pdf', 'content-length': String(96 * 1024 * 1024) },
     })
 
@@ -131,7 +133,7 @@ describe('a PDF as a blob', () => {
     const response = await call(env, `/v1/blobs/${PAPER}`, {
       method: 'PUT',
       token,
-      raw: new Uint8Array(8),
+      raw: bytesOf(PAPER),
       headers: { 'content-type': 'image/png', 'content-length': String(48 * 1024 * 1024) },
     })
 
@@ -139,8 +141,8 @@ describe('a PDF as a blob', () => {
   })
 
   test('and nothing else is stored at all', async () => {
-    expect((await upload(PAPER, 32, 'application/zip')).status).toBe(415)
-    expect((await upload(PAPER, 32, 'text/html')).status).toBe(415)
+    expect((await upload(PAPER, 'application/zip')).status).toBe(415)
+    expect((await upload(PAPER, 'text/html')).status).toBe(415)
   })
 })
 
@@ -217,7 +219,7 @@ describe('what a space keeps beside its notes', () => {
     await call(env, `/v1/blobs/${OTHER}`, {
       method: 'PUT',
       token: other,
-      raw: new Uint8Array(16),
+      raw: bytesOf(OTHER),
       headers: { 'content-type': 'application/pdf' },
     })
 
@@ -228,8 +230,6 @@ describe('what a space keeps beside its notes', () => {
 })
 
 describe('a space two people write in', () => {
-  const THIRD = 'c'.repeat(64)
-
   /** Somebody the owner gave the space to and who is in it, and their session. */
   async function writerIn(email: string): Promise<string> {
     const sent = await mail(() =>
@@ -267,7 +267,7 @@ describe('a space two people write in', () => {
     await call(env, `/v1/blobs/${hash}`, {
       method: 'PUT',
       token: as,
-      raw: new Uint8Array(64),
+      raw: bytesOf(hash),
       headers: { 'content-type': 'application/pdf' },
     })
     const held = readSpaceFiles(column())
@@ -307,7 +307,7 @@ describe('a space two people write in', () => {
     await call(env, `/v1/blobs/${THIRD}`, {
       method: 'PUT',
       token: writer,
-      raw: new Uint8Array(32),
+      raw: bytesOf(THIRD),
       headers: { 'content-type': 'application/pdf' },
     })
 
@@ -323,7 +323,7 @@ describe('a space two people write in', () => {
     await call(env, `/v1/blobs/${THIRD}`, {
       method: 'PUT',
       token: writer,
-      raw: new Uint8Array(32),
+      raw: bytesOf(THIRD),
       headers: { 'content-type': 'text/javascript' },
     })
 
@@ -334,7 +334,7 @@ describe('a space two people write in', () => {
     await call(env, `/v1/blobs/${PAPER}`, {
       method: 'PUT',
       token,
-      raw: new Uint8Array(32),
+      raw: bytesOf(PAPER),
       headers: { 'content-type': 'text/javascript' },
     })
     await record([{ path: 'publish.js', hash: PAPER }])
@@ -347,7 +347,7 @@ describe('a space two people write in', () => {
     await call(env, `/v1/blobs/${PAPER}`, {
       method: 'PUT',
       token,
-      raw: new Uint8Array(32),
+      raw: bytesOf(PAPER),
       headers: { 'content-type': 'text/css' },
     })
 

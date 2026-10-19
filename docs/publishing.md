@@ -460,6 +460,17 @@ app is the side that has the themes installed, so the app is the side that sends
 one - the same reasoning as the favicon. The reader's light-or-dark choice still
 sits on top of it, because a theme is a set of tokens and both schemes are in it.
 
+The sheet goes up as a page wears it, not as it was written (`pageSheet` in
+`themes/page-sheet.ts`). A theme says its schemes with `[data-theme='light']` and
+`[data-theme='dark']`, and a page that follows the reader's system has no
+`data-theme` at all, so a theme sent as written dressed the site only for readers
+who had pressed the button. Its scheme blocks are restated the way the page's own
+tokens are: light by default, dark under `prefers-color-scheme: dark`, the
+reader's choice over both, light on paper. A scheme the theme does not have is the
+page's own. The file is read again on every save and sent only when what would go
+up changed, so a theme the store has updated reaches the site the next time it is
+saved.
+
 ## The author's own CSS and JS
 
 `publish.css` and `publish.js` at the root of the space, which are Obsidian

@@ -31,6 +31,7 @@
   // The kind of file a row is, under a name of its own: `FileMark` here is the
   // component that draws one.
   import { fileMark, type FileMark as Mark } from './file-mark'
+  import { hiddenKinds } from './settings.svelte'
   import FileMark from './FileMark.svelte'
   import {
     folderFor,
@@ -53,8 +54,8 @@
   import { isSharedItem, othersIn } from './sharing.svelte'
   import { shortcuts } from './shortcuts.svelte'
   import { syncMark } from './surfaces.svelte'
-  import { carried, carriedNothing, carry, landing } from './drag-paths'
-  import { dropOnList, fileClipboard } from './list-landing.svelte'
+  import { carried, carriedNothing, carry, isBookmarkDrag, landing } from './drag-paths'
+  import { dropOnList, fileClipboard, listMotion } from './list-landing.svelte'
   import { dropTarget, targetFor } from './drop-target.svelte'
   import {
     autoScrollBy,
@@ -69,7 +70,7 @@
   import { folderOf } from './space-paths'
   import { flatRows, heldRows, rowIndex, type FlatRow } from './tree-flat'
   import { steppedKey } from './direction'
-  import { treeStep, TREE_MOVES } from './tree-keys'
+  import { onTwist, treeStep, TREE_MOVES } from './tree-keys'
   import { viewport } from './viewport.svelte'
   import type { Entry } from './workspace.svelte'
   import { workspace } from './workspace.svelte'
@@ -409,7 +410,7 @@
     [['edit.undo'], () => workspace.undoFileAction()],
     [['edit.redo', 'edit.redo.alt'], () => workspace.redoFileAction()],
     [['tree.duplicate'], (rows) => workspace.duplicateMany(rows)],
-    [['app.new'], (_, into) => workspace.createNote(into)],
+    [['app.new'], (_, into) => (hiddenKinds.offers('note') ? workspace.createNote(into) : null)],
   ]
 
   /** True when the press was one of those, and spent. */
@@ -549,6 +550,8 @@
     // The panes light their drop zones for a note out of the list as well as
     // for a tab out of a strip: both land in the same five places.
     workspace.panes.dragged({ tabId: null })
+    // And the switcher takes it to another space, as it takes a tab (#303).
+    void import('./tab-strip/space-drop').then((drop) => drop.followTreeDrag(paths))
   }
 
   function endDrag() {
@@ -660,6 +663,21 @@
 
   $effect(() => () => lift?.dropLift(held))
 
+  // Rows into or out of the Essentials slide (#412); see `arrive` in tree-lift.ts.
+  $effect(() => {
+    listMotion.before = () =>
+      new Map(
+        [...held.rows()].map((row) => [row.dataset.path ?? '', row.getBoundingClientRect().top]),
+      )
+    listMotion.after = (was) => {
+      if (was) void liftCode().then((code) => code.arrive(held, was))
+    }
+    return () => {
+      listMotion.before = () => null
+      listMotion.after = () => undefined
+    }
+  })
+
   /** A row lights only where a drop would do something, the way a pane's drop
    *  zones do: a row held over itself, over a row inside it, or over the row it
    *  already sits in used to light and then move nothing.
@@ -691,7 +709,8 @@
     // and in Manual that is where a new order is; the middle of the row is the row
     // itself, which is the move into a folder the list has always had. See
     // tree-lift.ts, which is also where the bands are. A copy is never an order.
-    const ordering = how === 'move' && row instanceof HTMLElement
+    const ordering =
+      how === 'move' && row instanceof HTMLElement && !isBookmarkDrag(event.dataTransfer)
     if (lift && ordering && lift.aimAt(held, row, event.clientY, entry)) {
       event.preventDefault()
       if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
@@ -755,8 +774,7 @@
   }
 
   function openRowAt(event: MouseEvent, entry: Entry) {
-    const twist = event.target instanceof Element ? event.target.closest('.twist') : null
-    if (twist) {
+    if (onTwist(event)) {
       workspace.toggleFolder(entry.path)
       return
     }
@@ -1189,8 +1207,10 @@
       aria-expanded={entry.is_dir ? workspace.isExpanded(entry.path) : undefined}
       draggable="true"
       onclick={(event) => openRowAt(event, entry)}
-      ondblclick={(event) => tabAsk(event) === 'plain' && workspace.openRow(entry.path)}
-      use:middleOpens={(event) => void workspace.openRow(entry.path, howFor(tabAsk(event)))}
+      ondblclick={(event) =>
+        !onTwist(event) && tabAsk(event) === 'plain' && workspace.openRow(entry.path)}
+      use:middleOpens={(event) =>
+        onTwist(event) || void workspace.openRow(entry.path, howFor(tabAsk(event)))}
       oncontextmenu={(event) => showRowMenu(event, entry, name)}
       use:longPress={(event) => showRowMenu(event, entry, name)}
       ontouchstart={(event) => onRowTouchStart(event, entry)}
@@ -1337,9 +1357,29 @@
      where a list already puts what a row counts; see `.nib-row-meta` in the themes
      package. */
   .twist {
+    position: relative;
+    align-self: stretch;
     display: grid;
     place-items: center;
     padding: 0 var(--space-1);
+  }
+
+  /* Where a press lets the row out, wider than the mark it is drawn as (#402): the
+     row's whole height, a step past the mark in front and on to the row's own end.
+     Drawn nowhere; the press lands on the twist, which is all `onTwist` asks. */
+  .twist::before {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    inset-inline: calc(-1 * var(--space-1)) calc(-1 * var(--row-pad));
+  }
+
+  /* And never narrower than a thumb. */
+  :global([data-touch]) .twist::before {
+    inset-inline-start: min(
+      calc(-1 * var(--space-1)),
+      calc(var(--icon-sm) + 2 * var(--space-1) + var(--row-pad) - var(--touch-target))
+    );
   }
 
   /* The box the twist fills; the shape and the turn are Twist.svelte's, which the

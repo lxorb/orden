@@ -10,21 +10,123 @@ export const zhHantHK: Dictionary = {
   'Do you write code?': '你有寫程式嗎？',
   Yes: '是',
   No: '否',
-  // Import: the first screen's rows for another app, and the palette's two
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': '從其他 App：{key}',
+  'From other apps: set in your system settings': '從其他 App：喺系統設定中設定',
+  'From other apps: bind {command} in your system settings':
+    '從其他 App：喺系統設定中綁定 {command}',
+  // Bookmarks are Essentials, Zen's word for them
+  Essentials: 'Essentials',
+  'Add to Essentials': '新增至 Essentials',
+  'Remove from Essentials': '從 Essentials 中移除',
+  'Add block to Essentials': '將區塊新增至 Essentials',
+  'Add blocks to Essentials': '將這些區塊新增至 Essentials',
+  'Add view to Essentials': '將檢視新增至 Essentials',
+  'Open tabs and Essentials': '開啟分頁及 Essentials',
+  // The name: the one-time notice, and the web build taking over the old address
+  'nibeditor is now Orden': 'nibeditor現已改名為Orden',
+  'Notes from nibeditor.com': '來自nibeditor.com的筆記',
+  'Nothing there': '那裡甚麼都沒有',
+  // AI: the three permission modes
+  'Full permissions': '完整權限',
+  'Auto mode': '自動模式',
+  'Full permissions: nothing is asked first': '完整權限：事先不會詢問任何事',
+  // Import: Zen's tabs
+  'Import from Zen': '從 Zen 匯入',
+  'Containers stay in Zen': '容器會留在 Zen',
+  'Zen’s tabs could not be read.': '無法讀取 Zen 的分頁。',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': '容器會留在 Firefox',
+  'Nothing could be read out of {browser}.': '無法從 {browser} 讀取任何內容。',
+  'Saved groups': '已儲存的群組',
+  'Tab group': '分頁群組',
+  'Bookmarks toolbar': '書籤列',
+  'Bookmarks menu': '書籤選單',
+  'Other bookmarks': '其他書籤',
+  'Mobile bookmarks': '流動裝置書籤',
+  'Bookmarks bar': '書籤列',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} 將開啟的分頁加密保存，所以只帶來了書籤。',
+  '{count} pages not on the web stay behind': '{count} 個不在網上的頁面沒有帶來',
+  'Reading List': '閱讀列表',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS 將 Safari 的分頁和書籤放在「完全磁碟取用權限」之後。請在那裡開啟 Orden，然後再試一次。',
+  // Settings: note types
+  'Page note': '分頁筆記',
+  'Web note': '網頁筆記',
+  'Private tab': '私密分頁',
+  'Note types': '筆記類型',
+  // Tasks: Upcoming's weeks
+  'Previous week': '上一星期',
+  // Tasks: projects placed in the panel, and their folder
+  'Add project above': '在上方新增項目',
+  'Add project below': '在下方新增項目',
+  'Projects folder': '項目資料夾',
+  // Tasks: a repeating task skipped or done for good
+  Skip: '跳過',
+  'Complete forever': '永久完成',
+  // Tasks: comments
+  Comments: '留言',
+  // Tasks: filters
+  Filters: '篩選器',
+  'Add filter': '新增篩選器',
+  'Edit filter': '編輯篩選器',
+  // Tasks: a project's sections
+  'Add section': '新增分區',
+  '{name} (copy)': '{name}（副本）',
+  'Its tasks are deleted with it.': '其中的任務會一併刪除。',
+  // Tasks: keys, selection and the undo toast
+  Completed: '已完成',
+  'Remove date': '移除日期',
+  'Next task': '下一個任務',
+  'Previous task': '上一個任務',
+  'Add task at the top': '在頂部新增任務',
+  '{count} selected': '已選 {count} 項',
+  // Tasks: the Display menu
+  Display: '顯示',
+  'Completed tasks': '已完成任務',
+  // Tasks: several lines pasted into quick add
+  'One task': '一個任務',
+  'One per line': '每行一個',
+  // Tasks: the projects in the panel
+  Favorites: '我的最愛',
+  'Add project': '新增專案',
+  'Add sub-project': '新增子專案',
+  // Tasks: the task view
+  'Sub-tasks': '子任務',
+  'Add sub-task': '新增子任務',
+  'New label': '新標籤',
+  'No deadline': '沒有截止日期',
+  // Tasks: the row's menu and the scheduler
+  Reschedule: '重新安排',
+  'Later this week': '本星期稍後',
+  'This weekend': '這個週末',
+  'Next weekend': '下個週末',
+  'Every week on {day}': '每星期{day}',
+  'Every month on day {day}': '每月{day}日',
+  'Every year on {date}': '每年{date}',
+  'Type a date': '輸入日期',
+  'Previous month': '上個月',
+  'Next month': '下個月',
+  'No time': '沒有時間',
+  'No repeat': '不重複',
+  Complete: '完成',
+  Reopen: '重新開啟',
+  Schedule: '安排',
+  'Open in note': '在筆記中開啟',
+  // Import: Settings' rows for another app, and the palette's two
   'Another app': '其他 App',
-  'Start fresh': '重新開始',
   'Import from Obsidian': '從 Obsidian 匯入',
   'Import from Notion': '從 Notion 匯入',
   // Hints: Silent mode and the cards that point at a feature
   Hints: '提示',
   'Silent mode': '安靜模式',
-  'Sign in to keep your notes safe and on every device.':
-    '登入後,你的筆記會安全保存,並在所有裝置上可用。',
   'See how your notes connect.': '查看你的筆記如何互相連結。',
   'Press {key} to find anything, notes and commands alike.':
     '按 {key} 尋找任何內容,筆記和指令皆可。',
   // Settings: markdown shown while writing, and the pointer
   'Show markdown while writing': '書寫時顯示 Markdown',
+  'Open notes in source mode': '以源代碼模式開啟筆記',
   Pointer: '指標',
   'Pointing hand on buttons': '按鈕上顯示手形指標',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
@@ -40,11 +142,13 @@ export const zhHantHK: Dictionary = {
   '{count} h': '{count}小時',
   Inbox: '收件匣',
   Date: '日期',
+  'Start date': '開始日期',
   Priority: '優先次序',
   Reminder: '提醒',
   Duration: '所需時間',
   'Smart dates': '智能日期',
   'From any app': '從任何應用程式',
+  'Show tasks without a start date in Today': '在今天中顯示沒有開始日期的任務',
   'Every day': '每天',
   'Every weekday': '每個工作天',
   'Every week': '每星期',
@@ -61,6 +165,13 @@ export const zhHantHK: Dictionary = {
   Unsaved: '未儲存',
   'Save to': '儲存到',
   'Reloaded with the web data of {space}': '已使用 {space} 的網頁資料重新載入',
+  Separate: '獨立',
+  'Share this note’s web data again?': '再次共用這則筆記的網絡數據？',
+  'What its pages are signed in to on this computer is deleted.':
+    '此電腦上其頁面已登入的內容將被刪除。',
+  'Share again': '再次共用',
+  'This note keeps its own web data now': '這則筆記現在有自己的網絡數據',
+  'Back on the shared web data': '已返回共用的網絡數據',
   'Add a page': '加一頁',
   'Add a page after this': '在此頁之後加一頁',
   'Delete this page': '刪除此頁',
@@ -81,6 +192,8 @@ export const zhHantHK: Dictionary = {
   Dots: '點陣',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': '用兩指旋轉畫布',
+  'Turn upright': '擺正',
   Canvas: '畫布',
   Card: '卡片',
   'Note or picture': '筆記或圖片',
@@ -95,7 +208,6 @@ export const zhHantHK: Dictionary = {
   'New window': '新增視窗',
   New: '新增',
   'New space': '新增空間',
-  '{name}: switch space': '{name}：切換空間',
   Untitled: '未命名',
   Space: '空間',
   'Name the space': '空間名稱',
@@ -140,8 +252,6 @@ export const zhHantHK: Dictionary = {
   'Loading…': '載入中…',
   'Create a space': '建立空間',
   'Import a folder': '匯入資料夾',
-  'Sign in to sync': '登入以同步',
-  'Create account': '建立帳戶',
   'Delete space': '刪除空間',
   'Delete {name}?': '刪除{name}？',
   'Every note in this space is deleted from your computer.':
@@ -159,6 +269,10 @@ export const zhHantHK: Dictionary = {
   Unpin: '取消固定',
   Close: '關閉',
   'Close pinned tab?': '關閉已固定的標籤頁？',
+  'Save changes to {name}?': '要儲存 {name} 的變更嗎？',
+  'Save changes to these tabs?': '要儲存這些分頁的變更嗎？',
+  'Unsaved words go to Recently deleted.': '未儲存的文字會移到「最近刪除」。',
+  'Don’t save': '不儲存',
   'Close others': '關閉其他',
   'Close tabs to the right': '關閉右側標籤頁',
   'Close tabs to the left': '關閉左側標籤頁',
@@ -195,9 +309,6 @@ export const zhHantHK: Dictionary = {
   'Move this note': '移動此筆記',
   'Move up': '上移',
   'Move down': '下移',
-  Bookmark: '加入書籤',
-  'Remove bookmark': '移除書籤',
-  'Leave out of search': '從搜尋中排除',
   'Search here again': '重新納入搜尋',
   'Undo the last file change': '復原上一次檔案更改',
   'Undo moving {name}': '復原移動{name}',
@@ -247,7 +358,6 @@ export const zhHantHK: Dictionary = {
   'Remove group': '移除分組',
   'Out of the group': '移出分組',
   Make: '建立',
-  'Bookmark this block': '為此區塊加書籤',
   Panels: '面板',
   Outline: '大綱',
   'Stay on this note': '停留在此筆記',
@@ -509,8 +619,7 @@ export const zhHantHK: Dictionary = {
   'Sign in to ask a question.': '請登入後提問。',
   'Asking OpenAI which models this key can use': '正在向OpenAI查詢此密鑰可用的模型',
   'Could not reach OpenAI': '無法連上OpenAI',
-  'That key cannot use any of the models nibeditor asks for.':
-    '此密鑰無法使用nibeditor所需的任何模型。',
+  'That key cannot use any of the models Orden asks for.': '此密鑰無法使用Orden所需的任何模型。',
   'No reasoning': '不推理',
   Minimal: '最低',
   Low: '低',
@@ -532,7 +641,7 @@ export const zhHantHK: Dictionary = {
   Mode: '模式',
   // The window's own edges; see appearance.rs
   Window: '視窗',
-  'nibeditor’s own': 'nibeditor 自己的',
+  'Orden’s own': 'Orden 自己的',
   'The system’s': '系統的',
   'Window frame': '視窗邊框',
   System: '系統',
@@ -592,6 +701,7 @@ export const zhHantHK: Dictionary = {
   '{done} of {total}': '{done}/{total}',
   'Sync failed': '同步失敗',
   '{name} could not be written.': '無法寫入 {name}。',
+  '{name} could not be read.': '無法讀取 {name}。',
   'Text size': '字體大小',
   'Line spacing': '行距',
   'Line width': '行寬',
@@ -651,8 +761,10 @@ export const zhHantHK: Dictionary = {
   '{used} of {limit} used.': '已用{used}，共{limit}。',
   'That image does not fit in your storage.': '儲存空間不足，放不下這張圖片。',
   'out of space': '儲存空間已滿',
-  'nibeditor {version} is ready to install.': 'nibeditor{version}已可安裝。',
+  'Orden {version} is ready to install.': 'Orden{version}已可安裝。',
+  'Orden {version} is available.': 'Orden{version}已推出。',
   'Restart now': '立即重新啟動',
+  'Move to Applications': '移到「應用程式」',
   Later: '稍後',
   More: '更多',
   'Open notes': '開啟中的筆記',
@@ -677,11 +789,9 @@ export const zhHantHK: Dictionary = {
   Continue: '繼續',
   'Send a new code': '重新發送驗證碼',
   'Code sent to': '驗證碼已發送至',
-  'You already have notes on this computer.': '這部電腦上已經有筆記了。',
-  'Keep them and they join your account. Erase them and only what your account already holds remains - this cannot be undone.':
-    '保留它們，它們會併入你的帳戶。清除它們，則只留下帳戶中已有的內容，此操作無法復原。',
-  'Keep them': '保留',
-  'Erase them': '清除',
+  'This device already has notes.': '此裝置已有筆記。',
+  Merge: '合併',
+  'Keep separate': '分開保留',
   'Digit {number}': '第{number}位',
   'Resend in {seconds}s': '{seconds}秒後可重發',
   'Last synced {time}.': '上次同步於{time}。',
@@ -726,13 +836,13 @@ export const zhHantHK: Dictionary = {
   'Reads your notes.': '讀取你的筆記。',
   'Reads and writes your notes.': '讀取並寫入你的筆記。',
   Other: '其他',
-  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your nibeditor email; there is nothing to paste.':
-    'AI助手可以讀取你的筆記，若你允許，也能修改。它用你的nibeditor電郵登入，不需要貼上任何東西。',
+  'An AI assistant can read your notes - and change them, if you allow it. It signs in with your Orden email; there is nothing to paste.':
+    'AI助手可以讀取你的筆記，若你允許，也能修改。它用你的Orden電郵登入，不需要貼上任何東西。',
   'In Claude, open Settings → Connectors and click Add custom connector.':
     '在Claude中開啟「設定→連接器」，點擊「新增自定義連接器」。',
   'Open Claude’s connectors': '開啟Claude的連接器',
   'Fill in the two fields and click Add.': '填好這兩個欄位，然後點擊「新增」。',
-  'Click Connect and sign in with your nibeditor email.': '點擊「連接」，用你的nibeditor電郵登入。',
+  'Click Connect and sign in with your Orden email.': '點擊「連接」，用你的Orden電郵登入。',
   'Using Claude Code instead?': '改用Claude Code？',
   Command: '命令',
   'Run it in a terminal, then type /mcp in Claude Code to sign in.':
@@ -743,15 +853,14 @@ export const zhHantHK: Dictionary = {
   'Open ChatGPT’s plugins': '開啟ChatGPT的插件',
   'No Plugins section or no plus button? Turn on Developer mode first, under Settings → Security and login.':
     '沒有「插件」一節或加號按鈕？請先在「設定→安全與登入」中開啟開發者模式。',
-  'Sign in with your nibeditor email when ChatGPT asks.':
-    'ChatGPT詢問時，用你的nibeditor電郵登入。',
-  'To use it in a chat, type @ and pick nibeditor.': '在對話中輸入@並選擇nibeditor即可使用。',
+  'Sign in with your Orden email when ChatGPT asks.': 'ChatGPT詢問時，用你的Orden電郵登入。',
+  'To use it in a chat, type @ and pick Orden.': '在對話中輸入@並選擇Orden即可使用。',
   'Server URL': '伺服器網址',
   Authentication: '驗證方式',
   'Leave the advanced OAuth settings as they are and tick “I understand and want to continue”.':
     '進階OAuth設定維持原樣，並勾選「我明白並要繼續」。',
-  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens nibeditor’s sign-in page.':
-    '任何支援Streamable HTTP和OAuth的MCP客戶端。把網址給它：它會自行註冊並開啟nibeditor的登入頁面。',
+  'Any MCP client that speaks Streamable HTTP with OAuth. Give it the URL: it registers itself and opens Orden’s sign-in page.':
+    '任何支援Streamable HTTP和OAuth的MCP客戶端。把網址給它：它會自行註冊並開啟Orden的登入頁面。',
   'Show config': '顯示設定檔',
   'For a client that takes a JSON block instead of a URL.': '適用於接受JSON設定而非網址的客戶端。',
   'A client that cannot sign in can be given a token instead. It is shown only once.':
@@ -817,7 +926,7 @@ export const zhHantHK: Dictionary = {
   'Display name': '顯示名稱',
   'Your name': '你的名字',
   Email: '電郵',
-  'On nibeditor.com': '在nibeditor.com上',
+  'On orden.so': '在orden.so上',
   'Your own domain': '你自己的域名',
   'Switching gives up {name}.': '切換就會放棄{name}。',
   Page: '頁面',
@@ -888,8 +997,9 @@ export const zhHantHK: Dictionary = {
   'No footnotes in this note': '這則筆記沒有註腳',
   'Stack tabs': '並排標籤頁',
   'Unstack tabs': '取消並排標籤頁',
-  'High contrast': '高對比',
+  Contrast: '對比',
   Glass: '玻璃',
+  Classic: '經典',
   'Front matter': '前置數據',
   'Front matter: {name}': '前置資料：{name}',
   'Properties draws the rows and edits them in place; Source is the YAML as typed.':
@@ -900,6 +1010,7 @@ export const zhHantHK: Dictionary = {
   Comment: '註釋',
   'Always on top': '總在最上層',
   'What is new': '更新內容',
+  'Download the app': '下載應用程式',
   'Report an issue': '報告問題',
   'Move the line up': '此行上移',
   'Move the line down': '此行下移',
@@ -975,6 +1086,22 @@ export const zhHantHK: Dictionary = {
   'Layout: {name}': '佈局：{name}',
   'Space: {name}': '空間：{name}',
   'Theme: {name}': '主題：{name}',
+  'AI account: {name}': 'AI 帳戶：{name}',
+  Accounts: '帳戶',
+  Access: '存取',
+  Set: '已設定',
+  'Start over': '重新開始',
+  'Sign in here': '在此登入',
+  '{device} wants your AI accounts': '{device} 要求你的 AI 帳戶',
+  '{device} offers this device your AI vault': '{device} 向此裝置提供你的 AI 保險庫',
+  Join: '加入',
+  'Allow this device on another one': '在另一部裝置上允許此裝置',
+  'On every device you sign in to, end-to-end encrypted.': '在你登入的每部裝置上，端對端加密。',
+  'Sign in to have them on every device.': '登入即可在每部裝置上使用。',
+  'Agents on this computer connect on their own': '這部電腦上的代理自動連線',
+  Helpers: '助手',
+  'Start helpers on your AI accounts': '在你的 AI 帳戶上啟動助手',
+  Delegated: '已委派',
   'Code theme: {name}': '代碼主題：{name}',
   'Delete a layout': '刪除佈局',
   // Keyboards and modal editing
@@ -1043,6 +1170,7 @@ export const zhHantHK: Dictionary = {
   'Double-click to write': '雙擊開始書寫',
   'Another colour': '其他顏色',
   'Turn into a note': '轉為筆記',
+  Arrange: '排列',
   'Bring to front': '移到最上層',
   'Bring forward': '上移一層',
   'Send backward': '下移一層',
@@ -1064,6 +1192,12 @@ export const zhHantHK: Dictionary = {
   'Export as PNG': '匯出為PNG',
   'Export as SVG': '匯出為SVG',
   'Export as PDF': '匯出為PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': '匯入 PDF',
+  'Choose how to add the pages to the canvas.': '選擇頁面怎樣加到畫布上。',
+  'Single page': '單頁',
+  'All pages': '所有頁面',
+  'Choose a page': '選擇一頁',
   // The canvas: what its own keys are called
   'Delete what is picked': '刪除所選範圍',
   'Nudge left': '向左微移',
@@ -1124,8 +1258,8 @@ export const zhHantHK: Dictionary = {
   'Release channel': '發佈通道',
   Stable: '穩定版',
   Unstable: '開發版',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    '穩定版跟着正式發佈走，開發版跟着main的每次推送，可能會壞掉。',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    '穩定版跟着已發佈的版本，開發版跟着edge建置，可能會壞掉。',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: '匯入',
@@ -1175,13 +1309,14 @@ export const zhHantHK: Dictionary = {
   '{count} tables inside notes do not come over': '筆記內嘅 {count} 個表格唔會轉入',
   '{count} attachments are in iCloud rather than on this Mac':
     '{count} 個附件在 iCloud，唔係在這部 Mac',
+  '{count} files are in iCloud rather than on this Mac': '{count} 個檔案在 iCloud，唔係在這部 Mac',
   'macOS keeps those notes behind Full Disk Access.':
     'macOS 將這些筆記放在「完整磁碟存取權」之後。',
   'There are no notes in Apple Notes on this Mac.': '這部 Mac 嘅「備忘錄」裡面沒有筆記。',
   'Those notes could not be read.': '讀唔到這些筆記。',
   'Read them from this Mac': '從這部 Mac 讀取',
-  'Turn nibeditor on under Full Disk Access, then ask again.':
-    '在「完整磁碟存取權」開啟 nibeditor，然後再試一次。',
+  'Turn Orden on under Full Disk Access, then ask again.':
+    '在「完整磁碟存取權」開啟 Orden，然後再試一次。',
   'Open the setting': '開啟設定',
   'Apple Journal exports itself: Journal, Settings, Export. Apple Notes has no export, so away from the Mac it is on, what to drop is a folder an exporter wrote.':
     '「日誌」可以自己匯出：日誌、設定、匯出。「備忘錄」沒有匯出，所以在筆記所在嘅 Mac 以外，要拖入嘅係匯出工具寫出嘅資料夾。',
@@ -1278,14 +1413,15 @@ export const zhHantHK: Dictionary = {
   'OpenAI-compatible': 'OpenAI兼容',
   'Base URL': '基礎網址',
   'API key': 'API密鑰',
-  'Set on this device': '已在此裝置設定',
   Optional: '可選',
   'List models': '列出模型',
   'Asking…': '詢問中…',
   'No providers yet.': '還沒有服務商。',
   'Add {name}': '新增{name}',
-  'Keys stay in the secure store on this device.': '密鑰留在此裝置的安全儲存區中。',
   'This browser holds the keys in its own storage.': '此瀏覽器把密鑰放在自己的儲存空間裏。',
+  'Keep this browser’s keys in the vault': '將此瀏覽器的密鑰保存在保險庫中',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    '這樣，每部裝置的密鑰都會保存在此瀏覽器的儲存空間中，混入頁面的指令碼可能讀取它們。',
   'AI can be wrong. Check the facts.': 'AI可能會出錯，請核實事實。',
   'Used by the glasses': '供眼鏡使用',
   'Could not read the models.': '無法讀取模型列表。',
@@ -1325,7 +1461,6 @@ export const zhHantHK: Dictionary = {
   'A cited report': '附引報告',
   'A helper in the background': '背景幫手',
   'A side question': '附帶問題',
-  'Agent mode': '代理模式',
   'Agent profile': '代理設定檔',
   'Archive the thread': '封存對話',
   'Approve mode': '批准模式',
@@ -1444,8 +1579,6 @@ export const zhHantHK: Dictionary = {
   // Web tabs
   Reload: '重新載入',
   'Hard reload': '強制重新載入',
-  'Clip this page': '儲存此頁',
-  'Clip the link': '儲存連結',
   'Open in the browser': '在瀏覽器開啟',
   'Show it here': '在此顯示',
   Website: '網站',
@@ -1528,7 +1661,8 @@ export const zhHantHK: Dictionary = {
   'that is not a theme': '這不是主題',
   'no such theme': '沒有該主題',
   'choose a model first': '請先選擇模型',
-  'set an OpenAI key in nibeditor’s settings first': '請先在nibeditor的設定中填入OpenAI密鑰',
+  'set an OpenAI key in Orden’s settings first': '請先在Orden的設定中填入OpenAI密鑰',
+  'set an OpenAI key in nibeditor’s settings first': '請先在Orden的設定中填入OpenAI密鑰',
   'that is a lot of questions - try again later': '問得太頻密了，請稍後再試',
   'that is too much audio': '音頻太長',
   'that is more than a spoken command': '這超過一句語音命令的長度',
@@ -1552,7 +1686,6 @@ export const zhHantHK: Dictionary = {
   Nothing: '無',
 
   // A way of looking at the space's graph, kept in the bookmarks.
-  'Bookmark this view': '將此檢視加入書籤',
   Keep: '保留',
 
   // Which side of the window a panel sits on.
@@ -1574,7 +1707,6 @@ export const zhHantHK: Dictionary = {
   'New tab': '新分頁',
   'Full screen': '全螢幕',
   'Print…': '打印…',
-  'Save page': '儲存網頁',
   'Share…': '分享…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1617,7 +1749,6 @@ export const zhHantHK: Dictionary = {
   Blocked: '已封鎖',
   'Reset permissions': '重設權限',
   'Turn into': '轉換為',
-  'Bookmark these blocks': '為這些區塊加書籤',
   Foldable: '可摺疊',
   'Starts folded': '預設摺疊',
   // Where a space keeps what websites store
@@ -1634,6 +1765,15 @@ export const zhHantHK: Dictionary = {
   'Bring all to front': '全部移至最前',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': '復原複製',
+  'Devices with your AI vault': '擁有你 AI 保險庫的裝置',
+  'This device': '此裝置',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    '該裝置將無法再讀取你的 AI 帳戶，其他裝置會得到新鎖匙。',
+  'Also remove this device from your AI vault?': '也將此裝置從你的 AI 保險庫中移除？',
+  'Remove and sign out': '移除並登出',
+  'Undo making {name}': '復原建立{name}',
+  'Undo the deletion': '復原刪除',
+  'Undo the move': '復原移動',
   'Redo the last file change': '重做上一次檔案變更',
   'Select down': '向下選取',
   'Select up': '向上選取',
@@ -1677,7 +1817,6 @@ export const zhHantHK: Dictionary = {
   '{key} in a terminal': '終端機中的 {key}',
   'Always ask': '每次詢問',
   'Open another': '再開啟一個',
-  'Open in terminal': '在終端機中開啟',
   Clear: '清除',
   'Exited with code {code}': '已結束，代碼 {code}',
   'Could not start {shell}': '無法啟動 {shell}',
@@ -1686,18 +1825,8 @@ export const zhHantHK: Dictionary = {
   'Stop what is running in {name}?': '要停止 {name} 中正在執行的內容嗎？',
   'Stop what is running in these terminals?': '要停止這些終端機中正在執行的內容嗎？',
   'Paste {count} lines?': '要貼上 {count} 行嗎？',
-  // Nib as the default browser
+  // Orden as the default browser
   'Default browser': '預設瀏覽器',
-  // The engine web tabs run on
-  Engine: '引擎',
-  Relaunch: '重新啟動',
-  'Chromium did not start': 'Chromium 未能啟動',
-  'No connection': '沒有連線',
-  'Not in this release': '此版本中沒有',
-  'Needs an update': '需要更新',
-  'Signature did not match': '簽名不符',
-  'Disk full': '磁碟已滿',
-  'Could not be installed': '無法安裝',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '還原 {name} 的編輯',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1797,7 +1926,7 @@ export const zhHantHK: Dictionary = {
   'Always on this site': '在此網站一律',
   'Agents stopped': '已停止代理',
   'Agent tabs closed': '已關閉代理分頁',
-  'nibeditor is still running for your agents': 'nibeditor 仍在為你的代理運作',
+  'Orden is still running for your agents': 'Orden 仍在為你的代理運作',
   '{client} wants to connect': '{client} 想連線',
   // Web logins that travel, and the devices of an account
   'no such device': '沒有這部裝置',
@@ -1811,10 +1940,11 @@ export const zhHantHK: Dictionary = {
   // to connect one more.
   'Agents on this computer': '這部電腦上的代理',
   'Your account’s connector': '你帳戶的連接器',
-  'nibeditor asks you once, the first time it connects.': '首次連線時，nibeditor 會問你一次。',
+  'Orden asks you once, the first time it connects.': '首次連線時，Orden 會問你一次。',
   'A client on another machine?': '另一部機器上的用戶端？',
   'Shown only once.': '只顯示一次。',
   'Remove {name}?': '移除 {name}？',
+  'End {name}?': '結束 {name}？',
   'Its token stops working.': '它的權杖將會失效。',
   'Added {date}': '新增於 {date}',
   'It reads your notes and browses signed in as you, so a page could try to make it send them out.':
@@ -1835,7 +1965,6 @@ export const zhHantHK: Dictionary = {
   'Change notes': '修改筆記',
   'See what you are looking at': '查看你正在看的內容',
   'Move and rename files': '移動及重新命名檔案',
-  'Open tabs and bookmarks': '開啟標籤頁及書籤',
   'Bring a tab to the front': '將標籤頁移到最前',
   'Browse in tabs of its own': '在自己的標籤頁中瀏覽',
   'Read what pages load': '讀取頁面載入的內容',
@@ -1857,11 +1986,8 @@ export const zhHantHK: Dictionary = {
   'Without your logins': '不使用你的登入',
   'Calls a minute': '每分鐘呼叫次數',
   'Pages a minute': '每分鐘頁面數',
+  'Browser memory limit': '瀏覽器記憶體上限',
   '{count} calls': '{count} 次呼叫',
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': '已在 {device} 開啟',
-  'Use here': '在此使用',
-  '{device} wants your web logins': '{device} 要求你的網頁登入',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': '快速提問',
@@ -1925,7 +2051,7 @@ export const zhHantHK: Dictionary = {
   // Reminders: the buttons on one that rang, and the settings that keep them ringing
   Snooze: '稍後提醒',
   Reminders: '提醒',
-  'Reminders ring while nibeditor is open': '提醒僅在 nibeditor 開啟時響起',
+  'Reminders ring while Orden is open': '提醒僅在 Orden 開啟時響起',
   Automatic: '自動',
   'Stay in the tray': '保留在系統匣',
   'Exact alarms': '精確鬧鐘',
@@ -1967,7 +2093,6 @@ export const zhHantHK: Dictionary = {
   'Any of them': '任何一項',
   Compare: '比較',
   'Add a filter': '新增篩選',
-  'Reschedule to today': '改到今日',
   Collapse: '收起',
   Expand: '展開',
   Summary: '摘要',
@@ -1989,7 +2114,6 @@ export const zhHantHK: Dictionary = {
   Layout: '版面',
   Overdue: '已逾期',
   Upcoming: '即將到來',
-  Logbook: '紀錄',
   Project: '專案',
   Label: '標籤',
   List: '清單',
@@ -2174,4 +2298,11 @@ export const zhHantHK: Dictionary = {
   'Search this chat': '在此聊天中搜尋',
   'Add as task': '新增為任務',
   'Save as note': '儲存為筆記',
+  // Appearance: glass's own pairs of colours
+  Dawn: '黎明',
+  Lagoon: '潟湖',
+  Lilac: '丁香',
+  Peach: '蜜桃',
+  Sage: '鼠尾草',
+  Mist: '薄霧',
 }

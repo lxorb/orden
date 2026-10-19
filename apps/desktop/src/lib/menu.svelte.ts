@@ -37,6 +37,8 @@ class ContextMenu {
   keepFocus = $state(false)
   /** The row a key lit while the keyboard stays in a field, or -1. */
   lit = $state(-1)
+  /** Where a press still held opened it; see menu-release.ts. */
+  heldAt: { x: number; y: number } | null = null
 
   /** Opens at the pointer. The caller has already decided what belongs here,
    *  so an empty list means "no menu" rather than an empty box. */
@@ -54,6 +56,7 @@ class ContextMenu {
     this.lit = -1
     this.x = event.clientX
     this.y = event.clientY
+    this.heldAt = event.buttons ? { x: event.clientX, y: event.clientY } : null
     this.open = true
   }
 
@@ -106,30 +109,24 @@ export function bookmarkEntry(mark: Bookmark | null): MenuEntry[] {
 
   return [
     {
-      label: workspace.bookmarks.has(mark) ? t('Remove bookmark') : t('Bookmark'),
+      label: workspace.bookmarks.has(mark) ? t('Remove from Essentials') : t('Add to Essentials'),
       run: () => workspace.bookmarks.toggle(mark),
     },
   ]
 }
 
-/** Leaving a note or a folder out of what the space says about itself, in one word
- *  that flips.
+/** The way back for a note or a folder left out of what the space says about itself.
  *
- *  Here rather than in the file list for the reason the icon is: it belongs to the
- *  thing, and every list that shows one can offer it. A folder stands for
+ *  Only the way back: no row offers to leave anything out any more, and Archive
+ *  does that job. What a space left out before keeps this one word, so nothing
+ *  stays out of search with no way to bring it back. A folder stands for
  *  everything under it, so a note inside an excluded folder is offered nothing -
  *  there is nothing it can take back on its own, and a row that said "take back"
  *  and then did not would be a row that lied. */
-export function excludeEntry(path: string | null | undefined): MenuEntry[] {
-  if (!path) return []
-  if (workspace.excluded.has(path) && !workspace.excluded.names(path)) return []
+export function searchAgainEntry(path: string | null | undefined): MenuEntry[] {
+  if (!path || !workspace.excluded.names(path)) return []
 
-  return [
-    {
-      label: workspace.excluded.names(path) ? t('Search here again') : t('Leave out of search'),
-      run: () => workspace.excluded.toggle(path),
-    },
-  ]
+  return [{ label: t('Search here again'), run: () => workspace.excluded.toggle(path) }]
 }
 
 /** Putting a row away, or taking it back, in one word that flips: the row's, the

@@ -1,4 +1,4 @@
-//! Nib, on a desktop and on a phone: the plugins it runs with, the commands the
+//! Orden, on a desktop and on a phone: the plugins it runs with, the commands the
 //! window may call, and the window itself.
 //!
 //! Every command lives in the module that owns the thing it touches - `notes`,
@@ -7,9 +7,8 @@
 //!
 //! A phone has no second window, no installer, no file dialog and no shell, so
 //! the modules that are only about those are `#[cfg(desktop)]` and their commands
-//! reach the handler only there. Everything about notes is the same on both: the
-//! same folder under the documents directory, read and written by the same
-//! commands.
+//! reach the handler only there. Everything about notes is the same on both: one
+//! spaces folder (`paths::spaces_dir`), read and written by the same commands.
 //!
 //! One rule about every command that waits for the disk: it says `async`.
 //!
@@ -44,11 +43,16 @@ mod ai_agent;
 // ai_cli.rs and docs/ai.md.
 #[cfg(desktop)]
 mod ai_cli;
+// The reader's AI accounts, one file for every window and engine; see ai_accounts.rs.
+mod ai_accounts;
 // The AI sidebar's threads, kept on this device; see ai_threads.rs.
 mod ai_threads;
 // A ChatGPT plan through Sign in with ChatGPT; see chatgpt.rs and docs/ai.md.
 #[cfg(desktop)]
 mod appearance;
+// Where a Mac's copy runs from, and the move to Applications; see app_place.rs.
+#[cfg(desktop)]
+mod app_place;
 #[cfg(desktop)]
 mod apple_notes;
 #[cfg(desktop)]
@@ -69,7 +73,7 @@ mod link_preview;
 )]
 mod apple_text;
 mod assets;
-// The Mac app's folder carried over from the product's old name; see bundle_name.rs.
+// The Mac app's folder carried over from the product's old names; see bundle_name.rs.
 #[cfg(desktop)]
 mod bundle_name;
 mod carry;
@@ -85,21 +89,25 @@ mod endpoint;
 #[cfg(desktop)]
 mod engine;
 #[cfg(desktop)]
-mod engine_switch;
-#[cfg(desktop)]
 mod extensions;
 #[cfg(desktop)]
 mod foreground;
 mod front_matter;
+// The window's full screen, which a run sent off the screen never takes; see full_screen.rs.
+#[cfg(desktop)]
+mod full_screen;
 mod fuzzy;
 #[cfg(desktop)]
 mod ground;
 // A second launch that finds the first not answering; see handover.rs.
 #[cfg(desktop)]
 mod handover;
+// PDFs another program opens with nib, brought into a space; see handed_pdfs.rs.
+#[cfg(desktop)]
+mod handed_pdfs;
 mod highlights;
 mod history;
-// The global shortcut plugin, added once for whoever holds a key from any app; see hotkeys.rs.
+// The keys from any app, through the system or the desktop portal; see hotkeys.rs.
 #[cfg(desktop)]
 mod hotkeys;
 #[cfg(desktop)]
@@ -112,6 +120,9 @@ mod lifecycle;
 #[cfg(target_os = "macos")]
 mod lights;
 mod links;
+// What a Linux desktop, and Wayland above all, needs beyond GTK; see linux.rs.
+#[cfg(target_os = "linux")]
+mod linux;
 mod logs;
 mod matcher;
 // `nib mcp`, the server an agent's client runs; main.rs hands it the process before
@@ -128,6 +139,9 @@ mod notices;
 // The vaults Obsidian lists, for the migration's first screen; see obsidian_vaults.rs.
 #[cfg(desktop)]
 mod obsidian_vaults;
+// Which package manager keeps this install, if one does; see package_manager.rs.
+#[cfg(desktop)]
+mod package_manager;
 #[cfg(desktop)]
 mod pandoc;
 mod papers;
@@ -147,6 +161,8 @@ mod regex;
 // reminders.rs and docs/tasks.md 5.10. A phone's are the activity's.
 #[cfg(desktop)]
 mod reminders;
+#[cfg(desktop)]
+mod retired_engine;
 mod search;
 #[cfg(any(desktop, target_os = "ios"))]
 mod secrets;
@@ -154,6 +170,9 @@ mod secrets;
 mod shell_menu;
 mod space_watch;
 mod spaces;
+// A touchpad's pinch let through to the app's own page on Windows; see pinch.rs.
+#[cfg(desktop)]
+mod pinch;
 // What the window's thread was doing when it stopped answering; see stall.rs.
 #[cfg(desktop)]
 mod stall;
@@ -163,6 +182,11 @@ mod tasks;
 #[cfg(desktop)]
 mod terminal;
 mod themes;
+// The window's top edge, offering a resize only where the window can be resized; see top_edge.rs.
+#[cfg(desktop)]
+mod top_edge;
+#[cfg(desktop)]
+mod touchpad;
 mod trace;
 mod trash;
 mod tree;
@@ -177,7 +201,7 @@ mod web_answers;
 // on a Mac.
 #[cfg(desktop)]
 mod web_clear;
-#[cfg(all(any(windows, target_os = "macos"), not(feature = "cef")))]
+#[cfg(any(windows, target_os = "macos"))]
 mod web_cookies;
 #[cfg(desktop)]
 mod web_cut;
@@ -195,6 +219,8 @@ mod web_icons;
 mod web_keys;
 #[cfg(desktop)]
 mod web_opens;
+#[cfg(target_os = "linux")]
+mod web_overlay;
 #[cfg(desktop)]
 mod web_page;
 #[cfg(desktop)]
@@ -213,10 +239,36 @@ mod web_tabs;
 mod web_tint;
 // Only where a page's input window is a window of another process: the system's own
 // engine on Windows.
-#[cfg(all(windows, not(feature = "cef")))]
+#[cfg(windows)]
 mod web_wheel;
 #[cfg(desktop)]
 mod web_worlds;
+// What every browser's import reads profiles and their files with; see
+// browser_profiles.rs.
+#[cfg(desktop)]
+mod browser_profiles;
+// The profiles Firefox lists and its bookmarks, for the import's Firefox row; see
+// firefox_profiles.rs.
+#[cfg(desktop)]
+mod firefox_profiles;
+// The profiles Chrome, Edge, Brave, Chromium and Vivaldi keep, for the import's rows;
+// see chromium_profiles.rs.
+#[cfg(desktop)]
+mod chromium_profiles;
+// Safari's tabs and bookmarks, for the import's Safari row on a Mac; see safari.rs.
+#[cfg(desktop)]
+mod safari;
+// The profiles Zen lists and the file of each that holds its tabs, for the import's
+// Zen row; see zen_profiles.rs.
+#[cfg(desktop)]
+mod zen_profiles;
+// The themes Chrome and Firefox wear, for the Appearance pane's Import row; see
+// browser_themes.rs.
+#[cfg(desktop)]
+mod browser_themes;
+// And what such a theme says of the pages in web tabs; see page_style.rs.
+#[cfg(desktop)]
+mod page_style;
 
 use paths::Picked;
 use tauri::Manager;
@@ -294,6 +346,8 @@ macro_rules! commands {
             space_watch::space_unwatch,
             space_watch::space_scan,
             space_watch::file_identity,
+            ai_accounts::ai_accounts_read,
+            ai_accounts::ai_accounts_write,
             ai_threads::ai_threads_list,
             ai_threads::ai_thread_read,
             ai_threads::ai_thread_write,
@@ -328,6 +382,8 @@ macro_rules! desktop_commands {
             agents::shell::agents_shell,
             agents::shell::agents_hold,
             quick_add::quick_add_key,
+            hotkeys::global_keys,
+            hotkeys::global_keys_change,
             quick_add::quick_add_hide,
             quick_add::quick_add_tall,
             agents::shell::tray_keep,
@@ -341,6 +397,9 @@ macro_rules! desktop_commands {
             ai_agent::ai_agent_call,
             ai_agent::ai_agent_context,
             ai_cli::ai_cli_status,
+            ai_cli::ai_cli_forget,
+            ai_cli::ai_cli_enroll_read,
+            ai_cli::ai_cli_enroll_write,
             ai_cli::ai_cli_ask,
             ai_cli::ai_cli_stop,
             ai_cli::ai_cli_open,
@@ -361,18 +420,25 @@ macro_rules! desktop_commands {
             obsidian_vaults::obsidian_vaults,
             obsidian_vaults::obsidian_vault_files,
             obsidian_vaults::read_obsidian_file,
+            full_screen::window_fullscreen,
+            full_screen::window_is_fullscreen,
+            zen_profiles::zen_profiles,
+            zen_profiles::read_zen_file,
+            browser_profiles::browser_profiles,
+            browser_profiles::read_browser_file,
+            firefox_profiles::read_firefox_places,
+            safari::read_safari,
+            browser_themes::browser_themes,
+            page_style::wear_page_styles,
             launch::take_startup_pages,
+            launch::take_startup_pdfs,
+            handed_pdfs::bring_in_pdf,
             launch::new_window,
             launch::show_window,
             ahead::launch_ahead,
             ahead::remember_launch,
             default_browser::default_browser,
             default_browser::make_default_browser,
-            engine_switch::engine_state,
-            engine_switch::engine_choose,
-            engine_switch::engine_relaunch,
-            engine_switch::fetch::engine_fetch,
-            engine_switch::fetch::engine_cancel,
             lifecycle::keep_running,
             lifecycle::quit_confirmed,
             lifecycle::quit_others,
@@ -409,6 +475,9 @@ macro_rules! desktop_commands {
             terminal::remote::remote_config_open,
             terminal::picture::remote_image,
             updates::check_update,
+            package_manager::install_manager,
+            app_place::app_stuck,
+            app_place::move_to_applications,
             web_tabs::web_open,
             // Chrome and Edge extensions in web tabs; see extensions.rs.
             extensions::extensions_list,
@@ -450,27 +519,12 @@ macro_rules! desktop_commands {
             downloads::web_download_open,
             downloads::web_download_show,
             downloads::web_download_cancel,
-            // A web login carried between computers; see web_state.rs.
-            web_state::web_state_capture,
-            web_state::web_state_restore,
-            web_state::web_state_session,
-            web_state::web_state_inbox,
-            web_state::web_state_wants,
-            web_state::web_state_file,
-            web_state::web_state_put,
-            web_state::web_key_device,
-            web_state::web_key_digits,
-            web_state::web_key_wrap,
-            web_state::web_key_accept,
-            web_state::web_key_rotate,
-            web_state::web_key_current,
-            web_state::web_key_lease,
-            web_state::web_key_forget,
+            // A store a space kept, folded into the shared one (#239); see web_state.rs.
+            web_state::web_merge,
             // Whether somebody is at this computer, and what it is called; see
             // presence.rs.
             presence::input_idle,
             presence::device_name,
-            agents::leases::web_lease_elsewhere,
         ]
     };
 }
@@ -494,73 +548,28 @@ mod entry {
     }
 }
 
-/// Which runtime every type in this crate is written against.
-///
-/// On the app that ships it is Tauri's own `Wry`, compiled in, and a bare
-/// `AppHandle` or `Webview` means that - which is why nothing else in the crate
-/// names a runtime at all. On nib's own Chromium the engine is chosen by the binary
-/// rather than compiled in, so the type is Tauri's type-erased one and a bare
-/// `AppHandle` means that instead. Every other signature in the crate is unchanged
-/// either way, which is what makes one seam enough; see src/engine.rs.
-#[cfg(not(feature = "cef"))]
+/// Which runtime every type in this crate is written against: Tauri's own `Wry`, on the
+/// system's engine, and a bare `AppHandle` or `Webview` means that - which is why
+/// nothing else in the crate names a runtime at all. See src/engine.rs.
 pub type Engine = tauri::Wry;
 
-/// Which runtime every type in this crate is written against: the type-erased one,
-/// because the engine arrives from the binary. See above.
-#[cfg(feature = "cef")]
-pub type Engine = tauri::DynRuntime;
-
-/// Starts the app on the engine this build ships with: the system's own, which is
-/// what `tauri::Builder::default` gives - `WebView2` on Windows, `WKWebView` on a
+/// Starts the app on the system's own engine, which is what `tauri::Builder::default`
+/// gives - `WebView2` on Windows, `WKWebView` on a
 /// Mac, `WebKitGTK` on Linux. Returns when the last window has closed.
 pub fn run() {
+    // Before GTK and any thread, both of which read what it sets; see linux.rs.
+    #[cfg(target_os = "linux")]
+    linux::prepare();
     run_on(tauri::Builder::default());
 }
 
-/// What a process nib's own Chromium starts beside the app - its GPU process, a
-/// utility - does first: hold every window it makes off the screen, where the run is a
-/// probe's. See foreground.rs.
-#[cfg(desktop)]
-pub fn hold_helper() {
-    foreground::hold_helper();
-}
-
-/// Whether nib's own Chromium should start able to make agents' pages, which have no
-/// window (off-screen rendering): only where an agent is paired, since the switch is the
-/// whole process's. `config` is the app's own settings folder. See
-/// agents/engines/cef.rs.
-#[cfg(feature = "cef")]
-#[must_use]
-pub fn agent_pages_wanted(config: &std::path::Path) -> bool {
-    agents::engines::cef::windowless_wanted(config)
-}
-
-/// Chromium's own swipe between pages, which nib's own Chromium starts without so that
-/// only nib's runs: the feature to disable, and the switch to append with its value. See
-/// `src/engine.rs` and `web_swipe.rs`.
-#[cfg(feature = "cef")]
-pub const ENGINE_SWIPE: (&str, &str, &str) = engine::ENGINE_SWIPE;
-
-/// Starts the app on an engine the binary chose, and exits with a message if the app
-/// could not be built at all.
-///
-/// One seam, for one reason: `apps/desktop/src-tauri/cef` is a binary that links
-/// Chromium through `tauri-runtime-cef` and hands the engine in here already
-/// configured, so nib's own interface and every web tab are views in one browser
-/// process. The engine is never named in this crate, which is what keeps three
-/// hundred megabytes of Chromium out of the default build's dependency graph
-/// entirely. See src/engine.rs and docs/browser.md.
+/// Starts the app on `builder`, and exits with a message if the app could not be built
+/// at all.
 pub fn run_on(builder: tauri::Builder<Engine>) {
     // Before everything, because a copy under the old folder's name renames it and
     // starts again from there rather than going on; see bundle_name.rs.
     #[cfg(target_os = "macos")]
     bundle_name::carry_over();
-
-    // Before the trace, because the gate's clock is the process's and a measurement
-    // that starts late is a measurement that flatters. Nothing at all in the default
-    // build: the module is behind the `cef` feature.
-    #[cfg(feature = "cef")]
-    engine::gate::begin();
 
     // First, so that the one step nothing inside the process can time - the
     // machine loading the binary before any of this ran - is on the trace as well;
@@ -584,28 +593,13 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
             reason = "a phone has no window in the config to take out of it"
         )
     )]
-    #[cfg(not(feature = "cef"))]
     let mut context = tauri::generate_context!();
-    // The engine build compiles this file from a package of its own one folder down,
-    // and the config it is built from is the app's; see cef/Cargo.toml.
-    #[cfg(feature = "cef")]
-    let mut context = tauri::generate_context!("../tauri.conf.json");
 
     // A second launch is handed to the nib already running, or - where that one has
     // stopped answering - asks whether to end it, rather than waiting on it for ever; see
-    // handover.rs. Before the engine is chosen, because ending a frozen nib frees the
-    // lock the choice is made under.
-    //
-    // Then which engine this launch belongs to, before anything of either engine starts:
-    // the other build takes the launch over where it is the one chosen. See
-    // engine_switch.rs.
+    // handover.rs.
     #[cfg(desktop)]
-    if handover::handed_over(&context.config().identifier)
-        || engine_switch::handed_over(
-            &context.config().identifier,
-            &context.package_info().version.to_string(),
-        )
-    {
+    if handover::handed_over(&context.config().identifier) {
         return;
     }
     #[cfg(desktop)]
@@ -627,39 +621,14 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     // lifecycle.rs.
     #[cfg(desktop)]
     let builder = lifecycle::managed(builder);
-    // What fetching nib's own Chromium keeps while it runs; see engine_switch.rs.
-    #[cfg(desktop)]
-    let builder = engine_switch::managed(builder);
     #[cfg(desktop)]
     trace::mark("plugins: updater, dialog, process, one instance");
 
-    // The opener is how a link leaves the app anywhere, and the os plugin is how
-    // the window knows which build it is running as.
-    //
-    // Without the script the opener puts in every webview by default, a web tab's
-    // included. That script takes a Ctrl+click, a Shift+click and a `target="_blank"`
-    // link away from the page and asks the opener to hand the link to the system
-    // browser, which a site is never granted: so in a web tab those presses did
-    // nothing at all, the commonest link on the web among them. Emil, 2026-09-30:
-    // *"Ctrl + click to open a new web page doesn't work."* A page's links open the
-    // way a browser opens them, and the engine asks this app for the window; see
-    // web_opens.rs. The app's own links are pressed through its own code, and each
-    // one says where it goes; see open-link.ts.
-    //
     // Deep links come after single instance above, which is the order that plugin
     // asks for: on Windows and Linux a `nib://` link reaching an app that is
     // already open arrives as a second launch, and single instance is what hands
     // it over to be read as a link. See uris.rs.
-    let builder = builder
-        .plugin(
-            tauri_plugin_opener::Builder::new()
-                .open_js_links_on_click(false)
-                .build(),
-        )
-        .plugin(tauri_plugin_os::init())
-        .plugin(tauri_plugin_deep_link::init())
-        .manage(Picked::default())
-        .manage(uris::Pending::default());
+    let builder = links_out_and_in(builder);
     trace::mark("plugins: opener, os, deep link");
 
     // Sync's store and the watch on the space folders: two empty slots, filled when the
@@ -713,24 +682,16 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     trace::mark("commands registered");
 
     // The window is taken out of the config on every desktop, and built by `ready`
-    // instead. Two reasons, one per engine, and the config still says what the window
-    // looks like either way; see engine.rs.
-    //
-    // On nib's own Chromium, because the interface needs a profile of its own and a
-    // profile is asked for when a webview is built. On the system's, because a window
-    // the runtime builds is built around its webview - so there is nothing on screen
-    // until the webview runtime has started, which on Windows is between a third and
-    // half of a launch with the screen empty for all of it. Built here, the window is up
-    // in about twenty milliseconds and the webview starts behind it. See ground.rs.
+    // instead, and the config still says what the window looks like; see engine.rs. A
+    // window the runtime builds is built around its webview - so there is nothing on
+    // screen until the webview runtime has started, which on Windows is between a third
+    // and half of a launch with the screen empty for all of it. Built here, the window is
+    // up in about twenty milliseconds and the webview starts behind it. See ground.rs.
     #[cfg(desktop)]
     let ui = engine::take_ui_window(&mut context);
 
     #[cfg(desktop)]
-    let builder = builder.setup(move |app| {
-        #[cfg(feature = "cef")]
-        engine::gate::say("\"event\":\"cef-initialised\"");
-        ready(app, ui.as_ref())
-    });
+    let builder = builder.setup(move |app| ready(app, ui.as_ref()));
     #[cfg(not(desktop))]
     let builder = builder.setup(|app| ready(app, None));
 
@@ -741,6 +702,33 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
             std::process::exit(1);
         })
         .run(on_event);
+}
+
+/// The plugins every build has, the phone's too: the opener, which is how a link leaves
+/// the app anywhere, the os plugin, which is how the window knows which build it is
+/// running as, and deep links; with the paths the reader picked in a dialog of the
+/// system's (`Picked`) and the links the app was launched by (`uris::Pending`).
+///
+/// Without the script the opener puts in every webview by default, a web tab's
+/// included. That script takes a Ctrl+click, a Shift+click and a `target="_blank"`
+/// link away from the page and asks the opener to hand the link to the system
+/// browser, which a site is never granted: so in a web tab those presses did
+/// nothing at all, the commonest link on the web among them. Emil, 2026-09-30:
+/// *"Ctrl + click to open a new web page doesn't work."* A page's links open the
+/// way a browser opens them, and the engine asks this app for the window; see
+/// `web_opens.rs`. The app's own links are pressed through its own code, and each
+/// one says where it goes; see open-link.ts.
+fn links_out_and_in(builder: tauri::Builder<Engine>) -> tauri::Builder<Engine> {
+    builder
+        .plugin(
+            tauri_plugin_opener::Builder::new()
+                .open_js_links_on_click(false)
+                .build(),
+        )
+        .plugin(tauri_plugin_os::init())
+        .plugin(tauri_plugin_deep_link::init())
+        .manage(Picked::default())
+        .manage(uris::Pending::default())
 }
 
 /// The window's commands, each saying by name while it runs on the window's thread what
@@ -768,6 +756,18 @@ fn on_event(app: &tauri::AppHandle<Engine>, event: tauri::RunEvent) {
 /// Everything that has to happen once, after the app is built and before the
 /// window is seen: what the webview may load, what the app was launched with, and
 /// then showing the window that was built hidden.
+/// What the window hears from outside its own page, all of it in place before the window
+/// is shown, because a page that asked before anything was listening waits for ever.
+#[cfg(desktop)]
+fn hearing(handle: &tauri::AppHandle) {
+    // What the window's own page may be given: the microphone the moment somebody
+    // presses Record, and nothing else; see `hearing` in web_tabs.rs.
+    web_tabs::hearing(handle);
+    // The fingers on a precision touchpad, which a swipe waits for; see touchpad.rs.
+    #[cfg(windows)]
+    touchpad::start(handle);
+}
+
 fn ready(
     app: &mut tauri::App,
     ui: Option<&tauri::utils::config::WindowConfig>,
@@ -778,6 +778,15 @@ fn ready(
     trace::mark("app built, window created");
 
     let handle = app.handle();
+
+    // Where the spaces are, before anything asks; see `decide_spaces`.
+    #[cfg(desktop)]
+    paths::decide_spaces(handle);
+
+    // Which display GTK opened, asked here on the event loop's thread before any window is
+    // placed; see linux.rs.
+    #[cfg(target_os = "linux")]
+    linux::learn();
 
     // What the page will ask for first, read on a thread of its own from here, while
     // the webview below starts; see ahead.rs.
@@ -819,9 +828,9 @@ fn ready(
     trace::mark("automation endpoint");
 
     // A command line is a desktop's way of being handed a link, when nib is the
-    // browser; never a note, since nib opens nothing from outside its spaces (see
-    // launch.rs). A phone app is launched by tapping it, and there is nothing in
-    // `args` worth reading.
+    // browser, and a PDF opened with nib; never a note, since nib opens nothing from
+    // outside its spaces (see launch.rs). A phone app is launched by tapping it, and
+    // there is nothing in `args` worth reading.
     //
     // Added to, not replaced: on a Mac a link the system opened the app with may
     // already be waiting there; see lifecycle.rs. And the trace says which kind of
@@ -829,9 +838,9 @@ fn ready(
     #[cfg(desktop)]
     {
         let args: Vec<String> = std::env::args().collect();
-        if let Some(pending) = handle.try_state::<launch::Pending>() {
-            pending.hold(launch::Handed::Pages, launch::handed_by(&args));
-        }
+        let cwd = std::env::current_dir().unwrap_or_default();
+        launch::hold_handed(handle, &args, &cwd);
+        quick_add::asked_at_launch(&args);
         trace::mark(if web_handed::for_a_link(&args) {
             "launch arguments, a link's"
         } else {
@@ -841,15 +850,10 @@ fn ready(
     #[cfg(not(desktop))]
     trace::mark("launch arguments");
 
-    // What the window's own page may be given: the microphone the moment somebody
-    // presses Record, and nothing else. Before the window is shown, because a page that
-    // asked before anything was listening waits for ever; see `hearing` in web_tabs.rs.
+    // What the window hears from outside its own page, before the window is shown; see
+    // `hearing`.
     #[cfg(desktop)]
-    web_tabs::hearing(handle);
-    // The browser's own chords in a web tab's page, which nib's own Chromium keeps from the
-    // page and the app alike; see web_keys.rs.
-    #[cfg(all(windows, feature = "cef"))]
-    web_keys::chromium::start(handle);
+    hearing(handle);
 
     // And the window on screen, which is the last thing this does and the first thing
     // anybody sees. Everything above it costs under two milliseconds together and has to
@@ -896,6 +900,7 @@ fn ready(
             // Started by nothing but a reminder's Done: answered without a window on
             // screen, from the tray; see reminders.rs.
             let window = building.visible(false).build()?;
+            top_edge::mind(&window.as_ref().window());
             stall::watch_page(handle, window.as_ref(), "the window's");
         } else {
             let colour = ground::remembered(handle);
@@ -905,6 +910,7 @@ fn ready(
                 None => building,
             };
             let window = building.visible(at_once).build()?;
+            top_edge::mind(&window.as_ref().window());
             if see_through {
                 appearance::wear_from_the_start(&window.as_ref().window());
             }
@@ -915,6 +921,7 @@ fn ready(
                 window.show()?;
             }
         }
+        pinch::first_window(handle);
     }
 
     // A phone's window is the activity's.
@@ -941,29 +948,29 @@ fn ready(
     if web_first {
         web_tabs::warm(handle);
     }
-    // nib's own Chromium got as far as its window, so the next launch hands over to it
-    // again; see engine_switch.rs.
+    // What nib's own Chromium left behind, once the window is up; see retired_engine.rs.
     #[cfg(desktop)]
-    engine_switch::window_shown(handle);
+    retired_engine::clear_leftovers(handle);
     // Written here as well as when the window reports in, so a launch that never
     // gets as far as a window still leaves behind what it did get through.
     trace::write(handle);
 
-    // Nib listed among the browsers, put back if a portable copy moved or an install
-    // never wrote it: after the window, on a thread of its own; see default_browser.rs.
+    // Orden listed among the browsers and among the agents' servers, each on a thread of
+    // its own after the window; see `kept_listed`.
     #[cfg(desktop)]
-    default_browser::keep_registered(handle);
-
-    // And, on a build that is being measured rather than used, the gate: it opens a
-    // web tab and the engine's own pages, says what each cost and quits. Off unless
-    // NIB_CEF_GATE says otherwise, and not in the default build at all.
-    #[cfg(feature = "cef")]
-    {
-        engine::gate::say("\"event\":\"window-shown\"");
-        engine::gate::start(handle);
-    }
+    kept_listed(handle);
 
     Ok(())
+}
+
+/// What other programs list nib in, put back after every launch: Windows' browsers, put
+/// back if a portable copy moved or an install never wrote it (`default_browser.rs`), and
+/// the agent programs on this computer, so they reach nib with nothing to set up
+/// (`ai_cli/enroll.rs`). Each on a thread of its own, after the window.
+#[cfg(desktop)]
+fn kept_listed(handle: &tauri::AppHandle<Engine>) {
+    default_browser::keep_registered(handle);
+    ai_cli::keep_enrolled(handle);
 }
 
 /// The launch said in the log, and the window's thread watched from here on: which
@@ -985,17 +992,9 @@ fn watched(handle: &tauri::AppHandle) {
 }
 
 /// The app's own folder, `src-tauri`, for a test that reads a file beside the crate.
-///
-/// Not always the manifest's folder: the engine build compiles this library from a
-/// package one folder down (cef/Cargo.toml), and its tests read the same files.
 #[cfg(test)]
 pub(crate) fn app_dir() -> std::path::PathBuf {
-    let manifest = std::path::Path::new(env!("CARGO_MANIFEST_DIR"));
-    if cfg!(feature = "cef") {
-        manifest.join("..")
-    } else {
-        manifest.to_path_buf()
-    }
+    std::path::Path::new(env!("CARGO_MANIFEST_DIR")).to_path_buf()
 }
 
 #[cfg(test)]

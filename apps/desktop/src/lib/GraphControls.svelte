@@ -77,9 +77,17 @@
 
   // Escape closes it, like everything else the app puts over a note; see
   // overlays.ts, which is also what keeps this press from reaching the graph's own
-  // Escape and closing the tab underneath. And Android's back, the same gesture on
-  // a phone.
-  $effect(() => (open ? overlays.show(() => onopen(false)) : undefined))
+  // Escape and closing the tab underneath. So does a press past the card and its tab,
+  // and the window losing the focus. And Android's back, the same gesture on a phone.
+  let corner = $state<HTMLElement>()
+  $effect(() =>
+    open
+      ? overlays.show(
+          () => onopen(false),
+          () => [corner],
+        )
+      : undefined,
+  )
   $effect(() => closeOnBack(open, () => onopen(false)))
 
   function addGroup() {
@@ -115,14 +123,14 @@
    *  rows import it: it is a sheet, and a card should not carry one. */
   async function keepView() {
     const { prompt } = await import('./prompt.svelte')
-    const name = await prompt.ask({ title: t('Bookmark this view'), confirmLabel: t('Keep') })
+    const name = await prompt.ask({ title: t('Add view to Essentials'), confirmLabel: t('Keep') })
     if (!name) return
 
     workspace.bookmarks.toggle(workspace.bookmarks.forGraph(name, settings))
   }
 </script>
 
-<div class="corner">
+<div class="corner" bind:this={corner}>
   {#if open}
     <div class="nib-layer card">
       <!-- What the picture is narrowed to. The search's own language, so a habit
@@ -415,7 +423,7 @@
            project, what nothing links to. It lands in the row above the file
            list with everything else that is kept; see Bookmarks.svelte. -->
       <button class="nib-row" onclick={() => void keepView()}>
-        <span class="nib-row-label">{t('Bookmark this view')}</span>
+        <span class="nib-row-label">{t('Add view to Essentials')}</span>
       </button>
 
       <button class="nib-row" onclick={() => workspace.graphSettings.reset()}>

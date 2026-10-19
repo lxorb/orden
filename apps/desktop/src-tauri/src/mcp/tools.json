@@ -141,12 +141,20 @@
   },
   {
     "name": "browser_click",
-    "description": "Press an element by ref, scrolled into view. Answers the address afterwards and any tabs the press opened.",
+    "description": "Press an element by ref, scrolled into view. Where a press by ref is refused as covered and the element is what shows there, press a point instead: x and y in the tab's viewport, in the pixels of browser_screenshot at its own scale. Answers the address afterwards and any tabs the press opened.",
     "inputSchema": {
       "type": "object",
       "properties": {
         "tab": { "type": "string" },
         "ref": { "type": "string" },
+        "x": {
+          "type": "number",
+          "description": "Instead of ref: across the tab's viewport, in CSS pixels."
+        },
+        "y": {
+          "type": "number",
+          "description": "Instead of ref: down the tab's viewport, in CSS pixels."
+        },
         "button": { "type": "string", "enum": ["left", "right", "middle"] },
         "count": { "type": "integer", "description": "2 for a double click." },
         "modifiers": {
@@ -154,7 +162,7 @@
           "items": { "type": "string", "enum": ["Alt", "Control", "Meta", "Shift"] }
         }
       },
-      "required": ["tab", "ref"]
+      "required": ["tab"]
     }
   },
   {
@@ -679,7 +687,7 @@
   },
   {
     "name": "add_task",
-    "description": "Add a to-do line to the space's Inbox, or to `note` under the heading `under`. `text` may carry Tasks plugin marks (📅 2026-10-06 ⏫ 🔁 every week); `fields` takes what update_task does. Answers its `at`.",
+    "description": "Add a to-do line to the space's Inbox, or to `note` under the heading `under`. `text` may carry Tasks plugin marks (🛫 2026-10-06 the day it starts, [deadline:: 2026-10-20] its deadline, ⏫ 🔁 every week); `fields` takes what update_task does. Answers its `at`.",
     "inputSchema": {
       "type": "object",
       "properties": {
@@ -1146,5 +1154,37 @@
       "required": ["tab"]
     },
     "annotations": { "openWorldHint": false, "destructiveHint": true }
+  },
+  {
+    "name": "run_agent",
+    "description": "Start a helper on any model the reader's AI accounts offer, Claude's or OpenAI's, as you would a subagent of your own. It has none of your conversation: give it the whole task. It works with these nib tools in your mode, and its final answer is the result; while it still works, call agent_result.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "description": { "type": "string", "description": "A few words the reader sees." },
+        "prompt": { "type": "string", "description": "The whole task." },
+        "model": {
+          "type": "string",
+          "description": "opus, sonnet, haiku, gpt-6-astra, astra or any listed id; empty for yours."
+        },
+        "effort": {
+          "type": "string",
+          "enum": ["auto", "off", "minimal", "low", "medium", "high", "xhigh", "max"]
+        },
+        "subagent_type": { "type": "string", "description": "An agent profile's name." }
+      },
+      "required": ["prompt"]
+    },
+    "annotations": { "readOnlyHint": false, "openWorldHint": true }
+  },
+  {
+    "name": "agent_result",
+    "description": "A run_agent helper's answer; while it still works, call again.",
+    "inputSchema": {
+      "type": "object",
+      "properties": { "agent": { "type": "string" } },
+      "required": ["agent"]
+    },
+    "annotations": { "readOnlyHint": true, "openWorldHint": false }
   }
 ]

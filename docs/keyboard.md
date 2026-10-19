@@ -1,6 +1,6 @@
 # The keyboard
 
-Nib is meant to be usable with no pointer at all. Not "usable" as in you can Tab
+Orden is meant to be usable with no pointer at all. Not "usable" as in you can Tab
 through it if you are patient: usable as in a hand that never leaves the home row
 can open a note, read down a folder, switch space, change a setting and get back
 to writing.
@@ -86,7 +86,7 @@ Code has `focusNextPart` on F6 and `focusPreviousPart` on Shift+F6, and Discord
 documents it as its section key. The APG has an open issue proposing Ctrl+F6 for
 the same job and it has sat there since 2020.
 
-## Nib's model
+## Orden's model
 
 Four sentences.
 
@@ -147,7 +147,7 @@ down are untouched: a list still runs down the screen. See `steppedKey` in
 `apps/desktop/src/lib/direction.ts`, which is the one place that says so.
 
 The space switcher has two places and one list. A press on the space's mark drops
-it out of the panel header or the title bar; Ctrl+Space (and Ctrl+Shift+Space)
+it out of the panel header; Ctrl+Space (and Ctrl+Shift+Space)
 stands the same rows in the middle of the window, where a hand on the keyboard is
 looking, and the key again puts it away. Either way a digit goes to that space at
 once, Alt and a digit too, letters find a name and wait for Enter, Backspace takes
@@ -199,7 +199,7 @@ entries, so a rebind of one is a rebind of both.
 | Delete, Backspace | delete the selection |
 | Ctrl+C, Ctrl+X, Ctrl+V | copy or cut the selection, then paste into the folder the row is, or sits in |
 | Ctrl+Alt+N | a new note in the folder the row is, or sits in, waiting for its name: New note's key, wherever it is bound |
-| Ctrl+Z, Ctrl+Y | undo the last file change, and do it again (Ctrl+Shift+Z too; Cmd+Shift+Z on a Mac) |
+| Ctrl+Z, Ctrl+Y | undo the last file change, and do it again (Ctrl+Shift+Z too; Cmd+Shift+Z on a Mac); also with the keyboard gone elsewhere, while the list was the last thing used |
 | Alt+Up, Alt+Down | move the row in the order somebody arranged |
 
 See `docs/tree.md` for what a copy is called and where it lands. Duplicate is a row of
@@ -233,7 +233,7 @@ in the palette, and it can be rebound. What was already there is marked.
 | | |
 | --- | --- |
 | F6, Shift+F6 | next section, previous section |
-| Shift Shift, Ctrl+O | the palette: one search over everything - notes and every other file, commands with their keys, the open tabs, bookmarks, the pages this device has visited, and the settings one by one. Shift pressed twice on its own is JetBrains' Search Everywhere key and works over a web page too. Ctrl+P was its second key until Emil, 2026-10-01: *"we don't need Ctrl+P as a default shortcut for opening the search, because we already have Shift Shift"*; it prints now, and the VS Code, Notion and Obsidian keyboards keep it on their palette. Empty, it lists what was used lately, notes and commands together, newest first. See *The palette* below |
+| Shift Shift, Ctrl+O | the palette: one search over everything - notes and every other file, commands with their keys, the open tabs, the Essentials, the pages this device has visited, and the settings one by one. Shift pressed twice on its own is JetBrains' Search Everywhere key and works over a web page too. Ctrl+P was its second key until Emil, 2026-10-01: *"we don't need Ctrl+P as a default shortcut for opening the search, because we already have Shift Shift"*; it prints now, and the VS Code, Notion and Obsidian keyboards keep it on their palette. Empty, it lists what was used lately, notes and commands together, newest first. See *The palette* below |
 | Enter, Shift+Enter in the palette | Enter goes to the top row. A name nothing has ends the list as a new note, and is the top row when nothing else matched (`Uni/Lecture 3` makes the folder too); Shift+Enter makes it whatever matches, as in Obsidian |
 | Ctrl+Enter, Ctrl+Shift+Enter, Ctrl+Alt+Enter in the palette | a note, a page or an open tab's file in a tab of its own behind this one, in front, or (a note) in a pane to the right (Obsidian's chord); the same with a click, and the middle button is Ctrl+click |
 | Shift+Delete in the palette | takes the row out of what is remembered: a page out of the history, a note off the recent ones, anything's count of uses (Chrome's key) |
@@ -408,6 +408,16 @@ with a chat at the end of the first line where the account has chats, and a line
 has nothing in left out (a browser has no shell of its own, a phone no web tab). See
 `kindLines` in new-kinds.ts.
 
+**Which kinds are offered is the reader's**, in Settings › Note types: a switch for each
+kind this device can make, in the same three lines. Emil, #355: *"user should be able to
+configure which items of the Ctrl + T menu should be shown / hidden in settings"*. A kind
+switched off is offered nowhere - not under Ctrl+T or the plus, not in a pane with nothing
+open, not by the file list's New or the palette - and a file of that kind still opens, edits
+and syncs as it did. The last kind still offered cannot be switched off. The choice is the
+account's, the last device to change it winning, and a phone and a desktop each offer what
+of it they have. See `hiddenKinds` in settings.svelte.ts, kind-choice.ts and
+`test/e2e/tab-kinds.py`.
+
 **Each card wears its letter, and the letter makes it**: N a note, C a canvas, P a page
 note, M a chat, R a terminal (T is the new tab's own key, and R is what Run has been on
 Windows for thirty years), S Remote (SSH, which opens the host picker; docs/terminal.md,
@@ -453,6 +463,37 @@ under every keyboard: none of the four binds it, and VS Code's own Ctrl+Shift+D 
 Run and Debug view nib has not got. A page has it first, as it has Ctrl+D; a terminal
 gives it to the app, since a shell cannot tell it from Ctrl+D. See `deselectAll` in
 `workspace.svelte.ts`.
+
+**Full screen**
+
+| | |
+| --- | --- |
+| F11 | the tab being worked in alone over the whole screen, and again gives the screen back. Ctrl+Cmd+F on a Mac, where the window takes a Space of its own |
+| Escape | gives the screen back, where nothing else wanted it |
+
+Emil, 2026-10-13 (#259): *"F11 toggles fullscreen for whatever is currently open (note, web
+tab, chat, etc.), like F11 in a browser. F11 again (or Esc) exits. Web tabs in fullscreen
+hide the URL bar (and the rest of the tab chrome)."* Chrome's F11 for whatever kind of tab
+is open: the window goes full screen and everything of the app goes with its frame - both
+sides, the strips, the other panes of a split, a web tab's address bar and the status bar
+- so a web tab is its page and nothing else. The pane is the one Full window fills, so the
+split and the strips come back exactly as they were, and a window that was filled is
+filled again after. The tab in front may change (Ctrl+Tab, a link) and the screen stays,
+as F11 does through a tab switch; a key that moves to another pane takes the screen with
+it; a pane left with nothing in it gives the screen back.
+
+F11 works from inside a web page too, where Chrome keeps it from the page - unless a video
+in the page holds the screen, when F11 gives that back first. Escape is the issue's other
+way out, and it is the last to hear the key, the way a browser gives a page its Escape
+first: an open menu, a field, a terminal, vim's normal mode, a picture stepped off and a
+page's own dialog each keep theirs, and only an Escape they let go by gives the screen
+back. Chrome's F11 has no Escape at all; here it is the one the issue asked for, held to
+the rule Escape keeps everywhere else (one level back, never two). Outside a web page a
+small button in the corner stays as well, fading once nothing has moved; over a web page
+nothing is drawn, since nothing of the app's can be drawn over a page, and F11 and Escape
+are the way out, as in Chrome. A run sent off the screen (`NIB_OFF_SCREEN`) never puts its
+window over one: the crate keeps what was asked and leaves the window where it is; see
+`src-tauri/src/full_screen.rs`.
 
 **Full window**
 
@@ -549,9 +590,10 @@ inside the page is Chrome's way back to the address field.
 *"if I press Ctrl+T right now while I'm in a browser window, nothing happens."* Chrome's
 rule, on `WebView2`: Ctrl+T, Ctrl+Shift+T, Ctrl+W, Ctrl+N, Ctrl+Shift+N, Ctrl+Tab,
 Ctrl+Shift+Tab, Ctrl+PgUp and Ctrl+PgDn (with Shift too), Ctrl+1 to 9, nib's own Alt+0
-to 9, F6 to the address field and Shift+F11, the tab filling the window, are never offered
-to the page. Shift+F11 alone leaves the page the keyboard: filling the window is no reason to
-take the caret out of what fills it. Alt and a digit is no
+to 9, F6 to the address field, F11, full screen, and Shift+F11, the tab filling the window,
+are never offered to the page - F11 only while no video in it holds the screen, which F11
+gives back first. F11 and Shift+F11 leave the page the keyboard: filling the screen or the
+window is no reason to take the caret out of what fills it. Alt and a digit is no
 character on Windows, so what a page loses with it is only an `accesskey` on a digit, as
 it does in Chrome on Linux; AltGr and a digit, which is Ctrl and Alt, stays the page's.
 The find keys - Ctrl+F, Ctrl+G, Ctrl+Shift+G, F3 and Shift+F3 - and the address
@@ -572,9 +614,8 @@ hands the keyboard back to the app and says which key it was, and the window pla
 on itself - so it goes through the same handler and the same bindings as anywhere
 else. F5 and Ctrl+R need nothing: pressed in a page they are the
 engine's own reload, as in Chrome. Everything else, a site's own Ctrl+K among them, is
-the page's. See `src-tauri/src/web_keys.rs` and `lib/web-tab/keys.ts`. `WKWebView`,
-`WebKitGTK` and nib's own Chromium have no such event reachable yet, and there the page
-keeps every key; Chromium's `OnPreKeyEvent` is the same hook, see docs/browser.md.
+the page's. See `src-tauri/src/web_keys.rs` and `lib/web-tab/keys.ts`. `WKWebView` and
+`WebKitGTK` have no such event reachable yet, and there the page keeps every key.
 
 **A terminal**
 
@@ -585,15 +626,14 @@ the shell. See `lib/terminal/keys.ts`, which is the rule, and docs/terminal.md.
 | | |
 | --- | --- |
 | Ctrl+Shift+T, Ctrl+Tab, Ctrl+Shift+Tab, Ctrl+PgUp, Ctrl+PgDn (and with Shift), the numbered tabs on Alt or Ctrl+Alt and a digit | the app's, as everywhere |
-| Ctrl+T, Ctrl+N | **both**: a new tab and the scratchpad, and the shell's swapped letters and next line. The first press asks which, and the answer is kept; see below |
-| Shift twice, Ctrl+P, Ctrl+Shift+P, Ctrl+comma, F11, Shift+F11, F6, Shift+F6 | the app's: the palette, the settings, full screen, full window, and the way a keyboard leaves the terminal - Tab cannot be, the shell completes with it |
+| Ctrl+T, Ctrl+N, Ctrl+W, Ctrl+Space, Ctrl+P, Ctrl+O, Ctrl+D, Ctrl+E, Ctrl+/ - every app command on a key a shell reads | **both**: a new tab and the swapped letters, the scratchpad and the next line, closing the tab and deleting a word, the space switcher and Emacs's mark, and so on. The first press asks which, and the answer is kept, per command; see below (#426) |
+| Shift twice, Ctrl+Shift+P, Ctrl+comma, F11, Shift+F11, F6, Shift+F6 | the app's: the palette, the settings, full screen, full window, and the way a keyboard leaves the terminal - Tab cannot be, the shell completes with it |
 | Ctrl+Shift and any other app command, Ctrl+Alt and an arrow | the app's: a terminal cannot tell Ctrl+Shift+E from Ctrl+E, and no shell has one on it. Ctrl+Shift+D puts every pane down here too, and Ctrl+Shift+Space opens the space switcher |
-| Ctrl+Space | **the shell's**: NUL, which Emacs sets its mark with and PowerShell opens its completions with, as in Windows Terminal and VS Code. Ctrl+Shift+Space is the space switcher here |
-| Ctrl+W, Ctrl+O, Ctrl+S, Ctrl+R, Ctrl+D and every other Ctrl and a letter | **the shell's**: delete a word, the history, search it, the end of input. Close a terminal with `exit`, its cross or its menu, or Cmd+W on a Mac |
+| Ctrl+R, Ctrl+S, Ctrl+U and every other Ctrl and a letter no app command is on | **the shell's**: search the history, stop the output, delete the line |
 | Ctrl+Shift+W | nobody's: Close window here and Close tab in every terminal there is, so neither |
 | Ctrl+C | always the interrupt |
 | Ctrl+Shift+C, Ctrl+Shift+V, Shift+Insert | copy, paste. Ctrl+V pastes too on Windows, as in Windows Terminal. Cmd+C and Cmd+V on a Mac, and a selection is copied as it is made |
-| Alt and a letter | **the shell's**, as ESC and the letter, which ConPTY hands a Windows program as the Alt chord Windows Terminal's would be: Claude Code's Alt+K, Alt+P, Alt+T and **Alt+V, which pastes an image** it reads off the clipboard itself (Ctrl+V on Linux and a Mac, which is the shell's there too) |
+| Alt and a letter no app command is on | **the shell's**, as ESC and the letter, which ConPTY hands a Windows program as the Alt chord Windows Terminal's would be: Claude Code's Alt+P, Alt+T and **Alt+V, which pastes an image** (Alt+K, which Ask about the selection is on, is asked about once) it reads off the clipboard itself (Ctrl+V on Linux and a Mac, which is the shell's there too) |
 | Alt+V, Ctrl+V off Windows, or a paste with a picture and no text, in a Remote or online terminal | **the picture carried over**: that machine's clipboard is not this one's, so the picture is written to a file there and its path pasted, which Claude Code and Codex take as an image. With no picture on the clipboard the key goes to the shell as it would have. See *Pictures* in docs/terminal.md |
 | Ctrl+F | find, in nib's find bar |
 | Ctrl+=, Ctrl+-, Ctrl+0 | the terminal's type, larger, smaller, as it was; the same size as Settings, General, Terminal |
@@ -607,18 +647,27 @@ anything but its own letter or digit is somebody typing `@` or `{`.
 **A key that is both is asked about, once.** Emil, issue #213: *"when pressing a shortcut
 in a terminal like interface or anywhere where it could have mulitple meanings then there
 should be a quick modal asking you which of the two should be used from now on (or you can
-tick always ask)"*. Two keys are both in a terminal: Ctrl+T, a new tab, which bash and zsh
-swap two letters with and fzf finds a file with, and Ctrl+N, the scratchpad, which is the
-shell's next line of history. The first press of either in a terminal - local, Remote or
-online - gives the press to neither and asks, in the app's one small question: *Ctrl+N in a
-terminal*, with the app's command (Scratchpad, New tab) and Terminal as the answers and an
-*Always ask* box beside them. The answer is the press: the app's is played on the window as
-the key it was, the terminal's is typed into the shell as the character it would have been
-(SO, DC4). It is kept for every terminal from then on unless the box was ticked, and Settings,
-General, Terminal has a row for each key - Always ask, the command, or Terminal - that shows
-the answer and takes it back. Escape answers nothing and sends the press nowhere. Only while
-the command is on Ctrl and a letter: a rebound one, Ctrl+Shift+X, and Cmd on a Mac are chords
-no shell has, and the app's without asking. See `TWO_WAYS` in `lib/terminal/keys.ts` and
+tick always ask)"*, and #426: *"the first time it asks you" should be the case for every
+dual bound shortcut*. So every app command whose key a shell reads as a character is both:
+Ctrl and a letter, Ctrl+Space (NUL, Emacs's mark and PowerShell's completions), and the
+other keys that type a control character - Ctrl+[, Ctrl+\, Ctrl+], Ctrl+/ and Ctrl and the
+digits 2 to 8 - whether the command is there by default or because somebody put it there
+in Settings. Ctrl+T is a new tab and the swapped letters (fzf's file finder too), Ctrl+N
+the scratchpad and the next line of history, Ctrl+W closing the tab and deleting a word,
+Ctrl+Space the space switcher and the mark. The first press of one in a terminal - local,
+Remote or online - gives the press to neither and asks, in the app's one small question:
+*Ctrl+N in a terminal*, with the app's command and Terminal as the answers and an *Always
+ask* box beside them. The answer is the press: the app's is played on the window as the key
+it was, the terminal's is typed into the shell as the character it would have been (SO, DC4,
+NUL). It is kept, per command, for every terminal from then on unless the box was ticked,
+and Settings, General, Terminal has a row for each key answered - Always ask, the command, or
+Terminal - that shows the answer and takes it back; Always ask takes the row away. Escape
+answers nothing and sends the press nowhere. **Ctrl+C is never asked about**: it is the
+interrupt. A command somebody put on a function key, or on Alt and an arrow or a letter, is
+on a key the program in the terminal reads too - htop and mc are worked with F-keys, Claude
+Code has Alt+K - and is asked about the same way rather than given to the program unasked;
+the program, chosen, is given the key as xterm would have sent it. Ctrl+Shift, Ctrl+Alt and an arrow, and Cmd on a Mac are chords no shell has, and
+the app's without asking. See `shellReads` in `lib/terminal/keys.ts` and
 `lib/terminal/two-ways.ts`.
 
 **A chat** (docs/chats.md 4.16)
@@ -734,7 +783,7 @@ laptops, the Mac has its own default. Windows and Linux are unchanged.
 | Full screen | ⌃⌘F | F11 | F11 is Show Desktop; ⌃⌘F is every Mac app's Enter Full Screen |
 | Full window | ⌃⇧⌘F | Shift+F11 | the same Shift on full screen's key, and Sublime Text's own pair |
 | Present | ⌥⌘P | F5 | Keynote's Play Slideshow |
-| Focus, Typewriter, Read-only | ⌃⌘O, ⌃⌘T, ⌃⌘R | F8, F9, F10 | media keys; Obsidian has none, so Nib's own on the Ctrl+Cmd row beside ⌃⌘F |
+| Focus, Typewriter, Read-only | ⌃⌘O, ⌃⌘T, ⌃⌘R | F8, F9, F10 | media keys; Obsidian has none, so Orden's own on the Ctrl+Cmd row beside ⌃⌘F |
 | Round the strip | ⌃⇥, ⌃⇧⇥, ⇧⌘], ⇧⌘[ | Ctrl+Tab, Ctrl+Shift+Tab, Ctrl+PgDn, Ctrl+PgUp | ⌘⇥ is the app switcher; the brackets are Safari's, Chrome's and VS Code's |
 | The note at a place | ⌘1 to ⌘9 | Alt+1 to 9 and Alt+0, Ctrl+Alt+1 to 9 | Obsidian's and Safari's; ⌥ and a digit types a character |
 | Heading 1 to 6 | ⌥⌘1 to ⌥⌘6 | Ctrl+1 to 6 | trades places with the notes, as Notion has them on a Mac |
@@ -807,7 +856,7 @@ or Cmd, and Backspace takes it away.
 Settings, Shortcuts, has a keyboard to start from: Default, Notion, Obsidian, VS Code or
 Vim. Each holds only where it differs from Default, so a key Default gains later reaches
 all of them. The rule for a clash is the other app's: its key goes to what it does there,
-and the Nib action that held it is left with no key rather than moved somewhere nobody
+and the Orden action that held it is left with no key rather than moved somewhere nobody
 would look. Those rows read "Not set" in the list, and are still in the menus and the
 palette. `presets.test.ts` fails if a keyboard writes one chord twice, or leaves any two
 actions on one key.
@@ -920,8 +969,7 @@ keyboard from the page. The window takes the record back inside the message that
 it the keyboard, so a click that brought it forward still lands where it clicked; only a
 page that is on screen, never an agent's own, and never while another program is in
 front. The element inside a page is the engine's to keep, and the app's page keeps a net
-under it for its own. nib's own Chromium had nothing hand the keyboard to any page at
-all, and now does, through each browser's host. A Mac and Linux keep a window's first
+under it for its own. A Mac and Linux keep a window's first
 responder across activation themselves; they share the record for the layers. See
 `src-tauri/src/keyboard.rs` and `lib/keyboard-home.ts`.
 
@@ -969,6 +1017,11 @@ nobody else's. Paragraph has no key now - Ctrl+2 on a second-level heading is wh
 it back into prose - and **Ctrl+Shift+P**, which it held for a while, is the palette on
 commands; see the digit rule above.
 
+Ctrl+Alt+R stands a canvas two fingers turned upright again (#351), beside them.
+
+The plane steps its zoom on the same two keys as a page note, Ctrl+Alt+= and
+Ctrl+Alt+-: the bar no longer has buttons for it (#401).
+
 The plane's Fit is Ctrl+Alt+0 for the same reason: it is read off the plane and the
 press goes on to the window afterwards, so the two on one key would fit the plane and
 resize the words at once. A surface with a zoom of its own - the canvas, the graph, a
@@ -981,7 +1034,7 @@ down on anything one of them has already prevented, keys as well as the wheel.
 | --- | --- |
 | Ctrl+Alt+= , Ctrl+Alt+- | a notch in and out of the paper |
 | Ctrl+Alt+0 | fit the width, and keep the paper fitted from then on |
-| Fit page | the whole of the page in the pane. No key out of the box; it is a row in the menu the percentage on the bar opens |
+| Fit page | the whole of the page in the pane. No key out of the box; it is a row in the paper's own menu, a right click or a finger held still |
 | Add a page | a page at the end. No key either: the gesture is carrying on scrolling past the last sheet, and the silhouette there is the button |
 
 They share Ctrl+Alt+0 with the plane's own Fit and are not a clash, because both

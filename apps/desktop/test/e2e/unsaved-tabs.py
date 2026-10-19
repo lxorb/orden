@@ -15,9 +15,10 @@ What it proves, in order, and photographs:
   writes the file there. The dot goes.
 * **Dropped on the list**: a tab carried off its strip and let go of below the file
   list's rows is saved at the root of the space, under its first line.
-* **Close and reopen**: a new note with words closes with no question, its words are in
-  Recently deleted, and Ctrl+Shift+T brings the tab back with them - and out of the
-  trash again.
+* **Close and reopen**: a new note with words asks before it closes (#359): Cancel keeps
+  it, Don't save closes it with its words in Recently deleted, and Ctrl+Shift+T brings
+  the tab back with them - and out of the trash again. Save asks where, in the layer
+  Ctrl+S puts under the tab, and closes it once it has its file.
 * **A restart**: the page loaded again brings a tab with no file back, words, dot and all.
 * **One tab per web note**: a split of a web note is an unsaved web tab beside it, never a
   second tab of the file.
@@ -40,6 +41,11 @@ DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
 LAYER = "() => !!document.querySelector('[role=\"dialog\"] form input')"
+
+#: The question a tab with unsaved words asks before it closes; see
+#: workspace/closing-unsaved.ts.
+SHEET = '[role="dialog"][aria-label^="Save changes to"]'
+QUESTION = "() => !!document.querySelector('[role=\"dialog\"][aria-label^=\"Save changes to\"]')"
 
 STATE = """
 () => {
@@ -143,9 +149,25 @@ def drive(browser: Browser, scheme: str) -> None:
     say(f"--- {scheme}: close and reopen ---")
     typed(page, "Scratch thought")
     page.keyboard.press("Control+KeyW")
-    page.wait_for_timeout(600)
-    if page.locator('[role="dialog"]').count():
-        wrong("closing a new note with words asked something")
+    wait_for(page, QUESTION, "the question before it closes")
+    buttons = page.locator(f"{SHEET} button").all_inner_texts()
+    if [one.strip() for one in buttons] != ["Cancel", "Don’t save", "Save"]:
+        wrong(f"the question's answers are {buttons}")
+    DRIVE.settled(page)
+    DRIVE.shot(page, f"{scheme}-06-asked")
+    page.keyboard.press("Escape")
+    wait_for(page, f"!({QUESTION})()", "the question gone")
+    if page.evaluate("() => window.nibApp.workspace.active?.path") is not None or not page.evaluate(
+        "() => window.nibApp.workspace.tabs.some((one) => one.path === null && one.note.blank === false && one.shown.startsWith('Scratch'))"
+    ):
+        wrong("Cancel did not keep the tab with its words")
+    else:
+        say("Ctrl+W, Escape         -> asked, and kept")
+    page.evaluate("() => window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)?.focus()")
+    page.keyboard.press("Control+KeyW")
+    wait_for(page, QUESTION, "the question again")
+    page.locator(f"{SHEET} button", has_text="Don’t save").click()
+    wait_for(page, f"!({QUESTION})()", "the question answered")
     # Its words in Recently deleted, as a note deleted from the root of the space.
     page.evaluate(
         """() => {
@@ -155,7 +177,7 @@ def drive(browser: Browser, scheme: str) -> None:
         }"""
     )
     if DRIVE.waited(page, "document.body.innerText.includes('Scratch thought')", "Recently deleted"):
-        say("closed with words      -> no question, and in Recently deleted")
+        say("Don’t save             -> closed, and in Recently deleted")
     else:
         wrong("the closed note's words are not in Recently deleted")
     DRIVE.shot(page, f"{scheme}-06-recently-deleted")
@@ -165,7 +187,23 @@ def drive(browser: Browser, scheme: str) -> None:
     page.evaluate("() => window.nibApp.views.of(window.nibApp.workspace.panes.focusedId)?.focus()")
     page.keyboard.press("Control+Shift+KeyT")
     wait_for(page, "window.nibApp.workspace.active?.doc === 'Scratch thought'", "the tab back")
-    say("Ctrl+W, Ctrl+Shift+T   -> no question, back with its words")
+    say("Ctrl+Shift+T           -> back with its words")
+
+    say(f"--- {scheme}: closed with Save ---")
+    typed(page, "Kept thought")
+    page.keyboard.press("Control+KeyW")
+    wait_for(page, QUESTION, "the question before it closes")
+    page.locator(f"{SHEET} button", has_text="Save").last.click()
+    wait_for(page, LAYER, "the layer under the tab")
+    DRIVE.shot(page, f"{scheme}-06b-save-to-close")
+    page.keyboard.press("Enter")
+    wait_for(
+        page,
+        "!window.nibApp.workspace.tabs.some((one) => one.shown.startsWith('Kept thought'))"
+        " && window.nibApp.workspace.files.some((one) => one.path.endsWith('/Kept thought.md'))",
+        "the note saved and its tab closed",
+    )
+    say("Ctrl+W, Save, Enter    -> Kept thought.md, and the tab closed")
 
     say(f"--- {scheme}: a restart ---")
     page.evaluate("() => window.nibApp.workspace.persist()")

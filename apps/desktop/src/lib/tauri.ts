@@ -1,4 +1,4 @@
-/** Nib runs three ways: as the desktop app, as the phone app, and as a page in a
+/** Orden runs three ways: as the desktop app, as the phone app, and as a page in a
  *  browser. Everything platform-specific funnels through here so the interface
  *  never branches. */
 
@@ -171,7 +171,11 @@ export async function currentWindow(): Promise<WindowLike> {
   if (!isNative) return browserWindow
 
   const { getCurrentWindow } = await import('@tauri-apps/api/window')
-  return getCurrentWindow()
+  // Full screen is the crate's, which keeps a probe off the screen; see full_screen.rs.
+  return Object.assign(Object.create(getCurrentWindow()) as WindowLike, {
+    setFullscreen: (on: boolean) => invoke<undefined>('window_fullscreen', { on }),
+    isFullscreen: () => invoke<boolean>('window_is_fullscreen'),
+  })
 }
 
 /** Closes the window the way its close button does, so what is owed in it is

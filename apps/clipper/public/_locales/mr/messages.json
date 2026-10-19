@@ -1,7 +1,0 @@
-{
-  "name": { "message": "nibeditor" },
-  "description": { "message": "पान, निवड किंवा लिंक तुमच्या nibeditor नोंदीत क्लिप करा." },
-  "clipPage": { "message": "पान क्लिप करा" },
-  "clipSelection": { "message": "निवड क्लिप करा" },
-  "clipLink": { "message": "लिंक क्लिप करा" }
-}

@@ -10,6 +10,8 @@
  *  an export in a webview, and it is the reason the sheet says how much it is
  *  about to write before it starts. */
 
+import { plural, t } from '../i18n.svelte'
+
 /** Which app the files came out of. `markdown` is the plain case: a folder of
  *  notes, which is what half of these apps export when asked nicely.
  *
@@ -33,8 +35,8 @@ export type FormatId =
   | 'table'
   | 'markdown'
   | 'pandoc'
-  /** A PDF, brought in as pages to write on: the paper itself, and a page note
-   *  beside it whose pages are that paper's pages. The one row here that is not
+  /** A PDF, brought in as pages to write on: a page note whose pages are that
+   *  paper's pages, holding the paper itself. The one row here that is not
    *  another app's export - somebody's own paper is a thing to write on, and the
    *  door that already takes files is the door to bring it through. */
   | 'pdf-pages'
@@ -42,9 +44,13 @@ export type FormatId =
   | 'todoist'
 
 /** One file the import will write. A note carries words, anything else carries
- *  bytes, and both are addressed the same way so the writing does not branch. */
+ *  bytes, and both are addressed the same way so the writing does not branch.
+ *
+ *  `pages` is a PDF that becomes its page note once it has landed, which is what the
+ *  Import door makes of a paper; see pdf-pages.ts. */
 export type Planned =
-  { kind: 'note'; path: string; text: string } | { kind: 'file'; path: string; bytes: Uint8Array }
+  | { kind: 'note'; path: string; text: string }
+  | { kind: 'file'; path: string; bytes: Uint8Array; pages?: true }
 
 /** One line about what could not be carried over.
  *
@@ -61,6 +67,16 @@ export interface Lost {
    *  hits the one case, in every language that has a singular. */
   one?: string
   values?: Record<string, string | number>
+}
+
+/** What one line of what was lost reads as. A line with a singular form of its own
+ *  is counting something, and the count decides which form its language takes;
+ *  everything else is one sentence. */
+export function worthKnowing(line: Lost): string {
+  const count = line.values?.count
+  if (line.one === undefined || typeof count !== 'number') return t(line.text, line.values)
+
+  return plural(count, { one: line.one, other: line.text }, line.values)
 }
 
 export interface ImportPlan {

@@ -1,26 +1,33 @@
 <script lang="ts">
-  /** The Tasks panel (docs/tasks.md 5.5): where things are, with how many, in one
-   *  glance - the add row, Inbox, Today (its count in the danger tone when something is
-   *  overdue), Upcoming and the Logbook; then the saved views (the space's `.base`
-   *  files), the projects (every note with open tasks, the most recently written first,
-   *  seven and then More) and the labels. Bookmarked ones first in each. A row opens
-   *  its view in a tab, the way the graph opens; the panel is navigation, the tab is
-   *  the work.
+  /** The Tasks panel, Todoist's sidebar the nib way: where things are, with how many, in
+   *  one glance. The add row, Inbox, Today (its count in the danger tone while something
+   *  is overdue), Upcoming and Completed; the saved views; the favourites (bookmarked
+   *  projects, notes and views); the projects - the notes in the space's projects folder,
+   *  nested and in the order the file list keeps (project-tree.ts), each with its count;
+   *  the other notes that hold open tasks, so a task written anywhere is in reach; and
+   *  the labels. A row opens its view in the tab it takes over, the way a press in the
+   *  file list opens a note: the panel is navigation, the tab is the work.
    *
    *  Moved to the right, beside the note being written, it is Today's list itself, so
    *  the day can be worked through without leaving the note. */
   import { answer, readBase, type Row } from '@nib/bases'
-  import { untrack } from 'svelte'
+  import { tick, untrack } from 'svelte'
+  import FileMark from '../FileMark.svelte'
+  import { chosenIcon } from '../chosen-icon'
   import { t } from '../i18n.svelte'
-  import { menu } from '../menu.svelte'
-  import { rows } from '../rows/rows.svelte'
-  import { relativeTo, samePath } from '../space-paths'
   import { links } from '../link-index.svelte'
+  import { modes } from '../modes.svelte'
+  import { archiveEntry, bookmarkEntry, DIVIDER, iconEntries, menu } from '../menu.svelte'
+  import { rows } from '../rows/rows.svelte'
+  import { insideSpace, relativeTo, samePath, within } from '../space-paths'
   import { invoke } from '../tauri'
+  import Twist from '../Twist.svelte'
   import { workspace } from '../workspace.svelte'
+  import { dropRow } from './act'
   import { addTyped, openQuickAdd } from './add'
   import { contextFor } from './context'
   import { todayHere } from './days'
+  import { droppable } from './drag.svelte'
   import { kitFor } from './kit'
   import ListLayout from './ListLayout.svelte'
   import { LiveView } from './live.svelte'
@@ -35,8 +42,21 @@
     VIEW_MARK,
   } from './marks'
   import { openBaseFile, openBuiltin, openLabel, openProject } from './open'
-  import { panelCounts, PROJECTS_SHOWN } from './panel'
+  import { EMPTY, toggled } from './list-items'
+  import { NOTES_SHOWN, openByPath, panelCounts } from './panel'
+  import {
+    addProject,
+    addProjectBeside,
+    addSubproject,
+    placeProject,
+    renameProject,
+    spaceProjects,
+  } from './project-actions'
+  import { reorderDrag } from './reorder-drag'
+  import { type ProjectNode, projectNotes, projectRows } from './project-tree'
   import { builtinBase } from './source'
+  import { queryOf } from './filters'
+  import { prompt } from '../prompt.svelte'
   import { type Builtin, readSpec } from './spec'
   import { builtinName } from './words'
 
@@ -53,25 +73,78 @@
       }),
     ),
   )
-  const counts = $derived(panelCounts(all, today, rows.inboxes()))
+  const counts = $derived(panelCounts(all, today, rows.inboxes(), modes.undatedInToday))
 
+  const space = $derived(workspace.activeSpace)
+  const root = $derived(space?.root ?? null)
+
+  /** Open tasks per note of the open space, by its path in the space. */
+  const openIn = $derived(openByPath(counts.notes, space?.name))
+
+  /** The projects: the projects folder's notes, as the file list has them. */
+  const nodes = $derived(
+    root === null ? [] : spaceProjects(root, (note) => openIn.get(relativeTo(root, note)) ?? 0),
+  )
+  let folded = $state.raw<ReadonlySet<string>>(EMPTY)
+  const shownProjects = $derived(projectRows(nodes, folded))
+  const inProjects = $derived(
+    new Set(root === null ? [] : projectNotes(nodes).map((note) => relativeTo(root, note))),
+  )
+
+  /** The other notes with open tasks: every space's, but not a project or an inbox. */
+  const inboxes = $derived(rows.inboxes())
+  /** The open space's templates folder: a template's tasks are a pattern, not work. */
+  let templatesAt = $state<string | null>(null)
+  $effect(() => {
+    const here = root
+    templatesAt = null
+    if (here === null) return
+    void import('./templates')
+      .then((one) => one.templatesFolder(here))
+      .then((folder) => {
+        if (root === here) templatesAt = folder
+      })
+  })
+  const notes = $derived(
+    counts.notes.filter(
+      (one) =>
+        !(one.space === space?.name && inProjects.has(one.path)) &&
+        !(
+          one.space === space?.name &&
+          templatesAt !== null &&
+          within(templatesAt, one.path) !== null
+        ) &&
+        !inboxes.some((inbox) => inbox.space === one.space && samePath(inbox.path, one.path)),
+    ),
+  )
   let more = $state(false)
-  const projects = $derived(more ? counts.projects : counts.projects.slice(0, PROJECTS_SHOWN))
+  const notesShown = $derived(more ? notes : notes.slice(0, NOTES_SHOWN))
 
-  /** The open space's bookmarks, for the rows that go first. */
-  const marked = $derived(workspace.bookmarks.list)
-  const bookmarked = (space: string, path: string) =>
-    space === workspace.activeSpace?.name &&
-    marked.some((one) => one.kind === 'note' && samePath(one.path, path))
-  const first = <T,>(list: readonly T[], top: (one: T) => boolean) => [
-    ...list.filter(top),
-    ...list.filter((one) => !top(one)),
-  ]
+  /** The open space's bookmarks that are a project, a note with tasks or a view. */
+  const favourites = $derived.by(() => {
+    if (root === null || !space) return []
+    return workspace.bookmarks.list.flatMap((mark) => {
+      if (mark.kind !== 'note') return []
+      const path = insideSpace(root, mark.path)
+      const isBase = /\.base$/i.test(mark.path)
+      const isProject = inProjects.has(mark.path)
+      const holds = openIn.has(mark.path)
+      if (!isBase && !isProject && !holds) return []
+      return [
+        {
+          path,
+          relative: mark.path,
+          base: isBase,
+          name: mark.path.replace(/^.*\//, '').replace(/\.(md|base)$/i, ''),
+          count: isBase ? baseCount(path) : (openIn.get(mark.path) ?? 0),
+        },
+      ]
+    })
+  })
 
   /** The space's `.base` files: its saved views. */
   const bases = $derived.by(() => {
-    const root = workspace.activeSpace?.root
-    if (root === undefined) return []
+    if (root === null) return []
     return workspace.files
       .filter((one) => !one.is_dir && /\.base$/i.test(one.name))
       .map((one) => ({
@@ -110,12 +183,12 @@
       return null
     }
   }
-  const baseCount = (path: string): number | null => {
+  function baseCount(path: string): number | null {
     const base = read[path]
-    const space = workspace.activeSpace?.name
-    if (!base || space === undefined) return null
+    const name = workspace.activeSpace?.name
+    if (!base || name === undefined) return null
     try {
-      const mine = all.filter((one) => one.space === space)
+      const mine = all.filter((one) => one.space === name)
       return answer(base, 0, mine, contextFor({ rows: mine, today, now: `${today}T00:00:00` }))
         .total
     } catch {
@@ -134,6 +207,10 @@
     (extra?.path === undefined || front.spec.path === extra.path) &&
     (extra?.tag === undefined || front.spec.tag === extra.tag)
 
+  /** A press opens the view in the tab the last press opened, unless that tab was kept;
+   *  Ctrl or Cmd keeps the one there and opens another, as a link in a browser does. */
+  const how = (event: MouseEvent) => ({ preview: !(event.ctrlKey || event.metaKey) })
+
   let typing = $state(false)
   let words = $state('')
 
@@ -148,12 +225,191 @@
     await addTyped(said, {})
   }
 
-  function projectMenu(event: MouseEvent, space: string, path: string) {
+  /** The row a project's name is being typed into: a new one at the top of the
+   *  projects, a new one inside another, or one named again. */
+  let naming = $state<
+    | { kind: 'new'; template?: string }
+    | { kind: 'inside' | 'rename'; node: ProjectNode }
+    | { kind: 'beside'; node: ProjectNode; after: boolean }
+    | null
+  >(null)
+  let name = $state('')
+
+  async function named() {
+    const asked = naming
+    const said = name.trim()
+    naming = null
+    name = ''
+    if (!asked || !said || root === null || !space) return
+    if (asked.kind === 'rename') {
+      await renameProject(asked.node, said)
+      return
+    }
+    const made =
+      asked.kind === 'new'
+        ? await addProject(root, said, asked.template)
+        : asked.kind === 'beside'
+          ? await addProjectBeside(asked.node, said, asked.after)
+          : await addSubproject(asked.node, said)
+    if (made) openProject(space.name, relativeTo(root, made), undefined, { preview: true })
+  }
+
+  function startNaming(next: typeof naming, words = '') {
+    naming = next
+    name = words
+    if (next && next.kind !== 'new' && folded.has(next.node.note)) twist(next.node.note)
+    // The row's field is drawn on the next turn, and only then can it take the keys.
+    void tick().then(() => panel?.querySelector<HTMLInputElement>('input.naming')?.select())
+  }
+
+  let panel = $state<HTMLElement>()
+
+  /** The plus's own menu, Todoist's project templates the nib way: a new project made
+   *  from a note of the space's templates folder, named as the reader types. */
+  function templateMenu(event: MouseEvent) {
+    event.preventDefault()
+    void import('./templates').then(async ({ templates }) => {
+      const found = await templates()
+      if (!found.length) return
+      menu.show(
+        event,
+        found.map((one) => ({
+          label: one.name.replace(/.md$/i, ''),
+          run: () => startNaming({ kind: 'new', template: one.path }),
+        })),
+        { title: t('New note from template') },
+      )
+    })
+  }
+
+  function twist(note: string) {
+    folded = toggled(folded, note)
+  }
+
+  function projectMenu(event: MouseEvent, node: ProjectNode) {
+    if (root === null || !space) return
+    const relative = relativeTo(root, node.note)
+    const folder = node.folder
     menu.show(event, [
-      { label: t('Open'), run: () => openProject(space, path) },
-      { label: t('Open as board'), run: () => openProject(space, path, 'kanban') },
-      { label: t('Open as calendar'), run: () => openProject(space, path, 'calendar') },
+      { label: t('Open'), run: () => openProject(space.name, relative) },
+      { label: t('Open as board'), run: () => openProject(space.name, relative, 'kanban') },
+      { label: t('Open as calendar'), run: () => openProject(space.name, relative, 'calendar') },
+      DIVIDER,
+      {
+        label: t('Add project above'),
+        run: () => startNaming({ kind: 'beside', node, after: false }),
+      },
+      {
+        label: t('Add project below'),
+        run: () => startNaming({ kind: 'beside', node, after: true }),
+      },
+      { label: t('Add sub-project'), run: () => startNaming({ kind: 'inside', node }) },
+      { label: t('Rename'), run: () => startNaming({ kind: 'rename', node }, node.name) },
+      { label: t('Duplicate'), run: () => void workspace.duplicate(folder ?? node.note) },
+      {
+        label: t('Save as CSV'),
+        run: () =>
+          void import('./todoist-csv').then((one) => one.saveProjectCsv(node.note, node.name)),
+      },
+      ...iconEntries(node.note),
+      ...bookmarkEntry({ kind: 'note', path: relative, text: '' }),
+      DIVIDER,
+      ...archiveEntry(folder ?? node.note),
+      {
+        label: t('Delete'),
+        danger: true,
+        run: () => void workspace.remove(folder ?? node.note, folder !== null),
+      },
     ])
+  }
+
+  function noteMenu(event: MouseEvent, one: { space: string; path: string }) {
+    menu.show(event, [
+      { label: t('Open'), run: () => openProject(one.space, one.path) },
+      { label: t('Open as board'), run: () => openProject(one.space, one.path, 'kanban') },
+      { label: t('Open as calendar'), run: () => openProject(one.space, one.path, 'calendar') },
+    ])
+  }
+
+  /** Todoist's Add filter: a name and a query, in its sheet (FilterSheet.svelte). */
+  function addFilter() {
+    void import('./filter-sheet.svelte').then((one) =>
+      one.showFilter({ path: null, name: '', query: '' }),
+    )
+  }
+
+  /** A saved view's menu: a filter is changed in its sheet, as it was typed; any view can
+   *  be a favourite and be deleted. */
+  function viewMenu(event: MouseEvent, one: { path: string; name: string; relative: string }) {
+    const base = read[one.path]
+    const query = base ? queryOf(base) : null
+    menu.show(event, [
+      { label: t('Open'), run: () => openBaseFile(one.path) },
+      ...(query === null
+        ? []
+        : [
+            {
+              label: t('Edit filter'),
+              asks: true,
+              run: () =>
+                void import('./filter-sheet.svelte').then((sheet) =>
+                  sheet.showFilter({ path: one.path, name: one.name, query }),
+                ),
+            },
+          ]),
+      ...bookmarkEntry({ kind: 'note', path: one.relative, text: '' }),
+      DIVIDER,
+      { label: t('Delete'), danger: true, run: () => void workspace.remove(one.path, false) },
+    ])
+  }
+
+  /** A label's menu: named again, or taken off every task, in every note of the space,
+   *  as one undo (`retagNotes`). */
+  function labelMenu(event: MouseEvent, tag: string) {
+    menu.show(event, [
+      { label: t('Open'), run: () => openLabel(tag) },
+      {
+        label: t('Rename'),
+        asks: true,
+        run: () =>
+          void prompt
+            .ask({ title: t('Rename'), value: tag, confirmLabel: t('Rename') })
+            .then((words) => {
+              const next = words?.trim().replace(/^#+/, '')
+              if (next && next !== tag && !/\s/.test(next)) void workspace.retagNotes(tag, next)
+            }),
+      },
+      DIVIDER,
+      {
+        label: t('Delete'),
+        danger: true,
+        asks: true,
+        run: () =>
+          void prompt
+            .confirm({
+              title: t('Delete {name}?', { name: `#${tag}` }),
+              confirmLabel: t('Delete'),
+              danger: true,
+            })
+            .then((sure) => (sure ? void workspace.retagNotes(tag, null) : undefined)),
+      },
+    ])
+  }
+
+  /** A project carried onto another, landing just above or below it (reorder-drag.ts). */
+  function place(moving: string, target: string, after: boolean) {
+    const all = projectRows(nodes, EMPTY)
+    const from = all.find((one) => samePath(one.note, moving))
+    const to = all.find((one) => samePath(one.note, target))
+    if (from && to) void placeProject(from, to, after)
+  }
+
+  /** A task let go over a project: it moves there, its lines and all. */
+  function takeInto(node: ProjectNode) {
+    return (carried: Row) => {
+      if (!carried.task || root === null) return
+      void dropRow(carried, { move: { path: relativeTo(root, node.note) } })
+    }
   }
 
   /** On the right: Today, worked through beside the note. */
@@ -173,6 +429,14 @@
     const here = beside
     if (here) return untrack(() => here.live.start())
   })
+  // And read again when Settings turns the tasks with no start date in or out of Today.
+  let undated = untrack(() => modes.undatedInToday)
+  $effect(() => {
+    const now = modes.undatedInToday
+    if (now === undated) return
+    undated = now
+    untrack(() => void beside?.live.reload())
+  })
 </script>
 
 {#snippet row(
@@ -180,7 +444,7 @@
   label: string,
   count: number | null,
   on: boolean,
-  open: () => void,
+  open: (event: MouseEvent) => void,
   late = false,
   context?: (event: MouseEvent) => void,
 )}
@@ -193,7 +457,34 @@
   </button>
 {/snippet}
 
-<div class="tasks">
+{#snippet field(placeholder: string, depth: number)}
+  <div class="nib-row adding" style:--depth={depth}>
+    <span class="nib-row-mark"
+      ><svg viewBox="0 0 13 13" aria-hidden="true"><path d={PROJECT_MARK} /></svg></span
+    >
+    <input
+      class="field naming"
+      bind:value={name}
+      aria-label={placeholder}
+      {placeholder}
+      onkeydown={(event) => {
+        if (event.isComposing) return
+        if (event.key === 'Enter') {
+          event.preventDefault()
+          void named()
+        } else if (event.key === 'Escape') {
+          event.preventDefault()
+          event.stopPropagation()
+          naming = null
+          name = ''
+        }
+      }}
+      onblur={() => void named()}
+    />
+  </div>
+{/snippet}
+
+<div class="tasks" bind:this={panel}>
   {#if typing}
     <div class="nib-row adding">
       <span class="nib-row-mark"
@@ -235,51 +526,151 @@
   {#if beside}
     <ListLayout kit={beside.kit} />
   {:else}
-    {@render row(INBOX_MARK, builtinName('inbox'), counts.inbox, isOn('inbox'), () =>
-      openBuiltin('inbox'),
+    {@render row(INBOX_MARK, builtinName('inbox'), counts.inbox, isOn('inbox'), (event) =>
+      openBuiltin('inbox', how(event)),
     )}
     {@render row(
       TODAY_MARK,
       builtinName('today'),
       counts.today,
       isOn('today'),
-      () => openBuiltin('today'),
+      (event) => openBuiltin('today', how(event)),
       counts.overdue,
     )}
-    {@render row(UPCOMING_MARK, builtinName('upcoming'), null, isOn('upcoming'), () =>
-      openBuiltin('upcoming'),
+    {@render row(UPCOMING_MARK, builtinName('upcoming'), null, isOn('upcoming'), (event) =>
+      openBuiltin('upcoming', how(event)),
     )}
-    {@render row(LOGBOOK_MARK, builtinName('logbook'), null, isOn('logbook'), () =>
-      openBuiltin('logbook'),
+    {@render row(LOGBOOK_MARK, builtinName('logbook'), null, isOn('logbook'), (event) =>
+      openBuiltin('logbook', how(event)),
     )}
 
-    {#if bases.length}
-      <p class="nib-section">{t('Views')}</p>
-      {#each first( bases, (one) => bookmarked(workspace.activeSpace?.name ?? '', one.relative) ) as one (one.path)}
-        {@render row(
-          VIEW_MARK,
-          one.name,
-          baseCount(one.path),
-          front?.path !== undefined && samePath(front.path, one.path),
-          () => openBaseFile(one.path),
-        )}
+    {#if favourites.length}
+      <p class="nib-section">{t('Favorites')}</p>
+      {#each favourites as one (one.path)}
+        {#if one.base}
+          {@render row(
+            VIEW_MARK,
+            one.name,
+            one.count,
+            front?.path !== undefined && samePath(front.path, one.path),
+            (event) => openBaseFile(one.path, how(event)),
+          )}
+        {:else if space}
+          {@const name = space.name}
+          {@render row(
+            PROJECT_MARK,
+            one.name,
+            one.count,
+            isOn('project', { path: one.relative }),
+            (event) => openProject(name, one.relative, undefined, how(event)),
+          )}
+        {/if}
       {/each}
     {/if}
 
-    {#if counts.projects.length}
+    <div class="head">
+      <p class="nib-section">{t('Filters')}</p>
+      <button
+        type="button"
+        class="nib-glyph plus"
+        aria-label={t('Add filter')}
+        title={t('Add filter')}
+        onclick={addFilter}
+        ><svg viewBox="0 0 13 13" aria-hidden="true"><path d={ADD_MARK} /></svg></button
+      >
+    </div>
+    {#each bases as one (one.path)}
+      {@render row(
+        VIEW_MARK,
+        one.name,
+        baseCount(one.path),
+        front?.path !== undefined && samePath(front.path, one.path),
+        (event) => openBaseFile(one.path, how(event)),
+        false,
+        (event) => viewMenu(event, one),
+      )}
+    {/each}
+
+    <div class="head">
       <p class="nib-section">{t('Projects')}</p>
-      {#each first( projects, (one) => bookmarked(one.space, one.path) ) as one (`${one.space}:${one.path}`)}
+      <button
+        type="button"
+        class="nib-glyph plus"
+        aria-label={t('Add project')}
+        title={t('Add project')}
+        onclick={() => startNaming({ kind: 'new' })}
+        oncontextmenu={templateMenu}
+        ><svg viewBox="0 0 13 13" aria-hidden="true"><path d={ADD_MARK} /></svg></button
+      >
+    </div>
+    {#if naming?.kind === 'new'}
+      {@render field(t('Add project'), 0)}
+    {/if}
+    {#each shownProjects as node (node.note)}
+      {@const relative = root === null ? node.note : relativeTo(root, node.note)}
+      {#if naming?.kind === 'beside' && !naming.after && naming.node.note === node.note}
+        {@render field(t('Add project above'), node.depth)}
+      {/if}
+      {#if naming?.kind === 'rename' && naming.node.note === node.note}
+        {@render field(t('Rename'), node.depth)}
+      {:else}
+        <div
+          class="project"
+          style:--depth={node.depth}
+          data-project={node.note}
+          use:droppable={takeInto(node)}
+          use:reorderDrag={{ id: node.note, among: 'project', place }}
+        >
+          <button
+            type="button"
+            class="nib-row"
+            class:is-on={isOn('project', { path: relative })}
+            onclick={(event) => space && openProject(space.name, relative, undefined, how(event))}
+            oncontextmenu={(event) => projectMenu(event, node)}
+          >
+            <span class="nib-row-mark"
+              >{#if chosenIcon(node.note)}<FileMark mark="note" path={node.note} />{:else}<svg
+                  viewBox="0 0 13 13"
+                  aria-hidden="true"><path d={PROJECT_MARK} /></svg
+                >{/if}</span
+            >
+            <span class="nib-row-label">{node.name}</span>
+            {#if node.count}<span class="nib-row-meta">{node.count}</span>{/if}
+          </button>
+          {#if node.children.length}
+            <button
+              type="button"
+              class="twist"
+              tabindex="-1"
+              aria-label={folded.has(node.note) ? t('Expand') : t('Collapse')}
+              aria-expanded={!folded.has(node.note)}
+              onclick={() => twist(node.note)}><Twist open={!folded.has(node.note)} /></button
+            >
+          {/if}
+        </div>
+      {/if}
+      {#if naming?.kind === 'inside' && naming.node.note === node.note}
+        {@render field(t('Add sub-project'), node.depth + 1)}
+      {/if}
+      {#if naming?.kind === 'beside' && naming.after && naming.node.note === node.note}
+        {@render field(t('Add project below'), node.depth)}
+      {/if}
+    {/each}
+
+    {#if notes.length}
+      <p class="nib-section">{t('Notes')}</p>
+      {#each notesShown as one (`${one.space}:${one.path}`)}
         {@render row(
           PROJECT_MARK,
           one.name,
           one.count,
           isOn('project', { path: one.path }),
-          () => openProject(one.space, one.path),
+          (event) => openProject(one.space, one.path, undefined, how(event)),
           false,
-          (event) => projectMenu(event, one.space, one.path),
+          (event) => noteMenu(event, one),
         )}
       {/each}
-      {#if counts.projects.length > PROJECTS_SHOWN}
+      {#if notes.length > NOTES_SHOWN}
         <button type="button" class="nib-row is-short more" onclick={() => (more = !more)}>
           <span class="nib-row-label">{more ? t('Less') : t('More')}</span>
         </button>
@@ -289,8 +680,14 @@
     {#if counts.labels.length}
       <p class="nib-section">{t('Labels')}</p>
       {#each counts.labels as one (one.tag)}
-        {@render row(LABEL_MARK, one.tag, one.count, isOn('label', { tag: one.tag }), () =>
-          openLabel(one.tag),
+        {@render row(
+          LABEL_MARK,
+          one.tag,
+          one.count,
+          isOn('label', { tag: one.tag }),
+          (event) => openLabel(one.tag, how(event)),
+          false,
+          (event) => labelMenu(event, one.tag),
         )}
       {/each}
     {/if}
@@ -320,6 +717,93 @@
   .adder,
   .more {
     color: var(--muted);
+  }
+
+  .head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .plus {
+    width: var(--row-height-sm);
+    height: var(--row-height-sm);
+    color: var(--muted);
+  }
+
+  .plus svg {
+    width: var(--icon-sm);
+    height: var(--icon-sm);
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.4;
+    stroke-linecap: round;
+  }
+
+  .project {
+    position: relative;
+    display: flex;
+    align-items: center;
+    padding-inline-start: calc(var(--depth) * var(--row-indent));
+    border-radius: var(--radius-row);
+  }
+
+  /* Where a carried project would land: a line on the edge it would take. */
+  .project:global(.is-above)::before,
+  .project:global(.is-below)::after {
+    content: '';
+    position: absolute;
+    z-index: var(--z-raised);
+    inset-inline: calc(var(--depth) * var(--row-indent)) 0;
+    height: 2px;
+    border-radius: 1px;
+    background: var(--accent);
+    pointer-events: none;
+  }
+
+  .project:global(.is-above)::before {
+    top: -1px;
+  }
+
+  .project:global(.is-below)::after {
+    bottom: -1px;
+  }
+
+  .project:global(.is-carried) {
+    opacity: 0.4;
+  }
+
+  .project:has(.twist) .nib-row-meta {
+    margin-inline-end: var(--icon-md);
+  }
+
+  .project:global(.is-taking) {
+    background: var(--surface-selected);
+    box-shadow: inset 0 0 0 1px var(--accent);
+  }
+
+  .project > .nib-row {
+    flex: 1;
+    min-width: 0;
+  }
+
+  /* Todoist's place for it: at the row's end, where the eye reads a count, and the
+     row's own press left to open the project. */
+  .twist {
+    position: absolute;
+    inset-inline-end: var(--space-1);
+    display: grid;
+    place-items: center;
+    width: var(--icon-md);
+    height: var(--icon-md);
+    padding: 3px;
+    border: none;
+    background: none;
+    color: var(--muted);
+  }
+
+  .adding {
+    padding-inline-start: calc(var(--row-pad) + var(--depth, 0) * var(--row-indent));
   }
 
   .field {

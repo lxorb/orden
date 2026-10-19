@@ -19,6 +19,7 @@
  *  another says so - is not something a stylesheet can declare. */
 
 import type { Scheme } from '../theme.svelte'
+import type { OwnPair } from './own-pair'
 
 /** What a control gives back: a choice or a colour, a number, a switch. */
 export type ThemeValue = string | number | boolean
@@ -55,7 +56,12 @@ interface Common {
 
 export type ThemeSetting = Common &
   (
-    | { kind: 'colour'; options: Swatch[]; initial: string }
+    | {
+        kind: 'colour'
+        options: Swatch[]
+        initial: string
+        pair?: OwnPair
+      }
     | {
         kind: 'choice'
         options: { value: string; label: string; disabled?: boolean }[]
@@ -105,6 +111,7 @@ export function valueOf(setting: ThemeSetting, held: unknown): ThemeValue {
   }
 
   if (typeof held !== 'string') return setting.initial
+  if (setting.kind === 'colour' && setting.pair?.accepts(held)) return held
   return setting.options.some((one) => one.value === held) ? held : setting.initial
 }
 

@@ -180,3 +180,61 @@ export function movedUnder(text: string, anchor: Anchor, heading: string): strin
   if (!cut) return null
   return withLines(cut.rest, cut.block, heading)
 }
+
+/** The note without a task's block: the task deleted with its description, comments
+ *  and sub-tasks. Null where the anchor names no line. */
+export function withoutBlock(text: string, anchor: Anchor): string | null {
+  return cutBlock(text, anchor)?.rest ?? null
+}
+
+/** The note with a task's block written again just under itself: Todoist's Duplicate,
+ *  the copy as the task is, sub-tasks and all, and any block name it carries left off
+ *  the copy, since a name belongs to one block. */
+export function duplicatedBlock(text: string, anchor: Anchor): string | null {
+  const index = lineOfAnchor(text, anchor)
+  if (index === null) return null
+  const lines = linesOf(text)
+  const [from, to] = blockAt(lines, index)
+  const copy = lines.slice(from, to).map((one) => one.text.replace(/\s\^[\w-]+\s*$/, ''))
+  return spliced(lines, to, to, copy)
+}
+
+/** Of many tasks of one note, the ones not inside another's block, last first: what a
+ *  move or a duplicate of all of them takes, since a parent carries its sub-tasks, and
+ *  in the order that keeps the lines above each cut where the anchors say. */
+export function outermost<T extends { anchor: Anchor }>(text: string, many: readonly T[]): T[] {
+  const lines = linesOf(text)
+  const placed = many.flatMap((one) => {
+    const index = lineOfAnchor(text, one.anchor)
+    return index === null ? [] : [{ one, span: blockAt(lines, index) }]
+  })
+  return placed
+    .filter(
+      ({ span }) => !placed.some((other) => other.span[0] < span[0] && span[1] <= other.span[1]),
+    )
+    .sort((a, b) => b.span[0] - a.span[0])
+    .map(({ one }) => one)
+}
+
+/** The note with each of these tasks' lines changed by `edit`, which answers edits of
+ *  the line alone (offsets into it), from the last task up so the lines above each are
+ *  where the anchors say. */
+export function editedLines(
+  text: string,
+  anchors: readonly Anchor[],
+  edit: (line: string) => readonly { from: number; to: number; insert: string }[],
+): string {
+  let out = text
+  for (const anchor of [...anchors].sort((a, b) => b.line - a.line)) {
+    const index = lineOfAnchor(out, anchor)
+    if (index === null) continue
+    const line = linesOf(out)[index]
+    if (!line) continue
+    const own = line.text.replace(/\r$/, '')
+    const edits = [...edit(own)].sort((a, b) => b.from - a.from)
+    for (const one of edits) {
+      out = out.slice(0, line.from + one.from) + one.insert + out.slice(line.from + one.to)
+    }
+  }
+  return out
+}

@@ -18,7 +18,9 @@
  *
  *  Only ever handed the ops that have not been sent: an op in flight is the account's
  *  already, and folding it into another would leave its answer with nobody to hear
- *  it. Op ids of what remains are the ops' own, so a retry still reads as one. */
+ *  it. Op ids of what remains are the ops' own, so a retry still reads as one - but for
+ *  the deletes a folder's delete becomes for what was only moved into it, which are new
+ *  ops, named after that delete: `${op}.0`, `${op}.1`, in its place in the queue. */
 
 import type { CreateOp, MkdirOp, Op } from './wire'
 

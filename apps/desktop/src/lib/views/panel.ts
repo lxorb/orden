@@ -1,10 +1,10 @@
 /** What the Tasks panel lists, with its counts: Inbox, Today and Upcoming as the views
- *  they open answer them, then the projects (every note with open tasks, the most
+ *  they open answer them, then the notes (every note with open tasks, the most
  *  recently written first) and the labels (every tag on an open task).
  *
  *  Inbox, Today and Upcoming are counted by the engine answering the very bases their
  *  tabs open (`builtinView`), so a number in the panel and the rows behind it can never
- *  disagree. The projects and labels are one pass over the open tasks. Pure: the panel
+ *  disagree. The notes and labels are one pass over the open tasks. Pure: the panel
  *  hands in the rows and the day, and draws the answer. */
 
 import { answer, type Base, builtinView, type Row } from '@nib/bases'
@@ -31,22 +31,30 @@ export interface PanelCounts {
   /** Whether any of Today's tasks are overdue, which turns its count to the danger tone. */
   overdue: boolean
   upcoming: number
-  projects: Project[]
+  /** Every note with open tasks, which the panel sorts into projects and the rest. */
+  notes: Project[]
   labels: Label[]
 }
 
-/** The built-in bases, made once per set of inboxes, so the engine compiles each once
- *  and keeps what it knows about every row between two counts. */
+/** The built-in bases, made once per set of inboxes and each way Today can be set, so
+ *  the engine compiles each once and keeps what it knows about every row between two
+ *  counts. */
 const made = new Map<string, Base>()
 
 function builtin(
   name: 'inbox' | 'today' | 'upcoming',
   inboxes: { space: string; path: string }[],
+  undated = false,
 ): Base {
-  const key = name === 'inbox' ? `inbox\n${JSON.stringify(inboxes)}` : name
+  const key =
+    name === 'inbox'
+      ? `inbox\n${JSON.stringify(inboxes)}`
+      : name === 'today'
+        ? `today\n${String(undated)}`
+        : name
   let base = made.get(key)
   if (!base) {
-    base = builtinView(name, { inboxes })
+    base = builtinView(name, { inboxes, ...(undated ? { undated } : {}) })
     if (name === 'inbox')
       for (const old of made.keys()) if (old.startsWith('inbox\n')) made.delete(old)
     made.set(key, base)
@@ -57,14 +65,16 @@ function builtin(
 const isOpen = (row: Row) =>
   row.kind === 'task' && !!row.task && !row.task.done && !row.task.cancelled
 
-/** The panel's lists and counts over these rows, on this day. */
+/** The panel's lists and counts over these rows, on this day; with `undated`, Today's
+ *  count holds the tasks with no start date, as its view does (`modes.undatedInToday`). */
 export function panelCounts(
   rows: readonly Row[],
   today: string,
   inboxes: { space: string; path: string }[],
+  undated = false,
 ): PanelCounts {
   const context = contextFor({ rows, today, now: `${today}T00:00:00` })
-  const todayAnswer = answer(builtin('today', inboxes), 0, rows, context)
+  const todayAnswer = answer(builtin('today', inboxes, undated), 0, rows, context)
 
   const projects = new Map<string, Project>()
   const labels = new Map<string, number>()
@@ -90,14 +100,22 @@ export function panelCounts(
     today: todayAnswer.total,
     overdue: todayAnswer.groups.some((group) => group.key === true && group.rows.length > 0),
     upcoming: answer(builtin('upcoming', inboxes), 0, rows, context).total,
-    projects: [...projects.values()].sort(
-      (a, b) => b.mtime - a.mtime || a.name.localeCompare(b.name),
-    ),
+    notes: [...projects.values()].sort((a, b) => b.mtime - a.mtime || a.name.localeCompare(b.name)),
     labels: [...labels.entries()]
       .map(([tag, count]) => ({ tag, count }))
       .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag)),
   }
 }
 
-/** How many projects the panel lists before the rest go under More. */
-export const PROJECTS_SHOWN = 7
+/** Open tasks per note of one space, by the note's path in it. */
+export function openByPath(
+  notes: readonly Project[],
+  space: string | undefined,
+): Map<string, number> {
+  const out = new Map<string, number>()
+  for (const one of notes) if (one.space === space) out.set(one.path, one.count)
+  return out
+}
+
+/** How many notes the panel lists before the rest go under More. */
+export const NOTES_SHOWN = 7

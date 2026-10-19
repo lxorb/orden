@@ -5,14 +5,18 @@
  *  because the socket is the one thing every device opens anyway. Its name is the
  *  account's once written - a device announces what it works out about itself, and
  *  a name somebody chose in the Account pane is not the device's to take back - but
- *  its platform, its app's version and its public key are the device's to keep
- *  current.
+ *  its platform and its app's version are the device's to keep current.
  *
  *  Ending one is what somebody does about a laptop that has gone missing, the way
- *  Google's device list and Signal's linked devices do it: its sessions end, the web
- *  key wrapped to it is deleted and the next upload moves the account to a new one,
- *  its hub socket is closed, and so are its rooms. Ending its session from the
- *  sessions list does the same; see auth.ts. See docs/sync-v2.md section 6.6. */
+ *  Google's device list and Signal's linked devices do it: its sessions end, its hub
+ *  socket is closed, and so are its rooms. Ending its session from the sessions list
+ *  does the same; see auth.ts.
+ *
+ *  A row's `public_key`, and the `web_keys` rows, are from web logins that travelled
+ *  between computers, which were removed (#393). Nothing writes or reads them now; they
+ *  stay until a later cleanup drops them, and go with the account when it is erased. A
+ *  device that is ended takes its own `web_keys` row with it all the same: a key wrapped
+ *  to a device the account no longer has is not one to keep. */
 
 import { Hono } from 'hono'
 import { tokenIn } from '../auth'
@@ -30,20 +34,12 @@ export interface Hello {
   name: string
   platform: string
   app: string
-  pub?: string
-}
-
-/** The web key as the account holds it for one device. */
-export interface WrappedKey {
-  wrapped: string
-  generation: number
 }
 
 const NO_SUCH_DEVICE = 'no such device'
 
 /** The device this request's session belongs to, or null for a session no device
- *  has said hello with. What the web routes ask: a web state is written by a
- *  device, and the session is what proves which. */
+ *  has said hello with. */
 export async function deviceOfSession(
   env: Env,
   user: string,
@@ -60,30 +56,16 @@ export async function deviceOfSession(
 }
 
 /** A device saying hello: made the first time, brought up to date after that, and
- *  bound to the session its socket carries. A public key that changed takes the key
- *  wrapped to the old one with it, because nothing can open that any more. Answers
- *  what the hub calls it, and the web key wrapped to it where there is one. */
-export async function register(
-  env: Env,
-  user: string,
-  session: string,
-  hello: Hello,
-): Promise<{ name: string; key: WrappedKey | null }> {
-  const before = await env.DB.prepare('select public_key from devices where id = ? and user_id = ?')
-    .bind(hello.device, user)
-    .first<{ public_key: string | null }>()
-
-  const at = now()
-  const row = await env.DB.prepare(
-    `insert into devices (id, user_id, session_id, name, platform, public_key, app, created_at,
+ *  bound to the session its socket carries. */
+export async function register(env: Env, user: string, session: string, hello: Hello) {
+  await env.DB.prepare(
+    `insert into devices (id, user_id, session_id, name, platform, app, created_at,
                           last_seen_at)
-     values (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?8)
+     values (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?7)
      on conflict(id) do update set
        session_id = excluded.session_id, platform = excluded.platform, app = excluded.app,
-       public_key = coalesce(excluded.public_key, devices.public_key),
        last_seen_at = excluded.last_seen_at, revoked_at = null
-     where devices.user_id = excluded.user_id
-     returning name`,
+     where devices.user_id = excluded.user_id`,
   )
     .bind(
       hello.device,
@@ -91,53 +73,9 @@ export async function register(
       session,
       deviceIn(hello.name) || hello.platform,
       hello.platform,
-      hello.pub ?? null,
       hello.app,
-      at,
+      now(),
     )
-    .first<{ name: string }>()
-
-  if (hello.pub && before?.public_key && before.public_key !== hello.pub) {
-    await dropKey(env, user, hello.device)
-  }
-
-  return { name: row?.name ?? hello.name, key: await keyOf(env, user, hello.device) }
-}
-
-/** The public key a device asks for the web key with, written to its row. Answers
- *  false for a device the account does not have. */
-export async function setPublicKey(
-  env: Env,
-  user: string,
-  device: string,
-  pub: string,
-): Promise<boolean> {
-  const row = await env.DB.prepare(
-    'select public_key from devices where id = ? and user_id = ? and revoked_at is null',
-  )
-    .bind(device, user)
-    .first<{ public_key: string | null }>()
-  if (!row) return false
-  if (row.public_key === pub) return true
-
-  await env.DB.prepare('update devices set public_key = ? where id = ? and user_id = ?')
-    .bind(pub, device, user)
-    .run()
-  await dropKey(env, user, device)
-  return true
-}
-
-async function keyOf(env: Env, user: string, device: string): Promise<WrappedKey | null> {
-  return await env.DB.prepare(
-    'select wrapped, generation from web_keys where user_id = ? and device_id = ?',
-  )
-    .bind(user, device)
-    .first<WrappedKey>()
-}
-
-function dropKey(env: Env, user: string, device: string) {
-  return env.DB.prepare('delete from web_keys where user_id = ? and device_id = ?')
-    .bind(user, device)
     .run()
 }
 
@@ -148,9 +86,8 @@ export async function markSeen(env: Env, user: string, device: string): Promise<
     .run()
 }
 
-/** Ends one device: its session, the web key wrapped to it, its hub socket and its
- *  rooms. Answers false for a device the account does not have, or has already
- *  ended. */
+/** Ends one device: its session, its hub socket and its rooms. Answers false for a
+ *  device the account does not have, or has already ended. */
 async function revokeDevice(env: Env, user: string, device: string): Promise<boolean> {
   if (!(await endDevice(env, user, device))) return false
 
@@ -161,18 +98,13 @@ async function revokeDevice(env: Env, user: string, device: string): Promise<boo
   return true
 }
 
-/** The device's half of ending it, for a caller that closes the rooms itself. The
- *  hub is told the account's key generation when the device held the key, so the
- *  next upload moves everybody left to a new one. */
+/** The device's half of ending it, for a caller that closes the rooms itself. */
 async function endDevice(env: Env, user: string, device: string): Promise<boolean> {
   const row = await env.DB.prepare(
-    `select d.session_id as session,
-            (select 1 from web_keys k where k.user_id = d.user_id and k.device_id = d.id) as keyed,
-            (select max(generation) from web_keys k where k.user_id = d.user_id) as generation
-       from devices d where d.id = ? and d.user_id = ? and d.revoked_at is null`,
+    'select session_id as session from devices where id = ? and user_id = ? and revoked_at is null',
   )
     .bind(device, user)
-    .first<{ session: string | null; keyed: number | null; generation: number | null }>()
+    .first<{ session: string | null }>()
   if (!row) return false
 
   await env.DB.batch([
@@ -186,10 +118,7 @@ async function endDevice(env: Env, user: string, device: string): Promise<boolea
     ),
   ])
 
-  await askHub(env, user, 'revoke', {
-    'x-nib-device': device,
-    ...(row.keyed && row.generation ? { 'x-nib-rotate': String(row.generation) } : {}),
-  })
+  await askHub(env, user, 'revoke', { 'x-nib-device': device })
   return true
 }
 
@@ -221,8 +150,7 @@ devices.get('/', async (context) => {
 
   const { results } = await context.env.DB.prepare(
     `select d.id, d.name, d.platform, d.app, d.created_at, d.last_seen_at,
-            (select 1 from sessions s where s.id = d.session_id and s.token_hash = ?2) as current,
-            (select 1 from web_keys k where k.user_id = d.user_id and k.device_id = d.id) as keyed
+            (select 1 from sessions s where s.id = d.session_id and s.token_hash = ?2) as current
        from devices d
       where d.user_id = ?1 and d.revoked_at is null
       order by d.last_seen_at desc, d.created_at desc`,
@@ -236,7 +164,6 @@ devices.get('/', async (context) => {
       created_at: number
       last_seen_at: number | null
       current: number | null
-      keyed: number | null
     }>()
 
   return context.json({
@@ -249,9 +176,6 @@ devices.get('/', async (context) => {
       lastSeenAt: one.last_seen_at,
       // Which row is the one asking, so the app can say "this device".
       current: one.current === 1,
-      // Whether it holds the web key: what a new computer reads to know whether
-      // anybody can approve it, or whether it makes the key itself.
-      webKey: one.keyed === 1,
     })),
   })
 })
@@ -272,12 +196,6 @@ devices.patch('/:id', async (context) => {
     .bind(name, id, user.id)
     .run()
   if (!changed.meta.changes) return context.json({ error: NO_SUCH_DEVICE }, 404)
-
-  // And the name the hub gives it when it tells another device where a site is open.
-  await askHub(context.env, user.id, 'renamed', {
-    'x-nib-device': id,
-    'x-nib-name': encodeURIComponent(name),
-  })
   return context.json({ ok: true, name })
 })
 

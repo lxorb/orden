@@ -3,7 +3,6 @@
 All of it is a pixel or a glyph rather than a behaviour, so the run measures rather
 than clicks:
 
-  - the title bar's label for the open space wears the space's own mark;
   - every mark in a badge is centred in it, optically, emoji and stroke alike;
   - a shared space and a shared note wear a shared mark, not a dot;
   - the sidebar button is one glyph whichever state it is in - the same shapes in
@@ -37,6 +36,7 @@ Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run.
 
 from __future__ import annotations
 
+import io
 import sys
 
 from playwright.sync_api import Browser, Page
@@ -221,7 +221,6 @@ BAR = """
   const want = [
     ['the menu', 'header > :first-child button, header > button:first-child'],
     ['the sidebar button', 'header .toggle'],
-    ['the space label', 'header .space'],
     ['the first tab', 'header .tab, header [role=tab], header .strip button'],
   ]
 
@@ -242,20 +241,6 @@ BAR = """
     height: Math.round(box.height * 100) / 100,
     token: getComputedStyle(document.documentElement).getPropertyValue('--header-height').trim(),
     parts,
-  }
-}
-"""
-
-# The label beside the sidebar button: does it carry the space's own mark.
-LABEL = """
-() => {
-  const label = document.querySelector('header .space')
-  if (!label) return null
-
-  return {
-    text: label.textContent.trim(),
-    marks: label.querySelectorAll('svg, .glyph, .nib-badge').length,
-    html: label.innerHTML.slice(0, 200),
   }
 }
 """
@@ -631,6 +616,45 @@ FORMAT_MARKS = """
 """
 
 
+# The format bar's buttons, where they are, to read their ink off the screen.
+FORMAT_BOXES = """
+() => {
+  const bar = document.querySelector('.nib-bar.docked') ?? document.querySelector('.nib-bar-at')
+  return bar
+    ? [...bar.querySelectorAll('button')].map((one) => {
+        const box = one.getBoundingClientRect()
+        return { name: one.getAttribute('aria-label') ?? '?', x: box.x, y: box.y, width: box.width, height: box.height }
+      })
+    : []
+}
+"""
+
+
+def drawn_off(page: Page) -> dict[str, float]:
+    """How far below each button's middle the middle of its ink is, read off the
+    pixels it is drawn in: what a reader sees, in whatever engine drew it.
+
+    The letters' places are estimated from the font's metrics in `FORMAT_MARKS`, and
+    for a letter moved by a transform that estimate is the engine's to get wrong:
+    WebKit put Quote 2px low by its metrics and drew it 1px high, in line with the
+    rest (#384). So the check reads the pixels where it can and says both."""
+    from PIL import Image
+
+    off: dict[str, float] = {}
+    for box in page.evaluate(FORMAT_BOXES):
+        if box["width"] < 4 or box["height"] < 4:
+            continue
+        clip = {key: box[key] for key in ("x", "y", "width", "height")}
+        picture = Image.open(io.BytesIO(page.screenshot(clip=clip, scale="css"))).convert("L")
+        width, height = picture.size
+        pixels = picture.load()
+        ground = pixels[1, height // 2]
+        rows = [y for y in range(height) if any(abs(pixels[x, y] - ground) > 60 for x in range(2, width - 2))]
+        if rows:
+            off[box["name"]] = round((rows[0] + rows[-1] + 1) / 2 - height / 2, 1)
+    return off
+
+
 # Where the drawer is, so a shot of nothing is a reading rather than a puzzle.
 ASIDE_AT = """
 () => {
@@ -706,7 +730,10 @@ def panel_ends(page: Page, label: str) -> None:
         check(False, f"[{label}] the panel has a foot to measure")
         return
 
-    check(len(foot["acts"]) == 2, f"[{label}] the foot holds the theme and the settings")
+    # The web app adds a third, the app to download (SidebarFoot.svelte), which the
+    # desktop app has no use for; the two every build has are the theme and Settings.
+    kept = [one["name"] for one in foot["acts"] if one["name"] != "Download the app"]
+    check(len(kept) == 2, f"[{label}] the foot holds the theme and the settings ({kept})")
     for one in foot["acts"]:
         check(
             abs(one["markX"]) <= SLACK and abs(one["markY"]) <= SLACK,
@@ -797,7 +824,10 @@ def on_phone(browser: Browser, scheme: str = "light") -> None:
             # And every mark in it reads on one line: the ink of each, measured, not
             # the cell it is centred in - which was centred all along.
             found = page.evaluate(FORMAT_MARKS)
+            inked = drawn_off(page)
             for one in found.get("marks", []):
+                if one["as"] == "letter" and one["name"] in inked:
+                    one["metrics"], one["off"] = one["off"], inked[one["name"]]
                 say(f"[{label}]   {one}")
 
             letters = [one for one in found.get("marks", []) if one["as"] == "letter"]
@@ -899,20 +929,12 @@ def drive(browser: Browser, label: str, viewport: dict[str, int], scheme: str) -
         placed = [one for one in bar["parts"] if not one.get("missing")]
         check(
             len(placed) >= 3,
-            f"[{label}] the bar holds the menu, the button, the label and a tab",
+            f"[{label}] the bar holds the menu, the button and a tab",
         )
         for one in placed:
             check(
                 abs(one["off"]) <= SLACK,
                 f"[{label}] {one['name']} is on the bar's centre line (off by {one['off']}px)",
-            )
-
-        label_seen = page.evaluate(LABEL)
-        say(f"[{label}] the space label: {label_seen}")
-        if label_seen:
-            check(
-                label_seen["marks"] >= 1,
-                f"[{label}] the space label wears the space's own mark",
             )
 
         shut = page.evaluate(TOGGLE)
@@ -966,7 +988,7 @@ def drive(browser: Browser, label: str, viewport: dict[str, int], scheme: str) -
             len(marked) == 1,
             f"[{label}] one note wears the mark and no other row does ({marked})",
         )
-        page.locator("aside").screenshot(path=str(SHOTS / f"tree-{label}.png"))
+        page.locator("aside:not(.right)").screenshot(path=str(SHOTS / f"tree-{label}.png"))
         say(f"[{label}] wrote tree-{label}.png")
         for one in shared:
             check(

@@ -10,6 +10,7 @@
 import { insideOnly } from '../automation/inside'
 import { changeOf } from '../search/replace'
 import { insideSpace, isMarkdownPath, relativeTo, withoutExtension } from '../space-paths'
+import { links } from '../link-index.svelte'
 import { workspace } from '../workspace.svelte'
 import { noteText, replaceInNotes } from '../workspace/note-text'
 import { writeFile } from '../workspace/write-file'
@@ -22,6 +23,14 @@ export function noteNames(root: string): string[] {
     .filter((one) => isMarkdownPath(one.path))
     .sort((a, b) => (recent.get(a.path) ?? 1e9) - (recent.get(b.path) ?? 1e9))
     .map((one) => withoutExtension(relativeTo(root, one.path)))
+}
+
+/** The headings of the note a `>` names, as the link index read them, for `/`. */
+export function headingsOf(root: string, said: string): readonly string[] {
+  const path = named(root, said)
+  if (path === null) return []
+  const relative = relativeTo(root, path)
+  return links.held().find((one) => one.path === relative)?.headings ?? []
 }
 
 /** The note a `>` names: one whose path or name is the words, case aside. */

@@ -15,6 +15,7 @@ import { STARTS_RIGHT } from './workspace/panels'
 vi.mock('./rooms.svelte', () => ({ rooms: { present: {}, following: null } }))
 vi.mock('./surfaces.svelte', () => ({
   askPanel: () => new Promise(() => undefined),
+  agentsPanel: () => new Promise(() => undefined),
   linksPanel: () => new Promise(() => undefined),
   propertiesPanel: () => new Promise(() => undefined),
   pagesNavigator: () => new Promise(() => undefined),
@@ -111,6 +112,20 @@ describe('the panel tabs', () => {
       const { html } = row(panel)
       expect(html.match(/class="tools/g)).toHaveLength(1)
     }
+  })
+
+  /** The square that stopped every agent stood beside the Agents tab on its own
+   *  (#406). An agent is stopped where it runs - its row in the panel, its tab, the
+   *  Ask panel's composer - and by the stop key, the tray and `nib --stop-agents`. */
+  test('and the Agents panel has no stop of its own among them', () => {
+    open('# Head\n')
+    agentMarks.heard = true
+    const { html, after } = row('agents')
+    agentMarks.heard = false
+
+    expect(html).toContain('aria-label="Agents"')
+    expect(after).not.toContain('Stop agents')
+    expect(html).not.toContain('Stop agents')
   })
 
   test('and with nothing laid out yet, none is put behind More', () => {
@@ -287,7 +302,7 @@ describe('the button that holds a panel on a note', () => {
 /** The space in the panel's header, which is the list of spaces shut.
  *
  *  A space is named with its mark everywhere else it is named - its row in the
- *  switcher, the title bar while the panel is away - and the header over the file
+ *  switcher, the tab card - and the header over the file
  *  list is where it is named most. That header said the word alone, so the one place
  *  a space is always written was the one place it was never drawn. Emil: *"in the top
  *  left in the space select, you should see the icon of the current space."*
@@ -376,5 +391,70 @@ describe('a shut side', () => {
 
     expect(html).toContain(`data-panel="${workspace.nextRight}"`)
     expect(html).not.toContain('data-panel="tree"')
+  })
+})
+
+/** A phone and a tablet have no AI panel (#403): not its tab on the right, not a way to
+ *  it from the palette or a key, and not a panel left open on it by a sitting before. */
+describe('the AI panel on a phone and a tablet', () => {
+  function rightTabs(device: typeof viewport.device): string[] {
+    viewport.device = device
+    workspace.panel = null
+    workspace.rightPanel = 'outline'
+    const html = render(Sidebar, { props: { side: 'right' as const } }).body
+    workspace.rightPanel = null
+    viewport.device = 'desktop'
+    return [...html.matchAll(/role="tab"[^>]*aria-label="([^"]+)"/g)].map(([, one]) => one ?? '')
+  }
+
+  test('has no tab on the right, where a desktop keeps one', () => {
+    open('# Head\n')
+
+    expect(rightTabs('desktop')).toContain('Ask')
+    expect(rightTabs('phone')).not.toContain('Ask')
+    expect(rightTabs('tablet')).not.toContain('Ask')
+  })
+
+  test('and asking for it shows nothing, while a desktop opens it', () => {
+    open('# Head\n')
+    workspace.rightPanel = null
+
+    viewport.device = 'phone'
+    workspace.showPanel('ask')
+    expect(workspace.rightPanel).toBeNull()
+    workspace.togglePanel('ask')
+    expect(workspace.rightPanel).toBeNull()
+    expect(workspace.offers('ask')).toBe(false)
+    expect(workspace.offers('outline')).toBe(true)
+
+    viewport.device = 'desktop'
+    workspace.showPanel('ask')
+    expect(workspace.rightPanel).toBe('ask')
+    workspace.rightPanel = null
+  })
+
+  test('and one left open by a desktop sitting is not drawn, nor what the side opens on', () => {
+    open('# Head\n')
+    workspace.rightPanel = 'ask'
+    workspace.lastRight = 'ask'
+
+    viewport.device = 'phone'
+    expect(workspace.openOn('right')).toBeNull()
+    expect(workspace.nextRight).not.toBe('ask')
+
+    viewport.device = 'desktop'
+    expect(workspace.openOn('right')).toBe('ask')
+    workspace.rightPanel = null
+  })
+
+  test('and the palette has no row for it', async () => {
+    const { appCommands } = await import('./commands')
+    open('# Head\n')
+
+    viewport.device = 'desktop'
+    expect(appCommands().some((one) => one.id === 'ask-panel')).toBe(true)
+    viewport.device = 'phone'
+    expect(appCommands().some((one) => one.id === 'ask-panel')).toBe(false)
+    viewport.device = 'desktop'
   })
 })
