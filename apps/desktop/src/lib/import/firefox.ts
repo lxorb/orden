@@ -50,8 +50,8 @@ export function firefoxSidebar(
 ): Sidebar {
   const made = new Made()
   if (isObject(session)) {
-    readWindows(session, made, words)
-    readSaved(list(session.savedGroups), made, words)
+    const open = readWindows(session, made, words)
+    readSaved(list(session.savedGroups), open, made, words)
   }
   if (isObject(bookmarks)) readBookmarks(bookmarks, made, words)
 
@@ -59,8 +59,9 @@ export function firefoxSidebar(
 }
 
 /** The open windows' tabs in their order, and the groups they are in. Never a private
- *  window's, nor a popup's. */
-function readWindows(session: Said, made: Made, words: FolderWords) {
+ *  window's, nor a popup's. Answers the groups that are open, by their ids. */
+function readWindows(session: Said, made: Made, words: FolderWords): Set<string> {
+  const open = new Set<string>()
   const windows = list(session.windows).filter((one) => !one.isPrivate && !one.isPopup)
   for (const window of windows) {
     const groups = new Map(
@@ -69,6 +70,7 @@ function readWindows(session: Said, made: Made, words: FolderWords) {
         return id ? [[id, text(group.name) ?? words.group] as const] : []
       }),
     )
+    for (const id of groups.keys()) open.add(id)
 
     for (const tab of list(window.tabs)) {
       const page = pageOf(tab)
@@ -87,13 +89,16 @@ function readWindows(session: Said, made: Made, words: FolderWords) {
       })
     }
   }
+  return open
 }
 
-/** The groups Firefox saved, each a folder in Saved groups, its tabs in it. */
-function readSaved(saved: Said[], made: Made, words: FolderWords) {
+/** The groups Firefox saved, each a folder in Saved groups, its tabs in it. A group
+ *  that is open too is the one already read: Firefox saves the open groups of a
+ *  window as it closes, and takes them off the saved list once they are open again. */
+function readSaved(saved: Said[], open: Set<string>, made: Made, words: FolderWords) {
   for (const group of saved) {
     const id = text(group.id)
-    if (!id) continue
+    if (!id || open.has(id)) continue
     made.folder('saved', words.savedGroups, null)
     made.folder(`saved:${id}`, text(group.name) ?? words.group, 'saved')
 
@@ -154,7 +159,8 @@ const DEEPEST = 64
 function walk(folder: Said, id: string, made: Made, words: FolderWords, depth: number) {
   if (depth > DEEPEST) return
   list(folder.children).forEach((node, at) => {
-    if (node.typeCode === 1) {
+    const kind = kindOf(node)
+    if (kind === BOOKMARK) {
       const url = text(node.uri)
       if (!url) return
       made.tab({
@@ -166,12 +172,24 @@ function walk(folder: Said, id: string, made: Made, words: FolderWords, depth: n
         container: 0,
         ...addedOf(node.dateAdded),
       })
-    } else if (node.typeCode === 2) {
+    } else if (kind === FOLDER) {
       const inner = `bookmark:${text(node.guid) ?? `${id}/${String(at)}`}`
       made.folder(inner, text(node.title) ?? words.other, id)
       walk(node, inner, made, words, depth + 1)
     }
   })
+}
+
+const BOOKMARK = 1
+const FOLDER = 2
+
+/** What a node of the tree is: its `typeCode`, or in a backup an older Firefox wrote
+ *  without one, the kind its `type` names, which is how Firefox reads one back. */
+function kindOf(node: Said): number | null {
+  if (typeof node.typeCode === 'number') return node.typeCode
+  if (node.type === 'text/x-moz-place') return BOOKMARK
+  if (node.type === 'text/x-moz-place-container') return FOLDER
+  return null
 }
 
 /** When a bookmark was made: Firefox counts microseconds since 1970. */
