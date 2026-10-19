@@ -802,8 +802,14 @@ function holds(tail: string): boolean {
  *  Raised 2026-10-19, to 3,256,000, for #533: a version put back from the history is
  *  said to be one (`restoreVersion` on the workspace and in saving.svelte.ts,
  *  `restoredAt` on a note), so a canvas takes it whole rather than merging with it.
- *  Measured 3,255,185. */
-const BUDGET = 3_256_000
+ *  Measured 3,255,185.
+ *
+ *  Raised 2026-10-19, to 3,257,000, for #537: a link that cannot be rewritten is
+ *  logged and passed over rather than undoing the rename (`retarget` in
+ *  link-index.svelte.ts, which now imports log.ts), and a PDF already moved into its
+ *  page note is never thrown away with it (pages/from-pdf.ts). Measured 3,256,522 on
+ *  unstable with #524 and #538 beside it. */
+const BUDGET = 3_257_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
