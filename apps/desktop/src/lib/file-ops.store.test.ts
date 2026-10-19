@@ -280,6 +280,41 @@ describe('a link rewritten in a note with typing not yet written', () => {
   })
 })
 
+describe('a note open on screen that links to itself, renamed', () => {
+  test('is rewritten where it went, and nothing comes back under its old name', async () => {
+    disk.current?.files.set(`${ROOT}/Groceries.md`, 'see [[Groceries#Produce]]\n')
+    await workspace.loadTree()
+    void startup.shown()
+    await links.build(ROOT)
+    links.noteSaved(`${ROOT}/Groceries.md`, 'see [[Groceries#Produce]]\n')
+    await workspace.open(`${ROOT}/Groceries.md`)
+    const note = workspace.active?.note
+
+    await workspace.rename(`${ROOT}/Groceries.md`, 'Shopping.md')
+    await workspace.writesSettled()
+
+    // The rewrite read the open document's words and wrote them to the path it
+    // had, which the rename had just emptied: the note came back there.
+    expect(disk.current?.files.has(`${ROOT}/Groceries.md`)).toBe(false)
+    expect(disk.current?.files.get(`${ROOT}/Shopping.md`)).toBe('see [[Shopping#Produce]]\n')
+    expect(note?.text).toBe('see [[Shopping#Produce]]\n')
+  })
+
+  test('closed, is rewritten where it went too', async () => {
+    disk.current?.files.set(`${ROOT}/Groceries.md`, 'see [[Groceries#Produce]]\n')
+    await workspace.loadTree()
+    void startup.shown()
+    await links.build(ROOT)
+    links.noteSaved(`${ROOT}/Groceries.md`, 'see [[Groceries#Produce]]\n')
+
+    await workspace.rename(`${ROOT}/Groceries.md`, 'Shopping.md')
+    await workspace.writesSettled()
+
+    expect(disk.current?.files.has(`${ROOT}/Groceries.md`)).toBe(false)
+    expect(disk.current?.files.get(`${ROOT}/Shopping.md`)).toBe('see [[Shopping#Produce]]\n')
+  })
+})
+
 describe('the stores the app keeps by path', () => {
   /** Each follower, by the call it answers an operation with. */
   function counted() {

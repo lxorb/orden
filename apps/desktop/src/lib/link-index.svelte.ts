@@ -1293,12 +1293,17 @@ class Links {
       if (!candidates.length) continue
       if (!candidates.some((link) => this.resolveFrom(note.path, link) === was)) continue
 
+      // The note that moved is still listed, and still open, under the name it
+      // had: its words are found there, but its file is where it went, and it
+      // links from there now. Written to the old path, it came back under it.
+      const self = note.path === was
       const absolute = insideSpace(root, note.path)
-      const before = await this.wordsOf(absolute, open)
+      const target = self ? insideSpace(root, now) : absolute
+      const before = await this.wordsOf(absolute, target, open)
       if (before === null) continue
 
       const points = (link: FoundLink) => this.resolveFrom(note.path, link) === was
-      const after = rewriteLinks(before, note.path, move, points)
+      const after = rewriteLinks(before, self ? now : note.path, move, points)
       if (after === null || after === before) continue
 
       // Taken by the document in the same breath as its words were read, so no
@@ -1308,9 +1313,9 @@ class Links {
       const edit = oneEdit(before, after)
       if (doc && edit) doc.edited([edit], after)
 
-      await invoke('snapshot_note', { path: absolute, content: before }).catch(() => undefined)
-      await invoke('write_note', { path: absolute, content: after })
-      for (const hear of this.hearing) hear(absolute, after)
+      await invoke('snapshot_note', { path: target, content: before }).catch(() => undefined)
+      await invoke('write_note', { path: target, content: after })
+      for (const hear of this.hearing) hear(target, after)
 
       this.notes = this.notes.map((one) =>
         one.path === note.path ? scanNote(note.path, after) : one,
@@ -1322,10 +1327,12 @@ class Links {
     return touched
   }
 
-  /** A note's words as they stand: the document's where it is open, and the file's
-   *  otherwise. */
+  /** A note's words as they stand: the document's open at `path` where there is
+   *  one, and otherwise the file's at `file`, which is somewhere else only for the
+   *  note that just moved. */
   private async wordsOf(
     path: string,
+    file: string,
     open: (path: string) => NoteDoc | null,
   ): Promise<string | null> {
     const doc = open(path)
@@ -1333,7 +1340,7 @@ class Links {
       doc.flush()
       return doc.text
     }
-    return invoke<string>('read_note', { path }).catch(() => null)
+    return invoke<string>('read_note', { path: file }).catch(() => null)
   }
 
   /** Blocks anywhere in the space whose words hold `text`: what the editor's
