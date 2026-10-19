@@ -15,6 +15,7 @@ import {
   setGroup,
   setHidden,
   setLayout,
+  mergedOrder,
   setManualOrder,
   setShowCompleted,
   setSort,
@@ -95,6 +96,20 @@ describe('a base changed from the head', () => {
     expect(setManualOrder(base, 0, 'To do', ['a.md', 'b.md']).views[0]?.nib.order).toEqual({
       'To do': ['a.md', 'b.md'],
     })
+  })
+
+  test("a reorder of the cards on screen keeps the hidden cards' places", () => {
+    const stored = setManualOrder(base, 0, 'To do', ['a', 'h1', 'b', 'h2', 'c'])
+    // Searched down to a, b and c, then c carried to the top.
+    expect(setManualOrder(stored, 0, 'To do', ['c', 'a', 'b']).views[0]?.nib.order).toEqual({
+      'To do': ['c', 'h1', 'a', 'h2', 'b'],
+    })
+    // A card new to the order rides with the card before it on screen.
+    expect(mergedOrder(['a', 'h', 'b'], ['a', 'x', 'b'])).toEqual(['a', 'x', 'h', 'b'])
+    expect(mergedOrder(['a', 'h', 'b'], ['x', 'b', 'a'])).toEqual(['x', 'b', 'h', 'a'])
+    // None of the shown cards had a place yet: they come after the stored ones.
+    expect(mergedOrder(['h'], ['a', 'b'])).toEqual(['h', 'a', 'b'])
+    expect(mergedOrder([], ['b', 'a'])).toEqual(['b', 'a'])
   })
 
   test('adds, names and takes away views, never the last one', () => {
@@ -213,6 +228,11 @@ describe('a drop into a group', () => {
       change: { note: { status: 'Done' } },
     })
     expect(dropInto('note.status', 'To do', noteRow('Bug.md', 'status: To do'), TODAY)).toBeNull()
+    // A list stays a list.
+    expect(dropInto('note.tags', 'c', noteRow('Bug.md', 'tags: [b]'), TODAY)).toEqual({
+      change: { note: { tags: ['c'] } },
+    })
+    expect(dropInto('note.tags', 'b', noteRow('Bug.md', 'tags: [b]'), TODAY)).toBeNull()
     expect(dropInto('file.size', 3, bank, TODAY)).toBeNull()
   })
 

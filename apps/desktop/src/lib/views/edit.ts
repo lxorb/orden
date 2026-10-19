@@ -79,12 +79,43 @@ export function setHidden(base: Base, at: number, group: string, hidden: boolean
   })
 }
 
-/** A group's manual order, as the board keeps it: row ids, first to last. */
+/** A group's manual order, as the board keeps it: row ids, first to last. `ids` are
+ *  the cards on screen in their new order, which may be only some of the group's (a
+ *  search, a filter, the limit or one swimlane hides the rest): those take the places
+ *  the shown ones held, and every other card keeps its own. */
 export function setManualOrder(base: Base, at: number, group: string, ids: string[]): Base {
   return withView(base, at, (view) => {
-    const order = { ...view.nib.order, [group]: ids }
+    const order = { ...view.nib.order, [group]: mergedOrder(view.nib.order?.[group] ?? [], ids) }
     return withNib(view, { order })
   })
+}
+
+/** A stored order with the shown cards put in their new order. Each shown card the
+ *  stored order already had marks a place; the shown cards fill those places in their
+ *  new order, a card new to the order going in next to the one before it on screen. */
+export function mergedOrder(stored: readonly string[], shown: readonly string[]): string[] {
+  const shownSet = new Set(shown)
+  const storedSet = new Set(stored)
+  const places = stored.filter((id) => shownSet.has(id)).length
+  if (places === 0) return [...stored, ...shown]
+  // The shown cards in runs, one run per place: a run starts at each card the stored
+  // order had, so the new cards ride with their neighbour.
+  const runs: string[][] = []
+  let run: string[] = []
+  let held = false
+  for (const id of shown) {
+    if (storedSet.has(id)) {
+      if (held) {
+        runs.push(run)
+        run = []
+      }
+      held = true
+    }
+    run.push(id)
+  }
+  runs.push(run)
+  let next = 0
+  return stored.flatMap((id) => (shownSet.has(id) ? (runs[next++] ?? []) : [id]))
 }
 
 /** A key of a layout's own: a calendar's date, a chart's measure. Kept under the

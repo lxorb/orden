@@ -107,6 +107,8 @@ export function dropInto(property: string, key: Value, row: Row, today: string):
   if (!isNoteProperty(property)) return null
   const name = bare(property)
   const now = row.note[name] ?? null
-  if (JSON.stringify(now) === JSON.stringify(key)) return null
-  return { change: { note: { [name]: key } } }
+  // A list stays a list: a card of tags dropped on one tag's column holds that tag.
+  const next = Array.isArray(now) && key !== null && !Array.isArray(key) ? [key] : key
+  if (JSON.stringify(now) === JSON.stringify(next)) return null
+  return { change: { note: { [name]: next } } }
 }
