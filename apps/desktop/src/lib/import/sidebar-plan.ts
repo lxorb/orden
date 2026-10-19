@@ -151,7 +151,9 @@ function write(rows: readonly Row[], folder: string, plan: SpacePlan, names: Nam
 
     const name = safeName(row.folder.name)
     if (!row.rows.length) {
-      const path = names.free(inside(`${name}.md`))
+      // Its name is taken as a folder's too: a note beside a folder of the same name
+      // is the note nib nests into that folder (folder-notes.ts), not a second one.
+      const path = names.free(`${names.free(inside(name))}.md`)
       plan.files.push({ kind: 'note', path, text: '' })
       order.push(nameIn(path))
       continue
