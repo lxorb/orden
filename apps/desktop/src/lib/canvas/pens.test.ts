@@ -4,6 +4,7 @@ import {
   clampRub,
   clampSize,
   DOCKS,
+  drawnWidth,
   LEAST_RUB,
   LEAST_WIDTH,
   MOST_RECENT,
@@ -335,5 +336,25 @@ describe('which edge the bar springs to', () => {
 
   test('falls back to the bottom for an edge nobody has heard of', () => {
     expect(readPens(JSON.stringify({ dock: 'sideways' })).dock).toBe('bottom')
+  })
+})
+
+/** Emil, #369: at a high zoom the pens were not fine enough. Zoomed in, a stroke is as
+ *  wide as the pen shows on the screen; at the actual size and further out, as wide as
+ *  the pen is. */
+describe('the width a stroke is written with', () => {
+  test('zoomed in, is the width on the screen', () => {
+    expect(drawnWidth(2, 4)).toBe(0.5)
+    expect(drawnWidth(LEAST_WIDTH, 4)).toBe(0.13)
+    expect(drawnWidth(3, 1.5)).toBe(2)
+  })
+
+  test('at the actual size and further out, is the pen’s own', () => {
+    expect(drawnWidth(3, 1)).toBe(3)
+    expect(drawnWidth(3, 0.25)).toBe(3)
+  })
+
+  test('is never finer than a file keeps', () => {
+    expect(drawnWidth(LEAST_WIDTH, 8)).toBe(0.1)
   })
 })

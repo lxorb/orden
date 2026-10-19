@@ -78,7 +78,7 @@
   import { cursorFor, type Over } from './canvas/cursor'
   import { hand } from './canvas/hand.svelte'
   import { aimed, fading, latticeLayers, latticeLevel, settled, stepped } from './canvas/lattice'
-  import { pens } from './canvas/pens.svelte'
+  import { drawnWidth, pens } from './canvas/pens.svelte'
   import { hitAt, HANDLE, PORT } from './canvas/hit'
   import { assisted, leadPoint, penFelt, tidyShape, transformed } from './canvas/ink'
   import { inkColour } from './canvas/paint'
@@ -922,7 +922,8 @@
       turn,
       turns: modes.canvasTurns,
       inkBox: box,
-      pen: tools.ink,
+      // Zoomed in, a pen writes as wide as it shows on the screen (#369).
+      pen: { ...tools.ink, size: drawnWidth(tools.ink.size, camera.scale) },
       eraser: pens.eraser,
       lassoBox: pens.box,
       aspect: holdsShape,
