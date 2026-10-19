@@ -933,6 +933,12 @@
     row-gap: var(--space-1);
   }
 
+  /* Notion's head stays a column: a wrapped column sizes to its content and would push
+     the tools past the edge. The tabs scroll instead. */
+  :global([data-touch]) .head.tabbed {
+    flex-wrap: nowrap;
+  }
+
   :global([data-touch]) .name {
     max-width: none;
     flex: 1;

@@ -119,7 +119,7 @@ def open_view(page: Page, view: str) -> None:
     )
     wait_for(
         page,
-        f"document.querySelector('.view-tab .head .name')?.textContent.trim() === {json.dumps(view)}",
+        f"document.querySelector('.view-tab .head .tab.on .words')?.textContent.trim() === {json.dumps(view)}",
         f"the {view} view of Projects.base",
     )
     quiet(page)
@@ -189,6 +189,12 @@ def menu_row(page: Page, label: str) -> None:
     page.locator(f".menu [role=menuitem]:has-text({json.dumps(label)})").first.click()
 
 
+def more_row(page: Page, label: str) -> None:
+    """A row of the view's settings, under ⋯ in its head, Notion's."""
+    page.locator(".view-tab .head [aria-label=Settings]").first.click()
+    page.locator(f".view-tab .settings .nib-row:has-text({json.dumps(label)})").first.click()
+
+
 def the_builders(page: Page) -> None:
     """The layers lane 7 adds over a view, each opened from where a reader finds it,
     and a locked view turning a change away."""
@@ -200,8 +206,7 @@ def the_builders(page: Page) -> None:
     page.keyboard.press("Escape")
 
     for label, name in [("Automations", "06-automations"), ("Colour", "07-colour")]:
-        page.locator(".view-tab .head .name").first.click()
-        menu_row(page, label)
+        more_row(page, label)
         wait_for(page, "document.querySelector('.view-tab .pop')", f"the {label} layer")
         shot(page, name)
         page.keyboard.press("Escape")
@@ -216,8 +221,7 @@ def the_builders(page: Page) -> None:
     shot(page, "08-rollup-picker")
     page.keyboard.press("Escape")
 
-    page.locator(".view-tab .head .name").first.click()
-    menu_row(page, "Lock view")
+    more_row(page, "Lock view")
     wait_for(page, "document.querySelector('.view-tab .lock')", "the padlock of a locked view")
     page.locator(".view-tab .heads .head:has-text('status') .name").first.click()
     wait_for(page, "document.querySelector('.view-tab .lock.shake')", "the padlock answering a change")
