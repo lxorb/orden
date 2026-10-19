@@ -225,6 +225,9 @@ export interface Space {
   /** What the site made of this space decides, as one JSON object; see
    *  spaces/site.ts. `{}` until something about it is chosen. */
   site: string
+  /** Which order the space's file list is read in; see spaces/sort.ts. Empty until
+   *  somebody chooses, which is by name. */
+  sort: string
   /** When a v2 device first asked for its tree as rows; null before. From then on
    *  every write that places a note keeps the rows current; see src/sync2/prepare.ts.
    *  Optional for the same reason as the web store. */

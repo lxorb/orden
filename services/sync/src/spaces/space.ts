@@ -19,6 +19,7 @@ import { readBookmarks } from './bookmarks'
 import { readExcluded } from './excluded'
 import { readArchived } from './archived'
 import { readGraph } from './graph'
+import { readSort } from './sort'
 import { readIcons, readTints } from './icons'
 import { presentSite, readSite } from '../blog/site'
 
@@ -112,6 +113,7 @@ export async function addSpace(
     archived: '{}',
     excluded: '[]',
     site: '{}',
+    sort: '',
   }
 
   await env.DB.prepare(
@@ -411,6 +413,10 @@ export function presentSpace(
     // And what it has archived, which the tree is drawn without: a tree that showed an
     // archived note and hid it a request later would be a row blinking out.
     archived: readArchived(space.archived),
+    // And which order the tree is read in, for the reason the arranged order comes down:
+    // a list that arrived by name and turned to another order a request later would be
+    // the rows moving under somebody's hand (#423).
+    sort: readSort(space.sort),
     createdAt: space.created_at,
     updatedAt: space.updated_at,
     blog: {

@@ -19,6 +19,7 @@ import { spaceExcluded } from './excluded'
 import { spaceArchived } from './archived'
 import { spaceFiles } from './files'
 import { spaceGraph } from './graph'
+import { spaceSort } from './sort'
 import { folderIcons, isIcon, isTint } from './icons'
 import { answers } from './answers'
 import { site } from './site'
@@ -293,6 +294,7 @@ spaces.route('/', bookmarks)
 spaces.route('/', folderIcons)
 spaces.route('/', spaceArranged)
 spaces.route('/', spaceGraph)
+spaces.route('/', spaceSort)
 spaces.route('/', spaceExcluded)
 spaces.route('/', spaceArchived)
 spaces.route('/', spaceFiles)
