@@ -36,6 +36,13 @@ runs:
         toolchain: stable
         targets: ${{ inputs.rust-targets || inputs.target }}
 
+    # Linux builds on CEF, from a manifest of its own put in place of the app's, so the
+    # crate's cache below is keyed by Linux's own lock file; see scripts/linux-cef.sh.
+    - name: Linux's manifest
+      if: runner.os == 'Linux'
+      shell: bash
+      run: bash scripts/linux-cef.sh
+
     - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
       with:
         workspaces: |
@@ -46,14 +53,16 @@ runs:
         # or a trial branch's.
         save-if: ${{ github.ref == 'refs/heads/unstable' }}
 
-    # xdg-utils is what the AppImage bundler copies `xdg-open` from; the x64
-    # image happens to ship it, the arm image does not.
+    # CEF's runtime is GTK 4 (4.14 at least, so Ubuntu 24.04's), and the engine itself is
+    # downloaded by its crate's build script; nothing of WebKitGTK or GStreamer. xdg-utils
+    # is what the AppImage bundler copies `xdg-open` from; the x64 image happens to ship
+    # it, the arm image does not.
     - name: System dependencies
       if: runner.os == 'Linux'
       shell: bash
       run: |
         sudo apt-get update
-        sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev patchelf xdg-utils gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-libav
+        sudo apt-get install -y libgtk-4-dev libdbus-1-dev cmake ninja-build patchelf xdg-utils squashfs-tools
 
     - shell: bash
       run: pnpm install --frozen-lockfile

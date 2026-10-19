@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# Orden started the way a Wayland desktop starts it, with no X server anywhere: a
-# headless sway with Xwayland off, DISPLAY and GDK_BACKEND unset, four screens - one
-# turned to portrait at a fractional 1.77, one at 1, one at 1.75, one at 2 - and a
-# session bus. Then the checks a reader would make by looking:
+# Orden started the way a Wayland desktop starts it: a headless sway with its Xwayland,
+# four screens - one turned to portrait at a fractional 1.77, one at 1, one at 1.75, one
+# at 2 - and a session bus. Orden runs on CEF, whose browsers are X11 windows, so its
+# window is an Xwayland one, as it is on every Wayland desktop; GDK_BACKEND is unset and
+# DISPLAY is Xwayland's. Then the checks a reader would make by looking:
 #
-#   - the window maps, on Wayland, as a window sway can see;
+#   - the window maps, as a window sway can see;
 #   - nothing the graphics stack says is a failure: no EGL display that could not be
 #     made, no protocol error, no GTK criticals;
 #   - a key from any app reaches the app the way this desktop allows: through the
@@ -32,6 +33,7 @@ out=${OUT:-$PWD/wayland-out}
 mkdir -p "$out"
 
 unset DISPLAY GDK_BACKEND WAYLAND_DISPLAY
+x11_before=$(ls /tmp/.X11-unix 2>/dev/null || true)
 export XDG_RUNTIME_DIR
 XDG_RUNTIME_DIR=$(mktemp -d)
 chmod 700 "$XDG_RUNTIME_DIR"
@@ -40,7 +42,7 @@ export HOME=${HOME:-/root}
 # sway with no GPU and no input: the headless backend, drawn in memory.
 export WLR_BACKENDS=headless WLR_RENDERER=pixman WLR_LIBINPUT_NO_DEVICES=1 WLR_HEADLESS_OUTPUTS=4
 cat > "$out/sway.conf" <<'CONF'
-xwayland disable
+xwayland force
 default_border none
 default_floating_border none
 output HEADLESS-1 mode --custom 2560x1440@60Hz transform 90 scale 1.77 position 0 0
@@ -62,6 +64,18 @@ export SWAYSOCK=$sock
 WAYLAND_DISPLAY=$(basename "$(ls "$XDG_RUNTIME_DIR"/wayland-* | grep -v '\.lock$' | head -1)")
 export WAYLAND_DISPLAY
 swaymsg -t get_outputs > "$out/outputs.json"
+# Xwayland's display, the one sway started: the socket that was not there before it.
+for _ in $(seq 100); do
+  for socket in $(ls /tmp/.X11-unix 2>/dev/null || true); do
+    if ! grep -qx "$socket" <<< "$x11_before"; then
+      export DISPLAY=":${socket#X}"
+    fi
+  done
+  [ -n "${DISPLAY:-}" ] && break
+  sleep 0.1
+done
+[ -n "${DISPLAY:-}" ] || { echo "::error::sway started no Xwayland"; cat "$out/sway.log"; exit 1; }
+echo "Xwayland on $DISPLAY"
 echo "sway on $WAYLAND_DISPLAY, outputs:"
 python3 -c 'import json,sys; [print(" ", o["name"], o["rect"], "scale", o["scale"], o["transform"]) for o in json.load(open(sys.argv[1]))]' "$out/outputs.json"
 
