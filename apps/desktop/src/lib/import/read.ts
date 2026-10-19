@@ -50,7 +50,7 @@ export async function detect(sources: readonly Source[]): Promise<FormatId | nul
   if (has(VAULT)) return 'obsidian'
 
   if (has(/\.enex$/i)) return 'evernote'
-  if (has(/\.note$/i)) return 'tomboy'
+  if (await looksLikeTomboy(sources)) return 'tomboy'
 
   // Papers and nothing else: somebody's own PDF, to be written on rather than
   // converted. Before everything below, because a `.pdf` is the one extension on this
@@ -195,6 +195,19 @@ async function looksLikeJournal(sources: readonly Source[]): Promise<boolean> {
 
   const dated = entries.every((one) => /^\d{4}-\d{2}-\d{2}/.test(one.path.split('/').pop() ?? ''))
   return dated && sources.some((one) => /(^|\/)resources\//i.test(one.path))
+}
+
+/** A Tomboy or Gnote note, which says so in its XML. The extension alone is not
+ *  enough: a `.note` somebody wrote by hand among their markdown would otherwise
+ *  have the whole folder read as Tomboy, and every markdown file in it left out. */
+async function looksLikeTomboy(sources: readonly Source[]): Promise<boolean> {
+  const notes = sources.filter((one) => /\.note$/i.test(one.path)).slice(0, PEEK)
+
+  for (const note of notes) {
+    if (/<note-content[\s>/]/.test((await note.text()).slice(0, 8000))) return true
+  }
+
+  return false
 }
 
 /** Apple's own HTML, which is what every Apple Notes exporter hands over: a
