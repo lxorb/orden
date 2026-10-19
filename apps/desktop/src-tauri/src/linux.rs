@@ -62,6 +62,47 @@ fn session_is_wayland(display: Option<&str>, kind: Option<&str>) -> bool {
     display.is_some_and(|display| !display.is_empty()) || kind == Some("wayland")
 }
 
+/// Says to the window manager that `window` is a utility window - a small one of the
+/// app's own, over the others - which a tiling one floats rather than tiles, as quick
+/// add wants. Its X11 window exists from the moment it is built, since CEF parents the
+/// page into it, and this is said before it is first shown, which is when a window
+/// manager decides. Nothing where there is no X server or no X11 window to say it of.
+pub fn float(window: &tauri::WebviewWindow<crate::Engine>) {
+    use raw_window_handle::{HasWindowHandle as _, RawWindowHandle};
+    use x11rb::connection::Connection as _;
+    use x11rb::protocol::xproto::{AtomEnum, ConnectionExt as _, PropMode};
+    use x11rb::wrapper::ConnectionExt as _;
+
+    let Some(xid) = window
+        .window_handle()
+        .ok()
+        .and_then(|handle| match handle.as_raw() {
+            RawWindowHandle::Xlib(x) => u32::try_from(x.window).ok(),
+            RawWindowHandle::Xcb(x) => Some(x.window.get()),
+            _ => None,
+        })
+    else {
+        return;
+    };
+    let Ok((x, _)) = x11rb::connect(None) else {
+        return;
+    };
+    let atom = |name: &[u8]| {
+        x.intern_atom(false, name)
+            .ok()
+            .and_then(|cookie| cookie.reply().ok())
+            .map(|reply| reply.atom)
+    };
+    if let (Some(kind), Some(utility)) = (
+        atom(b"_NET_WM_WINDOW_TYPE"),
+        atom(b"_NET_WM_WINDOW_TYPE_UTILITY"),
+    ) {
+        let _ = x.change_property32(PropMode::REPLACE, xid, kind, AtomEnum::ATOM, &[utility]);
+        let _ = x.flush();
+        let _ = x.sync();
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -3058,6 +3058,7 @@ dependencies = [
  "plist",
  "png 0.18.1",
  "portable-pty",
+ "raw-window-handle",
  "reqwest",
  "rusqlite",
  "rustls",

@@ -91,7 +91,12 @@ pub(crate) fn bring_up(app: &AppHandle, token: Option<String>) {
     let window = match app.get_webview_window(LABEL) {
         Some(window) => window,
         None => match quick_window(app) {
-            Ok(window) => window,
+            Ok(window) => {
+                // Floated by a tiling window manager, as a launcher's field is; see linux.rs.
+                #[cfg(feature = "cef")]
+                crate::linux::float(&window);
+                window
+            }
             Err(_) => return,
         },
     };

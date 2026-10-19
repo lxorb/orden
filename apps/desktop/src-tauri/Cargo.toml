@@ -388,6 +388,9 @@ zbus = { version = "5", default-features = false, features = ["async-io", "block
 # them. Pure Rust, and in Linux's lock file already, through the runtime's windowing.
 # See web_keys.rs and keyboard.rs.
 x11rb = { version = "0.13", default-features = false }
+# A window's own X11 window, for what only the window manager is told: quick add
+# floated (linux.rs). In the lock file already, through the runtime's windowing.
+raw-window-handle = "0.6"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 # What a file *is*, apart from where it is: the volume and the file id, asked of an open
