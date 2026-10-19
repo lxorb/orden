@@ -82,6 +82,10 @@ pub fn window_move_resize(
 /// `SCRIPT` each time the app's page in it loads. Nothing for a window that cannot be
 /// resized, or where there is no X11 window (any platform but Linux).
 #[tauri::command(async)]
+#[cfg_attr(
+    not(feature = "cef"),
+    allow(clippy::unnecessary_wraps, reason = "a command's answer, the same on every engine")
+)]
 pub fn window_frame(webview: tauri::Webview) -> Result<(), String> {
     #[cfg(feature = "cef")]
     {

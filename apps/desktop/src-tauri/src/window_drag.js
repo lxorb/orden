@@ -26,7 +26,7 @@
   function frame() {
     const internals = window.__TAURI_INTERNALS__
     if (internals && typeof internals.invoke === 'function') {
-      internals.invoke('window_frame').catch(() => {})
+      internals.invoke('window_frame').catch(() => null)
     }
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', frame)
