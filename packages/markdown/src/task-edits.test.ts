@@ -172,3 +172,15 @@ describe('a change', () => {
     expect(readTask(line)).toMatchObject({ priority: 2, due: '2026-10-06', tags: ['x'] })
   })
 })
+
+describe('unknown fields an object would answer from its prototype', () => {
+  test('are removed, changed and added like any other', () => {
+    expect(changedTask('- [ ] Pay [toString:: 1]', { fields: {} })).toBe('- [ ] Pay')
+    expect(changedTask('- [ ] Pay [toString:: 1]', { fields: { toString: '2' } })).toBe(
+      '- [ ] Pay [toString:: 2]',
+    )
+    expect(changedTask('- [ ] Pay', { fields: { constructor: '1' } })).toBe(
+      '- [ ] Pay [constructor:: 1]',
+    )
+  })
+})

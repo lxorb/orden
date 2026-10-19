@@ -228,3 +228,22 @@ describe('the values of nib fields', () => {
     expect(readRemind('whenever')).toBeNull()
   })
 })
+
+/** Field names and priority words are the writer's, and a plain object answered
+ *  `constructor` from its prototype: a priority became a function and was lost. */
+describe('words an object would answer from its prototype', () => {
+  test('are unknown fields, kept as written', () => {
+    const task = readTask('- [ ] Pay [constructor:: 1] [__proto__:: 2] [toString:: 3]')
+    expect(Object.entries(task?.fields ?? {}).sort()).toEqual([
+      ['__proto__', '2'],
+      ['constructor', '1'],
+      ['toString', '3'],
+    ])
+  })
+
+  test('are not a priority', () => {
+    const task = readTask('- [ ] Pay [priority:: constructor]')
+    expect(task?.priority).toBe(4)
+    expect(task?.fields).toEqual({ priority: 'constructor' })
+  })
+})

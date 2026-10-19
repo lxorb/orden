@@ -125,13 +125,15 @@ export interface ParsedTask {
 }
 
 /** The priorities by emoji, and back. */
-const PRIORITY_BY_EMOJI: Record<string, Priority> = {
-  '🔺': 1,
-  '⏫': 2,
-  '🔼': 3,
-  '🔽': 5,
-  '⏬': 6,
-}
+const PRIORITY_BY_EMOJI: ReadonlyMap<string, Priority> = new Map(
+  Object.entries({
+    '🔺': 1,
+    '⏫': 2,
+    '🔼': 3,
+    '🔽': 5,
+    '⏬': 6,
+  } satisfies Record<string, Priority>),
+)
 
 export const EMOJI_BY_PRIORITY: Record<Priority, string> = {
   1: '🔺',
@@ -143,15 +145,17 @@ export const EMOJI_BY_PRIORITY: Record<Priority, string> = {
 }
 
 /** Dataview's words for a priority, the ones the Tasks plugin writes in that format. */
-const PRIORITY_BY_WORD: Record<string, Priority> = {
-  highest: 1,
-  high: 2,
-  medium: 3,
-  none: 4,
-  normal: 4,
-  low: 5,
-  lowest: 6,
-}
+const PRIORITY_BY_WORD: ReadonlyMap<string, Priority> = new Map(
+  Object.entries({
+    highest: 1,
+    high: 2,
+    medium: 3,
+    none: 4,
+    normal: 4,
+    low: 5,
+    lowest: 6,
+  } satisfies Record<string, Priority>),
+)
 
 export const WORD_BY_PRIORITY: Record<Priority, string> = {
   1: 'highest',
@@ -164,17 +168,19 @@ export const WORD_BY_PRIORITY: Record<Priority, string> = {
 
 /** The date fields by their emoji, the alternatives the Tasks plugin also reads
  *  included. */
-const DATE_BY_EMOJI: Record<string, FieldName> = {
-  '✅': 'completed',
-  '❌': 'cancelledOn',
-  '📅': 'due',
-  '📆': 'due',
-  '🗓': 'due',
-  '⏳': 'scheduled',
-  '⌛': 'scheduled',
-  '🛫': 'start',
-  '➕': 'created',
-}
+const DATE_BY_EMOJI: ReadonlyMap<string, FieldName> = new Map(
+  Object.entries({
+    '✅': 'completed',
+    '❌': 'cancelledOn',
+    '📅': 'due',
+    '📆': 'due',
+    '🗓': 'due',
+    '⏳': 'scheduled',
+    '⌛': 'scheduled',
+    '🛫': 'start',
+    '➕': 'created',
+  } satisfies Record<string, FieldName>),
+)
 
 /** The emoji nib writes for each date field. */
 export const EMOJI_BY_DATE: Partial<Record<FieldName, string>> = {
@@ -193,24 +199,26 @@ export const ID_EMOJI = '🆔'
 export const DEPENDS_EMOJI = '⛔'
 
 /** A bracket field's key, read the way Dataview reads it: case and blanks aside. */
-const FIELD_BY_KEY: Record<string, FieldName> = {
-  due: 'due',
-  scheduled: 'scheduled',
-  start: 'start',
-  created: 'created',
-  completion: 'completed',
-  cancelled: 'cancelledOn',
-  priority: 'priority',
-  repeat: 'recurrence',
-  oncompletion: 'onCompletion',
-  id: 'id',
-  dependson: 'dependsOn',
-  time: 'time',
-  duration: 'duration',
-  deadline: 'deadline',
-  remind: 'remind',
-  assignee: 'assignee',
-}
+const FIELD_BY_KEY: ReadonlyMap<string, FieldName> = new Map(
+  Object.entries({
+    due: 'due',
+    scheduled: 'scheduled',
+    start: 'start',
+    created: 'created',
+    completion: 'completed',
+    cancelled: 'cancelledOn',
+    priority: 'priority',
+    repeat: 'recurrence',
+    oncompletion: 'onCompletion',
+    id: 'id',
+    dependson: 'dependsOn',
+    time: 'time',
+    duration: 'duration',
+    deadline: 'deadline',
+    remind: 'remind',
+    assignee: 'assignee',
+  } satisfies Record<string, FieldName>),
+)
 
 /** The key each field is written under in Dataview's format. */
 export const KEY_BY_FIELD: Record<FieldName, string> = {
@@ -397,7 +405,9 @@ function emptyFields(status: string): TaskFields {
     priority: NO_PRIORITY,
     tags: [],
     dependsOn: [],
-    fields: {},
+    // Keys are the writer's, and `[__proto__:: x]` on a plain object would set
+    // its prototype rather than keep the field.
+    fields: Object.create(null) as Record<string, string>,
   }
 }
 
@@ -418,7 +428,8 @@ function setField(fields: TaskFields, field: FieldName, value: string): boolean 
       return true
     }
     case 'priority': {
-      const priority = PRIORITY_BY_EMOJI[value] ?? PRIORITY_BY_WORD[value.trim().toLowerCase()]
+      const priority =
+        PRIORITY_BY_EMOJI.get(value) ?? PRIORITY_BY_WORD.get(value.trim().toLowerCase())
       if (priority === undefined) return false
       fields.priority = priority
       return true
@@ -541,7 +552,7 @@ function trailingTokens(
       read('priority', found[1] ?? '')
       take(found, 'priority', 'emoji', 1)
     } else if ((found = AT_END.date.exec(head))) {
-      const field = DATE_BY_EMOJI[found[1] ?? ''] ?? 'due'
+      const field = DATE_BY_EMOJI.get(found[1] ?? '') ?? 'due'
       read(field, found[2] ?? '')
       take(found, field, 'emoji', 2)
     } else if ((found = AT_END.recurrence.exec(head))) {
@@ -561,7 +572,7 @@ function trailingTokens(
     } else if ((found = AT_END.bracket.exec(head) ?? AT_END.paren.exec(head))) {
       const form: FieldForm = found[0].startsWith('[') ? 'bracket' : 'paren'
       const key = found[1] ?? ''
-      const field = FIELD_BY_KEY[keyOf(key)]
+      const field = FIELD_BY_KEY.get(keyOf(key))
       const known = field !== undefined && read(field, found[2] ?? '')
       if (!known) fields.fields[key.trim()] = (found[2] ?? '').trim()
       take(found, known ? field : 'other', form, 2, key)
@@ -582,7 +593,7 @@ function inlineTokens(line: string, from: number, to: number, fields: TaskFields
     const bracket = found[1] !== undefined
     const key = (bracket ? found[1] : found[3]) ?? ''
     const value = (bracket ? found[2] : found[4]) ?? ''
-    const field = FIELD_BY_KEY[keyOf(key)]
+    const field = FIELD_BY_KEY.get(keyOf(key))
     const start = from + found.index
     const known =
       field !== undefined && fields[field] === undefined && setField(fields, field, value)
