@@ -85,7 +85,7 @@ export async function detect(sources: readonly Source[]): Promise<FormatId | nul
 
   const markdown = paths.filter((one) => /\.(md|markdown|txt)$/i.test(one))
   const html = paths.filter((one) => /\.html?$/i.test(one))
-  const csv = paths.filter((one) => /\.csv$/i.test(one))
+  const csv = paths.filter((one) => /\.(csv|tsv)$/i.test(one))
 
   if (csv.length && (await looksLikeTodoist(sources))) return 'todoist'
   if (csv.length && !markdown.length && !html.length) return 'table'

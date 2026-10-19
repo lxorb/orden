@@ -161,6 +161,19 @@ describe('which app an export came out of', () => {
     )
   })
 
+  test('a tab separated file on its own is a table too', async () => {
+    await expect(detect([file('Books.tsv', 'Name\tPages\nDune\t412')])).resolves.toBe('table')
+  })
+
+  test('a folder of papers is papers, whatever a Mac left beside them', async () => {
+    await expect(
+      detect([file('Papers/One.pdf', '%PDF'), file('Papers/.DS_Store', 'junk')]),
+    ).resolves.toBe('pdf-pages')
+    await expect(
+      detect([file('One.pdf', '%PDF'), file('__MACOSX/._One.pdf', 'junk')]),
+    ).resolves.toBe('pdf-pages')
+  })
+
   test("a document only pandoc reads is named as pandoc's", async () => {
     await expect(detect([file('Thesis.docx', 'PK')])).resolves.toBe('pandoc')
   })
