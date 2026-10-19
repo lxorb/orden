@@ -25,9 +25,9 @@ data loss. **High** - data loss or a security hole on a specific path.
 | Severity | Found | Fixed | Open |
 | --- | --: | --: | --: |
 | Critical | 1 | 1 | 0 |
-| High | 11 | 11 | 0 |
-| Medium | 22 | 22 | 0 |
-| Low | 9 | 9 | 0 |
+| High | 13 | 13 | 0 |
+| Medium | 24 | 24 | 0 |
+| Low | 10 | 9 | 1 |
 
 Open rows are being fixed; see the status column.
 
@@ -78,6 +78,11 @@ Open rows are being fixed; see the status column.
 | B41 | Low | Removing a tag and a field side by side left a doubled blank | Fixed `ac1a3a04` | Tags and fields built separate removals claiming the same blank | All spans go through one `removals()` merge | `task-edits.test.ts` 4 cases (failed before) |
 | B42 | Medium | Renaming or moving a note that links to itself brought a copy back under its old name (found by the final re-audit; regression from B27) | Fixed `c376af2d` | `retarget` read the moved note's open document and wrote it to the path the rename had just emptied | The moved note is read where it is open and written, linked from, at its new path | 2 `file-ops.store.test.ts` tests, open and closed (both failed before) |
 | B43 | Low | B25's move checks compared paths with a bare `!==` | Fixed `217147fd` | A case- or composition-only difference read as a move | `samePath` | `one-path.test.ts` (failed before) |
+| B44 | High | Merging an open note that links to itself wrote its own words over the note it went into (second re-audit; regression from B42) | Fixed `88b08e433` | B42 took every `retarget` for a move | Callers say when the note itself moved (`Retargeting.moved`); a merge does not | `file-ops.store.test.ts` merge test (failed before) |
+| B45 | Medium | Undoing a merge pointed every link to the target, its own self-links included, at the note that came back | Fixed `88b08e433` | `unmerge` ran the rewrite back across the whole space | The merge records the notes it rewrote; the undo rewrites only those | `file-ops.store.test.ts` undo test with a linker to each note (failed before) |
+| B46 | High | Undoing a signed-in folder delete wrote over notes made at the same paths since (second re-audit; B24 for folders, from #399) | Fixed `5991dbde0` | `putBack` wrote held notes with `writeFile` | Each held note goes through `writeBeside` | `written-over.store.test.ts` (failed before) |
+| B47 | Medium | Undoing a signed-in folder delete gave back an empty folder | Fixed `5991dbde0` | `remove` hid the row before `heldIn` read what it held | The row is read before it is hidden and passed to `bin` | `written-over.store.test.ts` (failed before) |
+| B48 | Low | After a self-linking note is renamed, a row of its properties can show the old link until its next save or scan | Open, accepted | `hear(target, after)` fires before `fileMoved` moves the rows store | - (the file on disk is right) | - |
 
 Not fixed, judged insignificant or out of scope: GFM's escaped backslash before a
 pipe in tables (text written back unchanged); Todoist `date before: Oct 6, 2026`
