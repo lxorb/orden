@@ -73,9 +73,9 @@ describe('a folder moved into a new folder that took its old name', () => {
     disk.folders.add('/r/Projects')
     disk.files.set('/r/Projects/plan.md', 'p')
     const real = disk.move.bind(disk)
-    disk.move = (from: string, to: string, kind: 'file' | 'folder') => {
+    disk.move = (from: string, to: string) => {
       if (to.startsWith(`${from}/`)) throw new Error(`${from} cannot go inside itself`)
-      return real(from, to, kind)
+      return real(from, to)
     }
     const fresh = row('P', 'folder', null, 'Projects', '')
     const old = row('O', 'folder', 'P', 'Old', 'Projects')
