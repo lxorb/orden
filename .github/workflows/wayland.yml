@@ -217,6 +217,8 @@ jobs:
           cd packages/appimage
           chmod +x ./*.AppImage
           ./*.AppImage --appimage-extract > /dev/null
+          # sharun's AppImage unpacks as AppDir, an older one as squashfs-root.
+          [ -d squashfs-root ] || mv AppDir squashfs-root
       # As root in a container, where Chromium will not start sandboxed.
       - name: Under Wayland with no portal, `--quick-add` reaching the running app
         env:
@@ -258,6 +260,8 @@ jobs:
           cd packages/appimage
           chmod +x ./*.AppImage
           ./*.AppImage --appimage-extract > /dev/null
+          # sharun's AppImage unpacks as AppDir, an older one as squashfs-root.
+          [ -d squashfs-root ] || mv AppDir squashfs-root
       # As root in a container, where Chromium will not start sandboxed.
       - name: Under Wayland
         env:
