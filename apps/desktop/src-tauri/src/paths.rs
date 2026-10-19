@@ -479,7 +479,7 @@ pub fn inside(root: &Path, path: &Path) -> bool {
 fn inside_as(naming: Naming, root: &Path, path: &Path) -> bool {
     let root = folded(root);
     let path = folded(path);
-    if root.as_os_str().is_empty() || unspoken_as(naming, &path) {
+    if root.as_os_str().is_empty() {
         return false;
     }
 
@@ -492,7 +492,10 @@ fn inside_as(naming: Naming, root: &Path, path: &Path) -> bool {
         }
     }
 
-    true
+    // Only what the path says below the root: the root is the app's own, and may itself
+    // be spelled with a short name - a temporary folder on Windows often is, under
+    // `RUNNER~1` - which the path then says the same way.
+    !theirs.any(|(_, part)| unspoken(naming, part))
 }
 
 /// The space a folder belongs to: the folder directly inside `spaces` that holds
@@ -591,21 +594,21 @@ fn same_part(naming: Naming, one: Component, other: Component, last: bool) -> bo
     key(one) == key(other)
 }
 
-/// Whether a path holds a part the file system `naming` says would read as something
-/// other than a name, which no gate can compare by its letters and so lets in nowhere.
+/// Whether a part of a path is one the file system `naming` says would read as
+/// something other than a name, which no gate can compare by its letters and so lets
+/// in nowhere below the folder it guards.
 ///
 /// On Windows: a `:`, which names a stream of a file rather than a file -
 /// `.trash::$INDEX_ALLOCATION` is the trash folder itself - and a short 8.3 alias
 /// (`TRASH~1`), which names whatever long name it was made for (#485).
-fn unspoken_as(naming: Naming, path: &Path) -> bool {
-    naming == Naming::Win32
-        && path.components().any(|part| match part {
-            Component::Normal(name) => {
-                let name = name.to_string_lossy();
-                name.contains(':') || short_alias(&name)
-            }
-            _ => false,
-        })
+fn unspoken(naming: Naming, part: Component) -> bool {
+    match part {
+        Component::Normal(name) if naming == Naming::Win32 => {
+            let name = name.to_string_lossy();
+            name.contains(':') || short_alias(&name)
+        }
+        _ => false,
+    }
 }
 
 /// Whether a name has the shape Windows gives a long name's 8.3 alias: up to six
@@ -1409,6 +1412,22 @@ mod tests {
 
         assert!(said(Naming::Exact, &[".TRASH", "a.md"]).is_ok());
         assert!(said(Naming::Exact, &[".trash.", "a.md"]).is_ok());
+    }
+
+    /// The folder a gate guards may itself be spelled with a short name, as a temporary
+    /// folder on Windows is (`RUNNER~1`): only what a path says below it is held to the
+    /// rule, so a path the app hands back under that folder is still inside it.
+    #[test]
+    fn a_short_name_in_the_folder_guarded_is_no_bar() {
+        let root = path(&["Users", "RUNNER~1", "Temp", "Nib"]);
+        let under = path(&["Users", "RUNNER~1", "Temp", "Nib", "Work", "Plan.md"]);
+        let alias = path(&["Users", "RUNNER~1", "Temp", "Nib", "WORK~1", "Plan.md"]);
+        let stream = path(&["Users", "RUNNER~1", "Temp", "Nib", "Plan.md:hidden"]);
+
+        assert!(inside_as(Naming::Win32, &root, &under));
+        assert!(inside_as(Naming::Win32, &root, &root));
+        assert!(!inside_as(Naming::Win32, &root, &alias));
+        assert!(!inside_as(Naming::Win32, &root, &stream));
     }
 
     /// Case is folded no wider than the file system folds it (#486): NTFS keeps the
