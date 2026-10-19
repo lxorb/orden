@@ -23,11 +23,12 @@ import { prompt } from '../prompt.svelte'
 import { invoke } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import { writeFile } from '../workspace/write-file'
+import { sitesSince } from './clearing'
 import { keepNow } from './keep'
 import { pages } from './pages.svelte'
 import { withOwn } from './own-file'
 import { readWebFile } from './shortcut'
-import { freshOwn, ownStore } from './web-data.svelte'
+import { freshOwn, ownStore, webData } from './web-data.svelte'
 
 /** The two places a web note's pages may keep what websites store. */
 type Where = 'global' | 'separate'
@@ -95,10 +96,13 @@ async function choose(path: string, where: Where): Promise<void> {
     if (copy || tab.path === path) await pages.rehouse(tab.id, own, said)
   }
 
+  // Every site the history knows, for nib's own Chromium, which clears a site's data
+  // only where it is named; the history is not kept per store. See `sitesSince`.
   if (was !== null && own === null) {
     await invoke('web_clear', {
       stores: [ownStore(was)],
       clearing: { since: 0, site: true, cache: true },
+      sites: sitesSince([webData.history()], 0),
     }).catch(() => undefined)
   }
 }
