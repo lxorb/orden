@@ -86,6 +86,9 @@ export interface Env {
   /** Cloudflare Email Sending. Absent in tests, where codes are logged. */
   EMAIL?: EmailSender
   MAIL_FROM?: string
+  /** Where a report sent with Send feedback is mailed (#548): the owner's address, set
+   *  by hand (`wrangler secret put FEEDBACK_TO`). Unset, reports are kept in D1 only. */
+  FEEDBACK_TO?: string
 
   /** Workers AI, which is what listens for an account with no OpenAI key of its own;
    *  see ask/heard.ts. Absent in tests, which hand in a fake, and in a Worker that has
