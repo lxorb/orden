@@ -12,6 +12,7 @@
  *  tested by handing it a stand-in store rather than a workspace. */
 
 import { oneEdit } from '@nib/markdown/edits'
+import { freePath } from '@nib/markdown/paths'
 import { applied, type Edit } from '../search/replace'
 import { invoke } from '../tauri'
 import type { Entry } from '../workspace.svelte'
@@ -37,6 +38,9 @@ export interface PutsBack {
   fileMoved(from: string, to: string, kind: Kind): Promise<void>
   fileGone(path: string, kind: 'file' | 'folder'): Promise<void>
   fileCame(path: string, kind: 'file' | 'folder'): Promise<void>
+  /** One file operation on everything open at or under a path, after whatever write
+   *  of any of it is in the air; see `holdingUnder` in workspace/saving.svelte.ts. */
+  holdingUnder(path: string, run: () => Promise<void>): Promise<void>
   loadTree(): Promise<void>
   persist(): void
 }
@@ -120,7 +124,8 @@ async function uncopy(ws: PutsBack, action: Extract<FileAction, { kind: 'copy' }
 
 /** A deleted note back where it was, answering with where that is. Out of the
  *  device's trash when it went there - which moves it aside when something has
- *  taken its name meanwhile - and from the snapshot taken on the way out otherwise.
+ *  taken its name meanwhile - and from the snapshot taken on the way out otherwise,
+ *  which steps aside the same way; see `writeBeside`.
  *
  *  The trash can refuse: the sweep runs daily and clears anything past its
  *  fourteen days, and Recently deleted can purge an entry by hand. The
@@ -133,8 +138,7 @@ export async function putBack(action: Extract<FileAction, { kind: 'delete' }>): 
     // paper was, so this says so instead.
     if (!action.content) throw new Error('there is nothing to put back')
 
-    await invoke('write_note', { path: action.path, content: action.content })
-    return action.path
+    return writeBeside(action.path, action.content)
   }
 
   const restored = await invoke<string>('restore_trash', { id: action.trashId }).catch(() => null)
@@ -142,8 +146,27 @@ export async function putBack(action: Extract<FileAction, { kind: 'delete' }>): 
   if (restored !== null) return restored || action.path
   if (!action.content) throw new Error('the deleted note is no longer in the trash')
 
-  await invoke('write_note', { path: action.path, content: action.content })
-  return action.path
+  return writeBeside(action.path, action.content)
+}
+
+/** Words written back at `path`, or beside it where something is there now, answering
+ *  with where they went - the way the trash puts a note back.
+ *
+ *  A note can be made at a deleted note's name before the delete is undone, and the
+ *  undo used to write over it: the words typed into the new one were gone, and with
+ *  no version of them kept, since nothing had been asked to keep one. So the disk is
+ *  asked first, and a name with a file at it steps aside as a new note's does. */
+async function writeBeside(path: string, content: string): Promise<string> {
+  const found: string[] = []
+  for (;;) {
+    const at = freePath(path, (candidate) => found.includes(candidate))
+    const stamp = await invoke<unknown>('file_stamp', { path: at }).catch(() => null)
+    if (!stamp) {
+      await invoke('write_note', { path: at, content })
+      return at
+    }
+    found.push(at)
+  }
 }
 
 /** Puts an archiving back, either way round, and opens the tabs it closed. */
@@ -203,13 +226,18 @@ function carriedPast(note: { after: string; edits: readonly Edit[] }, now: strin
  *  followed it pointed at the old name again. */
 async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' | 'rename' }>) {
   const kind = ws.entryAt(action.to)?.is_dir === true ? 'folder' : 'file'
-  await invoke('rename_note', { from: action.to, to: action.from })
 
-  // The rename rewrote every link that pointed at the note; putting the name
-  // back has to put those back too, which is the same rewrite the other way
-  // round - and, again, before anything is told the note moved.
-  if (action.rewrote) await ws.retarget(action.to, action.from)
-  await ws.fileMoved(action.to, action.from, kind)
+  // A move like the one it undoes, so it waits for the writes of what is open in it
+  // the same way; see `move` in workspace.svelte.ts.
+  await ws.holdingUnder(action.to, async () => {
+    await invoke('rename_note', { from: action.to, to: action.from })
+
+    // The rename rewrote every link that pointed at the note; putting the name
+    // back has to put those back too, which is the same rewrite the other way
+    // round - and, again, before anything is told the note moved.
+    if (action.rewrote) await ws.retarget(action.to, action.from)
+    await ws.fileMoved(action.to, action.from, kind)
+  })
 }
 
 /** Puts a merge back: both notes as they were, and the note that was folded

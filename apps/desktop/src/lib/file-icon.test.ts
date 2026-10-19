@@ -129,8 +129,15 @@ describe('the icon a note is given', () => {
     await setFileIcon('/space/marked.md', 'compass')
 
     const touched = sent.filter((one) => one.path === '/space/marked.md')
-    expect(touched.map((one) => one.command)).toEqual(['read_note', 'snapshot_note', 'write_note'])
-    expect(touched[1]?.content).toContain('icon: rocket')
+    // Read for the change, and again just before it is written; see `writeClosed`
+    // in workspace/note-text.ts.
+    expect(touched.map((one) => one.command)).toEqual([
+      'read_note',
+      'read_note',
+      'snapshot_note',
+      'write_note',
+    ])
+    expect(touched[2]?.content).toContain('icon: rocket')
   })
 
   test('and is one thing to undo', async () => {
@@ -235,8 +242,15 @@ describe('the icon a canvas is given', () => {
     await setFileIcon('/space/Marked.canvas', 'compass')
 
     const touched = sent.filter((one) => one.path === '/space/Marked.canvas')
-    expect(touched.map((one) => one.command)).toEqual(['read_note', 'snapshot_note', 'write_note'])
-    expect(touched[1]?.content).toContain('"icon": "rocket"')
+    // Read for the change, and again just before it is written; see `writeClosed`
+    // in workspace/note-text.ts.
+    expect(touched.map((one) => one.command)).toEqual([
+      'read_note',
+      'read_note',
+      'snapshot_note',
+      'write_note',
+    ])
+    expect(touched[2]?.content).toContain('"icon": "rocket"')
     expect(workspace.undone.stack).toHaveLength(1)
   })
 
@@ -341,8 +355,15 @@ describe('the icon a chat is given', () => {
     await setFileIcon('/space/Team.chat', '🚀')
 
     const touched = sent.filter((one) => one.path === '/space/Team.chat')
-    expect(touched.map((one) => one.command)).toEqual(['read_note', 'snapshot_note', 'write_note'])
-    expect(touched[1]?.content).toBe(`{"v":1,"chat":"${CHAT}"}\n`)
+    // Read for the change, and again just before it is written; see `writeClosed`
+    // in workspace/note-text.ts.
+    expect(touched.map((one) => one.command)).toEqual([
+      'read_note',
+      'read_note',
+      'snapshot_note',
+      'write_note',
+    ])
+    expect(touched[2]?.content).toBe(`{"v":1,"chat":"${CHAT}"}\n`)
     expect(workspace.undone.stack).toHaveLength(1)
   })
 

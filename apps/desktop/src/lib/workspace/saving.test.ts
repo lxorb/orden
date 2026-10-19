@@ -509,7 +509,7 @@ describe('a note renamed while its write was in the air', () => {
 
     note.replace('# a typed')
     const writing = saving.write(note)
-    const renaming = saving.holding(note, () => {
+    const renaming = saving.holding([note], () => {
       order.push(`rename after ${String(written().length)} write`)
       note.path = `${SPACE}/b.md`
       return Promise.resolve()
@@ -524,5 +524,33 @@ describe('a note renamed while its write was in the air', () => {
     expect(order).toEqual(['rename after 1 write'])
     expect(written().map((one) => one.path)).toEqual([`${SPACE}/a.md`])
     expect(note.path).toBe(`${SPACE}/b.md`)
+  })
+
+  /** Something that did not wait - a space renamed, a file moved by sync - moves the
+   *  note while its write is in the air. The write landing used to tell the document
+   *  the old path back, so the tab followed the file the move had just left. */
+  test('by something that did not wait stays where it went, and is written there', async () => {
+    const { saving, note } = open(`${SPACE}/a.md`)
+
+    let letGo = () => {
+      // Replaced the moment the promise below hands over its resolver.
+    }
+    holding = new Promise<void>((go) => {
+      letGo = () => go()
+    })
+
+    note.replace('# a typed')
+    const writing = saving.write(note)
+    await vi.waitFor(() => expect(written()).toHaveLength(1))
+
+    note.path = `${SPACE}/b.md`
+    holding = null
+    letGo()
+    await writing
+    await saving.settled()
+
+    expect(note.path).toBe(`${SPACE}/b.md`)
+    expect(written().map((one) => one.path)).toEqual([`${SPACE}/a.md`, `${SPACE}/b.md`])
+    expect(note.dirty).toBe(false)
   })
 })

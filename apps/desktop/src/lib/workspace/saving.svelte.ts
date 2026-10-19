@@ -15,6 +15,7 @@
  *  both. The workspace holds one of these and hands its calls straight through. */
 
 import { flushTableEdits } from '@nib/editor'
+import { freePath } from '@nib/markdown/paths'
 import { SAVE_AT_MOST, SAVE_DELAY, saveRetryDelay } from '../backoff'
 import { flushCardEdits } from '../canvas/writing'
 import { t } from '../i18n.svelte'
@@ -273,24 +274,46 @@ export class Saving {
    *  two round trips but this: a rename landing while a write was still in the air
    *  moved the file, and the write then put the old name back beside it. So each
    *  waits its turn, whoever asked for it - the pause, Ctrl+S, the window going, a
-   *  row renamed in the file list. */
-  holding(note: NoteDoc, run: () => Promise<void>): Promise<void> {
-    const before = this.busy.get(note) ?? Promise.resolve()
+   *  row renamed in the file list.
+   *
+   *  Several documents at once for an operation that moves them all - a folder
+   *  renamed, a space - which waits for every one of them and holds every one of
+   *  them until it is done. */
+  holding(notes: readonly NoteDoc[], run: () => Promise<void>): Promise<void> {
+    const before = Promise.all(notes.map((one) => this.busy.get(one) ?? Promise.resolve()))
     const mine = before.then(run)
-    this.busy.set(
-      note,
-      mine.catch(() => undefined),
-    )
+    for (const one of notes) {
+      this.busy.set(
+        one,
+        mine.catch(() => undefined),
+      )
+    }
 
     this.track(mine)
     return mine
+  }
+
+  /** One file operation on everything at or under `from`, a file or a folder: every
+   *  document open there, and every one still waiting to be written, held as
+   *  `holding` holds one.
+   *
+   *  A move or a folder renamed used to hold nothing, or only the document at the
+   *  path itself. A write in the air for a note inside landed at the old path after
+   *  the files had gone - the note was then in two places, the old one with the
+   *  newest words - and the document was told the old path back with it. */
+  holdingUnder(from: string, run: () => Promise<void>): Promise<void> {
+    const notes = [...this.ws.documents, ...this.waiting].filter(
+      (one, at, all) =>
+        all.indexOf(one) === at && one.path !== null && within(from, one.path) !== null,
+    )
+    return this.holding(notes, run)
   }
 
   /** Writes one document down: a note, a canvas or a page note. Everything that
    *  writes comes through here, so a note open in two panes is written once
    *  however the writing was asked for. */
   write(note: NoteDoc): Promise<void> {
-    return this.holding(note, () => this.writeOne(note))
+    return this.holding([note], () => this.writeOne(note))
   }
 
   /** Whatever is running, known about until it has finished. Whoever started it
@@ -308,8 +331,8 @@ export class Saving {
   async place(note: NoteDoc, folder: string, file: string): Promise<string | null> {
     if (note.path !== null) return null
 
-    const path = joinPath(folder, this.ws.freeName(folder, file))
-    note.path = path
+    const path = await this.claim(note, folder, file)
+    if (path === null) return null
     note.name = nameOf(path)
     // What the tab holds is what the file has to say, typed in or not: an untouched
     // plane is a blank plane's worth of JSON.
@@ -323,6 +346,36 @@ export class Saving {
     this.soon.cancel()
     await this.saveWaiting()
     return path
+  }
+
+  /** A path in `folder` that nothing is at, given to the draft: the name `freeName`
+   *  gives, and the disk asked about it too. Null for a draft given a place some
+   *  other way while the disk was being asked.
+   *
+   *  `freeName` knows the listing of the space on screen, and a draft keeps the space
+   *  it was opened in: switch spaces and save it, and its folder is one no listing
+   *  here has read. `Plan.md` came back free there while the other space had one,
+   *  and the draft's first write replaced it, with no version kept of what it held.
+   *  So each name is stamped before it is claimed, and one with a file stepped past.
+   *  The listing is read again after each round trip and the name claimed in the
+   *  same breath: a draft saved beside this one may have claimed it meanwhile. */
+  private async claim(note: NoteDoc, folder: string, file: string): Promise<string | null> {
+    const found: string[] = []
+    for (;;) {
+      const name = freePath(
+        file,
+        (candidate) =>
+          found.includes(candidate) || this.ws.freeName(folder, candidate) !== candidate,
+      )
+      const path = joinPath(folder, name)
+      const stamp = await invoke<unknown>('file_stamp', { path }).catch(() => null)
+      if (note.path !== null) return null
+      if (stamp) found.push(name)
+      else if (this.ws.freeName(folder, name) === name) {
+        note.path = path
+        return path
+      }
+    }
   }
 
   /** Whether a note's file went out from under a write that was still waiting for
@@ -415,6 +468,9 @@ export class Saving {
 
     await invoke('write_note', { path, content })
     note.written(path, nameOf(path), revision)
+    // Moved under the write by something that did not wait for it: the words are
+    // owed again at the path the note is at now; see `written`.
+    if (note.path !== path) this.owed(note)
 
     // The one file that changed, read again from what was written. This is the
     // whole of keeping the index up to date after the first scan of a space; it

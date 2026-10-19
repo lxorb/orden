@@ -2440,22 +2440,27 @@ class Workspace {
     const kind = this.kindAt(from)
     this.showMove(from, target)
 
-    // And back where it was if the move did not happen - something already there,
-    // a file that has gone. The listing is what the tree really is, and until it is
-    // read again the row is sitting in a folder that does not hold it; see `remove`,
-    // which puts a row back the same way.
-    try {
-      await invoke('rename_note', { from, to: target })
-    } catch (error) {
-      await this.loadTree()
-      throw error
-    }
+    // After whatever write of anything open in it is in the air, and with every
+    // write of those held until the documents have been told where they went; see
+    // `holdingUnder` in workspace/saving.svelte.ts.
+    await this.saving.holdingUnder(from, async () => {
+      // And back where it was if the move did not happen - something already there,
+      // a file that has gone. The listing is what the tree really is, and until it is
+      // read again the row is sitting in a folder that does not hold it; see `remove`,
+      // which puts a row back the same way.
+      try {
+        await invoke('rename_note', { from, to: target })
+      } catch (error) {
+        await this.loadTree()
+        throw error
+      }
 
-    // A note that moved is a note every link to it has to be pointed at again;
-    // see `renameFile`, including why this comes before everything is told.
-    const rewrote = (await this.retarget(from, target)) > 0
-    this.undone.record({ kind: 'move', from, to: target, ...(rewrote ? { rewrote } : {}) })
-    await this.fileMoved(from, target, kind)
+      // A note that moved is a note every link to it has to be pointed at again;
+      // see `renameFile`, including why this comes before everything is told.
+      const rewrote = (await this.retarget(from, target)) > 0
+      this.undone.record({ kind: 'move', from, to: target, ...(rewrote ? { rewrote } : {}) })
+      await this.fileMoved(from, target, kind)
+    })
     await this.loadTree()
     await this.unnest(folderOf(from))
     this.persist()
@@ -3783,15 +3788,15 @@ class Workspace {
     const target = joinPath(folderOf(path), clean)
     if (sameSpelling(target, path)) return
 
-    const note = this.opened.at(path)
-    if (!note) {
-      await this.renameFile(path, target, true)
-      return
-    }
-
     // After whatever write of it is in the air, so the write cannot put the old name
-    // back beside the new one.
-    await this.saving.holding(note, () => this.renameFile(path, target, true))
+    // back beside the new one - and of everything open inside it, for a folder.
+    await this.saving.holdingUnder(path, () => this.renameFile(path, target, true))
+  }
+
+  /** One file operation on everything open at or under `path`; see `holdingUnder` in
+   *  workspace/saving.svelte.ts. */
+  holdingUnder(path: string, run: () => Promise<void>): Promise<void> {
+    return this.saving.holdingUnder(path, run)
   }
 
   /** One file under another name in the same folder, and everything that owes: the
@@ -3841,8 +3846,14 @@ class Workspace {
       // from.
       const was = `# ${shownName(nameOf(path))}`
       if (undoable && (note.text === was || note.text.startsWith(was + '\n'))) {
-        // Nobody typed this, so it goes in the way any other outside edit does.
+        // Nobody typed this, so it goes in the way any other outside edit does. But
+        // it is not what the file says, so it is owed the way typing is: a note with
+        // nothing waiting used to take it quietly and stay clean, the tab saying
+        // `# Groceries` and the file keeping `# Untitled`. Written once the rename
+        // lets go of the note; see `holdingUnder`.
         note.replace(`# ${shownName(nameOf(target))}${note.text.slice(was.length)}`, note.dirty)
+        note.dirty = true
+        this.saving.owed(note)
       }
     }
 
@@ -3980,7 +3991,7 @@ class Workspace {
     const root = this.activeSpace?.root
     if (!root) return 0
 
-    const touched = await links.retarget(from, to, root)
+    const touched = await links.retarget(from, to, root, (path) => this.documentAt(path))
 
     // A note on screen may be one of the notes that was rewritten.
     this.flush()

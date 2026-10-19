@@ -339,11 +339,16 @@ export class NoteDoc {
   /** The words are on disk. `revision` is the revision that went down: writing a
    *  file is a round trip and a keystroke can land inside it, and those words are
    *  on this machine and nowhere else, so a note that moved while its write was
-   *  in the air is still out of step with its file. */
+   *  in the air is still out of step with its file.
+   *
+   *  So is one whose path moved under the write - a space renamed, a file moved by
+   *  something that did not wait for it - and it stays where it went rather than
+   *  being told the path the write went to. Telling it that pointed the tab back at
+   *  the file the move had just left. */
   written(path: string, name: string, revision: number) {
-    this.path = path
-    this.name = name
-    this.dirty = this.revision !== revision
+    const moved = this.path !== path
+    if (!moved) this.name = name
+    this.dirty = moved || this.revision !== revision
     this.before = null
   }
 }
