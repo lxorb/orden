@@ -11,10 +11,7 @@ import { chatsGroups } from '../chats-settings'
 import { tabCycle } from '../tab-cycle.svelte'
 import { isDesktop, isMobile, platform } from '../tauri'
 import { swipeChoice } from '../back-swipe/choice.svelte'
-import { parseCombination } from '../keys'
-import { shortcuts } from '../shortcuts.svelte'
 import { BY_ID } from '../shortcuts/registry'
-import { shellReads, TWO_WAYS } from '../terminal/keys'
 import { asWarning, shellName, shells, SIZES } from '../terminal/shells.svelte'
 import { bothName } from '../terminal/two-ways'
 import { asChannel } from '../updater'
@@ -30,41 +27,26 @@ import { workspace } from '../workspace.svelte'
 import type { Field, Group, Pane } from './fields'
 
 /** Whose a key that is both the app's and the shell's is, one row each: asked every
- *  time, the app's command, or the shell's character. The row is the question's answer,
- *  and putting it back to asking is choosing that. Only for a command on a key a shell
- *  reads, which on a Mac is none of them: Cmd never reaches a shell. See
- *  terminal/two-ways.ts. */
+ *  time, the app's command, or the shell's character. A row for every key somebody has
+ *  answered the question for - any app command on a key a shell reads can be one (#426)
+ *  - and putting it back to asking takes the row away. On a Mac none ever is: Cmd never
+ *  reaches a shell. See terminal/two-ways.ts. */
 function twoWayFields(): Field[] {
-  return [...TWO_WAYS].flatMap((command): Field[] => {
-    const held = shortcuts.keyFor(command)
-    const chord = held ? parseCombination(held, shortcuts.platform) : null
-    const reads =
-      chord &&
-      shellReads({
-        key: chord.key,
-        ctrlKey: chord.ctrl,
-        metaKey: chord.meta,
-        altKey: chord.alt,
-        shiftKey: chord.shift,
-      })
-    if (!reads) return []
-
-    return [
-      {
-        kind: 'select',
-        label: bothName(command),
-        words: ['shortcut', 'key', 'shell', 'conflict', 'ask'],
-        options: [
-          { value: 'ask', label: t('Always ask') },
-          { value: 'app', label: BY_ID.get(command)?.label() ?? command },
-          { value: 'shell', label: t('Terminal') },
-        ],
-        initial: 'ask',
-        get: () => shells.ways[command] ?? 'ask',
-        set: (value) => shells.setWay(command, value === 'app' || value === 'shell' ? value : null),
-      },
-    ]
-  })
+  return Object.keys(shells.ways)
+    .filter((command) => BY_ID.has(command))
+    .map((command): Field => ({
+      kind: 'select',
+      label: bothName(command),
+      words: ['shortcut', 'key', 'shell', 'conflict', 'ask'],
+      options: [
+        { value: 'ask', label: t('Always ask') },
+        { value: 'app', label: BY_ID.get(command)?.label() ?? command },
+        { value: 'shell', label: t('Terminal') },
+      ],
+      initial: 'ask',
+      get: () => shells.ways[command] ?? 'ask',
+      set: (value) => shells.setWay(command, value === 'app' || value === 'shell' ? value : null),
+    }))
 }
 
 /** The terminal's settings. The shells are asked for as the pane is drawn, which is
