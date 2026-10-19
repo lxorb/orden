@@ -267,6 +267,12 @@ if [ "$status" = 0 ] && [ -n "${QUICK_ADD_FLOATS:-}" ]; then
 fi
 
 sleep 2
+# Still up, with everything above done: an engine that ends a while after its window
+# mapped - NSS, on the AppImage in #427 - ends the app with it.
+if ! kill -0 "$app_pid" 2>/dev/null; then
+  echo "::error::Orden ended before the run did"
+  status=1
+fi
 views > "$out/views.txt" || true
 # A picture of every screen as the run leaves it, whatever it checked.
 for screen in $(swaymsg -t get_outputs | python3 -c 'import json,sys; print(" ".join(o["name"] for o in json.load(sys.stdin)))'); do
@@ -297,7 +303,7 @@ fi
 # What a Wayland session must never print: the EGL display the friend's NixOS box could
 # not make, a protocol error, a GTK critical, a display that could not be opened, and
 # GStreamer loading plugins that are not its own.
-if grep -nE 'EGL_BAD_PARAMETER|Could not create default EGL display|Error 71|Protocol error|-CRITICAL|cannot open display|Failed to create GBM|Aborting|GStreamer-WARNING' "$out"/orden*.log "$out/second.log" 2>/dev/null; then
+if grep -nE 'EGL_BAD_PARAMETER|Could not create default EGL display|Error 71|Protocol error|-CRITICAL|cannot open display|Failed to create GBM|Aborting|GStreamer-WARNING|:FATAL:|Check failed' "$out"/orden*.log "$out/second.log" 2>/dev/null; then
   echo "::error::the graphics stack failed"
   status=1
 fi
