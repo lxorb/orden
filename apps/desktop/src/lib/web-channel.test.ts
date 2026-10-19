@@ -46,7 +46,7 @@ describe('the web build', () => {
   test('goes to the edge through the Worker, and back from it', async () => {
     ;(await loaded(undefined)).switchWebChannel('unstable')
     ;(await loaded('unstable')).switchWebChannel('stable')
-    expect(went).toEqual(['/?channel=unstable', '?channel=stable'])
+    expect(went).toEqual(['?channel=unstable', '?channel=stable'])
   })
 
   test('stays where it is when the build already is the one chosen', async () => {

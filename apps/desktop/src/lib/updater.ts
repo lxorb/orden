@@ -37,7 +37,7 @@ export const webChannel: Channel | null =
  *  services/sync/src/channel.ts. */
 export function switchWebChannel(to: Channel): void {
   if (to === webChannel) return
-  location.href = to === 'unstable' ? '/?channel=unstable' : '?channel=stable'
+  location.href = `?channel=${to}`
 }
 
 /** A downloaded update, waiting to be put in place on the way out. Closing one
