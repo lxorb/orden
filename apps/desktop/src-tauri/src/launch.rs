@@ -376,6 +376,9 @@ fn window_builder<'a>(
     // folder and would refuse a webview started any other way; see `engine::BROWSER_ARGS`.
     #[cfg(all(windows, not(feature = "cef")))]
     let builder = builder.additional_browser_args(crate::engine::BROWSER_ARGS);
+    // And on CEF the first window's profile, style and frame; see `engine::own_window`.
+    #[cfg(feature = "cef")]
+    let builder = crate::engine::own_window(builder, app);
 
     builder
 }

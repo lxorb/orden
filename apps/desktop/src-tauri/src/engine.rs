@@ -402,13 +402,30 @@ pub(crate) fn ui_window<'a, M: tauri::Manager<crate::Engine>>(
     // has no tab strip for Chrome to act on. A web tab is Chrome style, for the browser's
     // own pages and extensions; see web_tabs.rs.
     #[cfg(feature = "cef")]
-    let building = {
-        use tauri_runtime_cef::{RuntimeStyle, WebviewWindowBuilderCefExt as _};
-        building
-            .data_directory(app_profile(manager.app_handle())?)
-            .browser_runtime_style(RuntimeStyle::Alloy)
-    };
+    let building = own_window(building, manager.app_handle());
     Ok(building)
+}
+
+/// What every window of the app's own is on CEF, the first and every one after it: its
+/// page in the interface's own profile, and Alloy style (see `ui_window`).
+///
+/// A profile folder that cannot be made leaves the page in the engine's own, said in the
+/// log, rather than the window not opening at all.
+#[cfg(feature = "cef")]
+pub(crate) fn own_window<'a, M: tauri::Manager<crate::Engine>>(
+    building: tauri::WebviewWindowBuilder<'a, crate::Engine, M>,
+    app: &AppHandle,
+) -> tauri::WebviewWindowBuilder<'a, crate::Engine, M> {
+    use tauri_runtime_cef::{RuntimeStyle, WebviewWindowBuilderCefExt as _};
+    let building = building
+        .browser_runtime_style(RuntimeStyle::Alloy);
+    match app_profile(app) {
+        Ok(profile) => building.data_directory(profile),
+        Err(error) => {
+            crate::logs::say(app, "error", &format!("the window's profile: {error}"));
+            building
+        }
+    }
 }
 
 /// Whether a page is one the engine loads for itself rather than one a tab was sent to.
