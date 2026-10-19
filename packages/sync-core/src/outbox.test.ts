@@ -57,7 +57,13 @@ describe('coalesce', () => {
     // Made `mergeable` under its new name, it was merged into whichever note had that
     // name: walk seed 207384677 put a day's words into a note renamed Café.md.
     const day = (op: string): Op => ({
-      ...create(op, 'd', '2026-09-30.md'),
+      op,
+      t: 'create',
+      id: 'd',
+      kind: 'note',
+      parent: null,
+      name: '2026-09-30.md',
+      seen: 0,
       mergeable: { text: '' },
     })
 
