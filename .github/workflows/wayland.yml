@@ -69,8 +69,12 @@ jobs:
         env:
           CARGO_PROFILE_DEV_DEBUG: line-tables-only
           CARGO_PROFILE_DEV_OPT_LEVEL: '2'
+        # The window's own `@tauri-apps/api` and plugin packages are the Tauri 2 ones every
+        # other platform builds with; Tauri 3 speaks to them the same way, so the CLI is
+        # told to let the versions differ. See scripts/linux-cef.sh.
         run: >-
           bash scripts/linux-cef.sh tauri build --debug --bundles deb,rpm,appimage
+          --ignore-version-mismatches
           --config '{"bundle":{"createUpdaterArtifacts":false}}'
 
       # What each package carries: the engine, and nothing of WebKitGTK or GStreamer.
