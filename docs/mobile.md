@@ -3,8 +3,9 @@
 The same app, the same crate and the same notes, built as a native Android and
 iOS app with Tauri 2. Nothing about it is a separate product: the phone layout,
 the drawer, the sheets and the docked formatting bar are the ones the web build
-already has on a small screen, and the notes are the same files under the
-documents folder that the desktop reads.
+already has on a small screen, and the notes are the same files the desktop reads,
+in `Documents/Nib` inside the app's own container (a desktop's are in its app data;
+see docs/automation.md).
 
 ## Identity
 
@@ -52,7 +53,10 @@ every push and would take an APK uploaded beside it with it.
    under Settings, Apps.
 3. Play Protect will say it does not recognise the app. Install anyway.
 
-Every build of unstable is signed with a key the workflow generates for that run, so
+Every build is signed with the release key in the `ANDROID_KEYSTORE` secrets (set on
+2026-10-18; the keystore is kept outside the repository), so each APK installs over the
+last one and keeps the app's data. Before that, every build of unstable was signed with a
+key the workflow generated for that run, so
 Android sees each one as a different app and refuses to install it over the last.
 Uninstall the old one first, or add the release keystore below, after which every
 build replaces the one before it. The version code comes from the version number

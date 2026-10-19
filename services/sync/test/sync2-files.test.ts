@@ -244,3 +244,103 @@ describe('a file replaced', () => {
     expect(answer.status).toBe(403)
   })
 })
+
+/** v1 keeps a drawn diagram's SVG under a name that is not the hash of its bytes, so a
+ *  name somebody else wrote first is not taken on trust by an upload of the real bytes
+ *  (#468). */
+describe('a copy kept under a hash it is not the bytes of', () => {
+  const PLANTED = '<svg xmlns="http://www.w3.org/2000/svg"><text>not yours</text></svg>'
+
+  async function plant(hash: string): Promise<string> {
+    const other = await signIn(env, 'planter@example.com')
+    const put = await call(env, `/v1/blobs/${hash}`, {
+      method: 'PUT',
+      token: other,
+      raw: PLANTED,
+      headers: { 'content-type': 'image/svg+xml' },
+    })
+    expect(put.status).toBe(201)
+    return other
+  }
+
+  async function read(hash: string): Promise<string> {
+    const placed = await place('mine.bin', hash)
+    const id = (placed.results[0] as { id: string }).id
+    return (await call(env, `/v2/files/${space}/${id}`, { token })).text
+  }
+
+  test('is replaced by the real bytes when they come up in one request', async () => {
+    const data = bytes(5000, 11)
+    const hash = await hashOf(data)
+    await plant(hash)
+
+    expect((await upload(data)).status).toBe(201)
+    const got = await read(hash)
+    expect(got).not.toContain('not yours')
+    expect(new TextEncoder().encode(got).length).toBeGreaterThan(PLANTED.length)
+    expect((await env.NOTES.get(`blobs/${hash}`))?.size).toBe(5000)
+  })
+
+  test('and when they come up in parts', async () => {
+    const data = bytes(6000, 12)
+    const hash = await hashOf(data)
+    await plant(hash)
+
+    const started = await call<{ upload: string }>(env, '/v2/blobs/parts', {
+      token,
+      body: { hash, size: data.length },
+    })
+    const sent = await call<{ part: number; etag: string }>(
+      env,
+      `/v2/blobs/parts/${started.json.upload}/1`,
+      { method: 'PUT', token, raw: data },
+    )
+    const done = await call(env, `/v2/blobs/parts/${started.json.upload}`, {
+      token,
+      body: { parts: [sent.json] },
+    })
+    expect(done.status).toBe(201)
+    expect((await env.NOTES.get(`blobs/${hash}`))?.size).toBe(6000)
+  })
+
+  test('while a copy that is the bytes stays as it is', async () => {
+    const data = bytes(4000, 13)
+    const hash = await hashOf(data)
+    const other = await signIn(env, 'first@example.com')
+    await upload(data, 'image/png', other)
+
+    expect((await upload(data, 'audio/webm')).status).toBe(201)
+    // The first upload's type is what is kept: nothing was written again.
+    expect((await env.NOTES.get(`blobs/${hash}`))?.httpMetadata?.contentType).toBe('image/png')
+  })
+
+  test('kept before this, is taken away by the nightly sweep, rows and all', async () => {
+    const data = bytes(5000, 14)
+    const hash = await hashOf(data)
+    await plant(hash)
+    // What the upload route did before: the real bytes' row, over the planted copy.
+    const mine = (await call(env, '/v1/me', { token })).json.user.id
+    env.db
+      .prepare(
+        "insert into blobs (hash, user_id, size, type, created_at) values (?, ?, 5000, 'application/octet-stream', 1)",
+      )
+      .run(hash, mine)
+
+    // And a diagram, held only as an SVG under a name that is not its hash, stays.
+    const diagram = 'a'.repeat(64)
+    await plant(diagram)
+
+    const { sweepMisnamed } = await import('../src/sync2/files')
+    expect(await sweepMisnamed(env)).toBe(1)
+
+    expect(await env.NOTES.get(`blobs/${hash}`)).toBeNull()
+    expect(env.db.prepare('select count(*) as many from blobs where hash = ?').get(hash)).toEqual({
+      many: 0,
+    })
+    expect(await env.NOTES.get(`blobs/${diagram}`)).not.toBeNull()
+
+    // And the real bytes go up again as the first of them.
+    expect((await upload(data)).status).toBe(201)
+    expect((await env.NOTES.get(`blobs/${hash}`))?.size).toBe(5000)
+  })
+})

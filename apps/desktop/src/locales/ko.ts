@@ -26,6 +26,22 @@ export const ko: Dictionary = {
   'Import from Zen': 'Zen에서 가져오기',
   'Containers stay in Zen': '컨테이너는 Zen에 남습니다',
   'Zen’s tabs could not be read.': 'Zen의 탭을 읽을 수 없습니다.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': '컨테이너는 Firefox에 남습니다',
+  'Nothing could be read out of {browser}.': '{browser}에서 아무것도 읽지 못했습니다.',
+  'Saved groups': '저장된 그룹',
+  'Tab group': '탭 그룹',
+  'Bookmarks toolbar': '북마크 도구 모음',
+  'Bookmarks menu': '북마크 메뉴',
+  'Other bookmarks': '기타 북마크',
+  'Mobile bookmarks': '모바일 북마크',
+  'Bookmarks bar': '북마크바',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser}는 열린 탭을 잠가 두므로 북마크만 가져왔습니다.',
+  '{count} pages not on the web stay behind': '웹에 없는 페이지 {count}개는 가져오지 않습니다',
+  'Reading List': '읽기 목록',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS는 Safari의 탭과 북마크를 전체 디스크 접근 권한 뒤에 둡니다. 그곳에서 Orden을 켠 다음 다시 시도하세요.',
   // Settings: note types
   'Page note': '페이지 노트',
   'Web note': '웹 노트',
@@ -96,8 +112,6 @@ export const ko: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: '힌트',
   'Silent mode': '조용한 모드',
-  'Sign in to keep your notes safe and on every device.':
-    '로그인하면 노트를 안전하게, 모든 기기에서 볼 수 있어요.',
   'See how your notes connect.': '노트가 어떻게 연결되는지 보세요.',
   'Press {key} to find anything, notes and commands alike.':
     '{key}를 누르면 노트와 명령을 모두 찾을 수 있어요.',
@@ -119,11 +133,13 @@ export const ko: Dictionary = {
   '{count} h': '{count}시간',
   Inbox: '받은 편지함',
   Date: '날짜',
+  'Start date': '시작일',
   Priority: '우선순위',
   Reminder: '알림',
   Duration: '소요 시간',
   'Smart dates': '스마트 날짜',
   'From any app': '어느 앱에서나',
+  'Show tasks without a start date in Today': '시작일이 없는 할 일을 오늘에 표시',
   'Every day': '매일',
   'Every weekday': '평일마다',
   'Every week': '매주',
@@ -167,6 +183,8 @@ export const ko: Dictionary = {
   Dots: '점',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': '두 손가락으로 캔버스 회전',
+  'Turn upright': '똑바로 세우기',
   Canvas: '캔버스',
   Card: '카드',
   'Note or picture': '노트 또는 그림',
@@ -242,6 +260,10 @@ export const ko: Dictionary = {
   Unpin: '고정 해제',
   Close: '닫기',
   'Close pinned tab?': '고정된 탭을 닫을까요？',
+  'Save changes to {name}?': '{name}의 변경 사항을 저장할까요?',
+  'Save changes to these tabs?': '이 탭들의 변경 사항을 저장할까요?',
+  'Unsaved words go to Recently deleted.': '저장하지 않은 글은 최근 삭제된 항목으로 갑니다.',
+  'Don’t save': '저장 안 함',
   'Close others': '나머지 닫기',
   'Close tabs to the right': '오른쪽 탭 닫기',
   'Close tabs to the left': '왼쪽 탭 닫기',
@@ -1151,6 +1173,7 @@ export const ko: Dictionary = {
   'Double-click to write': '두 번 클릭해 쓰기',
   'Another colour': '다른 색',
   'Turn into a note': '노트로 바꾸기',
+  Arrange: '정렬',
   'Bring to front': '맨 앞으로',
   'Bring forward': '앞으로',
   'Send backward': '뒤로',
@@ -1240,6 +1263,9 @@ export const ko: Dictionary = {
   Unstable: '불안정',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     '안정은 출시된 버전을 따르고, 불안정은 엣지 빌드를 따르며 깨질 수 있습니다.',
+  'Web version': '웹 버전',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    '안정은 출시된 웹 앱이고, 불안정은 가장 새로운 빌드이며 깨질 수 있습니다.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: '가져오기',
@@ -1565,8 +1591,6 @@ export const ko: Dictionary = {
   // Web tabs
   Reload: '다시 불러오기',
   'Hard reload': '강력 새로고침',
-  'Clip this page': '이 페이지 저장',
-  'Clip the link': '링크 저장',
   'Open in the browser': '브라우저에서 열기',
   'Show it here': '여기에 표시',
   Website: '웹사이트',
@@ -1697,7 +1721,6 @@ export const ko: Dictionary = {
   'New tab': '새 탭',
   'Full screen': '전체화면',
   'Print…': '인쇄…',
-  'Save page': '페이지 저장',
   'Share…': '공유…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1756,6 +1779,15 @@ export const ko: Dictionary = {
   'Bring all to front': '모두 앞으로 가져오기',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': '복사 실행 취소',
+  'Devices with your AI vault': 'AI 보관함이 있는 기기',
+  'This device': '이 기기',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    '이 기기는 더 이상 AI 계정을 읽을 수 없고, 다른 기기는 새 키를 받습니다.',
+  'Also remove this device from your AI vault?': '이 기기를 AI 보관함에서도 제거할까요?',
+  'Remove and sign out': '제거하고 로그아웃',
+  'Undo making {name}': '{name} 만들기 취소',
+  'Undo the deletion': '삭제 취소',
+  'Undo the move': '이동 취소',
   'Redo the last file change': '마지막 파일 변경 다시 실행',
   'Select down': '아래로 선택',
   'Select up': '위로 선택',
@@ -1971,6 +2003,7 @@ export const ko: Dictionary = {
   'Without your logins': '내 로그인 없이',
   'Calls a minute': '분당 호출',
   'Pages a minute': '분당 페이지',
+  'Browser memory limit': '브라우저 메모리 한도',
   '{count} calls': '호출 {count}회',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it

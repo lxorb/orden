@@ -56,7 +56,7 @@ test('is Chromes own menu, in Chromes own order', () => {
     'Full screen',
     'Print…',
     'Find',
-    'Save page',
+    'Save as a note',
     'Share…',
     'Copy link',
     'Open in the browser',
@@ -77,7 +77,7 @@ test('a tab with nowhere to go has no rows about a page', () => {
 
   expect(off).toContain('Print…')
   expect(off).toContain('Find')
-  expect(off).toContain('Save page')
+  expect(off).toContain('Save as a note')
   expect(off).toContain('Copy link')
   expect(rows.find((one) => one.label === 'New tab')?.disabled).toBe(undefined)
 })
@@ -136,6 +136,18 @@ test('on the History page nothing about a site is offered', () => {
   )
   const named = (label: string) => rows.find((one) => one.label === label)
   expect(named('Print…')?.disabled).toBe(true)
-  expect(named('Save page')?.disabled).toBe(true)
+  expect(named('Save as a note')?.disabled).toBe(true)
   expect(named('History')?.disabled).toBeFalsy()
+})
+
+/** #405: the scissors left the bar, so this row is the way a page is saved as a note
+ *  from its tab, and pressing it is the clipper. */
+test('saving the page as a note is a row of the menu, and runs the clipper', () => {
+  let saved = 0
+  const rows = webRows(page('https://a.example/'), 1, { ...actions, save: () => (saved += 1) })
+  const row = rows.find((one) => one !== null && one.label === 'Save as a note')
+
+  expect(row && !row.disabled).toBe(true)
+  row?.run()
+  expect(saved).toBe(1)
 })

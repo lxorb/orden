@@ -128,7 +128,7 @@ Run it on a Mac, on Apple silicon and, if possible, on Intel. For each item that
 
 ### First launch
 
-1. Launch with an empty `~/Documents/Nib`, cleared storage, and signed out: it opens on the welcome note in a new Notes space, and the traffic lights stay usable.
+1. Launch with no `~/Documents/Nib` and no `~/Library/Application Support/ch.emilvinu.nib`, cleared storage, and signed out - the spaces go in `Spaces` there (#376): it opens on the welcome note in a new Notes space, and the traffic lights stay usable.
 2. Create a space: it opens with "Read me.md" and the file list.
 3. Import a folder:
    - The folder picker opens.

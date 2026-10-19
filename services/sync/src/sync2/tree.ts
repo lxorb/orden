@@ -275,6 +275,11 @@ export class Tree {
     return result
   }
 
+  /** Whether this op id was answered before, by this batch or an earlier one. */
+  answers(op: string): boolean {
+    return this.state.done.has(op)
+  }
+
   /** The answers ops were given before, read in so that sending one again is
    *  answered the same way. */
   remember(done: ReadonlyMap<string, OpResult>) {

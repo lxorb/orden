@@ -9,6 +9,7 @@
   import { prompt } from './prompt.svelte'
   import { selectAll } from './select-all'
   import SpaceMark from './SpaceMark.svelte'
+  import TickBox from './TickBox.svelte'
   import { LAYER } from './motion'
   import { trap } from './trap'
   import { isDesktop, platform } from './tauri'
@@ -159,10 +160,11 @@
                has its own; the keyboard lands on the answer rather than on it. See
                `chooseTicking` in prompt.svelte.ts. -->
           {#if prompt.tick}
-            <label class="tick">
-              <input type="checkbox" class="nib-checkbox" bind:checked={prompt.ticked} />
-              {prompt.tick}
-            </label>
+            <TickBox
+              label={prompt.tick}
+              checked={prompt.ticked}
+              onchange={(on: boolean) => (prompt.ticked = on)}
+            />
           {/if}
           {#each answers as option (option.id)}
             <button
@@ -287,7 +289,10 @@
     color: var(--text-strong);
   }
 
-  input {
+  /* The field a name or a search is typed into, and no other input: the box under a
+     question's answers is a checkbox, which this drew as an empty pill the width of
+     the row (#317). */
+  input:not([type='checkbox']) {
     width: 100%;
     padding: 10px 12px;
     border: 1px solid var(--line-strong);
@@ -307,15 +312,6 @@
     align-items: center;
     justify-content: flex-end;
     gap: var(--space-2);
-  }
-
-  .tick {
-    display: flex;
-    align-items: center;
-    gap: var(--space-2);
-    margin-inline-end: auto;
-    font-size: var(--text-sm);
-    color: var(--muted-strong);
   }
 
   /* The three buttons a question ever offers are `.nib-button` in the themes
@@ -343,12 +339,12 @@
      the field and the names it suggests. The buttons under them take the row
      scale from `.nib-button` in the themes package, which is where their touch
      size and type size are said once. */
-  :global([data-touch]) input,
+  :global([data-touch]) input:not([type='checkbox']),
   :global([data-touch]) .title {
     font-size: var(--touch-text);
   }
 
-  :global([data-touch]) input {
+  :global([data-touch]) input:not([type='checkbox']) {
     min-height: var(--touch-row);
     padding: 0 var(--touch-pad);
   }

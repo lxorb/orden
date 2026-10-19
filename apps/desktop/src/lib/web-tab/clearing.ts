@@ -45,6 +45,34 @@ export function sinceFor(range: Range, now: number): number {
   return back === null ? 0 : now - back
 }
 
+/** The origin of a web address, or null. */
+function originOf(url: string): string | null {
+  try {
+    const at = new URL(url)
+    return at.protocol === 'https:' || at.protocol === 'http:' ? at.origin : null
+  } catch {
+    return null
+  }
+}
+
+/** Every site the history in `books` says was visited since `since`, as its origin;
+ *  nought is all time.
+ *
+ *  For nib's own Chromium on Linux, which has no call that clears a time range: there the
+ *  crate clears what each of these sites stored, cookies and all, and a site the window
+ *  does not name keeps its data (#418). The other engines clear by the range and pass
+ *  over the list. See src-tauri/src/web_clear.rs. */
+export function sitesSince(books: readonly string[], since: number): string[] {
+  const sites = new Set<string>()
+  for (const book of books) {
+    for (const visit of visited.all(book)) {
+      const origin = visit.last >= since ? originOf(visit.url) : null
+      if (origin) sites.add(origin)
+    }
+  }
+  return [...sites]
+}
+
 /** The stores and the history a clearing reaches: the store every page shares, and the
  *  own store of each web note in `apart` that keeps its web data apart, which is every
  *  open one - Firefox clears each container too. A note kept apart that is not open keeps
@@ -58,7 +86,8 @@ export function reach(apart: readonly (string | null)[]): {
 }
 
 /** Deletes what was asked, from the shared store and the stores of the web notes kept
- *  apart in `apart`. The engine first, and the history after. */
+ *  apart in `apart`. The engine first, while the history still says which sites the
+ *  range visited, and the history after. */
 export async function clearData(
   asked: Asked,
   apart: readonly (string | null)[],
@@ -71,6 +100,7 @@ export async function clearData(
     await invoke('web_clear', {
       stores,
       clearing: { since, site: asked.site, cache: asked.cache },
+      sites: sitesSince(books, since),
     })
   }
 

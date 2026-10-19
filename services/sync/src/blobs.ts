@@ -4,7 +4,7 @@ import { spaceForHost } from './blog'
 import { readSite, SVG_POLICY } from './blog/site'
 import { now } from './crypto'
 import { readSpaceFiles } from './spaces/files'
-import { BYTES, hashOf, hashOfBytes, held, WRONG_BYTES } from './sync2/files'
+import { BYTES, hashOfBytes, held, holdsItsName, WRONG_BYTES } from './sync2/files'
 import { fits } from './storage'
 import type { Env, Variables } from './types'
 
@@ -96,7 +96,7 @@ blobs.put('/:hash', async (context) => {
   // it is the same bytes, and this account keeps it too. Unless it is not the same
   // bytes - something put there under a hash before the bytes were checked - and
   // these are: then the right bytes take its place, for everybody who keeps them.
-  if (!there || (verified && !(await holdsItsName(context.env, hash)))) {
+  if (!there || (verified && !(await holdsItsName(context.env, hash, body.byteLength)))) {
     await context.env.NOTES.put(key(hash), body, { httpMetadata: { contentType: type } })
   }
   // And the row may already be this account's by the time this runs: the check
@@ -112,12 +112,6 @@ blobs.put('/:hash', async (context) => {
 
   return context.json({ hash, stored: true }, 201)
 })
-
-/** Whether the object under a hash is the bytes that hash names. */
-async function holdsItsName(env: Env, hash: string): Promise<boolean> {
-  const object = await env.NOTES.get(key(hash))
-  return object !== null && (await hashOf(object)) === hash
-}
 
 /** Gives a file back and stops keeping it. The object survives while any other
  *  account still references it. */
@@ -169,15 +163,15 @@ export async function letGo(env: Env, userId: string, hash: string): Promise<voi
  *  **An access check here, by space membership.** The right answer in principle,
  *  and mostly impossible: an `<img>` tag cannot carry an `Authorization` header,
  *  auth here is a bearer token and never a cookie, and the URL of a picture is
- *  written into the note's own markdown - so the editor, an export, a published
- *  page and the clipper all fetch these with no session at all. Checking the
+ *  written into the note's own markdown - so the editor, an export and a published
+ *  page all fetch these with no session at all. Checking the
  *  requester would break every picture in the app before it stopped anybody.
  *
  *  So the capability stands for pictures, and what is checked is the thing that
  *  can be: a PDF is a whole document rather than an illustration inside a note,
  *  and the only thing that ever fetches one of those from here is a published
- *  page. The app opens the file in the space's own folder, the web build reads it
- *  out of its own store, and the clipper deals in pictures. So a PDF is served
+ *  page. The app opens the file in the space's own folder, and the web build reads it
+ *  out of its own store. So a PDF is served
  *  where a published page could link to it and nowhere else, and a paper in a
  *  private space is not something a hash gets anybody any more. */
 export const publicBlobs = new Hono<{ Bindings: Env }>()

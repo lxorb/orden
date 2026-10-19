@@ -14,12 +14,14 @@
 import { oneEdit } from '@nib/markdown/edits'
 import { freePath } from '@nib/markdown/paths'
 import { applied, type Edit } from '../search/replace'
+import { folderOf } from '../space-paths'
 import { invoke } from '../tauri'
 import type { Entry } from '../workspace.svelte'
 import type { Archive } from './archive.svelte'
 import type { NoteDoc } from './documents.svelte'
 import type { Kind } from './file-ops'
-import type { FileAction, FileActions } from './undo.svelte'
+import type { FileAction, FileActions, Kept } from './undo.svelte'
+import type { Bookmark } from './bookmarks.svelte'
 import { writeFile } from './write-file'
 
 /** What putting a file operation back needs of the store holding it. */
@@ -43,6 +45,9 @@ export interface PutsBack {
   holdingUnder(path: string, run: () => Promise<void>): Promise<void>
   loadTree(): Promise<void>
   persist(): void
+  readonly bookmarks: { put(root: string, list: Bookmark[]): void }
+  /** A file deleted without a step to undo it; see `bin` in workspace.svelte.ts. */
+  bin(path: string, isFolder: boolean): Promise<Kept | null>
 }
 
 /** Puts the last file operation back. */
@@ -50,12 +55,51 @@ export async function undoLastFileAction(ws: PutsBack): Promise<void> {
   const action = ws.undone.last
   if (!action) return
 
+  if (action.kind === 'many') {
+    // The steps of one gesture, newest first. One that will not go back leaves those
+    // before it on the stack as the step, to be asked for again.
+    const steps = [...action.steps]
+    for (let step = steps.at(-1); step; step = steps.at(-1)) {
+      if (!(await undoOne(ws, step))) {
+        if (steps.length < action.steps.length) action.steps = steps
+        await ws.loadTree()
+        return
+      }
+      steps.pop()
+    }
+  } else if (!(await undoOne(ws, action))) return
+
+  ws.undone.drop()
+  await ws.loadTree()
+  ws.persist()
+}
+
+/** Puts one operation back; false where it would not go. */
+async function undoOne(ws: PutsBack, action: FileAction): Promise<boolean> {
   try {
     switch (action.kind) {
       case 'delete':
         // And the index reads it again, so the links to it resolve at once.
-        await ws.fileCame(await putBack(action), 'file')
+        await ws.fileCame(await putBack(action), action.folder ? 'folder' : 'file')
         break
+      case 'create': {
+        // Into Recently deleted, and what that kept goes on the step for a redo.
+        const kept = await ws.bin(action.path, false)
+        action.content = kept?.content ?? ''
+        if (kept?.trashId) action.trashId = kept.trashId
+        else delete action.trashId
+        await ws.fileGone(action.path, 'file')
+        break
+      }
+      case 'many':
+        for (const step of [...action.steps].reverse()) if (!(await undoOne(ws, step))) return false
+        break
+      case 'keep': {
+        // The rows sliding as they go, the way the drop that kept them slid them.
+        const { moving } = await import('../list-landing.svelte')
+        moving(() => ws.bookmarks.put(action.root, action.before))
+        break
+      }
       case 'merge':
         await unmerge(ws, action)
         break
@@ -85,12 +129,9 @@ export async function undoLastFileAction(ws: PutsBack): Promise<void> {
     // Something else has since changed the file; leave what is there alone.
     // The action stays on the stack, so the same undo can be tried again
     // once whatever is in the way has been dealt with.
-    return
+    return false
   }
-
-  ws.undone.drop()
-  await ws.loadTree()
-  ws.persist()
+  return true
 }
 
 /** An import taken back: the files it wrote, gone again.
@@ -132,6 +173,14 @@ async function uncopy(ws: PutsBack, action: Extract<FileAction, { kind: 'copy' }
  *  snapshot is still here either way, so it stands in rather than leaving
  *  the note gone with nothing said. */
 export async function putBack(action: Extract<FileAction, { kind: 'delete' }>): Promise<string> {
+  if (!action.trashId && action.notes) {
+    // A folder deleted signed in: the folders it held, and its notes' words.
+    await invoke('create_folder', { path: action.path })
+    for (const path of action.folders ?? []) await invoke('create_folder', { path })
+    for (const note of action.notes) await writeFile(note.path, note.content)
+    return action.path
+  }
+
   if (!action.trashId) {
     // Nothing kept and nothing in the trash, which is what a PDF deleted while
     // signed in looks like. Writing nothing would leave an empty file where the
@@ -168,6 +217,38 @@ async function writeBeside(path: string, content: string): Promise<string> {
     found.push(at)
   }
 }
+
+/** What a folder about to be deleted signed in holds: the folders under it and the
+ *  words of every note that will read, so an undo can write them again. Null when
+ *  there is more than is worth holding, which leaves the deletion to Recently deleted. */
+export async function heldIn(
+  ws: { entryAt(path: string): Entry | null },
+  path: string,
+): Promise<Pick<Kept, 'notes' | 'folders'> | null> {
+  const notes: { path: string; content: string }[] = []
+  const folders: string[] = []
+  let size = 0
+  const walk = async (entry: Entry) => {
+    for (const one of entry.children) {
+      if (one.is_dir) {
+        folders.push(one.path)
+        await walk(one)
+        continue
+      }
+      const content = await invoke<string>('read_note', { path: one.path }).catch(() => null)
+      if (content === null) continue
+      size += content.length
+      notes.push({ path: one.path, content })
+    }
+  }
+  const entry = ws.entryAt(path)
+  if (entry) await walk(entry)
+  return size > HELD ? null : { notes, folders }
+}
+
+/** As much of a folder's words as a deletion holds: a few megabytes, past which the
+ *  step is not worth the memory and Recently deleted is the way back. */
+const HELD = 4_000_000
 
 /** Puts an archiving back, either way round, and opens the tabs it closed. */
 async function unarchive(
@@ -238,6 +319,10 @@ async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' 
     if (action.rewrote) await ws.retarget(action.to, action.from)
     await ws.fileMoved(action.to, action.from, kind)
   })
+  // A nesting made the folder; refused where something else is in it now.
+  if (action.nests) {
+    await invoke('remove_empty_folder', { path: folderOf(action.to) }).catch(() => undefined)
+  }
 }
 
 /** Puts a merge back: both notes as they were, and the note that was folded

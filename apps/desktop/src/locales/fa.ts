@@ -26,6 +26,25 @@ export const fa: Dictionary = {
   'Import from Zen': 'درون‌آوری از Zen',
   'Containers stay in Zen': 'کانتینرها در Zen می‌مانند',
   'Zen’s tabs could not be read.': 'زبانه‌های Zen خوانده نشدند.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'کانتینرها در Firefox می‌مانند',
+  'Nothing could be read out of {browser}.': 'هیچ چیزی از {browser} خوانده نشد.',
+  'Saved groups': 'گروه‌های ذخیره‌شده',
+  'Tab group': 'گروه زبانه',
+  'Bookmarks toolbar': 'نوار نشانک‌ها',
+  'Bookmarks menu': 'منوی نشانک‌ها',
+  'Other bookmarks': 'نشانک‌های دیگر',
+  'Mobile bookmarks': 'نشانک‌های تلفن همراه',
+  'Bookmarks bar': 'نوار نشانک‌ها',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} زبانه‌های باز خود را قفل نگه می‌دارد، پس فقط نشانک‌هایش آمد.',
+  '{count} pages not on the web stay behind': {
+    one: '{count} صفحه که روی وب نیست جا ماند',
+    other: '{count} صفحه که روی وب نیستند جا ماندند',
+  },
+  'Reading List': 'فهرست مطالعه',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS زبانه‌ها و نشانک‌های Safari را پشت دسترسی کامل به دیسک نگه می‌دارد. Orden را آنجا روشن کنید و دوباره بخواهید.',
   // Settings: note types
   'Page note': 'یادداشت صفحه‌ای',
   'Web note': 'یادداشت وب',
@@ -96,8 +115,6 @@ export const fa: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'راهنماها',
   'Silent mode': 'حالت بی‌صدا',
-  'Sign in to keep your notes safe and on every device.':
-    'وارد شوید تا یادداشت‌هایتان امن و روی همه دستگاه‌ها باشند.',
   'See how your notes connect.': 'ببینید یادداشت‌هایتان چگونه به هم پیوسته‌اند.',
   'Press {key} to find anything, notes and commands alike.':
     'برای یافتن هر چیزی، یادداشت یا فرمان، {key} را بزنید.',
@@ -119,11 +136,15 @@ export const fa: Dictionary = {
   '{count} h': '{count} ساعت',
   Inbox: 'صندوق ورودی',
   Date: 'تاریخ',
+  'Start date': 'تاریخ شروع',
   Priority: 'اولویت',
   Reminder: 'یادآوری',
   Duration: 'مدت',
   'Smart dates': 'تاریخ‌های هوشمند',
   'From any app': 'از هر برنامه‌ای',
+  'Rotate a canvas with two fingers': 'چرخاندن بوم با دو انگشت',
+  'Turn upright': 'صاف کردن',
+  'Show tasks without a start date in Today': 'نمایش کارهای بدون تاریخ شروع در امروز',
   'Every day': 'هر روز',
   'Every weekday': 'هر روز کاری',
   'Every week': 'هر هفته',
@@ -242,6 +263,10 @@ export const fa: Dictionary = {
   Unpin: 'برداشتن سنجاق',
   Close: 'بستن',
   'Close pinned tab?': 'زبانه سنجاق‌شده بسته شود؟',
+  'Save changes to {name}?': 'تغییرات {name} ذخیره شود؟',
+  'Save changes to these tabs?': 'تغییرات این زبانه‌ها ذخیره شود؟',
+  'Unsaved words go to Recently deleted.': 'واژه‌های ذخیره‌نشده به «اخیراً حذف‌شده» می‌روند.',
+  'Don’t save': 'ذخیره نکن',
   'Close others': 'بستن بقیه',
   'Close tabs to the right': 'بستن زبانه‌های سمت راست',
   'Close tabs to the left': 'بستن زبانه‌های سمت چپ',
@@ -1162,6 +1187,7 @@ export const fa: Dictionary = {
   'Double-click to write': 'دو بار کلیک برای نوشتن',
   'Another colour': 'رنگ دیگر',
   'Turn into a note': 'تبدیل به یادداشت',
+  Arrange: 'چیدمان',
   'Bring to front': 'آوردن به جلوترین',
   'Bring forward': 'آوردن به جلو',
   'Send backward': 'بردن به عقب',
@@ -1251,6 +1277,9 @@ export const fa: Dictionary = {
   Unstable: 'ناپایدار',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'پایدار نسخه‌های منتشرشده را پی می‌گیرد، ناپایدار ساخت‌های لبه را و می‌تواند بشکند.',
+  'Web version': 'نسخهٔ وب',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'پایدار اپ وب منتشرشده است، ناپایدار تازه‌ترین ساخت است و می‌تواند بشکند.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'درون‌آوری',
@@ -1585,8 +1614,6 @@ export const fa: Dictionary = {
   // Web tabs
   Reload: 'بارگذاری دوباره',
   'Hard reload': 'بارگذاری دوباره کامل',
-  'Clip this page': 'ذخیره این صفحه',
-  'Clip the link': 'ذخیره پیوند',
   'Open in the browser': 'گشودن در مرورگر',
   'Show it here': 'نمایش اینجا',
   Website: 'وب‌گاه',
@@ -1718,7 +1745,6 @@ export const fa: Dictionary = {
   'New tab': 'زبانه جدید',
   'Full screen': 'تمام صفحه',
   'Print…': 'چاپ…',
-  'Save page': 'ذخیره صفحه',
   'Share…': 'هم‌رسانی…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1777,6 +1803,16 @@ export const fa: Dictionary = {
   'Bring all to front': 'آوردن همه به جلو',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'واگرد رونوشت',
+  'Devices with your AI vault': 'دستگاه‌های دارای گاوصندوق هوش مصنوعی شما',
+  'This device': 'این دستگاه',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'این دستگاه دیگر نمی‌تواند حساب‌های هوش مصنوعی شما را بخواند و بقیه کلید تازه می‌گیرند.',
+  'Also remove this device from your AI vault?':
+    'این دستگاه از گاوصندوق هوش مصنوعی هم برداشته شود؟',
+  'Remove and sign out': 'برداشتن و خروج',
+  'Undo making {name}': 'واگرد ساختن {name}',
+  'Undo the deletion': 'واگرد حذف',
+  'Undo the move': 'واگرد جابه‌جایی',
   'Redo the last file change': 'ازنو کردن آخرین تغییر پرونده',
   'Select down': 'گزینش به پایین',
   'Select up': 'گزینش به بالا',
@@ -1996,6 +2032,7 @@ export const fa: Dictionary = {
   'Without your logins': 'بدون ورودهای شما',
   'Calls a minute': 'فراخوان در دقیقه',
   'Pages a minute': 'صفحه در دقیقه',
+  'Browser memory limit': 'سقف حافظهٔ مرورگر',
   '{count} calls': {
     one: '{count} فراخوان',
     other: '{count} فراخوان',

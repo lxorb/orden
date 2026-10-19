@@ -174,6 +174,8 @@ class Links {
   private files = $state.raw<readonly string[]>([])
   /** Which space the index is of, so a listing for another one is dropped. */
   private root: string | null = null
+  /** Whether the open space is an Obsidian vault, where a `📅` is a deadline (#371). */
+  private vault = false
   /** Bumped whenever the index changed. The editor is handed a new object only
    *  when this moves, so a keystroke does not redraw every link on screen. */
   version = $state(0)
@@ -320,6 +322,7 @@ class Links {
     // sync.svelte.ts.
     const mine = ++this.scans
     this.root = root
+    this.vault = false
     // What the files outside the open space wear was read against the space open
     // before this one; see marks-elsewhere.svelte.ts.
     elsewhere.clear()
@@ -344,6 +347,14 @@ class Links {
     }
 
     mark('scan_links asked')
+    // Whether a `📅` here is a deadline, asked on the index's own turn of the launch
+    // rather than in front of the first frame (#371).
+    void import('./rows/vault').then(async ({ isVault }) => {
+      if ((await isVault(root)) && this.scans === mine) {
+        this.vault = true
+        this.changed()
+      }
+    })
     const found = await invoke<SpaceLinks>('scan_links', { root }).catch(() => null)
     mark('scan_links answered')
 
@@ -858,6 +869,7 @@ class Links {
       files: this.files,
       path,
       read: (wanted) => this.readNote(wanted),
+      ...(this.vault ? { dueReads: 'deadline' as const } : {}),
       // What the `#` popup offers, and what `[[^^` asks the space for. Both go
       // with the rest of what the space holds rather than through a facet of
       // their own, for the same reason the query fence does: they are the same

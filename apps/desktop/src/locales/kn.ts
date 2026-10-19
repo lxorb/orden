@@ -27,6 +27,25 @@ export const kn: Dictionary = {
   'Import from Zen': 'Zen ನಿಂದ ಇಂಪೋರ್ಟ್ ಮಾಡಿ',
   'Containers stay in Zen': 'ಕಂಟೇನರ್‌ಗಳು Zen ನಲ್ಲೇ ಉಳಿಯುತ್ತವೆ',
   'Zen’s tabs could not be read.': 'Zen ಟ್ಯಾಬ್‌ಗಳನ್ನು ಓದಲಾಗಲಿಲ್ಲ.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'ಕಂಟೇನರ್‌ಗಳು Firefox ನಲ್ಲೇ ಉಳಿಯುತ್ತವೆ',
+  'Nothing could be read out of {browser}.': '{browser} ನಿಂದ ಏನನ್ನೂ ಓದಲು ಆಗಲಿಲ್ಲ.',
+  'Saved groups': 'ಉಳಿಸಿದ ಗುಂಪುಗಳು',
+  'Tab group': 'ಟ್ಯಾಬ್ ಗುಂಪು',
+  'Bookmarks toolbar': 'ಬುಕ್‌ಮಾರ್ಕ್ ಟೂಲ್‌ಬಾರ್',
+  'Bookmarks menu': 'ಬುಕ್‌ಮಾರ್ಕ್ ಮೆನು',
+  'Other bookmarks': 'ಇತರ ಬುಕ್‌ಮಾರ್ಕ್‌ಗಳು',
+  'Mobile bookmarks': 'ಮೊಬೈಲ್ ಬುಕ್‌ಮಾರ್ಕ್‌ಗಳು',
+  'Bookmarks bar': 'ಬುಕ್‌ಮಾರ್ಕ್ ಬಾರ್',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} ತನ್ನ ತೆರೆದ ಟ್ಯಾಬ್‌ಗಳನ್ನು ಲಾಕ್ ಮಾಡಿ ಇಡುತ್ತದೆ, ಹಾಗಾಗಿ ಬುಕ್‌ಮಾರ್ಕ್‌ಗಳು ಮಾತ್ರ ಬಂದವು.',
+  '{count} pages not on the web stay behind': {
+    one: 'ವೆಬ್‌ನಲ್ಲಿ ಇಲ್ಲದ {count} ಪುಟ ಉಳಿದುಹೋಯಿತು',
+    other: 'ವೆಬ್‌ನಲ್ಲಿ ಇಲ್ಲದ {count} ಪುಟಗಳು ಉಳಿದುಹೋದವು',
+  },
+  'Reading List': 'ಓದುವ ಪಟ್ಟಿ',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS Safariಯ ಟ್ಯಾಬ್‌ಗಳು ಮತ್ತು ಬುಕ್‌ಮಾರ್ಕ್‌ಗಳನ್ನು ಪೂರ್ಣ ಡಿಸ್ಕ್ ಪ್ರವೇಶದ ಹಿಂದೆ ಇಡುತ್ತದೆ. ಅಲ್ಲಿ Orden ಆನ್ ಮಾಡಿ, ನಂತರ ಮತ್ತೆ ಕೇಳಿ.',
   // Settings: note types
   'Page note': 'ಪುಟ ಟಿಪ್ಪಣಿ',
   'Web note': 'ಜಾಲ ಟಿಪ್ಪಣಿ',
@@ -97,8 +116,6 @@ export const kn: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'ಸುಳಿವುಗಳು',
   'Silent mode': 'ಮೌನ ಮೋಡ್',
-  'Sign in to keep your notes safe and on every device.':
-    'ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳನ್ನು ಸುರಕ್ಷಿತವಾಗಿ ಮತ್ತು ಪ್ರತಿ ಸಾಧನದಲ್ಲಿ ಇರಿಸಲು ಸೈನ್ ಇನ್ ಮಾಡಿ.',
   'See how your notes connect.': 'ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳು ಹೇಗೆ ಸಂಪರ್ಕಗೊಂಡಿವೆ ನೋಡಿ.',
   'Press {key} to find anything, notes and commands alike.':
     'ಟಿಪ್ಪಣಿಗಳು ಮತ್ತು ಆಜ್ಞೆಗಳು, ಏನನ್ನಾದರೂ ಹುಡುಕಲು {key} ಒತ್ತಿ.',
@@ -120,11 +137,13 @@ export const kn: Dictionary = {
   '{count} h': '{count} ಗಂ',
   Inbox: 'ಇನ್‌ಬಾಕ್ಸ್',
   Date: 'ದಿನಾಂಕ',
+  'Start date': 'ಆರಂಭದ ದಿನಾಂಕ',
   Priority: 'ಆದ್ಯತೆ',
   Reminder: 'ಜ್ಞಾಪನೆ',
   Duration: 'ಅವಧಿ',
   'Smart dates': 'ಸ್ಮಾರ್ಟ್ ದಿನಾಂಕಗಳು',
   'From any app': 'ಯಾವುದೇ ಆ್ಯಪ್‌ನಿಂದ',
+  'Show tasks without a start date in Today': 'ಆರಂಭದ ದಿನಾಂಕವಿಲ್ಲದ ಕಾರ್ಯಗಳನ್ನು ಇಂದು ಎಂಬಲ್ಲಿ ತೋರಿಸಿ',
   'Every day': 'ಪ್ರತಿದಿನ',
   'Every weekday': 'ಪ್ರತಿ ಕೆಲಸದ ದಿನ',
   'Every week': 'ಪ್ರತಿ ವಾರ',
@@ -168,6 +187,8 @@ export const kn: Dictionary = {
   Dots: 'ಚುಕ್ಕೆಗಳು',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'ಎರಡು ಬೆರಳುಗಳಿಂದ ಕ್ಯಾನ್ವಾಸ್ ತಿರುಗಿಸಿ',
+  'Turn upright': 'ನೇರಗೊಳಿಸಿ',
   Canvas: 'ಕ್ಯಾನ್ವಾಸ್',
   Card: 'ಕಾರ್ಡ್',
   'Note or picture': 'ಟಿಪ್ಪಣಿ ಅಥವಾ ಚಿತ್ರ',
@@ -243,6 +264,10 @@ export const kn: Dictionary = {
   Unpin: 'ಪಿನ್ ತೆಗೆಯಿರಿ',
   Close: 'ಮುಚ್ಚಿ',
   'Close pinned tab?': 'ಪಿನ್ ಮಾಡಿದ ಟ್ಯಾಬ್ ಮುಚ್ಚಬೇಕೆ?',
+  'Save changes to {name}?': '{name} ನಲ್ಲಿನ ಬದಲಾವಣೆಗಳನ್ನು ಉಳಿಸಬೇಕೆ?',
+  'Save changes to these tabs?': 'ಈ ಟ್ಯಾಬ್‌ಗಳಲ್ಲಿನ ಬದಲಾವಣೆಗಳನ್ನು ಉಳಿಸಬೇಕೆ?',
+  'Unsaved words go to Recently deleted.': 'ಉಳಿಸದ ಪದಗಳು ಇತ್ತೀಚೆಗೆ ಅಳಿಸಿದವುಗಳಿಗೆ ಹೋಗುತ್ತವೆ.',
+  'Don’t save': 'ಉಳಿಸಬೇಡಿ',
   'Close others': 'ಉಳಿದವನ್ನು ಮುಚ್ಚಿ',
   'Close tabs to the right': 'ಬಲಗಡೆಯ ಟ್ಯಾಬ್‌ಗಳನ್ನು ಮುಚ್ಚಿ',
   'Close tabs to the left': 'ಎಡಗಡೆಯ ಟ್ಯಾಬ್‌ಗಳನ್ನು ಮುಚ್ಚಿ',
@@ -1166,6 +1191,7 @@ export const kn: Dictionary = {
   'Double-click to write': 'ಬರೆಯಲು ಎರಡು ಬಾರಿ ಕ್ಲಿಕ್',
   'Another colour': 'ಬೇರೆ ಬಣ್ಣ',
   'Turn into a note': 'ಟಿಪ್ಪಣಿಯಾಗಿ ಮಾಡಿ',
+  Arrange: 'ಜೋಡಿಸಿ',
   'Bring to front': 'ಮುಂದಕ್ಕೆ ತರಿ',
   'Bring forward': 'ಒಂದು ಹೆಜ್ಜೆ ಮುಂದೆ',
   'Send backward': 'ಒಂದು ಹೆಜ್ಜೆ ಹಿಂದೆ',
@@ -1256,6 +1282,9 @@ export const kn: Dictionary = {
   Unstable: 'ಅಸ್ಥಿರ',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'ಸ್ಥಿರ ಬಿಡುಗಡೆಯಾದ ಆವೃತ್ತಿಗಳನ್ನು ಅನುಸರಿಸುತ್ತದೆ; ಅಸ್ಥಿರ ಎಡ್ಜ್ ಬಿಲ್ಡ್‌ಗಳನ್ನು ಅನುಸರಿಸುತ್ತದೆ, ಮುರಿಯಲೂಬಹುದು.',
+  'Web version': 'ವೆಬ್ ಆವೃತ್ತಿ',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'ಸ್ಥಿರ ಬಿಡುಗಡೆಯಾದ ವೆಬ್ ಆ್ಯಪ್; ಅಸ್ಥಿರ ಹೊಸ ಬಿಲ್ಡ್, ಮುರಿಯಲೂಬಹುದು.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'ಇಂಪೋರ್ಟ್',
@@ -1595,8 +1624,6 @@ export const kn: Dictionary = {
   // Web tabs
   Reload: 'ಮತ್ತೆ ಲೋಡ್ ಮಾಡು',
   'Hard reload': 'ಪೂರ್ಣವಾಗಿ ಮತ್ತೆ ಲೋಡ್ ಮಾಡು',
-  'Clip this page': 'ಈ ಪುಟ ಹಿಡಿದಿಡು',
-  'Clip the link': 'ಕೊಂಡಿ ಹಿಡಿದಿಡು',
   'Open in the browser': 'ಬ್ರೌಸರ್‌ನಲ್ಲಿ ತೆರೆ',
   'Show it here': 'ಇಲ್ಲಿ ತೋರಿಸು',
   Website: 'ಜಾಲತಾಣ',
@@ -1730,7 +1757,6 @@ export const kn: Dictionary = {
   'New tab': 'ಹೊಸ ಟ್ಯಾಬ್',
   'Full screen': 'ಪೂರ್ಣ ಪರದೆ',
   'Print…': 'ಮುದ್ರಿಸಿ…',
-  'Save page': 'ಪುಟವನ್ನು ಸೇವ್ ಮಾಡಿ',
   'Share…': 'ಹಂಚಿ…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1790,6 +1816,16 @@ export const kn: Dictionary = {
   'Bring all to front': 'ಎಲ್ಲವನ್ನೂ ಮುಂದೆ ತನ್ನಿ',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'ನಕಲನ್ನು ರದ್ದುಗೊಳಿಸಿ',
+  'Devices with your AI vault': 'ನಿಮ್ಮ AI ವಾಲ್ಟ್ ಇರುವ ಸಾಧನಗಳು',
+  'This device': 'ಈ ಸಾಧನ',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'ಆ ಸಾಧನ ಇನ್ನು ನಿಮ್ಮ AI ಖಾತೆಗಳನ್ನು ಓದಲಾಗದು, ಉಳಿದವಕ್ಕೆ ಹೊಸ ಕೀ ಸಿಗುತ್ತದೆ.',
+  'Also remove this device from your AI vault?':
+    'ಈ ಸಾಧನವನ್ನು ನಿಮ್ಮ AI ವಾಲ್ಟ್‌ನಿಂದಲೂ ತೆಗೆದುಹಾಕುವುದೇ?',
+  'Remove and sign out': 'ತೆಗೆದುಹಾಕಿ ಸೈನ್ ಔಟ್ ಮಾಡಿ',
+  'Undo making {name}': '{name} ರಚಿಸಿದ್ದನ್ನು ರದ್ದುಗೊಳಿಸಿ',
+  'Undo the deletion': 'ಅಳಿಸಿದ್ದನ್ನು ರದ್ದುಗೊಳಿಸಿ',
+  'Undo the move': 'ಸರಿಸಿದ್ದನ್ನು ರದ್ದುಗೊಳಿಸಿ',
   'Redo the last file change': 'ಕೊನೆಯ ಫೈಲ್ ಬದಲಾವಣೆಯನ್ನು ಮತ್ತೆ ಮಾಡಿ',
   'Select down': 'ಕೆಳಗೆ ಆಯ್ಕೆಮಾಡಿ',
   'Select up': 'ಮೇಲೆ ಆಯ್ಕೆಮಾಡಿ',
@@ -2013,6 +2049,7 @@ export const kn: Dictionary = {
   'Without your logins': 'ನಿಮ್ಮ ಲಾಗಿನ್‌ಗಳಿಲ್ಲದೆ',
   'Calls a minute': 'ನಿಮಿಷಕ್ಕೆ ಕರೆಗಳು',
   'Pages a minute': 'ನಿಮಿಷಕ್ಕೆ ಪುಟಗಳು',
+  'Browser memory limit': 'ಬ್ರೌಸರ್ ಮೆಮೊರಿ ಮಿತಿ',
   '{count} calls': {
     one: '{count} ಕರೆ',
     other: '{count} ಕರೆಗಳು',

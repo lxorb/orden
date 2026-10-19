@@ -1,9 +1,0 @@
-{
-  "name": { "message": "Orden" },
-  "description": {
-    "message": "Dondoa ukurasa, uteuzi au kiungo katika madokezo yako ya Orden."
-  },
-  "clipPage": { "message": "Dondoa ukurasa" },
-  "clipSelection": { "message": "Dondoa uteuzi" },
-  "clipLink": { "message": "Dondoa kiungo" }
-}

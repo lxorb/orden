@@ -6,6 +6,7 @@
  *  shared). `task.*` is nib's: a task row's fields, and the few answers views ask
  *  of every task (`open`, `date`, `at`, `started`, `subtask`). */
 
+import { dayOf, deadlineOf, hasStarted, startOf } from '@nib/markdown/task-dates'
 import { writeRemind } from '@nib/markdown/task-line'
 import { dateAt, wallClock } from '../dates'
 import type { DateValue, Row, Value } from '../types'
@@ -89,23 +90,26 @@ export function taskField(row: Row, name: string, scope: Scope): Val {
       return !task.done && !task.cancelled
     case 'due':
     case 'scheduled':
-    case 'start':
     case 'created':
     case 'completed':
     case 'cancelledOn':
-    case 'deadline':
       return dateValue(task[name])
+    // The two a reader sets, as the task's space reads its `📅`; see task-dates.
+    case 'start':
+      return dateValue(startOf(task, task.dueReads))
+    case 'deadline':
+      return dateValue(deadlineOf(task, task.dueReads))
     case 'date':
-      return dateValue(task.due ?? task.scheduled)
+      return dateValue(dayOf(task, task.dueReads))
     case 'at': {
-      const day = task.due ?? task.scheduled
+      const day = dayOf(task, task.dueReads)
       if (!day) return null
       return task.time
         ? { kind: 'date', iso: day, time: `${task.time}:00` }
         : { kind: 'date', iso: day }
     }
     case 'started':
-      return !task.start || task.start <= scope.context.today
+      return hasStarted(task, scope.context.today, task.dueReads)
     case 'time':
       return task.time ?? null
     case 'zone':

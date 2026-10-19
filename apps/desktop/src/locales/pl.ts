@@ -27,6 +27,27 @@ export const pl: Dictionary = {
   'Import from Zen': 'Importuj z Zen',
   'Containers stay in Zen': 'Kontenery zostają w Zen',
   'Zen’s tabs could not be read.': 'Nie udało się odczytać kart Zen.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'Kontenery zostają w Firefox',
+  'Nothing could be read out of {browser}.': 'Nie udało się nic odczytać z przeglądarki {browser}.',
+  'Saved groups': 'Zapisane grupy',
+  'Tab group': 'Grupa kart',
+  'Bookmarks toolbar': 'Pasek zakładek',
+  'Bookmarks menu': 'Menu zakładek',
+  'Other bookmarks': 'Inne zakładki',
+  'Mobile bookmarks': 'Zakładki z telefonu',
+  'Bookmarks bar': 'Pasek zakładek',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} trzyma otwarte karty pod kluczem, więc przyszły tylko zakładki.',
+  '{count} pages not on the web stay behind': {
+    few: 'Stron spoza sieci, które zostają: {count}',
+    many: 'Stron spoza sieci, które zostają: {count}',
+    one: 'Stron spoza sieci, które zostają: {count}',
+    other: 'Stron spoza sieci, które zostają: {count}',
+  },
+  'Reading List': 'Lista Czytelnia',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS trzyma karty i zakładki Safari za Pełnym dostępem do dysku. Włącz tam Orden, a potem spróbuj ponownie.',
   // Settings: note types
   'Page note': 'Notatka ze stronami',
   'Web note': 'Notatka internetowa',
@@ -97,8 +118,6 @@ export const pl: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'Wskazówki',
   'Silent mode': 'Tryb cichy',
-  'Sign in to keep your notes safe and on every device.':
-    'Zaloguj się, aby Twoje notatki były bezpieczne i na każdym urządzeniu.',
   'See how your notes connect.': 'Zobacz, jak łączą się Twoje notatki.',
   'Press {key} to find anything, notes and commands alike.':
     'Naciśnij {key}, aby znaleźć wszystko, notatki i polecenia.',
@@ -120,11 +139,13 @@ export const pl: Dictionary = {
   '{count} h': '{count} godz.',
   Inbox: 'Skrzynka odbiorcza',
   Date: 'Data',
+  'Start date': 'Data rozpoczęcia',
   Priority: 'Priorytet',
   Reminder: 'Przypomnienie',
   Duration: 'Czas trwania',
   'Smart dates': 'Inteligentne daty',
   'From any app': 'Z dowolnej aplikacji',
+  'Show tasks without a start date in Today': 'Pokazuj w Dzisiaj zadania bez daty rozpoczęcia',
   'Every day': 'Codziennie',
   'Every weekday': 'W każdy dzień roboczy',
   'Every week': 'Co tydzień',
@@ -168,6 +189,8 @@ export const pl: Dictionary = {
   Dots: 'Kropki',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'Obracaj płótno dwoma palcami',
+  'Turn upright': 'Wyprostuj',
   Canvas: 'Kanwa',
   Card: 'Karta',
   'Note or picture': 'Notatka lub obraz',
@@ -243,6 +266,10 @@ export const pl: Dictionary = {
   Unpin: 'Odepnij',
   Close: 'Zamknij',
   'Close pinned tab?': 'Zamknąć przypiętą kartę?',
+  'Save changes to {name}?': 'Zapisać zmiany w {name}?',
+  'Save changes to these tabs?': 'Zapisać zmiany w tych kartach?',
+  'Unsaved words go to Recently deleted.': 'Niezapisane słowa trafią do Ostatnio usuniętych.',
+  'Don’t save': 'Nie zapisuj',
   'Close others': 'Zamknij pozostałe',
   'Close tabs to the right': 'Zamknij karty po prawej',
   'Close tabs to the left': 'Zamknij karty po lewej',
@@ -1195,6 +1222,7 @@ export const pl: Dictionary = {
   'Double-click to write': 'Kliknij dwukrotnie, aby pisać',
   'Another colour': 'Inny kolor',
   'Turn into a note': 'Zamień w notatkę',
+  Arrange: 'Rozmieść',
   'Bring to front': 'Na wierzch',
   'Bring forward': 'Wyżej',
   'Send backward': 'Niżej',
@@ -1284,6 +1312,9 @@ export const pl: Dictionary = {
   Unstable: 'Niestabilny',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'Stabilny idzie za wydanymi wersjami, Niestabilny za buildami edge i może się psuć.',
+  'Web version': 'Wersja webowa',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'Stabilny to wydana aplikacja webowa, Niestabilny to najnowszy build i może się psuć.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Importuj',
@@ -1652,8 +1683,6 @@ export const pl: Dictionary = {
   // Web tabs
   Reload: 'Odśwież',
   'Hard reload': 'Twarde przeładowanie',
-  'Clip this page': 'Zapisz tę stronę',
-  'Clip the link': 'Zapisz odnośnik',
   'Open in the browser': 'Otwórz w przeglądarce',
   'Show it here': 'Pokaż tutaj',
   Website: 'Witryna',
@@ -1788,7 +1817,6 @@ export const pl: Dictionary = {
   'New tab': 'Nowa karta',
   'Full screen': 'Pełny ekran',
   'Print…': 'Drukuj…',
-  'Save page': 'Zapisz stronę',
   'Share…': 'Udostępnij…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1848,6 +1876,15 @@ export const pl: Dictionary = {
   'Bring all to front': 'Przenieś wszystko na wierzch',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Cofnij kopiowanie',
+  'Devices with your AI vault': 'Urządzenia z Twoim sejfem AI',
+  'This device': 'To urządzenie',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'To urządzenie nie odczyta już Twoich kont AI, a pozostałe dostaną nowy klucz.',
+  'Also remove this device from your AI vault?': 'Usunąć to urządzenie także z sejfu AI?',
+  'Remove and sign out': 'Usuń i wyloguj się',
+  'Undo making {name}': 'Cofnij utworzenie {name}',
+  'Undo the deletion': 'Cofnij usunięcie',
+  'Undo the move': 'Cofnij przeniesienie',
   'Redo the last file change': 'Ponów ostatnią zmianę plików',
   'Select down': 'Zaznacz w dół',
   'Select up': 'Zaznacz w górę',
@@ -2073,6 +2110,7 @@ export const pl: Dictionary = {
   'Without your logins': 'Bez twoich logowań',
   'Calls a minute': 'Wywołania na minutę',
   'Pages a minute': 'Strony na minutę',
+  'Browser memory limit': 'Limit pamięci przeglądarki',
   '{count} calls': {
     one: '{count} wywołanie',
     few: '{count} wywołania',

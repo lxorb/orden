@@ -25,7 +25,8 @@ describe('the line', () => {
         }),
       ),
     ).toEqual([
-      '- [ ] Call mum [time:: 16:00] [remind:: 30m] #family 🔺 🔁 every week on Sunday 📅 2026-10-08',
+      // The day is the day it starts: `🛫` (#371).
+      '- [ ] Call mum [time:: 16:00] [remind:: 30m] #family 🔺 🔁 every week on Sunday 🛫 2026-10-08',
     ])
   })
 

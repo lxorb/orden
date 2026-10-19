@@ -27,6 +27,25 @@ export const te: Dictionary = {
   'Import from Zen': 'Zen నుండి ఇంపోర్ట్ చేయి',
   'Containers stay in Zen': 'కంటైనర్‌లు Zen లోనే ఉంటాయి',
   'Zen’s tabs could not be read.': 'Zen ట్యాబ్‌లను చదవలేకపోయాము.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'కంటైనర్‌లు Firefox లోనే ఉంటాయి',
+  'Nothing could be read out of {browser}.': '{browser} నుండి ఏమీ చదవలేకపోయాము.',
+  'Saved groups': 'సేవ్ చేసిన గ్రూప్‌లు',
+  'Tab group': 'ట్యాబ్ గ్రూప్',
+  'Bookmarks toolbar': 'బుక్‌మార్క్‌ల టూల్‌బార్',
+  'Bookmarks menu': 'బుక్‌మార్క్‌ల మెనూ',
+  'Other bookmarks': 'ఇతర బుక్‌మార్క్‌లు',
+  'Mobile bookmarks': 'మొబైల్ బుక్‌మార్క్‌లు',
+  'Bookmarks bar': 'బుక్‌మార్క్‌ల బార్',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} తన తెరిచిన ట్యాబ్‌లను లాక్ చేసి ఉంచుతుంది, కాబట్టి బుక్‌మార్క్‌లు మాత్రమే వచ్చాయి.',
+  '{count} pages not on the web stay behind': {
+    one: 'వెబ్‌లో లేని {count} పేజీ వదిలివేయబడింది',
+    other: 'వెబ్‌లో లేని {count} పేజీలు వదిలివేయబడ్డాయి',
+  },
+  'Reading List': 'పఠన జాబితా',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS Safari ట్యాబ్‌లు, బుక్‌మార్క్‌లను పూర్తి డిస్క్ యాక్సెస్ వెనుక ఉంచుతుంది. అక్కడ Orden ను ఆన్ చేసి, మళ్లీ అడగండి.',
   // Settings: note types
   'Page note': 'పేజీ నోట్',
   'Web note': 'వెబ్ నోట్',
@@ -97,8 +116,6 @@ export const te: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'సూచనలు',
   'Silent mode': 'నిశ్శబ్ద మోడ్',
-  'Sign in to keep your notes safe and on every device.':
-    'మీ నోట్‌లు సురక్షితంగా, ప్రతి పరికరంలో ఉండేందుకు సైన్ ఇన్ చేయండి.',
   'See how your notes connect.': 'మీ నోట్‌లు ఎలా అనుసంధానమై ఉన్నాయో చూడండి.',
   'Press {key} to find anything, notes and commands alike.':
     'నోట్‌లు, ఆదేశాలు, ఏదైనా కనుగొనడానికి {key} నొక్కండి.',
@@ -120,11 +137,13 @@ export const te: Dictionary = {
   '{count} h': '{count} గం',
   Inbox: 'ఇన్‌బాక్స్',
   Date: 'తేదీ',
+  'Start date': 'ప్రారంభ తేదీ',
   Priority: 'ప్రాధాన్యత',
   Reminder: 'రిమైండర్',
   Duration: 'వ్యవధి',
   'Smart dates': 'స్మార్ట్ తేదీలు',
   'From any app': 'ఏ యాప్ నుండైనా',
+  'Show tasks without a start date in Today': 'ప్రారంభ తేదీ లేని పనులను ఈ రోజులో చూపించు',
   'Every day': 'ప్రతిరోజు',
   'Every weekday': 'ప్రతి పనిదినం',
   'Every week': 'ప్రతి వారం',
@@ -168,6 +187,8 @@ export const te: Dictionary = {
   Dots: 'చుక్కలు',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'రెండు వేళ్లతో కాన్వాస్‌ను తిప్పండి',
+  'Turn upright': 'నిటారుగా చేయండి',
   Canvas: 'క్యాన్వాస్',
   Card: 'కార్డ్',
   'Note or picture': 'నోట్ లేదా చిత్రం',
@@ -243,6 +264,10 @@ export const te: Dictionary = {
   Unpin: 'పిన్ తీసివేయి',
   Close: 'మూసివేయి',
   'Close pinned tab?': 'పిన్ చేసిన ట్యాబ్ మూసివేయాలా?',
+  'Save changes to {name}?': '{name}లో మార్పులను సేవ్ చేయాలా?',
+  'Save changes to these tabs?': 'ఈ ట్యాబ్‌లలో మార్పులను సేవ్ చేయాలా?',
+  'Unsaved words go to Recently deleted.': 'సేవ్ చేయని పదాలు ఇటీవల తొలగించినవికి వెళ్తాయి.',
+  'Don’t save': 'సేవ్ చేయవద్దు',
   'Close others': 'ఇతరాలను మూసివేయి',
   'Close tabs to the right': 'కుడివైపు ట్యాబ్‌లను మూసివేయి',
   'Close tabs to the left': 'ఎడమవైపు ట్యాబ్‌లను మూసివేయి',
@@ -1163,6 +1188,7 @@ export const te: Dictionary = {
   'Double-click to write': 'రాయడానికి రెండుసార్లు క్లిక్',
   'Another colour': 'మరో రంగు',
   'Turn into a note': 'నోట్‌గా మార్చు',
+  Arrange: 'అమర్చు',
   'Bring to front': 'ముందుకు తే',
   'Bring forward': 'ఒక అడుగు ముందుకు',
   'Send backward': 'ఒక అడుగు వెనుకకు',
@@ -1252,6 +1278,9 @@ export const te: Dictionary = {
   Unstable: 'అస్థిరం',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'స్థిరం విడుదలైన వెర్షన్‌లను అనుసరిస్తుంది; అస్థిరం edge బిల్డ్‌లను అనుసరిస్తుంది, విరిగిపోవచ్చు.',
+  'Web version': 'వెబ్ వెర్షన్',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'స్థిరం విడుదలైన వెబ్ యాప్; అస్థిరం అన్నిటికంటే కొత్త బిల్డ్, విరిగిపోవచ్చు.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'ఇంపోర్ట్',
@@ -1589,8 +1618,6 @@ export const te: Dictionary = {
   // Web tabs
   Reload: 'మళ్ళీ లోడ్ చేయి',
   'Hard reload': 'పూర్తిగా మళ్ళీ లోడ్ చేయి',
-  'Clip this page': 'ఈ పేజీ ఒడిసిపట్టు',
-  'Clip the link': 'లింక్ ఒడిసిపట్టు',
   'Open in the browser': 'బ్రౌజర్‌లో తెరువు',
   'Show it here': 'ఇక్కడ చూపు',
   Website: 'వెబ్‌సైట్',
@@ -1723,7 +1750,6 @@ export const te: Dictionary = {
   'New tab': 'కొత్త ట్యాబ్',
   'Full screen': 'ఫుల్-స్క్రీన్',
   'Print…': 'ప్రింట్ చేయి…',
-  'Save page': 'పేజీని సేవ్ చేయి',
   'Share…': 'షేర్ చేయి…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1783,6 +1809,15 @@ export const te: Dictionary = {
   'Bring all to front': 'అన్నింటినీ ముందుకు తీసుకురా',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'కాపీని చర్యరద్దు చేయి',
+  'Devices with your AI vault': 'మీ AI వాల్ట్ ఉన్న పరికరాలు',
+  'This device': 'ఈ పరికరం',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'ఆ పరికరం ఇకపై మీ AI ఖాతాలను చదవలేదు, మిగతా వాటికి కొత్త కీ వస్తుంది.',
+  'Also remove this device from your AI vault?': 'ఈ పరికరాన్ని మీ AI వాల్ట్ నుండి కూడా తీసివేయాలా?',
+  'Remove and sign out': 'తీసివేసి సైన్ అవుట్ చేయి',
+  'Undo making {name}': '{name} సృష్టిని చర్యరద్దు చేయి',
+  'Undo the deletion': 'తొలగింపును చర్యరద్దు చేయి',
+  'Undo the move': 'తరలింపును చర్యరద్దు చేయి',
   'Redo the last file change': 'చివరి ఫైల్ మార్పును మళ్లీ చేయి',
   'Select down': 'కిందికి ఎంచుకో',
   'Select up': 'పైకి ఎంచుకో',
@@ -2004,6 +2039,7 @@ export const te: Dictionary = {
   'Without your logins': 'మీ లాగిన్‌లు లేకుండా',
   'Calls a minute': 'నిమిషానికి కాల్‌లు',
   'Pages a minute': 'నిమిషానికి పేజీలు',
+  'Browser memory limit': 'బ్రౌజర్ మెమరీ పరిమితి',
   '{count} calls': {
     one: '{count} కాల్',
     other: '{count} కాల్‌లు',

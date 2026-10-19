@@ -19,6 +19,12 @@ What it checks and photographs:
       starts on, which is a setting rather than A4 for everybody
     adding, reordering and deleting a page, and what reordering does to the ink on it
     a long page growing past A4 when writing reaches the bottom of it
+    ink caught by the lasso dragged where the hand takes it, and no Add on the bar
+    the canvas's bar over lassoed ink, and the paper's own menu on a right click and
+      on a finger held still
+    printing: one picture per page of the PDF, handed to the print engine
+    the lasso's key held: the lasso until it comes up, then the pen again (#349)
+    the paper upright under two fingers turned, with the canvas's turning on (#351)
     the page counter in the status bar, and the thumbnails in the outline panel's slot
     a PDF imported as a page note: every page drawn, on the sheet and in the panel,
       counted in pixels rather than taken on trust, and a page whose paper has gone
@@ -80,6 +86,16 @@ def complain(label: str, message) -> None:
 
 
 PREPARE = """
+// What is handed to the print engine, kept where the drive can read it: printing goes
+// through a frame's `srcdoc`, and the dialog it opens is not something a drive sees.
+(() => {
+  const own = Object.getOwnPropertyDescriptor(HTMLIFrameElement.prototype, 'srcdoc');
+  Object.defineProperty(HTMLIFrameElement.prototype, 'srcdoc', {
+    configurable: true,
+    get() { return own.get.call(this) },
+    set(value) { window.__printed = value; own.set.call(this, value) },
+  });
+})();
 window.__TAURI_OS_PLUGIN_INTERNALS__ = {
   platform: 'android',
   family: 'unix',
@@ -423,6 +439,217 @@ def check_pen(page: Page, cdp, label: str) -> None:
         fail(f"[{label}] the stroke carries {varied} pressure(s): the nib was not felt")
 
     shot(page, f"{label}-a-stroke")
+
+
+def check_lasso(page: Page, cdp, label: str) -> None:
+    """Writing caught by the lasso is dragged where the hand takes it, and the bar
+    offers nothing a press on paper would not put down (#350)."""
+    say("--- the lasso, and what the bar offers ---")
+
+    if page.locator(".cluster .bar button[aria-label='Add']").count():
+        fail(f"[{label}] a page note's bar offers Add, and nothing on paper answers to it")
+    # Nor a zoom: a pinch, the wheel, the keys and the paper's menu do it (#401).
+    if page.locator(".cluster .bar button[aria-label^='Zoom']").count():
+        fail(f"[{label}] a page note's bar still has its zoom buttons")
+
+    tool(page, "d")
+    box = surface(page)
+    x0, y0 = box["x"] + box["width"] / 2 - 120, box["y"] + 320
+    stroke(page, cdp, [(x0 + n * 12, y0 + (n % 4) * 9) for n in range(22)])
+    # The stroke just drawn, found again by its id: the file is free to keep its ink
+    # in whatever order it likes.
+    drawn = page.evaluate(
+        "() => { const ink = window.nibApp.pages.current.store.canvas.ink;"
+        " return ink[ink.length - 1].id }"
+    )
+    first = (
+        "(id) => { const store = window.nibApp.pages.current.store;"
+        " const one = store.canvas.ink.find((s) => s.id === id);"
+        " return { x: one.points[0].x, y: one.points[0].y, scale: store.camera.scale } }"
+    )
+    was = page.evaluate(first, drawn)
+
+    tool(page, "q")
+    page.mouse.move(x0 - 30, y0 - 30)
+    page.mouse.down()
+    for x, y in ((x0 + 300, y0 - 30), (x0 + 300, y0 + 70), (x0 - 30, y0 + 70), (x0 - 30, y0 - 30)):
+        page.mouse.move(x, y, steps=6)
+    page.mouse.up()
+    page.wait_for_timeout(300)
+
+    page.mouse.move(x0 + 120, y0 + 15)
+    page.mouse.down()
+    page.mouse.move(x0 + 220, y0 + 115, steps=10)
+    page.mouse.up()
+    page.wait_for_timeout(400)
+
+    now = page.evaluate(first, drawn)
+    # A hundred pixels right and down, in the paper's own units.
+    wanted = 100 / was["scale"]
+    moved = (now["x"] - was["x"], now["y"] - was["y"])
+    if abs(moved[0] - wanted) > 4 or abs(moved[1] - wanted) > 4:
+        fail(f"[{label}] lassoed ink did not follow the drag (moved {moved}, not {wanted:.0f})")
+    else:
+        say(f"[{label}] the lassoed ink moved by {tuple(round(v) for v in moved)}")
+    shot(page, f"{label}-lasso-moved")
+
+    # The canvas's bar over what is picked, on paper: colour, copy and delete with a
+    # finger as well as a key (#350).
+    bar = page.evaluate("() => [...document.querySelectorAll('.over button')].map((b) => b.getAttribute('aria-label'))")
+    for wanted in ("Colour", "Duplicate", "Delete", "More"):
+        if wanted not in bar:
+            fail(f"[{label}] the bar over lassoed ink has no {wanted} ({bar})")
+    shot(page, f"{label}-lasso-bar")
+    picked = "() => window.nibApp.pages.current.store.picked.slice()"
+    if "Colour" in bar:
+        page.locator(".over button[aria-label='Colour']").first.click()
+        page.wait_for_timeout(300)
+        page.locator(".over button[aria-label='Colour 1']").first.click()
+        page.wait_for_timeout(300)
+        colour = page.evaluate(
+            "(id) => window.nibApp.pages.current.store.canvas.ink.find((s) => s.id === id)?.color", drawn
+        )
+        if colour != "1":
+            fail(f"[{label}] Colour 1 on the bar left the lassoed ink {colour}")
+    count = ink_count(page)
+    if "Duplicate" in bar:
+        page.locator(".over button[aria-label='Duplicate']").first.click()
+        page.wait_for_timeout(300)
+        if ink_count(page) != count + 1:
+            fail(f"[{label}] Duplicate on the bar made {ink_count(page) - count} strokes, not one")
+    if "Delete" in bar:
+        page.locator(".over button[aria-label='Delete']").first.click()
+        page.wait_for_timeout(300)
+        if ink_count(page) != count or page.evaluate(picked):
+            fail(f"[{label}] Delete on the bar did not take the copy away")
+    say(f"[{label}] the bar over lassoed ink colours, copies and deletes it")
+    # The stroke itself, gone too, so the checks after this start from the paper they
+    # had before it.
+    page.evaluate("(id) => window.nibApp.pages.current.store.pick(id)", drawn)
+    page.locator(".pages").first.focus()
+    page.keyboard.press("Delete")
+    page.wait_for_timeout(200)
+
+    # A right click on the paper: what this note can do, and nothing greyed.
+    page.mouse.click(x0 + 300, y0 + 260, button="right")
+    page.wait_for_timeout(400)
+    rows = [one.strip() for one in page.locator("[role=menu] [role=menuitem]").all_inner_texts()]
+    for wanted in ("Add a page after this", "Fit width", "Fit page", "100%", "Export as PDF", "Print"):
+        if wanted not in rows:
+            fail(f"[{label}] a right click on the paper has no {wanted} ({rows})")
+    if page.locator("[role=menu] [role=menuitem][disabled]").count():
+        fail(f"[{label}] a right click on the paper has greyed rows")
+    shot(page, f"{label}-paper-menu")
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(200)
+    tool(page, "v")
+
+
+def check_print(page: Page, label: str) -> None:
+    """Printing a page note: the print engine is handed one picture per page of the
+    PDF the export writes (#350). Read off the frame the print goes through, which is
+    the page the system's dialog prints."""
+    say("--- printing ---")
+
+    count = len(pages_of(page))
+    page.evaluate("() => { window.__printed = null }")
+    box = surface(page)
+    page.mouse.click(box["x"] + 30, box["y"] + 30)
+    page.keyboard.press("Control+p")
+    try:
+        page.wait_for_function("() => !!window.__printed", timeout=30000)
+    except Exception:  # noqa: BLE001 - said below
+        fail(f"[{label}] Ctrl+P on a page note handed nothing to the print engine")
+        return
+    sheets = page.evaluate("() => (window.__printed.match(/<img /g) || []).length")
+    if sheets != count:
+        fail(f"[{label}] printing handed over {sheets} sheets for {count} pages")
+    else:
+        say(f"[{label}] printing hands the print engine all {count} pages")
+
+
+def check_lasso_held(page: Page, cdp, label: str) -> None:
+    """The lasso's key held is the lasso until it comes up, on paper as on a plane: a
+    loop drawn while it is down catches the writing, and letting go gives the pen back
+    with the writing still caught (#349)."""
+    say("--- the lasso, held on its key ---")
+
+    tool(page, "d")
+    box = surface(page)
+    x0, y0 = box["x"] + box["width"] / 2 - 120, box["y"] + 420
+    stroke(page, cdp, [(x0 + n * 12, y0 + (n % 4) * 9) for n in range(22)])
+    drawn = page.evaluate(
+        "() => { const ink = window.nibApp.pages.current.store.canvas.ink; return ink[ink.length - 1].id }"
+    )
+
+    page.keyboard.down("q")
+    page.wait_for_timeout(100)
+    held = page.evaluate("() => getComputedStyle(document.querySelector('.pages')).cursor")
+    page.mouse.move(x0 - 30, y0 - 30)
+    page.mouse.down()
+    for x, y in ((x0 + 300, y0 - 30), (x0 + 300, y0 + 70), (x0 - 30, y0 + 70), (x0 - 30, y0 - 30)):
+        page.mouse.move(x, y, steps=6)
+    page.mouse.up()
+    page.keyboard.up("q")
+    page.wait_for_timeout(300)
+
+    picked = page.evaluate("() => window.nibApp.pages.current.store.picked.slice()")
+    back = page.evaluate(
+        "() => document.querySelector('.cluster .bar button[aria-pressed=true]')?.getAttribute('aria-label')"
+    )
+    say(f"[{label}] held: in hand {back} again after, picked {len(picked)}")
+    # Glass has no cursor to show, so the mouse's is asked after with the device a
+    # desktop for the moment: the key, held again, over the same paper.
+    page.evaluate("() => { window.nibApp.viewport.device = 'desktop' }")
+    page.keyboard.down("q")
+    page.wait_for_timeout(400)
+    mouse = page.evaluate("() => getComputedStyle(document.querySelector('.pages')).cursor")
+    page.keyboard.up("q")
+    page.evaluate("() => { window.nibApp.viewport.device = 'tablet' }")
+    page.wait_for_timeout(100)
+    if held not in ("auto", "default") or mouse != "crosshair":
+        fail(f"[{label}] the held lasso's cursor is {mouse} with a mouse, {held} on glass")
+    if back != "Pen":
+        fail(f"[{label}] letting the lasso's key go did not give the pen back ({back})")
+    if drawn not in picked:
+        fail(f"[{label}] what the held lasso caught was not left caught ({picked})")
+    shot(page, f"{label}-lasso-held")
+
+    page.locator(".pages").first.focus()
+    page.keyboard.press("Delete")
+    page.wait_for_timeout(200)
+    tool(page, "v")
+
+
+def check_upright(page: Page, cdp, label: str) -> None:
+    """Paper is read upright: two fingers turning it, with the canvas's turning on,
+    turn nothing (#351)."""
+    import math
+
+    say("--- paper stays upright ---")
+    page.evaluate("() => window.nibApp.modes.setCanvasTurns(true)")
+    box = surface(page)
+    middle = (box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+
+    def at(angle: float) -> list[dict]:
+        dx, dy = 80 * math.cos(angle), 80 * math.sin(angle)
+        return [
+            {"x": middle[0] - dx, "y": middle[1] - dy, "id": 1},
+            {"x": middle[0] + dx, "y": middle[1] + dy, "id": 2},
+        ]
+
+    cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": at(0)})
+    for step in range(1, 13):
+        cdp.send("Input.dispatchTouchEvent", {"type": "touchMove", "touchPoints": at(math.radians(40 * step / 12))})
+    cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
+    page.wait_for_timeout(300)
+    turn = page.evaluate("() => window.nibApp.pages.current.store.camera.turn ?? 0")
+    page.evaluate("() => window.nibApp.modes.setCanvasTurns(false)")
+    if turn:
+        fail(f"[{label}] two fingers turned a page note by {turn}")
+    else:
+        say(f"[{label}] two fingers turning the paper leave it upright")
+    store_call(page, "s.fitAgain()")
 
 
 def check_gutter(page: Page, cdp, label: str) -> None:
@@ -1177,8 +1404,16 @@ def check_paper(page: Page, label: str) -> None:
         }"""
     )
     if not opened_note:
-        fail(f"[{label}] the import wrote no page note beside the paper")
+        fail(f"[{label}] the import wrote no page note for the paper")
         return
+
+    # One thing in the list, the page note: the paper is the note's, not a row beside
+    # it (#400).
+    beside = page.evaluate(
+        "() => window.nibApp.workspace.files.filter((one) => one.name.startsWith('Lecture 4')).map((one) => one.name)"
+    )
+    if beside != ["Lecture 4.pages"]:
+        fail(f"[{label}] the import shows {beside} in the list rather than the page note alone")
 
     say(f"[{label}] the note the import made: {opened_note}")
     page.wait_for_selector(".pages", timeout=15000)
@@ -1228,9 +1463,22 @@ def check_paper(page: Page, label: str) -> None:
     # A page whose paper is not there says so rather than coming out blank, which is
     # the other half of the bug: a silent blank sheet is what hid it. Pointed at a paper
     # that was never there, through the store's own edit, which is what changing a page
-    # amounts to anywhere else.
+    # amounts to anywhere else - and the paper the note holds taken away first, since
+    # that is the first place a page's paper is looked for (pages/held.ts).
     page.evaluate(
-        """() => {
+        """async (paper) => {
+          const open = indexedDB.open('nib')
+          const db = await new Promise((resolve, reject) => {
+            open.onsuccess = () => resolve(open.result)
+            open.onerror = () => reject(open.error)
+          })
+          await new Promise((resolve, reject) => {
+            const write = db.transaction(['assets', 'stats'], 'readwrite')
+            write.objectStore('assets').delete(paper)
+            write.objectStore('stats').delete(paper)
+            write.oncomplete = () => resolve()
+            write.onerror = () => reject(write.error)
+          })
           const store = window.nibApp.pages.current.store
           const first = store.pages[0]
           store.edit({
@@ -1239,7 +1487,8 @@ def check_paper(page: Page, label: str) -> None:
               node.id === first.id ? { ...node, file: 'Nowhere at all.pdf' } : node,
             ),
           })
-        }"""
+        }""",
+        f"{opened_note}.pdf",
     )
     page.wait_for_timeout(1500)
 
@@ -1274,6 +1523,9 @@ def drive(browser, theme: str) -> None:
         check_opens(page, theme)
         check_refits(page, theme)
         check_pen(page, cdp, theme)
+        check_lasso(page, cdp, theme)
+        check_lasso_held(page, cdp, theme)
+        check_upright(page, cdp, theme)
         check_palm(page, cdp, theme)
         check_rulings(page, theme)
         check_adding(page, theme)
@@ -1289,6 +1541,9 @@ def drive(browser, theme: str) -> None:
         # Last, because it imports a paper and opens the note the import made: every
         # check above is about the note this drive started with.
         check_paper(page, theme)
+        # And printing that note, paper and ink together.
+        if theme == "light":
+            check_print(page, theme)
     finally:
         context.close()
 
@@ -1336,6 +1591,22 @@ def drive_phone(browser) -> None:
             fail("[phone] a finger did not write on a phone")
 
         shot(page, "phone-a-stroke")
+
+        # A finger held still on the paper is the paper's menu, as a right click is.
+        tool(page, "v")
+        hold = (box["x"] + box["width"] / 2, box["y"] + 420)
+        cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": [{"x": hold[0], "y": hold[1], "id": 1}]})
+        page.wait_for_timeout(900)
+        cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
+        page.wait_for_timeout(500)
+        rows = [one.strip() for one in page.locator("[role=menu] [role=menuitem]").all_inner_texts()]
+        if "Fit width" not in rows or "Print" not in rows:
+            fail(f"[phone] a finger held on the paper opened no menu ({rows})")
+        else:
+            say(f"[phone] a finger held on the paper opens its menu: {rows}")
+        shot(page, "phone-paper-menu")
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(300)
 
         # And the pages are still a column: the same layout, not a second one.
         pages = pages_of(page)

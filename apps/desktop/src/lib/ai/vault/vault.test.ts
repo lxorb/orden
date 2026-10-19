@@ -7,7 +7,7 @@ import { describe, expect, test } from 'vitest'
 import { added, type Accounts, NONE } from '../accounts'
 import type { Base, Contents } from './merge'
 import { newNonce } from '../../pairing'
-import { newDeviceKey } from './crypto'
+import { deviceKeyIn, newDeviceKey, open, unwrap } from './crypto'
 import { Vault, type VaultWorld } from './vault.svelte'
 
 interface Row {
@@ -44,6 +44,7 @@ class Account {
   blob: string | null = null
   authHash: string | null = null
   devices = new Map<string, Row>()
+  rotations = 0
 
   private async holds(auth: unknown): Promise<boolean> {
     return typeof auth === 'string' && this.authHash !== null && (await sha(auth)) === this.authHash
@@ -130,8 +131,27 @@ class Account {
       const row = this.devices.get(device[1] ?? '')
       if (!row) throw refused(404, 'no such device')
       if (row.wrapped && !(await this.holds(body.auth))) throw refused(403, 'not the vault key')
+      const others = [...this.devices].some(([id, one]) => id !== device[1] && one.wrapped)
+      if (row.wrapped && others) throw refused(409, 'change the key instead')
       this.devices.delete(device[1] ?? '')
       return { ok: true }
+    }
+    if (method === 'PUT' && url.pathname === '/v2/ai/rotate') {
+      if (!(await this.holds(body.auth))) throw refused(403, 'not the vault key')
+      if (body.rev !== this.rev) throw refused(409, 'stale')
+      this.rotations += 1
+      const keep = body.keep as string[]
+      const wraps = body.wraps as string[]
+      this.rev += 1
+      this.blob = String(body.blob)
+      this.authHash = await sha(String(body.next))
+      for (const id of body.go as string[]) this.devices.delete(id)
+      for (const [id, one] of this.devices) {
+        const at = keep.indexOf(id)
+        if (at >= 0) one.wrapped = wraps[at] ?? null
+        else if (one.wrapped) Object.assign(one, { wrapped: null, pub: null, nonce: null })
+      }
+      return { rev: this.rev }
     }
     if (method === 'PUT' && url.pathname === '/v2/ai/vault') {
       if (body.rev === 0) {
@@ -476,5 +496,112 @@ describe('somebody between the two screens', () => {
     await expect(account.answer('/v2/ai/vault', 'DELETE', forged)).rejects.toMatchObject({
       status: 403,
     })
+  })
+})
+
+/** #389: an allowed device let go of, by changing the vault key under it. */
+describe('a device let go of', () => {
+  /** The laptop, the phone and the tablet, all three let in and joined. */
+  async function three() {
+    const account = new Account()
+    const laptop = device(account, 'Laptop', keyed)
+    laptop.here.keys = { anthropic: 'sk-ant-secret' }
+    await laptop.vault.refresh()
+    const others = []
+    for (const name of ['Phone', 'Tablet']) {
+      const one = device(account, name)
+      await letIn(laptop, one)
+      await laptop.vault.allow(laptop.vault.asking[0]?.id ?? '')
+      await one.vault.refresh()
+      await one.vault.join()
+      expect(one.vault.standing).toBe('open')
+      others.push(one)
+    }
+    const [phone, tablet] = others
+    if (!phone || !tablet) throw new Error('two devices')
+    await laptop.vault.refresh()
+    return { account, laptop, phone, tablet }
+  }
+
+  const idOf = (account: Account, name: string) =>
+    [...account.devices].find(([, one]) => one.name === name)?.[0] ?? ''
+
+  test('lists every device let in, this one marked', async () => {
+    const { laptop } = await three()
+    expect(laptop.vault.allowed.map((one) => [one.name, one.mine])).toEqual([
+      ['Laptop', true],
+      ['Phone', false],
+      ['Tablet', false],
+    ])
+  })
+
+  test('cannot open the vault written after it went, with the key it kept', async () => {
+    const { account, laptop, phone, tablet } = await three()
+    const phoneId = idOf(account, 'Phone')
+    const kept = account.devices.get(phoneId)?.wrapped ?? ''
+    const phoneKey = deviceKeyIn(JSON.parse(phone.secrets.get('ai-vault-device') ?? 'null'))
+    if (!phoneKey) throw new Error('the phone has a key')
+    const oldKey = await unwrap(kept, phoneKey)
+    // The key it kept opened the vault as it was.
+    await expect(open(oldKey, account.blob ?? '')).resolves.toContain('sk-ant-secret')
+
+    expect(await laptop.vault.remove(phoneId)).toBe(true)
+    expect(account.devices.has(phoneId)).toBe(false)
+    expect(laptop.vault.allowed.map((one) => one.name)).toEqual(['Laptop', 'Tablet'])
+
+    // A key typed afterwards reaches the tablet, and nothing the phone kept opens it.
+    laptop.here.keys = { anthropic: 'sk-ant-after' }
+    await laptop.vault.refresh()
+    await tablet.vault.refresh()
+    expect(tablet.vault.standing).toBe('open')
+    expect(tablet.here.keys).toEqual({ anthropic: 'sk-ant-after' })
+    await expect(open(oldKey, account.blob ?? '')).rejects.toThrow()
+
+    // The phone itself is back to asking, and has nothing new.
+    await phone.vault.refresh()
+    expect(phone.vault.standing).not.toBe('open')
+    expect(phone.here.keys).toEqual({ anthropic: 'sk-ant-secret' })
+  })
+
+  test('leaves the devices that stay joined, offered nothing again', async () => {
+    const { account, laptop, tablet } = await three()
+    await laptop.vault.remove(idOf(account, 'Phone'))
+    await tablet.vault.refresh()
+    expect(tablet.vault.standing).toBe('open')
+    // And again, while the tablet was away for it.
+    await laptop.vault.remove(idOf(account, 'Tablet'))
+    expect(laptop.vault.allowed.map((one) => one.name)).toEqual(['Laptop'])
+    expect(account.rotations).toBe(2)
+  })
+
+  test('is this device too, when it leaves, and the others keep the vault', async () => {
+    const { account, laptop, phone } = await three()
+    await phone.vault.leave()
+    expect(phone.vault.standing).toBe('off')
+    expect(account.devices.has(idOf(account, 'Phone'))).toBe(false)
+    await laptop.vault.refresh()
+    expect(laptop.vault.standing).toBe('open')
+    expect(laptop.here.keys).toEqual({ anthropic: 'sk-ant-secret' })
+  })
+
+  test('changes the key over the vault as it is, written meanwhile by another device', async () => {
+    const { account, laptop, tablet } = await three()
+    // The tablet writes after the laptop last read, so the laptop's first try is stale.
+    tablet.here.keys = { anthropic: 'sk-from-the-tablet' }
+    await tablet.vault.refresh()
+    expect(await laptop.vault.remove(idOf(account, 'Phone'))).toBe(true)
+    await laptop.vault.refresh()
+    await tablet.vault.refresh()
+    expect(laptop.here.keys).toEqual({ anthropic: 'sk-from-the-tablet' })
+    expect(tablet.vault.standing).toBe('open')
+  })
+
+  test('the last device takes the vault with it', async () => {
+    const account = new Account()
+    const laptop = device(account, 'Laptop', keyed)
+    await laptop.vault.refresh()
+    await laptop.vault.leave()
+    expect(account.blob).toBeNull()
+    expect(account.devices.size).toBe(0)
   })
 })

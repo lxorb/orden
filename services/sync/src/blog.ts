@@ -5,6 +5,7 @@ import {
   type Heading,
   renderMarkdown,
   type Wikilink,
+  withoutComments,
 } from '@nib/markdown'
 import { DECK_HEIGHT, DECK_PAGE_CSS, DECK_SCRIPT, DECK_WIDTH, deckBody } from '@nib/markdown/deck'
 import { diagramAlt, diagramFigure, diagramKey, isDiagram } from '@nib/markdown/diagrams'
@@ -241,6 +242,14 @@ const NO_FRONT: NoteFront = {}
  *  has no `publish:` of its own to settle it, so where it sits is the whole of the
  *  answer - and where it sits is a path somebody can guess, which a hash is not. */
 function fileFor(space: Space, site: Site, slug: string, url: URL): Response | null {
+  const found = fileAt(space, slug)
+  if (!found || !publishes(site.rules, found.path, NO_FRONT)) return null
+
+  return toFile(found, url)
+}
+
+/** The file of the space at the path a request names, whoever may have it. */
+function fileAt(space: Space, slug: string): SpaceFile | null {
   const files = readSpaceFiles(space.files)
   if (!files.length) return null
 
@@ -251,10 +260,11 @@ function fileFor(space: Space, site: Site, slug: string, url: URL): Response | n
     // Not valid encoding, so it is already the name it stands for.
   }
 
-  const found = files.find((one) => one.path.toLowerCase() === wanted.toLowerCase())
-  if (!found || !publishes(site.rules, found.path, NO_FRONT)) return null
+  return files.find((one) => one.path.toLowerCase() === wanted.toLowerCase()) ?? null
+}
 
-  return Response.redirect(new URL(blobUrl(found), url).toString(), 302)
+function toFile(file: SpaceFile, url: URL): Response {
+  return Response.redirect(new URL(blobUrl(file), url).toString(), 302)
 }
 
 /** What a `[[wikilink]]` on a published page points at. A note the space does
@@ -357,7 +367,9 @@ async function embedded(
       if (!note) return
 
       const object = await env.NOTES.get(noteKey(space.id, note.id))
-      if (object) bodies.set(name, await object.text())
+      // Without its comments, as the note it is embedded in is: an embedded section is
+      // rendered on its own, after the page's own comments have gone.
+      if (object) bodies.set(name, withoutComments(await object.text()))
     }),
   )
 
@@ -1047,17 +1059,24 @@ async function takeAnswer(
 
   if (!note) return new Response('Not found', { status: 404 })
 
+  // A site of one note publishes that note and nothing else, whatever its folder
+  // rules say: an answer to any other note of the space is an answer to nothing
+  // the site shows.
   const front = readFront(note.front)
-  if (!publishes(site.rules, note.path, front)) return new Response('Not found', { status: 404 })
+  const shown = space.blog_note
+    ? note.path === space.blog_note
+    : publishes(site.rules, note.path, front)
+  if (!shown) return new Response('Not found', { status: 404 })
 
   const object = await env.NOTES.get(noteKey(space.id, note.id))
-  const source = object ? await object.text() : ''
+  // What the writer commented out is not the page's, nor its title's, nor its form's.
+  const source = withoutComments(object ? await object.text() : '')
 
   // The form as the note writes it, so what is accepted is what was asked: a
   // field the note does not have cannot be sent, whatever a machine posts.
   const fence = codeBlocks(source).find((one) => one.language.toLowerCase() === 'form')
   const form = fence ? formOf(fence.code) : null
-  const where = `/${pageOf(note.path, front)}`
+  const where = space.blog_note ? '/' : `/${pageOf(note.path, front)}`
   if (!form) return back(where)
 
   // Counting, which is the whole of what is done about spam here: no captcha,
@@ -1228,17 +1247,18 @@ async function served(
       shell: { theme, own, counter: counting },
     })
 
-  // A file the space keeps beside its notes, asked for by the path a link in one
-  // of them wrote. Before the notes, because it is settled by the path alone.
-  const asked = slug ? fileFor(space, site, slug, url) : null
-  if (asked) return asked
-
   // One note published on its own is the whole site: it sits at the root with
   // no index above it, and nothing else in the space is reachable. Asked for by
   // name rather than found in the listing, so it is served whatever else the
   // space holds.
+  //
+  // Nothing else means no file by its path either, so this is asked before any
+  // file is: the site's folder rules were never set for a site of one note, and
+  // the space still holds everything else it held. A file is served by its path
+  // only when the page itself links it, which it does by its bytes' own address.
   if (space.blog_note) {
-    if (slug) return missing()
+    const file = slug ? fileAt(space, slug) : null
+    if (slug && !file) return missing()
 
     const only = await env.DB.prepare(
       "select * from notes where space_id = ? and path = ? and deleted = 0 and kind != 'file'",
@@ -1249,7 +1269,8 @@ async function served(
     if (!only) return missing()
 
     const object = await env.NOTES.get(noteKey(space.id, only.id))
-    const source = object ? await object.text() : ''
+    // What the writer commented out is not the page's, nor its title's, nor its form's.
+    const source = withoutComments(object ? await object.text() : '')
     const front = readFront(only.front)
 
     // One note is the whole site, so there is nowhere for a link between notes
@@ -1269,6 +1290,11 @@ async function served(
       resolveLink: linkResolver([], files),
       resolveNoteHref: noteHrefResolver(only.path, [], files),
       resolveEmbed: await embedded(env, space, [only], source),
+    }
+
+    if (file) {
+      const rendered = renderMarkdown(source, { footnotes: true, ...reading })
+      return rendered.includes(`="${blobUrl(file)}`) ? toFile(file, url) : missing()
     }
 
     // A site of one note has no index and no feed: the page is the site, so it
@@ -1297,6 +1323,11 @@ async function served(
       },
     })
   }
+
+  // A file the space keeps beside its notes, asked for by the path a link in one
+  // of them wrote. Before the notes, because it is settled by the path alone.
+  const asked = slug ? fileFor(space, site, slug, url) : null
+  if (asked) return asked
 
   const pageList = await sitePages(env, space, site)
   const all = pageList.map(listed)
@@ -1460,7 +1491,8 @@ async function served(
 
   const note = found.note
   const object = await env.NOTES.get(noteKey(space.id, note.id))
-  const source = object ? await object.text() : ''
+  // What the writer commented out is not the page's, nor its title's, nor its form's.
+  const source = withoutComments(object ? await object.text() : '')
 
   // A published note is public: its raw HTML is shown, never run. Its links to
   // other notes point at where those notes are published, and its embeds show

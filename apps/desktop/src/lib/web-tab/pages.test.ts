@@ -56,6 +56,12 @@ let looked: Record<string, unknown> | null = null
 /** A freeze or a thaw the crate has not answered yet, while a test holds one. */
 let pausing: Promise<void> | null = null
 
+/** Whether a page asked where it has got to holds its answer, and the answers held: a
+ *  page being closed under the question never gives one, and the store waits out its
+ *  clock instead. See `whereIs`. */
+let holdingLooks = false
+const heldLooks: (() => void)[] = []
+
 /** Whether the engine refuses to freeze a page, as WebView2 does one in a call. */
 let refusing = false
 
@@ -78,6 +84,7 @@ vi.mock('../tauri', async (importOriginal) => ({
     if (command === 'web_shot' && photographing) await photographing
     if (command === 'web_shot') return photo
     if (command === 'web_pause') return !(refusing && args?.paused === true)
+    if (command === 'web_look' && holdingLooks) await new Promise<void>((go) => heldLooks.push(go))
     if (command === 'web_look') {
       if (!looked) throw new Error('that page said nothing')
       return looked
@@ -130,6 +137,16 @@ async function asked(): Promise<() => void> {
   throw new Error('no page was ever asked for')
 }
 
+/** Waits until a page has been asked where it has got to and is holding the answer. */
+async function looks(): Promise<() => void> {
+  for (let tries = 0; tries < 200; tries += 1) {
+    const held = heldLooks.shift()
+    if (held) return held
+    await new Promise<void>((go) => setTimeout(go, 0))
+  }
+  throw new Error('no page was ever asked where it was')
+}
+
 /** Waits until the window is listening for `name`, and hands back what it heard with.
  *
  *  The listeners are started with the first page and fetched on the way - see `listen`
@@ -172,6 +189,8 @@ beforeEach(async () => {
   building = null
   refuse = false
   looked = null
+  holdingLooks = false
+  heldLooks.length = 0
   cuts = false
   localStorage.clear()
 })
@@ -601,6 +620,82 @@ describe('where a page keeps what the site stores', () => {
     })
     expect(pages.of('a').notice).toBe('kept apart')
     pages.of('a').own = null
+  })
+
+  /** #409: "when I switch an open tab to separate web data, it then loads forever until I
+   *  close and reopen it". The menu and the pane both ask for the move; the second used to
+   *  close the page the first had just built in the new store. */
+  test('a note turned apart twice at once is moved once, and its new page stays', async () => {
+    const shown = pages.show('a', SITE, PANE)
+    ;(await asked())()
+    building = null
+    await shown
+    calls.length = 0
+    holdingLooks = true
+
+    // The menu that wrote the file, and the pane that read it change.
+    const fromMenu = pages.rehouse('a', '3f9a0c17e2b4d685', 'kept apart')
+    const fromPane = pages.rehouse('a', '3f9a0c17e2b4d685', 'kept apart')
+    // The first look answers; any other is held until the page is being built again, which
+    // is when the closing page's silence used to run out.
+    ;(await looks())()
+    const rebuilt = await asked()
+    holdingLooks = false
+    for (const go of heldLooks.splice(0)) go()
+    await settle()
+    rebuilt()
+    await Promise.all([fromMenu, fromPane])
+    await settle()
+
+    const said = commands()
+    expect(said.filter((one) => one === 'web_open')).toHaveLength(1)
+    expect(said.filter((one) => one === 'web_close')).toHaveLength(1)
+    expect(said.lastIndexOf('web_close')).toBeLessThan(said.lastIndexOf('web_open'))
+    expect(last('web_open')).toMatchObject({ profile: { store: 'note_3f9a0c17e2b4d685' } })
+    expect(pages.of('a').live).toBe(true)
+    expect(pages.of('a').notice).toBe('kept apart')
+  })
+
+  test('a pane that looks again while its page moves gets the one page', async () => {
+    const shown = pages.show('a', SITE, PANE)
+    ;(await asked())()
+    building = null
+    await shown
+    calls.length = 0
+    holdingLooks = true
+
+    const moving = pages.rehouse('a', '3f9a0c17e2b4d685')
+    ;(await looks())()
+    holdingLooks = false
+    // The old page is no longer live, and the pane looks again, as WebTab.svelte does.
+    await vi.waitFor(() => expect(pages.of('a').live).toBe(false))
+    const looking = pages.show('a', SITE, MOVED)
+    ;(await asked())()
+    await Promise.all([moving, looking])
+    await settle()
+
+    expect(commands().filter((one) => one === 'web_open')).toHaveLength(1)
+    expect(last('web_open')).toMatchObject({ profile: { store: 'note_3f9a0c17e2b4d685' } })
+    expect(pages.of('a').live).toBe(true)
+  })
+
+  test('a note turned apart while its page is on its way is moved once it arrives', async () => {
+    const shown = pages.show('a', SITE, PANE)
+    const first = await asked()
+    building = null
+    // Not live yet: there is nothing to move, and the page is built where it set out for.
+    void pages.rehouse('a', '3f9a0c17e2b4d685', 'kept apart')
+    first()
+    await shown
+    ;(await asked())()
+    await settle()
+
+    const opened = calls.filter((one) => one.command === 'web_open')
+    expect(opened.map((one) => (one.args.profile as { store: unknown }).store)).toEqual([
+      null,
+      'note_3f9a0c17e2b4d685',
+    ])
+    expect(pages.of('a').live).toBe(true)
   })
 
   test('a rehouse that leaves a page in the store it was built in loads nothing again', async () => {

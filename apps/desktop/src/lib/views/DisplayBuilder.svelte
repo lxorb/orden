@@ -54,7 +54,7 @@
     none: t('None'),
     note: t('Note'),
     section: t('Section'),
-    date: t('Date'),
+    date: t('Start date'),
     deadline: t('Deadline'),
     priority: t('Priority'),
   }
@@ -62,7 +62,7 @@
     default: t('Default'),
     manual: t('Manual'),
     name: t('Name'),
-    date: t('Date'),
+    date: t('Start date'),
     deadline: t('Deadline'),
     priority: t('Priority'),
     note: t('Note'),

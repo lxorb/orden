@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# Orden started the way a Wayland desktop starts it, with no X server anywhere: a
-# headless sway with Xwayland off, DISPLAY and GDK_BACKEND unset, four screens - one
-# turned to portrait at a fractional 1.77, one at 1, one at 1.75, one at 2 - and a
-# session bus. Then the checks a reader would make by looking:
+# Orden started the way a Wayland desktop starts it: a headless sway with its Xwayland,
+# four screens - one turned to portrait at a fractional 1.77, one at 1, one at 1.75, one
+# at 2 - and a session bus. Orden runs on CEF, whose browsers are X11 windows, so its
+# window is an Xwayland one, as it is on every Wayland desktop; GDK_BACKEND is unset and
+# DISPLAY is Xwayland's. Then the checks a reader would make by looking:
 #
-#   - the window maps, on Wayland, as a window sway can see;
+#   - the window maps, as a window sway can see;
 #   - nothing the graphics stack says is a failure: no EGL display that could not be
 #     made, no protocol error, no GTK criticals;
 #   - a key from any app reaches the app the way this desktop allows: through the
@@ -17,7 +18,10 @@
 #     the tab's menu over it and after a resize, clicking with the compositor's own
 #     pointer (scripts/wayland-pointer.py); and with COLD=n as well, Orden quit and
 #     started again n times, each on another screen and with no address, and the drive
-#     run on the web tab it came back to.
+#     run on the web tab it came back to;
+#   - with CHECK=1, what #418 asked of the engine, looked at and measured by
+#     scripts/wayland-418.py: the buttons' words, Settings' search, Ctrl+Tab, a web tab
+#     chosen, and three videos of three codecs (made here with ffmpeg).
 #
 # Run inside `dbus-run-session`, with the command that starts Orden:
 #
@@ -32,6 +36,7 @@ out=${OUT:-$PWD/wayland-out}
 mkdir -p "$out"
 
 unset DISPLAY GDK_BACKEND WAYLAND_DISPLAY
+x11_before=$(ls /tmp/.X11-unix 2>/dev/null || true)
 export XDG_RUNTIME_DIR
 XDG_RUNTIME_DIR=$(mktemp -d)
 chmod 700 "$XDG_RUNTIME_DIR"
@@ -40,7 +45,7 @@ export HOME=${HOME:-/root}
 # sway with no GPU and no input: the headless backend, drawn in memory.
 export WLR_BACKENDS=headless WLR_RENDERER=pixman WLR_LIBINPUT_NO_DEVICES=1 WLR_HEADLESS_OUTPUTS=4
 cat > "$out/sway.conf" <<'CONF'
-xwayland disable
+xwayland force
 default_border none
 default_floating_border none
 output HEADLESS-1 mode --custom 2560x1440@60Hz transform 90 scale 1.77 position 0 0
@@ -62,6 +67,18 @@ export SWAYSOCK=$sock
 WAYLAND_DISPLAY=$(basename "$(ls "$XDG_RUNTIME_DIR"/wayland-* | grep -v '\.lock$' | head -1)")
 export WAYLAND_DISPLAY
 swaymsg -t get_outputs > "$out/outputs.json"
+# Xwayland's display, the one sway started: the socket that was not there before it.
+for _ in $(seq 100); do
+  for socket in $(ls /tmp/.X11-unix 2>/dev/null || true); do
+    if ! grep -qx "$socket" <<< "$x11_before"; then
+      export DISPLAY=":${socket#X}"
+    fi
+  done
+  [ -n "${DISPLAY:-}" ] && break
+  sleep 0.1
+done
+[ -n "${DISPLAY:-}" ] || { echo "::error::sway started no Xwayland"; cat "$out/sway.log"; exit 1; }
+echo "Xwayland on $DISPLAY"
 echo "sway on $WAYLAND_DISPLAY, outputs:"
 python3 -c 'import json,sys; [print(" ", o["name"], o["rect"], "scale", o["scale"], o["transform"]) for o in json.load(open(sys.argv[1]))]' "$out/outputs.json"
 
@@ -116,17 +133,54 @@ endpoint() {
   chmod 600 "$config/automation.json"
 }
 command=("$@")
-if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ]; then
+if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ]; then
   mkdir -p "$out/site"
   video=""
   [ "${MEDIA:-0}" = 1 ] && video='<video src="none.webm" autoplay muted></video>'
   printf '<!doctype html><title>one colour</title><style>html,body{margin:0;height:100%%;background:#ff00ff}</style>%s' "$video" > "$out/site/index.html"
+  if [ "${CHECK:-0}" = 1 ]; then
+    clip=(-f lavfi -i testsrc2=size=320x240:rate=30 -f lavfi -i sine=frequency=440 -t 4)
+    ffmpeg -loglevel error -y "${clip[@]}" -c:v libvpx-vp9 -b:v 300k -c:a libopus "$out/site/vp9.webm"
+    ffmpeg -loglevel error -y "${clip[@]}" -c:v libaom-av1 -cpu-used 8 -b:v 300k -c:a libopus "$out/site/av1.webm"
+    ffmpeg -loglevel error -y "${clip[@]}" -c:v libx264 -pix_fmt yuv420p -c:a aac "$out/site/h264.mp4"
+    cat > "$out/site/video.html" <<'PAGE'
+<!doctype html><title>three codecs</title>
+<body style="margin:0;background:#202020;color:#eee;font:15px sans-serif">
+<script>
+const clips = [
+  ['vp9-opus', 'vp9.webm', 'video/webm; codecs="vp9, opus"'],
+  ['av1-opus', 'av1.webm', 'video/webm; codecs="av01.0.05M.08, opus"'],
+  ['h264-aac', 'h264.mp4', 'video/mp4; codecs="avc1.640015, mp4a.40.2"'],
+]
+for (const [name, src, type] of clips) {
+  const box = document.createElement('figure')
+  const v = document.createElement('video')
+  Object.assign(v, { src, muted: true, autoplay: true, loop: true, width: 320, height: 240 })
+  const said = document.createElement('figcaption')
+  box.append(v, said)
+  document.body.append(box)
+  const can = v.canPlayType(type)
+  let done = false
+  const finish = (ok, why) => {
+    if (done) return
+    done = true
+    said.textContent = name + ': ' + (ok ? 'plays' : 'does not play') + ' (' + why + ', canPlayType "' + can + '")'
+    fetch('/report?' + new URLSearchParams({ name, can, ok, why, w: v.videoWidth, h: v.videoHeight, t: v.currentTime.toFixed(2) }))
+  }
+  v.addEventListener('error', () => finish(false, 'error ' + (v.error && v.error.code)))
+  v.addEventListener('timeupdate', () => { if (v.currentTime > 1) finish(true, 'played') })
+  setTimeout(() => finish(false, 'timeout'), 9000)
+  v.play().catch((e) => finish(false, 'play ' + e.name))
+}
+</script>
+PAGE
+  fi
   python3 -m http.server 8765 --bind 127.0.0.1 --directory "$out/site" > "$out/site.log" 2>&1 &
   site_pid=$!
   endpoint
   set -- "$@" http://127.0.0.1:8765/
 fi
-if [ "${DRIVE:-0}" = 1 ]; then
+if [ "${DRIVE:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ]; then
   # And a keyboard with it, where xkbcommon's tools can say what its keys are.
   if command -v xkbcli > /dev/null; then
     xkbcli compile-keymap --layout us > "$out/keymap.txt"
@@ -179,6 +233,10 @@ if [ "$status" = 0 ] && [ "${DRIVE:-0}" = 1 ]; then
   python3 "$here/wayland-drive.py" "$out" "$app_pid" || status=1
 fi
 
+if [ "$status" = 0 ] && [ "${CHECK:-0}" = 1 ]; then
+  APP_COMMAND="${command[0]}" python3 "$here/wayland-418.py" "$out" "$app_pid" || status=1
+fi
+
 # Quit and started again, the way a reader comes back after a restart: no address, so the
 # web tab is the one the last run left, on the next screen round each time.
 if [ "$status" = 0 ] && [ "${DRIVE:-0}" = 1 ] && [ "${COLD:-0}" -gt 0 ]; then
@@ -209,7 +267,17 @@ if [ "$status" = 0 ] && [ -n "${QUICK_ADD_FLOATS:-}" ]; then
 fi
 
 sleep 2
+# Still up, with everything above done: an engine that ends a while after its window
+# mapped - NSS, on the AppImage in #427 - ends the app with it.
+if ! kill -0 "$app_pid" 2>/dev/null; then
+  echo "::error::Orden ended before the run did"
+  status=1
+fi
 views > "$out/views.txt" || true
+# A picture of every screen as the run leaves it, whatever it checked.
+for screen in $(swaymsg -t get_outputs | python3 -c 'import json,sys; print(" ".join(o["name"] for o in json.load(sys.stdin)))'); do
+  grim -o "$screen" "$out/end-$screen.png" 2>/dev/null || true
+done
 swaymsg -t get_tree > "$out/tree.json" || true
 kill "$app_pid" 2>/dev/null || true
 wait "$app_pid" 2>/dev/null || true
@@ -235,7 +303,7 @@ fi
 # What a Wayland session must never print: the EGL display the friend's NixOS box could
 # not make, a protocol error, a GTK critical, a display that could not be opened, and
 # GStreamer loading plugins that are not its own.
-if grep -nE 'EGL_BAD_PARAMETER|Could not create default EGL display|Error 71|Protocol error|-CRITICAL|cannot open display|Failed to create GBM|Aborting|GStreamer-WARNING' "$out"/orden*.log "$out/second.log" 2>/dev/null; then
+if grep -nE 'EGL_BAD_PARAMETER|Could not create default EGL display|Error 71|Protocol error|-CRITICAL|cannot open display|Failed to create GBM|Aborting|GStreamer-WARNING|:FATAL:|Check failed' "$out"/orden*.log "$out/second.log" 2>/dev/null; then
   echo "::error::the graphics stack failed"
   status=1
 fi

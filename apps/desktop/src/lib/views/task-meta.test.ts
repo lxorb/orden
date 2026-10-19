@@ -30,11 +30,13 @@ describe('the meta line under a task', () => {
   })
 
   test('a done task is in no hurry, and a day the group says is left off', () => {
-    const [done, timed] = rows(
-      '- [x] Old 📅 2026-10-01\n- [ ] Timed [time:: 09:30] 📅 2026-10-12\n',
+    const [done, timed, started] = rows(
+      '- [x] Old 📅 2026-10-20\n- [ ] Timed [time:: 09:30] 📅 2026-10-12\n- [ ] Begun 📅 2026-10-01\n',
     ).map((row) => row.task)
-    if (!done || !timed) throw new Error('no task')
+    if (!done || !timed || !started) throw new Error('no task')
     expect(metaOf(done, TODAY, true, undefined)[0]).toMatchObject({ tone: 'later' })
+    // A start date that has come says nothing under the task (#371).
+    expect(metaOf(started, TODAY, true, undefined)).toEqual([])
     expect(metaOf(timed, TODAY, false, undefined).map((one) => one.kind)).toEqual(['date'])
     expect(metaOf(timed, TODAY, false, undefined)[0]).toMatchObject({ repeat: false })
   })
@@ -65,7 +67,7 @@ describe('the meta line under a task', () => {
       const task = row.task
       if (!task) continue
       for (const dated of [true, false]) {
-        expect([task.text, dated, hasMeta(task, dated, undefined)]).toEqual([
+        expect([task.text, dated, hasMeta(task, dated, undefined, TODAY)]).toEqual([
           task.text,
           dated,
           metaOf(task, TODAY, dated, undefined).length > 0,
@@ -79,8 +81,8 @@ describe('the meta line under a task', () => {
       (row) => row.task,
     )
     if (!plain || !described) throw new Error('no task')
-    expect(lineCount(plain, hasMeta(plain, true, undefined), false)).toBe(1)
+    expect(lineCount(plain, hasMeta(plain, true, undefined, TODAY), false)).toBe(1)
     expect(lineCount(plain, false, true)).toBe(2)
-    expect(lineCount(described, hasMeta(described, true, undefined), false)).toBe(3)
+    expect(lineCount(described, hasMeta(described, true, undefined, TODAY), false)).toBe(3)
   })
 })

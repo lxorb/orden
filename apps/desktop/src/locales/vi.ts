@@ -26,6 +26,22 @@ export const vi: Dictionary = {
   'Import from Zen': 'Nhập từ Zen',
   'Containers stay in Zen': 'Các ngăn chứa vẫn ở lại Zen',
   'Zen’s tabs could not be read.': 'Không thể đọc các thẻ của Zen.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'Các ngăn chứa vẫn ở lại Firefox',
+  'Nothing could be read out of {browser}.': 'Không đọc được gì từ {browser}.',
+  'Saved groups': 'Nhóm đã lưu',
+  'Tab group': 'Nhóm thẻ',
+  'Bookmarks toolbar': 'Thanh dấu trang',
+  'Bookmarks menu': 'Menu dấu trang',
+  'Other bookmarks': 'Dấu trang khác',
+  'Mobile bookmarks': 'Dấu trang trên di động',
+  'Bookmarks bar': 'Thanh dấu trang',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} khóa các thẻ đang mở, nên chỉ dấu trang được mang sang.',
+  '{count} pages not on the web stay behind': '{count} trang không có trên web được để lại',
+  'Reading List': 'Danh sách đọc',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS giữ các tab và dấu trang của Safari sau Quyền truy cập toàn bộ ổ đĩa. Hãy bật Orden ở đó rồi thử lại.',
   // Settings: note types
   'Page note': 'Ghi chú nhiều trang',
   'Web note': 'Ghi chú web',
@@ -96,8 +112,6 @@ export const vi: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'Gợi ý',
   'Silent mode': 'Chế độ im lặng',
-  'Sign in to keep your notes safe and on every device.':
-    'Đăng nhập để giữ ghi chú an toàn và có trên mọi thiết bị.',
   'See how your notes connect.': 'Xem các ghi chú của bạn liên kết với nhau thế nào.',
   'Press {key} to find anything, notes and commands alike.':
     'Nhấn {key} để tìm mọi thứ, cả ghi chú lẫn lệnh.',
@@ -119,11 +133,13 @@ export const vi: Dictionary = {
   '{count} h': '{count} giờ',
   Inbox: 'Hộp thư đến',
   Date: 'Ngày',
+  'Start date': 'Ngày bắt đầu',
   Priority: 'Ưu tiên',
   Reminder: 'Lời nhắc',
   Duration: 'Thời lượng',
   'Smart dates': 'Ngày thông minh',
   'From any app': 'Từ bất kỳ ứng dụng nào',
+  'Show tasks without a start date in Today': 'Hiện việc không có ngày bắt đầu trong Hôm nay',
   'Every day': 'Mỗi ngày',
   'Every weekday': 'Mỗi ngày làm việc',
   'Every week': 'Mỗi tuần',
@@ -167,6 +183,8 @@ export const vi: Dictionary = {
   Dots: 'Dấu chấm',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'Xoay canvas bằng hai ngón tay',
+  'Turn upright': 'Đặt thẳng lại',
   Canvas: 'Canvas',
   Card: 'Thẻ',
   'Note or picture': 'Ghi chú hoặc ảnh',
@@ -242,6 +260,10 @@ export const vi: Dictionary = {
   Unpin: 'Bỏ ghim',
   Close: 'Đóng',
   'Close pinned tab?': 'Đóng tab đã ghim?',
+  'Save changes to {name}?': 'Lưu thay đổi trong {name}?',
+  'Save changes to these tabs?': 'Lưu thay đổi trong các thẻ này?',
+  'Unsaved words go to Recently deleted.': 'Chữ chưa lưu sẽ vào Đã xóa gần đây.',
+  'Don’t save': 'Không lưu',
   'Close others': 'Đóng các tab khác',
   'Close tabs to the right': 'Đóng các tab bên phải',
   'Close tabs to the left': 'Đóng các tab bên trái',
@@ -1152,6 +1174,7 @@ export const vi: Dictionary = {
   'Double-click to write': 'Nhấp đôi để viết',
   'Another colour': 'Màu khác',
   'Turn into a note': 'Biến thành ghi chú',
+  Arrange: 'Sắp xếp',
   'Bring to front': 'Đưa lên trước nhất',
   'Bring forward': 'Đưa lên một bậc',
   'Send backward': 'Đưa xuống một bậc',
@@ -1241,6 +1264,9 @@ export const vi: Dictionary = {
   Unstable: 'Không ổn định',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'Ổn định theo các bản đã phát hành, Không ổn định theo các bản dựng edge và có thể lỗi.',
+  'Web version': 'Phiên bản web',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'Ổn định là ứng dụng web đã phát hành, Không ổn định là bản dựng mới nhất và có thể lỗi.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Nhập',
@@ -1567,8 +1593,6 @@ export const vi: Dictionary = {
   // Web tabs
   Reload: 'Tải lại',
   'Hard reload': 'Tải lại toàn bộ',
-  'Clip this page': 'Lưu trang này',
-  'Clip the link': 'Lưu liên kết',
   'Open in the browser': 'Mở trong trình duyệt',
   'Show it here': 'Hiện ở đây',
   Website: 'Trang web',
@@ -1703,7 +1727,6 @@ export const vi: Dictionary = {
   'New tab': 'Thẻ mới',
   'Full screen': 'Toàn màn hình',
   'Print…': 'In…',
-  'Save page': 'Lưu trang',
   'Share…': 'Chia sẻ…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1763,6 +1786,15 @@ export const vi: Dictionary = {
   'Bring all to front': 'Đưa tất cả ra trước',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Hoàn tác việc sao chép',
+  'Devices with your AI vault': 'Thiết bị có kho AI của bạn',
+  'This device': 'Thiết bị này',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'Thiết bị đó sẽ không đọc được tài khoản AI của bạn nữa, và các thiết bị khác nhận khoá mới.',
+  'Also remove this device from your AI vault?': 'Gỡ cả thiết bị này khỏi kho AI của bạn?',
+  'Remove and sign out': 'Gỡ và đăng xuất',
+  'Undo making {name}': 'Hoàn tác tạo {name}',
+  'Undo the deletion': 'Hoàn tác xoá',
+  'Undo the move': 'Hoàn tác chuyển',
   'Redo the last file change': 'Làm lại thay đổi tệp gần nhất',
   'Select down': 'Chọn xuống',
   'Select up': 'Chọn lên',
@@ -1978,6 +2010,7 @@ export const vi: Dictionary = {
   'Without your logins': 'Không dùng đăng nhập của bạn',
   'Calls a minute': 'Lượt gọi mỗi phút',
   'Pages a minute': 'Trang mỗi phút',
+  'Browser memory limit': 'Giới hạn bộ nhớ trình duyệt',
   '{count} calls': '{count} lượt gọi',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it

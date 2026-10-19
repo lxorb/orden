@@ -2,8 +2,10 @@ import { workspace } from '../workspace.svelte'
 import { isUnsaved } from '../workspace/drafts'
 
 /** Save's one way in, fetched with the first press; see ask.ts. */
-export function askPlace(tabId?: string | null): void {
-  void import('./ask').then((one) => one.askPlace(tabId ?? null))
+export function askPlace(tabId?: string | null, saved?: () => void): void {
+  void import('./ask').then((one) =>
+    saved ? one.askPlace(tabId ?? null, saved) : one.askPlace(tabId ?? null),
+  )
 }
 
 /** Ctrl+S and `:w`, which mean one thing: put what is in front on the disk. A tab with

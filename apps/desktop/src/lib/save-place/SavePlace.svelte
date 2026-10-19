@@ -21,7 +21,12 @@
   import { offeredName } from '../workspace/drafts'
   import { fileFor, placesFor, startingPlace } from './places'
 
-  const { tab, anchor, onclose }: { tab: Tab; anchor: DOMRect | null; onclose: () => void } =
+  const {
+    tab,
+    anchor,
+    onclose,
+    onsaved,
+  }: { tab: Tab; anchor: DOMRect | null; onclose: () => void; onsaved?: (() => void) | undefined } =
     $props()
 
   /** How many places the list shows at once: enough to pick from without the layer
@@ -39,7 +44,11 @@
   // svelte-ignore state_referenced_locally
   let name = $state(offeredName(tab.note, title))
 
-  const places = placesFor(workspace.tree, workspace.spaces, workspace.activeSpace?.root ?? null)
+  const places = placesFor(
+    workspace.tree,
+    workspace.shownSpaces,
+    workspace.activeSpace?.root ?? null,
+  )
   const home = workspace.spaces.find((one) => one.id === workspace.spaceOf(tab.note))?.root
   let place = $state(startingPlace(places, home ?? null))
 
@@ -101,7 +110,9 @@
     // Gone at once, with the row arriving in the list as it goes: what is left is a
     // write, and a write that fails says so where every write says it.
     onclose()
-    void workspace.save(tab, folder, file)
+    void workspace.save(tab, folder, file).then((path) => {
+      if (path !== null) onsaved?.()
+    })
   }
 </script>
 

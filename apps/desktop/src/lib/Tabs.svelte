@@ -626,10 +626,11 @@
   function leave(node: HTMLElement) {
     node.classList.remove('active', 'chosen', 'line')
     node.classList.add('leaving')
-    const width = widthOf(node)
     // The set put aside goes at once, so no frame shows two sets.
     const duration = workspace.panes.swapping ? 0 : dur(210)
-    return { duration, easing: quintOut, css: (t: number) => `width: ${t * width}px` }
+    // As the next tabs move (#384).
+    if (duration) node.style.width = '0px'
+    return { duration }
   }
 
   /* ── A note out of the file list, or a link out of another app ─────── */

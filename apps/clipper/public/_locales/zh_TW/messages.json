@@ -1,7 +1,0 @@
-{
-  "name": { "message": "Orden" },
-  "description": { "message": "把頁面、選取內容或連結剪藏到你的 Orden 筆記。" },
-  "clipPage": { "message": "剪藏頁面" },
-  "clipSelection": { "message": "剪藏選取內容" },
-  "clipLink": { "message": "剪藏連結" }
-}

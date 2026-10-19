@@ -26,6 +26,22 @@ export const ja: Dictionary = {
   'Import from Zen': 'Zen から読み込む',
   'Containers stay in Zen': 'コンテナは Zen に残ります',
   'Zen’s tabs could not be read.': 'Zen のタブを読み込めませんでした。',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'コンテナは Firefox に残ります',
+  'Nothing could be read out of {browser}.': '{browser} から何も読み取れませんでした。',
+  'Saved groups': '保存したグループ',
+  'Tab group': 'タブグループ',
+  'Bookmarks toolbar': 'ブックマークツールバー',
+  'Bookmarks menu': 'ブックマークメニュー',
+  'Other bookmarks': 'その他のブックマーク',
+  'Mobile bookmarks': 'モバイルのブックマーク',
+  'Bookmarks bar': 'ブックマークバー',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} は開いているタブを暗号化して保存しているため、ブックマークだけを取り込みました。',
+  '{count} pages not on the web stay behind': 'Web 上にないページ {count} 件は持ち込みません',
+  'Reading List': 'リーディングリスト',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS は Safari のタブとブックマークをフルディスクアクセスの内側に置いています。そこで Orden をオンにしてから、もう一度お試しください。',
   // Settings: note types
   'Page note': 'ページノート',
   'Web note': 'ウェブノート',
@@ -96,8 +112,6 @@ export const ja: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'ヒント',
   'Silent mode': 'サイレントモード',
-  'Sign in to keep your notes safe and on every device.':
-    'サインインすると、ノートを安全に保ち、すべてのデバイスで使えます。',
   'See how your notes connect.': 'ノート同士のつながりを見る。',
   'Press {key} to find anything, notes and commands alike.':
     '{key} を押すと、ノートもコマンドも何でも探せます。',
@@ -119,11 +133,13 @@ export const ja: Dictionary = {
   '{count} h': '{count} 時間',
   Inbox: '受信箱',
   Date: '日付',
+  'Start date': '開始日',
   Priority: '優先度',
   Reminder: 'リマインダー',
   Duration: '所要時間',
   'Smart dates': 'スマート日付',
   'From any app': 'どのアプリからでも',
+  'Show tasks without a start date in Today': '開始日のないタスクを今日に表示',
   'Every day': '毎日',
   'Every weekday': '毎平日',
   'Every week': '毎週',
@@ -167,6 +183,8 @@ export const ja: Dictionary = {
   Dots: 'ドット',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': '2本指でキャンバスを回転',
+  'Turn upright': 'まっすぐに戻す',
   Canvas: 'キャンバス',
   Card: 'カード',
   'Note or picture': 'ノートまたは画像',
@@ -242,6 +260,10 @@ export const ja: Dictionary = {
   Unpin: 'ピン留めを外す',
   Close: '閉じる',
   'Close pinned tab?': 'ピン留めしたタブを閉じますか？',
+  'Save changes to {name}?': '{name} の変更を保存しますか？',
+  'Save changes to these tabs?': 'これらのタブの変更を保存しますか？',
+  'Unsaved words go to Recently deleted.': '保存していない文字は「最近削除した項目」に移ります。',
+  'Don’t save': '保存しない',
   'Close others': '他を閉じる',
   'Close tabs to the right': '右側のタブを閉じる',
   'Close tabs to the left': '左側のタブを閉じる',
@@ -1158,6 +1180,7 @@ export const ja: Dictionary = {
   'Double-click to write': 'ダブルクリックで書く',
   'Another colour': '別の色',
   'Turn into a note': 'ノートにする',
+  Arrange: '整列',
   'Bring to front': '最前面へ',
   'Bring forward': '前面へ',
   'Send backward': '背面へ',
@@ -1247,6 +1270,9 @@ export const ja: Dictionary = {
   Unstable: '不安定版',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     '安定版は公開されたバージョンを、不安定版はエッジビルドを追うので壊れることがあります。',
+  'Web version': 'Web版',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    '安定版は公開されたWebアプリ、不安定版は最新のビルドで、壊れることがあります。',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'インポート',
@@ -1573,8 +1599,6 @@ export const ja: Dictionary = {
   // Web tabs
   Reload: '再読み込み',
   'Hard reload': 'ハード再読み込み',
-  'Clip this page': 'このページを保存',
-  'Clip the link': 'リンクを保存',
   'Open in the browser': 'ブラウザーで開く',
   'Show it here': 'ここに表示',
   Website: 'ウェブサイト',
@@ -1713,7 +1737,6 @@ export const ja: Dictionary = {
   'New tab': '新しいタブ',
   'Full screen': '全画面表示',
   'Print…': '印刷…',
-  'Save page': 'ページを保存',
   'Share…': '共有…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1773,6 +1796,15 @@ export const ja: Dictionary = {
   'Bring all to front': 'すべてを手前に移動',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'コピーを元に戻す',
+  'Devices with your AI vault': 'AI 保管庫を持つデバイス',
+  'This device': 'このデバイス',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'そのデバイスは AI アカウントを読めなくなり、ほかのデバイスには新しい鍵が渡ります。',
+  'Also remove this device from your AI vault?': 'このデバイスを AI 保管庫からも外しますか？',
+  'Remove and sign out': '外してサインアウト',
+  'Undo making {name}': '{name} の作成を元に戻す',
+  'Undo the deletion': '削除を元に戻す',
+  'Undo the move': '移動を元に戻す',
   'Redo the last file change': '直前のファイル操作をやり直す',
   'Select down': '下へ選択',
   'Select up': '上へ選択',
@@ -1989,6 +2021,7 @@ export const ja: Dictionary = {
   'Without your logins': 'あなたのログインなし',
   'Calls a minute': '1 分あたりの呼び出し',
   'Pages a minute': '1 分あたりのページ',
+  'Browser memory limit': 'ブラウザのメモリ上限',
   '{count} calls': '{count} 件の呼び出し',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it

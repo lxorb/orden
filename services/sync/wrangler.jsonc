@@ -84,10 +84,16 @@
   // are the same bytes for everyone and no blog ever asks for them, so they
   // are served straight from the edge instead of billing a Worker invocation
   // each. That is most of the requests a page load makes.
+  //
+  // The directory holds two builds: the release at the root and the edge of
+  // `unstable` under `/_unstable/`, with both bundles in `/assets/`; a cookie picks
+  // which pages a browser gets (src/channel.ts, scripts/web-channels.sh). So no
+  // not-found page here: the binding could only name the release's `index.html`,
+  // and the Worker answers a path neither build has with the asking build's own.
   "assets": {
     "directory": "../../apps/desktop/dist",
     "binding": "ASSETS",
-    "not_found_handling": "single-page-application",
+    "not_found_handling": "none",
     "run_worker_first": ["/*", "!/assets/*"],
   },
 

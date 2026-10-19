@@ -2,8 +2,9 @@
  *
  *  The crate hears them - a launch, a second launch, a Mac's "open these" - and hands
  *  them to one window, the way it hands a link (see src-tauri/src/launch.rs). This is
- *  that window's half: each PDF in the viewer, in a tab in front, in the space
- *  arrival.ts chooses, brought into it first when it came from outside every space.
+ *  that window's half: each PDF as its page note, in a tab in front, in the space
+ *  arrival.ts chooses, brought into it first when it came from outside every space -
+ *  which is when it becomes that page note (workspace/copying.ts).
  *
  *  Fetched with the rest of the roads in, after the space has restored. */
 

@@ -1,7 +1,0 @@
-{
-  "name": { "message": "Orden" },
-  "description": { "message": "একটি পৃষ্ঠা, নির্বাচন বা লিংক আপনার Orden নোটে ক্লিপ করুন।" },
-  "clipPage": { "message": "পৃষ্ঠা ক্লিপ করুন" },
-  "clipSelection": { "message": "নির্বাচন ক্লিপ করুন" },
-  "clipLink": { "message": "লিংক ক্লিপ করুন" }
-}

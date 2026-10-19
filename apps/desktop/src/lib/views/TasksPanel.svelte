@@ -16,6 +16,7 @@
   import { chosenIcon } from '../chosen-icon'
   import { t } from '../i18n.svelte'
   import { links } from '../link-index.svelte'
+  import { modes } from '../modes.svelte'
   import { archiveEntry, bookmarkEntry, DIVIDER, iconEntries, menu } from '../menu.svelte'
   import { rows } from '../rows/rows.svelte'
   import { insideSpace, relativeTo, samePath, within } from '../space-paths'
@@ -72,7 +73,7 @@
       }),
     ),
   )
-  const counts = $derived(panelCounts(all, today, rows.inboxes()))
+  const counts = $derived(panelCounts(all, today, rows.inboxes(), modes.undatedInToday))
 
   const space = $derived(workspace.activeSpace)
   const root = $derived(space?.root ?? null)
@@ -427,6 +428,14 @@
   $effect(() => {
     const here = beside
     if (here) return untrack(() => here.live.start())
+  })
+  // And read again when Settings turns the tasks with no start date in or out of Today.
+  let undated = untrack(() => modes.undatedInToday)
+  $effect(() => {
+    const now = modes.undatedInToday
+    if (now === undated) return
+    undated = now
+    untrack(() => void beside?.live.reload())
   })
 </script>
 

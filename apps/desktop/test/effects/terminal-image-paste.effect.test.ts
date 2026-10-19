@@ -203,9 +203,9 @@ test('a local terminal hands Alt+V to the shell as ESC and the letter, reading n
   const session = await local('img-1')
 
   press(session, 'v', 'alt')
-  press(session, 'k', 'alt')
+  press(session, 'j', 'alt')
   press(session, 'v', 'ctrl')
-  await vi.waitFor(() => expect(typed.join('')).toBe('\x1bv\x1bk\x16'))
+  await vi.waitFor(() => expect(typed.join('')).toBe('\x1bv\x1bj\x16'))
   expect(heard).toEqual([])
   expect(reads.count).toBe(0)
   expect(carried).toEqual([])

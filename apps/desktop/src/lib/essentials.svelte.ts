@@ -10,7 +10,8 @@ import { carriedRows, draggedBookmark, isBookmarkDrag, isTreeDrag } from './drag
 import { chorded } from './keys'
 import { reading } from './direction'
 import type { OpenHow } from './new-tab'
-import { insideSpace, samePath } from './space-paths'
+import { moving } from './list-landing.svelte'
+import { folderOf, insideSpace, samePath } from './space-paths'
 import { type Bookmark, MOST_BOOKMARKS, sameBookmark } from './workspace/bookmarks.svelte'
 import { workspace, type Entry } from './workspace.svelte'
 
@@ -53,9 +54,12 @@ export function takes(event: DragEvent): boolean {
 }
 
 /** Over the grid: beside the tile nearest, gaps and the empty end of the last row
- *  included. */
+ *  included; at the end of the list over a grid with no tile yet (#412). */
 export function overGrid(event: DragEvent) {
-  if (takes(event)) landing.near(event.currentTarget as HTMLElement, event.clientX, event.clientY)
+  if (!takes(event)) return
+  if (!landing.near(event.currentTarget as HTMLElement, event.clientX, event.clientY)) {
+    landing.over(workspace.bookmarks.list.length, false)
+  }
 }
 
 /** Out of the grid altogether, not onto the next tile. */
@@ -74,13 +78,22 @@ export function keepCarried(
 ) {
   if (!isTreeDrag(event.dataTransfer)) return false
 
-  const marks = carriedRows(event.dataTransfer)
+  keepRows(carriedRows(event.dataTransfer), at, entry)
+  return true
+}
+
+/** Rows of the file list kept at `at`: a drop's, read while the drop could still be. */
+export function keepRows(
+  rows: readonly string[],
+  at: number,
+  entry: (path: string) => Entry | undefined,
+) {
+  const marks = rows
     .map(entry)
     .filter((one): one is Entry => one !== undefined)
     .map((one) => workspace.bookmarks.forEntry(one))
     .filter((mark): mark is Bookmark => mark !== null)
   place(marks, at)
-  return true
 }
 
 /** Let go of over the grid: where the line was, out of any group. */
@@ -121,7 +134,35 @@ export function place(marks: readonly Bookmark[], at: number) {
   const root = workspace.activeSpace?.root
   if (!marks.length || root === undefined) return
 
-  workspace.bookmarks.put(root, placed(workspace.bookmarks.of(root), marks, at))
+  keepAs(root, placed(workspace.bookmarks.of(root), marks, at))
+}
+
+/** A space's bookmarks as they become, the rows of the file list sliding out of the way
+ *  or into it, and one step to undo (#412). */
+function keepAs(root: string, after: Bookmark[]) {
+  const before = [...workspace.bookmarks.of(root)]
+  moving(() => workspace.bookmarks.put(root, after))
+  workspace.undone.record({ kind: 'keep', root, before, after })
+}
+
+/** An essential's tile let go of over the file list (#412): out of the Essentials, which
+ *  puts its row back in the list, and into the folder it was let go of in, opened to
+ *  show it. One step to undo, both halves. */
+export async function unkeepInto(at: number, folder: string) {
+  const root = workspace.activeSpace?.root
+  const held = root === undefined ? [] : workspace.bookmarks.of(root)
+  const mark = held[at]
+  if (root === undefined || mark?.kind !== 'note') return
+
+  const path = insideSpace(root, mark.path)
+  await workspace.undone.batch(async () => {
+    keepAs(
+      root,
+      held.filter((_, index) => index !== at),
+    )
+    if (!samePath(folderOf(path), folder)) await workspace.move(path, folder)
+  })
+  if (!samePath(folder, root)) workspace.device.expand(folder)
 }
 
 /** Left and right along the grid: the tile before and after, the way they read. */

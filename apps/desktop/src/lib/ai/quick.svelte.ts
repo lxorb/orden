@@ -188,7 +188,7 @@ class Quick {
    *  and its store are fetched by the press. */
   async continueInPanel() {
     const turns = this.turns.filter((one) => one.text.trim())
-    if (!turns.length || this.running) return
+    if (!turns.length || this.running || !workspace.offers('ask')) return
     const space = workspace.activeSpaceId ?? ''
     this.close()
     const [{ chat }, { revealChat }] = await Promise.all([

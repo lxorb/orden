@@ -122,9 +122,9 @@ export class SpaceTyping extends ListTyping {
   /** `go` switches to a space, and puts the list away. */
   constructor(go: (space: Space) => void) {
     super(
-      () => workspace.spaces.map((space) => space.name),
+      () => workspace.shownSpaces.map((space) => space.name),
       (at) => {
-        const space = workspace.spaces[at]
+        const space = workspace.shownSpaces[at]
         if (space) go(space)
       },
     )

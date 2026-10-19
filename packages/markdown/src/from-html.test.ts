@@ -785,7 +785,7 @@ describe('a page as markdown', () => {
 
   /** A picture says two things here and no more. A title would be a third string
    *  to break out of, and the quote that opens it is on any page that quotes
-   *  somebody; it would also sit between the brackets the clipper fills its
+   *  somebody; it would also sit between the brackets a caller fills its
    *  numbers in by. So the page's own is dropped. */
   test('a title is not markdown a page can write', () => {
     expect(
@@ -793,8 +793,8 @@ describe('a page as markdown', () => {
     ).toBe('![a](a.png)')
   })
 
-  /** What the clipper needs: the bytes are still on the site when the conversion
-   *  runs, so it numbers the pictures and fills the addresses in afterwards. */
+  /** What a caller with no address for a picture yet needs: it numbers the pictures
+   *  and fills the addresses in afterwards. */
   test('a caller can say what a picture becomes', () => {
     const seen: string[] = []
     const markdown = htmlToMarkdown(

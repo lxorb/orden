@@ -59,11 +59,32 @@ export class Activity {
     }
   }
 
+  /** The questions the reader is answering in this window, whose Show this window puts up
+   *  itself once the answer is in (`answer`). */
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- bookkeeping, never drawn
+  private answering = new Set<string>()
+
+  /** The agent tabs this window has shown, each once. */
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- bookkeeping, never drawn
+  private shown = new Set<string>()
+
   /** One event. */
   hear(event: AgentEvent): void {
     const now = Date.now()
     this.meanwhile?.push(event)
     heard(this.seen, event, now)
+    // A Show nobody was asked about - an agent with Full permissions asks nothing, its
+    // tab shown as it says so (#372) - is put up by the window that holds the pages.
+    const said = event.kind === 'answered' ? event.approval : null
+    if (
+      said?.answer === 'allowed' &&
+      said.category === 'showing' &&
+      said.tab &&
+      this.holds &&
+      !this.answering.has(said.id)
+    ) {
+      void this.show(said.tab)
+    }
     if (event.kind === 'closed') this.frames = without(this.frames, event.id)
     this.now = now
 
@@ -164,6 +185,7 @@ export class Activity {
 
   /** The reader's answer to a question. Allowing a Show shows the tab. */
   async answer(approval: Approval, allow: boolean, always = false): Promise<void> {
+    this.answering.add(approval.id)
     const answered = await this.source.answer(approval.id, allow, always)
     if (answered.answer === 'allowed' && answered.category === 'showing' && answered.tab) {
       await this.show(answered.tab)
@@ -174,7 +196,8 @@ export class Activity {
    *  loading it again (6.7). It goes on being acted in, framed. */
   async show(agentTab: string): Promise<void> {
     const held = this.seen.tabs[agentTab]
-    if (!held) return
+    if (!held || this.shown.has(agentTab)) return
+    this.shown.add(agentTab)
 
     const id = workspace.openPage(held.url, 'front', workspace.activeTabId ?? undefined)
     if (id === null) return

@@ -66,6 +66,7 @@ describe('the sentence behind a setting', () => {
    *  is written is a setting about the editor and sits there, and the rest are about
    *  the markdown itself. */
   const HINTED: readonly (readonly [pane: string, label: string])[] = [
+    ['general', 'Web version'],
     ['editor', 'New links'],
     ['markdown', 'Strict CommonMark'],
     ['markdown', 'Smart punctuation'],
@@ -131,6 +132,18 @@ describe('the Note types pane', () => {
     expect(last?.kind === 'switch' && last.locked?.()).toBe(true)
     for (const one of rest) if (one.kind === 'switch') one.set(true)
     expect(last?.kind === 'switch' && last.locked?.()).toBe(false)
+  })
+
+  /** #355: somebody who wants a kind gone from Ctrl+T looks for it by Ctrl+T. */
+  test('is found by the new tab and its key', async () => {
+    const { search } = await import('./settings-search')
+    for (const query of ['Ctrl+T', 'new tab']) {
+      const hits = search(query, preferences(), [])
+      expect(
+        hits.some((hit) => hit.kind === 'field' && hit.pane.id === 'kinds'),
+        query,
+      ).toBe(true)
+    }
   })
 })
 
@@ -266,6 +279,7 @@ describe('the release channel', () => {
     vi.doMock('./tauri', async (original) => ({
       ...(await original<typeof import('./tauri')>()),
       isDesktop: true,
+      isNative: true,
     }))
 
     desktop = (await import('./preferences')).preferences()
@@ -274,6 +288,11 @@ describe('the release channel', () => {
   afterAll(() => {
     vi.doUnmock('./tauri')
     vi.resetModules()
+  })
+
+  test('stands in for the web version, which the desktop app has no use for', () => {
+    const labels = desktop.flatMap((one) => one.groups.flatMap((group) => group.fields))
+    expect(labels.map((one) => one.label)).not.toContain('Web version')
   })
 
   test('is offered on nothing that cannot install a version it finds', () => {
@@ -312,6 +331,39 @@ describe('the release channel', () => {
     const group = general?.groups.find((one) => one.fields.some((field) => field === row()))
 
     expect(group?.title).toBe('Updates')
+  })
+})
+
+/** Which web build this browser is served (#424). The list above is a browser's, so the
+ *  row is in it; which build the page is comes from the build, and choosing goes to the
+ *  Worker, which keeps the choice in a cookie. See updater.ts. */
+describe('the web version', () => {
+  const row = () => {
+    const found = fieldsOf('general').find((one) => one.label === 'Web version')
+    if (found?.kind !== 'segmented') throw new Error('the web version is a segmented control')
+
+    return found
+  }
+
+  test('is the two builds, the release first, in a group of its own under General', () => {
+    expect(row().options).toEqual([
+      { value: 'stable', label: 'Stable' },
+      { value: 'unstable', label: 'Unstable' },
+    ])
+    const group = pane('general').groups.find((one) => one.fields.includes(row()))
+    expect(group?.title).toBe('Updates')
+  })
+
+  test('says the build that is running, which outside the edge is the release', () => {
+    expect(row().get()).toBe('stable')
+    expect(row().initial).toBe('stable')
+  })
+
+  test('says what the two words mean, and which of them can break', () => {
+    const hint = row().hint ?? ''
+    expect(hint).toContain('Stable')
+    expect(hint).toContain('Unstable')
+    expect(hint).toContain('break')
   })
 })
 

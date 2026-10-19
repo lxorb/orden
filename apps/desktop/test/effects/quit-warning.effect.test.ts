@@ -136,7 +136,7 @@ test('nothing but shells at their prompt: no question at all', async () => {
 
 test("Don't ask again is Settings' Never, and the next quit asks nothing", async () => {
   const { answered } = await quitting()
-  const never = document.querySelector<HTMLInputElement>('.never input')
+  const never = document.querySelector<HTMLInputElement>('.tick input')
   never?.click()
   flushSync()
   button('Quit anyway')?.click()

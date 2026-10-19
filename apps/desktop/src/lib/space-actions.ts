@@ -8,6 +8,9 @@ import { type Space, workspace } from './workspace.svelte'
 /** The rows that open into a choice, fetched with the press; see space-choices.ts. */
 const choices = () => import('./space-choices')
 
+/** Putting a space away, fetched with the press; see space-archive.ts. */
+const archiving = () => import('./space-archive')
+
 /** Asks for a name and makes the space. Where it lives is the app's business,
  *  so that is the only question. Answers the space, or nothing where the question
  *  was dismissed. */
@@ -44,7 +47,7 @@ export async function madeSpace(name: string): Promise<Space | undefined> {
  *
  *  One space is not a ring, and the key does nothing at all. */
 export function stepSpace(direction: number) {
-  const spaces = workspace.spaces
+  const spaces = workspace.shownSpaces
   if (spaces.length < 2) return
 
   const at = spaces.findIndex((one) => one.id === workspace.activeSpaceId)
@@ -72,9 +75,10 @@ async function moveSpace(id: string, beforeId: string | null) {
 function canNudge(space: Space, by: -1 | 1): boolean {
   if (roleOf(space.root) !== 'owner') return false
 
-  const at = workspace.spaces.findIndex((one) => one.id === space.id)
+  const shown = workspace.shownSpaces
+  const at = shown.findIndex((one) => one.id === space.id)
   const to = at + by
-  return at >= 0 && to >= 0 && to < workspace.spaces.length
+  return at >= 0 && to >= 0 && to < shown.length
 }
 
 /** One place up or down the list.
@@ -89,13 +93,14 @@ function canNudge(space: Space, by: -1 | 1): boolean {
  *  `moveSpace` places a space in front of another, so going down means going in
  *  front of the one after next. */
 async function nudgeSpace(space: Space, by: -1 | 1) {
-  const at = workspace.spaces.findIndex((one) => one.id === space.id)
+  const shown = workspace.shownSpaces
+  const at = shown.findIndex((one) => one.id === space.id)
   if (at < 0) return
 
   const to = at + by
-  if (to < 0 || to >= workspace.spaces.length) return
+  if (to < 0 || to >= shown.length) return
 
-  const before = by === -1 ? workspace.spaces[to] : workspace.spaces[to + 1]
+  const before = by === -1 ? shown[to] : shown[to + 1]
   await moveSpace(space.id, before?.id ?? null)
 }
 
@@ -139,6 +144,16 @@ export function spaceMenu(space: Space): MenuEntry[] {
       ? [{ label: t('Move down'), run: () => void nudgeSpace(space, 1) }]
       : []),
     DIVIDER,
+    // Put away whole, never deleted; offered where another space stays in sight, since a
+    // window has to be in one. See space-archive.ts.
+    ...(workspace.shownSpaces.length > 1 && !workspace.archivedSpaces.has(space.root)
+      ? [
+          {
+            label: t('Archive'),
+            run: () => void archiving().then((one) => one.archiveSpace(space)),
+          },
+        ]
+      : []),
     {
       label: theirs ? t('Leave space') : t('Delete space'),
       danger: true,

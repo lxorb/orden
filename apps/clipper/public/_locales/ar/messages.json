@@ -1,7 +1,0 @@
-{
-  "name": { "message": "Orden" },
-  "description": { "message": "اقتطف صفحة أو تحديدًا أو رابطًا إلى ملاحظات Orden." },
-  "clipPage": { "message": "اقتطاف الصفحة" },
-  "clipSelection": { "message": "اقتطاف التحديد" },
-  "clipLink": { "message": "اقتطاف الرابط" }
-}

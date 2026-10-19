@@ -27,6 +27,26 @@ export const ptPT: Dictionary = {
   'Import from Zen': 'Importar do Zen',
   'Containers stay in Zen': 'Os contentores ficam no Zen',
   'Zen’s tabs could not be read.': 'Não foi possível ler os separadores do Zen.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'Os contentores ficam no Firefox',
+  'Nothing could be read out of {browser}.': 'Não foi possível ler nada do {browser}.',
+  'Saved groups': 'Grupos guardados',
+  'Tab group': 'Grupo de separadores',
+  'Bookmarks toolbar': 'Barra de marcadores',
+  'Bookmarks menu': 'Menu de marcadores',
+  'Other bookmarks': 'Outros marcadores',
+  'Mobile bookmarks': 'Marcadores do telemóvel',
+  'Bookmarks bar': 'Barra de marcadores',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    'O {browser} guarda os separadores abertos trancados, por isso só vieram os marcadores.',
+  '{count} pages not on the web stay behind': {
+    many: '{count} páginas fora da web ficam para trás',
+    one: '{count} página fora da web fica para trás',
+    other: '{count} páginas fora da web ficam para trás',
+  },
+  'Reading List': 'Lista de leitura',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'O macOS guarda os separadores e os marcadores do Safari atrás do Acesso total ao disco. Ative o Orden aí e tente novamente.',
   // Settings: note types
   'Page note': 'Nota de páginas',
   'Web note': 'Nota da web',
@@ -97,8 +117,6 @@ export const ptPT: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'Dicas',
   'Silent mode': 'Modo silencioso',
-  'Sign in to keep your notes safe and on every device.':
-    'Inicie sessão para manter as suas notas seguras e em todos os dispositivos.',
   'See how your notes connect.': 'Veja como as suas notas se ligam.',
   'Press {key} to find anything, notes and commands alike.':
     'Prima {key} para encontrar qualquer coisa, notas e comandos.',
@@ -120,11 +138,13 @@ export const ptPT: Dictionary = {
   '{count} h': '{count} h',
   Inbox: 'Caixa de entrada',
   Date: 'Data',
+  'Start date': 'Data de início',
   Priority: 'Prioridade',
   Reminder: 'Lembrete',
   Duration: 'Duração',
   'Smart dates': 'Datas inteligentes',
   'From any app': 'De qualquer aplicação',
+  'Show tasks without a start date in Today': 'Mostrar em Hoje as tarefas sem data de início',
   'Every day': 'Todos os dias',
   'Every weekday': 'Todos os dias úteis',
   'Every week': 'Todas as semanas',
@@ -168,6 +188,8 @@ export const ptPT: Dictionary = {
   Dots: 'Pontos',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'Rodar uma tela com dois dedos',
+  'Turn upright': 'Endireitar',
   Canvas: 'Tela',
   Card: 'Cartão',
   'Note or picture': 'Nota ou imagem',
@@ -243,6 +265,11 @@ export const ptPT: Dictionary = {
   Unpin: 'Desafixar',
   Close: 'Fechar',
   'Close pinned tab?': 'Fechar o separador afixado?',
+  'Save changes to {name}?': 'Guardar as alterações em {name}?',
+  'Save changes to these tabs?': 'Guardar as alterações nestes separadores?',
+  'Unsaved words go to Recently deleted.':
+    'As palavras não guardadas vão para Eliminados recentemente.',
+  'Don’t save': 'Não guardar',
   'Close others': 'Fechar os outros',
   'Close tabs to the right': 'Fechar separadores à direita',
   'Close tabs to the left': 'Fechar separadores à esquerda',
@@ -1177,6 +1204,7 @@ export const ptPT: Dictionary = {
   'Double-click to write': 'Clicar duas vezes para escrever',
   'Another colour': 'Outra cor',
   'Turn into a note': 'Transformar em nota',
+  Arrange: 'Organizar',
   'Bring to front': 'Trazer para a frente',
   'Bring forward': 'Trazer adiante',
   'Send backward': 'Enviar atrás',
@@ -1266,6 +1294,9 @@ export const ptPT: Dictionary = {
   Unstable: 'Instável',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'Estável segue as versões lançadas; Instável segue as compilações de ponta e pode quebrar.',
+  'Web version': 'Versão web',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'Estável é a app web lançada; Instável é a compilação mais recente e pode falhar.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Importar',
@@ -1622,8 +1653,6 @@ export const ptPT: Dictionary = {
   // Web tabs
   Reload: 'Recarregar',
   'Hard reload': 'Recarregamento forçado',
-  'Clip this page': 'Guardar esta página',
-  'Clip the link': 'Guardar a ligação',
   'Open in the browser': 'Abrir no navegador',
   'Show it here': 'Mostrar aqui',
   Website: 'Sítio web',
@@ -1759,7 +1788,6 @@ export const ptPT: Dictionary = {
   'New tab': 'Novo separador',
   'Full screen': 'Ecrã inteiro',
   'Print…': 'Imprimir…',
-  'Save page': 'Guardar página',
   'Share…': 'Partilhar…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1819,6 +1847,16 @@ export const ptPT: Dictionary = {
   'Bring all to front': 'Trazer tudo para a frente',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Desfazer a cópia',
+  'Devices with your AI vault': 'Dispositivos com o seu cofre de IA',
+  'This device': 'Este dispositivo',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'O dispositivo deixa de conseguir ler as suas contas de IA, e os outros recebem uma chave nova.',
+  'Also remove this device from your AI vault?':
+    'Remover também este dispositivo do seu cofre de IA?',
+  'Remove and sign out': 'Remover e terminar sessão',
+  'Undo making {name}': 'Anular criar {name}',
+  'Undo the deletion': 'Anular a eliminação',
+  'Undo the move': 'Anular a deslocação',
   'Redo the last file change': 'Refazer a última alteração de ficheiro',
   'Select down': 'Selecionar para baixo',
   'Select up': 'Selecionar para cima',
@@ -2043,6 +2081,7 @@ export const ptPT: Dictionary = {
   'Without your logins': 'Sem as suas sessões',
   'Calls a minute': 'Chamadas por minuto',
   'Pages a minute': 'Páginas por minuto',
+  'Browser memory limit': 'Limite de memória do navegador',
   '{count} calls': {
     one: '{count} chamada',
     many: '{count} de chamadas',

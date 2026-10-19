@@ -168,7 +168,7 @@ describe('the chips', () => {
     expect(chips.find((chip) => chip.field === 'priority')?.tone).toBe('p1')
   })
 
-  test('mark a day gone by as overdue, and not a done one', () => {
+  test('mark a deadline gone by as overdue, and not a done one, and never a start date', () => {
     const base = {
       text: 'x',
       status: ' ',
@@ -181,8 +181,19 @@ describe('the chips', () => {
       dependsOn: [],
       fields: {},
     }
-    expect(chipsOf(base, '2026-10-01')[0]?.tone).toBe('overdue')
-    expect(chipsOf({ ...base, done: true }, '2026-10-01')[0]?.tone).toBeUndefined()
+    // A `📅` is the start date in a space of nib's own: come, it says nothing, and is
+    // never late. In a vault it is the deadline, and late once past (#371).
+    expect(chipsOf(base, '2026-10-01')).toEqual([])
+    expect(chipsOf(base, '2026-10-01', 'deadline')[0]).toMatchObject({
+      field: 'deadline',
+      tone: 'overdue',
+    })
+    expect(chipsOf({ ...base, done: true }, '2026-10-01', 'deadline')[0]?.tone).toBeUndefined()
+    // Still to come, the start date is said, in no tone.
+    expect(chipsOf({ ...base, due: '2026-10-05' }, '2026-10-01')[0]).toEqual({
+      field: 'date',
+      text: expect.any(String) as string,
+    })
   })
 })
 
@@ -225,7 +236,8 @@ describe('a date typed at the end of a task', () => {
     expect(takeHint(view as unknown as EditorView)).toBe(true)
     // The writer is fetched by the Tab that asks for it.
     await new Promise((resolve) => setTimeout(resolve, 50))
-    expect(view.state.doc.toString()).toBe('- [ ] Call mum 📅 2026-10-08')
+    // A day typed is the day it starts: `🛫` (#371).
+    expect(view.state.doc.toString()).toBe('- [ ] Call mum 🛫 2026-10-08')
     undo(view)
     expect(view.state.doc.toString()).toBe(note)
   })

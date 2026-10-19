@@ -112,7 +112,7 @@ pub(crate) async fn put(view: &Webview, cookies: &[&Cookie]) -> Result<(), Strin
     engine::set(view, cookies, now()).await
 }
 
-#[cfg(windows)]
+#[cfg(any(windows, feature = "cef"))]
 pub(crate) mod engine {
     use serde_json::{json, Map, Value};
     use tauri::Webview;
@@ -146,6 +146,13 @@ pub(crate) mod engine {
     /// What `Network.deleteCookies` is asked to take exactly this cookie away: its name,
     /// domain and path, and its partition where it has one. Without a partition the engine
     /// takes only the unpartitioned cookie of that name, never one in a partition.
+    #[cfg_attr(
+        feature = "cef",
+        allow(
+            dead_code,
+            reason = "web_cookies.rs, its one caller, is WebView2's and WKWebView's"
+        )
+    )]
     pub(crate) fn deleting(cookie: &Cookie) -> Value {
         let mut asked = Map::new();
         asked.insert("name".into(), json!(cookie.name));
@@ -253,7 +260,7 @@ pub(crate) mod engine {
     }
 }
 
-#[cfg(any(target_os = "macos", target_os = "linux"))]
+#[cfg(target_os = "macos")]
 mod engine {
     use tauri::webview::cookie;
     use tauri::Webview;

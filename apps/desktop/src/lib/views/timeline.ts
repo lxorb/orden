@@ -2,13 +2,14 @@
  *  days, weeks, months or quarters, and what a drag of a bar or one of its edges
  *  writes.
  *
- *  A task's bar runs from its start date (else its scheduled one) to its due date,
+ *  A task's bar runs from its start date (else its scheduled one) to its deadline,
  *  and is one day where it has only one; a note's runs between the two properties the
  *  view names (`nib.date`, `nib.end`), Notion's date range. Which field a drag writes
  *  is the field the bar's edge was read from, so moving a bar moves the dates the task
  *  actually has and gives it none it did not. */
 
 import { addDays, dayNumber, type Row, type Value } from '@nib/bases'
+import { deadlineOf, startOf } from '@nib/markdown/task-dates'
 import { dayIn } from './values'
 
 export type Scale = 'day' | 'week' | 'month' | 'quarter'
@@ -34,18 +35,22 @@ export function barOf(
   read: (row: Row, property: string) => Value,
 ): Bar | null {
   if (row.task && !dates.start) {
+    // From the day it starts (or is scheduled for) to its deadline, as its space reads
+    // a `📅` (#371).
     const task = row.task
-    const from = task.start
+    const begins = startOf(task, task.dueReads)
+    const deadline = deadlineOf(task, task.dueReads)
+    const from = begins
       ? 'task.start'
       : task.scheduled
         ? 'task.scheduled'
-        : task.due
-          ? 'task.due'
+        : deadline
+          ? 'task.deadline'
           : null
     if (from === null) return null
-    const start = task.start ?? task.scheduled ?? task.due ?? ''
-    const to = task.due && from !== 'task.due' ? 'task.due' : from
-    let end = task.due && from !== 'task.due' ? task.due : start
+    const start = begins ?? task.scheduled ?? deadline ?? ''
+    const to = deadline && from !== 'task.deadline' ? 'task.deadline' : from
+    let end = deadline && from !== 'task.deadline' ? deadline : start
     if (end < start) end = start
     return { row, start, end, from, to }
   }
@@ -91,7 +96,7 @@ export function dragged(
     const start = addDays(bar.start, days)
     // A task of one date pulled wider gets a start of its own rather than moving.
     const field =
-      bar.from === bar.to && bar.row.task && bar.from === 'task.due' ? 'task.start' : bar.from
+      bar.from === bar.to && bar.row.task && bar.from === 'task.deadline' ? 'task.start' : bar.from
     return { [field]: start > bar.end ? bar.end : start }
   }
   const end = addDays(bar.end, days)

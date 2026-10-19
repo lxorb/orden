@@ -26,6 +26,22 @@ export const id: Dictionary = {
   'Import from Zen': 'Impor dari Zen',
   'Containers stay in Zen': 'Kontainer tetap di Zen',
   'Zen’s tabs could not be read.': 'Tab Zen tidak dapat dibaca.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'Kontainer tetap di Firefox',
+  'Nothing could be read out of {browser}.': 'Tidak ada yang dapat dibaca dari {browser}.',
+  'Saved groups': 'Grup tersimpan',
+  'Tab group': 'Grup tab',
+  'Bookmarks toolbar': 'Bilah markah',
+  'Bookmarks menu': 'Menu markah',
+  'Other bookmarks': 'Markah lainnya',
+  'Mobile bookmarks': 'Markah seluler',
+  'Bookmarks bar': 'Bilah bookmark',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} mengunci tab yang terbuka, jadi hanya bookmark-nya yang ikut.',
+  '{count} pages not on the web stay behind': '{count} halaman yang tidak ada di web tertinggal',
+  'Reading List': 'Daftar Bacaan',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS menyimpan tab dan markah Safari di balik Akses Disk Penuh. Nyalakan Orden di sana, lalu coba lagi.',
   // Settings: note types
   'Page note': 'Catatan halaman',
   'Web note': 'Catatan web',
@@ -96,8 +112,6 @@ export const id: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'Petunjuk',
   'Silent mode': 'Mode senyap',
-  'Sign in to keep your notes safe and on every device.':
-    'Masuk agar catatan Anda aman dan ada di setiap perangkat.',
   'See how your notes connect.': 'Lihat bagaimana catatan Anda saling terhubung.',
   'Press {key} to find anything, notes and commands alike.':
     'Tekan {key} untuk menemukan apa saja, catatan maupun perintah.',
@@ -119,11 +133,13 @@ export const id: Dictionary = {
   '{count} h': '{count} j',
   Inbox: 'Kotak masuk',
   Date: 'Tanggal',
+  'Start date': 'Tanggal mulai',
   Priority: 'Prioritas',
   Reminder: 'Pengingat',
   Duration: 'Durasi',
   'Smart dates': 'Tanggal pintar',
   'From any app': 'Dari aplikasi mana pun',
+  'Show tasks without a start date in Today': 'Tampilkan tugas tanpa tanggal mulai di Hari ini',
   'Every day': 'Setiap hari',
   'Every weekday': 'Setiap hari kerja',
   'Every week': 'Setiap minggu',
@@ -167,6 +183,8 @@ export const id: Dictionary = {
   Dots: 'Titik',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'Putar kanvas dengan dua jari',
+  'Turn upright': 'Tegakkan',
   Canvas: 'Kanvas',
   Card: 'Kartu',
   'Note or picture': 'Catatan atau gambar',
@@ -242,6 +260,10 @@ export const id: Dictionary = {
   Unpin: 'Lepas',
   Close: 'Tutup',
   'Close pinned tab?': 'Tutup tab yang dipasang?',
+  'Save changes to {name}?': 'Simpan perubahan pada {name}?',
+  'Save changes to these tabs?': 'Simpan perubahan pada tab ini?',
+  'Unsaved words go to Recently deleted.': 'Kata-kata yang belum disimpan masuk ke Baru dihapus.',
+  'Don’t save': 'Jangan simpan',
   'Close others': 'Tutup yang lain',
   'Close tabs to the right': 'Tutup tab di kanan',
   'Close tabs to the left': 'Tutup tab di kiri',
@@ -1159,6 +1181,7 @@ export const id: Dictionary = {
   'Double-click to write': 'Klik dua kali untuk menulis',
   'Another colour': 'Warna lain',
   'Turn into a note': 'Jadikan catatan',
+  Arrange: 'Atur',
   'Bring to front': 'Bawa ke depan',
   'Bring forward': 'Majukan',
   'Send backward': 'Mundurkan',
@@ -1248,6 +1271,9 @@ export const id: Dictionary = {
   Unstable: 'Tidak stabil',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'Stabil mengikuti versi yang dirilis, Tidak stabil mengikuti build edge dan bisa rusak.',
+  'Web version': 'Versi web',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'Stabil adalah aplikasi web yang dirilis, Tidak stabil adalah build terbaru dan bisa rusak.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Impor',
@@ -1577,8 +1603,6 @@ export const id: Dictionary = {
   // Web tabs
   Reload: 'Muat ulang',
   'Hard reload': 'Muat ulang penuh',
-  'Clip this page': 'Simpan halaman ini',
-  'Clip the link': 'Simpan tautannya',
   'Open in the browser': 'Buka di peramban',
   'Show it here': 'Tampilkan di sini',
   Website: 'Situs web',
@@ -1716,7 +1740,6 @@ export const id: Dictionary = {
   'New tab': 'Tab baru',
   'Full screen': 'Layar penuh',
   'Print…': 'Cetak…',
-  'Save page': 'Simpan halaman',
   'Share…': 'Bagikan…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1776,6 +1799,15 @@ export const id: Dictionary = {
   'Bring all to front': 'Bawa semua ke depan',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Batalkan penyalinan',
+  'Devices with your AI vault': 'Perangkat dengan brankas AI Anda',
+  'This device': 'Perangkat ini',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'Perangkat itu tidak bisa lagi membaca akun AI Anda, dan yang lain mendapat kunci baru.',
+  'Also remove this device from your AI vault?': 'Hapus juga perangkat ini dari brankas AI Anda?',
+  'Remove and sign out': 'Hapus dan keluar',
+  'Undo making {name}': 'Batalkan pembuatan {name}',
+  'Undo the deletion': 'Batalkan penghapusan',
+  'Undo the move': 'Batalkan pemindahan',
   'Redo the last file change': 'Ulangi perubahan file terakhir',
   'Select down': 'Pilih ke bawah',
   'Select up': 'Pilih ke atas',
@@ -1993,6 +2025,7 @@ export const id: Dictionary = {
   'Without your logins': 'Tanpa login-mu',
   'Calls a minute': 'Panggilan per menit',
   'Pages a minute': 'Halaman per menit',
+  'Browser memory limit': 'Batas memori browser',
   '{count} calls': '{count} panggilan',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it

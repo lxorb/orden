@@ -438,6 +438,10 @@ share.post('/:id/share/invite', atLeast('owner'), about(), async (context) => {
   const may = await mayMail(context.env, email, machineOf(context.req))
   if (may.refusal) return refusedMail(context, may.refusal)
 
+  // What they held before, if anything: an invitation to somebody already in the space
+  // is a change of their role as much as `PATCH` is, and is told the same way below.
+  const before = held.find((one) => one.email === email)?.role
+
   const token = randomToken()
   await context.env.DB.prepare(
     `insert into space_members (space_id, email, item, role, invite_hash, expires_at, created_at)
@@ -456,6 +460,12 @@ share.post('/:id/share/invite', atLeast('owner'), about(), async (context) => {
   )
     .bind(space.id, email, scope.id)
     .run()
+
+  // A writer invited again as a reader may have a file of this one open, and a socket
+  // is not a request (#456): told now, as `PATCH /share/members` tells it.
+  if (before === 'write' && role === 'read') {
+    await roomsRevoked(context.env, space.id, await accountAt(context.env, email), 'read', scope.id)
+  }
 
   // Whether the mail went is not answered back. The gate is per address across
   // every space there is, so saying so would tell an owner whether somebody
@@ -637,6 +647,12 @@ share.post('/:id/share/requests/:email', atLeast('owner'), about(), async (conte
 
   if (!waiting) return context.json({ error: 'nobody by that address' }, 404)
 
+  const before = await context.env.DB.prepare(
+    'select role from space_members where space_id = ? and email = ? and item = ?',
+  )
+    .bind(space.id, email, scope.id)
+    .first<{ role: Given }>()
+
   // Already proved the address to have asked at all, so they are in rather than
   // invited: joined_at is set now and no mail goes anywhere. Set on a row that
   // was already there as well - an invitation nobody had opened - or accepting
@@ -657,6 +673,12 @@ share.post('/:id/share/requests/:email', atLeast('owner'), about(), async (conte
   )
     .bind(space.id, email, scope.id)
     .run()
+
+  // The role the request asked for replaces one they already held, so a writer whose
+  // request was for reading is a reader now, sockets and all (#456).
+  if (before?.role === 'write' && waiting.role === 'read') {
+    await roomsRevoked(context.env, space.id, await accountAt(context.env, email), 'read', scope.id)
+  }
 
   return context.json(await sharing(context.env, space, context.get('user'), scope))
 })

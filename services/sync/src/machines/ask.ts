@@ -14,6 +14,7 @@ export type MachineAsk =
   | 'state'
   | 'typing'
   | 'revoke'
+  | 'signedout'
   | 'end'
   | 'erase'
   | 'restart'

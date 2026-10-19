@@ -45,7 +45,7 @@ ERRANDS = """# Errands
 
 - [ ] Call the bank #admin 🔺 📅 {today}
 - [ ] Water the plants 📅 {today}
-- [ ] Pay rent #admin ⏫ 📅 {yesterday}
+- [ ] Pay rent #admin [deadline:: {yesterday}] ⏫ 📅 {yesterday}
 - [x] Bread ✅ {today} 📅 {today}
 - [ ] Dentist 📅 {later}
 """

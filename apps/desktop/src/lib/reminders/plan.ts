@@ -44,7 +44,8 @@ export function plan(
     const task = row.task
     if (row.kind !== 'task' || !task || !row.anchor) continue
 
-    for (const wall of remindTimes(task, auto)) {
+    // On the day it starts, as its space reads a `📅` (#371).
+    for (const wall of remindTimes(task, auto, task.dueReads)) {
       const at = momentOf(wall)
       if (!(at > now)) continue
       found.push({

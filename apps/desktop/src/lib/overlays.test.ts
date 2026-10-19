@@ -238,6 +238,58 @@ describe('a press past a popup', () => {
     off()
   })
 
+  /** #411: a popup that lays a catch over the window is closed on the tap's way down,
+   *  and the click that tap goes on to make lands on whatever is under the finger once
+   *  the catch is gone - on a phone, the button that opened it. */
+  describe('and the click of the press that closed it', () => {
+    const click = (target: unknown) => {
+      const said = { target: target as EventTarget, spent: false }
+      return {
+        ...said,
+        get spent() {
+          return said.spent
+        },
+        preventDefault: () => (said.spent = true),
+        stopImmediatePropagation: () => (said.spent = true),
+      }
+    }
+
+    test('is spent on the button that opened it, so it does not open it again', () => {
+      const { it } = popup()
+      overlays.pressed(press(new Box()))
+      const landed = click(it.opener)
+      overlays.clicked(landed)
+
+      expect(it.open).toBe(false)
+      expect(landed.spent).toBe(true)
+    })
+
+    test('is left alone anywhere else, and so is the next press s click', () => {
+      const { it } = popup()
+      overlays.pressed(press(new Box()))
+      const elsewhere = click(new Box())
+      overlays.clicked(elsewhere)
+      expect(elsewhere.spent).toBe(false)
+
+      // The press after, on the button: its own, which opens it again.
+      overlays.pressed(press(it.opener))
+      const again = click(it.opener)
+      overlays.clicked(again)
+      expect(again.spent).toBe(false)
+    })
+
+    test('a press on the button itself closes nothing and spends nothing', () => {
+      const { it, off } = popup()
+      overlays.pressed(press(it.opener))
+      const own = click(it.opener)
+      overlays.clicked(own)
+
+      expect(it.open).toBe(true)
+      expect(own.spent).toBe(false)
+      off()
+    })
+  })
+
   test('the window losing the focus closes every popup on top, and no sheet', () => {
     const offSheet = overlays.show(() => undefined)
     const one = popup()
@@ -370,7 +422,7 @@ describe('what hides a web page', () => {
    *  hidden; see web-tab/covers.ts. */
   test('the row floats over the panes rather than taking room from them', () => {
     const app = read('App.svelte')
-    const panes = app.slice(app.indexOf('<div class="panes" data-panes>'))
+    const panes = app.slice(app.indexOf('<div class="panes" data-panes'))
     const inPanes = panes.slice(0, panes.indexOf('\n        </div>'))
     expect(inPanes).toContain('{#if !viewport.drawer}\n            {@render notices()}')
 

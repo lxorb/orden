@@ -27,6 +27,26 @@ export const ptBR: Dictionary = {
   'Import from Zen': 'Importar do Zen',
   'Containers stay in Zen': 'Os contêineres ficam no Zen',
   'Zen’s tabs could not be read.': 'Não foi possível ler as abas do Zen.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'Os contêineres ficam no Firefox',
+  'Nothing could be read out of {browser}.': 'Não foi possível ler nada do {browser}.',
+  'Saved groups': 'Grupos salvos',
+  'Tab group': 'Grupo de abas',
+  'Bookmarks toolbar': 'Barra de favoritos',
+  'Bookmarks menu': 'Menu de favoritos',
+  'Other bookmarks': 'Outros favoritos',
+  'Mobile bookmarks': 'Favoritos do celular',
+  'Bookmarks bar': 'Barra de favoritos',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    'O {browser} guarda as abas abertas trancadas, então só os favoritos vieram.',
+  '{count} pages not on the web stay behind': {
+    many: '{count} páginas fora da web ficam para trás',
+    one: '{count} página fora da web fica para trás',
+    other: '{count} páginas fora da web ficam para trás',
+  },
+  'Reading List': 'Lista de Leitura',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'O macOS guarda as abas e os favoritos do Safari atrás do Acesso Total ao Disco. Ative o Orden lá e tente de novo.',
   // Settings: note types
   'Page note': 'Nota de páginas',
   'Web note': 'Nota da web',
@@ -97,8 +117,6 @@ export const ptBR: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'Dicas',
   'Silent mode': 'Modo silencioso',
-  'Sign in to keep your notes safe and on every device.':
-    'Entre para manter suas notas seguras e em todos os seus dispositivos.',
   'See how your notes connect.': 'Veja como suas notas se conectam.',
   'Press {key} to find anything, notes and commands alike.':
     'Pressione {key} para encontrar qualquer coisa, notas e comandos.',
@@ -120,11 +138,13 @@ export const ptBR: Dictionary = {
   '{count} h': '{count} h',
   Inbox: 'Caixa de entrada',
   Date: 'Data',
+  'Start date': 'Data de início',
   Priority: 'Prioridade',
   Reminder: 'Lembrete',
   Duration: 'Duração',
   'Smart dates': 'Datas inteligentes',
   'From any app': 'De qualquer app',
+  'Show tasks without a start date in Today': 'Mostrar em Hoje as tarefas sem data de início',
   'Every day': 'Todo dia',
   'Every weekday': 'Todo dia útil',
   'Every week': 'Toda semana',
@@ -168,6 +188,8 @@ export const ptBR: Dictionary = {
   Dots: 'Pontos',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'Girar uma tela com dois dedos',
+  'Turn upright': 'Endireitar',
   Canvas: 'Quadro',
   Card: 'Cartão',
   'Note or picture': 'Nota ou imagem',
@@ -243,6 +265,10 @@ export const ptBR: Dictionary = {
   Unpin: 'Desafixar',
   Close: 'Fechar',
   'Close pinned tab?': 'Fechar a aba fixada?',
+  'Save changes to {name}?': 'Salvar as alterações em {name}?',
+  'Save changes to these tabs?': 'Salvar as alterações nestas abas?',
+  'Unsaved words go to Recently deleted.': 'Palavras não salvas vão para Excluídos recentemente.',
+  'Don’t save': 'Não salvar',
   'Close others': 'Fechar as outras',
   'Close tabs to the right': 'Fechar abas à direita',
   'Close tabs to the left': 'Fechar abas à esquerda',
@@ -1172,6 +1198,7 @@ export const ptBR: Dictionary = {
   'Double-click to write': 'Clicar duas vezes para escrever',
   'Another colour': 'Outra cor',
   'Turn into a note': 'Virar uma nota',
+  Arrange: 'Organizar',
   'Bring to front': 'Trazer para a frente',
   'Bring forward': 'Trazer adiante',
   'Send backward': 'Enviar atrás',
@@ -1261,6 +1288,9 @@ export const ptBR: Dictionary = {
   Unstable: 'Instável',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'Estável segue as versões lançadas; Instável segue as compilações de ponta e pode quebrar.',
+  'Web version': 'Versão web',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'Estável é o app web lançado; Instável é a compilação mais recente e pode quebrar.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Importar',
@@ -1610,8 +1640,6 @@ export const ptBR: Dictionary = {
   // Web tabs
   Reload: 'Recarregar',
   'Hard reload': 'Recarregamento forçado',
-  'Clip this page': 'Salvar esta página',
-  'Clip the link': 'Salvar o link',
   'Open in the browser': 'Abrir no navegador',
   'Show it here': 'Mostrar aqui',
   Website: 'Site',
@@ -1746,7 +1774,6 @@ export const ptBR: Dictionary = {
   'New tab': 'Nova guia',
   'Full screen': 'Tela cheia',
   'Print…': 'Imprimir…',
-  'Save page': 'Salvar página',
   'Share…': 'Compartilhar…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1806,6 +1833,16 @@ export const ptBR: Dictionary = {
   'Bring all to front': 'Trazer tudo para a frente',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Desfazer a cópia',
+  'Devices with your AI vault': 'Dispositivos com o seu cofre de IA',
+  'This device': 'Este dispositivo',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'O dispositivo não poderá mais ler suas contas de IA, e os outros recebem uma chave nova.',
+  'Also remove this device from your AI vault?':
+    'Remover também este dispositivo do seu cofre de IA?',
+  'Remove and sign out': 'Remover e sair',
+  'Undo making {name}': 'Desfazer criar {name}',
+  'Undo the deletion': 'Desfazer a exclusão',
+  'Undo the move': 'Desfazer a movimentação',
   'Redo the last file change': 'Refazer a última alteração de arquivo',
   'Select down': 'Selecionar para baixo',
   'Select up': 'Selecionar para cima',
@@ -2030,6 +2067,7 @@ export const ptBR: Dictionary = {
   'Without your logins': 'Sem os seus logins',
   'Calls a minute': 'Chamadas por minuto',
   'Pages a minute': 'Páginas por minuto',
+  'Browser memory limit': 'Limite de memória do navegador',
   '{count} calls': {
     one: '{count} chamada',
     many: '{count} de chamadas',

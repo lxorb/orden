@@ -458,7 +458,9 @@ mod tests {
     /// Emil's ask): six tools, 2 101 characters, about 530 tokens, and listed only to a
     /// grant holding chats.read or chats.write. Raised to 34 500 on 2026-10-12 for helpers
     /// (Emil: "claude can create subagents of openai models"): two tools, about 1 000
-    /// characters, listed only to a grant holding agents.
+    /// characters, listed only to a grant holding agents. Raised to 35 000 on 2026-10-18
+    /// for a task's start date and deadline (#371): `add_task` names both marks, 56
+    /// characters, from a table at 34 499.
     #[test]
     fn the_table_stays_small() {
         let mut sizes = BTreeMap::new();
@@ -467,7 +469,7 @@ mod tests {
         }
         let total: usize = sizes.values().sum();
         assert!(
-            total < 34_500,
+            total < 35_000,
             "the tools are {total} characters: {sizes:?}"
         );
         for (name, size) in &sizes {

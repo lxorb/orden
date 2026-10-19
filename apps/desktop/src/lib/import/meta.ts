@@ -31,7 +31,7 @@ export type Property = FrontMatterRow[1]
 
 /** A front matter block, or nothing at all when there is nothing to say. Which
  *  rows there are is decided here - only what the export knew - and how each value
- *  is spelled is @nib/markdown/front-matter's, shared with the clipper so that a
+ *  is spelled is @nib/markdown/front-matter's, shared with a web tab's clip so that a
  *  clipped page and an imported note say the same thing the same way. */
 export function frontMatterFor(meta: Meta): string {
   const rows: FrontMatterRow[] = []

@@ -74,6 +74,10 @@ interface TextNode extends NodeBase {
   type: 'text'
   /** Plain text, with markdown syntax. */
   text: string
+  /** Words on the plane with no card round them: the Text tool's, as Miro's and a PDF
+   *  viewer's text tool put them (#421). A card to Obsidian, which reads `nodes` only;
+   *  which cards are bare is listed under `nib.words`. */
+  bare?: true
 }
 
 interface FileNode extends NodeBase {
@@ -360,7 +364,16 @@ function readNode(value: unknown): CanvasNode | null {
 
   switch (value.type) {
     case 'text':
-      return isString(value.text) ? { ...base, type: 'text', text: value.text } : null
+      // `bare` is never in a file's own record - the file lists them under `nib` - but
+      // a room keeps the node's fields as they are, and reads them back through here.
+      return isString(value.text)
+        ? {
+            ...base,
+            type: 'text',
+            text: value.text,
+            ...(value.bare === true ? { bare: true } : {}),
+          }
+        : null
     case 'file':
       if (!isString(value.file) || !value.file) return null
       return {
@@ -696,6 +709,14 @@ export function readCanvas(text: string): Canvas {
 
   const nib = isRecord(parsed.nib) ? parsed.nib : {}
 
+  // The cards that are words with no card round them; see `bare`.
+  if (Array.isArray(nib.words)) {
+    const bare = new Set(nib.words.filter(isString))
+    for (const [at, node] of nodes.entries()) {
+      if (node.type === 'text' && bare.has(node.id)) nodes[at] = { ...node, bare: true }
+    }
+  }
+
   if (Array.isArray(nib.shapes)) {
     for (const entry of nib.shapes) {
       const shape = readShape(entry)
@@ -981,6 +1002,9 @@ export function canvasRuns(canvas: Canvas): string[][] {
   // canvas of nothing but cards stacks in the order `nodes` already gives, and
   // a second list saying so again is noise in the file.
   const order = shapes.length ? canvas.nodes.map((node) => node.id) : []
+  const words = canvas.nodes
+    .filter((node) => node.type === 'text' && node.bare)
+    .map((node) => node.id)
   const at = Object.keys(canvas.at).length ? timeLines(canvas.at) : null
   const gone = Object.keys(canvas.gone).length ? timeLines(canvas.gone) : null
   // First in `nib`, because it is the one key in there a person would ever open the
@@ -990,7 +1014,7 @@ export function canvasRuns(canvas: Canvas): string[][] {
     canvas.icon && canvas.iconColor ? `,\n\t\t"iconColor": ${JSON.stringify(canvas.iconColor)}` : ''
   const nib =
     icon !== '' ||
-    [pages, canvas.ink, shapes, order].some((list) => list.length > 0) ||
+    [pages, canvas.ink, shapes, order, words].some((list) => list.length > 0) ||
     at !== null ||
     gone !== null
 
@@ -1017,6 +1041,7 @@ export function canvasRuns(canvas: Canvas): string[][] {
     [
       closes(2, shapes.length) +
         (order.length ? `,\n\t\t"order": ${printed(order, 2)}` : '') +
+        (words.length ? `,\n\t\t"words": ${printed(words, 2)}` : '') +
         (at ? ',\n\t\t"at": ' : ''),
     ],
     at ?? [],

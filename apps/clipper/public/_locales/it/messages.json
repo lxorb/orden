@@ -1,9 +1,0 @@
-{
-  "name": { "message": "Orden" },
-  "description": {
-    "message": "Ritaglia una pagina, una selezione o un link nelle tue note di Orden."
-  },
-  "clipPage": { "message": "Ritaglia la pagina" },
-  "clipSelection": { "message": "Ritaglia la selezione" },
-  "clipLink": { "message": "Ritaglia il link" }
-}

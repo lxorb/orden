@@ -99,6 +99,27 @@ const sheet = {
   answer: null as string | null,
 }
 
+/** The page note an older build wrote beside `paper.pdf`, its one page naming the
+ *  paper: what opening the paper takes for its own, moving the paper in under it.
+ *  Fresh page notes are made out of pdf.js's reading of the paper, which node has not
+ *  got; see pages/from-pdf.test.ts and naming.store.test.ts for those. */
+const BESIDE_PAPER = JSON.stringify({
+  nodes: [
+    {
+      id: 'p1',
+      type: 'file',
+      file: 'paper.pdf',
+      subpath: '#page=1',
+      x: -397,
+      y: 0,
+      width: 794,
+      height: 1123,
+    },
+  ],
+  edges: [],
+  nib: { version: 1, pages: [{ id: 'p1', paper: 'a4', pattern: 'blank' }] },
+})
+
 vi.mock('./prompt.svelte', () => ({
   prompt: {
     choose: (options: { title: string }) => {
@@ -106,6 +127,19 @@ vi.mock('./prompt.svelte', () => ({
       return Promise.resolve(sheet.answer)
     },
   },
+}))
+
+/** Save's layer, which a tab with unsaved words closed with Save opens: the tab it was
+ *  asked for, and what it calls once that tab has its file. */
+const placing = vi.hoisted(() => ({
+  asked: [] as { tab: string | null; saved: (() => void) | undefined }[],
+}))
+
+vi.mock('./save-place/door', () => ({
+  askPlace: (tab?: string | null, saved?: () => void) => {
+    placing.asked.push({ tab: tab ?? null, saved })
+  },
+  saveFront: () => undefined,
 }))
 
 function memoryStorage(): Storage {
@@ -282,8 +316,8 @@ describe('previewing every kind of file', () => {
   const OTHER_SITE = '/space/other.url'
   const DECK = '/space/deck.pages'
   const PAPER = '/space/paper.pdf'
-  /** A paper opens its companion page note, which is the tab a click on the paper's
-   *  row lands in; see `openPdf` in workspace.svelte.ts. */
+  /** A paper opens as the page note it becomes, which is the tab a click on the
+   *  paper's row lands in; see `openPdf` in workspace.svelte.ts. */
   const PAPER_PAGES = '/space/paper.pages'
   const PLANE = '/space/plan.canvas'
 
@@ -302,10 +336,8 @@ describe('previewing every kind of file', () => {
     notes[SITE] = '[InternetShortcut]\r\nURL=https://example.com/\r\n'
     notes[OTHER_SITE] = '[InternetShortcut]\r\nURL=https://example.org/\r\n'
     notes[DECK] = '{}'
-    // The paper's page note is already on disk, which is a paper somebody has
-    // opened before: the first open is the one that writes it, out of the sizes
-    // pdf.js reads off the paper, and there is no pdf.js under node.
-    notes[PAPER_PAGES] = '{}'
+    // The paper's page note from an older build, which the first open takes in.
+    notes[PAPER_PAGES] = BESIDE_PAPER
     workspace.tabs = []
     workspace.activeTabId = null
     workspace.previewTabId = null
@@ -771,6 +803,24 @@ describe('selecting several rows', () => {
     spy.mockRestore()
   })
 
+  /** One press of Delete on a selection is one Ctrl+Z (#399). */
+  test('and deleting several is one step to undo', async () => {
+    const spy = vi.spyOn(workspace, 'remove').mockImplementation(async (path: string) => {
+      workspace.undone.record({ kind: 'delete', path, content: '' })
+    })
+    await workspace.removeMany(['/space/a.md', '/space/d.md'])
+
+    expect(workspace.undone.last).toEqual({
+      kind: 'many',
+      steps: [
+        { kind: 'delete', path: '/space/a.md', content: '' },
+        { kind: 'delete', path: '/space/d.md', content: '' },
+      ],
+    })
+    expect(workspace.undoLabel).toBe('Undo the deletion')
+    spy.mockRestore()
+  })
+
   test('the selection empties with the space', async () => {
     workspace.select('/space/a.md')
     workspace.spaces = [{ id: 'one', name: 'One', root: '/space' }]
@@ -865,6 +915,41 @@ describe('nesting a note in a note', () => {
     ).toEqual(['/space/a'])
   })
 
+  /** The note that went in first and the rows that followed it are one drop, and one
+   *  undo takes them out again with the folder they made (#399). */
+  test('a drop that nests is one step, and undoing it takes the folder away', async () => {
+    await workspace.moveMany(['/space/d.md'], '/space/a')
+    expect(workspace.undone.last).toMatchObject({
+      kind: 'many',
+      steps: [
+        { kind: 'move', from: '/space/a.md', to: '/space/a/a.md', nests: true },
+        { kind: 'move', from: '/space/d.md', to: '/space/a/d.md' },
+      ],
+    })
+
+    sent.length = 0
+    await workspace.undoFileAction()
+    expect(
+      sent
+        .filter((one) => one.command === 'rename_note' || one.command === 'remove_empty_folder')
+        .map((one) => one.command + ' ' + one.path),
+    ).toEqual(['rename_note ', 'rename_note ', 'remove_empty_folder /space/a'])
+    expect(workspace.undone.next?.kind).toBe('many')
+  })
+
+  test('and the last row dragged back out is one step with the unnesting it caused', async () => {
+    await workspace.moveMany(['/space/d.md'], '/space/a')
+    await workspace.moveMany(['/space/a/d.md'], '/space')
+
+    expect(workspace.undone.last).toMatchObject({
+      kind: 'many',
+      steps: [
+        { kind: 'move', from: '/space/a/d.md', to: '/space/d.md' },
+        { kind: 'move', from: '/space/a/a.md', to: '/space/a.md', follows: true },
+      ],
+    })
+  })
+
   test('a note dropped on a folder that is a folder is the plain move it always was', async () => {
     workspace.tree = folder('/space', [
       folder('/space/f', [note('/space/f/b.md')]),
@@ -873,6 +958,96 @@ describe('nesting a note in a note', () => {
     await workspace.moveMany(['/space/d.md'], '/space/f')
 
     expect(shown(workspace.tree)).toEqual(['/space/f', '/space/f/b.md', '/space/f/d.md'])
+  })
+})
+
+describe('a file in the Essentials', () => {
+  const note = (path: string): Entry => ({
+    name: path.split('/').pop()!,
+    path,
+    is_dir: false,
+    modified: 0,
+    created: 0,
+    children: [],
+  })
+  const folder = (path: string, children: Entry[]): Entry => ({
+    name: path.split('/').pop()!,
+    path,
+    is_dir: true,
+    modified: 0,
+    created: 0,
+    children,
+  })
+
+  const shown = (entry: Entry | null): string[] =>
+    !entry
+      ? []
+      : entry.children.flatMap((child) => [child.path, ...shown(child.is_dir ? child : null)])
+
+  const mark = (path: string) => ({ kind: 'note' as const, path, text: '' })
+
+  beforeEach(() => {
+    workspace.spaces = [{ id: 'one', name: 'One', root: '/space' }]
+    workspace.activeSpaceId = 'one'
+    workspace.tree = folder('/space', [
+      note('/space/a.md'),
+      note('/space/Board.canvas'),
+      note('/space/Lecture.pages'),
+      note('/space/Site.web'),
+      folder('/space/f', [note('/space/f/b.md')]),
+    ])
+    workspace.device.expanded = { '/space/f': true }
+    workspace.panel = null
+    workspace.revealing = null
+    for (const one of workspace.bookmarks.list) workspace.bookmarks.toggle(one)
+  })
+
+  afterEach(() => {
+    for (const one of workspace.bookmarks.list) workspace.bookmarks.toggle(one)
+    workspace.activeSpaceId = null
+  })
+
+  test('is in the Essentials and not in the file list as well, whatever kind it is', () => {
+    for (const one of ['a.md', 'Board.canvas', 'Lecture.pages', 'Site.web', 'f/b.md']) {
+      workspace.bookmarks.toggle(mark(one))
+    }
+
+    expect(shown(workspace.shownTree)).toEqual(['/space/f'])
+    expect(workspace.visibleRows()).toEqual(['/space/f'])
+  })
+
+  test('and taken out of them is back in the list', () => {
+    workspace.bookmarks.toggle(mark('Board.canvas'))
+    expect(shown(workspace.shownTree)).not.toContain('/space/Board.canvas')
+
+    workspace.bookmarks.toggle(mark('Board.canvas'))
+    expect(shown(workspace.shownTree)).toContain('/space/Board.canvas')
+  })
+
+  test('is only left out of what is drawn: the disk and the files still hold it', () => {
+    workspace.bookmarks.toggle(mark('a.md'))
+
+    expect(shown(workspace.tree)).toContain('/space/a.md')
+    expect(workspace.files.map((one) => one.path)).toContain('/space/a.md')
+    expect(workspace.notes.map((one) => one.path)).toContain('/space/a.md')
+  })
+
+  test('a folder, a heading and a search kept there leave the list alone', () => {
+    workspace.bookmarks.toggle({ kind: 'folder', path: 'f', text: '' })
+    workspace.bookmarks.toggle({ kind: 'heading', path: 'a.md', text: 'Plan' })
+    workspace.bookmarks.toggle({ kind: 'search', path: '', text: 'plan' })
+
+    expect(shown(workspace.shownTree)).toContain('/space/f')
+    expect(shown(workspace.shownTree)).toContain('/space/f/b.md')
+    expect(shown(workspace.shownTree)).toContain('/space/a.md')
+  })
+
+  test('is shown where its row is when it is asked for, which is not the list', () => {
+    workspace.bookmarks.toggle(mark('f/b.md'))
+    workspace.revealNote('/space/f/b.md')
+
+    expect(workspace.panel).toBe('tree')
+    expect(workspace.revealing).toBeNull()
   })
 })
 
@@ -2639,6 +2814,113 @@ describe('a new tab', () => {
   })
 })
 
+/** Emil, 2026-10-15 (#359): *"when closing something that's unsaved (e.g. a note) then
+ *  you should get a warning modal"*. A tab with no file and words in it asks, once for
+ *  every such tab a gesture closes; nothing else does. See workspace/closing-unsaved.ts. */
+describe('closing a tab with unsaved words', () => {
+  beforeEach(() => {
+    onePane()
+    workspace.spaces = [{ id: 's', name: 'Notes', root: '/space' }]
+    workspace.activeSpaceId = 's'
+    workspace.closed.stack = []
+    trash.length = 0
+    sheet.asked = []
+    sheet.answer = null
+    placing.asked = []
+  })
+
+  function draft(words: string) {
+    workspace.openBlank()
+    const tab = workspace.active
+    if (!tab) throw new Error('no blank tab')
+    tab.note.live.replace(words)
+    return tab
+  }
+
+  const open = (id: string) => workspace.tabs.some((one) => one.id === id)
+
+  test('asks before it goes, and Cancel keeps it with its words', async () => {
+    const tab = draft('# Plan\n\nwords')
+
+    await workspace.closeAsking(tab.id)
+
+    expect(sheet.asked).toEqual([`Save changes to ${tab.shown}?`])
+    expect(open(tab.id)).toBe(true)
+    expect(tab.note.blank).toBe(false)
+    expect(trash).toEqual([])
+  })
+
+  test('Don’t save closes it, its words in Recently deleted and on the closed stack', async () => {
+    const tab = draft('# Plan\n\nwords')
+    sheet.answer = 'discard'
+
+    await workspace.closeAsking(tab.id)
+    await vi.waitFor(() => expect(workspace.closed.stack.at(-1)?.trashed).toBe('t1'))
+
+    expect(open(tab.id)).toBe(false)
+    expect(trash).toEqual([{ id: 't1', path: '/space/Plan.md', content: '# Plan\n\nwords' }])
+  })
+
+  test('Save asks where, keeps the tab until it is saved, and then closes it', async () => {
+    const tab = draft('# Plan\n\nwords')
+    sheet.answer = 'save'
+
+    await workspace.closeAsking(tab.id)
+    await vi.waitFor(() => expect(placing.asked).toHaveLength(1))
+
+    expect(placing.asked[0]?.tab).toBe(tab.id)
+    expect(open(tab.id)).toBe(true)
+
+    await workspace.save(tab, '/space', 'Plan.md')
+    placing.asked[0]?.saved?.()
+    await vi.waitFor(() => expect(open(tab.id)).toBe(false))
+    expect(sheet.asked).toHaveLength(1)
+    expect(trash).toEqual([])
+  })
+
+  test('Ctrl+W on a pinned one asks about its words, and not also whether to close it', async () => {
+    const tab = draft('# Plan')
+    workspace.togglePin(tab.id)
+    sheet.answer = 'discard'
+
+    await workspace.closeActive()
+
+    expect(sheet.asked).toEqual([`Save changes to ${tab.shown}?`])
+    expect(open(tab.id)).toBe(false)
+  })
+
+  test('several close with one question, and Save gives each its file first', async () => {
+    const one = draft('# One')
+    const two = draft('# Two')
+    sheet.answer = 'save'
+
+    await workspace.closeMany([one.id, two.id])
+
+    expect(sheet.asked).toEqual(['Save changes to these tabs?'])
+    expect(open(one.id) || open(two.id)).toBe(false)
+    expect(trash).toEqual([])
+    expect(sent.filter((call) => call.command === 'write_note').map((call) => call.path)).toEqual(
+      expect.arrayContaining(['/space/One.md', '/space/Two.md']),
+    )
+  })
+
+  test('asks nothing of an empty new tab, a note with a file, or a website', async () => {
+    workspace.openBlank()
+    const empty = workspace.active
+    await workspace.open('/space/a.md')
+    const note = workspace.tabs.find((one) => one.path === '/space/a.md')
+    workspace.openWebsite()
+    const site = workspace.active
+    if (!empty || !note || !site) throw new Error('nothing opened')
+    note.note.live.replace('# a, typed')
+
+    await workspace.closeMany([empty.id, note.id, site.id])
+
+    expect(sheet.asked).toEqual([])
+    expect(workspace.tabs).toEqual([])
+  })
+})
+
 describe('a note writes itself, wherever it is', () => {
   const WELCOME = '/Notes/Read me.md'
 
@@ -3016,7 +3298,7 @@ describe('a canvas that comes back after a restart', () => {
    *  `pdf`. There is no such surface any more, so the restore brings the paper's
    *  page note forward in its place; see `restore` in workspace.svelte.ts. */
   test('a paper from an older sitting comes back as its page note', async () => {
-    notes['/space/paper.pages'] = '{}'
+    notes['/space/paper.pages'] = BESIDE_PAPER
 
     try {
       await workspace.applyLayout(drafted('pdf', '/space/paper.pdf'))
@@ -3360,10 +3642,10 @@ describe('what a document is called on screen', () => {
     expect(workspace.active?.shown).toBe('plan')
   })
 
-  /** A paper has no tab of its own any more: it opens the page note beside it, and
-   *  that note is named the way every page note is. */
+  /** A paper has no tab of its own any more: it opens as its page note, and that
+   *  note is named the way every page note is. */
   test('is the page note a paper opens', async () => {
-    notes['/space/paper.pages'] = '{}'
+    notes['/space/paper.pages'] = BESIDE_PAPER
 
     try {
       await workspace.openPdf('/space/paper.pdf')
@@ -4301,7 +4583,7 @@ describe('a tab asked for with a modifier', () => {
   })
 
   test('a paper followed the same way opens behind too, as its page note', async () => {
-    notes['/space/paper.pages'] = '{}'
+    notes['/space/paper.pages'] = BESIDE_PAPER
     await workspace.open('/space/a.md')
     const reading = workspace.active
 

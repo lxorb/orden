@@ -278,6 +278,22 @@ export async function listThreads(space: string): Promise<ThreadHead[]> {
   return heads.sort((a, b) => b.updated - a.updated)
 }
 
+/** A line of the one list the panel shows: a thread's head and the space it is kept in. */
+export type Listed = ThreadHead & { space: string }
+
+/** Every space's threads as one list, newest first (#332): the panel's chats are not the
+ *  space's, so a space changing changes none of them. Each is still kept in the space it
+ *  was asked in, which is where it reads and writes, and that space is on its line. A
+ *  space whose list cannot be read leaves its threads out of this list and no other. */
+export async function listEveryThread(spaces: readonly string[]): Promise<Listed[]> {
+  const each = await Promise.all(
+    [...new Set(spaces)].map(async (space) =>
+      (await listThreads(space).catch(() => [])).map((head) => ({ ...head, space })),
+    ),
+  )
+  return each.flat().sort((a, b) => b.updated - a.updated)
+}
+
 /** One thread, whole, or null where there is none to read. */
 export async function readThread(space: string, id: string): Promise<Thread | null> {
   let text: string | null

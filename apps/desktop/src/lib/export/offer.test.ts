@@ -153,9 +153,27 @@ function memoryStorage(): Storage {
 
 const CANVAS = '{"nodes":[],"edges":[]}'
 
+/** A PDF becomes its page note the first time it is opened, out of the page sizes
+ *  pdf.js reads off it, and node has no pdf.js: the paper here is one A4 page. */
+vi.mock('../pdf/document', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../pdf/document')>()),
+  pageSizes: () => Promise.resolve([{ width: 794, height: 1123 }]),
+}))
+
+/** The page notes written here, which a paper's first open makes. */
+const written = vi.hoisted(() => new Map<string, string>())
+
 vi.mock('../tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../tauri')>()),
-  invoke: (command: string) => Promise.resolve(command === 'read_note' ? CANVAS : undefined),
+  invoke: (command: string, args?: { path?: string; content?: string }) => {
+    const path = args?.path ?? ''
+    if (command === 'write_note') written.set(path, args?.content ?? '')
+    if (command !== 'read_note') return Promise.resolve(undefined)
+    // A canvas wherever one is asked for, but a page note only once it is written and
+    // a paper never as words.
+    const held = written.get(path) ?? (/\.(pages|pdf)$/.test(path) ? undefined : CANVAS)
+    return held === undefined ? Promise.reject(new Error(`no ${path}`)) : Promise.resolve(held)
+  },
 }))
 
 vi.stubGlobal('localStorage', memoryStorage())
@@ -217,8 +235,8 @@ describe('the menu, the palette and the shortcut settings', () => {
     expect(menuLabels()).toEqual(['Export as PNG', 'Export as SVG', 'Export as PDF'])
   })
 
-  /** A paper has no tab of its own: it opens the page note beside it, so what
-   *  Export offers is what a set of pages offers. */
+  /** A paper has no tab of its own: it opens as its page note, so what Export
+   *  offers is what a set of pages offers. */
   test('offer a paper what its page note offers', async () => {
     await only(() => workspace.openPdf('/space/paper.pdf'))
     expect(offeredIds()).toEqual([...offeredBy('pages')])

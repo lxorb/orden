@@ -10,6 +10,9 @@ What only a browser can answer about src/lib/back-swipe and src-tauri/src/web_sw
     and close up at scales of 1, 1.25, 1.5 and 2, where it has to sit on whole pixels of
     the screen to be drawn sharp (#209: "the animation and the icon itself look very
     pixelated");
+  - a sweep over a wide table a little way from its edge scrolls the table and nothing
+    else - no arrow, no step, the note where it was - and the same sweep over the words
+    beside it goes back (#407);
   - the page script in a site's page says each sideways scroll the page left over, and
     says that the page took it where a scroller in the page could still move, where the
     page keeps its overscroll (`overscroll-behavior-x: none`, Google Sheets' line), and
@@ -250,10 +253,13 @@ PAGE = f"""<!doctype html>
   #row {{ width: 400px; overflow-x: auto; white-space: nowrap }}
   #row div {{ display: inline-block; width: 300px; height: 80px; background: #ccd }}
   #map {{ width: 400px; height: 120px; background: #dfd }}
+  #short {{ width: 400px; overflow-x: auto; white-space: nowrap }}
+  #short div {{ display: inline-block; width: 430px; height: 60px; background: #edc }}
 </style>
 <p id="words">Words.</p>
 <div id="row"><div></div><div></div><div></div></div>
 <div id="map">A map.</div>
+<div id="short"><div></div></div>
 <script>
   window.said = []
   window.open = (url, name) => {{
@@ -261,6 +267,7 @@ PAGE = f"""<!doctype html>
     return null
   }}
   document.getElementById('row').scrollLeft = 200
+  document.getElementById('short').scrollLeft = 4
   document.getElementById('map').addEventListener('wheel', (event) => event.preventDefault(), {{ passive: false }})
 </script>
 <script>{SCRIPT}</script>
@@ -327,11 +334,113 @@ def page_script(browser: Browser) -> None:
         wrong(f"a page that keeps its overscroll did not keep it: {json.dumps(contained)}")
     else:
         say("ok   overscroll-behavior-x: none keeps the swipe out")
+    # A scroller with only a little way to go, which a passive listener hears from after
+    # the scroll that took it to its edge: the stream moved it, so it is the page's
+    # (#407), and nothing of it is said as left over. On a page of its own, because in
+    # headless Chromium a sideways sweep over the words leaves the next ones scrolling
+    # nothing at all.
+    page.close()
+    page = DRIVE.page(browser, viewport={"width": 800, "height": 600})
+    page.set_content(PAGE)
+    short = heard("#short", 150)
+    DRIVE.waited(
+        page,
+        "document.getElementById('short').scrollLeft <= 0.5",
+        "the short scroller to scroll to its edge",
+        5,
+    )
+    if not short or not all(one.get("l") and one.get("r") for one in short):
+        wrong(f"a scroll that moved a scroller to its edge was said as left over: {json.dumps(short)}")
+    else:
+        say("ok   a stream that moved a scroller is the scroller's, to its edge and past it")
+    page.close()
+
+
+#: The note's wide table, scrolled to a little way short of its left edge.
+SHORT_OF_THE_EDGE = """() => {
+  const table = document.querySelector('.nib-table-scroll')
+  if (!table) return null
+  table.scrollLeft = 4
+  return { left: table.scrollLeft, x: document.querySelector('.cm-content').getBoundingClientRect().x }
+}"""
+
+#: Whether the arrow is out, polled while a sweep goes on.
+ARROW_SEEN = """() => {
+  window.__arrow = false
+  const look = () => {
+    if (document.querySelector('.nib-swipe')) window.__arrow = true
+    window.__looking = requestAnimationFrame(look)
+  }
+  look()
+}"""
+
+
+def latched(browser: Browser) -> None:
+    """#407: a sideways scroll over something that scrolls sideways scrolls it, and the
+    pane does not go with it. A wide table a little way from its edge is scrolled to the
+    edge and past it in one sweep towards Back: the table moves, no arrow comes in at any
+    point, nothing steps, and the note stays where it was. Over the words beside it, which
+    do not scroll sideways, the same sweep brings the arrow in and goes back."""
+    page = DRIVE.page(browser, viewport={"width": 1180, "height": 820})
+    page.add_init_script("performance.setResourceTimingBufferSize(10000)")
+    DRIVE.open(page)
+    wide = "| a | b |\n|---|---|\n| " + "longword" * 60 + " | y |\n"
+    DRIVE.seed(page, "# Alpha\n\nThe first note.\n", f"# Beta\n\nThe second note.\n\n{wide}")
+    page.evaluate(TRAIL)
+    wait_for(page, "window.nibApp.workspace.active?.canGoBack", "a tab with somewhere to go back to")
+    wait_for(
+        page,
+        "performance.getEntriesByType('resource').some((one) => /\\/swipes-[^/]*\\.js$/.test(one.name))",
+        "what hears a swipe",
+    )
+    wait_for(page, "document.querySelector('.nib-table-scroll')", "the wide table")
+    DRIVE.settled(page)
+
+    before = page.evaluate(SHORT_OF_THE_EDGE)
+    box = page.locator(".nib-table-scroll").first.bounding_box()
+    if before is None or box is None:
+        wrong("no wide table on screen")
+        page.close()
+        return
+    page.evaluate(ARROW_SEEN)
+    sweep(page, box["x"] + box["width"] / 2, box["y"] + box["height"] / 2, 400)
+    lifted(page)
+    after = page.evaluate(
+        """() => ({
+          left: document.querySelector('.nib-table-scroll').scrollLeft,
+          x: document.querySelector('.cm-content').getBoundingClientRect().x,
+          arrow: window.__arrow,
+        })"""
+    )
+    page.evaluate("cancelAnimationFrame(window.__looking)")
+    say(f"the table from {before} to {after}, the note {front(page)!r}")
+    if after["left"] > 0.5:
+        wrong(f"the table did not scroll to its edge: {after['left']}")
+    if after["arrow"]:
+        wrong("the arrow came in over a table the sweep was scrolling")
+    if not front(page).startswith("Beta"):
+        wrong(f"a sweep that scrolled the table went back: {front(page)}")
+    if after["x"] != before["x"]:
+        wrong(f"the note moved with the sweep: {before['x']} to {after['x']}")
+    shot(page, "latched-table")
+
+    words = page.locator(".cm-content .cm-line").first.bounding_box()
+    assert words is not None
+    page.evaluate(ARROW_SEEN)
+    sweep(page, words["x"] + 40, words["y"] + words["height"] / 2, 700)
+    lifted(page)
+    arrow = page.evaluate("window.__arrow")
+    page.evaluate("cancelAnimationFrame(window.__looking)")
+    if not arrow:
+        wrong("over words that do not scroll sideways, the arrow never came in")
+    on(page, "Alpha", "back on Alpha from the words")
+    say("ok   a table scrolled is the table's; the words beside it go back")
     page.close()
 
 
 def drive(browser: Browser) -> None:
     page_script(browser)
+    latched(browser)
     for scheme in ("light", "dark"):
         notes(browser, scheme)
     for scale in (1, 1.25, 1.5, 2):

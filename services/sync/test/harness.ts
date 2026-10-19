@@ -324,6 +324,8 @@ interface SpaceView {
   /** The order each folder of its tree was arranged into, by the folder's path; see
    *  0037. */
   arranged: Record<string, string[]>
+  /** Which order its file list is read in; see spaces/sort.ts. */
+  sort: string
   /** What it has archived, a moment per path; see 0041. */
   archived: Record<string, number>
   createdAt: number

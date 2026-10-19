@@ -2,6 +2,12 @@
  *  Ctrl, files dropped onto the list from outside the app, and a PDF another program
  *  opened with nib.
  *
+ *  A PDF that comes in from outside on its own - dropped, or opened with nib - is a
+ *  page note the moment it has landed, holding the paper (pages/from-pdf.ts): the
+ *  file list gains one row, the page note. One inside a dropped folder is that
+ *  folder's, the attachment a note in it may point at, and stays the file it is until
+ *  somebody opens it.
+ *
  *  Nothing is written over. A row copied beside itself is `Plan copy.md`, the word
  *  Duplicate has always used, and a file dropped in from outside that meets a name
  *  already there steps aside by number the way a new note does - `Plan 2.md` -
@@ -15,6 +21,7 @@
  *
  *  However many rows one copy made, it is one thing to undo. */
 
+import { isPdfTarget } from '@nib/markdown/links'
 import { toBase64 } from '../bytes'
 import { folderNote, isFolderNote } from '../folder-notes'
 import type { Picked } from '../import/sources'
@@ -38,6 +45,8 @@ export interface Copies {
   freeName(dir: string, wanted: string): string
   fileMoved(from: string, to: string, kind: 'file'): Promise<void>
   fileCame(path: string, kind: 'file' | 'folder'): Promise<void>
+  /** A PDF that has just landed, as the page note it becomes; see pages/from-pdf.ts. */
+  pageNoteForPdf(path: string): Promise<string | null>
 }
 
 /** One row to copy, and the folder it goes into. */
@@ -78,19 +87,21 @@ interface Landed {
 
 /** A PDF another program opened with nib, brought into the space at `root` by the
  *  crate, which reads it from where it is: the copy already in the space when there
- *  is one with the same bytes, else a new one at the top. A new one is a copy like any
- *  other here - on the list, in the link index and one undo away. Null when it could
- *  not be brought in. */
+ *  is one with the same bytes - a paper a page note holds among them - else a new one
+ *  at the top. A new one is a copy like any other here - on the list, in the link
+ *  index and one undo away - and is its page note by the time this answers, which is
+ *  the path that comes back. Null when it could not be brought in. */
 export async function broughtPdf(ws: Copies, from: string, root: string): Promise<string | null> {
   const landed = await invoke<Landed>('bring_in_pdf', { from, space: root }).catch(() => null)
   if (!landed) return null
 
-  if (landed.fresh) {
-    ws.showEntry(ws.freshEntry(landed.path, false))
-    await ws.fileCame(landed.path, 'file')
-    ws.undone.record({ kind: 'copy', made: [{ path: landed.path, folder: false }] })
-  }
-  return landed.path
+  if (!landed.fresh) return landed.path
+
+  ws.showEntry(ws.freshEntry(landed.path, false))
+  await ws.fileCame(landed.path, 'file')
+  const path = (await ws.pageNoteForPdf(landed.path)) ?? landed.path
+  ws.undone.record({ kind: 'copy', made: [{ path, folder: false }] })
+  return path
 }
 
 /** Copies rows of the space, each into its own folder, and answers where each
@@ -190,6 +201,10 @@ export async function bringIn(
       const bytes = new Uint8Array(await file.arrayBuffer())
       if (readsWords(path)) await writeFile(path, new TextDecoder().decode(bytes))
       else await writeBytes(path, toBase64(bytes))
+
+      if (!rest.length && isPdfTarget(path)) {
+        at.path = (await ws.pageNoteForPdf(path)) ?? path
+      }
     }
   } finally {
     if (landed.size) ws.undone.record({ kind: 'copy', made: [...landed.values()] })

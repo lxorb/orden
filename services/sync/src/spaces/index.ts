@@ -11,6 +11,7 @@ import { readBody } from '../body'
 import { chunks } from '../bound'
 import { now } from '../crypto'
 import { releaseDomain } from '../hostnames'
+import { spaceEnded } from '../rooms'
 import { facesIn } from '../people/seen'
 import type { Env, Space, Variables, Whoever } from '../types'
 import { spaceArranged } from './arranged'
@@ -19,6 +20,7 @@ import { spaceExcluded } from './excluded'
 import { spaceArchived } from './archived'
 import { spaceFiles } from './files'
 import { spaceGraph } from './graph'
+import { spaceSort } from './sort'
 import { folderIcons, isIcon, isTint } from './icons'
 import { answers } from './answers'
 import { site } from './site'
@@ -277,6 +279,10 @@ spaces.delete('/:id', atLeast('owner'), async (context) => {
 
   if (space.blog_domain) await releaseDomain(context.env, space.blog_domain)
 
+  // And whatever of it anybody has open, which a deleted row does not reach; see
+  // `spaceEnded`.
+  await spaceEnded(context.env, space.id)
+
   return context.json({ ok: true })
 })
 
@@ -293,6 +299,7 @@ spaces.route('/', bookmarks)
 spaces.route('/', folderIcons)
 spaces.route('/', spaceArranged)
 spaces.route('/', spaceGraph)
+spaces.route('/', spaceSort)
 spaces.route('/', spaceExcluded)
 spaces.route('/', spaceArchived)
 spaces.route('/', spaceFiles)

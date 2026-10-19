@@ -8,6 +8,7 @@
  *  but for `saveProjectCsv`, which reads the note and hands the file over. */
 
 import { csvText, type Row } from '@nib/bases'
+import { deadlineOf, startOf } from '@nib/markdown/task-dates'
 import { deliver } from '../export/save'
 import { t } from '../i18n.svelte'
 import { rows as store } from '../rows/rows.svelte'
@@ -65,7 +66,9 @@ export function todoistCsv(tasks: readonly Row[], comments: (line: number) => st
     }
     if (level === 1) section = heading
     const labels = task.tags.filter((tag) => !task.text.includes(`#${tag}`))
-    const day = task.due ?? task.scheduled
+    // Todoist's date is the day a task starts; its deadline is ours (#371).
+    const day = startOf(task, task.dueReads) ?? task.scheduled
+    const deadline = deadlineOf(task, task.dueReads)
     out.push(
       line({
         TYPE: 'task',
@@ -77,8 +80,8 @@ export function todoistCsv(tasks: readonly Row[], comments: (line: number) => st
         DATE_LANG: day || task.recurrence ? 'en' : '',
         DURATION: task.duration === undefined ? '' : String(task.duration),
         DURATION_UNIT: task.duration === undefined ? '' : 'minute',
-        DEADLINE: task.deadline ?? '',
-        DEADLINE_LANG: task.deadline ? 'en' : '',
+        DEADLINE: deadline ?? '',
+        DEADLINE_LANG: deadline ? 'en' : '',
       }),
     )
     for (const words of comments(at)) out.push(line({ TYPE: 'note', CONTENT: words }))

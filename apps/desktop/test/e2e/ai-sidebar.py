@@ -360,8 +360,8 @@ def drive(browser: Browser, scheme: str) -> None:
     if page.locator(".ask .controls .mode").text_content().strip() != "Approve":
         wrong("Shift+Tab went into Full permissions instead of back to Approve")
 
-    # The mode's own menu: the three permission modes and Plan, Full permissions set apart,
-    # and choosing it says so in the danger tone.
+    # The mode's own menu: the three permission modes and Plan, Full permissions a row like
+    # the others, and choosing it says so in the button's tooltip and never in red (#372).
     page.locator(".ask .controls .mode").click()
     waited(page, "document.querySelector('.menu [role=menuitem]')", "the mode menu")
     rows = page.locator(".menu [role=menuitem]").all_inner_texts()
@@ -371,12 +371,26 @@ def drive(browser: Browser, scheme: str) -> None:
     page.wait_for_timeout(300)
     shot(page, f"{tag}04b-modes")
     page.locator(".menu [role=menuitem]", has_text="Full permissions").click()
-    waited(page, "document.querySelector('.ask .controls .mode.full')", "Full permissions in its tone")
+    full = "document.querySelector('.ask .controls .mode')?.title.startsWith('Full permissions')"
+    waited(page, full, "Full permissions on the button")
+    red = page.evaluate(
+        """() => {
+          const mode = document.querySelector('.ask .controls .mode')
+          const probe = document.createElement('span')
+          probe.style.color = 'var(--danger)'
+          mode.parentElement.append(probe)
+          const danger = getComputedStyle(probe).color
+          probe.remove()
+          return getComputedStyle(mode).color === danger
+        }"""
+    )
+    if red:
+        wrong("Full permissions is drawn in the danger tone")
     page.wait_for_timeout(300)
     shot(page, f"{tag}04c-full")
     page.locator(".ask .controls .mode").click()
     page.locator(".menu [role=menuitem]", has_text="Approve").click()
-    waited(page, "!document.querySelector('.ask .controls .mode.full')", "Approve again")
+    waited(page, f"!({full})", "Approve again")
 
     # The ring's tray.
     page.locator(".ask .knob").click()

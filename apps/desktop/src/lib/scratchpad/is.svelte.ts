@@ -1,3 +1,4 @@
+import type { EditorView } from '@nib/editor'
 /** The scratchpad by name in no space, and its card: up or not, and how wide. Eager, so
  *  a card left up has its column before the note is drawn. See pad.ts. */
 
@@ -22,6 +23,8 @@ class Shown {
   width = $state(WIDTH)
   /** A person asked: the card takes the keyboard. */
   calling = $state(false)
+  /** The card's editor while it is up (#404). */
+  view = $state.raw<EditorView | null>(null)
   from: HTMLElement | null = null
 
   constructor() {

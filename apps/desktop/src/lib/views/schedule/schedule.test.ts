@@ -82,9 +82,14 @@ describe('the scheduler', () => {
       time: null,
       recurrence: null,
     })
+    // A task with no day yet is given a start date (#371).
     expect(changeFor(null, { due: '2026-10-13', recurrence: 'every day' })).toEqual({
-      due: '2026-10-13',
+      start: '2026-10-13',
       recurrence: 'every day',
+    })
+    // In a vault a `📅` is the deadline, which a pick of the start date leaves alone.
+    expect(changeFor({ due: '2026-10-20', dueReads: 'deadline' }, { due: '2026-10-13' })).toEqual({
+      start: '2026-10-13',
     })
   })
 })

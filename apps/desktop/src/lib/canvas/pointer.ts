@@ -16,6 +16,7 @@
  *  this much"; the store decides what that is worth remembering. A gesture is one
  *  edit because the machine only ever says so once, when the pointer comes up. */
 
+import { settledTurn, TURN_DEADBAND, turnedBy } from '../camera'
 import type { InkPoint, InkTool, Shape, Side } from './format'
 import type { Box, HandleId, Point } from './geometry'
 
@@ -26,11 +27,12 @@ export type Tool = 'select' | 'hand' | 'draw' | 'erase' | 'lasso' | PutTool
 /** A tool that puts something on the plane, which every one of them does by being
  *  pulled out: pressed once it lands at its own size, dragged it lands at the size
  *  it was dragged to. One gesture for a card, a frame and a triangle alike. */
-export type PutTool = 'text' | 'file' | 'picture' | 'link' | 'group' | Shape
+export type PutTool = 'text' | 'words' | 'file' | 'picture' | 'link' | 'group' | Shape
 
 /** The ones a press puts down, as a set, so the machine can ask in one lookup. */
 const PUT: ReadonlySet<Tool> = new Set<Tool>([
   'text',
+  'words',
   'file',
   'picture',
   'link',
@@ -211,6 +213,8 @@ export type Effect =
   | { do: 'ink'; dx: number; dy: number; scale: number; turn: number; about: Point }
   | { do: 'pan'; dx: number; dy: number }
   | { do: 'zoom'; at: Point; by: number }
+  /** The view turned about a screen point, by radians clockwise (#351). */
+  | { do: 'turn'; at: Point; by: number }
   | { do: 'menu'; at: Point }
   | { do: 'assist' }
 
@@ -227,7 +231,18 @@ export interface PendingStroke {
 
 type Gesture =
   | { kind: 'pan'; id: number; screen: Point; moved: boolean }
-  | { kind: 'pinch'; ids: [number, number]; screens: [Point, Point]; apart: number }
+  | {
+      kind: 'pinch'
+      ids: [number, number]
+      screens: [Point, Point]
+      apart: number
+      /** The angle the two fingers began at, and the one they were last at, in
+       *  radians; and whether they have turned past the deadband, after which the
+       *  view turns with them (#351). */
+      began: number
+      angle: number
+      turning: boolean
+    }
   | { kind: 'drag'; ids: string[]; screen: Point; dx: number; dy: number }
   | {
       kind: 'resize'
@@ -317,6 +332,11 @@ export interface Context {
   editing: string | null
   /** Pixels per plane unit. Slop and the eraser are felt in pixels. */
   scale: number
+  /** How far the view is turned, in radians, so a drag across the screen moves what
+   *  it carries the way the hand went (#351). */
+  turn?: number
+  /** Whether two fingers turn the view, which is a setting and off unless it is on. */
+  turns?: boolean
   /** The box round the ink a lasso caught, when there is one. */
   inkBox: Box | null
   /** The pen as the bar has it set. */
@@ -620,6 +640,9 @@ function onDown(machine: Machine, input: Down, context: Context): Step {
             ids: [first.id, input.id],
             screens: [first.screen, input.screen],
             apart: Math.hypot(input.screen.x - first.screen.x, input.screen.y - first.screen.y),
+            began: angleOf(first.screen, input.screen),
+            angle: angleOf(first.screen, input.screen),
+            turning: false,
           },
         },
         effects: [],
@@ -929,7 +952,22 @@ function onMove(machine: Machine, input: Move, context: Context): Step {
         effects.push({ do: 'zoom', at: middle, by: apart / one.apart })
       }
 
-      return { machine: { ...machine, gesture: { ...one, screens, apart } }, effects }
+      // And their turn, where turning is on: nothing until it has passed the
+      // deadband, which a pinch held a little crooked never does, and from there
+      // every change of angle (#351).
+      const angle = angleOf(screens[0], screens[1])
+      const turning =
+        one.turning ||
+        (!!context.turns && Math.abs(settledTurn(angle - one.began)) >= TURN_DEADBAND)
+      if (turning && context.turns) {
+        const by = settledTurn(angle - (one.turning ? one.angle : one.began))
+        if (by) effects.push({ do: 'turn', at: middle, by })
+      }
+
+      return {
+        machine: { ...machine, gesture: { ...one, screens, apart, angle, turning } },
+        effects,
+      }
     }
 
     case 'drag':
@@ -939,8 +977,7 @@ function onMove(machine: Machine, input: Move, context: Context): Step {
           ...machine,
           gesture: {
             ...one,
-            dx: (input.screen.x - one.screen.x) / context.scale,
-            dy: (input.screen.y - one.screen.y) / context.scale,
+            ...planeDelta(input.screen.x - one.screen.x, input.screen.y - one.screen.y, context),
           },
         },
         effects: [],
@@ -1202,4 +1239,17 @@ function onHeld(machine: Machine, at: Point, context: Context): Step {
   }
 
   return { machine, effects: [] }
+}
+
+/** The angle of the line from one finger to the other, in radians. */
+function angleOf(one: Point, other: Point): number {
+  return Math.atan2(other.y - one.y, other.x - one.x)
+}
+
+/** A drag across the screen as a move on the plane: by the zoom, and turned back by
+ *  however far the view is turned, so what is carried goes where the hand went
+ *  (#351). */
+function planeDelta(dx: number, dy: number, context: Context): { dx: number; dy: number } {
+  const by = turnedBy(dx, dy, -(context.turn ?? 0))
+  return { dx: by.x / context.scale, dy: by.y / context.scale }
 }

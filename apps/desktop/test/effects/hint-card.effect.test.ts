@@ -69,7 +69,7 @@ test('a card already drawn goes up when the session settles, and stays', () => {
 
 test('its cross puts it away', () => {
   hints.settle()
-  shown = mount(HintCard, { target: host, props: { hint: 'sign-in', text: 'Sign in' } })
+  shown = mount(HintCard, { target: host, props: { hint: 'graph', text: 'See them' } })
   flushSync()
 
   host.querySelector<HTMLButtonElement>('.shut')?.click()
@@ -77,5 +77,5 @@ test('its cross puts it away', () => {
 
   // Gone, on its way out: jsdom never finishes the fly, so the store is what is asked.
   expect(hints.current).toBeNull()
-  expect(hints.seen).toEqual(['sign-in'])
+  expect(hints.seen).toEqual(['graph'])
 })

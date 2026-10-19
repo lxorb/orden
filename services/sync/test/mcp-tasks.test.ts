@@ -86,6 +86,18 @@ describe('the to-dos, with nib closed', () => {
     expect(writing.tasks).toMatchObject([{ text: 'Write the intro', space: 'Work', priority: 2 }])
   })
 
+  test('Today with the tasks that have no start date, where the account says so (#408)', async () => {
+    const key = await connector(true)
+    await call(env, '/v1/settings', { method: 'PATCH', token, body: { undatedInToday: true } })
+    const listed = await json(key, 'list_tasks', { view: 'today' })
+    expect(listed.tasks.map((one) => one.text)).toEqual([
+      'Write the intro',
+      'Milk',
+      'Outline',
+      'Read',
+    ])
+  })
+
   test("a task added to the space's inbox, made the first time", async () => {
     const key = await connector()
     const added = await json(key, 'add_task', {
@@ -192,28 +204,5 @@ describe('bases, with nib closed', () => {
     expect(await json(await connector(true), 'query_base', { space: 'Work', yaml })).toMatchObject({
       total: 1,
     })
-  })
-})
-
-describe("the clipper's task, behind the session", () => {
-  test('a line in the inbox with the page linked, and nobody else may add one', async () => {
-    const made = await call(env, `/v1/spaces/${space}/tasks`, {
-      token,
-      body: { text: '[A page](https://example.com/a)' },
-    })
-    expect(made.status).toBe(201)
-    expect(made.json).toMatchObject({ path: 'Inbox.md', space: 'Work' })
-    expect(await read(await connector(true), 'Inbox.md')).toBe(
-      '- [ ] [A page](https://example.com/a)\n',
-    )
-
-    expect(
-      (await call(env, `/v1/spaces/${space}/tasks`, { token, body: { text: ' ' } })).status,
-    ).toBe(400)
-    const stranger = await signIn(env, 'x@y.dev')
-    expect(
-      (await call(env, `/v1/spaces/${space}/tasks`, { token: stranger, body: { text: 'Sneak' } }))
-        .status,
-    ).toBe(404)
   })
 })

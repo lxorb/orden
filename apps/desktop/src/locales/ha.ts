@@ -27,6 +27,25 @@ export const ha: Dictionary = {
   'Import from Zen': 'Shigo daga Zen',
   'Containers stay in Zen': 'Kwantenoni suna zama a Zen',
   'Zen’s tabs could not be read.': 'Ba a iya karanta shafukan Zen ba.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'Kwantenoni suna zama a Firefox',
+  'Nothing could be read out of {browser}.': 'Ba a iya karanta komai daga {browser} ba.',
+  'Saved groups': 'Ƙungiyoyin da aka adana',
+  'Tab group': 'Ƙungiyar shafuka',
+  'Bookmarks toolbar': 'Sandar alamun shafi',
+  'Bookmarks menu': 'Menu na alamun shafi',
+  'Other bookmarks': 'Sauran alamun shafi',
+  'Mobile bookmarks': 'Alamun shafi na waya',
+  'Bookmarks bar': 'Sandar alamun shafi',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} yana kulle shafukansa da ke buɗe, don haka alamun shafinsa kawai suka zo.',
+  '{count} pages not on the web stay behind': {
+    one: 'Shafi {count} da ba ya kan yanar gizo ya rage',
+    other: 'Shafuka {count} da ba sa kan yanar gizo sun rage',
+  },
+  'Reading List': 'Jerin Karatu',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS yana ajiye shafuka da alamun shafi na Safari a bayan Cikakken Damar Diski. Kunna Orden a can, sannan ku sake nema.',
   // Settings: note types
   'Page note': 'Bayanin kula na shafuka',
   'Web note': 'Bayanin yanar gizo',
@@ -97,8 +116,6 @@ export const ha: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'Shawarwari',
   'Silent mode': 'Yanayin shiru',
-  'Sign in to keep your notes safe and on every device.':
-    'Shiga don bayananka su kasance lafiya kuma a kowace na’ura.',
   'See how your notes connect.': 'Duba yadda bayananka suke haɗe.',
   'Press {key} to find anything, notes and commands alike.':
     'Danna {key} don nemo komai, bayanai da umarni duka.',
@@ -120,11 +137,13 @@ export const ha: Dictionary = {
   '{count} h': '{count} awa',
   Inbox: 'Akwatin saƙo',
   Date: 'Kwanan wata',
+  'Start date': 'Ranar farawa',
   Priority: 'Fifiko',
   Reminder: 'Tunatarwa',
   Duration: 'Tsawon lokaci',
   'Smart dates': 'Kwanan wata masu wayo',
   'From any app': 'Daga kowace manhaja',
+  'Show tasks without a start date in Today': 'Nuna ayyukan da ba su da ranar farawa a cikin Yau',
   'Every day': 'Kowace rana',
   'Every weekday': 'Kowace ranar aiki',
   'Every week': 'Kowane mako',
@@ -168,6 +187,8 @@ export const ha: Dictionary = {
   Dots: 'Ɗigogi',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'Juya zane da yatsu biyu',
+  'Turn upright': 'Daidaita',
   Canvas: 'Kanbas',
   Card: 'Kati',
   'Note or picture': 'Bayanin kula ko hoto',
@@ -243,6 +264,11 @@ export const ha: Dictionary = {
   Unpin: 'Cire manne',
   Close: 'Rufe',
   'Close pinned tab?': 'A rufe shafin da aka manne?',
+  'Save changes to {name}?': 'A adana canje-canje a {name}?',
+  'Save changes to these tabs?': 'A adana canje-canje a waɗannan shafuka?',
+  'Unsaved words go to Recently deleted.':
+    'Kalmomin da ba a adana ba za su tafi Waɗanda aka goge kwanan nan.',
+  'Don’t save': 'Kada a adana',
   'Close others': 'Rufe sauran',
   'Close tabs to the right': 'Rufe shafukan dama',
   'Close tabs to the left': 'Rufe shafukan hagu',
@@ -1169,6 +1195,7 @@ export const ha: Dictionary = {
   'Double-click to write': 'Danna sau biyu don rubutawa',
   'Another colour': 'Wani launi',
   'Turn into a note': 'Juya zuwa bayanin kula',
+  Arrange: 'Tsara',
   'Bring to front': 'Kawo gaba kwata-kwata',
   'Bring forward': 'Kawo gaba',
   'Send backward': 'Tura baya',
@@ -1258,6 +1285,9 @@ export const ha: Dictionary = {
   Unstable: 'Ba kwanciyar hankali',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'Kwanciyar hankali na bin fitattun sigogi, Ba kwanciyar hankali na bin gine-ginen gefe kuma zai iya lalacewa.',
+  'Web version': 'Sigar yanar gizo',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'Kwanciyar hankali ita ce fitacciyar manhajar yanar gizo, Ba kwanciyar hankali ginin mafi sabo ne kuma zai iya lalacewa.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Shigar',
@@ -1604,8 +1634,6 @@ export const ha: Dictionary = {
   // Web tabs
   Reload: 'Sake ɗauko',
   'Hard reload': 'Sake ɗauko gaba ɗaya',
-  'Clip this page': 'Ajiye wannan shafi',
-  'Clip the link': 'Ajiye haɗin',
   'Open in the browser': 'Buɗe a birawuza',
   'Show it here': 'Nuna shi nan',
   Website: 'Gidan yanar',
@@ -1744,7 +1772,6 @@ export const ha: Dictionary = {
   'New tab': 'Sabon tab',
   'Full screen': 'Cikakken allo',
   'Print…': 'Buga…',
-  'Save page': 'Ajiye shafi',
   'Share…': 'Raba…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1804,6 +1831,15 @@ export const ha: Dictionary = {
   'Bring all to front': 'Kawo duka gaba',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Mayar da kwafin',
+  'Devices with your AI vault': "Na'urorin da ke da ma'ajin AI ɗinka",
+  'This device': "Wannan na'urar",
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    "Na'urar ba za ta iya karanta asusun AI ɗinka ba kuma, sauran kuma za su sami sabon maɓalli.",
+  'Also remove this device from your AI vault?': "A cire wannan na'urar daga ma'ajin AI ɗinka ma?",
+  'Remove and sign out': 'Cire ka fita',
+  'Undo making {name}': 'Mayar da ƙirƙirar {name}',
+  'Undo the deletion': 'Mayar da sharewar',
+  'Undo the move': 'Mayar da matsarwar',
   'Redo the last file change': 'Sake yin canjin fayil na ƙarshe',
   'Select down': 'Zaɓi zuwa ƙasa',
   'Select up': 'Zaɓi zuwa sama',
@@ -2023,6 +2059,7 @@ export const ha: Dictionary = {
   'Without your logins': 'Ba tare da shigarka ba',
   'Calls a minute': 'Kira a minti ɗaya',
   'Pages a minute': 'Shafuka a minti ɗaya',
+  'Browser memory limit': 'Iyakar ƙwaƙwalwar burauza',
   '{count} calls': {
     one: 'Kira {count}',
     other: 'Kira {count}',

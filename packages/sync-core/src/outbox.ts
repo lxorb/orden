@@ -11,6 +11,7 @@
  *  - a rename or a move of an id whose create is still waiting is folded into the
  *    create, which then makes it under its final name in its final folder (unless
  *    that folder is itself made later in the queue, when the move has to wait for it);
+ *    a day's note given another name or folder that way is no longer made `mergeable`;
  *  - a create followed by a delete of the same id cancels both, with every op on that
  *    id in between, and for a folder everything made inside it meanwhile. Something
  *    that already existed and was moved into such a folder is deleted instead, which
@@ -22,12 +23,19 @@
  *  the deletes a folder's delete becomes for what was only moved into it, which are new
  *  ops, named after that delete: `${op}.0`, `${op}.1`, in its place in the queue. */
 
+import { nameKey } from './tree'
 import type { CreateOp, MkdirOp, Op } from './wire'
 
 type Making = CreateOp | MkdirOp
 
 function isMaking(op: Op): op is Making {
   return op.t === 'create' || op.t === 'mkdir'
+}
+
+/** A day's note renamed or moved before it went is a note of its own: made `mergeable`
+ *  under its new name, the account merged it into whatever note had that name (#436). */
+function unmergeable(create: Making) {
+  if (create.t === 'create') delete create.mergeable
 }
 
 /** Where everything the queue places ends up, up to (not including) `until`: the
@@ -85,6 +93,7 @@ export function coalesce(ops: readonly Op[]): Op[] {
     const foldable = !stuck.has(op.id)
 
     if (op.t === 'rename' && foldable && create && isMaking(create)) {
+      if (nameKey(op.name) !== nameKey(create.name)) unmergeable(create)
       create.name = op.name
       queue[at] = null
       continue
@@ -94,6 +103,8 @@ export function coalesce(ops: readonly Op[]): Op[] {
       // Folded only where its folder already exists when the create goes.
       const folder = op.parent === null ? undefined : making.get(op.parent)
       if (folder === undefined || folder < made) {
+        if (op.parent !== create.parent) unmergeable(create)
+        if (op.name !== undefined && nameKey(op.name) !== nameKey(create.name)) unmergeable(create)
         create.parent = op.parent
         if (op.name !== undefined) create.name = op.name
         queue[at] = null

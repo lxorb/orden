@@ -1,0 +1,63 @@
+#!/usr/bin/env bash
+# Orden started under a bare X server, Xvfb, with no compositor and no Wayland at all:
+# the session an X11 desktop gives it. The window has to map and the app has to stay up,
+# and a picture of the screen is kept. #427 was the AppImage's own WebKitGTK aborting on
+# Fedora 44 at start; this is that start, under X11.
+#
+# Run inside `dbus-run-session`, with the command that starts Orden:
+#
+#   dbus-run-session -- scripts/x11-launch.sh /path/to/AppRun
+#
+# Everything it saw is left in $OUT (default ./x11-out).
+set -euo pipefail
+
+out=${OUT:-$PWD/x11-out}
+mkdir -p "$out"
+unset WAYLAND_DISPLAY GDK_BACKEND
+export XDG_RUNTIME_DIR
+XDG_RUNTIME_DIR=$(mktemp -d)
+chmod 700 "$XDG_RUNTIME_DIR"
+export HOME=${HOME:-/root}
+export DISPLAY=:77
+
+Xvfb "$DISPLAY" -screen 0 1600x1000x24 > "$out/xvfb.log" 2>&1 &
+xvfb=$!
+for _ in $(seq 50); do xdpyinfo > /dev/null 2>&1 && break; sleep 0.1; done
+
+"$@" > "$out/orden.log" 2>&1 &
+app=$!
+
+status=0
+mapped=""
+for _ in $(seq 120); do
+  if ! kill -0 "$app" 2>/dev/null; then
+    echo "::error::Orden ended at start under X11"
+    status=1
+    break
+  fi
+  if xwininfo -root -tree 2>/dev/null | grep -qiE '"Orden|"Read me|"nib'; then
+    mapped=yes
+    break
+  fi
+  sleep 0.5
+done
+[ "$status" = 0 ] && [ -z "$mapped" ] && { echo "::error::no window mapped under X11 in 60 s"; status=1; }
+if [ "$status" = 0 ]; then
+  echo "the window mapped under X11:"
+  xwininfo -root -tree | grep -iE 'orden|nib|read me' | head
+  # Up for a while, and still up after it.
+  sleep 10
+  kill -0 "$app" 2>/dev/null || { echo "::error::Orden ended after its window mapped"; status=1; }
+fi
+import -window root "$out/x11.png" 2>/dev/null || xwd -root -silent | convert xwd:- "$out/x11.png" || true
+kill "$app" 2>/dev/null || true
+wait "$app" 2>/dev/null || true
+kill "$xvfb" 2>/dev/null || true
+echo "::group::orden's output"
+cat "$out/orden.log"
+echo "::endgroup::"
+if grep -nE 'SIGABRT|Aborted|core dumped|Check failed|FATAL' "$out/orden.log"; then
+  echo "::error::Orden or its engine aborted"
+  status=1
+fi
+exit $status

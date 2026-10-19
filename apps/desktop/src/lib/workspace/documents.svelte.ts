@@ -451,6 +451,12 @@ export class Tab {
    *  one canvas can be looked at from two places in two panes. */
   camera = $state<Camera | undefined>(undefined)
 
+  /** For a page note: whether that camera's zoom is the reader's own rather than the
+   *  paper fitted across the pane. Beside the camera, on the tab, because the surface
+   *  is made again every time the tab comes back to the front, and a zoom it forgot was
+   *  the paper fitted again the moment it was measured (#421). See pages/store.svelte.ts. */
+  zoomChosen = false
+
   /** For a website: the address the tab is on, which is not always the one its file
    *  says. Following a link in the page is browsing rather than editing, so the
    *  file keeps the address it was written with and the tab keeps where it went.

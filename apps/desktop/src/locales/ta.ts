@@ -27,6 +27,25 @@ export const ta: Dictionary = {
   'Import from Zen': 'Zen-இலிருந்து இறக்குமதி செய்',
   'Containers stay in Zen': 'கண்டெய்னர்கள் Zen-இலேயே இருக்கும்',
   'Zen’s tabs could not be read.': 'Zen தாவல்களைப் படிக்க முடியவில்லை.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'கண்டெய்னர்கள் Firefox-இலேயே இருக்கும்',
+  'Nothing could be read out of {browser}.': '{browser}-இலிருந்து எதையும் படிக்க முடியவில்லை.',
+  'Saved groups': 'சேமித்த குழுக்கள்',
+  'Tab group': 'தாவல் குழு',
+  'Bookmarks toolbar': 'புத்தகக்குறி கருவிப்பட்டி',
+  'Bookmarks menu': 'புத்தகக்குறி பட்டியல்',
+  'Other bookmarks': 'பிற புத்தகக்குறிகள்',
+  'Mobile bookmarks': 'மொபைல் புத்தகக்குறிகள்',
+  'Bookmarks bar': 'புத்தகக்குறிப் பட்டை',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} தன் திறந்த தாவல்களைப் பூட்டி வைக்கிறது, அதனால் புத்தகக்குறிகள் மட்டும் வந்தன.',
+  '{count} pages not on the web stay behind': {
+    one: 'இணையத்தில் இல்லாத {count} பக்கம் விடப்பட்டது',
+    other: 'இணையத்தில் இல்லாத {count} பக்கங்கள் விடப்பட்டன',
+  },
+  'Reading List': 'படிக்கும் பட்டியல்',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS Safari-இன் தாவல்களையும் புத்தகக்குறிகளையும் முழு வட்டு அணுகலுக்குப் பின்னால் வைத்திருக்கிறது. அங்கே Orden-ஐ இயக்கி, மீண்டும் கேளுங்கள்.',
   // Settings: note types
   'Page note': 'பக்கக் குறிப்பு',
   'Web note': 'இணையக் குறிப்பு',
@@ -97,8 +116,6 @@ export const ta: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'குறிப்புகள்',
   'Silent mode': 'அமைதி பயன்முறை',
-  'Sign in to keep your notes safe and on every device.':
-    'உங்கள் குறிப்புகள் பாதுகாப்பாகவும் எல்லா சாதனங்களிலும் இருக்க உள்நுழையவும்.',
   'See how your notes connect.': 'உங்கள் குறிப்புகள் எப்படி இணைந்துள்ளன என்று பாருங்கள்.',
   'Press {key} to find anything, notes and commands alike.':
     'குறிப்புகளும் கட்டளைகளும், எதையும் கண்டுபிடிக்க {key} அழுத்தவும்.',
@@ -120,11 +137,13 @@ export const ta: Dictionary = {
   '{count} h': '{count} மணி',
   Inbox: 'இன்பாக்ஸ்',
   Date: 'தேதி',
+  'Start date': 'தொடக்கத் தேதி',
   Priority: 'முன்னுரிமை',
   Reminder: 'நினைவூட்டல்',
   Duration: 'கால அளவு',
   'Smart dates': 'ஸ்மார்ட் தேதிகள்',
   'From any app': 'எந்த ஆப்பிலிருந்தும்',
+  'Show tasks without a start date in Today': 'தொடக்கத் தேதி இல்லாத பணிகளை இன்று என்பதில் காட்டு',
   'Every day': 'தினமும்',
   'Every weekday': 'ஒவ்வொரு வேலை நாளும்',
   'Every week': 'ஒவ்வொரு வாரமும்',
@@ -168,6 +187,8 @@ export const ta: Dictionary = {
   Dots: 'புள்ளிகள்',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'இரு விரல்களால் கேன்வாஸைச் சுழற்று',
+  'Turn upright': 'நேராக்கு',
   Canvas: 'கேன்வாஸ்',
   Card: 'அட்டை',
   'Note or picture': 'குறிப்பு அல்லது படம்',
@@ -243,6 +264,10 @@ export const ta: Dictionary = {
   Unpin: 'பின் அகற்று',
   Close: 'மூடு',
   'Close pinned tab?': 'பின்செய்த தாவலை மூடவா?',
+  'Save changes to {name}?': '{name} இல் உள்ள மாற்றங்களைச் சேமிக்கவா?',
+  'Save changes to these tabs?': 'இந்தத் தாவல்களில் உள்ள மாற்றங்களைச் சேமிக்கவா?',
+  'Unsaved words go to Recently deleted.': 'சேமிக்காத சொற்கள் சமீபத்தில் நீக்கியவைக்குச் செல்லும்.',
+  'Don’t save': 'சேமிக்க வேண்டாம்',
   'Close others': 'மற்றவற்றை மூடு',
   'Close tabs to the right': 'வலதுபுறத் தாவல்களை மூடு',
   'Close tabs to the left': 'இடதுபுறத் தாவல்களை மூடு',
@@ -1171,6 +1196,7 @@ export const ta: Dictionary = {
   'Double-click to write': 'எழுத இருமுறை கிளிக்',
   'Another colour': 'வேறு நிறம்',
   'Turn into a note': 'குறிப்பாக மாற்று',
+  Arrange: 'ஒழுங்கமை',
   'Bring to front': 'முன்னால் கொண்டுவா',
   'Bring forward': 'ஒரு படி முன்',
   'Send backward': 'ஒரு படி பின்',
@@ -1261,6 +1287,9 @@ export const ta: Dictionary = {
   Unstable: 'நிலையற்றது',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'நிலையானது வெளியிடப்பட்ட பதிப்புகளைப் பின்தொடரும்; நிலையற்றது edge பில்டுகளைப் பின்தொடரும், உடையவும் கூடும்.',
+  'Web version': 'வலைப் பதிப்பு',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'நிலையானது வெளியிடப்பட்ட வலை ஆப்; நிலையற்றது புதிய பில்ட், உடையவும் கூடும்.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'இறக்குமதி',
@@ -1606,8 +1635,6 @@ export const ta: Dictionary = {
   // Web tabs
   Reload: 'மீண்டும் ஏற்று',
   'Hard reload': 'முழுமையாக மீண்டும் ஏற்று',
-  'Clip this page': 'இந்தப் பக்கத்தை எடு',
-  'Clip the link': 'இணைப்பை எடு',
   'Open in the browser': 'உலாவியில் திற',
   'Show it here': 'இங்கே காட்டு',
   Website: 'இணையதளம்',
@@ -1743,7 +1770,6 @@ export const ta: Dictionary = {
   'New tab': 'புதிய தாவல்',
   'Full screen': 'முழுத்திரை',
   'Print…': 'அச்சிடு…',
-  'Save page': 'பக்கத்தைச் சேமி',
   'Share…': 'பகிர்…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1804,6 +1830,16 @@ export const ta: Dictionary = {
   'Bring all to front': 'அனைத்தையும் முன்னே கொண்டுவா',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'நகலெடுத்ததைச் செயல்தவிர்',
+  'Devices with your AI vault': 'உங்கள் AI பெட்டகம் உள்ள சாதனங்கள்',
+  'This device': 'இந்தச் சாதனம்',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'அந்தச் சாதனம் இனி உங்கள் AI கணக்குகளைப் படிக்க முடியாது, மற்றவை புதிய சாவியைப் பெறும்.',
+  'Also remove this device from your AI vault?':
+    'இந்தச் சாதனத்தை உங்கள் AI பெட்டகத்திலிருந்தும் நீக்கவா?',
+  'Remove and sign out': 'நீக்கி வெளியேறு',
+  'Undo making {name}': '{name} உருவாக்கலைச் செயல்தவிர்',
+  'Undo the deletion': 'நீக்கலைச் செயல்தவிர்',
+  'Undo the move': 'நகர்த்தலைச் செயல்தவிர்',
   'Redo the last file change': 'கடைசிக் கோப்பு மாற்றத்தை மீண்டும் செய்',
   'Select down': 'கீழ்நோக்கித் தேர்ந்தெடு',
   'Select up': 'மேல்நோக்கித் தேர்ந்தெடு',
@@ -2024,6 +2060,7 @@ export const ta: Dictionary = {
   'Without your logins': 'உங்கள் உள்நுழைவுகள் இல்லாமல்',
   'Calls a minute': 'நிமிடத்திற்கு அழைப்புகள்',
   'Pages a minute': 'நிமிடத்திற்குப் பக்கங்கள்',
+  'Browser memory limit': 'உலாவி நினைவக வரம்பு',
   '{count} calls': {
     one: '{count} அழைப்பு',
     other: '{count} அழைப்புகள்',

@@ -1,5 +1,6 @@
 /** What a task row says under its words, Todoist's way: the line of meta after the
- *  description - its day in the colour of how near it is, its time, ↻ for a repeat, the
+ *  description - the day it starts while that is still to come, in the colour of how
+ *  near it is (once it has come, nothing: #371), its time, ↻ for a repeat, the
  *  deadline, the duration, a bell for a reminder, how many of its sub-tasks are done,
  *  how many comments it has, its labels and its assignee - and how many lines the row
  *  takes, which is what the list is laid out by (`Heights` in chats/view/window.ts).
@@ -9,6 +10,7 @@
 
 import { dayNumber, type Row, type TaskRow } from '@nib/bases'
 import { dayWords, timeWords } from '@nib/editor/task-days'
+import { deadlineOf, startOf } from '@nib/markdown/task-dates'
 
 /** How near a day is, which is the colour its words are drawn in: Todoist's red for
  *  a day gone by, green for today, orange for tomorrow, purple for the rest of the
@@ -82,7 +84,7 @@ export function metaOf(
 ): Meta[] {
   const out: Meta[] = []
   const open = !task.done && !task.cancelled
-  const day = task.due ?? task.scheduled
+  const day = ahead(task, today)
   if (dated && day) {
     out.push({
       kind: 'date',
@@ -90,8 +92,9 @@ export function metaOf(
       tone: open ? dayTone(day, today) : 'later',
       repeat: task.recurrence !== undefined,
     })
-  } else if (task.recurrence !== undefined || (!dated && task.time)) {
-    // A day the group already says still has its time and its repeat to say.
+  } else if (task.recurrence !== undefined || task.time) {
+    // A day the group already says, or one that has come, still has its time and its
+    // repeat to say.
     out.push({
       kind: 'date',
       text: task.time ? timeWords(task.time) : '',
@@ -99,11 +102,12 @@ export function metaOf(
       repeat: task.recurrence !== undefined,
     })
   }
-  if (task.deadline) {
+  const deadline = deadlineOf(task, task.dueReads)
+  if (deadline) {
     out.push({
       kind: 'deadline',
-      text: dayWords(task.deadline, today),
-      late: open && task.deadline <= today,
+      text: dayWords(deadline, today),
+      late: open && deadline <= today,
     })
   }
   if (task.duration !== undefined) out.push({ kind: 'duration', minutes: task.duration })
@@ -115,15 +119,27 @@ export function metaOf(
   return out
 }
 
+/** The day a task starts or is scheduled for, while that is still to come: the only day
+ *  a row says under its words besides a deadline. */
+function ahead(task: TaskRow, today: string): string | undefined {
+  const day = startOf(task, task.dueReads) ?? task.scheduled
+  return day !== undefined && day > today ? day : undefined
+}
+
 /** Whether a task has anything to say on its meta line: what `metaOf` would answer
  *  something for, asked without writing a word of it, because the list asks it of every
  *  row it holds and only draws the ones on screen. */
-export function hasMeta(task: TaskRow, dated: boolean, subtasks: Subtasks | undefined): boolean {
+export function hasMeta(
+  task: TaskRow,
+  dated: boolean,
+  subtasks: Subtasks | undefined,
+  today: string,
+): boolean {
   return (
-    (dated && (task.due ?? task.scheduled) !== undefined) ||
+    (dated && ahead(task, today) !== undefined) ||
     task.recurrence !== undefined ||
-    (!dated && task.time !== undefined) ||
-    task.deadline !== undefined ||
+    task.time !== undefined ||
+    deadlineOf(task, task.dueReads) !== undefined ||
     task.duration !== undefined ||
     task.remind.length > 0 ||
     (subtasks?.total ?? 0) > 0 ||

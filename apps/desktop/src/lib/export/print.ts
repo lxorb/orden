@@ -15,6 +15,7 @@ import { t } from '../i18n.svelte'
 import { type PaperInches, pageSetupFor, paperInches } from '../page-setup'
 import { DEFAULT_PAGE_SETUP } from '../paper'
 import { invoke } from '../tauri'
+import { workspace } from '../workspace.svelte'
 import { openTarget, renderOptions } from './context'
 
 /** Whether this build has a print dialog to open at all. A desktop and a browser
@@ -50,7 +51,7 @@ export async function writtenPdf(
   }
 }
 
-export async function printNote(): Promise<void> {
+async function printNote(): Promise<void> {
   // Asked for when somebody prints rather than at startup: the renderer carries the
   // diagram drawers, the syntax parsers and the fonts, which is most of what the app
   // can load, and the row that offers printing is a word.
@@ -64,4 +65,47 @@ export async function printNote(): Promise<void> {
   const page = paperInches(pageSetupFor(target.source, options.page ?? DEFAULT_PAGE_SETUP))
 
   await printInFrame(html, page)
+}
+
+/** The kinds of document that go on paper: a note, a plane and a page note (#350).
+ *  The glasses' plugin has none of the exporters a plane and a page note are drawn
+ *  through, so there it is a note alone; see vite.even.config.ts. */
+const PRINTABLE: ReadonlySet<string> = new Set(
+  __EVEN_PLUGIN__ ? ['note'] : ['note', 'canvas', 'pages'],
+)
+
+/** Whether what is open goes on paper. */
+export function printable(kind: string | undefined): boolean {
+  return kind !== undefined && PRINTABLE.has(kind)
+}
+
+/** What is open, on paper, whichever kind of document it is. A plane prints the sheet
+ *  its PDF is printed from and a page note the pages of its PDF; see `printCanvas` in
+ *  canvas/picture.ts and `printPages` in pages/out.ts. */
+export async function printOpen(): Promise<void> {
+  const kind = workspace.active?.kind
+  if (__EVEN_PLUGIN__ || (kind !== 'canvas' && kind !== 'pages')) {
+    await printNote()
+    return
+  }
+
+  const target = openTarget()
+  const open = {
+    text: target.source,
+    name: target.name,
+    path: target.path,
+    root: workspace.activeSpace?.root ?? null,
+  }
+
+  if (kind === 'canvas') {
+    const [{ drawingOf }, { printCanvas }] = await Promise.all([
+      import('./drawing'),
+      import('../canvas/picture'),
+    ])
+    await printCanvas(drawingOf(open))
+    return
+  }
+
+  const out = await import('../pages/out')
+  await out.printPages(out.pagesOutOf(open))
 }

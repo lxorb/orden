@@ -89,7 +89,7 @@ lives in the far corner from the tools, and undo is in a third place again.
 | The live tool tinted rather than raised | kept |
 | Flyouts anchored to the tool that opened them | kept |
 | Name and key in every tooltip | kept |
-| Undo, redo and zoom as their own groups | kept, in the one bar |
+| Undo, redo and zoom as their own groups | undo and redo kept, in the one bar; the zoom's group taken off it (#401) |
 | Shape recognition | kept, as a switch on the pen |
 | Everything drawn while it is being dragged out | kept, for every one of them |
 | A rail fixed to the left edge | left; the bar goes to whichever edge it is dragged to |
@@ -106,7 +106,7 @@ the `--touch-*` scale for them, the way every other surface in the app does.
 Left to right, in the order a hand uses them:
 
 ```
-[arrow] [hand] | [pen] [pen] [pen] [eraser] [lasso] | [put down] | [ink] | [undo] [redo] | [-] [92%] [+]
+[arrow] [hand] | [pen] [pen] [pen] [eraser] [lasso] | [put down] | [ink] | [undo] [redo]
 ```
 
 Arranging is on the left, drawing is in the middle, and what a press puts on the
@@ -125,6 +125,18 @@ system's own picker, which on Android is the gallery, the camera and the files a
 in one sheet; the bytes go where every other pasted picture goes, and the plane gets
 a `file` node pointing at them, so Obsidian reads it. A picture dropped on the plane
 or pasted into it takes the same road.
+
+**The lasso's key, held, is the lasso only while it is down** (#349): Q tapped puts
+the lasso in hand as its button does; held - longer than a quarter of a second, or
+with a loop drawn while it is down - it is the lasso until it comes up, and then the
+tool before it is back, the pen most of all, with what the loop caught still caught.
+Photoshop's spring-loaded keys, on the lasso's own key rather than a second one, so
+there is nothing new to learn or to clash: moving the lasso's key in Settings ›
+Keyboard moves the hold with it. Obsidian's canvas has no lasso, Excalidraw's has no
+hold, and GoodNotes' lasso is a button and a pen gesture, so none of them had a key
+to borrow. The same on a page note. A pen's barrel button is not it: that button is
+the eraser on a plane and on paper, and has been since the pens came. See `pressed`
+and `released` in `canvas/tools.svelte.ts`.
 
 **Three pens, always three.** A pen is a thing you own rather than a setting you
 pick, so a favourite is the whole pen: which nib, how wide, how much of the
@@ -209,6 +221,13 @@ often than it is a shape, so it takes them the way a card does - a double press 
 Enter to type, the same renderer, in the middle of the shape - and they are written
 under `nib` beside the shape itself.
 
+**Words with no card round them** are the bar's Text button, `W` (#421), on a canvas
+and on a page note alike, as Miro's text tool and a PDF viewer's are: pressed, then the
+plane or the paper pressed, the words are typed in at once where the press was, in the
+ink of the page, and the arrow is in hand after. Left empty, they go again. The file
+keeps them as a card - Obsidian reads `nodes` and shows one - listed under
+`nib.words`. Not `T`, which the triangle has had since the shapes came.
+
 ## What is picked
 
 A small bar over the selection: its colour, duplicate, group, delete, and the rest.
@@ -219,6 +238,20 @@ frame, and a frame picked can be taken apart. Everything else that can be done t
 selection stays in the menu behind the last button - lining up, spreading out, the
 z order, the arrows on a connector - which is the menu a right click and a long
 press already open, so there is one list and not two.
+
+**The menu holds only what would do something there** (#350). On bare plane it is
+what can be put down where it was asked, the plane's own rows (find, fit, export);
+about something picked it is what can be done to that, and never a row that would put
+something new down. A row that could not act is left out rather than greyed: greyed,
+the menu on bare plane was seventeen dead rows out of twenty-eight and taller than a
+laptop's window. Lining up, spreading out and the z order go behind one row,
+**Arrange**, and only the ones that apply - lining up wants two things, spreading
+out three.
+
+**On a phone the bar is wider than the screen**, so it scrolls, and it starts with
+Undo and Redo: the two a thumb wants most were the two scrolled out of sight past
+its end. Whichever end has more past it fades out, so the row reads as one that
+goes on rather than one that stops at the edge of the glass.
 
 **What is picked wears handles**: eight to resize by, and the whole of it to move
 by. Shift holds the shape of the box while it is resized, and a picture under a
@@ -275,14 +308,58 @@ zoomed out far enough reads as a grid rather than as the blank grey field it onc
 
 ## Zoom
 
-Minus, the percentage, plus. The number is the button that fits the whole plane
-in the pane, which is the only other thing anybody asks of a zoom. Pinch, the
-wheel and the keys do the rest and always did.
+**Not on the bar** (#401). It had minus, the percentage and plus, and they went:
+three buttons for something a pinch, Ctrl and the wheel, and the keys already do,
+on the one bar a phone has to scroll. Ctrl+Alt+= and Ctrl+Alt+- step a notch about
+the middle of the view, Ctrl+Alt+0 fits the whole plane, Ctrl+1 frames what is
+picked, and the menu has Fit the canvas and Zoom to what is picked.
 
-One notch is `NOTCH` in `apps/desktop/src/lib/camera.ts`, and the buttons and the
-wheel really do agree on it now: the comment here said they did while the buttons
-stepped by a fifth and the wheel by two fifths, which is two zooms for one hand.
-`wheelZoom` is the one function both the plane and a page note ask.
+**Back to 100%** (#369): while the plane is at anything but its actual size, the end of
+the bar reads the zoom - `372%`, quiet as a caption - and pressed, puts it back about the
+middle of the view. At 100% there is nothing, so the bar keeps no zoom button it does not
+need. Actual size is in the shortcut list with no key of its own; Ctrl+0 stays the app's
+text size and Ctrl+Alt+0 the fit.
+
+**A pen zoomed in is as fine as it shows** (#369): past 100% a stroke is written as wide
+as the pen is on the screen, so zooming in to write small writes small, as in Miro and
+FigJam. At 100% and further out it is the pen's own width, as it always was. A page note
+is paper, and keeps the pen's width at every zoom.
+
+One notch is `NOTCH` in `apps/desktop/src/lib/camera.ts`, and the keys and the wheel
+agree on it: the bar's buttons once stepped by a fifth and the wheel by two fifths,
+which is two zooms for one hand. `wheelZoom` is the one function both the plane and
+a page note ask.
+
+## Turning
+
+**Two fingers turn a canvas, where Settings › Editor › Canvas says so** (#351): Rotate
+a canvas with two fingers, off to begin with and on the account, as Concepts does it.
+On glass the turn is the change in the angle of the line between the two fingers; on
+a Mac's trackpad it is WebKit's own `rotation` on the gesture events (`heldGestures`).
+Either way the plane turns about the point between the fingers, and only once they
+have turned six degrees from where they began (`TURN_DEADBAND`): a pinch held a
+little crooked never gets there, and a turn meant as one passes it in its first
+moment - from there it follows every degree, so it does not jump by the six.
+
+**Upright again** is Ctrl+Alt+R (⌥⌘R), beside the zoom's keys, and a row of the
+plane's menu while it is turned: a key rather than a two-finger double tap, which a
+tablet's own gestures and a palm both make too easily, and the menu is where a hand
+with no keyboard finds it. A page note never turns: paper is read upright.
+
+**How far it is turned is the view's, not the file's.** It is kept beside the pan and
+the zoom this device keeps for each plane (`canvas/place.ts`), the way a page note
+keeps its zoom, so a plane turned on a tablet opens upright on a laptop and the file
+Obsidian reads is the same bytes.
+
+**Everything is one transform, turned.** The camera carries `turn`, and `graphPoint`
+and `screenPoint` in `camera.ts` turn by it, so the hit test, the lasso, a drag, a
+connector and the menu's place all read the plane where it is drawn; a drag across
+the screen is turned back into the plane before it moves anything (`planeDelta` in
+`canvas/pointer.ts`). What is drawn - the pattern, the cards and the ink - is turned
+together by one css rotation of a square as wide as the pane's diagonal, so a turned
+view has dots and ink right into its corners, and the ink's own tiles never learn
+there is a turn at all. Fitting keeps the turn and fits the turned box. An export is
+of the plane and is upright.
 
 On paper the number opens rows instead - a sheet has a width to read at and a page
 to see whole, so there is more than one answer to "fit"; see [pages.md](pages.md).

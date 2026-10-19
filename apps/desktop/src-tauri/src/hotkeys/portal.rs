@@ -26,7 +26,7 @@ use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::mpsc::{self, Receiver, Sender};
 use std::sync::{Mutex, OnceLock, PoisonError};
 
-use tauri::AppHandle;
+use tauri::{AppHandle, Manager as _};
 use zbus::blocking::{Connection, MessageIterator};
 use zbus::message::Type as Kind;
 use zbus::zvariant::{ObjectPath, OwnedObjectPath, OwnedValue, Value};

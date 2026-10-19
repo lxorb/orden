@@ -32,6 +32,10 @@ let refuses: string | null = null
  *  on Windows does, rather than having the window hide the page behind its picture. */
 let cuts = false
 
+/** How many questions a page answers about where it has got to before it goes quiet, as
+ *  a page being closed under the question does; null for every one. See `whereIs`. */
+let answersLooks: number | null = null
+
 vi.mock('../../src/lib/tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../src/lib/tauri')>()),
   isDesktop: true,
@@ -40,6 +44,8 @@ vi.mock('../../src/lib/tauri', async (importOriginal) => ({
     asked.push({ command, args })
     if (command === refuses) return Promise.reject(new Error(`${command} was refused`))
     if (command === 'web_open' && holding) return holding
+    if (command === 'web_look' && answersLooks !== null && answersLooks-- <= 0)
+      return new Promise(() => undefined)
     if (command === 'web_place') return Promise.resolve(cuts)
     return Promise.resolve(undefined)
   },
@@ -218,6 +224,7 @@ beforeEach(() => {
   holding = null
   refuses = null
   cuts = false
+  answersLooks = null
   target = document.createElement('div')
   document.body.append(target)
 })
@@ -918,4 +925,53 @@ test('a screen of another scale places the page again', async () => {
   }
 
   void unmount(app)
+})
+
+/** #409, mounted: "when I switch an open tab to separate web data, it then loads forever
+ *  until I close and reopen it". The menu asks for the move and the pane hears the tab's
+ *  web data change and asks too (own-data.ts, WebTab.svelte). The second ask used to wait
+ *  out a page that was closing under its question and then close the page the first had
+ *  built in the new store, which the window went on believing in. */
+test('a tab turned Separate is built again once, in its own store, and stays', async () => {
+  await launched()
+
+  workspace.openWebsite()
+  const tab = workspace.tabs.at(-1)
+  if (!tab) return
+  pages.of(tab.id).url = 'https://example.com/apart'
+
+  const app = mount(WebTab, { target, props: { tab, focused: true } })
+  flushSync()
+  await frames()
+  expect(pages.of(tab.id).live).toBe(true)
+
+  asked.length = 0
+  let built: () => void = () => undefined
+  holding = new Promise<void>((go) => (built = go))
+  answersLooks = 1
+
+  const own = '3f9a0c17e2b4d685'
+  // What own-data.ts does for a tab with no file: the tab takes the web data, which the
+  // pane hears, and the move is asked for.
+  tab.apart = own
+  flushSync()
+  const fromMenu = pages.rehouse(tab.id, own, 'kept apart')
+  // Past the clock a page that does not answer is given, with the new page still on its way.
+  await vi.advanceTimersByTimeAsync(1000)
+  built()
+  holding = null
+  await frames()
+  await fromMenu
+  await frames()
+
+  const said = asked.map((one) => one.command)
+  expect(said.filter((one) => one === 'web_open')).toHaveLength(1)
+  expect(said.lastIndexOf('web_close')).toBeLessThan(said.lastIndexOf('web_open'))
+  expect(asked.filter((one) => one.command === 'web_open').at(-1)?.args).toMatchObject({
+    profile: { store: `note_${own}` },
+  })
+  expect(pages.of(tab.id).live).toBe(true)
+
+  void unmount(app)
+  pages.forget(tab.id)
 })

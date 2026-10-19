@@ -26,6 +26,22 @@ export const ms: Dictionary = {
   'Import from Zen': 'Import daripada Zen',
   'Containers stay in Zen': 'Bekas kekal dalam Zen',
   'Zen’s tabs could not be read.': 'Tab Zen tidak dapat dibaca.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'Bekas kekal dalam Firefox',
+  'Nothing could be read out of {browser}.': 'Tiada apa-apa dapat dibaca daripada {browser}.',
+  'Saved groups': 'Kumpulan disimpan',
+  'Tab group': 'Kumpulan tab',
+  'Bookmarks toolbar': 'Bar penanda',
+  'Bookmarks menu': 'Menu penanda',
+  'Other bookmarks': 'Penanda lain',
+  'Mobile bookmarks': 'Penanda mudah alih',
+  'Bookmarks bar': 'Bar penanda halaman',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} mengunci tab yang terbuka, jadi hanya penanda halamannya yang dibawa.',
+  '{count} pages not on the web stay behind': '{count} halaman yang bukan di web ditinggalkan',
+  'Reading List': 'Senarai Bacaan',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS menyimpan tab dan penanda Safari di sebalik Akses Cakera Penuh. Hidupkan Orden di sana, kemudian cuba lagi.',
   // Settings: note types
   'Page note': 'Nota halaman',
   'Web note': 'Nota web',
@@ -96,8 +112,6 @@ export const ms: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'Petua',
   'Silent mode': 'Mod senyap',
-  'Sign in to keep your notes safe and on every device.':
-    'Log masuk supaya nota anda selamat dan ada pada setiap peranti.',
   'See how your notes connect.': 'Lihat cara nota anda saling berkait.',
   'Press {key} to find anything, notes and commands alike.':
     'Tekan {key} untuk mencari apa sahaja, nota dan arahan.',
@@ -119,11 +133,13 @@ export const ms: Dictionary = {
   '{count} h': '{count} j',
   Inbox: 'Peti masuk',
   Date: 'Tarikh',
+  'Start date': 'Tarikh mula',
   Priority: 'Keutamaan',
   Reminder: 'Peringatan',
   Duration: 'Tempoh',
   'Smart dates': 'Tarikh pintar',
   'From any app': 'Dari mana-mana aplikasi',
+  'Show tasks without a start date in Today': 'Tunjukkan tugasan tanpa tarikh mula dalam Hari ini',
   'Every day': 'Setiap hari',
   'Every weekday': 'Setiap hari bekerja',
   'Every week': 'Setiap minggu',
@@ -167,6 +183,8 @@ export const ms: Dictionary = {
   Dots: 'Titik',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'Putar kanvas dengan dua jari',
+  'Turn upright': 'Tegakkan',
   Canvas: 'Kanvas',
   Card: 'Kad',
   'Note or picture': 'Nota atau gambar',
@@ -242,6 +260,11 @@ export const ms: Dictionary = {
   Unpin: 'Buang pin',
   Close: 'Tutup',
   'Close pinned tab?': 'Tutup tab yang dipin?',
+  'Save changes to {name}?': 'Simpan perubahan pada {name}?',
+  'Save changes to these tabs?': 'Simpan perubahan pada tab ini?',
+  'Unsaved words go to Recently deleted.':
+    'Perkataan yang belum disimpan pergi ke Dipadam baru-baru ini.',
+  'Don’t save': 'Jangan simpan',
   'Close others': 'Tutup yang lain',
   'Close tabs to the right': 'Tutup tab di sebelah kanan',
   'Close tabs to the left': 'Tutup tab di sebelah kiri',
@@ -1159,6 +1182,7 @@ export const ms: Dictionary = {
   'Double-click to write': 'Klik dua kali untuk menulis',
   'Another colour': 'Warna lain',
   'Turn into a note': 'Jadikan nota',
+  Arrange: 'Susun',
   'Bring to front': 'Bawa ke hadapan',
   'Bring forward': 'Ke hadapan satu',
   'Send backward': 'Ke belakang satu',
@@ -1248,6 +1272,9 @@ export const ms: Dictionary = {
   Unstable: 'Tidak stabil',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'Stabil mengikut versi yang dikeluarkan, Tidak stabil mengikut binaan edge dan boleh rosak.',
+  'Web version': 'Versi web',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'Stabil ialah aplikasi web yang dikeluarkan, Tidak stabil ialah binaan terbaharu dan boleh rosak.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Import',
@@ -1576,8 +1603,6 @@ export const ms: Dictionary = {
   // Web tabs
   Reload: 'Muat semula',
   'Hard reload': 'Muat semula sepenuhnya',
-  'Clip this page': 'Simpan halaman ini',
-  'Clip the link': 'Simpan pautan',
   'Open in the browser': 'Buka dalam pelayar',
   'Show it here': 'Tunjukkan di sini',
   Website: 'Laman web',
@@ -1716,7 +1741,6 @@ export const ms: Dictionary = {
   'New tab': 'Tab baharu',
   'Full screen': 'Skrin penuh',
   'Print…': 'Cetak…',
-  'Save page': 'Simpan halaman',
   'Share…': 'Kongsi…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1776,6 +1800,16 @@ export const ms: Dictionary = {
   'Bring all to front': 'Bawa semua ke hadapan',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Buat asal salinan',
+  'Devices with your AI vault': 'Peranti dengan peti besi AI anda',
+  'This device': 'Peranti ini',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'Peranti itu tidak dapat membaca akaun AI anda lagi, dan yang lain mendapat kunci baharu.',
+  'Also remove this device from your AI vault?':
+    'Alih keluar juga peranti ini daripada peti besi AI anda?',
+  'Remove and sign out': 'Alih keluar dan log keluar',
+  'Undo making {name}': 'Buat asal penciptaan {name}',
+  'Undo the deletion': 'Buat asal penghapusan',
+  'Undo the move': 'Buat asal pengalihan',
   'Redo the last file change': 'Buat semula perubahan fail terakhir',
   'Select down': 'Pilih ke bawah',
   'Select up': 'Pilih ke atas',
@@ -1993,6 +2027,7 @@ export const ms: Dictionary = {
   'Without your logins': 'Tanpa log masuk anda',
   'Calls a minute': 'Panggilan seminit',
   'Pages a minute': 'Halaman seminit',
+  'Browser memory limit': 'Had memori pelayar',
   '{count} calls': '{count} panggilan',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it

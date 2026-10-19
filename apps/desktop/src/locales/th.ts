@@ -26,6 +26,22 @@ export const th: Dictionary = {
   'Import from Zen': 'นำเข้าจาก Zen',
   'Containers stay in Zen': 'คอนเทนเนอร์ยังอยู่ใน Zen',
   'Zen’s tabs could not be read.': 'อ่านแท็บของ Zen ไม่ได้',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'คอนเทนเนอร์ยังอยู่ใน Firefox',
+  'Nothing could be read out of {browser}.': 'ไม่สามารถอ่านสิ่งใดจาก {browser} ได้',
+  'Saved groups': 'กลุ่มที่บันทึกไว้',
+  'Tab group': 'กลุ่มแท็บ',
+  'Bookmarks toolbar': 'แถบบุ๊กมาร์ก',
+  'Bookmarks menu': 'เมนูบุ๊กมาร์ก',
+  'Other bookmarks': 'บุ๊กมาร์กอื่นๆ',
+  'Mobile bookmarks': 'บุ๊กมาร์กบนมือถือ',
+  'Bookmarks bar': 'แถบบุ๊กมาร์ก',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} ล็อกแท็บที่เปิดอยู่ไว้ จึงนำมาได้เฉพาะบุ๊กมาร์ก',
+  '{count} pages not on the web stay behind': 'หน้าที่ไม่ได้อยู่บนเว็บ {count} หน้าไม่ได้นำมา',
+  'Reading List': 'รายการอ่าน',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS เก็บแท็บและบุ๊กมาร์กของ Safari ไว้หลังการเข้าถึงดิสก์เต็มรูปแบบ เปิด Orden ที่นั่นแล้วลองอีกครั้ง',
   // Settings: note types
   'Page note': 'โน้ตแบบหน้า',
   'Web note': 'โน้ตเว็บ',
@@ -96,8 +112,6 @@ export const th: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'คำแนะนำ',
   'Silent mode': 'โหมดเงียบ',
-  'Sign in to keep your notes safe and on every device.':
-    'ลงชื่อเข้าใช้เพื่อให้โน้ตของคุณปลอดภัยและอยู่บนทุกอุปกรณ์',
   'See how your notes connect.': 'ดูว่าโน้ตของคุณเชื่อมโยงกันอย่างไร',
   'Press {key} to find anything, notes and commands alike.':
     'กด {key} เพื่อค้นหาทุกอย่าง ทั้งโน้ตและคำสั่ง',
@@ -119,11 +133,13 @@ export const th: Dictionary = {
   '{count} h': '{count} ชม.',
   Inbox: 'กล่องรับเข้า',
   Date: 'วันที่',
+  'Start date': 'วันที่เริ่ม',
   Priority: 'ความสำคัญ',
   Reminder: 'การเตือน',
   Duration: 'ระยะเวลา',
   'Smart dates': 'วันที่อัจฉริยะ',
   'From any app': 'จากแอปใดก็ได้',
+  'Show tasks without a start date in Today': 'แสดงงานที่ไม่มีวันที่เริ่มในวันนี้',
   'Every day': 'ทุกวัน',
   'Every weekday': 'ทุกวันทำงาน',
   'Every week': 'ทุกสัปดาห์',
@@ -167,6 +183,8 @@ export const th: Dictionary = {
   Dots: 'จุด',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'หมุนแคนวาสด้วยสองนิ้ว',
+  'Turn upright': 'จัดให้ตรง',
   Canvas: 'แคนวาส',
   Card: 'การ์ด',
   'Note or picture': 'โน้ตหรือรูป',
@@ -242,6 +260,10 @@ export const th: Dictionary = {
   Unpin: 'เลิกปักหมุด',
   Close: 'ปิด',
   'Close pinned tab?': 'ปิดแท็บที่ปักหมุดไว้?',
+  'Save changes to {name}?': 'บันทึกการเปลี่ยนแปลงใน {name} ไหม',
+  'Save changes to these tabs?': 'บันทึกการเปลี่ยนแปลงในแท็บเหล่านี้ไหม',
+  'Unsaved words go to Recently deleted.': 'คำที่ยังไม่ได้บันทึกจะไปอยู่ในลบล่าสุด',
+  'Don’t save': 'ไม่บันทึก',
   'Close others': 'ปิดอันอื่น',
   'Close tabs to the right': 'ปิดแท็บทางขวา',
   'Close tabs to the left': 'ปิดแท็บทางซ้าย',
@@ -1146,6 +1168,7 @@ export const th: Dictionary = {
   'Double-click to write': 'ดับเบิลคลิกเพื่อเขียน',
   'Another colour': 'สีอื่น',
   'Turn into a note': 'เปลี่ยนเป็นโน้ต',
+  Arrange: 'จัดเรียง',
   'Bring to front': 'ไปหน้าสุด',
   'Bring forward': 'ขึ้นหนึ่งชั้น',
   'Send backward': 'ลงหนึ่งชั้น',
@@ -1235,6 +1258,9 @@ export const th: Dictionary = {
   Unstable: 'ไม่เสถียร',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'เสถียรตามรุ่นที่ปล่อยแล้ว ไม่เสถียรตามบิลด์ edge และอาจเสีย',
+  'Web version': 'เวอร์ชันเว็บ',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'เสถียรคือเว็บแอปที่ปล่อยแล้ว ไม่เสถียรคือบิลด์ล่าสุดและอาจเสีย',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'นำเข้า',
@@ -1556,8 +1582,6 @@ export const th: Dictionary = {
   // Web tabs
   Reload: 'โหลดใหม่',
   'Hard reload': 'โหลดใหม่ทั้งหมด',
-  'Clip this page': 'เก็บหน้านี้',
-  'Clip the link': 'เก็บลิงก์',
   'Open in the browser': 'เปิดในเบราว์เซอร์',
   'Show it here': 'แสดงที่นี่',
   Website: 'เว็บไซต์',
@@ -1687,7 +1711,6 @@ export const th: Dictionary = {
   'New tab': 'แท็บใหม่',
   'Full screen': 'เต็มหน้าจอ',
   'Print…': 'พิมพ์…',
-  'Save page': 'บันทึกหน้า',
   'Share…': 'แชร์…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1746,6 +1769,15 @@ export const th: Dictionary = {
   'Bring all to front': 'นำทั้งหมดมาไว้ด้านหน้า',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'เลิกทำการคัดลอก',
+  'Devices with your AI vault': 'อุปกรณ์ที่มีห้องนิรภัย AI ของคุณ',
+  'This device': 'อุปกรณ์นี้',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'อุปกรณ์นั้นจะอ่านบัญชี AI ของคุณไม่ได้อีก และอุปกรณ์อื่นจะได้กุญแจใหม่',
+  'Also remove this device from your AI vault?': 'นำอุปกรณ์นี้ออกจากห้องนิรภัย AI ด้วยไหม',
+  'Remove and sign out': 'นำออกและออกจากระบบ',
+  'Undo making {name}': 'เลิกสร้าง {name}',
+  'Undo the deletion': 'เลิกลบ',
+  'Undo the move': 'เลิกย้าย',
   'Redo the last file change': 'ทำซ้ำการเปลี่ยนแปลงไฟล์ล่าสุด',
   'Select down': 'เลือกลง',
   'Select up': 'เลือกขึ้น',
@@ -1961,6 +1993,7 @@ export const th: Dictionary = {
   'Without your logins': 'ไม่ใช้การลงชื่อเข้าใช้ของคุณ',
   'Calls a minute': 'การเรียกต่อนาที',
   'Pages a minute': 'หน้าต่อนาที',
+  'Browser memory limit': 'ขีดจำกัดหน่วยความจำของเบราว์เซอร์',
   '{count} calls': '{count} การเรียก',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it

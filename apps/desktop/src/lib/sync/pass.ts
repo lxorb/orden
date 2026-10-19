@@ -676,7 +676,11 @@ export async function push(
   const held = sending.held ?? new Set<string>()
   // Read once, for the same reason as in `pull`.
   const root = mirror.root
-  const tree = await invoke<Entry>('read_tree', { root }).catch(() => null)
+  // With the papers page notes hold, which the list leaves out: a paper goes up the
+  // way any PDF does, below.
+  const tree = await invoke<Entry>('read_tree', { root, options: { papers: true } }).catch(
+    () => null,
+  )
   if (!tree) return false
 
   // The copies of web notes earlier passes made, folded back into their notes before

@@ -8,7 +8,9 @@
    *  same order everywhere, drawn bigger where a thumb has to land on them.
    *
    *  Left to right it is arranging, then drawing, then what a press puts on the
-   *  plane, then the colour in hand, then the two arrows, then the zoom. Pressing
+   *  plane, then the colour in hand, then the two arrows. No zoom: a pinch, Ctrl and
+   *  the wheel, the keys and the menus all zoom, and three buttons for it were three
+   *  a thumb did not need on the one bar it has (#401). Pressing
    *  the tool you are already holding opens that tool's own panel and nothing else,
    *  which is the one gesture nobody has to be told, and the panel opens over the
    *  button that opened it rather than in the middle of the pane.
@@ -21,7 +23,6 @@
    *  gesture, and a bar that let one through would clear the selection its own
    *  buttons are for. */
 
-  import { NOTCH } from './camera'
   import CanvasCatch from './CanvasCatch.svelte'
   import CanvasColours from './CanvasColours.svelte'
   import CanvasIcon from './CanvasIcon.svelte'
@@ -37,6 +38,7 @@
     PLACING,
     RUBBING,
     type ToolMark,
+    WORDS,
   } from './canvas/glyphs'
   import { hand } from './canvas/hand.svelte'
   import { DEFAULT_INK, shownInk } from './canvas/palette'
@@ -47,39 +49,80 @@
   import { tools } from './canvas/tools.svelte'
   import { closeOnBack } from './backstack.svelte'
   import { t } from './i18n.svelte'
-  import { type MenuEntry, menu } from './menu.svelte'
   import { overlays } from './overlays'
   import { viewport } from './viewport.svelte'
 
   const {
     canundo,
     canredo,
-    zoom,
     onundo,
     onredo,
     onerase,
-    onzoom,
-    onfit,
-    zoomRows,
+    places = true,
+    scale,
+    onactual,
   }: {
     canundo: boolean
     canredo: boolean
-    /** How far in the plane is, so the number on the bar is the one in the corner
-     *  of every drawing program. */
-    zoom: number
     onundo: () => void
     onredo: () => void
     /** Every stroke on the plane, gone, which is what the eraser's panel asks for. */
     onerase: () => void
-    /** In or out about the middle of the view, by this much. */
-    onzoom: (by: number) => void
-    onfit: () => void
-    /** What the percentage offers instead of simply fitting, for a surface with
-     *  more than one answer to "fit". A page note has two - the width of the paper
-     *  and the whole of the page - and one to one, which is the size it prints at;
-     *  a plane has neither, so this is absent there and the number fits. */
-    zoomRows?: (() => MenuEntry[]) | undefined
+    /** Whether a press can put something on the surface: a card, a frame, a shape.
+     *  A plane's question. A page note has only the five tools that mean something
+     *  on paper, and a grid of things that a press there would never put down is a
+     *  row of buttons that do nothing (#350). */
+    places?: boolean
+    /** How near the plane is, and the way back to its actual size: a small reading of
+     *  the zoom at the bar's end while it is anything but 100%, which pressed goes back
+     *  there (#369). Nothing at 100%, so the bar keeps no zoom buttons it does not need
+     *  (#401). A plane's; a page note fits its paper and says its zoom elsewhere. */
+    scale?: number
+    onactual?: () => void
   } = $props()
+
+  /** The zoom as a reading, where it is not the actual size. */
+  const zoomed = $derived(
+    scale !== undefined && onactual && Math.abs(scale - 1) >= 0.005
+      ? `${String(Math.round(scale * 100))}%`
+      : null,
+  )
+
+  /** Whether Undo and Redo come first, which is a phone's bar: see `arrows` below. */
+  const early = $derived(viewport.device === 'phone')
+
+  /** Whether there is more of the bar past either end of it, which is what the fade
+   *  at that end says: a row scrolled sideways with nothing to show it scrolls reads
+   *  as a row that ends at the edge of the screen (#350). */
+  let scroller = $state<HTMLElement>()
+
+  /** Reads values for their own sake, so the effect around them follows them. */
+  const follows = (..._values: unknown[]) => undefined
+  let fades = $state({ start: false, end: false })
+
+  function measure() {
+    const row = scroller
+    if (!row) return
+    const along = standing
+      ? { at: row.scrollTop, seen: row.clientHeight, whole: row.scrollHeight }
+      : { at: Math.abs(row.scrollLeft), seen: row.clientWidth, whole: row.scrollWidth }
+    const start = along.at > 1
+    const end = along.at + along.seen < along.whole - 1
+    if (start !== fades.start || end !== fades.end) fades = { start, end }
+  }
+
+  $effect(() => {
+    const row = scroller
+    if (!row) return
+    // Measured again when the bar stands on its end, since that is the other way.
+    follows(standing)
+    measure()
+    if (typeof ResizeObserver === 'undefined') return
+    const watcher = new ResizeObserver(measure)
+    watcher.observe(row)
+    for (const one of row.children) watcher.observe(one)
+    return () => watcher.disconnect()
+  })
 
   /** Which panel is open over the bar, if any. One at a time: two panels over a
    *  drawing is a dialog box, and this is a bar. */
@@ -340,7 +383,49 @@
         </span>
       {/if}
 
-      <div class="scroller">
+      <div
+        class="scroller"
+        class:fade-start={fades.start}
+        class:fade-end={fades.end}
+        bind:this={scroller}
+        onscroll={measure}
+      >
+        <!-- Back and forward again. On a phone they come first: the bar is wider
+             than the screen there, and the two a thumb wants most were the two
+             scrolled out of sight past its end (#350). -->
+        {#snippet arrows()}
+          <button
+            type="button"
+            title={shortcuts.tooltip(t('Undo'), 'edit.undo')}
+            aria-label={t('Undo')}
+            disabled={!canundo}
+            onclick={() => {
+              tick()
+              onundo()
+            }}
+          >
+            <CanvasIcon node={MARKS.undo} />
+          </button>
+
+          <button
+            type="button"
+            title={shortcuts.tooltip(t('Redo'), 'edit.redo')}
+            aria-label={t('Redo')}
+            disabled={!canredo}
+            onclick={() => {
+              tick()
+              onredo()
+            }}
+          >
+            <CanvasIcon node={MARKS.redo} />
+          </button>
+        {/snippet}
+
+        {#if early}
+          {@render arrows()}
+          <span class="split"></span>
+        {/if}
+
         {#snippet holding(mark: ToolMark)}
           <button
             type="button"
@@ -388,23 +473,29 @@
 
         <span class="split"></span>
 
+        <!-- Words, put straight down where the next press is: on a canvas and on a page
+             note alike (#421). -->
+        {@render holding(WORDS)}
+
         <!-- What a press puts on the plane. While one of them is in hand it is that
              one, drawn on the button, so the bar says what a press is about to do
              and pressing it again opens the grid again. -->
-        <button
-          type="button"
-          class:on={open === 'put' || putting !== undefined}
-          class:deeper={putting !== undefined}
-          title={putting ? hinted(putting) : t('Add')}
-          aria-label={putting ? putting.title() : t('Add')}
-          aria-pressed={open === 'put'}
-          onclick={(event) => {
-            tick()
-            toggle('put', event)
-          }}
-        >
-          <CanvasIcon node={putting?.icon ?? MARKS.put} />
-        </button>
+        {#if places}
+          <button
+            type="button"
+            class:on={open === 'put' || putting !== undefined}
+            class:deeper={putting !== undefined}
+            title={putting ? hinted(putting) : t('Add')}
+            aria-label={putting ? putting.title() : t('Add')}
+            aria-pressed={open === 'put'}
+            onclick={(event) => {
+              tick()
+              toggle('put', event)
+            }}
+          >
+            <CanvasIcon node={putting?.icon ?? MARKS.put} />
+          </button>
+        {/if}
 
         <button
           type="button"
@@ -420,77 +511,25 @@
           }}
         ></button>
 
-        <span class="split"></span>
+        {#if !early}
+          <span class="split"></span>
+          {@render arrows()}
+        {/if}
 
-        <button
-          type="button"
-          title={shortcuts.tooltip(t('Undo'), 'edit.undo')}
-          aria-label={t('Undo')}
-          disabled={!canundo}
-          onclick={() => {
-            tick()
-            onundo()
-          }}
-        >
-          <CanvasIcon node={MARKS.undo} />
-        </button>
-
-        <button
-          type="button"
-          title={shortcuts.tooltip(t('Redo'), 'edit.redo')}
-          aria-label={t('Redo')}
-          disabled={!canredo}
-          onclick={() => {
-            tick()
-            onredo()
-          }}
-        >
-          <CanvasIcon node={MARKS.redo} />
-        </button>
-
-        <span class="split"></span>
-
-        <button
-          type="button"
-          title={shortcuts.tooltip(t('Zoom out'), zoomRows ? 'pages.zoom.out' : null)}
-          aria-label={t('Zoom out')}
-          onclick={() => {
-            tick()
-            onzoom(1 / NOTCH)
-          }}
-        >
-          <CanvasIcon node={MARKS.zoomOut} />
-        </button>
-
-        <!-- The number is the button that puts the whole plane in the pane, which
-             is the only other thing anybody asks of a zoom on a plane. On paper it
-             opens the rows instead: there is more than one way to fit a sheet. -->
-        <button
-          type="button"
-          class="how-far"
-          title={zoomRows ? t('Zoom') : shortcuts.tooltip(t('Show the whole canvas'), 'canvas.fit')}
-          aria-label={zoomRows ? t('Zoom') : t('Show the whole canvas')}
-          onclick={(event) => {
-            tick()
-            const rows = zoomRows
-            if (rows) menu.show(event, rows(), { title: t('Zoom') })
-            else onfit()
-          }}
-        >
-          {Math.round(zoom * 100)}%
-        </button>
-
-        <button
-          type="button"
-          title={shortcuts.tooltip(t('Zoom in'), zoomRows ? 'pages.zoom.in' : null)}
-          aria-label={t('Zoom in')}
-          onclick={() => {
-            tick()
-            onzoom(NOTCH)
-          }}
-        >
-          <CanvasIcon node={MARKS.zoomIn} />
-        </button>
+        {#if zoomed}
+          <button
+            type="button"
+            class="actual"
+            title={t('Actual size')}
+            aria-label={t('Actual size')}
+            onclick={() => {
+              tick()
+              onactual?.()
+            }}
+          >
+            {zoomed}
+          </button>
+        {/if}
       </div>
     </div>
   {/if}
@@ -513,6 +552,14 @@
     align-items: center;
     gap: var(--space-2);
     animation: rise var(--dur-stage) var(--ease-out);
+    /* The strip is the pane's width and the bar and its panel are not: what is either
+       side of them is the plane, and takes the pointer - a stroke drawn there, and a
+       press there that closes the panel (#382). */
+    pointer-events: none;
+  }
+
+  .cluster > * {
+    pointer-events: auto;
   }
 
   .cluster.top {
@@ -657,6 +704,38 @@
     display: none;
   }
 
+  /* The ends that have more past them fade out, along whichever way the bar runs. */
+  .scroller.fade-start,
+  .scroller.fade-end {
+    --fade: 28px;
+    --from: 0px;
+    --to: 0px;
+
+    mask-image: linear-gradient(
+      var(--along, to right),
+      transparent 0,
+      #000 var(--from),
+      #000 calc(100% - var(--to)),
+      transparent 100%
+    );
+  }
+
+  .scroller.fade-start {
+    --from: var(--fade);
+  }
+
+  .scroller.fade-end {
+    --to: var(--fade);
+  }
+
+  .cluster.standing .scroller {
+    --along: to bottom;
+  }
+
+  :global([dir='rtl']) .scroller {
+    --along: to left;
+  }
+
   button {
     position: relative;
     flex: none;
@@ -743,6 +822,18 @@
     box-shadow: 0 0 0 0.5px color-mix(in srgb, var(--text) 30%, transparent);
   }
 
+  /* The zoom, read, while it is not the actual size; pressed, it is again (#369). A
+     reading rather than a glyph, quiet as a caption, and only as wide as its words. */
+  .actual {
+    width: auto;
+    min-width: 0;
+    padding-inline: var(--space-2);
+    font-family: var(--font-ui);
+    font-size: var(--text-xs);
+    font-variant-numeric: tabular-nums;
+    color: var(--muted);
+  }
+
   /* The colour in hand, drawn as the dot it is. */
   .swatch::after {
     content: '';
@@ -757,10 +848,6 @@
 
   .swatch:active::after {
     scale: 1.08;
-  }
-
-  .how-far {
-    padding: 0 var(--space-2);
   }
 
   /* Two lines, the way a thing that moves is drawn everywhere. */

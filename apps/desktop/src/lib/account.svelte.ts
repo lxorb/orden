@@ -354,6 +354,10 @@ class Session {
     // and the two would import each other. See docs/sharing.md.
     const { sharedWithYou } = await import('./sharing.svelte')
     await sharedWithYou.load()
+
+    // And which of them are put away, which a listing is the moment to hear of; see
+    // space-archive.ts.
+    await (await import('./space-archive')).listed()
   }
 
   private asking?: ReturnType<typeof setTimeout>

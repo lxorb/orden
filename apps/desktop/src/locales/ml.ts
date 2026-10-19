@@ -27,6 +27,25 @@ export const ml: Dictionary = {
   'Import from Zen': 'Zen-ൽ നിന്ന് ഇംപോർട്ട് ചെയ്യുക',
   'Containers stay in Zen': 'കണ്ടെയ്‌നറുകൾ Zen-ൽ തന്നെ തുടരും',
   'Zen’s tabs could not be read.': 'Zen-ന്റെ ടാബുകൾ വായിക്കാനായില്ല.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'കണ്ടെയ്‌നറുകൾ Firefox-ൽ തന്നെ തുടരും',
+  'Nothing could be read out of {browser}.': '{browser}-ൽ നിന്ന് ഒന്നും വായിക്കാനായില്ല.',
+  'Saved groups': 'സംരക്ഷിച്ച ഗ്രൂപ്പുകൾ',
+  'Tab group': 'ടാബ് ഗ്രൂപ്പ്',
+  'Bookmarks toolbar': 'ബുക്ക്‌മാർക്ക് ടൂൾബാർ',
+  'Bookmarks menu': 'ബുക്ക്‌മാർക്ക് മെനു',
+  'Other bookmarks': 'മറ്റ് ബുക്ക്‌മാർക്കുകൾ',
+  'Mobile bookmarks': 'മൊബൈൽ ബുക്ക്‌മാർക്കുകൾ',
+  'Bookmarks bar': 'ബുക്ക്‌മാർക്ക് ബാർ',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} തുറന്ന ടാബുകൾ പൂട്ടി സൂക്ഷിക്കുന്നു, അതിനാൽ ബുക്ക്‌മാർക്കുകൾ മാത്രം വന്നു.',
+  '{count} pages not on the web stay behind': {
+    one: 'വെബിൽ ഇല്ലാത്ത {count} പേജ് ഒഴിവാക്കി',
+    other: 'വെബിൽ ഇല്ലാത്ത {count} പേജുകൾ ഒഴിവാക്കി',
+  },
+  'Reading List': 'വായനാ ലിസ്റ്റ്',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS Safari-യുടെ ടാബുകളും ബുക്ക്‌മാർക്കുകളും ഫുൾ ഡിസ്ക് ആക്സസിന് പിന്നിൽ സൂക്ഷിക്കുന്നു. അവിടെ Orden ഓൺ ചെയ്ത്, വീണ്ടും ശ്രമിക്കുക.',
   // Settings: note types
   'Page note': 'താൾ കുറിപ്പ്',
   'Web note': 'വെബ് കുറിപ്പ്',
@@ -97,8 +116,6 @@ export const ml: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'സൂചനകൾ',
   'Silent mode': 'നിശബ്ദ മോഡ്',
-  'Sign in to keep your notes safe and on every device.':
-    'നിങ്ങളുടെ കുറിപ്പുകൾ സുരക്ഷിതമായും എല്ലാ ഉപകരണത്തിലും ലഭിക്കാൻ സൈൻ ഇൻ ചെയ്യുക.',
   'See how your notes connect.': 'നിങ്ങളുടെ കുറിപ്പുകൾ എങ്ങനെ ബന്ധപ്പെട്ടിരിക്കുന്നു എന്ന് കാണുക.',
   'Press {key} to find anything, notes and commands alike.':
     'കുറിപ്പുകളും കമാൻഡുകളും, എന്തും കണ്ടെത്താൻ {key} അമർത്തുക.',
@@ -120,11 +137,14 @@ export const ml: Dictionary = {
   '{count} h': '{count} മണി',
   Inbox: 'ഇൻബോക്സ്',
   Date: 'തീയതി',
+  'Start date': 'ആരംഭ തീയതി',
   Priority: 'മുൻഗണന',
   Reminder: 'ഓർമ്മപ്പെടുത്തൽ',
   Duration: 'ദൈർഘ്യം',
   'Smart dates': 'സ്മാർട്ട് തീയതികൾ',
   'From any app': 'ഏത് ആപ്പിൽ നിന്നും',
+  'Show tasks without a start date in Today':
+    'ആരംഭ തീയതി ഇല്ലാത്ത ടാസ്കുകൾ ഇന്ന് എന്നതിൽ കാണിക്കുക',
   'Every day': 'എല്ലാ ദിവസവും',
   'Every weekday': 'എല്ലാ പ്രവൃത്തിദിവസവും',
   'Every week': 'എല്ലാ ആഴ്ചയും',
@@ -168,6 +188,8 @@ export const ml: Dictionary = {
   Dots: 'കുത്തുകൾ',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'രണ്ട് വിരലുകൾ കൊണ്ട് ക്യാൻവാസ് തിരിക്കുക',
+  'Turn upright': 'നേരെയാക്കുക',
   Canvas: 'ക്യാൻവാസ്',
   Card: 'കാർഡ്',
   'Note or picture': 'കുറിപ്പ് അല്ലെങ്കിൽ ചിത്രം',
@@ -243,6 +265,11 @@ export const ml: Dictionary = {
   Unpin: 'പിൻ നീക്കുക',
   Close: 'അടയ്ക്കുക',
   'Close pinned tab?': 'പിൻ ചെയ്ത ടാബ് അടയ്ക്കണോ?',
+  'Save changes to {name}?': '{name}-ലെ മാറ്റങ്ങൾ സേവ് ചെയ്യണോ?',
+  'Save changes to these tabs?': 'ഈ ടാബുകളിലെ മാറ്റങ്ങൾ സേവ് ചെയ്യണോ?',
+  'Unsaved words go to Recently deleted.':
+    'സേവ് ചെയ്യാത്ത വാക്കുകൾ അടുത്തിടെ ഇല്ലാതാക്കിയവയിലേക്ക് പോകും.',
+  'Don’t save': 'സേവ് ചെയ്യേണ്ട',
   'Close others': 'മറ്റുള്ളവ അടയ്ക്കുക',
   'Close tabs to the right': 'വലതുവശത്തെ ടാബുകൾ അടയ്ക്കുക',
   'Close tabs to the left': 'ഇടതുവശത്തെ ടാബുകൾ അടയ്ക്കുക',
@@ -1170,6 +1197,7 @@ export const ml: Dictionary = {
   'Double-click to write': 'എഴുതാൻ രണ്ടുതവണ ക്ലിക്ക്',
   'Another colour': 'മറ്റൊരു നിറം',
   'Turn into a note': 'കുറിപ്പാക്കി മാറ്റുക',
+  Arrange: 'ക്രമീകരിക്കുക',
   'Bring to front': 'മുന്നിലേക്ക് കൊണ്ടുവരുക',
   'Bring forward': 'ഒരു പടി മുന്നോട്ട്',
   'Send backward': 'ഒരു പടി പിന്നോട്ട്',
@@ -1260,6 +1288,9 @@ export const ml: Dictionary = {
   Unstable: 'അസ്ഥിരം',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'സ്ഥിരം റിലീസ് ചെയ്ത പതിപ്പുകൾ പിന്തുടരുന്നു; അസ്ഥിരം എഡ്ജ് ബിൽഡുകൾ പിന്തുടരുന്നു, തകരാനും മതി.',
+  'Web version': 'വെബ് പതിപ്പ്',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'സ്ഥിരം റിലീസ് ചെയ്ത വെബ് ആപ്പ്; അസ്ഥിരം ഏറ്റവും പുതിയ ബിൽഡ്, തകരാനും മതി.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'ഇംപോർട്ട്',
@@ -1599,8 +1630,6 @@ export const ml: Dictionary = {
   // Web tabs
   Reload: 'വീണ്ടും എടുക്കുക',
   'Hard reload': 'പൂർണ്ണമായി വീണ്ടും എടുക്കുക',
-  'Clip this page': 'ഈ താൾ എടുക്കുക',
-  'Clip the link': 'കണ്ണി എടുക്കുക',
   'Open in the browser': 'ബ്രൗസറിൽ തുറക്കുക',
   'Show it here': 'ഇവിടെ കാണിക്കുക',
   Website: 'വെബ്‌സൈറ്റ്',
@@ -1736,7 +1765,6 @@ export const ml: Dictionary = {
   'New tab': 'പുതിയ ടാബ്',
   'Full screen': 'പൂർണ്ണ സ്ക്രീൻ',
   'Print…': 'പ്രിന്റ് ചെയ്യുക…',
-  'Save page': 'പേജ് സംരക്ഷിക്കുക',
   'Share…': 'പങ്കിടുക…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1797,6 +1825,16 @@ export const ml: Dictionary = {
   'Bring all to front': 'എല്ലാം മുന്നിലേക്ക് കൊണ്ടുവരിക',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'പകർപ്പ് പഴയപടിയാക്കുക',
+  'Devices with your AI vault': 'നിങ്ങളുടെ AI വോൾട്ടുള്ള ഉപകരണങ്ങൾ',
+  'This device': 'ഈ ഉപകരണം',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'ആ ഉപകരണത്തിന് ഇനി നിങ്ങളുടെ AI അക്കൗണ്ടുകൾ വായിക്കാനാവില്ല, മറ്റുള്ളവയ്ക്ക് പുതിയ കീ ലഭിക്കും.',
+  'Also remove this device from your AI vault?':
+    'ഈ ഉപകരണത്തെ നിങ്ങളുടെ AI വോൾട്ടിൽ നിന്നും നീക്കണോ?',
+  'Remove and sign out': 'നീക്കി സൈൻ ഔട്ട് ചെയ്യുക',
+  'Undo making {name}': '{name} ഉണ്ടാക്കിയത് പഴയപടിയാക്കുക',
+  'Undo the deletion': 'ഇല്ലാതാക്കിയത് പഴയപടിയാക്കുക',
+  'Undo the move': 'നീക്കിയത് പഴയപടിയാക്കുക',
   'Redo the last file change': 'അവസാന ഫയൽ മാറ്റം വീണ്ടും ചെയ്യുക',
   'Select down': 'താഴേക്ക് തിരഞ്ഞെടുക്കുക',
   'Select up': 'മുകളിലേക്ക് തിരഞ്ഞെടുക്കുക',
@@ -2017,6 +2055,7 @@ export const ml: Dictionary = {
   'Without your logins': 'നിങ്ങളുടെ ലോഗിനുകളില്ലാതെ',
   'Calls a minute': 'മിനിറ്റിൽ കോളുകൾ',
   'Pages a minute': 'മിനിറ്റിൽ പേജുകൾ',
+  'Browser memory limit': 'ബ്രൗസർ മെമ്മറി പരിധി',
   '{count} calls': {
     one: '{count} കോൾ',
     other: '{count} കോളുകൾ',

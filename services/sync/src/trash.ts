@@ -10,6 +10,7 @@ import { presentSpace } from './spaces/space'
 import type { Env, Note, Space, Variables } from './types'
 import { forgetWords } from './blog/words'
 import { forgetVersions } from './versions'
+import { forgetEmptyGuest } from './guests'
 
 /** How long Recently deleted holds on to something. */
 const KEEP_FOR = 14 * 24 * 60 * 60 * 1000
@@ -106,10 +107,28 @@ async function purgeNote(env: Env, note: Pick<Note, 'id' | 'space_id'>) {
     .bind(note.id)
     .run()
 
+  // And what is named by the note's id outside the row: its room, which holds the
+  // whole document for as long as the file does, emptied from `leftovers` like an
+  // account's (leftovers.ts); and a chat its `.chat` file opened, which ends now and
+  // is erased a month later (chats/sweep.ts). The row stays as a tombstone, so the
+  // id is still this note's and nobody else may make anything under it.
+  const at = now()
+  await env.DB.batch([
+    env.DB.prepare('insert or ignore into leftovers (what, since) values (?, ?)').bind(
+      `rooms/${note.id}`,
+      at,
+    ),
+    env.DB.prepare('update chats set ended_at = ? where file_id = ? and ended_at is null').bind(
+      at,
+      note.id,
+    ),
+  ])
+
   // And whatever was shared about this one file. A share about a note whose
   // words have gone reaches nothing - every read of one joins the live note -
   // but a row nobody can ever use is a row nothing would take away, and it is
   // what a listing and a ceiling still count. See spaces/share.ts.
+  const guests = await guestsOf(env, note.space_id, note.id)
   await env.DB.batch([
     env.DB.prepare('delete from space_members where space_id = ? and item = ?').bind(
       note.space_id,
@@ -128,6 +147,19 @@ async function purgeNote(env: Env, note: Pick<Note, 'id' | 'space_id'>) {
       note.id,
     ),
   ])
+  for (const guest of guests) await forgetEmptyGuest(env, guest)
+}
+
+/** The guests one share of a space reaches, read before its rows go: a guest that
+ *  was in nothing else is nobody afterwards, and its session goes with it. */
+async function guestsOf(env: Env, spaceId: string, item: string | null): Promise<string[]> {
+  const { results } = await env.DB.prepare(
+    `select distinct guest_id from guest_members
+      where space_id = ?1 and (?2 is null or item = ?2) limit 1000`,
+  )
+    .bind(spaceId, item)
+    .all<{ guest_id: string }>()
+  return results.map((one) => one.guest_id)
 }
 
 /** Empties a space for good, a batch of notes at a time. The row stays as the
@@ -156,20 +188,55 @@ async function purgeSpace(env: Env, space: Pick<Space, 'id'>, budget = AT_ONCE):
   // Exactly the rows whose bytes have gone, so nothing rejected above is left
   // recorded as purged. A chunk at a time, because a batch is five hundred notes
   // and D1 binds a hundred parameters; see src/bound.ts.
+  //
+  // Each chunk writes down, with the rows, what the note's id names outside them:
+  // its room, and the bodies of its versions, which go once no other row names the
+  // same hash - emptied from `leftovers` as an account's are. And the id itself is
+  // retired, so that no create anywhere is made under it again and handed what the
+  // room held (0052).
+  const at = now()
   for (const chunk of chunks(results.map((note) => note.id))) {
-    await env.DB.prepare(`delete from notes where id in (${places(chunk.length)})`)
-      .bind(...chunk)
-      .run()
+    const list = places(chunk.length)
+    await env.DB.batch([
+      env.DB.prepare(
+        `insert or ignore into leftovers (what, since)
+           select 'rooms/' || id, ? from notes where id in (${list})`,
+      ).bind(at, ...chunk),
+      env.DB.prepare(
+        `insert or ignore into leftovers (what, since)
+           select distinct 'versions/' || hash, ? from note_versions where note_id in (${list})`,
+      ).bind(at, ...chunk),
+      env.DB.prepare(
+        `insert or ignore into retired_notes (id, since)
+           select id, ? from notes where id in (${list})`,
+      ).bind(at, ...chunk),
+      env.DB.prepare(`delete from notes where id in (${list})`).bind(...chunk),
+    ])
   }
 
   if (results.length < take) {
-    // And sync v2's tree of it, which is nothing once the notes have gone.
+    // And sync v2's tree of it, which is nothing once the notes have gone. And who it
+    // was shared with: the row of a purged space stays as a marker, so nothing
+    // cascades from it, and a membership, a link or a guest in a space with nothing
+    // in it is a way in to nothing that nothing else would take away. A guest that
+    // was in nothing else is nobody now, and its session goes with it. Its chats end
+    // with it, and are erased a month later (chats/sweep.ts).
+    const guests = await guestsOf(env, space.id, null)
     await env.DB.batch([
       env.DB.prepare('delete from folders where space_id = ?').bind(space.id),
       env.DB.prepare('delete from tree_ops where space_id = ?').bind(space.id),
       env.DB.prepare('delete from space_entries where space_id = ?').bind(space.id),
+      env.DB.prepare('delete from space_members where space_id = ?').bind(space.id),
+      env.DB.prepare('delete from space_links where space_id = ?').bind(space.id),
+      env.DB.prepare('delete from space_requests where space_id = ?').bind(space.id),
+      env.DB.prepare('delete from guest_members where space_id = ?').bind(space.id),
+      env.DB.prepare('update chats set ended_at = ? where space_id = ? and ended_at is null').bind(
+        at,
+        space.id,
+      ),
       env.DB.prepare('update spaces set deleted_at = null where id = ?').bind(space.id),
     ])
+    for (const guest of guests) await forgetEmptyGuest(env, guest)
   }
 
   return results.length

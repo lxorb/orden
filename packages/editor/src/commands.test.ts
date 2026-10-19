@@ -28,6 +28,7 @@ import {
   toggleTask,
   toggleTaskList,
   toggleWrap,
+  tickTaskAtCaret,
 } from './commands'
 import { selectWord } from './keymap'
 import { parsed } from '../test/parsed'
@@ -421,6 +422,37 @@ describe('ticking the task under the caret', () => {
     // Offsets rather than marks, because a table is written with the caret's mark.
     const table = '| a | b |\n| - | - |\n| 1 | 2 |'
     expect(apply(toggleTask, table, table.length - 2).took).toBe(false)
+  })
+})
+
+/** Enter in Vim's normal mode, which ticks a task and is Vim's own on every other line;
+ *  see vim-mode.ts. */
+describe('ticking the task the caret is on, and nothing else', () => {
+  test('ticks an empty box and clears a ticked one, wherever on the line the caret is', () => {
+    expect(apply(tickTaskAtCaret, '- [ ] wash up', 0).doc).toBe('- [x] wash up')
+    expect(apply(tickTaskAtCaret, '- [x] wash up', 13).doc).toBe('- [ ] wash up')
+    expect(apply(tickTaskAtCaret, '  - [ ] nested', 9).doc).toBe('  - [x] nested')
+  })
+
+  test('only the line the caret is on', () => {
+    expect(apply(tickTaskAtCaret, '- [ ] one\n- [ ] two', 12).doc).toBe('- [ ] one\n- [x] two')
+  })
+
+  test('leaves a line that is not a task alone, and says so', () => {
+    for (const doc of ['just words', '- a bullet', '1. a number', '']) {
+      const done = apply(tickTaskAtCaret, doc, doc.length)
+      expect(done.took, doc).toBe(false)
+      expect(done.doc).toBe(doc)
+    }
+  })
+
+  test('gives way in code, where a box is not a box', () => {
+    expect(took(tickTaskAtCaret, '```\n- [ ] still code|\n```')).toBe(false)
+  })
+
+  test('leaves a selection over more than one line alone', () => {
+    const doc = '- [ ] one\n- [ ] two'
+    expect(apply(tickTaskAtCaret, doc, 0, doc.length).took).toBe(false)
   })
 })
 

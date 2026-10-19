@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 
 import type { Grant, Scope } from '../verbs'
+import { readGrant } from './crate'
 import {
   askApplies,
   asks,
@@ -48,7 +49,7 @@ describe('the defaults', () => {
     ])
     expect(grant.spaces).toBe('all')
     expect(grant.mode).toBe('unsupervised')
-    expect(grant.limits).toEqual({ tabs: 4, calls: 600, navigations: 60 })
+    expect(grant.limits).toEqual({ tabs: 4, calls: 600, navigations: 60, memory: 0 })
     expect(asks(grant, 'paying')).toBe(true)
   })
 
@@ -72,7 +73,7 @@ describe('the defaults', () => {
       /Scope::BrowserScript\s*\|\s*Scope::BrowserStorage\s*\|\s*Scope::Settings\s*\)/,
     )
     expect(crate).toMatch(/Scope::Context\s*\|\s*Scope::BrowserReader/)
-    expect(crate).toMatch(/tabs: 4,\s*calls: 600,\s*navigations: 60/)
+    expect(crate).toMatch(/tabs: 4,\s*calls: 600,\s*navigations: 60,\s*memory: 0,/)
   })
 })
 
@@ -153,6 +154,28 @@ describe('the rest of a grant', () => {
     expect(withLimit(own(), 'tabs', 12).limits.tabs).toBe(8)
     expect(withLimit(own(), 'calls', 95).limits.calls).toBe(120)
     expect(withLimit(own(), 'navigations', 0).limits.navigations).toBe(10)
+    expect(withLimit(own(), 'memory', 5000).limits.memory).toBe(5120)
+    expect(withLimit(own(), 'memory', 99999).limits.memory).toBe(32768)
+  })
+
+  /** #333: the browser's memory was capped at 3 GB for every agent, whatever the
+   *  machine had. No grant starts with a ceiling, a grant written before there was one
+   *  reads as none, and the reader can still set one and take it away again. */
+  it('sets no memory ceiling unless the reader does', () => {
+    expect(own().limits.memory).toBe(0)
+    expect(thirdPartyGrant('script', 'A script', 1).limits.memory).toBe(0)
+    const set = withLimit(own(), 'memory', 4096)
+    expect(set.limits.memory).toBe(4096)
+    expect(withLimit(set, 'memory', 0).limits.memory).toBe(0)
+    const before = { tabs: 4, calls: 600, navigations: 60 }
+    expect(readGrant({ ...own(), limits: before })?.limits.memory).toBe(0)
+    expect(readGrant(set)?.limits.memory).toBe(4096)
+    const crate = readFileSync(
+      fileURLToPath(new URL('../../../../src-tauri/src/agents/memory.rs', import.meta.url)),
+      'utf8',
+    )
+    expect(crate).not.toMatch(/const CEILING/)
+    expect(crate).toMatch(/if ceiling == 0 \{\s*return None;/)
   })
 
   it('leaves every space for the spaces there are, then one at a time', () => {

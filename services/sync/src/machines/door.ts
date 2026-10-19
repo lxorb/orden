@@ -80,6 +80,9 @@ onlineDoor.get('/:term/socket', async (context) => {
     'x-nib-owns': reached.owns ? 'yes' : 'no',
     'x-nib-typing': reached.typing,
     'x-nib-wake': wake,
+    // The sign-in the socket arrived with, by the hash its row is keyed by: ending it
+    // ends the socket, the machine's owner's too (revoke.ts, `recheck` in machine.ts).
+    'x-nib-login': hash,
   })
 
   if (!answer || (answer.status === 101 && !answer.webSocket)) {

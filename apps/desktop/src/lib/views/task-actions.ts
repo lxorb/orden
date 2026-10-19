@@ -30,6 +30,7 @@ import {
 import type { Kit } from './kit'
 import { placeEntries } from './project-actions'
 import type { RowKey } from './row-keys'
+import { deadlineField, deadlineOf, startOf } from '@nib/markdown/task-dates'
 import { changeFor, loadByDay } from './schedule/schedule'
 import { type Box, showScheduler } from './schedule/scheduling.svelte'
 import { labelsOf } from './task-meta'
@@ -47,7 +48,8 @@ export function scheduleRows(
   if (!first) return
   showScheduler(from, {
     current: {
-      due: first.due ?? first.scheduled,
+      // The day it starts (#371).
+      due: startOf(first, first.dueReads) ?? first.scheduled,
       time: first.time,
       minutes: first.duration,
       recurrence: first.recurrence,
@@ -67,17 +69,29 @@ export function scheduleRows(
   })
 }
 
-/** The scheduler for a task's deadline: a day and nothing else, written as its
- *  `[deadline::]`, or taken away by No date. */
-export function scheduleDeadline(row: Row, from: Element | Box, kit: Kit): void {
-  const task = row.task
-  if (!task) return
+/** The scheduler for tasks' deadline: a day and nothing else, written as each one's
+ *  `[deadline::]` - or the `📅` that is a vault's deadline - or taken away by No date.
+ *  What the overdue group's Reschedule opens, since only a deadline makes a task late
+ *  (#371). It opens on the first task's deadline. */
+export function scheduleDeadline(rows: Row | readonly Row[], from: Element | Box, kit: Kit): void {
+  const tasks: Row[] = (Array.isArray(rows) ? [...(rows as readonly Row[])] : [rows as Row]).filter(
+    (row) => row.task,
+  )
+  const first = tasks[0]?.task
+  if (!first) return
   showScheduler(from, {
-    current: { due: task.deadline },
+    current: { due: deadlineOf(first, first.dueReads) },
     today: kit.live.today,
     load: loadByDay(kit.live.rows),
     dateOnly: true,
-    pick: (picked) => void writeEach([{ row, change: { task: { deadline: picked.due } } }]),
+    pick: (picked) =>
+      void writeEach(
+        tasks.map((row: Row) => {
+          const task = row.task
+          const field = task ? deadlineField(task, task.dueReads) : 'deadline'
+          return { row, change: { task: { [field]: picked.due } } }
+        }),
+      ),
   })
 }
 

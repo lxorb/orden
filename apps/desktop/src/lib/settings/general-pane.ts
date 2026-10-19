@@ -11,13 +11,10 @@ import { chatsGroups } from '../chats-settings'
 import { tabCycle } from '../tab-cycle.svelte'
 import { isDesktop, isMobile, platform } from '../tauri'
 import { swipeChoice } from '../back-swipe/choice.svelte'
-import { parseCombination } from '../keys'
-import { shortcuts } from '../shortcuts.svelte'
 import { BY_ID } from '../shortcuts/registry'
-import { shellReads, TWO_WAYS } from '../terminal/keys'
 import { asWarning, shellName, shells, SIZES } from '../terminal/shells.svelte'
 import { bothName } from '../terminal/two-ways'
-import { asChannel } from '../updater'
+import { asChannel, switchWebChannel, webChannel } from '../updater'
 import { updates } from '../updates.svelte'
 import { pages } from '../web-tab/pages.svelte'
 import { isSaver } from '../web-tab/resting'
@@ -30,41 +27,26 @@ import { workspace } from '../workspace.svelte'
 import type { Field, Group, Pane } from './fields'
 
 /** Whose a key that is both the app's and the shell's is, one row each: asked every
- *  time, the app's command, or the shell's character. The row is the question's answer,
- *  and putting it back to asking is choosing that. Only for a command on a key a shell
- *  reads, which on a Mac is none of them: Cmd never reaches a shell. See
- *  terminal/two-ways.ts. */
+ *  time, the app's command, or the shell's character. A row for every key somebody has
+ *  answered the question for - any app command on a key a shell reads can be one (#426)
+ *  - and putting it back to asking takes the row away. On a Mac none ever is: Cmd never
+ *  reaches a shell. See terminal/two-ways.ts. */
 function twoWayFields(): Field[] {
-  return [...TWO_WAYS].flatMap((command): Field[] => {
-    const held = shortcuts.keyFor(command)
-    const chord = held ? parseCombination(held, shortcuts.platform) : null
-    const reads =
-      chord &&
-      shellReads({
-        key: chord.key,
-        ctrlKey: chord.ctrl,
-        metaKey: chord.meta,
-        altKey: chord.alt,
-        shiftKey: chord.shift,
-      })
-    if (!reads) return []
-
-    return [
-      {
-        kind: 'select',
-        label: bothName(command),
-        words: ['shortcut', 'key', 'shell', 'conflict', 'ask'],
-        options: [
-          { value: 'ask', label: t('Always ask') },
-          { value: 'app', label: BY_ID.get(command)?.label() ?? command },
-          { value: 'shell', label: t('Terminal') },
-        ],
-        initial: 'ask',
-        get: () => shells.ways[command] ?? 'ask',
-        set: (value) => shells.setWay(command, value === 'app' || value === 'shell' ? value : null),
-      },
-    ]
-  })
+  return Object.keys(shells.ways)
+    .filter((command) => BY_ID.has(command))
+    .map((command): Field => ({
+      kind: 'select',
+      label: bothName(command),
+      words: ['shortcut', 'key', 'shell', 'conflict', 'ask'],
+      options: [
+        { value: 'ask', label: t('Always ask') },
+        { value: 'app', label: BY_ID.get(command)?.label() ?? command },
+        { value: 'shell', label: t('Terminal') },
+      ],
+      initial: 'ask',
+      get: () => shells.ways[command] ?? 'ask',
+      set: (value) => shells.setWay(command, value === 'app' || value === 'shell' ? value : null),
+    }))
 }
 
 /** The terminal's settings. The shells are asked for as the pane is drawn, which is
@@ -340,6 +322,16 @@ export function generalPane(): Pane {
                 },
               ] satisfies Field[])
             : []),
+          // Whether Today holds the tasks with no start date, as begun; off is Today as
+          // Todoist has it. On the account (modes.svelte.ts, docs/tasks.md 5.1.1).
+          {
+            kind: 'switch',
+            label: t('Show tasks without a start date in Today'),
+            words: ['tasks', 'today', 'start date', 'undated', 'no date', 'todoist'],
+            initial: DEFAULTS.undatedInToday,
+            get: () => modes.undatedInToday,
+            set: (on) => modes.setUndatedInToday(on),
+          },
           ...(isDesktop && !isMobile
             ? ([
                 {
@@ -443,6 +435,37 @@ export function generalPane(): Pane {
                   initial: 'stable',
                   get: () => updates.channel,
                   set: (value) => updates.setChannel(asChannel(value)),
+                },
+              ],
+            },
+          ] satisfies Group[])
+        : []),
+
+      // The web app's own pair: the release, or the edge of `unstable`, chosen for this
+      // browser by a cookie the Worker keeps (#424). Choosing loads the page again from
+      // the other build, so the row says what is running rather than what was last
+      // pressed. Not in the desktop and phone apps, which have the channel above or the
+      // store's. `__EVEN_PLUGIN__` said here as well as in `webChannel`, so the plugin's
+      // build drops the row before it decides which catalogue rows to keep.
+      ...(!__EVEN_PLUGIN__ && webChannel
+        ? ([
+            {
+              title: t('Updates'),
+              fields: [
+                {
+                  kind: 'segmented',
+                  label: t('Web version'),
+                  words: ['beta', 'updates', 'nightly', 'channel', 'edge'],
+                  hint: t(
+                    'Stable is the released web app; Unstable is the newest build and can break.',
+                  ),
+                  options: [
+                    { value: 'stable', label: t('Stable') },
+                    { value: 'unstable', label: t('Unstable') },
+                  ],
+                  initial: 'stable',
+                  get: () => webChannel ?? 'stable',
+                  set: (value) => switchWebChannel(asChannel(value)),
                 },
               ],
             },

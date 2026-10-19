@@ -18,7 +18,7 @@ vi.mock('../tauri', async (importOriginal) => ({
   },
 }))
 
-const { clearData, reach, sinceFor } = await import('./clearing')
+const { clearData, reach, sinceFor, sitesSince } = await import('./clearing')
 const { visited } = await import('./visited')
 const { placeKept, placeOf } = await import('./place')
 
@@ -52,7 +52,7 @@ describe('whose data', () => {
 })
 
 describe('the clearing', () => {
-  test("asks the engine to clear the range, then forgets the range's history", async () => {
+  test("asks the engine to clear the range and names the range's sites, then forgets the range's history", async () => {
     const book = 'nib:web-visits'
     visited.saw(book, 'old', 'https://old.example/page', 'Old')
     visited.saw(book, 'new', 'https://new.example/page', 'New')
@@ -76,10 +76,21 @@ describe('the clearing', () => {
     expect(call?.args).toEqual({
       stores: [null],
       clearing: { since: NOW - HOUR, site: true, cache: false },
+      sites: ['https://new.example'],
     })
     expect(again.all(book).map((one) => one.url)).toEqual(['https://old.example/page'])
     expect(places.placeOf('/Notes/New.url')).toBeNull()
     expect(places.placeOf('/Notes/Old.url')?.y).toBe(80)
+  })
+
+  test('all time names every site the history has, and nothing that is not a web page', async () => {
+    const book = 'nib:web-visits-sites'
+    visited.saw(book, 'a', 'https://a.example/one', 'A')
+    visited.saw(book, 'b', 'https://a.example/two', 'A again')
+    visited.saw(book, 'c', 'http://b.example:8080/', 'B')
+    visited.saw(book, 'd', 'nib://home', 'Home')
+    expect(sitesSince([book], 0).sort()).toEqual(['http://b.example:8080', 'https://a.example'])
+    expect(sitesSince([book], Date.now() + HOUR)).toEqual([])
   })
 
   test('history alone never reaches the engine, and all time forgets every place', async () => {

@@ -27,6 +27,26 @@ export const fr: Dictionary = {
   'Import from Zen': 'Importer depuis Zen',
   'Containers stay in Zen': 'Les conteneurs restent dans Zen',
   'Zen’s tabs could not be read.': 'Les onglets de Zen n’ont pas pu être lus.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'Les conteneurs restent dans Firefox',
+  'Nothing could be read out of {browser}.': 'Rien n’a pu être lu dans {browser}.',
+  'Saved groups': 'Groupes enregistrés',
+  'Tab group': 'Groupe d’onglets',
+  'Bookmarks toolbar': 'Barre personnelle',
+  'Bookmarks menu': 'Menu des marque-pages',
+  'Other bookmarks': 'Autres marque-pages',
+  'Mobile bookmarks': 'Marque-pages mobiles',
+  'Bookmarks bar': 'Barre de favoris',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} garde ses onglets ouverts sous clé : seuls ses favoris sont venus.',
+  '{count} pages not on the web stay behind': {
+    many: '{count} pages hors du Web restent en arrière',
+    one: '{count} page hors du Web reste en arrière',
+    other: '{count} pages hors du Web restent en arrière',
+  },
+  'Reading List': 'Liste de lecture',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS garde les onglets et les signets de Safari derrière l’accès complet au disque. Activez Orden à cet endroit, puis réessayez.',
   // Settings: note types
   'Page note': 'Note en pages',
   'Web note': 'Note web',
@@ -97,8 +117,6 @@ export const fr: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'Astuces',
   'Silent mode': 'Mode silencieux',
-  'Sign in to keep your notes safe and on every device.':
-    'Connectez-vous pour garder vos notes en sécurité et sur tous vos appareils.',
   'See how your notes connect.': 'Voyez comment vos notes sont reliées.',
   'Press {key} to find anything, notes and commands alike.':
     'Appuyez sur {key} pour tout trouver, notes comme commandes.',
@@ -120,11 +138,14 @@ export const fr: Dictionary = {
   '{count} h': '{count} h',
   Inbox: 'Boîte de réception',
   Date: 'Date',
+  'Start date': 'Date de début',
   Priority: 'Priorité',
   Reminder: 'Rappel',
   Duration: 'Durée',
   'Smart dates': 'Dates intelligentes',
   'From any app': 'Depuis n’importe quelle app',
+  'Show tasks without a start date in Today':
+    'Afficher dans Aujourd’hui les tâches sans date de début',
   'Every day': 'Chaque jour',
   'Every weekday': 'Chaque jour ouvré',
   'Every week': 'Chaque semaine',
@@ -168,6 +189,8 @@ export const fr: Dictionary = {
   Dots: 'Points',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'Faire pivoter un canevas à deux doigts',
+  'Turn upright': 'Redresser',
   Canvas: 'Canevas',
   Card: 'Carte',
   'Note or picture': 'Note ou image',
@@ -243,6 +266,11 @@ export const fr: Dictionary = {
   Unpin: 'Détacher',
   Close: 'Fermer',
   'Close pinned tab?': 'Fermer l’onglet épinglé ?',
+  'Save changes to {name}?': 'Enregistrer les modifications de {name} ?',
+  'Save changes to these tabs?': 'Enregistrer les modifications de ces onglets ?',
+  'Unsaved words go to Recently deleted.':
+    'Les mots non enregistrés vont dans Récemment supprimés.',
+  'Don’t save': 'Ne pas enregistrer',
   'Close others': 'Fermer les autres',
   'Close tabs to the right': 'Fermer les onglets à droite',
   'Close tabs to the left': 'Fermer les onglets à gauche',
@@ -1178,6 +1206,7 @@ export const fr: Dictionary = {
   'Double-click to write': 'Double-cliquez pour écrire',
   'Another colour': 'Autre couleur',
   'Turn into a note': 'Transformer en note',
+  Arrange: 'Disposer',
   'Bring to front': 'Mettre au premier plan',
   'Bring forward': 'Avancer',
   'Send backward': 'Reculer',
@@ -1267,6 +1296,9 @@ export const fr: Dictionary = {
   Unstable: 'Instable',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'Stable suit les versions publiées, Instable suit les builds de pointe et peut casser.',
+  'Web version': 'Version web',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'Stable est l’app web publiée, Instable est le build le plus récent et peut casser.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Importer',
@@ -1630,8 +1662,6 @@ export const fr: Dictionary = {
   // Web tabs
   Reload: 'Recharger',
   'Hard reload': 'Actualisation forcée',
-  'Clip this page': 'Enregistrer cette page',
-  'Clip the link': 'Enregistrer le lien',
   'Open in the browser': 'Ouvrir dans le navigateur',
   'Show it here': 'Afficher ici',
   Website: 'Site web',
@@ -1772,7 +1802,6 @@ export const fr: Dictionary = {
   'New tab': 'Nouvel onglet',
   'Full screen': 'Plein écran',
   'Print…': 'Imprimer…',
-  'Save page': 'Enregistrer la page',
   'Share…': 'Partager…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1832,6 +1861,15 @@ export const fr: Dictionary = {
   'Bring all to front': 'Tout ramener au premier plan',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Annuler la copie',
+  'Devices with your AI vault': 'Appareils avec votre coffre IA',
+  'This device': 'Cet appareil',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'L’appareil ne peut plus lire vos comptes IA, et les autres reçoivent une nouvelle clé.',
+  'Also remove this device from your AI vault?': 'Retirer aussi cet appareil de votre coffre IA ?',
+  'Remove and sign out': 'Retirer et se déconnecter',
+  'Undo making {name}': 'Annuler la création de {name}',
+  'Undo the deletion': 'Annuler la suppression',
+  'Undo the move': 'Annuler le déplacement',
   'Redo the last file change': 'Rétablir la dernière modification de fichier',
   'Select down': 'Sélectionner vers le bas',
   'Select up': 'Sélectionner vers le haut',
@@ -2055,6 +2093,7 @@ export const fr: Dictionary = {
   'Without your logins': 'Sans vos connexions',
   'Calls a minute': 'Appels par minute',
   'Pages a minute': 'Pages par minute',
+  'Browser memory limit': 'Limite de mémoire du navigateur',
   '{count} calls': {
     one: '{count} appel',
     many: '{count} d’appels',

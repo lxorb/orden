@@ -22,6 +22,12 @@
  *  against the commitment it answered and the key against the device's id, and wraps the
  *  vault key to that key and no other.
  *
+ *  An allowed device is let go of by changing the key (#389, `remove`): an open device
+ *  seals the vault under a new key and wraps that to every allowed device but the one
+ *  going, which keeps a key that opens nothing written after. The sealed words remember
+ *  the vaults they were changed from (`before`), so a device that joined the vault before
+ *  the change opens the new one without being offered it again.
+ *
  *  It reads again whenever its hub says another device changed something, when this
  *  device changes something, and now and then besides. The roads out - the account's
  *  routes, the secret store, the AI store - are handed in (`VaultWorld`), so the rules
@@ -57,6 +63,26 @@ const JOINED_SECRET = 'ai-vault-joined'
 /** How many times a write is made again over a newer vault before it waits for the next
  *  read. */
 const TRIES = 3
+
+/** How many vaults back a device that joined one still opens the one it became. */
+const MOST_BEFORE = 20
+
+/** The vaults sealed words say they were changed from, oldest first. */
+function beforeIn(value: unknown): string[] {
+  const kept =
+    typeof value === 'object' && value !== null ? (value as { before?: unknown }).before : null
+  return Array.isArray(kept)
+    ? kept.filter((one): one is string => typeof one === 'string').slice(-MOST_BEFORE)
+    : []
+}
+
+/** An allowed device, as an open device lists it. */
+export interface Allowed {
+  id: string
+  name: string
+  /** This device. */
+  mine: boolean
+}
 
 export type Standing = 'off' | 'opening' | 'open' | 'offered' | 'waiting' | 'stranded'
 
@@ -143,6 +169,8 @@ export class Vault {
   seen = $state.raw<Record<string, string>>({})
   /** The device offering this one the vault, while it is offered. */
   offeredBy = $state('')
+  /** The devices allowed, while this one is open. */
+  allowed = $state.raw<Allowed[]>([])
 
   private device: DeviceKey | null = null
   private registered = ''
@@ -228,6 +256,9 @@ export class Vault {
       }
       this.key = read.wrapped ? await unwrap(read.wrapped, device).catch(() => null) : null
       const others = read.devices.filter((one) => one.id !== device.id)
+      this.allowed = read.devices
+        .filter((one) => one.approved)
+        .map((one) => ({ id: one.id, name: one.name, mine: one.id === device.id }))
 
       if (!this.key) {
         const allowers = others.filter((one) => one.approved)
@@ -251,7 +282,15 @@ export class Vault {
       // Offered by another device: nothing is opened, taken or put in until the reader
       // joins here.
       const marker = await this.markerOf(this.key)
-      if ((await this.joined(account)) !== marker) {
+      const joined = await this.joined(account)
+      // The key changed under a vault this device joined: the same vault, joined still.
+      if (
+        joined &&
+        joined !== marker &&
+        (await this.before(this.key, read.blob)).includes(joined)
+      ) {
+        await this.keepJoined(account, marker)
+      } else if (joined !== marker) {
         const by = read.devices.find((one) => one.id === me.nonceFrom)
         this.offeredBy = by?.name ?? ''
         this.digits = this.mineAsking?.answer?.digits ?? ''
@@ -268,6 +307,12 @@ export class Vault {
       this.asking = await this.answer(device, others)
       if (await this.met(account, device, read)) return
     }
+  }
+
+  /** The vaults the sealed vault was changed from, as it says. */
+  private async before(key: Uint8Array<ArrayBuffer>, blob: string | null): Promise<string[]> {
+    const opened = blob ? await open(key, blob).catch(() => null) : null
+    return opened === null ? [] : beforeIn(JSON.parse(opened))
   }
 
   /** Which vault a key opens, as this device keeps it: a fingerprint of the vault's token,
@@ -431,6 +476,7 @@ export class Vault {
     const local = await this.world.local()
     const here = await sideOf({ ...local, seen: { ...this.seen, ...local.seen } })
     let remote: Side | null = null
+    let before: string[] = []
     if (read.blob) {
       const opened = await open(key, read.blob).catch(() => null)
       // Sealed under a key this device was never given: nothing here is the account's,
@@ -440,7 +486,9 @@ export class Vault {
         this.standing = 'stranded'
         return true
       }
-      remote = await sideOf(contentsIn(JSON.parse(opened)))
+      const parsed: unknown = JSON.parse(opened)
+      before = beforeIn(parsed)
+      remote = await sideOf(contentsIn(parsed))
     }
 
     const base = this.world.loadBase(account)
@@ -458,7 +506,7 @@ export class Vault {
     try {
       await this.world.call('/v2/ai/vault', 'PUT', {
         rev: read.rev,
-        blob: await seal(key, JSON.stringify(contents)),
+        blob: await seal(key, JSON.stringify(before.length ? { ...contents, before } : contents)),
         from: device.id,
         auth: await authOf(key),
       })
@@ -521,16 +569,76 @@ export class Vault {
     await this.refresh()
   }
 
-  /** This device out of the vault: its place on the account let go of, with the key
-   *  wrapped to it, and nothing read again until it is let back in. What it holds here
-   *  stays. */
-  async leave(): Promise<void> {
-    const key = this.key
+  /** This device's id on the account, once it has one. */
+  get deviceId(): string {
+    return this.device?.id ?? ''
+  }
+
+  /** An allowed device let go of (#389), this one included: the vault sealed under a new
+   *  key, wrapped to every allowed device but that one, and the old key's token the proof.
+   *  Over a newer vault it reads and tries again. The last allowed device takes the vault
+   *  with it, since nobody would be left to hold a new key. Answers whether it went. */
+  async remove(id: string): Promise<boolean> {
+    const account = this.world.account()
     const device = this.device
-    if (device && this.registered) {
-      await this.world
-        .call(`/v2/ai/devices/${device.id}`, 'DELETE', key ? { auth: await authOf(key) } : {})
-        .catch(() => undefined)
+    if (!account || !device) return false
+    for (let tries = 0; tries < TRIES; tries++) {
+      const key = this.key
+      if (!key) return false
+      const read = await this.read(device)
+      if (!read.devices.some((one) => one.id === id && one.approved)) return false
+      const keep = read.devices.filter((one) => one.approved && one.id !== id && one.pub)
+      const auth = await authOf(key)
+      if (!keep.length) {
+        await this.world.call('/v2/ai/vault', 'DELETE', { auth })
+        await this.world.call(`/v2/ai/devices/${id}`, 'DELETE', {}).catch(() => undefined)
+        this.world.keepBase(account, null)
+        this.signedOut()
+        return true
+      }
+
+      const opened = read.blob ? await open(key, read.blob).catch(() => null) : null
+      if (read.blob && opened === null) return false
+      const parsed: unknown = opened === null ? null : JSON.parse(opened)
+      const before = [...beforeIn(parsed), await this.markerOf(key)].slice(-MOST_BEFORE)
+      const next = newVaultKey()
+      try {
+        await this.world.call('/v2/ai/rotate', 'PUT', {
+          rev: read.rev,
+          blob: await seal(next, JSON.stringify({ ...contentsIn(parsed), before })),
+          from: device.id,
+          auth,
+          next: await authOf(next),
+          keep: keep.map((one) => one.id),
+          wraps: await Promise.all(keep.map((one) => wrap(next, one.pub ?? ''))),
+          go: [id],
+        })
+      } catch (error) {
+        if (isConflict(error)) continue
+        throw error
+      }
+      if (id === device.id) {
+        this.signedOut()
+        return true
+      }
+      this.key = next
+      await this.keepJoined(account, await this.markerOf(next))
+      this.allowed = this.allowed.filter((one) => one.id !== id)
+      void this.refresh()
+      return true
+    }
+    return false
+  }
+
+  /** This device out of the vault: let go of by changing the key where it is allowed, its
+   *  asking let go of otherwise, and nothing read again until it is let back in. What it
+   *  holds here stays. */
+  async leave(): Promise<void> {
+    const device = this.device
+    if (device && this.key && this.allowed.some((one) => one.mine)) {
+      await this.remove(device.id).catch(() => false)
+    } else if (device && this.registered) {
+      await this.world.call(`/v2/ai/devices/${device.id}`, 'DELETE', {}).catch(() => undefined)
     }
     this.signedOut()
   }
@@ -545,6 +653,7 @@ export class Vault {
     this.offered = ''
     this.offeredBy = ''
     this.asking = []
+    this.allowed = []
     this.digits = ''
   }
 }

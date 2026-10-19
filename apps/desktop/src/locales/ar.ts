@@ -26,6 +26,29 @@ export const ar: Dictionary = {
   'Import from Zen': 'استيراد من Zen',
   'Containers stay in Zen': 'تبقى الحاويات في Zen',
   'Zen’s tabs could not be read.': 'تعذّرت قراءة علامات تبويب Zen.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'تبقى الحاويات في Firefox',
+  'Nothing could be read out of {browser}.': 'تعذّرت قراءة أي شيء من {browser}.',
+  'Saved groups': 'المجموعات المحفوظة',
+  'Tab group': 'مجموعة علامات تبويب',
+  'Bookmarks toolbar': 'شريط الإشارات المرجعية',
+  'Bookmarks menu': 'قائمة الإشارات المرجعية',
+  'Other bookmarks': 'إشارات مرجعية أخرى',
+  'Mobile bookmarks': 'إشارات الجوال المرجعية',
+  'Bookmarks bar': 'شريط الإشارات المرجعية',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    'يحتفظ {browser} بعلامات تبويبه المفتوحة مقفلة، لذا جاءت إشاراته المرجعية فقط.',
+  '{count} pages not on the web stay behind': {
+    few: 'صفحات ليست على الويب بقيت مكانها: {count}',
+    many: 'صفحات ليست على الويب بقيت مكانها: {count}',
+    one: 'صفحات ليست على الويب بقيت مكانها: {count}',
+    other: 'صفحات ليست على الويب بقيت مكانها: {count}',
+    two: 'صفحات ليست على الويب بقيت مكانها: {count}',
+    zero: 'صفحات ليست على الويب بقيت مكانها: {count}',
+  },
+  'Reading List': 'قائمة القراءة',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'يحفظ macOS علامات تبويب Safari وإشاراته المرجعية خلف الوصول الكامل للقرص. فعّل Orden هناك، ثم اطلب مجددًا.',
   // Settings: note types
   'Page note': 'ملاحظة صفحات',
   'Web note': 'ملاحظة ويب',
@@ -96,8 +119,6 @@ export const ar: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'تلميحات',
   'Silent mode': 'الوضع الصامت',
-  'Sign in to keep your notes safe and on every device.':
-    'سجّل الدخول لتبقى ملاحظاتك آمنة وعلى كل أجهزتك.',
   'See how your notes connect.': 'شاهد كيف ترتبط ملاحظاتك.',
   'Press {key} to find anything, notes and commands alike.':
     'اضغط {key} للعثور على أي شيء، ملاحظات وأوامر على حد سواء.',
@@ -119,11 +140,15 @@ export const ar: Dictionary = {
   '{count} h': '{count} س',
   Inbox: 'الوارد',
   Date: 'التاريخ',
+  'Start date': 'تاريخ البدء',
   Priority: 'الأولوية',
   Reminder: 'تذكير',
   Duration: 'المدة',
   'Smart dates': 'تواريخ ذكية',
   'From any app': 'من أي تطبيق',
+  'Rotate a canvas with two fingers': 'تدوير اللوحة بإصبعين',
+  'Turn upright': 'إعادة إلى الوضع المستقيم',
+  'Show tasks without a start date in Today': 'إظهار المهام التي ليس لها تاريخ بدء في اليوم',
   'Every day': 'كل يوم',
   'Every weekday': 'كل يوم عمل',
   'Every week': 'كل أسبوع',
@@ -242,6 +267,10 @@ export const ar: Dictionary = {
   Unpin: 'إلغاء التثبيت',
   Close: 'إغلاق',
   'Close pinned tab?': 'إغلاق التبويب المثبّت؟',
+  'Save changes to {name}?': 'حفظ التغييرات في {name}؟',
+  'Save changes to these tabs?': 'حفظ التغييرات في هذه التبويبات؟',
+  'Unsaved words go to Recently deleted.': 'تذهب الكلمات غير المحفوظة إلى المحذوفة مؤخرًا.',
+  'Don’t save': 'عدم الحفظ',
   'Close others': 'إغلاق الأخرى',
   'Close tabs to the right': 'إغلاق التبويبات على اليمين',
   'Close tabs to the left': 'إغلاق التبويبات على اليسار',
@@ -1205,6 +1234,7 @@ export const ar: Dictionary = {
   'Double-click to write': 'انقر نقرًا مزدوجًا للكتابة',
   'Another colour': 'لون آخر',
   'Turn into a note': 'تحويل إلى ملاحظة',
+  Arrange: 'ترتيب',
   'Bring to front': 'إحضار إلى المقدمة',
   'Bring forward': 'إحضار للأمام',
   'Send backward': 'إرسال للخلف',
@@ -1294,6 +1324,9 @@ export const ar: Dictionary = {
   Unstable: 'غير مستقر',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'المستقر يتبع الإصدارات المنشورة، وغير المستقر يتبع بُنى الحافة وقد يتعطل.',
+  'Web version': 'إصدار الويب',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'المستقر هو تطبيق الويب المنشور، وغير المستقر هو أحدث بنية وقد يتعطل.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'استيراد',
@@ -1676,8 +1709,6 @@ export const ar: Dictionary = {
   // Web tabs
   Reload: 'إعادة التحميل',
   'Hard reload': 'إعادة تحميل كاملة',
-  'Clip this page': 'حفظ هذه الصفحة',
-  'Clip the link': 'حفظ الرابط',
   'Open in the browser': 'فتح في المتصفح',
   'Show it here': 'إظهاره هنا',
   Website: 'موقع ويب',
@@ -1808,7 +1839,6 @@ export const ar: Dictionary = {
   'New tab': 'علامة تبويب جديدة',
   'Full screen': 'ملء الشاشة',
   'Print…': 'طباعة…',
-  'Save page': 'حفظ الصفحة',
   'Share…': 'مشاركة…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1868,6 +1898,16 @@ export const ar: Dictionary = {
   'Bring all to front': 'إحضار الكل إلى المقدمة',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'التراجع عن النسخ',
+  'Devices with your AI vault': 'الأجهزة التي تحمل خزنة الذكاء الاصطناعي',
+  'This device': 'هذا الجهاز',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'لن يتمكن الجهاز بعد الآن من قراءة حسابات الذكاء الاصطناعي، وتحصل الأجهزة الأخرى على مفتاح جديد.',
+  'Also remove this device from your AI vault?':
+    'هل تزيل هذا الجهاز من خزنة الذكاء الاصطناعي أيضًا؟',
+  'Remove and sign out': 'إزالة وتسجيل الخروج',
+  'Undo making {name}': 'التراجع عن إنشاء {name}',
+  'Undo the deletion': 'التراجع عن الحذف',
+  'Undo the move': 'التراجع عن النقل',
   'Redo the last file change': 'إعادة آخر تغيير في الملفات',
   'Select down': 'التحديد للأسفل',
   'Select up': 'التحديد للأعلى',
@@ -2095,6 +2135,7 @@ export const ar: Dictionary = {
   'Without your logins': 'من دون تسجيلات دخولك',
   'Calls a minute': 'الاستدعاءات في الدقيقة',
   'Pages a minute': 'الصفحات في الدقيقة',
+  'Browser memory limit': 'حد ذاكرة المتصفح',
   '{count} calls': {
     zero: '{count} استدعاء',
     one: '{count} استدعاء',

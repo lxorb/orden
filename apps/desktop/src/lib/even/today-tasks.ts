@@ -3,6 +3,7 @@
  *  the rows engine, which the plugin does not carry (docs/even.md, `todayTasks`). */
 
 import { links } from '../link-index.svelte'
+import { modes } from '../modes.svelte'
 import { insideSpace } from '../space-paths'
 import { workspace } from '../workspace.svelte'
 
@@ -19,5 +20,5 @@ export async function todayHere(): Promise<{ at: string; space: string; text: st
       scanRows((await workspace.noteText(insideSpace(space.root, note.path))) ?? '').tasks
     rows.push(...scannedTaskRows(space.name, note.path, tasks))
   }
-  return todayTasks(rows, clockOf(new Date()).today).map(taskOut)
+  return todayTasks(rows, clockOf(new Date()).today, modes.undatedInToday).map(taskOut)
 }

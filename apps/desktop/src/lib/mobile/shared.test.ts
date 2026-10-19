@@ -195,6 +195,32 @@ describe('what a share becomes', () => {
     expect(written('/assets/')).toEqual(['a.md', 'assets/a.png'])
   })
 
+  test('a PDF on its own is its page note, as one imported is (#400)', () => {
+    const plan = sharedPlan(
+      arrived({ items: [item({ name: 'Lecture 4.pdf', mime: 'application/pdf', size: 4 })] }),
+      new Map([[0, bytes('%PDF')]]),
+      day,
+      'assets',
+    )
+
+    expect(plan.format).toBe('pdf-pages')
+    expect(plan.files).toEqual([
+      { kind: 'file', path: 'Lecture 4.pdf', bytes: bytes('%PDF'), pages: true },
+    ])
+  })
+
+  test('but a PDF with words, or beside another file, is a file a note is about', () => {
+    const paper = item({ name: 'paper.pdf', mime: 'application/pdf', size: 4 })
+    const said = sharedPlan(
+      arrived({ items: [item({ text: 'Read this first' }), paper] }),
+      new Map([[1, bytes('%PDF')]]),
+      day,
+      'assets',
+    )
+    expect(said.files.map((one) => one.path)).toEqual(['Read this first.md', 'assets/paper.pdf'])
+    expect(said.files.some((one) => one.kind === 'file' && one.pages)).toBe(false)
+  })
+
   test('a markdown file is its own note, with its own bytes', () => {
     const plan = sharedPlan(
       arrived({

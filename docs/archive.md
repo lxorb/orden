@@ -79,8 +79,37 @@ Version history is untouched: archiving writes nothing into the note, so its his
 opens from its tab as always, and a version restored into an archived note leaves it
 archived.
 
+## A whole space
+
+Emil (#352): *"should be possible to archive entire spaces"*. A space's own menu, in the
+switcher, says Archive. The space then leaves every list of spaces - the switcher, the
+picker Ctrl+Space opens, the keys that step through spaces, the palette's Space rows,
+Move to space, a note's Move to, the glasses' - and its files leave every list that
+reads across the spaces: Today, the Tasks panel and the bases, which read the rows of
+the spaces in sight only (`rows/rows.svelte.ts`). The search and the quick switcher are
+one space's, and an archived space is never the open one: archiving the open space goes
+to the one after it first (the one before, at the end), and the last space in sight is
+never archived, since a window has to be in some space.
+
+Nothing moves and nothing is deleted. The folder, its files and its sync stay as they
+were; a link or a bookmark into it still opens. It waits under **Archived**, at the
+foot of the switcher, and a press on its row takes it back - in its place in the order,
+and open - as does Unarchive on the row's menu.
+
+Which spaces are archived is the device's (`nib:archived-spaces`, by folder; see
+`workspace/archived-spaces.svelte.ts`), and for a space the account has, the account's
+too: the `archivedSpaces` setting, a list of space ids. On the account rather than on
+the space, because it is per person: a space somebody shared with you is yours to put
+away and still theirs to keep in sight. Every start and every listing of the spaces
+takes the account's list, unless this device changed it since and the account has not
+heard, in which case this device's is sent instead; ids of spaces this device does not
+have are kept as the account had them. See `space-archive.ts` and `archivedSpaces` in
+`services/sync/src/settings.ts`.
+
 ## Proof
 
 `apps/desktop/test/e2e/archive.py` archives a note and a folder from their rows, undoes
 one, opens the archive, brings one note out of an archived folder, is refused deleting a
-folder holding archived notes, and searches with and without the switch.
+folder holding archived notes, and searches with and without the switch. `space-archive.py`
+archives the open space from its menu, finds it in no list of spaces and none of its
+words or tasks across the others, and brings it back from Archived where it was.

@@ -13,6 +13,7 @@
   import { parseQuickAdd } from '@nib/bases/language'
   import { linesOf } from '@nib/bases/tasks'
   import { dayWords } from '@nib/editor/task-days'
+  import { deadlineOf, startOf } from '@nib/markdown/task-dates'
   import Bell from 'lucide/dist/esm/icons/bell.mjs'
   import Calendar from 'lucide/dist/esm/icons/calendar-days.mjs'
   import ChevronDown from 'lucide/dist/esm/icons/chevron-down.mjs'
@@ -72,6 +73,9 @@
 
   const row = $derived(rowFor(shown.ref, all))
   const task = $derived(row?.task)
+  /** Its start date and its deadline, as its space reads a `📅` (#371). */
+  const starts = $derived(task ? (startOf(task, task.dueReads) ?? task.scheduled) : undefined)
+  const deadline = $derived(task ? deadlineOf(task, task.dueReads) : undefined)
   const path = $derived(row ? notePath(row) : null)
   const phone = $derived(viewport.device === 'phone')
   const today = $derived(kit.live.today)
@@ -255,7 +259,8 @@
   function remindMenu(event: MouseEvent) {
     if (!row || !task) return
     const current = row
-    const day = task.due ?? task.scheduled
+    // A reminder rings on the day it starts (#371).
+    const day = starts
     menu.show(
       event,
       remindRows(
@@ -277,7 +282,7 @@
   /** How many lines a sub-task's row is. */
   function lineOf(one: Row): number {
     const sub = one.task
-    return sub ? lineCount(sub, hasMeta(sub, true, countsOf(one)), false) : 1
+    return sub ? lineCount(sub, hasMeta(sub, true, countsOf(one), today), false) : 1
   }
 </script>
 
@@ -461,19 +466,16 @@ ${shown.ref.line}`}
           <span class="nib-row-label">{row.file.basename}</span>
         </button>
 
-        <p class="nib-section">{t('Date')}</p>
+        <!-- The day it starts, never late; only a deadline is (#371). -->
+        <p class="nib-section">{t('Start date')}</p>
         <button
           type="button"
           class="nib-row is-short when"
           onclick={(event) => scheduleRows([row], event.currentTarget, kit)}
         >
           <span class="nib-row-mark"><Glyph icon={task.recurrence ? Repeat : Calendar} /></span>
-          <span class="nib-row-label" class:late={(task.due ?? task.scheduled ?? today) < today}
-            >{#if task.due ?? task.scheduled}{dayWords(
-                task.due ?? task.scheduled ?? today,
-                today,
-                task.time,
-              )}{#if task.duration !== undefined}
+          <span class="nib-row-label"
+            >{#if starts}{dayWords(starts, today, task.time)}{#if task.duration !== undefined}
                 · {durationLabel(task.duration)}{/if}{:else}{t('No date')}{/if}</span
           >
         </button>
@@ -486,8 +488,8 @@ ${shown.ref.line}`}
           onclick={(event) => scheduleDeadline(row, event.currentTarget, kit)}
         >
           <span class="nib-row-mark"><Glyph icon={Target} /></span>
-          <span class="nib-row-label" class:late={!!task.deadline && task.deadline <= today}
-            >{task.deadline ? dayWords(task.deadline, today) : t('No deadline')}</span
+          <span class="nib-row-label" class:late={!!deadline && deadline <= today}
+            >{deadline ? dayWords(deadline, today) : t('No deadline')}</span
           >
         </button>
 

@@ -96,6 +96,37 @@ pub struct Asking<'a> {
     pub key: String,
 }
 
+/// A question an agent that asks nothing would have raised, answered as it is raised: kept
+/// with its answer, so the activity panel and `approval_status` read it as any other, and
+/// said to the window, which shows a tab whose Show this was (#372).
+pub fn granted(app: &AppHandle, asking: Asking<'_>, answer: ApprovalAnswer) -> Approval {
+    let approval = Approval {
+        id: format!("q{}", NEXT.fetch_add(1, Ordering::Relaxed)),
+        agent: asking.agent.to_string(),
+        name: asking.name.to_string(),
+        category: asking.category,
+        summary: asking.summary,
+        site: asking.site,
+        tab: asking.tab,
+        verb: verb_of(&asking.key).to_owned(),
+        asked: crate::clock::now(),
+        answer,
+    };
+    held().push(Held {
+        approval: approval.clone(),
+        key: asking.key,
+        at: Instant::now(),
+        spent: true,
+    });
+    let _ = app.emit(
+        EVENT,
+        Event::Answered {
+            approval: approval.clone(),
+        },
+    );
+    approval
+}
+
 /// Asks, once: a call made again while its question waits is told the same question.
 pub fn ask(app: &AppHandle, asking: Asking<'_>) -> Answer {
     let mut all = held();

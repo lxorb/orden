@@ -26,6 +26,25 @@ export const gu: Dictionary = {
   'Import from Zen': 'Zen માંથી આયાત કરો',
   'Containers stay in Zen': 'કન્ટેનર Zen માં જ રહે છે',
   'Zen’s tabs could not be read.': 'Zen ના ટૅબ વાંચી શકાયા નહીં.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'કન્ટેનર Firefox માં જ રહે છે',
+  'Nothing could be read out of {browser}.': '{browser} માંથી કંઈ વાંચી શકાયું નહીં.',
+  'Saved groups': 'સાચવેલા જૂથો',
+  'Tab group': 'ટૅબ જૂથ',
+  'Bookmarks toolbar': 'બુકમાર્ક ટૂલબાર',
+  'Bookmarks menu': 'બુકમાર્ક મેનૂ',
+  'Other bookmarks': 'અન્ય બુકમાર્ક',
+  'Mobile bookmarks': 'મોબાઇલ બુકમાર્ક',
+  'Bookmarks bar': 'બુકમાર્ક બાર',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} તેના ખુલ્લા ટૅબ લૉક રાખે છે, તેથી ફક્ત તેના બુકમાર્ક આવ્યા.',
+  '{count} pages not on the web stay behind': {
+    one: 'વેબ પર ન હોય એવું {count} પાનું રહી ગયું',
+    other: 'વેબ પર ન હોય એવાં {count} પાનાં રહી ગયાં',
+  },
+  'Reading List': 'વાંચન સૂચિ',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS Safariના ટૅબ અને બુકમાર્ક ફુલ ડિસ્ક ઍક્સેસ પાછળ રાખે છે. ત્યાં Orden ચાલુ કરો, પછી ફરી પૂછો.',
   // Settings: note types
   'Page note': 'પાનાંવાળી નોંધ',
   'Web note': 'વેબ નોંધ',
@@ -96,8 +115,6 @@ export const gu: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'સંકેતો',
   'Silent mode': 'શાંત મોડ',
-  'Sign in to keep your notes safe and on every device.':
-    'તમારી નોંધો સુરક્ષિત અને દરેક ઉપકરણ પર રાખવા સાઇન ઇન કરો.',
   'See how your notes connect.': 'તમારી નોંધો કેવી રીતે જોડાયેલી છે તે જુઓ.',
   'Press {key} to find anything, notes and commands alike.':
     'નોંધો અને આદેશો, કંઈપણ શોધવા {key} દબાવો.',
@@ -119,11 +136,13 @@ export const gu: Dictionary = {
   '{count} h': '{count} કલાક',
   Inbox: 'ઇનબૉક્સ',
   Date: 'તારીખ',
+  'Start date': 'શરૂઆતની તારીખ',
   Priority: 'પ્રાથમિકતા',
   Reminder: 'રિમાઇન્ડર',
   Duration: 'અવધિ',
   'Smart dates': 'સ્માર્ટ તારીખો',
   'From any app': 'કોઈપણ ઍપમાંથી',
+  'Show tasks without a start date in Today': 'શરૂઆતની તારીખ વગરના કાર્યો આજેમાં બતાવો',
   'Every day': 'દરરોજ',
   'Every weekday': 'દરેક કામકાજના દિવસે',
   'Every week': 'દર અઠવાડિયે',
@@ -167,6 +186,8 @@ export const gu: Dictionary = {
   Dots: 'બિંદુઓ',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'બે આંગળીઓથી કેનવાસ ફેરવો',
+  'Turn upright': 'સીધું કરો',
   Canvas: 'કેનવાસ',
   Card: 'કાર્ડ',
   'Note or picture': 'નોંધ કે ચિત્ર',
@@ -242,6 +263,10 @@ export const gu: Dictionary = {
   Unpin: 'પિન કાઢો',
   Close: 'બંધ કરો',
   'Close pinned tab?': 'પિન કરેલી ટૅબ બંધ કરવી?',
+  'Save changes to {name}?': '{name} માં ફેરફારો સાચવવા છે?',
+  'Save changes to these tabs?': 'આ ટૅબમાં ફેરફારો સાચવવા છે?',
+  'Unsaved words go to Recently deleted.': 'ન સાચવેલા શબ્દો તાજેતરમાં કાઢી નાખેલામાં જશે.',
+  'Don’t save': 'સાચવશો નહીં',
   'Close others': 'બીજી બંધ કરો',
   'Close tabs to the right': 'જમણી બાજુના ટૅબ બંધ કરો',
   'Close tabs to the left': 'ડાબી બાજુના ટૅબ બંધ કરો',
@@ -1158,6 +1183,7 @@ export const gu: Dictionary = {
   'Double-click to write': 'લખવા બે વાર ક્લિક કરો',
   'Another colour': 'બીજો રંગ',
   'Turn into a note': 'નોંધમાં ફેરવો',
+  Arrange: 'ગોઠવો',
   'Bring to front': 'સૌથી આગળ લાવો',
   'Bring forward': 'આગળ લાવો',
   'Send backward': 'પાછળ મોકલો',
@@ -1247,6 +1273,9 @@ export const gu: Dictionary = {
   Unstable: 'અસ્થિર',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'સ્થિર પ્રકાશિત આવૃત્તિઓ અનુસરે છે, અસ્થિર એજ બિલ્ડ અનુસરે છે અને તૂટી શકે.',
+  'Web version': 'વેબ આવૃત્તિ',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'સ્થિર પ્રકાશિત વેબ એપ છે, અસ્થિર સૌથી નવું બિલ્ડ છે અને તૂટી શકે.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'આયાત',
@@ -1576,8 +1605,6 @@ export const gu: Dictionary = {
   // Web tabs
   Reload: 'ફરી લાવો',
   'Hard reload': 'પૂરેપૂરું ફરી લાવો',
-  'Clip this page': 'આ પાનું સાચવો',
-  'Clip the link': 'કડી સાચવો',
   'Open in the browser': 'બ્રાઉઝરમાં ખોલો',
   'Show it here': 'અહીં બતાવો',
   Website: 'વેબસાઇટ',
@@ -1708,7 +1735,6 @@ export const gu: Dictionary = {
   'New tab': 'નવું ટૅબ',
   'Full screen': 'પૂર્ણ સ્ક્રીન',
   'Print…': 'છાપો…',
-  'Save page': 'પેજ સાચવો',
   'Share…': 'વહેંચો…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1767,6 +1793,15 @@ export const gu: Dictionary = {
   'Bring all to front': 'બધું આગળ લાવો',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'નકલ પાછી લો',
+  'Devices with your AI vault': 'તમારા AI વૉલ્ટ વાળાં ઉપકરણો',
+  'This device': 'આ ઉપકરણ',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'ઉપકરણ હવે તમારાં AI એકાઉન્ટ વાંચી શકશે નહીં, અને બાકીનાંને નવી કી મળશે.',
+  'Also remove this device from your AI vault?': 'આ ઉપકરણને તમારા AI વૉલ્ટમાંથી પણ દૂર કરવું?',
+  'Remove and sign out': 'દૂર કરો અને સાઇન આઉટ કરો',
+  'Undo making {name}': '{name} બનાવવું પાછું લો',
+  'Undo the deletion': 'કાઢવું પાછું લો',
+  'Undo the move': 'ખસેડવું પાછું લો',
   'Redo the last file change': 'ફાઇલનો છેલ્લો ફેરફાર ફરી કરો',
   'Select down': 'નીચે તરફ પસંદ કરો',
   'Select up': 'ઉપર તરફ પસંદ કરો',
@@ -1985,6 +2020,7 @@ export const gu: Dictionary = {
   'Without your logins': 'તમારા લૉગ-ઇન વિના',
   'Calls a minute': 'પ્રતિ મિનિટ કૉલ',
   'Pages a minute': 'પ્રતિ મિનિટ પેજ',
+  'Browser memory limit': 'બ્રાઉઝર મેમરી મર્યાદા',
   '{count} calls': {
     one: '{count} કૉલ',
     other: '{count} કૉલ',

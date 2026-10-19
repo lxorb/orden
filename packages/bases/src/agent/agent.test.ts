@@ -115,7 +115,8 @@ describe('words read the way quick add reads them', () => {
 
   test('the grammar, and where the words say the task goes', () => {
     const said = read('Call mum tomorrow 4pm p1 >Errands /Later')
-    expect(taskLine(said.fields)).toBe('- [ ] Call mum [time:: 16:00] 🔺 📅 2026-10-05')
+    // A day said is the day it starts: `🛫` (#371).
+    expect(taskLine(said.fields)).toBe('- [ ] Call mum [time:: 16:00] 🔺 🛫 2026-10-05')
     expect(said).toMatchObject({ note: 'Errands', heading: 'Later' })
   })
 
@@ -219,7 +220,9 @@ describe('a task changed', () => {
 describe('lists', () => {
   test('Today: overdue first, then today, open only', () => {
     const { tasks } = listTasks(rows, { view: 'today' }, context)
-    expect(tasks.map((one) => one.text)).toEqual(['Water the plants', 'Call the bank'])
+    // A `📅` here is a start date (#371): the plants started yesterday, and are not
+    // overdue, so the higher priority goes first.
+    expect(tasks.map((one) => one.text)).toEqual(['Call the bank', 'Water the plants'])
   })
 
   test("Todoist's filter, on top of a view or alone", () => {
@@ -323,12 +326,21 @@ describe('Today without the engine', () => {
           '- [ ] Early [time:: 07:00] 📅 2026-10-04',
           '- [-] Cancelled 📅 2026-10-04',
           '- [ ] Later 📅 2026-10-09',
+          '- [ ] Planned later ⏳ 2026-10-09',
+          '- [ ] No start, due later [deadline:: 2026-10-09]',
         ].join('\n'),
       ),
     ]
     const engine = listTasks(many, { view: 'today' }, context).tasks.map((one) => one.at)
     expect(todayTasks(many, context.today).map((row) => atOf(row))).toEqual(engine)
     expect(engine).toHaveLength(5)
+
+    // And with the tasks that have no day of their own in it (#408).
+    const undated = listTasks(many, { view: 'today', undated: true }, context).tasks
+    expect(todayTasks(many, context.today, true).map((row) => atOf(row))).toEqual(
+      undated.map((one) => one.at),
+    )
+    expect(undated.length).toBeGreaterThan(engine.length)
   })
 })
 

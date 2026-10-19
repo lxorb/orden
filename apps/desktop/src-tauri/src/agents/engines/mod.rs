@@ -4,11 +4,12 @@
 //! | build | an agent's own tab | a reader's tab | the verbs |
 //! | --- | --- | --- | --- |
 //! | `WebView2` | a child webview outside the window's client area (`tabs.rs`) | its webview | the `DevTools` Protocol, all of them |
+//! | nib's own Chromium | a windowless browser with no native window at all (`cef.rs`) | its webview, through `engine/devtools.rs` | the same protocol, all of them |
 //! | `WKWebView`, `WebKitGTK` | none yet: measured by scripts/webkit-agent-probe, see docs/agent-native.md 12 | - | `unsupported_on_this_engine` |
 //!
 //! **The reader's logins, never the reader's extensions.** Emil, 2026-10-03: an agent's
 //! tab never loads the reader's extensions. An extension is installed into a profile, and
-//! the engine has no per-page switch for it, so a page in the reader's own store runs
+//! neither engine has a per-page switch for it, so a page in the reader's own store runs
 //! every extension the reader installed - a password manager that fills in the agent's
 //! page, an ad blocker that changes what it reads, anything with `<all_urls>` reading
 //! what the agent reads. Two ways out, and Emil has not chosen; [`READER_STORE`] is the
@@ -26,6 +27,9 @@
 //! - **Blocked**: an agent's tab is never in the reader's store; asked for it, the tab
 //!   opens in the agent's own store, signed out, and the answer says so - the way a site
 //!   set to "agent store only" already answers.
+
+#[cfg(feature = "cef")]
+pub mod cef;
 
 use tauri::{AppHandle, Manager as _, Webview};
 
@@ -86,6 +90,9 @@ pub fn reader_of(store: Option<&str>) -> Option<Option<&str>> {
 pub enum View {
     /// A webview of the app's: a reader's tab, or an agent's own on `WebView2`.
     Webview(Webview),
+    /// An agent's own tab on nib's own Chromium: a browser with no window.
+    #[cfg(feature = "cef")]
+    Windowless(cef::Windowless),
 }
 
 impl View {
@@ -93,6 +100,8 @@ impl View {
     pub fn label(&self) -> String {
         match self {
             View::Webview(view) => view.label().to_string(),
+            #[cfg(feature = "cef")]
+            View::Windowless(page) => page.label().to_string(),
         }
     }
 
@@ -100,6 +109,8 @@ impl View {
     pub fn url(&self) -> String {
         match self {
             View::Webview(view) => view.url().map(|one| one.to_string()).unwrap_or_default(),
+            #[cfg(feature = "cef")]
+            View::Windowless(page) => page.url(),
         }
     }
 
@@ -109,12 +120,18 @@ impl View {
             View::Webview(view) => {
                 let _ = view.close();
             }
+            #[cfg(feature = "cef")]
+            View::Windowless(page) => page.close(),
         }
     }
 }
 
 /// The page under a label, on whichever engine has it.
 pub fn view(app: &AppHandle, label: &str) -> Option<View> {
+    #[cfg(feature = "cef")]
+    if let Some(page) = cef::page(label) {
+        return Some(View::Windowless(page));
+    }
     app.get_webview(label).map(View::Webview)
 }
 

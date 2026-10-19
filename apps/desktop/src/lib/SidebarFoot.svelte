@@ -22,7 +22,6 @@
   import { longPress } from './longpress'
   import { dur } from './motion'
   import { settings } from './settings.svelte'
-  import { startup } from './startup.svelte'
   import { t } from './i18n.svelte'
   import { isNative, openExternal } from './tauri'
   import { theme } from './theme.svelte'
@@ -43,19 +42,6 @@
 <!-- A region of the window, so F6 reaches the account, the theme and the settings
      without a pointer; see focus.ts. -->
 <div class="foot" data-region="foot">
-  <!-- Notes on this device alone until somebody signs in, which nothing on screen
-       says: the one hint that is about not losing anything, so the first a session
-       offers. Not in the glasses' plugin, which signs in through the phone. -->
-  {#if !__EVEN_PLUGIN__ && startup.settled}
-    {#await import('./HintCard.svelte') then card}
-      <card.default
-        hint="sign-in"
-        text={t('Sign in to keep your notes safe and on every device.')}
-        when={!account.restoring && !account.signedIn}
-        onpress={() => settings.show('account')}
-      />
-    {/await}
-  {/if}
   <!-- The account, which is a row rather than a glyph: a name is what says whose
        notes these are. Signed in or not, it opens the same pane - signing in,
        the name the others in a shared space see, storage and signing out are all

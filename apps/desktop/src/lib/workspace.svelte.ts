@@ -58,6 +58,7 @@ import { Bookmarks } from './workspace/bookmarks.svelte'
 import { FolderIcons } from './workspace/folder-icons.svelte'
 import { Excluded } from './workspace/excluded.svelte'
 import { Archive } from './workspace/archive.svelte'
+import { ArchivedSpaces } from './workspace/archived-spaces.svelte'
 import { SpaceGraphSettings } from './workspace/graph-settings.svelte'
 import { ClosedTabs } from './workspace/closed.svelte'
 import { DeviceView } from './workspace/device.svelte'
@@ -88,7 +89,7 @@ import { Saving } from './workspace/saving.svelte'
 import { draftFile, hasWords, isDraft, isUnsaved } from './workspace/drafts'
 import { TAB_KINDS } from './workspace/tab-kinds'
 import type { Picked } from './import/sources'
-import { FileActions } from './workspace/undo.svelte'
+import { FileActions, type Kept } from './workspace/undo.svelte'
 import { writeFile } from './workspace/write-file'
 import { isScratchpad, shown as pad } from './scratchpad/is.svelte'
 import { outermost, Selection } from './workspace/selection.svelte'
@@ -104,7 +105,7 @@ import {
 import { flatRows } from './tree-flat'
 import { entryAt, withComing, withEntry, withMove, withoutEntry, withoutRows } from './tree-edits'
 import { orderedTree, type SortMode } from './tree-order'
-import { Arranged } from './workspace/arranged.svelte'
+import { Arranged, SpaceSorting } from './workspace/arranged.svelte'
 import { log } from './log'
 import { invoke, isDesktop, isNative, joinPath, openExternal } from './tauri'
 import { viewport } from './viewport.svelte'
@@ -234,8 +235,7 @@ function readTreeOptions(): TreeOptions {
   const saved = stored(TREE_KEY)
   // A build older than this one wrote a sort key and a direction here as well, for
   // the whole app rather than per space. They are ignored: the order is now the
-  // space's own and is kept beside where each space was left scrolled to; see
-  // `listOrder` in workspace/device.svelte.ts.
+  // space's own, with the account; see `SpaceSorting` in workspace/arranged.svelte.ts.
   if (!isRecord(saved)) return { showHidden: false }
 
   return { showHidden: saved.showHidden === true }
@@ -273,12 +273,24 @@ function worthReopening(tab: Tab): boolean {
   return !tab.inPrivate && !tab.nowhere && (!isDraft(tab.note) || hasWords(tab.note))
 }
 
+/** A tab with no file and words in it, which closing asks about. */
+const unsaved = (tab: Tab) => isDraft(tab.note) && hasWords(tab.note)
+
 class Workspace {
-  /** PDF tabs from older sessions are converted to page notes on restore. Keep
-   *  concurrent opens of the same paper from creating the sidecar twice. */
+  /** PDFs on their way to being page notes; see `pageNoteForPdf`. */
   private readonly pdfPageNotes = new Map<string, Promise<string | null>>()
   spaces = $state<Space[]>([])
   activeSpaceId = $state<string | null>(null)
+  /** The spaces put away whole; see workspace/archived-spaces.svelte.ts. */
+  readonly archivedSpaces = new ArchivedSpaces()
+
+  /** Every space that is not put away, in the reader's order: what every list of spaces
+   *  offers, and what reads across them. `spaces` is all of them, which sync, a path's
+   *  space and a link still need. */
+  get shownSpaces(): Space[] {
+    return this.spaces.filter((one) => !this.archivedSpaces.has(one.root))
+  }
+
   /** The space's listing. Raw, because it is only ever replaced whole - every edit
    *  of it builds a new tree; see tree-edits.ts - and a deep proxy over a listing of
    *  thousands of entries charged every walk of it a signal per field read: the
@@ -415,6 +427,9 @@ class Workspace {
    *  the same kind of thing: one space's own settings, kept on the account so
    *  every machine draws it the same way. */
   readonly graphSettings = new SpaceGraphSettings(() => this.activeSpace?.root ?? null)
+  /** Which order each space's file list is read in, with the account; see
+   *  `SpaceSorting` in workspace/arranged.svelte.ts (#423). */
+  readonly sorting = new SpaceSorting(() => this.activeSpace?.root ?? null)
   /** The notes and folders this space leaves out of its search, its graph and its
    *  unlinked mentions. Beside the other two because it is the same kind of thing:
    *  one space's own settings, kept on the account so every machine agrees. */
@@ -477,6 +492,7 @@ class Workspace {
       this.excluded,
       this.archive,
       this.graphSettings,
+      this.sorting,
     ]) {
       this.fileOps.follow(keeping(store))
     }
@@ -691,10 +707,33 @@ class Workspace {
       this.tree && arriving.coming.size ? withComing(this.tree, [...arriving.coming]) : this.tree
     if (!coming) return null
 
-    return orderedTree(this.unarchived(coming), this.sortMode, (folder) =>
+    return orderedTree(this.unkept(this.unarchived(coming)), this.sortMode, (folder) =>
       this.arranged.listOf(folder),
     )
   })
+
+  /** Whether a file is kept in this space's Essentials. */
+  inEssentials(path: string): boolean {
+    const root = this.activeSpace?.root
+    if (root === undefined || !within(root, path)) return false
+
+    const at = relativeTo(root, path)
+    return this.bookmarks.list.some((one) => one.kind === 'note' && samePath(one.path, at))
+  }
+
+  /** The tree without the files kept in the Essentials, which are drawn there (#345);
+   *  see docs/tree.md. */
+  private unkept(tree: Entry): Entry {
+    const root = this.activeSpace?.root
+    const kept = this.bookmarks.list.filter((one) => one.kind === 'note').map((one) => one.path)
+    if (root === undefined || !kept.length) return tree
+
+    return withoutRows(tree, (entry) => {
+      if (entry.is_dir) return false
+      const at = relativeTo(root, entry.path)
+      return kept.some((one) => samePath(one, at))
+    })
+  }
 
   /** The tree without what the space has archived. */
   private unarchived(tree: Entry): Entry {
@@ -706,10 +745,10 @@ class Workspace {
   }
 
   /** Which order this space's file list is read in. By name until somebody chooses
-   *  otherwise, per space, on this machine; see `listOrder` in
-   *  workspace/device.svelte.ts. */
+   *  otherwise, per space and with the account; see `SpaceSorting` in
+   *  workspace/arranged.svelte.ts. */
   readonly sortMode = $derived<SortMode>(
-    this.activeSpace ? this.device.orderOf(this.activeSpace.root) : 'name',
+    this.activeSpace ? this.sorting.of(this.activeSpace.root) : 'name',
   )
 
   /** Whether an account's first pass is running and there is still nothing of
@@ -1679,67 +1718,47 @@ class Workspace {
     this.persist()
   }
 
-  /** A PDF opens as its page note: the paper supplies the pages, and the page
-   *  note is the only surface used to read or write on them. `page` counts from
-   *  one, and null means wherever the page note was left. */
+  /** A PDF opens as its page note, made the first time; see pages/from-pdf.ts. A
+   *  page note, or the paper one holds, opens that note. `page` counts from one, and
+   *  null means wherever the page note was left. */
   async openPdf(asked: string, page: number | null = null, how: OpenHow = {}) {
     // The glasses' plugin has no page surface. Links and search hits use this too,
     // rather than going through `openerFor`.
     if (__EVEN_PLUGIN__) return
 
     const path = this.spelled(asked)
-    const pageNote = await this.pageNoteForPdf(path)
+    const pageNote = isPagesTarget(path) ? path : await this.pageNoteForPdf(path)
     if (!pageNote) return
     await this.openPages(pageNote, page, how)
   }
 
-  /** The companion page note for a PDF, created on first open. Every page keeps
-   *  the original paper as its background; no raster copy or second viewer is
-   *  involved. */
-  private pageNoteForPdf(asked: string): Promise<string | null> {
+  /** The page note a PDF is, or null where it could not be read. One at a time per
+   *  paper. */
+  pageNoteForPdf(asked: string): Promise<string | null> {
     const path = this.spelled(asked)
-    const pagePath = path.replace(/\.pdf$/i, '.pages')
-    const existing = this.pdfPageNotes.get(pagePath)
+    const existing = this.pdfPageNotes.get(path)
     if (existing) return existing
 
-    const making = (async () => {
-      // A sidecar already on disk is the page note the reader last worked on.
-      if (this.files.some((one) => samePath(one.path, pagePath))) return pagePath
-      const there = await invoke<string>('read_note', { path: pagePath }).catch(() => null)
-      if (there !== null) return pagePath
-
-      try {
-        const [{ openDocument }, { PDF_TO_CSS }, { pagesFromPdf }, { writeCanvas }] =
-          await Promise.all([
-            import('./pdf/document'),
-            import('./pdf/pages'),
-            import('@nib/markdown/pages'),
-            import('@nib/markdown/canvas'),
-          ])
-        const paper = await openDocument(path)
-        const sizes: { width: number; height: number }[] = []
-        try {
-          for (let number = 1; number <= paper.doc.numPages; number += 1) {
-            const page = await paper.doc.getPage(number)
-            const view = page.getViewport({ scale: PDF_TO_CSS })
-            sizes.push({ width: Math.round(view.width), height: Math.round(view.height) })
-            page.cleanup()
-          }
-        } finally {
-          await paper.close().catch(() => undefined)
-        }
-
-        await writeFile(pagePath, writeCanvas(pagesFromPdf(nameOf(path), sizes)))
-        void this.loadTree()
-        return pagePath
-      } catch (error) {
+    const making = this.turning(path)
+      .then(({ from, how }) => from.asPageNote(path, how))
+      .catch((error: unknown) => {
         log('error', `open PDF as page note: ${path} - ${String(error)}`)
         return null
-      }
-    })()
-    this.pdfPageNotes.set(pagePath, making)
-    void making.finally(() => this.pdfPageNotes.delete(pagePath))
+      })
+    this.pdfPageNotes.set(path, making)
+    void making.finally(() => this.pdfPageNotes.delete(path))
     return making
+  }
+
+  /** pages/from-pdf.ts, and this space for it to turn a PDF in: moved through
+   *  `renameFile`, so what is kept by path follows the paper. */
+  private async turning(path: string) {
+    const [from, { turningIn }] = await Promise.all([
+      import('./pages/from-pdf'),
+      import('./pages/turning'),
+    ])
+    const how = turningIn(this.rootHolding(path), (one, to) => this.renameFile(one, to, false))
+    return { from, how }
   }
 
   /** A canvas in the space, in a tab of its own. One tab per canvas, the way the
@@ -2100,6 +2119,7 @@ class Workspace {
 
     const { newSite } = await import('./web-tab/new-site')
     const path = await newSite(this, dir, named)
+    this.undone.record({ kind: 'create', path })
     await this.loadTree()
     await this.openWeb(path)
   }
@@ -2189,6 +2209,7 @@ class Workspace {
     if (__EVEN_PLUGIN__) return
 
     const path = this.spelled(asked)
+    await this.holdPaperBeside(path)
     const tab = this.showTab(
       await this.opened.opening(path, () => this.openDeck(path, page, how)),
       how,
@@ -2196,6 +2217,19 @@ class Workspace {
     // A deck already open turns to the page the link named. One opening at it is
     // already there, which is what the page it was given says.
     if (tab && page !== null && tab.page !== page) this.gotoPage = { path, page }
+  }
+
+  /** An older build's page note beside its PDF takes the PDF in; asked only where the
+   *  list has that PDF and the note is not open. */
+  private async holdPaperBeside(path: string) {
+    const pdf = path.replace(/\.pages$/i, '.pdf')
+    if (this.opened.at(path) || !this.files.some((one) => samePath(one.path, pdf))) return
+
+    await this.turning(path)
+      .then(({ from, how }) => from.adoptBeside(path, how))
+      .catch((error: unknown) => {
+        log('warn', `page note beside its PDF: ${path} - ${String(error)}`)
+      })
   }
 
   /** The document one open of a page note comes to. Only `openPages` calls it, and
@@ -2265,6 +2299,7 @@ class Workspace {
     this.dropScaffolding(tab)
 
     await writeFile(path, content)
+    this.undone.record({ kind: 'create', path })
     await this.loadTree()
     this.persist()
   }
@@ -2501,10 +2536,7 @@ class Workspace {
    *  places in the frame the menu closes in - a round trip is what this used to cost,
    *  and on a synced folder it was long enough to wonder whether the press landed. */
   setSort(mode: SortMode) {
-    const root = this.activeSpace?.root
-    if (root === undefined) return
-
-    this.device.setOrder(root, mode)
+    this.sorting.set(mode)
   }
 
   toggleHidden() {
@@ -2517,8 +2549,8 @@ class Workspace {
     void this.loadTree()
   }
 
-  /** Moves a note or folder into another folder. */
-  async move(from: string, intoFolder: string) {
+  /** Moves a note or folder into another folder; `how`, see undo.svelte.ts. */
+  async move(from: string, intoFolder: string, how?: 'follows' | 'nests') {
     const name = nameOf(from)
     const target = joinPath(intoFolder, name)
 
@@ -2528,29 +2560,39 @@ class Workspace {
     const kind = this.kindAt(from)
     this.showMove(from, target)
 
-    // After whatever write of anything open in it is in the air, and with every
-    // write of those held until the documents have been told where they went; see
-    // `holdingUnder` in workspace/saving.svelte.ts.
-    await this.saving.holdingUnder(from, async () => {
-      // And back where it was if the move did not happen - something already there,
-      // a file that has gone. The listing is what the tree really is, and until it is
-      // read again the row is sitting in a folder that does not hold it; see `remove`,
-      // which puts a row back the same way.
-      try {
-        await invoke('rename_note', { from, to: target })
-      } catch (error) {
-        await this.loadTree()
-        throw error
-      }
+    // One step to undo, the folder it may unnest included; see undo.svelte.ts.
+    await this.undone.batch(async () => {
+      // After whatever write of anything open in it is in the air, and with every
+      // write of those held until the documents have been told where they went; see
+      // `holdingUnder` in workspace/saving.svelte.ts. Unnesting is a move of its
+      // own, so it comes after the hold rather than inside it.
+      await this.saving.holdingUnder(from, async () => {
+        // And back where it was if the move did not happen - something already
+        // there, a file that has gone. The listing is what the tree really is, and
+        // until it is read again the row is sitting in a folder that does not hold
+        // it; see `remove`, which puts a row back the same way.
+        try {
+          await invoke('rename_note', { from, to: target })
+        } catch (error) {
+          await this.loadTree()
+          throw error
+        }
 
-      // A note that moved is a note every link to it has to be pointed at again;
-      // see `renameFile`, including why this comes before everything is told.
-      const rewrote = (await this.retarget(from, target)) > 0
-      this.undone.record({ kind: 'move', from, to: target, ...(rewrote ? { rewrote } : {}) })
-      await this.fileMoved(from, target, kind)
+        // A note that moved is a note every link to it has to be pointed at again;
+        // see `renameFile`, including why this comes before everything is told.
+        const rewrote = (await this.retarget(from, target)) > 0
+        this.undone.record({
+          kind: 'move',
+          from,
+          to: target,
+          ...(rewrote ? { rewrote } : {}),
+          ...(how ? { [how]: true } : {}),
+        })
+        await this.fileMoved(from, target, kind)
+      })
+      await this.loadTree()
+      await this.unnest(folderOf(from))
     })
-    await this.loadTree()
-    await this.unnest(folderOf(from))
     this.persist()
   }
 
@@ -2566,7 +2608,7 @@ class Workspace {
     const back = entry && unnesting(entry)
     if (!back) return
 
-    await this.move(back.note, back.into)
+    await this.move(back.note, back.into, 'follows')
 
     // The row goes as the note comes up rather than a round trip later: an empty
     // folder standing under the note it used to hold reads as half a move.
@@ -2956,12 +2998,11 @@ class Workspace {
   }
 
   /** Closes a tab somebody asked to close: the cross on the tab, Ctrl+W, the menu row
-   *  and the palette. Nothing is asked about words - every note writes itself, and
-   *  what one was waiting to write goes down as its tab closes; see `closed` in
-   *  workspace/saving.svelte.ts. The one question left is a terminal's, about
-   *  something still running in it; see terminal/closing.ts. `close` below stays the
-   *  plain operation, which is what everything that closes a tab because the note has
-   *  gone away needs.
+   *  and the palette. A note with a file writes itself, and what it was waiting to
+   *  write goes down as its tab closes; see `closed` in workspace/saving.svelte.ts. A
+   *  tab with no file and words asks first, and so does a terminal running something;
+   *  see `mayClose`. `close` below stays the plain operation, which is what everything
+   *  that closes a tab because the note has gone away needs.
    *
    *  A pinned tab has no cross, but its menu row and the middle button close it
    *  outright, as a browser's do. */
@@ -2974,7 +3015,9 @@ class Workspace {
    *  closing, and a pinned tab is asked about first; see workspace/closing-pinned.ts. */
   async closeActive() {
     const tab = this.active
-    if (tab && (!tab.pinned || (await closesPinned()))) await this.closeAsking(tab.id)
+    // A pinned one with unsaved words is asked about those instead.
+    if (tab && (!tab.pinned || unsaved(tab) || (await closesPinned())))
+      await this.closeAsking(tab.id)
   }
 
   /** The tabs of a pane around one; which tabs is workspace/closing-around.ts. */
@@ -2999,11 +3042,16 @@ class Workspace {
     return tab ? closedAround(this.tabsIn(tab.paneId), id, which).length : 0
   }
 
-  /** Whether a set of tabs may all go. Nothing is asked about a note, which writes
-   *  itself; a terminal running something asks, once for all of them. The window going
-   *  asks its own; see terminal/closing.ts and lib/quitting. */
+  /** Whether a set of tabs may all go. A note with a file writes itself; unsaved words
+   *  ask (workspace/closing-unsaved.ts) and a terminal running something asks, each once
+   *  for all of them. The window going asks its own; see lib/quitting. */
   private async mayClose(closing: readonly Tab[]): Promise<boolean> {
-    if (__EVEN_PLUGIN__ || !closing.some((tab) => tab.kind === 'terminal')) return true
+    if (__EVEN_PLUGIN__) return true
+    if (closing.some(unsaved)) {
+      const { mayLose } = await import('./workspace/closing-unsaved')
+      if (!(await mayLose(this, closing))) return false
+    }
+    if (!closing.some((tab) => tab.kind === 'terminal')) return true
     const { mayEnd } = await import('./terminal/closing')
     return mayEnd(closing)
   }
@@ -3316,8 +3364,10 @@ class Workspace {
   }
 
   async moveMany(paths: string[], intoFolder: string) {
-    await this.nestFor(intoFolder, paths)
-    for (const path of outermost(paths)) await this.move(path, intoFolder)
+    await this.undone.batch(async () => {
+      await this.nestFor(intoFolder, paths)
+      for (const path of outermost(paths)) await this.move(path, intoFolder)
+    })
     this.clearSelection()
   }
 
@@ -3334,7 +3384,7 @@ class Workspace {
     // blinks out - the note has left and the folder it went into does not exist
     // yet - and comes back a round trip later; see tree-edits.ts.
     this.showEntry(this.freshEntry(intoFolder, true))
-    await this.move(nesting, intoFolder)
+    await this.move(nesting, intoFolder, 'nests')
     this.device.expand(intoFolder)
   }
 
@@ -3387,10 +3437,12 @@ class Workspace {
   }
 
   async removeMany(paths: string[]) {
-    for (const path of this.deletable(paths)) {
-      const entry = this.entryAt(path)
-      if (entry) await this.remove(path, entry.is_dir)
-    }
+    await this.undone.batch(async () => {
+      for (const path of this.deletable(paths)) {
+        const entry = this.entryAt(path)
+        if (entry) await this.remove(path, entry.is_dir)
+      }
+    })
     this.clearSelection()
   }
 
@@ -3528,6 +3580,12 @@ class Workspace {
     const root = this.activeSpace?.root
     if (!path || root === undefined || withinSpace(root, path) === null) return
 
+    // Its row is its tile, above the list (#345).
+    if (this.inEssentials(path)) {
+      this.showPanel('tree')
+      return
+    }
+
     // An archived note's row is in the archive, at the list's foot.
     if (!__EVEN_PLUGIN__ && this.archive.has(path)) {
       this.showPanel('tree')
@@ -3641,6 +3699,7 @@ class Workspace {
     this.dropScaffolding(tab)
 
     await writeFile(path, content)
+    this.undone.record({ kind: 'create', path })
     await this.loadTree()
     this.persist()
   }
@@ -3701,6 +3760,7 @@ class Workspace {
     this.dropScaffolding(tab)
 
     await writeFile(path, content)
+    this.undone.record({ kind: 'create', path })
     await this.loadTree()
     this.persist()
   }
@@ -3723,8 +3783,10 @@ class Workspace {
     const folder = entry.is_dir ? path : folderFor(path)
     if (samePath(folder, path) && !entry.is_dir) return
 
-    if (!entry.is_dir) await this.moveMany([], folder)
-    await this.createNote(folder)
+    await this.undone.batch(async () => {
+      if (!entry.is_dir) await this.moveMany([], folder)
+      await this.createNote(folder)
+    })
   }
 
   /** A name nothing in the folder answers to: the one asked for, or the one asked
@@ -3986,40 +4048,54 @@ class Workspace {
     // caller that did not look.
     if (this.keepsArchived(path)) return
 
-    // Gone from the tree before the snapshot has been taken and the file has
-    // been moved: three round trips is a long time for a row to sit there
-    // looking as though the delete had not registered.
-    this.hideEntry(path)
+    await this.undone.batch(async () => {
+      // Gone from the tree before the snapshot has been taken and the file has
+      // been moved: three round trips is a long time for a row to sit there
+      // looking as though the delete had not registered.
+      this.hideEntry(path)
 
+      const kept = await this.bin(path, isFolder, source)
+      if (kept) this.undone.record({ kind: 'delete', path, ...kept })
+
+      await this.fileGone(path, isFolder ? 'folder' : 'file')
+      await this.loadTree()
+      // The row deleted may have been the last thing keeping a nested note nested.
+      await this.unnest(folderOf(path))
+    })
+  }
+
+  /** Deletes, answering what puts it back; recorded by the caller. */
+  async bin(path: string, isFolder: boolean, source?: string): Promise<Kept | null> {
     // A deleted note keeps one last snapshot, so the delete is recoverable. A PDF
     // is bytes and not words: there is no snapshot of one, so the only thing that
-    // can put it back is the trash, and it is recorded once the trash has it.
+    // can put it back is the trash.
     const words = !isFolder && !isPdfTarget(path)
     let content: string | null = null
     if (words) {
       content = await invoke<string>('read_note', { path }).catch(() => null)
       if (content) await invoke('snapshot_note', { path, content, source }).catch(() => undefined)
-      this.undone.record({ kind: 'delete', path, content: content ?? '' })
     }
 
-    // Unreadable means no snapshot and never synced: only the trash can keep it.
+    // Unreadable means no snapshot and never synced: only the trash can keep it, and
+    // only the trash keeps a page note's paper with it.
     const unread = words && content === null
+    // Signed in, the account keeps a copy for 14 days; signed out, this
+    // device does, in its own trash folder (see trash.svelte.ts).
+    const toAccount = account.signedIn && !unread && !(!isFolder && isPagesTarget(path))
+    const held =
+      toAccount && isFolder ? await (await import('./workspace/undoing')).heldIn(this, path) : null
 
     try {
-      // Signed in, the account keeps a copy for 14 days; signed out, this
-      // device does, in its own trash folder (see trash.svelte.ts).
-      if (account.signedIn && !unread) {
+      if (toAccount) {
         await invoke(isFolder ? 'delete_folder' : 'delete_note', { path })
-      } else {
-        const entry = await invoke<{ id: string }>('trash_item', {
-          path,
-          kind: isFolder ? 'folder' : 'note',
-        })
-        if (words) this.undone.trashed(path, entry.id)
-        else if (!isFolder) {
-          this.undone.record({ kind: 'delete', path, content: '', trashId: entry.id })
-        }
+        if (isFolder) return held && { content: '', folder: true, ...held }
+        return words ? { content: content ?? '' } : null
       }
+      const entry = await invoke<{ id: string }>('trash_item', {
+        path,
+        kind: isFolder ? 'folder' : 'note',
+      })
+      return { content: content ?? '', trashId: entry.id, ...(isFolder ? { folder: true } : {}) }
     } catch (error) {
       // The row was hidden before the file was asked to go, so a delete that
       // did not happen has to put it back: the listing is what the tree really
@@ -4027,11 +4103,6 @@ class Workspace {
       await this.loadTree()
       throw error
     }
-
-    await this.fileGone(path, isFolder ? 'folder' : 'file')
-    await this.loadTree()
-    // The row deleted may have been the last thing keeping a nested note nested.
-    await this.unnest(folderOf(path))
   }
 
   /** Puts the last file operation back; what each kind means going back is
@@ -4039,14 +4110,25 @@ class Workspace {
    *  Fetched with the first undo, like the redo beside it: a window opens on a note
    *  and not on a file operation to take back. See test/weight.test.ts. */
   async undoFileAction() {
-    const { undoLastFileAction } = await import('./workspace/undoing')
-    await undoLastFileAction(this)
+    await this.inTurn(async () => {
+      const { undoLastFileAction } = await import('./workspace/undoing')
+      await undoLastFileAction(this)
+    })
   }
 
   /** Does the last undone file operation again; see workspace/redoing.ts. */
   async redoFileAction() {
-    const { redoLastFileAction } = await import('./workspace/redoing')
-    await redoLastFileAction(this)
+    await this.inTurn(async () => {
+      const { redoLastFileAction } = await import('./workspace/redoing')
+      await redoLastFileAction(this)
+    })
+  }
+
+  /** Undos and redos one at a time, each after the one before has landed. */
+  private turn: Promise<void> = Promise.resolve()
+  private inTurn(work: () => Promise<void>): Promise<void> {
+    this.turn = this.turn.then(work, work)
+    return this.turn
   }
 
   /** A note the first pass has just written, by the path it landed at.
@@ -4335,12 +4417,19 @@ class Workspace {
   /** The panel open on one side, which is what that side's tab strip marks and
    *  what its body draws: none on the right under the scratchpad; see panels.ts. */
   openOn(side: PanelSide): Panel | null {
-    return panels.openOn(this.sides, side)
+    const open = panels.openOn(this.sides, side)
+    return open && this.offers(open) ? open : null
   }
 
   /** Which tabs one side holds, in the order the strip shows them. */
   panelsOn(side: PanelSide, every: readonly Panel[]): Panel[] {
-    return panels.panelsOn(this.right, side, every)
+    return panels.panelsOn(this.right, side, every).filter((one) => this.offers(one))
+  }
+
+  /** Whether this device has a panel at all: a phone and a tablet have no AI panel,
+   *  its tab or any way to it (#403). */
+  offers(panel: Panel): boolean {
+    return panel !== 'ask' || !viewport.touch
   }
 
   /** The panel the right side shows when something asks it to open: whatever is
@@ -4348,7 +4437,9 @@ class Workspace {
    *  key and the thumb that pulls the drawer out. Nothing once every panel has left. */
   get nextRight(): Panel | null {
     const last = this.lastRight
-    return this.rightPanel ?? (last && this.right.includes(last) ? last : this.right[0]) ?? null
+    const right = this.right.filter((one) => this.offers(one))
+    const open = this.rightPanel && this.offers(this.rightPanel) ? this.rightPanel : null
+    return open ?? (last && right.includes(last) ? last : right[0]) ?? null
   }
 
   /** Shows a panel. Asking for the one already showing leaves it showing, which is
@@ -4365,6 +4456,7 @@ class Workspace {
    *  So the fact is held here rather than by everybody who asks for it, and the
    *  gesture that switches says switch; see `togglePanel`. */
   showPanel(next: Panel) {
+    if (!this.offers(next)) return
     this.unfill()
     if (this.openOn(this.sideOf(next)) === next) return
 
@@ -4378,6 +4470,7 @@ class Workspace {
    *  showing. The rule itself is `showing` in workspace/panels.ts, which answers
    *  what the two sides are after the press. */
   togglePanel(next: Panel) {
+    if (!this.offers(next)) return
     if (this.unfill() && this.openOn(this.sideOf(next)) === next) return
     this.sides = panels.showing(this.sides, next)
   }

@@ -11,7 +11,8 @@
 
 import { Hono } from 'hono'
 import { readBody } from '../body'
-import { newId, now } from '../crypto'
+import { tokenIn } from '../auth'
+import { newId, now, sha256 } from '../crypto'
 import type { Env, Variables } from '../types'
 import { configured, type TargetKind } from './send'
 
@@ -63,15 +64,20 @@ push.post('/targets', async (context) => {
   if (zone !== undefined && !isZone(zone)) return context.json({ error: NOT_A_TARGET }, 400)
 
   const keys = known === 'webpush' ? JSON.stringify({ p256dh, auth }) : null
+  // The session asking, which the target lives exactly as long as (0054, live.ts): a
+  // device ended, signed out or run out is told nothing more.
+  const session = await sha256(tokenIn(context.req.header('authorization')) ?? '')
   const id = newId()
   await context.env.DB.prepare(
-    `insert into push_targets (id, user_id, device_id, kind, token, keys, zone, created_at)
-     values (?, ?, ?, ?, ?, ?, ?, ?)
+    `insert into push_targets (id, user_id, device_id, kind, token, keys, zone, created_at,
+                               session_hash)
+     values (?, ?, ?, ?, ?, ?, ?, ?, ?)
      on conflict (user_id, token) do update
        set kind = excluded.kind, keys = excluded.keys, zone = excluded.zone,
-           device_id = excluded.device_id, created_at = excluded.created_at, failed_at = null`,
+           device_id = excluded.device_id, created_at = excluded.created_at, failed_at = null,
+           session_hash = excluded.session_hash`,
   )
-    .bind(id, user.id, device ?? null, known, token, keys, zone ?? null, now())
+    .bind(id, user.id, device ?? null, known, token, keys, zone ?? null, now(), session)
     .run()
   // The oldest beyond the ceiling: a browser that subscribed and was never seen again.
   await context.env.DB.prepare(

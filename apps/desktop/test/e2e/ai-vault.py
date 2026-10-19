@@ -14,7 +14,12 @@ vault only once told to, so both are; a third browser, not told, stays out. Docs
 - the phone then says the laptop offers it the vault, and takes nothing until Join;
 - after Join it has the account and its key, and the account holds no key in the clear;
 - a change on the phone reaches the laptop within seconds, through the hub;
-- the phone, reloaded, opens at once without asking.
+- the phone, reloaded, opens at once without asking;
+- signing out on the phone asks whether it leaves the vault too, and Sign out alone keeps
+  it in (#389);
+- the laptop lists both devices in Settings > AI, and Remove on the phone's row changes the
+  vault key: the vault sealed again, a new token's hash on the account, the laptop's key
+  wrapped again and the phone's place gone.
 
 Everything is the real thing: the built web app, the Worker under `wrangler dev`, each
 account's hub as a Durable Object and D1 with every migration.
@@ -176,6 +181,45 @@ def main() -> int:
         wait(phone, "() => !!window.nibApp && !!window.nibApp.aiVault", "the phone again", 40)
         wait(phone, standing("open"), "the phone open after a reload", 40)
         check("the phone, reloaded, opens without asking", True)
+
+        # Signing out asks whether the phone leaves the vault too; Sign out alone keeps it.
+        phone.keyboard.press("Control+Shift+KeyP")
+        phone.wait_for_selector(".palette input")
+        phone.keyboard.type("Sign out")
+        phone.wait_for_timeout(400)
+        phone.keyboard.press("Enter")
+        phone.wait_for_selector("text=Also remove this device from your AI vault?", timeout=LIVE * 1000)
+        shot(phone, "05-phone-signing-out")
+        check("signing out asks whether the phone leaves the vault too", True)
+        phone.locator('.sheet:has(p.title)').get_by_role("button", name="Sign out", exact=True).click()
+        wait(phone, "() => !window.nibApp.account.signedIn", "the phone signed out", LIVE)
+        approved = worker.query("select id from ai_devices where approved_at is not null")
+        check("Sign out alone keeps the phone in the vault", len(approved) == 2)
+
+        # The laptop lets the phone go from its list: the key changes under it.
+        held = worker.query("select rev, blob, auth_hash from ai_vaults")[0]
+        laptop.evaluate("window.nibApp.settings.show('ai')")
+        laptop.wait_for_selector("text=Devices with your AI vault")
+        # Both browsers go by the same name; the phone's is the row that is not this one.
+        rows = laptop.locator('.card[data-device]:not(:has-text("This device"))')
+        shot(laptop, "06-laptop-devices")
+        check("the laptop lists both devices, itself marked", laptop.locator("text=This device").count() >= 1)
+        rows.first.get_by_role("button", name="Remove", exact=True).click()
+        laptop.locator('.sheet:has(p.title:has-text("Remove "))').get_by_role("button", name="Remove", exact=True).click()
+        wait(
+            laptop,
+            "async () => (await window.nibApp.aiVault()).vault.allowed.length === 1",
+            "the phone let go of",
+            LIVE,
+        )
+        after = worker.query("select rev, blob, auth_hash from ai_vaults")[0]
+        devices = worker.query("select name, wrapped from ai_devices")
+        check("the vault is sealed again under a new key", after["blob"] != held["blob"] and after["rev"] > held["rev"])
+        check("the account holds the new token's hash", after["auth_hash"] != held["auth_hash"])
+        check("the phone's place and its wrap are gone", len(devices) == 1 and devices[0]["wrapped"])
+        laptop.evaluate("window.nibApp.ai.update('anthropic', { name: 'After' })")
+        wait(laptop, standing("open"), "the laptop still open", LIVE)
+        shot(laptop, "07-laptop-alone")
     return DRIVE.verdict("the AI accounts carried from one device to another, end to end")
 
 

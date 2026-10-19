@@ -695,15 +695,98 @@ function holds(tail: string): boolean {
  *  shell say what they hold, and the copies of a window listener each kept are gone.
  *  Measured 3,214,496.
  *
- *  Raised 2026-10-19, to 3,223,200, from a main at 3,214,496 (1,004 under), for the bug
- *  burn-down's data-loss fixes in the save path every note is written through: a draft's
- *  name claimed on disk and a write held under a move (`claim`, `holdingUnder` in
- *  workspace/saving.svelte.ts), a closed note read again before it is written
- *  (`writeClosed` in workspace/note-text.ts), and a link rewritten in the open document
- *  and at the moved note's new path (`retarget` in link-index.svelte.ts). Measured
- *  3,222,155. */
-const BUDGET = 3_223_200
-const MOST_FILES = 381
+ *  Raised 2026-10-18, to 3,217,100, from an unstable at 3,214,496 (1,004 under), for the
+ *  seven held back after 0.16.0, landed together. Three weigh on the first paint: #317,
+ *  the question Ctrl+N asks in a terminal draws its box to tick with TickBox.svelte, one
+ *  box shared with quitting's (198 bytes); #359, closing a tab with unsaved words asks to
+ *  save, don't save or cancel (workspace/closing-unsaved.ts, read by the workspace, 528);
+ *  #371, a note's task chips say a start date only while it is to come, and a date typed
+ *  or picked there is written as one (link-index.svelte.ts, quick-add/task-pick.ts, 907).
+ *  #372's Full permissions, #333's browser memory, #360's quick question inset and #376's
+ *  spaces in app data add nothing to it. Measured 3,216,129.
+ *
+ *  Raised 2026-10-18, to 3,222,400, from an unstable at 3,216,426 (674 under), for #399:
+ *  Ctrl+Z takes back what was done in the sidebar wherever the keyboard went. Who the
+ *  key is for is decided on the way down, before the note the app handed the keyboard
+ *  to (`sidebarKey` and `used` in workspace/undo.svelte.ts, read by App.svelte and the
+ *  sidebar's `data-sidebar`); a gesture of several is one step (`batch` and `many`),
+ *  a new file and a folder deleted are steps too (`bin` in workspace.svelte.ts), and
+ *  undos and redos take turns. What a step means going back and forth is still fetched
+ *  with the first undo (undoing.ts, redoing.ts). Its comments are cut to a line each.
+ *  Measured 3,221,381.
+ *
+ *  Raised 2026-10-18, to 3,223,700, from an unstable at 3,221,698 (702 under), for #402:
+ *  a row's twist is pressed on the row's whole height and a step either side of it,
+ *  a strip drawn nowhere in the file list's own stylesheet (Tree.svelte, which the
+ *  first paint draws), and a press there only turns the row, double or middle
+ *  (`onTwist` in tree-keys.ts). The tag tree's is off the first paint. Measured
+ *  3,222,679.
+ *
+ *  Raised 2026-10-18, to 3,225,100, for #404 and #403 landing together: a phone's
+ *  scratchpad puts the panes out of reach and points the format bar at its own editor
+ *  (App.svelte, scratchpad/is.svelte.ts), and a touch screen offers no Ask panel
+ *  (`offers` in workspace.svelte.ts, asked by the panel paths and focus.ts). Measured
+ *  3,224,067.
+ *
+ *  Raised 2026-10-18, to 3,228,200, for #409 on top of #345: a tab's web data moves
+ *  once, the moves queued per page and the page counted as on its way between the old
+ *  page closing and the new one opening (`rehousing` and `moved` in pages.svelte.ts),
+ *  and a file in the Essentials kept out of the file list (`unkept` in
+ *  workspace.svelte.ts). Measured 3,227,260.
+ *
+ *  Raised 2026-10-18, to 3,229,600, for #414: a note's cover is handed to the editor
+ *  inside a block that holds the margin under it, and that block has the editor measure
+ *  again when its height changes by itself (`toDOM` in the editor's
+ *  live-preview/cover.ts), so a click under a cover lands on the line it was made on.
+ *  Measured 3,228,558.
+ *
+ *  Raised 2026-10-18, to 3,233,100, for #412: a tile dragged back onto the file list
+ *  and a file dragged into the Essentials, each one undo step (`unkeepInto` and the
+ *  `keep` kind of undo), with the list's rows slid into place (`arrive` in
+ *  tree-lift.ts). Measured 3,232,059.
+ *
+ *  Raised 2026-10-18, to 3,235,600, and by one module, for #352: which spaces are put
+ *  away has to be known to the first paint's switcher (`shownSpaces`, from
+ *  workspace/archived-spaces.svelte.ts); archiving and the account's side of it
+ *  (space-archive.ts) are behind the press. Measured 3,234,549 in 381 modules.
+ *
+ *  Raised 2026-10-18, to 3,237,200, for #411: the press that closed a popup has its
+ *  click spent when it lands on what opened it, so a tap on the space switcher's button
+ *  closes the list rather than opening it again (`clicked` in overlays.ts, asked by
+ *  App.svelte). Measured 3,236,191.
+ *
+ *  Raised 2026-10-18, to 3,238,500, for #384: a finger's press on the title bar, the
+ *  format bar, a suggestion or quick add is let through (`keepFocus` in focus.ts), or
+ *  WebKit sends no click and an iPhone's tap does nothing. Measured 3,237,468.
+ *
+ *  Raised 2026-10-19, to 3,239,700, for #364: a picture pasted onto a canvas by somebody
+ *  signed in is named by the account's whole address (`accountAddress` in assets.ts,
+ *  which the first paint carries for the editor's paste), where it was read as a path in
+ *  the space and drawn as "Nothing here". Measured 3,238,704.
+ *
+ *  Raised 2026-10-19, to 3,240,800, for #381: a web tab keeps where the keyboard was as
+ *  it is left - its address field, by what the last press landed on, or its page - and
+ *  gives it back to that and nothing else as it comes back (`keyboard` and `seen` on a
+ *  page in pages.svelte.ts, `pressedOn` in AddressField.svelte). Measured 3,239,774.
+ *
+ *  Raised 2026-10-19, to 3,242,700, for #423: which order each space's list is read in
+ *  goes with the account, and the list cannot be drawn before it is known
+ *  (`SpaceSorting`, beside the arranged order in workspace/arranged.svelte.ts rather than
+ *  a module of its own; device.svelte.ts lost its copy). Measured 3,241,664.
+ *
+ *  Raised 2026-10-19, to 3,245,000, for #424: the web app says which of its two builds
+ *  is running and goes to the other (`webChannel` and `switchWebChannel` in updater.ts,
+ *  the Unstable mark in Titlebar.svelte), and a listing from a Worker that has never
+ *  heard of a space's order is let be (#423). Measured 3,244,207.
+ *
+ *  Raised 2026-10-19, to 3,253,100, for the bug burn-down's data-loss fixes in the save
+ *  path every note is written through: a draft's name claimed on disk and a write held
+ *  under a move (`claim`, `holdingUnder` in workspace/saving.svelte.ts), a closed note
+ *  read again before it is written (`writeClosed` in workspace/note-text.ts), and a link
+ *  rewritten in the open document and at the moved note's new path (`retarget` in
+ *  link-index.svelte.ts). Measured 3,252,041. */
+const BUDGET = 3_253_100
+const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.

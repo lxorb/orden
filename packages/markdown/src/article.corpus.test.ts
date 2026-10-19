@@ -3,7 +3,7 @@
  *  documentation with code in three languages, a Wikipedia article with maths, and a
  *  page whose point is a table.
  *
- *  Each goes through `extract` as the clipper extension hands it a live page, and
+ *  Each goes through `extract` as a live page's DOM, and
  *  through `readSnapshot` as a web tab hands it the page written down, and the two must
  *  agree to the character - that is what "the same page clips to the same note from
  *  both" comes to. What is checked beyond that is the markdown, because that is what

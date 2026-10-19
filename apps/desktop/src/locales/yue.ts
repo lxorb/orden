@@ -26,6 +26,22 @@ export const yue: Dictionary = {
   'Import from Zen': '由 Zen 匯入',
   'Containers stay in Zen': '容器留喺 Zen',
   'Zen’s tabs could not be read.': '讀唔到 Zen 嘅分頁。',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': '容器留喺 Firefox',
+  'Nothing could be read out of {browser}.': '讀唔到 {browser} 入面任何嘢。',
+  'Saved groups': '已儲存嘅群組',
+  'Tab group': '分頁群組',
+  'Bookmarks toolbar': '書籤列',
+  'Bookmarks menu': '書籤選單',
+  'Other bookmarks': '其他書籤',
+  'Mobile bookmarks': '流動裝置書籤',
+  'Bookmarks bar': '書籤列',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} 將開咗嘅分頁鎖住咗，所以淨係帶到書籤。',
+  '{count} pages not on the web stay behind': '唔喺網上嘅 {count} 個頁面留低咗',
+  'Reading List': '閱讀列表',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS 將 Safari 嘅分頁同書籤放咗喺「完全磁碟取用權限」後面。喺嗰度開咗 Orden，再試多次。',
   // Settings: note types
   'Page note': '分頁筆記',
   'Web note': '網頁筆記',
@@ -96,8 +112,6 @@ export const yue: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: '提示',
   'Silent mode': '靜音模式',
-  'Sign in to keep your notes safe and on every device.':
-    '登入咗,你啲筆記就會安全,喺每部裝置都有。',
   'See how your notes connect.': '睇吓你啲筆記點樣連埋一齊。',
   'Press {key} to find anything, notes and commands alike.':
     '撳 {key} 就搵到任何嘢,筆記同指令都得。',
@@ -119,11 +133,13 @@ export const yue: Dictionary = {
   '{count} h': '{count}個鐘',
   Inbox: '收件匣',
   Date: '日期',
+  'Start date': '開始日期',
   Priority: '優先次序',
   Reminder: '提醒',
   Duration: '所需時間',
   'Smart dates': '智能日期',
   'From any app': '喺任何 App',
+  'Show tasks without a start date in Today': '喺今日顯示冇開始日期嘅任務',
   'Every day': '每日',
   'Every weekday': '每個工作日',
   'Every week': '每個禮拜',
@@ -167,6 +183,8 @@ export const yue: Dictionary = {
   Dots: '點陣',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': '用兩隻手指轉畫布',
+  'Turn upright': '擺返正',
   Canvas: '畫布',
   Card: '卡片',
   'Note or picture': '筆記或圖片',
@@ -242,6 +260,10 @@ export const yue: Dictionary = {
   Unpin: '取消固定',
   Close: '關閉',
   'Close pinned tab?': '關閉已固定嘅標籤頁？',
+  'Save changes to {name}?': '要唔要儲存 {name} 嘅改動？',
+  'Save changes to these tabs?': '要唔要儲存呢啲分頁嘅改動？',
+  'Unsaved words go to Recently deleted.': '未儲存嘅字會去最近刪除。',
+  'Don’t save': '唔儲存',
   'Close others': '關閉其他',
   'Close tabs to the right': '關閉右邊嘅標籤頁',
   'Close tabs to the left': '關閉左邊嘅標籤頁',
@@ -1140,6 +1162,7 @@ export const yue: Dictionary = {
   'Double-click to write': '雙擊開始書寫',
   'Another colour': '其他顏色',
   'Turn into a note': '轉為筆記',
+  Arrange: '排列',
   'Bring to front': '移到最上層',
   'Bring forward': '上移一層',
   'Send backward': '下移一層',
@@ -1229,6 +1252,9 @@ export const yue: Dictionary = {
   Unstable: '開發版',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     '穩定版跟着已發佈嘅版本走，開發版跟着edge建置，可能會壞掉。',
+  'Web version': '網頁版',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    '穩定版係已發佈嘅網頁版，開發版係最新嘅建置，可能會壞掉。',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: '匯入',
@@ -1546,8 +1572,6 @@ export const yue: Dictionary = {
   // Web tabs
   Reload: '重新載入',
   'Hard reload': '強制重新載入',
-  'Clip this page': '儲存呢頁',
-  'Clip the link': '儲存連結',
   'Open in the browser': '喺瀏覽器開啟',
   'Show it here': '喺呢度顯示',
   Website: '網站',
@@ -1676,7 +1700,6 @@ export const yue: Dictionary = {
   'New tab': '新分頁',
   'Full screen': '全螢幕',
   'Print…': '打印…',
-  'Save page': '儲存網頁',
   'Share…': '分享…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1735,6 +1758,15 @@ export const yue: Dictionary = {
   'Bring all to front': '全部擺到最前',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': '復原複製',
+  'Devices with your AI vault': '有你 AI 保險庫嘅裝置',
+  'This device': '呢部裝置',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    '嗰部裝置之後讀唔到你嘅 AI 帳戶，其他裝置會攞到新鎖匙。',
+  'Also remove this device from your AI vault?': '都將呢部裝置移出你嘅 AI 保險庫？',
+  'Remove and sign out': '移除並登出',
+  'Undo making {name}': '復原建立{name}',
+  'Undo the deletion': '復原刪除',
+  'Undo the move': '復原移動',
   'Redo the last file change': '重做上一次檔案變更',
   'Select down': '向下選取',
   'Select up': '向上選取',
@@ -1947,6 +1979,7 @@ export const yue: Dictionary = {
   'Without your logins': '唔用你嘅登入',
   'Calls a minute': '每分鐘呼叫次數',
   'Pages a minute': '每分鐘頁數',
+  'Browser memory limit': '瀏覽器記憶體上限',
   '{count} calls': '{count} 次呼叫',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it

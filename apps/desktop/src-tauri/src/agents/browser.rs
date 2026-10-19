@@ -1,7 +1,7 @@
-//! The browser verbs, answered on `WebView2` - it speaks the `DevTools` Protocol, and
-//! `engines` hands every verb the page (docs/agent-native.md 5.2 and 12): which tab,
-//! whether this agent may act there, what the page says it would be doing, and then the
-//! act.
+//! The browser verbs, answered on `WebView2` and nib's own Chromium alike - both speak the
+//! `DevTools` Protocol, and `engines` hands every verb the page whichever it is
+//! (docs/agent-native.md 5.2 and 12): which tab, whether
+//! this agent may act there, what the page says it would be doing, and then the act.
 //!
 //! Every verb on a tab goes through the same gate, in this order: the tab is this agent's
 //! own or a reader's tab it may reach (`browser.reader`, its spaces); the page is not
@@ -153,11 +153,23 @@ fn open_tab(app: &AppHandle, caller: &Caller, open: &super::verbs::Open) -> Answ
         Caller::Agent(grant) => usize::try_from(grant.limits.tabs).unwrap_or(4),
         Caller::Reader => 4,
     };
+    let ceiling = match caller {
+        Caller::Agent(grant) => grant.limits.memory,
+        Caller::Reader => 0,
+    };
     let size = (
         open.width.unwrap_or(tabs::WIDTH),
         open.height.unwrap_or(tabs::HEIGHT),
     );
-    match tabs::open(app, caller.id(), &open.url, store, store_name, size, most) {
+    match tabs::open(
+        app,
+        caller.id(),
+        &open.url,
+        store,
+        store_name,
+        size,
+        (most, ceiling),
+    ) {
         Ok(tab) => Answer::ok(Opened { tab: tab.id, store }),
         Err(refused) => refused,
     }
@@ -422,6 +434,24 @@ fn ask(
             key: key.to_string(),
         },
     )
+}
+
+/// An agent's own tab shown to the reader without a question, for an agent that asks
+/// nothing: its Show, answered as it is raised, which the window shows the tab for.
+fn shown(app: &AppHandle, grant: &Grant, own: &Tab, summary: String, key: &str) {
+    approvals::granted(
+        app,
+        Asking {
+            agent: &grant.id,
+            name: &grant.name,
+            category: Category::Showing,
+            summary,
+            site: policy::host_of(&own.url).map(|host| policy::site_of(&host)),
+            tab: Some(own.id.clone()),
+            key: key.to_string(),
+        },
+        super::verbs::ApprovalAnswer::Allowed,
+    );
 }
 
 /// The hosts a page and its frames have talked to, for the payment processors.
@@ -859,6 +889,11 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                 } else {
                     own.title.clone()
                 };
+                // Full permissions: shown at once, the question answered as it is raised.
+                if grant.asks_nothing() {
+                    shown(app, grant, own, format!("Show {title}"), &key);
+                    return Ok(acted(page));
+                }
                 ask(
                     app,
                     grant,
@@ -877,6 +912,15 @@ fn act(app: &AppHandle, caller: &Caller, place: &Place, page: &Page<'_>, verb: V
                     ));
                 };
                 let key = approvals::key("browser_takeover", Some(&tab), Some(&takeover.reason));
+                // Full permissions asks the reader nothing (#372): an agent's own tab is
+                // put in front of the reader at once, as Show puts it, and the agent goes
+                // on, waiting for the page to show the step done (`browser_wait`).
+                if grant.asks_nothing() {
+                    if let Place::Own(own) = place {
+                        shown(app, grant, own, takeover.reason.clone(), &key);
+                    }
+                    return Ok(acted(page));
+                }
                 // A question and nothing more: the agent keeps the tab, and goes on
                 // when the page shows the step done.
                 ask(

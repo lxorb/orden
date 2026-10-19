@@ -365,7 +365,12 @@ def drive_pointer(browser: Browser) -> None:
     )
     page.wait_for_timeout(300)
     page.keyboard.press("Control+Alt+BracketLeft")
-    page.wait_for_timeout(500)
+    # The fold is drawn on the editor's next measure, a frame on; a frame of WebKit's on
+    # a busy machine can be most of a second, so this waits for the mark (#384).
+    try:
+        page.wait_for_function("document.querySelectorAll('.nib-folded').length > 0", timeout=5000, polling=50)
+    except Exception:  # noqa: BLE001 - nothing folded, which the check below says
+        pass
     caret = page.evaluate(
         """() => {
           const head = window.nib.state.selection.main.head

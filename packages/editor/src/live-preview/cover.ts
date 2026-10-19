@@ -63,21 +63,34 @@ export class CoverWidget extends NibWidget {
   }
 
   /** Kept off the height of a line: a band of picture is not text, and asking
-   *  CodeMirror to guess at it makes it scroll in jumps. */
+   *  CodeMirror to guess at it makes it scroll in jumps. What the block measures at
+   *  the defaults: the band's `--cover-height` (tokens.css) and the 1.8em under it
+   *  (document.css) at the 16.5px a note's text starts at. */
   override get estimatedHeight() {
-    return 200
+    return 230
   }
 
   toDOM(view: EditorView) {
+    // The band inside a box of its own, and the box is what the editor is handed.
+    // CodeMirror finds the line under a click from the heights it measured, and it
+    // measures a block by its border box: the room under the band is a margin in
+    // document.css, which is outside that box, so with the band as the block every
+    // line below it sat that margin lower on the screen than CodeMirror had it, and
+    // a click was taken for the line under the one clicked. A box that holds its
+    // child's margins (editor.css) measures the band and the room under it as one.
     const host = document.createElement('div')
-    host.className = 'nib-cover'
+    host.className = 'nib-cover-block'
+
+    const band = document.createElement('div')
+    band.className = 'nib-cover'
+    host.append(band)
 
     const picture = document.createElement('img')
     picture.src = view.state.facet(imageResolver)(this.cover.src)
     picture.alt = ''
     picture.draggable = false
     picture.style.objectPosition = `50% ${this.cover.position}%`
-    host.append(picture)
+    band.append(picture)
 
     // A handle rather than the picture itself, so a drag over a cover is a drag of
     // the cover and never a selection of the text under it.
@@ -97,7 +110,7 @@ export class CoverWidget extends NibWidget {
     handle.setAttribute('aria-valuemax', '100')
     handle.setAttribute('aria-orientation', 'vertical')
     handle.setAttribute('aria-valuenow', String(this.cover.position))
-    host.append(handle)
+    band.append(handle)
 
     let from = this.cover.position
     let at: number | null = null
@@ -151,7 +164,17 @@ export class CoverWidget extends NibWidget {
     handle.addEventListener('pointercancel', lifted)
     handle.addEventListener('keydown', keyed)
 
+    // And measured again whenever its height changes on its own: a picture arriving
+    // late where a theme lets it take its own shape, the text size under an `em`, a
+    // narrow window's shorter band. Nothing in the document changed, so nothing else
+    // would tell CodeMirror, and whatever reads the heights it last measured - a drop,
+    // a hover, a scroll - would find every line under the band where it used to be.
+    const resized =
+      typeof ResizeObserver === 'function' ? new ResizeObserver(() => view.requestMeasure()) : null
+    resized?.observe(host)
+
     this.onDestroy(host, () => {
+      resized?.disconnect()
       handle.removeEventListener('pointerdown', pressed)
       handle.removeEventListener('pointermove', moved)
       handle.removeEventListener('pointerup', lifted)

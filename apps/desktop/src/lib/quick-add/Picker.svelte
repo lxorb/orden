@@ -9,6 +9,7 @@
   import { fade } from 'svelte/transition'
   import { LAYER } from '../motion'
   import { DIVIDER, type MenuEntry, walkableRows } from '../menu-item'
+  import { spendClick } from '../spent-click'
 
   const {
     rows,
@@ -54,8 +55,17 @@
   }
 </script>
 
-<!-- A press anywhere else is the same answer as Escape. -->
-<div class="catch" role="presentation" onpointerdown={onclose}></div>
+<!-- A press anywhere else is the same answer as Escape, and nothing more: a tap's
+     click, which comes after the catch has gone, is spent rather than opening the
+     chip under the finger again (#411; see spent-click.ts). -->
+<div
+  class="catch"
+  role="presentation"
+  onpointerdown={(event) => {
+    spendClick(event)
+    onclose()
+  }}
+></div>
 <ul
   bind:this={list}
   class="nib-layer picker"

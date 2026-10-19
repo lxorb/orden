@@ -502,12 +502,20 @@ second.post('/', async (context) => {
 })
 
 /** Step two: the first code out of the app, which proves it was set up, and the
- *  recovery codes, which are shown once and never again. */
+ *  recovery codes, which are shown once and never again.
+ *
+ *  An account that already has a factor is replacing it, and replacing it is
+ *  turning the old one off: it takes a code from the old one, as `DELETE` does,
+ *  or a recovery code, in `current`. Asked here rather than at step one, because
+ *  this is where the account changes - a secret handed out while the factor was
+ *  off is still only a secret, and confirming it after the factor came on is a
+ *  replacement like any other. */
 second.post('/confirm', async (context) => {
   const user = context.get('user')
   const body = await readBody(context)
   const holding = body.text('holding', 128)
   const code = body.text('code', 16)
+  const current = body.text('current', 64) ?? ''
   if (body.problem) return context.json({ error: body.problem }, 400)
   if (!holding || !code) return context.json({ error: WRONG_CODE }, 400)
 
@@ -522,7 +530,16 @@ second.post('/confirm', async (context) => {
     return context.json({ error: TOOK_TOO_LONG }, 400)
   }
 
+  // The new app's code first, which spends nothing, so a mistyped one does not
+  // cost the old factor a step it then has to wait out.
   if (!(await matches(secret, code))) return context.json({ error: WRONG_CODE }, 400)
+
+  if (
+    (await asksForSecond(context.env, user.id)) &&
+    !(await accepted(context.env, user.id, current, machineOf(context.req)))
+  ) {
+    return context.json({ error: WRONG_CODE }, 400)
+  }
 
   const codes = await turnOn(context.env, user.id, secret)
   await context.env.DB.prepare('delete from cached where scope = ? and key = ?')

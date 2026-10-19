@@ -215,4 +215,18 @@ describe('random walks, the engine as every device', () => {
   test(`${String(SEEDS)} seeds hold every check`, async () => {
     expect(await walked(1, SEEDS)).toEqual([])
   }, 600_000)
+
+  /** Seeds a nightly walk failed on, walked on every run from then on: the nightly walk
+   *  never walks a seed twice, so nothing else would notice one failing again.
+   *
+   *  - 207340730: a folder deleted on a device that had read the list but not pulled the
+   *    words of a note in it took the note, words and all (#435).
+   *  - 207384677: two devices that each moved the same passage settling a meeting put it
+   *    in the note twice, and a day's note renamed before it went was merged into another
+   *    note of that name (#436). */
+  const ONCE_FAILED = [207340730, 207384677]
+
+  test.each(ONCE_FAILED)('seed %i, which once failed, holds every check', async (seed) => {
+    expect(await walked(seed, 1)).toEqual([])
+  })
 })

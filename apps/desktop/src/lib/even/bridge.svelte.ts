@@ -301,7 +301,7 @@ class Bridge {
       space: () => workspace.activeSpace?.name ?? panelWord('Notes'),
       contents: () => rowsOf(workspace.tree, null),
       spaces: () =>
-        workspace.spaces.map((one) => ({
+        workspace.shownSpaces.map((one) => ({
           label: one.name,
           depth: 0,
           folder: false,
@@ -776,7 +776,7 @@ class Bridge {
         return
 
       case 'switchSpace': {
-        const spaces = workspace.spaces
+        const spaces = workspace.shownSpaces
         const name = bestOf(
           command.name,
           spaces.map((one) => one.name),

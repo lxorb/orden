@@ -4,7 +4,7 @@ import { mergeCanvasFiles } from '@nib/markdown/canvas-merge'
 import { isCanvasTarget } from '@nib/markdown/links'
 import { conflictPath, numbered } from '@nib/markdown/paths'
 import { objectBody, readBody } from './body'
-import { readFront, titleFrom, writeFront } from './blog/front'
+import { FRONT_REV, readFront, titleFrom, writeFront } from './blog/front'
 import { rememberOldPaths } from './blog/paths'
 import { keepWords } from './blog/words'
 import { linkPointer } from './chats/pointer'
@@ -165,8 +165,9 @@ export async function addNote(
   // one live note per path, so this is the write that can be refused, and bytes
   // written before it would be bytes under an id no row ever names.
   await env.DB.prepare(
-    `insert into notes (id, space_id, path, seq, version, updated_at, deleted, size, hash, front)
-     values (?, ?, ?, ?, ?, ?, 0, ?, ?, ?)`,
+    `insert into notes (id, space_id, path, seq, version, updated_at, deleted, size, hash, front,
+                        front_rev)
+     values (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)`,
   )
     .bind(
       note.id,
@@ -178,6 +179,7 @@ export async function addNote(
       note.size,
       note.hash,
       note.front,
+      FRONT_REV,
     )
     .run()
 
@@ -364,7 +366,7 @@ export async function saveNote(
   // loses the claim as surely as one that read an older version.
   const written = await env.DB.prepare(
     `update notes set path = ?, seq = ?, version = ?, updated_at = ?, deleted = 0, size = ?,
-                      hash = ?, front = ?, doc_seq = ?, doc_by = ?, updated_by = ?
+                      hash = ?, front = ?, front_rev = ?, doc_seq = ?, doc_by = ?, updated_by = ?
       where id = ? and version = ? and epoch = ?`,
   )
     .bind(
@@ -375,6 +377,7 @@ export async function saveNote(
       updated.size,
       updated.hash,
       updated.front,
+      FRONT_REV,
       updated.doc_seq ?? null,
       updated.doc_by ?? null,
       updated.updated_by ?? null,

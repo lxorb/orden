@@ -17,6 +17,14 @@ What it checks and photographs:
     every put-down tool drawn while it is being dragged out
     an arrow dragged from one card to another becoming a connector
     a picture and a note as two entries in the grid rather than one
+    the bar over what is picked, and its colours, kept on the plane against an edge
+    the menu holding only what would do something, with Arrange behind one row
+    a phone's bar: Undo and Redo first, and a fade at each end with more past it
+    no zoom on the bar, on a desktop or a phone (#401)
+    the lasso's key held: the lasso until it comes up, then the tool before it (#349)
+    two fingers turning the canvas, only with the setting on, and a click, a drag and
+      the upright key right in a turned view (#351)
+    printing: the sheet the PDF is made from, handed to the print engine
 
 Run it from the repository root:
 
@@ -52,6 +60,16 @@ def fail(what: str) -> None:
 
 
 PREPARE = """
+// What is handed to the print engine, kept where the drive can read it: printing goes
+// through a frame's `srcdoc`, and the dialog it opens is not something a drive sees.
+(() => {
+  const own = Object.getOwnPropertyDescriptor(HTMLIFrameElement.prototype, 'srcdoc');
+  Object.defineProperty(HTMLIFrameElement.prototype, 'srcdoc', {
+    configurable: true,
+    get() { return own.get.call(this) },
+    set(value) { window.__printed = value; own.set.call(this, value) },
+  });
+})();
 window.__TAURI_OS_PLUGIN_INTERNALS__ = {
   platform: 'android',
   family: 'unix',
@@ -283,12 +301,12 @@ def check_pattern(page: Page) -> None:
         )
         page.wait_for_timeout(250)
 
-        layers = page.locator(".canvas > .dots").count()
+        layers = page.locator(".canvas .dots").count()
         if layers < 1:
             fail(f"no pattern at all at a zoom of {scale}")
         else:
             steps = page.evaluate(
-                "() => [...document.querySelectorAll('.canvas > .dots')]"
+                "() => [...document.querySelectorAll('.canvas .dots')]"
                 ".map((one) => Math.round(parseFloat(getComputedStyle(one)"
                 ".getPropertyValue('--dot-step'))))"
             )
@@ -449,15 +467,184 @@ def check_more_menu(page: Page) -> None:
     more.click()
     page.wait_for_timeout(400)
 
-    for wanted in ("Align left", "Spread across", "Group", "Bring to front"):
-        if page.get_by_text(wanted, exact=True).count() < 1:
-            fail(f"the selection bar's menu does not offer {wanted}")
-
-    say("the selection bar's menu offers lining up, spreading out and the z order")
+    rows = menu_rows(page)
+    # About what is picked: nothing to put down, and nothing greyed (#350).
+    for unwanted in ("Card", "Note", "Picture", "Link", "Frame"):
+        if unwanted in rows:
+            fail(f"the selection bar's menu offers {unwanted}, which puts something new down")
+    if page.locator("[role=menu] [role=menuitem][disabled]").count():
+        fail("the selection bar's menu has greyed rows rather than leaving them out")
+    if "Group" not in rows or "Arrange" not in rows:
+        fail(f"the selection bar's menu has no Group or no Arrange ({rows})")
     shot(page, "canvas-more-menu")
 
+    # Arrange, pressed, is the rows behind it in the menu's place.
+    page.locator("[role=menu] [role=menuitem]", has_text="Arrange").first.click()
+    page.wait_for_timeout(400)
+    rows = menu_rows(page)
+    for wanted in ("Align left", "Spread across", "Bring to front"):
+        if wanted not in rows:
+            fail(f"Arrange does not offer {wanted} ({rows})")
+    say("the selection bar's menu offers Group and Arrange, and Arrange the rest")
+    shot(page, "canvas-more-arrange")
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
+
+    # On bare plane: what can be put down, and the plane's own rows - not a column of
+    # greyed ones.
+    page.keyboard.press("Escape")
+    page.locator(".canvas").first.click(position={"x": 20, "y": 20})
+    page.locator(".canvas").first.click(position={"x": 60, "y": 60}, button="right")
+    page.wait_for_timeout(400)
+    rows = menu_rows(page)
+    if page.locator("[role=menu] [role=menuitem][disabled]").count():
+        fail("the plane's menu has greyed rows rather than leaving them out")
+    for wanted in ("Card", "Frame", "Fit the canvas", "Export as PDF"):
+        if wanted not in rows:
+            fail(f"the plane's menu on nothing has no {wanted} ({rows})")
+    for unwanted in ("Duplicate", "Delete", "Arrange"):
+        if unwanted in rows:
+            fail(f"the plane's menu on nothing offers {unwanted}")
+    fits = page.evaluate(
+        "() => { const m = document.querySelector('[role=menu]').getBoundingClientRect();"
+        " return m.bottom <= innerHeight && m.top >= 0 }"
+    )
+    if not fits:
+        fail("the plane's menu on nothing does not fit the window")
+    say(f"the plane's menu on nothing is {len(rows)} rows, all of them live")
+    shot(page, "canvas-menu-bare")
+    page.keyboard.press("Escape")
+    page.wait_for_timeout(300)
+
+
+def check_print(page: Page) -> None:
+    """Printing a plane: the sheet its PDF is made from, handed to the print engine
+    (#350). Last, because the dialog it opens is left to time out."""
+    say("--- printing ---")
+
+    three_cards(page)
+    page.evaluate("() => { window.__printed = null }")
+    page.locator(".canvas").first.click(position={"x": 20, "y": 20})
+    page.keyboard.press("Control+p")
+    try:
+        page.wait_for_function("() => !!window.__printed", timeout=30000)
+    except Exception:  # noqa: BLE001 - said below
+        fail("Ctrl+P on a canvas handed nothing to the print engine")
+        return
+    sheet = page.evaluate("() => window.__printed")
+    if "<svg" not in sheet or "one" not in sheet or "@page" not in sheet:
+        fail("printing a canvas handed over something that is not its sheet")
+    else:
+        say("printing a canvas hands the print engine the sheet its PDF is made from")
+
+
+def menu_rows(page: Page) -> list[str]:
+    rows = page.locator("[role=menu] [role=menuitem]")
+    return [rows.nth(one).inner_text().strip() for one in range(rows.count())]
+
+
+# The bar over what is picked and its colours, measured against the plane: how far
+# either hangs past a side, and how wide the colours are against their widest.
+PICKED_SPILL = """
+() => {
+  const plane = document.querySelector('.canvas').getBoundingClientRect()
+  const over = [...document.querySelectorAll('.over .bar, .over .panel')]
+  const spill = over.map((one) => {
+    const box = one.getBoundingClientRect()
+    return Math.max(plane.left - box.left, box.right - plane.right, 0)
+  })
+  const dots = [...document.querySelectorAll('.over .panel button')]
+    .map((one) => one.getBoundingClientRect().width)
+  return {
+    spill: Math.round(Math.max(0, ...spill)),
+    dots: dots.length ? Math.round(Math.min(...dots)) : 0,
+    widest: Math.round(Math.max(0, ...dots)),
+  }
+}
+"""
+
+
+def check_picked_inside(page: Page) -> None:
+    """The bar over what is picked, and its colours, stay inside the plane when what is
+    picked is against its edge - and the colours keep their size wherever the bar is
+    (#350). A card against the left edge of a phone had its first colour out of reach,
+    and one right of the middle had its colours squeezed into what was left of the
+    plane past its own left edge."""
+    say("--- the bar over what is picked, against an edge ---")
+
+    for side, push in (("left", 520), ("right", -520)):
+        fresh(page)
+        page.evaluate(
+            """() => window.nibApp.workspace.active.note.replace(JSON.stringify({
+              nodes: [{ id: 'aa', type: 'text', x: 0, y: 0, width: 70, height: 60, text: 'edge' }],
+              edges: [],
+            }, null, '\\t') + '\\n')"""
+        )
+        page.wait_for_timeout(600)
+        box = plane(page)
+        page.mouse.move(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+        page.mouse.wheel(push, 0)
+        page.wait_for_timeout(400)
+        page.locator(".canvas .node", has_text="edge").first.click()
+        page.wait_for_timeout(300)
+        page.locator('.over button[aria-label="Colour"]').first.click()
+        page.wait_for_timeout(400)
+        got = page.evaluate(PICKED_SPILL)
+        if got["spill"] > 0:
+            fail(f"against the {side} edge the bar over the pick hangs {got['spill']}px off the plane")
+        elif got["dots"] < got["widest"] or got["dots"] < 20:
+            fail(f"against the {side} edge the colours are squeezed ({got})")
+        else:
+            say(f"against the {side} edge the bar and its colours stay on the plane, whole")
+        shot(page, f"canvas-picked-{side}-edge")
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(200)
+
+
+def check_lasso_held(page: Page) -> None:
+    """The lasso's key held is the lasso until it comes up: a loop drawn while it is
+    down catches the ink, and letting go gives the pen back with the ink still caught
+    (#349)."""
+    say("--- the lasso, held on its key ---")
+
+    fresh(page)
+    box = plane(page)
+    tool(page, "d")
+    x0, y0 = box["x"] + box["width"] / 2 - 120, box["y"] + box["height"] / 2
+    page.mouse.move(x0, y0)
+    page.mouse.down()
+    for step in range(1, 20):
+        page.mouse.move(x0 + step * 12, y0 + (step % 4) * 8)
+    page.mouse.up()
+    page.wait_for_timeout(300)
+
+    page.keyboard.down("q")
+    page.wait_for_timeout(100)
+    held = cursor_of(page)
+    pressed = page.evaluate(
+        "() => document.querySelector('.cluster .bar button[aria-pressed=true]')?.getAttribute('aria-label')"
+    )
+    page.mouse.move(x0 - 30, y0 - 30)
+    page.mouse.down()
+    for x, y in ((x0 + 260, y0 - 30), (x0 + 260, y0 + 60), (x0 - 30, y0 + 60), (x0 - 30, y0 - 30)):
+        page.mouse.move(x, y, steps=6)
+    page.mouse.up()
+    page.keyboard.up("q")
+    page.wait_for_timeout(300)
+
+    back = page.evaluate(
+        "() => document.querySelector('.cluster .bar button[aria-pressed=true]')?.getAttribute('aria-label')"
+    )
+    caught = page.evaluate("() => [...document.querySelectorAll('.over button')].length")
+    say(f"held: cursor {held}, in hand {pressed}; let go: in hand {back}, bar over the pick {caught}")
+    if held != "crosshair" or pressed != "Lasso":
+        fail(f"the lasso's key held did not put the lasso in hand ({pressed}, cursor {held})")
+    if back != "Pen":
+        fail(f"letting the lasso's key go did not give the pen back ({back})")
+    if not caught:
+        fail("what the held lasso caught was not left caught")
+    shot(page, "canvas-lasso-held")
+    page.keyboard.press("Escape")
 
 
 def check_broken_picture(page: Page) -> None:
@@ -999,6 +1186,8 @@ def drive(browser, theme: str) -> None:
         page.goto(ORIGIN, wait_until="domcontentloaded")
         opened(page, theme)
 
+        if page.locator(ZOOM_ON_BAR).count():
+            fail(f"[{theme}] the bar still has its zoom buttons")
         check_cursors(page)
         check_pattern(page)
         check_panel_shuts(page)
@@ -1008,14 +1197,284 @@ def drive(browser, theme: str) -> None:
         check_shape_text(page)
         check_arranging(page)
         check_more_menu(page)
+        check_picked_inside(page)
+        check_lasso_held(page)
         check_picture(page)
         check_broken_picture(page)
         check_sharp_stroke(page, cdp)
         check_pen_button(page, cdp)
         if theme == "light":
             check_bar_docks(page)
+            check_print(page)
     finally:
         context.close()
+
+
+AS_PHONE = """
+() => {
+  const app = window.nibApp;
+  app.viewport.device = 'phone';
+  app.viewport.portrait = true;
+  const root = document.documentElement;
+  root.dataset.device = 'phone';
+  root.toggleAttribute('data-touch', true);
+  root.toggleAttribute('data-drawer', true);
+  root.toggleAttribute('data-narrow', true);
+}
+"""
+
+# Which buttons of the bar are on screen, in order, and which ends of it fade.
+BAR_SEEN = """
+() => {
+  const row = document.querySelector('.cluster .scroller')
+  const box = row.getBoundingClientRect()
+  const seen = [...row.querySelectorAll('button')]
+    .filter((one) => { const at = one.getBoundingClientRect(); return at.left >= box.left - 1 && at.right <= box.right + 1 })
+    .map((one) => one.getAttribute('aria-label'))
+  return { seen, start: row.classList.contains('fade-start'), end: row.classList.contains('fade-end') }
+}
+"""
+
+
+# The bar's zoom group, which is not on it any more (#401).
+ZOOM_ON_BAR = (
+    ".cluster button[aria-label='Zoom in'], .cluster button[aria-label='Zoom out'],"
+    " .cluster button[aria-label='Zoom'], .cluster button[aria-label='Show the whole canvas']"
+)
+
+
+def drive_phone(browser, theme: str) -> None:
+    """A phone's bar: wider than the screen, so it scrolls - with Undo and Redo first,
+    where a thumb finds them, and a fade at whichever end has more past it (#350)."""
+    say(f"=== phone, {theme} ===")
+    context = browser.new_context(
+        viewport={"width": 412, "height": 900},
+        color_scheme=theme,
+        is_mobile=True,
+        has_touch=True,
+        device_scale_factor=2,
+    )
+    context.add_init_script(PREPARE)
+    page = context.new_page()
+    page.on("pageerror", lambda error: fail(f"[phone] page error: {error}"))
+
+    try:
+        page.goto(ORIGIN, wait_until="domcontentloaded")
+        wait_for(page, "!!window.nibApp", "[phone] the app to start")
+        wait_for(page, "window.nibApp.workspace.spaces.length > 0", "[phone] a space to exist")
+        page.evaluate(AS_PHONE)
+        opened(page, "phone")
+        page.wait_for_timeout(400)
+
+        # No zoom on the bar: a pinch, the wheel, the keys and the menu do it (#401).
+        if page.locator(ZOOM_ON_BAR).count():
+            fail(f"[phone/{theme}] the bar still has its zoom buttons")
+        first = page.evaluate(BAR_SEEN)
+        say(f"[phone/{theme}] on screen: {first['seen']}")
+        if "Undo" not in first["seen"][:3] or "Redo" not in first["seen"][:3]:
+            fail(f"[phone/{theme}] Undo and Redo are not first on a phone's bar ({first['seen']})")
+        if first["start"] or not first["end"]:
+            fail(f"[phone/{theme}] the bar at its start fades the wrong ends ({first})")
+        shot(page, f"canvas-phone-bar-{theme}")
+
+        page.evaluate("() => { const row = document.querySelector('.cluster .scroller'); row.scrollLeft = row.scrollWidth }")
+        page.wait_for_timeout(300)
+        last = page.evaluate(BAR_SEEN)
+        if not last["start"] or last["end"]:
+            fail(f"[phone/{theme}] the bar at its end fades the wrong ends ({last})")
+        else:
+            say(f"[phone/{theme}] Undo and Redo first, and the bar fades where there is more")
+        shot(page, f"canvas-phone-bar-end-{theme}")
+    finally:
+        context.close()
+
+
+# Where a card is drawn on screen: the middle of what the page draws for it, which a
+# turned view turns with it.
+CARD_AT = """
+(words) => {
+  const card = [...document.querySelectorAll('.canvas .node')].find((one) => one.textContent.includes(words))
+  const box = card?.getBoundingClientRect()
+  return box ? { x: box.x + box.width / 2, y: box.y + box.height / 2 } : null
+}
+"""
+
+
+# Where a point of the plane is on screen, by the same arithmetic as camera.ts: the
+# offset from the middle of the camera, scaled, turned, from the middle of the pane.
+TO_SCREEN = """
+(point) => {
+  const camera = window.nibApp.workspace.active.camera
+  const rect = document.querySelector('.canvas').getBoundingClientRect()
+  const turn = camera.turn ?? 0
+  const dx = (point.x - camera.x) * camera.scale
+  const dy = (point.y - camera.y) * camera.scale
+  return {
+    x: rect.left + rect.width / 2 + dx * Math.cos(turn) - dy * Math.sin(turn),
+    y: rect.top + rect.height / 2 + dx * Math.sin(turn) + dy * Math.cos(turn),
+  }
+}
+"""
+
+
+def two_fingers(cdp, middle: tuple[float, float], degrees: float, steps: int = 12) -> None:
+    """Two fingers a hundred and sixty pixels apart about a point, turned together by
+    `degrees`, through the protocol's own touch events."""
+    import math
+
+    def at(angle: float) -> list[dict]:
+        dx, dy = 80 * math.cos(angle), 80 * math.sin(angle)
+        return [
+            {"x": middle[0] - dx, "y": middle[1] - dy, "id": 1},
+            {"x": middle[0] + dx, "y": middle[1] + dy, "id": 2},
+        ]
+
+    cdp.send("Input.dispatchTouchEvent", {"type": "touchStart", "touchPoints": at(0)})
+    for step in range(1, steps + 1):
+        angle = math.radians(degrees * step / steps)
+        cdp.send("Input.dispatchTouchEvent", {"type": "touchMove", "touchPoints": at(angle)})
+    cdp.send("Input.dispatchTouchEvent", {"type": "touchEnd", "touchPoints": []})
+
+
+def drive_turning(browser) -> None:
+    """Two fingers turn a canvas where the setting says so, and only then; turned, a
+    click lands on the card under it, a drag carries a card the way the hand went, and
+    the key stands it upright again (#351)."""
+    say("=== turning ===")
+    context = browser.new_context(
+        viewport={"width": 1180, "height": 820},
+        has_touch=True,
+        device_scale_factor=1,
+    )
+    context.add_init_script(PREPARE + "\nlocalStorage.setItem('nib:pen-seen', 'yes');")
+    page = context.new_page()
+    page.on("pageerror", lambda error: fail(f"[turning] page error: {error}"))
+    cdp = context.new_cdp_session(page)
+    cdp.send("Input.setIgnoreInputEvents", {"ignore": False})
+
+    turn = "() => window.nibApp.workspace.active.camera?.turn ?? 0"
+    try:
+        page.goto(ORIGIN, wait_until="domcontentloaded")
+        opened(page, "turning")
+        tool(page, "v")
+        three_cards(page)
+        box = plane(page)
+        middle = (box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
+
+        # Off, the default: two fingers turned are a pan and a zoom and no turn.
+        page.evaluate("() => window.nibApp.modes.setCanvasTurns(false)")
+        two_fingers(cdp, middle, 40)
+        page.wait_for_timeout(300)
+        if abs(page.evaluate(turn)) > 1e-6:
+            fail(f"two fingers turned the canvas with the setting off ({page.evaluate(turn)})")
+        else:
+            say("with the setting off, two fingers turned do not turn the canvas")
+
+        # On: they turn it, about the point between them.
+        page.evaluate("() => window.nibApp.modes.setCanvasTurns(true)")
+        two_fingers(cdp, middle, 40)
+        page.wait_for_timeout(400)
+        got = page.evaluate(turn)
+        say(f"with the setting on, the canvas turned by {math_degrees(got):.1f} degrees")
+        if not 0.4 < got < 0.75:
+            fail(f"two fingers turned forty degrees turned the canvas by {got} radians")
+        shot(page, "canvas-turned")
+
+        # A click on a card where it is drawn picks that card: Delete takes it away.
+        two = page.evaluate(CARD_AT, "two")
+        page.mouse.click(two["x"], two["y"])
+        page.wait_for_timeout(200)
+        page.keyboard.press("Delete")
+        written(page, "!plane.nodes.some((n) => n.id === 'bb')")
+        if any(node["id"] == "bb" for node in canvas_of(page)["nodes"]):
+            fail("a click on a card in a turned view did not land on that card")
+        else:
+            say("a click on a card in a turned view lands on it")
+
+        # A drag carries a card the way the hand went, on screen.
+        one = page.evaluate(CARD_AT, "one")
+        page.mouse.move(one["x"], one["y"])
+        page.mouse.down()
+        page.mouse.move(one["x"] + 60, one["y"], steps=6)
+        page.mouse.move(one["x"] + 120, one["y"], steps=6)
+        page.mouse.up()
+        page.wait_for_timeout(400)
+        moved = page.evaluate(CARD_AT, "one")
+        shift = (moved["x"] - one["x"], moved["y"] - one["y"])
+        # Within a step of the grid it snaps to, which is the plane's and so turned.
+        if abs(shift[0] - 120) > 20 or abs(shift[1]) > 20:
+            fail(f"a card dragged 120px right in a turned view went {shift} on screen")
+        else:
+            say("a card dragged across a turned view goes where the hand went")
+
+        # A connector drawn from a card's side to another, in the turned view: the side's
+        # point is worked out from the plane, the way the surface does.
+        # Nothing picked first: the dragged card's own handles are on its sides. And the
+        # file written, so where the card is read from it is where it was dragged to.
+        page.keyboard.press("Escape")
+        page.wait_for_timeout(1600)
+        aa = next(node for node in canvas_of(page)["nodes"] if node["id"] == "aa")
+        start = page.evaluate(
+            TO_SCREEN, {"x": aa["x"] + aa["width"] + 2, "y": aa["y"] + aa["height"] / 2}
+        )
+        end = page.evaluate(CARD_AT, "three")
+        page.mouse.move(start["x"] - 20, start["y"])
+        page.mouse.move(start["x"], start["y"], steps=3)
+        page.wait_for_timeout(200)
+        page.mouse.down()
+        page.mouse.move(start["x"] + 15, start["y"] + 15, steps=4)
+        page.mouse.move(end["x"], end["y"], steps=12)
+        page.mouse.up()
+        written(page, "plane.edges.some((e) => e.fromNode === 'aa' && e.toNode === 'cc')")
+        if not any(e["fromNode"] == "aa" and e["toNode"] == "cc" for e in canvas_of(page)["edges"]):
+            fail("a connector dragged between two cards in a turned view joined nothing")
+        else:
+            say("a connector dragged between two cards in a turned view joins them")
+
+        # Ink drawn there, then caught by the lasso held on its key: what is caught is
+        # what was drawn, and the bar comes up over it.
+        tool(page, "d")
+        x0, y0 = box["x"] + 160, box["y"] + box["height"] - 220
+        page.mouse.move(x0, y0)
+        page.mouse.down()
+        for step in range(1, 16):
+            page.mouse.move(x0 + step * 10, y0 + (step % 3) * 8)
+        page.mouse.up()
+        page.wait_for_timeout(300)
+        page.keyboard.down("q")
+        page.mouse.move(x0 - 30, y0 - 30)
+        page.mouse.down()
+        for x, y in ((x0 + 190, y0 - 30), (x0 + 190, y0 + 50), (x0 - 30, y0 + 50), (x0 - 30, y0 - 30)):
+            page.mouse.move(x, y, steps=5)
+        page.mouse.up()
+        page.keyboard.up("q")
+        page.wait_for_timeout(300)
+        if not page.evaluate("() => document.querySelectorAll('.over button').length"):
+            fail("the lasso in a turned view caught nothing of what was drawn under it")
+        else:
+            say("the lasso in a turned view catches what was drawn under it")
+        shot(page, "canvas-turned-ink")
+        page.keyboard.press("Escape")
+        tool(page, "v")
+
+        # The key stands it upright again.
+        page.locator(".canvas").first.click(position={"x": 20, "y": 20})
+        page.keyboard.press("Control+Alt+r")
+        page.wait_for_timeout(300)
+        if abs(page.evaluate(turn)) > 1e-6:
+            fail(f"Ctrl+Alt+R did not stand the canvas upright ({page.evaluate(turn)})")
+        else:
+            say("Ctrl+Alt+R stands the canvas upright")
+        shot(page, "canvas-upright-again")
+        page.evaluate("() => window.nibApp.modes.setCanvasTurns(false)")
+    finally:
+        context.close()
+
+
+def math_degrees(radians: float) -> float:
+    import math
+
+    return math.degrees(radians)
 
 
 def main() -> int:
@@ -1023,6 +1482,9 @@ def main() -> int:
         for theme in ("light", "dark"):
             drive(browser, theme)
         drive_tablet(browser)
+        for theme in ("light", "dark"):
+            drive_phone(browser, theme)
+        drive_turning(browser)
 
     return DRIVE.verdict("everything the drive checked was right")
 

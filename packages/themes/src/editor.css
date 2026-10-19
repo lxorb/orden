@@ -2587,6 +2587,15 @@
    place is placed by taking hold of it. Transparent, so nothing is drawn over the
    photograph until a pointer is on it, and focusable, so the arrow keys reach it
    for anybody who is not holding a pointer. */
+
+/* The block the editor measures, holding the band and the room under it. A margin
+   is outside the box CodeMirror measures a block by, so the band's margin is kept
+   inside this one rather than collapsing through it, and a click under the cover
+   lands on the line it was made on; see cover.ts in the editor. */
+#write .nib-cover-block {
+  display: flow-root;
+}
+
 #write .nib-cover {
   position: relative;
   animation: settle-in var(--dur-base) var(--ease-out);

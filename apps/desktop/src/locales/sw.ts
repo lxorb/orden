@@ -27,6 +27,25 @@ export const sw: Dictionary = {
   'Import from Zen': 'Ingiza kutoka Zen',
   'Containers stay in Zen': 'Kontena zinabaki ndani ya Zen',
   'Zen’s tabs could not be read.': 'Vichupo vya Zen havikuweza kusomwa.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'Kontena zinabaki ndani ya Firefox',
+  'Nothing could be read out of {browser}.': 'Hakuna kilichoweza kusomwa kutoka {browser}.',
+  'Saved groups': 'Vikundi vilivyohifadhiwa',
+  'Tab group': 'Kikundi cha vichupo',
+  'Bookmarks toolbar': 'Upau wa alamisho',
+  'Bookmarks menu': 'Menyu ya alamisho',
+  'Other bookmarks': 'Alamisho zingine',
+  'Mobile bookmarks': 'Alamisho za simu',
+  'Bookmarks bar': 'Upau wa alamisho',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} hufunga vichupo vyake vilivyo wazi, kwa hivyo alamisho zake pekee zimekuja.',
+  '{count} pages not on the web stay behind': {
+    one: 'Ukurasa {count} usio kwenye wavuti umebaki',
+    other: 'Kurasa {count} zisizo kwenye wavuti zimebaki',
+  },
+  'Reading List': 'Orodha ya Kusoma',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS huweka vichupo na alamisho za Safari nyuma ya Ufikiaji Kamili wa Diski. Washa Orden hapo, kisha uombe tena.',
   // Settings: note types
   'Page note': 'Dokezo la kurasa',
   'Web note': 'Dokezo la wavuti',
@@ -97,8 +116,6 @@ export const sw: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'Vidokezo',
   'Silent mode': 'Hali ya kimya',
-  'Sign in to keep your notes safe and on every device.':
-    'Ingia ili madokezo yako yawe salama na kwenye kila kifaa.',
   'See how your notes connect.': 'Tazama jinsi madokezo yako yanavyounganika.',
   'Press {key} to find anything, notes and commands alike.':
     'Bonyeza {key} kupata chochote, madokezo na amri pia.',
@@ -120,11 +137,13 @@ export const sw: Dictionary = {
   '{count} h': '{count} saa',
   Inbox: 'Kikasha',
   Date: 'Tarehe',
+  'Start date': 'Tarehe ya kuanza',
   Priority: 'Kipaumbele',
   Reminder: 'Kikumbusho',
   Duration: 'Muda',
   'Smart dates': 'Tarehe mahiri',
   'From any app': 'Kutoka programu yoyote',
+  'Show tasks without a start date in Today': 'Onyesha kazi zisizo na tarehe ya kuanza katika Leo',
   'Every day': 'Kila siku',
   'Every weekday': 'Kila siku ya kazi',
   'Every week': 'Kila wiki',
@@ -168,6 +187,8 @@ export const sw: Dictionary = {
   Dots: 'Vitone',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'Zungusha turubai kwa vidole viwili',
+  'Turn upright': 'Nyoosha',
   Canvas: 'Turubai',
   Card: 'Kadi',
   'Note or picture': 'Dokezo au picha',
@@ -243,6 +264,11 @@ export const sw: Dictionary = {
   Unpin: 'Ondoa bandiko',
   Close: 'Funga',
   'Close pinned tab?': 'Funga kichupo kilichobandikwa?',
+  'Save changes to {name}?': 'Hifadhi mabadiliko katika {name}?',
+  'Save changes to these tabs?': 'Hifadhi mabadiliko katika vichupo hivi?',
+  'Unsaved words go to Recently deleted.':
+    'Maneno yasiyohifadhiwa huenda kwenye Vilivyofutwa hivi karibuni.',
+  'Don’t save': 'Usihifadhi',
   'Close others': 'Funga nyingine',
   'Close tabs to the right': 'Funga vichupo vya kulia',
   'Close tabs to the left': 'Funga vichupo vya kushoto',
@@ -1168,6 +1194,7 @@ export const sw: Dictionary = {
   'Double-click to write': 'Bofya mara mbili kuandika',
   'Another colour': 'Rangi nyingine',
   'Turn into a note': 'Fanya dokezo',
+  Arrange: 'Panga',
   'Bring to front': 'Lete mbele kabisa',
   'Bring forward': 'Lete mbele',
   'Send backward': 'Rudisha nyuma',
@@ -1257,6 +1284,9 @@ export const sw: Dictionary = {
   Unstable: 'Isiyo imara',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'Imara hufuata matoleo yaliyotolewa, Isiyo imara hufuata builds za edge na inaweza kuvunjika.',
+  'Web version': 'Toleo la wavuti',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'Imara ni programu ya wavuti iliyotolewa, Isiyo imara ni build mpya zaidi na inaweza kuvunjika.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Ingiza',
@@ -1601,8 +1631,6 @@ export const sw: Dictionary = {
   // Web tabs
   Reload: 'Pakia tena',
   'Hard reload': 'Pakia upya kabisa',
-  'Clip this page': 'Hifadhi ukurasa huu',
-  'Clip the link': 'Hifadhi kiungo',
   'Open in the browser': 'Fungua kwenye kivinjari',
   'Show it here': 'Ionyeshe hapa',
   Website: 'Tovuti',
@@ -1743,7 +1771,6 @@ export const sw: Dictionary = {
   'New tab': 'Kichupo kipya',
   'Full screen': 'Skrini nzima',
   'Print…': 'Chapisha…',
-  'Save page': 'Hifadhi ukurasa',
   'Share…': 'Shiriki…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1803,6 +1830,15 @@ export const sw: Dictionary = {
   'Bring all to front': 'Leta zote mbele',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Tendua unakili',
+  'Devices with your AI vault': 'Vifaa vyenye kasha lako la AI',
+  'This device': 'Kifaa hiki',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'Kifaa hicho hakitaweza tena kusoma akaunti zako za AI, na vingine vitapata ufunguo mpya.',
+  'Also remove this device from your AI vault?': 'Ondoa pia kifaa hiki kwenye kasha lako la AI?',
+  'Remove and sign out': 'Ondoa na utoke',
+  'Undo making {name}': 'Tendua kuunda {name}',
+  'Undo the deletion': 'Tendua ufutaji',
+  'Undo the move': 'Tendua uhamishaji',
   'Redo the last file change': 'Rudia badiliko la mwisho la faili',
   'Select down': 'Teua kwenda chini',
   'Select up': 'Teua kwenda juu',
@@ -2023,6 +2059,7 @@ export const sw: Dictionary = {
   'Without your logins': 'Bila kuingia kwako',
   'Calls a minute': 'Simu kwa dakika',
   'Pages a minute': 'Kurasa kwa dakika',
+  'Browser memory limit': 'Kikomo cha kumbukumbu ya kivinjari',
   '{count} calls': {
     one: 'simu {count}',
     other: 'simu {count}',

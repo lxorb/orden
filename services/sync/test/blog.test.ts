@@ -868,6 +868,65 @@ describe('publishing one note instead of the space', () => {
   })
 })
 
+describe('a site of one note', () => {
+  const PRIVATE = file(2048, 7)
+
+  /** A paper kept somewhere in the space that the one note does not link. */
+  async function keepPrivately(path = 'Private/salary.pdf') {
+    await call(env, `/v1/blobs/${PRIVATE.hash}`, {
+      method: 'PUT',
+      token,
+      raw: PRIVATE.bytes,
+      headers: { 'content-type': 'application/pdf' },
+    })
+    const kept = await call(env, `/v1/spaces/${space}/files`, {
+      method: 'PUT',
+      token,
+      body: { files: [{ path, hash: PRIVATE.hash }] },
+    })
+    expect(kept.status).toBe(200)
+  }
+
+  test('serves no other file of the space by its path', async () => {
+    await keepPrivately()
+    await publish({ subdomain: 'me', note: 'Hello world.md' })
+
+    for (const path of ['/Private/salary.pdf', '/private/salary.pdf', '/Private%2Fsalary.pdf']) {
+      const response = await call(env, path, { host: 'me.nibeditor.com' })
+      expect(response.status, path).toBe(404)
+      expect(response.headers.get('location'), path).toBeNull()
+    }
+  })
+
+  test('nor one its folder rules would have published as a site of the space', async () => {
+    await keepPrivately('Blog/paper.pdf')
+    await publish({ subdomain: 'me', note: 'Hello world.md', rules: { publish: ['Blog'] } })
+
+    expect((await call(env, '/Blog/paper.pdf', { host: 'me.nibeditor.com' })).status).toBe(404)
+  })
+
+  test('still links a file its note links, at the address of its bytes', async () => {
+    await keepPrivately('reading/paper.pdf')
+    await addNote('home.md', '# Home\n\nSee [the paper](reading/paper.pdf).\n')
+    await publish({ subdomain: 'me', note: 'home.md' })
+
+    const page = await call(env, '/', { host: 'me.nibeditor.com' })
+    expect(page.text).toContain(`href="/i/${PRIVATE.hash}.pdf"`)
+    expect((await call(env, `/i/${PRIVATE.hash}.pdf`)).status).toBe(200)
+
+    // And by the path the note wrote, because the page links it.
+    expect((await call(env, '/reading/paper.pdf', { host: 'me.nibeditor.com' })).status).toBe(302)
+  })
+
+  test('while a site of the space still serves a file by its path', async () => {
+    await keepPrivately('reading/paper.pdf')
+    await publish({ subdomain: 'field' })
+
+    const response = await call(env, '/reading/paper.pdf', { host: 'field.nibeditor.com' })
+    expect(response.status).toBe(302)
+  })
+})
+
 describe('a published note that links a PDF', () => {
   /** A paper, and the hash it is named by. */
   const PAPER_BYTES = file(2048, 3)
@@ -1177,6 +1236,99 @@ describe('searching a site', () => {
     expect(response.text).not.toContain('<script src')
     // The site's own script and the one inline line, and nothing the note added.
     expect(response.text.match(/<script/g)).toHaveLength(2)
+  })
+})
+
+/** A comment is the writer's note to themselves (#453): hidden on the page, and so
+ *  never in anything else a site says about the page either. */
+describe('what a writer commented out', () => {
+  const POST = [
+    'Intro %%hidden-inline%% and <!-- html-inline --> more.',
+    '',
+    '%%',
+    'hiddenblock quokka #secret-tag [[Hidden link]]',
+    '%%',
+    '',
+    'End.',
+    '',
+  ].join('\n')
+  const HIDDEN = ['hidden-inline', 'html-inline', 'hiddenblock', 'quokka', 'secret-tag']
+
+  test('is in nothing the site serves: page, head, feeds, sitemap, search', async () => {
+    await addNote('Post.md', POST)
+    await addNote('Hidden link.md', '# Hidden link\n\nOther.\n')
+    await publish({ subdomain: 'field' })
+
+    for (const path of ['/post', '/', '/feed.xml', '/rss.xml', '/sitemap.xml', '/hidden-link']) {
+      const response = await call(env, path, { host: 'field.nibeditor.com' })
+      expect(response.status, path).toBe(200)
+      for (const word of HIDDEN) expect(response.text, `${path} ${word}`).not.toContain(word)
+    }
+
+    // The words that were not commented out are what the head and the feed say.
+    const page = await call(env, '/post', { host: 'field.nibeditor.com' })
+    expect(page.text).toContain('content="Intro and more."')
+
+    for (const query of ['quokka', 'hiddenblock', 'hidden-inline', '%23secret-tag']) {
+      const found = await call(env, `/search?q=${query}`, { host: 'field.nibeditor.com' })
+      expect(found.text, query).toContain('Nothing matches.')
+      // The box says the query back; nothing else hidden is said.
+      for (const word of HIDDEN.filter((one) => !query.includes(one))) {
+        expect(found.text, `${query} ${word}`).not.toContain(word)
+      }
+    }
+  })
+
+  test('gives a page no title from a heading inside one', async () => {
+    await addNote('Untitled.md', '%%\n# Secret plans\n%%\n\nWords.\n')
+    await publish({ subdomain: 'field' })
+
+    for (const path of ['/untitled', '/', '/feed.xml']) {
+      const response = await call(env, path, { host: 'field.nibeditor.com' })
+      expect(response.text, path).not.toContain('Secret plans')
+    }
+  })
+
+  test('shows nothing of a note it embeds that was commented out there', async () => {
+    await addNote('Inner.md', 'Shown %%inner-hidden%% words.\n')
+    await addNote('Outer.md', '# Outer\n\n![[Inner]]\n')
+    await publish({ subdomain: 'field' })
+
+    const page = await call(env, '/outer', { host: 'field.nibeditor.com' })
+    expect(page.text).toContain('Shown')
+    expect(page.text).not.toContain('inner-hidden')
+  })
+
+  test('says nothing a row read before this said, and the sweep reads it again', async () => {
+    await addNote('Post.md', POST)
+    await publish({ subdomain: 'field' })
+
+    // A row as the old reading left it: a summary with the comment in it, words
+    // indexed with it, and nothing to say it was read the new way.
+    env.db
+      .prepare("update notes set front = ?, front_rev = 0 where path = 'Post.md'")
+      .run(JSON.stringify({ summary: 'Intro %%hidden-inline%% more.', tags: ['secret-tag'] }))
+    env.db
+      .prepare(
+        "update note_search set body = 'Intro hiddenblock quokka End.' where path = 'Post.md'",
+      )
+      .run()
+
+    const page = await call(env, '/post', { host: 'field.nibeditor.com' })
+    expect(page.text).not.toContain('hidden-inline')
+    const feed = await call(env, '/feed.xml', { host: 'field.nibeditor.com' })
+    expect(feed.text).not.toContain('hidden-inline')
+
+    const { fillFronts } = await import('../src/blog/fill')
+    await fillFronts(env, null)
+
+    expect(env.db.prepare("select front_rev from notes where path = 'Post.md'").get()).toEqual({
+      front_rev: 1,
+    })
+    const found = await call(env, '/search?q=quokka', { host: 'field.nibeditor.com' })
+    expect(found.text).toContain('Nothing matches.')
+    const tagged = await call(env, '/search?q=%23secret-tag', { host: 'field.nibeditor.com' })
+    expect(tagged.text).toContain('Nothing matches.')
   })
 })
 

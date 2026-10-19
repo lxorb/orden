@@ -294,6 +294,40 @@ describe('diverge', () => {
     expect(result.resolution?.split('mk4z').length ?? 2).toBe(2)
   })
 
+  test('a passage two devices each moved, which the CRDT holds twice, is said once (#436)', () => {
+    // Walk seed 207384677: two devices each settled an earlier meeting by moving "eggs
+    // mk1z", so each typed it again as an insertion of its own and the CRDT's merge holds
+    // two copies side by side. Falling back to the CRDT's text kept both.
+    const base = 'We mk5z ship on Monday after eggs mk1z mk13z monday ship\n\n- milk\n- eggs\n'
+    const local =
+      'We mk5z ship milk mk7z ship ship review plan mk16z we review on Monday review milk mk26z plan milk the mk18z mk8z on we after eggs mk1z mk13z monday ship mk11z\n'
+    const remote =
+      'We mk5z ship on Monday after mk14z milk plan eggs mk1z mk13z monday ship\n\n- milk\n- milk review monday mk6z eggs\n'
+    const merged =
+      'We mk5z ship milk mk7z ship ship review plan mk16z we review on Monday mk14z milk plan review milk mk26z plan milk the mk18z mk8z on we after eggs mk1zeggs mk1z mk13z monday shipmilk review monday mk6z  mk11z\n'
+    expect(merged.split('mk1z').length).toBe(3)
+
+    const result = diverge(base, local, remote, REMOTE_NEWER, merged)
+    expect(result.verdict).toBe('minor')
+    for (const word of ['mk1z', 'mk5z', 'mk6z', 'mk11z', 'mk13z', 'mk14z', 'mk26z']) {
+      expect(result.resolution?.split(word).length, word).toBe(2)
+    }
+  })
+
+  test("the CRDT's merge stands where the text merge would say more twice than it does", () => {
+    // Walk seed 7346, which the check above first broke: two words the CRDT set side by
+    // side read to it as a repeat, and the text merge it fell back to said mk13z twice.
+    const base = 'We ship the monday after mk16z ship on Monday mk6z after mk13z the review.'
+    const local = 'We ship the monday after mk16z ship on Monday mk6z after mk19z monday themk13z '
+    const remote =
+      'We ship the monday after mk16z ship on Monday mk6z after mk30z on mk13z the review. on mk24z'
+    const merged =
+      'We ship the monday after mk16z ship on Monday mk6z after mk19z monday mk30z on the on mk24zmk13z '
+
+    const result = diverge(base, local, remote, REMOTE_NEWER, merged)
+    expect(result.resolution?.split('mk13z').length).toBe(2)
+  })
+
   test('a line one side wrote that the other wrote too and went on from is not asked about', () => {
     // Found by the conflict drive under v2: a note closed offline and opened again
     // against a file nib wrote before the line, so one side is the line and the other

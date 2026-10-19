@@ -98,6 +98,10 @@ export interface TaskRow extends TaskFields {
   description?: string
   /** How many comments are written under it: list items that are not tasks. */
   comments?: number
+  /** What a `📅` on it means: a deadline in an Obsidian vault, else - absent - a start
+   *  date. Said by whatever made the rows, which knows the space; see
+   *  `@nib/markdown/task-dates`. */
+  dueReads?: 'deadline'
 }
 
 /** A note, or a task in a note. */

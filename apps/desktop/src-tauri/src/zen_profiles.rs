@@ -18,22 +18,16 @@
 //!
 //! Desktop only: a phone's Zen, where there is one, is somebody else's sandbox.
 
-use base64::engine::general_purpose::STANDARD as BASE64;
-use base64::Engine as _;
-use serde::Serialize;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use crate::paths::{folded, folder_named};
+#[cfg(test)]
+use crate::browser_profiles::{entries_in, installed_defaults};
+use crate::browser_profiles::{ini_profiles, once, read_listed, Profile};
+use crate::paths::folder_named;
 
 /// One profile, the way Zen's profile manager shows it.
-#[derive(Serialize, Debug, PartialEq, Eq)]
-pub struct ZenProfile {
-    pub name: String,
-    pub path: String,
-    /// The session files the profile holds, the one to read first in front.
-    pub files: Vec<String>,
-}
+pub type ZenProfile = Profile;
 
 /// Where a drive keeps a Zen of its own, so a probe never reads the reader's: the
 /// folder `profiles.ini` is in. The same rule as `NIB_SPACES_DIR`.
@@ -54,10 +48,6 @@ const BACKUPS: &str = "zen-sessions-backup";
 const BACKUP_PREFIX: &str = "zen-sessions-";
 const BACKUP_SUFFIX: &str = ".jsonlz4";
 
-/// More than any session is. A file past it is not one, and the app holds what it
-/// reads whole.
-const MOST_BYTES: u64 = 128 * 1024 * 1024;
-
 /// The profiles on this machine that hold a session, the one Zen opens first in
 /// front. None where Zen has never run.
 #[tauri::command(async)]
@@ -69,27 +59,11 @@ pub fn zen_profiles() -> Vec<ZenProfile> {
 /// bridge.
 #[tauri::command(async)]
 pub fn read_zen_file(profile: String, file: String) -> Result<String, String> {
-    let path = known(&profile, &file, &listed())?;
-    let size = fs::metadata(&path)
-        .map_err(|error| format!("{file}: {error}"))?
-        .len();
-    if size > MOST_BYTES {
-        return Err(format!("{file} is larger than any session"));
-    }
-    let bytes = fs::read(&path).map_err(|error| format!("{file} could not be read: {error}"))?;
-    Ok(BASE64.encode(bytes))
+    read_listed("Zen", &profile, &file, &listed())
 }
 
 fn listed() -> Vec<ZenProfile> {
-    homes()
-        .iter()
-        .flat_map(|home| profiles_in(home))
-        .fold(Vec::new(), |mut all, one| {
-            if !all.iter().any(|held: &ZenProfile| held.path == one.path) {
-                all.push(one);
-            }
-            all
-        })
+    once(homes().iter().flat_map(|home| profiles_in(home)))
 }
 
 /// The folders Zen keeps `profiles.ini` in: its own folder in the system's
@@ -117,124 +91,7 @@ fn homes() -> Vec<PathBuf> {
 /// The profiles of one `profiles.ini` that hold a session: the one an install
 /// opens first, then the one marked default, then the rest in the file's order.
 fn profiles_in(home: &Path) -> Vec<ZenProfile> {
-    let Ok(text) = fs::read_to_string(home.join("profiles.ini")) else {
-        return Vec::new();
-    };
-
-    let mut found: Vec<(u8, ZenProfile)> = Vec::new();
-    let opened = installed_defaults(&text);
-    for entry in entries_in(&text) {
-        let folder = if entry.relative {
-            home.join(&entry.path)
-        } else {
-            PathBuf::from(&entry.path)
-        };
-        let files = files_of(&folder);
-        if files.is_empty() {
-            continue;
-        }
-        let rank = if opened.contains(&entry.path) {
-            0
-        } else if entry.default {
-            1
-        } else {
-            2
-        };
-        found.push((
-            rank,
-            ZenProfile {
-                name: entry.name,
-                path: folder.to_string_lossy().into_owned(),
-                files,
-            },
-        ));
-    }
-
-    found.sort_by_key(|(rank, _)| *rank);
-    found.into_iter().map(|(_, one)| one).collect()
-}
-
-/// A `[ProfileN]` section.
-#[derive(Debug, PartialEq, Eq)]
-struct Entry {
-    name: String,
-    path: String,
-    relative: bool,
-    default: bool,
-}
-
-/// The sections of an INI file as `(section, key, value)` rows, keys and sections
-/// compared without case the way Firefox's own parser compares them.
-fn rows(text: &str) -> Vec<(String, String, String)> {
-    let mut section = String::new();
-    let mut found = Vec::new();
-
-    for line in text.lines().map(str::trim) {
-        if line.is_empty() || line.starts_with(';') || line.starts_with('#') {
-            continue;
-        }
-        if let Some(name) = line
-            .strip_prefix('[')
-            .and_then(|rest| rest.strip_suffix(']'))
-        {
-            name.trim().clone_into(&mut section);
-            continue;
-        }
-        if let Some((key, value)) = line.split_once('=') {
-            found.push((
-                section.clone(),
-                key.trim().to_ascii_lowercase(),
-                value.trim().to_owned(),
-            ));
-        }
-    }
-
-    found
-}
-
-/// Every profile the file names, in its order.
-fn entries_in(text: &str) -> Vec<Entry> {
-    let rows = rows(text);
-    let mut sections: Vec<&str> = Vec::new();
-    for (section, _, _) in &rows {
-        if section.to_ascii_lowercase().starts_with("profile")
-            && !sections.contains(&section.as_str())
-        {
-            sections.push(section);
-        }
-    }
-
-    sections
-        .into_iter()
-        .filter_map(|section| {
-            let value = |key: &str| {
-                rows.iter()
-                    .find(|(one, name, _)| one == section && name == key)
-                    .map(|(_, _, value)| value.clone())
-            };
-            let path = value("path").filter(|one| !one.is_empty())?;
-            Some(Entry {
-                name: value("name")
-                    .filter(|one| !one.is_empty())
-                    .unwrap_or_else(|| path.clone()),
-                relative: value("isrelative").as_deref() != Some("0"),
-                default: value("default").as_deref() == Some("1"),
-                path,
-            })
-        })
-        .collect()
-}
-
-/// The profile each install opens first: `[InstallXXXX]` sections, one per copy of
-/// Zen on the machine, each with `Default=` the profile's `Path`.
-fn installed_defaults(text: &str) -> Vec<String> {
-    rows(text)
-        .into_iter()
-        .filter(|(section, key, _)| {
-            section.to_ascii_lowercase().starts_with("install") && key == "default"
-        })
-        .map(|(_, _, value)| value)
-        .collect()
+    ini_profiles(home, files_of)
 }
 
 /// The session files a profile holds, in the order they are worth reading.
@@ -265,16 +122,9 @@ fn files_of(profile: &Path) -> Vec<String> {
 
 /// The file asked for, when the profile is one Zen lists and the file is one of the
 /// session files that profile was listed with: never a path the caller made up.
+#[cfg(test)]
 fn known(profile: &str, file: &str, listed: &[ZenProfile]) -> Result<PathBuf, String> {
-    let asked = folded(Path::new(profile));
-    let one = listed
-        .iter()
-        .find(|one| folded(Path::new(&one.path)) == asked)
-        .ok_or_else(|| format!("{profile} is not a profile Zen lists"))?;
-    if !one.files.iter().any(|name| name == file) {
-        return Err(format!("{file} is not a session file of that profile"));
-    }
-    Ok(Path::new(&one.path).join(file))
+    crate::browser_profiles::known("Zen", profile, file, listed)
 }
 
 #[cfg(test)]

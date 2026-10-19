@@ -44,8 +44,9 @@ function entry(path: string, isFolder: boolean): Entry {
 }
 
 /** The listing, built from the paths on the disk the way the crate builds it from
- *  a folder: folders first, then names in order. */
-function listing(root: string): Entry {
+ *  a folder: folders first, then names in order, and a paper a page note holds left
+ *  out unless it is asked for (`held_paper` in src-tauri/src/paths.rs). */
+function listing(root: string, papers = false): Entry {
   const tree = entry(root, true)
   const at = new Map<string, Entry>([[root, tree]])
 
@@ -63,6 +64,7 @@ function listing(root: string): Entry {
 
   for (const path of [...files.keys()].sort()) {
     if (!path.startsWith(`${root}/`)) continue
+    if (!papers && path.endsWith('.pages.pdf') && files.has(path.slice(0, -4))) continue
     folderFor(path.slice(0, path.lastIndexOf('/'))).children.push(entry(path, false))
   }
 
@@ -117,6 +119,12 @@ vi.mock('./tauri', async (importOriginal) => ({
           files.set(to, was)
         }
         if (folders.delete(from)) folders.add(to)
+        // A page note's paper follows it; see `move_held` in paths.rs.
+        const paper = files.get(`${from}.pdf`)
+        if (from.endsWith('.pages') && paper !== undefined) {
+          files.delete(`${from}.pdf`)
+          files.set(`${to}.pdf`, paper)
+        }
         return undefined
       }
       case 'write_bytes':
@@ -133,12 +141,16 @@ vi.mock('./tauri', async (importOriginal) => ({
         for (const [one, words] of [...files]) {
           if (under(one, from)) files.set(to + one.slice(from.length), words)
         }
+        const paper = files.get(`${from}.pdf`)
+        if (from.endsWith('.pages') && paper !== undefined) files.set(`${to}.pdf`, paper)
         for (const one of [...folders])
           if (under(one, from)) folders.add(to + one.slice(from.length))
         return undefined
       }
       case 'delete_note':
         files.delete(path)
+        // And a page note's paper with it; see `drop_held` in paths.rs.
+        if (path.endsWith('.pages')) files.delete(`${path}.pdf`)
         return undefined
       case 'delete_folder':
         for (const one of [...files.keys()]) if (one.startsWith(`${path}/`)) files.delete(one)
@@ -159,14 +171,30 @@ vi.mock('./tauri', async (importOriginal) => ({
         files.set(at, words)
         return { path: at, fresh: true }
       }
-      case 'read_tree':
-        return listing(text(args?.root))
+      case 'read_tree': {
+        const options = args?.options as { papers?: boolean } | undefined
+        return listing(text(args?.root), options?.papers === true)
+      }
       case 'file_stamp':
         return files.has(path) || locked.has(path) ? { modified: 1, len: 1 } : null
       default:
         return undefined
     }
   },
+}))
+
+/** A PDF becomes its page note out of the page sizes pdf.js reads off it, and node
+ *  has no pdf.js: a paper here is two pages, A4 and Letter, unless it says it is not a
+ *  PDF at all. */
+vi.mock('./pdf/document', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./pdf/document')>()),
+  pageSizes: (path: string) =>
+    files.get(path)?.startsWith('%PDF')
+      ? Promise.resolve([
+          { width: 794, height: 1123 },
+          { width: 816, height: 1056 },
+        ])
+      : Promise.reject(new Error(`${path} is not a PDF`)),
 }))
 
 function memoryStorage(): Storage {
@@ -188,6 +216,13 @@ const { nameFault } = await import('./naming')
 const { workspace } = await import('./workspace.svelte')
 const { sync } = await import('./sync.svelte')
 const { unread } = await import('./unread.svelte')
+
+/** A file dropped from outside the app, at `path` inside what was dropped. */
+const dropped = (path: string, words: string) => ({
+  name: path.split('/').pop() ?? path,
+  webkitRelativePath: path.includes('/') ? path : '',
+  arrayBuffer: () => Promise.resolve(new TextEncoder().encode(words).buffer),
+})
 
 /** Every path the list shows, in the order it shows them. */
 function rows(): string[] {
@@ -682,12 +717,6 @@ describe('doing a file operation again', () => {
 /** Files dropped on the list from outside the app: written in, words as words and
  *  everything else as bytes, stepping aside from a name already here. */
 describe('files dropped from outside', () => {
-  const dropped = (path: string, words: string) => ({
-    name: path.split('/').pop() ?? path,
-    webkitRelativePath: path.includes('/') ? path : '',
-    arrayBuffer: () => Promise.resolve(new TextEncoder().encode(words).buffer),
-  })
-
   test('arrive in the folder, a folder with everything in it', async () => {
     await workspace.bringIn(
       [dropped('Trip/Trip.md', '# Trip'), dropped('Trip/map.png', 'PNG'), dropped('Beta.md', 'b')],
@@ -714,21 +743,26 @@ describe('files dropped from outside', () => {
 })
 
 /** A PDF another program opened with nib: copied in at the top of the space like a
- *  file dropped there, unless the space holds it already. */
+ *  file dropped there, unless the space holds it already, and its page note from the
+ *  moment it lands. */
 describe('a PDF opened with nib', () => {
   beforeEach(() => {
     outside.set('/downloads/Paper.pdf', '%PDF paper')
   })
 
-  test('arrives at the top of the space, on the list and one undo away', async () => {
+  test('arrives at the top of the space as its page note, one undo away', async () => {
     const landed = await workspace.bringInPdf('/downloads/Paper.pdf', '/space')
 
-    expect(landed).toBe('/space/Paper.pdf')
-    expect(rows()).toContain('/space/Paper.pdf')
+    expect(landed).toBe('/space/Paper.pages')
+    expect(rows()).toContain('/space/Paper.pages')
+    expect(rows()).not.toContain('/space/Paper.pdf')
+    expect(rows()).not.toContain('/space/Paper.pages.pdf')
+    expect(files.get('/space/Paper.pages.pdf')).toBe('%PDF paper')
     expect(workspace.undoLabel).toBe('Undo the copy')
 
     await workspace.undoFileAction()
-    expect(files.has('/space/Paper.pdf')).toBe(false)
+    expect(files.has('/space/Paper.pages')).toBe(false)
+    expect(files.has('/space/Paper.pages.pdf')).toBe(false)
   })
 
   test('and is the copy the space has when it has one', async () => {
@@ -745,6 +779,166 @@ describe('a PDF opened with nib', () => {
 
   test('and nothing at all when it could not be brought in', async () => {
     expect(await workspace.bringInPdf('/downloads/Gone.pdf', '/space')).toBeNull()
+  })
+})
+
+/** The pages a page note on the disk has, and the paper each names. */
+function pagesIn(path: string): { file: string | undefined; subpath: string | undefined }[] {
+  const nodes = (JSON.parse(files.get(path) ?? '{}') as { nodes?: Record<string, unknown>[] }).nodes
+  return (nodes ?? [])
+    .filter((node) => node.type === 'file')
+    .map((node) => ({
+      file: typeof node.file === 'string' ? node.file : undefined,
+      subpath: typeof node.subpath === 'string' ? node.subpath : undefined,
+    }))
+}
+
+/** A page note an older build wrote beside its PDF: every page names the PDF, and
+ *  one stroke of ink is on the first. */
+const BESIDE = JSON.stringify({
+  nodes: [
+    {
+      id: 'p1',
+      type: 'file',
+      file: 'Lecture.pdf',
+      subpath: '#page=1',
+      x: -397,
+      y: 0,
+      width: 794,
+      height: 1123,
+    },
+  ],
+  edges: [],
+  nib: {
+    version: 1,
+    pages: [{ id: 'p1', paper: 'a4', pattern: 'blank' }],
+    ink: [{ id: 'k1', tool: 'fountain', color: '1', size: 2, points: [0, 10, 0.5, 40, 60, 0.5] }],
+  },
+})
+
+/** Issue #400: a PDF is one thing, its page note, and not a PDF with a page note
+ *  beside it. The paper's bytes move into the note's keeping, under the note's name
+ *  with `.pdf` after it, which the list does not show. See pages/from-pdf.ts. */
+describe('a PDF becomes the page note that holds it', () => {
+  test('dropped on the list on its own, it lands as its page note', async () => {
+    await workspace.bringIn([dropped('Lecture 4.pdf', '%PDF lecture')], '/space/Work')
+
+    expect(rows()).toContain('/space/Work/Lecture 4.pages')
+    expect(rows()).not.toContain('/space/Work/Lecture 4.pdf')
+    expect(rows()).not.toContain('/space/Work/Lecture 4.pages.pdf')
+    expect(files.get('/space/Work/Lecture 4.pages.pdf')).toBe('%PDF lecture')
+    expect(files.has('/space/Work/Lecture 4.pdf')).toBe(false)
+    // Every page of the paper, each naming the paper the note holds.
+    expect(pagesIn('/space/Work/Lecture 4.pages')).toEqual([
+      { file: 'Lecture 4.pages.pdf', subpath: '#page=1' },
+      { file: 'Lecture 4.pages.pdf', subpath: '#page=2' },
+    ])
+
+    await workspace.undoFileAction()
+    expect(files.has('/space/Work/Lecture 4.pages')).toBe(false)
+    expect(files.has('/space/Work/Lecture 4.pages.pdf')).toBe(false)
+  })
+
+  test("but one inside a dropped folder is that folder's, and stays a PDF", async () => {
+    await workspace.bringIn(
+      [dropped('Course/Notes.md', '![[Reading.pdf]]'), dropped('Course/Reading.pdf', '%PDF')],
+      '/space',
+    )
+
+    expect(rows()).toContain('/space/Course/Reading.pdf')
+    expect(files.has('/space/Course/Reading.pages')).toBe(false)
+  })
+
+  test('one already in the space becomes its page note the first time it opens', async () => {
+    files.set('/space/Work/Paper.pdf', '%PDF paper')
+    await workspace.loadTree()
+
+    await workspace.openEntry('/space/Work/Paper.pdf')
+
+    expect(workspace.active?.path).toBe('/space/Work/Paper.pages')
+    expect(workspace.active?.kind).toBe('pages')
+    expect(rows()).toContain('/space/Work/Paper.pages')
+    expect(rows()).not.toContain('/space/Work/Paper.pdf')
+    // Moved, not copied: one copy of the bytes.
+    expect(files.has('/space/Work/Paper.pdf')).toBe(false)
+    expect(files.get('/space/Work/Paper.pages.pdf')).toBe('%PDF paper')
+  })
+
+  test('and its paper, asked for again, is that page note', async () => {
+    files.set('/space/Paper.pages', BESIDE.replaceAll('Lecture.pdf', 'Paper.pages.pdf'))
+    files.set('/space/Paper.pages.pdf', '%PDF paper')
+    await workspace.loadTree()
+
+    await workspace.openPdf('/space/Paper.pages.pdf')
+    expect(workspace.active?.path).toBe('/space/Paper.pages')
+    expect(rows()).toEqual([
+      '/space/Work',
+      '/space/Work/Plan.md',
+      '/space/Beta.md',
+      '/space/Paper.pages',
+    ])
+  })
+
+  test('a page note an older build made beside its PDF takes the PDF in, ink and all', async () => {
+    files.set('/space/Lecture.pdf', '%PDF lecture')
+    files.set('/space/Lecture.pages', BESIDE)
+    await workspace.loadTree()
+
+    await workspace.openEntry('/space/Lecture.pdf')
+
+    expect(workspace.active?.path).toBe('/space/Lecture.pages')
+    expect(rows()).not.toContain('/space/Lecture.pdf')
+    expect(files.get('/space/Lecture.pages.pdf')).toBe('%PDF lecture')
+    // Nothing in the note is written: its ink, and its pages naming the PDF by the
+    // name it had, which the paper the note holds now answers to.
+    expect(files.get('/space/Lecture.pages')).toBe(BESIDE)
+  })
+
+  test('the same when it is the page note that is opened', async () => {
+    files.set('/space/Lecture.pdf', '%PDF lecture')
+    files.set('/space/Lecture.pages', BESIDE)
+    await workspace.loadTree()
+
+    await workspace.openEntry('/space/Lecture.pages')
+
+    expect(rows()).not.toContain('/space/Lecture.pdf')
+    expect(files.get('/space/Lecture.pages.pdf')).toBe('%PDF lecture')
+    expect(files.get('/space/Lecture.pages')).toBe(BESIDE)
+  })
+
+  test("somebody's own page note of that name is left alone, and the PDF steps aside", async () => {
+    const own = BESIDE.replaceAll('Lecture.pdf', 'Other.pdf')
+    files.set('/space/Lecture.pdf', '%PDF lecture')
+    files.set('/space/Lecture.pages', own)
+    await workspace.loadTree()
+
+    await workspace.openEntry('/space/Lecture.pdf')
+
+    expect(workspace.active?.path).toBe('/space/Lecture 2.pages')
+    expect(files.get('/space/Lecture.pages')).toBe(own)
+    expect(files.get('/space/Lecture 2.pages.pdf')).toBe('%PDF lecture')
+    expect(files.has('/space/Lecture.pdf')).toBe(false)
+  })
+
+  test('a file that is not a PDF is left as it is', async () => {
+    files.set('/space/Broken.pdf', 'not a pdf')
+    await workspace.loadTree()
+
+    await workspace.openEntry('/space/Broken.pdf')
+
+    expect(files.get('/space/Broken.pdf')).toBe('not a pdf')
+    expect(files.has('/space/Broken.pages')).toBe(false)
+    expect(rows()).toContain('/space/Broken.pdf')
+  })
+
+  test('a page note renamed takes its paper with it', async () => {
+    await workspace.bringIn([dropped('Week 1.pdf', '%PDF week')], '/space')
+    await workspace.rename('/space/Week 1.pages', 'Optics.pages')
+
+    expect(files.has('/space/Week 1.pages.pdf')).toBe(false)
+    expect(files.get('/space/Optics.pages.pdf')).toBe('%PDF week')
+    expect(rows()).toContain('/space/Optics.pages')
+    expect(rows()).not.toContain('/space/Optics.pages.pdf')
   })
 })
 

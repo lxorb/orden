@@ -15,6 +15,13 @@ const notes = new Map<string, string>()
 
 const text = (value: unknown) => (typeof value === 'string' ? value : '')
 
+/** A PDF becomes its page note the first time it is opened, out of the page sizes
+ *  pdf.js reads off it, and node has no pdf.js: the paper here is one A4 page. */
+vi.mock('./pdf/document', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./pdf/document')>()),
+  pageSizes: () => Promise.resolve([{ width: 794, height: 1123 }]),
+}))
+
 vi.mock('./tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./tauri')>()),
   isDesktop: true,
@@ -119,8 +126,8 @@ describe('a phone and a tablet', () => {
     await workspace.openCanvas('/space/Plan.canvas')
     expect(open()).toEqual(['Plan'])
 
-    // A paper opens the page note beside it, which is the document that takes the
-    // place of the plane; see `openPdf` in workspace.svelte.ts.
+    // A paper opens as its page note, which is the document that takes the place of
+    // the plane; see `openPdf` in workspace.svelte.ts.
     await workspace.openPdf('/space/Paper.pdf')
     expect(open()).toEqual(['Paper'])
     expect(workspace.active?.kind).toBe('pages')

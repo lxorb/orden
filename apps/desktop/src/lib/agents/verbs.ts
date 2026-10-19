@@ -173,7 +173,8 @@ export interface Grant {
   always: Record<string, Category[]>
   /** The programs `run_terminal` starts without asking. */
   programs: string[]
-  limits: { tabs: number; calls: number; navigations: number }
+  /** `memory` is the browser's MB past which it opens no tab; 0 is none (#333). */
+  limits: { tabs: number; calls: number; navigations: number; memory: number }
   /** Milliseconds since 1970. */
   created: number
 }

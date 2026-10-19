@@ -14,6 +14,7 @@ const world = vi.hoisted(() => ({
 
 vi.mock('./tauri', () => ({
   isDesktop: true,
+  isNative: true,
   invoke: (command: string) => {
     world.asked.push(command)
     if (command === 'install_manager') return Promise.resolve(world.manager)

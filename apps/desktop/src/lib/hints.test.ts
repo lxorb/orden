@@ -55,18 +55,18 @@ describe('a hint', () => {
   test('is the one that matters most of those wanted', async () => {
     const { hints } = await restarted()
     hints.want('palette', true)
-    hints.want('sign-in', true)
+    hints.want('graph', true)
     hints.settle()
 
-    expect(hints.current).toBe('sign-in')
+    expect(hints.current).toBe('graph')
   })
 
   test('is one a session at most', async () => {
     const { hints } = await restarted()
-    hints.want('sign-in', true)
     hints.want('graph', true)
+    hints.want('palette', true)
     hints.settle()
-    hints.dismiss('sign-in')
+    hints.dismiss('graph')
 
     expect(hints.current).toBeNull()
   })
@@ -91,14 +91,21 @@ describe('a hint', () => {
 
   test('put away stays away across a restart', async () => {
     const first = await restarted()
-    first.hints.dismiss('sign-in')
+    first.hints.dismiss('graph')
 
     const { hints } = await restarted()
-    expect(hints.seen).toEqual(['sign-in'])
+    expect(hints.seen).toEqual(['graph'])
 
-    hints.want('sign-in', true)
+    hints.want('graph', true)
     hints.want('palette', true)
     hints.settle()
     expect(hints.current).toBe('palette')
+  })
+
+  test('a sign-in card an earlier version put away is not read back (#415)', async () => {
+    localStorage.setItem('nib:hints', JSON.stringify(['sign-in', 'palette']))
+    const { hints } = await restarted()
+
+    expect(hints.seen).toEqual(['palette'])
   })
 })

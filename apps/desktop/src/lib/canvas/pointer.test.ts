@@ -387,6 +387,67 @@ describe('two fingers', () => {
   })
 })
 
+describe('two fingers turning the view (#351)', () => {
+  /** The second finger swung round the first by `degrees`, a step at a time. */
+  function swung(degrees: number, steps = 6): Input[] {
+    const moves: Input[] = []
+    for (let step = 1; step <= steps; step++) {
+      const angle = ((degrees * step) / steps) * (Math.PI / 180)
+      moves.push({
+        kind: 'move',
+        id: 2,
+        at: HERE,
+        screen: { x: 100 * Math.cos(angle), y: 100 * Math.sin(angle) },
+        samples: [],
+        hit: NOTHING,
+      })
+    }
+    return [
+      down({ id: 1, pointer: 'touch', screen: { x: 0, y: 0 } }),
+      down({ id: 2, pointer: 'touch', screen: { x: 100, y: 0 } }),
+      ...moves,
+    ]
+  }
+
+  const turnedBy = (effects: Effect[]) =>
+    effects.reduce((all, one) => all + (one.do === 'turn' ? one.by : 0), 0)
+
+  test('turn it with them, past the deadband, where the setting is on', () => {
+    const { effects } = play(swung(40), context({ turns: true }))
+    // The deadband's few degrees are not taken back from the hand: what is turned is
+    // every degree from where the turn began to follow it.
+    expect(turnedBy(effects)).toBeGreaterThan((30 * Math.PI) / 180)
+    expect(turnedBy(effects)).toBeLessThanOrEqual((40 * Math.PI) / 180 + 1e-9)
+  })
+
+  test('turn nothing at all where the setting is off', () => {
+    const { effects } = play(swung(40), context({ turns: false }))
+    expect(verbs(effects)).not.toContain('turn')
+  })
+
+  test('and a pinch held a little crooked turns nothing', () => {
+    const { effects } = play(swung(4), context({ turns: true }))
+    expect(verbs(effects)).not.toContain('turn')
+  })
+
+  test('a drag across a turned view moves what it carries the way the hand went', () => {
+    const { effects } = play(
+      [
+        down({ hit: hit({ node: 'a' }) }),
+        { kind: 'move', id: 1, at: HERE, screen: { x: 40, y: 0 }, samples: [], hit: NOTHING },
+        { kind: 'up', id: 1, at: HERE, screen: { x: 40, y: 0 }, hit: NOTHING },
+      ],
+      context({ turn: Math.PI / 2 }),
+    )
+    const move = effects.find((one) => one.do === 'move')
+    // Turned a quarter clockwise, right on the screen is up the plane.
+    expect(move).toMatchObject({ do: 'move' })
+    if (move?.do !== 'move') return
+    expect(move.dx).toBeCloseTo(0)
+    expect(move.dy).toBeCloseTo(-40)
+  })
+})
+
 /** A hand resting on a tablet is touch, and a pen that has arrived means the
  *  hand is not what anybody is drawing with. */
 describe('a pointer the system takes back', () => {

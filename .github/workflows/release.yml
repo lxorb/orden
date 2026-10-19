@@ -128,20 +128,128 @@ jobs:
           - platform: windows-11-arm
             target: aarch64-pc-windows-msvc
             label: windows-arm64
-          - platform: ubuntu-22.04
+          # Linux is CEF on GTK 4, which it needs at 4.14 at least: Ubuntu 24.04's.
+          - platform: ubuntu-24.04
             target: x86_64-unknown-linux-gnu
             label: linux-x64
-          - platform: ubuntu-22.04-arm
+          - platform: ubuntu-24.04-arm
             target: aarch64-unknown-linux-gnu
             label: linux-arm64
-          # One download that runs on every Mac, Intel or Apple silicon, which
-          # needs both architectures installed to lipo together.
-          - platform: macos-latest
-            target: universal-apple-darwin
-            label: macos-universal
-            rust: aarch64-apple-darwin,x86_64-apple-darwin
+          # The Mac is the `mac` and `macos` jobs below: one download for every Mac,
+          # built as two halves at once and put together.
 
     runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      # Not pnpm's store on Linux arm, the one store no other job shares: the
+      # repository's cache holds 10 GB, and half a gigabyte saved for a job with time
+      # to spare pushed out a Rust cache a slower job needed.
+      - uses: ./.github/actions/desktop-setup
+        with:
+          target: ${{ matrix.target }}
+          node-cache: ${{ matrix.platform != 'ubuntu-24.04-arm' }}
+
+      # Signed so the updater will accept them. Without the key the build still
+      # succeeds; it just produces bundles that cannot be auto-installed.
+      #
+      # The version is passed in rather than read from tauri.conf.json, so a
+      # build of main carries the number the manifest will claim for it.
+      #
+      # An edge build trades a little of the binary for minutes; see scripts/edge-profile.sh.
+      #
+      # Linux is built on Tauri 3 and CEF, from its own manifest, by the Tauri CLI at
+      # that manifest's pin, which is told to take the window's Tauri 2 packages as they
+      # are; see scripts/linux-cef.sh.
+      - name: Build the app
+        shell: bash
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ''
+          ROLLING: ${{ needs.version.outputs.rolling }}
+        run: |
+          source scripts/edge-profile.sh
+          if [ "$RUNNER_OS" = Linux ]; then
+            bash scripts/linux-cef.sh tauri build --target ${{ matrix.target }} \
+              --ignore-version-mismatches \
+              --config '{"version":"${{ needs.version.outputs.version }}"}'
+          else
+            pnpm --filter @nib/desktop exec tauri build --target ${{ matrix.target }} \
+              --config '{"version":"${{ needs.version.outputs.version }}"}'
+          fi
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: nib-${{ matrix.label }}
+          if-no-files-found: error
+          path: |
+            apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*.exe
+            apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*.sig
+            apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/msi/*.msi
+            apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/msi/*.sig
+            apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/appimage/*.AppImage
+            apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/appimage/*.sig
+            apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb
+            apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/rpm/*.rpm
+
+  # One download that runs on every Mac, Intel or Apple silicon (#307). `tauri build
+  # --target universal-apple-darwin` compiles the crate for each architecture one after
+  # the other on one runner, which made the Mac the slowest build by a few minutes; here
+  # each half is compiled on a runner of its own at the same time, and only the binary
+  # comes back. Both on Apple silicon, where the Intel half is cross-compiled, as the
+  # universal build always did it.
+  mac:
+    needs: [version, settle]
+    # As `build`: not when a newer push builds instead.
+    if: ${{ !cancelled() && needs.version.result == 'success' && needs.settle.outputs.newest != 'false' }}
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [aarch64-apple-darwin, x86_64-apple-darwin]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+
+      - uses: ./.github/actions/desktop-setup
+        with:
+          target: ${{ matrix.target }}
+
+      # The binary and nothing else: the bundle, its signature and the updater's archive
+      # are made once, of both halves, in `macos`. The version is the one the bundle will
+      # say, as in `build`.
+      - name: Build the binary
+        shell: bash
+        env:
+          ROLLING: ${{ needs.version.outputs.rolling }}
+        run: |
+          source scripts/edge-profile.sh
+          pnpm --filter @nib/desktop exec tauri build --target ${{ matrix.target }} --no-bundle \
+            --config '{"version":"${{ needs.version.outputs.version }}"}'
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          # Not `nib-`: `publish` takes only those, and this is half of one.
+          name: mac-half-${{ matrix.target }}
+          if-no-files-found: error
+          retention-days: 1
+          path: apps/desktop/src-tauri/target/${{ matrix.target }}/release/nib
+
+  # The two halves made one with `lipo`, where Tauri's universal build puts its own
+  # (`target/universal-apple-darwin/release`), and bundled from there by `tauri bundle`,
+  # which is the rest of what `tauri build --target universal-apple-darwin` does: the
+  # .app, signed (ad hoc, or with the Developer ID and notarized once those secrets
+  # exist), the .dmg, and the updater's .app.tar.gz with its signature. Nothing is
+  # compiled here.
+  macos:
+    needs: [version, mac]
+    if: ${{ !cancelled() && needs.mac.result == 'success' }}
+    permissions:
+      contents: read
+    runs-on: macos-latest
+    env:
+      UNIVERSAL: apps/desktop/src-tauri/target/universal-apple-darwin/release
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
@@ -151,48 +259,30 @@ jobs:
       - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
         with:
           node-version: 24
-          # Not on Linux arm, the one store no other job shares: the repository's
-          # cache holds 10 GB, and half a gigabyte saved for a job with time to
-          # spare pushed out a Rust cache a slower job needed.
-          cache: ${{ matrix.platform != 'ubuntu-22.04-arm' && 'pnpm' || '' }}
-          package-manager-cache: ${{ matrix.platform != 'ubuntu-22.04-arm' }}
+          cache: pnpm
 
-      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # the stable branch
-        with:
-          # Named, and not left to the `@stable` the ref used to carry: with the
-          # action pinned to a commit, the ref no longer says which toolchain to
-          # install, and this is the input that does.
-          toolchain: stable
-          # Universal is a Tauri target, not a rustup one, so that row names the
-          # real targets itself. Everything else builds for what it runs on.
-          targets: ${{ matrix.rust || matrix.target }}
-
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-        with:
-          workspaces: |
-            apps/desktop/src-tauri
-          key: ${{ matrix.target }}
-          # Saved from main only: a cache is read only on the ref that saved it and the
-          # ones below it, and the repository's free 10 GB have nothing to spare for a
-          # tag's or a trial branch's.
-          save-if: ${{ github.ref == 'refs/heads/unstable' }}
-
-      # xdg-utils is what the AppImage bundler copies `xdg-open` from; the x64
-      # image happens to ship it, the arm image does not.
-      - name: System dependencies
-        if: startsWith(matrix.platform, 'ubuntu')
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev patchelf xdg-utils gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-libav
-
+      # Only for the CLI that bundles; nothing here is compiled.
       - run: pnpm install --frozen-lockfile
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          pattern: mac-half-*
+          path: halves
+
+      - name: One binary of both halves
+        shell: bash
+        run: |
+          mkdir -p "$UNIVERSAL"
+          lipo -create -output "$UNIVERSAL/nib" \
+            halves/mac-half-aarch64-apple-darwin/nib halves/mac-half-x86_64-apple-darwin/nib
+          chmod 755 "$UNIVERSAL/nib"
+          lipo -info "$UNIVERSAL/nib"
 
       # A Developer ID and notarization, once the secrets exist. Without them the
       # bundle keeps the ad-hoc signature tauri.conf.json asks for, which Apple
       # silicon needs to run it at all. Exported only when set: the bundler reads
       # an empty APPLE_SIGNING_IDENTITY as an identity named "".
       - name: Apple signing
-        if: runner.os == 'macOS'
         shell: bash
         env:
           APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
@@ -210,51 +300,41 @@ jobs:
             { echo "$name<<__nib_eof__"; echo "$value"; echo "__nib_eof__"; } >> "$GITHUB_ENV"
           done
 
-      # Signed so the updater will accept them. Without the key the build still
-      # succeeds; it just produces bundles that cannot be auto-installed.
-      #
-      # The version is passed in rather than read from tauri.conf.json, so a
-      # build of main carries the number the manifest will claim for it.
-      - name: Build the app
+      # Signed so the updater will accept them, as in `build`.
+      - name: Bundle the app
         shell: bash
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ''
         run: |
-          pnpm --filter @nib/desktop exec tauri build --target ${{ matrix.target }} \
+          pnpm --filter @nib/desktop exec tauri bundle --target universal-apple-darwin \
             --config '{"version":"${{ needs.version.outputs.version }}"}'
-
-      # The AppImage without the Wayland, xkbcommon, EGL, GL, GBM and DRM libraries the
-      # host's driver has to supply, signed again for the updater; see the script, and
-      # wayland.yml, which runs the result on Arch under Wayland.
-      - name: The AppImage without the host's graphics stack
-        if: startsWith(matrix.platform, 'ubuntu')
-        shell: bash
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ''
-        run: |
-          sudo apt-get install -y squashfs-tools
-          for image in apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/appimage/*.AppImage; do
-            bash scripts/appimage-trim.sh "$image"
-          done
+          lipo -info "$UNIVERSAL/bundle/macos/Orden.app/Contents/MacOS/"*
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: nib-${{ matrix.label }}
+          name: nib-macos-universal
           if-no-files-found: error
           path: |
-            apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*.exe
-            apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*.sig
-            apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/msi/*.msi
-            apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/msi/*.sig
-            apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/appimage/*.AppImage
-            apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/appimage/*.sig
-            apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/deb/*.deb
-            apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/rpm/*.rpm
-            apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/dmg/*.dmg
-            apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.app.tar.gz
-            apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/macos/*.app.tar.gz.sig
+            ${{ env.UNIVERSAL }}/bundle/dmg/*.dmg
+            ${{ env.UNIVERSAL }}/bundle/macos/*.app.tar.gz
+            ${{ env.UNIVERSAL }}/bundle/macos/*.app.tar.gz.sig
+
+  # One generation of the release's caches on `unstable`, the only ref that saves any:
+  # once this run's are saved, the ones they replaced go, so the repository's 10 GB holds
+  # today's caches rather than yesterday's beside them (#307). After every job that saves
+  # one; see scripts/prune-caches.sh, which says what is kept.
+  caches:
+    needs: [build, macos]
+    if: ${{ !cancelled() && github.ref == 'refs/heads/unstable' && (needs.build.result == 'success' || needs.macos.result == 'success') }}
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/prune-caches.sh "$GITHUB_REF"
 
   # One manifest for every platform, which is what the app polls.
   #
@@ -266,10 +346,10 @@ jobs:
   # src-tauri/src/updates.rs), and the one manifest serves them all. A build of main
   # keeps everything on `edge`, as it always has.
   publish:
-    needs: [version, build]
+    needs: [version, build, macos]
     # Only `unstable` and tags: a dispatch on any other branch is a trial and
     # publishes nothing (it would otherwise replace edge).
-    if: ${{ !cancelled() && needs.build.result == 'success' && (github.ref == 'refs/heads/unstable' || startsWith(github.ref, 'refs/tags/v')) }}
+    if: ${{ !cancelled() && needs.build.result == 'success' && needs.macos.result == 'success' && (github.ref == 'refs/heads/unstable' || startsWith(github.ref, 'refs/tags/v')) }}
     runs-on: ubuntu-latest
     # The one job that writes: the release and its files are the point of it.
     permissions:
@@ -286,8 +366,9 @@ jobs:
       GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      # The bundles, and not the Mac's two halves, which `macos` made one of.
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
-        with: { path: artifacts }
+        with: { path: artifacts, pattern: 'nib-*' }
 
       # Before the manifest, which builds its download URLs from the filenames.
       - name: Name the downloads for humans

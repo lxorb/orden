@@ -398,14 +398,14 @@
   // ── Mode ──────────────────────────────────────────────
 
   /** The modes as rows, the one in force ticked, Codex's approval menu: the three
-   *  permission modes, least to most, then Plan under a rule. Full permissions is a danger
-   *  row, the one warning it gets, since it is chosen on purpose. The key that steps them
-   *  is the button's tooltip rather than a hint on every row. */
+   *  permission modes, least to most, then Plan under a rule. Full permissions is a row
+   *  like the others and never red (#372): it is chosen on purpose, and the button's
+   *  tooltip says it asks for nothing. The key that steps them is the button's tooltip
+   *  rather than a hint on every row. */
   function modeMenu(event: MouseEvent) {
     const row = (mode: Mode) => ({
       label: t(modeWord(mode)),
       checked: head?.mode === mode,
-      ...(mode === 'full' ? { danger: true } : {}),
       run: () => chat.setMode(mode),
     })
     menu.show(event, [...MODES.filter((one) => one !== 'plan').map(row), DIVIDER, row('plan')], {
@@ -659,7 +659,6 @@
         <!-- How much the agent may do without asking, Codex's permissions beside "+". -->
         <button
           class="mode"
-          class:full={mode === 'full'}
           title={mode === 'full'
             ? t('Full permissions: nothing is asked first')
             : shortcuts.tooltip(t('Next mode'), 'ai.mode')}
@@ -999,12 +998,6 @@
       background: var(--surface-hover);
       color: var(--text-strong);
     }
-  }
-
-  /* Asking for nothing is said in the danger tone for as long as it is on. */
-  .mode.full,
-  .mode.full:hover:not(:disabled) {
-    color: var(--danger);
   }
 
   /* A narrow side keeps the model's name whole and says the mode by its mark alone,

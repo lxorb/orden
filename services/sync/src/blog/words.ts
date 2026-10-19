@@ -15,6 +15,7 @@
  *  pages the site publishes, and the index is joined to that list. A private
  *  note is in the index and never in an answer; see blog/find.ts. */
 
+import { withoutComments } from '@nib/markdown'
 import { stripFrontMatter } from '@nib/markdown/front-matter'
 import type { Env } from '../types'
 
@@ -30,7 +31,9 @@ const MOST_WORDS = 16 * 1024
  *  be the same answer for ten times the work per save. */
 export function plainWords(source: string): string {
   return (
-    stripFrontMatter(source)
+    // A comment is the writer's note to themselves, and never a word a reader is
+    // shown, so it is never one a search finds either.
+    withoutComments(stripFrontMatter(source))
       // A fence is code, and code is not what somebody is searching a blog for.
       .replace(/^(```|~~~)[\s\S]*?^\1[^\n]*$/gm, ' ')
       // A picture is its words, and its address is not words at all.

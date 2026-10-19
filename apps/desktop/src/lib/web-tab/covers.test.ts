@@ -86,7 +86,7 @@ describe("the notices row's cards", () => {
     expect(found.some((one) => one.node === notices)).toBe(false)
   })
 
-  /** The sign-in hint in the sidebar's foot stays in the document while the sidebar is
+  /** A hint card in the sidebar stays in the document while the sidebar is
    *  shut, hidden with its column and still laid out over the foot of the page beside it:
    *  a page cut round it showed an empty box where nothing was drawn. */
   test('a layer hidden with what it stands in is no layer', () => {

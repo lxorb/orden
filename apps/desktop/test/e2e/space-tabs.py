@@ -99,7 +99,7 @@ def look(page: Page) -> dict:
 #: Every hint card already put away, as on a device that has seen them. The palette's
 #: comes up under the space's name a few seconds into a session (hints.svelte.ts) and
 #: lies over the first rows of the list of spaces, which is where this drive presses.
-HINTS_SEEN = "try { localStorage.setItem('nib:hints', JSON.stringify(['sign-in', 'graph', 'palette'])) } catch {}"
+HINTS_SEEN = "try { localStorage.setItem('nib:hints', JSON.stringify(['graph', 'palette'])) } catch {}"
 
 #: Tabs pressed in the space's menu, and its two choices in the menu's place.
 TABS_OPEN = "[...document.querySelectorAll('.menu .nib-row-label')].some((one) => one.textContent.trim() === 'Space')"

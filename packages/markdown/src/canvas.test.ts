@@ -10,6 +10,7 @@ import {
   freshId,
   FURTHEST,
   isShape,
+  nodeOf,
   readCanvas,
   SHAPES,
   writeCanvas,
@@ -821,6 +822,25 @@ describe('writing a canvas a piece at a time', () => {
     ],
     ['a page note', emptyPages()],
     [
+      'words with no card round them',
+      {
+        ...plane(1),
+        nodes: [
+          ...plane(1).nodes,
+          {
+            id: 'words',
+            type: 'text' as const,
+            x: 0,
+            y: 90,
+            width: 240,
+            height: 40,
+            text: 'Hi',
+            bare: true as const,
+          },
+        ],
+      },
+    ],
+    [
       'a page note of a PDF',
       pagesFromPdf('paper.pdf', [
         { width: 600, height: 800 },
@@ -855,5 +875,41 @@ describe('writing a canvas a piece at a time', () => {
     // strokes that were printed the last time.
     expect(characters).toBeLessThan(written.length / 5)
     expect(written).toBe(printed(written))
+  })
+})
+
+describe('words with no card round them (#421)', () => {
+  const canvas: Canvas = {
+    ...readCanvas(blankCanvas()),
+    nodes: [
+      { id: 'card', type: 'text', x: 0, y: 0, width: 100, height: 50, text: 'A card' },
+      { id: 'words', type: 'text', x: 0, y: 90, width: 240, height: 40, text: 'Words', bare: true },
+    ],
+  }
+  const written = writeCanvas(canvas)
+  const parsed = JSON.parse(written) as {
+    nodes: Record<string, unknown>[]
+    nib: { words: string[] }
+  }
+
+  test('are a card to anybody reading the spec, and listed as words under nib', () => {
+    expect(parsed.nodes.map((node) => node.type)).toEqual(['text', 'text'])
+    expect(parsed.nodes.some((node) => 'bare' in node)).toBe(false)
+    expect(parsed.nib.words).toEqual(['words'])
+  })
+
+  test('come back as words, and the card as a card', () => {
+    const back = readCanvas(written)
+    expect(back.nodes).toEqual(canvas.nodes)
+    expect(writeCanvas(back)).toBe(written)
+  })
+
+  test('as a room keeps them, field for field', () => {
+    expect(nodeOf({ ...canvas.nodes[1] })).toEqual(canvas.nodes[1])
+  })
+
+  test('leave no key of ours in a file of plain cards', () => {
+    const plain = writeCanvas({ ...canvas, nodes: [canvas.nodes[0]!] })
+    expect(JSON.parse(plain)).not.toHaveProperty('nib')
   })
 })

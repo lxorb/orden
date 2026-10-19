@@ -271,8 +271,12 @@ def a_handheld(browser: Browser, panel: str, at: int) -> None:
     # The panel itself is there - the strip holds the same five panels - which is what
     # makes the absence of the hold below a fact about the hold rather than about a
     # sidebar nobody drew. The existing check in panels.py counts `.tools .tool` on a
-    # phone and would pass just as happily with no sidebar at all.
-    is_true(len(held) == 5, f"a phone's strip holds {len(held)} panels rather than five")
+    # phone and would pass just as happily with no sidebar at all. Four on a phone since
+    # #403, which has no AI panel there: the note's own.
+    is_true(
+        sorted(held) == ["Footnotes", "Links", "Outline", "Properties"],
+        f"a phone's strip holds {held} rather than the note's four",
+    )
     is_true(page.evaluate(HOLD) == 0, f"the hold button is offered on a phone's {panel} panel")
     if panel == "footnotes":
         is_true(rows == 3, "a phone draws no footnote rows")

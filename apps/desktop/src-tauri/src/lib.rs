@@ -7,9 +7,8 @@
 //!
 //! A phone has no second window, no installer, no file dialog and no shell, so
 //! the modules that are only about those are `#[cfg(desktop)]` and their commands
-//! reach the handler only there. Everything about notes is the same on both: the
-//! same folder under the documents directory, read and written by the same
-//! commands.
+//! reach the handler only there. Everything about notes is the same on both: one
+//! spaces folder (`paths::spaces_dir`), read and written by the same commands.
 //!
 //! One rule about every command that waits for the disk: it says `async`.
 //!
@@ -162,7 +161,9 @@ mod regex;
 // reminders.rs and docs/tasks.md 5.10. A phone's are the activity's.
 #[cfg(desktop)]
 mod reminders;
-#[cfg(desktop)]
+// What Orden's own Chromium left on a Windows PC or a Mac that once ran it, cleared; see
+// retired_engine.rs. Linux never had it, and runs on CEF now.
+#[cfg(all(desktop, not(feature = "cef")))]
 mod retired_engine;
 mod search;
 #[cfg(any(desktop, target_os = "ios"))]
@@ -171,6 +172,9 @@ mod secrets;
 mod shell_menu;
 mod space_watch;
 mod spaces;
+// A touchpad's pinch let through to the app's own page on Windows; see pinch.rs.
+#[cfg(desktop)]
+mod pinch;
 // What the window's thread was doing when it stopped answering; see stall.rs.
 #[cfg(desktop)]
 mod stall;
@@ -199,7 +203,7 @@ mod web_answers;
 // on a Mac.
 #[cfg(desktop)]
 mod web_clear;
-#[cfg(any(windows, target_os = "macos"))]
+#[cfg(all(any(windows, target_os = "macos"), not(feature = "cef")))]
 mod web_cookies;
 #[cfg(desktop)]
 mod web_cut;
@@ -217,8 +221,6 @@ mod web_icons;
 mod web_keys;
 #[cfg(desktop)]
 mod web_opens;
-#[cfg(target_os = "linux")]
-mod web_overlay;
 #[cfg(desktop)]
 mod web_page;
 #[cfg(desktop)]
@@ -237,10 +239,25 @@ mod web_tabs;
 mod web_tint;
 // Only where a page's input window is a window of another process: the system's own
 // engine on Windows.
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "cef")))]
 mod web_wheel;
 #[cfg(desktop)]
 mod web_worlds;
+// What every browser's import reads profiles and their files with; see
+// browser_profiles.rs.
+#[cfg(desktop)]
+mod browser_profiles;
+// The profiles Firefox lists and its bookmarks, for the import's Firefox row; see
+// firefox_profiles.rs.
+#[cfg(desktop)]
+mod firefox_profiles;
+// The profiles Chrome, Edge, Brave, Chromium and Vivaldi keep, for the import's rows;
+// see chromium_profiles.rs.
+#[cfg(desktop)]
+mod chromium_profiles;
+// Safari's tabs and bookmarks, for the import's Safari row on a Mac; see safari.rs.
+#[cfg(desktop)]
+mod safari;
 // The profiles Zen lists and the file of each that holds its tabs, for the import's
 // Zen row; see zen_profiles.rs.
 #[cfg(desktop)]
@@ -407,6 +424,10 @@ macro_rules! desktop_commands {
             full_screen::window_is_fullscreen,
             zen_profiles::zen_profiles,
             zen_profiles::read_zen_file,
+            browser_profiles::browser_profiles,
+            browser_profiles::read_browser_file,
+            firefox_profiles::read_firefox_places,
+            safari::read_safari,
             browser_themes::browser_themes,
             page_style::wear_page_styles,
             launch::take_startup_pages,
@@ -527,19 +548,52 @@ mod entry {
     }
 }
 
-/// Which runtime every type in this crate is written against: Tauri's own `Wry`, on the
-/// system's engine, and a bare `AppHandle` or `Webview` means that - which is why
-/// nothing else in the crate names a runtime at all. See src/engine.rs.
+// Linux is built from linux/Cargo.toml, on CEF: its WebKitGTK build is gone, and the
+// app's own manifest names no engine for it. See scripts/linux-cef.sh.
+#[cfg(all(target_os = "linux", not(feature = "cef")))]
+compile_error!(
+    "Linux builds from apps/desktop/src-tauri/linux/Cargo.toml: run scripts/linux-cef.sh first"
+);
+
+/// Which runtime every type in this crate is written against.
+///
+/// On macOS, Windows and the phones it is Tauri's own `Wry`, on the system's engine,
+/// and a bare `AppHandle` or `Webview` means that - which is why nothing else in the
+/// crate names a runtime at all. On Linux it is CEF, through Tauri's type-erased runtime,
+/// and a bare `AppHandle` means that instead. Every other signature in the crate is
+/// unchanged either way, which is what makes one seam enough; see src/engine.rs.
+#[cfg(not(feature = "cef"))]
 pub type Engine = tauri::Wry;
 
-/// Starts the app on the system's own engine, which is what `tauri::Builder::default`
-/// gives - `WebView2` on Windows, `WKWebView` on a
-/// Mac, `WebKitGTK` on Linux. Returns when the last window has closed.
+/// Which runtime every type in this crate is written against on CEF: the type-erased
+/// one. See above.
+#[cfg(feature = "cef")]
+pub type Engine = tauri::DynRuntime;
+
+/// Starts the app on the engine this build ships with - `WebView2` on Windows,
+/// `WKWebView` on a Mac, CEF on Linux - and returns when the last window has closed.
 pub fn run() {
     // Before GTK and any thread, both of which read what it sets; see linux.rs.
     #[cfg(target_os = "linux")]
     linux::prepare();
+    #[cfg(not(feature = "cef"))]
     run_on(tauri::Builder::default());
+    #[cfg(feature = "cef")]
+    run_on(tauri::Builder::default().runtime(engine::cef_runtime()));
+}
+
+/// What a process CEF starts beside the app - a renderer, the GPU process, a utility -
+/// does instead of the app: true when this process is one of them and has run as it,
+/// in which case `main` returns. Every one of them is this same executable, started
+/// again with `--type=`. See engine.rs.
+#[cfg(feature = "cef")]
+#[must_use]
+pub fn cef_helper() -> bool {
+    if !std::env::args().any(|arg| arg.starts_with("--type=")) {
+        return false;
+    }
+    tauri_runtime_cef::run_cef_helper_process();
+    true
 }
 
 /// Starts the app on `builder`, and exits with a message if the app could not be built
@@ -661,11 +715,15 @@ pub fn run_on(builder: tauri::Builder<Engine>) {
     trace::mark("commands registered");
 
     // The window is taken out of the config on every desktop, and built by `ready`
-    // instead, and the config still says what the window looks like; see engine.rs. A
-    // window the runtime builds is built around its webview - so there is nothing on
-    // screen until the webview runtime has started, which on Windows is between a third
-    // and half of a launch with the screen empty for all of it. Built here, the window is
-    // up in about twenty milliseconds and the webview starts behind it. See ground.rs.
+    // instead. Two reasons, one per engine, and the config still says what the window
+    // looks like either way; see engine.rs.
+    //
+    // On nib's own Chromium, because the interface needs a profile of its own and a
+    // profile is asked for when a webview is built. On the system's, because a window
+    // the runtime builds is built around its webview - so there is nothing on screen
+    // until the webview runtime has started, which on Windows is between a third and
+    // half of a launch with the screen empty for all of it. Built here, the window is up
+    // in about twenty milliseconds and the webview starts behind it. See ground.rs.
     #[cfg(desktop)]
     let ui = engine::take_ui_window(&mut context);
 
@@ -758,10 +816,9 @@ fn ready(
 
     let handle = app.handle();
 
-    // Which display GTK opened, asked here on the event loop's thread before any window is
-    // placed; see linux.rs.
-    #[cfg(target_os = "linux")]
-    linux::learn();
+    // Where the spaces are, before anything asks; see `decide_spaces`.
+    #[cfg(desktop)]
+    paths::decide_spaces(handle);
 
     // What the page will ask for first, read on a thread of its own from here, while
     // the webview below starts; see ahead.rs.
@@ -896,6 +953,7 @@ fn ready(
                 window.show()?;
             }
         }
+        pinch::first_window(handle);
     }
 
     // A phone's window is the activity's.
@@ -922,8 +980,8 @@ fn ready(
     if web_first {
         web_tabs::warm(handle);
     }
-    // What nib's own Chromium left behind, once the window is up; see retired_engine.rs.
-    #[cfg(desktop)]
+    // What Orden's own Chromium left behind, once the window is up; see retired_engine.rs.
+    #[cfg(all(desktop, not(feature = "cef")))]
     retired_engine::clear_leftovers(handle);
     // Written here as well as when the window reports in, so a launch that never
     // gets as far as a window still leaves behind what it did get through.

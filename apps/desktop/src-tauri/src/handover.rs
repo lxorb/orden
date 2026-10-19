@@ -76,18 +76,18 @@ pub fn handed_over(identifier: &str) -> bool {
 }
 
 /// On Linux the plugin hands a launch over on the session bus, which waits on no window
-/// thread, so a frozen nib never holds a launch up there. What the plugin's hand-over
-/// lacks is the compositor's token for the launch, without which Wayland lets the
-/// running window flash rather than come forward: so a launch that has one makes the
-/// same call itself, before anything of the app is built, with the token beside the
-/// arguments (see linux.rs). A launch without one leaves it to the plugin.
+/// thread, so a frozen nib never holds a launch up there. Every launch makes that call
+/// itself, before anything of the app is built, for two reasons. The plugin's own call
+/// comes as the app is set up, and on CEF that is after the engine has started: CEF
+/// keeps one browser process to a profile, so a second one meets the first's and ends
+/// there, with the address it was started on lost. And the plugin's call lacks the
+/// launcher's token, which goes beside the arguments where there is one (see linux.rs).
 #[cfg(target_os = "linux")]
 pub fn handed_over(identifier: &str) -> bool {
-    let Some(token) = crate::linux::launched_with() else {
-        return false;
-    };
     let mut launch: Vec<String> = std::env::args().collect();
-    launch.push(format!("{}{token}", crate::launch::TOKEN_FLAG));
+    if let Some(token) = crate::linux::launched_with() {
+        launch.push(format!("{}{token}", crate::launch::TOKEN_FLAG));
+    }
     on_the_bus(identifier, &launch).unwrap_or(false)
 }
 

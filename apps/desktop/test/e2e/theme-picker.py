@@ -177,7 +177,14 @@ def main() -> int:
             f"Solar styled {timing['styled']:.1f} ms after the pointer moved,"
             f" painted within {timing['painted']:.1f} ms"
         )
-        check("a theme is on the page within two frames", timing["painted"] < 50)
+        # How long a frame takes is the painter's: Playwright's WebKit outside a Mac paints
+        # in software, a whole window at twice the pixels in hundreds of milliseconds,
+        # which says nothing of what a Mac draws (#384). There the app's own part - the
+        # style in place - is what is held, and the paint is said.
+        if harness.WEBKIT:
+            check("a theme is styled within two frames' time", timing["styled"] < 50)
+        else:
+            check("a theme is on the page within two frames", timing["painted"] < 50)
 
         # Leaving the cards gives the kept one back.
         page.mouse.move(1200, 60)

@@ -10,11 +10,13 @@
  *  becomes a moment against a zone: the one on the line, else the one the caller is in.
  *
  *  What rings: each `[remind::]` entry (some minutes before the task's time, a time on
- *  the task's own day, or a moment of its own), and the automatic one at the task's time
+ *  the task's own day - the day it starts - or a moment of its own), and the automatic
+ *  one at the task's time
  *  less the reader's offset, as Todoist does for every task with a time. A task that is
  *  done or cancelled rings nothing. A relative reminder needs a time to count back from,
  *  and a time of day needs a day, so a task without either has none of those. */
 
+import { type DueReads, startOf } from './task-dates'
 import type { TaskFields } from './task-line'
 
 /** A wall time: a date and `HH:MM`, and the zone it is read in where the line says. */
@@ -26,18 +28,23 @@ export interface WallTime {
 
 const MINUTE = 60_000
 
-/** The day a task is on: its due date, else the scheduled one. */
-export function taskDay(task: TaskFields): string | undefined {
-  return task.due ?? task.scheduled
+/** The day a task rings on: the day it starts, else the one it is scheduled for. A
+ *  deadline rings nothing (#371); `due` says what a `📅` means in the task's space. */
+export function taskDay(task: TaskFields, due: DueReads = 'start'): string | undefined {
+  return startOf(task, due) ?? task.scheduled
 }
 
 /** Every wall time a task rings at, earliest first and each once. `auto` is how many
  *  minutes before its time a task with a time is reminded of on its own, or null where
  *  the reader turned that off. */
-export function remindTimes(task: TaskFields, auto: number | null): WallTime[] {
+export function remindTimes(
+  task: TaskFields,
+  auto: number | null,
+  due: DueReads = 'start',
+): WallTime[] {
   if (task.done || task.cancelled) return []
 
-  const day = taskDay(task)
+  const day = taskDay(task, due)
   const zone = task.zone
   const at = (date: string, time: string): WallTime =>
     zone ? { date, time, zone } : { date, time }

@@ -12,7 +12,7 @@
 
 import { noteKey } from '../notes'
 import type { Env } from '../types'
-import { titleFrom, writeFront } from './front'
+import { FRONT_REV, titleFrom, writeFront } from './front'
 import { keepWords } from './words'
 
 /** How many notes one sweep reads. Each is an object out of storage and a row
@@ -32,15 +32,23 @@ const AT_ONCE = 200
  *  ceiling on. Answers how many it read, so a caller can say whether there is
  *  more to do. */
 export async function fillFronts(env: Env, spaceId: string | null): Promise<number> {
+  // And every note whose head was read before a comment was taken out of it first
+  // (`front_rev`, 0053): what it says about itself may hold something its writer
+  // commented out. Notes of published spaces first, because nothing of anybody
+  // else's is read by a stranger.
   const asking = spaceId
     ? env.DB.prepare(
         `select id, space_id, path from notes
-          where front is null and deleted = 0 and kind != 'file' and space_id = ? limit ?`,
-      ).bind(spaceId, AT_ONCE)
+          where (front is null or front_rev < ?) and deleted = 0 and kind != 'file'
+            and space_id = ?
+          limit ?`,
+      ).bind(FRONT_REV, spaceId, AT_ONCE)
     : env.DB.prepare(
-        `select id, space_id, path from notes
-          where front is null and deleted = 0 and kind != 'file' limit ?`,
-      ).bind(AT_ONCE)
+        `select n.id, n.space_id, n.path from notes n join spaces s on s.id = n.space_id
+          where (n.front is null or n.front_rev < ?) and n.deleted = 0 and n.kind != 'file'
+          order by n.front is null desc, s.blog_enabled desc
+          limit ?`,
+      ).bind(FRONT_REV, AT_ONCE)
 
   const { results } = await asking.all<{ id: string; space_id: string; path: string }>()
   if (!results.length) return 0
@@ -54,8 +62,9 @@ export async function fillFronts(env: Env, spaceId: string | null): Promise<numb
       // are read from it together everywhere else. See blog/words.ts.
       await keepWords(env, row, source, titleFrom(row.path, source)).catch(() => undefined)
 
-      return env.DB.prepare('update notes set front = ? where id = ?').bind(
+      return env.DB.prepare('update notes set front = ?, front_rev = ? where id = ?').bind(
         writeFront(source),
+        FRONT_REV,
         row.id,
       )
     }),

@@ -27,6 +27,25 @@ export const gsw: Dictionary = {
   'Import from Zen': 'Us Zen importiere',
   'Containers stay in Zen': 'D Container blibe im Zen',
   'Zen’s tabs could not be read.': 'D Tabs vo Zen hend nöd chöne gläse werde.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'D Container blibe im Firefox',
+  'Nothing could be read out of {browser}.': 'Us {browser} het sich nüüt lo läse.',
+  'Saved groups': 'Gspeichereti Gruppe',
+  'Tab group': 'Tab-Gruppe',
+  'Bookmarks toolbar': 'Lesezeiche-Symbolleischte',
+  'Bookmarks menu': 'Lesezeiche-Menü',
+  'Other bookmarks': 'Wiiteri Lesezeiche',
+  'Mobile bookmarks': 'Mobili Lesezeiche',
+  'Bookmarks bar': 'Lesezeicheleischte',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} haltet sini offene Tabs verschlosse, drum sind nur d Lesezeiche cho.',
+  '{count} pages not on the web stay behind': {
+    one: '{count} Siite usserhalb vom Web blibt zrugg',
+    other: '{count} Siite usserhalb vom Web blibed zrugg',
+  },
+  'Reading List': 'Leseliste',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS bhaltet d Tabs und Lesezeiche vo Safari hinter em Vollzuegriff uf d Festplatte. Schalt Orden det ii und probiers nomal.',
   // Settings: note types
   'Page note': 'Siitenotiz',
   'Web note': 'Webnotiz',
@@ -97,8 +116,6 @@ export const gsw: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'Hiwiis',
   'Silent mode': 'Ruemodus',
-  'Sign in to keep your notes safe and on every device.':
-    'Mäld di aa, dass dini Notize sicher und uf jedem Grät sind.',
   'See how your notes connect.': 'Lueg, wie dini Notize zämehanged.',
   'Press {key} to find anything, notes and commands alike.':
     'Drück {key}, zum alles finde, Notize wie Befähl.',
@@ -120,11 +137,13 @@ export const gsw: Dictionary = {
   '{count} h': '{count} Std.',
   Inbox: 'Iigang',
   Date: 'Datum',
+  'Start date': 'Aafangsdatum',
   Priority: 'Priorität',
   Reminder: 'Erinnerig',
   Duration: 'Duur',
   'Smart dates': 'Gschiidi Date',
   'From any app': 'Us jedere App',
+  'Show tasks without a start date in Today': 'Ufgaabe ohni Aafangsdatum in Heute zeige',
   'Every day': 'Jede Tag',
   'Every weekday': 'Jede Wärchtig',
   'Every week': 'Jedi Wuche',
@@ -168,6 +187,8 @@ export const gsw: Dictionary = {
   Dots: 'Pünkt',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'Liiwand mit zwei Finger drähe',
+  'Turn upright': 'Grad richte',
   Canvas: 'Liinwand',
   Card: 'Chärtli',
   'Note or picture': 'Notiz oder Bild',
@@ -243,6 +264,10 @@ export const gsw: Dictionary = {
   Unpin: 'Löse',
   Close: 'Zuemache',
   'Close pinned tab?': 'Aagheftete Tab zuemache?',
+  'Save changes to {name}?': 'Änderige a {name} speichere?',
+  'Save changes to these tabs?': 'Änderige i dene Tabs speichere?',
+  'Unsaved words go to Recently deleted.': 'Ungspeichereti Wörter landed in „Zletscht glöscht“.',
+  'Don’t save': 'Nöd speichere',
   'Close others': 'Anderi zuemache',
   'Close tabs to the right': 'Tabs rächts zuemache',
   'Close tabs to the left': 'Tabs links zuemache',
@@ -1163,6 +1188,7 @@ export const gsw: Dictionary = {
   'Double-click to write': 'Zum Schriibe doppelklicke',
   'Another colour': 'Anderi Farb',
   'Turn into a note': 'I e Notiz umwandle',
+  Arrange: 'Aaordne',
   'Bring to front': 'Ganz nach vorne',
   'Bring forward': 'Nach vorne hole',
   'Send backward': 'Nach hine schiebe',
@@ -1252,6 +1278,9 @@ export const gsw: Dictionary = {
   Unstable: 'Instabil',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'Stabil folgt de veröffentlichte Versione, Instabil de Edge-Builds und cha kaputt gaa.',
+  'Web version': 'Web-Version',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'Stabil isch d veröffentlichti Web-App, Instabil de neuschti Build und cha kaputt gaa.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Importiere',
@@ -1590,8 +1619,6 @@ export const gsw: Dictionary = {
   // Web tabs
   Reload: 'Neu lade',
   'Hard reload': 'Vollständig neu lade',
-  'Clip this page': 'Die Siite spichere',
-  'Clip the link': 'De Link spichere',
   'Open in the browser': 'Im Browser ufmache',
   'Show it here': 'Da azeige',
   Website: 'Webssite',
@@ -1727,7 +1754,6 @@ export const gsw: Dictionary = {
   'New tab': 'Nöie Tab',
   'Full screen': 'Vollbild',
   'Print…': 'Drucke…',
-  'Save page': 'Siite spichere',
   'Share…': 'Teile…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1787,6 +1813,15 @@ export const gsw: Dictionary = {
   'Bring all to front': 'Alli nach vorne bringä',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Kopie zurücknehmen',
+  'Devices with your AI vault': 'Grät mit dim KI-Tresor',
+  'This device': 'Das Grät',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'Das Grät cha dini KI-Konte nüme läse, und di andere überchömed en neue Schlüssel.',
+  'Also remove this device from your AI vault?': 'Das Grät au us dim KI-Tresor entferne?',
+  'Remove and sign out': 'Entferne und abmelde',
+  'Undo making {name}': '{name} wider ewägnäh',
+  'Undo the deletion': 'Lösche zrugnäh',
+  'Undo the move': 'Verschiebe zrugnäh',
   'Redo the last file change': 'Letzte Dateiänderung wiederholen',
   'Select down': 'Nach unten auswählen',
   'Select up': 'Nach oben auswählen',
@@ -2005,6 +2040,7 @@ export const gsw: Dictionary = {
   'Without your logins': 'Ohni dini Aamäldige',
   'Calls a minute': 'Ufrüef pro Minute',
   'Pages a minute': 'Siite pro Minute',
+  'Browser memory limit': 'Arbeitsspeicher-Gränze vom Browser',
   '{count} calls': {
     one: '{count} Ufruef',
     other: '{count} Ufrüef',

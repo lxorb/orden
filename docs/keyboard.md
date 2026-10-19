@@ -199,7 +199,7 @@ entries, so a rebind of one is a rebind of both.
 | Delete, Backspace | delete the selection |
 | Ctrl+C, Ctrl+X, Ctrl+V | copy or cut the selection, then paste into the folder the row is, or sits in |
 | Ctrl+Alt+N | a new note in the folder the row is, or sits in, waiting for its name: New note's key, wherever it is bound |
-| Ctrl+Z, Ctrl+Y | undo the last file change, and do it again (Ctrl+Shift+Z too; Cmd+Shift+Z on a Mac) |
+| Ctrl+Z, Ctrl+Y | undo the last file change, and do it again (Ctrl+Shift+Z too; Cmd+Shift+Z on a Mac); also with the keyboard gone elsewhere, while the list was the last thing used |
 | Alt+Up, Alt+Down | move the row in the order somebody arranged |
 
 See `docs/tree.md` for what a copy is called and where it lands. Duplicate is a row of
@@ -407,6 +407,16 @@ Online Terminal | Web Note, Private Web Note"* - what is written, what runs, and
 with a chat at the end of the first line where the account has chats, and a line a device
 has nothing in left out (a browser has no shell of its own, a phone no web tab). See
 `kindLines` in new-kinds.ts.
+
+**Which kinds are offered is the reader's**, in Settings › Note types: a switch for each
+kind this device can make, in the same three lines. Emil, #355: *"user should be able to
+configure which items of the Ctrl + T menu should be shown / hidden in settings"*. A kind
+switched off is offered nowhere - not under Ctrl+T or the plus, not in a pane with nothing
+open, not by the file list's New or the palette - and a file of that kind still opens, edits
+and syncs as it did. The last kind still offered cannot be switched off. The choice is the
+account's, the last device to change it winning, and a phone and a desktop each offer what
+of it they have. See `hiddenKinds` in settings.svelte.ts, kind-choice.ts and
+`test/e2e/tab-kinds.py`.
 
 **Each card wears its letter, and the letter makes it**: N a note, C a canvas, P a page
 note, M a chat, R a terminal (T is the new tab's own key, and R is what Run has been on
@@ -616,15 +626,14 @@ the shell. See `lib/terminal/keys.ts`, which is the rule, and docs/terminal.md.
 | | |
 | --- | --- |
 | Ctrl+Shift+T, Ctrl+Tab, Ctrl+Shift+Tab, Ctrl+PgUp, Ctrl+PgDn (and with Shift), the numbered tabs on Alt or Ctrl+Alt and a digit | the app's, as everywhere |
-| Ctrl+T, Ctrl+N | **both**: a new tab and the scratchpad, and the shell's swapped letters and next line. The first press asks which, and the answer is kept; see below |
-| Shift twice, Ctrl+P, Ctrl+Shift+P, Ctrl+comma, F11, Shift+F11, F6, Shift+F6 | the app's: the palette, the settings, full screen, full window, and the way a keyboard leaves the terminal - Tab cannot be, the shell completes with it |
+| Ctrl+T, Ctrl+N, Ctrl+W, Ctrl+Space, Ctrl+P, Ctrl+O, Ctrl+D, Ctrl+E, Ctrl+/ - every app command on a key a shell reads | **both**: a new tab and the swapped letters, the scratchpad and the next line, closing the tab and deleting a word, the space switcher and Emacs's mark, and so on. The first press asks which, and the answer is kept, per command; see below (#426) |
+| Shift twice, Ctrl+Shift+P, Ctrl+comma, F11, Shift+F11, F6, Shift+F6 | the app's: the palette, the settings, full screen, full window, and the way a keyboard leaves the terminal - Tab cannot be, the shell completes with it |
 | Ctrl+Shift and any other app command, Ctrl+Alt and an arrow | the app's: a terminal cannot tell Ctrl+Shift+E from Ctrl+E, and no shell has one on it. Ctrl+Shift+D puts every pane down here too, and Ctrl+Shift+Space opens the space switcher |
-| Ctrl+Space | **the shell's**: NUL, which Emacs sets its mark with and PowerShell opens its completions with, as in Windows Terminal and VS Code. Ctrl+Shift+Space is the space switcher here |
-| Ctrl+W, Ctrl+O, Ctrl+S, Ctrl+R, Ctrl+D and every other Ctrl and a letter | **the shell's**: delete a word, the history, search it, the end of input. Close a terminal with `exit`, its cross or its menu, or Cmd+W on a Mac |
+| Ctrl+R, Ctrl+S, Ctrl+U and every other Ctrl and a letter no app command is on | **the shell's**: search the history, stop the output, delete the line |
 | Ctrl+Shift+W | nobody's: Close window here and Close tab in every terminal there is, so neither |
 | Ctrl+C | always the interrupt |
 | Ctrl+Shift+C, Ctrl+Shift+V, Shift+Insert | copy, paste. Ctrl+V pastes too on Windows, as in Windows Terminal. Cmd+C and Cmd+V on a Mac, and a selection is copied as it is made |
-| Alt and a letter | **the shell's**, as ESC and the letter, which ConPTY hands a Windows program as the Alt chord Windows Terminal's would be: Claude Code's Alt+K, Alt+P, Alt+T and **Alt+V, which pastes an image** it reads off the clipboard itself (Ctrl+V on Linux and a Mac, which is the shell's there too) |
+| Alt and a letter no app command is on | **the shell's**, as ESC and the letter, which ConPTY hands a Windows program as the Alt chord Windows Terminal's would be: Claude Code's Alt+P, Alt+T and **Alt+V, which pastes an image** (Alt+K, which Ask about the selection is on, is asked about once) it reads off the clipboard itself (Ctrl+V on Linux and a Mac, which is the shell's there too) |
 | Alt+V, Ctrl+V off Windows, or a paste with a picture and no text, in a Remote or online terminal | **the picture carried over**: that machine's clipboard is not this one's, so the picture is written to a file there and its path pasted, which Claude Code and Codex take as an image. With no picture on the clipboard the key goes to the shell as it would have. See *Pictures* in docs/terminal.md |
 | Ctrl+F | find, in nib's find bar |
 | Ctrl+=, Ctrl+-, Ctrl+0 | the terminal's type, larger, smaller, as it was; the same size as Settings, General, Terminal |
@@ -638,18 +647,27 @@ anything but its own letter or digit is somebody typing `@` or `{`.
 **A key that is both is asked about, once.** Emil, issue #213: *"when pressing a shortcut
 in a terminal like interface or anywhere where it could have mulitple meanings then there
 should be a quick modal asking you which of the two should be used from now on (or you can
-tick always ask)"*. Two keys are both in a terminal: Ctrl+T, a new tab, which bash and zsh
-swap two letters with and fzf finds a file with, and Ctrl+N, the scratchpad, which is the
-shell's next line of history. The first press of either in a terminal - local, Remote or
-online - gives the press to neither and asks, in the app's one small question: *Ctrl+N in a
-terminal*, with the app's command (Scratchpad, New tab) and Terminal as the answers and an
-*Always ask* box beside them. The answer is the press: the app's is played on the window as
-the key it was, the terminal's is typed into the shell as the character it would have been
-(SO, DC4). It is kept for every terminal from then on unless the box was ticked, and Settings,
-General, Terminal has a row for each key - Always ask, the command, or Terminal - that shows
-the answer and takes it back. Escape answers nothing and sends the press nowhere. Only while
-the command is on Ctrl and a letter: a rebound one, Ctrl+Shift+X, and Cmd on a Mac are chords
-no shell has, and the app's without asking. See `TWO_WAYS` in `lib/terminal/keys.ts` and
+tick always ask)"*, and #426: *"the first time it asks you" should be the case for every
+dual bound shortcut*. So every app command whose key a shell reads as a character is both:
+Ctrl and a letter, Ctrl+Space (NUL, Emacs's mark and PowerShell's completions), and the
+other keys that type a control character - Ctrl+[, Ctrl+\, Ctrl+], Ctrl+/ and Ctrl and the
+digits 2 to 8 - whether the command is there by default or because somebody put it there
+in Settings. Ctrl+T is a new tab and the swapped letters (fzf's file finder too), Ctrl+N
+the scratchpad and the next line of history, Ctrl+W closing the tab and deleting a word,
+Ctrl+Space the space switcher and the mark. The first press of one in a terminal - local,
+Remote or online - gives the press to neither and asks, in the app's one small question:
+*Ctrl+N in a terminal*, with the app's command and Terminal as the answers and an *Always
+ask* box beside them. The answer is the press: the app's is played on the window as the key
+it was, the terminal's is typed into the shell as the character it would have been (SO, DC4,
+NUL). It is kept, per command, for every terminal from then on unless the box was ticked,
+and Settings, General, Terminal has a row for each key answered - Always ask, the command, or
+Terminal - that shows the answer and takes it back; Always ask takes the row away. Escape
+answers nothing and sends the press nowhere. **Ctrl+C is never asked about**: it is the
+interrupt. A command somebody put on a function key, or on Alt and an arrow or a letter, is
+on a key the program in the terminal reads too - htop and mc are worked with F-keys, Claude
+Code has Alt+K - and is asked about the same way rather than given to the program unasked;
+the program, chosen, is given the key as xterm would have sent it. Ctrl+Shift, Ctrl+Alt and an arrow, and Cmd on a Mac are chords no shell has, and
+the app's without asking. See `shellReads` in `lib/terminal/keys.ts` and
 `lib/terminal/two-ways.ts`.
 
 **A chat** (docs/chats.md 4.16)
@@ -999,6 +1017,11 @@ nobody else's. Paragraph has no key now - Ctrl+2 on a second-level heading is wh
 it back into prose - and **Ctrl+Shift+P**, which it held for a while, is the palette on
 commands; see the digit rule above.
 
+Ctrl+Alt+R stands a canvas two fingers turned upright again (#351), beside them.
+
+The plane steps its zoom on the same two keys as a page note, Ctrl+Alt+= and
+Ctrl+Alt+-: the bar no longer has buttons for it (#401).
+
 The plane's Fit is Ctrl+Alt+0 for the same reason: it is read off the plane and the
 press goes on to the window afterwards, so the two on one key would fit the plane and
 resize the words at once. A surface with a zoom of its own - the canvas, the graph, a
@@ -1011,7 +1034,7 @@ down on anything one of them has already prevented, keys as well as the wheel.
 | --- | --- |
 | Ctrl+Alt+= , Ctrl+Alt+- | a notch in and out of the paper |
 | Ctrl+Alt+0 | fit the width, and keep the paper fitted from then on |
-| Fit page | the whole of the page in the pane. No key out of the box; it is a row in the menu the percentage on the bar opens |
+| Fit page | the whole of the page in the pane. No key out of the box; it is a row in the paper's own menu, a right click or a finger held still |
 | Add a page | a page at the end. No key either: the gesture is carrying on scrolling past the last sheet, and the silhouette there is the button |
 
 They share Ctrl+Alt+0 with the plane's own Fit and are not a clash, because both

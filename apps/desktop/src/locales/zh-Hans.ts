@@ -26,6 +26,22 @@ export const zhHans: Dictionary = {
   'Import from Zen': '从 Zen 导入',
   'Containers stay in Zen': '容器保留在 Zen 中',
   'Zen’s tabs could not be read.': '无法读取 Zen 的标签页。',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': '容器保留在 Firefox 中',
+  'Nothing could be read out of {browser}.': '无法从 {browser} 读取任何内容。',
+  'Saved groups': '已保存的组',
+  'Tab group': '标签页组',
+  'Bookmarks toolbar': '书签工具栏',
+  'Bookmarks menu': '书签菜单',
+  'Other bookmarks': '其他书签',
+  'Mobile bookmarks': '移动设备书签',
+  'Bookmarks bar': '书签栏',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} 将打开的标签页加密保存，所以只带来了书签。',
+  '{count} pages not on the web stay behind': '{count} 个不在网上的页面没有带来',
+  'Reading List': '阅读列表',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS 将 Safari 的标签页和书签放在“完全磁盘访问权限”之后。请在那里打开 Orden，然后再试一次。',
   // Settings: note types
   'Page note': '分页笔记',
   'Web note': '网页笔记',
@@ -96,8 +112,6 @@ export const zhHans: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: '提示',
   'Silent mode': '安静模式',
-  'Sign in to keep your notes safe and on every device.':
-    '登录后,你的笔记将安全保存并在所有设备上可用。',
   'See how your notes connect.': '查看你的笔记如何相互关联。',
   'Press {key} to find anything, notes and commands alike.':
     '按 {key} 查找任何内容,笔记和命令皆可。',
@@ -119,11 +133,13 @@ export const zhHans: Dictionary = {
   '{count} h': '{count}小时',
   Inbox: '收件箱',
   Date: '日期',
+  'Start date': '开始日期',
   Priority: '优先级',
   Reminder: '提醒',
   Duration: '时长',
   'Smart dates': '智能日期',
   'From any app': '从任意应用',
+  'Show tasks without a start date in Today': '在今天中显示没有开始日期的任务',
   'Every day': '每天',
   'Every weekday': '每个工作日',
   'Every week': '每周',
@@ -167,6 +183,8 @@ export const zhHans: Dictionary = {
   Dots: '点阵',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': '用双指旋转画布',
+  'Turn upright': '摆正',
   Canvas: '画布',
   Card: '卡片',
   'Note or picture': '笔记或图片',
@@ -242,6 +260,10 @@ export const zhHans: Dictionary = {
   Unpin: '取消固定',
   Close: '关闭',
   'Close pinned tab?': '关闭已固定的标签页？',
+  'Save changes to {name}?': '要保存对 {name} 的更改吗？',
+  'Save changes to these tabs?': '要保存这些标签页的更改吗？',
+  'Unsaved words go to Recently deleted.': '未保存的文字会移到“最近删除”。',
+  'Don’t save': '不保存',
   'Close others': '关闭其他',
   'Close tabs to the right': '关闭右侧标签页',
   'Close tabs to the left': '关闭左侧标签页',
@@ -1139,6 +1161,7 @@ export const zhHans: Dictionary = {
   'Double-click to write': '双击开始书写',
   'Another colour': '其他颜色',
   'Turn into a note': '转为笔记',
+  Arrange: '排列',
   'Bring to front': '置于顶层',
   'Bring forward': '上移一层',
   'Send backward': '下移一层',
@@ -1228,6 +1251,9 @@ export const zhHans: Dictionary = {
   Unstable: '开发版',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     '稳定版跟随已发布的版本，开发版跟随edge构建，可能出问题。',
+  'Web version': '网页版',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    '稳定版是已发布的网页版，开发版是最新的构建，可能出问题。',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: '导入',
@@ -1548,8 +1574,6 @@ export const zhHans: Dictionary = {
   // Web tabs
   Reload: '重新加载',
   'Hard reload': '硬性重新加载',
-  'Clip this page': '保存此页',
-  'Clip the link': '保存链接',
   'Open in the browser': '在浏览器中打开',
   'Show it here': '在此显示',
   Website: '网站',
@@ -1678,7 +1702,6 @@ export const zhHans: Dictionary = {
   'New tab': '新建标签页',
   'Full screen': '全屏',
   'Print…': '打印…',
-  'Save page': '保存页面',
   'Share…': '共享…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1737,6 +1760,15 @@ export const zhHans: Dictionary = {
   'Bring all to front': '前置全部窗口',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': '撤销复制',
+  'Devices with your AI vault': '拥有你 AI 保险库的设备',
+  'This device': '此设备',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    '该设备将无法再读取你的 AI 账户，其他设备会得到新密钥。',
+  'Also remove this device from your AI vault?': '也将此设备从你的 AI 保险库中移除？',
+  'Remove and sign out': '移除并退出登录',
+  'Undo making {name}': '撤销新建{name}',
+  'Undo the deletion': '撤销删除',
+  'Undo the move': '撤销移动',
   'Redo the last file change': '重做上一次文件更改',
   'Select down': '向下选择',
   'Select up': '向上选择',
@@ -1949,6 +1981,7 @@ export const zhHans: Dictionary = {
   'Without your logins': '不使用你的登录',
   'Calls a minute': '每分钟调用次数',
   'Pages a minute': '每分钟页面数',
+  'Browser memory limit': '浏览器内存上限',
   '{count} calls': '{count} 次调用',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it

@@ -36,6 +36,7 @@ Set NIB_SKIP_BUILD=1 to reuse apps/desktop/dist from a previous run.
 
 from __future__ import annotations
 
+import io
 import sys
 
 from playwright.sync_api import Browser, Page
@@ -615,6 +616,45 @@ FORMAT_MARKS = """
 """
 
 
+# The format bar's buttons, where they are, to read their ink off the screen.
+FORMAT_BOXES = """
+() => {
+  const bar = document.querySelector('.nib-bar.docked') ?? document.querySelector('.nib-bar-at')
+  return bar
+    ? [...bar.querySelectorAll('button')].map((one) => {
+        const box = one.getBoundingClientRect()
+        return { name: one.getAttribute('aria-label') ?? '?', x: box.x, y: box.y, width: box.width, height: box.height }
+      })
+    : []
+}
+"""
+
+
+def drawn_off(page: Page) -> dict[str, float]:
+    """How far below each button's middle the middle of its ink is, read off the
+    pixels it is drawn in: what a reader sees, in whatever engine drew it.
+
+    The letters' places are estimated from the font's metrics in `FORMAT_MARKS`, and
+    for a letter moved by a transform that estimate is the engine's to get wrong:
+    WebKit put Quote 2px low by its metrics and drew it 1px high, in line with the
+    rest (#384). So the check reads the pixels where it can and says both."""
+    from PIL import Image
+
+    off: dict[str, float] = {}
+    for box in page.evaluate(FORMAT_BOXES):
+        if box["width"] < 4 or box["height"] < 4:
+            continue
+        clip = {key: box[key] for key in ("x", "y", "width", "height")}
+        picture = Image.open(io.BytesIO(page.screenshot(clip=clip, scale="css"))).convert("L")
+        width, height = picture.size
+        pixels = picture.load()
+        ground = pixels[1, height // 2]
+        rows = [y for y in range(height) if any(abs(pixels[x, y] - ground) > 60 for x in range(2, width - 2))]
+        if rows:
+            off[box["name"]] = round((rows[0] + rows[-1] + 1) / 2 - height / 2, 1)
+    return off
+
+
 # Where the drawer is, so a shot of nothing is a reading rather than a puzzle.
 ASIDE_AT = """
 () => {
@@ -784,7 +824,10 @@ def on_phone(browser: Browser, scheme: str = "light") -> None:
             # And every mark in it reads on one line: the ink of each, measured, not
             # the cell it is centred in - which was centred all along.
             found = page.evaluate(FORMAT_MARKS)
+            inked = drawn_off(page)
             for one in found.get("marks", []):
+                if one["as"] == "letter" and one["name"] in inked:
+                    one["metrics"], one["off"] = one["off"], inked[one["name"]]
                 say(f"[{label}]   {one}")
 
             letters = [one for one in found.get("marks", []) if one["as"] == "letter"]

@@ -404,40 +404,16 @@ own, mixed into `--bg` rather than laid over nothing. The terminal lays the rest
 way to a floor of its own on top, with xterm.js pulling a program's colours to 5.5 from
 the paper while it is see-through, so every one of the sixteen reads at AA on the ground
 under it. A web page, a PDF's pages and a page note's sheets paint their own: a page is
-printed paper. The settings and every other sheet are as good as opaque: they float over
-content, and what would show through is a second layer of words (Windows' own dialogs are
-solid for the same reason), so the frost on them keeps nine tenths of the surface. The list and the AI panel are the frame already. Nothing is
+printed paper. The settings and every other sheet stay opaque: they float over content,
+and what would show through is a second layer of words (Windows' own dialogs are solid
+for the same reason). The list and the AI panel are the frame already. Nothing is
 filtered: a see-through paper is one more layer to composite, and
 `apps/desktop/test/e2e/theme-options.py` counts the frames of a long note scrolled and
 typed into on the built-in theme, glass and the wallpaper, all at a median of one frame.
 
 Glass is offered on every platform: Windows puts Mica Alt, Mica or Acrylic under the colour;
 macOS (whose webview is opaque without the private API), Linux, the browser and a phone stand
-it on the paper. Nothing scrolls under nib's frame, so no `backdrop-filter` is spent on it;
-the one place glass spends one is a layer that floats, below.
-
-**Glass is a material, and it is Orden's** (2026-10-14: *"more like revolut and like apple
-liquid glass, but still the unique orden theme"*). The colour alone read as a wash over the
-built-in, so glass has a shape of its own as well, all of it in `glass.css` and none of it
-in another theme. What floats - a menu, the palette and the small modal, a bar over a
-selection, a bubble, a notice, a drawer over the note - is a frosted pane under a lit rim:
-a hairline of light round the edge and a brighter one along the top. Each keeps nine
-tenths of the palette's own surface under the blur, so where the blur is not drawn
-(WebKitGTK without compositing, a headless Chromium) the words under it are a ghost and
-never a second line of reading; a system asking for less transparency gets the surface
-solid. The paper is a card on the frame, flush with the open tab and a step off the other
-three sides, and the side panels are panes of glass with the paper's corners and gutters,
-so a desktop window reads as three cards on Dawn. Every control a finger or a pointer
-presses is a capsule: a glyph is a circle, a button, a segmented control, a switch and a
-field one line tall are pills, and the row you are on is a chip of glass lifted off the
-list rather than a wash of the accent.
-
-What keeps it from being anybody's glass is the icon: four capsules of ink on Dawn. A
-space's badge is that tile, ink on Dawn in both schemes; the row you are on in a side
-panel carries one of the capsules, in the accent, at its leading edge; a bookmark's card is
-a piece of the same glass. The type is set with Revolut's confidence and none of its sizes:
-the space's name heavier and tighter, the note's first two headings tighter than the
-built-in's, spacing only, so nothing is laid out again.
+it on the paper. Nothing scrolls under nib's frame, so no `backdrop-filter` is spent anywhere.
 
 Two tokens carry it. `--window-ground` is `--bg` in every window there has ever been,
 and `transparent` over the material; `html` and `body` are painted with it.
@@ -1034,9 +1010,15 @@ beside the control it lives behind, the way Google Docs and Notion point at thei
 one line saying what it does, pressed to do it, and a cross to put it away. At most
 one a session, not before the window has been open twenty seconds, never again once
 put away (`nib:hints`, per device), and none at all in Silent mode (Settings > General,
-off out of the box, an account setting). There are three, in order: signing in, the
-graph, and the palette's keys. The store is `hints.svelte.ts`, the card
-`HintCard.svelte`, and both are fetched through a door, since no launch draws one.
+off out of the box, an account setting). There are two, in order: the graph, and the
+palette's keys. The store is `hints.svelte.ts`, the card `HintCard.svelte`, and both
+are fetched through a door, since no launch draws one.
+
+A hint points at a feature or a key, never at an account. Nothing unasked tells
+somebody to sign in, make an account or turn on syncing (#415): signing in is the
+account row at the foot of the panel, Settings > Account, Sign in in the Help menu and
+the palette, and, for a guest, their corner. The web app's download button in the
+panel's foot is a control, not a card, and stays.
 
 ### Section labels
 

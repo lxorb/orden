@@ -785,11 +785,11 @@
   <div class="head" class:gone={fullscreen.on} bind:this={head}>
     <WebBar
       {page}
+      tab={tab.id}
       ground={chrome.barOf(tab.id)}
       theme={chrome.barTheme(tab.id)}
       {focused}
       {book}
-      reads={isDesktop}
       onstep={(step: Step, press?: MouseEvent) => {
         const ask = press ? tabAsk(press) : 'plain'
         if (step === 'back') workspace.goBack(tab.id, ask)
@@ -821,7 +821,6 @@
         // so. A link followed inside the page is not; see `workspace.webAimed`.
         void workspace.webAimed(tab, url)
       }}
-      onclip={clip}
       onmenu={(event: MouseEvent) =>
         menu.show(event, webRows(page, page.zoom, actions), { title: t('Website') })}
       onsite={() => {

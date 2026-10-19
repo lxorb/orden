@@ -7,6 +7,7 @@
    *  The surface Pane.svelte fetches the first time a view tab is shown; nothing of
    *  this is in the first paint (surfaces.svelte.ts). */
   import { untrack } from 'svelte'
+  import { modes } from '../modes.svelte'
   import type { Tab } from '../workspace/documents.svelte'
   import { kitFor } from './kit'
   import { LiveView } from './live.svelte'
@@ -51,6 +52,18 @@
     if (words === seen) return
     seen = words
     if (tab.path === null) untrack(() => void made.live.reload())
+  })
+
+  /** Today read again when Settings turns the tasks with no start date in or out of it
+   *  (`builtinBase`). */
+  let undated = untrack(() => modes.undatedInToday)
+  $effect(() => {
+    const now = modes.undatedInToday
+    if (now === undated) return
+    undated = now
+    untrack(() => {
+      if (tab.path === null && readSpec(tab.doc)?.builtin === 'today') void made.live.reload()
+    })
   })
 </script>
 

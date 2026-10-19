@@ -9,8 +9,10 @@
 
 import { addDays, parseRule, type Row, ruleText, type TaskChange, weekday } from '@nib/bases'
 import { parseQuickAdd } from '@nib/bases/language'
+import { dayOf, type DueReads, startField } from '@nib/markdown/task-dates'
 
-/** What a pick says about a task's day: null takes the field away, absent leaves it. */
+/** What a pick says about a task's day: null takes the field away, absent leaves it.
+ *  `due` is the day picked, which is the day the task starts (#371). */
 export interface Scheduled {
   due: string | null
   time?: string | null
@@ -40,13 +42,13 @@ export function quickDays(today: string): { kind: QuickDay; day: string }[] {
   return out
 }
 
-/** How many open tasks each day already holds, by their due day (else scheduled). */
+/** How many open tasks each day already holds, by the day each is on. */
 export function loadByDay(rows: readonly Row[]): Map<string, number> {
   const out = new Map<string, number>()
   for (const row of rows) {
     const task = row.task
     if (!task || task.done || task.cancelled) continue
-    const day = task.due ?? task.scheduled
+    const day = dayOf(task, task.dueReads)
     if (day) out.set(day, (out.get(day) ?? 0) + 1)
   }
   return out
@@ -125,23 +127,29 @@ export function repeatKindOf(rule: string | undefined, day: string): RepeatKind 
   return REPEATS.find((kind) => repeatRule(kind, day) === written) ?? null
 }
 
-/** The task's date as a pick changes it. A task kept by its scheduled date (`⏳`) is
- *  moved by that date, so the plan it was written with stays; any other is given a due
- *  date (docs/tasks.md 8.2). No date takes the day, its time and its repeat away and
- *  leaves the duration, as Todoist does. */
-export function changeFor(
-  task: { due?: string | undefined; scheduled?: string | undefined } | null,
-  picked: Scheduled,
-): TaskChange {
-  const byScheduled = task?.due === undefined && task?.scheduled !== undefined
-  const field = byScheduled ? 'scheduled' : 'due'
+/** A task, as far as which of its dates a pick lands on goes. */
+interface Dated {
+  due?: string | undefined
+  scheduled?: string | undefined
+  start?: string | undefined
+  deadline?: string | undefined
+  dueReads?: DueReads | undefined
+}
+
+/** The task's start date as a pick changes it (#371): written to the field that already
+ *  holds its day - `🛫`, a `⏳` it is kept by, an old `📅` in a space of nib's own - so
+ *  nothing else on the line moves, else as a new `🛫`. No date takes the day, its time
+ *  and its repeat away and leaves the duration and the deadline, as Todoist does. */
+export function changeFor(task: Dated | null, picked: Scheduled): TaskChange {
+  const reads = task?.dueReads ?? 'start'
+  const field = task ? startField(task, reads) : 'start'
   if (picked.due === null) {
-    return {
-      [field]: null,
-      ...(byScheduled ? {} : task?.scheduled === undefined ? {} : { scheduled: null }),
-      time: null,
-      recurrence: null,
-    }
+    const out: TaskChange = { [field]: null, time: null, recurrence: null }
+    // Whatever would be read as its start once that is gone, goes with it.
+    if (task?.start !== undefined) out.start = null
+    if (task?.scheduled !== undefined) out.scheduled = null
+    if (reads === 'start' && task?.due !== undefined) out.due = null
+    return out
   }
   const out: TaskChange = { [field]: picked.due }
   if (picked.time !== undefined) out.time = picked.time

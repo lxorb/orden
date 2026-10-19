@@ -281,6 +281,146 @@ describe('the AI vault', () => {
     expect((await call(env, '/v2/ai/vault', { token, method: 'DELETE' })).status).toBe(200)
   })
 
+  /** The laptop and the phone let in, and a tablet asking that the phone answered. */
+  async function three() {
+    const laptop = await first()
+    const allowed = async (name: string) => {
+      const one = await aDevice()
+      await register(one, name)
+      await call(env, `/v2/ai/devices/${one.id}/nonce`, {
+        token,
+        method: 'PUT',
+        body: { nonce: base64(random(32)), from: laptop.id, auth },
+      })
+      await reveal(one.id, one.pub, one.nonce)
+      await call(env, `/v2/ai/devices/${one.id}/wrap`, {
+        token,
+        method: 'PUT',
+        body: { wrapped: `d3JhcC${name}`, from: laptop.id, auth },
+      })
+      return one
+    }
+    const phone = await allowed('Phone')
+    const tablet = await aDevice()
+    await register(tablet, 'Tablet')
+    await call(env, `/v2/ai/devices/${tablet.id}/nonce`, {
+      token,
+      method: 'PUT',
+      body: { nonce: base64(random(32)), from: phone.id, auth },
+    })
+    return { laptop, phone, tablet }
+  }
+
+  const rotate = (body: Record<string, unknown>) =>
+    call<{ rev?: number; error?: string }>(env, '/v2/ai/rotate', { token, method: 'PUT', body })
+
+  /** #389: an allowed device goes only with the key changed under it, in one step. */
+  test('lets an allowed device go by changing the key, and only so', async () => {
+    const { laptop, phone, tablet } = await three()
+    expect(
+      (await call(env, `/v2/ai/devices/${phone.id}`, { token, method: 'DELETE', body: { auth } }))
+        .status,
+    ).toBe(409)
+
+    const next = base64(random(32))
+    const turned = await rotate({
+      rev: 1,
+      blob: 'bmV3',
+      from: laptop.id,
+      auth,
+      next,
+      keep: [laptop.id],
+      wraps: ['bmV3d3JhcA'],
+      go: [phone.id],
+    })
+    expect(turned.status).toBe(200)
+    expect(turned.json.rev).toBe(2)
+    expect((await read(laptop.id)).json).toMatchObject({
+      rev: 2,
+      blob: 'bmV3',
+      wrapped: 'bmV3d3JhcA',
+      devices: [
+        { id: laptop.id, approved: true },
+        // Answered by the device that went: asks again from the start.
+        { id: tablet.id, nonce: null, nonceFrom: null, approved: false },
+      ],
+    })
+    expect((await read(phone.id)).json.wrapped).toBeNull()
+
+    // The old token changes nothing any more; the new one does.
+    const write = (as: string) =>
+      call(env, '/v2/ai/vault', { token, method: 'PUT', body: { rev: 2, blob: 'eA', auth: as } })
+    expect((await write(auth)).status).toBe(403)
+    expect((await write(next)).status).toBe(200)
+  })
+
+  test('changes the key only over the revision and the token it was read at', async () => {
+    const { laptop, phone } = await three()
+    const turn = (rev: number, as: string) =>
+      rotate({
+        rev,
+        blob: 'bmV3',
+        from: laptop.id,
+        auth: as,
+        next: base64(random(32)),
+        keep: [laptop.id],
+        wraps: ['bmV3d3JhcA'],
+        go: [phone.id],
+      })
+    await call(env, '/v2/ai/vault', { token, method: 'PUT', body: { rev: 1, blob: 'dHdv', auth } })
+    const stale = await turn(1, auth)
+    expect(stale.status).toBe(409)
+    expect(stale.json).toMatchObject({ error: 'stale', rev: 2 })
+    expect((await turn(2, base64(random(32)))).status).toBe(403)
+    // Nothing moved: the phone is still let in, under the key it had.
+    expect((await read(phone.id)).json).toMatchObject({ rev: 2, wrapped: 'd3JhcCPhone' })
+    expect((await turn(2, auth)).status).toBe(200)
+  })
+
+  test('puts a device let in that the change did not name back to asking', async () => {
+    const { laptop, phone, tablet } = await three()
+    const turned = await rotate({
+      rev: 1,
+      blob: 'bmV3',
+      from: laptop.id,
+      auth,
+      next: base64(random(32)),
+      keep: [laptop.id],
+      wraps: ['bmV3d3JhcA'],
+      go: [tablet.id],
+    })
+    expect(turned.status).toBe(200)
+    expect((await read(phone.id)).json).toMatchObject({
+      wrapped: null,
+      devices: [
+        { id: laptop.id, approved: true },
+        { id: phone.id, pub: null, approved: false },
+      ],
+    })
+  })
+
+  test('takes no new key that is not one', async () => {
+    const { laptop, phone } = await three()
+    const body = {
+      rev: 1,
+      blob: 'bmV3',
+      from: laptop.id,
+      auth,
+      next: base64(random(32)),
+      keep: [laptop.id],
+      wraps: ['bmV3d3JhcA'],
+      go: [phone.id],
+    }
+    expect((await rotate({ ...body, go: [] })).status).toBe(400)
+    expect((await rotate({ ...body, wraps: [] })).status).toBe(400)
+    expect((await rotate({ ...body, keep: [], wraps: [] })).status).toBe(400)
+    expect(
+      (await rotate({ ...body, keep: [laptop.id, phone.id], wraps: ['YQ', 'Yg'] })).status,
+    ).toBe(400)
+    expect((await rotate({ ...body, next: '' })).status).toBe(400)
+    expect((await rotate({ ...body, auth: base64(random(32)) })).status).toBe(403)
+  })
+
   test('takes only what a device makes, and only from somebody signed in', async () => {
     const bad = await call(env, '/v2/ai/devices', {
       token,

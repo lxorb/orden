@@ -16,6 +16,7 @@ import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 import legacyWorkerUrl from 'pdfjs-dist/legacy/build/pdf.worker.min.mjs?url'
 import { door } from '@nib/markdown/door'
 import { fileBytes, sha256 } from '../bytes'
+import { PDF_TO_CSS } from './pages'
 
 type Library = typeof import('pdfjs-dist')
 
@@ -83,6 +84,38 @@ export async function openDocument(path: string): Promise<OpenPdf> {
   const task = library.getDocument({ data })
 
   return { doc: await task.promise, hash, close: () => task.destroy() }
+}
+
+/** Every page's size in CSS pixels, out of a PDF of the space or out of bytes an
+ *  import holds and has not written yet. Read out of each page's own dictionary and
+ *  nothing drawn, so a book of four hundred pages is a read of the file rather than
+ *  four hundred renders - which is what lets a PDF become a page note at once, and the
+ *  Import sheet say what it is about to make before it makes it. */
+export async function pageSizes(
+  from: string | Uint8Array,
+): Promise<{ width: number; height: number }[]> {
+  const opened =
+    typeof from === 'string'
+      ? await openDocument(from)
+      : await pdfjs().then((library) => {
+          // A copy, because the worker takes the bytes and the import still needs
+          // them to write the file with.
+          const task = library.getDocument({ data: from.slice() })
+          return task.promise.then((doc) => ({ doc, close: () => task.destroy() }))
+        })
+
+  try {
+    const sizes: { width: number; height: number }[] = []
+    for (let number = 1; number <= opened.doc.numPages; number += 1) {
+      const page = await opened.doc.getPage(number)
+      const view = page.getViewport({ scale: PDF_TO_CSS })
+      sizes.push({ width: Math.round(view.width), height: Math.round(view.height) })
+      page.cleanup()
+    }
+    return sizes
+  } finally {
+    await opened.close().catch(() => undefined)
+  }
 }
 
 /** The words of a page, as the strings pdf.js lays one span out for: the same

@@ -86,6 +86,69 @@ came in, and lands in it.
   written twice. Cookies and logins are not read. See `import/zen-plan.ts` and
   `import/zen-landing.ts`, and `scripts/zen-import-probe.py`, which reads a Zen of
   its own through `NIB_ZEN_DIR`.
+- **Every other browser's tabs and bookmarks** (#377). On a desktop there is a row for
+  each browser the machine has a profile of: Firefox, then Chrome, Edge, Brave,
+  Chromium and Vivaldi, which are all Chromium and keep the same files. Each browser's
+  own list of profiles is read - Firefox's `profiles.ini`, a Chromium's `Local State` -
+  and a browser with several shows them by name, the way Zen's are. A profile becomes
+  one space, named for the browser (and for the profile where there are several), and
+  comes in the shape Zen's spaces do, because it is read into the same sidebar
+  (`import/sidebar.ts`) and written the same way (`sidebar-plan.ts`,
+  `sidebar-landing.ts`):
+  - **the open tabs**, every ordinary window's in their order, each a web note; a
+    private window's never;
+  - **a pinned tab** one of the Essentials, which is what stays put above everything;
+  - **a tab group** a folder of its name where its first tab is (one nobody named is
+    `Tab group`); its colour has nothing to become;
+  - **Firefox's saved groups** each a folder in `Saved groups`;
+  - **the bookmarks** a folder called `Bookmarks` after everything else, a folder in it
+    for each of the browser's roots that holds any (the bar or toolbar, Firefox's
+    menu, the other bookmarks, the phone's), every bookmark folder a folder and each
+    bookmark a web note kept on the day it was bookmarked. The bar's bookmarks are not
+    made Essentials. Separators, Firefox's tags and smart folders, bookmarklets and
+    folders with nothing on the web in them stay behind, and the line counts the
+    pages among them: a tab on the browser's own pages, a file, a bookmarklet.
+
+  Firefox's session is `sessionstore-backups/recovery.jsonlz4` (then `sessionstore` and
+  `previous`), read like Zen's (`import/firefox.ts`); its bookmarks are `places.sqlite`,
+  which Firefox holds open, so the crate copies it with its log into a temporary folder
+  and reads the copy (`firefox_profiles.rs`), with the newest daily copy in
+  `bookmarkbackups/` behind it. A Chromium's session is `Sessions/Session_*`, an SNSS
+  file: a log of commands replayed to the windows it leaves (`import/snss.ts`), and its
+  bookmarks are the JSON file `Bookmarks` (`import/chromium.ts`). A group a Chromium
+  closed and saved lives in its sync database, not its session, and does not come. Newer
+  Chromium writes its session encrypted as well (`Sessions_Encrypted/`, the key in the
+  system's keychain); where only that one is there, the profile brings its bookmarks and
+  the line says the open tabs stayed locked. Containers stay in Firefox, and the line
+  says so. The crate hands over only the files it listed for a profile it listed
+  (`browser_profiles.rs`, `chromium_profiles.rs`), never a cookie, a password or the
+  history, and `scripts/browser-import-probe.py` reads browsers of its own through
+  `NIB_BROWSERS_DIR`. Importing again brings only what is new, as Zen's does.
+- **Safari** (#394), on a Mac, first among the browsers, since it is the Mac's own.
+  Safari keeps no list of profiles; what is read is three files of the home folder,
+  which the crate reads whole and hands over as JSON (`safari.rs`), and
+  `import/safari.ts` reads into the same sidebar:
+  - **the open tabs** are `SafariTabs.db` (Safari 15 on), in Safari's container: a
+    tree of folders and tabs, copied with its log and read the way Firefox's
+    `places.sqlite` is. A folder that holds tabs is a tab group and becomes a folder of
+    its name; a group's `TopScopedBookmarkList` holds its pinned tabs, which are the
+    Essentials; the window's own tabs, in the folder Safari calls `Local`, come at the
+    top of the space. Rows marked deleted, blank tabs and Safari's own lists
+    (`com.apple.…`, its iCloud tabs among them) stay behind. An older Safari's windows
+    are `LastSession.plist` instead, a private window never;
+  - **the bookmarks** are `Bookmarks.plist`, a binary property list (the `plist` crate
+    reads it): the Bookmarks folder holds Favorites, which is Safari's name for its bar,
+    the Bookmarks menu, and every other list of the root by its title; History is a
+    list there too, and stays;
+  - **the Reading List**, the root's `com.apple.ReadingList`, is a folder of its own
+    after the bookmarks, each page kept on the day it was added.
+
+  macOS keeps all three behind Full Disk Access, so the first read is refused: the
+  crate answers `no access`, as it does for Apple Notes, and the app opens System
+  Settings > Privacy & Security > Full Disk Access and says in its line to turn Orden
+  on there and ask again. The layout of `SafariTabs.db` is the one a macOS 15 Safari
+  writes, as forensic readers of it document; the tests hold the reader to files written
+  after it, since no Mac wrote them here.
 - **More apps** are a row and a case in `carriedBy`; the readers are already there.
 
 ## Where it lands

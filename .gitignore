@@ -44,9 +44,6 @@ services/mcp/target/
 apps/desktop/src-tauri/binaries/*
 !apps/desktop/src-tauri/binaries/.gitkeep
 
-# What the clipper's build packs for the Chrome Web Store, beside its dist
-apps/clipper/*.zip
-
 # Claude Code worktrees of this repo
 .claude/worktrees/
 *.nupkg

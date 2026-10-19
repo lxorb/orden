@@ -432,9 +432,10 @@ Still pandoc's, and offered only where pandoc is installed:
       Craft, OneNote, Tomboy, Airtable and any folder of markdown, read from the
       export the reader already has, in one sheet, on every platform. See
       docs/import.md and section 17
-- [x] A PDF, as pages to write on. One more row of the same sheet: the paper goes
-      into the space byte for byte, so Obsidian still opens it, and a `.pages` note
-      lands beside it whose pages are that paper's pages. Nothing is baked in - no
+- [x] A PDF, as pages to write on. One more row of the same sheet, and what a drop
+      or a first open makes of a PDF too: a `.pages` note whose pages are that
+      paper's pages, holding the paper byte for byte, so Obsidian still opens it.
+      The list shows the note alone. Nothing is baked in - no
       folder of PNGs - each page names the file and the page, and the picture is
       rendered from the paper when it comes near the view. Which is also the answer
       to Samsung Notes, GoodNotes, Notability and Apple Notes, none of which
@@ -1209,8 +1210,8 @@ Features Typora does not have, which are the reason this exists.
       - convert on the first open, or all at once from the palette, and a note that
       had words of its own beyond the link stays a note beside its shortcut. No room
       and no collaboration: there are no words in it to share
-- [x] Clip the page a tab is showing into the space, through the same converter the
-      browser extension uses: the selection, or the article, as markdown under
+- [x] Clip the page a tab is showing into the space, through the converter a paste
+      uses: the selection, or the article, as markdown under
       `source:` and `date:`. On a desktop the page is read in the document as the
       reader sees it, through the engine's own script callback rather than through the
       app's IPC, so the page is read without being given anything to call

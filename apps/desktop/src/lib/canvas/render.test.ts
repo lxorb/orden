@@ -18,7 +18,7 @@ vi.mock('../link-index.svelte', () => ({
   },
 }))
 
-const { cardHtml } = await import('./render')
+const { cardHtml, fileUrl, keptByAccount } = await import('./render')
 
 const HOSTILE = '<img src=x onerror="alert(1)"> and <u>more</u>'
 
@@ -55,5 +55,36 @@ describe('a card on the plane', () => {
     expect(cardHtml(HOSTILE, null, true)).toContain('<img src=x')
     expect(cardHtml(HOSTILE, null, false)).not.toContain('<img src=x')
     expect(cardHtml(HOSTILE, null, true)).toContain('<img src=x')
+  })
+})
+
+describe('a picture on the plane', () => {
+  // Pasted while signed in, a picture is kept by the account and the card names its
+  // address; joined to the space's folder, it was a file nowhere (#364).
+  test('kept by the account is loaded from its address as it is', () => {
+    const kept = 'https://sync.orden.so/i/ab12cd.png'
+    expect(fileUrl(kept, '/space')).toBe(kept)
+    expect(fileUrl('HTTP://example.com/a.png', '/space')).toBe('HTTP://example.com/a.png')
+  })
+
+  test('kept in the space is loaded from the space', () => {
+    expect(fileUrl('pictures/a.png', '/space')).toContain('pictures/a.png')
+    expect(fileUrl('pictures/a.png', '/space')).not.toBe('pictures/a.png')
+    expect(fileUrl('pictures/a.png', null)).toBe('pictures/a.png')
+  })
+})
+
+describe('a card the web app wrote before #364', () => {
+  const HASH = 'f41264ebbcf7b79f05aa6c7992fd339248711a8f0c775c7394a8c71bb3e1eea3'
+
+  test('names the account’s picture as a path, and is loaded from the account', () => {
+    expect(keptByAccount(`i/${HASH}.png`, true)).toBe(`https://orden.so/i/${HASH}.png`)
+  })
+
+  test('is left alone signed out, and every other card is', () => {
+    expect(keptByAccount(`i/${HASH}.png`, false)).toBeNull()
+    expect(keptByAccount('i/cat.png', true)).toBeNull()
+    expect(keptByAccount(`pictures/i/${HASH}.png`, true)).toBeNull()
+    expect(keptByAccount(`assets/${HASH.slice(0, 16)}.png`, true)).toBeNull()
   })
 })
