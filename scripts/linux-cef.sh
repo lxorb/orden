@@ -70,6 +70,12 @@ case "${1:-use}" in
     shift
     pin=$(sed -n 's/^tauri = { version = "=\([^"]*\)".*/\1/p' "$app/linux/Cargo.toml" | head -1)
     [ -n "$pin" ] || { echo "no tauri pin in $app/linux/Cargo.toml" >&2; exit 1; }
+    # The AppImage is made by quick-sharun, which the bundler fetches and which fetches
+    # two C files of its own from a repository that has since moved them; they are
+    # named here, at the commit of the fork the bundler takes the script from.
+    sharun=https://raw.githubusercontent.com/FabianLars/Anylinux-AppImages/3e280d1b2270fecfcb2c2c823b490c782ecf1277/useful-tools/lib
+    export ANYLINUX_LIB_SOURCE="${ANYLINUX_LIB_SOURCE:-$sharun/anylinux.c}"
+    export GTK_CLASS_FIX_SOURCE="${GTK_CLASS_FIX_SOURCE:-$sharun/gtk-class-fix.c}"
     cd "$here/apps/desktop"
     exec npx --yes "@tauri-apps/cli@$pin" "$@"
     ;;
