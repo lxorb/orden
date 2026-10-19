@@ -792,8 +792,13 @@ function holds(tail: string): boolean {
  *  Raised 2026-10-19, to 3,252,000, for #541: a note whose room is out of reach is let
  *  go of before the file sync puts a file into it (`letGoUnreached` in rooms.svelte.ts,
  *  `bound` on a room), so another device's words are not sent back as this device's.
- *  Measured 3,251,126. */
-const BUDGET = 3_252_000
+ *  Measured 3,251,126.
+ *
+ *  Raised 2026-10-19, to 3,255,000, for #544: words from the room are held while an
+ *  input method composes in a view and taken in when it ends, with what is typed
+ *  meanwhile carried past them (`held`, `settle` and the compositionend handler in
+ *  @nib/editor's shared.ts). Measured 3,254,393. */
+const BUDGET = 3_255_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
