@@ -37,6 +37,8 @@
 import { foldName } from '@nib/markdown/links'
 
 import { key } from '../i18n.svelte'
+import { encodeTarget } from '../link-rewrite'
+import { folderOf, relativePath } from '../space-paths'
 
 import { folderPlan, isHidden, isJunk } from './folder'
 import { dayOf, type Meta } from './meta'
@@ -127,6 +129,8 @@ export async function readLogseq(sources: readonly Source[]): Promise<ImportPlan
   }
 
   let flattened = 0
+  // Where each file of the graph went, by its path in the graph.
+  const went = new Map<string, string>()
 
   const plan = await folderPlan(sources, {
     format: 'logseq',
@@ -135,13 +139,22 @@ export async function readLogseq(sources: readonly Source[]): Promise<ImportPlan
       if (isJunk(path) || isHidden(path) || APP.test(path)) return { to: null }
 
       const to = placed(path, config.file)
-      if (!/\.(md|markdown)$/i.test(to)) return { to: names.free(to) }
+      const free = names.free(to)
+      went.set(path, free)
+      if (!/\.(md|markdown)$/i.test(to)) return { to: free }
 
       return {
-        to: names.free(to),
+        to: free,
         read: (text) => {
           const said = logseqNote(text, blocks, days)
           flattened += said.flattened
+
+          // The import follows the links in a note's words to where their files
+          // went, and these are the ones in its properties: a PDF's highlights
+          // page names its PDF there.
+          const extra = said.meta.extra?.map(
+            ([name, value]) => [name, followed(value, path, free, went)] as const,
+          )
 
           // The names the page answered to in Logseq that its file here does not
           // say, so a link written with one of them still finds it.
@@ -157,9 +170,10 @@ export async function readLogseq(sources: readonly Source[]): Promise<ImportPlan
             )
           })
 
-          const meta = aliases.length
-            ? { ...said.meta, extra: [...(said.meta.extra ?? []), ['aliases', aliases] as const] }
-            : said.meta
+          const meta = {
+            ...said.meta,
+            extra: [...(extra ?? []), ...(aliases.length ? [['aliases', aliases] as const] : [])],
+          }
           return { text: said.body, title: null, meta }
         },
       }
@@ -174,6 +188,34 @@ export async function readLogseq(sources: readonly Source[]): Promise<ImportPlan
   }
 
   return plan
+}
+
+/** A property's links to files of the graph, written in the note at `from` in the
+ *  graph and now at `to`, pointed at where those files went. A link to anything
+ *  else is left as it was. */
+function followed(
+  value: string,
+  from: string,
+  to: string,
+  went: ReadonlyMap<string, string>,
+): string {
+  return value.replace(/\]\(([^)\n]+)\)/g, (whole, target: string) => {
+    if (/^[a-z][\w+.-]*:/i.test(target) || target.startsWith('#')) return whole
+    const there = went.get(within(folderOf(from), decoded(target.trim())) ?? '')
+    return there ? `](${encodeTarget(relativePath(folderOf(to), there))})` : whole
+  })
+}
+
+/** A relative path read from a folder of the graph, or null for one that leaves it. */
+function within(folder: string, relative: string): string | null {
+  const parts = folder ? folder.split('/') : []
+  for (const part of relative.split('/')) {
+    if (part === '..') {
+      if (!parts.length) return null
+      parts.pop()
+    } else if (part && part !== '.') parts.push(part)
+  }
+  return parts.join('/')
 }
 
 /** Where the graph starts: the top, or one folder down for a graph zipped up
@@ -440,7 +482,7 @@ export function logseqNote(
   if (tags.length) meta.tags = tags
   if (extra.length) meta.extra = extra
 
-  const rest = lines.slice(at)
+  const rest = blocksOf(lines.slice(at))
   const code = fenced(rest)
   const body = rest
     .flatMap((line, index) => {
@@ -451,6 +493,82 @@ export function logseqNote(
     .join('\n')
 
   return { body, meta, flattened, title, aliases }
+}
+
+/** The Org mode blocks that hold code: source, an example, and a query, which is
+ *  Datalog that only Logseq can run and is kept to read. */
+const CODE_BLOCKS = ['SRC', 'EXAMPLE', 'QUERY']
+const CODE_LANGUAGE: Record<string, string> = { EXAMPLE: '', QUERY: 'clojure' }
+
+/** The blocks Logseq borrowed from Org mode, `#+BEGIN_NOTE` to `#+END_NOTE`, in the
+ *  spellings everything else reads: a quote is a quote, a note or a warning is a
+ *  callout of that kind, and source code or a query is a fenced code block. One nib has no
+ *  spelling for is left as it was written. And the clock Logseq keeps on a task in
+ *  a `:LOGBOOK:` drawer is its own bookkeeping, which does not come. */
+function blocksOf(lines: readonly string[]): string[] {
+  const code = fenced(lines)
+  const out: string[] = []
+  let open: { kind: string; inside: string } | null = null
+  let drawer = false
+
+  for (const [at, line] of lines.entries()) {
+    if (code[at]) {
+      out.push(line)
+      continue
+    }
+
+    if (drawer) {
+      if (/^\s*:END:\s*$/i.test(line)) drawer = false
+      continue
+    }
+    // Only a block that is closed somewhere below is one; anything else is words.
+    const closed = (end: RegExp) => lines.slice(at + 1).some((later) => end.test(later))
+
+    if (/^\s*(?:-\s+)?:LOGBOOK:\s*$/i.test(line) && closed(/^\s*:END:\s*$/i)) {
+      drawer = true
+      continue
+    }
+
+    if (open) {
+      if (new RegExp(`^\\s*#\\+END_${open.kind}\\s*$`, 'i').test(line)) {
+        if (CODE_BLOCKS.includes(open.kind)) out.push(`${open.inside}\`\`\``)
+        open = null
+        continue
+      }
+      const words = line.startsWith(open.inside) ? line.slice(open.inside.length) : line.trimStart()
+      out.push(
+        CODE_BLOCKS.includes(open.kind)
+          ? `${open.inside}${words}`
+          : `${open.inside}> ${words}`.trimEnd(),
+      )
+      continue
+    }
+
+    const begin = /^(\s*(?:-\s+)?)#\+BEGIN_(\w+)(?:[ \t]+(.*?))?\s*$/i.exec(line)
+    const kind = begin?.[2]?.toUpperCase() ?? ''
+    const callout = ['NOTE', 'TIP', 'IMPORTANT', 'WARNING', 'CAUTION', 'PINNED'].includes(kind)
+    if (
+      begin &&
+      (callout || kind === 'QUOTE' || CODE_BLOCKS.includes(kind)) &&
+      closed(new RegExp(`^\\s*#\\+END_${kind}\\s*$`, 'i'))
+    ) {
+      const lead = begin[1] ?? ''
+      const inside = lead.replace(/-(\s+)$/, ' $1')
+      open = { kind, inside }
+      // A quote straight after another would be read as more of it.
+      const bullet = lead.includes('-')
+      if (!bullet && !CODE_BLOCKS.includes(kind) && out.at(-1)?.trimStart().startsWith('>'))
+        out.push('')
+      if (callout) out.push(`${lead}> [!${kind.toLowerCase()}]`)
+      else if (kind === 'QUOTE') out.push(`${lead}>`)
+      else out.push(`${lead}\`\`\`${CODE_LANGUAGE[kind] ?? (begin[3] ?? '').split(/\s/)[0]}`)
+      continue
+    }
+
+    out.push(line)
+  }
+
+  return out
 }
 
 /** One line of a note in the spellings everything else reads. */

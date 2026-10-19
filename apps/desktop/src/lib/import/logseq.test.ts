@@ -217,4 +217,63 @@ describe('a Logseq graph', () => {
 
     expect(logseqNote(code).body).toBe(code)
   })
+
+  test("a property's link to a file of the graph follows it to where it went", async () => {
+    const plan = await readLogseq([
+      file('pages/hls__paper.md', 'file:: [paper.pdf](../assets/my paper.pdf)\n\n- A highlight\n'),
+      file('assets/my paper.pdf', '%PDF'),
+    ])
+
+    expect(noteAt(plan, 'hls__paper.md')).toContain('[paper.pdf](assets/my%20paper.pdf)')
+  })
+
+  test("Logseq's quotes, notes and source blocks are a quote, a callout and code", () => {
+    const said = logseqNote(
+      [
+        '- #+BEGIN_WARNING',
+        '  **Back up** first',
+        '  #+END_WARNING',
+        '- #+BEGIN_QUOTE',
+        '  Said somebody',
+        '  #+END_QUOTE',
+        '  #+BEGIN_TIP',
+        '  Right after',
+        '  #+END_TIP',
+        '- #+BEGIN_QUERY',
+        '  {:query [:find ?b]}',
+        '  #+END_QUERY',
+        '- #+BEGIN_SRC clojure',
+        '  (println "TODO")',
+        '  #+END_SRC',
+        '- #+BEGIN_NOTE never closed',
+      ].join('\n'),
+    )
+
+    expect(said.body).toBe(
+      [
+        '- > [!warning]',
+        '  > **Back up** first',
+        '- >',
+        '  > Said somebody',
+        '',
+        '  > [!tip]',
+        '  > Right after',
+        '- ```clojure',
+        '  {:query [:find ?b]}',
+        '  ```',
+        '- ```clojure',
+        '  (println "TODO")',
+        '  ```',
+        '- #+BEGIN_NOTE never closed',
+      ].join('\n'),
+    )
+  })
+
+  test("a task's clock is Logseq's bookkeeping and does not come", () => {
+    const said = logseqNote(
+      '- DONE Write it\n  :LOGBOOK:\n  CLOCK: [2024-01-01 Mon 10:00]--[2024-01-01 Mon 11:00] =>  01:00:00\n  :END:\n- Next\n',
+    )
+
+    expect(said.body).toBe('- [x] Write it\n- Next\n')
+  })
 })
