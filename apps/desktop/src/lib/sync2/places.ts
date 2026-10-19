@@ -304,6 +304,15 @@ export async function settle(space: SpaceState, how: Settling): Promise<EntryRow
       if (want === undefined || entry.local_path === want) continue
       if (waits(want)) continue
       const kind = entry.kind === 'folder' ? 'folder' : 'file'
+      if (space.key(want).startsWith(space.key(`${entry.local_path}${SEP}`))) {
+        // Wanted inside where it is now: a new folder took its old name. No disk moves
+        // a folder into itself, so it steps aside and goes on in the next round.
+        const out = aside(entry.local_path, entry.id)
+        await how.disk.move(full(entry.local_path), full(out), kind)
+        carry(space, entry, out, moved)
+        progress += 1
+        continue
+      }
       const holder = space.at(want)
       if (holder && holder !== entry) {
         // Somebody else is still there: it waits aside, and moves on in its own turn.

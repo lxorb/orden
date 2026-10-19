@@ -26,7 +26,7 @@ data loss. **High** - data loss or a security hole on a specific path.
 | --- | --: | --: | --: |
 | Critical | 1 | 1 | 0 |
 | High | 14 | 14 | 0 |
-| Medium | 32 | 32 | 0 |
+| Medium | 33 | 33 | 0 |
 | Low | 16 | 10 | 6 |
 
 Open rows are being fixed; see the status column.
@@ -97,6 +97,7 @@ Open rows are being fixed; see the status column.
 | B61 | Medium | In the browser, sync v2 never saw a folder as there: one deleted on another device stayed with its files untracked (re-audit of B59; older than this branch) | Fixed `63170d329` | Nothing reads at a folder's own path | `onDisk` in the browser counts a folder that lists anything, or its marker | `on-disk.test.ts` (failed before) |
 | B62 | Medium | On a desktop, a folder deleted on another device was never removed: sync forgot the notes in it and sent them up again (re-audit of B61; older than this branch) | Fixed `64b147da4` | The crate stamps no folder, so `exists(folder)` was false and `forgetUnder` dropped the notes inside without removing them | `onDisk` on the desktop also asks the tree, which refuses a root that is not a folder | `on-disk.test.ts` (failed before) |
 | B63 | Medium | A folder renamed while a note was moved into it never reached its new name: it waited on every pass, its notes went one by one, an empty folder stayed (re-audit of B62; older than this branch) | Fixed `f0f620669` | Moves were ordered by where entries were; the note went first and its folder was made at the renamed folder's new name, which then read as taken | An entry waits while its target is inside a folder still on its way; a round that moves nothing ends the settle | `sync2/places.test.ts`, both orders (the note-first one failed before) |
+| B64 | Medium | A folder moved into a new folder that took its old name was asked to move inside itself, and sync threw on every pass (re-audit of B63; older than this branch) | Fixed (this commit) | The new folder has no place on disk yet, so nothing marked the target as inside the entry's own path | An entry wanted inside where it is steps aside first and moves on next round | `sync2/places.test.ts` with a disk that refuses a move into itself (failed before); 3000 random trees in a scratch fuzz all reach their wanted layout |
 | B48 | Low | After a self-linking note is renamed, a row of its properties can show the old link until its next save or scan | Open, accepted | `hear(target, after)` fires before `fileMoved` moves the rows store | - (the file on disk is right) | - |
 
 Not fixed, judged insignificant or out of scope: GFM's escaped backslash before a

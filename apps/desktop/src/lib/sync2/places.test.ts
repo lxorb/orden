@@ -62,3 +62,45 @@ describe('a folder renamed while a note was moved into it', () => {
     },
   )
 })
+
+describe('a folder moved into a new folder that took its old name', () => {
+  // Renamed Old, a new Projects made, and Old moved into it: the folder at Projects
+  // was asked to go into Projects/Old, inside itself, which no disk will do, and the
+  // settle threw on every pass.
+  test('steps aside first, and both end where they are wanted', async () => {
+    const disk = new MemoryDisk()
+    disk.folders.add('/r')
+    disk.folders.add('/r/Projects')
+    disk.files.set('/r/Projects/plan.md', 'p')
+    const real = disk.move.bind(disk)
+    disk.move = (from: string, to: string, kind: 'file' | 'folder') => {
+      if (to.startsWith(`${from}/`)) throw new Error(`${from} cannot go inside itself`)
+      return real(from, to, kind)
+    }
+    const fresh = row('P', 'folder', null, 'Projects', '')
+    const old = row('O', 'folder', 'P', 'Old', 'Projects')
+    const plan = row('N', 'note', 'O', 'plan.md', 'Projects/plan.md')
+    const space = new SpaceState(
+      { space_id: 's', root: '/r', cursor: 9, role: 'owner', store: null },
+      [fresh, old, plan],
+      [],
+      'd',
+      { platform: 'linux', foldsCase: true } as never,
+    )
+
+    await settle(space, {
+      disk,
+      join: (a: string, b: string) => `${a}/${b}`,
+      keeps: () => false,
+      forget: () => undefined,
+    })
+
+    expect([fresh.local_path, old.local_path, plan.local_path]).toEqual([
+      'Projects',
+      'Projects/Old',
+      'Projects/Old/plan.md',
+    ])
+    expect([...disk.files.keys()]).toEqual(['/r/Projects/Old/plan.md'])
+    expect([...disk.folders].filter((one) => one.includes('.nib-moving'))).toEqual([])
+  })
+})
