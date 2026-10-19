@@ -4,7 +4,7 @@ import { spaceForHost } from './blog'
 import { readSite, SVG_POLICY } from './blog/site'
 import { now } from './crypto'
 import { readSpaceFiles } from './spaces/files'
-import { BYTES, hashOf, hashOfBytes, held, WRONG_BYTES } from './sync2/files'
+import { BYTES, hashOfBytes, held, holdsItsName, WRONG_BYTES } from './sync2/files'
 import { fits } from './storage'
 import type { Env, Variables } from './types'
 
@@ -96,7 +96,7 @@ blobs.put('/:hash', async (context) => {
   // it is the same bytes, and this account keeps it too. Unless it is not the same
   // bytes - something put there under a hash before the bytes were checked - and
   // these are: then the right bytes take its place, for everybody who keeps them.
-  if (!there || (verified && !(await holdsItsName(context.env, hash)))) {
+  if (!there || (verified && !(await holdsItsName(context.env, hash, body.byteLength)))) {
     await context.env.NOTES.put(key(hash), body, { httpMetadata: { contentType: type } })
   }
   // And the row may already be this account's by the time this runs: the check
@@ -112,12 +112,6 @@ blobs.put('/:hash', async (context) => {
 
   return context.json({ hash, stored: true }, 201)
 })
-
-/** Whether the object under a hash is the bytes that hash names. */
-async function holdsItsName(env: Env, hash: string): Promise<boolean> {
-  const object = await env.NOTES.get(key(hash))
-  return object !== null && (await hashOf(object)) === hash
-}
 
 /** Gives a file back and stops keeping it. The object survives while any other
  *  account still references it. */

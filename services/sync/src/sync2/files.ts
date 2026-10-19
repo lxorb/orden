@@ -144,11 +144,69 @@ export async function held(
   return { mine: row?.mine === 1, there: (row?.rows ?? 0) > 0 }
 }
 
+/** Whether the object under a hash is the bytes that hash names, for an upload that has
+ *  just checked its own bytes against it and is about to keep the copy that is there.
+ *
+ *  Not taken on trust because a row is there: v1 keeps a drawn diagram's SVG under a
+ *  name that is not the hash of its bytes (blobs.ts), so a name somebody else wrote
+ *  first may hold anything. A copy of another size is not these bytes; one of the
+ *  same size is hashed. */
+export async function holdsItsName(env: Env, hash: string, size: number): Promise<boolean> {
+  const object = await env.NOTES.get(blobKey(hash))
+  if (!object) return false
+  // Another size is another file, and its body is never read.
+  if (object.size !== size) return false
+  return (await hashOf(object)) === hash
+}
+
+/** How many hashes one night's look for misnamed copies reads, a page at a time. */
+const MISNAMED_PAGE = 100
+const MISNAMED_AT_MOST = 1000
+
+/** Copies kept under a hash they are not the bytes of, taken away by the nightly job.
+ *
+ *  Before uploads checked the copy that was already there (`holdsItsName`), an SVG v1
+ *  kept unchecked under somebody else's file's hash was what everybody who uploaded
+ *  that file afterwards was served. Such a hash is held both as an SVG - the only
+ *  type v1 keeps unchecked - and as something else, by whoever uploaded the real
+ *  file. Where its copy is not the bytes the hash names, the copy and every row of it
+ *  go: the file reads as missing rather than as somebody else's bytes, and the next
+ *  upload of the real one is kept, as the first of it. A hash held only as an SVG is a
+ *  drawn diagram's, named by its fence, and is left alone. */
+export async function sweepMisnamed(env: Env): Promise<number> {
+  let after = ''
+  let gone = 0
+  for (let read = 0; read < MISNAMED_AT_MOST; read += MISNAMED_PAGE) {
+    const { results } = await env.DB.prepare(
+      `select distinct hash from blobs
+        where type = 'image/svg+xml' and hash > ?
+          and hash in (select hash from blobs where type != 'image/svg+xml')
+        order by hash limit ?`,
+    )
+      .bind(after, MISNAMED_PAGE)
+      .all<{ hash: string }>()
+
+    for (const { hash } of results) {
+      const object = await env.NOTES.get(blobKey(hash))
+      if (object && (await hashOf(object)) === hash) continue
+      await env.NOTES.delete(blobKey(hash))
+      await env.DB.prepare('delete from blobs where hash = ?').bind(hash).run()
+      gone++
+    }
+
+    const last = results.at(-1)
+    if (!last || results.length < MISNAMED_PAGE) break
+    after = last.hash
+  }
+  return gone
+}
+
 export const v2Blobs = new Hono<App>()
 
 /** A file's bytes, in one request. The object already there - somebody else's copy of
  *  the same file - is not written again, so what a published page is served stays
- *  what it was. */
+ *  what it was. Unless it is not the same bytes (`holdsItsName`): then these, which
+ *  are, take its place for everybody who keeps that hash. */
 v2Blobs.put('/:hash', async (context) => {
   const user = context.get('user')
   const hash = context.req.param('hash').toLowerCase()
@@ -170,7 +228,7 @@ v2Blobs.put('/:hash', async (context) => {
   }
 
   const type = typeOf(context.req.header('content-type'))
-  if (!there) {
+  if (!there || !(await holdsItsName(context.env, hash, body.byteLength))) {
     await context.env.NOTES.put(blobKey(hash), body, { httpMetadata: { contentType: type } })
   }
   await keepBlob(context.env, user.id, hash, body.byteLength, type)
@@ -309,8 +367,12 @@ v2Blobs.post('/parts/:upload', async (context) => {
   }
 
   // Checked, so they go where the blob lives - unless a copy somebody else finished
-  // meanwhile is already there, which is the same bytes and stays as it is.
-  if (!(await held(context.env, user.id, upload.hash)).there) {
+  // meanwhile is already there, which is the same bytes and stays as it is. Only if it
+  // is: see `holdsItsName`.
+  if (
+    !(await held(context.env, user.id, upload.hash)).there ||
+    !(await holdsItsName(context.env, upload.hash, upload.size))
+  ) {
     await moveInto(context.env, upload.staging, blobKey(upload.hash), upload.type)
   }
   await context.env.NOTES.delete(upload.staging)

@@ -43,7 +43,7 @@ import { online } from './machines/routes'
 import { settings } from './settings'
 import { v2Docs, v2Spaces } from './sync2'
 import { syncAdmin } from './sync2/admin'
-import { v2Blobs, v2Files } from './sync2/files'
+import { sweepMisnamed, v2Blobs, v2Files } from './sync2/files'
 import { v2Maps } from './sync2/maps'
 import { sweepTreeOps } from './sync2/tree'
 import { spaces } from './spaces'
@@ -430,6 +430,8 @@ function scheduled(event: ScheduledEvent, env: Env, context: ExecutionContext) {
   // And what a deleted account left in the bucket and the rooms that the request
   // deleting it did not get to; see leftovers.ts.
   context.waitUntil(sweepLeftovers(env))
+  // And any copy of a file kept under a hash it is not the bytes of; see sync2/files.ts.
+  context.waitUntil(sweepMisnamed(env))
   // And what the notes written before publishing could read them say about
   // themselves, two hundred at a time; see blog/fill.ts.
   context.waitUntil(fillFronts(env, null))
