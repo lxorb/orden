@@ -18,7 +18,7 @@
 import { Hono } from 'hono'
 import { now } from '../crypto'
 import { laterOf, pokeSpace } from '../hub/poke'
-import { nextSeq } from '../notes'
+import { atNextSeq, TAKEN_SEQ } from '../notes'
 import { OUT_OF_SPACE } from '../refused'
 import { atLeast, spaceOf } from '../spaces/space'
 import { fits } from '../storage'
@@ -448,15 +448,17 @@ v2Files.put('/:space/:id', atLeast('write', 'space'), async (context) => {
   const device = await deviceOf(context)
   if (file.deleted) await revive(context.env, space.id, device, id)
 
-  const seq = await nextSeq(context.env, space.id)
-  const written = await context.env.DB.prepare(
-    `update notes set hash = ?, size = ?, seq = ?, doc_seq = ?, doc_by = ?, updated_by = ?,
-                      version = version + 1, updated_at = ?
-      where id = ? and hash = ?`,
+  // The number taken and the row written as one; see `atNextSeq`.
+  const { seq, changes } = await atNextSeq(
+    context.env,
+    space.id,
+    context.env.DB.prepare(
+      `update notes set hash = ?2, size = ?3, seq = ${TAKEN_SEQ}, doc_seq = ${TAKEN_SEQ},
+                        doc_by = ?4, updated_by = ?4, version = version + 1, updated_at = ?5
+        where id = ?6 and hash = ?7`,
+    ).bind(space.id, hash, blob.size, device, now(), id, base),
   )
-    .bind(hash, blob.size, seq, seq, device, device, now(), id, base)
-    .run()
-  if (!written.meta.changes) {
+  if (!changes) {
     const current = await fileIn(context.env, space.id, id)
     return context.json({
       moved: { hash: current?.hash ?? '', size: current?.size ?? 0, at: current?.updated_at ?? 0 },

@@ -2,7 +2,7 @@ import { freePath } from '@nib/markdown/paths'
 import { Hono } from 'hono'
 import { chunks, places } from './bound'
 import { now } from './crypto'
-import { nextSeq, noteKey, presentNote } from './notes'
+import { atNextSeq, noteKey, presentNote, TAKEN_SEQ } from './notes'
 import { snapshotKey } from './rooms/epoch'
 import { deviceOf } from './sync2/device'
 import { deleteById } from './sync2/ops'
@@ -374,12 +374,16 @@ trash.post('/notes/:id/restore', async (context) => {
   const path = freePath(note.path, (candidate) => taken.has(candidate))
 
   const at = now()
-  const seq = await nextSeq(env, note.space_id)
-  await env.DB.prepare(
-    'update notes set deleted = 0, deleted_at = null, path = ?, seq = ?, version = version + 1, updated_at = ? where id = ?',
+  // The number taken and the row written as one; see `atNextSeq`.
+  const { seq } = await atNextSeq(
+    env,
+    note.space_id,
+    env.DB.prepare(
+      `update notes set deleted = 0, deleted_at = null, path = ?2, seq = ${TAKEN_SEQ},
+                        version = version + 1, updated_at = ?3
+        where id = ?4`,
+    ).bind(note.space_id, path, at, note.id),
   )
-    .bind(path, seq, at, note.id)
-    .run()
 
   return context.json({
     note: presentNote({

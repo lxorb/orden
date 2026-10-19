@@ -69,11 +69,32 @@ function d1(database: DatabaseSync, loses: Loses, bound: Bound, justBefore: Just
         // `meta.changes` is what a conditional write reads to find out whether
         // it landed; see `saveNote`. Node's driver reports the same number under
         // the same name, so the fake passes it straight through.
-        run(): Promise<{ success: true; meta: { changes: number } }> {
-          if (lost) return Promise.resolve({ success: true, meta: { changes: 0 } })
+        //
+        // And the rows, for a statement that answers with some: D1 answers a batch with
+        // every statement's rows, which is how a batch reads back what it just wrote
+        // (see `atNextSeq` in notes.ts).
+        run(): Promise<{ success: true; results: unknown[]; meta: { changes: number } }> {
+          if (lost) return Promise.resolve({ success: true, results: [], meta: { changes: 0 } })
 
-          const result = database.prepare(sql).run(...statement.args)
-          return Promise.resolve({ success: true, meta: { changes: Number(result.changes) } })
+          const prepared = database.prepare(sql)
+          // Node has had `columns` since 22.16; the types this repo pins predate it.
+          if ((prepared as unknown as { columns(): unknown[] }).columns().length) {
+            const changed = () =>
+              (database.prepare('select total_changes() as n').get() as { n: number }).n
+            const before = changed()
+            const results = prepared.all(...statement.args)
+            return Promise.resolve({
+              success: true,
+              results,
+              meta: { changes: changed() - before },
+            })
+          }
+          const result = prepared.run(...statement.args)
+          return Promise.resolve({
+            success: true,
+            results: [],
+            meta: { changes: Number(result.changes) },
+          })
         },
       }
       return statement
