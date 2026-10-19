@@ -10,7 +10,9 @@ What it proves, and photographs:
   among them, another tab pressed and then this one: the words are there, the field has
   the keyboard, and the caret is where it was.
 * **Ctrl+Tab from inside the field**: the same, with the keyboard never leaving it.
-* **Enter**: an address gone to leaves nothing waiting.
+* **Left for something else**: the field pressed past, then another tab and back: the
+  field does not take the keyboard, which only a field that had it as its tab was left
+  does.
 
 From the repository root:
 
@@ -97,6 +99,38 @@ def drive(browser: Browser, scheme: str) -> None:
     page.wait_for_timeout(400)
     back = page.evaluate(STATE)
     check(f"[{scheme}] Ctrl+Tab and back: {back['value']!r} at {back['caret']}", back["value"] == "weather ina zurich" and back["caret"] == [11, 11] and back["focused"])
+
+    # Left for something else in the tab, then another tab and back: the field is not put
+    # in front of the next key, which only a field that had the keyboard is (#381).
+    box = page.locator('input[role="combobox"][aria-label="Address"]').first.bounding_box()
+    assert box
+    # Bare ground, clear of the new tab's tiles.
+    page.mouse.click(box["x"] + 60, box["y"] + box["height"] + 560)
+    page.wait_for_timeout(300)
+    left = page.evaluate(STATE)
+    check(f"[{scheme}] a press past the field takes the keyboard from it", not left["focused"])
+    tab_of(page, note).click()
+    DRIVE.wait_for(page, f"window.nibApp.workspace.active?.id === {note!r}", "the note in front")
+    page.wait_for_timeout(300)
+    tab_of(page, web).click()
+    DRIVE.wait_for(page, f"window.nibApp.workspace.active?.id === {web!r}", "the new tab again")
+    page.wait_for_timeout(500)
+    unasked = page.evaluate(STATE)
+    shot(page, f"{scheme}-3-left")
+    check(f"[{scheme}] back, the field it was left by does not take the keyboard", not unasked["focused"])
+
+    # And a new tab gone from at once, with its field never typed in or left: back, its
+    # field has the keyboard, which it had.
+    page.evaluate("() => window.nibApp.workspace.openWebsite()")
+    DRIVE.wait_for(page, "document.activeElement?.getAttribute('aria-label') === 'Address'", "another new tab's field")
+    fresh = page.evaluate("() => window.nibApp.workspace.active.id")
+    tab_of(page, note).click()
+    DRIVE.wait_for(page, f"window.nibApp.workspace.active?.id === {note!r}", "the note in front")
+    page.wait_for_timeout(300)
+    tab_of(page, fresh).click()
+    DRIVE.wait_for(page, f"window.nibApp.workspace.active?.id === {fresh!r}", "the fresh tab again")
+    page.wait_for_timeout(500)
+    check(f"[{scheme}] a field that had the keyboard has it back", page.evaluate(STATE)["focused"])
     page.context.close()
 
 
