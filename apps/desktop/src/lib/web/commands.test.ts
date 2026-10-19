@@ -375,6 +375,26 @@ describe('the trash', () => {
     expect(await webInvoke('list_trash')).toEqual([])
   })
 
+  // Sync v2 trashes a picture deleted on another device; the trash asked only of
+  // the notes, refused it, and the next pass asked again.
+  test('holds a picture, which lives with the assets alone, and puts it back', async () => {
+    disk.assets.set('/Notes/shot.png', {
+      path: '/Notes/shot.png',
+      type: 'image/png',
+      data: 'AAAA',
+      modified: 1,
+    })
+
+    const entry = await webInvoke<{ id: string }>('trash_item', {
+      path: '/Notes/shot.png',
+      kind: 'note',
+    })
+    expect(disk.assets.has('/Notes/shot.png')).toBe(false)
+
+    expect(await webInvoke('restore_trash', { id: entry.id })).toBe('/Notes/shot.png')
+    expect(disk.assets.has('/Notes/shot.png')).toBe(true)
+  })
+
   test('puts a note back beside the one that took its place', async () => {
     await write('/Notes/Idea.md', 'first')
     const entry = await webInvoke<{ id: string }>('trash_item', {

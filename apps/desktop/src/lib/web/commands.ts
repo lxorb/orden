@@ -422,6 +422,16 @@ async function occupied(path: string): Promise<boolean> {
   return (await files.paths()).some((one) => one.startsWith(`${path}/`))
 }
 
+/** Whether anything is at `path` for the trash to take or give back: a note, a folder
+ *  of them, or a picture or a PDF, which live in the asset store alone. Not
+ *  `occupied`, which a rename asks after moving the pictures already. Asking only of
+ *  the notes refused a picture deleted on another device, and sync v2 asked again on
+ *  every pass and got no further. */
+async function holds(path: string): Promise<boolean> {
+  if ((await occupied(path)) || (await assets.get(path))) return true
+  return (await assets.paths()).some((one) => one.startsWith(`${path}/`))
+}
+
 /** `path` if nothing is there, else `name 2`, `name 3`... - before the
  *  extension for a note, after the name for a folder or a space. */
 async function freeSpot(path: string, isFile: boolean): Promise<string> {
@@ -442,7 +452,7 @@ async function freeSpot(path: string, isFile: boolean): Promise<string> {
 async function trashItem(path: string, kind: string): Promise<TrashEntry> {
   const source = normalise(path)
   if (source === '/' || source.startsWith(TRASH)) throw new Error('that cannot be deleted')
-  if (!(await occupied(source))) throw new Error('nothing is there')
+  if (!(await holds(source))) throw new Error('nothing is there')
 
   const id = `${now()}-${trashCounter++}`
   const name = basename(source)
@@ -475,7 +485,7 @@ async function restoreTrash(id: string): Promise<string> {
 
   const held = `${TRASH}/${entry.id}/${entry.name}`
   const rest = entries.filter((one) => one.id !== id)
-  if (!(await occupied(held))) {
+  if (!(await holds(held))) {
     await saveTrash(rest)
     throw new Error('it is already gone')
   }
