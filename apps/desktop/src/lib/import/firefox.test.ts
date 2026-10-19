@@ -111,12 +111,35 @@ describe("Firefox's tabs and bookmarks as nib's", () => {
             { guid: 's1', type: 'text/x-moz-place-separator' },
           ],
         },
+        // Roots known by the name of the root they are, with no id of their own.
+        {
+          title: 'Bookmarks Toolbar',
+          root: 'toolbarFolder',
+          type: 'text/x-moz-place-container',
+          children: [
+            { title: 'Getting Started', type: 'text/x-moz-place', uri: 'http://start.example/' },
+          ],
+        },
+        {
+          title: 'Tags',
+          root: 'tagsFolder',
+          type: 'text/x-moz-place-container',
+          children: [
+            {
+              title: 'tagged',
+              type: 'text/x-moz-place-container',
+              children: [{ type: 'text/x-moz-place', uri: 'http://start.example/' }],
+            },
+          ],
+        },
       ],
     }
     const [space] = planned(null, older).spaces
+    expect(space?.order.Bookmarks).toEqual(['Bookmarks toolbar', 'Bookmarks menu'])
     expect(space?.order['Bookmarks/Bookmarks menu/Mozilla Firefox']).toEqual([
       'Help and Tutorials.url',
     ])
+    expect(space?.order['Bookmarks/Bookmarks toolbar']).toEqual(['Getting Started.url'])
   })
 
   test('writes a bookmark as kept on the day it was bookmarked, a tab on the day of the import', () => {

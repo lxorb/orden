@@ -134,20 +134,35 @@ function containerOf(value: unknown): number {
   return Number.isInteger(said) && said > 0 ? said : 0
 }
 
+/** The roots by the names an older Firefox's backups give them instead of an id. */
+const ROOT_NAMES: Record<string, string> = {
+  toolbarFolder: 'toolbar_____',
+  bookmarksMenuFolder: 'menu________',
+  unfiledBookmarksFolder: 'unfiled_____',
+  mobileFolder: 'mobile______',
+  tagsFolder: TAGS,
+}
+
+/** Which of Firefox's roots a node is, by its id or the name of the root it is. */
+function rootOf(node: Said): string | null {
+  const named = typeof node.root === 'string' ? ROOT_NAMES[node.root] : undefined
+  return named ?? text(node.guid)
+}
+
 /** The bookmark tree, each of Firefox's roots a folder in Bookmarks. */
 function readBookmarks(root: Said, made: Made, words: FolderWords) {
-  const roots = list(root.children).filter((one) => text(one.guid) !== TAGS)
+  const roots = list(root.children).filter((one) => rootOf(one) !== TAGS)
   const known = ROOTS.flatMap(([guid, word]) => {
-    const found = roots.find((one) => one.guid === guid)
+    const found = roots.find((one) => rootOf(one) === guid)
     return found ? [{ node: found, name: words[word] }] : []
   })
   const others = roots
-    .filter((one) => !ROOTS.some(([guid]) => guid === one.guid))
+    .filter((one) => !ROOTS.some(([guid]) => guid === rootOf(one)))
     .map((node) => ({ node, name: text(node.title) ?? words.other }))
 
   for (const { node, name } of [...known, ...others]) {
     made.folder('bookmarks', words.bookmarks, null)
-    const id = `bookmark:${text(node.guid) ?? name}`
+    const id = `bookmark:${rootOf(node) ?? name}`
     made.folder(id, name, 'bookmarks')
     walk(node, id, made, words, 0)
   }
