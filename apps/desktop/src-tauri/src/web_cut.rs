@@ -29,8 +29,11 @@
 //! hidden, so the engine keeps its frame and the page is back the moment the sheet goes,
 //! with nothing to repaint.
 //!
-//! The system engine on Windows only. Elsewhere `CUTS` is false, and the window answers a
-//! layer over a page the way it always has: the still picture, and the page hidden.
+//! The system engine on Windows, and CEF on Linux, where the page is an X11 window of
+//! its own and the shape is the X server's (the Shape extension): before it, a page on
+//! Linux was never cut, and a toast took a band of the pane under the page rather than
+//! floating over it (#512). Elsewhere `CUTS` is false, and the window answers a layer
+//! over a page the way it always has: the still picture, and the page hidden.
 
 use std::collections::HashMap;
 use std::sync::{LazyLock, Mutex, PoisonError};
@@ -116,7 +119,10 @@ pub fn shape_of(cut: Option<&Cut>, wide: u32, tall: u32, scale: f64) -> Shape {
 }
 
 /// Whether this build cuts layers out of a page at all.
-pub const CUTS: bool = cfg!(all(windows, not(feature = "cef")));
+pub const CUTS: bool = cfg!(any(
+    all(windows, not(feature = "cef")),
+    all(target_os = "linux", feature = "cef")
+));
 
 /// The cut each page was last given, and the shape that made of it, so the same shape is
 /// not given twice - a region set again is a page drawn again - and a page resized under
@@ -214,7 +220,162 @@ mod engine {
     }
 }
 
-#[cfg(not(all(windows, not(feature = "cef"))))]
+#[cfg(all(target_os = "linux", feature = "cef"))]
+mod engine {
+    use std::sync::LazyLock;
+
+    use tauri::Webview;
+    use x11rb::connection::Connection as _;
+    use x11rb::protocol::shape::{ConnectionExt as _, SK, SO};
+    use x11rb::protocol::xproto::{ClipOrdering, Rectangle};
+    use x11rb::rust_connection::RustConnection;
+
+    use super::{Piece, Shape};
+
+    /// The crate's own connection to the X server, for shapes alone: made the first time
+    /// a page is cut, and `None` where there is no X server or it has no Shape extension.
+    static X: LazyLock<Option<RustConnection>> = LazyLock::new(|| {
+        let (x, _) = x11rb::connect(None).ok()?;
+        x.shape_query_version().ok()?.reply().ok()?;
+        Some(x)
+    });
+
+    /// The page's own window, the browser's, as the X server knows it - every window
+    /// Chromium draws the page in is inside it, and a shape on a window clips all inside
+    /// it - given `shape`: the region it may draw in and take presses in, the rest
+    /// showing the app's own page beneath, which is a window of its own under it.
+    pub fn shape(view: &Webview, shape: Shape) {
+        let _ = view.with_webview(move |platform| {
+            let Some(window) = crate::web_keys::x11_window(&platform) else {
+                return;
+            };
+            let Some(x) = X.as_ref() else {
+                return;
+            };
+            let _ = give(x, window, shape.as_deref());
+        });
+    }
+
+    fn give(x: &RustConnection, window: u32, shape: Option<&[Piece]>) -> Option<()> {
+        match shape {
+            // All of it: no shape at all, which is the window's own rectangle.
+            None => {
+                x.shape_mask(SO::SET, SK::BOUNDING, window, 0, 0, x11rb::NONE)
+                    .ok()?;
+            }
+            Some(pieces) => {
+                let (whole, hollows) = match pieces.split_first() {
+                    None => (Vec::new(), &[][..]),
+                    Some((&(left, top, right, bottom, _), hollows)) => {
+                        (rectangles(left, top, right, bottom, 0), hollows)
+                    }
+                };
+                x.shape_rectangles(
+                    SO::SET,
+                    SK::BOUNDING,
+                    ClipOrdering::UNSORTED,
+                    window,
+                    0,
+                    0,
+                    &whole,
+                )
+                .ok()?;
+                let cut: Vec<Rectangle> = hollows
+                    .iter()
+                    .flat_map(|&(left, top, right, bottom, round)| {
+                        rectangles(left, top, right, bottom, round)
+                    })
+                    .collect();
+                if !cut.is_empty() {
+                    x.shape_rectangles(
+                        SO::SUBTRACT,
+                        SK::BOUNDING,
+                        ClipOrdering::UNSORTED,
+                        window,
+                        0,
+                        0,
+                        &cut,
+                    )
+                    .ok()?;
+                }
+            }
+        }
+        x.flush().ok()
+    }
+
+    /// A rectangle from `left`, `top` to `right`, `bottom` with corners of diameter
+    /// `round`, as the rectangles the X server takes: one for the middle, and a row a
+    /// pixel tall for each line of the corners above and below it, each as wide as the
+    /// curve is there.
+    pub fn rectangles(left: i32, top: i32, right: i32, bottom: i32, round: i32) -> Vec<Rectangle> {
+        let wide = right - left;
+        let tall = bottom - top;
+        if wide <= 0 || tall <= 0 {
+            return Vec::new();
+        }
+        let radius = (round / 2).clamp(0, wide.min(tall) / 2);
+        let rect = |x: i32, y: i32, width: i32, height: i32| Rectangle {
+            x: clamp16(x),
+            y: clamp16(y),
+            width: u16::try_from(width.max(0)).unwrap_or(u16::MAX),
+            height: u16::try_from(height.max(0)).unwrap_or(u16::MAX),
+        };
+        let mut all = vec![rect(left, top + radius, wide, tall - 2 * radius)];
+        for line in 0..radius {
+            let inset = inset(radius, line);
+            all.push(rect(left + inset, top + line, wide - 2 * inset, 1));
+            all.push(rect(left + inset, bottom - 1 - line, wide - 2 * inset, 1));
+        }
+        all
+    }
+
+    /// How far in from the side a corner of `radius` is on its `line`th line from the
+    /// top: where a circle's edge crosses the middle of that line.
+    #[allow(
+        clippy::cast_possible_truncation,
+        reason = "never more than the radius, which is a page's size at most"
+    )]
+    fn inset(radius: i32, line: i32) -> i32 {
+        let r = f64::from(radius);
+        let off = r - f64::from(line) - 0.5;
+        (r - (r * r - off * off).max(0.0).sqrt()).round() as i32
+    }
+
+    fn clamp16(value: i32) -> i16 {
+        i16::try_from(value.clamp(i32::from(i16::MIN), i32::from(i16::MAX))).unwrap_or(0)
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::rectangles;
+
+        /// A square corner is the one rectangle; a round one is narrower on its first
+        /// line than its last, and no line of it is wider than the whole.
+        #[test]
+        fn corners_are_rows_as_wide_as_the_curve() {
+            let square = rectangles(10, 20, 110, 70, 0);
+            assert_eq!(square.len(), 1);
+            assert_eq!(
+                (square[0].x, square[0].y, square[0].width, square[0].height),
+                (10, 20, 100, 50)
+            );
+
+            let round = rectangles(0, 0, 100, 50, 16);
+            assert_eq!(round.len(), 1 + 2 * 8);
+            assert_eq!((round[0].y, round[0].height), (8, 34));
+            let first = round[1];
+            let last = round[2 * 7 + 1];
+            assert!(first.width < last.width, "{first:?} {last:?}");
+            assert!(round.iter().all(|one| one.width <= 100));
+            assert!(rectangles(0, 0, 0, 10, 4).is_empty());
+        }
+    }
+}
+
+#[cfg(not(any(
+    all(windows, not(feature = "cef")),
+    all(target_os = "linux", feature = "cef")
+)))]
 mod engine {
     use tauri::Webview;
 
