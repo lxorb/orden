@@ -112,6 +112,10 @@ export class NoteDoc {
    *  editor watches - the reading view - because `words` itself only catches up
    *  when something asks for it, and a pane that is only reading never does. */
   revision = $state(0)
+  /** The revision a version put back from the history made, which a canvas takes whole
+   *  rather than merging with: what was deleted since comes back and what was added
+   *  since goes, the way a restore reads (#533). Null for every other change. */
+  restoredAt: number | null = null
   /** True while text is being put in that leaves the note in step with its file,
    *  which is nothing the app has to be told about; see `replace`. */
   private quiet = false

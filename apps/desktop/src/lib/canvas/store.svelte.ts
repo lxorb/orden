@@ -401,6 +401,19 @@ export class CanvasStore implements PlaneSurface {
     if (this.note.revision === this.at) return false
 
     const arrived = this.parse(this.note.text)
+
+    // A version put back from the history is the plane the reader asked for, whole:
+    // merged, what was deleted since stayed deleted and what was added since stayed,
+    // so nothing came back and the merge was written over the version (#533). Taken as
+    // one edit - undoable, to the room as what it changed, its deletions and what it
+    // brought back stamped as now, so the other devices take it the same way.
+    if (this.note.restoredAt === this.note.revision) {
+      this.at = this.note.revision
+      this.edit(arrived)
+      this.keepPicked()
+      return true
+    }
+
     const ours = this.canvas
     // A plane in a room always has something of its own: the room's other devices
     // are holding it, so words arriving under it are one more copy to merge with
