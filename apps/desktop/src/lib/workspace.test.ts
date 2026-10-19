@@ -81,6 +81,11 @@ vi.mock('./tauri', async (importOriginal) => ({
     if (command === 'read_note' && holding.read && holding.readPath === pathOf(args)) {
       await holding.read
     }
+    // The browser's listing, answering for the notes here and the folders they are in.
+    if (command === 'path_exists') {
+      const at = pathOf(args)
+      return Object.keys(notes).some((one) => one === at || one.startsWith(`${at}/`))
+    }
     if (command !== 'read_note') return undefined
 
     const path = pathOf(args)
