@@ -174,7 +174,8 @@ sheet, where it asks outright.
 
 `screenshot` is Windows and macOS. A webview cannot photograph the window it is
 drawn in, so the app says where the window is and the platform's own tool takes the
-picture: `scripts/capture-window.ps1` on Windows, `screencapture -R` on macOS. On
+picture: `scripts/capture-window.ps1` on Windows, `screencapture -l` on macOS, handed the
+number of the answering process's window so nothing in front of it lands in the file. On
 Linux there is nothing honest to shell out to, since X11 and Wayland share no
 capture tool, and it says so.
 
