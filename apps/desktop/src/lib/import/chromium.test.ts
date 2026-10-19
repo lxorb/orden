@@ -68,6 +68,36 @@ describe("Chrome's tabs and bookmarks as nib's", () => {
     expect(read?.added?.startsWith('2026-10-18T')).toBe(true)
   })
 
+  test("puts a signed-in profile's account bookmarks in the same roots, first", () => {
+    const account = {
+      roots: {
+        bookmark_bar: {
+          children: [
+            {
+              type: 'folder',
+              guid: 'a-work',
+              name: 'Work',
+              children: [{ type: 'url', url: 'https://wiki.example.com/', name: 'Wiki' }],
+            },
+          ],
+        },
+        other: { children: [] },
+        synced: { children: [{ type: 'url', url: 'https://phone.example.com/', name: 'Phone' }] },
+      },
+    }
+    const sidebar = chromiumSidebar(null, BOOKMARKS, 'Chrome', WORDS, account)
+    const chrome = sidebarImport(sidebar, NOW, { text: 'none' }).spaces[0]
+    expect(chrome?.order.Bookmarks).toEqual([
+      'Bookmarks bar',
+      'Other bookmarks',
+      'Mobile bookmarks',
+    ])
+    expect(chrome?.order['Bookmarks/Bookmarks bar']).toEqual(['Work', 'Work 2', 'News.url'])
+    expect(chrome?.order['Bookmarks/Bookmarks bar/Work']).toEqual(['Wiki.url'])
+    expect(chrome?.order['Bookmarks/Bookmarks bar/Work 2']).toEqual(['Board.url'])
+    expect(chrome?.order['Bookmarks/Mobile bookmarks']).toEqual(['Phone.url'])
+  })
+
   test('reads the bookmarks alone where the session could not be', () => {
     expect(space(BOOKMARKS, null)?.order['']).toEqual(['Bookmarks'])
     expect(space(null, null)?.files).toEqual([])
