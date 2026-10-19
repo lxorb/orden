@@ -80,6 +80,9 @@ function undeviced(name: string): string {
 
 /** The name without the id its exporter stuck on the end. */
 export function withoutNotionId(name: string): string {
+  // A folder has no extension, and a dot in its name is a dot in the title:
+  // `v1.2 Plans 1a2b...7890/`.
+  if (NOTION_ID.test(name)) return name.replace(NOTION_ID, '')
   const at = name.lastIndexOf('.')
   const stem = at > 0 ? name.slice(0, at) : name
   const extension = at > 0 ? name.slice(at) : ''
