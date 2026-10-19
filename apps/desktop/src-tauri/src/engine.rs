@@ -402,7 +402,10 @@ pub(crate) fn ui_window<'a, M: tauri::Manager<crate::Engine>>(
     // has no tab strip for Chrome to act on. A web tab is Chrome style, for the browser's
     // own pages and extensions; see web_tabs.rs.
     #[cfg(feature = "cef")]
-    let building = own_window(building, manager.app_handle());
+    let building = {
+        let _ = OWN_PROFILE.set(app_profile(manager.app_handle())?);
+        own_window(building)
+    };
     Ok(building)
 }
 
@@ -410,25 +413,26 @@ pub(crate) fn ui_window<'a, M: tauri::Manager<crate::Engine>>(
 /// page in the interface's own profile, Alloy style (see `ui_window`), and the window
 /// moved and resized by the page's own presses, which never reach GTK (`window_drag.rs`).
 ///
-/// A profile folder that cannot be made leaves the page in the engine's own, said in the
-/// log, rather than the window not opening at all.
+/// The profile's folder is made for the first window, on the thread that sets the app
+/// up, and only remembered for every window after it, whose command runs on the
+/// window's own thread, where nothing may wait on the disk.
 #[cfg(feature = "cef")]
-pub(crate) fn own_window<'a, M: tauri::Manager<crate::Engine>>(
-    building: tauri::WebviewWindowBuilder<'a, crate::Engine, M>,
-    app: &AppHandle,
-) -> tauri::WebviewWindowBuilder<'a, crate::Engine, M> {
+pub(crate) fn own_window<M: tauri::Manager<crate::Engine>>(
+    building: tauri::WebviewWindowBuilder<'_, crate::Engine, M>,
+) -> tauri::WebviewWindowBuilder<'_, crate::Engine, M> {
     use tauri_runtime_cef::{RuntimeStyle, WebviewWindowBuilderCefExt as _};
     let building = building
         .browser_runtime_style(RuntimeStyle::Alloy)
         .initialization_script(crate::window_drag::SCRIPT);
-    match app_profile(app) {
-        Ok(profile) => building.data_directory(profile),
-        Err(error) => {
-            crate::logs::say(app, "error", &format!("the window's profile: {error}"));
-            building
-        }
+    match OWN_PROFILE.get() {
+        Some(profile) => building.data_directory(profile.clone()),
+        None => building,
     }
 }
+
+/// The interface's profile folder, once the first window has made it.
+#[cfg(feature = "cef")]
+static OWN_PROFILE: std::sync::OnceLock<PathBuf> = std::sync::OnceLock::new();
 
 /// Whether a page is one the engine loads for itself rather than one a tab was sent to.
 ///

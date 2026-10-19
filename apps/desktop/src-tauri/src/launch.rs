@@ -378,7 +378,7 @@ fn window_builder<'a>(
     let builder = builder.additional_browser_args(crate::engine::BROWSER_ARGS);
     // And on CEF the first window's profile, style and frame; see `engine::own_window`.
     #[cfg(feature = "cef")]
-    let builder = crate::engine::own_window(builder, app);
+    let builder = crate::engine::own_window(builder);
 
     builder
 }
