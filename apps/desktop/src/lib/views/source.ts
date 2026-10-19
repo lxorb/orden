@@ -19,7 +19,7 @@ import { workspace } from '../workspace.svelte'
 import type { Tab } from '../workspace/documents.svelte'
 import { noteText, writeNoteText } from '../workspace/note-text'
 import { keepProjectView } from './kept-views'
-import type { Source } from './live.svelte'
+import type { Shown, Source } from './live.svelte'
 import { readSpec, type ViewSpec, writeSpec } from './spec'
 
 /** Today as Settings has it: with the tasks that have no start date in it, or not (#408). */
@@ -134,14 +134,31 @@ function fenceAt(text: string, code: string): { from: number; to: number } | nul
   return null
 }
 
+/** Where the reader was in each fence, by its note and its words. The editor draws a
+ *  fence again whenever its words change, and every change to the view is a change
+ *  to its words, so without this a new view, a duplicate or a filter set on the
+ *  second tab would land back on the first with the search gone. Kept for the
+ *  session, so a note opened again shows its fence as it was left. */
+const fenceViews = new Map<string, Shown>()
+
+/** A fence's place in `fenceViews`: its words as the editor and the write both have
+ *  them, whatever the last line ends with. */
+const fenceKey = (path: string, words: string) => `${path}\n${words.replace(/\s+$/, '')}`
+
 /** A ` ```base ` fence in a note at `path` (on this disk; null for a note with no
  *  file). Its changes are written into the fence, so the note is the base. */
 export function fenceSource(code: string, path: string | null): Source {
   let words = code
+  let shown = path === null ? undefined : fenceViews.get(fenceKey(path, code))
   const space = path === null ? workspace.activeSpace : spaceOf(path)
   return {
     scope: space?.name ?? null,
     self: () => rowAt(path),
+    shown: () => shown,
+    keep(now) {
+      shown = now
+      if (path !== null) fenceViews.set(fenceKey(path, words), now)
+    },
     load: () => Promise.resolve(readBase(words)),
     async save(next) {
       if (path === null) return
@@ -150,6 +167,8 @@ export function fenceSource(code: string, path: string | null): Source {
       const at = fenceAt(text, words)
       if (!at) return
       const written = writeBase(next, words)
+      // Before the write, which is what draws the fence again.
+      if (shown) fenceViews.set(fenceKey(path, written), shown)
       const after =
         text.slice(0, at.from) +
         (written.endsWith('\n') ? written : `${written}\n`) +

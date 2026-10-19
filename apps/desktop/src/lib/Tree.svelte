@@ -1171,9 +1171,10 @@
       style:--level={depth}
     >
       <FileMark mark={markOf(entry, own)} path={markPath(entry, own)} />
+      <!-- A database is a folder, so the name typed for one has no ending to keep. -->
       <NameField
         value={nameToEdit(entry)}
-        extension={extensionOf(entry.name, entry.is_dir)}
+        extension={named.making === 'database' ? '' : extensionOf(entry.name, entry.is_dir)}
         current={named.making ? undefined : entry.name}
         taken={workspace.namesBeside(entry.path)}
         appending={named.appending}

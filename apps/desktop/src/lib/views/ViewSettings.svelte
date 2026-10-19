@@ -75,8 +75,13 @@
   function carry(event: PointerEvent, from: string) {
     event.preventDefault()
     const list = (event.currentTarget as HTMLElement).closest('.shown')
-    const up = (one: PointerEvent) => {
+    const done = () => {
       window.removeEventListener('pointerup', up)
+      window.removeEventListener('pointercancel', done)
+    }
+    // A carry the system took away (a touch turned into a scroll) puts nothing down.
+    const up = (one: PointerEvent) => {
+      done()
       const rows = [...(list?.querySelectorAll<HTMLElement>('[data-shown]') ?? [])]
       const to = rows.findIndex((row) => {
         const box = row.getBoundingClientRect()
@@ -89,6 +94,7 @@
       kit.change((base, at) => setColumns(base, at, order))
     }
     window.addEventListener('pointerup', up)
+    window.addEventListener('pointercancel', done)
   }
 
   function toggle(on: boolean, run: () => void) {

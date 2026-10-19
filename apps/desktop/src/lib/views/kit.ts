@@ -3,7 +3,7 @@
  *  view itself. A layout draws the engine's answer and calls these; it never filters,
  *  sorts or writes a file of its own (docs/tasks.md 5.9). */
 
-import { type Base, BUTTON, type Row, type Value } from '@nib/bases'
+import { type Base, BUTTON, groupName, type Row, type Value } from '@nib/bases'
 import type { RowChange } from '../rows/write'
 import { insideSpace } from '../space-paths'
 import { workspace } from '../workspace.svelte'
@@ -13,6 +13,7 @@ import { dropInto } from './drop'
 import { pressButton } from './press'
 import type { LiveView } from './live.svelte'
 import type { ViewSpec } from './spec'
+import { layoutOf } from './words'
 
 export interface Kit {
   live: LiveView
@@ -44,8 +45,9 @@ export interface Kit {
    *  turns the change away and its lock answers (`live.refused`), unless `unlocking`:
    *  the lock's own switch. */
   change(edit: (base: Base, at: number) => Base, unlocking?: boolean): void
-  /** The change, kept: answers once it is written, false where a lock turned it away. */
-  changed(edit: (base: Base, at: number) => Base): Promise<boolean>
+  /** The change, kept: answers once it is written, false where a lock turned it away.
+   *  `show` is the view to move to with the change, as it is made. */
+  changed(edit: (base: Base, at: number) => Base, show?: number): Promise<boolean>
 }
 
 /** Where a row's note is on this disk. */
@@ -54,14 +56,19 @@ export function notePath(row: Row): string | null {
   return space ? insideSpace(space.root, row.path) : null
 }
 
-/** The view's notes in the order it shows them, once each: what a peek steps through. */
+/** The view's notes in the order it shows them, once each: what a peek steps through.
+ *  A board or a list leaves out the groups it hides, as the reader does. */
 function walkOf(live: LiveView): string[] {
   const seen = new Set<string>()
-  for (const group of live.answer?.groups ?? [])
+  const layout = layoutOf(live.view?.type ?? 'table')
+  const hidden = layout === 'kanban' || layout === 'list' ? (live.view?.nib.hidden ?? []) : []
+  for (const group of live.answer?.groups ?? []) {
+    if (hidden.includes(groupName(group.key))) continue
     for (const row of group.rows) {
       const path = row.task ? null : notePath(row)
       if (path !== null) seen.add(path)
     }
+  }
   return [...seen]
 }
 
@@ -125,14 +132,14 @@ export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, comp
       }
       void live.change(edit(base, live.at))
     },
-    async changed(edit) {
+    async changed(edit, show) {
       const base = live.base
       if (!base) return false
       if (live.locked) {
         live.refused++
         return false
       }
-      await live.change(edit(base, live.at))
+      await live.change(edit(base, live.at), show)
       return true
     },
   }

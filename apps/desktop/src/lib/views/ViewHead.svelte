@@ -87,13 +87,14 @@
   let open = $state<Tool | 'display' | 'settings' | 'chip-filter' | 'chip-sort' | null>(null)
   /** The project the view is of, whose name is its note's. */
   const project = $derived(projectOf(kit))
-  /** A view of tasks wears Todoist's head: its name, the search, Display and the plus;
-   *  a base of notes keeps the database's tools. */
+  /** A view of tasks has Todoist's Display: in a built-in view's head, its name, the
+   *  search, Display and the plus; in a base's, beside Filter and Sort. */
   const tasky = $derived(kit.spec.builtin !== undefined || view?.nib.rows === 'tasks')
   /** A base of its own (a `.base` file, a fence, a database) wears Notion's head: its
    *  title over the view tabs, Filter, Sort, the search, ⋯ for the view's settings and
-   *  New; a built-in view and a view of tasks keep theirs. */
-  const tabbed = $derived(!tasky)
+   *  New, whichever rows it is of, so Rows in its settings never takes the head away;
+   *  a built-in view keeps its own. */
+  const tabbed = $derived(kit.spec.builtin === undefined)
   const narrowed = $derived(view ? Object.keys(onlyOf(view)).length > 0 : false)
   const notes = $derived((view?.nib.rows ?? 'notes') === 'notes')
 
@@ -322,10 +323,8 @@
                 ],
               }
               return switched(fresh, last + 1, one, live.rows)
-            })
-            .then((kept) => {
-              if (kept) live.at = last + 1
-            }),
+            }, last + 1)
+            .catch(() => undefined),
       })),
       { title: t('New view') },
     )
@@ -343,12 +342,7 @@
         { label: t('Rename'), run: () => (naming = at) },
         {
           label: t('Duplicate view'),
-          run: () =>
-            void kit
-              .changed((b) => addView(b, at))
-              .then((kept) => {
-                if (kept) live.at = at + 1
-              }),
+          run: () => void kit.changed((b) => addView(b, at), at + 1).catch(() => undefined),
         },
         ...(file !== null && one?.name
           ? [
@@ -368,8 +362,11 @@
                 label: t('Delete view'),
                 danger: true,
                 run: () => {
-                  if (live.at > at) live.at -= 1
-                  kit.change((b) => removeView(b, at))
+                  // The view showing stays the one showing, unless it is the one going.
+                  const showing = live.at
+                  void kit
+                    .changed((b) => removeView(b, at), showing > at ? showing - 1 : undefined)
+                    .catch(() => undefined)
                 },
               },
             ]
@@ -486,6 +483,26 @@
     </div>
   {/each}
 {/snippet}
+{#snippet display()}
+  <div class="tool">
+    <button
+      type="button"
+      class="nib-glyph"
+      class:set={narrowed}
+      class:open={open === 'display'}
+      data-opens-popover
+      title={t('Display')}
+      aria-label={t('Display')}
+      aria-expanded={open === 'display'}
+      onclick={() => toggle('display')}
+    >
+      <svg viewBox="0 0 13 13"><path d={DISPLAY_MARK} /></svg>
+    </button>
+    <Popover open={open === 'display'} label={t('Display')} onclose={() => (open = null)}>
+      <DisplayBuilder {kit} onreset={kit.spec.builtin !== undefined ? reset : undefined} />
+    </Popover>
+  </div>
+{/snippet}
 {#snippet plusButton()}
   <button
     type="button"
@@ -555,6 +572,7 @@
               aria-selected={at === live.at}
               onclick={() => {
                 open = null
+                live.builder = null
                 live.at = at
               }}
               ondblclick={() => (naming = at)}
@@ -580,6 +598,8 @@
       {@render lock()}
       <span class="spring"></span>
       {@render tools(['filter', 'sort'])}
+      <!-- A base of tasks keeps what Todoist's Display narrows a view of tasks by. -->
+      {#if tasky}{@render display()}{/if}
       {@render searchField()}
       <div class="tool">
         <button
@@ -683,26 +703,7 @@
 
     {@render searchField()}
 
-    {#if tasky}
-      <div class="tool">
-        <button
-          type="button"
-          class="nib-glyph"
-          class:set={narrowed}
-          class:open={open === 'display'}
-          data-opens-popover
-          title={t('Display')}
-          aria-label={t('Display')}
-          aria-expanded={open === 'display'}
-          onclick={() => toggle('display')}
-        >
-          <svg viewBox="0 0 13 13"><path d={DISPLAY_MARK} /></svg>
-        </button>
-        <Popover open={open === 'display'} label={t('Display')} onclose={() => (open = null)}>
-          <DisplayBuilder {kit} onreset={kit.spec.builtin !== undefined ? reset : undefined} />
-        </Popover>
-      </div>
-    {/if}
+    {#if tasky}{@render display()}{/if}
 
     {@render plusButton()}
   </div>

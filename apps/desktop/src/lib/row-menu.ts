@@ -390,9 +390,14 @@ export function newFileRows(): MenuEntry[] {
       return make ? [{ label: kindLabel(kind), run: () => void make() }] : []
     }),
     // A folder of notes with a board over them, Notion's database; see new-database.ts.
-    {
-      label: t('New database'),
-      run: () => void import('./views/new-database').then((one) => one.createDatabase()),
-    },
+    // Not on the glasses, which draw no views.
+    ...(__EVEN_PLUGIN__
+      ? []
+      : [
+          {
+            label: t('New database'),
+            run: () => void import('./views/new-database').then((one) => one.createDatabase()),
+          },
+        ]),
   ]
 }

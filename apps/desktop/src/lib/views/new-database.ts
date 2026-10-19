@@ -62,6 +62,19 @@ export function databaseNote(): string {
   return `\`\`\`base\n${writeBase(base).trimEnd()}\n\`\`\`\n`
 }
 
+/** A name for the database's folder free twice over: no folder of that name, and no
+ *  note either, which the list would draw as a second row of the same name beside
+ *  it. */
+function freeFolder(dir: string, wanted: string): string {
+  let name = wanted
+  for (;;) {
+    const folder = workspace.freeName(dir, name)
+    const note = workspace.freeName(dir, `${folder}.md`)
+    if (note === `${folder}.md`) return folder
+    name = note.slice(0, -'.md'.length)
+  }
+}
+
 /** Makes a database in a folder and opens it: a folder of its own, named as the row
  *  waiting for a name is, whose note holds the board. Where there is a list to type
  *  in, the row asks for the name first, as a note's does. */
@@ -70,8 +83,10 @@ export async function createDatabase(folder?: string, named?: string): Promise<v
   if (!dir) return
   if (named === undefined && workspace.startNaming('database', dir)) return
 
-  const wanted = (named ?? t('Board')).trim().replace(/[\\/:*?"<>|]/g, '-') || t('Board')
-  const path = folderNotePath(joinPath(dir, workspace.freeName(dir, wanted)))
+  // The name as typed for a folder, without the ending a note's name field adds.
+  const typed = (named ?? t('Board')).trim().replace(/\.md$/i, '')
+  const wanted = typed.replace(/[\\/:*?"<>|]/g, '-').trim() || t('Board')
+  const path = folderNotePath(joinPath(dir, freeFolder(dir, wanted)))
   await writeFile(path, databaseNote())
   workspace.undone.record({ kind: 'create', path })
   await workspace.loadTree()

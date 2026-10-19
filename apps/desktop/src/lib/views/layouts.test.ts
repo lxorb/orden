@@ -268,13 +268,22 @@ describe('on a phone', () => {
 })
 
 describe('the frame', () => {
-  test('wears Todoist’s head over tasks, and the database’s tools over notes', () => {
+  test('wears Todoist’s head over a built-in view, and the database’s tools over a base', () => {
     const tasks = render(ViewFrame, {
-      props: { kit: kitOf(builtinView('today'), TASKS), title: 'Today' },
+      props: { kit: kitOf(builtinView('today'), TASKS, { builtin: 'today' }), title: 'Today' },
     }).body
     expect(tasks).toContain('aria-label="Display"')
     expect(tasks).not.toContain('aria-label="Filter"')
     expect(tasks).toContain('Call the bank')
+
+    // A base of tasks keeps its tabs, so Rows in its settings never takes them away,
+    // and keeps Display beside Filter and Sort.
+    const based = render(ViewFrame, {
+      props: { kit: kitOf(builtinView('today'), TASKS), title: 'Today' },
+    }).body
+    expect(based).toContain('role="tab"')
+    expect(based).toContain('aria-label="Filter"')
+    expect(based).toContain('aria-label="Display"')
 
     const notes = render(ViewFrame, { props: { kit: kitOf(BUGS, NOTES), title: 'Bugs' } }).body
     // Notion's head: a tab for each view, Filter and Sort, and the view's settings.
