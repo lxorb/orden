@@ -516,6 +516,20 @@ describe('the tree', () => {
 
     const tree = await webInvoke<{ children: { name: string }[] }>('read_tree', { root: '/Notes' })
     expect(tree.children.map((one) => one.name)).toEqual(['a.md', 'paper.pdf'])
+
+    // Asked for every file, as an undo of a folder deleted signed in asks, the
+    // picture and the highlights are there too, and the picture is not words.
+    const every = await webInvoke<{ children: { name: string; path: string }[] }>('read_tree', {
+      root: '/Notes',
+      options: { every: true },
+    })
+    expect(every.children.map((one) => one.name)).toEqual([
+      'a.md',
+      'paper.pdf',
+      'paper.pdf.highlights.json',
+      'shot.png',
+    ])
+    await expect(webInvoke('read_note', { path: '/Notes/shot.png' })).rejects.toThrow()
   })
 })
 

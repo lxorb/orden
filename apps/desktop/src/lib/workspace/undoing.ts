@@ -227,7 +227,9 @@ async function writeBeside(path: string, content: string): Promise<string> {
  *  deleted. The file list leaves those out, and an undo read from it gave back the
  *  notes without them, saying nothing. */
 export async function heldIn(path: string): Promise<Pick<Kept, 'notes' | 'folders'> | null> {
-  const options = { showHidden: true, papers: true, every: true }
+  // Dotfiles and a system's own clutter are left out, as sync leaves them: the
+  // account keeps no copy of them either, and a Finder's .DS_Store is not words.
+  const options = { papers: true, every: true }
   const listed = await invoke<Entry>('read_tree', { root: path, options }).catch(() => null)
   if (!listed) return null
 
@@ -241,6 +243,7 @@ export async function heldIn(path: string): Promise<Pick<Kept, 'notes' | 'folder
         if (!(await walk(one))) return false
         continue
       }
+      if (CLUTTER.test(one.name)) continue
       const content = await invoke<string>('read_note', { path: one.path }).catch(() => null)
       if (content === null) return false
       size += content.length
@@ -251,6 +254,9 @@ export async function heldIn(path: string): Promise<Pick<Kept, 'notes' | 'folder
   }
   return (await walk(listed)) ? { notes, folders } : null
 }
+
+/** What sync leaves alone besides dotfiles; see `ignored` in space_watch/walk.rs. */
+const CLUTTER = /^(~\$.*|thumbs\.db|desktop\.ini|Icon\r)$/i
 
 /** As much of a folder's words as a deletion holds: a few megabytes, past which the
  *  step is not worth the memory and Recently deleted is the way back. */

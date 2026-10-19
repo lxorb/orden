@@ -43,6 +43,8 @@ interface TreeOptions {
   /** The papers page notes hold, which the list leaves out; see `papers` in the
    *  desktop's tree.rs. */
   papers?: boolean
+  /** Every file, pictures too; see `every` in the desktop's tree.rs. */
+  every?: boolean
 }
 
 const now = () => Date.now()
@@ -190,7 +192,7 @@ async function tree(root: string, options: TreeOptions = {}): Promise<Entry> {
       continue
     }
 
-    if (!listed(row.path)) continue
+    if (!options.every && !listed(row.path)) continue
     if (!options.showHidden && basename(row.path).startsWith('.')) continue
     if (!options.papers && held(row.path)) continue
 

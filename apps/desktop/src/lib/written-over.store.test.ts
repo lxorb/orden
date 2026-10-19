@@ -135,6 +135,20 @@ describe('a folder deleted signed in, undone after a note took a name in it', ()
     expect(workspace.undone.stack).toEqual([])
   })
 
+  test("holding a Finder's .DS_Store and a desktop.ini, is still put back", async () => {
+    files().set('/space/Journal/.DS_Store', 'not words')
+    disk.current?.unreadable.add('/space/Journal/.DS_Store')
+    files().set('/space/Journal/desktop.ini', 'not words')
+    disk.current?.unreadable.add('/space/Journal/desktop.ini')
+    await workspace.loadTree()
+
+    await workspace.remove('/space/Journal', true)
+    await workspace.undoFileAction()
+
+    // Neither is words, nor kept by sync; each stopped the undo being recorded.
+    expect(files().get('/space/Journal/2026-10-19.md')).toBe('# Today\nthe old words\n')
+  })
+
   test('puts the old note back beside the new one, which keeps its words', async () => {
     await workspace.remove('/space/Journal', true)
     // Today's note made again in the folder made again, and typed into.

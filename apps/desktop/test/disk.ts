@@ -118,8 +118,10 @@ export class Disk {
         this.trash.delete(text(args.id))
         return kept.path
       }
-      case 'read_tree':
-        return this.listing(text(args.root))
+      case 'read_tree': {
+        const options = (args.options ?? {}) as { showHidden?: boolean }
+        return this.listing(text(args.root), options.showHidden === true)
+      }
       case 'file_stamp':
         return this.spelled(path) === null ? null : { modified: 1, len: 1 }
       default:
@@ -128,7 +130,7 @@ export class Disk {
   }
 
   /** The listing of a space, folders first and names in order, as the crate reads one. */
-  listing(root: string): Entry {
+  listing(root: string, hidden = true): Entry {
     const entry = (at: string, folder: boolean): Entry => ({
       name: at.slice(at.lastIndexOf('/') + 1),
       path: at,
@@ -152,6 +154,7 @@ export class Disk {
     for (const path of [...this.folders].sort()) if (path.startsWith(`${root}/`)) folderFor(path)
     for (const path of [...this.files.keys()].sort()) {
       if (!path.startsWith(`${root}/`)) continue
+      if (!hidden && path.slice(path.lastIndexOf('/') + 1).startsWith('.')) continue
       folderFor(path.slice(0, path.lastIndexOf('/'))).children.push(entry(path, false))
     }
 
