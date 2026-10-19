@@ -17,7 +17,7 @@ import { key } from '../i18n.svelte'
 import { recordsOf } from './csv'
 import { type Base, writeBase } from '@nib/bases'
 import { dayOf, noteText, type Meta, propertyName } from './meta'
-import { Names, safeName } from './names'
+import { Names, safeName, withoutNotionId } from './names'
 import type { ImportPlan, Lost, Planned } from './plan'
 import type { Source } from './sources'
 
@@ -39,12 +39,16 @@ export async function readTable(
   const files: Planned[] = []
   const lost: Lost[] = []
 
+  // Notion writes a database twice, as the view on screen and as `_all`, every
+  // row; where both came, the second is the table.
+  const paths = new Set(sources.map((one) => one.path.toLowerCase()))
+
   for (const source of sources) {
     if (!/\.csv$/i.test(source.path)) continue
+    if (paths.has(source.path.toLowerCase().replace(/\.csv$/, '_all.csv'))) continue
 
-    const stem = safeName(
-      (source.path.split('/').pop() ?? source.path).replace(/\.csv$/i, '').replace(/_all$/i, ''),
-    )
+    const name = (source.path.split('/').pop() ?? source.path).replace(/(_all)?\.csv$/i, '.csv')
+    const stem = safeName(withoutNotionId(name).replace(/\.csv$/i, ''))
     const table = recordsOf(await source.text())
     if (!table.columns.length) continue
 

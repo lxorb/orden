@@ -32,6 +32,16 @@ describe('a CSV as one table', () => {
     expect(text).toContain('| Dune | Read | 412 | January 2 2026 | Long, and worth it |')
   })
 
+  test('a Notion database is named without its id, and its every-row table is the one read', async () => {
+    const plan = await readTable([
+      file('Books 1a2b3c4d5e6f78901a2b3c4d5e6f7890.csv', 'Name\nDune\n'),
+      file('Books 1a2b3c4d5e6f78901a2b3c4d5e6f7890_all.csv', 'Name\nDune\nUbik\n'),
+    ])
+
+    expect(plan.files.map((one) => one.path)).toEqual(['Books.md'])
+    expect(noteAt(plan, 'Books.md')).toContain('| Ubik |')
+  })
+
   test('a pipe inside a cell does not become a column', () => {
     const table = tableOf(['A'], [{ A: 'one | two' }])
 
