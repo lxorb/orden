@@ -790,9 +790,13 @@ function holds(tail: string): boolean {
  *  read again before it is written (`writeClosed` in workspace/note-text.ts), and a link
  *  rewritten in the open document, at a moved note's new path and, for a merge, only
  *  where it was (`retarget` and `Retargeting` in link-index.svelte.ts). Measured
- *  3,257,093. */
+ *  3,257,093.
+ *
+ *  And by one module, to 383, for the same burn-down: whether a name is taken is asked
+ *  in one place, the crate's stamp on the desktop and a read in the browser, which keeps
+ *  no stamps (on-disk.ts, asked by the save path's `claim`). Measured 382 modules. */
 const BUDGET = 3_258_100
-const MOST_FILES = 382
+const MOST_FILES = 383
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.
