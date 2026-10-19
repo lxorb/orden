@@ -243,10 +243,10 @@ def ink_rows(image, box, scale):
 
 def buttons(where):
     listed = run(
-        "[...document.querySelectorAll('button')].filter((b) => {"
+        "[...document.querySelectorAll('button, [role=button], [role=tab]')].filter((b) => {"
         " const r = b.getBoundingClientRect(); const t = (b.innerText || '').trim();"
         " return r.width > 24 && r.height > 16 && r.height < 60 && t.length >= 2 && t.length < 28"
-        " && !t.includes('\\n') && !b.querySelector('svg, img') && r.y >= 0 && r.y < innerHeight"
+        " && !t.includes('\\n') && r.y >= 0 && r.y < innerHeight"
         " && getComputedStyle(b).visibility !== 'hidden' }).slice(0, 14).map((b) => {"
         " const r = b.getBoundingClientRect(); const cs = getComputedStyle(b);"
         " return { text: b.innerText.trim(), x: r.x, y: r.y, width: r.width, height: r.height,"
@@ -334,6 +334,22 @@ new MutationObserver(() => {
 return document.activeElement === input
 """
 
+# The same search typed by the page itself, a value at a time: what Svelte, the layout
+# and the engine's next two frames cost, with nothing of the keyboard's path in it.
+SEARCH_SET = """
+const input = document.querySelector('.nib-field.search input')
+const twoFrames = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
+const took = []
+for (const word of ['f', 'fo', 'fon', 'font', '', 't', 'th', 'the', 'them', 'theme', '']) {
+  const began = performance.now()
+  input.value = word
+  input.dispatchEvent(new Event('input', { bubbles: true }))
+  await twoFrames()
+  took.push(Math.round((performance.now() - began) * 10) / 10)
+}
+return took
+"""
+
 SEARCH_READ = """
 const m = window.__nib418
 m.on = false
@@ -379,11 +395,19 @@ def search():
             time.sleep(0.2)
     time.sleep(0.5)
     read = run(SEARCH_READ) or {}
+    active = run("document.activeElement ? document.activeElement.tagName + '.' + document.activeElement.className : null")
+    set_by_page = sorted(run(SEARCH_SET) or [])
     keys = [k for k in read.get("keys", []) if k.get("drawn")]
     latencies = sorted(round(k["drawn"] - k["down"], 1) for k in keys)
     changed = sorted(round(k["changed"] - k["down"], 1) for k in keys)
     found["search"] = {
         "focused": focused,
+        "active_after_typing": active,
+        "value_set_to_drawn_ms": {
+            "median": statistics.median(set_by_page) if set_by_page else None,
+            "max": set_by_page[-1] if set_by_page else None,
+            "each": set_by_page,
+        },
         "keys": len(read.get("keys", [])),
         "key_to_drawn_ms": {
             "median": statistics.median(latencies) if latencies else None,
@@ -396,7 +420,7 @@ def search():
         },
         "frames": frame_stats(read.get("frames", [])),
     }
-    print(f"search: {found['search']['key_to_drawn_ms']} frames {found['search']['frames']}")
+    print(f"search: keys {found['search']['key_to_drawn_ms']} set {found['search']['value_set_to_drawn_ms']} frames {found['search']['frames']}")
     tell("key 1")  # Escape
     time.sleep(0.8)
 
