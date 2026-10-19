@@ -345,8 +345,11 @@ export const run = {
     }
 
     try {
-      let next = store.canvas
-      const ids: string[] = []
+      // The pages are laid on the plane as it stands once they are all rendered, not
+      // as it stood when the import began: a card drawn, or one that arrived from
+      // another device, while the pages were rendering was otherwise written over by
+      // the older plane, and recorded as deleted everywhere (#532).
+      const made: Parameters<typeof withNode>[1][] = []
       let y = at.y
       for (const number of pages) {
         const page = await doc.getPage(number)
@@ -383,15 +386,13 @@ export const run = {
           mode === 'single'
             ? placedAt(at, width, height)
             : placedAt({ x: at.x, y: y + height / 2 }, width, height)
-        const id = freshId()
-        next = withNode(next, { ...box, id, type: 'file', file: relative })
-        ids.push(id)
+        made.push({ ...box, id: freshId(), type: 'file', file: relative })
         y += height + GRID
       }
 
-      if (ids.length) {
-        store.edit(next)
-        store.pickAll(ids)
+      if (made.length) {
+        store.edit(made.reduce((next, node) => withNode(next, node), store.canvas))
+        store.pickAll(made.map((node) => node.id))
       }
     } finally {
       await task.destroy().catch(() => undefined)
