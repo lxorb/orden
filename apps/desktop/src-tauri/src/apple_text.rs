@@ -187,6 +187,7 @@ pub fn markdown(body: &Body, parts: &mut dyn Parts) -> String {
     // The style and the count of the last item at each depth of the list this line
     // is in.
     let mut levels: Vec<(i32, u32)> = Vec::new();
+    let fence = fence_for(&body.text);
 
     for line in lines_of(body) {
         let run = line.run().unwrap_or(&DEFAULT);
@@ -199,7 +200,8 @@ pub fn markdown(body: &Body, parts: &mut dyn Parts) -> String {
         // A fence is opened once for however many monospaced paragraphs follow
         // each other, which is what they were on screen: one block of code.
         if code != fenced {
-            out.push_str("```\n");
+            out.push_str(&fence);
+            out.push('\n');
             fenced = code;
         }
 
@@ -246,10 +248,27 @@ pub fn markdown(body: &Body, parts: &mut dyn Parts) -> String {
     }
 
     if fenced {
-        out.push_str("```\n");
+        out.push_str(&fence);
+        out.push('\n');
     }
 
     tidy(&out)
+}
+
+/// The fence a block of code is written between: three backticks, or one more than
+/// the longest run of them in the note, so code that holds a fence of its own - a
+/// snippet of markdown, say - does not end the block halfway.
+fn fence_for(text: &[u16]) -> String {
+    let backtick = u16::from(b'`');
+    let mut longest = 0_usize;
+    let mut here = 0_usize;
+
+    for one in text {
+        here = if *one == backtick { here + 1 } else { 0 };
+        longest = longest.max(here);
+    }
+
+    "`".repeat(longest.max(2) + 1)
 }
 
 /// A run that says nothing, for a line with nothing in it at all.
@@ -1392,6 +1411,17 @@ mod tests {
 
         assert!(said.len() < 200, "{} characters of indent", said.len());
         assert!(said.trim_start().starts_with("- "), "{said}");
+    }
+
+    /// Code that holds a fence of its own, a snippet of markdown, is still one block.
+    #[test]
+    fn code_with_a_fence_in_it_is_fenced_with_a_longer_one() {
+        let said = as_markdown(
+            "```js\nx\n```\n",
+            &[run(12, &[bytes(2, &style(4, 0, None))])],
+        );
+
+        assert_eq!(said, "````\n```js\nx\n```\n````");
     }
 
     /// The items nested under a numbered one are a list of their own, and the list
