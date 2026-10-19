@@ -247,3 +247,30 @@ describe('words an object would answer from its prototype', () => {
     expect(task?.fields).toEqual({ priority: 'constructor' })
   })
 })
+
+/** #499: patterns that gave the same blanks to more than one quantifier, timed on
+ *  lines that took from seconds to hours before. */
+describe('a line built to make the reader backtrack', () => {
+  const quick = (line: string) => {
+    const started = performance.now()
+    const task = readTask(line)
+    expect(performance.now() - started).toBeLessThan(500)
+    return task
+  }
+
+  test('is read in linear time, a dependency list that ends badly among them', () => {
+    expect(quick(`- [ ] x ⛔ a${' , a'.repeat(40)} !`)?.dependsOn).toEqual([])
+    quick(`- [ ] x ⛔ a${' '.repeat(100_000)} !`)
+    quick(`- [ ] x 🔁${' '.repeat(100_000)}#`)
+    quick(`- [ ] x [a::${' '.repeat(100_000)}x`)
+    quick(`- [ ] x ${'[a:: '.repeat(20_000)}`)
+    quick(`- [ ] x ${'(a:: '.repeat(20_000)}`)
+    quick(`- [ ] x ${'[a:: '.repeat(20_000)}] (b:: c)`)
+  })
+
+  test('reads the same fields as before', () => {
+    expect(quick('- [ ] x ⛔ a , b,c  ')?.dependsOn).toEqual(['a', 'b', 'c'])
+    expect(quick(`- [ ] x [a::${' '.repeat(10_000)}y  ]`)?.fields).toEqual({ a: 'y' })
+    expect(quick('- [ ] x [a:: [b] (c:: d [e:: f]')?.fields).toEqual({ a: '[b', e: 'f' })
+  })
+})

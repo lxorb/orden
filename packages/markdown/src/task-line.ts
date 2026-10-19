@@ -275,17 +275,77 @@ const AT_END = {
   block: /(?<=\s)\^([A-Za-z0-9-]+)$/u,
   priority: new RegExp(`(🔺|⏫|🔼|🔽|⏬)${VARIANT}$`, 'u'),
   date: new RegExp(`(✅|❌|📅|📆|🗓|⏳|⌛|🛫|➕)${VARIANT} *${DATE}$`, 'u'),
-  recurrence: new RegExp(`🔁${VARIANT} *([a-zA-Z0-9, !]+)$`, 'u'),
+  // The words start on something other than a blank, or ` *` and the words would
+  // share the blanks between them and a long run of them takes seconds to fail.
+  recurrence: new RegExp(`🔁${VARIANT} *([a-zA-Z0-9,!][a-zA-Z0-9, !]*)$`, 'u'),
   onCompletion: new RegExp(`🏁${VARIANT} *([a-zA-Z]+)$`, 'u'),
   tag: /(?<=^|\s)#[^ !@#$%^&*(),.?":{}|<>]+$/u,
   id: new RegExp(`🆔${VARIANT} *([a-zA-Z0-9-_]+)$`, 'u'),
-  dependsOn: new RegExp(`⛔${VARIANT} *([a-zA-Z0-9-_]+(?: *, *[a-zA-Z0-9-_]+ *)*)$`, 'u'),
-  bracket: /\[([^[\]:]+?)::[ \t]*([^\]]*?)[ \t]*\]$/u,
-  paren: /\(([^():]+?)::[ \t]*([^)]*?)[ \t]*\)$/u,
+  // The plugin's own has ` *` on both sides of each comma and after each id, so
+  // the blanks could be shared out any number of ways, and a list that did not end
+  // as expected tried every one of them: eight seconds for a line of 125 (#499).
+  dependsOn: new RegExp(`⛔${VARIANT} *([a-zA-Z0-9-_]+(?: *, *[a-zA-Z0-9-_]+)*) *$`, 'u'),
 }
 
-/** A bracket or round field anywhere among the words. */
-const INLINE_FIELD = /\[([^[\]:]+?)::[ \t]*([^\]]*?)[ \t]*\]|\(([^():]+?)::[ \t]*([^)]*?)[ \t]*\)/gu
+/** A bracket or round field, `[key:: value]` or `(key:: value)`, as far as its two
+ *  colons. The key is everything before the first colon. */
+const FIELD_KEY = { '[': /\[([^[\]:]+?)::/uy, '(': /\(([^():]+?)::/uy }
+
+/** What a field is read as: the whole of it at `index`, then its key and value. */
+interface Found {
+  index: number
+  0: string
+  [group: number]: string | undefined
+}
+
+/** The field that opens at `at`, if one does. Its value is what stands between the
+ *  colons and the first closing mark after them, blanks at either end aside.
+ *
+ *  Read by hand, not by a pattern. `\[([^[\]:]+?)::[ \t]*([^\]]*?)[ \t]*\]` gave
+ *  the blanks inside to three quantifiers at once, which is cubic - twenty seconds
+ *  for one field of four thousand spaces - and, for an opening that nothing
+ *  closes, scanned to the end of the line once per opening (#499). `last` is where
+ *  the last closing mark of its kind stands, so such an opening is turned away
+ *  without a scan at all. */
+function fieldAt(text: string, at: number, last: number): Found | null {
+  const open = text[at] === '[' ? '[' : '('
+  const key = FIELD_KEY[open]
+  key.lastIndex = at
+  const found = key.exec(text)
+  if (!found || key.lastIndex > last) return null
+
+  const end = text.indexOf(open === '[' ? ']' : ')', key.lastIndex)
+  let from = key.lastIndex
+  let to = end
+  while (from < to && isBlank(text[from])) from++
+  while (to > from && isBlank(text[to - 1])) to--
+
+  return { index: at, 0: text.slice(at, end + 1), 1: found[1], 2: text.slice(from, to) }
+}
+
+function isBlank(character: string | undefined): boolean {
+  return character === ' ' || character === '\t'
+}
+
+/** The field `head` ends with, if it ends with one. A field holds no closing mark
+ *  but its own last one, so it opens after the one before that. */
+function fieldAtEnd(head: string): Found | null {
+  const shut = head.at(-1)
+  if (shut !== ']' && shut !== ')') return null
+
+  const end = head.length - 1
+  const open = shut === ']' ? '[' : '('
+  let at = head.indexOf(open, head.lastIndexOf(shut, end - 1) + 1)
+  for (; at !== -1 && at < end; at = head.indexOf(open, at + 1)) {
+    const found = fieldAt(head, at, end)
+    if (found) return found
+  }
+
+  return null
+}
+
+/** Where the next field could open in `text`, at or after `at`. */
+const OPENS = /[[(]/g
 
 /** A tag anywhere, nib's grammar (tags.ts). */
 const TAG = new RegExp(`#(${TAG_NAME})`, 'gu')
@@ -504,7 +564,7 @@ function trailingTokens(
 
   /** Takes the match off the end, as a token of this field. */
   const take = (
-    found: RegExpExecArray,
+    found: Found,
     field: FieldToken['field'],
     form: FieldForm,
     value: number,
@@ -546,7 +606,7 @@ function trailingTokens(
 
   for (let runs = 0; runs < MOST_FIELDS && end > from; runs++) {
     const head = line.slice(from, end)
-    let found: RegExpExecArray | null
+    let found: Found | null
 
     if ((found = AT_END.priority.exec(head))) {
       read('priority', found[1] ?? '')
@@ -569,7 +629,7 @@ function trailingTokens(
     } else if ((found = AT_END.dependsOn.exec(head))) {
       read('dependsOn', found[1] ?? '')
       take(found, 'dependsOn', 'emoji', 1)
-    } else if ((found = AT_END.bracket.exec(head) ?? AT_END.paren.exec(head))) {
+    } else if ((found = fieldAtEnd(head))) {
       const form: FieldForm = found[0].startsWith('[') ? 'bracket' : 'paren'
       const key = found[1] ?? ''
       const field = FIELD_BY_KEY.get(keyOf(key))
@@ -589,10 +649,17 @@ function inlineTokens(line: string, from: number, to: number, fields: TaskFields
   const tokens: FieldToken[] = []
   const words = line.slice(from, to)
 
-  for (const found of words.matchAll(INLINE_FIELD)) {
-    const bracket = found[1] !== undefined
-    const key = (bracket ? found[1] : found[3]) ?? ''
-    const value = (bracket ? found[2] : found[4]) ?? ''
+  const last = { '[': words.lastIndexOf(']'), '(': words.lastIndexOf(')') }
+
+  for (OPENS.lastIndex = 0; OPENS.exec(words);) {
+    const at = OPENS.lastIndex - 1
+    const found = fieldAt(words, at, words[at] === '[' ? last['['] : last['('])
+    if (!found) continue
+    OPENS.lastIndex = at + found[0].length
+
+    const bracket = found[0].startsWith('[')
+    const key = found[1] ?? ''
+    const value = found[2] ?? ''
     const field = FIELD_BY_KEY.get(keyOf(key))
     const start = from + found.index
     const known =
