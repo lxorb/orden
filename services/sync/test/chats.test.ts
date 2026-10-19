@@ -633,6 +633,24 @@ describe('chats', () => {
       expect((await list(people.guestWriter))[0]).toMatchObject({ mentions: 0 })
     })
 
+    test('@everyone and @here call everybody when they are the first thing a cold chat hears (#459)', async () => {
+      const chat = await chatOfOwner()
+      // The object as it is after a sleep or a revocation: no list of who it reaches.
+      ;(logs.of(chat).log as unknown as { reachers: unknown }).reachers = null
+      await send(people.owner, chat, postOf('all of you', { mentions: ['everyone'] }))
+      at(201_000)
+      await fire(logs.of(chat))
+      expect((await list(people.writer))[0]).toMatchObject({ mentions: 1 })
+      expect((await list(people.guestReader))[0]).toMatchObject({ mentions: 1 })
+
+      ;(logs.of(chat).log as unknown as { reachers: unknown }).reachers = null
+      at(202_000)
+      await send(people.owner, chat, postOf('who is about', { mentions: ['here'] }))
+      at(203_000)
+      await fire(logs.of(chat))
+      expect((await list(people.reader))[0]).toMatchObject({ mentions: 2 })
+    })
+
     test('people with no socket open are poked through their hub, two seconds apart', async () => {
       const chat = await chatOfOwner()
       await socketOf('owner', chat)

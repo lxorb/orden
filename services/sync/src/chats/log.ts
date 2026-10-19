@@ -379,6 +379,18 @@ export class ChatLog implements DurableObject {
     at: number,
     from: WebSocket | null,
   ): Promise<Answer> {
+    // `@here` and `@everyone` call whoever the chat reaches, which is a list this object
+    // keeps only a minute and has none of when it is cold - just made, woken, or told
+    // somebody's access changed - and the post is the commonest first thing it hears
+    // (#459). So the list is asked for first, outside the transaction that cannot wait.
+    // A moment's failure to ask places the post anyway, calling only who it names.
+    const mentions = event.kind === 'post' ? (event.mentions ?? []) : []
+    if (mentions.includes('here') || mentions.includes('everyone')) {
+      await this.reachersNow().catch((error: unknown) => {
+        note(`chat ${this.chatId()} reachers`, error, null)
+      })
+    }
+
     const { logged, effects, called } = this.ctx.storage.transactionSync(() => {
       const placed = place(this.sql, event, person, at)
       return { ...placed, called: this.noted(placed.logged, placed.effects) }
