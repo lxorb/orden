@@ -2,7 +2,7 @@
 //!
 //! What a browser does when the extension's button is pressed - a small window under the
 //! button holding `chrome-extension://<id>/<popup>`, sized to what the page lays out, at
-//! most 800 by 600 - done the one way the engine allows: a child webview, in the store
+//! most 800 by 600 - done the one way both engines allow: a child webview, in the store
 //! the tab is in, so the page is the extension's own and talks to its own background. The
 //! window draws the bubble round it and says where; this builds the page, puts it there,
 //! and says how large the page wants to be.
@@ -220,18 +220,18 @@ pub async fn extension_popup_open(
                 return;
             }
         }
-        #[cfg(windows)]
+        #[cfg(all(windows, not(feature = "cef")))]
         let builder =
             crate::web_tabs::on_shared_session(builder, &window, &building, store.as_deref());
-        #[cfg(not(windows))]
+        #[cfg(not(all(windows, not(feature = "cef"))))]
         let _ = &store;
-        let made = window
-            .add_child(
-                builder,
-                LogicalPosition::new(rect.x, rect.y),
-                LogicalSize::new(SMALLEST, SMALLEST),
-            )
-            .map_err(|error| format!("that popup could not be opened: {error}"));
+        let made = crate::engine::add_child(
+            &window,
+            builder,
+            LogicalPosition::new(rect.x, rect.y),
+            LogicalSize::new(SMALLEST, SMALLEST),
+        )
+        .map_err(|error| format!("that popup could not be opened: {error}"));
         let made = made.map(|view| {
             *SHOWN.lock().unwrap_or_else(PoisonError::into_inner) = Some(label);
             sent(&building, &view, &address);
@@ -304,7 +304,7 @@ fn blank() -> Result<Url, String> {
 /// tab's is (`web_worlds.rs`); and on `WebView2` Escape and the page's own `window.close()`
 /// heard, which close it.
 fn sent(app: &AppHandle, view: &Webview, address: &Url) {
-    #[cfg(windows)]
+    #[cfg(all(windows, not(feature = "cef")))]
     {
         let (closing, label) = (app.clone(), view.label().to_owned());
         let address = address.to_string();
@@ -313,12 +313,20 @@ fn sent(app: &AppHandle, view: &Webview, address: &Url) {
             heard(&closing, &label, &platform);
         });
     }
-    #[cfg(not(windows))]
+    #[cfg(feature = "cef")]
+    {
+        let _ = app;
+        let (view, address) = (view.clone(), address.clone());
+        std::thread::spawn(move || {
+            let _ = crate::web_worlds::sent(&view, &address, "");
+        });
+    }
+    #[cfg(not(any(windows, feature = "cef")))]
     let _ = (app, view, address);
 }
 
 /// Escape inside the popup, and the page closing itself, close it.
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "cef")))]
 #[allow(
     unsafe_code,
     reason = "the key and the close are WebView2's own events, reached through its COM interfaces"
@@ -437,7 +445,7 @@ fn pixels(length: f64) -> u32 {
 /// it there, and would only ever answer the size it was given: Proton Pass's, told by
 /// `WebView2` it is in a tab, set itself to the whole window and stayed a strip 58 pixels
 /// tall (2026-10-13) where its stylesheet asks for 600 by 430.
-#[cfg(windows)]
+#[cfg(any(windows, feature = "cef"))]
 const ASK: &str = "(() => { const root = document.documentElement, body = document.body, own = root.getAttribute('style'); root.removeAttribute('style'); const size = [Math.max(root.scrollWidth, body ? body.scrollWidth : 0), Math.max(root.scrollHeight, body ? body.scrollHeight : 0)]; if (own !== null) root.setAttribute('style', own); return JSON.stringify(size) })()";
 
 /// The page's own size, from the engine this build runs on.
@@ -448,7 +456,7 @@ fn laid_out(view: &Webview) -> Option<(f64, f64)> {
 }
 
 /// The answer to `ASK`, as the JSON text the page wrote.
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "cef")))]
 #[allow(
     unsafe_code,
     reason = "WebView2's own script call, through its COM interface"
@@ -477,8 +485,25 @@ fn evaluated(view: &Webview) -> Option<String> {
     answer.recv_timeout(Duration::from_secs(2)).ok().flatten()
 }
 
+/// The answer to `ASK`, through the page's `DevTools` agent.
+#[cfg(feature = "cef")]
+fn evaluated(view: &Webview) -> Option<String> {
+    let said = crate::engine::devtools::call(
+        view,
+        None,
+        "Runtime.evaluate",
+        &serde_json::json!({ "expression": ASK, "returnByValue": true }),
+        Duration::from_secs(2),
+    )
+    .ok()?;
+    said.get("result")?
+        .get("value")?
+        .as_str()
+        .map(str::to_owned)
+}
+
 /// Neither: no other engine runs extensions.
-#[cfg(not(windows))]
+#[cfg(not(any(windows, feature = "cef")))]
 fn evaluated(_view: &Webview) -> Option<String> {
     None
 }
@@ -525,7 +550,7 @@ mod tests {
     fn nothing_reaches_the_popup_without_asking_its_browser_first() {
         let source = include_str!("popup.rs").replace('\r', "");
         let code = source.split("#[cfg(test)]").next().unwrap_or(&source);
-        let calls = [".add_child(", ".set_position(", ".set_size(", ".close()"];
+        let calls = ["add_child(", ".set_position(", ".set_size(", ".close()"];
         let mut checked = 0;
         let starts = ["\nfn ", "\npub fn ", "\npub async fn "];
         for body in starts.iter().flat_map(|start| code.split(start).skip(1)) {

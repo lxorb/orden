@@ -232,6 +232,9 @@ export interface RemoteSpace {
   arranged: unknown
   /** What the space has archived; read rather than trusted, see workspace/archive. */
   archived?: unknown
+  /** Which order its file list is read in; read rather than trusted, see
+   *  `SpaceSorting` in workspace/arranged.svelte.ts (#423). */
+  sort?: unknown
   createdAt: number
   updatedAt: number
   blog: {
@@ -788,6 +791,10 @@ export const routes = {
       token,
       body: { arranged },
     }),
+
+  /** Which order the space's file list is read in; see `SpaceSorting` (#423). */
+  saveSort: (token: string, id: string, sort: string) =>
+    request<{ sort: string }>(`/v1/spaces/${id}/sort`, { method: 'PUT', token, body: { sort } }),
 
   /** The whole map, met with the account's first; see workspace/archive-map.ts. */
   saveArchived: (token: string, id: string, archived: Readonly<Record<string, number>>) =>

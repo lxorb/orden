@@ -7,7 +7,7 @@ them. Not Flathub; see the section of that name.
 
 | Directory | Manager | Built from | Architectures |
 | --- | --- | --- | --- |
-| `apt/` | apt (`apt install orden`, from `lxorb.github.io/apt`) | the `.deb` | amd64, arm64 |
+| `apt/` | apt (`apt install orden`, from `apt.orden.so`) | the `.deb` | amd64, arm64 |
 | `aur/nib-bin/` | AUR (`yay -S orden-bin`) | the `.deb` | x86_64, aarch64 |
 | `snap/` | Snap Store | the `.deb` | amd64, arm64 |
 | `nix/` | a flake anyone can install from | the `.deb` | x86_64, aarch64 |
@@ -35,12 +35,21 @@ pushed anywhere until `PACKAGING_TOKEN`, `WINGET_TOKEN` and
 
 ```
 Package: orden (Conflicts and Replaces: nib and nibeditor, its names up to 0.11 and 0.13)
-Depends: libwebkit2gtk-4.1-0 (>= 2.40.0), gstreamer1.0-plugins-base, gstreamer1.0-plugins-good, libwebkit2gtk-4.1-0, libgtk-3-0
-Recommends: gstreamer1.0-libav, gstreamer1.0-plugins-bad
-usr/bin/nib
+Depends: libgtk-4-1 (>= 4.14), libnss3, libnspr4, ... (`bundle.linux.deb.depends`)
+usr/bin/nib -> ../share/Orden/nib
+usr/share/Orden/nib, libcef.so, icudtl.dat, v8_context_snapshot.bin, *.pak, locales/en-US*.pak
+usr/share/Orden/libvk_swiftshader.so, vk_swiftshader_icd.json, libvulkan.so.1
+usr/share/Orden/chrome-sandbox (setuid root)
 usr/share/applications/Orden.desktop (Nib.desktop up to 0.11, nibeditor.desktop up to 0.13)
 usr/share/icons/hicolor/{32x32,128x128,256x256@2}/apps/nib.png
 ```
+
+The program is beside the engine it runs on, CEF, in `/usr/share/Orden`, where it finds
+`libcef.so` and Chromium finds its resources; `/usr/bin/nib` is a link to it. The `.rpm`
+is laid out the same way. Two empty files go in beside them as well, `libEGL.so` and
+`libGLESv2.so`: CEF 154 links ANGLE into `libcef.so` and no longer ships the two, and
+the bundler still copies them by name (see `scripts/linux-cef.sh`). Chromium only loads
+them where ANGLE is not linked in, so they are never opened.
 
 The binary and the icons are fine, and so is most of the control file: `Description:`
 comes from `bundle.shortDescription` and `longDescription` in `tauri.conf.json`, and the
@@ -66,54 +75,58 @@ copies differ only where they have to: the snap one points `Icon=` at `${SNAP}`.
 
 ## What Orden needs of the system
 
-**WebKitGTK 2.40 or newer.** A web tab's state is read and written in a script
-world of its own through `webkit_web_view_call_async_javascript_function`, which
-is new in 2.40, so the crate builds `webkit2gtk` with its `v2_40` feature
-(`apps/desktop/src-tauri/Cargo.toml`, `src/web_state/isolated.rs`). wry on its
-own asks for 2.38. Every distribution packaged here is past it: Ubuntu 22.04 has
-2.50 and 24.04 2.52 in their updates, Debian 12 2.50 and 13 2.54, Arch 2.54, and the snap's
-gnome-46-2404 platform 2.52.
+**Its engine, CEF, which every package carries.** Orden runs on CEF (Chromium) on Linux,
+through Tauri 3's `tauri-runtime-cef`: the app's own window and every web tab are
+browsers of one Chromium, as on Windows with WebView2. Nothing of WebKitGTK or
+GStreamer is asked for any more. Tauri 3 is Linux's alone: macOS, Windows and the phones
+stay on Tauri 2, and Linux builds from a manifest of its own
+(`apps/desktop/src-tauri/linux/Cargo.toml`, written from the app's by
+`scripts/linux-manifest.mjs`; see `scripts/linux-cef.sh`).
 
-**GStreamer's -base and -good plugins.** WebKitGTK plays and records sound and
-video through GStreamer, and what Orden plays is its own: a voice note in a chat,
-a recording embedded in a note, a picture's or a video's preview in a chat's
-gallery. A recording on Linux is Opus in WebM (`recorder/container.ts`): Opus is
-in -base, WebM (and MP4) in -good, and so is the source and sink for the sound
-server. Debian's and Ubuntu's `libwebkit2gtk-4.1-0` already depend on both; Arch's
-`webkit2gtk-4.1` depends only on GStreamer's libraries and leaves every plugin
-optional, so the AUR package names them.
+**GTK 4.14 or newer.** The runtime's windows are GTK 4, built against 4.14, which is
+Ubuntu 24.04, Debian 13, Fedora 40 and Arch, and the snap's gnome-46-2404 platform. Not
+Ubuntu 22.04 or Debian 12, whose GTK 4 is older: the `.deb` says so in its `Depends:`.
+The release is built on Ubuntu 24.04 for the same reason.
 
-**gst-libav and -bad, recommended.** A recording made on a Mac or an iPhone is AAC
-in MP4 (`.m4a`), and a video from a phone is H.264 or HEVC; GStreamer decodes those
-in gst-libav (`avdec_aac`, `avdec_h264`), with -bad holding most of the remaining
-formats. Without them the file is there and does not play, and nothing else in the
-app is affected, so they are what Debian calls Recommends (Debian 13 recommends
-them for WebKitGTK already; Ubuntu only suggests them) and the AUR `optdepends`.
+**X11, which a Wayland desktop has as Xwayland.** CEF puts each browser in an X11
+window, so the runtime starts GTK on X11 (`GDK_BACKEND=x11`, `--ozone-platform=x11`)
+whatever the session, and under Wayland the window is an Xwayland one; Chromium draws
+on the GPU in both. A global shortcut under Wayland still goes through the desktop
+portal (`hotkeys/portal.rs`), since no Xwayland window hears a key pressed elsewhere.
 
-| | WebKitGTK | required | recommended |
-| --- | --- | --- | --- |
-| `.deb` (`tauri.conf.json` `bundle.linux.deb`) | `libwebkit2gtk-4.1-0 (>= 2.40.0)` | `gstreamer1.0-plugins-base`, `-good` | `gstreamer1.0-libav`, `-plugins-bad` |
-| AUR (`PKGBUILD`) | `webkit2gtk-4.1>=2.40` | `gst-plugins-base`, `gst-plugins-good` | `gst-libav`, `gst-plugins-bad` (`optdepends`) |
-| snap | the platform's, 2.52 | the platform's | none: not in the platform |
-| Nix | nixpkgs' | `gstPluginsFor` in the flake: all five | - |
+**What Chromium links.** `libcef.so` asks for NSS and NSPR, ALSA, CUPS, the
+accessibility bridge (ATK, AT-SPI), D-Bus, GBM and DRM, xkbcommon, Pango and Cairo,
+udev, and the X11 libraries (X11, xcb, Xcomposite, Xdamage, Xext, Xfixes, Xrandr):
 
-The `.rpm` names neither: Tauri writes its requirements as sonames
-(`libwebkit2gtk-4.1.so.0()(64bit)`), which carry no version, and Fedora and
-openSUSE spell every package above differently.
+| | named |
+| --- | --- |
+| `.deb` (`tauri.conf.json` `bundle.linux.deb.depends`) | `libgtk-4-1 (>= 4.14)`, `libnss3`, `libasound2t64 \| libasound2` and the rest by Ubuntu's names |
+| `.rpm` (`bundle.linux.rpm.depends`) | `gtk4 >= 4.14`, `nss`, `alsa-lib` and the rest by Fedora's names |
+| AUR (`PKGBUILD`) | `gtk4>=4.14`, `nss`, `alsa-lib` and the rest by Arch's names |
+| snap | the platform's |
+| Nix | `runtimeInputsFor` in the flake, and `openedFor` for what Chromium opens by name |
 
-The snap has no way to recommend a package, and stages nothing beside the platform
-on purpose (see below). gnome-46-2404 carries -base, -good, PipeWire's and the GL
-plugins, so recordings and WebM play; AAC and H.264 do not. Staging gst-libav would
-not be enough to change that: its libavfilter is not in the platform, and the
-platform's launcher puts no directory of the snap's own on the library path.
+**Media.** Chromium plays VP9, AV1, VP8, Opus, Vorbis, FLAC and MP3 itself, in WebM, Ogg
+and MP4, so a recording made on Linux (Opus in WebM, `recorder/container.ts`) plays
+everywhere. The standard CEF build has no H.264, HEVC or AAC, and no DRM: a `.m4a` from a
+Mac or an iPhone and an H.264 video do not play, in any package. A CEF built with
+Chromium's proprietary codecs would play them; that is a build of its own, on a larger
+runner, if it is wanted.
 
-## apt - `lxorb/apt`
+**The sandbox.** Chromium sandboxes its renderers with the setuid `chrome-sandbox` beside
+`libcef.so`, which the `.deb`, the `.rpm` and the AUR package install setuid root, or in
+user namespaces where it is not setuid. The snap has the namespace one, through
+`browser-support` with `allow-sandbox`; Nix leaves the helper out of the store, where it
+cannot be setuid, and NixOS allows the namespaces. An AppImage cannot carry a setuid
+helper: where user namespaces are restricted as well (Ubuntu 24.04's AppArmor), the
+runtime starts Chromium without a sandbox and says so in the log.
 
-An apt repository of our own, on GitHub Pages: `lxorb/apt`, served at
-`https://lxorb.github.io/apt`. The address lives in one place, the repository variable
-`APT_BASE_URL` (that default when it is unset), which `apt.yml` writes into the
-repository's own page; a move to `apt.orden.so` is that variable, a `CNAME` in `lxorb/apt`
-and the lines below.
+## apt - `apt.orden.so`
+
+An apt repository of our own, served at `https://apt.orden.so` from the Cloudflare R2
+bucket `orden-apt` in Orden's Cloudflare account. The bucket is the domain's whole
+answer: a custom domain of the bucket, kept out of the `*.orden.so/*` route the sync
+Worker answers on by a route of its own, `apt.orden.so/*`, with no Worker on it.
 
 Two suites, one component, `main`, and both architectures:
 
@@ -125,16 +138,30 @@ Both call it (`uses:`) rather than dispatching it: a dispatch only finds a workf
 on the default branch already, and `apt.yml` reaches `unstable` first.
 
 **Each suite holds one version, the newest.** A run empties that suite's pool, puts the
-release's two `.deb`s in, writes its `Packages` and `Release` again and signs it; the
-other suite is taken from the repository as it is. Every older `.deb` stays on its release
-page. The repository is pushed as a single commit with no history, because every `.deb`
-that ever went in would otherwise stay in a repository Pages serves - thirty megabytes for
-every edge build.
+release's two `.deb`s in, writes its `Packages` and `Release` again and signs it, and puts
+that suite into the bucket in place of what it was: the `.deb`s first, the indices that
+name them after, and the `.deb`s nothing names any more taken away last, so an apt reading
+at any moment finds every file it is told of. The other suite is never touched. Every older
+`.deb` stays on its release page. The `.deb`s are kept by the edge for a year (their names
+carry their version and never change), the indices for a minute.
+
+**Written into R2 on `CLOUDFLARE_API_TOKEN`**, the repository secret the deploy uses too,
+which has R2 write on the account: R2's S3 key is the token's id, and its secret the
+token's SHA-256, so no second key is kept.
+
+**Why not GitHub Pages any more.** The repository was `lxorb/apt` on Pages, at
+`https://lxorb.github.io/apt`, up to 0.16. A `.deb` carrying CEF is about 150 MB, and a
+file in a GitHub repository may be 100 at most. Pages answers no path with a redirect, so
+the old address cannot send apt here either: `apt.yml -f suite=move` wrote it for the
+last time (`scripts/apt-move.sh`), with the version each suite held once more as
+`<version>+moved` and a postinst that points every source naming the old address at the
+new one. The next `apt upgrade` from the old address installs it, and the `apt update`
+after that reads `apt.orden.so`. Every `.deb` since carries the same postinst
+(`src-tauri/linux/postinst`), for a source written from old instructions later.
 
 **Written with `apt-ftparchive` and `gpg`**, in `scripts/apt-repo.sh`, and nothing else:
-no `reprepro` database or `aptly` state to keep beside the files, so the checkout of
-`lxorb/apt` is the whole of the state, a run reads it as it finds it, and the layout is the
-plain one apt reads:
+no `reprepro` database or `aptly` state to keep beside the files, so a run needs nothing of
+what is in the bucket, and the layout is the plain one apt reads:
 
 ```
 dists/<suite>/InRelease, Release, Release.gpg
@@ -147,17 +174,17 @@ orden-archive-keyring.asc, orden-archive-keyring.gpg, index.html, README.md
 `Orden packages <emil@emilvinu.ch>`, fingerprint
 `44404B19539FB2C53F31086941F0103448A194DE`. Its public half is
 `apt/orden-archive-keyring.asc` here and at the root of the repository, and a run whose
-secret is not that key refuses to sign. Without the key or `PACKAGING_TOKEN` the run is
-skipped. `InRelease` and `Release.gpg` both, so every apt finds the signature it asks for.
+secret is not that key refuses to sign. Without the key or `CLOUDFLARE_API_TOKEN` the
+run is skipped. `InRelease` and `Release.gpg` both, so every apt finds the signature it asks for.
 
 Adding it, for `stable` (`Suites: unstable` for the edge builds):
 
 ```sh
 sudo install -d -m 0755 /etc/apt/keyrings
-curl -fsSL https://lxorb.github.io/apt/orden-archive-keyring.asc | sudo tee /etc/apt/keyrings/orden.asc >/dev/null
+curl -fsSL https://apt.orden.so/orden-archive-keyring.asc | sudo tee /etc/apt/keyrings/orden.asc >/dev/null
 sudo tee /etc/apt/sources.list.d/orden.sources >/dev/null <<'EOF'
 Types: deb
-URIs: https://lxorb.github.io/apt
+URIs: https://apt.orden.so
 Suites: stable
 Components: main
 Signed-By: /etc/apt/keyrings/orden.asc
@@ -167,7 +194,7 @@ sudo apt install orden
 ```
 
 The one-line form, for an apt older than 2.3 that reads no `.sources` file:
-`deb [signed-by=/etc/apt/keyrings/orden.asc] https://lxorb.github.io/apt stable main` in
+`deb [signed-by=/etc/apt/keyrings/orden.asc] https://apt.orden.so stable main` in
 `/etc/apt/sources.list.d/orden.list`. The keyring may be the armored `.asc`; apt reads
 either. The app leaves an install from here to apt and only says when a new version is out
 (`package_manager.rs`).
@@ -245,12 +272,10 @@ was decided; the history has how they were made and checked.
 
 ## Snap Store
 
-`snap/snapcraft.yaml` unpacks the `.deb` (`source-type: deb`) and stages nothing
-of its own: the `gnome` extension's platform snap carries GTK, WebKitGTK 4.1 and
-libsoup3, and binds the `webkit2gtk-4.1` helper directory in from there. A staged
-second copy of the library would pair a WebKit UI process with web process
-helpers from a different WebKit, which is how a Tauri window ends up blank.
-Strict confinement: the spaces are reached through `home`, an export saved to a
+`snap/snapcraft.yaml` unpacks the `.deb` (`source-type: deb`), which carries the engine,
+and stages nothing of its own: the `gnome` extension's platform snap carries GTK 4 and
+the rest of what Chromium links. Strict confinement, with Chromium's namespace sandbox
+through `browser-support` and `allow-sandbox`, as the Chromium snap has it: the spaces are reached through `home`, an export saved to a
 stick through `removable-media`, and nothing else is needed.
 
 Two channels. A release goes to `stable`, from `publish-linux.yml`; every edge build goes
@@ -327,10 +352,12 @@ quietly carried the source flake onto main and broke
 `nix profile install github:lxorb/orden?dir=packaging/nix` for everyone already on
 it. Nothing in the flake asks which branch it is on.
 
-The release build takes the program out of the release `.deb` and runs it on
-nixpkgs' own WebKitGTK, GTK and GStreamer, with `autoPatchelfHook` and
-`wrapGAppsHook3`, the way nixpkgs packages other Tauri apps and the way the AUR
-package runs it on Arch's. Up to 0.13 it wrapped the AppImage instead, which broke
+The release build takes the program and the engine beside it out of the release `.deb`
+and runs them on nixpkgs' own GTK 4, NSS and the rest, with `autoPatchelfHook` and
+`wrapGAppsHook4`, the way the AUR package runs it on Arch's. The source build compiles
+Linux's manifest against nixpkgs' `cef-binary` moved to the version that manifest pins
+(`cefFor`), and ships that engine beside the program the same way. What follows about
+WebKitGTK is the history of the release build up to 0.16, when Linux moved to CEF. Up to 0.13 it wrapped the AppImage instead, which broke
 on NixOS: the AppImage's own libwayland-client and GLib do not match the system's
 Mesa and libglvnd (WebKit's web process aborts with `Could not create default EGL
 display: EGL_BAD_PARAMETER`), its start script forces `GDK_BACKEND=x11`, and its

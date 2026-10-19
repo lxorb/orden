@@ -92,8 +92,12 @@ jobs:
           # Not a gate: this is the file the packaging replaces, and it is
           # expected to be thin. Reported so a regression stays visible.
           desktop-file-validate "$entry" && echo 'valid' || echo 'invalid'
-          file x/usr/bin/nib
-          objdump -p x/usr/bin/nib | grep NEEDED
+          # The program and the engine beside it, in /usr/share/Orden, with /usr/bin/nib a
+          # link to it; see packaging/linux.md.
+          ls -la x/usr/bin/nib x/usr/share/Orden
+          file -L x/usr/bin/nib
+          objdump -p x/usr/share/Orden/nib | grep -E 'NEEDED|RUNPATH'
+          stat -c '%a %U %n' x/usr/share/Orden/chrome-sandbox
 
       - name: What the AppImage bundles
         run: |
@@ -106,7 +110,7 @@ jobs:
           echo "::group::AppDir"
           find squashfs-root -maxdepth 4 -printf '%y %p\n' | sort | head -60
           echo "::endgroup::"
-          find squashfs-root -name '*webkit*' -o -name '*javascriptcore*' -o -name 'WebKit*'
+          find squashfs-root -name 'libcef.so' -o -name '*webkit*' -o -name 'libgst*'
 
       - name: The .desktop entries the packaging ships instead
         run: |
@@ -200,14 +204,14 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-      # The snap stages no WebKitGTK of its own, so the platform snap the
-      # gnome extension pulls in has to be the one carrying it.
+      # The snap stages no GTK of its own, so the platform snap the gnome extension
+      # pulls in has to carry the GTK 4 CEF's runtime is built against, and NSS.
       - name: What the gnome platform snap carries
         run: |
           snap download gnome-46-2404 --basename=gnome-platform
-          unsquashfs -l gnome-platform.snap | grep -E "libwebkit2gtk-4[.]1|libjavascriptcoregtk-4[.]1|libsoup-3" | tee webkit.txt
-          grep -q "libwebkit2gtk-4[.]1[.]so[.]0$" webkit.txt
-          echo "webkit2gtk-4.1 comes from the platform snap"
+          unsquashfs -l gnome-platform.snap | grep -E "libgtk-4[.]so[.]1|libnss3[.]so" | tee platform.txt
+          grep -q "libgtk-4[.]so[.]1$" platform.txt
+          echo "GTK 4 comes from the platform snap"
 
       # snapcraft reads one checksum line, amd64's as committed; the arm64 row takes
       # the arm64 digest the file keeps beside it. See packaging/linux.md.
@@ -235,4 +239,4 @@ jobs:
             test ! -e "/tmp/snapx/usr/share/applications/$tauri.desktop"
           done
           ls /tmp/snapx/meta/gui/ || true
-          find /tmp/snapx -name 'libwebkit2gtk*' -o -name 'libgtk-3*' | head
+          find /tmp/snapx -name 'libcef.so' -o -name 'libwebkit2gtk*' -o -name 'libgtk-3*' | head

@@ -10,18 +10,18 @@
 //! point. Never the files, then or now: a cookie database is encrypted to the machine it
 //! is on.
 //!
-//! | | `WebView2` | `WKWebView` | `WebKitGTK` |
+//! | | `WebView2` | `WKWebView` | CEF (Linux) |
 //! | --- | --- | --- | --- |
-//! | cookies | `DevTools` `Network.*` (`cookies.rs`) | `WKHTTPCookieStore` | the cookie manager |
-//! | the page's storage | dump.js and restore.js in an isolated world (`isolated.rs`) | a `WKContentWorld` | a script world |
-//! | a page on an origin nobody has open | `WebResourceRequested` answering `<origin>/__nib_restore` (`restore_view.rs`) | `loadHTMLString` | `load_html` |
+//! | cookies | `DevTools` `Network.*` (`cookies.rs`) | `WKHTTPCookieStore` | as `WebView2` |
+//! | the page's storage | dump.js and restore.js in an isolated world (`isolated.rs`) | a `WKContentWorld` | as `WebView2` |
+//! | a page on an origin nobody has open | `WebResourceRequested` answering `<origin>/__nib_restore` (`restore_view.rs`) | `loadHTMLString` | the site's own answer at that address |
 //!
 //! **Who may call.** Only the app's own windows (`main`, `nib-2`, ...): a web tab's page
 //! is a remote origin that reaches no command anyway, and the command refuses any other
 //! caller besides, as the terminal's do.
 
 mod answer;
-#[cfg(windows)]
+#[cfg(any(windows, feature = "cef"))]
 mod cdp;
 pub(crate) mod cookies;
 mod isolated;

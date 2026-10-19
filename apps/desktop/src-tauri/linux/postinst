@@ -1,0 +1,14 @@
+#!/bin/sh
+# Orden's apt repository moved from https://lxorb.github.io/apt to https://apt.orden.so,
+# signed with the same key. A source that still names the old address - one written by
+# the instructions before the move - is pointed at the new one, so `apt update` keeps
+# finding Orden. Nothing else in a source is touched, and a system with none is left as
+# it is. See packaging/linux.md, "apt".
+set -e
+for source in /etc/apt/sources.list /etc/apt/sources.list.d/*.list /etc/apt/sources.list.d/*.sources; do
+  [ -f "$source" ] || continue
+  if grep -q 'lxorb\.github\.io/apt' "$source"; then
+    sed -i 's#https\{0,1\}://lxorb\.github\.io/apt/\{0,1\}#https://apt.orden.so#g' "$source"
+  fi
+done
+exit 0

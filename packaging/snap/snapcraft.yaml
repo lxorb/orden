@@ -1,18 +1,15 @@
 # Orden for the Snap Store.
 #
 # Like the AUR and Flathub packaging, this unpacks the official .deb instead of
-# rebuilding the app. Nothing is staged from the Ubuntu archive: the gnome
-# extension's platform snap carries GTK, WebKitGTK 4.1 and libsoup3, and its
-# layout binds the webkit2gtk-4.1 helper directory in from there. Staging a
-# second copy of the library would pair a WebKit UI process with web process
-# helpers built from a different WebKit, which is how a Tauri window ends up
-# blank.
+# rebuilding the app. Orden runs on CEF (Chromium) on Linux, and the .deb carries the
+# engine itself beside the program, in usr/share/Orden, so nothing of the engine is
+# staged from the Ubuntu archive. What it links from the system - GTK 4, NSS, ALSA and
+# the rest - is the gnome extension's platform snap: gnome-46-2404 carries GTK 4.14,
+# the oldest the runtime is built against. Chromium plays VP9, AV1 and Opus itself, so
+# no GStreamer either; H.264 and AAC do not play in the standard CEF build anywhere.
 #
-# What the program needs of that platform: WebKitGTK 2.40 or newer, and GStreamer's
-# -base and -good plugins for a recording and its playback. gnome-46-2404 carries
-# WebKitGTK 2.52 and both plugin sets (and PipeWire's), so nothing is added for
-# them. It carries neither -bad nor gst-libav, so AAC and H.264 - a recording made
-# on a Mac, a video from a phone - do not play in the snap; see packaging/linux.md.
+# Chromium's sandbox is a namespace one here, the setuid helper being of no use in a
+# snap: `browser-support` with `allow-sandbox`, as the Chromium snap has it.
 #
 # Build with `snapcraft` from this directory. Publishing needs a Snapcraft
 # account and `snapcraft upload --release=stable orden_0.15.0_amd64.snap`; see
@@ -72,11 +69,12 @@ apps:
       - wayland
       - x11
       - unity7
-      - browser-support
-    environment:
-      # WebKitGTK's DMA-BUF renderer cannot reach the host's DRM nodes the way
-      # it expects from inside strict confinement, and gives a blank window.
-      WEBKIT_DISABLE_DMABUF_RENDERER: '1'
+      - browser-sandbox
+
+plugs:
+  browser-sandbox:
+    interface: browser-support
+    allow-sandbox: true
 
 parts:
   orden:

@@ -92,7 +92,7 @@ pub fn halt(app: &AppHandle, agent: &str) {
 pub fn stop(app: &AppHandle) -> bool {
     GENERATION.fetch_add(1, Ordering::SeqCst);
     let again = STOPPED.swap(true, Ordering::SeqCst);
-    #[cfg(windows)]
+    #[cfg(any(windows, feature = "cef"))]
     if again {
         super::tabs::close_all(app, None);
     }

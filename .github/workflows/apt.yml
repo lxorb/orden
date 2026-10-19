@@ -1,19 +1,24 @@
 name: apt
 
-# The apt repository, lxorb/apt on GitHub Pages: one suite of it written again from a
-# release's .debs, signed with APT_SIGNING_KEY. `stable` comes from publish.yml, for a
-# stable release, and `unstable` from release.yml, once edge is up; both call this
-# workflow (`uses:`) rather than dispatching it, because a dispatch only finds a
-# workflow that is on the default branch already. By hand, once it is on main:
+# The apt repository, served at https://apt.orden.so from the Cloudflare R2 bucket
+# `orden-apt`: one suite of it written again from a release's .debs, signed with
+# APT_SIGNING_KEY, and put into the bucket in place of what that suite was. `stable`
+# comes from publish.yml, for a stable release, and `unstable` from release.yml, once
+# edge is up; both call this workflow (`uses:`) rather than dispatching it, because a
+# dispatch only finds a workflow that is on the default branch already. By hand, once it
+# is on main:
 #
 #   gh workflow run apt.yml -f suite=stable -f tag=v0.15.0
 #   gh workflow run apt.yml -f suite=unstable -f tag=edge
 #
-# Each suite holds its newest version alone, and the repository is pushed as one commit
-# with no history: every .deb that ever went in would otherwise stay in the history of a
-# repository Pages has to serve, thirty megabytes a build. What a run does not write -
-# the other suite - it takes from the repository as it finds it. See scripts/apt-repo.sh
-# and packaging/linux.md, "apt".
+# Each suite holds its newest version alone; every older .deb stays on its release page.
+# The bucket is written with the S3 API on CLOUDFLARE_API_TOKEN, which needs R2 write on
+# the account: its S3 key is the token's id and its secret the token's SHA-256, as R2
+# takes them. See scripts/apt-repo.sh and packaging/linux.md, "apt".
+#
+# Until 0.16 the repository was lxorb/apt on GitHub Pages, at https://lxorb.github.io/apt.
+# `suite=move` writes that one for the last time: what it holds, once more, with a
+# postinst that points the sources naming it at apt.orden.so (scripts/apt-move.sh).
 on:
   workflow_call:
     inputs:
@@ -28,12 +33,12 @@ on:
   workflow_dispatch:
     inputs:
       suite:
-        description: Which suite to write
+        description: Which suite to write, or move to say the move in the old repository
         type: choice
-        options: [stable, unstable]
+        options: [stable, unstable, move]
         required: true
       tag:
-        description: The release whose .debs go in, v1.2.3 for stable and edge for unstable
+        description: The release whose .debs go in, v1.2.3 for stable and edge for unstable; anything for move
         required: true
 
 permissions:
@@ -43,9 +48,12 @@ env:
   # The key the repository is signed with; its public half is
   # packaging/apt/orden-archive-keyring.asc, and the run refuses a secret that is not it.
   APT_KEY_FINGERPRINT: 44404B19539FB2C53F31086941F0103448A194DE
-  # Where the repository is served, written into its page; a repository variable moves
-  # it, to apt.orden.so for one.
-  APT_BASE_URL: ${{ vars.APT_BASE_URL || 'https://lxorb.github.io/apt' }}
+  # Where the repository is served, written into its page.
+  APT_BASE_URL: https://apt.orden.so
+  # The bucket it is served from, and the account the bucket is in (as
+  # services/sync/wrangler.jsonc has it; not a secret).
+  R2_BUCKET: orden-apt
+  CF_ACCOUNT_ID: b0e98c15b1f905a394ecd6a849e8e99f
 
 jobs:
   gate:
@@ -61,10 +69,17 @@ jobs:
           SUITE: ${{ inputs.suite }}
           TAG: ${{ inputs.tag }}
           APT_SIGNING_KEY: ${{ secrets.APT_SIGNING_KEY }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           PACKAGING_TOKEN: ${{ secrets.PACKAGING_TOKEN }}
         run: |
-          if [[ -z $APT_SIGNING_KEY || -z $PACKAGING_TOKEN ]]; then
-            echo "::notice::APT_SIGNING_KEY or PACKAGING_TOKEN is not set - nothing to publish."
+          if [[ $SUITE == move ]]; then
+            if [[ -z $APT_SIGNING_KEY || -z $PACKAGING_TOKEN ]]; then
+              echo "::error::the move needs APT_SIGNING_KEY and PACKAGING_TOKEN"
+              exit 1
+            fi
+            echo 'go=true' >>"$GITHUB_OUTPUT"
+          elif [[ -z $APT_SIGNING_KEY || -z $CLOUDFLARE_API_TOKEN ]]; then
+            echo "::notice::APT_SIGNING_KEY or CLOUDFLARE_API_TOKEN is not set - nothing to publish."
             echo 'go=false' >>"$GITHUB_OUTPUT"
           elif [[ $SUITE == stable && $TAG == v*.*.* && $TAG != *-* ]] || [[ $SUITE == unstable && $TAG == edge ]]; then
             echo 'go=true' >>"$GITHUB_OUTPUT"
@@ -75,16 +90,16 @@ jobs:
 
   publish:
     needs: gate
-    if: needs.gate.outputs.go == 'true'
+    if: needs.gate.outputs.go == 'true' && inputs.suite != 'move'
     runs-on: ubuntu-latest
-    # One writer at a time, from either suite and whichever workflow called this one: both
-    # push the same branch, and a newer run waits rather than cancelling one half way
-    # through its push. On the job rather than the workflow, so the group is this job's
-    # own and never one a caller is holding (release.yml's and publish.yml's are theirs).
+    # One writer at a time, from either suite and whichever workflow called this one: a
+    # newer run waits rather than cancelling one half way through its upload. On the job
+    # rather than the workflow, so the group is this job's own and never one a caller is
+    # holding (release.yml's and publish.yml's are theirs).
     concurrency:
       group: apt
       cancel-in-progress: false
-    # The push goes to lxorb/apt on the PACKAGING_TOKEN; this token only downloads the
+    # The upload goes to R2 on CLOUDFLARE_API_TOKEN; this token only downloads the
     # release's .debs.
     permissions:
       contents: read
@@ -98,12 +113,6 @@ jobs:
             scripts/apt-repo.sh
             packaging/apt
           persist-credentials: false
-
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
-        with:
-          repository: lxorb/apt
-          path: apt
-          token: ${{ secrets.PACKAGING_TOKEN }}
 
       - name: The release's .debs
         env:
@@ -128,15 +137,41 @@ jobs:
           command -v apt-ftparchive >/dev/null || sudo apt-get install -y apt-utils
           bash scripts/apt-repo.sh "$SUITE" debs apt
 
-      - name: Push
+      # R2's S3 key from the API token: the token's id, and the SHA-256 of the token.
+      - name: The bucket's key
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          said=$(curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" https://api.cloudflare.com/client/v4/user/tokens/verify ||
+            curl -fsS -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" "https://api.cloudflare.com/client/v4/accounts/$CF_ACCOUNT_ID/tokens/verify")
+          id=$(jq -r '.result.id // empty' <<<"$said")
+          [ -n "$id" ] || { echo "::error::CLOUDFLARE_API_TOKEN did not verify"; exit 1; }
+          secret=$(printf '%s' "$CLOUDFLARE_API_TOKEN" | sha256sum | cut -d' ' -f1)
+          echo "::add-mask::$secret"
+          {
+            echo "AWS_ACCESS_KEY_ID=$id"
+            echo "AWS_SECRET_ACCESS_KEY=$secret"
+            echo "AWS_DEFAULT_REGION=auto"
+            echo "R2=https://$CF_ACCOUNT_ID.r2.cloudflarestorage.com"
+          } >>"$GITHUB_ENV"
+
+      # The suite's .debs first, then its indices, which name them, and only then the
+      # .debs nothing names any more taken away: an apt that reads the indices at any
+      # moment finds every file they name. The .debs are named by their version and
+      # never change; the indices change with every run, so they are kept for a minute.
+      - name: Into the bucket
         working-directory: apt
         run: |
-          git config user.name lxorb
-          git config user.email 101118850+lxorb@users.noreply.github.com
-          git checkout --orphan written
-          git add -A
-          git commit -q -m "$SUITE: $TAG"
-          git push --force origin written:main
+          s3() { aws --endpoint-url "$R2" s3 "$@"; }
+          bucket="s3://$R2_BUCKET"
+          s3 sync "pool/$SUITE" "$bucket/pool/$SUITE" --only-show-errors --cache-control 'public, max-age=31536000, immutable'
+          s3 sync "dists/$SUITE" "$bucket/dists/$SUITE" --only-show-errors --delete --cache-control 'public, max-age=60'
+          for file in orden-archive-keyring.asc orden-archive-keyring.gpg index.html README.md; do
+            s3 cp "$file" "$bucket/$file" --only-show-errors --cache-control 'public, max-age=300'
+          done
+          s3 sync "pool/$SUITE" "$bucket/pool/$SUITE" --only-show-errors --delete --cache-control 'public, max-age=31536000, immutable'
+          s3 ls --recursive "$bucket/dists/$SUITE/"
+          s3 ls --recursive "$bucket/pool/$SUITE/"
           {
             echo "### $SUITE: $TAG"
             echo
@@ -144,3 +179,61 @@ jobs:
               echo "- $arch: $(awk '/^Version: / { print $2 }' "dists/$SUITE/main/binary-$arch/Packages")"
             done
           } >>"$GITHUB_STEP_SUMMARY"
+
+      # Read back over the address apt uses.
+      - name: Served
+        run: |
+          for path in "dists/$SUITE/InRelease" "dists/$SUITE/main/binary-amd64/Packages" orden-archive-keyring.asc; do
+            curl -fsSI "$APT_BASE_URL/$path" | head -1
+          done
+
+  # The old repository on GitHub Pages, written for the last time; see the top of this
+  # file and scripts/apt-move.sh.
+  move:
+    needs: gate
+    if: needs.gate.outputs.go == 'true' && inputs.suite == 'move'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: apt
+      cancel-in-progress: false
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          sparse-checkout: |
+            scripts/apt-repo.sh
+            scripts/apt-move.sh
+            packaging/apt
+            apps/desktop/src-tauri/linux/postinst
+          persist-credentials: false
+
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          repository: lxorb/apt
+          path: apt
+          token: ${{ secrets.PACKAGING_TOKEN }}
+
+      - name: The signing key
+        env:
+          APT_SIGNING_KEY: ${{ secrets.APT_SIGNING_KEY }}
+        run: |
+          gpg --batch --import <<<"$APT_SIGNING_KEY"
+          published=$(gpg --batch --show-keys --with-colons packaging/apt/orden-archive-keyring.asc | awk -F: '$1 == "fpr" { print $10; exit }')
+          [ "$published" = "$APT_KEY_FINGERPRINT" ] || { echo "::error::the published key is $published"; exit 1; }
+
+      - name: The last of it, pointing at apt.orden.so
+        run: |
+          command -v apt-ftparchive >/dev/null || sudo apt-get install -y apt-utils
+          bash scripts/apt-move.sh apt
+
+      - name: Push
+        working-directory: apt
+        run: |
+          git config user.name lxorb
+          git config user.email 101118850+lxorb@users.noreply.github.com
+          git checkout --orphan written
+          git add -A
+          git commit -q -m "moved to https://apt.orden.so"
+          git push --force origin written:main
+          cat dists/*/main/binary-amd64/Packages | grep -E '^(Package|Version):'

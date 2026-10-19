@@ -52,7 +52,7 @@ Download an installer from the [latest release](https://github.com/lxorb/orden/r
 | macOS, Homebrew | `brew install --cask --no-quarantine lxorb/tap/orden` |
 | Nix | `nix profile install github:lxorb/orden?dir=packaging/nix` |
 | Nix, current source from `unstable` | `nix profile install github:lxorb/orden/unstable?dir=packaging/nix#orden-unstable` |
-| Debian, Ubuntu, apt repository | add `https://lxorb.github.io/apt` as below, then `sudo apt install orden` |
+| Debian, Ubuntu, apt repository | add `https://apt.orden.so` as below, then `sudo apt install orden` |
 | Debian, Ubuntu, one file | `sudo apt install ./Orden-<version>-linux-x64.deb` |
 | Fedora, openSUSE | `sudo dnf install ./Orden-<version>-linux-x64.rpm` |
 | Any Linux | `chmod +x Orden-<version>-linux-x64.AppImage && ./Orden-<version>-linux-x64.AppImage` |
@@ -61,10 +61,10 @@ The apt repository, on x86_64 and arm64, with its key in `/etc/apt/keyrings`:
 
 ```sh
 sudo install -d -m 0755 /etc/apt/keyrings
-curl -fsSL https://lxorb.github.io/apt/orden-archive-keyring.asc | sudo tee /etc/apt/keyrings/orden.asc >/dev/null
+curl -fsSL https://apt.orden.so/orden-archive-keyring.asc | sudo tee /etc/apt/keyrings/orden.asc >/dev/null
 sudo tee /etc/apt/sources.list.d/orden.sources >/dev/null <<'EOF'
 Types: deb
-URIs: https://lxorb.github.io/apt
+URIs: https://apt.orden.so
 Suites: stable
 Components: main
 Signed-By: /etc/apt/keyrings/orden.asc
@@ -73,7 +73,7 @@ sudo apt update
 sudo apt install orden
 ```
 
-`Suites: unstable` follows the edge builds instead. On an apt older than 2.3 the source is one line, `deb [signed-by=/etc/apt/keyrings/orden.asc] https://lxorb.github.io/apt stable main`, in `/etc/apt/sources.list.d/orden.list`. An install from the repository is updated by apt, and the app only says when a new version is out.
+`Suites: unstable` follows the edge builds instead. On an apt older than 2.3 the source is one line, `deb [signed-by=/etc/apt/keyrings/orden.asc] https://apt.orden.so stable main`, in `/etc/apt/sources.list.d/orden.list`. An install from the repository is updated by apt, and the app only says when a new version is out.
 
 ## Why Orden?
 

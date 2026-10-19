@@ -31,6 +31,9 @@ use std::sync::{Mutex, PoisonError};
 use std::time::{Duration, Instant};
 
 use tauri::AppHandle;
+// Tauri 3 posts to the main thread through `Manager`; Tauri 2 has it on the handle.
+#[cfg(feature = "cef")]
+use tauri::Manager as _;
 
 use crate::logs::say;
 
@@ -388,7 +391,7 @@ fn pumps(thread: u32, within: Duration) -> Answer {
 /// which from outside looks exactly like nib freezing: `WebView2`'s `ProcessFailed`,
 /// whose "unresponsive" kind is raised after the page has not answered input for a few
 /// seconds. The kind is all that is said.
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "cef")))]
 #[allow(
     unsafe_code,
     reason = "a webview's processes are WebView2's own event, reached through its COM interfaces"
@@ -438,41 +441,17 @@ pub fn watch_page(app: &AppHandle, webview: &tauri::Webview, whose: &'static str
     });
 }
 
-/// Says in the log when the web process behind the window's own page goes - crashed, or
-/// ended by the system for its memory, or aborted at its start the way `WebKitGTK` does
-/// where it cannot make an EGL display - and notes the window as one with no page to
-/// answer in. `WebKitGTK`'s `web-process-terminated`.
-#[cfg(target_os = "linux")]
-pub fn watch_page(app: &AppHandle, webview: &tauri::Webview, whose: &'static str) {
-    use webkit2gtk::WebViewExt as _;
-
-    let app = app.clone();
-    let label = webview.label().to_owned();
-    let _ = webview.with_webview(move |platform| {
-        let _ = platform
-            .inner()
-            .connect_web_process_terminated(move |_, reason| {
-                gone(&label);
-                say(
-                    &app,
-                    "error",
-                    &format!("stall: {whose} page ended ({reason:?})"),
-                );
-            });
-    });
-}
-
 /// Every other engine: nothing to listen to.
-#[cfg(not(any(windows, target_os = "linux")))]
+#[cfg(not(all(windows, not(feature = "cef"))))]
 pub fn watch_page(_app: &AppHandle, _webview: &tauri::Webview, _whose: &'static str) {}
 
 /// The windows whose page's engine has gone, by label.
 static GONE: Mutex<BTreeSet<String>> = Mutex::new(BTreeSet::new());
 
 /// Notes the window's page as gone.
-#[cfg_attr(
-    not(target_os = "linux"),
-    allow(dead_code, reason = "only WebKitGTK's page is noted gone")
+#[allow(
+    dead_code,
+    reason = "no engine nib runs on notes its page gone yet; WebKitGTK's did, and CEF's will"
 )]
 fn gone(label: &str) {
     GONE.lock()

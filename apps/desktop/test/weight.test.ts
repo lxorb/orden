@@ -769,12 +769,17 @@ function holds(tail: string): boolean {
  *  gives it back to that and nothing else as it comes back (`keyboard` and `seen` on a
  *  page in pages.svelte.ts, `pressedOn` in AddressField.svelte). Measured 3,239,774.
  *
- *  Raised 2026-10-19, to 3,242,100, for #254: Developer mode has to be known to the
+ *  Raised 2026-10-19, to 3,242,700, for #423: which order each space's list is read in
+ *  goes with the account, and the list cannot be drawn before it is known
+ *  (`SpaceSorting`, beside the arranged order in workspace/arranged.svelte.ts rather than
+ *  a module of its own; device.svelte.ts lost its copy). Measured 3,241,664.
+ *
+ *  Raised 2026-10-19, to 3,244,300, for #254: Developer mode has to be known to the
  *  first paint's new-tab kinds (`developer` and `coder` in modes.svelte.ts, read by
  *  `kindsHere`), and the window has to know when to fetch the first run's optional
  *  questions (`setup` in settings.svelte.ts); the card itself is behind a door
- *  (Personalize.svelte). Measured 3,241,040. */
-const BUDGET = 3_242_100
+ *  (Personalize.svelte). Measured 3,243,219. */
+const BUDGET = 3_244_300
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

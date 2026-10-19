@@ -6,6 +6,10 @@
 //! with a patience of its own: an engine that never answers is a merge that fails
 //! with a sentence, never a command that hangs for ever.
 
+// CEF answers every question a merge asks through the DevTools protocol, which waits
+// for itself; only the patience is read there.
+#![cfg_attr(feature = "cef", allow(dead_code))]
+
 use std::time::Duration;
 
 use tauri::async_runtime::{channel, Sender};

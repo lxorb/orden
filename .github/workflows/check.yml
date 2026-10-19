@@ -11,6 +11,9 @@ on:
     # `ready_for_review` too: a draft runs nothing, and the full run starts the moment
     # it is marked ready (see docs/conventions.md, "CI").
     types: [opened, synchronize, reopened, ready_for_review]
+  # By hand, on a branch whose work is not headed for main yet (`gh workflow run
+  # check.yml --ref <branch>`).
+  workflow_dispatch:
 
 concurrency:
   group: check-${{ github.ref }}
@@ -318,7 +321,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-24.04, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -347,6 +350,16 @@ jobs:
           toolchain: stable
           components: clippy, rustfmt
 
+      # Linux builds on CEF, from a manifest of its own put in place of the app's, which
+      # has to be the one scripts/linux-manifest.mjs writes from the app's; and it goes
+      # in before the cache below is keyed by the lock file beside it. See
+      # scripts/linux-cef.sh.
+      - name: Linux's manifest
+        if: runner.os == 'Linux'
+        run: |
+          node scripts/linux-manifest.mjs --check
+          bash scripts/linux-cef.sh
+
       # The cache key this action builds already carries the runner's own OS, so
       # the three rows keep three caches without being told to. Saved from main
       # only: the repository has ten gigabytes of cache, the release and phone
@@ -358,14 +371,15 @@ jobs:
             apps/desktop/src-tauri
           save-if: ${{ github.ref == 'refs/heads/main' }}
 
-      # Tauri needs the system webview to compile against. Windows has WebView2 in
-      # the image already and macOS has WebKit in the system; only Linux has to be
-      # handed one.
+      # Tauri needs a webview to compile against. Windows has WebView2 in the image
+      # already and macOS has WebKit in the system; Linux's is CEF, which its crate's
+      # build script downloads, on GTK 4 - 4.14 at least, so Ubuntu 24.04's.
       - name: System dependencies
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev
+          sudo apt-get install -y libgtk-4-dev libdbus-1-dev cmake ninja-build
+          bash scripts/linux-cef.sh cef
 
       # Tauri's build script embeds the built frontend, so it has to exist
       # before the crate will even compile.
@@ -385,8 +399,11 @@ jobs:
         run: |
           cargo clippy --manifest-path apps/desktop/src-tauri/Cargo.toml --all-targets -- -D warnings
 
+      # On Linux the tests link CEF, which its build script copies beside the binaries
+      # it builds, one folder above the tests'.
       - name: Tests
         run: |
+          export LD_LIBRARY_PATH="$PWD/apps/desktop/src-tauri/target/debug${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
           cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml
 
   # Whether the phone's own half of the app changed. Its own job so the answer is

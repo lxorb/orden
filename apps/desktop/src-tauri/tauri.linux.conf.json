@@ -9,11 +9,6 @@
         "role": "Viewer",
         "rank": "Alternate"
       }
-    ],
-    "linux": {
-      "appimage": {
-        "bundleMediaFramework": true
-      }
-    }
+    ]
   }
 }

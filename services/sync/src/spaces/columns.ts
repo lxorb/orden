@@ -22,7 +22,8 @@ import type { Env } from '../types'
 
 /** A column a client writes whole. `icons` writes a second column beside it - the
  *  tints - so it has a statement of its own; see ./icons. */
-export type Column = 'archived' | 'arranged' | 'bookmarks' | 'excluded' | 'files' | 'graph' | 'site'
+export type Column =
+  'archived' | 'arranged' | 'bookmarks' | 'excluded' | 'files' | 'graph' | 'site' | 'sort'
 
 /** How many bytes each column may hold, once written down.
  *
@@ -53,6 +54,8 @@ export type Column = 'archived' | 'arranged' | 'bookmarks' | 'excluded' | 'files
  *  columns ride along with its name on every read, so a ceiling here is a ceiling
  *  on what every device downloads to list its spaces. */
 export const MOST_BYTES: Record<Column | 'icons', number> = {
+  // One of seven words; see sort.ts.
+  sort: 32,
   graph: 4 * 1024,
   bookmarks: 8 * 1024,
   excluded: 16 * 1024,

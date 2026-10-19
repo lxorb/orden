@@ -105,7 +105,7 @@ import {
 import { flatRows } from './tree-flat'
 import { entryAt, withComing, withEntry, withMove, withoutEntry, withoutRows } from './tree-edits'
 import { orderedTree, type SortMode } from './tree-order'
-import { Arranged } from './workspace/arranged.svelte'
+import { Arranged, SpaceSorting } from './workspace/arranged.svelte'
 import { log } from './log'
 import { invoke, isDesktop, isNative, joinPath, openExternal } from './tauri'
 import { viewport } from './viewport.svelte'
@@ -235,8 +235,7 @@ function readTreeOptions(): TreeOptions {
   const saved = stored(TREE_KEY)
   // A build older than this one wrote a sort key and a direction here as well, for
   // the whole app rather than per space. They are ignored: the order is now the
-  // space's own and is kept beside where each space was left scrolled to; see
-  // `listOrder` in workspace/device.svelte.ts.
+  // space's own, with the account; see `SpaceSorting` in workspace/arranged.svelte.ts.
   if (!isRecord(saved)) return { showHidden: false }
 
   return { showHidden: saved.showHidden === true }
@@ -428,6 +427,9 @@ class Workspace {
    *  the same kind of thing: one space's own settings, kept on the account so
    *  every machine draws it the same way. */
   readonly graphSettings = new SpaceGraphSettings(() => this.activeSpace?.root ?? null)
+  /** Which order each space's file list is read in, with the account; see
+   *  `SpaceSorting` in workspace/arranged.svelte.ts (#423). */
+  readonly sorting = new SpaceSorting(() => this.activeSpace?.root ?? null)
   /** The notes and folders this space leaves out of its search, its graph and its
    *  unlinked mentions. Beside the other two because it is the same kind of thing:
    *  one space's own settings, kept on the account so every machine agrees. */
@@ -490,6 +492,7 @@ class Workspace {
       this.excluded,
       this.archive,
       this.graphSettings,
+      this.sorting,
     ]) {
       this.fileOps.follow(keeping(store))
     }
@@ -742,10 +745,10 @@ class Workspace {
   }
 
   /** Which order this space's file list is read in. By name until somebody chooses
-   *  otherwise, per space, on this machine; see `listOrder` in
-   *  workspace/device.svelte.ts. */
+   *  otherwise, per space and with the account; see `SpaceSorting` in
+   *  workspace/arranged.svelte.ts. */
   readonly sortMode = $derived<SortMode>(
-    this.activeSpace ? this.device.orderOf(this.activeSpace.root) : 'name',
+    this.activeSpace ? this.sorting.of(this.activeSpace.root) : 'name',
   )
 
   /** Whether an account's first pass is running and there is still nothing of
@@ -2536,10 +2539,7 @@ class Workspace {
    *  places in the frame the menu closes in - a round trip is what this used to cost,
    *  and on a synced folder it was long enough to wonder whether the press landed. */
   setSort(mode: SortMode) {
-    const root = this.activeSpace?.root
-    if (root === undefined) return
-
-    this.device.setOrder(root, mode)
+    this.sorting.set(mode)
   }
 
   toggleHidden() {

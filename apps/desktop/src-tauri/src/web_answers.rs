@@ -41,7 +41,7 @@ pub fn said(app: &tauri::AppHandle) {
 
 /// Whether the browser drawing this page answers within a moment. A page whose window is
 /// not there yet, or an engine with no such window, answers.
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "cef")))]
 ///
 /// Called on the window's own thread, where `with_webview` runs at once rather than
 /// later, so the answer is in by the time it returns.
@@ -77,7 +77,7 @@ pub fn answers(view: &tauri::Webview) -> bool {
 }
 
 /// Every other engine draws its pages in this process, or answers on its own thread.
-#[cfg(not(windows))]
+#[cfg(not(all(windows, not(feature = "cef"))))]
 pub fn answers(_view: &tauri::Webview) -> bool {
     true
 }
@@ -89,7 +89,7 @@ pub fn answers(_view: &tauri::Webview) -> bool {
 /// waited on the browser all the same: the system tells a window being hidden, child
 /// windows of another process included. The next placement once the browser answers
 /// puts it back where its pane is.
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "cef")))]
 pub fn put_away(view: &tauri::Webview) {
     let _ = view.with_webview(|platform| {
         use windows::Win32::UI::WindowsAndMessaging::{
@@ -122,12 +122,15 @@ pub fn put_away(view: &tauri::Webview) {
     });
 }
 
-#[cfg(not(windows))]
+#[cfg(not(all(windows, not(feature = "cef"))))]
 pub fn put_away(_view: &tauri::Webview) {}
 
 /// Closes a page whose browser did not answer once it does, asking every second; a
 /// browser that never comes back keeps a page out of sight until the app quits.
 pub fn close_when_answering(app: &tauri::AppHandle, label: String) {
+    // Tauri 3 posts to the main thread through `Manager`; Tauri 2 has it on the handle.
+    #[cfg(feature = "cef")]
+    use tauri::Manager as _;
     let app = app.clone();
     std::thread::spawn(move || loop {
         std::thread::sleep(std::time::Duration::from_secs(1));
@@ -152,7 +155,7 @@ pub fn close_when_answering(app: &tauri::AppHandle, label: String) {
     });
 }
 
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "cef")))]
 mod engine {
     use windows::Win32::Foundation::{BOOL, HWND, LPARAM, WPARAM};
     use windows::Win32::UI::WindowsAndMessaging::{

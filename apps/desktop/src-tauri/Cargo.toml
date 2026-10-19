@@ -37,8 +37,7 @@ missing_docs = "warn"
 # not handed away from somebody typing in a page (src/presence.rs). And the shape a
 # web tab's page is cut to round the app's layers over it (src/web_cut.rs). And the
 # window's top edge strip, shown only while that edge resizes the window
-# (src/top_edge.rs). And on Linux, the compositor's token handed to GTK's Wayland
-# display (src/linux.rs). None of
+# (src/top_edge.rs). None of
 # them has a safe wrapper to use instead, and anything new that wants unsafe has to
 # say so at the function and say why.
 unsafe_code = "deny"
@@ -56,6 +55,39 @@ needless_pass_by_value = "allow"
 # array. The tests read as the sentence they are, and the answer on a failure is one
 # `dbg!` away; nearly two hundred of them turned red the day the runners' stable moved.
 assert_is_empty = "allow"
+
+[features]
+# Which runtime the app's webviews run on. Off here: macOS, Windows and the phones are
+# built from this manifest, against Tauri 2, on the system's own engine.
+#
+# On, the app is a Chromium app: its own interface and every web tab are views in one
+# CEF browser process, through `tauri-runtime-cef`, which exists for Tauri 3 only. That
+# is Linux, and only Linux: `linux/Cargo.toml` is this same package with the Tauri family
+# moved to the pins below and this feature on, written from this file by
+# scripts/linux-manifest.mjs. One manifest cannot hold both, even per target: Tauri 2 and
+# 3 both declare `links = "Tauri"`, which Cargo allows once in a dependency graph. See
+# src/engine.rs and packaging/linux.md.
+cef = []
+
+# What `linux/Cargo.toml` pins the Tauri family to: one release of Tauri 3 and the CEF
+# runtime built against it, so a Linux build gives the same answer twice. The plugins
+# are pinned one by one, because each moves on its own.
+[package.metadata.cef]
+tauri = "3.0.0-alpha.5"
+tauri-runtime-cef = "3.0.0-alpha.6"
+tauri-runtime = "3.0.0-alpha.4"
+tauri-build = "3.0.0-alpha.4"
+tauri-utils = "3.0.0-alpha.4"
+cef = "154.5.0"
+tauri-plugin-opener = "3.0.0-alpha.3"
+tauri-plugin-os = "3.0.0-alpha.3"
+tauri-plugin-deep-link = "3.0.0-alpha.3"
+tauri-plugin-dialog = "3.0.0-alpha.4"
+tauri-plugin-process = "3.0.0-alpha.3"
+tauri-plugin-single-instance = "3.0.0-alpha.3"
+tauri-plugin-updater = "3.0.0-alpha.3"
+tauri-plugin-global-shortcut = "3.0.0-alpha.3"
+tauri-plugin-notification = "3.0.0-alpha.3"
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
@@ -343,23 +375,22 @@ objc2-web-kit = { version = "0.3", default-features = false, features = [
   "WKWebsiteDataStore",
 ] }
 
-# WebKitGTK as the objects wry hands out, at the versions it is built against, for a web
-# state's scripts: a script world of their own and an async function call need 2.40,
-# which every distribution nib is packaged for has. See web_state/isolated.rs. The same
-# crate empties a web tab's user scripts of the app's and gives it nib's own in a script
-# world of their own; see web_worlds.rs, and the BSDs' table below.
-[target.'cfg(target_os = "linux")'.dependencies]
-webkit2gtk = { version = "=2.0.2", features = ["v2_40"] }
-javascriptcore-rs = "=1.1.2"
 # The desktop portal's global shortcuts, the only key from any app a Wayland session
 # hands over, and the token-carrying second launch, both on the session bus: zbus's
 # blocking API, which the single instance and notification plugins already build here,
-# rather than ashpd on top of it. GTK and its Wayland display for the compositor's token
-# when a window comes forward, both what tao already builds with. See hotkeys/portal.rs,
-# handover.rs and linux.rs.
+# rather than ashpd on top of it. See hotkeys/portal.rs and handover.rs. Linux is built
+# from linux/Cargo.toml, on CEF; this table is what that manifest is written from.
+[target.'cfg(target_os = "linux")'.dependencies]
 zbus = { version = "5", default-features = false, features = ["async-io", "blocking-api"] }
-gtk = "0.18"
-gdkwayland-sys = "0.18"
+# The X server, from a connection of the crate's own: the browser's chords taken from a
+# web tab's page before the page has them, and which page has the keyboard. Every CEF
+# browser is an X11 window, and Chromium keeps the chords from the page and swallows
+# them. Pure Rust, and in Linux's lock file already, through the runtime's windowing.
+# See web_keys.rs and keyboard.rs.
+x11rb = { version = "0.13", default-features = false }
+# A window's own X11 window, for what only the window manager is told: quick add
+# floated (linux.rs). In the lock file already, through the runtime's windowing.
+raw-window-handle = "0.6"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 # What a file *is*, apart from where it is: the volume and the file id, asked of an open
