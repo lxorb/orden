@@ -22,6 +22,8 @@ vi.mock('../tauri', () => ({
     const id = typeof args?.id === 'string' ? args.id : ''
     sent.push({ command, path, content })
 
+    // The crate refuses a tree whose root is not a folder, and none is here.
+    if (command === 'read_tree') return Promise.reject(new Error('root is not a directory'))
     const named = path || id
     if (refused.has(named)) return Promise.reject(new Error(`${named} will not budge`))
     return Promise.resolve('')
@@ -110,6 +112,7 @@ describe('an entry that goes back', () => {
     // `writeBeside` in undoing.ts.
     expect(sent).toEqual([
       { command: 'file_stamp', path: '/s/a.md', content: '' },
+      { command: 'read_tree', path: '', content: '' },
       { command: 'write_note', path: '/s/a.md', content: '# a' },
     ])
     expect(ws.undone.stack).toEqual([])
@@ -156,7 +159,12 @@ describe('an entry that cannot go back', () => {
     const ws = store({ kind: 'delete', path: '/s/a.md', content: '# a', trashId: 'trash-1' })
     await undoLastFileAction(ws)
 
-    expect(sent.map((one) => one.command)).toEqual(['restore_trash', 'file_stamp', 'write_note'])
+    expect(sent.map((one) => one.command)).toEqual([
+      'restore_trash',
+      'file_stamp',
+      'read_tree',
+      'write_note',
+    ])
     expect(ws.undone.stack).toEqual([])
   })
 })
@@ -474,8 +482,9 @@ describe('a gesture of several', () => {
 
     expect(sent.map((one) => `${one.command} ${one.path}`)).toEqual([
       'rename_note ',
-      // Asked first whether the name is still free; see `writeBeside`.
+      // Asked first whether the name is still free, as a file or a folder; see `onDisk`.
       'file_stamp /s/A/b.md',
+      'read_tree ',
       'write_note /s/A/b.md',
     ])
     expect(told).toEqual(['moved /s/A.md -> /s/A/A.md', 'back /s/A/b.md'])
@@ -584,8 +593,9 @@ describe('a folder deleted', () => {
     expect(sent.map((one) => `${one.command} ${one.path}`)).toEqual([
       'create_folder /s/A',
       'create_folder /s/A/B',
-      // Asked first whether the name is still free; see `writeBeside`.
+      // Asked first whether the name is still free, as a file or a folder; see `onDisk`.
       'file_stamp /s/A/B/b.md',
+      'read_tree ',
       'write_note /s/A/B/b.md',
     ])
     expect(told.at(-1)).toBe('back /s/A')

@@ -31,6 +31,17 @@ describe('a file on the disk', () => {
     expect(await onDisk('/s/b.md')).toBe(false)
   })
 
+  // The crate stamps no folder, so sync v2 on a desktop never removed a folder
+  // deleted on another device, forgot the notes in it, and sent them up again.
+  test('on the desktop, is a folder the tree reads', async () => {
+    state.native = true
+    state.answers.set('file_stamp /s/Work', null)
+    state.answers.set('read_tree /s/Work', { children: [] })
+
+    expect(await onDisk('/s/Work')).toBe(true)
+    expect(await onDisk('/s/Gone')).toBe(false)
+  })
+
   // The browser answers null to every stamp, and an undo that asked it found every
   // name free and wrote over the note there.
   test('in the browser, is a note that reads or a picture whose bytes do', async () => {

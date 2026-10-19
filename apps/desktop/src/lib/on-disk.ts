@@ -1,9 +1,15 @@
-/** Whether anything is at this path: the crate's stamp, or in the browser, which
- *  keeps none, a note or asset that reads, or a folder's contents or marker. */
+/** Whether anything is at this path: a stamp or a folder, or in the browser,
+ *  which keeps no stamps, a note or asset that reads, or a folder's contents. */
 import { invoke, isNative } from './tauri'
 
 export async function onDisk(path: string): Promise<boolean> {
-  if (isNative) return Boolean(await invoke<unknown>('file_stamp', { path }).catch(() => null))
+  if (isNative) {
+    if (await invoke<unknown>('file_stamp', { path }).catch(() => null)) return true
+    return invoke('read_tree', { root: path }).then(
+      () => true,
+      () => false,
+    )
+  }
   const reads = (command: string, at = path) =>
     invoke<unknown>(command, { path: at }).then(
       (held) => typeof held === 'string',

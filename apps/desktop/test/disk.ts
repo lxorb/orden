@@ -119,6 +119,11 @@ export class Disk {
         return kept.path
       }
       case 'read_tree': {
+        // As the crate does: a root that is not a folder is refused.
+        const root = text(args.root)
+        const folder =
+          this.folders.has(root) || [...this.files.keys()].some((one) => one.startsWith(`${root}/`))
+        if (!folder) throw new Error('root is not a directory')
         const options = (args.options ?? {}) as { showHidden?: boolean }
         return this.listing(text(args.root), options.showHidden === true)
       }
