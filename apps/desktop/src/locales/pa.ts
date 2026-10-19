@@ -26,6 +26,25 @@ export const pa: Dictionary = {
   'Import from Zen': 'Zen ਤੋਂ ਅੰਦਰ ਲਿਆਓ',
   'Containers stay in Zen': 'ਕੰਟੇਨਰ Zen ਵਿੱਚ ਹੀ ਰਹਿੰਦੇ ਹਨ',
   'Zen’s tabs could not be read.': 'Zen ਦੀਆਂ ਟੈਬਾਂ ਪੜ੍ਹੀਆਂ ਨਹੀਂ ਜਾ ਸਕੀਆਂ।',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'ਕੰਟੇਨਰ Firefox ਵਿੱਚ ਹੀ ਰਹਿੰਦੇ ਹਨ',
+  'Nothing could be read out of {browser}.': '{browser} ਤੋਂ ਕੁਝ ਵੀ ਪੜ੍ਹਿਆ ਨਹੀਂ ਜਾ ਸਕਿਆ।',
+  'Saved groups': 'ਸੰਭਾਲੇ ਗਰੁੱਪ',
+  'Tab group': 'ਟੈਬ ਗਰੁੱਪ',
+  'Bookmarks toolbar': 'ਨਿਸ਼ਾਨੀਆਂ ਟੂਲਬਾਰ',
+  'Bookmarks menu': 'ਨਿਸ਼ਾਨੀਆਂ ਮੀਨੂ',
+  'Other bookmarks': 'ਹੋਰ ਨਿਸ਼ਾਨੀਆਂ',
+  'Mobile bookmarks': 'ਮੋਬਾਈਲ ਨਿਸ਼ਾਨੀਆਂ',
+  'Bookmarks bar': 'ਬੁੱਕਮਾਰਕ ਬਾਰ',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} ਆਪਣੀਆਂ ਖੁੱਲ੍ਹੀਆਂ ਟੈਬਾਂ ਲਾਕ ਰੱਖਦਾ ਹੈ, ਇਸ ਲਈ ਸਿਰਫ਼ ਬੁੱਕਮਾਰਕ ਆਏ।',
+  '{count} pages not on the web stay behind': {
+    one: 'ਵੈੱਬ ’ਤੇ ਨਾ ਹੋਣ ਵਾਲਾ {count} ਪੰਨਾ ਪਿੱਛੇ ਰਹਿ ਗਿਆ',
+    other: 'ਵੈੱਬ ’ਤੇ ਨਾ ਹੋਣ ਵਾਲੇ {count} ਪੰਨੇ ਪਿੱਛੇ ਰਹਿ ਗਏ',
+  },
+  'Reading List': 'ਪੜ੍ਹਨ ਸੂਚੀ',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS Safari ਦੀਆਂ ਟੈਬਾਂ ਅਤੇ ਬੁੱਕਮਾਰਕ ਫੁੱਲ ਡਿਸਕ ਐਕਸੈਸ ਦੇ ਪਿੱਛੇ ਰੱਖਦਾ ਹੈ। ਉੱਥੇ Orden ਚਾਲੂ ਕਰੋ, ਫਿਰ ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ।',
   // Settings: note types
   'Page note': 'ਸਫ਼ਿਆਂ ਵਾਲੀ ਨੋਟ',
   'Web note': 'ਵੈੱਬ ਨੋਟ',
@@ -96,8 +115,6 @@ export const pa: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'ਸੰਕੇਤ',
   'Silent mode': 'ਚੁੱਪ ਮੋਡ',
-  'Sign in to keep your notes safe and on every device.':
-    'ਆਪਣੇ ਨੋਟ ਸੁਰੱਖਿਅਤ ਅਤੇ ਹਰ ਡਿਵਾਈਸ ਉੱਤੇ ਰੱਖਣ ਲਈ ਸਾਈਨ ਇਨ ਕਰੋ।',
   'See how your notes connect.': 'ਦੇਖੋ ਤੁਹਾਡੇ ਨੋਟ ਕਿਵੇਂ ਜੁੜੇ ਹਨ।',
   'Press {key} to find anything, notes and commands alike.':
     'ਨੋਟ ਅਤੇ ਕਮਾਂਡਾਂ, ਕੁਝ ਵੀ ਲੱਭਣ ਲਈ {key} ਦਬਾਓ।',
@@ -119,11 +136,13 @@ export const pa: Dictionary = {
   '{count} h': '{count} ਘੰ',
   Inbox: 'ਇਨਬਾਕਸ',
   Date: 'ਤਾਰੀਖ',
+  'Start date': 'ਸ਼ੁਰੂਆਤ ਦੀ ਤਾਰੀਖ',
   Priority: 'ਤਰਜੀਹ',
   Reminder: 'ਯਾਦ-ਸੂਚਨਾ',
   Duration: 'ਮਿਆਦ',
   'Smart dates': 'ਸਮਾਰਟ ਤਾਰੀਖਾਂ',
   'From any app': 'ਕਿਸੇ ਵੀ ਐਪ ਤੋਂ',
+  'Show tasks without a start date in Today': 'ਸ਼ੁਰੂਆਤ ਦੀ ਤਾਰੀਖ ਤੋਂ ਬਿਨਾਂ ਕੰਮ ਅੱਜ ਵਿੱਚ ਦਿਖਾਓ',
   'Every day': 'ਹਰ ਰੋਜ਼',
   'Every weekday': 'ਹਰ ਕੰਮ ਵਾਲੇ ਦਿਨ',
   'Every week': 'ਹਰ ਹਫ਼ਤੇ',
@@ -167,6 +186,8 @@ export const pa: Dictionary = {
   Dots: 'ਬਿੰਦੂ',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'ਦੋ ਉਂਗਲਾਂ ਨਾਲ ਕੈਨਵਸ ਘੁਮਾਓ',
+  'Turn upright': 'ਸਿੱਧਾ ਕਰੋ',
   Canvas: 'ਕੈਨਵਸ',
   Card: 'ਕਾਰਡ',
   'Note or picture': 'ਨੋਟ ਜਾਂ ਤਸਵੀਰ',
@@ -242,6 +263,10 @@ export const pa: Dictionary = {
   Unpin: 'ਟੰਗਣਾ ਹਟਾਓ',
   Close: 'ਬੰਦ ਕਰੋ',
   'Close pinned tab?': 'ਟੰਗੀ ਹੋਈ ਟੈਬ ਬੰਦ ਕਰਨੀ ਹੈ?',
+  'Save changes to {name}?': '{name} ਵਿੱਚ ਬਦਲਾਅ ਸੇਵ ਕਰਨੇ ਹਨ?',
+  'Save changes to these tabs?': 'ਇਨ੍ਹਾਂ ਟੈਬਾਂ ਵਿੱਚ ਬਦਲਾਅ ਸੇਵ ਕਰਨੇ ਹਨ?',
+  'Unsaved words go to Recently deleted.': 'ਸੇਵ ਨਾ ਕੀਤੇ ਸ਼ਬਦ ਹਾਲ ਹੀ ਵਿੱਚ ਮਿਟਾਏ ਵਿੱਚ ਜਾਣਗੇ।',
+  'Don’t save': 'ਸੇਵ ਨਾ ਕਰੋ',
   'Close others': 'ਬਾਕੀ ਬੰਦ ਕਰੋ',
   'Close tabs to the right': 'ਸੱਜੇ ਪਾਸੇ ਦੀਆਂ ਟੈਬਾਂ ਬੰਦ ਕਰੋ',
   'Close tabs to the left': 'ਖੱਬੇ ਪਾਸੇ ਦੀਆਂ ਟੈਬਾਂ ਬੰਦ ਕਰੋ',
@@ -1164,6 +1189,7 @@ export const pa: Dictionary = {
   'Double-click to write': 'ਲਿਖਣ ਲਈ ਦੋ ਵਾਰ ਕਲਿੱਕ ਕਰੋ',
   'Another colour': 'ਹੋਰ ਰੰਗ',
   'Turn into a note': 'ਨੋਟ ਵਿੱਚ ਬਦਲੋ',
+  Arrange: 'ਤਰਤੀਬ ਦਿਓ',
   'Bring to front': 'ਸਭ ਤੋਂ ਅੱਗੇ ਲਿਆਓ',
   'Bring forward': 'ਅੱਗੇ ਲਿਆਓ',
   'Send backward': 'ਪਿੱਛੇ ਭੇਜੋ',
@@ -1253,6 +1279,9 @@ export const pa: Dictionary = {
   Unstable: 'ਕੱਚਾ',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'ਪੱਕਾ ਜਾਰੀ ਹੋਈਆਂ ਰੂਪਾਂ ਪਿੱਛੇ ਚੱਲਦਾ ਹੈ, ਕੱਚਾ ਕਿਨਾਰੇ ਵਾਲੇ ਬਿਲਡਾਂ ਪਿੱਛੇ ਤੇ ਟੁੱਟ ਸਕਦਾ ਹੈ।',
+  'Web version': 'ਵੈੱਬ ਰੂਪ',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'ਪੱਕਾ ਜਾਰੀ ਹੋਈ ਵੈੱਬ ਐਪ ਹੈ, ਕੱਚਾ ਸਭ ਤੋਂ ਨਵਾਂ ਬਿਲਡ ਹੈ ਤੇ ਟੁੱਟ ਸਕਦਾ ਹੈ।',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'ਅੰਦਰ ਲਿਆਓ',
@@ -1587,8 +1616,6 @@ export const pa: Dictionary = {
   // Web tabs
   Reload: 'ਮੁੜ ਲੋਡ ਕਰੋ',
   'Hard reload': 'ਪੂਰੀ ਤਰ੍ਹਾਂ ਮੁੜ ਲੋਡ ਕਰੋ',
-  'Clip this page': 'ਇਹ ਸਫ਼ਾ ਸਾਂਭੋ',
-  'Clip the link': 'ਕੜੀ ਸਾਂਭੋ',
   'Open in the browser': 'ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ ਖੋਲ੍ਹੋ',
   'Show it here': 'ਇੱਥੇ ਦਿਖਾਓ',
   Website: 'ਵੈੱਬਸਾਈਟ',
@@ -1720,7 +1747,6 @@ export const pa: Dictionary = {
   'New tab': 'ਨਵੀਂ ਟੈਬ',
   'Full screen': 'ਪੂਰੀ ਸਕ੍ਰੀਨ',
   'Print…': 'ਛਾਪੋ…',
-  'Save page': 'ਪੰਨਾ ਰੱਖਿਅਤ ਕਰੋ',
   'Share…': 'ਸਾਂਝਾ ਕਰੋ…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1780,6 +1806,15 @@ export const pa: Dictionary = {
   'Bring all to front': 'ਸਭ ਨੂੰ ਅੱਗੇ ਲਿਆਓ',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'ਨਕਲ ਵਾਪਸ ਲਵੋ',
+  'Devices with your AI vault': 'ਤੁਹਾਡੇ AI ਵਾਲਟ ਵਾਲੇ ਡਿਵਾਈਸ',
+  'This device': 'ਇਹ ਡਿਵਾਈਸ',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'ਉਹ ਡਿਵਾਈਸ ਹੁਣ ਤੁਹਾਡੇ AI ਖਾਤੇ ਨਹੀਂ ਪੜ੍ਹ ਸਕੇਗਾ, ਅਤੇ ਬਾਕੀਆਂ ਨੂੰ ਨਵੀਂ ਕੁੰਜੀ ਮਿਲੇਗੀ।',
+  'Also remove this device from your AI vault?': 'ਇਸ ਡਿਵਾਈਸ ਨੂੰ ਆਪਣੇ AI ਵਾਲਟ ਤੋਂ ਵੀ ਹਟਾਉਣਾ ਹੈ?',
+  'Remove and sign out': 'ਹਟਾਓ ਅਤੇ ਸਾਈਨ ਆਉਟ ਕਰੋ',
+  'Undo making {name}': '{name} ਬਣਾਉਣਾ ਵਾਪਸ ਲਵੋ',
+  'Undo the deletion': 'ਮਿਟਾਉਣਾ ਵਾਪਸ ਲਵੋ',
+  'Undo the move': 'ਭੇਜਣਾ ਵਾਪਸ ਲਵੋ',
   'Redo the last file change': 'ਫ਼ਾਈਲ ਦੀ ਆਖ਼ਰੀ ਤਬਦੀਲੀ ਮੁੜ ਕਰੋ',
   'Select down': 'ਹੇਠਾਂ ਵੱਲ ਚੁਣੋ',
   'Select up': 'ਉੱਪਰ ਵੱਲ ਚੁਣੋ',
@@ -1880,6 +1915,11 @@ export const pa: Dictionary = {
   Max: 'ਵੱਧ ਤੋਂ ਵੱਧ',
   Fast: 'ਤੇਜ਼',
   Send: 'ਭੇਜੋ',
+  'Send feedback': 'ਫੀਡਬੈਕ ਭੇਜੋ',
+  'Describe the issue': 'ਸਮੱਸਿਆ ਦੱਸੋ',
+  Sent: 'ਭੇਜ ਦਿੱਤਾ',
+  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
+    'ਇਸ ਰਿਪੋਰਟ ਵਿੱਚ ਤੁਹਾਡਾ ਵੇਰਵਾ, Orden ਦਾ ਰੂਪ, ਤੁਹਾਡਾ ਪਲੇਟਫਾਰਮ ਅਤੇ ਐਪ ਦਾ ਹਾਲੀਆ ਲੌਗ ਹੁੰਦਾ ਹੈ। ਤੁਹਾਡੇ ਨੋਟ ਕਦੇ ਨਹੀਂ।',
   'Send into the running answer': 'ਚੱਲ ਰਹੇ ਜਵਾਬ ਵਿੱਚ ਭੇਜੋ',
   'Stop the answer': 'ਜਵਾਬ ਰੋਕੋ',
   'Open every step': 'ਹਰ ਕਦਮ ਖੋਲ੍ਹੋ',
@@ -1998,6 +2038,7 @@ export const pa: Dictionary = {
   'Without your logins': 'ਤੁਹਾਡੇ ਲੌਗ-ਇਨ ਤੋਂ ਬਿਨਾਂ',
   'Calls a minute': 'ਪ੍ਰਤੀ ਮਿੰਟ ਕਾਲਾਂ',
   'Pages a minute': 'ਪ੍ਰਤੀ ਮਿੰਟ ਪੰਨੇ',
+  'Browser memory limit': 'ਬ੍ਰਾਊਜ਼ਰ ਮੈਮਰੀ ਸੀਮਾ',
   '{count} calls': {
     one: '{count} ਕਾਲ',
     other: '{count} ਕਾਲਾਂ',

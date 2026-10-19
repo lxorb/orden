@@ -8,7 +8,7 @@
  *  there is the address and the title - a link card, which is what the glyph says it
  *  will be before anybody presses it.
  *
- *  What the note itself says is note.ts: the clipper extension's own extractor finds
+ *  What the note itself says is note.ts: the article extractor (`@nib/markdown/article`) finds
  *  the article in what the page wrote down, and its converter and its note shape do
  *  the rest, so the same page clips to the same note from here and from the
  *  extension. Where it is written is the workspace's, which knows the space. */

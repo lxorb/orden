@@ -17,7 +17,9 @@ function kindGroups(): Group[] {
     fields: line.map((one): Field => ({
       kind: 'switch',
       label: kindName(one.kind),
-      words: ['type', 'kind', 'new', 'create', 'hide', 'show', one.kind],
+      // `new tab` and `ctrl+t`, because the new tab is where these are offered, and that is
+      // what somebody who wants one gone looks for (#355).
+      words: ['type', 'kind', 'new', 'new tab', 'ctrl+t', 'create', 'hide', 'show', one.kind],
       icon: one.icon ?? MARKS[one.mark],
       initial: true,
       locked: () => locked(one.kind),

@@ -25,8 +25,9 @@ describe('a surface a pane is filled with', () => {
       'emptySurface',
       'graphSurface',
       'pagesSurface',
-      // No paper of its own: a PDF opens the page note beside it, which the pages
-      // surface draws with the paper behind it. See `openPdf` in workspace.svelte.ts.
+      // No paper of its own: a PDF opens as the page note that holds it, which the
+      // pages surface draws with the paper behind it. See `openPdf` in
+      // workspace.svelte.ts.
       'readingSurface',
       'terminalSurface',
       'viewSurface',

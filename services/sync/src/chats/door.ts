@@ -48,6 +48,9 @@ chatDoor.get('/:chat/socket', async (context) => {
     'x-nib-guest': reached.guest ? 'yes' : 'no',
     'x-nib-role': reached.role,
     ...(device ? { 'x-nib-device': device } : {}),
+    // The sign-in the socket arrived with, by its hash, which the socket lasts no longer
+    // than; see `askSignIns` in log.ts.
+    'x-nib-login': await sha256(token),
   })
 
   if (!answer || (answer.status === 101 && !answer.webSocket)) {

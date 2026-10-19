@@ -519,6 +519,62 @@ describe('the tree', () => {
   })
 })
 
+/** A PDF brought in is a page note, and its paper is part of the note: the list shows
+ *  the note, and the paper goes wherever the note goes. The desktop's `held_paper` and
+ *  `move_held` in paths.rs, said again over the browser's two stores. */
+describe("a page note's paper", () => {
+  const note = '/Notes/Lecture.pages'
+  const paper = '/Notes/Lecture.pages.pdf'
+  const held = (path: string) => ({ path, type: 'application/pdf', data: 'JVBERg==', modified: 1 })
+
+  beforeEach(async () => {
+    await write(note, '{}')
+    disk.assets.set(paper, held(paper))
+  })
+
+  test('is not listed beside the note, and is once the note has gone', async () => {
+    const names = async (options?: { papers?: boolean }) =>
+      (
+        await webInvoke<{ children: { name: string }[] }>('read_tree', { root: '/Notes', options })
+      ).children.map((one) => one.name)
+
+    expect(await names()).toEqual(['Lecture.pages'])
+    // Sync, where it cannot scan a folder, asks for every file there is.
+    expect(await names({ papers: true })).toEqual(['Lecture.pages', 'Lecture.pages.pdf'])
+
+    disk.files.delete(note)
+    expect(await names()).toEqual(['Lecture.pages.pdf'])
+  })
+
+  test('follows the note when it is renamed, with its highlights', async () => {
+    await webInvoke('write_highlights', { path: paper, content: '{"version":1}' })
+
+    await webInvoke('rename_note', { from: note, to: '/Notes/Week 1.pages' })
+
+    expect(disk.assets.has(paper)).toBe(false)
+    expect(disk.assets.get('/Notes/Week 1.pages.pdf')?.data).toBe('JVBERg==')
+    expect(disk.files.has('/Notes/Week 1.pages.pdf.highlights.json')).toBe(true)
+  })
+
+  test('goes to the trash and comes back with it', async () => {
+    const entry = await webInvoke<{ id: string }>('trash_item', { path: note, kind: 'note' })
+    expect(disk.assets.has(paper)).toBe(false)
+
+    await webInvoke('restore_trash', { id: entry.id })
+    expect(disk.assets.get(paper)?.data).toBe('JVBERg==')
+  })
+
+  test('is copied with it, and goes when it goes', async () => {
+    await webInvoke('copy_path', { from: note, to: '/Notes/Lecture copy.pages' })
+    expect(disk.assets.has('/Notes/Lecture copy.pages.pdf')).toBe(true)
+    expect(disk.assets.has(paper)).toBe(true)
+
+    await webInvoke('delete_note', { path: '/Notes/Lecture copy.pages' })
+    expect(disk.assets.has('/Notes/Lecture copy.pages.pdf')).toBe(false)
+    expect(disk.assets.has(paper)).toBe(true)
+  })
+})
+
 describe("a PDF's highlights", () => {
   const pdf = '/Notes/paper.pdf'
   const sidecar = '/Notes/paper.pdf.highlights.json'
@@ -548,6 +604,18 @@ describe("a PDF's highlights", () => {
 
     expect(disk.assets.has('/Reading/paper.pdf')).toBe(true)
     expect(disk.files.has('/Reading/paper.pdf.highlights.json')).toBe(true)
+  })
+
+  test('follow a PDF renamed on its own, which is a row of the asset store alone', async () => {
+    disk.assets.set(pdf, { path: pdf, type: 'application/pdf', data: '', modified: 1 })
+    await webInvoke('write_highlights', { path: pdf, content: '{"version":1}' })
+
+    await webInvoke('rename_note', { from: pdf, to: '/Notes/paper.pages.pdf' })
+
+    expect(disk.assets.has('/Notes/paper.pages.pdf')).toBe(true)
+    expect(disk.assets.has(pdf)).toBe(false)
+    expect(disk.files.has('/Notes/paper.pages.pdf.highlights.json')).toBe(true)
+    expect(disk.files.has(sidecar)).toBe(false)
   })
 
   test('go when the PDF goes', async () => {

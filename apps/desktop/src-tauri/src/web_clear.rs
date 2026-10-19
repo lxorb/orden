@@ -10,7 +10,7 @@
 //! | --- | --- |
 //! | `WebView2` | `ICoreWebView2Profile2::ClearBrowsingDataInTimeRange`, or `ClearBrowsingData` for all time |
 //! | `WKWebView` | `WKWebsiteDataStore removeDataOfTypes:modifiedSince:` |
-//! | `WebKitGTK` | `webkit_website_data_manager_clear`, with the range as a time span back from now |
+//! | CEF (Linux) | the `DevTools` Protocol: `Storage.clearDataForOrigin` for each site the range visited, every cookie for all time, and the cache |
 //!
 //! **A store is reached through a page built in it.** Each engine hands its store out
 //! through a webview - a profile, a data store, a data manager - and a store may have no
@@ -18,6 +18,11 @@
 //! built for the clearing, a pixel wide and out of sight, on the same seam a tab's page is
 //! built on (`engine::web_store`), and closed again once the engine has answered. A
 //! private tab's store is in memory and goes with its last tab; nothing here reaches it.
+//!
+//! CEF has no call that takes a time range. There the range decides which sites' data
+//! goes - each site the window says the range visited (`sites`), with everything it
+//! stored, cookies included - and the cache, which is no site's, goes whole: what a
+//! reader loses to that is a few pictures fetched again. Said in docs/web-tabs.md.
 
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::Duration;
@@ -60,13 +65,17 @@ impl Clearing {
 }
 
 /// Clears what `clearing` says from each of `stores` - `None` for the store every space
-/// shares, a name for a space's or a site's own - one after the other.
+/// shares, a name for a space's or a site's own - one after the other. `sites` are the
+/// origins the range visited, which only CEF needs and a window that does not say them
+/// leaves out; see above.
 #[tauri::command]
 pub async fn web_clear(
     webview: Webview,
     stores: Vec<Option<String>>,
     clearing: Clearing,
+    sites: Option<Vec<String>>,
 ) -> Result<(), String> {
+    let sites = sites.unwrap_or_default();
     if !clearing.any() {
         return Ok(());
     }
@@ -74,7 +83,7 @@ pub async fn web_clear(
     for store in stores {
         let store = crate::web_stores::named(store.as_deref())?.map(str::to_string);
         let page = page_in_store(&app, &webview.window(), store.as_deref()).await?;
-        let cleared = engine::clear(&page, clearing).await;
+        let cleared = engine::clear(&page, clearing, &sites).await;
         let _ = page.close();
         cleared?;
     }
@@ -99,24 +108,24 @@ async fn page_in_store(
 
     let (sending, mut waiting) = tauri::async_runtime::channel::<Result<(), String>>(1);
     let building = window.clone();
-    #[cfg(windows)]
+    #[cfg(all(windows, not(feature = "cef")))]
     let (anchoring, storing) = (app.clone(), store.map(str::to_string));
     app.run_on_main_thread(move || {
         // On the session its store's tabs share, so the profile cleared is theirs; see
         // `on_shared_session`.
-        #[cfg(windows)]
+        #[cfg(all(windows, not(feature = "cef")))]
         let builder =
             crate::web_tabs::on_shared_session(builder, &building, &anchoring, storing.as_deref());
-        let made = building
-            .add_child(
-                builder,
-                LogicalPosition::new(0.0, 0.0),
-                LogicalSize::new(1.0, 1.0),
-            )
-            .map(|view| {
-                let _ = view.hide();
-            })
-            .map_err(|error| format!("the data could not be reached: {error}"));
+        let made = crate::engine::add_child(
+            &building,
+            builder,
+            LogicalPosition::new(0.0, 0.0),
+            LogicalSize::new(1.0, 1.0),
+        )
+        .map(|view| {
+            let _ = view.hide();
+        })
+        .map_err(|error| format!("the data could not be reached: {error}"));
         let _ = sending.try_send(made);
     })
     .map_err(|error| format!("the data could not be reached: {error}"))?;
@@ -132,33 +141,15 @@ async fn page_in_store(
 /// The milliseconds since 1970 that `clearing` starts at, as seconds: what `WebView2`
 /// and `WKWebView` count in.
 #[cfg_attr(
-    target_os = "linux",
-    allow(dead_code, reason = "WebKitGTK counts back from now")
+    feature = "cef",
+    allow(dead_code, reason = "CEF has no range; see the top of this file")
 )]
 fn seconds(clearing: Clearing) -> f64 {
     clearing.since / 1000.0
 }
 
-/// How far back `clearing` reaches from `now`, both in milliseconds, as the microseconds
-/// `WebKitGTK` takes: nought for all time, which is that engine's own word for it.
-#[cfg_attr(
-    not(target_os = "linux"),
-    allow(dead_code, reason = "only WebKitGTK counts back from now")
-)]
-fn span(clearing: Clearing, now: f64) -> i64 {
-    if clearing.always() {
-        return 0;
-    }
-    #[allow(
-        clippy::cast_possible_truncation,
-        reason = "a span of milliseconds since 1970 is far inside an i64 of microseconds"
-    )]
-    let micros = ((now - clearing.since).max(1.0) * 1000.0) as i64;
-    micros
-}
-
 /// `WebView2`.
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "cef")))]
 mod engine {
     use webview2_com::ClearBrowsingDataCompletedHandler;
     use webview2_com::Microsoft::Web::WebView2::Win32::{
@@ -185,7 +176,11 @@ mod engine {
         unsafe_code,
         reason = "a profile's data is cleared through WebView2's own COM interfaces, on the page's own thread"
     )]
-    pub async fn clear(page: &tauri::Webview, clearing: Clearing) -> Result<(), String> {
+    pub async fn clear(
+        page: &tauri::Webview,
+        clearing: Clearing,
+        _sites: &[String],
+    ) -> Result<(), String> {
         let (sending, mut waiting) = tauri::async_runtime::channel::<Result<(), String>>(1);
         page.with_webview(move |platform| {
             let failed = sending.clone();
@@ -230,7 +225,7 @@ mod engine {
 }
 
 /// `WKWebView`.
-#[cfg(target_os = "macos")]
+#[cfg(all(target_os = "macos", not(feature = "cef")))]
 mod engine {
     use block2::RcBlock;
     use objc2::rc::Retained;
@@ -280,7 +275,11 @@ mod engine {
         unsafe_code,
         reason = "the data store is reached through WKWebView's Objective-C interface, from the pointer wry hands out"
     )]
-    pub async fn clear(page: &tauri::Webview, clearing: Clearing) -> Result<(), String> {
+    pub async fn clear(
+        page: &tauri::Webview,
+        clearing: Clearing,
+        _sites: &[String],
+    ) -> Result<(), String> {
         let (sending, mut waiting) = tauri::async_runtime::channel::<Result<(), String>>(1);
         page.with_webview(move |platform| {
             let Some(mtm) = MainThreadMarker::new() else {
@@ -320,65 +319,74 @@ mod engine {
     }
 }
 
-/// `WebKitGTK`.
-#[cfg(target_os = "linux")]
+/// nib's own Chromium, through the `DevTools` Protocol.
+#[cfg(feature = "cef")]
 mod engine {
-    use webkit2gtk::{
-        gio, glib, WebViewExt as _, WebsiteDataManagerExtManual as _, WebsiteDataTypes,
-    };
+    use serde_json::{json, Value};
 
-    use super::{span, Clearing, PATIENCE};
+    use super::{Clearing, PATIENCE};
 
-    /// The types the two rows mean to `WebKitGTK`.
-    fn types(clearing: Clearing) -> WebsiteDataTypes {
-        let cache = WebsiteDataTypes::DISK_CACHE | WebsiteDataTypes::MEMORY_CACHE;
-        match (clearing.site, clearing.cache) {
-            (true, true) => WebsiteDataTypes::ALL,
-            (true, false) => WebsiteDataTypes::ALL - cache,
-            _ => cache,
+    /// What the protocol is asked for, in order: each site the range visited with
+    /// everything it stored, and for all time every cookie as well; the cache, which no
+    /// site owns, whole.
+    pub(super) fn asks(clearing: Clearing, sites: &[String]) -> Vec<(&'static str, Value)> {
+        let mut asks = Vec::new();
+        if clearing.site {
+            if clearing.always() {
+                asks.push(("Network.clearBrowserCookies", json!({})));
+            }
+            for origin in sites {
+                asks.push((
+                    "Storage.clearDataForOrigin",
+                    json!({ "origin": origin, "storageTypes": "all" }),
+                ));
+            }
         }
+        if clearing.cache {
+            asks.push(("Network.clearBrowserCache", json!({})));
+        }
+        asks
     }
 
-    pub async fn clear(page: &tauri::Webview, clearing: Clearing) -> Result<(), String> {
-        let (sending, mut waiting) = tauri::async_runtime::channel::<Result<(), String>>(1);
-        let now = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map_or(0.0, |since| since.as_secs_f64() * 1000.0);
-        page.with_webview(move |platform| {
-            let Some(manager) = platform.inner().website_data_manager() else {
-                let _ = sending.try_send(Err("the data could not be reached".to_string()));
-                return;
-            };
-            manager.clear(
-                types(clearing),
-                glib::TimeSpan::from_microseconds(span(clearing, now)),
-                None::<&gio::Cancellable>,
-                move |result| {
-                    let _ =
-                        sending
-                            .try_send(result.map_err(|error| {
-                                format!("the data could not be deleted: {error}")
-                            }));
-                },
-            );
+    pub async fn clear(
+        page: &tauri::Webview,
+        clearing: Clearing,
+        sites: &[String],
+    ) -> Result<(), String> {
+        let page = page.clone();
+        let asks = asks(clearing, sites);
+        // The protocol's answers arrive on the window's thread, so they are waited for
+        // anywhere but there; see engine/devtools.rs.
+        tauri::async_runtime::spawn_blocking(move || {
+            for (method, params) in asks {
+                crate::engine::devtools::call(&page, None, method, &params, PATIENCE)?;
+            }
+            Ok(())
         })
-        .map_err(|error| format!("the data could not be reached: {error}"))?;
-
-        super::within(PATIENCE, waiting.recv()).await
+        .await
+        .map_err(|error| format!("the data could not be deleted: {error}"))?
     }
 }
 
 /// Every other build has no web tab, so nothing to clear.
-#[cfg(not(any(windows, target_os = "macos", target_os = "linux")))]
+#[cfg(not(any(feature = "cef", windows, target_os = "macos")))]
 mod engine {
     use super::Clearing;
 
-    pub async fn clear(_page: &tauri::Webview, _clearing: Clearing) -> Result<(), String> {
+    pub async fn clear(
+        _page: &tauri::Webview,
+        _clearing: Clearing,
+        _sites: &[String],
+    ) -> Result<(), String> {
         Ok(())
     }
 }
 
 /// An engine's answer, or a word that it never came.
+#[cfg_attr(
+    feature = "cef",
+    allow(dead_code, reason = "the protocol's calls wait for themselves")
+)]
 async fn within(
     patience: Duration,
     answer: impl std::future::Future<Output = Option<Result<(), String>>>,
@@ -392,25 +400,7 @@ async fn within(
 
 #[cfg(test)]
 mod tests {
-    use super::{span, Clearing};
-
-    /// All time is nought to `WebKitGTK`, and a range is how far back it reaches.
-    #[test]
-    fn a_range_is_how_far_back_it_reaches() {
-        let always = Clearing {
-            since: 0.0,
-            site: true,
-            cache: false,
-        };
-        let now = 1_791_000_000_000.0;
-        assert_eq!(span(always, now), 0);
-
-        let hour = Clearing {
-            since: now - 3_600_000.0,
-            ..always
-        };
-        assert_eq!(span(hour, now), 3_600_000_000);
-    }
+    use super::Clearing;
 
     /// The window's words for it, read as the crate reads them.
     #[test]
@@ -427,5 +417,35 @@ mod tests {
             }
         );
         assert!(!said.always());
+    }
+
+    /// CEF: every cookie only for all time, each site the range visited,
+    /// and the cache whole.
+    #[cfg(feature = "cef")]
+    #[test]
+    fn chromium_is_asked_site_by_site() {
+        let sites = vec!["https://a.example".to_string()];
+        let ranged = Clearing {
+            since: 5.0,
+            site: true,
+            cache: true,
+        };
+        let methods: Vec<&str> = super::engine::asks(ranged, &sites)
+            .into_iter()
+            .map(|(method, _)| method)
+            .collect();
+        assert_eq!(
+            methods,
+            ["Storage.clearDataForOrigin", "Network.clearBrowserCache"]
+        );
+
+        let always = Clearing {
+            since: 0.0,
+            ..ranged
+        };
+        assert_eq!(
+            super::engine::asks(always, &sites)[0].0,
+            "Network.clearBrowserCookies"
+        );
     }
 }

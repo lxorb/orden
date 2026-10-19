@@ -27,6 +27,27 @@ export const ru: Dictionary = {
   'Import from Zen': 'Импорт из Zen',
   'Containers stay in Zen': 'Контейнеры остаются в Zen',
   'Zen’s tabs could not be read.': 'Не удалось прочитать вкладки Zen.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'Контейнеры остаются в Firefox',
+  'Nothing could be read out of {browser}.': 'Из {browser} ничего не удалось прочитать.',
+  'Saved groups': 'Сохранённые группы',
+  'Tab group': 'Группа вкладок',
+  'Bookmarks toolbar': 'Панель закладок',
+  'Bookmarks menu': 'Меню закладок',
+  'Other bookmarks': 'Другие закладки',
+  'Mobile bookmarks': 'Мобильные закладки',
+  'Bookmarks bar': 'Панель закладок',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} хранит открытые вкладки под замком, поэтому пришли только закладки.',
+  '{count} pages not on the web stay behind': {
+    few: 'Страниц не из интернета, которые остаются: {count}',
+    many: 'Страниц не из интернета, которые остаются: {count}',
+    one: 'Страниц не из интернета, которые остаются: {count}',
+    other: 'Страниц не из интернета, которые остаются: {count}',
+  },
+  'Reading List': 'Список для чтения',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS держит вкладки и закладки Safari за полным доступом к диску. Включите там Orden и попробуйте снова.',
   // Settings: note types
   'Page note': 'Заметка со страницами',
   'Web note': 'Веб-заметка',
@@ -97,8 +118,6 @@ export const ru: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'Подсказки',
   'Silent mode': 'Тихий режим',
-  'Sign in to keep your notes safe and on every device.':
-    'Войдите, чтобы заметки были в безопасности и на всех устройствах.',
   'See how your notes connect.': 'Посмотрите, как связаны ваши заметки.',
   'Press {key} to find anything, notes and commands alike.':
     'Нажмите {key}, чтобы найти что угодно: заметки и команды.',
@@ -120,11 +139,13 @@ export const ru: Dictionary = {
   '{count} h': '{count} ч',
   Inbox: 'Входящие',
   Date: 'Дата',
+  'Start date': 'Дата начала',
   Priority: 'Приоритет',
   Reminder: 'Напоминание',
   Duration: 'Длительность',
   'Smart dates': 'Умные даты',
   'From any app': 'Из любого приложения',
+  'Show tasks without a start date in Today': 'Показывать в «Сегодня» задачи без даты начала',
   'Every day': 'Каждый день',
   'Every weekday': 'Каждый будний день',
   'Every week': 'Каждую неделю',
@@ -168,6 +189,8 @@ export const ru: Dictionary = {
   Dots: 'Точки',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'Вращать холст двумя пальцами',
+  'Turn upright': 'Выровнять',
   Canvas: 'Полотно',
   Card: 'Карточка',
   'Note or picture': 'Заметка или картинка',
@@ -243,6 +266,10 @@ export const ru: Dictionary = {
   Unpin: 'Открепить',
   Close: 'Закрыть',
   'Close pinned tab?': 'Закрыть закреплённую вкладку?',
+  'Save changes to {name}?': 'Сохранить изменения в {name}?',
+  'Save changes to these tabs?': 'Сохранить изменения в этих вкладках?',
+  'Unsaved words go to Recently deleted.': 'Несохранённые слова попадут в «Недавно удалённые».',
+  'Don’t save': 'Не сохранять',
   'Close others': 'Закрыть остальные',
   'Close tabs to the right': 'Закрыть вкладки справа',
   'Close tabs to the left': 'Закрыть вкладки слева',
@@ -1198,6 +1225,7 @@ export const ru: Dictionary = {
   'Double-click to write': 'Двойной щелчок для письма',
   'Another colour': 'Другой цвет',
   'Turn into a note': 'Превратить в заметку',
+  Arrange: 'Упорядочить',
   'Bring to front': 'На передний план',
   'Bring forward': 'Переместить вперёд',
   'Send backward': 'Переместить назад',
@@ -1287,6 +1315,9 @@ export const ru: Dictionary = {
   Unstable: 'Нестабильный',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'Стабильный следует выпущенным версиям, нестабильный - сборкам edge и может ломаться.',
+  'Web version': 'Веб-версия',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'Стабильный - выпущенное веб-приложение, нестабильный - самая новая сборка и может ломаться.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Импорт',
@@ -1655,8 +1686,6 @@ export const ru: Dictionary = {
   // Web tabs
   Reload: 'Обновить',
   'Hard reload': 'Жёсткая перезагрузка',
-  'Clip this page': 'Сохранить эту страницу',
-  'Clip the link': 'Сохранить ссылку',
   'Open in the browser': 'Открыть в браузере',
   'Show it here': 'Показать здесь',
   Website: 'Сайт',
@@ -1788,7 +1817,6 @@ export const ru: Dictionary = {
   'New tab': 'Новая вкладка',
   'Full screen': 'Полноэкранный режим',
   'Print…': 'Печать…',
-  'Save page': 'Сохранить страницу',
   'Share…': 'Поделиться…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1848,6 +1876,15 @@ export const ru: Dictionary = {
   'Bring all to front': 'Все окна на передний план',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Отменить копирование',
+  'Devices with your AI vault': 'Устройства с вашим хранилищем ИИ',
+  'This device': 'Это устройство',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'Устройство больше не сможет читать ваши аккаунты ИИ, а остальные получат новый ключ.',
+  'Also remove this device from your AI vault?': 'Убрать это устройство и из хранилища ИИ?',
+  'Remove and sign out': 'Убрать и выйти',
+  'Undo making {name}': 'Отменить создание {name}',
+  'Undo the deletion': 'Отменить удаление',
+  'Undo the move': 'Отменить перемещение',
   'Redo the last file change': 'Повторить последнее изменение файлов',
   'Select down': 'Выделить вниз',
   'Select up': 'Выделить вверх',
@@ -1955,6 +1992,11 @@ export const ru: Dictionary = {
   Max: 'Макс.',
   Fast: 'Быстро',
   Send: 'Отправить',
+  'Send feedback': 'Отправить отзыв',
+  'Describe the issue': 'Опишите проблему',
+  Sent: 'Отправлено',
+  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
+    'Этот отчёт содержит ваше описание, версию Orden, вашу платформу и недавний журнал приложения. Ваших заметок в нём никогда нет.',
   'Send into the running answer': 'Отправить в текущий ответ',
   'Stop the answer': 'Остановить ответ',
   'Open every step': 'Раскрыть все шаги',
@@ -2073,6 +2115,7 @@ export const ru: Dictionary = {
   'Without your logins': 'Без ваших входов',
   'Calls a minute': 'Вызовов в минуту',
   'Pages a minute': 'Страниц в минуту',
+  'Browser memory limit': 'Предел памяти браузера',
   '{count} calls': {
     one: '{count} вызов',
     few: '{count} вызова',

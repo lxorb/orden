@@ -2556,10 +2556,7 @@ dependencies = [
  "dirs",
  "file-id",
  "flate2",
- "gdkwayland-sys",
  "getrandom 0.3.4",
- "gtk",
- "javascriptcore-rs",
  "keyring",
  "libc",
  "notify",
@@ -2569,8 +2566,10 @@ dependencies = [
  "objc2-ui-kit",
  "objc2-user-notifications",
  "objc2-web-kit",
+ "plist",
  "png 0.18.1",
  "portable-pty",
+ "raw-window-handle",
  "reqwest",
  "rusqlite",
  "rustls",
@@ -2598,6 +2597,7 @@ dependencies = [
  "windows 0.61.3",
  "windows-core 0.61.2",
  "windows-registry 0.6.1",
+ "x11rb",
  "zbus 5.19.0",
  "zip",
 ]
@@ -6362,6 +6362,7 @@ dependencies = [
  "gethostname",
  "rustix",
  "x11rb-protocol",
+ "xcursor",
 ]
 
 [[package]]
@@ -6379,6 +6380,12 @@ dependencies = [
  "libc",
  "rustix",
 ]
+
+[[package]]
+name = "xcursor"
+version = "0.3.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "163b33ed8786455e2fa5d72f554057ce3f3182425434f756cd39c99839d88e23"
 
 [[package]]
 name = "xdg-home"

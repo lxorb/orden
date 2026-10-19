@@ -43,3 +43,45 @@ export async function machinesRevoked(
     ),
   )
 }
+
+/** How many sign-ins one ending names to a machine: well past how many sessions an
+ *  account has, and a bound on the header. Past it the minute alarm finds the rest. */
+const MOST_LOGINS = 100
+
+/** Sign-ins of one account that ended - signed out, ended from the sessions or the
+ *  devices list - and the terminal sockets that arrived with them, which close now
+ *  (`signedOut` in machine.ts), the machine owner's own included.
+ *
+ *  Unlike a share changing, this is about the person and not about a space: every
+ *  machine where they may have a terminal open is told, which is their own and any with a
+ *  live session in a space they are in. A machine nothing told closes the socket at its
+ *  next minute anyway, when it asks whether each socket's sign-in still lives. */
+export async function machinesSignedOut(
+  env: Env,
+  who: string,
+  logins: readonly string[],
+): Promise<void> {
+  const ended = logins.filter(Boolean).slice(0, MOST_LOGINS)
+  if (!env.MACHINES || !who || !ended.length) return
+
+  const { results } = await env.DB.prepare(
+    `select distinct t.machine as machine
+       from term_sessions t left join notes n on n.id = t.term
+      where t.ended_at is null
+        and (t.user_id = ?1
+             or n.space_id in (select id from spaces where user_id = ?1
+                               union select m.space_id from space_members m
+                                       join users u on u.email = m.email where u.id = ?1
+                               union select g.space_id from guest_members g
+                                      where g.guest_id = ?1 and g.joined_at is not null))
+      limit ?2`,
+  )
+    .bind(who, MOST_MACHINES)
+    .all<{ machine: string }>()
+
+  await Promise.all(
+    results.map((one) =>
+      askMachine(env, one.machine, 'signedout', { 'x-nib-logins': ended.join(',') }),
+    ),
+  )
+}

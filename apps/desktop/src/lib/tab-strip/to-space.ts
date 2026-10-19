@@ -13,7 +13,19 @@ const tabsOf = (ids: readonly string[]) => workspace.tabs.filter((one) => ids.in
 
 /** The spaces these tabs can be moved to. */
 export function spacesOf(tabs: readonly Tab[]): Space[] {
-  return spacesFor(tabs.map(movingOf), workspace, canWriteAt)
+  // Never into a space put away; see workspace/archived-spaces.svelte.ts.
+  return spacesFor(tabs.map(movingOf), workspace, canWriteAt).filter(
+    (one) => !workspace.archivedSpaces.has(one.root),
+  )
+}
+
+/** The spaces rows of the file list can be moved to, by the same rule as a tab's: never
+ *  their own, nor one that may not be written in or is put away. */
+export function spacesOfPaths(paths: readonly string[]): Space[] {
+  const moving = paths.map((path) => ({ path, home: null, shared: null }))
+  return spacesFor(moving, workspace, canWriteAt).filter(
+    (one) => !workspace.archivedSpaces.has(one.root),
+  )
 }
 
 /** The tabs moved to a space; see moving-space.ts. */

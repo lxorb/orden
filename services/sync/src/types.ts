@@ -86,6 +86,9 @@ export interface Env {
   /** Cloudflare Email Sending. Absent in tests, where codes are logged. */
   EMAIL?: EmailSender
   MAIL_FROM?: string
+  /** Where a report sent with Send feedback is mailed (#548): the owner's address, set
+   *  by hand (`wrangler secret put FEEDBACK_TO`). Unset, reports are kept in D1 only. */
+  FEEDBACK_TO?: string
 
   /** Workers AI, which is what listens for an account with no OpenAI key of its own;
    *  see ask/heard.ts. Absent in tests, which hand in a fake, and in a Worker that has
@@ -225,6 +228,9 @@ export interface Space {
   /** What the site made of this space decides, as one JSON object; see
    *  spaces/site.ts. `{}` until something about it is chosen. */
   site: string
+  /** Which order the space's file list is read in; see spaces/sort.ts. Empty until
+   *  somebody chooses, which is by name. */
+  sort: string
   /** When a v2 device first asked for its tree as rows; null before. From then on
    *  every write that places a note keeps the rows current; see src/sync2/prepare.ts.
    *  Optional for the same reason as the web store. */

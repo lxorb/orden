@@ -45,6 +45,37 @@ test('keeps the pan and the zoom against the path', () => {
   expect(viewOf('/space/Board.canvas')).toEqual({ x: 120, y: -40, scale: 1.5 })
 })
 
+test('and how far two fingers turned it, beside the place and never in the file (#351)', () => {
+  viewKept('/space/Board.canvas', { x: 1, y: 2, scale: 1, turn: 0.5 })
+  expect(viewOf('/space/Board.canvas')).toEqual({ x: 1, y: 2, scale: 1, turn: 0.5 })
+})
+
+test('a framed canvas stays turned the way it was turned (#351)', () => {
+  const note = new NoteDoc(
+    {
+      kind: 'canvas',
+      path: '/space/Turned.canvas',
+      name: 'Turned.canvas',
+      text: blankCanvas(),
+      dirty: false,
+    },
+    () => undefined,
+  )
+  const store = new CanvasStore(new Tab(note, 'pane'))
+  store.camera = { x: 0, y: 0, scale: 1, turn: 0.7 }
+  store.canvas = {
+    ...store.canvas,
+    nodes: [{ id: 'a', type: 'text', x: 0, y: 0, width: 400, height: 100, text: 'a' }],
+  }
+  store.fit(800, 600)
+  expect(store.camera.turn).toBe(0.7)
+  // Turned, the card is wider on screen than it is upright, so it fits at a smaller scale.
+  const upright = new CanvasStore(new Tab(note, 'pane'))
+  upright.canvas = store.canvas
+  upright.fit(800, 600)
+  expect(store.camera.scale).toBeLessThanOrEqual(upright.camera.scale)
+})
+
 test('a canvas written twice keeps what was written last', () => {
   viewKept('/a.canvas', { x: 0, y: 0, scale: 1 })
   viewKept('/a.canvas', { x: 10, y: 20, scale: 2 })

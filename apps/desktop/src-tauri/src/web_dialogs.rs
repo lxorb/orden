@@ -24,12 +24,12 @@
 use serde::Serialize;
 
 /// The event the window hears a page's dialog on.
-#[cfg_attr(not(windows), allow(dead_code))]
+#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
 const DIALOG: &str = "nib://web-dialog";
 
 /// Which dialog a page opened, in the window's words for them. `leave` is the one a
 /// page's `beforeunload` asks for as the tab moves on.
-#[cfg_attr(not(windows), allow(dead_code))]
+#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Kind {
@@ -41,7 +41,7 @@ pub enum Kind {
 
 /// A dialog a page has opened and nobody has answered, on its way to the window. `id` is
 /// what the answer comes back with; the page's script is waiting on it.
-#[cfg_attr(not(windows), allow(dead_code))]
+#[cfg_attr(any(not(windows), feature = "cef"), allow(dead_code))]
 #[derive(Clone, Debug, Serialize)]
 struct Opened {
     tab: String,
@@ -59,16 +59,16 @@ struct Opened {
 /// crate is no longer holding - its tab closed meanwhile - is nothing to answer.
 #[tauri::command]
 pub fn web_dialog_answer(app: tauri::AppHandle, id: u64, accept: bool, text: Option<String>) {
-    #[cfg(windows)]
+    #[cfg(all(windows, not(feature = "cef")))]
     let _ = app.run_on_main_thread(move || engine::answer(id, accept, text.as_deref()));
-    #[cfg(not(windows))]
+    #[cfg(not(all(windows, not(feature = "cef"))))]
     let _ = (app, id, accept, text);
 }
 
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "cef")))]
 pub use engine::{forget, listen};
 
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "cef")))]
 mod engine {
     use std::cell::RefCell;
     use std::collections::HashMap;
@@ -230,7 +230,7 @@ mod engine {
 }
 
 /// Every other engine keeps its own dialogs; see the top of this file.
-#[cfg(not(windows))]
+#[cfg(any(not(windows), feature = "cef"))]
 pub fn listen(
     _webview: &tauri::webview::PlatformWebview,
     _app: tauri::AppHandle,
@@ -239,7 +239,7 @@ pub fn listen(
 ) {
 }
 
-#[cfg(not(windows))]
+#[cfg(any(not(windows), feature = "cef"))]
 pub fn forget(_tab: &str) {}
 
 #[cfg(test)]

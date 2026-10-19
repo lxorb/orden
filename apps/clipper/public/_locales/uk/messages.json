@@ -1,9 +1,0 @@
-{
-  "name": { "message": "Orden" },
-  "description": {
-    "message": "Вирізайте сторінку, виділення або посилання у свої нотатки Orden."
-  },
-  "clipPage": { "message": "Вирізати сторінку" },
-  "clipSelection": { "message": "Вирізати виділення" },
-  "clipLink": { "message": "Вирізати посилання" }
-}

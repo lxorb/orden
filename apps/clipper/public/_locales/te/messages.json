@@ -1,7 +1,0 @@
-{
-  "name": { "message": "Orden" },
-  "description": { "message": "పేజీ, ఎంపిక లేదా లింక్‌ను మీ Orden నోట్లలోకి క్లిప్ చేయండి." },
-  "clipPage": { "message": "పేజీని క్లిప్ చేయి" },
-  "clipSelection": { "message": "ఎంపికను క్లిప్ చేయి" },
-  "clipLink": { "message": "లింక్‌ను క్లిప్ చేయి" }
-}

@@ -115,6 +115,22 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
         ],
       },
       {
+        // Two fingers on a canvas move it and zoom it; with this on they turn it as
+        // well, as Concepts does (#351). Off, because a plane turned by a pinch held a
+        // little crooked is a plane askew. On the account; a page note never turns.
+        title: t('Canvas'),
+        fields: [
+          {
+            kind: 'switch',
+            label: t('Rotate a canvas with two fingers'),
+            words: ['canvas', 'rotate', 'turn', 'two fingers', 'pinch', 'concepts', 'trackpad'],
+            initial: DEFAULTS.canvasTurns,
+            get: () => modes.canvasTurns,
+            set: (on) => modes.setCanvasTurns(on),
+          },
+        ],
+      },
+      {
         // The paper a page note starts on. A page already written on is changed from
         // its own menu in the panel, which is where somebody looking at a page is;
         // this is only what a new one is given. See PagesNavigator.svelte.

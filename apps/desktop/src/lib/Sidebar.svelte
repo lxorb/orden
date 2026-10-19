@@ -479,7 +479,9 @@
    *  down inside one is not the previous value: the direction came out wrong
    *  whenever the panel happened to read it an extra time. Before the paint, so
    *  the transition that is about to start is the one this decided. */
-  const place = $derived(workspace.spaces.findIndex((one) => one.id === workspace.activeSpaceId))
+  const place = $derived(
+    workspace.shownSpaces.findIndex((one) => one.id === workspace.activeSpaceId),
+  )
   let direction = $state(1)
   let lastPlace = -1
 
@@ -565,6 +567,7 @@
     bind:this={aside}
     bind:clientWidth={asideWidth}
     data-region={side === 'right' ? 'right' : undefined}
+    data-sidebar
     aria-label={t('{space} panel', { space: workspace.activeSpace?.name ?? t('Space') })}
     class:resizing={size.dragging}
     class:right={side === 'right'}
@@ -626,7 +629,18 @@
       </div>
     {/if}
 
-    <div class="switch" bind:clientWidth={rowWidth}>
+    <!-- A file carried up out of the list; see `offered` in Bookmarks.svelte. -->
+    <!-- svelte-ignore a11y_no_static_element_interactions -->
+    <div
+      class="switch"
+      bind:clientWidth={rowWidth}
+      ondragover={() => {
+        const drag = workspace.panes.dragging
+        if (drag?.tabId === null && !drag.upward) {
+          workspace.panes.dragging = { ...drag, upward: true }
+        }
+      }}
+    >
       <!-- Four tabs are one tab stop, and left and right move between them. They
          change as they are arrived at, because what each of them shows is already
          worked out and arrives without a wait - which is the rule the ARIA practices
@@ -806,20 +820,6 @@
             onclick={(event) => showTabMenu(event, 'search', t('Search'))}
           >
             <svg viewBox="0 0 13 13"><path d={ORDER_MARK} /></svg>
-          </button>
-        {/if}
-        {#if showing === 'agents'}
-          <button
-            class="nib-glyph tool"
-            title={shortcuts.tooltip(t('Stop agents'), 'agents.stop')}
-            aria-label={t('Stop agents')}
-            onclick={() => {
-              if (!__EVEN_PLUGIN__) void import('./agents/ui/index').then((one) => one.stopAgents())
-            }}
-          >
-            <svg viewBox="0 0 13 13"
-              ><rect class="solid" x="3.2" y="3.2" width="6.6" height="6.6" rx="1.2" /></svg
-            >
           </button>
         {/if}
         {#if showing === 'ask'}
@@ -1310,11 +1310,6 @@
     text-align: center;
     font-variant-numeric: tabular-nums;
     pointer-events: none;
-  }
-
-  .tool .solid {
-    fill: currentColor;
-    stroke: none;
   }
 
   /* The tools keep their size: they are square glyph buttons, and a row that has

@@ -384,7 +384,9 @@ def main() -> int:
         # A face is fetched when something on the page is set in it, so the
         # equations have to be drawn before the list is read.
         page.evaluate("async () => { await document.fonts.ready }")
-        elsewhere = sorted({url for url in asked if not url.startswith(ORIGIN)})
+        # An object URL the page made of its own bytes is its own: WebKit reports
+        # reading one as a request, and Chromium does not (#384).
+        elsewhere = sorted({url for url in asked if not url.startswith((ORIGIN, f"blob:{ORIGIN}/"))})
         say(f"the page asked for {len(asked)} addresses:")
         for url in sorted(set(asked)):
             say(f"  {url[len(ORIGIN) :] if url.startswith(ORIGIN) else url}")

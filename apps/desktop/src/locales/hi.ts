@@ -26,6 +26,25 @@ export const hi: Dictionary = {
   'Import from Zen': 'Zen से इंपोर्ट करें',
   'Containers stay in Zen': 'कंटेनर Zen में ही रहते हैं',
   'Zen’s tabs could not be read.': 'Zen के टैब पढ़े नहीं जा सके।',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'कंटेनर Firefox में ही रहते हैं',
+  'Nothing could be read out of {browser}.': '{browser} से कुछ भी पढ़ा नहीं जा सका।',
+  'Saved groups': 'सहेजे गए समूह',
+  'Tab group': 'टैब समूह',
+  'Bookmarks toolbar': 'बुकमार्क टूलबार',
+  'Bookmarks menu': 'बुकमार्क मेनू',
+  'Other bookmarks': 'अन्य बुकमार्क',
+  'Mobile bookmarks': 'मोबाइल बुकमार्क',
+  'Bookmarks bar': 'बुकमार्क बार',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} अपने खुले टैब लॉक रखता है, इसलिए सिर्फ़ उसके बुकमार्क आए।',
+  '{count} pages not on the web stay behind': {
+    one: 'वेब पर न होने वाला {count} पेज पीछे रह गया',
+    other: 'वेब पर न होने वाले {count} पेज पीछे रह गए',
+  },
+  'Reading List': 'रीडिंग लिस्ट',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS Safari के टैब और बुकमार्क फ़ुल डिस्क ऐक्सेस के पीछे रखता है। वहाँ Orden चालू करें, फिर दोबारा कोशिश करें।',
   // Settings: note types
   'Page note': 'पृष्ठ नोट',
   'Web note': 'वेब नोट',
@@ -96,8 +115,6 @@ export const hi: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'संकेत',
   'Silent mode': 'मौन मोड',
-  'Sign in to keep your notes safe and on every device.':
-    'अपने नोट सुरक्षित और हर डिवाइस पर रखने के लिए साइन इन करें।',
   'See how your notes connect.': 'देखें कि आपके नोट कैसे जुड़े हैं।',
   'Press {key} to find anything, notes and commands alike.':
     'नोट और कमांड, कुछ भी खोजने के लिए {key} दबाएँ।',
@@ -119,11 +136,13 @@ export const hi: Dictionary = {
   '{count} h': '{count} घं',
   Inbox: 'इनबॉक्स',
   Date: 'तारीख',
+  'Start date': 'शुरुआत की तारीख',
   Priority: 'प्राथमिकता',
   Reminder: 'रिमाइंडर',
   Duration: 'अवधि',
   'Smart dates': 'स्मार्ट तारीखें',
   'From any app': 'किसी भी ऐप से',
+  'Show tasks without a start date in Today': 'शुरुआत की तारीख के बिना कार्य आज में दिखाएँ',
   'Every day': 'हर दिन',
   'Every weekday': 'हर कार्यदिवस',
   'Every week': 'हर सप्ताह',
@@ -167,6 +186,8 @@ export const hi: Dictionary = {
   Dots: 'बिंदु',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'दो उंगलियों से कैनवास घुमाएँ',
+  'Turn upright': 'सीधा करें',
   Canvas: 'कैनवास',
   Card: 'कार्ड',
   'Note or picture': 'नोट या चित्र',
@@ -242,6 +263,10 @@ export const hi: Dictionary = {
   Unpin: 'पिन निकालें',
   Close: 'बंद करें',
   'Close pinned tab?': 'पिन किया गया टैब बंद करें?',
+  'Save changes to {name}?': '{name} के बदलाव सेव करें?',
+  'Save changes to these tabs?': 'इन टैब के बदलाव सेव करें?',
+  'Unsaved words go to Recently deleted.': 'बिना सेव किए शब्द हाल ही में मिटाए गए में जाएँगे।',
+  'Don’t save': 'सेव न करें',
   'Close others': 'बाकी बंद करें',
   'Close tabs to the right': 'दाईं ओर के टैब बंद करें',
   'Close tabs to the left': 'बाईं ओर के टैब बंद करें',
@@ -1161,6 +1186,7 @@ export const hi: Dictionary = {
   'Double-click to write': 'लिखने के लिए दो बार क्लिक',
   'Another colour': 'दूसरा रंग',
   'Turn into a note': 'नोट बना दें',
+  Arrange: 'व्यवस्थित करें',
   'Bring to front': 'सबसे आगे लाएँ',
   'Bring forward': 'आगे लाएँ',
   'Send backward': 'पीछे भेजें',
@@ -1250,6 +1276,9 @@ export const hi: Dictionary = {
   Unstable: 'अस्थिर',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'स्थिर जारी हुए संस्करण लेता है, अस्थिर एज बिल्ड लेता है और टूट सकता है।',
+  'Web version': 'वेब संस्करण',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'स्थिर जारी हुआ वेब ऐप है, अस्थिर सबसे नया बिल्ड है और टूट सकता है।',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'इंपोर्ट',
@@ -1580,8 +1609,6 @@ export const hi: Dictionary = {
   // Web tabs
   Reload: 'फिर लोड करें',
   'Hard reload': 'पूरी तरह फिर लोड करें',
-  'Clip this page': 'यह पृष्ठ सहेजें',
-  'Clip the link': 'लिंक सहेजें',
   'Open in the browser': 'ब्राउज़र में खोलें',
   'Show it here': 'यहाँ दिखाएँ',
   Website: 'वेबसाइट',
@@ -1713,7 +1740,6 @@ export const hi: Dictionary = {
   'New tab': 'नया टैब',
   'Full screen': 'फ़ुल स्क्रीन',
   'Print…': 'प्रिंट करें…',
-  'Save page': 'पेज सेव करें',
   'Share…': 'साझा करें…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1772,6 +1798,15 @@ export const hi: Dictionary = {
   'Bring all to front': 'सभी को सामने लाएँ',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'कॉपी पूर्ववत करें',
+  'Devices with your AI vault': 'आपके AI वॉल्ट वाले डिवाइस',
+  'This device': 'यह डिवाइस',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'डिवाइस अब आपके AI खाते नहीं पढ़ सकेगा, और बाकी को नई कुंजी मिलेगी।',
+  'Also remove this device from your AI vault?': 'इस डिवाइस को अपने AI वॉल्ट से भी हटाएं?',
+  'Remove and sign out': 'हटाएं और साइन आउट करें',
+  'Undo making {name}': '{name} बनाना पूर्ववत करें',
+  'Undo the deletion': 'हटाना पूर्ववत करें',
+  'Undo the move': 'ले जाना पूर्ववत करें',
   'Redo the last file change': 'फ़ाइलों का आख़िरी बदलाव दोबारा करें',
   'Select down': 'नीचे की ओर चुनें',
   'Select up': 'ऊपर की ओर चुनें',
@@ -1872,6 +1907,11 @@ export const hi: Dictionary = {
   Max: 'अधिकतम',
   Fast: 'तेज़',
   Send: 'भेजें',
+  'Send feedback': 'प्रतिक्रिया भेजें',
+  'Describe the issue': 'समस्या बताएँ',
+  Sent: 'भेज दिया',
+  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
+    'इस रिपोर्ट में आपका विवरण, Orden का संस्करण, आपका प्लेटफ़ॉर्म और ऐप का हाल का लॉग होता है। आपके नोट कभी नहीं।',
   'Send into the running answer': 'चल रहे उत्तर में भेजें',
   'Stop the answer': 'उत्तर रोकें',
   'Open every step': 'हर चरण खोलें',
@@ -1990,6 +2030,7 @@ export const hi: Dictionary = {
   'Without your logins': 'आपके लॉग-इन के बिना',
   'Calls a minute': 'प्रति मिनट कॉल',
   'Pages a minute': 'प्रति मिनट पेज',
+  'Browser memory limit': 'ब्राउज़र मेमोरी सीमा',
   '{count} calls': {
     one: '{count} कॉल',
     other: '{count} कॉल',

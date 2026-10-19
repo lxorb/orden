@@ -16,6 +16,7 @@
 import { type Extension, Prec } from '@codemirror/state'
 import { EditorView, ViewPlugin } from '@codemirror/view'
 import { CodeMirror, getCM, Vim, vim } from '@replit/codemirror-vim'
+import { tickTaskAtCaret } from './commands'
 import { once } from './once'
 import { redoEdit, undoEdit } from './shared'
 import { modeOf, vimCommands, vimReport } from './vim'
@@ -28,15 +29,23 @@ const CONTEXTS = [undefined, 'normal', 'insert', 'visual']
 
 /** Takes a key off Vim's keymap in every mode. A key can be bound more than
  *  once in one mode, and `unmap` answers true while it is still finding one.
- *  Answers whether there was anything there to take. */
-function takeBack(keys: string): boolean {
-  let found = false
+ *  Answers how many bindings there were to take. */
+function takeBack(keys: string): number {
+  let found = 0
   for (const context of CONTEXTS) {
-    while (unmap(keys, context)) found = true
+    while (unmap(keys, context)) found++
   }
 
   return found
 }
+
+/** A binding no key can press, standing where one was taken. The library finds its
+ *  own bindings by counting back from the length its keymap started at - every key
+ *  that stands for others (`<CR>` for `j^`, `<Space>` for `l`, `s` for `cl`) is
+ *  looked up that way - and a keymap shorter than it started reads from before its
+ *  own beginning: the lookup threw, and Enter in normal mode fell through to the
+ *  editor's own Enter and split the line. So the keymap is kept its length. */
+const HOLDING_PLACE = { keys: '<OrdenTaken>', type: 'idle' } as const
 
 /** Every letter but `q`, which is Vim's own way out of a taken Ctrl chord. */
 const CTRL_LETTERS = 'abcdefghijklmnoprstuvwxyz'
@@ -68,19 +77,22 @@ const CARET_KEYS = [
  *  keystroke - so every one of these arrives at the editor and the app exactly
  *  as it does with modal editing off.
  *
- *  What this costs: the library counts its own keymap from the length it
- *  started at, so `:noremap` and `:mapclear` typed into the command line no
- *  longer work. Neither is much use in an editor with no vimrc to read them
- *  from, and `:map` is unaffected. */
+ *  Every binding taken is given back as one nothing can press (`HOLDING_PLACE`),
+ *  so the keymap stays the length the library counts from and its own keys that
+ *  stand for others still find them. */
 export function takeBackNibKeys(): string[] {
   const taken: string[] = []
+  let bindings = 0
   const sweep = (keys: string) => {
-    if (takeBack(keys)) taken.push(keys)
+    const found = takeBack(keys)
+    bindings += found
+    if (found) taken.push(keys)
   }
 
   for (const letter of CTRL_LETTERS) sweep(`<C-${letter}>`)
   for (const keys of CTRL_OTHERS) sweep(keys)
   for (const keys of CARET_KEYS) sweep(keys)
+  for (let one = 0; one < bindings; one++) Vim._mapCommand({ ...HOLDING_PLACE })
 
   return taken
 }
@@ -133,6 +145,61 @@ const modeReporter = ViewPlugin.define((view: EditorView) => {
     },
   }
 })
+
+/** The few fields of a keystroke the question below reads. */
+interface Keyed {
+  key: string
+  shiftKey: boolean
+  ctrlKey: boolean
+  metaKey: boolean
+  altKey: boolean
+  isComposing: boolean
+}
+
+/** And of the library's state for a view: its mode, and what has been typed so far. */
+interface Moded {
+  insertMode: boolean
+  visualMode: boolean
+  inputState: {
+    prefixRepeat: string[]
+    operator?: string | null | undefined
+    keyBuffer: string[]
+    registerName?: string | undefined
+  }
+}
+
+/** Whether a keystroke is a plain Enter in normal mode with nothing typed in front of
+ *  it. A count, an operator waiting for its motion, a register named first or half a
+ *  key sequence make Enter part of a command - `3<CR>`, `d<CR>` - which is Vim's to
+ *  finish, and insert and visual mode are where Enter has always meant what it means. */
+export function plainNormalEnter(event: Keyed, mode: Moded | null | undefined): boolean {
+  if (event.key !== 'Enter' || event.isComposing) return false
+  if (event.shiftKey || event.ctrlKey || event.metaKey || event.altKey) return false
+  if (!mode || mode.insertMode || mode.visualMode) return false
+
+  const input = mode.inputState
+  return (
+    !input.prefixRepeat.length && !input.operator && !input.keyBuffer.length && !input.registerName
+  )
+}
+
+/** Enter on a task in normal mode ticks it, and Enter again clears it - the press a
+ *  reader moving down a list with the keyboard makes on the line they mean, and the
+ *  one Ctrl+Enter makes everywhere. On every other line it is Vim's own line down,
+ *  untouched. Above Vim, because Vim takes every Enter in normal mode; and it says no
+ *  rather than taking the key anywhere it does not tick, so what is underneath sees
+ *  the keystroke exactly as before. */
+const enterTicks = Prec.highest(
+  EditorView.domEventHandlers({
+    keydown(event, view) {
+      if (!plainNormalEnter(event, getCM(view)?.state.vim)) return false
+      if (!tickTaskAtCaret(view)) return false
+
+      event.preventDefault()
+      return true
+    },
+  }),
+)
 
 /** The two things modal editing puts on screen, in Orden's own colours.
  *
@@ -187,6 +254,7 @@ export const modalEditing = once((on: boolean): Extension =>
   on
     ? Prec.high([
         vim(),
+        enterTicks,
         modeReporter,
         vimTheme,
         EditorView.editorAttributes.of({ class: 'nib-vim' }),

@@ -127,7 +127,9 @@ function linesOf(
     tags: task.labels.map(tagOf).filter(Boolean),
     dependsOn: [],
     fields: {},
-    ...(task.due ? { due: task.due } : {}),
+    // Todoist's date is when a task is planned to start, which is a start date here;
+    // its deadline is a deadline (#371).
+    ...(task.due ? { start: task.due } : {}),
     ...(task.time ? { time: task.time } : {}),
     ...(task.zone ? { zone: task.zone } : {}),
     ...(rule ? { recurrence: rule } : {}),

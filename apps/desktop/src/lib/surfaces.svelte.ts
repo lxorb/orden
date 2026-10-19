@@ -364,6 +364,19 @@ export const signInSheet = latched(() => import('./SignIn.svelte'))
 /** The one word a link owes whoever followed it, when it owes one; see joining.svelte.ts. */
 export const joinSheet = latched(() => import('./JoinSheet.svelte'))
 
+/** Send feedback, the first time the bug at the foot of the sidebar or the palette's row
+ *  asks for it; see feedback.svelte.ts. */
+export const feedbackSheet = latched(() => import('./FeedbackSheet.svelte'))
+
+/** Send feedback opened: its state and its sheet fetched with the press, neither of
+ *  which is worth a byte of the first paint. */
+export function showFeedback(): void {
+  void import('./feedback.svelte').then(({ feedback }) => {
+    feedback.show()
+    void feedbackSheet.ask()
+  })
+}
+
 /** Quick add, the first time its key, the palette's row or a view's button asks for it;
  *  see quick-add/asked.svelte.ts. */
 export const quickAddSheet = latched(() =>

@@ -18,8 +18,8 @@ pub mod icloud;
 use crate::carry::{copy_whole, move_whole};
 use crate::clock;
 use crate::paths::{
-    at_most, at_most_stamped, cannot, chosen, copy_highlights, drop_highlights, in_spaces, made,
-    move_highlights, openable, write_in_place,
+    at_most, at_most_stamped, cannot, chosen, copy_held, drop_held, in_spaces, made, move_held,
+    openable, write_in_place,
 };
 
 /// The most a note may be for nib to read it: 64 MiB.
@@ -189,8 +189,9 @@ pub fn delete_note(app: AppHandle, path: String) -> Result<(), String> {
     let target = in_spaces(&app, &path)?;
     fs::remove_file(&target).map_err(|error| cannot("delete", &target, &error))?;
 
-    // A PDF's highlights are part of that PDF and have nothing left to describe.
-    drop_highlights(&target);
+    // A PDF's highlights are part of that PDF, and a page note's paper is part of
+    // the note, and neither has anything left to describe.
+    drop_held(&target);
     Ok(())
 }
 
@@ -204,8 +205,9 @@ pub fn rename_note(app: AppHandle, from: String, to: String) -> Result<(), Strin
 
     move_entry(&source, &target, respelling)?;
 
-    // A PDF's highlights follow it, so a rename or a move keeps them.
-    move_highlights(&source, &target);
+    // A PDF's highlights follow it, and a page note's paper follows the note, so a
+    // rename or a move keeps them.
+    move_held(&source, &target);
     Ok(())
 }
 
@@ -344,9 +346,10 @@ fn copied(source: &Path, target: &Path) -> Result<(), String> {
 
     copy_whole(source, target)?;
 
-    // A PDF's highlights are part of it, so the copy has them too. A folder's
-    // come along with everything else in it.
-    copy_highlights(source, target);
+    // A PDF's highlights are part of it, and a page note's paper is part of the
+    // note, so the copy has them too. A folder's come along with everything else in
+    // it.
+    copy_held(source, target);
     Ok(())
 }
 

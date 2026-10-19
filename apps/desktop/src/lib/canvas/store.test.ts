@@ -335,3 +335,60 @@ describe('a plane written after it opens', () => {
     expect(note.live.text.toString()).toBe(note.text)
   })
 })
+
+describe('a version put back from the history (#533)', () => {
+  /** A plane with one card, then the card deleted and another drawn, and written down:
+   *  the version with the first card is what the history offers back. */
+  function laterThanTheVersion() {
+    const version = writeCanvas({ ...readCanvas(blankCanvas()), nodes: [card('kept')] })
+    const { store, note } = opened(version)
+    store.edit({ ...store.canvas, nodes: [card('later', 300)] })
+    store.part()
+    return { store, note, version }
+  }
+
+  test('is the plane, whole: what was deleted since is back, and what was drawn since goes', () => {
+    const { store, note, version } = laterThanTheVersion()
+
+    note.replace(version)
+    note.restoredAt = note.revision
+    store.follow()
+
+    expect(ids(store.canvas)).toEqual(['kept'])
+    // Gone the way any deletion goes, so the other devices take it the same way.
+    expect(store.canvas.gone).toHaveProperty('later')
+    expect(store.canvas.gone).not.toHaveProperty('kept')
+  })
+
+  test('and is one step undo takes back', () => {
+    const { store, note, version } = laterThanTheVersion()
+
+    note.replace(version)
+    note.restoredAt = note.revision
+    store.follow()
+    store.undo()
+
+    expect(ids(store.canvas)).toEqual(['later'])
+  })
+
+  test('goes to the room as what it changed', () => {
+    const { store, note, version } = laterThanTheVersion()
+    const shared = room()
+    store.shared = shared
+
+    note.replace(version)
+    note.restoredAt = note.revision
+    store.follow()
+
+    expect(shared.pushed.map(ids)).toEqual([['kept']])
+  })
+
+  test('where the same words arrive from a sync instead, they are merged, as before', () => {
+    const { store, note, version } = laterThanTheVersion()
+
+    note.replace(version)
+    store.follow()
+
+    expect(ids(store.canvas)).toEqual(['later'])
+  })
+})

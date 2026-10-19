@@ -967,7 +967,14 @@ It is Chrome's and Edge's gesture, numbers and all (Chromium's
   of scroll that began by moving one stays its own to the end, even once it has run out:
   scroll latching, so a fling along a carousel never turns into Back. A scroller that says
   `overscroll-behavior-x: contain` or `none` keeps its overscroll, which is the line Google
-  Sheets draws, and a page whose own handler took the wheel - a map - keeps it too.
+  Sheets draws, and a page whose own handler took the wheel - a map - keeps it too. Whether
+  the scroll moved anything is read off what scrolled, not off where the scroller stands
+  when the wheel is heard: a passive listener hears it after the scroll it made, so a
+  scroller with a few pixels left to go was already at its edge when asked, the stream
+  that moved it came out as a swipe, and the arrow came in over a page that had just slid
+  along with the fingers (#407: _"wenn man bei uns horizontal scrollt scrollt die seite so
+  komisch mit"_). A stream that scrolled something sideways, from a moment before its
+  first step, is that content's (`slid.ts`, and the same in `web_swipe.js`).
 - **Sideways on purpose.** 60 pixels sideways (50 for a finger), two and a half times as
   far as down, before anything shows - counted from the stream's very first step, a step
   straight down included, so a scroll down a page that drifts sideways as it goes is a
@@ -1067,7 +1074,7 @@ a stream still ends when the wheel stops for 120 ms, and at once when it turns i
 touchpad's own coasting after a flick, a run of steadily shrinking steps.
 
 Proved by `src/lib/back-swipe/gesture.test.ts` (the numbers, and a hand that says when it
-lifts), `edge.test.ts`, `test/effects/swipe.effect.test.ts` (the wiring, the arrow, a
+lifts), `edge.test.ts`, `slid.test.ts`, `test/effects/swipe.effect.test.ts` (the wiring, the arrow, a
 page's swipe, the setting, and every gesture in `test/effects/swipe-replays.json`),
 `touchpad.rs`'s own tests (frames put back together, and what is said while nib is behind),
 `test/e2e/swipe.py` (Chromium's own precise scroll gestures over a note, and the page script
@@ -1165,7 +1172,7 @@ desktop app leaves its web notes' tabs out (`tabsAlong`).
 
 ## The bar
 
-Back, forward, reload, the address, a clip, the dots. The same `.nib-glyph`
+Back, forward, reload, the address, the dots. The same `.nib-glyph`
 squares the find bar is made of, the same `.nib-field`, the same row scale, in the
 same place under the tab strip - a bar over the page would cover the first line of
 it.
@@ -1288,10 +1295,10 @@ site is and what it has been allowed, which is Chrome's site information bubble;
 asked for exactly that: _"Our browser related menu structure should be very similar
 to that of chrome. And in general we don't want to reinvent how a browser works."_
 New tab, New private tab, History, Essentials, Delete browsing data, Zoom out / the size /
-Zoom in, Full screen, Print, Find, Save page, Share, Copy link, Open in the browser,
+Zoom in, Full screen, Print, Find, Save as a note, Share, Copy link, Open in the browser,
 Settings - each bent onto what nib has where the two differ: Chrome's Incognito window is
-a tab here, a bookmark is the space's own kept files, Save page is the clipper, and Share
-is nib's share sheet. The three zoom rows keep the menu open the
+a tab here, a bookmark is the space's own kept files, Chrome's Save page is Save as a
+note, the clipper, and Share is nib's share sheet. The three zoom rows keep the menu open the
 way a browser's do, which is the one thing a row in this app may now ask for; see
 `keep` in `lib/menu-item.ts`.
 
@@ -1596,13 +1603,17 @@ a probe build, read back out of the folder, the tabs and the crate's list.
 
 ## Clipping the page
 
-The Clip glyph writes the page into the space as a note, through the same three
-things the clipper extension uses: the article extractor (`@nib/markdown/article`,
+**Save as a note**, behind the dots, writes the page into the space as a note. It is
+the one way in from a web tab: the scissors that did the same from the bar went on
+every platform when Emil asked for them gone (#405, *"und entferne bitte diese komische
+schere um browser tabs als note zu speichern"*), and a press on the dots is one more
+than a press on the bar for something nobody does every minute. It goes through
+three things: the article extractor (`@nib/markdown/article`,
 Mozilla's Readability, which is Firefox's reader mode), the converter
 (`@nib/markdown/from-html`) and the note's shape (`@nib/markdown/clip-note`:
 `source:`, `title:`, `clipped:` and `tags:`, then the title as a heading). A page
-clipped from a tab and the same page clipped from the extension are the same note,
-and `lib/web-tab/reader.test.ts` holds the two to it over a news article, a page of
+clipped from a tab is the note the extractor makes of the same page read live, and
+`lib/web-tab/reader.test.ts` holds the two to it over a news article, a page of
 documentation, Wikipedia with maths and a page of tables. The extractor is fetched
 when somebody clips, never on the way to a window.
 
@@ -1633,8 +1644,8 @@ given anything to call.
 
 **In a browser build a clip is the link.** The frame's document belongs to
 somebody else's origin and cannot be read at all, so the note is the title and the
-address. The glyph says so before it is pressed: it reads "Clip the link" there and
-"Clip this page" on a desktop, which is better than an apology afterwards.
+address. The row is the same row either way; what lands in the file list says which it
+was.
 
 The clip does not open in a tab. The page is still what the reader is looking at,
 and a note that opened over it would take them away from what they were reading;
@@ -1863,6 +1874,26 @@ On Windows a store of its own is a user data folder rather than a `WebView2` pro
 because the runtime has no way to name a profile for a webview it builds. It costs a
 browser process while one of its tabs is open, and nothing after: a login in it survives
 its last tab closing because its session cookies are given an expiry as its pages load.
+
+**The page moves once** (#409). Turning a note Separate asks for the move twice - the menu
+that wrote the file, and the open tab that heard the file change - and the two used to run
+side by side: the second waited out the closing page's silence and then closed the page the
+first had just built in the new store, which the tab went on believing in, spinning until it
+was closed by hand. A tab's moves run one after the other now (`rehouse` in
+`pages.svelte.ts`), the second finds the page already where it asks for, and the page counts
+as on its way from the park to the build, so the pane looking again meanwhile says where the
+new page goes rather than asking for a second.
+
+**A store is handed each extension once, and its first-run page never opens** (#409). On
+Windows a store nothing was ever handed to - every note just turned Separate - is given the
+extensions on the list as its first page is built (`extensions/webview2.rs`), and an install
+runs the extension's `onInstalled`, which most answer with a "thanks for installing" page: a
+window of the engine's own, or a tab. A store holding an extension at the list's version is
+handed nothing, and one on its way in is not handed again before the engine answers
+(`extensions/given.rs`); and for ten seconds after an extension is handed over, the store is
+quiet: a window nobody pressed for is not opened from its pages, and a framed window its
+browser process opens on its own is closed as it appears (`extensions/welcome.rs`). The
+extension is installed and runs; its options page is in Settings.
 
 **History is one list** (`nib:web-visits`, `visited.ts`), a note kept apart included, as
 Firefox keeps one history across containers. **Delete browsing data** clears the shared
@@ -2190,6 +2221,8 @@ versions and goes to the trash like every other document.
 | `apps/desktop/src-tauri/src/web_cookies.rs` | a session cookie given an expiry, so a login survives a restart: after each page and as the window closes. `WebView2` (through the `DevTools` Protocol, partitions kept) and `WKWebView`. Unit tested |
 | `apps/desktop/src-tauri/src/web_cookies/twins.rs` | the copies without a partition that the COM cookie manager made of partitioned cookies, found so each keep takes them away. Unit tested |
 | `apps/desktop/src-tauri/src/web_stores.rs` | a store's name checked, and what it is on each engine. Unit tested |
+| `apps/desktop/src-tauri/src/extensions/given.rs` | what a store is handed: each extension once, nothing to a store loaded again. Unit tested |
+| `apps/desktop/src-tauri/src/extensions/welcome.rs` | a store quiet while an extension arrives, so its first-run page never opens. Unit tested |
 | `apps/desktop/src-tauri/src/paths.rs`                 | `is_shortcut`, beside the other three kinds                                                                                                                                                                                                            |
 | `apps/desktop/src-tauri/src/tree.rs`                  | the four kinds the file list shows                                                                                                                                                                                                                     |
 | `apps/desktop/src-tauri/src/search.rs`                | a shortcut is searched as the text it is, so a site is found by its address                                                                                                                                                                            |

@@ -30,7 +30,7 @@
 
   const shown = $derived(
     typing.reading.shown.flatMap((at) => {
-      const space = workspace.spaces[at]
+      const space = workspace.shownSpaces[at]
       return space ? [{ space, at }] : []
     }),
   )

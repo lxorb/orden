@@ -8,7 +8,7 @@
  *  - **Auto**: every tool; a change is made at once and can be kept or undone after,
  *    and what Settings › AI › Access says asks (sending, deleting, publishing, the
  *    terminal, ...) still waits for the reader.
- *  - **Full permissions**: every tool, nothing asked but paying.
+ *  - **Full permissions**: every tool, nothing asked at all (#372).
  *  - **Plan**: reads, and writes the plan as a note.
  *
  *  The same for every engine the panel runs - its own loop for a key or a plan, Claude

@@ -79,7 +79,7 @@ function unsaved(tabId: string) {
 
 /** The carried tab is at `point`, or over something else where that is null. */
 export function overList(tabId: string, point: { x: number; y: number } | null): void {
-  overSpaces(tabId, point)
+  overSpaces({ tab: tabId }, point)
   overBookmarks(tabId, point)
   const folder = point && unsaved(tabId) ? folderAt(point.x, point.y) : null
   if (folder !== null) dropTarget.over(folder)
@@ -92,7 +92,7 @@ export function droppedOnList(tabId: string): void {
   const folder = dropTarget.folder
   const tab = unsaved(tabId)
   dropTarget.clear()
-  if (droppedOnSpace(tabId) || droppedOnBookmarks(tabId)) return
+  if (droppedOnSpace({ tab: tabId }) || droppedOnBookmarks(tabId)) return
   if (folder !== null && tab) void workspace.save(tab, folder)
 }
 

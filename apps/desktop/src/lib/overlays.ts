@@ -17,6 +17,7 @@
  *  tells the app is that the keyboard went (#382). The press that opened it does not
  *  close it, and a press in a popup opened over it - a submenu, a list - closes
  *  neither. A sheet says nothing of the kind, and is closed by its own scrim.
+ *  The press that closed one does not open it again; see `clicked`.
  *
  *  **Only what is drawn over the note belongs here**, because the stack also decides
  *  whether a web page, a native webview, must hide. Full screen wants Escape and is
@@ -45,6 +46,9 @@ interface Press {
 
 class Overlays {
   private readonly stack: Open[] = []
+
+  /** What the popups the last press shut held, until its click is read. */
+  private shutBy: Holds[] = []
 
   /** Who wants to hear that the stack changed.
    *
@@ -100,14 +104,28 @@ class Overlays {
    *  and one that waited behind a long task carries a time from before a popup that
    *  opened in the meantime, which its time would read as the press that opened it. */
   pressed(press: Pointed) {
-    const target = typeof Node !== 'undefined' && press.target instanceof Node ? press.target : null
+    this.shutBy = []
+    const target = nodeOf(press)
 
     for (let at = this.stack.length - 1; at >= 0; at--) {
       const one = this.stack[at]
       if (!one?.holds) return
-      if (target && one.holds().some((held) => held?.contains(target))) return
+      if (target && one.holds().some((held) => holds(held, target))) return
+      this.shutBy.push(one.holds)
       this.shut(one)
     }
+  }
+
+  /** A tap's click lands where the finger was once a popup's catch has gone: on the
+   *  button that opened it, it is spent, or it opens the popup again (#411). */
+  clicked(click: Pointed & Press) {
+    const shut = this.shutBy
+    this.shutBy = []
+    const target = nodeOf(click)
+    if (!target || !shut.some((holds) => holds().some((held) => held?.contains(target)))) return
+
+    click.preventDefault()
+    click.stopImmediatePropagation()
   }
 
   /** The window lost the focus: to another window, or to a web page, which is the one
@@ -145,6 +163,32 @@ class Overlays {
     top.close()
     return true
   }
+}
+
+/** Whether a press on `target` is in what `held` draws. Not the bare box round a popup and
+ *  its button, where nothing is drawn: the canvas's pens and their panel sit in a strip
+ *  the width of the pane, and a press beside the panel landed in it and left it open
+ *  (#382). */
+function holds(held: Pick<Element, 'contains'> | null | undefined, target: Node): boolean {
+  if (!held?.contains(target)) return false
+  return held !== target || typeof getComputedStyle !== 'function' || !bare(target)
+}
+
+/** An element that draws nothing of its own: no background and no border. */
+function bare(node: Node): boolean {
+  if (typeof Element === 'undefined' || !(node instanceof Element)) return false
+  const style = getComputedStyle(node)
+  const none = (value: string) => value === 'none' || value === ''
+  return (
+    style.backgroundColor === 'rgba(0, 0, 0, 0)' &&
+    none(style.backgroundImage) &&
+    none(style.borderTopStyle)
+  )
+}
+
+/** What a press landed on, where it is a node at all. */
+function nodeOf(press: Pointed): Node | null {
+  return typeof Node !== 'undefined' && press.target instanceof Node ? press.target : null
 }
 
 export const overlays = new Overlays()

@@ -228,3 +228,49 @@ describe('the values of nib fields', () => {
     expect(readRemind('whenever')).toBeNull()
   })
 })
+
+/** Field names and priority words are the writer's, and a plain object answered
+ *  `constructor` from its prototype: a priority became a function and was lost. */
+describe('words an object would answer from its prototype', () => {
+  test('are unknown fields, kept as written', () => {
+    const task = readTask('- [ ] Pay [constructor:: 1] [__proto__:: 2] [toString:: 3]')
+    expect(Object.entries(task?.fields ?? {}).sort()).toEqual([
+      ['__proto__', '2'],
+      ['constructor', '1'],
+      ['toString', '3'],
+    ])
+  })
+
+  test('are not a priority', () => {
+    const task = readTask('- [ ] Pay [priority:: constructor]')
+    expect(task?.priority).toBe(4)
+    expect(task?.fields).toEqual({ priority: 'constructor' })
+  })
+})
+
+/** #499: patterns that gave the same blanks to more than one quantifier, timed on
+ *  lines that took from seconds to hours before. */
+describe('a line built to make the reader backtrack', () => {
+  const quick = (line: string) => {
+    const started = performance.now()
+    const task = readTask(line)
+    expect(performance.now() - started).toBeLessThan(500)
+    return task
+  }
+
+  test('is read in linear time, a dependency list that ends badly among them', () => {
+    expect(quick(`- [ ] x ⛔ a${' , a'.repeat(40)} !`)?.dependsOn).toEqual([])
+    quick(`- [ ] x ⛔ a${' '.repeat(100_000)} !`)
+    quick(`- [ ] x 🔁${' '.repeat(100_000)}#`)
+    quick(`- [ ] x [a::${' '.repeat(100_000)}x`)
+    quick(`- [ ] x ${'[a:: '.repeat(20_000)}`)
+    quick(`- [ ] x ${'(a:: '.repeat(20_000)}`)
+    quick(`- [ ] x ${'[a:: '.repeat(20_000)}] (b:: c)`)
+  })
+
+  test('reads the same fields as before', () => {
+    expect(quick('- [ ] x ⛔ a , b,c  ')?.dependsOn).toEqual(['a', 'b', 'c'])
+    expect(quick(`- [ ] x [a::${' '.repeat(10_000)}y  ]`)?.fields).toEqual({ a: 'y' })
+    expect(quick('- [ ] x [a:: [b] (c:: d [e:: f]')?.fields).toEqual({ a: '[b', e: 'f' })
+  })
+})

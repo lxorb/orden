@@ -79,6 +79,7 @@ function saying(field: Field): string {
   if (field.kind === 'switch') return field.get() ? panelWord('On') : panelWord('Off')
   if (field.kind === 'slider') return `${String(field.get())}${field.unit ?? ''}`
   if (field.kind === 'text') return field.get() || field.placeholder
+  if (field.kind === 'value') return field.get()
   // A picture has no word; the glasses never show the wallpaper's row.
   if (field.kind === 'picture') return ''
 
@@ -301,7 +302,7 @@ class Bridge {
       space: () => workspace.activeSpace?.name ?? panelWord('Notes'),
       contents: () => rowsOf(workspace.tree, null),
       spaces: () =>
-        workspace.spaces.map((one) => ({
+        workspace.shownSpaces.map((one) => ({
           label: one.name,
           depth: 0,
           folder: false,
@@ -776,7 +777,7 @@ class Bridge {
         return
 
       case 'switchSpace': {
-        const spaces = workspace.spaces
+        const spaces = workspace.shownSpaces
         const name = bestOf(
           command.name,
           spaces.map((one) => one.name),

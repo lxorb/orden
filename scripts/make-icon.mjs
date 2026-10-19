@@ -11,7 +11,7 @@
    - Android: an adaptive pair, the wash behind and the bars in front inside the
      66 dp circle no launcher mask ever reaches, plus the one-colour layer that
      themed icons take;
-   - the web app and the clipper: drawn straight at their sizes.
+   - the web app: drawn straight at its sizes.
    `tauri icon` does the encoding (icns, ico, the Android and iOS sets); this
    script picks from three passes of it what each platform should keep. */
 
@@ -104,8 +104,6 @@ cpSync(join(ICONS, 'android'), RES, { recursive: true })
 const web = 'apps/desktop/public'
 for (const size of [256, 512])
   writeFileSync(join(web, `icon-${size}.png`), png(size, tile(GRID, edge), { small: true }))
-for (const size of [16, 32, 48, 128])
-  writeFileSync(`apps/clipper/public/icons/${size}.png`, png(size, tile(GRID)))
 
 rmSync(work, { recursive: true, force: true })
 console.log('the Orden icon, every platform')

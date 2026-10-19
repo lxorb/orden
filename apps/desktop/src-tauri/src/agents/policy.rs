@@ -1805,19 +1805,32 @@ mod tests {
     }
 
     #[test]
-    fn autonomous_mode_asks_only_before_paying() {
+    fn autonomous_mode_asks_nothing_paying_included() {
         let mut grant = grant();
         grant.mode = Mode::Autonomous;
         let url = "https://mail.example/";
-        for name in ["Send", "Delete", "Publish", "Next"] {
+        for name in [
+            "Send",
+            "Delete",
+            "Publish",
+            "Next",
+            "Buy now",
+            "Place order",
+        ] {
             assert!(
                 judge(&grant, &press(name), Act::Press, url, &[]).is_none(),
                 "{name}"
             );
         }
         assert!(judge(&grant, &Facts::default(), Act::Write, url, &[]).is_none());
-        let paying = judge(&grant, &press("Buy now"), Act::Press, url, &[]);
-        assert_eq!(paying.map(|one| one.category), Some(Category::Paying));
+        // A submit on a page that talks to a payment processor, and Enter in a message box.
+        let submit = Facts {
+            submit: true,
+            ..press("Continue")
+        };
+        let hosts = ["js.stripe.com".to_string()];
+        assert!(judge(&grant, &submit, Act::Press, url, &hosts).is_none());
+        assert!(judge(&grant, &press("Send"), Act::Enter, url, &[]).is_none());
     }
 
     #[test]

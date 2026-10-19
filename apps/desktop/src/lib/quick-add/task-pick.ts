@@ -5,6 +5,13 @@
  *  change. */
 
 import { todayOf } from '@nib/bases'
+import {
+  deadlineField,
+  deadlineOf,
+  type DueReads,
+  startField,
+  startOf,
+} from '@nib/markdown/task-dates'
 import type { TaskChange } from '@nib/markdown/task-edits'
 import type { TaskFields } from '@nib/markdown/task-line'
 import { t } from '../i18n.svelte'
@@ -31,30 +38,39 @@ function repeatRows(current: string | undefined, set: (rule: string | null) => v
   ]
 }
 
-/** The rows for one chip's field. */
+/** The rows for one chip's field. The date is the day the task starts and the deadline
+ *  its deadline, each read and written as the note's space reads a `📅` (#371). */
 function rowsFor(
   field: string,
   fields: TaskFields,
   at: DOMRect,
+  due: DueReads,
   change: (change: TaskChange) => void,
 ): MenuEntry[] {
   const today = todayOf()
   switch (field) {
-    case 'date':
+    case 'date': {
+      const written = startField(fields, due)
       return dayRows(
-        fields,
+        { due: startOf(fields, due) ?? fields.scheduled, time: fields.time },
         today,
-        (when) => change(when),
+        (when) => {
+          const { due: day, ...rest } = when
+          change({ ...rest, [written]: day })
+        },
         () => at,
       )
-    case 'deadline':
+    }
+    case 'deadline': {
+      const written = deadlineField(fields, due)
       return dayRows(
-        { due: fields.deadline },
+        { due: deadlineOf(fields, due) },
         today,
-        (when) => change({ deadline: when.due }),
+        (when) => change({ [written]: when.due }),
         () => at,
         false,
       )
+    }
     case 'priority':
       return priorityRows(fields.priority, (priority) => change({ priority }))
     case 'remind':
@@ -73,9 +89,10 @@ export function pickField(
   field: string,
   fields: TaskFields,
   at: DOMRect,
+  due: DueReads,
   change: (change: TaskChange) => void,
 ): void {
-  const rows = rowsFor(field, fields, at, change)
+  const rows = rowsFor(field, fields, at, due, change)
   if (!rows.length) return
   // The menu opens where a press would have opened it: under the chip's start.
   menu.show(new MouseEvent('contextmenu', { clientX: at.left, clientY: at.bottom }), rows)

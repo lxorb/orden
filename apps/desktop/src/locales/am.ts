@@ -26,6 +26,25 @@ export const am: Dictionary = {
   'Import from Zen': 'ከZen አምጣ',
   'Containers stay in Zen': 'ኮንቴይነሮች በZen ውስጥ ይቀራሉ',
   'Zen’s tabs could not be read.': 'የZen ትሮች ሊነበቡ አልቻሉም።',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'ኮንቴይነሮች በFirefox ውስጥ ይቀራሉ',
+  'Nothing could be read out of {browser}.': 'ከ{browser} ምንም ሊነበብ አልቻለም።',
+  'Saved groups': 'የተቀመጡ ቡድኖች',
+  'Tab group': 'የትር ቡድን',
+  'Bookmarks toolbar': 'የዕልባቶች መሣሪያ አሞሌ',
+  'Bookmarks menu': 'የዕልባቶች ምናሌ',
+  'Other bookmarks': 'ሌሎች ዕልባቶች',
+  'Mobile bookmarks': 'የሞባይል ዕልባቶች',
+  'Bookmarks bar': 'የዕልባቶች አሞሌ',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} የተከፈቱ ትሮቹን ቆልፎ ያስቀምጣል፣ ስለዚህ ዕልባቶቹ ብቻ መጥተዋል።',
+  '{count} pages not on the web stay behind': {
+    one: 'በድር ላይ ያልሆነ {count} ገጽ ቀርቷል',
+    other: 'በድር ላይ ያልሆኑ {count} ገጾች ቀርተዋል',
+  },
+  'Reading List': 'የንባብ ዝርዝር',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS የSafari ትሮችን እና ዕልባቶችን ከሙሉ የዲስክ መዳረሻ ጀርባ ያስቀምጣል። እዚያ Ordenን ያብሩ፣ ከዚያ እንደገና ይጠይቁ።',
   // Settings: note types
   'Page note': 'የገጾች ማስታወሻ',
   'Web note': 'የድረ ገጽ ማስታወሻ',
@@ -96,8 +115,6 @@ export const am: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'ጠቃሚ ምክሮች',
   'Silent mode': 'ጸጥታ ሁነታ',
-  'Sign in to keep your notes safe and on every device.':
-    'ማስታወሻዎችዎ ደህና እንዲሆኑ እና በሁሉም መሣሪያ ላይ እንዲገኙ ይግቡ።',
   'See how your notes connect.': 'ማስታወሻዎችዎ እንዴት እንደሚገናኙ ይመልከቱ።',
   'Press {key} to find anything, notes and commands alike.': 'ማስታወሻዎችንም ትዕዛዞችንም ለማግኘት {key} ይጫኑ።',
   // Settings: markdown shown while writing, and the pointer
@@ -118,11 +135,15 @@ export const am: Dictionary = {
   '{count} h': '{count} ሰ',
   Inbox: 'የገቢ ሳጥን',
   Date: 'ቀን',
+  'Start date': 'የመጀመሪያ ቀን',
   Priority: 'ቅድሚያ',
   Reminder: 'ማስታወሻ',
   Duration: 'የጊዜ ርዝመት',
   'Smart dates': 'ብልህ ቀኖች',
   'From any app': 'ከማንኛውም መተግበሪያ',
+  'Rotate a canvas with two fingers': 'ሸራን በሁለት ጣቶች አዙር',
+  'Turn upright': 'ቀጥ አድርግ',
+  'Show tasks without a start date in Today': 'የመጀመሪያ ቀን የሌላቸውን ተግባሮች በዛሬ አሳይ',
   'Every day': 'በየቀኑ',
   'Every weekday': 'በየሥራ ቀኑ',
   'Every week': 'በየሳምንቱ',
@@ -240,6 +261,10 @@ export const am: Dictionary = {
   Unpin: 'ቸንካር አንሳ',
   Close: 'ዝጋ',
   'Close pinned tab?': 'የተቸነከረው ትር ይዘጋ?',
+  'Save changes to {name}?': 'በ{name} ያሉ ለውጦች ይቀመጡ?',
+  'Save changes to these tabs?': 'በእነዚህ ትሮች ያሉ ለውጦች ይቀመጡ?',
+  'Unsaved words go to Recently deleted.': 'ያልተቀመጡ ቃላት ወደ በቅርቡ የተሰረዙ ይሄዳሉ።',
+  'Don’t save': 'አታስቀምጥ',
   'Close others': 'ሌሎቹን ዝጋ',
   'Close tabs to the right': 'በቀኝ ያሉትን ትሮች ዝጋ',
   'Close tabs to the left': 'በግራ ያሉትን ትሮች ዝጋ',
@@ -1147,6 +1172,7 @@ export const am: Dictionary = {
   'Double-click to write': 'ለመጻፍ ሁለት ጊዜ ጫን',
   'Another colour': 'ሌላ ቀለም',
   'Turn into a note': 'ወደ ማስታወሻ ቀይር',
+  Arrange: 'አደራጅ',
   'Bring to front': 'ወደ ፊት አምጣ',
   'Bring forward': 'አንድ ወደ ፊት አምጣ',
   'Send backward': 'አንድ ወደ ኋላ ላክ',
@@ -1236,6 +1262,9 @@ export const am: Dictionary = {
   Unstable: 'ያልተረጋጋ',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'የተረጋጋ የተለቀቁ ዕትሞችን ይከተላል፣ ያልተረጋጋ የዳር ግንባታዎችን ይከተላል እና ሊሰበር ይችላል።',
+  'Web version': 'የድር ዕትም',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'የተረጋጋ የተለቀቀው የድር መተግበሪያ ነው፣ ያልተረጋጋ አዲሱ ግንባታ ነው እና ሊሰበር ይችላል።',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'አምጣ',
@@ -1563,8 +1592,6 @@ export const am: Dictionary = {
   // Web tabs
   Reload: 'እንደገና ጫን',
   'Hard reload': 'ሙሉ በሙሉ እንደገና ጫን',
-  'Clip this page': 'ይህን ገጽ አስቀምጥ',
-  'Clip the link': 'አገናኙን አስቀምጥ',
   'Open in the browser': 'በአሳሽ ክፈት',
   'Show it here': 'እዚህ አሳይ',
   Website: 'ድረ ገጽ',
@@ -1694,7 +1721,6 @@ export const am: Dictionary = {
   'New tab': 'አዲስ ትር',
   'Full screen': 'ሙሉ ማያ ገፅ',
   'Print…': 'አትም…',
-  'Save page': 'ገፅ አስቀምጥ',
   'Share…': 'አጋራ…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1753,6 +1779,15 @@ export const am: Dictionary = {
   'Bring all to front': 'ሁሉንም ወደ ፊት አምጣ',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'ቅጂውን መልስ',
+  'Devices with your AI vault': 'የAI ካዝናዎ ያላቸው መሣሪያዎች',
+  'This device': 'ይህ መሣሪያ',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'መሣሪያው የAI መለያዎችዎን ከእንግዲህ ማንበብ አይችልም፣ ሌሎቹም አዲስ ቁልፍ ያገኛሉ።',
+  'Also remove this device from your AI vault?': 'ይህን መሣሪያ ከAI ካዝናዎም ያስወግዱ?',
+  'Remove and sign out': 'አስወግድና ውጣ',
+  'Undo making {name}': '{name} መፍጠርን መልስ',
+  'Undo the deletion': 'ማጥፋቱን መልስ',
+  'Undo the move': 'ማንቀሳቀሱን መልስ',
   'Redo the last file change': 'የመጨረሻውን የፋይል ለውጥ እንደገና አድርግ',
   'Select down': 'ወደ ታች ምረጥ',
   'Select up': 'ወደ ላይ ምረጥ',
@@ -1853,6 +1888,11 @@ export const am: Dictionary = {
   Max: 'ከፍተኛ',
   Fast: 'ፈጣን',
   Send: 'ላክ',
+  'Send feedback': 'አስተያየት ላክ',
+  'Describe the issue': 'ችግሩን ይግለጹ',
+  Sent: 'ተልኳል',
+  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
+    'ይህ ሪፖርት መግለጫዎን፣ የOrden ዕትምን፣ መድረክዎን እና የቅርብ ጊዜውን የመተግበሪያ ምዝግብ ያካትታል። ማስታወሻዎችዎን ፈጽሞ አያካትትም።',
   'Send into the running answer': 'ወደ ሚሄደው መልስ ላክ',
   'Stop the answer': 'መልሱን አቁም',
   'Open every step': 'እያንዳንዱን ደረጃ ክፈት',
@@ -1969,6 +2009,7 @@ export const am: Dictionary = {
   'Without your logins': 'ያለ እርስዎ መግቢያዎች',
   'Calls a minute': 'በደቂቃ ጥሪዎች',
   'Pages a minute': 'በደቂቃ ገጾች',
+  'Browser memory limit': 'የአሳሽ ማህደረ ትውስታ ገደብ',
   '{count} calls': {
     one: '{count} ጥሪ',
     other: '{count} ጥሪዎች',

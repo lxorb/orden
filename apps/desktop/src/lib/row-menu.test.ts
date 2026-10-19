@@ -47,6 +47,7 @@ vi.mock('./sharing.svelte', () => ({
 
 const { rowMenu } = await import('./row-menu')
 const { workspace } = await import('./workspace.svelte')
+const { viewport } = await import('./viewport.svelte')
 type Entry = import('./workspace.svelte').Entry
 
 function note(path: string): Entry {
@@ -113,14 +114,29 @@ describe('every row', () => {
     expect(Object.keys(de)).not.toContain('Folder')
   })
 
-  test('opens, renames, moves and deletes, in that order', () => {
+  test('opens, renames and deletes, in that order', () => {
     for (const entry of rows) {
       const said = labels(entry)
 
       expect(said[0], entry.path).toBe('Open')
       expect(said, entry.path).toContain('Rename')
-      expect(said, entry.path).toContain('Move')
       expect(said.at(-1), entry.path).toBe('Delete')
+    }
+  })
+
+  // A row is dragged into a folder or onto a space in the switcher, and the palette
+  // asks where (#303); a finger has no drag, and its held press opens this menu.
+  test('moves on a touch screen only', () => {
+    for (const entry of rows) expect(labels(entry), entry.path).not.toContain('Move')
+
+    viewport.device = 'phone'
+    try {
+      for (const entry of rows) expect(labels(entry), entry.path).toContain('Move')
+      workspace.select('/s/loose.md')
+      workspace.toggleSelect('/s/paper.pdf')
+      expect(labels(loose)).toContain('Move')
+    } finally {
+      viewport.device = 'desktop'
     }
   })
 })
@@ -133,7 +149,6 @@ describe('a note', () => {
       'Open to the side',
       'New note inside',
       'Rename',
-      'Move',
       'Choose an icon',
       'Set cover',
       'Add to Essentials',
@@ -184,7 +199,6 @@ describe('a paper', () => {
       'Open in new tab',
       'Open to the side',
       'Rename',
-      'Move',
       'Add to Essentials',
       'Archive',
       'Duplicate',
@@ -205,7 +219,6 @@ describe('a file the account has a copy of', () => {
       'Open to the side',
       'New note inside',
       'Rename',
-      'Move',
       'Choose an icon',
       'Set cover',
       'Add to Essentials',
@@ -227,7 +240,6 @@ describe('a file the account has a copy of', () => {
       'Open to the side',
       'New note inside',
       'Rename',
-      'Move',
       'Choose an icon',
       'Set cover',
       'Add to Essentials',
@@ -246,7 +258,6 @@ describe('a file the account has a copy of', () => {
       'Open in new tab',
       'Open to the side',
       'Rename',
-      'Move',
       'Add to Essentials',
       'Archive',
       'Share',
@@ -261,13 +272,7 @@ describe('a row that is part of a selection of several', () => {
     workspace.select('/s/loose.md')
     workspace.toggleSelect('/s/paper.pdf')
 
-    expect(labels(loose)).toEqual([
-      'Open all',
-      'Move',
-      'Add to Essentials',
-      'Archive',
-      'Delete 2 items',
-    ])
+    expect(labels(loose)).toEqual(['Open all', 'Add to Essentials', 'Archive', 'Delete 2 items'])
   })
 
   test('and bookmarks the lot with one press, or takes the lot out once all are in', () => {

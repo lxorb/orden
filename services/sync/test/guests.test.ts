@@ -563,6 +563,14 @@ describe('a guest session', () => {
     expect((await call(env, '/v1/me', { token: guest })).status).toBe(401)
   })
 
+  test('is over once it signs out, and the token opens nothing after (#519)', async () => {
+    expect((await call(env, '/v1/me', { token: guest })).status).toBe(200)
+    expect((await call(env, '/v1/auth/signout', { method: 'POST', token: guest })).status).toBe(200)
+
+    expect((await call(env, '/v1/me', { token: guest })).status).toBe(401)
+    expect(env.db.prepare('select count(*) as held from guest_sessions').get()).toEqual({ held: 0 })
+  })
+
   test('ends when the owner takes them out, and is nobody afterwards', async () => {
     const who = (await shareView()).json.members[0]?.guest ?? ''
     await call(env, `/v1/spaces/${space}/share/guests/${who}`, { method: 'DELETE', token: owner })
@@ -678,25 +686,101 @@ describe('a guest becoming an account', () => {
     expect((await shareView()).json.requests).toHaveLength(1)
   })
 
-  test('keeps what it had when an invitation is what proves who is at the device', async () => {
-    const open = await follow(await shareLink('write', 'open'))
-
+  /** An invitation to the owner's second space, mailed to `email`. */
+  async function inviteToMore(email: string): Promise<string> {
     const second = (await call(env, '/v1/spaces', { token: owner, body: { name: 'More' } })).json
       .space.id
     const sent = await mail(() =>
       call(env, `/v1/spaces/${second}/share/invite`, {
         token: owner,
-        body: { email: GUEST, role: 'read' },
+        body: { email, role: 'read' },
+      }),
+    )
+    return /\/join\/([a-f0-9]+)/.exec(sent)?.[1] ?? ''
+  }
+
+  test('is not handed to whatever address an invitation it holds was mailed to', async () => {
+    const open = await follow(await shareLink('write', 'open'))
+    const link = await inviteToMore(GUEST)
+
+    // The link proves the address it was mailed to, not who opened it.
+    const { status, json } = await follow(link, { as: open.json.token })
+    expect(status).toBe(403)
+    expect(json.error).toBe('that invitation was sent to another address')
+    expect(json.token).toBeUndefined()
+
+    // The guest is still the guest, in what it was lent and nothing else.
+    expect((await call(env, '/v1/me', { token: open.json.token })).json.guest.id).toBe(
+      open.json.guest.id,
+    )
+    expect((await rail(open.json.token)).json.spaces.map((one) => one.name)).toEqual([SHARED])
+
+    // And the address has what it was invited to and nothing the guest held.
+    const token = await signIn(env, GUEST)
+    expect((await rail(token)).json.spaces.map((one) => one.name).sort()).toEqual(['More', 'Notes'])
+    expect((await call(env, `/v1/notes/${note}`, { token })).status).not.toBe(200)
+
+    // Nor did the invitation get spent on the refusal.
+    expect((await call<JoinView>(env, `/v1/join/${link}`)).status).toBe(200)
+  })
+
+  test('keeps a space owned by somebody else out of an invitation another owner sent', async () => {
+    const open = await follow(await shareLink('write', 'open'))
+
+    // Somebody else entirely, inviting an address of their own choosing.
+    const other = await signIn(env, 'other@example.com')
+    const theirs = (await call(env, '/v1/spaces', { token: other, body: { name: 'B' } })).json.space
+      .id
+    const sent = await mail(() =>
+      call(env, `/v1/spaces/${theirs}/share/invite`, {
+        token: other,
+        body: { email: 'other2@example.com', role: 'read' },
       }),
     )
     const link = /\/join\/([a-f0-9]+)/.exec(sent)?.[1] ?? ''
 
-    const { json } = await follow(link, { as: open.json.token })
+    expect((await follow(link, { as: open.json.token })).status).toBe(403)
+
+    const token = await signIn(env, 'other2@example.com')
+    expect((await rail(token)).json.spaces.map((one) => one.name).sort()).toEqual(['B', 'Notes'])
+    expect((await call(env, `/v1/notes/${note}`, { token })).status).not.toBe(200)
+    expect(
+      (
+        await call(env, `/v1/notes/${note}`, {
+          method: 'PUT',
+          token,
+          body: { content: 'not theirs' },
+        })
+      ).status,
+    ).not.toBe(200)
+    expect((await call(env, '/v1/me', { token: open.json.token })).status).toBe(200)
+  })
+
+  test('keeps what it had when the invitation is to the address it said it was at', async () => {
+    const link = await shareLink('read', 'approval')
+    const asked = await follow(link, { body: { email: GUEST } })
+    const guest = (await shareView()).json.requests[0]?.guest ?? ''
+    await call(env, `/v1/spaces/${space}/share/guests/${guest}`, { method: 'POST', token: owner })
+
+    const { status, json } = await follow(await inviteToMore(GUEST), { as: asked.json.token })
+    expect(status).toBe(200)
     expect(json.user.email).toBe(GUEST)
 
-    // Both spaces: the one the link gave the guest and the one the mail gave the
-    // address.
+    // Both spaces: the one the owner let the guest into and the one the mail gave
+    // the address. Proving the address is what hands that guest over.
     const { json: rails } = await rail(json.token)
+    expect(rails.spaces.map((one) => one.name).sort()).toEqual(['More', 'Notes', SHARED])
+  })
+
+  test('keeps what it had when the device signs in, then walks through the invitation', async () => {
+    const open = await follow(await shareLink('write', 'open'))
+    const link = await inviteToMore(GUEST)
+
+    // The emailed code, with the device's guest handed over, is the way in.
+    const token = await signIn(env, GUEST, open.json.token)
+    expect((await follow(link, { as: token })).status).toBe(200)
+
+    const { json: rails } = await rail(token)
     expect(rails.spaces.map((one) => one.name).sort()).toEqual(['More', 'Notes', SHARED])
   })
 

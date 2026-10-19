@@ -1,22 +1,34 @@
-//! How much of the machine's memory the engine is holding, so an agent cannot make the
-//! reader's machine slow (docs/agent-native.md 6.4).
+//! How much of the machine's memory the engine is holding, for an agent whose grant sets
+//! a ceiling on it (docs/agent-native.md 6.4).
 //!
 //! Every engine process is a child of the app's own: the browser process, the renderers,
 //! the GPU and the utilities. Their working sets together are the engine's cost to the
-//! reader, and past 3 GB an agent's `browser_open` is refused with the reason rather
-//! than adding another page to it. Asked only when an agent opens a tab.
+//! reader. There is **no ceiling unless the reader sets one** on an agent (Settings,
+//! Agents, Limits): the 3 GB that stood here for every agent refused tabs on a machine
+//! with memory to spare, and what that machine can hold is its owner's to say (#333).
+//! Past a ceiling that is set, the agent's `browser_open` is refused with the reason
+//! rather than adding another page. Asked only when an agent opens a tab.
 
-/// The engine's working set past which an agent opens no more tabs.
-const CEILING: u64 = 3 * 1024 * 1024 * 1024;
+/// A megabyte, as the grant's ceiling is counted.
+const MB: u64 = 1024 * 1024;
 
-/// Why an agent may not open another tab now, or `None` when it may.
-pub fn too_much() -> Option<String> {
-    let used = engine_bytes();
-    (used > CEILING).then(|| {
+/// Why an agent may not open another tab now, or `None` when it may: the browser is past
+/// `ceiling` MB. A `ceiling` of 0 is none, and the engine is then not even asked.
+pub fn too_much(ceiling: u32) -> Option<String> {
+    if ceiling == 0 {
+        return None;
+    }
+    past(engine_bytes(), ceiling)
+}
+
+/// The sentence for `used` bytes against `ceiling` MB, when they are past it.
+fn past(used: u64, ceiling: u32) -> Option<String> {
+    let most = u64::from(ceiling) * MB;
+    (ceiling > 0 && used > most).then(|| {
         format!(
-            "the browser is using {} MB of memory, past Orden's ceiling of {} MB for agents: close or finish some tabs first",
-            used / (1024 * 1024),
-            CEILING / (1024 * 1024)
+            "the browser is using {} MB of memory, past the {} MB this agent's limits allow: close or finish some tabs first, or raise the limit in Settings",
+            used / MB,
+            ceiling
         )
     })
 }
@@ -81,11 +93,33 @@ pub fn engine_bytes() -> u64 {
 
 #[cfg(test)]
 mod tests {
+    use super::{past, too_much, MB};
+
+    #[test]
+    fn no_ceiling_is_the_default_and_refuses_nothing() {
+        // #333: the browser's memory was capped for every agent at 3 GB. A grant's
+        // ceiling of 0, which is every grant's own, refuses nothing however much the
+        // browser holds.
+        assert_eq!(crate::agents::grants::Limits::default().memory, 0);
+        assert!(too_much(0).is_none());
+        assert!(past(u64::MAX, 0).is_none());
+        assert!(past(64 * 1024 * MB, 0).is_none());
+    }
+
+    #[test]
+    fn a_ceiling_somebody_set_still_holds() {
+        assert!(past(3 * 1024 * MB, 4096).is_none());
+        assert!(past(4096 * MB, 4096).is_none());
+        let why = past(5 * 1024 * MB, 4096).expect("past");
+        assert!(why.contains("5120 MB"), "{why}");
+        assert!(why.contains("4096 MB"), "{why}");
+    }
+
     #[test]
     fn the_test_runner_itself_holds_no_engine() {
         // The test binary starts no webview, so nothing below it is an engine; what is
         // asserted is that asking does not fail or take the machine's whole process list.
-        assert!(super::engine_bytes() < super::CEILING);
-        assert!(super::too_much().is_none());
+        assert!(super::engine_bytes() < 1024 * MB);
+        assert!(too_much(1024).is_none());
     }
 }

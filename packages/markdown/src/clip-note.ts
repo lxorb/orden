@@ -1,8 +1,8 @@
 /** A clip as a note: the one shape both clips write.
  *
  *  Front matter first, so the note remembers where it came from and when, then the
- *  title as an H1, then the words. The clipper extension and a web tab's Clip both
- *  write through here, after the same extractor (`article.ts`) and the same converter
+ *  title as an H1, then the words. A web tab's Clip writes
+ *  through here, after the same extractor (`article.ts`) and the same converter
  *  (`from-html.ts`), so a folder of clips reads the same whichever of the two saved
  *  each one - and the same page clipped from both is the same note. */
 

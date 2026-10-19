@@ -80,11 +80,19 @@ Move sheet offers, starting on the root of the space it was opened in. A tab dro
 row of the file list is saved there. A web tab nobody has kept wears no dot - a browser
 tab has nothing unwritten in it - and is saved the same way. See `workspace/drafts.ts`.
 
-**Closing one asks nothing**, as a browser asks nothing: an empty one just goes, and one
-with words keeps them twice over, on the closed stack for Ctrl+Shift+T and in Recently
-deleted for fourteen days, from where it is restored as the note it would have been
-(`trash_words` in `trash.rs`, `workspace/placing.ts`). VS Code and Notepad ask "Save
-changes?" here; nib has no such question anywhere.
+**Closing one with words in it asks first**, as VS Code and Notepad ask "Save changes?".
+Emil, 2026-10-15 (#359): _"when closing something that's unsaved (e.g. a note) then you
+should get a warning modal"_. One question for every such tab a gesture closes (the cross,
+Ctrl+W, the menu's rows, a pane): **Save** gives it a file and then closes it - one tab is
+asked where in the layer Ctrl+S puts under it and closes once saved, several are each
+saved where Save offers first; **Don't save** closes it with its words kept twice over, on
+the closed stack for Ctrl+Shift+T and in Recently deleted for fourteen days, from where it
+is restored as the note it would have been (`trash_words` in `trash.rs`,
+`workspace/placing.ts`); **Cancel**, the key Enter lands on, keeps it. An empty one just
+goes, a note with a file writes itself and is never asked about, and a pinned one closed
+by key asks this rather than whether to close a pinned tab. The window closing asks
+nothing about them: the next window brings every tab with no file back with its words.
+See `workspace/closing-unsaved.ts`.
 
 **A session brings every tab back, whatever its kind.** A tab is written down as a
 `Draft` (`workspace/session.ts`): its kind, its file or none, its words where the disk
@@ -139,11 +147,18 @@ See `workspace/sets.ts` for the rules and `workspace/sets.svelte.ts` for the sto
 
 ### Move to space
 
-**Any tab moves to another space: Move to space in its menu (a pick of tabs too), in the
-palette, or the tab carried onto the space switcher**, which opens under it after 450 ms,
-as a folder opens under a held file, and lights the space it would land in. Emil,
-2026-10-03: *"It should be possible to move a tab to another space (e.g. relevant for
-terminal tabs that you can't just close and reopen without losing progress)."*
+**Any tab moves to another space: the tab carried onto the space switcher**, which opens
+under it after 450 ms, as a folder opens under a held file, and lights the space it would
+land in, **or Move to space in the palette**. Emil, 2026-10-03: *"It should be possible
+to move a tab to another space (e.g. relevant for terminal tabs that you can't just close
+and reopen without losing progress)."* A row of the file list - a note, a folder, a
+selection - is carried onto the switcher the same way, and moves as a drop into a folder
+does, with its Undo (#303). Leaving the list, or Escape, closes it and nothing moves.
+
+The right-click menus of a tab and of a row no longer say Move to space or Move (#303):
+the drag does it, and the palette asks where. On a touch screen, where a held finger opens
+the menu and the file list has no drag outside the Manual order, the menus still offer
+both.
 
 - **The same tab.** Nothing closes and opens again: a terminal is the same shell, its
   process and its screen; a page keeps its place; an unsaved note keeps its words and its

@@ -43,6 +43,7 @@ export function carried(): readonly string[] {
 /** Said at the end of a drag, however it ended. */
 export function carriedNothing() {
   carrying = []
+  carryingTile = false
 }
 
 export function isTreeDrag(transfer: DataTransfer | null): boolean {
@@ -93,6 +94,7 @@ export function landing(
   platform: Platform,
 ): 'move' | 'copy' | null {
   if (isFileDrop(event.dataTransfer) || isLinkDrop(event.dataTransfer)) return 'copy'
+  if (carryingTile && isBookmarkDrag(event.dataTransfer)) return 'move'
   if (!isTreeDrag(event.dataTransfer)) return null
 
   return (platform === 'mac' ? event.altKey : event.ctrlKey) ? 'copy' : 'move'
@@ -120,11 +122,15 @@ export function dragged(transfer: DataTransfer | null): string[] {
   return one ? [one] : []
 }
 
-export function carryBookmark(transfer: DataTransfer | null, at: number) {
+/** Whether the bookmark dragged is a tile, which the list takes back (#412). */
+let carryingTile = false
+
+export function carryBookmark(transfer: DataTransfer | null, at: number, tile = false) {
   if (!transfer) return
 
   transfer.setData(BOOKMARK, String(at))
   transfer.effectAllowed = 'move'
+  carryingTile = tile
 }
 
 export function isBookmarkDrag(transfer: DataTransfer | null): boolean {

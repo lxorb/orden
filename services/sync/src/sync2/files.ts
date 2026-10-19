@@ -18,10 +18,10 @@
 import { Hono } from 'hono'
 import { now } from '../crypto'
 import { laterOf, pokeSpace } from '../hub/poke'
-import { nextSeq } from '../notes'
+import { atNextSeq, TAKEN_SEQ } from '../notes'
 import { OUT_OF_SPACE } from '../refused'
 import { atLeast, spaceOf } from '../spaces/space'
-import { fits } from '../storage'
+import { fits, fitsSql } from '../storage'
 import type { Env, Note, Variables } from '../types'
 import { deviceOf } from './device'
 import { revive } from './ops'
@@ -90,7 +90,7 @@ type DigestStreaming = new (algorithm: string) => WritableStream & { digest: Pro
 
 /** The hash of an object in the bucket, read as a stream where the runtime can hash
  *  one (a Worker's `DigestStream`), and whole where it cannot. */
-export async function hashOf(object: R2ObjectBody): Promise<string> {
+async function hashOf(object: R2ObjectBody): Promise<string> {
   // Read off the runtime rather than its types, which describe only one of the two.
   const Streaming = (crypto as unknown as { DigestStream?: DigestStreaming }).DigestStream
   if (Streaming) {
@@ -120,14 +120,33 @@ async function moveInto(env: Env, from: string, to: string, type: string): Promi
   await env.NOTES.put(to, await object.arrayBuffer(), metadata)
 }
 
-/** A row saying this account keeps a blob, once its bytes are there. */
-async function keepBlob(env: Env, user: string, hash: string, size: number, type: string) {
-  await env.DB.prepare(
-    `insert into blobs (hash, user_id, size, type, created_at) values (?, ?, ?, ?, ?)
+/** A row saying this account keeps a blob, once its bytes are there - written only if
+ *  it fits under the quota as the row is written (#469). Asked once before the bytes
+ *  are read and again here, because nothing between the two is held: two uploads
+ *  started while each fitted could otherwise both land past it, and a multipart one is
+ *  a gigabyte. Answers whether the account keeps it now.
+ *
+ *  Refused, the bytes put there for it go again unless somebody keeps them. */
+async function keepBlob(
+  env: Env,
+  user: string,
+  hash: string,
+  size: number,
+  type: string,
+): Promise<boolean> {
+  const written = await env.DB.prepare(
+    `insert into blobs (hash, user_id, size, type, created_at)
+     select ?1, ?2, ?3, ?4, ?5 where ${fitsSql('?2', '?3')}
      on conflict(hash, user_id) do nothing`,
   )
     .bind(hash, user, size, type, now())
     .run()
+  if (written.meta.changes) return true
+
+  const { mine, there } = await held(env, user, hash)
+  if (mine) return true
+  if (!there) await env.NOTES.delete(blobKey(hash))
+  return false
 }
 
 /** Whether this account keeps a blob already, and whether anybody's bytes are there. */
@@ -144,11 +163,69 @@ export async function held(
   return { mine: row?.mine === 1, there: (row?.rows ?? 0) > 0 }
 }
 
+/** Whether the object under a hash is the bytes that hash names, for an upload that has
+ *  just checked its own bytes against it and is about to keep the copy that is there.
+ *
+ *  Not taken on trust because a row is there: v1 keeps a drawn diagram's SVG under a
+ *  name that is not the hash of its bytes (blobs.ts), so a name somebody else wrote
+ *  first may hold anything. A copy of another size is not these bytes; one of the
+ *  same size is hashed. */
+export async function holdsItsName(env: Env, hash: string, size: number): Promise<boolean> {
+  const object = await env.NOTES.get(blobKey(hash))
+  if (!object) return false
+  // Another size is another file, and its body is never read.
+  if (object.size !== size) return false
+  return (await hashOf(object)) === hash
+}
+
+/** How many hashes one night's look for misnamed copies reads, a page at a time. */
+const MISNAMED_PAGE = 100
+const MISNAMED_AT_MOST = 1000
+
+/** Copies kept under a hash they are not the bytes of, taken away by the nightly job.
+ *
+ *  Before uploads checked the copy that was already there (`holdsItsName`), an SVG v1
+ *  kept unchecked under somebody else's file's hash was what everybody who uploaded
+ *  that file afterwards was served. Such a hash is held both as an SVG - the only
+ *  type v1 keeps unchecked - and as something else, by whoever uploaded the real
+ *  file. Where its copy is not the bytes the hash names, the copy and every row of it
+ *  go: the file reads as missing rather than as somebody else's bytes, and the next
+ *  upload of the real one is kept, as the first of it. A hash held only as an SVG is a
+ *  drawn diagram's, named by its fence, and is left alone. */
+export async function sweepMisnamed(env: Env): Promise<number> {
+  let after = ''
+  let gone = 0
+  for (let read = 0; read < MISNAMED_AT_MOST; read += MISNAMED_PAGE) {
+    const { results } = await env.DB.prepare(
+      `select distinct hash from blobs
+        where type = 'image/svg+xml' and hash > ?
+          and hash in (select hash from blobs where type != 'image/svg+xml')
+        order by hash limit ?`,
+    )
+      .bind(after, MISNAMED_PAGE)
+      .all<{ hash: string }>()
+
+    for (const { hash } of results) {
+      const object = await env.NOTES.get(blobKey(hash))
+      if (object && (await hashOf(object)) === hash) continue
+      await env.NOTES.delete(blobKey(hash))
+      await env.DB.prepare('delete from blobs where hash = ?').bind(hash).run()
+      gone++
+    }
+
+    const last = results.at(-1)
+    if (!last || results.length < MISNAMED_PAGE) break
+    after = last.hash
+  }
+  return gone
+}
+
 export const v2Blobs = new Hono<App>()
 
 /** A file's bytes, in one request. The object already there - somebody else's copy of
  *  the same file - is not written again, so what a published page is served stays
- *  what it was. */
+ *  what it was. Unless it is not the same bytes (`holdsItsName`): then these, which
+ *  are, take its place for everybody who keeps that hash. */
 v2Blobs.put('/:hash', async (context) => {
   const user = context.get('user')
   const hash = context.req.param('hash').toLowerCase()
@@ -170,10 +247,12 @@ v2Blobs.put('/:hash', async (context) => {
   }
 
   const type = typeOf(context.req.header('content-type'))
-  if (!there) {
+  if (!there || !(await holdsItsName(context.env, hash, body.byteLength))) {
     await context.env.NOTES.put(blobKey(hash), body, { httpMetadata: { contentType: type } })
   }
-  await keepBlob(context.env, user.id, hash, body.byteLength, type)
+  if (!(await keepBlob(context.env, user.id, hash, body.byteLength, type))) {
+    return context.json({ error: OUT_OF_SPACE }, 507)
+  }
   return context.json({ hash, stored: true }, 201)
 })
 
@@ -308,13 +387,28 @@ v2Blobs.post('/parts/:upload', async (context) => {
     return context.json({ error: WRONG_BYTES }, 400)
   }
 
+  // The quota asked again, for what was started while it fitted (#469): uploads started
+  // together each fit on their own. Asked before a gigabyte is moved, and once more as
+  // the row is written; see `keepBlob`.
+  const mine = (await held(context.env, user.id, upload.hash)).mine
+  if (!mine && !(await fits(context.env, user.id, upload.size))) {
+    await context.env.NOTES.delete(upload.staging)
+    return context.json({ error: OUT_OF_SPACE }, 507)
+  }
+
   // Checked, so they go where the blob lives - unless a copy somebody else finished
-  // meanwhile is already there, which is the same bytes and stays as it is.
-  if (!(await held(context.env, user.id, upload.hash)).there) {
+  // meanwhile is already there, which is the same bytes and stays as it is. Only if it
+  // is: see `holdsItsName`.
+  if (
+    !(await held(context.env, user.id, upload.hash)).there ||
+    !(await holdsItsName(context.env, upload.hash, upload.size))
+  ) {
     await moveInto(context.env, upload.staging, blobKey(upload.hash), upload.type)
   }
   await context.env.NOTES.delete(upload.staging)
-  await keepBlob(context.env, user.id, upload.hash, upload.size, upload.type)
+  if (!(await keepBlob(context.env, user.id, upload.hash, upload.size, upload.type))) {
+    return context.json({ error: OUT_OF_SPACE }, 507)
+  }
   return context.json({ hash: upload.hash, stored: true }, 201)
 })
 
@@ -386,15 +480,17 @@ v2Files.put('/:space/:id', atLeast('write', 'space'), async (context) => {
   const device = await deviceOf(context)
   if (file.deleted) await revive(context.env, space.id, device, id)
 
-  const seq = await nextSeq(context.env, space.id)
-  const written = await context.env.DB.prepare(
-    `update notes set hash = ?, size = ?, seq = ?, doc_seq = ?, doc_by = ?, updated_by = ?,
-                      version = version + 1, updated_at = ?
-      where id = ? and hash = ?`,
+  // The number taken and the row written as one; see `atNextSeq`.
+  const { seq, changes } = await atNextSeq(
+    context.env,
+    space.id,
+    context.env.DB.prepare(
+      `update notes set hash = ?2, size = ?3, seq = ${TAKEN_SEQ}, doc_seq = ${TAKEN_SEQ},
+                        doc_by = ?4, updated_by = ?4, version = version + 1, updated_at = ?5
+        where id = ?6 and hash = ?7`,
+    ).bind(space.id, hash, blob.size, device, now(), id, base),
   )
-    .bind(hash, blob.size, seq, seq, device, device, now(), id, base)
-    .run()
-  if (!written.meta.changes) {
+  if (!changes) {
     const current = await fileIn(context.env, space.id, id)
     return context.json({
       moved: { hash: current?.hash ?? '', size: current?.size ?? 0, at: current?.updated_at ?? 0 },

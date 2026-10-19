@@ -6,6 +6,7 @@
    *  list is the same whoever answers. */
   import { cubicOut } from 'svelte/easing'
   import { fly } from 'svelte/transition'
+  import { keepFocus } from '../../focus'
   import { dur } from '../../motion'
   import MentionMark from './MentionMark.svelte'
   import type { Row } from './mentions'
@@ -38,7 +39,8 @@
       aria-selected={index === active}
       title={row.dim}
       tabindex="-1"
-      onpointerdown={(event) => event.preventDefault()}
+      onpointerdown={keepFocus}
+      onmousedown={keepFocus}
       onpointermove={() => onlight(index)}
       onclick={() => onpick(index)}
     >

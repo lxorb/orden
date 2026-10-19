@@ -548,7 +548,7 @@ def drive_canvas(page: Page) -> None:
             edges: [],
           }
           window.nibApp.workspace.openShared(
-            { id: 'plane', name: 'Plane.canvas', canvas: true },
+            { id: 'plane', name: 'Plane.canvas', path: 'Plane.canvas' },
             JSON.stringify(plane),
           )
         }"""

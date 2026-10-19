@@ -26,6 +26,25 @@ export const ur: Dictionary = {
   'Import from Zen': 'Zen سے امپورٹ کریں',
   'Containers stay in Zen': 'کنٹینر Zen ہی میں رہتے ہیں',
   'Zen’s tabs could not be read.': 'Zen کے ٹیب پڑھے نہیں جا سکے۔',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'کنٹینر Firefox ہی میں رہتے ہیں',
+  'Nothing could be read out of {browser}.': '{browser} سے کچھ بھی پڑھا نہیں جا سکا۔',
+  'Saved groups': 'محفوظ گروپس',
+  'Tab group': 'ٹیب گروپ',
+  'Bookmarks toolbar': 'بک مارکس ٹول بار',
+  'Bookmarks menu': 'بک مارکس مینو',
+  'Other bookmarks': 'دیگر بک مارکس',
+  'Mobile bookmarks': 'موبائل بک مارکس',
+  'Bookmarks bar': 'بُک مارکس بار',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} اپنے کھلے ٹیب مقفل رکھتا ہے، اس لیے صرف اس کے بُک مارکس آئے۔',
+  '{count} pages not on the web stay behind': {
+    one: 'ویب پر نہ ہونے والا {count} صفحہ پیچھے رہ گیا',
+    other: 'ویب پر نہ ہونے والے {count} صفحات پیچھے رہ گئے',
+  },
+  'Reading List': 'ریڈنگ لسٹ',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS سفاری کے ٹیب اور بُک مارکس کو فل ڈسک ایکسیس کے پیچھے رکھتا ہے۔ وہاں Orden آن کریں، پھر دوبارہ کوشش کریں۔',
   // Settings: note types
   'Page note': 'صفحات والا نوٹ',
   'Web note': 'ویب نوٹ',
@@ -96,8 +115,6 @@ export const ur: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'اشارے',
   'Silent mode': 'خاموش موڈ',
-  'Sign in to keep your notes safe and on every device.':
-    'اپنے نوٹس محفوظ اور ہر ڈیوائس پر رکھنے کے لیے سائن ان کریں۔',
   'See how your notes connect.': 'دیکھیں آپ کے نوٹس کیسے جڑے ہیں۔',
   'Press {key} to find anything, notes and commands alike.':
     'نوٹس اور کمانڈز، کچھ بھی تلاش کرنے کے لیے {key} دبائیں۔',
@@ -119,11 +136,13 @@ export const ur: Dictionary = {
   '{count} h': '{count} گھنٹے',
   Inbox: 'ان باکس',
   Date: 'تاریخ',
+  'Start date': 'آغاز کی تاریخ',
   Priority: 'ترجیح',
   Reminder: 'یاد دہانی',
   Duration: 'دورانیہ',
   'Smart dates': 'سمارٹ تاریخیں',
   'From any app': 'کسی بھی ایپ سے',
+  'Show tasks without a start date in Today': 'آغاز کی تاریخ کے بغیر کام آج میں دکھائیں',
   'Every day': 'ہر روز',
   'Every weekday': 'ہر کام کے دن',
   'Every week': 'ہر ہفتے',
@@ -167,6 +186,8 @@ export const ur: Dictionary = {
   Dots: 'نقطے',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'دو انگلیوں سے کینوس گھمائیں',
+  'Turn upright': 'سیدھا کریں',
   Canvas: 'کینوس',
   Card: 'کارڈ',
   'Note or picture': 'نوٹ یا تصویر',
@@ -242,6 +263,10 @@ export const ur: Dictionary = {
   Unpin: 'پن ہٹائیں',
   Close: 'بند کریں',
   'Close pinned tab?': 'پن کیا ہوا ٹیب بند کریں؟',
+  'Save changes to {name}?': '{name} میں تبدیلیاں محفوظ کریں؟',
+  'Save changes to these tabs?': 'ان ٹیبز میں تبدیلیاں محفوظ کریں؟',
+  'Unsaved words go to Recently deleted.': 'غیر محفوظ الفاظ حال ہی میں حذف شدہ میں چلے جائیں گے۔',
+  'Don’t save': 'محفوظ نہ کریں',
   'Close others': 'باقی بند کریں',
   'Close tabs to the right': 'دائیں جانب کے ٹیب بند کریں',
   'Close tabs to the left': 'بائیں جانب کے ٹیب بند کریں',
@@ -1159,6 +1184,7 @@ export const ur: Dictionary = {
   'Double-click to write': 'لکھنے کے لیے دو بار کلک',
   'Another colour': 'دوسرا رنگ',
   'Turn into a note': 'نوٹ بنا دیں',
+  Arrange: 'ترتیب دیں',
   'Bring to front': 'سب سے آگے لائیں',
   'Bring forward': 'آگے لائیں',
   'Send backward': 'پیچھے بھیجیں',
@@ -1248,6 +1274,9 @@ export const ur: Dictionary = {
   Unstable: 'غیر مستحکم',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'مستحکم جاری کردہ ورژن کے ساتھ چلتا ہے، غیر مستحکم ایج بلڈ کے ساتھ اور خراب ہو سکتا ہے۔',
+  'Web version': 'ویب ورژن',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'مستحکم جاری کردہ ویب ایپ ہے، غیر مستحکم سب سے نیا بلڈ ہے اور خراب ہو سکتا ہے۔',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'امپورٹ',
@@ -1582,8 +1611,6 @@ export const ur: Dictionary = {
   // Web tabs
   Reload: 'دوبارہ لوڈ کریں',
   'Hard reload': 'مکمل طور پر دوبارہ لوڈ کریں',
-  'Clip this page': 'یہ صفحہ محفوظ کریں',
-  'Clip the link': 'لنک محفوظ کریں',
   'Open in the browser': 'براؤزر میں کھولیں',
   'Show it here': 'یہاں دکھائیں',
   Website: 'ویب سائٹ',
@@ -1714,7 +1741,6 @@ export const ur: Dictionary = {
   'New tab': 'نیا ٹیب',
   'Full screen': 'پوری اسکرین',
   'Print…': 'پرنٹ کریں…',
-  'Save page': 'صفحہ محفوظ کریں',
   'Share…': 'شیئر کریں…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1773,6 +1799,15 @@ export const ur: Dictionary = {
   'Bring all to front': 'سب کو سامنے لائیں',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'نقل واپس لیں',
+  'Devices with your AI vault': 'آپ کے AI والٹ والی ڈیوائسز',
+  'This device': 'یہ ڈیوائس',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'وہ ڈیوائس اب آپ کے AI اکاؤنٹس نہیں پڑھ سکے گی، اور باقی کو نئی کلید ملے گی۔',
+  'Also remove this device from your AI vault?': 'اس ڈیوائس کو اپنے AI والٹ سے بھی ہٹائیں؟',
+  'Remove and sign out': 'ہٹائیں اور سائن آؤٹ کریں',
+  'Undo making {name}': '{name} بنانا واپس لیں',
+  'Undo the deletion': 'حذف واپس لیں',
+  'Undo the move': 'منتقلی واپس لیں',
   'Redo the last file change': 'فائل کی آخری تبدیلی دوبارہ کریں',
   'Select down': 'نیچے کی طرف منتخب کریں',
   'Select up': 'اوپر کی طرف منتخب کریں',
@@ -1873,6 +1908,11 @@ export const ur: Dictionary = {
   Max: 'زیادہ سے زیادہ',
   Fast: 'تیز',
   Send: 'بھیجیں',
+  'Send feedback': 'رائے بھیجیں',
+  'Describe the issue': 'مسئلہ بیان کریں',
+  Sent: 'بھیج دیا',
+  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
+    'اس رپورٹ میں آپ کی تفصیل، Orden کا ورژن، آپ کا پلیٹ فارم اور ایپ کا حالیہ لاگ شامل ہوتا ہے۔ آپ کے نوٹس کبھی شامل نہیں ہوتے۔',
   'Send into the running answer': 'جاری جواب میں بھیجیں',
   'Stop the answer': 'جواب روکیں',
   'Open every step': 'ہر قدم کھولیں',
@@ -1991,6 +2031,7 @@ export const ur: Dictionary = {
   'Without your logins': 'آپ کے لاگ اِن کے بغیر',
   'Calls a minute': 'فی منٹ کالز',
   'Pages a minute': 'فی منٹ صفحات',
+  'Browser memory limit': 'براؤزر میموری کی حد',
   '{count} calls': {
     one: '{count} کال',
     other: '{count} کالز',

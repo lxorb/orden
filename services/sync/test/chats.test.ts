@@ -10,6 +10,7 @@ import { chatListOf, eventsPageOf, resultsOf, statePageOf } from '@nib/chats/wir
 import { subprotocol } from '@nib/rooms'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { reachAs } from '../src/chats/reach'
+import { sha256 } from '../src/crypto'
 import { sweepChats } from '../src/chats/sweep'
 import { sweepLeftovers } from '../src/leftovers'
 import { chatLogs, type ChatSocket, fire, hangUp, open, say } from './chat-fakes'
@@ -632,6 +633,24 @@ describe('chats', () => {
       expect((await list(people.guestWriter))[0]).toMatchObject({ mentions: 0 })
     })
 
+    test('@everyone and @here call everybody when they are the first thing a cold chat hears (#459)', async () => {
+      const chat = await chatOfOwner()
+      // The object as it is after a sleep or a revocation: no list of who it reaches.
+      ;(logs.of(chat).log as unknown as { reachers: unknown }).reachers = null
+      await send(people.owner, chat, postOf('all of you', { mentions: ['everyone'] }))
+      at(201_000)
+      await fire(logs.of(chat))
+      expect((await list(people.writer))[0]).toMatchObject({ mentions: 1 })
+      expect((await list(people.guestReader))[0]).toMatchObject({ mentions: 1 })
+
+      ;(logs.of(chat).log as unknown as { reachers: unknown }).reachers = null
+      at(202_000)
+      await send(people.owner, chat, postOf('who is about', { mentions: ['here'] }))
+      at(203_000)
+      await fire(logs.of(chat))
+      expect((await list(people.reader))[0]).toMatchObject({ mentions: 2 })
+    })
+
     test('people with no socket open are poked through their hub, two seconds apart', async () => {
       const chat = await chatOfOwner()
       await socketOf('owner', chat)
@@ -1045,6 +1064,8 @@ describe('chats', () => {
         expect(told?.get('x-nib-chat-ask'), who).toBe('join')
         expect(told?.get('x-nib-space'), who).toBe(spaceId)
         expect(told?.get('x-nib-device'), who).toBe('device-one')
+        // And the sign-in it arrived with, which the socket lasts no longer than (#520).
+        expect(told?.get('x-nib-login'), who).toBe(await sha256(people[who]))
       }
       expect((await knock(people.stranger)).status).toBe(404)
       expect((await knock('not-a-session')).status).toBe(401)

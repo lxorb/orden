@@ -156,9 +156,19 @@ function holds(state: TreeState, ancestor: string, id: string | null): boolean {
   return false
 }
 
-/** One change to an entry: it takes the next cursor, and says which device made it. */
-function changed(state: TreeState, entry: TreeEntry, device: string | undefined) {
+/** One change to an entry: it takes the next cursor, and says which device made it.
+ *
+ *  Unless the device made it without having seen the change before it, which another
+ *  device made after `seen`: then that device's word stands. `by` is what tells a
+ *  folder delete that an entry is the deleting device's own to take, and a rename made
+ *  offline of a note another device had meanwhile moved into a folder took that over -
+ *  the folder deleted next, from the same device that never saw the note in it, took the
+ *  note and its words (#514). */
+function changed(state: TreeState, entry: TreeEntry, device: string | undefined, seen?: number) {
+  const unseen =
+    seen !== undefined && entry.seq > seen && entry.by !== undefined && entry.by !== device
   entry.seq = tick(state)
+  if (unseen) return
   if (device === undefined) delete entry.by
   else entry.by = device
 }
@@ -295,7 +305,7 @@ class Rules {
     const name = freeName(this.state, entry.parent, op.name, entry.kind, entry.id)
     if (name !== entry.name) {
       entry.name = name
-      changed(this.state, entry, this.device)
+      changed(this.state, entry, this.device, op.seen)
     }
     return placement(op, entry)
   }
@@ -315,7 +325,7 @@ class Rules {
     if (name !== entry.name || op.parent !== entry.parent) {
       entry.name = name
       entry.parent = op.parent
-      changed(state, entry, device)
+      changed(state, entry, device, op.seen)
     }
     return placement(op, entry)
   }

@@ -30,7 +30,14 @@
  *
  *  Every change is said to the account's hub, which tells its devices to read again.
  *  A write names the revision it read, and one over a newer revision is refused, so a
- *  device merges and writes again rather than writing another's change away. */
+ *  device merges and writes again rather than writing another's change away.
+ *
+ *  An allowed device is let go of only by changing the key (#389): a device with the key
+ *  seals the vault under a new one, wraps that to every allowed device but the ones going,
+ *  and sends it all at once with the old token and the new one (`/rotate`). The account
+ *  takes it only over the revision it was read at and the token it holds, swaps the hash,
+ *  writes the wraps, and lets the going devices go in the same breath, so a device let go
+ *  of keeps a key that opens nothing written after. */
 
 import { type Context, Hono } from 'hono'
 import { readBody } from '../body'
@@ -306,6 +313,15 @@ aiVault.delete('/devices/:id', async (context) => {
   if (row.approved_at !== null && !(await holdsTheKey(context.env, user, await authIn(context)))) {
     return context.json({ error: NOT_THE_KEY }, 403)
   }
+  // An allowed device among others goes only with the key changed under it; see `/rotate`.
+  if (row.approved_at !== null) {
+    const others = await context.env.DB.prepare(
+      'select 1 as one from ai_devices where user_id = ? and id != ? and approved_at is not null',
+    )
+      .bind(user, id)
+      .first()
+    if (others) return context.json({ error: 'change the key instead' }, 409)
+  }
 
   await context.env.DB.prepare('delete from ai_devices where user_id = ? and id = ?')
     .bind(user, id)
@@ -353,6 +369,87 @@ aiVault.put('/vault', async (context) => {
   if (!written.meta.changes) return context.json({ error: STALE, rev: held?.rev ?? 0 }, 409)
   await told(context.env, user, from)
   return context.json({ rev: held?.rev ?? rev + 1 })
+})
+
+/** The vault key changed, to let allowed devices go: the vault sealed under the new key,
+ *  the new key wrapped to each device that stays, all over the revision and the token it
+ *  was read at. `keep` and `wraps` go together, one wrap per device that stays; `go` are
+ *  the devices let go of. An allowed device the sender did not know of - let in between
+ *  its read and this - is put back to asking rather than left with a key that opens
+ *  nothing, and so is a device still asking that a device going had answered. */
+aiVault.put('/rotate', async (context) => {
+  const user = context.get('user').id
+  const body = await readBody(context)
+  const blob = body.text('blob', MOST_VAULT) ?? ''
+  const rev = body.count('rev') ?? -1
+  const from = body.text('from', 32) ?? ''
+  const auth = body.text('auth', 100)
+  const next = body.text('next', 100) ?? ''
+  const keep = body.texts('keep', MOST_DEVICES, 32) ?? []
+  const wraps = body.texts('wraps', MOST_DEVICES, 400) ?? []
+  const go = body.texts('go', MOST_DEVICES, 32) ?? []
+  if (body.problem) return context.json({ error: body.problem }, 400)
+  const nextHash = await authHash(next)
+  if (
+    !BASE64.test(blob) ||
+    !Number.isSafeInteger(rev) ||
+    rev < 1 ||
+    !nextHash ||
+    !go.length ||
+    // Somebody has to be left holding the new key; the last device lets the vault go.
+    !keep.length ||
+    keep.length !== wraps.length ||
+    ![...keep, ...go].every((one) => ID.test(one)) ||
+    !wraps.every((one) => BASE64.test(one)) ||
+    keep.some((one) => go.includes(one))
+  ) {
+    return context.json({ error: 'not a new key' }, 400)
+  }
+  if (!(await holdsTheKey(context.env, user, auth))) {
+    return context.json({ error: NOT_THE_KEY }, 403)
+  }
+  const oldHash = (await authHash(auth ?? '')) ?? ''
+
+  // Every statement after the first holds only once the first has: the new hash at the
+  // next revision is what says the key changed here.
+  const changed = `exists (select 1 from ai_vaults where user_id = ?1 and rev = ?2 and auth_hash = ?3)`
+  const after = [user, rev + 1, nextHash] as const
+  const marks = (ids: readonly string[], first: number) =>
+    ids.map((_, at) => `?${String(at + first)}`).join(', ')
+  const results = await context.env.DB.batch([
+    context.env.DB.prepare(
+      `update ai_vaults set rev = rev + 1, blob = ?, auth_hash = ?, updated_at = ?
+        where user_id = ? and rev = ? and auth_hash = ?`,
+    ).bind(blob, nextHash, now(), user, rev, oldHash),
+    ...keep.map((id, at) =>
+      context.env.DB.prepare(
+        `update ai_devices set wrapped = ?4 where user_id = ?1 and id = ?5
+           and approved_at is not null and ${changed}`,
+      ).bind(...after, wraps[at] ?? '', id),
+    ),
+    context.env.DB.prepare(
+      `delete from ai_devices where user_id = ?1 and id in (${marks(go, 4)}) and ${changed}`,
+    ).bind(...after, ...go),
+    context.env.DB.prepare(
+      `update ai_devices set wrapped = null, approved_at = null, nonce = null, nonce_from = null,
+              pub = null, revealed = null
+        where user_id = ?1 and approved_at is not null
+          and id not in (${marks(keep, 4)}) and ${changed}`,
+    ).bind(...after, ...keep),
+    context.env.DB.prepare(
+      `update ai_devices set nonce = null, nonce_from = null, pub = null, revealed = null
+        where user_id = ?1 and approved_at is null and nonce_from in (${marks(go, 4)})
+          and ${changed}`,
+    ).bind(...after, ...go),
+  ])
+  if (!results[0]?.meta.changes) {
+    const held = await context.env.DB.prepare('select rev from ai_vaults where user_id = ?')
+      .bind(user)
+      .first<{ rev: number }>()
+    return context.json({ error: STALE, rev: held?.rev ?? 0 }, 409)
+  }
+  await told(context.env, user, from)
+  return context.json({ rev: rev + 1 })
 })
 
 /** Starting over: the vault and every wrap let go of, the devices kept so they can be let

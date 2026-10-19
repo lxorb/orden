@@ -7,6 +7,7 @@
  *  a note's own property and a task's own field are written through the one write
  *  path, and `file.*` and `formula.*` are what the files and the formulas say. */
 
+import { deadlineField, startField } from '@nib/markdown/task-dates'
 import {
   type Base,
   isButton,
@@ -139,8 +140,17 @@ export function changeOf(row: Row, property: string, value: Value | null): RowCh
     if (!(field in TASK_EDITORS)) return null
     // Each editor in TASK_EDITORS hands back the shape its field holds (a date as
     // its ISO day, a priority as its number, tags as words), so the field and the
-    // value agree by construction rather than by type.
-    const task: TaskChange = { [field]: value }
+    // value agree by construction rather than by type. A start date and a deadline are
+    // read as the task's space reads a `📅`, and written to the field that holds them
+    // (#371).
+    const reads = row.task?.dueReads
+    const written =
+      field === 'start' && row.task
+        ? startField(row.task, reads)
+        : field === 'deadline' && row.task
+          ? deadlineField(row.task, reads)
+          : field
+    const task: TaskChange = { [written]: value }
     return { task }
   }
   if (!isNoteProperty(property)) return null

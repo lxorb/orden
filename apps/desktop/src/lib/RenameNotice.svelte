@@ -9,7 +9,7 @@
    *  before anything else of the app's, and writes the answer down at once - for a
    *  fresh install too, so its own settings are never read as an earlier version's on
    *  the next run. The glasses' plugin never says it, since its storage is new every
-   *  launch, and neither does the clipper, an app of its own.
+   *  launch.
    *
    *  Twitter's rename said nothing and people were lost for years; Element's and
    *  Shortcut's said one line. This is one line: the update notice's card, fetched only

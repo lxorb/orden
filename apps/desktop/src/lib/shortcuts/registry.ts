@@ -1470,6 +1470,9 @@ const CANVAS_ENTRIES: Shortcut[] = (
     ['canvas.tool.erase', () => t('Erase'), 'e'],
     ['canvas.tool.lasso', () => t('Lasso'), 'q'],
     ['canvas.tool.text', () => t('Card'), 'c'],
+    // Words with no card round them (#421). Not T, which Triangle has had since the
+    // shapes came: W for the words, free on every board this one is read beside.
+    ['canvas.tool.words', () => t('Text'), 'w'],
     ['canvas.tool.file', () => t('Note'), 'n'],
     ['canvas.tool.picture', () => t('Picture'), 'i'],
     ['canvas.tool.link', () => t('Link'), 'k'],
@@ -1494,6 +1497,16 @@ const CANVAS_ENTRIES: Shortcut[] = (
     // the words from one key. The same trade the plane's Ctrl+1 makes under the
     // Obsidian preset; see presets.ts.
     ['canvas.fit', () => t('Fit the canvas'), 'Mod-Alt-0'],
+    // And the zoom itself on the two keys beside it, the page note's own: the bar no
+    // longer has buttons for it, and a reader without a wheel or a pinch still zooms
+    // (#401).
+    ['canvas.zoom.in', () => t('Zoom in'), 'Mod-Alt-='],
+    ['canvas.zoom.out', () => t('Zoom out'), 'Mod-Alt--'],
+    // Back to 100% (#369): the bar's reading of the zoom does it, and a reader who wants
+    // a key gives it one. Ctrl+0 is the app's text size, and Ctrl+Alt+0 the fit.
+    ['canvas.zoom.actual', () => t('Actual size'), null],
+    // Upright again (#351).
+    ['canvas.upright', () => t('Turn upright'), 'Mod-Alt-r'],
     ['canvas.frame', () => t('Zoom to what is picked'), 'Mod-1'],
     ['canvas.find', () => t('Find on the canvas'), 'Mod-f'],
     ['canvas.front', () => t('Bring to front'), 'Mod-Shift-]'],

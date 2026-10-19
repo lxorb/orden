@@ -15,7 +15,7 @@
  *  to speak of, and what happens to it is the site's default; see
  *  spaces/site.ts. */
 
-import { documentTitle } from '@nib/markdown'
+import { documentTitle, withoutComments } from '@nib/markdown'
 import { frontMatterList, frontMatterValue, stripFrontMatter } from '@nib/markdown/front-matter'
 import { findLinks } from '@nib/markdown/links'
 import { objectIn } from '../body'
@@ -158,7 +158,11 @@ function firstWords(source: string): string | undefined {
 
 /** Everything a note says about its page, from the note. Null where it says
  *  nothing at all, which is most notes, so most rows keep nothing. */
-export function frontOf(source: string): NoteFront | null {
+export function frontOf(written: string): NoteFront | null {
+  // A comment is the writer's note to themselves: nothing in one is a title, a
+  // summary, a tag or a link of the page, and nothing read here goes anywhere but a
+  // page, a feed, a listing or a search (#453).
+  const source = withoutComments(written)
   const front: NoteFront = {}
 
   const publish = flag(frontMatterValue(source, 'publish'))
@@ -243,6 +247,20 @@ export function readFront(raw: string | null): NoteFront {
     if (typeof value === 'string' && value) front[key] = value.slice(0, LONGEST_TEXT)
   }
 
+  // A summary and a heading read off a note before comments were taken out of it
+  // can still hold one. Taken out here as well, so a row written then says no more
+  // than one written now, until the nightly sweep reads it again (`fillFronts`).
+  const uncommented = (value: string | undefined) =>
+    value === undefined
+      ? undefined
+      : withoutComments(value).replace(/\s+/g, ' ').trim() || undefined
+  const heading = uncommented(front.heading)
+  const summary = uncommented(front.summary)
+  delete front.heading
+  delete front.summary
+  if (heading) front.heading = heading
+  if (summary) front.summary = summary
+
   if (typeof held.order === 'number' && Number.isFinite(held.order)) front.order = held.order
 
   for (const key of ['tags', 'links'] as const) {
@@ -289,6 +307,11 @@ export function titleFrom(path: string, source: string): string {
  *
  *  Note that a null front and an empty one are the same answer to every reader:
  *  see `readFront`. */
+/** Which reading of a note's head `writeFront` is, written beside it as `front_rev`:
+ *  1 since comments were taken out first (#453). A row below it is read again by the
+ *  nightly sweep; see blog/fill.ts. */
+export const FRONT_REV = 1
+
 export function writeFront(source: string): string {
   return JSON.stringify(frontOf(source) ?? {})
 }

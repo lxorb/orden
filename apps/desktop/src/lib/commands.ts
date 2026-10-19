@@ -59,7 +59,7 @@ import { look, openTarget, renderOptions } from './export/context'
 import { type ExportId, exportKindOf, isNoteFormat, labelOf, offeredBy } from './export/offer'
 import type { RunOptions } from './export/run'
 import { PANDOC_FORMATS } from './export-formats'
-import { canPrint, printNote } from './export/print'
+import { canPrint, printable, printOpen } from './export/print'
 import { imagePath } from './images'
 import { canDictate, dictating, toggleDictation } from './mobile/dictation'
 import { canInsertPicture, canTakePhoto, insertPicture, takePhoto } from './insert-picture'
@@ -94,7 +94,7 @@ import { isUnsaved } from './workspace/drafts'
 import { askPlace } from './save-place/door'
 import { pages, type Step } from './web-tab/pages.svelte'
 import { openRandomNote, randomChoices } from './random-note'
-import { showQuickAdd } from './surfaces.svelte'
+import { showFeedback, showQuickAdd } from './surfaces.svelte'
 
 /** Opens `custom.css` in the editor itself - it is a text file like any other. */
 async function openCustomCss() {
@@ -496,7 +496,7 @@ function tabCommands(): Command[] {
       run: () => void tabOps().then((ops) => ops.renameFromTab(id)),
     },
     // Left out with one space; see tab-strip/to-space.ts, fetched with the press.
-    ...(tab && workspace.spaces.length > 1
+    ...(tab && workspace.shownSpaces.length > 1
       ? [
           {
             id: 'move-to-space',
@@ -976,7 +976,7 @@ function moveCommand(): Command | null {
   const targets = moveTargets({
     moving: path,
     tree: workspace.tree,
-    spaces: workspace.spaces,
+    spaces: workspace.shownSpaces,
     here: workspace.activeSpace?.root ?? null,
   })
   if (!targets.length) return null
@@ -1013,8 +1013,8 @@ function spaceCommands(): Command[] {
     // pointer's way in; this is the keyboard's, and the only one there is while
     // the panel is shut. A row each, with the one you are in ticked, which is
     // how the palette offers every other set of things to pick from.
-    ...(workspace.spaces.length > 1
-      ? workspace.spaces.map((one) => ({
+    ...(workspace.shownSpaces.length > 1
+      ? workspace.shownSpaces.map((one) => ({
           id: `space:${one.id}`,
           label: t('Space: {name}', { name: one.name }),
           checked: one.id === space.id,
@@ -1221,8 +1221,8 @@ export function appCommands(view?: EditorView): Command[] {
             id: 'print',
             label: t('Print'),
             hint: shortcuts.hint('app.print'),
-            disabled: workspace.active?.kind !== 'note',
-            run: () => busy.start(t('Printing'), () => printNote()),
+            disabled: !printable(workspace.active?.kind),
+            run: () => busy.start(t('Printing'), () => printOpen()),
           },
         ]
       : []),
@@ -1319,6 +1319,11 @@ export function appCommands(view?: EditorView): Command[] {
       run: () => settings.show(),
     },
     {
+      id: 'feedback',
+      label: t('Send feedback'),
+      run: showFeedback,
+    },
+    {
       id: 'shortcuts',
       label: t('Shortcuts'),
       hint: shortcuts.hint('app.keys'),
@@ -1358,7 +1363,11 @@ export function appCommands(view?: EditorView): Command[] {
           label: `${t('Sign out')} ${account.user.email}`.trim(),
           // Who this machine is signed in as is not a link's business.
           byHand: true,
-          run: () => void account.signOut(),
+          // Asking first whether this device leaves the AI vault too (#389).
+          run: () =>
+            __EVEN_PLUGIN__
+              ? void account.signOut()
+              : void import('./ai/vault/leaving').then((one) => one.signOut()),
         }
       : { id: 'signin', label: t('Sign in'), run: () => (account.open = true) },
 
@@ -1656,12 +1665,17 @@ export function appCommands(view?: EditorView): Command[] {
       hint: shortcuts.hint('app.properties'),
       run: () => revealPanel('properties'),
     },
-    {
-      id: 'ask-panel',
-      label: t('Ask'),
-      hint: shortcuts.hint('app.ask'),
-      run: () => revealPanel('ask'),
-    },
+    // A phone and a tablet have no AI panel (#403).
+    ...(viewport.touch
+      ? []
+      : [
+          {
+            id: 'ask-panel',
+            label: t('Ask'),
+            hint: shortcuts.hint('app.ask'),
+            run: () => revealPanel('ask'),
+          },
+        ]),
     {
       id: 'quick-question',
       label: t('Quick question'),
@@ -1726,14 +1740,14 @@ export function appCommands(view?: EditorView): Command[] {
       id: 'space-next',
       label: t('Next space'),
       hint: shortcuts.hint('space.next'),
-      disabled: workspace.spaces.length < 2,
+      disabled: workspace.shownSpaces.length < 2,
       run: () => stepSpace(1),
     },
     {
       id: 'space-previous',
       label: t('Previous space'),
       hint: shortcuts.hint('space.previous'),
-      disabled: workspace.spaces.length < 2,
+      disabled: workspace.shownSpaces.length < 2,
       run: () => stepSpace(-1),
     },
     {

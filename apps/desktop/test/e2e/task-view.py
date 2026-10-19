@@ -129,7 +129,8 @@ def the_view(page: Page) -> None:
     sub = page.evaluate("() => window.tasks.rows.of().find((one) => one.task?.text === 'Ask about fees')")
     if not sub or sub["task"].get("parent") is None:
         wrong("the new task is not a sub-task")
-    if not sub or not sub["task"].get("due"):
+    # The day said is the day it starts (#371).
+    if not sub or not sub["task"].get("start"):
         wrong("the sub-task's words were not read for a day")
     shot(page, "02-edited")
 

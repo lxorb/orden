@@ -56,41 +56,48 @@ import { CHEVRON, iconMarkup, type IconParts } from './icons'
 /** Every look there is, and the icon it wears. The name is also the class the
  *  stylesheets colour it by - `.callout-warning` - and the only names those
  *  need to know, since an alias has resolved to one of these before any markup
- *  is written. */
-const LOOKS: Record<string, IconNode> = {
-  note: Pencil,
-  abstract: ClipboardList,
-  info: Info,
-  todo: CircleCheck,
-  tip: Flame,
-  success: Check,
-  question: CircleQuestionMark,
-  warning: TriangleAlert,
-  failure: X,
-  danger: Zap,
-  bug: Bug,
-  example: List,
-  quote: Quote,
-}
+ *  is written.
+ *
+ *  A map and not an object, as `ALIASES` is: the type is the writer's word, and
+ *  an object answers `constructor` and `__proto__` from its prototype. */
+const LOOKS: ReadonlyMap<string, IconNode> = new Map(
+  Object.entries({
+    note: Pencil,
+    abstract: ClipboardList,
+    info: Info,
+    todo: CircleCheck,
+    tip: Flame,
+    success: Check,
+    question: CircleQuestionMark,
+    warning: TriangleAlert,
+    failure: X,
+    danger: Zap,
+    bug: Bug,
+    example: List,
+    quote: Quote,
+  }),
+)
 
 /** The other words for those, Obsidian's own - all twelve of them, which is what
  *  makes a callout written in either app the same callout in both. */
-const ALIASES: Record<string, string> = {
-  summary: 'abstract',
-  tldr: 'abstract',
-  hint: 'tip',
-  important: 'tip',
-  check: 'success',
-  done: 'success',
-  help: 'question',
-  faq: 'question',
-  caution: 'warning',
-  attention: 'warning',
-  fail: 'failure',
-  missing: 'failure',
-  error: 'danger',
-  cite: 'quote',
-}
+const ALIASES: ReadonlyMap<string, string> = new Map(
+  Object.entries({
+    summary: 'abstract',
+    tldr: 'abstract',
+    hint: 'tip',
+    important: 'tip',
+    check: 'success',
+    done: 'success',
+    help: 'question',
+    faq: 'question',
+    caution: 'warning',
+    attention: 'warning',
+    fail: 'failure',
+    missing: 'failure',
+    error: 'danger',
+    cite: 'quote',
+  }),
+)
 
 /** Words that are not words. Title case would make these "Tldr" and "Faq". */
 const SHOUTED = new Set(['tldr', 'faq'])
@@ -146,7 +153,7 @@ export function calloutOf(text: string): Callout | null {
 
   return {
     type,
-    look: LOOKS[type] ? type : (ALIASES[type] ?? null),
+    look: LOOKS.has(type) ? type : (ALIASES.get(type) ?? null),
     label: SHOUTED.has(type) ? type.toUpperCase() : type.charAt(0).toUpperCase() + type.slice(1),
     title,
     foldable: sign !== undefined,
@@ -160,7 +167,7 @@ export function calloutOf(text: string): Callout | null {
  *  building DOM rather than writing markup - the editor's callout widget.
  *  Nothing at all for a type nib has never heard of. */
 export function calloutIconParts(look: string | null): IconParts | null {
-  const node = look === null ? undefined : LOOKS[look]
+  const node = look === null ? undefined : LOOKS.get(look)
   return node ?? null
 }
 

@@ -26,6 +26,7 @@ import { now, sha256 } from '../crypto'
 import { roomsSignedOut } from '../rooms'
 import type { Env, Variables } from '../types'
 import { deviceIn } from '../versions'
+import { machinesSignedOut } from '../machines/revoke'
 import { askHub } from './reach'
 
 /** A device's own words about itself, as `hello` brings them. */
@@ -89,7 +90,17 @@ export async function markSeen(env: Env, user: string, device: string): Promise<
 /** Ends one device: its session, its hub socket and its rooms. Answers false for a
  *  device the account does not have, or has already ended. */
 async function revokeDevice(env: Env, user: string, device: string): Promise<boolean> {
+  // Its sign-in, read before it goes, for the terminals it may have open.
+  const login = await env.DB.prepare(
+    `select s.token_hash from devices d join sessions s on s.id = d.session_id and s.user_id = d.user_id
+      where d.id = ? and d.user_id = ? and d.revoked_at is null`,
+  )
+    .bind(device, user)
+    .first<{ token_hash: string }>()
   if (!(await endDevice(env, user, device))) return false
+
+  // And the online terminals it has open, its own machine's too; see machines/revoke.ts.
+  await machinesSignedOut(env, user, login ? [login.token_hash] : [])
 
   // Its rooms, through the one door that closes somebody's rooms: every room of the
   // account, since the rooms know people rather than devices, and the account's
@@ -109,6 +120,14 @@ async function endDevice(env: Env, user: string, device: string): Promise<boolea
 
   await env.DB.batch([
     env.DB.prepare('delete from web_keys where user_id = ? and device_id = ?').bind(user, device),
+    // Where it was pushed to, by the device it said it was and by the session it
+    // registered through: a lost phone is told nothing more (#454, push/live.ts).
+    env.DB.prepare(
+      `delete from push_targets
+        where user_id = ?1
+          and (device_id = ?2
+               or session_hash = (select token_hash from sessions where user_id = ?1 and id = ?3))`,
+    ).bind(user, device, row.session ?? ''),
     env.DB.prepare(
       'update devices set revoked_at = ?, session_id = null where id = ? and user_id = ?',
     ).bind(now(), device, user),

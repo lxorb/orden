@@ -26,6 +26,7 @@ import {
   WIKILINK_INNER as INNER,
 } from './links'
 import { firstStart, lineStart, matchesAt } from './starts'
+import { remembering } from './tags'
 
 /** Where a note's name goes on this page: an `href`, or null for a link the
  *  caller cannot place, which renders as the words it showed. `text` is there for
@@ -82,7 +83,7 @@ export function wikilinks(options: {
   resolveEmbed?: EmbedResolver
   embeds: Embeds
 }): MarkedExtension {
-  return {
+  return remembering({
     extensions: [
       {
         name: 'embed',
@@ -130,7 +131,7 @@ export function wikilinks(options: {
         },
       },
     ],
-  }
+  })
 }
 
 /** A link as an anchor, or as the words it showed when it points nowhere. */

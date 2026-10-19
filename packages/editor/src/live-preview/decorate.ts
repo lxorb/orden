@@ -569,7 +569,10 @@ class Decorator {
   /** A task's fields hidden the way marks are and said again as chips after its words,
    *  the source back with the caret on its line; see task-chips.ts. */
   private taskFields(line: Line) {
-    const drawn = chipsFor(line.text)?.taskDrawing(line.text)
+    const drawn = chipsFor(line.text)?.taskDrawing(
+      line.text,
+      this.state.facet(noteIndex).dueReads ?? 'start',
+    )
     if (!drawn || !chips) return
 
     const shown = lineRevealed(this.state, line.from)

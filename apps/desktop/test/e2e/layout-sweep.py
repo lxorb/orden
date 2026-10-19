@@ -18,12 +18,13 @@ of facts a layout has to keep whatever is on it:
   - no two things side by side in a row are drawn over each other
   - no control is drawn at no size at all, and no empty field is invisible: a box
     with no border, no ground and no words in it is a row with nothing to press
+  - a box to tick is drawn as a box, with its few words on one line beside it
   - a row of settings keeps a name a person can read beside its control
 
 Every pane of the settings and every page behind one, signed out and with an
 account, at 1280, 960 and 720 on a desktop and 390 on a phone, light and dark; and
 beside them the new tab, the palette, the theme picker, the theme store, a question,
-the sync question, the icon picker, the sign-in sheet, a row's menu, every panel of
+the question with a box under its answers (Ctrl+N in a terminal), the sync question, the quick question, the icon picker, the sign-in sheet, a row's menu, every panel of
 the sidebars, the file list and the empty space.
 
 The account is the browser's own: the session is a word in storage and every request
@@ -57,7 +58,9 @@ import sys
 import time
 from typing import Any
 
-from harness import LAUNCHED, Drive
+from urllib.parse import urlsplit
+
+from harness import ENGINE, LAUNCHED, Drive, harmless
 
 DRIVE = Drive(__file__)
 say, wrong = DRIVE.say, DRIVE.wrong
@@ -333,6 +336,60 @@ CHECK = r"""
     }
   }
 
+  // ── A box to tick is a box, and its words one line beside it ───────────
+  // The question Ctrl+N raises in a terminal drew "Always ask" as an empty pill the
+  // width of a field, its two words wrapped under each other (#317): a rule for the
+  // sheet's text field that caught its checkbox too.
+  for (const el of visible) {
+    if (!el.matches('input[type="checkbox"]')) continue
+    const r = el.getBoundingClientRect()
+    if (r.width <= 1 && r.height <= 1) continue
+    if (r.width > 2 * r.height || r.width > 32)
+      say(`${named(el)} is a box to tick drawn ${px(r.width)} by ${px(r.height)}`)
+    const label = el.closest('label')
+    if (!label || label.querySelector('input, select, textarea, button') !== el) continue
+    const words = [...label.childNodes].filter((one) => one !== el).map((one) => one.textContent).join(' ').trim()
+    if (!words || words.length > 40) continue
+    // The lines its words are drawn on, off each text's own boxes: two tops more than a
+    // few pixels apart are two lines.
+    const tops = []
+    const walker = document.createTreeWalker(label, NodeFilter.SHOW_TEXT)
+    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+      if (!node.textContent.trim()) continue
+      const range = document.createRange()
+      range.selectNodeContents(node)
+      for (const one of range.getClientRects()) {
+        if (one.width > 1 && !tops.some((top) => Math.abs(top - one.top) < 4)) tops.push(one.top)
+      }
+    }
+    if (tops.length > 1) say(`the words "${words}" beside a box to tick wrap over ${tops.length} lines in ${named(label)}`)
+  }
+
+  // ── A box inset in a layer is inset at its foot too ────────────────────
+  // The quick question (#360) held its field a space in from the top and the sides of
+  // its sheet and set it on the sheet's bottom edge. A layer's first thing standing
+  // clear of the top is the layer's inset, and its last thing keeps at least half of
+  // it below; a layer that starts on its own edge - a list, a bar - is not asked.
+  for (const sheet of visible) {
+    if (!sheet.classList.contains('nib-screen')) continue
+    const kids = [...sheet.children].filter((k) => isShown.has(k) && inFlow(k))
+    if (!kids.length) continue
+    const s = css(sheet)
+    const box = sheet.getBoundingClientRect()
+    // From the sheet's border to what is drawn in its first and last box: the sheet's
+    // padding, a margin and the box's own padding are all the one inset.
+    const inner = { t: box.top + parseFloat(s.borderTopWidth), b: box.bottom - parseFloat(s.borderBottomWidth) }
+    const first = kids[0]
+    const last = kids[kids.length - 1]
+    const top = first.getBoundingClientRect().top + parseFloat(css(first).borderTopWidth) + parseFloat(css(first).paddingTop) - inner.t
+    const foot = inner.b - (last.getBoundingClientRect().bottom - parseFloat(css(last).borderBottomWidth) - parseFloat(css(last).paddingBottom))
+    // A layer that scrolls is cut at its foot by its height, and its last thing is
+    // wherever the scroll left it.
+    if (sheet.scrollHeight > sheet.clientHeight + 1) continue
+    if (top >= 8 && foot < top / 2)
+      say(`${named(kids[kids.length - 1])} stands ${px(foot)} from the foot of ${named(sheet).split(' < ')[0]}, whose top is ${px(top)} in`)
+  }
+
   // ── A row of settings keeps a name a person can read ───────────────────
   for (const row of visible) {
     if (!row.classList.contains('nib-setting')) continue
@@ -385,10 +442,16 @@ class Browser:
             device_scale_factor=2 if phone else 1,
             color_scheme="light",
             reduced_motion="reduce",
+            # The account here is the routes', and in WebKit a page the asset worker
+            # controls sends its fetches past them; see WEBKIT_WORKERS in harness.py.
+            service_workers="block" if ENGINE == "webkit" else "allow",
         )
         if self.signed_in:
             await context.add_init_script("try { localStorage.setItem('nib:session', 'sweep') } catch {}")
-        await context.route(re.compile(r"^https?://(?!layout-sweep\.localhost)"), self.answer)
+        # Everything but the app's own origin, which is a name below `.localhost` in
+        # Chromium and the loopback address itself in WebKit (see harness.py).
+        own = re.escape(urlsplit(DRIVE.origin).netloc)
+        await context.route(re.compile(rf"^https?://(?!{own}/)"), self.answer)
         with_sockets = getattr(context, "route_web_socket", None)
         if with_sockets:
             await with_sockets(re.compile(r"^wss?://"), lambda socket: None)
@@ -411,6 +474,8 @@ class Browser:
         return page
 
     def threw(self, error: Any) -> None:
+        if harmless(error):
+            return
         self.errors.append(f"{error} (after {self.at})")
         if os.environ.get("SWEEP_TRACE"):
             say(f"  {self.label} threw after {self.at}: {(error.stack or '')[:2500]}")
@@ -676,6 +741,42 @@ async def sync_question(one: Browser, page: Any, width: int, scheme: str) -> Non
     )
 
 
+#: A provider the quick question can be asked of, and nothing that answers: nothing is
+#: asked here, and the layer only draws its field once there is somebody to ask.
+PROVIDER = """
+() => {
+  const ai = window.nibApp.ai
+  if (ai.providers.some((one) => one.name === 'Sweep')) return
+  const made = ai.add('compatible')
+  ai.update(made.id, { name: 'Sweep', baseUrl: 'http://layout-sweep.localhost:9', model: 'sweep' })
+  ai.setDefault(made.id)
+}
+"""
+
+QUICK = '[role="dialog"][aria-label="Quick question"]'
+
+
+async def quick_question(one: Browser, page: Any, width: int, scheme: str) -> None:
+    """Ctrl twice: the quick question, with the open note along as a chip and then on
+    its own once the chip is taken off, which is where its field met the sheet's foot
+    (#360)."""
+    await page.evaluate(PROVIDER)
+    # Through the palette's row: a built app has no path to the module to call.
+    await page.keyboard.press("Control+Shift+P")
+    await page.wait_for_selector(PALETTE)
+    await page.keyboard.type("Quick question")
+    await page.wait_for_timeout(120)
+    await page.keyboard.press("Enter")
+    await page.wait_for_selector(f"{QUICK} textarea", timeout=8000)
+    await one.check(page, "quick question", width, scheme, QUICK)
+    drop = page.locator(f"{QUICK} .drop")
+    if await drop.count():
+        await drop.click()
+        await page.wait_for_selector(f"{QUICK} .chips", state="detached", timeout=4000)
+        await one.check(page, "quick question / alone", width, scheme, QUICK)
+    await shut(page, QUICK)
+
+
 async def surfaces(one: Browser, page: Any, width: int, scheme: str) -> None:
     """Everything but the settings, at one width in one scheme."""
     walks = [
@@ -699,6 +800,17 @@ async def surfaces(one: Browser, page: Any, width: int, scheme: str) -> None:
             "() => { window.nibApp.iconChoice.close() }",
         )),
         ("sync question", sync_question(one, page, width, scheme)),
+        # A key that is both the terminal's and the app's, asked about with a box under
+        # its answers (#317); only a terminal raises it, so it is raised here by hand.
+        ("terminal question", layer(
+            one, page, "terminal question", width, scheme,
+            "() => { void window.nibApp.prompt.chooseTicking({ title: 'Ctrl+N in a terminal',"
+            " options: [{ id: 'shell', label: 'Terminal' }, { id: 'app', label: 'Scratchpad', primary: true }],"
+            " tick: 'Always ask' }) }",
+            '[role="dialog"]:has(.tick)',
+            "() => { window.nibApp.prompt.dismiss() }",
+        )),
+        ("quick question", quick_question(one, page, width, scheme)),
         ("new tab", new_tab(one, page, width, scheme)),
     ]
     if not one.signed_in:
@@ -755,7 +867,12 @@ async def sweep() -> list[Browser]:
         wanted = sys.argv[sys.argv.index("--only") + 1].split(",")
         kinds = [one for one in kinds if f"{one.kind}-{'in' if one.signed_in else 'out'}" in wanted]
     async with async_playwright() as play:
-        browser = await play.chromium.launch(channel=os.environ.get("NIB_BROWSER", "chromium"))
+        # The engine the run is in, as every other drive's (`NIB_ENGINE` in harness.py):
+        # the sweep is a question about how an engine lays the app out.
+        if ENGINE == "webkit":
+            browser = await play.webkit.launch()
+        else:
+            browser = await play.chromium.launch(channel=os.environ.get("NIB_BROWSER", "chromium"))
         try:
             results = await asyncio.gather(*(sweep_one(one, browser) for one in kinds), return_exceptions=True)
         finally:

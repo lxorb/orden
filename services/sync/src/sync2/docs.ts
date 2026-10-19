@@ -53,7 +53,10 @@ async function reachedNotes(
   ids: readonly string[],
 ): Promise<Map<string, Reached>> {
   const { results } = await env.DB.prepare(
-    'select * from notes where id in (select value from json_each(?))',
+    // Never a note purged from Recently deleted: its words are gone for good, though
+    // its room may not have been emptied yet (leftovers.ts).
+    `select * from notes where id in (select value from json_each(?))
+        and not (deleted = 1 and deleted_at is null)`,
   )
     .bind(JSON.stringify([...new Set(ids)]))
     .all<Note>()

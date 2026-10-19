@@ -67,4 +67,11 @@ export const LIMIT_WORDS: Record<Limit, () => string> = {
   tabs: () => t('Tabs'),
   calls: () => t('Calls a minute'),
   navigations: () => t('Pages a minute'),
+  memory: () => t('Browser memory limit'),
+}
+
+/** A limit's value as its row says it: memory in GB, and Off where there is none. */
+export function limitValue(limit: Limit, value: number): string {
+  if (limit !== 'memory') return String(value)
+  return value === 0 ? t('Off') : `${String(Math.round((value / 1024) * 10) / 10)} GB`
 }

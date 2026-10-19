@@ -52,7 +52,7 @@
   import { focusSoon } from './focus-soon'
   import './task-keys'
   import RowLine from './RowLine.svelte'
-  import { runKey, scheduleRows } from './task-actions'
+  import { runKey, scheduleDeadline } from './task-actions'
   import { hasMeta, lineCount, subtaskCounts, taskKey } from './task-meta'
   import TaskRow from './TaskRow.svelte'
   import { dayHead, groupLabel } from './words'
@@ -169,7 +169,7 @@
     items.map((item) => {
       const task = item.kind === 'row' ? item.row.task : undefined
       if (!task || item.kind !== 'row') return 1
-      return lineCount(task, hasMeta(task, dated, countsOf(item.row)), where)
+      return lineCount(task, hasMeta(task, dated, countsOf(item.row), live.today), where)
     }),
   )
 
@@ -425,7 +425,7 @@
             <button
               type="button"
               class="nib-chip is-quiet act"
-              onclick={(event) => scheduleRows(item.group.rows, event.currentTarget, kit)}
+              onclick={(event) => scheduleDeadline(item.group.rows, event.currentTarget, kit)}
               >{t('Reschedule')}</button
             >
           {/if}

@@ -49,14 +49,14 @@ DAYS = """() => {
 ERRANDS = """# Errands
 
 ## Calls
-- [ ] Call the bank [deadline:: {soon}] #admin ⏫ 📅 {yesterday}
+- [ ] Call the bank [deadline:: {yesterday}] #admin ⏫ 📅 {yesterday}
   Their number is on the back of the old card.
   - [x] Find the old card
   - [ ] Find the pin
   - Called once, no answer.
   - Called again.
 - [ ] Water the plants 🔁 every 3 days when done 📅 {today}
-- [ ] Pay the dentist 📅 {yesterday}
+- [ ] Pay the dentist [deadline:: {yesterday}] 📅 {yesterday}
 - [ ] Take the vitamins 🔁 every day 📅 {today}
 - [ ] Stretch 🔁 every day 📅 {today}
 """
@@ -105,8 +105,10 @@ def the_row(page: Page) -> None:
     for wanted in ["Their number is on the back", "1/2", "#admin", "Errands", "Calls"]:
         if wanted not in text:
             wrong(f"the bank's row does not say {wanted}")
-    if page.locator(f"{bank} .meta .bit").count() < 4:
-        wrong("the bank's meta line is missing its date, deadline, sub-tasks or comments")
+    # Its start date has come, so it says nothing of it; its deadline, past, is said in the
+    # danger tone (#371).
+    if page.locator(f"{bank} .meta .bit").count() < 3:
+        wrong("the bank's meta line is missing its deadline, sub-tasks or comments")
     late = page.locator(f"{bank} .meta .bit").first.evaluate("(bit) => getComputedStyle(bit).color")
     danger = page.evaluate(
         "() => { const probe = document.createElement('span'); probe.style.color = 'var(--danger)';"
@@ -114,7 +116,7 @@ def the_row(page: Page) -> None:
     )
     say(f"[late colour] {late} (danger {danger})")
     if late != danger:
-        wrong("an overdue day is not drawn in the danger tone")
+        wrong("a deadline past is not drawn in the danger tone")
     shot(page, "01-today")
 
 
@@ -164,16 +166,17 @@ def reschedule(page: Page, days: dict[str, str]) -> None:
     open_today(page)
     page.locator(".view-tab .head .act", has_text="Reschedule").click()
     wait_for(page, "document.querySelector('.scheduler')", "the scheduler for what is overdue")
+    # Overdue is a deadline past, so Reschedule moves the deadline (#371).
     page.locator(".scheduler .quick .nib-row", has_text="Today").click()
     wait_for(
         page,
-        f"() => ['Call the bank', 'Pay the dentist'].every((words) => ({TASK})(words)?.due === '{days['today']}')",
-        "every overdue task moved to today",
+        f"() => ['Call the bank', 'Pay the dentist'].every((words) => ({TASK})(words)?.deadline === '{days['today']}')",
+        "every overdue task's deadline moved to today",
     )
     page.keyboard.press("Control+z")
     wait_for(
         page,
-        f"() => ['Call the bank', 'Pay the dentist'].every((words) => ({TASK})(words)?.due === '{days['yesterday']}')",
+        f"() => ['Call the bank', 'Pay the dentist'].every((words) => ({TASK})(words)?.deadline === '{days['yesterday']}')",
         "one undo taking all of them back",
     )
 

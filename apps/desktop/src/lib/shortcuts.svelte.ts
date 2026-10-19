@@ -12,6 +12,7 @@ import { api, type AccountSettings } from './api'
 import { t } from './i18n.svelte'
 import {
   currentPlatform,
+  type Keystroke,
   matchesCombination,
   parseCombination,
   sameCombination,
@@ -282,7 +283,7 @@ class Shortcuts {
   /** Whether a keystroke is the one an entry holds. What a panel with keys of
    *  its own asks, since those fire where the focus is rather than on the
    *  window. */
-  pressed(id: string, event: KeyboardEvent): boolean {
+  pressed(id: string, event: Keystroke): boolean {
     const key = this.keyFor(id)
     return !!key && matchesCombination(key, event, this.platform)
   }

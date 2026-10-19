@@ -227,25 +227,39 @@ function overlaid(
   return [...byKey.values()]
 }
 
-/** Takes this many numbers off the space's cursor, answering the first. */
-async function cursorBlock(env: Env, spaceId: string, many: number): Promise<number> {
-  const row = await env.DB.prepare(
-    `insert into space_cursor (space_id, next) values (?1, ?2 + 1)
-     on conflict(space_id) do update set next = next + ?2
-     returning next - ?2 as first`,
-  )
-    .bind(spaceId, many)
-    .first<{ first: number }>()
-  return row?.first ?? 1
+/** Entries written at a block of the space's cursor, the numbers taken and the rows
+ *  written in one transaction (#470): taken first and written after, two writers could
+ *  land the other way round, and a device that read the feed in between was handed a
+ *  cursor past numbers it then never asked about. Each change carries its place in the
+ *  block as `seq`. Answers the last number taken. */
+async function writeAtBlock(
+  env: Env,
+  spaceId: string,
+  changes: readonly Kept[],
+  columns: Record<string, string> | null,
+  by: string,
+): Promise<number> {
+  const many = changes.length
+  const results = await env.DB.batch([
+    env.DB.prepare(
+      `insert into space_cursor (space_id, next) values (?1, ?2 + 1)
+       on conflict(space_id) do update set next = next + ?2`,
+    ).bind(spaceId, many),
+    ...writing(env, spaceId, changes, columns, by, many),
+    env.DB.prepare('select next - 1 as last from space_cursor where space_id = ?1').bind(spaceId),
+  ])
+  return (results.at(-1)?.results[0] as { last?: number } | undefined)?.last ?? many
 }
 
-/** The statements that write entries, and the v1 columns they come to. */
+/** The statements that write entries, and the v1 columns they come to. Each entry's
+ *  number is its place in a block of `many` the batch has just taken. */
 function writing(
   env: Env,
   spaceId: string,
   changes: readonly Kept[],
   columns: Record<string, string> | null,
   by: string,
+  many: number,
 ): D1PreparedStatement[] {
   const out: D1PreparedStatement[] = []
   for (let from = 0; from < changes.length; from += 200) {
@@ -260,12 +274,14 @@ function writing(
       env.DB.prepare(
         `insert into space_entries (space_id, map, key, value, seq, at, by)
          select ?1, json_extract(value, '$.map'), json_extract(value, '$.key'),
-                json_extract(value, '$.value'), json_extract(value, '$.seq'),
+                json_extract(value, '$.value'),
+                (select next from space_cursor where space_id = ?1) - ?4
+                  + json_extract(value, '$.seq'),
                 json_extract(value, '$.at'), ?2
            from json_each(?3) where true
          on conflict(space_id, map, key) do update
            set value = excluded.value, seq = excluded.seq, at = excluded.at, by = excluded.by`,
-      ).bind(spaceId, by, JSON.stringify(piece)),
+      ).bind(spaceId, by, JSON.stringify(piece), many),
     )
   }
   if (columns) {
@@ -304,10 +320,8 @@ async function writeEntries(
   const columns = projected(provisional, tree)
   if (!fitting(columns)) return null
 
-  const first = await cursorBlock(env, spaceId, changes.length)
-  const stamped = changes.map((one, index) => ({ ...one, seq: first + index, at }))
-  await env.DB.batch(writing(env, spaceId, stamped, columns, by))
-  return first + changes.length - 1
+  const stamped = changes.map((one, index) => ({ ...one, seq: index, at }))
+  return await writeAtBlock(env, spaceId, stamped, columns, by)
 }
 
 /** A v1 app's whole value for one map, read as every entry changed: what it names is
@@ -326,10 +340,9 @@ export async function v1Wrote(env: Env, space: Space, map: MapName, value: unkno
   const changes = [...said, ...gone]
   if (!changes.length) return
 
-  const first = await cursorBlock(env, space.id, changes.length)
   const at = now()
-  const stamped = changes.map((one, index) => ({ ...one, seq: first + index, at }))
-  await env.DB.batch(writing(env, space.id, stamped, null, by))
+  const stamped = changes.map((one, index) => ({ ...one, seq: index, at }))
+  await writeAtBlock(env, space.id, stamped, null, by)
 }
 
 /** What one v1 column says, as entries of its map. */
@@ -415,7 +428,7 @@ export async function reproject(env: Env, spaceId: string): Promise<void> {
   if (!kept.some((one) => one.map === 'icon' || one.map === 'order')) return
   const columns = projected(kept, await readTree(env, spaceId))
   if (!fitting(columns)) return
-  await env.DB.batch(writing(env, spaceId, [], columns, ''))
+  await env.DB.batch(writing(env, spaceId, [], columns, '', 0))
 }
 
 /** What changed since a cursor, a page at a time. */

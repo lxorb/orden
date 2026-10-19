@@ -61,7 +61,7 @@ describe('a new account', () => {
     expect(content).toContain('# Welcome to Orden')
   })
 
-  /** The clipper and the connector both used to have to say "make a space
+  /** The connector used to have to say "make a space
    *  first", because an account could exist with nowhere to write. */
   test('is somewhere the connector can write without being told to make a space', async () => {
     const token = await signIn(env, 'a@b.dev')

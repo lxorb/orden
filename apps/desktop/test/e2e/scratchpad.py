@@ -6,7 +6,9 @@ glyph at the bar's top right shows a card docked under it, Escape and the glyph 
 away and give the keyboard back to the note, Ctrl+Shift+X calls it, a reload keeps it
 up with its words, and nothing of it is ever in the tab strip. On a phone it is the one
 note on the screen, all of where the note is and named in the bar, never a card beside the
-note (#206: "it should display as the only open note on mobile").
+note (#206: "it should display as the only open note on mobile"). Over a canvas or a
+page note it is a markdown note like any other: nothing of the drawing is left on the
+screen, and putting it away gives the drawing back (#404).
 
     python apps/desktop/test/e2e/scratchpad.py
 
@@ -68,6 +70,14 @@ def opened(browser: Browser, scheme: str, phone: bool = False) -> Page:
     return page
 
 
+def gone(page: Page) -> None:
+    """Until the card is off the page, or three seconds; what is there then is checked."""
+    try:
+        page.wait_for_function(f"!document.querySelector('{CARD}')", timeout=3000, polling=50)
+    except Exception:  # noqa: BLE001 - still up, which the check after this says
+        pass
+
+
 def no_tab(page: Page, where: str) -> None:
     tabs = page.evaluate(STATE)["tabs"]
     if any("Scratchpad" in one for one in tabs):
@@ -96,6 +106,9 @@ def desktop(browser: Browser, scheme: str) -> None:
 
     page.keyboard.press("Escape")
     page.wait_for_timeout(400)
+    # The card leaves over frames, and a frame of WebKit's on a busy machine can be
+    # most of a second: given its time, then held to it (#384).
+    gone(page)
     state = page.evaluate(STATE)
     say(f"[{scheme}] after Escape: {state}")
     if state["card"] or state["pressed"] != "false" or not state["inNote"]:
@@ -126,6 +139,7 @@ def desktop(browser: Browser, scheme: str) -> None:
 
     page.locator(GLYPH).click()
     page.wait_for_timeout(400)
+    gone(page)
     if page.evaluate(STATE)["card"]:
         wrong(f"[{scheme}] the switch did not put the card away")
     page.context.close()
@@ -158,6 +172,88 @@ def phone(browser: Browser) -> None:
     page.context.close()
 
 
+# Whether anything of the document under the scratchpad can be seen or pressed: the
+# canvas's bar or the page note's, read where it would be drawn.
+UNDER = """() => {
+  const bar = document.querySelector('.cluster')
+  const panes = document.querySelector('[data-panes]')
+  const box = bar?.getBoundingClientRect()
+  const hit = box && box.width
+    ? document.elementFromPoint(box.x + box.width / 2, box.y + box.height / 2)
+    : null
+  return {
+    barSeen: !!hit && !!hit.closest('.cluster'),
+    panesHidden: !!panes && getComputedStyle(panes).visibility === 'hidden',
+    panesInert: !!panes?.inert,
+  }
+}"""
+
+# Where a note's words start and how wide they may run, which is what makes it read
+# as a note: the editor's own column, in the note's pane or in the scratchpad.
+COLUMN = """(where) => {
+  const content = document.querySelector(`${where} .cm-content`)
+  if (!content) return null
+  const style = getComputedStyle(content)
+  return { left: Math.round(content.getBoundingClientRect().x), top: style.paddingTop, measure: style.maxWidth }
+}"""
+
+
+def over_a_drawing(browser: Browser) -> None:
+    """On a phone the scratchpad over a canvas or a page note is a markdown note like
+    any other: nothing of the drawing under it is drawn or pressed, its words sit in a
+    note's column, the strip over the keyboard formats it, and putting it away is the
+    drawing again (#404)."""
+    page = opened(browser, "light", phone=True)
+    note = page.evaluate(COLUMN, "[data-panes]")
+    say(f"[phone] a note's column: {note}")
+    for kind, make in (("canvas", "createCanvas"), ("page note", "createPages")):
+        page.evaluate(f"() => window.nibApp.workspace.{make}()")
+        wait_for(page, "document.querySelector('.cluster')", f"the {kind}'s bar")
+        page.wait_for_timeout(400)
+        page.locator(GLYPH).tap()
+        wait_for(page, f"document.querySelector('{CARD}')", f"the scratchpad over the {kind}")
+        page.wait_for_timeout(500)
+
+        under = page.evaluate(UNDER)
+        say(f"[phone, {kind}] under the scratchpad: {under}")
+        if under["barSeen"] or not under["panesHidden"] or not under["panesInert"]:
+            wrong(f"[phone] the {kind}'s bar is still there over the scratchpad: {under}")
+        if not page.evaluate(ON_TOP):
+            wrong(f"[phone] something is drawn over the scratchpad on a {kind}")
+        if not page.locator("header .title .mark").count():
+            wrong(f"[phone] the bar names the scratchpad over a {kind} without a note's mark")
+
+        column = page.evaluate(COLUMN, "[data-scratchpad]")
+        if not note or not column or column != note:
+            wrong(f"[phone] the scratchpad's words are not in a note's column ({column}, not {note})")
+
+        # The strip over the keyboard formats the scratchpad, as it does any note.
+        page.locator(CARD).tap()
+        page.evaluate("() => { window.nibApp.viewport.keyboard = 300; window.nibApp.viewport.typing = true }")
+        wait_for(page, "document.querySelector('.nib-bar.docked')", f"the strip over the keyboard on a {kind}")
+        page.keyboard.type("Pad words")
+        page.keyboard.press("Home")
+        page.keyboard.press("Shift+End")
+        bold = page.locator(".nib-bar.docked button[aria-label='Bold']").first
+        if bold.count():
+            bold.tap()
+            page.wait_for_timeout(300)
+            if "**Pad words**" not in (page.evaluate(STATE)["words"] or ""):
+                wrong(f"[phone] Bold on the strip did not format the scratchpad over a {kind}")
+        shot(page, f"light/06-over-a-{kind.replace(' ', '-')}")
+        page.evaluate("() => { window.nibApp.viewport.keyboard = 0; window.nibApp.viewport.typing = false }")
+
+        page.locator(GLYPH).tap()
+        page.wait_for_timeout(600)
+        back = page.evaluate(UNDER)
+        kinds = {"canvas": "canvas", "page note": "pages"}
+        if page.evaluate("() => window.nibApp.workspace.active?.kind") != kinds[kind] or not back["barSeen"]:
+            wrong(f"[phone] putting the scratchpad away did not give the {kind} back: {back}")
+        shot(page, f"light/07-the-{kind.replace(' ', '-')}-again")
+        say(f"[phone] the scratchpad over a {kind} is a note like any other, and the {kind} comes back")
+    page.context.close()
+
+
 def main() -> int:
     with DRIVE.session() as browser:
         for scheme in ("light", "dark"):
@@ -165,6 +261,8 @@ def main() -> int:
             desktop(browser, scheme)
         say("--- a phone ---")
         phone(browser)
+        say("--- a phone, over a drawing ---")
+        over_a_drawing(browser)
     return DRIVE.verdict("the scratchpad is a switch and a card, never a tab")
 
 

@@ -16,17 +16,15 @@ pkgdesc="Lightweight markdown editor with realtime inline preview"
 arch=('x86_64' 'aarch64')
 url="https://orden.so"
 license=('AGPL-3.0-only')
-# WebKitGTK 2.40 is the oldest the program runs on: it calls into a script world
-# with `webkit_web_view_call_async_javascript_function`, new in 2.40. Arch's
-# webkit2gtk-4.1 needs none of GStreamer's plugins, only its libraries, so the two
-# a recording and its playback cannot do without are named here: Opus is in
-# gst-plugins-base, WebM, MP4 and the sound server's source and sink in -good.
+# Orden runs on CEF (Chromium) on Linux, and the .deb carries the engine itself
+# beside the program, in /usr/share/Orden: what is named here is what Chromium and
+# its GTK 4 windows link from the system. GTK 4.14 is the oldest the runtime is built
+# against. Nothing of WebKitGTK or GStreamer: Chromium plays VP9, AV1 and Opus itself.
 # See packaging/linux.md.
-depends=('gtk3' 'webkit2gtk-4.1>=2.40' 'gst-plugins-base' 'gst-plugins-good'
-         'hicolor-icon-theme')
-optdepends=('gst-libav: play AAC and H.264 - a recording made on a Mac, a video from a phone'
-            'gst-plugins-bad: play the remaining formats WebKitGTK hands to it'
-            'pandoc: import and export DOCX, ODT, EPUB, LaTeX and friends'
+depends=('gtk4>=4.14' 'nss' 'nspr' 'alsa-lib' 'libcups' 'at-spi2-core' 'libdrm' 'mesa'
+         'libxkbcommon' 'libxcomposite' 'libxdamage' 'libxrandr' 'libxfixes' 'pango'
+         'cairo' 'dbus' 'expat' 'hicolor-icon-theme')
+optdepends=('pandoc: import and export DOCX, ODT, EPUB, LaTeX and friends'
             'xdg-utils: open links and attachments in the desktop default application')
 provides=("orden=${pkgver}" "${_pkgname}=${pkgver}")
 conflicts=("${_pkgname}" 'nib-bin' 'nibeditor')
@@ -43,8 +41,10 @@ sha256sums_x86_64=('576e58010d909072a23313c6a9e6841f862fab226355c5347b07a853e6c3
 sha256sums_aarch64=('ae4a7cf7a29f83dc521bda5354c3d1924e49d249ed514959afe7c76e56947095')
 
 package() {
-  bsdtar -O -xf "${srcdir}/nib.deb" data.tar.gz |
+  bsdtar -O -xf "${srcdir}/nib.deb" 'data.tar.*' |
     bsdtar -xf - -C "${pkgdir}" usr
+  # Chromium's sandbox helper, which only runs setuid root.
+  chmod 4755 "${pkgdir}/usr/share/Orden/chrome-sandbox"
 
   install -Dm644 "${srcdir}/nib.desktop" \
     "${pkgdir}/usr/share/applications/${_pkgname}.desktop"

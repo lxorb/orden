@@ -37,6 +37,8 @@ class ContextMenu {
   keepFocus = $state(false)
   /** The row a key lit while the keyboard stays in a field, or -1. */
   lit = $state(-1)
+  /** Where a press still held opened it; see menu-release.ts. */
+  heldAt: { x: number; y: number } | null = null
 
   /** Opens at the pointer. The caller has already decided what belongs here,
    *  so an empty list means "no menu" rather than an empty box. */
@@ -54,6 +56,7 @@ class ContextMenu {
     this.lit = -1
     this.x = event.clientX
     this.y = event.clientY
+    this.heldAt = event.buttons ? { x: event.clientX, y: event.clientY } : null
     this.open = true
   }
 

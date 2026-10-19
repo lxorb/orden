@@ -26,6 +26,22 @@ export const my: Dictionary = {
   'Import from Zen': 'Zen မှ သွင်းပါ',
   'Containers stay in Zen': 'ကွန်တိန်နာများ Zen တွင် ကျန်ရစ်သည်',
   'Zen’s tabs could not be read.': 'Zen ၏ တဘ်များကို ဖတ်၍ မရပါ။',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'ကွန်တိန်နာများ Firefox တွင် ကျန်ရစ်သည်',
+  'Nothing could be read out of {browser}.': '{browser} မှ ဘာမျှ ဖတ်၍ မရပါ။',
+  'Saved groups': 'သိမ်းထားသော အုပ်စုများ',
+  'Tab group': 'တဘ် အုပ်စု',
+  'Bookmarks toolbar': 'စာမှတ် ကိရိယာဘား',
+  'Bookmarks menu': 'စာမှတ် မီနူး',
+  'Other bookmarks': 'အခြား စာမှတ်များ',
+  'Mobile bookmarks': 'မိုဘိုင်း စာမှတ်များ',
+  'Bookmarks bar': 'စာမှတ်ဘား',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} သည် ဖွင့်ထားသော တဘ်များကို သော့ခတ်ထားသဖြင့် စာမှတ်များသာ ပါလာသည်။',
+  '{count} pages not on the web stay behind': 'ဝဘ်ပေါ်တွင် မရှိသော စာမျက်နှာ {count} ခု ကျန်ခဲ့သည်',
+  'Reading List': 'ဖတ်ရန်စာရင်း',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS သည် Safari ၏ တဘ်များနှင့် စာမှတ်များကို Full Disk Access နောက်တွင် ထားသည်။ ထိုနေရာတွင် Orden ကို ဖွင့်ပြီး ထပ်မံ တောင်းဆိုပါ။',
   // Settings: note types
   'Page note': 'စာမျက်နှာမှတ်စု',
   'Web note': 'ဝဘ်မှတ်စု',
@@ -96,8 +112,6 @@ export const my: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'အကြံပြုချက်များ',
   'Silent mode': 'တိတ်ဆိတ်မုဒ်',
-  'Sign in to keep your notes safe and on every device.':
-    'သင့်မှတ်စုများ လုံခြုံပြီး စက်တိုင်းတွင် ရှိနေစေရန် အကောင့်ဝင်ပါ။',
   'See how your notes connect.': 'သင့်မှတ်စုများ မည်သို့ ချိတ်ဆက်ထားသည်ကို ကြည့်ပါ။',
   'Press {key} to find anything, notes and commands alike.':
     'မှတ်စုနှင့် အမိန့်များ အားလုံးကို ရှာရန် {key} ကိုနှိပ်ပါ။',
@@ -119,11 +133,13 @@ export const my: Dictionary = {
   '{count} h': '{count} နာရီ',
   Inbox: 'ဝင်စာပုံး',
   Date: 'ရက်စွဲ',
+  'Start date': 'စတင်ရက်',
   Priority: 'ဦးစားပေး',
   Reminder: 'သတိပေးချက်',
   Duration: 'ကြာချိန်',
   'Smart dates': 'စမတ် ရက်စွဲများ',
   'From any app': 'မည်သည့်အက်ပ်မှမဆို',
+  'Show tasks without a start date in Today': 'စတင်ရက် မရှိသော လုပ်ငန်းများကို ယနေ့ တွင် ပြရန်',
   'Every day': 'နေ့တိုင်း',
   'Every weekday': 'အလုပ်ရက်တိုင်း',
   'Every week': 'အပတ်တိုင်း',
@@ -167,6 +183,8 @@ export const my: Dictionary = {
   Dots: 'အစက်များ',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'လက်နှစ်ချောင်းဖြင့် ကင်းဗတ်ကို လှည့်ရန်',
+  'Turn upright': 'တည့်တည့်ပြန်ထားရန်',
   Canvas: 'ကန်ဗတ်',
   Card: 'ကတ်',
   'Note or picture': 'မှတ်စုသို့မဟုတ်ပုံ',
@@ -242,6 +260,11 @@ export const my: Dictionary = {
   Unpin: 'ပင်ဖြုတ်',
   Close: 'ပိတ်',
   'Close pinned tab?': 'ပင်ထိုးထားသောတဘ်ကို ပိတ်မလား?',
+  'Save changes to {name}?': '{name} ရှိ ပြောင်းလဲမှုများကို သိမ်းမလား?',
+  'Save changes to these tabs?': 'ဤတဘ်များရှိ ပြောင်းလဲမှုများကို သိမ်းမလား?',
+  'Unsaved words go to Recently deleted.':
+    'မသိမ်းရသေးသော စာလုံးများ မကြာသေးမီက ဖျက်ထားသည်များ သို့ ရောက်သွားမည်။',
+  'Don’t save': 'မသိမ်းပါ',
   'Close others': 'အခြားတဘ်ပိတ်',
   'Close tabs to the right': 'ညာဘက်ရှိ တဘ်များ ပိတ်',
   'Close tabs to the left': 'ဘယ်ဘက်ရှိ တဘ်များ ပိတ်',
@@ -1154,6 +1177,7 @@ export const my: Dictionary = {
   'Double-click to write': 'ရေးရန် နှစ်ချက်နှိပ်ပါ',
   'Another colour': 'အခြားအရောင်',
   'Turn into a note': 'မှတ်စုအဖြစ် ပြောင်းပါ',
+  Arrange: 'စီစဉ်ရန်',
   'Bring to front': 'အရှေ့ဆုံးသို့ ယူပါ',
   'Bring forward': 'ရှေ့သို့ယူပါ',
   'Send backward': 'နောက်သို့ပို့ပါ',
@@ -1244,6 +1268,9 @@ export const my: Dictionary = {
   Unstable: 'မတည်ငြိမ်',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'တည်ငြိမ်သည် ထုတ်လွှင့်ပြီးဗားရှင်းများကို လိုက်သည်၊ မတည်ငြိမ်သည် edge build များကို လိုက်၍ ပျက်နိုင်သည်။',
+  'Web version': 'ဝဘ်ဗားရှင်း',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'တည်ငြိမ်သည် ထုတ်လွှင့်ပြီး ဝဘ်အက်ပ်ဖြစ်သည်၊ မတည်ငြိမ်သည် နောက်ဆုံး build ဖြစ်၍ ပျက်နိုင်သည်။',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'သွင်းပါ',
@@ -1571,8 +1598,6 @@ export const my: Dictionary = {
   // Web tabs
   Reload: 'ပြန်ဖွင့်ပါ',
   'Hard reload': 'အပြည့်အဝ ပြန်ဖွင့်ပါ',
-  'Clip this page': 'ဤစာမျက်နှာသိမ်းပါ',
-  'Clip the link': 'လင့်သိမ်းပါ',
   'Open in the browser': 'ဘရောက်ဇာတွင်ဖွင့်ပါ',
   'Show it here': 'ဤတွင်ပြပါ',
   Website: 'ဝဘ်ဆိုက်',
@@ -1707,7 +1732,6 @@ export const my: Dictionary = {
   'New tab': 'တဘ် အသစ်',
   'Full screen': 'မျက်နှာပြင် အပြည့်',
   'Print…': 'ပုံနှိပ်ပါ…',
-  'Save page': 'စာမျက်နှာ သိမ်းရန်',
   'Share…': 'မျှဝေပါ…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1767,6 +1791,15 @@ export const my: Dictionary = {
   'Bring all to front': 'အားလုံးကို ရှေ့သို့ယူရန်',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'ကူးယူမှုကို ပြန်ဖျက်',
+  'Devices with your AI vault': 'သင်၏ AI သေတ္တာရှိသော စက်များ',
+  'This device': 'ဤစက်',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'ထိုစက်သည် သင်၏ AI အကောင့်များကို မဖတ်နိုင်တော့ဘဲ အခြားစက်များ သော့အသစ် ရမည်။',
+  'Also remove this device from your AI vault?': 'ဤစက်ကို သင်၏ AI သေတ္တာမှလည်း ဖယ်မလား။',
+  'Remove and sign out': 'ဖယ်ပြီး အကောင့်ထွက်',
+  'Undo making {name}': '{name} ဖန်တီးမှုပြန်ဖျက်',
+  'Undo the deletion': 'ဖျက်မှုကို ပြန်ပါ',
+  'Undo the move': 'ရွှေ့မှုကို ပြန်ပါ',
   'Redo the last file change': 'နောက်ဆုံးဖိုင်ပြောင်းလဲမှု ပြန်လုပ်',
   'Select down': 'အောက်သို့ ရွေး',
   'Select up': 'အထက်သို့ ရွေး',
@@ -1864,6 +1897,11 @@ export const my: Dictionary = {
   Max: 'အများဆုံး',
   Fast: 'မြန်',
   Send: 'ပို့ရန်',
+  'Send feedback': 'အကြံပြုချက် ပို့ရန်',
+  'Describe the issue': 'ပြဿနာကို ဖော်ပြပါ',
+  Sent: 'ပို့ပြီး',
+  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
+    'ဤအစီရင်ခံစာတွင် သင့်ဖော်ပြချက်၊ Orden ဗားရှင်း၊ သင့်ပလက်ဖောင်းနှင့် အက်ပ်၏ မကြာသေးမီ log ပါဝင်သည်။ သင့်မှတ်စုများ ဘယ်တော့မှ မပါဝင်ပါ။',
   'Send into the running answer': 'လုပ်ဆောင်နေသော အဖြေထဲ ပို့ရန်',
   'Stop the answer': 'အဖြေကို ရပ်ရန်',
   'Open every step': 'အဆင့်တိုင်း ဖွင့်ရန်',
@@ -1983,6 +2021,7 @@ export const my: Dictionary = {
   'Without your logins': 'သင့်ဝင်ရောက်မှုများ မပါဘဲ',
   'Calls a minute': 'တစ်မိနစ်လျှင် ခေါ်ဆိုမှု',
   'Pages a minute': 'တစ်မိနစ်လျှင် စာမျက်နှာ',
+  'Browser memory limit': 'ဘရောက်ဇာ မှတ်ဉာဏ် ကန့်သတ်ချက်',
   '{count} calls': 'ခေါ်ဆိုမှု {count} ခု',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it

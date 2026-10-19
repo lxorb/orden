@@ -162,12 +162,27 @@ const present = StateField.define<Present>({
   create: () => nobody,
   update: (held, transaction) => {
     let told = held
+    // A caret is somebody else's word for where they are, and may say a place past the
+    // end of this text - a room whose words are not yet this note's, say. Mapping such a
+    // place threw on every keystroke, and the keystroke never reached the note (#542),
+    // so each is brought inside the text it is mapped through first, and inside the
+    // text it is set against.
+    const within = (at: number, length: number) => Math.max(0, Math.min(at, length))
+    const before = transaction.startState.doc.length
     const moved = (peers: readonly Peer[]) =>
       peers.map((peer) => ({
         ...peer,
-        head: transaction.changes.mapPos(peer.head),
-        anchor: transaction.changes.mapPos(peer.anchor),
+        head: transaction.changes.mapPos(within(peer.head, before)),
+        anchor: transaction.changes.mapPos(within(peer.anchor, before)),
       }))
+    const placed = (peers: readonly Peer[]) => {
+      const length = transaction.state.doc.length
+      return peers.map((peer) => ({
+        ...peer,
+        head: within(peer.head, length),
+        anchor: within(peer.anchor, length),
+      }))
+    }
 
     // The words moved under the carets. Mapping is what keeps a remote caret in
     // the same place in the text while somebody types above it, and it costs the
@@ -181,8 +196,8 @@ const present = StateField.define<Present>({
     }
 
     for (const effect of transaction.effects) {
-      if (effect.is(setPeers)) told = { ...told, peers: effect.value }
-      else if (effect.is(setAgents)) told = { ...told, agents: effect.value }
+      if (effect.is(setPeers)) told = { ...told, peers: placed(effect.value) }
+      else if (effect.is(setAgents)) told = { ...told, agents: placed(effect.value) }
       else continue
 
       told = { ...told, marks: marksFor(transaction.state, told.peers, told.agents) }

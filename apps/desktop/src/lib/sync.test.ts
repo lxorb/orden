@@ -357,8 +357,15 @@ vi.mock('./api', async (importOriginal) => ({
  *  join. What the pass asks of them is one question - whether a room is carrying this
  *  note - and a test answers it for itself, so a room can settle in the middle of a
  *  pass the way one does when somebody stops typing. */
+/** The notes a pass asked to let go of their room before putting a file into them. */
+const lettingGo = vi.hoisted(() => [] as string[])
+
 vi.mock('./rooms.svelte', () => ({
-  rooms: { carries: (noteId: string) => fake.rooms.has(noteId), present: {} },
+  rooms: {
+    carries: (noteId: string) => fake.rooms.has(noteId),
+    letGoUnreached: (noteId: string) => lettingGo.push(noteId),
+    present: {},
+  },
 }))
 
 function memoryStorage(): Storage {
@@ -607,6 +614,19 @@ describe('what arrives from the account', () => {
     fake.writeRemoteNote('s-Account', 'Hello.md', '# Hello from somewhere else')
     await sync.pass()
 
+    expect(workspace.active?.doc).toBe('# Hello from somewhere else')
+  })
+
+  test('lets go of a room out of reach before the file goes into the tab (#541)', async () => {
+    await readingWhatTheAccountSent()
+    lettingGo.length = 0
+
+    // The room is not carrying the note - its socket is down - but the note may still be
+    // joined to the room's text; the file must not go into that as this device's typing.
+    fake.writeRemoteNote('s-Account', 'Hello.md', '# Hello from somewhere else')
+    await sync.pass()
+
+    expect(lettingGo).toHaveLength(1)
     expect(workspace.active?.doc).toBe('# Hello from somewhere else')
   })
 

@@ -246,7 +246,11 @@ function drawnNode(
 
   const wash = node.color === undefined ? '' : ` fill-opacity="0.09"`
   const paper = node.color === undefined ? (palette.surface ?? '#fff') : line
-  const card = `<rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" rx="8" fill="${paper}"${wash} stroke="${line}"/>`
+  // Words with no card round them are drawn as the words alone (#421).
+  const card =
+    node.type === 'text' && node.bare
+      ? ''
+      : `<rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" rx="8" fill="${paper}"${wash} stroke="${line}"/>`
 
   if (plain) {
     return `<g>${card}${plainCard(saidBy(node), box, palette)}</g>`
@@ -458,7 +462,9 @@ export async function exportCanvasPng(drawing: Drawing) {
 }
 
 /** The plane on a page, through the same printer a note goes through. */
-export async function exportCanvasPdf(drawing: Drawing) {
+/** The plane as one sheet of paper: the page the PDF is printed from, and the page
+ *  printing puts in front of the print engine, so the two cannot differ. */
+async function sheetOf(drawing: Drawing) {
   const svg = await readySvg(drawing)
   const size = /viewBox="(-?\d+) (-?\d+) (\d+) (\d+)"/.exec(svg)
   const width = Number(size?.[3] ?? 800)
@@ -468,10 +474,21 @@ export async function exportCanvasPdf(drawing: Drawing) {
   // goes on one sheet of its own size rather than being cut across A4.
   const html = `<!doctype html><html><head><meta charset="utf-8"><title>${escapeAll(stem(drawing.name))}</title><style>@page{size:${width}px ${height}px;margin:0}html,body{margin:0;padding:0}svg{display:block}</style></head><body>${svg}</body></html>`
 
+  return { html, page: { width: width / 96, height: height / 96, margin: 0, landscape: false } }
+}
+
+/** The plane on paper, through whatever print dialog the machine has: the sheet the
+ *  PDF export prints from, handed to the print engine instead of to a file (#350). */
+export async function printCanvas(drawing: Drawing) {
+  const { html, page } = await sheetOf(drawing)
+  await printInFrame(html, page)
+}
+
+export async function exportCanvasPdf(drawing: Drawing) {
+  const { html, page } = await sheetOf(drawing)
+
   const native = isDesktop && (await invoke<boolean>('pdf_supported').catch(() => false))
   const target = native ? await chooseTarget(drawing.name, 'pdf', 'PDF') : null
-
-  const page = { width: width / 96, height: height / 96, margin: 0, landscape: false }
 
   if (target) {
     // The print dialog can still save the file, so nobody is left with nothing -

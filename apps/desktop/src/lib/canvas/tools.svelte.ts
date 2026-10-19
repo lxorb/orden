@@ -17,6 +17,23 @@ import { nibFor, pens } from './pens.svelte'
 import { DEFAULT_INK } from './palette'
 import { type Tool } from './pointer'
 
+/** How long a tool's key may be down and still be a tap, in milliseconds: a key held
+ *  longer, or used while it is down, is held. */
+export const HOLD = 250
+
+/** The tools whose key, held, is the tool only for as long as it is down (#349). The
+ *  lasso alone: a selection is caught on the way to doing something else with the
+ *  hand. */
+const SPRUNG: ReadonlySet<Tool> = new Set<Tool>(['lasso'])
+
+/** A key as the hold reads it: which physical key, whether it is the keyboard
+ *  repeating, and when. */
+interface Held {
+  code: string
+  repeat?: boolean
+  timeStamp: number
+}
+
 class Tools {
   /** What a press on the plane means. */
   which = $state<Tool>('select')
@@ -34,6 +51,39 @@ class Tools {
    *  than this store's: it opens that tool's own panel, and the tool stays put. */
   choose(tool: Tool) {
     this.which = tool
+  }
+
+  /** A sprung tool's key down, and what was in hand before it. */
+  private spring: { code: string; was: Tool; at: number; used: boolean } | null = null
+
+  /** A tool's own key, pressed. Tapped it puts the tool in hand as a button does;
+   *  held, the lasso is in hand only until the key comes up, and then the tool before
+   *  it is back - Photoshop's spring-loaded keys, on the lasso's own key, so moving
+   *  the key in Settings › Keyboard moves both (#349). */
+  pressed(tool: Tool, key: Held) {
+    if (key.repeat) return
+    this.spring =
+      SPRUNG.has(tool) && this.which !== tool
+        ? { code: key.code, was: this.which, at: key.timeStamp, used: false }
+        : null
+    this.choose(tool)
+  }
+
+  /** Something done with the tool while its key is still down, which makes the press
+   *  a hold however short it was. */
+  used() {
+    if (this.spring) this.spring.used = true
+  }
+
+  /** A key let go of: a sprung tool's key, held, hands back the tool before it. What
+   *  it caught stays caught. */
+  released(key: Held) {
+    const spring = this.spring
+    if (spring?.code !== key.code) return
+
+    this.spring = null
+    if (!SPRUNG.has(this.which)) return
+    if (spring.used || key.timeStamp - spring.at >= HOLD) this.which = spring.was
   }
 
   /** A kind of nib chosen, which also turns the tool to drawing: picking a

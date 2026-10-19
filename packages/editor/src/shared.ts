@@ -31,7 +31,7 @@ import {
   Transaction,
   type TransactionSpec,
 } from '@codemirror/state'
-import type { Command } from '@codemirror/view'
+import { type Command, EditorView } from '@codemirror/view'
 import { fold } from '@nib/rooms/fold'
 import { external } from './external'
 
@@ -41,6 +41,8 @@ import { external } from './external'
 export interface DocView {
   readonly state: EditorState
   dispatch(spec: TransactionSpec): void
+  /** Whether an input method is composing in it: a CodeMirror view says so. */
+  readonly composing?: boolean
 }
 
 /** Which document each view is on. One entry per view, whatever else is holding
@@ -235,6 +237,17 @@ export class SharedDoc {
    *  words kept here weigh what was typed rather than the note times four hundred. */
   private recent: { before: Text; changes: ChangeSet; by: Made; at: number }[] = []
 
+  /** Words another device wrote that arrived while an input method was composing in
+   *  one of the views, held until the composition is over (#544).
+   *
+   *  CodeMirror 6 leaves the half-composed characters behind when a change lands at
+   *  the composition or inside its word (`hello worldZZにほ日本`), and a room is what
+   *  makes that reachable. So nothing arrives while somebody composes: the changes wait
+   *  here as one set on the words as they were, carried past everything typed in the
+   *  meantime, and what is typed meanwhile goes to the room carried past them, since
+   *  the room already has them. Taken in at the end of the composition. */
+  private held: ChangeSet | null = null
+
   /** Whoever wants to hear every change: see `listen`. */
   private readonly listeners = new Set<(heard: Heard) => void>()
 
@@ -379,6 +392,7 @@ export class SharedDoc {
   leave(view: DocView) {
     this.views.delete(view)
     if (onDocument.get(view) === this) onDocument.delete(view)
+    this.settle()
   }
 
   /** A change a view made. Applied to the document and to the other views.
@@ -394,6 +408,7 @@ export class SharedDoc {
     this.carry(changes, from)
     this.made(changes)
     this.took(made, 'reader')
+    this.settle()
   }
 
   /** Text put into the document from outside: a version restored, a note a sync
@@ -480,7 +495,16 @@ export class SharedDoc {
    *  it. And it is kept out of the history: pressing undo takes back what you
    *  wrote, never what somebody else did, which is what undo has to mean when
    *  two people are writing at once. */
-  arrived(changes: readonly Replacement[]) {
+  arrived(changes: readonly Replacement[] | ChangeSet) {
+    if (this.held || this.composing()) {
+      // On the words the room has, which are these and what is held.
+      const length = this.held ? this.held.newLength : this.state.doc.length
+      const set = changes instanceof ChangeSet ? changes : ChangeSet.of(changes, length)
+      this.held = this.held ? this.held.compose(set) : set
+      this.settle()
+      return
+    }
+
     const made = this.state.update({
       changes,
       annotations: Transaction.addToHistory.of(false),
@@ -657,10 +681,33 @@ export class SharedDoc {
   }
 
   /** A change made here, reported once: to the app, which writes the words down,
-   *  and to the room, which carries them to the other devices. */
+   *  and to the room, which carries them to the other devices. While words from the
+   *  room are held, the room hears the change as it falls after them, and they are
+   *  carried past it; see `held`. */
   private made(changes: ChangeSet) {
-    this.onLocal?.(changes)
+    if (this.held) {
+      const theirs = this.held
+      this.held = theirs.map(changes, true)
+      this.onLocal?.(changes.map(theirs))
+    } else {
+      this.onLocal?.(changes)
+    }
     this.onChange?.(this.state.doc)
+  }
+
+  /** Whether an input method is composing in any view of this note. */
+  private composing(): boolean {
+    for (const view of this.views) if (view.composing) return true
+    return false
+  }
+
+  /** The words held while somebody composed, taken in once nobody is. Asked after
+   *  every change and at the end of every composition; see `sharing`. */
+  settle() {
+    if (!this.held || this.composing()) return
+    const held = this.held
+    this.held = null
+    if (!held.empty) this.arrived(held)
   }
 
   /** One change into every view except the one it came from.
@@ -697,6 +744,14 @@ export function sharing(): Extension {
     EditorState.transactionExtender.of((transaction) =>
       sharedOf(transaction.startState) ? { annotations: Transaction.addToHistory.of(false) } : null,
     ),
+    // The words another device wrote while this one composed, taken in once the
+    // composition is over: after the view has had the end of it, since it is still
+    // composing while the event is handled. See `held` on SharedDoc.
+    EditorView.domEventHandlers({
+      compositionend: (_event, view) => {
+        setTimeout(() => documentOf(view)?.settle(), 0)
+      },
+    }),
   ]
 }
 

@@ -25,7 +25,14 @@
   import { roving } from './roving'
   import { GRAPH_MARK, SEARCH_MARK } from './panel-marks'
   import { rowName } from './note-name'
-  import { carryBookmark, draggedBookmark } from './drag-paths'
+  import {
+    carried,
+    carriedNothing,
+    carriedRows,
+    carryBookmark,
+    draggedBookmark,
+    isTreeDrag,
+  } from './drag-paths'
   import { insideSpace, samePath } from './space-paths'
   import { type Bookmark, isTile, sameBookmark } from './workspace/bookmarks.svelte'
   import type { Entry } from './workspace.svelte'
@@ -136,12 +143,18 @@
     workspace.device.essentialTiles ? drawn.filter((row) => !isTile(row.mark)) : drawn,
   )
 
-  /** A tab carried out of the strip that could be a first tile, which the grid keeps
-   *  an empty place for while there is none. */
+  /** A tab carried out of the strip that could be a first tile, or a file carried out of
+   *  the list (#412), which the grid keeps an empty place for while there is none. */
   const offered = $derived.by(() => {
-    if (!workspace.device.essentialTiles) return false
+    if (!workspace.device.essentialTiles || !workspace.panes.dragging) return false
+    if (workspace.panes.dragging.tabId === null) {
+      return (
+        !!workspace.panes.dragging.upward &&
+        carried().some((one) => workspace.entryAt(one)?.is_dir === false)
+      )
+    }
 
-    const id = workspace.panes.dragging?.tabId
+    const id = workspace.panes.dragging.tabId
     const path = id ? workspace.tabs.find((one) => one.id === id)?.path : null
     const mark = path ? workspace.bookmarks.forEntry({ path, is_dir: false }) : null
     return mark !== null && !workspace.bookmarks.has(mark)
@@ -161,6 +174,21 @@
     if (workspace.panes.dragging) reach()
   })
   const landing = $derived(hands?.landing ?? null)
+
+  /** Rows carried over the grid before `hands` arrived: droppable, placed once it has. */
+  function early(event: DragEvent) {
+    if (!isTreeDrag(event.dataTransfer)) return
+    event.preventDefault()
+    reach()
+  }
+
+  function late(event: DragEvent) {
+    if (!isTreeDrag(event.dataTransfer)) return
+    event.preventDefault()
+    const rows = carriedRows(event.dataTransfer)
+    const at = workspace.bookmarks.list.length
+    void reckoning().then((one) => one.keepRows(rows, at, (path) => byPath.get(path)))
+  }
 
   /** Which row is being dragged. Kept here as well as in the drag itself
    *  because what a drag carries is sealed until it is dropped: while it is
@@ -220,13 +248,14 @@
 
   function startDrag(event: DragEvent, row: Row) {
     reach()
-    carryBookmark(event.dataTransfer, row.at)
+    carryBookmark(event.dataTransfer, row.at, isTile(row.mark))
     dragging = row.at
   }
 
   function endDrag() {
     landing?.clear()
     dragging = null
+    carriedNothing()
   }
 
   function over(event: DragEvent, row: Row) {
@@ -369,14 +398,16 @@
         data-bookmark-drop
         aria-label={t('Essentials')}
         onkeydown={(event) => hands?.gridKey(event)}
-        ondragover={(event) => hands?.overGrid(event)}
+        ondragover={(event) => (hands ? hands.overGrid(event) : early(event))}
         ondragleave={(event) => hands?.leaving(event)}
-        ondrop={(event) => hands?.dropOnGrid(event, (path) => byPath.get(path))}
+        ondrop={(event) =>
+          hands ? hands.dropOnGrid(event, (path) => byPath.get(path)) : late(event)}
       >
         {#each tiles as tile (`${tile.mark.kind}:${tile.mark.path}`)}
           <li
             animate:flip={{ duration: dur(150), easing: cubicOut }}
             in:scale={{ start: 0.9, duration: dur(150), easing: cubicOut }}
+            out:scale={{ start: 0.9, duration: dur(150), easing: cubicOut }}
           >
             <BookmarkTile
               path={tile.path ?? ''}

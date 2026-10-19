@@ -42,6 +42,13 @@ import { duplicateTab, moveToOtherPane, renameFromTab } from './ops'
 import { spaceEntry } from './to-space'
 import { chosen, duplicateMany, moveManyToOtherPane, pinMany } from './picking.svelte'
 
+/** Move to space, on a touch screen only (#303). Under a pointer a tab is carried onto
+ *  the space in the switcher, and the palette's Move to space asks which; a held finger
+ *  opens this menu where a pointer would start the carry. */
+function movedToSpace(tabs: readonly Tab[]): MenuEntry[] {
+  return viewport.touch ? spaceEntry(tabs) : []
+}
+
 /** An agent acting in the tab (docs/agent-native.md 7.3, 9.5): Stop stops that agent,
  *  as its row in the activity panel does, and Resume lets it go on. Nothing hands the
  *  tab to anybody: it is the reader's and the agent's at once. First, because while an
@@ -330,7 +337,7 @@ function pickMenu(tabs: readonly Tab[], paneId: string): MenuEntry[] {
       run: () => pinMany(tabs),
     },
     ...bookmarkAll(paths),
-    ...spaceEntry(tabs),
+    ...movedToSpace(tabs),
     DIVIDER,
     {
       label: t('Close'),
@@ -403,7 +410,7 @@ export function tabMenu(tab: Tab, paneId: string): MenuEntry[] {
     ...shellEntries(tab),
     ...tabEntries(tab),
     ...inListEntry(tab),
-    ...spaceEntry([tab]),
+    ...movedToSpace([tab]),
     // Putting away what the tab shows, which closes it; see archiving.ts.
     ...archiveEntry(tab.path),
     DIVIDER,

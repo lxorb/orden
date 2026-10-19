@@ -3,8 +3,8 @@
  *  A new tab is a tab and nothing else - no file, no row in the list - however much is
  *  written in it, until it is saved: Ctrl+S or its dot, which ask where and under what
  *  name, or the tab dropped on a row of the file list. Its words are in the session
- *  meanwhile, the way VS Code's hot exit keeps an untitled editor, and closing it asks
- *  nothing. Emil, 2026-09-30: *"When I open a new tab or note on nib it should be in an
+ *  meanwhile, the way VS Code's hot exit keeps an untitled editor, and closing it with
+ *  words in it asks whether to save them (closing-unsaved.ts, #359). Emil, 2026-09-30: *"When I open a new tab or note on nib it should be in an
  *  unsaved state (with no saving location) and there should be a dot behind it
  *  (indicating that). For web tabs there should not be the dot behind them if they're
  *  unsaved."* Pure: when and where are the workspace's and saving.svelte.ts's. */

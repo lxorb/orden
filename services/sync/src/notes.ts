@@ -4,7 +4,7 @@ import { mergeCanvasFiles } from '@nib/markdown/canvas-merge'
 import { isCanvasTarget } from '@nib/markdown/links'
 import { conflictPath, numbered } from '@nib/markdown/paths'
 import { objectBody, readBody } from './body'
-import { readFront, titleFrom, writeFront } from './blog/front'
+import { FRONT_REV, readFront, titleFrom, writeFront } from './blog/front'
 import { rememberOldPaths } from './blog/paths'
 import { keepWords } from './blog/words'
 import { linkPointer } from './chats/pointer'
@@ -108,18 +108,36 @@ export function noteKey(spaceId: string, noteId: string): string {
   return `spaces/${spaceId}/${noteId}`
 }
 
-/** The next cursor value for a space. Strictly increasing, so a client can ask
- *  for "everything after N" and never miss a write that shared a millisecond. */
-export async function nextSeq(env: Env, spaceId: string): Promise<number> {
-  const row = await env.DB.prepare(
-    `insert into space_cursor (space_id, next) values (?, 2)
-     on conflict(space_id) do update set next = next + 1
-     returning next - 1 as seq`,
-  )
-    .bind(spaceId)
-    .first<{ seq: number }>()
+/** The number `atNextSeq` took, as SQL, for the statement it writes the row with to put
+ *  where the row's `seq` goes. Names the space as `?1`, which every such statement binds
+ *  first. */
+export const TAKEN_SEQ = '(select next - 1 from space_cursor where space_id = ?1)'
 
-  return row?.seq ?? 1
+/** A row written at the space's next cursor value. Strictly increasing, so a client
+ *  can ask for "everything after N" and never miss a write that shared a millisecond.
+ *
+ *  The number is taken and the row written in one transaction (#470). Taken first and
+ *  written after, in two requests, a write that took N and one that took N + 1 could
+ *  land the other way round, and a device that read the feed in between was handed a
+ *  cursor of N + 1 and never asked about N again. `write` is the statement, with
+ *  `TAKEN_SEQ` where the number goes and the space bound as `?1`. A write that changes
+ *  nothing leaves a number nobody holds, which a feed passes over and loses nothing by.
+ *  Answers the number and how many rows the write changed. */
+export async function atNextSeq(
+  env: Env,
+  spaceId: string,
+  write: D1PreparedStatement,
+): Promise<{ seq: number; changes: number }> {
+  const [, written, taken] = await env.DB.batch([
+    env.DB.prepare(
+      `insert into space_cursor (space_id, next) values (?1, 2)
+       on conflict(space_id) do update set next = next + 1`,
+    ).bind(spaceId),
+    write,
+    env.DB.prepare('select next - 1 as seq from space_cursor where space_id = ?1').bind(spaceId),
+  ])
+  const seq = (taken?.results[0] as { seq?: number } | undefined)?.seq ?? 1
+  return { seq, changes: written?.meta.changes ?? 0 }
 }
 
 /** Puts a note in a space that has nothing at that path yet: the bytes in R2,
@@ -151,7 +169,8 @@ export async function addNote(
     id: newId(),
     space_id: spaceId,
     path,
-    seq: await nextSeq(env, spaceId),
+    // Taken as the row is written, below.
+    seq: 0,
     version: 1,
     updated_at: now(),
     deleted: 0,
@@ -164,22 +183,27 @@ export async function addNote(
   // The row first, then the bytes, for the reason `saveNote` gives: a space holds
   // one live note per path, so this is the write that can be refused, and bytes
   // written before it would be bytes under an id no row ever names.
-  await env.DB.prepare(
-    `insert into notes (id, space_id, path, seq, version, updated_at, deleted, size, hash, front)
-     values (?, ?, ?, ?, ?, ?, 0, ?, ?, ?)`,
-  )
-    .bind(
-      note.id,
-      note.space_id,
-      note.path,
-      note.seq,
-      note.version,
-      note.updated_at,
-      note.size,
-      note.hash,
-      note.front,
+  note.seq = (
+    await atNextSeq(
+      env,
+      spaceId,
+      env.DB.prepare(
+        `insert into notes (id, space_id, path, seq, version, updated_at, deleted, size, hash, front,
+                            front_rev)
+         values (?2, ?1, ?3, ${TAKEN_SEQ}, ?4, ?5, 0, ?6, ?7, ?8, ?9)`,
+      ).bind(
+        note.space_id,
+        note.id,
+        note.path,
+        note.version,
+        note.updated_at,
+        note.size,
+        note.hash,
+        note.front,
+        FRONT_REV,
+      ),
     )
-    .run()
+  ).seq
 
   await env.NOTES.put(noteKey(spaceId, note.id), content)
 
@@ -336,12 +360,12 @@ export async function saveNote(
   const hash = await sha256(content)
   if (hash === note.hash && path === note.path) return note
 
-  const seq = await nextSeq(env, note.space_id)
   const words = hash !== note.hash
   const updated: Note = {
     ...note,
     path,
-    seq,
+    // Taken as the row is written, below.
+    seq: 0,
     version: note.version + 1,
     updated_at: now(),
     deleted: 0,
@@ -350,7 +374,7 @@ export async function saveNote(
     front: writeFront(content),
     // What sync v2's feed says about the words moving, and who moved them; see
     // sync2/tree.ts.
-    doc_seq: words ? seq : (note.doc_seq ?? null),
+    doc_seq: words ? 0 : (note.doc_seq ?? null),
     doc_by: words ? (saving.docBy ?? null) : (note.doc_by ?? null),
     updated_by: saving.docBy ?? null,
   }
@@ -362,29 +386,37 @@ export async function saveNote(
   // And the epoch: once a note has a document its room is the only thing that writes
   // it (docs/sync-v2.md section 5.3), so a writer that read the note before it had one
   // loses the claim as surely as one that read an older version.
-  const written = await env.DB.prepare(
-    `update notes set path = ?, seq = ?, version = ?, updated_at = ?, deleted = 0, size = ?,
-                      hash = ?, front = ?, doc_seq = ?, doc_by = ?, updated_by = ?
-      where id = ? and version = ? and epoch = ?`,
-  )
-    .bind(
+  const written = await atNextSeq(
+    env,
+    note.space_id,
+    env.DB.prepare(
+      `update notes set path = ?2, seq = ${TAKEN_SEQ}, version = ?3, updated_at = ?4, deleted = 0,
+                        size = ?5, hash = ?6, front = ?7, front_rev = ?8,
+                        doc_seq = case when ?9 then ${TAKEN_SEQ} else ?10 end, doc_by = ?11,
+                        updated_by = ?12
+        where id = ?13 and version = ?14 and epoch = ?15`,
+    ).bind(
+      note.space_id,
       updated.path,
-      updated.seq,
       updated.version,
       updated.updated_at,
       updated.size,
       updated.hash,
       updated.front,
-      updated.doc_seq ?? null,
+      FRONT_REV,
+      words ? 1 : 0,
+      note.doc_seq ?? null,
       updated.doc_by ?? null,
       updated.updated_by ?? null,
       note.id,
       note.version,
       saving.epoch ?? note.epoch ?? 0,
-    )
-    .run()
+    ),
+  )
 
-  if (!written.meta.changes) return null
+  if (!written.changes) return null
+  updated.seq = written.seq
+  if (words) updated.doc_seq = written.seq
 
   await env.NOTES.put(noteKey(note.space_id, note.id), content)
 
@@ -847,12 +879,15 @@ notes.delete('/notes/:id', async (context) => {
   }
 
   const at = now()
-  const seq = await nextSeq(context.env, note.space_id)
-  await context.env.DB.prepare(
-    'update notes set deleted = 1, deleted_at = ?, seq = ?, version = version + 1, updated_at = ? where id = ?',
+  await atNextSeq(
+    context.env,
+    note.space_id,
+    context.env.DB.prepare(
+      `update notes set deleted = 1, deleted_at = ?2, seq = ${TAKEN_SEQ}, version = version + 1,
+                        updated_at = ?2
+        where id = ?3`,
+    ).bind(note.space_id, at, note.id),
   )
-    .bind(at, seq, at, note.id)
-    .run()
 
   return context.json({ ok: true })
 })

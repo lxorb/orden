@@ -129,7 +129,8 @@ def drive(browser: Browser) -> None:
     lines = [line for line in text.splitlines() if line.strip()]
     if not lines or lines[0] != "- [ ] Call mum tomorrow #family 🔺":
         wrong(f"the first task is {lines[:1]}, not the words kept and the priority written")
-    if len(lines) < 2 or not lines[1].startswith("- [ ] Pay rent ⏫ 📅 "):
+    # The day said is the day it starts: `🛫` (#371).
+    if len(lines) < 2 or not lines[1].startswith("- [ ] Pay rent ⏫ 🛫 "):
         wrong(f"the second task is {lines[1:2]}, not Pay rent with its day and priority")
 
     # And a task's fields are chips in the note, with the caret elsewhere.

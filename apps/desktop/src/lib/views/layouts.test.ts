@@ -72,7 +72,8 @@ function kitOf(base: Base, rows: readonly Row[], spec = {}) {
 }
 
 const TASKS = [
-  taskRow('Errands.md', '- [ ] Call the bank [time:: 16:00] ⏫ 📅 2026-10-01', 2, {
+  // Overdue by its deadline (#371).
+  taskRow('Errands.md', '- [ ] Call the bank [time:: 16:00] [deadline:: 2026-10-01] ⏫', 2, {
     section: ['Errands'],
   }),
   taskRow('Errands.md', '  - [ ] Find the card', 3, { section: ['Errands'], parent: 2, indent: 2 }),

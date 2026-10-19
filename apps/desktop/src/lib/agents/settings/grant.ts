@@ -74,17 +74,20 @@ export const ASKS: readonly { category: Category; needs: readonly Scope[] }[] = 
 ]
 
 /** The limits a slider may set: the crate's defaults sit inside each. Eight tabs is the
- *  most every agent together keeps open (6.4). */
+ *  most every agent together keeps open (6.4). Memory is the browser's, in MB, past
+ *  which the agent opens no tab: 0, where it starts, is no ceiling at all, because a
+ *  machine's memory is its owner's to spend (#333). */
 export const LIMITS = {
   tabs: { min: 1, max: 8, step: 1 },
   calls: { min: 60, max: 1200, step: 60 },
   navigations: { min: 10, max: 300, step: 10 },
+  memory: { min: 0, max: 32768, step: 1024 },
 } as const
 
 export type Limit = keyof typeof LIMITS
 
 /** The limits in the order the pane shows them. */
-export const LIMIT_NAMES: readonly Limit[] = ['tabs', 'calls', 'navigations']
+export const LIMIT_NAMES: readonly Limit[] = ['tabs', 'calls', 'navigations', 'memory']
 
 const holds = (scopes: readonly Scope[], scope: Scope) => scopes.includes(scope)
 
@@ -249,7 +252,7 @@ export function ownGrant(id: string, client: string, created: number): Grant {
     asks: {},
     always: {},
     programs: [],
-    limits: { tabs: 4, calls: 600, navigations: 60 },
+    limits: { tabs: 4, calls: 600, navigations: 60, memory: 0 },
     created,
   }
 }

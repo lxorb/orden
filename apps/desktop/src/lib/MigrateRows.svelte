@@ -10,7 +10,10 @@
    *
    *  Obsidian on a desktop opens on the vaults Obsidian lists, the way Arc opens on
    *  the browsers it found; see migrating.svelte.ts. Zen, the browser, the same way
-   *  with its profiles, where it keeps more than one. */
+   *  with its profiles, where it keeps more than one. And a row for every other
+   *  browser this desktop has a profile of - Firefox, Chrome, Edge, Brave, Chromium,
+   *  Vivaldi - asked as the rows are drawn, so a browser that is not there has no row. */
+  import { untrack } from 'svelte'
   import { t } from './i18n.svelte'
   import { migrating } from './migrating.svelte'
   import { takingOver } from './web/taking-over.svelte'
@@ -28,6 +31,8 @@
   const OBSIDIAN = 'Obsidian'
   const NOTION = 'Notion'
   const ZEN = 'Zen'
+
+  $effect(() => untrack(() => void migrating.findBrowsers()))
 </script>
 
 {#if migrating.vaults}
@@ -75,6 +80,32 @@
         type="button"
         disabled={migrating.working}
         onclick={() => void migrating.zenProfile(profile)}
+      >
+        {t('Import')}
+      </button>
+    </div>
+  {/each}
+
+  <div class="nib-setting">
+    <span class="name"></span>
+    <button
+      class="nib-button is-quiet is-soft"
+      type="button"
+      disabled={migrating.working}
+      onclick={() => migrating.back()}
+    >
+      {t('Back')}
+    </button>
+  </div>
+{:else if migrating.browserProfiles}
+  {#each migrating.browserProfiles as profile (profile.path)}
+    <div class="nib-setting">
+      <span class="name" title={profile.path}>{profile.name}</span>
+      <button
+        class="nib-button is-quiet is-soft"
+        type="button"
+        disabled={migrating.working}
+        onclick={() => void migrating.browserProfile(profile)}
       >
         {t('Import')}
       </button>
@@ -153,6 +184,20 @@
       </button>
     </div>
   {/if}
+
+  {#each migrating.browsers as found (found.browser)}
+    <div class="nib-setting">
+      <span class="name">{found.name}</span>
+      <button
+        class="nib-button is-quiet is-soft"
+        type="button"
+        disabled={migrating.working}
+        onclick={() => void migrating.browser(found)}
+      >
+        {t('Import')}
+      </button>
+    </div>
+  {/each}
 
   <div class="nib-setting">
     <span class="name">{t('Another app')}</span>

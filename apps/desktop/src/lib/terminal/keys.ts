@@ -19,18 +19,26 @@
  *    a word, which loses nothing;
  *  - on a Mac, every app command on Cmd, which no shell ever sees.
  *
- *  **Two keys are both**, and the terminal asks once which one is meant (Emil, issue
- *  #213): Ctrl+T, a new tab and the shell's swapped letters (and fzf's file finder), and
- *  Ctrl+N, the scratchpad and the shell's next line of history. Pressed in a terminal
- *  with nothing chosen yet, a small question puts the two side by side, and the answer
- *  is kept for every terminal from then on unless "Always ask" was ticked; Settings,
- *  General, Terminal changes it back. Only while the command is on Ctrl and a letter,
- *  which is a character the shell reads: Ctrl+Shift+X, the scratchpad's second key, is
- *  the app's as every other Ctrl+Shift is. See `TWO_WAYS` and two-ways.ts.
+ *  **Every app command on a key the shell reads is both**, and the terminal asks once
+ *  which one is meant (Emil, issues #213 and #426): Ctrl+T, a new tab and the shell's
+ *  swapped letters; Ctrl+N, the scratchpad and the next line of history; Ctrl+Space,
+ *  the space switcher and Emacs's mark; Ctrl+W, closing the tab and deleting a word; and
+ *  whichever other command sits - by default or because somebody put it there in
+ *  Settings - on Ctrl and a letter, Ctrl+Space, or another key that types a control
+ *  character (`shellReads`). Pressed in a terminal with nothing chosen yet, a small
+ *  question puts the two side by side, and the answer is kept, per command, for every
+ *  terminal from then on unless "Always ask" was ticked; Settings, General, Terminal
+ *  lists each answer and takes it back. **Ctrl+C is the interrupt**, always, and never
+ *  asked about. And a command put on any other key the program in the terminal reads -
+ *  a function key, which htop and mc are worked with, Alt and an arrow - is asked about
+ *  the same way rather than given to the program unasked. A key no shell reads -
+ *  Ctrl+Shift, Ctrl+Alt and an arrow, Cmd on a Mac - is the app's, as below. See
+ *  two-ways.ts.
  *
- *  **Ctrl+W goes to the shell** on Windows and Linux, as it does in VS Code, Windows
- *  Terminal and every emulator: a half-typed command losing its whole tab to a word
- *  deleted is the worst trade there is. Cmd+W closes the tab on a Mac.
+ *  Before #426 the keys asked about were a list of two, and Ctrl+W went to the shell
+ *  without a question, as it does in VS Code and Windows Terminal: a half-typed command
+ *  losing its tab to a word deleted is the worst trade there is - which is why it is a
+ *  question now rather than the app's. Cmd+W closes the tab on a Mac.
  *
  *  The terminal's own: copying with Ctrl+Shift+C (Cmd+C on a Mac; Ctrl+C is always the
  *  interrupt), pasting with Ctrl+Shift+V, Shift+Insert, Ctrl+V on Windows as Windows
@@ -97,10 +105,6 @@ const APP_KEYS = new Set([
   'app.region-previous',
 ])
 
-/** The app's commands that are asked about where their key is one the shell reads as
- *  well: see the top of this file. */
-export const TWO_WAYS = new Set(['app.new-kind', 'app.scratchpad'])
-
 /** Sent to nobody: see the top of this file. */
 const NEITHER = new Set(['app.close-window'])
 
@@ -146,14 +150,70 @@ export function routeKey(
   const zoom = ZOOM[command]
   if (zoom) return zoom
   if (NEITHER.has(command)) return 'shell'
-  if (TWO_WAYS.has(command)) return shellReads(event) ? 'ask' : 'app'
+  // A key the shell reads as a character of its own, which an app command is on as well:
+  // asked about, once. Ctrl+C is the interrupt whatever is on it.
+  if (shellReads(event)) return key === 'c' ? 'shell' : 'ask'
   if (APP_KEYS.has(command) || command.startsWith('app.note-')) return 'app'
   // The panes, on Ctrl+Alt and an arrow: a named key, so never AltGr typing anything.
   if (!mac && event.ctrlKey && event.altKey) return 'app'
   if (mac && event.metaKey) return 'app'
   if (!mac && event.ctrlKey && event.shiftKey) return 'app'
 
-  return 'shell'
+  // Any other key an app command is on is one the program in the terminal reads too: a
+  // function key htop and mc are worked with, Alt and an arrow a shell moves a word with,
+  // wherever somebody put the command. Asked about, once, like a control character.
+  return 'ask'
+}
+
+/** The arrows, Home and End, and F1 to F4, which xterm ends with a letter. */
+const LETTERED: Readonly<Record<string, string>> = {
+  ArrowUp: 'A',
+  ArrowDown: 'B',
+  ArrowRight: 'C',
+  ArrowLeft: 'D',
+  Home: 'H',
+  End: 'F',
+  F1: 'P',
+  F2: 'Q',
+  F3: 'R',
+  F4: 'S',
+}
+
+/** Which of those xterm sends as CSI rather than SS3 with nothing held. */
+const ARROWS = new Set(['ArrowUp', 'ArrowDown', 'ArrowRight', 'ArrowLeft', 'Home', 'End'])
+
+/** The keys xterm ends with a number and a tilde. */
+const NUMBERED: Readonly<Record<string, number>> = {
+  Insert: 2,
+  Delete: 3,
+  PageUp: 5,
+  PageDown: 6,
+  F5: 15,
+  F6: 17,
+  F7: 18,
+  F8: 19,
+  F9: 20,
+  F10: 21,
+  F11: 23,
+  F12: 24,
+}
+
+/** What the program in a terminal would have read for a key, typed once it has been
+ *  answered for the shell: xterm's sequences, with the modifiers as xterm numbers them
+ *  (1, plus Shift 1, Alt 2, Ctrl 4). Null for a key that types nothing. */
+export function typedBy(event: Keystroke): string | null {
+  const held = 1 + (event.shiftKey ? 1 : 0) + (event.altKey ? 2 : 0) + (event.ctrlKey ? 4 : 0)
+  const said = held > 1 ? `1;${String(held)}` : ''
+  const lettered = LETTERED[event.key]
+  if (lettered) {
+    if (held > 1) return `\x1b[${said}${lettered}`
+    return `${ARROWS.has(event.key) ? '\x1b[' : '\x1bO'}${lettered}`
+  }
+  const numbered = NUMBERED[event.key]
+  if (numbered) return `\x1b[${String(numbered)}${held > 1 ? `;${String(held)}` : ''}~`
+  if (shellReads(event)) return controlOf(event.key)
+  if (event.key.length !== 1) return null
+  return event.altKey ? `\x1b${event.key}` : event.key
 }
 
 /** Whether a key is the one a coding agent pastes a picture from the clipboard with:
@@ -173,15 +233,38 @@ export function imageKeyTyped(event: Keystroke): string {
   return event.altKey ? '\x1bv' : controlOf('v')
 }
 
-/** Whether a chord is one a shell reads as a character of its own: Ctrl and a letter
- *  and nothing else. Anything else an app command is on is a chord no shell has. */
-export function shellReads(event: Keystroke): boolean {
-  const bare = !event.shiftKey && !event.altKey && !event.metaKey
-  return event.ctrlKey && bare && /^[a-z]$/i.test(event.key)
+/** The control characters Ctrl types with a key that is not a letter, as xterm.js sends
+ *  them: NUL on Ctrl+Space and Ctrl+2, ESC on Ctrl+[ and Ctrl+3, and on along the row to
+ *  US on Ctrl+/ and Ctrl+7, and DEL on Ctrl+8. Ctrl and the minus, the equals and the
+ *  nought are the type's size, and never reach here. */
+const CONTROLS: Readonly<Record<string, string>> = {
+  ' ': '\x00',
+  '2': '\x00',
+  '[': '\x1b',
+  '3': '\x1b',
+  '\\': '\x1c',
+  '4': '\x1c',
+  ']': '\x1d',
+  '5': '\x1d',
+  '6': '\x1e',
+  '/': '\x1f',
+  '7': '\x1f',
+  '8': '\x7f',
 }
 
-/** The character Ctrl and a letter types, which is what the shell would have read had
- *  the terminal not asked first: Ctrl+T is DC4, Ctrl+N is SO. */
-export function controlOf(letter: string): string {
-  return String.fromCharCode(letter.toLowerCase().charCodeAt(0) - 96)
+/** Whether a chord is one a shell reads as a character of its own: Ctrl and a letter,
+ *  Ctrl+Space, or Ctrl and another key that types a control character (`CONTROLS`), and
+ *  nothing else held. Anything else an app command is on is a chord no shell has. */
+export function shellReads(event: Keystroke): boolean {
+  const bare = !event.shiftKey && !event.altKey && !event.metaKey
+  return event.ctrlKey && bare && (/^[a-z]$/i.test(event.key) || event.key in CONTROLS)
+}
+
+/** The character a key the shell reads types with Ctrl, which is what the shell would
+ *  have read had the terminal not asked first: Ctrl+T is DC4, Ctrl+N is SO, Ctrl+Space
+ *  is NUL. */
+export function controlOf(key: string): string {
+  const control = CONTROLS[key]
+  if (control !== undefined) return control
+  return String.fromCharCode(key.toLowerCase().charCodeAt(0) - 96)
 }

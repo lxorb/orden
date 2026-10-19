@@ -52,17 +52,19 @@ export interface Chart {
 /** The kinds, and the names the plugin uses for each. `doughnut` is Chart.js's
  *  own spelling and `donut` is what people type; `polarArea` is Chart.js's name for
  *  the one everybody else calls a polar chart. */
-const KINDS: Readonly<Record<string, ChartKind>> = {
-  bar: 'bar',
-  line: 'line',
-  scatter: 'scatter',
-  pie: 'pie',
-  donut: 'donut',
-  doughnut: 'donut',
-  radar: 'radar',
-  polar: 'polar',
-  polararea: 'polar',
-}
+const KINDS: ReadonlyMap<string, ChartKind> = new Map(
+  Object.entries({
+    bar: 'bar',
+    line: 'line',
+    scatter: 'scatter',
+    pie: 'pie',
+    donut: 'donut',
+    doughnut: 'donut',
+    radar: 'radar',
+    polar: 'polar',
+    polararea: 'polar',
+  } satisfies Record<string, ChartKind>),
+)
 
 /** Well past any chart worth reading in a note, and a ceiling so a fence cannot
  *  ask for a picture of ten thousand bars. */
@@ -144,7 +146,7 @@ export function readChart(source: string): Chart | null {
       // a fence asking for a picture this cannot draw keeps its own characters, so
       // the reader can see what they asked for and change it. Silently drawing a bar
       // chart instead was the right numbers saying the wrong thing.
-      if (found.key === 'type') kind = KINDS[unquoted(found.value).toLowerCase()] ?? null
+      if (found.key === 'type') kind = KINDS.get(unquoted(found.value).toLowerCase()) ?? null
       else if (found.key === 'title') title = unquoted(found.value) || null
       else if (found.key === 'labels') labels = flowItems(found.value) ?? [unquoted(found.value)]
       continue

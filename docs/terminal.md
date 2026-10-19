@@ -98,8 +98,8 @@ General, Terminal, Restore history** turned off writes nothing and forgets every
 there is at that moment - Warp's switch stops recording and leaves the database where it
 was. The tab itself, its shell and its folder still come back, as every tab does.
 
-**Moved to another space** (Move to space, in the tab's menu or the palette, or the tab
-carried onto the space switcher; docs/chrome-tabs.md), a terminal is the same tab with the
+**Moved to another space** (Move to space in the palette, or the tab carried onto the
+space switcher; docs/chrome-tabs.md), a terminal is the same tab with the
 same shell: the process goes on, its screen and scrollback with it, and its current
 folder is the one it was in. What changes is which space it is in - whose set it is in,
 where a restart puts it - and where its last lines are kept: read, written under the new
@@ -567,7 +567,7 @@ test/weight.test.ts).
 | `apps/desktop/src-tauri/src/terminal/session.rs`   | one shell in one pty, and its four threads                                                                                                                                                                                       |
 | `apps/desktop/src-tauri/src/terminal/process.rs`   | whether anything besides the shell runs, and where it is                                                                                                                                                                         |
 | `apps/desktop/src/lib/new-kinds.ts`                | the terminal as a kind a new tab can be, and its chevron                                                                                                                                                                         |
-| `apps/desktop/src/lib/terminal/two-ways.ts`        | Ctrl+T and Ctrl+N in a terminal, which are both the app's and the shell's: asked once, and the answer kept (docs/keyboard.md, _A terminal_) |
+| `apps/desktop/src/lib/terminal/two-ways.ts`        | every app command on a key a shell reads, in a terminal - Ctrl+T, Ctrl+N, Ctrl+W, Ctrl+Space and the rest: asked once, and the answer kept per command (docs/keyboard.md, _A terminal_; #426) |
 | `apps/desktop/src/lib/terminal/open.ts`            | making one: which shell, which folder, where in the strip                                                                                                                                                                        |
 | `apps/desktop/src/lib/terminal/spec.ts`            | what a terminal tab's words say, and where one starts                                                                                                                                                                            |
 | `apps/desktop/src/lib/terminal/sessions.svelte.ts` | the screens and their shells                                                                                                                                                                                                     |

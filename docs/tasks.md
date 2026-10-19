@@ -24,7 +24,7 @@ Nothing here loosens any of them.
 
 ## The short version
 
-1. **A task is a line in a note.** `- [ ] Call the bank 📅 2026-10-06`, in the Obsidian
+1. **A task is a line in a note.** `- [ ] Call the bank 🛫 2026-10-06`, in the Obsidian
    Tasks plugin's own emoji format, so a space opened in Obsidian with Tasks installed reads
    every date, priority and recurrence nib wrote. What Tasks has no field for (a time of day,
    a duration, a deadline, a reminder, an assignee) is a Dataview inline field, `[time::
@@ -216,7 +216,7 @@ added, property edited or a schedule; forms that write rows.
 | 13  | Description while adding                                         | Shift+Enter opens a second line, written indented under the task                                                                                            | must                                   |                                                                  |
 | 14  | Ramble                                                           | the microphone in quick add: dictation through the existing recorder, the same parser, and with a model connected the AI splits a ramble into several tasks | should                                 | dictation exists; the split needs a provider                     |
 | 15  | Forward email to a project or a task                             | a private address per account; the Worker appends the mail to the Inbox note                                                                                | later                                  | needs inbound mail routing on the Worker (8.5)                   |
-| 16  | Browser extension: add a page as a task                          | the clipper's menu gains "As a task", a line in the Inbox with the link                                                                                     | should                                 | the clipper exists                                               |
+| 16  | Browser extension: add a page as a task                          | gone with the browser extension (#366): a web tab's page goes into a note from its dots, Save as a note                                                     | should                                 | the clipper exists                                               |
 | 17  | Share sheet on the phone                                         | "Add as task" beside the existing share into a note                                                                                                         | should                                 |                                                                  |
 | 18  | Widgets                                                          | the Android widget gains a Today list with boxes                                                                                                            | should                                 | the widget exists                                                |
 | 19  | Quick settings tile                                              | "Add task" tile next to New note                                                                                                                            | should                                 | three lines of Kotlin                                            |
@@ -464,9 +464,9 @@ one canonical form so a round trip through Obsidian changes no byte.
 | field          | written                                              | read too                                       | notes                                                                             |
 | -------------- | ---------------------------------------------------- | ---------------------------------------------- | --------------------------------------------------------------------------------- |
 | status         | `[ ]` open, `[x]` done, `[/]` doing, `[-]` cancelled | any one character, as the box already reads it | `[>]` and others are kept and shown as open with their mark                       |
-| due date       | `📅 2026-10-06`                                      | `[due:: 2026-10-06]`                           | Todoist's date                                                                    |
+| due date       | `📅 2026-10-06`                                      | `[due:: 2026-10-06]`                           | read by where it stands (5.1.1): a deadline in a vault, a start date elsewhere   |
 | scheduled      | `⏳ 2026-10-08`                                      | `[scheduled:: ]`                               | "do it on", Things' When                                                          |
-| start          | `🛫 2026-10-08`                                      | `[start:: ]`                                   | hidden from Today and Upcoming until then, Things' Anytime                        |
+| start          | `🛫 2026-10-08`                                      | `[start:: ]`                                   | the task's date: hidden until then (5.1.1), Todoist's date, Things' Anytime       |
 | created        | `➕ 2026-10-03`                                      | `[created:: ]`                                 | written by quick add when Settings says so (off by default)                       |
 | done           | `✅ 2026-10-03`                                      | `[completion:: ]`                              | written on ticking                                                                |
 | cancelled      | `❌ 2026-10-03`                                      | `[cancelled:: ]`                               | written on cancelling                                                             |
@@ -474,11 +474,44 @@ one canonical form so a round trip through Obsidian changes no byte.
 | recurrence     | `🔁 every week on Monday`, `... when done`           | `[repeat:: ]`                                  | always written in English, the words Tasks parses; shown in the reader's language |
 | id, depends on | `🆔 a1b2c3`, `⛔ a1b2c3`                             | `[id:: ]`, `[dependsOn:: ]`                    | written when a dependency is drawn                                                |
 | tags           | `#admin`                                             |                                                | Todoist's labels                                                                  |
-| time           | `[time:: 16:00]`                                     | `[time:: 16:00 Europe/Zurich]`                 | nib's; the due or scheduled date's time                                           |
+| time           | `[time:: 16:00]`                                     | `[time:: 16:00 Europe/Zurich]`                 | nib's; the start or scheduled date's time                                         |
 | duration       | `[duration:: 45m]`                                   | `1h30m`, `90m`                                 | nib's                                                                             |
 | deadline       | `[deadline:: 2026-10-20]`                            |                                                | nib's; Todoist's deadline                                                         |
-| reminders      | `[remind:: 15m, 2026-10-06 09:00]`                   |                                                | nib's; relative to the due time, or absolute                                      |
+| reminders      | `[remind:: 15m, 2026-10-06 09:00]`                   |                                                | nib's; relative to the start time, or absolute                                    |
 | assignee       | `[assignee:: Lucile]`                                | `+Lucile` in quick add                         | nib's                                                                             |
+
+#### 5.1.1 A start date and a deadline
+
+A task has two dates a reader sets (#371). Its **start date** is the first day it can be
+worked on: before it the task is out of sight - in Today, the Inbox, a label and Assigned
+to me - and in Upcoming on that day, where the days ahead are; from it on the task is
+simply there, and nothing under it says when it started. Its **deadline** is the day it
+has to be done by: it is said under the task, and only a deadline makes a task overdue.
+A project's own list is its note, and shows every task in it.
+
+A task with **no start date** is out of Today unless its deadline has come, as in Todoist.
+Settings › General › Add task › *Show tasks without a start date in Today* (#408) turns
+that round: Today then takes a task with neither a start date nor a scheduled one as one
+whose start date has come, whatever its deadline, which still only makes it overdue once
+past. The Tasks panel's Today count follows it, and so do the glasses' Today and both
+connectors' `list_tasks`. It is on the account (`undatedInToday`), off to begin with, and
+it is `undated` on Bases' Today (`builtinView`); a Today a tab laid out differently keeps
+its layout and still follows it (`todayAs`), unless the reader wrote its filter.
+
+Written, a start date is `🛫` and a deadline `[deadline:: ]`; what nib writes for a date
+picked, typed or said is `🛫`. A `📅` is read by where it stands, and never rewritten:
+
+- in an **Obsidian vault**, a space with `.obsidian` at its root, it is the Tasks plugin's
+  due date, which is a deadline;
+- in a **space of nib's own**, where a deadline has always been `[deadline:: ]`, it is the
+  date nib wrote before it said start dates, and is read as one - unless the line has a
+  `🛫` of its own, which makes it a line written the plugin's way and its `📅` the
+  deadline.
+
+A date set again is written to the field that already holds it, so an old `📅` moves in
+place. `⏳` stays the plugin's scheduled date: it places a task on a day the way a start
+date does, and never makes it late. The rules are `@nib/markdown/task-dates`; the rows say
+which way a space reads its `📅` (`dueReads`), and so does the editor's note index.
 
 **Order on the line**: words, then nib's bracket fields, then tags, then the emoji fields in
 Tasks' own order. Tasks reads its fields from the end of the line backwards and stops at the
@@ -639,9 +672,9 @@ The built-in views are bases the app carries:
 
 | view           | rows            | filter                                             | group, sort                               |
 | -------------- | --------------- | -------------------------------------------------- | ----------------------------------------- |
-| Inbox          | tasks           | open, in a space's inbox note                      | by space; note order                      |
-| Today          | tasks           | open, due or scheduled on or before today, started | Overdue first, then Today; priority, time |
-| Upcoming       | tasks           | open, dated after today, started                   | by day; time, priority                    |
+| Inbox          | tasks           | open, started, in a space's inbox note             | by space; note order                      |
+| Today          | tasks           | open, started, on or before today, or due by then; with the setting, one with no start date too (5.1.1) | Overdue (a deadline past) first, then Today; priority, time |
+| Upcoming       | tasks           | open, dated; a start to come on its day            | Overdue first, then by day from today; time, priority |
 | Completed      | tasks           | done or cancelled                                  | by `✅` day, newest first                 |
 | Project        | tasks           | in this note                                       | by heading; note order                    |
 | Label          | tasks and notes | carry this tag                                     | by note                                   |
@@ -839,9 +872,10 @@ The editor draws a task line as words and chips, hiding its fields the way it hi
 ```
 
 - Chips are a widget after the words (`packages/editor/src/live-preview/widgets.ts`), quiet
-  (`--muted`, the small size), one per field: the date as a weekday within a week and a
-  short date after, red when overdue; ↻ for recurrence; the flag for priority; 🔔 when a
-  reminder is set; ⏱ and the duration; ⚑ and the deadline; the assignee's initial.
+  (`--muted`, the small size), one per field: the start date while it is still to come, as
+  a weekday within a week and a short date after, and nothing once it has come (5.1.1); ↻ for recurrence; the flag for priority; 🔔 when a
+  reminder is set; ⏱ and the duration; ⚑ and the deadline, red when overdue; the assignee's
+  initial.
 - **The caret on the line shows the source**, as every mark does, and the chips give way to
   the emoji and brackets as written.
 - **A chip pressed** opens its picker as a small layer (`.nib-layer`): the date chip a
@@ -1038,7 +1072,7 @@ and the reading view), so the first paint carries the panel's tab mark and nothi
 
 ### 5.10 Reminders
 
-What a reminder is: a time, from `[remind::]` or from the due time when the task has one
+What a reminder is: a time, from `[remind::]` or from the start time when the task has one
 and the automatic reminder is on (Settings: at the time, 5, 15, 30 or 60 minutes before,
 or off). Location reminders are later (row 66).
 
@@ -1077,7 +1111,8 @@ reading reminder times), and Emil decided to build it (8.5).
 
 - **When**: `remindTimes` and `momentOf` in `@nib/markdown/task-reminders`, shared by the
   app and the Worker so both agree on the minute. A relative `[remind:: 15m]` counts back
-  on the wall clock from the task's time on its due (else scheduled) day; a bare time is
+  on the wall clock from the task's time on the day it starts (else is scheduled); a
+  deadline rings nothing (5.1.1); a bare time is
   on that day; an absolute one is its own moment; the automatic one is the account
   setting `remindBefore` (0, 5, 15, 30, 60, or -1 for off; Settings > General >
   Reminders), for every task with a day and a time. A floating time is the device's
@@ -1460,7 +1495,7 @@ What becomes what: a project a note in the space's projects folder (`Projects/<P
 or `Projects/<Project>/<Project>.md` for one with projects inside it), a section a heading, a task a line with its sub-tasks indented,
 its description and comments indented under it with their dates, attachments downloaded
 beside the note (account import only), labels tags, priority the emoji (Todoist's API counts
-4 as p1, which the importer turns round), the due date and time, `every` and `every!` (the
+4 as p1, which the importer turns round), the date and time as the start date (`🛫`), `every` and `every!` (the
 human string re-parsed by the same grammar, with the original kept as a comment under the
 task when it cannot be read), deadlines, durations, reminders, assignees as names, and the
 Inbox the space's inbox. Completed tasks, if asked, as done lines with their dates. A preview
@@ -1506,10 +1541,8 @@ one (`TodayWidget.kt`, `res/layout/widget_today.xml`), drawn from the JSON the p
 already hands over (`mobile/widgets.svelte.ts`, its `today`), read again when the rows
 change; a box opens the app with the task's anchor and the page ticks it through the one
 write path (`mobile/handed.ts`), a row's words open its note, the plus is quick add.
-The clipper's menu has **As a task** under Orden, a line in the inbox of the space the
-last clip went to, the page or the link under the cursor linked in it, through the
-Worker's `POST /v1/spaces/:id/tasks` (`services/sync/src/tasks.ts`), which is the
-connector's `add_task` behind the session. On the glasses the modal's fifth row is
+The browser extension's **As a task**, and the Worker's `POST /v1/spaces/:id/tasks` it
+was the only caller of, went with the extension (#366). On the glasses the modal's fifth row is
 Today and "task ..." / "Aufgabe ..." adds to the inbox (docs/even.md).
 
 ## 6. What nib does not do
@@ -1622,7 +1655,8 @@ function parseQuickAdd(text: string, langs: string[], now: Date): QuickAdd   // 
 // what an expression reads beyond Bases' own `file.*`, `note.*`, `formula.*`, `this`:
 //   file.space, file.shared
 //   task.text status done cancelled open due scheduled start created completed cancelledOn
-//   deadline date (due, else scheduled) at (date and time) started time zone duration
+//   deadline date (start, else scheduled, else deadline; 5.1.1) at (date and time)
+//   started time zone duration
 //   remind priority recurrence recurring tags assignee mine id dependsOn section (nearest
 //   heading) headings parent subtask indent line note, and task.hasTag(...)
 ```
@@ -1641,7 +1675,7 @@ reads a file. The reminders store (lane 5) reads `rows.watch` and nothing else.
 | **3 `quick-add-and-editor`** | `@nib/bases`'s `language/` folder (new); `lib/quick-add/` (new); `packages/editor/src/live-preview/` task chips (a new file, a hook in `decorate.ts`); the quick add window in `src-tauri/src` (new file)                                                                                                                                                  | the en and de grammar tables and the parser (5.6), chips in the field, the pickers; the quick add sheet, palette row, panel row and global window with its key; the editor's chips, pickers, completion of a typed date and the tick with recurrence (5.7); the ` ```tasks ` fence drawn by the engine                                                                                                                                     | parser tests per table row in both languages and the ambiguous cases; editor state tests for chips hidden and shown with the caret, a pick as one edit, a recurring tick as one undo; a drive: quick add from the palette into the Inbox, a chip pressed back to words; the global key tested on a probe through `run_probe` only                     | 2    |
 | **4 `views`**                | `lib/views/` (new); the `'tasks'` panel in `apps/desktop/src/lib/workspace.svelte.ts` and `apps/desktop/src/lib/workspace/panels.ts`; the view tab's kind in `apps/desktop/src/lib/openers.ts`; the base fence and embed; `apps/desktop/src/lib/PropertiesPanel.svelte` (its controls lifted into shared ones)                                             | the Tasks panel (5.5); the view tab and its head; list, table, cards, board, calendar, Upcoming, timeline and chart layouts (5.9); inline editing through `rows.write`; drag on every layout; the filter, sort and group builders; saving a view as a `.base`; ` ```base ` and `![[x.base#View]]`; the phone layouts                                                                                                                       | component tests per layout; a drive `test/e2e/tasks.py`: seed tasks and notes, Today and Upcoming right, a board drag writing the property, a calendar drag writing the date, a table cell edit undone with Ctrl+Z, an embedded base in a note; the same at phone width; 2,000-card board scroll measured                                             | 2    |
 | **5 `reminders`**            | `lib/reminders/` (new); `src-tauri/src` reminders module (new); the Android alarm and boot receiver (new Kotlin beside `Widgets.kt`); the tray residency setting                                                                                                                                                                                           | the scheduler (5.10); Windows scheduled toasts and macOS triggers; the notification actions starting nib in the background; Linux and the tray; Android alarms, actions and reboot; the settings rows; the Worker push (8.5)                                                                                                                                                                                                               | scheduler tests (a moved task moves its reminder, a ticked one cancels, a recurring one schedules the next, 64 kept); cargo tests for the scheduling calls behind a trait; a probe with an identifier of its own, never Emil's nib, that a scheduled toast is registered; Android unit tests for the alarm list                                       | 2    |
-| **6 `tasks-everywhere`**     | `apps/desktop/src-tauri/src/mcp/tools.json` and the window's handlers (`lib/agents/workspace/tasks.ts`, new); `services/sync/src/mcp/tools.ts`; `apps/desktop/src/lib/ai/commands/table.ts` and `docs/ai-sidebar.md` 3.1; the CLI's verbs; `lib/import/todoist.ts` (new); the Even Today screen in `apps/desktop/src/lib/even/`; the widget's Today layout | the verbs of 5.15 on both servers; `/tasks`, `/today` and the `/jobs` rename; the CLI verbs and `nib://add-task`; the Todoist importer from the API and CSV (5.17); the glasses' Today and spoken add (5.18); the clipper's "As a task" and the share sheet's                                                                                                                                                                              | verb tests through the MCP harness, a grant without the space refused; the AI command table test green with the new rows; importer tests on a recorded API answer and Todoist's documented CSV, with priorities turned round and recurrences re-parsed; Even screen tests within the panel's eight lines                                              | 2    |
+| **6 `tasks-everywhere`**     | `apps/desktop/src-tauri/src/mcp/tools.json` and the window's handlers (`lib/agents/workspace/tasks.ts`, new); `services/sync/src/mcp/tools.ts`; `apps/desktop/src/lib/ai/commands/table.ts` and `docs/ai-sidebar.md` 3.1; the CLI's verbs; `lib/import/todoist.ts` (new); the Even Today screen in `apps/desktop/src/lib/even/`; the widget's Today layout | the verbs of 5.15 on both servers; `/tasks`, `/today` and the `/jobs` rename; the CLI verbs and `nib://add-task`; the Todoist importer from the API and CSV (5.17); the glasses' Today and spoken add (5.18); the share sheet's                                                                                                                                                                              | verb tests through the MCP harness, a grant without the space refused; the AI command table test green with the new rows; importer tests on a recorded API answer and Todoist's documented CSV, with priorities turned round and recurrences re-parsed; Even screen tests within the panel's eight lines                                              | 2    |
 | **7 `database-extras`**      | `lib/views/` additions agreed with lane 4 (the form layout, the button cell, the rollup picker); `@nib/bases`'s `automations` (new)                                                                                                                                                                                                                        | relations' reverse columns and the rollup picker (5.12); unique ids; select options with tones; conditional colour; forms; buttons; templates and repeating templates; automations; locking; CSV export and CSV import as a base                                                                                                                                                                                                           | engine tests for rollups, id collisions, automations firing once per change and undoing as one; a drive: a form makes a note, a button sets a property, a rollup counts                                                                                                                                                                               | 3    |
 
 **Wave 1** is lanes 1 and 2 together: one is a pure package, the other the crate and the
@@ -1678,8 +1712,10 @@ them.
 1. **`#` stays a tag in quick add, and a project is `>Note`.** Decided. In a markdown file
    `#Work` is a tag, and Obsidian agrees; filters accept `#Work` for a note of that name
    (5.8), because that is where Todoist habits land.
-2. **Bare dates are due dates (`📅`).** Decided. Todoist calls its date "due" and most
-   Obsidian users write `📅`; the stricter reading is there through `⏳` and `{deadline}`.
+2. **Bare dates are start dates (`🛫`).** Decided, and changed on 2026-10-18 (#371): a
+   date is the first day a task can be worked on, and only a deadline (`{deadline}`) makes
+   one late. Bare dates were due dates (`📅`) until then; a `📅` is read by where it stands
+   (5.1.1).
 3. **`/tasks` means to-dos, background work becomes `/jobs`** (synonyms `/ps`, `/bashes`).
    Decided.
 4. **Tasks views span every space**, each row saying which space when it is not the open

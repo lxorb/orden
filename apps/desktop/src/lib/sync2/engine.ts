@@ -20,9 +20,10 @@
 import { foreignCopy, inForeignCopy } from '@nib/sync-core/foreign'
 import type { EngineEvents, Engine as AskedEngine } from './asking.svelte'
 import { Core } from './core'
-import { made, moved, removed, unsynced } from './create'
+import { atOrUnder, made, moved, removed, unsynced } from './create'
 import type { Doc } from './docs'
 import { HeldList, type Names } from './held'
+import { holdsDocument } from './kinds'
 import { foldIn } from './ingest'
 import { settle, type SpaceState } from './places'
 import { pass, type Passed, resting } from './pass'
@@ -58,7 +59,30 @@ export class Engine implements AskedEngine {
   ) {
     this.held = new HeldList(core, names)
     core.events.resurrected = (event) => this.emit('resurrected', event)
-    core.events.held = () => void this.held.refresh()
+    core.events.held = () => {
+      void this.held.refresh()
+      for (const [id, told] of [...this.unheld]) {
+        if (core.isHeld(id)) continue
+        this.unheld.delete(id)
+        for (const one of told) one()
+      }
+    }
+  }
+
+  /** Who is waiting for a held note to be let go of, by id; see `whenLetGo`. */
+  private readonly unheld = new Map<string, Set<() => void>>()
+
+  /** Tells `then` once the note is no longer held: its question answered, whichever
+   *  way. Answers how to stop waiting. An open note waits so before it is joined to its
+   *  document again; see binding.ts. */
+  whenLetGo(id: string, then: () => void): () => void {
+    const told = this.unheld.get(id) ?? new Set()
+    told.add(then)
+    this.unheld.set(id, told)
+    return () => {
+      told.delete(then)
+      if (!told.size) this.unheld.delete(id)
+    }
   }
 
   static async start(world: World, store: SyncStore, how: Starting = {}): Promise<Engine> {
@@ -224,10 +248,26 @@ export class Engine implements AskedEngine {
     const now = this.placed(to)
     if (!was || !now) return
     if (was.space !== now.space) {
-      // Out of one space and into another: gone from the one, made in the other.
+      // Out of one space and into another: gone from the one, made in the other - and a
+      // folder with everything in it, since the other space's tree has never heard of
+      // any of it. Only the folder used to be made, and another device found it empty
+      // (#413). Each made as the kind it was, read before the removal lets them go, so
+      // a PDF is not taken for a folder because it does not read as words.
+      const inside = atOrUnder(was.space, was.path)
+        .map((entry) => ({ kind: entry.kind, rest: entry.local_path.slice(was.path.length) }))
+        .sort((a, b) => a.rest.split('/').length - b.rest.split('/').length)
       await this.remove(from)
-      const text = await this.core.world.disk.read(to)
-      await this.make(to, text === null, text ?? undefined)
+      // One this tree never knew - made a moment ago - is what is on the disk.
+      if (!inside.length) {
+        const text = await this.core.world.disk.read(to)
+        await this.make(to, text === null, text ?? undefined)
+      }
+      for (const one of inside) {
+        const path = this.core.world.join(now.space.row.root, `${now.path}${one.rest}`)
+        if (one.kind === 'folder') await this.make(path, true)
+        else if (!holdsDocument(one.kind)) await this.make(path, false)
+        else await this.make(path, false, (await this.core.world.disk.read(path)) ?? '')
+      }
       return
     }
     await this.core.commit(moved(this.core, was.space, was.path, now.path))

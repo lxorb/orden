@@ -22,6 +22,7 @@
 import { tick } from 'svelte'
 import { dropTarget, targetFor } from './drop-target.svelte'
 import { dur } from './motion'
+import { droppedOnSpace, leftSpaces, overSpaces } from './tab-strip/space-drop'
 import { folderOf, nameOf } from './space-paths'
 import { placedBeside, stepped, trimmed } from './tree-arranging'
 import { shownNames } from './tree-order'
@@ -176,6 +177,29 @@ export async function slideInto(held: Held, was: Map<string, number>): Promise<v
       // settles, rather than creeping away from the pointer.
       easing: 'cubic-bezier(0.215, 0.61, 0.355, 1)',
     })
+  }
+}
+
+/** Rows that came into the list or left it - an essential let go of over it, a file
+ *  kept as one (#412) - with the rest sliding to their new places, and a row that was
+ *  not there before fading in where it lands. Nothing for a reader who asked for as
+ *  little movement as possible. */
+export async function arrive(held: Held, was: Map<string, number>): Promise<void> {
+  if (dur(SLIDING) === 0) return
+
+  await slideInto(held, was)
+  for (const row of held.rows()) {
+    if (was.has(row.dataset.path ?? '')) continue
+    row.animate(
+      [
+        { opacity: 0, transform: 'translateX(-6px)' },
+        { opacity: 1, transform: 'none' },
+      ],
+      {
+        duration: dur(SLIDING),
+        easing: 'cubic-bezier(0.215, 0.61, 0.355, 1)',
+      },
+    )
   }
 }
 
@@ -424,6 +448,14 @@ function onLiftMove(held: Held, event: TouchEvent) {
 
   ghost.style.transform = `translateY(${touch.clientY - ghostFrom}px) scale(1.03)`
 
+  // Over the switcher, a space to take it to (#303); see tab-strip/space-drop.ts.
+  if (overSpaces({ paths: held.carrying() }, { x: touch.clientX, y: touch.clientY })) {
+    slideBack(held)
+    dropTarget.clear()
+    dwellOver(null, false)
+    return
+  }
+
   const under = document.elementFromPoint(touch.clientX, touch.clientY)
   const row = under instanceof Element ? under.closest('.row[data-path]') : null
   const path = row instanceof HTMLElement ? row.dataset.path : undefined
@@ -457,6 +489,10 @@ function onLiftEnd(held: Held, event: TouchEvent) {
   const paths = [...held.carrying()]
 
   if (landed) workspace.arranged.drop()
+  if (!landed && droppedOnSpace({ paths })) {
+    dropLift(held)
+    return
+  }
   dropLift(held)
 
   if (!landed && folder && paths.length) void workspace.moveMany(paths, folder)
@@ -477,6 +513,7 @@ export function dropLift(held: Held): void {
   ghost?.remove()
   ghost = null
   cancelHold()
+  leftSpaces()
   dropTarget.clear()
   letGo(held)
   held.edge(null)

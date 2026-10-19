@@ -3,6 +3,7 @@ import {
   type ChangeSpec,
   EditorSelection,
   EditorState,
+  Text,
   type TransactionSpec,
 } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
@@ -584,5 +585,78 @@ describe('where the reader typed lately', () => {
 
     expect(note.touchedWithin(2000)).toEqual([])
     expect(note.readerAt).toBeNull()
+  })
+})
+
+/** A pane an input method is composing in, which CodeMirror says with `composing`. */
+class Composing extends Pane {
+  composing = false
+}
+
+describe('words from the room while somebody composes (#544)', () => {
+  /** The room's own copy of the words, kept the way a room keeps it: this device's
+   *  changes go in as they are told, and another device's straight in, then told. */
+  function roomOf(note: SharedDoc, words: string) {
+    let held = Text.of(words.split('\n'))
+    note.onLocal = (changes) => {
+      held = changes.apply(held)
+    }
+    return {
+      get words() {
+        return held.toString()
+      },
+      elsewhere(at: number, insert: string) {
+        held = held.replace(at, at, Text.of([insert]))
+        note.arrived([{ from: at, to: at, insert }])
+      },
+    }
+  }
+
+  test('wait until the composition is over, and then nobody holds a half-composed word', () => {
+    const note = new SharedDoc('hello world')
+    const pane = new Composing(note, 11)
+    const room = roomOf(note, 'hello world')
+
+    // An input method starts a word at the end of the line.
+    pane.composing = true
+    pane.type(11, 'にほ')
+    // Another device writes at the very place, while the word is still being composed.
+    room.elsewhere(11, 'ZZ')
+    expect(pane.text).toBe('hello worldにほ')
+
+    // The word is chosen, which the input method writes over what it composed.
+    pane.edit({ from: 11, to: 13, insert: '日本' }, 13)
+    pane.composing = false
+    note.settle()
+
+    expect(room.words).toBe('hello worldZZ日本')
+    expect(note.text.toString()).toBe(room.words)
+    expect(pane.text).toBe(room.words)
+  })
+
+  test('arrive at once where nobody is composing', () => {
+    const note = new SharedDoc('hello world')
+    const pane = new Composing(note, 0)
+    const room = roomOf(note, 'hello world')
+
+    room.elsewhere(5, ',')
+    expect(pane.text).toBe('hello, world')
+    expect(note.text.toString()).toBe(room.words)
+  })
+
+  test('wait inside the word too, and land where the room has them', () => {
+    const note = new SharedDoc('hello world')
+    const pane = new Composing(note, 8)
+    const room = roomOf(note, 'hello world')
+
+    pane.composing = true
+    pane.type(8, 'に')
+    room.elsewhere(7, 'Q')
+    pane.edit({ from: 8, to: 9, insert: '日' }, 9)
+    pane.composing = false
+    note.settle()
+
+    expect(room.words).toBe('hello wQo日rld')
+    expect(pane.text).toBe(room.words)
   })
 })

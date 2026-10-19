@@ -31,7 +31,7 @@ pub(crate) fn quoted(text: &str) -> Result<String, String> {
     serde_json::to_string(text).map_err(|error| error.to_string())
 }
 
-#[cfg(windows)]
+#[cfg(any(windows, feature = "cef"))]
 mod engine {
     use serde_json::json;
     use tauri::Webview;
@@ -143,40 +143,6 @@ mod engine {
                         Some(&done),
                     );
                 }
-            })
-            .map_err(|error| error.to_string())
-        })
-        .await
-    }
-}
-
-#[cfg(target_os = "linux")]
-mod engine {
-    use javascriptcore::ValueExt as _;
-    use tauri::Webview;
-    use webkit2gtk::WebViewExt as _;
-
-    use super::super::answer::{answer, Reply};
-    use super::WORLD;
-
-    pub(super) async fn run(view: &Webview, source: &str, call: &str) -> Result<String, String> {
-        let body = format!("{source}\nreturn await {call}");
-        answer("a script", |reply: Reply<String>| {
-            view.with_webview(move |platform| {
-                platform.inner().call_async_javascript_function(
-                    &body,
-                    None,
-                    Some(WORLD),
-                    None,
-                    None::<&webkit2gtk::gio::Cancellable>,
-                    move |result| {
-                        reply.say(match result {
-                            Ok(value) if value.is_string() => Ok(value.to_str().to_string()),
-                            Ok(_) => Err("the script answered nothing".to_owned()),
-                            Err(error) => Err(error.to_string()),
-                        });
-                    },
-                );
             })
             .map_err(|error| error.to_string())
         })

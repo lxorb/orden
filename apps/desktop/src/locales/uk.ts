@@ -27,6 +27,27 @@ export const uk: Dictionary = {
   'Import from Zen': 'Імпорт з Zen',
   'Containers stay in Zen': 'Контейнери залишаються в Zen',
   'Zen’s tabs could not be read.': 'Не вдалося прочитати вкладки Zen.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'Контейнери залишаються в Firefox',
+  'Nothing could be read out of {browser}.': 'З {browser} нічого не вдалося прочитати.',
+  'Saved groups': 'Збережені групи',
+  'Tab group': 'Група вкладок',
+  'Bookmarks toolbar': 'Панель закладок',
+  'Bookmarks menu': 'Меню закладок',
+  'Other bookmarks': 'Інші закладки',
+  'Mobile bookmarks': 'Мобільні закладки',
+  'Bookmarks bar': 'Панель закладок',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} тримає відкриті вкладки під замком, тож прийшли лише закладки.',
+  '{count} pages not on the web stay behind': {
+    few: 'Сторінок не з інтернету, що лишаються: {count}',
+    many: 'Сторінок не з інтернету, що лишаються: {count}',
+    one: 'Сторінок не з інтернету, що лишаються: {count}',
+    other: 'Сторінок не з інтернету, що лишаються: {count}',
+  },
+  'Reading List': 'Список читання',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS тримає вкладки й закладки Safari за повним доступом до диска. Увімкніть там Orden і спробуйте знову.',
   // Settings: note types
   'Page note': 'Нотатка зі сторінками',
   'Web note': 'Вебнотатка',
@@ -97,8 +118,6 @@ export const uk: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'Підказки',
   'Silent mode': 'Тихий режим',
-  'Sign in to keep your notes safe and on every device.':
-    'Увійдіть, щоб нотатки були в безпеці та на кожному пристрої.',
   'See how your notes connect.': 'Подивіться, як пов’язані ваші нотатки.',
   'Press {key} to find anything, notes and commands alike.':
     'Натисніть {key}, щоб знайти будь-що: нотатки й команди.',
@@ -120,11 +139,13 @@ export const uk: Dictionary = {
   '{count} h': '{count} год',
   Inbox: 'Вхідні',
   Date: 'Дата',
+  'Start date': 'Дата початку',
   Priority: 'Пріоритет',
   Reminder: 'Нагадування',
   Duration: 'Тривалість',
   'Smart dates': 'Розумні дати',
   'From any app': 'З будь-якого застосунку',
+  'Show tasks without a start date in Today': 'Показувати в «Сьогодні» завдання без дати початку',
   'Every day': 'Щодня',
   'Every weekday': 'Щоробочого дня',
   'Every week': 'Щотижня',
@@ -168,6 +189,8 @@ export const uk: Dictionary = {
   Dots: 'Точки',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'Обертати полотно двома пальцями',
+  'Turn upright': 'Вирівняти',
   Canvas: 'Полотно',
   Card: 'Картка',
   'Note or picture': 'Нотатка або малюнок',
@@ -243,6 +266,10 @@ export const uk: Dictionary = {
   Unpin: 'Відкріпити',
   Close: 'Закрити',
   'Close pinned tab?': 'Закрити закріплену вкладку?',
+  'Save changes to {name}?': 'Зберегти зміни в {name}?',
+  'Save changes to these tabs?': 'Зберегти зміни в цих вкладках?',
+  'Unsaved words go to Recently deleted.': 'Незбережені слова потраплять до «Нещодавно видалених».',
+  'Don’t save': 'Не зберігати',
   'Close others': 'Закрити інші',
   'Close tabs to the right': 'Закрити вкладки праворуч',
   'Close tabs to the left': 'Закрити вкладки ліворуч',
@@ -1196,6 +1223,7 @@ export const uk: Dictionary = {
   'Double-click to write': 'Подвійний клік для письма',
   'Another colour': 'Інший колір',
   'Turn into a note': 'Перетворити в нотатку',
+  Arrange: 'Упорядкувати',
   'Bring to front': 'На передній план',
   'Bring forward': 'Перемістити вперед',
   'Send backward': 'Перемістити назад',
@@ -1285,6 +1313,9 @@ export const uk: Dictionary = {
   Unstable: 'Нестабільний',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'Стабільний слідує випущеним версіям, нестабільний - збіркам edge і може ламатися.',
+  'Web version': 'Веб-версія',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'Стабільний - випущений веб-застосунок, нестабільний - найновіша збірка і може ламатися.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Імпорт',
@@ -1650,8 +1681,6 @@ export const uk: Dictionary = {
   // Web tabs
   Reload: 'Оновити',
   'Hard reload': 'Жорстке перезавантаження',
-  'Clip this page': 'Зберегти цю сторінку',
-  'Clip the link': 'Зберегти посилання',
   'Open in the browser': 'Відкрити в браузері',
   'Show it here': 'Показати тут',
   Website: 'Сайт',
@@ -1783,7 +1812,6 @@ export const uk: Dictionary = {
   'New tab': 'Нова вкладка',
   'Full screen': 'На весь екран',
   'Print…': 'Друк…',
-  'Save page': 'Зберегти сторінку',
   'Share…': 'Поділитися…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1842,6 +1870,15 @@ export const uk: Dictionary = {
   'Bring all to front': 'Усе на передній план',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Скасувати копіювання',
+  'Devices with your AI vault': 'Пристрої з вашим сховищем ШІ',
+  'This device': 'Цей пристрій',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'Пристрій більше не зможе читати ваші облікові записи ШІ, а решта отримають новий ключ.',
+  'Also remove this device from your AI vault?': 'Прибрати цей пристрій і зі сховища ШІ?',
+  'Remove and sign out': 'Прибрати й вийти',
+  'Undo making {name}': 'Скасувати створення {name}',
+  'Undo the deletion': 'Скасувати видалення',
+  'Undo the move': 'Скасувати переміщення',
   'Redo the last file change': 'Повторити останню зміну файлів',
   'Select down': 'Виділити вниз',
   'Select up': 'Виділити вгору',
@@ -1949,6 +1986,11 @@ export const uk: Dictionary = {
   Max: 'Макс.',
   Fast: 'Швидко',
   Send: 'Надіслати',
+  'Send feedback': 'Надіслати відгук',
+  'Describe the issue': 'Опишіть проблему',
+  Sent: 'Надіслано',
+  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
+    'Цей звіт містить ваш опис, версію Orden, вашу платформу та недавній журнал застосунку. Ваших нотаток у ньому ніколи немає.',
   'Send into the running answer': 'Надіслати в поточну відповідь',
   'Stop the answer': 'Зупинити відповідь',
   'Open every step': 'Розгорнути всі кроки',
@@ -2066,6 +2108,7 @@ export const uk: Dictionary = {
   'Without your logins': 'Без ваших входів',
   'Calls a minute': 'Викликів на хвилину',
   'Pages a minute': 'Сторінок на хвилину',
+  'Browser memory limit': 'Межа пам’яті браузера',
   '{count} calls': {
     one: '{count} виклик',
     few: '{count} виклики',

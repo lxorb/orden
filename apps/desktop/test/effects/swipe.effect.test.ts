@@ -204,6 +204,41 @@ test('a scroll the content can take is the content s', () => {
   expect(pressed).toEqual(['back n1'])
 })
 
+/** #407: the window hears a wheel after the content has scrolled with it, so a scroller
+ *  with a little way to go is at its edge by the time it is asked. The scroll it made says
+ *  whose the stream is: it is the scroller's, to the end, with no arrow and no step - and
+ *  a stream that moved nothing, at the same edge, is a swipe as before. */
+test('a stream that moved a scroller is the scroller s, though it is at its edge when asked', () => {
+  const wide = document.createElement('div')
+  wide.style.overflowX = 'auto'
+  Object.defineProperties(wide, {
+    scrollWidth: { value: 506 },
+    clientWidth: { value: 500 },
+    scrollLeft: { value: 6, writable: true },
+  })
+  const cell = document.createElement('span')
+  wide.append(cell)
+  words.append(wide)
+  // Where it stood, a while ago.
+  wide.dispatchEvent(stamped(new Event('scroll')))
+  clock += 1000
+
+  // The sweep's own first steps took it the last six pixels before the window heard them.
+  wide.scrollLeft = 0
+  wide.dispatchEvent(stamped(new Event('scroll')))
+  sweep(cell, 40, -10)
+  expect(arrow()).toBeNull()
+  letGo()
+  expect(pressed).toEqual([])
+
+  // At the edge and moving nothing, the next stream is a swipe.
+  clock += 1000
+  sweep(cell, 40, -10)
+  expect(arrow()).not.toBeNull()
+  letGo()
+  expect(pressed).toEqual(['back n1'])
+})
+
 test('a scroll a surface kept for itself is the surface s', () => {
   words.addEventListener('wheel', (event) => event.preventDefault(), { passive: false })
   sweep(words, 40, -10, { cancelable: true })

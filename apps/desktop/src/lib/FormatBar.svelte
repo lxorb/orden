@@ -8,6 +8,7 @@
   } from '@nib/editor'
   import { HIGHLIGHT_COLOURS, type HighlightColour } from '@nib/markdown/highlights'
   import type { IconNode } from 'lucide'
+  import { keepFocus } from './focus'
   import { tick } from 'svelte'
   import CanvasIcon from './CanvasIcon.svelte'
   import { t } from './i18n.svelte'
@@ -249,8 +250,8 @@
   <button
     title={shortcuts.tooltip(title, key)}
     aria-label={title}
-    onpointerdown={(event) => event.preventDefault()}
-    onmousedown={(event) => event.preventDefault()}
+    onpointerdown={keepFocus}
+    onmousedown={keepFocus}
     onclick={act}
   >
     {#if glyph}
@@ -276,8 +277,8 @@
     aria-label={t(colour.name)}
     aria-pressed={on}
     style:--dot={dotFor(colour.tone)}
-    onpointerdown={(event) => event.preventDefault()}
-    onmousedown={(event) => event.preventDefault()}
+    onpointerdown={keepFocus}
+    onmousedown={keepFocus}
     onclick={act}
   ></button>
 {/snippet}

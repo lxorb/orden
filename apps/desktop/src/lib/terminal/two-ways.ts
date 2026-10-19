@@ -2,15 +2,17 @@
  *
  *  Emil, issue #213: *"when pressing a shortcut in a terminal like interface or anywhere
  *  where it could have mulitple meanings then there should be a quick modal asking you
- *  which of the two should be used from now on (or you can tick always ask)"*. In a
- *  terminal those are Ctrl+T and Ctrl+N - a new tab and the scratchpad, and the shell's
- *  swapped letters and next line of history - so the first press of either in a terminal
- *  asks which, in the app's one small question (see prompt.svelte.ts), and the answer is
- *  every terminal's from then on unless "Always ask" was ticked. Settings, General,
- *  Terminal shows the answer and takes it back; see preferences.ts.
+ *  which of the two should be used from now on (or you can tick always ask)"* - and #426,
+ *  for every key that is both. In a terminal that is every app command on a key the shell
+ *  reads as a character - Ctrl+T, a new tab and the swapped letters; Ctrl+N, the
+ *  scratchpad and the next line of history; Ctrl+W; Ctrl+Space; whatever somebody put on
+ *  one in Settings - so the first press of one in a terminal asks which, in the app's one
+ *  small question (see prompt.svelte.ts), and the answer is that command's in every
+ *  terminal from then on unless "Always ask" was ticked. Settings, General, Terminal lists
+ *  each answer and takes it back; see general-pane.ts.
  *
- *  Which keys are both is keys.ts's (`TWO_WAYS`); where the answer is kept is
- *  shells.svelte.ts's. Fetched with the first question: most people never get one. */
+ *  Which keys are both is keys.ts's (`shellReads`); where the answer is kept is
+ *  shells.svelte.ts's. Fetched with the first question. */
 
 import { key, t } from '../i18n.svelte'
 import { prompt } from '../prompt.svelte'

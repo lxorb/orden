@@ -41,7 +41,9 @@ export function preferences(view?: EditorView): Pane[] {
 
 /** Whether every field in the pane knows what it started as. */
 export function resettable(pane: Pane): boolean {
-  return pane.groups.every((group) => group.fields.every((field) => field.initial !== undefined))
+  return pane.groups.every((group) =>
+    group.fields.every((field) => field.kind === 'value' || field.initial !== undefined),
+  )
 }
 
 /** Puts every field in the pane back to what it started as; see reset-fields.ts. */

@@ -22,6 +22,8 @@
   import { spacePicker } from './space-picker.svelte'
   import { SpaceTyping } from './space-typing.svelte'
   import { sharedWithYou } from './sharing.svelte'
+  import SpaceBadge from './SpaceBadge.svelte'
+  import { spendClick } from './spent-click'
   import { trap } from './trap'
   import { type Space, workspace } from './workspace.svelte'
 
@@ -54,6 +56,27 @@
     )
   }
 
+  /** The spaces put away, in the reader's order, each a row that takes it back; see
+   *  space-archive.ts. */
+  const archived = $derived(
+    workspace.spaces.filter((one) => workspace.archivedSpaces.has(one.root)),
+  )
+
+  /** Takes a space back, where it was in the list, and goes to it. */
+  async function bringBack(space: Space) {
+    close()
+    const { unarchiveSpace } = await import('./space-archive')
+    await unarchiveSpace(space)
+    await workspace.showSpace(space.id)
+  }
+
+  /** What an archived space offers: taking it back. */
+  function aboutArchived(event: MouseEvent, space: Space) {
+    menu.show(event, [{ label: t('Unarchive'), run: () => void bringBack(space) }], {
+      title: space.name,
+    })
+  }
+
   /** What is typed into the list, the same as into the switcher in the middle of the
    *  window: a digit goes to that space, a name waits for Enter. New each time it opens,
    *  which is each time this is mounted. */
@@ -69,9 +92,10 @@
 
 <!-- Takes the press that closes it, and the scroll that would otherwise reach
      the list underneath. No colour: this is a menu inside the panel, not a
-     layer over the app. -->
+     layer over the app. A tap's click comes after the catch has gone, and is
+     spent rather than reaching what was under it (#411; see spent-click.ts). -->
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-<div class="catch" onclick={close}></div>
+<div class="catch" onclick={close} onpointerdown={spendClick}></div>
 
 <!-- The same walk and the same one tab stop every list in the app has, and the
      same trap every layer has: the arrows move, a digit or a name typed finds a
@@ -120,6 +144,35 @@
     </span>
     <span class="nib-row-label">{t('New space')}</span>
   </button>
+
+  <!-- ── Archived ─────────────────────────────────────────────────────
+       The spaces put away whole, under the list rather than in it: out of the way of
+       choosing a space, and one press from coming back. A row takes it back and goes
+       to it; its menu says Unarchive. See space-archive.ts. -->
+  {#if archived.length}
+    <hr />
+
+    <div class="held" role="group" aria-label={t('Archived')} data-archived-spaces>
+      <p class="from" aria-hidden="true">{t('Archived')}</p>
+
+      {#each archived as space (space.id)}
+        <div class="line" role="none">
+          <button
+            class="nib-row"
+            role="menuitem"
+            title={t('Unarchive')}
+            onclick={() => void bringBack(space)}
+            oncontextmenu={(event) => aboutArchived(event, space)}
+            use:longPress={(event) => aboutArchived(event, space)}
+          >
+            <SpaceBadge {space} />
+            <span class="nib-row-label">{space.name}</span>
+          </button>
+          <RowMore onclick={(event: MouseEvent) => aboutArchived(event, space)} />
+        </div>
+      {/each}
+    </div>
+  {/if}
 
   <!-- ── Shared with you ────────────────────────────────────────────
        Files other people handed over on their own: one note or one canvas out

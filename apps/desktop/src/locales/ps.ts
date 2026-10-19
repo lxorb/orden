@@ -26,6 +26,25 @@ export const ps: Dictionary = {
   'Import from Zen': 'له Zen څخه واردول',
   'Containers stay in Zen': 'کانټینرونه په Zen کې پاتې کېږي',
   'Zen’s tabs could not be read.': 'د Zen ټبونه ونه لوستل شول.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'کانټینرونه په Firefox کې پاتې کېږي',
+  'Nothing could be read out of {browser}.': 'له {browser} څخه هېڅ ونه لوستل شو.',
+  'Saved groups': 'خوندي شوې ډلې',
+  'Tab group': 'د ټب ډله',
+  'Bookmarks toolbar': 'د نښو توکپټه',
+  'Bookmarks menu': 'د نښو مېنو',
+  'Other bookmarks': 'نورې نښې',
+  'Mobile bookmarks': 'د موبایل نښې',
+  'Bookmarks bar': 'د نښو پټه',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} خپل پرانیستي ټبونه تړلي ساتي، نو یوازې نښې یې راغلې.',
+  '{count} pages not on the web stay behind': {
+    one: '{count} پاڼه چې په وېب کې نه ده پاتې شوه',
+    other: '{count} پاڼې چې په وېب کې نه دي پاتې شوې',
+  },
+  'Reading List': 'د لوستلو لېست',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS د Safari ټبونه او نښې د ډیسک بشپړ لاسرسي شاته ساتي. هلته Orden چالان کړئ، بیا بیا وغواړئ.',
   // Settings: note types
   'Page note': 'د مخونو يادښت',
   'Web note': 'ویب يادښت',
@@ -96,8 +115,6 @@ export const ps: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'لارښوونې',
   'Silent mode': 'چوپ حالت',
-  'Sign in to keep your notes safe and on every device.':
-    'ننوځئ چې ستاسو یادښتونه خوندي او په هر وسیله کې وي.',
   'See how your notes connect.': 'وګورئ چې ستاسو یادښتونه څنګه سره تړلي دي.',
   'Press {key} to find anything, notes and commands alike.':
     'د هر څه موندلو لپاره، یادښتونه او امرونه، {key} کېکاږئ.',
@@ -119,11 +136,13 @@ export const ps: Dictionary = {
   '{count} h': '{count} ساعته',
   Inbox: 'راغلي',
   Date: 'نېټه',
+  'Start date': 'د پیل نېټه',
   Priority: 'لومړیتوب',
   Reminder: 'یادونه',
   Duration: 'موده',
   'Smart dates': 'هوښیارې نېټې',
   'From any app': 'له هر اپ څخه',
+  'Show tasks without a start date in Today': 'هغه دندې چې د پیل نېټه نه لري په نن کې وښایاست',
   'Every day': 'هره ورځ',
   'Every weekday': 'هره کاري ورځ',
   'Every week': 'هره اونۍ',
@@ -167,6 +186,8 @@ export const ps: Dictionary = {
   Dots: 'ټکي',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'کینوس په دوو ګوتو وګرځوئ',
+  'Turn upright': 'سم یې کړئ',
   Canvas: 'تخته',
   Card: 'کارت',
   'Note or picture': 'يادښت يا انځور',
@@ -242,6 +263,10 @@ export const ps: Dictionary = {
   Unpin: 'نښلون ليرې کول',
   Close: 'بندول',
   'Close pinned tab?': 'نښلول شوې ټوټه بنده شي؟',
+  'Save changes to {name}?': 'په {name} کې بدلونونه خوندي شي؟',
+  'Save changes to these tabs?': 'په دې ټبونو کې بدلونونه خوندي شي؟',
+  'Unsaved words go to Recently deleted.': 'ناخوندي شوي ټکي وروستي ړنګ شوو ته ځي.',
+  'Don’t save': 'مه یې خوندي کوه',
   'Close others': 'نور بندول',
   'Close tabs to the right': 'ښي خوا ټبونه بندول',
   'Close tabs to the left': 'کيڼ اړخ ټبونه بندول',
@@ -1158,6 +1183,7 @@ export const ps: Dictionary = {
   'Double-click to write': 'د ليکلو لپاره دوه ځله کليک',
   'Another colour': 'بل رنګ',
   'Turn into a note': 'يادښت ته بدلول',
+  Arrange: 'ترتیب',
   'Bring to front': 'تر ټولو مخکې راوستل',
   'Bring forward': 'مخکې راوستل',
   'Send backward': 'وروسته لېږل',
@@ -1247,6 +1273,9 @@ export const ps: Dictionary = {
   Unstable: 'نا ټينګ',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'ټينګ خپاره شوې نسخې تعقيبوي، نا ټينګ د څنډې جوړښتونه او ماتېدی شي.',
+  'Web version': 'ويب نسخه',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'ټينګ خپره شوې ويب اپلیکېشن ده، نا ټينګ تر ټولو نوی جوړښت دی او ماتېدی شي.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'واردول',
@@ -1585,8 +1614,6 @@ export const ps: Dictionary = {
   // Web tabs
   Reload: 'بېرته راوړل',
   'Hard reload': 'بشپړ بېرته راوړل',
-  'Clip this page': 'دا مخ خوندول',
-  'Clip the link': 'تړنه خوندول',
   'Open in the browser': 'په کوټګر کې پرانيستل',
   'Show it here': 'دلته ښودل',
   Website: 'ټاټوبی',
@@ -1718,7 +1745,6 @@ export const ps: Dictionary = {
   'New tab': 'نوی ټب',
   'Full screen': 'بشپړ پرده',
   'Print…': 'چاپ…',
-  'Save page': 'مخ خوندول',
   'Share…': 'شريکول…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1778,6 +1804,15 @@ export const ps: Dictionary = {
   'Bring all to front': 'ټول مخې ته راوړه',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'لمېسه بېرته کول',
+  'Devices with your AI vault': 'ستاسو د AI خزانې لرونکې وسیلې',
+  'This device': 'دا وسیله',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'وسیله به نور ستاسو د AI حسابونه ونه لوستلای شي، او نورې به نوې کیلي ترلاسه کړي.',
+  'Also remove this device from your AI vault?': 'دا وسیله له خپلې AI خزانې هم لرې کړئ؟',
+  'Remove and sign out': 'لرې کړئ او ووځئ',
+  'Undo making {name}': 'د {name} جوړول بېرته کول',
+  'Undo the deletion': 'ړنګون بېرته کول',
+  'Undo the move': 'خوځښت بېرته کول',
   'Redo the last file change': 'د دوتنې وروستی بدلون بيا کول',
   'Select down': 'ښکته ټاکل',
   'Select up': 'پورته ټاکل',
@@ -1878,6 +1913,11 @@ export const ps: Dictionary = {
   Max: 'تر ټولو ډېر',
   Fast: 'چټک',
   Send: 'لېږل',
+  'Send feedback': 'نظر ولېږئ',
+  'Describe the issue': 'ستونزه بیان کړئ',
+  Sent: 'ولېږل شو',
+  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
+    'په دې راپور کې ستاسو تشریح، د Orden نسخه، ستاسو پلاتفورم او د اپ وروستی لاګ شامل دي. ستاسو یادښتونه هېڅکله نه.',
   'Send into the running answer': 'روان ځواب ته لېږل',
   'Stop the answer': 'ځواب ودرول',
   'Open every step': 'ټول پړاوونه پرانیستل',
@@ -1996,6 +2036,7 @@ export const ps: Dictionary = {
   'Without your logins': 'ستاسو له ننوتلو پرته',
   'Calls a minute': 'په دقیقه کې غوښتنې',
   'Pages a minute': 'په دقیقه کې پاڼې',
+  'Browser memory limit': 'د براوزر د حافظې حد',
   '{count} calls': {
     one: '{count} غوښتنه',
     other: '{count} غوښتنې',

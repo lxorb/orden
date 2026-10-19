@@ -14,7 +14,7 @@
    *  and gone with it, the way the hover card's is (preview-card.ts). Written a pause
    *  after the typing stops, and at once as the card goes or the window does - no dot,
    *  nothing to save. Its edge widens it; Escape puts it away. See pad.ts. */
-  import { createEditor, EditorView, modeEffects } from '@nib/editor'
+  import { createEditor, EditorView } from '@nib/editor'
   import { onMount } from 'svelte'
   import { SAVE_DELAY } from '../backoff'
   import { pickedLink } from '../composer'
@@ -76,8 +76,12 @@
         // Where pastes from anywhere go, so its markup is never run.
         trustedMarkup: false,
       })
-      made.dispatch({ effects: modeEffects(modes.settings) })
+      // Every mode a note's editor wears, the width of its column and its leading too,
+      // and kept up to date with them: on a phone this is the note on screen, and it
+      // reads as any other note there does (#404).
+      modes.apply(made)
       view = made
+      shown.view = made
       scratchpad.live = made
       owing = flush
     })()
@@ -87,7 +91,9 @@
       flush()
       owing = null
       scratchpad.live = null
+      if (shown.view === view) shown.view = null
       caret = view?.state.selection.main.head ?? caret
+      if (view) modes.forget(view)
       view?.destroy()
     }
   })
@@ -242,8 +248,9 @@
     background: none;
   }
 
-  /* A card's worth of margin rather than a page's. */
-  .host :global(#write) {
+  /* A card's worth of margin rather than a page's - on a desktop, where it is a card.
+     On a phone and a tablet it is the note on the screen, on a note's own page. */
+  :global(html[data-device='desktop']) .host :global(#write) {
     max-width: none;
     margin: 0 var(--space-4);
     padding: var(--space-4) 0 var(--space-7);

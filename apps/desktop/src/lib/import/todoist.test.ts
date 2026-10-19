@@ -206,14 +206,15 @@ describe('from the account', () => {
     const work = plan.files.find((one) => one.path === 'Projects/Work/Work.md')
     expect(work?.kind === 'note' ? work.text : '').toBe(
       [
-        '- [ ] Call the bank [time:: 16:00] [duration:: 30m] [deadline:: 2026-10-10] [remind:: 15m, 2026-10-06 09:00] [assignee:: Lucile] #admin #phone-calls 🔺 📅 2026-10-06',
+        // Todoist's date is the day it starts, `🛫`; its deadline a deadline (#371).
+        '- [ ] Call the bank [time:: 16:00] [duration:: 30m] [deadline:: 2026-10-10] [remind:: 15m, 2026-10-06 09:00] [assignee:: Lucile] #admin #phone-calls 🔺 🛫 2026-10-06',
         '  Their number is on the card.',
         '  2026-10-01: Asked at the counter [card.png](https://files.todoist.com/card.png)',
         '  - [ ] Find the card',
         '',
         '## Errands',
         '',
-        '- [ ] Water the plants 🔼 🔁 every 3 days when done 📅 2026-10-04',
+        '- [ ] Water the plants 🔼 🔁 every 3 days when done 🛫 2026-10-04',
         '',
       ].join('\n'),
     )
@@ -225,7 +226,7 @@ describe('from the account', () => {
     const inbox = plan.files.find((one) => one.path === 'Inbox.md')
     const text = inbox?.kind === 'note' ? inbox.text : ''
     expect(text).toContain(
-      '- [ ] Renew the gym [time:: 09:00 Europe/Zurich] ⏫ 🔁 every 2 weeks on Tuesday 📅 2026-10-08',
+      '- [ ] Renew the gym [time:: 09:00 Europe/Zurich] ⏫ 🔁 every 2 weeks on Tuesday 🛫 2026-10-08',
     )
     expect(text).toContain('- [x] Pay rent ✅ 2026-10-01')
     expect(plan.lost).toEqual([])
@@ -263,7 +264,7 @@ describe('from a CSV', () => {
     expect(note?.path).toBe('Projects/Launch.md')
     expect(note?.kind === 'note' ? note.text : '').toBe(
       [
-        '- [ ] Plan the launch #work [duration:: 1h] [deadline:: 2026-10-09] 🔺 📅 2026-10-06',
+        '- [ ] Plan the launch #work [duration:: 1h] [deadline:: 2026-10-09] 🔺 🛫 2026-10-06',
         '  Everything for Monday',
         '  Remember the slides',
         '  - [ ] Book the room [assignee:: Lucile]',

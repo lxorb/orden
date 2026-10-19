@@ -1,5 +1,5 @@
 /** The one order every language picker keeps: the app's language, the spelling
- *  dictionary, the language a rewrite translates into and the clipper's own row.
+ *  dictionary, and the language a rewrite translates into.
  *
  *  Each language is named the way its own speakers write it, so a reader scans the
  *  list for a word in their own alphabet, and for most readers that is the Latin

@@ -55,6 +55,7 @@ import { pokeSpace } from '../hub/poke'
 import { MAX_NOTE_BYTES, noteBeside, noteKey, saveNote } from '../notes'
 import { fits } from '../storage'
 import { revive } from '../sync2/ops'
+import { ASK_SIGNINS_EVERY, SIGNED_OUT, stillSignedIn } from '../signins'
 import type { Env, Note } from '../types'
 import { deviceIn, versionKey } from '../versions'
 import { ingested, seedOf, snapshotKey } from './epoch'
@@ -139,6 +140,9 @@ interface Attached {
    *  for the tree's rule that a device's own writing never stands against its own
    *  delete. */
   device?: string
+  /** The hash of the sign-in the socket arrived with, which it lasts no longer than;
+   *  see `askSignIns`. Absent on a socket let in before the door said. */
+  login?: string
 }
 
 /** What the door decided about the person on the other end of a socket. */
@@ -147,6 +151,7 @@ export interface Joining {
   who: string
   v2?: boolean
   device?: string
+  login?: string
   /** The note's epoch as the door read it, which may be newer than the one this room
    *  holds; see `caughtUpWithEpoch`. */
   epoch?: number
@@ -215,16 +220,24 @@ function deviceIdOf(socket: WebSocket): string | undefined {
   return typeof device === 'string' && device ? device : undefined
 }
 
+/** The sign-in a socket arrived with, if the door said. */
+function loginOf(socket: WebSocket): string | undefined {
+  const login = attachedTo(socket)?.login
+  return typeof login === 'string' && login ? login : undefined
+}
+
 /** A socket's attachment with some of it changed and the rest kept, which is how every
  *  write to one is made: a field one write knows about is not one the next drops. */
 function attach(socket: WebSocket, change: Partial<Attached>) {
   const device = deviceIdOf(socket)
+  const login = loginOf(socket)
   const kept: Attached = {
     clients: announcedBy(socket),
     mayWrite: mayWrite(socket),
     who: whoOf(socket),
     ...(speaksV2(socket) ? { v2: true } : {}),
     ...(device === undefined ? {} : { device }),
+    ...(login === undefined ? {} : { login }),
   }
   socket.serializeAttachment({ ...kept, ...change } satisfies Attached)
 }
@@ -379,6 +392,8 @@ export class NoteRoom implements DurableObject {
    *  the note. Held so that two joins landing together do not both seed it. */
   private opened: Promise<void> | null = null
   private held: Held | null = null
+  /** When this object last asked whether its sockets' sign-ins live; see `askSignIns`. */
+  private signInsAskedAt = 0
   /** When the settle already on the clock will fire, or null for one this object
    *  did not put there itself; see `settleSoon`. */
   private settleAt: number | null = null
@@ -444,6 +459,9 @@ export class NoteRoom implements DurableObject {
     const asked = request.headers.get('x-nib-doc')
     if (asked === 'push' || asked === 'pull' || asked === 'ingest') {
       const body = new Uint8Array(await request.arrayBuffer())
+      // What a push or a whole text brings is said to every socket here; none whose
+      // sign-in has ended hears it.
+      await this.askSignIns()
       await this.open(held)
       await this.caughtUpWithEpoch(epochIn(request.headers.get('x-nib-epoch')))
       if (asked === 'push') return octets(await this.push(body))
@@ -452,6 +470,7 @@ export class NoteRoom implements DurableObject {
     }
 
     const device = request.headers.get('x-nib-device-id')
+    const login = request.headers.get('x-nib-login')
     const epoch = epochIn(request.headers.get('x-nib-epoch'))
     const pair = new WebSocketPair()
     await this.enter(pair[1], held, {
@@ -459,6 +478,7 @@ export class NoteRoom implements DurableObject {
       who: request.headers.get('x-nib-who') ?? '',
       v2: request.headers.get('x-nib-v2') === 'yes',
       ...(device ? { device } : {}),
+      ...(login ? { login } : {}),
       ...(epoch === undefined ? {} : { epoch }),
     })
 
@@ -496,6 +516,7 @@ export class NoteRoom implements DurableObject {
       who: joining.who,
       ...(joining.v2 ? { v2: true } : {}),
       ...(joining.device ? { device: joining.device } : {}),
+      ...(joining.login ? { login: joining.login } : {}),
     } satisfies Attached)
 
     // The greeting, both halves at once: what this room holds, and who is in it.
@@ -597,6 +618,47 @@ export class NoteRoom implements DurableObject {
       .run()
   }
 
+  /** Every socket whose sign-in has ended - run out, most of all, which nothing else
+   *  announces - closed, at most once a minute (#520). Asked when something is about to
+   *  be said to the sockets here, which is the only time a socket that outlived its
+   *  sign-in could hear or say anything: a room nobody types in is never woken for it.
+   *  A socket let in before the door said which sign-in it came with is left as it is. */
+  private async askSignIns(): Promise<Set<WebSocket>> {
+    const closed = new Set<WebSocket>()
+    const now = Date.now()
+    if (now - this.signInsAskedAt < ASK_SIGNINS_EVERY) return closed
+    this.signInsAskedAt = now
+
+    const sockets = this.ctx.getWebSockets()
+    const logins = sockets.flatMap((one) => loginOf(one) ?? [])
+    if (!logins.length) return closed
+
+    const live = await stillSignedIn(this.env, logins).catch(() => null)
+    // Not asked is not ended: the next minute asks again.
+    if (!live) return closed
+
+    for (const socket of sockets) {
+      const login = loginOf(socket)
+      if (login === undefined || live.has(login)) continue
+      forget(this.awareness, announcedBy(socket), socket)
+      socket.close(SIGNED_OUT, 'signed out')
+      closed.add(socket)
+    }
+
+    // A close this side asked for brings no close handler with it, so the rows go from
+    // here: one for each person none of whose sockets is left.
+    const gone = new Set([...closed].map(whoOf))
+    for (const socket of sockets) if (!closed.has(socket)) gone.delete(whoOf(socket))
+    const noteId = this.held?.noteId
+    for (const who of gone) {
+      if (!who || !noteId) continue
+      await this.env.DB.prepare('delete from room_sockets where note_id = ? and who = ?')
+        .bind(noteId, who)
+        .run()
+    }
+    return closed
+  }
+
   /** Somebody's access to this file ended, or narrowed to reading, while they had
    *  it open. The route that changed it says so and this happens inside that same
    *  request: what a socket cannot be asked to notice about itself.
@@ -671,6 +733,10 @@ export class NoteRoom implements DurableObject {
     if (!mayWrite(socket) && isEdit(said)) return
 
     await this.woken()
+
+    // Whatever this says is heard by every socket here, so none whose sign-in has
+    // ended - this one included - is left to say it or to hear it.
+    if ((await this.askSignIns()).has(socket)) return
 
     // And a document at its ceiling takes no more keystrokes from anybody. Refused
     // before `receive` rather than after: an update applied is in the document and
@@ -1309,7 +1375,7 @@ export class NoteRoom implements DurableObject {
 
     if (crossing || (await sha256(settled)) !== held.hash) {
       if (file.deleted) {
-        await revive(this.env, held.spaceId, this.settlingDevice, held.noteId)
+        await revive(this.env, held.spaceId, this.settlingDevice, held.noteId, 'stays deleted')
         file = await this.env.DB.prepare('select * from notes where id = ? and deleted = 0')
           .bind(held.noteId)
           .first<Note>()

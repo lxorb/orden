@@ -48,6 +48,10 @@ const NOTED: readonly string[] = [
   // see rooms/epoch.ts.
   `insert or ignore into leftovers (what, since)
      select 'crdt/' || id, ?3 from notes where space_id in (${OWNED})`,
+  // And the ids themselves, which nothing may be made under again: a room is named by
+  // the id, and is emptied after the row has gone (0052).
+  `insert or ignore into retired_notes (id, since)
+     select id, ?3 from notes where space_id in (${OWNED})`,
   `insert or ignore into leftovers (what, since)
      select distinct 'versions/' || hash, ?3 from note_versions where note_id in (${OWNED_NOTES})`,
   `insert or ignore into leftovers (what, since)
@@ -147,6 +151,7 @@ export const ERASED: readonly (readonly [table: string, sql: string])[] = [
   ['spaces', 'delete from spaces where user_id = ?1'],
   ['blobs', 'delete from blobs where user_id = ?1'],
   ['sessions', 'delete from sessions where user_id = ?1'],
+  ['feedback', 'delete from feedback where user_id = ?1'],
   ['mcp_tokens', 'delete from mcp_tokens where user_id = ?1'],
   ['oauth_codes', 'delete from oauth_codes where user_id = ?1'],
   ['oauth_grants', 'delete from oauth_grants where user_id = ?1'],

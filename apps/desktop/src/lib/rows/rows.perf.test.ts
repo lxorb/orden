@@ -61,6 +61,7 @@ function store(): RowsStore {
     open: () => ({ root: '/big', scanned: () => Promise.resolve(), notes: () => scanned }),
     breathe: () => Promise.resolve(),
     now: () => 2,
+    vault: () => Promise.resolve(false),
   }
   return new RowsStore(host)
 }

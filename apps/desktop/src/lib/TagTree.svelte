@@ -117,6 +117,7 @@
   }
 
   .twist {
+    position: relative;
     flex: none;
     min-height: var(--row-height);
     display: flex;
@@ -127,6 +128,23 @@
     background: none;
     color: var(--muted);
     cursor: default;
+  }
+
+  /* Where a press lets the tag out, a step wider than the button either side (#402),
+     drawn nowhere: the press lands on the twist, which only turns. */
+  .twist::before {
+    content: '';
+    position: absolute;
+    inset-block: 0;
+    inset-inline: calc(-1 * var(--space-1));
+  }
+
+  /* And never narrower than a thumb, made up on the side of the name. */
+  :global([data-touch]) .twist::before {
+    inset-inline-end: min(
+      calc(-1 * var(--space-1)),
+      calc(var(--icon-md) + 2 * var(--space-1) - var(--touch-target))
+    );
   }
 
   /* The box the twist fills; the shape and the turn are Twist.svelte's, which the

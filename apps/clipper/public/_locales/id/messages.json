@@ -1,9 +1,0 @@
-{
-  "name": { "message": "Orden" },
-  "description": {
-    "message": "Klip sebuah halaman, pilihan, atau tautan ke catatan Orden Anda."
-  },
-  "clipPage": { "message": "Klip halaman" },
-  "clipSelection": { "message": "Klip pilihan" },
-  "clipLink": { "message": "Klip tautan" }
-}

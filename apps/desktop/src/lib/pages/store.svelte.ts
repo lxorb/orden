@@ -60,7 +60,7 @@ export class PagesStore extends CanvasStore {
     // A zoom the reader chose comes back with the camera it belongs to, so the
     // paper is not fitted across the pane again the first time this one is
     // measured. See `keptView` and place.ts.
-    if (this.restored?.chose === true) this.chose = true
+    if (this.restored?.chose === true) this.tab.zoomChosen = true
   }
 
   /** How big the pane is, in pixels. Told by the surface, because only a component
@@ -80,8 +80,17 @@ export class PagesStore extends CanvasStore {
    *  viewer does. Once somebody has zoomed in on a corner of a diagram, the zoom is
    *  theirs and nothing takes it off them.
    *
-   *  A canvas has no equivalent, and rightly: an endless plane has no width to fit. */
-  private chose = false
+   *  A canvas has no equivalent, and rightly: an endless plane has no width to fit.
+   *
+   *  Kept on the tab rather than here, as the camera is: the surface is made again
+   *  each time the tab comes back to the front (#421). */
+  private get chose(): boolean {
+    return this.tab.zoomChosen
+  }
+
+  private set chose(chosen: boolean) {
+    this.tab.zoomChosen = chosen
+  }
 
   /** The pane's new size, and the paper still fitted across it if nobody has said
    *  otherwise. Told by the surface on every resize; see Pages.svelte. */

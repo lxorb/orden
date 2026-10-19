@@ -2,8 +2,8 @@
  *
  *  Its own file because two things that must not reach each other's imports ask
  *  them: the article extractor (`article.ts`) resolves what a page's markup wrote,
- *  and the clipper's service worker checks what arrived over a message - and a
- *  worker that imported the extractor would carry Readability for two lines.
+ *  and the converter checks what a page's links say - and a caller that imported
+ *  the extractor for these would carry Readability for two lines.
  *  Asking them in one place is also what keeps the answers the same, and a scheme
  *  that is read one way here and another way there is how a filter gets walked
  *  past. */

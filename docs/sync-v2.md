@@ -571,6 +571,17 @@ coordinates, and looks at the edits that meet:
   (two devices that each answered Keep for the same deleted paragraph), and keeping both
   would say it twice, so they are an overlap like any other - except where one side's words
   hold the other's whole, when the fuller one stands and nothing is asked.
+- **A passage two devices each moved** is in M twice: settling a meeting can move a passage,
+  which the device writes as a deletion and an insertion of its own, and when two devices
+  did that to the same passage the one deletion lands on the copy both started from and
+  both insertions stay. Where M says something twice that neither side says, the
+  resolution is the text merge with both sides' edits made, not M (#436).
+- **A passage put in twice by the older side's words.** Where the resolution says
+  something twice that neither side does, because both sides moved one word of B each
+  to a place of its own, or because two devices each put the same passage back over a
+  deletion and one's words at that point end with it where the other's begin with it,
+  the older side's copy is taken out of its words and the merge made again; that
+  stands where it says less twice (#530).
 - **Overlapping edits**: spans that intersect, or an insertion strictly inside a span the
   other side replaced. Their size is the characters of both replacements plus the ancestor
   text they cover.
@@ -765,13 +776,22 @@ Worker and the client (which applies its own ops optimistically):
   `merged` with the existing id; the device merges its document into that note three-way
   against the text both started from, and drops its own id. Two appends are two pure
   insertions, so they merge silently; two people rewriting the same line of the day asks.
-  Every other create keeps its own identity and is numbered.
+  Every other create keeps its own identity and is numbered, and so does a day's note
+  renamed or moved before its create went: under another name or in another folder it is
+  no longer "this note", and made `mergeable` it was merged into whatever note had the new
+  name (#436).
 - **An edit beats a delete.** A `delete` whose note has content changes after `seen` by
   another device is refused as `edited`, and the device that deleted it puts it back (the
   toast); the deleting device's own writing never stands against it, since it had seen it
   whatever its cursor says. A folder delete takes what the device had seen; anything
   created, moved in, renamed or edited in it since by another device survives and keeps the
-  folder. An edit that lands on a note already deleted brings it back, with its folders.
+  folder. A rename or move made without having seen another device's change before it
+  leaves that device as the one that last changed the entry, so a note moved into a
+  folder elsewhere stays when the device that renamed it, never knowing, deletes the
+  folder (#514). What a device has seen of a note is what it pulled, not what the list told it:
+  a delete's `seen` is no later than the words of any note under it that the device has not
+  pulled yet, whether or not the note has a file on this disk (#435). An edit that lands on
+  a note already deleted brings it back, with its folders.
 - **A rename or move of something deleted after its device last looked brings it back**:
   tree operations are last-writer-wins by arrival, as a delete arriving after a rename
   deletes.

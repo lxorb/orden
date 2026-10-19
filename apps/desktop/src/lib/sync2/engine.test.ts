@@ -42,6 +42,8 @@ interface Device {
   account: ReferenceAccount
   routes: string[]
   online: boolean
+  /** Routes this device's requests go unanswered on, as if each were lost. */
+  unanswered: Set<string>
   engine: Engine
   launch(): Promise<Engine>
 }
@@ -108,13 +110,14 @@ async function device(
     account,
     routes: [],
     online: true,
+    unanswered: new Set(),
     engine: null as unknown as Engine,
     async launch() {
       const world: World = {
         disk,
         account: {
           ask: async (route, body) => {
-            if (!made.online || route === 'prepare') return null
+            if (!made.online || route === 'prepare' || made.unanswered.has(route)) return null
             made.routes.push(route)
             return unframe(await account.handle(id, route, frame(body)))
           },
@@ -137,6 +140,11 @@ async function device(
 }
 
 const PLAN = 'n1'
+
+/** Long enough for what an answer sets going to have landed. */
+function settled(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 20))
+}
 
 async function textOn(account: ReferenceAccount, id: string): Promise<string> {
   return (await account.view()).texts[id] ?? ''
@@ -269,6 +277,72 @@ describe('an open note', () => {
     expect(arrived).toEqual([
       [{ from: SEEDED[0]?.text.length, to: SEEDED[0]?.text.length, insert: 'From there.' }],
     ])
+  })
+})
+
+describe('an open note held apart from its document (#543)', () => {
+  /** The document and the note each written over, differently, while the note was
+   *  closed: the rule asks, the note is held, and it is not joined to the document until
+   *  the question is answered. Joined, a keystroke at the end of the note went into the
+   *  document at the note's place, inside a word of the document's (`wr!itten`). */
+  async function heldApart() {
+    const one = await device()
+    const doc = await one.engine.hold(PLAN)
+    const live = doc?.live
+    const theirs = 'Everything here was written again on this device.\n'
+    live?.transact(() => {
+      const text = live.getText(TEXT)
+      text.delete(0, text.length)
+      text.insert(0, theirs)
+    }, HERE)
+    await one.engine.letGo(PLAN)
+
+    const mine = 'A note rewritten in another program, start to end.\n'
+    const note = new SharedDoc(mine)
+    const held = {
+      live: note,
+      get latest() {
+        return note.text.toString()
+      },
+    }
+    const part = await attach(one.engine, PLAN, held, () => true)
+    return { one, note, part, theirs, mine }
+  }
+
+  test('is not joined while it is held, so typing goes into the note alone', async () => {
+    const { one, note, part, theirs, mine } = await heldApart()
+    expect(one.engine.core.isHeld(PLAN)).toBe(true)
+
+    note.edit([{ from: mine.length, to: mine.length, insert: '!' }])
+    expect((await one.engine.core.doc(PLAN))?.text()).toBe(theirs)
+    expect(note.text.toString()).toBe(`${mine}!`)
+    part?.()
+  })
+
+  test('answered Keep mine, the document takes the note, typing since and all, and they are one', async () => {
+    const { one, note, part, mine } = await heldApart()
+    note.edit([{ from: mine.length, to: mine.length, insert: 'Typed while asked.' }])
+
+    await one.engine.held.answer(PLAN, 'mine')
+    await settled()
+
+    const doc = await one.engine.core.doc(PLAN)
+    expect(doc?.text()).toBe(`${mine}Typed while asked.`)
+    note.edit([{ from: 0, to: 0, insert: '> ' }])
+    expect(doc?.text()).toBe(`> ${mine}Typed while asked.`)
+    part?.()
+  })
+
+  test('answered Keep theirs, the note takes the document, and they are one', async () => {
+    const { one, note, part, theirs } = await heldApart()
+
+    await one.engine.held.answer(PLAN, 'theirs')
+    await settled()
+
+    expect(note.text.toString()).toBe(theirs)
+    note.edit([{ from: theirs.length, to: theirs.length, insert: 'After.' }])
+    expect((await one.engine.core.doc(PLAN))?.text()).toBe(`${theirs}After.`)
+    part?.()
   })
 })
 
@@ -443,6 +517,132 @@ describe('an outbox folded while offline', () => {
     expect(names).toEqual(['Ideas.md'])
     expect(here.engine.waiting(SPACE)).toBe(false)
     expect(here.store.rows('outbox')).toEqual([])
+  })
+})
+
+describe('a folder deleted here', () => {
+  test('leaves a note in it whose words this device never pulled, and the folder with it (#435)', async () => {
+    // Another device made a folder and a note in it. This one read the list and has not
+    // pulled the note's words, so the note has no file here yet; deleting the folder took
+    // the note, words and all, with nothing kept. Seed 207340730 of the long walks.
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const there = await device(account, 'd0')
+    const here = await device(account, 'd1')
+
+    await there.disk.mkdir(`${ROOT}/Work`)
+    await there.engine.created(`${ROOT}/Work`, true)
+    await there.disk.write(`${ROOT}/Work/Notes.md`, 'eggs mk7z')
+    const note = await there.engine.created(`${ROOT}/Work/Notes.md`, false, 'eggs mk7z')
+    await there.engine.pass(SPACE)
+    expect(note).not.toBeNull()
+    expect(await textOn(account, note ?? '')).toBe('eggs mk7z')
+
+    here.unanswered.add('pull')
+    await here.engine.pass(SPACE)
+    expect(here.disk.files.has(`${ROOT}/Work/Notes.md`)).toBe(false)
+
+    await here.disk.remove(`${ROOT}/Work`)
+    await here.engine.removed(`${ROOT}/Work`)
+    here.unanswered.clear()
+    await here.engine.pass(SPACE)
+
+    const live = (await account.view()).entries.map((entry) => entry.name)
+    expect(live).toEqual(expect.arrayContaining(['Work', 'Notes.md']))
+    expect(await textOn(account, note ?? '')).toBe('eggs mk7z')
+  })
+
+  test('takes a note in it whose words this device had pulled', async () => {
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const there = await device(account, 'd0')
+    const here = await device(account, 'd1')
+
+    await there.disk.mkdir(`${ROOT}/Work`)
+    await there.engine.created(`${ROOT}/Work`, true)
+    await there.disk.write(`${ROOT}/Work/Notes.md`, 'eggs mk8z')
+    await there.engine.created(`${ROOT}/Work/Notes.md`, false, 'eggs mk8z')
+    await there.engine.pass(SPACE)
+
+    await here.engine.pass(SPACE)
+    expect(here.disk.files.get(`${ROOT}/Work/Notes.md`)).toBe('eggs mk8z')
+
+    await here.disk.remove(`${ROOT}/Work`)
+    await here.engine.removed(`${ROOT}/Work`)
+    await here.engine.pass(SPACE)
+
+    const live = (await account.view()).entries.map((entry) => entry.name)
+    expect(live).not.toContain('Work')
+    expect(live).not.toContain('Notes.md')
+  })
+})
+
+describe('a move to another space', () => {
+  const WORK = 'work'
+  const WORK_ROOT = '/device/work'
+
+  /** A device holding the seeded space and an empty second one, offline. */
+  async function twoSpaces(): Promise<Device> {
+    const here = await device()
+    here.engine.stop()
+    const writing = here.store.open()
+    await writing.write([
+      put('spaces', { space_id: WORK, root: WORK_ROOT, cursor: 0, role: 'owner', store: null }),
+      put('meta', wantedRow(WORK, new Map())),
+    ])
+    await writing.cleanExit(true)
+    await here.launch()
+    here.online = false
+    return here
+  }
+
+  /** What a space holds, live, as path and kind. */
+  function held(here: Device, space: string): string[] {
+    const state = here.engine.core.spaces.get(space)
+    if (!state) return []
+    return [...state.entries.values()]
+      .filter((entry) => state.isLive(entry.id))
+      .map((entry) => `${entry.local_path} ${entry.kind}`)
+      .sort()
+  }
+
+  test('takes a folder with everything in it, each as the kind it was (#413)', async () => {
+    // The other space's tree had never heard of anything in the folder, and only the
+    // folder was made there: the account, and every other device, had it empty.
+    const here = await twoSpaces()
+    await here.disk.mkdir(`${ROOT}/Trip`)
+    await here.engine.created(`${ROOT}/Trip`, true)
+    for (const [name, text] of [
+      ['Trip/Trip.md', '# Trip\n'],
+      ['Trip/Map.md', '# Map\n'],
+      ['Trip/Board.canvas', '{"nodes":[],"edges":[]}'],
+    ] as const) {
+      await here.disk.write(`${ROOT}/${name}`, text)
+      await here.engine.created(`${ROOT}/${name}`, false, text)
+    }
+
+    await here.disk.move(`${ROOT}/Trip`, `${WORK_ROOT}/Trip`)
+    await here.engine.moved(`${ROOT}/Trip`, `${WORK_ROOT}/Trip`)
+
+    expect(held(here, WORK)).toEqual([
+      'Trip folder',
+      'Trip/Board.canvas canvas',
+      'Trip/Map.md note',
+      'Trip/Trip.md note',
+    ])
+    expect(held(here, SPACE)).toEqual(['Ideas.md note', 'Plan.md note'])
+    const map = here.engine.entryAt(`${WORK_ROOT}/Trip/Map.md`)
+    expect((await here.engine.hold(map?.id ?? ''))?.text()).toBe('# Map\n')
+  })
+
+  test('takes a note the account knows, with its words, and leaves none behind', async () => {
+    const here = await twoSpaces()
+    await here.disk.move(`${ROOT}/Plan.md`, `${WORK_ROOT}/Plan.md`)
+    await here.engine.moved(`${ROOT}/Plan.md`, `${WORK_ROOT}/Plan.md`)
+
+    expect(held(here, WORK)).toEqual(['Plan.md note'])
+    expect(held(here, SPACE)).toEqual(['Ideas.md note'])
+    const plan = here.engine.entryAt(`${WORK_ROOT}/Plan.md`)
+    expect(plan?.id).not.toBe(PLAN)
+    expect((await here.engine.hold(plan?.id ?? ''))?.text()).toBe(SEEDED[0]?.text)
   })
 })
 

@@ -6,7 +6,15 @@
  *  keeps it: what it holds is paths in a space. A cut row is drawn faint until the
  *  paste moves it; a copy pastes as often as asked. */
 
-import { caughtFiles, dragged, isFileDrop, isLinkDrop, landing } from './drag-paths'
+import {
+  caughtFiles,
+  dragged,
+  draggedBookmark,
+  isBookmarkDrag,
+  isFileDrop,
+  isLinkDrop,
+  landing,
+} from './drag-paths'
 import { shortcuts } from './shortcuts.svelte'
 import { workspace } from './workspace.svelte'
 
@@ -38,6 +46,19 @@ class FileClipboard {
 
 export const fileClipboard = new FileClipboard()
 
+/** Rows measured before a change and slid after (#412); Tree.svelte fills it in. */
+export const listMotion: {
+  before: () => Map<string, number> | null
+  after: (was: Map<string, number> | null) => void
+} = { before: () => null, after: () => undefined }
+
+/** A change of the list's rows, slid. */
+export function moving(change: () => void): void {
+  const was = listMotion.before()
+  change()
+  listMotion.after(was)
+}
+
 /** A drop on a row, or on the stretch under the rows: moved, copied with Ctrl held,
  *  or files from outside copied in. */
 export function dropOnList(event: DragEvent, folder: string) {
@@ -60,6 +81,14 @@ export function dropOnList(event: DragEvent, folder: string) {
     void import('./web-tab/dropped-site').then(({ siteDropped }) =>
       siteDropped(workspace, folder, list, html),
     )
+    return
+  }
+
+  // A tile, out of the Essentials into this folder (#412).
+  const tile = landing(event, shortcuts.platform) && isBookmarkDrag(transfer)
+  const at = tile ? draggedBookmark(transfer) : null
+  if (at !== null) {
+    void import('./essentials.svelte').then((one) => one.unkeepInto(at, folder))
     return
   }
 

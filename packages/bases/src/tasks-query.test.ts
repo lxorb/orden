@@ -34,7 +34,8 @@ describe('a tasks fence', () => {
     ['scheduled this week', []],
     ['happens next week', ['Paint']],
     ['happens last week', []],
-    ['starts before today', ['Write report', 'Old thing', 'Paint', 'Water', 'Halfway']],
+    // In a space of nib's own a `📅` is a start date (#371): Write report starts today.
+    ['starts before today', ['Old thing', 'Paint', 'Water', 'Halfway']],
     ['is recurring', ['Paint']],
     ['priority is highest', ['Write report']],
     ['priority is above none', ['Write report']],

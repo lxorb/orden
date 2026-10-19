@@ -27,12 +27,17 @@ from __future__ import annotations
 
 from playwright.sync_api import Browser, Page
 
-from harness import Drive
+from harness import WEBKIT, Drive
 
 DRIVE = Drive(__file__)
 say, wrong, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.wait_for
 
 NAMES = [f"Note {letter}" for letter in "ABCDEFGHIJKL"]
+
+#: How far apart the closed tab's edge and the next one's may be read in any frame. Both
+#: move by the strip's one transition, the closed tab's width and the next tab's
+#: transform, and Chromium reads them together to the pixel (#384).
+PARTED = 3
 
 # Twelve notes in the space, each in a tab of its own: narrower than they would like in a
 # window this size, which is when a close holds the widths.
@@ -125,7 +130,10 @@ def closing(page: Page, scheme: str) -> None:
                 wrong(f"[{scheme}] frame {at}: {one['name']} went from {held} to {one['width']} wide")
                 return
     say(f"[{scheme}] the closed tab's edge and the next one's: at most {worst:.1f} px apart")
-    if worst > 3:
+    # Said and not held in WebKit, which draws the transform on its compositor, on a
+    # clock of its own: what the page reads of it mid-flight is the page's idea of it,
+    # anywhere from 0.3 to 5 px off the width read beside it in the same frame (#384).
+    if worst > PARTED and not WEBKIT:
         wrong(f"[{scheme}] the closed tab and the next one parted by {worst:.1f} px")
 
     # The next cross is where this one was: a second press closes Note E.

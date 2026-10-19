@@ -53,6 +53,9 @@ export interface Host {
   breathe(): Promise<void>
   /** Milliseconds since the epoch, for a note just written. */
   now(): number
+  /** Whether a space is an Obsidian vault - `.obsidian` at its root - where a `📅` is a
+   *  deadline rather than a start date (#371, `@nib/markdown/task-dates`). */
+  vault(root: string): Promise<boolean>
 }
 
 /** How many notes are made into rows between two breaths. */
@@ -69,6 +72,8 @@ interface Held {
    *  again over what the read brings back. */
   reading: boolean
   since: ((files: Map<string, Row[]>) => void)[]
+  /** Whether its `📅` is a deadline, as asked of the host when the space is read. */
+  vault: boolean
 }
 
 export class RowsStore {
@@ -148,8 +153,8 @@ export class RowsStore {
       const known = before?.[0]?.file.ctime ?? 0
       const ctime = known > 0 ? known : now
       const stamp = { size: content.length, mtime: now, ctime }
-      return rowsOf(
-        held.name,
+      return this.rowsIn(
+        held,
         readOf({ ...scanNote(relative, content), ...scanRows(content), stamp }),
       )
     })
@@ -178,6 +183,13 @@ export class RowsStore {
   private flat(held: Held): Row[] {
     held.flat ??= [...held.files.values()].flat()
     return held.flat
+  }
+
+  /** A note's rows, read the way its space reads a task's dates. */
+  private rowsIn(held: Held, read: NoteRead): Row[] {
+    const rows = rowsOf(held.name, read)
+    if (held.vault) for (const row of rows) if (row.task) row.task.dueReads = 'deadline'
+    return rows
   }
 
   private holding(path: string): Held | null {
@@ -216,6 +228,7 @@ export class RowsStore {
       flat: null,
       reading: true,
       since: [],
+      vault: false,
     }
     this.spaces.set(pathKey(space.root), held)
     this.queue.push(held)
@@ -329,7 +342,7 @@ export class RowsStore {
       const relative = at ? `${at}/${note.path}` : note.path
       if (!isMarkdownPath(relative)) continue
       this.edit(held, pathKey(relative, held.root), () =>
-        rowsOf(held.name, readOf({ ...note, path: relative })),
+        this.rowsIn(held, readOf({ ...note, path: relative })),
       )
     }
   }
@@ -352,6 +365,7 @@ export class RowsStore {
   /** One space read whole: the link index's scan where it is the open space, a scan of
    *  its own otherwise. */
   private async read(held: Held) {
+    held.vault = await this.host.vault(held.root).catch(() => false)
     const notes = await this.notesOf(held)
     if (this.spaces.get(pathKey(held.root)) !== held) return
 
@@ -367,11 +381,11 @@ export class RowsStore {
           const stamp = { size: content.length, mtime: this.host.now(), ctime: this.host.now() }
           files.set(
             pathKey(note.path, held.root),
-            rowsOf(held.name, readOf({ ...note, ...scanRows(content), stamp })),
+            this.rowsIn(held, readOf({ ...note, ...scanRows(content), stamp })),
           )
         }
       } else {
-        files.set(pathKey(note.path, held.root), rowsOf(held.name, readOf(note)))
+        files.set(pathKey(note.path, held.root), this.rowsIn(held, readOf(note)))
       }
       if (++counted % CHUNK === 0) await this.host.breathe()
     }

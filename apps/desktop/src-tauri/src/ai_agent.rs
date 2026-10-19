@@ -15,8 +15,8 @@
 //! whatever the model says. And how each is supervised, laid over the grant for the call
 //! and never kept (`supervised`): Approve asks before every change and never before a
 //! read; Auto as the grant is, asking about what Settings > AI > Access says asks
-//! (sending, deleting, publishing, ...); Full permissions asks for nothing but paying,
-//! because every change it makes can be kept or undone; Plan as the grant is.
+//! (sending, deleting, publishing, ...); Full permissions asks for nothing at all (#372),
+//! every change it makes on the changes card to keep or undo; Plan as the grant is.
 //!
 //! The same three hold for every engine the sidebar runs: its own loop for a key or a
 //! plan, and Claude Code and Codex, which are started with none of their own tools and
@@ -51,7 +51,7 @@ pub enum Mode {
     Approve,
     /// Everything the grant reaches, asked about where the grant asks.
     Auto,
-    /// Everything the grant reaches, nothing asked but paying. Agent, as it was called
+    /// Everything the grant reaches, nothing asked (#372). Agent, as it was called
     /// before, is read as this.
     #[serde(alias = "agent")]
     Full,
@@ -105,7 +105,7 @@ fn made(id: String, client: &str, builtin: &Builtin) -> Grant {
 
 /// The grant as a call in `mode` meets the policy: Approve asks before every change, and
 /// about every category, whatever was switched off; Auto as the grant is, so what the
-/// reader set in Settings > AI > Access is what asks; Full asks for nothing but paying;
+/// reader set in Settings > AI > Access is what asks; Full asks for nothing at all (#372);
 /// Plan, which changes nothing but its own note, as the grant is.
 fn supervised(mut grant: Grant, mode: Mode) -> Grant {
     match mode {
@@ -389,18 +389,16 @@ mod tests {
     }
 
     #[test]
-    fn full_permissions_never_ask_but_before_paying() {
+    fn full_permissions_never_ask_anything() {
         let mut stored = grant();
-        // Whatever the grant said, asking first included.
+        // Whatever the grant said, asking first included (#372: paying, a tab shown and a
+        // step handed to the reader too).
         stored.mode = GrantMode::Confirm;
         let agent = supervised(stored, Mode::Full);
         assert_eq!(agent.mode, GrantMode::Autonomous);
+        assert!(agent.asks_nothing());
         for category in ASKED {
-            assert_eq!(
-                agent.asks(category),
-                category == Category::Paying,
-                "{category:?}"
-            );
+            assert!(!agent.asks(category), "{category:?}");
         }
     }
 
@@ -445,7 +443,7 @@ mod tests {
         assert!(supervised(off, Mode::Approve).asks(Category::Sending));
         assert!(count(Mode::Approve) >= count(Mode::Auto));
         assert!(count(Mode::Auto) > count(Mode::Full));
-        assert_eq!(count(Mode::Full), 1);
+        assert_eq!(count(Mode::Full), 0);
         assert_eq!(
             supervised(stored.clone(), Mode::Approve).mode,
             GrantMode::Confirm

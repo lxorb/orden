@@ -41,6 +41,7 @@ import { swipeChoice } from './choice.svelte'
 import { chainOf, taken } from './edge'
 import { QUIET, SETTLE, type Side, type Source, Swipe, type Turn } from './gesture'
 import { type Room, swiping } from './shown.svelte'
+import { Slid } from './slid'
 import SwipeArrow from './SwipeArrow.svelte'
 
 /** How near a pane's side a finger has to land to be a swipe and not a pan. */
@@ -83,7 +84,9 @@ interface Live {
   /** Whether it began while the last swipe's coast was settling: then it is that coast,
    *  and every step of it is nobody's. */
   swallowed: boolean
-  /** The last step's time on its own clock, and on this window's. */
+  /** The first step's time, and the last step's, on its own clock; and the last on this
+   *  window's. */
+  first: number
   at: number
   heardAt: number
 }
@@ -195,6 +198,7 @@ export function heard(step: Heard): void {
     stepped: false,
     went: false,
     swallowed: !told && now < settling,
+    first: step.at,
     at: step.at,
     heardAt: now,
   }
@@ -294,12 +298,25 @@ export function fromTouchpad(event: WheelEvent, streaming: boolean): boolean {
   return streaming || !(notch !== 0 && notch % 120 === 0)
 }
 
+/** Which pane's content each scroll moved sideways, and when; see slid.ts. */
+const slid = new Slid()
+
+function scrolled(event: Event) {
+  if (!(event.target instanceof Element)) return
+  const pane = event.target.closest<HTMLElement>('[data-pane]')?.dataset.pane ?? null
+  slid.heard(event.target, pane, event.timeStamp)
+}
+
 /** Which way the content under a wheel would take it, asked only where the answer counts:
- *  a sideways step of a stream that has not decided yet. */
+ *  a sideways step of a stream that has not decided yet. A stream that has moved the
+ *  pane's content sideways already is the content's, wherever the content stands now: a
+ *  passive listener hears the wheel after the scroll it made (#407; see slid.ts). */
 function scrollsUnder(event: WheelEvent, under: { tab: Tab; pane: HTMLElement; at: Element }) {
   if (event.defaultPrevented) return KEPT
-  const decided = live?.tab.id === under.tab.id && !live.swipe.asking
-  if (event.deltaX === 0 || decided) return NEITHER
+  const ours = live?.tab.id === under.tab.id ? live : null
+  if (ours && !ours.swipe.asking) return NEITHER
+  if (slid.since(under.tab.paneId, ours?.first ?? event.timeStamp)) return KEPT
+  if (event.deltaX === 0) return NEITHER
   return taken(chainOf(under.at, under.pane))
 }
 
@@ -422,6 +439,7 @@ export function listen(): () => void {
   const arrow = mount(SwipeArrow, { target })
 
   window.addEventListener('wheel', wheeled, { passive: true })
+  window.addEventListener('scroll', scrolled, { capture: true, passive: true })
   // A phone has the system's own back at the side of the screen.
   const touching = !isMobile
   if (touching) {
@@ -456,6 +474,8 @@ export function listen(): () => void {
     stopped = true
     unlisten?.()
     window.removeEventListener('wheel', wheeled)
+    window.removeEventListener('scroll', scrolled, { capture: true })
+    slid.forget()
     if (touching) {
       window.removeEventListener('touchstart', touched, { capture: true })
       window.removeEventListener('touchmove', moved, { capture: true })

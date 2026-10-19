@@ -719,6 +719,24 @@
         {/each}
       </span>
     </div>
+  {:else if field.kind === 'value'}
+    <!-- Said rather than set: the version this is (#490). The whole row copies it, and
+         says so for a moment in the value's place. -->
+    <div
+      class="nib-setting setting pressable"
+      role="button"
+      tabindex="0"
+      title={t('Copy')}
+      onclick={() => field.press()}
+      onkeydown={(event) => {
+        if (event.key !== ' ' && event.key !== 'Enter') return
+        event.preventDefault()
+        field.press()
+      }}
+    >
+      {@render named(field, where)}
+      <span class="value said">{field.get()}</span>
+    </div>
   {:else if field.kind === 'text'}
     <!-- A line somebody types. The placeholder is what the app answers to with
          nothing typed, so an empty field is the default put back and the reset is
@@ -740,7 +758,7 @@
         onchange={field.live ? undefined : (event) => field.set(event.currentTarget.value)}
       />
     </label>
-  {:else}
+  {:else if field.kind === 'select'}
     <div class="nib-setting setting">
       {@render named(field, where)}
       <div class="pick">
@@ -985,7 +1003,12 @@
       <Security />
 
       <div class="card">
-        <button class="nib-action is-danger" onclick={() => account.signOut()}
+        <button
+          class="nib-action is-danger"
+          onclick={() =>
+            __EVEN_PLUGIN__
+              ? void account.signOut()
+              : void import('./ai/vault/leaving').then((one) => one.signOut())}
           >{t('Sign out')}</button
         >
         <!-- Fetched by the press, like the sheets: nobody opening the settings needs
@@ -1661,6 +1684,19 @@
     font-family: var(--font-mono);
     font-size: var(--text-xs);
     color: var(--muted);
+  }
+
+  /* The version, in the type a number is read in, and selectable as text as well; as
+     wide as it needs, where a slider's number has a column of its own. */
+  .setting .value.said {
+    flex: none;
+    width: auto;
+    font-family: var(--font-mono);
+    font-size: var(--text-sm);
+    color: var(--muted-strong);
+    unicode-bidi: isolate;
+    user-select: text;
+    -webkit-user-select: text;
   }
 
   .setting .chevron {

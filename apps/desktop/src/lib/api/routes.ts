@@ -232,6 +232,9 @@ export interface RemoteSpace {
   arranged: unknown
   /** What the space has archived; read rather than trusted, see workspace/archive. */
   archived?: unknown
+  /** Which order its file list is read in; read rather than trusted, see
+   *  `SpaceSorting` in workspace/arranged.svelte.ts (#423). */
+  sort?: unknown
   createdAt: number
   updatedAt: number
   blog: {
@@ -405,6 +408,12 @@ export interface AccountSettings {
   attachments?: string
   /** The automatic reminder's minutes before a task's time, -1 for none. */
   remindBefore?: number
+  /** Whether Today holds a task with no start date, as one whose start date has come. */
+  undatedInToday?: boolean
+  /** The spaces put away whole, by their ids; see space-archive.ts. */
+  archivedSpaces?: string[]
+  /** Whether two fingers turn a canvas (#351). */
+  canvasTurns?: boolean
   /** What pings for every chat at once (docs/chats.md 4.11): words that call for the
    *  reader as their name does, the hours pings are let through (null for every hour),
    *  and whether a notification shows the words and makes a sound. See
@@ -780,6 +789,10 @@ export const routes = {
       token,
       body: { arranged },
     }),
+
+  /** Which order the space's file list is read in; see `SpaceSorting` (#423). */
+  saveSort: (token: string, id: string, sort: string) =>
+    request<{ sort: string }>(`/v1/spaces/${id}/sort`, { method: 'PUT', token, body: { sort } }),
 
   /** The whole map, met with the account's first; see workspace/archive-map.ts. */
   saveArchived: (token: string, id: string, archived: Readonly<Record<string, number>>) =>

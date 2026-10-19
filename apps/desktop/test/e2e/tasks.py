@@ -68,7 +68,7 @@ ERRANDS = """# Errands
 THESIS = """# Thesis
 
 - [/] Draft the talk [duration:: 2h] ⏳ {soon}
-- [ ] Renew passport 🔺 📅 {lastweek}
+- [ ] Renew passport [deadline:: {yesterday}] 🔺 📅 {lastweek}
 """
 
 SYNC = "---\nstatus: Doing\ndue: {soon}\npoints: 3\n---\n# Sync loses a rename\n"
@@ -156,6 +156,7 @@ def the_panel(page: Page) -> None:
     for wanted in ["Inbox", "Today", "Upcoming", "Bugs", "Errands", "Thesis", "admin"]:
         if not any(one.startswith(wanted) for one in rows):
             wrong(f"the panel has no {wanted} row")
+    # Overdue is a deadline past (#371): the passport's.
     late = page.evaluate("!!document.querySelector('.tasks .nib-row-meta.late')")
     if not late:
         wrong("Today's count is not in the danger tone while something is overdue")

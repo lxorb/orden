@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
-import { calloutIcon, calloutOf } from './callouts'
+import { calloutIcon, calloutIconParts, calloutOf } from './callouts'
+import { renderMarkdown } from './index'
 
 describe('a callout’s opening line', () => {
   test('is nothing at all for a quote that names no type', () => {
@@ -24,6 +25,16 @@ describe('a callout’s opening line', () => {
     expect(found?.type).toBe('recipe')
     expect(found?.look).toBeNull()
     expect(found?.label).toBe('Recipe')
+  })
+
+  /** #492: the looks were an object, and `constructor` answered from its
+   *  prototype, so one line of a shared note broke the whole of it for everyone. */
+  test('leaves a type an object would answer from its prototype without a look', () => {
+    for (const word of ['constructor', 'Constructor', '__proto__', 'toString', 'hasOwnProperty']) {
+      const found = calloutOf(`[!${word}] T`)
+      expect(found?.type).toBe(word.toLowerCase())
+      expect(found?.look).toBeNull()
+    }
   })
 
   /** These two were nib's own looks before nib had any of the others, and an
@@ -126,6 +137,17 @@ describe('a callout’s icon', () => {
   test('is nothing for a type nothing knows', () => {
     expect(calloutIcon(null)).toBe('')
     expect(calloutIcon('recipe')).toBe('')
+    expect(calloutIcon('constructor')).toBe('')
+    expect(calloutIconParts('__proto__')).toBeNull()
+  })
+
+  test('is nothing for those, and the note around them still renders', () => {
+    for (const word of ['constructor', '__proto__', 'Constructor']) {
+      const html = renderMarkdown(`> [!${word}] T\n> body\n`, { escapeHtml: true })
+      expect(html).toContain(`data-callout="${word.toLowerCase()}"`)
+      expect(html).toContain('<p>body</p>')
+      expect(html).not.toContain('callout-icon')
+    }
   })
 
   test('draws in the colour of the words around it', () => {

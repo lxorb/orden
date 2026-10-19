@@ -201,8 +201,9 @@ describe('a drop into a group', () => {
     expect(dropInto('formula.day', { kind: 'date', iso: '2026-10-09' }, bank, TODAY)).toEqual({
       change: { task: { due: '2026-10-09' } },
     })
+    // Out of overdue is a deadline of today: only a deadline makes a task late (#371).
     expect(dropInto('formula.overdue', false, bank, TODAY)).toEqual({
-      change: { task: { due: TODAY } },
+      change: { task: { deadline: TODAY } },
     })
     expect(dropInto('formula.overdue', true, bank, TODAY)).toBeNull()
     expect(dropInto('task.priority', 1, bank, TODAY)).toEqual({ change: { task: { priority: 1 } } })
@@ -394,21 +395,22 @@ describe('the calendar', () => {
 
 describe('the timeline', () => {
   const read = () => null
-  test('runs a task from its start to its due date and writes what a drag moved', () => {
+  test('runs a task from its start to its deadline and writes what a drag moved', () => {
+    // Beside a `🛫`, a `📅` is the deadline (#371).
     const talk = taskRow('T.md', '- [ ] Talk 🛫 2026-10-05 📅 2026-10-08')
     const bar = barOf(talk, {}, read)
     expect(bar).toMatchObject({
       start: '2026-10-05',
       end: '2026-10-08',
       from: 'task.start',
-      to: 'task.due',
+      to: 'task.deadline',
     })
     if (!bar) throw new Error('bar')
     expect(dragged(bar, 'move', 2)).toEqual({
       'task.start': '2026-10-07',
-      'task.due': '2026-10-10',
+      'task.deadline': '2026-10-10',
     })
-    expect(dragged(bar, 'end', -5)).toEqual({ 'task.due': '2026-10-05' })
+    expect(dragged(bar, 'end', -5)).toEqual({ 'task.deadline': '2026-10-05' })
     const one = barOf(taskRow('T.md', '- [ ] One 📅 2026-10-08'), {}, read)
     if (!one) throw new Error('bar')
     expect(dragged(one, 'start', -2)).toEqual({ 'task.start': '2026-10-06' })
@@ -569,13 +571,16 @@ describe('the panel', () => {
   test('counts Inbox, Today and Upcoming as their views answer them, and the projects and labels', () => {
     const rows = [
       taskRow('Inbox.md', '- [ ] Idea'),
-      taskRow('Errands.md', '- [ ] Late #admin 📅 2026-10-01'),
+      // Late by its deadline: a start date past is never late (#371).
+      taskRow('Errands.md', '- [ ] Late #admin [deadline:: 2026-10-01]'),
       taskRow('Errands.md', '- [ ] Now 📅 2026-10-04', 1),
       taskRow('Thesis.md', '- [ ] Later #admin 📅 2026-10-09'),
       taskRow('Thesis.md', '- [x] Done ✅ 2026-10-01', 1),
     ]
     const counts = panelCounts(rows, TODAY, [{ space: 'Notes', path: 'Inbox.md' }])
     expect(counts).toMatchObject({ inbox: 1, today: 2, overdue: true, upcoming: 3 })
+    // With the tasks that have no start date in Today, as Settings can have it (#408).
+    expect(panelCounts(rows, TODAY, [{ space: 'Notes', path: 'Inbox.md' }], true).today).toBe(3)
     expect(counts.notes.map((one) => `${one.name} ${one.count}`).sort()).toEqual([
       'Errands 2',
       'Inbox 1',

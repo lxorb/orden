@@ -385,6 +385,99 @@ describe('signing in with it on', () => {
     const said = await call<SecondView>(env, '/v1/second', { token })
     expect(said.json.on).toBe(false)
   })
+
+  /** Begins an enrolment and answers it with the new app's code, with whatever
+   *  `current` is given for the factor already on. */
+  async function replace(token: string, current?: string) {
+    const begun = await call<SecondView>(env, '/v1/second', { token, body: {} })
+    const fresh = await secretHeldFor(env, begun.json.holding ?? '')
+    const done = await call<SecondView>(env, '/v1/second/confirm', {
+      token,
+      body: {
+        holding: begun.json.holding,
+        code: await codeAt(fresh, step()),
+        ...(current === undefined ? {} : { current }),
+      },
+    })
+
+    return { done, fresh }
+  }
+
+  test('and replacing it takes a code from the one it replaces', async () => {
+    const token = await signInWith(env, secret)
+    const before = env.db.prepare('select totp_secret from users').get()
+
+    for (const current of [undefined, '', '000000']) {
+      const { done } = await replace(token, current)
+      expect(done.status).toBe(400)
+      expect(done.json.error).toBe('that code is not right')
+    }
+
+    // Nothing moved: the same secret, and every recovery code still there.
+    expect(env.db.prepare('select totp_secret from users').get()).toEqual(before)
+    expect((await call<SecondView>(env, '/v1/second', { token })).json.codesLeft).toBe(10)
+
+    // And the old factor still finishes a sign-in, with the step after the one
+    // spent above.
+    const half = await signInHalfWay(env)
+    const done = await call<SecondView>(env, '/v1/auth/second', {
+      body: { holding: half.json.holding, code: await codeAt(secret, step() + 1) },
+    })
+    expect(done.status).toBe(200)
+  })
+
+  test('which, given, replaces it: the old secret and its list stop working', async () => {
+    const token = await signInWith(env, secret)
+    const { done, fresh } = await replace(token, await codeAt(secret, step() + 1))
+    expect(done.status).toBe(200)
+    expect(done.json.recovery).toHaveLength(10)
+
+    const half = await signInHalfWay(env)
+    const old = await call<SecondView>(env, '/v1/auth/second', {
+      body: { holding: half.json.holding, code: await codeAt(secret, step() + 1) },
+    })
+    expect(old.status).toBe(400)
+
+    const now = await call<SecondView>(env, '/v1/auth/second', {
+      body: { holding: half.json.holding, code: await codeAt(fresh, step()) },
+    })
+    expect(now.status).toBe(200)
+  })
+
+  test('and a recovery code will do for the one it replaces', async () => {
+    const token = await signInWith(env, secret)
+    const list = await call<SecondView>(env, '/v1/second/recovery', {
+      token,
+      body: { code: await codeAt(secret, step() + 1) },
+    })
+    const spare = list.json.recovery?.[0] ?? ''
+
+    const { done } = await replace(token, spare)
+    expect(done.status).toBe(200)
+  })
+
+  test('and a secret handed out before it came on cannot replace it later', async () => {
+    const token = await signInWith(env, secret)
+    // Off, then an enrolment begun and left, then on again with another app.
+    await call(env, '/v1/second', {
+      method: 'DELETE',
+      token,
+      body: { code: await codeAt(secret, step() + 1) },
+    })
+    const left = await call<SecondView>(env, '/v1/second', { token, body: {} })
+    const leftSecret = await secretHeldFor(env, left.json.holding ?? '')
+    const { done: on, fresh } = await replace(token)
+    expect(on.status).toBe(200)
+
+    const late = await call<SecondView>(env, '/v1/second/confirm', {
+      token,
+      body: { holding: left.json.holding, code: await codeAt(leftSecret, step()) },
+    })
+    expect(late.status).toBe(400)
+
+    // The factor that came on is the one that still answers.
+    expect(await signInWith(env, fresh)).toBeTruthy()
+  })
 })
 
 /** Every way an address alone opens an account, held to the second factor the
@@ -829,6 +922,17 @@ function secretOf(env: TestEnv): string {
   const row = env.db
     .prepare("select value from cached where scope = 'second-pending' order by until desc limit 1")
     .get() as { value: string } | undefined
+
+  return (row?.value ?? '').split(':')[1] ?? ''
+}
+
+/** The secret one pending enrolment holds, found by its holding token: where two are
+ *  pending at once, made in the same millisecond, the newest is not a question the
+ *  table can answer. */
+async function secretHeldFor(env: TestEnv, holding: string): Promise<string> {
+  const row = env.db
+    .prepare("select value from cached where scope = 'second-pending' and key = ?")
+    .get(await sha256(holding)) as { value: string } | undefined
 
   return (row?.value ?? '').split(':')[1] ?? ''
 }

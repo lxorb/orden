@@ -21,27 +21,27 @@
 //! console's domain (`Runtime`) is enabled only once an agent asks for the console,
 //! because a page can tell that one is on.
 
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "cef")))]
 use std::cell::Cell;
 use std::collections::{HashMap, HashSet, VecDeque};
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "cef")))]
 use std::rc::Rc;
 use std::sync::mpsc::{sync_channel, Receiver, RecvTimeoutError};
 use std::sync::{Arc, Mutex, PoisonError};
 use std::time::{Duration, Instant};
 
 use serde_json::{json, Value};
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "cef")))]
 use tauri::webview::PlatformWebview;
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "cef")))]
 use webview2_com::Microsoft::Web::WebView2::Win32::{
     ICoreWebView2, ICoreWebView2DevToolsProtocolEventReceivedEventArgs2, ICoreWebView2_11,
 };
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "cef")))]
 use webview2_com::{
     CallDevToolsProtocolMethodCompletedHandler, DevToolsProtocolEventReceivedEventHandler,
 };
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "cef")))]
 use windows_core::{Interface as _, HSTRING, PWSTR};
 
 use super::engines::View;
@@ -119,7 +119,7 @@ fn asked(
     params: &Value,
 ) -> Result<Answering, String> {
     match view {
-        #[cfg(windows)]
+        #[cfg(all(windows, not(feature = "cef")))]
         View::Webview(view) => {
             let (answered, answer) = sync_channel(1);
             let asking = (
@@ -134,12 +134,37 @@ fn asked(
             .map_err(|error| format!("the page could not be reached: {error}"))?;
             Ok(answer)
         }
+        // A reader's page on nib's own Chromium: the runtime's own door, which waits on
+        // the caller's thread, so a thread of its own waits here and a caller can give up.
+        #[cfg(feature = "cef")]
+        View::Webview(view) => {
+            let (answered, answer) = sync_channel(1);
+            let (view, session, method, params) = (
+                view.clone(),
+                session.map(str::to_string),
+                method.to_string(),
+                params.clone(),
+            );
+            std::thread::spawn(move || {
+                let said = crate::engine::devtools::call(
+                    &view,
+                    session.as_deref(),
+                    &method,
+                    &params,
+                    PATIENCE,
+                );
+                let _ = answered.try_send(said);
+            });
+            Ok(answer)
+        }
+        #[cfg(feature = "cef")]
+        View::Windowless(page) => page.ask(session, method, params),
     }
 }
 
 /// Sends one call to the engine, on the window's thread, and the answer to `answered`
 /// whenever it comes.
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "cef")))]
 #[allow(
     unsafe_code,
     reason = "the DevTools Protocol is WebView2's own, reached through its COM interfaces"
@@ -188,7 +213,7 @@ fn send(
 /// back about, a screencast's frame acknowledged.
 pub fn tell(view: &View, method: &'static str, params: &Value) {
     match view {
-        #[cfg(windows)]
+        #[cfg(all(windows, not(feature = "cef")))]
         View::Webview(view) => {
             let params = params.clone();
             let _ = view.with_webview(move |platform| {
@@ -197,6 +222,12 @@ pub fn tell(view: &View, method: &'static str, params: &Value) {
                 }
             });
         }
+        #[cfg(feature = "cef")]
+        View::Webview(view) => {
+            crate::engine::devtools::tell(view, None, vec![(method, params.clone())]);
+        }
+        #[cfg(feature = "cef")]
+        View::Windowless(page) => page.tell(method, params),
     }
 }
 
@@ -204,7 +235,7 @@ pub fn tell(view: &View, method: &'static str, params: &Value) {
 /// parameters, for as long as the page is open.
 pub fn listen(view: &View, event: &'static str, on: impl Fn(Value) + Send + Sync + 'static) {
     match view {
-        #[cfg(windows)]
+        #[cfg(all(windows, not(feature = "cef")))]
         View::Webview(view) => {
             let _ = view.with_webview(move |platform| {
                 if let Some(core) = core_of(&platform) {
@@ -212,13 +243,27 @@ pub fn listen(view: &View, event: &'static str, on: impl Fn(Value) + Send + Sync
                 }
             });
         }
+        #[cfg(feature = "cef")]
+        View::Webview(view) => {
+            let _ = crate::engine::devtools::hear(view, move |method, session, params| {
+                if method == event && session.is_none() {
+                    on(params.clone());
+                }
+            });
+        }
+        #[cfg(feature = "cef")]
+        View::Windowless(page) => page.hear(move |method, session, params| {
+            if method == event && session.is_none() {
+                on(params.clone());
+            }
+        }),
     }
 }
 
 /// One call nobody waits for, on the window's thread: its answer, whatever it is, is
 /// dropped. For what a page is set up with before it loads, where waiting would be
 /// waiting inside the event loop's own turn.
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "cef")))]
 pub fn post(core: &ICoreWebView2, method: &str, params: &Value) {
     ask(core, method, params, |_| ());
 }
@@ -227,7 +272,7 @@ pub fn post(core: &ICoreWebView2, method: &str, params: &Value) {
 /// whenever the engine gives it - or at once, with the reason, where the call could not
 /// be made at all. For work that already runs on the window's thread: `call` would wait
 /// there for an answer that only that same thread can deliver.
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "cef")))]
 #[allow(
     unsafe_code,
     reason = "the DevTools Protocol is WebView2's own, reached through its COM interfaces"
@@ -270,7 +315,7 @@ pub fn ask(
 }
 
 /// An answer's text as the value it spells: no text at all is `null`.
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "cef")))]
 fn parsed(method: &str, text: &str) -> Result<Value, String> {
     if text.is_empty() {
         return Ok(Value::Null);
@@ -279,7 +324,7 @@ fn parsed(method: &str, text: &str) -> Result<Value, String> {
 }
 
 /// The sentence in the protocol's own refusal, `{"code": -32000, "message": "..."}`.
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "cef")))]
 fn refusal(json: &str) -> Option<String> {
     let said: Value = serde_json::from_str(json).ok()?;
     said.get("message")?.as_str().map(str::to_string)
@@ -287,7 +332,7 @@ fn refusal(json: &str) -> Option<String> {
 
 /// Starts hearing one of the protocol's events on a page, on the window's thread. `on`
 /// is handed the frame's session (empty for the page's own) and the event's parameters.
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "cef")))]
 #[allow(
     unsafe_code,
     reason = "the DevTools Protocol's events are WebView2's own, reached through its COM interfaces"
@@ -627,7 +672,7 @@ const EVENTS: [&str; 13] = [
 
 /// Starts following what a page says, on the window's thread. Once per webview: the
 /// engine's receivers live as long as it does.
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "cef")))]
 pub fn follow(core: &ICoreWebView2, label: &str) {
     let page = heard(label);
     if std::mem::replace(
@@ -648,7 +693,7 @@ pub fn follow(core: &ICoreWebView2, label: &str) {
 /// Starts following what a page says, from any thread, on whichever engine it is. Once
 /// per page.
 pub fn follow_view(view: &View, label: &str) {
-    #[cfg(windows)]
+    #[cfg(all(windows, not(feature = "cef")))]
     {
         let View::Webview(webview) = view;
         let named = label.to_string();
@@ -657,6 +702,33 @@ pub fn follow_view(view: &View, label: &str) {
                 follow(&core, &named);
             }
         });
+    }
+    #[cfg(feature = "cef")]
+    {
+        let page = heard(label);
+        if std::mem::replace(
+            &mut page.lock().unwrap_or_else(PoisonError::into_inner).followed,
+            true,
+        ) {
+            return;
+        }
+        let hearing = move |method: &str, session: Option<&str>, params: &Value| {
+            if EVENTS.contains(&method) {
+                let mut held = page.lock().unwrap_or_else(PoisonError::into_inner);
+                heard_event(
+                    &mut held,
+                    method,
+                    session.unwrap_or_default(),
+                    params.clone(),
+                );
+            }
+        };
+        match view {
+            View::Webview(webview) => {
+                let _ = crate::engine::devtools::hear(webview, hearing);
+            }
+            View::Windowless(windowless) => windowless.hear(hearing),
+        }
     }
 }
 
@@ -929,7 +1001,7 @@ pub fn sleep_idle(app: &tauri::AppHandle) {
 }
 
 /// The platform webview's engine, on the window's thread.
-#[cfg(windows)]
+#[cfg(all(windows, not(feature = "cef")))]
 #[allow(
     unsafe_code,
     reason = "the engine is reached through WebView2's COM interfaces"

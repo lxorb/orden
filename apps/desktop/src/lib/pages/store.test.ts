@@ -255,6 +255,20 @@ describe('the two fits and the zoom in between', () => {
     expect(again.store.camera.scale).toBe(1)
   })
 
+  /** The other one that was wrong (#421): the surface is made again each time its tab
+   *  comes back to the front, and the camera lived on the tab while `chose` lived on
+   *  the surface, so another tab and back fitted the paper again. */
+  test('and survives another tab and back, the surface made again on the same tab', () => {
+    const first = ofPages(2, '/space/Switched.pages')
+    first.store.zoomTo(1.6)
+    const tab = (first.store as unknown as { tab: InstanceType<typeof Tab> }).tab
+
+    const back = new PagesStore(tab)
+    back.measured(1180, 722)
+    back.measured(1000, 722)
+    expect(back.camera.scale).toBe(1.6)
+  })
+
   test('while a fitted one comes back fitted, and fits the new pane', () => {
     const first = ofPages(2, '/space/Fitted.pages')
     first.store.turnTo(2)

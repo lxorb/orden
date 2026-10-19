@@ -26,6 +26,22 @@ export const jv: Dictionary = {
   'Import from Zen': 'Impor saka Zen',
   'Containers stay in Zen': 'Kontainer tetep ana ing Zen',
   'Zen’s tabs could not be read.': 'Tab Zen ora bisa diwaca.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'Kontainer tetep ana ing Firefox',
+  'Nothing could be read out of {browser}.': 'Ora ana sing bisa diwaca saka {browser}.',
+  'Saved groups': 'Grup sing disimpen',
+  'Tab group': 'Grup tab',
+  'Bookmarks toolbar': 'Bilah tandha buku',
+  'Bookmarks menu': 'Menu tandha buku',
+  'Other bookmarks': 'Tandha buku liyane',
+  'Mobile bookmarks': 'Tandha buku seluler',
+  'Bookmarks bar': 'Bilah tandha buku',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} ngunci tab sing kabukak, mula mung tandha bukune sing teka.',
+  '{count} pages not on the web stay behind': '{count} kaca sing ora ana ing web ditinggal',
+  'Reading List': 'Dhaptar Wacan',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS nyimpen tab lan tandha buku Safari ing mburine Akses Disk Lengkap. Uripna Orden ing kana, banjur jaluk maneh.',
   // Settings: note types
   'Page note': 'Cathetan kaca',
   'Web note': 'Cathetan web',
@@ -96,8 +112,6 @@ export const jv: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'Pitedah',
   'Silent mode': 'Mode sepi',
-  'Sign in to keep your notes safe and on every device.':
-    'Mlebu supaya cathetan sampeyan aman lan ana ing saben piranti.',
   'See how your notes connect.': 'Delengen kepiye cathetan sampeyan nyambung.',
   'Press {key} to find anything, notes and commands alike.':
     'Pencet {key} kanggo nemokake apa wae, cathetan utawa prentah.',
@@ -119,11 +133,13 @@ export const jv: Dictionary = {
   '{count} h': '{count} jam',
   Inbox: 'Kothak mlebu',
   Date: 'Tanggal',
+  'Start date': 'Tanggal wiwitan',
   Priority: 'Prioritas',
   Reminder: 'Pangeling',
   Duration: 'Suwene',
   'Smart dates': 'Tanggal pinter',
   'From any app': 'Saka aplikasi apa wae',
+  'Show tasks without a start date in Today': 'Tampilake tugas tanpa tanggal wiwitan ing Dina iki',
   'Every day': 'Saben dina',
   'Every weekday': 'Saben dina kerja',
   'Every week': 'Saben minggu',
@@ -167,6 +183,8 @@ export const jv: Dictionary = {
   Dots: 'Titik',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'Puter kanvas nganggo driji loro',
+  'Turn upright': 'Jejegke',
   Canvas: 'Kanvas',
   Card: 'Kartu',
   'Note or picture': 'Cathetan utawa gambar',
@@ -242,6 +260,10 @@ export const jv: Dictionary = {
   Unpin: 'Uculi pin',
   Close: 'Tutup',
   'Close pinned tab?': 'Tutup tab sing dipinen?',
+  'Save changes to {name}?': 'Simpen owahan ing {name}?',
+  'Save changes to these tabs?': 'Simpen owahan ing tab-tab iki?',
+  'Unsaved words go to Recently deleted.': 'Tembung sing durung disimpen mlebu Mentas dibusak.',
+  'Don’t save': 'Aja disimpen',
   'Close others': 'Tutup liyane',
   'Close tabs to the right': 'Tutup tab ing sisih tengen',
   'Close tabs to the left': 'Tutup tab ing sisih kiwa',
@@ -1155,6 +1177,7 @@ export const jv: Dictionary = {
   'Double-click to write': 'Klik kaping pindho kanggo nulis',
   'Another colour': 'Warna liya',
   'Turn into a note': 'Owahi dadi cathetan',
+  Arrange: 'Tata',
   'Bring to front': 'Gawa ing ngarep banget',
   'Bring forward': 'Gawa ngarep',
   'Send backward': 'Kirim mburi',
@@ -1244,6 +1267,9 @@ export const jv: Dictionary = {
   Unstable: 'Ora mantep',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'Mantep ngetutake versi sing wis diwedalake, Ora mantep ngetutake build edge lan bisa rusak.',
+  'Web version': 'Versi web',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'Mantep yaiku aplikasi web sing wis diwedalake, Ora mantep yaiku build paling anyar lan bisa rusak.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Impor',
@@ -1571,8 +1597,6 @@ export const jv: Dictionary = {
   // Web tabs
   Reload: 'Emot maneh',
   'Hard reload': 'Emot maneh kabeh',
-  'Clip this page': 'Simpen kaca iki',
-  'Clip the link': 'Simpen pranalane',
   'Open in the browser': 'Bukak ing panjelajah',
   'Show it here': 'Tuduhake ing kene',
   Website: 'Situs web',
@@ -1709,7 +1733,6 @@ export const jv: Dictionary = {
   'New tab': 'Tab anyar',
   'Full screen': 'Layar wutuh',
   'Print…': 'Cetak…',
-  'Save page': 'Simpen kaca',
   'Share…': 'Bagi…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1769,6 +1792,15 @@ export const jv: Dictionary = {
   'Bring all to front': 'Gawa kabeh menyang ngarep',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Balekake salinan',
+  'Devices with your AI vault': 'Piranti sing duwe brankas AI sampeyan',
+  'This device': 'Piranti iki',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'Piranti kasebut ora bisa maca akun AI sampeyan maneh, lan liyane entuk kunci anyar.',
+  'Also remove this device from your AI vault?': 'Busak uga piranti iki saka brankas AI sampeyan?',
+  'Remove and sign out': 'Busak lan metu',
+  'Undo making {name}': 'Balekake gawe {name}',
+  'Undo the deletion': 'Balekake pambusakan',
+  'Undo the move': 'Balekake pamindhahan',
   'Redo the last file change': 'Ulangi owah-owahan berkas pungkasan',
   'Select down': 'Pilih mudhun',
   'Select up': 'Pilih munggah',
@@ -1867,6 +1899,11 @@ export const jv: Dictionary = {
   Max: 'Maks',
   Fast: 'Cepet',
   Send: 'Kirim',
+  'Send feedback': 'Kirim masukan',
+  'Describe the issue': 'Jlentrehna masalahe',
+  Sent: 'Wis dikirim',
+  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
+    'Laporan iki isine katrangan sampeyan, versi Orden, platform sampeyan lan log aplikasi anyar. Cathetan sampeyan ora tau melu.',
   'Send into the running answer': 'Kirim menyang wangsulan sing lagi mlaku',
   'Stop the answer': 'Mandhegake wangsulan',
   'Open every step': 'Bukak kabeh langkah',
@@ -1985,6 +2022,7 @@ export const jv: Dictionary = {
   'Without your logins': 'Tanpa login-mu',
   'Calls a minute': 'Panggilan saben menit',
   'Pages a minute': 'Kaca saben menit',
+  'Browser memory limit': 'Wates memori browser',
   '{count} calls': '{count} panggilan',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it

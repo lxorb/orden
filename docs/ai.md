@@ -373,6 +373,26 @@ account, end to end (`lib/ai/vault`, `services/sync/src/ai/vault.ts`):
   a device, wrapping the key to one, writing the vault, turning an allowed device away and
   letting the vault go each send it. A session alone - a stolen one included - can register
   a device and ask, which the reader sees as a bubble, and change nothing else.
+- **Letting a device go** (#389): Settings > AI lists the devices that hold the key,
+  *Devices with your AI vault*, each with **Remove**, and signing out on one that holds it
+  beside others asks *Also remove this device from your AI vault?* Removing changes the
+  key: a device that has it makes a new one, seals the vault under it, wraps it to every
+  allowed device but the one going, and sends all of it at once (`PUT /v2/ai/rotate`) with
+  the old token and the new one. The account takes it only over the revision it was read
+  at and the token whose hash it holds, swaps in the new hash, writes the new wraps and
+  lets the going device go, all in one batch, so two devices changing the key at once
+  cannot both win and the loser reads again. The device let go of keeps the old key, which
+  opens the vault as it was and nothing written after; its old token changes nothing any
+  more. An allowed device the change did not name - let in between its read and its write
+  - is put back to asking rather than left with a key that opens nothing, and so is a
+  device still asking that the device going had answered. An allowed device is only let
+  go of this way: deleting one beside others is refused. The last device takes the vault
+  with it, since nobody would be left to hold a new key.
+- **The same vault under a new key**: the sealed words remember the vaults they were
+  changed from (`before`, a fingerprint of each old token, the last twenty), so a device
+  that joined the vault opens it under its new key without being offered it again, even
+  after several changes it was away for. A vault started over remembers none, and is
+  offered.
 - **A browser** keeps its keys in the vault only once the reader turns on *Keep this
   browser's keys in the vault* in Settings > AI, which says what it costs: every device's
   keys are then in the browser's own storage, where a script that got into the page could

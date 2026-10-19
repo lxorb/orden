@@ -26,6 +26,22 @@ export const zhHantHK: Dictionary = {
   'Import from Zen': '從 Zen 匯入',
   'Containers stay in Zen': '容器會留在 Zen',
   'Zen’s tabs could not be read.': '無法讀取 Zen 的分頁。',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': '容器會留在 Firefox',
+  'Nothing could be read out of {browser}.': '無法從 {browser} 讀取任何內容。',
+  'Saved groups': '已儲存的群組',
+  'Tab group': '分頁群組',
+  'Bookmarks toolbar': '書籤列',
+  'Bookmarks menu': '書籤選單',
+  'Other bookmarks': '其他書籤',
+  'Mobile bookmarks': '流動裝置書籤',
+  'Bookmarks bar': '書籤列',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} 將開啟的分頁加密保存，所以只帶來了書籤。',
+  '{count} pages not on the web stay behind': '{count} 個不在網上的頁面沒有帶來',
+  'Reading List': '閱讀列表',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS 將 Safari 的分頁和書籤放在「完全磁碟取用權限」之後。請在那裡開啟 Orden，然後再試一次。',
   // Settings: note types
   'Page note': '分頁筆記',
   'Web note': '網頁筆記',
@@ -96,8 +112,6 @@ export const zhHantHK: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: '提示',
   'Silent mode': '安靜模式',
-  'Sign in to keep your notes safe and on every device.':
-    '登入後,你的筆記會安全保存,並在所有裝置上可用。',
   'See how your notes connect.': '查看你的筆記如何互相連結。',
   'Press {key} to find anything, notes and commands alike.':
     '按 {key} 尋找任何內容,筆記和指令皆可。',
@@ -119,11 +133,13 @@ export const zhHantHK: Dictionary = {
   '{count} h': '{count}小時',
   Inbox: '收件匣',
   Date: '日期',
+  'Start date': '開始日期',
   Priority: '優先次序',
   Reminder: '提醒',
   Duration: '所需時間',
   'Smart dates': '智能日期',
   'From any app': '從任何應用程式',
+  'Show tasks without a start date in Today': '在今天中顯示沒有開始日期的任務',
   'Every day': '每天',
   'Every weekday': '每個工作天',
   'Every week': '每星期',
@@ -167,6 +183,8 @@ export const zhHantHK: Dictionary = {
   Dots: '點陣',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': '用兩指旋轉畫布',
+  'Turn upright': '擺正',
   Canvas: '畫布',
   Card: '卡片',
   'Note or picture': '筆記或圖片',
@@ -242,6 +260,10 @@ export const zhHantHK: Dictionary = {
   Unpin: '取消固定',
   Close: '關閉',
   'Close pinned tab?': '關閉已固定的標籤頁？',
+  'Save changes to {name}?': '要儲存 {name} 的變更嗎？',
+  'Save changes to these tabs?': '要儲存這些分頁的變更嗎？',
+  'Unsaved words go to Recently deleted.': '未儲存的文字會移到「最近刪除」。',
+  'Don’t save': '不儲存',
   'Close others': '關閉其他',
   'Close tabs to the right': '關閉右側標籤頁',
   'Close tabs to the left': '關閉左側標籤頁',
@@ -1139,6 +1161,7 @@ export const zhHantHK: Dictionary = {
   'Double-click to write': '雙擊開始書寫',
   'Another colour': '其他顏色',
   'Turn into a note': '轉為筆記',
+  Arrange: '排列',
   'Bring to front': '移到最上層',
   'Bring forward': '上移一層',
   'Send backward': '下移一層',
@@ -1228,6 +1251,9 @@ export const zhHantHK: Dictionary = {
   Unstable: '開發版',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     '穩定版跟着已發佈的版本，開發版跟着edge建置，可能會壞掉。',
+  'Web version': '網頁版',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    '穩定版是已發佈的網頁版，開發版是最新的建置，可能會壞掉。',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: '匯入',
@@ -1547,8 +1573,6 @@ export const zhHantHK: Dictionary = {
   // Web tabs
   Reload: '重新載入',
   'Hard reload': '強制重新載入',
-  'Clip this page': '儲存此頁',
-  'Clip the link': '儲存連結',
   'Open in the browser': '在瀏覽器開啟',
   'Show it here': '在此顯示',
   Website: '網站',
@@ -1677,7 +1701,6 @@ export const zhHantHK: Dictionary = {
   'New tab': '新分頁',
   'Full screen': '全螢幕',
   'Print…': '打印…',
-  'Save page': '儲存網頁',
   'Share…': '分享…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1736,6 +1759,15 @@ export const zhHantHK: Dictionary = {
   'Bring all to front': '全部移至最前',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': '復原複製',
+  'Devices with your AI vault': '擁有你 AI 保險庫的裝置',
+  'This device': '此裝置',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    '該裝置將無法再讀取你的 AI 帳戶，其他裝置會得到新鎖匙。',
+  'Also remove this device from your AI vault?': '也將此裝置從你的 AI 保險庫中移除？',
+  'Remove and sign out': '移除並登出',
+  'Undo making {name}': '復原建立{name}',
+  'Undo the deletion': '復原刪除',
+  'Undo the move': '復原移動',
   'Redo the last file change': '重做上一次檔案變更',
   'Select down': '向下選取',
   'Select up': '向上選取',
@@ -1833,6 +1865,11 @@ export const zhHantHK: Dictionary = {
   Max: '最高',
   Fast: '快速',
   Send: '傳送',
+  'Send feedback': '傳送意見',
+  'Describe the issue': '描述問題',
+  Sent: '已傳送',
+  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
+    '此報告包括你的描述、Orden 的版本、你的平台和應用程式最近的記錄，絕不包括你的筆記。',
   'Send into the running answer': '傳送到進行中的回答',
   'Stop the answer': '停止回答',
   'Open every step': '展開所有步驟',
@@ -1948,6 +1985,7 @@ export const zhHantHK: Dictionary = {
   'Without your logins': '不使用你的登入',
   'Calls a minute': '每分鐘呼叫次數',
   'Pages a minute': '每分鐘頁面數',
+  'Browser memory limit': '瀏覽器記憶體上限',
   '{count} calls': '{count} 次呼叫',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it

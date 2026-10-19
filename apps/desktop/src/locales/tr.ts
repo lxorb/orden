@@ -27,6 +27,25 @@ export const tr: Dictionary = {
   'Import from Zen': 'Zen’den içe aktar',
   'Containers stay in Zen': 'Kapsayıcılar Zen’de kalır',
   'Zen’s tabs could not be read.': 'Zen’in sekmeleri okunamadı.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'Kapsayıcılar Firefox’ta kalır',
+  'Nothing could be read out of {browser}.': '{browser} içinden hiçbir şey okunamadı.',
+  'Saved groups': 'Kaydedilen gruplar',
+  'Tab group': 'Sekme grubu',
+  'Bookmarks toolbar': 'Yer imleri araç çubuğu',
+  'Bookmarks menu': 'Yer imleri menüsü',
+  'Other bookmarks': 'Diğer yer imleri',
+  'Mobile bookmarks': 'Mobil yer imleri',
+  'Bookmarks bar': 'Yer işareti çubuğu',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} açık sekmelerini kilitli tutuyor, bu yüzden yalnızca yer işaretleri geldi.',
+  '{count} pages not on the web stay behind': {
+    one: 'Web’de olmayan {count} sayfa geride kalıyor',
+    other: 'Web’de olmayan {count} sayfa geride kalıyor',
+  },
+  'Reading List': 'Okuma Listesi',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS, Safari’nin sekmelerini ve yer işaretlerini Tam Disk Erişimi’nin arkasında tutar. Orden’ı orada açıp yeniden deneyin.',
   // Settings: note types
   'Page note': 'Sayfalı not',
   'Web note': 'Web notu',
@@ -97,8 +116,6 @@ export const tr: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'İpuçları',
   'Silent mode': 'Sessiz mod',
-  'Sign in to keep your notes safe and on every device.':
-    'Notlarınızı güvende ve her cihazda tutmak için oturum açın.',
   'See how your notes connect.': 'Notlarınızın nasıl bağlandığını görün.',
   'Press {key} to find anything, notes and commands alike.':
     'Notlar ve komutlar, her şeyi bulmak için {key} tuşlarına basın.',
@@ -120,11 +137,13 @@ export const tr: Dictionary = {
   '{count} h': '{count} sa',
   Inbox: 'Gelen kutusu',
   Date: 'Tarih',
+  'Start date': 'Başlangıç tarihi',
   Priority: 'Öncelik',
   Reminder: 'Hatırlatıcı',
   Duration: 'Süre',
   'Smart dates': 'Akıllı tarihler',
   'From any app': 'Herhangi bir uygulamadan',
+  'Show tasks without a start date in Today': 'Başlangıç tarihi olmayan görevleri Bugün’de göster',
   'Every day': 'Her gün',
   'Every weekday': 'Her iş günü',
   'Every week': 'Her hafta',
@@ -168,6 +187,8 @@ export const tr: Dictionary = {
   Dots: 'Noktalı',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'Tuvali iki parmakla döndür',
+  'Turn upright': 'Düzelt',
   Canvas: 'Tuval',
   Card: 'Kart',
   'Note or picture': 'Not veya resim',
@@ -243,6 +264,10 @@ export const tr: Dictionary = {
   Unpin: 'Sabitlemeyi kaldır',
   Close: 'Kapat',
   'Close pinned tab?': 'Sabitlenmiş sekme kapatılsın mı?',
+  'Save changes to {name}?': '{name} içindeki değişiklikler kaydedilsin mi?',
+  'Save changes to these tabs?': 'Bu sekmelerdeki değişiklikler kaydedilsin mi?',
+  'Unsaved words go to Recently deleted.': 'Kaydedilmemiş sözcükler Son silinenler’e gider.',
+  'Don’t save': 'Kaydetme',
   'Close others': 'Diğerlerini kapat',
   'Close tabs to the right': 'Sağdaki sekmeleri kapat',
   'Close tabs to the left': 'Soldaki sekmeleri kapat',
@@ -1163,6 +1188,7 @@ export const tr: Dictionary = {
   'Double-click to write': 'Yazmak için iki kez tıkla',
   'Another colour': 'Başka bir renk',
   'Turn into a note': 'Nota dönüştür',
+  Arrange: 'Düzenle',
   'Bring to front': 'En öne getir',
   'Bring forward': 'Öne getir',
   'Send backward': 'Arkaya gönder',
@@ -1252,6 +1278,9 @@ export const tr: Dictionary = {
   Unstable: 'Kararsız',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'Kararlı yayımlanan sürümleri izler, Kararsız edge yapılarını izler ve bozulabilir.',
+  'Web version': 'Web sürümü',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'Kararlı yayımlanan web uygulamasıdır, Kararsız en yeni yapıdır ve bozulabilir.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'İçe aktar',
@@ -1587,8 +1616,6 @@ export const tr: Dictionary = {
   // Web tabs
   Reload: 'Yeniden yükle',
   'Hard reload': 'Sert yeniden yükleme',
-  'Clip this page': 'Bu sayfayı sakla',
-  'Clip the link': 'Bağlantıyı sakla',
   'Open in the browser': 'Tarayıcıda aç',
   'Show it here': 'Burada göster',
   Website: 'Web sitesi',
@@ -1724,7 +1751,6 @@ export const tr: Dictionary = {
   'New tab': 'Yeni sekme',
   'Full screen': 'Tam ekran',
   'Print…': 'Yazdır…',
-  'Save page': 'Sayfayı kaydet',
   'Share…': 'Paylaş…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1783,6 +1809,16 @@ export const tr: Dictionary = {
   'Bring all to front': 'Tümünü öne getir',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Kopyalamayı geri al',
+  'Devices with your AI vault': 'Yapay zekâ kasanız olan cihazlar',
+  'This device': 'Bu cihaz',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'Cihaz artık yapay zekâ hesaplarınızı okuyamaz, diğerleri yeni bir anahtar alır.',
+  'Also remove this device from your AI vault?':
+    'Bu cihaz yapay zekâ kasanızdan da kaldırılsın mı?',
+  'Remove and sign out': 'Kaldır ve oturumu kapat',
+  'Undo making {name}': '{name} oluşturmasını geri al',
+  'Undo the deletion': 'Silmeyi geri al',
+  'Undo the move': 'Taşımayı geri al',
   'Redo the last file change': 'Son dosya değişikliğini yinele',
   'Select down': 'Aşağı doğru seç',
   'Select up': 'Yukarı doğru seç',
@@ -1886,6 +1922,11 @@ export const tr: Dictionary = {
   Max: 'Maks.',
   Fast: 'Hızlı',
   Send: 'Gönder',
+  'Send feedback': 'Geri bildirim gönder',
+  'Describe the issue': 'Sorunu açıklayın',
+  Sent: 'Gönderildi',
+  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
+    'Bu rapor açıklamanızı, Orden sürümünü, platformunuzu ve uygulamanın son günlüğünü içerir. Notlarınızı asla içermez.',
   'Send into the running answer': 'Süren yanıta gönder',
   'Stop the answer': 'Yanıtı durdur',
   'Open every step': 'Tüm adımları aç',
@@ -2003,6 +2044,7 @@ export const tr: Dictionary = {
   'Without your logins': 'Oturumların olmadan',
   'Calls a minute': 'Dakikada çağrı',
   'Pages a minute': 'Dakikada sayfa',
+  'Browser memory limit': 'Tarayıcı bellek sınırı',
   '{count} calls': {
     one: '{count} çağrı',
     other: '{count} çağrı',

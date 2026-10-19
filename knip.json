@@ -3,7 +3,8 @@
   "ignore": [
     "apps/desktop/src-tauri/src/web_state/scripts/*.js",
     "apps/desktop/src-tauri/src/web_tabs/*.js",
-    "apps/desktop/src-tauri/src/web_swipe.js"
+    "apps/desktop/src-tauri/src/web_swipe.js",
+    "apps/desktop/src-tauri/src/window_drag.js"
   ],
   "workspaces": {
     ".": {
@@ -38,17 +39,6 @@
     },
     "apps/cli": {
       "ignoreBinaries": ["screencapture"]
-    },
-    "apps/clipper": {
-      "entry": [
-        "src/**/*.svelte",
-        "src/popup/main.ts",
-        "src/options/main.ts",
-        "src/background/index.ts",
-        "src/content/index.ts",
-        "vite.content.config.ts"
-      ],
-      "ignoreDependencies": ["@nib/themes"]
     },
     "services/sync": {
       "entry": ["src/machines/entry.ts"],

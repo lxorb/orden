@@ -100,6 +100,18 @@ describe('the other people in a note', () => {
     expect(carets(state)).toEqual([4, 9])
   })
 
+  test('past the end of the note, are kept inside it, and typing still lands (#542)', () => {
+    // A room's words longer than the note, and somebody's caret at their end: mapping
+    // that place threw on every keystroke, and the keystroke never reached the note.
+    const far: Peer = { id: 3, name: 'iPad', colour: '#e66100', head: 40, anchor: 38 }
+    const state = withPeers('one\n', [far])
+
+    expect(peersOf(state)[0]).toMatchObject({ head: 4, anchor: 4 })
+    const typed = state.update({ changes: { from: 4, to: 4, insert: 'XYZ' } }).state
+    expect(typed.doc.toString()).toBe('one\nXYZ')
+    expect(carets(typed)).toEqual([7])
+  })
+
   test('move along when words are written above them', () => {
     const state = withPeers('one\ntwo\n', [MAC])
     const after = state.update({ changes: { from: 0, to: 0, insert: 'nought\n' } }).state

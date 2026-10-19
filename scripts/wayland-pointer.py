@@ -19,8 +19,13 @@ Lines read from the FIFO at <path>, made if it is not there:
 
     move X Y      to X, Y in sway's layout, in its own (logical) pixels
     click         the left button pressed and let go
+    press         the left button pressed, and held
+    release       the left button let go of
     key [ctrl] [shift] [alt] CODE
                   a key by its evdev code (R is 19, T 20, F5 63), the modifiers held
+    chord [ctrl] [shift] [alt] CODE
+                  the same, with each modifier's own key pressed first and let go of
+                  last, as a hand does: what a release of Ctrl after Ctrl+Tab hears
     quit
 
     KEY_MAP=keymap.txt python3 scripts/wayland-pointer.py <fifo>
@@ -154,6 +159,31 @@ def key(held, code):
     send(keyboard, 2, struct.pack("<IIII", 0, 0, 0, 0))
 
 
+#: The modifiers' own keys, by evdev code: the left ones.
+MODIFIER_KEYS = {"shift": 42, "ctrl": 29, "alt": 56}
+
+
+def chord(held, code):
+    """The modifiers' own keys down one after another, the key pressed and let go of, and
+    the modifiers let go of in the opposite order: a hand's Ctrl+Tab, whose release of
+    Ctrl is a key of its own."""
+    mask = 0
+    for one in held:
+        mask |= MODIFIERS[one]
+        send(keyboard, 1, struct.pack("<III", now(), MODIFIER_KEYS[one], 1))
+        send(keyboard, 2, struct.pack("<IIII", mask, 0, 0, 0))
+        time.sleep(0.03)
+    send(keyboard, 1, struct.pack("<III", now(), code, 1))
+    time.sleep(0.05)
+    send(keyboard, 1, struct.pack("<III", now(), code, 0))
+    time.sleep(0.15)
+    for one in reversed(held):
+        mask &= ~MODIFIERS[one]
+        send(keyboard, 1, struct.pack("<III", now(), MODIFIER_KEYS[one], 0))
+        send(keyboard, 2, struct.pack("<IIII", mask, 0, 0, 0))
+        time.sleep(0.03)
+
+
 def button(state):
     send(pointer, 2, struct.pack("<III", now(), LEFT, state))
     send(pointer, 4)  # frame
@@ -176,7 +206,13 @@ while True:
                 button(1)
                 time.sleep(0.05)
                 button(0)
+            elif words[0] == "press":
+                button(1)
+            elif words[0] == "release":
+                button(0)
             elif words[0] == "key" and keyboard is not None:
                 key(words[1:-1], int(words[-1]))
+            elif words[0] == "chord" and keyboard is not None:
+                chord(words[1:-1], int(words[-1]))
             elif words[0] == "quit":
                 sys.exit(0)

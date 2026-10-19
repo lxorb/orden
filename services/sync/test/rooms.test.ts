@@ -5,6 +5,7 @@ import { stamped } from '@nib/markdown/canvas-merge'
 import { awarenessUpdate, receive, subprotocol, syncStep1, syncUpdate, TEXT } from '@nib/rooms'
 import { pushPlane, readPlane } from '@nib/rooms/plane'
 import * as Y from 'yjs'
+import { sha256 } from '../src/crypto'
 import { roomsRevoked } from '../src/rooms'
 import { MOST_DOCUMENT_BYTES, TOO_LARGE_IN_A_ROOM } from '../src/rooms/state'
 import { writesOf } from '../src/rooms/kind'
@@ -839,6 +840,52 @@ describe('the door to a room', () => {
     expect(refused.status).toBe(404)
   })
 
+  test('tells the room the device the session proves, the way a tree op names it (#413)', async () => {
+    const door = doorway()
+    env.close()
+    env = testEnv({ ROOMS: door.ROOMS })
+
+    const token = await signIn(env, 'owner@example.com')
+    const space = await call(env, '/v1/spaces', { token, body: { name: 'Notes' } })
+    const spaceId = space.json.space.id
+    const note = await call(env, `/v1/spaces/${spaceId}/notes`, {
+      token,
+      body: { path: 'mine.md', content: 'mine' },
+    })
+    const noteId = note.json.note.id
+    const told = async (device: string) => {
+      const answer = await call(env, `/rooms/${noteId}`, {
+        headers: {
+          upgrade: 'websocket',
+          'sec-websocket-protocol': `${subprotocol(token)}, nib.device.${device}`,
+        },
+      })
+      expect(answer.status).toBe(200)
+      return door.asked.at(-1)?.get('x-nib-device-id')
+    }
+
+    // A device that has not said hello to its hub is named by its session, as the
+    // tree's ops name it, whatever its socket says.
+    const hash = await sha256(token)
+    expect(await told('laptop')).toBe(`session:${hash.slice(0, 16)}`)
+
+    // Once bound to the session, it is the device the session is bound to.
+    const session = env.db
+      .prepare('select id, user_id from sessions where token_hash = ?')
+      .get(hash) as {
+      id: string
+      user_id: string
+    }
+    env.db
+      .prepare(
+        `insert into devices (id, user_id, session_id, name, platform, created_at)
+         values ('laptop', ?, ?, 'Laptop', 'web', 1)`,
+      )
+      .run(session.user_id, session.id)
+    expect(await told('laptop')).toBe('laptop')
+    expect(await told('somebody-else')).toBe('laptop')
+  })
+
   test('lets in a guest a link let in, at what the link said', async () => {
     const door = doorway()
     env.close()
@@ -1509,12 +1556,84 @@ describe('somebody who stops being in the space while the file is open', () => {
     expect(socket.closed).toBe(true)
   })
 
+  test('is a guest signing out, whose socket closes with the session', async () => {
+    const { json } = await call<ShareView>(env, `/v1/spaces/${spaceId}/share/link`, {
+      method: 'PUT',
+      token: owner,
+      body: { role: 'write', mode: 'open' },
+    })
+    const link = /\/join\/([a-f0-9]+)/.exec(json.link?.url ?? '')?.[1] ?? ''
+    const arrived = await call(env, `/v1/join/${link}`, {
+      method: 'POST',
+      body: { device: 'Windows' },
+    })
+    const socket = await open(arrived.json.guest.id)
+
+    await call(env, '/v1/auth/signout', { method: 'POST', token: arrived.json.token })
+
+    expect(socket.closed).toBe(true)
+  })
+
   test('is a person letting themselves out, on their other devices', async () => {
     const socket = await open(writerId)
 
     await call(env, `/v1/spaces/${spaceId}/share/me`, { method: 'DELETE', token: writer })
 
     expect(socket.closed).toBe(true)
+  })
+
+  /** Types a line through a socket and settles the room: what reaches the note. */
+  async function typedThrough(socket: FakeSocket): Promise<string> {
+    const { room: made, state } = live.of(noteId)
+    const device = new Device(socket)
+    await say(made, state, socket, syncStep1(device.doc))
+    await settle(made, state, [device])
+    await say(made, state, socket, device.type(OPENING.length, 'typed after'))
+    await made.alarm()
+    return (await env.NOTES.get(`spaces/${spaceId}/${noteId}`).then((one) => one?.text())) ?? ''
+  }
+
+  test('has every socket closed when the owner deletes the space, the owner’s too (#456)', async () => {
+    const ownerId = (await call(env, '/v1/me', { token: owner })).json.user.id
+    const theirs = await open(ownerId)
+    const socket = await open(writerId)
+
+    expect(
+      (await call(env, `/v1/spaces/${spaceId}`, { method: 'DELETE', token: owner })).status,
+    ).toBe(200)
+
+    expect(socket.closed).toBe(true)
+    expect(socket.closedWith?.code).toBe(1008)
+    expect(theirs.closed).toBe(true)
+    expect(env.db.prepare('select count(*) as held from room_sockets').get()).toEqual({ held: 0 })
+  })
+
+  test('stops writing when invited again as a reader, as a role changed any other way', async () => {
+    const socket = await open(writerId)
+
+    await call(env, `/v1/spaces/${spaceId}/share/invite`, {
+      token: owner,
+      body: { email: WRITER, role: 'read' },
+    })
+
+    expect(socket.closed).toBe(false)
+    expect(await typedThrough(socket)).not.toContain('typed after')
+  })
+
+  test('and when a request to read is let in over a membership to write', async () => {
+    const socket = await open(writerId)
+    env.db
+      .prepare(
+        "insert into space_requests (space_id, email, item, role, created_at) values (?, ?, '', 'read', 1)",
+      )
+      .run(spaceId, WRITER)
+
+    await call(env, `/v1/spaces/${spaceId}/share/requests/${WRITER}`, {
+      method: 'POST',
+      token: owner,
+    })
+
+    expect(await typedThrough(socket)).not.toContain('typed after')
   })
 
   test('and a room nobody is in is told without being woken', async () => {

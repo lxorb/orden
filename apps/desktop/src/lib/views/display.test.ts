@@ -20,7 +20,8 @@ const ROWS = taskRowsOfText(
   'Notes',
   'Errands.md',
   [
-    '- [ ] Call the bank #admin 🔺 📅 2026-10-12',
+    // Overdue by its deadline: a start date past is never late (#371).
+    '- [ ] Call the bank #admin [deadline:: 2026-10-12] 🔺 📅 2026-10-12',
     '- [ ] Water the plants 📅 2026-10-13',
     '- [ ] Pay rent #admin ⏫ 📅 2026-10-13',
     '- [x] Bread ✅ 2026-10-12 📅 2026-10-13',

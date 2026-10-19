@@ -27,6 +27,26 @@ export const es: Dictionary = {
   'Import from Zen': 'Importar desde Zen',
   'Containers stay in Zen': 'Los contenedores se quedan en Zen',
   'Zen’s tabs could not be read.': 'No se pudieron leer las pestañas de Zen.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'Los contenedores se quedan en Firefox',
+  'Nothing could be read out of {browser}.': 'No se pudo leer nada de {browser}.',
+  'Saved groups': 'Grupos guardados',
+  'Tab group': 'Grupo de pestañas',
+  'Bookmarks toolbar': 'Barra de marcadores',
+  'Bookmarks menu': 'Menú de marcadores',
+  'Other bookmarks': 'Otros marcadores',
+  'Mobile bookmarks': 'Marcadores del móvil',
+  'Bookmarks bar': 'Barra de marcadores',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} guarda bajo llave sus pestañas abiertas, así que solo llegaron sus marcadores.',
+  '{count} pages not on the web stay behind': {
+    many: '{count} páginas que no están en la web se quedan atrás',
+    one: '{count} página que no está en la web se queda atrás',
+    other: '{count} páginas que no están en la web se quedan atrás',
+  },
+  'Reading List': 'Lista de lectura',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS guarda las pestañas y los marcadores de Safari tras el acceso total al disco. Activa Orden allí y vuelve a intentarlo.',
   // Settings: note types
   'Page note': 'Nota de páginas',
   'Web note': 'Nota web',
@@ -97,8 +117,6 @@ export const es: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'Consejos',
   'Silent mode': 'Modo silencioso',
-  'Sign in to keep your notes safe and on every device.':
-    'Inicia sesión para mantener tus notas a salvo y en todos tus dispositivos.',
   'See how your notes connect.': 'Mira cómo se conectan tus notas.',
   'Press {key} to find anything, notes and commands alike.':
     'Pulsa {key} para encontrar cualquier cosa, notas y comandos por igual.',
@@ -120,11 +138,15 @@ export const es: Dictionary = {
   '{count} h': '{count} h',
   Inbox: 'Bandeja de entrada',
   Date: 'Fecha',
+  'Start date': 'Fecha de inicio',
   Priority: 'Prioridad',
   Reminder: 'Recordatorio',
   Duration: 'Duración',
   'Smart dates': 'Fechas inteligentes',
   'From any app': 'Desde cualquier app',
+  'Rotate a canvas with two fingers': 'Girar un lienzo con dos dedos',
+  'Turn upright': 'Enderezar',
+  'Show tasks without a start date in Today': 'Mostrar en Hoy las tareas sin fecha de inicio',
   'Every day': 'Cada día',
   'Every weekday': 'Cada día laborable',
   'Every week': 'Cada semana',
@@ -243,6 +265,11 @@ export const es: Dictionary = {
   Unpin: 'Desanclar',
   Close: 'Cerrar',
   'Close pinned tab?': '¿Cerrar la pestaña anclada?',
+  'Save changes to {name}?': '¿Guardar los cambios de {name}?',
+  'Save changes to these tabs?': '¿Guardar los cambios de estas pestañas?',
+  'Unsaved words go to Recently deleted.':
+    'Las palabras sin guardar van a Eliminado recientemente.',
+  'Don’t save': 'No guardar',
   'Close others': 'Cerrar las demás',
   'Close tabs to the right': 'Cerrar pestañas a la derecha',
   'Close tabs to the left': 'Cerrar pestañas a la izquierda',
@@ -1175,6 +1202,7 @@ export const es: Dictionary = {
   'Double-click to write': 'Doble clic para escribir',
   'Another colour': 'Otro color',
   'Turn into a note': 'Convertir en nota',
+  Arrange: 'Organizar',
   'Bring to front': 'Traer al frente',
   'Bring forward': 'Traer adelante',
   'Send backward': 'Enviar atrás',
@@ -1264,6 +1292,9 @@ export const es: Dictionary = {
   Unstable: 'Inestable',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'Estable sigue las versiones publicadas; Inestable sigue las compilaciones de prueba y puede fallar.',
+  'Web version': 'Versión web',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'Estable es la app web publicada; Inestable es la compilación más reciente y puede fallar.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Importar',
@@ -1620,8 +1651,6 @@ export const es: Dictionary = {
   // Web tabs
   Reload: 'Recargar',
   'Hard reload': 'Recarga forzada',
-  'Clip this page': 'Guardar esta página',
-  'Clip the link': 'Guardar el enlace',
   'Open in the browser': 'Abrir en el navegador',
   'Show it here': 'Mostrarlo aquí',
   Website: 'Sitio web',
@@ -1760,7 +1789,6 @@ export const es: Dictionary = {
   'New tab': 'Nueva pestaña',
   'Full screen': 'Pantalla completa',
   'Print…': 'Imprimir…',
-  'Save page': 'Guardar página',
   'Share…': 'Compartir…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1820,6 +1848,16 @@ export const es: Dictionary = {
   'Bring all to front': 'Traer todo al frente',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Deshacer la copia',
+  'Devices with your AI vault': 'Dispositivos con tu bóveda de IA',
+  'This device': 'Este dispositivo',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'El dispositivo ya no podrá leer tus cuentas de IA, y los demás reciben una clave nueva.',
+  'Also remove this device from your AI vault?':
+    '¿Quitar también este dispositivo de tu bóveda de IA?',
+  'Remove and sign out': 'Quitar y cerrar sesión',
+  'Undo making {name}': 'Deshacer crear {name}',
+  'Undo the deletion': 'Deshacer la eliminación',
+  'Undo the move': 'Deshacer el movimiento',
   'Redo the last file change': 'Rehacer el último cambio de archivo',
   'Select down': 'Seleccionar hacia abajo',
   'Select up': 'Seleccionar hacia arriba',
@@ -1926,6 +1964,11 @@ export const es: Dictionary = {
   Max: 'Máx.',
   Fast: 'Rápido',
   Send: 'Enviar',
+  'Send feedback': 'Enviar comentarios',
+  'Describe the issue': 'Describe el problema',
+  Sent: 'Enviado',
+  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
+    'Este informe incluye tu descripción, la versión de Orden, tu plataforma y el registro reciente de la app. Nunca incluye tus notas.',
   'Send into the running answer': 'Enviar a la respuesta en curso',
   'Stop the answer': 'Detener la respuesta',
   'Open every step': 'Abrir todos los pasos',
@@ -2045,6 +2088,7 @@ export const es: Dictionary = {
   'Without your logins': 'Sin tus inicios de sesión',
   'Calls a minute': 'Llamadas por minuto',
   'Pages a minute': 'Páginas por minuto',
+  'Browser memory limit': 'Límite de memoria del navegador',
   '{count} calls': {
     one: '{count} llamada',
     many: '{count} de llamadas',

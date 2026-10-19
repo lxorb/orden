@@ -1,4 +1,4 @@
-/** The AI panel's state: the space's threads, the one open, the ones running, what is
+/** The AI panel's state: the threads, the one open, the ones running, what is
  *  queued behind them, and everything the controls under the field change
  *  (docs/ai-sidebar.md 4).
  *
@@ -7,6 +7,12 @@
  *  writes into and hands the panel a copy of the open one, made at most once a frame
  *  (snapshot.ts). A thread keeps running when another is opened or the space changes,
  *  and lands in the space it was asked in.
+ *
+ *  The threads are one list, every space's (#332, Emil: "They should stay the same across
+ *  spaces: one list of chats, and the open chat stays open when the space changes"). A
+ *  thread is still kept in, and works in, the space it was started in - its notes, its
+ *  AGENTS.md, its files - so a space changing moves no thread and changes no answer on
+ *  its way; it only says where the next new chat starts.
  *
  *  Fetched with the panel, never in the first paint; see surfaces.svelte.ts. */
 
@@ -22,7 +28,8 @@ import {
   branchThread,
   deleteThread,
   keepThread,
-  listThreads,
+  listEveryThread,
+  type Listed,
   newThread,
   readThread,
 } from '../chat/threads'
@@ -34,7 +41,6 @@ import type {
   Mode,
   ModelInfo,
   Thread,
-  ThreadHead,
   Turn,
   Usage,
 } from '../chat/types'
@@ -46,7 +52,7 @@ import { threadMarkdown } from './export'
 import { draftOf, type Front } from './gather'
 import type { Mention } from './mentions'
 import { OLD_KEY, oldSpaces, threadFromAsk } from './migrate'
-import { effortFor, lastMode, openIn, rememberEffort, rememberMode, rememberOpen } from './prefs'
+import { effortFor, lastMode, lastOpen, rememberEffort, rememberMode, rememberOpen } from './prefs'
 import type { Attached, Ended, Once, Panel } from '../commands/types'
 import { engineOf } from './setup'
 import { snapshot } from './snapshot'
@@ -109,8 +115,8 @@ function headOf(thread: Thread): Head {
 }
 
 class Chat implements Panel {
-  /** The space's threads, newest first. */
-  heads = $state.raw<ThreadHead[]>([])
+  /** Every space's threads, newest first, each with the space it is kept in. */
+  heads = $state.raw<Listed[]>([])
   /** The open thread, as the controls show it. */
   head = $state.raw<Head | null>(null)
   /** Its turns, as the conversation draws them. */
@@ -145,9 +151,11 @@ class Chat implements Panel {
    *  tab"): the one place the keyboard and a popover go while both are on screen. */
   host = $state<Host>('side')
 
-  /** The space the panel shows. Plain, so the effect that sets it never reads what it
-   *  writes. */
+  /** The spaces whose threads the list holds, and the one in front, where a new thread
+   *  starts. Plain, so the effects that set them never read what they write. */
+  private spaces: readonly string[] = []
   private space = ''
+  private started = false
   /** Every thread this run has had in hand, by id, as the engine writes into them. */
   private live = new Map<string, Thread>()
   private open: Thread | null = null
@@ -192,26 +200,51 @@ class Chat implements Panel {
 
   // ── Spaces and threads ────────────────────────────────
 
-  /** Shows a space's threads: the one it had open, else its newest, else a new one.
-   *  Called from an effect, so it decides from what it is handed and from plain
-   *  fields only. */
-  enter(space: string): void {
-    if (space === this.space) return
-    this.space = space
+  /** The spaces there are, whose threads are the list: the first time, the thread open
+   *  last, else the newest, else a new one; afterwards only the list again, as a space
+   *  comes or goes. Called from an effect, so it decides from what it is handed and from
+   *  plain fields only. */
+  know(spaces: readonly string[]): void {
+    if (
+      this.started &&
+      spaces.length === this.spaces.length &&
+      spaces.every((one, at) => one === this.spaces[at])
+    )
+      return
+    this.spaces = [...spaces]
+    if (this.started) {
+      void this.arrive(false)
+      return
+    }
+    this.started = true
     this.listing = false
     this.popover = null
-    this.heads = []
-    this.show(this.fresh())
-    void this.arrive(space)
+    // A quick question carried on before the panel was ever drawn is already open.
+    if (!this.open) this.show(this.fresh())
+    void this.arrive(true)
   }
 
-  private async arrive(space: string): Promise<void> {
-    await this.adoptOldAsk(space)
-    const heads = await listThreads(space).catch(() => [])
-    if (this.space !== space) return
+  /** The space in front, which is where the next new thread starts. The open thread
+   *  stays open whatever it is; one nothing has been sent in yet is not anybody's, so it
+   *  moves to the space in front with the reader. */
+  here(space: string): void {
+    this.space = space
+    const open = this.open
+    if (open && !open.turns.length && space && open.space !== space) open.space = space
+  }
+
+  private async arrive(opening: boolean): Promise<void> {
+    const spaces = this.spaces
+    for (const space of spaces) await this.adoptOldAsk(space)
+    const heads = await listEveryThread(spaces).catch(() => this.heads)
+    if (this.spaces !== spaces) return
     this.heads = heads
-    const wanted = openIn(space)
-    const id = heads.find((one) => one.id === wanted)?.id ?? heads.find((one) => !one.archived)?.id
+    if (!opening) return
+    const { last, before } = lastOpen()
+    const id =
+      heads.find((one) => one.id === last)?.id ??
+      heads.find((one) => before.includes(one.id) && !one.archived)?.id ??
+      heads.find((one) => !one.archived)?.id
     if (id && !this.open?.turns.length) await this.openThread(id, false)
   }
 
@@ -229,9 +262,14 @@ class Chat implements Panel {
   }
 
   private async refreshHeads(): Promise<void> {
-    const space = this.space
-    const heads = await listThreads(space).catch(() => this.heads)
-    if (this.space === space) this.heads = heads
+    const spaces = this.spaces
+    const heads = await listEveryThread(spaces).catch(() => this.heads)
+    if (this.spaces === spaces) this.heads = heads
+  }
+
+  /** The space a thread is kept in: its line's, else the space in front. */
+  private spaceOf(id: string): string {
+    return this.live.get(id)?.space ?? this.heads.find((one) => one.id === id)?.space ?? this.space
   }
 
   /** A new thread on the provider Used for > Ask names, in the last mode picked. Not
@@ -240,7 +278,13 @@ class Chat implements Panel {
     const provider = this.providerForNew()
     const model = provider?.model ?? ''
     const effort = provider ? effortFor(provider.id, model) : 'auto'
-    return newThread(this.space, provider?.id ?? '', model, effort, lastMode())
+    return newThread(
+      this.space || (this.spaces[0] ?? ''),
+      provider?.id ?? '',
+      model,
+      effort,
+      lastMode(),
+    )
   }
 
   /** A thread nothing has been sent in follows Settings > AI > Used for > Ask, so a
@@ -264,7 +308,7 @@ class Chat implements Panel {
     this.dropped = []
     this.everything = true
     this.redraw()
-    if (thread.turns.length) rememberOpen(thread.space, thread.id)
+    if (thread.turns.length) rememberOpen(thread.id)
     const provider = ai.provider(thread.provider)
     if (provider) void this.loadModels(provider)
   }
@@ -285,7 +329,7 @@ class Chat implements Panel {
       return
     }
     this.show(this.fresh())
-    rememberOpen(this.space, null)
+    rememberOpen(null)
     this.focus()
   }
 
@@ -543,8 +587,7 @@ class Chat implements Panel {
     if (thread === this.open) this.redraw()
     if (!thread.turns.length) return
     await keepThread(thread).catch(() => undefined)
-    if (thread.space !== this.space) return
-    if (thread === this.open) rememberOpen(thread.space, thread.id)
+    if (thread === this.open) rememberOpen(thread.id)
     await this.refreshHeads()
   }
 
@@ -834,7 +877,7 @@ class Chat implements Panel {
     if (!thread || !last) return
     const copy = branchThread(thread, last.id, name ?? thread.title)
     this.show(copy)
-    rememberOpen(copy.space, copy.id)
+    rememberOpen(copy.id)
     void keepThread(copy).then(() => this.refreshHeads())
     this.focus()
   }
@@ -842,13 +885,12 @@ class Chat implements Panel {
   /** A quick question's conversation (Ctrl Ctrl), carried on as a thread of its own in
    *  the panel: Raycast's and Arc's way from a quick answer to a conversation. */
   continueFrom(turns: readonly { role: 'you' | 'model'; text: string }[], space: string): void {
-    this.enter(space)
     const provider = this.providerForNew()
     const thread = threadFromAsk(turns, space, provider?.id ?? '', provider?.model ?? '')
     if (!thread) return
     thread.mode = lastMode()
     this.adopt(thread, true)
-    rememberOpen(space, thread.id)
+    rememberOpen(thread.id)
     this.focus()
   }
 
@@ -859,7 +901,7 @@ class Chat implements Panel {
 
   /** A thread by id: the one in hand, else the one kept. */
   private async held(id: string): Promise<Thread | null> {
-    return this.live.get(id) ?? (await readThread(this.space, id).catch(() => null))
+    return this.live.get(id) ?? (await readThread(this.spaceOf(id), id).catch(() => null))
   }
 
   async exportThread(): Promise<void> {
@@ -897,7 +939,7 @@ class Chat implements Panel {
     })
     if (!sure) return
     this.stoppers.get(id)?.abort()
-    await deleteThread(this.space, id).catch(() => undefined)
+    await deleteThread(this.spaceOf(id), id).catch(() => undefined)
     this.live.delete(id)
     if (this.open?.id === id) this.newThread()
     await this.refreshHeads()

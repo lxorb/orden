@@ -26,6 +26,25 @@ export const fil: Dictionary = {
   'Import from Zen': 'Mag-import mula sa Zen',
   'Containers stay in Zen': 'Nananatili sa Zen ang mga container',
   'Zen’s tabs could not be read.': 'Hindi mabasa ang mga tab ng Zen.',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'Nananatili sa Firefox ang mga container',
+  'Nothing could be read out of {browser}.': 'Walang nabasa mula sa {browser}.',
+  'Saved groups': 'Mga naka-save na grupo',
+  'Tab group': 'Grupo ng tab',
+  'Bookmarks toolbar': 'Toolbar ng mga bookmark',
+  'Bookmarks menu': 'Menu ng mga bookmark',
+  'Other bookmarks': 'Iba pang bookmark',
+  'Mobile bookmarks': 'Mga bookmark sa mobile',
+  'Bookmarks bar': 'Bar ng mga bookmark',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    'Naka-lock sa {browser} ang mga bukas na tab nito, kaya ang mga bookmark lang ang dumating.',
+  '{count} pages not on the web stay behind': {
+    one: '{count} pahinang wala sa web ang naiwan',
+    other: '{count} pahinang wala sa web ang naiwan',
+  },
+  'Reading List': 'Listahan ng Babasahin',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'Itinatago ng macOS ang mga tab at bookmark ng Safari sa likod ng Full Disk Access. I-on doon ang Orden, saka subukan ulit.',
   // Settings: note types
   'Page note': 'Talang may pahina',
   'Web note': 'Talang web',
@@ -96,8 +115,6 @@ export const fil: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'Mga tip',
   'Silent mode': 'Silent mode',
-  'Sign in to keep your notes safe and on every device.':
-    'Mag-sign in para manatiling ligtas ang iyong mga tala at nasa bawat device.',
   'See how your notes connect.': 'Tingnan kung paano magkakaugnay ang iyong mga tala.',
   'Press {key} to find anything, notes and commands alike.':
     'Pindutin ang {key} para mahanap ang kahit ano, mga tala man o mga command.',
@@ -119,11 +136,14 @@ export const fil: Dictionary = {
   '{count} h': '{count} oras',
   Inbox: 'Inbox',
   Date: 'Petsa',
+  'Start date': 'Petsa ng simula',
   Priority: 'Priyoridad',
   Reminder: 'Paalala',
   Duration: 'Tagal',
   'Smart dates': 'Matalinong petsa',
   'From any app': 'Mula sa anumang app',
+  'Show tasks without a start date in Today':
+    'Ipakita sa Ngayong Araw ang mga gawaing walang petsa ng simula',
   'Every day': 'Araw-araw',
   'Every weekday': 'Tuwing araw ng trabaho',
   'Every week': 'Linggo-linggo',
@@ -167,6 +187,8 @@ export const fil: Dictionary = {
   Dots: 'Mga tuldok',
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
+  'Rotate a canvas with two fingers': 'Iikot ang canvas gamit ang dalawang daliri',
+  'Turn upright': 'Ituwid',
   Canvas: 'Canvas',
   Card: 'Card',
   'Note or picture': 'Tala o larawan',
@@ -242,6 +264,11 @@ export const fil: Dictionary = {
   Unpin: 'I-unpin',
   Close: 'Isara',
   'Close pinned tab?': 'Isara ang naka-pin na tab?',
+  'Save changes to {name}?': 'I-save ang mga pagbabago sa {name}?',
+  'Save changes to these tabs?': 'I-save ang mga pagbabago sa mga tab na ito?',
+  'Unsaved words go to Recently deleted.':
+    'Mapupunta sa Kamakailang binura ang mga salitang hindi na-save.',
+  'Don’t save': 'Huwag i-save',
   'Close others': 'Isara ang iba',
   'Close tabs to the right': 'Isara ang mga tab sa kanan',
   'Close tabs to the left': 'Isara ang mga tab sa kaliwa',
@@ -1172,6 +1199,7 @@ export const fil: Dictionary = {
   'Double-click to write': 'I-double click para sumulat',
   'Another colour': 'Ibang kulay',
   'Turn into a note': 'Gawing tala',
+  Arrange: 'Ayusin',
   'Bring to front': 'Ilagay sa unahan',
   'Bring forward': 'Isulong',
   'Send backward': 'Iurong',
@@ -1262,6 +1290,9 @@ export const fil: Dictionary = {
   Unstable: 'Hindi matatag',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'Sinusundan ng Matatag ang mga inilabas na bersyon, ang Hindi matatag ay mga edge build at puwedeng masira.',
+  'Web version': 'Bersyon sa web',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'Ang Matatag ang inilabas na web app, ang Hindi matatag ang pinakabagong build at puwedeng masira.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'I-import',
@@ -1608,8 +1639,6 @@ export const fil: Dictionary = {
   // Web tabs
   Reload: 'I-reload',
   'Hard reload': 'Buong i-reload',
-  'Clip this page': 'I-clip ang pahinang ito',
-  'Clip the link': 'I-clip ang link',
   'Open in the browser': 'Buksan sa browser',
   'Show it here': 'Ipakita dito',
   Website: 'Website',
@@ -1750,7 +1779,6 @@ export const fil: Dictionary = {
   'New tab': 'Bagong tab',
   'Full screen': 'Buong screen',
   'Print…': 'I-print…',
-  'Save page': 'I-save ang page',
   'Share…': 'Ibahagi…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1810,6 +1838,15 @@ export const fil: Dictionary = {
   'Bring all to front': 'Dalhin lahat sa harap',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'Ibalik ang pagkopya',
+  'Devices with your AI vault': 'Mga device na may iyong AI vault',
+  'This device': 'Ang device na ito',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'Hindi na mababasa ng device ang iyong mga AI account, at bagong susi ang makukuha ng iba.',
+  'Also remove this device from your AI vault?': 'Alisin din ang device na ito sa iyong AI vault?',
+  'Remove and sign out': 'Alisin at mag-sign out',
+  'Undo making {name}': 'Ibalik ang paggawa ng {name}',
+  'Undo the deletion': 'Ibalik ang pagtanggal',
+  'Undo the move': 'Ibalik ang paglipat',
   'Redo the last file change': 'Gawing muli ang huling pagbabago sa file',
   'Select down': 'Pumili pababa',
   'Select up': 'Pumili pataas',
@@ -1915,6 +1952,11 @@ export const fil: Dictionary = {
   Max: 'Pinakamataas',
   Fast: 'Mabilis',
   Send: 'Ipadala',
+  'Send feedback': 'Magpadala ng feedback',
+  'Describe the issue': 'Ilarawan ang problema',
+  Sent: 'Naipadala',
+  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
+    'Kasama sa ulat na ito ang iyong paglalarawan, ang bersyon ng Orden, ang iyong platform at ang kamakailang log ng app. Hindi kailanman kasama ang iyong mga tala.',
   'Send into the running answer': 'Ipadala sa tumatakbong sagot',
   'Stop the answer': 'Ihinto ang sagot',
   'Open every step': 'Buksan ang bawat hakbang',
@@ -2034,6 +2076,7 @@ export const fil: Dictionary = {
   'Without your logins': 'Nang wala ang iyong mga login',
   'Calls a minute': 'Mga tawag bawat minuto',
   'Pages a minute': 'Mga page bawat minuto',
+  'Browser memory limit': 'Limitasyon sa memory ng browser',
   '{count} calls': {
     one: '{count} tawag',
     other: '{count} na tawag',

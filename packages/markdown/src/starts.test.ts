@@ -182,3 +182,33 @@ describe('a construct on a line of its own still ends the paragraph above it', (
     expect(html).toContain('<nav class="toc">')
   })
 })
+
+/** #546: every inline `start` read the rest of the paragraph at every break in it,
+ *  and the hashtag tokenizer flattened the text before it to read one character. */
+describe('a paragraph of many breaks', () => {
+  const quick = (source: string) => {
+    const started = performance.now()
+    const html = renderMarkdown(source)
+    expect(performance.now() - started).toBeLessThan(1500)
+    return html
+  }
+
+  test('renders in linear time', () => {
+    quick('!a '.repeat(66_000))
+    quick('[[a '.repeat(25_000))
+    quick('==a '.repeat(25_000))
+    expect(quick('!#a '.repeat(25_000))).not.toContain('class="tag"')
+  })
+
+  test('finds what it found before at every break', () => {
+    expect(renderMarkdown('!#a x#b (#c **#d**')).toBe(
+      '<p>!#a x#b (<span class="tag" data-tag="c">#c</span> <strong><span class="tag" data-tag="d">#d</span></strong></p>\n',
+    )
+    expect(renderMarkdown('==a #b== [[c]] #d')).toBe(
+      '<p><mark>a <span class="tag" data-tag="b">#b</span></mark> c <span class="tag" data-tag="d">#d</span></p>\n',
+    )
+    expect(renderMarkdown('a ~b~ ^c^ $d :smile: #e [^f]')).toBe(
+      '<p>a <sub>b</sub> <sup>c</sup> $d :smile: <span class="tag" data-tag="e">#e</span> <sup class="footnote-ref" id="fnref-f"><a href="#fn-f">f</a></sup></p>\n',
+    )
+  })
+})

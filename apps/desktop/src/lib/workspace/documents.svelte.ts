@@ -112,6 +112,10 @@ export class NoteDoc {
    *  editor watches - the reading view - because `words` itself only catches up
    *  when something asks for it, and a pane that is only reading never does. */
   revision = $state(0)
+  /** The revision a version put back from the history made, which a canvas takes whole
+   *  rather than merging with: what was deleted since comes back and what was added
+   *  since goes, the way a restore reads (#533). Null for every other change. */
+  restoredAt: number | null = null
   /** True while text is being put in that leaves the note in step with its file,
    *  which is nothing the app has to be told about; see `replace`. */
   private quiet = false
@@ -444,6 +448,12 @@ export class Tab {
    *  panned to belongs to the afternoon rather than to the file. Per tab, since
    *  one canvas can be looked at from two places in two panes. */
   camera = $state<Camera | undefined>(undefined)
+
+  /** For a page note: whether that camera's zoom is the reader's own rather than the
+   *  paper fitted across the pane. Beside the camera, on the tab, because the surface
+   *  is made again every time the tab comes back to the front, and a zoom it forgot was
+   *  the paper fitted again the moment it was measured (#421). See pages/store.svelte.ts. */
+  zoomChosen = false
 
   /** For a website: the address the tab is on, which is not always the one its file
    *  says. Following a link in the page is browsing rather than editing, so the

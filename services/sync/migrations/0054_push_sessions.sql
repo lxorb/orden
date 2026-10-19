@@ -1,0 +1,12 @@
+-- The session a push target was registered through.
+--
+-- A target is a device's address at its push service, and what it is sent is the
+-- account's own words: a task's title, the note and space it is in. Ending a device,
+-- ending its session or signing it out ended the session and left the target, so a
+-- lost phone kept being told (#454). The target now names the session that registered
+-- it (by the hash the `sessions` row is keyed by), and is sent to only while that
+-- session lives; see src/push/live.ts.
+--
+-- A row from before names none and is sent nothing until its device registers again,
+-- which is what a device does as it starts. An older Worker never reads the column.
+alter table push_targets add column session_hash text;

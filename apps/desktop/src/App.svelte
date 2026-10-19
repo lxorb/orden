@@ -49,6 +49,7 @@
     historySheet,
     iconPicker,
     joinSheet,
+    feedbackSheet,
     importSheet,
     spacePickerDialog,
     hostPickerDialog,
@@ -83,8 +84,10 @@
   import { theme } from './lib/theme.svelte'
   import { views } from './lib/views.svelte'
   import { workspace } from './lib/workspace.svelte'
+  import { sidebarKey, used } from './lib/workspace/undo.svelte'
   import { saveFront } from './lib/save-place/door'
   import PadColumn from './lib/scratchpad/PadColumn.svelte'
+  import { shown as pad } from './lib/scratchpad/is.svelte'
   import { isDraft } from './lib/workspace/drafts'
   import { type TabKind, TAB_KINDS } from './lib/workspace/tab-kinds'
   import { shortcuts } from './lib/shortcuts.svelte'
@@ -101,6 +104,12 @@
    *  menu and the palette act on. Each pane leaves its own here; see
    *  views.svelte.ts. */
   const view = $derived(views.of(workspace.panes.focusedId))
+
+  /** The scratchpad as the one note on a touch screen (#404). */
+  const padOver = $derived(viewport.touch && pad.on)
+
+  /** What commands and the keyboard's strip act on. */
+  const writingIn = $derived(padOver ? (pad.view ?? view) : view)
 
   const fabLabel = $derived(hiddenKinds.offers('note') ? t('New note') : t('New tab'))
 
@@ -224,6 +233,8 @@
         pull.receive(remote)
         void import('./lib/kind-choice').then((one) => one.receive(remote))
         recovery.receive(remote)
+        // Which spaces are put away, the same on every device; see lib/space-archive.ts.
+        void import('./lib/space-archive').then((one) => one.receive(remote))
         // What pings for every chat, fetched with the chats rather than in front of the
         // first paint; see lib/chats/hush.svelte.ts.
         if (!__EVEN_PLUGIN__)
@@ -312,6 +323,7 @@
       workspace.folderIcons.adopt(space.root, remote.icons, remote.tints, who)
       void workspace.arranged.adopt(space.root, remote.arranged, who)
       workspace.graphSettings.adopt(space.root, remote.graph, who)
+      workspace.sorting.adopt(space.root, remote.sort, who)
       workspace.excluded.adopt(space.root, remote.excluded, who)
       void workspace.archive.adopt(space.root, remote.archived, who)
     }
@@ -543,6 +555,9 @@
         // The update notice, which only a release server puts up; see
         // test/e2e/notices.py.
         updates,
+        // The questions the app asks, so a drive can put up one only a terminal raises -
+        // Ctrl+N in a terminal - in a browser that has none; see test/e2e/layout-sweep.py.
+        prompt,
         workspace,
         search,
         settings,
@@ -791,6 +806,15 @@
     return () => cancelAnimationFrame(frame)
   })
 
+  /** Ctrl+Z for what was done in a sidebar; see `sidebarKey`. */
+  function sidebarUndo(event: KeyboardEvent) {
+    const own = sidebarKey(event, (id) => shortcuts.pressed(id, event))
+    if (!own) return
+    event.preventDefault()
+    event.stopPropagation()
+    void (own === 'undo' ? workspace.undoFileAction() : workspace.redoFileAction())
+  }
+
   /** Every app-level key comes from one registry, so a rebind reaches the
    *  keyboard, the menus and the palette at once. The one thing it cannot reach
    *  on its own is here: the palette is this component's own state. */
@@ -844,7 +868,7 @@
    *  showing. */
   function appContext(): AppContext {
     return {
-      view,
+      view: writingIn,
       palette: (mode, again) => {
         // Shift Shift over the palette puts it away, as Escape does, and the keyboard
         // goes back where it was; see `tapped` in the registry.
@@ -893,6 +917,7 @@
 <!-- Nothing in the app ever shows the browser's own menu. -->
 <svelte:window
   onkeydown={onKeydown}
+  onkeydowncapture={sidebarUndo}
   oncontextmenucapture={(event: MouseEvent) => {
     // A Mac's text field keeps the system's own menu, which has Look Up and the
     // spelling in it as well as the four; see system-menu.ts. Every other field gets
@@ -903,7 +928,11 @@
     if (!keepsSystemMenu(event.target, platform())) event.preventDefault()
   }}
   onmousedown={onMouse}
-  onpointerdowncapture={(event: PointerEvent) => overlays.pressed(event)}
+  onpointerdowncapture={(event: PointerEvent) => {
+    overlays.pressed(event)
+    used(event.target)
+  }}
+  onclickcapture={(event: MouseEvent) => overlays.clicked(event)}
   onblur={() => overlays.away()}
   onpointermove={() => fullscreen.stir()}
   onpointerdown={() => fullscreen.stir()}
@@ -1045,7 +1074,7 @@
       <div class="body">
         <!-- One pane, or up to four of them; see PaneTree.svelte. Anything slow
              enough to be waited for draws a line along the top of them. -->
-        <div class="panes" data-panes>
+        <div class="panes" data-panes class:under-pad={padOver} inert={padOver}>
           <Progress />
           <PaneTree frame={workspace.panes.frame} />
           <!-- The note the window was left on, as it was left, until its editor is up;
@@ -1216,6 +1245,12 @@
     <JoinSheet />
   {/await}
 {/if}
+<!-- Send feedback, once somebody has asked for it; see feedback.svelte.ts. -->
+{#if feedbackSheet.asked}
+  {#await feedbackSheet.asked then FeedbackSheet}
+    <FeedbackSheet />
+  {/await}
+{/if}
 <!-- The sheets, each fetched the first time something opens it and kept mounted
      afterwards; the effect above says why, and surfaces.svelte.ts holds the doors.
      The largest of them is the settings sheet - the pane per section, the theme
@@ -1228,7 +1263,7 @@
 {/if}
 {#if formatBarDoor.asked}
   {#await formatBarDoor.asked then FormatBar}
-    <FormatBar bind:this={formatBar} {view} context={appContext} />
+    <FormatBar bind:this={formatBar} view={writingIn} context={appContext} />
   {/await}
 {/if}
 {#if historySheet.asked}
@@ -1349,6 +1384,10 @@
     min-width: 0;
     min-height: 0;
     display: flex;
+  }
+
+  .panes.under-pad {
+    visibility: hidden;
   }
 
   /* Start, middle and end, whichever of them is up; each card names its track.

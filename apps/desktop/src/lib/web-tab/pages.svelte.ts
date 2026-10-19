@@ -36,6 +36,7 @@ import type { Cut } from './covers'
 import { Latest } from './latest'
 import { placeOf, placeKept } from './place'
 import type { Upgrade } from './upgrade'
+import type { HalfTyped } from './typed'
 
 /** This device's history, asked for by the first page that says where it is rather
  *  than carried: this store is in front of the first paint, because the workspace
@@ -294,6 +295,13 @@ export class Page {
   url = $state<string | null>(null)
   /** What the page calls itself, or the empty string before it has said. */
   title = $state('')
+  /** An address half typed into the tab's field, waiting while another tab is in front
+   *  (#381): the tab's own, gone with it. Plain, since only the field reads it, as it is
+   *  built. See AddressField.svelte. */
+  halfTyped: HalfTyped | null = null
+  /** See WebBar.svelte (#381). */
+  keyboard: 'address' | 'page' | null = null
+  seen = false
   /** The site's own mark as the page shows it now, as an address the window draws
    *  without fetching anything: the picture the engine chose for the page, from inside
    *  the page's own profile. It follows the page, so a site that redraws its mark with
@@ -447,6 +455,8 @@ export class Page {
   inPrivate = false
   /** The store the page was built in; see `restore`. */
   store: string | null | undefined
+  /** Every move to another store, one after the other; see `rehouse`. */
+  rehousing = Promise.resolve()
 
   /** The page's mark has changed. Empty is a page with none, which leaves the tab
    *  the file's mark again and the file its own. */
@@ -653,10 +663,13 @@ class Pages {
     // The address this build is for. A new tab's first build has none and is refused,
     // and an address typed while that refusal is on its way is a page to build next.
     const tried = page.url
+    // And the web data it is for: a note turned Separate or back while this page is on its
+    // way has it moved once it arrives, below.
+    const forOwn = page.own
 
     try {
       // The note's own store, or the shared one; see web-data.svelte.ts.
-      const store = page.inPrivate ? null : await (await stores()).store(page.own)
+      const store = page.inPrivate ? null : await (await stores()).store(forOwn)
       const cuts = await invoke<boolean | undefined>('web_open', {
         tab: tabId,
         url: page.url,
@@ -717,6 +730,10 @@ class Pages {
       await invoke('web_close', { tab: tabId, keep: false }).catch(() => undefined)
       return
     }
+
+    // Its note was turned Separate or back while it was on its way, which `rehouse` could
+    // not move a page that was not there yet for. Not waited for: a move builds a page.
+    if (page.own !== forOwn && !page.inPrivate) void this.rehouse(tabId, page.own)
 
     if (!wanted) return
     if (wanted.visible) await this.place(tabId, wanted.pane, true, false, wanted.over)
@@ -1224,16 +1241,48 @@ class Pages {
 
   /** The web note keeps its own web data now, or no longer does: a running page is
    *  parked and built again in that store, where it was, and `said` shown for a moment,
-   *  since the site may have signed out. A webview's store is fixed when it is built. */
-  async rehouse(tabId: string, own: string | null, said: string | null = null): Promise<void> {
+   *  since the site may have signed out. A webview's store is fixed when it is built.
+   *
+   *  **One move at a time, each finding the page where the last one left it** (#409).
+   *  Turning a note Separate asks twice - the menu that wrote the file (own-data.ts), and
+   *  the pane that read the file change (WebTab.svelte) - and the two used to run side
+   *  by side. The second parked a page the first was already parking: it asked the
+   *  closing page where it had got to, waited out `LOOK_WAITS` for an answer that never
+   *  came, and then closed the page the first had just built in the new store - which
+   *  the first went on to call live. The tab believed in a page that had gone, spinning
+   *  on the load it had begun, until somebody closed it by hand. Now the second finds the
+   *  page already in the store it asks for, and does nothing. */
+  rehouse(tabId: string, own: string | null, said: string | null = null): Promise<void> {
     const page = this.held.get(tabId)
-    if (!page) return
+    if (!page) return Promise.resolve()
     page.own = own
-    if (!page.live || page.inPrivate) return
-    if ((await (await stores()).store(own)) === page.store) return
+    const moving = page.rehousing.then(() => this.moved(tabId, page, said))
+    page.rehousing = moving.catch(() => undefined)
+    return moving
+  }
+
+  /** One of `rehouse`'s moves. The page counts as on its way for the whole of it, from
+   *  the park to the build: the pane looks again the moment the old page is no longer
+   *  live, and that look says where the new page goes rather than asking for a second
+   *  one beside it; see `show`. */
+  private async moved(tabId: string, page: Page, said: string | null): Promise<void> {
+    if (this.held.get(tabId) !== page || page.inPrivate) return
+    const store = await (await stores()).store(page.own)
+    if (!page.live || store === page.store) return
+
     const shown = page.shown ? page.pane : null
-    await this.park(tabId)
-    if (shown && page.url) await this.show(tabId, page.url, shown)
+    page.opening = true
+    try {
+      await this.park(tabId)
+    } finally {
+      page.opening = false
+    }
+
+    const wanted = page.wanted
+    page.wanted = null
+    const pane = wanted?.pane ?? shown
+    if (pane && page.url && this.held.get(tabId) === page)
+      await this.build(tabId, page, pane, wanted?.visible ?? true, wanted?.over)
     page.notice = said
   }
 

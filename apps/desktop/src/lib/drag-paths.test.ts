@@ -69,3 +69,19 @@ describe('a drop on the file list', () => {
     expect(landing({ dataTransfer: null, ctrlKey: false, altKey: false }, 'win')).toBeNull()
   })
 })
+
+/** An essential's tile is a file the list takes back (#412); any other bookmark is not. */
+describe('a bookmark carried over the file list', () => {
+  test('is a move where it is a tile, and nothing otherwise', async () => {
+    const { carryBookmark, carriedNothing } = await import('./drag-paths')
+    const tile = transfer()
+    carryBookmark(tile, 0, true)
+    expect(landing(drop(tile), 'linux')).toBe('move')
+    carriedNothing()
+    expect(landing(drop(tile), 'linux')).toBeNull()
+
+    const search = transfer()
+    carryBookmark(search, 1)
+    expect(landing(drop(search), 'linux')).toBeNull()
+  })
+})

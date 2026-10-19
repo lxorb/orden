@@ -10,7 +10,7 @@
 //! | --- | --- |
 //! | `WebView2` | sent to `<origin>/__nib_restore`, which `WebResourceRequested` answers with an empty page before any network is asked |
 //! | `WKWebView` | `loadHTMLString("", baseURL: <origin>/__nib_restore)`, which runs as that origin |
-//! | `WebKitGTK` | `load_html("", <origin>/__nib_restore)`, the same |
+//! | CEF (Linux) | sent to `<origin>/__nib_restore` as it is, so the site answers; its answer is a document of the origin all the same |
 //!
 //! The view is a child of the window that asked, a pixel wide, hidden from the moment
 //! it exists and never given the keyboard, built through the same seam every web tab is
@@ -68,13 +68,13 @@ impl Hidden {
         let (made, mut waiting) = channel(1);
         let holder = window.clone();
         app.run_on_main_thread(move || {
-            let built = holder
-                .add_child(
-                    builder,
-                    LogicalPosition::new(0.0, 0.0),
-                    LogicalSize::new(1.0, 1.0),
-                )
-                .map_err(|error| format!("no page could be made to restore into: {error}"));
+            let built = crate::engine::add_child(
+                &holder,
+                builder,
+                LogicalPosition::new(0.0, 0.0),
+                LogicalSize::new(1.0, 1.0),
+            )
+            .map_err(|error| format!("no page could be made to restore into: {error}"));
             if let Ok(view) = &built {
                 let _ = view.hide();
             }
@@ -218,12 +218,13 @@ mod engine {
     }
 }
 
-#[cfg(target_os = "linux")]
+/// CEF: the address itself, as the site answers it. Not intercepted as on `WebView2`, so
+/// the site is asked; whatever it sends - its own page, a page saying there is no such
+/// address - is a document of the origin, which is all the restore needs of it.
+#[cfg(feature = "cef")]
 mod engine {
-    use tauri::Webview;
-    use webkit2gtk::WebViewExt as _;
+    use tauri::{Url, Webview};
 
-    /// Nothing to set up: an HTML string with a base address is the origin already.
     #[allow(
         clippy::unused_async,
         reason = "one signature for every engine; WebView2's has something to wait for"
@@ -233,10 +234,9 @@ mod engine {
     }
 
     pub(super) fn show(view: &Webview, address: &str) -> Result<(), String> {
-        let address = address.to_owned();
-        view.with_webview(move |platform| {
-            platform.inner().load_html("", Some(&address));
-        })
-        .map_err(|error| error.to_string())
+        let url: Url = address
+            .parse()
+            .map_err(|_| format!("{address} is not an address"))?;
+        view.navigate(url).map_err(|error| error.to_string())
     }
 }

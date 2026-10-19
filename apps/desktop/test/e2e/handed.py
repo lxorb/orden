@@ -267,6 +267,8 @@ def fresh(
     phone browser and the PWA all are. Dictation there is the web's own recogniser
     rather than the phone's, and that is the only difference the page ever sees."""
     context = browser.new_context(
+        # The asset worker is what this drive is about; see WEBKIT_WORKERS in harness.py.
+        service_workers="allow",
         viewport=PHONE if finger else {"width": 1180, "height": 900},
         color_scheme="light",
         has_touch=finger,

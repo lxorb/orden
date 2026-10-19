@@ -54,7 +54,7 @@ import {
   restoredLine,
 } from './history'
 import type { Picture } from './images'
-import { controlOf, imageKey, imageKeyTyped, type Route, routeKey } from './keys'
+import { imageKey, imageKeyTyped, type Route, routeKey, typedBy } from './keys'
 import { findColours, monospace, terminalContrast, terminalTheme } from './look'
 import { type Left, pastesItself, promptEnd, reporting, tidied } from './modes'
 import { Front, terminalName } from './naming'
@@ -1223,7 +1223,14 @@ class Session {
     if (way === 'app') (await import('../web-tab/keys')).replay(pressed)
     else if (way === 'shell') {
       this.focus()
-      this.term.input(controlOf(pressed.key), true)
+      const typed = typedBy({
+        key: pressed.key,
+        ctrlKey: pressed.ctrl,
+        metaKey: false,
+        altKey: pressed.alt,
+        shiftKey: pressed.shift,
+      })
+      if (typed !== null) this.term.input(typed, true)
     }
   }
 

@@ -22,6 +22,7 @@
  *  paper as in a note. Only the rows are built here: a page has no lines, so the
  *  words around the match are what a row shows. */
 
+import { holderOf } from '../pages/held'
 import { type Hit, Matcher } from '../search/match'
 import type { Query } from '../search/query'
 import { warm } from '../search/warm.svelte'
@@ -424,7 +425,11 @@ export function searchPapers(
     const relative = path.slice(inside.length)
     if (leftOut(relative, excluded)) continue
 
-    const name = relative.split('/').pop() ?? relative
+    // A paper a page note holds is called what the note is, `Lecture 4` and not
+    // `Lecture 4.pages.pdf`: the note is the one thing the list shows. See
+    // pages/held.ts.
+    const file = relative.split('/').pop() ?? relative
+    const name = holderOf(file) ?? file
 
     for (const [page, body] of [...paper.pages].sort((one, other) => one[0] - other[0])) {
       if (out.length >= limit) break

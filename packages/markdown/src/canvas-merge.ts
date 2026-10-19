@@ -18,7 +18,7 @@
  *  same file, so it does not matter whether the client or the worker does it, or
  *  which device gets there first. */
 
-import { type Canvas, readCanvas, type Thing, writeCanvas } from './canvas'
+import { type Canvas, noTimes, readCanvas, type Thing, timeIn, writeCanvas } from './canvas'
 
 /** How long a tombstone is kept, in milliseconds. Long enough that a tablet left
  *  in a drawer for a month cannot bring a deleted card back, short enough that a
@@ -66,8 +66,8 @@ export function stamped(before: Canvas, after: Canvas, now: number): Canvas {
   // written. So the plane is still walked once and the record still built from it -
   // what has gone is the two maps over all of it and the lookup per thing.
   const touchedIds = new Set(changed)
-  const at: Record<string, number> = {}
-  const when = (id: string) => (touchedIds.has(id) ? now : (before.at[id] ?? now))
+  const at = noTimes()
+  const when = (id: string) => (touchedIds.has(id) ? now : (timeIn(before.at, id) ?? now))
 
   for (const thing of after.nodes) {
     const id = thing.id
@@ -82,7 +82,7 @@ export function stamped(before: Canvas, after: Canvas, now: number): Canvas {
     at[id] = when(id)
   }
 
-  const gone: Record<string, number> = {}
+  const gone = noTimes()
 
   for (const [id, since] of Object.entries(before.gone)) {
     // A tombstone for something that is on the plane again is no longer true.
@@ -156,7 +156,7 @@ function diff<T extends Thing>(
 /** When something last changed, on one side. Zero for something that side has
  *  never seen, which loses to any time at all. */
 function timeOf(canvas: Canvas, id: string): number {
-  return canvas.at[id] ?? 0
+  return timeIn(canvas.at, id) ?? 0
 }
 
 /** Which of two versions of one thing to keep. The later one; and for two with
@@ -220,11 +220,11 @@ function mergeList<T extends Thing>(
 /** Two canvases as one. Neither side is the base and neither is preferred: this
  *  is the whole of the conflict rule, and it is the same rule wherever it runs. */
 export function merged(ours: Canvas, theirs: Canvas, now = Date.now()): Canvas {
-  const gone: Record<string, number> = {}
+  const gone = noTimes()
 
   for (const [id, when] of Object.entries({ ...ours.gone, ...theirs.gone })) {
-    const mine = ours.gone[id] ?? 0
-    const yours = theirs.gone[id] ?? 0
+    const mine = timeIn(ours.gone, id) ?? 0
+    const yours = timeIn(theirs.gone, id) ?? 0
     const buried = Math.max(mine, yours, when)
     if (now - buried >= TOMBSTONE_KEPT) continue
 
@@ -235,10 +235,10 @@ export function merged(ours: Canvas, theirs: Canvas, now = Date.now()): Canvas {
   const nodes = mergeList(ours.nodes, theirs.nodes, ours, theirs, gone)
   const held = new Set(nodes.map((node) => node.id))
 
-  const at: Record<string, number> = {}
+  const at = noTimes()
   for (const id of new Set([...Object.keys(ours.at), ...Object.keys(theirs.at)])) {
     if (gone[id] !== undefined && !held.has(id)) continue
-    at[id] = Math.max(ours.at[id] ?? 0, theirs.at[id] ?? 0)
+    at[id] = Math.max(timeIn(ours.at, id) ?? 0, timeIn(theirs.at, id) ?? 0)
   }
 
   return {

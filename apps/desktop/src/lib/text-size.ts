@@ -18,6 +18,7 @@
  *  this stands down on. */
 
 import { modes } from './modes.svelte'
+import { platform } from './tauri'
 
 /** What one wheel event over the note should do to the text size: a notch in, a
  *  notch out, or nothing at all.
@@ -50,9 +51,13 @@ function overNote(target: EventTarget | null): boolean {
  *  note opens and a listener on it would have to be rebuilt with it, and the
  *  bubble phase is what lets the surfaces with their own zoom answer first. */
 export function watchTextSize(): () => void {
+  const pinches = platform() === 'windows'
   const onWheel = (event: WheelEvent) => {
     const step = sizeStepFor(event, overNote(event.target))
-    if (!step) return
+    if (!step) {
+      if (pinches && event.ctrlKey) event.preventDefault()
+      return
+    }
 
     // Before the step, so a browser that would have zoomed the page does not,
     // whether or not the size had anywhere left to go.

@@ -114,13 +114,30 @@ export async function sweepLeftovers(env: Env): Promise<number> {
       .run()
   }
 
+  // An id retired while its room still held something is free again once the room is
+  // empty and nothing else named by it is still to go: what a create under it would
+  // have been handed is gone (0052). Never sooner.
+  const rooms = done.filter((one) => one.startsWith(ROOM)).map((one) => one.slice(ROOM.length))
+  for (const chunk of chunks(rooms)) {
+    await env.DB.prepare(
+      `delete from retired_notes
+        where id in (${places(chunk.length)})
+          and not exists (select 1 from leftovers
+                           where what in ('rooms/' || retired_notes.id, 'crdt/' || retired_notes.id)
+                              or what like 'spaces/%/' || retired_notes.id)`,
+    )
+      .bind(...chunk)
+      .run()
+  }
+
   return done.length
 }
 
 /** Which of these names a row still answers for.
  *
  *  A note's body, its room and its document's snapshot are the note's, so the note's
- *  row is the question. A version's body and a picture are addressed by their contents
+ *  row is the question - a live one, or one in Recently deleted, and not the tombstone
+ *  a purge leaves. A version's body and a picture are addressed by their contents
  *  and shared by whoever holds the same bytes, so the question there is whether any
  *  row at all still names the hash. A web login's bytes and a hub are named by the account
  *  itself, which never comes back: nothing else can name them. */
@@ -140,7 +157,13 @@ async function stillNamed(env: Env, names: readonly string[]): Promise<Set<strin
     else if (kind === 'chats') chats.set(name, last)
   }
 
-  const notes = await askIn(env, 'select id as one from notes where id in', byNote)
+  // A row purged from Recently deleted is a tombstone, not the note: its words are
+  // gone for good and nothing brings it back, so it answers for nothing here.
+  const notes = await askIn(
+    env,
+    'select id as one from notes where not (deleted = 1 and deleted_at is null) and id in',
+    byNote,
+  )
   const heldVersions = await askIn(
     env,
     'select distinct hash as one from note_versions where hash in',

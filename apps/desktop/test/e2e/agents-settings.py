@@ -9,7 +9,8 @@ foot, and one session opened as its calls.
 What it checks on the way, and fails on: the trifecta line is on the agent that reads
 notes and browses, and not on the one that does not; a switch pressed is in the
 crate's grant, and so is what it needs; a site typed as an address is kept as its
-site; a right-to-left language turns the pane round.
+site; the browser's memory has no limit until one is set, and one set is in the grant
+(#333); a right-to-left language turns the pane round.
 
 From the repository root; the harness builds the app with its handle on the page
 the first time and serves it (see harness.py):
@@ -89,6 +90,44 @@ def body_to(page, where: str) -> None:
     quiet(page)
 
 
+MEMORY = ".agents .nib-setting.sliding:has-text('Browser memory limit')"
+
+SLIDE = """
+([label, value]) => {
+  const row = [...document.querySelectorAll('.agents .nib-setting.sliding')].find(
+    (one) => one.querySelector('.name')?.textContent?.trim() === label,
+  )
+  const range = row.querySelector('input[type=range]')
+  range.value = String(value)
+  range.dispatchEvent(new Event('input', { bubbles: true }))
+  range.dispatchEvent(new Event('change', { bubbles: true }))
+}
+"""
+
+
+def memory_limit(page, name: str) -> None:
+    """#333: there was a 3 GB ceiling on the browser for every agent. The row starts at
+    Off, which is no ceiling, and a limit the reader sets is in the grant, and can be
+    taken away again."""
+    row = page.locator(MEMORY)
+    row.scroll_into_view_if_needed()
+    quiet(page)
+    # The words in the row, not what is drawn of them: WebKit has no innerText for a
+    # row its scroller has not drawn yet, and Chromium does (#384).
+    said = lambda: (row.locator(".value").text_content() or "").strip()  # noqa: E731
+    check(f"[{name}] the memory limit starts Off", said() == "Off")
+    check(f"[{name}] and the grant holds no ceiling", page.evaluate(GRANT, "claude-code")["limits"]["memory"] == 0)
+    page.evaluate(SLIDE, ["Browser memory limit", 4096])
+    page.wait_for_timeout(200)
+    quiet(page)
+    check(f"[{name}] a limit set is in the grant", page.evaluate(GRANT, "claude-code")["limits"]["memory"] == 4096)
+    check(f"[{name}] and its row says it", said() == "4 GB")
+    shot(page, f"{name}-memory-limit")
+    page.evaluate(SLIDE, ["Browser memory limit", 0])
+    page.wait_for_timeout(200)
+    check(f"[{name}] and taken away again", page.evaluate(GRANT, "claude-code")["limits"]["memory"] == 0)
+
+
 def look(browser, scheme: str, language: str) -> None:
     name = f"{scheme}-{language}"
     page = DRIVE.page(
@@ -149,6 +188,10 @@ def look(browser, scheme: str, language: str) -> None:
     quiet(page)
     photograph("session")
     page.locator(".agents .session").first.click()
+    # Until the calls have slid away: the rows below rise as they go, and in WebKit a
+    # press made while they rose went down on one row and up on another, which is no
+    # click at all (#384).
+    page.wait_for_selector(".agents .calls", state="detached")
     quiet(page)
 
     if language == "en":
@@ -181,6 +224,8 @@ def look(browser, scheme: str, language: str) -> None:
         )
         grant = page.evaluate(GRANT, "claude-code")
         check(f"[{name}] a typed address is kept as its site", grant["sites"].get("bank2.example") == "deny")
+
+        memory_limit(page, name)
 
     body_to(page, "middle")
     photograph("agent-middle")

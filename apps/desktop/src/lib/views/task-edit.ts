@@ -5,16 +5,19 @@
 
 import type { TaskChange, TaskRow } from '@nib/bases'
 import type { Entry, Prefill } from '../quick-add/entry'
+import { deadlineField, deadlineOf, startOf } from '@nib/markdown/task-dates'
 import { changeFor } from './schedule/schedule'
 
 /** The field's prefill for a task as it stands, and its description's words. */
 export function prefillFor(task: TaskRow, description: string | null): Prefill {
-  const due = task.due ?? task.scheduled
+  // Its start date and its deadline, as its space reads a `📅` (#371).
+  const due = startOf(task, task.dueReads) ?? task.scheduled
+  const deadline = deadlineOf(task, task.dueReads)
   const fields: NonNullable<Prefill['fields']> = {
     ...(due === undefined ? {} : { due }),
     ...(task.time === undefined ? {} : { time: task.time }),
     ...(task.recurrence === undefined ? {} : { recurrence: task.recurrence }),
-    ...(task.deadline === undefined ? {} : { deadline: task.deadline }),
+    ...(deadline === undefined ? {} : { deadline }),
     priority: task.priority <= 4 ? task.priority : 4,
     tags: [...task.tags],
     remind: [...task.remind],
@@ -40,7 +43,7 @@ export function changeOf(task: TaskRow, entry: Entry): TaskChange {
     priority: keptLow ? task.priority : (fields.priority ?? 4),
     tags: fields.tags,
     remind: fields.remind,
-    deadline: fields.deadline ?? null,
+    [deadlineField(task, task.dueReads)]: fields.deadline ?? null,
   }
   change.duration = fields.duration ?? null
   return change

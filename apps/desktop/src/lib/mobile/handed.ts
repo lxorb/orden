@@ -270,9 +270,10 @@ async function intoANewNote(arrived: Arrived, bytes: ReadonlyMap<number, Uint8Ar
     applyImport(plan, { root: space.root, folder: '' }),
   )
 
-  // The note is first in the plan, so it is the first path back.
+  // The note is first in the plan, so it is the first path back - a page note, where
+  // what was shared is a PDF on its own.
   const first = landed.paths[0]
-  if (first) await workspace.open(first)
+  if (first) await workspace.openEntry(first)
 }
 
 /** Into the note in front of somebody: the words at the caret, and each picture

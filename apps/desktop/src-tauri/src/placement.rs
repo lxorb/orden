@@ -213,17 +213,10 @@ pub fn reopened<'a, R: tauri::Runtime, M: Manager<R>>(
         .maximized(placed.maximized)
 }
 
-/// Whether a window may be put where it was: everywhere but Wayland, where the
-/// compositor places every window and an app is never told where one is.
+/// Whether a window may be put where it was: everywhere, Linux included, whose windows
+/// are X11 windows under CEF even in a Wayland session (see linux.rs).
 fn positions() -> bool {
-    #[cfg(target_os = "linux")]
-    {
-        crate::linux::places_windows()
-    }
-    #[cfg(not(target_os = "linux"))]
-    {
-        true
-    }
+    true
 }
 
 /// The place the file says, made to fit the screens there are, and noted as where a
@@ -463,21 +456,8 @@ pub fn built<R: Runtime, M: Manager<R>>(
 /// app - a key the window in front receives - and asks again, which no lock refuses: so
 /// under the switch this must never be reached at all, and nothing else in the crate
 /// asks a window for the keyboard; see the test below.
-///
-/// On Wayland with the compositor's token for the press that asked, which is the only
-/// way a window there may take the front; see linux.rs.
 pub fn raised<R: Runtime>(window: &Window<R>) {
     if away().is_some() {
-        return;
-    }
-    #[cfg(target_os = "linux")]
-    if let Some(token) = crate::linux::token_for_raise() {
-        let forward = window.clone();
-        let _ = window.run_on_main_thread(move || {
-            crate::linux::hand_gtk(&token);
-            let _ = forward.unminimize();
-            let _ = forward.set_focus();
-        });
         return;
     }
     let _ = window.unminimize();
@@ -956,7 +936,9 @@ mod tests {
     #[test]
     fn every_window_is_built_where_the_run_sends_them() {
         // Built hidden and never shown: a page printed and gone.
-        let excused = ["pdf.rs", "engine.rs"];
+        // The CEF build's own two, which only its gate runs, placing each window on the
+        // screen it photographs.
+        let excused = ["pdf.rs", "engine.rs", "engine/gate.rs"];
 
         let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("src");
         let mut sources = vec![root.clone()];
@@ -995,7 +977,7 @@ mod tests {
     /// Nothing in the crate asks for the keyboard or the front but `raised` and
     /// `keyboard_to`, which both do nothing where a drive sent the windows away; and
     /// nothing asks Windows or an engine for either directly - `WebView2`'s `MoveFocus`,
-    /// wry's `focus_parent` and a webview's `set_focus` all activate the window the
+    /// wry's `focus_parent` and a Chromium host's `set_focus` all activate the window the
     /// page is in. Read off the source for the same reason as the test above: a call that
     /// forgets is only ever found by the person whose typing it took. foreground.rs, which
     /// keeps a probe out of the front, is the one file that names the system's calls, and

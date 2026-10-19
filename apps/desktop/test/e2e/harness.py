@@ -171,8 +171,57 @@ WEBKIT_CLIPBOARD = (
     " c.readText = () => read().catch(() => kept) })()"
 )
 
+#: And Cmd+A selecting the words of a field, which on a Mac is the system's and not the
+#: page's: Playwright's WebKit outside a Mac has no such command, so a field asked for
+#: all of its words with the Mac's key kept them unselected and the next words typed
+#: went on the end (#384). Heard first and done once the key has been through the page,
+#: and only where nothing on the page took it.
+MAC_SELECT_ALL = (
+    "addEventListener('keydown', (event) => { const at = event.target;"
+    " if (!event.metaKey || event.ctrlKey || event.altKey || event.key.toLowerCase() !== 'a') return;"
+    " if (!(at instanceof HTMLInputElement || at instanceof HTMLTextAreaElement)) return;"
+    " setTimeout(() => { if (!event.defaultPrevented) at.select() }) }, true)"
+)
+
+#: Every socket a page opens, kept where `_offline_as_chromium` can close it. WebKit's
+#: offline leaves a socket that is already open carrying messages both ways, where
+#: Chromium's stops it, so a page "offline" in WebKit went on syncing live (#384).
+WEBKIT_SOCKETS = (
+    "(() => { const Native = window.WebSocket; if (!Native || window.__nibSockets) return;"
+    " const open = new Set(); window.__nibSockets = open; window.__nibOffline = false;"
+    " window.WebSocket = class extends Native { constructor(url, ...rest) {"
+    " super(window.__nibOffline ? 'ws://offline.invalid/' : url, ...rest);"
+    " open.add(this); this.addEventListener('close', () => open.delete(this)) } } })()"
+)
+
+#: Whether a WebKit context lets the page's service worker in, unless the drive says.
+#: In WebKit a page the asset worker controls sends its fetches past the routes a drive
+#: answers them with - every one, not only the asset worker's own - so a drive's stand-in
+#: for the account went unasked and the page reached the real one (#384). Chromium
+#: routes them all the same. The drives about the worker itself say `allow`.
+WEBKIT_WORKERS = "block"
+
 #: How long anything a drive waits for is given by default, in seconds.
 PATIENCE = 30
+
+#: The one error an engine reports that is not the app's: a resize observer whose
+#: callback changed the size of what it watches has the rest delivered on the next
+#: frame, and the engine says so on the window. WebKit hands it to Playwright as an
+#: uncaught page error and Chromium does not, so in WebKit drives went red on it
+#: (#384). The app treats it the same way: said once and not counted (`RESIZE_LOOP` in
+#: src/lib/log.ts). Matched on its exact words, so nothing else is let through.
+HARMLESS = (
+    "ResizeObserver loop completed with undelivered notifications.",
+    "ResizeObserver loop limit exceeded",
+)
+
+
+def harmless(error: Any) -> bool:
+    """Whether a page error is the engine's notice about a resize observer, which is
+    not a failure of the app's; see `HARMLESS`."""
+    said = str(getattr(error, "message", None) or error).strip()
+    return said.startswith(HARMLESS)
+
 
 #: Which engine a drive's browser is: Playwright's Chromium, which is what WebView2
 #: is, or with `NIB_ENGINE=webkit` its WebKit, which is what a Mac, an iPhone and
@@ -201,7 +250,7 @@ TEARDOWN = 90
 #: run-all.py off the drive's source, which is why it is a word and not a function.
 NEEDS = {
     "native": "a native probe build (Windows, NIB_PROBE_EXE and NIB_PROBE_IDENTIFIER)",
-    "chromium": "Chromium's own DevTools or flags, which WebKit does not have",
+    "chromium": "Chromium's own DevTools, flags or routing, which WebKit does not have",
 }
 
 #: The identifier every release is built under, which is the nib the reader is using
@@ -243,15 +292,21 @@ def answering(browser: Any) -> Any:
         if WEBKIT:
             context.add_init_script(MAC_PLATFORM)
             context.add_init_script(WEBKIT_CLIPBOARD)
+            context.add_init_script(WEBKIT_SOCKETS)
+            context.add_init_script(MAC_SELECT_ALL)
         if not first_look:
             context.add_init_script(BUILT_IN)
 
     def new_context(*args: Any, first_look: bool = False, **options: Any) -> Any:
+        if WEBKIT:
+            options.setdefault("service_workers", WEBKIT_WORKERS)
         context = made_context(*args, **options)
         answered(context, first_look)
         return context
 
     def new_page(*args: Any, first_look: bool = False, **options: Any) -> Any:
+        if WEBKIT:
+            options.setdefault("service_workers", WEBKIT_WORKERS)
         # Nothing is loaded in the page yet, so a script added now runs before the app.
         page = made_page(*args, **options)
         answered(page.context, first_look)
@@ -447,6 +502,57 @@ def _press_as_a_mac() -> None:
 
 if WEBKIT:
     _press_as_a_mac()
+
+
+def _offline_as_chromium() -> None:
+    """A context set offline in WebKit cut off as Chromium's is: the sockets its pages
+    have open are closed, and one opened while it is offline is refused - pointed at a
+    port nothing answers on - so the app sees the connection go and come back as it
+    does on a machine that lost it. See `WEBKIT_SOCKETS`."""
+    from playwright.sync_api import BrowserContext
+
+    went = BrowserContext.set_offline
+
+    def set_offline(self: Any, offline: bool) -> None:
+        went(self, offline)
+        for page in self.pages:
+            with contextlib.suppress(Exception):
+                page.evaluate(
+                    """(away) => {
+                      window.__nibOffline = away
+                      if (away) for (const one of [...(window.__nibSockets ?? [])]) one.close()
+                    }""",
+                    offline,
+                )
+
+    BrowserContext.set_offline = set_offline  # type: ignore[method-assign]
+
+
+if WEBKIT:
+    _offline_as_chromium()
+
+
+def _hear_no_harmless() -> None:
+    """Every `pageerror` listener a drive adds hears nothing `harmless` lets through:
+    one place for every drive, most of which listen for page errors themselves rather
+    than through `Drive.page`, and for every page however it was made."""
+    from playwright.sync_api import Page
+
+    listen = Page.on
+
+    def on(self: Any, event: str, handler: Any) -> Any:
+        if event == "pageerror":
+            heard = handler
+
+            def handler(error: Any) -> Any:
+                return None if harmless(error) else heard(error)
+
+        return listen(self, event, handler)
+
+    Page.on = on  # type: ignore[method-assign]
+
+
+_hear_no_harmless()
 
 
 # ---------------------------------------------------------------------- the build
@@ -1003,12 +1109,15 @@ class Drive:
         if WEBKIT:
             options.pop("channel", None)
             options.pop("args", None)
+            options.setdefault("service_workers", WEBKIT_WORKERS)
             context = play.webkit.launch_persistent_context(user_data_dir=str(profile), **options)
         else:
             options.setdefault("channel", os.environ.get("NIB_BROWSER", "chromium"))
             context = play.chromium.launch_persistent_context(user_data_dir=str(profile), **options)
         if WEBKIT:
             context.add_init_script(MAC_PLATFORM)
+            context.add_init_script(WEBKIT_SOCKETS)
+            context.add_init_script(MAC_SELECT_ALL)
         context.add_init_script(BUILT_IN)
         return context
 
@@ -1072,21 +1181,29 @@ class Drive:
         over the loopback does not: a chunk first asked for while the context is
         offline fails, and a failed module import is remembered for the rest of the
         page's life. `modulepreload` is how the page is handed them all beforehand -
-        the same links the build puts in front of its own first paint. Answers how
-        many there were."""
+        the same links the build puts in front of its own first paint. The
+        stylesheets a chunk brings are fetched too, as `preload` and not applied: a
+        lazy sheet asks for its CSS as it arrives, and WebKit, offline, fails that
+        request where Chromium answered it from its cache (#384). Answers how many
+        there were."""
         assets = (folder or self.folder) / "assets"
         chunks = sorted(f"/assets/{one.name}" for one in assets.glob("*.js"))
+        sheets = sorted(f"/assets/{one.name}" for one in assets.glob("*.css"))
         page.evaluate(
-            """(chunks) => Promise.all(chunks.map((href) => new Promise((done) => {
+            """([chunks, sheets]) => Promise.all([
+              ...chunks.map((href) => ['modulepreload', href]),
+              ...sheets.map((href) => ['preload', href]),
+            ].map(([rel, href]) => new Promise((done) => {
               const link = document.createElement('link')
-              link.rel = 'modulepreload'
+              link.rel = rel
+              if (rel === 'preload') link.as = 'style'
               link.href = href
               link.onload = link.onerror = () => done()
               document.head.append(link)
             })))""",
-            chunks,
+            [chunks, sheets],
         )
-        return len(chunks)
+        return len(chunks) + len(sheets)
 
     def reading(self, page: Any, patience: float = PATIENCE) -> None:
         """The note in front as it reads, once the reading view has drawn it: the view is

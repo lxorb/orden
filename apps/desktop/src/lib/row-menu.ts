@@ -157,7 +157,7 @@ function selectionMenu(entry: Entry): MenuEntry[] | null {
   return [
     { label: t('Open all'), run: () => void openAll(paths) },
     DIVIDER,
-    { label: t('Move'), run: () => void moveAllTo(paths) },
+    ...(viewport.touch ? [{ label: t('Move'), run: () => void moveAllTo(paths) }] : []),
     ...bookmarkAll(paths),
     ...archiveAll(paths),
     DIVIDER,
@@ -259,8 +259,13 @@ function archiveAll(paths: readonly string[]): MenuEntry[] {
  *  only way a row moves at all. It is offered under a pointer too: a drag across a
  *  long list, into a note that is folded shut, is a gesture that can be missed,
  *  and the places a row can land read faster as a list than as a target to aim at.
- *  Which places those are is move-targets.ts. */
+ *  Which places those are is move-targets.ts.
+ *
+ *  Not under a pointer any more (#303): a row is dragged into a folder or onto a space
+ *  in the switcher, and the palette's Move this note asks where. The right-click menu
+ *  was long, and Move was the row in it a drag already does. */
 function moveEntry(entry: Entry): MenuEntry[] {
+  if (!viewport.touch) return []
   const targets = moveTargets({
     moving: entry.path,
     tree: workspace.tree,

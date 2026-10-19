@@ -27,10 +27,13 @@ function rootOf(change: FileChange, thread: Pick<Thread, 'space'>): string | nul
   return space?.root ?? null
 }
 
-/** The step that deleted `path`, newest first, if it is still on the stack. */
+/** The step that deleted `path`, newest first, if it is still on the stack: on its own,
+ *  or the first of a delete and the unnesting it caused. */
 function deletion(path: string): Extract<FileAction, { kind: 'delete' }> | null {
-  for (const action of [...workspace.undone.stack].reverse())
-    if (action.kind === 'delete' && samePath(action.path, path)) return action
+  for (const action of [...workspace.undone.stack].reverse()) {
+    const step = action.kind === 'many' ? action.steps[0] : action
+    if (step?.kind === 'delete' && samePath(step.path, path)) return step
+  }
   return null
 }
 
@@ -52,7 +55,13 @@ export async function undoFile(
     const back = await putBack(step)
     // Off the tree's own Undo, which would otherwise write it back a second time; here
     // rather than a method of the stack's, which is in the first paint.
-    workspace.undone.stack = workspace.undone.stack.filter((one) => one !== step)
+    workspace.undone.stack = workspace.undone.stack.flatMap((one): FileAction[] =>
+      one === step
+        ? []
+        : one.kind === 'many'
+          ? [{ ...one, steps: one.steps.filter((x) => x !== step) }]
+          : [one],
+    )
     await workspace.fileCame(back, 'file')
     await workspace.loadTree()
     return true

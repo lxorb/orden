@@ -1,21 +1,21 @@
 name: wayland
 
-# Orden on Linux the way a Wayland desktop runs it, with no X server anywhere: every
-# package a Linux reader installs, started under a headless sway with Xwayland off,
-# DISPLAY and GDK_BACKEND unset, and three screens - one portrait at 1.77, one at 1, one
-# at 1.75 - the desk the first Hyprland report came from. See scripts/wayland-launch.sh
-# for what each run checks, and src-tauri/src/linux.rs and hotkeys/portal.rs for what
-# it checks it of.
+# Orden on Linux the way a Wayland desktop runs it: every package a Linux reader
+# installs, started under a headless sway with three screens - one portrait at 1.77, one
+# at 1, one at 1.75 - the desk the first Hyprland report came from. Orden runs on CEF
+# (Chromium), whose browsers are X11 windows, so the session has Xwayland, as every
+# Wayland desktop does. See scripts/wayland-launch.sh for what each run checks, and
+# src-tauri/src/linux.rs and hotkeys/portal.rs for what it checks it of.
 #
-#   deb       Ubuntu 24.04's own WebKitGTK, and the desktop portal's global shortcuts
-#             (a stand-in portal, scripts/wayland-portal.py): the key bound, pressed,
-#             and quick add up.
-#   appimage  Arch, the newest Mesa and Wayland there are, against the libraries the
-#             AppImage carries: where it carries its own libwayland, Mesa's EGL cannot
-#             make a display and the window never comes ("Could not create default EGL
-#             display: EGL_BAD_PARAMETER", NixOS under Hyprland, 2026-10-14). No portal
-#             for keys, so `--quick-add` handed to the running app instead.
-#   rpm       Fedora's own WebKitGTK and Mesa.
+#   deb       Ubuntu 24.04, and the desktop portal's global shortcuts (a stand-in
+#             portal, scripts/wayland-portal.py): the key bound, pressed, and quick add
+#             up. And the drive: a web tab's page where its tab is (#387), and what #418
+#             asked of CEF, measured beside the last WebKitGTK build on the same runner
+#             (scripts/wayland-418.py).
+#   appimage  Arch, the newest Mesa and Wayland there are, against what the AppImage
+#             carries. No portal for keys, so `--quick-add` handed to the running app
+#             instead.
+#   rpm       Fedora's own GTK 4 and Mesa.
 #
 # The packages are built the way release.yml builds them, on the same Ubuntu, as a
 # debug build: the bundles are the same and the compile is a third of the time.
@@ -53,36 +53,15 @@ jobs:
   build:
     # Not on a draft; see the `pull_request` trigger above.
     if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
 
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
-
-      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5.0.0
+      - uses: ./.github/actions/desktop-setup
         with:
-          node-version: 24
-          cache: pnpm
-
-      - uses: dtolnay/rust-toolchain@6bed0761d98439e5a578e2877258200ad565ba87 # the stable branch
-        with:
-          toolchain: stable
-
-      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
-        with:
-          workspaces: |
-            apps/desktop/src-tauri
-          key: wayland
-          save-if: ${{ github.ref == 'refs/heads/main' }}
-
-      - name: System dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev patchelf xdg-utils gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-libav squashfs-tools
-
-      - run: pnpm install --frozen-lockfile
+          target: x86_64-unknown-linux-gnu
 
       - name: Build the app and its Linux packages
         # Optimised, so what is timed against a frame - a page's still picture under a
@@ -90,43 +69,38 @@ jobs:
         env:
           CARGO_PROFILE_DEV_DEBUG: line-tables-only
           CARGO_PROFILE_DEV_OPT_LEVEL: '2'
+        # The window's own `@tauri-apps/api` and plugin packages are the Tauri 2 ones every
+        # other platform builds with; Tauri 3 speaks to them the same way, so the CLI is
+        # told to let the versions differ. See scripts/linux-cef.sh.
         run: >-
-          pnpm --filter @nib/desktop exec tauri build --debug --bundles deb,rpm,appimage
+          bash scripts/linux-cef.sh tauri build --debug --bundles deb,rpm,appimage
+          --ignore-version-mismatches
           --config '{"bundle":{"createUpdaterArtifacts":false}}'
 
-      # Trimmed the way release.yml trims the one that ships.
-      - name: The AppImage without the host's graphics stack
-        run: bash scripts/appimage-trim.sh apps/desktop/src-tauri/target/debug/bundle/appimage/*.AppImage
-
-      # What the AppImage brings of its own that a Wayland desktop's graphics stack must
-      # bring instead: the window system's client libraries and the GL ones sit under
-      # the host's Mesa or NVIDIA driver, and a copy from this Ubuntu breaks them.
-      - name: The AppImage carries no window system or GL of its own
-        working-directory: apps/desktop/src-tauri/target/debug/bundle/appimage
+      # What each package carries: the engine, and nothing of WebKitGTK or GStreamer.
+      - name: The packages carry CEF and no WebKitGTK
+        working-directory: apps/desktop/src-tauri/target/debug/bundle
         run: |
-          ls -la
-          ./*.AppImage --appimage-extract > /dev/null
-          echo "::group::usr/lib"
-          ls squashfs-root/usr/lib | sort
-          echo "::endgroup::"
-          bad=$(find squashfs-root -name 'libwayland-*' -o -name 'libEGL*' -o -name 'libGL*' -o -name 'libgbm*' -o -name 'libdrm*' -o -name 'libxkbcommon*' | sort)
-          if [ -n "$bad" ]; then
-            echo "::error::the AppImage carries libraries the host's must be used for:"
-            echo "$bad"
+          ls -la deb rpm appimage
+          dpkg-deb -I deb/*.deb | sed -n '/Depends/p'
+          dpkg-deb -c deb/*.deb | grep -E 'libcef.so|chrome-sandbox|icudtl.dat|v8_context_snapshot.bin|resources.pak'
+          if dpkg-deb -I deb/*.deb | grep -iE 'webkit|gstreamer'; then
+            echo "::error::the .deb still asks for WebKitGTK or GStreamer"
             exit 1
           fi
-          if grep -rnE '^[[:space:]]*(export[[:space:]]+)?GDK_BACKEND=' squashfs-root/AppRun squashfs-root/apprun-hooks 2>/dev/null; then
-            echo "::error::the AppImage sets GDK_BACKEND, which keeps GTK off Wayland"
+          ./appimage/*.AppImage --appimage-extract > /dev/null || true
+          ls -d ./*/ || true
+          root=$(ls -d squashfs-root AppDir 2>/dev/null | head -1)
+          root=${root:-appimage/Orden.AppDir}
+          echo "the AppImage, as $root:"
+          find "$root" -maxdepth 2 | sort | head -60
+          find "$root" -name 'libcef.so*' | grep -q . || { echo "::error::the AppImage carries no libcef.so"; exit 1; }
+          if find "$root" -name 'libwebkit2gtk*' -o -name 'libgst*' | grep .; then
+            echo "::error::the AppImage carries WebKitGTK or GStreamer"
             exit 1
           fi
-          echo "::group::base libraries a newer host has newer copies of"
-          find squashfs-root -name 'liblzma*' -o -name 'libcurl*' -o -name 'libnghttp2*' -o -name 'libz.so*' -o -name 'libstdc++*' -o -name 'libgcc_s*' | sort
-          echo "::endgroup::"
-          echo "::group::GStreamer"
-          find squashfs-root -path '*gstreamer*' -maxdepth 6 | head -40
-          echo "::endgroup::"
-          rm -rf squashfs-root
-          echo "nothing of the window system or GL in the AppImage"
+          du -sh "$root"
+          rm -rf squashfs-root AppDir
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
@@ -153,7 +127,7 @@ jobs:
       - name: The .deb, sway, Mesa and a session bus
         run: |
           sudo apt-get update
-          sudo apt-get install -y ./packages/deb/*.deb sway grim dbus python3-gi python3-pil gir1.2-glib-2.0 libgl1-mesa-dri libegl-mesa0 libxkbcommon-tools
+          sudo apt-get install -y ./packages/deb/*.deb sway xwayland grim dbus python3-gi python3-pil gir1.2-glib-2.0 libgl1-mesa-dri libegl-mesa0 libxkbcommon-tools ffmpeg
       - name: Under Wayland, the portal's key reaching quick add
         env:
           OUT: wayland-out/portal
@@ -169,10 +143,102 @@ jobs:
           DRIVE: '1'
           COLD: '4'
         run: dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+      # #427: the window moved by its tab strip and resized by its edge, floated.
+      - name: The window moved by its strip and resized by its edge, under sway
+        if: always()
+        env:
+          OUT: wayland-out/drag
+          DRAG: '1'
+        run: |
+          echo "left of the runs before:"; pgrep -a nib || true
+          pkill -f /usr/share/Orden/nib || true
+          rm -rf "$HOME/.config/ch.emilvinu.nib"
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+      # What #418 asked of the engine, measured; the `webkitgtk` job below measures the
+      # last WebKitGTK build the same way, for the numbers to be read side by side.
+      - name: What #418 asked, on CEF
+        if: always()
+        env:
+          OUT: wayland-out/418-cef
+          CHECK: '1'
+        run: |
+          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: wayland-deb
+          path: wayland-out
+          if-no-files-found: ignore
+
+  # #427 under KDE's own window manager, on the system it was reported on: Fedora 44's
+  # KWin on an X server, the AppImage as the report ran it, and the window moved by its
+  # tab strip, resized by its edge and maximised by a double click on the strip, with
+  # xdotool.
+  kwin:
+    needs: build
+    runs-on: ubuntu-latest
+    container: fedora:44
+    permissions:
+      contents: read
+    steps:
+      - name: KWin, Xvfb and xdotool, as Fedora 44 has them
+        run: dnf install -y kwin-x11 xorg-x11-server-Xvfb xdpyinfo xwininfo xprop xdotool ImageMagick dbus-daemon dbus-tools python3 procps-ng nss nss-softokn mesa-dri-drivers git
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: linux-packages
+          path: packages
+      - name: Unpacked
+        run: |
+          cd packages/appimage
+          chmod +x ./*.AppImage
+          ./*.AppImage --appimage-extract > /dev/null
+          [ -d squashfs-root ] || mv AppDir squashfs-root
+      # As root in a container, where Chromium will not start sandboxed.
+      - name: Moved, resized and maximised under KWin
+        env:
+          OUT: kwin-out
+          KWIN: '1'
+          DRAG: '1'
+          NIB_CEF_SANDBOX: disabled
+        run: dbus-run-session -- bash scripts/x11-launch.sh "$GITHUB_WORKSPACE/packages/appimage/squashfs-root/AppRun"
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: kwin
+          path: kwin-out
+          if-no-files-found: ignore
+
+  # The last build on WebKitGTK, the edge release's own .deb, through the same #418 checks
+  # on the same kind of runner: what CEF's numbers are read against.
+  webkitgtk:
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - name: The edge release's .deb, on WebKitGTK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p packages
+          gh release download edge -R "$GITHUB_REPOSITORY" -p '*-linux-x64.deb' -D packages
+          ls -la packages
+      - name: The .deb, sway, Mesa and a session bus
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ./packages/*.deb sway xwayland grim dbus python3-gi python3-pil gir1.2-glib-2.0 libgl1-mesa-dri libegl-mesa0 libxkbcommon-tools ffmpeg
+      - name: What #418 asked, on WebKitGTK
+        env:
+          OUT: wayland-out/418-webkitgtk
+          CHECK: '1'
+        run: dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: wayland-webkitgtk
           path: wayland-out
           if-no-files-found: ignore
 
@@ -187,7 +253,7 @@ jobs:
         # sway's binary carries a file capability a container may not exec with; a copy
         # carries none, and goes first on the path.
         run: |
-          pacman -Syu --noconfirm --needed sway mesa dbus python gtk3 git alsa-lib
+          pacman -Syu --noconfirm --needed sway xorg-xwayland mesa dbus python git alsa-lib nss
           install -m 755 "$(command -v sway)" /usr/local/bin/sway
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
@@ -201,18 +267,15 @@ jobs:
           cd packages/appimage
           chmod +x ./*.AppImage
           ./*.AppImage --appimage-extract > /dev/null
-      # And a host's GStreamer plugin path pointing at libraries that are no plugins at
-      # all, the way a NixOS profile points it at Qt's: the image's GStreamer must not
-      # read them (src-tauri/src/linux.rs).
+          # sharun's AppImage unpacks as AppDir, an older one as squashfs-root.
+          [ -d squashfs-root ] || mv AppDir squashfs-root
+      # As root in a container, where Chromium will not start sandboxed.
       - name: Under Wayland with no portal, `--quick-add` reaching the running app
         env:
           OUT: wayland-out
           KEYS: 'no desktop portal'
-          MEDIA: '1'
+          NIB_CEF_SANDBOX: disabled
         run: |
-          mkdir -p "$RUNNER_TEMP/not-plugins"
-          cp /usr/lib/libcurl.so* /usr/lib/liblzma.so* "$RUNNER_TEMP/not-plugins/"
-          export GST_PLUGIN_PATH="$RUNNER_TEMP/not-plugins" GST_PLUGIN_SYSTEM_PATH_1_0="$RUNNER_TEMP/not-plugins"
           app="$GITHUB_WORKSPACE/packages/appimage/squashfs-root/AppRun"
           SECOND="$app --quick-add" dbus-run-session -- bash scripts/wayland-launch.sh "$app"
       - if: always()
@@ -220,6 +283,52 @@ jobs:
         with:
           name: wayland-appimage
           path: wayland-out
+          if-no-files-found: ignore
+
+  # #427: the AppImage on Fedora 44, whose Mesa 26.2, libgbm and libglvnd the WebKitGTK
+  # one aborted against at start. Under Wayland (sway) and under a bare X server (Xvfb),
+  # a picture of each.
+  fedora-44:
+    needs: build
+    runs-on: ubuntu-latest
+    container: fedora:44
+    permissions:
+      contents: read
+    steps:
+      - name: sway, Xvfb, Mesa and a session bus, as Fedora 44 has them
+        run: |
+          dnf install -y sway xorg-x11-server-Xwayland xorg-x11-server-Xvfb xdpyinfo xwininfo mesa-dri-drivers mesa-libEGL mesa-libgbm libglvnd-egl dbus-daemon dbus-tools python3 python3-pillow grim ImageMagick git
+          install -m 755 "$(command -v sway)" /usr/local/bin/sway
+          rpm -q mesa-libgbm libglvnd
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: linux-packages
+          path: packages
+      - name: Unpacked
+        run: |
+          cd packages/appimage
+          chmod +x ./*.AppImage
+          ./*.AppImage --appimage-extract > /dev/null
+          # sharun's AppImage unpacks as AppDir, an older one as squashfs-root.
+          [ -d squashfs-root ] || mv AppDir squashfs-root
+      # As root in a container, where Chromium will not start sandboxed.
+      - name: Under Wayland
+        env:
+          OUT: fedora-out/wayland
+          NIB_CEF_SANDBOX: disabled
+        run: dbus-run-session -- bash scripts/wayland-launch.sh "$GITHUB_WORKSPACE/packages/appimage/squashfs-root/AppRun"
+      - name: Under X11
+        if: always()
+        env:
+          OUT: fedora-out/x11
+          NIB_CEF_SANDBOX: disabled
+        run: dbus-run-session -- bash scripts/x11-launch.sh "$GITHUB_WORKSPACE/packages/appimage/squashfs-root/AppRun"
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: fedora-44
+          path: fedora-out
           if-no-files-found: ignore
 
   rpm:
@@ -236,11 +345,13 @@ jobs:
           path: packages
       - name: The .rpm, sway, Mesa and a session bus
         run: |
-          dnf install -y ./packages/rpm/*.rpm sway mesa-dri-drivers mesa-libEGL dbus-daemon dbus-tools python3
+          dnf install -y ./packages/rpm/*.rpm sway xorg-x11-server-Xwayland mesa-dri-drivers mesa-libEGL dbus-daemon dbus-tools python3
           install -m 755 "$(command -v sway)" /usr/local/bin/sway
+      # As root in a container, where Chromium will not start sandboxed.
       - name: Under Wayland
         env:
           OUT: wayland-out
+          NIB_CEF_SANDBOX: disabled
         run: dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2

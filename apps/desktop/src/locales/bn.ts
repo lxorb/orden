@@ -26,6 +26,25 @@ export const bn: Dictionary = {
   'Import from Zen': 'Zen থেকে ইমপোর্ট',
   'Containers stay in Zen': 'কন্টেইনারগুলো Zen-এ থেকে যায়',
   'Zen’s tabs could not be read.': 'Zen-এর ট্যাবগুলো পড়া গেল না।',
+  // Import: a browser's tabs and bookmarks
+  'Containers stay in Firefox': 'কন্টেইনারগুলো Firefox-এ থেকে যায়',
+  'Nothing could be read out of {browser}.': '{browser} থেকে কিছুই পড়া যায়নি।',
+  'Saved groups': 'সংরক্ষিত গ্রুপ',
+  'Tab group': 'ট্যাব গ্রুপ',
+  'Bookmarks toolbar': 'বুকমার্ক টুলবার',
+  'Bookmarks menu': 'বুকমার্ক মেনু',
+  'Other bookmarks': 'অন্যান্য বুকমার্ক',
+  'Mobile bookmarks': 'মোবাইল বুকমার্ক',
+  'Bookmarks bar': 'বুকমার্ক বার',
+  '{browser} keeps its open tabs locked, so only its bookmarks came.':
+    '{browser} তার খোলা ট্যাবগুলো লক করে রাখে, তাই শুধু বুকমার্কগুলো এসেছে।',
+  '{count} pages not on the web stay behind': {
+    one: 'ওয়েবে নেই এমন {count}টি পাতা থেকে গেছে',
+    other: 'ওয়েবে নেই এমন {count}টি পাতা থেকে গেছে',
+  },
+  'Reading List': 'রিডিং লিস্ট',
+  'macOS keeps Safari’s tabs and bookmarks behind Full Disk Access. Turn Orden on there, then ask again.':
+    'macOS Safari-র ট্যাব আর বুকমার্ক ফুল ডিস্ক অ্যাক্সেসের পেছনে রাখে। সেখানে Orden চালু করুন, তারপর আবার চেষ্টা করুন।',
   // Settings: note types
   'Page note': 'পাতার নোট',
   'Web note': 'ওয়েব নোট',
@@ -96,8 +115,6 @@ export const bn: Dictionary = {
   // Hints: Silent mode and the cards that point at a feature
   Hints: 'ইঙ্গিত',
   'Silent mode': 'নীরব মোড',
-  'Sign in to keep your notes safe and on every device.':
-    'আপনার নোট নিরাপদ রাখতে এবং প্রতিটি ডিভাইসে পেতে সাইন ইন করুন।',
   'See how your notes connect.': 'দেখুন আপনার নোটগুলো কীভাবে যুক্ত।',
   'Press {key} to find anything, notes and commands alike.':
     'নোট ও কমান্ড, যেকোনো কিছু খুঁজতে {key} চাপুন।',
@@ -119,11 +136,15 @@ export const bn: Dictionary = {
   '{count} h': '{count} ঘণ্টা',
   Inbox: 'ইনবক্স',
   Date: 'তারিখ',
+  'Start date': 'শুরুর তারিখ',
   Priority: 'অগ্রাধিকার',
   Reminder: 'অনুস্মারক',
   Duration: 'সময়কাল',
   'Smart dates': 'স্মার্ট তারিখ',
   'From any app': 'যেকোনো অ্যাপ থেকে',
+  'Rotate a canvas with two fingers': 'দুই আঙুলে ক্যানভাস ঘোরান',
+  'Turn upright': 'সোজা করুন',
+  'Show tasks without a start date in Today': 'শুরুর তারিখ ছাড়া কাজগুলো আজ-এ দেখান',
   'Every day': 'প্রতিদিন',
   'Every weekday': 'প্রতি কর্মদিবস',
   'Every week': 'প্রতি সপ্তাহ',
@@ -242,6 +263,10 @@ export const bn: Dictionary = {
   Unpin: 'পিন সরান',
   Close: 'বন্ধ',
   'Close pinned tab?': 'পিন করা ট্যাব বন্ধ করবেন?',
+  'Save changes to {name}?': '{name}-এর পরিবর্তন সেভ করবেন?',
+  'Save changes to these tabs?': 'এই ট্যাবগুলোর পরিবর্তন সেভ করবেন?',
+  'Unsaved words go to Recently deleted.': 'সেভ না করা লেখা সম্প্রতি মোছা-তে যাবে।',
+  'Don’t save': 'সেভ করবেন না',
   'Close others': 'বাকিগুলো বন্ধ',
   'Close tabs to the right': 'ডানের ট্যাবগুলি বন্ধ করুন',
   'Close tabs to the left': 'বাঁয়ের ট্যাবগুলি বন্ধ করুন',
@@ -1158,6 +1183,7 @@ export const bn: Dictionary = {
   'Double-click to write': 'লিখতে দুবার ক্লিক',
   'Another colour': 'আরেকটি রং',
   'Turn into a note': 'নোটে বদলান',
+  Arrange: 'সাজান',
   'Bring to front': 'একেবারে সামনে',
   'Bring forward': 'সামনে আনুন',
   'Send backward': 'পিছনে পাঠান',
@@ -1247,6 +1273,9 @@ export const bn: Dictionary = {
   Unstable: 'আনস্টেবল',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'স্টেবল প্রকাশিত সংস্করণ অনুসরণ করে, আনস্টেবল এজ বিল্ড অনুসরণ করে, আর ভেঙে যেতে পারে।',
+  'Web version': 'ওয়েব সংস্করণ',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'স্টেবল প্রকাশিত ওয়েব অ্যাপ, আনস্টেবল সবচেয়ে নতুন বিল্ড, আর ভেঙে যেতে পারে।',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'ইমপোর্ট',
@@ -1581,8 +1610,6 @@ export const bn: Dictionary = {
   // Web tabs
   Reload: 'আবার লোড করুন',
   'Hard reload': 'পুরোপুরি আবার লোড করুন',
-  'Clip this page': 'এই পাতা রাখুন',
-  'Clip the link': 'লিঙ্ক রাখুন',
   'Open in the browser': 'ব্রাউজারে খুলুন',
   'Show it here': 'এখানে দেখান',
   Website: 'ওয়েবসাইট',
@@ -1713,7 +1740,6 @@ export const bn: Dictionary = {
   'New tab': 'নতুন ট্যাব',
   'Full screen': 'পূর্ণ স্ক্রীণ',
   'Print…': 'প্রিন্ট…',
-  'Save page': 'পৃষ্ঠা সেভ করুন',
   'Share…': 'শেয়ার…',
 
   // What a site is asking for, in the bubble under the address field.
@@ -1772,6 +1798,15 @@ export const bn: Dictionary = {
   'Bring all to front': 'সব সামনে আনুন',
   // The file list's clipboard, and redoing a file change
   'Undo the copy': 'কপি আনডু করুন',
+  'Devices with your AI vault': 'আপনার AI ভল্ট থাকা ডিভাইস',
+  'This device': 'এই ডিভাইস',
+  'The device can no longer read your AI accounts, and the others get a new key.':
+    'ডিভাইসটি আর আপনার AI অ্যাকাউন্ট পড়তে পারবে না, আর বাকিরা নতুন কী পাবে।',
+  'Also remove this device from your AI vault?': 'এই ডিভাইসটিকে আপনার AI ভল্ট থেকেও সরাবেন?',
+  'Remove and sign out': 'সরান ও সাইন আউট',
+  'Undo making {name}': '{name} তৈরি আনডু',
+  'Undo the deletion': 'মোছা আনডু',
+  'Undo the move': 'সরানো আনডু',
   'Redo the last file change': 'ফাইলের শেষ পরিবর্তন রিডু করুন',
   'Select down': 'নিচের দিকে নির্বাচন',
   'Select up': 'উপরের দিকে নির্বাচন',
@@ -1875,6 +1910,11 @@ export const bn: Dictionary = {
   Max: 'সর্বোচ্চ',
   Fast: 'দ্রুত',
   Send: 'পাঠান',
+  'Send feedback': 'মতামত পাঠান',
+  'Describe the issue': 'সমস্যাটি বর্ণনা করুন',
+  Sent: 'পাঠানো হয়েছে',
+  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
+    'এই রিপোর্টে আপনার বর্ণনা, Orden-এর সংস্করণ, আপনার প্ল্যাটফর্ম আর অ্যাপের সাম্প্রতিক লগ থাকে। আপনার নোট কখনো থাকে না।',
   'Send into the running answer': 'চলমান উত্তরে পাঠান',
   'Stop the answer': 'উত্তর থামান',
   'Open every step': 'প্রতিটি ধাপ খুলুন',
@@ -1993,6 +2033,7 @@ export const bn: Dictionary = {
   'Without your logins': 'আপনার লগইন ছাড়া',
   'Calls a minute': 'প্রতি মিনিটে কল',
   'Pages a minute': 'প্রতি মিনিটে পেজ',
+  'Browser memory limit': 'ব্রাউজারের মেমরি সীমা',
   '{count} calls': {
     one: '{count}টি কল',
     other: '{count}টি কল',

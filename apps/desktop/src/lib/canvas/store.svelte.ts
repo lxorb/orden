@@ -26,7 +26,7 @@
  *  else did. See shared.ts for the contract and rooms/plane.ts for the room. */
 
 import { idle } from '../breathe'
-import { type Camera, clampScale, framingBox } from '../camera'
+import { type Camera, clampScale, framingBox, turnOf } from '../camera'
 import { owes } from '../parting'
 import {
   type Canvas,
@@ -115,7 +115,7 @@ export class CanvasStore implements PlaneSurface {
    *  thing again on its own side. */
   readOnly = $state(false)
 
-  private readonly tab: Tab
+  protected readonly tab: Tab
   private readonly note: NoteDoc
   private readonly history = new CanvasHistory()
   /** Which revision of the document this surface has read. Anything past it came
@@ -401,6 +401,19 @@ export class CanvasStore implements PlaneSurface {
     if (this.note.revision === this.at) return false
 
     const arrived = this.parse(this.note.text)
+
+    // A version put back from the history is the plane the reader asked for, whole:
+    // merged, what was deleted since stayed deleted and what was added since stayed,
+    // so nothing came back and the merge was written over the version (#533). Taken as
+    // one edit - undoable, to the room as what it changed, its deletions and what it
+    // brought back stamped as now, so the other devices take it the same way.
+    if (this.note.restoredAt === this.note.revision) {
+      this.at = this.note.revision
+      this.edit(arrived)
+      this.keepPicked()
+      return true
+    }
+
     const ours = this.canvas
     // A plane in a room always has something of its own: the room's other devices
     // are holding it, so words arriving under it are one more copy to merge with
@@ -569,14 +582,38 @@ export class CanvasStore implements PlaneSurface {
    *  so the first cards to arrive are framed when they do. */
   fit(width: number, height: number) {
     const box = bounds([...this.canvas.nodes, ...this.canvas.ink.map(strokeBox)])
-    if (box) this.camera = framingBox(box, width, height, PADDING)
+    if (box) this.camera = this.framingTurned(box, width, height)
+  }
+
+  /** A box framed with the view kept turned the way it is (#351): the box as it
+   *  stands on the turned screen, which is wider and taller than it is upright. */
+  private framingTurned(
+    box: { x: number; y: number; width: number; height: number },
+    width: number,
+    height: number,
+  ): Camera {
+    const turn = turnOf(this.camera)
+    if (!turn) return framingBox(box, width, height, PADDING)
+
+    const cos = Math.abs(Math.cos(turn))
+    const sin = Math.abs(Math.sin(turn))
+    const across = box.width * cos + box.height * sin
+    const down = box.width * sin + box.height * cos
+    const middle = { x: box.x + box.width / 2, y: box.y + box.height / 2 }
+    const framed = framingBox(
+      { x: middle.x - across / 2, y: middle.y - down / 2, width: across, height: down },
+      width,
+      height,
+      PADDING,
+    )
+    return { ...framed, turn }
   }
 
   /** Just what is picked in view, which is the other half of the same gesture:
    *  one key frames everything, the same key with something picked frames that. */
   frame(width: number, height: number) {
     const box = this.box
-    if (box) this.camera = framingBox(box, width, height, PADDING)
+    if (box) this.camera = this.framingTurned(box, width, height)
     else this.fit(width, height)
   }
 }

@@ -163,6 +163,14 @@ def fresh(browser: Browser, finger: bool) -> Page:
             else {}
         ),
     )
+    # The provider's player is not under test, only the frame the card puts it in. And
+    # WebKit hands the errors its scripts throw in their own frame to the page, as the
+    # page's (#384), so there it is a page of nothing.
+    if harness.WEBKIT:
+        context.route(
+            "https://www.youtube-nocookie.com/**",
+            lambda route: route.fulfill(content_type="text/html", body="<!doctype html><title>Player</title>"),
+        )
     page = context.new_page()
     page.on("pageerror", lambda error: wrong(f"page error: {error}"))
     DRIVE.open(page)
