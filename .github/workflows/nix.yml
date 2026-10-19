@@ -158,6 +158,7 @@ jobs:
         run: nix eval --raw "$FLAKE#packages.${{ matrix.other }}.default.name"
 
       - name: nix build
+        id: build
         env:
           FLAKE: ${{ steps.flake.outputs.flake }}
           RESOLVE_HASHES: ${{ inputs.resolve_source_hashes }}
@@ -173,6 +174,15 @@ jobs:
           # orden or orden-unstable: every file a profile gets is
           # named after it, so installed streams never collide.
           pname=$(nix eval --raw "$FLAKE#$attr.pname")
+          # The release is on WebKitGTK up to 0.16.0 and on CEF after it; the source
+          # build is always on CEF. What is asserted about the wrapper and GStreamer
+          # below only holds for WebKit.
+          if [ "$pname" = orden-unstable ]; then
+            engine=cef
+          else
+            engine=$(nix eval --raw "$FLAKE#$attr.engine")
+          fi
+          echo "engine=$engine" >>"$GITHUB_OUTPUT"
           echo "### $pname $(nix eval --raw "$FLAKE#$attr.version")" >>"$GITHUB_STEP_SUMMARY"
 
           if [ "$pname" = orden-unstable ]; then
@@ -241,7 +251,7 @@ jobs:
           # DMA-BUF renderer off on NVIDIA's driver alone.
           cat "result/bin/$pname"
           if grep -n GDK_BACKEND "result/bin/$pname"; then exit 1; fi
-          if [ "$pname" != orden-unstable ]; then
+          if [ "$engine" = webkit ]; then
             grep -q '/proc/driver/nvidia/version ]; then export WEBKIT_DISABLE_DMABUF_RENDERER=1' "result/bin/$pname"
           fi
           nix shell nixpkgs#pax-utils -c lddtree "result/libexec/$pname/nib" | head -80
@@ -273,6 +283,7 @@ jobs:
       # one. The folder here is made of the runner's own libraries, and is shown to
       # be one GStreamer chokes on before the app is started with it.
       - name: A plugin path full of strangers, and GStreamer's own inspector
+        if: steps.build.outputs.engine == 'webkit'
         env:
           FLAKE: ${{ steps.flake.outputs.flake }}
         run: |
