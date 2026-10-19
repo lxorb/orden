@@ -114,14 +114,18 @@ export function oneLine(value: string): string {
 
 /** What YAML reads as something other than the string it says: nothing at all, a
  *  character that opens a construct where a value begins, a mapping or a comment
- *  opening inside it, a word that is a boolean or a null, or a number. */
+ *  opening inside it, a word that is a boolean or a null, or a number. A number in
+ *  every spelling YAML has for one: `1e3` is a thousand to it, `0x1F` thirty-one and
+ *  `.inf` infinity, and a part number or a code in a column of somebody's table is
+ *  written that way as often as not. */
 function ambiguous(value: string): boolean {
   return (
     !value ||
     /^[-?:,[\]{}#&*!|>'"%@`]/.test(value) ||
     /:\s|:$|\s#/.test(value) ||
     /^(true|false|null|yes|no|on|off|~)$/i.test(value) ||
-    /^[-+]?[\d.]+$/.test(value)
+    /^[-+]?[\d._]+([eE][-+]?\d+)?$/.test(value) ||
+    /^0x[\da-f_]+$|^0o[0-7_]+$|^0b[01_]+$|^[-+]?\.(inf|nan)$/i.test(value)
   )
 }
 

@@ -136,6 +136,13 @@ describe('a value being written', () => {
     expect(scalar('# hash')).toBe("'# hash'")
     expect(scalar('- not a list')).toBe("'- not a list'")
     expect(scalar('')).toBe("''")
+    // Numbers however YAML spells them: a part number `1e3` is not a thousand.
+    expect(scalar('1e3')).toBe("'1e3'")
+    expect(scalar('2E-5')).toBe("'2E-5'")
+    expect(scalar('0x1F')).toBe("'0x1F'")
+    expect(scalar('0o17')).toBe("'0o17'")
+    expect(scalar('.inf')).toBe("'.inf'")
+    expect(scalar('1_000')).toBe("'1_000'")
   })
 
   test('and comes back out of the reader as what was written', () => {
