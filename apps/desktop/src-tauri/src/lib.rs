@@ -170,6 +170,9 @@ mod secrets;
 mod shell_menu;
 mod space_watch;
 mod spaces;
+// A touchpad's pinch let through to the app's own page on Windows; see pinch.rs.
+#[cfg(desktop)]
+mod pinch;
 // What the window's thread was doing when it stopped answering; see stall.rs.
 #[cfg(desktop)]
 mod stall;
@@ -918,6 +921,7 @@ fn ready(
                 window.show()?;
             }
         }
+        pinch::first_window(handle);
     }
 
     // A phone's window is the activity's.
