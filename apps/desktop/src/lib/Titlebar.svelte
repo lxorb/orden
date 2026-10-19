@@ -14,7 +14,9 @@
   import { isDraft } from './workspace/drafts'
   import Tabs from './Tabs.svelte'
   import { closeWindow, currentWindow, isDesktop, platform } from './tauri'
+  import { settings } from './settings.svelte'
   import { shortcuts } from './shortcuts.svelte'
+  import { webChannel } from './updater'
   import { viewport } from './viewport.svelte'
   import { WindowState } from './window-state.svelte'
   import { workspace } from './workspace.svelte'
@@ -83,6 +85,18 @@
   }
 </script>
 
+<!-- The edge of `unstable` running in this browser rather than the release, said in the
+     one bar that is always there, beside the switches at its end, and a press from the
+     row in Settings that goes back (#424). Never in the release, nor in the desktop and
+     phone apps. -->
+{#snippet edgeMark()}
+  {#if !__EVEN_PLUGIN__ && webChannel === 'unstable'}
+    <button class="channel" title={t('Web version')} onclick={() => settings.show('general')}>
+      {t('Unstable')}
+    </button>
+  {/if}
+{/snippet}
+
 <!-- The scratchpad's switch. It leaves the keyboard where it is, and has no menu: the
      scratchpad is in no space, so nothing a tab's or a file's menu offers is its; see
      scratchpad/pad.ts. -->
@@ -138,6 +152,7 @@
     </h1>
 
     <!-- The desktop's whole menu bar behind three dots; see AppMenu.svelte. -->
+    {@render edgeMark()}
     {@render padGlyph()}
     <AppMenu {view} {onpalette} {onhistory} dots />
   {:else}
@@ -149,6 +164,7 @@
     <!-- What the window is dragged by; a sliver beside a strip, whose own empty
          stretch is the caption too (Tabs.svelte). Then the scratchpad's switch. -->
     <div class="drag" class:sliver={!!only} data-tauri-drag-region></div>
+    {@render edgeMark()}
     {@render padGlyph()}
   {/if}
 
@@ -221,6 +237,29 @@
 
   .pad {
     align-self: center;
+  }
+
+  /* Small and quiet, in the accent: a note on which build this is, not an alarm. */
+  .channel {
+    flex: none;
+    align-self: center;
+    margin-inline-end: var(--space-1);
+    padding: 1px 6px;
+    border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+    border-radius: 999px;
+    background: none;
+    color: var(--accent);
+    font-family: var(--font-ui);
+    font-size: var(--text-xs);
+    line-height: 1.4;
+    white-space: nowrap;
+    cursor: default;
+  }
+
+  @media (hover: hover) {
+    .channel:hover {
+      background: var(--accent-soft);
+    }
   }
 
   .drag {
