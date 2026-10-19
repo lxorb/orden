@@ -46,7 +46,7 @@ import { tools } from './tools.svelte'
 import { NOTCH, turned, turnOf, zoomed } from '../camera'
 import type { Keystroke } from '../keys'
 import { shortcuts } from '../shortcuts.svelte'
-import { storeImage } from '../assets'
+import { accountAddress, storeImage } from '../assets'
 import { chooseFiles, PICTURES } from '../choose-files'
 import { t, key } from '../i18n.svelte'
 import { DIVIDER, type MenuEntry } from '../menu.svelte'
@@ -283,10 +283,11 @@ export const run = {
     if (!stored) return
 
     const root = workspace.activeSpace?.root
+    // Kept by the account, the card names its whole address: the web app's API is its
+    // own origin and answers `/i/…`, which read as a path in the space was a file
+    // nowhere, and every picture pasted by somebody signed in was "Nothing here" (#364).
     const relative =
-      root && notePath && !stored.startsWith('http')
-        ? spaceRelative(root, notePath, stored)
-        : stored
+      accountAddress(stored) ?? (root && notePath ? spaceRelative(root, notePath, stored) : stored)
     if (!relative) return
     const size = ownSize('picture')
     // A box says exactly where and how big; a point is a paste or a drop, which is

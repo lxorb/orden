@@ -18,7 +18,7 @@ vi.mock('../link-index.svelte', () => ({
   },
 }))
 
-const { cardHtml } = await import('./render')
+const { cardHtml, fileUrl } = await import('./render')
 
 const HOSTILE = '<img src=x onerror="alert(1)"> and <u>more</u>'
 
@@ -55,5 +55,21 @@ describe('a card on the plane', () => {
     expect(cardHtml(HOSTILE, null, true)).toContain('<img src=x')
     expect(cardHtml(HOSTILE, null, false)).not.toContain('<img src=x')
     expect(cardHtml(HOSTILE, null, true)).toContain('<img src=x')
+  })
+})
+
+describe('a picture on the plane', () => {
+  // Pasted while signed in, a picture is kept by the account and the card names its
+  // address; joined to the space's folder, it was a file nowhere (#364).
+  test('kept by the account is loaded from its address as it is', () => {
+    const kept = 'https://sync.orden.so/i/ab12cd.png'
+    expect(fileUrl(kept, '/space')).toBe(kept)
+    expect(fileUrl('HTTP://example.com/a.png', '/space')).toBe('HTTP://example.com/a.png')
+  })
+
+  test('kept in the space is loaded from the space', () => {
+    expect(fileUrl('pictures/a.png', '/space')).toContain('pictures/a.png')
+    expect(fileUrl('pictures/a.png', '/space')).not.toBe('pictures/a.png')
+    expect(fileUrl('pictures/a.png', null)).toBe('pictures/a.png')
   })
 })

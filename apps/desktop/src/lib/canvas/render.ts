@@ -70,8 +70,9 @@ export function isPicture(file: string): boolean {
 }
 
 /** A file node's path as something the webview will load. The path is relative to
- *  the space, which is how JSON Canvas writes one. */
+ *  the space, which is how JSON Canvas writes one; an address is loaded as it is. */
 export function fileUrl(file: string, root: string | null): string {
+  if (/^https?:\/\//i.test(file)) return file
   return root ? assetUrl(joinPath(root, file)) : file
 }
 
