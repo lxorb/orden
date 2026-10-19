@@ -402,6 +402,40 @@ export async function roomsRevoked(
   }
 }
 
+/** How many people one space's ending reaches: everybody who can be in a space at
+ *  once - two hundred members and two hundred guests - and a bound on the request. */
+const MOST_IN_A_SPACE = 400
+
+/** A space has gone to Recently deleted, and whoever has any of it open - a note, a
+ *  chat, a terminal - is in nothing now. Everybody's sockets of it close in the same
+ *  request, the owner's too: a socket is not a request, and the door turns a deleted
+ *  space away, so nothing else would close them, and words typed into one would be
+ *  saved into the space and come back with it if it were put back (#456).
+ *
+ *  Who to tell is whoever its rooms and chats have open; and, where a terminal of it is
+ *  running, everybody it is shared with, since a terminal keeps no list of who watches
+ *  it here. A machine's owner keeps their own terminal whatever the space says
+ *  (machines/reach.ts), and a machine nothing told closes the rest at its next minute. */
+export async function spaceEnded(env: Env, spaceId: string): Promise<void> {
+  const { results } = await env.DB.prepare(
+    `with terms as (
+       select 1 from term_sessions t join notes n on n.id = t.term
+        where n.space_id = ?1 and t.ended_at is null limit 1
+     )
+     select who from room_sockets where space_id = ?1
+     union select who from chat_sockets where space_id = ?1
+     union select u.id from space_members m join users u on u.email = m.email
+            where m.space_id = ?1 and exists (select 1 from terms)
+     union select g.guest_id from guest_members g
+            where g.space_id = ?1 and g.joined_at is not null and exists (select 1 from terms)
+     limit ?2`,
+  )
+    .bind(spaceId, MOST_IN_A_SPACE)
+    .all<{ who: string }>()
+
+  for (const { who } of results) await roomsRevoked(env, spaceId, who, 'none')
+}
+
 /** One room told one thing, answering whether it heard. Never a throw: every
  *  caller has already changed the rows the message is about, and an object being
  *  unwell for a moment is not a reason for that change to fail. */

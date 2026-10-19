@@ -1564,6 +1564,60 @@ describe('somebody who stops being in the space while the file is open', () => {
     expect(socket.closed).toBe(true)
   })
 
+  /** Types a line through a socket and settles the room: what reaches the note. */
+  async function typedThrough(socket: FakeSocket): Promise<string> {
+    const { room: made, state } = live.of(noteId)
+    const device = new Device(socket)
+    await say(made, state, socket, syncStep1(device.doc))
+    await settle(made, state, [device])
+    await say(made, state, socket, device.type(OPENING.length, 'typed after'))
+    await made.alarm()
+    return (await env.NOTES.get(`spaces/${spaceId}/${noteId}`).then((one) => one?.text())) ?? ''
+  }
+
+  test('has every socket closed when the owner deletes the space, the owner’s too (#456)', async () => {
+    const ownerId = (await call(env, '/v1/me', { token: owner })).json.user.id
+    const theirs = await open(ownerId)
+    const socket = await open(writerId)
+
+    expect(
+      (await call(env, `/v1/spaces/${spaceId}`, { method: 'DELETE', token: owner })).status,
+    ).toBe(200)
+
+    expect(socket.closed).toBe(true)
+    expect(socket.closedWith?.code).toBe(1008)
+    expect(theirs.closed).toBe(true)
+    expect(env.db.prepare('select count(*) as held from room_sockets').get()).toEqual({ held: 0 })
+  })
+
+  test('stops writing when invited again as a reader, as a role changed any other way', async () => {
+    const socket = await open(writerId)
+
+    await call(env, `/v1/spaces/${spaceId}/share/invite`, {
+      token: owner,
+      body: { email: WRITER, role: 'read' },
+    })
+
+    expect(socket.closed).toBe(false)
+    expect(await typedThrough(socket)).not.toContain('typed after')
+  })
+
+  test('and when a request to read is let in over a membership to write', async () => {
+    const socket = await open(writerId)
+    env.db
+      .prepare(
+        "insert into space_requests (space_id, email, item, role, created_at) values (?, ?, '', 'read', 1)",
+      )
+      .run(spaceId, WRITER)
+
+    await call(env, `/v1/spaces/${spaceId}/share/requests/${WRITER}`, {
+      method: 'POST',
+      token: owner,
+    })
+
+    expect(await typedThrough(socket)).not.toContain('typed after')
+  })
+
   test('and a room nobody is in is told without being woken', async () => {
     // Nothing has ever opened this note, so there is no row and no object to ask.
     await call(env, `/v1/spaces/${spaceId}/share/members/${WRITER}`, {

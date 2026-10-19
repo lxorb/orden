@@ -11,6 +11,7 @@ import { readBody } from '../body'
 import { chunks } from '../bound'
 import { now } from '../crypto'
 import { releaseDomain } from '../hostnames'
+import { spaceEnded } from '../rooms'
 import { facesIn } from '../people/seen'
 import type { Env, Space, Variables, Whoever } from '../types'
 import { spaceArranged } from './arranged'
@@ -277,6 +278,10 @@ spaces.delete('/:id', atLeast('owner'), async (context) => {
     .run()
 
   if (space.blog_domain) await releaseDomain(context.env, space.blog_domain)
+
+  // And whatever of it anybody has open, which a deleted row does not reach; see
+  // `spaceEnded`.
+  await spaceEnded(context.env, space.id)
 
   return context.json({ ok: true })
 })
