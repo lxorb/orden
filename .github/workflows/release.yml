@@ -128,10 +128,11 @@ jobs:
           - platform: windows-11-arm
             target: aarch64-pc-windows-msvc
             label: windows-arm64
-          - platform: ubuntu-22.04
+          # Linux is CEF on GTK 4, which it needs at 4.14 at least: Ubuntu 24.04's.
+          - platform: ubuntu-24.04
             target: x86_64-unknown-linux-gnu
             label: linux-x64
-          - platform: ubuntu-22.04-arm
+          - platform: ubuntu-24.04-arm
             target: aarch64-unknown-linux-gnu
             label: linux-arm64
           # The Mac is the `mac` and `macos` jobs below: one download for every Mac,
@@ -147,7 +148,7 @@ jobs:
       - uses: ./.github/actions/desktop-setup
         with:
           target: ${{ matrix.target }}
-          node-cache: ${{ matrix.platform != 'ubuntu-22.04-arm' }}
+          node-cache: ${{ matrix.platform != 'ubuntu-24.04-arm' }}
 
       # Signed so the updater will accept them. Without the key the build still
       # succeeds; it just produces bundles that cannot be auto-installed.
@@ -156,6 +157,10 @@ jobs:
       # build of main carries the number the manifest will claim for it.
       #
       # An edge build trades a little of the binary for minutes; see scripts/edge-profile.sh.
+      #
+      # Linux is built on Tauri 3 and CEF, from its own manifest, by the Tauri CLI at
+      # that manifest's pin, which is told to take the window's Tauri 2 packages as they
+      # are; see scripts/linux-cef.sh.
       - name: Build the app
         shell: bash
         env:
@@ -164,23 +169,14 @@ jobs:
           ROLLING: ${{ needs.version.outputs.rolling }}
         run: |
           source scripts/edge-profile.sh
-          pnpm --filter @nib/desktop exec tauri build --target ${{ matrix.target }} \
-            --config '{"version":"${{ needs.version.outputs.version }}"}'
-
-      # The AppImage without the Wayland, xkbcommon, EGL, GL, GBM and DRM libraries the
-      # host's driver has to supply, signed again for the updater; see the script, and
-      # wayland.yml, which runs the result on Arch under Wayland.
-      - name: The AppImage without the host's graphics stack
-        if: startsWith(matrix.platform, 'ubuntu')
-        shell: bash
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ''
-        run: |
-          sudo apt-get install -y squashfs-tools
-          for image in apps/desktop/src-tauri/target/${{ matrix.target }}/release/bundle/appimage/*.AppImage; do
-            bash scripts/appimage-trim.sh "$image"
-          done
+          if [ "$RUNNER_OS" = Linux ]; then
+            bash scripts/linux-cef.sh tauri build --target ${{ matrix.target }} \
+              --ignore-version-mismatches \
+              --config '{"version":"${{ needs.version.outputs.version }}"}'
+          else
+            pnpm --filter @nib/desktop exec tauri build --target ${{ matrix.target }} \
+              --config '{"version":"${{ needs.version.outputs.version }}"}'
+          fi
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
