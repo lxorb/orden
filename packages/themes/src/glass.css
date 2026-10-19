@@ -223,6 +223,11 @@
 
 /* ── The shape ──
 
+   A desktop's only (#422): on a phone and a tablet - `html[data-device]` - glass looks
+   as it did before it was a material, which the reader there preferred. Every rule
+   below says so with `:where(:not([data-device='phone'], [data-device='tablet']))`,
+   which weighs nothing, so on a desktop each one wins and loses exactly as before.
+
    What makes glass a material rather than a colour, the way a phone's controls have
    been drawn since Apple's Liquid Glass and a banking app like Revolut draws its
    cards: the things that float are frosted panes of the frame with a lit rim, the
@@ -236,8 +241,9 @@
    it is not in WebKitGTK without compositing - and the rim - a hairline of
    light round the edge and a brighter one along the top, which is what reads as
    thickness on glass. */
-:root,
-[data-theme='dark'] {
+:root:where(:not([data-device='phone'], [data-device='tablet'])),
+:root:where(:not([data-device='phone'], [data-device='tablet']))[data-theme='dark'],
+:where(:root:not([data-device='phone'], [data-device='tablet'])) [data-theme='dark'] {
   --glass-float: color-mix(in srgb, var(--surface) 88%, transparent);
   --glass-float-blur: blur(40px) saturate(180%);
   --glass-edge: rgb(255 255 255 / 0.09);
@@ -256,7 +262,8 @@
   --radius-row: 10px;
 }
 
-[data-theme='light'] {
+:root:where(:not([data-device='phone'], [data-device='tablet']))[data-theme='light'],
+:where(:root:not([data-device='phone'], [data-device='tablet'])) [data-theme='light'] {
   --glass-float: color-mix(in srgb, var(--surface) 90%, transparent);
   --glass-edge: rgb(255 255 255 / 0.7);
   --glass-rim: inset 0 1px 0 rgb(255 255 255 / 0.9);
@@ -267,7 +274,7 @@
   --glass-card-shadow: 0 0 0 1px rgb(16 24 40 / 0.06), 0 12px 32px -14px rgb(16 24 40 / 0.22);
 }
 
-:root[data-touch] {
+:root:where(:not([data-device='phone'], [data-device='tablet']))[data-touch] {
   --radius-row: 16px;
 }
 
@@ -276,28 +283,33 @@
    because the open tab runs down into it; the other three sides stand off the frame
    by a step, so the frame's colour is round the paper the way a wallpaper is round a
    window. */
-:root:not([data-touch]) .document > .body {
+:root:where(:not([data-device='phone'], [data-device='tablet'])):not([data-touch])
+  .document
+  > .body {
   padding: 0 var(--space-2) var(--space-2) var(--space-2);
 }
 
-:root:not([data-touch]) .document > .body .pane {
+:root:where(:not([data-device='phone'], [data-device='tablet'])):not([data-touch])
+  .document
+  > .body
+  .pane {
   border-radius: 0 0 var(--radius-md) var(--radius-md);
   box-shadow: var(--glass-card-shadow);
   overflow: clip;
 }
 
 /* And the hairline between a side panel and the note is the gap now. */
-:root:not([data-touch]) .panels aside {
+:root:where(:not([data-device='phone'], [data-device='tablet'])):not([data-touch]) .panels aside {
   border-inline-color: transparent;
 }
 
 /* What floats: a menu, the palette and the one small modal, a bar over a selection, a
    word of help, a notice. Frosted rather than solid, under the rim. */
-:root .nib-layer,
-:root .nib-screen,
-:root .nib-bar,
-:root .nib-bubble,
-:root .nib-pill {
+:root:where(:not([data-device='phone'], [data-device='tablet'])) .nib-layer,
+:root:where(:not([data-device='phone'], [data-device='tablet'])) .nib-screen,
+:root:where(:not([data-device='phone'], [data-device='tablet'])) .nib-bar,
+:root:where(:not([data-device='phone'], [data-device='tablet'])) .nib-bubble,
+:root:where(:not([data-device='phone'], [data-device='tablet'])) .nib-pill {
   border-color: var(--glass-edge);
   background: var(--glass-float);
   -webkit-backdrop-filter: var(--glass-float-blur);
@@ -305,50 +317,53 @@
   box-shadow: var(--glass-rim), var(--shadow-lg);
 }
 
-:root .nib-bar,
-:root .nib-pill {
+:root:where(:not([data-device='phone'], [data-device='tablet'])) .nib-bar,
+:root:where(:not([data-device='phone'], [data-device='tablet'])) .nib-pill {
   border-radius: 999px;
 }
 
-:root .nib-bar button {
+:root:where(:not([data-device='phone'], [data-device='tablet'])) .nib-bar button {
   border-radius: 999px;
 }
 
 /* The row you are on: a chip of glass lifted off the list rather than a wash of the
    accent, which keeps the accent for the mark in front of it. */
-:root .nib-row.is-on {
+:root:where(:not([data-device='phone'], [data-device='tablet'])) .nib-row.is-on {
   background: var(--glass-chip);
   box-shadow: var(--glass-chip-shadow);
 }
 
 /* Capsules: a glyph that is a button is a circle, a button and a segmented control a
    pill, and the thumb that slides along one a chip. */
-:root .nib-glyph,
-:root .nib-glyph.is-on {
+:root:where(:not([data-device='phone'], [data-device='tablet'])) .nib-glyph,
+:root:where(:not([data-device='phone'], [data-device='tablet'])) .nib-glyph.is-on {
   border-radius: 999px;
 }
 
-:root .nib-button {
+:root:where(:not([data-device='phone'], [data-device='tablet'])) .nib-button {
   border-radius: 999px;
   padding-inline: var(--space-5);
 }
 
-:root .nib-button:not(.is-quiet, .is-danger) {
+:root:where(:not([data-device='phone'], [data-device='tablet']))
+  .nib-button:not(.is-quiet, .is-danger) {
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.25);
 }
 
-:root .nib-segmented {
+:root:where(:not([data-device='phone'], [data-device='tablet'])) .nib-segmented {
   border-radius: 999px;
   background: color-mix(in srgb, var(--text) 6%, transparent);
 }
 
-:root .nib-segmented button,
-:root .nib-segmented-thumb {
+:root:where(:not([data-device='phone'], [data-device='tablet'])) .nib-segmented button,
+:root:where(:not([data-device='phone'], [data-device='tablet'])) .nib-segmented-thumb {
   border-radius: 999px;
 }
 
-:root .nib-segmented-thumb,
-:root .nib-segmented:not(.has-thumb) button.on {
+:root:where(:not([data-device='phone'], [data-device='tablet'])) .nib-segmented-thumb,
+:root:where(:not([data-device='phone'], [data-device='tablet']))
+  .nib-segmented:not(.has-thumb)
+  button.on {
   background: var(--glass-chip);
   box-shadow: var(--glass-chip-shadow);
 }
@@ -356,17 +371,17 @@
 /* A switch is a capsule with a pebble of white in it, lit from above, whichever way
    it is set: what says on or off is the track, the accent or a lift of the ink, and
    where the pebble sits. */
-:root .nib-switch {
+:root:where(:not([data-device='phone'], [data-device='tablet'])) .nib-switch {
   background: color-mix(in srgb, var(--text) 16%, transparent);
   box-shadow: inset 0 0 0 0.5px color-mix(in srgb, var(--text) 10%, transparent);
 }
 
-:root .nib-switch.on {
+:root:where(:not([data-device='phone'], [data-device='tablet'])) .nib-switch.on {
   background: var(--accent);
 }
 
-:root .nib-switch::after,
-:root .nib-switch.on::after {
+:root:where(:not([data-device='phone'], [data-device='tablet'])) .nib-switch::after,
+:root:where(:not([data-device='phone'], [data-device='tablet'])) .nib-switch.on::after {
   background: #ffffff;
   box-shadow:
     0 1px 3px rgb(0 0 0 / 0.25),
@@ -375,7 +390,8 @@
 
 /* A field one line tall is a capsule too; one that takes paragraphs keeps its
    corners, or a capsule's ends would cut into the words at its edge. */
-:root .nib-field:not(textarea, :has(textarea)) {
+:root:where(:not([data-device='phone'], [data-device='tablet']))
+  .nib-field:not(textarea, :has(textarea)) {
   border-radius: 999px;
 }
 
@@ -385,7 +401,7 @@
    Dawn's blue going to pink - so a space's badge is that tile, the row you are on
    carries one of those capsules in the accent at its leading edge, and the side panel
    is a pane of glass on the frame with the same corners as the paper beside it. */
-:root {
+:root:where(:not([data-device='phone'], [data-device='tablet'])) {
   --orden-ink: #1b2133;
   --orden-tile: linear-gradient(135deg, #d2e7fc, #eed7f2);
 }
@@ -393,7 +409,7 @@
 /* A space's badge, drawn as the icon is: Dawn under ink, in both schemes, with the
    rim a tile has. A badge given a colour of its own - an agent's, a device's - keeps
    it. */
-:root .nib-badge:not(.is-on, .is-quiet) {
+:root:where(:not([data-device='phone'], [data-device='tablet'])) .nib-badge:not(.is-on, .is-quiet) {
   background: var(--badge-fill, var(--orden-tile));
   color: var(--badge-ink, var(--orden-ink));
   box-shadow:
@@ -404,13 +420,13 @@
 /* The capsule at the leading edge of the row you are on in a side panel. A layer of
    the row's own background rather than an element, so no list has to carry it. Not in
    a menu, where the row's words start at its edge and the chip says enough. */
-:root aside .nib-row.is-on {
+:root:where(:not([data-device='phone'], [data-device='tablet'])) aside .nib-row.is-on {
   background:
     linear-gradient(var(--accent), var(--accent)) no-repeat left 2px center / 3px 42%,
     var(--glass-chip);
 }
 
-:root[dir='rtl'] aside .nib-row.is-on {
+:root:where(:not([data-device='phone'], [data-device='tablet']))[dir='rtl'] aside .nib-row.is-on {
   background-position:
     right 2px center,
     0 0;
@@ -418,12 +434,12 @@
 
 /* A bookmark's card, a piece of the same glass as the row you are on, and when it is
    the open one, the chip with the accent's ring round it. */
-:root .nib-tile {
+:root:where(:not([data-device='phone'], [data-device='tablet'])) .nib-tile {
   background: color-mix(in srgb, var(--glass-chip) 60%, transparent);
   box-shadow: var(--glass-rim);
 }
 
-:root .nib-tile.is-on {
+:root:where(:not([data-device='phone'], [data-device='tablet'])) .nib-tile.is-on {
   background: var(--glass-chip);
   box-shadow: var(--glass-chip-shadow);
 }
@@ -432,18 +448,24 @@
    drawer over the note, where it has to hide what is under it. The pane is drawn
    behind the panel's rows rather than being the panel, so the panel keeps its width
    and its handle: the gutters round it are the paper's, a step on every side. */
-:root:not([data-touch], [data-drawer]) .panels aside {
+:root:where(:not([data-device='phone'], [data-device='tablet'])):not([data-touch], [data-drawer])
+  .panels
+  aside {
   isolation: isolate;
   padding-block-end: var(--space-2);
   padding-inline-start: var(--space-2);
   background: none;
 }
 
-:root:not([data-touch], [data-drawer]) .panels aside.right {
+:root:where(:not([data-device='phone'], [data-device='tablet'])):not([data-touch], [data-drawer])
+  .panels
+  aside.right {
   padding-inline: 0 var(--space-2);
 }
 
-:root:not([data-touch], [data-drawer]) .panels aside::before {
+:root:where(:not([data-device='phone'], [data-device='tablet'])):not([data-touch], [data-drawer])
+  .panels
+  aside::before {
   content: '';
   position: absolute;
   inset: var(--space-1) 0 var(--space-2) var(--space-2);
@@ -455,18 +477,23 @@
   pointer-events: none;
 }
 
-:root:not([data-touch], [data-drawer]) .panels aside .hint {
+:root:where(:not([data-device='phone'], [data-device='tablet'])):not([data-touch], [data-drawer])
+  .panels
+  aside
+  .hint {
   inset-inline-end: var(--space-2);
 }
 
-:root:not([data-touch], [data-drawer]) .panels aside.right::before {
+:root:where(:not([data-device='phone'], [data-device='tablet'])):not([data-touch], [data-drawer])
+  .panels
+  aside.right::before {
   inset: var(--space-1) var(--space-2) var(--space-2) 0;
 }
 
 /* A panel that is a drawer over the note is a pane that floats, and frosted like one:
    the list's own layer was a lift of whatever was under it, which over a note was the
    note's words between the rows. */
-:root[data-drawer] .panels aside {
+:root:where(:not([data-device='phone'], [data-device='tablet']))[data-drawer] .panels aside {
   background: var(--glass-float);
   -webkit-backdrop-filter: var(--glass-float-blur);
   backdrop-filter: var(--glass-float-blur);
@@ -474,23 +501,24 @@
 
 /* Under a dark pane the frame's own light is too little to lift a pane by, so the
    pane says a little more of it. */
-[data-theme='dark'] {
+:root:where(:not([data-device='phone'], [data-device='tablet']))[data-theme='dark'],
+:where(:root:not([data-device='phone'], [data-device='tablet'])) [data-theme='dark'] {
   --glass-layer: rgb(255 255 255 / 0.05);
 }
 
 /* Type with some confidence in it, the way Revolut sets a balance: the space's name a
    step heavier and set tight, and the note's first two headings tighter than the
    built-in's. Spacing only - no size changes, so nothing is laid out again. */
-:root aside .head .name .nib-row-label {
+:root:where(:not([data-device='phone'], [data-device='tablet'])) aside .head .name .nib-row-label {
   font-weight: 700;
   letter-spacing: -0.012em;
 }
 
-:root .cm-line.nib-h1 {
+:root:where(:not([data-device='phone'], [data-device='tablet'])) .cm-line.nib-h1 {
   letter-spacing: -0.032em;
 }
 
-:root .cm-line.nib-h2 {
+:root:where(:not([data-device='phone'], [data-device='tablet'])) .cm-line.nib-h2 {
   letter-spacing: -0.024em;
 }
 
@@ -513,12 +541,12 @@
   }
 
   /* What floats is solid, at the palette's own surface. */
-  :root .nib-layer,
-  :root .nib-screen,
-  :root .nib-bar,
-  :root .nib-bubble,
-  :root .nib-pill,
-  :root[data-drawer] .panels aside {
+  :root:where(:not([data-device='phone'], [data-device='tablet'])) .nib-layer,
+  :root:where(:not([data-device='phone'], [data-device='tablet'])) .nib-screen,
+  :root:where(:not([data-device='phone'], [data-device='tablet'])) .nib-bar,
+  :root:where(:not([data-device='phone'], [data-device='tablet'])) .nib-bubble,
+  :root:where(:not([data-device='phone'], [data-device='tablet'])) .nib-pill,
+  :root:where(:not([data-device='phone'], [data-device='tablet']))[data-drawer] .panels aside {
     background: var(--surface);
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
@@ -535,10 +563,14 @@
    side panel that only added its layer to that was the desk with rows on it. The pane
    is frosted like what floats, a little lighter, so the list reads as a sheet of glass
    with the material behind it rather than as the desktop. */
-:root[data-translucent] {
+:root:where(:not([data-device='phone'], [data-device='tablet']))[data-translucent] {
   --glass-pane: color-mix(in srgb, var(--glass-chrome) 92%, transparent);
 }
 
-:root[data-translucent][data-touch]:not([data-drawer]) .panels aside {
+:root:where(:not([data-device='phone'], [data-device='tablet']))[data-translucent][data-touch]:not(
+    [data-drawer]
+  )
+  .panels
+  aside {
   background: linear-gradient(var(--glass-layer), var(--glass-layer)) var(--glass-pane);
 }
