@@ -485,12 +485,18 @@
 
     const write = async () => {
       let wrote = false as boolean
+      const before = live.answer
       await asOneUndo([
         ...drops.map((drop) => async () => (wrote = await dropRow(row, drop))),
         () => (wrote && keepOrder ? writeOrder(name, order) : Promise.resolve(false)),
       ])
       if (wrote) {
-        pending = pending.map((one) => (one === moving ? { ...one, written: true } : one))
+        // The rows may already have come back while the write ran; then nothing else will
+        // clear the card it was drawn as.
+        pending =
+          live.answer === before
+            ? pending.map((one) => (one === moving ? { ...one, written: true } : one))
+            : pending.filter((one) => one !== moving)
       } else {
         pending = pending.filter((one) => one !== moving)
         failed.tell(() => {

@@ -104,7 +104,7 @@ export async function orderMoved(
   if (!was || !now || was === now) return
   const files = basesIn(tree).map((path) => ({ path: movedPath(path, from, to), fenced: false }))
   // A folder moved is a database renamed as often as not: its own note too.
-  const own = [folderNotePath(to), `${to}.md`]
+  const own = [folderNotePath(to), `${to}.md`, `${from}.md`]
   const notes = [...new Set([...own, ...foldersNotes(root, to)])].map((path) => ({
     path,
     fenced: true,
@@ -113,6 +113,7 @@ export async function orderMoved(
     const before = await noteText(workspace, path)
     if (!before?.includes(was)) continue
     const after = movedWords(before, fenced, was, now)
-    if (after !== null && after !== before) await writeNoteText(workspace, path, before, after)
+    if (after !== null && after !== before)
+      await writeNoteText(workspace, path, before, after, { undoable: false })
   }
 }

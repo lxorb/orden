@@ -152,11 +152,12 @@ export async function writeNoteText(
   path: string,
   before: string,
   after: string,
+  keeping: Keeping = {},
 ): Promise<void> {
   const edit = oneEdit(before, after)
   if (!edit) return
 
-  await replaceInNotes(ws, [changeOf(path, before, [edit])])
+  await replaceInNotes(ws, [changeOf(path, before, [edit])], keeping)
 }
 
 /** One note's share of a replacement, as it is put back later. */
@@ -172,6 +173,7 @@ export interface Keeping {
   snapshot?: boolean
   /** Who it was kept for, written beside it and shown in the versions list. */
   source?: string
+  undoable?: boolean
 }
 
 /** Keeps the version a write is about to replace, as `keeping` says. */
@@ -208,7 +210,7 @@ export async function replaceInNotes(
     )
   }
 
-  ws.undone.record({ kind: 'replace', notes: done })
+  if (keeping.undoable !== false) ws.undone.record({ kind: 'replace', notes: done })
   await ws.loadTree()
   ws.persist()
 
