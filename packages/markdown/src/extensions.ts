@@ -6,6 +6,7 @@ import { closesFence, fenceMark } from './fences'
 import { highlightTone, readHighlight } from './highlights'
 import { escape, fragment } from './html'
 import { firstStart, lineStart, matchesAt } from './starts'
+import { remembering } from './tags'
 
 /** Only the three that matter in element content, which is where the source of
  *  an equation that would not parse ends up. */
@@ -78,7 +79,7 @@ function highlightEnd(src: string, tokens: Token[] | undefined): number {
  *  Word highlight and the RTF colour a document export writes are all read off
  *  the same answer. See `documentOf` in apps/desktop/src/lib/export/document.ts,
  *  the other reader. */
-export const highlight: MarkedExtension = {
+export const highlight: MarkedExtension = remembering({
   extensions: [
     {
       name: 'highlight',
@@ -107,7 +108,7 @@ export const highlight: MarkedExtension = {
       },
     },
   ],
-}
+})
 
 /** `H~2~O` and `X^2^`
  *
@@ -117,7 +118,7 @@ export const highlight: MarkedExtension = {
  *  src=x onerror=...>~` is not a raw HTML token, so nothing else would have
  *  caught it - and it also meant that emphasis inside a subscript came out as
  *  its own asterisks. */
-export const scripts: MarkedExtension = {
+export const scripts: MarkedExtension = remembering({
   extensions: [
     {
       name: 'subscript',
@@ -156,7 +157,7 @@ export const scripts: MarkedExtension = {
       },
     },
   ],
-}
+})
 
 /** A formula, drawn, with the source it was drawn from on the element around it.
  *
@@ -177,7 +178,7 @@ function drawing(token: Tokens.Generic, display: boolean): string {
 
 /** `$inline$`, and a `$$` block written either way. Where the block begins and
  *  ends is blocks.ts, which slides.ts reads without any of this. */
-export const maths: MarkedExtension = {
+export const maths: MarkedExtension = remembering({
   extensions: [
     {
       ...blockMath,
@@ -195,7 +196,7 @@ export const maths: MarkedExtension = {
       renderer: (token: Tokens.Generic) => drawing(token, false),
     },
   ],
-}
+})
 
 /** The opening paragraph of a callout with its marker line taken off.
  *
@@ -278,7 +279,7 @@ export const callouts: MarkedExtension = {
 }
 
 /** `:smile:` becomes the character it names. */
-export const emoji: MarkedExtension = {
+export const emoji: MarkedExtension = remembering({
   extensions: [
     {
       name: 'emoji',
@@ -306,7 +307,7 @@ export const emoji: MarkedExtension = {
       renderer: (token: Tokens.Generic) => String(token.text),
     },
   ],
-}
+})
 
 /** A definition list, drawn. What one is, and how far it reaches, is blocks.ts. */
 export const definitionLists: MarkedExtension = {
@@ -420,7 +421,7 @@ function footnoteDefinition(src: string, at: number): number | null {
 }
 
 /** `[^1]` in the text, `[^1]: …` at the bottom. */
-export const footnotes: MarkedExtension = {
+export const footnotes: MarkedExtension = remembering({
   extensions: [
     {
       name: 'footnoteDef',
@@ -460,4 +461,4 @@ export const footnotes: MarkedExtension = {
       },
     },
   ],
-}
+})
