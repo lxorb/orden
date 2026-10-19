@@ -767,8 +767,13 @@ function holds(tail: string): boolean {
  *  Raised 2026-10-19, to 3,240,800, for #381: a web tab keeps where the keyboard was as
  *  it is left - its address field, by what the last press landed on, or its page - and
  *  gives it back to that and nothing else as it comes back (`keyboard` and `seen` on a
- *  page in pages.svelte.ts, `pressedOn` in AddressField.svelte). Measured 3,239,774. */
-const BUDGET = 3_240_800
+ *  page in pages.svelte.ts, `pressedOn` in AddressField.svelte). Measured 3,239,774.
+ *
+ *  Raised 2026-10-19, to 3,242,700, for #423: which order each space's list is read in
+ *  goes with the account, and the list cannot be drawn before it is known
+ *  (`SpaceSorting`, beside the arranged order in workspace/arranged.svelte.ts rather than
+ *  a module of its own; device.svelte.ts lost its copy). Measured 3,241,664. */
+const BUDGET = 3_242_700
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
