@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from 'vitest'
-import { SharedDoc } from '@nib/editor'
-import { receive, TEXT } from '@nib/rooms'
+import { SharedDoc, setPeers } from '@nib/editor'
+import { awarenessUpdate, receive, TEXT } from '@nib/rooms'
 import { Awareness } from 'y-protocols/awareness'
 import * as Y from 'yjs'
 import type { Settling } from './apart'
@@ -97,6 +97,18 @@ class Server {
   /** One message applied, and whatever the protocol wrote back. */
   answer(message: Uint8Array): Uint8Array | null {
     return receive(message, this.doc, this.awareness, 'socket')
+  }
+
+  /** Somebody else in the room, their caret at `at` in the room's words, as the
+   *  message that tells this device so. */
+  somebodyAt(at: number): Uint8Array {
+    const text = this.doc.getText(TEXT)
+    const place = Y.relativePositionToJSON(Y.createRelativePositionFromTypeIndex(text, at))
+    this.awareness.setLocalState({
+      who: { name: 'iPad', accent: 'orange' },
+      caret: { anchor: place, head: place },
+    })
+    return awarenessUpdate(this.awareness, [this.doc.clientID])
   }
 
   get words(): string {
@@ -254,6 +266,63 @@ describe('a note typed in while the room is still answering', () => {
     // And the note is not in a room at all while it waits, so a pass reads a version
     // arriving for it as the disagreement it is; see rooms.svelte.ts.
     expect(room.settled).toBe(false)
+
+    room.leave()
+  })
+
+  test("shows nobody's caret while it waits, and says nothing of its own (#542)", async () => {
+    // The room's words are longer than the note, and somebody's caret is at their end:
+    // a place past the end of this note, which threw on every keystroke here.
+    const { note, room, server, socket } = joining('one\n', 'one\ntwo from elsewhere\n', {
+      answer: 'wait',
+    })
+    const shown: unknown[][] = []
+    const announce = note.announce.bind(note)
+    note.announce = (effects) => {
+      for (const effect of effects) if (effect.is(setPeers)) shown.push([...effect.value])
+      announce(effects)
+    }
+    socket.arrive()
+    note.edit([{ from: 4, to: 4, insert: 'typed here\n' }])
+    for (const message of socket.take()) {
+      const back = server.answer(message)
+      if (back) socket.wire.heard(back)
+    }
+    await settled()
+    for (const message of socket.take()) server.answer(message)
+
+    socket.wire.heard(server.somebodyAt(server.words.length))
+    room.moved(3, 3)
+    await settled()
+
+    expect(room.settled).toBe(false)
+    expect(shown.at(-1)).toEqual([])
+    expect(shown.flat()).toEqual([])
+    // This device's caret is a place in the note, not in the room's words: unsaid.
+    const said = socket.take().map((one) => server.answer(one))
+    expect(said.every((one) => one === null)).toBe(true)
+
+    room.leave()
+  })
+
+  test("shows the others' carets once the note is joined to the room", async () => {
+    const { note, room, server, socket } = joining('one\n', 'one\n')
+    const shown: unknown[][] = []
+    const announce = note.announce.bind(note)
+    note.announce = (effects) => {
+      for (const effect of effects) if (effect.is(setPeers)) shown.push([...effect.value])
+      announce(effects)
+    }
+    socket.arrive()
+    for (const message of socket.take()) {
+      const back = server.answer(message)
+      if (back) socket.wire.heard(back)
+    }
+    await settled()
+
+    socket.wire.heard(server.somebodyAt(2))
+    expect(room.settled).toBe(true)
+    expect(shown.at(-1)).toMatchObject([{ name: 'iPad', head: 2 }])
 
     room.leave()
   })
