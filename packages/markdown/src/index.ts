@@ -10,13 +10,12 @@ import {
   readProperties,
 } from './properties'
 import { withoutComments } from './comments'
-import { emphasis } from './emphasis'
 import { coverFigure, coverOf } from './cover'
 import { stripFrontMatter } from './front-matter'
 import { attributeUrl, escape, safeHref, safeSrc } from './html'
 import { htmlBlockCard, ownMarkup } from './html-block'
 import { isNoteTarget, slugify, withoutBlockIds } from './links'
-import { firstStart, lineStart, matchesAt } from './starts'
+import { emphasis, firstStart, lineStart, matchesAt } from './starts'
 import { hashtags, type TagHref } from './tags'
 import { iframeCard, isIframeTag, splitIframe, webCard } from './web-embed'
 import {

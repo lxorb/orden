@@ -29,8 +29,8 @@
 
 import { Marked, type Token, type Tokens } from 'marked'
 import { blockMath, definitionList } from './blocks'
-import { emphasis } from './emphasis'
 import { BLANK, bodyStart, fenceChange, HORIZONTAL, lines, VERTICAL } from './slide-breaks'
+import { emphasis } from './starts'
 
 /** How a slide is laid out, read off what it holds rather than off an
  *  annotation nobody could open in another editor. */
