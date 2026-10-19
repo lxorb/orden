@@ -203,12 +203,13 @@ export async function replaceInNotes(
 
   for (const change of changes) {
     const open = ws.documentAt(change.path)
-    done.push(
-      open ? await writeOpen(open, change, keeping) : await writeClosed(ws, change, keeping),
-    )
+    const wrote = open
+      ? await writeOpen(open, change, keeping)
+      : await writeClosed(ws, change, keeping)
+    if (wrote) done.push(wrote)
   }
 
-  ws.undone.record({ kind: 'replace', notes: done })
+  if (done.length) ws.undone.record({ kind: 'replace', notes: done })
   await ws.loadTree()
   ws.persist()
 
@@ -245,16 +246,60 @@ async function writeOpen(open: NoteDoc, change: Change, keeping: Keeping): Promi
 
 /** A note nobody has open, written as the change says. A pane that opened it while
  *  the write was in the air read the file before it, and takes the edits the way an
- *  open note does; one that read it after already has them. */
-async function writeClosed(ws: HoldsNotes, change: Change, keeping: Keeping): Promise<Undone> {
-  await keep(change.path, change.before, keeping)
-  await writeFile(change.path, change.after)
+ *  open note does; one that read it after already has them.
+ *
+ *  The file is read again first. A change can be worked out long before it is
+ *  written - Convert syntax asks whether to go ahead with the count - and sync or an
+ *  agent may have written the note meanwhile. Writing the change as it was worked
+ *  out put the old words back over theirs, with no version kept of them. So the
+ *  edits are carried past the one span the file has changed by, and a note where
+ *  the two overlap, or that has gone, is left as it is. Null for a note not
+ *  written. */
+async function writeClosed(
+  ws: HoldsNotes,
+  change: Change,
+  keeping: Keeping,
+): Promise<Undone | null> {
+  const now = await invoke<string>('read_note', { path: change.path }).catch(() => null)
+  if (now === null) return null
+
+  const same = now === change.before
+  const edits = same ? change.edits : carriedPast(change.before, now, change.edits)
+  if (!edits) return null
+  const after = same ? change.after : applied(now, edits)
+
+  await keep(change.path, now, keeping)
+  await writeFile(change.path, after)
 
   const late = ws.documentAt(change.path)
-  const edits = late?.live.carried(change.edits, change.before)
-  if (late && edits) catchUp(late, edits, change.after)
+  const caught = late?.live.carried(edits, now)
+  if (late && caught) catchUp(late, caught, after)
 
-  return { path: change.path, content: change.before, after: change.after, edits: change.back }
+  return {
+    path: change.path,
+    content: now,
+    after,
+    edits: same ? change.back : reverse(now, edits),
+  }
+}
+
+/** Edits worked out against `before`, carried onto `now`, which differs from it by
+ *  one span: those before the span as they were and those after it moved by what it
+ *  grew or shrank by. Null where any of them falls inside it, which is somebody
+ *  else's writing and not this change's to touch. */
+function carriedPast(before: string, now: string, edits: readonly Edit[]): Edit[] | null {
+  const since = oneEdit(before, now)
+  if (!since) return [...edits]
+
+  const grew = since.insert.length - (since.to - since.from)
+  const carried: Edit[] = []
+  for (const one of edits) {
+    if (one.to <= since.from) carried.push(one)
+    else if (one.from >= since.to)
+      carried.push({ ...one, from: one.from + grew, to: one.to + grew })
+    else return null
+  }
+  return carried
 }
 
 /** A note opened from the file a write was about to replace, brought up to it. Its

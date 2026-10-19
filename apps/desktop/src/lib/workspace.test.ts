@@ -2018,10 +2018,12 @@ describe('a replacement across the space', () => {
   test('keeps what each note said before it writes what it says now', async () => {
     await workspace.replaceInNotes([change('/space/a.md', '# a', '# alpha')])
 
+    // Read again first, in case it was written since; see `writeClosed` in
+    // workspace/note-text.ts.
     const written = sent.filter((one) => one.path === '/space/a.md')
-    expect(written.map((one) => one.command)).toEqual(['snapshot_note', 'write_note'])
-    expect(written[0]?.content).toBe('# a')
-    expect(written[1]?.content).toBe('# alpha')
+    expect(written.map((one) => one.command)).toEqual(['read_note', 'snapshot_note', 'write_note'])
+    expect(written[1]?.content).toBe('# a')
+    expect(written[2]?.content).toBe('# alpha')
   })
 
   test('takes a snapshot of every note it touches', async () => {
