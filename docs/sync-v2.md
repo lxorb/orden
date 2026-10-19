@@ -779,7 +779,10 @@ Worker and the client (which applies its own ops optimistically):
   toast); the deleting device's own writing never stands against it, since it had seen it
   whatever its cursor says. A folder delete takes what the device had seen; anything
   created, moved in, renamed or edited in it since by another device survives and keeps the
-  folder. What a device has seen of a note is what it pulled, not what the list told it:
+  folder. A rename or move made without having seen another device's change before it
+  leaves that device as the one that last changed the entry, so a note moved into a
+  folder elsewhere stays when the device that renamed it, never knowing, deletes the
+  folder (#514). What a device has seen of a note is what it pulled, not what the list told it:
   a delete's `seen` is no later than the words of any note under it that the device has not
   pulled yet, whether or not the note has a file on this disk (#435). An edit that lands on
   a note already deleted brings it back, with its folders.
