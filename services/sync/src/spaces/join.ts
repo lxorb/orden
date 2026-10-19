@@ -30,7 +30,7 @@ import { accountFor, claimWhatWasGuested, openSession, presentUser, requireWhoev
 import { readBody } from '../body'
 import { cleanPersonName, isEmail, NAME_LIMIT, normaliseEmail, now, sha256 } from '../crypto'
 import { forgetMailed, mailer, mayMail, requestMessage } from '../email'
-import { claimGuest, newGuest, presentGuest } from '../guests'
+import { newGuest, presentGuest } from '../guests'
 import { machineOf, mayTellTheOwner } from '../limits'
 import { asksForSecond, halfWay } from '../second'
 import type { Env, Guest, Space, User, Variables } from '../types'
@@ -376,11 +376,24 @@ join.post('/:token', async (context) => {
   const found = await tokenLeadsTo(context.env, context.req.param('token'))
   if (!found) return context.json({ error: EXPIRED }, 404)
 
-  // An invitation is proof of an address, so it opens that account whoever is
-  // holding the tab. An account already signed in as somebody else is the one
-  // case it is not: that is answered below, where the address is checked.
-  if (found.kind === 'invite' && who?.kind !== 'user') {
-    return await redeemInvitation(context, found, who?.guest ?? null)
+  // An invitation is proof of an address, so it opens that account for a tab with
+  // nobody signed in. A tab that already has somebody is not proof of anything
+  // about them: an account signed in as another address is answered below, where
+  // the address is checked, and a guest is answered the same way here.
+  if (found.kind === 'invite' && !who) return await redeemInvitation(context, found)
+
+  if (found.kind === 'invite' && who?.kind === 'guest') {
+    // A guest is nobody in particular, so holding somebody's invitation does not
+    // make them that somebody, and what they were lent is not the address's to
+    // take. The one guest that is already that address is the one that said so,
+    // and proving the address hands that guest over anyway (`claimGuestsAt`).
+    // Anybody else keeps the session they have, and the emailed code is the way
+    // into the account - which is also how a device hands its guest over.
+    if (who.guest.email !== found.email) {
+      return context.json({ error: 'that invitation was sent to another address' }, 403)
+    }
+
+    return await redeemInvitation(context, found)
   }
 
   if (who?.kind === 'user') return await asAnAccount(context, found, who.user)
@@ -391,14 +404,14 @@ join.post('/:token', async (context) => {
 
 /** The mailed link, opening the account it was written to. The whole of what
  *  somebody with no Orden account does: they press the link. */
-async function redeemInvitation(context: Reply, found: Leads, guest: Guest | null) {
+async function redeemInvitation(context: Reply, found: Leads) {
   if (found.kind !== 'invite') return context.json({ error: EXPIRED }, 404)
 
   const user = await accountFor(context.env, found.email, context.req.header('accept-language'))
 
-  // Whatever this device held as a guest, and whatever any guest said it was at
-  // this address, is the account's now: proving the address is what that turns on.
-  if (guest) await claimGuest(context.env, guest.id, user)
+  // Whatever any guest said it was at this address is the account's now: proving
+  // the address is what that turns on. Never the guest holding the tab as such -
+  // the link proves who it was mailed to, not who opened it.
   await claimWhatWasGuested(context.env, user, null)
 
   // An account that asks for a second code is not signed in by a mail any more
