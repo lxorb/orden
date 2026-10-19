@@ -184,7 +184,9 @@ pub fn markdown(body: &Body, parts: &mut dyn Parts) -> String {
     let mut out = String::new();
     let mut fenced = false;
     let mut counted = 0_u32;
-    let mut counting = (PLAIN, 0_u32);
+    // The style and the count of the last item at each depth of the list this line
+    // is in.
+    let mut levels: Vec<(i32, u32)> = Vec::new();
 
     for line in lines_of(body) {
         let run = line.run().unwrap_or(&DEFAULT);
@@ -202,14 +204,31 @@ pub fn markdown(body: &Body, parts: &mut dyn Parts) -> String {
         }
 
         // The second half of a paragraph is the same item: it carries no number of
-        // its own, so it does not take the next one either.
+        // its own, so it does not take the next one either. Each depth of a list keeps
+        // its own count, so the items nested under `1.` do not restart the list they
+        // sit in, and `2.` after them is still `2.`.
         if !line.soft {
-            if run.style == NUMBERED && counting == (NUMBERED, run.indent) {
-                counted += 1;
+            let listed = matches!(run.style, DOTTED | DASHED | NUMBERED | CHECKBOX);
+            let depth = usize::try_from(run.indent).unwrap_or(0);
+            if listed {
+                levels.truncate(depth + 1);
+                levels.resize(depth + 1, (PLAIN, 0));
             } else {
-                counted = 1;
-                counting = (run.style, run.indent);
+                levels.clear();
             }
+
+            counted = match levels.get_mut(depth) {
+                Some(level) if listed => {
+                    let next = if level.0 == NUMBERED && run.style == NUMBERED {
+                        level.1 + 1
+                    } else {
+                        1
+                    };
+                    *level = (run.style, next);
+                    next
+                }
+                _ => 1,
+            };
         }
 
         let words = inline(&line, parts, fenced);
@@ -1373,6 +1392,23 @@ mod tests {
 
         assert!(said.len() < 200, "{} characters of indent", said.len());
         assert!(said.trim_start().starts_with("- "), "{said}");
+    }
+
+    /// The items nested under a numbered one are a list of their own, and the list
+    /// they sit in carries on counting after them.
+    #[test]
+    fn a_nested_list_does_not_restart_the_count_around_it() {
+        let said = as_markdown(
+            "One\na\nb\nTwo\n",
+            &[
+                run(4, &[bytes(2, &style(102, 0, None))]),
+                run(2, &[bytes(2, &style(102, 1, None))]),
+                run(2, &[bytes(2, &style(102, 1, None))]),
+                run(4, &[bytes(2, &style(102, 0, None))]),
+            ],
+        );
+
+        assert_eq!(said, "1. One\n  1. a\n  2. b\n2. Two");
     }
 
     /// Code is the code as it was typed: a bracket in it is a bracket, and a bold run
