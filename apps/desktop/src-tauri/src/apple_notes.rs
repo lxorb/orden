@@ -139,9 +139,9 @@ mod mac {
     const SMART: i64 = 3;
 
     /// The attachments that are words rather than files: a tag, a mention of
-    /// somebody, and a link to another note.
-    const HASHTAG: &str = "com.apple.notes.inlinetextattachment.hashtag";
-    const MENTION: &str = "com.apple.notes.inlinetextattachment.mention";
+    /// somebody, the answer to a sum, and a link to another note, which is the one
+    /// of them that points somewhere.
+    const INLINE: &str = "com.apple.notes.inlinetextattachment.";
     const INTERNAL: &str = "com.apple.notes.inlinetextattachment.link";
     /// A link Notes drew a card for.
     const CARD: &str = "public.url";
@@ -895,12 +895,17 @@ mod mac {
 
     impl Parts for Found<'_> {
         fn attachment(&mut self, id: &str, uti: &str) -> Option<String> {
-            if uti == HASHTAG || uti == MENTION {
-                return self.words(id);
+            // A link to a note that did not come over - locked, in the bin - is still
+            // the words Notes showed for it.
+            if uti == INTERNAL {
+                return self.link(id).or_else(|| self.words(id));
             }
 
-            if uti == INTERNAL {
-                return self.link(id);
+            // A tag, a mention, and anything else Notes keeps as words in the line:
+            // the answer to a sum in Math Notes, the expression a graph was drawn
+            // from. Each holds the words Notes draws for it, and none has a file.
+            if uti.starts_with(INLINE) {
+                return self.words(id);
             }
 
             if uti == CARD {
@@ -1157,6 +1162,21 @@ mod mac {
                 "{}",
                 note.text
             );
+        }
+
+        /// The answer to a sum is words Notes keeps on its attachment's row, and so is
+        /// a link to a note that stays behind: neither leaves a gap in the line.
+        #[test]
+        fn words_kept_on_an_attachment_come_over_as_words() {
+            let read = read_from(&fixture()).expect("the fixture reads");
+            let note = read
+                .notes
+                .iter()
+                .find(|note| note.path == "Work/Sums.md")
+                .expect("the note with a sum in it");
+
+            assert!(note.text.contains("2 + 2 = 4"), "{}", note.text);
+            assert!(note.text.contains("See Locked"), "{}", note.text);
         }
 
         fn plans(read: &super::Read) -> &super::Note {

@@ -9,8 +9,9 @@ protobuf in `ZICNOTEDATA.ZDATA`.
 
 What it holds is one of each thing the reader has to get right: a note in the
 folder Notes starts with, a note in a folder somebody named, a note two folders
-deep, a note behind a password, a note in the bin, a picture, and a link from one
-note to another. And the things Notes keeps as documents and pictures of its own:
+deep, a note behind a password, a note in the bin, a picture, a link from one
+note to another, and the answer to a sum and a link to the locked note, which are
+words Notes keeps on an attachment's row. And the things Notes keeps as documents and pictures of its own:
 a table, a sketch with the picture Notes drew of it, a scan of two pages - one
 with Notes' cropped preview on the disk and one without - a marked-up scan with
 the PDF Notes made of it, and a sketch whose picture is not on this Mac.
@@ -311,7 +312,7 @@ def row(db: sqlite3.Connection, pk: int, kind: str, **values: object) -> None:
 
 
 def notes(db: sqlite3.Connection) -> None:
-    """The five notes, and the words of the three that come over."""
+    """The notes, and the words of the ones that come over."""
     groceries = "Groceries\nMilk\nEggs\n"
     made(
         db,
@@ -373,6 +374,34 @@ def notes(db: sqlite3.Connection) -> None:
         folder=3,
         title="Plans",
         data=note_data(plans, parts),
+    )
+
+    # The answer to a sum in Math Notes, and a link to the locked note, which does
+    # not come over: both are words Notes keeps on the attachment's row.
+    sums = f"Sums\n2 + 2 {OBJECT}\nSee {OBJECT}\n"
+    made(
+        db,
+        16,
+        "77777777-2222-3333-4444-555555555555",
+        folder=3,
+        title="Sums",
+        data=note_data(
+            sums,
+            [
+                run("Sums\n", block(2, style(TITLE))),
+                run("2 + 2 "),
+                run(
+                    OBJECT,
+                    attachment("att-sum", "com.apple.notes.inlinetextattachment.calculateresult"),
+                ),
+                run("\nSee "),
+                run(
+                    OBJECT,
+                    attachment("att-locked-link", "com.apple.notes.inlinetextattachment.link"),
+                ),
+                run("\n"),
+            ],
+        ),
     )
 
     made(
@@ -438,6 +467,16 @@ def attachments(db: sqlite3.Connection) -> None:
         "ICAttachment",
         ZIDENTIFIER="att-link",
         ZTOKENCONTENTIDENTIFIER=f"applenotes:note/{NOTE_ONE.lower()}",
+    )
+
+    row(db, 23, "ICAttachment", ZIDENTIFIER="att-sum", ZALTTEXT="= 4")
+    row(
+        db,
+        24,
+        "ICAttachment",
+        ZIDENTIFIER="att-locked-link",
+        ZALTTEXT="Locked",
+        ZTOKENCONTENTIDENTIFIER="applenotes:note/44444444-2222-3333-4444-555555555555",
     )
 
     where = OUT / "Accounts" / ACCOUNT / "Media" / "media-photo"
