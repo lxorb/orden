@@ -26,7 +26,7 @@ data loss. **High** - data loss or a security hole on a specific path.
 | --- | --: | --: | --: |
 | Critical | 1 | 1 | 0 |
 | High | 14 | 14 | 0 |
-| Medium | 34 | 34 | 0 |
+| Medium | 35 | 35 | 0 |
 | Low | 16 | 11 | 5 |
 
 Open rows are being fixed; see the status column.
@@ -99,6 +99,7 @@ Open rows are being fixed; see the status column.
 | B63 | Medium | A folder renamed while a note was moved into it never reached its new name: it waited on every pass, its notes went one by one, an empty folder stayed (re-audit of B62; older than this branch) | Fixed `f0f620669` | Moves were ordered by where entries were; the note went first and its folder was made at the renamed folder's new name, which then read as taken | An entry waits while its target is inside a folder still on its way; a round that moves nothing ends the settle | `sync2/places.test.ts`, both orders (the note-first one failed before) |
 | B64 | Medium | A folder moved into a new folder that took its old name was asked to move inside itself, and sync threw on every pass (re-audit of B63; older than this branch) | Fixed `45fff1553` | The new folder has no place on disk yet, so nothing marked the target as inside the entry's own path | An entry wanted inside where it is steps aside first and moves on next round | `sync2/places.test.ts` with a disk that refuses a move into itself (failed before); 3000 random trees in a scratch fuzz all reach their wanted layout |
 | B65 | Medium | In the browser, an import read the whole listing once for every file it brought (complete final re-audit; regression from B61) | Fixed `b21d6d6c6` | `onDisk` asked a missing name by listing a tree, which reads every row in the store | `path_exists`, a key lookup on the listing (`stats.holds`), answers for notes, assets and folders in one call | `web/store.test.ts`, `web/commands.test.ts`, `on-disk.test.ts` |
+| B66 | Medium | Notes handed over from an old browser address that had no listing read as not there, so a save or import could go over them (re-audit of B65; made worse by B65) | Fixed (this commit) | `restore` filled the stores that came and left the new address's listing as it was | The listing is made from the rows that came, when the old address brought none | `web/handoff.test.ts` (failed before) |
 | B48 | Low | After a self-linking note is renamed, a row of its properties can show the old link until its next save or scan | Open, accepted | `hear(target, after)` fires before `fileMoved` moves the rows store | - (the file on disk is right) | - |
 
 Not fixed, judged insignificant or out of scope: GFM's escaped backslash before a
