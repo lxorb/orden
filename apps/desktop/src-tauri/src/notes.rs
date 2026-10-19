@@ -19,7 +19,7 @@ use crate::carry::{copy_whole, move_whole};
 use crate::clock;
 use crate::paths::{
     at_most, at_most_stamped, cannot, chosen, copy_held, drop_held, in_spaces, made, move_held,
-    openable, write_in_place,
+    openable, paper_in_the_way, write_in_place,
 };
 
 /// The most a note may be for nib to read it: 64 MiB.
@@ -202,6 +202,12 @@ pub fn rename_note(app: AppHandle, from: String, to: String) -> Result<(), Strin
     let source = in_spaces(&app, &from)?;
     let target = in_spaces(&app, &to)?;
     let respelling = respelled(&source, &target, same_entry);
+
+    // A page note brings its paper, `<name>.pages.pdf`, and a file of that name already
+    // there is somebody's own: it was moved over, or hidden as held (#538).
+    if let Some(there) = paper_in_the_way(&source, &target, same_entry) {
+        return Err(format!("{} is already there", there.display()));
+    }
 
     move_entry(&source, &target, respelling)?;
 
