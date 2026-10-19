@@ -80,9 +80,13 @@ function moved(line, pins, table) {
     const kept = features.filter((one) => one !== 'devtools')
     return [
       ...(features.includes('devtools')
-        ? [`tauri-runtime-cef = { version = "=${pin('tauri-runtime-cef')}", features = ["devtools"] }`]
+        ? [
+            `tauri-runtime-cef = { version = "=${pin('tauri-runtime-cef')}", features = ["devtools"] }`,
+          ]
         : []),
-      ...(kept.length > 0 ? [`tauri = { version = "=${pin('tauri')}", features = [${listed(kept)}] }`] : []),
+      ...(kept.length > 0
+        ? [`tauri = { version = "=${pin('tauri')}", features = [${listed(kept)}] }`]
+        : []),
     ]
   }
   if (name === 'tauri-plugin-dialog' && table === LINUX_DESKTOP) {
@@ -95,7 +99,11 @@ function moved(line, pins, table) {
   }
   if (name.startsWith('tauri-plugin-')) {
     const rest = /^[a-z-]+ = \{ version = "[^"]*"(.*)$/.exec(line)?.[1]
-    return [rest === undefined ? `${name} = "=${pin(name)}"` : `${name} = { version = "=${pin(name)}"${rest}`]
+    return [
+      rest === undefined
+        ? `${name} = "=${pin(name)}"`
+        : `${name} = { version = "=${pin(name)}"${rest}`,
+    ]
   }
   if (name.startsWith('tauri')) {
     throw new Error(`the app depends on ${line}, which Linux's build has no pin for`)
@@ -105,11 +113,11 @@ function moved(line, pins, table) {
 
 /** The desktops' shared table, the one whose dialog plugin is Linux's. */
 const LINUX_DESKTOP =
-  "[target.'cfg(any(target_os = \"windows\", target_os = \"linux\", target_os = \"macos\"))'.dependencies]"
+  '[target.\'cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))\'.dependencies]'
 
 /** Tables Linux's build leaves out: the BSDs' WebKitGTK. */
 const DROPPED = new Set([
-  "[target.'cfg(any(target_os = \"dragonfly\", target_os = \"freebsd\", target_os = \"netbsd\", target_os = \"openbsd\"))'.dependencies]",
+  '[target.\'cfg(any(target_os = "dragonfly", target_os = "freebsd", target_os = "netbsd", target_os = "openbsd"))\'.dependencies]',
 ])
 
 /** Linux's manifest from the app's manifest `app`. */
