@@ -1,5 +1,13 @@
 import { describe, expect, test } from 'vitest'
-import { controlOf, imageKey, imageKeyTyped, type Keystroke, routeKey, shellReads } from './keys'
+import {
+  controlOf,
+  imageKey,
+  imageKeyTyped,
+  type Keystroke,
+  routeKey,
+  shellReads,
+  typedBy,
+} from './keys'
 
 /** Which keys a terminal lets the app have: VS Code's split, checked against its own
  *  skip list. See keys.ts, and docs/keyboard.md for the list as a reader sees it. */
@@ -87,6 +95,34 @@ describe('on Windows and Linux', () => {
     expect(routeKey(press('T', ctrlShift), 'win', 'app.new-kind', false)).toBe('app')
   })
 
+  /** A command put on a function key, or on Alt and an arrow, is on a key the program in
+   *  the terminal reads too - htop and mc are worked with F-keys, a shell moves a word
+   *  with Alt and an arrow - so it is asked about as well, not given away unasked. */
+  test('a command on a function key or Alt and an arrow is both too', () => {
+    expect(routeKey(press('F9'), 'win', 'app.scratchpad', false)).toBe('ask')
+    expect(routeKey(press('F2'), 'linux', 'app.print', false)).toBe('ask')
+    expect(routeKey(press('ArrowLeft', { altKey: true }), 'win', 'app.back', false)).toBe('ask')
+    // The app's own function keys stay the app's, and a key with no command on it is the
+    // program's.
+    expect(routeKey(press('F6'), 'win', 'app.region-next', false)).toBe('app')
+    expect(routeKey(press('F11'), 'linux', 'app.fullscreen', false)).toBe('app')
+    expect(routeKey(press('F9'), 'win', null, false)).toBe('shell')
+  })
+
+  /** What the program would have read, typed once the answer is the shell. */
+  test('a key answered for the shell is typed as xterm would have sent it', () => {
+    expect(typedBy(press('F9'))).toBe('\x1b[20~')
+    expect(typedBy(press('F2'))).toBe('\x1bOQ')
+    expect(typedBy(press('F5', { shiftKey: true }))).toBe('\x1b[15;2~')
+    expect(typedBy(press('ArrowLeft'))).toBe('\x1b[D')
+    expect(typedBy(press('ArrowLeft', { altKey: true }))).toBe('\x1b[1;3D')
+    expect(typedBy(press('F1', { ctrlKey: true }))).toBe('\x1b[1;5P')
+    expect(typedBy(press('n', ctrl))).toBe('\x0e')
+    expect(typedBy(press(' ', ctrl))).toBe('\x00')
+    expect(typedBy(press('b', { altKey: true }))).toBe('\x1bb')
+    expect(typedBy(press('Shift'))).toBeNull()
+  })
+
   test('a character a shell reads is Ctrl and a letter, Ctrl+Space, or another control key', () => {
     expect(shellReads(press('n', ctrl))).toBe(true)
     expect(shellReads(press(' ', ctrl))).toBe(true)
@@ -171,13 +207,13 @@ describe('on a Mac', () => {
 describe('the key an agent pastes a picture with', () => {
   const alt = { altKey: true }
 
-  test('Alt and a letter is the shell’s in a local terminal, Alt+V included', () => {
+  test('Alt and a letter no command is on is the shell’s in a local terminal, Alt+V included', () => {
     for (const platform of ['win', 'linux'] as const) {
       for (const letter of 'abcdefghijklmnopqrstuvwxyz') {
         expect(routeKey(press(letter, alt), platform, null, false), letter).toBe('shell')
       }
-      // Claude Code's Alt+K, which the app has too: the shell's in a terminal.
-      expect(routeKey(press('k', alt), platform, 'app.ask-selection', false)).toBe('shell')
+      // Claude Code's Alt+K, which the app has too: both, and asked about once (#426).
+      expect(routeKey(press('k', alt), platform, 'app.ask-selection', false)).toBe('ask')
     }
   })
 

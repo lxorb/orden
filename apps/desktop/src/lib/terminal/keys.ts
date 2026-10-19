@@ -29,8 +29,11 @@
  *  question puts the two side by side, and the answer is kept, per command, for every
  *  terminal from then on unless "Always ask" was ticked; Settings, General, Terminal
  *  lists each answer and takes it back. **Ctrl+C is the interrupt**, always, and never
- *  asked about. A key no shell reads - Ctrl+Shift, Ctrl+Alt and an arrow, Cmd on a Mac
- *  - is the app's, as below. See two-ways.ts.
+ *  asked about. And a command put on any other key the program in the terminal reads -
+ *  a function key, which htop and mc are worked with, Alt and an arrow - is asked about
+ *  the same way rather than given to the program unasked. A key no shell reads -
+ *  Ctrl+Shift, Ctrl+Alt and an arrow, Cmd on a Mac - is the app's, as below. See
+ *  two-ways.ts.
  *
  *  Before #426 the keys asked about were a list of two, and Ctrl+W went to the shell
  *  without a question, as it does in VS Code and Windows Terminal: a half-typed command
@@ -156,7 +159,61 @@ export function routeKey(
   if (mac && event.metaKey) return 'app'
   if (!mac && event.ctrlKey && event.shiftKey) return 'app'
 
-  return 'shell'
+  // Any other key an app command is on is one the program in the terminal reads too: a
+  // function key htop and mc are worked with, Alt and an arrow a shell moves a word with,
+  // wherever somebody put the command. Asked about, once, like a control character.
+  return 'ask'
+}
+
+/** The arrows, Home and End, and F1 to F4, which xterm ends with a letter. */
+const LETTERED: Readonly<Record<string, string>> = {
+  ArrowUp: 'A',
+  ArrowDown: 'B',
+  ArrowRight: 'C',
+  ArrowLeft: 'D',
+  Home: 'H',
+  End: 'F',
+  F1: 'P',
+  F2: 'Q',
+  F3: 'R',
+  F4: 'S',
+}
+
+/** Which of those xterm sends as CSI rather than SS3 with nothing held. */
+const ARROWS = new Set(['ArrowUp', 'ArrowDown', 'ArrowRight', 'ArrowLeft', 'Home', 'End'])
+
+/** The keys xterm ends with a number and a tilde. */
+const NUMBERED: Readonly<Record<string, number>> = {
+  Insert: 2,
+  Delete: 3,
+  PageUp: 5,
+  PageDown: 6,
+  F5: 15,
+  F6: 17,
+  F7: 18,
+  F8: 19,
+  F9: 20,
+  F10: 21,
+  F11: 23,
+  F12: 24,
+}
+
+/** What the program in a terminal would have read for a key, typed once it has been
+ *  answered for the shell: xterm's sequences, with the modifiers as xterm numbers them
+ *  (1, plus Shift 1, Alt 2, Ctrl 4). Null for a key that types nothing. */
+export function typedBy(event: Keystroke): string | null {
+  const held = 1 + (event.shiftKey ? 1 : 0) + (event.altKey ? 2 : 0) + (event.ctrlKey ? 4 : 0)
+  const said = held > 1 ? `1;${String(held)}` : ''
+  const lettered = LETTERED[event.key]
+  if (lettered) {
+    if (held > 1) return `\x1b[${said}${lettered}`
+    return `${ARROWS.has(event.key) ? '\x1b[' : '\x1bO'}${lettered}`
+  }
+  const numbered = NUMBERED[event.key]
+  if (numbered) return `\x1b[${String(numbered)}${held > 1 ? `;${String(held)}` : ''}~`
+  if (shellReads(event)) return controlOf(event.key)
+  if (event.key.length !== 1) return null
+  return event.altKey ? `\x1b${event.key}` : event.key
 }
 
 /** Whether a key is the one a coding agent pastes a picture from the clipboard with:

@@ -66,6 +66,7 @@ const { workspace } = await import('../../src/lib/workspace.svelte')
 const { sessionOf } = await import('../../src/lib/terminal/sessions.svelte')
 const { shells } = await import('../../src/lib/terminal/shells.svelte')
 const { prompt } = await import('../../src/lib/prompt.svelte')
+const { shortcuts } = await import('../../src/lib/shortcuts.svelte')
 const PromptSheet = (await import('../../src/lib/PromptSheet.svelte')).default
 const { flushSync, mount, unmount } = await import('svelte')
 const { written } = await import('../../src/lib/parting')
@@ -244,4 +245,33 @@ test('Ctrl+W asks too, and Ctrl+C never does', async () => {
   await vi.waitFor(() => expect(prompt.open).toBe(true))
   flushSync()
   expect(prompt.title).toBe('Ctrl+W in a terminal')
+})
+
+/** A command put on a function key is on a key the program in the terminal reads too -
+ *  htop and mc are worked with them - so it is asked about, and the program, chosen, is
+ *  given the key as xterm would have sent it. */
+test('a command put on F9 asks, and the shell chosen is given F9', async () => {
+  shortcuts.set('app.scratchpad', 'F9')
+  try {
+    const session = await opened('w8')
+    session.term.textarea?.dispatchEvent(
+      new KeyboardEvent('keydown', {
+        key: 'F9',
+        code: 'F9',
+        keyCode: 120,
+        bubbles: true,
+        cancelable: true,
+      }),
+    )
+    flushSync()
+    await vi.waitFor(() => expect(prompt.open).toBe(true))
+    flushSync()
+    expect(prompt.title).toBe('F9 in a terminal')
+
+    answer('Terminal')
+    await vi.waitFor(() => expect(typed).toEqual(['\x1b[20~']))
+    expect(shells.ways['app.scratchpad']).toBe('shell')
+  } finally {
+    shortcuts.reset('app.scratchpad')
+  }
 })

@@ -633,7 +633,7 @@ the shell. See `lib/terminal/keys.ts`, which is the rule, and docs/terminal.md.
 | Ctrl+Shift+W | nobody's: Close window here and Close tab in every terminal there is, so neither |
 | Ctrl+C | always the interrupt |
 | Ctrl+Shift+C, Ctrl+Shift+V, Shift+Insert | copy, paste. Ctrl+V pastes too on Windows, as in Windows Terminal. Cmd+C and Cmd+V on a Mac, and a selection is copied as it is made |
-| Alt and a letter | **the shell's**, as ESC and the letter, which ConPTY hands a Windows program as the Alt chord Windows Terminal's would be: Claude Code's Alt+K, Alt+P, Alt+T and **Alt+V, which pastes an image** it reads off the clipboard itself (Ctrl+V on Linux and a Mac, which is the shell's there too) |
+| Alt and a letter no app command is on | **the shell's**, as ESC and the letter, which ConPTY hands a Windows program as the Alt chord Windows Terminal's would be: Claude Code's Alt+P, Alt+T and **Alt+V, which pastes an image** (Alt+K, which Ask about the selection is on, is asked about once) it reads off the clipboard itself (Ctrl+V on Linux and a Mac, which is the shell's there too) |
 | Alt+V, Ctrl+V off Windows, or a paste with a picture and no text, in a Remote or online terminal | **the picture carried over**: that machine's clipboard is not this one's, so the picture is written to a file there and its path pasted, which Claude Code and Codex take as an image. With no picture on the clipboard the key goes to the shell as it would have. See *Pictures* in docs/terminal.md |
 | Ctrl+F | find, in nib's find bar |
 | Ctrl+=, Ctrl+-, Ctrl+0 | the terminal's type, larger, smaller, as it was; the same size as Settings, General, Terminal |
@@ -663,7 +663,10 @@ NUL). It is kept, per command, for every terminal from then on unless the box wa
 and Settings, General, Terminal has a row for each key answered - Always ask, the command, or
 Terminal - that shows the answer and takes it back; Always ask takes the row away. Escape
 answers nothing and sends the press nowhere. **Ctrl+C is never asked about**: it is the
-interrupt. Ctrl+Shift, Ctrl+Alt and an arrow, and Cmd on a Mac are chords no shell has, and
+interrupt. A command somebody put on a function key, or on Alt and an arrow or a letter, is
+on a key the program in the terminal reads too - htop and mc are worked with F-keys, Claude
+Code has Alt+K - and is asked about the same way rather than given to the program unasked;
+the program, chosen, is given the key as xterm would have sent it. Ctrl+Shift, Ctrl+Alt and an arrow, and Cmd on a Mac are chords no shell has, and
 the app's without asking. See `shellReads` in `lib/terminal/keys.ts` and
 `lib/terminal/two-ways.ts`.
 
