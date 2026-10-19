@@ -184,7 +184,7 @@ objc2-web-kit = { version = "0.3", default-features = false, features = [
 
 [target.'cfg(target_os = "linux")'.dependencies]
 zbus = { version = "5", default-features = false, features = ["async-io", "blocking-api"] }
-x11rb = { version = "0.13", default-features = false }
+x11rb = { version = "0.13", default-features = false, features = ["cursor", "resource_manager"] }
 raw-window-handle = "0.6"
 
 [target.'cfg(target_os = "windows")'.dependencies]

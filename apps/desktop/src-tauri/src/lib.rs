@@ -425,6 +425,7 @@ macro_rules! desktop_commands {
             obsidian_vaults::read_obsidian_file,
             full_screen::window_fullscreen,
             window_drag::window_move_resize,
+            window_drag::window_frame,
             full_screen::window_is_fullscreen,
             zen_profiles::zen_profiles,
             zen_profiles::read_zen_file,
