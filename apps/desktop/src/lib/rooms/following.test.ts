@@ -291,6 +291,54 @@ describe('a space renamed while one of its notes is open in a room', () => {
   })
 })
 
+describe('a file put into a note whose room cannot be reached (#541)', () => {
+  /** The socket drops while the file sync still works. Another device types, the room
+   *  writes it into the account, and the pass puts that copy into the open note - which
+   *  was still joined to the room's text, so the words went into it as this device's
+   *  typing, and back to the room when the socket returned: twice everywhere. What the
+   *  pass does first now is let go of the room (`letGoUnreached`), as `refresh` in
+   *  sync.svelte.ts does. */
+  test('reaches the room once, from the other device, and the note holds it once', async () => {
+    const note = documentOn('/Notes/a.md', '# A\n')
+    const server = new Server('# A\n')
+    const socket = await following(note, server)
+
+    socket.went(1006)
+    expect(rooms.carries('note-1')).toBe(false)
+    server.doc.getText(TEXT).insert(4, 'from the phone\n')
+
+    // The pass, with the account's copy.
+    rooms.letGoUnreached('note-1')
+    note.replace(server.file, false)
+    note.flush()
+
+    // Let go of, so nothing it held goes anywhere; and joined again from nothing.
+    expect(socket.stopped).toBe(true)
+    const again = latest()
+    expect(again).not.toBe(socket)
+    again.arrive()
+    carry(again, server)
+    await until(() => rooms.carries('note-1'), 'the room joined again')
+    carry(again, server)
+
+    expect(server.file).toBe('# A\nfrom the phone\n')
+    expect(words(note)).toBe('# A\nfrom the phone\n')
+  })
+
+  test('is not why a room that can be reached is let go of', async () => {
+    const note = documentOn('/Notes/a.md', '# A\n')
+    const server = new Server('# A\n')
+    const socket = await following(note, server)
+    const before = sockets.opened.length
+
+    rooms.letGoUnreached('note-1')
+
+    expect(sockets.opened.length).toBe(before)
+    expect(socket.stopped).toBe(false)
+    expect(rooms.carries('note-1')).toBe(true)
+  })
+})
+
 describe('which shape of room a file joins', () => {
   test('is the file’s name, not what the tab was opened as', async () => {
     // A tab that thinks it holds words over a file whose name says otherwise: what

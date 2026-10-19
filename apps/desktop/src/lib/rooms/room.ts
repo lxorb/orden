@@ -111,6 +111,13 @@ export class Room extends JoinedRoom {
     return this.door.caughtUp && this.unbind !== null
   }
 
+  /** Whether the note is joined to the room's text, keystroke by keystroke, whatever
+   *  the socket is doing: what a file put into the note while the room cannot be
+   *  reached would be replayed into as this device's own typing (#541). */
+  get bound(): boolean {
+    return this.unbind !== null
+  }
+
   /** Whether this room is the one waiting on a reader: it and this device each wrote
    *  since the words they shared, and the rule is the one that asks.
    *
