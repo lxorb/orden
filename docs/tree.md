@@ -1,7 +1,7 @@
 # The file list
 
-Emil: *"no folders anymore as we can now nest notes already so they're
-unnecessary."*
+Emil: _"no folders anymore as we can now nest notes already so they're
+unnecessary."_
 
 So the file list shows one kind of thing. Every row is a note. A note can hold
 notes, and that is the whole of how a space is organised. The word "folder" is
@@ -18,19 +18,19 @@ exports or the glasses: all of them go on seeing files in folders.
 
 ## One row, and what it does
 
-| | |
-| --- | --- |
-| the mark in front | what kind of file the row is: a page with writing on it for a note, two cards for a canvas, a book for a paper, a globe for a website, a plain page for a name nobody has written under yet. There is no folder mark, because no row is a folder; see `file-mark.ts`. Every mark comes off the name, the globe included: a website is a shortcut file, `Svelte docs.url`, which is the format Explorer and every browser write. It used to be a note with `url:` in its front matter, and the row had to ask the link index what the file said; see docs/web-tabs.md |
-| the name | the note's, or the folder's for a row that is a folder - so a row whose note is somebody else's `index.md` is still called after its place |
-| a click | opens what the row is |
-| the twist at the far end | shows what the row holds, and only appears when it holds something; a press anywhere in the row's height a step either side of it counts, and opens nothing (#402) |
-| right, left | the twist for a keyboard: `tree.into` and `tree.out`, labelled "Show what it holds" and "Hide what it holds" |
-| Enter, Space | open, the way a click does. Never fold: what a row holds is the arrows' business |
-| a drag onto it | nests what was dragged inside it. A drag to the space under the last row un-nests. In Manual, the thin band at the top or the bottom of the row is the space between rows instead, and a drop there is a new order |
-| Alt and up, down | in Manual, moves the row one step up or down the folder, over a folder as readily as over a note: `tree.move-up` and `tree.move-down`, labelled "Move up" and "Move down". Nothing in the other six orders, which are rules rather than arrangements |
-| its menu | Open, Open in new tab, Open to the side, New note inside, Rename, Move, Choose an icon, Bookmark, Copy link, Duplicate, Delete - one menu for every row, differing only in the entries that mean something for it; see `row-menu.ts`. A new tab opens behind the one in front, as a browser's does; the side is a pane of its own, and is not offered on a phone or for a folder nobody has written a note in. Copy link writes what the `[[` popup would, in the spelling the Links setting asks for |
-| its menu, several selected | Open all, Move, Bookmark, Copy link, Delete: the lot, the first of them in front and the rest behind, one link a line |
-| a drag into a note | a link to it at the drop, the caret showing where; several rows are a link a line, a picture is embedded. The middle of the pane is the note's, and only a note that can be written in: the strip and the four edges still open and split, and a note that is read-only opens the row as it always did. See `linkedFiles` in `folder-notes.ts` and `wikilink/drop.ts` in the editor |
+|                            |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| the mark in front          | what kind of file the row is: a page with writing on it for a note, two cards for a canvas, a book for a paper, a globe for a website, a plain page for a name nobody has written under yet. There is no folder mark, because no row is a folder; see `file-mark.ts`. Every mark comes off the name, the globe included: a website is a shortcut file, `Svelte docs.url`, which is the format Explorer and every browser write. It used to be a note with `url:` in its front matter, and the row had to ask the link index what the file said; see docs/web-tabs.md |
+| the name                   | the note's, or the folder's for a row that is a folder - so a row whose note is somebody else's `index.md` is still called after its place                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| a click                    | opens what the row is                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| the twist at the far end   | shows what the row holds, and only appears when it holds something; a press anywhere in the row's height a step either side of it counts, and opens nothing (#402)                                                                                                                                                                                                                                                                                                                                                                                                   |
+| right, left                | the twist for a keyboard: `tree.into` and `tree.out`, labelled "Show what it holds" and "Hide what it holds"                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| Enter, Space               | open, the way a click does. Never fold: what a row holds is the arrows' business                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| a drag onto it             | nests what was dragged inside it. A drag to the space under the last row un-nests. In Manual, the thin band at the top or the bottom of the row is the space between rows instead, and a drop there is a new order                                                                                                                                                                                                                                                                                                                                                   |
+| Alt and up, down           | in Manual, moves the row one step up or down the folder, over a folder as readily as over a note: `tree.move-up` and `tree.move-down`, labelled "Move up" and "Move down". Nothing in the other six orders, which are rules rather than arrangements                                                                                                                                                                                                                                                                                                                 |
+| its menu                   | Open, Open in new tab, Open to the side, New note inside, Rename, Move, Choose an icon, Bookmark, Copy link, Duplicate, Delete - one menu for every row, differing only in the entries that mean something for it; see `row-menu.ts`. A new tab opens behind the one in front, as a browser's does; the side is a pane of its own, and is not offered on a phone or for a folder nobody has written a note in. Copy link writes what the `[[` popup would, in the spelling the Links setting asks for                                                                |
+| its menu, several selected | Open all, Move, Bookmark, Copy link, Delete: the lot, the first of them in front and the rest behind, one link a line                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| a drag into a note         | a link to it at the drop, the caret showing where; several rows are a link a line, a picture is embedded. The middle of the pane is the note's, and only a note that can be written in: the strip and the four edges still open and split, and a note that is read-only opens the row as it always did. See `linkedFiles` in `folder-notes.ts` and `wikilink/drop.ts` in the editor                                                                                                                                                                                  |
 
 **What the list itself makes** is under the panel's own menu, wherever in it you
 ask: New note, New canvas and New web note (not on a phone). Each one puts a row in
@@ -61,9 +61,9 @@ The Essentials above the list keep notes, folders, headings, blocks, searches, g
 and one view of the space's graph. Each says where it points the way a link does,
 relative to the space, so the list travels to every machine signed in.
 
-**A file kept there is not in the list as well** (#345). Emil: *"Anything added to
+**A file kept there is not in the list as well** (#345). Emil: _"Anything added to
 Essentials should appear only under Essentials, not in the explorer's file list as
-well."* A note, a canvas, a page note or a website is in one of the two at any time:
+well."_ A note, a canvas, a page note or a website is in one of the two at any time:
 kept, its row leaves the list; let go of, the row is back. Only what is drawn changes -
 `shownTree` leaves it out, so the rows, the arrows and a Shift-click agree, while the
 disk, a search, the links and the quick open still have every file. Asked to show it,
@@ -79,8 +79,9 @@ reader gave it, and pressing it writes those settings into the space's own graph
 settings and shows the graph. The space keeps one picture, which is what makes
 the graph a command rather than something to open; a view is a second way of
 looking at that one picture - the whole space, one project, what nothing links to
+
 - without setting the card up again each time. `Bookmark this view` is the row
-that makes one, at the foot of the graph's control card.
+  that makes one, at the foot of the graph's control card.
 
 A build older than this one draws no row for a kind it has never heard of, and
 writes the list back without it: a graph view made here disappears from a device
@@ -106,8 +107,8 @@ is in it.
   rest, so the default panel holds four, a wide one more, and two tiles are two
   halves. There is no limit of its own: Zen stops at twelve, which people ask it to
   lift, so the grid simply wraps and the list's own sixty is the limit.
-- **In place, not in a tab.** Emil, 2026-10-13: *"essentials should not open as
-  tabs"*. A press shows the file where a tab shows and puts nothing in the strip; another
+- **In place, not in a tab.** Emil, 2026-10-13: _"essentials should not open as
+  tabs"_. A press shows the file where a tab shows and puts nothing in the strip; another
   tab or tile then takes the pane and the essential stays loaded behind it, and the next
   press on its tile comes back to it where it was left - following a link inside it
   stays inside it. Ctrl or the middle button on a tile, or Open in new tab in its menu,
@@ -287,30 +288,30 @@ sync brings in from another is not. See `workspace/copying.ts` and
 
 ## The order it is read in
 
-Emil: *"there should be settings to decide the order of notes displayed in the
+Emil: _"there should be settings to decide the order of notes displayed in the
 explorer, e.g. manual, name, etc. Manual will definitely need some work, make it
-feel really really nice."* And: *"by name should be the default."*
+feel really really nice."_ And: _"by name should be the default."_
 
 Seven orders, behind the one glyph at the end of the panel's header - the same slot
 the Links panel keeps its own two controls in. The row that is in force wears a
 tick. The same seven are still on a right click on the Files tab, where the list's
 sorting has always been, because one builder draws both.
 
-| | |
-| --- | --- |
-| Name, A to Z | the default, and what the list has always done |
-| Name, Z to A | |
-| Modified, newest first | |
-| Modified, oldest first | |
-| Created, newest first | |
-| Created, oldest first | |
-| Manual | the order somebody arranged by dragging the rows |
+|                        |                                                  |
+| ---------------------- | ------------------------------------------------ |
+| Name, A to Z           | the default, and what the list has always done   |
+| Name, Z to A           |                                                  |
+| Modified, newest first |                                                  |
+| Modified, oldest first |                                                  |
+| Created, newest first  |                                                  |
+| Created, oldest first  |                                                  |
+| Manual                 | the order somebody arranged by dragging the rows |
 
 Folders come first in the six that are read off a key. That is what Obsidian,
 Finder and Explorer do, and it is what a reader looking for a folder expects.
 
-Not in Manual. Emil: *"for the manual ordering mode in explorer, it should not be
-enforced that directories display above files."* An order somebody arranged by hand
+Not in Manual. Emil: _"for the manual ordering mode in explorer, it should not be
+enforced that directories display above files."_ An order somebody arranged by hand
 is theirs, and lifting every folder back over it would be the app overruling the
 drag - so a hand-arranged folder is one list: a note can be dropped between two
 folders, or stepped above one with the keyboard, and it stays where it was put.
@@ -331,19 +332,25 @@ whether the arrow means the newest or the oldest; "Modified, newest first" says 
 Seven rows is also the whole answer in one glance, which a control that flips when
 you press it twice never is.
 
-**Which order is per space, and on this device.** Whether a space reads by name or
-by age is how somebody is looking at it this afternoon: a space of meeting notes
-wants the newest first and a space of chapters wants them in the order somebody
-arranged, and a phone and a desktop can honestly disagree about it the way they
-already disagree about which folders are open. So it sits beside how far down the
-list each space was left, in `workspace/device.svelte.ts` under `nib:list-order`.
-It used to be one choice for the whole app, in `nib:tree`; a value written there by
-an older build is ignored.
+**Which order is per space, and the space's on every device** (#423). Emil: _"if I
+turn on manual for one space, it will remain on for that space even on other
+devices"_. A space of meeting notes wants the newest first and a space of chapters
+wants the order somebody arranged, and that is a fact about the space rather than
+about one machine: the arranged order already went with the account, and a space read
+in it on one device read by name on the next. So the order is on the account beside
+the arranged one - the space's `sort`, `PUT /v1/spaces/:id/sort`, keyed by the space
+and not by a folder on one disk - and `SpaceSorting` in `workspace/arranged.svelte.ts` keeps a copy under
+the space's folder so the list is drawn before the account answers. Met the way the
+graph's settings are: the first time an account sees a space, this machine's choice
+stands where the account has none and is sent up; after that the account's is taken.
+What a machine chose before, under `nib:list-order`, is read over once. It used to be
+one choice for the whole app, in `nib:tree`; a value written there by an older build
+is ignored.
 
 **Nothing is read off the disk to change it.** The listing in memory is the
 listing, and which order it is drawn in is arithmetic over it - `orderedTree` in
 `tree-order.ts`, applied once in `shownTree`. That comparator is the only part of
-this the first paint pays for, because the first paint *is* the file list; the lift,
+this the first paint pays for, because the first paint _is_ the file list; the lift,
 the arithmetic of a drop, the seven words of the menu and the account's half of what
 somebody arranged are fetched by the first drag, the first press and the first
 syncing pass - `tree-lift.ts`, `tree-arranging.ts`, `order-menu.ts` and
@@ -397,16 +404,16 @@ see `lib/workspace/file-ops.ts`.
 
 ### The drag
 
-| | |
-| --- | --- |
-| lifting it | a press and a move with a mouse or a pen, which is the drag the platform starts; a press, a short hold of 250 ms and a move under a finger, which is the only gesture a touch screen has - it fires no drag events at all. The hold is shorter than the 500 ms the row's own menu waits, so a press that then moves is a drag and a press that stays put is a menu |
-| what follows the pointer | a copy of the row, a little larger and with a shadow under it. The platform draws that itself for a drag it started; a lift draws its own, in `body`, so no scroll and no rebuild of the window can take it away mid-gesture |
-| where it will land | the row's own place in the list, drawn hollow. The gap is the row, so there is no drop line to draw and nothing for the reader to translate: what they see is the answer |
-| the other rows | slide out of the way over 180 ms, ease-out, measured before and after the order changes and started from their own old places. Instant for a reader who has asked for as little movement as possible |
-| onto a folder | the middle half of any row is still the row: a drop there goes into it, exactly as it always has. Resting there for 400 ms opens it, so a drop can go further in than the row it started over |
-| near an edge | the list rolls under the pointer, the same band and the same speed a drag has always had |
-| Escape | everything slides back |
-| the keys | Alt and an arrow, one step at a time, with the same slide |
+|                          |                                                                                                                                                                                                                                                                                                                                                                    |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| lifting it               | a press and a move with a mouse or a pen, which is the drag the platform starts; a press, a short hold of 250 ms and a move under a finger, which is the only gesture a touch screen has - it fires no drag events at all. The hold is shorter than the 500 ms the row's own menu waits, so a press that then moves is a drag and a press that stays put is a menu |
+| what follows the pointer | a copy of the row, a little larger and with a shadow under it. The platform draws that itself for a drag it started; a lift draws its own, in `body`, so no scroll and no rebuild of the window can take it away mid-gesture                                                                                                                                       |
+| where it will land       | the row's own place in the list, drawn hollow. The gap is the row, so there is no drop line to draw and nothing for the reader to translate: what they see is the answer                                                                                                                                                                                           |
+| the other rows           | slide out of the way over 180 ms, ease-out, measured before and after the order changes and started from their own old places. Instant for a reader who has asked for as little movement as possible                                                                                                                                                               |
+| onto a folder            | the middle half of any row is still the row: a drop there goes into it, exactly as it always has. Resting there for 400 ms opens it, so a drop can go further in than the row it started over                                                                                                                                                                      |
+| near an edge             | the list rolls under the pointer, the same band and the same speed a drag has always had                                                                                                                                                                                                                                                                           |
+| Escape                   | everything slides back                                                                                                                                                                                                                                                                                                                                             |
+| the keys                 | Alt and an arrow, one step at a time, with the same slide                                                                                                                                                                                                                                                                                                          |
 
 The gap is written into the store rather than held in the component, which is what
 makes the gap under the pointer the same gap the whole list is drawn from: one
