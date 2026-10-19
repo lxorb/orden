@@ -1338,6 +1338,8 @@ export const tr: Dictionary = {
     '{count} ruh hâli ve etkinlik kartı çizimdir, bu yüzden yalnızca sözcükleri geçer',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} not, yalnızca Notlar’ın açabildiği bir parolanın ardındadır',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} not, yalnızca Bear’ın açabildiği bir parolanın ardındadır',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} not Son Silinenler’dedir ve orada kalır',
   '{count} drawings and scans have no picture on this Mac':

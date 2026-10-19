@@ -1360,6 +1360,8 @@ export const es: Dictionary = {
     '{count} tarjetas de ánimo y actividad son dibujos, así que solo pasan sus palabras',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} notas están tras una contraseña que solo Notas puede abrir',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} notas están tras una contraseña que solo Bear puede abrir',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} notas están en Eliminados recientemente y ahí se quedan',
   '{count} drawings and scans have no picture on this Mac':

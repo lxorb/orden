@@ -1299,6 +1299,8 @@ export const zhHant: Dictionary = {
     '{count} 張心情與活動卡片是圖畫，因此只有文字轉入',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} 則筆記加了密碼，只有「備忘錄」能開啟',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} 則筆記加了密碼，只有 Bear 能開啟',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} 則筆記在「最近刪除」中，仍留在那裡',
   '{count} drawings and scans have no picture on this Mac':

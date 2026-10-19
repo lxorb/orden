@@ -1333,6 +1333,8 @@ export const ps: Dictionary = {
     '{count} د حالت او فعاليت کارتونه انځورونه دي، نو يوازې کلمې يې راځي',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} يادښتونه د پټنوم تر شا دي چې يوازې Notes يې پرانيځي',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} يادښتونه د پټنوم تر شا دي چې يوازې Bear يې پرانيځي',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} يادښتونه په نوی ړنګ شوي کې دي او هلته پاتې کېږي',
   '{count} drawings and scans have no picture on this Mac':

@@ -1366,6 +1366,8 @@ export const ptPT: Dictionary = {
     '{count} cartões de humor e atividade são desenhos, pelo que só as palavras passam',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} notas estão atrás de uma palavra-passe que só o Notas abre',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} notas estão atrás de uma palavra-passe que só o Bear abre',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} notas estão em Eliminados recentemente e lá ficam',
   '{count} drawings and scans have no picture on this Mac':

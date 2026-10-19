@@ -1328,6 +1328,8 @@ export const gu: Dictionary = {
     '{count} મનોભાવ અને પ્રવૃત્તિ કાર્ડ ચિત્રો છે, તેથી ફક્ત તેમના શબ્દો આવે છે',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} નોંધ પાસવર્ડ પાછળ છે, જે ફક્ત Notes ખોલી શકે',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} નોંધ પાસવર્ડ પાછળ છે, જે ફક્ત Bear ખોલી શકે',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} નોંધ હાલમાં કાઢેલામાં છે અને ત્યાં જ રહે છે',
   '{count} drawings and scans have no picture on this Mac':

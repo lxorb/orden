@@ -1390,6 +1390,8 @@ export const uk: Dictionary = {
     'Карток настрою та активності, що є малюнками: {count} - переносяться лише слова',
   '{count} notes are behind a password, which nothing but Notes can open':
     'Нотаток під паролем, який відкривають лише Нотатки: {count}',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    'Нотаток під паролем, який відкриває лише Bear: {count}',
   '{count} notes are in Recently Deleted, and stay there':
     'Нотаток у «Нещодавно видалених», які там і залишаються: {count}',
   '{count} drawings and scans have no picture on this Mac':

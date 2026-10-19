@@ -1300,6 +1300,8 @@ export const yue: Dictionary = {
     '{count} 張心情同活動卡片係圖畫，所以只有文字轉入',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} 則筆記加咗密碼，只有「備忘錄」開得到',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} 則筆記加咗密碼，只有 Bear 開得到',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} 則筆記喺「最近刪除」，仲留喺嗰度',
   '{count} drawings and scans have no picture on this Mac': '{count} 幅圖畫同掃描喺呢部 Mac 冇圖片',

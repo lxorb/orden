@@ -1342,6 +1342,8 @@ export const kn: Dictionary = {
     '{count} ಮನಃಸ್ಥಿತಿ ಮತ್ತು ಚಟುವಟಿಕೆ ಕಾರ್ಡುಗಳು ಚಿತ್ರಗಳು, ಹಾಗಾಗಿ ಅವುಗಳ ಪದಗಳಷ್ಟೇ ಬರುತ್ತವೆ',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} ಟಿಪ್ಪಣಿಗಳು ಪಾಸ್‌ವರ್ಡ್ ಹಿಂದಿವೆ, ಅದನ್ನು Notes ಮಾತ್ರ ತೆರೆಯಬಲ್ಲದು',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} ಟಿಪ್ಪಣಿಗಳು ಪಾಸ್‌ವರ್ಡ್ ಹಿಂದಿವೆ, ಅದನ್ನು Bear ಮಾತ್ರ ತೆರೆಯಬಲ್ಲದು',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} ಟಿಪ್ಪಣಿಗಳು ಇತ್ತೀಚೆಗೆ ಅಳಿಸಿದವುಗಳಲ್ಲಿವೆ, ಅಲ್ಲೇ ಉಳಿಯುತ್ತವೆ',
   '{count} drawings and scans have no picture on this Mac':

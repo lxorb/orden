@@ -1349,6 +1349,8 @@ export const de: Dictionary = {
     '{count} Stimmungs- und Aktivitätskarten sind Zeichnungen: nur ihre Worte kommen mit',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} Notizen liegen hinter einem Passwort, das nur Notizen öffnet',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} Notizen liegen hinter einem Passwort, das nur Bear öffnet',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} Notizen liegen in Zuletzt gelöscht und bleiben dort',
   '{count} drawings and scans have no picture on this Mac':

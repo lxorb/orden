@@ -1313,6 +1313,8 @@ export const ko: Dictionary = {
     '기분과 활동 카드 {count}개가 그림이라 글만 넘어옵니다',
   '{count} notes are behind a password, which nothing but Notes can open':
     '노트 {count}개가 메모만 열 수 있는 암호 뒤에 있습니다',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '노트 {count}개가 Bear만 열 수 있는 암호 뒤에 있습니다',
   '{count} notes are in Recently Deleted, and stay there':
     '노트 {count}개가 최근 삭제된 항목에 있고 그대로 남습니다',
   '{count} drawings and scans have no picture on this Mac':

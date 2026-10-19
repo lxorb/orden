@@ -1318,6 +1318,8 @@ export const my: Dictionary = {
     'စိတ်နေနှင့် လုပ်ရပ်ကတ် {count} ခု ပုံဆွဲများဖြစ်၍ စာသာ ပါလာသည်',
   '{count} notes are behind a password, which nothing but Notes can open':
     'မှတ်စု {count} ခု Notes သာ ဖွင့်နိုင်သော စကားဝှက်နောက်တွင် ရှိသည်',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    'မှတ်စု {count} ခု Bear သာ ဖွင့်နိုင်သော စကားဝှက်နောက်တွင် ရှိသည်',
   '{count} notes are in Recently Deleted, and stay there':
     'မှတ်စု {count} ခု မကြာမီဖျက်ခဲ့သည်တွင်ရှိ၍ ထိုတွင် ကျန်မည်',
   '{count} drawings and scans have no picture on this Mac':

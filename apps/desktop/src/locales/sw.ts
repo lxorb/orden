@@ -1345,6 +1345,8 @@ export const sw: Dictionary = {
     'Kadi {count} za hisia na shughuli ni michoro, kwa hivyo maneno yao pekee huvuka',
   '{count} notes are behind a password, which nothing but Notes can open':
     'Madokezo {count} yako nyuma ya nenosiri ambalo Notes pekee huweza kufungua',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    'Madokezo {count} yako nyuma ya nenosiri ambalo Bear pekee huweza kufungua',
   '{count} notes are in Recently Deleted, and stay there':
     'Madokezo {count} yako katika Vilivyofutwa hivi karibuni na yanasalia huko',
   '{count} drawings and scans have no picture on this Mac':

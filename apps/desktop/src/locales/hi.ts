@@ -1331,6 +1331,8 @@ export const hi: Dictionary = {
     '{count} मनोभाव और गतिविधि कार्ड चित्र हैं, इसलिए केवल उनके शब्द आते हैं',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} नोट पासवर्ड के पीछे हैं, जिसे केवल Notes खोल सकता है',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} नोट पासवर्ड के पीछे हैं, जिसे केवल Bear खोल सकता है',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} नोट हाल में हटाए गए में हैं और वहीं रहते हैं',
   '{count} drawings and scans have no picture on this Mac':

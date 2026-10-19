@@ -1351,6 +1351,8 @@ export const fil: Dictionary = {
     '{count} card ng damdamin at gawain ay mga guhit, kaya salita lang ang pumapasok',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} tala ang nasa likod ng password na Notes lang ang makakabukas',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} tala ang nasa likod ng password na Bear lang ang makakabukas',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} tala ang nasa Kanina lang tinanggal, at doon mananatili',
   '{count} drawings and scans have no picture on this Mac':

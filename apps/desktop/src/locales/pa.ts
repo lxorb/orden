@@ -1338,6 +1338,8 @@ export const pa: Dictionary = {
     '{count} ਮਨੋਭਾਵ ਤੇ ਸਰਗਰਮੀ ਕਾਰਡ ਚਿੱਤਰ ਹਨ, ਇਸ ਲਈ ਸਿਰਫ਼ ਉਨ੍ਹਾਂ ਦੇ ਸ਼ਬਦ ਆਉਂਦੇ ਹਨ',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} ਨੋਟਾਂ ਪਾਸਵਰਡ ਪਿੱਛੇ ਹਨ, ਜਿਸ ਨੂੰ ਸਿਰਫ਼ Notes ਖੋਲ੍ਹ ਸਕਦਾ ਹੈ',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} ਨੋਟਾਂ ਪਾਸਵਰਡ ਪਿੱਛੇ ਹਨ, ਜਿਸ ਨੂੰ ਸਿਰਫ਼ Bear ਖੋਲ੍ਹ ਸਕਦਾ ਹੈ',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} ਨੋਟਾਂ ਹਾਲ ਵਿੱਚ ਮਿਟਾਏ ਵਿੱਚ ਹਨ ਤੇ ਉੱਥੇ ਹੀ ਰਹਿੰਦੀਆਂ ਹਨ',
   '{count} drawings and scans have no picture on this Mac':

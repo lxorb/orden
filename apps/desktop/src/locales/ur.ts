@@ -1332,6 +1332,8 @@ export const ur: Dictionary = {
     '{count} موڈ اور سرگرمی کارڈ خاکے ہیں، اس لیے صرف ان کے الفاظ آتے ہیں',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} نوٹس پاس ورڈ کے پیچھے ہیں، جسے صرف Notes کھول سکتا ہے',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} نوٹس پاس ورڈ کے پیچھے ہیں، جسے صرف Bear کھول سکتا ہے',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} نوٹس حال میں حذف شدہ میں ہیں اور وہیں رہتے ہیں',
   '{count} drawings and scans have no picture on this Mac':

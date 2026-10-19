@@ -1323,6 +1323,8 @@ export const ms: Dictionary = {
     '{count} kad suasana dan aktiviti ialah lukisan, jadi hanya perkataannya sampai',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} nota berada di sebalik kata laluan yang hanya Notes boleh buka',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} nota berada di sebalik kata laluan yang hanya Bear boleh buka',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} nota berada dalam Baru dihapuskan dan kekal di sana',
   '{count} drawings and scans have no picture on this Mac':

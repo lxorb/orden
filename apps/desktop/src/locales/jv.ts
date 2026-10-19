@@ -1319,6 +1319,8 @@ export const jv: Dictionary = {
     '{count} kartu swasana lan kegiatan iku gambar, mula mung tembunge sing mlebu',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} cathetan ana ing mburi tembung sandhi sing mung Notes bisa mbukak',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} cathetan ana ing mburi tembung sandhi sing mung Bear bisa mbukak',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} cathetan ana ing Anyar dibusak lan tetep ing kono',
   '{count} drawings and scans have no picture on this Mac':

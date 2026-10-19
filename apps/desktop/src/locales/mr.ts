@@ -1330,6 +1330,8 @@ export const mr: Dictionary = {
     '{count} मनःस्थिती व कृती कार्डे रेखाटने आहेत, म्हणून फक्त त्यांचे शब्द येतात',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} नोंदी पासवर्डच्या मागे आहेत, जो फक्त Notes उघडू शकते',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} नोंदी पासवर्डच्या मागे आहेत, जो फक्त Bear उघडू शकते',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} नोंदी अलीकडे काढलेल्यांत आहेत आणि तिथेच राहतात',
   '{count} drawings and scans have no picture on this Mac':

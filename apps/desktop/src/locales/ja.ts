@@ -1320,6 +1320,8 @@ export const ja: Dictionary = {
     '{count} 件の気分とアクティビティのカードは絵なので、文字だけが入ります',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} 件のメモはパスワードで保護され、メモ以外では開けません',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} 件のメモはパスワードで保護され、Bear 以外では開けません',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} 件のメモは最近削除した項目にあり、そこに残ります',
   '{count} drawings and scans have no picture on this Mac':

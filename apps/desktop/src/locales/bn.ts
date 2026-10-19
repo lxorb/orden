@@ -1331,6 +1331,8 @@ export const bn: Dictionary = {
     '{count}টি মন ও কাজের কার্ড আঁকা, তাই কেবল তাদের লেখা আসে',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count}টি নোট পাসওয়ার্ডের পিছনে, যা কেবল Notes খুলতে পারে',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count}টি নোট পাসওয়ার্ডের পিছনে, যা কেবল Bear খুলতে পারে',
   '{count} notes are in Recently Deleted, and stay there':
     '{count}টি নোট সাম্প্রতিক মুছে ফেলায় আছে এবং সেখানেই থাকে',
   '{count} drawings and scans have no picture on this Mac':

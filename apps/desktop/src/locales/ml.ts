@@ -1348,6 +1348,8 @@ export const ml: Dictionary = {
     '{count} മനോഭാവ, പ്രവൃത്തി കാർഡുകൾ വരകളാണ്, അതിനാൽ അവയുടെ വാക്കുകൾ മാത്രം വരും',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} കുറിപ്പുകൾ പാസ്‌വേഡിനു പിന്നിലാണ്, അത് Notes മാത്രം തുറക്കും',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} കുറിപ്പുകൾ പാസ്‌വേഡിനു പിന്നിലാണ്, അത് Bear മാത്രം തുറക്കും',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} കുറിപ്പുകൾ അടുത്തിടെ മായ്ച്ചവയിലാണ്, അവിടെത്തന്നെ നിൽക്കും',
   '{count} drawings and scans have no picture on this Mac':

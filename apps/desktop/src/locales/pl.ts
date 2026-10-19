@@ -1389,6 +1389,8 @@ export const pl: Dictionary = {
     'Kart nastroju i aktywności będących rysunkami: {count} - przenoszą się tylko słowa',
   '{count} notes are behind a password, which nothing but Notes can open':
     'Notatek za hasłem, które otwiera tylko Notatki: {count}',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    'Notatek za hasłem, które otwiera tylko Bear: {count}',
   '{count} notes are in Recently Deleted, and stay there':
     'Notatek w Ostatnio usuniętych, które tam zostają: {count}',
   '{count} drawings and scans have no picture on this Mac':

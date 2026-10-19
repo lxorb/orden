@@ -1347,6 +1347,8 @@ export const ta: Dictionary = {
     '{count} மனநிலை மற்றும் செயல் அட்டைகள் வரைபடங்கள், எனவே அவற்றின் சொற்கள் மட்டுமே வரும்',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} குறிப்புகள் கடவுச்சொல்லுக்குப் பின் உள்ளன, அதை Notes மட்டுமே திறக்கும்',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} குறிப்புகள் கடவுச்சொல்லுக்குப் பின் உள்ளன, அதை Bear மட்டுமே திறக்கும்',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} குறிப்புகள் சமீபத்தில் நீக்கியவற்றில் உள்ளன, அங்கேயே இருக்கும்',
   '{count} drawings and scans have no picture on this Mac':

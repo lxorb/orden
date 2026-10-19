@@ -1307,6 +1307,8 @@ export const th: Dictionary = {
     'การ์ดอารมณ์และกิจกรรม {count} ใบเป็นภาพวาด จึงมาแต่ข้อความ',
   '{count} notes are behind a password, which nothing but Notes can open':
     'โน้ต {count} รายการอยู่หลังรหัสผ่านที่มีแต่ Notes เปิดได้',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    'โน้ต {count} รายการอยู่หลังรหัสผ่านที่มีแต่ Bear เปิดได้',
   '{count} notes are in Recently Deleted, and stay there':
     'โน้ต {count} รายการอยู่ในที่ลบเมื่อเร็วๆ นี้ และยังอยู่ที่นั่น',
   '{count} drawings and scans have no picture on this Mac':

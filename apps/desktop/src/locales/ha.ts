@@ -1347,6 +1347,8 @@ export const ha: Dictionary = {
     'Katunan yanayi da ayyuka {count} zane ne, don haka kalmominsu kawai ke shigowa',
   '{count} notes are behind a password, which nothing but Notes can open':
     'Bayanan kula {count} suna bayan kalmar sirri da Notes kawai zai iya buɗewa',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    'Bayanan kula {count} suna bayan kalmar sirri da Bear kawai zai iya buɗewa',
   '{count} notes are in Recently Deleted, and stay there':
     'Bayanan kula {count} suna cikin Wanda aka share kwanan nan kuma za su zauna can',
   '{count} drawings and scans have no picture on this Mac':

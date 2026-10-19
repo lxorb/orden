@@ -1412,6 +1412,8 @@ export const ar: Dictionary = {
     '{count} بطاقة مزاج ونشاط هي رسوم، فلا ينتقل منها سوى الكلمات',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} ملاحظة محمية بكلمة سر لا يفتحها سوى Notes',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} ملاحظة محمية بكلمة سر لا يفتحها سوى Bear',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} ملاحظة في المحذوفات حديثاً وتبقى هناك',
   '{count} drawings and scans have no picture on this Mac':

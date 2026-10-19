@@ -1368,6 +1368,8 @@ export const fr: Dictionary = {
     '{count} cartes d’humeur et d’activité sont des dessins : seuls leurs mots arrivent',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} notes sont protégées par un mot de passe que seul Notes peut ouvrir',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} notes sont protégées par un mot de passe que seul Bear peut ouvrir',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} notes sont dans Supprimés récemment et y restent',
   '{count} drawings and scans have no picture on this Mac':

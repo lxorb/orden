@@ -1337,6 +1337,8 @@ export const te: Dictionary = {
     '{count} మనోభావ, కార్యకలాప కార్డులు గీతలు, కాబట్టి వాటి మాటలే వస్తాయి',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} నోట్లు పాస్‌వర్డ్ వెనుక ఉన్నాయి, దాన్ని Notes మాత్రమే తెరుస్తుంది',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} నోట్లు పాస్‌వర్డ్ వెనుక ఉన్నాయి, దాన్ని Bear మాత్రమే తెరుస్తుంది',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} నోట్లు ఇటీవల తొలగించినవిలో ఉన్నాయి, అక్కడే ఉంటాయి',
   '{count} drawings and scans have no picture on this Mac':

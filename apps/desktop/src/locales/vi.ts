@@ -1314,6 +1314,8 @@ export const vi: Dictionary = {
     '{count} thẻ tâm trạng và hoạt động là hình vẽ, nên chỉ chữ được chuyển sang',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} ghi chú nằm sau mật khẩu mà chỉ Notes mở được',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} ghi chú nằm sau mật khẩu mà chỉ Bear mở được',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} ghi chú nằm trong Đã xoá gần đây và vẫn ở đó',
   '{count} drawings and scans have no picture on this Mac':

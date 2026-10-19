@@ -1338,6 +1338,8 @@ export const gsw: Dictionary = {
     '{count} Stimmigs- und Aktivitätscharte sind Zeichnige: nur ihri Wort chömed mit',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} Notize sind hinder eme Passwort, wo nur Notize ufmacht',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} Notize sind hinder eme Passwort, wo nur Bear ufmacht',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} Notize sind i Zletscht glöscht und bliibed det',
   '{count} drawings and scans have no picture on this Mac':

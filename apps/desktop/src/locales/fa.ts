@@ -1333,6 +1333,8 @@ export const fa: Dictionary = {
     '{count} کارت حال و فعالیت نقش‌اند، پس تنها واژه‌هایشان می‌آید',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} یادداشت پشت گذرواژه‌ای است که تنها Notes می‌گشاید',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} یادداشت پشت گذرواژه‌ای است که تنها Bear می‌گشاید',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} یادداشت در «تازه حذف‌شده» است و همان‌جا می‌ماند',
   '{count} drawings and scans have no picture on this Mac':

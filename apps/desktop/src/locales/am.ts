@@ -1317,6 +1317,8 @@ export const am: Dictionary = {
     '{count} የስሜትና የእንቅስቃሴ ካርዶች ሥዕሎች ናቸው፣ ስለዚህ ቃላቶቻቸው ብቻ ይሻገራሉ',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} ማስታወሻዎች Notes ብቻ የሚከፍተው የይለፍ ቃል ጀርባ ናቸው',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} ማስታወሻዎች Bear ብቻ የሚከፍተው የይለፍ ቃል ጀርባ ናቸው',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} ማስታወሻዎች በቅርቡ የጠፋ ውስጥ ናቸውና እዚያ ይቀራሉ',
   '{count} drawings and scans have no picture on this Mac':

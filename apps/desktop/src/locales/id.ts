@@ -1324,6 +1324,8 @@ export const id: Dictionary = {
     '{count} kartu suasana dan aktivitas berupa gambar, jadi hanya katanya yang ikut',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} catatan ada di balik sandi yang hanya Notes bisa buka',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} catatan ada di balik sandi yang hanya Bear bisa buka',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} catatan ada di Baru dihapus dan tetap di sana',
   '{count} drawings and scans have no picture on this Mac':
