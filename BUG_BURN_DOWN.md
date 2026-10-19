@@ -25,8 +25,8 @@ data loss. **High** - data loss or a security hole on a specific path.
 | Severity | Found | Fixed | Open |
 | --- | --: | --: | --: |
 | Critical | 1 | 1 | 0 |
-| High | 11 | 8 | 3 |
-| Medium | 21 | 18 | 3 |
+| High | 11 | 11 | 0 |
+| Medium | 21 | 21 | 0 |
 | Low | 8 | 8 | 0 |
 
 Open rows are being fixed; see the status column.
@@ -57,12 +57,12 @@ Open rows are being fixed; see the status column.
 | B20 | Low | Removing a tag written twice left one copy | Fixed `895d8c3c` | `find` took one match | Every copy removed, as one edit where adjacent | `task-edits.test.ts` "takes off a tag written twice…" |
 | B21 | Low | Task list over `> c` gave `- [ ] > c` | Fixed `89fe1dd4` | The quote marker was read as words | Read after the quote prefix | `commands.test.ts` "puts the box inside a quote…" |
 | B22 | Low | A date with no year took UTC's year near New Year | Fixed `f56407e9` | `new Date().toISOString()` | Local `todayOf()` | `todoist.test.ts` (Pacific/Auckland, fake clock) |
-| B23 | High | Saving a draft into a space not on screen overwrote an existing note there | In progress | `freeName` checks only the space on screen | - | - |
-| B24 | High | Undoing a delete overwrote a note made at the same path since | In progress | `putBack` writes without checking the path | - | - |
-| B25 | High | Moving a file or renaming a folder during an autosave left the file in two places | In progress | `move`/folder `rename` not held; `written()` resets `path` | - | - |
-| B26 | Medium | The heading rewritten after a rename was never saved | In progress | `replace(…, note.dirty)` is quiet for a clean note | - | - |
-| B27 | Medium | A link rewrite was lost when the linking note had unsaved typing | In progress | `retarget` rewrites the disk copy; the dirty document writes the old link back | - | - |
-| B28 | Medium | Convert syntax could overwrite a change made during its confirm dialog | In progress | Closed notes written from text read before the dialog | - | - |
+| B23 | High | Saving a draft into a space not on screen overwrote an existing note there | Fixed `e0baa3cb` | `freeName` checks only the space on screen | `Saving.claim` asks the disk about each name and claims it in the same step | `written-over.store.test.ts` "steps past a note of the same name" (failed before) |
+| B24 | High | Undoing a delete overwrote a note made at the same path since | Fixed `aabc4970` | `putBack` writes without checking the path | `writeBeside` steps a taken name aside, like the trash restore | `written-over.store.test.ts` "puts the old note back beside the new one" (failed before) |
+| B25 | High | Moving a file or renaming a folder during an autosave left the file in two places | Fixed `9fa45386` | `move`/folder `rename` not held; `written()` resets `path` | `holdingUnder` holds every document under the path; `written()` keeps a moved path and re-queues | 3 `file-ops.store.test.ts` tests with `write_note` held open, `saving.test.ts` (failed before) |
+| B26 | Medium | The heading rewritten after a rename was never saved | Fixed `5f9de58b` | `replace(…, note.dirty)` is quiet for a clean note | The note is marked dirty and owed a write after the rename | `file-ops.store.test.ts` "has the new heading written to the file" (failed before) |
+| B27 | Medium | A link rewrite was lost when the linking note had unsaved typing | Fixed `73854b3e` | `retarget` rewrites the disk copy; the dirty document writes the old link back | An open note is rewritten in its document, then written | `file-ops.store.test.ts` "keeps both the typing and the new link" (failed before) |
+| B28 | Medium | Convert syntax could overwrite a change made during its confirm dialog | Fixed `bcd017c9` | Closed notes written from text read before the dialog | `writeClosed` re-reads; edits move past a changed span, overlap leaves the note alone | 3 `note-text.test.ts` tests (failed before) |
 | B29 | High | A file shared with you on its own rendered its raw HTML as your own | Fixed `dc51542d` | `originOfDocument` ignores `note.shared` when `path` is null | A file opened from a share counts as shared whatever its path | `markdown-trust` test for a shared file with no path (failed before) |
 | B30 | High | Export and print never asked the trust question, and the hidden-window outputs have no CSP | Fixed `4b4ca0c1` | `buildBody` never passes `escapeHtml` | `buildBody` passes the trust answer; export and print pages carry a CSP meta | export tests for untrusted HTML and the CSP meta (failed before) |
 | B31 | High | Pasting or clipping HTML collapsed blank lines and stripped trailing spaces inside code blocks | Fixed `80c499a7` | `tidy()` runs over fenced code | `tidy()` skips fenced code | html-to-markdown test with blank lines and trailing spaces in a fence (failed before) |
