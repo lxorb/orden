@@ -53,6 +53,26 @@ describe('coalesce', () => {
     expect(coalesce(ops)).toEqual([rename('2', 'm', 'X'), rename('3', 'n', 'B')])
   })
 
+  test("a day's note renamed or moved before it went is made as a note of its own (#436)", () => {
+    // Made `mergeable` under its new name, it was merged into whichever note had that
+    // name: walk seed 207384677 put a day's words into a note renamed Café.md.
+    const day = (op: string): Op => ({
+      ...create(op, 'd', '2026-09-30.md'),
+      mergeable: { text: '' },
+    })
+
+    const renamed = coalesce([day('1'), rename('2', 'd', 'café.md')])
+    expect(renamed).toEqual([{ ...create('1', 'd', 'café.md') }])
+
+    const moved = coalesce([mkdir('0', 'f', 'Work'), day('1'), move('2', 'd', 'f')])
+    expect(moved).toEqual([mkdir('0', 'f', 'Work'), { ...create('1', 'd', '2026-09-30.md', 'f') }])
+
+    // Only its case changed: still the day's note, still merged with one made elsewhere.
+    expect(coalesce([day('1'), rename('2', 'd', '2026-09-30.MD')])).toEqual([
+      { ...day('1'), name: '2026-09-30.MD' },
+    ])
+  })
+
   test('a rename or move of a note whose create has not gone folds into the create', () => {
     const ops = [
       mkdir('0', 'f', 'Work'),
