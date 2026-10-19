@@ -389,6 +389,10 @@ zbus = { version = "5", default-features = false, features = ["async-io", "block
 # See web_keys.rs and keyboard.rs.
 # And the window's own edges, with a border's cursors (window_drag.rs).
 x11rb = { version = "0.13", default-features = false, features = ["cursor", "resource_manager"] }
+# GLib's sources, read by name at run time where the binding cannot be linked: the
+# main thread's loop asleep while nothing happens on CEF (chromium_pump.rs). In the lock
+# file already, as what nearly every crate here builds with.
+libc = "0.2"
 # A window's own X11 window, for what only the window manager is told: quick add
 # floated (linux.rs). In the lock file already, through the runtime's windowing.
 raw-window-handle = "0.6"

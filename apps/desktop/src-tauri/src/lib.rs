@@ -123,6 +123,9 @@ mod links;
 // What a Linux desktop, and Wayland above all, needs beyond GTK; see linux.rs.
 #[cfg(target_os = "linux")]
 mod linux;
+// The main thread asleep while nothing happens, on CEF; see chromium_pump.rs.
+#[cfg(all(target_os = "linux", feature = "cef"))]
+mod chromium_pump;
 mod logs;
 mod matcher;
 // `nib mcp`, the server an agent's client runs; main.rs hands it the process before
@@ -891,6 +894,8 @@ fn ready(
     // `hearing`.
     #[cfg(desktop)]
     hearing(handle);
+    #[cfg(all(target_os = "linux", feature = "cef"))]
+    chromium_pump::start(handle);
 
     // And the window on screen, which is the last thing this does and the first thing
     // anybody sees. Everything above it costs under two milliseconds together and has to
