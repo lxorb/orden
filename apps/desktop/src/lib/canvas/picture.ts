@@ -141,14 +141,13 @@ function plainCard(text: string, box: Box, palette: Palette): string {
   return `<text font-size="${CARD_FONT}" fill="${palette.text ?? '#111'}" class="label">${spans}</text>`
 }
 
-function cardBody(node: CanvasNode, canvasPath: string | null): string {
+function cardBody(node: CanvasNode, canvasPath: string | null, trusted: boolean): string {
   switch (node.type) {
     case 'text':
-      // Trusting, like every other export: a picture is a file somebody asked for
-      // and takes away, and nothing in it runs - an SVG drawn as an image has no
-      // scripts. The rule about whose HTML runs is about the app's own surfaces;
-      // see trust.ts.
-      return `<div class="card" xmlns="http://www.w3.org/1999/xhtml">${asXml(cardHtml(node.text, canvasPath, true))}</div>`
+      // The question the plane on screen asks of the same card: an SVG opened on
+      // its own is a document, and a PDF is printed from a window of the app's
+      // own, so somebody else's HTML in a card is still theirs. See trust.ts.
+      return `<div class="card" xmlns="http://www.w3.org/1999/xhtml">${asXml(cardHtml(node.text, canvasPath, trusted))}</div>`
     case 'link':
       return `<div class="card" xmlns="http://www.w3.org/1999/xhtml"><strong>${escapeAll(hostOf(node.url))}</strong><br/><span style="opacity:.6">${escapeAll(node.url)}</span></div>`
     case 'file':
@@ -173,12 +172,13 @@ function shapeWords(
   palette: Palette,
   canvasPath: string | null,
   plain: boolean,
+  trusted: boolean,
 ): string {
   if (!node.text) return ''
 
   if (plain) return plainCard(node.text, box, palette)
 
-  return `<foreignObject x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}"><div class="card" xmlns="http://www.w3.org/1999/xhtml" style="display:flex;flex-direction:column;justify-content:center;text-align:center">${asXml(cardHtml(node.text, canvasPath, true))}</div></foreignObject>`
+  return `<foreignObject x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}"><div class="card" xmlns="http://www.w3.org/1999/xhtml" style="display:flex;flex-direction:column;justify-content:center;text-align:center">${asXml(cardHtml(node.text, canvasPath, trusted))}</div></foreignObject>`
 }
 
 function hostOf(url: string): string {
@@ -198,6 +198,7 @@ function drawnNode(
   canvasPath: string | null,
   root: string | null,
   plain: boolean,
+  trusted: boolean,
 ): string {
   const box = boxOf(node)
   const line = colourOf(node, palette, palette.line ?? '#d6d9de')
@@ -214,7 +215,7 @@ function drawnNode(
     const fill = node.fill ? stroke : 'none'
     const opacity = node.fill ? 0.18 : 1
 
-    const words = shapeWords(node, box, palette, canvasPath, plain)
+    const words = shapeWords(node, box, palette, canvasPath, plain, trusted)
 
     if (node.shape === 'rect') {
       return `<g><rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" rx="4" fill="${fill}" fill-opacity="${opacity}" stroke="${stroke}" stroke-width="2"/>${words}</g>`
@@ -237,7 +238,7 @@ function drawnNode(
         : ''
 
     const body = `<path d="${d}" fill="${open ? 'none' : fill}" fill-opacity="${opacity}" stroke="${stroke}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>`
-    return `<g>${body}${head}${shapeWords(node, box, palette, canvasPath, plain)}</g>`
+    return `<g>${body}${head}${shapeWords(node, box, palette, canvasPath, plain, trusted)}</g>`
   }
 
   if (node.type === 'file' && isPicture(node.file)) {
@@ -252,7 +253,7 @@ function drawnNode(
     return `<g>${card}${plainCard(saidBy(node), box, palette)}</g>`
   }
 
-  return `<g>${card}<foreignObject x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}">${cardBody(node, canvasPath)}</foreignObject></g>`
+  return `<g>${card}<foreignObject x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}">${cardBody(node, canvasPath, trusted)}</foreignObject></g>`
 }
 
 /** What a card says, as words. */
@@ -314,13 +315,18 @@ function drawnEdges(canvas: Canvas, palette: Palette): string {
  *  Exported because a plane is also drawn inside the note that embeds it, where the
  *  same reasoning holds: there is one description of what a canvas looks like as a
  *  picture, and an embed that drew its own would be a second one to drift from.
- *  That reader asks for `plain`, and reading/drawn.ts says why. */
+ *  That reader asks for `plain`, and reading/drawn.ts says why.
+ *
+ *  `trusted` is whether the HTML in the cards is markup rather than the characters
+ *  it is made of, asked of the plane the way its surface asks it; see trust.ts. A
+ *  plain picture holds no HTML at all, so it does not matter there. */
 export function canvasSvg(
   canvas: Canvas,
   palette: Palette,
   canvasPath: string | null,
   root: string | null,
   plain = false,
+  trusted = false,
 ): string {
   const box = bounds([...canvas.nodes, ...canvas.ink.map(strokeBox)]) ?? {
     x: 0,
@@ -335,7 +341,7 @@ export function canvasSvg(
   const height = Math.max(1, Math.round(box.height + 2 * PADDING))
 
   const nodes = canvas.nodes
-    .map((node) => drawnNode(node, palette, canvasPath, root, plain))
+    .map((node) => drawnNode(node, palette, canvasPath, root, plain, trusted))
     .join('')
 
   return [
@@ -402,11 +408,20 @@ export interface Drawing {
   path: string | null
   root: string | null
   name: string
+  /** Whether the cards' HTML is markup; see `canvasSvg`. */
+  trusted: boolean
 }
 
 /** The SVG, with every picture in it inlined so the file stands alone. */
 async function readySvg(drawing: Drawing, plain = false): Promise<string> {
-  const svg = canvasSvg(drawing.canvas, drawing.palette, drawing.path, drawing.root, plain)
+  const svg = canvasSvg(
+    drawing.canvas,
+    drawing.palette,
+    drawing.path,
+    drawing.root,
+    plain,
+    drawing.trusted,
+  )
   // `inlineImages` matches `<img src>`, which is what a card's markdown holds;
   // an `<image href>` is swapped the same way by asking for the same resolver.
   //

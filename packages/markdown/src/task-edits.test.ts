@@ -119,6 +119,27 @@ describe('a change', () => {
     expect(changedTask(line, change)).toBe(after)
   })
 
+  /** A tag and a field taken off together at the opening of the words, side by
+   *  side: each would claim the blank between them, the first after itself and the
+   *  second before, and an editor handed edits that overlap leaves a blank behind
+   *  in front of the words. */
+  test.each([
+    ['- [ ] #a [due:: 2026-10-01] Buy milk', { tags: [], due: null }],
+    ['- [ ] [due:: 2026-10-01] #a Buy milk', { tags: [], due: null }],
+    ['- [ ] #a [k:: v] Buy milk', { tags: [], fields: {} }],
+    ['- [ ] [k:: v] #a Buy milk', { tags: [], fields: {} }],
+  ] as [string, TaskChange][])(
+    '%s with %o takes both off in edits that never overlap',
+    (line, change) => {
+      const edits = writeTask(line, change)
+      edits.forEach((edit, at) => {
+        const next = edits[at + 1]
+        if (next) expect(edit.to).toBeLessThanOrEqual(next.from)
+      })
+      expect(changedTask(line, change)).toBe('- [ ] Buy milk')
+    },
+  )
+
   test('touches only the characters that change', () => {
     expect(writeTask('- [ ] a ⏫ 📅 2026-10-06', { due: '2026-10-07' })).toEqual([
       { from: 13, to: 23, insert: '2026-10-07' },

@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { readBase } from '../base-file'
+import { readBase, writeBase } from '../base-file'
 import { rowsOfText } from '../note-rows'
 import {
   AgentError,
@@ -329,5 +329,40 @@ describe('Today without the engine', () => {
     const engine = listTasks(many, { view: 'today' }, context).tasks.map((one) => one.at)
     expect(todayTasks(many, context.today).map((row) => atOf(row))).toEqual(engine)
     expect(engine).toHaveLength(5)
+  })
+})
+
+/** Filters and a limit nib cannot read are kept as written, but only until the
+ *  base or the view is given its own; clearing them is giving it none. */
+describe('a base edited where nib could not read it', () => {
+  const SOURCE =
+    'filters:\n  xor:\n    - a\nviews:\n  - type: table\n    name: A\n    filters:\n      xor:\n        - b\n    limit: "10"\n'
+
+  test("a view's limit cleared is gone from the file", () => {
+    const edited = editedBase(readBase(SOURCE), [{ op: 'edit_view', view: 'A', limit: null }])
+    expect(writeBase(edited, SOURCE)).not.toContain('limit')
+  })
+
+  test("a view's limit set and then cleared does not bring the old one back", () => {
+    const set = editedBase(readBase(SOURCE), [{ op: 'edit_view', view: 'A', limit: 5 }])
+    const cleared = editedBase(set, [{ op: 'edit_view', view: 'A', limit: null }])
+    expect(writeBase(cleared, SOURCE)).not.toContain('limit')
+  })
+
+  test("a view's filters cleared are gone from the file", () => {
+    const edited = editedBase(readBase(SOURCE), [{ op: 'set_filter', view: 'A', filter: null }])
+    expect(writeBase(edited, SOURCE)).not.toContain('- b')
+  })
+
+  test("the base's filters cleared are gone from the file", () => {
+    const edited = editedBase(readBase(SOURCE), [{ op: 'set_filter', filter: null }])
+    expect(writeBase(edited, SOURCE)).not.toContain('- a\n')
+  })
+
+  test("the base's filters set replace the unreadable ones", () => {
+    const edited = editedBase(readBase(SOURCE), [{ op: 'set_filter', filter: 'c == 1' }])
+    const written = writeBase(edited, SOURCE)
+    expect(written).toContain('filters: c == 1\n')
+    expect(written).not.toContain('- a\n')
   })
 })
