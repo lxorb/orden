@@ -26,8 +26,8 @@ data loss. **High** - data loss or a security hole on a specific path.
 | --- | --: | --: | --: |
 | Critical | 1 | 1 | 0 |
 | High | 14 | 14 | 0 |
-| Medium | 33 | 33 | 0 |
-| Low | 16 | 10 | 6 |
+| Medium | 34 | 34 | 0 |
+| Low | 16 | 11 | 5 |
 
 Open rows are being fixed; see the status column.
 
@@ -91,13 +91,14 @@ Open rows are being fixed; see the status column.
 | B55 | Low | Sync's own moves and an agent's move to another space do not wait for a write in the air | Open, accepted (older than this branch) | `disk.move` and `movedAway` do not go through `holdingUnder` | - (B25's `written()` now keeps the tab right and re-queues the write) | - |
 | B56 | Low | An agent or automation edit can report done when the note changed in the same milliseconds and nothing was written | Open, accepted | `writeClosed` now refuses an overlapping edit; the caller does not hear of it | - (before this branch the same race wrote over the note) | - |
 | B57 | Medium | In the browser, sync v2 never saw a file on the disk: a note deleted on another device stayed, and a merged note kept its old words (re-audit of B52; older than this branch) | Fixed `a61ad1363` | `stamped` in sync2/app-world.ts asked `file_stamp` alone | `exists` is `onDisk` | `sync2/app-world.test.ts` (failed before) |
-| B58 | Low | In the browser a note over 64 MB reads as not there, so a write could go over it | Open, accepted | `read_note` refuses it as too large, and `onDisk` hears a refusal | - (such a note only arrives by sync or import) | - |
+| B58 | Low | In the browser a note over 64 MB read as not there, so a write could go over it | Fixed (this commit) | `read_note` refuses it as too large, and `onDisk` heard a refusal | `onDisk` asks the listing, which has its row | `web/store.test.ts` |
 | B59 | Medium | In the browser, a picture or PDF deleted on another device stopped sync v2 on every pass (re-audit of B57; regression from B57) | Fixed `4db8f385b` | Now that `exists` saw the picture, `settle` trashed it, and the browser's trash asked only the notes store whether anything was there | `holds` asks the asset store too, for `trash_item` and `restore_trash` | `web/commands.test.ts` picture in the trash (failed before) |
 | B60 | Medium | In the browser, putting a picture back from Recently deleted went over a newer one of the same name (re-audit of B59) | Fixed `63170d329` | `freeSpot` asked `occupied`, which knows only the notes | `freeSpot` asks `holds` | `web/commands.test.ts` (failed before) |
 | B61 | Medium | In the browser, sync v2 never saw a folder as there: one deleted on another device stayed with its files untracked (re-audit of B59; older than this branch) | Fixed `63170d329` | Nothing reads at a folder's own path | `onDisk` in the browser counts a folder that lists anything, or its marker | `on-disk.test.ts` (failed before) |
 | B62 | Medium | On a desktop, a folder deleted on another device was never removed: sync forgot the notes in it and sent them up again (re-audit of B61; older than this branch) | Fixed `64b147da4` | The crate stamps no folder, so `exists(folder)` was false and `forgetUnder` dropped the notes inside without removing them | `onDisk` on the desktop also asks the tree, which refuses a root that is not a folder | `on-disk.test.ts` (failed before) |
 | B63 | Medium | A folder renamed while a note was moved into it never reached its new name: it waited on every pass, its notes went one by one, an empty folder stayed (re-audit of B62; older than this branch) | Fixed `f0f620669` | Moves were ordered by where entries were; the note went first and its folder was made at the renamed folder's new name, which then read as taken | An entry waits while its target is inside a folder still on its way; a round that moves nothing ends the settle | `sync2/places.test.ts`, both orders (the note-first one failed before) |
 | B64 | Medium | A folder moved into a new folder that took its old name was asked to move inside itself, and sync threw on every pass (re-audit of B63; older than this branch) | Fixed `45fff1553` | The new folder has no place on disk yet, so nothing marked the target as inside the entry's own path | An entry wanted inside where it is steps aside first and moves on next round | `sync2/places.test.ts` with a disk that refuses a move into itself (failed before); 3000 random trees in a scratch fuzz all reach their wanted layout |
+| B65 | Medium | In the browser, an import read the whole listing once for every file it brought (complete final re-audit; regression from B61) | Fixed (this commit) | `onDisk` asked a missing name by listing a tree, which reads every row in the store | `path_exists`, a key lookup on the listing (`stats.holds`), answers for notes, assets and folders in one call | `web/store.test.ts`, `web/commands.test.ts`, `on-disk.test.ts` |
 | B48 | Low | After a self-linking note is renamed, a row of its properties can show the old link until its next save or scan | Open, accepted | `hear(target, after)` fires before `fileMoved` moves the rows store | - (the file on disk is right) | - |
 
 Not fixed, judged insignificant or out of scope: GFM's escaped backslash before a

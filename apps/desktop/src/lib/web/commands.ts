@@ -892,6 +892,11 @@ export async function webInvoke<T>(
     case 'read_tree':
       return (await tree(root, args.options ?? {})) as T
 
+    // A note, a picture or a folder at this path: what the desktop's stamp answers,
+    // and its folders too. See on-disk.ts.
+    case 'path_exists':
+      return (await stats.holds(normalise(path))) as T
+
     // Searching a space is not here: it runs in a worker, because reading every
     // note and scoring every line of them on this thread is keystrokes that do
     // not appear. See web/search-client.ts, which search/space.ts calls instead.

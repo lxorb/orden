@@ -15,6 +15,7 @@ vi.mock('../tauri', () => ({
   invoke: (command: string, args?: { path?: string }) => {
     const path = args?.path ?? ''
     if (command === 'file_stamp') return Promise.resolve(null)
+    if (command === 'path_exists') return Promise.resolve(notes.has(path))
     if (command === 'read_note' && notes.has(path)) return Promise.resolve(notes.get(path))
     return Promise.reject(new Error(`nothing at ${path}`))
   },

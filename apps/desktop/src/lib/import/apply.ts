@@ -142,7 +142,7 @@ const ESCAPING = key('That import would have landed outside the space, so nothin
  *  hold, so a picture, a file in `.obsidian/` or any file of another space is not
  *  in it: the disk is asked about every path the import would write as well, and a
  *  path it holds is taken like any other, until no path the import would write is
- *  one. A disk that cannot be asked, a page in a browser, has the list's word. */
+ *  one. In a browser the listing answers; see on-disk.ts. */
 async function restampedOnDisk(
   plan: Written,
   target: ImportTarget,

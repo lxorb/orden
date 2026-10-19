@@ -1,6 +1,6 @@
 import 'fake-indexeddb/auto'
 import { describe, expect, test, vi } from 'vitest'
-import { files, inSlices, type RowChange, stats } from './store'
+import { assets, files, inSlices, type RowChange, stats } from './store'
 
 /** Reading a whole store without stopping the thread.
  *
@@ -109,5 +109,21 @@ describe('a file written over', () => {
     listening.close()
 
     expect(heard).toEqual([{ written: ['/s/note.md'], gone: [] } satisfies RowChange])
+  })
+})
+
+describe('whether the listing holds a path', () => {
+  // By a key: what onDisk asks in the browser, once for every file an import brings.
+  test('holds a note, a picture, a folder of either, and not a name they only begin', async () => {
+    await files.write('/h/Plan.md', '# Plan', 1)
+    await assets.put({ path: '/h/Pics/shot.png', type: 'image/png', data: 'AAAA', modified: 1 })
+
+    expect(await stats.holds('/h/Plan.md')).toBe(true)
+    expect(await stats.holds('/h/Pics/shot.png')).toBe(true)
+    expect(await stats.holds('/h/Pics')).toBe(true)
+    expect(await stats.holds('/h')).toBe(true)
+    expect(await stats.holds('/h/Plan')).toBe(false)
+    expect(await stats.holds('/h/Pic')).toBe(false)
+    expect(await stats.holds('/h/Gone.md')).toBe(false)
   })
 })

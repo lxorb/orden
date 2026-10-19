@@ -43,29 +43,17 @@ describe('a file on the disk', () => {
   })
 
   // The browser answers null to every stamp, and an undo that asked it found every
-  // name free and wrote over the note there.
-  test('in the browser, is a note that reads or a picture whose bytes do', async () => {
+  // name free and wrote over the note there; nothing read at a folder's own path.
+  test('in the browser, is what the listing holds, folders and pictures too', async () => {
     state.native = false
     state.answers.set('file_stamp /s/a.md', null)
-    state.answers.set('read_note /s/a.md', '# a\n')
-    state.answers.set('read_asset /s/shot.png', 'AAAA')
+    state.answers.set('path_exists /s/a.md', true)
+    state.answers.set('path_exists /s/Work', true)
+    state.answers.set('path_exists /s/gone.md', false)
 
     expect(await onDisk('/s/a.md')).toBe(true)
-    expect(await onDisk('/s/shot.png')).toBe(true)
-    expect(await onDisk('/s/gone.md')).toBe(false)
-  })
-
-  // Nothing reads at a folder's own path, so sync never saw a folder deleted on
-  // another device as there to delete, and a restore could land on one.
-  test('in the browser, is a folder that holds anything, or the marker of an empty one', async () => {
-    state.native = false
-    state.answers.set('read_tree /s/Work', { children: [{ name: 'shot.png' }] })
-    state.answers.set('read_tree /s/Empty', { children: [] })
-    state.answers.set('read_note /s/Empty/.keep', '')
-    state.answers.set('read_tree /s/None', { children: [] })
-
     expect(await onDisk('/s/Work')).toBe(true)
-    expect(await onDisk('/s/Empty')).toBe(true)
-    expect(await onDisk('/s/None')).toBe(false)
+    expect(await onDisk('/s/gone.md')).toBe(false)
+    expect(await onDisk('/s/unasked.md')).toBe(false)
   })
 })

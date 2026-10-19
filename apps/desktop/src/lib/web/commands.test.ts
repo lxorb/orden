@@ -74,6 +74,12 @@ vi.mock('./store', () => ({
   // invariant the real store pays a transaction to hold: a path's listing says
   // what the file at that path says, always.
   stats: {
+    holds: (path: string) =>
+      Promise.resolve(
+        [...disk.files.keys(), ...disk.assets.keys()].some(
+          (one) => one === path || one.startsWith(`${path}/`),
+        ),
+      ),
     all: () =>
       Promise.resolve([
         ...[...disk.files.values()].map((row) => {
@@ -355,6 +361,34 @@ describe('spaces', () => {
       name: 'Notes 2',
       path: '/Notes 2',
     })
+  })
+})
+
+describe('whether anything is at a path', () => {
+  // What onDisk asks in the browser, which keeps no stamps; listing the tree to ask
+  // read every row in the store once for each file an import brought.
+  test('answers for a note, a picture and a folder, and not for a name it only begins', async () => {
+    await write('/Notes/Plan.md', '# Plan')
+    await webInvoke('create_folder', { path: '/Notes/Empty' })
+    disk.assets.set('/Notes/Pics/shot.png', {
+      path: '/Notes/Pics/shot.png',
+      type: 'image/png',
+      data: 'AAAA',
+      modified: 1,
+    })
+    await webInvoke('save_asset', {
+      notePath: '/Notes/Plan.md',
+      folder: 'Pics',
+      name: 'other.png',
+      bytes: [1, 2, 3],
+    }).catch(() => undefined)
+
+    const at = (path: string) => webInvoke<boolean>('path_exists', { path })
+    expect(await at('/Notes/Plan.md')).toBe(true)
+    expect(await at('/Notes')).toBe(true)
+    expect(await at('/Notes/Empty')).toBe(true)
+    expect(await at('/Notes/Plan')).toBe(false)
+    expect(await at('/Notes/Gone.md')).toBe(false)
   })
 })
 
