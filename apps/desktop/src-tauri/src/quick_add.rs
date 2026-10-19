@@ -124,6 +124,14 @@ fn quick_window(app: &AppHandle) -> tauri::Result<tauri::WebviewWindow<crate::En
     #[cfg(all(windows, not(feature = "cef")))]
     let builder = builder.additional_browser_args(crate::engine::BROWSER_ARGS);
 
+    // On Linux the window is an X11 one, and the size it may not leave is said to the
+    // window manager as well - the least and the most it may be, the same - which is
+    // what a tiling compositor floats an X11 window by.
+    #[cfg(feature = "cef")]
+    let builder = builder
+        .min_inner_size(WIDTH, HEIGHT)
+        .max_inner_size(WIDTH, HEIGHT);
+
     // Off the screen with every other window where a drive sent them there.
     crate::placement::built(builder)
 }
