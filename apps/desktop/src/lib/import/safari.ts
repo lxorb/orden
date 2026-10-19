@@ -12,6 +12,9 @@
  *    `Local`, and come at the top of the space rather than in a folder.
  *  - Folders that only hold folders - the root, a profile - hold nothing of their own,
  *    and a row marked deleted, or a folder of Safari's own (`com.apple.…`), is nothing.
+ *  - Private Browsing's tabs, which Safari keeps in folders of their own (`private`,
+ *    and `privatepinned` for its pinned ones), are nobody's to keep, as a private
+ *    window is not in any browser's import.
  *
  *  Before Safari 15 the open windows are `LastSession.plist`: `SessionWindows`, each
  *  with its `TabStates`, the pinned ones `IsAppTab`, a private window never.
@@ -39,6 +42,7 @@ export interface SafariFiles {
 /** Safari's folders in `SafariTabs.db` that are not tab groups. */
 const PINNED = 'TopScopedBookmarkList'
 const LOCAL = 'Local'
+const PRIVATE = new Set(['private', 'privatepinned'])
 
 /** The root's lists in `Bookmarks.plist`, by their fixed titles. */
 const BAR = 'BookmarksBar'
@@ -96,6 +100,7 @@ function readTabs(said: Said[], made: Made, words: FolderWords) {
     if (depth > DEEPEST) return
     for (const folder of inside.get(parent) ?? []) {
       if (folder.type !== FOLDER || folder.title.startsWith('com.apple.')) continue
+      if (PRIVATE.has(folder.title.toLowerCase())) continue
       if (folder.title === PINNED) {
         for (const tab of tabsIn(folder)) page(made, tab, { essential: true })
         continue
