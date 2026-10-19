@@ -48,13 +48,17 @@ describe('a Logseq graph', () => {
 
   test('a task marker is a task', async () => {
     const plan = await readLogseq([
-      file('pages/A.md', '- TODO Ring the bank\n- DONE Buy milk\n  - LATER Sub task\n'),
+      file(
+        'pages/A.md',
+        '- TODO Ring the bank\n- DONE Buy milk\n  - LATER Sub task\n- WAITING On them\n',
+      ),
     ])
 
     const text = noteAt(plan, 'A.md')
     expect(text).toContain('- [ ] Ring the bank')
     expect(text).toContain('- [x] Buy milk')
     expect(text).toContain('  - [ ] Sub task')
+    expect(text).toContain('- [ ] On them')
   })
 
   test('a block reference is written out as what it said', async () => {
@@ -275,5 +279,11 @@ describe('a Logseq graph', () => {
     )
 
     expect(said.body).toBe('- [x] Write it\n- Next\n')
+  })
+
+  test('the filters Logseq keeps on a page for its references are not properties', () => {
+    const said = logseqNote('filters:: {"journal" false}\ntype:: book\n\n- Words\n')
+
+    expect(said.meta.extra).toEqual([['type', 'book']])
   })
 })

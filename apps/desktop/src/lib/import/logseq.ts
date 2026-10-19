@@ -21,7 +21,8 @@
  *  is those words. An embed of a page, `{{embed [[Page]]}}`, is nib's `![[Page]]`.
  *
  *  `TODO`, `DOING`, `NOW`, `LATER` and `DONE` in front of a bullet are Logseq's
- *  task markers, and they become task list items: a box is a box.
+ *  task markers, as are the rarer `WAITING` and its kin, and they become task list
+ *  items: a box is a box.
  *
  *  A journal is renamed to the date it is: `2026_09_11.md` is `2026-09-11.md`, so
  *  a year of them sorts in the file list. A link to one names it the way Logseq
@@ -52,8 +53,9 @@ const APP = /^logseq\//i
 /** A property line: `key:: value`, at the top of a note or of its first block. */
 const PROPERTY = /^\s*(?:-\s+)?([A-Za-z][\w -]{0,39}):: *(.*?)\r?$/
 
-/** The five words Logseq puts in front of a bullet to make it a task. */
-const MARKER = /^(\s*)-\s+(TODO|DOING|NOW|LATER|DONE|CANCELED|CANCELLED)\s+/
+/** The words Logseq puts in front of a bullet to make it a task. */
+const MARKER =
+  /^(\s*)-\s+(TODO|DOING|NOW|LATER|DONE|WAIT|WAITING|IN-PROGRESS|STARTED|CANCELED|CANCELLED)\s+/
 
 /** A block reference. */
 const REFERENCE = /\(\(([0-9a-f-]{36})\)\)/gi
@@ -472,7 +474,7 @@ export function logseqNote(
       }
     }
 
-    if (/^(id|collapsed|heading)$/i.test(name)) continue
+    if (/^(id|collapsed|heading|filters)$/i.test(name)) continue
 
     if (/^title$/i.test(name)) title = value
 
