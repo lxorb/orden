@@ -246,7 +246,11 @@ function drawnNode(
 
   const wash = node.color === undefined ? '' : ` fill-opacity="0.09"`
   const paper = node.color === undefined ? (palette.surface ?? '#fff') : line
-  const card = `<rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" rx="8" fill="${paper}"${wash} stroke="${line}"/>`
+  // Words with no card round them are drawn as the words alone (#421).
+  const card =
+    node.type === 'text' && node.bare
+      ? ''
+      : `<rect x="${box.x}" y="${box.y}" width="${box.width}" height="${box.height}" rx="8" fill="${paper}"${wash} stroke="${line}"/>`
 
   if (plain) {
     return `<g>${card}${plainCard(saidBy(node), box, palette)}</g>`

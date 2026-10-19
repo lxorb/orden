@@ -298,6 +298,7 @@
   class:dimmed
   class:group={node.type === 'group'}
   class:shape={node.type === 'shape'}
+  class:bare={node.type === 'text' && node.bare}
   class:editing
   class:coloured={colour !== null}
   data-id={node.id}
@@ -453,6 +454,29 @@
 
   .node.shape.picked {
     box-shadow: none;
+  }
+
+  /* Words with no card round them, the Text tool's (#421): only the words, in the ink of
+     the page, at the size a line of a note is. Picked, or written in, a hairline of the
+     accent says where the box is, and nothing else. */
+  .node.bare,
+  .node.bare.coloured {
+    border-color: transparent;
+    background: none;
+    box-shadow: none;
+  }
+
+  .node.bare.picked,
+  .node.bare.editing {
+    border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+    box-shadow: none;
+  }
+
+  .node.bare .card,
+  .node.bare .editor :global(#write) {
+    padding: 4px 6px;
+    color: var(--card-colour, var(--text));
+    font-size: 16px;
   }
 
   .drawn {

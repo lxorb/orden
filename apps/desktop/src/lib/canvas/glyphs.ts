@@ -45,6 +45,7 @@ import Square from 'lucide/dist/esm/icons/square.mjs'
 import StickyNote from 'lucide/dist/esm/icons/sticky-note.mjs'
 import Trash2 from 'lucide/dist/esm/icons/trash-2.mjs'
 import Triangle from 'lucide/dist/esm/icons/triangle.mjs'
+import Type from 'lucide/dist/esm/icons/type.mjs'
 import Undo2 from 'lucide/dist/esm/icons/undo-2.mjs'
 import Ungroup from 'lucide/dist/esm/icons/ungroup.mjs'
 import type { IconNode } from 'lucide'
@@ -86,6 +87,11 @@ export const ABOUT: ToolMark[] = [
   },
   { id: 'hand', icon: Hand, title: () => t('Pan'), key: 'canvas.tool.hand' },
 ]
+
+/** Words put straight on the plane or the paper, with no card round them: a button of
+ *  its own on the bar of a canvas and of a page note, as Miro's and a PDF viewer's text
+ *  tool are, rather than one more row behind Add (#421). */
+export const WORDS: ToolMark = { id: 'words', icon: Type, title: () => t('Text'), key: null }
 
 /** The two tools the pens are used with. */
 export const RUBBING: ToolMark[] = [

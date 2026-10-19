@@ -531,7 +531,7 @@
 
   /** Which of the things a press puts down are drawn as a plain box while they are
    *  being pulled out. The rest are drawn as themselves; see pulledPath. */
-  const PLAIN = new Set(['text', 'file', 'picture', 'link', 'group', 'rect', 'ellipse'])
+  const PLAIN = new Set(['text', 'words', 'file', 'picture', 'link', 'group', 'rect', 'ellipse'])
 
   /** The shape being pulled out, as a path, through the same geometry the finished
    *  one is drawn from - so what is dragged out is exactly what lands. */

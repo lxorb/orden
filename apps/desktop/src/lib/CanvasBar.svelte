@@ -38,6 +38,7 @@
     PLACING,
     RUBBING,
     type ToolMark,
+    WORDS,
   } from './canvas/glyphs'
   import { hand } from './canvas/hand.svelte'
   import { DEFAULT_INK, shownInk } from './canvas/palette'
@@ -456,6 +457,10 @@
         {/each}
 
         <span class="split"></span>
+
+        <!-- Words, put straight down where the next press is: on a canvas and on a page
+             note alike (#421). -->
+        {@render holding(WORDS)}
 
         <!-- What a press puts on the plane. While one of them is in hand it is that
              one, drawn on the button, so the bar says what a press is about to do

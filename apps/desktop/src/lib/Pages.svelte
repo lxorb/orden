@@ -52,7 +52,7 @@
   import PagesSlot from './PagesSlot.svelte'
   import PagesZoom from './PagesZoom.svelte'
   import { type Camera, ctrlWheelZoom, graphPoint, heldGestures, NOTCH, pinching } from './camera'
-  import { toolPressed } from './canvas/actions'
+  import { putWords, toolPressed, wordsAt } from './canvas/actions'
   import { coloured, copied, movedBy, pickedBox, removed, withText } from './canvas/edits'
   import { freshId, type InkPoint, type InkStroke } from './canvas/format'
   import { Contacts, hovering, penKind, Stylus } from './canvas/contacts'
@@ -111,7 +111,14 @@
 
   /** The tools a page note has. The five that mean something on paper; a connector and
    *  a frame are a plane's, and there is nothing on a sheet to join. */
-  const PAPER_TOOLS: ReadonlySet<Tool> = new Set<Tool>(['select', 'hand', 'draw', 'erase', 'lasso'])
+  const PAPER_TOOLS: ReadonlySet<Tool> = new Set<Tool>([
+    'select',
+    'hand',
+    'draw',
+    'erase',
+    'lasso',
+    'words',
+  ])
 
   /** How soon after a gesture began a second finger is the paper rather than a
    *  palm, in milliseconds. The canvas's own number and the canvas's own reason: a
@@ -527,6 +534,13 @@
     }
 
     if (!writable) return
+
+    // Words, typed onto the paper where it was pressed (#421); see `putWords`.
+    if (tool === 'words') {
+      event.preventDefault()
+      putWords(store, wordsAt(point))
+      return
+    }
 
     if (tool === 'draw') {
       const nib = tools.ink

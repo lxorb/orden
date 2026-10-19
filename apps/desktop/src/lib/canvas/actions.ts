@@ -632,6 +632,18 @@ function putText(store: CanvasStore, text: string, box: Box, writing = false) {
   if (writing) store.editing = id
 }
 
+/** Words on the plane with no card round them, the Text tool's (#421): put where the
+ *  press was, at the start of a line, and written in at once, as Miro's text tool and a
+ *  PDF viewer's do. Left empty, it goes again, as an empty card does. The arrow is in
+ *  hand after it, so the next press picks rather than starting another. */
+export function putWords(store: CanvasStore, box: Box) {
+  const id = freshId()
+  store.edit(withNode(store.canvas, { ...box, id, type: 'text', text: '', bare: true }))
+  store.pick(id)
+  store.editing = id
+  tools.choose('select')
+}
+
 function putLink(store: CanvasStore, url: string, box: Box) {
   const id = freshId()
   store.edit(withNode(store.canvas, { ...box, id, type: 'link', url }))
@@ -666,6 +678,8 @@ function ownSize(tool: PutTool): { width: number; height: number } {
   switch (tool) {
     case 'text':
       return { width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT }
+    case 'words':
+      return { width: GRID * 12, height: GRID * 2 }
     case 'file':
       return { width: DEFAULT_WIDTH, height: GRID * 9 }
     case 'picture':
@@ -687,7 +701,19 @@ export interface Putting {
 /** What a tool puts on the plane where it was pressed, at its own size. */
 export async function place(store: CanvasStore, tool: PutTool, at: Point, putting: Putting) {
   const size = ownSize(tool)
-  await putDown(store, tool, placedAt(at, size.width, size.height), putting)
+  await putDown(
+    store,
+    tool,
+    tool === 'words' ? wordsAt(at) : placedAt(at, size.width, size.height),
+    putting,
+  )
+}
+
+/** Where words pressed down go: their line starting where the press was, as a caret
+ *  goes where text is clicked. */
+export function wordsAt(at: Point): Box {
+  const { width, height } = ownSize('words')
+  return { x: Math.round(at.x), y: Math.round(at.y - height / 2), width, height }
 }
 
 /** What a tool puts on the plane at the size it was dragged out to. The one
@@ -726,6 +752,9 @@ async function putDown(
   switch (tool) {
     case 'text':
       putText(store, '', box, true)
+      return
+    case 'words':
+      putWords(store, box)
       return
     case 'group': {
       const id = freshId()

@@ -27,11 +27,12 @@ export type Tool = 'select' | 'hand' | 'draw' | 'erase' | 'lasso' | PutTool
 /** A tool that puts something on the plane, which every one of them does by being
  *  pulled out: pressed once it lands at its own size, dragged it lands at the size
  *  it was dragged to. One gesture for a card, a frame and a triangle alike. */
-export type PutTool = 'text' | 'file' | 'picture' | 'link' | 'group' | Shape
+export type PutTool = 'text' | 'words' | 'file' | 'picture' | 'link' | 'group' | Shape
 
 /** The ones a press puts down, as a set, so the machine can ask in one lookup. */
 const PUT: ReadonlySet<Tool> = new Set<Tool>([
   'text',
+  'words',
   'file',
   'picture',
   'link',
