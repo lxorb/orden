@@ -207,10 +207,22 @@ print(f"{DESK}: the strip dragged by (160, 90): {before} -> {moved}")
 if abs(moved[0] - before[0] - 160) > 20 or abs(moved[1] - before[1] - 90) > 20:
     fail(f"{DESK}: the window did not follow the strip ({before} -> {moved})")
 
+# What the page hears of the pointer from here on, kept in the page and read back with
+# the numbers: a drag that moved nothing is then a press the page never had, or one it
+# had and did nothing with.
+run(
+    "(() => { window.__dragHeard = []; for (const kind of ['mousedown', 'mouseup', 'pointercancel', 'lostpointercapture', 'blur', 'focus'])"
+    " window.addEventListener(kind, (e) => window.__dragHeard.push([kind, Math.round(performance.now()),"
+    " e.clientX ?? null, e.clientY ?? null, e.button ?? null, e.buttons ?? null, innerWidth, innerHeight]), true);"
+    " return true })()"
+)
+
 # The right edge, two pixels in, carried out by 120.
 at = window()
 drag((at[0] + at[2] - 2, at[1] + at[3] // 2), (120, 0))
 grown = window()
+seen["heard"] = run("window.__dragHeard")
+print(f"{DESK}: the page heard {seen['heard']}")
 shoot("resized")
 seen["resize"] = {"before": at, "after": grown}
 print(f"{DESK}: the right edge dragged by 120: {at} -> {grown}")
