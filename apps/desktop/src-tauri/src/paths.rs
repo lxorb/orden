@@ -466,17 +466,28 @@ pub fn folded(path: &Path) -> PathBuf {
 /// space someone symlinked onto another disk is still their space, and `..` was
 /// already folded away. What this stops is a path climbing out of the folder,
 /// not a reader arranging their own notes.
+///
+/// Each part is compared the way this platform's file system tells two names apart
+/// (`Naming`), and a path holding a part it would read as something other than a name
+/// is inside nothing (`unspoken`).
 pub fn inside(root: &Path, path: &Path) -> bool {
+    inside_as(NAMING, root, path)
+}
+
+/// `inside`, for the file system `naming` says, so each one's rules can be held in a
+/// test on any machine.
+fn inside_as(naming: Naming, root: &Path, path: &Path) -> bool {
     let root = folded(root);
     let path = folded(path);
-    if root.as_os_str().is_empty() {
+    if root.as_os_str().is_empty() || unspoken_as(naming, &path) {
         return false;
     }
 
-    let mut theirs = path.components();
+    let last = path.components().count();
+    let mut theirs = path.components().enumerate();
     for ours in root.components() {
         match theirs.next() {
-            Some(mine) if same_part(ours, mine) => {}
+            Some((at, mine)) if same_part(naming, ours, mine, at + 1 == last) => {}
             _ => return false,
         }
     }
@@ -504,15 +515,110 @@ pub fn space_root(spaces: &Path, path: &Path) -> Option<PathBuf> {
     parts.next().map(|first| spaces.join(first))
 }
 
-/// One part of a path against another. Windows tells `Notes` and `notes` apart
-/// nowhere but in the letters, so neither does this.
-fn same_part(one: Component, other: Component) -> bool {
-    if cfg!(windows) {
-        let (one, other) = (one.as_os_str(), other.as_os_str());
-        one.to_string_lossy().to_lowercase() == other.to_string_lossy().to_lowercase()
-    } else {
-        one == other
+/// How this platform's file systems tell two names in a path apart, which is what the
+/// gates below compare by (#485, #486).
+///
+/// Comparing letters as they were sent let other spellings of one folder past: the
+/// trash is refused as `.trash`, and macOS opened it as `.TRASH`, Windows as `.trash.`
+/// and `.trash ` too. And comparing wider than the file system does lets a sibling in:
+/// Windows lowercased the Kelvin sign to `k`, which NTFS keeps apart from `K`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Naming {
+    /// Linux: a name is its bytes.
+    Exact,
+    /// macOS: APFS and HFS+ as a Mac formats them, which ignore case.
+    Cased,
+    /// Windows: NTFS ignores case, and Win32 drops the dot a part ends in and every dot
+    /// and space the last part ends in before NTFS sees the name.
+    Win32,
+}
+
+/// This platform's.
+const NAMING: Naming = if cfg!(windows) {
+    Naming::Win32
+} else if cfg!(target_os = "macos") {
+    Naming::Cased
+} else {
+    Naming::Exact
+};
+
+/// A name as the file system reads it, to compare by. `last` is whether it ends the
+/// path, which is where Win32 drops trailing spaces as well as dots.
+fn name_key(naming: Naming, name: &str, last: bool) -> String {
+    match naming {
+        Naming::Exact => name.to_owned(),
+        Naming::Cased => upcased(name),
+        Naming::Win32 => upcased(win32_name(name, last)),
     }
+}
+
+/// What Win32 makes of one part of a path: a part of only dots is a name of its own,
+/// a part ends in one dot fewer, and the last part in no dot or space at all.
+fn win32_name(name: &str, last: bool) -> &str {
+    if name.chars().all(|one| one == '.') {
+        name
+    } else if last {
+        name.trim_end_matches(['.', ' '])
+    } else {
+        name.strip_suffix('.').unwrap_or(name)
+    }
+}
+
+/// A name with case taken out the way NTFS's upcase table and the Mac's file systems
+/// take it out: each letter to its one capital, and a letter whose capital is more than
+/// one letter (`ß`) left as it is. `to_lowercase` folded wider than that - the Kelvin
+/// sign to `k` - and so judged a sibling folder to be this one (#486).
+fn upcased(name: &str) -> String {
+    name.chars()
+        .map(|one| {
+            let mut upper = one.to_uppercase();
+            match (upper.next(), upper.next()) {
+                (Some(only), None) => only,
+                _ => one,
+            }
+        })
+        .collect()
+}
+
+/// One part of a path against another, as `naming` reads them.
+fn same_part(naming: Naming, one: Component, other: Component, last: bool) -> bool {
+    if naming == Naming::Exact {
+        return one == other;
+    }
+    // Both read as the part of the path in that place: the path's last part is where
+    // Win32 drops a trailing space, whichever side is asked about.
+    let key = |part: Component| name_key(naming, &part.as_os_str().to_string_lossy(), last);
+    key(one) == key(other)
+}
+
+/// Whether a path holds a part the file system `naming` says would read as something
+/// other than a name, which no gate can compare by its letters and so lets in nowhere.
+///
+/// On Windows: a `:`, which names a stream of a file rather than a file -
+/// `.trash::$INDEX_ALLOCATION` is the trash folder itself - and a short 8.3 alias
+/// (`TRASH~1`), which names whatever long name it was made for (#485).
+fn unspoken_as(naming: Naming, path: &Path) -> bool {
+    naming == Naming::Win32
+        && path.components().any(|part| match part {
+            Component::Normal(name) => {
+                let name = name.to_string_lossy();
+                name.contains(':') || short_alias(&name)
+            }
+            _ => false,
+        })
+}
+
+/// Whether a name has the shape Windows gives a long name's 8.3 alias: up to six
+/// letters, a `~` and a number, and at most three after a dot.
+fn short_alias(name: &str) -> bool {
+    let (stem, extension) = name.rsplit_once('.').unwrap_or((name, ""));
+    let Some((_, number)) = stem.rsplit_once('~') else {
+        return false;
+    };
+    stem.chars().count() <= 8
+        && extension.chars().count() <= 3
+        && !number.is_empty()
+        && number.chars().all(|one| one.is_ascii_digit())
 }
 
 /// The gate every note, folder and space command goes through: a string from the
@@ -526,9 +632,14 @@ pub fn in_spaces(app: &AppHandle, path: &str) -> Result<PathBuf, String> {
 /// That gate, with the spaces folder passed in rather than asked for, so what it
 /// refuses can be said without an app around it.
 fn judged(root: &Path, path: &str) -> Result<PathBuf, String> {
+    judged_as(NAMING, root, path)
+}
+
+/// `judged`, for the file system `naming` says.
+fn judged_as(naming: Naming, root: &Path, path: &str) -> Result<PathBuf, String> {
     let target = folded(Path::new(path));
 
-    if !inside(root, &target) || inside(&root.join(TRASH), &target) {
+    if !inside_as(naming, root, &target) || inside_as(naming, &root.join(TRASH), &target) {
         return Err(format!("{path} is outside the notes folder"));
     }
 
@@ -1062,9 +1173,10 @@ pub(crate) fn link_to(target: &Path, link: &Path) -> bool {
 mod tests {
     use super::{
         a_shareable_folder, at_most, copy_held, drop_held, files_in, folded, folder_key,
-        folder_named, free_spot, held_paper, highlights_of, inside, is_base, is_canvas,
-        is_markdown, is_pages, is_pdf, is_shortcut, judged, judged_beyond, judged_space, link_to,
-        move_held, paper_of, same_path, space_root, write_atomically, Picked,
+        folder_named, free_spot, held_paper, highlights_of, inside, inside_as, is_base, is_canvas,
+        is_markdown, is_pages, is_pdf, is_shortcut, judged, judged_as, judged_beyond, judged_space,
+        link_to, move_held, paper_of, same_path, space_root, upcased, write_atomically, Naming,
+        Picked,
     };
     use std::ffi::OsStr;
     use std::path::{Path, PathBuf};
@@ -1253,6 +1365,65 @@ mod tests {
         assert!(said(&["Documents", "Nib", ".trash"]).is_err());
         assert!(said(&["Documents", "Nib", ".trash", "1-0", "a.md"]).is_err());
         assert!(said(&["Documents", "Nib", ".trashy.md"]).is_ok());
+    }
+
+    /// The trash by any other spelling the file system reads as the trash is refused
+    /// as well (#485): a Mac ignores case, and Windows drops a trailing dot or space,
+    /// reads `:` as a stream of the folder and `TRASH~1` as its short name. What the
+    /// platform keeps apart stays apart: on Linux `.TRASH` is a folder of its own.
+    #[test]
+    fn the_gate_refuses_the_trash_however_the_file_system_spells_it() {
+        let root = path(&["Documents", "Nib"]);
+        let said = |naming, one: &[&str]| {
+            let mut parts = vec!["Documents", "Nib"];
+            parts.extend_from_slice(one);
+            judged_as(naming, &root, &path(&parts).to_string_lossy())
+        };
+
+        for naming in [Naming::Cased, Naming::Win32] {
+            for trash in [
+                &[".TRASH", "1-0", "a.md"][..],
+                &[".Trash"],
+                &[".tra\u{17f}h"],
+            ] {
+                assert!(said(naming, trash).is_err(), "{naming:?} {trash:?}");
+            }
+            assert!(said(naming, &["Work", "Plan.md"]).is_ok(), "{naming:?}");
+            assert!(said(naming, &[".trashy.md"]).is_ok(), "{naming:?}");
+        }
+
+        for trash in [
+            &[".trash."][..],
+            &[".trash "],
+            &[".trash. ."],
+            &[".trash.", "x.md"],
+            &[".trash::$INDEX_ALLOCATION"],
+            &[".trash:x"],
+            &["TRASH~1", "1-0", "a.md"],
+            &["Work", "Plan.md:hidden"],
+        ] {
+            assert!(said(Naming::Win32, trash).is_err(), "{trash:?}");
+        }
+        // A folder of three dots is a name Win32 keeps.
+        assert!(said(Naming::Win32, &["...", "a.md"]).is_ok());
+
+        assert!(said(Naming::Exact, &[".TRASH", "a.md"]).is_ok());
+        assert!(said(Naming::Exact, &[".trash.", "a.md"]).is_ok());
+    }
+
+    /// Case is folded no wider than the file system folds it (#486): NTFS keeps the
+    /// Kelvin sign apart from `k`, so a folder spelled with one is not this one, while
+    /// `KIM` is. A letter whose capital is two letters is left as it is.
+    #[test]
+    fn containment_folds_case_no_wider_than_the_file_system() {
+        let root = path(&["Users", "kim", "Nib"]);
+        let kelvin = path(&["Users", "\u{212a}im", "Nib", "x.md"]);
+        let upper = path(&["Users", "KIM", "Nib", "x.md"]);
+
+        assert!(!inside_as(Naming::Win32, &root, &kelvin));
+        assert!(inside_as(Naming::Win32, &root, &upper));
+        assert!(!inside_as(Naming::Exact, &root, &upper));
+        assert_eq!(upcased("stra\u{df}e"), "STRA\u{df}E");
     }
 
     /// A space is a folder directly inside the spaces folder, which is the stricter
