@@ -221,27 +221,35 @@ async function writeBeside(path: string, content: string): Promise<string> {
 }
 
 /** What a folder about to be deleted signed in holds: the folders under it and the
- *  words of every note that will read, so an undo can write them again. Null when
- *  there is more than is worth holding, which leaves the deletion to Recently deleted. */
-export async function heldIn(entry: Entry | null): Promise<Pick<Kept, 'notes' | 'folders'> | null> {
+ *  words of every file in it, read off the disk, so an undo can write them again.
+ *  Null when that is not the whole folder - a picture, a PDF, anything that is not
+ *  words - or more than is worth holding, which leaves the deletion to Recently
+ *  deleted. The file list leaves those out, and an undo read from it gave back the
+ *  notes without them, saying nothing. */
+export async function heldIn(path: string): Promise<Pick<Kept, 'notes' | 'folders'> | null> {
+  const options = { showHidden: true, papers: true, every: true }
+  const listed = await invoke<Entry>('read_tree', { root: path, options }).catch(() => null)
+  if (!listed) return null
+
   const notes: { path: string; content: string }[] = []
   const folders: string[] = []
   let size = 0
-  const walk = async (entry: Entry) => {
+  const walk = async (entry: Entry): Promise<boolean> => {
     for (const one of entry.children) {
       if (one.is_dir) {
         folders.push(one.path)
-        await walk(one)
+        if (!(await walk(one))) return false
         continue
       }
       const content = await invoke<string>('read_note', { path: one.path }).catch(() => null)
-      if (content === null) continue
+      if (content === null) return false
       size += content.length
+      if (size > HELD) return false
       notes.push({ path: one.path, content })
     }
+    return true
   }
-  if (entry) await walk(entry)
-  return size > HELD ? null : { notes, folders }
+  return (await walk(listed)) ? { notes, folders } : null
 }
 
 /** As much of a folder's words as a deletion holds: a few megabytes, past which the

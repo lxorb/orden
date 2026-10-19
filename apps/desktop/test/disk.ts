@@ -20,6 +20,8 @@ export class Disk {
   /** Every file, under the spelling it was made with. */
   readonly files = new Map<string, string>()
   readonly folders = new Set<string>()
+  /** Files that are there but are not words, as a picture is: `read_note` refuses them. */
+  readonly unreadable = new Set<string>()
   /** Every command asked, with the path it named. */
   readonly sent: string[] = []
   private readonly trash = new Map<string, { path: string; text: string }>()
@@ -47,6 +49,7 @@ export class Disk {
   reset() {
     this.files.clear()
     this.folders.clear()
+    this.unreadable.clear()
     this.trash.clear()
     this.sent.length = 0
   }
@@ -68,6 +71,7 @@ export class Disk {
         const at = this.spelled(path)
         const held = at === null ? undefined : this.files.get(at)
         if (held === undefined) throw new Error(`no such note: ${path}`)
+        if (at !== null && this.unreadable.has(at)) throw new Error(`not words: ${path}`)
         return held
       }
       case 'write_note':

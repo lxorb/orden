@@ -4051,12 +4051,10 @@ class Workspace {
     await this.undone.batch(async () => {
       // Gone from the tree before the snapshot has been taken and the file has
       // been moved: three round trips is a long time for a row to sit there
-      // looking as though the delete had not registered. A folder's row is read
-      // first: what it holds is what an undo writes back.
-      const shown = this.entryAt(path)
+      // looking as though the delete had not registered.
       this.hideEntry(path)
 
-      const kept = await this.bin(path, isFolder, source, shown)
+      const kept = await this.bin(path, isFolder, source)
       if (kept) this.undone.record({ kind: 'delete', path, ...kept })
 
       await this.fileGone(path, isFolder ? 'folder' : 'file')
@@ -4067,12 +4065,7 @@ class Workspace {
   }
 
   /** Deletes, answering what puts it back; recorded by the caller. */
-  async bin(
-    path: string,
-    isFolder: boolean,
-    source?: string,
-    shown = this.entryAt(path),
-  ): Promise<Kept | null> {
+  async bin(path: string, isFolder: boolean, source?: string): Promise<Kept | null> {
     // A deleted note keeps one last snapshot, so the delete is recoverable. A PDF
     // is bytes and not words: there is no snapshot of one, so the only thing that
     // can put it back is the trash.
@@ -4090,7 +4083,7 @@ class Workspace {
     // device does, in its own trash folder (see trash.svelte.ts).
     const toAccount = account.signedIn && !unread && !(!isFolder && isPagesTarget(path))
     const held =
-      toAccount && isFolder ? await (await import('./workspace/undoing')).heldIn(shown) : null
+      toAccount && isFolder ? await (await import('./workspace/undoing')).heldIn(path) : null
 
     try {
       if (toAccount) {
