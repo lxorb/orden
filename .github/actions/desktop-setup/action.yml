@@ -62,7 +62,16 @@ runs:
       shell: bash
       run: |
         sudo apt-get update
-        sudo apt-get install -y libgtk-4-dev libdbus-1-dev cmake ninja-build patchelf xdg-utils squashfs-tools
+        sudo apt-get install -y libgtk-4-dev libdbus-1-dev libnss3 cmake ninja-build patchelf xdg-utils squashfs-tools
+        # NSS's own modules, beside its libraries, where the AppImage's quick-sharun looks
+        # for them: Ubuntu keeps them in a folder of their own, and an AppImage without
+        # them loaded the host's, which ask for a newer NSS than the one it carries - or
+        # found none - and Chromium ended at its start (#427).
+        lib="/usr/lib/$(uname -m)-linux-gnu"
+        for module in "$lib"/nss/*.so*; do
+          [ -e "$lib/${module##*/}" ] || sudo ln -s "$module" "$lib/${module##*/}"
+        done
+        ls -la "$lib"/libsoftokn3.so "$lib"/libfreeblpriv3.so
 
     # The engine, laid out where the build and the bundler both read it (CEF_PATH);
     # see scripts/linux-cef.sh.
