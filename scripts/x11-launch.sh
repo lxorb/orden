@@ -30,7 +30,8 @@ for _ in $(seq 50); do xdpyinfo > /dev/null 2>&1 && break; sleep 0.1; done
 here=$(cd "$(dirname "$0")" && pwd)
 wm=""
 if [ "${KWIN:-0}" = 1 ]; then
-  kwin_x11 --replace > "$out/kwin.log" 2>&1 &
+  # Without compositing, which a server with no GPU has nothing to do it with.
+  KWIN_COMPOSE=N QT_QPA_PLATFORM=xcb kwin_x11 --replace > "$out/kwin.log" 2>&1 &
   wm=$!
   sleep 3
 fi

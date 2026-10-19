@@ -149,7 +149,11 @@ jobs:
         env:
           OUT: wayland-out/drag
           DRAG: '1'
-        run: dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+        run: |
+          echo "left of the runs before:"; pgrep -a nib || true
+          pkill -f /usr/share/Orden/nib || true
+          rm -rf "$HOME/.config/ch.emilvinu.nib"
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       # What #418 asked of the engine, measured; the `webkitgtk` job below measures the
       # last WebKitGTK build the same way, for the numbers to be read side by side.
       - name: What #418 asked, on CEF

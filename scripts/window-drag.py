@@ -78,7 +78,9 @@ if DESK == "sway":
 
     def window():
         def walk(node):
-            if str(node.get("pid")) == APP:
+            if str(node.get("pid")) == APP or (
+                node.get("type") in ("con", "floating_con") and "Orden" in (node.get("name") or "")
+            ):
                 yield node
             for child in node.get("nodes", []) + node.get("floating_nodes", []):
                 yield from walk(child)
@@ -112,7 +114,7 @@ if DESK == "sway":
         output = sway("-t", "get_outputs")[0]["rect"]
         return output["width"], output["height"]
 
-    subprocess.run(["swaymsg", f"[pid={APP}] floating enable, resize set 900 600, move position 100 100"], check=False)
+    subprocess.run(["swaymsg", '[title="Orden"] floating enable, resize set 900 600, move position 100 100'], check=False)
     time.sleep(1.5)
 else:
 
@@ -120,7 +122,9 @@ else:
         return subprocess.run(["xdotool", *words], capture_output=True, text=True, check=False).stdout
 
     def wid():
-        found = [w for w in xdo("search", "--onlyvisible", "--pid", APP).split() if w]
+        # By its title, which is the page's and ends in the app's name; its pid is not
+        # always said on the window.
+        found = [w for w in xdo("search", "--onlyvisible", "--name", "Orden").split() if w]
         best, area = None, 0
         for one in found:
             shape = xdo("getwindowgeometry", "--shell", one)
