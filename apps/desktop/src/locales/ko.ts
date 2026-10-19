@@ -1885,6 +1885,11 @@ export const ko: Dictionary = {
   Max: '최대',
   Fast: '빠르게',
   Send: '보내기',
+  'Send feedback': '피드백 보내기',
+  'Describe the issue': '문제를 설명해 주세요',
+  Sent: '보냄',
+  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
+    '이 보고서에는 설명, Orden 버전, 플랫폼, 최근 앱 로그가 포함됩니다. 노트는 절대 포함되지 않습니다.',
   'Send into the running answer': '진행 중인 답변에 보내기',
   'Stop the answer': '답변 중지',
   'Open every step': '모든 단계 펼치기',

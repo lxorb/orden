@@ -1914,6 +1914,11 @@ export const fa: Dictionary = {
   Max: 'بیشینه',
   Fast: 'سریع',
   Send: 'ارسال',
+  'Send feedback': 'ارسال بازخورد',
+  'Describe the issue': 'مشکل را شرح دهید',
+  Sent: 'ارسال شد',
+  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
+    'این گزارش شامل توضیح شما، نسخهٔ Orden، پلتفرم شما و گزارش اخیر برنامه است و هرگز یادداشت‌های شما را در بر نمی‌گیرد.',
   'Send into the running answer': 'ارسال به پاسخ در حال اجرا',
   'Stop the answer': 'توقف پاسخ',
   'Open every step': 'باز کردن همه مراحل',

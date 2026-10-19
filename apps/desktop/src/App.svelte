@@ -49,6 +49,7 @@
     historySheet,
     iconPicker,
     joinSheet,
+    feedbackSheet,
     importSheet,
     spacePickerDialog,
     hostPickerDialog,
@@ -1242,6 +1243,12 @@
 {#if joinSheet.asked}
   {#await joinSheet.asked then JoinSheet}
     <JoinSheet />
+  {/await}
+{/if}
+<!-- Send feedback, once somebody has asked for it; see feedback.svelte.ts. -->
+{#if feedbackSheet.asked}
+  {#await feedbackSheet.asked then FeedbackSheet}
+    <FeedbackSheet />
   {/await}
 {/if}
 <!-- The sheets, each fetched the first time something opens it and kept mounted

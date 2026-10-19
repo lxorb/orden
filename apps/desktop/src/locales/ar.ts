@@ -2019,6 +2019,11 @@ export const ar: Dictionary = {
   Max: 'أقصى',
   Fast: 'سريع',
   Send: 'إرسال',
+  'Send feedback': 'إرسال ملاحظات',
+  'Describe the issue': 'صف المشكلة',
+  Sent: 'أُرسلت',
+  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
+    'يتضمن هذا التقرير وصفك وإصدار Orden ومنصتك وسجل التطبيق الأخير، ولا يتضمن ملاحظاتك أبدًا.',
   'Send into the running answer': 'إرسال إلى الإجابة الجارية',
   'Stop the answer': 'إيقاف الإجابة',
   'Open every step': 'فتح كل الخطوات',

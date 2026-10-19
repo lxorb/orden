@@ -20,6 +20,7 @@ vi.mock('./surfaces.svelte', () => ({
   propertiesPanel: () => new Promise(() => undefined),
   pagesNavigator: () => new Promise(() => undefined),
   searchPanel: () => new Promise(() => undefined),
+  showFeedback: () => undefined,
 }))
 
 const { workspace } = await import('./workspace.svelte')

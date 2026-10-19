@@ -1913,6 +1913,11 @@ export const ps: Dictionary = {
   Max: 'تر ټولو ډېر',
   Fast: 'چټک',
   Send: 'لېږل',
+  'Send feedback': 'نظر ولېږئ',
+  'Describe the issue': 'ستونزه بیان کړئ',
+  Sent: 'ولېږل شو',
+  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
+    'په دې راپور کې ستاسو تشریح، د Orden نسخه، ستاسو پلاتفورم او د اپ وروستی لاګ شامل دي. ستاسو یادښتونه هېڅکله نه.',
   'Send into the running answer': 'روان ځواب ته لېږل',
   'Stop the answer': 'ځواب ودرول',
   'Open every step': 'ټول پړاوونه پرانیستل',

@@ -1910,6 +1910,11 @@ export const bn: Dictionary = {
   Max: 'সর্বোচ্চ',
   Fast: 'দ্রুত',
   Send: 'পাঠান',
+  'Send feedback': 'মতামত পাঠান',
+  'Describe the issue': 'সমস্যাটি বর্ণনা করুন',
+  Sent: 'পাঠানো হয়েছে',
+  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
+    'এই রিপোর্টে আপনার বর্ণনা, Orden-এর সংস্করণ, আপনার প্ল্যাটফর্ম আর অ্যাপের সাম্প্রতিক লগ থাকে। আপনার নোট কখনো থাকে না।',
   'Send into the running answer': 'চলমান উত্তরে পাঠান',
   'Stop the answer': 'উত্তর থামান',
   'Open every step': 'প্রতিটি ধাপ খুলুন',

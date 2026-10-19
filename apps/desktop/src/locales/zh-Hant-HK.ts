@@ -1865,6 +1865,11 @@ export const zhHantHK: Dictionary = {
   Max: '最高',
   Fast: '快速',
   Send: '傳送',
+  'Send feedback': '傳送意見',
+  'Describe the issue': '描述問題',
+  Sent: '已傳送',
+  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
+    '此報告包括你的描述、Orden 的版本、你的平台和應用程式最近的記錄，絕不包括你的筆記。',
   'Send into the running answer': '傳送到進行中的回答',
   'Stop the answer': '停止回答',
   'Open every step': '展開所有步驟',

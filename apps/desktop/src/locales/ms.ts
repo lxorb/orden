@@ -1908,6 +1908,11 @@ export const ms: Dictionary = {
   Max: 'Maks',
   Fast: 'Pantas',
   Send: 'Hantar',
+  'Send feedback': 'Hantar maklum balas',
+  'Describe the issue': 'Terangkan masalahnya',
+  Sent: 'Dihantar',
+  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
+    'Laporan ini mengandungi penerangan anda, versi Orden, platform anda dan log aplikasi terkini. Nota anda tidak pernah disertakan.',
   'Send into the running answer': 'Hantar ke jawapan yang sedang berjalan',
   'Stop the answer': 'Hentikan jawapan',
   'Open every step': 'Buka semua langkah',

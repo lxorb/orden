@@ -1922,6 +1922,11 @@ export const tr: Dictionary = {
   Max: 'Maks.',
   Fast: 'Hızlı',
   Send: 'Gönder',
+  'Send feedback': 'Geri bildirim gönder',
+  'Describe the issue': 'Sorunu açıklayın',
+  Sent: 'Gönderildi',
+  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
+    'Bu rapor açıklamanızı, Orden sürümünü, platformunuzu ve uygulamanın son günlüğünü içerir. Notlarınızı asla içermez.',
   'Send into the running answer': 'Süren yanıta gönder',
   'Stop the answer': 'Yanıtı durdur',
   'Open every step': 'Tüm adımları aç',

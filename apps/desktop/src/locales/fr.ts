@@ -1975,6 +1975,11 @@ export const fr: Dictionary = {
   Max: 'Max',
   Fast: 'Rapide',
   Send: 'Envoyer',
+  'Send feedback': 'Envoyer un retour',
+  'Describe the issue': 'Décrivez le problème',
+  Sent: 'Envoyé',
+  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
+    'Ce rapport contient votre description, la version d’Orden, votre plateforme et le journal récent de l’app. Il ne contient jamais vos notes.',
   'Send into the running answer': 'Envoyer dans la réponse en cours',
   'Stop the answer': 'Arrêter la réponse',
   'Open every step': 'Ouvrir toutes les étapes',

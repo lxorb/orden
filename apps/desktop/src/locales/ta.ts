@@ -1941,6 +1941,11 @@ export const ta: Dictionary = {
   Max: 'அதிகபட்சம்',
   Fast: 'வேகம்',
   Send: 'அனுப்பு',
+  'Send feedback': 'கருத்தை அனுப்பு',
+  'Describe the issue': 'சிக்கலை விவரிக்கவும்',
+  Sent: 'அனுப்பப்பட்டது',
+  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
+    'இந்த அறிக்கையில் உங்கள் விவரம், Orden பதிப்பு, உங்கள் தளம், ஆப்பின் சமீபத்திய பதிவு ஆகியவை இருக்கும். உங்கள் குறிப்புகள் ஒருபோதும் இருக்காது.',
   'Send into the running answer': 'நடக்கும் பதிலுக்குள் அனுப்பு',
   'Stop the answer': 'பதிலை நிறுத்து',
   'Open every step': 'எல்லா படிகளையும் திற',

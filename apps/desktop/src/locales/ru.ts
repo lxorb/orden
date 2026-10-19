@@ -1992,6 +1992,11 @@ export const ru: Dictionary = {
   Max: 'Макс.',
   Fast: 'Быстро',
   Send: 'Отправить',
+  'Send feedback': 'Отправить отзыв',
+  'Describe the issue': 'Опишите проблему',
+  Sent: 'Отправлено',
+  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
+    'Этот отчёт содержит ваше описание, версию Orden, вашу платформу и недавний журнал приложения. Ваших заметок в нём никогда нет.',
   'Send into the running answer': 'Отправить в текущий ответ',
   'Stop the answer': 'Остановить ответ',
   'Open every step': 'Раскрыть все шаги',

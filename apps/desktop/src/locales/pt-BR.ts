@@ -1949,6 +1949,11 @@ export const ptBR: Dictionary = {
   Max: 'Máx.',
   Fast: 'Rápido',
   Send: 'Enviar',
+  'Send feedback': 'Enviar feedback',
+  'Describe the issue': 'Descreva o problema',
+  Sent: 'Enviado',
+  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
+    'Este relatório inclui sua descrição, a versão do Orden, sua plataforma e o registro recente do app. Nunca inclui suas notas.',
   'Send into the running answer': 'Enviar para a resposta em andamento',
   'Stop the answer': 'Parar a resposta',
   'Open every step': 'Abrir todas as etapas',

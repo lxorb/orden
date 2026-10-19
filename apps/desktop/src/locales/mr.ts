@@ -1913,6 +1913,11 @@ export const mr: Dictionary = {
   Max: 'कमाल',
   Fast: 'जलद',
   Send: 'पाठवा',
+  'Send feedback': 'अभिप्राय पाठवा',
+  'Describe the issue': 'समस्या सांगा',
+  Sent: 'पाठवले',
+  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
+    'या अहवालात तुमचे वर्णन, Orden ची आवृत्ती, तुमचा प्लॅटफॉर्म आणि ॲपचा अलीकडील लॉग असतो. तुमच्या नोंदी कधीच नसतात.',
   'Send into the running answer': 'चालू उत्तरात पाठवा',
   'Stop the answer': 'उत्तर थांबवा',
   'Open every step': 'प्रत्येक पायरी उघडा',

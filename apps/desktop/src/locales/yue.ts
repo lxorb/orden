@@ -1864,6 +1864,11 @@ export const yue: Dictionary = {
   Max: '最高',
   Fast: '快',
   Send: '傳送',
+  'Send feedback': '傳送意見',
+  'Describe the issue': '描述問題',
+  Sent: '已傳送',
+  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
+    '呢份報告包括你嘅描述、Orden 嘅版本、你嘅平台同埋 app 最近嘅記錄，從來唔包括你嘅筆記。',
   'Send into the running answer': '傳入去進行緊嘅回答',
   'Stop the answer': '停咗個回答',
   'Open every step': '打開晒所有步驟',

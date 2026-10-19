@@ -1902,6 +1902,11 @@ export const gu: Dictionary = {
   Max: 'મહત્તમ',
   Fast: 'ઝડપી',
   Send: 'મોકલો',
+  'Send feedback': 'પ્રતિસાદ મોકલો',
+  'Describe the issue': 'સમસ્યાનું વર્ણન કરો',
+  Sent: 'મોકલ્યું',
+  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
+    'આ અહેવાલમાં તમારું વર્ણન, Orden ની આવૃત્તિ, તમારું પ્લેટફોર્મ અને એપનો તાજેતરનો લોગ હોય છે. તમારી નોંધો ક્યારેય નહીં.',
   'Send into the running answer': 'ચાલુ જવાબમાં મોકલો',
   'Stop the answer': 'જવાબ રોકો',
   'Open every step': 'દરેક પગલું ખોલો',

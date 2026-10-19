@@ -1888,6 +1888,11 @@ export const am: Dictionary = {
   Max: 'ከፍተኛ',
   Fast: 'ፈጣን',
   Send: 'ላክ',
+  'Send feedback': 'አስተያየት ላክ',
+  'Describe the issue': 'ችግሩን ይግለጹ',
+  Sent: 'ተልኳል',
+  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
+    'ይህ ሪፖርት መግለጫዎን፣ የOrden ዕትምን፣ መድረክዎን እና የቅርብ ጊዜውን የመተግበሪያ ምዝግብ ያካትታል። ማስታወሻዎችዎን ፈጽሞ አያካትትም።',
   'Send into the running answer': 'ወደ ሚሄደው መልስ ላክ',
   'Stop the answer': 'መልሱን አቁም',
   'Open every step': 'እያንዳንዱን ደረጃ ክፈት',
