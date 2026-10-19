@@ -12,17 +12,15 @@
   # file sits in.
   #
   # `packages.default` and `packages.orden` take the program out of the release's
-  # .deb and run it on nixpkgs' own WebKitGTK, GTK and GStreamer, the way the AUR
-  # package runs it on Arch's.
+  # .deb and run it on nixpkgs' own GTK 4, NSS and the rest, the way the AUR package
+  # runs it on Arch's. Orden runs on CEF (Chromium) on Linux, and the .deb carries the
+  # engine beside the program, in usr/share/Orden: both are kept together, every one
+  # of their libraries pointed at nixpkgs'.
   #
-  # Not the AppImage, which this flake wrapped up to 0.13. Its own libwayland-client
-  # does not match NixOS' Mesa and libglvnd, so WebKit's web process died with
-  # "Could not create default EGL display: EGL_BAD_PARAMETER"; its start script
-  # forces GTK onto X11 even in a Wayland session; and its GStreamer 1.20 refuses
-  # nixpkgs' plugins. The .deb is the bare program, so everything it links is
-  # nixpkgs', the same version as everything else on the system: native Wayland,
-  # the graphics driver NixOS provides, GStreamer with its plugins, and a fraction
-  # of the size.
+  # Not the AppImage, which this flake wrapped up to 0.13: its own libraries do not
+  # match NixOS' Mesa and libglvnd. The .deb is the bare program and its engine, so
+  # everything they link is nixpkgs', the same version as everything else on the
+  # system: the graphics driver NixOS provides, and a fraction of the size.
   #
   # This is not the nixpkgs package - it is a flake anyone can install from
   # directly, without waiting on a nixpkgs review:
@@ -112,36 +110,99 @@
       workspace = self.sourceInfo.outPath;
       haveSources = builtins.pathExists "${workspace}/apps/desktop/src-tauri/Cargo.lock";
 
-      # WebKitGTK plays audio and video through GStreamer, and these are the only
-      # plugins either build is let to load.
-      gstPluginsFor =
-        pkgs: with pkgs.gst_all_1; [
-          gstreamer
-          gst-plugins-base
-          gst-plugins-good
-          gst-plugins-bad
-          gst-libav
-        ];
-
-      # Everything both builds link against. The release build patches the .deb's
-      # program onto these; the source build compiles against them.
+      # Everything both builds link against: what Chromium and its GTK 4 windows take
+      # from the system. The release build patches the .deb's program and engine onto
+      # these; the source build compiles against them.
       runtimeInputsFor =
-        pkgs:
-        (with pkgs; [
-          webkitgtk_4_1
-          gtk3
-          libsoup_3
+        pkgs: with pkgs; [
+          gtk4
           glib
           glib-networking
           cairo
           pango
           gdk-pixbuf
           dbus
-          openssl
-          xdotool
+          nss
+          nspr
+          atk
+          at-spi2-atk
+          at-spi2-core
+          libdrm
+          expat
+          libxkbcommon
+          libgbm
+          alsa-lib
+          cups
+          libGL
+          systemdLibs
+          libxcb
+          libx11
+          libxcomposite
+          libxdamage
+          libxext
+          libxfixes
+          libxrandr
+          libxshmfence
           stdenv.cc.cc.lib
-        ])
-        ++ gstPluginsFor pkgs;
+        ];
+
+      # What Chromium opens by name at run time rather than links: the GL and Vulkan
+      # loaders and udev. Put on every patched file's run path.
+      openedFor =
+        pkgs: with pkgs; [
+          libGL
+          vulkan-loader
+          systemdLibs
+        ];
+
+      # The CEF the source build compiles against and ships: the version Linux's
+      # manifest pins (`cef` in apps/desktop/src-tauri/Cargo.toml's
+      # [package.metadata.cef]), nixpkgs' own package of it moved to that version, and
+      # laid out the way the `cef` crate's build script reads a distribution - every
+      # file of the engine in one folder, with the archive it came from named beside
+      # them. The build script would download it itself, which a build in Nix's
+      # sandbox may not.
+      cefFor =
+        pkgs:
+        let
+          system = pkgs.stdenv.hostPlatform.system;
+          arch =
+            {
+              x86_64-linux = "linux64";
+              aarch64-linux = "linuxarm64";
+            }
+            .${system};
+          sha1 =
+            {
+              x86_64-linux = "15c91ad767097217b2e82ba8b933fe30b134be69";
+              aarch64-linux = "fa85793519eef199e6b6fa8cc8d6f0eb45c6dac2";
+            }
+            .${system};
+          cef = pkgs.cef-binary.override {
+            version = "154.0.34";
+            gitRevision = "14c5a08";
+            chromiumVersion = "154.0.8037.98";
+            srcHashes = {
+              x86_64-linux = "sha256-6H4sdjBDct0ouJnOtu+ks1P1JwBZTdw1ioI37AfsZJI=";
+              aarch64-linux = "sha256-RZizUOWkNRnbufHHMuixhDM1ctpTJE/1XMBjADw0xeQ=";
+            };
+          };
+          archive = builtins.toJSON {
+            type = "minimal";
+            name = "cef_binary_154.0.34+g14c5a08+chromium-154.0.8037.98_${arch}_minimal.tar.bz2";
+            inherit sha1;
+          };
+        in
+        pkgs.runCommand "cef-distribution-154.0.34" { } ''
+          mkdir -p $out
+          for one in ${cef}/Release/* ${cef}/Resources/*; do
+            ln -s "$one" "$out/$(basename "$one")"
+          done
+          for one in CMakeLists.txt cmake include libcef_dll; do
+            ln -s "${cef}/$one" "$out/$one"
+          done
+          echo '${archive}' > $out/archive.json
+        '';
 
       # Built out of whichever nixpkgs it is handed: this flake's own for
       # `packages`, the system's for `overlays.default`. Nothing is compiled: the
@@ -151,7 +212,6 @@
         pkgs:
         let
           inherit (debs.${pkgs.stdenv.hostPlatform.system}) suffix hash;
-          gstPlugins = gstPluginsFor pkgs;
         in
         pkgs.stdenv.mkDerivation {
           inherit pname version;
@@ -164,14 +224,17 @@
           nativeBuildInputs = with pkgs; [
             dpkg
             autoPatchelfHook
-            wrapGAppsHook3
+            wrapGAppsHook4
             makeShellWrapper
           ];
 
           buildInputs = runtimeInputsFor pkgs;
+          runtimeDependencies = openedFor pkgs;
 
           dontConfigure = true;
           dontBuild = true;
+          # libcef.so is stripped already, and stripping it again is minutes for nothing.
+          dontStrip = true;
 
           # The program keeps the name every install of it has had, nib, out of
           # $PATH; the command is the package's name, and the stable one keeps
@@ -179,9 +242,16 @@
           # beside this file, and its 256x256 icon, which it files under a scale-2
           # directory, goes where a theme looks for it. Every file the profile
           # gets is named after the package, so stable and edge never collide.
+          #
+          # The program and the engine stay in one folder, which is where the program
+          # looks for libcef.so and Chromium for its resources. Not the sandbox helper,
+          # which only works setuid root and cannot be in the store: Chromium sandboxes
+          # its renderers in user namespaces instead, which NixOS allows.
           installPhase = ''
             runHook preInstall
-            install -Dm755 usr/bin/nib $out/libexec/${pname}/nib
+            install -d $out/libexec
+            cp -r usr/share/Orden $out/libexec/${pname}
+            rm -f $out/libexec/${pname}/chrome-sandbox
             install -d $out/share/applications
             substitute ${./orden.desktop} $out/share/applications/${pname}.desktop \
               --replace-fail 'Name=Orden' 'Name=${if edge then "Orden Edge" else "Orden"}' \
@@ -197,18 +267,10 @@
             runHook postInstall
           '';
 
-          # The wrapper is a shell script rather than wrapGAppsHook3's own, which
-          # would be compiled, and for the one thing a binary wrapper cannot do:
-          # WebKitGTK's DMA-BUF renderer is what leaves a blank window on NVIDIA's
-          # own driver, so there, and only there, it is turned off - unless the
-          # user has set it either way. Mesa (Intel, AMD) keeps it. GTK names the
-          # window after the command it was started as, which is what the desktop
-          # entry's StartupWMClass says. Links and attachments open with xdg-open.
-          #
-          # GStreamer is shut in with its own plugins: a plugin path the session
-          # carries (a NixOS profile's lib/, with every Qt and KDE library in it)
-          # is not searched, and the registry it keeps is this package's alone, so
-          # the web process never tries to load a stranger's .so.
+          # The wrapper is a shell script rather than wrapGAppsHook4's own, which would be
+          # compiled. GTK names the window after the command it was started as, which is
+          # what the desktop entry's StartupWMClass says. Links and attachments open with
+          # xdg-open.
           #
           # pandoc is deliberately not here: it is only needed for importing and
           # exporting DOCX and friends, Orden hides that when it is missing, and
@@ -218,12 +280,7 @@
             makeShellWrapper $out/libexec/${pname}/nib $out/bin/${pname} \
               "''${gappsWrapperArgs[@]}" \
               --inherit-argv0 \
-              --suffix PATH : ${pkgs.lib.makeBinPath [ pkgs.xdg-utils ]} \
-              --set GST_PLUGIN_SYSTEM_PATH_1_0 ${pkgs.lib.makeSearchPathOutput "lib" "lib/gstreamer-1.0" gstPlugins} \
-              --unset GST_PLUGIN_PATH \
-              --unset GST_PLUGIN_PATH_1_0 \
-              --run 'export GST_REGISTRY_1_0="''${XDG_CACHE_HOME:-$HOME/.cache}/${pname}/gstreamer-registry-${pkgs.stdenv.hostPlatform.system}.bin"' \
-              --run 'if [ -z "''${WEBKIT_DISABLE_DMABUF_RENDERER+set}" ] && [ -e /proc/driver/nvidia/version ]; then export WEBKIT_DISABLE_DMABUF_RENDERER=1; fi'
+              --suffix PATH : ${pkgs.lib.makeBinPath [ pkgs.xdg-utils ]}
           ''
           + pkgs.lib.optionalString (!edge) ''
             ln -s orden $out/bin/nib
@@ -280,7 +337,7 @@
         let
           lib = pkgs.lib;
           inherit (fromSource) pname version;
-          gstPlugins = gstPluginsFor pkgs;
+          cef = cefFor pkgs;
         in
         if !haveSources then
           # Reached only through a flake reference that copied this directory
@@ -311,16 +368,30 @@
             TAURI_CONFIG = builtins.toJSON { inherit version; };
             src = workspace;
             cargoRoot = "apps/desktop/src-tauri";
-            cargoLock.lockFile = "${workspace}/apps/desktop/src-tauri/Cargo.lock";
+            # Linux is built from a manifest of its own, on Tauri 3 and CEF, put in place
+            # of the app's before anything reads it; see scripts/linux-cef.sh.
+            cargoLock.lockFile = "${workspace}/apps/desktop/src-tauri/linux/Cargo.lock";
+            postPatch = ''
+              cp apps/desktop/src-tauri/linux/Cargo.toml apps/desktop/src-tauri/Cargo.toml
+              cp apps/desktop/src-tauri/linux/Cargo.lock apps/desktop/src-tauri/Cargo.lock
+            '';
+            CEF_PATH = cef;
 
             nativeBuildInputs = with pkgs; [
               pkg-config
+              cmake
               nodejs_24
               pnpm_10
               pnpmConfigHook
-              wrapGAppsHook3
+              autoPatchelfHook
+              wrapGAppsHook4
               makeWrapper
             ];
+            # cmake is the `cef` crate's, for the wrapper library it compiles; the
+            # package itself is Cargo's.
+            dontUseCmakeConfigure = true;
+            runtimeDependencies = openedFor pkgs;
+            dontStrip = true;
 
             pnpmDeps = pkgs.fetchPnpmDeps {
               inherit pname version;
@@ -341,9 +412,18 @@
             # (Tauri's own is replaced with the one beside this file, with the
             # pname substituted into it) and the icons, including the 256x256 one
             # Tauri files under a scale-2 name.
+            #
+            # The engine beside the program, where it looks for libcef.so and Chromium for
+            # its resources; not the sandbox helper, which only works setuid root.
             postInstall = ''
               install -Dm755 $out/bin/nib $out/libexec/${pname}/nib
               rm $out/bin/nib
+              for one in ${cef}/*; do
+                case "$(basename "$one")" in
+                  CMakeLists.txt | cmake | include | libcef_dll | archive.json | chrome-sandbox) ;;
+                  *) cp -rL "$one" $out/libexec/${pname}/ ;;
+                esac
+              done
               install -Dm644 ${./orden.desktop} $out/share/applications/${pname}.desktop
               substitute ${./orden.desktop} $out/share/applications/${pname}.desktop \
                 --replace-fail 'Name=Orden' 'Name=Orden Unstable' \
@@ -358,23 +438,13 @@
                 $out/share/icons/hicolor/256x256/apps/${pname}.png
             '';
 
-            # The same environment the release build's wrapper sets, for the same
-            # reasons: xdg-open on $PATH, GStreamer shut in with its own plugins and
-            # with a registry of its own - under this package's name, so the two
-            # installs never share one - and WebKitGTK's DMA-BUF renderer turned off
-            # on NVIDIA's driver alone, where it leaves a blank window, unless the
-            # user has set it either way.
+            # The same environment the release build's wrapper sets: xdg-open on $PATH.
             dontWrapGApps = true;
             postFixup = ''
               wrapProgram $out/libexec/${pname}/nib $out/bin/${pname} \
                 --inherit-argv0 \
                 ''${gappsWrapperArgs[@]} \
-                --prefix PATH : ${lib.makeBinPath [ pkgs.xdg-utils ]} \
-                --set GST_PLUGIN_SYSTEM_PATH_1_0 ${lib.makeSearchPathOutput "lib" "lib/gstreamer-1.0" gstPlugins} \
-                --unset GST_PLUGIN_PATH \
-                --unset GST_PLUGIN_PATH_1_0 \
-                --run 'if [ -z "''${WEBKIT_DISABLE_DMABUF_RENDERER+set}" ] && [ -e /proc/driver/nvidia/version ]; then export WEBKIT_DISABLE_DMABUF_RENDERER=1; fi' \
-                --run 'export GST_REGISTRY_1_0="''${XDG_CACHE_HOME:-$HOME/.cache}/${pname}/gstreamer-registry-${pkgs.stdenv.hostPlatform.system}.bin"'
+                --prefix PATH : ${lib.makeBinPath [ pkgs.xdg-utils ]}
             '';
 
             meta = {
