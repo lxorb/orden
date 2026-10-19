@@ -3846,8 +3846,14 @@ class Workspace {
       // from.
       const was = `# ${shownName(nameOf(path))}`
       if (undoable && (note.text === was || note.text.startsWith(was + '\n'))) {
-        // Nobody typed this, so it goes in the way any other outside edit does.
+        // Nobody typed this, so it goes in the way any other outside edit does. But
+        // it is not what the file says, so it is owed the way typing is: a note with
+        // nothing waiting used to take it quietly and stay clean, the tab saying
+        // `# Groceries` and the file keeping `# Untitled`. Written once the rename
+        // lets go of the note; see `holdingUnder`.
         note.replace(`# ${shownName(nameOf(target))}${note.text.slice(was.length)}`, note.dirty)
+        note.dirty = true
+        this.saving.owed(note)
       }
     }
 

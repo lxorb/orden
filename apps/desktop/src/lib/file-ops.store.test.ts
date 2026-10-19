@@ -229,6 +229,30 @@ describe('a write in the air while a file moves', () => {
   })
 })
 
+describe('a note renamed while its heading is still its name', () => {
+  test('has the new heading written to the file, not only shown', async () => {
+    // With no file list on screen a new note is written at once under its
+    // placeholder name, rather than waiting in a row for one.
+    workspace.panel = null
+    await workspace.createNote(ROOT)
+    await workspace.writesSettled()
+    const made = workspace.active?.path
+    if (!made) throw new Error('no note')
+    workspace.panel = 'tree'
+    await workspace.loadTree()
+
+    await workspace.rename(made, 'Groceries.md')
+    await workspace.writesSettled()
+
+    // The heading was rewritten quietly into a note with nothing waiting to be
+    // written, which left it clean: the tab said `# Groceries` and the file kept
+    // `# Untitled` until something else was typed.
+    const shown = workspace.documentAt(`${ROOT}/Groceries.md`)?.text ?? ''
+    expect(shown.startsWith('# Groceries\n')).toBe(true)
+    expect(disk.current?.files.get(`${ROOT}/Groceries.md`)).toBe(shown)
+  })
+})
+
 describe('the stores the app keeps by path', () => {
   /** Each follower, by the call it answers an operation with. */
   function counted() {

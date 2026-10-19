@@ -2696,9 +2696,13 @@ describe('a note writes itself, wherever it is', () => {
   })
 
   /** A rename landing inside a write used to move the file out from under it, and
-   *  the write put the old name back beside the new one. */
+   *  the write put the old name back beside the new one.
+   *
+   *  A note whose heading is not its name: this disk keeps nothing it is sent, so a
+   *  note re-read after its write says `# a` again, and a rename rewrites a heading
+   *  that is still the note's old name and writes it too. */
   test('a rename during a write waits for it, and one file is left, with the words', async () => {
-    const tab = await typedIn('/space/a.md')
+    const tab = await typedIn('/space/c.md')
 
     let release: () => void = () => undefined
     holding.write = new Promise<void>((resolve) => {
@@ -2707,7 +2711,7 @@ describe('a note writes itself, wherever it is', () => {
 
     const writing = workspace.writeNow()
     await vi.advanceTimersByTimeAsync(0)
-    const renaming = workspace.rename('/space/a.md', 'Renamed.md')
+    const renaming = workspace.rename('/space/c.md', 'Renamed.md')
     await vi.advanceTimersByTimeAsync(0)
     expect(sent.some((one) => one.command === 'rename_note')).toBe(false)
 
