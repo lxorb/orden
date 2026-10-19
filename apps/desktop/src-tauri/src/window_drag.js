@@ -5,6 +5,21 @@
 ;(function () {
   const invoke = (args) => window.__TAURI_INTERNALS__.invoke('window_move_resize', args)
 
+  // Tauri's own `start_dragging`, which its drag script asks for the moment a press lands,
+  // is answered here instead, by the move once the pointer has gone (below): on CEF the
+  // runtime's would start from a press GTK never had, or, where it had one, from that
+  // press at once, before a double click could be one. Wrapped the first time a press
+  // comes, by when Tauri's own script has put its `invoke` in place.
+  let wrapped = false
+  function wrap() {
+    const internals = window.__TAURI_INTERNALS__
+    if (wrapped || !internals || typeof internals.invoke !== 'function') return
+    wrapped = true
+    const own = internals.invoke.bind(internals)
+    internals.invoke = (cmd, ...rest) =>
+      cmd === 'plugin:window|start_dragging' ? Promise.resolve() : own(cmd, ...rest)
+  }
+
   // Tauri's own rule for a drag region (its drag.js), so the same presses move the window.
   const ATTR = 'data-tauri-drag-region'
   const CLICKABLE = new Set(['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'LABEL', 'SUMMARY'])
@@ -103,9 +118,16 @@
   )
   document.addEventListener('mouseleave', () => cursor(null))
 
+  // A press on the strip moves the window once the pointer has gone a few pixels with
+  // the button held, as GTK's own title bar does: a click is still a click, and the
+  // second press of a double click still reaches Tauri's script, which maximises.
+  const THRESHOLD = 4
+  let pressed = null
   window.addEventListener(
     'mousedown',
     (event) => {
+      pressed = null
+      wrap()
       if (event.button !== 0 || !event.isTrusted) return
       const edge = filling ? null : edgeAt(event.clientX, event.clientY)
       if (edge) {
@@ -114,11 +136,25 @@
         invoke({ edge })
         return
       }
-      // A double click is Tauri's, which maximises the window. A press is left to go
-      // on to the page's own handlers as it always went, and to Tauri's script, whose
-      // `start_dragging` does nothing here.
-      if (event.detail === 1 && dragRegion(event.composedPath())) invoke({ edge: null })
+      if (event.detail === 1 && dragRegion(event.composedPath())) {
+        pressed = { x: event.screenX, y: event.screenY }
+      }
     },
     true,
   )
+  window.addEventListener(
+    'mousemove',
+    (event) => {
+      if (!pressed) return
+      if (!(event.buttons & 1)) {
+        pressed = null
+        return
+      }
+      if (Math.hypot(event.screenX - pressed.x, event.screenY - pressed.y) < THRESHOLD) return
+      pressed = null
+      invoke({ edge: null })
+    },
+    true,
+  )
+  window.addEventListener('mouseup', () => (pressed = null), true)
 })()

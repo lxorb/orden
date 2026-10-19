@@ -14,10 +14,11 @@
 //! connection lets go of any grab of its own. Every window manager that follows the
 //! EWMH takes it - `KWin`, Mutter, Xfwm, Openbox - and so does a Wayland compositor for
 //! an `XWayland` window, which is what Orden's is (see linux.rs). The page asks through
-//! `SCRIPT`, put into the app's own page before anything of it runs: it takes the
-//! presses Tauri's script would have handed to `start_dragging` first, finds the edges
-//! itself, and shows the cursor a border shows there. A double click on the tab strip
-//! is still Tauri's: it maximises the window, which needs no press.
+//! `SCRIPT`, put into the app's own page before anything of it runs: it hears the
+//! presses Tauri's script hands to `start_dragging` first, and asks for the move once
+//! the pointer has gone a few pixels with the button held, as GTK's own title bar does;
+//! it finds the edges itself, and shows the cursor a border shows there. A double click
+//! on the tab strip is still Tauri's: it maximises the window, which needs no press.
 
 /// What the app's own page runs on CEF, before any of its own scripts: see the top of
 /// this file.
