@@ -91,4 +91,130 @@ describe('a Logseq graph', () => {
     expect(said.meta).toEqual({})
     expect(said.body).toContain('- Not a property')
   })
+
+  test('a graph zipped up whole is read one folder down', async () => {
+    const plan = await readLogseq([
+      file('My graph/logseq/config.edn', '{}'),
+      file('My graph/logseq/bak/pages/A.md', '- An old copy'),
+      file('My graph/pages/home___kitchen.md', '- Tiles\n'),
+      file('My graph/journals/2026_09_11.md', '- Woke up\n'),
+    ])
+
+    expect(plan.files.map((one) => one.path)).toEqual(['home/kitchen.md', 'Journals/2026-09-11.md'])
+  })
+
+  test('a graph kept in git leaves its history behind', async () => {
+    const plan = await readLogseq([
+      file('.git/HEAD', 'ref: refs/heads/main'),
+      file('.gitignore', '.DS_Store'),
+      file('pages/A.md', '- Words\n'),
+    ])
+
+    expect(plan.files.map((one) => one.path)).toEqual(['A.md'])
+  })
+
+  test('a page with a very long name is still a note', async () => {
+    const plan = await readLogseq([file(`pages/${'Long '.repeat(30)}end.md`, '- Words\n')])
+
+    expect(plan.files[0]?.kind).toBe('note')
+    expect(plan.files[0]?.path).toMatch(/\.md$/)
+  })
+
+  test('a name that ends in a slash is named by what came before it', async () => {
+    const plan = await readLogseq([file('pages/Tweet___Ten tips...___.md', '- Words\n')])
+
+    expect(plan.files[0]?.path).toBe('Tweet/Ten tips.md')
+  })
+
+  test('properties are read from a file written with Windows line endings', async () => {
+    const plan = await readLogseq([
+      file('pages/A.md', 'type:: book\r\ntags:: [[deep work]], #focus\r\n\r\n- Words\r\n'),
+    ])
+
+    const text = noteAt(plan, 'A.md')
+    expect(text).toContain('type: book')
+    expect(text).toContain('tags: [deep-work, focus]')
+    expect(text).not.toContain('type::')
+  })
+
+  test('a link to a journal follows it to the date it is now', async () => {
+    const plan = await readLogseq([
+      file('journals/2026_09_11.md', '- Woke up\n'),
+      file('pages/A.md', '- On [[Sep 11th, 2026]] and [[sep 11th, 2026]]\n'),
+    ])
+
+    expect(noteAt(plan, 'A.md')).toContain('On [[2026-09-11]] and [[2026-09-11]]')
+  })
+
+  test("a journal is named and linked the way the graph's settings say", async () => {
+    const plan = await readLogseq([
+      file(
+        'logseq/config.edn',
+        '{:journal/page-title-format "EEEE, dd.MM.yyyy"\n :journal/file-name-format "dd_MM_yyyy"}',
+      ),
+      file('journals/11_09_2026.md', '- Woke up\n'),
+      file('pages/A.md', '- See [[Friday, 11.09.2026]]\n'),
+    ])
+
+    expect(plan.files.map((one) => one.path)).toContain('Journals/2026-09-11.md')
+    expect(noteAt(plan, 'A.md')).toContain('See [[2026-09-11]]')
+  })
+
+  test('a page answers to its aliases, and to the name its file could not hold', async () => {
+    const plan = await readLogseq([
+      file('pages/New to Logseq%3F.md', '- Start here\n'),
+      file(
+        'pages/config edn file.md',
+        'title:: config.edn\nalias:: settings, [[the config]]\n\n- Words\n',
+      ),
+    ])
+
+    expect(noteAt(plan, 'New to Logseq.md')).toContain('aliases: [New to Logseq?]')
+    expect(noteAt(plan, 'config edn file.md')).toContain(
+      'aliases: [config.edn, settings, the config]',
+    )
+  })
+
+  test('embeds show what they embedded, and a reference with words keeps the words', async () => {
+    const plan = await readLogseq([
+      file(
+        'pages/Source.md',
+        '- The quarter closed ahead of plan\n  id:: aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee\n',
+      ),
+      file(
+        'pages/Other.md',
+        [
+          '- {{embed ((aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee))}}',
+          '- {{embed [[Source]] }}',
+          '- [as noted](((aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee)))',
+          '- [the source]([[Source]])',
+        ].join('\n'),
+      ),
+    ])
+
+    const text = noteAt(plan, 'Other.md')
+    expect(text).toContain('- The quarter closed ahead of plan\n- ![[Source]]\n- as noted\n')
+    expect(text).toContain('[[Source|the source]]')
+    expect(plan.lost[0]?.values).toEqual({ count: 2 })
+  })
+
+  test("a block's fold and a picture's size are Logseq's own and do not come", async () => {
+    const plan = await readLogseq([
+      file(
+        'pages/A.md',
+        '- Parent\n  collapsed:: true\n  - ![shot](../assets/shot.png){:height 53, :width 42}\n',
+      ),
+      file('assets/shot.png', 'PNG'),
+    ])
+
+    const text = noteAt(plan, 'A.md')
+    expect(text).not.toContain('collapsed')
+    expect(text).toContain('![shot](assets/shot.png)\n')
+  })
+
+  test('code is kept exactly as it was written', () => {
+    const code = '- ```\n  - TODO not a task\n  id:: aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee\n  ```'
+
+    expect(logseqNote(code).body).toBe(code)
+  })
 })
