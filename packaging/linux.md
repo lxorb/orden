@@ -7,7 +7,7 @@ them. Not Flathub; see the section of that name.
 
 | Directory | Manager | Built from | Architectures |
 | --- | --- | --- | --- |
-| `apt/` | apt (`apt install orden`, from `lxorb.github.io/apt`) | the `.deb` | amd64, arm64 |
+| `apt/` | apt (`apt install orden`, from `apt.orden.so`) | the `.deb` | amd64, arm64 |
 | `aur/nib-bin/` | AUR (`yay -S orden-bin`) | the `.deb` | x86_64, aarch64 |
 | `snap/` | Snap Store | the `.deb` | amd64, arm64 |
 | `nix/` | a flake anyone can install from | the `.deb` | x86_64, aarch64 |
@@ -121,13 +121,12 @@ cannot be setuid, and NixOS allows the namespaces. An AppImage cannot carry a se
 helper: where user namespaces are restricted as well (Ubuntu 24.04's AppArmor), the
 runtime starts Chromium without a sandbox and says so in the log.
 
-## apt - `lxorb/apt`
+## apt - `apt.orden.so`
 
-An apt repository of our own, on GitHub Pages: `lxorb/apt`, served at
-`https://lxorb.github.io/apt`. The address lives in one place, the repository variable
-`APT_BASE_URL` (that default when it is unset), which `apt.yml` writes into the
-repository's own page; a move to `apt.orden.so` is that variable, a `CNAME` in `lxorb/apt`
-and the lines below.
+An apt repository of our own, served at `https://apt.orden.so` from the Cloudflare R2
+bucket `orden-apt` in Orden's Cloudflare account. The bucket is the domain's whole
+answer: a custom domain of the bucket, kept out of the `*.orden.so/*` route the sync
+Worker answers on by a route of its own, `apt.orden.so/*`, with no Worker on it.
 
 Two suites, one component, `main`, and both architectures:
 
@@ -139,16 +138,30 @@ Both call it (`uses:`) rather than dispatching it: a dispatch only finds a workf
 on the default branch already, and `apt.yml` reaches `unstable` first.
 
 **Each suite holds one version, the newest.** A run empties that suite's pool, puts the
-release's two `.deb`s in, writes its `Packages` and `Release` again and signs it; the
-other suite is taken from the repository as it is. Every older `.deb` stays on its release
-page. The repository is pushed as a single commit with no history, because every `.deb`
-that ever went in would otherwise stay in a repository Pages serves - thirty megabytes for
-every edge build.
+release's two `.deb`s in, writes its `Packages` and `Release` again and signs it, and puts
+that suite into the bucket in place of what it was: the `.deb`s first, the indices that
+name them after, and the `.deb`s nothing names any more taken away last, so an apt reading
+at any moment finds every file it is told of. The other suite is never touched. Every older
+`.deb` stays on its release page. The `.deb`s are kept by the edge for a year (their names
+carry their version and never change), the indices for a minute.
+
+**Written into R2 on `CLOUDFLARE_API_TOKEN`**, the repository secret the deploy uses too,
+which has R2 write on the account: R2's S3 key is the token's id, and its secret the
+token's SHA-256, so no second key is kept.
+
+**Why not GitHub Pages any more.** The repository was `lxorb/apt` on Pages, at
+`https://lxorb.github.io/apt`, up to 0.16. A `.deb` carrying CEF is about 150 MB, and a
+file in a GitHub repository may be 100 at most. Pages answers no path with a redirect, so
+the old address cannot send apt here either: `apt.yml -f suite=move` wrote it for the
+last time (`scripts/apt-move.sh`), with the version each suite held once more as
+`<version>+moved` and a postinst that points every source naming the old address at the
+new one. The next `apt upgrade` from the old address installs it, and the `apt update`
+after that reads `apt.orden.so`. Every `.deb` since carries the same postinst
+(`src-tauri/linux/postinst`), for a source written from old instructions later.
 
 **Written with `apt-ftparchive` and `gpg`**, in `scripts/apt-repo.sh`, and nothing else:
-no `reprepro` database or `aptly` state to keep beside the files, so the checkout of
-`lxorb/apt` is the whole of the state, a run reads it as it finds it, and the layout is the
-plain one apt reads:
+no `reprepro` database or `aptly` state to keep beside the files, so a run needs nothing of
+what is in the bucket, and the layout is the plain one apt reads:
 
 ```
 dists/<suite>/InRelease, Release, Release.gpg
@@ -161,17 +174,17 @@ orden-archive-keyring.asc, orden-archive-keyring.gpg, index.html, README.md
 `Orden packages <emil@emilvinu.ch>`, fingerprint
 `44404B19539FB2C53F31086941F0103448A194DE`. Its public half is
 `apt/orden-archive-keyring.asc` here and at the root of the repository, and a run whose
-secret is not that key refuses to sign. Without the key or `PACKAGING_TOKEN` the run is
-skipped. `InRelease` and `Release.gpg` both, so every apt finds the signature it asks for.
+secret is not that key refuses to sign. Without the key or `CLOUDFLARE_API_TOKEN` the
+run is skipped. `InRelease` and `Release.gpg` both, so every apt finds the signature it asks for.
 
 Adding it, for `stable` (`Suites: unstable` for the edge builds):
 
 ```sh
 sudo install -d -m 0755 /etc/apt/keyrings
-curl -fsSL https://lxorb.github.io/apt/orden-archive-keyring.asc | sudo tee /etc/apt/keyrings/orden.asc >/dev/null
+curl -fsSL https://apt.orden.so/orden-archive-keyring.asc | sudo tee /etc/apt/keyrings/orden.asc >/dev/null
 sudo tee /etc/apt/sources.list.d/orden.sources >/dev/null <<'EOF'
 Types: deb
-URIs: https://lxorb.github.io/apt
+URIs: https://apt.orden.so
 Suites: stable
 Components: main
 Signed-By: /etc/apt/keyrings/orden.asc
@@ -181,7 +194,7 @@ sudo apt install orden
 ```
 
 The one-line form, for an apt older than 2.3 that reads no `.sources` file:
-`deb [signed-by=/etc/apt/keyrings/orden.asc] https://lxorb.github.io/apt stable main` in
+`deb [signed-by=/etc/apt/keyrings/orden.asc] https://apt.orden.so stable main` in
 `/etc/apt/sources.list.d/orden.list`. The keyring may be the armored `.asc`; apt reads
 either. The app leaves an install from here to apt and only says when a new version is out
 (`package_manager.rs`).
