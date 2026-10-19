@@ -14,7 +14,7 @@ import { swipeChoice } from '../back-swipe/choice.svelte'
 import { BY_ID } from '../shortcuts/registry'
 import { asWarning, shellName, shells, SIZES } from '../terminal/shells.svelte'
 import { bothName } from '../terminal/two-ways'
-import { asChannel } from '../updater'
+import { asChannel, switchWebChannel, webChannel } from '../updater'
 import { updates } from '../updates.svelte'
 import { pages } from '../web-tab/pages.svelte'
 import { isSaver } from '../web-tab/resting'
@@ -435,6 +435,37 @@ export function generalPane(): Pane {
                   initial: 'stable',
                   get: () => updates.channel,
                   set: (value) => updates.setChannel(asChannel(value)),
+                },
+              ],
+            },
+          ] satisfies Group[])
+        : []),
+
+      // The web app's own pair: the release, or the edge of `unstable`, chosen for this
+      // browser by a cookie the Worker keeps (#424). Choosing loads the page again from
+      // the other build, so the row says what is running rather than what was last
+      // pressed. Not in the desktop and phone apps, which have the channel above or the
+      // store's. `__EVEN_PLUGIN__` said here as well as in `webChannel`, so the plugin's
+      // build drops the row before it decides which catalogue rows to keep.
+      ...(!__EVEN_PLUGIN__ && webChannel
+        ? ([
+            {
+              title: t('Updates'),
+              fields: [
+                {
+                  kind: 'segmented',
+                  label: t('Web version'),
+                  words: ['beta', 'updates', 'nightly', 'channel', 'edge'],
+                  hint: t(
+                    'Stable is the released web app; Unstable is the newest build and can break.',
+                  ),
+                  options: [
+                    { value: 'stable', label: t('Stable') },
+                    { value: 'unstable', label: t('Unstable') },
+                  ],
+                  initial: 'stable',
+                  get: () => webChannel ?? 'stable',
+                  set: (value) => switchWebChannel(asChannel(value)),
                 },
               ],
             },

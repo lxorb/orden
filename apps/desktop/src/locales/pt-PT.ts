@@ -1294,6 +1294,9 @@ export const ptPT: Dictionary = {
   Unstable: 'Instável',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'Estável segue as versões lançadas; Instável segue as compilações de ponta e pode quebrar.',
+  'Web version': 'Versão web',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'Estável é a app web lançada; Instável é a compilação mais recente e pode falhar.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Importar',

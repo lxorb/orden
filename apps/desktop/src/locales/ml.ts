@@ -1288,6 +1288,9 @@ export const ml: Dictionary = {
   Unstable: 'അസ്ഥിരം',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'സ്ഥിരം റിലീസ് ചെയ്ത പതിപ്പുകൾ പിന്തുടരുന്നു; അസ്ഥിരം എഡ്ജ് ബിൽഡുകൾ പിന്തുടരുന്നു, തകരാനും മതി.',
+  'Web version': 'വെബ് പതിപ്പ്',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'സ്ഥിരം റിലീസ് ചെയ്ത വെബ് ആപ്പ്; അസ്ഥിരം ഏറ്റവും പുതിയ ബിൽഡ്, തകരാനും മതി.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'ഇംപോർട്ട്',

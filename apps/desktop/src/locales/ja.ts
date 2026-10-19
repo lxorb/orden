@@ -1270,6 +1270,9 @@ export const ja: Dictionary = {
   Unstable: '不安定版',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     '安定版は公開されたバージョンを、不安定版はエッジビルドを追うので壊れることがあります。',
+  'Web version': 'Web版',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    '安定版は公開されたWebアプリ、不安定版は最新のビルドで、壊れることがあります。',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'インポート',

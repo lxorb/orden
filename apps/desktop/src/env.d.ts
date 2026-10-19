@@ -73,4 +73,7 @@ interface ImportMetaEnv {
    *  plays both on local origins; a normal build has orden.so and nibeditor.com. */
   readonly VITE_NIB_WEB?: string
   readonly VITE_NIB_LEGACY_WEB?: string
+  /** `unstable` in the web build of `unstable`'s edge, which the Worker serves to a
+   *  browser that asked for it; unset in every other build. See updater.ts. */
+  readonly VITE_ORDEN_CHANNEL?: string
 }

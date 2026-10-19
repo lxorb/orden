@@ -1273,6 +1273,9 @@ export const bn: Dictionary = {
   Unstable: 'আনস্টেবল',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'স্টেবল প্রকাশিত সংস্করণ অনুসরণ করে, আনস্টেবল এজ বিল্ড অনুসরণ করে, আর ভেঙে যেতে পারে।',
+  'Web version': 'ওয়েব সংস্করণ',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'স্টেবল প্রকাশিত ওয়েব অ্যাপ, আনস্টেবল সবচেয়ে নতুন বিল্ড, আর ভেঙে যেতে পারে।',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'ইমপোর্ট',

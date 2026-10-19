@@ -1287,6 +1287,9 @@ export const ta: Dictionary = {
   Unstable: 'நிலையற்றது',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'நிலையானது வெளியிடப்பட்ட பதிப்புகளைப் பின்தொடரும்; நிலையற்றது edge பில்டுகளைப் பின்தொடரும், உடையவும் கூடும்.',
+  'Web version': 'வலைப் பதிப்பு',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'நிலையானது வெளியிடப்பட்ட வலை ஆப்; நிலையற்றது புதிய பில்ட், உடையவும் கூடும்.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'இறக்குமதி',

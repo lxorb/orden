@@ -1263,6 +1263,9 @@ export const ko: Dictionary = {
   Unstable: '불안정',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     '안정은 출시된 버전을 따르고, 불안정은 엣지 빌드를 따르며 깨질 수 있습니다.',
+  'Web version': '웹 버전',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    '안정은 출시된 웹 앱이고, 불안정은 가장 새로운 빌드이며 깨질 수 있습니다.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: '가져오기',

@@ -1251,6 +1251,9 @@ export const zhHant: Dictionary = {
   Unstable: '開發版',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     '穩定版跟著已發行的版本，開發版跟著edge建置，可能會壞掉。',
+  'Web version': '網頁版',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    '穩定版是已發行的網頁版，開發版是最新的建置，可能會壞掉。',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: '匯入',

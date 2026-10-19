@@ -1284,6 +1284,9 @@ export const sw: Dictionary = {
   Unstable: 'Isiyo imara',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'Imara hufuata matoleo yaliyotolewa, Isiyo imara hufuata builds za edge na inaweza kuvunjika.',
+  'Web version': 'Toleo la wavuti',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'Imara ni programu ya wavuti iliyotolewa, Isiyo imara ni build mpya zaidi na inaweza kuvunjika.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Ingiza',

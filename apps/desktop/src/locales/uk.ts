@@ -1313,6 +1313,9 @@ export const uk: Dictionary = {
   Unstable: 'Нестабільний',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'Стабільний слідує випущеним версіям, нестабільний - збіркам edge і може ламатися.',
+  'Web version': 'Веб-версія',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'Стабільний - випущений веб-застосунок, нестабільний - найновіша збірка і може ламатися.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Імпорт',

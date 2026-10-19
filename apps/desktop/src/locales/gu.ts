@@ -1273,6 +1273,9 @@ export const gu: Dictionary = {
   Unstable: 'અસ્થિર',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'સ્થિર પ્રકાશિત આવૃત્તિઓ અનુસરે છે, અસ્થિર એજ બિલ્ડ અનુસરે છે અને તૂટી શકે.',
+  'Web version': 'વેબ આવૃત્તિ',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'સ્થિર પ્રકાશિત વેબ એપ છે, અસ્થિર સૌથી નવું બિલ્ડ છે અને તૂટી શકે.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'આયાત',

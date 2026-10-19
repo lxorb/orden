@@ -1282,6 +1282,9 @@ export const kn: Dictionary = {
   Unstable: 'ಅಸ್ಥಿರ',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'ಸ್ಥಿರ ಬಿಡುಗಡೆಯಾದ ಆವೃತ್ತಿಗಳನ್ನು ಅನುಸರಿಸುತ್ತದೆ; ಅಸ್ಥಿರ ಎಡ್ಜ್ ಬಿಲ್ಡ್‌ಗಳನ್ನು ಅನುಸರಿಸುತ್ತದೆ, ಮುರಿಯಲೂಬಹುದು.',
+  'Web version': 'ವೆಬ್ ಆವೃತ್ತಿ',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'ಸ್ಥಿರ ಬಿಡುಗಡೆಯಾದ ವೆಬ್ ಆ್ಯಪ್; ಅಸ್ಥಿರ ಹೊಸ ಬಿಲ್ಡ್, ಮುರಿಯಲೂಬಹುದು.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'ಇಂಪೋರ್ಟ್',

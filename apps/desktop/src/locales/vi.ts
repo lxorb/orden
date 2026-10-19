@@ -1264,6 +1264,9 @@ export const vi: Dictionary = {
   Unstable: 'Không ổn định',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'Ổn định theo các bản đã phát hành, Không ổn định theo các bản dựng edge và có thể lỗi.',
+  'Web version': 'Phiên bản web',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'Ổn định là ứng dụng web đã phát hành, Không ổn định là bản dựng mới nhất và có thể lỗi.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Nhập',

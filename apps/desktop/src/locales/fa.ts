@@ -1277,6 +1277,9 @@ export const fa: Dictionary = {
   Unstable: 'ناپایدار',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'پایدار نسخه‌های منتشرشده را پی می‌گیرد، ناپایدار ساخت‌های لبه را و می‌تواند بشکند.',
+  'Web version': 'نسخهٔ وب',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'پایدار اپ وب منتشرشده است، ناپایدار تازه‌ترین ساخت است و می‌تواند بشکند.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'درون‌آوری',

@@ -1279,6 +1279,9 @@ export const pa: Dictionary = {
   Unstable: 'ਕੱਚਾ',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'ਪੱਕਾ ਜਾਰੀ ਹੋਈਆਂ ਰੂਪਾਂ ਪਿੱਛੇ ਚੱਲਦਾ ਹੈ, ਕੱਚਾ ਕਿਨਾਰੇ ਵਾਲੇ ਬਿਲਡਾਂ ਪਿੱਛੇ ਤੇ ਟੁੱਟ ਸਕਦਾ ਹੈ।',
+  'Web version': 'ਵੈੱਬ ਰੂਪ',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'ਪੱਕਾ ਜਾਰੀ ਹੋਈ ਵੈੱਬ ਐਪ ਹੈ, ਕੱਚਾ ਸਭ ਤੋਂ ਨਵਾਂ ਬਿਲਡ ਹੈ ਤੇ ਟੁੱਟ ਸਕਦਾ ਹੈ।',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'ਅੰਦਰ ਲਿਆਓ',

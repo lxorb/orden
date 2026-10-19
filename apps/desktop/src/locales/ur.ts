@@ -1274,6 +1274,9 @@ export const ur: Dictionary = {
   Unstable: 'غیر مستحکم',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'مستحکم جاری کردہ ورژن کے ساتھ چلتا ہے، غیر مستحکم ایج بلڈ کے ساتھ اور خراب ہو سکتا ہے۔',
+  'Web version': 'ویب ورژن',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'مستحکم جاری کردہ ویب ایپ ہے، غیر مستحکم سب سے نیا بلڈ ہے اور خراب ہو سکتا ہے۔',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'امپورٹ',

@@ -1262,6 +1262,9 @@ export const am: Dictionary = {
   Unstable: 'ያልተረጋጋ',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'የተረጋጋ የተለቀቁ ዕትሞችን ይከተላል፣ ያልተረጋጋ የዳር ግንባታዎችን ይከተላል እና ሊሰበር ይችላል።',
+  'Web version': 'የድር ዕትም',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'የተረጋጋ የተለቀቀው የድር መተግበሪያ ነው፣ ያልተረጋጋ አዲሱ ግንባታ ነው እና ሊሰበር ይችላል።',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'አምጣ',

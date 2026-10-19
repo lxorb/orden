@@ -1324,6 +1324,9 @@ export const ar: Dictionary = {
   Unstable: 'غير مستقر',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'المستقر يتبع الإصدارات المنشورة، وغير المستقر يتبع بُنى الحافة وقد يتعطل.',
+  'Web version': 'إصدار الويب',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'المستقر هو تطبيق الويب المنشور، وغير المستقر هو أحدث بنية وقد يتعطل.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'استيراد',

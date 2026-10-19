@@ -1273,6 +1273,9 @@ export const ps: Dictionary = {
   Unstable: 'نا ټينګ',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'ټينګ خپاره شوې نسخې تعقيبوي، نا ټينګ د څنډې جوړښتونه او ماتېدی شي.',
+  'Web version': 'ويب نسخه',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'ټينګ خپره شوې ويب اپلیکېشن ده، نا ټينګ تر ټولو نوی جوړښت دی او ماتېدی شي.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'واردول',

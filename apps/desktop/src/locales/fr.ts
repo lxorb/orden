@@ -1296,6 +1296,9 @@ export const fr: Dictionary = {
   Unstable: 'Instable',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'Stable suit les versions publiées, Instable suit les builds de pointe et peut casser.',
+  'Web version': 'Version web',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'Stable est l’app web publiée, Instable est le build le plus récent et peut casser.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Importer',

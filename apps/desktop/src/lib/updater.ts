@@ -1,7 +1,7 @@
 import { log } from './log'
 import { GIVE_UP, settleUp, written } from './parting'
 import { isNumber, isRecord, isString } from './stored'
-import { invoke, isDesktop } from './tauri'
+import { invoke, isDesktop, isNative } from './tauri'
 import { waited } from './timing'
 
 /** The two streams of releases a machine can follow: the tagged releases, or the
@@ -16,6 +16,28 @@ export type Channel = (typeof CHANNELS)[number]
  *  safe answer to a value nobody wrote. */
 export function asChannel(value: unknown): Channel {
   return CHANNELS.find((one) => one === value) ?? 'stable'
+}
+
+/** Which web build this page is: the release, or the edge of `unstable` (#424). Null
+ *  in the desktop and phone apps, which follow a channel of their own (above), and in
+ *  the glasses' plugin, which has none.
+ *
+ *  Said by the build, which the deploy makes with `VITE_ORDEN_CHANNEL=unstable` for
+ *  the edge, and not by the cookie that chose it: the cookie says what was asked for,
+ *  and a browser that asked for an edge nobody deployed is served the release. */
+export const webChannel: Channel | null =
+  isNative || __EVEN_PLUGIN__
+    ? null
+    : import.meta.env.VITE_ORDEN_CHANNEL === 'unstable'
+      ? 'unstable'
+      : 'stable'
+
+/** The browser moved to the other web build. The Worker sets or clears the cookie that
+ *  picks it and answers with the page again, which is the reload; see
+ *  services/sync/src/channel.ts. */
+export function switchWebChannel(to: Channel): void {
+  if (to === webChannel) return
+  location.href = to === 'unstable' ? '/?channel=unstable' : '?channel=stable'
 }
 
 /** A downloaded update, waiting to be put in place on the way out. Closing one

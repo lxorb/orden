@@ -1290,6 +1290,9 @@ export const fil: Dictionary = {
   Unstable: 'Hindi matatag',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'Sinusundan ng Matatag ang mga inilabas na bersyon, ang Hindi matatag ay mga edge build at puwedeng masira.',
+  'Web version': 'Bersyon sa web',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'Ang Matatag ang inilabas na web app, ang Hindi matatag ang pinakabagong build at puwedeng masira.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'I-import',

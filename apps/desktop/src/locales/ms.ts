@@ -1272,6 +1272,9 @@ export const ms: Dictionary = {
   Unstable: 'Tidak stabil',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'Stabil mengikut versi yang dikeluarkan, Tidak stabil mengikut binaan edge dan boleh rosak.',
+  'Web version': 'Versi web',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'Stabil ialah aplikasi web yang dikeluarkan, Tidak stabil ialah binaan terbaharu dan boleh rosak.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Import',

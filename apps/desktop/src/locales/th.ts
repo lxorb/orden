@@ -1258,6 +1258,9 @@ export const th: Dictionary = {
   Unstable: 'ไม่เสถียร',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'เสถียรตามรุ่นที่ปล่อยแล้ว ไม่เสถียรตามบิลด์ edge และอาจเสีย',
+  'Web version': 'เวอร์ชันเว็บ',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'เสถียรคือเว็บแอปที่ปล่อยแล้ว ไม่เสถียรคือบิลด์ล่าสุดและอาจเสีย',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'นำเข้า',

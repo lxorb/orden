@@ -1267,6 +1267,9 @@ export const jv: Dictionary = {
   Unstable: 'Ora mantep',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'Mantep ngetutake versi sing wis diwedalake, Ora mantep ngetutake build edge lan bisa rusak.',
+  'Web version': 'Versi web',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'Mantep yaiku aplikasi web sing wis diwedalake, Ora mantep yaiku build paling anyar lan bisa rusak.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Impor',

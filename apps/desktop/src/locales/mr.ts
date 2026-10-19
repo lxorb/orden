@@ -1272,6 +1272,9 @@ export const mr: Dictionary = {
   Unstable: 'अस्थिर',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'स्थिर प्रकाशित आवृत्त्या घेतो, अस्थिर एज बिल्ड घेतो आणि तुटू शकतो.',
+  'Web version': 'वेब आवृत्ती',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'स्थिर हा प्रकाशित वेब ॲप आहे, अस्थिर हा सर्वात नवा बिल्ड आहे आणि तुटू शकतो.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'इंपोर्ट',

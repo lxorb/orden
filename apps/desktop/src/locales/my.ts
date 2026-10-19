@@ -1268,6 +1268,9 @@ export const my: Dictionary = {
   Unstable: 'မတည်ငြိမ်',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'တည်ငြိမ်သည် ထုတ်လွှင့်ပြီးဗားရှင်းများကို လိုက်သည်၊ မတည်ငြိမ်သည် edge build များကို လိုက်၍ ပျက်နိုင်သည်။',
+  'Web version': 'ဝဘ်ဗားရှင်း',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'တည်ငြိမ်သည် ထုတ်လွှင့်ပြီး ဝဘ်အက်ပ်ဖြစ်သည်၊ မတည်ငြိမ်သည် နောက်ဆုံး build ဖြစ်၍ ပျက်နိုင်သည်။',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'သွင်းပါ',

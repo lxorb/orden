@@ -1285,6 +1285,9 @@ export const ha: Dictionary = {
   Unstable: 'Ba kwanciyar hankali',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'Kwanciyar hankali na bin fitattun sigogi, Ba kwanciyar hankali na bin gine-ginen gefe kuma zai iya lalacewa.',
+  'Web version': 'Sigar yanar gizo',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'Kwanciyar hankali ita ce fitacciyar manhajar yanar gizo, Ba kwanciyar hankali ginin mafi sabo ne kuma zai iya lalacewa.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Shigar',

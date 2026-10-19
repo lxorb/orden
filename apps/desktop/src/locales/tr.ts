@@ -1278,6 +1278,9 @@ export const tr: Dictionary = {
   Unstable: 'Kararsız',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'Kararlı yayımlanan sürümleri izler, Kararsız edge yapılarını izler ve bozulabilir.',
+  'Web version': 'Web sürümü',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'Kararlı yayımlanan web uygulamasıdır, Kararsız en yeni yapıdır ve bozulabilir.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'İçe aktar',

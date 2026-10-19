@@ -1278,6 +1278,9 @@ export const te: Dictionary = {
   Unstable: 'అస్థిరం',
   'Stable follows released versions; Unstable follows edge builds and can break.':
     'స్థిరం విడుదలైన వెర్షన్‌లను అనుసరిస్తుంది; అస్థిరం edge బిల్డ్‌లను అనుసరిస్తుంది, విరిగిపోవచ్చు.',
+  'Web version': 'వెబ్ వెర్షన్',
+  'Stable is the released web app; Unstable is the newest build and can break.':
+    'స్థిరం విడుదలైన వెబ్ యాప్; అస్థిరం అన్నిటికంటే కొత్త బిల్డ్, విరిగిపోవచ్చు.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'ఇంపోర్ట్',
