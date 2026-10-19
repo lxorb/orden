@@ -626,11 +626,10 @@ the shell. See `lib/terminal/keys.ts`, which is the rule, and docs/terminal.md.
 | | |
 | --- | --- |
 | Ctrl+Shift+T, Ctrl+Tab, Ctrl+Shift+Tab, Ctrl+PgUp, Ctrl+PgDn (and with Shift), the numbered tabs on Alt or Ctrl+Alt and a digit | the app's, as everywhere |
-| Ctrl+T, Ctrl+N | **both**: a new tab and the scratchpad, and the shell's swapped letters and next line. The first press asks which, and the answer is kept; see below |
-| Shift twice, Ctrl+P, Ctrl+Shift+P, Ctrl+comma, F11, Shift+F11, F6, Shift+F6 | the app's: the palette, the settings, full screen, full window, and the way a keyboard leaves the terminal - Tab cannot be, the shell completes with it |
+| Ctrl+T, Ctrl+N, Ctrl+W, Ctrl+Space, Ctrl+P, Ctrl+O, Ctrl+D, Ctrl+E, Ctrl+/ - every app command on a key a shell reads | **both**: a new tab and the swapped letters, the scratchpad and the next line, closing the tab and deleting a word, the space switcher and Emacs's mark, and so on. The first press asks which, and the answer is kept, per command; see below (#426) |
+| Shift twice, Ctrl+Shift+P, Ctrl+comma, F11, Shift+F11, F6, Shift+F6 | the app's: the palette, the settings, full screen, full window, and the way a keyboard leaves the terminal - Tab cannot be, the shell completes with it |
 | Ctrl+Shift and any other app command, Ctrl+Alt and an arrow | the app's: a terminal cannot tell Ctrl+Shift+E from Ctrl+E, and no shell has one on it. Ctrl+Shift+D puts every pane down here too, and Ctrl+Shift+Space opens the space switcher |
-| Ctrl+Space | **the shell's**: NUL, which Emacs sets its mark with and PowerShell opens its completions with, as in Windows Terminal and VS Code. Ctrl+Shift+Space is the space switcher here |
-| Ctrl+W, Ctrl+O, Ctrl+S, Ctrl+R, Ctrl+D and every other Ctrl and a letter | **the shell's**: delete a word, the history, search it, the end of input. Close a terminal with `exit`, its cross or its menu, or Cmd+W on a Mac |
+| Ctrl+R, Ctrl+S, Ctrl+U and every other Ctrl and a letter no app command is on | **the shell's**: search the history, stop the output, delete the line |
 | Ctrl+Shift+W | nobody's: Close window here and Close tab in every terminal there is, so neither |
 | Ctrl+C | always the interrupt |
 | Ctrl+Shift+C, Ctrl+Shift+V, Shift+Insert | copy, paste. Ctrl+V pastes too on Windows, as in Windows Terminal. Cmd+C and Cmd+V on a Mac, and a selection is copied as it is made |
@@ -648,18 +647,24 @@ anything but its own letter or digit is somebody typing `@` or `{`.
 **A key that is both is asked about, once.** Emil, issue #213: *"when pressing a shortcut
 in a terminal like interface or anywhere where it could have mulitple meanings then there
 should be a quick modal asking you which of the two should be used from now on (or you can
-tick always ask)"*. Two keys are both in a terminal: Ctrl+T, a new tab, which bash and zsh
-swap two letters with and fzf finds a file with, and Ctrl+N, the scratchpad, which is the
-shell's next line of history. The first press of either in a terminal - local, Remote or
-online - gives the press to neither and asks, in the app's one small question: *Ctrl+N in a
-terminal*, with the app's command (Scratchpad, New tab) and Terminal as the answers and an
-*Always ask* box beside them. The answer is the press: the app's is played on the window as
-the key it was, the terminal's is typed into the shell as the character it would have been
-(SO, DC4). It is kept for every terminal from then on unless the box was ticked, and Settings,
-General, Terminal has a row for each key - Always ask, the command, or Terminal - that shows
-the answer and takes it back. Escape answers nothing and sends the press nowhere. Only while
-the command is on Ctrl and a letter: a rebound one, Ctrl+Shift+X, and Cmd on a Mac are chords
-no shell has, and the app's without asking. See `TWO_WAYS` in `lib/terminal/keys.ts` and
+tick always ask)"*, and #426: *"the first time it asks you" should be the case for every
+dual bound shortcut*. So every app command whose key a shell reads as a character is both:
+Ctrl and a letter, Ctrl+Space (NUL, Emacs's mark and PowerShell's completions), and the
+other keys that type a control character - Ctrl+[, Ctrl+\, Ctrl+], Ctrl+/ and Ctrl and the
+digits 2 to 8 - whether the command is there by default or because somebody put it there
+in Settings. Ctrl+T is a new tab and the swapped letters (fzf's file finder too), Ctrl+N
+the scratchpad and the next line of history, Ctrl+W closing the tab and deleting a word,
+Ctrl+Space the space switcher and the mark. The first press of one in a terminal - local,
+Remote or online - gives the press to neither and asks, in the app's one small question:
+*Ctrl+N in a terminal*, with the app's command and Terminal as the answers and an *Always
+ask* box beside them. The answer is the press: the app's is played on the window as the key
+it was, the terminal's is typed into the shell as the character it would have been (SO, DC4,
+NUL). It is kept, per command, for every terminal from then on unless the box was ticked,
+and Settings, General, Terminal has a row for each key answered - Always ask, the command, or
+Terminal - that shows the answer and takes it back; Always ask takes the row away. Escape
+answers nothing and sends the press nowhere. **Ctrl+C is never asked about**: it is the
+interrupt. Ctrl+Shift, Ctrl+Alt and an arrow, and Cmd on a Mac are chords no shell has, and
+the app's without asking. See `shellReads` in `lib/terminal/keys.ts` and
 `lib/terminal/two-ways.ts`.
 
 **A chat** (docs/chats.md 4.16)
