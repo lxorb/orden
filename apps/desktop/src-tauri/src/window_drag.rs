@@ -31,7 +31,11 @@ pub const SCRIPT: &str = include_str!("window_drag.js");
 /// where the window is maximised or fills the screen, and nothing happens where there
 /// is no X11 window to move (any platform but Linux, which moves its own).
 #[tauri::command(async)]
-pub fn window_move_resize(webview: tauri::Webview, edge: Option<String>) -> Result<(), String> {
+pub fn window_move_resize(
+    webview: tauri::Webview,
+    edge: Option<String>,
+    at: Option<Pressed>,
+) -> Result<(), String> {
     let direction = match edge.as_deref() {
         None => MOVE,
         Some(edge) => direction_of(edge).ok_or_else(|| format!("{edge} is not an edge"))?,
@@ -45,7 +49,7 @@ pub fn window_move_resize(webview: tauri::Webview, edge: Option<String>) -> Resu
         {
             return Ok(());
         }
-        let done = x11::move_resize(&window, direction);
+        let done = x11::move_resize(&window, direction, at.map(|at| (at.x, at.y)));
         // Said in the log, which is the one place a window manager that took no notice
         // can be told apart from a press that never asked.
         crate::logs::say(
@@ -60,9 +64,16 @@ pub fn window_move_resize(webview: tauri::Webview, edge: Option<String>) -> Resu
     }
     #[cfg(not(feature = "cef"))]
     {
-        let _ = (webview, direction);
+        let _ = (webview, direction, at);
         Ok(())
     }
+}
+
+/// Where a press was on the screen, in its own pixels.
+#[derive(Clone, Copy, Debug, serde::Deserialize)]
+pub struct Pressed {
+    x: i32,
+    y: i32,
 }
 
 /// `_NET_WM_MOVERESIZE`'s word for a move.
@@ -92,7 +103,7 @@ mod x11 {
     use x11rb::CURRENT_TIME;
 
     /// A release of `button` sent to the deepest window under the pointer inside
-    /// `window`, which is Chromium's own, and a moment for Chromium to read it.
+    /// `window`, which is Chromium's own, and the wait for Chromium to let go.
     fn let_chromium_go(
         x: &x11rb::rust_connection::RustConnection,
         root: u32,
@@ -100,7 +111,9 @@ mod x11 {
         pointer: &x11rb::protocol::xproto::QueryPointerReply,
         button: u8,
     ) -> Result<(), String> {
-        use x11rb::protocol::xproto::{ButtonReleaseEvent, BUTTON_RELEASE_EVENT};
+        use x11rb::protocol::xproto::{
+            ButtonReleaseEvent, GrabMode, GrabStatus, BUTTON_RELEASE_EVENT,
+        };
 
         let fail = |error: &dyn std::fmt::Display| error.to_string();
         let mut under = window;
@@ -142,8 +155,33 @@ mod x11 {
         x.send_event(false, under, EventMask::BUTTON_RELEASE, release)
             .map_err(|e| fail(&e))?;
         x.sync().map_err(|e| fail(&e))?;
-        std::thread::sleep(std::time::Duration::from_millis(40));
-        Ok(())
+        // Chromium has let go once a grab of this connection's own is taken, and no
+        // longer than that is waited: every moment waited is a moment the pointer goes
+        // on without the window, which the window manager then never makes up.
+        for _ in 0..50 {
+            let status = x
+                .grab_pointer(
+                    false,
+                    root,
+                    EventMask::NO_EVENT,
+                    GrabMode::ASYNC,
+                    GrabMode::ASYNC,
+                    x11rb::NONE,
+                    x11rb::NONE,
+                    CURRENT_TIME,
+                )
+                .map_err(|e| fail(&e))?
+                .reply()
+                .map_err(|e| fail(&e))?
+                .status;
+            if status == GrabStatus::SUCCESS {
+                x.ungrab_pointer(CURRENT_TIME).map_err(|e| fail(&e))?;
+                x.sync().map_err(|e| fail(&e))?;
+                return Ok(());
+            }
+            std::thread::sleep(std::time::Duration::from_millis(2));
+        }
+        Err("the pointer was still held after 100 ms".into())
     }
 
     /// The message, for the window `window` is: where the pointer is on the screen now,
@@ -151,6 +189,7 @@ mod x11 {
     pub fn move_resize(
         window: &tauri::Window<crate::Engine>,
         direction: u32,
+        pressed: Option<(i32, i32)>,
     ) -> Result<String, String> {
         let xid = window
             .window_handle()
@@ -193,13 +232,15 @@ mod x11 {
         // connection's own grab, if it had one, goes too.
         let _ = let_chromium_go(&x, root, xid, &pointer, button);
         let _ = x.ungrab_pointer(CURRENT_TIME);
+        // From where the press was, where the page says it, and otherwise from here.
+        let from = pressed.unwrap_or((i32::from(pointer.root_x), i32::from(pointer.root_y)));
         let message = ClientMessageEvent::new(
             32,
             xid,
             atom,
             [
-                u32::try_from(pointer.root_x).unwrap_or(0),
-                u32::try_from(pointer.root_y).unwrap_or(0),
+                u32::try_from(from.0).unwrap_or(0),
+                u32::try_from(from.1).unwrap_or(0),
                 direction,
                 u32::from(button),
                 // Said by an application, as against a pager.
@@ -216,8 +257,8 @@ mod x11 {
         x.flush().map_err(|error| error.to_string())?;
         x.sync().map_err(|error| error.to_string())?;
         Ok(format!(
-            "_NET_WM_MOVERESIZE {direction} for {xid:#x} at {},{} with button {button} (held {held:#x})",
-            pointer.root_x, pointer.root_y
+            "_NET_WM_MOVERESIZE {direction} for {xid:#x} from {},{} with button {button} (held {held:#x})",
+            from.0, from.1
         ))
     }
 }

@@ -151,8 +151,15 @@
         return
       }
       if (Math.hypot(event.screenX - pressed.x, event.screenY - pressed.y) < THRESHOLD) return
+      // Where the press was, in the screen's own pixels: the window manager keeps the
+      // pointer where it held the window then, so the window catches up with the
+      // pointer rather than trailing it by the few pixels it took to tell a drag.
+      const at = {
+        x: Math.round(pressed.x * devicePixelRatio),
+        y: Math.round(pressed.y * devicePixelRatio),
+      }
       pressed = null
-      invoke({ edge: null })
+      invoke({ edge: null, at })
     },
     true,
   )
