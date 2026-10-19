@@ -10,6 +10,7 @@ import {
   readProperties,
 } from './properties'
 import { withoutComments } from './comments'
+import { emphasis } from './emphasis'
 import { coverFigure, coverOf } from './cover'
 import { stripFrontMatter } from './front-matter'
 import { attributeUrl, escape, safeHref, safeSrc } from './html'
@@ -213,7 +214,17 @@ const NOTE_LINK = /\.(md|markdown|mdown|mkd|canvas|pages|pdf)$/i
  *  which is why a renderer that numbers them is built per document. */
 function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
   const marked = new Marked({ gfm: true, breaks: false })
-  marked.use(maths, highlight, scripts, emoji, footnotes, callouts, definitionLists, abbreviations)
+  marked.use(
+    emphasis,
+    maths,
+    highlight,
+    scripts,
+    emoji,
+    footnotes,
+    callouts,
+    definitionLists,
+    abbreviations,
+  )
   // First among the inline extensions, so `[[…]]` is one link rather than a
   // link nested in another - the same reason the editor's parser puts it first.
   marked.use(
