@@ -1313,6 +1313,11 @@ export const ptBR: Dictionary = {
     '{count} trechos estão criptografados e nada os lê sem o Evernote',
   '{count} notes had a reminder, which the export does not carry':
     '{count} notas tinham um lembrete, que a exportação não traz',
+  '{count} attachments were missing from the export or could not be read': {
+    many: '{count} anexos faltavam na exportação ou não puderam ser lidos',
+    one: '{count} anexo faltava na exportação ou não pôde ser lido',
+    other: '{count} anexos faltavam na exportação ou não puderam ser lidos',
+  },
   '{count} notes were in the bin and stay there': '{count} notas estavam na lixeira e ficam lá',
   '{count} archived notes are in a folder called Archive':
     '{count} notas arquivadas estão numa pasta chamada Archive',

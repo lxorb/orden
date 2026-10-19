@@ -1290,6 +1290,10 @@ export const gu: Dictionary = {
     '{count} ભાગ એન્ક્રિપ્ટ થયેલા છે, અને Evernote વિના તે કોઈ વાંચી શકતું નથી',
   '{count} notes had a reminder, which the export does not carry':
     '{count} નોંધમાં યાદ હતું, જે નિકાસ લઈ જતો નથી',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} જોડાણો એક્સપોર્ટમાં ન હતાં અથવા વાંચી શકાયાં નહીં',
+    other: '{count} જોડાણો એક્સપોર્ટમાં ન હતાં અથવા વાંચી શકાયાં નહીં',
+  },
   '{count} notes were in the bin and stay there': '{count} નોંધ કચરાપેટીમાં હતી અને ત્યાં રહે છે',
   '{count} archived notes are in a folder called Archive':
     '{count} સંગ્રહેલી નોંધ Archive નામના ફોલ્ડરમાં છે',

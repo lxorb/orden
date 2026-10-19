@@ -1287,6 +1287,8 @@ export const ja: Dictionary = {
     '{count} 件の本文は暗号化されており、Evernote なしでは読めません',
   '{count} notes had a reminder, which the export does not carry':
     '{count} 件のノートにリマインダーがありましたが、書き出しには含まれていません',
+  '{count} attachments were missing from the export or could not be read':
+    '{count} 件の添付ファイルがエクスポートになかったか、読み取れませんでした',
   '{count} notes were in the bin and stay there':
     '{count} 件のノートはゴミ箱にあり、そのままにします',
   '{count} archived notes are in a folder called Archive':

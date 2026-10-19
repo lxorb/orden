@@ -1279,6 +1279,10 @@ export const am: Dictionary = {
     '{count} ክፍሎች ተመስጥረዋል፣ እና ያለ Evernote ምንም ሊያነባቸው አይችልም',
   '{count} notes had a reminder, which the export does not carry':
     '{count} ማስታወሻዎች አስታዋሽ ነበራቸው፣ ልኬቱ ግን አይወስደውም',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} አባሪዎች ከመላኪያው ጠፍተዋል ወይም ሊነበቡ አልቻሉም',
+    other: '{count} አባሪዎች ከመላኪያው ጠፍተዋል ወይም ሊነበቡ አልቻሉም',
+  },
   '{count} notes were in the bin and stay there': '{count} ማስታወሻዎች በቆሻሻ ውስጥ ነበሩና እዚያ ይቀራሉ',
   '{count} archived notes are in a folder called Archive':
     '{count} የተቀመጡ ማስታወሻዎች Archive በተባለ ፎልደር ውስጥ ናቸው',

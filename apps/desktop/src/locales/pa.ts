@@ -1299,6 +1299,10 @@ export const pa: Dictionary = {
     '{count} ਹਿੱਸੇ ਗੁਪਤ ਹਨ, ਤੇ Evernote ਬਿਨਾਂ ਕੋਈ ਉਨ੍ਹਾਂ ਨੂੰ ਨਹੀਂ ਪੜ੍ਹ ਸਕਦਾ',
   '{count} notes had a reminder, which the export does not carry':
     '{count} ਨੋਟਾਂ ਵਿੱਚ ਯਾਦ ਸੀ, ਜੋ ਬਾਹਰ ਭੇਜਣ ਨਾਲ ਨਹੀਂ ਜਾਂਦਾ',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} ਅਟੈਚਮੈਂਟ ਐਕਸਪੋਰਟ ਵਿੱਚ ਨਹੀਂ ਸਨ ਜਾਂ ਪੜ੍ਹੇ ਨਹੀਂ ਜਾ ਸਕੇ',
+    other: '{count} ਅਟੈਚਮੈਂਟ ਐਕਸਪੋਰਟ ਵਿੱਚ ਨਹੀਂ ਸਨ ਜਾਂ ਪੜ੍ਹੇ ਨਹੀਂ ਜਾ ਸਕੇ',
+  },
   '{count} notes were in the bin and stay there':
     '{count} ਨੋਟਾਂ ਕੂੜੇਦਾਨ ਵਿੱਚ ਸਨ ਤੇ ਉੱਥੇ ਰਹਿੰਦੀਆਂ ਹਨ',
   '{count} archived notes are in a folder called Archive':

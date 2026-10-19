@@ -1321,6 +1321,11 @@ export const fr: Dictionary = {
     '{count} passages sont chiffrés et illisibles sans Evernote',
   '{count} notes had a reminder, which the export does not carry':
     '{count} notes avaient un rappel, absent de l’export',
+  '{count} attachments were missing from the export or could not be read': {
+    many: '{count} pièces jointes manquaient dans l’export ou étaient illisibles',
+    one: '{count} pièce jointe manquait dans l’export ou était illisible',
+    other: '{count} pièces jointes manquaient dans l’export ou étaient illisibles',
+  },
   '{count} notes were in the bin and stay there':
     '{count} notes étaient à la corbeille et y restent',
   '{count} archived notes are in a folder called Archive':

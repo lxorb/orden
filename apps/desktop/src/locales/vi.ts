@@ -1281,6 +1281,8 @@ export const vi: Dictionary = {
     '{count} đoạn được mã hoá, không gì đọc được mà không có Evernote',
   '{count} notes had a reminder, which the export does not carry':
     '{count} ghi chú có lời nhắc, bản xuất không mang theo',
+  '{count} attachments were missing from the export or could not be read':
+    '{count} tệp đính kèm không có trong bản xuất hoặc không đọc được',
   '{count} notes were in the bin and stay there': '{count} ghi chú ở trong thùng rác và vẫn ở đó',
   '{count} archived notes are in a folder called Archive':
     '{count} ghi chú lưu trữ nằm trong thư mục tên Archive',

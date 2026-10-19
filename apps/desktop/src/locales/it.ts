@@ -1323,6 +1323,11 @@ export const it: Dictionary = {
     '{count} passaggi sono cifrati e nulla può leggerli senza Evernote',
   '{count} notes had a reminder, which the export does not carry':
     '{count} note avevano un promemoria, che l’esportazione non porta',
+  '{count} attachments were missing from the export or could not be read': {
+    many: '{count} allegati mancavano nell’esportazione o non erano leggibili',
+    one: '{count} allegato mancava nell’esportazione o non era leggibile',
+    other: '{count} allegati mancavano nell’esportazione o non erano leggibili',
+  },
   '{count} notes were in the bin and stay there': '{count} note erano nel cestino e lì restano',
   '{count} archived notes are in a folder called Archive':
     '{count} note archiviate sono in una cartella chiamata Archive',

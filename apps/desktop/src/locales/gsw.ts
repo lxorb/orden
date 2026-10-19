@@ -1298,6 +1298,10 @@ export const gsw: Dictionary = {
     '{count} Abschnitt sind verschlüsslet und ohni Evernote nöd läsbar',
   '{count} notes had a reminder, which the export does not carry':
     '{count} Notize hend en Erinnerig gha, wo im Export nöd drin isch',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} Aahang het im Export gfählt oder isch nöd läsbar gsi',
+    other: '{count} Aahäng händ im Export gfählt oder sind nöd läsbar gsi',
+  },
   '{count} notes were in the bin and stay there':
     '{count} Notize sind im Papierchorb und bliibed det',
   '{count} archived notes are in a folder called Archive':

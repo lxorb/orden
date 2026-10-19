@@ -1294,6 +1294,10 @@ export const ur: Dictionary = {
     '{count} اقتباسات مخفی ہیں، اور Evernote کے بغیر کوئی انہیں نہیں پڑھ سکتا',
   '{count} notes had a reminder, which the export does not carry':
     '{count} نوٹس میں یاد دہانی تھی، جو ایکسپورٹ ساتھ نہیں لاتا',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} منسلکات ایکسپورٹ میں نہیں تھیں یا پڑھی نہ جا سکیں',
+    other: '{count} منسلکات ایکسپورٹ میں نہیں تھیں یا پڑھی نہ جا سکیں',
+  },
   '{count} notes were in the bin and stay there': '{count} نوٹس ردی میں تھے اور وہیں رہیں گے',
   '{count} archived notes are in a folder called Archive':
     '{count} محفوظ شدہ نوٹس Archive نامی فولڈر میں ہیں',

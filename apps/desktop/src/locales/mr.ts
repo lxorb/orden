@@ -1292,6 +1292,10 @@ export const mr: Dictionary = {
     '{count} उतारे एन्क्रिप्ट केलेले आहेत, आणि Evernote विना ते कोणीच वाचू शकत नाही',
   '{count} notes had a reminder, which the export does not carry':
     '{count} नोंदींना स्मरणपत्र होते, जे एक्सपोर्टमध्ये येत नाही',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} संलग्नके एक्सपोर्टमध्ये नव्हती किंवा वाचता आली नाहीत',
+    other: '{count} संलग्नके एक्सपोर्टमध्ये नव्हती किंवा वाचता आली नाहीत',
+  },
   '{count} notes were in the bin and stay there': '{count} नोंदी कचऱ्यात होत्या आणि तिथेच राहतात',
   '{count} archived notes are in a folder called Archive':
     '{count} संग्रहित नोंदी Archive नावाच्या फोल्डरमध्ये आहेत',

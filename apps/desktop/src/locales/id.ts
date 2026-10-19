@@ -1288,6 +1288,8 @@ export const id: Dictionary = {
     '{count} bagian terenkripsi dan tidak dapat dibaca tanpa Evernote',
   '{count} notes had a reminder, which the export does not carry':
     '{count} catatan punya pengingat, yang tidak dibawa oleh ekspor',
+  '{count} attachments were missing from the export or could not be read':
+    '{count} lampiran tidak ada di ekspor atau tidak dapat dibaca',
   '{count} notes were in the bin and stay there':
     '{count} catatan ada di tempat sampah dan tetap di sana',
   '{count} archived notes are in a folder called Archive':

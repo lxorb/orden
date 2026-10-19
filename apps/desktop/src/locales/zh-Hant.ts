@@ -1268,6 +1268,8 @@ export const zhHant: Dictionary = {
     '有{count}段內容已加密，離開Evernote就無法讀取',
   '{count} notes had a reminder, which the export does not carry':
     '{count}篇筆記設有提醒，匯出檔不會帶著提醒',
+  '{count} attachments were missing from the export or could not be read':
+    '{count} 個附件不在匯出檔案中或無法讀取',
   '{count} notes were in the bin and stay there': '{count}篇筆記在資源回收筒裡，仍留在那裡',
   '{count} archived notes are in a folder called Archive':
     '{count}篇已封存的筆記放在名為Archive的資料夾中',

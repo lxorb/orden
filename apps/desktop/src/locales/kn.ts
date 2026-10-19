@@ -1302,6 +1302,10 @@ export const kn: Dictionary = {
     '{count} ಭಾಗಗಳು ಎನ್‌ಕ್ರಿಪ್ಟ್ ಆಗಿವೆ, Evernote ಇಲ್ಲದೆ ಅವನ್ನು ಯಾವುದೂ ಓದಲಾಗದು',
   '{count} notes had a reminder, which the export does not carry':
     '{count} ಟಿಪ್ಪಣಿಗಳಿಗೆ ಜ್ಞಾಪನೆ ಇತ್ತು, ಎಕ್ಸ್‌ಪೋರ್ಟ್ ಅದನ್ನು ತರುವುದಿಲ್ಲ',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} ಲಗತ್ತುಗಳು ರಫ್ತಿನಲ್ಲಿ ಇರಲಿಲ್ಲ ಅಥವಾ ಓದಲಾಗಲಿಲ್ಲ',
+    other: '{count} ಲಗತ್ತುಗಳು ರಫ್ತಿನಲ್ಲಿ ಇರಲಿಲ್ಲ ಅಥವಾ ಓದಲಾಗಲಿಲ್ಲ',
+  },
   '{count} notes were in the bin and stay there':
     '{count} ಟಿಪ್ಪಣಿಗಳು ಕಸದಬುಟ್ಟಿಯಲ್ಲಿದ್ದವು, ಅಲ್ಲೇ ಇರುತ್ತವೆ',
   '{count} archived notes are in a folder called Archive':

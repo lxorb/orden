@@ -1307,6 +1307,10 @@ export const ta: Dictionary = {
     '{count} பகுதிகள் மறையாக்கம் செய்யப்பட்டுள்ளன, Evernote இல்லாமல் எதுவும் அவற்றைப் படிக்க முடியாது',
   '{count} notes had a reminder, which the export does not carry':
     '{count} குறிப்புகளில் நினைவூட்டல் இருந்தது, ஏற்றுமதி அதைக் கொண்டுவராது',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} இணைப்புகள் ஏற்றுமதியில் இல்லை அல்லது படிக்க முடியவில்லை',
+    other: '{count} இணைப்புகள் ஏற்றுமதியில் இல்லை அல்லது படிக்க முடியவில்லை',
+  },
   '{count} notes were in the bin and stay there':
     '{count} குறிப்புகள் குப்பையில் இருந்தன, அங்கேயே இருக்கும்',
   '{count} archived notes are in a folder called Archive':

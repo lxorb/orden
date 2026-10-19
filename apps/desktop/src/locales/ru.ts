@@ -1342,6 +1342,12 @@ export const ru: Dictionary = {
     'Зашифрованных фрагментов: {count}, без Evernote их не прочитать',
   '{count} notes had a reminder, which the export does not carry':
     'Заметок с напоминанием: {count}, экспорт их не переносит',
+  '{count} attachments were missing from the export or could not be read': {
+    few: 'Вложений, которых нет в экспорте или которые не читаются: {count}',
+    many: 'Вложений, которых нет в экспорте или которые не читаются: {count}',
+    one: 'Вложений, которых нет в экспорте или которые не читаются: {count}',
+    other: 'Вложений, которых нет в экспорте или которые не читаются: {count}',
+  },
   '{count} notes were in the bin and stay there': 'Заметок в корзине: {count}, там они и остаются',
   '{count} archived notes are in a folder called Archive':
     'Архивных заметок: {count}, они в папке Archive',

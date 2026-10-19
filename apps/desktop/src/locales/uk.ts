@@ -1340,6 +1340,12 @@ export const uk: Dictionary = {
     'Зашифрованих фрагментів: {count}, без Evernote їх не прочитати',
   '{count} notes had a reminder, which the export does not carry':
     'Нотаток із нагадуванням: {count}, експорт їх не переносить',
+  '{count} attachments were missing from the export or could not be read': {
+    few: 'Вкладень, яких немає в експорті або які не читаються: {count}',
+    many: 'Вкладень, яких немає в експорті або які не читаються: {count}',
+    one: 'Вкладень, яких немає в експорті або які не читаються: {count}',
+    other: 'Вкладень, яких немає в експорті або які не читаються: {count}',
+  },
   '{count} notes were in the bin and stay there':
     'Нотаток у смітнику: {count}, там вони й залишаються',
   '{count} archived notes are in a folder called Archive':

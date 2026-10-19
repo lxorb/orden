@@ -1285,6 +1285,8 @@ export const my: Dictionary = {
     'အပိုင်း {count} ကို ကုဒ်ဖြင့်ထားသည်၊ Evernote မရှိလျှင် မည်သည့်အရာမျှ မဖတ်နိုင်ပါ',
   '{count} notes had a reminder, which the export does not carry':
     'မှတ်စု {count} တွင် သတိပေးချက်ရှိခဲ့သည်၊ ထုတ်မှုတွင် မပါဝင်ပါ',
+  '{count} attachments were missing from the export or could not be read':
+    'ပူးတွဲဖိုင် {count} ခုသည် ထုတ်ယူမှုတွင် မပါ သို့မဟုတ် ဖတ်၍မရပါ',
   '{count} notes were in the bin and stay there':
     'မှတ်စု {count} သည် ပုံးထဲတွင်ရှိ၍ ထိုတွင် ကျန်နေမည်',
   '{count} archived notes are in a folder called Archive':

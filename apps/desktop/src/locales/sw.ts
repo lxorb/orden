@@ -1304,6 +1304,10 @@ export const sw: Dictionary = {
     'vifungu {count} vimesimbwa, na hakuna kinachoweza kuvisoma bila Evernote',
   '{count} notes had a reminder, which the export does not carry':
     'madokezo {count} yalikuwa na kikumbusho, ambacho utoaji hauchukui',
+  '{count} attachments were missing from the export or could not be read': {
+    one: 'viambatisho {count} havikuwa kwenye uhamishaji au havikuweza kusomwa',
+    other: 'viambatisho {count} havikuwa kwenye uhamishaji au havikuweza kusomwa',
+  },
   '{count} notes were in the bin and stay there':
     'madokezo {count} yalikuwa kwenye pipa na yanasalia hapo',
   '{count} archived notes are in a folder called Archive':

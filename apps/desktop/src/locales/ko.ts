@@ -1280,6 +1280,8 @@ export const ko: Dictionary = {
     '{count}개 구절이 암호화되어 Evernote 없이는 읽을 수 없습니다',
   '{count} notes had a reminder, which the export does not carry':
     '{count}개 노트에 알림이 있었지만 내보내기에는 담기지 않습니다',
+  '{count} attachments were missing from the export or could not be read':
+    '첨부 파일 {count}개가 내보내기에 없거나 읽을 수 없었습니다',
   '{count} notes were in the bin and stay there':
     '{count}개 노트가 휴지통에 있었고 그대로 남습니다',
   '{count} archived notes are in a folder called Archive':

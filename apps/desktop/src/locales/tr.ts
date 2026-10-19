@@ -1298,6 +1298,10 @@ export const tr: Dictionary = {
     '{count} bölüm şifreli ve Evernote olmadan hiçbir şey okuyamaz',
   '{count} notes had a reminder, which the export does not carry':
     '{count} notta anımsatıcı vardı, dışa aktarma onu taşımıyor',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} ek dışa aktarımda yoktu ya da okunamadı',
+    other: '{count} ek dışa aktarımda yoktu ya da okunamadı',
+  },
   '{count} notes were in the bin and stay there': '{count} not çöp kutusundaydı ve orada kalıyor',
   '{count} archived notes are in a folder called Archive':
     '{count} arşivlenmiş not Archive adlı bir klasörde',

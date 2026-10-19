@@ -1305,6 +1305,10 @@ export const ha: Dictionary = {
     'an ɓoye sassa {count}, kuma babu abin da zai iya karanta su ba tare da Evernote',
   '{count} notes had a reminder, which the export does not carry':
     'bayanan kula {count} suna da tunatarwa, wanda fitarwa ba ta ɗauka',
+  '{count} attachments were missing from the export or could not be read': {
+    one: 'haɗe-haɗe {count} sun ɓace daga fitarwar ko ba a iya karanta su ba',
+    other: 'haɗe-haɗe {count} sun ɓace daga fitarwar ko ba a iya karanta su ba',
+  },
   '{count} notes were in the bin and stay there':
     'bayanan kula {count} suna cikin kwandon shara kuma suna zama can',
   '{count} archived notes are in a folder called Archive':

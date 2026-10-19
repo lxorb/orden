@@ -1289,6 +1289,8 @@ export const ms: Dictionary = {
     '{count} bahagian tersulit dan tiada apa-apa boleh membacanya tanpa Evernote',
   '{count} notes had a reminder, which the export does not carry':
     '{count} nota mempunyai peringatan, yang tidak dibawa oleh eksport',
+  '{count} attachments were missing from the export or could not be read':
+    '{count} lampiran tiada dalam eksport atau tidak dapat dibaca',
   '{count} notes were in the bin and stay there':
     '{count} nota ada dalam tong sampah dan kekal di sana',
   '{count} archived notes are in a folder called Archive':

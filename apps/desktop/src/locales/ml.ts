@@ -1308,6 +1308,10 @@ export const ml: Dictionary = {
     '{count} ഭാഗങ്ങൾ എൻക്രിപ്റ്റ് ചെയ്തിരിക്കുന്നു, Evernote ഇല്ലാതെ അവ വായിക്കാൻ ഒന്നിനുമാകില്ല',
   '{count} notes had a reminder, which the export does not carry':
     '{count} കുറിപ്പുകൾക്ക് റിമൈൻഡർ ഉണ്ടായിരുന്നു, എക്സ്പോർട്ട് അത് കൊണ്ടുവരില്ല',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} അറ്റാച്ച്മെന്റുകൾ എക്സ്പോർട്ടിൽ ഇല്ലായിരുന്നു, അല്ലെങ്കിൽ വായിക്കാനായില്ല',
+    other: '{count} അറ്റാച്ച്മെന്റുകൾ എക്സ്പോർട്ടിൽ ഇല്ലായിരുന്നു, അല്ലെങ്കിൽ വായിക്കാനായില്ല',
+  },
   '{count} notes were in the bin and stay there':
     '{count} കുറിപ്പുകൾ ചവറ്റുകുട്ടയിലായിരുന്നു, അവിടെത്തന്നെ നിൽക്കും',
   '{count} archived notes are in a folder called Archive':

@@ -1294,6 +1294,10 @@ export const fa: Dictionary = {
     '{count} بند رمزگذاری‌شده‌اند و بی Evernote چیزی آن‌ها را نمی‌خواند',
   '{count} notes had a reminder, which the export does not carry':
     '{count} یادداشت یادآور داشتند که برون‌بری آن را نمی‌برد',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} پیوست در خروجی نبود یا خوانده نشد',
+    other: '{count} پیوست در خروجی نبود یا خوانده نشد',
+  },
   '{count} notes were in the bin and stay there': '{count} یادداشت در سبد بودند و همان‌جا می‌مانند',
   '{count} archived notes are in a folder called Archive':
     '{count} یادداشت بایگانی‌شده در پوشه‌ای به نام Archive است',

@@ -1298,6 +1298,10 @@ export const te: Dictionary = {
     '{count} భాగాలు ఎన్‌క్రిప్ట్ అయ్యాయి, Evernote లేకుండా వాటిని ఏదీ చదవలేదు',
   '{count} notes had a reminder, which the export does not carry':
     '{count} నోట్‌లకు రిమైండర్ ఉంది, ఎక్స్‌పోర్ట్ దాన్ని తీసుకురాదు',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} అటాచ్‌మెంట్‌లు ఎగుమతిలో లేవు లేదా చదవలేకపోయాం',
+    other: '{count} అటాచ్‌మెంట్‌లు ఎగుమతిలో లేవు లేదా చదవలేకపోయాం',
+  },
   '{count} notes were in the bin and stay there':
     '{count} నోట్‌లు చెత్తబుట్టలో ఉన్నాయి, అక్కడే ఉంటాయి',
   '{count} archived notes are in a folder called Archive':

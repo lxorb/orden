@@ -1339,6 +1339,12 @@ export const pl: Dictionary = {
     'Zaszyfrowanych fragmentów: {count} - nic ich nie przeczyta bez Evernote',
   '{count} notes had a reminder, which the export does not carry':
     'Notatek z przypomnieniem: {count} - eksport go nie przenosi',
+  '{count} attachments were missing from the export or could not be read': {
+    few: 'Brakujących lub nieczytelnych załączników w eksporcie: {count}',
+    many: 'Brakujących lub nieczytelnych załączników w eksporcie: {count}',
+    one: 'Brakujących lub nieczytelnych załączników w eksporcie: {count}',
+    other: 'Brakujących lub nieczytelnych załączników w eksporcie: {count}',
+  },
   '{count} notes were in the bin and stay there': 'Notatek w koszu: {count} - tam zostają',
   '{count} archived notes are in a folder called Archive':
     'Zarchiwizowanych notatek: {count} - są w folderze Archive',

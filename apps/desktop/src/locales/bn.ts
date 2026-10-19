@@ -1293,6 +1293,10 @@ export const bn: Dictionary = {
     '{count}টি অংশ এনক্রিপ্ট করা, Evernote ছাড়া কিছুই সেগুলো পড়তে পারে না',
   '{count} notes had a reminder, which the export does not carry':
     '{count}টি নোটে রিমাইন্ডার ছিল, যা এক্সপোর্ট বহন করে না',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count}টি সংযুক্তি এক্সপোর্টে ছিল না বা পড়া যায়নি',
+    other: '{count}টি সংযুক্তি এক্সপোর্টে ছিল না বা পড়া যায়নি',
+  },
   '{count} notes were in the bin and stay there': '{count}টি নোট বিনে ছিল, সেখানেই থাকবে',
   '{count} archived notes are in a folder called Archive':
     '{count}টি আর্কাইভ করা নোট Archive নামের ফোল্ডারে আছে',

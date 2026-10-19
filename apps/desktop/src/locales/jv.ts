@@ -1284,6 +1284,8 @@ export const jv: Dictionary = {
     '{count} bagean disinandi, lan ora ana sing bisa maca tanpa Evernote',
   '{count} notes had a reminder, which the export does not carry':
     '{count} cathetan duwe pangeling, sing ora digawa ekspor',
+  '{count} attachments were missing from the export or could not be read':
+    '{count} lampiran ora ana ing ekspor utawa ora bisa diwaca',
   '{count} notes were in the bin and stay there':
     '{count} cathetan ana ing kranjang lan tetep ing kono',
   '{count} archived notes are in a folder called Archive':

@@ -1269,6 +1269,8 @@ export const yue: Dictionary = {
     '有{count}段內容已加密，離開Evernote就冇辦法讀取',
   '{count} notes had a reminder, which the export does not carry':
     '{count}篇筆記設有提醒，匯出檔唔會帶着提醒',
+  '{count} attachments were missing from the export or could not be read':
+    '有{count}個附件唔喺匯出檔入面，或者讀唔到',
   '{count} notes were in the bin and stay there': '{count}篇筆記喺垃圾桶入面，仲留喺嗰度',
   '{count} archived notes are in a folder called Archive':
     '{count}篇已歸檔嘅筆記放喺名為Archive嘅檔案夾中',

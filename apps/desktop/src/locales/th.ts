@@ -1275,6 +1275,8 @@ export const th: Dictionary = {
     '{count} ช่วงถูกเข้ารหัส อ่านไม่ได้ถ้าไม่มี Evernote',
   '{count} notes had a reminder, which the export does not carry':
     '{count} โน้ตมีการเตือน ซึ่งไฟล์ส่งออกไม่มีมาด้วย',
+  '{count} attachments were missing from the export or could not be read':
+    'ไฟล์แนบ {count} รายการไม่มีในไฟล์ส่งออกหรืออ่านไม่ได้',
   '{count} notes were in the bin and stay there': '{count} โน้ตอยู่ในถังขยะและยังอยู่ที่นั่น',
   '{count} archived notes are in a folder called Archive':
     '{count} โน้ตที่เก็บถาวรอยู่ในโฟลเดอร์ชื่อ Archive',

@@ -1293,6 +1293,10 @@ export const ps: Dictionary = {
     '{count} برخې رمز شوې دي او بې له Evernote هيڅ يې نه شي لوستلی',
   '{count} notes had a reminder, which the export does not carry':
     '{count} يادښتونه يادونه لرله چې صادره يې نه وړي',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} ضميمې په صادرولو کې نه وې يا ونه لوستل شوې',
+    other: '{count} ضميمې په صادرولو کې نه وې يا ونه لوستل شوې',
+  },
   '{count} notes were in the bin and stay there':
     '{count} يادښتونه په ټوکرۍ کې وو او هلته پاتې کېږي',
   '{count} archived notes are in a folder called Archive':

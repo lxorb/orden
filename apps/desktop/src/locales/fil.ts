@@ -1310,6 +1310,10 @@ export const fil: Dictionary = {
     'Naka-encrypt ang {count} bahagi at walang makakabasa nito nang wala ang Evernote',
   '{count} notes had a reminder, which the export does not carry':
     'May paalala ang {count} tala, na hindi kasama sa export',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} attachment ang wala sa export o hindi mabasa',
+    other: '{count} attachment ang wala sa export o hindi mabasa',
+  },
   '{count} notes were in the bin and stay there':
     'Nasa basurahan ang {count} tala at mananatili roon',
   '{count} archived notes are in a folder called Archive':

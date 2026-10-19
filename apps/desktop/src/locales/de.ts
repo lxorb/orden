@@ -1308,6 +1308,10 @@ export const de: Dictionary = {
     '{count} Abschnitte sind verschlüsselt und ohne Evernote nicht lesbar',
   '{count} notes had a reminder, which the export does not carry':
     '{count} Notizen hatten eine Erinnerung, die der Export nicht enthält',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} Anhang fehlte im Export oder ließ sich nicht lesen',
+    other: '{count} Anhänge fehlten im Export oder ließen sich nicht lesen',
+  },
   '{count} notes were in the bin and stay there':
     '{count} Notizen lagen im Papierkorb und bleiben dort',
   '{count} archived notes are in a folder called Archive':
