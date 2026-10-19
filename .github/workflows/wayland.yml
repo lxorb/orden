@@ -171,29 +171,38 @@ jobs:
           path: wayland-out
           if-no-files-found: ignore
 
-  # #427 under KDE's own window manager: KWin on an X server, the window moved by its
-  # tab strip, resized by its edge and maximised by a double click, with xdotool.
+  # #427 under KDE's own window manager, on the system it was reported on: Fedora 44's
+  # KWin on an X server, the AppImage as the report ran it, and the window moved by its
+  # tab strip, resized by its edge and maximised by a double click on the strip, with
+  # xdotool.
   kwin:
     needs: build
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
+    container: fedora:44
     permissions:
       contents: read
     steps:
+      - name: KWin, Xvfb and xdotool, as Fedora 44 has them
+        run: dnf install -y kwin-x11 xorg-x11-server-Xvfb xdpyinfo xwininfo xprop xdotool ImageMagick dbus-daemon dbus-tools python3 procps-ng nss nss-softokn mesa-dri-drivers git
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
           name: linux-packages
           path: packages
-      - name: The .deb, KWin, Xvfb and xdotool
+      - name: Unpacked
         run: |
-          sudo apt-get update
-          sudo apt-get install -y ./packages/deb/*.deb kwin-x11 xvfb xdotool x11-utils imagemagick dbus python3
+          cd packages/appimage
+          chmod +x ./*.AppImage
+          ./*.AppImage --appimage-extract > /dev/null
+          [ -d squashfs-root ] || mv AppDir squashfs-root
+      # As root in a container, where Chromium will not start sandboxed.
       - name: Moved, resized and maximised under KWin
         env:
           OUT: kwin-out
           KWIN: '1'
           DRAG: '1'
-        run: dbus-run-session -- bash scripts/x11-launch.sh /usr/bin/nib
+          NIB_CEF_SANDBOX: disabled
+        run: dbus-run-session -- bash scripts/x11-launch.sh "$GITHUB_WORKSPACE/packages/appimage/squashfs-root/AppRun"
       - if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:

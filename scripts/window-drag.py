@@ -111,10 +111,14 @@ if DESK == "sway":
         subprocess.run(["grim", str(OUT / f"drag-{name}.png")], check=False)
 
     def screen():
-        output = sway("-t", "get_outputs")[0]["rect"]
+        output = next(one for one in sway("-t", "get_outputs") if one["name"] == "HEADLESS-2")["rect"]
         return output["width"], output["height"]
 
-    subprocess.run(["swaymsg", '[title="Orden"] floating enable, resize set 900 600, move position 100 100'], check=False)
+    # On the screen at scale 1, wide enough for the window to stay on it as it moves and grows.
+    subprocess.run(
+        ["swaymsg", '[title="Orden"] floating enable, move container to output HEADLESS-2, resize set 900 600, move position 100 100'],
+        check=False,
+    )
     time.sleep(1.5)
 else:
 

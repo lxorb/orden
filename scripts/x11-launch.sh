@@ -36,7 +36,16 @@ if [ "${KWIN:-0}" = 1 ]; then
   # Without compositing, which a server with no GPU has nothing to do it with.
   KWIN_COMPOSE=N QT_QPA_PLATFORM=xcb kwin_x11 --replace > "$out/kwin.log" 2>&1 &
   wm=$!
-  sleep 3
+  for _ in $(seq 40); do
+    xprop -root _NET_SUPPORTING_WM_CHECK 2>/dev/null | grep -q 'window id' && break
+    sleep 0.25
+  done
+  if ! kill -0 "$wm" 2>/dev/null || ! xprop -root _NET_SUPPORTING_WM_CHECK | grep -q 'window id'; then
+    echo "::error::KWin did not start"
+    cat "$out/kwin.log"
+    exit 1
+  fi
+  echo "KWin is the window manager: $(xprop -root _NET_SUPPORTING_WM_CHECK)"
 fi
 if [ "${DRAG:-0}" = 1 ]; then
   # The app's endpoint open to `eval`, for where its tab strip is.
@@ -73,6 +82,10 @@ if [ "$status" = 0 ]; then
 fi
 if [ "$status" = 0 ] && [ "${DRAG:-0}" = 1 ]; then
   python3 "$here/window-drag.py" x11 "$out" "$app" || status=1
+  if [ -n "$wm" ] && ! kill -0 "$wm" 2>/dev/null; then
+    echo "::error::KWin ended during the drive"
+    status=1
+  fi
 fi
 import -window root "$out/x11.png" 2>/dev/null || xwd -root -silent | convert xwd:- "$out/x11.png" || true
 kill "$app" 2>/dev/null || true
