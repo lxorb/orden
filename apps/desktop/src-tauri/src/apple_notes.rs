@@ -656,7 +656,7 @@ mod mac {
             let path = self.notes.get(&uuid)?;
             let name = path.rsplit('/').next().unwrap_or(path.as_str()).to_string();
 
-            Some(format!("[{name}]({path}.md)"))
+            Some(format!("[{}]({}.md)", label(&name), target(path)))
         }
 
         /// A card Notes drew for a link somebody pasted.
@@ -664,7 +664,11 @@ mod mac {
             let url = self.column(id, "zurlstring")?;
             let title = self.column(id, "ztitle").unwrap_or_else(|| url.clone());
 
-            Some(format!("[{title}]({url})"))
+            Some(format!(
+                "[{}]({})",
+                label(&title),
+                apple_text::destination(&url)
+            ))
         }
 
         /// A real file: a picture, a recording, a paper. The row says which file
@@ -941,6 +945,39 @@ mod mac {
         format!("[{name}]({path})")
     }
 
+    /// A note's title as the words of a link: a bracket of its own would end them,
+    /// and a line break would leave the link behind on the line above.
+    fn label(words: &str) -> String {
+        words
+            .replace('\\', "\\\\")
+            .replace('[', "\\[")
+            .replace(']', "\\]")
+            .replace(['\n', '\r'], " ")
+    }
+
+    /// Where a link goes, with what a title may hold and a link may not encoded: a
+    /// space and a bracket, which end it, a `#`, which starts a heading, a `%`, which
+    /// starts an escape, and a colon, which makes `Re: lunch.md` read as an address
+    /// in a scheme called `Re`. The import decodes it again to find the note.
+    fn target(path: &str) -> String {
+        let mut out = String::with_capacity(path.len());
+        for one in path.chars() {
+            match one {
+                '%' => out.push_str("%25"),
+                ' ' => out.push_str("%20"),
+                '(' => out.push_str("%28"),
+                ')' => out.push_str("%29"),
+                '#' => out.push_str("%23"),
+                ':' => out.push_str("%3A"),
+                '<' => out.push_str("%3C"),
+                '>' => out.push_str("%3E"),
+                '\n' | '\r' => {}
+                _ => out.push(one),
+            }
+        }
+        out
+    }
+
     /// A width or a height the way Notes writes one into a preview's name: a whole
     /// number of points with no fraction after it.
     fn measure(points: f64) -> String {
@@ -1031,6 +1068,18 @@ mod mac {
             assert_eq!(segment("..."), "");
             assert_eq!(segment("/"), "");
             assert_eq!(segment(""), "");
+        }
+
+        /// A title is anything somebody typed, and a link to that note has to survive
+        /// it: `Re: lunch` would otherwise read as an address in a scheme called `Re`,
+        /// and `C# notes` as a heading in a note called `C`.
+        #[test]
+        fn a_link_to_a_note_holds_whatever_its_title_says() {
+            assert_eq!(
+                super::target("Work/Re: lunch (draft) #2 100%"),
+                "Work/Re%3A%20lunch%20%28draft%29%20%232%20100%25"
+            );
+            assert_eq!(super::label("[Draft] plan ]"), "\\[Draft\\] plan \\]");
         }
 
         /// The database under `tests/apple-notes`, which is Notes' own schema with
