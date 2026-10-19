@@ -512,3 +512,15 @@ describe('a name as something to compare', () => {
     expect(foldName('ÜBERSICHT')).toBe(foldName(decomposed))
   })
 })
+
+describe('links after code that only looks like a fence', () => {
+  test('are found after a line of inline code in three backticks', () => {
+    const found = findLinks('```x```\n[[Target]] and [l](Other.md)\n')
+    expect(found.map((link) => link.target)).toEqual(['Target', 'Other.md'])
+  })
+
+  test('are not found inside a code span with a longer run inside it', () => {
+    const found = findLinks('`` a ``` ` [[Hidden]] `` [[Target]]')
+    expect(found.map((link) => link.target)).toEqual(['Target'])
+  })
+})

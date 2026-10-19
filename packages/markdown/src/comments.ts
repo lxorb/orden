@@ -20,7 +20,7 @@
  *  rather than running a pattern over it. What opens and closes a fence is read
  *  in fences.ts, which every walk in this package that steps over code shares. */
 
-import { closesFence, fenceMark } from './fences'
+import { closesFence, closingTicks, fenceMark } from './fences'
 
 /** The two ways a comment is written. `%%` opens and closes with the same
  *  characters, which the scan below does not care about: it looks for the
@@ -66,7 +66,7 @@ function stripLine(line: string, inside: string | null): { text: string; inside:
     // code at all, so the scan carries on past it.
     if (line[at] === '`') {
       const marks = /^`+/.exec(line.slice(at))?.[0] ?? '`'
-      const close = line.indexOf(marks, at + marks.length)
+      const close = closingTicks(line, at + marks.length, marks.length)
       const span = close === -1 ? marks.length : close + marks.length - at
       out += line.slice(at, at + span)
       at += span
@@ -124,7 +124,9 @@ export function withoutComments(source: string): string {
     if (!inside) {
       const mark = fenceMark(line)
       if (mark) {
-        out.push(line)
+        // A comment in the info string would be the caption.
+        const opens = line.indexOf(mark) + mark.length
+        out.push(line.slice(0, opens) + stripLine(line.slice(opens), null).text)
         fence = mark
         continue
       }

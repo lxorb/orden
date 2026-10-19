@@ -15,7 +15,7 @@
  *  Imported on its own - `@nib/markdown/links` - by the editor, which wants the
  *  grammar and not the renderer that stands on it. */
 
-import { closesFence, fenceMark } from './fences'
+import { closesFence, closingTicks, fenceMark } from './fences'
 
 /** What one link between notes says. */
 export interface Wikilink {
@@ -352,7 +352,7 @@ function withoutCode(line: string): string {
     let openEnd = tick
     while (openEnd < line.length && line[openEnd] === '`') openEnd++
     const marks = line.slice(tick, openEnd)
-    const close = line.indexOf(marks, openEnd)
+    const close = closingTicks(line, openEnd, marks.length)
 
     out += line.slice(at, tick)
     if (close === -1) {
