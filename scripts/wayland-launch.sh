@@ -19,6 +19,8 @@
 #     pointer (scripts/wayland-pointer.py); and with COLD=n as well, Orden quit and
 #     started again n times, each on another screen and with no address, and the drive
 #     run on the web tab it came back to;
+#   - with IDLE=1, what the app costs the CPU while nothing happens, before anything
+#     else is done with it (scripts/idle-cpu.py);
 #   - with DRAG=1, the window moved by its tab strip and resized by its edge with the
 #     compositor's own pointer (scripts/window-drag.py, #427);
 #   - with CHECK=1, what #418 asked of the engine, looked at and measured by
@@ -243,6 +245,14 @@ if [ "$status" = 0 ] && [ -n "$portal_pid" ]; then
   cat "$out/portal.log"
   grep -q '"BindShortcuts"' "$out/portal.log" || { echo "::error::nothing was bound through the portal"; status=1; }
   grep -q 'CTRL+ALT+space' "$out/portal.log" || { echo "::error::quick add's key was not the one preferred"; status=1; }
+fi
+
+# Idle, before anything is done with it: what it costs the CPU (#427, scripts/idle-cpu.py).
+if [ "$status" = 0 ] && [ "${IDLE:-0}" = 1 ]; then
+  sleep 15
+  python3 "$here/idle-cpu.py" "$app_pid" 20 | tee "$out/idle.txt"
+  [ "${PIPESTATUS[0]}" = 0 ] || status=1
+  find "$HOME" -path '*ch.emilvinu.nib*' -name nib.log -exec grep -hE ' (pump|gpu): ' {} + 2>/dev/null | tee -a "$out/idle.txt" || true
 fi
 
 if [ "$status" = 0 ] && [ "${DRIVE:-0}" = 1 ]; then
