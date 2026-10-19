@@ -25,9 +25,9 @@ data loss. **High** - data loss or a security hole on a specific path.
 | Severity | Found | Fixed | Open |
 | --- | --: | --: | --: |
 | Critical | 1 | 1 | 0 |
-| High | 9 | 6 | 3 |
-| Medium | 20 | 17 | 3 |
-| Low | 7 | 7 | 0 |
+| High | 11 | 8 | 3 |
+| Medium | 21 | 18 | 3 |
+| Low | 8 | 8 | 0 |
 
 Open rows are being fixed; see the status column.
 
@@ -72,6 +72,10 @@ Open rows are being fixed; see the status column.
 | B35 | Medium | ```` ```flow ```` fences could carry `javascript:` links and window-global click hooks | Fixed `11c4e771` | flowchart.js `:>url` and `:$name` | `flow.ts` strips links that are not http(s)/mailto and drops click hooks before flowchart.js sees them | `flow.test.ts` (failed before) |
 | B36 | Low | `&#106avascript:` passed the trusted-HTML filter | Fixed `39946245` | Decimal branch of the entity regex eats hex letters | Decimal and hex branches split in the entity regex | trusted-HTML filter test for `&#106avascript:` (failed before) |
 | B37 | Low | An abbreviation could be wrapped inside an entity | Fixed `6fab63d4` | Skip pattern lacked entities | Entities added to the skip pattern | abbreviation test (failed before) |
+| B38 | High | An exported slide deck rendered a collaborator's HTML live and carried no CSP | Fixed `2c246de8` | `renderDeck` always passed `trusted = true`; `buildDeckHtml` wrote no CSP | The deck takes the note's trust answer and carries a CSP whose `script-src` allows only the deck's own nonced script | `slides/file.test.ts` trust and content-policy tests (5 failed before) |
+| B39 | High | Canvas SVG and PDF export rendered every card's HTML as trusted | Fixed `d1d8d1f2` | `cardBody`/`shapeWords` hard-coded `cardHtml(..., true)` | `canvasSvg`/`Drawing` take the plane's trust answer, default untrusted | new `canvas/picture.test.ts` (failed before); canvas, export and commands suites 1016 passed |
+| B40 | Medium | Clearing or replacing filters or a limit nib could not read brought the old value back, and new base filters were overwritten by kept ones | Fixed `15cda349` | Kept raw values never removed on edit; `base.kept` spread after the new filters | Edits drop the kept value; `basePlain` writes `filters ?? kept.filters` in place | 8 tests in `base-file.test.ts`, `agent.test.ts`, `views/logic.test.ts` (failed before) |
+| B41 | Low | Removing a tag and a field side by side left a doubled blank | Fixed `ac1a3a04` | Tags and fields built separate removals claiming the same blank | All spans go through one `removals()` merge | `task-edits.test.ts` 4 cases (failed before) |
 
 Not fixed, judged insignificant or out of scope: GFM's escaped backslash before a
 pipe in tables (text written back unchanged); Todoist `date before: Oct 6, 2026`
