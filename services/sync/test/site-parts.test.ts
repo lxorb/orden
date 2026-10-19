@@ -321,6 +321,25 @@ describe('a site with forms on it', () => {
     expect((await call(env, `/v1/spaces/${space}/answers`, { token })).json.answers).toHaveLength(1)
   })
 
+  test('takes no answer for a form the writer commented out', async () => {
+    const wrote = await call(env, `/v1/spaces/${space}/notes`, {
+      token,
+      body: { path: 'Draft.md', content: `# Draft\n\n%%\n${FENCE}\n%%\n` },
+    })
+    const draft = wrote.json.note.id
+
+    const page = await call(env, '/draft', { host: HOST })
+    expect(page.text).not.toContain(`action="/form/${draft}"`)
+
+    await call(env, `/form/${draft}`, {
+      host: HOST,
+      method: 'POST',
+      raw: 'your-name=Ada',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    })
+    expect((await call(env, `/v1/spaces/${space}/answers`, { token })).json.answers).toHaveLength(0)
+  })
+
   test('refuses an answer the form did not ask for', async () => {
     const sent = await call(env, `/form/${note}`, {
       host: HOST,

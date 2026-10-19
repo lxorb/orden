@@ -5,6 +5,7 @@ import {
   type Heading,
   renderMarkdown,
   type Wikilink,
+  withoutComments,
 } from '@nib/markdown'
 import { DECK_HEIGHT, DECK_PAGE_CSS, DECK_SCRIPT, DECK_WIDTH, deckBody } from '@nib/markdown/deck'
 import { diagramAlt, diagramFigure, diagramKey, isDiagram } from '@nib/markdown/diagrams'
@@ -366,7 +367,9 @@ async function embedded(
       if (!note) return
 
       const object = await env.NOTES.get(noteKey(space.id, note.id))
-      if (object) bodies.set(name, await object.text())
+      // Without its comments, as the note it is embedded in is: an embedded section is
+      // rendered on its own, after the page's own comments have gone.
+      if (object) bodies.set(name, withoutComments(await object.text()))
     }),
   )
 
@@ -1066,7 +1069,8 @@ async function takeAnswer(
   if (!shown) return new Response('Not found', { status: 404 })
 
   const object = await env.NOTES.get(noteKey(space.id, note.id))
-  const source = object ? await object.text() : ''
+  // What the writer commented out is not the page's, nor its title's, nor its form's.
+  const source = withoutComments(object ? await object.text() : '')
 
   // The form as the note writes it, so what is accepted is what was asked: a
   // field the note does not have cannot be sent, whatever a machine posts.
@@ -1265,7 +1269,8 @@ async function served(
     if (!only) return missing()
 
     const object = await env.NOTES.get(noteKey(space.id, only.id))
-    const source = object ? await object.text() : ''
+    // What the writer commented out is not the page's, nor its title's, nor its form's.
+    const source = withoutComments(object ? await object.text() : '')
     const front = readFront(only.front)
 
     // One note is the whole site, so there is nowhere for a link between notes
@@ -1486,7 +1491,8 @@ async function served(
 
   const note = found.note
   const object = await env.NOTES.get(noteKey(space.id, note.id))
-  const source = object ? await object.text() : ''
+  // What the writer commented out is not the page's, nor its title's, nor its form's.
+  const source = withoutComments(object ? await object.text() : '')
 
   // A published note is public: its raw HTML is shown, never run. Its links to
   // other notes point at where those notes are published, and its embeds show
