@@ -161,6 +161,7 @@ export async function readEvernote(sources: readonly Source[]): Promise<ImportPl
   if (missing) {
     lost.push({
       text: key('{count} attachments were missing from the export or could not be read'),
+      one: '{count} attachment was missing from the export or could not be read',
       values: { count: missing },
     })
   }
