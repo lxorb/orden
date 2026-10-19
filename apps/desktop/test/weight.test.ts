@@ -757,8 +757,13 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-18, to 3,238,500, for #384: a finger's press on the title bar, the
  *  format bar, a suggestion or quick add is let through (`keepFocus` in focus.ts), or
- *  WebKit sends no click and an iPhone's tap does nothing. Measured 3,237,468. */
-const BUDGET = 3_238_500
+ *  WebKit sends no click and an iPhone's tap does nothing. Measured 3,237,468.
+ *
+ *  Raised 2026-10-19, to 3,239,700, for #364: a picture pasted onto a canvas by somebody
+ *  signed in is named by the account's whole address (`accountAddress` in assets.ts,
+ *  which the first paint carries for the editor's paste), where it was read as a path in
+ *  the space and drawn as "Nothing here". Measured 3,238,704. */
+const BUDGET = 3_239_700
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
