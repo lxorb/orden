@@ -797,8 +797,13 @@ function holds(tail: string): boolean {
  *  Raised 2026-10-19, to 3,255,000, for #544: words from the room are held while an
  *  input method composes in a view and taken in when it ends, with what is typed
  *  meanwhile carried past them (`held`, `settle` and the compositionend handler in
- *  @nib/editor's shared.ts). Measured 3,254,393. */
-const BUDGET = 3_255_000
+ *  @nib/editor's shared.ts). Measured 3,254,393.
+ *
+ *  Raised 2026-10-19, to 3,256,000, for #533: a version put back from the history is
+ *  said to be one (`restoreVersion` on the workspace and in saving.svelte.ts,
+ *  `restoredAt` on a note), so a canvas takes it whole rather than merging with it.
+ *  Measured 3,255,185. */
+const BUDGET = 3_256_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
