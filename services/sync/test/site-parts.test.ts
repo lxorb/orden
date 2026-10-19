@@ -282,6 +282,45 @@ describe('a site with forms on it', () => {
     expect(answer.text).toContain('Thank you')
   })
 
+  test('takes no answer for another note when the site is one note', async () => {
+    await call(env, `/v1/spaces/${space}/notes`, {
+      token,
+      body: { path: 'Home.md', content: '# Home\n' },
+    })
+    await call(env, `/v1/spaces/${space}/blog`, {
+      method: 'PUT',
+      token,
+      body: { subdomain: 'field', note: 'Home.md' },
+    })
+
+    const sent = await call(env, `/form/${note}`, {
+      host: HOST,
+      method: 'POST',
+      raw: 'your-name=Ada',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    })
+    expect(sent.status).toBe(404)
+    expect((await call(env, `/v1/spaces/${space}/answers`, { token })).json.answers).toHaveLength(0)
+  })
+
+  test('and takes one for the note it is, back at its root', async () => {
+    await call(env, `/v1/spaces/${space}/blog`, {
+      method: 'PUT',
+      token,
+      body: { subdomain: 'field', note: 'Hello.md' },
+    })
+
+    const sent = await call(env, `/form/${note}`, {
+      host: HOST,
+      method: 'POST',
+      raw: 'your-name=Ada',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    })
+    expect(sent.status).toBe(303)
+    expect(sent.headers.get('location')).toBe(`/?sent=${note}`)
+    expect((await call(env, `/v1/spaces/${space}/answers`, { token })).json.answers).toHaveLength(1)
+  })
+
   test('refuses an answer the form did not ask for', async () => {
     const sent = await call(env, `/form/${note}`, {
       host: HOST,

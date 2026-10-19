@@ -868,6 +868,65 @@ describe('publishing one note instead of the space', () => {
   })
 })
 
+describe('a site of one note', () => {
+  const PRIVATE = file(2048, 7)
+
+  /** A paper kept somewhere in the space that the one note does not link. */
+  async function keepPrivately(path = 'Private/salary.pdf') {
+    await call(env, `/v1/blobs/${PRIVATE.hash}`, {
+      method: 'PUT',
+      token,
+      raw: PRIVATE.bytes,
+      headers: { 'content-type': 'application/pdf' },
+    })
+    const kept = await call(env, `/v1/spaces/${space}/files`, {
+      method: 'PUT',
+      token,
+      body: { files: [{ path, hash: PRIVATE.hash }] },
+    })
+    expect(kept.status).toBe(200)
+  }
+
+  test('serves no other file of the space by its path', async () => {
+    await keepPrivately()
+    await publish({ subdomain: 'me', note: 'Hello world.md' })
+
+    for (const path of ['/Private/salary.pdf', '/private/salary.pdf', '/Private%2Fsalary.pdf']) {
+      const response = await call(env, path, { host: 'me.nibeditor.com' })
+      expect(response.status, path).toBe(404)
+      expect(response.headers.get('location'), path).toBeNull()
+    }
+  })
+
+  test('nor one its folder rules would have published as a site of the space', async () => {
+    await keepPrivately('Blog/paper.pdf')
+    await publish({ subdomain: 'me', note: 'Hello world.md', rules: { publish: ['Blog'] } })
+
+    expect((await call(env, '/Blog/paper.pdf', { host: 'me.nibeditor.com' })).status).toBe(404)
+  })
+
+  test('still links a file its note links, at the address of its bytes', async () => {
+    await keepPrivately('reading/paper.pdf')
+    await addNote('home.md', '# Home\n\nSee [the paper](reading/paper.pdf).\n')
+    await publish({ subdomain: 'me', note: 'home.md' })
+
+    const page = await call(env, '/', { host: 'me.nibeditor.com' })
+    expect(page.text).toContain(`href="/i/${PRIVATE.hash}.pdf"`)
+    expect((await call(env, `/i/${PRIVATE.hash}.pdf`)).status).toBe(200)
+
+    // And by the path the note wrote, because the page links it.
+    expect((await call(env, '/reading/paper.pdf', { host: 'me.nibeditor.com' })).status).toBe(302)
+  })
+
+  test('while a site of the space still serves a file by its path', async () => {
+    await keepPrivately('reading/paper.pdf')
+    await publish({ subdomain: 'field' })
+
+    const response = await call(env, '/reading/paper.pdf', { host: 'field.nibeditor.com' })
+    expect(response.status).toBe(302)
+  })
+})
+
 describe('a published note that links a PDF', () => {
   /** A paper, and the hash it is named by. */
   const PAPER_BYTES = file(2048, 3)
