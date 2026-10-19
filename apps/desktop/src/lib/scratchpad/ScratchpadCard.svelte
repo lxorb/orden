@@ -30,6 +30,7 @@
   import { writeFile } from '../workspace/write-file'
   import { scratchpad } from './pad'
   import { shown, WIDTH } from './is.svelte'
+  import { viewport } from '../viewport.svelte'
 
   const NARROWEST = 240
   const WIDEST = 560
@@ -149,21 +150,24 @@
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div class="card nib-layer" class:resizing onkeydown={onKey}>
-  <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
-  <div
-    class="edge"
-    role="separator"
-    aria-orientation="vertical"
-    aria-label={t('Panel width')}
-    aria-valuemin={NARROWEST}
-    aria-valuemax={WIDEST}
-    aria-valuenow={shown.width}
-    tabindex="0"
-    title={t('Drag to resize')}
-    onpointerdown={grab}
-    ondblclick={() => shown.resize(WIDTH)}
-    onkeydown={onEdgeKey}
-  ></div>
+  <!-- No width to drag on a phone or a tablet, where the card is the one note there is. -->
+  {#if !viewport.touch}
+    <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
+    <div
+      class="edge"
+      role="separator"
+      aria-orientation="vertical"
+      aria-label={t('Panel width')}
+      aria-valuemin={NARROWEST}
+      aria-valuemax={WIDEST}
+      aria-valuenow={shown.width}
+      tabindex="0"
+      title={t('Drag to resize')}
+      onpointerdown={grab}
+      ondblclick={() => shown.resize(WIDTH)}
+      onkeydown={onEdgeKey}
+    ></div>
+  {/if}
   <div class="host" bind:this={host}></div>
 </div>
 
@@ -180,6 +184,25 @@
     inset-inline-end: 0;
     z-index: var(--z-lifted);
     max-width: 100%;
+  }
+
+  /* A phone and a tablet open one note at a time, and the scratchpad is that note while
+     it is up: the whole of where the note is, never a card beside it (Emil, #206: "it
+     shouldn't side-display, it should display as the only open note on mobile"). */
+  :global(html:not([data-device='desktop']) [data-scratchpad]) {
+    position: absolute;
+    inset: 0;
+    z-index: var(--z-lifted);
+    max-width: none;
+  }
+
+  :global(html:not([data-device='desktop']) [data-scratchpad]) .card {
+    width: 100%;
+    margin: 0;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    background: var(--bg);
   }
 
   /* Held at its width while the column slides. */

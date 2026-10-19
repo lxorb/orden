@@ -32,6 +32,7 @@ import type {
 } from '@tauri-apps/api/menu'
 import { account } from './account.svelte'
 import { fullscreen } from './fullscreen.svelte'
+import { hiddenKinds } from './settings.svelte'
 import { i18n, t } from './i18n.svelte'
 import type { MenuItem } from './menu-item'
 import { modes } from './modes.svelte'
@@ -149,6 +150,7 @@ function signature(context: MenuBarContext): unknown[] {
     present.available,
     account.user,
     viewport.touch,
+    hiddenKinds.shown.join(),
   ]
 }
 
@@ -171,10 +173,10 @@ function fileRows(context: MenuBarContext): MenuBarSources['file'] {
 
   return {
     opening: [
-      entryRow('app.new', context),
+      ...(hiddenKinds.offers('note') ? [entryRow('app.new', context)] : []),
       entryRow('app.new-kind', context, { label: t('New tab') }),
       entryRow('app.new-window', context),
-      entryRow('app.new-private', context),
+      ...(hiddenKinds.offers('private') ? [entryRow('app.new-private', context)] : []),
     ],
     closing: [
       entryRow('app.close', context, { disabled: !open }),
@@ -182,6 +184,24 @@ function fileRows(context: MenuBarContext): MenuBarSources['file'] {
       entryRow('app.close-window', context),
     ],
   }
+}
+
+/** The keys a web tab is reloaded by, which run from anywhere: with the page holding the
+ *  keyboard a key reaches the app only as a row; see `viewRows` in native-menu.ts. */
+const RELOADING = new Set(['web.reload', 'web.fresh'])
+
+/** View's rows for a web tab in front, greyed with anything else; see `viewRows`. */
+function reloadRows(context: MenuBarContext): MenuItem[] {
+  const web = workspace.active?.kind === 'web'
+  const step = (how: 'reload' | 'fresh') => () => {
+    const tab = workspace.active
+    if (tab?.kind === 'web')
+      void import('./web-tab/pages.svelte').then(({ pages }) => pages.step(tab.id, how))
+  }
+  return [
+    entryRow('web.reload', context, { disabled: !web, run: step('reload') }),
+    entryRow('web.fresh', context, { disabled: !web, run: step('fresh') }),
+  ]
 }
 
 class MenuBar {
@@ -264,8 +284,9 @@ class MenuBar {
       settings: entryRow('app.settings', context),
       windowRows: [entryRow('app.next-note', context), entryRow('app.previous-note', context)],
       helpRows: [entryRow('app.keys', context)],
+      viewRows: reloadRows(context),
       keyFor: (command) => shortcuts.keyFor(command),
-      isWindowCommand: (command) => BY_ID.get(command)?.scope === 'app',
+      isWindowCommand: (command) => BY_ID.get(command)?.scope === 'app' || RELOADING.has(command),
       words: words(),
       english: i18n.language === 'en',
     })

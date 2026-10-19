@@ -112,14 +112,6 @@ export const pagesSurface = held(() =>
     : import('./Pages.svelte'),
 )
 
-/** A paper being read, beside the notes about it. Brings pdf.js with it, which is why
- *  the glasses' plugin has neither; see vite.even.config.ts. */
-export const pdfSurface = held(() =>
-  __EVEN_PLUGIN__
-    ? Promise.reject(new Error('no PDF viewer in the Even Realities plugin'))
-    : import('./Pdf.svelte'),
-)
-
 /** A website in a tab. See docs/web-tabs.md. Never the glasses' plugin's, which opens
  *  no website in a tab (see `openWeb` in workspace.svelte.ts), and a fetch that is
  *  only never called still puts its chunk in the package. */
@@ -395,6 +387,10 @@ export function showQuickAdd(prefill: import('./quick-add/entry').Prefill = {}):
  *  on screen as a window opens, since neither is remembered. See lib/tab-fill. */
 export const fillBar = held(() => import('./tab-fill/FillBar.svelte'))
 export const fullscreenWayOut = held(() => import('./FullscreenLeave.svelte'))
+
+/** Who a guest alone in one shared file is, and the way to an account, in the corner
+ *  that file leaves: only a guest with no app round them ever has it. See alone.svelte.ts. */
+export const guestCorner = held(() => import('./GuestCorner.svelte'))
 
 /** A note as a deck, over the whole window. The one overlay that is not latched:
  *  it takes the tab it is presenting as a prop, so there is nothing for it to be

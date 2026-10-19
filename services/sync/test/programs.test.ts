@@ -62,19 +62,13 @@ describe('what a program may reach', () => {
   })
 
   /** Sync v2's half that is about computers rather than notes: a token in a CI
-   *  secret has no device to be, no web login to hold and no key to ask for. */
-  test('and nothing of the hub: devices, web state, or a space’s web store', () => {
-    const key = 'k'.repeat(43)
+   *  secret has no device to be. */
+  test('and nothing of the hub: its socket, or the devices', () => {
     for (const [method, path] of [
       ['GET', '/v2/hub'],
       ['GET', '/v2/devices'],
       ['PATCH', '/v2/devices/abc'],
       ['DELETE', '/v2/devices/abc'],
-      ['GET', `/v2/web/${key}`],
-      ['PUT', `/v2/web/${key}`],
-      ['GET', `/v2/web/chunks/${key}`],
-      ['PUT', `/v2/web/chunks/${key}`],
-      ['PUT', '/v2/spaces/abc/web-store'],
     ] as const) {
       expect(programMayReach(method, path, false), `${method} ${path}`).toBe(false)
     }

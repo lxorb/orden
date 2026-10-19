@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const pa: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'ਹੋਰ ਐਪਾਂ ਤੋਂ: {key}',
+  'From other apps: set in your system settings': 'ਹੋਰ ਐਪਾਂ ਤੋਂ: ਸਿਸਟਮ ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਤੈਅ ਕਰੋ',
+  'From other apps: bind {command} in your system settings':
+    'ਹੋਰ ਐਪਾਂ ਤੋਂ: ਸਿਸਟਮ ਸੈਟਿੰਗਾਂ ਵਿੱਚ {command} ਜੋੜੋ',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: 'ਜ਼ਰੂਰੀ',
   'Add to Essentials': 'ਜ਼ਰੂਰੀ ਵਿੱਚ ਜੋੜੋ',
@@ -21,6 +26,11 @@ export const pa: Dictionary = {
   'Import from Zen': 'Zen ਤੋਂ ਅੰਦਰ ਲਿਆਓ',
   'Containers stay in Zen': 'ਕੰਟੇਨਰ Zen ਵਿੱਚ ਹੀ ਰਹਿੰਦੇ ਹਨ',
   'Zen’s tabs could not be read.': 'Zen ਦੀਆਂ ਟੈਬਾਂ ਪੜ੍ਹੀਆਂ ਨਹੀਂ ਜਾ ਸਕੀਆਂ।',
+  // Settings: note types
+  'Page note': 'ਸਫ਼ਿਆਂ ਵਾਲੀ ਨੋਟ',
+  'Web note': 'ਵੈੱਬ ਨੋਟ',
+  'Private tab': 'ਨਿੱਜੀ ਟੈਬ',
+  'Note types': 'ਨੋਟ ਦੀਆਂ ਕਿਸਮਾਂ',
   // Tasks: Upcoming's weeks
   'Previous week': 'ਪਿਛਲਾ ਹਫ਼ਤਾ',
   // Tasks: projects placed in the panel, and their folder
@@ -988,6 +998,7 @@ export const pa: Dictionary = {
   Comment: 'ਟਿੱਪਣੀ',
   'Always on top': 'ਹਮੇਸ਼ਾ ਉੱਪਰ',
   'What is new': 'ਨਵਾਂ ਕੀ ਹੈ',
+  'Download the app': 'ਐਪ ਡਾਊਨਲੋਡ ਕਰੋ',
   'Report an issue': 'ਸਮੱਸਿਆ ਦੱਸੋ',
   'Move the line up': 'ਲਾਈਨ ਉੱਪਰ ਭੇਜੋ',
   'Move the line down': 'ਲਾਈਨ ਹੇਠਾਂ ਭੇਜੋ',
@@ -1071,6 +1082,16 @@ export const pa: Dictionary = {
   'AI account: {name}': 'AI ਖਾਤਾ: {name}',
   Accounts: 'ਖਾਤੇ',
   Access: 'ਪਹੁੰਚ',
+  Set: 'ਸੈੱਟ ਹੈ',
+  'Start over': 'ਮੁੜ ਸ਼ੁਰੂ ਕਰੋ',
+  'Sign in here': 'ਇੱਥੇ ਸਾਈਨ ਇਨ ਕਰੋ',
+  '{device} wants your AI accounts': '{device} ਤੁਹਾਡੇ AI ਖਾਤੇ ਚਾਹੁੰਦਾ ਹੈ',
+  '{device} offers this device your AI vault': '{device} ਇਸ ਡਿਵਾਈਸ ਨੂੰ ਤੁਹਾਡਾ AI ਵਾਲਟ ਦੇ ਰਿਹਾ ਹੈ',
+  Join: 'ਸ਼ਾਮਲ ਹੋਵੋ',
+  'Allow this device on another one': 'ਕਿਸੇ ਹੋਰ ਡਿਵਾਈਸ ਤੇ ਇਸ ਡਿਵਾਈਸ ਦੀ ਇਜਾਜ਼ਤ ਦਿਓ',
+  'On every device you sign in to, end-to-end encrypted.':
+    'ਹਰ ਡਿਵਾਈਸ ਤੇ ਜਿੱਥੇ ਤੁਸੀਂ ਸਾਈਨ ਇਨ ਕਰੋ, ਐਂਡ-ਟੂ-ਐਂਡ ਇਨਕ੍ਰਿਪਟਿਡ।',
+  'Sign in to have them on every device.': 'ਹਰ ਡਿਵਾਈਸ ਤੇ ਪਾਉਣ ਲਈ ਸਾਈਨ ਇਨ ਕਰੋ।',
   'Agents on this computer connect on their own': 'ਇਸ ਕੰਪਿਊਟਰ ਦੇ ਏਜੰਟ ਆਪਣੇ ਆਪ ਜੁੜਦੇ ਹਨ',
   Helpers: 'ਸਹਾਇਕ',
   'Start helpers on your AI accounts': 'ਆਪਣੇ AI ਖਾਤਿਆਂ ਤੇ ਸਹਾਇਕ ਸ਼ੁਰੂ ਕਰੋ',
@@ -1164,6 +1185,12 @@ export const pa: Dictionary = {
   'Export as PNG': 'PNG ਵਜੋਂ ਬਾਹਰ ਭੇਜੋ',
   'Export as SVG': 'SVG ਵਜੋਂ ਬਾਹਰ ਭੇਜੋ',
   'Export as PDF': 'PDF ਵਜੋਂ ਬਾਹਰ ਭੇਜੋ',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF ਅੰਦਰ ਲਿਆਓ',
+  'Choose how to add the pages to the canvas.': 'ਸਫ਼ੇ ਕੈਨਵਸ ਉੱਤੇ ਕਿਵੇਂ ਜੋੜਨੇ ਹਨ, ਚੁਣੋ।',
+  'Single page': 'ਇੱਕ ਸਫ਼ਾ',
+  'All pages': 'ਸਾਰੇ ਸਫ਼ੇ',
+  'Choose a page': 'ਸਫ਼ਾ ਚੁਣੋ',
   // The canvas: what its own keys are called
   'Delete what is picked': 'ਚੁਣਿਆ ਮਿਟਾਓ',
   'Nudge left': 'ਖੱਬੇ ਥੋੜ੍ਹਾ ਸਰਕਾਓ',
@@ -1224,8 +1251,8 @@ export const pa: Dictionary = {
   'Release channel': 'ਜਾਰੀ ਰਾਹ',
   Stable: 'ਪੱਕਾ',
   Unstable: 'ਕੱਚਾ',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'ਪੱਕਾ ਸਰਕਾਰੀ ਜਾਰੀਆਂ ਪਿੱਛੇ ਚੱਲਦਾ ਹੈ, ਕੱਚਾ main ਵਿੱਚ ਹਰ ਧੱਕੇ ਪਿੱਛੇ ਤੇ ਟੁੱਟ ਸਕਦਾ ਹੈ।',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'ਪੱਕਾ ਜਾਰੀ ਹੋਈਆਂ ਰੂਪਾਂ ਪਿੱਛੇ ਚੱਲਦਾ ਹੈ, ਕੱਚਾ ਕਿਨਾਰੇ ਵਾਲੇ ਬਿਲਡਾਂ ਪਿੱਛੇ ਤੇ ਟੁੱਟ ਸਕਦਾ ਹੈ।',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'ਅੰਦਰ ਲਿਆਓ',
@@ -1392,16 +1419,16 @@ export const pa: Dictionary = {
   'OpenAI-compatible': 'OpenAI ਨਾਲ ਮੇਲ',
   'Base URL': 'ਮੂਲ URL',
   'API key': 'API ਕੁੰਜੀ',
-  'Set on this device': 'ਇਸ ਡਿਵਾਈਸ ਉੱਤੇ ਲੱਗੀ',
   Optional: 'ਮਰਜ਼ੀ ਨਾਲ',
   'List models': 'ਮਾਡਲ ਲਿਆਓ',
   'Asking…': 'ਪੁੱਛ ਰਿਹਾ ਹੈ…',
   'No providers yet.': 'ਹਾਲੇ ਪ੍ਰਦਾਤਾ ਨਹੀਂ।',
   'Add {name}': '{name} ਜੋੜੋ',
-  'Keys stay in the secure store on this device.':
-    'ਕੁੰਜੀਆਂ ਇਸ ਡਿਵਾਈਸ ਦੇ ਸੁਰੱਖਿਅਤ ਭੰਡਾਰ ਵਿੱਚ ਰਹਿੰਦੀਆਂ ਹਨ।',
   'This browser holds the keys in its own storage.':
     'ਇਹ ਬ੍ਰਾਊਜ਼ਰ ਕੁੰਜੀਆਂ ਆਪਣੇ ਭੰਡਾਰ ਵਿੱਚ ਰੱਖਦਾ ਹੈ।',
+  'Keep this browser’s keys in the vault': 'ਇਸ ਬ੍ਰਾਊਜ਼ਰ ਦੀਆਂ ਕੁੰਜੀਆਂ ਵਾਲਟ ਵਿੱਚ ਰੱਖੋ',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'ਫਿਰ ਹਰ ਡਿਵਾਈਸ ਦੀਆਂ ਕੁੰਜੀਆਂ ਇਸ ਬ੍ਰਾਊਜ਼ਰ ਦੀ ਸਟੋਰੇਜ ਵਿੱਚ ਰਹਿਣਗੀਆਂ, ਜਿੱਥੇ ਪੰਨੇ ਵਿੱਚ ਵੜੀ ਕੋਈ ਸਕ੍ਰਿਪਟ ਉਨ੍ਹਾਂ ਨੂੰ ਪੜ੍ਹ ਸਕਦੀ ਹੈ।',
   'AI can be wrong. Check the facts.': 'AI ਗਲਤ ਹੋ ਸਕਦਾ ਹੈ। ਤੱਥਾਂ ਦੀ ਜਾਂਚ ਕਰੋ।',
   'Used by the glasses': 'ਐਨਕਾਂ ਵਰਤਦੀਆਂ ਹਨ',
   'Could not read the models.': 'ਮਾਡਲ ਨਹੀਂ ਪੜ੍ਹੇ ਜਾ ਸਕੇ।',
@@ -1806,16 +1833,6 @@ export const pa: Dictionary = {
   'Paste {count} lines?': { one: '{count} ਲਾਈਨ ਪੇਸਟ ਕਰੀਏ?', other: '{count} ਲਾਈਨਾਂ ਪੇਸਟ ਕਰੀਏ?' },
   // Orden as the default browser
   'Default browser': 'ਮੂਲ ਬ੍ਰਾਊਜ਼ਰ',
-  // The engine web tabs run on
-  Engine: 'ਇੰਜਣ',
-  Relaunch: 'ਮੁੜ ਚਾਲੂ ਕਰੋ',
-  'Chromium did not start': 'Chromium ਚਾਲੂ ਨਹੀਂ ਹੋਇਆ',
-  'No connection': 'ਕਨੈਕਸ਼ਨ ਨਹੀਂ',
-  'Not in this release': 'ਇਸ ਰਿਲੀਜ਼ ਵਿੱਚ ਨਹੀਂ',
-  'Needs an update': 'ਅੱਪਡੇਟ ਚਾਹੀਦਾ ਹੈ',
-  'Signature did not match': 'ਦਸਤਖ਼ਤ ਮੇਲ ਨਹੀਂ ਖਾਂਦੇ',
-  'Disk full': 'ਡਿਸਕ ਭਰੀ ਹੋਈ',
-  'Could not be installed': 'ਇੰਸਟਾਲ ਨਹੀਂ ਹੋ ਸਕਿਆ',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ਦੇ ਸੰਪਾਦਨ ਅਣਕੀਤੇ ਕਰੋ',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1985,10 +2002,6 @@ export const pa: Dictionary = {
     one: '{count} ਕਾਲ',
     other: '{count} ਕਾਲਾਂ',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': '{device} ਉੱਤੇ ਖੁੱਲ੍ਹਾ ਹੈ',
-  'Use here': 'ਇੱਥੇ ਵਰਤੋ',
-  '{device} wants your web logins': '{device} ਤੁਹਾਡੇ ਵੈੱਬ ਲੌਗਇਨ ਚਾਹੁੰਦਾ ਹੈ',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'ਛੋਟਾ ਸਵਾਲ',

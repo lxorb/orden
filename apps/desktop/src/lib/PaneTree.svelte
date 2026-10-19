@@ -7,6 +7,7 @@
    *  exactly the number the tree holds and the divider is a real line rather
    *  than a gap between two floats. */
 
+  import { alone } from './alone.svelte'
   import Pane from './Pane.svelte'
   import PaneTree from './PaneTree.svelte'
   import { type Frame, paneIn, type Split } from './workspace/pane-tree'
@@ -22,7 +23,7 @@
   /** Which side holds the pane filling the window, where this split holds it: the other
    *  side and the divider go while it does. See lib/tab-fill. */
   const kept = $derived.by(() => {
-    const fills = workspace.panes.fills
+    const fills = workspace.panes.fills ?? alone.pane
     return split && fills ? split.sides.findIndex((side) => paneIn(side, fills)) : -1
   })
 

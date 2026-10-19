@@ -52,8 +52,9 @@ const NOTED: readonly string[] = [
      select distinct 'versions/' || hash, ?3 from note_versions where note_id in (${OWNED_NOTES})`,
   `insert or ignore into leftovers (what, since)
      select 'blobs/' || hash, ?3 from blobs where user_id = ?1`,
-  // The web logins' bytes, and the hubs of the account and of the guests at its
-  // address, which keep their leases in storage of their own; see hub/bucket.ts.
+  // The bytes of web logins that travelled between computers, kept until those were
+  // removed (#393) and swept with the account still, and the hubs of the account and of
+  // the guests at its address, which keep storage of their own.
   `insert or ignore into leftovers (what, since)
      select 'web/' || user_id || '/' || key, ?3 from web_states where user_id = ?1`,
   `insert or ignore into leftovers (what, since)
@@ -153,12 +154,16 @@ export const ERASED: readonly (readonly [table: string, sql: string])[] = [
   ['login_codes', 'delete from login_codes where email = ?2'],
   ['mailed', 'delete from mailed where email = ?2'],
   ['mailed_days', 'delete from mailed_days where email = ?2'],
-  // Its devices and its web logins: the key wrapped to each device before the
-  // device, and the states whose bytes NOTED has already written down.
+  // Its devices, and what web logins that travelled left (#393): the key wrapped to
+  // each device before the device, and the states whose bytes NOTED has already
+  // written down.
   ['web_keys', 'delete from web_keys where user_id = ?1'],
   ['devices', 'delete from devices where user_id = ?1'],
   ['web_states', 'delete from web_states where user_id = ?1'],
   ['web_chunks', 'delete from web_chunks where user_id = ?1'],
+  // Its AI accounts, sealed, and the keys to them wrapped to each device.
+  ['ai_vaults', 'delete from ai_vaults where user_id = ?1'],
+  ['ai_devices', 'delete from ai_devices where user_id = ?1'],
   // Where its devices were pushed to, and the reminders kept to push them.
   ['push_targets', 'delete from push_targets where user_id = ?1'],
   ['push_reminders', 'delete from push_reminders where user_id = ?1'],

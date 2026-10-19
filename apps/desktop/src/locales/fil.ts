@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const fil: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'Mula sa ibang app: {key}',
+  'From other apps: set in your system settings': 'Mula sa ibang app: itakda sa settings ng system',
+  'From other apps: bind {command} in your system settings':
+    'Mula sa ibang app: i-bind ang {command} sa settings ng system',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: 'Mga Mahalaga',
   'Add to Essentials': 'Idagdag sa Mga Mahalaga',
@@ -21,6 +26,11 @@ export const fil: Dictionary = {
   'Import from Zen': 'Mag-import mula sa Zen',
   'Containers stay in Zen': 'Nananatili sa Zen ang mga container',
   'Zen’s tabs could not be read.': 'Hindi mabasa ang mga tab ng Zen.',
+  // Settings: note types
+  'Page note': 'Talang may pahina',
+  'Web note': 'Talang web',
+  'Private tab': 'Pribadong tab',
+  'Note types': 'Mga uri ng tala',
   // Tasks: Upcoming's weeks
   'Previous week': 'Nakaraang linggo',
   // Tasks: projects placed in the panel, and their folder
@@ -994,6 +1004,7 @@ export const fil: Dictionary = {
   Comment: 'Komento',
   'Always on top': 'Laging nasa itaas',
   'What is new': 'Ano ang bago',
+  'Download the app': 'I-download ang app',
   'Report an issue': 'Mag-ulat ng problema',
   'Move the line up': 'Iakyat ang linya',
   'Move the line down': 'Ibaba ang linya',
@@ -1077,6 +1088,17 @@ export const fil: Dictionary = {
   'AI account: {name}': 'AI account: {name}',
   Accounts: 'Mga account',
   Access: 'Access',
+  Set: 'Nakatakda',
+  'Start over': 'Magsimula muli',
+  'Sign in here': 'Mag-sign in dito',
+  '{device} wants your AI accounts': 'Gusto ng {device} ang iyong mga AI account',
+  '{device} offers this device your AI vault':
+    'Inaalok ng {device} sa device na ito ang iyong AI vault',
+  Join: 'Sumali',
+  'Allow this device on another one': 'Payagan ang device na ito sa ibang device',
+  'On every device you sign in to, end-to-end encrypted.':
+    'Sa bawat device na pinag-sign in-an mo, end-to-end encrypted.',
+  'Sign in to have them on every device.': 'Mag-sign in para nasa bawat device ang mga ito.',
   'Agents on this computer connect on their own':
     'Kusang kumokonekta ang mga agent sa computer na ito',
   Helpers: 'Mga katulong',
@@ -1171,6 +1193,13 @@ export const fil: Dictionary = {
   'Export as PNG': 'I-export bilang PNG',
   'Export as SVG': 'I-export bilang SVG',
   'Export as PDF': 'I-export bilang PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'I-import ang PDF',
+  'Choose how to add the pages to the canvas.':
+    'Piliin kung paano idadagdag ang mga pahina sa canvas.',
+  'Single page': 'Isang pahina',
+  'All pages': 'Lahat ng pahina',
+  'Choose a page': 'Pumili ng pahina',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Tanggalin ang pinili',
   'Nudge left': 'Itulak pakaliwa',
@@ -1231,8 +1260,8 @@ export const fil: Dictionary = {
   'Release channel': 'Channel ng release',
   Stable: 'Matatag',
   Unstable: 'Hindi matatag',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Sinusundan ng Matatag ang opisyal na release, ang Hindi matatag ay bawat push sa main at puwedeng masira.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Sinusundan ng Matatag ang mga inilabas na bersyon, ang Hindi matatag ay mga edge build at puwedeng masira.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'I-import',
@@ -1409,16 +1438,16 @@ export const fil: Dictionary = {
   'OpenAI-compatible': 'Kompatible sa OpenAI',
   'Base URL': 'Base URL',
   'API key': 'API key',
-  'Set on this device': 'Nakatakda sa device na ito',
   Optional: 'Opsyonal',
   'List models': 'Kunin ang mga modelo',
   'Asking…': 'Nagtatanong…',
   'No providers yet.': 'Wala pang provider.',
   'Add {name}': 'Idagdag ang {name}',
-  'Keys stay in the secure store on this device.':
-    'Nananatili ang key sa ligtas na imbakan ng device na ito.',
   'This browser holds the keys in its own storage.':
     'Itinatago ng browser na ito ang key sa sariling imbakan nito.',
+  'Keep this browser’s keys in the vault': 'Itago ang mga key ng browser na ito sa vault',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'Kung gayon, itatago ang mga key ng bawat device sa storage ng browser na ito, kung saan mababasa ang mga ito ng script na nakapasok sa page.',
   'AI can be wrong. Check the facts.': 'Puwedeng magkamali ang AI. Suriin ang mga detalye.',
   'Used by the glasses': 'Ginagamit ng salamin',
   'Could not read the models.': 'Hindi mabasa ang mga modelo.',
@@ -1838,16 +1867,6 @@ export const fil: Dictionary = {
   },
   // Orden as the default browser
   'Default browser': 'Default na browser',
-  // The engine web tabs run on
-  Engine: 'Engine',
-  Relaunch: 'I-relaunch',
-  'Chromium did not start': 'Hindi nagsimula ang Chromium',
-  'No connection': 'Walang koneksyon',
-  'Not in this release': 'Wala sa release na ito',
-  'Needs an update': 'Kailangan ng update',
-  'Signature did not match': 'Hindi tugma ang lagda',
-  'Disk full': 'Puno na ang disk',
-  'Could not be installed': 'Hindi ma-install',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'I-undo ang mga edit ni {name}',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -2019,10 +2038,6 @@ export const fil: Dictionary = {
     one: '{count} tawag',
     other: '{count} na tawag',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'Bukas sa {device}',
-  'Use here': 'Gamitin dito',
-  '{device} wants your web logins': 'Gusto ng {device} ang iyong mga web login',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'Mabilis na tanong',

@@ -12,7 +12,7 @@
  *  are on screen right now, and how to put the keyboard in one, is focus.ts,
  *  where the DOM is. */
 
-import type { TabKind } from './workspace/documents.svelte'
+import { type TabKind, TAB_KINDS } from './workspace/tab-kinds'
 
 /** Every region there is, in the order the window draws them - down the sidebar,
  *  then across the note - which is the order Tab already walks and so the order
@@ -42,11 +42,6 @@ export const REGIONS = [
 ] as const
 
 export type Region = (typeof REGIONS)[number]
-
-/** The kinds of tab the bar under the note is left out over; see `hasStatusBar` at
- *  the foot of this file. A page note is not one of them: its bar carries the page
- *  counter. */
-const WITHOUT_STATUS = new Set<TabKind>(['graph', 'canvas'])
 
 const RANK = new Map<string, number>(REGIONS.map((name, at) => [name, at]))
 
@@ -103,7 +98,8 @@ export function stepRegion(
  *  in docs/keyboard.md, `ordered` above and `regionsOn` in focus.ts - and a window
  *  that draws one thing while they say another is how the ring and the window drift
  *  apart. Nothing open at all still draws it: that is a window waiting for a note,
- *  not one showing something else. */
+ *  not one showing something else. Which kinds leave it out is each kind's own
+ *  `statusBar`, in workspace/tab-kinds.ts. */
 export function hasStatusBar(kind: TabKind | null | undefined): boolean {
-  return kind === null || kind === undefined || !WITHOUT_STATUS.has(kind)
+  return kind === null || kind === undefined || TAB_KINDS[kind].statusBar
 }

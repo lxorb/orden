@@ -223,6 +223,74 @@ def file_of(page: Page) -> str:
     return page.evaluate("() => window.nibApp.workspace.active?.doc ?? ''")
 
 
+PHONE = {"width": 390, "height": 844}
+
+
+def held_at_edge(page: Page, failures: list[str], label: str) -> None:
+    """Looks far away from the other hand, and checks it is held at the edge of the
+    screen with its name, pointing back the way to it, rather than gone. Then looks
+    back."""
+    # The tab's own camera, which is none at all until somebody moves it.
+    before = page.evaluate("() => window.nibApp.workspace.active.camera ?? null")
+    page.evaluate(
+        "() => { const tab = window.nibApp.workspace.active;"
+        " tab.camera = { x: 40000, y: 0, scale: 0.5 } }"
+    )
+    try:
+        DRIVE.wait_for(page, "!!document.querySelector('svg.hands .held')", f"[{label}] the hand held at the edge", 10)
+    except SystemExit:
+        pass
+
+    held = page.evaluate(
+        """() => {
+            const one = document.querySelector('svg.hands .held')
+            const surface = document.querySelector('div.canvas')?.getBoundingClientRect()
+            if (!one || !surface) return null
+            const box = one.getBoundingClientRect()
+            return {
+                name: one.querySelector('text')?.textContent ?? null,
+                inside: box.left >= surface.left && box.right <= surface.right
+                    && box.top >= surface.top && box.bottom <= surface.bottom,
+                left: box.left - surface.left,
+                dot: !!document.querySelector('svg.hands > circle'),
+            }
+        }"""
+    )
+    say(f"[{label}] looking far to the right of the other hand: {json.dumps(held)}")
+    page.locator("div.canvas").first.screenshot(path=str(SHOTS / f"held-at-edge-{label}.png"))
+
+    if not held:
+        failures.append(f"[{label}] a hand off the screen was not held at its edge")
+    else:
+        if not held["name"]:
+            failures.append(f"[{label}] a hand held at the edge carried no name")
+        if not held["inside"]:
+            failures.append(f"[{label}] a hand held at the edge was drawn past it")
+        # Far to the right of it, so it is to the left: held at the left edge.
+        if held["left"] > 40:
+            failures.append(f"[{label}] a hand to the left was held {held['left']:.0f}px in, not at the left edge")
+        if held["dot"]:
+            failures.append(f"[{label}] a hand held at the edge was drawn where it is as well")
+
+    # Pressed, the arrow goes to them: the camera moves to the hand, which is drawn where
+    # it is again.
+    if held:
+        page.locator("svg.hands .held path").first.click(force=True)
+        try:
+            DRIVE.wait_for(
+                page,
+                "!document.querySelector('svg.hands .held') && !!document.querySelector('svg.hands > circle')",
+                f"[{label}] the camera to go to the hand",
+                10,
+            )
+            say(f"[{label}] pressing the arrow went to the hand")
+        except SystemExit as gave_up:
+            failures.append(str(gave_up))
+
+    page.evaluate("(camera) => { window.nibApp.workspace.active.camera = camera ?? undefined }", before)
+    page.wait_for_timeout(200)
+
+
 def pen(page: Page):
     """A pen, as the debugging protocol delivers one: pressure and tilt, and the
     events a digitiser really sends rather than a mouse pretending to be one."""
@@ -465,12 +533,28 @@ def main() -> int:
         if not drawing["named"]:
             failures.append("the other device's hand carried no name")
 
-        # And the pen lifts: the stroke settles into the plane's own ink, the
-        # name fades a second and a half later, and the dot stays.
+        # And the pen lifts: the stroke settles into the plane's own ink, and the
+        # dot and the name both stay - somebody in the canvas is always somebody
+        # you can see (#386).
         up(*live[-1])
         two.wait_for_timeout(1900)
         two.locator("div.canvas").first.screenshot(path=str(SHOTS / "remote-pointer.png"))
         two.locator(".strip").first.screenshot(path=str(SHOTS / "plane-presence.png"))
+        still_named = two.evaluate(
+            "() => document.querySelector('svg.hands text')?.textContent ?? null"
+        )
+        if not still_named:
+            failures.append("the other device's name went once its hand stopped")
+        else:
+            say(f"the hand that stopped is still named {still_named!r}")
+
+        held_at_edge(two, failures, "desktop")
+        # The same on a phone's screen, where far less of the plane is in view.
+        two.set_viewport_size(PHONE)
+        two.wait_for_timeout(300)
+        held_at_edge(two, failures, "phone")
+        two.set_viewport_size({"width": 1180, "height": 760})
+        two.wait_for_timeout(300)
         say(f"the photographs are in {SHOTS}")
 
         # And now both at once, neither having heard the other.

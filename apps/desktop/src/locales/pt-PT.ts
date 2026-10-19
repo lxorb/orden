@@ -1,6 +1,12 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ptPT: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'A partir de outras apps: {key}',
+  'From other apps: set in your system settings':
+    'A partir de outras apps: definir nas definições do sistema',
+  'From other apps: bind {command} in your system settings':
+    'A partir de outras apps: associe {command} nas definições do sistema',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: 'Essenciais',
   'Add to Essentials': 'Adicionar aos Essenciais',
@@ -21,6 +27,11 @@ export const ptPT: Dictionary = {
   'Import from Zen': 'Importar do Zen',
   'Containers stay in Zen': 'Os contentores ficam no Zen',
   'Zen’s tabs could not be read.': 'Não foi possível ler os separadores do Zen.',
+  // Settings: note types
+  'Page note': 'Nota de páginas',
+  'Web note': 'Nota da web',
+  'Private tab': 'Separador privado',
+  'Note types': 'Tipos de nota',
   // Tasks: Upcoming's weeks
   'Previous week': 'Semana anterior',
   // Tasks: projects placed in the panel, and their folder
@@ -999,6 +1010,7 @@ export const ptPT: Dictionary = {
   Comment: 'Comentário',
   'Always on top': 'Sempre à frente',
   'What is new': 'Novidades',
+  'Download the app': 'Transferir a app',
   'Report an issue': 'Comunicar um problema',
   'Move the line up': 'Subir a linha',
   'Move the line down': 'Descer a linha',
@@ -1082,6 +1094,17 @@ export const ptPT: Dictionary = {
   'AI account: {name}': 'Conta de IA: {name}',
   Accounts: 'Contas',
   Access: 'Acesso',
+  Set: 'Definida',
+  'Start over': 'Recomeçar',
+  'Sign in here': 'Iniciar sessão aqui',
+  '{device} wants your AI accounts': '{device} quer as suas contas de IA',
+  '{device} offers this device your AI vault':
+    '{device} oferece a este dispositivo o seu cofre de IA',
+  Join: 'Aderir',
+  'Allow this device on another one': 'Permita este dispositivo noutro',
+  'On every device you sign in to, end-to-end encrypted.':
+    'Em todos os dispositivos em que iniciar sessão, com encriptação ponto a ponto.',
+  'Sign in to have them on every device.': 'Inicie sessão para as ter em todos os dispositivos.',
   'Agents on this computer connect on their own': 'Os agentes deste computador ligam-se sozinhos',
   Helpers: 'Ajudantes',
   'Start helpers on your AI accounts': 'Iniciar ajudantes nas suas contas de IA',
@@ -1175,6 +1198,12 @@ export const ptPT: Dictionary = {
   'Export as PNG': 'Exportar como PNG',
   'Export as SVG': 'Exportar como SVG',
   'Export as PDF': 'Exportar como PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'Importar PDF',
+  'Choose how to add the pages to the canvas.': 'Escolha como adicionar as páginas à tela.',
+  'Single page': 'Uma página',
+  'All pages': 'Todas as páginas',
+  'Choose a page': 'Escolher uma página',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Eliminar o que está selecionado',
   'Nudge left': 'Deslocar para a esquerda',
@@ -1235,8 +1264,8 @@ export const ptPT: Dictionary = {
   'Release channel': 'Canal de versões',
   Stable: 'Estável',
   Unstable: 'Instável',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Estável segue as versões oficiais; Instável, cada push na main, e pode quebrar.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Estável segue as versões lançadas; Instável segue as compilações de ponta e pode quebrar.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Importar',
@@ -1424,16 +1453,16 @@ export const ptPT: Dictionary = {
   'OpenAI-compatible': 'Compatível com OpenAI',
   'Base URL': 'URL base',
   'API key': 'Chave de API',
-  'Set on this device': 'Definida neste dispositivo',
   Optional: 'Opcional',
   'List models': 'Listar modelos',
   'Asking…': 'A perguntar…',
   'No providers yet.': 'Ainda sem fornecedores.',
   'Add {name}': 'Adicionar {name}',
-  'Keys stay in the secure store on this device.':
-    'As chaves ficam no armazenamento seguro deste dispositivo.',
   'This browser holds the keys in its own storage.':
     'Este navegador guarda as chaves no seu próprio armazenamento.',
+  'Keep this browser’s keys in the vault': 'Guardar as chaves deste browser no cofre',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'Assim, as chaves de todos os dispositivos ficam no armazenamento deste browser, onde um script que entrasse na página as poderia ler.',
   'AI can be wrong. Check the facts.': 'A IA pode errar. Confirme os factos.',
   'Used by the glasses': 'Usado pelos óculos',
   'Could not read the models.': 'Não foi possível ler os modelos.',
@@ -1848,16 +1877,6 @@ export const ptPT: Dictionary = {
   },
   // Orden as the default browser
   'Default browser': 'Navegador predefinido',
-  // The engine web tabs run on
-  Engine: 'Motor',
-  Relaunch: 'Reiniciar',
-  'Chromium did not start': 'O Chromium não arrancou',
-  'No connection': 'Sem ligação',
-  'Not in this release': 'Não está nesta versão',
-  'Needs an update': 'Precisa de atualização',
-  'Signature did not match': 'A assinatura não corresponde',
-  'Disk full': 'Disco cheio',
-  'Could not be installed': 'Não foi possível instalar',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Anular as edições de {name}',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -2029,10 +2048,6 @@ export const ptPT: Dictionary = {
     many: '{count} de chamadas',
     other: '{count} chamadas',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'Aberto em {device}',
-  'Use here': 'Usar aqui',
-  '{device} wants your web logins': '{device} quer os seus inícios de sessão web',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'Pergunta rápida',

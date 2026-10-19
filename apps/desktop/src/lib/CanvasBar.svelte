@@ -106,36 +106,25 @@
    *  where a thumb already is. */
   const movable = $derived(viewport.touch || hand.penSeen)
 
-  // Escape closes it, like everything else the app puts over a note; see
-  // overlays.ts. And Android's back, which is the same gesture on a phone.
-  $effect(() => (open ? overlays.show(() => (open = null)) : undefined))
+  // Escape closes it, like everything else the app puts over a note, and so does a
+  // press anywhere but on this bar, or the window losing the focus; see overlays.ts.
+  // Caught on the way down, at the window, rather than waited for on the way up: the
+  // plane reads a press as the start of a gesture, so a panel that waited for the click
+  // stayed open through a whole stroke - and a panel over the drawing is exactly what
+  // the drawing is under. And Android's back, which is the same gesture on a phone.
+  $effect(() =>
+    open
+      ? overlays.show(
+          () => (open = null),
+          () => [cluster],
+        )
+      : undefined,
+  )
   $effect(() => closeOnBack(open !== null, () => (open = null)))
 
   function shut() {
     open = null
   }
-
-  // A press anywhere but on this bar shuts whatever it has open.
-  //
-  // Caught on the way down, at the window, rather than waited for on the way up.
-  // Everything else in the app closes a panel with the click that follows the press,
-  // and the plane cannot use that: it reads a press as the start of a gesture, so a
-  // panel that waited for the click stayed open through a whole stroke - and a panel
-  // over the drawing is exactly what the drawing is under. Capture, so nothing
-  // between here and the window can decide otherwise.
-  $effect(() => {
-    const away = (event: PointerEvent) => {
-      if (!open) return
-
-      const target = event.target
-      if (target instanceof Node && cluster?.contains(target)) return
-
-      open = null
-    }
-
-    window.addEventListener('pointerdown', away, { capture: true })
-    return () => window.removeEventListener('pointerdown', away, { capture: true })
-  })
 
   // And a tool taken with a key shuts it too: the panel was about the tool that is no
   // longer in hand.
@@ -271,8 +260,6 @@
    *  and one question per surface is the whole of why that bar exists. */
   const swatch = $derived(shownInk(nib.colour))
 </script>
-
-<svelte:window onblur={shut} />
 
 <!-- Every pointer stops here. See the note at the top of the file. -->
 <!-- svelte-ignore a11y_no_static_element_interactions -->

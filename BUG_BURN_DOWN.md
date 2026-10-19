@@ -26,8 +26,8 @@ data loss. **High** - data loss or a security hole on a specific path.
 | --- | --: | --: | --: |
 | Critical | 1 | 1 | 0 |
 | High | 11 | 11 | 0 |
-| Medium | 21 | 21 | 0 |
-| Low | 8 | 8 | 0 |
+| Medium | 22 | 22 | 0 |
+| Low | 9 | 9 | 0 |
 
 Open rows are being fixed; see the status column.
 
@@ -76,6 +76,8 @@ Open rows are being fixed; see the status column.
 | B39 | High | Canvas SVG and PDF export rendered every card's HTML as trusted | Fixed `d1d8d1f2` | `cardBody`/`shapeWords` hard-coded `cardHtml(..., true)` | `canvasSvg`/`Drawing` take the plane's trust answer, default untrusted | new `canvas/picture.test.ts` (failed before); canvas, export and commands suites 1016 passed |
 | B40 | Medium | Clearing or replacing filters or a limit nib could not read brought the old value back, and new base filters were overwritten by kept ones | Fixed `15cda349` | Kept raw values never removed on edit; `base.kept` spread after the new filters | Edits drop the kept value; `basePlain` writes `filters ?? kept.filters` in place | 8 tests in `base-file.test.ts`, `agent.test.ts`, `views/logic.test.ts` (failed before) |
 | B41 | Low | Removing a tag and a field side by side left a doubled blank | Fixed `ac1a3a04` | Tags and fields built separate removals claiming the same blank | All spans go through one `removals()` merge | `task-edits.test.ts` 4 cases (failed before) |
+| B42 | Medium | Renaming or moving a note that links to itself brought a copy back under its old name (found by the final re-audit; regression from B27) | Fixed `c376af2d` | `retarget` read the moved note's open document and wrote it to the path the rename had just emptied | The moved note is read where it is open and written, linked from, at its new path | 2 `file-ops.store.test.ts` tests, open and closed (both failed before) |
+| B43 | Low | B25's move checks compared paths with a bare `!==` | Fixed `217147fd` | A case- or composition-only difference read as a move | `samePath` | `one-path.test.ts` (failed before) |
 
 Not fixed, judged insignificant or out of scope: GFM's escaped backslash before a
 pipe in tables (text written back unchanged); Todoist `date before: Oct 6, 2026`

@@ -1,18 +1,22 @@
 pkgbase = orden-bin
 	pkgdesc = Lightweight markdown editor with realtime inline preview
-	pkgver = 0.15.0
+	pkgver = 0.16.0
 	pkgrel = 1
 	url = https://orden.so
 	arch = x86_64
 	arch = aarch64
 	license = AGPL-3.0-only
 	depends = gtk3
-	depends = webkit2gtk-4.1
+	depends = webkit2gtk-4.1>=2.40
+	depends = gst-plugins-base
+	depends = gst-plugins-good
 	depends = hicolor-icon-theme
+	optdepends = gst-libav: play AAC and H.264 - a recording made on a Mac, a video from a phone
+	optdepends = gst-plugins-bad: play the remaining formats WebKitGTK hands to it
 	optdepends = pandoc: import and export DOCX, ODT, EPUB, LaTeX and friends
 	optdepends = xdg-utils: open links and attachments in the desktop default application
-	provides = orden=0.15.0
-	provides = nib=0.15.0
+	provides = orden=0.16.0
+	provides = nib=0.16.0
 	conflicts = nib
 	conflicts = nib-bin
 	conflicts = nibeditor
@@ -22,9 +26,9 @@ pkgbase = orden-bin
 	options = !emptydirs
 	source = nib.desktop
 	sha256sums = dbc30233704066e7d5479267db5d81532ca61a5b68f30eb0b7eccc9372532aff
-	source_x86_64 = nib.deb::https://github.com/lxorb/orden/releases/download/v0.15.0/Orden-0.15.0-linux-x64.deb
-	sha256sums_x86_64 = c3dc5252c62c144451c2484a29f05f570762ff3fc728340cda3fd2dedd274441
-	source_aarch64 = nib.deb::https://github.com/lxorb/orden/releases/download/v0.15.0/Orden-0.15.0-linux-arm64.deb
-	sha256sums_aarch64 = fa276143e8fe1d63f8da427b8e5c8ed4609dd47d33fc3306770334b2987c3601
+	source_x86_64 = nib.deb::https://github.com/lxorb/orden/releases/download/v0.16.0/Orden-0.16.0-linux-x64.deb
+	sha256sums_x86_64 = 576e58010d909072a23313c6a9e6841f862fab226355c5347b07a853e6c39aba
+	source_aarch64 = nib.deb::https://github.com/lxorb/orden/releases/download/v0.16.0/Orden-0.16.0-linux-arm64.deb
+	sha256sums_aarch64 = ae4a7cf7a29f83dc521bda5354c3d1924e49d249ed514959afe7c76e56947095
 
 pkgname = orden-bin

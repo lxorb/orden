@@ -358,7 +358,13 @@ depends on the file's.
   `PATCH /v2/chats/:id {space}` by a writer of both spaces, so its history goes with it and
   its audience changes. Duplicate makes a new, empty chat beside it, never a second pointer to
   one log. Deleting the pointer sends it to Recently deleted; emptying the trash ends the chat:
-  the account erases its log 30 days later with the other leftovers.
+  the account erases its log 30 days later with the other leftovers. While the pointer is in
+  Recently deleted the account does not list the chat (`GET /v2/chats` leaves out a chat
+  whose `file_id` is a deleted note), and a device takes it off its list the moment the
+  pointer goes from it, by its own hand or by the sync, rather than draw the row the account
+  still lists until it hears - a row with no pointer, so no name: a lone `#` for each chat
+  ever deleted (#375). Put back, the pointer brings its chat back as it was. A chat whose
+  pointer is only on its way to this device is listed, under the word Chat until it comes.
 - **The file list** draws `thesis.chat` as one row with the chat's mark and its unread count,
   or the icon the pointer wears; the tab, the palette and the Chats panel show the same.
 
@@ -574,9 +580,9 @@ The space's roles (`docs/collaboration.md`, Sharing) answer it, with one setting
   need MLS ([RFC 9420][mls]) or WhatsApp's per-device fan-out ([multi-device][wa-multi]),
   each a project of its own.
 - **What it would protect.** The same people's notes beside the chat are not end-to-end
-  encrypted (`docs/sync-v2.md` 6.6 encrypts web logins only, because they are live
-  credentials). Slack, Discord and Teams make the same choice, and Telegram for its cloud
-  chats.
+  encrypted (`docs/sync-v2.md` 6.6 encrypted web logins only, because they are live
+  credentials, and the AI vault does the same for keys). Slack, Discord and Teams make the
+  same choice, and Telegram for its cloud chats.
 - **What is done**: TLS on the wire, Cloudflare's encryption at rest, no third party sees a
   message (link previews are made by the sender, no GIF service), and the person's own
   controls in 4.18.

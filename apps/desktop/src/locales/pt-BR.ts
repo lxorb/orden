@@ -1,6 +1,12 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ptBR: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'De outros apps: {key}',
+  'From other apps: set in your system settings':
+    'De outros apps: defina nas configurações do sistema',
+  'From other apps: bind {command} in your system settings':
+    'De outros apps: associe {command} nas configurações do sistema',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: 'Essenciais',
   'Add to Essentials': 'Adicionar aos Essenciais',
@@ -21,6 +27,11 @@ export const ptBR: Dictionary = {
   'Import from Zen': 'Importar do Zen',
   'Containers stay in Zen': 'Os contêineres ficam no Zen',
   'Zen’s tabs could not be read.': 'Não foi possível ler as abas do Zen.',
+  // Settings: note types
+  'Page note': 'Nota de páginas',
+  'Web note': 'Nota da web',
+  'Private tab': 'Guia privada',
+  'Note types': 'Tipos de nota',
   // Tasks: Upcoming's weeks
   'Previous week': 'Semana anterior',
   // Tasks: projects placed in the panel, and their folder
@@ -995,6 +1006,7 @@ export const ptBR: Dictionary = {
   Comment: 'Comentário',
   'Always on top': 'Sempre na frente',
   'What is new': 'Novidades',
+  'Download the app': 'Baixar o app',
   'Report an issue': 'Relatar um problema',
   'Move the line up': 'Subir a linha',
   'Move the line down': 'Descer a linha',
@@ -1076,6 +1088,17 @@ export const ptBR: Dictionary = {
   'AI account: {name}': 'Conta de IA: {name}',
   Accounts: 'Contas',
   Access: 'Acesso',
+  Set: 'Definida',
+  'Start over': 'Recomeçar',
+  'Sign in here': 'Entrar aqui',
+  '{device} wants your AI accounts': '{device} quer suas contas de IA',
+  '{device} offers this device your AI vault':
+    '{device} oferece a este dispositivo o seu cofre de IA',
+  Join: 'Entrar',
+  'Allow this device on another one': 'Permita este dispositivo em outro',
+  'On every device you sign in to, end-to-end encrypted.':
+    'Em todo dispositivo em que você entrar, com criptografia de ponta a ponta.',
+  'Sign in to have them on every device.': 'Entre para tê-las em todos os dispositivos.',
   'Agents on this computer connect on their own':
     'Os agentes deste computador se conectam sozinhos',
   Helpers: 'Ajudantes',
@@ -1170,6 +1193,12 @@ export const ptBR: Dictionary = {
   'Export as PNG': 'Exportar como PNG',
   'Export as SVG': 'Exportar como SVG',
   'Export as PDF': 'Exportar como PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'Importar PDF',
+  'Choose how to add the pages to the canvas.': 'Escolha como adicionar as páginas ao quadro.',
+  'Single page': 'Uma página',
+  'All pages': 'Todas as páginas',
+  'Choose a page': 'Escolher uma página',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Excluir o que está selecionado',
   'Nudge left': 'Deslocar à esquerda',
@@ -1230,8 +1259,8 @@ export const ptBR: Dictionary = {
   'Release channel': 'Canal de versões',
   Stable: 'Estável',
   Unstable: 'Instável',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Estável segue as versões oficiais; Instável, cada push na main, e pode quebrar.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Estável segue as versões lançadas; Instável segue as compilações de ponta e pode quebrar.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Importar',
@@ -1413,16 +1442,16 @@ export const ptBR: Dictionary = {
   'OpenAI-compatible': 'Compatível com OpenAI',
   'Base URL': 'URL base',
   'API key': 'Chave de API',
-  'Set on this device': 'Definida neste dispositivo',
   Optional: 'Opcional',
   'List models': 'Listar modelos',
   'Asking…': 'Perguntando…',
   'No providers yet.': 'Ainda sem provedores.',
   'Add {name}': 'Adicionar {name}',
-  'Keys stay in the secure store on this device.':
-    'As chaves ficam no armazenamento seguro deste dispositivo.',
   'This browser holds the keys in its own storage.':
     'Este navegador guarda as chaves no próprio armazenamento.',
+  'Keep this browser’s keys in the vault': 'Guardar as chaves deste navegador no cofre',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'Assim, as chaves de todos os dispositivos ficam no armazenamento deste navegador, onde um script que entrasse na página poderia lê-las.',
   'AI can be wrong. Check the facts.': 'A IA pode errar. Confira os fatos.',
   'Used by the glasses': 'Usado pelos óculos',
   'Could not read the models.': 'Não foi possível ler os modelos.',
@@ -1835,16 +1864,6 @@ export const ptBR: Dictionary = {
   },
   // Orden as the default browser
   'Default browser': 'Navegador padrão',
-  // The engine web tabs run on
-  Engine: 'Mecanismo',
-  Relaunch: 'Reiniciar',
-  'Chromium did not start': 'O Chromium não iniciou',
-  'No connection': 'Sem conexão',
-  'Not in this release': 'Não está nesta versão',
-  'Needs an update': 'Precisa de atualização',
-  'Signature did not match': 'A assinatura não confere',
-  'Disk full': 'Disco cheio',
-  'Could not be installed': 'Não foi possível instalar',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Desfazer as edições de {name}',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -2016,10 +2035,6 @@ export const ptBR: Dictionary = {
     many: '{count} de chamadas',
     other: '{count} chamadas',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'Aberto em {device}',
-  'Use here': 'Usar aqui',
-  '{device} wants your web logins': '{device} quer seus logins da web',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'Pergunta rápida',

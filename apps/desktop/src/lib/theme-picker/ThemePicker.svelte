@@ -126,8 +126,17 @@
   let grid = $state<HTMLElement>()
 
   // Escape closes it, like everything else the app puts over a note, and Back does
-  // on a phone; both give the kept look back. See overlays.ts.
-  $effect(() => (picking.open ? overlays.show(() => picking.close()) : undefined))
+  // on a phone; both give the kept look back. See overlays.ts. And a press past it, and
+  // the window losing the focus, as every popup does.
+  let panel = $state<HTMLElement>()
+  $effect(() =>
+    picking.open
+      ? overlays.show(
+          () => picking.close(),
+          () => [panel],
+        )
+      : undefined,
+  )
   $effect(() => closeOnBack(picking.open, () => picking.close()))
 
   /** How it arrives: rising into place over the app, or up from the foot of a
@@ -245,6 +254,7 @@
     style:top={place && !place.above ? `${place.y}px` : undefined}
     style:bottom={place?.above ? `${place.y}px` : undefined}
     style:max-height={place ? `${place.room}px` : undefined}
+    bind:this={panel}
     use:trap
     use:pullsAway={viewport.touch ? () => picking.close() : null}
     role="dialog"

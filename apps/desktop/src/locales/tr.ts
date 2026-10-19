@@ -1,6 +1,12 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const tr: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'Diğer uygulamalardan: {key}',
+  'From other apps: set in your system settings':
+    'Diğer uygulamalardan: sistem ayarlarında belirlenir',
+  'From other apps: bind {command} in your system settings':
+    'Diğer uygulamalardan: {command} komutunu sistem ayarlarında atayın',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: 'Temel öğeler',
   'Add to Essentials': 'Temel öğelere ekle',
@@ -21,6 +27,11 @@ export const tr: Dictionary = {
   'Import from Zen': 'Zen’den içe aktar',
   'Containers stay in Zen': 'Kapsayıcılar Zen’de kalır',
   'Zen’s tabs could not be read.': 'Zen’in sekmeleri okunamadı.',
+  // Settings: note types
+  'Page note': 'Sayfalı not',
+  'Web note': 'Web notu',
+  'Private tab': 'Gizli sekme',
+  'Note types': 'Not türleri',
   // Tasks: Upcoming's weeks
   'Previous week': 'Önceki hafta',
   // Tasks: projects placed in the panel, and their folder
@@ -985,6 +996,7 @@ export const tr: Dictionary = {
   Comment: 'Açıklama',
   'Always on top': 'Her zaman üstte',
   'What is new': 'Yenilikler',
+  'Download the app': 'Uygulamayı indir',
   'Report an issue': 'Sorun bildir',
   'Move the line up': 'Satırı yukarı taşı',
   'Move the line down': 'Satırı aşağı taşı',
@@ -1068,6 +1080,16 @@ export const tr: Dictionary = {
   'AI account: {name}': 'Yapay zekâ hesabı: {name}',
   Accounts: 'Hesaplar',
   Access: 'Erişim',
+  Set: 'Ayarlı',
+  'Start over': 'Baştan başla',
+  'Sign in here': 'Burada oturum aç',
+  '{device} wants your AI accounts': '{device} yapay zekâ hesaplarını istiyor',
+  '{device} offers this device your AI vault': '{device}, bu cihaza yapay zekâ kasanızı sunuyor',
+  Join: 'Katıl',
+  'Allow this device on another one': 'Bu cihaza başka bir cihazdan izin verin',
+  'On every device you sign in to, end-to-end encrypted.':
+    'Oturum açtığın her cihazda, uçtan uca şifreli.',
+  'Sign in to have them on every device.': 'Her cihazda olmaları için oturum aç.',
   'Agents on this computer connect on their own':
     'Bu bilgisayardaki ajanlar kendiliğinden bağlanır',
   Helpers: 'Yardımcılar',
@@ -1162,6 +1184,12 @@ export const tr: Dictionary = {
   'Export as PNG': 'PNG olarak aktar',
   'Export as SVG': 'SVG olarak aktar',
   'Export as PDF': 'PDF olarak aktar',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF içe aktar',
+  'Choose how to add the pages to the canvas.': 'Sayfaların tuvale nasıl ekleneceğini seçin.',
+  'Single page': 'Tek sayfa',
+  'All pages': 'Tüm sayfalar',
+  'Choose a page': 'Bir sayfa seçin',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Seçileni sil',
   'Nudge left': 'Sola it',
@@ -1222,8 +1250,8 @@ export const tr: Dictionary = {
   'Release channel': 'Sürüm kanalı',
   Stable: 'Kararlı',
   Unstable: 'Kararsız',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Kararlı resmî sürümleri izler, Kararsız main’e her gönderimi izler ve bozulabilir.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Kararlı yayımlanan sürümleri izler, Kararsız edge yapılarını izler ve bozulabilir.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'İçe aktar',
@@ -1390,15 +1418,16 @@ export const tr: Dictionary = {
   'OpenAI-compatible': 'OpenAI uyumlu',
   'Base URL': 'Temel URL',
   'API key': 'API anahtarı',
-  'Set on this device': 'Bu aygıtta ayarlı',
   Optional: 'İsteğe bağlı',
   'List models': 'Modelleri getir',
   'Asking…': 'Soruluyor…',
   'No providers yet.': 'Henüz sağlayıcı yok.',
   'Add {name}': '{name} ekle',
-  'Keys stay in the secure store on this device.': 'Anahtarlar bu aygıtın güvenli deposunda kalır.',
   'This browser holds the keys in its own storage.':
     'Bu tarayıcı anahtarları kendi deposunda tutar.',
+  'Keep this browser’s keys in the vault': 'Bu tarayıcının anahtarlarını kasada tut',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'O zaman her cihazın anahtarları bu tarayıcının depolama alanında tutulur; sayfaya sızan bir betik onları okuyabilir.',
   'AI can be wrong. Check the facts.': 'YZ yanılabilir. Bilgileri doğrulayın.',
   'Used by the glasses': 'Gözlük kullanır',
   'Could not read the models.': 'Modeller okunamadı.',
@@ -1810,16 +1839,6 @@ export const tr: Dictionary = {
   },
   // Orden as the default browser
   'Default browser': 'Öntanımlı tarayıcı',
-  // The engine web tabs run on
-  Engine: 'Motor',
-  Relaunch: 'Yeniden başlat',
-  'Chromium did not start': 'Chromium başlamadı',
-  'No connection': 'Bağlantı yok',
-  'Not in this release': 'Bu sürümde yok',
-  'Needs an update': 'Güncelleme gerekiyor',
-  'Signature did not match': 'İmza eşleşmedi',
-  'Disk full': 'Disk dolu',
-  'Could not be installed': 'Yüklenemedi',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} düzenlemelerini geri al',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1988,10 +2007,6 @@ export const tr: Dictionary = {
     one: '{count} çağrı',
     other: '{count} çağrı',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': '{device} üzerinde açık',
-  'Use here': 'Burada kullan',
-  '{device} wants your web logins': '{device} web oturum açma bilgilerinizi istiyor',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'Hızlı soru',

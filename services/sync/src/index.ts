@@ -32,6 +32,7 @@ import { oauth, oauthMetadata } from './oauth'
 import { expireClients } from './oauth/clients'
 import { rooms } from './rooms'
 import { devices } from './hub/devices'
+import { aiVault } from './ai/vault'
 import { hubDoor } from './hub/door'
 import { onlineAdmin } from './machines/admin'
 import { sweepAudit } from './machines/audit'
@@ -39,8 +40,6 @@ import { machineBundle } from './machines/bundle'
 import { onlineDoor } from './machines/door'
 import { isMachineHost, machineDomain } from './machines/hetzner-host'
 import { online } from './machines/routes'
-import { web } from './hub/web'
-import { webStore } from './spaces/web-store'
 import { settings } from './settings'
 import { v2Docs, v2Spaces } from './sync2'
 import { syncAdmin } from './sync2/admin'
@@ -78,18 +77,7 @@ const appOrigins = cors({
   // header that is not named here is dropped by the browser before the request
   // leaves, which is a thing that only shows up on the builds whose origin is
   // not the service's own. See versions.ts and apps/desktop/src/lib/device.ts.
-  // The other three are what a web state is uploaded under; see hub/web.ts.
-  allowHeaders: [
-    'authorization',
-    'content-type',
-    'x-nib-device',
-    'x-nib-fence',
-    'x-nib-generation',
-    'x-nib-chunks',
-  ],
-  // And what a downloaded web state says about itself, which a page may only read
-  // when it is named.
-  exposeHeaders: ['x-nib-version', 'x-nib-fence', 'x-nib-generation'],
+  allowHeaders: ['authorization', 'content-type', 'x-nib-device'],
   allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   maxAge: 86400,
 })
@@ -122,9 +110,9 @@ app.route('/mcp', mcp)
 // subprotocol and is let in ahead of the guard below; see rooms/index.ts.
 app.route('/rooms', rooms)
 
-// The account's hub, the one socket every signed-in device keeps: pokes, web leases
-// and the web key's relay. A socket for the same reason as a room's, so it is let
-// in ahead of the guard as well; see hub/door.ts.
+// The account's hub, the one socket every signed-in device keeps: pokes, and whether
+// somebody is at it. A socket for the same reason as a room's, so it is let in ahead of
+// the guard as well; see hub/door.ts.
 app.route('/v2/hub', hubDoor)
 
 // A chat's socket, for the same reason: only `/:chat/socket` is answered here, and
@@ -216,15 +204,14 @@ app.get('/v1/me', async (context) => {
   // name, which is all a guest has and all the other people in a note need.
   if (who.kind === 'guest') return context.json({ guest: presentGuest(who.guest) })
 
-  // Which sync engine the account's devices run, and whether its web logins travel
-  // between its computers: two switches flipped one account at a time (docs/sync-v2.md
-  // section 11). Read here and not on every request's user: the app asks once, as it
-  // starts, and a change takes effect at its next launch.
-  const flags = await context.env.DB.prepare(
-    'select web_sync, sync_version from users where id = ?',
-  )
+  // Which sync engine the account's devices run: a switch flipped one account at a time
+  // (docs/sync-v2.md section 11). Read here and not on every request's user: the app
+  // asks once, as it starts, and a change takes effect at its next launch. The
+  // `web_sync` beside it was for web logins that travelled between computers, which
+  // were removed (#393); it is no longer read.
+  const flags = await context.env.DB.prepare('select sync_version from users where id = ?')
     .bind(who.user.id)
-    .first<{ web_sync: number; sync_version: number }>()
+    .first<{ sync_version: number }>()
   // And the profile as its owner edits it, with what it is called in each space where
   // it chose something else; see people/.
   const [profile, nicks] = await Promise.all([
@@ -236,7 +223,6 @@ app.get('/v1/me', async (context) => {
   return context.json({
     user: {
       ...presentUser(who.user),
-      webSync: flags?.web_sync === 1,
       syncVersion: flags?.sync_version === 2 ? 2 : 1,
       ...(profile ? presentOwnProfile(profile, Date.now()) : {}),
       nicks: Object.fromEntries(nicks.results.map((row) => [row.space_id, row.nick])),
@@ -304,12 +290,10 @@ app.route('/v1/account', account)
 app.route('/v1', tasks)
 app.route('/v1', notes)
 
-// Sync v2, the hub's half: a site's web state and its chunks, the account's
-// devices, and which web store a space's pages live in. See hub/web.ts,
-// hub/devices.ts and spaces/web-store.ts.
-app.route('/v2/web', web)
+// Sync v2, the hub's half: the account's devices. See hub/devices.ts.
 app.route('/v2/devices', devices)
-app.route('/v2/spaces', webStore)
+// The reader's AI accounts, end to end between their devices; see ai/vault.ts.
+app.route('/v2/ai', aiVault)
 
 // Sync v2, the documents' half: a space's tree and its feed, documents in batches,
 // and a space's files. See sync2/index.ts and docs/sync-v2.md section 7.

@@ -26,7 +26,6 @@ import { api, ApiError, type Invitation, type Joined } from './api'
 import { account } from './account.svelte'
 import { message, t } from './i18n.svelte'
 import { deviceName } from './rooms/who'
-import { sharedWithYou } from './sharing.svelte'
 import { forget, keep, storedText } from './stored'
 import { sync } from './sync.svelte'
 import { workspace } from './workspace.svelte'
@@ -112,7 +111,10 @@ class Joining {
    *  and asking again is how anybody finds out they were let in. */
   private async resume() {
     const held = storedText(WAITING_KEY)
-    if (!held || !PATH.test(`/join/${held}`) || !account.signedIn) return
+    if (!held || !PATH.test(`/join/${held}`) || !account.signedIn) {
+      if (account.guest) await (await import('./one-file')).backToTheFile()
+      return
+    }
 
     this.token = held
     this.invitation = await api.invitation(held).catch(() => null)
@@ -200,9 +202,9 @@ class Joining {
     // section and opens in a tab whose words travel through its room. See
     // sharing.svelte.ts and docs/sharing.md.
     if (joined.item) {
+      this.stopAsking()
+      await (await import('./one-file')).landOn(joined.item)
       this.arrived()
-      await sharedWithYou.load()
-      await sharedWithYou.open(joined.item)
       return
     }
 

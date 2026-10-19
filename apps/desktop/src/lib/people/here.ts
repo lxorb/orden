@@ -1,10 +1,9 @@
 /** Whether somebody is at this device, said to the account's hub: what the others see
  *  as the dot on this person's face.
  *
- *  One `Activity` for the device (web-tab/activity.ts), made here and shared: web logins
- *  that travel hand a site over by the same answer (web-tab/web-sync.svelte.ts), and two
- *  ears saying two things to one hub would be a site handed over because a face went
- *  idle. Started for every signed-in device after the first paint, beside the hub (see
+ *  One `Activity` for the device (web-tab/activity.ts), made here and shared with a
+ *  chat's notices (chats/notices.ts). Started for every signed-in device after the
+ *  first paint, beside the hub (see
  *  sync2/connect.svelte.ts); the hub works out the person from all their devices and
  *  writes it down when it changes (services/sync/src/people/presence.ts). The zone this
  *  device is in is kept on the account in the same turn, so a card tells the time where
@@ -14,10 +13,6 @@ import { invoke, isDesktop } from '../tauri'
 import { hub } from '../sync2/hub.svelte'
 import { Activity, listenForInput, readSystemInput } from '../web-tab/activity'
 import { keepZone } from './mine'
-
-/** What else keeps this device in use without a hand on it: a page playing sound, an
- *  agent at work. Added by whoever knows; see web-sync.svelte.ts. */
-const busy = new Set<() => boolean>()
 
 let made: Activity | null = null
 
@@ -29,7 +24,6 @@ export function deviceActivity(): Activity {
     // The system's idle clock is the crate's, on a desktop; elsewhere the page's own
     // keys and pointer are the whole answer.
     system: async () => (isDesktop ? readSystemInput(await invoke<unknown>('input_idle')) : null),
-    busy: () => [...busy].some((one) => one()),
     listen: listenForInput,
     every: (ms, tick) => {
       const timer = setInterval(tick, ms)
@@ -38,11 +32,6 @@ export function deviceActivity(): Activity {
   })
   made.start()
   return made
-}
-
-/** Counts something as somebody at this device while it says so. */
-export function busyWhile(asking: () => boolean): void {
-  busy.add(asking)
 }
 
 let started = false

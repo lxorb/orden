@@ -46,7 +46,12 @@ vi.mock('../tauri', async (original) => ({
   invoke: fakeInvoke,
   isDesktop: true,
 }))
-vi.mock('./keys', () => ({ readKey: () => Promise.resolve('sk-key') }))
+// The rest of the module as it is: the AI vault starts with the AI store and listens
+// for keys moving, whatever this test asks of the key.
+vi.mock('./keys', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./keys')>()),
+  readKey: () => Promise.resolve('sk-key'),
+}))
 
 /** Every request the page made itself, and what the provider streams back. */
 const fetched: { url: string; init: RequestInit }[] = []

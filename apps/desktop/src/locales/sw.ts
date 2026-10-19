@@ -1,6 +1,12 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const sw: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'Kutoka programu nyingine: {key}',
+  'From other apps: set in your system settings':
+    'Kutoka programu nyingine: weka kwenye mipangilio ya mfumo',
+  'From other apps: bind {command} in your system settings':
+    'Kutoka programu nyingine: unganisha {command} kwenye mipangilio ya mfumo',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: 'Muhimu',
   'Add to Essentials': 'Ongeza kwenye Muhimu',
@@ -21,6 +27,11 @@ export const sw: Dictionary = {
   'Import from Zen': 'Ingiza kutoka Zen',
   'Containers stay in Zen': 'Kontena zinabaki ndani ya Zen',
   'Zen’s tabs could not be read.': 'Vichupo vya Zen havikuweza kusomwa.',
+  // Settings: note types
+  'Page note': 'Dokezo la kurasa',
+  'Web note': 'Dokezo la wavuti',
+  'Private tab': 'Kichupo cha faragha',
+  'Note types': 'Aina za madokezo',
   // Tasks: Upcoming's weeks
   'Previous week': 'Wiki iliyopita',
   // Tasks: projects placed in the panel, and their folder
@@ -990,6 +1001,7 @@ export const sw: Dictionary = {
   Comment: 'Maoni',
   'Always on top': 'Juu kila wakati',
   'What is new': 'Mapya',
+  'Download the app': 'Pakua programu',
   'Report an issue': 'Ripoti tatizo',
   'Move the line up': 'Panda mstari juu',
   'Move the line down': 'Shusha mstari chini',
@@ -1073,6 +1085,16 @@ export const sw: Dictionary = {
   'AI account: {name}': 'Akaunti ya AI: {name}',
   Accounts: 'Akaunti',
   Access: 'Ufikiaji',
+  Set: 'Imewekwa',
+  'Start over': 'Anza upya',
+  'Sign in here': 'Ingia hapa',
+  '{device} wants your AI accounts': '{device} inaomba akaunti zako za AI',
+  '{device} offers this device your AI vault': '{device} inakipa kifaa hiki kasha lako la AI',
+  Join: 'Jiunge',
+  'Allow this device on another one': 'Ruhusu kifaa hiki kwenye kingine',
+  'On every device you sign in to, end-to-end encrypted.':
+    'Kwenye kila kifaa unachoingia, kimesimbwa mwisho hadi mwisho.',
+  'Sign in to have them on every device.': 'Ingia ili uwe nazo kwenye kila kifaa.',
   'Agents on this computer connect on their own':
     'Mawakala kwenye kompyuta hii hujiunganisha wenyewe',
   Helpers: 'Wasaidizi',
@@ -1167,6 +1189,12 @@ export const sw: Dictionary = {
   'Export as PNG': 'Toa kama PNG',
   'Export as SVG': 'Toa kama SVG',
   'Export as PDF': 'Toa kama PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'Ingiza PDF',
+  'Choose how to add the pages to the canvas.': 'Chagua jinsi ya kuongeza kurasa kwenye turubai.',
+  'Single page': 'Ukurasa mmoja',
+  'All pages': 'Kurasa zote',
+  'Choose a page': 'Chagua ukurasa',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Futa kilichoteuliwa',
   'Nudge left': 'Sukuma kushoto',
@@ -1227,8 +1255,8 @@ export const sw: Dictionary = {
   'Release channel': 'Njia ya matoleo',
   Stable: 'Imara',
   Unstable: 'Isiyo imara',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Imara hufuata matoleo rasmi, Isiyo imara hufuata kila usukumo kwenye main na inaweza kuvunjika.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Imara hufuata matoleo yaliyotolewa, Isiyo imara hufuata builds za edge na inaweza kuvunjika.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Ingiza',
@@ -1404,16 +1432,16 @@ export const sw: Dictionary = {
   'OpenAI-compatible': 'Inaoana na OpenAI',
   'Base URL': 'URL ya msingi',
   'API key': 'Kitufe cha API',
-  'Set on this device': 'Imewekwa kwenye kifaa hiki',
   Optional: 'Si lazima',
   'List models': 'Pata modeli',
   'Asking…': 'Inauliza…',
   'No providers yet.': 'Hakuna watoa huduma bado.',
   'Add {name}': 'Ongeza {name}',
-  'Keys stay in the secure store on this device.':
-    'Vitufe vinasalia kwenye hifadhi salama ya kifaa hiki.',
   'This browser holds the keys in its own storage.':
     'Kivinjari hiki huhifadhi vitufe kwenye hifadhi yake.',
+  'Keep this browser’s keys in the vault': 'Weka funguo za kivinjari hiki kwenye kasha',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'Kisha funguo za kila kifaa zitahifadhiwa kwenye hifadhi ya kivinjari hiki, ambapo hati iliyoingia kwenye ukurasa inaweza kuzisoma.',
   'AI can be wrong. Check the facts.': 'AI inaweza kukosea. Hakiki ukweli.',
   'Used by the glasses': 'Inatumiwa na miwani',
   'Could not read the models.': 'Modeli hazikusomwa.',
@@ -1829,16 +1857,6 @@ export const sw: Dictionary = {
   'Paste {count} lines?': { one: 'Bandika mstari {count}?', other: 'Bandika mistari {count}?' },
   // Orden as the default browser
   'Default browser': 'Kivinjari chaguomsingi',
-  // The engine web tabs run on
-  Engine: 'Injini',
-  Relaunch: 'Zindua upya',
-  'Chromium did not start': 'Chromium haikuanza',
-  'No connection': 'Hakuna muunganisho',
-  'Not in this release': 'Haipo katika toleo hili',
-  'Needs an update': 'Inahitaji sasisho',
-  'Signature did not match': 'Sahihi hailingani',
-  'Disk full': 'Diski imejaa',
-  'Could not be installed': 'Imeshindwa kusakinishwa',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Tendua mabadiliko ya {name}',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -2009,10 +2027,6 @@ export const sw: Dictionary = {
     one: 'simu {count}',
     other: 'simu {count}',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'Imefunguliwa kwenye {device}',
-  'Use here': 'Tumia hapa',
-  '{device} wants your web logins': '{device} inaomba kuingia kwako kwenye wavuti',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'Swali la haraka',

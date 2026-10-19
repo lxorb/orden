@@ -12,7 +12,6 @@
  *  so what is drawn is what came back rather than a guess about what the change
  *  did - which is also what keeps two machines editing the same list honest. */
 
-import { isCanvasTarget } from '@nib/markdown/links'
 import {
   api,
   ApiError,
@@ -712,17 +711,14 @@ class SharedWithYou {
 
     // Already open: bring it forward rather than asking for the words again.
     if (workspace.showingShared(item.id)) {
-      workspace.openShared({ id: item.id, name: item.name, canvas: isCanvasTarget(item.path) }, '')
+      workspace.openShared(item, '')
       return
     }
 
     this.opening = item.id
     try {
       const { content } = await api.readNote(token, item.id)
-      workspace.openShared(
-        { id: item.id, name: item.name, canvas: isCanvasTarget(item.path) },
-        content,
-      )
+      workspace.openShared(item, content)
     } catch {
       // A file that is no longer shared answers 404, which the next pass reads as
       // it going from the list. Nothing is said here: the row is about to leave.

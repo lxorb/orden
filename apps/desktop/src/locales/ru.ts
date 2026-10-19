@@ -1,6 +1,12 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ru: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'Из других приложений: {key}',
+  'From other apps: set in your system settings':
+    'Из других приложений: задаётся в настройках системы',
+  'From other apps: bind {command} in your system settings':
+    'Из других приложений: назначьте {command} в настройках системы',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: 'Важное',
   'Add to Essentials': 'Добавить в важное',
@@ -21,6 +27,11 @@ export const ru: Dictionary = {
   'Import from Zen': 'Импорт из Zen',
   'Containers stay in Zen': 'Контейнеры остаются в Zen',
   'Zen’s tabs could not be read.': 'Не удалось прочитать вкладки Zen.',
+  // Settings: note types
+  'Page note': 'Заметка со страницами',
+  'Web note': 'Веб-заметка',
+  'Private tab': 'Приватная вкладка',
+  'Note types': 'Типы заметок',
   // Tasks: Upcoming's weeks
   'Previous week': 'Предыдущая неделя',
   // Tasks: projects placed in the panel, and their folder
@@ -1020,6 +1031,7 @@ export const ru: Dictionary = {
   Comment: 'Комментарий',
   'Always on top': 'Поверх всех окон',
   'What is new': 'Что нового',
+  'Download the app': 'Скачать приложение',
   'Report an issue': 'Сообщить о проблеме',
   'Move the line up': 'Переместить строку выше',
   'Move the line down': 'Переместить строку ниже',
@@ -1103,6 +1115,17 @@ export const ru: Dictionary = {
   'AI account: {name}': 'Аккаунт ИИ: {name}',
   Accounts: 'Аккаунты',
   Access: 'Доступ',
+  Set: 'Задан',
+  'Start over': 'Начать заново',
+  'Sign in here': 'Войти здесь',
+  '{device} wants your AI accounts': '{device} запрашивает ваши аккаунты ИИ',
+  '{device} offers this device your AI vault':
+    '{device} предлагает этому устройству ваше хранилище ИИ',
+  Join: 'Присоединиться',
+  'Allow this device on another one': 'Разрешите это устройство на другом',
+  'On every device you sign in to, end-to-end encrypted.':
+    'На каждом устройстве, где вы вошли, со сквозным шифрованием.',
+  'Sign in to have them on every device.': 'Войдите, чтобы они были на каждом устройстве.',
   'Agents on this computer connect on their own': 'Агенты на этом компьютере подключаются сами',
   Helpers: 'Помощники',
   'Start helpers on your AI accounts': 'Запускать помощников на ваших аккаунтах ИИ',
@@ -1196,6 +1219,12 @@ export const ru: Dictionary = {
   'Export as PNG': 'Экспорт в PNG',
   'Export as SVG': 'Экспорт в SVG',
   'Export as PDF': 'Экспорт в PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'Импорт PDF',
+  'Choose how to add the pages to the canvas.': 'Выберите, как добавить страницы на полотно.',
+  'Single page': 'Одна страница',
+  'All pages': 'Все страницы',
+  'Choose a page': 'Выбрать страницу',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Удалить выбранное',
   'Nudge left': 'Сдвинуть влево',
@@ -1256,8 +1285,8 @@ export const ru: Dictionary = {
   'Release channel': 'Канал выпусков',
   Stable: 'Стабильный',
   Unstable: 'Нестабильный',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Стабильный следует официальным выпускам, нестабильный - каждому пушу в main и может ломаться.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Стабильный следует выпущенным версиям, нестабильный - сборкам edge и может ломаться.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Импорт',
@@ -1458,16 +1487,16 @@ export const ru: Dictionary = {
   'OpenAI-compatible': 'Совместимый с OpenAI',
   'Base URL': 'Базовый адрес',
   'API key': 'Ключ API',
-  'Set on this device': 'Задан на этом устройстве',
   Optional: 'Необязательно',
   'List models': 'Получить модели',
   'Asking…': 'Запрос…',
   'No providers yet.': 'Поставщиков пока нет.',
   'Add {name}': 'Добавить {name}',
-  'Keys stay in the secure store on this device.':
-    'Ключи остаются в защищённом хранилище этого устройства.',
   'This browser holds the keys in its own storage.':
     'Этот браузер держит ключи в собственном хранилище.',
+  'Keep this browser’s keys in the vault': 'Хранить ключи этого браузера в хранилище',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'Тогда ключи всех устройств будут храниться в памяти этого браузера, где их сможет прочитать скрипт, проникший на страницу.',
   'AI can be wrong. Check the facts.': 'ИИ может ошибаться. Проверяйте факты.',
   'Used by the glasses': 'Используется очками',
   'Could not read the models.': 'Не удалось прочитать модели.',
@@ -1877,16 +1906,6 @@ export const ru: Dictionary = {
   },
   // Orden as the default browser
   'Default browser': 'Браузер по умолчанию',
-  // The engine web tabs run on
-  Engine: 'Движок',
-  Relaunch: 'Перезапустить',
-  'Chromium did not start': 'Chromium не запустился',
-  'No connection': 'Нет подключения',
-  'Not in this release': 'Нет в этом выпуске',
-  'Needs an update': 'Нужно обновление',
-  'Signature did not match': 'Подпись не совпадает',
-  'Disk full': 'Диск заполнен',
-  'Could not be installed': 'Не удалось установить',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Отменить правки {name}',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -2060,10 +2079,6 @@ export const ru: Dictionary = {
     many: '{count} вызовов',
     other: '{count} вызова',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'Открыто на {device}',
-  'Use here': 'Использовать здесь',
-  '{device} wants your web logins': '{device} запрашивает ваши входы на сайты',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'Быстрый вопрос',

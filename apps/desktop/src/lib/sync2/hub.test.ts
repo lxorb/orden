@@ -80,7 +80,6 @@ afterEach(() => {
 describe('a device’s hub socket', () => {
   test('opens with the session and the device, and says hello with what the device is', async () => {
     const hub = new Hub(world())
-    hub.introduce(() => Promise.resolve({ pub: 'cHVibGlj' }))
     hub.follow('token-1')
     const socket = await open()
 
@@ -91,7 +90,6 @@ describe('a device’s hub socket', () => {
       device: 'device-0001',
       name: 'Laptop',
       app: 'under test',
-      pub: 'cHVibGlj',
     })
     expect(hub.state).toBe('open')
     expect(hub.device).toBe('device-0001')
@@ -112,9 +110,9 @@ describe('a device’s hub socket', () => {
   test('hands each frame to whoever listens for its kind, and to nobody else', async () => {
     const hub = new Hub(world())
     const pokes: unknown[] = []
-    const frees: unknown[] = []
+    const terms: unknown[] = []
     hub.on('poke', (frame) => pokes.push(frame))
-    hub.on('free', (frame) => frees.push(frame))
+    hub.on('terms', (frame) => terms.push(frame))
     hub.follow('token-1')
     const socket = await open()
 
@@ -123,7 +121,7 @@ describe('a device’s hub socket', () => {
     socket.events.heard('{"t":"poke"}')
 
     expect(pokes).toEqual([{ t: 'poke', space: 's1', seq: 4 }])
-    expect(frees).toEqual([])
+    expect(terms).toEqual([])
   })
 
   test('sends only while open, and says so', async () => {
@@ -202,8 +200,8 @@ describe('two windows', () => {
   test('keep one socket, and the second speaks and hears through the first', async () => {
     const first = new Hub(windowed())
     const second = new Hub(windowed())
-    const frees: unknown[] = []
-    second.on('free', (frame) => frees.push(frame))
+    const terms: unknown[] = []
+    second.on('terms', (frame) => terms.push(frame))
 
     first.follow('token-1')
     second.follow('token-1')
@@ -212,13 +210,11 @@ describe('two windows', () => {
     expect(sockets).toHaveLength(1)
     expect(second.state).toBe('open')
 
-    expect(second.send({ t: 'acquire', key: 'k'.repeat(16), take: false })).toBe(true)
-    expect(socket.said.at(-1)).toBe(
-      JSON.stringify({ t: 'acquire', key: 'k'.repeat(16), take: false }),
-    )
+    expect(second.send({ t: 'active' })).toBe(true)
+    expect(socket.said.at(-1)).toBe(JSON.stringify({ t: 'active' }))
 
-    socket.events.heard(JSON.stringify({ t: 'free', key: 'k'.repeat(16) }))
-    expect(frees).toEqual([{ t: 'free', key: 'k'.repeat(16) }])
+    socket.events.heard(JSON.stringify({ t: 'terms' }))
+    expect(terms).toEqual([{ t: 'terms' }])
   })
 
   test('the second opens its own the moment the first goes', async () => {

@@ -3,8 +3,8 @@
  *
  *  Three answers, Slack's: **active** while any device of theirs is in use, **away**
  *  while one is connected and none is, **offline** with none connected. The hub knows
- *  each socket's `active` already, because a device says `active` and `idle` for its
- *  web logins (hub.ts), so presence costs no frame of its own. Nobody is told when it
+ *  each socket's `active` already, because a device says `active` and `idle` on its
+ *  hub socket (hub.ts), so presence costs no frame of its own. Nobody is told when it
  *  changes: whoever has a person on screen asks, at most once a minute (see
  *  apps/desktop/src/lib/people), and that is one query against the row written here,
  *  never a fan-out per person per change. See docs/chats.md 4.10. */

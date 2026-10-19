@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const am: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'ከሌሎች መተግበሪያዎች፦ {key}',
+  'From other apps: set in your system settings': 'ከሌሎች መተግበሪያዎች፦ በስርዓት ቅንብሮች ውስጥ ያዘጋጁ',
+  'From other apps: bind {command} in your system settings':
+    'ከሌሎች መተግበሪያዎች፦ {command}ን በስርዓት ቅንብሮች ውስጥ ይመድቡ',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: 'አስፈላጊዎች',
   'Add to Essentials': 'ወደ አስፈላጊዎች አክል',
@@ -21,6 +26,11 @@ export const am: Dictionary = {
   'Import from Zen': 'ከZen አምጣ',
   'Containers stay in Zen': 'ኮንቴይነሮች በZen ውስጥ ይቀራሉ',
   'Zen’s tabs could not be read.': 'የZen ትሮች ሊነበቡ አልቻሉም።',
+  // Settings: note types
+  'Page note': 'የገጾች ማስታወሻ',
+  'Web note': 'የድረ ገጽ ማስታወሻ',
+  'Private tab': 'የግል ትር',
+  'Note types': 'የማስታወሻ ዓይነቶች',
   // Tasks: Upcoming's weeks
   'Previous week': 'ያለፈው ሳምንት',
   // Tasks: projects placed in the panel, and their folder
@@ -974,6 +984,7 @@ export const am: Dictionary = {
   Comment: 'አስተያየት',
   'Always on top': 'ዘወትር ከላይ',
   'What is new': 'አዲሱ ምን ነው',
+  'Download the app': 'መተግበሪያውን አውርድ',
   'Report an issue': 'ችግር አሳውቅ',
   'Move the line up': 'መስመሩን ወደ ላይ አንቀሳቅስ',
   'Move the line down': 'መስመሩን ወደ ታች አንቀሳቅስ',
@@ -1054,6 +1065,16 @@ export const am: Dictionary = {
   'AI account: {name}': 'የAI መለያ: {name}',
   Accounts: 'መለያዎች',
   Access: 'መዳረሻ',
+  Set: 'ተቀናብሯል',
+  'Start over': 'እንደገና ጀምር',
+  'Sign in here': 'እዚህ ይግቡ',
+  '{device} wants your AI accounts': '{device} የAI መለያዎችዎን ይፈልጋል',
+  '{device} offers this device your AI vault': '{device} የAI ካዝናዎን ለዚህ መሣሪያ ያቀርባል',
+  Join: 'ተቀላቀል',
+  'Allow this device on another one': 'ይህን መሣሪያ በሌላ ላይ ይፍቀዱ',
+  'On every device you sign in to, end-to-end encrypted.':
+    'በሚገቡበት እያንዳንዱ መሣሪያ ላይ፣ ከጫፍ እስከ ጫፍ የተመሰጠረ።',
+  'Sign in to have them on every device.': 'በእያንዳንዱ መሣሪያ ላይ እንዲኖሩ ይግቡ።',
   'Agents on this computer connect on their own': 'በዚህ ኮምፒውተር ላይ ያሉ ወኪሎች በራሳቸው ይገናኛሉ',
   Helpers: 'ረዳቶች',
   'Start helpers on your AI accounts': 'በAI መለያዎችዎ ላይ ረዳቶችን ያስጀምሩ',
@@ -1147,6 +1168,12 @@ export const am: Dictionary = {
   'Export as PNG': 'እንደ PNG ላክ',
   'Export as SVG': 'እንደ SVG ላክ',
   'Export as PDF': 'እንደ PDF ላክ',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF አምጣ',
+  'Choose how to add the pages to the canvas.': 'ገጾቹ ወደ ሸራው እንዴት እንዲጨመሩ ይምረጡ።',
+  'Single page': 'ነጠላ ገጽ',
+  'All pages': 'ሁሉም ገጾች',
+  'Choose a page': 'ገጽ ይምረጡ',
   // The canvas: what its own keys are called
   'Delete what is picked': 'የተመረጠውን አጥፋ',
   'Nudge left': 'ወደ ግራ ገፋ',
@@ -1207,8 +1234,8 @@ export const am: Dictionary = {
   'Release channel': 'የልቀት መስመር',
   Stable: 'የተረጋጋ',
   Unstable: 'ያልተረጋጋ',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'የተረጋጋ ይፋዊ ልቀቶችን ይከተላል፣ ያልተረጋጋ ወደ main የሚገባውን ሁሉ ይከተላል እና ሊሰበር ይችላል።',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'የተረጋጋ የተለቀቁ ዕትሞችን ይከተላል፣ ያልተረጋጋ የዳር ግንባታዎችን ይከተላል እና ሊሰበር ይችላል።',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'አምጣ',
@@ -1370,14 +1397,15 @@ export const am: Dictionary = {
   'OpenAI-compatible': 'ከOpenAI ጋር ተስማሚ',
   'Base URL': 'መሠረታዊ አድራሻ',
   'API key': 'የAPI ቁልፍ',
-  'Set on this device': 'በዚህ መሣሪያ ላይ ተዘጋጅቷል',
   Optional: 'አማራጭ',
   'List models': 'ሞዴሎች አምጣ',
   'Asking…': 'በመጠየቅ ላይ…',
   'No providers yet.': 'እስካሁን አቅራቢ የለም።',
   'Add {name}': '{name} ጨምር',
-  'Keys stay in the secure store on this device.': 'ቁልፎች በዚህ መሣሪያ አስተማማኝ ማከማቻ ውስጥ ይቀራሉ።',
   'This browser holds the keys in its own storage.': 'ይህ አሳሽ ቁልፎቹን በራሱ ማከማቻ ይይዛል።',
+  'Keep this browser’s keys in the vault': 'የዚህን አሳሽ ቁልፎች በካዝናው ውስጥ አቆይ',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'ከዚያ የእያንዳንዱ መሣሪያ ቁልፎች በዚህ አሳሽ ማከማቻ ውስጥ ይቀመጣሉ፤ ወደ ገጹ የገባ ስክሪፕት ሊያነባቸው ይችላል።',
   'AI can be wrong. Check the facts.': 'AI ሊሳሳት ይችላል። እውነታዎቹን አረጋግጥ።',
   'Used by the glasses': 'መነጽሩ ይጠቀማል',
   'Could not read the models.': 'ሞዴሎቹን ማንበብ አልተቻለም።',
@@ -1778,16 +1806,6 @@ export const am: Dictionary = {
   'Paste {count} lines?': { one: '{count} መስመር ይለጠፍ?', other: '{count} መስመሮች ይለጠፉ?' },
   // Orden as the default browser
   'Default browser': 'ነባር አሳሽ',
-  // The engine web tabs run on
-  Engine: 'ሞተር',
-  Relaunch: 'እንደገና አስጀምር',
-  'Chromium did not start': 'Chromium አልጀመረም',
-  'No connection': 'ግንኙነት የለም',
-  'Not in this release': 'በዚህ ልቀት ውስጥ የለም',
-  'Needs an update': 'ማዘመን ያስፈልጋል',
-  'Signature did not match': 'ፊርማው አልተዛመደም',
-  'Disk full': 'ዲስኩ ሞልቷል',
-  'Could not be installed': 'መጫን አልተቻለም',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} ያደረጋቸውን ለውጦች ቀልብስ',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1955,10 +1973,6 @@ export const am: Dictionary = {
     one: '{count} ጥሪ',
     other: '{count} ጥሪዎች',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'በ{device} ላይ ክፍት ነው',
-  'Use here': 'እዚህ ተጠቀም',
-  '{device} wants your web logins': '{device} የድር መግቢያዎችህን ይፈልጋል',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'ፈጣን ጥያቄ',

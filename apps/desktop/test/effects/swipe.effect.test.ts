@@ -300,7 +300,7 @@ test('a finger from the side of the pane goes back when it lifts far enough alon
   expect(pressed).toEqual([])
 })
 
-test('over a web page the arrow is one of the layers the page is cut round', async () => {
+test('over a web page the arrow comes in over the page s picture, and is a layer of its own', async () => {
   const { layersOver } = await import('../../src/lib/web-tab/covers')
   const hole = found('.hole')
   expect(layersOver(hole)).toEqual([])
@@ -309,7 +309,9 @@ test('over a web page the arrow is one of the layers the page is cut round', asy
     pageSaid({ tab: 'w1', kind: 'wheel', dx: -10, dy: 0, at: at * 8, left: false, right: false })
   }
   flushSync()
-  expect(layersOver(hole)).toHaveLength(1)
+  // The room the arrow comes in over covers the page while the fingers are on, and the
+  // circle is the layer it is cut round until the page's picture is in; see covers.ts.
+  expect(layersOver(hole).map((one) => one.scrim)).toEqual([true, false])
 
   letGo()
   vi.advanceTimersByTime(PLAYS + 1)
@@ -392,7 +394,7 @@ describe('gestures replayed on a precision touchpad, which says when the fingers
     ])
     expect(swiping.travel).toBe(120 - 60)
     const box = arrow() as HTMLElement
-    expect(box.style.transform).toBe(`translate(${120 - 60 - 40}px, -50%)`)
+    expect(box.style.transform).toMatch(new RegExp(`^translate\\(${120 - 60 - 40}px, \\d+px\\)$`))
     replay([['sweep', 3, 1]])
     expect(swiping.travel).toBe(90 - 60)
     replay([['fingers', 0]])

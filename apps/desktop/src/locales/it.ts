@@ -1,6 +1,12 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const it: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'Dalle altre app: {key}',
+  'From other apps: set in your system settings':
+    'Dalle altre app: da definire nelle impostazioni di sistema',
+  'From other apps: bind {command} in your system settings':
+    'Dalle altre app: assegna {command} nelle impostazioni di sistema',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: 'Essenziali',
   'Add to Essentials': 'Aggiungi agli Essenziali',
@@ -21,6 +27,11 @@ export const it: Dictionary = {
   'Import from Zen': 'Importa da Zen',
   'Containers stay in Zen': 'I contenitori restano in Zen',
   'Zen’s tabs could not be read.': 'Impossibile leggere le schede di Zen.',
+  // Settings: note types
+  'Page note': 'Nota a pagine',
+  'Web note': 'Nota web',
+  'Private tab': 'Scheda privata',
+  'Note types': 'Tipi di nota',
   // Tasks: Upcoming's weeks
   'Previous week': 'Settimana precedente',
   // Tasks: projects placed in the panel, and their folder
@@ -1004,6 +1015,7 @@ export const it: Dictionary = {
   Comment: 'Commento',
   'Always on top': 'Sempre in primo piano',
   'What is new': 'Novità',
+  'Download the app': "Scarica l'app",
   'Report an issue': 'Segnala un problema',
   'Move the line up': 'Sposta la riga in alto',
   'Move the line down': 'Sposta la riga in basso',
@@ -1086,6 +1098,17 @@ export const it: Dictionary = {
   'AI account: {name}': 'Account IA: {name}',
   Accounts: 'Account',
   Access: 'Accesso',
+  Set: 'Impostata',
+  'Start over': 'Ricomincia',
+  'Sign in here': 'Accedi qui',
+  '{device} wants your AI accounts': '{device} chiede i tuoi account IA',
+  '{device} offers this device your AI vault':
+    '{device} offre a questo dispositivo la tua cassaforte IA',
+  Join: 'Unisciti',
+  'Allow this device on another one': 'Consenti questo dispositivo da un altro',
+  'On every device you sign in to, end-to-end encrypted.':
+    'Su ogni dispositivo in cui accedi, con crittografia end-to-end.',
+  'Sign in to have them on every device.': 'Accedi per averli su ogni dispositivo.',
   'Agents on this computer connect on their own':
     'Gli agenti di questo computer si collegano da soli',
   Helpers: 'Aiutanti',
@@ -1180,6 +1203,12 @@ export const it: Dictionary = {
   'Export as PNG': 'Esporta in PNG',
   'Export as SVG': 'Esporta in SVG',
   'Export as PDF': 'Esporta in PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'Importa PDF',
+  'Choose how to add the pages to the canvas.': 'Scegli come aggiungere le pagine alla tela.',
+  'Single page': 'Una pagina',
+  'All pages': 'Tutte le pagine',
+  'Choose a page': 'Scegli una pagina',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Elimina la selezione',
   'Nudge left': 'Sposta a sinistra',
@@ -1240,8 +1269,8 @@ export const it: Dictionary = {
   'Release channel': 'Canale di rilascio',
   Stable: 'Stabile',
   Unstable: 'Instabile',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Stabile segue le versioni ufficiali, Instabile ogni push su main e può rompersi.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Stabile segue le versioni pubblicate, Instabile segue le build di sviluppo e può rompersi.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Importa',
@@ -1429,16 +1458,16 @@ export const it: Dictionary = {
   'OpenAI-compatible': 'Compatibile con OpenAI',
   'Base URL': 'URL di base',
   'API key': 'Chiave API',
-  'Set on this device': 'Impostata su questo dispositivo',
   Optional: 'Facoltativo',
   'List models': 'Elenca i modelli',
   'Asking…': 'Richiesta in corso…',
   'No providers yet.': 'Ancora nessun fornitore.',
   'Add {name}': 'Aggiungi {name}',
-  'Keys stay in the secure store on this device.':
-    'Le chiavi restano nell’archivio sicuro di questo dispositivo.',
   'This browser holds the keys in its own storage.':
     'Questo browser conserva le chiavi nella propria memoria.',
+  'Keep this browser’s keys in the vault': 'Conserva le chiavi di questo browser nella cassaforte',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'Così le chiavi di ogni dispositivo vengono conservate nello spazio di questo browser, dove uno script entrato nella pagina potrebbe leggerle.',
   'AI can be wrong. Check the facts.': 'L’IA può sbagliare. Verificare i fatti.',
   'Used by the glasses': 'Usato dagli occhiali',
   'Could not read the models.': 'Non è stato possibile leggere i modelli.',
@@ -1858,16 +1887,6 @@ export const it: Dictionary = {
   },
   // Orden as the default browser
   'Default browser': 'Browser predefinito',
-  // The engine web tabs run on
-  Engine: 'Motore',
-  Relaunch: 'Riavvia',
-  'Chromium did not start': 'Chromium non si è avviato',
-  'No connection': 'Nessuna connessione',
-  'Not in this release': 'Non in questa versione',
-  'Needs an update': 'Serve un aggiornamento',
-  'Signature did not match': 'La firma non corrisponde',
-  'Disk full': 'Disco pieno',
-  'Could not be installed': 'Impossibile installare',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Annulla le modifiche di {name}',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -2039,10 +2058,6 @@ export const it: Dictionary = {
     many: '{count} di chiamate',
     other: '{count} chiamate',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'Aperto su {device}',
-  'Use here': 'Usa qui',
-  '{device} wants your web logins': '{device} chiede i tuoi accessi web',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'Domanda veloce',

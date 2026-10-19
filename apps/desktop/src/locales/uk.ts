@@ -1,6 +1,12 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const uk: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'З інших застосунків: {key}',
+  'From other apps: set in your system settings':
+    'З інших застосунків: задається в налаштуваннях системи',
+  'From other apps: bind {command} in your system settings':
+    'З інших застосунків: призначте {command} у налаштуваннях системи',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: 'Основне',
   'Add to Essentials': 'Додати до основного',
@@ -21,6 +27,11 @@ export const uk: Dictionary = {
   'Import from Zen': 'Імпорт з Zen',
   'Containers stay in Zen': 'Контейнери залишаються в Zen',
   'Zen’s tabs could not be read.': 'Не вдалося прочитати вкладки Zen.',
+  // Settings: note types
+  'Page note': 'Нотатка зі сторінками',
+  'Web note': 'Вебнотатка',
+  'Private tab': 'Приватна вкладка',
+  'Note types': 'Типи нотаток',
   // Tasks: Upcoming's weeks
   'Previous week': 'Попередній тиждень',
   // Tasks: projects placed in the panel, and their folder
@@ -1019,6 +1030,7 @@ export const uk: Dictionary = {
   Comment: 'Коментар',
   'Always on top': 'Поверх усіх вікон',
   'What is new': 'Що нового',
+  'Download the app': 'Завантажити застосунок',
   'Report an issue': 'Повідомити про проблему',
   'Move the line up': 'Перемістити рядок вище',
   'Move the line down': 'Перемістити рядок нижче',
@@ -1102,6 +1114,16 @@ export const uk: Dictionary = {
   'AI account: {name}': 'Обліковий запис ШІ: {name}',
   Accounts: 'Облікові записи',
   Access: 'Доступ',
+  Set: 'Задано',
+  'Start over': 'Почати знову',
+  'Sign in here': 'Увійти тут',
+  '{device} wants your AI accounts': '{device} запитує ваші облікові записи ШІ',
+  '{device} offers this device your AI vault': '{device} пропонує цьому пристрою ваше сховище ШІ',
+  Join: 'Приєднатися',
+  'Allow this device on another one': 'Дозвольте цей пристрій на іншому',
+  'On every device you sign in to, end-to-end encrypted.':
+    'На кожному пристрої, де ви ввійшли, з наскрізним шифруванням.',
+  'Sign in to have them on every device.': 'Увійдіть, щоб мати їх на кожному пристрої.',
   'Agents on this computer connect on their own': 'Агенти на цьому комп’ютері підключаються самі',
   Helpers: 'Помічники',
   'Start helpers on your AI accounts': 'Запускати помічників на ваших облікових записах ШІ',
@@ -1195,6 +1217,12 @@ export const uk: Dictionary = {
   'Export as PNG': 'Експорт у PNG',
   'Export as SVG': 'Експорт у SVG',
   'Export as PDF': 'Експорт у PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'Імпорт PDF',
+  'Choose how to add the pages to the canvas.': 'Виберіть, як додати сторінки на полотно.',
+  'Single page': 'Одна сторінка',
+  'All pages': 'Усі сторінки',
+  'Choose a page': 'Вибрати сторінку',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Видалити вибране',
   'Nudge left': 'Зсунути ліворуч',
@@ -1255,8 +1283,8 @@ export const uk: Dictionary = {
   'Release channel': 'Канал випусків',
   Stable: 'Стабільний',
   Unstable: 'Нестабільний',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Стабільний слідує офіційним випускам, нестабільний - кожному пушу в main і може ламатися.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Стабільний слідує випущеним версіям, нестабільний - збіркам edge і може ламатися.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Імпорт',
@@ -1455,15 +1483,15 @@ export const uk: Dictionary = {
   'OpenAI-compatible': 'Сумісний з OpenAI',
   'Base URL': 'Базова адреса',
   'API key': 'Ключ API',
-  'Set on this device': 'Задано на цьому пристрої',
   Optional: 'Необов’язково',
   'List models': 'Отримати моделі',
   'Asking…': 'Запит…',
   'No providers yet.': 'Постачальників ще немає.',
   'Add {name}': 'Додати {name}',
-  'Keys stay in the secure store on this device.':
-    'Ключі залишаються в захищеному сховищі цього пристрою.',
   'This browser holds the keys in its own storage.': 'Цей браузер тримає ключі у власному сховищі.',
+  'Keep this browser’s keys in the vault': 'Зберігати ключі цього браузера у сховищі',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'Тоді ключі всіх пристроїв зберігатимуться в пам’яті цього браузера, де їх зможе прочитати скрипт, що потрапив на сторінку.',
   'AI can be wrong. Check the facts.': 'ШІ може помилятися. Перевіряйте факти.',
   'Used by the glasses': 'Використовується окулярами',
   'Could not read the models.': 'Не вдалося прочитати моделі.',
@@ -1872,16 +1900,6 @@ export const uk: Dictionary = {
   },
   // Orden as the default browser
   'Default browser': 'Браузер за умовчанням',
-  // The engine web tabs run on
-  Engine: 'Рушій',
-  Relaunch: 'Перезапустити',
-  'Chromium did not start': 'Chromium не запустився',
-  'No connection': 'Немає з’єднання',
-  'Not in this release': 'Немає в цьому випуску',
-  'Needs an update': 'Потрібне оновлення',
-  'Signature did not match': 'Підпис не збігається',
-  'Disk full': 'Диск заповнений',
-  'Could not be installed': 'Не вдалося встановити',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Скасувати правки {name}',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -2054,10 +2072,6 @@ export const uk: Dictionary = {
     many: '{count} викликів',
     other: '{count} виклику',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'Відкрито на {device}',
-  'Use here': 'Використати тут',
-  '{device} wants your web logins': '{device} просить ваші входи на сайти',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'Швидке запитання',

@@ -2,15 +2,12 @@
  *
  *  The same idea as room.ts: the class the Worker exports is a plain one, so a state
  *  that keeps its storage in a Map, sockets that keep what was said to them, and a
- *  namespace that makes one real hub per id are the whole runtime a test needs. Two
- *  things are the runtime's own and are stood in for here on purpose, because they
- *  are what the hub's idea of time is made of: the moment a socket last had `beat`
- *  answered for it (`beat`), and the alarm (`fire`). The clock itself is Vitest's,
- *  set by the tests; nothing a device sends ever reaches it. */
+ *  namespace that makes one real hub per id are the whole runtime a test needs. The
+ *  clock is Vitest's, set by the tests. */
 
 import { vi } from 'vitest'
 import { sha256 } from '../src/crypto'
-import { AccountHub, BEAT, BEAT_ANSWER, type Joining } from '../src/hub/hub'
+import { AccountHub, type Joining } from '../src/hub/hub'
 import type { FromHub } from '../src/hub/frames'
 import type { Env } from '../src/types'
 import { signIn, type TestEnv } from './harness'
@@ -24,13 +21,11 @@ class Pair {
 }
 Object.assign(globalThis, { WebSocketRequestResponsePair: Pair })
 
-/** A hub socket: what was said down it, and the runtime's record of its beats. */
+/** A hub socket: what was said down it. */
 export class HubSocket {
   readonly said: FromHub[] = []
   readyState = 1
   closedWith: { code: number | undefined; reason: string | undefined } | null = null
-  /** The last time the runtime answered this socket's `beat`, or null for never. */
-  beatAt: Date | null = null
   private attachment: unknown = null
 
   constructor(readonly tags: string[] = []) {}
@@ -129,10 +124,6 @@ export class HubState {
     return socket.tags
   }
 
-  getWebSocketAutoResponseTimestamp(socket: HubSocket): Date | null {
-    return socket.beatAt
-  }
-
   /** A socket the runtime has finished with, gone from the list as it is once its
    *  close handler has run. */
   drop(socket: HubSocket) {
@@ -211,22 +202,6 @@ export async function send(made: AccountHub, socket: HubSocket, frame: unknown):
   )
 }
 
-/** The runtime answering a socket's `beat` now, without the hub hearing a thing. */
-export function beat(state: HubState, socket: HubSocket): void {
-  if (state.autoResponse?.request !== BEAT || state.autoResponse.response !== BEAT_ANSWER) {
-    throw new Error('the hub did not ask the runtime to answer beats')
-  }
-  socket.beatAt = new Date(Date.now())
-}
-
-/** The alarm, if it is due by the clock as it stands. Answers whether it fired. */
-export async function fire(made: AccountHub, state: HubState): Promise<boolean> {
-  if (state.alarm === null || state.alarm > Date.now()) return false
-  state.alarm = null
-  await made.alarm()
-  return true
-}
-
 /** A socket closed from the device's side, and the runtime done with it. */
 export async function hangUp(made: AccountHub, state: HubState, socket: HubSocket) {
   socket.readyState = 3
@@ -238,10 +213,9 @@ export async function hangUp(made: AccountHub, state: HubState, socket: HubSocke
 export type Hubs = ReturnType<typeof hubs>
 
 /** A computer of an account: signed in through the real sign-in, with a hub socket
- *  that said hello under that session, beating, and - unless `keyed` is false -
- *  holding the web key. Expects Vitest's clock: a second code to one address waits
- *  out the gap between two codes, so the clock is moved past it for whoever signs
- *  in next. */
+ *  that said hello under that session. Expects Vitest's clock: a second code to one
+ *  address waits out the gap between two codes, so the clock is moved past it for
+ *  whoever signs in next. */
 export interface Computer {
   token: string
   id: string
@@ -255,7 +229,6 @@ export async function computer(
   running: Hubs,
   email: string,
   name: string,
-  keyed = true,
 ): Promise<Computer> {
   const token = await signIn(env, email)
   const user = (env.db.prepare('select id from users where email = ?').get(email) as { id: string })
@@ -267,24 +240,11 @@ export async function computer(
   ).id
 
   const id = `device-${name.toLowerCase()}`
-  const { hub: made, state } = running.of(user)
+  const { hub: made } = running.of(user)
   const socket = connect(made, { device: id, who: user, session })
-  const hello = { t: 'hello', device: id, name, platform: 'windows', app: '1.0.0' }
-  await send(made, socket, hello)
-  if (keyed) {
-    env.db
-      .prepare('insert into web_keys (user_id, device_id, wrapped, generation) values (?, ?, ?, 1)')
-      .run(user, id, 'w'.repeat(60))
-    await send(made, socket, hello)
-  }
+  await send(made, socket, { t: 'hello', device: id, name, platform: 'windows', app: '1.0.0' })
 
   vi.setSystemTime(Date.now() + 31_000)
-  beat(state, socket)
   socket.take()
   return { token, id, user, session, socket }
-}
-
-/** Every socket of one account's hub, answered a beat now. */
-export function beatAll(state: HubState): void {
-  for (const socket of state.getWebSockets()) beat(state, socket)
 }

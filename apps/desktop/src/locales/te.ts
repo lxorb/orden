@@ -1,6 +1,12 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const te: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'ఇతర యాప్‌ల నుండి: {key}',
+  'From other apps: set in your system settings':
+    'ఇతర యాప్‌ల నుండి: సిస్టమ్ సెట్టింగ్‌లలో సెట్ చేయండి',
+  'From other apps: bind {command} in your system settings':
+    'ఇతర యాప్‌ల నుండి: సిస్టమ్ సెట్టింగ్‌లలో {command} జోడించండి',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: 'అత్యవసరాలు',
   'Add to Essentials': 'అత్యవసరాలకు జోడించు',
@@ -21,6 +27,11 @@ export const te: Dictionary = {
   'Import from Zen': 'Zen నుండి ఇంపోర్ట్ చేయి',
   'Containers stay in Zen': 'కంటైనర్‌లు Zen లోనే ఉంటాయి',
   'Zen’s tabs could not be read.': 'Zen ట్యాబ్‌లను చదవలేకపోయాము.',
+  // Settings: note types
+  'Page note': 'పేజీ నోట్',
+  'Web note': 'వెబ్ నోట్',
+  'Private tab': 'ప్రైవేట్ ట్యాబ్',
+  'Note types': 'నోట్ రకాలు',
   // Tasks: Upcoming's weeks
   'Previous week': 'మునుపటి వారం',
   // Tasks: projects placed in the panel, and their folder
@@ -985,6 +996,7 @@ export const te: Dictionary = {
   Comment: 'వ్యాఖ్య',
   'Always on top': 'ఎప్పుడూ పైన',
   'What is new': 'కొత్తది ఏమిటి',
+  'Download the app': 'యాప్‌ను డౌన్‌లోడ్ చేయండి',
   'Report an issue': 'సమస్య తెలియజేయి',
   'Move the line up': 'పంక్తిని పైకి తరలించు',
   'Move the line down': 'పంక్తిని కిందికి తరలించు',
@@ -1068,6 +1080,16 @@ export const te: Dictionary = {
   'AI account: {name}': 'AI ఖాతా: {name}',
   Accounts: 'ఖాతాలు',
   Access: 'యాక్సెస్',
+  Set: 'సెట్ చేయబడింది',
+  'Start over': 'మళ్లీ ప్రారంభించండి',
+  'Sign in here': 'ఇక్కడ సైన్ ఇన్ చేయండి',
+  '{device} wants your AI accounts': '{device} మీ AI ఖాతాలను కోరుతోంది',
+  '{device} offers this device your AI vault': '{device} ఈ పరికరానికి మీ AI వాల్ట్‌ను అందిస్తోంది',
+  Join: 'చేరండి',
+  'Allow this device on another one': 'మరొక పరికరంలో ఈ పరికరాన్ని అనుమతించండి',
+  'On every device you sign in to, end-to-end encrypted.':
+    'మీరు సైన్ ఇన్ చేసే ప్రతి పరికరంలో, ఎండ్-టు-ఎండ్ ఎన్‌క్రిప్ట్.',
+  'Sign in to have them on every device.': 'ప్రతి పరికరంలో పొందడానికి సైన్ ఇన్ చేయండి.',
   'Agents on this computer connect on their own':
     'ఈ కంప్యూటర్‌లోని ఏజెంట్లు స్వయంగా కనెక్ట్ అవుతాయి',
   Helpers: 'సహాయకులు',
@@ -1162,6 +1184,12 @@ export const te: Dictionary = {
   'Export as PNG': 'PNGగా ఎక్స్‌పోర్ట్ చేయి',
   'Export as SVG': 'SVGగా ఎక్స్‌పోర్ట్ చేయి',
   'Export as PDF': 'PDFగా ఎక్స్‌పోర్ట్ చేయి',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF ఇంపోర్ట్ చేయి',
+  'Choose how to add the pages to the canvas.': 'పేజీలను క్యాన్వాస్‌కు ఎలా జోడించాలో ఎంచుకో.',
+  'Single page': 'ఒక పేజీ',
+  'All pages': 'అన్ని పేజీలు',
+  'Choose a page': 'ఒక పేజీని ఎంచుకో',
   // The canvas: what its own keys are called
   'Delete what is picked': 'ఎంచుకున్నది తొలగించు',
   'Nudge left': 'ఎడమకు జరుపు',
@@ -1222,8 +1250,8 @@ export const te: Dictionary = {
   'Release channel': 'రిలీజ్ ఛానెల్',
   Stable: 'స్థిరం',
   Unstable: 'అస్థిరం',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'స్థిరం అధికారిక రిలీజ్‌లను అనుసరిస్తుంది; అస్థిరం mainకు ప్రతి పుష్‌ను అనుసరిస్తుంది, విరిగిపోవచ్చు.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'స్థిరం విడుదలైన వెర్షన్‌లను అనుసరిస్తుంది; అస్థిరం edge బిల్డ్‌లను అనుసరిస్తుంది, విరిగిపోవచ్చు.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'ఇంపోర్ట్',
@@ -1393,14 +1421,15 @@ export const te: Dictionary = {
   'OpenAI-compatible': 'OpenAI అనుకూలం',
   'Base URL': 'బేస్ URL',
   'API key': 'API కీ',
-  'Set on this device': 'ఈ పరికరంలో సెట్ అయింది',
   Optional: 'ఐచ్ఛికం',
   'List models': 'మోడల్‌ల జాబితా',
   'Asking…': 'అడుగుతోంది…',
   'No providers yet.': 'ఇంకా ప్రొవైడర్‌లు లేవు.',
   'Add {name}': '{name} జోడించు',
-  'Keys stay in the secure store on this device.': 'కీలు ఈ పరికరంలోని సురక్షిత స్టోర్‌లో ఉంటాయి.',
   'This browser holds the keys in its own storage.': 'ఈ బ్రౌజర్ కీలను తన స్టోరేజ్‌లో ఉంచుతుంది.',
+  'Keep this browser’s keys in the vault': 'ఈ బ్రౌజర్ కీలను వాల్ట్‌లో ఉంచు',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'అప్పుడు ప్రతి పరికరం కీలు ఈ బ్రౌజర్ నిల్వలో ఉంటాయి, పేజీలోకి చొరబడిన స్క్రిప్ట్ వాటిని చదవగలదు.',
   'AI can be wrong. Check the facts.': 'AI తప్పు కావచ్చు. వాస్తవాలను సరిచూసుకోండి.',
   'Used by the glasses': 'అద్దాలు వాడేది',
   'Could not read the models.': 'మోడల్‌లను చదవలేకపోయింది.',
@@ -1810,16 +1839,6 @@ export const te: Dictionary = {
   },
   // Orden as the default browser
   'Default browser': 'డిఫాల్ట్ బ్రౌజర్',
-  // The engine web tabs run on
-  Engine: 'ఇంజిన్',
-  Relaunch: 'మళ్లీ ప్రారంభించు',
-  'Chromium did not start': 'Chromium ప్రారంభం కాలేదు',
-  'No connection': 'కనెక్షన్ లేదు',
-  'Not in this release': 'ఈ విడుదలలో లేదు',
-  'Needs an update': 'అప్‌డేట్ అవసరం',
-  'Signature did not match': 'సంతకం సరిపోలలేదు',
-  'Disk full': 'డిస్క్ నిండింది',
-  'Could not be installed': 'ఇన్‌స్టాల్ చేయలేకపోయింది',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name} చేసిన సవరణలను రద్దు చేయి',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1989,10 +2008,6 @@ export const te: Dictionary = {
     one: '{count} కాల్',
     other: '{count} కాల్‌లు',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': '{device}లో తెరిచి ఉంది',
-  'Use here': 'ఇక్కడ ఉపయోగించండి',
-  '{device} wants your web logins': '{device} మీ వెబ్ లాగిన్‌లను కోరుతోంది',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'చిన్న ప్రశ్న',

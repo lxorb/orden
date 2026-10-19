@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const zhHans: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': '从其他应用：{key}',
+  'From other apps: set in your system settings': '从其他应用：在系统设置中设定',
+  'From other apps: bind {command} in your system settings':
+    '从其他应用：在系统设置中绑定 {command}',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: '常驻项',
   'Add to Essentials': '添加到常驻项',
@@ -21,6 +26,11 @@ export const zhHans: Dictionary = {
   'Import from Zen': '从 Zen 导入',
   'Containers stay in Zen': '容器保留在 Zen 中',
   'Zen’s tabs could not be read.': '无法读取 Zen 的标签页。',
+  // Settings: note types
+  'Page note': '分页笔记',
+  'Web note': '网页笔记',
+  'Private tab': '无痕标签页',
+  'Note types': '笔记类型',
   // Tasks: Upcoming's weeks
   'Previous week': '上一周',
   // Tasks: projects placed in the panel, and their folder
@@ -969,6 +979,7 @@ export const zhHans: Dictionary = {
   Comment: '注释',
   'Always on top': '始终置顶',
   'What is new': '更新内容',
+  'Download the app': '下载应用',
   'Report an issue': '报告问题',
   'Move the line up': '上移此行',
   'Move the line down': '下移此行',
@@ -1047,6 +1058,15 @@ export const zhHans: Dictionary = {
   'AI account: {name}': 'AI 账户：{name}',
   Accounts: '账户',
   Access: '访问',
+  Set: '已设置',
+  'Start over': '重新开始',
+  'Sign in here': '在此登录',
+  '{device} wants your AI accounts': '{device} 请求你的 AI 账户',
+  '{device} offers this device your AI vault': '{device} 向此设备提供你的 AI 保险库',
+  Join: '加入',
+  'Allow this device on another one': '在另一台设备上允许此设备',
+  'On every device you sign in to, end-to-end encrypted.': '在你登录的每台设备上，端到端加密。',
+  'Sign in to have them on every device.': '登录即可在每台设备上使用。',
   'Agents on this computer connect on their own': '此电脑上的智能体自动连接',
   Helpers: '助手',
   'Start helpers on your AI accounts': '在你的 AI 账户上启动助手',
@@ -1140,6 +1160,12 @@ export const zhHans: Dictionary = {
   'Export as PNG': '导出为PNG',
   'Export as SVG': '导出为SVG',
   'Export as PDF': '导出为PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': '导入 PDF',
+  'Choose how to add the pages to the canvas.': '选择页面怎么加到画布上。',
+  'Single page': '单页',
+  'All pages': '所有页面',
+  'Choose a page': '选择一页',
   // The canvas: what its own keys are called
   'Delete what is picked': '删除所选',
   'Nudge left': '向左微移',
@@ -1200,8 +1226,8 @@ export const zhHans: Dictionary = {
   'Release channel': '发布通道',
   Stable: '稳定版',
   Unstable: '开发版',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    '稳定版跟随正式发布，开发版跟随main的每次推送，可能出问题。',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    '稳定版跟随已发布的版本，开发版跟随edge构建，可能出问题。',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: '导入',
@@ -1356,14 +1382,15 @@ export const zhHans: Dictionary = {
   'OpenAI-compatible': 'OpenAI兼容',
   'Base URL': '基础URL',
   'API key': 'API密钥',
-  'Set on this device': '已在此设备设置',
   Optional: '可选',
   'List models': '获取模型列表',
   'Asking…': '询问中…',
   'No providers yet.': '还没有服务商。',
   'Add {name}': '添加{name}',
-  'Keys stay in the secure store on this device.': '密钥保存在此设备的安全存储中。',
   'This browser holds the keys in its own storage.': '此浏览器把密钥保存在自己的存储中。',
+  'Keep this browser’s keys in the vault': '将此浏览器的密钥保存在保险库中',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    '这样，每台设备的密钥都会保存在此浏览器的存储中，混入页面的脚本可能读取它们。',
   'AI can be wrong. Check the facts.': 'AI可能会出错，请核实事实。',
   'Used by the glasses': '供眼镜使用',
   'Could not read the models.': '无法读取模型列表。',
@@ -1763,16 +1790,6 @@ export const zhHans: Dictionary = {
   'Paste {count} lines?': '粘贴 {count} 行？',
   // Orden as the default browser
   'Default browser': '默认浏览器',
-  // The engine web tabs run on
-  Engine: '引擎',
-  Relaunch: '重新启动',
-  'Chromium did not start': 'Chromium 未能启动',
-  'No connection': '无连接',
-  'Not in this release': '此版本中没有',
-  'Needs an update': '需要更新',
-  'Signature did not match': '签名不匹配',
-  'Disk full': '磁盘已满',
-  'Could not be installed': '无法安装',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '撤销 {name} 的编辑',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1933,10 +1950,6 @@ export const zhHans: Dictionary = {
   'Calls a minute': '每分钟调用次数',
   'Pages a minute': '每分钟页面数',
   '{count} calls': '{count} 次调用',
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': '已在 {device} 上打开',
-  'Use here': '在此使用',
-  '{device} wants your web logins': '{device} 请求你的网页登录',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': '快速提问',

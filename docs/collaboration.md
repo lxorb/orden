@@ -282,6 +282,17 @@ line appear as it is drawn, both see a small named pointer where the other's han
 is, and neither drawing is ever woven through the other. It is the same room a note
 has, about a different kind of file.
 
+**Nobody is ever nowhere.** The name stays beside the pointer, and a pointer off the
+screen - a phone and a desktop looking at two corners of one plane - is held at the
+nearest edge of it, as an arrow pointing the way to them with the name on the inside.
+Moving towards the arrow brings them into view. A page note draws its hands with the
+same layer and says the same; see `canvas/edge.ts` and `CanvasHands.svelte`. A note
+says it the same way: a caret's name stays over it rather than fading, and a caret
+scrolled out of sight is held at the top or the foot of the page, its name behind an
+arrow pointing up or down to it (`heldCarets` in `packages/editor/src/carets.ts`).
+Pressing what is held goes to them: a note scrolls to the caret, and a canvas or a
+page note moves its camera to the hand.
+
 **The same Durable Object class, keyed by the file.** A room is named by the file's
 id, so there is already one instance in the world per file whichever kind of file it
 is; a second class would have been this whole object again for the sake of one seed
@@ -759,7 +770,7 @@ switcher's row of a shared space, and a chat's rows once there are chats.
 - **Whether they are here**: active while any device of theirs is in use, away
   while one is connected and none is, offline with none. The account's hub works it
   out from the `active` and `idle` every signed-in device now says (one
-  `Activity` per device, `people/here.ts`, which web logins that travel share)
+  `Activity` per device, `people/here.ts`)
   and writes `presence` only when the answer changes. Nobody is told: whoever has a
   person on screen asks `GET /v2/presence?ids=` at most once a minute
   (`people.watch`). Appear offline is offline to everybody but the person.

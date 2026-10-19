@@ -12,7 +12,7 @@
 
 import { isDeck } from '@nib/markdown/slide-breaks'
 import { key, t } from '../i18n.svelte'
-import type { TabKind } from '../workspace/documents.svelte'
+import { type TabKind, TAB_KINDS } from '../workspace/tab-kinds'
 import { type Exportable, EXPORT_FORMATS, EXPORT_VARIANTS } from './formats'
 
 /** The kinds of document that go out differently. Narrower than a tab's kind: a
@@ -91,7 +91,9 @@ export interface Open {
 export function exportKindOf(open: Open | null): ExportKind {
   if (!open) return 'none'
 
-  switch (open.kind) {
+  // What the kind goes out as is its entry's (workspace/tab-kinds.ts); what is left
+  // here is what the document itself says.
+  switch (TAB_KINDS[open.kind].exports) {
     case 'note':
       return isDeck(open.text) ? 'deck' : 'note'
 
@@ -103,7 +105,7 @@ export function exportKindOf(open: Open | null): ExportKind {
 
     // A copy is bytes read off a path, so a paper with no path behind it is a
     // paper the app cannot hand over.
-    case 'pdf':
+    case 'file':
       return open.path === null ? 'none' : 'file'
 
     // Nothing to hand over: the graph is drawn from the space rather than held in a
@@ -111,12 +113,7 @@ export function exportKindOf(open: Open | null): ExportKind {
     // page worth keeping is kept by clipping it, which writes a note; see
     // web-tab/clip.ts. A terminal is a session, and holds nothing a file would, and a
     // view is drawn from the rows of the spaces.
-    case 'graph':
-    case 'web':
-    case 'terminal':
-    case 'view':
-    case 'chat':
-    case 'channel':
+    case 'none':
       return 'none'
   }
 }

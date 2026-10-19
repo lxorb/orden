@@ -636,8 +636,65 @@ function holds(tail: string): boolean {
  *  come before, and the reading view's door brings it at the launch's last turn anyway
  *  (`warmDoors` in surfaces.svelte.ts). The charts and the web cards stay: the live
  *  preview draws those itself. Measured 3,163,402 and 375, and the ceiling is one per
- *  cent over that again. */
-const BUDGET = 3_195_000
+ *  cent over that again.
+ *
+ *  Raised 2026-10-17, to 3,200,600, from an unstable at 3,194,026 (974 bytes under), for
+ *  the TabKind registry: the kinds' traits moved into one table read on first paint
+ *  (workspace/tab-kinds.ts), which holdsWords, the pane, the tab's mark and the status
+ *  bar ask, in place of the chains of `kind === ...` they each kept. Its comments are cut
+ *  to a line a trait; what is left is the table. Measured 3,199,582.
+ *
+ *  Raised 2026-10-17, to 3,202,400, from an unstable at 3,199,582 (1,018 under), for
+ *  modes: each default said once in DEFAULTS, read on first paint. The store's forty
+ *  fields start from that one table and its restore falls back to it, where each wrote
+ *  its default twice and some three times; Settings' reset reads it too, off the first
+ *  paint. Measured 3,201,397.
+ *
+ *  Raised 2026-10-17, to 3,206,000, from an unstable at 3,201,397 (1,003 under), for
+ *  bug-burn-down re-landed: security fixes in the first paint. What a flow fence may do
+ *  is fetched with flowchart.js instead (live-preview/flow.ts, 1,735 bytes); what is
+ *  left is the live preview's and the editor's own fixes, which every note is drawn
+ *  through: the iframe card's caption and a raw block's trust (web-embed.ts,
+ *  html-block.ts), the editor's list, paste and fence commands (commands.ts), a table
+ *  sort's currency (table/model.ts) and a file shared on its own read as somebody
+ *  else's words (sharing.svelte.ts). Measured 3,204,981.
+ *
+ *  Raised 2026-10-17, to 3,207,500, from an unstable at 3,205,991 (9 under), for Wayland
+ *  #387: a late still picture stands in under menus (photograph in web-tab/pages.svelte.ts
+ *  keeps a picture that lands after its clock), and Super refused as a global key outside
+ *  a Mac (refuse in shortcuts.svelte.ts, accelerator.ts). Their comments are cut to a line
+ *  each. Measured 3,206,501.
+ *
+ *  Raised 2026-10-17, to 3,214,800, from an unstable at 3,207,078 (422 under), for share
+ *  #386 again: a page note and a chat shared on their own open as themselves
+ *  (`sharedKind` in openers.ts, 336 bytes), and nobody in a note is out of sight - a
+ *  caret's name stays, and one scrolled away is held at the edge of the page
+ *  (`heldCarets` in carets.ts, the rest). The editor draws every note, so the layer is in
+ *  front of the first paint with it. Measured 3,213,845.
+ *
+ *  Raised 2026-10-17, to 3,216,600, from an unstable at 3,214,464 (336 under), for share
+ *  #386 once more: a caret's name held at the edge of the page goes to that caret when it
+ *  is pressed (`heldCarets` in carets.ts), in the editor every note is drawn with.
+ *  Measured 3,215,593.
+ *
+ *  Raised 2026-10-17, to 3,218,100, from an unstable at 3,215,776 (824 under), for the
+ *  phone #206: a web note held in a tab off the desktop app goes to the browser and the
+ *  tab with it (`handedOut` in workspace.svelte.ts), a sitting put back there leaves web
+ *  notes' tabs out, and the scratchpad is the one note on a phone's screen, named in the
+ *  bar (Titlebar.svelte, scratchpad/). Their comments are cut to a line each. Measured
+ *  3,217,083.
+ *
+ *  Lowered 2026-10-17, to 3,212,500, from an unstable at 3,217,083, for #393: web logins no
+ *  longer travel between computers, so the hand-back a closing window waited for and the
+ *  web key's lines under a web tab's bar are gone from the first paint. Measured 3,211,503.
+ *
+ *  Raised 2026-10-18, to 3,215,500, from an unstable at 3,212,280 (220 under), for #382:
+ *  every popup closes when it is pressed past or the window loses the focus, by one rule
+ *  on the overlay stack (`pressed` and `away` in overlays.ts) that the shell calls from
+ *  the window; the menus, the space switcher and the app menu that are drawn with the
+ *  shell say what they hold, and the copies of a window listener each kept are gone.
+ *  Measured 3,214,496. */
+const BUDGET = 3_215_500
 const MOST_FILES = 381
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

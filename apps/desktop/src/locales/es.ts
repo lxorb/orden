@@ -1,6 +1,12 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const es: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'Desde otras apps: {key}',
+  'From other apps: set in your system settings':
+    'Desde otras apps: se define en los ajustes del sistema',
+  'From other apps: bind {command} in your system settings':
+    'Desde otras apps: asigna {command} en los ajustes del sistema',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: 'Esenciales',
   'Add to Essentials': 'Añadir a esenciales',
@@ -21,6 +27,11 @@ export const es: Dictionary = {
   'Import from Zen': 'Importar desde Zen',
   'Containers stay in Zen': 'Los contenedores se quedan en Zen',
   'Zen’s tabs could not be read.': 'No se pudieron leer las pestañas de Zen.',
+  // Settings: note types
+  'Page note': 'Nota de páginas',
+  'Web note': 'Nota web',
+  'Private tab': 'Pestaña privada',
+  'Note types': 'Tipos de nota',
   // Tasks: Upcoming's weeks
   'Previous week': 'Semana anterior',
   // Tasks: projects placed in the panel, and their folder
@@ -999,6 +1010,7 @@ export const es: Dictionary = {
   Comment: 'Comentario',
   'Always on top': 'Siempre visible',
   'What is new': 'Novedades',
+  'Download the app': 'Descargar la app',
   'Report an issue': 'Informar de un problema',
   'Move the line up': 'Subir la línea',
   'Move the line down': 'Bajar la línea',
@@ -1081,6 +1093,16 @@ export const es: Dictionary = {
   'AI account: {name}': 'Cuenta de IA: {name}',
   Accounts: 'Cuentas',
   Access: 'Acceso',
+  Set: 'Configurada',
+  'Start over': 'Empezar de nuevo',
+  'Sign in here': 'Iniciar sesión aquí',
+  '{device} wants your AI accounts': '{device} quiere tus cuentas de IA',
+  '{device} offers this device your AI vault': '{device} ofrece a este dispositivo tu bóveda de IA',
+  Join: 'Unirse',
+  'Allow this device on another one': 'Permite este dispositivo desde otro',
+  'On every device you sign in to, end-to-end encrypted.':
+    'En cada dispositivo en el que inicies sesión, con cifrado de extremo a extremo.',
+  'Sign in to have them on every device.': 'Inicia sesión para tenerlas en cada dispositivo.',
   'Agents on this computer connect on their own': 'Los agentes de este equipo se conectan solos',
   Helpers: 'Ayudantes',
   'Start helpers on your AI accounts': 'Iniciar ayudantes en tus cuentas de IA',
@@ -1174,6 +1196,12 @@ export const es: Dictionary = {
   'Export as PNG': 'Exportar a PNG',
   'Export as SVG': 'Exportar a SVG',
   'Export as PDF': 'Exportar a PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'Importar PDF',
+  'Choose how to add the pages to the canvas.': 'Elige cómo añadir las páginas al lienzo.',
+  'Single page': 'Una página',
+  'All pages': 'Todas las páginas',
+  'Choose a page': 'Elegir una página',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Eliminar lo seleccionado',
   'Nudge left': 'Desplazar a la izquierda',
@@ -1234,8 +1262,8 @@ export const es: Dictionary = {
   'Release channel': 'Canal de versiones',
   Stable: 'Estable',
   Unstable: 'Inestable',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Estable sigue las versiones oficiales; Inestable, cada cambio en main, y puede fallar.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Estable sigue las versiones publicadas; Inestable sigue las compilaciones de prueba y puede fallar.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Importar',
@@ -1423,16 +1451,16 @@ export const es: Dictionary = {
   'OpenAI-compatible': 'Compatible con OpenAI',
   'Base URL': 'URL base',
   'API key': 'Clave de API',
-  'Set on this device': 'Definida en este dispositivo',
   Optional: 'Opcional',
   'List models': 'Listar modelos',
   'Asking…': 'Preguntando…',
   'No providers yet.': 'Aún no hay proveedores.',
   'Add {name}': 'Añadir {name}',
-  'Keys stay in the secure store on this device.':
-    'Las claves quedan en el almacén seguro de este dispositivo.',
   'This browser holds the keys in its own storage.':
     'Este navegador guarda las claves en su propio almacenamiento.',
+  'Keep this browser’s keys in the vault': 'Guardar las claves de este navegador en la bóveda',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'Entonces las claves de todos los dispositivos se guardan en el almacenamiento de este navegador, donde un script que se haya colado en la página podría leerlas.',
   'AI can be wrong. Check the facts.': 'La IA puede equivocarse. Comprobar los hechos.',
   'Used by the glasses': 'Lo usan las gafas',
   'Could not read the models.': 'No se pudieron leer los modelos.',
@@ -1850,16 +1878,6 @@ export const es: Dictionary = {
   },
   // Orden as the default browser
   'Default browser': 'Navegador por defecto',
-  // The engine web tabs run on
-  Engine: 'Motor',
-  Relaunch: 'Reiniciar',
-  'Chromium did not start': 'Chromium no se inició',
-  'No connection': 'Sin conexión',
-  'Not in this release': 'No está en esta versión',
-  'Needs an update': 'Necesita una actualización',
-  'Signature did not match': 'La firma no coincide',
-  'Disk full': 'Disco lleno',
-  'Could not be installed': 'No se pudo instalar',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Deshacer los cambios de {name}',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -2032,10 +2050,6 @@ export const es: Dictionary = {
     many: '{count} de llamadas',
     other: '{count} llamadas',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'Abierto en {device}',
-  'Use here': 'Usar aquí',
-  '{device} wants your web logins': '{device} quiere tus inicios de sesión web',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'Pregunta rápida',

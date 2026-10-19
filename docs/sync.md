@@ -10,7 +10,8 @@ disagree, what a reader can see about any of it, and the two things that are abo
 the account rather than the notes.
 
 `docs/sync-v2.md` is the design that replaces the pass, the conflict rules and the
-copies beside a note described below, and adds web logins that follow the person.
+copies beside a note described below. (It also added web logins that follow the person;
+those were taken out, #393.)
 Until it ships, this page is what runs.
 
 ## What a pass is

@@ -1,7 +1,7 @@
 /** Whether somebody is at this computer: five minutes without a key or the pointer is
- *  idle, and the next key is active again; input to a web page, which the app's own page
- *  never hears, counts through what the system says; and sound or an agent at work keep
- *  the computer in use. Said on the change and only then. */
+ *  idle, and the next key is active again; and input to a web page, which the app's own
+ *  page never hears, counts through what the system says. Said on the change and only
+ *  then. */
 
 import { beforeEach, describe, expect, test } from 'vitest'
 import { IDLE_AFTER, INPUT_EVERY } from '../backoff'
@@ -9,7 +9,6 @@ import { Activity, readSystemInput, type SystemInput } from './activity'
 
 let now: number
 let system: SystemInput | null
-let busy: boolean
 let heard: (() => void) | null
 let tick: (() => void) | null
 
@@ -17,7 +16,6 @@ function activity(): Activity {
   return new Activity({
     now: () => now,
     system: () => Promise.resolve(system),
-    busy: () => busy,
     listen: (run) => {
       heard = run
       return () => {
@@ -36,7 +34,6 @@ function activity(): Activity {
 beforeEach(() => {
   now = 1_000_000
   system = null
-  busy = false
   heard = null
   tick = null
 })
@@ -77,15 +74,6 @@ describe('activity', () => {
     system = { idleMs: 2_000, front: false }
     await one.check()
     expect(one.active).toBe(false)
-  })
-
-  test('stays in use while a page plays sound or an agent works', async () => {
-    const one = activity()
-    one.start()
-    now += IDLE_AFTER * 3
-    busy = true
-    await one.check()
-    expect(one.active).toBe(true)
   })
 
   test('checks on its own clock once started, and stops', async () => {

@@ -8,6 +8,7 @@
   import { onMount } from 'svelte'
   import { amount, t } from '../../i18n.svelte'
   import { workspace } from '../../workspace.svelte'
+  import { hiddenKinds } from '../../settings.svelte'
   import type { ChatEntry, Hit } from '../api'
   import ChatMark from './ChatMark.svelte'
   import Glyph from './Glyph.svelte'
@@ -88,7 +89,7 @@
 
     <div class="section">
       <p class="nib-section">{t('Chats')}</p>
-      {#if workspace.activeSpace}
+      {#if workspace.activeSpace && hiddenKinds.offers('chat')}
         <button
           type="button"
           class="nib-glyph add"
@@ -111,7 +112,9 @@
         onclick={() => open(chat)}
       >
         <span class="nib-row-mark"><ChatMark path={chat.path} /></span>
-        <span class="nib-row-label">{chat.name}</span>
+        <!-- A chat whose pointer is still on its way here has no name yet: the kind's
+             word stands in rather than a blank row (#375). -->
+        <span class="nib-row-label">{chat.name ?? t('Chat')}</span>
         {#if chat.mentions && !muted}
           <span class="badge">{amount(chat.mentions)}</span>
         {:else if unread}

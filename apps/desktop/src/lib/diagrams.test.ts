@@ -11,7 +11,7 @@ Object.assign(SVGElement.prototype, {
   getScreenCTM: matrix,
 })
 
-const { flowSource } = await import('@nib/editor')
+const { flowSource } = await import('@nib/editor/flow')
 const { drawDiagram } = await import('./diagrams')
 
 /** A ` ```flow ` fence is the note's words like any other, and whoever wrote the

@@ -1,7 +1,7 @@
 """Does dump.js read out everything a site keeps, and does restore.js put it back as it was?
 
-The two scripts beside this file are the page's half of carrying a web login from one
-computer to another (see src-tauri/src/web_state.rs and docs/sync-v2.md 6.4). This drives
+The two scripts beside this file are the page's half of moving a web store's state into
+another store (see src-tauri/src/web_state.rs and docs/sync-v2.md 6.4). This drives
 them in a real engine, headless, against a corpus of every kind of value IndexedDB can hold:
 primitives with -0, NaN and the infinities, BigInts, sparse arrays and arrays with keys of
 their own, a `__proto__` key, cycles and shared references, Dates valid and not, RegExps,

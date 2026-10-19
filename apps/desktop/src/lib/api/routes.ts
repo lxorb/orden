@@ -18,10 +18,6 @@ export interface Account {
   email: string
   /** Shown on anything the account publishes. Null until chosen. */
   name: string | null
-  /** Whether the account's web logins travel between its computers: a switch flipped
-   *  one account at a time, answered by `/v1/me` alone; see lib/sync2/connect.svelte.ts
-   *  and docs/sync-v2.md section 11. */
-  webSync?: boolean
   /** Which sync engine the account's devices run: 1 for every account until it is
    *  moved, 2 once it is. Read as the app starts; see sync.svelte.ts and
    *  docs/sync-v2.md section 11. */
@@ -195,9 +191,6 @@ export interface RemoteSpace {
   /** What this account may do here. Everything the app offers in a space asks
    *  this first, so a reader is never shown a button that would be refused. */
   role: SpaceRole
-  /** Which web store its pages live in on every computer, while web logins travel;
-   *  absent from a build of the service older than this app. See web-data.svelte.ts. */
-  webStore?: string
   /** Whether anybody besides the owner is in it, which is the dot on its row in
    *  the switcher. About the space itself: a file of it shared on its own is a
    *  mark on that row, and does not make the whole space shared. */
@@ -436,6 +429,8 @@ export interface AccountSettings {
    *  default that changes later reach everybody who never chose; see
    *  toolbar.svelte.ts. */
   toolbar?: string[] | null
+  /** See kind-choice.ts. */
+  hiddenKinds?: string[] | null
   /** Which command pulling a list or a note down past its top runs: an id from
    *  the same registry, `none` for no gesture at all, or null for the one the app
    *  offers. See pull.svelte.ts. */

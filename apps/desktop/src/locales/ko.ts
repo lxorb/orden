@@ -1,6 +1,11 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ko: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': '다른 앱에서: {key}',
+  'From other apps: set in your system settings': '다른 앱에서: 시스템 설정에서 지정',
+  'From other apps: bind {command} in your system settings':
+    '다른 앱에서: 시스템 설정에서 {command} 지정',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: '에센셜',
   'Add to Essentials': '에센셜에 추가',
@@ -21,6 +26,11 @@ export const ko: Dictionary = {
   'Import from Zen': 'Zen에서 가져오기',
   'Containers stay in Zen': '컨테이너는 Zen에 남습니다',
   'Zen’s tabs could not be read.': 'Zen의 탭을 읽을 수 없습니다.',
+  // Settings: note types
+  'Page note': '페이지 노트',
+  'Web note': '웹 노트',
+  'Private tab': '비공개 탭',
+  'Note types': '노트 유형',
   // Tasks: Upcoming's weeks
   'Previous week': '이전 주',
   // Tasks: projects placed in the panel, and their folder
@@ -977,6 +987,7 @@ export const ko: Dictionary = {
   Comment: '주석',
   'Always on top': '항상 위에',
   'What is new': '새로운 점',
+  'Download the app': '앱 다운로드',
   'Report an issue': '문제 신고',
   'Move the line up': '줄을 위로 이동',
   'Move the line down': '줄을 아래로 이동',
@@ -1058,6 +1069,16 @@ export const ko: Dictionary = {
   'AI account: {name}': 'AI 계정: {name}',
   Accounts: '계정',
   Access: '접근',
+  Set: '설정됨',
+  'Start over': '처음부터 다시',
+  'Sign in here': '여기서 로그인',
+  '{device} wants your AI accounts': '{device}에서 AI 계정을 요청합니다',
+  '{device} offers this device your AI vault': '{device}에서 이 기기에 AI 보관함을 제공합니다',
+  Join: '참여',
+  'Allow this device on another one': '다른 기기에서 이 기기를 허용하세요',
+  'On every device you sign in to, end-to-end encrypted.':
+    '로그인하는 모든 기기에서, 종단 간 암호화.',
+  'Sign in to have them on every device.': '로그인하면 모든 기기에서 쓸 수 있습니다.',
   'Agents on this computer connect on their own': '이 컴퓨터의 에이전트가 스스로 연결',
   Helpers: '도우미',
   'Start helpers on your AI accounts': 'AI 계정에서 도우미 시작',
@@ -1151,6 +1172,12 @@ export const ko: Dictionary = {
   'Export as PNG': 'PNG로 내보내기',
   'Export as SVG': 'SVG로 내보내기',
   'Export as PDF': 'PDF로 내보내기',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF 가져오기',
+  'Choose how to add the pages to the canvas.': '페이지를 캔버스에 어떻게 추가할지 고르세요.',
+  'Single page': '한 페이지',
+  'All pages': '모든 페이지',
+  'Choose a page': '페이지 고르기',
   // The canvas: what its own keys are called
   'Delete what is picked': '선택한 것 삭제',
   'Nudge left': '왼쪽으로 조금',
@@ -1211,8 +1238,8 @@ export const ko: Dictionary = {
   'Release channel': '릴리스 채널',
   Stable: '안정',
   Unstable: '불안정',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    '안정은 공식 릴리스를 따르고, 불안정은 main에 올라간 모든 것을 따르며 깨질 수 있습니다.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    '안정은 출시된 버전을 따르고, 불안정은 엣지 빌드를 따르며 깨질 수 있습니다.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: '가져오기',
@@ -1370,14 +1397,15 @@ export const ko: Dictionary = {
   'OpenAI-compatible': 'OpenAI 호환',
   'Base URL': '기본 URL',
   'API key': 'API 키',
-  'Set on this device': '이 기기에 설정됨',
   Optional: '선택 사항',
   'List models': '모델 목록 가져오기',
   'Asking…': '묻는 중…',
   'No providers yet.': '아직 공급자가 없습니다.',
   'Add {name}': '{name} 추가',
-  'Keys stay in the secure store on this device.': '키는 이 기기의 보안 저장소에 남습니다.',
   'This browser holds the keys in its own storage.': '이 브라우저는 키를 자체 저장소에 보관합니다.',
+  'Keep this browser’s keys in the vault': '이 브라우저의 키를 보관함에 두기',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    '그러면 모든 기기의 키가 이 브라우저의 저장소에 보관되며, 페이지에 들어온 스크립트가 이를 읽을 수 있습니다.',
   'AI can be wrong. Check the facts.': 'AI는 틀릴 수 있습니다. 사실을 확인하세요.',
   'Used by the glasses': '글래스가 사용',
   'Could not read the models.': '모델 목록을 읽을 수 없었습니다.',
@@ -1781,16 +1809,6 @@ export const ko: Dictionary = {
   'Paste {count} lines?': '{count}줄을 붙여넣을까요?',
   // Orden as the default browser
   'Default browser': '기본 브라우저',
-  // The engine web tabs run on
-  Engine: '엔진',
-  Relaunch: '다시 시작',
-  'Chromium did not start': 'Chromium이 시작되지 않았습니다',
-  'No connection': '연결 없음',
-  'Not in this release': '이 릴리스에 없음',
-  'Needs an update': '업데이트 필요',
-  'Signature did not match': '서명이 일치하지 않음',
-  'Disk full': '디스크 가득 참',
-  'Could not be installed': '설치할 수 없음',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': '{name}의 편집 실행 취소',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1954,10 +1972,6 @@ export const ko: Dictionary = {
   'Calls a minute': '분당 호출',
   'Pages a minute': '분당 페이지',
   '{count} calls': '호출 {count}회',
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': '{device}에서 열려 있음',
-  'Use here': '여기에서 사용',
-  '{device} wants your web logins': '{device}에서 웹 로그인을 요청합니다',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': '빠른 질문',

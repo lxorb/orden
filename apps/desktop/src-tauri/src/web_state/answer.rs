@@ -1,9 +1,9 @@
 //! Waiting, from a command's own thread, for an answer the engine gives on the window's.
 //!
 //! Every engine answers on its own thread and in its own time: a `DevTools` call's
-//! completion handler, a script's callback, a page that has finished loading. A capture
+//! completion handler, a script's callback, a page that has finished loading. A merge
 //! is a dozen of those one after another, so each is turned into something to `await`,
-//! with a patience of its own: an engine that never answers is a capture that fails
+//! with a patience of its own: an engine that never answers is a merge that fails
 //! with a sentence, never a command that hangs for ever.
 
 use std::time::Duration;

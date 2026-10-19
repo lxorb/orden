@@ -40,8 +40,17 @@
   let wrong = $state(false)
 
   // Escape closes it, the way Escape closes everything else the app opens over
-  // what is under it; see overlays.ts.
-  $effect(() => (open ? overlays.show(() => (open = false)) : undefined))
+  // what is under it, and so does a press past the list and its header, or the window
+  // losing the focus - which is how a press into a web page beside it is heard; see
+  // overlays.ts.
+  $effect(() =>
+    open
+      ? overlays.show(
+          () => (open = false),
+          () => [...document.querySelectorAll('[data-spaces-open], [data-space-drop="switcher"]')],
+        )
+      : undefined,
+  )
 
   // What a space wears in its badge, and which set has to be fetched to draw it,
   // are the badge's own business: SpaceBadge.svelte.

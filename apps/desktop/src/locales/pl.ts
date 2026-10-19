@@ -1,6 +1,12 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const pl: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'Z innych aplikacji: {key}',
+  'From other apps: set in your system settings':
+    'Z innych aplikacji: ustaw w ustawieniach systemu',
+  'From other apps: bind {command} in your system settings':
+    'Z innych aplikacji: przypisz {command} w ustawieniach systemu',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: 'Niezbędne',
   'Add to Essentials': 'Dodaj do niezbędnych',
@@ -21,6 +27,11 @@ export const pl: Dictionary = {
   'Import from Zen': 'Importuj z Zen',
   'Containers stay in Zen': 'Kontenery zostają w Zen',
   'Zen’s tabs could not be read.': 'Nie udało się odczytać kart Zen.',
+  // Settings: note types
+  'Page note': 'Notatka ze stronami',
+  'Web note': 'Notatka internetowa',
+  'Private tab': 'Karta prywatna',
+  'Note types': 'Typy notatek',
   // Tasks: Upcoming's weeks
   'Previous week': 'Poprzedni tydzień',
   // Tasks: projects placed in the panel, and their folder
@@ -1018,6 +1029,7 @@ export const pl: Dictionary = {
   Comment: 'Komentarz',
   'Always on top': 'Zawsze na wierzchu',
   'What is new': 'Co nowego',
+  'Download the app': 'Pobierz aplikację',
   'Report an issue': 'Zgłoś problem',
   'Move the line up': 'Przenieś wiersz wyżej',
   'Move the line down': 'Przenieś wiersz niżej',
@@ -1101,6 +1113,16 @@ export const pl: Dictionary = {
   'AI account: {name}': 'Konto AI: {name}',
   Accounts: 'Konta',
   Access: 'Dostęp',
+  Set: 'Ustawiony',
+  'Start over': 'Zacznij od nowa',
+  'Sign in here': 'Zaloguj się tutaj',
+  '{device} wants your AI accounts': '{device} prosi o twoje konta AI',
+  '{device} offers this device your AI vault': '{device} oferuje temu urządzeniu Twój sejf AI',
+  Join: 'Dołącz',
+  'Allow this device on another one': 'Zezwól na to urządzenie na innym',
+  'On every device you sign in to, end-to-end encrypted.':
+    'Na każdym urządzeniu, na którym się zalogujesz, szyfrowane end-to-end.',
+  'Sign in to have them on every device.': 'Zaloguj się, aby mieć je na każdym urządzeniu.',
   'Agents on this computer connect on their own': 'Agenci na tym komputerze łączą się sami',
   Helpers: 'Pomocnicy',
   'Start helpers on your AI accounts': 'Uruchamiać pomocników na twoich kontach AI',
@@ -1194,6 +1216,12 @@ export const pl: Dictionary = {
   'Export as PNG': 'Eksportuj do PNG',
   'Export as SVG': 'Eksportuj do SVG',
   'Export as PDF': 'Eksportuj do PDF',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'Importuj PDF',
+  'Choose how to add the pages to the canvas.': 'Wybierz, jak dodać strony do kanwy.',
+  'Single page': 'Jedna strona',
+  'All pages': 'Wszystkie strony',
+  'Choose a page': 'Wybierz stronę',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Usuń zaznaczenie',
   'Nudge left': 'Przesuń w lewo',
@@ -1254,8 +1282,8 @@ export const pl: Dictionary = {
   'Release channel': 'Kanał wydań',
   Stable: 'Stabilny',
   Unstable: 'Niestabilny',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Stabilny idzie za oficjalnymi wydaniami, Niestabilny za każdym pushem na main i może się psuć.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Stabilny idzie za wydanymi wersjami, Niestabilny za buildami edge i może się psuć.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Importuj',
@@ -1456,16 +1484,16 @@ export const pl: Dictionary = {
   'OpenAI-compatible': 'Zgodny z OpenAI',
   'Base URL': 'Podstawowy adres URL',
   'API key': 'Klucz API',
-  'Set on this device': 'Ustawiony na tym urządzeniu',
   Optional: 'Opcjonalnie',
   'List models': 'Pobierz modele',
   'Asking…': 'Pytanie…',
   'No providers yet.': 'Jeszcze brak dostawców.',
   'Add {name}': 'Dodaj {name}',
-  'Keys stay in the secure store on this device.':
-    'Klucze zostają w bezpiecznym magazynie tego urządzenia.',
   'This browser holds the keys in its own storage.':
     'Ta przeglądarka trzyma klucze we własnym magazynie.',
+  'Keep this browser’s keys in the vault': 'Przechowuj klucze tej przeglądarki w sejfie',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'Wtedy klucze wszystkich urządzeń są przechowywane w pamięci tej przeglądarki, gdzie skrypt, który dostał się na stronę, mógłby je odczytać.',
   'AI can be wrong. Check the facts.': 'AI może się mylić. Sprawdzaj fakty.',
   'Used by the glasses': 'Używany przez okulary',
   'Could not read the models.': 'Nie udało się odczytać modeli.',
@@ -1879,16 +1907,6 @@ export const pl: Dictionary = {
   },
   // Orden as the default browser
   'Default browser': 'Domyślna przeglądarka',
-  // The engine web tabs run on
-  Engine: 'Silnik',
-  Relaunch: 'Uruchom ponownie',
-  'Chromium did not start': 'Chromium się nie uruchomił',
-  'No connection': 'Brak połączenia',
-  'Not in this release': 'Nie ma w tym wydaniu',
-  'Needs an update': 'Wymaga aktualizacji',
-  'Signature did not match': 'Podpis się nie zgadza',
-  'Disk full': 'Dysk pełny',
-  'Could not be installed': 'Nie udało się zainstalować',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Cofnij zmiany {name}',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -2061,10 +2079,6 @@ export const pl: Dictionary = {
     many: '{count} wywołań',
     other: '{count} wywołania',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'Otwarte na {device}',
-  'Use here': 'Użyj tutaj',
-  '{device} wants your web logins': '{device} prosi o Twoje logowania do stron',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'Szybkie pytanie',

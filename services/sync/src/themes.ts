@@ -17,7 +17,7 @@ import type { Env } from './types'
  *  every origin. */
 
 /** Where the registry lives today. The one place that knows. */
-const REGISTRY = 'https://raw.githubusercontent.com/lxorb/nib-themes/main'
+const REGISTRY = 'https://raw.githubusercontent.com/lxorb/orden-themes/main'
 
 /** What an id may be: the same shape the registry gives its folders and the app
  *  checks before it writes a file. Checked here as well, because this is where

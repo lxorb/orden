@@ -1,6 +1,12 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const gsw: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'Us andere Apps: {key}',
+  'From other apps: set in your system settings':
+    'Us andere Apps: i de Systemiistellige feschtlege',
+  'From other apps: bind {command} in your system settings':
+    'Us andere Apps: {command} i de Systemiistellige zuewiise',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: 'Essentials',
   'Add to Essentials': 'Zu de Essentials tue',
@@ -21,6 +27,11 @@ export const gsw: Dictionary = {
   'Import from Zen': 'Us Zen importiere',
   'Containers stay in Zen': 'D Container blibe im Zen',
   'Zen’s tabs could not be read.': 'D Tabs vo Zen hend nöd chöne gläse werde.',
+  // Settings: note types
+  'Page note': 'Siitenotiz',
+  'Web note': 'Webnotiz',
+  'Private tab': 'Private Tab',
+  'Note types': 'Notiztype',
   // Tasks: Upcoming's weeks
   'Previous week': 'Vorherigi Wuche',
   // Tasks: projects placed in the panel, and their folder
@@ -986,6 +997,7 @@ export const gsw: Dictionary = {
   Comment: 'Kommentar',
   'Always on top': 'Immer vorne',
   'What is new': 'Was isch neu',
+  'Download the app': 'App abelade',
   'Report an issue': 'Problem mälde',
   'Move the line up': 'D Zile ufe schiebe',
   'Move the line down': 'D Zile abe schiebe',
@@ -1069,6 +1081,16 @@ export const gsw: Dictionary = {
   'AI account: {name}': 'KI-Konto: {name}',
   Accounts: 'Konten',
   Access: 'Zuegriff',
+  Set: 'Gsetzt',
+  'Start over': 'Nöi aafange',
+  'Sign in here': 'Da aamälde',
+  '{device} wants your AI accounts': '{device} wott dini KI-Konte',
+  '{device} offers this device your AI vault': '{device} bietet däm Grät din KI-Tresor aa',
+  Join: 'Biiträte',
+  'Allow this device on another one': 'Das Grät uf emne andere zueloo',
+  'On every device you sign in to, end-to-end encrypted.':
+    'Uf jedem Grät, wo du aagmäldet bisch, Änd-zu-Änd-verschlüsslet.',
+  'Sign in to have them on every device.': 'Mälde dich aa, zum sie uf jedem Grät ha.',
   'Agents on this computer connect on their own': 'Agänte uf däm Computer verbinde sich sälber',
   Helpers: 'Helfer',
   'Start helpers on your AI accounts': 'Helfer uf dine KI-Konte starte',
@@ -1162,6 +1184,12 @@ export const gsw: Dictionary = {
   'Export as PNG': 'Als PNG exportiere',
   'Export as SVG': 'Als SVG exportiere',
   'Export as PDF': 'Als PDF exportiere',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF importiere',
+  'Choose how to add the pages to the canvas.': 'Wähl, wie d Siite uf d Liinwand chöme.',
+  'Single page': 'Einzelni Siite',
+  'All pages': 'Alli Siite',
+  'Choose a page': 'Siite uswähle',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Uswahl lösche',
   'Nudge left': 'Nach links schiebe',
@@ -1222,8 +1250,8 @@ export const gsw: Dictionary = {
   'Release channel': 'Update-Kanal',
   Stable: 'Stabil',
   Unstable: 'Instabil',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Stabil folgt de offizielle Releases, Instabil jedem Push uf main und cha kaputt gaa.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Stabil folgt de veröffentlichte Versione, Instabil de Edge-Builds und cha kaputt gaa.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Importiere',
@@ -1394,16 +1422,16 @@ export const gsw: Dictionary = {
   'OpenAI-compatible': 'OpenAI-kompatibel',
   'Base URL': 'Basis-URL',
   'API key': 'API-Schlüssel',
-  'Set on this device': 'Uf däm Grät gsetzt',
   Optional: 'Optional',
   'List models': 'Modäll abrüefe',
   'Asking…': 'Wird gfragt…',
   'No providers yet.': 'Na kei Aabieter.',
   'Add {name}': '{name} dezuetue',
-  'Keys stay in the secure store on this device.':
-    'Schlüssel bliibe im sichere Speicher vo däm Grät.',
   'This browser holds the keys in its own storage.':
     'Dä Browser bhaltet d Schlüssel in sim eigene Speicher.',
+  'Keep this browser’s keys in the vault': 'D Schlüssel vo däm Browser im Tresor ufbewahre',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'Denn sind d Schlüssel vo allne Grät im Speicher vo däm Browser, wo sie es Skript, wo i d Siite inecho isch, chönnt läse.',
   'AI can be wrong. Check the facts.': 'KI cha sich irre. Fakte prüefe.',
   'Used by the glasses': 'Vo de Brille gnutzt',
   'Could not read the models.': 'D Modäll händ sich nöd läse laa.',
@@ -1812,16 +1840,6 @@ export const gsw: Dictionary = {
   'Paste {count} lines?': { one: '{count} Ziile iifüege?', other: '{count} Ziile iifüege?' },
   // Orden as the default browser
   'Default browser': 'Standardbrowser',
-  // The engine web tabs run on
-  Engine: 'Engine',
-  Relaunch: 'Neu starte',
-  'Chromium did not start': 'Chromium isch nöd gstartet',
-  'No connection': 'Kei Verbindig',
-  'Not in this release': 'Nöd i dere Version',
-  'Needs an update': 'Bruucht es Update',
-  'Signature did not match': 'Signatur stimmt nöd',
-  'Disk full': 'Festplatte voll',
-  'Could not be installed': 'Het nöd chöne installiert wärde',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Änderige vo {name} rückgängig mache',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -1991,10 +2009,6 @@ export const gsw: Dictionary = {
     one: '{count} Ufruef',
     other: '{count} Ufrüef',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'Offe uf {device}',
-  'Use here': 'Da bruuche',
-  '{device} wants your web logins': '{device} wott dini Web-Aamäldige',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'Schnälli Frag',

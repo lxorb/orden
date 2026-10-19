@@ -1,6 +1,12 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const de: Dictionary = {
+  // Keys from other apps, where the system holds them (hotkeys.rs)
+  'From other apps: {key}': 'Aus anderen Apps: {key}',
+  'From other apps: set in your system settings':
+    'Aus anderen Apps: in den Systemeinstellungen festlegen',
+  'From other apps: bind {command} in your system settings':
+    'Aus anderen Apps: {command} in den Systemeinstellungen zuweisen',
   // Bookmarks are Essentials, Zen's word for them
   Essentials: 'Essentials',
   'Add to Essentials': 'Zu Essentials hinzufügen',
@@ -21,6 +27,11 @@ export const de: Dictionary = {
   'Import from Zen': 'Aus Zen importieren',
   'Containers stay in Zen': 'Container bleiben in Zen',
   'Zen’s tabs could not be read.': 'Die Tabs von Zen konnten nicht gelesen werden.',
+  // Settings: note types
+  'Page note': 'Seitennotiz',
+  'Web note': 'Webnotiz',
+  'Private tab': 'Privater Tab',
+  'Note types': 'Notiztypen',
   // Tasks: Upcoming's weeks
   'Previous week': 'Vorherige Woche',
   // Tasks: projects placed in the panel, and their folder
@@ -994,6 +1005,7 @@ export const de: Dictionary = {
   Comment: 'Kommentar',
   'Always on top': 'Immer im Vordergrund',
   'What is new': 'Was ist neu',
+  'Download the app': 'App herunterladen',
   'Report an issue': 'Problem melden',
   'Move the line up': 'Zeile nach oben schieben',
   'Move the line down': 'Zeile nach unten schieben',
@@ -1077,6 +1089,16 @@ export const de: Dictionary = {
   'AI account: {name}': 'KI-Konto: {name}',
   Accounts: 'Konten',
   Access: 'Zugriff',
+  Set: 'Gesetzt',
+  'Start over': 'Neu beginnen',
+  'Sign in here': 'Hier anmelden',
+  '{device} wants your AI accounts': '{device} möchte deine KI-Konten',
+  '{device} offers this device your AI vault': '{device} bietet diesem Gerät deinen KI-Tresor an',
+  Join: 'Beitreten',
+  'Allow this device on another one': 'Dieses Gerät auf einem anderen zulassen',
+  'On every device you sign in to, end-to-end encrypted.':
+    'Auf jedem Gerät, auf dem du angemeldet bist, Ende-zu-Ende-verschlüsselt.',
+  'Sign in to have them on every device.': 'Melde dich an, um sie auf jedem Gerät zu haben.',
   'Agents on this computer connect on their own':
     'Agenten auf diesem Computer verbinden sich selbst',
   Helpers: 'Helfer',
@@ -1171,6 +1193,12 @@ export const de: Dictionary = {
   'Export as PNG': 'Als PNG exportieren',
   'Export as SVG': 'Als SVG exportieren',
   'Export as PDF': 'Als PDF exportieren',
+  // A PDF dropped on the canvas: one page of it, or every page in order
+  'Import PDF': 'PDF importieren',
+  'Choose how to add the pages to the canvas.': 'Wähle, wie die Seiten auf die Leinwand kommen.',
+  'Single page': 'Einzelne Seite',
+  'All pages': 'Alle Seiten',
+  'Choose a page': 'Seite wählen',
   // The canvas: what its own keys are called
   'Delete what is picked': 'Auswahl löschen',
   'Nudge left': 'Nach links schieben',
@@ -1231,8 +1259,8 @@ export const de: Dictionary = {
   'Release channel': 'Update-Kanal',
   Stable: 'Stabil',
   Unstable: 'Instabil',
-  'Stable follows the official releases, Unstable every push to main and can break.':
-    'Stabil folgt den offiziellen Releases, Instabil jedem Push auf main und kann kaputtgehen.',
+  'Stable follows released versions; Unstable follows edge builds and can break.':
+    'Stabil folgt veröffentlichten Versionen, Instabil folgt Edge-Builds und kann kaputtgehen.',
   // Bringing notes in from another app: the sheet, what it says, and the
   // conversion of another app’s spellings.
   Import: 'Importieren',
@@ -1409,16 +1437,16 @@ export const de: Dictionary = {
   'OpenAI-compatible': 'OpenAI-kompatibel',
   'Base URL': 'Basis-URL',
   'API key': 'API-Schlüssel',
-  'Set on this device': 'Auf diesem Gerät gesetzt',
   Optional: 'Optional',
   'List models': 'Modelle abrufen',
   'Asking…': 'Wird gefragt…',
   'No providers yet.': 'Noch keine Anbieter.',
   'Add {name}': '{name} hinzufügen',
-  'Keys stay in the secure store on this device.':
-    'Schlüssel bleiben im sicheren Speicher dieses Geräts.',
   'This browser holds the keys in its own storage.':
     'Dieser Browser bewahrt die Schlüssel in seinem eigenen Speicher auf.',
+  'Keep this browser’s keys in the vault': 'Schlüssel dieses Browsers im Tresor aufbewahren',
+  'Then every device’s keys are kept in this browser’s storage, where a script that got into the page could read them.':
+    'Dann liegen die Schlüssel aller Geräte im Speicher dieses Browsers, wo ein Skript, das in die Seite gelangt ist, sie lesen könnte.',
   'AI can be wrong. Check the facts.': 'KI kann sich irren. Fakten prüfen.',
   'Used by the glasses': 'Von der Brille genutzt',
   'Could not read the models.': 'Die Modelle konnten nicht gelesen werden.',
@@ -1841,16 +1869,6 @@ export const de: Dictionary = {
   'Paste {count} lines?': { one: '{count} Zeile einfügen?', other: '{count} Zeilen einfügen?' },
   // Orden as the default browser
   'Default browser': 'Standardbrowser',
-  // The engine web tabs run on
-  Engine: 'Engine',
-  Relaunch: 'Neu starten',
-  'Chromium did not start': 'Chromium ist nicht gestartet',
-  'No connection': 'Keine Verbindung',
-  'Not in this release': 'Nicht in dieser Version',
-  'Needs an update': 'Braucht ein Update',
-  'Signature did not match': 'Signatur stimmt nicht',
-  'Disk full': 'Festplatte voll',
-  'Could not be installed': 'Konnte nicht installiert werden',
   // An agent's edits in a note, taken back
   'Undo edits by {name}': 'Änderungen von {name} rückgängig machen',
   // The archive: a row put away and taken back, and what refuses to delete it
@@ -2020,10 +2038,6 @@ export const de: Dictionary = {
     one: '{count} Aufruf',
     other: '{count} Aufrufe',
   },
-  // A web login another computer is using, and another computer asking for them
-  'Open on {device}': 'Offen auf {device}',
-  'Use here': 'Hier verwenden',
-  '{device} wants your web logins': '{device} möchte deine Web-Anmeldungen',
   // A quick question on the side, and the scratchpad, whose name is its file's and
   // so is the same in every language, as its tab says it
   'Quick question': 'Schnelle Frage',

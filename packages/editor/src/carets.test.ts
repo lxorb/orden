@@ -2,7 +2,15 @@ import { describe, expect, test } from 'vitest'
 import { EditorState } from '@codemirror/state'
 import type { Decoration } from '@codemirror/view'
 import { EditorView } from '@codemirror/view'
-import { agentsOf, type Peer, peersOf, remoteCarets, setAgents, setPeers } from './carets'
+import {
+  agentsOf,
+  outOfSight,
+  type Peer,
+  peersOf,
+  remoteCarets,
+  setAgents,
+  setPeers,
+} from './carets'
 
 /** A state with the carets extension in it and nothing else, which is all the
  *  extension needs: the decorations are worked out from the state, so nothing here
@@ -173,5 +181,45 @@ describe('an agent in the note', () => {
       .state.update({ effects: setAgents.of([]) }).state
 
     expect(carets(state)).toEqual([])
+  })
+})
+
+/** Whose caret is held at an edge of the page: a line out of sight above, or below,
+ *  and nobody whose line shows at all (#386). */
+
+/** Lines twenty pixels high, one per ten characters, with the page scrolled to show
+ *  from 200 to 400. */
+const lineAt = (at: number) => {
+  const top = Math.floor(at / 10) * 20
+  return { top, bottom: top + 20 }
+}
+const seen = { top: 200, bottom: 400 }
+
+const at = (head: number, name = `at ${head}`) => ({ head, name })
+
+describe('a caret out of sight', () => {
+  test('above the page is held at the top, and below it at the foot', () => {
+    const held = outOfSight([at(5), at(250), at(105)], lineAt, seen)
+
+    expect(held.above.map((one) => one.head)).toEqual([5])
+    expect(held.below.map((one) => one.head)).toEqual([250])
+  })
+
+  test('on a line that only just shows is in sight, either way', () => {
+    // The line from 180 to 200 ends where the page begins, and the one from 400 starts
+    // where it ends: both out of sight. The one from 380 to 400 is the last that shows.
+    expect(outOfSight([at(90)], lineAt, seen).above).toHaveLength(1)
+    expect(outOfSight([at(195)], lineAt, seen)).toEqual({ above: [], below: [] })
+    expect(outOfSight([at(200)], lineAt, seen).below).toHaveLength(1)
+  })
+
+  test('keeps the order people came in, so a held row does not reshuffle', () => {
+    const held = outOfSight([at(300, 'Ada'), at(400, 'Grace'), at(350, 'Lin')], lineAt, seen)
+
+    expect(held.below.map((one) => one.name)).toEqual(['Ada', 'Grace', 'Lin'])
+  })
+
+  test('nobody in the note holds nobody', () => {
+    expect(outOfSight([], lineAt, seen)).toEqual({ above: [], below: [] })
   })
 })

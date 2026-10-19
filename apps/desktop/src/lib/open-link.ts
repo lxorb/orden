@@ -46,13 +46,14 @@ export function webHref(href: string): string | null {
   return isWebAddress(said) ? said : null
 }
 
-/** Whether this build has anywhere to put a page. A phone hands the address to the
- *  system browser instead, which is the answer rather than a gap - that browser has
- *  their logins, their extensions and their ad blocking, and Tauri has no child
- *  webviews there anyway - and in front of a pair of glasses there is no page at all.
+/** Whether this build has anywhere to put a page. A phone and a tablet hand the
+ *  address to the system browser instead, which is the answer rather than a gap -
+ *  that browser has their logins, their extensions and their ad blocking, and Tauri
+ *  has no child webviews there anyway - and in front of a pair of glasses there is no
+ *  page at all.
  *  A web note leaves everywhere but the desktop app; see docs/web-tabs.md. */
 function holdsPages(): boolean {
-  return !isPlugin() && viewport.device !== 'phone'
+  return !isPlugin() && !viewport.touch
 }
 
 /** Where one press on one link goes: the whole of the decision, and pure, so which

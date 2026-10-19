@@ -42,7 +42,7 @@
   import { preferences } from './preferences'
   import { search } from './search.svelte'
   import { paletteWords } from './surfaces.svelte'
-  import { settings } from './settings.svelte'
+  import { hiddenKinds, settings } from './settings.svelte'
   import { landing } from './settings/landing.svelte'
   import { places } from './settings/places'
   import { ICONS, sectionGroups } from './settings/sections'
@@ -90,9 +90,10 @@
   const mode = $derived(asked.mode)
   const term = $derived(asked.term)
 
-  /** A phone has no web tab, so it has no pages to go to either; nor has the glasses'
-   *  plugin on any screen, whose package leaves the history and the address rows out. */
-  const browses = $derived(!__EVEN_PLUGIN__ && viewport.device !== 'phone')
+  /** A phone and a tablet have no web tab, so no pages to go to either; nor has the
+   *  glasses' plugin on any screen, whose package leaves the history and the address
+   *  rows out. */
+  const browses = $derived(!__EVEN_PLUGIN__ && !viewport.touch)
 
   /** Something was taken out of the history or the list of things used: the one
    *  change the stores below do not say themselves. */
@@ -192,7 +193,10 @@
 
   /** The note Shift+Enter would make out of what was typed, whatever else answers:
    *  only where the words read as a name, and not one the space already has. */
-  const makes = $derived(mode === 'everything' && root ? makeable(term, taken) : null)
+  // Not where Settings turned notes off; see kind-choice.ts.
+  const makes = $derived(
+    mode === 'everything' && root && hiddenKinds.offers('note') ? makeable(term, taken) : null,
+  )
 
   /** An address typed, where it is one. */
   const address = $derived.by(() => {

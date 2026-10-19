@@ -1,6 +1,6 @@
 //! The `DevTools` Protocol on a `WebView2` page, for a web state: the one door the crate
 //! has to it, `agents/cdp.rs`, whose calls wait on the thread that makes them, taken
-//! from a thread of the runtime's that may block, so a capture's command awaits them
+//! from a thread of the runtime's that may block, so the merge's command awaits them
 //! like anything else.
 //!
 //! In-process, so there is no port for anything else on the machine to reach, and it

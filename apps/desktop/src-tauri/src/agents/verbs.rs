@@ -251,15 +251,23 @@ pub enum Modifier {
     Shift,
 }
 
-/// `browser_click`.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+/// `browser_click`: an element by ref, or - where a press by ref cannot land - a point in
+/// the tab's viewport, in CSS pixels, which is one image pixel of `browser_screenshot` at
+/// its own scale (#373). One or the other, never both.
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Click {
     /// The tab.
     pub tab: TabId,
     /// What to press.
-    #[serde(rename = "ref")]
-    pub element: Ref,
+    #[serde(default, rename = "ref", skip_serializing_if = "Option::is_none")]
+    pub element: Option<Ref>,
+    /// Across the viewport from its left, in CSS pixels.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub x: Option<f64>,
+    /// Down the viewport from its top, in CSS pixels.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub y: Option<f64>,
     /// Which button; the main one when not said.
     #[serde(default)]
     pub button: Button,
@@ -730,8 +738,6 @@ pub enum Code {
     NoDialog,
     /// The reader said no.
     Denied,
-    /// Another device is using that site's login (7.4).
-    InUseElsewhere,
 }
 
 /// A dialog the page is holding open until `browser_dialog` answers it.
@@ -1516,9 +1522,19 @@ mod tests {
         let Some(Ok(Verb::Click(click))) = read else {
             panic!("{read:?}");
         };
-        assert_eq!(click.element, "f2e17");
+        assert_eq!(click.element.as_deref(), Some("f2e17"));
         assert_eq!(click.button, Button::Left);
         assert!(click.modifiers.is_empty());
+    }
+
+    #[test]
+    fn a_click_can_be_a_point_in_the_tab_instead() {
+        let read = Verb::read("browser_click", json!({ "tab": "a1", "x": 120.5, "y": 48 }));
+        let Some(Ok(Verb::Click(click))) = read else {
+            panic!("{read:?}");
+        };
+        assert_eq!(click.element, None);
+        assert_eq!((click.x, click.y), (Some(120.5), Some(48.0)));
     }
 
     #[test]
