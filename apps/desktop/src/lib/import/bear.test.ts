@@ -116,6 +116,23 @@ describe('a Bear backup', () => {
     expect(text).toContain('[elsewhere](bear://x-callback-url/open-note?id=GONE)')
   })
 
+  test("a link to a heading, which Bear writes with a slash, is nib's link to that heading", async () => {
+    const plan = await readBear([
+      file(
+        'Welcome.md',
+        '# Welcome\n[[Guide/Step one|Start here]] [[Guide/Step two]] [[Trips/Iceland]]\n',
+      ),
+      file('Guide.md', '# Guide\n## Step one\n## Step two\n'),
+      // A note in a folder is still a note in a folder.
+      file('Trips/Iceland.md', '# Iceland\n'),
+      file('Trips.md', '# Trips\n'),
+    ])
+
+    expect(textOf(plan, 'Welcome.md')).toContain(
+      '[[Guide#Step one|Start here]] [[Guide#Step two]] [[Iceland]]',
+    )
+  })
+
   test('an info.json that does not read is a note like any other', async () => {
     const plan = await readBear([
       file('Trip.textbundle/text.md', '# Trip\n'),

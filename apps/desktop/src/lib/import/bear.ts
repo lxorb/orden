@@ -128,10 +128,15 @@ const COLONS = /(?<![\w:])::([^\s:](?:[^:\n]*[^\s:])?)::(?![\w:])/g
 /** A link Bear writes to one of its own notes, by id or by title. */
 const NOTE_LINK = /\]\((bear:\/\/x-callback-url\/open-note\?[^)\s]*)\)/g
 
+/** A wikilink, whose target Bear may write as `Note/Heading`. */
+const WIKILINK = /(?<!\\)(!?)\[\[([^\]\n|#]+)((?:\|[^\]\n]*)?)\]\]/g
+
 /** A note's words with Bear's own spellings made nib's: its closed tags, its
  *  underline and its old highlight, and a link into Bear that names a note in the
  *  export pointed at that note, so the import's own rewriting makes it a wikilink.
- *  Nothing inside code is touched. */
+ *  Bear links to a heading with a slash, `[[Note/Heading]]`, which nib reads as a
+ *  note in a folder, so where no note is there and the note before the slash is,
+ *  it is written `[[Note#Heading]]`. Nothing inside code is touched. */
 export function bearWords(text: string, from = '', notes: NoteIndex = EMPTY): string {
   const tagged = bearTags(text)
 
@@ -139,6 +144,10 @@ export function bearWords(text: string, from = '', notes: NoteIndex = EMPTY): st
     words
       .replace(UNDERLINE, '<u>$1</u>')
       .replace(COLONS, '==$1==')
+      .replace(WIKILINK, (whole, bang: string, target: string, shown: string) => {
+        const heading = notes.heading(target)
+        return heading === null ? whole : `${bang}[[${heading}${shown}]]`
+      })
       .replace(NOTE_LINK, (whole, address: string) => {
         const to = notes.find(address)
         if (!to) return whole
@@ -161,13 +170,16 @@ function encoded(path: string): string {
 /** The notes in the export, by Bear's id for them and by their title. */
 interface NoteIndex {
   find(address: string): string | null
+  /** `Note#Heading` for a `Note/Heading` that names a heading rather than a note. */
+  heading(target: string): string | null
 }
 
-const EMPTY: NoteIndex = { find: () => null }
+const EMPTY: NoteIndex = { find: () => null, heading: () => null }
 
 function noteIndex(sources: readonly Source[], infos: ReadonlyMap<string, Info>): NoteIndex {
   const byId = new Map<string, string>()
   const byTitle = new Map<string, string>()
+  const notes: string[] = []
 
   for (const source of sources) {
     if (!/\.(md|markdown|txt)$/i.test(source.path)) continue
@@ -178,6 +190,9 @@ function noteIndex(sources: readonly Source[], infos: ReadonlyMap<string, Info>)
     const named = (bundle ?? source.path).split('/').pop() ?? ''
     const title = named.replace(/\.(textbundle|md|markdown|txt)$/i, '').toLowerCase()
     if (!byTitle.has(title)) byTitle.set(title, source.path)
+    notes.push(
+      (bundle ?? source.path).replace(/\.(textbundle|md|markdown|txt)$/i, '').toLowerCase(),
+    )
   }
 
   return {
@@ -192,6 +207,15 @@ function noteIndex(sources: readonly Source[], infos: ReadonlyMap<string, Info>)
       if (id) return byId.get(id.toUpperCase()) ?? null
       const title = params.get('title')
       return title ? (byTitle.get(title.toLowerCase()) ?? null) : null
+    },
+    heading(target) {
+      const slash = target.indexOf('/')
+      if (slash <= 0) return null
+      const wanted = target.trim().toLowerCase()
+      if (notes.some((one) => one === wanted || one.endsWith(`/${wanted}`))) return null
+      const note = target.slice(0, slash)
+      if (!byTitle.has(note.trim().toLowerCase())) return null
+      return `${note.trim()}#${target.slice(slash + 1).trim()}`
     },
   }
 }
