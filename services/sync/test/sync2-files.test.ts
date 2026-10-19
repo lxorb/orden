@@ -344,3 +344,64 @@ describe('a copy kept under a hash it is not the bytes of', () => {
     expect((await env.NOTES.get(`blobs/${hash}`))?.size).toBe(5000)
   })
 })
+
+/** The quota is what is kept when the bytes land, not when an upload starts (#469). */
+describe('the quota, for bytes that went up in parts', () => {
+  const QUOTA = 1024 ** 3
+
+  /** The account this many bytes short of its quota. */
+  function shortBy(bytes: number) {
+    const user = (env.db.prepare('select id from users').get() as { id: string }).id
+    env.db
+      .prepare(
+        "insert into blobs (hash, user_id, size, type, created_at) values ('f'||hex(randomblob(31)), ?, ?, 'application/octet-stream', 1)",
+      )
+      .run(user, QUOTA - bytes)
+  }
+
+  async function upTo(data: Uint8Array) {
+    const hash = await hashOf(data)
+    const started = await call<{ upload: string }>(env, '/v2/blobs/parts', {
+      token,
+      body: { hash, size: data.length },
+    })
+    expect(started.status).toBe(201)
+    const sent = await call<{ part: number; etag: string }>(
+      env,
+      `/v2/blobs/parts/${started.json.upload}/1`,
+      { method: 'PUT', token, raw: data },
+    )
+    return {
+      hash,
+      finish: () =>
+        call(env, `/v2/blobs/parts/${started.json.upload}`, {
+          token,
+          body: { parts: [sent.json] },
+        }),
+    }
+  }
+
+  test('two started while each fitted cannot both be kept past it', async () => {
+    shortBy(2000)
+    const one = await upTo(bytes(1200, 21))
+    const two = await upTo(bytes(1200, 22))
+
+    expect((await one.finish()).status).toBe(201)
+    const refused = await two.finish()
+    expect(refused.status).toBe(507)
+
+    expect((await call(env, '/v1/usage', { token })).json.used).toBeLessThanOrEqual(QUOTA)
+    expect(await env.NOTES.get(`blobs/${two.hash}`)).toBeNull()
+    expect(env.keys().filter((one) => one.startsWith('uploads/'))).toEqual([])
+  })
+
+  test('nor bytes in one request, past it by the time the row is written', async () => {
+    shortBy(2000)
+    const data = bytes(1200, 23)
+    // Something else of the account's lands between the check and the row.
+    env.justBefore(/insert into blobs/, () => shortBy(1500))
+
+    expect((await upload(data)).status).toBe(507)
+    expect(await env.NOTES.get(`blobs/${await hashOf(data)}`)).toBeNull()
+  })
+})

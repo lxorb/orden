@@ -3,6 +3,21 @@ import type { Env } from './types'
 /** What one account may keep, notes and images together. */
 export const QUOTA = 1024 * 1024 * 1024
 
+/** What an account's notes and its blobs come to, as SQL around the parameter that
+ *  names it: for `usedBytes`, and for a write that may only land under the quota. */
+const NOTES_USED = (user: string) => `(select coalesce(sum(n.size), 0)
+          from notes n join spaces s on s.id = n.space_id
+         where s.user_id = ${user} and n.kind != 'file')`
+const BLOBS_USED = (user: string) =>
+  `(select coalesce(sum(size), 0) from blobs where user_id = ${user})`
+
+/** Whether `incoming` more bytes fit the account named by the parameter `user`, as a
+ *  condition a statement can carry: checked by the write itself, so two writes that
+ *  each fit on their own cannot both land past the quota. */
+export function fitsSql(user: string, incoming: string): string {
+  return `${NOTES_USED(user)} + ${BLOBS_USED(user)} + ${incoming} <= ${String(QUOTA)}`
+}
+
 /** Bytes an account is using: every note it can reach plus every image it is
  *  keeping.
  *
@@ -15,11 +30,7 @@ export const QUOTA = 1024 * 1024 * 1024
  *  So the sum over every row is exactly what the bucket holds. */
 export async function usedBytes(env: Env, userId: string): Promise<number> {
   const row = await env.DB.prepare(
-    `select
-       (select coalesce(sum(n.size), 0)
-          from notes n join spaces s on s.id = n.space_id
-         where s.user_id = ?1 and n.kind != 'file') as notes,
-       (select coalesce(sum(size), 0) from blobs where user_id = ?1) as blobs`,
+    `select ${NOTES_USED('?1')} as notes, ${BLOBS_USED('?1')} as blobs`,
   )
     .bind(userId)
     .first<{ notes: number; blobs: number }>()

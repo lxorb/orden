@@ -21,7 +21,7 @@ import { laterOf, pokeSpace } from '../hub/poke'
 import { atNextSeq, TAKEN_SEQ } from '../notes'
 import { OUT_OF_SPACE } from '../refused'
 import { atLeast, spaceOf } from '../spaces/space'
-import { fits } from '../storage'
+import { fits, fitsSql } from '../storage'
 import type { Env, Note, Variables } from '../types'
 import { deviceOf } from './device'
 import { revive } from './ops'
@@ -120,14 +120,33 @@ async function moveInto(env: Env, from: string, to: string, type: string): Promi
   await env.NOTES.put(to, await object.arrayBuffer(), metadata)
 }
 
-/** A row saying this account keeps a blob, once its bytes are there. */
-async function keepBlob(env: Env, user: string, hash: string, size: number, type: string) {
-  await env.DB.prepare(
-    `insert into blobs (hash, user_id, size, type, created_at) values (?, ?, ?, ?, ?)
+/** A row saying this account keeps a blob, once its bytes are there - written only if
+ *  it fits under the quota as the row is written (#469). Asked once before the bytes
+ *  are read and again here, because nothing between the two is held: two uploads
+ *  started while each fitted could otherwise both land past it, and a multipart one is
+ *  a gigabyte. Answers whether the account keeps it now.
+ *
+ *  Refused, the bytes put there for it go again unless somebody keeps them. */
+async function keepBlob(
+  env: Env,
+  user: string,
+  hash: string,
+  size: number,
+  type: string,
+): Promise<boolean> {
+  const written = await env.DB.prepare(
+    `insert into blobs (hash, user_id, size, type, created_at)
+     select ?1, ?2, ?3, ?4, ?5 where ${fitsSql('?2', '?3')}
      on conflict(hash, user_id) do nothing`,
   )
     .bind(hash, user, size, type, now())
     .run()
+  if (written.meta.changes) return true
+
+  const { mine, there } = await held(env, user, hash)
+  if (mine) return true
+  if (!there) await env.NOTES.delete(blobKey(hash))
+  return false
 }
 
 /** Whether this account keeps a blob already, and whether anybody's bytes are there. */
@@ -231,7 +250,9 @@ v2Blobs.put('/:hash', async (context) => {
   if (!there || !(await holdsItsName(context.env, hash, body.byteLength))) {
     await context.env.NOTES.put(blobKey(hash), body, { httpMetadata: { contentType: type } })
   }
-  await keepBlob(context.env, user.id, hash, body.byteLength, type)
+  if (!(await keepBlob(context.env, user.id, hash, body.byteLength, type))) {
+    return context.json({ error: OUT_OF_SPACE }, 507)
+  }
   return context.json({ hash, stored: true }, 201)
 })
 
@@ -366,6 +387,15 @@ v2Blobs.post('/parts/:upload', async (context) => {
     return context.json({ error: WRONG_BYTES }, 400)
   }
 
+  // The quota asked again, for what was started while it fitted (#469): uploads started
+  // together each fit on their own. Asked before a gigabyte is moved, and once more as
+  // the row is written; see `keepBlob`.
+  const mine = (await held(context.env, user.id, upload.hash)).mine
+  if (!mine && !(await fits(context.env, user.id, upload.size))) {
+    await context.env.NOTES.delete(upload.staging)
+    return context.json({ error: OUT_OF_SPACE }, 507)
+  }
+
   // Checked, so they go where the blob lives - unless a copy somebody else finished
   // meanwhile is already there, which is the same bytes and stays as it is. Only if it
   // is: see `holdsItsName`.
@@ -376,7 +406,9 @@ v2Blobs.post('/parts/:upload', async (context) => {
     await moveInto(context.env, upload.staging, blobKey(upload.hash), upload.type)
   }
   await context.env.NOTES.delete(upload.staging)
-  await keepBlob(context.env, user.id, upload.hash, upload.size, upload.type)
+  if (!(await keepBlob(context.env, user.id, upload.hash, upload.size, upload.type))) {
+    return context.json({ error: OUT_OF_SPACE }, 507)
+  }
   return context.json({ hash: upload.hash, stored: true }, 201)
 })
 
