@@ -169,9 +169,9 @@ vi.mock('../tauri', async (importOriginal) => ({
     const path = args?.path ?? ''
     if (command === 'write_note') written.set(path, args?.content ?? '')
     if (command !== 'read_note') return Promise.resolve(undefined)
-    // A canvas wherever one is asked for, but a page note only once it is written and
-    // a paper never as words.
-    const held = written.get(path) ?? (/\.(pages|pdf)$/.test(path) ? undefined : CANVAS)
+    // A canvas wherever one is asked for, but a page note only once it is written, a
+    // paper never as words, and no folder's marker: there are no folders here.
+    const held = written.get(path) ?? (/(\.(pages|pdf)|\/\.keep)$/.test(path) ? undefined : CANVAS)
     return held === undefined ? Promise.reject(new Error(`no ${path}`)) : Promise.resolve(held)
   },
 }))
