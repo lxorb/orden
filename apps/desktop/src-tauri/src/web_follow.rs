@@ -224,36 +224,13 @@ pub fn edges(bounds: Bounds, scale: f64) -> (i32, i32, u32, u32) {
 }
 
 /// Puts a page where `bounds` says, in the window's units at `scale`: edge by edge in
-/// the screen's pixels where the runtime places a webview, and in GTK's own pixels on
-/// Linux, where the page is laid over the window's in an overlay (see `web_overlay.rs`) - the
-/// runtime's own bounds go nowhere there, and it would read the screen's pixels with
-/// the page's scale, which is 1 until the page is on screen.
-#[cfg_attr(
-    target_os = "linux",
-    allow(
-        clippy::unnecessary_wraps,
-        reason = "the runtime's own placement elsewhere can fail"
-    )
-)]
+/// the screen's pixels, where the runtime places a webview.
 pub fn put(view: &tauri::Webview, bounds: Bounds, scale: f64) -> tauri::Result<()> {
-    #[cfg(target_os = "linux")]
-    {
-        let _ = scale;
-        crate::web_overlay::page_over(view, edges(bounds, 1.0));
-        Ok(())
-    }
-    #[cfg(not(target_os = "linux"))]
-    {
-        view.set_bounds(rect_of(edges(bounds, scale)))
-    }
+    view.set_bounds(rect_of(edges(bounds, scale)))
 }
 
 /// A page's window as `edges` says it, in the runtime's own terms.
 #[must_use]
-#[cfg_attr(
-    target_os = "linux",
-    allow(dead_code, reason = "GTK is handed its own pixels; see `put`")
-)]
 pub fn rect_of((left, top, width, height): (i32, i32, u32, u32)) -> Rect {
     Rect {
         position: PhysicalPosition::new(left, top).into(),

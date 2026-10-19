@@ -7,10 +7,18 @@
 //! and stdout. Branching this early is what keeps it that: no window, no webview, no
 //! hand-off to a nib that is already running, no updater, and nothing on stdout but the
 //! protocol. See src/mcp/mod.rs.
+//!
+//! On Linux, CEF starts its renderers, its GPU process and its utilities as this same
+//! executable with `--type=`, and each of those runs as CEF's and never as the app; see
+//! `cef_helper` in src/lib.rs.
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
+    #[cfg(feature = "cef")]
+    if nib_lib::cef_helper() {
+        return;
+    }
     #[cfg(desktop)]
     if std::env::args_os()
         .nth(1)

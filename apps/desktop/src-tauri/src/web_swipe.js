@@ -17,10 +17,14 @@
   // Taken now, so a page that replaces its own `window.open` replaces nothing of this.
   const open = window.open.bind(window)
 
-  // As a window asked for under a name that says it, which the crate reads and never
+  // Through the binding where nib's world has one (nib's own Chromium), and otherwise
+  // as a window asked for under a name that says it, which the crate reads and never
   // opens (`WebView2`); see web_swipe.rs.
   function say(said) {
-    open('about:blank', 'nib-swipe:' + JSON.stringify(said))
+    const words = JSON.stringify(said)
+    const bound = globalThis.nibSwiped
+    if (typeof bound === 'function') bound(words)
+    else open('about:blank', 'nib-swipe:' + words)
   }
 
   // Whether the content would take a scroll each way, from the element under the

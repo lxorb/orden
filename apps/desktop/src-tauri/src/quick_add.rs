@@ -99,11 +99,6 @@ pub(crate) fn bring_up(app: &AppHandle, token: Option<String>) {
         under_pointer(app, &window);
         let _ = window.show();
     }
-    #[cfg(target_os = "linux")]
-    if let Some(token) = token {
-        crate::linux::token_arrived(token);
-    }
-    #[cfg(not(target_os = "linux"))]
     let _ = token;
     crate::placement::raised(&window.as_ref().window());
     crate::placement::keyboard_to(window.as_ref());
@@ -126,7 +121,7 @@ fn quick_window(app: &AppHandle) -> tauri::Result<tauri::WebviewWindow<crate::En
 
     // The same switches as the first window, which runs on the same user data folder
     // and would refuse a webview started any other way; see `engine::BROWSER_ARGS`.
-    #[cfg(windows)]
+    #[cfg(all(windows, not(feature = "cef")))]
     let builder = builder.additional_browser_args(crate::engine::BROWSER_ARGS);
 
     // Off the screen with every other window where a drive sent them there.
@@ -137,10 +132,6 @@ fn quick_window(app: &AppHandle) -> tauri::Result<tauri::WebviewWindow<crate::En
 /// launcher's field is. Not on Wayland, which never says where the pointer is outside
 /// the app's own windows and places every window itself.
 fn under_pointer(app: &AppHandle, window: &tauri::WebviewWindow<crate::Engine>) {
-    #[cfg(target_os = "linux")]
-    if !crate::linux::places_windows() {
-        return;
-    }
     let Ok(pointer) = app.cursor_position() else {
         let _ = window.center();
         return;
