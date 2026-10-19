@@ -4,6 +4,10 @@
 # and a picture of the screen is kept. #427 was the AppImage's own WebKitGTK aborting on
 # Fedora 44 at start; this is that start, under X11.
 #
+# With KWIN=1, KWin is the window manager on that server, and with DRAG=1 the window is
+# then moved by its tab strip, resized by its edge and maximised by a double click on the
+# strip with xdotool's pointer (scripts/window-drag.py, #427).
+#
 # Run inside `dbus-run-session`, with the command that starts Orden:
 #
 #   dbus-run-session -- scripts/x11-launch.sh /path/to/AppRun
@@ -23,6 +27,20 @@ export DISPLAY=:77
 Xvfb "$DISPLAY" -screen 0 1600x1000x24 > "$out/xvfb.log" 2>&1 &
 xvfb=$!
 for _ in $(seq 50); do xdpyinfo > /dev/null 2>&1 && break; sleep 0.1; done
+here=$(cd "$(dirname "$0")" && pwd)
+wm=""
+if [ "${KWIN:-0}" = 1 ]; then
+  kwin_x11 --replace > "$out/kwin.log" 2>&1 &
+  wm=$!
+  sleep 3
+fi
+if [ "${DRAG:-0}" = 1 ]; then
+  # The app's endpoint open to `eval`, for where its tab strip is.
+  config="${XDG_CONFIG_HOME:-$HOME/.config}/ch.emilvinu.nib"
+  mkdir -p "$config"
+  printf '{"port":0,"secret":"%s","eval":true,"pid":0}' "$(python3 -c 'import secrets; print(secrets.token_hex(32))')" > "$config/automation.json"
+  chmod 600 "$config/automation.json"
+fi
 
 "$@" > "$out/orden.log" 2>&1 &
 app=$!
@@ -49,9 +67,13 @@ if [ "$status" = 0 ]; then
   sleep 10
   kill -0 "$app" 2>/dev/null || { echo "::error::Orden ended after its window mapped"; status=1; }
 fi
+if [ "$status" = 0 ] && [ "${DRAG:-0}" = 1 ]; then
+  python3 "$here/window-drag.py" x11 "$out" "$app" || status=1
+fi
 import -window root "$out/x11.png" 2>/dev/null || xwd -root -silent | convert xwd:- "$out/x11.png" || true
 kill "$app" 2>/dev/null || true
 wait "$app" 2>/dev/null || true
+[ -n "$wm" ] && kill "$wm" 2>/dev/null || true
 kill "$xvfb" 2>/dev/null || true
 echo "::group::orden's output"
 cat "$out/orden.log"

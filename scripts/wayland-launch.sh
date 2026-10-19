@@ -19,6 +19,8 @@
 #     pointer (scripts/wayland-pointer.py); and with COLD=n as well, Orden quit and
 #     started again n times, each on another screen and with no address, and the drive
 #     run on the web tab it came back to;
+#   - with DRAG=1, the window moved by its tab strip and resized by its edge with the
+#     compositor's own pointer (scripts/window-drag.py, #427);
 #   - with CHECK=1, what #418 asked of the engine, looked at and measured by
 #     scripts/wayland-418.py: the buttons' words, Settings' search, Ctrl+Tab, a web tab
 #     chosen, and three videos of three codecs (made here with ffmpeg).
@@ -133,7 +135,7 @@ endpoint() {
   chmod 600 "$config/automation.json"
 }
 command=("$@")
-if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ]; then
+if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ]; then
   mkdir -p "$out/site"
   video=""
   [ "${MEDIA:-0}" = 1 ] && video='<video src="none.webm" autoplay muted></video>'
@@ -180,7 +182,7 @@ PAGE
   endpoint
   set -- "$@" http://127.0.0.1:8765/
 fi
-if [ "${DRIVE:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ]; then
+if [ "${DRIVE:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ]; then
   # And a keyboard with it, where xkbcommon's tools can say what its keys are.
   if command -v xkbcli > /dev/null; then
     xkbcli compile-keymap --layout us > "$out/keymap.txt"
@@ -231,6 +233,11 @@ fi
 
 if [ "$status" = 0 ] && [ "${DRIVE:-0}" = 1 ]; then
   python3 "$here/wayland-drive.py" "$out" "$app_pid" || status=1
+fi
+
+if [ "$status" = 0 ] && [ "${DRAG:-0}" = 1 ]; then
+  sleep 3
+  python3 "$here/window-drag.py" sway "$out" "$app_pid" || status=1
 fi
 
 if [ "$status" = 0 ] && [ "${CHECK:-0}" = 1 ]; then

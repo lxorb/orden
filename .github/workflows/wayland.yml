@@ -143,6 +143,13 @@ jobs:
           DRIVE: '1'
           COLD: '4'
         run: dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+      # #427: the window moved by its tab strip and resized by its edge, floated.
+      - name: The window moved by its strip and resized by its edge, under sway
+        if: always()
+        env:
+          OUT: wayland-out/drag
+          DRAG: '1'
+        run: dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       # What #418 asked of the engine, measured; the `webkitgtk` job below measures the
       # last WebKitGTK build the same way, for the numbers to be read side by side.
       - name: What #418 asked, on CEF
@@ -158,6 +165,36 @@ jobs:
         with:
           name: wayland-deb
           path: wayland-out
+          if-no-files-found: ignore
+
+  # #427 under KDE's own window manager: KWin on an X server, the window moved by its
+  # tab strip, resized by its edge and maximised by a double click, with xdotool.
+  kwin:
+    needs: build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: linux-packages
+          path: packages
+      - name: The .deb, KWin, Xvfb and xdotool
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ./packages/deb/*.deb kwin-x11 xvfb xdotool x11-utils imagemagick dbus python3
+      - name: Moved, resized and maximised under KWin
+        env:
+          OUT: kwin-out
+          KWIN: '1'
+          DRAG: '1'
+        run: dbus-run-session -- bash scripts/x11-launch.sh /usr/bin/nib
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: kwin
+          path: kwin-out
           if-no-files-found: ignore
 
   # The last build on WebKitGTK, the edge release's own .deb, through the same #418 checks

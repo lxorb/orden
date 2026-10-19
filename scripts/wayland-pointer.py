@@ -19,6 +19,8 @@ Lines read from the FIFO at <path>, made if it is not there:
 
     move X Y      to X, Y in sway's layout, in its own (logical) pixels
     click         the left button pressed and let go
+    press         the left button pressed, and held
+    release       the left button let go of
     key [ctrl] [shift] [alt] CODE
                   a key by its evdev code (R is 19, T 20, F5 63), the modifiers held
     chord [ctrl] [shift] [alt] CODE
@@ -203,6 +205,10 @@ while True:
             elif words[0] == "click":
                 button(1)
                 time.sleep(0.05)
+                button(0)
+            elif words[0] == "press":
+                button(1)
+            elif words[0] == "release":
                 button(0)
             elif words[0] == "key" and keyboard is not None:
                 key(words[1:-1], int(words[-1]))
