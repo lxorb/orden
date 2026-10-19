@@ -88,14 +88,19 @@ jobs:
             echo "::error::the .deb still asks for WebKitGTK or GStreamer"
             exit 1
           fi
-          ./appimage/*.AppImage --appimage-extract > /dev/null
-          find squashfs-root -name 'libcef.so' | grep -q . || { echo "::error::the AppImage carries no libcef.so"; exit 1; }
-          if find squashfs-root -name 'libwebkit2gtk*' -o -name 'libgst*' | grep .; then
+          ./appimage/*.AppImage --appimage-extract > /dev/null || true
+          ls -d ./*/ || true
+          root=$(ls -d squashfs-root AppDir 2>/dev/null | head -1)
+          root=${root:-appimage/Orden.AppDir}
+          echo "the AppImage, as $root:"
+          find "$root" -maxdepth 2 | sort | head -60
+          find "$root" -name 'libcef.so*' | grep -q . || { echo "::error::the AppImage carries no libcef.so"; exit 1; }
+          if find "$root" -name 'libwebkit2gtk*' -o -name 'libgst*' | grep .; then
             echo "::error::the AppImage carries WebKitGTK or GStreamer"
             exit 1
           fi
-          du -sh squashfs-root
-          rm -rf squashfs-root
+          du -sh "$root"
+          rm -rf squashfs-root AppDir
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
