@@ -404,6 +404,68 @@ describe('the door', () => {
     expect(door.asked[0]?.id).toBe(term.machine)
   })
 
+  /** What the machines were told about sign-ins that ended: which, to whom. */
+  const signedOut = () =>
+    door.asked
+      .filter((one) => one.headers.get('x-nib-machine') === 'signedout')
+      .map((one) => ({ id: one.id, logins: one.headers.get('x-nib-logins')?.split(',') ?? [] }))
+
+  test('lets a socket in with the sign-in it arrived with, for the machine to end it by', async () => {
+    const { owner } = await made()
+    door.asked.length = 0
+    await knock('term-1', owner)
+    expect(door.asked[0]?.headers.get('x-nib-login')).toBe(await sha256(owner))
+  })
+
+  test('ending every other session tells the machine, the owner’s own sockets included', async () => {
+    const { owner: laptop, term } = await made()
+    const phone = await session(OWNER)
+    await knock('term-1', laptop)
+    door.asked.length = 0
+
+    expect((await call(env, '/v1/sessions', { method: 'DELETE', token: phone })).status).toBe(200)
+    expect(signedOut()).toEqual([{ id: term.machine, logins: [await sha256(laptop)] }])
+  })
+
+  test('and so does ending one session, signing out, and ending a device', async () => {
+    const { owner, writer, term } = await made()
+    const phone = await session(OWNER)
+    const listed = await call<{ sessions: { id: string; current: boolean }[] }>(
+      env,
+      '/v1/sessions',
+      { token: phone },
+    )
+    const laptop = listed.json.sessions.find((one) => !one.current)?.id ?? ''
+
+    door.asked.length = 0
+    await call(env, `/v1/sessions/${laptop}`, { method: 'DELETE', token: phone })
+    expect(signedOut()).toEqual([{ id: term.machine, logins: [await sha256(owner)] }])
+
+    // A writer watching the owner's terminal, signing out of their own account.
+    door.asked.length = 0
+    await call(env, '/v1/auth/signout', { method: 'POST', token: writer })
+    expect(signedOut()).toEqual([{ id: term.machine, logins: [await sha256(writer)] }])
+
+    // A device of the owner's, ended from the devices list.
+    const tablet = await session(OWNER)
+    const tabletSession = (
+      env.db.prepare('select id from sessions where token_hash = ?').get(await sha256(tablet)) as {
+        id: string
+      }
+    ).id
+    env.db
+      .prepare(
+        `insert into devices (id, user_id, session_id, name, platform, created_at)
+         values ('device-tablet', ?, ?, 'Tablet', 'ios', 1)`,
+      )
+      .run(idOf(OWNER), tabletSession)
+    door.asked.length = 0
+    expect(
+      (await call(env, '/v2/devices/device-tablet', { method: 'DELETE', token: phone })).status,
+    ).toBe(200)
+    expect(signedOut()).toEqual([{ id: term.machine, logins: [await sha256(tablet)] }])
+  })
+
   test('taking a writer out of the space tells the machine in the same request', async () => {
     const { owner, term } = await made()
     door.asked.length = 0
@@ -866,6 +928,54 @@ describe('a machine', () => {
     })
     expect(sent.find((one) => one.t === 'in')).toMatchObject({ t: 'in', session: 'session-1' })
     expect(writer.of('size').at(-1)).toEqual({ t: 'size', cols: 60, rows: 20, by: 'writer' })
+  })
+
+  test('a sign-in that ended closes its sockets at once, the owner’s too', async () => {
+    const running = await machine(env, ID, user)
+    const laptop = await join(
+      running,
+      { who: user, owns: true, role: 'owner', login: 'l-laptop' },
+      'yes',
+    )
+    const phone = await join(
+      running,
+      { who: user, owns: true, role: 'owner', login: 'l-phone' },
+      'yes',
+    )
+
+    await running.machine.fetch(
+      new Request('https://machine.invalid/signedout', {
+        headers: { 'x-nib-machine': 'signedout', 'x-nib-logins': 'l-laptop' },
+      }),
+    )
+    expect(laptop.closedWith?.code).toBe(4401)
+    expect(phone.closedWith).toBeNull()
+  })
+
+  test('and the minute closes a socket whose sign-in has ended, even when nobody said', async () => {
+    const laptopToken = await session(OWNER)
+    const phoneToken = await session(OWNER)
+    const running = await machine(env, ID, user)
+    const laptop = await join(
+      running,
+      { who: user, owns: true, role: 'owner', login: await sha256(laptopToken) },
+      'yes',
+    )
+    const phone = await join(
+      running,
+      { who: user, owns: true, role: 'owner', login: await sha256(phoneToken) },
+      'yes',
+    )
+    env.db.prepare('delete from sessions where token_hash = ?').run(await sha256(laptopToken))
+
+    await nibd(running, {
+      t: 'activity',
+      activity: { at: Date.now(), output: 10, cpu: 0, net: 0, homeBytes: 1000 },
+    })
+    vi.setSystemTime(Date.now() + 60_000)
+    expect(await fire(running)).toBe(true)
+    expect(laptop.closedWith?.code).toBe(4401)
+    expect(phone.closedWith).toBeNull()
   })
 
   test('revocation closes a socket at once, and a reader’s typing is taken away', async () => {

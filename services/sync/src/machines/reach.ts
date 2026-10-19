@@ -80,6 +80,12 @@ export const WHO = `select s.user_id as who from sessions s where s.token_hash =
   union all
   select g.guest_id as who from guest_sessions g where g.token_hash = ?1 and g.expires_at > ?2`
 
+/** Which of the sign-ins sockets arrived with are still signed in: the token hashes
+ *  as JSON in `?1`, now in `?2`. An account's or a guest's, as the door read them. */
+export const SIGNED_IN = `select value as login from json_each(?1)
+  where exists (select 1 from sessions s where s.token_hash = value and s.expires_at > ?2)
+     or exists (select 1 from guest_sessions g where g.token_hash = value and g.expires_at > ?2)`
+
 /** `Machine`'s: every socket's person and file at once, as JSON in `?1`. */
 const AGAIN = reach(
   `pairs as (

@@ -81,7 +81,7 @@ import {
   type SessionNow,
   text,
 } from '@nib/online/wire'
-import { reachAgain } from './reach'
+import { reachAgain, SIGNED_IN } from './reach'
 import { serviceOf } from './service'
 
 /** Work nothing waits for - a heartbeat's, a socket's, a link event's - with whatever it
@@ -197,7 +197,13 @@ export interface Viewer {
   rows: number
   /** When this person last said hello or typed, by the object's clock. */
   seen: number
+  /** The hash of the sign-in the socket arrived with, which it lasts no longer than.
+   *  Empty on a socket let in before sockets carried one. */
+  login?: string
 }
+
+/** The tag a socket is found by through the sign-in it arrived with. */
+const loginTag = (login: string) => `login:${login}`
 
 /** Who the machine is: its id and its owner. */
 interface Me {
@@ -339,6 +345,9 @@ export class Machine implements DurableObject {
       case 'typing':
         this.retype(headers.get('x-nib-term') ?? '', headers.get('x-nib-typing'))
         return new Response(null, { status: 204 })
+      case 'signedout':
+        this.signedOut((headers.get('x-nib-logins') ?? '').split(',').filter(Boolean))
+        return new Response(null, { status: 204 })
       case 'revoke':
         this.revoke(headers.get('x-nib-who') ?? '', headers.get('x-nib-role'), headers)
         return new Response(null, { status: 204 })
@@ -385,7 +394,11 @@ export class Machine implements DurableObject {
    *  runtime to make the pair. `wake` is `yes` where the owner's socket may wake the
    *  machine, or why it may not. */
   async enter(server: WebSocket, viewer: Viewer, wake: string): Promise<void> {
-    this.ctx.acceptWebSocket(server, [viewer.session, viewer.who])
+    this.ctx.acceptWebSocket(server, [
+      viewer.session,
+      viewer.who,
+      ...(viewer.login ? [loginTag(viewer.login)] : []),
+    ])
     server.serializeAttachment(viewer)
     this.next.set(server, -1)
 
@@ -1535,6 +1548,18 @@ export class Machine implements DurableObject {
     })
     if (!sockets.length) return
 
+    // The sign-ins first: a socket whose sign-in has ended closes, whoever it is, before
+    // anything is asked about what it reaches.
+    const logins = [
+      ...new Set(sockets.flatMap(({ viewer }) => (viewer.login ? [viewer.login] : []))),
+    ]
+    if (logins.length) {
+      const { results } = await this.env.DB.prepare(SIGNED_IN)
+        .bind(JSON.stringify(logins), Date.now())
+        .all<{ login: string }>()
+      this.signedOut(logins.filter((one) => !results.some((row) => row.login === one)))
+    }
+
     const pairs = new Map<string, { who: string; term: string; guest: boolean }>()
     for (const { viewer } of sockets) {
       pairs.set(`${viewer.who}\n${viewer.term}`, {
@@ -1582,6 +1607,17 @@ export class Machine implements DurableObject {
       if (!viewer || viewer.owns || !terms.has(viewer.term)) continue
       if (role === 'read') this.reattach(socket, { ...viewer, role: 'read' })
       else socket.close(4403, 'no longer reaches this terminal')
+    }
+  }
+
+  /** Sign-ins that ended - signed out, ended from another device, run out - and every
+   *  socket that arrived with one, the machine's owner's included: a laptop whose
+   *  session was ended keeps no shell open on anybody's machine. */
+  private signedOut(logins: readonly string[]): void {
+    for (const login of logins) {
+      for (const socket of this.ctx.getWebSockets(loginTag(login))) {
+        socket.close(4401, 'signed out')
+      }
     }
   }
 
@@ -1744,6 +1780,7 @@ function viewerFrom(headers: Headers): Viewer {
     cols: 80,
     rows: 24,
     seen: Date.now(),
+    login: headers.get('x-nib-login') ?? '',
   }
 }
 

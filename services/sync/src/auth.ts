@@ -16,6 +16,7 @@ import { claimGuest, claimGuestsAt, guestForToken } from './guests'
 import { machineOf, mailCeilings, mailNotSent, mayTryCode } from './limits'
 import { accepted, asksForSecond, halfWay, spendHalf, whoseHalf } from './second'
 import { devicesEnded } from './hub/devices'
+import { machinesSignedOut } from './machines/revoke'
 import { forgetEndedTargets } from './push/live'
 import { roomsSignedOut } from './rooms'
 import { makeFirstSpace } from './spaces/first'
@@ -488,6 +489,12 @@ sessions.get('/', async (context) => {
 
 sessions.delete('/:id', async (context) => {
   const user = context.get('user')
+  // Which sign-in it is, read before it goes, for the terminals it may have open.
+  const ending = await context.env.DB.prepare(
+    'select token_hash from sessions where user_id = ? and id = ?',
+  )
+    .bind(user.id, context.req.param('id'))
+    .first<{ token_hash: string }>()
   const gone = await context.env.DB.prepare('delete from sessions where user_id = ? and id = ?')
     .bind(user.id, context.req.param('id'))
     .run()
@@ -498,6 +505,9 @@ sessions.delete('/:id', async (context) => {
   if (gone.meta.changes) {
     await roomsSignedOut(context.env, user.id)
     await devicesEnded(context.env, user.id, [context.req.param('id')])
+    // And the online terminals it has open, the account's own machine's too; see
+    // machines/revoke.ts.
+    await machinesSignedOut(context.env, user.id, ending ? [ending.token_hash] : [])
   }
   // And wherever it was pushed to; see push/live.ts.
   await forgetEndedTargets(context.env, user.id)
@@ -513,10 +523,10 @@ sessions.delete('/', async (context) => {
 
   // Which sessions those are, read before they go, so their devices can go too.
   const { results: ending } = await context.env.DB.prepare(
-    'select id from sessions where user_id = ? and token_hash <> ? and id is not null',
+    'select id, token_hash from sessions where user_id = ? and token_hash <> ?',
   )
     .bind(user.id, mine)
-    .all<{ id: string }>()
+    .all<{ id: string | null; token_hash: string }>()
 
   const gone = await context.env.DB.prepare(
     'delete from sessions where user_id = ? and token_hash <> ?',
@@ -533,7 +543,12 @@ sessions.delete('/', async (context) => {
     await devicesEnded(
       context.env,
       user.id,
-      ending.map((one) => one.id),
+      ending.flatMap((one) => (one.id === null ? [] : [one.id])),
+    )
+    await machinesSignedOut(
+      context.env,
+      user.id,
+      ending.map((one) => one.token_hash),
     )
   }
   await forgetEndedTargets(context.env, user.id)
@@ -561,6 +576,7 @@ auth.post('/signout', async (context) => {
     if (held) {
       await roomsSignedOut(context.env, held.user_id)
       if (held.id) await devicesEnded(context.env, held.user_id, [held.id])
+      await machinesSignedOut(context.env, held.user_id, [await sha256(token)])
       // And wherever this device was pushed to; see push/live.ts.
       await forgetEndedTargets(context.env, held.user_id)
     }
