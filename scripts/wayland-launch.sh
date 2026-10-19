@@ -18,7 +18,10 @@
 #     the tab's menu over it and after a resize, clicking with the compositor's own
 #     pointer (scripts/wayland-pointer.py); and with COLD=n as well, Orden quit and
 #     started again n times, each on another screen and with no address, and the drive
-#     run on the web tab it came back to.
+#     run on the web tab it came back to;
+#   - with CHECK=1, what #418 asked of the engine, looked at and measured by
+#     scripts/wayland-418.py: the buttons' words, Settings' search, Ctrl+Tab, a web tab
+#     chosen, and three videos of three codecs (made here with ffmpeg).
 #
 # Run inside `dbus-run-session`, with the command that starts Orden:
 #
@@ -130,17 +133,54 @@ endpoint() {
   chmod 600 "$config/automation.json"
 }
 command=("$@")
-if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ]; then
+if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ]; then
   mkdir -p "$out/site"
   video=""
   [ "${MEDIA:-0}" = 1 ] && video='<video src="none.webm" autoplay muted></video>'
   printf '<!doctype html><title>one colour</title><style>html,body{margin:0;height:100%%;background:#ff00ff}</style>%s' "$video" > "$out/site/index.html"
+  if [ "${CHECK:-0}" = 1 ]; then
+    clip=(-f lavfi -i testsrc2=size=320x240:rate=30 -f lavfi -i sine=frequency=440 -t 4)
+    ffmpeg -loglevel error -y "${clip[@]}" -c:v libvpx-vp9 -b:v 300k -c:a libopus "$out/site/vp9.webm"
+    ffmpeg -loglevel error -y "${clip[@]}" -c:v libaom-av1 -cpu-used 8 -b:v 300k -c:a libopus "$out/site/av1.webm"
+    ffmpeg -loglevel error -y "${clip[@]}" -c:v libx264 -pix_fmt yuv420p -c:a aac "$out/site/h264.mp4"
+    cat > "$out/site/video.html" <<'PAGE'
+<!doctype html><title>three codecs</title>
+<body style="margin:0;background:#202020;color:#eee;font:15px sans-serif">
+<script>
+const clips = [
+  ['vp9-opus', 'vp9.webm', 'video/webm; codecs="vp9, opus"'],
+  ['av1-opus', 'av1.webm', 'video/webm; codecs="av01.0.05M.08, opus"'],
+  ['h264-aac', 'h264.mp4', 'video/mp4; codecs="avc1.640015, mp4a.40.2"'],
+]
+for (const [name, src, type] of clips) {
+  const box = document.createElement('figure')
+  const v = document.createElement('video')
+  Object.assign(v, { src, muted: true, autoplay: true, loop: true, width: 320, height: 240 })
+  const said = document.createElement('figcaption')
+  box.append(v, said)
+  document.body.append(box)
+  const can = v.canPlayType(type)
+  let done = false
+  const finish = (ok, why) => {
+    if (done) return
+    done = true
+    said.textContent = name + ': ' + (ok ? 'plays' : 'does not play') + ' (' + why + ', canPlayType "' + can + '")'
+    fetch('/report?' + new URLSearchParams({ name, can, ok, why, w: v.videoWidth, h: v.videoHeight, t: v.currentTime.toFixed(2) }))
+  }
+  v.addEventListener('error', () => finish(false, 'error ' + (v.error && v.error.code)))
+  v.addEventListener('timeupdate', () => { if (v.currentTime > 1) finish(true, 'played') })
+  setTimeout(() => finish(false, 'timeout'), 9000)
+  v.play().catch((e) => finish(false, 'play ' + e.name))
+}
+</script>
+PAGE
+  fi
   python3 -m http.server 8765 --bind 127.0.0.1 --directory "$out/site" > "$out/site.log" 2>&1 &
   site_pid=$!
   endpoint
   set -- "$@" http://127.0.0.1:8765/
 fi
-if [ "${DRIVE:-0}" = 1 ]; then
+if [ "${DRIVE:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ]; then
   # And a keyboard with it, where xkbcommon's tools can say what its keys are.
   if command -v xkbcli > /dev/null; then
     xkbcli compile-keymap --layout us > "$out/keymap.txt"
@@ -191,6 +231,10 @@ fi
 
 if [ "$status" = 0 ] && [ "${DRIVE:-0}" = 1 ]; then
   python3 "$here/wayland-drive.py" "$out" "$app_pid" || status=1
+fi
+
+if [ "$status" = 0 ] && [ "${CHECK:-0}" = 1 ]; then
+  APP_COMMAND="${command[0]}" python3 "$here/wayland-418.py" "$out" "$app_pid" || status=1
 fi
 
 # Quit and started again, the way a reader comes back after a restart: no address, so the

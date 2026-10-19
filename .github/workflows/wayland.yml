@@ -122,7 +122,7 @@ jobs:
       - name: The .deb, sway, Mesa and a session bus
         run: |
           sudo apt-get update
-          sudo apt-get install -y ./packages/deb/*.deb sway xwayland grim dbus python3-gi python3-pil gir1.2-glib-2.0 libgl1-mesa-dri libegl-mesa0 libxkbcommon-tools
+          sudo apt-get install -y ./packages/deb/*.deb sway xwayland grim dbus python3-gi python3-pil gir1.2-glib-2.0 libgl1-mesa-dri libegl-mesa0 libxkbcommon-tools ffmpeg
       - name: Under Wayland, the portal's key reaching quick add
         env:
           OUT: wayland-out/portal
@@ -138,10 +138,52 @@ jobs:
           DRIVE: '1'
           COLD: '4'
         run: dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+      # What #418 asked of the engine, measured; the `webkitgtk` job below measures the
+      # last WebKitGTK build the same way, for the numbers to be read side by side.
+      - name: What #418 asked, on CEF
+        if: always()
+        env:
+          OUT: wayland-out/418-cef
+          CHECK: '1'
+        run: |
+          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: wayland-deb
+          path: wayland-out
+          if-no-files-found: ignore
+
+  # The last build on WebKitGTK, the edge release's own .deb, through the same #418 checks
+  # on the same kind of runner: what CEF's numbers are read against.
+  webkitgtk:
+    if: ${{ github.event_name != 'pull_request' || !github.event.pull_request.draft }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+      - name: The edge release's .deb, on WebKitGTK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p packages
+          gh release download edge -R "$GITHUB_REPOSITORY" -p '*-linux-x64.deb' -D packages
+          ls -la packages
+      - name: The .deb, sway, Mesa and a session bus
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ./packages/*.deb sway xwayland grim dbus python3-gi python3-pil gir1.2-glib-2.0 libgl1-mesa-dri libegl-mesa0 libxkbcommon-tools ffmpeg
+      - name: What #418 asked, on WebKitGTK
+        env:
+          OUT: wayland-out/418-webkitgtk
+          CHECK: '1'
+        run: dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+      - if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: wayland-webkitgtk
           path: wayland-out
           if-no-files-found: ignore
 
