@@ -19,6 +19,7 @@ import { taskHash } from '@nib/bases'
 import { readTask } from '@nib/markdown/task-line'
 import { momentOf, plainWords, reminderId, remindTimes } from '@nib/markdown/task-reminders'
 import type { Env } from '../types'
+import { liveTarget } from './live'
 import { type Message, push, type Target } from './send'
 
 /** The automatic reminder's choices, in minutes before a task's time, -1 for none: the
@@ -125,11 +126,11 @@ function autoOf(settings: string | null): number | null {
 export async function keepReminders(env: Env, note: Saved, content: string, now = Date.now()) {
   const owner = await env.DB.prepare(
     `select s.user_id, s.name, u.settings,
-            (select zone from push_targets t where t.user_id = s.user_id
+            (select zone from push_targets t where t.user_id = s.user_id and ${liveTarget('?2')}
               order by t.created_at desc limit 1) as zone
-       from spaces s join users u on u.id = s.user_id where s.id = ?`,
+       from spaces s join users u on u.id = s.user_id where s.id = ?1`,
   )
-    .bind(note.space_id)
+    .bind(note.space_id, Date.now())
     .first<{ user_id: string; name: string; settings: string | null; zone: string | null }>()
 
   const forget = env.DB.prepare('delete from push_reminders where note_id = ?').bind(note.id)
@@ -224,9 +225,12 @@ export async function sendDue(
     if (!theirs) {
       theirs = (
         await env.DB.prepare(
-          'select id, user_id, kind, token, keys, zone from push_targets where user_id = ?',
+          `select t.id, t.user_id, t.kind, t.token, t.keys, t.zone from push_targets t
+            where t.user_id = ?1 and ${liveTarget('?2')}`,
         )
-          .bind(one.user_id)
+          // Whether the session lives is asked of the clock, not of the moment the
+          // reminders are due at, which a test or a late run may set elsewhere.
+          .bind(one.user_id, Date.now())
           .all<Target>()
       ).results
       targets.set(one.user_id, theirs)

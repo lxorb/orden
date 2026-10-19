@@ -109,6 +109,14 @@ async function endDevice(env: Env, user: string, device: string): Promise<boolea
 
   await env.DB.batch([
     env.DB.prepare('delete from web_keys where user_id = ? and device_id = ?').bind(user, device),
+    // Where it was pushed to, by the device it said it was and by the session it
+    // registered through: a lost phone is told nothing more (#454, push/live.ts).
+    env.DB.prepare(
+      `delete from push_targets
+        where user_id = ?1
+          and (device_id = ?2
+               or session_hash = (select token_hash from sessions where user_id = ?1 and id = ?3))`,
+    ).bind(user, device, row.session ?? ''),
     env.DB.prepare(
       'update devices set revoked_at = ?, session_id = null where id = ? and user_id = ?',
     ).bind(now(), device, user),

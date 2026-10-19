@@ -16,6 +16,7 @@ import { claimGuest, claimGuestsAt, guestForToken } from './guests'
 import { machineOf, mailCeilings, mailNotSent, mayTryCode } from './limits'
 import { accepted, asksForSecond, halfWay, spendHalf, whoseHalf } from './second'
 import { devicesEnded } from './hub/devices'
+import { forgetEndedTargets } from './push/live'
 import { roomsSignedOut } from './rooms'
 import { makeFirstSpace } from './spaces/first'
 import { startingVersion } from './sync2/rollout'
@@ -498,6 +499,8 @@ sessions.delete('/:id', async (context) => {
     await roomsSignedOut(context.env, user.id)
     await devicesEnded(context.env, user.id, [context.req.param('id')])
   }
+  // And wherever it was pushed to; see push/live.ts.
+  await forgetEndedTargets(context.env, user.id)
 
   return context.json({ ok: !!gone.meta.changes })
 })
@@ -533,6 +536,7 @@ sessions.delete('/', async (context) => {
       ending.map((one) => one.id),
     )
   }
+  await forgetEndedTargets(context.env, user.id)
 
   return context.json({ ended: gone.meta.changes })
 })
@@ -557,6 +561,8 @@ auth.post('/signout', async (context) => {
     if (held) {
       await roomsSignedOut(context.env, held.user_id)
       if (held.id) await devicesEnded(context.env, held.user_id, [held.id])
+      // And wherever this device was pushed to; see push/live.ts.
+      await forgetEndedTargets(context.env, held.user_id)
     }
   }
   return context.json({ ok: true })
