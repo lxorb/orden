@@ -91,7 +91,12 @@ export const ABOUT: ToolMark[] = [
 /** Words put straight on the plane or the paper, with no card round them: a button of
  *  its own on the bar of a canvas and of a page note, as Miro's and a PDF viewer's text
  *  tool are, rather than one more row behind Add (#421). */
-export const WORDS: ToolMark = { id: 'words', icon: Type, title: () => t('Text'), key: null }
+export const WORDS: ToolMark = {
+  id: 'words',
+  icon: Type,
+  title: () => t('Text'),
+  key: 'canvas.tool.words',
+}
 
 /** The two tools the pens are used with. */
 export const RUBBING: ToolMark[] = [

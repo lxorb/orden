@@ -2,7 +2,7 @@
 
 Emil: "no button to create some text on page note / canvas (similar to the one you have
 in miro board / chrome pdf)". The bar of a canvas and of a page note has a Text button:
-pressed, and the plane or the paper pressed, the words are typed in at once where the
+pressed, or W, and the plane or the paper pressed, the words are typed in at once where the
 press was, with no card round them, and the arrow is in hand after. The file keeps them
 as a card Obsidian reads, listed under `nib.words`.
 
@@ -75,6 +75,19 @@ def drive(browser: Browser) -> None:
     wait_for(page, "!!document.querySelector('.canvas') && !!document.querySelector('.cluster')", "the canvas")
     page.wait_for_timeout(600)
     typed(page, "canvas", ".canvas", "() => null")
+
+    # And by its key: W, the arrow in hand again after the words.
+    box = page.locator(".canvas").first.bounding_box()
+    assert box
+    page.mouse.click(box["x"] + box["width"] * 0.8, box["y"] + box["height"] * 0.8)
+    page.keyboard.press("w")
+    page.wait_for_timeout(200)
+    which = page.evaluate("() => document.querySelector('.cluster button[aria-pressed=\"true\"]')?.getAttribute('aria-label')")
+    if which != "Text":
+        wrong(f"[canvas] W did not take up the Text tool: {which}")
+    else:
+        say("ok   [canvas] W takes up the Text tool")
+    page.keyboard.press("v")
 
     for _ in range(4):
         page.evaluate("() => window.nibApp.workspace.createPages()")

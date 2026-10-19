@@ -221,6 +221,13 @@ often than it is a shape, so it takes them the way a card does - a double press 
 Enter to type, the same renderer, in the middle of the shape - and they are written
 under `nib` beside the shape itself.
 
+**Words with no card round them** are the bar's Text button, `W` (#421), on a canvas
+and on a page note alike, as Miro's text tool and a PDF viewer's are: pressed, then the
+plane or the paper pressed, the words are typed in at once where the press was, in the
+ink of the page, and the arrow is in hand after. Left empty, they go again. The file
+keeps them as a card - Obsidian reads `nodes` and shows one - listed under
+`nib.words`. Not `T`, which the triangle has had since the shapes came.
+
 ## What is picked
 
 A small bar over the selection: its colour, duplicate, group, delete, and the rest.

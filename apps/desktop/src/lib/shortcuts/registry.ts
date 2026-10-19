@@ -1470,6 +1470,9 @@ const CANVAS_ENTRIES: Shortcut[] = (
     ['canvas.tool.erase', () => t('Erase'), 'e'],
     ['canvas.tool.lasso', () => t('Lasso'), 'q'],
     ['canvas.tool.text', () => t('Card'), 'c'],
+    // Words with no card round them (#421). Not T, which Triangle has had since the
+    // shapes came: W for the words, free on every board this one is read beside.
+    ['canvas.tool.words', () => t('Text'), 'w'],
     ['canvas.tool.file', () => t('Note'), 'n'],
     ['canvas.tool.picture', () => t('Picture'), 'i'],
     ['canvas.tool.link', () => t('Link'), 'k'],

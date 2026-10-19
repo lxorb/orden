@@ -542,6 +542,7 @@ const TOOL_KEYS: readonly (readonly [string, Tool])[] = [
   ['canvas.tool.erase', 'erase'],
   ['canvas.tool.lasso', 'lasso'],
   ['canvas.tool.text', 'text'],
+  ['canvas.tool.words', 'words'],
   ['canvas.tool.file', 'file'],
   ['canvas.tool.picture', 'picture'],
   ['canvas.tool.link', 'link'],
