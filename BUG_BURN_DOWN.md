@@ -26,7 +26,7 @@ data loss. **High** - data loss or a security hole on a specific path.
 | --- | --: | --: | --: |
 | Critical | 1 | 1 | 0 |
 | High | 14 | 14 | 0 |
-| Medium | 28 | 28 | 0 |
+| Medium | 30 | 30 | 0 |
 | Low | 16 | 10 | 6 |
 
 Open rows are being fixed; see the status column.
@@ -93,6 +93,8 @@ Open rows are being fixed; see the status column.
 | B57 | Medium | In the browser, sync v2 never saw a file on the disk: a note deleted on another device stayed, and a merged note kept its old words (re-audit of B52; older than this branch) | Fixed `a61ad1363` | `stamped` in sync2/app-world.ts asked `file_stamp` alone | `exists` is `onDisk` | `sync2/app-world.test.ts` (failed before) |
 | B58 | Low | In the browser a note over 64 MB reads as not there, so a write could go over it | Open, accepted | `read_note` refuses it as too large, and `onDisk` hears a refusal | - (such a note only arrives by sync or import) | - |
 | B59 | Medium | In the browser, a picture or PDF deleted on another device stopped sync v2 on every pass (re-audit of B57; regression from B57) | Fixed `4db8f385b` | Now that `exists` saw the picture, `settle` trashed it, and the browser's trash asked only the notes store whether anything was there | `holds` asks the asset store too, for `trash_item` and `restore_trash` | `web/commands.test.ts` picture in the trash (failed before) |
+| B60 | Medium | In the browser, putting a picture back from Recently deleted went over a newer one of the same name (re-audit of B59) | Fixed (this commit) | `freeSpot` asked `occupied`, which knows only the notes | `freeSpot` asks `holds` | `web/commands.test.ts` (failed before) |
+| B61 | Medium | In the browser, sync v2 never saw a folder as there: one deleted on another device stayed with its files untracked (re-audit of B59; older than this branch) | Fixed (this commit) | Nothing reads at a folder's own path | `onDisk` in the browser counts a folder that lists anything, or its marker | `on-disk.test.ts` (failed before) |
 | B48 | Low | After a self-linking note is renamed, a row of its properties can show the old link until its next save or scan | Open, accepted | `hear(target, after)` fires before `fileMoved` moves the rows store | - (the file on disk is right) | - |
 
 Not fixed, judged insignificant or out of scope: GFM's escaped backslash before a

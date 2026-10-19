@@ -395,6 +395,26 @@ describe('the trash', () => {
     expect(disk.assets.has('/Notes/shot.png')).toBe(true)
   })
 
+  test('puts a picture back beside a newer one of the same name, which keeps its bytes', async () => {
+    const picture = (data: string) => ({
+      path: '/Notes/shot.png',
+      type: 'image/png',
+      data,
+      modified: 1,
+    })
+    disk.assets.set('/Notes/shot.png', picture('old'))
+    const entry = await webInvoke<{ id: string }>('trash_item', {
+      path: '/Notes/shot.png',
+      kind: 'note',
+    })
+    disk.assets.set('/Notes/shot.png', picture('new'))
+
+    // The free name was asked of the notes alone, and the old picture went over
+    // the new one.
+    expect(await webInvoke('restore_trash', { id: entry.id })).toBe('/Notes/shot 2.png')
+    expect(disk.assets.get('/Notes/shot.png')?.data).toBe('new')
+  })
+
   test('puts a note back beside the one that took its place', async () => {
     await write('/Notes/Idea.md', 'first')
     const entry = await webInvoke<{ id: string }>('trash_item', {

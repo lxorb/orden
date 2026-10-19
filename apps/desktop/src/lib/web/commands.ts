@@ -435,7 +435,7 @@ async function holds(path: string): Promise<boolean> {
 /** `path` if nothing is there, else `name 2`, `name 3`... - before the
  *  extension for a note, after the name for a folder or a space. */
 async function freeSpot(path: string, isFile: boolean): Promise<string> {
-  if (!(await occupied(path))) return path
+  if (!(await holds(path))) return path
 
   const folder = parent(path)
   const file = basename(path)
@@ -445,7 +445,7 @@ async function freeSpot(path: string, isFile: boolean): Promise<string> {
 
   for (let counter = 2; ; counter++) {
     const candidate = join(folder, `${stem} ${counter}${extension}`)
-    if (!(await occupied(candidate))) return candidate
+    if (!(await holds(candidate))) return candidate
   }
 }
 

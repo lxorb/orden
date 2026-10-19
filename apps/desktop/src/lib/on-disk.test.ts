@@ -9,8 +9,8 @@ vi.mock('./tauri', () => ({
   get isNative() {
     return state.native
   },
-  invoke: (command: string, args?: { path?: string }) => {
-    const key = `${command} ${args?.path ?? ''}`
+  invoke: (command: string, args?: { path?: string; root?: string }) => {
+    const key = `${command} ${args?.path ?? args?.root ?? ''}`
     return state.answers.has(key)
       ? Promise.resolve(state.answers.get(key))
       : Promise.reject(new Error(`nothing at ${key}`))
@@ -42,5 +42,19 @@ describe('a file on the disk', () => {
     expect(await onDisk('/s/a.md')).toBe(true)
     expect(await onDisk('/s/shot.png')).toBe(true)
     expect(await onDisk('/s/gone.md')).toBe(false)
+  })
+
+  // Nothing reads at a folder's own path, so sync never saw a folder deleted on
+  // another device as there to delete, and a restore could land on one.
+  test('in the browser, is a folder that holds anything, or the marker of an empty one', async () => {
+    state.native = false
+    state.answers.set('read_tree /s/Work', { children: [{ name: 'shot.png' }] })
+    state.answers.set('read_tree /s/Empty', { children: [] })
+    state.answers.set('read_note /s/Empty/.keep', '')
+    state.answers.set('read_tree /s/None', { children: [] })
+
+    expect(await onDisk('/s/Work')).toBe(true)
+    expect(await onDisk('/s/Empty')).toBe(true)
+    expect(await onDisk('/s/None')).toBe(false)
   })
 })

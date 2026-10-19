@@ -31,6 +31,7 @@ vi.mock('../tauri', () => ({
     if (command === 'read_note' || command === 'read_asset') {
       return Promise.reject(new Error('nothing there'))
     }
+    if (command === 'read_tree') return Promise.resolve({ children: [] })
     if (args.path === refusing) return Promise.reject(new Error('the disk is full'))
     if (command === 'write_note') said.set(String(args.path), String(args.content))
     wrote.push({ command, path: String(args.path) })
