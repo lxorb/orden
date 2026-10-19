@@ -100,7 +100,6 @@ export { blockAt, type BlockKind, type BlockShape, type BlockSpan } from './bloc
 export { landed } from './landing'
 export { fenceLanguages } from './languages'
 export { sequenceToMermaid } from './live-preview/sequence'
-export { flowSource, keepSafeLinks } from './live-preview/flow'
 export { nibHighlightStyle, nibTheme } from './theme'
 export { livePreview } from './live-preview'
 export { selectedImage } from './live-preview/image'

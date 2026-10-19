@@ -10,7 +10,6 @@ import { NibWidget } from './widget'
 // are fetched only once something on the page wears one, and a formula appearing
 // before the CSS that sets it would be a formula in the wrong font for a frame.
 import 'katex/dist/katex.min.css'
-import { flowSource, keepSafeLinks } from './flow'
 import { sequenceToMermaid } from './sequence'
 
 /** Equation labels seen in this document, in order, so `\eqref` can resolve. */

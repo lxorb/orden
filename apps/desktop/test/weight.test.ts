@@ -693,8 +693,16 @@ function holds(tail: string): boolean {
  *  on the overlay stack (`pressed` and `away` in overlays.ts) that the shell calls from
  *  the window; the menus, the space switcher and the app menu that are drawn with the
  *  shell say what they hold, and the copies of a window listener each kept are gone.
- *  Measured 3,214,496. */
-const BUDGET = 3_215_500
+ *  Measured 3,214,496.
+ *
+ *  Raised 2026-10-19, to 3,223,200, from a main at 3,214,496 (1,004 under), for the bug
+ *  burn-down's data-loss fixes in the save path every note is written through: a draft's
+ *  name claimed on disk and a write held under a move (`claim`, `holdingUnder` in
+ *  workspace/saving.svelte.ts), a closed note read again before it is written
+ *  (`writeClosed` in workspace/note-text.ts), and a link rewritten in the open document
+ *  and at the moved note's new path (`retarget` in link-index.svelte.ts). Measured
+ *  3,222,155. */
+const BUDGET = 3_223_200
 const MOST_FILES = 381
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
