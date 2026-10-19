@@ -39,10 +39,7 @@ from PIL import Image
 
 from harness import Drive
 
-# Glass's dark side over the clear desk reads its quiet ink at 5.84:1 against the 6:1
-# floor, in both engines; whether the colour or the floor moves is the owner's call, and
-# the colour is not changed here (#383, #384).
-DRIVE = Drive(__file__, known={"quiet ink on the side": "#383, the floor for glass's quiet ink"})
+DRIVE = Drive(__file__)
 say, wrong, shot, wait_for = DRIVE.say, DRIVE.wrong, DRIVE.shot, DRIVE.wait_for
 
 NOTE = """# Under a picture
