@@ -233,7 +233,19 @@ export function merged(ours: Canvas, theirs: Canvas, now = Date.now()): Canvas {
 
   const kept = keptIcon(ours.icon ?? null, theirs.icon ?? null)
   const nodes = mergeList(ours.nodes, theirs.nodes, ours, theirs, gone)
-  const held = new Set(nodes.map((node) => node.id))
+  const cards = new Set(nodes.map((node) => node.id))
+  // An edge whose card the merge dropped has nowhere to be, and the format
+  // has no place to put one that ends in the air.
+  const edges = mergeList(ours.edges, theirs.edges, ours, theirs, gone).filter(
+    (edge) => cards.has(edge.fromNode) && cards.has(edge.toNode),
+  )
+  const ink = mergeList(ours.ink, theirs.ink, ours, theirs, gone)
+
+  // Everything kept keeps its time, edges and ink as much as cards. A stroke kept
+  // over a tombstone because it was recoloured after the erase, and written back
+  // without its time, read as never touched at the next merge - and lost to that
+  // same tombstone there (#500).
+  const held = new Set([...cards, ...edges.map((edge) => edge.id), ...ink.map((one) => one.id)])
 
   const at = noTimes()
   for (const id of new Set([...Object.keys(ours.at), ...Object.keys(theirs.at)])) {
@@ -243,12 +255,8 @@ export function merged(ours: Canvas, theirs: Canvas, now = Date.now()): Canvas {
 
   return {
     nodes,
-    // An edge whose card the merge dropped has nowhere to be, and the format
-    // has no place to put one that ends in the air.
-    edges: mergeList(ours.edges, theirs.edges, ours, theirs, gone).filter(
-      (edge) => held.has(edge.fromNode) && held.has(edge.toNode),
-    ),
-    ink: mergeList(ours.ink, theirs.ink, ours, theirs, gone),
+    edges,
+    ink,
     at,
     gone,
     icon: kept,

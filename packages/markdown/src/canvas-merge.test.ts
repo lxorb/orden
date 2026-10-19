@@ -167,6 +167,67 @@ describe('merging two copies of a canvas', () => {
     expect(merged(ours, shared, 1000).edges).toEqual([])
   })
 
+  /** Recoloured on one device after it was erased on the other: kept, and kept
+   *  with its time, or the next merge reads it as never touched and the same
+   *  tombstone takes it after all (#500). */
+  test('keeps the time of an edge or a stroke it kept over a tombstone', () => {
+    const now = 10_000_000
+    const ours = plane({
+      nodes: [card('a'), card('b')],
+      edges: [{ id: 'e', fromNode: 'a', toNode: 'b' }],
+      ink: [stroke('s')],
+      at: { a: now - 9000, b: now - 9000, e: now - 1000, s: now - 1000 },
+    })
+    const theirs = plane({
+      nodes: [card('a'), card('b')],
+      at: { a: now - 9000, b: now - 9000 },
+      gone: { e: now - 5000, s: now - 5000 },
+    })
+
+    for (const once of [merged(ours, theirs, now), merged(theirs, ours, now)]) {
+      expect(once.at).toMatchObject({ e: now - 1000, s: now - 1000 })
+
+      const twice = merged(once, theirs, now)
+      expect(twice.edges.map((edge) => edge.id)).toEqual(['e'])
+      expect(twice.ink.map((one) => one.id)).toEqual(['s'])
+    }
+  })
+
+  test('and keeps them through the files the sync writes, merge after merge', () => {
+    const now = 10_000_000
+    const ours = writeCanvas(
+      plane({
+        nodes: [card('a'), card('b')],
+        edges: [{ id: 'e', fromNode: 'a', toNode: 'b' }],
+        ink: [stroke('s')],
+        at: { a: now - 9000, b: now - 9000, e: now - 1000, s: now - 1000 },
+      }),
+    )
+    const theirs = writeCanvas(
+      plane({
+        nodes: [card('a'), card('b')],
+        at: { a: now - 9000, b: now - 9000 },
+        gone: { e: now - 5000, s: now - 5000 },
+      }),
+    )
+
+    const once = mergeCanvasFiles(ours, theirs, now)
+    const twice = readCanvas(mergeCanvasFiles(once, theirs, now))
+    expect(twice.edges.map((edge) => edge.id)).toEqual(['e'])
+    expect(twice.ink.map((one) => one.id)).toEqual(['s'])
+  })
+
+  test('forgets the time of an edge or a stroke a tombstone did take', () => {
+    const now = 10_000_000
+    const ours = plane({ ink: [stroke('s')], at: { s: now - 5000 } })
+    const theirs = plane({ gone: { s: now - 1000 } })
+
+    const one = merged(ours, theirs, now)
+    expect(one.ink).toEqual([])
+    expect(one.at).toEqual({})
+    expect(one.gone).toEqual({ s: now - 1000 })
+  })
+
   test('keeps a canvas neither side changed exactly as it was', () => {
     const shared = stamped(plane(), plane({ nodes: [card('a'), card('b')] }), 100)
     expect(writeCanvas(merged(shared, shared, 1000))).toBe(writeCanvas(shared))
