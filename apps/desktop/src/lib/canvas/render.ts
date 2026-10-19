@@ -11,6 +11,8 @@
  *  looked at renders nothing at all. */
 
 import { hardBreaks, renderMarkdown } from '@nib/markdown'
+import { BASE } from '../api'
+import { accountAddress } from '../assets'
 import { isPicturePath } from '../space-paths'
 import { assetUrl, joinPath } from '../tauri'
 import { enginesArrived } from '../engines.svelte'
@@ -74,6 +76,16 @@ export function isPicture(file: string): boolean {
 export function fileUrl(file: string, root: string | null): string {
   if (/^https?:\/\//i.test(file)) return file
   return root ? assetUrl(joinPath(root, file)) : file
+}
+
+/** Where a card the web app wrote before #364 is loaded from. Pasting while signed in,
+ *  it wrote the account's picture, `/i/<hash>.<ext>`, down as a path in the space,
+ *  `i/<hash>.<ext>`. Where the space has no such file - the card's picture did not
+ *  load - and the reader is signed in, that is the account's picture, and is loaded from
+ *  there; the canvas is not rewritten. Null for any other card. */
+export function keptByAccount(file: string, signedIn: boolean): string | null {
+  if (!signedIn || !/^i\/[0-9a-f]{64}\.[a-z0-9]+$/i.test(file)) return null
+  return accountAddress(`${BASE}/${file}`)
 }
 
 /** The markdown of the note a file node names, or null when the space holds

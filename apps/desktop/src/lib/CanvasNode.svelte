@@ -19,7 +19,8 @@
     type Text,
   } from '@nib/editor'
   import type { CanvasNode } from './canvas/format'
-  import { cardHtml, fileSource, fileUrl, isPicture } from './canvas/render'
+  import { cardHtml, fileSource, fileUrl, isPicture, keptByAccount } from './canvas/render'
+  import { account } from './account.svelte'
   import CanvasPdf from './CanvasPdf.svelte'
   import { isLineShape, shapeLine, shapePath } from './canvas/geometry'
   import { shownColour } from './canvas/palette'
@@ -140,12 +141,24 @@
    *  attachments, a share that left them behind. Shown as a quiet placeholder, because
    *  the card is still where somebody put it and the plane is still readable. */
   let broken = $state(false)
+  /** The account's address for a card that names its picture as a path in the space,
+   *  tried once the space had no such file; see `keptByAccount`. */
+  let instead = $state<string | null>(null)
 
   $effect(() => {
     // The card being pointed at a different file is a different question, so the
     // path is read for its own sake and the answer starts again with it.
-    if (node.type === 'file' && node.file) broken = false
+    if (node.type === 'file' && node.file) {
+      broken = false
+      instead = null
+    }
   })
+
+  function unloaded(file: string) {
+    const elsewhere = instead ? null : keptByAccount(file, !!account.accountToken)
+    if (elsewhere) instead = elsewhere
+    else broken = true
+  }
 
   /** A link node's host, which is the closest thing to a title that can be known
    *  without asking the web for one. */
@@ -311,10 +324,10 @@
       {:else}
         <img
           class="picture"
-          src={fileUrl(node.file, root)}
+          src={instead ?? fileUrl(node.file, root)}
           alt={node.file}
           draggable="false"
-          onerror={() => (broken = true)}
+          onerror={() => unloaded(node.file)}
         />
       {/if}
     {:else if /\.pdf$/i.test(node.file)}

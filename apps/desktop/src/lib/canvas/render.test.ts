@@ -18,7 +18,7 @@ vi.mock('../link-index.svelte', () => ({
   },
 }))
 
-const { cardHtml, fileUrl } = await import('./render')
+const { cardHtml, fileUrl, keptByAccount } = await import('./render')
 
 const HOSTILE = '<img src=x onerror="alert(1)"> and <u>more</u>'
 
@@ -71,5 +71,20 @@ describe('a picture on the plane', () => {
     expect(fileUrl('pictures/a.png', '/space')).toContain('pictures/a.png')
     expect(fileUrl('pictures/a.png', '/space')).not.toBe('pictures/a.png')
     expect(fileUrl('pictures/a.png', null)).toBe('pictures/a.png')
+  })
+})
+
+describe('a card the web app wrote before #364', () => {
+  const HASH = 'f41264ebbcf7b79f05aa6c7992fd339248711a8f0c775c7394a8c71bb3e1eea3'
+
+  test('names the account’s picture as a path, and is loaded from the account', () => {
+    expect(keptByAccount(`i/${HASH}.png`, true)).toBe(`https://orden.so/i/${HASH}.png`)
+  })
+
+  test('is left alone signed out, and every other card is', () => {
+    expect(keptByAccount(`i/${HASH}.png`, false)).toBeNull()
+    expect(keptByAccount('i/cat.png', true)).toBeNull()
+    expect(keptByAccount(`pictures/i/${HASH}.png`, true)).toBeNull()
+    expect(keptByAccount(`assets/${HASH.slice(0, 16)}.png`, true)).toBeNull()
   })
 })

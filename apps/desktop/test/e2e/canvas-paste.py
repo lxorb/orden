@@ -7,7 +7,8 @@ See `fileUrl` in canvas/render.ts.
 
 Against the real Worker, on the built web app: a PNG pasted onto a canvas - signed in,
 and on a device that is not - comes up as a picture that has loaded, and is still one
-after the canvas is opened again.
+after the canvas is opened again. And a card the web app wrote before the fix, naming the
+account's picture as `i/<hash>.png`, is loaded from the account by somebody signed in.
 
     python apps/desktop/test/e2e/canvas-paste.py
 """
@@ -15,6 +16,7 @@ after the canvas is opened again.
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
 import struct
 import zlib
@@ -110,6 +112,37 @@ def pasted(page: Page, label: str, path: str) -> None:
         wrong(f"[{label}] after a reload the picture did not load: {page.evaluate(PICTURES)}")
 
 
+#: The picture's hash, which is the name the account keeps it under.
+HASH = hashlib.sha256(base64.b64decode(PICTURE)).hexdigest()
+
+
+def written_before(page: Page, label: str, signed: bool) -> None:
+    """A card the web app wrote before #364: the account's picture as a path in the
+    space. Signed in, it is loaded from the account; signed out, it is still nothing."""
+    root = page.evaluate("() => window.nibApp.workspace.activeSpace.root.replace(/\\/+$/, '')")
+    path = f"{root}/Before.canvas"
+    card = {"id": "old", "type": "file", "file": f"i/{HASH}.png", "x": 0, "y": 0, "width": 320, "height": 224}
+    page.evaluate(
+        "async ([path, text]) => { const ws = window.nibApp.workspace;"
+        " await window.nibApp.tasks().then((t) => t.writeFile(path, text));"
+        " await ws.loadTree(); await ws.openEntry(path, { activate: true }) }",
+        [path, json.dumps({"nodes": [card], "edges": []})],
+    )
+    wait(page, "() => !!document.querySelector('.canvas [data-id=\"old\"]')", f"[{label}] the old card")
+    if signed:
+        try:
+            wait(page, f"() => ({PICTURES})().some((one) => one.loaded)", f"[{label}] the old card's picture")
+            say(f"ok   [{label}] a card written before #364 is loaded from the account")
+        except SystemExit:
+            wrong(f"[{label}] a card written before #364 did not load: {page.evaluate(PICTURES)}")
+    else:
+        page.wait_for_timeout(1500)
+        if page.evaluate(f"() => ({PICTURES})().some((one) => one.loaded)"):
+            wrong(f"[{label}] a card written before #364 loaded with nobody signed in")
+        else:
+            say(f"ok   [{label}] a card written before #364 is nothing, with nobody signed in")
+
+
 def drive(browser: Browser, token: str) -> None:
     for label, signed in (("signed in", True), ("signed out", False)):
         context = browser.new_context(viewport={"width": 1280, "height": 820})
@@ -120,6 +153,7 @@ def drive(browser: Browser, token: str) -> None:
         page.goto(ORIGIN, wait_until="domcontentloaded")
         path = board(page, label)
         pasted(page, label, path)
+        written_before(page, label, signed)
         context.close()
 
 
