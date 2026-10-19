@@ -6,6 +6,7 @@ import { closesFence, fenceMark } from './fences'
 import { highlightTone, readHighlight } from './highlights'
 import { escape, fragment } from './html'
 import { firstStart, lineStart, matchesAt } from './starts'
+import { remembering } from './tags'
 
 /** Only the three that matter in element content, which is where the source of
  *  an equation that would not parse ends up. */
@@ -41,6 +42,31 @@ function math(tex: string, display: boolean): string {
   }
 }
 
+/** What is known of where highlights close in one run of inline text, by the
+ *  run's own token list: how far from the end of the run the closer stands, or -1
+ *  for none at all. */
+const CLOSERS = new WeakMap<Token[], number>()
+
+/** Where the `==` closing a highlight that opens `src` stands, or -1: the first
+ *  at index 3 or later with no blank before it, which is what
+ *  `/^==(?=\S)([\s\S]*?\S)==/` matched - found once per run, not once per `==`.
+ *
+ *  That pattern scanned to the end of the paragraph at every `==` that never
+ *  closed, so a paragraph of them took seconds (#494). Marked asks again at every
+ *  position with what is left of the run, and the same list of tokens, so what is
+ *  left only ever shrinks from the front: a closer found for one ask is the first
+ *  for every later ask that starts before it, and none for one is none for all. */
+function highlightEnd(src: string, tokens: Token[] | undefined): number {
+  const left = tokens ? CLOSERS.get(tokens) : undefined
+  if (left === -1) return -1
+  if (left !== undefined && src.length - left >= 3) return src.length - left
+
+  let at = src.indexOf('==', 3)
+  while (at !== -1 && !/\S/.test(src.charAt(at - 1))) at = src.indexOf('==', at + 1)
+  if (tokens) CLOSERS.set(tokens, at === -1 ? -1 : src.length - at)
+  return at
+}
+
 /** `==marked==`, and `==🔴 marked==` for one of the five colours Obsidian writes.
  *
  *  The colour comes off the front of the words before they are tokenized, so it
@@ -53,22 +79,23 @@ function math(tex: string, display: boolean): string {
  *  Word highlight and the RTF colour a document export writes are all read off
  *  the same answer. See `documentOf` in apps/desktop/src/lib/export/document.ts,
  *  the other reader. */
-export const highlight: MarkedExtension = {
+export const highlight: MarkedExtension = remembering({
   extensions: [
     {
       name: 'highlight',
       level: 'inline',
       start: (src: string) => src.indexOf('=='),
-      tokenizer(src: string) {
-        const match = /^==(?=\S)([\s\S]*?\S)==/.exec(src)
-        if (!match?.[1]) return undefined
+      tokenizer(src: string, tokens: Token[]) {
+        if (!src.startsWith('==') || !/\S/.test(src.charAt(2))) return undefined
+        const end = highlightEnd(src, tokens)
+        if (end === -1) return undefined
 
-        const { colour, from } = readHighlight(match[1])
-        const words = match[1].slice(from)
+        const { colour, from } = readHighlight(src.slice(2, end))
+        const words = src.slice(2 + from, end)
 
         return {
           type: 'highlight',
-          raw: match[0],
+          raw: src.slice(0, end + 2),
           text: words,
           tone: colour.tone,
           tokens: this.lexer.inlineTokens(words),
@@ -81,7 +108,7 @@ export const highlight: MarkedExtension = {
       },
     },
   ],
-}
+})
 
 /** `H~2~O` and `X^2^`
  *
@@ -91,7 +118,7 @@ export const highlight: MarkedExtension = {
  *  src=x onerror=...>~` is not a raw HTML token, so nothing else would have
  *  caught it - and it also meant that emphasis inside a subscript came out as
  *  its own asterisks. */
-export const scripts: MarkedExtension = {
+export const scripts: MarkedExtension = remembering({
   extensions: [
     {
       name: 'subscript',
@@ -130,7 +157,7 @@ export const scripts: MarkedExtension = {
       },
     },
   ],
-}
+})
 
 /** A formula, drawn, with the source it was drawn from on the element around it.
  *
@@ -151,7 +178,7 @@ function drawing(token: Tokens.Generic, display: boolean): string {
 
 /** `$inline$`, and a `$$` block written either way. Where the block begins and
  *  ends is blocks.ts, which slides.ts reads without any of this. */
-export const maths: MarkedExtension = {
+export const maths: MarkedExtension = remembering({
   extensions: [
     {
       ...blockMath,
@@ -169,7 +196,7 @@ export const maths: MarkedExtension = {
       renderer: (token: Tokens.Generic) => drawing(token, false),
     },
   ],
-}
+})
 
 /** The opening paragraph of a callout with its marker line taken off.
  *
@@ -252,7 +279,7 @@ export const callouts: MarkedExtension = {
 }
 
 /** `:smile:` becomes the character it names. */
-export const emoji: MarkedExtension = {
+export const emoji: MarkedExtension = remembering({
   extensions: [
     {
       name: 'emoji',
@@ -280,7 +307,7 @@ export const emoji: MarkedExtension = {
       renderer: (token: Tokens.Generic) => String(token.text),
     },
   ],
-}
+})
 
 /** A definition list, drawn. What one is, and how far it reaches, is blocks.ts. */
 export const definitionLists: MarkedExtension = {
@@ -394,7 +421,7 @@ function footnoteDefinition(src: string, at: number): number | null {
 }
 
 /** `[^1]` in the text, `[^1]: …` at the bottom. */
-export const footnotes: MarkedExtension = {
+export const footnotes: MarkedExtension = remembering({
   extensions: [
     {
       name: 'footnoteDef',
@@ -434,4 +461,4 @@ export const footnotes: MarkedExtension = {
       },
     },
   ],
-}
+})

@@ -7,7 +7,13 @@
  *  the renderer below and the `#` popup read it here; the index's twins are the
  *  app's search/tags.ts and the crate's tags.rs. */
 
-import type { MarkedExtension, Token, Tokens } from 'marked'
+import type {
+  MarkedExtension,
+  Token,
+  TokenizerAndRendererExtension,
+  TokenizerExtension,
+  Tokens,
+} from 'marked'
 import { attributeUrl, escapeAll } from './html'
 
 export const TAG_NAME = String.raw`\p{L}[\p{L}\p{N}\-_/]*`
@@ -54,15 +60,29 @@ export type TagHref = (tag: string) => string | null
  *  is drawn here and left as words in the editor. The token carries its words as
  *  `text` for readers that never heard of a tag - a Word document, the glasses. */
 export function hashtags(href?: TagHref): MarkedExtension {
-  return {
+  /** What was left of each run the last time it asked. */
+  const seen = new WeakMap<Token[], string>()
+
+  return remembering({
     extensions: [
       {
         name: 'hashtag',
         level: 'inline',
         start: nextTag,
         tokenizer(src: string, tokens: Token[]) {
-          if (this.lexer.state.inLink) return undefined
-          if (!opensTag(tokens.at(-1)?.raw.slice(-1) ?? '')) return undefined
+          const before = seen.get(tokens)
+          seen.set(tokens, src)
+          if (this.lexer.state.inLink || !src.startsWith(HASH)) return undefined
+
+          // The character before, read from what was left the last time this run
+          // asked, which is this tail and more. Reading it off the token before
+          // flattened that token's text, which marked grows a piece at a time:
+          // once per break in a paragraph, and quadratic (#546).
+          const last =
+            before !== undefined && before.length > src.length
+              ? before.charAt(before.length - src.length - 1)
+              : (tokens.at(-1)?.raw.slice(-1) ?? '')
+          if (!opensTag(last)) return undefined
 
           const name = tagNameAt(src, 0)
           if (name === null) return undefined
@@ -82,5 +102,60 @@ export function hashtags(href?: TagHref): MarkedExtension {
         },
       },
     ],
+  })
+}
+
+/** Inline extensions whose `start` reads each run of text once, not once per
+ *  break in it.
+ *
+ *  Marked asks every inline `start` again at each break in a run of text, with
+ *  all that is left of the run, so one that reads what it is given read the run
+ *  once per break: a paragraph of `!a ` took seconds (#546). There is no blank
+ *  line to stop at here, as `paragraphWindow` has for a block.
+ *
+ *  But what is left only ever shrinks from the front, and the answer carries over.
+ *  If the first place was `at` for some tail, it is the first place for every
+ *  shorter tail that still holds it; and none for one tail is none for all of
+ *  them. So the answer is kept as a distance from the end, by the run's token
+ *  list, and read again only once the run has passed it.
+ *
+ *  Which run a `start` is asked about is told by the tokenizer beside it: marked
+ *  asks every inline tokenizer, with the tail and the run's token list, before it
+ *  asks any `start` with that tail less its first character.
+ *
+ *  Here, beside the one inline extension the app loads before it first draws,
+ *  rather than in starts.ts, which it does not load until later. */
+export function remembering(extension: MarkedExtension): MarkedExtension {
+  return { ...extension, extensions: extension.extensions?.map(remembered) ?? null }
+}
+
+function remembered(extension: TokenizerAndRendererExtension): TokenizerAndRendererExtension {
+  if (!('tokenizer' in extension) || extension.level !== 'inline') return extension
+  const { start, tokenizer } = extension
+  if (!start) return extension
+
+  const answers = new WeakMap<object, number>()
+  let tokens: object | null = null
+  let length = -1
+
+  const remembering: Pick<TokenizerExtension, 'start' | 'tokenizer'> = {
+    tokenizer(src, list) {
+      tokens = list
+      length = src.length
+      return tokenizer.call(this, src, list)
+    },
+    start(src) {
+      if (tokens === null || src.length !== length - 1) return start.call(this, src)
+
+      const known = answers.get(tokens)
+      if (known === -1) return undefined
+      if (known !== undefined && src.length >= known) return src.length - known
+
+      const at = start.call(this, src)
+      const found = typeof at === 'number' && at >= 0
+      answers.set(tokens, found ? src.length - at : -1)
+      return found ? at : undefined
+    },
   }
+  return { ...extension, ...remembering }
 }

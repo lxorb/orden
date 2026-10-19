@@ -5,7 +5,7 @@ import { readSite, SVG_POLICY } from './blog/site'
 import { now } from './crypto'
 import { readSpaceFiles } from './spaces/files'
 import { BYTES, hashOfBytes, held, holdsItsName, WRONG_BYTES } from './sync2/files'
-import { fits } from './storage'
+import { fits, fitsSql } from './storage'
 import type { Env, Variables } from './types'
 
 /** What may be stored, and how much of each.
@@ -102,13 +102,23 @@ blobs.put('/:hash', async (context) => {
   // And the row may already be this account's by the time this runs: the check
   // above is not a lock, and a paste that went up twice at once used to answer
   // the second one with a 500. The same bytes under the same hash are the same
-  // row, so there is nothing to write and nothing to say about it.
-  await context.env.DB.prepare(
-    `insert into blobs (hash, user_id, size, type, created_at) values (?, ?, ?, ?, ?)
+  // row, so there is nothing to write and nothing to say about it. Written only while
+  // it fits, asked by the write itself, for the same reason (#469); refused, the
+  // bytes put there for it go again unless somebody keeps them.
+  const written = await context.env.DB.prepare(
+    `insert into blobs (hash, user_id, size, type, created_at)
+     select ?1, ?2, ?3, ?4, ?5 where ${fitsSql('?2', '?3')}
      on conflict(hash, user_id) do nothing`,
   )
     .bind(hash, user.id, body.byteLength, type, now())
     .run()
+  if (!written.meta.changes) {
+    const after = await held(context.env, user.id, hash)
+    if (!after.mine) {
+      if (!after.there) await context.env.NOTES.delete(key(hash))
+      return context.json({ error: OUT_OF_SPACE }, 507)
+    }
+  }
 
   return context.json({ hash, stored: true }, 201)
 })

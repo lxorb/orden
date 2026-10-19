@@ -25,6 +25,7 @@ import { isHiddenTabs } from '../workspace/sets'
 import { projectsOf, setProjects } from '../rows/projects'
 import { workspace } from '../workspace.svelte'
 import type { Field, Group, Pane } from './fields'
+import { versionField } from './version.svelte'
 
 /** Whose a key that is both the app's and the shell's is, one row each: asked every
  *  time, the app's command, or the shell's character. A row for every key somebody has
@@ -409,18 +410,26 @@ export function generalPane(): Pane {
       // Only a desktop has a terminal; see docs/terminal.md.
       ...(!__EVEN_PLUGIN__ && isDesktop ? [terminalGroup()] : []),
 
-      // Only the desktop app installs anything: a page is the new version the
-      // moment it is reloaded, and a phone app is the store's business. So the
-      // row is not there at all rather than there and answering nothing.
+      // Which version this is, on every build, and the channel it follows where it
+      // follows one (#490): the desktop's release channel, chosen here, or the web app's
+      // two builds; a phone's updates are the store's.
       //
-      // The choice stays on this machine, since it is about this machine: one
-      // laptop can run the build of main while the desktop stays on the
-      // releases. See updates.svelte.ts.
-      ...(isDesktop
-        ? ([
-            {
-              title: t('Updates'),
-              fields: [
+      // Only the desktop app installs anything: a page is the new version the moment it
+      // is reloaded, and a phone app is the store's business. So its row is not there at
+      // all rather than there and answering nothing. The choice stays on this machine,
+      // since it is about this machine: one laptop can run the build of main while the
+      // desktop stays on the releases. See updates.svelte.ts.
+      //
+      // The web app's own pair is the release or the edge of `unstable`, chosen for this
+      // browser by a cookie the Worker keeps (#424). Choosing loads the page again from
+      // the other build, so the row says what is running rather than what was last
+      // pressed. `__EVEN_PLUGIN__` said here as well as in `webChannel`, so the plugin's
+      // build drops the row before it decides which catalogue rows to keep.
+      {
+        title: t('Updates'),
+        fields: [
+          ...(isDesktop
+            ? ([
                 {
                   kind: 'segmented',
                   label: t('Release channel'),
@@ -436,22 +445,10 @@ export function generalPane(): Pane {
                   get: () => updates.channel,
                   set: (value) => updates.setChannel(asChannel(value)),
                 },
-              ],
-            },
-          ] satisfies Group[])
-        : []),
-
-      // The web app's own pair: the release, or the edge of `unstable`, chosen for this
-      // browser by a cookie the Worker keeps (#424). Choosing loads the page again from
-      // the other build, so the row says what is running rather than what was last
-      // pressed. Not in the desktop and phone apps, which have the channel above or the
-      // store's. `__EVEN_PLUGIN__` said here as well as in `webChannel`, so the plugin's
-      // build drops the row before it decides which catalogue rows to keep.
-      ...(!__EVEN_PLUGIN__ && webChannel
-        ? ([
-            {
-              title: t('Updates'),
-              fields: [
+              ] satisfies Field[])
+            : []),
+          ...(!__EVEN_PLUGIN__ && webChannel
+            ? ([
                 {
                   kind: 'segmented',
                   label: t('Web version'),
@@ -467,10 +464,11 @@ export function generalPane(): Pane {
                   get: () => webChannel ?? 'stable',
                   set: (value) => switchWebChannel(asChannel(value)),
                 },
-              ],
-            },
-          ] satisfies Group[])
-        : []),
+              ] satisfies Field[])
+            : []),
+          versionField(),
+        ],
+      },
     ],
   }
 }

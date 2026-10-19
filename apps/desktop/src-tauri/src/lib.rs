@@ -243,6 +243,9 @@ mod web_tint;
 mod web_wheel;
 #[cfg(desktop)]
 mod web_worlds;
+// The window moved and resized by the page's own presses on Linux; see window_drag.rs.
+#[cfg(desktop)]
+mod window_drag;
 // What every browser's import reads profiles and their files with; see
 // browser_profiles.rs.
 #[cfg(desktop)]
@@ -421,6 +424,7 @@ macro_rules! desktop_commands {
             obsidian_vaults::obsidian_vault_files,
             obsidian_vaults::read_obsidian_file,
             full_screen::window_fullscreen,
+            window_drag::window_move_resize,
             full_screen::window_is_fullscreen,
             zen_profiles::zen_profiles,
             zen_profiles::read_zen_file,

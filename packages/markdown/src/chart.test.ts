@@ -318,3 +318,11 @@ describe('the kinds that were drawn as a bar chart', () => {
     }
   })
 })
+
+describe('a kind an object would answer from its prototype', () => {
+  test('is a kind nothing knows, and the fence keeps its characters', () => {
+    for (const kind of ['constructor', '__proto__', 'toString']) {
+      expect(readChart(`type: ${kind}\nlabels: [a]\nseries:\n  - data: [1]\n`)).toBeNull()
+    }
+  })
+})

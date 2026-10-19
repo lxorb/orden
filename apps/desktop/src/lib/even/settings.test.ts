@@ -73,14 +73,14 @@ describe('every glasses setting', () => {
       // typed one per kind and a cast here would be a test of the cast.
       if (field.kind === 'switch') field.set(other as boolean)
       else if (field.kind === 'slider') field.set(other as number)
-      else field.set(other as string)
+      else if (field.kind !== 'value') field.set(other as string)
 
       expect(field.get()).toBe(other)
       expect(glassesStamp()).not.toBe(stamp)
 
       if (field.kind === 'switch') field.set(was as boolean)
       else if (field.kind === 'slider') field.set(was as number)
-      else field.set(was as string)
+      else if (field.kind !== 'value') field.set(was as string)
 
       expect(field.get()).toBe(was)
       // The whole of what the panel watches, back where it was: this is what makes

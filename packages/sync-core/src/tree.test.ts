@@ -124,6 +124,51 @@ describe('tree', () => {
     expect(live(state, 'old')).toBe(false)
   })
 
+  test('a folder delete keeps what another device moved in, even renamed since by one that never saw it there (#514)', () => {
+    // The phone moved a note into the laptop's folder. The laptop, offline, renamed the
+    // note where it last saw it and deleted the folder, empty as far as it knew. Its own
+    // rename took over who last changed the note, and the folder took it, words and all.
+    const state = treeState()
+    mkdir(state, 'f', 'Work')
+    create(state, 'n', 'Plan.md')
+    const seen = state.cursor
+    applyOp(state, { op: opId(), t: 'move', id: 'n', parent: 'f', seen }, PHONE)
+
+    applyOp(state, { op: opId(), t: 'rename', id: 'n', name: 'Untitled.md', seen }, OWNER)
+    const result = applyOp(state, { op: opId(), t: 'delete', id: 'f', seen }, OWNER)
+    expect(result).toMatchObject({ refused: 'edited' })
+    expect(live(state, 'n')).toBe(true)
+    expect(live(state, 'f')).toBe(true)
+    expect(state.entries.get('n')?.name).toBe('Untitled.md')
+  })
+
+  test("a rename made having seen the last change is the renaming device's own", () => {
+    const state = treeState()
+    mkdir(state, 'f', 'Work')
+    applyOp(
+      state,
+      {
+        op: opId(),
+        t: 'create',
+        id: 'n',
+        kind: 'note',
+        parent: 'f',
+        name: 'Plan.md',
+        seen: state.cursor,
+      },
+      PHONE,
+    )
+
+    applyOp(
+      state,
+      { op: opId(), t: 'rename', id: 'n', name: 'Notes.md', seen: state.cursor },
+      OWNER,
+    )
+    applyOp(state, { op: opId(), t: 'delete', id: 'f', seen: state.cursor }, OWNER)
+    expect(live(state, 'n')).toBe(false)
+    expect(live(state, 'f')).toBe(false)
+  })
+
   test('a folder delete that saw everything takes everything, and a restore brings it back', () => {
     const state = treeState()
     mkdir(state, 'f', 'Work')

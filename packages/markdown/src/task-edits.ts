@@ -335,23 +335,29 @@ function unknownFieldEdits(
   const next = change.fields
   const before = parsed.fields.fields
 
+  // The keys are the writer's, so neither record may answer one from its
+  // prototype: `toString` is a field like any other.
+  const own = (fields: Record<string, string>, key: string) =>
+    Object.hasOwn(fields, key) ? fields[key] : undefined
+
   for (const token of parsed.tokens) {
     if (token.field !== 'other' || token.key === undefined) continue
     const key = token.key.trim()
     if (gone.has(token)) {
-      const value = next[key]
+      const value = own(next, key)
       if (value !== undefined) arriving.push({ rank: RANK.other, text: `[${key}:: ${value}]` })
       continue
     }
-    if (!(key in next)) {
+    if (!Object.hasOwn(next, key)) {
       gone.add(token)
       taking.push(token)
-    } else if (next[key] !== before[key]) {
-      edits.push({ from: token.valueFrom, to: token.valueTo, insert: next[key] ?? '' })
+    } else if (own(next, key) !== own(before, key)) {
+      edits.push({ from: token.valueFrom, to: token.valueTo, insert: own(next, key) ?? '' })
     }
   }
   for (const [key, value] of Object.entries(next)) {
-    if (!(key in before)) arriving.push({ rank: RANK.other, text: `[${key}:: ${value}]` })
+    if (!Object.hasOwn(before, key))
+      arriving.push({ rank: RANK.other, text: `[${key}:: ${value}]` })
   }
   return edits
 }

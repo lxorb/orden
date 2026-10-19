@@ -22,6 +22,8 @@ interface Resettable {
  *  that was already right. */
 export function resetFields(fields: Iterable<Field>): void {
   for (const field of fields) {
+    // Said rather than set: nothing to put back.
+    if (field.kind === 'value') continue
     const one: Resettable = field
     if (one.initial !== undefined && one.get() !== one.initial) one.set(one.initial)
   }

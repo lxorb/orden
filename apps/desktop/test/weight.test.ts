@@ -779,13 +779,19 @@ function holds(tail: string): boolean {
  *  the Unstable mark in Titlebar.svelte), and a listing from a Worker that has never
  *  heard of a space's order is let be (#423). Measured 3,244,207.
  *
- *  Raised 2026-10-19, to 3,253,100, for the bug burn-down's data-loss fixes in the save
+ *  Raised 2026-10-19, to 3,250,000, for the bug fixes after #419: the version row in
+ *  Settings (#490), and markdown's lookups by Map and CommonMark's fence rule (#492,
+ *  #493), had taken the room down to 17 bytes, and fixes in @nib/markdown land beside
+ *  the app's in parallel. Measured 3,244,983.
+ *
+ *  Raised 2026-10-19, to 3,258,100, for the bug burn-down's data-loss fixes in the save
  *  path every note is written through: a draft's name claimed on disk and a write held
  *  under a move (`claim`, `holdingUnder` in workspace/saving.svelte.ts), a closed note
  *  read again before it is written (`writeClosed` in workspace/note-text.ts), and a link
- *  rewritten in the open document and at the moved note's new path (`retarget` in
- *  link-index.svelte.ts). Measured 3,252,041. */
-const BUDGET = 3_253_100
+ *  rewritten in the open document, at a moved note's new path and, for a merge, only
+ *  where it was (`retarget` and `Retargeting` in link-index.svelte.ts). Measured
+ *  3,257,093. */
+const BUDGET = 3_258_100
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

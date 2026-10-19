@@ -2,7 +2,7 @@
  *  saved, and each pushed once at its minute, against recorded answers of the three
  *  services. See src/push. */
 
-import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { momentOf } from '@nib/markdown/task-reminders'
 import { base64url, fromBase64url } from '../src/push/keys'
 import { remindersIn, sendDue } from '../src/push/reminders'
@@ -184,6 +184,70 @@ describe('sending', () => {
     const pem = `-----BEGIN PRIVATE KEY-----\n${btoa(String.fromCharCode(...der))}\n-----END PRIVATE KEY-----\n`
     return JSON.stringify({ client_email: 'nib@x.iam', private_key: pem, project_id: 'nib-test' })
   }
+
+  /** A reminder two days from now, at nine where the phone is: near enough that the
+   *  session is still good when the clock is moved to it. */
+  function soon() {
+    const day = new Date(Date.now() + 2 * 86_400_000).toISOString().slice(0, 10)
+    return {
+      task: `- [ ] Call the bank [remind:: ${day} 09:00]\n`,
+      at: momentOf({ date: day, time: '09:00' }, ZONE),
+    }
+  }
+
+  test('a reminder whose minute has gone by is still sent after the note is saved (#458)', async () => {
+    env.FCM_SERVICE_ACCOUNT = await serviceAccount()
+    await register({ kind: 'fcm', token: 'phone-token', zone: ZONE })
+    const { task, at } = soon()
+    const made = (await save('Plan.md', task)).json as { note: { id: string; version: number } }
+    expect(kept()).toHaveLength(1)
+
+    vi.useFakeTimers({ toFake: ['Date'] })
+    try {
+      // Typing on in the note, two seconds after its minute and before the cron.
+      vi.setSystemTime(at + 2000)
+      const saved = await call(env, `/v1/notes/${made.note.id}`, {
+        method: 'PUT',
+        token,
+        body: { content: `${task}and a line\n`, baseVersion: made.note.version },
+      })
+      expect(saved.status).toBe(200)
+      expect(kept()).toMatchObject([{ at, sent_at: null }])
+
+      const fcm = recorded(
+        () => Response.json({ access_token: 'access', expires_in: 3600 }),
+        () => Response.json({ name: 'projects/nib-test/messages/1' }),
+      )
+      expect(await sendDue(env, at + 5000, fcm.send)).toBe(1)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  test('but one written for a time already gone, or ticked once due, is not', async () => {
+    await register({ kind: 'fcm', token: 'phone-token', zone: ZONE })
+    const { task, at } = soon()
+
+    vi.useFakeTimers({ toFake: ['Date'] })
+    try {
+      vi.setSystemTime(at + 2000)
+      await save('Late.md', task)
+      expect(kept()).toEqual([])
+
+      vi.setSystemTime(at - 60_000)
+      const made = (await save('Plan.md', task)).json as { note: { id: string; version: number } }
+      expect(kept()).toHaveLength(1)
+      vi.setSystemTime(at + 2000)
+      await call(env, `/v1/notes/${made.note.id}`, {
+        method: 'PUT',
+        token,
+        body: { content: task.replace('[ ]', '[x]'), baseVersion: made.note.version },
+      })
+      expect(kept()).toEqual([])
+    } finally {
+      vi.useRealTimers()
+    }
+  })
 
   test('a due reminder goes to a phone once, as data the app decides on', async () => {
     env.FCM_SERVICE_ACCOUNT = await serviceAccount()

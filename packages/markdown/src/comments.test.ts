@@ -131,3 +131,29 @@ describe('a comment on the page', () => {
     expect(html).toContain('said out loud')
   })
 })
+
+/** #493: each of these let a comment through to the page. */
+describe('a comment after code that only looks like a fence', () => {
+  test('goes after a line of inline code in three backticks', () => {
+    const html = renderMarkdown('```inline```\n\n%%secret%%\n\nmore <!-- hidden -->', {
+      escapeHtml: true,
+    })
+    expect(html).toContain('<code>inline</code>')
+    expect(html).not.toContain('secret')
+    expect(html).not.toContain('hidden')
+    expect(html).toContain('more')
+  })
+
+  test('goes after a code span with a longer run of backticks inside it', () => {
+    expect(withoutComments('a `` x ``` y `` %%secret%% b')).toBe('a `` x ``` y ``  b')
+    expect(withoutComments('a `` %%secret%% ``` b')).toBe('a ``  ``` b')
+  })
+
+  test('goes from a fence’s info string, and never becomes its caption', () => {
+    expect(withoutComments('```js %%secret%%\nx %%kept%%\n```')).toBe('```js \nx %%kept%%\n```')
+    expect(withoutComments('```js <!-- open\nx\n```')).toBe('```js \nx\n```')
+    const html = renderMarkdown('```js src/a.ts %%secret%%\nx\n```', { escapeHtml: true })
+    expect(html).not.toContain('secret')
+    expect(html).toContain('<figcaption>src/a.ts</figcaption>')
+  })
+})

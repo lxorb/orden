@@ -290,6 +290,13 @@ describe('the release channel', () => {
     vi.resetModules()
   })
 
+  test('has the version after it, with the channel beside it', () => {
+    const general = desktop.find((one) => one.id === 'general')
+    const group = general?.groups.find((one) => one.fields.some((field) => field === row()))
+    expect(group?.fields.map((one) => one.label)).toEqual(['Release channel', 'Version'])
+    expect(group?.fields.at(-1)?.get()).toBe('under test · Stable')
+  })
+
   test('stands in for the web version, which the desktop app has no use for', () => {
     const labels = desktop.flatMap((one) => one.groups.flatMap((group) => group.fields))
     expect(labels.map((one) => one.label)).not.toContain('Web version')
@@ -364,6 +371,18 @@ describe('the web version', () => {
     expect(hint).toContain('Stable')
     expect(hint).toContain('Unstable')
     expect(hint).toContain('break')
+  })
+})
+
+/** Which version this is (#490): on every build, the last row of General > Updates. */
+describe('the version', () => {
+  test('is the last row of Updates under General, said beside the build the browser runs', () => {
+    const group = pane('general').groups.find((one) => one.title === 'Updates')
+    const last = group?.fields.at(-1)
+    expect(last?.label).toBe('Version')
+    expect(last?.kind).toBe('value')
+    expect(last?.get()).toBe('under test · Stable')
+    expect(last?.words).toEqual(expect.arrayContaining(['version', 'about']))
   })
 })
 

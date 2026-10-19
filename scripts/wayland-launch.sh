@@ -19,6 +19,8 @@
 #     pointer (scripts/wayland-pointer.py); and with COLD=n as well, Orden quit and
 #     started again n times, each on another screen and with no address, and the drive
 #     run on the web tab it came back to;
+#   - with DRAG=1, the window moved by its tab strip and resized by its edge with the
+#     compositor's own pointer (scripts/window-drag.py, #427);
 #   - with CHECK=1, what #418 asked of the engine, looked at and measured by
 #     scripts/wayland-418.py: the buttons' words, Settings' search, Ctrl+Tab, a web tab
 #     chosen, and three videos of three codecs (made here with ffmpeg).
@@ -133,7 +135,7 @@ endpoint() {
   chmod 600 "$config/automation.json"
 }
 command=("$@")
-if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ]; then
+if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ]; then
   mkdir -p "$out/site"
   video=""
   [ "${MEDIA:-0}" = 1 ] && video='<video src="none.webm" autoplay muted></video>'
@@ -180,7 +182,7 @@ PAGE
   endpoint
   set -- "$@" http://127.0.0.1:8765/
 fi
-if [ "${DRIVE:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ]; then
+if [ "${DRIVE:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ]; then
   # And a keyboard with it, where xkbcommon's tools can say what its keys are.
   if command -v xkbcli > /dev/null; then
     xkbcli compile-keymap --layout us > "$out/keymap.txt"
@@ -188,6 +190,20 @@ if [ "${DRIVE:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ]; then
   fi
   python3 "$here/wayland-pointer.py" "$out/pointer.fifo" > "$out/pointer.log" 2>&1 &
   pointer_pid=$!
+  # The pointer and the keyboard on the seat before Orden starts, and not while it does
+  # (#439): Xwayland makes each an input device of its own, and GTK 4 reads the X
+  # server's devices once as it opens the display. A device made between that reading
+  # and GTK listening for new ones is one GTK never learns of, and the first event from
+  # it is GDK handed no device - `gdk_device_get_n_axes: assertion 'GDK_IS_DEVICE
+  # (device)' failed` - and a crash.
+  said="a pointer is on the seat"
+  [ -n "${KEY_MAP:-}" ] && said="and a keyboard"
+  for _ in $(seq 100); do
+    grep -q "$said" "$out/pointer.log" 2>/dev/null && break
+    sleep 0.1
+  done
+  grep -q "$said" "$out/pointer.log" || { echo "::error::the stand-in pointer did not start"; cat "$out/pointer.log"; exit 1; }
+  sleep 0.5
 fi
 
 started=$(date +%s%N)
@@ -231,6 +247,11 @@ fi
 
 if [ "$status" = 0 ] && [ "${DRIVE:-0}" = 1 ]; then
   python3 "$here/wayland-drive.py" "$out" "$app_pid" || status=1
+fi
+
+if [ "$status" = 0 ] && [ "${DRAG:-0}" = 1 ]; then
+  sleep 3
+  python3 "$here/window-drag.py" sway "$out" "$app_pid" || status=1
 fi
 
 if [ "$status" = 0 ] && [ "${CHECK:-0}" = 1 ]; then

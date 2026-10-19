@@ -14,7 +14,7 @@ import type { Env } from './types'
 export const ASK_SIGNINS_EVERY = 60_000
 
 /** The question, with the hashes as JSON in `?1` and now in `?2`. */
-export const SIGNED_IN = `select value as login from json_each(?1)
+const SIGNED_IN = `select value as login from json_each(?1)
   where exists (select 1 from sessions s where s.token_hash = value and s.expires_at > ?2)
      or exists (select 1 from guest_sessions g where g.token_hash = value and g.expires_at > ?2)`
 

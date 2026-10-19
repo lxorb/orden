@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { HIGHLIGHT_COLOURS, highlightTone, readHighlight, writeHighlight } from './highlights'
+import { highlight } from './extensions'
 import { renderMarkdown, setHardBreaks } from './index'
 
 /** The markup is Obsidian's, and this is the whole of the claim: a colour emoji
@@ -105,5 +106,35 @@ describe('whether a single newline breaks the line', () => {
     } finally {
       setHardBreaks(false)
     }
+  })
+})
+
+/** #494: `/^==(?=\S)([\s\S]*?\S)==/` scanned to the end of the paragraph at every
+ *  `==` that never closed. Marked asks at every position with what is left of the
+ *  run and the same token list, which is what this does. */
+describe('a paragraph of highlights that never close', () => {
+  const tokenizer = (
+    highlight.extensions?.[0] as { tokenizer: (src: string, tokens: []) => unknown }
+  ).tokenizer
+
+  test('is read in linear time', () => {
+    const source = '==a '.repeat(50_000)
+    const tokens: [] = []
+    const lexer = { lexer: { inlineTokens: () => [] } }
+    let found = 0
+    const started = performance.now()
+    for (let at = 0; at < source.length; at += 4) {
+      if (tokenizer.call(lexer, source.slice(at), tokens)) found++
+    }
+    expect(performance.now() - started).toBeLessThan(500)
+    expect(found).toBe(0)
+  })
+
+  test('closes where the pattern closed, on the first `==` after something', () => {
+    expect(renderMarkdown('==a == b== and ==c==')).toBe(
+      '<p><mark>a == b</mark> and <mark>c</mark></p>\n',
+    )
+    expect(renderMarkdown('== a== ==b ==')).toBe('<p>== a== ==b ==</p>\n')
+    expect(renderMarkdown('==a ===')).toBe('<p><mark>a =</mark></p>\n')
   })
 })

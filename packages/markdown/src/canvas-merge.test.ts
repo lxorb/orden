@@ -335,3 +335,45 @@ describe('what stamping an edit compares', () => {
     expect(stampedNow.at).toEqual({ a: 3000, b: 3000, c: 3000 })
   })
 })
+
+/** The ids are the file's own, and a plain object answers `constructor` and
+ *  `__proto__` from its prototype: a time that was never written turned up as a
+ *  function, and the file written after it was not JSON. */
+describe('ids an object would answer from its prototype', () => {
+  const OBSIDIAN = JSON.stringify({
+    nodes: [
+      { id: 'constructor', type: 'text', x: 0, y: 0, width: 100, height: 50, text: 'c' },
+      { id: 'toString', type: 'text', x: 0, y: 0, width: 100, height: 50, text: 't' },
+    ],
+    edges: [],
+  })
+
+  test('have no time until one is written, and the file stays readable', () => {
+    const before = readCanvas(OBSIDIAN)
+    const after = stamped(before, { ...before, nodes: [...before.nodes, card('a')] }, 100)
+
+    expect(after.at).toEqual({ a: 100, constructor: 100, toString: 100 })
+    expect(ids(readCanvas(writeCanvas(after)))).toEqual(['constructor', 'toString', 'a'])
+  })
+
+  test('keep their times through a merge, `__proto__` among them', () => {
+    const ours = stamped(plane(), plane({ nodes: [card('__proto__'), card('constructor')] }), 100)
+    const theirs = stamped(ours, { ...ours, nodes: [card('constructor', 'moved')] }, 200)
+
+    expect(Object.hasOwn(ours.at, '__proto__')).toBe(true)
+    expect(readCanvas(writeCanvas(ours)).at).toEqual(ours.at)
+
+    const both = merged(ours, theirs, 300)
+    expect(ids(both)).toEqual(['constructor'])
+    expect(both.nodes[0]).toMatchObject({ text: 'moved' })
+    expect(Object.entries(both.gone)).toEqual([['__proto__', 200]])
+  })
+
+  test('are not taken for a time on a canvas built on a plain object', () => {
+    const one = { ...plane({ nodes: [card('constructor')] }), at: { constructor: 50 }, gone: {} }
+    const other = { ...plane({ nodes: [card('constructor', 'other')] }), at: {}, gone: {} }
+
+    expect(merged(one, other, 100).at).toEqual({ constructor: 50 })
+    expect(merged(other, one, 100).nodes[0]).toMatchObject({ text: 'constructor' })
+  })
+})

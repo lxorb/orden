@@ -77,7 +77,8 @@ function taskLines(content: string): { line: number; text: string }[] {
   return found
 }
 
-/** The next reminders a note's words ask for, after `now`. */
+/** The reminders a note's words ask for, after `now` - or after `from`, for a caller
+ *  that also wants the ones whose minute has just gone by. */
 export function remindersIn(
   content: string,
   space: string,
@@ -85,6 +86,7 @@ export function remindersIn(
   zone: string,
   auto: number | null,
   now: number,
+  from = now,
 ): Kept[] {
   const body = path.replace(/^.*\//, '').replace(/\.md$/i, '')
   const kept: Kept[] = []
@@ -94,7 +96,7 @@ export function remindersIn(
     const hash = taskHash(task.text)
     for (const wall of remindTimes(task, auto)) {
       const at = momentOf(wall, zone)
-      if (!(at > now)) continue
+      if (!(at > from)) continue
       kept.push({
         id: reminderId(space, path, hash, wall),
         at,
@@ -140,14 +142,30 @@ export async function keepReminders(env: Env, note: Saved, content: string, now 
     return
   }
 
-  const kept = remindersIn(content, owner.name, note.path, owner.zone, autoOf(owner.settings), now)
-  // What was sent stays sent: a save after a reminder rang does not ring it again.
-  const sent = await env.DB.prepare(
-    'select id, sent_at from push_reminders where note_id = ? and sent_at is not null',
-  )
+  // What the note kept before this save. What was sent stays sent: a save after a
+  // reminder rang does not ring it again. And one whose minute has gone by while the
+  // cron has not got to it yet stays to be sent, for as long as a reminder is kept: a
+  // room settles a note being typed in every second or so, and a save in the moment
+  // between the minute and the cron took the reminder away unsent (#458). Only one the
+  // note had already kept, and only while its task still asks for it: a reminder
+  // written for a time already past is not rung late.
+  const before = await env.DB.prepare('select id, sent_at from push_reminders where note_id = ?')
     .bind(note.id)
-    .all<{ id: string; sent_at: number }>()
-  const sentAt = new Map(sent.results.map((one) => [one.id, one.sent_at]))
+    .all<{ id: string; sent_at: number | null }>()
+  const sentAt = new Map(
+    before.results.flatMap((one) => (one.sent_at === null ? [] : [[one.id, one.sent_at] as const])),
+  )
+  const waiting = new Set(before.results.filter((one) => one.sent_at === null).map((one) => one.id))
+
+  const kept = remindersIn(
+    content,
+    owner.name,
+    note.path,
+    owner.zone,
+    autoOf(owner.settings),
+    now,
+    now - KEPT_FOR,
+  ).filter((one) => one.at > now || waiting.has(one.id))
 
   await env.DB.batch([
     forget,

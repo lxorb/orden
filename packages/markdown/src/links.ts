@@ -15,7 +15,7 @@
  *  Imported on its own - `@nib/markdown/links` - by the editor, which wants the
  *  grammar and not the renderer that stands on it. */
 
-import { closesFence, fenceMark } from './fences'
+import { closesFence, closingTicks, fenceMark } from './fences'
 
 /** What one link between notes says. */
 export interface Wikilink {
@@ -71,9 +71,13 @@ const WIKILINK = new RegExp(`(?<!\\\\)(!?)\\[\\[(${WIKILINK_INNER})\\]\\]`, 'g')
 
 /** `[label](target)`, with an optional `"title"` and an optional `<>` around a
  *  target that has spaces in it. Only the shape is matched here; whether the
- *  target names a note rather than the web is decided by `isNoteTarget`. */
+ *  target names a note rather than the web is decided by `isNoteTarget`.
+ *
+ *  The blanks before a title belong to the title: with a `\s*` either side of an
+ *  optional one, a link nothing closed shared its blanks out every way there is,
+ *  and a hundred thousand of them took thirteen seconds (#494). */
 const MARKDOWN_LINK =
-  /(?<!\\)(!?)\[((?:[^[\]\\]|\\.)*)\]\(\s*(?:<([^<>\n]*)>|([^\s()]+))\s*(?:"[^"\n]*"|'[^'\n]*')?\s*\)/g
+  /(?<!\\)(!?)\[((?:[^[\]\\]|\\.)*)\]\(\s*(?:<([^<>\n]*)>|([^\s()]+))(?:\s*(?:"[^"\n]*"|'[^'\n]*'))?\s*\)/g
 
 /** How many links one note is read for. Far past any note anybody writes - a map of
  *  content points at a few hundred things - and a bound on what one file can cost
@@ -352,7 +356,7 @@ function withoutCode(line: string): string {
     let openEnd = tick
     while (openEnd < line.length && line[openEnd] === '`') openEnd++
     const marks = line.slice(tick, openEnd)
-    const close = line.indexOf(marks, openEnd)
+    const close = closingTicks(line, openEnd, marks.length)
 
     out += line.slice(at, tick)
     if (close === -1) {

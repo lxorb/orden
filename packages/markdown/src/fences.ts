@@ -13,8 +13,9 @@
  *  block of code - and it answers it the same way for all of them. */
 
 /** Up to three spaces of indent, as CommonMark allows before an indented code
- *  block takes over; then the run of marks; then the info string. */
-const FENCE = /^ {0,3}(`{3,}|~{3,})[ \t]*(\S*)/
+ *  block takes over; then the run of marks; then the info string, in which a
+ *  backtick fence has no backtick (CommonMark 4.5). */
+const FENCE = /^ {0,3}(`{3,}(?!.*`)|~{3,})[ \t]*(\S*)/
 
 /** Whether a line could be a fence at all: a mark, after up to three spaces.
  *
@@ -51,4 +52,12 @@ export function closesFence(line: string, mark: string): boolean {
 
   const run = found[1] ?? ''
   return run.startsWith(mark.charAt(0)) && run.length >= mark.length && !found[2]
+}
+
+/** Where a span of `length` backticks closes after `from`, or -1: at a run of
+ *  exactly that many, as a longer one is inside it. */
+export function closingTicks(line: string, from: number, length: number): number {
+  const run = new RegExp(`(?<!\`)\`{${length}}(?!\`)`, 'g')
+  run.lastIndex = from
+  return run.exec(line)?.index ?? -1
 }

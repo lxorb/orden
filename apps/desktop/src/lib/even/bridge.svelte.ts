@@ -79,6 +79,7 @@ function saying(field: Field): string {
   if (field.kind === 'switch') return field.get() ? panelWord('On') : panelWord('Off')
   if (field.kind === 'slider') return `${String(field.get())}${field.unit ?? ''}`
   if (field.kind === 'text') return field.get() || field.placeholder
+  if (field.kind === 'value') return field.get()
   // A picture has no word; the glasses never show the wallpaper's row.
   if (field.kind === 'picture') return ''
 

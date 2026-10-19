@@ -223,8 +223,10 @@ describe('random walks, the engine as every device', () => {
    *    words of a note in it took the note, words and all (#435).
    *  - 207384677: two devices that each moved the same passage settling a meeting put it
    *    in the note twice, and a day's note renamed before it went was merged into another
-   *    note of that name (#436). */
-  const ONCE_FAILED = [207340730, 207384677]
+   *    note of that name (#436).
+   *  - 644000557: a note one device renamed, never having seen another move it into a
+   *    folder, was taken with that folder when the first deleted it (#514). */
+  const ONCE_FAILED = [207340730, 207384677, 644000557]
 
   test.each(ONCE_FAILED)('seed %i, which once failed, holds every check', async (seed) => {
     expect(await walked(seed, 1)).toEqual([])

@@ -76,6 +76,12 @@ export function choose(row: Row, press: Press | undefined, hands: Hands): Chosen
         field.set(!field.get())
         return 'stay'
       }
+      // A value is copied where it stands, the version found by "version" or "about"
+      // (#490), and the row says it copied.
+      if (field?.kind === 'value') {
+        field.press()
+        return 'stay'
+      }
       hands.showSetting(row.setting.section, row.setting.row ? row.setting.label : null)
       return 'close'
     }
