@@ -115,7 +115,7 @@ export class CanvasStore implements PlaneSurface {
    *  thing again on its own side. */
   readOnly = $state(false)
 
-  private readonly tab: Tab
+  protected readonly tab: Tab
   private readonly note: NoteDoc
   private readonly history = new CanvasHistory()
   /** Which revision of the document this surface has read. Anything past it came
