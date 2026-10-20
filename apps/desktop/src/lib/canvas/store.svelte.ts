@@ -117,7 +117,7 @@ export class CanvasStore implements PlaneSurface {
 
   protected readonly tab: Tab
   private readonly note: NoteDoc
-  private readonly history = new CanvasHistory()
+  private readonly history: CanvasHistory
   /** Which revision of the document this surface has read. Anything past it came
    *  from somewhere else and has to be taken on; see `follow`. */
   private at = -1
@@ -144,6 +144,10 @@ export class CanvasStore implements PlaneSurface {
     this.tab = tab
     this.note = tab.note
     this.read()
+    const left = LEFT.get(tab)
+    this.history =
+      left?.note === this.note && left.revision === this.at ? left.history : new CanvasHistory()
+    this.stackChanged()
     this.restored = tab.camera === undefined ? viewOf(tab.path) : null
 
     // Where this device left the plane, so opening the canvas again - tomorrow, or
@@ -376,6 +380,7 @@ export class CanvasStore implements PlaneSurface {
     // the plane without the word in it. See canvas/writing.ts.
     flushCardEdits()
     this.writing.flush()
+    LEFT.set(this.tab, { note: this.note, revision: this.at, history: this.history })
 
     // Where the reading was left, for this device: coming back to the plane, or opening
     // it again, lands here. Only once it has been framed, so an empty plane nobody moved
@@ -630,6 +635,13 @@ export class CanvasStore implements PlaneSurface {
  *  else about it and this list never keeps one alive. */
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it; see above
 const drawn = new Set<WeakRef<CanvasStore>>()
+
+/** What each tab's plane could take back as it was left: the surface is made again
+ *  every time the tab comes back to the front, and the undo went with it. With the
+ *  document and the revision it was left at, since a tab can move on to another
+ *  document and words can arrive while it is away, and either makes it stale. Weak, so
+ *  a tab that closes takes it along. */
+const LEFT = new WeakMap<Tab, { note: NoteDoc; revision: number; history: CanvasHistory }>()
 
 /** Every plane's file written now. Said to `parting.ts` when this module is first
  *  loaded, which is when the first canvas opens: the launch must not have to load the
