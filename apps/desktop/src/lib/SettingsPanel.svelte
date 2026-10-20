@@ -1585,6 +1585,13 @@
     display: none;
   }
 
+  /* A pane's name on as many lines as it needs rather than cut short: the column
+     is one width in every language, and Hausa's `Wanda aka share kwanan nan` is
+     longer than it. */
+  .item .nib-row-label {
+    white-space: normal;
+  }
+
   /* ── The pane ──────────────────────────────────────────────────── */
 
   .body {
@@ -1717,11 +1724,13 @@
     stroke-linejoin: round;
   }
 
-  /* Wide enough for the longest choice any pane offers, so a value is read
-     rather than guessed from its first half. */
+  /* Never narrower than the column the choices line up in, and as wide as the
+     chosen one's words where they need more, so a value is read rather than
+     guessed from its first half: at one width for every language, German read
+     `Ansicht: In diesem Bere…`. */
   .pick {
     flex: none;
-    width: 14rem;
+    min-width: 14rem;
   }
 
   /* A row that is itself a control: it shows what it does when pointed at. */
@@ -2500,7 +2509,7 @@
   }
 
   .sheet.phone .pick {
-    width: auto;
+    min-width: 0;
     max-width: 60%;
   }
 
