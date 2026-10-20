@@ -205,6 +205,10 @@ fn second_launch(app: &AppHandle, argv: &[String], cwd: &str) {
         }
         return;
     }
+    if let Some(unread) = unread_link(argv) {
+        use tauri_plugin_deep_link::DeepLinkExt as _;
+        app.deep_link().handle_cli_arguments(unread.iter());
+    }
     let argv = &without_ours(argv);
 
     // The window, not the webview window, which a window holding a page in a tab
@@ -237,13 +241,6 @@ pub fn page_up(app: &AppHandle, label: &str) -> bool {
 }
 
 /// The compositor's token a second launch carried, where it had one; see handover.rs.
-#[cfg_attr(
-    not(test),
-    allow(
-        dead_code,
-        reason = "the token is taken off the arguments and not used: a window on CEF is an X11 window, which comes forward without it"
-    )
-)]
 fn token_in(argv: &[String]) -> Option<String> {
     argv.iter()
         .skip(1)
@@ -258,6 +255,14 @@ fn without_ours(argv: &[String]) -> Vec<String> {
         .filter(|one| !one.starts_with(TOKEN_FLAG) && !crate::hotkeys::Which::is_flag(one))
         .cloned()
         .collect()
+}
+
+/// The launch the deep-link plugin is to read again, without the token. The plugin
+/// reads a second launch before nib does, token and all, and takes a link only when it
+/// is the launch's one argument (`handle_cli_arguments`), so a `nib://` link beside a
+/// token was no link to it. `None` where there was no token: it read that one already.
+fn unread_link(argv: &[String]) -> Option<Vec<String>> {
+    token_in(argv).map(|_| without_ours(argv))
 }
 
 /// How a second launch's token travels with its arguments.
@@ -517,8 +522,8 @@ fn free_label(app: &AppHandle) -> String {
 #[cfg(test)]
 mod tests {
     use super::{
-        handed_by, is_document_window, receiver, token_in, without_ours, Handed, Handover, Pending,
-        Seen,
+        handed_by, is_document_window, receiver, token_in, unread_link, without_ours, Handed,
+        Handover, Pending, Seen,
     };
 
     fn window(label: &str, focused: bool, listening: bool) -> Seen {
@@ -635,6 +640,24 @@ mod tests {
         );
         let bare: Vec<String> = ["nib", "--activation-token="].map(String::from).into();
         assert_eq!(token_in(&bare), None);
+    }
+
+    /// A link beside the launcher's token reaches the deep-link plugin as the launch's
+    /// one argument, wherever the token was; without a token the plugin read it already.
+    #[test]
+    fn a_link_beside_a_token_is_read_again_without_it() {
+        let link = "nib://open?path=Inbox.md";
+        let read = Some(vec!["nib".to_owned(), link.to_owned()]);
+        let last: Vec<String> = ["nib", link, "--activation-token=abc"]
+            .map(String::from)
+            .into();
+        assert_eq!(unread_link(&last), read);
+        let first: Vec<String> = ["nib", "--activation-token=abc", link]
+            .map(String::from)
+            .into();
+        assert_eq!(unread_link(&first), read);
+        let bare: Vec<String> = ["nib", link].map(String::from).into();
+        assert_eq!(unread_link(&bare), None);
     }
 
     /// nib opens nothing from outside its spaces, so a note's path on a command line is
