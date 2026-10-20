@@ -19,6 +19,7 @@
  *  which device gets there first. */
 
 import { type Canvas, noTimes, readCanvas, type Thing, timeIn, writeCanvas } from './canvas'
+import { type Extras, extrasOf, holdsExtras, mergedExtras, withExtras } from './canvas-extras'
 
 /** How long a tombstone is kept, in milliseconds. Long enough that a tablet left
  *  in a drawer for a month cannot bring a deleted card back, short enough that a
@@ -233,7 +234,19 @@ export function merged(ours: Canvas, theirs: Canvas, now = Date.now()): Canvas {
 
   const kept = keptIcon(ours.icon ?? null, theirs.icon ?? null)
   const nodes = mergeList(ours.nodes, theirs.nodes, ours, theirs, gone)
-  const held = new Set(nodes.map((node) => node.id))
+  const cards = new Set(nodes.map((node) => node.id))
+  // An edge whose card the merge dropped has nowhere to be, and the format
+  // has no place to put one that ends in the air.
+  const edges = mergeList(ours.edges, theirs.edges, ours, theirs, gone).filter(
+    (edge) => cards.has(edge.fromNode) && cards.has(edge.toNode),
+  )
+  const ink = mergeList(ours.ink, theirs.ink, ours, theirs, gone)
+
+  // Everything kept keeps its time, edges and ink as much as cards. A stroke kept
+  // over a tombstone because it was recoloured after the erase, and written back
+  // without its time, read as never touched at the next merge - and lost to that
+  // same tombstone there (#500).
+  const held = new Set([...cards, ...edges.map((edge) => edge.id), ...ink.map((one) => one.id)])
 
   const at = noTimes()
   for (const id of new Set([...Object.keys(ours.at), ...Object.keys(theirs.at)])) {
@@ -243,12 +256,8 @@ export function merged(ours: Canvas, theirs: Canvas, now = Date.now()): Canvas {
 
   return {
     nodes,
-    // An edge whose card the merge dropped has nowhere to be, and the format
-    // has no place to put one that ends in the air.
-    edges: mergeList(ours.edges, theirs.edges, ours, theirs, gone).filter(
-      (edge) => held.has(edge.fromNode) && held.has(edge.toNode),
-    ),
-    ink: mergeList(ours.ink, theirs.ink, ours, theirs, gone),
+    edges,
+    ink,
     at,
     gone,
     icon: kept,
@@ -297,15 +306,21 @@ export function mergeCanvasFiles(ours: string, theirs: string, now = Date.now())
 
   const mine = readCanvas(ours)
   const yours = readCanvas(theirs)
+  // What either file holds that Orden does not read - another app's nodes, the edges
+  // that end at them, fields and keys the spec does not name - put back into what is
+  // written, so a merge never drops it from somebody's vault (#501).
+  const myExtras = extrasOf(ours)
+  const yourExtras = extrasOf(theirs)
 
-  if (!weighs(mine)) return theirs
-  if (!weighs(yours)) return ours
+  if (!weighs(mine, myExtras)) return theirs
+  if (!weighs(yours, yourExtras)) return ours
 
-  return writeCanvas(merged(mine, yours, now))
+  return withExtras(writeCanvas(merged(mine, yours, now)), mergedExtras(myExtras, yourExtras))
 }
 
-function weighs(canvas: Canvas): boolean {
+function weighs(canvas: Canvas, extras: Extras): boolean {
   return (
+    holdsExtras(extras) ||
     canvas.nodes.length > 0 ||
     canvas.ink.length > 0 ||
     Object.keys(canvas.gone).length > 0 ||

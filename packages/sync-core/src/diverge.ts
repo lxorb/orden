@@ -316,10 +316,123 @@ function excess(references: readonly string[], merge: string): number {
   return over
 }
 
+/** A side's text with each of its edits' words changed by `words`, the rest of it as it
+ *  was: its own text rebuilt on the ancestor. */
+function rewritten(base: string, side: string, words: (edit: Edit) => string): string {
+  let out = ''
+  let at = 0
+  for (const edit of edits(base, side, 'semantic')) {
+    out += base.slice(at, edit.from) + words(edit)
+    at = edit.to
+  }
+  return out + base.slice(at)
+}
+
+/** `text` without the first whole word `word`, and one space beside it. */
+function withoutWord(text: string, word: string): string {
+  const parts = text.split(/(\s+)/)
+  const at = parts.indexOf(word)
+  if (at < 0) return text
+  const space = parts[at + 1] !== undefined ? at + 1 : at - 1
+  return parts.filter((_, index) => index !== at && index !== space).join('')
+}
+
+/** How often each whole word is in a text. */
+function wordsOf(text: string): Map<string, number> {
+  const counts = new Map<string, number>()
+  for (const word of text.split(/\s+/)) if (word) counts.set(word, (counts.get(word) ?? 0) + 1)
+  return counts
+}
+
+/** The older side's text with what both sides put in twice taken out of its own words,
+ *  or null when there is nothing of the kind (#530). Two shapes of it, each one passage
+ *  the merge says twice and neither side does:
+ *
+ *  - **Moved twice.** A word of the ancestor that each side took from where it was and
+ *    wrote somewhere else, so each side has it as often as the ancestor did and the
+ *    merge once more: the older side's new place for it goes.
+ *  - **Put back twice at one point.** Two devices that each kept a passage over a
+ *    deletion wrote it again where it was, as words of their own; the one side's words
+ *    there end with it and the other's start with it. The older side's copy goes. */
+function putTwice(
+  base: string,
+  local: string,
+  remote: string,
+  older: Whose,
+  resolution: string,
+): { local: string; remote: string } | null {
+  const [mine, theirs] = older === 'local' ? [local, remote] : [remote, local]
+  const said = wordsOf(resolution)
+  const [before, ours, others] = [wordsOf(base), wordsOf(mine), wordsOf(theirs)]
+  const moved = [...said].filter(([word, count]) => {
+    const inBase = before.get(word) ?? 0
+    const inMine = ours.get(word) ?? 0
+    const inTheirs = others.get(word) ?? 0
+    return (
+      inBase > 0 && inMine <= inBase && inTheirs <= inBase && count > Math.max(inMine, inTheirs)
+    )
+  })
+
+  const theirInserts = edits(base, theirs, 'semantic')
+  const fixed = rewritten(base, mine, (edit) => {
+    let words = edit.insert
+    for (const [word] of moved) words = withoutWord(words, word)
+    // What the other side wrote at the same point, beside these words.
+    for (const other of theirInserts) {
+      if (other.from !== edit.from || other.to !== edit.to) continue
+      const ahead = overlapOf(other.insert, words)
+      const behind = ahead === null ? overlapOf(words, other.insert) : null
+      if (ahead !== null) words = words.slice(ahead.length)
+      else if (behind !== null) words = words.slice(0, words.length - behind.length)
+    }
+    return words
+  })
+  if (fixed === mine) return null
+  return older === 'local' ? { local: fixed, remote } : { local, remote: fixed }
+}
+
+/** The longest stretch `first` ends with and `then` starts with, of at least `RUN`
+ *  letters, that ends `then` on a whole word; or null. */
+function overlapOf(first: string, then: string): string | null {
+  for (let length = Math.min(first.length, then.length); length > 0; length--) {
+    const piece = then.slice(0, length)
+    if (!first.endsWith(piece)) continue
+    if (piece.replace(/\s+/g, '').length < RUN) return null
+    const next = then.charAt(length)
+    if (next === '' || /\s/.test(next)) return piece
+  }
+  return null
+}
+
 /** Classifies what merging `local` and `remote` against `base` would do, and says
  *  what the note should read when nobody has to be asked. `merged` is the CRDT's
- *  merge of the two, when the caller has it. */
+ *  merge of the two, when the caller has it.
+ *
+ *  Where the resolution says something twice that neither side does, and the older
+ *  side's words are what put it there twice (`putTwice`), the merge is made again
+ *  without them, and that stands where it says less twice (#530). */
 export function diverge(
+  base: string,
+  local: string,
+  remote: string,
+  times: Times,
+  merged?: string,
+): Divergence {
+  const first = divergeOnce(base, local, remote, times, merged)
+  if (first.resolution === null || !repeats([local, remote], first.resolution)) return first
+
+  const older: Whose = times.local > times.remote ? 'remote' : 'local'
+  const fixed = putTwice(base, local, remote, older, first.resolution)
+  if (!fixed) return first
+  const again = divergeOnce(base, fixed.local, fixed.remote, times, merged)
+  if (again.resolution === null) return first
+  if (excess([local, remote], again.resolution) >= excess([local, remote], first.resolution)) {
+    return first
+  }
+  return { ...first, resolution: again.resolution, settled: again.settled }
+}
+
+function divergeOnce(
   base: string,
   local: string,
   remote: string,

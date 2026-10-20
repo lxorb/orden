@@ -284,6 +284,9 @@ importers:
       '@lezer/highlight':
         specifier: ^1.2.3
         version: 1.2.3
+      '@lezer/javascript':
+        specifier: ^1.5.4
+        version: 1.5.4
       '@lezer/markdown':
         specifier: ^1.7.2
         version: 1.7.2

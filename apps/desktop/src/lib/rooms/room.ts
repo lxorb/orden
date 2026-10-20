@@ -111,6 +111,13 @@ export class Room extends JoinedRoom {
     return this.door.caughtUp && this.unbind !== null
   }
 
+  /** Whether the note is joined to the room's text, keystroke by keystroke, whatever
+   *  the socket is doing: what a file put into the note while the room cannot be
+   *  reached would be replayed into as this device's own typing (#541). */
+  get bound(): boolean {
+    return this.unbind !== null
+  }
+
   /** Whether this room is the one waiting on a reader: it and this device each wrote
    *  since the words they shared, and the rule is the one that asks.
    *
@@ -131,6 +138,10 @@ export class Room extends JoinedRoom {
    *  have moved in between - and because until the room has answered there is no
    *  text to place a caret against at all. */
   moved(anchor: number, head: number) {
+    // A place in the note is a place in the room's words only while the two are one
+    // text; until then this device's caret would be shown to the others somewhere it is
+    // not (#542).
+    if (!this.unbind) return
     this.door.announce('caret', () => ({
       anchor: relative(this.text, anchor),
       head: relative(this.text, head),
@@ -159,6 +170,8 @@ export class Room extends JoinedRoom {
 
     if (await this.settleAgainst(base)) {
       this.unbind = bind(this.joining.note, this.text, () => this.holds())
+      // The others' carets, held back until now, in the words they are places in.
+      this.showPresent()
     }
   }
 
@@ -232,7 +245,11 @@ export class Room extends JoinedRoom {
   protected showPresent() {
     const { present, carets, seen } = peersIn(this.door.awareness, this.door.doc, this.scheme)
 
-    this.joining.note.announce([setPeers.of(carets)])
+    // Their carets are places in the room's words, which are this note's only while the
+    // note is joined to them: waiting on a reader, or between catching up and binding,
+    // they would land anywhere in it, past its end included (#542). Counted all the same.
+    const ours = this.unbind && this.holds() ? carets : []
+    this.joining.note.announce([setPeers.of(ours)])
     this.joining.onPeers(present, seen)
   }
 }

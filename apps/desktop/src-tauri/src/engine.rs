@@ -423,7 +423,8 @@ pub(crate) fn own_window<M: tauri::Manager<crate::Engine>>(
     use tauri_runtime_cef::{RuntimeStyle, WebviewWindowBuilderCefExt as _};
     let building = building
         .browser_runtime_style(RuntimeStyle::Alloy)
-        .initialization_script(crate::window_drag::SCRIPT);
+        .initialization_script(crate::window_drag::SCRIPT)
+        .initialization_script(crate::gpu::SCRIPT);
     match OWN_PROFILE.get() {
         Some(profile) => building.data_directory(profile.clone()),
         None => building,

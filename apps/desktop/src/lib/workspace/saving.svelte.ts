@@ -170,6 +170,15 @@ export class Saving {
     note?.replace(text)
   }
 
+  /** A version put back from the history: the same as `replace`, and said to be one, so
+   *  a canvas takes it whole; see `restoredAt`. */
+  restoreVersion(text: string, target?: Tab) {
+    const note = (target ?? this.ws.active)?.note
+    if (!note) return
+    note.replace(text)
+    note.restoredAt = note.revision
+  }
+
   /** Everything waiting, written now rather than a pause later: a tab brought
    *  forward or closed, the window left, the window going. Nothing at all when
    *  nothing is waiting, so it is safe to say on every one of those. */

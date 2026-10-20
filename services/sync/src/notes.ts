@@ -1,7 +1,7 @@
 import { type Context, Hono } from 'hono'
 import { NOT_A_PATH, NO_SUCH_NOTE, OUT_OF_SPACE, ROOM_AWAY } from './refused'
 import { mergeCanvasFiles } from '@nib/markdown/canvas-merge'
-import { isCanvasTarget } from '@nib/markdown/links'
+import { isCanvasTarget, isPagesTarget } from '@nib/markdown/links'
 import { conflictPath, numbered } from '@nib/markdown/paths'
 import { objectBody, readBody } from './body'
 import { FRONT_REV, readFront, titleFrom, writeFront } from './blog/front'
@@ -602,6 +602,75 @@ notes.get('/notes/:id/versions/:at', async (context) => {
   if (content === null) return context.json({ error: 'no such version' }, 404)
   return context.json({ at: asked, content })
 })
+
+/** The paper a page note holds, for anybody who can reach the note (#551).
+ *
+ *  A page note made from a PDF is the PDF with ink on it, so the paper is part of the
+ *  note and goes where the note goes: to the account's other devices on either sync,
+ *  and to somebody the note was shared with on its own, who has no space to find a
+ *  file in. Kept by the note's id rather than by a file's name, so a rename, a move
+ *  and Recently deleted take it along with nothing to pair up again. The bytes are a
+ *  blob like any other, and served as a PDF only to whoever `reachedNote` lets in. */
+notes.get('/notes/:id/paper', async (context) => {
+  const found = await reachedNote(context.env, context.get('who'), context.req.param('id'))
+  if (!found) return context.json({ error: NO_SUCH_NOTE }, 404)
+
+  const hash = found.note.paper
+  const object = hash ? await context.env.NOTES.get(`blobs/${hash}`) : null
+  if (!hash || !object) return context.json({ error: NO_PAPER }, 404)
+
+  return new Response(object.body, {
+    headers: {
+      'content-type': 'application/pdf',
+      'content-length': String(object.size),
+      // The same bytes under one hash for ever, and this note's rather than the
+      // world's: kept by the device that asked and by nothing in between.
+      'cache-control': 'private, max-age=31536000, immutable',
+      etag: `"${hash}"`,
+      'x-content-type-options': 'nosniff',
+    },
+  })
+})
+
+/** The paper a page note holds, named by the hash of bytes already uploaded to
+ *  `/v1/blobs`. Somebody who can write in the space only: what a note is made of is
+ *  the space's to say, and somebody handed the one note writes on its pages, not under
+ *  them. The bytes have to be the asker's or the space owner's already, so nobody can
+ *  hang a paper they could not upload onto a note. */
+notes.put('/notes/:id/paper', async (context) => {
+  const found = await reachedNote(context.env, context.get('who'), context.req.param('id'))
+  if (!found) return context.json({ error: NO_SUCH_NOTE }, 404)
+  if (found.only || !allows(found.space.role, 'write')) {
+    return context.json({ error: refusal('write') }, 403)
+  }
+  const { note, space } = found
+  if (!isPagesTarget(note.path)) return context.json({ error: NOT_PAGES }, 400)
+
+  const body = await readBody(context)
+  const hash = body.text('hash', 64)?.toLowerCase()
+  if (body.problem || !hash || !PAPER_HASH.test(hash)) {
+    return context.json({ error: 'that is not a hash' }, 400)
+  }
+
+  const who = context.get('who')
+  const kept = await context.env.DB.prepare(
+    'select 1 as one from blobs where hash = ?1 and user_id in (?2, ?3) limit 1',
+  )
+    .bind(hash, who.kind === 'user' ? who.user.id : '', space.user_id)
+    .first<{ one: number }>()
+  if (!kept) return context.json({ error: NO_PAPER }, 409)
+
+  if (note.paper !== hash) {
+    await context.env.DB.prepare('update notes set paper = ? where id = ?')
+      .bind(hash, note.id)
+      .run()
+  }
+  return context.json({ paper: hash })
+})
+
+const PAPER_HASH = /^[a-f0-9]{64}$/
+const NO_PAPER = 'this note holds no paper'
+const NOT_PAGES = 'only a page note holds a paper'
 
 /** The most notes one ancestry question names: a page of changes is a few hundred,
  *  and the device asks a page at a time. */

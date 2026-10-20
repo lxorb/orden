@@ -48,6 +48,7 @@ import { v2Maps } from './sync2/maps'
 import { sweepTreeOps } from './sync2/tree'
 import { spaces } from './spaces'
 import { join } from './spaces/join'
+import { feedback } from './feedback'
 import { recheckDomains } from './spaces/proof'
 import { expireRequests, sharedWithMe } from './spaces/share'
 import { themes } from './themes'
@@ -132,6 +133,10 @@ app.route('/v2/online/machine', machineBundle)
 // anybody, and walking through it is what hands out the session. See
 // spaces/join.ts.
 app.route('/v1/join', join)
+
+// Send feedback, which a person who cannot sign in may need most. Ahead of the guard;
+// a session it carries says whose report it is. See feedback.ts.
+app.route('/v1/feedback', feedback)
 
 // How a client finds the sign-in, and the sign-in itself. Registered ahead of
 // the catch-all, which would otherwise answer with the web app's HTML.

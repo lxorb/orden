@@ -784,18 +784,44 @@ function holds(tail: string): boolean {
  *  #493), had taken the room down to 17 bytes, and fixes in @nib/markdown land beside
  *  the app's in parallel. Measured 3,244,983.
  *
- *  Raised 2026-10-19, to 3,258,100, for the bug burn-down's data-loss fixes in the save
+ *  Raised 2026-10-19, to 3,251,000, for #548: Send feedback's bug at the foot of the
+ *  sidebar, the door that fetches its sheet and its state with the press
+ *  (`showFeedback` in surfaces.svelte.ts), and the last lines a page logged, which a
+ *  report from the web app carries (`recentLog` in log.ts). Measured 3,250,259.
+ *
+ *  Raised 2026-10-19, to 3,252,000, for #541: a note whose room is out of reach is let
+ *  go of before the file sync puts a file into it (`letGoUnreached` in rooms.svelte.ts,
+ *  `bound` on a room), so another device's words are not sent back as this device's.
+ *  Measured 3,251,126.
+ *
+ *  Raised 2026-10-19, to 3,255,000, for #544: words from the room are held while an
+ *  input method composes in a view and taken in when it ends, with what is typed
+ *  meanwhile carried past them (`held`, `settle` and the compositionend handler in
+ *  @nib/editor's shared.ts). Measured 3,254,393.
+ *
+ *  Raised 2026-10-19, to 3,256,000, for #533: a version put back from the history is
+ *  said to be one (`restoreVersion` on the workspace and in saving.svelte.ts,
+ *  `restoredAt` on a note), so a canvas takes it whole rather than merging with it.
+ *  Measured 3,255,185.
+ *
+ *  Raised 2026-10-19, to 3,257,000, for #537: a link that cannot be rewritten is
+ *  logged and passed over rather than undoing the rename (`retarget` in
+ *  link-index.svelte.ts, which now imports log.ts), and a PDF already moved into its
+ *  page note is never thrown away with it (pages/from-pdf.ts). Measured 3,256,522 on
+ *  unstable with #524 and #538 beside it.
+ *
+ *  Raised 2026-10-20, to 3,267,000, for the bug burn-down's data-loss fixes in the save
  *  path every note is written through: a draft's name claimed on disk and a write held
  *  under a move (`claim`, `holdingUnder` in workspace/saving.svelte.ts), a closed note
  *  read again before it is written (`writeClosed` in workspace/note-text.ts), and a link
  *  rewritten in the open document, at a moved note's new path and, for a merge, only
  *  where it was (`retarget` and `Retargeting` in link-index.svelte.ts). Measured
- *  3,257,093.
+ *  3,266,254 on unstable with #533, #537, #541, #544 and #548 beside it.
  *
  *  And by one module, to 383, for the same burn-down: whether a name is taken is asked
  *  in one place, the crate's stamp on the desktop and a read in the browser, which keeps
  *  no stamps (on-disk.ts, asked by the save path's `claim`). Measured 382 modules. */
-const BUDGET = 3_258_100
+const BUDGET = 3_267_000
 const MOST_FILES = 383
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

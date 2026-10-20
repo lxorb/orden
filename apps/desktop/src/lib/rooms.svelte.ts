@@ -146,6 +146,22 @@ class Rooms {
     return false
   }
 
+  /** A note joined to its room's text while the room cannot be reached, let go of and
+   *  joined again from nothing, before the file sync puts a file into it: still joined,
+   *  the words went to the room as this device's typing once it was back (#541). */
+  letGoUnreached(noteId: string): void {
+    let left = false
+    for (const [key, joined] of this.held) {
+      if (joined.noteId !== noteId || joined.kind !== 'words') continue
+      if (!joined.room.bound || joined.room.settled) continue
+      joined.room.leave()
+      this.held.delete(key)
+      this.heard(key, 0)
+      left = true
+    }
+    if (left) this.follow(this.open)
+  }
+
   /** The open files, as the app now has them. Rooms are joined and left to match:
    *  nothing here is called for a particular file, so no call site can forget one.
    *

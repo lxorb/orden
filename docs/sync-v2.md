@@ -576,6 +576,12 @@ coordinates, and looks at the edits that meet:
   did that to the same passage the one deletion lands on the copy both started from and
   both insertions stay. Where M says something twice that neither side says, the
   resolution is the text merge with both sides' edits made, not M (#436).
+- **A passage put in twice by the older side's words.** Where the resolution says
+  something twice that neither side does, because both sides moved one word of B each
+  to a place of its own, or because two devices each put the same passage back over a
+  deletion and one's words at that point end with it where the other's begin with it,
+  the older side's copy is taken out of its words and the merge made again; that
+  stands where it says less twice (#530).
 - **Overlapping edits**: spans that intersect, or an insertion strictly inside a span the
   other side replaced. Their size is the characters of both replacements plus the ancestor
   text they cover.

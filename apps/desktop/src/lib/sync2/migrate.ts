@@ -31,6 +31,7 @@
  *  every file it finds agreeing as a note it already knows, at the version the account
  *  holds (`mirrorsFrom`). */
 
+import { holderOf } from '../pages/held'
 import type { Mirror, Tracked } from '../sync/mirror'
 import type { Core } from './core'
 import { kindOfName, made, moved } from './create'
@@ -78,7 +79,14 @@ export async function firstPass(
   const items = new Map<string, FeedItem>()
   if (!(await readFeed(core, space, alive, (item) => items.set(item.id, item)))) return false
 
-  const listing = (await world.list?.(space.row.root)) ?? []
+  // The paper a page note holds is part of the note and no entry of its own (#551; see
+  // `heldPaper` in engine.ts), so it is left out of what the folder is read as.
+  const everything = (await world.list?.(space.row.root)) ?? []
+  const notes = new Set(everything.filter((one) => !one.dir).map((one) => space.key(one.path)))
+  const listing = everything.filter((one) => {
+    const holder = one.dir ? null : holderOf(one.path)
+    return holder === null || !notes.has(space.key(holder))
+  })
   const wanted = space.paths()
   const changes: Change[] = []
   const matched: Matched[] = []

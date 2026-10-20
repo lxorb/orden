@@ -1899,6 +1899,11 @@ export const jv: Dictionary = {
   Max: 'Maks',
   Fast: 'Cepet',
   Send: 'Kirim',
+  'Send feedback': 'Kirim masukan',
+  'Describe the issue': 'Jlentrehna masalahe',
+  Sent: 'Wis dikirim',
+  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
+    'Laporan iki isine katrangan sampeyan, versi Orden, platform sampeyan lan log aplikasi anyar. Cathetan sampeyan ora tau melu.',
   'Send into the running answer': 'Kirim menyang wangsulan sing lagi mlaku',
   'Stop the answer': 'Mandhegake wangsulan',
   'Open every step': 'Bukak kabeh langkah',

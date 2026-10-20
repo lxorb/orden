@@ -20,6 +20,18 @@
       cmd === 'plugin:window|start_dragging' ? Promise.resolve() : own(cmd, ...rest)
   }
 
+  // The window's own edges, above every page in it, a web tab's too (window_drag.rs):
+  // asked for once the page is up, by when Tauri's `invoke` is in place. The window
+  // gives them once, however often its page loads.
+  function frame() {
+    const internals = window.__TAURI_INTERNALS__
+    if (internals && typeof internals.invoke === 'function') {
+      internals.invoke('window_frame').catch(() => null)
+    }
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', frame)
+  else frame()
+
   // Tauri's own rule for a drag region (its drag.js), so the same presses move the window.
   const ATTR = 'data-tauri-drag-region'
   const CLICKABLE = new Set(['A', 'BUTTON', 'INPUT', 'SELECT', 'TEXTAREA', 'LABEL', 'SUMMARY'])

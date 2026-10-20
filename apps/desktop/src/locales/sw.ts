@@ -1940,6 +1940,11 @@ export const sw: Dictionary = {
   Max: 'Upeo',
   Fast: 'Haraka',
   Send: 'Tuma',
+  'Send feedback': 'Tuma maoni',
+  'Describe the issue': 'Eleza tatizo',
+  Sent: 'Imetumwa',
+  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
+    'Ripoti hii ina maelezo yako, toleo la Orden, jukwaa lako na kumbukumbu za karibuni za programu. Haina madokezo yako kamwe.',
   'Send into the running answer': 'Tuma ndani ya jibu linaloendelea',
   'Stop the answer': 'Simamisha jibu',
   'Open every step': 'Fungua kila hatua',

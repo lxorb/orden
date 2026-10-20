@@ -167,6 +167,67 @@ describe('merging two copies of a canvas', () => {
     expect(merged(ours, shared, 1000).edges).toEqual([])
   })
 
+  /** Recoloured on one device after it was erased on the other: kept, and kept
+   *  with its time, or the next merge reads it as never touched and the same
+   *  tombstone takes it after all (#500). */
+  test('keeps the time of an edge or a stroke it kept over a tombstone', () => {
+    const now = 10_000_000
+    const ours = plane({
+      nodes: [card('a'), card('b')],
+      edges: [{ id: 'e', fromNode: 'a', toNode: 'b' }],
+      ink: [stroke('s')],
+      at: { a: now - 9000, b: now - 9000, e: now - 1000, s: now - 1000 },
+    })
+    const theirs = plane({
+      nodes: [card('a'), card('b')],
+      at: { a: now - 9000, b: now - 9000 },
+      gone: { e: now - 5000, s: now - 5000 },
+    })
+
+    for (const once of [merged(ours, theirs, now), merged(theirs, ours, now)]) {
+      expect(once.at).toMatchObject({ e: now - 1000, s: now - 1000 })
+
+      const twice = merged(once, theirs, now)
+      expect(twice.edges.map((edge) => edge.id)).toEqual(['e'])
+      expect(twice.ink.map((one) => one.id)).toEqual(['s'])
+    }
+  })
+
+  test('and keeps them through the files the sync writes, merge after merge', () => {
+    const now = 10_000_000
+    const ours = writeCanvas(
+      plane({
+        nodes: [card('a'), card('b')],
+        edges: [{ id: 'e', fromNode: 'a', toNode: 'b' }],
+        ink: [stroke('s')],
+        at: { a: now - 9000, b: now - 9000, e: now - 1000, s: now - 1000 },
+      }),
+    )
+    const theirs = writeCanvas(
+      plane({
+        nodes: [card('a'), card('b')],
+        at: { a: now - 9000, b: now - 9000 },
+        gone: { e: now - 5000, s: now - 5000 },
+      }),
+    )
+
+    const once = mergeCanvasFiles(ours, theirs, now)
+    const twice = readCanvas(mergeCanvasFiles(once, theirs, now))
+    expect(twice.edges.map((edge) => edge.id)).toEqual(['e'])
+    expect(twice.ink.map((one) => one.id)).toEqual(['s'])
+  })
+
+  test('forgets the time of an edge or a stroke a tombstone did take', () => {
+    const now = 10_000_000
+    const ours = plane({ ink: [stroke('s')], at: { s: now - 5000 } })
+    const theirs = plane({ gone: { s: now - 1000 } })
+
+    const one = merged(ours, theirs, now)
+    expect(one.ink).toEqual([])
+    expect(one.at).toEqual({})
+    expect(one.gone).toEqual({ s: now - 1000 })
+  })
+
   test('keeps a canvas neither side changed exactly as it was', () => {
     const shared = stamped(plane(), plane({ nodes: [card('a'), card('b')] }), 100)
     expect(writeCanvas(merged(shared, shared, 1000))).toBe(writeCanvas(shared))
@@ -375,5 +436,94 @@ describe('ids an object would answer from its prototype', () => {
 
     expect(merged(one, other, 100).at).toEqual({ constructor: 50 })
     expect(merged(other, one, 100).nodes[0]).toMatchObject({ text: 'constructor' })
+  })
+})
+
+/** What a canvas file holds that Orden does not read - another app's node and the edges
+ *  ending at it, a field the spec does not name, a key beside the lists - kept through a
+ *  merge of two copies (#501). */
+describe('merging two canvas files somebody else wrote in too', () => {
+  const drawing = {
+    id: 'x',
+    type: 'excalidraw',
+    x: 0,
+    y: 0,
+    width: 200,
+    height: 100,
+    file: 'Drawing.excalidraw',
+  }
+  const card = (id: string, text: string) => ({
+    id,
+    type: 'text',
+    text,
+    x: 300,
+    y: 0,
+    width: 200,
+    height: 60,
+  })
+
+  const ours = JSON.stringify({
+    nodes: [drawing, { ...card('c', 'hello'), styleAttributes: { shape: 'pill' } }],
+    edges: [{ id: 'e', fromNode: 'x', toNode: 'c' }],
+    metadata: { version: '1.0-1.0' },
+    nib: { version: 1, at: { c: 100 } },
+  })
+  const theirs = JSON.stringify({
+    nodes: [card('c', 'hello'), card('d', 'from the other side')],
+    edges: [],
+    nib: { version: 1, at: { c: 100, d: 200 }, later: true },
+  })
+
+  test('keeps them, from whichever side held them', () => {
+    const file = JSON.parse(mergeCanvasFiles(ours, theirs, 300)) as {
+      nodes: { id: string; styleAttributes?: unknown }[]
+      edges: { id: string }[]
+      metadata?: unknown
+      nib: Record<string, unknown>
+    }
+
+    expect(file.nodes.map((node) => node.id).sort()).toEqual(['c', 'd', 'x'])
+    expect(file.nodes.find((node) => node.id === 'x')).toEqual(drawing)
+    expect(file.nodes.find((node) => node.id === 'c')?.styleAttributes).toEqual({ shape: 'pill' })
+    expect(file.edges.map((edge) => edge.id)).toEqual(['e'])
+    expect(file.metadata).toEqual({ version: '1.0-1.0' })
+    expect(file.nib.later).toBe(true)
+  })
+
+  test('is the same file whichever side asks', () => {
+    expect(mergeCanvasFiles(theirs, ours, 300)).toBe(mergeCanvasFiles(ours, theirs, 300))
+  })
+
+  test('lets an edge go with the card the merge did not keep', () => {
+    const deleted = JSON.stringify({
+      nodes: [drawing],
+      edges: [],
+      nib: { version: 1, gone: { c: 250 } },
+    })
+    const file = JSON.parse(mergeCanvasFiles(ours, deleted, 300)) as {
+      nodes: { id: string }[]
+      edges: unknown[]
+    }
+
+    expect(file.nodes.map((node) => node.id)).toEqual(['x'])
+    expect(file.edges).toEqual([])
+  })
+
+  test('counts a file of nothing but another app’s nodes as a canvas', () => {
+    const only = JSON.stringify({ nodes: [drawing], edges: [] })
+    const plain = writeCanvas(plane({ nodes: [card('c', 'hello') as CanvasNode], at: { c: 100 } }))
+    const ids = (text: string) =>
+      (JSON.parse(text) as { nodes: { id: string }[] }).nodes.map((one) => one.id)
+
+    expect(ids(mergeCanvasFiles(only, plain, 300)).sort()).toEqual(['c', 'x'])
+  })
+
+  test('writes a canvas with nothing unread in it exactly as before', () => {
+    const one = writeCanvas(plane({ nodes: [card('a', 'one') as CanvasNode], at: { a: 1 } }))
+    const two = writeCanvas(plane({ nodes: [card('b', 'two') as CanvasNode], at: { b: 2 } }))
+
+    expect(mergeCanvasFiles(one, two, 300)).toBe(
+      writeCanvas(merged(readCanvas(one), readCanvas(two), 300)),
+    )
   })
 })

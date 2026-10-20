@@ -1935,6 +1935,11 @@ export const ml: Dictionary = {
   Max: 'പരമാവധി',
   Fast: 'വേഗം',
   Send: 'അയയ്ക്കുക',
+  'Send feedback': 'ഫീഡ്‌ബാക്ക് അയയ്ക്കുക',
+  'Describe the issue': 'പ്രശ്നം വിവരിക്കുക',
+  Sent: 'അയച്ചു',
+  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
+    'ഈ റിപ്പോർട്ടിൽ നിങ്ങളുടെ വിവരണം, Orden-ന്റെ പതിപ്പ്, നിങ്ങളുടെ പ്ലാറ്റ്ഫോം, ആപ്പിന്റെ സമീപകാല ലോഗ് എന്നിവയുണ്ട്. നിങ്ങളുടെ കുറിപ്പുകൾ ഒരിക്കലും ഇല്ല.',
   'Send into the running answer': 'നടക്കുന്ന ഉത്തരത്തിലേക്ക് അയയ്ക്കുക',
   'Stop the answer': 'ഉത്തരം നിർത്തുക',
   'Open every step': 'എല്ലാ ഘട്ടവും തുറക്കുക',

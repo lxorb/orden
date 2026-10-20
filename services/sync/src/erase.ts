@@ -151,6 +151,7 @@ export const ERASED: readonly (readonly [table: string, sql: string])[] = [
   ['spaces', 'delete from spaces where user_id = ?1'],
   ['blobs', 'delete from blobs where user_id = ?1'],
   ['sessions', 'delete from sessions where user_id = ?1'],
+  ['feedback', 'delete from feedback where user_id = ?1'],
   ['mcp_tokens', 'delete from mcp_tokens where user_id = ?1'],
   ['oauth_codes', 'delete from oauth_codes where user_id = ?1'],
   ['oauth_grants', 'delete from oauth_grants where user_id = ?1'],

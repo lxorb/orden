@@ -1941,6 +1941,11 @@ export const ha: Dictionary = {
   Max: 'Mafi girma',
   Fast: 'Da sauri',
   Send: 'Aika',
+  'Send feedback': 'Aika ra’ayi',
+  'Describe the issue': 'Bayyana matsalar',
+  Sent: 'An aika',
+  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
+    'Wannan rahoton ya ƙunshi bayaninka, sigar Orden, dandalinka da sabon log na manhaja. Ba ya taɓa ƙunsar bayanan ka.',
   'Send into the running answer': 'Aika cikin amsar da ke gudana',
   'Stop the answer': 'Dakatar da amsar',
   'Open every step': 'Buɗe kowane mataki',

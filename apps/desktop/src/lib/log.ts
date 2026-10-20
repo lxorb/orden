@@ -2,11 +2,23 @@ import { invoke, isNative } from './tauri'
 
 export type Level = 'info' | 'warn' | 'error'
 
+/** The last lines this page logged, for a page with no log file: what a report sent
+ *  with Send feedback carries from the web app (#548). A ring, so it never grows. */
+const KEPT = 200
+const recent: string[] = []
+
+export function recentLog(): readonly string[] {
+  return recent
+}
+
 /** Writes one line to the app's log file. Never throws: a failure to log must
  *  not become a second failure. */
 export function log(level: Level, message: string) {
+  const at = new Date().toISOString()
+  recent.push(`${at} ${level} ${message}`)
+  if (recent.length > KEPT) recent.splice(0, recent.length - KEPT)
   if (!isNative) return
-  void invoke('write_log', { level, message, at: new Date().toISOString() }).catch(() => undefined)
+  void invoke('write_log', { level, message, at }).catch(() => undefined)
 }
 
 /** Turns whatever was thrown into something worth reading back later. */
@@ -25,10 +37,9 @@ function describe(error: unknown): string {
  *  log somebody sent. Said once a run, so it is still seen. */
 const RESIZE_LOOP = 'ResizeObserver loop'
 
-/** Catches what would otherwise vanish into a console nobody is watching. */
+/** Catches what would otherwise vanish into a console nobody is watching: into the log
+ *  file in the app, and into the lines a feedback report carries in a browser. */
 export function collectErrors() {
-  if (!isNative) return
-
   let resizeLoopSaid = false
   window.addEventListener('error', (event) => {
     const said = describe(event.error ?? event.message)

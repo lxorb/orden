@@ -709,6 +709,22 @@ export const routes = {
     return body as { hash: string; stored: boolean }
   },
 
+  /** The paper a page note holds, named by bytes already up through `putBlob`: the
+   *  note and its PDF are one thing on the account, kept by the note's id (#551). */
+  holdPaper: (token: string, id: string, hash: string) =>
+    request<{ paper: string }>(`/v1/notes/${id}/paper`, { method: 'PUT', token, body: { hash } }),
+
+  /** The bytes of the paper a page note holds, or null where it holds none the account
+   *  knows of. */
+  notePaper: async (token: string, id: string): Promise<Uint8Array | null> => {
+    const response = await fetch(`${BASE}/v1/notes/${id}/paper`, {
+      headers: { authorization: `Bearer ${token}` },
+    })
+    if (response.status === 404) return null
+    if (!response.ok) throw new ApiError(response.status, `paper not fetched (${response.status})`)
+    return new Uint8Array(await response.arrayBuffer())
+  },
+
   reorderSpaces: (token: string, order: string[]) =>
     request<{ ok: true }>('/v1/spaces/order', { method: 'PUT', token, body: { order } }),
 

@@ -693,6 +693,52 @@ describe('the icon a canvas wears', () => {
     expect(writeCanvas(readCanvas(written))).toBe(written)
   })
 
+  /** Somebody's Obsidian vault: a node of a plugin's own type, an edge to it, a field
+   *  Advanced Canvas keeps on a card and a key beside the lists. Setting the icon used
+   *  to read the file as a canvas and write it back, which left all four out (#501). */
+  test('changes nothing in the file but the icon', () => {
+    const vault = {
+      nodes: [
+        {
+          id: 'b',
+          type: 'excalidraw',
+          x: 0,
+          y: 0,
+          width: 200,
+          height: 100,
+          file: 'Drawing.excalidraw',
+        },
+        {
+          id: 'c',
+          type: 'text',
+          text: 'hello',
+          x: 300,
+          y: 0,
+          width: 200,
+          height: 60,
+          styleAttributes: { shape: 'pill' },
+        },
+      ],
+      edges: [{ id: 'e', fromNode: 'b', toNode: 'c' }],
+      metadata: { version: '1.0-1.0', frontmatter: {} },
+    }
+    const before = JSON.stringify(vault, null, '\t')
+    const after = applied(before, 'star')
+
+    expect(after).not.toBeNull()
+    expect(JSON.parse(after ?? '')).toEqual({ ...vault, nib: { version: 1, icon: 'star' } })
+    expect(applied(after ?? '', null)).toBe(`${JSON.stringify(vault, null, '\t')}\n`)
+  })
+
+  test('and keeps what a newer build wrote under its own key', () => {
+    const file = JSON.stringify({ nodes: [], edges: [], nib: { version: 1, later: [1, 2] } })
+    expect(JSON.parse(applied(file, 'rocket', 'blue') ?? '')).toEqual({
+      nodes: [],
+      edges: [],
+      nib: { version: 1, icon: 'rocket', iconColor: 'blue', later: [1, 2] },
+    })
+  })
+
   /** The twin of `frontMatterEdit`: what changes is written and not the whole file,
    *  so an open canvas takes the change without being replaced under its reader. */
   test('goes in as an edit of the few characters that moved', () => {

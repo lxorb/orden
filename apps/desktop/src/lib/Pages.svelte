@@ -1204,6 +1204,7 @@
         {unit}
         notePath={tab.note.path}
         root={workspace.activeSpace?.root ?? null}
+        shared={tab.note.shared}
       />
     {/each}
 

@@ -641,7 +641,11 @@ class Sync {
     if (!note || note.dirty) return
 
     const content = await invoke<string>('read_note', { path }).catch(() => null)
-    if (content !== null && content !== note.text) workspace.reload(path, content)
+    if (content === null || content === note.text) return
+    // A room joined to the note but out of reach takes no file: the words would go to
+    // it as this device's own typing once it is reached again (#541).
+    if (id !== undefined) rooms.letGoUnreached(id)
+    workspace.reload(path, content)
   }
 
   /** What the pass being run has moved, for the log. Counted on the store rather
@@ -734,6 +738,11 @@ class Sync {
         mirror.dropped = false
         this.noted(mirror, began, null)
       }
+
+      // Each page note's paper goes where the note goes (#551); not waited for.
+      void import('./pages/carrying').then(({ carryNow, mirroredPages }) =>
+        carryNow(() => mirroredPages(Object.values(this.mirrors), (id) => this.reads(id))),
+      )
 
       // Nothing else re-reads the folder for notes that arrived from another
       // machine, so they would otherwise sit there unseen until the next save.

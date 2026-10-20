@@ -1875,6 +1875,11 @@ export const th: Dictionary = {
   Max: 'สูงสุด',
   Fast: 'เร็ว',
   Send: 'ส่ง',
+  'Send feedback': 'ส่งความคิดเห็น',
+  'Describe the issue': 'อธิบายปัญหา',
+  Sent: 'ส่งแล้ว',
+  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
+    'รายงานนี้มีคำอธิบายของคุณ เวอร์ชันของ Orden แพลตฟอร์มของคุณ และบันทึกล่าสุดของแอป ไม่มีโน้ตของคุณเลย',
   'Send into the running answer': 'ส่งเข้าไปในคำตอบที่กำลังทำ',
   'Stop the answer': 'หยุดคำตอบ',
   'Open every step': 'เปิดทุกขั้นตอน',

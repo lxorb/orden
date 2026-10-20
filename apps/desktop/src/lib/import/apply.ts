@@ -109,6 +109,11 @@ async function asPages(path: string): Promise<string[]> {
 /** What an import that wrote something owes the rest of the app. */
 async function landed(paths: string[]) {
   workspace.undone.record({ kind: 'import', paths })
+  // Each file made, said once like any other (workspace/file-ops.ts), so sync v2 has an
+  // entry for it where no watcher reads the folder - the browser, a phone - and an
+  // imported paper's page note reaches the account at all (#551). Said where a watcher
+  // already heard it too, which finds the entry there and does nothing.
+  for (const path of paths) await workspace.fileCame(path, 'file')
   await workspace.loadTree()
   const { sync } = await import('../sync.svelte')
   sync.nudge()

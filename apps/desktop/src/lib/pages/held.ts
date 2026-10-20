@@ -6,8 +6,8 @@
  *  after it, the way a PDF's highlights are its own name with their suffix after it.
  *  The file list shows the note and not the paper; a rename, a move, a copy and a
  *  delete take the paper with the note (`move_held` in src-tauri/src/paths.rs, and
- *  `renameNote` in web/commands.ts); and sync carries it as the file it is. See
- *  docs/pages.md.
+ *  `renameNote` in web/commands.ts); and the account keeps it as part of the note, by
+ *  the note's id (carried.ts). See docs/pages.md.
  *
  *  Pure, so the browser build, the paper reader and the export ask the same thing. */
 

@@ -213,13 +213,13 @@ export function goneMessage() {
 /** A subject is one line. Everything put into one below comes from a person - a
  *  space's name, a name somebody chose - and a line break in one of those is not
  *  part of a name; it is a second header. */
-function oneLine(value: string): string {
+export function oneLine(value: string): string {
   return value.replace(/\s+/g, ' ').trim()
 }
 
 /** Everything put into the messages below comes from a person: a space's name,
  *  an address, a name somebody chose. None of it may become markup. */
-function escape(value: string): string {
+export function escape(value: string): string {
   return value
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')

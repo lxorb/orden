@@ -1906,6 +1906,11 @@ export const id: Dictionary = {
   Max: 'Maks',
   Fast: 'Cepat',
   Send: 'Kirim',
+  'Send feedback': 'Kirim masukan',
+  'Describe the issue': 'Jelaskan masalahnya',
+  Sent: 'Terkirim',
+  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
+    'Laporan ini berisi deskripsi Anda, versi Orden, platform Anda, dan log aplikasi terbaru. Catatan Anda tidak pernah disertakan.',
   'Send into the running answer': 'Kirim ke jawaban yang sedang berjalan',
   'Stop the answer': 'Hentikan jawaban',
   'Open every step': 'Buka semua langkah',

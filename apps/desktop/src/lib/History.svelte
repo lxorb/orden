@@ -140,7 +140,7 @@
     if (!preview || !tab?.path) return
 
     await recovery.keep(tab.path, tab.note.text)
-    workspace.replace(preview, tab)
+    workspace.restoreVersion(preview, tab)
     open = false
   }
 

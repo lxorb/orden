@@ -30,6 +30,7 @@
 import { Marked, type Token, type Tokens } from 'marked'
 import { blockMath, definitionList } from './blocks'
 import { BLANK, bodyStart, fenceChange, HORIZONTAL, lines, VERTICAL } from './slide-breaks'
+import { emphasis } from './starts'
 
 /** How a slide is laid out, read off what it holds rather than off an
  *  annotation nobody could open in another editor. */
@@ -151,7 +152,7 @@ function shapeOf(markdown: string): SlideShape {
  *  emoji table in with it - and `isDeck` is asked about every note the editor
  *  shows, which is the one place in the app that must load none of that. */
 const blocks = new Marked({ gfm: true, breaks: false })
-blocks.use({ extensions: [blockMath, definitionList] })
+blocks.use(emphasis, { extensions: [blockMath, definitionList] })
 
 /** Every list item the slide renders, in the order the renderer emits them.
  *

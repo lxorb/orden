@@ -74,6 +74,16 @@ export interface OpenPdf {
  *  time, because the first page cannot be drawn until both are here. */
 export async function openDocument(path: string): Promise<OpenPdf> {
   const [library, data] = await Promise.all([pdfjs(), fileBytes(path)])
+  return await opening(library, data)
+}
+
+/** A PDF that is bytes in hand rather than a file of the space: the paper of a page
+ *  note fetched from the account (pages/carried.ts). */
+export async function openBytes(data: Uint8Array): Promise<OpenPdf> {
+  return await opening(await pdfjs(), data)
+}
+
+async function opening(library: Library, data: Uint8Array): Promise<OpenPdf> {
   // Before the bytes are handed over, and off the main thread: the digest of a
   // paper is a few milliseconds where the read that just finished was hundreds.
   // The same digest, over the same bytes, that the mirror addresses a paper by.

@@ -37,6 +37,7 @@
     unit,
     notePath,
     root,
+    shared = null,
   }: {
     page: PageNode
     /** Counting from one, which is what a page's label says. */
@@ -57,6 +58,9 @@
      *  cannot find its own paper without them; see pages/paper.ts. */
     notePath: string | null
     root: string | null
+    /** The note's id on the account, for a note shared on its own: no path here, and
+     *  its paper is the account's to hand over. See pages/carried.ts. */
+    shared?: string | null
   } = $props()
 
   /** The ruling pitches, in the pixels everything else on the plane is in: 8mm and
@@ -82,9 +86,11 @@
     const at = page.page
     if (!file || !at) return
 
+    // Asked again for a paper not there yet each time this moves; see `tries` below.
+    const asking = tries
     let alive = true
-    void paperOf({ file, note: notePath, root }, at).then((drawn) => {
-      if (!alive) return
+    void paperOf({ file, note: notePath, root, shared }, at).then((drawn) => {
+      if (!alive || asking !== tries) return
 
       paper = drawn?.image ?? null
       lost = !drawn
@@ -95,6 +101,20 @@
       paper = null
       lost = false
     }
+  })
+
+  /** How many times a paper that was not there has been asked for again. A page note's
+   *  paper comes with the note but not always at the same moment: opened on another
+   *  device before a pass brought the paper down, or before the device that made the
+   *  note carried it up, the sheet says so and keeps asking for a while (#551). */
+  let tries = $state(0)
+  const RETRY = 5000
+  const MOST_TRIES = 60
+
+  $effect(() => {
+    if (!lost || tries >= MOST_TRIES) return
+    const timer = setTimeout(() => (tries += 1), RETRY)
+    return () => clearTimeout(timer)
   })
 
   // The picture onto the sheet, at the size the page is. Drawn once per page rather

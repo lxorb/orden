@@ -3238,6 +3238,11 @@ class Workspace {
     this.saving.replace(text, target)
   }
 
+  /** A version put back from the history, which a canvas takes whole (#533). */
+  restoreVersion(text: string, target?: Tab) {
+    this.saving.restoreVersion(text, target)
+  }
+
   /** The open notes a version could be kept of; see recovery.svelte.ts. */
   get worthKeeping(): { key: string; path: string; text: string; revision: number }[] {
     return this.saving.worthKeeping

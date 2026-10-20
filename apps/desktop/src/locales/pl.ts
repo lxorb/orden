@@ -1993,6 +1993,11 @@ export const pl: Dictionary = {
   Max: 'Maks.',
   Fast: 'Szybki',
   Send: 'Wyślij',
+  'Send feedback': 'Wyślij opinię',
+  'Describe the issue': 'Opisz problem',
+  Sent: 'Wysłano',
+  'This report includes your description, Orden’s version, your platform and the recent app log. It never includes your notes.':
+    'Ten raport zawiera twój opis, wersję Orden, twoją platformę i ostatni dziennik aplikacji. Nigdy nie zawiera twoich notatek.',
   'Send into the running answer': 'Wyślij do trwającej odpowiedzi',
   'Stop the answer': 'Zatrzymaj odpowiedź',
   'Open every step': 'Rozwiń wszystkie kroki',

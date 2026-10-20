@@ -80,6 +80,14 @@ if [ "$status" = 0 ]; then
   sleep 10
   kill -0 "$app" 2>/dev/null || { echo "::error::Orden ended after its window mapped"; status=1; }
 fi
+# Idle, before anything is done with it: what it costs the CPU (#427, scripts/idle-cpu.py).
+if [ "$status" = 0 ] && [ "${IDLE:-0}" = 1 ]; then
+  sleep 15
+  python3 "$here/idle-cpu.py" "$app" 20 | tee "$out/idle.txt"
+  [ "${PIPESTATUS[0]}" = 0 ] || status=1
+  find "$HOME" -path '*ch.emilvinu.nib*' -name nib.log -exec grep -hE ' (pump|gpu): ' {} + 2>/dev/null | tee -a "$out/idle.txt" || true
+fi
+
 if [ "$status" = 0 ] && [ "${DRAG:-0}" = 1 ]; then
   python3 "$here/window-drag.py" x11 "$out" "$app" || status=1
   if [ -n "$wm" ] && ! kill -0 "$wm" 2>/dev/null; then

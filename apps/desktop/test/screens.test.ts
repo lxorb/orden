@@ -106,6 +106,7 @@ describe('the rule', () => {
 describe('every layer in the middle of the window', () => {
   test('is found', () => {
     expect(layers.map((one) => one.name).sort()).toEqual([
+      'lib/FeedbackSheet.svelte',
       'lib/History.svelte',
       'lib/IconPicker.svelte',
       'lib/JoinSheet.svelte',

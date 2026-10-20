@@ -141,6 +141,11 @@ async function device(
 
 const PLAN = 'n1'
 
+/** Long enough for what an answer sets going to have landed. */
+function settled(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 20))
+}
+
 async function textOn(account: ReferenceAccount, id: string): Promise<string> {
   return (await account.view()).texts[id] ?? ''
 }
@@ -272,6 +277,72 @@ describe('an open note', () => {
     expect(arrived).toEqual([
       [{ from: SEEDED[0]?.text.length, to: SEEDED[0]?.text.length, insert: 'From there.' }],
     ])
+  })
+})
+
+describe('an open note held apart from its document (#543)', () => {
+  /** The document and the note each written over, differently, while the note was
+   *  closed: the rule asks, the note is held, and it is not joined to the document until
+   *  the question is answered. Joined, a keystroke at the end of the note went into the
+   *  document at the note's place, inside a word of the document's (`wr!itten`). */
+  async function heldApart() {
+    const one = await device()
+    const doc = await one.engine.hold(PLAN)
+    const live = doc?.live
+    const theirs = 'Everything here was written again on this device.\n'
+    live?.transact(() => {
+      const text = live.getText(TEXT)
+      text.delete(0, text.length)
+      text.insert(0, theirs)
+    }, HERE)
+    await one.engine.letGo(PLAN)
+
+    const mine = 'A note rewritten in another program, start to end.\n'
+    const note = new SharedDoc(mine)
+    const held = {
+      live: note,
+      get latest() {
+        return note.text.toString()
+      },
+    }
+    const part = await attach(one.engine, PLAN, held, () => true)
+    return { one, note, part, theirs, mine }
+  }
+
+  test('is not joined while it is held, so typing goes into the note alone', async () => {
+    const { one, note, part, theirs, mine } = await heldApart()
+    expect(one.engine.core.isHeld(PLAN)).toBe(true)
+
+    note.edit([{ from: mine.length, to: mine.length, insert: '!' }])
+    expect((await one.engine.core.doc(PLAN))?.text()).toBe(theirs)
+    expect(note.text.toString()).toBe(`${mine}!`)
+    part?.()
+  })
+
+  test('answered Keep mine, the document takes the note, typing since and all, and they are one', async () => {
+    const { one, note, part, mine } = await heldApart()
+    note.edit([{ from: mine.length, to: mine.length, insert: 'Typed while asked.' }])
+
+    await one.engine.held.answer(PLAN, 'mine')
+    await settled()
+
+    const doc = await one.engine.core.doc(PLAN)
+    expect(doc?.text()).toBe(`${mine}Typed while asked.`)
+    note.edit([{ from: 0, to: 0, insert: '> ' }])
+    expect(doc?.text()).toBe(`> ${mine}Typed while asked.`)
+    part?.()
+  })
+
+  test('answered Keep theirs, the note takes the document, and they are one', async () => {
+    const { one, note, part, theirs } = await heldApart()
+
+    await one.engine.held.answer(PLAN, 'theirs')
+    await settled()
+
+    expect(note.text.toString()).toBe(theirs)
+    note.edit([{ from: theirs.length, to: theirs.length, insert: 'After.' }])
+    expect((await one.engine.core.doc(PLAN))?.text()).toBe(`${theirs}After.`)
+    part?.()
   })
 })
 

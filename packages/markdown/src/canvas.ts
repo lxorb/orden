@@ -23,7 +23,10 @@
  *  what reads as a node becomes one and what does not is left out rather than
  *  taking the whole canvas with it. Writing puts the spec's fields down in the
  *  order the spec lists them and leaves out every one that is absent, so a
- *  canvas that has not changed is written back byte for byte. */
+ *  canvas that has not changed is written back byte for byte. What is left out of
+ *  reading is not lost from the file, though: setting the icon changes the JSON's own
+ *  key and nothing else, and a merge of two copies puts back whatever either held that
+ *  this module does not read (canvas-extras.ts, #501). */
 
 import { oneEdit, type TextEdit } from './edits'
 import { isPaper, type Paper, PAPERS } from './papers'
@@ -1099,11 +1102,13 @@ export function blankCanvas(): string {
  *  snapshotted and what one undo puts back. `frontMatterEdit` answers exactly this
  *  question for a note; this is its twin for the format that has no front matter.
  *
- *  The file is read and written back, because `nib.icon` sits in JSON rather than
- *  on a line of its own. That costs nothing for a canvas Orden wrote - writing one
- *  is exact, so the only characters that differ are the key - and for a canvas
- *  written by hand it comes out as the file reformatted, which is what any change
- *  to it would have been anyway.
+ *  `nib.icon` and `nib.iconColor` are changed in the file's JSON and nothing else is:
+ *  the file is not read as a canvas and written back, which would leave out whatever
+ *  this build does not read - another app's nodes and the edges that end at them, the
+ *  fields and keys the spec does not name (#501). For a canvas Orden wrote, whose text
+ *  is exactly what `JSON.stringify` prints, the only characters that differ are the
+ *  key's; a canvas written by hand comes out reformatted, which is what any change to
+ *  it would have been anyway.
  *
  *  Nothing at all for a file that is not JSON: an empty canvas standing in for
  *  something unreadable is what lets a truncated file be drawn on, and it must
@@ -1119,7 +1124,27 @@ export function canvasIconEdit(
   const wanted = tint === null || name === null ? null : tint
   if (canvas.icon === name && (canvas.iconColor ?? null) === wanted) return null
 
-  return oneEdit(text, writeCanvas({ ...canvas, icon: name, iconColor: wanted }))
+  // A file with nothing in it yet is a blank canvas wearing the icon, as before.
+  if (!text.trim()) return oneEdit(text, writeCanvas({ ...canvas, icon: name, iconColor: wanted }))
+
+  const file = JSON.parse(text) as Record<string, unknown>
+  const rest: Record<string, unknown> = { ...(isRecord(file.nib) ? file.nib : {}) }
+  const version = rest.version ?? NIB_VERSION
+  delete rest.version
+  delete rest.icon
+  delete rest.iconColor
+  const nib: Record<string, unknown> = {
+    version,
+    ...(name ? { icon: name } : {}),
+    ...(name && wanted ? { iconColor: wanted } : {}),
+    ...rest,
+  }
+  // Nothing of ours left but the version is no key of ours at all, the way
+  // `writeCanvas` leaves `nib` out of a canvas that has nothing to put in it.
+  if (Object.keys(nib).length > 1) file.nib = nib
+  else delete file.nib
+
+  return oneEdit(text, `${JSON.stringify(file, null, '\t')}\n`)
 }
 
 function isCanvasJson(text: string): boolean {
