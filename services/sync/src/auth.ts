@@ -288,7 +288,8 @@ export async function verifyCode(
   const checked = await checkCode(env, address, code)
   if ('error' in checked) return checked
 
-  await spendCode(env, address)
+  // Two requests holding the same code are one sign-in, not two.
+  if (!(await spendCode(env, address))) return { error: WRONG_CODE, status: 400 }
 
   return { user: await accountFor(env, address, accepted) }
 }
