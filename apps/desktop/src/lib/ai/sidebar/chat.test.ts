@@ -3,6 +3,7 @@
  *  The crate's per-space store is played here by a map, so what is kept where is seen. */
 
 import { beforeEach, describe, expect, test, vi } from 'vitest'
+import type { Draft, EngineEvent, Thread } from '../chat/types'
 
 const { memoryStorage } = await import('../../../../test/disk')
 vi.stubGlobal('localStorage', memoryStorage())
@@ -50,9 +51,20 @@ vi.mock('../store.svelte', () => {
   return { ai: { providerFor: () => provider, provider: () => provider } }
 })
 
-vi.mock('./setup', () => ({
-  engineOf: () => Promise.resolve({ models: () => Promise.resolve([]) }),
+/** The engine, which answers every send at the plan's limit, until an hour from now. */
+const until = vi.hoisted(() => Date.now() + 3_600_000)
+const engine = vi.hoisted(() => ({
+  models: () => Promise.resolve([]),
+  send: vi.fn((thread: Thread, draft: Draft, on: (event: EngineEvent) => void) => {
+    const notice = { kind: 'notice', code: 'error', text: 'At its limit' } as const
+    thread.turns.push({ id: crypto.randomUUID(), role: 'you', at: 1, parts: [], draft })
+    thread.turns.push({ id: crypto.randomUUID(), role: 'model', at: 1, parts: [notice] })
+    on({ type: 'limit', limit: { state: 'reached', until, untilWords: null } })
+    on({ type: 'done', stop: 'error', error: notice.text })
+    return Promise.resolve()
+  }),
 }))
+vi.mock('./setup', () => ({ engineOf: () => Promise.resolve(engine) }))
 
 // What a review of an agent's edits needs is a workspace of documents, which none of
 // this is about.
@@ -163,5 +175,48 @@ describe('the panel’s chats', () => {
 
     expect(deleted).toEqual([`home/${garden.id}`])
     expect(chat.heads.some((one) => one.id === garden.id)).toBe(false)
+  })
+
+  test('at the plan’s limit, send the message again once it resets, in another chat too', async () => {
+    engine.send.mockClear()
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work'])
+    chat.text = 'go on'
+    chat.submit({ front: null, selection: '' })
+    const asked = chat.thread
+    await vi.waitFor(() =>
+      expect(chat.resets[String(asked?.id)]).toEqual({ until, waiting: false }),
+    )
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
+
+    chat.waitForReset(true)
+    chat.newThread()
+    await vi.advanceTimersByTimeAsync(3_600_000)
+    expect(engine.send).toHaveBeenCalledTimes(1)
+    await vi.advanceTimersByTimeAsync(30_000)
+    vi.useRealTimers()
+    await vi.waitFor(() => expect(engine.send).toHaveBeenCalledTimes(2))
+    expect(engine.send.mock.calls[1]?.slice(0, 2)).toEqual([
+      asked,
+      { text: 'go on', attachments: [] },
+    ])
+  })
+
+  test('wait no longer for the plan to reset once the wait is taken back', async () => {
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work'])
+    engine.send.mockClear()
+    chat.text = 'go on'
+    chat.submit({ front: null, selection: '' })
+    await vi.waitFor(() => expect(chat.resets[String(chat.thread?.id)]?.waiting).toBe(false))
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'Date'] })
+
+    chat.waitForReset(true)
+    chat.waitForReset(false)
+    await vi.advanceTimersByTimeAsync(7_200_000)
+    vi.useRealTimers()
+    expect(engine.send).toHaveBeenCalledTimes(1)
   })
 })
