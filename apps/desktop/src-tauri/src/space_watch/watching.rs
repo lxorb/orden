@@ -417,7 +417,7 @@ impl Shared {
 
 #[cfg(test)]
 mod tests {
-    use super::{watch, Heard, Root, MOST_CHANGES};
+    use super::{watch, Heard, Root, MOST_CHANGES, QUIET};
     use crate::space_watch::known::Seen;
     use std::fs;
     use std::path::{Path, PathBuf};
@@ -509,12 +509,21 @@ mod tests {
         let (_watch, heard) = watching(root);
         assert!(until_quiet(&heard)[0].scan);
 
+        let started = Instant::now();
         for at in 0..1000 {
             fs::write(root.join(format!("note-{at:04}.md")), format!("note {at}")).expect("a note");
         }
         let burst = until_quiet(&heard);
 
-        assert!(burst.len() <= 12, "{} messages", burst.len());
+        // A batch is settled no sooner than `QUIET` after its first event and says one
+        // message, so however long the disk takes over the notes - a Windows runner's
+        // scans every one - there is at most one message for each `QUIET` of it.
+        let most = started.elapsed().as_millis() / QUIET.as_millis() + 1;
+        assert!(
+            burst.len() as u128 <= most,
+            "{} messages, at most {most}",
+            burst.len()
+        );
         for one in &burst {
             assert!(
                 one.seen.len() <= MOST_CHANGES,
