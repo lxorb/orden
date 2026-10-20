@@ -8,7 +8,9 @@ from __future__ import annotations
 
 import json
 import pathlib
+import re
 import sys
+import tempfile
 import unittest
 
 HERE = pathlib.Path(__file__).resolve().parent
@@ -16,7 +18,7 @@ sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(HERE.parents[3] / "scripts"))
 
 from fake_agent import from_contract, marked_source  # noqa: E402
-from run import ROADS, SCENARIOS, dotted, filled, judged, needed  # noqa: E402
+from run import ROADS, SCENARIOS, dotted, filled, judged, needed, stand_in  # noqa: E402
 
 #: Every kind of step run.py knows; a scenario with any other is a typo.
 STEPS = {"call", "join", "record", "keyboard", "windows", "reader", "reader_call", "reader_eval", "pause", "observe"}
@@ -104,6 +106,15 @@ class EveryScenario(unittest.TestCase):
                 self.assertLessEqual(set(needed(scenario)), VERBS)
                 for road in scenario.get("via", []):
                     self.assertIn(road, ROADS)
+
+
+class AHelpersAccount(unittest.TestCase):
+    def test_claude_code_is_the_stand_in_that_says_you_asked(self) -> None:
+        with tempfile.TemporaryDirectory() as folder:
+            shim = pathlib.Path(stand_in(pathlib.Path(folder))["NIB_AI_CLAUDE_CODE"])
+            script = pathlib.Path(re.findall(r'"([^"]+)" claude ', shim.read_text(encoding="utf-8"))[0])
+        self.assertEqual(shim.name, "claude.cmd")
+        self.assertIn("You asked: ", script.read_text(encoding="utf-8"))
 
 
 if __name__ == "__main__":
