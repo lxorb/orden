@@ -825,8 +825,12 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-20, to 3,280,000, for David's branches landed together (#254 developer
  *  mode, #429 hardened importers, #430 board edits, #447, #474 the Shortcuts action,
- *  #484 board views and databases, #531 the bug burn-down). Measured 3,279,757. */
-const BUDGET = 3_280_000
+ *  #484 board views and databases, #531 the bug burn-down). Measured 3,279,757.
+ *
+ *  Raised 2026-10-20, to 3,281,000, for #417: the empty Essentials a drag is offered
+ *  stands over the caption rather than pushing the file list down under the pointer
+ *  (`is-floating` in Bookmarks.svelte). Measured 3,280,466. */
+const BUDGET = 3_281_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
