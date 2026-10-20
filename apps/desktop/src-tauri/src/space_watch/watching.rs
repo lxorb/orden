@@ -28,8 +28,9 @@
 //! simply quiet.
 
 use notify::event::{AccessKind, AccessMode};
-use notify::{EventKind, RecommendedWatcher, RecursiveMode, Watcher};
+use notify::{ErrorKind, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
 use std::collections::BTreeSet;
+use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Condvar, Mutex, MutexGuard};
 use std::time::{Duration, Instant};
@@ -121,9 +122,7 @@ pub fn watch(roots: Vec<Root>, sink: Sink) -> Result<Watch, String> {
     let mut watcher = notify::recommended_watcher(move |event| heard.heard(&resolving, event))
         .map_err(|error| format!("could not watch the spaces: {error}"))?;
     for root in roots.iter() {
-        watcher
-            .watch(&root.real, RecursiveMode::Recursive)
-            .map_err(|error| format!("could not watch {}: {error}", root.given.display()))?;
+        arm(&mut watcher, root);
     }
 
     let working = Arc::clone(&shared);
@@ -133,6 +132,52 @@ pub fn watch(roots: Vec<Root>, sink: Sink) -> Result<Watch, String> {
         .map_err(|error| format!("could not start watching the spaces: {error}"))?;
 
     Ok(Watch { shared })
+}
+
+/// Watches a root and every folder in it that can be watched, and says in the log what
+/// could not be. inotify watches folder by folder, and notify gives up on the whole tree
+/// at the first folder it cannot add: one nobody may read (a `lost+found` at the top of
+/// an external disk), or one past the system's limit of watches. A space that cannot be
+/// watched at all is still read at every batch, and every other space is watched.
+fn arm(watcher: &mut RecommendedWatcher, root: &Root) {
+    if let Err(error) = watch_tree(watcher, &root.real) {
+        eprintln!(
+            "nib: could not watch all of {}: {error}",
+            root.given.display()
+        );
+    }
+}
+
+/// Watches `dir` whole, or, where a folder inside it cannot be watched, every folder
+/// below it but that one; `dir` itself is watched whole by then, so a folder made in it
+/// later is too. Said back: the first folder that could not be watched.
+fn watch_tree(watcher: &mut RecommendedWatcher, dir: &Path) -> notify::Result<()> {
+    let Err(error) = watcher.watch(dir, RecursiveMode::Recursive) else {
+        return Ok(());
+    };
+    // Only a folder below is left out; past the limit, every other would fail too.
+    let below = error
+        .paths
+        .iter()
+        .any(|path| path != dir && path.starts_with(dir));
+    if !below || matches!(error.kind, ErrorKind::MaxFilesWatch) {
+        return Err(error);
+    }
+    let mut outcome = Ok(());
+    for entry in fs::read_dir(dir).map_err(notify::Error::io)?.flatten() {
+        let path = entry.path();
+        if path.is_dir() {
+            let one = watch_tree(watcher, &path);
+            if one
+                .as_ref()
+                .is_err_and(|error| matches!(error.kind, ErrorKind::MaxFilesWatch))
+            {
+                return one;
+            }
+            outcome = outcome.and(one);
+        }
+    }
+    outcome
 }
 
 /// The thread every answer is settled on: learns each space, says so, then settles each
@@ -174,7 +219,7 @@ fn work(roots: &[Root], shared: &Shared, mut watcher: RecommendedWatcher, mut si
                 // Watched again before it is read again, so nothing that happens in
                 // between is missed: it is either in the reading or heard after it.
                 let _ = watcher.unwatch(&root.real);
-                let _ = watcher.watch(&root.real, RecursiveMode::Recursive);
+                arm(&mut watcher, root);
                 *space = Space::read(&root.real).unwrap_or_default();
                 released[at].clear();
                 heard.push(Heard::scan(at));
@@ -566,5 +611,41 @@ mod tests {
         }
         assert!(after.iter().all(|one| one.seen.is_empty()), "{after:?}");
         assert!(after.iter().any(|one| one.gone), "{after:?}");
+    }
+
+    /// A folder nobody may read in one space (a `lost+found` at the top of an external
+    /// disk) costs the watch that folder: not the rest of its space, not another space.
+    #[cfg(unix)]
+    #[test]
+    fn a_folder_that_cannot_be_watched_is_left_out_and_nothing_else() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = tempfile::tempdir().expect("a folder");
+        let (space, other) = (dir.path().join("Space"), dir.path().join("Other"));
+        let locked = space.join("lost+found");
+        for folder in [&locked, &space.join("Box"), &other] {
+            fs::create_dir_all(folder).expect("a folder");
+        }
+        fs::set_permissions(&locked, fs::Permissions::from_mode(0o000)).expect("locked");
+        // Root reads every folder, so there is nothing to leave out.
+        let unreadable = fs::read_dir(&locked).is_err();
+        let (tell, heard) = channel();
+        let roots = [&space, &other].map(|dir| Root {
+            given: dir.clone(),
+            real: fs::canonicalize(dir).expect("a real path"),
+        });
+        let watched = watch(roots.to_vec(), Box::new(move |one| tell.send(one).is_ok()));
+        fs::set_permissions(&locked, fs::Permissions::from_mode(0o755)).expect("unlocked");
+        if !unreadable {
+            return;
+        }
+        let _watch = watched.expect("watching");
+        assert_eq!(until_quiet(&heard).iter().filter(|one| one.scan).count(), 2);
+
+        fs::write(space.join("Box").join("Plan.md"), "new").expect("written");
+        fs::write(other.join("Idea.md"), "new").expect("written");
+        assert_eq!(
+            said(&until_quiet(&heard)),
+            ["created Box/Plan.md", "created Idea.md"]
+        );
     }
 }
