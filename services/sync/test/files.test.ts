@@ -81,6 +81,25 @@ describe('a PDF as a blob', () => {
     expect((await call(env, `/i/${PAPER}.pdf`)).status).toBe(404)
   })
 
+  test('and not where its site leaves out the folder it sits in', async () => {
+    await upload(PAPER)
+    await record([{ path: 'Private/salary.pdf', hash: PAPER }])
+    await call(env, `/v1/spaces/${space}/blog`, {
+      method: 'PUT',
+      token,
+      body: { subdomain: 'field' },
+    })
+    await call(env, `/v1/spaces/${space}/site`, {
+      method: 'PUT',
+      token,
+      body: { rules: { include: ['Blog'], otherwise: 'none' } },
+    })
+    expect((await call(env, `/i/${PAPER}.pdf`)).status).toBe(404)
+
+    await record([{ path: 'Blog/salary.pdf', hash: PAPER }])
+    expect((await call(env, `/i/${PAPER}.pdf`)).status).toBe(200)
+  })
+
   test('and stops being served when the space stops publishing', async () => {
     await upload(PAPER)
     await record([{ path: 'paper.pdf', hash: PAPER }])

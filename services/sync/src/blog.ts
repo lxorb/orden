@@ -267,6 +267,24 @@ function toFile(file: SpaceFile, url: URL): Response {
   return Response.redirect(new URL(blobUrl(file), url).toString(), 302)
 }
 
+/** Whether a page of the space's site could link this file of it: the site's
+ *  folder rules publish it, or the site is one note whose page links it. The
+ *  second is asked the way the site answers a path to the file, which sends the
+ *  reader to its bytes only when the page links them. */
+export async function publishesFile(
+  env: Env,
+  space: Space,
+  file: SpaceFile,
+  request: Request,
+): Promise<boolean> {
+  const site = readSite(space.site)
+  if (!space.blog_note) return publishes(site.rules, file.path, NO_FRONT)
+
+  const url = new URL(`/${encodeURIComponent(file.path)}`, request.url)
+  const answer = await served(env, space, url, request, site)
+  return answer.headers.get('location') === new URL(blobUrl(file), url).toString()
+}
+
 /** What a `[[wikilink]]` on a published page points at. A note the space does
  *  not publish resolves to nothing, and the renderer leaves it as words. */
 function linkResolver(listed: readonly Page[], files: readonly SpaceFile[]) {

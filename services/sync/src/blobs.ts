@@ -1,12 +1,12 @@
 import { Hono } from 'hono'
 import { NOT_A_HASH, OUT_OF_SPACE } from './refused'
-import { spaceForHost } from './blog'
+import { publishesFile, spaceForHost } from './blog'
 import { readSite, SVG_POLICY } from './blog/site'
 import { now } from './crypto'
 import { readSpaceFiles } from './spaces/files'
 import { BYTES, hashOfBytes, held, holdsItsName, WRONG_BYTES } from './sync2/files'
 import { fits, fitsSql } from './storage'
-import type { Env, Variables } from './types'
+import type { Env, Space, Variables } from './types'
 
 /** What may be stored, and how much of each.
  *
@@ -191,8 +191,9 @@ export const publicBlobs = new Hono<{ Bindings: Env }>()
  *  scripts and handlers before it uploads a diagram; the policy is the half that
  *  does not depend on which version of the app drew it. */
 
-/** Whether any published space says it keeps this file beside its notes, which is
- *  the one condition under which a page here writes its URL.
+/** Whether any published space keeps this file beside its notes where a page of
+ *  its site could link it, which is the one condition under which a page here
+ *  writes its URL; see `publishesFile`.
  *
  *  A scan of the published spaces, narrowed by the hash appearing anywhere in the
  *  column and then read properly: the column is a JSON list rather than a table,
@@ -224,15 +225,20 @@ async function dressesThisSite(env: Env, host: string, hash: string): Promise<bo
   return readSpaceFiles(space.files).some((one) => one.hash === hash)
 }
 
-async function publishedAnywhere(env: Env, hash: string): Promise<boolean> {
+async function publishedAnywhere(env: Env, hash: string, request: Request): Promise<boolean> {
   const { results } = await env.DB.prepare(
-    `select files from spaces
+    `select * from spaces
       where blog_enabled = 1 and deleted = 0 and files like ?1 limit 50`,
   )
     .bind(`%${hash}%`)
-    .all<{ files: string }>()
+    .all<Space>()
 
-  return results.some((row) => readSpaceFiles(row.files).some((one) => one.hash === hash))
+  for (const space of results) {
+    for (const file of readSpaceFiles(space.files)) {
+      if (file.hash === hash && (await publishesFile(env, space, file, request))) return true
+    }
+  }
+  return false
 }
 
 publicBlobs.get('/:name', async (context) => {
@@ -254,7 +260,7 @@ publicBlobs.get('/:name', async (context) => {
   // bytes and nothing more: it is reached through its space (`GET /v2/files`), never
   // by hash, and is not something a published page points at.
   if (type === BYTES) return context.notFound()
-  if (DOCUMENTS.has(type) && !(await publishedAnywhere(context.env, hash))) {
+  if (DOCUMENTS.has(type) && !(await publishedAnywhere(context.env, hash, context.req.raw))) {
     return context.notFound()
   }
 
