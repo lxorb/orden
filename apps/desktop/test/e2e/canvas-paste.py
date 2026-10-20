@@ -31,6 +31,13 @@ say, wrong, shot = DRIVE.say, DRIVE.wrong, DRIVE.shot
 ORIGIN = harness.worker_origin()
 PATIENCE = 60
 
+#: The app's own `fetch('/')` that a reload stops, as WebKit says it and Playwright hands
+#: it over. Playwright makes every console error of WebKit's a page error, cut after the
+#: first colon, and WebKit words a request the navigation stopped as refused by access
+#: control. The fetch is reload-when.ts asking the site for its build, as the reload stops
+#: a chunk (`vite:preloadError`), and it catches its own failure: nothing a person sees.
+STOPPED = f"{ORIGIN.split(':', 1)[1][1:]}/ due to access control checks."
+
 
 def png(width: int, height: int, rgb: tuple[int, int, int]) -> bytes:
     """A picture of one colour, as a PNG's bytes."""
@@ -74,6 +81,8 @@ def wait(page: Page, script: str, what: str) -> object:
 
 def board(page: Page, label: str) -> str:
     wait(page, "() => !!window.nibApp?.workspace?.activeSpace && typeof window.nibApp.tasks === 'function'", f"[{label}] the app")
+    # Signed out, the pasted picture is a row in the browser, drawn by the asset worker.
+    wait(page, "() => !!navigator.serviceWorker.controller", f"[{label}] the asset worker")
     root = page.evaluate("() => window.nibApp.workspace.activeSpace.root.replace(/\\/+$/, '')")
     path = f"{root}/Board.canvas"
     page.evaluate(
@@ -145,11 +154,15 @@ def written_before(page: Page, label: str, signed: bool) -> None:
 
 def drive(browser: Browser, token: str) -> None:
     for label, signed in (("signed in", True), ("signed out", False)):
-        context = browser.new_context(viewport={"width": 1280, "height": 820})
+        # The asset worker is half of what this drive is about; see WEBKIT_WORKERS in harness.py.
+        context = browser.new_context(viewport={"width": 1280, "height": 820}, service_workers="allow")
         if signed:
             context.add_init_script(f"localStorage.setItem('nib:session', {json.dumps(token)})")
         page = context.new_page()
-        page.on("pageerror", lambda error, label=label: wrong(f"[{label}] page error: {error}"))
+        page.on(
+            "pageerror",
+            lambda error, label=label: (say if str(error) == STOPPED else wrong)(f"[{label}] page error: {error}"),
+        )
         page.goto(ORIGIN, wait_until="domcontentloaded")
         path = board(page, label)
         pasted(page, label, path)
