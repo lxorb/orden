@@ -259,6 +259,11 @@ export function isEdit(message: Uint8Array): boolean {
  *  leaves, so the carets go with it. */
 export function forget(awareness: Awareness, clients: readonly number[], origin: unknown) {
   if (clients.length) removeAwarenessStates(awareness, [...clients], origin)
+
+  // The protocol keeps a forgotten client's clock and refuses its state said again
+  // at that clock, which is the first thing a device that reconnects says: until
+  // its caret next moved it would not be seen. Forgotten too, so it arrives anew.
+  for (const client of clients) awareness.meta.delete(client)
 }
 
 /** A room is a place rather than somebody in it, and it never sleeps on a timer.
