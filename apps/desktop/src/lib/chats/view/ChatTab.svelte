@@ -166,6 +166,7 @@
 <div
   class="chat-tab"
   class:dropping
+  data-chat-drop={tab.id}
   bind:clientWidth={width}
   onkeydowncapture={onKey}
   ondragover={dragging}

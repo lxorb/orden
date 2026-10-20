@@ -146,6 +146,7 @@
   bind:this={root}
   onfocusin={claim}
   onpointerdown={claim}
+  data-chat-drop=""
   ondragover={(event) => {
     if (isTreeDrag(event.dataTransfer)) event.preventDefault()
   }}
