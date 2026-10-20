@@ -610,6 +610,20 @@ describe('a site behind a password', () => {
     expect(read.headers.get('cache-control')).toBe('private, no-store')
   })
 
+  /** Every site is a name under one root, and a script on any of them may set a
+   *  cookie for the whole root, which every other site is then sent ahead of its own. */
+  test('a cookie another site set for the root keeps nobody out', async () => {
+    const answer = await page('/plan', {
+      method: 'POST',
+      raw: `password=${encodeURIComponent(PASSWORD)}`,
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    })
+    const ticket = (answer.headers.get('set-cookie') ?? '').split(';')[0] ?? ''
+
+    const read = await page('/plan', { headers: { cookie: `nib_site=0.0; ${ticket}` } })
+    expect(read.text).toContain('Words.')
+  })
+
   /** Every answer on a site behind a password, not only the gate: the feed and the
    *  sitemap are the site's words too. */
   test('and nothing a site behind a password answers is a shared cache’s', async () => {
@@ -628,7 +642,7 @@ describe('a site behind a password', () => {
 
   test('a ticket somebody made up opens nothing', async () => {
     const read = await page('/plan', {
-      headers: { cookie: `nib_site=${Date.now() + 1000}.${'0'.repeat(64)}` },
+      headers: { cookie: `__Host-nib_site=${Date.now() + 1000}.${'0'.repeat(64)}` },
     })
 
     expect(read.text).toContain('type="password"')
