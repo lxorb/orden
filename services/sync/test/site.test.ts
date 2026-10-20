@@ -587,6 +587,19 @@ describe('a site behind a password', () => {
     expect(answer.headers.get('set-cookie')).toBeNull()
   })
 
+  test('a path that begins with two slashes stays on this site', async () => {
+    const gate = await page('//evil.example/')
+    expect(gate.text).toContain('action="/evil.example/"')
+
+    const answer = await page('//evil.example/', {
+      method: 'POST',
+      raw: `password=${encodeURIComponent(PASSWORD)}`,
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    })
+    expect(answer.status).toBe(303)
+    expect(answer.headers.get('location')).toBe('/evil.example/')
+  })
+
   test('the right one hands over a ticket that opens the site', async () => {
     const answer = await page('/plan', {
       method: 'POST',

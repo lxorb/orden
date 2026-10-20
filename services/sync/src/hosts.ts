@@ -70,3 +70,10 @@ export function blogRootOf(env: Env, hostname: string): string | null {
     .sort((a, b) => b.length - a.length)
   return roots[0] ?? null
 }
+
+/** A path on this origin, for a redirect or a form to name. A pathname that begins
+ *  with two slashes is an address with a host in it, which a browser goes to, so its
+ *  leading slashes are collapsed to the one that was meant. */
+export function sameOriginPath(pathname: string): string {
+  return pathname.replace(/^\/+/, '/')
+}
