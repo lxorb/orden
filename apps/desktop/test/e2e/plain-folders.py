@@ -246,9 +246,19 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
         # ── The Move sheet offers rows and spaces, and no folders ──────────
         # A note from inside one of them, so the space itself is a place to move to:
         # a note already at the top of the space is not offered the space it is in.
-        row(page, "Loft.md").click(button="right")
-        page.wait_for_selector('[role="menu"]:visible', timeout=5000)
-        page.get_by_role("menuitem", name="Move", exact=True).click()
+        # A pointer's row menu has no Move since #303: the palette's Move this note asks,
+        # for the note that is open.
+        row(page, "Loft.md").click()
+        wait_for(
+            page,
+            "() => window.nibApp.workspace.active?.path?.endsWith('Projects/Loft.md')",
+            f"[{label}] the note to open",
+        )
+        page.keyboard.press("Control+Shift+KeyP")
+        page.wait_for_selector(".palette input")
+        page.keyboard.type("Move this note")
+        page.wait_for_timeout(400)
+        page.keyboard.press("Enter")
         # The sheet, by what it is. It was told apart from the menu by having no role
         # at all until the sheets were given one; now it says it is a dialog, that it
         # is modal, and what it is called. See PromptSheet.svelte.
@@ -272,6 +282,7 @@ def shoot(browser: Browser, where: str, viewport: dict[str, int]) -> None:
         )
         page.keyboard.press("Escape")
         page.wait_for_timeout(250)
+        relist(page, where)
 
         # ── The other convention, read and not rewritten ───────────────────
         book = row(page, "Handbook")
