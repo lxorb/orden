@@ -49,6 +49,7 @@
     movedBy,
     pickedBox,
     resizedPick,
+    sized,
     subset,
     turnedInk,
     withText,
@@ -2144,9 +2145,12 @@
       at={overPicked.at}
       below={overPicked.below}
       colour={pickedColour}
+      size={store.canvas.ink.find((one) => store.isPicked(one.id))?.size}
       recent={pens.recent}
       grouping={onFrame ? 'ungroup' : store.picked.length > 1 ? 'group' : null}
       oncolour={colourPicked}
+      onsize={(size: number, drag: string) =>
+        store.edit(sized(store.canvas, store.picked, size), drag)}
       onduplicate={() => run.duplicate(store)}
       ondelete={() => run.remove(store)}
       ongroup={() => (onFrame ? run.ungroup(store) : run.group(store))}
