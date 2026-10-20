@@ -535,7 +535,7 @@
             # The same environment the release build's wrapper sets: xdg-open on $PATH.
             dontWrapGApps = true;
             postFixup = ''
-              wrapProgram $out/libexec/${pname}/nib $out/bin/${pname} \
+              makeWrapper $out/libexec/${pname}/nib $out/bin/${pname} \
                 --inherit-argv0 \
                 ''${gappsWrapperArgs[@]} \
                 --prefix PATH : ${lib.makeBinPath [ pkgs.xdg-utils ]}
