@@ -58,6 +58,9 @@
         "x64",
         "arm64"
       ]
+    },
+    "patchedDependencies": {
+      "@lezer/markdown@1.7.2": "patches/@lezer__markdown@1.7.2.patch"
     }
   }
 }

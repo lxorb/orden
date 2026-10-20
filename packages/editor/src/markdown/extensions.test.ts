@@ -418,3 +418,33 @@ describe('fenced code while editing', () => {
     expect(found.filter((name) => name === 'FencedCode')).toHaveLength(1)
   })
 })
+
+describe('a long paragraph', () => {
+  /** A pasted log is one paragraph, and a paragraph is parsed in one go. Each `[INFO]`
+   *  that closed a link, and each address that asked whether a link was open, walked
+   *  back over everything before it in the paragraph: forty thousand lines took
+   *  twenty seconds. See patches/@lezer__markdown@1.7.2.patch. */
+  test('parses in time that grows with its length', () => {
+    let doc = ''
+    for (let line = 0; line < 40_000; line++) {
+      doc += `2026-10-19 12:00:00 [INFO] request ${line} url=https://example.com/${line}\n`
+    }
+    const parser = markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }).language
+      .parser
+    const start = performance.now()
+    const found = { Link: 0, URL: 0 }
+    parser.parse(doc).iterate({
+      enter: (node) => {
+        if (node.name === 'Link' || node.name === 'URL') found[node.name]++
+      },
+    })
+    expect(performance.now() - start).toBeLessThan(2000)
+    expect(found).toEqual({ Link: 40_000, URL: 40_000 })
+  })
+
+  test('still ends an address at the bracket of the link it is in', () => {
+    expect(tree('[a [b](c) www.example.com] and [see www.example.com]').match(/URL ".*"/g)).toEqual(
+      ['URL "c"', 'URL "www.example.com"', 'URL "www.example.com"'],
+    )
+  })
+})
