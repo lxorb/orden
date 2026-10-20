@@ -42,6 +42,30 @@ export function unquoted(value: string): string {
   }
 }
 
+/** A value without the comment YAML lets a line end in, and the blanks in front of
+ *  it: a `#` at the start or after a blank, outside quotes. So `a # note` says `a`,
+ *  and `'a # b'` and `a#b` say all of themselves. A quote opens only where a scalar
+ *  or a flow member starts, as in `members` below. */
+export function uncommented(value: string): string {
+  let quote: string | null = null
+
+  for (let at = 0; at < value.length; at++) {
+    const char = value.charAt(at)
+
+    if (quote !== null) {
+      if (quote === '"' && char === '\\') at++
+      else if (quote === "'" && char === "'" && value.charAt(at + 1) === "'") at++
+      else if (char === quote) quote = null
+    } else if (char === '#' && !value.charAt(at - 1).trim()) {
+      return value.slice(0, at).trimEnd()
+    } else if ((char === '"' || char === "'") && /(?:^|[[,])\s*$/.test(value.slice(0, at))) {
+      quote = char
+    }
+  }
+
+  return value
+}
+
 /** A flow sequence: `[a, b, c]`, and `[]` for a list of nothing. */
 const FLOW = /^\[([\s\S]*)\]$/
 

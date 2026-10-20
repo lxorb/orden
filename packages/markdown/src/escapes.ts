@@ -57,9 +57,10 @@ const BLANK = /\s/
  *  `-5°C` is a temperature. */
 const A_BLOCK = /^(?:-(?=[\s-]|$)|\+ |>|~~~|=+|#{1,6} )/
 
-/** A number that would open an ordered list. The escape goes on the dot, because
- *  the dot is the marker; the digits are a number either way. */
-const A_NUMBER = /^(\d+)\. /
+/** A number that would open an ordered list, with a dot or with CommonMark's other
+ *  marker, a parenthesis. The escape goes on the marker; the digits are a number
+ *  either way. */
+const A_NUMBER = /^(\d+)([.)]) /
 
 /** A code span: as many backticks as it closes with, and something between them.
  *  Whatever else is in there is inert - markdown reads a code span as the
@@ -162,7 +163,7 @@ export function escapeText(text: string): string {
 
   // A block marker is only ever the first thing in the text, so it is answered
   // once rather than asked about at every character after it.
-  let escaped = numbered ? `${numbered[1]}\\. ` : block ? `\\${block[0]}` : ''
+  let escaped = numbered ? `${numbered[1]}\\${numbered[2]} ` : block ? `\\${block[0]}` : ''
   let at = (numbered?.[0] ?? block?.[0] ?? '').length
   let midLine = at > 0
 

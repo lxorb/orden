@@ -34,6 +34,18 @@ describe('reading the front matter', () => {
     expect(frontMatter('---  \ntitle: Hi\n---\n\nBody')).toBe('title: Hi')
   })
 
+  /** A file saved by Notepad opens with a byte order mark, and a block read past it
+   *  is a block edited in place rather than a second one opened above it. */
+  test('a byte order mark in front of the fence', () => {
+    const source = '\uFEFF---\ntitle: a\n---\nbody\n'
+    expect(frontMatterValue(source, 'title')).toBe('a')
+    expect(stripFrontMatter(source)).toBe('body\n')
+
+    expect(frontMatterEdit(source, 'title', 'b')).toEqual({ from: 11, to: 13, insert: ' b' })
+    // Taking the block away keeps the mark the file was saved with.
+    expect(frontMatterEdit(source, 'title', null)).toEqual({ from: 1, to: 18, insert: '' })
+  })
+
   test('the note without it, which is what a renderer reads', () => {
     expect(stripFrontMatter('---\ntitle: Hi\n---\n# Title')).toBe('# Title')
     expect(stripFrontMatter('# Title')).toBe('# Title')
@@ -50,6 +62,22 @@ describe('reading the front matter', () => {
 
   test('a key with nothing after it says nothing', () => {
     expect(frontMatterValue('---\nicon:\n---\n', 'icon')).toBeNull()
+  })
+
+  /** YAML's comment, which is no part of the value and stays where it was written
+   *  when the value is set. */
+  test('a comment after the value', () => {
+    expect(frontMatterValue('---\ntitle: a # note\n---\n', 'title')).toBe('a')
+    expect(frontMatterValue("---\ntitle: 'a # b' # note\n---\n", 'title')).toBe('a # b')
+    expect(frontMatterValue('---\ntitle: a#b\n---\n', 'title')).toBe('a#b')
+    expect(frontMatterValue('---\nicon: # none yet\n---\n', 'icon')).toBeNull()
+    expect(frontMatterList('---\ntags: [a, "b #c"] # mine\n---\n', 'tags')).toEqual(['a', 'b #c'])
+
+    const source = '---\ntitle: a # note\n---\n'
+    const edit = frontMatterEdit(source, 'title', 'b')
+    expect(edit && source.slice(0, edit.from) + edit.insert + source.slice(edit.to)).toBe(
+      '---\ntitle: b # note\n---\n',
+    )
   })
 })
 

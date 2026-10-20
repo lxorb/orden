@@ -277,7 +277,8 @@ export function pageFragment(fragment: string | null): number | null {
  *  at: `[[]]`, or an alias with no target and no heading. */
 export function parseWikilink(inner: string, embed = false): Wikilink | null {
   const bar = inner.indexOf('|')
-  const named = bar === -1 ? inner : inner.slice(0, bar)
+  // `\|` is how a table cell writes the bar, and its backslash names nothing.
+  const named = bar === -1 ? inner : inner.slice(0, bar).replace(/\\$/, '')
   // Everything after the first bar, so an alias may itself contain one.
   const alias = bar === -1 ? null : inner.slice(bar + 1).trim()
 

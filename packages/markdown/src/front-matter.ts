@@ -18,7 +18,7 @@
  *  otherwise. */
 
 import { oneEdit, type TextEdit } from './edits'
-import { flowItem, flowItems, listItem, scalar, unquoted } from './yaml'
+import { flowItem, flowItems, listItem, scalar, uncommented, unquoted } from './yaml'
 
 /** Named here as well because the block is this module's business and yaml.ts is
  *  its private grammar: a caller writing a block asks for one import, and a caller
@@ -33,7 +33,8 @@ export { oneLine } from './yaml'
  *  `body`, what comes after it starts at `to`, a new key goes in at `close`, and
  *  taking the block away is `from` to `to`. */
 export interface FrontMatterBlock {
-  /** The start of the note, which is the only place a block can open. */
+  /** The start of the note, which is the only place a block can open: past a
+   *  byte order mark, which is no character of the note's to a reader of it. */
   from: number
   /** Past the closing fence and its line break: where the note's words start. */
   to: number
@@ -66,10 +67,11 @@ const KEY = /^([^\s#-].*?)[ \t]*:(?=\s|$)/
  *  that says nothing but `---`, so a horizontal rule in the middle of a note
  *  cannot be read as the end of a block that never started. */
 export function frontMatterBlock(source: string): FrontMatterBlock | null {
-  if (!source.startsWith('---')) return null
+  const from = source.startsWith('\uFEFF') ? 1 : 0
+  if (!source.startsWith('---', from)) return null
 
   const first = source.indexOf('\n')
-  if (first === -1 || source.slice(0, first).trim() !== '---') return null
+  if (first === -1 || source.slice(from, first).trim() !== '---') return null
 
   let at = first + 1
   while (at <= source.length) {
@@ -78,7 +80,7 @@ export function frontMatterBlock(source: string): FrontMatterBlock | null {
 
     if (source.slice(at, stop).trim() === '---') {
       return {
-        from: 0,
+        from,
         to: end === -1 ? source.length : end + 1,
         body: { from: first + 1, to: at },
         close: at,
@@ -204,25 +206,34 @@ export function frontMatterValue(source: string, key: string): string | null {
 }
 
 /** The line a key is written on, or null when the block has no such key. The
- *  first one wins, the way YAML reads a duplicated key. */
+ *  first one wins, the way YAML reads a duplicated key. A key in another case is
+ *  read where the note has none in this one; where it has both they are two keys,
+ *  as they are to YAML and to the rows, and `title` is never the `Title` line. */
 function keyLine(source: string, block: FrontMatterBlock, key: string): KeyLine | null {
   const wanted = key.toLowerCase()
+  let other: KeyLine | null = null
   let at = block.body.from
 
   while (at < block.body.to) {
     const end = source.indexOf('\n', at)
     const stop = end === -1 || end > block.body.to ? block.body.to : end
-    const found = KEY.exec(source.slice(at, stop))
+    const text = source.slice(at, stop)
+    const found = KEY.exec(text)
 
     if (found?.[1]?.toLowerCase() === wanted) {
-      return { from: at, to: stop, value: { from: at + found[0].length, to: stop } }
+      // The value ends where a comment starts, so a value set leaves the comment.
+      const value = at + found[0].length
+      const to = value + uncommented(text.slice(found[0].length)).length
+      const line = { from: at, to: stop, value: { from: value, to } }
+      if (found[1] === key) return line
+      other ??= line
     }
 
     if (end === -1) break
     at = end + 1
   }
 
-  return null
+  return other
 }
 
 /** One edit that sets several top-level keys at once, in the order given, or null
