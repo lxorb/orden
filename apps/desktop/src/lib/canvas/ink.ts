@@ -667,7 +667,11 @@ export function strokeBox(stroke: InkStroke): Box {
 }
 
 function measured(stroke: InkStroke): Box {
-  const [first] = stroke.points
+  // The curve the outline is drawn through, not the samples: between samples far
+  // apart it bows out past them, and a box short of it leaves that ink behind when
+  // the tiles repair where a rubbed-out stroke was (#645).
+  const points = smoothed(stroke.points, stroke.size)
+  const [first] = points
   if (!first) return { x: 0, y: 0, width: 0, height: 0 }
 
   let least = first.x
@@ -675,7 +679,7 @@ function measured(stroke: InkStroke): Box {
   let lowest = first.y
   let highest = first.y
 
-  for (const point of stroke.points) {
+  for (const point of points) {
     if (point.x < least) least = point.x
     if (point.x > most) most = point.x
     if (point.y < lowest) lowest = point.y
