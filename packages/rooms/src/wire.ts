@@ -147,15 +147,20 @@ export function awarenessState(awareness: Awareness): Uint8Array | null {
  *  like - and the only thing to do with bytes that are not this protocol is
  *  drop them. Letting the decoder throw instead would take down the room the
  *  frame arrived on: on a client an unhandled rejection and a note that never
- *  finishes joining, and in the Worker a socket that dies mid-conversation. */
+ *  finishes joining, and in the Worker a socket that dies mid-conversation.
+ *
+ *  `mayAnnounce`, where given, says which clients the sender may speak for: an
+ *  awareness entry for any other is dropped and the rest of the message is still
+ *  heard. What a room asks, so that nobody can relabel somebody else's caret. */
 export function receive(
   message: Uint8Array,
   doc: Y.Doc,
   awareness: Awareness,
   origin: unknown,
+  mayAnnounce?: (client: number) => boolean,
 ): Uint8Array | null {
   try {
-    return applied(message, doc, awareness, origin)
+    return applied(message, doc, awareness, origin, mayAnnounce)
   } catch {
     return null
   }
@@ -166,12 +171,14 @@ function applied(
   doc: Y.Doc,
   awareness: Awareness,
   origin: unknown,
+  mayAnnounce?: (client: number) => boolean,
 ): Uint8Array | null {
   const decoder = decoding.createDecoder(message)
   const kind = decoding.readVarUint(decoder)
 
   if (kind === AWARENESS) {
-    applyAwarenessUpdate(awareness, decoding.readVarUint8Array(decoder), origin)
+    const update = decoding.readVarUint8Array(decoder)
+    applyAwarenessUpdate(awareness, mayAnnounce ? only(update, mayAnnounce) : update, origin)
     return null
   }
 
@@ -184,6 +191,31 @@ function applied(
   // One byte is the kind and nothing after it: the protocol had no answer, and
   // sending the bare frame would only make the other end decode a nothing.
   return encoding.length(encoder) > 1 ? encoding.toUint8Array(encoder) : null
+}
+
+/** An awareness update with only the entries for clients `kept` says yes to, read
+ *  and written the way y-protocols encodes one: a count, then each client's id,
+ *  clock and state. */
+function only(update: Uint8Array, kept: (client: number) => boolean): Uint8Array {
+  const decoder = decoding.createDecoder(update)
+  const entries: (readonly [number, number, string])[] = []
+  for (let left = decoding.readVarUint(decoder); left > 0; left--) {
+    const entry = [
+      decoding.readVarUint(decoder),
+      decoding.readVarUint(decoder),
+      decoding.readVarString(decoder),
+    ] as const
+    if (kept(entry[0])) entries.push(entry)
+  }
+
+  const encoder = encoding.createEncoder()
+  encoding.writeVarUint(encoder, entries.length)
+  for (const [client, clock, state] of entries) {
+    encoding.writeVarUint(encoder, client)
+    encoding.writeVarUint(encoder, clock)
+    encoding.writeVarString(encoder, state)
+  }
+  return encoding.toUint8Array(encoder)
 }
 
 /** Whether a message is the other end answering with everything this one was
