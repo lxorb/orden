@@ -808,8 +808,12 @@ function holds(tail: string): boolean {
  *  logged and passed over rather than undoing the rename (`retarget` in
  *  link-index.svelte.ts, which now imports log.ts), and a PDF already moved into its
  *  page note is never thrown away with it (pages/from-pdf.ts). Measured 3,256,522 on
- *  unstable with #524 and #538 beside it. */
-const BUDGET = 3_257_000
+ *  unstable with #524 and #538 beside it.
+ *
+ *  Raised 2026-10-20, to 3,258,000, for #331: every tab of the space as cards, its door
+ *  and whether it is up in surfaces.svelte.ts and its mount in App.svelte; the cards
+ *  themselves are fetched with the first press. Measured 3,257,477. */
+const BUDGET = 3_258_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
