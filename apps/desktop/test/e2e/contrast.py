@@ -284,7 +284,7 @@ def drive_settings(browser: Browser) -> None:
         wrong("the appearance pane is empty, so what it offers cannot be read")
     # Still not a third row: contrast is one of the answers to "which theme", which is
     # the first of the two questions rather than a question of its own.
-    if page.locator("[role='switch']", has_text="More contrast").count():
+    if page.get_by_role("switch", name="More contrast").count():
         wrong("the More contrast switch is back")
 
     offered = page.evaluate("() => window.nibApp.theme.all.map((one) => one.id)")
