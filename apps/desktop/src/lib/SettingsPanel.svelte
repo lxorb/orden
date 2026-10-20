@@ -684,7 +684,7 @@
     <div class="nib-setting setting">
       {@render named(field, where)}
       <span class="pictures">
-        {#each field.sides as side (side.label)}
+        {#each field.sides as side, index (index)}
           {@const held = side.picture()}
           {@const [x, y] = side.focus()}
           <span class="picture" class:current={side.current}>
@@ -876,10 +876,10 @@
 
 {#snippet pane()}
   {#if current}
-    {#each current.groups as group (group.title)}
+    {#each current.groups as group, index (index)}
       <h3>{group.title}</h3>
       <div class="card">
-        {#each group.fields as field (field.label)}
+        {#each group.fields as field, index (index)}
           {@render row(field)}
         {/each}
       </div>
