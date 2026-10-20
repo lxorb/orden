@@ -60,8 +60,8 @@
       # anchor ends.
       release = {
         pname = "orden";
-        version = "0.16.0";
-        tag = "v0.16.0";
+        version = "0.17.0";
+        tag = "v0.17.0";
         asset = "Orden";
       };
 
@@ -69,11 +69,11 @@
       debs = {
         x86_64-linux = {
           suffix = "x64";
-          hash = "sha256-V25YAQ2QkHKiMxPGqeaEH4YvqyJjVcU0eweoU+bDmro=";
+          hash = "sha256-mbNTz6SylGjXrnM534Lpb3JZQUMCRpUqoO2udcXRQ40=";
         };
         aarch64-linux = {
           suffix = "arm64";
-          hash = "sha256-rkp896Kfg9xSG9pTVMPRkk5J0kntUUlZr+fHblaUcJU=";
+          hash = "sha256-ksJEQCmX6G++ruv0yzf4TlL6sXpwPLowjT9/SYOKaWM=";
         };
       };
 
@@ -88,6 +88,14 @@
 
       inherit (release) pname version;
       edge = pname != "orden";
+
+      # 0.16.0 is the last release on WebKitGTK; every release after it carries CEF
+      # in its .deb. The packaging for CEF lands on unstable ahead of the release that
+      # ships it, so until the pin above moves past 0.16.0 the release build has to
+      # take the .deb it is actually pinned to, or `nix run` breaks for everyone the
+      # moment this file reaches main. Once it has moved, the WebKit half below is
+      # dead and can go.
+      onCef = nixpkgs.lib.versionOlder "0.16.0" version;
       systems = builtins.attrNames debs;
       forEach = f: nixpkgs.lib.genAttrs systems (system: f nixpkgs.legacyPackages.${system});
 
@@ -109,6 +117,36 @@
       # evaluation error.
       workspace = self.sourceInfo.outPath;
       haveSources = builtins.pathExists "${workspace}/apps/desktop/src-tauri/Cargo.lock";
+
+      # WebKitGTK plays audio and video through GStreamer, and these are the only
+      # plugins a WebKit release is let to load.
+      gstPluginsFor =
+        pkgs: with pkgs.gst_all_1; [
+          gstreamer
+          gst-plugins-base
+          gst-plugins-good
+          gst-plugins-bad
+          gst-libav
+        ];
+
+      # What a release on WebKitGTK (0.16.0 and before) links against.
+      webkitInputsFor =
+        pkgs:
+        (with pkgs; [
+          webkitgtk_4_1
+          gtk3
+          libsoup_3
+          glib
+          glib-networking
+          cairo
+          pango
+          gdk-pixbuf
+          dbus
+          openssl
+          xdotool
+          stdenv.cc.cc.lib
+        ])
+        ++ gstPluginsFor pkgs;
 
       # Everything both builds link against: what Chromium and its GTK 4 windows take
       # from the system. The release build patches the .deb's program and engine onto
@@ -147,7 +185,11 @@
         ];
 
       # What Chromium opens by name at run time rather than links: the GL and Vulkan
-      # loaders and udev. Put on every patched file's run path.
+      # loaders and udev. autoPatchelfHook puts these on the program's run path alone,
+      # and a library's `dlopen` searches its own: ANGLE's libGLESv2 and libEGL and
+      # libcef.so looked for libGL.so.1 and found nothing, and the GPU process gave up
+      # (#438). So the release build puts them on every library of the engine as well;
+      # see its postFixup.
       openedFor =
         pkgs: with pkgs; [
           libGL
@@ -212,9 +254,13 @@
         pkgs:
         let
           inherit (debs.${pkgs.stdenv.hostPlatform.system}) suffix hash;
+          gstPlugins = gstPluginsFor pkgs;
         in
         pkgs.stdenv.mkDerivation {
           inherit pname version;
+
+          # Which engine the pinned .deb runs on, for nix.yml to check the right things.
+          passthru.engine = if onCef then "cef" else "webkit";
 
           src = pkgs.fetchurl {
             url = "https://github.com/lxorb/orden/releases/download/${release.tag}/${release.asset}-${version}-linux-${suffix}.deb";
@@ -224,17 +270,17 @@
           nativeBuildInputs = with pkgs; [
             dpkg
             autoPatchelfHook
-            wrapGAppsHook4
+            (if onCef then wrapGAppsHook4 else wrapGAppsHook3)
             makeShellWrapper
           ];
 
-          buildInputs = runtimeInputsFor pkgs;
-          runtimeDependencies = openedFor pkgs;
+          buildInputs = if onCef then runtimeInputsFor pkgs else webkitInputsFor pkgs;
+          runtimeDependencies = pkgs.lib.optionals onCef (openedFor pkgs);
 
           dontConfigure = true;
           dontBuild = true;
           # libcef.so is stripped already, and stripping it again is minutes for nothing.
-          dontStrip = true;
+          dontStrip = onCef;
 
           # The program keeps the name every install of it has had, nib, out of
           # $PATH; the command is the package's name, and the stable one keeps
@@ -249,9 +295,20 @@
           # its renderers in user namespaces instead, which NixOS allows.
           installPhase = ''
             runHook preInstall
-            install -d $out/libexec
-            cp -r usr/share/Orden $out/libexec/${pname}
-            rm -f $out/libexec/${pname}/chrome-sandbox
+          ''
+          + (
+            if onCef then
+              ''
+                install -d $out/libexec
+                cp -r usr/share/Orden $out/libexec/${pname}
+                rm -f $out/libexec/${pname}/chrome-sandbox
+              ''
+            else
+              ''
+                install -Dm755 usr/bin/nib $out/libexec/${pname}/nib
+              ''
+          )
+          + ''
             install -d $out/share/applications
             substitute ${./orden.desktop} $out/share/applications/${pname}.desktop \
               --replace-fail 'Name=Orden' 'Name=${if edge then "Orden Edge" else "Orden"}' \
@@ -272,15 +329,47 @@
           # what the desktop entry's StartupWMClass says. Links and attachments open with
           # xdg-open.
           #
+          # On WebKitGTK, two more things: its DMA-BUF renderer leaves a blank window on
+          # NVIDIA's own driver, so there, and only there, it is turned off unless the
+          # user has set it either way; and GStreamer is shut in with its own plugins
+          # and a registry of this package's own, so a NixOS profile's lib/ full of Qt
+          # and KDE libraries is never searched.
+          #
           # pandoc is deliberately not here: it is only needed for importing and
           # exporting DOCX and friends, Orden hides that when it is missing, and
           # anyone who wants it can add it to their own profile.
           dontWrapGApps = true;
-          postFixup = ''
+          # Patched here rather than by the hook's own run, which comes after this and
+          # would set every run path afresh: the engine's libraries then get what they
+          # open by name beside what they link (`openedFor`).
+          dontAutoPatchelf = onCef;
+          postFixup =
+            pkgs.lib.optionalString onCef ''
+              autoPatchelf $out
+              for one in $out/libexec/${pname}/*.so $out/libexec/${pname}/*.so.*; do
+                [ -f "$one" ] && [ ! -L "$one" ] || continue
+                patchelf --add-rpath ${pkgs.lib.makeLibraryPath (openedFor pkgs)} "$one"
+              done
+            ''
+            + ''
             makeShellWrapper $out/libexec/${pname}/nib $out/bin/${pname} \
               "''${gappsWrapperArgs[@]}" \
               --inherit-argv0 \
-              --suffix PATH : ${pkgs.lib.makeBinPath [ pkgs.xdg-utils ]}
+              --suffix PATH : ${pkgs.lib.makeBinPath [ pkgs.xdg-utils ]} \
+          ''
+          # On CEF, a system that refuses the user namespaces Chromium's sandbox needs
+          # here is told so, and what to do, before Chromium stops on it (userns.sh).
+          + pkgs.lib.optionalString onCef ''
+            --run '. ${./userns.sh}'
+          ''
+          + pkgs.lib.optionalString (!onCef) ''
+            --set GST_PLUGIN_SYSTEM_PATH_1_0 ${
+              pkgs.lib.makeSearchPathOutput "lib" "lib/gstreamer-1.0" gstPlugins
+            } \
+            --unset GST_PLUGIN_PATH \
+            --unset GST_PLUGIN_PATH_1_0 \
+            --run 'export GST_REGISTRY_1_0="''${XDG_CACHE_HOME:-$HOME/.cache}/${pname}/gstreamer-registry-${pkgs.stdenv.hostPlatform.system}.bin"' \
+            --run 'if [ -z "''${WEBKIT_DISABLE_DMABUF_RENDERER+set}" ] && [ -e /proc/driver/nvidia/version ]; then export WEBKIT_DISABLE_DMABUF_RENDERER=1; fi'
           ''
           + pkgs.lib.optionalString (!edge) ''
             ln -s orden $out/bin/nib

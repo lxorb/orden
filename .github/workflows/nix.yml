@@ -107,6 +107,13 @@ jobs:
           name: ${{ inputs.artifact }}
           path: packaging
 
+      # The packaging laid over this checkout carries a lock of its own, and a pull
+      # request's flake - `path:$PWD`, below - reads the root's: the copy goes with it,
+      # so what is built here is the lock that lands (#438).
+      - name: The root flake.lock, the one laid over packaging/nix
+        if: inputs.artifact != ''
+        run: if [ -e flake.nix ]; then cp packaging/nix/flake.lock flake.lock; fi
+
       - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
         with:
           extra_nix_config: |
@@ -158,6 +165,7 @@ jobs:
         run: nix eval --raw "$FLAKE#packages.${{ matrix.other }}.default.name"
 
       - name: nix build
+        id: build
         env:
           FLAKE: ${{ steps.flake.outputs.flake }}
           RESOLVE_HASHES: ${{ inputs.resolve_source_hashes }}
@@ -173,6 +181,15 @@ jobs:
           # orden or orden-unstable: every file a profile gets is
           # named after it, so installed streams never collide.
           pname=$(nix eval --raw "$FLAKE#$attr.pname")
+          # The release is on WebKitGTK up to 0.16.0 and on CEF after it; the source
+          # build is always on CEF. What is asserted about the wrapper and GStreamer
+          # below only holds for WebKit.
+          if [ "$pname" = orden-unstable ]; then
+            engine=cef
+          else
+            engine=$(nix eval --raw "$FLAKE#$attr.engine")
+          fi
+          echo "engine=$engine" >>"$GITHUB_OUTPUT"
           echo "### $pname $(nix eval --raw "$FLAKE#$attr.version")" >>"$GITHUB_STEP_SUMMARY"
 
           if [ "$pname" = orden-unstable ]; then
@@ -241,8 +258,19 @@ jobs:
           # DMA-BUF renderer off on NVIDIA's driver alone.
           cat "result/bin/$pname"
           if grep -n GDK_BACKEND "result/bin/$pname"; then exit 1; fi
-          if [ "$pname" != orden-unstable ]; then
+          if [ "$engine" = webkit ]; then
             grep -q '/proc/driver/nvidia/version ]; then export WEBKIT_DISABLE_DMABUF_RENDERER=1' "result/bin/$pname"
+          fi
+          # On CEF the release's wrapper says so before it starts on a system that
+          # refuses the user namespaces its sandbox needs - this runner, until the step
+          # below allows them - and never starts without one (#438).
+          if [ "$engine" = cef ] && [ "$pname" = orden ]; then
+            check=$(grep -o "/nix/store/[^' ]*-userns.sh" "result/bin/$pname")
+            test -f "$check"
+            if grep -q no-sandbox "result/bin/$pname"; then exit 1; fi
+            if [ "$(cat /proc/sys/kernel/apparmor_restrict_unprivileged_userns 2>/dev/null)" = 1 ]; then
+              bash -ec ". $check" 2>&1 | tee userns.log | grep -q 'No usable sandbox'
+            fi
           fi
           nix shell nixpkgs#pax-utils -c lddtree "result/libexec/$pname/nib" | head -80
           nix shell nixpkgs#desktop-file-utils -c desktop-file-validate "result/share/applications/$pname.desktop"
@@ -273,6 +301,7 @@ jobs:
       # one. The folder here is made of the runner's own libraries, and is shown to
       # be one GStreamer chokes on before the app is started with it.
       - name: A plugin path full of strangers, and GStreamer's own inspector
+        if: steps.build.outputs.engine == 'webkit'
         env:
           FLAKE: ${{ steps.flake.outputs.flake }}
         run: |
@@ -290,17 +319,31 @@ jobs:
           echo "GST_INSPECT=$gst/bin/gst-inspect-1.0" >>"$GITHUB_ENV"
           echo "STRANGER_PLUGINS=$HOME/profile/lib" >>"$GITHUB_ENV"
 
+      # Chromium sandboxes its renderers in unprivileged user namespaces, the store
+      # having no room for a setuid helper; NixOS allows them, and Ubuntu's AppArmor -
+      # this runner's - refuses them unless told otherwise, and the app stops with "No
+      # usable sandbox!". The runner is told, so what is checked is the package on a
+      # system that allows what NixOS does (#438).
+      - name: User namespaces, as NixOS has them
+        if: steps.build.outputs.engine == 'cef'
+        run: |
+          if [ -e /proc/sys/kernel/apparmor_restrict_unprivileged_userns ]; then
+            sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+          fi
+
       - name: It starts on Wayland
         id: wayland
         env:
           FLAKE: ${{ steps.flake.outputs.flake }}
-        run: bash scripts/nix-start.sh wayland "$FLAKE"
+          ENGINE: ${{ steps.build.outputs.engine }}
+        run: bash scripts/nix-start.sh wayland "$FLAKE" "$ENGINE"
 
       - name: It starts on X11, through Xwayland
         if: ${{ !cancelled() && steps.wayland.outcome != 'skipped' }}
         env:
           FLAKE: ${{ steps.flake.outputs.flake }}
-        run: bash scripts/nix-start.sh x11 "$FLAKE"
+          ENGINE: ${{ steps.build.outputs.engine }}
+        run: bash scripts/nix-start.sh x11 "$FLAKE" "$ENGINE"
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
