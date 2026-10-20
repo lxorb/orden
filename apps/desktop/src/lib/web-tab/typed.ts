@@ -97,16 +97,13 @@ const SCHEME = /^([a-z][a-z\d+.-]*):/i
 
 /** An address half typed into a tab's field and left there: what the field held, what of
  *  it the reader typed, where the caret was, and the address it was typed over, so it
- *  comes back only while the tab is still there; and whether the reader left the field
- *  for something else in the window, and which field it was. See AddressField.svelte. */
+ *  comes back only while the tab is still there. See AddressField.svelte. */
 export interface HalfTyped {
   value: string
   typed: string
   from: number
   to: number
   over: string
-  left: boolean
-  by: string
 }
 
 /** The address something typed is, or null for words and for nothing: what the palette

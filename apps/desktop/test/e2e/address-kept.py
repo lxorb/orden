@@ -118,6 +118,7 @@ def drive(browser: Browser, scheme: str) -> None:
     unasked = page.evaluate(STATE)
     shot(page, f"{scheme}-3-left")
     check(f"[{scheme}] back, the field it was left by does not take the keyboard", not unasked["focused"])
+    check(f"[{scheme}] and its words are still in it: {unasked['value']!r}", unasked["value"] == "weather ina zurich")
 
     # And a new tab gone from at once, with its field never typed in or left: back, its
     # field has the keyboard, which it had.
