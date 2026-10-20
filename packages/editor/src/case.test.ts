@@ -40,6 +40,21 @@ describe('changing case', () => {
     expect(run(upperCase, 'straße', 0, 6)).toMatchObject({ doc: 'STRASSE', selected: 'STRASSE' })
   })
 
+  test('two carets in one word change it once, and keep their places', () => {
+    let state = EditorState.create({
+      doc: 'hello world',
+      selection: EditorSelection.create([EditorSelection.cursor(1), EditorSelection.cursor(3)]),
+      extensions: EditorState.allowMultipleSelections.of(true),
+    })
+    upperCase({ state, dispatch: (transaction) => (state = transaction.state) })
+    expect(state.doc.toString()).toBe('HELLO world')
+    expect(state.selection.ranges.map((range) => range.head)).toEqual([1, 3])
+  })
+
+  test('a caret stays among its letters when one before it changes length', () => {
+    expect(run(upperCase, 'ßab', 2)).toMatchObject({ doc: 'SSAB', start: 3 })
+  })
+
   test('words already in that case are left out of the history', () => {
     let dispatched = false
     const state = EditorState.create({ doc: 'LOUD', selection: EditorSelection.range(0, 4) })
