@@ -474,6 +474,15 @@ describe('the part of a note a link points into', () => {
   test('and a note with no heading named is the whole of it', () => {
     expect(sectionOf('words\n', { heading: null, block: null })).toBe('words\n')
   })
+
+  test('a note written on Windows has its headings and its block names', () => {
+    const note = '# Title\r\n\r\npara ^abc1\r\n'
+    expect(headingsOf(note)).toEqual(['Title'])
+    expect(blockIds(note)).toEqual([{ id: 'abc1', line: 2 }])
+    expect(sectionOf(note, { heading: 'Title', block: null })).toBe('# Title\r\n\r\npara ^abc1')
+    expect(sectionOf(note, { heading: null, block: 'abc1' })).toBe('para')
+    expect(withoutBlockIds(note)).toBe('# Title\r\n\r\npara\r\n')
+  })
 })
 
 /** A note arrives from a share, a room, a folder somebody synced or a page somebody

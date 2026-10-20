@@ -105,7 +105,8 @@ function linesOf(
   while (at < to) {
     const end = source.indexOf('\n', at)
     const stop = end === -1 || end > to ? to : end
-    out.push({ text: source.slice(at, stop).replace(/\r$/, ''), from: at, to: stop })
+    const text = source.slice(at, stop).replace(/\r$/, '')
+    out.push({ text, from: at, to: at + text.length })
     if (end === -1) break
     at = end + 1
   }

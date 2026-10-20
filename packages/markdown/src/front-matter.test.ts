@@ -134,6 +134,12 @@ describe('setting a key', () => {
       '---\r\ntitle: Plan\r\nicon: rocket\r\n---\r\nwords',
     )
     expect(applied('# Plan\r\n', 'icon', 'rocket')).toBe('---\r\nicon: rocket\r\n---\r\n# Plan\r\n')
+    expect(applied('---\r\ntitle: a\r\ntags: [x]\r\n---\r\nbody\r\n', 'title', 'b')).toBe(
+      '---\r\ntitle: b\r\ntags: [x]\r\n---\r\nbody\r\n',
+    )
+    expect(applied('---\r\ntags:\r\n  - x\r\ntitle: a\r\n---\r\n', 'tags', 'z')).toBe(
+      '---\r\ntags: z\r\ntitle: a\r\n---\r\n',
+    )
   })
 
   test('finds a key that is not a word of letters, and edits it where it is', () => {
