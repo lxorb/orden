@@ -27,8 +27,8 @@ const LONGEST: usize = 32 * 1024;
 /// address and nothing else, so nothing else on it is ever read as a note to open:
 /// the guard Chrome's `--single-argument` is, against a link that smuggles a quote
 /// into its address to add an argument of its own.
-pub fn for_a_link(args: &[String]) -> bool {
-    args.iter().skip(1).any(|one| one == LINK_FLAG)
+pub fn for_a_link<A: AsRef<std::ffi::OsStr>>(args: &[A]) -> bool {
+    args.iter().skip(1).any(|one| one.as_ref() == LINK_FLAG)
 }
 
 /// The pages a command line asks for.

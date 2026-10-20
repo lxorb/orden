@@ -78,7 +78,7 @@ pub fn quick_add_key(app: AppHandle, webview: Webview, key: Option<String>) -> O
 
 /// Notes a launch started by `--quick-add`, whose window comes up once the page that
 /// answers it is there (`quick_add_key`).
-pub fn asked_at_launch(argv: &[String]) {
+pub fn asked_at_launch(argv: &[std::ffi::OsString]) {
     if crate::hotkeys::Which::asked_by(argv).contains(&crate::hotkeys::Which::QuickAdd) {
         ASKED_AT_LAUNCH.store(true, Ordering::Relaxed);
     }

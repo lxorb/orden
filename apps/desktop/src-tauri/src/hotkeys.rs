@@ -62,10 +62,10 @@ impl Which {
     }
 
     /// The keys a command line asks to press.
-    pub fn asked_by(argv: &[String]) -> Vec<Self> {
+    pub fn asked_by<A: AsRef<std::ffi::OsStr>>(argv: &[A]) -> Vec<Self> {
         Self::ALL
             .into_iter()
-            .filter(|which| argv.iter().skip(1).any(|one| one == which.flag()))
+            .filter(|which| argv.iter().skip(1).any(|one| one.as_ref() == which.flag()))
             .collect()
     }
 
@@ -291,7 +291,9 @@ fn keys_now() -> Keys {
             std::env::var("FLATPAK_ID").ok(),
             std::env::var("APPIMAGE").ok(),
             std::env::var("SNAP_NAME").ok(),
-            std::env::args().next(),
+            std::env::args_os()
+                .next()
+                .map(|first| first.to_string_lossy().into_owned()),
         ),
     })
 }

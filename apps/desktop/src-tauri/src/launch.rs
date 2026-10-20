@@ -148,10 +148,16 @@ pub fn handed_by(args: &[String]) -> Vec<String> {
 }
 
 /// What a command line hands the app, each kind put aside for the window: its pages,
-/// and the PDFs it names, read from where the launch was made.
-pub fn hold_handed(app: &AppHandle, args: &[String], cwd: &std::path::Path) {
+/// and the PDFs it names, read from where the launch was made. Each argument as it was
+/// given, since a path need not be Unicode; a page is, so it is read from the words,
+/// spelled the way the single instance plugin spells a second launch's.
+pub fn hold_handed(app: &AppHandle, args: &[std::ffi::OsString], cwd: &std::path::Path) {
     if let Some(pending) = app.try_state::<Pending>() {
-        pending.hold(Handed::Pages, handed_by(args));
+        let words: Vec<String> = args
+            .iter()
+            .map(|one| one.to_string_lossy().into_owned())
+            .collect();
+        pending.hold(Handed::Pages, handed_by(&words));
         let pdfs = crate::handed_pdfs::pdfs_in(args, cwd);
         pending.hold(Handed::Pdfs, crate::handed_pdfs::admitted(app, pdfs));
     }
