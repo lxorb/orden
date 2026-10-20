@@ -57,6 +57,18 @@ describe('what is between the brackets', () => {
     expect(parseWikilink('Note|a | b')?.alias).toBe('a | b')
   })
 
+  /** Obsidian's spelling inside a table, where a bare bar would end the cell. The
+   *  table renders `[[Note|shown]]`, and a rename has to find `Note` too. */
+  test('a bar escaped for a table cell', () => {
+    expect(parseWikilink('Note\\|shown')).toMatchObject({ target: 'Note', alias: 'shown' })
+    expect(parseWikilink('Note#Part\\|shown')?.heading).toBe('Part')
+
+    const text = '| a |\n| - |\n| [[Note\\|shown]] |'
+    const [link] = findLinks(text)
+    expect(link?.target).toBe('Note')
+    expect(link && text.slice(link.targetFrom, link.targetTo)).toBe('Note')
+  })
+
   test('the hash names a heading', () => {
     expect(parseWikilink('Note#Some Heading')).toMatchObject({
       target: 'Note',
