@@ -703,18 +703,29 @@ export function nodeOf(value: unknown): CanvasNode | null {
 }
 
 /** A canvas out of the text of a file. An empty one for a file that is not JSON
- *  at all, which is what a new or a truncated file looks like: an empty plane is
- *  something to draw on, and an error message is not. */
+ *  at all: a reader that only looks at a plane - search, a merge, an embed - takes
+ *  nothing from one it cannot read. Whether a file may be drawn on, and so written
+ *  over, is `canvasIn`'s question, asked when the file is opened. */
 export function readCanvas(text: string): Canvas {
+  return canvasIn(text) ?? emptyCanvas()
+}
+
+/** The canvas in the text of a file, or null for text that is not one: JSON that
+ *  does not parse, or that parses to something other than an object. Blank text is
+ *  a new plane, and is one. `readCanvas` is this, with the refusal turned into an
+ *  empty plane. */
+export function canvasIn(text: string): Canvas | null {
+  if (!text.trim()) return emptyCanvas()
+
   let parsed: unknown
   try {
     parsed = JSON.parse(text) as unknown
   } catch {
-    // Not JSON, or nothing at all. Either way there is no canvas in it.
-    return emptyCanvas()
+    // Not JSON, so there is no canvas in it.
+    return null
   }
 
-  if (!isRecord(parsed)) return emptyCanvas()
+  if (!isRecord(parsed)) return null
 
   const nodes: CanvasNode[] = []
   const ids = new Set<string>()
