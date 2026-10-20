@@ -184,6 +184,7 @@ export const ja: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': '2本指でキャンバスを回転',
+  'Snap the rotation to right angles': '回転を直角にスナップ',
   'Turn upright': 'まっすぐに戻す',
   Canvas: 'キャンバス',
   Card: 'カード',

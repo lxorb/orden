@@ -142,6 +142,7 @@ export const am: Dictionary = {
   'Smart dates': 'ብልህ ቀኖች',
   'From any app': 'ከማንኛውም መተግበሪያ',
   'Rotate a canvas with two fingers': 'ሸራን በሁለት ጣቶች አዙር',
+  'Snap the rotation to right angles': 'ማዞሩን በቀኝ ማዕዘኖች ላይ አጣብቅ',
   'Turn upright': 'ቀጥ አድርግ',
   'Show tasks without a start date in Today': 'የመጀመሪያ ቀን የሌላቸውን ተግባሮች በዛሬ አሳይ',
   'Every day': 'በየቀኑ',

@@ -214,6 +214,11 @@ describe('turning a canvas with two fingers, on an account (#351)', () => {
     expect(refused.status).toBe(400)
     expect(refused.json.error).toBe('canvasTurns must be true or false')
   })
+
+  test('and its snap to right angles is on or off (#487)', async () => {
+    expect((await patch({ canvasTurnSnaps: false })).json.settings.canvasTurnSnaps).toBe(false)
+    expect((await patch({ canvasTurnSnaps: 'no' })).status).toBe(400)
+  })
 })
 
 describe('modal editing on an account', () => {

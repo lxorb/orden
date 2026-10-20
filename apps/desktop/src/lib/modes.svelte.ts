@@ -174,6 +174,7 @@ interface Saved {
   remindBefore: number
   undatedInToday: boolean
   canvasTurns: boolean
+  canvasTurnSnaps: boolean
   highlightTone: number | null
   hardBreaks: boolean
   linkFormat: LinkFormat
@@ -289,6 +290,7 @@ export const DEFAULTS = {
   remindBefore: 0,
   undatedInToday: false,
   canvasTurns: false,
+  canvasTurnSnaps: true,
   highlightTone: null as number | null,
   hardBreaks: false,
   linkFormat: 'wikilink' as LinkFormat,
@@ -488,6 +490,9 @@ class Modes {
 
   /** Whether two fingers turn a canvas (#351). */
   canvasTurns = $state(DEFAULTS.canvasTurns)
+
+  /** Whether a turned canvas snaps to its right angles (#487); see `snapped` in camera.ts. */
+  canvasTurnSnaps = $state(DEFAULTS.canvasTurnSnaps)
 
   /** Which colour the highlight button writes, as the palette tone it names, or
    *  null for a highlight with no colour of its own - which is what nib has always
@@ -1132,6 +1137,15 @@ class Modes {
     this.share({ canvasTurns: on })
   }
 
+  /** Whether a turned canvas snaps to its right angles. */
+  setCanvasTurnSnaps(on: boolean) {
+    if (on === this.canvasTurnSnaps) return
+
+    this.canvasTurnSnaps = on
+    this.persist()
+    this.share({ canvasTurnSnaps: on })
+  }
+
   /** Takes over the account's settings: signing in on a new machine brings
    *  them along, and a change made on another shows up at the next start.
    *  What the account has not decided stays as this machine had it.
@@ -1223,6 +1237,12 @@ class Modes {
     const turns = remote.canvasTurns
     if (typeof turns === 'boolean' && unheard && turns !== this.canvasTurns) {
       this.canvasTurns = turns
+      this.persist()
+    }
+
+    const snaps = remote.canvasTurnSnaps
+    if (typeof snaps === 'boolean' && unheard && snaps !== this.canvasTurnSnaps) {
+      this.canvasTurnSnaps = snaps
       this.persist()
     }
 
@@ -1526,6 +1546,7 @@ class Modes {
       remindBefore: this.remindBefore,
       undatedInToday: this.undatedInToday,
       canvasTurns: this.canvasTurns,
+      canvasTurnSnaps: this.canvasTurnSnaps,
       highlightTone: this.highlightTone,
       hardBreaks: this.hardBreaks,
       frontMatter: this.properties,

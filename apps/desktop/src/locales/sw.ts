@@ -188,6 +188,7 @@ export const sw: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'Zungusha turubai kwa vidole viwili',
+  'Snap the rotation to right angles': 'Shikisha mzunguko kwenye pembe mraba',
   'Turn upright': 'Nyoosha',
   Canvas: 'Turubai',
   Card: 'Kadi',

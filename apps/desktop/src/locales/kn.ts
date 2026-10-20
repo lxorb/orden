@@ -188,6 +188,7 @@ export const kn: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'ಎರಡು ಬೆರಳುಗಳಿಂದ ಕ್ಯಾನ್ವಾಸ್ ತಿರುಗಿಸಿ',
+  'Snap the rotation to right angles': 'ತಿರುಗುವಿಕೆಯನ್ನು ಲಂಬಕೋನಗಳಿಗೆ ಸ್ನ್ಯಾಪ್ ಮಾಡಿ',
   'Turn upright': 'ನೇರಗೊಳಿಸಿ',
   Canvas: 'ಕ್ಯಾನ್ವಾಸ್',
   Card: 'ಕಾರ್ಡ್',

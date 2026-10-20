@@ -143,6 +143,7 @@ export const fa: Dictionary = {
   'Smart dates': 'تاریخ‌های هوشمند',
   'From any app': 'از هر برنامه‌ای',
   'Rotate a canvas with two fingers': 'چرخاندن بوم با دو انگشت',
+  'Snap the rotation to right angles': 'چسباندن چرخش به زاویه‌های قائمه',
   'Turn upright': 'صاف کردن',
   'Show tasks without a start date in Today': 'نمایش کارهای بدون تاریخ شروع در امروز',
   'Every day': 'هر روز',

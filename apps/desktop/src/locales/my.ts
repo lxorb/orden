@@ -184,6 +184,7 @@ export const my: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'လက်နှစ်ချောင်းဖြင့် ကင်းဗတ်ကို လှည့်ရန်',
+  'Snap the rotation to right angles': 'လှည့်ခြင်းကို ထောင့်မှန်များတွင် ချိတ်ရန်',
   'Turn upright': 'တည့်တည့်ပြန်ထားရန်',
   Canvas: 'ကန်ဗတ်',
   Card: 'ကတ်',

@@ -414,6 +414,8 @@ export interface AccountSettings {
   archivedSpaces?: string[]
   /** Whether two fingers turn a canvas (#351). */
   canvasTurns?: boolean
+  /** Whether a turned canvas snaps to its right angles (#487). */
+  canvasTurnSnaps?: boolean
   /** What pings for every chat at once (docs/chats.md 4.11): words that call for the
    *  reader as their name does, the hours pings are let through (null for every hour),
    *  and whether a notification shows the words and makes a sound. See

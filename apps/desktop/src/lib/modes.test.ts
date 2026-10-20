@@ -90,6 +90,7 @@ interface Held {
   silent?: boolean
   undatedInToday?: boolean
   canvasTurns?: boolean
+  canvasTurnSnaps?: boolean
 }
 
 vi.mock('./api', async (importOriginal) => ({
@@ -449,6 +450,12 @@ describe('turning a canvas with two fingers (#351)', () => {
     expect(modes.canvasTurns).toBe(false)
     modes.setCanvasTurns(true)
     expect((await restarted()).canvasTurns).toBe(true)
+  })
+
+  test('snaps to its right angles unless that is turned off (#487)', async () => {
+    expect(modes.canvasTurnSnaps).toBe(true)
+    modes.setCanvasTurnSnaps(false)
+    expect((await restarted()).canvasTurnSnaps).toBe(false)
   })
 })
 

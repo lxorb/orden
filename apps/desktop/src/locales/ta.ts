@@ -188,6 +188,7 @@ export const ta: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'இரு விரல்களால் கேன்வாஸைச் சுழற்று',
+  'Snap the rotation to right angles': 'சுழற்சியை செங்கோணங்களில் பொருத்து',
   'Turn upright': 'நேராக்கு',
   Canvas: 'கேன்வாஸ்',
   Card: 'அட்டை',

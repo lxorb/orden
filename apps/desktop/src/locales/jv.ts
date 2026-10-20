@@ -184,6 +184,7 @@ export const jv: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'Puter kanvas nganggo driji loro',
+  'Snap the rotation to right angles': 'Kunci puteran menyang sudut siku-siku',
   'Turn upright': 'Jejegke',
   Canvas: 'Kanvas',
   Card: 'Kartu',

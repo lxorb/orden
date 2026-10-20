@@ -184,6 +184,7 @@ export const id: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'Putar kanvas dengan dua jari',
+  'Snap the rotation to right angles': 'Kunci putaran ke sudut siku-siku',
   'Turn upright': 'Tegakkan',
   Canvas: 'Kanvas',
   Card: 'Kartu',

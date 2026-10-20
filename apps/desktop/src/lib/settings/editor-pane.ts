@@ -128,6 +128,14 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
             get: () => modes.canvasTurns,
             set: (on) => modes.setCanvasTurns(on),
           },
+          {
+            kind: 'switch',
+            label: t('Snap the rotation to right angles'),
+            words: ['canvas', 'rotate', 'turn', 'snap', 'upright', 'right angle', 'straight'],
+            initial: DEFAULTS.canvasTurnSnaps,
+            get: () => modes.canvasTurnSnaps,
+            set: (on) => modes.setCanvasTurnSnaps(on),
+          },
         ],
       },
       {

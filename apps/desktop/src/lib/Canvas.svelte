@@ -208,6 +208,10 @@
   /** Two fingers' turn of the view about a point, held upright and at its right
    *  angles until the twist is plainly meant. */
   function twist(x: number, y: number, by: number) {
+    if (!modes.canvasTurnSnaps) {
+      store.camera = turned(camera, width, height, x, y, by)
+      return
+    }
     if (turn !== twistedTo) twisted = unsnapped(turn)
     twisted = settledTurn(twisted + by)
     store.camera = turned(camera, width, height, x, y, snapped(twisted) - turn)
