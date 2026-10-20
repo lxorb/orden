@@ -71,6 +71,32 @@ describe('handing out a token', () => {
   test('needs a session to ask for', async () => {
     expect((await call(env, '/v1/mcp/token', { body: {} })).status).toBe(401)
   })
+
+  test('dies with the session it was handed out through', async () => {
+    const other = await signIn(env, 'a@b.dev')
+    const made = await call(env, '/v1/mcp/token', { token: other, body: { readOnly: false } })
+    const key = made.json.token
+    expect((await call(env, '/v1/spaces', { token: key })).status).toBe(200)
+
+    await call(env, '/v1/sessions', { method: 'DELETE', token })
+    expect((await call(env, '/v1/me', { token: other })).status).toBe(401)
+    expect((await call(env, '/v1/spaces', { token: key })).status).toBe(401)
+    expect((await call(env, '/v1/mcp/token', { token })).json.exists).toBe(false)
+
+    // The session that stayed can still hand one out, and that one works.
+    const kept = await connector(false)
+    expect((await call(env, '/v1/spaces', { token: kept })).status).toBe(200)
+  })
+
+  test('a token handed out before it named a session keeps working', async () => {
+    const other = await signIn(env, 'a@b.dev')
+    const made = await call(env, '/v1/mcp/token', { token: other, body: { readOnly: false } })
+    const key = made.json.token
+    env.db.exec('update mcp_tokens set session_hash = null')
+
+    await call(env, '/v1/sessions', { method: 'DELETE', token })
+    expect((await call(env, '/v1/spaces', { token: key })).status).toBe(200)
+  })
 })
 
 describe('the connector', () => {
