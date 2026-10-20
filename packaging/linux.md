@@ -283,7 +283,7 @@ to `edge`, from `release.yml` once edge's files are up, at `grade: devel`, which
 keeps out of `stable` and `candidate`. Both call `.github/workflows/snap.yml` (`uses:`)
 rather than dispatching it, because a dispatch only finds a workflow on the default
 branch. It finds the two `.deb`s on the release by what they are - a release's page
-calls them `Orden-<version>`, edge `Nib-<version>`, and an edge build's version is in
+and edge call them `Orden-<version>`, and an edge build's version is in
 nothing else - checks the version is one a snap may have (at most 32 of letters, digits
 and `.+~-`, as `0.15.1-688` is), and writes version, grade, URLs and digests in.
 `sudo snap install orden --edge` follows the edge builds, `sudo snap refresh orden
