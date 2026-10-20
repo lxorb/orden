@@ -181,8 +181,6 @@ export const TAB_KINDS = {
     selection: null,
     outsideTitle: false,
   },
-  // `editor` as the chain in Pane.svelte had it, which never left the channel out:
-  // 1f4e7492 added the kind and its surface but not its line there. Kept as it was.
   channel: {
     words: false,
     extension: null,
@@ -190,7 +188,7 @@ export const TAB_KINDS = {
     mark: 'chat',
     glyph: null,
     liveMark: false,
-    editor: true,
+    editor: false,
     takesDrops: true,
     ownBar: false,
     fileDocument: false,
