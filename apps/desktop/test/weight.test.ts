@@ -811,8 +811,11 @@ function holds(tail: string): boolean {
  *  unstable with #524 and #538 beside it.
  *
  *  Raised 2026-10-20, to 3,258,000, for #304: a note's strip ends in a ⋯ button that
- *  opens what the note offers. Measured 3,257,606. */
-const BUDGET = 3_258_000
+ *  opens what the note offers. Measured 3,257,606.
+ *
+ *  Raised 2026-10-20, to 3,259,000, for #304: a search button in the title bar opens
+ *  the palette. Measured 3,258,262. */
+const BUDGET = 3_259_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

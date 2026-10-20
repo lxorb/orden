@@ -5,6 +5,7 @@
   import { i18n, t } from './i18n.svelte'
   import { keepFocus } from './focus'
   import { modes } from './modes.svelte'
+  import { SEARCH_MARK } from './panel-marks'
   import SidebarToggle from './SidebarToggle.svelte'
   import FileMark from './FileMark.svelte'
   import TabMark from './TabMark.svelte'
@@ -121,6 +122,21 @@
   {/if}
 {/snippet}
 
+<!-- The palette, for a hand that does not know its keys; the tooltip says them (#304).
+     It keeps the keyboard where it was, for the palette to hand back. -->
+{#snippet searchGlyph()}
+  <button
+    class="nib-glyph search"
+    title={shortcuts.tooltip(t('Search'), 'app.palette')}
+    aria-label={t('Search notes and commands')}
+    onpointerdown={keepFocus}
+    onmousedown={keepFocus}
+    onclick={() => onpalette()}
+  >
+    <svg viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
+  </button>
+{/snippet}
+
 <!-- One row: what the app is, the button that opens the file list, the open
      notes, and the window's own buttons. On a desktop the note's name lives in
      its tab, so there is no separate title; a phone and a tablet hold one
@@ -131,6 +147,9 @@
        other end, its left corner being the file list. -->
   {#if !viewport.touch && !mac}
     <AppMenu {view} {onpalette} {onhistory} />
+  {/if}
+  {#if !viewport.touch}
+    {@render searchGlyph()}
   {/if}
 
   <!-- Not while there is no space and no tab: a list of nothing, in the moment before a
@@ -153,6 +172,7 @@
 
     <!-- The desktop's whole menu bar behind three dots; see AppMenu.svelte. -->
     {@render edgeMark()}
+    {@render searchGlyph()}
     {@render padGlyph()}
     <AppMenu {view} {onpalette} {onhistory} dots />
   {:else}
@@ -235,7 +255,8 @@
     padding-left: var(--traffic-lights);
   }
 
-  .pad {
+  .pad,
+  .search {
     align-self: center;
   }
 

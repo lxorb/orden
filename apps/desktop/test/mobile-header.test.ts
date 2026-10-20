@@ -151,3 +151,12 @@ describe('the hamburger', () => {
     )
   })
 })
+
+describe('the search button', () => {
+  /** The palette, for somebody who does not know its keys, and on every bar (#304). */
+  test('opens the palette, says its key on the tooltip, and is in both bars', () => {
+    expect(titlebar).toContain("title={shortcuts.tooltip(t('Search'), 'app.palette')}")
+    expect(titlebar).toContain('onclick={() => onpalette()}')
+    expect(titlebar.match(/\{@render searchGlyph\(\)\}/g) ?? []).toHaveLength(2)
+  })
+})
