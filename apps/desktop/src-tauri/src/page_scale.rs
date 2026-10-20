@@ -81,7 +81,7 @@ fn xsettings_int(data: &[u8], wanted: &str) -> Option<i32> {
 
 #[cfg(feature = "cef")]
 mod engine {
-    use std::collections::{HashMap, HashSet};
+    use std::collections::HashMap;
     use std::sync::{LazyLock, Mutex, OnceLock, PoisonError};
 
     use x11rb::protocol::xproto::{AtomEnum, ConnectionExt as _};
@@ -127,22 +127,19 @@ mod engine {
         super::scale_of_dpi(super::xsettings_int(&data, "Xft/DPI")?)
     }
 
-    /// Each window's page's pixel ratio as it last said it, by the window's label; and
-    /// the pages already given the desktop's zoom.
+    /// Each window's page's pixel ratio as it last said it, by the window's label.
     static SAID: LazyLock<Mutex<HashMap<String, f64>>> = LazyLock::new(Mutex::default);
-    static ZOOMED: LazyLock<Mutex<HashSet<String>>> = LazyLock::new(Mutex::default);
 
+    /// A page whose ratio is not the desktop's scale is zoomed to it, each time it says
+    /// so: the engine keeps a zoom by the page's origin, and the window's page starts
+    /// on an inert page of the runtime's own, whose zoom is not the app's.
     pub fn heard(webview: &tauri::Webview<crate::Engine>, ratio: f64) {
         let window = webview.window().label().to_owned();
         SAID.lock()
             .unwrap_or_else(PoisonError::into_inner)
             .insert(window, ratio);
         let scale = desktop();
-        let first = ZOOMED
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .insert(webview.label().to_owned());
-        if first && (scale - 1.0).abs() > 0.01 && (ratio - scale).abs() > 0.01 {
+        if (ratio - scale).abs() > 0.01 {
             let _ = webview.set_zoom(scale);
         }
     }
