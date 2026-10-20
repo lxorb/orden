@@ -58,8 +58,9 @@ export class CheckboxWidget extends NibWidget {
       // the sub-tasks, a recurring task's next line. See task-tick.ts.
       const help = view.state.facet(noteIndex).tasks
       if (help) {
-        const line = view.state.doc.lineAt(this.from).number
-        void import('../task-tick').then(({ tickLines }) => tickLines(view, help, [line]))
+        const { doc } = view.state
+        const line = doc.lineAt(this.from).number
+        void import('../task-tick').then(({ tickLines }) => tickLines(view, help, doc, [line]))
         return
       }
       view.dispatch({

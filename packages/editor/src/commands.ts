@@ -279,7 +279,9 @@ export const toggleTask: StateCommand = (target) => {
   }
 
   if (ticking.length && help && target instanceof EditorView) {
-    void import('./task-tick').then(({ tickLines }) => tickLines(target, help, ticking, changes))
+    void import('./task-tick').then(({ tickLines }) =>
+      tickLines(target, help, state.doc, ticking, changes),
+    )
     return true
   }
   if (!changes.length) return false

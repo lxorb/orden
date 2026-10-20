@@ -201,7 +201,7 @@ describe('a box ticked', () => {
   test('writes the next occurrence and the done line as one transaction, one undo', async () => {
     const note = '- [ ] Gym 🔁 every week 📅 2026-10-05\n'
     const view = viewOf(stateOf(note, note.length, HELP))
-    await tickLines(view as unknown as EditorView, HELP, [1])
+    await tickLines(view as unknown as EditorView, HELP, view.state.doc, [1])
 
     expect(view.sent).toHaveLength(1)
     expect(view.state.doc.toString()).toBe(
@@ -221,7 +221,7 @@ describe('a box ticked', () => {
         return HELP.tick(text, line)
       },
     }
-    await tickLines(view as unknown as EditorView, slow, [1])
+    await tickLines(view as unknown as EditorView, slow, view.state.doc, [1])
     expect(view.state.doc.toString()).toBe('typed - [ ] Go\n')
   })
 })
