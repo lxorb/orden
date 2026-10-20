@@ -60,7 +60,8 @@
       ]
     },
     "patchedDependencies": {
-      "@lezer/markdown@1.7.2": "patches/@lezer__markdown@1.7.2.patch"
+      "@lezer/markdown@1.7.2": "patches/@lezer__markdown@1.7.2.patch",
+      "marked@18.0.11": "patches/marked@18.0.11.patch"
     }
   }
 }
