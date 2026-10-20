@@ -117,8 +117,6 @@ describe('the panel’s chats', () => {
       ['Recipes', 'home'],
       ['Quarterly plan', 'work'],
     ])
-    // The newest of them is open, though the space in front is another.
-    await vi.waitFor(() => expect(chat.head?.title).toBe('Garden'))
   })
 
   test('stay as they are when the space changes: the open one, its draft, its space', async () => {
@@ -153,6 +151,18 @@ describe('the panel’s chats', () => {
     expect(chat.thread?.space).toBe('home')
   })
 
+  test('start a new one on the model last picked, the next time too', async () => {
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work', 'home'])
+    chat.setModel('p', 'picked')
+
+    const next = await launched()
+    next.here('work')
+    next.know(['work', 'home'])
+    expect(next.head?.model).toBe('picked')
+  })
+
   test('open the one open last, whichever space it is in', async () => {
     const garden = await had('home', 'Garden', 1_000)
     await had('work', 'Quarterly plan', 9_000)
@@ -162,6 +172,21 @@ describe('the panel’s chats', () => {
     fresh.here('work')
     fresh.know(['work', 'home'])
     await vi.waitFor(() => expect(fresh.head?.id).toBe(garden.id))
+  })
+
+  test('open a new one where a new one was open when the panel was left', async () => {
+    const garden = await had('home', 'Garden', 1_000)
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work', 'home'])
+    await chat.openThread(garden.id, false)
+    chat.newThread()
+
+    const next = await launched()
+    next.here('work')
+    next.know(['work', 'home'])
+    await vi.waitFor(() => expect(next.heads).toHaveLength(1))
+    expect(next.head?.kept).toBe(false)
   })
 
   test('delete a thread from the space it is kept in', async () => {
