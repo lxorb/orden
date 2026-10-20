@@ -355,6 +355,14 @@ class Chat implements Panel {
       .then(() => this.refreshHeads())
   }
 
+  /** A new thread started out of sight, in the list and running there: a task done with
+   *  AI (#325). On the provider, model and effort a new thread asks, in `mode`. */
+  startAside(space: string, title: string, mode: Mode, text: string): Promise<Ended> {
+    const thread = { ...this.fresh(), space, title, mode }
+    this.adopt(thread)
+    return this.turn(thread, text)
+  }
+
   /** A thread a command changed outside a send (its goal moved, a line it added): drawn
    *  again where it is open, and written down. */
   touched(thread: Thread): void {

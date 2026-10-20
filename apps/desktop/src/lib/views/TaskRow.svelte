@@ -22,6 +22,7 @@
   import Message from 'lucide/dist/esm/icons/message-square.mjs'
   import Pencil from 'lucide/dist/esm/icons/pencil.mjs'
   import Repeat from 'lucide/dist/esm/icons/repeat.mjs'
+  import Sparkles from 'lucide/dist/esm/icons/sparkles.mjs'
   import Target from 'lucide/dist/esm/icons/target.mjs'
   import Timer from 'lucide/dist/esm/icons/timer.mjs'
   import { amount, t } from '../i18n.svelte'
@@ -231,6 +232,21 @@
               kit.openTask(row, true)
             }}><Glyph icon={Message} /></button
           >
+          <!-- Done in a chat of its own in the AI panel's list (#325); the glasses have none. -->
+          {#if !__EVEN_PLUGIN__ && !task.done && !task.cancelled}
+            <button
+              type="button"
+              class="act"
+              tabindex="-1"
+              aria-label={t('Do with AI')}
+              title={t('Do with AI')}
+              onclick={(event) => {
+                event.stopPropagation()
+                onselect?.()
+                void import('../ai/do-task').then((one) => one.doWithAi(row, task.text))
+              }}><Glyph icon={Sparkles} /></button
+            >
+          {/if}
           <button
             type="button"
             class="act"
