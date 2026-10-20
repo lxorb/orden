@@ -78,7 +78,8 @@ const appOrigins = cors({
   // header that is not named here is dropped by the browser before the request
   // leaves, which is a thing that only shows up on the builds whose origin is
   // not the service's own. See versions.ts and apps/desktop/src/lib/device.ts.
-  allowHeaders: ['authorization', 'content-type', 'x-nib-device'],
+  // `x-nib-diagram` is what a drawn diagram's name was hashed from; see blobs.ts.
+  allowHeaders: ['authorization', 'content-type', 'x-nib-device', 'x-nib-diagram'],
   allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   maxAge: 86400,
 })

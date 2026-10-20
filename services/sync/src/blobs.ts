@@ -1,12 +1,14 @@
+import { DIAGRAM_SCHEMES, diagramKey } from '@nib/markdown/diagrams'
 import { Hono } from 'hono'
 import { NOT_A_HASH, OUT_OF_SPACE } from './refused'
 import { publishesFile, spaceForHost } from './blog'
 import { readSite, SVG_POLICY } from './blog/site'
 import { now } from './crypto'
 import { readSpaceFiles } from './spaces/files'
+import { allows, reachedSpace } from './spaces/space'
 import { BYTES, hashOfBytes, held, holdsItsName, WRONG_BYTES } from './sync2/files'
 import { fits, fitsSql } from './storage'
-import type { Env, Space, Variables } from './types'
+import type { Env, Space, Variables, Whoever } from './types'
 
 /** What may be stored, and how much of each.
  *
@@ -80,10 +82,21 @@ blobs.put('/:hash', async (context) => {
   // file is served the one object: bytes that are not that hash would be somebody
   // else's picture, or their site's stylesheet or script, replaced for all of them.
   // The one name that is not the hash of what it holds is a drawn diagram's, which
-  // is named by its fence and its space (packages/markdown/src/diagrams.ts) - a
-  // name no page prints, so nobody but the space's own devices can write to it.
+  // is named by its fence and its space (packages/markdown/src/diagrams.ts). The app
+  // sends what it hashed beside the drawing, so that name is checked too, and only
+  // for a space this account may write in. An app from before that sends nothing
+  // and is taken at its word, under a name no page prints, until it is too old to
+  // sign in (#518).
   const verified = (await hashOfBytes(body)) === hash
   if (!verified && type !== 'image/svg+xml') return context.json({ error: WRONG_BYTES }, 400)
+  const said = context.req.header('x-nib-diagram')
+  if (
+    !verified &&
+    said !== undefined &&
+    !(await drawnFrom(context.env, context.get('who'), hash, said))
+  ) {
+    return context.json({ error: WRONG_BYTES }, 400)
+  }
   // Nor is that name a way to claim a drawing somebody else made: a row is what lets
   // a post or a file entry name a blob, and it is only ever had for the bytes.
   if (!verified && there) return context.json({ error: WRONG_BYTES }, 400)
@@ -122,6 +135,22 @@ blobs.put('/:hash', async (context) => {
 
   return context.json({ hash, stored: true }, 201)
 })
+
+/** Whether a diagram's name is what the app says it hashed - the fence, the word it
+ *  opened with, the scheme and the space, as `diagramKey` puts them together - in a
+ *  space whoever is asking may write in. */
+async function drawnFrom(env: Env, who: Whoever, hash: string, said: string): Promise<boolean> {
+  const preimage = new URLSearchParams(said)
+  const spaceId = preimage.get('space')
+  const language = preimage.get('language')
+  const code = preimage.get('code')
+  const scheme = DIAGRAM_SCHEMES.find((one) => one === preimage.get('scheme'))
+  if (spaceId === null || language === null || code === null || scheme === undefined) return false
+  if ((await diagramKey(spaceId, language, code, scheme)) !== hash) return false
+
+  const space = await reachedSpace(env, who, spaceId)
+  return space !== null && allows(space.role, 'write')
+}
 
 /** Gives a file back and stops keeping it. The object survives while any other
  *  account still references it. */
