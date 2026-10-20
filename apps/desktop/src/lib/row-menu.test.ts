@@ -164,6 +164,7 @@ describe('a note, with chats to send it to', () => {
     const { account } = await import('./account.svelte')
     Object.defineProperty(account, 'accountToken', { value: 'signed in' })
     expect(labels(loose)).not.toContain('Send to chat')
+  })
 })
 
 /** New note inside makes a note; its chevron offers every kind the file list's New

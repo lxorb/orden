@@ -100,6 +100,7 @@ describe('the tab in front', () => {
 
     expect(current).toHaveLength(1)
     expect(current[0]?.[0]).toContain(`data-tab="${front}"`)
+  })
 })
 
 /** The bar's line under the strip, which the open tab leaves itself out of and the

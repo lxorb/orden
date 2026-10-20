@@ -193,6 +193,7 @@ describe('picked ink given another width (#432)', () => {
 
     store.undo()
     expect(store.canvas.ink.map((one) => one.size)).toEqual([2, 2, 2])
+  })
 })
 
 /** The stroke eraser reaches as far as its own width says, like the area eraser,

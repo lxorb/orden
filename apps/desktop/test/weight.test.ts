@@ -812,9 +812,8 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-20, to 3,258,000, for #527: a link's #fragment is read as the words
  *  it names, so links.ts decodes every escape in it (`decodeFragment`). Measured
- *  3,257,920. */
- })
-
+ *  3,257,920.
+ *
  *  Raised 2026-10-20, to 3,258,000, for #380: New note inside offers every kind the
  *  file list makes, each made inside the row (`newFileRows` in row-menu.ts, `make` on
  *  `createInside`). Measured 3,257,028. */
