@@ -812,8 +812,12 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-20, to 3,258,000, for #498: a note that opens with a byte order
  *  mark has its front matter read past the mark (`frontMatterBlock` in
- *  @nib/markdown's front-matter.ts). Measured 3,257,066. */
-const BUDGET = 3_258_000
+ *  @nib/markdown's front-matter.ts). Measured 3,257,066.
+ *
+ *  Raised 2026-10-20, to 3,259,000, for #498: a comment after a value in the front
+ *  matter is no part of the value (`uncommented` in @nib/markdown's yaml.ts, read by
+ *  front-matter.ts and properties.ts). Measured 3,258,340. */
+const BUDGET = 3_259_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

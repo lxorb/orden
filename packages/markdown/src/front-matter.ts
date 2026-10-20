@@ -18,7 +18,7 @@
  *  otherwise. */
 
 import { oneEdit, type TextEdit } from './edits'
-import { flowItem, flowItems, listItem, scalar, unquoted } from './yaml'
+import { flowItem, flowItems, listItem, scalar, uncommented, unquoted } from './yaml'
 
 /** Named here as well because the block is this module's business and yaml.ts is
  *  its private grammar: a caller writing a block asks for one import, and a caller
@@ -212,10 +212,14 @@ function keyLine(source: string, block: FrontMatterBlock, key: string): KeyLine 
   while (at < block.body.to) {
     const end = source.indexOf('\n', at)
     const stop = end === -1 || end > block.body.to ? block.body.to : end
-    const found = KEY.exec(source.slice(at, stop))
+    const text = source.slice(at, stop)
+    const found = KEY.exec(text)
 
     if (found?.[1]?.toLowerCase() === wanted) {
-      return { from: at, to: stop, value: { from: at + found[0].length, to: stop } }
+      // The value ends where a comment starts, so a value set leaves the comment.
+      const value = at + found[0].length
+      const to = value + uncommented(text.slice(found[0].length)).length
+      return { from: at, to: stop, value: { from: value, to } }
     }
 
     if (end === -1) break

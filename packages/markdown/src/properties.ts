@@ -19,7 +19,7 @@
 
 import { frontMatterBlock } from './front-matter'
 import { escape } from './html'
-import { flowItems, listItem, unquoted } from './yaml'
+import { flowItems, listItem, uncommented, unquoted } from './yaml'
 
 /** What a surface does with a note's front matter. Three answers, and every
  *  surface that shows a whole note reads the same one, so a reader who asked for
@@ -142,6 +142,8 @@ export function readProperties(source: string): Property[] | null {
 
     const key = found[1] ?? ''
     const written = (found[2] ?? '').trim()
+    // Nor is one after a value, which a row would show as part of it.
+    if (uncommented(written) !== written) return null
     const listed = flowItems(written)
 
     if (listed !== null) {

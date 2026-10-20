@@ -63,6 +63,22 @@ describe('reading the front matter', () => {
   test('a key with nothing after it says nothing', () => {
     expect(frontMatterValue('---\nicon:\n---\n', 'icon')).toBeNull()
   })
+
+  /** YAML's comment, which is no part of the value and stays where it was written
+   *  when the value is set. */
+  test('a comment after the value', () => {
+    expect(frontMatterValue('---\ntitle: a # note\n---\n', 'title')).toBe('a')
+    expect(frontMatterValue("---\ntitle: 'a # b' # note\n---\n", 'title')).toBe('a # b')
+    expect(frontMatterValue('---\ntitle: a#b\n---\n', 'title')).toBe('a#b')
+    expect(frontMatterValue('---\nicon: # none yet\n---\n', 'icon')).toBeNull()
+    expect(frontMatterList('---\ntags: [a, "b #c"] # mine\n---\n', 'tags')).toEqual(['a', 'b #c'])
+
+    const source = '---\ntitle: a # note\n---\n'
+    const edit = frontMatterEdit(source, 'title', 'b')
+    expect(edit && source.slice(0, edit.from) + edit.insert + source.slice(edit.to)).toBe(
+      '---\ntitle: b # note\n---\n',
+    )
+  })
 })
 
 /** The shapes a note may write a list in. Obsidian writes `aliases` all three
