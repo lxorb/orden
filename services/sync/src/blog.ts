@@ -33,7 +33,7 @@ import { SITE_JS, SITE_JS_PATH, THEME_JS, THEME_JS_HASH } from './blog/script'
 import { type Around, aside, bar, contents, counter, ownFiles, underneath } from './blog/shell'
 import { PAGE_CSS, PAGE_CSS_PATH, SLIDES_CSS, SLIDES_CSS_PATH } from './blog/style'
 import { askInChunks, places } from './bound'
-import { blogRootOf } from './hosts'
+import { blogRootOf, sameOriginPath } from './hosts'
 import { machineOf, mayGuess, maySendAnswer, mayTakeAnswer } from './limits'
 import { noteKey } from './notes'
 import { keepAnswer } from './spaces/answers'
@@ -1192,7 +1192,7 @@ async function served(
       return new Response(null, {
         status: 303,
         headers: {
-          location: url.pathname,
+          location: sameOriginPath(url.pathname),
           'set-cookie': ticketCookie(await newTicket(held, Date.now())),
           'cache-control': 'private, no-store',
         },
@@ -1203,7 +1203,7 @@ async function served(
       const wrong = request.method === 'POST'
       return page(
         { title: heading, site: heading, url: `${url.origin}/`, noindex: true },
-        gateBody(heading, url.pathname, wrong),
+        gateBody(heading, sameOriginPath(url.pathname), wrong),
         env,
         { status: wrong ? 401 : 200, locked: true },
       )
