@@ -152,6 +152,23 @@ BUILT_IN = (
     " catch {}"
 )
 
+#: And the first run's questions taken as already answered. A first visit puts up the
+#: "All set / Personalize" card in the corner beside the welcome note (Personalize.svelte),
+#: and every drive's window is a first visit: the card took clicks meant for what was
+#: under it, answered `.card`, `[role=dialog]` and `button.nib-button`, covered a phone's
+#: bar and sat on paper being measured. Nothing is written down for it to read - the card
+#: is up once, on the visit that wrote the welcome note (`seed` in web/commands.ts), and a
+#: later visit is not seeded again - so a returning reader is the handle's: as the app
+#: puts `window.nibApp` up, the "all set" (-1) it opens the card on is not taken, and every
+#: other step still is. A drive about the card is a new reader's, `first_look=True`.
+ANSWERED = (
+    "Object.defineProperty(window, 'nibApp', { configurable: true, set(app) {"
+    " Object.defineProperty(window, 'nibApp', { value: app, writable: true, configurable: true, enumerable: true });"
+    " const held = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(app.settings), 'setup');"
+    " Object.defineProperty(app.settings, 'setup', { configurable: true, get: () => held.get.call(app.settings),"
+    " set: (at) => { if (at !== -1) held.set.call(app.settings, at) } }) } })"
+)
+
 #: What a Mac's WebKit says its platform is. Playwright's WebKit says it is a Mac in its
 #: agent wherever it runs, and on Windows says `Win32` here, so CodeMirror - which asks
 #: this - and the app - which asks the agent - would disagree about which key is `Mod`,
@@ -296,6 +313,7 @@ def answering(browser: Any) -> Any:
             context.add_init_script(MAC_SELECT_ALL)
         if not first_look:
             context.add_init_script(BUILT_IN)
+            context.add_init_script(ANSWERED)
 
     def new_context(*args: Any, first_look: bool = False, **options: Any) -> Any:
         if WEBKIT:
@@ -1119,6 +1137,7 @@ class Drive:
             context.add_init_script(WEBKIT_SOCKETS)
             context.add_init_script(MAC_SELECT_ALL)
         context.add_init_script(BUILT_IN)
+        context.add_init_script(ANSWERED)
         return context
 
     def page(self, browser: Any, errors: bool = True, **options: Any) -> Any:
