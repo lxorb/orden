@@ -237,7 +237,10 @@ export function htmlFrameDocument(html: string, script: string): string {
  *  a document built out of the note itself has promised nothing, and one line of
  *  `allow-same-origin` written into a card would be the note running in the app. */
 async function ownFrame(html: string, title: string): Promise<HTMLIFrameElement | null> {
-  const { FRAME_SCRIPT: script } = await import('./frame-text')
+  const [{ FRAME_SCRIPT: script }, { guardedBlock }] = await Promise.all([
+    import('./frame-text'),
+    import('./loop-guard'),
+  ])
   if (script === null) return null
 
   const frame = document.createElement('iframe')
@@ -246,7 +249,8 @@ async function ownFrame(html: string, title: string): Promise<HTMLIFrameElement 
   frame.title = title
   // Set before the frame joins the page, so it has this document to load rather
   // than an empty one to be navigated away from a moment later.
-  frame.srcdoc = htmlFrameDocument(html, script)
+  // Its loops give up in time (#525); see loop-guard.ts.
+  frame.srcdoc = htmlFrameDocument(guardedBlock(html), script)
 
   return frame
 }
