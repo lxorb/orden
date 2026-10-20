@@ -49,6 +49,7 @@ import { sweepTreeOps } from './sync2/tree'
 import { spaces } from './spaces'
 import { join } from './spaces/join'
 import { feedback } from './feedback'
+import { openWaitingIssues } from './feedback-issues'
 import { recheckDomains } from './spaces/proof'
 import { expireRequests, sharedWithMe } from './spaces/share'
 import { themes } from './themes'
@@ -405,10 +406,12 @@ const EVERY_MINUTE = '* * * * *'
 function scheduled(event: ScheduledEvent, env: Env, context: ExecutionContext) {
   const at = Date.now()
 
-  // Each minute, the reminders due by now, pushed to the devices that asked for them;
-  // nothing else runs on that one. See push/reminders.ts.
+  // Each minute, the reminders due by now, pushed to the devices that asked for them
+  // (push/reminders.ts), and the reports sent with Send feedback whose issue could not be
+  // opened yet, tried again (feedback-issues.ts).
   if (event.cron === EVERY_MINUTE) {
     context.waitUntil(sendDue(env, at))
+    context.waitUntil(openWaitingIssues(env, at))
     return
   }
 
