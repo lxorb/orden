@@ -493,4 +493,21 @@ describe('the bulk read and the kept side', () => {
     const words = await call(env, `/v1/notes/${id}/versions/${String(newest?.at)}`, { token })
     expect(words.json.content).toBe('the words that lost\n')
   })
+
+  test('a kept side counts against the pushes one person may make in a minute', async () => {
+    const id = await made('Plan.md', 'one\n')
+    await prepare()
+    const user = env.db.prepare('select id from users').get() as { id: string }
+    env.db
+      .prepare('insert into limits (scope, key, count, until) values (?, ?, ?, ?)')
+      .run('doc-push', user.id, 600, Date.now() + 60 * 1000)
+
+    const over = await call(env, '/v2/docs/keep', {
+      token,
+      body: { id, text: 'one too many\n', device: 'Laptop' },
+    })
+    expect(over.status).toBe(429)
+    const held = env.db.prepare('select count(*) as many from note_versions where note_id = ?')
+    expect(held.get(id)).toEqual({ many: 1 })
+  })
 })
