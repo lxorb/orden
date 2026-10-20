@@ -100,6 +100,7 @@ def head_and_about(page: Page) -> None:
 
 def sections(page: Page) -> None:
     page.locator(".view-tab .add-section").click()
+    wait_for(page, "document.activeElement?.matches('.view-tab .naming.end')", "the section's field")
     page.keyboard.type("Attic", delay=10)
     page.keyboard.press("Enter")
     wait_for(page, f"async () => (await ({READ})('Home.md'))?.includes('## Attic')", "Attic written")
