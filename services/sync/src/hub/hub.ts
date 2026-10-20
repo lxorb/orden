@@ -188,11 +188,15 @@ export class AccountHub implements DurableObject {
     await keepPresence(this.env, user, state)
   }
 
-  /** A device was ended from another: its sockets closed. */
+  /** A device was ended from another, or sessions ended: their sockets closed. */
   private revoke(headers: Headers): Response {
     const device = headers.get('x-nib-device') ?? ''
     for (const socket of this.ctx.getWebSockets(device)) {
       socket.close(1008, 'this device was signed out')
+    }
+    const sessions = headers.get('x-nib-sessions')?.split(',') ?? []
+    for (const { socket, attached } of everySocket(this.ctx)) {
+      if (sessions.includes(attached.session)) socket.close(1008, 'this device was signed out')
     }
     return new Response(null, { status: 204 })
   }
