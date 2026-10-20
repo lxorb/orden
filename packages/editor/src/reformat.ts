@@ -8,8 +8,10 @@ import { parseTable, serializeTable } from './table/model'
  *  `~~~` in the middle of a ``` block is code, and reading it as a fence would
  *  end the block early and let the rest of it be rewritten as prose. */
 
-/** What else is written to be read exactly, as the parser finds it: code, maths and
- *  raw HTML. `tidy` is kept away from the characters these are spelled with. */
+/** What else is written to be read exactly, as the parser finds it: code, maths, raw
+ *  HTML, a rule, and the spaces that end a line with a hard break. `* * *` is a rule
+ *  rather than a list item, and two spaces at the end of a line are a line break, so
+ *  `tidy` is kept away from the characters these are spelled with. */
 const VERBATIM = new Set([
   'CodeBlock',
   'InlineCode',
@@ -19,6 +21,8 @@ const VERBATIM = new Set([
   'CommentBlock',
   'Comment',
   'HTMLTag',
+  'HorizontalRule',
+  'HardBreak',
 ])
 
 /** Tidies a document without changing what it means: one bullet character, one

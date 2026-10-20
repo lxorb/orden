@@ -76,6 +76,14 @@ describe('tidying a document', () => {
     expect(reformat('a | b is not a table\n')).toBe('a | b is not a table\n')
   })
 
+  test('a thematic break stays a rule', () => {
+    expect(reformat('* * *\n')).toBe('* * *\n')
+  })
+
+  test('keeps the spaces of a hard line break', () => {
+    expect(reformat('line one  \nline two\n')).toBe('line one  \nline two\n')
+  })
+
   test('leaves inline code as written and tidies around it', () => {
     expect(reformat('`x = _a_ + 1`\n')).toBe('`x = _a_ + 1`\n')
     expect(reformat('* _a_ `_b_` _c_\n')).toBe('- *a* `_b_` *c*\n')
