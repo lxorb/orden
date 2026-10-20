@@ -20,23 +20,8 @@ import {
   type Line,
   type StateCommand,
 } from '@codemirror/state'
+import { type Lines, linesOf } from './commands'
 import { hiddenFrontMatter } from './live-preview/hidden-front-matter'
-
-/** A run of whole lines, by number. */
-interface Lines {
-  first: number
-  last: number
-}
-
-/** The lines a range covers. A selection that ends at the very start of a line - a
- *  run of lines selected with Shift and the arrows - does not take that line: the
- *  caret is in front of it, not in it. */
-function linesOf(state: EditorState, from: number, to: number): Lines {
-  const first = state.doc.lineAt(from).number
-  const end = state.doc.lineAt(to)
-  const last = to > from && to === end.from && end.number > first ? end.number - 1 : end.number
-  return { first, last }
-}
 
 /** The first line the reader can see: past the metadata when it is hidden. */
 function firstShown(state: EditorState): number {
