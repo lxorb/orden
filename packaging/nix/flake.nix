@@ -355,9 +355,12 @@
             makeShellWrapper $out/libexec/${pname}/nib $out/bin/${pname} \
               "''${gappsWrapperArgs[@]}" \
               --inherit-argv0 \
-              --suffix PATH : ${pkgs.lib.makeBinPath [ pkgs.xdg-utils ]}${
-                pkgs.lib.optionalString (!onCef) " \\"
-              }
+              --suffix PATH : ${pkgs.lib.makeBinPath [ pkgs.xdg-utils ]} \
+          ''
+          # On CEF, a system that refuses the user namespaces Chromium's sandbox needs
+          # here is told so, and what to do, before Chromium stops on it (userns.sh).
+          + pkgs.lib.optionalString onCef ''
+            --run '. ${./userns.sh}'
           ''
           + pkgs.lib.optionalString (!onCef) ''
             --set GST_PLUGIN_SYSTEM_PATH_1_0 ${

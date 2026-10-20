@@ -8,6 +8,12 @@
 #   scripts/nix-start.sh x11 <flake>       X11, through sway's Xwayland, with no
 #                                          WAYLAND_DISPLAY for GTK to prefer
 #
+# A third argument names the engine the build runs on, `webkit` unless it says `cef`.
+# On CEF the window is an X11 one in every session - the runtime asks GTK and Chromium
+# for X11 itself, because CEF parents its browsers into X11 windows (src-tauri's
+# linux.rs) - so a Wayland session is one with Xwayland in it, both displays set, as a
+# desktop's is, and the window it maps is an xwayland one (#438).
+#
 # sway is wlroots, like Hyprland, and it says what each window is: `shell` is
 # xdg_shell for a Wayland client and xwayland for an X11 one. Leaves <mode>.log,
 # <mode>.png, <mode>.json and <mode>.env in the working directory.
@@ -22,12 +28,14 @@ set -euo pipefail
 
 mode=${1:?wayland or x11}
 flake=${2:?a flake, as nix run takes it}
+engine=${3:-webkit}
 out=$PWD
 
-case "$mode" in
-  wayland) xwayland=disable shell=xdg_shell drop=DISPLAY ;;
-  x11) xwayland=enable shell=xwayland drop=WAYLAND_DISPLAY ;;
-  *) echo "no mode $mode" >&2; exit 2 ;;
+case "$mode/$engine" in
+  wayland/webkit) xwayland=disable shell=xdg_shell drop=DISPLAY ;;
+  wayland/cef) xwayland=enable shell=xwayland drop="" ;;
+  x11/*) xwayland=enable shell=xwayland drop=WAYLAND_DISPLAY ;;
+  *) echo "no mode $mode on $engine" >&2; exit 2 ;;
 esac
 
 stranger=""
@@ -52,7 +60,7 @@ export SWAYSOCK
 
 # Started by sway, so it gets sway's own WAYLAND_DISPLAY and, with Xwayland on,
 # its DISPLAY; the other one is taken away.
-swaymsg exec "env -u $drop $stranger nix run '$flake' >'$out/$mode.log' 2>&1" >/dev/null
+swaymsg exec "env ${drop:+-u $drop} $stranger nix run '$flake' >'$out/$mode.log' 2>&1" >/dev/null
 
 views='[recurse(.nodes[]?, .floating_nodes[]?) | select(.pid? != null and (.type == "con" or .type == "floating_con"))]'
 for _ in $(seq 180); do
