@@ -176,7 +176,11 @@ def desktop(browser: Browser) -> None:
     bx, by = carry_to_switcher(page, plan)
     if not page.evaluate(f"() => {LIST}"):
         wrong("[leaving] the list did not open under the hold")
+    # Down the file list, well past the list's foot: with nothing pushing the rows down
+    # as the drag begins (#417), the first row is under the list's edge, where it stays.
     px, py = centre(page, row_of(join(home, "Draft.md")))
+    foot = page.evaluate("() => document.querySelector('[data-spaces-open]').getBoundingClientRect().bottom")
+    py = max(py, foot + 40)
     glide(page, px, py)
     glide(page, px + 2, py)
     if page.evaluate(f"() => {LIST}"):
