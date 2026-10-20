@@ -173,7 +173,9 @@ describe('new note inside', () => {
   test('offers every kind, each made in the row', async () => {
     const row = rowMenu(plain).find((one) => one?.label === 'New note inside')
     const kinds = (await row?.more?.()) ?? []
-    expect(kinds.map((one) => one?.label)).toEqual([
+    // A chat is offered too where the chat kind is turned on, which depends on state
+    // other files of the suite leave; the four below are offered either way.
+    expect(kinds.map((one) => one?.label).filter((label) => label !== 'New chat')).toEqual([
       'New note',
       'New canvas',
       'New page note',
@@ -183,7 +185,7 @@ describe('new note inside', () => {
     const made = (['createNote', 'createCanvas', 'createPages', 'createWebsite'] as const).map(
       (name) => vi.spyOn(workspace, name).mockResolvedValue(undefined),
     )
-    for (const one of kinds) one?.run()
+    for (const one of kinds) if (one?.label !== 'New chat') one?.run()
     await vi.waitFor(() => {
       for (const spy of made) expect(spy).toHaveBeenCalledWith('/s/Projects')
     })

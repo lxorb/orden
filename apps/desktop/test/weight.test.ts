@@ -816,8 +816,13 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-20, to 3,258,000, for #380: New note inside offers every kind the
  *  file list makes, each made inside the row (`newFileRows` in row-menu.ts, `make` on
- *  `createInside`). Measured 3,257,028. */
-const BUDGET = 3_258_000
+ *  `createInside`). Measured 3,257,028.
+ *
+ *  Raised 2026-10-20, to 3,268,000, for the fixes arbobendik's branches brought onto
+ *  unstable together (#554 to #645: Ctrl+Tab after a tab closes itself, tags and
+ *  addresses in every script, the table's keys and undo, a chat taking drops and being
+ *  made from the file list, the eraser's width and more). Measured 3,267,616. */
+const BUDGET = 3_268_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
