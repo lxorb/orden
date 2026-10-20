@@ -282,6 +282,7 @@ export const it: Dictionary = {
   Tabs: 'Schede',
   'Ctrl+Tab in order of use': 'Ctrl+Tab in ordine di utilizzo',
   'Swipe between pages': 'Scorri tra le pagine',
+  'Hardware acceleration': 'Accelerazione hardware',
   'Hidden tabs': 'Schede nascoste',
   'Memory saver': 'Risparmio memoria',
   Moderate: 'Moderato',

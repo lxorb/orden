@@ -281,6 +281,7 @@ export const kn: Dictionary = {
   Tabs: 'ಟ್ಯಾಬ್‌ಗಳು',
   'Ctrl+Tab in order of use': 'ಬಳಕೆಯ ಕ್ರಮದಲ್ಲಿ Ctrl+Tab',
   'Swipe between pages': 'ಪುಟಗಳ ನಡುವೆ ಸ್ವೈಪ್ ಮಾಡಿ',
+  'Hardware acceleration': 'ಹಾರ್ಡ್‌ವೇರ್ ವೇಗವರ್ಧನೆ',
   'Hidden tabs': 'ಮರೆಮಾಡಿದ ಟ್ಯಾಬ್‌ಗಳು',
   'Memory saver': 'ಮೆಮೊರಿ ಸೇವರ್',
   Moderate: 'ಮಧ್ಯಮ',

@@ -280,6 +280,7 @@ export const bn: Dictionary = {
   Tabs: 'ট্যাব',
   'Ctrl+Tab in order of use': 'ব্যবহারের ক্রমে Ctrl+Tab',
   'Swipe between pages': 'পৃষ্ঠাগুলির মধ্যে সোয়াইপ',
+  'Hardware acceleration': 'হার্ডওয়্যার অ্যাক্সিলারেশন',
   'Hidden tabs': 'লুকানো ট্যাব',
   'Memory saver': 'মেমরি সেভার',
   Moderate: 'মাঝারি',

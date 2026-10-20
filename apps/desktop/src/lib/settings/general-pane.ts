@@ -25,6 +25,7 @@ import { isHiddenTabs } from '../workspace/sets'
 import { projectsOf, setProjects } from '../rows/projects'
 import { workspace } from '../workspace.svelte'
 import type { Field, Group, Pane } from './fields'
+import { gpu } from './gpu.svelte'
 import { versionField } from './version.svelte'
 
 /** Whose a key that is both the app's and the shell's is, one row each: asked every
@@ -98,6 +99,24 @@ function terminalGroup(): Group {
         set: (value) => shells.setWarning(asWarning(value)),
       },
       ...twoWayFields(),
+    ],
+  }
+}
+
+function gpuGroup(): Group {
+  void gpu.ask()
+
+  return {
+    title: t('Hardware acceleration'),
+    fields: [
+      {
+        kind: 'switch',
+        label: t('Hardware acceleration'),
+        words: ['gpu', 'graphics', 'software', 'rendering', 'cpu', 'restart'],
+        initial: true,
+        get: () => gpu.on,
+        set: (on) => void gpu.set(on),
+      },
     ],
   }
 }
@@ -409,6 +428,12 @@ export function generalPane(): Pane {
       // because a shell is a program on one computer and its screen is nobody else's.
       // Only a desktop has a terminal; see docs/terminal.md.
       ...(!__EVEN_PLUGIN__ && isDesktop ? [terminalGroup()] : []),
+
+      // Whether Chromium draws on the graphics card (#550): Linux and Windows, since a
+      // Mac's engine has no switch.
+      ...(!__EVEN_PLUGIN__ && isDesktop && ['linux', 'windows'].includes(platform())
+        ? [gpuGroup()]
+        : []),
 
       // Which version this is, on every build, and the channel it follows where it
       // follows one (#490): the desktop's release channel, chosen here, or the web app's

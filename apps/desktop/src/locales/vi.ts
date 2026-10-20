@@ -277,6 +277,7 @@ export const vi: Dictionary = {
   Tabs: 'Tab',
   'Ctrl+Tab in order of use': 'Ctrl+Tab theo thứ tự sử dụng',
   'Swipe between pages': 'Vuốt giữa các trang',
+  'Hardware acceleration': 'Tăng tốc phần cứng',
   'Hidden tabs': 'Thẻ ẩn',
   'Memory saver': 'Tiết kiệm bộ nhớ',
   Moderate: 'Vừa phải',

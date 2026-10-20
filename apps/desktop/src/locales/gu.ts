@@ -280,6 +280,7 @@ export const gu: Dictionary = {
   Tabs: 'ટૅબ',
   'Ctrl+Tab in order of use': 'ઉપયોગના ક્રમમાં Ctrl+Tab',
   'Swipe between pages': 'પૃષ્ઠો વચ્ચે સ્વાઇપ કરો',
+  'Hardware acceleration': 'હાર્ડવેર એક્સિલરેશન',
   'Hidden tabs': 'છુપાયેલા ટૅબ',
   'Memory saver': 'મેમરી સેવર',
   Moderate: 'મધ્યમ',

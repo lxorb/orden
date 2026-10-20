@@ -280,6 +280,7 @@ export const pa: Dictionary = {
   Tabs: 'ਟੈਬਾਂ',
   'Ctrl+Tab in order of use': 'ਵਰਤੋਂ ਦੇ ਕ੍ਰਮ ਵਿੱਚ Ctrl+Tab',
   'Swipe between pages': 'ਪੰਨਿਆਂ ਵਿਚਕਾਰ ਸਵਾਈਪ ਕਰੋ',
+  'Hardware acceleration': 'ਹਾਰਡਵੇਅਰ ਐਕਸਲਰੇਸ਼ਨ',
   'Hidden tabs': 'ਲੁਕੀਆਂ ਟੈਬਾਂ',
   'Memory saver': 'ਮੈਮਰੀ ਸੇਵਰ',
   Moderate: 'ਦਰਮਿਆਨਾ',

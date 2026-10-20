@@ -280,6 +280,7 @@ export const ur: Dictionary = {
   Tabs: 'ٹیبز',
   'Ctrl+Tab in order of use': 'استعمال کی ترتیب سے Ctrl+Tab',
   'Swipe between pages': 'صفحات کے درمیان سوائپ کریں',
+  'Hardware acceleration': 'ہارڈ ویئر ایکسلریشن',
   'Hidden tabs': 'چھپے ہوئے ٹیب',
   'Memory saver': 'میموری سیور',
   Moderate: 'معتدل',

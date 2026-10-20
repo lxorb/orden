@@ -277,6 +277,7 @@ export const zhHans: Dictionary = {
   Tabs: '标签页',
   'Ctrl+Tab in order of use': 'Ctrl+Tab 按使用顺序',
   'Swipe between pages': '在页面之间轻扫',
+  'Hardware acceleration': '硬件加速',
   'Hidden tabs': '隐藏的标签页',
   'Memory saver': '内存节省',
   Moderate: '适中',

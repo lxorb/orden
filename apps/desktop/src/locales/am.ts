@@ -278,6 +278,7 @@ export const am: Dictionary = {
   Tabs: 'ትሮች',
   'Ctrl+Tab in order of use': 'Ctrl+Tab በአጠቃቀም ቅደም ተከተል',
   'Swipe between pages': 'በገጾች መካከል ማንሸራተት',
+  'Hardware acceleration': 'የሃርድዌር ማፋጠን',
   'Hidden tabs': 'የተደበቁ ትሮች',
   'Memory saver': 'ማህደረ ትውስታ ቆጣቢ',
   Moderate: 'መካከለኛ',

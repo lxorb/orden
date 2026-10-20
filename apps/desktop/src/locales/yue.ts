@@ -277,6 +277,7 @@ export const yue: Dictionary = {
   Tabs: '標籤頁',
   'Ctrl+Tab in order of use': 'Ctrl+Tab 按使用次序',
   'Swipe between pages': '喺頁面之間掃',
+  'Hardware acceleration': '硬件加速',
   'Hidden tabs': '隱藏標籤頁',
   'Memory saver': '慳記憶體',
   Moderate: '適中',

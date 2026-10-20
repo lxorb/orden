@@ -283,6 +283,7 @@ export const ptPT: Dictionary = {
   Tabs: 'Separadores',
   'Ctrl+Tab in order of use': 'Ctrl+Tab por ordem de utilização',
   'Swipe between pages': 'Deslizar entre páginas',
+  'Hardware acceleration': 'Aceleração de hardware',
   'Hidden tabs': 'Separadores ocultos',
   'Memory saver': 'Poupança de memória',
   Moderate: 'Moderado',

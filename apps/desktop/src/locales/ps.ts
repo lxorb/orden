@@ -280,6 +280,7 @@ export const ps: Dictionary = {
   Tabs: 'ټبونه',
   'Ctrl+Tab in order of use': 'د کارونې په ترتیب Ctrl+Tab',
   'Swipe between pages': 'د پاڼو ترمنځ ښویول',
+  'Hardware acceleration': 'د هارډویر چټکتیا',
   'Hidden tabs': 'پټې ټبونه',
   'Memory saver': 'د حافظې سپما',
   Moderate: 'منځنی',

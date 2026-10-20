@@ -281,6 +281,7 @@ export const gsw: Dictionary = {
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab i de Reihefolg vom Bruuch',
   'Swipe between pages': 'Zwüsche Siite wüsche',
+  'Hardware acceleration': 'Hardwarebeschlünigung',
   'Hidden tabs': 'Versteckti Tabs',
   'Memory saver': 'Arbeitsspeicher spare',
   Moderate: 'Moderat',

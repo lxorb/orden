@@ -282,6 +282,7 @@ export const ha: Dictionary = {
   Tabs: 'Shafuka',
   'Ctrl+Tab in order of use': 'Ctrl+Tab bisa jerin amfani',
   'Swipe between pages': 'Goge tsakanin shafuka',
+  'Hardware acceleration': 'Hanzarta kayan aiki',
   'Hidden tabs': 'Ɓoyayyun shafuka',
   'Memory saver': 'Mai adana ƙwaƙwalwa',
   Moderate: 'Matsakaici',
