@@ -37,6 +37,13 @@ pub fn open_shortcuts() -> Result<(), String> {
 
 /// The page saying which note is the inbox of the space in front; see siri.rs.
 #[tauri::command(async)]
+#[cfg_attr(
+    not(target_os = "macos"),
+    allow(
+        clippy::unnecessary_wraps,
+        reason = "one signature for every platform; only the Mac's Siri file can fail to be written"
+    )
+)]
 pub fn remember_inbox(app: AppHandle, path: String) -> Result<(), String> {
     #[cfg(target_os = "macos")]
     {
