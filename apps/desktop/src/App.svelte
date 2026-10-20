@@ -1041,9 +1041,6 @@
         ></div>
       {/if}
 
-      <!-- The three dots at the right end of it open the whole of the app on a
-           phone and a tablet, which is why the bar is handed what the menu needs;
-           see AppMenu.svelte. -->
       {#if !bare}
         {#if filled}
           {#await fillBar() then FillBar}
@@ -1198,12 +1195,8 @@
 
 {#snippet bar()}
   <Titlebar
-    {view}
     onpalette={() => {
       palette = true
-    }}
-    onhistory={() => {
-      settings.historyOpen = true
     }}
   />
 {/snippet}
