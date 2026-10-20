@@ -258,6 +258,10 @@ mod window_drag;
 // Whether Chromium draws on the graphics card or on the CPU, in the log; see gpu.rs.
 #[cfg(desktop)]
 mod gpu;
+// How large the app's pages are drawn, and where a web tab's page goes; see
+// page_scale.rs.
+#[cfg(desktop)]
+mod page_scale;
 // What every browser's import reads profiles and their files with; see
 // browser_profiles.rs.
 #[cfg(desktop)]
@@ -442,6 +446,7 @@ macro_rules! desktop_commands {
             gpu::gpu_chosen,
             gpu::gpu_choose,
             gpu::gpu_line,
+            page_scale::page_scale_seen,
             window_drag::window_frame,
             full_screen::window_is_fullscreen,
             zen_profiles::zen_profiles,
@@ -830,6 +835,15 @@ fn hearing(handle: &tauri::AppHandle) {
     touchpad::start(handle);
 }
 
+/// What CEF on Linux needs once it has started and before the window is made: the main
+/// thread asleep while nothing happens (`chromium_pump.rs`), and the desktop's scale read
+/// (`page_scale.rs`).
+#[cfg(all(target_os = "linux", feature = "cef"))]
+fn engine_started(handle: &tauri::AppHandle<Engine>) {
+    chromium_pump::start(handle);
+    page_scale::start(handle);
+}
+
 fn ready(
     app: &mut tauri::App,
     ui: Option<&tauri::utils::config::WindowConfig>,
@@ -912,7 +926,7 @@ fn ready(
     #[cfg(desktop)]
     hearing(handle);
     #[cfg(all(target_os = "linux", feature = "cef"))]
-    chromium_pump::start(handle);
+    engine_started(handle);
 
     // And the window on screen, which is the last thing this does and the first thing
     // anybody sees. Everything above it costs under two milliseconds together and has to

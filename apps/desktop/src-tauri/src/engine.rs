@@ -181,6 +181,12 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
         .deep_link_schemes(["nib"])
         .disable_features([swipe_feature])
         .command_line_args([(swipe_switch, Some(swipe_off))])
+        // Chromium's scale at 1, which CEF on X11 sizes windows by correctly; the
+        // desktop's is the app's zoom instead. See page_scale.rs.
+        .command_line_args([(
+            crate::page_scale::SWITCH.0,
+            Some(crate::page_scale::SWITCH.1),
+        )])
         .command_line_args(switches(&std::env::var("NIB_CEF_ARGS").unwrap_or_default()))
         // A web tab's developer tools in the build that ships, as in a browser; nib's own
         // window turns its own off outside a development build (`ui_window`).
@@ -442,7 +448,8 @@ pub(crate) fn own_window<M: tauri::Manager<crate::Engine>>(
     let building = building
         .browser_runtime_style(RuntimeStyle::Alloy)
         .initialization_script(crate::window_drag::SCRIPT)
-        .initialization_script(crate::gpu::SCRIPT);
+        .initialization_script(crate::gpu::SCRIPT)
+        .initialization_script(crate::page_scale::SCRIPT);
     match OWN_PROFILE.get() {
         Some(profile) => building.data_directory(profile.clone()),
         None => building,

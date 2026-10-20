@@ -1057,7 +1057,7 @@ fn page_built(
 
     // Edge by edge in the screen's pixels, as every placement after it; see web_follow.rs.
     let bounds = crate::web_follow::Bounds::from(pane);
-    let scale = window.scale_factor().unwrap_or(1.0);
+    let scale = crate::page_scale::of(window).unwrap_or(1.0);
     let (left, top, width, height) = crate::web_follow::edges(bounds, scale);
     let view = crate::engine::add_child(
         window,
@@ -1067,6 +1067,12 @@ fn page_built(
     )
     .map_err(|error| format!("that page could not be opened: {error}"))?;
     crate::page_style::worn(&view);
+    // At the desktop's scale from the start, where that is not the engine's; see
+    // page_scale.rs. A zoom the reader chose comes after, times it.
+    let zoom = crate::page_scale::web(1.0);
+    if (zoom - 1.0).abs() > 0.01 {
+        let _ = view.set_zoom(zoom);
+    }
     crate::web_follow::put(&view, bounds, scale)
         .map_err(|error| format!("that page could not be placed: {error}"))?;
     Ok(())
@@ -1802,8 +1808,7 @@ pub fn web_place(
         frame,
         visible,
     );
-    let scale = window
-        .scale_factor()
+    let scale = crate::page_scale::of(&window)
         .map_err(|error| format!("that page could not be placed: {error}"))?;
     let (_, _, width, height) = crate::web_follow::edges(bounds, scale);
     // Each step says itself while it runs, so a stall names the one that waited; see
@@ -1968,7 +1973,7 @@ pub fn web_scroll(app: AppHandle, tab: String, x: f64, y: f64) -> Result<(), Str
 #[tauri::command]
 pub fn web_zoom(app: AppHandle, tab: String, factor: f64) -> Result<(), String> {
     found(&app, &tab)?
-        .set_zoom(factor)
+        .set_zoom(crate::page_scale::web(factor))
         .map_err(|error| format!("that page could not be zoomed: {error}"))
 }
 
