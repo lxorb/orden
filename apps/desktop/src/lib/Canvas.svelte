@@ -1610,14 +1610,14 @@
   /** What is picked, as a canvas of its own, so it pastes into another canvas
    *  here or in Obsidian. */
   function onCopy(event: ClipboardEvent) {
-    if (store.editing !== null || !store.picked.length) return
+    if (typing(event.target) || store.editing !== null || !store.picked.length) return
 
     event.preventDefault()
     event.clipboardData?.setData('text/plain', writeCanvas(subset(store.canvas, store.picked)))
   }
 
   function onCut(event: ClipboardEvent) {
-    if (store.editing !== null || !store.picked.length) return
+    if (typing(event.target) || store.editing !== null || !store.picked.length) return
 
     onCopy(event)
     run.remove(store)
@@ -1626,7 +1626,7 @@
   /** Cards from another canvas, a picture, an address, or some words: a paste is
    *  read as whichever of the four it turns out to be. */
   function onPaste(event: ClipboardEvent) {
-    if (store.editing !== null) return
+    if (typing(event.target) || store.editing !== null) return
 
     const picture = [...(event.clipboardData?.items ?? [])].find(
       (one) => one.type.startsWith('image/') || one.type === 'application/pdf',
@@ -1818,9 +1818,7 @@
   /** Whether a frame is among what is picked, which is what makes the bar's own
    *  button say "ungroup" rather than "group". */
   const onFrame = $derived(
-    store.picked.some((id) =>
-      store.canvas.nodes.some((node) => node.id === id && node.type === 'group'),
-    ),
+    store.canvas.nodes.some((node) => node.type === 'group' && picked.has(node.id)),
   )
 
   /** Whether the plane is empty, which is the one moment the surface says anything
