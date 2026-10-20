@@ -504,6 +504,56 @@ describe('the icon a tab shows', () => {
   })
 })
 
+describe('the analytics script a site loads', () => {
+  /** A stray space in what was pasted, and a scheme with nothing after it. None of
+   *  them is an address a page can load. */
+  const BROKEN = [
+    'https:// plausible.io/js/script.js',
+    'https://plausible.io /js/script.js',
+    'https://',
+  ]
+
+  test('an address that does not parse is refused, and nothing is kept', async () => {
+    await note('One.md', '# One\n')
+    await publish()
+
+    for (const url of BROKEN) {
+      expect((await setSite({ analytics: { url } })).status).toBe(400)
+    }
+
+    const listed = await call(env, '/v1/spaces', { token })
+    expect(JSON.stringify(listed.json.spaces)).not.toContain('plausible')
+    expect((await page('/one')).status).toBe(200)
+  })
+
+  test('an address that parses is loaded by every page', async () => {
+    await note('One.md', '# One\n')
+    await publish()
+    await setSite({
+      analytics: { url: 'https://plausible.io/js/script.js', domain: 'field.nibeditor.com' },
+    })
+
+    const answer = await page('/one')
+    expect(answer.text).toContain(
+      '<script defer src="https://plausible.io/js/script.js" data-domain="field.nibeditor.com"></script>',
+    )
+    expect(answer.headers.get('content-security-policy')).toContain('https://plausible.io')
+  })
+
+  /** A row an earlier build wrote, which no route writes now. */
+  test('one stored before the check does not take the site down', async () => {
+    await note('One.md', '# One\n')
+    await publish()
+    env.db
+      .prepare('update spaces set site = ? where id = ?')
+      .run(JSON.stringify({ analytics: { url: BROKEN[0] } }), space)
+
+    const answer = await page('/one')
+    expect(answer.status).toBe(200)
+    expect(answer.text).not.toContain('plausible')
+  })
+})
+
 describe('a site behind a password', () => {
   const PASSWORD = 'the quiet part'
 

@@ -148,6 +148,13 @@ export function words(value: unknown, longest = LONGEST_TEXT): string | undefine
   return said ? said.slice(0, longest) : undefined
 }
 
+/** A counter's script as `words` leaves it: an https address that parses. A stray
+ *  space leaves one that does not, and a page cannot name the origin of such a
+ *  script. Checked where the sheet's address comes in and where it is read back. */
+function isCounterUrl(url: string | undefined): url is string {
+  return url !== undefined && /^https:\/\//i.test(url) && URL.canParse(url)
+}
+
 /** The column, as everything that reads the site reads it. Written whole by the
  *  app, and read field by field here, so a newer client's extra key is ignored
  *  rather than trusted. */
@@ -182,7 +189,7 @@ export function readSite(raw: string | null | undefined): Site {
 
   const analytics = held.analytics as Record<string, unknown> | undefined
   const url = words(analytics?.url, LONGEST_URL)
-  if (url && /^https:\/\//i.test(url)) {
+  if (isCounterUrl(url)) {
     const domain = words(analytics?.domain, LONGEST_NAME)
     site.analytics = { url, ...(domain ? { domain } : {}) }
   }
@@ -308,8 +315,8 @@ export function wrong(body: Record<string, unknown>): string | null {
       return 'analytics is a script to load, or null for none'
     }
 
-    const url = (analytics as Record<string, unknown>).url
-    if (typeof url !== 'string' || !/^https:\/\//i.test(url)) {
+    const url = words((analytics as Record<string, unknown>).url, LONGEST_URL)
+    if (!isCounterUrl(url)) {
       return 'an analytics script is an https address'
     }
   }
