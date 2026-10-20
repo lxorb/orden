@@ -16,6 +16,15 @@ describe('what a tag is', () => {
     expect(tagNameAt('#日本語', 0)).toBe('日本語')
   })
 
+  test('marks and emoji are in a name, which is never all digits', () => {
+    expect(tagNameAt('#हिन्दी', 0)).toBe('हिन्दी')
+    expect(tagNameAt('#กิน', 0)).toBe('กิน')
+    expect(tagNameAt('#café', 0)).toBe('café')
+    expect(tagNameAt('#tag👍', 0)).toBe('tag👍')
+    expect(tagNameAt('#2024-review', 0)).toBe('2024-review')
+    expect(tagNameAt('#2024', 0)).toBeNull()
+  })
+
   test('not a number, not a heading, not a bare hash', () => {
     expect(tagNameAt('#42', 0)).toBeNull()
     expect(tagNameAt('# Heading', 0)).toBeNull()

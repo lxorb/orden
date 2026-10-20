@@ -50,6 +50,7 @@ flate2 = { version = "1", default-features = false, features = ["rust_backend"] 
 rusqlite = { version = "0.32", features = ["bundled"] }
 notify = "8"
 getrandom = "0.3"
+icu_properties = "2"
 
 [target.'cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))'.dependencies]
 png = "0.18"

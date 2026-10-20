@@ -17,6 +17,11 @@ describe('the tags in a note', () => {
     expect(tagsIn('#42 and a#b')).toEqual([])
   })
 
+  test('a name holds marks and emoji, and is never all digits', () => {
+    expect(tagsIn('#हिन्दी #café #tag👍')).toEqual(['#हिन्दी', '#café', '#tag👍'])
+    expect(tagsIn('#2024-review #2024')).toEqual(['#2024-review'])
+  })
+
   test('and a slash is part of the tag, to any depth', () => {
     expect(tagsIn('#work/nib/canvas/deep/deeper')).toEqual(['#work/nib/canvas/deep/deeper'])
     expect(tagsIn('#a-b #c_d #e/f')).toEqual(['#a-b', '#c_d', '#e/f'])

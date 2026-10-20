@@ -148,6 +148,9 @@ notify = "8"
 # file as something tauri builds with, and on every platform now that every platform
 # has a sync store.
 getrandom = "0.3"
+# A tag's name holds letters, marks, digits and emoji, which the standard library cannot
+# tell apart. Already in the lock file as something tauri builds with, so this adds nothing.
+icu_properties = "2"
 
 # Desktop only: a second launch should hand its file to the running window, the
 # app installs its own updates, and files are chosen and saved in a dialog. A
