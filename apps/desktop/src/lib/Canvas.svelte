@@ -73,6 +73,7 @@
     GRID,
     HANDLES,
     isLineShape,
+    nodeAt,
     overlaps,
     type Point,
     rectBetween,
@@ -1508,6 +1509,9 @@
     // lasso caught - makes the menu about that rather than about the bare plane.
     const bare =
       !about && !found.node && !found.edge && !found.stroke && !found.ink && !found.handle
+    // What is drawn under the point, locked or not: the press went through it, and its
+    // menu is how it is let go again (#643).
+    const under = about ? null : nodeAt(shown.nodes, point, 12)
 
     const rect = host?.getBoundingClientRect()
     const at = onScreen(point)
@@ -1518,6 +1522,7 @@
       new MouseEvent('contextmenu', { ...screen, buttons }),
       canvasMenu(store, point, {
         bare,
+        locked: under?.locked ? under.id : null,
         again: (rows, title) =>
           menu.show(new MouseEvent('contextmenu', screen), rows, { title, near }),
         path: tab.path,

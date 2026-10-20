@@ -15,7 +15,7 @@ vi.stubGlobal('localStorage', {
 const { NoteDoc, Tab } = await import('../workspace/documents.svelte')
 const { CanvasStore } = await import('./store.svelte')
 const { blankCanvas, readCanvas, writeCanvas } = await import('./format')
-const { run } = await import('./actions')
+const { canvasMenu, run } = await import('./actions')
 const { locking } = await import('./edits')
 const { pens } = await import('./pens.svelte')
 type Canvas = import('./format').Canvas
@@ -503,5 +503,56 @@ describe('something locked in place', () => {
 
     store.undo()
     expect(store.picked).toEqual([])
+  })
+
+  const view = (locked: string | null) => ({
+    ...{ width: 800, height: 600, path: null, name: 'Board', palette: {} as never },
+    ...{ onfind: () => undefined, onnarrow: () => undefined, again: () => undefined },
+    ...{ narrowed: false, trusted: false, bare: locked !== null, locked },
+  })
+  const rows = (store: InstanceType<typeof CanvasStore>, locked: string | null) =>
+    canvasMenu(store, { x: 10, y: 10 }, view(locked))
+  const labels = (store: InstanceType<typeof CanvasStore>, locked: string | null) =>
+    rows(store, locked).map((row) => row?.label)
+  const press = (store: InstanceType<typeof CanvasStore>, locked: string | null, label: string) =>
+    rows(store, locked)
+      .find((row) => row?.label === label)
+      ?.run()
+
+  test('is locked from the menu of what is picked, and let go of', () => {
+    const { store } = opened()
+    store.edit({ ...store.canvas, nodes: [card('a')] })
+    store.pick('a')
+
+    press(store, null, 'Lock')
+    expect(store.canvas.nodes[0]?.locked).toBe(true)
+    expect(store.picked).toEqual([])
+  })
+
+  test('is offered Unlock by its own menu, and nothing it cannot do, and is one step back', () => {
+    const { store } = opened()
+    store.edit(locking({ ...store.canvas, nodes: [card('a')] }, ['a'], true))
+    expect(labels(store, 'a')).toContain('Unlock')
+    expect(labels(store, 'a')).not.toContain('Lock')
+    expect(labels(store, 'a')).not.toContain('Delete')
+
+    press(store, 'a', 'Unlock')
+    expect(store.canvas.nodes[0]?.locked).toBeUndefined()
+    store.undo()
+    expect(store.canvas.nodes[0]?.locked).toBe(true)
+  })
+
+  test('is left alone by both erasers rubbing over it', () => {
+    const { store } = opened()
+    const points = [0, 200].map((x) => ({ x, y: 30, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 }))
+    const ink = [{ id: 'ink', tool: 'pen' as const, color: 'ink', size: 2, points }]
+    store.edit(locking({ ...store.canvas, nodes: [card('a')], ink }, ['a'], true))
+    const before = store.canvas.nodes
+
+    // The line written across it cut through, and then rubbed out whole.
+    run.cut(store, { x: 100, y: 30 }, 20)
+    run.rub(store, { x: 10, y: 30 }, 20)
+    expect(store.canvas.ink).toEqual([])
+    expect(store.canvas.nodes).toBe(before)
   })
 })

@@ -80,7 +80,8 @@ lives in the far corner from the tools, and undo is in a third place again.
 | Opacity, and a straighten switch | kept |
 | Recent colours beside the presets | kept |
 | Favourite pens set the way you set them | kept, as exactly three |
-| Illustrated nibs, tape, ruler, lock, AI, convert to text | left |
+| A lock on a picture that is written over | kept, in the menu (#643) |
+| Illustrated nibs, tape, ruler, AI, convert to text | left |
 | A switch that spares one kind of ink | left, it breaks the eraser silently |
 
 | From Miro | |
@@ -258,6 +259,14 @@ by. Shift holds the shape of the box while it is resized, and a picture under a
 thumb holds it without being asked, because there is no Shift on a tablet and a
 photograph stretched one way is not the photograph. A connector wears a round handle
 at each end instead, and dragging one onto another card moves that end there.
+
+**Locked in place** (#643). A picture written over is a page under the pen, and a
+finger resting on it must not drag it away. Lock, in the menu about what is picked,
+holds it where it is: a press, a band and Ctrl+A go through it to what is under it, a
+frame dragged or deleted leaves it behind, and the erasers only ever took ink. It is
+drawn as it always was. A right click or a long press on it opens the plane's menu
+with Unlock at the top, the one way back. The file lists it under `nib.locked`, so
+Obsidian reads the same cards. A page note has none of it yet.
 
 **Alt on a drag leaves a copy behind.** The originals are what the pointer carries
 away, so nothing is renamed halfway through a gesture, and the copy and the move are
@@ -716,8 +725,8 @@ same reducer and the same ink.
 
 ## What we deliberately do not have
 
-- **A ruler, tape and a lock.** Three pictures of stationery for three things
-  nobody asked for.
+- **A ruler and tape.** Two pictures of stationery for two things nobody asked
+  for.
 - **An eyedropper.** The web has one on exactly one platform, and a colour picked
   off the drawing is a nicety next to the six presets and the last six colours.
 - **A switch that spares one kind of ink.** It breaks the eraser with nothing on
