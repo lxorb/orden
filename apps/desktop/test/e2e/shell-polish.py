@@ -10,7 +10,7 @@ than clicks:
     because the two states differing by a transform is exactly what an audit of the
     markup cannot see;
   - the space switcher spans the panel, less whatever else is in its head;
-  - the two switches at the foot of the panel each have their mark centred, are the
+  - the buttons at the foot of the panel each have their mark centred, are the
     same square, and sit on the row's own centre line;
   - the formatting bar on a phone sits on the keyboard, follows it, and leaves with
     it - nothing of it is left in the middle of the screen;
@@ -337,7 +337,7 @@ HEAD = """
 }
 """
 
-# The foot of the panel: the two switches, the glyph inside each, and the row.
+# The foot of the panel: its buttons, the glyph inside each, and the row.
 #
 # Three things in one measurement, because they fail together: the mark centred in
 # its button, the buttons the same size, and both of them on the row's own centre
@@ -730,10 +730,15 @@ def panel_ends(page: Page, label: str) -> None:
         check(False, f"[{label}] the panel has a foot to measure")
         return
 
-    # The web app adds a third, the app to download (SidebarFoot.svelte), which the
-    # desktop app has no use for; the two every build has are the theme and Settings.
+    # The web app adds the app to download (SidebarFoot.svelte), which the desktop
+    # app has no use for; every build has Send feedback (#548), the theme and
+    # Settings, in that order.
     kept = [one["name"] for one in foot["acts"] if one["name"] != "Download the app"]
-    check(len(kept) == 2, f"[{label}] the foot holds the theme and the settings ({kept})")
+    check(
+        len(kept) == 3 and kept[0] == "Send feedback" and kept[1] in ("Dark", "Light")
+        and kept[2] == "Settings",
+        f"[{label}] the foot holds feedback, the theme and the settings ({kept})",
+    )
     for one in foot["acts"]:
         check(
             abs(one["markX"]) <= SLACK and abs(one["markY"]) <= SLACK,
@@ -747,7 +752,7 @@ def panel_ends(page: Page, label: str) -> None:
         )
 
     sizes = {(one["width"], one["height"]) for one in foot["acts"]}
-    check(len(sizes) == 1, f"[{label}] both switches are the same square ({sizes})")
+    check(len(sizes) == 1, f"[{label}] every button in it is the same square ({sizes})")
 
     if foot["who"] is not None:
         check(
