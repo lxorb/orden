@@ -130,6 +130,14 @@ describe('the table', () => {
     expect(html).toContain('Doing')
     expect(html).toContain('8')
   })
+
+  test('is one tab stop on its first cell before any is pressed, its header row in the grid', () => {
+    const base = readBase('views:\n  - type: table\n    order: [file.name, note.status]\n')
+    const html = render(TableLayout, { props: { kit: kitOf(base, NOTES) } }).body
+    const stops = [...html.matchAll(/role="gridcell" tabindex="(-?\d)"/g)].map((one) => one[1])
+    expect(stops).toEqual(['0', '-1', '-1', '-1'])
+    expect(html).toMatch(/^(?:<!--[^>]*-->)?<div class="table[^>]*role="grid"/)
+  })
 })
 
 describe('the table, as lane 7 left it', () => {

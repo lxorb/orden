@@ -111,6 +111,9 @@
   /** The cell the keyboard is on, and whether it is being edited. */
   let at = $state<{ line: number; column: number } | null>(null)
   let editing = $state(false)
+  /** The cell Tab lands on: the one the keyboard was last on, else the first row's
+   *  first cell, so the grid is one tab stop before anything has been pressed. */
+  const cursor = $derived(at ?? { line: lines.findIndex((line) => line.kind === 'row'), column: 0 })
 
   function sortBy(column: string) {
     kit.change((base, index) => {
@@ -186,7 +189,7 @@
   }
 
   function keydown(event: KeyboardEvent) {
-    if (editing || !at) return
+    if (editing) return
     const rowsAt = lines.length
     const move = (line: number, column: number) => {
       event.preventDefault()
@@ -196,12 +199,13 @@
       }
       queueMicrotask(() => body?.querySelector<HTMLElement>('.cell.on')?.focus())
     }
-    if (event.key === 'ArrowDown') move(at.line + 1, at.column)
-    else if (event.key === 'ArrowUp') move(at.line - 1, at.column)
-    else if (event.key === 'ArrowRight') move(at.line, at.column + 1)
-    else if (event.key === 'ArrowLeft') move(at.line, at.column - 1)
+    if (event.key === 'ArrowDown') move(cursor.line + 1, cursor.column)
+    else if (event.key === 'ArrowUp') move(cursor.line - 1, cursor.column)
+    else if (event.key === 'ArrowRight') move(cursor.line, cursor.column + 1)
+    else if (event.key === 'ArrowLeft') move(cursor.line, cursor.column - 1)
     else if (event.key === 'Enter' || event.key === 'F2') {
       event.preventDefault()
+      at = cursor
       editing = true
     }
   }
@@ -235,6 +239,8 @@
   style:--columns={template}
   style:--line-height="{rowHeight}px"
   style:--lines={tall}
+  role="grid"
+  aria-label={view?.name ?? ''}
 >
   <div class="heads" role="row">
     {#each columns as column, place (column)}
@@ -262,12 +268,12 @@
     {/each}
   </div>
 
+  <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
   <div
     class="body"
     bind:this={body}
-    role="grid"
+    role="rowgroup"
     tabindex="-1"
-    aria-label={view?.name ?? ''}
     onkeydown={keydown}
     style:padding-top="{shown.above}px"
     style:padding-bottom="{shown.below}px"
@@ -302,7 +308,7 @@
               class:edge={place === frozen - 1}
               style:inset-inline-start={place < frozen ? `${stuck[place]}px` : undefined}
               role="gridcell"
-              tabindex={on ? 0 : -1}
+              tabindex={cursor.line === index && cursor.column === place ? 0 : -1}
               onclick={() => {
                 if (on && !editing) editing = true
                 else {
