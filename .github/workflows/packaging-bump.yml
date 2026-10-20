@@ -146,7 +146,12 @@ jobs:
           git config user.name lxorbs-minion
           git config user.email 43935334+lxorbs-minion@users.noreply.github.com
           git switch -c "$branch"
+          # The root flake.lock is a copy of the lock beside the flake, which nix.yml
+          # holds the two to: it moves with it, or the release's own pull request
+          # fails that check (#438).
+          if [ -e flake.nix ]; then cp packaging/nix/flake.lock flake.lock; fi
           git add packaging
+          if [ -e flake.nix ]; then git add flake.lock; fi
           git commit -m "chore: packaging on $VERSION" -m "Co-authored-by: Emil Vinu <101118850+lxorb@users.noreply.github.com>"
           git push --force origin "$branch"
           if gh pr view "$branch" --json state -q .state 2>/dev/null | grep -qx OPEN; then

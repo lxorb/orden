@@ -107,6 +107,13 @@ jobs:
           name: ${{ inputs.artifact }}
           path: packaging
 
+      # The packaging laid over this checkout carries a lock of its own, and a pull
+      # request's flake - `path:$PWD`, below - reads the root's: the copy goes with it,
+      # so what is built here is the lock that lands (#438).
+      - name: The root flake.lock, the one laid over packaging/nix
+        if: inputs.artifact != ''
+        run: if [ -e flake.nix ]; then cp packaging/nix/flake.lock flake.lock; fi
+
       - uses: cachix/install-nix-action@13d8dd58da0234aa297dedd986986ccb8e7f3e24 # v31.11.1
         with:
           extra_nix_config: |
