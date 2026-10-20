@@ -35,11 +35,18 @@ vi.mock('../tauri', () => ({
   isNative: false,
 }))
 
+/** Each file the import said it made, as a file operation. */
+const came: string[] = []
+
 vi.mock('../workspace.svelte', () => ({
   workspace: {
     files: [],
     undone: { record: (action: unknown) => void recorded.push(action) },
     loadTree: () => Promise.resolve(),
+    fileCame: (path: string) => {
+      came.push(path)
+      return Promise.resolve()
+    },
   },
 }))
 
@@ -411,6 +418,19 @@ describe('a path no space would take', () => {
     })
 
     expect(heard).toEqual(['saved /Work/Plan.md', 'came back /Work/assets/x.png'])
+  })
+
+  /** Said as file operations, so sync v2 has an entry for each where no watcher reads
+   *  the folder: in a browser an imported paper's page note never reached the account
+   *  (#551). */
+  test('and says each of them was made, as every file operation is said', async () => {
+    came.length = 0
+    await applyImport(planOf([note('Plan.md', '# Plan'), file('assets/x.png')]), {
+      root: '/Work',
+      folder: '',
+    })
+
+    expect(came).toEqual(['/Work/Plan.md', '/Work/assets/x.png'])
   })
 })
 
