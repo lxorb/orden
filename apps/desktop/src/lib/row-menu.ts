@@ -78,7 +78,13 @@ export function rowMenu(entry: Entry): MenuEntry[] {
     ...compareEntry(entry),
     DIVIDER,
     ...(holds && hiddenKinds.offers('note')
-      ? [{ label: t('New note inside'), run: () => void workspace.createInside(entry.path) }]
+      ? [
+          {
+            label: t('New note inside'),
+            run: () => void workspace.createInside(entry.path),
+            more: () => Promise.resolve(newFileRows(entry.path)),
+          },
+        ]
       : []),
     DIVIDER,
     { label: t('Rename'), run: () => workspace.startRenaming(entry.path) },
@@ -356,20 +362,26 @@ function revealEntry(entry: Entry): MenuEntry[] {
 /** What the file list's own New rows make: a named file, as its row waiting for a name,
  *  of each kind that is a file and that Settings › Note types offers. The new tab's
  *  gesture is the other one, a tab first and a file when saved; see new-kinds.ts. A shell
- *  and a private tab are tabs and never files. */
-const MAKERS: Partial<Record<KindName, () => unknown>> = {
-  note: () => workspace.createNote(),
-  canvas: () => workspace.createCanvas(),
-  pages: () => workspace.createPages(),
-  web: () => workspace.createWebsite(),
+ *  and a private tab are tabs and never files. Given a row, they go inside it, as its
+ *  New note inside does. */
+const MAKERS: Partial<Record<KindName, (folder?: string) => unknown>> = {
+  note: (folder) => workspace.createNote(folder),
+  canvas: (folder) => workspace.createCanvas(folder),
+  pages: (folder) => workspace.createPages(folder),
+  web: (folder) => workspace.createWebsite(folder),
   ...(__EVEN_PLUGIN__
     ? {}
-    : { chat: () => import('./chats/view/open').then(({ makeChat }) => makeChat()) }),
+    : {
+        chat: (folder?: string) =>
+          import('./chats/view/open').then(({ makeChat }) => makeChat(folder)),
+      }),
 }
 
-export function newFileRows(): MenuEntry[] {
+export function newFileRows(inside?: string): MenuEntry[] {
   return hiddenKinds.shown.flatMap((kind) => {
     const make = MAKERS[kind]
-    return make ? [{ label: kindLabel(kind), run: () => void make() }] : []
+    if (!make) return []
+    const run = inside ? () => void workspace.createInside(inside, make) : () => void make()
+    return [{ label: kindLabel(kind), run }]
   })
 }

@@ -164,6 +164,28 @@ describe('a note, with chats to send it to', () => {
     const { account } = await import('./account.svelte')
     Object.defineProperty(account, 'accountToken', { value: 'signed in' })
     expect(labels(loose)).not.toContain('Send to chat')
+})
+
+/** New note inside makes a note; its chevron offers every kind the file list's New
+ *  rows make, each made inside the row (#380). */
+describe('new note inside', () => {
+  test('offers every kind, each made in the row', async () => {
+    const row = rowMenu(plain).find((one) => one?.label === 'New note inside')
+    const kinds = (await row?.more?.()) ?? []
+    expect(kinds.map((one) => one?.label)).toEqual([
+      'New note',
+      'New canvas',
+      'New page note',
+      'New web note',
+    ])
+
+    const made = (['createNote', 'createCanvas', 'createPages', 'createWebsite'] as const).map(
+      (name) => vi.spyOn(workspace, name).mockResolvedValue(undefined),
+    )
+    for (const one of kinds) one?.run()
+    await vi.waitFor(() => {
+      for (const spy of made) expect(spy).toHaveBeenCalledWith('/s/Projects')
+    })
   })
 })
 

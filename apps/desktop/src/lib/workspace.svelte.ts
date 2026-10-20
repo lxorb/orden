@@ -3789,8 +3789,9 @@ class Workspace {
    *
    *  Nesting is `moveMany` with nothing to move, which is the one call the drop
    *  makes: it is the folder-note rule in one place, with the same rows put in
-   *  optimistically and the same undo. See folder-notes.ts. */
-  async createInside(path: string) {
+   *  optimistically and the same undo. See folder-notes.ts. `make` is
+   *  another kind, from the row's submenu. */
+  async createInside(path: string, make = (folder: string): unknown => this.createNote(folder)) {
     const entry = this.entryAt(path)
     if (!entry) return
 
@@ -3799,7 +3800,7 @@ class Workspace {
 
     await this.undone.batch(async () => {
       if (!entry.is_dir) await this.moveMany([], folder)
-      await this.createNote(folder)
+      await make(folder)
     })
   }
 
