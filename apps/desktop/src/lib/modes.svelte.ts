@@ -173,7 +173,8 @@ interface Saved {
   keepVersions: number
   remindBefore: number
   undatedInToday: boolean
-  canvasTurns: boolean
+  /** `canvasTurns` before turning became the default; see `restore`. */
+  turnsCanvas: boolean
   canvasTurnSnaps: boolean
   highlightTone: number | null
   hardBreaks: boolean
@@ -289,7 +290,7 @@ export const DEFAULTS = {
   keepVersions: KEEP_MONTH,
   remindBefore: 0,
   undatedInToday: false,
-  canvasTurns: false,
+  canvasTurns: true,
   canvasTurnSnaps: true,
   highlightTone: null as number | null,
   hardBreaks: false,
@@ -614,6 +615,10 @@ class Modes {
             ? 'source'
             : DEFAULTS.properties
       stale ||= 'properties' in saved
+      // Kept as `turnsCanvas` since turning became the default (#487): an older build
+      // wrote `canvasTurns` down for everybody, so its off was no choice, its on is ours.
+      this.canvasTurns = on(saved.turnsCanvas, DEFAULTS.canvasTurns)
+      stale ||= 'canvasTurns' in saved
     }
     // The renderer and the one link writer are told once, here and in the setters
     // below, rather than asked by every caller; see `setHardBreaks` in
@@ -1545,7 +1550,7 @@ class Modes {
       keepVersions: this.keepVersions,
       remindBefore: this.remindBefore,
       undatedInToday: this.undatedInToday,
-      canvasTurns: this.canvasTurns,
+      turnsCanvas: this.canvasTurns,
       canvasTurnSnaps: this.canvasTurnSnaps,
       highlightTone: this.highlightTone,
       hardBreaks: this.hardBreaks,

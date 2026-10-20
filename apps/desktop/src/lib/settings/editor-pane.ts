@@ -116,8 +116,8 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
       },
       {
         // Two fingers on a canvas move it and zoom it; with this on they turn it as
-        // well, as Concepts does (#351). Off, because a plane turned by a pinch held a
-        // little crooked is a plane askew. On the account; a page note never turns.
+        // well, as Concepts does (#351). On, with the snap holding it upright until a turn
+        // is plainly meant (#487). On the account; a page note never turns.
         title: t('Canvas'),
         fields: [
           {
