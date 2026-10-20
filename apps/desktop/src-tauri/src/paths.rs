@@ -179,8 +179,12 @@ pub fn held_paper(pdf: &Path) -> bool {
         return false;
     }
 
+    // The note's paper is the one `paper_of` names, so a paper hidden is one that goes
+    // with the note: `Lecture.pages.PDF` is that paper on a disk that ignores case,
+    // and somebody's own PDF on one that does not.
     let holder = pdf.with_extension("");
-    is_pages(&holder) && holder.is_file()
+    let paper = paper_of(&holder);
+    is_pages(&holder) && holder.is_file() && (paper == pdf || crate::notes::same_entry(&paper, pdf))
 }
 
 /// Whether a name is taken: by something there, or, for a page note, by a file where
@@ -2019,6 +2023,12 @@ mod tests {
         std::fs::write(here.join("Lecture.pdf"), "%PDF").expect("a pdf");
         assert!(!held_paper(&here.join("Lecture.pdf")));
         assert!(!held_paper(&here.join("Lecture.pages")));
+        // A capital PDF is the note's paper only where the disk reaches it as one.
+        let capital = here.join("Lecture.pages.PDF");
+        std::fs::remove_file(&paper).expect("the paper, gone");
+        std::fs::write(&capital, "%PDF").expect("a capital PDF");
+        let lecture = here.join("Lecture.pages");
+        assert_eq!(held_paper(&capital), paper_of(&lecture).exists());
     }
 
     #[test]

@@ -38,7 +38,7 @@ import {
   type Side,
 } from './format'
 import { bounds, type Box, boxOf, facingSide, GRID, type Point, rectBetween } from './geometry'
-import { erased, INK_STYLES, nearStroke, strokesInLasso, tidied } from './ink'
+import { erased, INK_STYLES, nearStroke, strokeBox, strokesInLasso, tidied } from './ink'
 import type { Palette } from './paint'
 import type { Hit, PendingStroke, PutTool, Tool } from './pointer'
 import type { CanvasStore } from './store.svelte'
@@ -238,7 +238,7 @@ export const run = {
     if (incoming.nodes.length || incoming.ink.length) {
       // Centred on the pointer, so a paste lands where the reader is looking
       // rather than where the cards happened to be in the canvas they came from.
-      const box = bounds(incoming.nodes)
+      const box = bounds([...incoming.nodes, ...incoming.ink.map(strokeBox)])
       const dx = box ? Math.round(at.x - box.x - box.width / 2) : 0
       const dy = box ? Math.round(at.y - box.y - box.height / 2) : 0
       const made = pasted(store.canvas, incoming, dx, dy)

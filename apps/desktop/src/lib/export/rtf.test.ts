@@ -411,11 +411,11 @@ describe('tables', () => {
 
   test('splits the text column evenly and draws all four borders', () => {
     // Three columns across the A4 text column, which is the sheet less both 20 mm
-    // margins: 9641 twips. It was 9360 - a letter page with an inch each side -
+    // margins: 9638 twips. It was 9360 - a letter page with an inch each side -
     // whatever paper the export was going on.
-    expect(RTF).toContain('\\cellx3214')
-    expect(RTF).toContain('\\cellx6427')
-    expect(RTF).toContain('\\cellx9641')
+    expect(RTF).toContain('\\cellx3213')
+    expect(RTF).toContain('\\cellx6425')
+    expect(RTF).toContain('\\cellx9638')
     expect(RTF).toContain('\\clbrdrt\\brdrs\\brdrw10\\clbrdrl\\brdrs\\brdrw10')
     expect(RTF).toContain('\\clbrdrb\\brdrs\\brdrw10\\clbrdrr\\brdrs\\brdrw10')
   })
@@ -537,11 +537,11 @@ describe('pictures', () => {
     const wide = made([{ kind: 'paragraph', spans: [{ text: 'Wide', picture: 'a/wide.png' }] }])
     const bytes = new Uint8Array(pngHeader(1000, 500))
 
-    // The column is the A4 sheet less both 20 mm margins: 11909 - 2268 twips. It
+    // The column is the A4 sheet less both 20 mm margins: 11906 - 2268 twips. It
     // used to be the 9360 of a letter page with an inch each side, whatever paper
     // the export was actually going on.
     expect(toRtf(wide, [picture('a/wide.png', 'image/png', bytes)], PAPER)).toContain(
-      '\\picw1000\\pich500\\picwgoal9641\\pichgoal4821',
+      '\\picw1000\\pich500\\picwgoal9638\\pichgoal4819',
     )
   })
 

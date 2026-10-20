@@ -31,7 +31,8 @@ function opened(text = blankCanvas()) {
     () => undefined,
   )
 
-  return { store: new CanvasStore(new Tab(note, 'pane')), note }
+  const tab = new Tab(note, 'pane')
+  return { store: new CanvasStore(tab), note, tab }
 }
 
 /** A room, recorded rather than run: what it was pushed, and what it was asked. */
@@ -390,5 +391,49 @@ describe('a version put back from the history (#533)', () => {
     store.follow()
 
     expect(ids(store.canvas)).toEqual(['later'])
+  })
+})
+
+describe('ink pasted on its own', () => {
+  test('lands centred on the pointer, as cards do', async () => {
+    const { run } = await import('./actions')
+    const { strokeBox } = await import('./ink')
+    const { store } = opened()
+    const at = (x: number, y: number) => ({ x, y, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 })
+    const points = [at(0, 0), at(100, 0), at(100, 100)]
+    const incoming = { nodes: [], edges: [], at: {}, gone: {} }
+    const ink = [{ id: 's', tool: 'pen' as const, color: '#000000', size: 4, points }]
+
+    run.paste(store, { ...incoming, ink }, '', { x: 1000, y: 2000 })
+
+    const box = strokeBox(store.canvas.ink[0]!)
+    expect(Math.round(box.x + box.width / 2)).toBe(1000)
+    expect(Math.round(box.y + box.height / 2)).toBe(2000)
+  })
+})
+
+describe('a plane whose tab is switched away from and back', () => {
+  test('can still take back what was drawn on it', () => {
+    const { store, note, tab } = opened()
+    store.edit({ ...store.canvas, nodes: [card('a')] })
+    store.part()
+
+    const again = new CanvasStore(tab)
+    again.undo()
+
+    expect(again.canvas.nodes).toEqual([])
+    expect(readCanvas(note.text).nodes).toEqual([])
+  })
+
+  test('but not past words that arrived while it was away', () => {
+    const { store, note, tab } = opened()
+    store.edit({ ...store.canvas, nodes: [card('a')] })
+    store.part()
+    note.replace(writeCanvas({ ...readCanvas(note.text), nodes: [card('b')] }))
+
+    const again = new CanvasStore(tab)
+    again.undo()
+
+    expect(ids(again.canvas)).toEqual(['b'])
   })
 })
