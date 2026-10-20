@@ -98,9 +98,9 @@ export function length(value: string): string | null {
  *  the print dialog, which is the only thing that knows how many there are. */
 export function fill(template: string, title: string, date: string): string {
   return template
-    .replace(/\$\{title\}/g, title)
-    .replace(/\$\{date\}/g, date)
-    .replace(/\$\{year\}/g, date.slice(0, 4))
+    .replace(/\$\{title\}/g, () => title)
+    .replace(/\$\{date\}/g, () => date)
+    .replace(/\$\{year\}/g, () => date.slice(0, 4))
 }
 
 /** The paper half of the print stylesheet. */

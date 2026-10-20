@@ -78,6 +78,10 @@ describe('running text', () => {
     expect(fill('© ${year}', 'Notes', '2026-09-03')).toBe('© 2026')
   })
 
+  test('prints a dollar sign in the title as it is written', () => {
+    expect(fill('${title}', 'Budget $$ and $& more', '2026-09-03')).toBe('Budget $$ and $& more')
+  })
+
   test('leaves an unknown placeholder alone', () => {
     expect(fill('${pages}', 'Notes', '2026-09-03')).toBe('${pages}')
   })
