@@ -734,6 +734,44 @@ describe('a reader in a room', () => {
     })
   })
 
+  /** Awareness is said per client, and a reader could say it for the writer's: a
+   *  higher clock under any name relabelled the writer's caret on every screen, and
+   *  the writer's next settle was credited to that name. */
+  test('cannot speak for somebody else’s caret, only for its own', async () => {
+    const { room: made, state } = room(env)
+    const writer = await arrive(made, state, { id: noteId, spaceId })
+    const other = await arrive(made, state, { id: noteId, spaceId })
+    const reader = await reading(made, state)
+
+    env.db.exec('update note_versions set at = at - 600000')
+    writer.awareness.setLocalStateField('who', { name: 'Ada Mac' })
+    await say(made, state, writer.socket, awarenessUpdate(writer.awareness, [writer.doc.clientID]))
+
+    const posing = new Y.Doc()
+    posing.clientID = writer.doc.clientID
+    const forged = new Awareness(posing)
+    for (let one = 0; one < 5; one++) forged.setLocalStateField('who', { name: `Mallory ${one}` })
+    reader.awareness.setLocalStateField('who', { name: 'Reader' })
+    applyAwarenessUpdate(reader.awareness, encodeAwarenessUpdate(forged, [forged.clientID]), 'me')
+    const both = [writer.doc.clientID, reader.doc.clientID]
+    await say(made, state, reader.socket, awarenessUpdate(reader.awareness, both))
+    await settle(made, state, [writer, other, reader])
+
+    expect(other.awareness.getStates().get(writer.doc.clientID)).toEqual({
+      who: { name: 'Ada Mac' },
+    })
+    expect(other.awareness.getStates().get(reader.doc.clientID)).toEqual({
+      who: { name: 'Reader' },
+    })
+
+    await say(made, state, writer.socket, writer.type(11, 'typed here\n'))
+    await made.alarm()
+    const kept = env.db
+      .prepare('select by from note_versions where note_id = ? order by at desc')
+      .all(noteId) as { by: string }[]
+    expect(kept[0]?.by).toBe('Ada Mac')
+  })
+
   /** A socket's attachment has a hard ceiling of a couple of kilobytes and the
    *  list of what it announced only ever grew, so one message naming a few hundred
    *  carets took it past the ceiling - and the write that threw threw inside the
