@@ -33,7 +33,8 @@ export { oneLine } from './yaml'
  *  `body`, what comes after it starts at `to`, a new key goes in at `close`, and
  *  taking the block away is `from` to `to`. */
 export interface FrontMatterBlock {
-  /** The start of the note, which is the only place a block can open. */
+  /** The start of the note, which is the only place a block can open: past a
+   *  byte order mark, which is no character of the note's to a reader of it. */
   from: number
   /** Past the closing fence and its line break: where the note's words start. */
   to: number
@@ -64,10 +65,11 @@ const KEY = /^([A-Za-z_][\w-]*)[ \t]*:/
  *  that says nothing but `---`, so a horizontal rule in the middle of a note
  *  cannot be read as the end of a block that never started. */
 export function frontMatterBlock(source: string): FrontMatterBlock | null {
-  if (!source.startsWith('---')) return null
+  const from = source.startsWith('\uFEFF') ? 1 : 0
+  if (!source.startsWith('---', from)) return null
 
   const first = source.indexOf('\n')
-  if (first === -1 || source.slice(0, first).trim() !== '---') return null
+  if (first === -1 || source.slice(from, first).trim() !== '---') return null
 
   let at = first + 1
   while (at <= source.length) {
@@ -76,7 +78,7 @@ export function frontMatterBlock(source: string): FrontMatterBlock | null {
 
     if (source.slice(at, stop).trim() === '---') {
       return {
-        from: 0,
+        from,
         to: end === -1 ? source.length : end + 1,
         body: { from: first + 1, to: at },
         close: at,

@@ -34,6 +34,18 @@ describe('reading the front matter', () => {
     expect(frontMatter('---  \ntitle: Hi\n---\n\nBody')).toBe('title: Hi')
   })
 
+  /** A file saved by Notepad opens with a byte order mark, and a block read past it
+   *  is a block edited in place rather than a second one opened above it. */
+  test('a byte order mark in front of the fence', () => {
+    const source = '\uFEFF---\ntitle: a\n---\nbody\n'
+    expect(frontMatterValue(source, 'title')).toBe('a')
+    expect(stripFrontMatter(source)).toBe('body\n')
+
+    expect(frontMatterEdit(source, 'title', 'b')).toEqual({ from: 11, to: 13, insert: ' b' })
+    // Taking the block away keeps the mark the file was saved with.
+    expect(frontMatterEdit(source, 'title', null)).toEqual({ from: 1, to: 18, insert: '' })
+  })
+
   test('the note without it, which is what a renderer reads', () => {
     expect(stripFrontMatter('---\ntitle: Hi\n---\n# Title')).toBe('# Title')
     expect(stripFrontMatter('# Title')).toBe('# Title')
