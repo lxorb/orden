@@ -1840,6 +1840,10 @@ pub fn web_place(
     // A page shown again after a layer that closed over it may be owed the keyboard; see
     // keyboard.rs. A page under a layer is not shown to the keyboard: the layer has it.
     let _doing = crate::stall::doing("web_place: keyboard");
+    #[cfg(feature = "cef")]
+    if visible && cut.is_some() {
+        crate::keyboard::hold_for_layer(&app, window.label());
+    }
     crate::keyboard::placed(&app, &view, visible && cut.is_none());
     Ok(crate::web_cut::CUTS)
 }

@@ -180,6 +180,19 @@ pub fn placed(app: &AppHandle, view: &Webview, visible: bool) {
     }
 }
 
+/// One of the app's layers was cut out of a page that stays live under it (`web_cut.rs`):
+/// the keyboard is kept by the app's own page, which has it, given to its browser
+/// outright. On X11 a window's keyboard goes to whichever of its child windows the
+/// pointer is over until one of them is given it, so the pointer crossing the page took
+/// it from the menu over the page, and the menu closed (#427). Not where a page holds
+/// the keyboard already: a toast coming up over a page being typed in leaves it there.
+#[cfg(feature = "cef")]
+pub fn hold_for_layer(app: &AppHandle, window: &str) {
+    if native::holding(window).is_none() {
+        let _ = native::take(app, window);
+    }
+}
+
 /// A page closed, on the window's own thread.
 pub fn closed(page: &str) {
     homes(|all| all.closed(page));
