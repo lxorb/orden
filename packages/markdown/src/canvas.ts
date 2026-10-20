@@ -71,6 +71,10 @@ interface NodeBase {
   width: number
   height: number
   color?: CanvasColour
+  /** Held where it is, as a picture under the writing is: nothing picks it, drags it,
+   *  resizes it or bands it until its menu unlocks it (#643). Which nodes are locked is
+   *  listed under `nib.locked`, so the spec's own records stay the spec's. */
+  locked?: true
 }
 
 interface TextNode extends NodeBase {
@@ -371,6 +375,8 @@ function readNode(value: unknown): CanvasNode | null {
     width: Math.max(1, pixels(value.width, DEFAULT_WIDTH)),
     height: Math.max(1, pixels(value.height, DEFAULT_HEIGHT)),
     ...colour(value.color),
+    // Never in a file's own record, as `bare` is not, but a room keeps it there.
+    ...(value.locked === true ? { locked: true } : {}),
   }
 
   switch (value.type) {
@@ -537,6 +543,7 @@ function readShape(value: unknown): ShapeNode | null {
     width: Math.max(1, pixels(value.width, DEFAULT_WIDTH)),
     height: Math.max(1, pixels(value.height, DEFAULT_HEIGHT)),
     ...colour(value.color),
+    ...(value.locked === true ? { locked: true } : {}),
     ...(value.fill === true ? { fill: true } : {}),
     ...(value.up === true ? { up: true } : {}),
     ...(isString(value.text) && value.text ? { text: value.text } : {}),
@@ -810,6 +817,14 @@ export function canvasIn(text: string): Canvas | null {
     }
   }
 
+  // What is locked in place; see `locked`. After the pages, which are made afresh.
+  if (Array.isArray(nib.locked)) {
+    const held = new Set(nib.locked.filter(isString))
+    for (const [at, node] of nodes.entries()) {
+      if (held.has(node.id)) nodes[at] = { ...node, locked: true }
+    }
+  }
+
   return {
     nodes: inOrder(nodes, order),
     edges,
@@ -1040,6 +1055,7 @@ export function canvasRuns(canvas: Canvas): string[][] {
   const words = canvas.nodes
     .filter((node) => node.type === 'text' && node.bare)
     .map((node) => node.id)
+  const locked = canvas.nodes.filter((node) => node.locked).map((node) => node.id)
   const at = Object.keys(canvas.at).length ? timeLines(canvas.at) : null
   const gone = Object.keys(canvas.gone).length ? timeLines(canvas.gone) : null
   // First in `nib`, because it is the one key in there a person would ever open the
@@ -1049,7 +1065,7 @@ export function canvasRuns(canvas: Canvas): string[][] {
     canvas.icon && canvas.iconColor ? `,\n\t\t"iconColor": ${JSON.stringify(canvas.iconColor)}` : ''
   const nib =
     icon !== '' ||
-    [pages, canvas.ink, shapes, order, words].some((list) => list.length > 0) ||
+    [pages, canvas.ink, shapes, order, words, locked].some((list) => list.length > 0) ||
     at !== null ||
     gone !== null
 
@@ -1077,6 +1093,7 @@ export function canvasRuns(canvas: Canvas): string[][] {
       closes(2, shapes.length) +
         (order.length ? `,\n\t\t"order": ${printed(order, 2)}` : '') +
         (words.length ? `,\n\t\t"words": ${printed(words, 2)}` : '') +
+        (locked.length ? `,\n\t\t"locked": ${printed(locked, 2)}` : '') +
         (at ? ',\n\t\t"at": ' : ''),
     ],
     at ?? [],

@@ -57,6 +57,7 @@ const NIB_FIELDS = new Set([
   'shapes',
   'order',
   'words',
+  'locked',
   'at',
   'gone',
 ])

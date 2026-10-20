@@ -15,6 +15,7 @@ import {
   SHAPES,
   writeCanvas,
 } from './canvas'
+import { mergeCanvasFiles } from './canvas-merge'
 import { emptyPages, pagesFromPdf } from './pages'
 
 /** A canvas written the way the spec's own examples are: every node type, every
@@ -957,5 +958,70 @@ describe('words with no card round them (#421)', () => {
   test('leave no key of ours in a file of plain cards', () => {
     const plain = writeCanvas({ ...canvas, nodes: [canvas.nodes[0]!] })
     expect(JSON.parse(plain)).not.toHaveProperty('nib')
+  })
+})
+
+describe('something locked in place (#643)', () => {
+  const canvas: Canvas = {
+    ...readCanvas(blankCanvas()),
+    nodes: [
+      {
+        id: 'photo',
+        type: 'file',
+        x: 0,
+        y: 0,
+        width: 400,
+        height: 300,
+        file: 'a.png',
+        locked: true,
+      },
+      { id: 'card', type: 'text', x: 0, y: 320, width: 100, height: 50, text: 'A card' },
+      {
+        id: 'box',
+        type: 'shape',
+        shape: 'rect',
+        x: 0,
+        y: 400,
+        width: 80,
+        height: 80,
+        locked: true,
+      },
+    ],
+  }
+  const written = writeCanvas(canvas)
+  const parsed = JSON.parse(written) as {
+    nodes: Record<string, unknown>[]
+    nib: { locked: string[]; shapes: Record<string, unknown>[] }
+  }
+
+  test('is the record it was to anybody reading the spec, and listed as locked under nib', () => {
+    expect(parsed.nodes.some((node) => 'locked' in node)).toBe(false)
+    expect(parsed.nib.shapes.some((shape) => 'locked' in shape)).toBe(false)
+    expect(parsed.nib.locked).toEqual(['photo', 'box'])
+  })
+
+  test('comes back locked, and the rest as it was', () => {
+    const back = readCanvas(written)
+    expect(back.nodes).toEqual(canvas.nodes)
+    expect(writeCanvas(back)).toBe(written)
+  })
+
+  test('as a room keeps it, field for field', () => {
+    expect(nodeOf({ ...canvas.nodes[0] })).toEqual(canvas.nodes[0])
+    expect(nodeOf({ ...canvas.nodes[2] })).toEqual(canvas.nodes[2])
+  })
+
+  test('leaves no key of ours in a file of plain cards', () => {
+    const plain = writeCanvas({ ...canvas, nodes: [canvas.nodes[1]!] })
+    expect(JSON.parse(plain)).not.toHaveProperty('nib')
+  })
+
+  test('unlocked on one copy later stays unlocked when the two are put together', () => {
+    const free = canvas.nodes.map(({ locked: _locked, ...node }) => node)
+    const ours = writeCanvas({ ...canvas, at: { photo: 100, card: 100, box: 100 } })
+    const theirs = writeCanvas({ ...canvas, nodes: free, at: { photo: 200, card: 100, box: 200 } })
+    const both = mergeCanvasFiles(ours, theirs, 300)
+    expect(readCanvas(both).nodes.some((node) => node.locked)).toBe(false)
+    expect(JSON.parse(both).nib).not.toHaveProperty('locked')
   })
 })
