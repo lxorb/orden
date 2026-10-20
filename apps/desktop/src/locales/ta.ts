@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ta: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'எல்லாம் தயார்',
+  Personalize: 'தனிப்பயனாக்கு',
+  Clean: 'சுத்தம்',
+  'Live preview': 'நேரடி முன்னோட்டம்',
+  'Developer mode': 'டெவலப்பர் பயன்முறை',
+  'Do you write code?': 'நீங்கள் குறியீடு எழுதுவீர்களா?',
+  Yes: 'ஆம்',
+  No: 'இல்லை',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'பிற ஆப்களிலிருந்து: {key}',
   'From other apps: set in your system settings':

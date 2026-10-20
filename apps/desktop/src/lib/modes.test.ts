@@ -88,6 +88,7 @@ interface Held {
   glassesSeen?: boolean
   quietMarks?: boolean
   silent?: boolean
+  developer?: boolean
   undatedInToday?: boolean
   canvasTurns?: boolean
   canvasTurnSnaps?: boolean
@@ -475,6 +476,37 @@ describe('the tasks with no start date in Today', () => {
   })
 })
 
+describe('Developer mode', () => {
+  test('is unasked at first, which keeps the terminals', () => {
+    expect(modes.developer).toBeNull()
+    expect(modes.coder).toBe(true)
+  })
+
+  test('a first no writes the way Notion does, and is remembered', async () => {
+    modes.setDeveloper(false)
+    expect(modes.coder).toBe(false)
+    expect(modes.quietMarks).toBe(true)
+
+    const again = await restarted()
+    expect(again.developer).toBe(false)
+    expect(again.quietMarks).toBe(true)
+  })
+
+  test('a first yes keeps the marks under the caret, as Obsidian does', () => {
+    modes.setDeveloper(true)
+    expect(modes.coder).toBe(true)
+    expect(modes.quietMarks).toBe(false)
+  })
+
+  test('after the first answer, leaves the marks to their own switch', () => {
+    modes.setDeveloper(false)
+    modes.toggleQuietMarks()
+    modes.setDeveloper(true)
+    modes.setDeveloper(false)
+    expect(modes.quietMarks).toBe(false)
+  })
+})
+
 describe('the pointing hand', () => {
   test('starts off and is said on the root for the stylesheet', async () => {
     expect(modes.hand).toBe(false)
@@ -714,6 +746,17 @@ describe('taking over what the account holds', () => {
     await adopted
 
     expect(modes.undatedInToday).toBe(true)
+  })
+
+  test('brings Developer mode', async () => {
+    const { release, settingsCall } = heldAnswer({ developer: false })
+    api.settings = settingsCall
+
+    const adopted = modes.adopt('token')
+    release()
+    await adopted
+
+    expect(modes.coder).toBe(false)
   })
 
   test('brings a setting this machine has never chosen', async () => {

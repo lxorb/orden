@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const hi: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'सब तैयार है',
+  Personalize: 'अपने हिसाब से बनाएँ',
+  Clean: 'साफ़',
+  'Live preview': 'लाइव प्रीव्यू',
+  'Developer mode': 'डेवलपर मोड',
+  'Do you write code?': 'क्या आप कोड लिखते हैं?',
+  Yes: 'हाँ',
+  No: 'नहीं',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'दूसरे ऐप्स से: {key}',
   'From other apps: set in your system settings': 'दूसरे ऐप्स से: सिस्टम सेटिंग्स में तय करें',

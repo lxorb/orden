@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const am: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'ሁሉም ዝግጁ ነው',
+  Personalize: 'ግላዊ አድርግ',
+  Clean: 'ንጹህ',
+  'Live preview': 'ቀጥታ ቅድመ እይታ',
+  'Developer mode': 'የገንቢ ሁነታ',
+  'Do you write code?': 'ኮድ ይጽፋሉ?',
+  Yes: 'አዎ',
+  No: 'አይ',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'ከሌሎች መተግበሪያዎች፦ {key}',
   'From other apps: set in your system settings': 'ከሌሎች መተግበሪያዎች፦ በስርዓት ቅንብሮች ውስጥ ያዘጋጁ',

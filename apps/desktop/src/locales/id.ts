@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const id: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'Semua siap',
+  Personalize: 'Personalisasi',
+  Clean: 'Bersih',
+  'Live preview': 'Pratinjau langsung',
+  'Developer mode': 'Mode pengembang',
+  'Do you write code?': 'Apakah Anda menulis kode?',
+  Yes: 'Ya',
+  No: 'Tidak',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'Dari aplikasi lain: {key}',
   'From other apps: set in your system settings': 'Dari aplikasi lain: atur di pengaturan sistem',

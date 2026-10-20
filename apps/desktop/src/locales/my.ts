@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const my: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'အားလုံး အသင့်ဖြစ်ပါပြီ',
+  Personalize: 'စိတ်ကြိုက်ပြင်ရန်',
+  Clean: 'ရှင်းလင်း',
+  'Live preview': 'တိုက်ရိုက်အစမ်းကြည့်',
+  'Developer mode': 'ဒီဗလပ်ပါမုဒ်',
+  'Do you write code?': 'ကုဒ်ရေးပါသလား?',
+  Yes: 'ဟုတ်ကဲ့',
+  No: 'မဟုတ်ပါ',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'အခြားအက်ပ်များမှ: {key}',
   'From other apps: set in your system settings': 'အခြားအက်ပ်များမှ: စနစ်ဆက်တင်များတွင် သတ်မှတ်ပါ',

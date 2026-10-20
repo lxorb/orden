@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const yue: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': '搞掂晒',
+  Personalize: '個人化',
+  Clean: '簡潔',
+  'Live preview': '即時預覽',
+  'Developer mode': '開發人員模式',
+  'Do you write code?': '你寫唔寫程式？',
+  Yes: '係',
+  No: '唔係',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': '喺其他 App：{key}',
   'From other apps: set in your system settings': '喺其他 App：喺系統設定度設定',

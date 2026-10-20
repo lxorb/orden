@@ -1,6 +1,6 @@
 import { type FoldLines, type NoteJump, sameFolds, type SpaceTag } from '@nib/editor'
 import { account } from './account.svelte'
-import { hiddenKinds } from './settings.svelte'
+import { hiddenKinds, settings } from './settings.svelte'
 import { arriving } from './arriving.svelte'
 import {
   blockIds,
@@ -790,7 +790,10 @@ class Workspace {
     if (!isNative && !isPlugin()) {
       const { seed } = await import('./web/commands')
       // What the old address's handoff waits for; see first-visit.svelte.ts.
-      if (await seed()) (await import('./first-visit.svelte')).firstVisit.seeded()
+      if (await seed()) {
+        ;(await import('./first-visit.svelte')).firstVisit.seeded()
+        settings.setup = -1
+      }
     }
 
     const state = readSession(stored(STORAGE_KEY))

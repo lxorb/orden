@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const zhHans: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': '一切就绪',
+  Personalize: '个性化',
+  Clean: '简洁',
+  'Live preview': '实时预览',
+  'Developer mode': '开发者模式',
+  'Do you write code?': '你写代码吗？',
+  Yes: '是',
+  No: '否',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': '从其他应用：{key}',
   'From other apps: set in your system settings': '从其他应用：在系统设置中设定',

@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ptPT: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'Tudo pronto',
+  Personalize: 'Personalizar',
+  Clean: 'Limpo',
+  'Live preview': 'Pré-visualização em direto',
+  'Developer mode': 'Modo de programador',
+  'Do you write code?': 'Escreve código?',
+  Yes: 'Sim',
+  No: 'Não',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'A partir de outras apps: {key}',
   'From other apps: set in your system settings':

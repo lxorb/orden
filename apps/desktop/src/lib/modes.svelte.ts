@@ -138,6 +138,7 @@ interface Saved {
   focus: boolean
   quietMarks: boolean
   silent: boolean
+  developer?: boolean
   typewriter: boolean
   punctuation: boolean
   numbers: boolean
@@ -343,6 +344,8 @@ class Modes {
    *  Off, because the people a hint is for would never look for the switch. The
    *  account's, like the rest of how somebody likes the app; see hints.svelte.ts. */
   silent = $state(DEFAULTS.silent)
+  /** Null until answered, which counts as yes; see Personalize.svelte. */
+  developer = $state<boolean | null>(null)
   typewriter = $state(DEFAULTS.typewriter)
   punctuation = $state(DEFAULTS.punctuation)
   numbers = $state(DEFAULTS.numbers)
@@ -564,6 +567,7 @@ class Modes {
         }
       }
       if (saved.reading === true) this.readOnly = true
+      this.developer = typeof saved.developer === 'boolean' ? saved.developer : null
       this.codeTheme = text(saved.codeTheme, DEFAULTS.codeTheme)
       this.zoom = measure(saved.zoom, DEFAULTS.zoom)
       this.width = measure(saved.width, DEFAULTS.width)
@@ -807,6 +811,18 @@ class Modes {
     this.silent = !this.silent
     this.persist()
     this.share({ silent: this.silent })
+  }
+
+  get coder(): boolean {
+    return this.developer !== false
+  }
+
+  setDeveloper(on: boolean) {
+    const first = this.developer === null
+    this.developer = on
+    if (first && this.quietMarks === on) this.toggleQuietMarks()
+    this.persist()
+    this.share({ developer: on })
   }
 
   toggleHand() {
@@ -1273,6 +1289,12 @@ class Modes {
       this.persist()
     }
 
+    const coding = remote.developer
+    if (typeof coding === 'boolean' && unheard && coding !== this.developer) {
+      this.developer = coding
+      this.persist()
+    }
+
     const breaking = remote.hardBreaks
     if (typeof breaking === 'boolean' && unheard && breaking !== this.hardBreaks) {
       this.hardBreaks = breaking
@@ -1515,6 +1537,7 @@ class Modes {
       focus: this.focus,
       quietMarks: this.quietMarks,
       silent: this.silent,
+      ...(this.developer === null ? {} : { developer: this.developer }),
       typewriter: this.typewriter,
       punctuation: this.punctuation,
       numbers: this.numbers,

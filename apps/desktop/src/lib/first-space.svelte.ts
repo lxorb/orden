@@ -16,6 +16,7 @@
 
 import { type Moment, startsFresh } from './fresh-start'
 import { markSeeded, wasSeeded } from './seeded'
+import { settings } from './settings.svelte'
 import { madeSpace } from './space-actions'
 import { joinPath } from './tauri'
 import { viewport } from './viewport.svelte'
@@ -34,7 +35,11 @@ class FirstSpace {
     this.working = true
     try {
       const space = await madeSpace(WELCOME_SPACE)
-      if (space) await this.arrive(space, await this.welcome(space))
+      if (!space) return
+      const note = await this.welcome(space)
+      await this.arrive(space, note)
+      // The first time on this device: the optional questions beside the note.
+      if (note) settings.setup = -1
     } finally {
       this.working = false
     }

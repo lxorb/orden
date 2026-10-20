@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ml: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'എല്ലാം തയ്യാർ',
+  Personalize: 'വ്യക്തിഗതമാക്കുക',
+  Clean: 'വൃത്തിയുള്ളത്',
+  'Live preview': 'ലൈവ് പ്രിവ്യൂ',
+  'Developer mode': 'ഡെവലപ്പർ മോഡ്',
+  'Do you write code?': 'നിങ്ങൾ കോഡ് എഴുതാറുണ്ടോ?',
+  Yes: 'അതെ',
+  No: 'ഇല്ല',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'മറ്റ് ആപ്പുകളിൽ നിന്ന്: {key}',
   'From other apps: set in your system settings':

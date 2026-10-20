@@ -1234,6 +1234,11 @@
     <Palette bind:this={paletteScreen} bind:open={palette} {view} ongoto={goto} />
   {/await}
 {/if}
+{#if !__EVEN_PLUGIN__ && settings.setup !== null}
+  {#await import('./lib/Personalize.svelte') then Personalize}
+    <Personalize.default />
+  {/await}
+{/if}
 {#if quickAddSheet.asked}
   {#await quickAddSheet.asked then QuickAddSheet}
     <QuickAddSheet />
