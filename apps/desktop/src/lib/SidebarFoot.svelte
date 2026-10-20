@@ -20,6 +20,7 @@
   import { arriving } from './arriving.svelte'
   import { initial } from './icons'
   import { longPress } from './longpress'
+  import { DIVIDER, menu } from './menu.svelte'
   import { dur } from './motion'
   import { showFeedback } from './surfaces.svelte'
   import { settings } from './settings.svelte'
@@ -38,16 +39,38 @@
    *  on the switch, or a finger held on it. Fetched then; see theme-picker/. */
   const pick = (event: MouseEvent) =>
     void import('./theme-picker/picking.svelte').then((one) => one.pickTheme(event))
+
+  /** What the account offers, over its row: its own pane, the settings, and signing
+   *  in or out (#308). Upward from the row, which is at the bottom of the window. */
+  function showAccount(event: MouseEvent) {
+    const box = (event.currentTarget as HTMLElement).getBoundingClientRect()
+    const at = new MouseEvent('contextmenu', { clientX: box.left, clientY: box.top })
+    const leave = () =>
+      __EVEN_PLUGIN__
+        ? void account.signOut()
+        : void import('./ai/vault/leaving').then((one) => one.signOut())
+    menu.show(
+      at,
+      [
+        { label: t('Account'), run: () => settings.show('account') },
+        { label: t('Settings'), hint: shortcuts.hint('app.settings'), run: () => settings.show() },
+        DIVIDER,
+        account.user
+          ? { label: t('Sign out'), run: leave }
+          : { label: t('Sign in'), run: () => (account.open = true) },
+      ],
+      { title: account.user?.email ?? t('Account'), up: true },
+    )
+  }
 </script>
 
 <!-- A region of the window, so F6 reaches the account, the theme and the settings
      without a pointer; see focus.ts. -->
 <div class="foot" data-region="foot">
   <!-- The account, which is a row rather than a glyph: a name is what says whose
-       notes these are. Signed in or not, it opens the same pane - signing in,
-       the name the others in a shared space see, storage and signing out are all
-       there, so there is one place for who you are instead of a sheet here and a
-       pane there.
+       notes these are. Signed in or not, it opens the same menu: the account's
+       pane, the settings, and signing in or out, as a sidebar's owner does in
+       every app that has one.
 
        It waits while the stores are still being asked: signed out and not known
        yet are different states, and on a phone the difference is the seconds the
@@ -58,7 +81,8 @@
     title={who ?? t('Sign in')}
     aria-label={who ?? t('Sign in')}
     disabled={account.restoring}
-    onclick={() => settings.show('account')}
+    aria-haspopup="menu"
+    onclick={showAccount}
   >
     <span class="nib-badge" class:person={!!who} aria-hidden="true">
       {#if face}
