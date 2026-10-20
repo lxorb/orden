@@ -1163,6 +1163,8 @@ export const ps: Dictionary = {
   Elbow: 'څنګل',
   Frame: 'چوکاټ',
   Ungroup: 'ډله ماتول',
+  Lock: 'قلف کړئ',
+  Unlock: 'قلف خلاص کړئ',
   'The ink of the page': 'د مخ رنګ',
   'Write in what is picked': 'په ټاکل شوي کې ليکل',
   Pen: 'قلم',

@@ -1162,6 +1162,8 @@ export const ms: Dictionary = {
   Elbow: 'Siku',
   Frame: 'Kerangka',
   Ungroup: 'Buang kumpulan',
+  Lock: 'Kunci',
+  Unlock: 'Buka kunci',
   'The ink of the page': 'Dakwat halaman',
   'Write in what is picked': 'Tulis dalam yang dipilih',
   Pen: 'Pen',

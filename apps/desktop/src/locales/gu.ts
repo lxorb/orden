@@ -1163,6 +1163,8 @@ export const gu: Dictionary = {
   Elbow: 'કોણી',
   Frame: 'ચોકઠું',
   Ungroup: 'સમૂહ છોડો',
+  Lock: 'લૉક કરો',
+  Unlock: 'અનલૉક કરો',
   'The ink of the page': 'પાનાની શાહી',
   'Write in what is picked': 'પસંદ કરેલામાં લખો',
   Pen: 'કલમ',

@@ -1202,6 +1202,8 @@ export const pl: Dictionary = {
   Elbow: 'Kolanko',
   Frame: 'Ramka',
   Ungroup: 'Rozgrupuj',
+  Lock: 'Zablokuj',
+  Unlock: 'Odblokuj',
   'The ink of the page': 'Tusz strony',
   'Write in what is picked': 'Pisz w zaznaczeniu',
   Pen: 'Pióro',

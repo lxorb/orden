@@ -1168,6 +1168,8 @@ export const te: Dictionary = {
   Elbow: 'మలుపు గీత',
   Frame: 'ఫ్రేమ్',
   Ungroup: 'గ్రూప్ విడదీయి',
+  Lock: 'లాక్ చేయి',
+  Unlock: 'అన్‌లాక్ చేయి',
   'The ink of the page': 'పేజీ సిరా',
   'Write in what is picked': 'ఎంచుకున్నదానిలో రాయి',
   Pen: 'పెన్',

@@ -1203,6 +1203,8 @@ export const uk: Dictionary = {
   Elbow: 'Ламана',
   Frame: 'Рамка',
   Ungroup: 'Розгрупувати',
+  Lock: 'Заблокувати',
+  Unlock: 'Розблокувати',
   'The ink of the page': 'Чорнило сторінки',
   'Write in what is picked': 'Писати у вибраному',
   Pen: 'Ручка',

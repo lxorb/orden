@@ -1162,6 +1162,8 @@ export const mr: Dictionary = {
   Elbow: 'कोपर',
   Frame: 'फ्रेम',
   Ungroup: 'गट मोडा',
+  Lock: 'लॉक करा',
+  Unlock: 'अनलॉक करा',
   'The ink of the page': 'पानाची शाई',
   'Write in what is picked': 'निवडलेल्यात लिहा',
   Pen: 'पेन',

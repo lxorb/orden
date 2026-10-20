@@ -1160,6 +1160,8 @@ export const ja: Dictionary = {
   Elbow: 'かぎ線',
   Frame: '枠',
   Ungroup: 'グループ解除',
+  Lock: 'ロック',
+  Unlock: 'ロックを解除',
   'The ink of the page': 'ページのインク',
   'Write in what is picked': '選んだものに書く',
   Pen: 'ボールペン',

@@ -1148,6 +1148,8 @@ export const th: Dictionary = {
   Elbow: 'เส้นหักศอก',
   Frame: 'กรอบ',
   Ungroup: 'ยกเลิกกลุ่ม',
+  Lock: 'ล็อก',
+  Unlock: 'ปลดล็อก',
   'The ink of the page': 'หมึกของหน้านี้',
   'Write in what is picked': 'เขียนในสิ่งที่เลือก',
   Pen: 'ปากกา',

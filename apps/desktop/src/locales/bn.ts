@@ -1163,6 +1163,8 @@ export const bn: Dictionary = {
   Elbow: 'কোণা',
   Frame: 'ফ্রেম',
   Ungroup: 'গ্রুপ ভাঙুন',
+  Lock: 'লক করুন',
+  Unlock: 'আনলক করুন',
   'The ink of the page': 'পাতার কালি',
   'Write in what is picked': 'নির্বাচিত জায়গায় লিখুন',
   Pen: 'কলম',

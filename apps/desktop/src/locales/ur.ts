@@ -1164,6 +1164,8 @@ export const ur: Dictionary = {
   Elbow: 'کہنی',
   Frame: 'فریم',
   Ungroup: 'گروپ توڑیں',
+  Lock: 'مقفل کریں',
+  Unlock: 'قفل کھولیں',
   'The ink of the page': 'صفحے کی سیاہی',
   'Write in what is picked': 'منتخب میں لکھیں',
   Pen: 'قلم',

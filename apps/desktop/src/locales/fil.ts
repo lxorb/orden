@@ -1179,6 +1179,8 @@ export const fil: Dictionary = {
   Elbow: 'Siko',
   Frame: 'Kuwadro',
   Ungroup: 'Tanggalin ang grupo',
+  Lock: 'I-lock',
+  Unlock: 'I-unlock',
   'The ink of the page': 'Tinta ng pahina',
   'Write in what is picked': 'Sumulat sa loob ng pinili',
   Pen: 'Panulat',

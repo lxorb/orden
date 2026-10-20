@@ -1152,6 +1152,8 @@ export const am: Dictionary = {
   Elbow: 'ክርን',
   Frame: 'ክፈፍ',
   Ungroup: 'ቡድን ፍታ',
+  Lock: 'ቆልፍ',
+  Unlock: 'ክፈት',
   'The ink of the page': 'የገጹ ቀለም',
   'Write in what is picked': 'በተመረጠው ውስጥ ጻፍ',
   Pen: 'ብዕር',

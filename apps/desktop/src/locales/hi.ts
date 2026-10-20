@@ -1166,6 +1166,8 @@ export const hi: Dictionary = {
   Elbow: 'कोहनी',
   Frame: 'फ़्रेम',
   Ungroup: 'समूह तोड़ें',
+  Lock: 'लॉक करें',
+  Unlock: 'अनलॉक करें',
   'The ink of the page': 'पेज की स्याही',
   'Write in what is picked': 'चुने हुए में लिखें',
   Pen: 'पेन',

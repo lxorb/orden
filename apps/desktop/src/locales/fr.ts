@@ -1186,6 +1186,8 @@ export const fr: Dictionary = {
   Elbow: 'Coude',
   Frame: 'Cadre',
   Ungroup: 'Dissocier',
+  Lock: 'Verrouiller',
+  Unlock: 'Déverrouiller',
   'The ink of the page': 'L’encre de la page',
   'Write in what is picked': 'Écrire dans la sélection',
   Pen: 'Stylo',

@@ -1188,6 +1188,8 @@ export const it: Dictionary = {
   Elbow: 'Gomito',
   Frame: 'Cornice',
   Ungroup: 'Separa',
+  Lock: 'Blocca',
+  Unlock: 'Sblocca',
   'The ink of the page': 'L’inchiostro della pagina',
   'Write in what is picked': 'Scrivi nella selezione',
   Pen: 'Penna',

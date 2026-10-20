@@ -1174,6 +1174,8 @@ export const sw: Dictionary = {
   Elbow: 'Kiwiko',
   Frame: 'Fremu',
   Ungroup: 'Tenganisha kundi',
+  Lock: 'Funga',
+  Unlock: 'Fungua',
   'The ink of the page': 'Wino wa ukurasa',
   'Write in what is picked': 'Andika ndani ya kilichoteuliwa',
   Pen: 'Kalamu',

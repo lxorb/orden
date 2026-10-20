@@ -1167,6 +1167,8 @@ export const fa: Dictionary = {
   Elbow: 'آرنج',
   Frame: 'قاب',
   Ungroup: 'برداشتن گروه',
+  Lock: 'قفل کردن',
+  Unlock: 'باز کردن قفل',
   'The ink of the page': 'مرکب صفحه',
   'Write in what is picked': 'نوشتن درون گزیده',
   Pen: 'قلم',
