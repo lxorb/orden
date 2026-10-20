@@ -19,6 +19,7 @@
  *  which device gets there first. */
 
 import { type Canvas, noTimes, readCanvas, type Thing, timeIn, writeCanvas } from './canvas'
+import { type Extras, extrasOf, holdsExtras, mergedExtras, withExtras } from './canvas-extras'
 
 /** How long a tombstone is kept, in milliseconds. Long enough that a tablet left
  *  in a drawer for a month cannot bring a deleted card back, short enough that a
@@ -305,15 +306,21 @@ export function mergeCanvasFiles(ours: string, theirs: string, now = Date.now())
 
   const mine = readCanvas(ours)
   const yours = readCanvas(theirs)
+  // What either file holds that Orden does not read - another app's nodes, the edges
+  // that end at them, fields and keys the spec does not name - put back into what is
+  // written, so a merge never drops it from somebody's vault (#501).
+  const myExtras = extrasOf(ours)
+  const yourExtras = extrasOf(theirs)
 
-  if (!weighs(mine)) return theirs
-  if (!weighs(yours)) return ours
+  if (!weighs(mine, myExtras)) return theirs
+  if (!weighs(yours, yourExtras)) return ours
 
-  return writeCanvas(merged(mine, yours, now))
+  return withExtras(writeCanvas(merged(mine, yours, now)), mergedExtras(myExtras, yourExtras))
 }
 
-function weighs(canvas: Canvas): boolean {
+function weighs(canvas: Canvas, extras: Extras): boolean {
   return (
+    holdsExtras(extras) ||
     canvas.nodes.length > 0 ||
     canvas.ink.length > 0 ||
     Object.keys(canvas.gone).length > 0 ||
