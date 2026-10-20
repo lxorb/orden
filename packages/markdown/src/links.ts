@@ -86,7 +86,7 @@ const MARKDOWN_LINK =
 export const MOST_LINKS = 5000
 
 /** A block's name: `^abc123` at the end of it, on its own or after a space. */
-const BLOCK_ID = /(?:^|[ \t])\^([A-Za-z0-9-]+)[ \t]*$/
+const BLOCK_ID = /(?:^|[ \t])\^([A-Za-z0-9-]+)[ \t]*(?=\r?$)/
 
 /** The scheme a target names, or the empty string when it names none. `//host`
  *  counts as naming one, since a browser reads it as the page's own scheme. */
@@ -566,12 +566,12 @@ export function slugify(text: string): string {
 }
 
 /** A heading line, and the trailing hashes some styles close one with. */
-const HEADING = /^\s{0,3}(#{1,6})\s+(.*)$/
+const HEADING = /^\s{0,3}(#{1,6})\s+(.*)\r?$/
 
 /** A heading line and everything after its hashes, which is either nothing or a
  *  blank and then the words. `#` alone is an empty heading and `#Title` is not a
  *  heading at all, which is what CommonMark says of both. */
-const HEADING_LINE = /^[ \t]{0,3}#{1,6}((?:[ \t].*)?)$/
+const HEADING_LINE = /^[ \t]{0,3}#{1,6}((?:[ \t].*)?)\r?$/
 
 /** A closing run of hashes, which needs a blank in front of it to be one.
  *

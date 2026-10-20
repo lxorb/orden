@@ -312,7 +312,8 @@ export function frontMatterEdit(
     const said = source.slice(line.value.from, line.value.to).trim()
     if (unquoted(said) === value) return null
 
-    return { from: line.value.from, to: line.value.to, insert: ` ${value}` }
+    const to = source[line.value.to - 1] === '\r' ? line.value.to - 1 : line.value.to
+    return { from: line.value.from, to, insert: ` ${value}` }
   }
 
   return { from: block.close, to: block.close, insert: `${key}: ${value}${nl}` }

@@ -98,6 +98,16 @@ describe('a list', () => {
     expect(readProperties(written)?.find((one) => one.key === 'tags')?.items).toEqual(['one'])
   })
 
+  test('keeps a file’s own line endings', () => {
+    const note = '---\r\ntitle: a\r\ntags:\r\n  - x\r\n  - y\r\n---\r\nbody\r\n'
+    expect(applied(note, writeProperty(note, 'title', 'b'))).toBe(
+      '---\r\ntitle: b\r\ntags:\r\n  - x\r\n  - y\r\n---\r\nbody\r\n',
+    )
+    expect(applied(note, writeList(note, 'tags', ['z']))).toBe(
+      '---\r\ntitle: a\r\ntags: [z]\r\n---\r\nbody\r\n',
+    )
+  })
+
   test('is appended like any other key where the block does not hold it yet', () => {
     const written = applied(NOTE, writeList(NOTE, 'aliases', ['other']))
 
