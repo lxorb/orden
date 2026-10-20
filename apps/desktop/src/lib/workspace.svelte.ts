@@ -1728,7 +1728,11 @@ class Workspace {
 
     const path = this.spelled(asked)
     const pageNote = isPagesTarget(path) ? path : await this.pageNoteForPdf(path)
-    if (!pageNote) return
+    // A paper pdf.js will not read, broken or behind a password: no tab, and the reader told.
+    if (!pageNote) {
+      await unread(path)
+      return
+    }
     await this.openPages(pageNote, page, how)
   }
 
