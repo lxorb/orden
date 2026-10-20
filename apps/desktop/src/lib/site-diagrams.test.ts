@@ -12,19 +12,34 @@ interface World {
   files: Record<string, string>
   /** Every blob that went up, by the name it went up under. */
   sent: Record<string, string>
+  /** What each of those said its name was hashed from. */
+  said: Record<string, string>
   /** Which drawings the drawer refuses. */
   refuse: Set<string>
   /** What storage holds, standing in for the browser's. */
   kept: Record<string, string>
 }
 
-const world = vi.hoisted((): World => ({ files: {}, sent: {}, refuse: new Set(), kept: {} }))
+const world = vi.hoisted((): World => ({
+  files: {},
+  sent: {},
+  said: {},
+  refuse: new Set(),
+  kept: {},
+}))
 
 vi.mock('./api', () => ({
   api: {
-    putBlob: (_token: string, hash: string, type: string, bytes: ArrayBuffer) => {
+    putBlob: (
+      _token: string,
+      hash: string,
+      type: string,
+      bytes: ArrayBuffer,
+      headers: Record<string, string>,
+    ) => {
       expect(type).toBe('image/svg+xml')
       world.sent[hash] = new TextDecoder().decode(bytes)
+      world.said[hash] = headers['x-nib-diagram']!
       return Promise.resolve({ hash, stored: true })
     },
   },
@@ -90,6 +105,7 @@ vi.mock('./diagrams', () => ({
 }))
 
 const { asFile, diagramFences, drawnBoth, pushDiagrams } = await import('./site-diagrams')
+const { diagramKey } = await import('@nib/markdown/diagrams')
 
 const SPACE = '7d1f4e8c-0000-4000-8000-000000000001'
 const FENCE = '```mermaid\ngraph TD\n  A --> B\n```\n'
@@ -97,6 +113,7 @@ const FENCE = '```mermaid\ngraph TD\n  A --> B\n```\n'
 beforeEach(() => {
   world.files = {}
   world.sent = {}
+  world.said = {}
   world.refuse = new Set()
   world.kept = {}
 })
@@ -211,6 +228,27 @@ describe('what a publish sends', () => {
     for (const svg of Object.values(world.sent)) {
       expect(svg).toContain('<?xml version="1.0"')
       expect(svg).toContain('width="303"')
+    }
+  })
+
+  /** The store hashes it again before it keeps a picture under a name that is not
+   *  the hash of the picture (#518). */
+  test('says what each name was hashed from', async () => {
+    world.files = { 'One.md': `# One\n\n${FENCE}` }
+    await pushDiagrams('token', SPACE, '/vault/space')
+
+    expect(Object.keys(world.said)).toHaveLength(2)
+    for (const [hash, said] of Object.entries(world.said)) {
+      const preimage = new URLSearchParams(said)
+      expect(preimage.get('space')).toBe(SPACE)
+      expect(
+        await diagramKey(
+          SPACE,
+          preimage.get('language')!,
+          preimage.get('code')!,
+          preimage.get('scheme') as 'light' | 'dark',
+        ),
+      ).toBe(hash)
     }
   })
 

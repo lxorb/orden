@@ -692,10 +692,16 @@ export const routes = {
   askPiece: (token: string, wav: Uint8Array<ArrayBuffer>) => listen(token, wav, '?piece=1'),
 
   /** Named by its own hash, so a repeat costs one request and no storage. */
-  putBlob: async (token: string, hash: string, type: string, bytes: ArrayBuffer) => {
+  putBlob: async (
+    token: string,
+    hash: string,
+    type: string,
+    bytes: ArrayBuffer,
+    headers: Record<string, string> = {},
+  ) => {
     const response = await fetch(`${BASE}/v1/blobs/${hash}`, {
       method: 'PUT',
-      headers: { authorization: `Bearer ${token}`, 'content-type': type },
+      headers: { authorization: `Bearer ${token}`, 'content-type': type, ...headers },
       body: bytes,
     })
 
