@@ -784,6 +784,14 @@ describe('a guest becoming an account', () => {
     expect(rails.spaces.map((one) => one.name).sort()).toEqual(['More', 'Notes', SHARED])
   })
 
+  test('makes no member of the owner who followed their own link', async () => {
+    const { json } = await follow(await shareLink('read', 'open'))
+    await signIn(env, OWNER, json.token)
+
+    expect((await shareView()).json.members).toEqual([])
+    expect((await call(env, '/v1/me', { token: json.token })).status).toBe(401)
+  })
+
   test('is nobody once claimed, so the owner is not shown a ghost', async () => {
     const { json } = await follow(await shareLink('read', 'open'))
     await signIn(env, GUEST, json.token)
