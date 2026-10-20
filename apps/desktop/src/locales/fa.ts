@@ -82,6 +82,7 @@ export const fa: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'یک کار',
   'One per line': 'یکی برای هر خط',
+  'Add with AI': 'افزودن با هوش مصنوعی',
   // Tasks: the projects in the panel
   Favorites: 'برگزیده‌ها',
   'Add project': 'افزودن پروژه',

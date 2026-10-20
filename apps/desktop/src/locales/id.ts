@@ -79,6 +79,7 @@ export const id: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'Satu tugas',
   'One per line': 'Satu per baris',
+  'Add with AI': 'Tambah dengan AI',
   // Tasks: the projects in the panel
   Favorites: 'Favorit',
   'Add project': 'Tambah proyek',

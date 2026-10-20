@@ -79,6 +79,7 @@ export const yue: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': '一個任務',
   'One per line': '每行一個',
+  'Add with AI': '用 AI 新增',
   // Tasks: the projects in the panel
   Favorites: '最愛',
   'Add project': '加專案',

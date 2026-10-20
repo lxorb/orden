@@ -83,6 +83,7 @@ export const ha: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'Aiki ɗaya',
   'One per line': 'Ɗaya kowane layi',
+  'Add with AI': 'Ƙara da AI',
   // Tasks: the projects in the panel
   Favorites: 'Waɗanda aka fi so',
   'Add project': 'Ƙara aiki',

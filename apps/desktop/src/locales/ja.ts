@@ -79,6 +79,7 @@ export const ja: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': '1つのタスク',
   'One per line': '1行に1つ',
+  'Add with AI': 'AIで追加',
   // Tasks: the projects in the panel
   Favorites: 'お気に入り',
   'Add project': 'プロジェクトを追加',

@@ -82,6 +82,7 @@ export const pa: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'ਇੱਕ ਕੰਮ',
   'One per line': 'ਹਰ ਲਾਈਨ ਲਈ ਇੱਕ',
+  'Add with AI': 'AI ਨਾਲ ਜੋੜੋ',
   // Tasks: the projects in the panel
   Favorites: 'ਮਨਪਸੰਦ',
   'Add project': 'ਪ੍ਰੋਜੈਕਟ ਜੋੜੋ',

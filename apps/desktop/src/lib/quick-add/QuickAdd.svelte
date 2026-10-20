@@ -30,11 +30,13 @@
   import Hash from 'lucide/dist/esm/icons/heading.mjs'
   import Inbox from 'lucide/dist/esm/icons/inbox.mjs'
   import Repeat from 'lucide/dist/esm/icons/repeat.mjs'
+  import Sparkles from 'lucide/dist/esm/icons/sparkles.mjs'
   import Tag from 'lucide/dist/esm/icons/tag.mjs'
   import Target from 'lucide/dist/esm/icons/target.mjs'
   import Timer from 'lucide/dist/esm/icons/timer.mjs'
   import { onMount, tick, untrack } from 'svelte'
   import { t } from '../i18n.svelte'
+  import type { Provider } from '../ai/providers'
   import type { MenuEntry } from '../menu-item'
   import type { Entry, Prefill } from './entry'
   import {
@@ -64,6 +66,7 @@
     oncancel,
     onpicking,
     headingsOf,
+    provider = null,
   }: {
     /** The app's language first; English is always read too. */
     langs: readonly string[]
@@ -84,6 +87,8 @@
     onpicking?: (open: boolean) => void
     /** A note's headings, by the name `>` gives it, for `/`. */
     headingsOf?: (note: string) => readonly string[]
+    /** The model Add with AI asks; without one there is no such button. */
+    provider?: Provider | null
   } = $props()
 
   // What the opener knew, taken once: the field is made again for every opening.
@@ -381,11 +386,31 @@
     input?.focus()
   }
 
+  /** Add with AI waiting for the model's answer. */
+  let thinking = $state(false)
+
   async function submit(open: boolean) {
     const entry = entryOf(read.text, fields)
-    if (!entry) return
+    if (!entry || thinking) return
     if (mode === 'add') clear()
     await onsubmit(entry, open)
+  }
+
+  /** Add with AI (#328): the task the model makes of the line, with the field's labels and
+   *  its note where it has one; the plain task where the model makes none. */
+  async function submitAi(asked: Provider) {
+    thinking = true
+    const { askedEntry } = await import('./ai-entry')
+    const made = await askedEntry(asked, text.trim(), tags, notes).catch(() => null)
+    thinking = false
+    if (!made) return submit(false)
+    const own = { ...fields, ...made.fields, remind: fields.remind }
+    own.tags = [...new Set([...fields.tags, ...made.fields.tags])]
+    const entry = entryOf(made.text, own)
+    if (!entry) return
+    if (note === undefined && made.note !== undefined) entry.note = made.note
+    clear()
+    await onsubmit(entry, false)
   }
 
   /** Several lines pasted: one task each, read the way a typed line is, with what the
@@ -611,6 +636,17 @@
       </button>
       {#if oncancel}
         <button type="button" class="control cancel" onclick={oncancel}>{t('Cancel')}</button>
+      {/if}
+      {#if provider && mode === 'add'}
+        <button
+          type="button"
+          class="control"
+          disabled={!read.text || thinking}
+          onclick={() => void submitAi(provider)}
+          title={t('Add with AI')}
+        >
+          <Glyph icon={Sparkles} />
+        </button>
       {/if}
       <button type="button" class="add" disabled={!read.text} onclick={() => void submit(false)}
         >{mode === 'edit' ? t('Save') : t('Add')}</button

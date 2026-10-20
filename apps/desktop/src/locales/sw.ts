@@ -83,6 +83,7 @@ export const sw: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'Kazi moja',
   'One per line': 'Moja kwa kila mstari',
+  'Add with AI': 'Ongeza kwa AI',
   // Tasks: the projects in the panel
   Favorites: 'Vipendwa',
   'Add project': 'Ongeza mradi',

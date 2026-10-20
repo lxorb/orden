@@ -83,6 +83,7 @@ export const ta: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'ஒரு பணி',
   'One per line': 'வரிக்கு ஒன்று',
+  'Add with AI': 'AI மூலம் சேர்',
   // Tasks: the projects in the panel
   Favorites: 'பிடித்தவை',
   'Add project': 'திட்டத்தைச் சேர்',

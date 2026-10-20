@@ -79,6 +79,7 @@ export const th: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'งานเดียว',
   'One per line': 'บรรทัดละงาน',
+  'Add with AI': 'เพิ่มด้วย AI',
   // Tasks: the projects in the panel
   Favorites: 'รายการโปรด',
   'Add project': 'เพิ่มโปรเจกต์',

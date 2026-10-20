@@ -84,6 +84,7 @@ export const es: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'Una tarea',
   'One per line': 'Una por línea',
+  'Add with AI': 'Añadir con IA',
   // Tasks: the projects in the panel
   Favorites: 'Favoritos',
   'Add project': 'Añadir proyecto',
