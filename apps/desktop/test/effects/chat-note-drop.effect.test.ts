@@ -41,5 +41,13 @@ test('a note dropped on a chat is linked in the composer', async () => {
   const field = target.querySelector<HTMLElement>('.cm-editor')
   const words = () => (field ? EditorView.findFromDOM(field)?.state.doc.toString() : null)
   await vi.waitFor(() => expect(words()).toBe('[[Plan]] '))
+
+  // And a web tab let go of on it, as its page's address (tab-strip/chat-drop.ts).
+  workspace.tabs = [{ id: 'w', kind: 'web', address: 'https://svelte.dev/' }] as never
+  const web = new Event('drop', { bubbles: true, cancelable: true })
+  const getData = (one: string) => (one === 'text/nib-tab' ? 'w' : '')
+  Object.defineProperty(web, 'dataTransfer', { value: { types: [], files: [], getData } })
+  target.querySelector('.chat-tab')?.dispatchEvent(web)
+  expect(words()).toBe('[[Plan]] https://svelte.dev/ ')
   void unmount(drawn)
 })

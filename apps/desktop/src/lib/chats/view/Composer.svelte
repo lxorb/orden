@@ -220,8 +220,8 @@
     )
   }
 
-  /** Words put in at the caret: an emoji from the picker. */
-  function insert(words: string) {
+  /** Words put in at the caret: an emoji from the picker, a web tab's address dropped. */
+  export function insert(words: string) {
     if (!editor) return
     editor.dispatch(editor.state.replaceSelection(words))
     editor.focus()

@@ -39,3 +39,10 @@ test('a note and a folder dropped on the panel are chips, each once', () => {
   ])
   expect(drop([])).toBe(false)
 })
+
+test('a web tab let go of on the panel is its page', () => {
+  workspace.tabs = [{ id: 'w', shown: 'Svelte' }] as never
+  const getData = (one: string) => (one === 'text/nib-tab' ? 'w' : '')
+  dropRows({ dataTransfer: { types: [], getData }, preventDefault: vi.fn() } as never)
+  expect(chat.chips).toContainEqual({ kind: 'tab', id: 'w', label: 'Svelte', word: 'tab' })
+})

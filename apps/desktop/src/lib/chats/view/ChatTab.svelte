@@ -9,7 +9,8 @@
    *  Escape to the bottom (4.16). On a phone the replies are the page. */
   import { chatOf, type FileRef, type Message, type Poll } from '@nib/chats'
   import { onDestroy, untrack } from 'svelte'
-  import { isTreeDrag } from '../../drag-paths'
+  import { draggedTab, isTreeDrag } from '../../drag-paths'
+  import { pages } from '../../web-tab/pages.svelte'
   import EmojiPicker from '../../emoji/EmojiPicker.svelte'
   import { t } from '../../i18n.svelte'
   import { shortcuts } from '../../shortcuts.svelte'
@@ -46,6 +47,7 @@
     focus: () => void
     addFiles: (files: readonly File[]) => void
     addNotes: (paths: readonly string[]) => void
+    insert: (words: string) => void
   }>()
   let picking = $state<{ at: Box; pick: (emoji: string) => void } | null>(null)
   let looking = $state<{ files: FileRef[]; start: number } | null>(null)
@@ -153,6 +155,14 @@
     if (notes.length) {
       event.preventDefault()
       composer?.addNotes(notes)
+      return
+    }
+    // A web tab let go of on the chat, as its page's address; see tab-strip/chat-drop.ts.
+    const web = workspace.tabs.find((one) => one.id === draggedTab(event.dataTransfer))
+    const address = web && (pages.addressOf(web.id) ?? web.address ?? workspace.webAddressOf(web))
+    if (address) {
+      event.preventDefault()
+      composer?.insert(`${address} `)
       return
     }
     const files = [...(event.dataTransfer?.files ?? [])]

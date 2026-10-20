@@ -1,5 +1,5 @@
 /** A tab let go of over a chat is handed to it as the drop of its file's row (#416), and
- *  the chat's own tab, let go of over it, is handed nothing. See tab-strip/chat-drop.ts;
+ *  a web tab as itself; the chat's own tab, let go of over it, is handed nothing. See tab-strip/chat-drop.ts;
  *  jsdom has no drag events and lays nothing out, so the test says what is under the
  *  pointer and gives the transfer its two calls. */
 
@@ -10,6 +10,7 @@ vi.mock('../../src/lib/workspace.svelte', () => ({
     tabs: [
       { id: 'note', path: '/s/Plan.md' },
       { id: 'chat', path: '/s/General.chat' },
+      { id: 'web', kind: 'web', path: '/s/Svelte.url' },
     ],
   },
 }))
@@ -37,7 +38,8 @@ test('a tab let go of on a chat is dropped on it as its file, and the chat itsel
   document.body.innerHTML = '<div data-chat-drop="chat"><p id="words"></p></div><p id="away"></p>'
   const taken: string[] = []
   document.querySelector('[data-chat-drop]')?.addEventListener('drop', (event) => {
-    taken.push((event as DragEvent).dataTransfer?.getData('text/nib-path') ?? '')
+    const carried = (event as DragEvent).dataTransfer
+    taken.push(`${carried?.getData('text/nib-path')}${carried?.getData('text/nib-tab')}`)
   })
   let under = document.getElementById('words')
   document.elementFromPoint = () => under
@@ -45,9 +47,11 @@ test('a tab let go of on a chat is dropped on it as its file, and the chat itsel
   overChat({ x: 1, y: 1 })
   expect(droppedOnChat('note')).toBe(true)
   overChat({ x: 1, y: 1 })
+  expect(droppedOnChat('web')).toBe(true)
+  overChat({ x: 1, y: 1 })
   expect(droppedOnChat('chat')).toBe(false)
   under = document.getElementById('away')
   overChat({ x: 1, y: 1 })
   expect(droppedOnChat('note')).toBe(false)
-  expect(taken).toEqual(['/s/Plan.md'])
+  expect(taken).toEqual(['/s/Plan.md', 'web'])
 })
