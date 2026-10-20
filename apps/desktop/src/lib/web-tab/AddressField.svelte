@@ -34,7 +34,8 @@
    *
    *  One control with two faces, and one with a list under it. While it does not have
    *  the keyboard it reads `resting` - the site and the page's own name, whatever the
-   *  caller says - and the moment it does it holds the whole address, selected so
+   *  caller says, or what was half typed and left in it - and the moment it does it
+   *  holds the whole address, selected so
    *  typing replaces it. Then it is Chrome's omnibox, in both halves; see omnibox.ts
    *  for what is offered and why:
    *
@@ -112,8 +113,17 @@
    *  pressing, and this is a field with two faces rather than one value. */
   $effect(() => {
     const box = field
-    if (box && !editing && box.value !== resting) box.value = resting
+    const face = rest()
+    if (box && !editing && box.value !== face) box.value = face
   })
+
+  /** The face of a field nobody is typing in: what was half typed into it, which Chrome's
+   *  field keeps after a press somewhere else, while the tab is on the address it was
+   *  typed over - and `resting` otherwise (#381). */
+  function rest(): string {
+    const half = held.halfTyped
+    return half?.over === address ? half.value : resting
+  }
 
   // The list is over the page, and a web tab's page is a native webview that draws
   // above every pixel of the window's own: so while it is open it is on the overlay
@@ -151,11 +161,9 @@
    *  which address: it comes back with the keyboard, as in Chrome's address field, while
    *  the tab is on that address - after the keyboard went to another program and back,
    *  and after the tab went and came back (#381), when this field is a new one in the
-   *  tab's bar and finds it in `held`. The reader leaving the field for something else in
-   *  the window and coming back to it gets the address again, which `left` says; a tab
-   *  is left that way too, by a press on another tab, so a field new to the tab still
-   *  takes what this one left. */
-  function remember(left = false) {
+   *  tab's bar and finds it in `held` - and after a press somewhere else, which leaves
+   *  the words in the field as Chrome's does. */
+  function remember() {
     const box = field
     if (!box || !holding) return
     held.halfTyped =
@@ -166,8 +174,6 @@
             from: box.selectionStart ?? box.value.length,
             to: box.selectionEnd ?? box.value.length,
             over: address,
-            left,
-            by: id,
           }
         : null
   }
@@ -191,7 +197,7 @@
     active = -1
     shut = false
     const half = held.halfTyped
-    const back = half?.over === address && !(half.left && half.by === id) ? half : null
+    const back = half?.over === address ? half : null
     held.halfTyped = null
     restored = back !== null
     if (back) {
@@ -208,9 +214,7 @@
   function onBlur() {
     if (!here() || !field) return
 
-    // The window's keyboard going somewhere else - another program, or the page - rather
-    // than this field's: the element is still the one the page would type into.
-    remember(document.activeElement !== field)
+    remember()
     // Still the field's as far as its tab goes when the keyboard went to another program
     // or to a tab pressed on the way to it; not when the reader pressed something else.
     if (document.hasFocus() && !pressedOn?.closest('[data-tab]')) held.keyboard = null
@@ -218,12 +222,12 @@
     editing = false
     ontyping(false)
     rows = []
-    field.value = resting
+    field.value = rest()
   }
 
   // The tab going while its field has the keyboard - Ctrl+Tab typed into it - takes the
   // field away before any blur this component could hear: what it held is kept here. Only
-  // then: a field the reader had already left holds its resting face, not their words.
+  // then: a field the reader had already left kept their words as it was left.
   onMount(() => () => {
     if (holding) remember()
   })

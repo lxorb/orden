@@ -82,15 +82,16 @@ test('comes back with what was typed and where the caret was', () => {
   expect(field().selectionEnd).toBe(2)
 })
 
-test('the reader leaving the field still puts its resting face back', () => {
+test('the reader leaving the field leaves the words in it, as Chrome does (#381)', () => {
   typed('exa')
   field().blur()
   flushSync()
-  expect(field().value).toBe('Example')
+  expect(field().value).toBe('exa')
 
   field().focus()
   flushSync()
-  expect(field().value).toBe(ADDRESS)
+  expect(field().value).toBe('exa')
+  expect(field().selectionStart).toBe(2)
 })
 
 test('nothing typed is the whole address again, selected', () => {
@@ -105,7 +106,7 @@ test('nothing typed is the whole address again, selected', () => {
 /** #381: a new tab's address half typed, another tab, and back. The pane builds a new bar
  *  for the tab that comes back, so what the old field held waits on the tab's page. */
 describe('across a switch of tabs', () => {
-  const page = { halfTyped: null as HalfTyped | null }
+  const page = { halfTyped: null as HalfTyped | null, keyboard: null as 'address' | null }
   let other: ReturnType<typeof mount> | null = null
   let gone = ''
 
@@ -173,6 +174,23 @@ describe('across a switch of tabs', () => {
     flushSync()
     expect(box.value).toBe('weather in zur')
     expect([box.selectionStart, box.selectionEnd]).toEqual([8, 8])
+  })
+
+  test('pressed past the field: the words stay, there and back, and it is not given the keyboard', () => {
+    into('weather in zur', 8)
+    // The window keeps the keyboard, which jsdom does not say once nothing is focused.
+    vi.spyOn(document, 'hasFocus').mockReturnValue(true)
+    document.body.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }))
+    document.body.dispatchEvent(new PointerEvent('pointerup', { bubbles: true }))
+    field().blur()
+    flushSync()
+    expect(field().value).toBe('weather in zur')
+    bar()
+
+    expect(field().value).toBe('weather in zur')
+    expect(page.keyboard).toBeNull()
+    expect(document.activeElement).not.toBe(field())
+    vi.restoreAllMocks()
   })
 
   test('Ctrl+Tab typed into the field: the tab goes with the field still focused', () => {
