@@ -236,6 +236,17 @@ jobs:
           retention-days: 1
           path: apps/desktop/src-tauri/target/${{ matrix.target }}/release/nib
 
+      # The App Intents' metadata build.rs writes beside the binary (see build.rs and
+      # tauri.macos.conf.json): the same for either half, so the arm one hands it on
+      # to the job that bundles, which compiles nothing and so never writes it.
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: matrix.target == 'aarch64-apple-darwin'
+        with:
+          name: mac-app-intents
+          if-no-files-found: error
+          retention-days: 1
+          path: apps/desktop/src-tauri/gen/app-intents
+
   # The two halves made one with `lipo`, where Tauri's universal build puts its own
   # (`target/universal-apple-darwin/release`), and bundled from there by `tauri bundle`,
   # which is the rest of what `tauri build --target universal-apple-darwin` does: the
@@ -268,6 +279,11 @@ jobs:
         with:
           pattern: mac-half-*
           path: halves
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: mac-app-intents
+          path: apps/desktop/src-tauri/gen/app-intents
 
       - name: One binary of both halves
         shell: bash
