@@ -1547,6 +1547,7 @@ export const ko: Dictionary = {
   'Ask the model': '모델에 질문',
   'answered by {model}, {date}': '{model} 답변, {date}',
   'AI block': 'AI 블록',
+  'Do with AI': 'AI로 하기',
   'Highlight colour': '형광펜 색',
   'A single newline breaks the line': '줄바꿈 한 번으로 줄이 나뉨',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

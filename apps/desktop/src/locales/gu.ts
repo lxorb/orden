@@ -1561,6 +1561,7 @@ export const gu: Dictionary = {
   'Ask the model': 'મોડેલને પૂછો',
   'answered by {model}, {date}': '{model}નો જવાબ, {date}',
   'AI block': 'AI બ્લૉક',
+  'Do with AI': 'AI વડે કરો',
   'Highlight colour': 'ઉજાગર રંગ',
   'A single newline breaks the line': 'એક નવી લીટી જ લીટી તોડે છે',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

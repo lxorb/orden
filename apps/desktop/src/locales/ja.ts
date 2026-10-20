@@ -1555,6 +1555,7 @@ export const ja: Dictionary = {
   'Ask the model': 'モデルに質問',
   'answered by {model}, {date}': '{model} が {date} に回答',
   'AI block': 'AI ブロック',
+  'Do with AI': 'AI で実行',
   'Highlight colour': 'ハイライトの色',
   'A single newline breaks the line': '改行１つで行を分ける',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

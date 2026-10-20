@@ -1574,6 +1574,7 @@ export const te: Dictionary = {
   'Ask the model': 'మోడల్‌ను అడుగు',
   'answered by {model}, {date}': '{model} బదులిచ్చింది, {date}',
   'AI block': 'AI బ్లాక్',
+  'Do with AI': 'AI తో చేయండి',
   'Highlight colour': 'హైలైట్ రంగు',
   'A single newline breaks the line': 'ఒక కొత్త పంక్తి పంక్తిని విరుస్తుంది',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

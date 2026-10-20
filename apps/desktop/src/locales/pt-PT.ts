@@ -1609,6 +1609,7 @@ export const ptPT: Dictionary = {
   'Ask the model': 'Perguntar ao modelo',
   'answered by {model}, {date}': 'respondido por {model}, {date}',
   'AI block': 'Bloco de IA',
+  'Do with AI': 'Fazer com IA',
   'Highlight colour': 'Cor do destaque',
   'A single newline breaks the line': 'Uma única mudança de linha quebra a linha',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

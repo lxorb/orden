@@ -1591,6 +1591,7 @@ export const ta: Dictionary = {
   'Ask the model': 'மாடலைக் கேள்',
   'answered by {model}, {date}': '{model} பதிலளித்தது, {date}',
   'AI block': 'AI தொகுதி',
+  'Do with AI': 'AI மூலம் செய்',
   'Highlight colour': 'ஹைலைட் நிறம்',
   'A single newline breaks the line': 'ஒரு புதிய வரி வரியை முறிக்கும்',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

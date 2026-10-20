@@ -1538,6 +1538,7 @@ export const th: Dictionary = {
   'Ask the model': 'ถามโมเดล',
   'answered by {model}, {date}': '{model} ตอบ {date}',
   'AI block': 'บล็อก AI',
+  'Do with AI': 'ทำด้วย AI',
   'Highlight colour': 'สีไฮไลต์',
   'A single newline breaks the line': 'ขึ้นบรรทัดใหม่ครั้งเดียวก็ตัดบรรทัด',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

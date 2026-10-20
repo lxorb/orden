@@ -1590,6 +1590,7 @@ export const ha: Dictionary = {
   'Ask the model': 'Tambayi samfurin',
   'answered by {model}, {date}': '{model} ya amsa, {date}',
   'AI block': 'Sashen AI',
+  'Do with AI': 'Yi da AI',
   'Highlight colour': 'Launin haske',
   'A single newline breaks the line': 'Sabon layi ɗaya na karya layin',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

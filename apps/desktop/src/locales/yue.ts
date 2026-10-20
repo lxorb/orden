@@ -1528,6 +1528,7 @@ export const yue: Dictionary = {
   'Ask the model': '問模型',
   'answered by {model}, {date}': '由{model}回答，{date}',
   'AI block': 'AI區塊',
+  'Do with AI': '用AI做',
   'Highlight colour': '突出顯示顏色',
   'A single newline breaks the line': '單一換行即斷行',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

@@ -1572,6 +1572,7 @@ export const tr: Dictionary = {
   'Ask the model': 'Modele sor',
   'answered by {model}, {date}': '{model} yanıtladı, {date}',
   'AI block': 'YZ bloğu',
+  'Do with AI': 'YZ ile yap',
   'Highlight colour': 'Vurgu rengi',
   'A single newline breaks the line': 'Tek bir satır sonu satırı böler',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

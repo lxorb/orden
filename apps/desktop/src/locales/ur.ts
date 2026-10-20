@@ -1567,6 +1567,7 @@ export const ur: Dictionary = {
   'Ask the model': 'ماڈل سے پوچھیں',
   'answered by {model}, {date}': '{model} کا جواب، {date}',
   'AI block': 'AI بلاک',
+  'Do with AI': 'AI سے کریں',
   'Highlight colour': 'نمایاں رنگ',
   'A single newline breaks the line': 'ایک نئی سطر ہی سطر توڑ دیتی ہے',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

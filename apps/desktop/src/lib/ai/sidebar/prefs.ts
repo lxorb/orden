@@ -12,8 +12,12 @@ import { isRecord, isString, keep, stored } from '../../stored'
 
 const STORAGE_KEY = 'nib:ai-sidebar'
 
+/** The mode a task done with AI works in before anybody picked one (#325). */
+const FIRST_TASK_MODE: Mode = 'auto'
+
 interface Prefs {
   mode: Mode
+  task: Mode
   efforts: Record<string, Effort>
   /** The thread open last, whichever space it is in. */
   last: string | null
@@ -25,10 +29,18 @@ interface Prefs {
 
 function read(): Prefs {
   const saved = stored(STORAGE_KEY)
-  const out: Prefs = { mode: FIRST_MODE, efforts: {}, last: null, open: {}, rail: true }
+  const out: Prefs = {
+    mode: FIRST_MODE,
+    task: FIRST_TASK_MODE,
+    efforts: {},
+    last: null,
+    open: {},
+    rail: true,
+  }
   if (!isRecord(saved)) return out
   if (saved.rail === false) out.rail = false
   out.mode = modeIn(saved.mode) ?? FIRST_MODE
+  out.task = modeIn(saved.task) ?? FIRST_TASK_MODE
   if (isRecord(saved.efforts)) {
     for (const [model, effort] of Object.entries(saved.efforts)) {
       if (isEffort(effort)) out.efforts[model] = effort
@@ -64,6 +76,16 @@ export function lastMode(): Mode {
 
 export function rememberMode(mode: Mode): void {
   held().mode = mode
+  save()
+}
+
+/** The mode a task done with AI works in: Settings › AI › Do with AI. */
+export function taskMode(): Mode {
+  return held().task
+}
+
+export function rememberTaskMode(mode: Mode): void {
+  held().task = mode
   save()
 }
 

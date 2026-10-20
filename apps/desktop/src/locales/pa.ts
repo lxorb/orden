@@ -1572,6 +1572,7 @@ export const pa: Dictionary = {
   'Ask the model': 'ਮਾਡਲ ਨੂੰ ਪੁੱਛੋ',
   'answered by {model}, {date}': '{model} ਦਾ ਜਵਾਬ, {date}',
   'AI block': 'AI ਬਲਾਕ',
+  'Do with AI': 'AI ਨਾਲ ਕਰੋ',
   'Highlight colour': 'ਉਭਾਰ ਦਾ ਰੰਗ',
   'A single newline breaks the line': 'ਇੱਕੋ ਨਵੀਂ ਲਾਈਨ ਲਾਈਨ ਤੋੜ ਦਿੰਦੀ ਹੈ',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

@@ -1553,6 +1553,7 @@ export const jv: Dictionary = {
   'Ask the model': 'Takon model',
   'answered by {model}, {date}': 'diwangsuli {model}, {date}',
   'AI block': 'Blok AI',
+  'Do with AI': 'Garap nganggo AI',
   'Highlight colour': 'Warna sorot',
   'A single newline breaks the line': 'Siji larik anyar wis misahake larike',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

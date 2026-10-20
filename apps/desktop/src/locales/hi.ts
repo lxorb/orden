@@ -1565,6 +1565,7 @@ export const hi: Dictionary = {
   'Ask the model': 'मॉडल से पूछें',
   'answered by {model}, {date}': '{model} का उत्तर, {date}',
   'AI block': 'AI ब्लॉक',
+  'Do with AI': 'AI से करें',
   'Highlight colour': 'हाइलाइट का रंग',
   'A single newline breaks the line': 'एक ही नई पंक्ति पंक्ति तोड़ती है',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

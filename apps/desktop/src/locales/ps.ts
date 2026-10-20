@@ -1570,6 +1570,7 @@ export const ps: Dictionary = {
   'Ask the model': 'له ماډل پوښتنه',
   'answered by {model}, {date}': 'ځواب له {model}، {date}',
   'AI block': 'د مصنوعي ځيرکتيا بلاک',
+  'Do with AI': 'د مصنوعي ځيرکتيا سره يې وکړئ',
   'Highlight colour': 'د ځلاند رنګ',
   'A single newline breaks the line': 'يوه نوې کرښه کرښه ماتوي',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

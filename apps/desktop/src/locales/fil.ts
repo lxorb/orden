@@ -1595,6 +1595,7 @@ export const fil: Dictionary = {
   'Ask the model': 'Tanungin ang modelo',
   'answered by {model}, {date}': 'sinagot ng {model}, {date}',
   'AI block': 'AI block',
+  'Do with AI': 'Gawin gamit ang AI',
   'Highlight colour': 'Kulay ng tampok',
   'A single newline breaks the line': 'Isang bagong linya lang ay humahati ng linya',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

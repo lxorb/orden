@@ -1575,6 +1575,7 @@ export const gsw: Dictionary = {
   'Ask the model': 'S Modäll fräge',
   'answered by {model}, {date}': 'gantwortet vo {model}, {date}',
   'AI block': 'KI-Block',
+  'Do with AI': 'Mit KI erledige',
   'Highlight colour': 'Hervorhäbigsfarb',
   'A single newline breaks the line': 'En einzelne Zileumbruch bricht d Zile',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
