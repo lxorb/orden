@@ -1736,7 +1736,12 @@ export function appCommands(view?: EditorView): Command[] {
       hint: shortcuts.hint('space.switcher'),
       run: () => spacePicker.toggle(),
     },
-    { id: 'tab-overview', label: t('Tabs'), run: toggleTabOverview },
+    {
+      id: 'tab-overview',
+      label: t('Tabs'),
+      hint: shortcuts.hint('app.tab-overview'),
+      run: toggleTabOverview,
+    },
     {
       id: 'space-next',
       label: t('Next space'),

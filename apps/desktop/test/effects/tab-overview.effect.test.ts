@@ -1,9 +1,9 @@
 import { flushSync, mount, tick, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test } from 'vitest'
 
-/** Every tab of the space as a card (issue #331), opened from the palette's row: one
- *  card per tab of every pane, Enter on one goes to it, Escape puts it away. In the jsdom
- *  project because the cards are mounted. */
+/** Every tab of the space as a card (issue #331), opened from the palette's row or
+ *  Ctrl+Alt+Up: one card per tab of every pane, Enter on one goes to it, Escape and the
+ *  key again put it away. In the jsdom project because the cards are mounted. */
 
 /** Svelte plays a transition through the Web Animations API, which jsdom has not got. */
 Element.prototype.animate = () =>
@@ -18,6 +18,7 @@ const { default: TabOverview } = await import('../../src/lib/TabOverview.svelte'
 const { tabOverview } = await import('../../src/lib/surfaces.svelte')
 const { appCommands } = await import('../../src/lib/commands')
 const { overlays } = await import('../../src/lib/overlays')
+const { shortcuts } = await import('../../src/lib/shortcuts.svelte')
 const { workspace } = await import('../../src/lib/workspace.svelte')
 
 let close: () => void
@@ -41,8 +42,8 @@ afterEach(() => {
 const cards = () => [...document.querySelectorAll<HTMLButtonElement>('.nib-tile')]
 
 /** A key, pressed where the keyboard is. */
-function press(key: string): KeyboardEvent {
-  const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true })
+function press(key: string, held: KeyboardEventInit = {}): KeyboardEvent {
+  const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, ...held })
   document.activeElement?.dispatchEvent(event)
   flushSync()
   return event
@@ -77,4 +78,23 @@ test('Escape puts it away and goes nowhere', async () => {
   flushSync()
   expect(tabOverview.open).toBe(false)
   expect(workspace.activeTabId).toBe(before)
+})
+
+test('Ctrl+Alt+Up opens it, and pressed on a card puts it away again', async () => {
+  const context = { palette: () => undefined, fullscreen: () => undefined }
+  const up = { code: 'ArrowUp', ctrlKey: true, altKey: true }
+
+  expect(shortcuts.handle(new KeyboardEvent('keydown', { key: 'ArrowUp', ...up }), context)).toBe(
+    true,
+  )
+  flushSync()
+  await tick()
+  expect(cards()).toHaveLength(4)
+
+  // On a card the chord is not the list's: it goes on to the window.
+  const again = press('ArrowUp', up)
+  expect(again.defaultPrevented).toBe(false)
+  expect(shortcuts.handle(again, context)).toBe(true)
+  flushSync()
+  expect(tabOverview.open).toBe(false)
 })
