@@ -73,6 +73,7 @@ fn escaped(text: &str) -> String {
             '\'' => out.push_str("&apos;"),
             // A control character is not XML at all, and the system refuses the toast.
             one if one.is_control() && one != '\t' && one != '\n' => out.push(' '),
+            '\u{FFFE}' | '\u{FFFF}' => out.push(' '),
             one => out.push(one),
         }
     }
@@ -128,5 +129,11 @@ mod tests {
     #[test]
     fn a_control_character_is_a_space_and_a_line_stays_a_line() {
         assert_eq!(escaped("a\u{0}b\tc\nd"), "a b\tc\nd");
+    }
+
+    /// U+FFFE and U+FFFF are not XML characters either.
+    #[test]
+    fn a_non_character_is_a_space_as_well() {
+        assert_eq!(escaped("a\u{FFFE}b\u{FFFF}c"), "a b c");
     }
 }
