@@ -739,6 +739,11 @@ class Sync {
         this.noted(mirror, began, null)
       }
 
+      // Each page note's paper goes where the note goes (#551); not waited for.
+      void import('./pages/carrying').then(({ carryNow, mirroredPages }) =>
+        carryNow(() => mirroredPages(Object.values(this.mirrors), (id) => this.reads(id))),
+      )
+
       // Nothing else re-reads the folder for notes that arrived from another
       // machine, so they would otherwise sit there unseen until the next save.
       if (shown) await workspace.loadTree()
