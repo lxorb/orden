@@ -12,6 +12,9 @@ patchedDependencies:
   '@lezer/markdown@1.7.2':
     hash: faf62e6e9dbc4914529931b72e7ed512159ccf208b12512140f3218bcbae5594
     path: patches/@lezer__markdown@1.7.2.patch
+  marked@18.0.11:
+    hash: fc6fc2ea77079e618ac42a4d98bef7cee851de92f5d7b6f426e8f7edd824c959
+    path: patches/marked@18.0.11.patch
 
 importers:
 
@@ -144,7 +147,7 @@ importers:
         version: 1.40.0
       marked:
         specifier: ^18.0.11
-        version: 18.0.11
+        version: 18.0.11(patch_hash=fc6fc2ea77079e618ac42a4d98bef7cee851de92f5d7b6f426e8f7edd824c959)
       mermaid:
         specifier: ^11.17.2
         version: 11.17.2
@@ -355,7 +358,7 @@ importers:
         version: link:../markdown
       marked:
         specifier: ^18.0.11
-        version: 18.0.11
+        version: 18.0.11(patch_hash=fc6fc2ea77079e618ac42a4d98bef7cee851de92f5d7b6f426e8f7edd824c959)
       node-emoji:
         specifier: ^2.2.0
         version: 2.2.0
@@ -414,7 +417,7 @@ importers:
         version: 1.40.0
       marked:
         specifier: ^18.0.11
-        version: 18.0.11
+        version: 18.0.11(patch_hash=fc6fc2ea77079e618ac42a4d98bef7cee851de92f5d7b6f426e8f7edd824c959)
       node-emoji:
         specifier: ^2.2.0
         version: 2.2.0
@@ -6352,7 +6355,7 @@ snapshots:
 
   marked@16.4.2: {}
 
-  marked@18.0.11: {}
+  marked@18.0.11(patch_hash=fc6fc2ea77079e618ac42a4d98bef7cee851de92f5d7b6f426e8f7edd824c959): {}
 
   mdn-data@2.27.1: {}
 
