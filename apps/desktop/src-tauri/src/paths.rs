@@ -47,24 +47,29 @@ static WRITES: AtomicU64 = AtomicU64::new(0);
 pub const HIGHLIGHTS: &str = ".highlights.json";
 
 /// Names Windows refuses whatever the extension, because each one names a device
-/// rather than a file.
+/// rather than a file. Windows reads the superscripts `¹²³` as digits, so `COM¹`
+/// is a port as surely as `COM1`.
 ///
-/// Here rather than in one of the two modules that ask, because both do: `spaces`
-/// keeps a new space from being called one, and `trash` will not put a file back
-/// under one. A second copy would be a second answer to the same question.
-pub const RESERVED: [&str; 22] = [
-    "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8",
-    "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
+/// Here rather than in one of the modules that ask, because several do: `spaces`
+/// keeps a new space from being called one, `trash` will not put a file back
+/// under one, and `downloads` will not save one. A second copy would be a second
+/// answer to the same question.
+pub const RESERVED: [&str; 32] = [
+    "CON", "PRN", "AUX", "NUL", "CONIN$", "CONOUT$", "COM0", "COM1", "COM2", "COM3", "COM4",
+    "COM5", "COM6", "COM7", "COM8", "COM9", "COM¹", "COM²", "COM³", "LPT0", "LPT1", "LPT2", "LPT3",
+    "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9", "LPT¹", "LPT²", "LPT³",
 ];
 
 /// Whether a name is one of those, going by the part in front of the first dot,
 /// which is where Windows looks: `NUL.md` names the device as surely as `NUL`.
+/// And without the spaces that part ends with, which Windows drops: `CON .md` is
+/// `CON.md`.
 ///
 /// Asked on every platform, not only on Windows. A note the reader syncs is a
 /// note that has to land on all of their machines, and a name only some of them
 /// can hold is not a name.
 pub fn is_reserved(name: &str) -> bool {
-    let stem = name.split('.').next().unwrap_or(name);
+    let stem = name.split('.').next().unwrap_or(name).trim_end_matches(' ');
     RESERVED.contains(&stem.to_ascii_uppercase().as_str())
 }
 
@@ -1220,6 +1225,18 @@ mod tests {
     };
     use std::ffi::OsStr;
     use std::path::{Path, PathBuf};
+
+    /// The device names the list once missed, a stem with the spaces Windows drops
+    /// after it, and names that only begin like a device's.
+    #[test]
+    fn a_device_name_is_reserved_however_it_is_written() {
+        for name in ["COM¹", "LPT².md", "CONIN$", "conout$.md", "CON .md", "COM0"] {
+            assert!(super::is_reserved(name), "{name}");
+        }
+        for name in ["CONSOLE.md", "COM10", "Con Law.md"] {
+            assert!(!super::is_reserved(name), "{name}");
+        }
+    }
 
     /// Every reader is held to a ceiling. A file over it comes back as nothing
     /// rather than as an error, because what to say about it - a note too large to be
