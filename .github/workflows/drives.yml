@@ -121,6 +121,13 @@ jobs:
           python3 -m pip install --quiet --break-system-packages playwright pillow
           python3 -m playwright install --with-deps chromium webkit
 
+      # The Arabic faces `Orden Arabic` names (tokens.css). The runner has none of
+      # them, so every Arabic label fell to DejaVu Sans and font-ui.py, which asks that
+      # Arabic is drawn with one of them, failed every night. Noto Naskh Arabic is in
+      # fonts-noto-core, the Ubuntu the drive was written against (#418).
+      - name: The Arabic faces
+        run: sudo apt-get install -y --no-install-recommends fonts-noto-core
+
       # Two at a time on the runner's four cores. The drives against the Worker need
       # no Cloudflare token: each Worker runs with `--local`, which switches off the
       # one binding - Workers AI - that has no local emulation. A drive that needs what
