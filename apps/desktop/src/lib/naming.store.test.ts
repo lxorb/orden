@@ -953,6 +953,15 @@ describe('a PDF becomes the page note that holds it', () => {
     expect(rows()).toContain('/space/Broken.pdf')
   })
 
+  // A click that opens nothing and says nothing reads as the app being broken (#540).
+  test('and opens nothing, which it says', async () => {
+    files.set('/space/Broken.pdf', 'not a pdf')
+
+    await workspace.openPdf('/space/Broken.pdf')
+    expect(workspace.tabs).toEqual([])
+    expect(unread.shown).toBe(true)
+  })
+
   test('a page note renamed takes its paper with it', async () => {
     await workspace.bringIn([dropped('Week 1.pdf', '%PDF week')], '/space')
     await workspace.rename('/space/Week 1.pages', 'Optics.pages')
