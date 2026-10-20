@@ -25,7 +25,8 @@ vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x6
 
 /** Loaded once, at module scope: the menu and the command list reach half the app,
  *  and compiling that belongs to no one test. See docs/conventions.md. */
-const { appMenu, ISSUES_URL, RELEASES_URL, SOURCE_URL } = await import('./app-menu')
+const { appMenu } = await import('./app-menu')
+const { ISSUES_URL, RELEASES_URL, SOURCE_URL } = await import('./links')
 const { isSubmenu, walkableRows } = await import('./menu-item')
 const { appCommands } = await import('./commands')
 const { BY_ID } = await import('./shortcuts/registry')
@@ -126,6 +127,19 @@ describe('File', () => {
       'app.settings',
     ]
     for (const id of keys) expect(BY_ID.get(id)?.key, id).toBeTruthy()
+  })
+
+  /** The rows the menu in the window was the only way in to, before it went (#304).
+   *  Always on top too, which only a desktop offers. */
+  test('and every row only the menu had is in the palette now', () => {
+    const offered = appCommands().map((one) => one.label)
+    for (const label of [
+      ...['Inline math', 'Superscript', 'Subscript', 'Paste as plain text'],
+      ...['Find next', 'Find previous', 'Fullscreen'],
+      ...['What is new', 'Report an issue', 'Source code'],
+    ]) {
+      expect(offered, label).toContain(label)
+    }
   })
 
   /** Emil, 2026-09-30: *"I don't want there to be any manual saving anymore. Only
