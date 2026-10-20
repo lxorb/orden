@@ -18,6 +18,9 @@ export function drawingOf(open: {
   name: string
   path: string | null
   root: string | null
+  /** Whether the cards' HTML is markup; see `canvasSvg`. Left out by the readers
+   *  that only ever draw a plain picture, which holds no HTML. */
+  trusted?: boolean
 }): Drawing {
   return {
     canvas: readCanvas(open.text),
@@ -28,5 +31,6 @@ export function drawingOf(open: {
     path: open.path,
     root: open.root,
     name: open.name,
+    trusted: open.trusted ?? false,
   }
 }

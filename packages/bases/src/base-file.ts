@@ -318,8 +318,10 @@ function nibBasePlain(nib: NibBase): Plain {
 
 /** A Base as the plain object its YAML says, keys in Obsidian's order. */
 function basePlain(base: Base): Plain {
+  // The filters kept as written stand in their own place, and only while the base
+  // has none of its own, as a view's do; see `viewPlain`.
   return present([
-    ['filters', base.filters],
+    ['filters', base.filters ?? base.kept.filters],
     ['formulas', base.formulas],
     [
       'properties',
@@ -332,7 +334,7 @@ function basePlain(base: Base): Plain {
     ],
     ['summaries', base.summaries],
     ['views', base.views.map(viewPlain)],
-    ...Object.entries(base.kept),
+    ...Object.entries(rest(base.kept, ['filters'])),
     ['nib', nibBasePlain(base.nib)],
   ])
 }

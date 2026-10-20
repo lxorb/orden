@@ -41,7 +41,15 @@ export type FileAction =
   /** The composer's three, each recorded with the text it replaced: what those
    *  do is edit two notes at once, and an edit is not a file operation the
    *  filesystem can put back. */
-  | { kind: 'merge'; from: string; fromContent: string; into: string; intoContent: string }
+  | {
+      kind: 'merge'
+      from: string
+      fromContent: string
+      into: string
+      intoContent: string
+      /** The notes whose links to `from` were pointed at `into`. */
+      relinked?: string[]
+    }
   | { kind: 'split' | 'extract'; from: string; fromContent: string; created: string }
   /** A replacement run across the space. However many notes it touched, it is
    *  one thing somebody did and so one thing to take back. Each note keeps the

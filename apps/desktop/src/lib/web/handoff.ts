@@ -176,6 +176,21 @@ export async function pack(): Promise<Handoff> {
   return { kind: KIND, databases, local }
 }
 
+/** The notes' listing (web/store.ts), and a row of it, made as `statOf` there makes
+ *  one: said again here because this page loads nothing of the app. */
+const LISTING = 'stats'
+interface Listed {
+  path: string
+  modified: number
+  created?: number
+  content?: string
+  data?: string
+}
+function listingOf(row: Listed) {
+  const size = (row.content ?? row.data ?? '').length
+  return { path: row.path, modified: row.modified, created: row.created ?? row.modified, size }
+}
+
 /** One database, as it was at the old address: the stores it had, made if they
  *  are missing, and each emptied and filled with the rows the old one held. */
 function restore(database: DatabaseDump, version: number): Promise<void> {
@@ -219,7 +234,13 @@ function restore(database: DatabaseDump, version: number): Promise<void> {
         return
       }
 
-      const writing = db.transaction(names, 'readwrite')
+      // An old address from before the notes had a listing brings none: it is made
+      // here from the rows that came, or every one of them reads as not there.
+      const listing =
+        database.name === 'nib' && db.objectStoreNames.contains(LISTING) && !names.includes(LISTING)
+          ? LISTING
+          : null
+      const writing = db.transaction(listing ? [...names, listing] : names, 'readwrite')
       for (const shape of database.stores) {
         if (!names.includes(shape.name)) continue
         const store = writing.objectStore(shape.name)
@@ -228,6 +249,14 @@ function restore(database: DatabaseDump, version: number): Promise<void> {
           if (shape.keyPath === null) store.put(value, shape.keys[at])
           else store.put(value)
         })
+      }
+      if (listing) {
+        const stats = writing.objectStore(listing)
+        stats.clear()
+        for (const shape of database.stores) {
+          if (shape.name !== 'files' && shape.name !== 'assets') continue
+          for (const value of shape.values) stats.put(listingOf(value as Listed))
+        }
       }
       finished(writing)
         .then(resolve, reject)

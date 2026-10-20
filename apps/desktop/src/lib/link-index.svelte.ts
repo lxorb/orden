@@ -32,6 +32,7 @@ import {
   type TaskHelp,
 } from '@nib/editor'
 import { door } from '@nib/markdown/door'
+import { oneEdit } from '@nib/markdown/edits'
 import {
   blockIdOf,
   blockIds,
@@ -63,11 +64,13 @@ import {
   nameOf,
   noteName,
   relativePath,
+  samePath,
   within,
 } from './space-paths'
 import { elsewhere } from './marks-elsewhere.svelte'
 import { invoke } from './tauri'
 import { coveredBy } from './workspace/archive.svelte'
+import type { NoteDoc } from './workspace/documents.svelte'
 import type { FileOp } from './workspace/file-ops'
 import { log } from './log'
 
@@ -158,6 +161,16 @@ const TASKS = __EVEN_PLUGIN__ ? undefined : taskLines()
 /** The query fence's rows, once the first fence has asked for them; see `query` in the
  *  space the editor is handed. */
 let queryBlock: typeof import('./query-block') | null = null
+
+/** How `retarget` runs. */
+export interface Retargeting {
+  /** The note itself went, by a rename or a move; not by a merge. */
+  moved?: boolean
+  /** Only these notes, by absolute path. */
+  only?: readonly string[]
+  /** Filled with every note rewritten. */
+  touched?: string[]
+}
 
 class Links {
   /** Every note of the open space as the last scan read it.
@@ -1273,8 +1286,21 @@ class Links {
    *
    *  Each note keeps one snapshot of what it said before, so the rewrite shows up
    *  in the version history of every note it touched and can be undone note by
-   *  note there as well as through the file undo. */
-  async retarget(from: string, to: string, root: string): Promise<number> {
+   *  note there as well as through the file undo.
+   *
+   *  `open` is the document a note is open as, which is where its words are: a note
+   *  with typing not yet written is rewritten there, and written as it then stands,
+   *  the way a replacement writes an open note; see `writeOpen` in
+   *  workspace/note-text.ts. The file alone used to be rewritten, and the typing
+   *  went down a moment later with the old link still in it. */
+  async retarget(
+    from: string,
+    to: string,
+    root: string,
+    open: (path: string) => NoteDoc | null = () => null,
+    how: Retargeting = {},
+  ): Promise<number> {
+    const { moved = false, only, touched: told } = how
     const was = this.relative(from)
     const now = this.relative(to)
     if (!was || !now || was === now) return 0
@@ -1288,33 +1314,47 @@ class Links {
     let touched = 0
 
     for (const note of [...this.notes]) {
+      if (only && !only.some((path) => samePath(path, insideSpace(root, note.path)))) continue
       // Whether this note is worth reading at all, decided from the index.
       const candidates = note.links.filter((link) => this.couldName(link, byFile))
       if (!candidates.length) continue
       if (!candidates.some((link) => this.resolveFrom(note.path, link) === was)) continue
 
+      // The note that moved is still listed, and still open, under the name it
+      // had: its words are found there, but its file is where it went, and it
+      // links from there now. Written to the old path, it came back under it.
+      const self = moved && note.path === was
       const absolute = insideSpace(root, note.path)
-      const before = await invoke<string>('read_note', { path: absolute }).catch(() => null)
+      const target = self ? insideSpace(root, now) : absolute
+      const before = await this.wordsOf(absolute, target, open)
       if (before === null) continue
 
       const points = (link: FoundLink) => this.resolveFrom(note.path, link) === was
-      const after = rewriteLinks(before, note.path, move, points)
+      const after = rewriteLinks(before, self ? now : note.path, move, points)
       if (after === null || after === before) continue
 
-      await invoke('snapshot_note', { path: absolute, content: before }).catch(() => undefined)
+      // Taken by the document in the same breath as its words were read, so no
+      // keystroke falls between the two; one landing while the write is in the air
+      // is the document's own, and marks it for its next write.
+      const doc = open(absolute)
+      const edit = oneEdit(before, after)
+      if (doc && edit) doc.edited([edit], after)
+
+      await invoke('snapshot_note', { path: target, content: before }).catch(() => undefined)
       // A note that cannot be written - read-only, held by another program, a full
       // disk - keeps its old link and is said in the log; the others are rewritten
       // all the same. Thrown, it undid the move that asked for this: opening a PDF
       // discarded the page note made for it, and with it the PDF, for good (#537).
-      const wrote = await invoke('write_note', { path: absolute, content: after }).then(
+      const wrote = await invoke('write_note', { path: target, content: after }).then(
         () => true,
         (error: unknown) => {
-          log('warn', `a link in ${absolute} could not be rewritten: ${String(error)}`)
+          log('warn', `a link in ${target} could not be rewritten: ${String(error)}`)
           return false
         },
       )
       if (!wrote) continue
-      for (const hear of this.hearing) hear(absolute, after)
+      for (const hear of this.hearing) hear(target, after)
+      told?.push(target)
 
       this.notes = this.notes.map((one) =>
         one.path === note.path ? scanNote(note.path, after) : one,
@@ -1324,6 +1364,22 @@ class Links {
 
     if (touched) this.changed()
     return touched
+  }
+
+  /** A note's words as they stand: the document's open at `path` where there is
+   *  one, and otherwise the file's at `file`, which is somewhere else only for the
+   *  note that just moved. */
+  private async wordsOf(
+    path: string,
+    file: string,
+    open: (path: string) => NoteDoc | null,
+  ): Promise<string | null> {
+    const doc = open(path)
+    if (doc) {
+      doc.flush()
+      return doc.text
+    }
+    return invoke<string>('read_note', { path: file }).catch(() => null)
   }
 
   /** Blocks anywhere in the space whose words hold `text`: what the editor's

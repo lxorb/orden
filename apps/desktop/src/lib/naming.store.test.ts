@@ -172,6 +172,11 @@ vi.mock('./tauri', async (importOriginal) => ({
         return { path: at, fresh: true }
       }
       case 'read_tree': {
+        // As the crate does: a root that is not a folder is refused.
+        const root = text(args?.root)
+        if (!folders.has(root) && ![...files.keys()].some((one) => one.startsWith(`${root}/`))) {
+          throw new Error('root is not a directory')
+        }
         const options = args?.options as { papers?: boolean } | undefined
         return listing(text(args?.root), options?.papers === true)
       }

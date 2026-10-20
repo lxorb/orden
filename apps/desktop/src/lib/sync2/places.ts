@@ -283,10 +283,34 @@ export async function settle(space: SpaceState, how: Settling): Promise<EntryRow
       .sort((a, b) => depth(a.local_path) - depth(b.local_path))
     if (!due.length) break
 
+    // The folders still on their way to a new name. Something going into one of them
+    // waits for it: made first, the folder found its own new name taken, and waited
+    // on every pass while its notes went one by one.
+    const arriving = new Set(
+      due.filter((one) => one.kind === 'folder').map((one) => space.key(wanted.get(one.id) ?? '')),
+    )
+    const waits = (want: string) => {
+      for (let at = folderOf(want); at; at = folderOf(at)) {
+        if (arriving.has(space.key(at))) return true
+      }
+      return false
+    }
+    let progress = 0
+
     for (const entry of due) {
       const want = wanted.get(entry.id)
       if (want === undefined || entry.local_path === want) continue
+      if (waits(want)) continue
       const kind = entry.kind === 'folder' ? 'folder' : 'file'
+      if (space.key(want).startsWith(space.key(`${entry.local_path}${SEP}`))) {
+        // Wanted inside where it is now: a new folder took its old name. No disk moves
+        // a folder into itself, so it steps aside and goes on in the next round.
+        const out = aside(entry.local_path, entry.id)
+        await how.disk.move(full(entry.local_path), full(out), kind)
+        carry(space, entry, out, moved)
+        progress += 1
+        continue
+      }
       const holder = space.at(want)
       if (holder && holder !== entry) {
         // Somebody else is still there: it waits aside, and moves on in its own turn.
@@ -302,7 +326,11 @@ export async function settle(space: SpaceState, how: Settling): Promise<EntryRow
       await how.disk.mkdir(full(folderOf(want)))
       await how.disk.move(full(entry.local_path), full(want), kind)
       carry(space, entry, want, moved)
+      progress += 1
+      if (entry.kind === 'folder') arriving.delete(space.key(want))
     }
+    // Nothing moved, so nothing will: what is left waits on the disk, not on a round.
+    if (!progress) break
   }
 
   for (const [id, want] of wanted) {

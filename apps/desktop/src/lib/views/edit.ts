@@ -49,10 +49,16 @@ export const setGroup = (base: Base, at: number, group: Sort | undefined): Base 
 export const setSubGroup = (base: Base, at: number, sub: Sort | undefined): Base =>
   withView(base, at, (view) => withNib(view, { subGroupBy: sub }))
 
+/** Filters nib could not read are kept among the options as written, only until the
+ *  view is given its own - and none is its own too, so both drop them. See
+ *  `viewPlain` in @nib/bases. */
 export const setFilter = (base: Base, at: number, filters: Filter | undefined): Base =>
-  withView(base, at, (view) =>
-    filters === undefined ? lacking(view, 'filters') : { ...view, filters },
-  )
+  withView(base, at, (view) => {
+    const options = { ...view.options }
+    Reflect.deleteProperty(options, 'filters')
+    const next = { ...view, options }
+    return filters === undefined ? lacking(next, 'filters') : { ...next, filters }
+  })
 
 export const setShowCompleted = (base: Base, at: number, shown: boolean): Base =>
   withView(base, at, (view) => withNib(view, { showCompleted: shown ? true : undefined }))

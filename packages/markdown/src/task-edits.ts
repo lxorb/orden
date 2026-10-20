@@ -225,6 +225,10 @@ export function writeTask(line: string, change: TaskChange): TextEdit[] {
   const edits: TextEdit[] = []
   const gone = new Set<FieldToken>()
   const arriving: Arrival[] = []
+  // Every span taken off the line, whichever field it holds, goes through one
+  // `removals`: a tag and a field side by side would otherwise each claim the
+  // blank between them, in edits that overlap.
+  const taking: { from: number; to: number }[] = []
   const form = bracketStyle(parsed) ? 'bracket' : 'emoji'
 
   const status = nextStatus(fields, change)
@@ -264,7 +268,7 @@ export function writeTask(line: string, change: TaskChange): TextEdit[] {
         spans.push({ from: at, to: at + tag.length + 1 })
       }
     }
-    edits.push(...removals(line, spans, parsed.wordsFrom))
+    taking.push(...spans)
     for (const tag of next.filter((one) => !fields.tags.includes(one))) {
       arriving.push({ rank: RANK.tag, text: `#${tag}` })
     }
@@ -306,7 +310,7 @@ export function writeTask(line: string, change: TaskChange): TextEdit[] {
           (one.field === field || (one.key !== undefined && fieldOfKey(one.key) === field)),
       )
       for (const one of every) gone.add(one)
-      edits.push(...removals(line, every, parsed.wordsFrom))
+      taking.push(...every)
     } else if (token && value !== null) {
       const whole = field === 'priority' && token.form === 'emoji'
       edits.push(
@@ -319,19 +323,21 @@ export function writeTask(line: string, change: TaskChange): TextEdit[] {
     }
   }
 
-  edits.push(...unknownFieldEdits(line, parsed, change, gone, arriving))
+  edits.push(...unknownFieldEdits(parsed, change, gone, arriving, taking))
   edits.push(...arrivals(line, parsed, gone, arriving))
+  edits.push(...removals(line, taking, parsed.wordsFrom))
 
   return ordered(edits)
 }
 
-/** The edits for Dataview fields nib has no name for. */
+/** The edits for Dataview fields nib has no name for. The ones taken off are put
+ *  among `taking`, to go with the rest; see `writeTask`. */
 function unknownFieldEdits(
-  line: string,
   parsed: ParsedTask,
   change: TaskChange,
   gone: Set<FieldToken>,
   arriving: Arrival[],
+  taking: { from: number; to: number }[],
 ): TextEdit[] {
   if (change.fields == null) return []
   const edits: TextEdit[] = []
@@ -353,7 +359,7 @@ function unknownFieldEdits(
     }
     if (!Object.hasOwn(next, key)) {
       gone.add(token)
-      edits.push(removal(line, token.from, token.to, parsed.wordsFrom))
+      taking.push(token)
     } else if (own(next, key) !== own(before, key)) {
       edits.push({ from: token.valueFrom, to: token.valueTo, insert: own(next, key) ?? '' })
     }

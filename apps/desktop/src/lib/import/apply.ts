@@ -31,7 +31,8 @@ import { freePath } from '@nib/markdown/paths'
 import { insideOnly } from '../automation/inside'
 import { key } from '../i18n.svelte'
 import { log } from '../log'
-import { invoke, joinPath } from '../tauri'
+import { onDisk } from '../on-disk'
+import { joinPath } from '../tauri'
 import { toBase64 } from '../bytes'
 import { workspace } from '../workspace.svelte'
 import { writeBytes, writeFile } from '../workspace/write-file'
@@ -146,7 +147,7 @@ const ESCAPING = key('That import would have landed outside the space, so nothin
  *  hold, so a picture, a file in `.obsidian/` or any file of another space is not
  *  in it: the disk is asked about every path the import would write as well, and a
  *  path it holds is taken like any other, until no path the import would write is
- *  one. A disk that cannot be asked, a page in a browser, has the list's word. */
+ *  one. In a browser the listing answers; see on-disk.ts. */
 async function restampedOnDisk(
   plan: Written,
   target: ImportTarget,
@@ -166,12 +167,6 @@ async function restampedOnDisk(
     if (!held.length) return { files, stepped: stamped.stepped }
     for (const file of held) taken.add(nameKey(file.path))
   }
-}
-
-/** Whether a file is at this path: `file_stamp` answers nothing where there is none. */
-async function onDisk(path: string): Promise<boolean> {
-  const stamp = await invoke<unknown>('file_stamp', { path }).catch(() => null)
-  return stamp !== null && stamp !== undefined
 }
 
 /** Every path the space already holds, as the one name it is (see `nameKey`), so a

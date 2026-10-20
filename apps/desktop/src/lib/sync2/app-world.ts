@@ -11,6 +11,7 @@ import { api, BASE } from '../api'
 import { fileBytes, sha256, toBase64 } from '../bytes'
 import { deviceName } from '../device'
 import { links } from '../link-index.svelte'
+import { onDisk } from '../on-disk'
 import { scanSpace } from '../space-watch'
 import { invoke, isDesktop, joinPath, platform } from '../tauri'
 import { classifier } from './classify'
@@ -35,9 +36,10 @@ function parentOf(path: string): string {
   return at > 0 ? path.slice(0, at) : path
 }
 
-async function stamped(path: string): Promise<boolean> {
-  return (await invoke<unknown>('file_stamp', { path }).catch(() => null)) !== null
-}
+/** Whether a file is there: the crate's stamp, or in the browser, which keeps none,
+ *  a read; see on-disk.ts. A stamp alone answered no for every path in the browser,
+ *  so a note deleted on another device was never deleted there. */
+const stamped = onDisk
 
 function diskOf(telling: Telling): Disk {
   return {

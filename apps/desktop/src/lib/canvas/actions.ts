@@ -812,6 +812,9 @@ async function putDown(
 export interface MenuView extends KeyView {
   narrowed: boolean
   onnarrow: () => void
+  /** Whether the cards' HTML is markup, asked of the plane's note; an export of
+   *  it asks the same question the surface does. See trust.ts. */
+  trusted: boolean
   /** Whether the menu was asked for on bare plane rather than about something:
    *  only then is putting something down where it was asked one of its rows. The
    *  bar over what is picked opens it about the pick, and a right click on a card
@@ -954,6 +957,7 @@ async function exportAs(store: CanvasStore, view: MenuView, how: 'png' | 'svg' |
     path: view.path,
     root: workspace.activeSpace?.root ?? null,
     name: view.name,
+    trusted: view.trusted,
   }
 
   if (how === 'png') await picture.exportCanvasPng(drawing)

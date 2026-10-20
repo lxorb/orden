@@ -419,6 +419,17 @@ export const assets = {
  *  because on the way up it is the one question that holds everything else; see
  *  `inSlices`. */
 export const stats = {
+  /** Whether anything is at `path` or under it, by a key and not a row: one lookup,
+   *  where listing the tree to ask read every row in the store. */
+  holds: async (path: string) => {
+    const at = await run<IDBValidKey | undefined>('stats', 'readonly', (s) => s.getKey(path))
+    if (at !== undefined) return true
+    const under = IDBKeyRange.bound(`${path}/`, `${path}/\uffff`)
+    return (
+      (await run<IDBValidKey | undefined>('stats', 'readonly', (s) => s.getKey(under))) !==
+      undefined
+    )
+  },
   all: () =>
     inSlices<StatRow>(
       (after, most) => slice<StatRow>('stats', after, most),

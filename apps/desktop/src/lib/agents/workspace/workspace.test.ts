@@ -537,7 +537,8 @@ describe('another space, without switching', () => {
     expect(indexed).toContainEqual({
       root: '/s/Home',
       asked: 'retarget',
-      args: ['/s/Home/Soup.md', '/s/Home/Food/Soup.md', '/s/Home'],
+      // The note itself went, so its own links are written where it went.
+      args: ['/s/Home/Soup.md', '/s/Home/Food/Soup.md', '/s/Home', undefined, { moved: true }],
     })
     expect(workspace.fileMoved).toHaveBeenCalledWith(
       '/s/Home/Soup.md',

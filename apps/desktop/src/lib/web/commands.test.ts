@@ -74,6 +74,12 @@ vi.mock('./store', () => ({
   // invariant the real store pays a transaction to hold: a path's listing says
   // what the file at that path says, always.
   stats: {
+    holds: (path: string) =>
+      Promise.resolve(
+        [...disk.files.keys(), ...disk.assets.keys()].some(
+          (one) => one === path || one.startsWith(`${path}/`),
+        ),
+      ),
     all: () =>
       Promise.resolve([
         ...[...disk.files.values()].map((row) => {
@@ -358,6 +364,34 @@ describe('spaces', () => {
   })
 })
 
+describe('whether anything is at a path', () => {
+  // What onDisk asks in the browser, which keeps no stamps; listing the tree to ask
+  // read every row in the store once for each file an import brought.
+  test('answers for a note, a picture and a folder, and not for a name it only begins', async () => {
+    await write('/Notes/Plan.md', '# Plan')
+    await webInvoke('create_folder', { path: '/Notes/Empty' })
+    disk.assets.set('/Notes/Pics/shot.png', {
+      path: '/Notes/Pics/shot.png',
+      type: 'image/png',
+      data: 'AAAA',
+      modified: 1,
+    })
+    await webInvoke('save_asset', {
+      notePath: '/Notes/Plan.md',
+      folder: 'Pics',
+      name: 'other.png',
+      bytes: [1, 2, 3],
+    }).catch(() => undefined)
+
+    const at = (path: string) => webInvoke<boolean>('path_exists', { path })
+    expect(await at('/Notes/Plan.md')).toBe(true)
+    expect(await at('/Notes')).toBe(true)
+    expect(await at('/Notes/Empty')).toBe(true)
+    expect(await at('/Notes/Plan')).toBe(false)
+    expect(await at('/Notes/Gone.md')).toBe(false)
+  })
+})
+
 describe('the trash', () => {
   test('holds what was deleted and puts it back where it came from', async () => {
     await write('/Notes/Idea.md', '# Idea')
@@ -373,6 +407,46 @@ describe('the trash', () => {
     expect(await webInvoke('restore_trash', { id: entry.id })).toBe('/Notes/Idea.md')
     expect(await read('/Notes/Idea.md')).toBe('# Idea')
     expect(await webInvoke('list_trash')).toEqual([])
+  })
+
+  // Sync v2 trashes a picture deleted on another device; the trash asked only of
+  // the notes, refused it, and the next pass asked again.
+  test('holds a picture, which lives with the assets alone, and puts it back', async () => {
+    disk.assets.set('/Notes/shot.png', {
+      path: '/Notes/shot.png',
+      type: 'image/png',
+      data: 'AAAA',
+      modified: 1,
+    })
+
+    const entry = await webInvoke<{ id: string }>('trash_item', {
+      path: '/Notes/shot.png',
+      kind: 'note',
+    })
+    expect(disk.assets.has('/Notes/shot.png')).toBe(false)
+
+    expect(await webInvoke('restore_trash', { id: entry.id })).toBe('/Notes/shot.png')
+    expect(disk.assets.has('/Notes/shot.png')).toBe(true)
+  })
+
+  test('puts a picture back beside a newer one of the same name, which keeps its bytes', async () => {
+    const picture = (data: string) => ({
+      path: '/Notes/shot.png',
+      type: 'image/png',
+      data,
+      modified: 1,
+    })
+    disk.assets.set('/Notes/shot.png', picture('old'))
+    const entry = await webInvoke<{ id: string }>('trash_item', {
+      path: '/Notes/shot.png',
+      kind: 'note',
+    })
+    disk.assets.set('/Notes/shot.png', picture('new'))
+
+    // The free name was asked of the notes alone, and the old picture went over
+    // the new one.
+    expect(await webInvoke('restore_trash', { id: entry.id })).toBe('/Notes/shot 2.png')
+    expect(disk.assets.get('/Notes/shot.png')?.data).toBe('new')
   })
 
   test('puts a note back beside the one that took its place', async () => {
@@ -516,6 +590,20 @@ describe('the tree', () => {
 
     const tree = await webInvoke<{ children: { name: string }[] }>('read_tree', { root: '/Notes' })
     expect(tree.children.map((one) => one.name)).toEqual(['a.md', 'paper.pdf'])
+
+    // Asked for every file, as an undo of a folder deleted signed in asks, the
+    // picture and the highlights are there too, and the picture is not words.
+    const every = await webInvoke<{ children: { name: string; path: string }[] }>('read_tree', {
+      root: '/Notes',
+      options: { every: true },
+    })
+    expect(every.children.map((one) => one.name)).toEqual([
+      'a.md',
+      'paper.pdf',
+      'paper.pdf.highlights.json',
+      'shot.png',
+    ])
+    await expect(webInvoke('read_note', { path: '/Notes/shot.png' })).rejects.toThrow()
   })
 })
 

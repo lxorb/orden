@@ -20,6 +20,8 @@ export class Disk {
   /** Every file, under the spelling it was made with. */
   readonly files = new Map<string, string>()
   readonly folders = new Set<string>()
+  /** Files that are there but are not words, as a picture is: `read_note` refuses them. */
+  readonly unreadable = new Set<string>()
   /** Every command asked, with the path it named. */
   readonly sent: string[] = []
   private readonly trash = new Map<string, { path: string; text: string }>()
@@ -47,6 +49,7 @@ export class Disk {
   reset() {
     this.files.clear()
     this.folders.clear()
+    this.unreadable.clear()
     this.trash.clear()
     this.sent.length = 0
   }
@@ -68,6 +71,7 @@ export class Disk {
         const at = this.spelled(path)
         const held = at === null ? undefined : this.files.get(at)
         if (held === undefined) throw new Error(`no such note: ${path}`)
+        if (at !== null && this.unreadable.has(at)) throw new Error(`not words: ${path}`)
         return held
       }
       case 'write_note':
@@ -114,8 +118,15 @@ export class Disk {
         this.trash.delete(text(args.id))
         return kept.path
       }
-      case 'read_tree':
-        return this.listing(text(args.root))
+      case 'read_tree': {
+        // As the crate does: a root that is not a folder is refused.
+        const root = text(args.root)
+        const folder =
+          this.folders.has(root) || [...this.files.keys()].some((one) => one.startsWith(`${root}/`))
+        if (!folder) throw new Error('root is not a directory')
+        const options = (args.options ?? {}) as { showHidden?: boolean }
+        return this.listing(text(args.root), options.showHidden === true)
+      }
       case 'file_stamp':
         return this.spelled(path) === null ? null : { modified: 1, len: 1 }
       default:
@@ -124,7 +135,7 @@ export class Disk {
   }
 
   /** The listing of a space, folders first and names in order, as the crate reads one. */
-  listing(root: string): Entry {
+  listing(root: string, hidden = true): Entry {
     const entry = (at: string, folder: boolean): Entry => ({
       name: at.slice(at.lastIndexOf('/') + 1),
       path: at,
@@ -148,6 +159,7 @@ export class Disk {
     for (const path of [...this.folders].sort()) if (path.startsWith(`${root}/`)) folderFor(path)
     for (const path of [...this.files.keys()].sort()) {
       if (!path.startsWith(`${root}/`)) continue
+      if (!hidden && path.slice(path.lastIndexOf('/') + 1).startsWith('.')) continue
       folderFor(path.slice(0, path.lastIndexOf('/'))).children.push(entry(path, false))
     }
 

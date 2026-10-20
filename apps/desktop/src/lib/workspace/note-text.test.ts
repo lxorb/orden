@@ -113,7 +113,10 @@ describe('a replacement across the space', () => {
       },
     ])
 
+    // Read again first, in case somebody else has written it since the change was
+    // worked out; see the last describe below.
     expect(sent).toEqual([
+      { command: 'read_note', path: `${SPACE}/a.md`, content: '' },
       { command: 'snapshot_note', path: `${SPACE}/a.md`, content: 'before' },
       { command: 'write_note', path: `${SPACE}/a.md`, content: 'after' },
     ])
@@ -492,5 +495,56 @@ describe('a replacement taken back while the reader types', () => {
     await undoLastFileAction(ws as unknown as PutsBack)
 
     expect(disk.get(NOTE)).toBe('Re: the plan for monday')
+  })
+})
+
+/** A change worked out against a closed note's file, written after a question was
+ *  answered: Convert syntax asks how many things to rewrite before it rewrites them.
+ *  Sync or an agent can write the file while the sheet is up, and writing the change
+ *  as it was worked out put the old words back over theirs, with no version kept of
+ *  them. See `writeClosed` in workspace/note-text.ts. */
+describe('a closed note written to after the change was worked out', () => {
+  const NOTE = `${SPACE}/plan.md`
+  /** `#two words#` to `#two-words`, as Convert syntax rewrites a Bear tag. */
+  const change = {
+    path: NOTE,
+    before: 'the plan #two words#',
+    after: 'the plan #two-words',
+    edits: [{ from: 9, to: 20, insert: '#two-words' }],
+    back: [{ from: 9, to: 19, insert: '#two words#' }],
+  }
+
+  test('keeps what was written meanwhile, and the change goes on around it', async () => {
+    const { ws } = space({ [NOTE]: change.before })
+    disk.set(NOTE, 'Re: the plan #two words#')
+
+    await replaceInNotes(ws, [change])
+
+    expect(disk.get(NOTE)).toBe('Re: the plan #two-words')
+    expect(sent).toContainEqual({
+      command: 'snapshot_note',
+      path: NOTE,
+      content: 'Re: the plan #two words#',
+    })
+  })
+
+  test('and leaves the note alone where what was written overlaps the change', async () => {
+    const { ws } = space({ [NOTE]: change.before })
+    disk.set(NOTE, 'the plan #two words and more#')
+
+    await replaceInNotes(ws, [change])
+
+    expect(disk.get(NOTE)).toBe('the plan #two words and more#')
+    expect(sent.some((one) => one.command === 'write_note')).toBe(false)
+    expect(ws.undone.stack).toEqual([])
+  })
+
+  test('and writes nothing at all for a note that has gone', async () => {
+    const { ws } = space({ [NOTE]: change.before })
+    disk.delete(NOTE)
+
+    await replaceInNotes(ws, [change])
+
+    expect(disk.has(NOTE)).toBe(false)
   })
 })

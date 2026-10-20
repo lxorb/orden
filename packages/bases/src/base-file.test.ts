@@ -165,6 +165,21 @@ describe('writing a change', () => {
     expect(written).toContain('    - categories.contains(link("Books"))\n')
   })
 
+  test('filters set on a base whose own nib could not read replace them, once', () => {
+    // The unreadable filters are kept only until the base is given filters of its
+    // own: kept after them, they would be written over the new ones.
+    const source = 'filters:\n  xor:\n    - a\nviews:\n  - type: table\n    name: A\n'
+    const base = readBase(source)
+    base.filters = 'b == 1'
+    const written = writeBase(base, source)
+    expect(written).toBe('filters: b == 1\nviews:\n  - type: table\n    name: A\n')
+  })
+
+  test("a base's unreadable filters keep their place at the top of a new file", () => {
+    const source = 'filters:\n  xor:\n    - a\nviews:\n  - type: table\n    name: A\n'
+    expect(writeBase(readBase(source))).toBe(source)
+  })
+
   test("a view's filters and limit nib cannot read stay as written when another key changes", () => {
     // A filter of a shape the reader does not know, and a limit written as text,
     // are not nib's to understand but are the file's own: dropping them on the
