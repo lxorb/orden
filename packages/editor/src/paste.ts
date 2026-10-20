@@ -5,6 +5,7 @@ import {
   type TransactionSpec,
 } from '@codemirror/state'
 import { type Command, EditorView } from '@codemirror/view'
+import { rangeInCode } from './code'
 import { ourOwn } from './copy'
 import { loadLineCommands } from './line-door'
 import { documentOf } from './shared'
@@ -47,7 +48,8 @@ export function delimitedToTable(text: string): string | null {
     : lines.every((line) => line.split(',').length > 2)
       ? ','
       : null
-  if (!separator) return null
+  // An empty first cell on every line is code indented with tabs, not a sheet.
+  if (!separator || lines.every((line) => line.startsWith(separator))) return null
 
   const rows = lines.map((line) => line.split(separator).map((cell) => cell.trim()))
   // An empty header falls out below on the column count, so the default needs
@@ -192,6 +194,10 @@ export function richPaste(): Extension {
       // text in as it stands - and the plain text is the note's own markdown. See
       // `copiedHere`.
       if (copiedHere(html, text)) return false
+
+      // Code takes the words as they are, and CodeMirror puts the plain text in: no
+      // table made of a CSV, and no markdown made of the HTML an editor copies too.
+      if (view.state.selection.ranges.some((range) => rangeInCode(view.state, range))) return false
 
       // A spreadsheet puts both flavours on the clipboard and the plain text is the
       // table, so that paste is worked out here and lands in the frame it happened in.

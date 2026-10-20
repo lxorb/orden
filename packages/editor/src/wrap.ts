@@ -12,26 +12,14 @@
  *  `**x**`, and `~x~` is `~~x~~`. Nothing changes when there is no selection -
  *  a `*` typed on its own is a `*`. */
 
-import {
-  type EditorState,
-  EditorSelection,
-  type Extension,
-  Prec,
-  type SelectionRange,
-} from '@codemirror/state'
+import { EditorSelection, type Extension, Prec } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
-import { inCode } from './code'
+import { rangeInCode } from './code'
 
 /** The marks a selection can be wrapped in. The backtick is inline code; `*`
  *  and `_` are emphasis and double up into strong, `~` into a strikethrough and
  *  `=` into a highlight. */
 const MARKS = new Set(['`', '*', '_', '~', '='])
-
-/** Whether either end of the selection is in code. Both ends, because a
- *  selection that starts in prose and ends in a fence is not prose. */
-function inside(state: EditorState, range: SelectionRange): boolean {
-  return inCode(state, range.from) || inCode(state, range.to, -1)
-}
 
 export function wrapSelection(): Extension {
   // Ahead of the rest so the mark never lands as a plain character first.
@@ -53,7 +41,7 @@ export function wrapSelection(): Extension {
 
       // In code a mark is a character like any other, so it replaces the
       // selection the way typing always does.
-      if (state.selection.ranges.some((range) => inside(state, range))) return false
+      if (state.selection.ranges.some((range) => rangeInCode(state, range))) return false
 
       const wrapped = state.changeByRange((range) => ({
         changes: [

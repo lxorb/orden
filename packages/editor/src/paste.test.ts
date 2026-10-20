@@ -116,6 +116,10 @@ describe('pasting spreadsheet cells', () => {
   test('a single column is not a table', () => {
     expect(delimitedToTable('a\nb\nc')).toBeNull()
   })
+
+  test('code indented with tabs is not a table', () => {
+    expect(delimitedToTable('\tx := 1\n\ty := 2\n\treturn x + y')).toBeNull()
+  })
 })
 
 /** An address pasted over selected words makes a link of them, and nothing else

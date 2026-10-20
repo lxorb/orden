@@ -7,7 +7,7 @@
  *  not in the other. */
 
 import { syntaxTree } from '@codemirror/language'
-import type { EditorState } from '@codemirror/state'
+import type { EditorState, SelectionRange } from '@codemirror/state'
 import { enclosingNamed } from './nodes'
 
 /** Every node a piece of code is made of: a fenced block, an indented block,
@@ -22,4 +22,10 @@ const CODE = new Set(['InlineCode', 'CodeText', 'CodeMark', 'CodeInfo', 'FencedC
  *  same as CodeMirror's: 1 is the node starting here, -1 the one ending here. */
 export function inCode(state: EditorState, pos: number, side: -1 | 1 = 1): boolean {
   return enclosingNamed(syntaxTree(state).resolveInner(pos, side), CODE) !== null
+}
+
+/** Whether either end of a selection is in code. Both ends, because a
+ *  selection that starts in prose and ends in a fence is not prose. */
+export function rangeInCode(state: EditorState, range: SelectionRange): boolean {
+  return inCode(state, range.from) || inCode(state, range.to, -1)
 }
