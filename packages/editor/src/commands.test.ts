@@ -231,6 +231,14 @@ describe('line prefixes', () => {
     expect(apply(toggleBulletList, doc, 0, doc.length).doc).toBe('a\n  b\n  c')
   })
 
+  // Shift+Down, a triple click and Mod-L leave the selection at the start of the
+  // next line, which the caret is in front of, not in.
+  test('leaves the line a selection ends in front of', () => {
+    expect(apply(toggleBulletList, 'a\nb\nc', 0, 4).doc).toBe('- a\n- b\nc')
+    expect(apply(setHeading(2), 'a\nb\nc', 0, 2).doc).toBe('## a\nb\nc')
+    expect(apply(toggleBulletList, 'a\nb', 2).doc).toBe('a\n- b')
+  })
+
   test('numbers an ordered list across lines', () => {
     expect(run(toggleOrderedList, '[one\ntwo\nthree]')).toBe('1. one\n2. two\n3. three')
   })

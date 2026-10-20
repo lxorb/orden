@@ -78,12 +78,27 @@ function inside(state: EditorState, from: number, to: number): { from: number; t
   return { from: start, to: start + kept.length }
 }
 
+/** A run of whole lines, by number. */
+export interface Lines {
+  first: number
+  last: number
+}
+
+/** The lines a range covers. A selection that ends at the very start of a line - a
+ *  run of lines selected with Shift and the arrows - does not take that line: the
+ *  caret is in front of it, not in it. */
+export function linesOf(state: EditorState, from: number, to: number): Lines {
+  const first = state.doc.lineAt(from).number
+  const end = state.doc.lineAt(to)
+  const last = to > from && to === end.from && end.number > first ? end.number - 1 : end.number
+  return { first, last }
+}
+
 function selectedLines(state: Parameters<StateCommand>[0]['state']) {
   const numbers = new Set<number>()
 
   for (const range of state.selection.ranges) {
-    const first = state.doc.lineAt(range.from).number
-    const last = state.doc.lineAt(range.to).number
+    const { first, last } = linesOf(state, range.from, range.to)
     for (let line = first; line <= last; line++) numbers.add(line)
   }
 
