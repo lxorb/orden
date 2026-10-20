@@ -1819,7 +1819,7 @@
       nib: {
         // The nib is in plane units and the cursor is in pixels, so the dot is the
         // width the pen will really draw at this zoom.
-        size: pens.current.size * camera.scale,
+        size: drawnWidth(pens.current.size, camera.scale) * camera.scale,
         colour: inkColour(pens.current.colour, palette),
       },
       rub: { size: pens.whole ? pens.strokeRub : pens.rub, whole: pens.whole },
