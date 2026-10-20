@@ -812,8 +812,12 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-20, to 3,258,000, for #523: the tab in front says it is current
  *  (`aria-current` on its button in Tabs.svelte), which the strip drew and nothing read.
- *  Measured 3,257,081. */
-const BUDGET = 3_258_000
+ *  Measured 3,257,081.
+ *
+ *  Raised 2026-10-20, to 3,260,000, for #523 again: the divider between two panes is a
+ *  separator the arrows, Home, End and Enter move (`nudge` in PaneTree.svelte), as the
+ *  sidebar's edge already was. Measured 3,259,125. */
+const BUDGET = 3_260_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
