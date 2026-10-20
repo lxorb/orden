@@ -212,6 +212,14 @@
     focus()
   }
 
+  /** Rows of the file list dropped on the chat, as links at the caret (#416), the
+   *  words a drop on a note writes. */
+  export function addNotes(paths: readonly string[]): void {
+    void import('@nib/editor/note-links').then(({ noteLinks }) =>
+      insert(`${noteLinks(links.index(path), paths, pickedLink)} `),
+    )
+  }
+
   /** Words put in at the caret: an emoji from the picker. */
   function insert(words: string) {
     if (!editor) return

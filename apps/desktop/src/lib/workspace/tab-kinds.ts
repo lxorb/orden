@@ -191,7 +191,7 @@ export const TAB_KINDS = {
     glyph: null,
     liveMark: false,
     editor: true,
-    takesDrops: false,
+    takesDrops: true,
     ownBar: false,
     fileDocument: false,
     plane: false,
