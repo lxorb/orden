@@ -4,6 +4,7 @@ import {
   connected,
   copied,
   grouped,
+  locking,
   movedBy,
   pasted,
   placedAt,
@@ -430,5 +431,17 @@ describe('resizing with the shape of the box held', () => {
   test('stretches when it is not held, which is what a card wants', () => {
     const next = resizedPick(canvas, ['a'], 'se', 100, 0)
     expect(next.nodes[0]).toMatchObject({ width: 200, height: 50 })
+  })
+})
+
+describe('locking in place (#643)', () => {
+  test('locks what it names, and lets it go again without a key left behind', () => {
+    const before = canvasOf([card('a'), card('b')])
+    const locked = locking(before, ['a'], true)
+    expect(locked.nodes[0]).toEqual({ ...card('a'), locked: true })
+    expect(locked.nodes[1]).toBe(before.nodes[1])
+
+    expect(locking(locked, ['a'], false).nodes[0]).toEqual(card('a'))
+    expect(locking(locked, ['a'], true).nodes[0]).toBe(locked.nodes[0])
   })
 })

@@ -530,7 +530,8 @@ export class CanvasStore implements PlaneSurface {
   private keepPicked() {
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read within this call and thrown away; nothing renders from it
     const held = new Set([
-      ...this.canvas.nodes.map((node) => node.id),
+      // Something locked in place is not picked either, once a lock or an undo says so.
+      ...this.canvas.nodes.filter((node) => !node.locked).map((node) => node.id),
       ...this.canvas.edges.map((edge) => edge.id),
       ...this.canvas.ink.map((stroke) => stroke.id),
     ])
@@ -547,6 +548,7 @@ export class CanvasStore implements PlaneSurface {
   /** A plain click picks one thing; Shift or Ctrl adds to what is picked and
    *  takes an already-picked one out again, the way a file list does. */
   pick(id: string, adding = false) {
+    if (this.lockedIds().has(id)) return
     if (!adding) {
       if (this.picked.length !== 1 || this.picked[0] !== id) this.picked = [id]
       return
@@ -561,9 +563,9 @@ export class CanvasStore implements PlaneSurface {
     const wanted = adding ? [...this.picked, ...ids] : ids
     // Each id once, in the order they arrived. Through a set rather than by
     // looking back along the list, because a rubber band answers on every
-    // pointer event and may have caught five hundred cards.
-    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read within this call and thrown away; nothing renders from it
-    const seen = new Set<string>()
+    // pointer event and may have caught five hundred cards. Begun with what is
+    // locked, so that is never let through.
+    const seen = this.lockedIds()
     const next = wanted.filter((id) => {
       if (seen.has(id)) return false
 
@@ -573,6 +575,13 @@ export class CanvasStore implements PlaneSurface {
     if (next.length === this.picked.length && next.every((id, at) => this.picked[at] === id)) return
 
     this.picked = next
+  }
+
+  /** What is locked in place, which nothing picks: not a press, a band, Ctrl+A or a
+   *  find (#643). Unlocked from the menu, which finds it under the press. */
+  private lockedIds(): Set<string> {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read within one call and thrown away; nothing renders from it
+    return new Set(this.canvas.nodes.filter((node) => node.locked).map((node) => node.id))
   }
 
   clearPicked() {

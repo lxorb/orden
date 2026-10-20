@@ -16,6 +16,7 @@ const { NoteDoc, Tab } = await import('../workspace/documents.svelte')
 const { CanvasStore } = await import('./store.svelte')
 const { blankCanvas, readCanvas, writeCanvas } = await import('./format')
 const { run } = await import('./actions')
+const { locking } = await import('./edits')
 const { pens } = await import('./pens.svelte')
 type Canvas = import('./format').Canvas
 type CanvasNode = import('./format').CanvasNode
@@ -479,5 +480,28 @@ describe('a plane whose tab is switched away from and back', () => {
     again.undo()
 
     expect(ids(again.canvas)).toEqual(['b'])
+  })
+})
+
+/** Nothing picks what is locked in place: not a press, a band or Ctrl+A (#643). */
+describe('something locked in place', () => {
+  test('is never picked, alone or among others', () => {
+    const { store } = opened()
+    store.edit(locking({ ...store.canvas, nodes: [card('a'), card('b', 300)] }, ['a'], true))
+
+    store.pick('a')
+    expect(store.picked).toEqual([])
+    store.pickAll(['a', 'b'])
+    expect(store.picked).toEqual(['b'])
+  })
+
+  test('is let go when an unlock is taken back', () => {
+    const { store } = opened()
+    store.edit(locking({ ...store.canvas, nodes: [card('a')] }, ['a'], true))
+    store.edit(locking(store.canvas, ['a'], false))
+    store.pick('a')
+
+    store.undo()
+    expect(store.picked).toEqual([])
   })
 })

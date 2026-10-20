@@ -196,6 +196,14 @@ describe('what a drag carries', () => {
     expect(dragged(nested, ['outer']).sort()).toEqual(['deep', 'inner', 'outer'])
   })
 
+  test('leaves what is locked in place where it is (#643)', () => {
+    const held = {
+      ...canvas,
+      nodes: [canvas.nodes[0]!, { ...card('in', 50, 50), locked: true as const }],
+    }
+    expect(dragged(held, ['g'])).toEqual(['g'])
+  })
+
   test('counts a card as inside only when the whole of it is', () => {
     expect(
       insideGroup({ x: 0, y: 0, width: 100, height: 100 }, { x: 10, y: 10, width: 50, height: 50 }),

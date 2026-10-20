@@ -425,7 +425,8 @@ export function insideGroup(group: Box, node: Box): boolean {
 
 /** Everything a drag of these nodes takes with it: the nodes themselves, and
  *  whatever sits inside any group among them. A group inside a group carries its
- *  own contents too, so the walk repeats until nothing new is caught. */
+ *  own contents too, so the walk repeats until nothing new is caught. What is locked
+ *  in place stays where it is, frame or no frame (#643). */
 export function dragged(canvas: Canvas, picked: readonly string[]): string[] {
   const moving = new Set(picked)
   const groups = canvas.nodes.filter((node) => node.type === 'group')
@@ -438,7 +439,7 @@ export function dragged(canvas: Canvas, picked: readonly string[]): string[] {
       if (!moving.has(group.id)) continue
 
       for (const node of canvas.nodes) {
-        if (node.id === group.id || moving.has(node.id)) continue
+        if (node.id === group.id || node.locked || moving.has(node.id)) continue
         if (insideGroup(boxOf(group), boxOf(node))) moving.add(node.id)
       }
     }
