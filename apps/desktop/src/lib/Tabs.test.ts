@@ -88,3 +88,17 @@ describe('drawing the tab strip', () => {
     expect(asked).toHaveLength(16)
   })
 })
+
+describe('the tab in front', () => {
+  test('is the one tab that says it is current', () => {
+    const paneId = strip(3)
+    const front = workspace.tabsIn(paneId)[1]?.id ?? ''
+    workspace.activate(front)
+
+    const html = render(Tabs, { props: { paneId } }).body
+    const current = [...html.matchAll(/<button[^>]*aria-current="page"[^>]*>/g)]
+
+    expect(current).toHaveLength(1)
+    expect(current[0]?.[0]).toContain(`data-tab="${front}"`)
+  })
+})

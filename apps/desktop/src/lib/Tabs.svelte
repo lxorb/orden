@@ -896,12 +896,14 @@
           <!-- Named by the note, and named on the button. A pinned tab is a mark and
              no words, and the name used to be put on the `span` around the mark -
              which has no role, so nothing read it and the tab was a button with
-             nothing to call it. No `title`: the hover card says the name. -->
+             nothing to call it. No `title`: the hover card says the name. And the one in
+             front says so, which the strip drew and nothing read (#523). -->
           <button
             class="pick"
             class:centred={parts.centred}
             data-tab={tab.id}
             aria-label={tab.shown}
+            aria-current={tab.id === activeId ? 'page' : undefined}
             onfocus={(event) => {
               if (event.currentTarget.matches(':focus-visible'))
                 card(tab, event.currentTarget, true)
