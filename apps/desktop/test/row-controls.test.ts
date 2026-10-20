@@ -137,7 +137,7 @@ test('the words a row of settings is named by are its .name', () => {
 /** The rule of the row itself, in the themes package: one rule's body by its selector. */
 function ruleOf(sheet: string, selector: string): string {
   const at = sheet.indexOf(`\n${selector} {`)
-  expect(at, `${selector} in base.css`).toBeGreaterThan(-1)
+  expect(at, `${selector.trim()} in its sheet`).toBeGreaterThan(-1)
   return sheet.slice(at, sheet.indexOf('}', at))
 }
 
@@ -156,4 +156,16 @@ test("a row's name keeps a readable width and what does not fit beside it wraps 
   // What wraps lands at the end, where a row's control always is.
   expect(ruleOf(sheet, '.nib-setting > .name + *')).toMatch(/margin-inline-start:\s*auto/)
   expect(ruleOf(sheet, '.nib-setting > .name ~ *')).toMatch(/max-inline-size:\s*100%/)
+})
+
+/** A dropdown at the end of a row was one width in every language, so in a dozen of
+ *  them the chosen value was cut short of the words that tell the choices apart, and
+ *  the list of panes cut a name its column could not hold (issue 516). */
+test('a dropdown in a row and a pane in the list are as long as their words', () => {
+  const panel = readFileSync(join(SRC, 'lib/SettingsPanel.svelte'), 'utf8')
+
+  // A floor for the column the choices line up in, not a width.
+  expect(ruleOf(panel, '  .pick')).toMatch(/min-width:\s*14rem/)
+  expect(ruleOf(panel, '  .pick')).not.toMatch(/\swidth:/)
+  expect(ruleOf(panel, '  .item .nib-row-label')).toMatch(/white-space:\s*normal/)
 })
