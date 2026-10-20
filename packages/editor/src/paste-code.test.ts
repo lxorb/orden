@@ -7,8 +7,13 @@ import { parsed } from '../test/parsed'
 import { nibMarkdownExtensions } from './markdown/extensions'
 import { richPaste } from './paste'
 
-// The converter a page's HTML goes through, fetched before any paste waits on it.
-beforeAll(() => import('@nib/markdown/from-html'))
+// The converter a page's HTML goes through, fetched before any paste waits on it. jsdom
+// lays nothing out, so a range has no rectangles for a measure the view schedules.
+beforeAll(() => {
+  Range.prototype.getClientRects = () => [] as unknown as DOMRectList
+  Range.prototype.getBoundingClientRect = () => new DOMRect()
+  return import('@nib/markdown/from-html')
+})
 
 /** The note after `text` (and `html`, where there is some) is pasted at the `|`. */
 async function pasted(marked: string, text: string, html = ''): Promise<string> {
