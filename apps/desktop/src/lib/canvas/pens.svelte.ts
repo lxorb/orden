@@ -90,7 +90,7 @@ export const MOST_WIDTH = 30
 
 /** How wide the eraser can be, in pixels on screen, since that is where a finger
  *  judges it. */
-export const LEAST_RUB = 4
+export const LEAST_RUB = 2
 export const MOST_RUB = 64
 /** And how wide it is when nobody has said. */
 export const RUB = 10
@@ -144,6 +144,7 @@ interface Kept {
   shut: boolean
   whole: boolean
   rub: number
+  strokeRub: number
   /** Whether a stroke held still is tidied into what it was aiming at. */
   straighten: boolean
   /** Whether the lasso is a box pulled out rather than a loop drawn by hand, and
@@ -163,6 +164,7 @@ function blank(): Kept {
     shut: false,
     whole: false,
     rub: RUB,
+    strokeRub: STROKE_RUB,
     straighten: true,
     box: false,
     partly: false,
@@ -221,6 +223,7 @@ export function readPens(raw: string | null): Kept {
     shut: held.shut === true,
     whole: held.whole === true,
     rub: typeof held.rub === 'number' ? clampRub(held.rub) : RUB,
+    strokeRub: typeof held.strokeRub === 'number' ? clampRub(held.strokeRub) : STROKE_RUB,
     straighten: held.straighten !== false,
     box: held.box === true,
     partly: held.partly === true,
@@ -242,6 +245,8 @@ class Pens {
   whole = $state(false)
   /** How wide the eraser is, in pixels on screen. */
   rub = $state(RUB)
+  /** How wide the stroke eraser reaches, in pixels on screen. */
+  strokeRub = $state(STROKE_RUB)
   /** Whether a stroke held still is tidied into the line, ring or box it was
    *  aiming at. */
   straighten = $state(true)
@@ -263,7 +268,7 @@ class Pens {
 
   /** The eraser as the pointer machine wants it. */
   get eraser(): { whole: boolean; size: number; stroke: number } {
-    return { whole: this.whole, size: this.rub, stroke: STROKE_RUB }
+    return { whole: this.whole, size: this.rub, stroke: this.strokeRub }
   }
 
   /** A pen picked out of the row. */
@@ -320,10 +325,11 @@ class Pens {
     this.keep()
   }
 
-  /** The eraser set: whole strokes or a hole, and how wide. */
-  rubbing(changed: { whole?: boolean; rub?: number }) {
+  /** The eraser set: whole strokes or a hole, and how wide each is. */
+  rubbing(changed: { whole?: boolean; rub?: number; strokeRub?: number }) {
     if (changed.whole !== undefined) this.whole = changed.whole
     if (changed.rub !== undefined) this.rub = clampRub(changed.rub)
+    if (changed.strokeRub !== undefined) this.strokeRub = clampRub(changed.strokeRub)
     this.keep()
   }
 
@@ -352,6 +358,7 @@ class Pens {
     this.shut = held.shut
     this.whole = held.whole
     this.rub = held.rub
+    this.strokeRub = held.strokeRub
     this.straighten = held.straighten
     this.box = held.box
     this.partly = held.partly
@@ -366,6 +373,7 @@ class Pens {
       shut: this.shut,
       whole: this.whole,
       rub: this.rub,
+      strokeRub: this.strokeRub,
       straighten: this.straighten,
       box: this.box,
       partly: this.partly,

@@ -105,12 +105,13 @@ describe('the eraser’s own ring', () => {
     expect(sizeOf(wide)).toBeGreaterThan(sizeOf(narrow))
   })
 
-  /** A stroke eraser takes whatever line it touches, whole, so it has no width to
-   *  show and says so with a dashed ring at a fixed size instead. */
-  test('is a small dashed ring for the eraser that takes whole strokes', () => {
+  /** A stroke eraser takes whole whatever line it reaches, so it says so with a
+   *  dashed ring as wide as it reaches, and a small one while that is a touch. */
+  test('is a dashed ring for the eraser that takes whole strokes, small at a touch', () => {
     const whole = rubCursor({ size: 40, whole: true })
     expect(whole).toContain(encodeURIComponent('stroke-dasharray'))
-    expect(sizeOf(whole)).toBeLessThan(sizeOf(rubCursor({ size: 40, whole: false })))
+    expect(sizeOf(whole)).toBe(sizeOf(rubCursor({ size: 40, whole: false })))
+    expect(sizeOf(rubCursor({ size: 2, whole: true }))).toBe(16)
   })
 
   test('stops before a browser would refuse to draw it', () => {

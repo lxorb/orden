@@ -1802,7 +1802,7 @@
         size: pens.current.size * camera.scale,
         colour: inkColour(pens.current.colour, palette),
       },
-      rub: { size: pens.rub, whole: pens.whole },
+      rub: { size: pens.whole ? pens.strokeRub : pens.rub, whole: pens.whole },
     })
   })
 
