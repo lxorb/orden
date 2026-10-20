@@ -1,7 +1,7 @@
-import { redo, undo } from '@codemirror/commands'
 import { EditorSelection, type StateCommand } from '@codemirror/state'
-import type { EditorView } from '@codemirror/view'
+import type { Command, EditorView } from '@codemirror/view'
 import { label, type LabelKey } from '../labels'
+import { redoEdit, undoEdit } from '../shared'
 import {
   attached,
   button,
@@ -524,11 +524,11 @@ export class TableView {
     if (mod && !event.altKey) {
       const lower = key.toLowerCase()
       if (lower === 'z' && !event.shiftKey) {
-        this.history(event, undo, cell, at)
+        this.history(event, undoEdit, cell, at)
         return
       }
       if (lower === 'y' || (lower === 'z' && event.shiftKey)) {
-        this.history(event, redo, cell, at)
+        this.history(event, redoEdit, cell, at)
         return
       }
       // The browser's select-all reaches past the cell to the whole document.
@@ -593,7 +593,7 @@ export class TableView {
 
   /** Undo and redo are the editor's, not the browser's: a cell's edits live
    *  in the document. The caret stays in the cell through the redraw. */
-  private history(event: Event, command: StateCommand, cell: HTMLElement, at: CellAddress) {
+  private history(event: Event, command: Command, cell: HTMLElement, at: CellAddress) {
     event.preventDefault()
     this.flush()
     this.focusAfter = { at, offset: caretOffset(cell) }
@@ -620,9 +620,9 @@ export class TableView {
     if (type.startsWith('format') || type === 'insertParagraph' || type === 'insertLineBreak') {
       event.preventDefault()
     } else if (type === 'historyUndo') {
-      this.history(event, undo, cell, at)
+      this.history(event, undoEdit, cell, at)
     } else if (type === 'historyRedo') {
-      this.history(event, redo, cell, at)
+      this.history(event, redoEdit, cell, at)
     }
   }
 
