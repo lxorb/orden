@@ -185,7 +185,11 @@
         ];
 
       # What Chromium opens by name at run time rather than links: the GL and Vulkan
-      # loaders and udev. Put on every patched file's run path.
+      # loaders and udev. autoPatchelfHook puts these on the program's run path alone,
+      # and a library's `dlopen` searches its own: ANGLE's libGLESv2 and libEGL and
+      # libcef.so looked for libGL.so.1 and found nothing, and the GPU process gave up
+      # (#438). So the release build puts them on every library of the engine as well;
+      # see its postFixup.
       openedFor =
         pkgs: with pkgs; [
           libGL
@@ -335,7 +339,19 @@
           # exporting DOCX and friends, Orden hides that when it is missing, and
           # anyone who wants it can add it to their own profile.
           dontWrapGApps = true;
-          postFixup = ''
+          # Patched here rather than by the hook's own run, which comes after this and
+          # would set every run path afresh: the engine's libraries then get what they
+          # open by name beside what they link (`openedFor`).
+          dontAutoPatchelf = onCef;
+          postFixup =
+            pkgs.lib.optionalString onCef ''
+              autoPatchelf $out
+              for one in $out/libexec/${pname}/*.so $out/libexec/${pname}/*.so.*; do
+                [ -f "$one" ] && [ ! -L "$one" ] || continue
+                patchelf --add-rpath ${pkgs.lib.makeLibraryPath (openedFor pkgs)} "$one"
+              done
+            ''
+            + ''
             makeShellWrapper $out/libexec/${pname}/nib $out/bin/${pname} \
               "''${gappsWrapperArgs[@]}" \
               --inherit-argv0 \
