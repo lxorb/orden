@@ -601,7 +601,7 @@ pub fn run() {
 #[cfg(feature = "cef")]
 #[must_use]
 pub fn cef_helper() -> bool {
-    if !std::env::args().any(|arg| arg.starts_with("--type=")) {
+    if !std::env::args_os().any(|arg| arg.as_encoded_bytes().starts_with(b"--type=")) {
         return false;
     }
     tauri_runtime_cef::run_cef_helper_process();
@@ -881,7 +881,7 @@ fn ready(
     // launch this was, because a link's is measured from the click to the page.
     #[cfg(desktop)]
     {
-        let args: Vec<String> = std::env::args().collect();
+        let args: Vec<std::ffi::OsString> = std::env::args_os().collect();
         let cwd = std::env::current_dir().unwrap_or_default();
         launch::hold_handed(handle, &args, &cwd);
         quick_add::asked_at_launch(&args);
