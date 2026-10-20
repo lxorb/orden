@@ -220,11 +220,11 @@ def docx_page(xml: str) -> dict[str, str]:
 
 
 def the_paper_the_settings_default_to(rtf: Path, docx: Path) -> None:
-    """A4 upright with a 20 mm margin: 11909 by 16834 twips, 1134 of margin. Letter,
+    """A4 upright with a 20 mm margin: 11906 by 16838 twips, 1134 of margin. Letter,
     which is what both writers used to hand over, is 12240 by 15840."""
     words = rtf_says(rtf)
     say(f"[rtf] the page it names: {rtf_page(words)}")
-    is_true("\\paperw11909\\paperh16834" in words, "the RTF did not go out on A4")
+    is_true("\\paperw11906\\paperh16838" in words, "the RTF did not go out on A4")
     is_true("\\margl1134" in words, "the RTF did not take the 20 mm margin")
     is_true("\\paperw12240\\paperh15840" not in words, "the RTF is still on Letter")
     is_true("\\landscape" not in words, "the RTF turned an upright page on its side")
@@ -232,8 +232,8 @@ def the_paper_the_settings_default_to(rtf: Path, docx: Path) -> None:
     xml, parts = docx_says(docx)
     found = docx_page(xml)
     say(f"[docx] the page it names: {found}")
-    is_true(found.get("w") == "11909", "the Word document did not go out on A4")
-    is_true(found.get("h") == "16834", "the Word document's A4 is the wrong way up")
+    is_true(found.get("w") == "11906", "the Word document did not go out on A4")
+    is_true(found.get("h") == "16838", "the Word document's A4 is the wrong way up")
     is_true(found.get("margin-top") == "1134", "the Word document did not take the margin")
     is_true(
         not [one for one in parts if re.match(r"word/(header|footer)\d*\.xml", one)],
@@ -258,8 +258,8 @@ def the_paper_the_settings_ask_for(page: Page) -> None:
 
     words = rtf_says(exported(page, "Export as RTF", "a5-landscape.rtf"))
     say(f"[rtf] the page it names: {rtf_page(words)}")
-    # RTF says the sheet as it is printed, so a turned A5 is 11909 by 8395.
-    is_true("\\paperw11909\\paperh8395" in words, "the RTF did not go out on A5 on its side")
+    # RTF says the sheet as it is printed, so a turned A5 is 11906 by 8391.
+    is_true("\\paperw11906\\paperh8391" in words, "the RTF did not go out on A5 on its side")
     is_true("\\landscape" in words, "the RTF did not turn the page")
     is_true("\\margl1871" in words, "the RTF did not take the 33 mm margin")
     is_true("{\\header" in words, "the RTF has no running text across the top")
@@ -271,8 +271,8 @@ def the_paper_the_settings_ask_for(page: Page) -> None:
     found = docx_page(xml)
     say(f"[docx] the page it names: {found}")
     # OOXML says a turned page as it is printed too, with `orient` saying which way.
-    is_true(found.get("w") == "11909", "the Word document did not go out on A5 on its side")
-    is_true(found.get("h") == "8395", "the Word document's A5 is the wrong way round")
+    is_true(found.get("w") == "11906", "the Word document did not go out on A5 on its side")
+    is_true(found.get("h") == "8391", "the Word document's A5 is the wrong way round")
     is_true(found.get("orient") == "landscape", "the Word document did not turn the page")
     is_true(found.get("margin-left") == "1871", "the Word document did not take the margin")
     running = [one for one in parts if re.match(r"word/(header|footer)\d*\.xml", one)]
