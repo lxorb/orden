@@ -60,8 +60,8 @@
       # anchor ends.
       release = {
         pname = "orden";
-        version = "0.17.0";
-        tag = "v0.17.0";
+        version = "0.18.0";
+        tag = "v0.18.0";
         asset = "Orden";
       };
 
@@ -69,11 +69,11 @@
       debs = {
         x86_64-linux = {
           suffix = "x64";
-          hash = "sha256-mbNTz6SylGjXrnM534Lpb3JZQUMCRpUqoO2udcXRQ40=";
+          hash = "sha256-so1n84OtxeaZxNR3TSBcT7QzO2uHePGMP8NfFODdowo=";
         };
         aarch64-linux = {
           suffix = "arm64";
-          hash = "sha256-ksJEQCmX6G++ruv0yzf4TlL6sXpwPLowjT9/SYOKaWM=";
+          hash = "sha256-fNUtf8ZTHnw2P4+6gvtmiMi6A/s93cXv0NbbSjRzrC4=";
         };
       };
 
