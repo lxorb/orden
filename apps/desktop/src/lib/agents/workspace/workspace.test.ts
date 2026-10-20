@@ -964,7 +964,7 @@ describe('a page into a note', () => {
     expect(capture()).toMatchObject({
       shape: 'pdf',
       fullPage: false,
-      page: { width: 8.27, height: 11.69, margin: 0.787, landscape: false },
+      page: { width: 210 / 25.4, height: 297 / 25.4, margin: 0.787, landscape: false },
     })
     expect(String(saved()?.name)).toMatch(/\.pdf$/)
     expect(files.get('/s/Work/A page.md')).toMatch(/!\[\[files\/page-[\d-]+\.pdf\]\]/)

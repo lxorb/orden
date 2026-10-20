@@ -144,8 +144,8 @@ describe('wrapping the body in running text', () => {
 describe('paper in inches', () => {
   test('knows the paper sizes', () => {
     expect(paperInches(DEFAULT_PAGE_SETUP)).toEqual({
-      width: 8.27,
-      height: 11.69,
+      width: 210 / 25.4,
+      height: 297 / 25.4,
       margin: 0.787,
       landscape: false,
     })
