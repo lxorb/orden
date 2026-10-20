@@ -108,6 +108,7 @@ function gpuGroup(): Group {
 
   return {
     title: t('Hardware acceleration'),
+    ...(gpu.line ? { caption: { text: gpu.line } } : {}),
     fields: [
       {
         kind: 'switch',

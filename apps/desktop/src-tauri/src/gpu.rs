@@ -30,6 +30,26 @@ pub struct Seen {
     pub gpu_process: bool,
 }
 
+impl Seen {
+    /// What the log says of it, after `gpu: `: `hardware (…)` or `software (…)`.
+    fn said(&self) -> String {
+        format!(
+            "{} ({}; {})",
+            if self.hardware {
+                "hardware"
+            } else {
+                "software"
+            },
+            self.renderer,
+            if self.gpu_process {
+                "a GPU process"
+            } else {
+                "no GPU process"
+            }
+        )
+    }
+}
+
 static SEEN: OnceLock<Seen> = OnceLock::new();
 
 /// Where Hardware acceleration is kept, in the app's own settings folder: `off` for a
@@ -58,10 +78,6 @@ fn chosen(config: &Path) -> bool {
 }
 
 /// What draws the app's pages, once the first page has said; `None` before then.
-#[allow(
-    dead_code,
-    reason = "read by the setting for the GPU (#550), which comes next"
-)]
 pub fn seen() -> Option<&'static Seen> {
     SEEN.get()
 }
@@ -79,6 +95,14 @@ pub fn gpu_choose(app: tauri::AppHandle<crate::Engine>, on: bool) -> Result<(), 
     let config = crate::paths::config_dir(&app)?;
     crate::paths::made(&config)?;
     crate::paths::write_atomically(&config.join(FILE), if on { b"on" } else { b"off" })
+}
+
+/// What draws the app's pages, as the log said it, for Settings to show under Hardware
+/// acceleration: `None` until the first page has said, which on Windows is never, since
+/// the page's script runs on nib's own Chromium only.
+#[tauri::command(async)]
+pub fn gpu_line() -> Option<String> {
+    seen().map(Seen::said)
 }
 
 /// Whether a renderer WebGL names is one that draws on the CPU.
@@ -136,20 +160,7 @@ pub fn gpu_seen(app: tauri::AppHandle<crate::Engine>, renderer: Option<String>) 
             gpu_process,
         },
     };
-    let line = format!(
-        "gpu: {} ({}; {})",
-        if seen.hardware {
-            "hardware"
-        } else {
-            "software"
-        },
-        seen.renderer,
-        if seen.gpu_process {
-            "a GPU process"
-        } else {
-            "no GPU process"
-        }
-    );
+    let line = format!("gpu: {}", seen.said());
     if SEEN.set(seen).is_ok() {
         crate::logs::say(&app, "info", &line);
     }
@@ -157,7 +168,18 @@ pub fn gpu_seen(app: tauri::AppHandle<crate::Engine>, renderer: Option<String>) 
 
 #[cfg(test)]
 mod tests {
-    use super::{chosen, software, FILE, SCRIPT};
+    use super::{chosen, software, Seen, FILE, SCRIPT};
+
+    /// Settings shows what the log says: which of the two, and why.
+    #[test]
+    fn what_draws_is_said_as_the_log_says_it() {
+        let seen = Seen {
+            hardware: false,
+            renderer: "no WebGL".to_owned(),
+            gpu_process: false,
+        };
+        assert_eq!(seen.said(), "software (no WebGL; no GPU process)");
+    }
 
     /// Hardware acceleration is on until the file says `off`, and only that turns it off.
     #[test]

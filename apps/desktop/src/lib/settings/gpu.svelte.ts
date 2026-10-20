@@ -10,8 +10,13 @@ class Gpu {
   /** What the next launch starts with; asked for as the pane is drawn. */
   on = $state(true)
 
+  /** What draws the pages in this run, as the log said it: none on Windows, and none
+   *  before the first page has said (src-tauri/src/gpu.rs). */
+  line = $state<string | null>(null)
+
   async ask() {
     this.on = await invoke<boolean>('gpu_chosen')
+    this.line = await invoke<string | null>('gpu_line')
   }
 
   async set(on: boolean) {
