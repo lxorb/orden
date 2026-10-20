@@ -808,8 +808,13 @@ function holds(tail: string): boolean {
  *  logged and passed over rather than undoing the rename (`retarget` in
  *  link-index.svelte.ts, which now imports log.ts), and a PDF already moved into its
  *  page note is never thrown away with it (pages/from-pdf.ts). Measured 3,256,522 on
- *  unstable with #524 and #538 beside it. */
-const BUDGET = 3_257_000
+ *  unstable with #524 and #538 beside it.
+ *
+ *  Raised 2026-10-20, to 3,258,000, from an unstable at 3,256,924 (76 under), for #370:
+ *  an address typed into a `.webloc`'s bar goes into the plist's own `URL` string, the
+ *  pattern the reader finds it by shared with the write (`WEBLOC_URL` in
+ *  web-tab/shortcut.ts). Measured 3,257,027. */
+const BUDGET = 3_258_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

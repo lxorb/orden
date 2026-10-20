@@ -10,7 +10,7 @@ import { shownName } from '../note-name'
 import { nameOf } from '../space-paths'
 import type { Tab } from '../workspace/documents.svelte'
 import { writeFile } from '../workspace/write-file'
-import { readWebFile, writeShortcut } from './shortcut'
+import { readWebFile, WEBLOC_URL, writeShortcut } from './shortcut'
 
 export async function aimed(
   ws: { keep(id: string): void; persist(): void },
@@ -26,9 +26,17 @@ export async function aimed(
   if (was?.url === url) return
 
   const title = was?.title ?? shownName(nameOf(tab.path))
-  const content = writeShortcut(url, title, new Date(), null, null, was?.own)
+  // A `.webloc` keeps its plist, and every other key in it: only the address changes.
+  const content = /\.webloc$/i.test(tab.path.trim())
+    ? tab.doc.replace(WEBLOC_URL, () => escaped(url))
+    : writeShortcut(url, title, new Date(), null, null, was?.own)
   tab.note.replace(content, false)
 
   await writeFile(tab.path, content).catch(() => undefined)
   ws.persist()
+}
+
+/** An address as a plist's string: the three marks XML text cannot hold bare. */
+function escaped(url: string): string {
+  return url.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
