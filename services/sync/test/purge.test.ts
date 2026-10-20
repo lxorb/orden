@@ -237,6 +237,33 @@ describe('an id made by another space', () => {
     expect(made.json.results[0]).toMatchObject({ refused: 'gone' })
   })
 
+  test('is not made again as a folder, and the rest of the batch still applies', async () => {
+    const mine = await anotherAccount()
+    const folder = 'folder-of-mine'
+    await call(env, `/v2/spaces/${mine.space}/ops`, {
+      token: mine.token,
+      body: { ops: [{ op: 'mine', t: 'mkdir', id: folder, parent: null, name: 'Mine', seen: 0 }] },
+    })
+    await call(env, `/v2/spaces/${space}/prepare`, { token, method: 'POST' })
+
+    const made = await call<{ results: Record<string, unknown>[] }>(
+      env,
+      `/v2/spaces/${space}/ops`,
+      {
+        token,
+        body: {
+          ops: [
+            { op: 'theirs', t: 'mkdir', id: folder, parent: null, name: 'Theirs', seen: 0 },
+            { op: 'fine', t: 'mkdir', id: 'folder-fine', parent: null, name: 'Fine', seen: 0 },
+          ],
+        },
+      },
+    )
+    expect(made.status).toBe(200)
+    expect(made.json.results[0]).toMatchObject({ refused: 'gone' })
+    expect(made.json.results[1]).toMatchObject({ id: 'folder-fine' })
+  })
+
   test('while a create this space already answered is answered the same again', async () => {
     const other = await anotherAccount()
     const first = await createUnder(other, 'mine-1', 'op-once')
