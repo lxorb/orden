@@ -1570,6 +1570,7 @@ export const fa: Dictionary = {
   'Ask the model': 'پرسیدن از مدل',
   'answered by {model}, {date}': 'پاسخ از {model}، {date}',
   'AI block': 'بلوک هوش مصنوعی',
+  'Do with AI': 'انجام با هوش مصنوعی',
   'Highlight colour': 'رنگ پُررنگ',
   'A single newline breaks the line': 'یک خط تازه خط را می‌شکند',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

@@ -1559,6 +1559,7 @@ export const ms: Dictionary = {
   'Ask the model': 'Tanya model',
   'answered by {model}, {date}': 'dijawab {model}, {date}',
   'AI block': 'Blok AI',
+  'Do with AI': 'Lakukan dengan AI',
   'Highlight colour': 'Warna sorotan',
   'A single newline breaks the line': 'Satu baris baharu memutuskan baris',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

@@ -1639,6 +1639,7 @@ export const pl: Dictionary = {
   'Ask the model': 'Zapytaj model',
   'answered by {model}, {date}': 'odpowiedział {model}, {date}',
   'AI block': 'Blok AI',
+  'Do with AI': 'Zrób z AI',
   'Highlight colour': 'Kolor wyróżnienia',
   'A single newline breaks the line': 'Pojedynczy nowy wiersz przerywa wiersz',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

@@ -1665,6 +1665,7 @@ export const ar: Dictionary = {
   'Ask the model': 'اسأل الطراز',
   'answered by {model}, {date}': 'أجاب {model}، {date}',
   'AI block': 'كتلة ذكاء اصطناعي',
+  'Do with AI': 'نفّذ بالذكاء الاصطناعي',
   'Highlight colour': 'لون التظليل',
   'A single newline breaks the line': 'سطر جديد واحد يقطع السطر',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

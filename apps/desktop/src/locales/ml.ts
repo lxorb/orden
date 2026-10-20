@@ -1586,6 +1586,7 @@ export const ml: Dictionary = {
   'Ask the model': 'മോഡലിനോട് ചോദിക്കുക',
   'answered by {model}, {date}': '{model} മറുപടി നൽകി, {date}',
   'AI block': 'AI ബ്ലോക്ക്',
+  'Do with AI': 'AI ഉപയോഗിച്ച് ചെയ്യുക',
   'Highlight colour': 'ഹൈലൈറ്റ് നിറം',
   'A single newline breaks the line': 'ഒരു പുതിയ വരി വരി മുറിക്കും',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

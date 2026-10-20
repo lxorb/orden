@@ -1548,6 +1548,7 @@ export const am: Dictionary = {
   'Ask the model': 'ሞዴሉን ጠይቅ',
   'answered by {model}, {date}': '{model} መለሰ፣ {date}',
   'AI block': 'የAI ብሎክ',
+  'Do with AI': 'በAI አድርግ',
   'Highlight colour': 'የማጉላት ቀለም',
   'A single newline breaks the line': 'አንድ አዲስ መስመር መስመሩን ይሰብራል',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

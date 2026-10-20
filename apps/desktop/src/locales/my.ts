@@ -1554,6 +1554,7 @@ export const my: Dictionary = {
   'Ask the model': 'မော်ဒယ်ကို မေးပါ',
   'answered by {model}, {date}': '{model} ဖြေသည်၊ {date}',
   'AI block': 'AI ဘလောက်',
+  'Do with AI': 'AI ဖြင့် လုပ်ရန်',
   'Highlight colour': 'မီးမောင်းအရောင်',
   'A single newline breaks the line': 'လိုင်းအသစ်တစ်ခုတည်းဖြင့် လိုင်းပြတ်သည်',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

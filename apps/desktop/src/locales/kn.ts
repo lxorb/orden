@@ -1580,6 +1580,7 @@ export const kn: Dictionary = {
   'Ask the model': 'ಮಾದರಿಯನ್ನು ಕೇಳಿ',
   'answered by {model}, {date}': '{model} ಉತ್ತರಿಸಿದೆ, {date}',
   'AI block': 'AI ಬ್ಲಾಕ್',
+  'Do with AI': 'AI ಮೂಲಕ ಮಾಡಿ',
   'Highlight colour': 'ಹೈಲೈಟ್ ಬಣ್ಣ',
   'A single newline breaks the line': 'ಒಂದೇ ಹೊಸ ಸಾಲು ಸಾಲನ್ನು ಮುರಿಯುತ್ತದೆ',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

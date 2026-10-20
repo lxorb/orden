@@ -1549,6 +1549,7 @@ export const vi: Dictionary = {
   'Ask the model': 'Hỏi mô hình',
   'answered by {model}, {date}': '{model} trả lời, {date}',
   'AI block': 'Khối AI',
+  'Do with AI': 'Làm bằng AI',
   'Highlight colour': 'Màu đánh dấu',
   'A single newline breaks the line': 'Một lần xuống dòng là ngắt dòng',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

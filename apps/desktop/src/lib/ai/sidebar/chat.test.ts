@@ -164,4 +164,18 @@ describe('the panel’s chats', () => {
     expect(deleted).toEqual([`home/${garden.id}`])
     expect(chat.heads.some((one) => one.id === garden.id)).toBe(false)
   })
+
+  test('take a task done with AI as one more, sent in its mode while the open one stays', async () => {
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work', 'home'])
+    const open = chat.thread
+    void chat.startAside('home', 'Book the dentist', 'auto', 'Do this task')
+
+    const task = chat.threadOf(chat.running[0] ?? '')
+    expect([task?.space, task?.title, task?.mode]).toEqual(['home', 'Book the dentist', 'auto'])
+    expect(chat.pending[task?.id ?? '']).toBe('Do this task')
+    expect(chat.thread).toBe(open)
+    await vi.waitFor(() => expect(chat.heads.map((one) => one.title)).toEqual(['Book the dentist']))
+  })
 })

@@ -1530,6 +1530,7 @@ export const zhHans: Dictionary = {
   'Ask the model': '向模型提问',
   'answered by {model}, {date}': '由{model}回答，{date}',
   'AI block': 'AI块',
+  'Do with AI': '用AI完成',
   'Highlight colour': '高亮颜色',
   'A single newline breaks the line': '单个换行符即断行',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':

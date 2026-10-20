@@ -1587,6 +1587,7 @@ export const sw: Dictionary = {
   'Ask the model': 'Uliza modeli',
   'answered by {model}, {date}': 'ilijibiwa na {model}, {date}',
   'AI block': 'Kizuizi cha AI',
+  'Do with AI': 'Fanya kwa AI',
   'Highlight colour': 'Rangi ya angazio',
   'A single newline breaks the line': 'Mstari mpya mmoja huvunja mstari',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
