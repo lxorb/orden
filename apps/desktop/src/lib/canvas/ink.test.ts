@@ -339,6 +339,24 @@ describe('the box a stroke covers', () => {
 
     expect(both).toEqual({ x: 0, y: -20, width: 60, height: 30 })
   })
+
+  /** Samples far apart are drawn as the curve through them, which bows out past
+   *  them. The box has to hold that too: where a stroke is rubbed out, the tiles
+   *  repair its box, and ink outside it stayed on screen until a zoom (#645). */
+  test('holds the curve drawn between samples far apart', () => {
+    const turning = [0, 1, 2, 3, 4, 5].map((at) =>
+      point(Math.cos(at * 0.7) * 100, Math.sin(at * 0.7) * 100, 1),
+    )
+    const fast = stroke(turning, { tool: 'brush', size: 7 })
+    const box = strokeBox(fast)
+
+    for (const one of outlineOf(fast)) {
+      expect(one.x).toBeGreaterThanOrEqual(box.x)
+      expect(one.x).toBeLessThanOrEqual(box.x + box.width)
+      expect(one.y).toBeGreaterThanOrEqual(box.y)
+      expect(one.y).toBeLessThanOrEqual(box.y + box.height)
+    }
+  })
 })
 
 describe('smoothing a stroke', () => {
