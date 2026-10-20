@@ -213,13 +213,29 @@ describe('a form in a note', () => {
 
   test('the answers become a spreadsheet, one column per question', () => {
     const csv = asCsv([
-      { at: 0, answers: { 'Your name': 'Ada', 'What you want to say': 'Hello' } },
-      { at: 1000, answers: { 'Your name': 'Grace' } },
+      { at: 0, path: 'Hello.md', answers: { 'Your name': 'Ada', 'What you want to say': 'Hello' } },
+      { at: 1000, path: 'Hello.md', answers: { 'Your name': 'Grace' } },
     ])
 
-    expect(csv.split('\n')[0]).toBe('"when","Your name","What you want to say"')
-    expect(csv).toContain('"Ada","Hello"')
+    expect(csv.split('\n')[0]).toBe('"when","page","Your name","What you want to say"')
+    expect(csv).toContain('"Hello.md","Ada","Hello"')
     expect(csv).toContain('"Grace",""')
+  })
+
+  test('where an answer is never run as a formula, and a number stays one', () => {
+    const csv = asCsv([
+      { at: 0, path: 'Hello.md', answers: { Name: '=HYPERLINK("http://evil.example","x")' } },
+      { at: 0, path: 'Hello.md', answers: { Name: '@SUM(A1)', Age: '-5' } },
+    ])
+
+    expect(csv).toContain(`"'=HYPERLINK(""http://evil.example"",""x"")"`)
+    expect(csv).toContain(`"'@SUM(A1)","-5"`)
+  })
+
+  test('and a question called page leaves the page column alone', () => {
+    const csv = asCsv([{ at: 0, path: 'Hello.md', answers: { page: 'forged' } }])
+
+    expect(csv).toBe('"when","page","page"\n"1970-01-01T00:00:00.000Z","Hello.md","forged"\n')
   })
 })
 

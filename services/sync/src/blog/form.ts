@@ -39,6 +39,9 @@ const MOST_FIELDS = 20
 const LONGEST_ANSWER = 4000
 const LONGEST_LABEL = 120
 
+/** How a cell starts that a spreadsheet runs as a formula. */
+const FORMULA = /^[=+\-@\t\r]/
+
 type FieldKind = 'text' | 'email' | 'lines' | 'number' | 'choice'
 
 interface Field {
@@ -226,17 +229,27 @@ export function answersFrom(
  *  Written here rather than in the app because the shape of an answer is decided
  *  here, and a second writer of the same file is a second answer to what a
  *  column is called. */
-export function asCsv(rows: readonly { at: number; answers: Record<string, string> }[]): string {
-  const columns = ['when', ...new Set(rows.flatMap((one) => Object.keys(one.answers)))]
+export function asCsv(
+  rows: readonly { at: number; path: string; answers: Record<string, string> }[],
+): string {
+  // The export's own columns go by place rather than by name, so a question
+  // called "page" is a column of its own instead of the page it was asked on.
+  const asked = [...new Set(rows.flatMap((one) => Object.keys(one.answers)))]
 
-  const cell = (said: string) => `"${said.replace(/"/g, '""')}"`
-  const lines = [columns.map(cell).join(',')]
+  // A cell a spreadsheet would run as a formula is written as text, the way
+  // OWASP says to; a number, a negative one too, stays a number.
+  const cell = (said: string) => {
+    const text = FORMULA.test(said) && !Number.isFinite(Number(said)) ? `'${said}` : said
+    return `"${text.replace(/"/g, '""')}"`
+  }
+  const lines = [['when', 'page', ...asked].map(cell).join(',')]
 
   for (const row of rows) {
     lines.push(
       [
         new Date(row.at).toISOString(),
-        ...columns.slice(1).map((column) => row.answers[column] ?? ''),
+        row.path,
+        ...asked.map((column) => row.answers[column] ?? ''),
       ]
         .map(cell)
         .join(','),

@@ -146,12 +146,7 @@ answers.get('/:id/answers.csv', atLeast('owner'), async (context) => {
   const space = spaceOf(context)
   const rows = await rowsFor(context.env, space.id)
 
-  const csv = asCsv(
-    rows.map((row) => {
-      const one = present(row)
-      return { at: one.at, answers: { page: one.path, ...one.answers } }
-    }),
-  )
+  const csv = asCsv(rows.map(present))
 
   return new Response(csv, {
     headers: {
