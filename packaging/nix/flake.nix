@@ -216,28 +216,46 @@
               aarch64-linux = "fa85793519eef199e6b6fa8cc8d6f0eb45c6dac2";
             }
             .${system};
-          cef = pkgs.cef-binary.override {
-            version = "154.0.34";
-            gitRevision = "14c5a08";
-            chromiumVersion = "154.0.8037.98";
-            srcHashes = {
-              x86_64-linux = "sha256-6H4sdjBDct0ouJnOtu+ks1P1JwBZTdw1ioI37AfsZJI=";
-              aarch64-linux = "sha256-RZizUOWkNRnbufHHMuixhDM1ctpTJE/1XMBjADw0xeQ=";
-            };
-          };
+          # nixpkgs packages CEF 151, whose install step points libEGL.so and
+          # libGLESv2.so at their libraries. CEF 154 ships neither any more (ANGLE
+          # is inside libcef.so now), and patchelf fails on the missing files, so
+          # those two lines go; the rest of the step is kept as nixpkgs wrote it.
+          cef =
+            (pkgs.cef-binary.override {
+              version = "154.0.34";
+              gitRevision = "14c5a08";
+              chromiumVersion = "154.0.8037.98";
+              srcHashes = {
+                x86_64-linux = "sha256-6H4sdjBDct0ouJnOtu+ks1P1JwBZTdw1ioI37AfsZJI=";
+                aarch64-linux = "sha256-RZizUOWkNRnbufHHMuixhDM1ctpTJE/1XMBjADw0xeQ=";
+              };
+            }).overrideAttrs
+              (old: {
+                installPhase = pkgs.lib.concatStringsSep "\n" (
+                  builtins.filter (
+                    line: !(pkgs.lib.hasInfix "/libEGL.so" line || pkgs.lib.hasInfix "/libGLESv2.so" line)
+                  ) (pkgs.lib.splitString "\n" old.installPhase)
+                );
+              });
           archive = builtins.toJSON {
             type = "minimal";
             name = "cef_binary_154.0.34+g14c5a08+chromium-154.0.8037.98_${arch}_minimal.tar.bz2";
             inherit sha1;
           };
         in
-        pkgs.runCommand "cef-distribution-154.0.34" { } ''
+        # Two empty libraries under ANGLE's names as well, as scripts/linux-cef.sh lays
+        # out for the other Linux builds: the bundler still copies libEGL.so and
+        # libGLESv2.so by name, and Chromium never opens them with ANGLE linked in.
+        pkgs.runCommandCC "cef-distribution-154.0.34" { } ''
           mkdir -p $out
           for one in ${cef}/Release/* ${cef}/Resources/*; do
             ln -s "$one" "$out/$(basename "$one")"
           done
           for one in CMakeLists.txt cmake include libcef_dll; do
             ln -s "${cef}/$one" "$out/$one"
+          done
+          for angle in libEGL.so libGLESv2.so; do
+            [ -e "$out/$angle" ] || cc -shared -o "$out/$angle" -x c /dev/null
           done
           echo '${archive}' > $out/archive.json
         '';
@@ -468,7 +486,7 @@
               src = workspace;
               pnpm = pkgs.pnpm_10;
               fetcherVersion = 4;
-              hash = "sha256-LUz2LBZRHXa3eToF5qyaLxjza4350N75S1JF4kJYFNQ=";
+              hash = "sha256-3OH5zSUgmuLgwXRe8vXdx7E7T4n5SVMdQvmNDEP2yL8=";
             };
 
             buildInputs = runtimeInputsFor pkgs;
