@@ -4,7 +4,16 @@
  *  note that holds it, and a base's ids written again under a new prefix. Pure but for
  *  the rows handed in. */
 
-import { type Base, idNumber, idText, type Row, type SelectOption, type Value } from '@nib/bases'
+import {
+  type Base,
+  type Context,
+  idNumber,
+  idText,
+  inBase,
+  type Row,
+  type SelectOption,
+  type Value,
+} from '@nib/bases'
 import type { RowChange } from '../rows/write'
 import { bare } from './columns'
 
@@ -54,6 +63,23 @@ export function renamedIn(row: Row, property: string, from: string, to: string):
     return { note: { [key]: value.map((one) => (wordsIn(one).includes(from) ? to : one)) } }
   }
   return wordsIn(value).includes(from) ? { note: { [key]: to } } : null
+}
+
+/** The changes that rename a choice in the notes of one base, and no other: another
+ *  base of the same space may hold a choice of the same words. */
+export function renamedInBase(
+  base: Base,
+  rows: readonly Row[],
+  context: Context,
+  property: string,
+  from: string,
+  to: string,
+): { row: Row; change: RowChange }[] {
+  return rows.flatMap((row) => {
+    if (!inBase(base, row, context)) return []
+    const change = renamedIn(row, property, from, to)
+    return change ? [{ row, change }] : []
+  })
 }
 
 /** The changes that write a base's ids again under a new prefix. */

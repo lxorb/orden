@@ -11,7 +11,7 @@ import { contextFor } from './context'
 import { noteRow } from './fixture'
 import { formatted } from './format'
 import { listItems } from './list-items'
-import { optionsFor, renamedIn, reprefixed, valuesOf } from './options'
+import { optionsFor, renamedIn, renamedInBase, reprefixed, valuesOf } from './options'
 import { parentOf } from './columns'
 
 const TODAY = '2026-10-05'
@@ -95,6 +95,16 @@ describe("a property's choices", () => {
       note: { tags: ['bee', 'c'] },
     })
     expect(renamedIn(done, 'status', 'Doing', 'Busy')).toBeNull()
+  })
+
+  test("renamed in the base's own notes only, not another base's of the same space", () => {
+    const mine = noteRow('Bugs/Crash.md', 'status: Done')
+    const theirs = noteRow('Books/Dune.md', 'status: Done')
+    const space = [mine, theirs]
+    const context = contextFor({ rows: space, today: TODAY, now: `${TODAY}T09:30:00` })
+    expect(renamedInBase(base, space, context, 'note.status', 'Done', 'Shipped')).toEqual([
+      { row: mine, change: { note: { status: 'Shipped' } } },
+    ])
   })
 
   test("a base's ids written again under a new prefix", () => {

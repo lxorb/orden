@@ -2,8 +2,10 @@
  *  which groups, with which summaries.
  *
  *  In the order Bases applies them: the base's filters and the view's, the view's
- *  own search, the sort, the limit, the grouping and a second grouping under it,
- *  then the summaries of each group and of all of it. Groups come in the order the
+ *  own search, the sort, the grouping and a second grouping under it, the limit,
+ *  then the summaries of each group and of all of it. The limit is Notion's load
+ *  limit: it cuts each group after its manual order, so a board's columns each keep
+ *  their first cards instead of the sort's first rows deciding which columns empty. Groups come in the order the
  *  property's options give (empty ones included, so a board keeps a column for a
  *  status nothing has yet), then by value, and the group of rows with no value
  *  last.
@@ -219,7 +221,8 @@ export function compileView(base: Base, which?: string | number): CompiledView {
       }
       return a.at - b.at
     })
-    const limited = view.limit ? kept.slice(0, view.limit) : kept
+    const limit = view.limit && view.limit > 0 ? view.limit : null
+    const cut = <T>(members: T[]): T[] => (limit === null ? members : members.slice(0, limit))
 
     const summaries = (members: readonly { row: Row; facts: RowFacts }[]) => {
       const out: Record<string, Value> = {}
@@ -239,15 +242,17 @@ export function compileView(base: Base, which?: string | number): CompiledView {
       keyOf: (one: RowFacts) => Val,
       by: Sort | undefined,
       inner?: (members: { row: Row; facts: RowFacts }[]) => Group[],
+      top = false,
     ): Group[] => {
-      if (!by)
-        return [
-          {
-            key: null,
-            rows: ordered(members, '').map((one) => one.row),
-            summaries: summaries(members),
-          },
-        ]
+      /** A group's members in its manual order, cut to the limit at the top level. */
+      const cutGroup = (inGroup: { row: Row; facts: RowFacts }[], name: string) => {
+        const sorted = ordered(inGroup, name)
+        return top ? cut(sorted) : sorted
+      }
+      if (!by) {
+        const only = cutGroup(members, '')
+        return [{ key: null, rows: only.map((one) => one.row), summaries: summaries(only) }]
+      }
       const options = optionOrder(base, by.property)
       const groups = new Map<string, { key: Value; members: { row: Row; facts: RowFacts }[] }>()
       for (const option of options) groups.set(option, { key: option, members: [] })
@@ -274,12 +279,13 @@ export function compileView(base: Base, which?: string | number): CompiledView {
           return by.direction === 'DESC' ? -order : order
         })
       return keys.map(({ key, members: inGroup }) => {
+        const only = cutGroup(inGroup, groupName(key))
         const out: Group = {
           key,
-          rows: ordered(inGroup, groupName(key)).map((one) => one.row),
-          summaries: summaries(inGroup),
+          rows: only.map((one) => one.row),
+          summaries: summaries(only),
         }
-        if (inner) out.sub = inner(inGroup)
+        if (inner) out.sub = inner(only)
         return out
       })
     }
@@ -295,11 +301,15 @@ export function compileView(base: Base, which?: string | number): CompiledView {
 
     const subBy = view.nib.subGroupBy
     const groups = grouped(
-      limited,
+      kept,
       (one) => one.group,
       view.groupBy,
       subBy ? (members) => grouped(members, (one) => one.sub, subBy) : undefined,
+      true,
     )
+    if (limit === null) return { groups, total: kept.length, summaries: summaries(kept) }
+    const onScreen = new Set(groups.flatMap((group) => group.rows))
+    const limited = kept.filter((one) => onScreen.has(one.row))
     return { groups, total: limited.length, summaries: summaries(limited) }
   }
 
