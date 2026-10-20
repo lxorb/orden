@@ -123,6 +123,7 @@ export const ms: Dictionary = {
   'Pointing hand on buttons': 'Tangan menuding pada butang',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Tambah tugasan',
+  'Apple Shortcuts': 'Apple Pintasan',
   Tomorrow: 'Esok',
   'done {date}': 'selesai {date}',
   'Next week': 'Minggu depan',

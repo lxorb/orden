@@ -125,6 +125,7 @@ export const am: Dictionary = {
   'Pointing hand on buttons': 'በአዝራሮች ላይ የሚጠቁም እጅ',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'ተግባር አክል',
+  'Apple Shortcuts': 'Apple አቋራጮች',
   Tomorrow: 'ነገ',
   'done {date}': 'ተጠናቋል {date}',
   'Next week': 'የሚቀጥለው ሳምንት',

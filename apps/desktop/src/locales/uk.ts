@@ -129,6 +129,7 @@ export const uk: Dictionary = {
   'Pointing hand on buttons': 'Вказівна рука над кнопками',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Додати завдання',
+  'Apple Shortcuts': 'Apple Швидкі команди',
   Tomorrow: 'Завтра',
   'done {date}': 'виконано {date}',
   'Next week': 'Наступного тижня',

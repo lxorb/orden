@@ -127,6 +127,7 @@ export const ha: Dictionary = {
   'Pointing hand on buttons': 'Hannun nuni a kan maɓallai',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Ƙara aiki',
+  'Apple Shortcuts': 'Apple Gajerun hanyoyi',
   Tomorrow: 'Gobe',
   'done {date}': 'an gama {date}',
   'Next week': 'Mako mai zuwa',

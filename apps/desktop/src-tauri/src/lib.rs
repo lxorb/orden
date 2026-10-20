@@ -173,6 +173,12 @@ mod search;
 mod secrets;
 #[cfg(desktop)]
 mod shell_menu;
+// Settings' Shortcuts row and where a task from Shortcuts goes; see shortcuts.rs.
+#[cfg(desktop)]
+mod shortcuts;
+// The Mac's App Intents for Shortcuts; see siri.rs and swift/AddTask.swift.
+#[cfg(target_os = "macos")]
+mod siri;
 mod space_watch;
 mod spaces;
 // A touchpad's pinch let through to the app's own page on Windows; see pinch.rs.
@@ -494,6 +500,9 @@ macro_rules! desktop_commands {
             package_manager::install_manager,
             app_place::app_stuck,
             app_place::move_to_applications,
+            shortcuts::shortcuts_offered,
+            shortcuts::open_shortcuts,
+            shortcuts::remember_inbox,
             web_tabs::web_open,
             // Chrome and Edge extensions in web tabs; see extensions.rs.
             extensions::extensions_list,

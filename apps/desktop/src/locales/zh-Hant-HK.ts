@@ -123,6 +123,7 @@ export const zhHantHK: Dictionary = {
   'Pointing hand on buttons': '按鈕上顯示手形指標',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': '新增任務',
+  'Apple Shortcuts': 'Apple 捷徑',
   Tomorrow: '明天',
   'done {date}': '{date} 完成',
   'Next week': '下星期',

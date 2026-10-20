@@ -123,6 +123,7 @@ export const zhHans: Dictionary = {
   'Pointing hand on buttons': '按钮上显示手形指针',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': '添加任务',
+  'Apple Shortcuts': 'Apple 快捷指令',
   Tomorrow: '明天',
   'done {date}': '{date} 完成',
   'Next week': '下周',

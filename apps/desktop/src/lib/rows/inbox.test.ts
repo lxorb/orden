@@ -22,22 +22,34 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 const disk = new Map<string, string>()
 
+/** What the crate was told the inbox of the space in front is. */
+const told: string[] = []
+
 vi.mock('../tauri', async (original) => ({
   ...(await original<typeof import('../tauri')>()),
+  isDesktop: true,
+  platform: () => 'macos',
   invoke: (command: string, args?: { path?: string }) => {
+    if (command === 'remember_inbox') {
+      told.push(args?.path ?? '')
+      return Promise.resolve()
+    }
     const held = disk.get(args?.path ?? '')
     if (command === 'read_note' && held !== undefined) return Promise.resolve(held)
     return Promise.reject(new Error('no such note'))
   },
 }))
 
-const { ensureInbox, INBOX, inboxes, inboxOf, setInbox, STORAGE_KEY } = await import('./inbox')
+const { ensureInbox, INBOX, inboxes, inboxOf, rememberInbox, setInbox, STORAGE_KEY } =
+  await import('./inbox')
 
 const ROOT = '/spaces/Work'
 
 beforeEach(() => {
   localStorage.clear()
   disk.clear()
+  told.length = 0
+  rememberInbox(null)
 })
 
 describe('the inbox of a space', () => {
@@ -86,5 +98,25 @@ describe('the inbox of a space', () => {
     disk.set(`${ROOT}/Inbox.md`, '- [ ] already here\n')
     expect(await ensureInbox(ROOT, make)).toBe(`${ROOT}/Inbox.md`)
     expect(made).toEqual([`${ROOT}/Inbox.md`])
+  })
+})
+
+describe('the inbox a task from Shortcuts goes to', () => {
+  test('is the inbox of the space in front, and follows it', () => {
+    rememberInbox(ROOT)
+    expect(told).toEqual([`${ROOT}/${INBOX}`])
+
+    setInbox(ROOT, 'Lists/Todo.md')
+    expect(told.at(-1)).toBe(`${ROOT}/Lists/Todo.md`)
+
+    // Another space's inbox moving says nothing: it is not the one in front.
+    setInbox('/spaces/Home', 'Elsewhere.md')
+    expect(told).toHaveLength(2)
+  })
+
+  test('is not said with no space in front', () => {
+    rememberInbox(null)
+    setInbox(ROOT, 'Lists/Todo.md')
+    expect(told).toEqual([])
   })
 })

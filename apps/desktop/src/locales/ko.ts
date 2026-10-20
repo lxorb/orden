@@ -123,6 +123,7 @@ export const ko: Dictionary = {
   'Pointing hand on buttons': '버튼 위에서 손가락 포인터',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': '할 일 추가',
+  'Apple Shortcuts': 'Apple 단축어',
   Tomorrow: '내일',
   'done {date}': '{date} 완료',
   'Next week': '다음 주',

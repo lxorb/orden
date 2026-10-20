@@ -126,6 +126,7 @@ export const bn: Dictionary = {
   'Pointing hand on buttons': 'বোতামের উপর নির্দেশক হাত',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'কাজ যোগ করুন',
+  'Apple Shortcuts': 'Apple শর্টকাট',
   Tomorrow: 'আগামীকাল',
   'done {date}': 'সম্পন্ন {date}',
   'Next week': 'পরের সপ্তাহ',

@@ -123,6 +123,7 @@ export const vi: Dictionary = {
   'Pointing hand on buttons': 'Bàn tay chỉ trên các nút',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Thêm việc',
+  'Apple Shortcuts': 'Apple Phím tắt',
   Tomorrow: 'Ngày mai',
   'done {date}': 'xong {date}',
   'Next week': 'Tuần sau',

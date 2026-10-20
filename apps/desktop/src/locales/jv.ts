@@ -123,6 +123,7 @@ export const jv: Dictionary = {
   'Pointing hand on buttons': 'Tangan nuding ing tombol',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Tambah tugas',
+  'Apple Shortcuts': 'Apple Trabasan',
   Tomorrow: 'Sesuk',
   'done {date}': 'rampung {date}',
   'Next week': 'Minggu ngarep',

@@ -32,7 +32,9 @@
 //! starts in milliseconds and grows no dependency graph of its own.
 
 mod app;
-mod home;
+// The settings folder found without Tauri, which the Mac's App Intents read too; see
+// siri.rs.
+pub(crate) mod home;
 // The AI sidebar's agent, served from inside the app; see ai_agent.rs.
 pub(crate) mod host;
 mod link;

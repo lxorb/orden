@@ -270,6 +270,10 @@ objc2-ui-kit = { version = "0.3", default-features = false, features = [
 ] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
+# Whether the running app is signed by a developer team, which is when the system lists
+# its App Intents in Shortcuts. Already in the lock file, through keyring and the
+# platform certificate verifier. See src/siri.rs.
+security-framework = "3"
 # The folder a terminal's shell is in, asked of the kernel (`proc_pidinfo`) for the
 # shells that do not say it themselves - zsh, a Mac's own. Already in the lock file, as
 # what portable-pty and tauri build with. See src/terminal/process.rs.

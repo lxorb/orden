@@ -123,6 +123,7 @@ export const th: Dictionary = {
   'Pointing hand on buttons': 'มือชี้บนปุ่ม',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'เพิ่มงาน',
+  'Apple Shortcuts': 'Apple คำสั่งลัด',
   Tomorrow: 'พรุ่งนี้',
   'done {date}': 'เสร็จ {date}',
   'Next week': 'สัปดาห์หน้า',

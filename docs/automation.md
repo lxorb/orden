@@ -210,6 +210,28 @@ could be. The same rectangle copied off the screen is a different picture, which
 difference between photographing a window and photographing whatever is in front of it.
 And the window in front is the same one before and after.
 
+## Shortcuts, on a Mac
+
+One App Intent, Add task, which Shortcuts, Spotlight and the Action button list under
+Orden. It asks for the words and appends `- [ ] <words>` to the inbox of the space in
+front - the note `rememberInbox` (`src/lib/rows/inbox.ts`) last told the crate about,
+kept in `inbox.txt` in the app's config folder - or, where that note is gone, to
+`Inbox.md` of the first space. It runs in the app's own process, which the system
+starts in the background when the app is not open, and writes the file directly: no
+window and no page are involved. `NIB_SPACES_DIR` holds for it as for everything else.
+
+The intent is Swift (`src-tauri/swift/AddTask.swift`), compiled by `build.rs` into an
+object linked into the app, with its metadata written beside it for the bundle. The
+system lists an app's intents only when a developer team signed it, so an ad-hoc build
+has the intent and Shortcuts never shows it; Settings > AI > Access shows its Shortcuts
+row only for a build the crate finds signed by a team (`siri.rs`).
+
+Siri does not run it by voice. On macOS 27 Siri plans with Apple's assistant schemas
+and calls only actions that implement one; "add a task" is the Reminders schema's
+`createReminder`, which asks for a whole reminder model. The phone has no intent yet:
+the Xcode project that would compile it is generated (`tauri ios init`) and nothing in
+it is committed.
+
 ## Agents
 
 An agent (docs/agent-native.md) reaches the window through the same dispatcher, with
@@ -387,3 +409,5 @@ close leaves the app running for ever. Both are `scripts/probe_app.py`.
 | `src/lib/automation/start.ts` | the listeners, and the callbacks |
 | `src/lib/automation/link.ts` | writing a link to what is open |
 | `apps/cli/nib.mjs` | words in a terminal into a request, and the answer printed |
+| `src-tauri/swift/AddTask.swift` | the Mac's Add task intent and its App Shortcut |
+| `src-tauri/src/siri.rs` | where a task from Shortcuts goes, and whether Shortcuts lists the app |

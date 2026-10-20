@@ -127,6 +127,7 @@ export const kn: Dictionary = {
   'Pointing hand on buttons': 'ಬಟನ್‌ಗಳ ಮೇಲೆ ಸೂಚಿಸುವ ಕೈ',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'ಕಾರ್ಯ ಸೇರಿಸಿ',
+  'Apple Shortcuts': 'Apple ಶಾರ್ಟ್‌ಕಟ್‌ಗಳು',
   Tomorrow: 'ನಾಳೆ',
   'done {date}': 'ಮುಗಿದಿದೆ {date}',
   'Next week': 'ಮುಂದಿನ ವಾರ',

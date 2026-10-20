@@ -126,6 +126,7 @@ export const ps: Dictionary = {
   'Pointing hand on buttons': 'په تڼیو باندې اشاره کوونکی لاس',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'دنده ورزيات کړئ',
+  'Apple Shortcuts': 'Apple لنډلارې',
   Tomorrow: 'سبا',
   'done {date}': 'بشپړه {date}',
   'Next week': 'راتلونکې اونۍ',

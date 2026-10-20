@@ -130,6 +130,7 @@ export const ar: Dictionary = {
   'Pointing hand on buttons': 'يد مشيرة فوق الأزرار',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'إضافة مهمة',
+  'Apple Shortcuts': 'Apple الاختصارات',
   Tomorrow: 'غدًا',
   'done {date}': 'أُنجزت {date}',
   'Next week': 'الأسبوع القادم',

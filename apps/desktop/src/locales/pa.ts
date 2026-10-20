@@ -126,6 +126,7 @@ export const pa: Dictionary = {
   'Pointing hand on buttons': 'ਬਟਨਾਂ ਉੱਤੇ ਇਸ਼ਾਰਾ ਕਰਦਾ ਹੱਥ',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'ਕੰਮ ਜੋੜੋ',
+  'Apple Shortcuts': 'Apple ਸ਼ਾਰਟਕੱਟ',
   Tomorrow: 'ਭਲਕੇ',
   'done {date}': 'ਪੂਰਾ {date}',
   'Next week': 'ਅਗਲੇ ਹਫ਼ਤੇ',
