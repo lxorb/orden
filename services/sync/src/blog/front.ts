@@ -93,12 +93,12 @@ function cleanSlug(value: string): string {
     .trim()
     .toLowerCase()
     .replace(/\\/g, '/')
-    .replace(/[^a-z0-9/_-]+/g, '-')
+    .replace(/[^\p{L}\p{M}\p{N}/_-]+/gu, '-')
     .split('/')
     .map((part) => part.replace(/^-+|-+$/g, ''))
     .filter((part) => part && part !== '.' && part !== '..')
 
-  return parts.join('/').slice(0, LONGEST_PATH)
+  return parts.join('/').normalize('NFC').slice(0, LONGEST_PATH)
 }
 
 function text(value: string | null, longest = LONGEST_TEXT): string | undefined {
