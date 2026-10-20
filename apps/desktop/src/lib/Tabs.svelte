@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onDestroy, onMount, untrack } from 'svelte'
+  import { onDestroy, onMount, tick, untrack } from 'svelte'
   import { fade } from 'svelte/transition'
   import { quintOut } from 'svelte/easing'
   import { agentMarks } from './agent-marks.svelte'
@@ -342,7 +342,16 @@
       )
     }
 
-    void workspace.closeAsking(tab.id)
+    void (by ? workspace.closeAsking(tab.id) : closeByKey(tab.id))
+  }
+
+  /** A tab closed from the keyboard, Delete on it or Enter on its cross, hands the
+   *  keyboard on to the tab in front rather than to nothing as it goes (#523). */
+  async function closeByKey(id: string) {
+    await workspace.closeAsking(id)
+    await tick()
+    if (!workspace.tabs.some((one) => one.id === id))
+      strip?.querySelector<HTMLElement>(`.pick[data-tab="${activeId}"]`)?.focus()
   }
 
   /** What pressed the cross: a click a key sent has no pointer behind it. */
@@ -818,7 +827,7 @@
       quiet: '.shut',
       open: (row) => row.click(),
       peek: (row) => row.click(),
-      remove: (row) => void workspace.closeAsking(row.dataset.tab ?? ''),
+      remove: (row) => void closeByKey(row.dataset.tab ?? ''),
       menu: (row, at) => row.dispatchEvent(at),
     }}
     class:quiet
