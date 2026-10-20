@@ -393,6 +393,7 @@
       <ul
         class="nib-tiles tiles"
         class:is-taking={(landing?.at ?? null) !== null && !tiles.length}
+        class:is-floating={!tiles.length}
         data-bookmark-drop
         aria-label={t('Essentials')}
         onkeydown={(event) => hands?.gridKey(event)}
@@ -501,6 +502,31 @@
 {/if}
 
 <style>
+  /* The empty place for a first tile (#417) stands over the caption under it rather
+     than in front of it, the caption's height, so the rows under a drag that has just
+     begun stay where the pointer found them (#412). */
+  .bookmarks {
+    position: relative;
+  }
+
+  .tiles.is-floating {
+    position: absolute;
+    inset: 0 0 auto;
+    margin-block: 0;
+  }
+
+  .tiles.is-floating .is-empty {
+    height: calc(2 * var(--space-1) + 1lh);
+    font-family: var(--font-ui);
+    font-size: var(--text-xs);
+  }
+
+  .tiles.is-floating + .nib-section,
+  .bookmarks:has(> .is-floating:only-child) + :global(.nib-section) {
+    margin-top: 0;
+    visibility: hidden;
+  }
+
   .list {
     list-style: none;
     margin: 0 0 var(--space-2);
