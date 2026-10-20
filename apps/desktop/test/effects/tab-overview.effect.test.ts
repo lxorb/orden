@@ -2,9 +2,9 @@ import { flushSync, mount, tick, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
 /** Every tab of the space as a card (issue #331), opened from the palette's row or
- *  Ctrl+Alt+Up: one card per tab of every pane, the arrows walk the grid, Enter on one
- *  goes to it, Escape and the key again put it away. In the jsdom project because the
- *  cards are mounted. */
+ *  Ctrl+Alt+Up: one card per tab of every pane, a web tab's with its page, the arrows walk
+ *  the grid, Enter on one goes to it, Escape and the key again put it away. In the jsdom
+ *  project because the cards are mounted. */
 
 /** Svelte plays a transition through the Web Animations API, which jsdom has not got. */
 Element.prototype.animate = () =>
@@ -20,6 +20,7 @@ const { tabOverview } = await import('../../src/lib/surfaces.svelte')
 const { appCommands } = await import('../../src/lib/commands')
 const { overlays } = await import('../../src/lib/overlays')
 const { shortcuts } = await import('../../src/lib/shortcuts.svelte')
+const { pages } = await import('../../src/lib/web-tab/pages.svelte')
 const { workspace } = await import('../../src/lib/workspace.svelte')
 
 let close: () => void
@@ -86,6 +87,17 @@ test('Down and Up walk a row of the grid at a time, and Right a tile', async () 
   expect(document.activeElement).toBe(cards()[3])
   press('ArrowUp')
   expect(document.activeElement).toBe(cards()[1])
+})
+
+test('a web tab’s card shows its page as it was left, and a note’s shows none', async () => {
+  const page = workspace.openPage('https://example.com/') ?? ''
+  // jsdom cannot draw the still, so the photograph itself stands in; see thumb.ts.
+  pages.of(page).shot = 'data:image/png;base64,AA=='
+  await opened()
+
+  await vi.waitFor(() => expect(cards().at(-1)?.querySelector('img')).not.toBe(null))
+  expect(cards().at(-1)?.querySelector('img')?.getAttribute('src')).toBe(pages.of(page).shot)
+  expect(cards()[0]?.querySelector('img')).toBe(null)
 })
 
 test('Escape puts it away and goes nowhere', async () => {
