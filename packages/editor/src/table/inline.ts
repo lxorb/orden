@@ -1,10 +1,5 @@
 import type { SyntaxNode } from '@lezer/common'
-import { GFM, parser } from '@lezer/markdown'
-import { nibMarkdownExtensions } from '../markdown/extensions'
-
-/** The same grammar the document is parsed with, so a cell agrees with the
- *  prose around it rather than having a dialect of its own. */
-const cellParser = parser.configure([GFM, ...nibMarkdownExtensions])
+import { nibMarkdownParser } from '../markdown/extensions'
 
 /** Which inline construct becomes which element. Anything absent keeps its
  *  text and loses only its wrapper, so an unknown node degrades to plain
@@ -46,7 +41,7 @@ export function parseInline(source: string): Inline[] {
   if (!source) return []
 
   // Everything inline sits under a single Paragraph.
-  const top = cellParser.parse(source).topNode
+  const top = nibMarkdownParser.parse(source).topNode
   const paragraph = top.firstChild ?? top
 
   return walk(paragraph, source, paragraph.from, paragraph.to)
