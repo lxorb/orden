@@ -17,7 +17,6 @@
  *  can be moved into are all true only then. */
 
 import { foreignCopy } from '@nib/sync-core/foreign'
-import { account } from './account.svelte'
 import { folderNote, nestedIn } from './folder-notes'
 import { hiddenKinds, type KindName } from './settings.svelte'
 import { kindLabel } from './kind-words'
@@ -105,7 +104,6 @@ export function rowMenu(entry: Entry): MenuEntry[] {
     // copy of: a folder is not one, and a folder with no note has nothing to
     // share. See `shareEntry` and sharing.svelte.ts.
     ...shareEntry(marked.path),
-    ...sendEntry(marked),
     // A copy of the bytes, so a PDF duplicates as a PDF and a row that is a folder
     // as the folder with its note renamed to match; see workspace/copying.ts.
     {
@@ -117,17 +115,6 @@ export function rowMenu(entry: Entry): MenuEntry[] {
     DIVIDER,
     { label: t('Delete'), danger: true, run: () => void removeRow(entry, marked, inside) },
   ]
-}
-
-/** A note sent to a chat the reader picks, where it shows as a live card (docs/chats.md
- *  4.13). A note's row only, with somebody signed in to the account the chats are;
- *  never in the glasses' plugin, which carries no chats. */
-function sendEntry(entry: Entry): MenuEntry[] {
-  if (__EVEN_PLUGIN__ || entry.is_dir || !isMarkdownPath(entry.name) || !account.accountToken) {
-    return []
-  }
-  const run = () => void import('./chats/send').then(({ sendToChat }) => sendToChat(entry.path))
-  return [{ label: t('Send to chat'), run }]
 }
 
 /** A picture in a space as the wallpaper, copied into the app; see lib/wallpaper. */

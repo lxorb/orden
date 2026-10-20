@@ -159,6 +159,15 @@ describe('a note', () => {
   })
 })
 
+describe('a note, with chats to send it to', () => {
+  /** Dragged onto a chat instead (#416); the palette and a selection's menu still send. */
+  test('offers no Send to chat', async () => {
+    const { account } = await import('./account.svelte')
+    Object.defineProperty(account, 'accountToken', { value: 'signed in' })
+    expect(labels(loose)).not.toContain('Send to chat')
+  })
+})
+
 describe('a note that holds notes', () => {
   /** A copy of the folder, with its note renamed to match; see copying.ts. */
   test('is the same menu', () => {

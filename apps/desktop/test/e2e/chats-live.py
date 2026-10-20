@@ -253,8 +253,11 @@ def everywhere(owner: Page, chat: dict[str, str]) -> None:
     owner.evaluate("() => window.nibApp.workspace.showPanel('tree')")
     plan = owner.locator(".row[data-path$='Plan.md']").first
     plan.wait_for(timeout=10_000)
-    plan.click(button="right")
-    owner.get_by_role("menuitem", name="Send to chat").click()
+    # Through the palette: the row's menu leaves sending to a drag (#416).
+    plan.click()
+    owner.keyboard.press("Control+Shift+P")
+    owner.keyboard.type("Send to chat", delay=10)
+    owner.keyboard.press("Enter")
     owner.keyboard.type("Chat", delay=10)
     owner.keyboard.press("Enter")
     came(
