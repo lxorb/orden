@@ -282,6 +282,7 @@ export const ptBR: Dictionary = {
   Tabs: 'Abas',
   'Ctrl+Tab in order of use': 'Ctrl+Tab por ordem de uso',
   'Swipe between pages': 'Passar o dedo entre páginas',
+  'Hardware acceleration': 'Aceleração de hardware',
   'Hidden tabs': 'Abas ocultas',
   'Memory saver': 'Economia de memória',
   Moderate: 'Moderado',

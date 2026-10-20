@@ -284,6 +284,7 @@ export const fr: Dictionary = {
   Tabs: 'Onglets',
   'Ctrl+Tab in order of use': 'Ctrl+Tab dans l’ordre d’utilisation',
   'Swipe between pages': 'Balayer entre les pages',
+  'Hardware acceleration': 'Accélération matérielle',
   'Hidden tabs': 'Onglets masqués',
   'Memory saver': 'Économiseur de mémoire',
   Moderate: 'Modéré',

@@ -278,6 +278,7 @@ export const ms: Dictionary = {
   Tabs: 'Tab',
   'Ctrl+Tab in order of use': 'Ctrl+Tab mengikut urutan penggunaan',
   'Swipe between pages': 'Leret antara halaman',
+  'Hardware acceleration': 'Pecutan perkakasan',
   'Hidden tabs': 'Tab tersembunyi',
   'Memory saver': 'Penjimat memori',
   Moderate: 'Sederhana',

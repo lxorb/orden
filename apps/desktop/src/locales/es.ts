@@ -283,6 +283,7 @@ export const es: Dictionary = {
   Tabs: 'Pestañas',
   'Ctrl+Tab in order of use': 'Ctrl+Tab por orden de uso',
   'Swipe between pages': 'Deslizar entre páginas',
+  'Hardware acceleration': 'Aceleración por hardware',
   'Hidden tabs': 'Pestañas ocultas',
   'Memory saver': 'Ahorro de memoria',
   Moderate: 'Moderado',

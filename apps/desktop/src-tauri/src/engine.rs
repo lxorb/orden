@@ -118,6 +118,17 @@ pub(crate) const BROWSER_ARGS: &str = concat!(
     " --overscroll-history-navigation=0",
 );
 
+/// [`BROWSER_ARGS`], and the switches that keep the engine off the graphics card in a run
+/// where Settings turned hardware acceleration off; see gpu.rs.
+#[cfg(all(windows, not(feature = "cef")))]
+pub(crate) fn browser_args(app: &AppHandle) -> String {
+    if config_dir(app).is_ok_and(|config| !crate::gpu::accelerated(&config)) {
+        format!("{BROWSER_ARGS} {}", crate::gpu::OFF.join(" "))
+    } else {
+        BROWSER_ARGS.to_owned()
+    }
+}
+
 /// Chromium's own swipe between pages, which both of Windows' engines would run beside
 /// nib's: the feature that is its touchpad half, and the switch, with its value, that is
 /// the whole of it. Written into [`BROWSER_ARGS`] for `WebView2` and handed to nib's own
@@ -183,6 +194,13 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
             .is_some_and(crate::agents::engines::cef::windowless_wanted)
         {
             engine = engine.with_settings(|settings| settings.windowless_rendering_enabled = 1);
+        }
+        // Off the graphics card where Settings turned hardware acceleration off; see gpu.rs.
+        if root
+            .parent()
+            .is_some_and(|config| !crate::gpu::accelerated(config))
+        {
+            engine = engine.command_line_args(crate::gpu::OFF.map(|switch| (switch, None::<&str>)));
         }
         engine = engine.root_cache_path(root);
     }
@@ -283,7 +301,7 @@ pub(crate) fn web_store<R: Runtime>(
     // extensions.rs.
     #[cfg(windows)]
     let builder = builder
-        .additional_browser_args(BROWSER_ARGS)
+        .additional_browser_args(&browser_args(app))
         .browser_extensions_enabled(crate::extensions::in_store(store));
 
     #[cfg(any(windows, target_os = "linux"))]
@@ -394,7 +412,7 @@ pub(crate) fn ui_window<'a, M: tauri::Manager<crate::Engine>>(
     let building =
         tauri::WebviewWindowBuilder::from_config(manager, config)?.devtools(cfg!(debug_assertions));
     #[cfg(all(windows, not(feature = "cef")))]
-    let building = building.additional_browser_args(BROWSER_ARGS);
+    let building = building.additional_browser_args(&browser_args(manager.app_handle()));
     // On CEF, Alloy style: a page and nothing of Chrome's around it, as `WebView2` and
     // `WKWebView` are. A Chrome style browser keeps Chrome's whole accelerator table,
     // which takes Ctrl+Tab, Ctrl+W, Ctrl+T and Ctrl+N before the page is offered them -

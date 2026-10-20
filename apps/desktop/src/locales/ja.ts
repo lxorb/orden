@@ -277,6 +277,7 @@ export const ja: Dictionary = {
   Tabs: 'タブ',
   'Ctrl+Tab in order of use': 'Ctrl+Tab を使用順にする',
   'Swipe between pages': 'ページ間をスワイプ',
+  'Hardware acceleration': 'ハードウェア アクセラレーション',
   'Hidden tabs': '非表示のタブ',
   'Memory saver': 'メモリセーバー',
   Moderate: '控えめ',

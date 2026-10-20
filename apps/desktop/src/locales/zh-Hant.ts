@@ -277,6 +277,7 @@ export const zhHant: Dictionary = {
   Tabs: '分頁',
   'Ctrl+Tab in order of use': 'Ctrl+Tab 依使用順序',
   'Swipe between pages': '在頁面之間滑動',
+  'Hardware acceleration': '硬體加速',
   'Hidden tabs': '隱藏的分頁',
   'Memory saver': '記憶體節省',
   Moderate: '適中',

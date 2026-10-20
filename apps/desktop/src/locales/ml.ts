@@ -283,6 +283,7 @@ export const ml: Dictionary = {
   Tabs: 'ടാബുകൾ',
   'Ctrl+Tab in order of use': 'ഉപയോഗിച്ച ക്രമത്തിൽ Ctrl+Tab',
   'Swipe between pages': 'പേജുകൾക്കിടയിൽ സ്വൈപ്പ് ചെയ്യുക',
+  'Hardware acceleration': 'ഹാർഡ്‌വെയർ ആക്സിലറേഷൻ',
   'Hidden tabs': 'മറഞ്ഞിരിക്കുന്ന ടാബുകൾ',
   'Memory saver': 'മെമ്മറി സേവർ',
   Moderate: 'മിതമായ',

@@ -281,6 +281,7 @@ export const te: Dictionary = {
   Tabs: 'ట్యాబ్‌లు',
   'Ctrl+Tab in order of use': 'ఉపయోగించిన క్రమంలో Ctrl+Tab',
   'Swipe between pages': 'పేజీల మధ్య స్వైప్ చేయండి',
+  'Hardware acceleration': 'హార్డ్‌వేర్ యాక్సిలరేషన్',
   'Hidden tabs': 'దాచిన ట్యాబ్‌లు',
   'Memory saver': 'మెమరీ సేవర్',
   Moderate: 'మధ్యస్థం',

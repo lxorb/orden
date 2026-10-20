@@ -283,6 +283,7 @@ export const pl: Dictionary = {
   Tabs: 'Karty',
   'Ctrl+Tab in order of use': 'Ctrl+Tab według ostatniego użycia',
   'Swipe between pages': 'Przesuwanie między stronami',
+  'Hardware acceleration': 'Akceleracja sprzętowa',
   'Hidden tabs': 'Ukryte karty',
   'Memory saver': 'Oszczędzanie pamięci',
   Moderate: 'Umiarkowany',

@@ -280,6 +280,7 @@ export const hi: Dictionary = {
   Tabs: 'टैब',
   'Ctrl+Tab in order of use': 'उपयोग के क्रम में Ctrl+Tab',
   'Swipe between pages': 'पेजों के बीच स्वाइप करें',
+  'Hardware acceleration': 'हार्डवेयर एक्सेलरेशन',
   'Hidden tabs': 'छिपे हुए टैब',
   'Memory saver': 'मेमोरी सेवर',
   Moderate: 'मध्यम',

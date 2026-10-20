@@ -284,6 +284,7 @@ export const ar: Dictionary = {
   Tabs: 'التبويبات',
   'Ctrl+Tab in order of use': 'Ctrl+Tab حسب ترتيب الاستخدام',
   'Swipe between pages': 'التمرير بين الصفحات',
+  'Hardware acceleration': 'تسريع الأجهزة',
   'Hidden tabs': 'التبويبات المخفية',
   'Memory saver': 'توفير الذاكرة',
   Moderate: 'معتدل',

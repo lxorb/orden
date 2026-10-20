@@ -281,6 +281,7 @@ export const tr: Dictionary = {
   Tabs: 'Sekmeler',
   'Ctrl+Tab in order of use': 'Kullanım sırasına göre Ctrl+Tab',
   'Swipe between pages': 'Sayfalar arasında kaydır',
+  'Hardware acceleration': 'Donanım hızlandırma',
   'Hidden tabs': 'Gizli sekmeler',
   'Memory saver': 'Bellek tasarrufu',
   Moderate: 'Orta',

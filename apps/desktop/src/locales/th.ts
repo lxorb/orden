@@ -277,6 +277,7 @@ export const th: Dictionary = {
   Tabs: 'แท็บ',
   'Ctrl+Tab in order of use': 'Ctrl+Tab ตามลำดับการใช้งาน',
   'Swipe between pages': 'ปัดระหว่างหน้า',
+  'Hardware acceleration': 'การเร่งด้วยฮาร์ดแวร์',
   'Hidden tabs': 'แท็บที่ซ่อนอยู่',
   'Memory saver': 'ประหยัดหน่วยความจำ',
   Moderate: 'ปานกลาง',

@@ -154,13 +154,13 @@ export async function discard() {
  *  On Windows the installer takes the app down itself, so the relaunch below is
  *  only reached on the platforms where it does not. What a close would write is
  *  written and waited for first, as a close waits; see start.ts. */
-export async function restartToUpdate() {
+export async function restartToUpdate(install = true) {
   // What runs stops with the restart, and is asked about first; see lib/quitting.
   if (!__EVEN_PLUGIN__ && !(await (await import('./quitting/ask')).mayStop('restart'))) return
   settleUp()
   await Promise.race([written(), waited(GIVE_UP)])
   // Not on a failed install, which would start the same version again.
-  if (!(await installStaged())) return
+  if (install && !(await installStaged())) return
 
   try {
     const { relaunch } = await import('@tauri-apps/plugin-process')

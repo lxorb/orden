@@ -283,6 +283,7 @@ export const ru: Dictionary = {
   Tabs: 'Вкладки',
   'Ctrl+Tab in order of use': 'Ctrl+Tab в порядке использования',
   'Swipe between pages': 'Смахивание между страницами',
+  'Hardware acceleration': 'Аппаратное ускорение',
   'Hidden tabs': 'Скрытые вкладки',
   'Memory saver': 'Экономия памяти',
   Moderate: 'Умеренный',

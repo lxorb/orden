@@ -282,6 +282,7 @@ export const fil: Dictionary = {
   Tabs: 'Mga tab',
   'Ctrl+Tab in order of use': 'Ctrl+Tab ayon sa pagkakagamit',
   'Swipe between pages': 'Mag-swipe sa pagitan ng mga pahina',
+  'Hardware acceleration': 'Pagpapabilis ng hardware',
   'Hidden tabs': 'Mga nakatagong tab',
   'Memory saver': 'Pagtitipid sa memory',
   Moderate: 'Katamtaman',

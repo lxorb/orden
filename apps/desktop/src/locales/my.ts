@@ -278,6 +278,7 @@ export const my: Dictionary = {
   Tabs: 'တဘ်များ',
   'Ctrl+Tab in order of use': 'သုံးခဲ့သည့်အစဉ်အတိုင်း Ctrl+Tab',
   'Swipe between pages': 'စာမျက်နှာများကြား ပွတ်ဆွဲရန်',
+  'Hardware acceleration': 'ဟာ့ဒ်ဝဲ အရှိန်မြှင့်ခြင်း',
   'Hidden tabs': 'ဝှက်ထားသော တဘ်များ',
   'Memory saver': 'မှတ်ဉာဏ် ချွေတာခြင်း',
   Moderate: 'အလယ်အလတ်',

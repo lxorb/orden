@@ -282,6 +282,7 @@ export const sw: Dictionary = {
   Tabs: 'Vichupo',
   'Ctrl+Tab in order of use': 'Ctrl+Tab kwa mpangilio wa matumizi',
   'Swipe between pages': 'Telezesha kati ya kurasa',
+  'Hardware acceleration': 'Uongezaji kasi wa maunzi',
   'Hidden tabs': 'Vichupo vilivyofichwa',
   'Memory saver': 'Kiokoa kumbukumbu',
   Moderate: 'Wastani',

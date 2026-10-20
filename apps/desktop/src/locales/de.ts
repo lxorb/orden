@@ -282,6 +282,7 @@ export const de: Dictionary = {
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Strg+Tab in Nutzungsreihenfolge',
   'Swipe between pages': 'Zwischen Seiten wischen',
+  'Hardware acceleration': 'Hardwarebeschleunigung',
   'Hidden tabs': 'Versteckte Tabs',
   'Memory saver': 'Arbeitsspeicher sparen',
   Moderate: 'Moderat',

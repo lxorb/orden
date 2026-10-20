@@ -283,6 +283,7 @@ export const uk: Dictionary = {
   Tabs: 'Вкладки',
   'Ctrl+Tab in order of use': 'Ctrl+Tab у порядку використання',
   'Swipe between pages': 'Гортання між сторінками',
+  'Hardware acceleration': 'Апаратне прискорення',
   'Hidden tabs': 'Приховані вкладки',
   'Memory saver': 'Економія пам’яті',
   Moderate: 'Помірний',

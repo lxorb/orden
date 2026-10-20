@@ -280,6 +280,7 @@ export const fa: Dictionary = {
   Tabs: 'زبانه‌ها',
   'Ctrl+Tab in order of use': 'Ctrl+Tab به ترتیب استفاده',
   'Swipe between pages': 'کشیدن بین صفحه‌ها',
+  'Hardware acceleration': 'شتاب‌دهی سخت‌افزاری',
   'Hidden tabs': 'زبانه‌های پنهان',
   'Memory saver': 'صرفه‌جویی در حافظه',
   Moderate: 'متوسط',

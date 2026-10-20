@@ -281,6 +281,7 @@ export const ta: Dictionary = {
   Tabs: 'தாவல்கள்',
   'Ctrl+Tab in order of use': 'பயன்பாட்டு வரிசையில் Ctrl+Tab',
   'Swipe between pages': 'பக்கங்களுக்கு இடையே ஸ்வைப் செய்',
+  'Hardware acceleration': 'வன்பொருள் முடுக்கம்',
   'Hidden tabs': 'மறைந்த தாவல்கள்',
   'Memory saver': 'நினைவகச் சேமிப்பு',
   Moderate: 'மிதமான',

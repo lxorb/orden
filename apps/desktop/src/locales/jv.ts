@@ -277,6 +277,7 @@ export const jv: Dictionary = {
   Tabs: 'Tab',
   'Ctrl+Tab in order of use': 'Ctrl+Tab miturut urutan panganggone',
   'Swipe between pages': 'Usap ing antarane kaca',
+  'Hardware acceleration': 'Akselerasi hardware',
   'Hidden tabs': 'Tab sing didhelikake',
   'Memory saver': 'Penghemat memori',
   Moderate: 'Sedheng',
