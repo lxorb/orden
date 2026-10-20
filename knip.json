@@ -39,7 +39,7 @@
       "ignoreDependencies": ["katex", "axe-core"]
     },
     "apps/cli": {
-      "ignoreBinaries": ["screencapture"]
+      "ignoreBinaries": ["screencapture", "osascript"]
     },
     "services/sync": {
       "entry": ["src/machines/entry.ts"],

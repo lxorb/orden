@@ -211,11 +211,7 @@ export async function replaceInNotes(
     if (wrote) done.push(wrote)
   }
 
-<<<<<<< HEAD
-  if (keeping.undoable !== false) ws.undone.record({ kind: 'replace', notes: done })
-=======
-  if (done.length) ws.undone.record({ kind: 'replace', notes: done })
->>>>>>> refs/pr/531
+  if (done.length && keeping.undoable !== false) ws.undone.record({ kind: 'replace', notes: done })
   await ws.loadTree()
   ws.persist()
 
