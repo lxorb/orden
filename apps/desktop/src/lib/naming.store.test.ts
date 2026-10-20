@@ -457,6 +457,28 @@ describe('making a canvas', () => {
   })
 })
 
+describe('opening a canvas whose file is not JSON', () => {
+  // A stray comma after a hand edit. The file is there, so it is refused the way a file
+  // that is there and will not read is: an empty plane drawn over it would be the first
+  // write, and that write would be the end of what the file held (#534).
+  test('opens nothing, says so, and leaves the file as it was', async () => {
+    const words = '{"nodes":[{"id":"a","type":"text","text":"precious"}],"edges":[],}'
+    files.set('/space/Board.canvas', words)
+
+    await workspace.openCanvas('/space/Board.canvas')
+    expect(workspace.tabs).toEqual([])
+    expect(unread.shown).toBe(true)
+    expect(files.get('/space/Board.canvas')).toBe(words)
+  })
+
+  test('but a file with nothing in it, or only blank lines, is a new plane', async () => {
+    files.set('/space/Blank.canvas', ' \n')
+
+    await workspace.openCanvas('/space/Blank.canvas')
+    expect(workspace.active?.kind).toBe('canvas')
+  })
+})
+
 describe('renaming a row that exists', () => {
   test('moves the file and closes the field', async () => {
     workspace.startRenaming('/space/Beta.md')

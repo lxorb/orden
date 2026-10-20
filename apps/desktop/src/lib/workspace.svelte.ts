@@ -1877,7 +1877,10 @@ class Workspace {
     // and it is not going in it - see test/weight.test.ts. `parseAhead` says why
     // this is not a worker.
     const { parseAhead } = await import('./canvas/format')
-    parseAhead(text)
+    // Text that is not a canvas will not read either: a stray comma or a truncated
+    // save, and a plane drawn over it would take the file with it. Blank text is a
+    // new plane.
+    if (!parseAhead(text)) return unread(path).then(() => null)
     await nextTask()
 
     const file = this.document({
