@@ -130,8 +130,9 @@ describe('reading the press', () => {
   })
 })
 
-/** The welcome note's last line, which opens Settings > Import rather than leaving the
- *  app for a scheme nobody else answers. See welcome.ts. */
+/** The last line of a welcome note seeded 2026-10-13 to 2026-10-20, which opens
+ *  Settings > Import rather than leaving the app for a scheme nobody else answers.
+ *  See welcome.ts. */
 describe('a link to a settings pane', () => {
   test('opens Import, however it is spelled', () => {
     expect(settingsPane('nib://settings/import')).toBe('import')
