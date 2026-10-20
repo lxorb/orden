@@ -166,6 +166,18 @@ describe('a change', () => {
     expect(writeTask('- a', { due: '2026-10-06' })).toEqual([])
   })
 
+  test('of the words of a line with none stands a blank from the box and the fields', () => {
+    expect(changedTask('- [ ] #work', { text: 'Call Bob' })).toBe('- [ ] Call Bob #work')
+    expect(changedTask('- [ ] 📅 2026-10-06', { text: 'Call Bob' })).toBe(
+      '- [ ] Call Bob 📅 2026-10-06',
+    )
+    expect(changedTask('- [ ]', { text: 'Call Bob' })).toBe('- [ ] Call Bob')
+    expect(readTask(changedTask('- [ ] #work', { text: 'Call Bob' }))).toMatchObject({
+      text: 'Call Bob',
+      tags: ['work'],
+    })
+  })
+
   test('keeps every Tasks field readable: nib fields never land after its fields', () => {
     const line = changedTask('- [ ] a ⏫ 📅 2026-10-06', { remind: [{ before: 15 }], tags: ['x'] })
     expect(line).toBe('- [ ] a [remind:: 15m] #x ⏫ 📅 2026-10-06')

@@ -235,11 +235,12 @@ export function writeTask(line: string, change: TaskChange): TextEdit[] {
     const kept = inline
       .filter((token) => !touches(change, token))
       .map((token) => line.slice(token.from, token.to))
-    edits.push({
-      from: parsed.wordsFrom,
-      to: parsed.wordsTo,
-      insert: [change.text, ...kept].filter((part) => part !== '').join(' '),
-    })
+    const words = [change.text, ...kept].filter((part) => part !== '').join(' ')
+    // Words where there were none stand between the box and a field, a blank apart
+    // from each.
+    const open = words !== '' && /\S/.test(line.charAt(parsed.wordsFrom - 1)) ? ' ' : ''
+    const close = words !== '' && /\S/.test(line.charAt(parsed.wordsTo)) ? ' ' : ''
+    edits.push({ from: parsed.wordsFrom, to: parsed.wordsTo, insert: open + words + close })
     for (const token of inline) gone.add(token)
   }
 

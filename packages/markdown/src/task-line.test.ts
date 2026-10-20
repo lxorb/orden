@@ -166,6 +166,21 @@ describe('a task line read the way the Tasks plugin reads it', () => {
     })
   })
 
+  test('reads a reminder, a priority and dependencies among the words like a date', () => {
+    const task = readTask('- [ ] call mom [remind:: 15m] tomorrow [time:: 10:00] 🛫 2026-10-06')
+    expect(task).toMatchObject({ text: 'call mom tomorrow', remind: [{ before: 15 }], fields: {} })
+    expect(readTask('- [ ] a [priority:: high] b')).toMatchObject({ priority: 2, fields: {} })
+    expect(readTask('- [ ] a [dependsOn:: x1, y2] b')).toMatchObject({
+      dependsOn: ['x1', 'y2'],
+      fields: {},
+    })
+    // The one at the end is the one read, as for any field written twice.
+    expect(readTask('- [ ] a [remind:: 1h] b [remind:: 15m]')).toMatchObject({
+      remind: [{ before: 15 }],
+      fields: { remind: '1h' },
+    })
+  })
+
   test('keeps a value a field cannot hold as an unknown field', () => {
     const task = readTask('- [ ] a [due:: someday]')
     expect(task?.due).toBeUndefined()
