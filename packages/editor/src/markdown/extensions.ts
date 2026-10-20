@@ -1,3 +1,4 @@
+import { GFM, parser } from '@lezer/markdown'
 import {
   Abbreviation,
   BlockMath,
@@ -38,3 +39,8 @@ export const nibMarkdownExtensions = [
   Abbreviation,
   FencedCode,
 ]
+
+/** The same grammar the document is parsed with, for reading markdown outside an
+ *  editor - a table cell, a note being tidied - so it agrees with the prose around it
+ *  rather than having a dialect of its own. */
+export const nibMarkdownParser = parser.configure([GFM, ...nibMarkdownExtensions])

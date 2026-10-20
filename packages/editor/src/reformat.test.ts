@@ -75,4 +75,24 @@ describe('tidying a document', () => {
   test('does not disturb prose containing a pipe', () => {
     expect(reformat('a | b is not a table\n')).toBe('a | b is not a table\n')
   })
+
+  test('leaves inline code as written and tidies around it', () => {
+    expect(reformat('`x = _a_ + 1`\n')).toBe('`x = _a_ + 1`\n')
+    expect(reformat('* _a_ `_b_` _c_\n')).toBe('- *a* `_b_` *c*\n')
+  })
+
+  test('leaves indented code as written', () => {
+    const source = 'text\n\n    * not a list\n\n\n    _still code_\n'
+    expect(reformat(source)).toBe(source)
+  })
+
+  test('leaves maths as written', () => {
+    expect(reformat('$$\n_a_ + __b__\n$$\n')).toBe('$$\n_a_ + __b__\n$$\n')
+    expect(reformat('_a_ and $_b_$\n')).toBe('*a* and $_b_$\n')
+  })
+
+  test('leaves an HTML comment as written', () => {
+    const source = '<!--\n* keep\n\n\n_x_\n-->\n'
+    expect(reformat(source)).toBe(source)
+  })
 })

@@ -808,8 +808,11 @@ function holds(tail: string): boolean {
  *  logged and passed over rather than undoing the rename (`retarget` in
  *  link-index.svelte.ts, which now imports log.ts), and a PDF already moved into its
  *  page note is never thrown away with it (pages/from-pdf.ts). Measured 3,256,522 on
- *  unstable with #524 and #538 beside it. */
-const BUDGET = 3_257_000
+ *  unstable with #524 and #538 beside it.
+ *
+ *  Raised 2026-10-20, to 3,260,000, for #510: tidying a note leaves its code, maths and
+ *  HTML as written, so reformat.ts reads the note's syntax tree. Measured 3,259,084. */
+const BUDGET = 3_260_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
