@@ -266,25 +266,29 @@ async function endpoint() {
  *  and it raises nothing: a screenshot must not take the keyboard off whatever somebody
  *  is typing in.
  *
- *  macOS is handed the rectangle. Linux is told the truth: X11 and Wayland have no one
- *  tool between them, so there is nothing honest to shell out to. */
+ *  macOS is handed the same pid, and `screencapture -l` the number of that process's
+ *  window, which it draws on its own: copying the rectangle off the screen put whatever
+ *  was in front of the window into the picture, a system dialog or another app's
+ *  window over a corner. Linux is told the truth: X11 and Wayland have no one tool
+ *  between them, so there is nothing honest to shell out to. */
 async function screenshot(asked) {
   const out = asked.out ?? join(tmpdir(), 'nib-window.png')
   const rect = await ask('window', {}, [])
   if (!rect.ok) return show(rect, asked)
+
+  // A pid or nothing. The window is found by pid and never by name, because a name once
+  // matched another application's window entirely; an endpoint file with no pid in it
+  // is an app too old to say which window is its own.
+  const byPid = platform() === 'win32' || platform() === 'darwin'
+  const { pid } = byPid ? await endpoint() : {}
+  if (byPid && !pid)
+    throw new Error('this app did not say which process it is, so it cannot be photographed')
 
   if (platform() === 'win32') {
     const script = resolve(
       dirname(fileURLToPath(import.meta.url)),
       '../../scripts/capture-window.ps1',
     )
-    const { pid } = await endpoint()
-    // A pid or nothing. The script photographs a window by pid and refuses a name,
-    // because a name once matched another application's window entirely; an endpoint
-    // file with no pid in it is an app too old to say which window is its own.
-    if (!pid)
-      throw new Error('this app did not say which process it is, so it cannot be photographed')
-
     const ran = spawnSync(
       'powershell',
       [
@@ -302,11 +306,9 @@ async function screenshot(asked) {
     )
     if (ran.status !== 0) throw new Error(ran.stderr.trim() || 'the capture failed')
   } else if (platform() === 'darwin') {
-    const { x, y, width, height, scale } = rect.value
-    const points = [x / scale, y / scale, width / scale, height / scale].map(Math.round)
-    const ran = spawnSync('screencapture', ['-x', `-R${points.join(',')}`, out], {
-      encoding: 'utf8',
-    })
+    const id = macWindow(pid, rect.value)
+    // `-o` leaves the shadow out, so the picture is the window's own size.
+    const ran = spawnSync('screencapture', ['-x', '-o', `-l${id}`, out], { encoding: 'utf8' })
     if (ran.status !== 0) throw new Error(ran.stderr.trim() || 'the capture failed')
   } else {
     throw new Error(
@@ -315,6 +317,32 @@ async function screenshot(asked) {
   }
 
   return show({ ok: true, value: { file: out, ...rect.value } }, asked)
+}
+
+/** The window server's number for the window of `pid` that is where the app said its
+ *  window is, in points: the process has a few windows nobody sees besides the one it
+ *  draws in. Asked of CoreGraphics through JavaScript for Automation, which every Mac
+ *  has, so the command line still needs nothing installed. */
+const MAC_WINDOWS = `ObjC.import('CoreGraphics')
+function run(argv) {
+  const all = ObjC.deepUnwrap(ObjC.castRefToObject($.CGWindowListCopyWindowInfo($.kCGWindowListOptionOnScreenOnly, 0)))
+  return JSON.stringify(all.filter((one) => one.kCGWindowOwnerPID === Number(argv[0]) && one.kCGWindowLayer === 0)
+    .map((one) => ({ id: one.kCGWindowNumber, ...one.kCGWindowBounds })))
+}`
+
+function macWindow(pid, { x, y, width, height, scale }) {
+  const ran = spawnSync('osascript', ['-l', 'JavaScript', '-e', MAC_WINDOWS, String(pid)], {
+    encoding: 'utf8',
+  })
+  if (ran.status !== 0) throw new Error(ran.stderr.trim() || 'could not list the windows')
+
+  const near = (a, b) => Math.abs(a - b / scale) <= 1
+  const found = JSON.parse(ran.stdout).find(
+    (one) => near(one.X, x) && near(one.Y, y) && near(one.Width, width) && near(one.Height, height),
+  )
+  if (!found) throw new Error(`process ${pid} has no window on screen where the app said it is`)
+
+  return found.id
 }
 
 /** What the app said, printed.

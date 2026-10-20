@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, test } from 'vitest'
+import { TAB_KINDS } from './workspace/tab-kinds'
 
 /** What fills a pane is fetched the first time a tab of its kind is in front: a
  *  canvas, a set of pages, a website, the reading view, the buttons of an empty pane. A fetch
@@ -39,5 +40,27 @@ describe('a surface a pane is filled with', () => {
     for (const [, door, body] of SURFACES) {
       expect(body, door).toMatch(/\{:catch\}\s*\{@render unreachable\(\)\}/)
     }
+  })
+})
+
+/** The kinds the pane draws a surface of its own for, by the branches that ask for one. */
+const OWN_SURFACES = [...SOURCE.matchAll(/\{:else if tab\?\.kind === '(\w+)'\}/g)].map(
+  ([, kind]) => kind as keyof typeof TAB_KINDS,
+)
+
+/** A kind with a surface of its own is not the editor, which is what the pane asks
+ *  before it takes a dropped note as a link and before it draws the editor's find bar.
+ *  The chat in a tab was the one left out (#385). */
+describe('a kind with a surface of its own', () => {
+  test('is not the editor, so a note dropped in its middle is not taken as a link', () => {
+    expect(OWN_SURFACES).toContain('channel')
+    for (const kind of OWN_SURFACES) expect(TAB_KINDS[kind].editor, kind).toBe(false)
+    expect(SOURCE).toMatch(/const writing = \$derived\(!!tab && TAB_KINDS\[tab\.kind\]\.editor/)
+    expect(SOURCE).toMatch(/const keepsMiddle = \$derived\(\s*ownSurface \|\| \(writing &&/)
+  })
+
+  test("has no editor's find bar drawn over it", () => {
+    expect(TAB_KINDS.channel.editor).toBe(false)
+    expect(SOURCE).toContain('{#if finding && writing}')
   })
 })

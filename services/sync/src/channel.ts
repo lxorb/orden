@@ -17,6 +17,8 @@
  *  The unstable build talks to this Worker, which is the release's, exactly as the
  *  unstable desktop builds do. See #424. */
 
+import { sameOriginPath } from './hosts'
+
 /** The cookie, its value for the edge, and the parameter that sets it. */
 const CHANNEL_COOKIE = 'orden-channel'
 const UNSTABLE = 'unstable'
@@ -65,7 +67,7 @@ export function switchChannel(request: Request): Response | null {
   return new Response(null, {
     status: 302,
     headers: {
-      location: url.pathname + url.search,
+      location: sameOriginPath(url.pathname) + url.search,
       'set-cookie': cookie,
       'cache-control': 'no-store',
     },

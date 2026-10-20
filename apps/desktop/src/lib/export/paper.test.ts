@@ -54,14 +54,14 @@ function rtfOf(source: string, page: PageSetup) {
   return toRtf(doc, [], paperTwips(pageSetupFor(source, page), doc.title, '2026-09-14'))
 }
 
-/** A4 upright is 8.27 by 11.69 inches, and a twip is a fourteen-hundred-and-fortieth
- *  of one: 11,909 by 16,834. The margin nib defaults to is 20 mm, which is 1134. */
+/** A4 upright is 210 by 297 mm, and a twip is a fourteen-hundred-and-fortieth of an
+ *  inch: 11,906 by 16,838, the numbers Word itself writes for A4. The margin nib defaults to is 20 mm, which is 1134. */
 describe('the paper a Word document goes out on', () => {
   test('is the A4 the app defaults to, not the Letter Word assumes', async () => {
     const page = await docxPage(NOTE, setup())
 
-    expect(page.width).toBe(11909)
-    expect(page.height).toBe(16834)
+    expect(page.width).toBe(11906)
+    expect(page.height).toBe(16838)
     expect(page.orientation).toBe('portrait')
     // Letter is 12240 by 15840, which is what came out before this.
     expect(page.width).not.toBe(12240)
@@ -82,12 +82,12 @@ describe('the paper a Word document goes out on', () => {
       setup({ paper: 'A5', orientation: 'landscape', margin: '33mm' }),
     )
 
-    // A5 upright is 5.83 by 8.27 inches: 8395 by 11909. The sheet is handed over
+    // A5 upright is 148 by 210 mm: 8391 by 11906. The sheet is handed over
     // upright and the writer turns it, so what lands in the package is the page as
     // it is printed - wider than it is tall - with `orient` saying which way it was
     // turned. That is what OOXML asks for.
-    expect(page.width).toBe(11909)
-    expect(page.height).toBe(8395)
+    expect(page.width).toBe(11906)
+    expect(page.height).toBe(8391)
     expect(page.orientation).toBe('landscape')
     expect(page.top).toBe(1871)
   })
@@ -125,7 +125,7 @@ describe('the paper an RTF goes out on', () => {
   test('is the A4 the app defaults to, not the Letter that was written in by hand', () => {
     const rtf = rtfOf(NOTE, setup())
 
-    expect(rtf).toContain('\\paperw11909\\paperh16834')
+    expect(rtf).toContain('\\paperw11906\\paperh16838')
     expect(rtf).toContain('\\margl1134\\margr1134\\margt1134\\margb1134')
     expect(rtf).not.toContain('\\paperw12240\\paperh15840')
     expect(rtf).not.toContain('\\landscape')
@@ -137,7 +137,7 @@ describe('the paper an RTF goes out on', () => {
     // RTF says the sheet as it is printed, so a turned page is the wide way round -
     // which is the other way from Word, where the sheet is upright and `orient` turns
     // it. Each format is written the way that format says it.
-    expect(rtf).toContain('\\paperw11909\\paperh8395')
+    expect(rtf).toContain('\\paperw11906\\paperh8391')
     expect(rtf).toContain('\\landscape')
     expect(rtf).toContain('\\margl1871')
   })
@@ -146,8 +146,8 @@ describe('the paper an RTF goes out on', () => {
     const over = '---\nexport:\n  paper: A3\n  orientation: landscape\n---\n\n# A page\n'
     const rtf = rtfOf(over, setup())
 
-    // A3 upright is 11.69 by 16.54 inches: 16834 by 23818, turned.
-    expect(rtf).toContain('\\paperw23818\\paperh16834')
+    // A3 upright is 297 by 420 mm: 16838 by 23811, turned.
+    expect(rtf).toContain('\\paperw23811\\paperh16838')
     expect(rtf).toContain('\\landscape')
   })
 
@@ -176,8 +176,8 @@ describe('the paper an RTF goes out on', () => {
 describe('the setup as a document writer needs it', () => {
   test('is the sheet upright, its margin, and the running text already filled', () => {
     expect(paperTwips(DEFAULT_PAGE_SETUP, 'A page', '2026-09-14')).toEqual({
-      width: 11909,
-      height: 16834,
+      width: 11906,
+      height: 16838,
       margin: 1134,
       landscape: false,
       header: '',

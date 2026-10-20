@@ -17,14 +17,12 @@
  *  can be moved into are all true only then. */
 
 import { foreignCopy } from '@nib/sync-core/foreign'
-import { account } from './account.svelte'
 import { folderNote, nestedIn } from './folder-notes'
 import { hiddenKinds, type KindName } from './settings.svelte'
 import { kindLabel } from './kind-words'
 import { key, plural, t } from './i18n.svelte'
 import {
   archiveEntry,
-  bookmarkEntry,
   coverEntries,
   DIVIDER,
   iconEntries,
@@ -80,7 +78,13 @@ export function rowMenu(entry: Entry): MenuEntry[] {
     ...compareEntry(entry),
     DIVIDER,
     ...(holds && hiddenKinds.offers('note')
-      ? [{ label: t('New note inside'), run: () => void workspace.createInside(entry.path) }]
+      ? [
+          {
+            label: t('New note inside'),
+            run: () => void workspace.createInside(entry.path),
+            more: () => Promise.resolve(newFileRows(entry.path)),
+          },
+        ]
       : []),
     DIVIDER,
     { label: t('Rename'), run: () => workspace.startRenaming(entry.path) },
@@ -92,7 +96,6 @@ export function rowMenu(entry: Entry): MenuEntry[] {
     // like; see `coverEntries`.
     ...coverEntries(marked.path),
     ...wallpaperEntry(entry),
-    ...bookmarkEntry(workspace.bookmarks.forEntry(marked)),
     ...webDataEntry(entry),
     // Only for a row already left out of search, so nothing stays out with no way
     // back; see `searchAgainEntry`.
@@ -105,7 +108,6 @@ export function rowMenu(entry: Entry): MenuEntry[] {
     // copy of: a folder is not one, and a folder with no note has nothing to
     // share. See `shareEntry` and sharing.svelte.ts.
     ...shareEntry(marked.path),
-    ...sendEntry(marked),
     // A copy of the bytes, so a PDF duplicates as a PDF and a row that is a folder
     // as the folder with its note renamed to match; see workspace/copying.ts.
     {
@@ -117,17 +119,6 @@ export function rowMenu(entry: Entry): MenuEntry[] {
     DIVIDER,
     { label: t('Delete'), danger: true, run: () => void removeRow(entry, marked, inside) },
   ]
-}
-
-/** A note sent to a chat the reader picks, where it shows as a live card (docs/chats.md
- *  4.13). A note's row only, with somebody signed in to the account the chats are;
- *  never in the glasses' plugin, which carries no chats. */
-function sendEntry(entry: Entry): MenuEntry[] {
-  if (__EVEN_PLUGIN__ || entry.is_dir || !isMarkdownPath(entry.name) || !account.accountToken) {
-    return []
-  }
-  const run = () => void import('./chats/send').then(({ sendToChat }) => sendToChat(entry.path))
-  return [{ label: t('Send to chat'), run }]
 }
 
 /** A picture in a space as the wallpaper, copied into the app; see lib/wallpaper. */
@@ -158,7 +149,6 @@ function selectionMenu(entry: Entry): MenuEntry[] | null {
     { label: t('Open all'), run: () => void openAll(paths) },
     DIVIDER,
     ...(viewport.touch ? [{ label: t('Move'), run: () => void moveAllTo(paths) }] : []),
-    ...bookmarkAll(paths),
     ...archiveAll(paths),
     DIVIDER,
     {
@@ -216,9 +206,9 @@ async function openAll(paths: readonly string[]) {
   for (const path of rest) await workspace.openRow(path, howFor('behind'))
 }
 
-/** The selection bookmarked with one press, as a row bookmarks itself: the note a
- *  folder is drawn as where it has one. The word says which way the press goes. A
- *  tab's menu offers the same row for the files its tabs show; see tab-strip/menu.ts. */
+/** The files of the tabs a tab's menu is about, bookmarked with one press: the note a
+ *  folder is drawn as where it has one. The word says which way the press goes; see
+ *  tab-strip/menu.ts. A row of the file list is dragged onto the Essentials (#417). */
 export function bookmarkAll(paths: readonly string[]): MenuEntry[] {
   const marks = paths.flatMap((path) => {
     const entry = entryAt(workspace.tree, path)
@@ -372,20 +362,39 @@ function revealEntry(entry: Entry): MenuEntry[] {
 /** What the file list's own New rows make: a named file, as its row waiting for a name,
  *  of each kind that is a file and that Settings › Note types offers. The new tab's
  *  gesture is the other one, a tab first and a file when saved; see new-kinds.ts. A shell
- *  and a private tab are tabs and never files. */
-const MAKERS: Partial<Record<KindName, () => unknown>> = {
-  note: () => workspace.createNote(),
-  canvas: () => workspace.createCanvas(),
-  pages: () => workspace.createPages(),
-  web: () => workspace.createWebsite(),
+ *  and a private tab are tabs and never files. Given a row, they go inside it, as its
+ *  New note inside does. */
+const MAKERS: Partial<Record<KindName, (folder?: string) => unknown>> = {
+  note: (folder) => workspace.createNote(folder),
+  canvas: (folder) => workspace.createCanvas(folder),
+  pages: (folder) => workspace.createPages(folder),
+  web: (folder) => workspace.createWebsite(folder),
   ...(__EVEN_PLUGIN__
     ? {}
-    : { chat: () => import('./chats/view/open').then(({ makeChat }) => makeChat()) }),
+    : {
+        chat: (folder?: string) =>
+          import('./chats/view/open').then(({ makeChat }) => makeChat(folder)),
+      }),
 }
 
-export function newFileRows(): MenuEntry[] {
-  return hiddenKinds.shown.flatMap((kind) => {
-    const make = MAKERS[kind]
-    return make ? [{ label: kindLabel(kind), run: () => void make() }] : []
-  })
+export function newFileRows(inside?: string): MenuEntry[] {
+  return [
+    ...hiddenKinds.shown.flatMap((kind) => {
+      const make = MAKERS[kind]
+      if (!make) return []
+      const run = inside ? () => void workspace.createInside(inside, make) : () => void make()
+      return [{ label: kindLabel(kind), run }]
+    }),
+    // A folder of notes with a board over them, Notion's database; see new-database.ts.
+    // Not on the glasses, which draw no views. Made at the top level only, since
+    // createDatabase takes no folder.
+    ...(__EVEN_PLUGIN__ || inside
+      ? []
+      : [
+          {
+            label: t('New database'),
+            run: () => void import('./views/new-database').then((one) => one.createDatabase()),
+          },
+        ]),
+  ]
 }

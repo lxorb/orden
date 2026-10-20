@@ -192,11 +192,20 @@ def drive(browser: Browser) -> None:
         until(page, renamed, "a note renamed")
         back_and_forth(page, START, renamed, "a note renamed")
 
-        # Moved into the folder, through Move to.
+        # Moved into the folder, through Move to. A pointer's row menu has no Move since
+        # #303: the palette's Move this note asks where, for the note that is open. The
+        # click opens Plan, whose note takes the keyboard; the row has it back, so the
+        # chord, and the Ctrl+Z after the move, are the list's.
         marked(page)
-        row(page, "Plan.md").click(button="right")
-        entry(page, "Move")
-        picker = page.locator('[role="dialog"] input').first
+        row(page, "Plan.md").click()
+        wait_for(page, "() => !!window.nibApp.workspace.active?.path?.endsWith('/Plan.md')", "Plan open")
+        row(page, "Plan.md").focus()
+        page.keyboard.press("Control+Shift+KeyP")
+        page.wait_for_selector(".palette input")
+        page.keyboard.type("Move this note")
+        page.wait_for_timeout(400)
+        page.keyboard.press("Enter")
+        picker = page.locator('.sheet[role="dialog"] input').first
         picker.wait_for(state="visible", timeout=PATIENCE * 1000)
         picker.fill("Work")
         page.wait_for_timeout(200)

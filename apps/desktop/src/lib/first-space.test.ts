@@ -108,6 +108,16 @@ describe('a fresh start', () => {
     expect(workspace.active?.path).toBe(welcome)
   })
 
+  /** The page the app was opened for is taken while the space is still being made. */
+  test('leaves a page the app was opened with in front, the note behind it', async () => {
+    const starting = firstSpace.start(FRESH)
+    const page = workspace.openPage('https://example.com/', 'front')
+    await starting
+
+    expect(workspace.active?.id).toBe(page)
+    expect(workspace.tabs.map((one) => one.path)).toContain(welcome)
+  })
+
   test('asks nothing, and makes one space however often it is asked at once', async () => {
     await Promise.all([firstSpace.start(FRESH), firstSpace.start(FRESH)])
 
@@ -214,21 +224,18 @@ describe('the welcome note, untouched', () => {
     expect(isUntouchedWelcome(`/spaces/Journal/${WELCOME_NAME}`, `${earlier}mine\n`)).toBe(false)
   })
 
-  /** Every seed before the welcome note linked to Settings > Import was written
-   *  without that line, and is no more the reader's writing for missing it. */
-  test('nor the one written before it linked to Import', () => {
-    const before = WELCOME.replace(
-      '\n[Import from Obsidian or Notion](nib://settings/import)\n',
-      '',
-    )
+  /** The seeds of 2026-10-13 to 2026-10-20 ended in a link to Settings > Import, and
+   *  are no more the reader's writing for it. */
+  test('nor the one that linked to Import', () => {
+    const linked = `${WELCOME}\n[Import from Obsidian or Notion](nib://settings/import)\n`
 
-    expect(before).not.toBe(WELCOME)
-    expect(isUntouchedWelcome(`/spaces/Notes/${WELCOME_NAME}`, before)).toBe(true)
-    expect(isUntouchedWelcome(`/spaces/Notes/${WELCOME_NAME}`, `${before}mine\n`)).toBe(false)
+    expect(isUntouchedWelcome(`/spaces/Notes/${WELCOME_NAME}`, linked)).toBe(true)
+    expect(isUntouchedWelcome(`/spaces/Notes/${WELCOME_NAME}`, `${linked}mine\n`)).toBe(false)
   })
 
-  test('points to Settings > Import, where notes from another app come in', () => {
-    expect(WELCOME).toContain('](nib://settings/import)')
+  /** Issue #322: a newcomer offered imports was offered too much. */
+  test('suggests no import', () => {
+    expect(WELCOME).not.toMatch(/import/i)
   })
 
   test('says nothing about which build it is in', () => {

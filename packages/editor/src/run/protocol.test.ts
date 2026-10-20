@@ -73,6 +73,21 @@ describe('the document the sandbox runs', () => {
     expect(html.indexOf('nib-frame')).toBeLessThan(html.indexOf(`<script>${SCRIPT}`))
   })
 
+  /** In WebKit a frame shares the app's thread, and code that never ended froze the
+   *  app with the timer that was to stop it (#525): the code runs in a worker the frame
+   *  makes, a thread of its own everywhere, which the frame's policy has to allow. */
+  test('runs the code in a worker of its own, which its policy allows', () => {
+    const html = made('while (true) {}')
+    expect(html).toContain('worker-src blob:')
+    expect(programOf(html)).toContain('new Worker(')
+    const runner = /var RUNNER = (".*")\n/.exec(programOf(html) ?? '')?.[1]
+    expect(runner).toBeDefined()
+    const source = JSON.parse((runner ?? '""').replace(/\\u003c/g, '<')) as string
+    // eslint-disable-next-line @typescript-eslint/no-implied-eval -- compiling the worker is how a broken one is caught
+    expect(() => new Function(source)).not.toThrow()
+    expect(source).not.toContain('while (true) {}')
+  })
+
   test('carries the run number, so its output can be told apart', () => {
     expect(made('1', 42)).toContain('var RUN = 42')
   })

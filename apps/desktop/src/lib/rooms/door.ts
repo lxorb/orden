@@ -120,7 +120,12 @@ export class RoomDoor {
     readonly doc: Y.Doc = new Y.Doc(),
     offers: readonly string[] = [],
   ) {
-    this.awareness = new Awareness(this.doc)
+    // On a document of its own under the same client id: the protocol ties an awareness
+    // to its document's destroy with a listener its own destroy() leaves behind, and on
+    // the engine's document, which outlives every room, each of those would stay.
+    const own = new Y.Doc()
+    own.clientID = this.doc.clientID
+    this.awareness = new Awareness(own)
     this.who = opening.who
     this.socket = new RoomSocket(
       opening.noteId,

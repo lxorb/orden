@@ -119,16 +119,14 @@ export function chipsOf(fields: TaskFields, today: string, due: DueReads = 'star
 
 /** The row of chips after a task's words. */
 export class TaskChipsWidget extends NibWidget {
-  constructor(
-    private readonly chips: readonly TaskChip[],
-    /** Where the task's line starts, to find it again when a chip is pressed. */
-    private readonly at: number,
-  ) {
+  /** No place of its own: a chip pressed finds its task by where the row is drawn, so a
+   *  pick lands on that task after the lines above it changed while it was being made. */
+  constructor(private readonly chips: readonly TaskChip[]) {
     super()
   }
 
   override eq(other: TaskChipsWidget) {
-    return other.at === this.at && JSON.stringify(other.chips) === JSON.stringify(this.chips)
+    return JSON.stringify(other.chips) === JSON.stringify(this.chips)
   }
 
   toDOM(view: EditorView) {
@@ -149,7 +147,7 @@ export class TaskChipsWidget extends NibWidget {
       if (!(target instanceof HTMLElement) || !help || view.state.readOnly) return
       // The caret stays where it was: a press on a chip is a pick, not a place to type.
       event.preventDefault()
-      const line = view.state.doc.lineAt(Math.min(this.at, view.state.doc.length))
+      const line = view.state.doc.lineAt(view.posAtDOM(row))
       const parsed = parseTask(line.text)
       if (!parsed) return
       help.pick(
@@ -158,7 +156,9 @@ export class TaskChipsWidget extends NibWidget {
         target.getBoundingClientRect(),
         view.state.facet(noteIndex).dueReads ?? 'start',
         (change) => {
-          const now = view.state.doc.lineAt(Math.min(this.at, view.state.doc.length))
+          // Gone with its task, or with the task taken up to be written: no pick for it.
+          if (!row.isConnected) return
+          const now = view.state.doc.lineAt(view.posAtDOM(row))
           const edits = writeTask(now.text, change)
           if (!edits.length) return
           view.dispatch({

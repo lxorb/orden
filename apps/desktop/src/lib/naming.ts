@@ -27,32 +27,18 @@ import { endingOf } from './note-name'
 export type NameFault = 'empty' | 'separator' | 'illegal' | 'trailing' | 'reserved' | 'taken'
 
 /** Names Windows keeps for devices, whatever the extension is: `NUL.md` names
- *  the device as surely as `NUL`. The crate's own list, said again here because
- *  the field answers between two keystrokes and cannot wait for a round trip to
- *  the one place that has it. */
+ *  the device as surely as `NUL`, and Windows reads the superscripts `¹²³` as
+ *  digits, so `COM¹` is a port as surely as `COM1`. The crate's own list, said
+ *  again here because the field answers between two keystrokes and cannot wait
+ *  for a round trip to the one place that has it. */
 const RESERVED = [
   'CON',
   'PRN',
   'AUX',
   'NUL',
-  'COM1',
-  'COM2',
-  'COM3',
-  'COM4',
-  'COM5',
-  'COM6',
-  'COM7',
-  'COM8',
-  'COM9',
-  'LPT1',
-  'LPT2',
-  'LPT3',
-  'LPT4',
-  'LPT5',
-  'LPT6',
-  'LPT7',
-  'LPT8',
-  'LPT9',
+  'CONIN$',
+  'CONOUT$',
+  ...Array.from('0123456789¹²³', (digit) => [`COM${digit}`, `LPT${digit}`]).flat(),
 ]
 
 /** The characters Windows reserves. The separators are asked about on their own,
@@ -79,9 +65,11 @@ export interface Naming {
 }
 
 /** Whether the name is one of the device names, going by the part in front of
- *  the first dot, which is where Windows looks. */
-function isReserved(name: string): boolean {
-  const stem = name.split('.')[0] ?? name
+ *  the first dot, which is where Windows looks, and without the spaces that part
+ *  ends with, which Windows drops: `CON .md` is `CON.md`. Every module that asks
+ *  asks this, so there is one list in the app to keep beside the crate's. */
+export function isReserved(name: string): boolean {
+  const stem = (name.split('.')[0] ?? name).replace(/ +$/, '')
   return RESERVED.includes(stem.toUpperCase())
 }
 

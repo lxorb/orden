@@ -28,12 +28,14 @@
   import { dur } from '../../motion'
   import { hearAgain } from '../../shortcuts/registry'
   import { shortcuts } from '../../shortcuts.svelte'
+  import { isTreeDrag } from '../../drag-paths'
   import { workspace } from '../../workspace.svelte'
   import { ai } from '../store.svelte'
   import { following, toggleFollow } from '../review'
   import { chat } from './chat.svelte'
   import Composer from './Composer.svelte'
   import Conversation from './Conversation.svelte'
+  import { dropRows } from './drop'
   import { setHost } from './host'
   import { railOpen, rememberRail } from './prefs'
   import { chatToTab } from './reveal'
@@ -144,6 +146,11 @@
   bind:this={root}
   onfocusin={claim}
   onpointerdown={claim}
+  data-chat-drop=""
+  ondragover={(event) => {
+    if (isTreeDrag(event.dataTransfer)) event.preventDefault()
+  }}
+  ondrop={dropRows}
 >
   {#if wide && railed}
     <aside class="shelf" transition:fly={{ x: -12, duration: dur(150), easing: cubicOut }}>

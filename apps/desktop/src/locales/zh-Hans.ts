@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const zhHans: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': '一切就绪',
+  Personalize: '个性化',
+  Clean: '简洁',
+  'Live preview': '实时预览',
+  'Developer mode': '开发者模式',
+  'Do you write code?': '你写代码吗？',
+  Yes: '是',
+  No: '否',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': '从其他应用：{key}',
   'From other apps: set in your system settings': '从其他应用：在系统设置中设定',
@@ -79,6 +88,7 @@ export const zhHans: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': '一个任务',
   'One per line': '每行一个',
+  'Add with AI': '用 AI 添加',
   // Tasks: the projects in the panel
   Favorites: '收藏',
   'Add project': '添加项目',
@@ -122,6 +132,7 @@ export const zhHans: Dictionary = {
   'Pointing hand on buttons': '按钮上显示手形指针',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': '添加任务',
+  'Apple Shortcuts': 'Apple 快捷指令',
   Tomorrow: '明天',
   'done {date}': '{date} 完成',
   'Next week': '下周',
@@ -184,6 +195,7 @@ export const zhHans: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': '用双指旋转画布',
+  'Snap the rotation to right angles': '旋转吸附到直角',
   'Turn upright': '摆正',
   Canvas: '画布',
   Card: '卡片',
@@ -277,6 +289,7 @@ export const zhHans: Dictionary = {
   Tabs: '标签页',
   'Ctrl+Tab in order of use': 'Ctrl+Tab 按使用顺序',
   'Swipe between pages': '在页面之间轻扫',
+  'Hardware acceleration': '硬件加速',
   'Hidden tabs': '隐藏的标签页',
   'Memory saver': '内存节省',
   Moderate: '适中',
@@ -1128,6 +1141,8 @@ export const zhHans: Dictionary = {
   Elbow: '折线',
   Frame: '画框',
   Ungroup: '取消编组',
+  Lock: '锁定',
+  Unlock: '解锁',
   'The ink of the page': '页面的墨迹',
   'Write in what is picked': '在所选中书写',
   Pen: '笔',
@@ -1268,10 +1283,13 @@ export const zhHans: Dictionary = {
     '有{count}段内容已加密，离开Evernote无法读取',
   '{count} notes had a reminder, which the export does not carry':
     '{count}篇笔记设有提醒，导出文件不包含提醒',
+  '{count} attachments were missing from the export or could not be read':
+    '{count} 个附件不在导出文件中或无法读取',
   '{count} notes were in the bin and stay there': '{count}篇笔记在回收站中，仍留在那里',
   '{count} archived notes are in a folder called Archive':
     '{count}篇已归档笔记放在名为Archive的文件夹中',
   'The colours a note had are not kept': '笔记原有的颜色不会保留',
+  '{count} files could not be read, so they were left out': '{count}个文件无法读取，已略过',
   '{count} block references were written out as the words they pointed at':
     '{count}处块引用已写成其指向的文字',
   '{count} saved views are left out, and every row is in the table':
@@ -1296,6 +1314,8 @@ export const zhHans: Dictionary = {
     '{count} 张心情与活动卡片是图画，因此只有文字转入',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} 条笔记加了密码，只有「备忘录」能打开',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} 条笔记加了密码，只有 Bear 能打开',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} 条笔记在「最近删除」中，仍留在那里',
   '{count} drawings and scans have no picture on this Mac':
@@ -1530,6 +1550,7 @@ export const zhHans: Dictionary = {
   'Ask the model': '向模型提问',
   'answered by {model}, {date}': '由{model}回答，{date}',
   'AI block': 'AI块',
+  'Do with AI': '用AI完成',
   'Highlight colour': '高亮颜色',
   'A single newline breaks the line': '单个换行符即断行',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -1843,6 +1864,8 @@ export const zhHans: Dictionary = {
   'Settings › AI': '设置 › AI',
   'New chat': '新对话',
   'Ask again': '再问一次',
+  'Continue when the limit resets': '上限恢复后继续',
+  'Continues at {time}': '{time} 继续',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': '随便问，@ 添加，/ 更多',
   'What can I help with?': '有什么可以帮忙的？',
@@ -2305,4 +2328,29 @@ export const zhHans: Dictionary = {
   Peach: '蜜桃',
   Sage: '鼠尾草',
   Mist: '薄雾',
+  // A board, Notion's: its columns, its cards, its settings, a new database
+  'New database': '新建数据库',
+  'New page': '新建页面',
+  'Not started': '未开始',
+  'In progress': '进行中',
+  'No {property}': '无{property}',
+  '{card} moved to {group}': '已将{card}移至{group}',
+  'Not moved': '未移动',
+  Retry: '重试',
+  Calculate: '计算',
+  'Remove sort': '移除排序',
+  'Remove sort?': '移除排序？',
+  Groups: '分组',
+  'Hidden groups': '隐藏的分组',
+  'Add as option': '添加为选项',
+  'Move left': '左移',
+  'Move right': '右移',
+  'Delete option': '删除选项',
+  'Colour columns': '为列着色',
+  'Hide empty groups': '隐藏空分组',
+  'Card size': '卡片大小',
+  Small: '小',
+  Large: '大',
+  Both: '两者',
+  'Shown on cards': '在卡片上显示',
 }

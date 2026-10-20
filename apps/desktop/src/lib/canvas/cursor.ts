@@ -106,11 +106,11 @@ export function nibCursor(size: number, colour: string): string {
 }
 
 /** The eraser as the ring it is: exactly as wide on the screen as the hole it will
- *  rub, so nothing has to be guessed from a number. The stroke eraser has no width
- *  to show - it takes whatever line it touches, whole - so it is a small ring that
- *  says "a touch is enough". */
+ *  rub, so nothing has to be guessed from a number. The stroke eraser takes whole
+ *  whatever line it reaches, and never shows smaller than a small ring that says
+ *  "a touch is enough". */
 export function rubCursor(rub: { size: number; whole: boolean }): string {
-  const across = rub.whole ? 12 : Math.min(BIGGEST, Math.max(6, Math.round(rub.size * 2)))
+  const across = Math.min(BIGGEST, Math.max(rub.whole ? 12 : 6, Math.round(rub.size * 2)))
   const room = across + 4
   const middle = room / 2
 

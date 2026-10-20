@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ta: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'எல்லாம் தயார்',
+  Personalize: 'தனிப்பயனாக்கு',
+  Clean: 'சுத்தம்',
+  'Live preview': 'நேரடி முன்னோட்டம்',
+  'Developer mode': 'டெவலப்பர் பயன்முறை',
+  'Do you write code?': 'நீங்கள் குறியீடு எழுதுவீர்களா?',
+  Yes: 'ஆம்',
+  No: 'இல்லை',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'பிற ஆப்களிலிருந்து: {key}',
   'From other apps: set in your system settings':
@@ -83,6 +92,7 @@ export const ta: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'ஒரு பணி',
   'One per line': 'வரிக்கு ஒன்று',
+  'Add with AI': 'AI மூலம் சேர்',
   // Tasks: the projects in the panel
   Favorites: 'பிடித்தவை',
   'Add project': 'திட்டத்தைச் சேர்',
@@ -126,6 +136,7 @@ export const ta: Dictionary = {
   'Pointing hand on buttons': 'பொத்தான்களில் சுட்டும் கை',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'பணியைச் சேர்',
+  'Apple Shortcuts': 'Apple ஷார்ட்கட்கள்',
   Tomorrow: 'நாளை',
   'done {date}': 'முடிந்தது {date}',
   'Next week': 'அடுத்த வாரம்',
@@ -188,6 +199,7 @@ export const ta: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'இரு விரல்களால் கேன்வாஸைச் சுழற்று',
+  'Snap the rotation to right angles': 'சுழற்சியை செங்கோணங்களில் பொருத்து',
   'Turn upright': 'நேராக்கு',
   Canvas: 'கேன்வாஸ்',
   Card: 'அட்டை',
@@ -281,6 +293,7 @@ export const ta: Dictionary = {
   Tabs: 'தாவல்கள்',
   'Ctrl+Tab in order of use': 'பயன்பாட்டு வரிசையில் Ctrl+Tab',
   'Swipe between pages': 'பக்கங்களுக்கு இடையே ஸ்வைப் செய்',
+  'Hardware acceleration': 'வன்பொருள் முடுக்கம்',
   'Hidden tabs': 'மறைந்த தாவல்கள்',
   'Memory saver': 'நினைவகச் சேமிப்பு',
   Moderate: 'மிதமான',
@@ -1163,6 +1176,8 @@ export const ta: Dictionary = {
   Elbow: 'மூட்டுக்கோடு',
   Frame: 'சட்டகம்',
   Ungroup: 'குழுவைப் பிரி',
+  Lock: 'பூட்டு',
+  Unlock: 'பூட்டைத் திற',
   'The ink of the page': 'பக்கத்தின் மை',
   'Write in what is picked': 'தேர்ந்ததில் எழுது',
   Pen: 'பேனா',
@@ -1307,11 +1322,19 @@ export const ta: Dictionary = {
     '{count} பகுதிகள் மறையாக்கம் செய்யப்பட்டுள்ளன, Evernote இல்லாமல் எதுவும் அவற்றைப் படிக்க முடியாது',
   '{count} notes had a reminder, which the export does not carry':
     '{count} குறிப்புகளில் நினைவூட்டல் இருந்தது, ஏற்றுமதி அதைக் கொண்டுவராது',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} இணைப்புகள் ஏற்றுமதியில் இல்லை அல்லது படிக்க முடியவில்லை',
+    other: '{count} இணைப்புகள் ஏற்றுமதியில் இல்லை அல்லது படிக்க முடியவில்லை',
+  },
   '{count} notes were in the bin and stay there':
     '{count} குறிப்புகள் குப்பையில் இருந்தன, அங்கேயே இருக்கும்',
   '{count} archived notes are in a folder called Archive':
     '{count} காப்பகக் குறிப்புகள் Archive எனும் கோப்புறையில் உள்ளன',
   'The colours a note had are not kept': 'குறிப்புக்கு இருந்த நிறங்கள் வைக்கப்படவில்லை',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} கோப்புகளைப் படிக்க முடியவில்லை, எனவே விடப்பட்டன',
+    other: '{count} கோப்புகளைப் படிக்க முடியவில்லை, எனவே விடப்பட்டன',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} தொகுதிச் சுட்டுகள் அவை சுட்டிய சொற்களாகவே எழுதப்பட்டன',
   '{count} saved views are left out, and every row is in the table': {
@@ -1339,6 +1362,8 @@ export const ta: Dictionary = {
     '{count} மனநிலை மற்றும் செயல் அட்டைகள் வரைபடங்கள், எனவே அவற்றின் சொற்கள் மட்டுமே வரும்',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} குறிப்புகள் கடவுச்சொல்லுக்குப் பின் உள்ளன, அதை Notes மட்டுமே திறக்கும்',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} குறிப்புகள் கடவுச்சொல்லுக்குப் பின் உள்ளன, அதை Bear மட்டுமே திறக்கும்',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} குறிப்புகள் சமீபத்தில் நீக்கியவற்றில் உள்ளன, அங்கேயே இருக்கும்',
   '{count} drawings and scans have no picture on this Mac':
@@ -1591,6 +1616,7 @@ export const ta: Dictionary = {
   'Ask the model': 'மாடலைக் கேள்',
   'answered by {model}, {date}': '{model} பதிலளித்தது, {date}',
   'AI block': 'AI தொகுதி',
+  'Do with AI': 'AI மூலம் செய்',
   'Highlight colour': 'ஹைலைட் நிறம்',
   'A single newline breaks the line': 'ஒரு புதிய வரி வரியை முறிக்கும்',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -1918,6 +1944,8 @@ export const ta: Dictionary = {
   'Settings › AI': 'அமைப்புகள் › AI',
   'New chat': 'புதிய அரட்டை',
   'Ask again': 'மீண்டும் கேள்',
+  'Continue when the limit resets': 'வரம்பு மீட்டமைந்ததும் தொடர்',
+  'Continues at {time}': '{time} மணிக்குத் தொடரும்',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'எதையும் கேளுங்கள், சேர்க்க @, மேலும் /',
   'What can I help with?': 'நான் எதில் உதவலாம்?',
@@ -2393,4 +2421,29 @@ export const ta: Dictionary = {
   Peach: 'பீச்',
   Sage: 'சேஜ்',
   Mist: 'மூடுபனி',
+  // A board, Notion's: its columns, its cards, its settings, a new database
+  'New database': 'புதிய தரவுத்தளம்',
+  'New page': 'புதிய பக்கம்',
+  'Not started': 'தொடங்கவில்லை',
+  'In progress': 'நடைபெறுகிறது',
+  'No {property}': '{property} இல்லை',
+  '{card} moved to {group}': '{card} {group}-க்கு நகர்த்தப்பட்டது',
+  'Not moved': 'நகர்த்தப்படவில்லை',
+  Retry: 'மீண்டும் முயலவும்',
+  Calculate: 'கணக்கிடு',
+  'Remove sort': 'வரிசையை நீக்கு',
+  'Remove sort?': 'வரிசையை நீக்கவா?',
+  Groups: 'குழுக்கள்',
+  'Hidden groups': 'மறைக்கப்பட்ட குழுக்கள்',
+  'Add as option': 'விருப்பமாகச் சேர்',
+  'Move left': 'இடப்பக்கம் நகர்த்து',
+  'Move right': 'வலப்பக்கம் நகர்த்து',
+  'Delete option': 'விருப்பத்தை நீக்கு',
+  'Colour columns': 'நெடுவரிசைகளுக்கு வண்ணமிடு',
+  'Hide empty groups': 'வெற்றுக் குழுக்களை மறை',
+  'Card size': 'அட்டை அளவு',
+  Small: 'சிறியது',
+  Large: 'பெரியது',
+  Both: 'இரண்டும்',
+  'Shown on cards': 'அட்டைகளில் காட்டப்படுபவை',
 }

@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const gu: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'બધું તૈયાર છે',
+  Personalize: 'વ્યક્તિગત બનાવો',
+  Clean: 'સ્વચ્છ',
+  'Live preview': 'લાઇવ પ્રીવ્યૂ',
+  'Developer mode': 'ડેવલપર મોડ',
+  'Do you write code?': 'શું તમે કોડ લખો છો?',
+  Yes: 'હા',
+  No: 'ના',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'બીજી ઍપ્સમાંથી: {key}',
   'From other apps: set in your system settings': 'બીજી ઍપ્સમાંથી: સિસ્ટમ સેટિંગ્સમાં નક્કી કરો',
@@ -82,6 +91,7 @@ export const gu: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'એક કાર્ય',
   'One per line': 'દરેક લીટીએ એક',
+  'Add with AI': 'AI વડે ઉમેરો',
   // Tasks: the projects in the panel
   Favorites: 'મનપસંદ',
   'Add project': 'પ્રોજેક્ટ ઉમેરો',
@@ -125,6 +135,7 @@ export const gu: Dictionary = {
   'Pointing hand on buttons': 'બટનો પર નિર્દેશ કરતો હાથ',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'કાર્ય ઉમેરો',
+  'Apple Shortcuts': 'Apple શૉર્ટકટ',
   Tomorrow: 'આવતીકાલે',
   'done {date}': 'પૂર્ણ {date}',
   'Next week': 'આવતા અઠવાડિયે',
@@ -187,6 +198,7 @@ export const gu: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'બે આંગળીઓથી કેનવાસ ફેરવો',
+  'Snap the rotation to right angles': 'ફેરવવાનું કાટખૂણે સ્નેપ કરો',
   'Turn upright': 'સીધું કરો',
   Canvas: 'કેનવાસ',
   Card: 'કાર્ડ',
@@ -280,6 +292,7 @@ export const gu: Dictionary = {
   Tabs: 'ટૅબ',
   'Ctrl+Tab in order of use': 'ઉપયોગના ક્રમમાં Ctrl+Tab',
   'Swipe between pages': 'પૃષ્ઠો વચ્ચે સ્વાઇપ કરો',
+  'Hardware acceleration': 'હાર્ડવેર એક્સિલરેશન',
   'Hidden tabs': 'છુપાયેલા ટૅબ',
   'Memory saver': 'મેમરી સેવર',
   Moderate: 'મધ્યમ',
@@ -1150,6 +1163,8 @@ export const gu: Dictionary = {
   Elbow: 'કોણી',
   Frame: 'ચોકઠું',
   Ungroup: 'સમૂહ છોડો',
+  Lock: 'લૉક કરો',
+  Unlock: 'અનલૉક કરો',
   'The ink of the page': 'પાનાની શાહી',
   'Write in what is picked': 'પસંદ કરેલામાં લખો',
   Pen: 'કલમ',
@@ -1290,10 +1305,18 @@ export const gu: Dictionary = {
     '{count} ભાગ એન્ક્રિપ્ટ થયેલા છે, અને Evernote વિના તે કોઈ વાંચી શકતું નથી',
   '{count} notes had a reminder, which the export does not carry':
     '{count} નોંધમાં યાદ હતું, જે નિકાસ લઈ જતો નથી',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} જોડાણો એક્સપોર્ટમાં ન હતાં અથવા વાંચી શકાયાં નહીં',
+    other: '{count} જોડાણો એક્સપોર્ટમાં ન હતાં અથવા વાંચી શકાયાં નહીં',
+  },
   '{count} notes were in the bin and stay there': '{count} નોંધ કચરાપેટીમાં હતી અને ત્યાં રહે છે',
   '{count} archived notes are in a folder called Archive':
     '{count} સંગ્રહેલી નોંધ Archive નામના ફોલ્ડરમાં છે',
   'The colours a note had are not kept': 'નોંધ પાસે જે રંગ હતા તે રખાતા નથી',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} ફાઇલો વાંચી શકાઈ નહીં, તેથી છોડી દેવાઈ',
+    other: '{count} ફાઇલો વાંચી શકાઈ નહીં, તેથી છોડી દેવાઈ',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} બ્લૉક સંદર્ભ તે જે શબ્દો તાકતા હતા તે રીતે લખાયા',
   '{count} saved views are left out, and every row is in the table': {
@@ -1320,6 +1343,8 @@ export const gu: Dictionary = {
     '{count} મનોભાવ અને પ્રવૃત્તિ કાર્ડ ચિત્રો છે, તેથી ફક્ત તેમના શબ્દો આવે છે',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} નોંધ પાસવર્ડ પાછળ છે, જે ફક્ત Notes ખોલી શકે',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} નોંધ પાસવર્ડ પાછળ છે, જે ફક્ત Bear ખોલી શકે',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} નોંધ હાલમાં કાઢેલામાં છે અને ત્યાં જ રહે છે',
   '{count} drawings and scans have no picture on this Mac':
@@ -1561,6 +1586,7 @@ export const gu: Dictionary = {
   'Ask the model': 'મોડેલને પૂછો',
   'answered by {model}, {date}': '{model}નો જવાબ, {date}',
   'AI block': 'AI બ્લૉક',
+  'Do with AI': 'AI વડે કરો',
   'Highlight colour': 'ઉજાગર રંગ',
   'A single newline breaks the line': 'એક નવી લીટી જ લીટી તોડે છે',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -1879,6 +1905,8 @@ export const gu: Dictionary = {
   'Settings › AI': 'ગોઠવણ › AI',
   'New chat': 'નવી ચેટ',
   'Ask again': 'ફરી પૂછો',
+  'Continue when the limit resets': 'મર્યાદા ફરી શરૂ થાય ત્યારે ચાલુ રાખો',
+  'Continues at {time}': '{time} એ ચાલુ થશે',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'કંઈ પણ પૂછો, ઉમેરવા @, વધુ માટે /',
   'What can I help with?': 'હું કેવી રીતે મદદ કરી શકું?',
@@ -2352,4 +2380,29 @@ export const gu: Dictionary = {
   Peach: 'પીચ',
   Sage: 'સેજ',
   Mist: 'ધુમ્મસ',
+  // A board, Notion's: its columns, its cards, its settings, a new database
+  'New database': 'નવો ડેટાબેઝ',
+  'New page': 'નવું પાનું',
+  'Not started': 'શરૂ નથી થયું',
+  'In progress': 'ચાલુ છે',
+  'No {property}': '{property} વગર',
+  '{card} moved to {group}': '{card} ને {group} માં ખસેડ્યું',
+  'Not moved': 'ખસેડ્યું નહીં',
+  Retry: 'ફરી પ્રયાસ કરો',
+  Calculate: 'ગણતરી કરો',
+  'Remove sort': 'ગોઠવણી દૂર કરો',
+  'Remove sort?': 'ગોઠવણી દૂર કરવી છે?',
+  Groups: 'સમૂહો',
+  'Hidden groups': 'છુપાયેલા સમૂહો',
+  'Add as option': 'વિકલ્પ તરીકે ઉમેરો',
+  'Move left': 'ડાબે ખસેડો',
+  'Move right': 'જમણે ખસેડો',
+  'Delete option': 'વિકલ્પ કાઢી નાખો',
+  'Colour columns': 'સ્તંભોને રંગ આપો',
+  'Hide empty groups': 'ખાલી સમૂહો છુપાવો',
+  'Card size': 'કાર્ડનું કદ',
+  Small: 'નાનું',
+  Large: 'મોટું',
+  Both: 'બંને',
+  'Shown on cards': 'કાર્ડ પર દેખાય છે',
 }

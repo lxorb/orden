@@ -248,6 +248,14 @@ describe('a room carrying the engine’s document', () => {
     expect(one.live).toEqual([])
   })
 
+  test('leaves nothing of a room on the engine’s document once it is left', () => {
+    const one = device(seeded('We ship.'))
+
+    for (let carried = 0; carried < 3; carried++) join(one).room.leave()
+
+    expect(one.doc._observers.has('destroy')).toBe(false)
+  })
+
   test('hears the room’s acknowledgement and its new epoch, and lets go on 4001', async () => {
     const account = seeded('We ship.')
     const server = new Server()

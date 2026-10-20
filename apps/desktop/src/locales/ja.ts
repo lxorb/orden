@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ja: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': '準備完了',
+  Personalize: 'カスタマイズ',
+  Clean: 'クリーン',
+  'Live preview': 'ライブプレビュー',
+  'Developer mode': '開発者モード',
+  'Do you write code?': 'コードを書きますか？',
+  Yes: 'はい',
+  No: 'いいえ',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': '他のアプリから: {key}',
   'From other apps: set in your system settings': '他のアプリから: システム設定で指定',
@@ -79,6 +88,7 @@ export const ja: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': '1つのタスク',
   'One per line': '1行に1つ',
+  'Add with AI': 'AIで追加',
   // Tasks: the projects in the panel
   Favorites: 'お気に入り',
   'Add project': 'プロジェクトを追加',
@@ -122,6 +132,7 @@ export const ja: Dictionary = {
   'Pointing hand on buttons': 'ボタン上で指差しカーソル',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'タスクを追加',
+  'Apple Shortcuts': 'Apple ショートカット',
   Tomorrow: '明日',
   'done {date}': '{date} 完了',
   'Next week': '来週',
@@ -184,6 +195,7 @@ export const ja: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': '2本指でキャンバスを回転',
+  'Snap the rotation to right angles': '回転を直角にスナップ',
   'Turn upright': 'まっすぐに戻す',
   Canvas: 'キャンバス',
   Card: 'カード',
@@ -277,6 +289,7 @@ export const ja: Dictionary = {
   Tabs: 'タブ',
   'Ctrl+Tab in order of use': 'Ctrl+Tab を使用順にする',
   'Swipe between pages': 'ページ間をスワイプ',
+  'Hardware acceleration': 'ハードウェア アクセラレーション',
   'Hidden tabs': '非表示のタブ',
   'Memory saver': 'メモリセーバー',
   Moderate: '控えめ',
@@ -1147,6 +1160,8 @@ export const ja: Dictionary = {
   Elbow: 'かぎ線',
   Frame: '枠',
   Ungroup: 'グループ解除',
+  Lock: 'ロック',
+  Unlock: 'ロックを解除',
   'The ink of the page': 'ページのインク',
   'Write in what is picked': '選んだものに書く',
   Pen: 'ボールペン',
@@ -1287,11 +1302,15 @@ export const ja: Dictionary = {
     '{count} 件の本文は暗号化されており、Evernote なしでは読めません',
   '{count} notes had a reminder, which the export does not carry':
     '{count} 件のノートにリマインダーがありましたが、書き出しには含まれていません',
+  '{count} attachments were missing from the export or could not be read':
+    '{count} 件の添付ファイルがエクスポートになかったか、読み取れませんでした',
   '{count} notes were in the bin and stay there':
     '{count} 件のノートはゴミ箱にあり、そのままにします',
   '{count} archived notes are in a folder called Archive':
     'アーカイブ済みの {count} 件は Archive フォルダーに入ります',
   'The colours a note had are not kept': 'ノートの色は引き継がれません',
+  '{count} files could not be read, so they were left out':
+    '読み込めなかったファイル {count} 件は省きました',
   '{count} block references were written out as the words they pointed at':
     '{count} 件のブロック参照は、参照先の文に置き換えました',
   '{count} saved views are left out, and every row is in the table':
@@ -1316,6 +1335,8 @@ export const ja: Dictionary = {
     '{count} 件の気分とアクティビティのカードは絵なので、文字だけが入ります',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} 件のメモはパスワードで保護され、メモ以外では開けません',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} 件のメモはパスワードで保護され、Bear 以外では開けません',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} 件のメモは最近削除した項目にあり、そこに残ります',
   '{count} drawings and scans have no picture on this Mac':
@@ -1555,6 +1576,7 @@ export const ja: Dictionary = {
   'Ask the model': 'モデルに質問',
   'answered by {model}, {date}': '{model} が {date} に回答',
   'AI block': 'AI ブロック',
+  'Do with AI': 'AI で実行',
   'Highlight colour': 'ハイライトの色',
   'A single newline breaks the line': '改行１つで行を分ける',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -1880,6 +1902,8 @@ export const ja: Dictionary = {
   'Settings › AI': '設定 › AI',
   'New chat': '新しいチャット',
   'Ask again': 'もう一度質問',
+  'Continue when the limit resets': '上限がリセットされたら続ける',
+  'Continues at {time}': '{time} に再開します',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': '何でも質問、@ で追加、/ でその他',
   'What can I help with?': '何かお手伝いできることはありますか？',
@@ -2347,4 +2371,29 @@ export const ja: Dictionary = {
   Peach: 'ピーチ',
   Sage: 'セージ',
   Mist: 'ミスト',
+  // A board, Notion's: its columns, its cards, its settings, a new database
+  'New database': '新規データベース',
+  'New page': '新規ページ',
+  'Not started': '未着手',
+  'In progress': '進行中',
+  'No {property}': '{property} なし',
+  '{card} moved to {group}': '{card} を {group} に移動しました',
+  'Not moved': '移動できませんでした',
+  Retry: '再試行',
+  Calculate: '計算',
+  'Remove sort': '並べ替えを解除',
+  'Remove sort?': '並べ替えを解除しますか？',
+  Groups: 'グループ',
+  'Hidden groups': '非表示のグループ',
+  'Add as option': 'オプションとして追加',
+  'Move left': '左へ移動',
+  'Move right': '右へ移動',
+  'Delete option': 'オプションを削除',
+  'Colour columns': '列に色を付ける',
+  'Hide empty groups': '空のグループを非表示',
+  'Card size': 'カードサイズ',
+  Small: '小',
+  Large: '大',
+  Both: '両方',
+  'Shown on cards': 'カードに表示',
 }

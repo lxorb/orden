@@ -15,6 +15,7 @@ import {
   coloured,
   cutInk,
   grouped,
+  locking,
   movedBy,
   pasted,
   placedAt,
@@ -38,7 +39,7 @@ import {
   type Side,
 } from './format'
 import { bounds, type Box, boxOf, facingSide, GRID, type Point, rectBetween } from './geometry'
-import { erased, INK_STYLES, nearStroke, strokesInLasso, tidied } from './ink'
+import { erased, INK_STYLES, nearStroke, strokeBox, strokesInLasso, tidied } from './ink'
 import type { Palette } from './paint'
 import type { Hit, PendingStroke, PutTool, Tool } from './pointer'
 import type { CanvasStore } from './store.svelte'
@@ -103,6 +104,17 @@ export const run = {
     store.pick(made.id)
   },
 
+  /** What is picked locked in place, and so let go of: nothing picks it now (#643). */
+  lock(store: CanvasStore) {
+    store.edit(locking(store.canvas, store.picked, true))
+    store.pickAll(store.picked)
+  },
+
+  /** Something locked in place let go again, from its own menu. */
+  unlock(store: CanvasStore, id: string) {
+    store.edit(locking(store.canvas, [id], false))
+  },
+
   /** The frames among what is picked, gone, and what they held picked instead. */
   ungroup(store: CanvasStore) {
     const made = ungrouped(store.canvas, store.picked)
@@ -157,14 +169,12 @@ export const run = {
     store.edit({ ...store.canvas, ink: [] })
   },
 
-  /** Whole strokes gone, which is what the stroke eraser does: touch a line
-   *  anywhere and the line goes. `run` names the drag it is part of, so the whole
-   *  drag is one step to take back; see `edit` in store.svelte.ts. */
-  rub(store: CanvasStore, ids: readonly string[], run?: string) {
-    if (!ids.length) return
-
-    const going = new Set(ids)
-    store.edit({ ...store.canvas, ink: store.canvas.ink.filter((one) => !going.has(one.id)) }, run)
+  /** Whole strokes gone, which is what the stroke eraser does: come within its
+   *  reach of a line anywhere and the line goes. `run` names the drag it is part
+   *  of, so the whole drag is one step to take back; see `edit` in store.svelte.ts. */
+  rub(store: CanvasStore, at: Point, reach: number, run?: string) {
+    const next = cutInk(store.canvas, (stroke) => (nearStroke(stroke, at, reach) ? [] : [stroke]))
+    store.edit(next, run)
   },
 
   /** A hole rubbed through whatever is under the eraser, which may leave the two
@@ -238,7 +248,7 @@ export const run = {
     if (incoming.nodes.length || incoming.ink.length) {
       // Centred on the pointer, so a paste lands where the reader is looking
       // rather than where the cards happened to be in the canvas they came from.
-      const box = bounds(incoming.nodes)
+      const box = bounds([...incoming.nodes, ...incoming.ink.map(strokeBox)])
       const dx = box ? Math.round(at.x - box.x - box.width / 2) : 0
       const dy = box ? Math.round(at.y - box.y - box.height / 2) : 0
       const made = pasted(store.canvas, incoming, dx, dy)
@@ -814,6 +824,9 @@ async function putDown(
 export interface MenuView extends KeyView {
   narrowed: boolean
   onnarrow: () => void
+  /** Whether the cards' HTML is markup, asked of the plane's note; an export of
+   *  it asks the same question the surface does. See trust.ts. */
+  trusted: boolean
   /** Whether the menu was asked for on bare plane rather than about something:
    *  only then is putting something down where it was asked one of its rows. The
    *  bar over what is picked opens it about the pick, and a right click on a card
@@ -821,6 +834,9 @@ export interface MenuView extends KeyView {
   bare: boolean
   /** Rows shown in the menu's place, where it was opened: what pressing Arrange does. */
   again: (rows: MenuEntry[], title: string) => void
+  /** What is locked in place under the press, which a press cannot pick: the menu is
+   *  the one way back to it (#643). */
+  locked: string | null
 }
 
 /** Groups of rows with a rule between each, leaving out the groups with nothing in
@@ -850,11 +866,14 @@ export function canvasMenu(store: CanvasStore, at: Point, view: MenuView): MenuE
   const onFrame = store.picked.some((id) =>
     store.canvas.nodes.some((node) => node.id === id && node.type === 'group'),
   )
+  const onNode = store.picked.some((id) => store.canvas.nodes.some((node) => node.id === id))
+  const locked = view.locked
   const putting = { colour: tools.colour, path: view.path }
 
   const arranging = arrangeRows(store, several, many)
 
   return sections(
+    locked ? [{ label: t('Unlock'), run: () => run.unlock(store, locked) }] : [],
     view.bare
       ? [
           { label: t('Card'), run: () => void place(store, 'text', at, putting) },
@@ -873,6 +892,7 @@ export function canvasMenu(store: CanvasStore, at: Point, view: MenuView): MenuE
             : []),
           { label: t('Group'), run: () => run.group(store) },
           ...(onFrame ? [{ label: t('Ungroup'), run: () => run.ungroup(store) }] : []),
+          ...(onNode ? [{ label: t('Lock'), run: () => run.lock(store) }] : []),
           {
             label: t('Arrange'),
             more: () => Promise.resolve(arranging),
@@ -956,6 +976,7 @@ async function exportAs(store: CanvasStore, view: MenuView, how: 'png' | 'svg' |
     path: view.path,
     root: workspace.activeSpace?.root ?? null,
     name: view.name,
+    trusted: view.trusted,
   }
 
   if (how === 'png') await picture.exportCanvasPng(drawing)

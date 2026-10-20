@@ -84,7 +84,10 @@ pub fn handed_over(identifier: &str) -> bool {
 /// launcher's token, which goes beside the arguments where there is one (see linux.rs).
 #[cfg(target_os = "linux")]
 pub fn handed_over(identifier: &str) -> bool {
-    let mut launch: Vec<String> = std::env::args().collect();
+    // As the plugin's own call reads them: the bus carries Unicode only.
+    let mut launch: Vec<String> = std::env::args_os()
+        .map(|arg| arg.to_string_lossy().into_owned())
+        .collect();
     if let Some(token) = crate::linux::launched_with() {
         launch.push(format!("{}{token}", crate::launch::TOKEN_FLAG));
     }
@@ -201,7 +204,10 @@ impl Names {
 #[cfg(windows)]
 fn arguments() -> Vec<u8> {
     let folder = std::env::current_dir().unwrap_or_default();
-    let args = std::env::args().collect::<Vec<String>>().join("|");
+    let args = std::env::args_os()
+        .map(|arg| arg.to_string_lossy().into_owned())
+        .collect::<Vec<String>>()
+        .join("|");
     format!("{}|{args}\0", folder.to_str().unwrap_or_default()).into_bytes()
 }
 

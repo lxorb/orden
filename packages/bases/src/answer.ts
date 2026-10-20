@@ -2,8 +2,10 @@
  *  which groups, with which summaries.
  *
  *  In the order Bases applies them: the base's filters and the view's, the view's
- *  own search, the sort, the limit, the grouping and a second grouping under it,
- *  then the summaries of each group and of all of it. Groups come in the order the
+ *  own search, the sort, the grouping and a second grouping under it, the limit,
+ *  then the summaries of each group and of all of it. The limit is Notion's load
+ *  limit: it cuts each group after its manual order, so a board's columns each keep
+ *  their first cards instead of the sort's first rows deciding which columns empty. Groups come in the order the
  *  property's options give (empty ones included, so a board keeps a column for a
  *  status nothing has yet), then by value, and the group of rows with no value
  *  last.
@@ -141,6 +143,7 @@ export function compileView(base: Base, which?: string | number): CompiledView {
   const clock = filter.clock || [...formulas, ...getters].some((one) => one.clock)
 
   const kinds = view.nib.rows ?? 'notes'
+  const fanOut = view.type === 'kanban' || view.type === 'board'
   const showCompleted = view.nib.showCompleted ?? false
   let facts = new WeakMap<Row, RowFacts>()
   let factsFor = ''
@@ -219,7 +222,8 @@ export function compileView(base: Base, which?: string | number): CompiledView {
       }
       return a.at - b.at
     })
-    const limited = view.limit ? kept.slice(0, view.limit) : kept
+    const limit = view.limit && view.limit > 0 ? view.limit : null
+    const cut = <T>(members: T[]): T[] => (limit === null ? members : members.slice(0, limit))
 
     const summaries = (members: readonly { row: Row; facts: RowFacts }[]) => {
       const out: Record<string, Value> = {}
@@ -239,47 +243,66 @@ export function compileView(base: Base, which?: string | number): CompiledView {
       keyOf: (one: RowFacts) => Val,
       by: Sort | undefined,
       inner?: (members: { row: Row; facts: RowFacts }[]) => Group[],
+      top = false,
     ): Group[] => {
-      if (!by)
-        return [
-          {
-            key: null,
-            rows: ordered(members, '').map((one) => one.row),
-            summaries: summaries(members),
-          },
-        ]
+      /** A group's members in its manual order, cut to the limit at the top level. */
+      const cutGroup = (inGroup: { row: Row; facts: RowFacts }[], name: string) => {
+        const sorted = ordered(inGroup, name)
+        return top ? cut(sorted) : sorted
+      }
+      if (!by) {
+        const only = cutGroup(members, '')
+        return [{ key: null, rows: only.map((one) => one.row), summaries: summaries(only) }]
+      }
       const options = optionOrder(base, by.property)
       const groups = new Map<string, { key: Value; members: { row: Row; facts: RowFacts }[] }>()
       for (const option of options) groups.set(option, { key: option, members: [] })
-      for (const one of members) {
-        const key = settled(keyOf(one.facts))
+      const into = (key: Value, one: { row: Row; facts: RowFacts }) => {
         const name = groupName(key)
         const found = groups.get(name)
-        if (found) found.members.push(one)
-        else groups.set(name, { key, members: [one] })
+        if (found) {
+          if (found.members.at(-1) !== one) found.members.push(one)
+        } else groups.set(name, { key, members: [one] })
+      }
+      for (const one of members) {
+        const key = settled(keyOf(one.facts))
+        // A board grouped by a list puts a card in the column of each of its members,
+        // Notion's multi-select board; a list of none is the group of no value.
+        if (fanOut && Array.isArray(key)) {
+          const each = key.filter((member) => member !== null && groupName(member) !== '')
+          if (!each.length) into(null, one)
+          for (const member of each) into(member, one)
+        } else into(key, one)
       }
       const keys = [...groups.values()]
+      // The view's own column order first, then the options', then by value; the
+      // group of no value last, or first where the view says so.
+      const placed = view.nib.groups ?? []
+      const rank = (key: Value): number => {
+        const name = groupName(key)
+        const own = placed.indexOf(name)
+        if (own !== -1) return own
+        const option = options.indexOf(name)
+        return placed.length + (option === -1 ? options.length : option)
+      }
+      const noneFirst = view.nib.noneFirst === true
       if (view.nib.groupOrder !== 'rows')
         keys.sort((a, b) => {
-          if (a.key === null || b.key === null) return a.key === b.key ? 0 : a.key === null ? 1 : -1
-          const optionA = options.indexOf(groupName(a.key))
-          const optionB = options.indexOf(groupName(b.key))
-          if (optionA !== -1 || optionB !== -1) {
-            return (
-              (optionA === -1 ? options.length : optionA) -
-              (optionB === -1 ? options.length : optionB)
-            )
-          }
+          if (a.key === null || b.key === null)
+            return a.key === b.key ? 0 : (a.key === null) !== noneFirst ? 1 : -1
+          const byRank = rank(a.key) - rank(b.key)
+          if (byRank !== 0) return byRank
           const order = sortCompare(a.key, b.key)
           return by.direction === 'DESC' ? -order : order
         })
       return keys.map(({ key, members: inGroup }) => {
+        const only = cutGroup(inGroup, groupName(key))
         const out: Group = {
           key,
-          rows: ordered(inGroup, groupName(key)).map((one) => one.row),
-          summaries: summaries(inGroup),
+          rows: only.map((one) => one.row),
+          summaries: summaries(only),
         }
-        if (inner) out.sub = inner(inGroup)
+        if (inner) out.sub = inner(only)
         return out
       })
     }
@@ -289,26 +312,38 @@ export function compileView(base: Base, which?: string | number): CompiledView {
       const manual = view.nib.order?.[name]
       if (!manual?.length) return members
       const place = new Map(manual.map((id, at) => [id, at]))
-      const rank = (one: T) => place.get(rowId(one.row)) ?? manual.length
+      const rank = (one: T) =>
+        place.get(orderId(one.row)) ?? place.get(rowId(one.row)) ?? manual.length
       return [...members].sort((a, b) => rank(a) - rank(b))
     }
 
     const subBy = view.nib.subGroupBy
     const groups = grouped(
-      limited,
+      kept,
       (one) => one.group,
       view.groupBy,
       subBy ? (members) => grouped(members, (one) => one.sub, subBy) : undefined,
+      true,
     )
+    if (limit === null) return { groups, total: kept.length, summaries: summaries(kept) }
+    const onScreen = new Set(groups.flatMap((group) => group.rows))
+    const limited = kept.filter((one) => onScreen.has(one.row))
     return { groups, total: limited.length, summaries: summaries(limited) }
   }
 
   return { view, answer }
 }
 
-/** How a manual order names a row: its path, and a task's line after a `#`. */
+/** How a view names a row on screen: its path, and a task's line after a `#`. */
 export function rowId(row: Row): string {
   return row.anchor ? `${row.path}#${row.anchor.line}` : row.path
+}
+
+/** How a manual order names a row: its path, and a task's words' hash after `#^`, so
+ *  the order holds while lines above the task come and go. An order written before
+ *  names a task by its line (`rowId`), which is still read. */
+export function orderId(row: Row): string {
+  return row.anchor ? `${row.path}#^${row.anchor.hash}` : row.path
 }
 
 const compiledViews = new WeakMap<Base, Map<string | number, CompiledView>>()

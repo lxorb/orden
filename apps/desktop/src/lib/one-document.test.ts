@@ -37,6 +37,8 @@ vi.mock('./tauri', async (importOriginal) => ({
       case 'list_spaces':
         return [{ name: 'space', path: '/space' }]
       case 'read_tree':
+        // As the crate does: a root that is not the space, the one folder here, is refused.
+        if (args?.root !== '/space') throw new Error('root is not a directory')
         return {
           name: 'space',
           path: '/space',

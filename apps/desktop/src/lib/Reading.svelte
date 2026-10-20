@@ -31,7 +31,7 @@
   import { theme } from './theme.svelte'
   import { workspace, type Tab } from './workspace.svelte'
   import { loadEmbed, resolveFile, resolveNote, resolveRelative } from '@nib/editor'
-  import { isTabFile, pageFragment } from '@nib/markdown/links'
+  import { decodeFragment, isTabFile, pageFragment } from '@nib/markdown/links'
   import { links } from './link-index.svelte'
   import { pressRow } from './query-block'
 
@@ -398,7 +398,7 @@
           target,
           heading: null,
           block: null,
-          page: pageFragment(fragment ? written(fragment) : null),
+          page: pageFragment(fragment ? decodeFragment(fragment) : null),
         },
         ask,
       )
@@ -414,7 +414,7 @@
       {
         path: found.path,
         target,
-        heading: fragment ? written(fragment) : null,
+        heading: fragment ? decodeFragment(fragment) : null,
         block: null,
         page: null,
       },

@@ -33,8 +33,9 @@ export interface Source {
   scope: string | null
   /** The base, as it is now. */
   load(): Promise<Base>
-  /** Keeps a changed base. */
-  save(next: Base): Promise<void>
+  /** Keeps a changed base; `shown` is where the reader is with it, for a host that
+   *  keeps that. */
+  save(next: Base, shown?: Shown): Promise<void>
   /** Bases' `this`: the note embedding the view. */
   self?: () => Row | undefined
   /** Which view of the base to show first, by name. */
@@ -42,6 +43,18 @@ export interface Source {
   /** Hears the source change under the view (a base file written elsewhere); answers
    *  the way to stop. */
   watch?: (changed: () => void) => () => void
+  /** Which view was showing and what was searched, where the host keeps that for a
+   *  view drawn again over the same base: a fence's, whose widget the editor makes
+   *  again each time the fence's words change. */
+  shown?: () => Shown | undefined
+  /** Hears which view is showing and what is searched, for `shown`. */
+  keep?: (shown: Shown) => void
+}
+
+/** Where a reader is in a base: which of its views, and the search typed over it. */
+export interface Shown {
+  at: number
+  typed: string
 }
 
 /** The small layer a view's head holds open over the view: a builder for something a
@@ -56,8 +69,7 @@ const SEARCH_QUIET = 160
 
 export class LiveView {
   base = $state.raw<Base | null>(null)
-  /** Which of the base's views is showing. */
-  at = $state(0)
+  #at = $state(0)
   /** What the search field holds, and what the answer was last asked with. */
   typed = $state('')
   private searched = $state('')
@@ -76,7 +88,30 @@ export class LiveView {
   private once = false
   private readonly quiet = afterQuiet(() => (this.searched = this.typed.trim()), SEARCH_QUIET)
 
-  constructor(private readonly source: Source) {}
+  constructor(private readonly source: Source) {
+    const shown = source.shown?.()
+    if (shown) {
+      this.#at = shown.at
+      this.typed = shown.typed
+      this.searched = shown.typed.trim()
+      this.once = true
+    }
+  }
+
+  /** Which of the base's views is showing. */
+  get at(): number {
+    return this.#at
+  }
+
+  set at(at: number) {
+    this.#at = at
+    this.kept()
+  }
+
+  /** Tells the host where the reader is, for a view drawn again. */
+  private kept() {
+    this.source.keep?.({ at: this.#at, typed: this.typed })
+  }
 
   /** Starts listening and reads the base. Answers the way to stop. */
   start(): () => void {
@@ -169,16 +204,23 @@ export class LiveView {
   /** Typing into the view's own search. */
   search(words: string) {
     this.typed = words
+    this.kept()
     if (!words.trim()) {
       this.quiet.cancel()
       this.searched = ''
     } else this.quiet()
   }
 
-  /** A changed base, shown at once and then kept where the host keeps it. */
-  async change(next: Base): Promise<void> {
+  /** A changed base, shown at once and then kept where the host keeps it; `show` is
+   *  the view to move to with it, a view just made or duplicated. Moved before the
+   *  write, so the view is never one behind, and a fence drawn again by the write
+   *  starts on it. */
+  async change(next: Base, show?: number): Promise<void> {
     this.base = next
-    if (this.at >= next.views.length) this.at = Math.max(0, next.views.length - 1)
-    await this.source.save(next)
+    // Not kept under the words as they were: undone, those words come back to where
+    // the reader was on them. The write keeps the new place under the new words.
+    if (show !== undefined) this.#at = show
+    if (this.#at >= next.views.length) this.#at = Math.max(0, next.views.length - 1)
+    await this.source.save(next, { at: this.#at, typed: this.typed })
   }
 }

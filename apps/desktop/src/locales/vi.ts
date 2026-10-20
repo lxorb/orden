@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const vi: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'Đã sẵn sàng',
+  Personalize: 'Cá nhân hóa',
+  Clean: 'Gọn gàng',
+  'Live preview': 'Xem trước trực tiếp',
+  'Developer mode': 'Chế độ nhà phát triển',
+  'Do you write code?': 'Bạn có viết code không?',
+  Yes: 'Có',
+  No: 'Không',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'Từ ứng dụng khác: {key}',
   'From other apps: set in your system settings': 'Từ ứng dụng khác: đặt trong cài đặt hệ thống',
@@ -79,6 +88,7 @@ export const vi: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'Một việc',
   'One per line': 'Mỗi dòng một việc',
+  'Add with AI': 'Thêm bằng AI',
   // Tasks: the projects in the panel
   Favorites: 'Yêu thích',
   'Add project': 'Thêm dự án',
@@ -122,6 +132,7 @@ export const vi: Dictionary = {
   'Pointing hand on buttons': 'Bàn tay chỉ trên các nút',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Thêm việc',
+  'Apple Shortcuts': 'Apple Phím tắt',
   Tomorrow: 'Ngày mai',
   'done {date}': 'xong {date}',
   'Next week': 'Tuần sau',
@@ -184,6 +195,7 @@ export const vi: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'Xoay canvas bằng hai ngón tay',
+  'Snap the rotation to right angles': 'Bám góc xoay vào các góc vuông',
   'Turn upright': 'Đặt thẳng lại',
   Canvas: 'Canvas',
   Card: 'Thẻ',
@@ -277,6 +289,7 @@ export const vi: Dictionary = {
   Tabs: 'Tab',
   'Ctrl+Tab in order of use': 'Ctrl+Tab theo thứ tự sử dụng',
   'Swipe between pages': 'Vuốt giữa các trang',
+  'Hardware acceleration': 'Tăng tốc phần cứng',
   'Hidden tabs': 'Thẻ ẩn',
   'Memory saver': 'Tiết kiệm bộ nhớ',
   Moderate: 'Vừa phải',
@@ -1141,6 +1154,8 @@ export const vi: Dictionary = {
   Elbow: 'Gấp khúc',
   Frame: 'Khung',
   Ungroup: 'Bỏ nhóm',
+  Lock: 'Khóa',
+  Unlock: 'Mở khóa',
   'The ink of the page': 'Mực của trang',
   'Write in what is picked': 'Viết vào phần đã chọn',
   Pen: 'Bút',
@@ -1281,10 +1296,14 @@ export const vi: Dictionary = {
     '{count} đoạn được mã hoá, không gì đọc được mà không có Evernote',
   '{count} notes had a reminder, which the export does not carry':
     '{count} ghi chú có lời nhắc, bản xuất không mang theo',
+  '{count} attachments were missing from the export or could not be read':
+    '{count} tệp đính kèm không có trong bản xuất hoặc không đọc được',
   '{count} notes were in the bin and stay there': '{count} ghi chú ở trong thùng rác và vẫn ở đó',
   '{count} archived notes are in a folder called Archive':
     '{count} ghi chú lưu trữ nằm trong thư mục tên Archive',
   'The colours a note had are not kept': 'Màu mà ghi chú từng có không được giữ',
+  '{count} files could not be read, so they were left out':
+    'Không đọc được {count} tệp nên đã bỏ qua',
   '{count} block references were written out as the words they pointed at':
     '{count} tham chiếu khối được viết ra thành chữ mà chúng trỏ tới',
   '{count} saved views are left out, and every row is in the table':
@@ -1310,6 +1329,8 @@ export const vi: Dictionary = {
     '{count} thẻ tâm trạng và hoạt động là hình vẽ, nên chỉ chữ được chuyển sang',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} ghi chú nằm sau mật khẩu mà chỉ Notes mở được',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} ghi chú nằm sau mật khẩu mà chỉ Bear mở được',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} ghi chú nằm trong Đã xoá gần đây và vẫn ở đó',
   '{count} drawings and scans have no picture on this Mac':
@@ -1549,6 +1570,7 @@ export const vi: Dictionary = {
   'Ask the model': 'Hỏi mô hình',
   'answered by {model}, {date}': '{model} trả lời, {date}',
   'AI block': 'Khối AI',
+  'Do with AI': 'Làm bằng AI',
   'Highlight colour': 'Màu đánh dấu',
   'A single newline breaks the line': 'Một lần xuống dòng là ngắt dòng',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -1869,6 +1891,8 @@ export const vi: Dictionary = {
   'Settings › AI': 'Cài đặt › AI',
   'New chat': 'Cuộc trò chuyện mới',
   'Ask again': 'Hỏi lại',
+  'Continue when the limit resets': 'Tiếp tục khi giới hạn được đặt lại',
+  'Continues at {time}': 'Tiếp tục lúc {time}',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Hỏi bất cứ điều gì, @ để thêm, / để xem thêm',
   'What can I help with?': 'Tôi có thể giúp gì?',
@@ -2337,4 +2361,29 @@ export const vi: Dictionary = {
   Peach: 'Đào',
   Sage: 'Xô thơm',
   Mist: 'Sương mù',
+  // A board, Notion's: its columns, its cards, its settings, a new database
+  'New database': 'Cơ sở dữ liệu mới',
+  'New page': 'Trang mới',
+  'Not started': 'Chưa bắt đầu',
+  'In progress': 'Đang thực hiện',
+  'No {property}': 'Không có {property}',
+  '{card} moved to {group}': 'Đã chuyển {card} sang {group}',
+  'Not moved': 'Chưa chuyển được',
+  Retry: 'Thử lại',
+  Calculate: 'Tính toán',
+  'Remove sort': 'Bỏ sắp xếp',
+  'Remove sort?': 'Bỏ sắp xếp?',
+  Groups: 'Nhóm',
+  'Hidden groups': 'Nhóm bị ẩn',
+  'Add as option': 'Thêm làm tùy chọn',
+  'Move left': 'Chuyển sang trái',
+  'Move right': 'Chuyển sang phải',
+  'Delete option': 'Xoá tùy chọn',
+  'Colour columns': 'Tô màu cột',
+  'Hide empty groups': 'Ẩn nhóm trống',
+  'Card size': 'Kích thước thẻ',
+  Small: 'Nhỏ',
+  Large: 'Lớn',
+  Both: 'Cả hai',
+  'Shown on cards': 'Hiển thị trên thẻ',
 }

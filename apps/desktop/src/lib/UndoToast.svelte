@@ -7,6 +7,7 @@
   import { back } from './sync2/resurrected.svelte'
   import { undoToast } from './undo-toast.svelte'
   import { unread } from './unread.svelte'
+  import { failed } from './views/failed.svelte'
   import { workspace } from './workspace.svelte'
 
   /** The one word for each thing the toast can take back. */
@@ -31,17 +32,30 @@
     untrack(() => undoToast.heard(stack))
   })
 
+  // An Undo offered after a board's write failed is the newer news, and the Retry goes.
+  $effect(() => {
+    if (undoToast.kind) untrack(() => failed.dismiss())
+  })
+
   // Gone with the component, and the timers with it.
   $effect(() => () => {
     undoToast.dismiss()
     unread.dismiss()
+    failed.dismiss()
     back.dismiss()
   })
 </script>
 
 <!-- One word for what happened and one for the way back: the row it was about has
-     already gone or moved, which says the rest. -->
-{#if undoToast.kind}
+     already gone or moved, which says the rest. A failed carry comes first: whichever of
+     the two came last dismissed the other, so this only decides a tie. -->
+{#if failed.retry}
+  <!-- A card carried to a column whose note would not be written: it went back. -->
+  <div class="toast" role="status" transition:fly={{ y: 12, duration: dur(220), easing: cubicOut }}>
+    <p>{t('Not moved')}</p>
+    <button class="undo" onclick={() => failed.again()}>{t('Retry')}</button>
+  </div>
+{:else if undoToast.kind}
   <div
     class="toast"
     role="status"

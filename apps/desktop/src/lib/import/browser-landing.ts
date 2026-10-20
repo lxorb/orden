@@ -102,13 +102,16 @@ async function readFirefox(profile: BrowserProfile, name: string): Promise<Read 
   return { sidebar: firefoxSidebar(session, bookmarks, name, folderWords()), lost: [] }
 }
 
-/** A Chromium's session, the first of its files that reads, and its bookmarks. A
- *  session written encrypted is said in a line, and the bookmarks come alone. Null
- *  where neither is there. */
+/** A Chromium's bookmark files: its own, and its Google account's. */
+const BOOKMARK_FILES = ['Bookmarks', 'AccountBookmarks']
+
+/** A Chromium's session, the first of its files that reads, and its bookmarks and its
+ *  account's. A session written encrypted is said in a line, and the bookmarks come
+ *  alone. Null where none of them is there. */
 async function readChromium(profile: BrowserProfile, name: string): Promise<Read | null> {
   let session: SnssSession | null = null
   let locked = false
-  for (const file of profile.files.filter((one) => one !== 'Bookmarks')) {
+  for (const file of profile.files.filter((one) => !BOOKMARK_FILES.includes(one))) {
     const bytes = await browserFile(profile, file)
     const read = bytes ? readSnss(bytes) : null
     if (read === 'locked') locked = true
@@ -118,15 +121,13 @@ async function readChromium(profile: BrowserProfile, name: string): Promise<Read
     }
   }
 
-  const said = await browserFile(profile, 'Bookmarks')
-  let bookmarks: unknown = null
-  try {
-    bookmarks = said ? (JSON.parse(new TextDecoder().decode(said)) as unknown) : null
-  } catch {
-    // A file Chromium was halfway through writing is no bookmarks rather than a refusal.
-  }
+  const [bookmarks, account] = await Promise.all(
+    BOOKMARK_FILES.map(async (file) =>
+      profile.files.includes(file) ? jsonOf(await browserFile(profile, file)) : null,
+    ),
+  )
 
-  if (!session && !bookmarks) return null
+  if (!session && !bookmarks && !account) return null
   const lost: Lost[] =
     !session && locked
       ? [
@@ -136,7 +137,18 @@ async function readChromium(profile: BrowserProfile, name: string): Promise<Read
           },
         ]
       : []
-  return { sidebar: chromiumSidebar(session, bookmarks, name, folderWords()), lost }
+  return { sidebar: chromiumSidebar(session, bookmarks, name, folderWords(), account), lost }
+}
+
+/** What a JSON file holds, or null for one that is not whole: a file Chromium was
+ *  halfway through writing is no bookmarks rather than a refusal. */
+function jsonOf(bytes: Uint8Array | null): unknown {
+  if (!bytes) return null
+  try {
+    return JSON.parse(new TextDecoder().decode(bytes)) as unknown
+  } catch {
+    return null
+  }
 }
 
 /** What the crate answers when macOS would not let Safari's files be read. */

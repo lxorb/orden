@@ -156,6 +156,10 @@
     // APP_ORIGIN says. See machines/hetzner-host.ts.
     "MACHINE_DOMAIN": "nibeditor.com",
     "MAIL_FROM": "Orden <nib@nibeditor.com>",
+    // The private repository a report sent with Send feedback becomes an issue in, as
+    // lxorbs-minion (src/feedback-issues.ts); its token, set by hand:
+    //   wrangler secret put GITHUB_FEEDBACK_TOKEN
+    "FEEDBACK_REPO": "lxorb/orden-feedback",
     // How a machine's traffic leaves it: `open` or `web`; see machines/host.ts.
     "MACHINE_EGRESS": "open",
     // The account the Hetzner machines' Cloudflare Tunnels are made in (4.15). Their
@@ -183,8 +187,9 @@
   // somebody's own is read again. See `scheduled` in src/index.ts, which names
   // the five.
   //
-  // And each minute, the reminders due by now pushed to the devices that asked for them;
-  // see push/reminders.ts. Push needs keys that are secrets of their own, each service off
+  // And each minute, the reminders due by now pushed to the devices that asked for them
+  // (see push/reminders.ts), and the reports whose issue could not be opened yet tried
+  // again (src/feedback-issues.ts). Push needs keys that are secrets of their own, each service off
   // until its keys are set (docs/mobile.md, "Push"):
   //   VAPID_PUBLIC_KEY      a var below once made; the browser build subscribes with it
   //   wrangler secret put VAPID_PRIVATE_KEY

@@ -17,6 +17,7 @@
 //! will read outside the spaces: no note, link or page can add to it.
 
 use std::collections::HashSet;
+use std::ffi::OsStr;
 use std::fs::File;
 use std::io::{BufReader, Read};
 use std::path::{Path, PathBuf};
@@ -71,15 +72,16 @@ pub fn admitted(app: &AppHandle, pdfs: Vec<PathBuf>) -> Vec<String> {
 /// The PDFs a command line names, each once, in the order given. A path relative to
 /// where the launch was made is read from there, and a `file:` address - what a Linux
 /// entry's `%U` hands over - as the file it names. Nothing on a link's command line,
-/// which is about its one address; see `for_a_link` in `web_handed.rs`.
-pub fn pdfs_in(args: &[String], cwd: &Path) -> Vec<PathBuf> {
+/// which is about its one address; see `for_a_link` in `web_handed.rs`. Each argument
+/// as it was given, so a file whose name is not Unicode is found all the same.
+pub fn pdfs_in<A: AsRef<OsStr>>(args: &[A], cwd: &Path) -> Vec<PathBuf> {
     if crate::web_handed::for_a_link(args) {
         return Vec::new();
     }
 
     let mut found: Vec<PathBuf> = Vec::new();
     for one in args.iter().skip(1) {
-        if let Some(pdf) = named(one, cwd).filter(|pdf| !found.contains(pdf)) {
+        if let Some(pdf) = named(one.as_ref(), cwd).filter(|pdf| !found.contains(pdf)) {
             found.push(pdf);
         }
     }
@@ -105,15 +107,15 @@ pub fn pdfs_among(urls: &[Url]) -> Vec<PathBuf> {
 
 /// The PDF one argument names, or `None` for a flag, a page, or anything that is not
 /// a PDF on this disk.
-fn named(said: &str, cwd: &Path) -> Option<PathBuf> {
-    if said.is_empty() || said.starts_with('-') || said.len() > LONGEST {
+fn named(said: &OsStr, cwd: &Path) -> Option<PathBuf> {
+    if said.is_empty() || said.as_encoded_bytes().starts_with(b"-") || said.len() > LONGEST {
         return None;
     }
 
     // `C:\paper.pdf` parses as an address in the scheme `c`, which is a path all the
     // same; only `file:` is read as an address.
-    let path = match Url::parse(said) {
-        Ok(url) if url.scheme() == "file" => url.to_file_path().ok()?,
+    let path = match said.to_str().map(Url::parse) {
+        Some(Ok(url)) if url.scheme() == "file" => url.to_file_path().ok()?,
         _ => PathBuf::from(said),
     };
     let path = folded(&if path.is_absolute() {
@@ -306,6 +308,19 @@ mod tests {
 
         let args = line(&[crate::web_handed::LINK_FLAG, "https://example.com/", &paper]);
         assert!(pdfs_in(&args, dir.path()).is_empty());
+    }
+
+    /// A name that is not Unicode, which Linux allows, is found by the very bytes it has.
+    #[cfg(target_os = "linux")]
+    #[test]
+    fn a_pdf_whose_name_is_not_unicode_is_handed_over_as_named() {
+        use std::os::unix::ffi::OsStrExt;
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let name = std::ffi::OsStr::from_bytes(b"x\xff.pdf");
+        file(&dir.path().join(name), b"%PDF");
+
+        let args = [std::ffi::OsString::from("nib"), name.to_owned()];
+        assert_eq!(pdfs_in(&args, dir.path()), vec![dir.path().join(name)]);
     }
 
     #[test]

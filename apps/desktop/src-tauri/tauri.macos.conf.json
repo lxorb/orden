@@ -28,7 +28,10 @@
   "bundle": {
     "macOS": {
       "entitlements": "Entitlements.plist",
-      "minimumSystemVersion": "13.3"
+      "minimumSystemVersion": "13.3",
+      "files": {
+        "Resources/Metadata.appintents": "gen/app-intents/Metadata.appintents"
+      }
     }
   }
 }

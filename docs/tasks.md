@@ -958,6 +958,26 @@ manual order. Group by status gives the classic To do, Doing, Done for task line
 `[/]`, `[x]`), and by heading gives Apple's sections as columns. A sub-group splits columns
 into swimlanes.
 
+Notion is the role model (plan: kanban-boards.md in the project files). Columns are
+coloured by their option's tone, and their ⋯ menu renames, colours, hides, moves and
+deletes the option for this base only, as one undo. A value the notes hold that no option
+does is a quiet column that can become an option or be merged into one. A list property
+puts a card in each of its members' columns, and a drop swaps only the member it was
+dragged from. Column order is the view's own (`nib.groups`, falling back to the options'
+order), and the column of no value comes last unless the view says first (`nib.noneFirst`,
+which a new database sets). Cards are small, medium or large (`nib.cardSize`), show the
+view's properties in its order, and a checklist count from the note's own tasks. The count
+in a head is a button for the column's calculation. Hidden groups gather in a last column
+that still takes drops. A drop into a sorted column asks once to remove the sort. A failed
+write puts the card back and offers Retry. Every base that is not a built-in wears
+Notion's head: a tab per view (right-click to rename, duplicate, copy a link, delete; `+`
+picks a layout), Filter, Sort, the search, and ⋯ for the view's settings (layout, group,
+the board's options, rows, the properties shown). Active sorts and filters sit as chips
+under the tabs. A card opens in a side peek, one pane beside the view that every next
+card reuses (Ctrl+Shift+J/K step through the view, Escape closes it). New database, in the
+file list's New menu and the palette, makes a folder whose own note holds a board over the
+notes beside it.
+
 ```
 ┌ ▥ Bugs board ──────────────────────────────────────────────────────────┐
 │ Bugs ▾ Board  [Filter] [Sort] [Group: status]          ⌕       ⊕       │
@@ -1051,7 +1071,8 @@ and the reading view), so the first paint carries the panel's tab mark and nothi
   `Cell.svelte` with the Properties panel's own control, `properties/PropertyValue`),
   `CardsLayout` (Bases' `image`, `imageFit`, `imageAspectRatio`, `cardSize`; a cover on
   the web is the host's name until the reader opens it), `BoardLayout` (every card one
-  height, each column windowed), `CalendarLayout` (month, week, three days, day; the
+  height per card size, each column windowed; `BoardColumn`, `BoardCard`, `BoardHead`,
+  `BoardNew`, `board-menus.ts`, pure helpers in `board.ts`), `CalendarLayout` (month, week, three days, day; the
   tray; hours with duration; a pulled edge writes the duration; repeats faded),
   `UpcomingLayout`, `TimelineLayout` (start to due, or `nib.date` to `nib.end`;
   dependency arrows from `⛔`), `ChartLayout` (settings under the view's `nib:`). A

@@ -361,8 +361,13 @@ function keyOf(written: string): string {
     .replace(/[\s_-]+/g, '')
 }
 
-/** `16:00`, `9:05`, `16:00 Europe/Zurich`. */
-const TIME = /^(\d{1,2}):(\d{2})(?::\d{2})?(?:\s+([A-Za-z_]+(?:\/[A-Za-z_+-]+)*))?$/
+/** The field a bracket field's key names, if nib knows one by it. */
+export function fieldOfKey(key: string): FieldName | undefined {
+  return FIELD_BY_KEY.get(keyOf(key))
+}
+
+/** `16:00`, `9:05`, `16:00 Europe/Zurich`, `16:00 Etc/GMT+5`. */
+const TIME = /^(\d{1,2}):(\d{2})(?::\d{2})?(?:\s+([A-Za-z_][\w+-]*(?:\/[\w+-]+)*))?$/
 
 export function readTime(value: string): { time: string; zone?: string } | null {
   const found = TIME.exec(value.trim())
@@ -557,10 +562,10 @@ function trailingTokens(
   line: string,
   from: number,
   fields: TaskFields,
+  seen: Set<FieldName>,
 ): { tokens: FieldToken[]; end: number } {
   const tokens: FieldToken[] = []
   let end = line.trimEnd().length
-  const seen = new Set<FieldName>()
 
   /** Takes the match off the end, as a token of this field. */
   const take = (
@@ -601,7 +606,7 @@ function trailingTokens(
   const block = AT_END.block.exec(line.slice(from, end))
   if (block) {
     take(block, 'block', 'caret', 1)
-    fields.block = block[1] ?? ''
+    read('block', block[1] ?? '')
   }
 
   for (let runs = 0; runs < MOST_FIELDS && end > from; runs++) {
@@ -645,7 +650,13 @@ function trailingTokens(
 }
 
 /** The bracket fields among the words: Dataview reads a field wherever it stands. */
-function inlineTokens(line: string, from: number, to: number, fields: TaskFields): FieldToken[] {
+function inlineTokens(
+  line: string,
+  from: number,
+  to: number,
+  fields: TaskFields,
+  seen: Set<FieldName>,
+): FieldToken[] {
   const tokens: FieldToken[] = []
   const words = line.slice(from, to)
 
@@ -662,9 +673,9 @@ function inlineTokens(line: string, from: number, to: number, fields: TaskFields
     const value = found[2] ?? ''
     const field = FIELD_BY_KEY.get(keyOf(key))
     const start = from + found.index
-    const known =
-      field !== undefined && fields[field] === undefined && setField(fields, field, value)
-    if (!known) fields.fields[key.trim()] = value.trim()
+    const known = field !== undefined && !seen.has(field) && setField(fields, field, value)
+    if (known) seen.add(field)
+    else fields.fields[key.trim()] = value.trim()
     const valueFrom =
       value === '' ? start + found[0].length - 1 : start + found[0].lastIndexOf(value)
     const held = heldLength(known ? field : 'other', value)
@@ -699,8 +710,9 @@ export function parseTask(line: string): ParsedTask | null {
   if (!item) return null
 
   const fields = emptyFields(item.mark)
-  const { tokens: trailing, end } = trailingTokens(line, item.marker, fields)
-  const inline = inlineTokens(line, item.marker, end, fields)
+  const seen = new Set<FieldName>()
+  const { tokens: trailing, end } = trailingTokens(line, item.marker, fields, seen)
+  const inline = inlineTokens(line, item.marker, end, fields, seen)
 
   let text = line.slice(item.marker, end)
   for (const token of [...inline].reverse()) {

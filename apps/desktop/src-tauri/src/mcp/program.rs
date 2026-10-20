@@ -24,6 +24,9 @@ const STORE: &str = "/nix/store";
 /// The names this program has on a path.
 const NAMES: [&str; 2] = ["orden", "nib"];
 
+/// A Mac app's folder: its name now, and the names it had until 0.11 and until 0.13.
+const BUNDLES: [&str; 3] = ["Orden.app", "Nib.app", "nibeditor.app"];
+
 /// This program's path, as a client should run it.
 pub fn program() -> Result<PathBuf, String> {
     let exe = std::env::current_exe()
@@ -83,8 +86,10 @@ fn unwrapped(exe: &Path) -> PathBuf {
 
 /// Whether `command`, a program an agent's client was told to run, is a copy of this
 /// app that is not this one any more: a Nix store path an update has replaced, an
-/// `AppImage`'s mount gone with its run, or an `AppImage` of an earlier release. A
-/// program by any other name is somebody else's.
+/// `AppImage`'s mount gone with its run, an `AppImage` of an earlier release, a Mac
+/// copy run from its disk image or translocated, or one in a folder of an old name. A
+/// program by any other name is somebody else's, and so is a copy of this app installed
+/// anywhere else.
 pub fn older_copy(command: &str, now: &Path) -> bool {
     let command = command.trim().trim_matches(|c| c == '"' || c == '\'');
     let path = Path::new(command);
@@ -108,6 +113,22 @@ pub fn older_copy(command: &str, now: &Path) -> bool {
     }
     if command.starts_with("/tmp/.mount_") {
         return command.ends_with("/usr/bin/nib");
+    }
+    let bundle = path
+        .parent()
+        .filter(|macos| macos.ends_with("Contents/MacOS"))
+        .and_then(|macos| macos.parent()?.parent());
+    if let Some(bundle) = bundle.filter(|_| ours(name)) {
+        let folder = bundle
+            .file_name()
+            .and_then(|name| name.to_str())
+            .unwrap_or_default();
+        // A disk image is mounted at `/Volumes/<its name>`, and translocated copies are
+        // all in a random folder under `AppTranslocation`: either is gone soon, and the
+        // next disk image of that name can be anybody's.
+        let lent = bundle.parent().and_then(Path::parent) == Some(Path::new("/Volumes"))
+            || command.contains("/AppTranslocation/");
+        return BUNDLES[1..].contains(&folder) || (lent && folder == BUNDLES[0]);
     }
     let lower = name.to_ascii_lowercase();
     lower.strip_suffix(".appimage").is_some_and(|stem| {
@@ -214,6 +235,11 @@ mod tests {
             "/home/e/Apps/Nib-0.13.1-linux-x64.AppImage",
             "\"/home/e/Apps/Orden.AppImage\"",
             "/opt/nibeditor_0.12.AppImage",
+            "/Volumes/Orden/Orden.app/Contents/MacOS/nib",
+            "/private/var/folders/x1/abc/T/AppTranslocation/7E2F-11AA/d/Orden.app/Contents/MacOS/nib",
+            "/Volumes/nibeditor/nibeditor.app/Contents/MacOS/nib",
+            "/Applications/Nib.app/Contents/MacOS/nib",
+            "/Applications/nibeditor.app/Contents/MacOS/nib",
         ] {
             assert!(older_copy(older, now), "{older}");
         }
@@ -224,6 +250,11 @@ mod tests {
             "/usr/bin/python3",
             "/home/e/Apps/Nibbles.AppImage",
             "/tmp/.mount_Other/usr/bin/other",
+            "/Applications/Orden.app/Contents/MacOS/nib",
+            "/Volumes/Orden/Other.app/Contents/MacOS/nib",
+            "/Volumes/Disk/Apps/Orden.app/Contents/MacOS/nib",
+            "/Volumes/Orden/Orden.app/Contents/MacOS/other",
+            "/Applications/Nibbler.app/Contents/MacOS/nib",
             "",
         ] {
             assert!(!older_copy(theirs, now), "{theirs}");

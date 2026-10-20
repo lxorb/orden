@@ -33,7 +33,7 @@ import { SITE_JS, SITE_JS_PATH, THEME_JS, THEME_JS_HASH } from './blog/script'
 import { type Around, aside, bar, contents, counter, ownFiles, underneath } from './blog/shell'
 import { PAGE_CSS, PAGE_CSS_PATH, SLIDES_CSS, SLIDES_CSS_PATH } from './blog/style'
 import { askInChunks, places } from './bound'
-import { blogRootOf } from './hosts'
+import { blogRootOf, sameOriginPath } from './hosts'
 import { machineOf, mayGuess, maySendAnswer, mayTakeAnswer } from './limits'
 import { noteKey } from './notes'
 import { keepAnswer } from './spaces/answers'
@@ -265,6 +265,24 @@ function fileAt(space: Space, slug: string): SpaceFile | null {
 
 function toFile(file: SpaceFile, url: URL): Response {
   return Response.redirect(new URL(blobUrl(file), url).toString(), 302)
+}
+
+/** Whether a page of the space's site could link this file of it: the site's
+ *  folder rules publish it, or the site is one note whose page links it. The
+ *  second is asked the way the site answers a path to the file, which sends the
+ *  reader to its bytes only when the page links them. */
+export async function publishesFile(
+  env: Env,
+  space: Space,
+  file: SpaceFile,
+  request: Request,
+): Promise<boolean> {
+  const site = readSite(space.site)
+  if (!space.blog_note) return publishes(site.rules, file.path, NO_FRONT)
+
+  const url = new URL(`/${encodeURIComponent(file.path)}`, request.url)
+  const answer = await served(env, space, url, request, site)
+  return answer.headers.get('location') === new URL(blobUrl(file), url).toString()
 }
 
 /** What a `[[wikilink]]` on a published page points at. A note the space does
@@ -536,6 +554,9 @@ ${shell.right ?? ''}
       // A page nobody has said the password for is that reader's own to hold and
       // no shared cache's.
       'cache-control': options.locked ? 'private, no-store' : 'public, max-age=60',
+      // A hover card asks for the page's own address and is answered with less of
+      // it, so a browser that kept the card would show it as the page; see `served`.
+      vary: 'x-nib-preview',
       'content-security-policy': csp({
         scripts,
         ...(shell.counter ? { counter: new URL(counterUrl(shell.counter)).origin } : {}),
@@ -1015,10 +1036,6 @@ function fencesOf(noteId: string, url: URL, request: Request, drawn: ReadonlyMap
   }
 }
 
-/** What a reader is told when the space already holds as many answers as it
- *  keeps. The page's own words, like the other two a form can come back with. */
-const FORM_FULL = 'This form is full.'
-
 /** An answer somebody typed into a form on a page.
  *
  *  Answered with a redirect rather than a page, so that a reload after sending
@@ -1076,7 +1093,9 @@ async function takeAnswer(
   // field the note does not have cannot be sent, whatever a machine posts.
   const fence = codeBlocks(source).find((one) => one.language.toLowerCase() === 'form')
   const form = fence ? formOf(fence.code) : null
-  const where = space.blog_note ? '/' : `/${pageOf(note.path, front)}`
+  const where = space.blog_note
+    ? '/'
+    : new URL(`/${pageOf(note.path, front)}`, request.url).pathname
   if (!form) return back(where)
 
   // Counting, which is the whole of what is done about spam here: no captcha,
@@ -1084,19 +1103,19 @@ async function takeAnswer(
   // kept. See limits.ts.
   const machine = machineIn(request)
   if (!(await maySendAnswer(env, machine)) || !(await mayTakeAnswer(env, space.id))) {
-    return back(`${where}?wrong=${encodeURIComponent('Too many just now. Try later.')}`)
+    return back(`${where}?wrong=busy`)
   }
 
   const sent = await request.formData().catch(() => null)
   if (!sent) return back(where)
 
   const read = answersFrom(form, sent)
-  if ('wrong' in read) return back(`${where}?wrong=${encodeURIComponent(read.wrong)}`)
+  if ('wrong' in read) return back(`${where}?wrong=${read.wrong}`)
 
   // A space keeps so many answers and no more; one that is full says so, and the
   // owner sees the same word in the publish sheet. See spaces/answers.ts.
   if (!(await keepAnswer(env, space.id, note.id, read.answers))) {
-    return back(`${where}?wrong=${encodeURIComponent(FORM_FULL)}`)
+    return back(`${where}?wrong=full`)
   }
 
   return back(`${where}?sent=${encodeURIComponent(note.id)}`)
@@ -1192,7 +1211,7 @@ async function served(
       return new Response(null, {
         status: 303,
         headers: {
-          location: url.pathname,
+          location: sameOriginPath(url.pathname),
           'set-cookie': ticketCookie(await newTicket(held, Date.now())),
           'cache-control': 'private, no-store',
         },
@@ -1203,7 +1222,7 @@ async function served(
       const wrong = request.method === 'POST'
       return page(
         { title: heading, site: heading, url: `${url.origin}/`, noindex: true },
-        gateBody(heading, url.pathname, wrong),
+        gateBody(heading, sameOriginPath(url.pathname), wrong),
         env,
         { status: wrong ? 401 : 200, locked: true },
       )
@@ -1476,13 +1495,16 @@ async function served(
     )
   }
 
-  const found = pageList.find((one) => pathsOf(one.note.path, one.front).includes(slug))
+  // The name the page knows it by: a browser escapes every letter outside ASCII, and a
+  // half-written escape names no page.
+  const decodedSlug = decoded(slug) ?? slug
+  const found = pageList.find((one) => pathsOf(one.note.path, one.front).includes(decodedSlug))
 
   if (!found) {
     // A path this site used to answer on. Somebody's link, somebody's history or
     // somebody's feed reader still says it, so it goes where the page went rather
     // than nowhere. Permanent, because the page did move; see blog/paths.ts.
-    const was = await rememberedNote(env, space.id, slug)
+    const was = await rememberedNote(env, space.id, decodedSlug)
     const moved = was ? pageList.find((one) => one.note.id === was) : null
     if (moved) return Response.redirect(new URL(`/${moved.slug}`, url).toString(), 301)
 

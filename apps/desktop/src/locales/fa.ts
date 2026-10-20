@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const fa: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'همه چیز آماده است',
+  Personalize: 'شخصی‌سازی',
+  Clean: 'تمیز',
+  'Live preview': 'پیش‌نمایش زنده',
+  'Developer mode': 'حالت توسعه‌دهنده',
+  'Do you write code?': 'آیا کد می‌نویسید؟',
+  Yes: 'بله',
+  No: 'نه',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'از برنامه‌های دیگر: {key}',
   'From other apps: set in your system settings': 'از برنامه‌های دیگر: در تنظیمات سیستم تعیین کنید',
@@ -82,6 +91,7 @@ export const fa: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'یک کار',
   'One per line': 'یکی برای هر خط',
+  'Add with AI': 'افزودن با هوش مصنوعی',
   // Tasks: the projects in the panel
   Favorites: 'برگزیده‌ها',
   'Add project': 'افزودن پروژه',
@@ -125,6 +135,7 @@ export const fa: Dictionary = {
   'Pointing hand on buttons': 'دست اشاره روی دکمه‌ها',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'افزودن کار',
+  'Apple Shortcuts': 'Apple میانبرها',
   Tomorrow: 'فردا',
   'done {date}': 'انجام شد {date}',
   'Next week': 'هفتهٔ بعد',
@@ -143,6 +154,7 @@ export const fa: Dictionary = {
   'Smart dates': 'تاریخ‌های هوشمند',
   'From any app': 'از هر برنامه‌ای',
   'Rotate a canvas with two fingers': 'چرخاندن بوم با دو انگشت',
+  'Snap the rotation to right angles': 'چسباندن چرخش به زاویه‌های قائمه',
   'Turn upright': 'صاف کردن',
   'Show tasks without a start date in Today': 'نمایش کارهای بدون تاریخ شروع در امروز',
   'Every day': 'هر روز',
@@ -280,6 +292,7 @@ export const fa: Dictionary = {
   Tabs: 'زبانه‌ها',
   'Ctrl+Tab in order of use': 'Ctrl+Tab به ترتیب استفاده',
   'Swipe between pages': 'کشیدن بین صفحه‌ها',
+  'Hardware acceleration': 'شتاب‌دهی سخت‌افزاری',
   'Hidden tabs': 'زبانه‌های پنهان',
   'Memory saver': 'صرفه‌جویی در حافظه',
   Moderate: 'متوسط',
@@ -1154,6 +1167,8 @@ export const fa: Dictionary = {
   Elbow: 'آرنج',
   Frame: 'قاب',
   Ungroup: 'برداشتن گروه',
+  Lock: 'قفل کردن',
+  Unlock: 'باز کردن قفل',
   'The ink of the page': 'مرکب صفحه',
   'Write in what is picked': 'نوشتن درون گزیده',
   Pen: 'قلم',
@@ -1294,10 +1309,18 @@ export const fa: Dictionary = {
     '{count} بند رمزگذاری‌شده‌اند و بی Evernote چیزی آن‌ها را نمی‌خواند',
   '{count} notes had a reminder, which the export does not carry':
     '{count} یادداشت یادآور داشتند که برون‌بری آن را نمی‌برد',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} پیوست در خروجی نبود یا خوانده نشد',
+    other: '{count} پیوست در خروجی نبود یا خوانده نشد',
+  },
   '{count} notes were in the bin and stay there': '{count} یادداشت در سبد بودند و همان‌جا می‌مانند',
   '{count} archived notes are in a folder called Archive':
     '{count} یادداشت بایگانی‌شده در پوشه‌ای به نام Archive است',
   'The colours a note had are not kept': 'رنگ‌هایی که یادداشت داشت نگه داشته نمی‌شوند',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} فایل خوانده نشد و کنار گذاشته شد',
+    other: '{count} فایل خوانده نشد و کنار گذاشته شد',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} ارجاع بلوک به شکل واژه‌هایی که به آن‌ها اشاره داشتند نوشته شد',
   '{count} saved views are left out, and every row is in the table': {
@@ -1325,6 +1348,8 @@ export const fa: Dictionary = {
     '{count} کارت حال و فعالیت نقش‌اند، پس تنها واژه‌هایشان می‌آید',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} یادداشت پشت گذرواژه‌ای است که تنها Notes می‌گشاید',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} یادداشت پشت گذرواژه‌ای است که تنها Bear می‌گشاید',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} یادداشت در «تازه حذف‌شده» است و همان‌جا می‌ماند',
   '{count} drawings and scans have no picture on this Mac':
@@ -1570,6 +1595,7 @@ export const fa: Dictionary = {
   'Ask the model': 'پرسیدن از مدل',
   'answered by {model}, {date}': 'پاسخ از {model}، {date}',
   'AI block': 'بلوک هوش مصنوعی',
+  'Do with AI': 'انجام با هوش مصنوعی',
   'Highlight colour': 'رنگ پُررنگ',
   'A single newline breaks the line': 'یک خط تازه خط را می‌شکند',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -1891,6 +1917,8 @@ export const fa: Dictionary = {
   'Settings › AI': 'تنظیم ‹ هوش مصنوعی',
   'New chat': 'گفتگوی تازه',
   'Ask again': 'دوباره بپرس',
+  'Continue when the limit resets': 'ادامه پس از بازنشانی سقف',
+  'Continues at {time}': 'در {time} ادامه می‌دهد',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'هر چیزی بپرسید، @ برای افزودن، / برای بیشتر',
   'What can I help with?': 'چه کمکی از من برمی‌آید؟',
@@ -2364,4 +2392,29 @@ export const fa: Dictionary = {
   Peach: 'هلو',
   Sage: 'مریم‌گلی',
   Mist: 'مه',
+  // A board, Notion's: its columns, its cards, its settings, a new database
+  'New database': 'پایگاه داده تازه',
+  'New page': 'صفحه تازه',
+  'Not started': 'شروع نشده',
+  'In progress': 'در حال انجام',
+  'No {property}': 'بدون {property}',
+  '{card} moved to {group}': '{card} به {group} منتقل شد',
+  'Not moved': 'منتقل نشد',
+  Retry: 'تلاش دوباره',
+  Calculate: 'محاسبه',
+  'Remove sort': 'حذف مرتب‌سازی',
+  'Remove sort?': 'مرتب‌سازی حذف شود؟',
+  Groups: 'گروه‌ها',
+  'Hidden groups': 'گروه‌های پنهان',
+  'Add as option': 'افزودن به‌عنوان گزینه',
+  'Move left': 'جابه‌جایی به چپ',
+  'Move right': 'جابه‌جایی به راست',
+  'Delete option': 'حذف گزینه',
+  'Colour columns': 'رنگی کردن ستون‌ها',
+  'Hide empty groups': 'پنهان کردن گروه‌های خالی',
+  'Card size': 'اندازه کارت',
+  Small: 'کوچک',
+  Large: 'بزرگ',
+  Both: 'هر دو',
+  'Shown on cards': 'نمایش روی کارت‌ها',
 }

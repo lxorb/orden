@@ -34,6 +34,18 @@ describe('reading the front matter', () => {
     expect(frontMatter('---  \ntitle: Hi\n---\n\nBody')).toBe('title: Hi')
   })
 
+  /** A file saved by Notepad opens with a byte order mark, and a block read past it
+   *  is a block edited in place rather than a second one opened above it. */
+  test('a byte order mark in front of the fence', () => {
+    const source = '\uFEFF---\ntitle: a\n---\nbody\n'
+    expect(frontMatterValue(source, 'title')).toBe('a')
+    expect(stripFrontMatter(source)).toBe('body\n')
+
+    expect(frontMatterEdit(source, 'title', 'b')).toEqual({ from: 11, to: 13, insert: ' b' })
+    // Taking the block away keeps the mark the file was saved with.
+    expect(frontMatterEdit(source, 'title', null)).toEqual({ from: 1, to: 18, insert: '' })
+  })
+
   test('the note without it, which is what a renderer reads', () => {
     expect(stripFrontMatter('---\ntitle: Hi\n---\n# Title')).toBe('# Title')
     expect(stripFrontMatter('# Title')).toBe('# Title')
@@ -50,6 +62,22 @@ describe('reading the front matter', () => {
 
   test('a key with nothing after it says nothing', () => {
     expect(frontMatterValue('---\nicon:\n---\n', 'icon')).toBeNull()
+  })
+
+  /** YAML's comment, which is no part of the value and stays where it was written
+   *  when the value is set. */
+  test('a comment after the value', () => {
+    expect(frontMatterValue('---\ntitle: a # note\n---\n', 'title')).toBe('a')
+    expect(frontMatterValue("---\ntitle: 'a # b' # note\n---\n", 'title')).toBe('a # b')
+    expect(frontMatterValue('---\ntitle: a#b\n---\n', 'title')).toBe('a#b')
+    expect(frontMatterValue('---\nicon: # none yet\n---\n', 'icon')).toBeNull()
+    expect(frontMatterList('---\ntags: [a, "b #c"] # mine\n---\n', 'tags')).toEqual(['a', 'b #c'])
+
+    const source = '---\ntitle: a # note\n---\n'
+    const edit = frontMatterEdit(source, 'title', 'b')
+    expect(edit && source.slice(0, edit.from) + edit.insert + source.slice(edit.to)).toBe(
+      '---\ntitle: b # note\n---\n',
+    )
   })
 })
 
@@ -134,6 +162,30 @@ describe('setting a key', () => {
       '---\r\ntitle: Plan\r\nicon: rocket\r\n---\r\nwords',
     )
     expect(applied('# Plan\r\n', 'icon', 'rocket')).toBe('---\r\nicon: rocket\r\n---\r\n# Plan\r\n')
+    expect(applied('---\r\ntitle: a\r\ntags: [x]\r\n---\r\nbody\r\n', 'title', 'b')).toBe(
+      '---\r\ntitle: b\r\ntags: [x]\r\n---\r\nbody\r\n',
+    )
+    expect(applied('---\r\ntags:\r\n  - x\r\ntitle: a\r\n---\r\n', 'tags', 'z')).toBe(
+      '---\r\ntags: z\r\ntitle: a\r\n---\r\n',
+    )
+  })
+
+  test('finds a key that is not a word of letters, and edits it where it is', () => {
+    const twice = applied(applied('---\n日期: a\n---\nbody\n', '日期', 'b'), '日期', 'c')
+    expect(twice).toBe('---\n日期: c\n---\nbody\n')
+    expect(frontMatterValue(twice, '日期')).toBe('c')
+    for (const key of ['due date', 'Größe', '1st', 'a.b']) {
+      expect(applied(`---\n${key}: a\n# note\n---\n`, key, 'b')).toBe(
+        `---\n${key}: b\n# note\n---\n`,
+      )
+      expect(applied(`---\n${key}: a\n# note\n---\n`, key, null)).toBe('---\n# note\n---\n')
+    }
+  })
+
+  test('a list written under the key goes with the value it is replaced by', () => {
+    expect(applied('---\ntitle: a\ntags:\n  - x\n  - y\n---\nbody\n', 'tags', 'z')).toBe(
+      '---\ntitle: a\ntags: z\n---\nbody\n',
+    )
   })
 })
 
@@ -165,6 +217,15 @@ describe('taking a key away', () => {
       '---\r\ntitle: Plan\r\n---\r\nwords',
     )
     expect(applied('---\r\nicon: rocket\r\n---\r\n\r\n# Plan\r\n', 'icon')).toBe('# Plan\r\n')
+  })
+
+  test('takes the list written under it too, and leaves the next key its own', () => {
+    expect(applied('---\ntitle: a\ntags:\n  - x\n  - y\n---\nbody\n', 'tags')).toBe(
+      '---\ntitle: a\n---\nbody\n',
+    )
+    expect(applied('---\ntags:\n- x\n- y\ntitle: a\n---\nbody\n', 'tags')).toBe(
+      '---\ntitle: a\n---\nbody\n',
+    )
   })
 })
 

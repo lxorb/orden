@@ -21,11 +21,12 @@ const HOLDS_NOTHING: Record<string, string> = {
   retired_notes: 'note ids whose rooms are still to be emptied, cleared with those rooms',
   online_service: "the online terminal service's own switches, about no account",
   sync_rollout: "sync v2's switch for the whole service, about no account",
+  guest_sessions: "a guest's way in: a guest only says it is at an address (#488)",
 }
 
 /** The columns that say whose a row is or what it is inside. A table with one of
  *  these cannot be waved through as holding nothing. */
-const WHOSE = ['user_id', 'email', 'space_id', 'note_id', 'guest_id', 'who']
+const WHOSE = ['user_id', 'email', 'space_id', 'note_id', 'who']
 
 function tables(database: DatabaseSync): string[] {
   const rows = database
@@ -88,7 +89,8 @@ describe('the list of what is erased', () => {
 /* ── Two accounts, one of everything ─────────────────────────────────── */
 
 /** Everything that names the account being deleted. Its hashes are the ones only it
- *  holds; the shared ones are named by the other account too, and stay. */
+ *  holds; the shared ones are named by the other account too, and stay. Its guest
+ *  only said it was at the address, and stays too. */
 const LEAVING = {
   id: 'user-leaving',
   email: 'leaving@example.com',
@@ -182,7 +184,7 @@ function seed(database: DatabaseSync, who: Person): void {
   )
   run(
     'insert into guest_sessions (token_hash, guest_id, created_at, expires_at) values (?, ?, 1, 9e15)',
-    `guest-session-${who.id}`,
+    `guest-session-${who.guest}`,
     who.guest,
   )
   run(
@@ -380,9 +382,7 @@ function everyRow(database: DatabaseSync): { table: string; row: string }[] {
 }
 
 const naming = (who: Person) => (row: string) =>
-  [who.id, who.email, who.space, who.note, who.guest, who.blob, who.version].some((mark) =>
-    row.includes(mark),
-  )
+  [who.id, who.email, who.space, who.note, who.blob, who.version].some((mark) => row.includes(mark))
 
 describe('deleting one of two accounts', () => {
   let env: TestEnv
@@ -455,14 +455,14 @@ describe('deleting one of two accounts', () => {
     expect(env.db.prepare('select count(*) as many from leftovers').get()).toEqual({ many: 0 })
   })
 
-  test('empties its hub and the hubs of the guests at its address, and nobody else’s', async () => {
+  test('empties its hub, and not the hub of a guest that said it was at its address', async () => {
     const running = hubs(env)
     env.HUB = running.HUB
 
     await eraseAccount(env, { id: LEAVING.id, email: LEAVING.email, name: null, created_at: 1 })
 
     const erased = running.asked.filter((one) => one.ask === 'erase').map((one) => one.id)
-    expect(erased.sort()).toEqual([LEAVING.guest, LEAVING.id].sort())
+    expect(erased).toEqual([LEAVING.id])
     expect(env.db.prepare('select count(*) as many from leftovers').get()).toEqual({ many: 0 })
   })
 
@@ -476,7 +476,7 @@ describe('deleting one of two accounts', () => {
 
     expect(
       env.db.prepare("select what from leftovers where what like 'hubs/%' order by what").all(),
-    ).toEqual([{ what: `hubs/${LEAVING.guest}` }, { what: `hubs/${LEAVING.id}` }])
+    ).toEqual([{ what: `hubs/${LEAVING.id}` }])
   })
 
   test('undoes nothing when the transaction fails', async () => {

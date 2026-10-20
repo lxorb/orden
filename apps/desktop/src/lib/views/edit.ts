@@ -6,6 +6,7 @@
  *  before; every edit here makes a new base, sharing whatever it did not touch, and
  *  the tab answers the new one afresh. Pure, so each is a line of a test. */
 
+import { bare } from './columns'
 import type { Base, Filter, NibBase, NibProperty, NibView, Sort, View } from '@nib/bases'
 
 /** The base with one of its views replaced. A place past the end changes nothing. */
@@ -48,10 +49,16 @@ export const setGroup = (base: Base, at: number, group: Sort | undefined): Base 
 export const setSubGroup = (base: Base, at: number, sub: Sort | undefined): Base =>
   withView(base, at, (view) => withNib(view, { subGroupBy: sub }))
 
+/** Filters nib could not read are kept among the options as written, only until the
+ *  view is given its own - and none is its own too, so both drop them. See
+ *  `viewPlain` in @nib/bases. */
 export const setFilter = (base: Base, at: number, filters: Filter | undefined): Base =>
-  withView(base, at, (view) =>
-    filters === undefined ? lacking(view, 'filters') : { ...view, filters },
-  )
+  withView(base, at, (view) => {
+    const options = { ...view.options }
+    Reflect.deleteProperty(options, 'filters')
+    const next = { ...view, options }
+    return filters === undefined ? lacking(next, 'filters') : { ...next, filters }
+  })
 
 export const setShowCompleted = (base: Base, at: number, shown: boolean): Base =>
   withView(base, at, (view) => withNib(view, { showCompleted: shown ? true : undefined }))
@@ -79,12 +86,43 @@ export function setHidden(base: Base, at: number, group: string, hidden: boolean
   })
 }
 
-/** A group's manual order, as the board keeps it: row ids, first to last. */
+/** A group's manual order, as the board keeps it: row ids, first to last. `ids` are
+ *  the cards on screen in their new order, which may be only some of the group's (a
+ *  search, a filter, the limit or one swimlane hides the rest): those take the places
+ *  the shown ones held, and every other card keeps its own. */
 export function setManualOrder(base: Base, at: number, group: string, ids: string[]): Base {
   return withView(base, at, (view) => {
-    const order = { ...view.nib.order, [group]: ids }
+    const order = { ...view.nib.order, [group]: mergedOrder(view.nib.order?.[group] ?? [], ids) }
     return withNib(view, { order })
   })
+}
+
+/** A stored order with the shown cards put in their new order. Each shown card the
+ *  stored order already had marks a place; the shown cards fill those places in their
+ *  new order, a card new to the order going in next to the one before it on screen. */
+export function mergedOrder(stored: readonly string[], shown: readonly string[]): string[] {
+  const shownSet = new Set(shown)
+  const storedSet = new Set(stored)
+  const places = stored.filter((id) => shownSet.has(id)).length
+  if (places === 0) return [...stored, ...shown]
+  // The shown cards in runs, one run per place: a run starts at each card the stored
+  // order had, so the new cards ride with their neighbour.
+  const runs: string[][] = []
+  let run: string[] = []
+  let held = false
+  for (const id of shown) {
+    if (storedSet.has(id)) {
+      if (held) {
+        runs.push(run)
+        run = []
+      }
+      held = true
+    }
+    run.push(id)
+  }
+  runs.push(run)
+  let next = 0
+  return stored.flatMap((id) => (shownSet.has(id) ? (runs[next++] ?? []) : [id]))
 }
 
 /** A key of a layout's own: a calendar's date, a chart's measure. Kept under the
@@ -226,4 +264,111 @@ export function setDisplayName(base: Base, column: string, words: string): Base 
     Reflect.deleteProperty(properties, key)
   else properties[key] = next
   return { ...base, properties }
+}
+
+/** A group renamed in every key a base keeps it under: each view's manual order, its
+ *  hidden groups and its column order, and a filter's literal of it, so a column whose
+ *  option was renamed keeps its cards' order, stays hidden and stays where it was. With
+ *  `merge`, `to` is a group already, and `from`'s cards join it. */
+export function renamedGroup(
+  base: Base,
+  property: string,
+  from: string,
+  to: string,
+  merge = false,
+): Base {
+  if (from === to) return base
+  const name = property.replace(/^note\./, '')
+  // A rename onto a name that is already a group is a merge: the two lists are one,
+  // the target's first, and a name is never there twice.
+  const swap = (list: readonly string[]) => [
+    ...new Set(list.map((one) => (one === from ? to : one))),
+  ]
+  const quoted = (words: string) => JSON.stringify(words)
+  const literal = (filter: Filter): Filter => {
+    if (typeof filter === 'string')
+      return filter.includes(name) ? filter.split(quoted(from)).join(quoted(to)) : filter
+    if ('and' in filter) return { and: filter.and.map(literal) }
+    if ('or' in filter) return { or: filter.or.map(literal) }
+    return { not: filter.not.map(literal) }
+  }
+  const same = (one: string | undefined) => one !== undefined && bare(one) === name
+  const views = base.views.map((view): View => {
+    if (!same(view.groupBy?.property) && !same(view.nib.subGroupBy?.property))
+      return { ...view, ...(view.filters ? { filters: literal(view.filters) } : {}) }
+    const order = view.nib.order
+    let moved = order
+    if (order && from in order) {
+      const { [from]: carried = [], ...rest } = order
+      moved = { ...rest, [to]: [...new Set([...(rest[to] ?? []), ...carried])] }
+    }
+    // A merge goes into the target as it is, shown or hidden; a rename keeps hiding
+    // what was hidden.
+    const hidden = view.nib.hidden
+      ? merge
+        ? view.nib.hidden.filter((one) => one !== from)
+        : swap(view.nib.hidden)
+      : undefined
+    return {
+      ...view,
+      ...(view.filters ? { filters: literal(view.filters) } : {}),
+      nib: {
+        ...view.nib,
+        ...(moved ? { order: moved } : {}),
+        ...(hidden ? { hidden } : {}),
+        ...(view.nib.groups ? { groups: swap(view.nib.groups) } : {}),
+      },
+    }
+  })
+  return { ...base, views, ...(base.filters ? { filters: literal(base.filters) } : {}) }
+}
+
+/** A group gone from every key a base keeps it under, its option deleted: so one made
+ *  again under that name starts shown, unordered and at the end. */
+export function forgottenGroup(base: Base, property: string, value: string): Base {
+  const name = bare(property)
+  const same = (one: string | undefined) => one !== undefined && bare(one) === name
+  const views = base.views.map((view): View => {
+    if (!same(view.groupBy?.property) && !same(view.nib.subGroupBy?.property)) return view
+    const nib = { ...view.nib }
+    if (nib.order && value in nib.order) {
+      nib.order = Object.fromEntries(Object.entries(nib.order).filter(([key]) => key !== value))
+    }
+    if (nib.hidden) nib.hidden = nib.hidden.filter((one) => one !== value)
+    if (nib.groups) nib.groups = nib.groups.filter((one) => one !== value)
+    return { ...view, nib }
+  })
+  return { ...base, views }
+}
+
+/** A board's columns in a new order: `moving` put before or after `target`, among the
+ *  columns as they stand (`names`, by key as text). */
+export function placeColumn(
+  base: Base,
+  at: number,
+  names: readonly string[],
+  moving: string,
+  target: string,
+  after: boolean,
+): Base {
+  if (moving === target) return base
+  const rest = names.filter((one) => one !== moving)
+  const index = rest.indexOf(target)
+  if (index === -1) return base
+  rest.splice(after ? index + 1 : index, 0, moving)
+  return setViewNib(base, at, 'groups', rest)
+}
+
+/** A group's manual order with the ids of rows no longer anywhere left out. */
+export function prunedOrder(base: Base, at: number, group: string, alive: (id: string) => boolean) {
+  return withView(base, at, (view) => {
+    const was = view.nib.order?.[group]
+    if (!was) return view
+    const kept = was.filter(alive)
+    if (kept.length === was.length) return view
+    const order = { ...view.nib.order }
+    if (kept.length) order[group] = kept
+    else Reflect.deleteProperty(order, group)
+    return withNib(view, { order: Object.keys(order).length ? order : undefined })
+  })
 }

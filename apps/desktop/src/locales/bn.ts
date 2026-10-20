@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const bn: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'সব প্রস্তুত',
+  Personalize: 'নিজের মতো সাজান',
+  Clean: 'পরিচ্ছন্ন',
+  'Live preview': 'লাইভ প্রিভিউ',
+  'Developer mode': 'ডেভেলপার মোড',
+  'Do you write code?': 'আপনি কি কোড লেখেন?',
+  Yes: 'হ্যাঁ',
+  No: 'না',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'অন্য অ্যাপ থেকে: {key}',
   'From other apps: set in your system settings': 'অন্য অ্যাপ থেকে: সিস্টেম সেটিংসে ঠিক করুন',
@@ -82,6 +91,7 @@ export const bn: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'একটি কাজ',
   'One per line': 'প্রতি লাইনে একটি',
+  'Add with AI': 'AI দিয়ে যোগ করুন',
   // Tasks: the projects in the panel
   Favorites: 'প্রিয়',
   'Add project': 'প্রকল্প যোগ করুন',
@@ -125,6 +135,7 @@ export const bn: Dictionary = {
   'Pointing hand on buttons': 'বোতামের উপর নির্দেশক হাত',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'কাজ যোগ করুন',
+  'Apple Shortcuts': 'Apple শর্টকাট',
   Tomorrow: 'আগামীকাল',
   'done {date}': 'সম্পন্ন {date}',
   'Next week': 'পরের সপ্তাহ',
@@ -143,6 +154,7 @@ export const bn: Dictionary = {
   'Smart dates': 'স্মার্ট তারিখ',
   'From any app': 'যেকোনো অ্যাপ থেকে',
   'Rotate a canvas with two fingers': 'দুই আঙুলে ক্যানভাস ঘোরান',
+  'Snap the rotation to right angles': 'ঘোরানো সমকোণে আটকে রাখুন',
   'Turn upright': 'সোজা করুন',
   'Show tasks without a start date in Today': 'শুরুর তারিখ ছাড়া কাজগুলো আজ-এ দেখান',
   'Every day': 'প্রতিদিন',
@@ -280,6 +292,7 @@ export const bn: Dictionary = {
   Tabs: 'ট্যাব',
   'Ctrl+Tab in order of use': 'ব্যবহারের ক্রমে Ctrl+Tab',
   'Swipe between pages': 'পৃষ্ঠাগুলির মধ্যে সোয়াইপ',
+  'Hardware acceleration': 'হার্ডওয়্যার অ্যাক্সিলারেশন',
   'Hidden tabs': 'লুকানো ট্যাব',
   'Memory saver': 'মেমরি সেভার',
   Moderate: 'মাঝারি',
@@ -1150,6 +1163,8 @@ export const bn: Dictionary = {
   Elbow: 'কোণা',
   Frame: 'ফ্রেম',
   Ungroup: 'গ্রুপ ভাঙুন',
+  Lock: 'লক করুন',
+  Unlock: 'আনলক করুন',
   'The ink of the page': 'পাতার কালি',
   'Write in what is picked': 'নির্বাচিত জায়গায় লিখুন',
   Pen: 'কলম',
@@ -1293,10 +1308,18 @@ export const bn: Dictionary = {
     '{count}টি অংশ এনক্রিপ্ট করা, Evernote ছাড়া কিছুই সেগুলো পড়তে পারে না',
   '{count} notes had a reminder, which the export does not carry':
     '{count}টি নোটে রিমাইন্ডার ছিল, যা এক্সপোর্ট বহন করে না',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count}টি সংযুক্তি এক্সপোর্টে ছিল না বা পড়া যায়নি',
+    other: '{count}টি সংযুক্তি এক্সপোর্টে ছিল না বা পড়া যায়নি',
+  },
   '{count} notes were in the bin and stay there': '{count}টি নোট বিনে ছিল, সেখানেই থাকবে',
   '{count} archived notes are in a folder called Archive':
     '{count}টি আর্কাইভ করা নোট Archive নামের ফোল্ডারে আছে',
   'The colours a note had are not kept': 'নোটের রং রাখা হয় না',
+  '{count} files could not be read, so they were left out': {
+    one: '{count}টি ফাইল পড়া যায়নি, তাই বাদ দেওয়া হয়েছে',
+    other: '{count}টি ফাইল পড়া যায়নি, তাই বাদ দেওয়া হয়েছে',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count}টি ব্লক রেফারেন্স যে শব্দ দেখাত, সেই শব্দ হিসেবেই লেখা হয়েছে',
   '{count} saved views are left out, and every row is in the table': {
@@ -1323,6 +1346,8 @@ export const bn: Dictionary = {
     '{count}টি মন ও কাজের কার্ড আঁকা, তাই কেবল তাদের লেখা আসে',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count}টি নোট পাসওয়ার্ডের পিছনে, যা কেবল Notes খুলতে পারে',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count}টি নোট পাসওয়ার্ডের পিছনে, যা কেবল Bear খুলতে পারে',
   '{count} notes are in Recently Deleted, and stay there':
     '{count}টি নোট সাম্প্রতিক মুছে ফেলায় আছে এবং সেখানেই থাকে',
   '{count} drawings and scans have no picture on this Mac':
@@ -1566,6 +1591,7 @@ export const bn: Dictionary = {
   'Ask the model': 'মডেলকে জিজ্ঞাসা করুন',
   'answered by {model}, {date}': '{model}-এর উত্তর, {date}',
   'AI block': 'AI ব্লক',
+  'Do with AI': 'AI দিয়ে করুন',
   'Highlight colour': 'হাইলাইটের রং',
   'A single newline breaks the line': 'একটি নতুন লাইনই লাইন ভাঙে',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -1887,6 +1913,8 @@ export const bn: Dictionary = {
   'Settings › AI': 'সেটিংস › AI',
   'New chat': 'নতুন চ্যাট',
   'Ask again': 'আবার জিজ্ঞাসা করুন',
+  'Continue when the limit resets': 'সীমা নতুন হলে চালিয়ে যান',
+  'Continues at {time}': '{time}-এ চালিয়ে যাবে',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'যা খুশি জিজ্ঞেস করুন, যোগ করতে @, আরও জন্য /',
   'What can I help with?': 'কীভাবে সাহায্য করতে পারি?',
@@ -2360,4 +2388,29 @@ export const bn: Dictionary = {
   Peach: 'পিচ',
   Sage: 'সেজ',
   Mist: 'কুয়াশা',
+  // A board, Notion's: its columns, its cards, its settings, a new database
+  'New database': 'নতুন ডেটাবেস',
+  'New page': 'নতুন পৃষ্ঠা',
+  'Not started': 'শুরু হয়নি',
+  'In progress': 'চলছে',
+  'No {property}': '{property} নেই',
+  '{card} moved to {group}': '{card} {group}-এ সরানো হয়েছে',
+  'Not moved': 'সরানো হয়নি',
+  Retry: 'আবার চেষ্টা করুন',
+  Calculate: 'হিসাব করুন',
+  'Remove sort': 'সাজানো সরান',
+  'Remove sort?': 'সাজানো সরাবেন?',
+  Groups: 'গ্রুপ',
+  'Hidden groups': 'লুকানো গ্রুপ',
+  'Add as option': 'অপশন হিসেবে যোগ করুন',
+  'Move left': 'বাঁয়ে সরান',
+  'Move right': 'ডানে সরান',
+  'Delete option': 'অপশন মুছুন',
+  'Colour columns': 'কলাম রং করুন',
+  'Hide empty groups': 'খালি গ্রুপ লুকান',
+  'Card size': 'কার্ডের আকার',
+  Small: 'ছোট',
+  Large: 'বড়',
+  Both: 'দুটোই',
+  'Shown on cards': 'কার্ডে দেখানো',
 }

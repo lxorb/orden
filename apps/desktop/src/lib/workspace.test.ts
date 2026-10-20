@@ -81,6 +81,11 @@ vi.mock('./tauri', async (importOriginal) => ({
     if (command === 'read_note' && holding.read && holding.readPath === pathOf(args)) {
       await holding.read
     }
+    // The browser's listing, answering for the notes here and the folders they are in.
+    if (command === 'path_exists') {
+      const at = pathOf(args)
+      return Object.keys(notes).some((one) => one === at || one.startsWith(`${at}/`))
+    }
     if (command !== 'read_note') return undefined
 
     const path = pathOf(args)
@@ -169,7 +174,7 @@ const { startup } = await import('./startup.svelte')
 const ops = await import('./tab-strip/ops')
 const { Tab } = await import('./workspace/documents.svelte')
 const { isDraft } = await import('./workspace/drafts')
-const { apartOf, writeShortcut } = await import('./web-tab/shortcut')
+const { apartOf, readShortcut, readWebloc, writeShortcut } = await import('./web-tab/shortcut')
 const { STARTS_RIGHT } = await import('./workspace/panels')
 const { shown: pad } = await import('./scratchpad/is.svelte')
 type Entry = import('./workspace.svelte').Entry
@@ -2205,10 +2210,12 @@ describe('a replacement across the space', () => {
   test('keeps what each note said before it writes what it says now', async () => {
     await workspace.replaceInNotes([change('/space/a.md', '# a', '# alpha')])
 
+    // Read again first, in case it was written since; see `writeClosed` in
+    // workspace/note-text.ts.
     const written = sent.filter((one) => one.path === '/space/a.md')
-    expect(written.map((one) => one.command)).toEqual(['snapshot_note', 'write_note'])
-    expect(written[0]?.content).toBe('# a')
-    expect(written[1]?.content).toBe('# alpha')
+    expect(written.map((one) => one.command)).toEqual(['read_note', 'snapshot_note', 'write_note'])
+    expect(written[1]?.content).toBe('# a')
+    expect(written[2]?.content).toBe('# alpha')
   })
 
   test('takes a snapshot of every note it touches', async () => {
@@ -3012,9 +3019,13 @@ describe('a note writes itself, wherever it is', () => {
   })
 
   /** A rename landing inside a write used to move the file out from under it, and
-   *  the write put the old name back beside the new one. */
+   *  the write put the old name back beside the new one.
+   *
+   *  A note whose heading is not its name: this disk keeps nothing it is sent, so a
+   *  note re-read after its write says `# a` again, and a rename rewrites a heading
+   *  that is still the note's old name and writes it too. */
   test('a rename during a write waits for it, and one file is left, with the words', async () => {
-    const tab = await typedIn('/space/a.md')
+    const tab = await typedIn('/space/c.md')
 
     let release: () => void = () => undefined
     holding.write = new Promise<void>((resolve) => {
@@ -3023,7 +3034,7 @@ describe('a note writes itself, wherever it is', () => {
 
     const writing = workspace.writeNow()
     await vi.advanceTimersByTimeAsync(0)
-    const renaming = workspace.rename('/space/a.md', 'Renamed.md')
+    const renaming = workspace.rename('/space/c.md', 'Renamed.md')
     await vi.advanceTimersByTimeAsync(0)
     expect(sent.some((one) => one.command === 'rename_note')).toBe(false)
 
@@ -4199,6 +4210,58 @@ describe('a file asked for as a note and then as a website', () => {
     expect(workspace.documentAt(WEB_NOTE)).toBe(note)
     // And nothing was written under the document that was open on it.
     expect(sent.filter((one) => one.command === 'write_note')).toEqual([])
+  })
+})
+
+/** An address typed into a website's bar goes into its file in the file's own format:
+ *  a `.webloc` a Mac wrote stays a plist a Mac reads, its other keys and all (#370). */
+describe('an address typed into a website bar', () => {
+  beforeEach(() => {
+    workspace.tabs = []
+    workspace.spaces = [{ id: 'one', name: 'One', root: '/space' }]
+    workspace.activeSpaceId = 'one'
+  })
+
+  afterEach(() => {
+    workspace.tabs = []
+    delete notes['/space/Docs.webloc']
+    delete notes['/space/Docs.url']
+  })
+
+  const aimedAt = async (path: string, was: string, url: string) => {
+    notes[path] = was
+    await workspace.openWeb(path)
+    const tab = workspace.active
+    if (!tab) throw new Error('no tab')
+    sent.length = 0
+    await workspace.webAimed(tab, url)
+    return sent.find((one) => one.command === 'write_note')?.content
+  }
+
+  test('keeps a .webloc a plist, with nothing in it changed but the address', async () => {
+    const plist = (url: string) =>
+      '<?xml version="1.0" encoding="UTF-8"?>\n<plist version="1.0">\n<dict>\n' +
+      `\t<key>Name</key>\n\t<string>Docs</string>\n\t<key>URL</key>\n\t<string>${url}</string>\n` +
+      '</dict>\n</plist>\n'
+
+    const written = await aimedAt(
+      '/space/Docs.webloc',
+      plist('https://svelte.dev/'),
+      'https://a.example/?a=1&b=2',
+    )
+
+    expect(written).toBe(plist('https://a.example/?a=1&amp;b=2'))
+    expect(readWebloc(written)).toBe('https://a.example/?a=1&b=2')
+  })
+
+  test('and a .url an internet shortcut', async () => {
+    const written = await aimedAt(
+      '/space/Docs.url',
+      '[InternetShortcut]\r\nURL=https://svelte.dev/\r\n',
+      'https://svelte.dev/docs',
+    )
+
+    expect(readShortcut(written)?.url).toBe('https://svelte.dev/docs')
   })
 })
 

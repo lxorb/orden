@@ -239,6 +239,7 @@ const KNOWN: Record<string, Check> = {
   undatedInToday: switched('undatedInToday'),
   // Whether two fingers turn a canvas as well as moving and zooming it (#351).
   canvasTurns: switched('canvasTurns'),
+  canvasTurnSnaps: switched('canvasTurnSnaps'),
   // Which colour the highlight button writes. A palette tone by number, or null
   // for a highlight with no colour of its own; the app decides what a tone it has
   // never heard of means, which is the plain one. See highlights.ts in
@@ -271,6 +272,8 @@ const KNOWN: Record<string, Check> = {
   quietMarks: switched('quietMarks'),
   // No hints anywhere in the app, for somebody who knows it.
   silent: switched('silent'),
+  // Whether the terminals and the other tools for writing code are offered.
+  developer: switched('developer'),
 }
 
 /** How much of any of this an account may hold.

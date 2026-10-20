@@ -28,6 +28,27 @@ function page(id: string, extra: Partial<PageNode> = {}): PageNode {
   return { ...newPage(), id, ...extra }
 }
 
+/** Pages laid out with a card and a stroke 20 into each, both named `on:` the page. */
+function carrying(pages: PageNode[]) {
+  const placed = laidOut(pages)
+  const at = (one: PageNode) => ({ x: one.x + 20, y: one.y + 20 })
+  const sized = { type: 'text' as const, width: 80, height: 30, text: '' }
+  const inked = { tool: 'pen' as const, color: '1', size: 2 }
+  const point = (one: PageNode) => ({ pressure: 0.5, tiltX: 0, tiltY: 0, t: 0, ...at(one) })
+  const cards = placed.map((one) => ({ ...sized, ...at(one), id: `on:${one.id}` }))
+  const ink = placed.map((one) => ({ ...inked, id: `on:${one.id}`, points: [point(one)] }))
+  return { ...emptyCanvas(), nodes: [...placed, ...cards], ink }
+}
+
+/** The cards and strokes that are no longer on the page they were put on. */
+function strays(canvas: ReturnType<typeof emptyCanvas>): string[] {
+  const off = (id: string, point: { x: number; y: number } | undefined) =>
+    !point || pageAt(pagesOf(canvas), point)?.id !== id.slice(3)
+  const nodes = canvas.nodes.filter((node) => !isPage(node) && off(node.id, node))
+  const ink = canvas.ink.filter((stroke) => off(stroke.id, stroke.points[0]))
+  return [...nodes, ...ink].map((one) => one.id)
+}
+
 describe('a page note as a file', () => {
   test('a blank one is one A4 page', () => {
     const canvas = readCanvas(blankPages())
@@ -242,6 +263,12 @@ describe('adding and taking away', () => {
     expect(left.ink).toHaveLength(0)
   })
 
+  test('the pages after one taken away take what is on them along', () => {
+    const left = removed(carrying([page('a'), page('b'), page('c')]), 'a')
+    expect(left.nodes.map((node) => node.id)).toEqual(['b', 'c', 'on:b', 'on:c'])
+    expect(strays(left)).toEqual([])
+  })
+
   test('the last page is never taken away', () => {
     const one = emptyPages()
     expect(removed(one, pagesOf(one)[0]?.id ?? '')).toBe(one)
@@ -279,6 +306,12 @@ describe('reordering', () => {
     expect(card?.y).toBe(20)
   })
 
+  test('every page that moves in a reorder carries what is on it', () => {
+    const turned = moved(carrying([page('a'), page('b'), page('c')]), 'a', 2)
+    expect(pagesOf(turned).map((one) => one.id)).toEqual(['b', 'c', 'a'])
+    expect(strays(turned)).toEqual([])
+  })
+
   test('a page already where it is asked to go comes back unchanged', () => {
     const two = added(emptyPages()).canvas
     expect(moved(two, pagesOf(two)[0]?.id ?? '', 0)).toBe(two)
@@ -303,6 +336,12 @@ describe('a long page', () => {
     expect(height).toBeGreaterThan(PAPERS.a4.height)
     // In whole screenfuls, so the page grows in steps a scroll can follow.
     expect((height - PAPERS.a4.height) % GROWTH).toBe(0)
+  })
+
+  test('the page under one that grew takes what is on it along', () => {
+    const long = carrying([page('a', { paper: 'long' }), page('b', { paper: 'long' })])
+    const taller = grown(long, new Map([['a', PAPERS.long.height + 400]]))
+    expect(strays(taller)).toEqual([])
   })
 
   test('a page with nothing reaching past it is left where it is', () => {

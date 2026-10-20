@@ -223,3 +223,17 @@ test('a tab closed with its cross goes as no longer in front, and the rest hold 
   // all wider than that already.
   for (const id of ids.slice(1)) expect(box(id)?.style.width, id).toBe(before.get(id))
 })
+
+/** #523: the keyboard went with the tab to the page's `body`, and the next arrow walked
+ *  nothing. It goes on to the tab in front, the way a browser's strip does. */
+test('Delete on a tab leaves the keyboard on the tab in front after it', async () => {
+  const { ids } = await strip()
+  const [one, two] = ids as [string, string]
+
+  pick(one)?.focus()
+  pick(one)?.dispatchEvent(
+    new KeyboardEvent('keydown', { key: 'Delete', bubbles: true, cancelable: true }),
+  )
+  await vi.waitFor(() => expect(workspace.tabs.map((tab) => tab.id)).not.toContain(one))
+  await vi.waitFor(() => expect(document.activeElement).toBe(pick(two)))
+})

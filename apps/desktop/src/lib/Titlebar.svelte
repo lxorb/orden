@@ -1,10 +1,9 @@
 <script lang="ts">
-  import type { EditorView } from '@nib/editor'
-  import AppMenu from './AppMenu.svelte'
   import { chrome } from './glass/chrome.svelte'
   import { i18n, t } from './i18n.svelte'
   import { keepFocus } from './focus'
   import { modes } from './modes.svelte'
+  import { SEARCH_MARK } from './panel-marks'
   import SidebarToggle from './SidebarToggle.svelte'
   import FileMark from './FileMark.svelte'
   import TabMark from './TabMark.svelte'
@@ -21,11 +20,7 @@
   import { WindowState } from './window-state.svelte'
   import { workspace } from './workspace.svelte'
 
-  const {
-    view,
-    onpalette,
-    onhistory,
-  }: { view?: EditorView | undefined; onpalette: () => void; onhistory: () => void } = $props()
+  const { onpalette }: { onpalette: () => void } = $props()
 
   /** What the middle button says. Read off the window itself rather than off its
    *  own clicks, because dragging a maximised window off the top of the screen
@@ -121,16 +116,29 @@
   {/if}
 {/snippet}
 
-<!-- One row: what the app is, the button that opens the file list, the open
-     notes, and the window's own buttons. On a desktop the note's name lives in
-     its tab, so there is no separate title; a phone and a tablet hold one
-     document, so the name is the middle of the row and the whole of the app is
-     behind the dots at the end of it. -->
+<!-- The palette, for a hand that does not know its keys; the tooltip says them (#304).
+     It keeps the keyboard where it was, for the palette to hand back. -->
+{#snippet searchGlyph()}
+  <button
+    class="nib-glyph search"
+    title={shortcuts.tooltip(t('Search'), 'app.palette')}
+    aria-label={t('Search notes and commands')}
+    onpointerdown={keepFocus}
+    onmousedown={keepFocus}
+    onclick={() => onpalette()}
+  >
+    <svg viewBox="0 0 13 13"><path d={SEARCH_MARK} /></svg>
+  </button>
+{/snippet}
+
+<!-- One row: the palette, the button that opens the file list, the open notes, and
+     the window's own buttons. On a desktop the note's name lives in its tab, so there
+     is no separate title; a phone and a tablet hold one document, so the name is the
+     middle of the row and the palette is at the end of it. No menu of the whole app:
+     what it held is the palette's, a note's dots and the strip's (#304). -->
 <header class:lights={cornered} data-chrome="top" data-theme={chrome.theme}>
-  <!-- The application itself, top left; a phone has it behind the dots at the
-       other end, its left corner being the file list. -->
-  {#if !viewport.touch && !mac}
-    <AppMenu {view} {onpalette} {onhistory} />
+  {#if !viewport.touch}
+    {@render searchGlyph()}
   {/if}
 
   <!-- Not while there is no space and no tab: a list of nothing, in the moment before a
@@ -151,10 +159,9 @@
       {/if}
     </h1>
 
-    <!-- The desktop's whole menu bar behind three dots; see AppMenu.svelte. -->
     {@render edgeMark()}
+    {@render searchGlyph()}
     {@render padGlyph()}
-    <AppMenu {view} {onpalette} {onhistory} dots />
   {:else}
     <!-- One pane keeps its tabs up here; split, each pane has its own (Pane.svelte). -->
     {#if only}
@@ -235,7 +242,8 @@
     padding-left: var(--traffic-lights);
   }
 
-  .pad {
+  .pad,
+  .search {
     align-self: center;
   }
 

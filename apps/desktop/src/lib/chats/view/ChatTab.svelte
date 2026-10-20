@@ -5,16 +5,18 @@
    *
    *  The layers a chat puts up live here, once for the tab: the emoji picker (for the
    *  composer and for reactions), the lightbox, a new poll, the bubble. A file dropped
-   *  anywhere on the chat lands in the composer. Ctrl+J goes to the New line and
+   *  anywhere on the chat lands in the composer, and a row of the file list as a link. Ctrl+J goes to the New line and
    *  Escape to the bottom (4.16). On a phone the replies are the page. */
   import { chatOf, type FileRef, type Message, type Poll } from '@nib/chats'
   import { onDestroy, untrack } from 'svelte'
+  import { draggedTab, isTreeDrag } from '../../drag-paths'
+  import { pages } from '../../web-tab/pages.svelte'
   import EmojiPicker from '../../emoji/EmojiPicker.svelte'
   import { t } from '../../i18n.svelte'
   import { shortcuts } from '../../shortcuts.svelte'
   import { samePath } from '../../space-paths'
   import { viewport } from '../../viewport.svelte'
-  import type { Tab } from '../../workspace.svelte'
+  import { type Tab, workspace } from '../../workspace.svelte'
   import { ChatPage } from './chat.svelte'
   import ChatHead from './ChatHead.svelte'
   import Composer from './Composer.svelte'
@@ -41,7 +43,12 @@
     toBottom: () => Promise<void>
     focusRows: () => void
   }>()
-  let composer = $state<{ focus: () => void; addFiles: (files: readonly File[]) => void }>()
+  let composer = $state<{
+    focus: () => void
+    addFiles: (files: readonly File[]) => void
+    addNotes: (paths: readonly string[]) => void
+    insert: (words: string) => void
+  }>()
   let picking = $state<{ at: Box; pick: (emoji: string) => void } | null>(null)
   let looking = $state<{ files: FileRef[]; start: number } | null>(null)
   let polling = $state<((poll: Poll) => void) | null>(null)
@@ -137,13 +144,27 @@
   }
 
   function dragging(event: DragEvent) {
-    if (!event.dataTransfer?.types.includes('Files')) return
+    if (!event.dataTransfer?.types.includes('Files') && !isTreeDrag(event.dataTransfer)) return
     event.preventDefault()
     dropping = true
   }
 
   function dropped(event: DragEvent) {
     dropping = false
+    const notes = workspace.carriedNotes(event.dataTransfer)
+    if (notes.length) {
+      event.preventDefault()
+      composer?.addNotes(notes)
+      return
+    }
+    // A web tab let go of on the chat, as its page's address; see tab-strip/chat-drop.ts.
+    const web = workspace.tabs.find((one) => one.id === draggedTab(event.dataTransfer))
+    const address = web && (pages.addressOf(web.id) ?? web.address ?? workspace.webAddressOf(web))
+    if (address) {
+      event.preventDefault()
+      composer?.insert(`${address} `)
+      return
+    }
     const files = [...(event.dataTransfer?.files ?? [])]
     if (!files.length) return
     event.preventDefault()
@@ -155,6 +176,7 @@
 <div
   class="chat-tab"
   class:dropping
+  data-chat-drop={tab.id}
   bind:clientWidth={width}
   onkeydowncapture={onKey}
   ondragover={dragging}

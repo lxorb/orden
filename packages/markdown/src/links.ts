@@ -86,7 +86,7 @@ const MARKDOWN_LINK =
 export const MOST_LINKS = 5000
 
 /** A block's name: `^abc123` at the end of it, on its own or after a space. */
-const BLOCK_ID = /(?:^|[ \t])\^([A-Za-z0-9-]+)[ \t]*$/
+const BLOCK_ID = /(?:^|[ \t])\^([A-Za-z0-9-]+)[ \t]*(?=\r?$)/
 
 /** The scheme a target names, or the empty string when it names none. `//host`
  *  counts as naming one, since a browser reads it as the page's own scheme. */
@@ -277,7 +277,8 @@ export function pageFragment(fragment: string | null): number | null {
  *  at: `[[]]`, or an alias with no target and no heading. */
 export function parseWikilink(inner: string, embed = false): Wikilink | null {
   const bar = inner.indexOf('|')
-  const named = bar === -1 ? inner : inner.slice(0, bar)
+  // `\|` is how a table cell writes the bar, and its backslash names nothing.
+  const named = bar === -1 ? inner : inner.slice(0, bar).replace(/\\$/, '')
   // Everything after the first bar, so an alias may itself contain one.
   const alias = bar === -1 ? null : inner.slice(bar + 1).trim()
 
@@ -479,7 +480,7 @@ function collect(line: string, offset: number, at: number, found: FoundLink[]) {
 
     const hash = written.indexOf('#')
     const target = hash === -1 ? written : written.slice(0, hash)
-    const fragment = hash === -1 ? '' : written.slice(hash + 1)
+    const fragment = hash === -1 ? '' : decodeFragment(written.slice(hash + 1))
     if (!target && !fragment) continue
 
     const from = offset + match.index
@@ -519,6 +520,24 @@ function decodeTarget(target: string): string {
   }
 }
 
+/** One or more percent escapes in a row: how a heading's words are written in a link
+ *  when they hold a space or a character a URL cannot. */
+const ESCAPES = /(?:%[0-9A-Fa-f]{2})+/g
+
+/** The UTF-8 a run of escapes is read as. Not fatal, so a run that is not valid
+ *  encoding comes out as replacement characters rather than as an error. */
+const UTF8 = new TextDecoder('utf-8', { fatal: false, ignoreBOM: true })
+
+/** The `#fragment` of a link as the words it names. What a note writes in a link is
+ *  a URL, so `Some%20Heading` is `Some Heading` and `Why%3F` is `Why?`: every escape
+ *  is undone, which `decodeURI` does not do for the characters a URL reserves. A `%`
+ *  that does not begin an escape is taken as written. */
+export function decodeFragment(fragment: string): string {
+  return fragment.replace(ESCAPES, (run) =>
+    UTF8.decode(Uint8Array.from(run.slice(1).split('%'), (hex) => Number.parseInt(hex, 16))),
+  )
+}
+
 /** The name a block link points at, when a line ends by naming one.
  *
  *  Asked of every line of every note, and of every visible line on every
@@ -547,12 +566,12 @@ export function slugify(text: string): string {
 }
 
 /** A heading line, and the trailing hashes some styles close one with. */
-const HEADING = /^\s{0,3}(#{1,6})\s+(.*)$/
+const HEADING = /^\s{0,3}(#{1,6})\s+(.*)\r?$/
 
 /** A heading line and everything after its hashes, which is either nothing or a
  *  blank and then the words. `#` alone is an empty heading and `#Title` is not a
  *  heading at all, which is what CommonMark says of both. */
-const HEADING_LINE = /^[ \t]{0,3}#{1,6}((?:[ \t].*)?)$/
+const HEADING_LINE = /^[ \t]{0,3}#{1,6}((?:[ \t].*)?)\r?$/
 
 /** A closing run of hashes, which needs a blank in front of it to be one.
  *

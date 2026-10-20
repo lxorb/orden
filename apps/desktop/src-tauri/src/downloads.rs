@@ -38,6 +38,8 @@ use serde::Serialize;
 use tauri::webview::DownloadEvent;
 use tauri::{AppHandle, Emitter, Manager, Runtime, WebviewBuilder};
 
+use crate::paths::is_reserved;
+
 /// The event the window hears whenever a download starts, moves or ends. It carries
 /// the whole download each time, so the window never has to put one together.
 const MOVED: &str = "nib://web-download";
@@ -51,13 +53,6 @@ const DOWNLOADS_DIR: &str = "NIB_DOWNLOADS_DIR";
 /// allows 255 bytes, and a name that is mostly one server's idea of a title is still
 /// read as that title at this length.
 const LONGEST_NAME: usize = 180;
-
-/// The names Windows keeps for devices, which no file may be called whatever its
-/// extension. A file saved as `CON.pdf` is a file nobody can open, move or delete.
-const DEVICES: [&str; 22] = [
-    "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8",
-    "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
-];
 
 /// Where a download has got to.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
@@ -314,13 +309,8 @@ pub(crate) fn clean_name(suggested: &OsStr) -> String {
     };
 
     let (stem, ext) = split_extension(name);
-    let device = DEVICES.iter().any(|one| {
-        stem.split('.')
-            .next()
-            .unwrap_or(stem)
-            .eq_ignore_ascii_case(one)
-    });
-    let stem = if device {
+    // A file saved as `CON.pdf` is a file nobody can open, move or delete.
+    let stem = if is_reserved(stem) {
         format!("_{stem}")
     } else {
         stem.to_string()
@@ -1077,6 +1067,7 @@ mod tests {
         assert_eq!(name("CON.pdf"), "_CON.pdf");
         assert_eq!(name("nul"), "_nul");
         assert_eq!(name("com1.tar.gz"), "_com1.tar.gz");
+        assert_eq!(name("COM¹.pdf"), "_COM¹.pdf");
         assert_eq!(name("CONSOLE.pdf"), "CONSOLE.pdf");
     }
 

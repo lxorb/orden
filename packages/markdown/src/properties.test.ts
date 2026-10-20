@@ -95,6 +95,8 @@ describe('a block this cannot draw', () => {
       '---\njust some words\n---\n',
       // A comment somebody is keeping notes in.
       '---\n# why this is here\ntitle: A plan\n---\n',
+      // And one after a value, which a row would show as part of it.
+      '---\ntitle: A plan # for now\n---\n',
       // A list under a key that also has a value.
       '---\ntags: one\n  - two\n---\n',
       // Items and pairs under one key, which is not something YAML means.

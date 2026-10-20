@@ -195,6 +195,15 @@ def made_spaces() -> pathlib.Path:
     return root
 
 
+def stand_in(folder: pathlib.Path) -> dict[str, str]:
+    """The probe pointed at scripts/fake-ai-cli.mjs for Claude Code, through a `.cmd` shim
+    as npm installs one, so a helper answers with nobody's account behind it."""
+
+    shim = folder / "claude.cmd"
+    shim.write_text(f'@node "{ROOT / "scripts" / "fake-ai-cli.mjs"}" claude %*\n', encoding="utf-8")
+    return {"NIB_AI_CLAUDE_CODE": str(shim)}
+
+
 # ---- a scenario ----
 
 
@@ -537,7 +546,8 @@ def scenario_run(args: argparse.Namespace) -> int:
     spaces = made_spaces()
     site = Site()
     _, token = seeded(args.identifier, agents=True)
-    probe = Probe(args.exe, args.identifier, spaces)
+    programs = pathlib.Path(tempfile.mkdtemp(prefix="nib-agent-harness-ai-"))
+    probe = Probe(args.exe, args.identifier, spaces, env=stand_in(programs))
     report: dict[str, Any] = {"via": args.via, "exe": str(args.exe), "scenarios": {}}
     failed = 0
     try:
@@ -560,6 +570,7 @@ def scenario_run(args: argparse.Namespace) -> int:
         probe.close()
         site.close()
         shutil.rmtree(spaces, ignore_errors=True)
+        shutil.rmtree(programs, ignore_errors=True)
     return failed
 
 

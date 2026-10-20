@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const jv: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'Kabeh wis siyap',
+  Personalize: 'Atur dhewe',
+  Clean: 'Resik',
+  'Live preview': 'Pratinjau langsung',
+  'Developer mode': 'Mode pangembang',
+  'Do you write code?': 'Apa sampeyan nulis kode?',
+  Yes: 'Iya',
+  No: 'Ora',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'Saka aplikasi liya: {key}',
   'From other apps: set in your system settings': 'Saka aplikasi liya: atur ing setelan sistem',
@@ -79,6 +88,7 @@ export const jv: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'Siji tugas',
   'One per line': 'Siji saben baris',
+  'Add with AI': 'Tambah nganggo AI',
   // Tasks: the projects in the panel
   Favorites: 'Favorit',
   'Add project': 'Tambah proyek',
@@ -122,6 +132,7 @@ export const jv: Dictionary = {
   'Pointing hand on buttons': 'Tangan nuding ing tombol',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Tambah tugas',
+  'Apple Shortcuts': 'Apple Trabasan',
   Tomorrow: 'Sesuk',
   'done {date}': 'rampung {date}',
   'Next week': 'Minggu ngarep',
@@ -184,6 +195,7 @@ export const jv: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'Puter kanvas nganggo driji loro',
+  'Snap the rotation to right angles': 'Kunci puteran menyang sudut siku-siku',
   'Turn upright': 'Jejegke',
   Canvas: 'Kanvas',
   Card: 'Kartu',
@@ -277,6 +289,7 @@ export const jv: Dictionary = {
   Tabs: 'Tab',
   'Ctrl+Tab in order of use': 'Ctrl+Tab miturut urutan panganggone',
   'Swipe between pages': 'Usap ing antarane kaca',
+  'Hardware acceleration': 'Akselerasi hardware',
   'Hidden tabs': 'Tab sing didhelikake',
   'Memory saver': 'Penghemat memori',
   Moderate: 'Sedheng',
@@ -1144,6 +1157,8 @@ export const jv: Dictionary = {
   Elbow: 'Sikut',
   Frame: 'Kerangka',
   Ungroup: 'Uculake grup',
+  Lock: 'Kunci',
+  Unlock: 'Bukak kunci',
   'The ink of the page': 'Mangsi kaca',
   'Write in what is picked': 'Nulis ing njero sing dipilih',
   Pen: 'Potlot mangsi',
@@ -1284,11 +1299,15 @@ export const jv: Dictionary = {
     '{count} bagean disinandi, lan ora ana sing bisa maca tanpa Evernote',
   '{count} notes had a reminder, which the export does not carry':
     '{count} cathetan duwe pangeling, sing ora digawa ekspor',
+  '{count} attachments were missing from the export or could not be read':
+    '{count} lampiran ora ana ing ekspor utawa ora bisa diwaca',
   '{count} notes were in the bin and stay there':
     '{count} cathetan ana ing kranjang lan tetep ing kono',
   '{count} archived notes are in a folder called Archive':
     '{count} cathetan arsip ana ing folder jenenge Archive',
   'The colours a note had are not kept': 'Warna sing didhuweni cathetan ora disimpen',
+  '{count} files could not be read, so they were left out':
+    '{count} berkas ora bisa diwaca, mula ora dilebokake',
   '{count} block references were written out as the words they pointed at':
     '{count} referensi blok ditulis minangka tembung sing dituding',
   '{count} saved views are left out, and every row is in the table':
@@ -1315,6 +1334,8 @@ export const jv: Dictionary = {
     '{count} kartu swasana lan kegiatan iku gambar, mula mung tembunge sing mlebu',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} cathetan ana ing mburi tembung sandhi sing mung Notes bisa mbukak',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} cathetan ana ing mburi tembung sandhi sing mung Bear bisa mbukak',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} cathetan ana ing Anyar dibusak lan tetep ing kono',
   '{count} drawings and scans have no picture on this Mac':
@@ -1553,6 +1574,7 @@ export const jv: Dictionary = {
   'Ask the model': 'Takon model',
   'answered by {model}, {date}': 'diwangsuli {model}, {date}',
   'AI block': 'Blok AI',
+  'Do with AI': 'Garap nganggo AI',
   'Highlight colour': 'Warna sorot',
   'A single newline breaks the line': 'Siji larik anyar wis misahake larike',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -1876,6 +1898,8 @@ export const jv: Dictionary = {
   'Settings › AI': 'Setelan › AI',
   'New chat': 'Obrolan anyar',
   'Ask again': 'Takon maneh',
+  'Continue when the limit resets': 'Terusake yen wates wis direset',
+  'Continues at {time}': 'Diterusake jam {time}',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Takon apa wae, @ kanggo nambah, / kanggo liyane',
   'What can I help with?': 'Apa sing bisa dakbantu?',
@@ -2343,4 +2367,29 @@ export const jv: Dictionary = {
   Peach: 'Persik',
   Sage: 'Sage',
   Mist: 'Pedhut',
+  // A board, Notion's: its columns, its cards, its settings, a new database
+  'New database': 'Database anyar',
+  'New page': 'Kaca anyar',
+  'Not started': 'Durung diwiwiti',
+  'In progress': 'Lagi digarap',
+  'No {property}': 'Tanpa {property}',
+  '{card} moved to {group}': '{card} dipindhah menyang {group}',
+  'Not moved': 'Ora dipindhah',
+  Retry: 'Coba maneh',
+  Calculate: 'Etung',
+  'Remove sort': 'Busak urutan',
+  'Remove sort?': 'Busak urutan?',
+  Groups: 'Grup',
+  'Hidden groups': 'Grup sing didelikake',
+  'Add as option': 'Tambahake minangka opsi',
+  'Move left': 'Pindhah ngiwa',
+  'Move right': 'Pindhah nengen',
+  'Delete option': 'Busak opsi',
+  'Colour columns': 'Wenehi werna kolom',
+  'Hide empty groups': 'Delikna grup kosong',
+  'Card size': 'Ukuran kertu',
+  Small: 'Cilik',
+  Large: 'Gedhe',
+  Both: 'Loro-lorone',
+  'Shown on cards': 'Ditampilake ing kertu',
 }

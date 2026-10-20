@@ -172,6 +172,11 @@ vi.mock('./tauri', async (importOriginal) => ({
         return { path: at, fresh: true }
       }
       case 'read_tree': {
+        // As the crate does: a root that is not a folder is refused.
+        const root = text(args?.root)
+        if (!folders.has(root) && ![...files.keys()].some((one) => one.startsWith(`${root}/`))) {
+          throw new Error('root is not a directory')
+        }
         const options = args?.options as { papers?: boolean } | undefined
         return listing(text(args?.root), options?.papers === true)
       }
@@ -453,6 +458,28 @@ describe('making a canvas', () => {
 
     await workspace.makeNamed('Board.canvas')
     expect(files.has('/space/Board.canvas')).toBe(true)
+    expect(workspace.active?.kind).toBe('canvas')
+  })
+})
+
+describe('opening a canvas whose file is not JSON', () => {
+  // A stray comma after a hand edit. The file is there, so it is refused the way a file
+  // that is there and will not read is: an empty plane drawn over it would be the first
+  // write, and that write would be the end of what the file held (#534).
+  test('opens nothing, says so, and leaves the file as it was', async () => {
+    const words = '{"nodes":[{"id":"a","type":"text","text":"precious"}],"edges":[],}'
+    files.set('/space/Board.canvas', words)
+
+    await workspace.openCanvas('/space/Board.canvas')
+    expect(workspace.tabs).toEqual([])
+    expect(unread.shown).toBe(true)
+    expect(files.get('/space/Board.canvas')).toBe(words)
+  })
+
+  test('but a file with nothing in it, or only blank lines, is a new plane', async () => {
+    files.set('/space/Blank.canvas', ' \n')
+
+    await workspace.openCanvas('/space/Blank.canvas')
     expect(workspace.active?.kind).toBe('canvas')
   })
 })
@@ -929,6 +956,15 @@ describe('a PDF becomes the page note that holds it', () => {
     expect(files.get('/space/Broken.pdf')).toBe('not a pdf')
     expect(files.has('/space/Broken.pages')).toBe(false)
     expect(rows()).toContain('/space/Broken.pdf')
+  })
+
+  // A click that opens nothing and says nothing reads as the app being broken (#540).
+  test('and opens nothing, which it says', async () => {
+    files.set('/space/Broken.pdf', 'not a pdf')
+
+    await workspace.openPdf('/space/Broken.pdf')
+    expect(workspace.tabs).toEqual([])
+    expect(unread.shown).toBe(true)
   })
 
   test('a page note renamed takes its paper with it', async () => {

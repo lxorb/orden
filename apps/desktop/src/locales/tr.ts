@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const tr: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'Her şey hazır',
+  Personalize: 'Kişiselleştir',
+  Clean: 'Sade',
+  'Live preview': 'Canlı önizleme',
+  'Developer mode': 'Geliştirici modu',
+  'Do you write code?': 'Kod yazıyor musunuz?',
+  Yes: 'Evet',
+  No: 'Hayır',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'Diğer uygulamalardan: {key}',
   'From other apps: set in your system settings':
@@ -83,6 +92,7 @@ export const tr: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'Tek görev',
   'One per line': 'Satır başına bir',
+  'Add with AI': 'YZ ile ekle',
   // Tasks: the projects in the panel
   Favorites: 'Favoriler',
   'Add project': 'Proje ekle',
@@ -126,6 +136,7 @@ export const tr: Dictionary = {
   'Pointing hand on buttons': 'Düğmelerde işaret eden el',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Görev ekle',
+  'Apple Shortcuts': 'Apple Kestirmeler',
   Tomorrow: 'Yarın',
   'done {date}': 'tamamlandı {date}',
   'Next week': 'Gelecek hafta',
@@ -188,6 +199,7 @@ export const tr: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'Tuvali iki parmakla döndür',
+  'Snap the rotation to right angles': 'Döndürmeyi dik açılara oturt',
   'Turn upright': 'Düzelt',
   Canvas: 'Tuval',
   Card: 'Kart',
@@ -281,6 +293,7 @@ export const tr: Dictionary = {
   Tabs: 'Sekmeler',
   'Ctrl+Tab in order of use': 'Kullanım sırasına göre Ctrl+Tab',
   'Swipe between pages': 'Sayfalar arasında kaydır',
+  'Hardware acceleration': 'Donanım hızlandırma',
   'Hidden tabs': 'Gizli sekmeler',
   'Memory saver': 'Bellek tasarrufu',
   Moderate: 'Orta',
@@ -1155,6 +1168,8 @@ export const tr: Dictionary = {
   Elbow: 'Dirsek',
   Frame: 'Çerçeve',
   Ungroup: 'Grubu çöz',
+  Lock: 'Kilitle',
+  Unlock: 'Kilidini aç',
   'The ink of the page': 'Sayfanın mürekkebi',
   'Write in what is picked': 'Seçilenin içine yaz',
   Pen: 'Kalem',
@@ -1298,10 +1313,18 @@ export const tr: Dictionary = {
     '{count} bölüm şifreli ve Evernote olmadan hiçbir şey okuyamaz',
   '{count} notes had a reminder, which the export does not carry':
     '{count} notta anımsatıcı vardı, dışa aktarma onu taşımıyor',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} ek dışa aktarımda yoktu ya da okunamadı',
+    other: '{count} ek dışa aktarımda yoktu ya da okunamadı',
+  },
   '{count} notes were in the bin and stay there': '{count} not çöp kutusundaydı ve orada kalıyor',
   '{count} archived notes are in a folder called Archive':
     '{count} arşivlenmiş not Archive adlı bir klasörde',
   'The colours a note had are not kept': 'Bir notun renkleri korunmaz',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} dosya okunamadı, bu yüzden dışarıda kaldı',
+    other: '{count} dosya okunamadı, bu yüzden dışarıda kaldı',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} blok göndermesi, işaret ettikleri sözcükler olarak yazıldı',
   '{count} saved views are left out, and every row is in the table': {
@@ -1330,6 +1353,8 @@ export const tr: Dictionary = {
     '{count} ruh hâli ve etkinlik kartı çizimdir, bu yüzden yalnızca sözcükleri geçer',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} not, yalnızca Notlar’ın açabildiği bir parolanın ardındadır',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} not, yalnızca Bear’ın açabildiği bir parolanın ardındadır',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} not Son Silinenler’dedir ve orada kalır',
   '{count} drawings and scans have no picture on this Mac':
@@ -1572,6 +1597,7 @@ export const tr: Dictionary = {
   'Ask the model': 'Modele sor',
   'answered by {model}, {date}': '{model} yanıtladı, {date}',
   'AI block': 'YZ bloğu',
+  'Do with AI': 'YZ ile yap',
   'Highlight colour': 'Vurgu rengi',
   'A single newline breaks the line': 'Tek bir satır sonu satırı böler',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -1899,6 +1925,8 @@ export const tr: Dictionary = {
   'Settings › AI': 'Ayarlar › YZ',
   'New chat': 'Yeni sohbet',
   'Ask again': 'Yeniden sor',
+  'Continue when the limit resets': 'Sınır sıfırlanınca devam et',
+  'Continues at {time}': '{time} saatinde devam edecek',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Her şeyi sor, eklemek için @, fazlası için /',
   'What can I help with?': 'Nasıl yardımcı olabilirim?',
@@ -2371,4 +2399,29 @@ export const tr: Dictionary = {
   Peach: 'Şeftali',
   Sage: 'Adaçayı',
   Mist: 'Sis',
+  // A board, Notion's: its columns, its cards, its settings, a new database
+  'New database': 'Yeni veritabanı',
+  'New page': 'Yeni sayfa',
+  'Not started': 'Başlanmadı',
+  'In progress': 'Devam ediyor',
+  'No {property}': '{property} yok',
+  '{card} moved to {group}': '{card}, {group} grubuna taşındı',
+  'Not moved': 'Taşınmadı',
+  Retry: 'Tekrar dene',
+  Calculate: 'Hesapla',
+  'Remove sort': 'Sıralamayı kaldır',
+  'Remove sort?': 'Sıralama kaldırılsın mı?',
+  Groups: 'Gruplar',
+  'Hidden groups': 'Gizli gruplar',
+  'Add as option': 'Seçenek olarak ekle',
+  'Move left': 'Sola taşı',
+  'Move right': 'Sağa taşı',
+  'Delete option': 'Seçeneği sil',
+  'Colour columns': 'Sütunları renklendir',
+  'Hide empty groups': 'Boş grupları gizle',
+  'Card size': 'Kart boyutu',
+  Small: 'Küçük',
+  Large: 'Büyük',
+  Both: 'İkisi de',
+  'Shown on cards': 'Kartlarda gösterilen',
 }

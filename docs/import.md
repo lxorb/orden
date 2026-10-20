@@ -49,8 +49,8 @@ came in, and lands in it.
 - **Where it is.** Nothing asks on the way in. Emil, 2026-10-13: "rather welcome
   note instead of the where do your notes come from". A fresh start opens on the
   welcome note, in a space made for it (`fresh-start.ts`, `first-space.svelte.ts`),
-  and the note's last line is a link to Settings > Import (`nib://settings/import`,
-  see `settingsPane` in `open-link.ts`). The same rows are the palette's Import from
+  and the note says nothing of importing: a newcomer offered imports was offered too
+  much (#322). The rows are Settings > Import's and the palette's Import from
   Obsidian and Import from Notion. See `MigrateRows.svelte` and `migrating.svelte.ts`.
 - **Obsidian's vaults by name.** On a desktop the Obsidian row lists the vaults
   Obsidian itself lists in `obsidian.json`, newest first, the way Arc's first run

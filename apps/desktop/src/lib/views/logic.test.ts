@@ -15,6 +15,7 @@ import {
   setGroup,
   setHidden,
   setLayout,
+  mergedOrder,
   setManualOrder,
   setShowCompleted,
   setSort,
@@ -85,6 +86,18 @@ describe('a base changed from the head', () => {
     expect(setSort(base, 0, []).views[0]?.sort).toEqual([])
   })
 
+  /** Filters nib cannot read are kept as written until the view is given its own,
+   *  and taking a view's filters away is giving it none: the old ones must not
+   *  come back on the next write. */
+  test('takes away filters it could not read, and does not bring them back', () => {
+    const source = 'views:\n  - type: table\n    name: A\n    filters:\n      xor:\n        - b\n'
+    const read = readBase(source)
+
+    expect(writeBase(setFilter(read, 0, undefined), source)).not.toContain('xor')
+    const set = setFilter(read, 0, 'c == 1')
+    expect(writeBase(setFilter(set, 0, undefined), source)).not.toContain('xor')
+  })
+
   test('keeps nib’s own keys under nib, and takes one away with undefined', () => {
     const shown = setShowCompleted(base, 0, true)
     expect(shown.views[0]?.nib.showCompleted).toBe(true)
@@ -95,6 +108,20 @@ describe('a base changed from the head', () => {
     expect(setManualOrder(base, 0, 'To do', ['a.md', 'b.md']).views[0]?.nib.order).toEqual({
       'To do': ['a.md', 'b.md'],
     })
+  })
+
+  test("a reorder of the cards on screen keeps the hidden cards' places", () => {
+    const stored = setManualOrder(base, 0, 'To do', ['a', 'h1', 'b', 'h2', 'c'])
+    // Searched down to a, b and c, then c carried to the top.
+    expect(setManualOrder(stored, 0, 'To do', ['c', 'a', 'b']).views[0]?.nib.order).toEqual({
+      'To do': ['c', 'h1', 'a', 'h2', 'b'],
+    })
+    // A card new to the order rides with the card before it on screen.
+    expect(mergedOrder(['a', 'h', 'b'], ['a', 'x', 'b'])).toEqual(['a', 'x', 'h', 'b'])
+    expect(mergedOrder(['a', 'h', 'b'], ['x', 'b', 'a'])).toEqual(['x', 'b', 'h', 'a'])
+    // None of the shown cards had a place yet: they come after the stored ones.
+    expect(mergedOrder(['h'], ['a', 'b'])).toEqual(['h', 'a', 'b'])
+    expect(mergedOrder([], ['b', 'a'])).toEqual(['b', 'a'])
   })
 
   test('adds, names and takes away views, never the last one', () => {
@@ -213,7 +240,34 @@ describe('a drop into a group', () => {
       change: { note: { status: 'Done' } },
     })
     expect(dropInto('note.status', 'To do', noteRow('Bug.md', 'status: To do'), TODAY)).toBeNull()
+    // A list stays a list.
+    expect(dropInto('note.tags', 'c', noteRow('Bug.md', 'tags: [b]'), TODAY)).toEqual({
+      change: { note: { tags: ['c'] } },
+    })
+    expect(dropInto('note.tags', 'b', noteRow('Bug.md', 'tags: [b]'), TODAY)).toBeNull()
     expect(dropInto('file.size', 3, bank, TODAY)).toBeNull()
+  })
+
+  test("carries one member of a list from its column to another's, and no other", () => {
+    const card = noteRow('Bug.md', 'tags: [iOS, Sync]')
+    expect(dropInto('note.tags', 'Mac', card, TODAY, 'iOS')).toEqual({
+      change: { note: { tags: ['Sync', 'Mac'] } },
+    })
+    // Onto a member it already holds: the one it came from goes.
+    expect(dropInto('note.tags', 'Sync', card, TODAY, 'iOS')).toEqual({
+      change: { note: { tags: ['Sync'] } },
+    })
+    // Onto no value: that member alone goes, and the last one takes the key away.
+    expect(dropInto('note.tags', null, card, TODAY, 'iOS')).toEqual({
+      change: { note: { tags: ['Sync'] } },
+    })
+    expect(dropInto('note.tags', null, noteRow('a.md', 'tags: [iOS]'), TODAY, 'iOS')).toEqual({
+      change: { note: { tags: null } },
+    })
+    // Out of no value: one added.
+    expect(dropInto('note.tags', 'iOS', noteRow('a.md', 'tags: []'), TODAY, null)).toEqual({
+      change: { note: { tags: ['iOS'] } },
+    })
   })
 
   test('takes the date off in the group with none', () => {

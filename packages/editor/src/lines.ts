@@ -16,26 +16,12 @@ import {
   type ChangeSpec,
   EditorSelection,
   type EditorState,
+  findClusterBreak,
   type Line,
   type StateCommand,
 } from '@codemirror/state'
+import { type Lines, linesOf } from './commands'
 import { hiddenFrontMatter } from './live-preview/hidden-front-matter'
-
-/** A run of whole lines, by number. */
-interface Lines {
-  first: number
-  last: number
-}
-
-/** The lines a range covers. A selection that ends at the very start of a line - a
- *  run of lines selected with Shift and the arrows - does not take that line: the
- *  caret is in front of it, not in it. */
-function linesOf(state: EditorState, from: number, to: number): Lines {
-  const first = state.doc.lineAt(from).number
-  const end = state.doc.lineAt(to)
-  const last = to > from && to === end.from && end.number > first ? end.number - 1 : end.number
-  return { first, last }
-}
 
 /** The first line the reader can see: past the metadata when it is hidden. */
 function firstShown(state: EditorState): number {
@@ -154,7 +140,10 @@ export const deleteLine: StateCommand = ({ state, dispatch }) => {
   const after = set.apply(doc)
   const ranges = carets.map((at) => {
     const line = after.lineAt(set.mapPos(at, 1))
-    return EditorSelection.cursor(line.from + Math.min(column, line.length))
+    // The last character boundary at or before the column, never between the two
+    // halves of an emoji, where the next Backspace would leave half of it.
+    const along = findClusterBreak(line.text, Math.min(column, line.length) + 1, false)
+    return EditorSelection.cursor(line.from + along)
   })
 
   dispatch(

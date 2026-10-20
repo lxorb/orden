@@ -123,6 +123,9 @@ mod links;
 // What a Linux desktop, and Wayland above all, needs beyond GTK; see linux.rs.
 #[cfg(target_os = "linux")]
 mod linux;
+// The main thread asleep while nothing happens, on CEF; see chromium_pump.rs.
+#[cfg(all(target_os = "linux", feature = "cef"))]
+mod chromium_pump;
 mod logs;
 mod matcher;
 // `nib mcp`, the server an agent's client runs; main.rs hands it the process before
@@ -170,6 +173,12 @@ mod search;
 mod secrets;
 #[cfg(desktop)]
 mod shell_menu;
+// Settings' Shortcuts row and where a task from Shortcuts goes; see shortcuts.rs.
+#[cfg(desktop)]
+mod shortcuts;
+// The Mac's App Intents for Shortcuts; see siri.rs and swift/AddTask.swift.
+#[cfg(target_os = "macos")]
+mod siri;
 mod space_watch;
 mod spaces;
 // A touchpad's pinch let through to the app's own page on Windows; see pinch.rs.
@@ -246,6 +255,13 @@ mod web_worlds;
 // The window moved and resized by the page's own presses on Linux; see window_drag.rs.
 #[cfg(desktop)]
 mod window_drag;
+// Whether Chromium draws on the graphics card or on the CPU, in the log; see gpu.rs.
+#[cfg(desktop)]
+mod gpu;
+// How large the app's pages are drawn, and where a web tab's page goes; see
+// page_scale.rs.
+#[cfg(desktop)]
+mod page_scale;
 // What every browser's import reads profiles and their files with; see
 // browser_profiles.rs.
 #[cfg(desktop)]
@@ -368,6 +384,7 @@ macro_rules! desktop_commands {
     () => {
         commands![
             endpoint::automation_result,
+            endpoint::automation_listening,
             agents::grants::agents_read,
             agents::grants::agents_write,
             agents::grants::agents_mint,
@@ -425,6 +442,11 @@ macro_rules! desktop_commands {
             obsidian_vaults::read_obsidian_file,
             full_screen::window_fullscreen,
             window_drag::window_move_resize,
+            gpu::gpu_seen,
+            gpu::gpu_chosen,
+            gpu::gpu_choose,
+            gpu::gpu_line,
+            page_scale::page_scale_seen,
             window_drag::window_frame,
             full_screen::window_is_fullscreen,
             zen_profiles::zen_profiles,
@@ -483,6 +505,9 @@ macro_rules! desktop_commands {
             package_manager::install_manager,
             app_place::app_stuck,
             app_place::move_to_applications,
+            shortcuts::shortcuts_offered,
+            shortcuts::open_shortcuts,
+            shortcuts::remember_inbox,
             web_tabs::web_open,
             // Chrome and Edge extensions in web tabs; see extensions.rs.
             extensions::extensions_list,
@@ -497,6 +522,7 @@ macro_rules! desktop_commands {
             extensions::popup::extension_popup_close,
             web_tabs::web_place,
             keyboard::keyboard_watch,
+            keyboard::keyboard_pressed,
             keyboard::keyboard_here,
             keyboard::keyboard_went,
             keyboard::keyboard_back,
@@ -594,7 +620,7 @@ pub fn run() {
 #[cfg(feature = "cef")]
 #[must_use]
 pub fn cef_helper() -> bool {
-    if !std::env::args().any(|arg| arg.starts_with("--type=")) {
+    if !std::env::args_os().any(|arg| arg.as_encoded_bytes().starts_with(b"--type=")) {
         return false;
     }
     tauri_runtime_cef::run_cef_helper_process();
@@ -810,6 +836,15 @@ fn hearing(handle: &tauri::AppHandle) {
     touchpad::start(handle);
 }
 
+/// What CEF on Linux needs once it has started and before the window is made: the main
+/// thread asleep while nothing happens (`chromium_pump.rs`), and the desktop's scale read
+/// (`page_scale.rs`).
+#[cfg(all(target_os = "linux", feature = "cef"))]
+fn engine_started(handle: &tauri::AppHandle<Engine>) {
+    chromium_pump::start(handle);
+    page_scale::start(handle);
+}
+
 fn ready(
     app: &mut tauri::App,
     ui: Option<&tauri::utils::config::WindowConfig>,
@@ -874,7 +909,7 @@ fn ready(
     // launch this was, because a link's is measured from the click to the page.
     #[cfg(desktop)]
     {
-        let args: Vec<String> = std::env::args().collect();
+        let args: Vec<std::ffi::OsString> = std::env::args_os().collect();
         let cwd = std::env::current_dir().unwrap_or_default();
         launch::hold_handed(handle, &args, &cwd);
         quick_add::asked_at_launch(&args);
@@ -891,6 +926,8 @@ fn ready(
     // `hearing`.
     #[cfg(desktop)]
     hearing(handle);
+    #[cfg(all(target_os = "linux", feature = "cef"))]
+    engine_started(handle);
 
     // And the window on screen, which is the last thing this does and the first thing
     // anybody sees. Everything above it costs under two milliseconds together and has to

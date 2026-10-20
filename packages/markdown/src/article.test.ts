@@ -35,6 +35,15 @@ describe('the widest candidate a srcset offers', () => {
     expect(widestOf('a.jpg, b.jpg 2x')).toBe('b.jpg')
   })
 
+  test('keeps the commas inside an address', () => {
+    const srcset =
+      'https://res.cloudinary.com/d/image/upload/w_400,h_300,c_fill/a.jpg 400w, ' +
+      'https://res.cloudinary.com/d/image/upload/w_800,h_600,c_fill/a.jpg 800w'
+    expect(widestOf(srcset)).toBe(
+      'https://res.cloudinary.com/d/image/upload/w_800,h_600,c_fill/a.jpg',
+    )
+  })
+
   test('takes the only one when there is only one', () => {
     expect(widestOf('a.jpg')).toBe('a.jpg')
   })

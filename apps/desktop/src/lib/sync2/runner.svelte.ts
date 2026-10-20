@@ -41,6 +41,7 @@ import { attach, attachPlane, type PlaneJoin } from './binding'
 import { carry, uncarry } from './carry'
 import { kindOfName } from './create'
 import { Engine } from './engine'
+import type { Carried } from '../pages/carried'
 import { holdsDocument } from './kinds'
 import { hub } from './hub.svelte'
 import { firstPass, mirrorsFrom, type V1Listing, type V1Space } from './migrate'
@@ -454,6 +455,10 @@ class Runner {
       }
       this.quiet = moved ? 0 : Math.min(this.quiet + 1, 8)
       if (this.engine !== engine) return
+      // The paper each page note holds goes where the note goes (#551), kept by the
+      // note's id rather than as a file of the tree; see pages/carried.ts. Not waited
+      // for: a paper is megabytes, and nothing in the pass is behind it.
+      void import('../pages/carrying').then(({ carryNow }) => carryNow(() => pageNotes(engine)))
       this.lastSyncedAt = Date.now()
       this.status = offline ? 'offline' : 'idle'
     } catch (error) {
@@ -900,3 +905,18 @@ account.forgetWithSession(() => {
   const id = runner.accountNow
   if (id) void runner.signedOut(id)
 })
+
+/** The page notes the account holds of every space this engine keeps, for their papers. */
+function pageNotes(engine: Engine): Carried[] {
+  const out: Carried[] = []
+  for (const space of engine.core.spaces.values()) {
+    const writes = space.row.role !== 'read'
+    for (const entry of space.entries.values()) {
+      if (entry.kind !== 'pages' || entry.deleted || entry.seq === null || !entry.local_path)
+        continue
+      if (!space.isLive(entry.id)) continue
+      out.push({ path: joinPath(space.row.root, entry.local_path), id: entry.id, writes })
+    }
+  }
+  return out
+}

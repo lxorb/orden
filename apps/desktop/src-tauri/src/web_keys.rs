@@ -467,15 +467,18 @@ mod grabbed {
     }
 
     impl Map {
+        /// The first of a keycode's keysyms that is a key a chord is made with: on AZERTY
+        /// the top row's digit is under Shift, after `&`, `é`, ...
         fn keysym(&self, code: Keycode) -> Option<Keysym> {
             let at = usize::from(code.checked_sub(self.first)?) * self.per;
-            self.syms.get(at).copied()
+            let row = self.syms.get(at..at + self.per)?;
+            row.iter().copied().find(|sym| vk_of(*sym).is_some())
         }
 
         fn keycodes(&self, sym: Keysym) -> Vec<Keycode> {
             (0..self.syms.len() / self.per.max(1))
-                .filter(|code| self.syms.get(code * self.per) == Some(&sym))
                 .filter_map(|code| Keycode::try_from(code).ok()?.checked_add(self.first))
+                .filter(|code| self.keysym(*code) == Some(sym))
                 .collect()
         }
     }
@@ -657,6 +660,26 @@ mod grabbed {
             .unwrap_or_else(PoisonError::into_inner)
             .insert(page, window);
         grabs.grab(page);
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::Map;
+
+        /// AZERTY's top row is `&`, `é`, ... with the digits under Shift, as the server's
+        /// map has it: two keysyms a keycode, from keycode 10 on.
+        #[test]
+        fn a_digit_under_shift_is_still_the_key_s() {
+            let map = Map {
+                first: 10,
+                per: 2,
+                syms: vec![0x26, 0x31, 0xE9, 0x32, 0x61, 0x41],
+            };
+            assert_eq!(map.keycodes(0x31), vec![10]);
+            assert_eq!(map.keysym(10), Some(0x31));
+            assert_eq!(map.keycodes(0x61), vec![12]);
+            assert_eq!(map.keysym(12), Some(0x61));
+        }
     }
 }
 

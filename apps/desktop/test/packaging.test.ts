@@ -100,6 +100,18 @@ describe('the release', () => {
     expect(guard).toContain("startsWith(github.ref, 'refs/tags/v')")
   })
 
+  // #491: edge was titled `main` and every file on it kept the updater's `Nib-`. Only
+  // the bundles latest.json names keep it now, for the builds before 0.14.
+  test('titles edge by its branch and names its installers Orden', () => {
+    const job = /\n {2}publish:\n([\s\S]*?)(?=\n {2}[a-z-]+:\n|$)/.exec(workflow)?.[1] ?? ''
+    const upload = /- name: Upload the files\n([\s\S]*?)(?=\n {6}- )/.exec(job)?.[1] ?? ''
+
+    expect(job).not.toContain('main ·')
+    expect(job).toContain('--title "$GITHUB_REF_NAME · $VERSION"')
+    expect(upload).not.toContain('ROLLING')
+    expect(upload).toContain('cp "$file" "installers/Orden-${name#Nib-}"')
+  })
+
   test('and no other job writes', () => {
     const writing = [...workflow.matchAll(/\n {2}([a-z-]+):\n[\s\S]*?(?=\n {2}[a-z-]+:\n|$)/g)]
       .filter((one) => /contents: write|gh release/.test(one[0]))

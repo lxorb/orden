@@ -92,6 +92,45 @@ def note(page: Page) -> str:
     return page.evaluate(NOTE)  # type: ignore[no-any-return]
 
 
+# Where the comment field's words sit, and the Add sub-task row's above it.
+FIELDS = """() => {
+  const composer = document.querySelector('.sheet .composer')
+  const label = document.querySelector('.sheet .adder .nib-row-label')
+  if (!composer || !label) return null
+  const style = getComputedStyle(composer)
+  const box = composer.getBoundingClientRect()
+  const adder = label.closest('.nib-row').getBoundingClientRect()
+  const line = parseFloat(style.lineHeight)
+  const top = parseFloat(style.paddingTop)
+  return {
+    left: Math.round(box.left), labelLeft: Math.round(label.getBoundingClientRect().left),
+    height: Math.round(composer.closest('.nib-row').getBoundingClientRect().height),
+    adderHeight: Math.round(adder.height),
+    lineMiddle: Math.round(top + line / 2), middle: Math.round(box.height / 2),
+    border: style.borderTopWidth,
+  }
+}"""
+
+
+def the_comment_field(page: Page) -> None:
+    """The comment field is a quiet row like Add sub-task above it, its words on the
+    row's line and in line with that row's (#667): it was an outlined box with its
+    placeholder at the top."""
+    fields = page.evaluate(FIELDS)
+    say(f"[comment field] {fields}")
+    if not fields:
+        wrong("the comment field or the Add sub-task row is not there")
+        return
+    if abs(fields["left"] - fields["labelLeft"]) > 1:
+        wrong(f"the comment's words start at {fields['left']}, not at Add sub-task's {fields['labelLeft']}")
+    if abs(fields["height"] - fields["adderHeight"]) > 1:
+        wrong(f"the comment row is {fields['height']} high, Add sub-task's {fields['adderHeight']}")
+    if abs(fields["lineMiddle"] - fields["middle"]) > 1:
+        wrong(f"the comment's line is not in the middle of its field: {fields}")
+    if fields["border"] not in ("0px", ""):
+        wrong(f"the comment field is still a box: border {fields['border']}")
+
+
 def the_view(page: Page) -> None:
     page.locator(f"{row('Call the bank')} .words").click()
     wait_for(page, "document.querySelector('.sheet .title')", "the task view")
@@ -101,6 +140,7 @@ def the_view(page: Page) -> None:
         if wanted not in text:
             wrong(f"the task view does not say {wanted}")
     shot(page, "01-view")
+    the_comment_field(page)
 
     # Its words, changed.
     page.locator(".sheet .title").fill("Call the bank again")

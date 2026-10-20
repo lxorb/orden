@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const gsw: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'Alles parat',
+  Personalize: 'Aapasse',
+  Clean: 'Uufgruumt',
+  'Live preview': 'Live-Vorschau',
+  'Developer mode': 'Entwicklermodus',
+  'Do you write code?': 'Schriibsch du Code?',
+  Yes: 'Ja',
+  No: 'Nei',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'Us andere Apps: {key}',
   'From other apps: set in your system settings':
@@ -83,6 +92,7 @@ export const gsw: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'Ei Ufgab',
   'One per line': 'Eini pro Ziile',
+  'Add with AI': 'Mit KI hinzuefüege',
   // Tasks: the projects in the panel
   Favorites: 'Favorite',
   'Add project': 'Projekt dezuetue',
@@ -126,6 +136,7 @@ export const gsw: Dictionary = {
   'Pointing hand on buttons': 'Zeigendi Hand über Chnöpf',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Ufgaab hinzuefüege',
+  'Apple Shortcuts': 'Apple Kurzbefähl',
   Tomorrow: 'Morn',
   'done {date}': 'erledigt {date}',
   'Next week': 'Nächschti Wuche',
@@ -188,6 +199,7 @@ export const gsw: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'Liiwand mit zwei Finger drähe',
+  'Snap the rotation to right angles': 'Drähig a rächte Winkel iirasta',
   'Turn upright': 'Grad richte',
   Canvas: 'Liinwand',
   Card: 'Chärtli',
@@ -281,6 +293,7 @@ export const gsw: Dictionary = {
   Tabs: 'Tabs',
   'Ctrl+Tab in order of use': 'Ctrl+Tab i de Reihefolg vom Bruuch',
   'Swipe between pages': 'Zwüsche Siite wüsche',
+  'Hardware acceleration': 'Hardwarebeschlünigung',
   'Hidden tabs': 'Versteckti Tabs',
   'Memory saver': 'Arbeitsspeicher spare',
   Moderate: 'Moderat',
@@ -1155,6 +1168,8 @@ export const gsw: Dictionary = {
   Elbow: 'Chnick',
   Frame: 'Rahme',
   Ungroup: 'Gruppe uuflöse',
+  Lock: 'Sperre',
+  Unlock: 'Entsperre',
   'The ink of the page': 'D Tinte vo de Syte',
   'Write in what is picked': 'Is Gwählte schrybe',
   Pen: 'Kugelschriiber',
@@ -1298,11 +1313,19 @@ export const gsw: Dictionary = {
     '{count} Abschnitt sind verschlüsslet und ohni Evernote nöd läsbar',
   '{count} notes had a reminder, which the export does not carry':
     '{count} Notize hend en Erinnerig gha, wo im Export nöd drin isch',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} Aahang het im Export gfählt oder isch nöd läsbar gsi',
+    other: '{count} Aahäng händ im Export gfählt oder sind nöd läsbar gsi',
+  },
   '{count} notes were in the bin and stay there':
     '{count} Notize sind im Papierchorb und bliibed det',
   '{count} archived notes are in a folder called Archive':
     '{count} archivierti Notize sind imene Ordner namens Archive',
   'The colours a note had are not kept': 'D Farbe vo de Notize werded nöd übernoh',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} Datei het mer nöd chöne läse, si bliibt dusse',
+    other: '{count} Dateie het mer nöd chöne läse, si bliibed dusse',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} Blockverwiis sind as de Text gschribe worde, wo si zeigt hend',
   '{count} saved views are left out, and every row is in the table': {
@@ -1330,6 +1353,8 @@ export const gsw: Dictionary = {
     '{count} Stimmigs- und Aktivitätscharte sind Zeichnige: nur ihri Wort chömed mit',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} Notize sind hinder eme Passwort, wo nur Notize ufmacht',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} Notize sind hinder eme Passwort, wo nur Bear ufmacht',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} Notize sind i Zletscht glöscht und bliibed det',
   '{count} drawings and scans have no picture on this Mac':
@@ -1575,6 +1600,7 @@ export const gsw: Dictionary = {
   'Ask the model': 'S Modäll fräge',
   'answered by {model}, {date}': 'gantwortet vo {model}, {date}',
   'AI block': 'KI-Block',
+  'Do with AI': 'Mit KI erledige',
   'Highlight colour': 'Hervorhäbigsfarb',
   'A single newline breaks the line': 'En einzelne Zileumbruch bricht d Zile',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -1899,6 +1925,8 @@ export const gsw: Dictionary = {
   'Settings › AI': 'Iistellige › KI',
   'New chat': 'Neue Chat',
   'Ask again': 'Nomol frage',
+  'Continue when the limit resets': 'Wiiter, sobald s Limit zrugggsetzt isch',
+  'Continues at {time}': 'Gaht um {time} wiiter',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Frög öppis, @ zum Aahänke, / für meh',
   'What can I help with?': 'Wobi chan ich hälfe?',
@@ -2373,4 +2401,29 @@ export const gsw: Dictionary = {
   Peach: 'Pfirsich',
   Sage: 'Salbei',
   Mist: 'Näbel',
+  // A board, Notion's: its columns, its cards, its settings, a new database
+  'New database': 'Nöii Datebank',
+  'New page': 'Nöii Siite',
+  'Not started': 'Nonig aagfange',
+  'In progress': 'In Arbet',
+  'No {property}': 'Ohni {property}',
+  '{card} moved to {group}': '{card} nach {group} verschobe',
+  'Not moved': 'Nöd verschobe',
+  Retry: 'Nomol probiere',
+  Calculate: 'Berächne',
+  'Remove sort': 'Sortierig entferne',
+  'Remove sort?': 'Sortierig entferne?',
+  Groups: 'Gruppe',
+  'Hidden groups': 'Uusbländti Gruppe',
+  'Add as option': 'Als Option dezuefüege',
+  'Move left': 'Nach links',
+  'Move right': 'Nach rächts',
+  'Delete option': 'Option lösche',
+  'Colour columns': 'Spalte iifärbe',
+  'Hide empty groups': 'Leeri Gruppe uusblände',
+  'Card size': 'Chärtligrössi',
+  Small: 'Chlii',
+  Large: 'Gross',
+  Both: 'Beides',
+  'Shown on cards': 'Uf de Charte zeigt',
 }

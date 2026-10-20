@@ -138,6 +138,7 @@ interface Saved {
   focus: boolean
   quietMarks: boolean
   silent: boolean
+  developer?: boolean
   typewriter: boolean
   punctuation: boolean
   numbers: boolean
@@ -173,7 +174,9 @@ interface Saved {
   keepVersions: number
   remindBefore: number
   undatedInToday: boolean
-  canvasTurns: boolean
+  /** `canvasTurns` before turning became the default; see `restore`. */
+  turnsCanvas: boolean
+  canvasTurnSnaps: boolean
   highlightTone: number | null
   hardBreaks: boolean
   linkFormat: LinkFormat
@@ -288,7 +291,8 @@ export const DEFAULTS = {
   keepVersions: KEEP_MONTH,
   remindBefore: 0,
   undatedInToday: false,
-  canvasTurns: false,
+  canvasTurns: true,
+  canvasTurnSnaps: true,
   highlightTone: null as number | null,
   hardBreaks: false,
   linkFormat: 'wikilink' as LinkFormat,
@@ -340,6 +344,8 @@ class Modes {
    *  Off, because the people a hint is for would never look for the switch. The
    *  account's, like the rest of how somebody likes the app; see hints.svelte.ts. */
   silent = $state(DEFAULTS.silent)
+  /** Null until answered, which counts as yes; see Personalize.svelte. */
+  developer = $state<boolean | null>(null)
   typewriter = $state(DEFAULTS.typewriter)
   punctuation = $state(DEFAULTS.punctuation)
   numbers = $state(DEFAULTS.numbers)
@@ -489,6 +495,9 @@ class Modes {
   /** Whether two fingers turn a canvas (#351). */
   canvasTurns = $state(DEFAULTS.canvasTurns)
 
+  /** Whether a turned canvas snaps to its right angles (#487); see `snapped` in camera.ts. */
+  canvasTurnSnaps = $state(DEFAULTS.canvasTurnSnaps)
+
   /** Which colour the highlight button writes, as the palette tone it names, or
    *  null for a highlight with no colour of its own - which is what nib has always
    *  written and so is where this starts.
@@ -558,6 +567,7 @@ class Modes {
         }
       }
       if (saved.reading === true) this.readOnly = true
+      this.developer = typeof saved.developer === 'boolean' ? saved.developer : null
       this.codeTheme = text(saved.codeTheme, DEFAULTS.codeTheme)
       this.zoom = measure(saved.zoom, DEFAULTS.zoom)
       this.width = measure(saved.width, DEFAULTS.width)
@@ -609,6 +619,10 @@ class Modes {
             ? 'source'
             : DEFAULTS.properties
       stale ||= 'properties' in saved
+      // Kept as `turnsCanvas` since turning became the default (#487): an older build
+      // wrote `canvasTurns` down for everybody, so its off was no choice, its on is ours.
+      this.canvasTurns = on(saved.turnsCanvas, DEFAULTS.canvasTurns)
+      stale ||= 'canvasTurns' in saved
     }
     // The renderer and the one link writer are told once, here and in the setters
     // below, rather than asked by every caller; see `setHardBreaks` in
@@ -797,6 +811,18 @@ class Modes {
     this.silent = !this.silent
     this.persist()
     this.share({ silent: this.silent })
+  }
+
+  get coder(): boolean {
+    return this.developer !== false
+  }
+
+  setDeveloper(on: boolean) {
+    const first = this.developer === null
+    this.developer = on
+    if (first && this.quietMarks === on) this.toggleQuietMarks()
+    this.persist()
+    this.share({ developer: on })
   }
 
   toggleHand() {
@@ -1132,6 +1158,15 @@ class Modes {
     this.share({ canvasTurns: on })
   }
 
+  /** Whether a turned canvas snaps to its right angles. */
+  setCanvasTurnSnaps(on: boolean) {
+    if (on === this.canvasTurnSnaps) return
+
+    this.canvasTurnSnaps = on
+    this.persist()
+    this.share({ canvasTurnSnaps: on })
+  }
+
   /** Takes over the account's settings: signing in on a new machine brings
    *  them along, and a change made on another shows up at the next start.
    *  What the account has not decided stays as this machine had it.
@@ -1226,6 +1261,12 @@ class Modes {
       this.persist()
     }
 
+    const snaps = remote.canvasTurnSnaps
+    if (typeof snaps === 'boolean' && unheard && snaps !== this.canvasTurnSnaps) {
+      this.canvasTurnSnaps = snaps
+      this.persist()
+    }
+
     const wanted = toneOf(remote.highlightTone)
     if (wanted !== undefined && unheard) {
       if (wanted !== this.highlightTone) {
@@ -1245,6 +1286,12 @@ class Modes {
     const quietly = remote.silent
     if (typeof quietly === 'boolean' && unheard && quietly !== this.silent) {
       this.silent = quietly
+      this.persist()
+    }
+
+    const coding = remote.developer
+    if (typeof coding === 'boolean' && unheard && coding !== this.developer) {
+      this.developer = coding
       this.persist()
     }
 
@@ -1490,6 +1537,7 @@ class Modes {
       focus: this.focus,
       quietMarks: this.quietMarks,
       silent: this.silent,
+      ...(this.developer === null ? {} : { developer: this.developer }),
       typewriter: this.typewriter,
       punctuation: this.punctuation,
       numbers: this.numbers,
@@ -1525,7 +1573,8 @@ class Modes {
       keepVersions: this.keepVersions,
       remindBefore: this.remindBefore,
       undatedInToday: this.undatedInToday,
-      canvasTurns: this.canvasTurns,
+      turnsCanvas: this.canvasTurns,
+      canvasTurnSnaps: this.canvasTurnSnaps,
       highlightTone: this.highlightTone,
       hardBreaks: this.hardBreaks,
       frontMatter: this.properties,

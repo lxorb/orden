@@ -25,6 +25,7 @@ import { isHiddenTabs } from '../workspace/sets'
 import { projectsOf, setProjects } from '../rows/projects'
 import { workspace } from '../workspace.svelte'
 import type { Field, Group, Pane } from './fields'
+import { gpu } from './gpu.svelte'
 import { versionField } from './version.svelte'
 
 /** Whose a key that is both the app's and the shell's is, one row each: asked every
@@ -98,6 +99,25 @@ function terminalGroup(): Group {
         set: (value) => shells.setWarning(asWarning(value)),
       },
       ...twoWayFields(),
+    ],
+  }
+}
+
+function gpuGroup(): Group {
+  void gpu.ask()
+
+  return {
+    title: t('Hardware acceleration'),
+    ...(gpu.line ? { caption: { text: gpu.line } } : {}),
+    fields: [
+      {
+        kind: 'switch',
+        label: t('Hardware acceleration'),
+        words: ['gpu', 'graphics', 'software', 'rendering', 'cpu', 'restart'],
+        initial: true,
+        get: () => gpu.on,
+        set: (on) => void gpu.set(on),
+      },
     ],
   }
 }
@@ -347,6 +367,26 @@ export function generalPane(): Pane {
             : []),
         ],
       },
+      // Discord's Developer Mode: the terminals and what goes with them, for somebody
+      // who writes code. The first run asks (Personalize.svelte); this is where the
+      // answer changes. Not in the glasses' plugin, which has no terminal to offer.
+      ...(__EVEN_PLUGIN__
+        ? []
+        : [
+            {
+              title: t('Code'),
+              fields: [
+                {
+                  kind: 'switch' as const,
+                  label: t('Developer mode'),
+                  words: ['coder', 'coding', 'programmer', 'terminal', 'shell', 'ssh'],
+                  initial: true,
+                  get: () => modes.coder,
+                  set: (on: boolean) => modes.setDeveloper(on),
+                },
+              ],
+            },
+          ]),
       // Silent mode turns the hints off; see hints.svelte.ts. The glasses have none.
       ...(__EVEN_PLUGIN__
         ? []
@@ -408,7 +448,13 @@ export function generalPane(): Pane {
       // come back after a restart: this machine's, like the release channel below,
       // because a shell is a program on one computer and its screen is nobody else's.
       // Only a desktop has a terminal; see docs/terminal.md.
-      ...(!__EVEN_PLUGIN__ && isDesktop ? [terminalGroup()] : []),
+      ...(!__EVEN_PLUGIN__ && isDesktop && modes.coder ? [terminalGroup()] : []),
+
+      // Whether Chromium draws on the graphics card (#550): Linux and Windows, since a
+      // Mac's engine has no switch.
+      ...(!__EVEN_PLUGIN__ && isDesktop && ['linux', 'windows'].includes(platform())
+        ? [gpuGroup()]
+        : []),
 
       // Which version this is, on every build, and the channel it follows where it
       // follows one (#490): the desktop's release channel, chosen here, or the web app's

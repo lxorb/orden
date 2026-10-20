@@ -47,7 +47,7 @@ AS_PHONE = """
 """
 
 SWITCHES = """() => [...document.querySelectorAll('[role=switch]')].map((one) => ({
-  name: one.textContent.trim(),
+  name: one.getAttribute('aria-label'),
   on: one.getAttribute('aria-checked') === 'true',
   locked: one.getAttribute('aria-disabled') === 'true',
 }))"""

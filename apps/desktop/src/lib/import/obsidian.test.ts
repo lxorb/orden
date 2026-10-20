@@ -247,8 +247,45 @@ describe('the links in a vault', () => {
       file('Projects/Alpha.md', 'Back to [Home](../Index.md), or [[Index|here]].\n'),
     )
     // nib reads `[[Index]]` from Projects as the Index beside it, so the markdown link
-    // stays, while the wikilink meant the one beside it all along.
-    expect(text).toBe('Back to [Home](../Index.md), or [[Projects/Index|here]].\n')
+    // stays, while the wikilink meant the one beside it all along and is left as it was.
+    expect(text).toBe('Back to [Home](../Index.md), or [[Index|here]].\n')
+  })
+
+  // Found by importing the Obsidian Hub vault, where a person, a plugin and a theme
+  // often share one name and differ only in case.
+  test('to a name two notes share stay as written and go where nib reads them', async () => {
+    const text = await noteFrom(
+      'People/benf.md',
+      file('Expansions/All/Themes/LaTeX.md', '# Theme\n'),
+      file('Concepts/LaTeX.md', '# Concept\n'),
+      file('People/benf.md', '- [[LaTeX]]\n- [[LaTeX|tex]]\n'),
+    )
+    expect(text).toBe('- [[LaTeX]]\n- [[LaTeX|tex]]\n')
+  })
+
+  test('go to the note of the spelling they were written in first', async () => {
+    const files = [
+      file('People/BookFusion.md', '- [[bookfusion|BookFusion]]\n'),
+      file('Plugins/bookfusion.md', 'Developed by: [[BookFusion]]\n'),
+    ]
+    // Not the note the link is written in, whose name differs only in case: nib
+    // reads a name without regard to case, so the folder is written in.
+    await expect(noteFrom('People/BookFusion.md', ...files)).resolves.toBe(
+      '- [[Plugins/bookfusion|BookFusion]]\n',
+    )
+    await expect(noteFrom('Plugins/bookfusion.md', ...files)).resolves.toBe(
+      'Developed by: [[People/BookFusion|BookFusion]]\n',
+    )
+  })
+
+  test('nib would read as another note stay wikilinks, with the folder in', async () => {
+    const text = await noteFrom(
+      'People/Jawuj.md',
+      file('Expansions/Themes/Blur.md', '# Theme\n'),
+      file('Expansions/Plugins/blur.md', '# Plugin\n'),
+      file('People/Jawuj.md', '- [[Blur]]\n- ![[Blur#Usage]]\n'),
+    )
+    expect(text).toBe('- [[Expansions/Themes/Blur|Blur]]\n- ![[Expansions/Themes/Blur#Usage]]\n')
   })
 
   test('that start with a slash start at the top of the vault', async () => {

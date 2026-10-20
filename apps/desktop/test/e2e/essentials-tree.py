@@ -2,7 +2,7 @@
 
 Emil: "Anything added to Essentials should appear only under Essentials, not in the
 explorer's file list as well." So a note, a canvas, a page note and a website each go
-from the list to a tile when the row's menu keeps them, come back to the list when the
+from the list to a tile when a drop keeps them (#417), come back to the list when the
 tile's menu lets them go, and the quick open still finds one kept there - only what is
 drawn changes. Seen in light and dark.
 
@@ -60,6 +60,8 @@ async (files) => {
 # The names the file list draws, and the names the Essentials' tiles wear.
 LISTED = "() => [...document.querySelectorAll('.row[data-path]')].map((row) => row.dataset.path.split('/').pop())"
 TILED = "() => [...document.querySelectorAll('.tiles .tile')].map((tile) => tile.getAttribute('aria-label'))"
+# What a row dropped on the Essentials does.
+KEEP = "(name) => { const ws = window.nibApp.workspace; const root = ws.activeSpace.root.replace(/\\/+$/, ''); ws.bookmarks.toggle(ws.bookmarks.forEntry({ path: `${root}/${name}`, is_dir: false })) }"
 
 
 def press_row(page: Page, label: str) -> bool:
@@ -83,11 +85,7 @@ def drive(browser: Browser, scheme: str) -> None:
 
     kept = [name for name in FILES if name != "Loose.md"]
     for name in kept:
-        page.locator(f".row[data-path$='/{name}']").first.click(button="right")
-        page.wait_for_timeout(300)
-        if not press_row(page, "Add to Essentials"):
-            wrong(f"[{scheme}] the row of {name} has no Add to Essentials")
-            continue
+        page.evaluate(KEEP, name)
         page.wait_for_timeout(300)
         listed = page.evaluate(LISTED)
         if name in listed:

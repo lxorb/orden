@@ -132,6 +132,114 @@ describe('a Notion export', () => {
     expect(noteAt(plan, 'Tasks/A B.md')).toContain('note: one two')
   })
 
+  test('lands as the workspace, not inside the folder Notion zipped it in', async () => {
+    const wrap = 'Export-d2b14fbf-86de-4508-a1b2-6515ff8d7aab'
+    const plan = await readNotion([
+      file(`${wrap}/Plan ${PLAN}.md`, `# Plan\n\n[Kit](Plan%20${PLAN}/Kit%20${SUB}.md)\n`),
+      // A large export comes in parts, each in a folder of its own.
+      file(`${wrap}-Part-2/Plan ${PLAN}/Kit ${SUB}.md`, '# Kit\n'),
+      file(`${wrap}/index.html`, '<ul><li>Plan</li></ul>'),
+    ])
+
+    // The index lists what the folders already hold, and is left behind.
+    expect(pathsOf(plan)).toEqual(['Plan.md', 'Plan/Kit.md'])
+    expect(noteAt(plan, 'Plan.md')).toContain('[[Kit]]')
+  })
+
+  test('a row reads its properties under the blank line Notion leaves below the title', async () => {
+    const plan = await readNotion([
+      file(`Habits ${TASKS}_all.csv`, 'Date,Ran today,📅 Due\n"@May 1, 2026 ",Yes,"May 2, 2026"\n'),
+      file(
+        `Habits ${TASKS}/@May 1, 2026 ${ROW}.md`,
+        '# @May 1, 2026\n\nRan today: Yes\n📅 Due: May 2, 2026\n\nWords.\n',
+      ),
+      // A page that is not a row keeps a line like that as the words it is.
+      file(`Plan ${PLAN}.md`, '# Plan\n\nOne thing: it works.\n'),
+    ])
+
+    const row = noteAt(plan, 'Habits/@May 1, 2026.md')
+    expect(row).toContain('ran-today: true\n')
+    expect(row).toContain('due: 2026-05-02\n')
+    expect(row).not.toContain('Ran today: Yes')
+    expect(row).toContain('Words.')
+    expect(noteAt(plan, 'Plan.md')).toContain('One thing: it works.')
+  })
+
+  test('a row whose title was a date mention is the page named as it read that day', async () => {
+    const plan = await readNotion([
+      file(`Habits ${TASKS}_all.csv`, 'Date,Ran\n"@August 6, 2025 ","August 6, 2025 6:21 AM"\n'),
+      file(`Habits ${TASKS}/@Today ${ROW}.md`, '# @Today\n\nRan: August 6, 2025 6:21 AM\n'),
+    ])
+
+    // One note, not the page and a second one made for a row with no page.
+    expect(pathsOf(plan)).toEqual(['Habits.md', 'Habits/@Today.md'])
+  })
+
+  test('finds the rows in a folder named the way Notion names them now', async () => {
+    const plan = await readNotion([
+      file(`Specs ${TASKS}_all.csv`, 'Name,Method\nLogin,POST\n'),
+      file(`Specs/Login ${ROW}.md`, '# Login\n\nMethod: POST\n'),
+      file(`Features/Untitled ${PLAN}_Checkout ${SUB}_all.csv`, 'Name,Status\nTax,Done\n'),
+      file(`Features/Untitled 1a2b-7890/Checkout/Tax ${ROW}.md`, '# Tax\n\nStatus: Done\n'),
+    ])
+
+    expect(pathsOf(plan)).toEqual([
+      'Specs.md',
+      'Specs/Login.md',
+      'Features/Untitled 1a2b-7890/Checkout.md',
+      'Features/Untitled 1a2b-7890/Checkout/Tax.md',
+    ])
+    expect(noteAt(plan, 'Specs/Login.md')).toContain('method: POST')
+  })
+
+  test('a link to a database goes to its folder note, and one to a linked view to its page', async () => {
+    const plan = await readNotion([
+      file(
+        `Home ${PLAN}.md`,
+        `# Home\n\n[Tasks](Home%20${PLAN}/Tasks%20${TASKS}.csv)\n\n[Mine](Home%20${PLAN}/Mine%20${SUB}.csv)\n`,
+      ),
+      file(`Home ${PLAN}/Tasks ${TASKS}.csv`, 'Name\nOne\n'),
+      file(`Home ${PLAN}/Tasks ${TASKS}_all.csv`, 'Name\nOne\n'),
+      file(`Home ${PLAN}/Mine ${SUB}.md`, '# Mine\n'),
+    ])
+
+    const home = noteAt(plan, 'Home.md')
+    expect(home).toContain('[[Tasks]]')
+    expect(home).toContain('[[Mine]]')
+  })
+
+  test('an HTML export keeps a row’s properties and its to-dos', async () => {
+    const plan = await readNotion([
+      file(
+        `Gear ${PLAN}/Espresso ${SUB}.html`,
+        [
+          '<html><body><article><header><h1 class="page-title">Espresso</h1>',
+          '<table class="properties"><tbody>',
+          '<tr class="property-row property-row-multi_select"><th>Tags</th><td><span class="selected-value">home office</span><span class="selected-value">coffee</span></td></tr>',
+          '<tr class="property-row property-row-checkbox"><th>Serviced</th><td><div class="checkbox checkbox-on"></div></td></tr>',
+          '<tr class="property-row property-row-date"><th>Bought</th><td><time>@March 1, 2024</time></td></tr>',
+          '<tr class="property-row property-row-number"><th>Price</th><td>67.3</td></tr>',
+          '<tr class="property-row property-row-text"><th>Notes</th><td>Fast &amp; loud</td></tr>',
+          '</tbody></table></header><div class="page-body">',
+          '<ul class="to-do-list"><li><div class="checkbox checkbox-on"></div> <span class="to-do-children-checked">Descale</span></li></ul>',
+          '<ul class="to-do-list"><li><div class="checkbox checkbox-off"></div> <span class="to-do-children-unchecked">Clean</span></li></ul>',
+          '</div></article></body></html>',
+        ].join(''),
+      ),
+      file(`Gear ${PLAN}.html`, '<h1>Gear</h1>'),
+    ])
+
+    const row = noteAt(plan, 'Gear/Espresso.md')
+    expect(row).toContain('tags: [home-office, coffee]\n')
+    expect(row).toContain('serviced: true\n')
+    expect(row).toContain('bought: 2024-03-01\n')
+    expect(row).toContain('price: 67.3\n')
+    expect(row).toContain('notes: Fast & loud\n')
+    expect(row).toContain('- [x] Descale')
+    expect(row).toContain('- [ ] Clean')
+    expect(row).not.toContain('Serviced |')
+  })
+
   test('an HTML export is read as HTML rather than refused', async () => {
     const plan = await readNotion([
       file(`Plan ${PLAN}.html`, '<h1>Plan</h1><p>Words</p>'),

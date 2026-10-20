@@ -26,6 +26,20 @@ describe('front matter for an imported note', () => {
     expect(block).toContain('last-edited-time: 2026-01-02')
   })
 
+  test('keeps a column named in any script, and an emoji in front is left off', () => {
+    const block = frontMatterFor({
+      extra: [
+        ['Größe', 'L'],
+        ['期限', 'soon'],
+        ['📅 When', 'today'],
+      ],
+    })
+
+    expect(block).toContain('größe: L')
+    expect(block).toContain('期限: soon')
+    expect(block).toContain('when: today')
+  })
+
   test('a note with nothing to say carries no fence at all', () => {
     expect(frontMatterFor({})).toBe('')
     expect(frontMatterFor({ tags: [], extra: [['Empty', '  ']] })).toBe('')

@@ -88,8 +88,10 @@ interface Held {
   glassesSeen?: boolean
   quietMarks?: boolean
   silent?: boolean
+  developer?: boolean
   undatedInToday?: boolean
   canvasTurns?: boolean
+  canvasTurnSnaps?: boolean
 }
 
 vi.mock('./api', async (importOriginal) => ({
@@ -445,10 +447,24 @@ describe('Silent mode', () => {
 })
 
 describe('turning a canvas with two fingers (#351)', () => {
-  test('starts off, and is remembered across a restart', async () => {
-    expect(modes.canvasTurns).toBe(false)
-    modes.setCanvasTurns(true)
-    expect((await restarted()).canvasTurns).toBe(true)
+  test('starts on, and is remembered off across a restart (#487)', async () => {
+    expect(modes.canvasTurns).toBe(true)
+    modes.setCanvasTurns(false)
+    expect((await restarted()).canvasTurns).toBe(false)
+  })
+
+  test('takes no off from an older build, which wrote it down for everybody', async () => {
+    localStorage.setItem('nib:modes', JSON.stringify({ canvasTurns: false, vim: true }))
+    const back = await restarted()
+    expect(back.canvasTurns).toBe(true)
+    expect(back.vim).toBe(true)
+    expect(localStorage.getItem('nib:modes')).not.toContain('"canvasTurns"')
+  })
+
+  test('snaps to its right angles unless that is turned off (#487)', async () => {
+    expect(modes.canvasTurnSnaps).toBe(true)
+    modes.setCanvasTurnSnaps(false)
+    expect((await restarted()).canvasTurnSnaps).toBe(false)
   })
 })
 
@@ -457,6 +473,37 @@ describe('the tasks with no start date in Today', () => {
     expect(modes.undatedInToday).toBe(false)
     modes.setUndatedInToday(true)
     expect((await restarted()).undatedInToday).toBe(true)
+  })
+})
+
+describe('Developer mode', () => {
+  test('is unasked at first, which keeps the terminals', () => {
+    expect(modes.developer).toBeNull()
+    expect(modes.coder).toBe(true)
+  })
+
+  test('a first no writes the way Notion does, and is remembered', async () => {
+    modes.setDeveloper(false)
+    expect(modes.coder).toBe(false)
+    expect(modes.quietMarks).toBe(true)
+
+    const again = await restarted()
+    expect(again.developer).toBe(false)
+    expect(again.quietMarks).toBe(true)
+  })
+
+  test('a first yes keeps the marks under the caret, as Obsidian does', () => {
+    modes.setDeveloper(true)
+    expect(modes.coder).toBe(true)
+    expect(modes.quietMarks).toBe(false)
+  })
+
+  test('after the first answer, leaves the marks to their own switch', () => {
+    modes.setDeveloper(false)
+    modes.toggleQuietMarks()
+    modes.setDeveloper(true)
+    modes.setDeveloper(false)
+    expect(modes.quietMarks).toBe(false)
   })
 })
 
@@ -699,6 +746,17 @@ describe('taking over what the account holds', () => {
     await adopted
 
     expect(modes.undatedInToday).toBe(true)
+  })
+
+  test('brings Developer mode', async () => {
+    const { release, settingsCall } = heldAnswer({ developer: false })
+    api.settings = settingsCall
+
+    const adopted = modes.adopt('token')
+    release()
+    await adopted
+
+    expect(modes.coder).toBe(false)
   })
 
   test('brings a setting this machine has never chosen', async () => {

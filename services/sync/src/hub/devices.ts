@@ -159,6 +159,9 @@ export async function devicesEnded(
 
     for (const { id } of results) await endDevice(env, user, id)
   }
+
+  // And the sockets that came in on them without saying hello, which no row names.
+  await askHub(env, user, 'revoke', { 'x-nib-sessions': sessions.join(',') })
 }
 
 export const devices = new Hono<{ Bindings: Env; Variables: Variables }>()

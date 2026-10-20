@@ -25,6 +25,9 @@
     { whole: false, word: () => t('Area'), title: () => t('Only what is under the nib') },
   ] as const
 
+  /** The width of whichever way is on: each keeps its own. */
+  const wide = $derived(pens.whole ? pens.strokeRub : pens.rub)
+
   function way(whole: boolean) {
     tick()
     pens.rubbing({ whole })
@@ -49,17 +52,17 @@
 
   <!-- How wide, shown as the width. The circle is the nib at its real size, so
        there is nothing to read off a number and imagine. -->
-  <div class="wide" class:off={pens.whole}>
-    <span class="ring" style:width="{pens.rub * 2}px" style:height="{pens.rub * 2}px"></span>
+  <div class="wide">
+    <span class="ring" style:width="{wide * 2}px" style:height="{wide * 2}px"></span>
 
     <CanvasDial
-      value={pens.rub}
+      value={wide}
       least={LEAST_RUB}
       most={MOST_RUB}
       step={2}
       label={t('Width')}
-      reading={String(pens.rub)}
-      onvalue={(rub: number) => pens.rubbing({ rub })}
+      reading={String(wide)}
+      onvalue={(rub: number) => pens.rubbing(pens.whole ? { strokeRub: rub } : { rub })}
     />
   </div>
 
@@ -89,13 +92,6 @@
     display: flex;
     align-items: center;
     gap: var(--space-3);
-    transition: opacity var(--dur-fast) var(--ease-out);
-  }
-
-  /* A whole stroke goes whatever the nib is, so the dial has nothing to say. */
-  .wide.off {
-    opacity: 0.35;
-    pointer-events: none;
   }
 
   .wide :global(.dial) {

@@ -372,9 +372,13 @@ export function createLocalEngine(kind: LocalKind, setup: LocalSetup): Engine {
           on({ type: 'model', model: said.model })
         }
         if (said.limit) {
-          heard.limit = said.limit
-          plans.heard(provider.id, said.limit)
-          on({ type: 'limit', limit: said.limit })
+          // A refusal's words say the limit and seldom when it resets; the plan's own
+          // word before them, at its limit, did.
+          const until =
+            said.limit.until ?? (heard.limit?.state === 'reached' ? heard.limit.until : null)
+          heard.limit = { ...said.limit, until }
+          plans.heard(provider.id, heard.limit)
+          on({ type: 'limit', limit: heard.limit })
         }
         if (said.trouble) heard.trouble = said.trouble
         if (said.signedOut) {

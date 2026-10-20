@@ -217,10 +217,8 @@ export async function exportPagesPng(out: PagesOut): Promise<string | undefined>
  *  ring round it, and the same ring goes into the SVG, onto the screen and in here.
  *  So the three pictures of one stroke cannot drift.
  *
- *  PDF coordinates run up the page and a plane's run down it, which `drawSvgPath`
- *  turns itself about the top of the sheet. That is the whole of the conversion: the
- *  units are the same, because a page's size in this format is already the size it
- *  would be printed. */
+ *  A page is in CSS pixels and a sheet in points, turned as its paper is turned; see
+ *  `pagesPdf` for the one transform that is a page on its sheet. */
 export async function exportPagesPdf(out: PagesOut): Promise<string | undefined> {
   const bytes = await pagesPdf(out)
   if (!bytes) return
@@ -230,11 +228,11 @@ export async function exportPagesPdf(out: PagesOut): Promise<string | undefined>
 
 /** The note's PDF, as bytes: what the export above writes and what printing puts on
  *  paper, so the two cannot differ. Null for a note with no pages. */
-async function pagesPdf(out: PagesOut): Promise<Uint8Array | null> {
+export async function pagesPdf(out: PagesOut): Promise<Uint8Array | null> {
   const pages = pagesOf(out.canvas)
   if (!pages.length) return null
 
-  const { BlendMode, PDFDocument, rgb } = await import('pdf-lib')
+  const { BlendMode, degrees, PDFDocument, rgb } = await import('pdf-lib')
 
   // The paper the pages came from, where they all came from one. A note whose pages
   // name several papers, or none, gets blank pages at its own sizes: the ink is what
@@ -257,9 +255,16 @@ async function pagesPdf(out: PagesOut): Promise<Uint8Array | null> {
     const sheet =
       from !== null && kept[from - 1]
         ? doc.insertPage(carried + at, kept[from - 1])
-        : doc.insertPage(carried + at, [page.width, page.height])
+        : doc.insertPage(carried + at, [page.width / PDF_TO_CSS, page.height / PDF_TO_CSS])
 
-    const { height } = sheet.getSize()
+    // The page is the sheet as pdf.js shows it, which is how its size was read: the
+    // crop box turned by /Rotate. So the ink is scaled from pixels to that box's points,
+    // turned with it, and put at the corner that is then the top left.
+    const box = sheet.getCropBox()
+    const turn = ((sheet.getRotation().angle % 360) + 360) % 360
+    const scale = (turn % 180 ? box.height : box.width) / page.width
+    const x = box.x + (turn >= 180 ? box.width : 0)
+    const y = box.y + (turn === 0 || turn === 270 ? box.height : 0)
 
     for (const stroke of inkOn(out.canvas, page)) {
       const ring = outlineOf(stroke)
@@ -278,8 +283,10 @@ async function pagesPdf(out: PagesOut): Promise<Uint8Array | null> {
       // the origin it is given: so the path is the plane's own `y`, and the origin is the
       // top of the sheet. Turned twice, the ink landed below the sheet, off the page.
       sheet.drawSvgPath(`${path} Z`, {
-        x: 0,
-        y: height,
+        x,
+        y,
+        rotate: degrees(turn),
+        scale,
         color: rgb(colour.r, colour.g, colour.b),
         opacity: inkOpacity(stroke),
         // The ring is the stroke: it is filled, never stroked, exactly as it is on

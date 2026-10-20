@@ -1,5 +1,6 @@
 import { setSnippets } from '@nib/editor'
 import { account } from './account.svelte'
+import { modes } from './modes.svelte'
 import { connectors } from './connectors.svelte'
 import { message } from './i18n.svelte'
 import { DEFAULT_ID_FORMAT, ID_FORMATS } from './note-id'
@@ -44,6 +45,8 @@ class Settings {
   listing = $state(true)
   /** The version-history sheet, which is its own overlay. */
   historyOpen = $state(false)
+  /** The first run's optional questions: -1 all set, else the one asked; Personalize.svelte. */
+  setup = $state<number | null>(null)
 
   /** Whether pandoc is on this machine, which decides the export list. */
   pandoc = $state(false)
@@ -185,8 +188,9 @@ export function kindsHere(): KindName[] {
   const web = !viewport.touch
   const here: KindName[] = ['note', 'canvas', 'pages']
   if (account.accountToken) here.push('chat')
-  if (isDesktop) here.push('terminal', 'remote')
-  here.push('online')
+  // Every terminal is for somebody who writes code; see `developer` in modes.svelte.ts.
+  if (isDesktop && modes.coder) here.push('terminal', 'remote')
+  if (modes.coder) here.push('online')
   if (web) here.push('web')
   if (web && isDesktop) here.push('private')
   return here

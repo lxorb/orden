@@ -94,6 +94,21 @@ case "${1:-use}" in
             fi
           done
         done
+        # And Mesa whole, for the same reason (#427): the AppImage runs on the glibc it
+        # carries, under which a newer host's Mesa cannot load - Fedora 44's needs glibc
+        # 2.43 - and quick-sharun carries only what the app links to, which is GBM and
+        # none of what draws. Without its own, EGL and GLX found no driver, Chromium's
+        # GPU process ended at its start, and every page was drawn on the CPU. Its EGL and
+        # GLX drivers and gallium, from which quick-sharun follows their libraries; the
+        # loaders the DRI drivers are; and glvnd's word for which EGL driver is Mesa's,
+        # where sharun points glvnd.
+        for module in "$lib"/libEGL_mesa.so.0 "$lib"/libGLX_mesa.so.0 "$lib"/libgallium-*.so "$lib"/dri/*_dri.so; do
+          [ -f "$module" ] || continue
+          name="${module#"$lib"/}"
+          files="$files${files:+,}\"/usr/lib/$name\":\"$(readlink -f "$module")\""
+        done
+        vendor=/usr/share/glvnd/egl_vendor.d/50_mesa.json
+        [ -f "$vendor" ] && files="$files${files:+,}\"/share/glvnd/egl_vendor.d/50_mesa.json\":\"$vendor\""
         [ -n "$files" ] && set -- "$@" --config "{\"bundle\":{\"linux\":{\"appimage\":{\"files\":{$files}}}}}"
         ;;
     esac

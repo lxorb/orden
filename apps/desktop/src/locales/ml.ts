@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ml: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'എല്ലാം തയ്യാർ',
+  Personalize: 'വ്യക്തിഗതമാക്കുക',
+  Clean: 'വൃത്തിയുള്ളത്',
+  'Live preview': 'ലൈവ് പ്രിവ്യൂ',
+  'Developer mode': 'ഡെവലപ്പർ മോഡ്',
+  'Do you write code?': 'നിങ്ങൾ കോഡ് എഴുതാറുണ്ടോ?',
+  Yes: 'അതെ',
+  No: 'ഇല്ല',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'മറ്റ് ആപ്പുകളിൽ നിന്ന്: {key}',
   'From other apps: set in your system settings':
@@ -83,6 +92,7 @@ export const ml: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'ഒരു ജോലി',
   'One per line': 'ഓരോ വരിക്കും ഒന്ന്',
+  'Add with AI': 'AI ഉപയോഗിച്ച് ചേർക്കുക',
   // Tasks: the projects in the panel
   Favorites: 'പ്രിയപ്പെട്ടവ',
   'Add project': 'പ്രോജക്റ്റ് ചേർക്കുക',
@@ -126,6 +136,7 @@ export const ml: Dictionary = {
   'Pointing hand on buttons': 'ബട്ടണുകളിൽ ചൂണ്ടുന്ന കൈ',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'ടാസ്ക് ചേർക്കുക',
+  'Apple Shortcuts': 'Apple ഷോർട്ട്കട്ടുകൾ',
   Tomorrow: 'നാളെ',
   'done {date}': 'പൂർത്തിയായി {date}',
   'Next week': 'അടുത്ത ആഴ്ച',
@@ -189,6 +200,7 @@ export const ml: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'രണ്ട് വിരലുകൾ കൊണ്ട് ക്യാൻവാസ് തിരിക്കുക',
+  'Snap the rotation to right angles': 'തിരിക്കൽ മട്ടകോണുകളിലേക്ക് സ്നാപ്പ് ചെയ്യുക',
   'Turn upright': 'നേരെയാക്കുക',
   Canvas: 'ക്യാൻവാസ്',
   Card: 'കാർഡ്',
@@ -283,6 +295,7 @@ export const ml: Dictionary = {
   Tabs: 'ടാബുകൾ',
   'Ctrl+Tab in order of use': 'ഉപയോഗിച്ച ക്രമത്തിൽ Ctrl+Tab',
   'Swipe between pages': 'പേജുകൾക്കിടയിൽ സ്വൈപ്പ് ചെയ്യുക',
+  'Hardware acceleration': 'ഹാർഡ്‌വെയർ ആക്സിലറേഷൻ',
   'Hidden tabs': 'മറഞ്ഞിരിക്കുന്ന ടാബുകൾ',
   'Memory saver': 'മെമ്മറി സേവർ',
   Moderate: 'മിതമായ',
@@ -1164,6 +1177,8 @@ export const ml: Dictionary = {
   Elbow: 'മുട്ടുവര',
   Frame: 'ഫ്രെയിം',
   Ungroup: 'ഗ്രൂപ്പ് വേർപെടുത്തുക',
+  Lock: 'ലോക്ക് ചെയ്യുക',
+  Unlock: 'അൺലോക്ക് ചെയ്യുക',
   'The ink of the page': 'പേജിന്റെ മഷി',
   'Write in what is picked': 'തിരഞ്ഞെടുത്തതിൽ എഴുതുക',
   Pen: 'പെൻ',
@@ -1308,11 +1323,19 @@ export const ml: Dictionary = {
     '{count} ഭാഗങ്ങൾ എൻക്രിപ്റ്റ് ചെയ്തിരിക്കുന്നു, Evernote ഇല്ലാതെ അവ വായിക്കാൻ ഒന്നിനുമാകില്ല',
   '{count} notes had a reminder, which the export does not carry':
     '{count} കുറിപ്പുകൾക്ക് റിമൈൻഡർ ഉണ്ടായിരുന്നു, എക്സ്പോർട്ട് അത് കൊണ്ടുവരില്ല',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} അറ്റാച്ച്മെന്റുകൾ എക്സ്പോർട്ടിൽ ഇല്ലായിരുന്നു, അല്ലെങ്കിൽ വായിക്കാനായില്ല',
+    other: '{count} അറ്റാച്ച്മെന്റുകൾ എക്സ്പോർട്ടിൽ ഇല്ലായിരുന്നു, അല്ലെങ്കിൽ വായിക്കാനായില്ല',
+  },
   '{count} notes were in the bin and stay there':
     '{count} കുറിപ്പുകൾ ചവറ്റുകുട്ടയിലായിരുന്നു, അവിടെത്തന്നെ നിൽക്കും',
   '{count} archived notes are in a folder called Archive':
     '{count} ആർക്കൈവ് കുറിപ്പുകൾ Archive ഫോൾഡറിലാണ്',
   'The colours a note had are not kept': 'കുറിപ്പിനുണ്ടായിരുന്ന നിറങ്ങൾ സൂക്ഷിക്കില്ല',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} ഫയലുകൾ വായിക്കാനായില്ല, അതിനാൽ ഒഴിവാക്കി',
+    other: '{count} ഫയലുകൾ വായിക്കാനായില്ല, അതിനാൽ ഒഴിവാക്കി',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} ബ്ലോക്ക് റഫറൻസുകൾ അവ ചൂണ്ടിയ വാക്കുകളായി എഴുതി',
   '{count} saved views are left out, and every row is in the table': {
@@ -1340,6 +1363,8 @@ export const ml: Dictionary = {
     '{count} മനോഭാവ, പ്രവൃത്തി കാർഡുകൾ വരകളാണ്, അതിനാൽ അവയുടെ വാക്കുകൾ മാത്രം വരും',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} കുറിപ്പുകൾ പാസ്‌വേഡിനു പിന്നിലാണ്, അത് Notes മാത്രം തുറക്കും',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} കുറിപ്പുകൾ പാസ്‌വേഡിനു പിന്നിലാണ്, അത് Bear മാത്രം തുറക്കും',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} കുറിപ്പുകൾ അടുത്തിടെ മായ്ച്ചവയിലാണ്, അവിടെത്തന്നെ നിൽക്കും',
   '{count} drawings and scans have no picture on this Mac':
@@ -1586,6 +1611,7 @@ export const ml: Dictionary = {
   'Ask the model': 'മോഡലിനോട് ചോദിക്കുക',
   'answered by {model}, {date}': '{model} മറുപടി നൽകി, {date}',
   'AI block': 'AI ബ്ലോക്ക്',
+  'Do with AI': 'AI ഉപയോഗിച്ച് ചെയ്യുക',
   'Highlight colour': 'ഹൈലൈറ്റ് നിറം',
   'A single newline breaks the line': 'ഒരു പുതിയ വരി വരി മുറിക്കും',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -1912,6 +1938,8 @@ export const ml: Dictionary = {
   'Settings › AI': 'സെറ്റിംഗ്സ് › AI',
   'New chat': 'പുതിയ ചാറ്റ്',
   'Ask again': 'വീണ്ടും ചോദിക്കുക',
+  'Continue when the limit resets': 'പരിധി പുതുക്കുമ്പോൾ തുടരുക',
+  'Continues at {time}': '{time}-ന് തുടരും',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'എന്തും ചോദിക്കൂ, ചേർക്കാൻ @, കൂടുതലിന് /',
   'What can I help with?': 'ഞാൻ എന്ത് സഹായിക്കണം?',
@@ -2387,4 +2415,29 @@ export const ml: Dictionary = {
   Peach: 'പീച്ച്',
   Sage: 'സേജ്',
   Mist: 'മൂടൽമഞ്ഞ്',
+  // A board, Notion's: its columns, its cards, its settings, a new database
+  'New database': 'പുതിയ ഡാറ്റാബേസ്',
+  'New page': 'പുതിയ പേജ്',
+  'Not started': 'ആരംഭിച്ചിട്ടില്ല',
+  'In progress': 'പുരോഗമിക്കുന്നു',
+  'No {property}': '{property} ഇല്ല',
+  '{card} moved to {group}': '{card} {group}-ലേക്ക് നീക്കി',
+  'Not moved': 'നീക്കിയില്ല',
+  Retry: 'വീണ്ടും ശ്രമിക്കുക',
+  Calculate: 'കണക്കാക്കുക',
+  'Remove sort': 'ക്രമം നീക്കുക',
+  'Remove sort?': 'ക്രമം നീക്കണോ?',
+  Groups: 'ഗ്രൂപ്പുകൾ',
+  'Hidden groups': 'മറച്ച ഗ്രൂപ്പുകൾ',
+  'Add as option': 'ഓപ്ഷനായി ചേർക്കുക',
+  'Move left': 'ഇടത്തേക്ക് നീക്കുക',
+  'Move right': 'വലത്തേക്ക് നീക്കുക',
+  'Delete option': 'ഓപ്ഷൻ ഇല്ലാതാക്കുക',
+  'Colour columns': 'കോളങ്ങൾക്ക് നിറം നൽകുക',
+  'Hide empty groups': 'ശൂന്യമായ ഗ്രൂപ്പുകൾ മറയ്ക്കുക',
+  'Card size': 'കാർഡ് വലുപ്പം',
+  Small: 'ചെറുത്',
+  Large: 'വലുത്',
+  Both: 'രണ്ടും',
+  'Shown on cards': 'കാർഡുകളിൽ കാണിക്കുന്നവ',
 }

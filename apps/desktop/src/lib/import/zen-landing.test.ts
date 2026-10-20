@@ -16,11 +16,14 @@ const spaces: { id: string; name: string; root: string }[] = []
 const done: string[] = []
 const marks: { kind: string; path: string; text: string }[] = []
 
+/** What Zen's session file holds. */
+let sidebar: unknown = SIDEBAR
+
 vi.mock('../tauri', () => ({
   invoke: (command: string, args: Record<string, unknown>) => {
     if (command === 'read_zen_file') {
       return args.file === 'zen-sessions.jsonlz4'
-        ? Promise.resolve(toBase64(mozLz4Of(new TextEncoder().encode(JSON.stringify(SIDEBAR)))))
+        ? Promise.resolve(toBase64(mozLz4Of(new TextEncoder().encode(JSON.stringify(sidebar)))))
         : Promise.reject(new Error('no such file'))
     }
     if (command === 'read_note') {
@@ -58,7 +61,9 @@ vi.mock('../workspace.svelte', () => {
       get activeSpaceId() {
         return active
       },
-      addSpace: (name: string) => {
+      addSpace: (asked: string) => {
+        // The crate names the folder, and so the space, without what a folder cannot hold.
+        const name = asked.replace(/[:/]/g, ' ').replace(/\s+/g, ' ').trim()
         const space = { id: name, name, root: `/spaces/${name}` }
         spaces.push(space)
         active = space.id
@@ -94,6 +99,7 @@ const PROFILE = {
 }
 
 beforeEach(() => {
+  sidebar = SIDEBAR
   disk.clear()
   written.length = 0
   spaces.length = 0
@@ -149,6 +155,22 @@ describe('Zen brought into nib', () => {
     // A space that was there keeps the order and the icon it has.
     expect(done.filter((one) => one.startsWith('order') || one.startsWith('icon'))).toEqual([])
     expect(marks).toHaveLength(1)
+  })
+
+  test('finds the space it made again where the name it asked for was not a folder name', async () => {
+    sidebar = {
+      ...SIDEBAR,
+      spaces: SIDEBAR.spaces.map((one) =>
+        one.name === 'Work' ? { ...one, name: 'Work: Client' } : one,
+      ),
+    }
+    await landZen(PROFILE)
+    written.length = 0
+
+    await landZen(PROFILE)
+
+    expect(spaces.map((one) => one.name)).toEqual(['Home', 'Work Client', 'Reading'])
+    expect(written).toEqual([])
   })
 
   test("says so when none of the profile's files can be read", async () => {

@@ -71,6 +71,7 @@ const ws = {
     return this.files.filter((one) => !/\.(pdf|canvas|base)$/i.test(one.name))
   },
   undone: { record: () => undefined },
+  fileCame: () => Promise.resolve(),
   addSpace: async (name: string) => {
     if (ws.refusing) return undefined
     ws.added += 1

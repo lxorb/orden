@@ -539,6 +539,19 @@ mod tests {
         assert!(Path::new(&target).parent().is_some());
     }
 
+    /// A page note comes back where neither it nor its paper would go over anything: a
+    /// PDF of its paper's name is somebody's own (#538).
+    #[test]
+    fn a_page_note_restores_beside_a_pdf_of_its_papers_name() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let base = dir.path();
+        std::fs::write(base.join("Report.pages.pdf"), b"%PDF mine").expect("somebody's PDF");
+
+        let target =
+            restore_target(base, &entry("1-0", "Report.pages", "Report.pages")).expect("a place");
+        assert_eq!(target, base.join("Report 2.pages"));
+    }
+
     /// An entry goes on the end of what the manifest already holds, and nothing is
     /// undone when it was written down.
     #[test]

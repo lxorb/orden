@@ -6,6 +6,7 @@
 import { describe, expect, test } from 'vitest'
 import { sourceOf } from './sources'
 import {
+  clockOf,
   csvProject,
   type Fetch,
   isTodoistCsv,
@@ -238,6 +239,101 @@ describe('from the account', () => {
       'Todoist did not take that token.',
     )
   })
+
+  /** A second account, in the shapes the API's own SDKs record. */
+  const ANSWERED: Record<string, unknown> = {
+    '/projects': {
+      results: [{ id: 'p-1', name: 'Home', description: 'Everything about the flat.' }],
+      next_cursor: null,
+    },
+    '/sections': { results: [], next_cursor: null },
+    '/tasks': {
+      results: [
+        {
+          id: 't-1',
+          project_id: 'p-1',
+          content: 'Fix the tap',
+          priority: 1,
+          labels: [],
+          child_order: 1,
+          checked: false,
+          note_count: 1,
+        },
+      ],
+      next_cursor: null,
+    },
+    '/reminders': {
+      results: [
+        { item_id: 't-1', type: 'relative', minute_offset: 30, is_deleted: false },
+        { item_id: 't-1', type: 'relative', minute_offset: 45, is_deleted: true },
+        {
+          item_id: 't-1',
+          type: 'absolute',
+          due: { date: '2026-10-05T07:00:00.000000Z', timezone: 'Europe/Zurich' },
+          is_deleted: false,
+        },
+      ],
+      next_cursor: null,
+    },
+    '/comments?task_id=t-1': {
+      results: [
+        {
+          content: 'The plumber said',
+          posted_at: '2026-10-02T10:00:00Z',
+          file_attachment: { resource_type: 'url', url: 'https://example.com/taps', title: 'Taps' },
+        },
+      ],
+      next_cursor: null,
+    },
+    '/tasks/completed/by_completion_date': {
+      items: [
+        {
+          id: 't-2',
+          project_id: 'p-gone',
+          content: 'Pack the boxes',
+          priority: 1,
+          labels: [],
+          child_order: 1,
+          completed_at: '2026-10-01T08:00:00Z',
+        },
+      ],
+      next_cursor: null,
+    },
+  }
+  const answering: Fetch = (url) => {
+    const path = url
+      .replace('https://api.todoist.com/api/v1', '')
+      .replace(/[?&](limit|since|until)=[^&]*/g, '')
+      .replace(/\?$/, '')
+    const page = ANSWERED[path]
+    return Promise.resolve({
+      ok: !!page,
+      status: page ? 200 : 404,
+      json: () => Promise.resolve(page),
+    })
+  }
+
+  test("a project's description over its tasks, a link a comment points to, reminders that are still set at their zone's time", async () => {
+    const plan = planOf(await readTodoistAccount(answering, 'secret'))
+    const home = plan.files.find((one) => one.path === 'Projects/Home.md')
+    expect(home?.kind === 'note' ? home.text : '').toBe(
+      [
+        'Everything about the flat.',
+        '',
+        '- [ ] Fix the tap [remind:: 30m, 2026-10-05 09:00]',
+        '  2026-10-02: The plumber said [Taps](https://example.com/taps)',
+        '',
+      ].join('\n'),
+    )
+  })
+
+  test('a done task is done though it does not say checked, and kept though its project was not read', async () => {
+    const plan = planOf(
+      await readTodoistAccount(answering, 'secret', { completed: true, now: NOW }),
+    )
+    const kept = plan.files.find((one) => one.path === 'Projects/Todoist.md')
+    expect(kept?.kind === 'note' ? kept.text : '').toBe('- [x] Pack the boxes ✅ 2026-10-01\n')
+  })
 })
 
 /** Todoist's documented CSV, as a project export writes it. */
@@ -289,6 +385,118 @@ describe('from a CSV', () => {
     expect(plan.files.map((one) => one.path)).toEqual(['Inbox.md', 'Projects/Work.md'])
     expect(plan.inbox).toBe('Inbox.md')
   })
+
+  test("keeps what is said about the project and its sections, an attachment as a link, a duration in days, a rule's time", () => {
+    const csv = [
+      'TYPE,CONTENT,DESCRIPTION,PRIORITY,INDENT,AUTHOR,RESPONSIBLE,DATE,DATE_LANG,TIMEZONE,DURATION,DURATION_UNIT,meta,DEADLINE,DEADLINE_LANG,IS_COLLAPSED',
+      'meta,view_style=list,,,,,,,,,,,,,,',
+      'note,A comment on the project,,,,,,,,,,,,,,',
+      'section,Doing,What we are on now,,,,,,,,,,,,,FALSE',
+      'note,A comment on the section,,,,,,,,,,,,,,',
+      'task,Move the piano,,4,1,,,2026-10-06,en,,2,day,,,,',
+      'note,"Quote: [[file {""file_name"":""quote (1).pdf"",""file_url"":""https://files.todoist.com/a/quote (1).pdf""}]]",,,,,,,,,,,,,,',
+      'task,Clean the house,,4,1,,,every month @ 13:00,en,,,,,,,',
+      'task,Take out the trash,,4,1,,,every friday at 7pm,en,,,,,,,',
+      'task,Book it,,4,1,,,2026-02-30,en,,,,,,,',
+    ].join('\r\n')
+    const plan = planOf(csvProject('Moving', csv, 0))
+    const note = plan.files[0]
+    expect(note?.kind === 'note' ? note.text : '').toBe(
+      [
+        'A comment on the project',
+        '',
+        '## Doing',
+        '',
+        'What we are on now',
+        '',
+        'A comment on the section',
+        '',
+        '- [ ] Move the piano [duration:: 48h] 🛫 2026-10-06',
+        '  Quote: [quote (1).pdf](<https://files.todoist.com/a/quote (1).pdf>)',
+        '- [ ] Clean the house [time:: 13:00] 🔁 every month',
+        '- [ ] Take out the trash [time:: 19:00] 🔁 every week on Friday',
+        // A day the calendar does not have stays as it was written.
+        '- [ ] Book it',
+        '  Todoist: 2026-02-30',
+        '',
+      ].join('\n'),
+    )
+  })
+})
+
+describe('a broken answer', () => {
+  test('tasks whose parents go round in a circle are each written once, not lost', () => {
+    const task = (id: string, parent: string) => ({
+      id,
+      project: 'p',
+      parent,
+      text: id,
+      description: '',
+      priority: 4 as const,
+      labels: [],
+      order: 1,
+      remind: [],
+      comments: [],
+    })
+    const plan = planOf({
+      projects: [{ id: 'p', name: 'Loop', inbox: false }],
+      sections: [],
+      tasks: [task('A', 'B'), task('B', 'A'), task('C', 'C'), task('D', 'A')],
+    })
+    const note = plan.files[0]
+    expect(note?.kind === 'note' ? note.text : '').toBe(
+      ['- [ ] A', '  - [ ] B', '  - [ ] D', '- [ ] C', ''].join('\n'),
+    )
+  })
+
+  test('an answer that is not JSON is Todoist not being reached', async () => {
+    const page: Fetch = () =>
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        json: () => Promise.reject(new SyntaxError('Unexpected token <')),
+      })
+    await expect(readTodoistAccount(page, 'secret')).rejects.toThrow(
+      'Todoist could not be reached.',
+    )
+  })
+})
+
+describe('words that look like something else', () => {
+  test('a checkbox in a description or a comment is no task, and a description opening with --- no properties', () => {
+    const plan = planOf({
+      projects: [{ id: 'p', name: 'Lists', inbox: false, about: ['---\nfrom the old list\n---'] }],
+      sections: [],
+      tasks: [
+        {
+          id: 't',
+          project: 'p',
+          text: 'Shop',
+          description: '- [ ] milk\n* [x] bread',
+          priority: 4,
+          labels: [],
+          order: 1,
+          remind: [],
+          comments: [{ text: '1. [ ] eggs' }],
+        },
+      ],
+    })
+    const note = plan.files[0]
+    expect(note?.kind === 'note' ? note.text : '').toBe(
+      [
+        '',
+        '---',
+        'from the old list',
+        '---',
+        '',
+        '- [ ] Shop',
+        '  - \\[ ] milk',
+        '  * \\[x] bread',
+        '  1. \\[ ] eggs',
+        '',
+      ].join('\n'),
+    )
+  })
 })
 
 describe('the words', () => {
@@ -298,6 +506,14 @@ describe('the words', () => {
     expect(ruleOf('every other week')).toBe('every 2 weeks')
     expect(ruleOf('every workday')).toBe('every weekday')
     expect(ruleOf('every 3rd friday')).toBeNull()
+  })
+
+  test('a rule said at a time, the time apart', () => {
+    expect(clockOf('every day at 9am')).toEqual({ time: '09:00', rest: 'every day' })
+    expect(clockOf('every mon @ 13:30')).toEqual({ time: '13:30', rest: 'every mon' })
+    expect(clockOf('every day at 12am')).toEqual({ time: '00:00', rest: 'every day' })
+    expect(clockOf('every 3 days')).toEqual({ rest: 'every 3 days' })
+    expect(ruleOf('every weekday at 10:00')).toBe('every weekday')
   })
 
   test('a label as a tag', () => {

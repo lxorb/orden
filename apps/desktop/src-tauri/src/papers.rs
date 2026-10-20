@@ -22,7 +22,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use tauri::AppHandle;
 
-use crate::paths::{config_dir, folder_key, is_pdf, made, write_atomically, ORIGIN};
+use crate::paths::{config_dir, is_pdf, kept_folder, made, write_atomically, ORIGIN};
 
 /// How much of one paper's words may be kept. A thousand pages of a dense book,
 /// and a ceiling so that a window asking a cache to hold more than a cache should
@@ -52,7 +52,7 @@ fn paper_dir(app: &AppHandle, pdf: &str) -> Result<PathBuf, String> {
         return Err(format!("{pdf} is not a PDF"));
     }
 
-    Ok(papers_dir(app)?.join(folder_key(pdf)))
+    Ok(kept_folder(&papers_dir(app)?, pdf))
 }
 
 /// Where the words are, and where the paper they came from is named. Two files

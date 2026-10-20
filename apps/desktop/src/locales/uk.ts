@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const uk: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'Усе готово',
+  Personalize: 'Налаштувати під себе',
+  Clean: 'Чистий',
+  'Live preview': 'Живий перегляд',
+  'Developer mode': 'Режим розробника',
+  'Do you write code?': 'Ви пишете код?',
+  Yes: 'Так',
+  No: 'Ні',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'З інших застосунків: {key}',
   'From other apps: set in your system settings':
@@ -85,6 +94,7 @@ export const uk: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'Одне завдання',
   'One per line': 'По одному на рядок',
+  'Add with AI': 'Додати з ШІ',
   // Tasks: the projects in the panel
   Favorites: 'Вибране',
   'Add project': 'Додати проєкт',
@@ -128,6 +138,7 @@ export const uk: Dictionary = {
   'Pointing hand on buttons': 'Вказівна рука над кнопками',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Додати завдання',
+  'Apple Shortcuts': 'Apple Швидкі команди',
   Tomorrow: 'Завтра',
   'done {date}': 'виконано {date}',
   'Next week': 'Наступного тижня',
@@ -190,6 +201,7 @@ export const uk: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'Обертати полотно двома пальцями',
+  'Snap the rotation to right angles': 'Прив’язувати обертання до прямих кутів',
   'Turn upright': 'Вирівняти',
   Canvas: 'Полотно',
   Card: 'Картка',
@@ -283,6 +295,7 @@ export const uk: Dictionary = {
   Tabs: 'Вкладки',
   'Ctrl+Tab in order of use': 'Ctrl+Tab у порядку використання',
   'Swipe between pages': 'Гортання між сторінками',
+  'Hardware acceleration': 'Апаратне прискорення',
   'Hidden tabs': 'Приховані вкладки',
   'Memory saver': 'Економія пам’яті',
   Moderate: 'Помірний',
@@ -1190,6 +1203,8 @@ export const uk: Dictionary = {
   Elbow: 'Ламана',
   Frame: 'Рамка',
   Ungroup: 'Розгрупувати',
+  Lock: 'Заблокувати',
+  Unlock: 'Розблокувати',
   'The ink of the page': 'Чорнило сторінки',
   'Write in what is picked': 'Писати у вибраному',
   Pen: 'Ручка',
@@ -1340,11 +1355,23 @@ export const uk: Dictionary = {
     'Зашифрованих фрагментів: {count}, без Evernote їх не прочитати',
   '{count} notes had a reminder, which the export does not carry':
     'Нотаток із нагадуванням: {count}, експорт їх не переносить',
+  '{count} attachments were missing from the export or could not be read': {
+    few: 'Вкладень, яких немає в експорті або які не читаються: {count}',
+    many: 'Вкладень, яких немає в експорті або які не читаються: {count}',
+    one: 'Вкладень, яких немає в експорті або які не читаються: {count}',
+    other: 'Вкладень, яких немає в експорті або які не читаються: {count}',
+  },
   '{count} notes were in the bin and stay there':
     'Нотаток у смітнику: {count}, там вони й залишаються',
   '{count} archived notes are in a folder called Archive':
     'Архівних нотаток: {count}, вони в папці Archive',
   'The colours a note had are not kept': 'Кольори нотаток не зберігаються',
+  '{count} files could not be read, so they were left out': {
+    few: 'Не вдалося прочитати {count} файли, їх пропущено',
+    many: 'Не вдалося прочитати {count} файлів, їх пропущено',
+    one: 'Не вдалося прочитати {count} файл, його пропущено',
+    other: 'Не вдалося прочитати {count} файлу, їх пропущено',
+  },
   '{count} block references were written out as the words they pointed at':
     'Посилань на блоки: {count}, вони записані словами, на які вказували',
   '{count} saved views are left out, and every row is in the table': {
@@ -1378,6 +1405,8 @@ export const uk: Dictionary = {
     'Карток настрою та активності, що є малюнками: {count} - переносяться лише слова',
   '{count} notes are behind a password, which nothing but Notes can open':
     'Нотаток під паролем, який відкривають лише Нотатки: {count}',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    'Нотаток під паролем, який відкриває лише Bear: {count}',
   '{count} notes are in Recently Deleted, and stay there':
     'Нотаток у «Нещодавно видалених», які там і залишаються: {count}',
   '{count} drawings and scans have no picture on this Mac':
@@ -1637,6 +1666,7 @@ export const uk: Dictionary = {
   'Ask the model': 'Запитати модель',
   'answered by {model}, {date}': 'відповіла {model}, {date}',
   'AI block': 'Блок ШІ',
+  'Do with AI': 'Зробити з ШІ',
   'Highlight colour': 'Колір виділення',
   'A single newline breaks the line': 'Один перенос рядка розриває рядок',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -1963,6 +1993,8 @@ export const uk: Dictionary = {
   'Settings › AI': 'Налаштування › ШІ',
   'New chat': 'Новий чат',
   'Ask again': 'Запитати знову',
+  'Continue when the limit resets': 'Продовжити, коли ліміт оновиться',
+  'Continues at {time}': 'Продовжить о {time}',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Запитайте що завгодно, @ щоб додати, / для команд',
   'What can I help with?': 'Чим я можу допомогти?',
@@ -2439,4 +2471,29 @@ export const uk: Dictionary = {
   Peach: 'Персик',
   Sage: 'Шавлія',
   Mist: 'Туман',
+  // A board, Notion's: its columns, its cards, its settings, a new database
+  'New database': 'Нова база даних',
+  'New page': 'Нова сторінка',
+  'Not started': 'Не розпочато',
+  'In progress': 'У процесі',
+  'No {property}': 'Без {property}',
+  '{card} moved to {group}': 'Картку {card} переміщено до {group}',
+  'Not moved': 'Не переміщено',
+  Retry: 'Повторити',
+  Calculate: 'Обчислити',
+  'Remove sort': 'Прибрати сортування',
+  'Remove sort?': 'Прибрати сортування?',
+  Groups: 'Групи',
+  'Hidden groups': 'Приховані групи',
+  'Add as option': 'Додати як варіант',
+  'Move left': 'Перемістити ліворуч',
+  'Move right': 'Перемістити праворуч',
+  'Delete option': 'Видалити варіант',
+  'Colour columns': 'Розфарбувати колонки',
+  'Hide empty groups': 'Сховати порожні групи',
+  'Card size': 'Розмір картки',
+  Small: 'Мале',
+  Large: 'Велике',
+  Both: 'Обидва',
+  'Shown on cards': 'Показано на картках',
 }

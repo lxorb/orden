@@ -41,7 +41,7 @@ import { fuzzy, noteIndex, type SpaceTag } from './wikilink/notes'
 /** How many rows the popup shows. The same number the `[[` list stops at. */
 const MOST_SHOWN = 40
 
-/** What a tag's name may hold: a letter, then letters, digits, and the three
+/** What a tag's name may hold: letters, marks, digits and emoji, and the three
  *  characters that join words - the slash among them, which is what makes a tag
  *  nestable. The grammar the parser pills a tag by, so the popup offers exactly
  *  what will be drawn as one; the one source of the four patterns below. */

@@ -166,8 +166,10 @@ publish.put('/:id/blog', atLeast('owner'), async (context) => {
 
   const proof = proofFor(space, address.domain)
 
+  // And checked again in the write itself: another space can take the name or the
+  // domain between the checks above and here, and the unique index answers a 500.
   const at = now()
-  await context.env.DB.prepare(
+  const wrote = await context.env.DB.prepare(
     `update spaces set blog_enabled = 1,
                        blog_subdomain = ?,
                        blog_domain = ?,
@@ -176,7 +178,8 @@ publish.put('/:id/blog', atLeast('owner'), async (context) => {
                        blog_title = coalesce(?, blog_title),
                        blog_note = ?,
                        updated_at = ?
-      where id = ?`,
+      where id = ?8
+        and not exists (select 1 from spaces where id != ?8 and (blog_subdomain = ?1 or blog_domain = ?2))`,
   )
     .bind(
       address.subdomain,
@@ -189,6 +192,13 @@ publish.put('/:id/blog', atLeast('owner'), async (context) => {
       space.id,
     )
     .run()
+
+  if (!wrote.meta.changes) {
+    return context.json(
+      { error: address.domain ? 'that domain is taken' : 'that name is taken' },
+      409,
+    )
+  }
 
   // The certificate for a domain given up goes at once. One for a domain just
   // chosen waits on the record: this is exactly where a certificate used to be

@@ -19,24 +19,43 @@ function titled(text: string): string {
 
 function recased(change: (text: string) => string): StateCommand {
   return ({ state, dispatch }) => {
-    const update = state.changeByRange((range) => {
-      const word = range.empty ? state.wordAt(range.head) : range
-      const text = word ? state.sliceDoc(word.from, word.to) : ''
-      const insert = change(text)
-      // Nothing to write where there is no word, or the words are already so: a
-      // press that changes nothing leaves nothing in the history to undo.
-      if (!word || insert === text) return { range }
+    const { ranges, mainIndex } = state.selection
+    const words = ranges.map((range) => (range.empty ? state.wordAt(range.head) : range))
+    const changes = state.changes(
+      words.flatMap((word, i) => {
+        // Two carets in one word change it once.
+        if (
+          !word ||
+          words.slice(0, i).some((other) => other?.from === word.from && other.to === word.to)
+        )
+          return []
+        const text = state.sliceDoc(word.from, word.to)
+        const insert = change(text)
+        // Nothing to write where the words are already so: a press that changes
+        // nothing leaves nothing in the history to undo.
+        return insert === text ? [] : [{ from: word.from, to: word.to, insert }]
+      }),
+    )
+    if (changes.empty) return true
 
-      return {
-        changes: { from: word.from, to: word.to, insert },
-        range: range.empty
-          ? EditorSelection.cursor(Math.min(range.head, word.from + insert.length))
-          : EditorSelection.range(word.from, word.from + insert.length),
-      }
+    // A caret keeps its place among the letters, counted after the change, since a
+    // letter can change length on the way.
+    const selection = ranges.map((range, i) => {
+      const word = words[i]
+      if (!word) return range.map(changes)
+      const from = changes.mapPos(word.from)
+      return range.empty
+        ? EditorSelection.cursor(from + change(state.sliceDoc(word.from, range.head)).length)
+        : EditorSelection.range(from, from + change(state.sliceDoc(word.from, word.to)).length)
     })
-    if (update.changes.empty) return true
-
-    dispatch(state.update(update, { scrollIntoView: true, userEvent: 'input' }))
+    dispatch(
+      state.update({
+        changes,
+        selection: EditorSelection.create(selection, mainIndex),
+        scrollIntoView: true,
+        userEvent: 'input',
+      }),
+    )
     return true
   }
 }

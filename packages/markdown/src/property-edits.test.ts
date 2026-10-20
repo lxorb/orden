@@ -26,6 +26,13 @@ describe('a value typed into a row', () => {
     )
   })
 
+  /** Two rows, and each one's field writes its own line. */
+  test('changes the key it names where another is spelled in another case', () => {
+    const both = '---\nTitle: a\ntitle: b\n---\n'
+    expect(applied(both, writeProperty(both, 'title', 'c'))).toBe('---\nTitle: a\ntitle: c\n---\n')
+    expect(applied(both, writeProperty(both, 'Title', null))).toBe('---\ntitle: b\n---\n')
+  })
+
   test('is written as YAML says it, so a word that reads as something else is quoted', () => {
     const written = applied(NOTE, writeProperty(NOTE, 'title', 'true'))
 
@@ -48,6 +55,13 @@ describe('a value typed into a row', () => {
 
   test('writes nothing at all when the note already says it', () => {
     expect(writeProperty(NOTE, 'title', 'A note')).toBeNull()
+  })
+
+  test('over a list written under its key, leaves none of the items behind', () => {
+    const listed = '---\ntitle: a\ntags:\n  - x\n  - y\n---\nbody\n'
+    const written = applied(listed, writeProperty(listed, 'tags', 'z'))
+    expect(written).toBe('---\ntitle: a\ntags: z\n---\nbody\n')
+    expect(readProperties(applied(listed, writeProperty(listed, 'tags', null)))).toHaveLength(1)
   })
 })
 
@@ -82,6 +96,16 @@ describe('a list', () => {
 
     expect(written).toBe('---\ntags: [one]\ntitle: A note\n---\n\nWords.\n')
     expect(readProperties(written)?.find((one) => one.key === 'tags')?.items).toEqual(['one'])
+  })
+
+  test('keeps a file’s own line endings', () => {
+    const note = '---\r\ntitle: a\r\ntags:\r\n  - x\r\n  - y\r\n---\r\nbody\r\n'
+    expect(applied(note, writeProperty(note, 'title', 'b'))).toBe(
+      '---\r\ntitle: b\r\ntags:\r\n  - x\r\n  - y\r\n---\r\nbody\r\n',
+    )
+    expect(applied(note, writeList(note, 'tags', ['z']))).toBe(
+      '---\r\ntitle: a\r\ntags: [z]\r\n---\r\nbody\r\n',
+    )
   })
 
   test('is appended like any other key where the block does not hold it yet', () => {

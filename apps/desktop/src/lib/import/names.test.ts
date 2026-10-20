@@ -22,6 +22,8 @@ describe('a title as a file name', () => {
   test('steps around the names MS-DOS took', () => {
     expect(safeName('con')).toBe('con-')
     expect(safeName('LPT1')).toBe('LPT1-')
+    expect(safeName('LPT²')).toBe('LPT²-')
+    expect(safeName('CONIN$')).toBe('CONIN$-')
     expect(safeName('console')).toBe('console')
   })
 
@@ -62,6 +64,11 @@ describe('the id Notion sticks on every name', () => {
   test('comes off, extension and all', () => {
     expect(withoutNotionId('Plan 1a2b3c4d5e6f78901a2b3c4d5e6f7890.md')).toBe('Plan.md')
     expect(withoutNotionId('Plan-1a2b3c4d5e6f78901a2b3c4d5e6f7890')).toBe('Plan')
+  })
+
+  test('comes off a folder with a dot in its name, which is no extension', () => {
+    expect(withoutNotionId('v1.2 Plans 1a2b3c4d5e6f78901a2b3c4d5e6f7890')).toBe('v1.2 Plans')
+    expect(withoutNotionId('v1.2 Plans 1a2b3c4d5e6f78901a2b3c4d5e6f7890.md')).toBe('v1.2 Plans.md')
   })
 
   test("is recognised, which is how a zip is known to be Notion's", () => {

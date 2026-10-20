@@ -30,6 +30,7 @@
   import { insideSpace } from '../../space-paths'
   import { viewport } from '../../viewport.svelte'
   import { views } from '../../views.svelte'
+  import { when } from '../../when'
   import { workspace } from '../../workspace.svelte'
   import { ai } from '../store.svelte'
   import { chat } from './chat.svelte'
@@ -209,6 +210,8 @@
     turn.parts.some((part) => part.kind === 'notice' && part.code === 'error'),
   )
   const answered = $derived(!!words.trim())
+  /** When the open chat's plan resets, where this answer ended at its limit. */
+  const reset = $derived(chat.head ? chat.resets[chat.head.id] : undefined)
 </script>
 
 {#snippet one(block: Block)}
@@ -231,6 +234,14 @@
       {noticeOf(block.notice)}
       {#if block.notice.code === 'error' && last && !live}
         <button class="link" onclick={() => chat.retry()}>{t('Ask again')}</button>
+        {#if reset?.waiting}
+          {t('Continues at {time}', { time: when(reset.until, 'medium') })}
+          <button class="link" onclick={() => chat.waitForReset(false)}>{t('Cancel')}</button>
+        {:else if reset}
+          <button class="link" onclick={() => chat.waitForReset(true)}>
+            {t('Continue when the limit resets')}
+          </button>
+        {/if}
       {/if}
     </p>
   {:else if block.kind === 'explored'}

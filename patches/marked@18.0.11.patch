@@ -1,0 +1,130 @@
+diff --git a/lib/marked.esm.js b/lib/marked.esm.js
+index 166104ec00c2b64af0fcbdc78c3dd34ea109968a..2d0dcfc591e2042c2fc26da495f7ac408fca2676 100644
+--- a/lib/marked.esm.js
++++ b/lib/marked.esm.js
+@@ -78 +78,125 @@
+ //# sourceMappingURL=marked.esm.js.map
++
++// Patched (pnpm patch, see docs/patches.md): emphasis that cannot close is
++// turned away before emStrong walks the rest of the paragraph for its closer.
++//
++// The walk takes each run of * or _ that could open and looks for the run that
++// closes it, so a paragraph of openers nothing closes is quadratic: `*a ` a
++// hundred thousand characters long took 162 seconds. The walk is a running
++// count over the runs of emStrongRDelimAst and emStrongRDelimUnd: it starts at
++// the opener's length, a run that can only open adds its length, one that can
++// close takes it away, one that can do both takes it away unless the rule of
++// three makes it neither, and the opener closes once the count is down to
++// nothing. What a run counts as depends only on the characters either side of
++// it, so the counts are summed once per paragraph, and a running minimum from
++// the end says whether an opener's count ever gets there. If it cannot, the
++// walk would find nothing and is skipped. Emphasis nested thousands deep ran
++// out of stack, so it is read EM_DEEPEST deep and no further. Read off the GFM
++// rules (marked's default); pedantic and non-GFM reading is left as it was.
++const EM_BLANK = 0
++const EM_MARK = 1
++const EM_WORD = 2
++const EM_NONE = 3
++const EM_BLANKS = /\s/u
++const EM_MARKS = /[\p{P}\p{S}]/u
++const EM_DEEPEST = 32
++// The runs of the paragraphs asked about lately, by the masked text: an opener's
++// words are read in the middle of the run around them, so one is not enough.
++const EM_READ = { '*': new Map(), _: new Map() }
++const EM_READ_MOST = 16
++let emDepth = 0
++
++// What the character at `code` is to a run of `mark`: `~` is a word to `*`.
++function emSideOf(code, mark) {
++  if (code === undefined) return EM_NONE
++  const character = String.fromCodePoint(code)
++  if (EM_BLANKS.test(character)) return EM_BLANK
++  if (character === '~' && mark === '*') return EM_WORD
++  return EM_MARKS.test(character) ? EM_MARK : EM_WORD
++}
++
++// Opens only, closes only, both, or neither; `_` never opens or closes in a word.
++function emRoleOf(before, after, mark) {
++  if (before === EM_BLANK) return after === EM_BLANK || after === EM_NONE ? null : 'open'
++  if (before === EM_MARK) {
++    if (after === EM_BLANK || after === EM_NONE) return 'close'
++    return after === EM_WORD ? 'open' : 'both'
++  }
++  if (after === EM_WORD) return mark === '*' ? 'both' : null
++  return 'close'
++}
++
++// The runs of `mark` and, for each remainder of an opener's length modulo three,
++// `sums[k]`, the count after the first k runs, and `lowest[k]`, the lowest at or after k.
++function emRunsOf(masked, mark) {
++  const starts = []
++  const lengths = []
++  const roles = []
++  for (let at = masked.indexOf(mark); at !== -1;) {
++    let end = at
++    while (masked[end] === mark) end++
++    const unit = masked.charCodeAt(at - 1)
++    const back = at >= 2 && unit >= 0xdc00 && unit <= 0xdfff ? at - 2 : at - 1
++    starts.push(at)
++    lengths.push(end - at)
++    roles.push(at === 0 ? null : emRoleOf(emSideOf(masked.codePointAt(back), mark), emSideOf(masked.codePointAt(end), mark), mark))
++    at = masked.indexOf(mark, end)
++  }
++  const sums = []
++  const lowest = []
++  for (let remainder = 0; remainder < 3; remainder++) {
++    const sum = new Int32Array(starts.length + 1)
++    for (let k = 0; k < starts.length; k++) {
++      const length = lengths[k]
++      const middle = roles[k] === 'both' && remainder !== 0 && (remainder + length) % 3 === 0
++      sum[k + 1] = sum[k] + (roles[k] === 'open' ? length : roles[k] === null || middle ? 0 : -length)
++    }
++    const low = new Int32Array(starts.length + 2)
++    low[starts.length + 1] = 2 ** 30
++    for (let k = starts.length; k >= 0; k--) low[k] = Math.min(sum[k], low[k + 1])
++    sums.push(sum)
++    lowest.push(low)
++  }
++  return { starts, sums, lowest }
++}
++
++// Whether the run of `mark` at `at` in `masked` could close at all.
++function emCouldClose(masked, at, mark) {
++  const known = EM_READ[mark]
++  let runs = known.get(masked)
++  if (!runs) {
++    runs = emRunsOf(masked, mark)
++    if (known.size >= EM_READ_MOST) known.delete(known.keys().next().value)
++    known.set(masked, runs)
++  }
++  let length = 0
++  while (masked[at + length] === mark) length++
++  // The walk steps over the mark inside `__…*…__` straight after a `*` opener, and
++  // `**…_…**` after a `_` one, which the counts do not see: left to the walk.
++  let next = at + length
++  while (next < masked.length && masked[next] !== '*' && masked[next] !== '_') next++
++  if (masked.startsWith(mark === '*' ? '__' : '**', next)) return true
++  const { starts } = runs
++  let low = 0
++  let high = starts.length
++  while (low < high) {
++    const middle = (low + high) >> 1
++    if (starts[middle] <= at) low = middle + 1
++    else high = middle
++  }
++  if (low >= starts.length) return false
++  return runs.lowest[length % 3][low + 1] - runs.sums[length % 3][low] <= -length
++}
++
++const emStrong = y.prototype.emStrong
++y.prototype.emStrong = function (src, masked, before) {
++  const mark = src.charAt(0)
++  const at = masked.length - src.length
++  const gfm = this.options.gfm && !this.options.pedantic
++  if (!gfm || (mark !== '*' && mark !== '_') || masked.charAt(at) !== mark) return emStrong.call(this, src, masked, before)
++  if (emDepth >= EM_DEEPEST || !emCouldClose(masked, at, mark)) return
++  emDepth++
++  const token = emStrong.call(this, src, masked, before)
++  emDepth--
++  return token
++}

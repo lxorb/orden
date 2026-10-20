@@ -1,0 +1,31 @@
+// The app's page's own pixel ratio, said to the crate as the page starts and whenever it
+// changes, its zoom included: where a web tab's page goes is what the page measured
+// times it. See page_scale.rs.
+;(function () {
+  if (window.top !== window) return
+  let said = 0
+  // `again` says it even where it has not changed: a zoom asked for while the page was
+  // still settling can be dropped, and a ratio still wrong is asked about once more.
+  function say(again) {
+    const internals = window.__TAURI_INTERNALS__
+    if (!internals || typeof internals.invoke !== 'function') return false
+    if (again || devicePixelRatio !== said) {
+      said = devicePixelRatio
+      internals.invoke('page_scale_seen', { ratio: said }).catch(() => null)
+    }
+    return true
+  }
+  // A change of ratio is a media query that stops matching; the next is asked for then.
+  function watch() {
+    say(false)
+    matchMedia(`(resolution: ${devicePixelRatio}dppx)`).addEventListener('change', watch, {
+      once: true,
+    })
+  }
+  if (!say(false)) document.addEventListener('DOMContentLoaded', () => say(false), { once: true })
+  window.addEventListener('load', () => {
+    say(true)
+    setTimeout(() => say(true), 2000)
+  })
+  watch()
+})()

@@ -15,6 +15,7 @@ const ONE = 'text/nib-path'
 const MANY = 'text/nib-paths'
 const BOOKMARK = 'text/nib-bookmark'
 const SECTION = 'text/nib-section'
+const TAB = 'text/nib-tab'
 
 /** What the drag under way carries, kept from its start to its end.
  *
@@ -159,6 +160,16 @@ export function isSectionDrag(transfer: DataTransfer | null): boolean {
 
 export function draggedSection(transfer: DataTransfer | null): number | null {
   return index(transfer, SECTION)
+}
+
+/** A web tab let go of on a chat, by its id (tab-strip/chat-drop.ts): the page it is on,
+ *  which is no row of the list. */
+export function carryTab(transfer: DataTransfer, id: string) {
+  transfer.setData(TAB, id)
+}
+
+export function draggedTab(transfer: DataTransfer | null): string | undefined {
+  return transfer?.getData(TAB)
 }
 
 /** A row's place in its list, as the drag carries it. Text, so anything that is

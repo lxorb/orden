@@ -12,9 +12,12 @@ import {
   screenPoint as onScreen,
   settledTurn,
   SMALLEST_DOT,
+  snapped,
   TURN_DEADBAND,
+  TURN_SNAP,
   turned,
   Twist,
+  unsnapped,
   wheelZoom,
   zoomed,
 } from './camera'
@@ -282,5 +285,33 @@ describe('a turned view (#351)', () => {
     expect(twist.to(8 * degree)).toBeCloseTo(8 * degree)
     expect(twist.to(10 * degree)).toBeCloseTo(2 * degree)
     expect(TURN_DEADBAND).toBeGreaterThan(3 * degree)
+  })
+})
+
+describe('the rotation snap (#487)', () => {
+  const degree = Math.PI / 180
+
+  test('holds the view upright and at its right angles until the twist passes the snap', () => {
+    expect(TURN_SNAP).toBeCloseTo(20 * degree)
+    expect(snapped(19 * degree)).toBe(0)
+    expect(snapped(-19 * degree)).toBe(0)
+    expect(snapped(105 * degree)).toBeCloseTo(90 * degree)
+    expect(snapped(-100 * degree)).toBeCloseTo(-90 * degree)
+    expect(Math.abs(snapped(-175 * degree))).toBeCloseTo(Math.PI)
+  })
+
+  test('past the snap the view follows without a jump, and meets the fingers halfway', () => {
+    expect(snapped(20.01 * degree)).toBeLessThan(0.1 * degree)
+    expect(snapped(30 * degree)).toBeCloseTo(18 * degree)
+    expect(snapped(45 * degree)).toBeCloseTo(45 * degree)
+    expect(snapped(-60 * degree)).toBeCloseTo(-72 * degree)
+  })
+
+  test('a turn shown is the twist that shows it, a right angle the right angle', () => {
+    for (const turn of [10, 30, 45, -60, 135, -170]) {
+      expect(snapped(unsnapped(turn * degree))).toBeCloseTo(turn * degree)
+    }
+    expect(unsnapped(Math.PI / 2)).toBe(Math.PI / 2)
+    expect(unsnapped(0)).toBe(0)
   })
 })

@@ -11,9 +11,12 @@
    *  in one of them and missing from the other. */
 
   import CanvasColours from './CanvasColours.svelte'
+  import CanvasDial from './CanvasDial.svelte'
   import CanvasIcon from './CanvasIcon.svelte'
+  import { freshId } from './canvas/format'
   import { MARKS } from './canvas/glyphs'
   import { shownColour } from './canvas/palette'
+  import { LEAST_WIDTH, MOST_WIDTH } from './canvas/pens.svelte'
   import { tick } from './canvas/tick'
   import { t } from './i18n.svelte'
   import { overlays } from './overlays'
@@ -22,9 +25,11 @@
     at,
     below,
     colour,
+    size,
     recent,
     grouping,
     oncolour,
+    onsize,
     onduplicate,
     ondelete,
     ongroup,
@@ -38,11 +43,17 @@
     below: boolean
     /** The colour what is picked wears, or nothing where it wears none. */
     colour: string | null
+    /** How wide the picked ink is, which is the first stroke's, or nothing where no
+     *  ink is picked: a card has no width of line to set. */
+    size: number | undefined
     recent: readonly string[]
     /** Whether the bar offers to make a frame round what is picked, to take one
      *  apart, or neither - which is one thing picked that is not a frame. */
     grouping: 'group' | 'ungroup' | null
     oncolour: (colour: string | null) => void
+    /** `run` is this opening of the panel, so a whole drag of the dial is one step
+     *  to take back; see `edit` in canvas/store.svelte.ts. */
+    onsize: (size: number, run: string) => void
     onduplicate: () => void
     ondelete: () => void
     ongroup: () => void
@@ -50,6 +61,7 @@
   } = $props()
 
   let colouring = $state(false)
+  let run = freshId()
   let over = $state<HTMLElement>()
 
   /** How wide the bar is with whatever hangs off it, and how wide the plane it stands
@@ -117,6 +129,17 @@
   {#if colouring}
     <div class="panel">
       <CanvasColours {colour} {recent} oncolour={pick} />
+      {#if size !== undefined}
+        <CanvasDial
+          value={size}
+          least={LEAST_WIDTH}
+          most={MOST_WIDTH}
+          step={0.5}
+          label={t('Width')}
+          reading={String(size)}
+          onvalue={(next: number) => onsize(next, run)}
+        />
+      {/if}
     </div>
   {/if}
 
@@ -133,6 +156,7 @@
       onclick={() => {
         tick()
         colouring = !colouring
+        run = freshId()
       }}
     ></button>
 
@@ -237,6 +261,9 @@
   }
 
   .panel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
     box-sizing: border-box;
     max-width: 21rem;
     padding: var(--space-2);

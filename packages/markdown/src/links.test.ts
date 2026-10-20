@@ -57,6 +57,18 @@ describe('what is between the brackets', () => {
     expect(parseWikilink('Note|a | b')?.alias).toBe('a | b')
   })
 
+  /** Obsidian's spelling inside a table, where a bare bar would end the cell. The
+   *  table renders `[[Note|shown]]`, and a rename has to find `Note` too. */
+  test('a bar escaped for a table cell', () => {
+    expect(parseWikilink('Note\\|shown')).toMatchObject({ target: 'Note', alias: 'shown' })
+    expect(parseWikilink('Note#Part\\|shown')?.heading).toBe('Part')
+
+    const text = '| a |\n| - |\n| [[Note\\|shown]] |'
+    const [link] = findLinks(text)
+    expect(link?.target).toBe('Note')
+    expect(link && text.slice(link.targetFrom, link.targetTo)).toBe('Note')
+  })
+
   test('the hash names a heading', () => {
     expect(parseWikilink('Note#Some Heading')).toMatchObject({
       target: 'Note',
@@ -331,6 +343,13 @@ describe('finding the links in a note', () => {
     expect(link).toMatchObject({ target: 'My Note.md', heading: 'a-heading' })
   })
 
+  test('a markdown heading is the words it names, every escape undone', () => {
+    const found = findLinks(
+      '[x](Note.md#Some%20Heading) [y](Note.md#Q&A:%20why%3F) [z](Note.md#50%%20off)',
+    )
+    expect(found.map((one) => one.heading)).toEqual(['Some Heading', 'Q&A: why?', '50% off'])
+  })
+
   test('an angled markdown target holds spaces', () => {
     const text = '[x](<My Note.md>)'
     const [link] = findLinks(text)
@@ -473,6 +492,21 @@ describe('the part of a note a link points into', () => {
 
   test('and a note with no heading named is the whole of it', () => {
     expect(sectionOf('words\n', { heading: null, block: null })).toBe('words\n')
+  })
+
+  test('a heading an Obsidian link writes percent-encoded finds its section', () => {
+    const note = '# Some Heading\n\nwords\n'
+    const [link] = findLinks('[x](Note.md#Some%20Heading)')
+    expect(sectionOf(note, link!)).toBe('# Some Heading\n\nwords')
+  })
+
+  test('a note written on Windows has its headings and its block names', () => {
+    const note = '# Title\r\n\r\npara ^abc1\r\n'
+    expect(headingsOf(note)).toEqual(['Title'])
+    expect(blockIds(note)).toEqual([{ id: 'abc1', line: 2 }])
+    expect(sectionOf(note, { heading: 'Title', block: null })).toBe('# Title\r\n\r\npara ^abc1')
+    expect(sectionOf(note, { heading: null, block: 'abc1' })).toBe('para')
+    expect(withoutBlockIds(note)).toBe('# Title\r\n\r\npara\r\n')
   })
 })
 

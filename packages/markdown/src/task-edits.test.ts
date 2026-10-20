@@ -119,6 +119,27 @@ describe('a change', () => {
     expect(changedTask(line, change)).toBe(after)
   })
 
+  /** A tag and a field taken off together at the opening of the words, side by
+   *  side: each would claim the blank between them, the first after itself and the
+   *  second before, and an editor handed edits that overlap leaves a blank behind
+   *  in front of the words. */
+  test.each([
+    ['- [ ] #a [due:: 2026-10-01] Buy milk', { tags: [], due: null }],
+    ['- [ ] [due:: 2026-10-01] #a Buy milk', { tags: [], due: null }],
+    ['- [ ] #a [k:: v] Buy milk', { tags: [], fields: {} }],
+    ['- [ ] [k:: v] #a Buy milk', { tags: [], fields: {} }],
+  ] as [string, TaskChange][])(
+    '%s with %o takes both off in edits that never overlap',
+    (line, change) => {
+      const edits = writeTask(line, change)
+      edits.forEach((edit, at) => {
+        const next = edits[at + 1]
+        if (next) expect(edit.to).toBeLessThanOrEqual(next.from)
+      })
+      expect(changedTask(line, change)).toBe('- [ ] Buy milk')
+    },
+  )
+
   test('touches only the characters that change', () => {
     expect(writeTask('- [ ] a ⏫ 📅 2026-10-06', { due: '2026-10-07' })).toEqual([
       { from: 13, to: 23, insert: '2026-10-07' },
@@ -139,6 +160,13 @@ describe('a change', () => {
     expect(changedTask(line, { due: null })).toBe('- [ ] a')
     // With no words in front, both would take the blank between them.
     expect(changedTask('- [ ] 📅 2026-10-01 📅 2026-10-05', { due: null })).toBe('- [ ] ')
+  })
+
+  test('taken off goes from among the words too', () => {
+    const twice = '- [ ] [deadline:: 2026-10-10] word [deadline:: 2026-10-10]'
+    expect(readTask(changedTask(twice, { deadline: null }))?.deadline).toBeUndefined()
+    const timed = '- [ ] (time:: 09:00) word [time:: 10:00]'
+    expect(readTask(changedTask(timed, { time: null }))?.time).toBeUndefined()
   })
 
   // A date field holds its first ten characters, the date, and what is written
@@ -164,6 +192,18 @@ describe('a change', () => {
 
   test('is nothing for a line that is not a task', () => {
     expect(writeTask('- a', { due: '2026-10-06' })).toEqual([])
+  })
+
+  test('of the words of a line with none stands a blank from the box and the fields', () => {
+    expect(changedTask('- [ ] #work', { text: 'Call Bob' })).toBe('- [ ] Call Bob #work')
+    expect(changedTask('- [ ] 📅 2026-10-06', { text: 'Call Bob' })).toBe(
+      '- [ ] Call Bob 📅 2026-10-06',
+    )
+    expect(changedTask('- [ ]', { text: 'Call Bob' })).toBe('- [ ] Call Bob')
+    expect(readTask(changedTask('- [ ] #work', { text: 'Call Bob' }))).toMatchObject({
+      text: 'Call Bob',
+      tags: ['work'],
+    })
   })
 
   test('keeps every Tasks field readable: nib fields never land after its fields', () => {

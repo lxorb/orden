@@ -51,7 +51,9 @@ const SPACE_NAME_LIMIT = 80
  *  folder on somebody's disk, and a service that quietly made it `My Notes` would
  *  be naming a space the app then could not find. */
 function spaceName(given: string): string {
-  return given.replace(/\p{Cc}/gu, '').trim()
+  // Trimmed of the invisible format characters too, so a name of nothing but a
+  // zero-width space is no name. Only at the ends: inside, one joins an emoji.
+  return given.replace(/\p{Cc}/gu, '').replace(/^[\s\p{Cf}]+|[\s\p{Cf}]+$/gu, '')
 }
 /** An id is a UUID; the length is all this needs to know. */
 const ID_LIMIT = 64

@@ -91,6 +91,24 @@ async function replaced(changes: readonly Change[], said?: Said): Promise<void> 
   if (said && last) undoToast.tell(last, said, workspace.undone.stack)
 }
 
+/** Writes made one after another as one undo: a card carried to another column writes
+ *  its note and the base's order of that column, an option renamed writes the base and
+ *  the notes that hold it. Each step that wrote is folded into the one before it. */
+export async function asOneUndo(steps: readonly (() => Promise<unknown>)[]): Promise<void> {
+  let made = 0
+  for (const step of steps) {
+    const top = workspace.undone.stack.at(-1)
+    const said = await step()
+    if (workspace.undone.stack.at(-1) !== top) made++
+    // A step that answers false was turned away, a locked base's, and what followed
+    // from it is not written either.
+    if (said === false) break
+  }
+  if (made < 2) return
+  const { gatherLast } = await import('../workspace/undo-join')
+  for (; made > 1; made--) if (!gatherLast(workspace.undone)) return
+}
+
 /** A property of a row's note or a field of its task: the one write path. */
 export function writeRow(row: Row, change: RowChange): Promise<boolean> {
   return rows.write(row, change)

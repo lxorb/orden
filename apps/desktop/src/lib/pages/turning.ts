@@ -6,7 +6,8 @@
  *  Fetched with the first PDF opened or brought in, and not before. */
 
 import { pageSizes } from '../pdf/document'
-import { invoke, isNative } from '../tauri'
+import { onDisk } from '../on-disk'
+import { invoke } from '../tauri'
 import { writeFile } from '../workspace/write-file'
 import type { Turning } from './from-pdf'
 
@@ -23,21 +24,4 @@ export function turningIn(
     discard: (path) => invoke('delete_note', { path }),
     sizes: pageSizes,
   }
-}
-
-/** Whether a file is at this path on the disk, whatever the list shows: the list
- *  leaves out a paper a page note holds. `file_stamp` answers nothing where there is
- *  none; the browser keeps no stamps (web/commands.ts), so there a note is there if it
- *  reads, and a PDF if its bytes do. */
-async function onDisk(path: string): Promise<boolean> {
-  if (isNative) {
-    const stamp = await invoke<unknown>('file_stamp', { path }).catch(() => null)
-    return stamp !== null && stamp !== undefined
-  }
-  const reads = (command: string) =>
-    invoke<unknown>(command, { path }).then(
-      (held) => typeof held === 'string',
-      () => false,
-    )
-  return (await reads('read_note')) || (await reads('read_asset'))
 }

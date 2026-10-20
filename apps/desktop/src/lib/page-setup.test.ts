@@ -78,6 +78,10 @@ describe('running text', () => {
     expect(fill('© ${year}', 'Notes', '2026-09-03')).toBe('© 2026')
   })
 
+  test('prints a dollar sign in the title as it is written', () => {
+    expect(fill('${title}', 'Budget $$ and $& more', '2026-09-03')).toBe('Budget $$ and $& more')
+  })
+
   test('leaves an unknown placeholder alone', () => {
     expect(fill('${pages}', 'Notes', '2026-09-03')).toBe('${pages}')
   })
@@ -140,8 +144,8 @@ describe('wrapping the body in running text', () => {
 describe('paper in inches', () => {
   test('knows the paper sizes', () => {
     expect(paperInches(DEFAULT_PAGE_SETUP)).toEqual({
-      width: 8.27,
-      height: 11.69,
+      width: 210 / 25.4,
+      height: 297 / 25.4,
       margin: 0.787,
       landscape: false,
     })

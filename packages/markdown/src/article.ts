@@ -67,18 +67,18 @@ function isPlaceholder(src: string): boolean {
   return !src || src.startsWith('data:')
 }
 
+/** One candidate of a `srcset`, as the HTML standard reads one: an address up to a
+ *  blank, which may hold commas but does not end in one (an image CDN puts its
+ *  options there, `w_400,h_300`), then its descriptor as far as the next comma. */
+const CANDIDATE = /[\s,]*([^\s,](?:\S*[^\s,])?)(?:\s+([^,]*))?/g
+
 /** The widest candidate a `srcset` offers. The descriptors are either widths
  *  (`640w`) or pixel ratios (`2x`); either way the largest number wins, and an
  *  entry with no descriptor counts as one. */
 export function widestOf(srcset: string): string | null {
   let best: { url: string; weight: number } | null = null
 
-  for (const candidate of srcset.split(',')) {
-    const parts = candidate.trim().split(/\s+/)
-    const url = parts[0]
-    if (!url) continue
-
-    const descriptor = parts[1] ?? '1x'
+  for (const [, url = '', descriptor = '1x'] of srcset.matchAll(CANDIDATE)) {
     const weight = Number.parseFloat(descriptor) || 1
     if (!best || weight >= best.weight) best = { url, weight }
   }

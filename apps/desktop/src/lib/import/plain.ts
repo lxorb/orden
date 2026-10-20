@@ -14,6 +14,7 @@ import { htmlToMarkdown } from '@nib/markdown/from-html'
 
 import { key } from '../i18n.svelte'
 import { folderPlan, isJunk, isNoteFile } from './folder'
+import type { Meta } from './meta'
 import { keptName, Names, safeName, safeParts, withoutNotionId } from './names'
 import type { FormatId, ImportPlan } from './plan'
 import type { Source } from './sources'
@@ -30,6 +31,9 @@ export interface PlainOptions {
   /** A last look at a note's words: Bear rewrites its tags here, Logseq its
    *  properties. */
   words?: (text: string, source: Source) => string
+  /** What the export knew about a note beside its words: Bear's dates, which a
+   *  bundle keeps in its `info.json`. */
+  meta?: (source: Source) => Meta | undefined
   /** Files an app keeps for itself rather than an export it wrote: an Obsidian
    *  vault. Their names are the reader's own, so no exporter's id is taken off
    *  them and none is shortened or respaced, since the vault's canvases name them
@@ -99,6 +103,7 @@ export async function readPlain(
         read: (text, at) => ({
           text: options.words?.(text, at) ?? text,
           title: null,
+          meta: options.meta?.(at) ?? {},
           kept: options.asTheyAre === true,
         }),
       }

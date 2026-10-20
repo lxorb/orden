@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onDestroy, onMount, untrack } from 'svelte'
+  import { onDestroy, onMount, tick, untrack } from 'svelte'
   import { fade } from 'svelte/transition'
   import { quintOut } from 'svelte/easing'
   import { agentMarks } from './agent-marks.svelte'
@@ -94,6 +94,11 @@
     void import('./tab-strip/menu').then(({ tabMenu, tabMenuTitle }) =>
       menu.show(event, tabMenu(tab, paneId), { title: tabMenuTitle(tab, paneId) }),
     )
+  }
+
+  /** What the note in this pane offers, fetched on the press; see note-menu.ts. */
+  function showNoteMenu(event: MouseEvent) {
+    void import('./note-menu').then(({ noteMenu }) => menu.show(event, noteMenu(event, paneId)))
   }
 
   /** A press on a stopped agent's mark resumes it (docs/agent-native.md 9.5). Read on
@@ -263,7 +268,7 @@
 
   const quiet = $derived(!focused && !alone)
   /** No open tab to leave out of the bar's line. */
-  const bare = $derived(!activeId || (drag.out && lifted.includes(activeId)))
+  const bare = $derived(!sized.some((one) => one.active && !(drag.out && lifted.includes(one.id))))
 
   /** Where a point on the glass is along the strip, from the start of the first
    *  tab, in the direction the interface reads, the strip's own scroll included. */
@@ -342,7 +347,16 @@
       )
     }
 
-    void workspace.closeAsking(tab.id)
+    void (by ? workspace.closeAsking(tab.id) : closeByKey(tab.id))
+  }
+
+  /** A tab closed from the keyboard, Delete on it or Enter on its cross, hands the
+   *  keyboard on to the tab in front rather than to nothing as it goes (#523). */
+  async function closeByKey(id: string) {
+    await workspace.closeAsking(id)
+    await tick()
+    if (!workspace.tabs.some((one) => one.id === id))
+      strip?.querySelector<HTMLElement>(`.pick[data-tab="${activeId}"]`)?.focus()
   }
 
   /** What pressed the cross: a click a key sent has no pointer behind it. */
@@ -818,7 +832,7 @@
       quiet: '.shut',
       open: (row) => row.click(),
       peek: (row) => row.click(),
-      remove: (row) => void workspace.closeAsking(row.dataset.tab ?? ''),
+      remove: (row) => void closeByKey(row.dataset.tab ?? ''),
       menu: (row, at) => row.dispatchEvent(at),
     }}
     class:quiet
@@ -896,12 +910,14 @@
           <!-- Named by the note, and named on the button. A pinned tab is a mark and
              no words, and the name used to be put on the `span` around the mark -
              which has no role, so nothing read it and the tab was a button with
-             nothing to call it. No `title`: the hover card says the name. -->
+             nothing to call it. No `title`: the hover card says the name. And the one in
+             front says so, which the strip drew and nothing read (#523). -->
           <button
             class="pick"
             class:centred={parts.centred}
             data-tab={tab.id}
             aria-label={tab.shown}
+            aria-current={tab.id === activeId ? 'page' : undefined}
             onfocus={(event) => {
               if (event.currentTarget.matches(':focus-visible'))
                 card(tab, event.currentTarget, true)
@@ -1082,6 +1098,19 @@
           d="M5.6 8.4 8.4 5.6M6.6 4 8 2.6a2.8 2.8 0 0 1 4 4L10.6 8M7.4 10 6 11.4a2.8 2.8 0 0 1-4-4L3.4 6"
         />
       </svg>
+    </button>
+  {/if}
+
+  <!-- The note's own menu, while this pane shows a note (#304). -->
+  {#if walking?.kind === 'note'}
+    <button
+      class="nib-glyph more"
+      title={t('More')}
+      aria-label={t('More')}
+      aria-haspopup="menu"
+      onclick={showNoteMenu}
+    >
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h0M8 8h0M13 8h0" /></svg>
     </button>
   {/if}
 </div>
@@ -1690,6 +1719,14 @@
   .link.on {
     color: var(--accent);
     background: var(--surface-selected);
+  }
+
+  .more {
+    align-self: center;
+  }
+
+  .more svg {
+    stroke-width: 2.6;
   }
 
   .link svg {

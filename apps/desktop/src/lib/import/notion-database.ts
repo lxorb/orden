@@ -82,7 +82,9 @@ export function kindOf(values: readonly string[]): Kind {
 
   if (said.every((one) => CHECKBOX.test(one))) return 'checkbox'
   if (said.every((one) => NUMBER.test(one))) return 'number'
-  if (said.every((one) => notionDate(one) !== null)) return 'date'
+  // A range is a date column's too, kept as the words it said, and its commas are
+  // a date's rather than a list's.
+  if (said.every((one) => notionDate(one) !== null || isRange(one))) return 'date'
   if (said.every((one) => pagesIn(one) !== null)) return 'pages'
 
   const labels = said.map((one) => one.split(',').map((label) => label.trim()))
@@ -145,6 +147,17 @@ export function notionDate(value: string): string | null {
   if (hour > 23) return null
 
   return `${date}T${two(hour)}:${found[5] ?? '00'}`
+}
+
+/** `May 1, 2026 → May 3, 2026`: a date with an end, which is two dates, or a
+ *  date and the time it ends that day. */
+function isRange(value: string): boolean {
+  const [start = '', end = '', ...more] = value.split(' → ')
+  return (
+    !more.length &&
+    notionDate(start) !== null &&
+    (notionDate(end) !== null || /^\d{1,2}:\d{2}(?: ?[AP]M)?$/i.test(end))
+  )
 }
 
 function two(value: number): string {

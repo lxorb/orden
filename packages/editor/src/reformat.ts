@@ -1,5 +1,6 @@
 import type { StateCommand } from '@codemirror/state'
 import { closesFence, fenceMark } from '@nib/markdown/fences'
+import { nibMarkdownParser } from './markdown/extensions'
 import { parseTable, serializeTable } from './table/model'
 
 /** Which lines are code comes from @nib/markdown/fences, the same reading the
@@ -7,11 +8,29 @@ import { parseTable, serializeTable } from './table/model'
  *  `~~~` in the middle of a ``` block is code, and reading it as a fence would
  *  end the block early and let the rest of it be rewritten as prose. */
 
+/** What else is written to be read exactly, as the parser finds it: code, maths, raw
+ *  HTML, a rule, and the spaces that end a line with a hard break. `* * *` is a rule
+ *  rather than a list item, and two spaces at the end of a line are a line break, so
+ *  `tidy` is kept away from the characters these are spelled with. */
+const VERBATIM = new Set([
+  'CodeBlock',
+  'InlineCode',
+  'BlockMath',
+  'InlineMath',
+  'HTMLBlock',
+  'CommentBlock',
+  'Comment',
+  'HTMLTag',
+  'HorizontalRule',
+  'HardBreak',
+])
+
 /** Tidies a document without changing what it means: one bullet character, one
  *  emphasis style, pipe-aligned tables, and no runs of blank lines. */
 export function reformat(source: string): string {
   const lines = source.split('\n')
   const out: string[] = []
+  const kept = verbatim(source, lines)
 
   let index = 0
   let blanks = 0
@@ -28,6 +47,7 @@ export function reformat(source: string): string {
 
   while (index < lines.length) {
     const line = lines[index] ?? ''
+    const stretches = kept[index] ?? []
 
     const mark = fenceMark(line)
     if (mark) {
@@ -54,7 +74,7 @@ export function reformat(source: string): string {
       continue
     }
 
-    if (!line.trim()) {
+    if (!line.trim() && !stretches.length) {
       blanks += 1
       if (blanks <= 1) out.push('')
       index += 1
@@ -62,7 +82,7 @@ export function reformat(source: string): string {
     }
 
     blanks = 0
-    out.push(tidy(line))
+    out.push(tidyAround(line, stretches))
     index += 1
   }
 
@@ -102,6 +122,44 @@ function readTable(lines: string[], start: number): { text: string; next: number
   if (!model) return null
 
   return { text: serializeTable(model), next: end }
+}
+
+/** For each line, the stretches of it the parser says are `VERBATIM`, from and to
+ *  within the line. A blank line inside one, in a comment or between two lines of
+ *  code, has one that is empty. */
+function verbatim(source: string, lines: readonly string[]): [number, number][][] {
+  const ranges: [number, number][] = []
+  nibMarkdownParser.parse(source).iterate({
+    enter(node) {
+      if (!VERBATIM.has(node.name)) return true
+      ranges.push([node.from, node.to])
+      return false
+    },
+  })
+
+  let start = 0
+  return lines.map((line) => {
+    const end = start + line.length
+    const within = ranges
+      .filter(([from, to]) => from <= end && to > start)
+      .map(([from, to]): [number, number] => [
+        Math.max(from, start) - start,
+        Math.min(to, end) - start,
+      ])
+    start = end + 1
+    return within
+  })
+}
+
+/** `tidy`, leaving the `kept` stretches of the line as they are. Every rewrite it
+ *  makes keeps the line's length but the trimming of its end, so a kept character can
+ *  be hidden behind an `x` - whitespace staying whitespace, so what is around it reads
+ *  the same - and put back at the same place afterwards. */
+function tidyAround(line: string, kept: readonly [number, number][]): string {
+  const isKept = (at: number) => kept.some(([from, to]) => at >= from && at < to)
+  const tidied = tidy(line.replace(/\S/g, (char, at: number) => (isKept(at) ? 'x' : char)))
+  // What `tidy` trimmed off the end reads as nothing.
+  return line.replace(/[^]/g, (char, at: number) => (isKept(at) ? char : tidied.charAt(at)))
 }
 
 function tidy(line: string): string {

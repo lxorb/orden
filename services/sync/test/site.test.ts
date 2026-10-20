@@ -262,6 +262,32 @@ describe('where a page lives', () => {
     expect((await page('/the-plan')).status).toBe(200)
   })
 
+  test('a name in another script is an address of its own, and a browser finds it', async () => {
+    await note('Привет.md', '# Привет\n\nHi.\n')
+    await note('日本語.md', '# 日本語\n\nKonnichiwa.\n')
+    await note('Notes/中文.md', '# 中文\n\nNihao.\n')
+    await note('Notes.md', '# Notes\n\nPlain.\n')
+    await publish()
+
+    const index = await page('/')
+    expect(index.text).toContain('<a href="/привет">Привет</a>')
+    expect(index.text).toContain('<a href="/日本語">日本語</a>')
+    expect(index.text).toContain('<a href="/notes/中文">中文</a>')
+    expect(index.text).toContain('<a href="/notes">Notes</a>')
+
+    expect((await page(encodeURI('/привет'))).text).toContain('Hi.')
+    expect((await page(encodeURI('/日本語'))).text).toContain('Konnichiwa.')
+    expect((await page(encodeURI('/notes/中文'))).text).toContain('Nihao.')
+  })
+
+  test('a permalink or an alias in another script finds it too', async () => {
+    await note('Plan.md', '---\npermalink: планы/март\naliases:\n  - план\n---\n\n# Plan\n')
+    await publish()
+
+    expect((await page(encodeURI('/планы/март'))).status).toBe(200)
+    expect((await page(encodeURI('/план'))).status).toBe(200)
+  })
+
   test('a rename leaves the old path redirecting', async () => {
     const made = await note('Plan.md', '# Plan\n\nWords.\n')
     await publish()
@@ -504,6 +530,56 @@ describe('the icon a tab shows', () => {
   })
 })
 
+describe('the analytics script a site loads', () => {
+  /** A stray space in what was pasted, and a scheme with nothing after it. None of
+   *  them is an address a page can load. */
+  const BROKEN = [
+    'https:// plausible.io/js/script.js',
+    'https://plausible.io /js/script.js',
+    'https://',
+  ]
+
+  test('an address that does not parse is refused, and nothing is kept', async () => {
+    await note('One.md', '# One\n')
+    await publish()
+
+    for (const url of BROKEN) {
+      expect((await setSite({ analytics: { url } })).status).toBe(400)
+    }
+
+    const listed = await call(env, '/v1/spaces', { token })
+    expect(JSON.stringify(listed.json.spaces)).not.toContain('plausible')
+    expect((await page('/one')).status).toBe(200)
+  })
+
+  test('an address that parses is loaded by every page', async () => {
+    await note('One.md', '# One\n')
+    await publish()
+    await setSite({
+      analytics: { url: 'https://plausible.io/js/script.js', domain: 'field.nibeditor.com' },
+    })
+
+    const answer = await page('/one')
+    expect(answer.text).toContain(
+      '<script defer src="https://plausible.io/js/script.js" data-domain="field.nibeditor.com"></script>',
+    )
+    expect(answer.headers.get('content-security-policy')).toContain('https://plausible.io')
+  })
+
+  /** A row an earlier build wrote, which no route writes now. */
+  test('one stored before the check does not take the site down', async () => {
+    await note('One.md', '# One\n')
+    await publish()
+    env.db
+      .prepare('update spaces set site = ? where id = ?')
+      .run(JSON.stringify({ analytics: { url: BROKEN[0] } }), space)
+
+    const answer = await page('/one')
+    expect(answer.status).toBe(200)
+    expect(answer.text).not.toContain('plausible')
+  })
+})
+
 describe('a site behind a password', () => {
   const PASSWORD = 'the quiet part'
 
@@ -587,6 +663,19 @@ describe('a site behind a password', () => {
     expect(answer.headers.get('set-cookie')).toBeNull()
   })
 
+  test('a path that begins with two slashes stays on this site', async () => {
+    const gate = await page('//evil.example/')
+    expect(gate.text).toContain('action="/evil.example/"')
+
+    const answer = await page('//evil.example/', {
+      method: 'POST',
+      raw: `password=${encodeURIComponent(PASSWORD)}`,
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    })
+    expect(answer.status).toBe(303)
+    expect(answer.headers.get('location')).toBe('/evil.example/')
+  })
+
   test('the right one hands over a ticket that opens the site', async () => {
     const answer = await page('/plan', {
       method: 'POST',
@@ -610,6 +699,20 @@ describe('a site behind a password', () => {
     expect(read.headers.get('cache-control')).toBe('private, no-store')
   })
 
+  /** Every site is a name under one root, and a script on any of them may set a
+   *  cookie for the whole root, which every other site is then sent ahead of its own. */
+  test('a cookie another site set for the root keeps nobody out', async () => {
+    const answer = await page('/plan', {
+      method: 'POST',
+      raw: `password=${encodeURIComponent(PASSWORD)}`,
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    })
+    const ticket = (answer.headers.get('set-cookie') ?? '').split(';')[0] ?? ''
+
+    const read = await page('/plan', { headers: { cookie: `nib_site=0.0; ${ticket}` } })
+    expect(read.text).toContain('Words.')
+  })
+
   /** Every answer on a site behind a password, not only the gate: the feed and the
    *  sitemap are the site's words too. */
   test('and nothing a site behind a password answers is a shared cache’s', async () => {
@@ -628,7 +731,7 @@ describe('a site behind a password', () => {
 
   test('a ticket somebody made up opens nothing', async () => {
     const read = await page('/plan', {
-      headers: { cookie: `nib_site=${Date.now() + 1000}.${'0'.repeat(64)}` },
+      headers: { cookie: `__Host-nib_site=${Date.now() + 1000}.${'0'.repeat(64)}` },
     })
 
     expect(read.text).toContain('type="password"')

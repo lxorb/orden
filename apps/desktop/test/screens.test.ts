@@ -117,6 +117,7 @@ describe('every layer in the middle of the window', () => {
       'lib/Sheet.svelte',
       'lib/SignIn.svelte',
       'lib/SpacePicker.svelte',
+      'lib/TabOverview.svelte',
       'lib/ThemeStore.svelte',
       'lib/quick-add/QuickAddSheet.svelte',
       'lib/quitting/QuitSheet.svelte',

@@ -338,6 +338,7 @@ describe('what hides a web page', () => {
     'lib/Slides.svelte': 'a deck over the whole window',
     'lib/SpacePicker.svelte': 'dialog',
     'lib/SpaceSwitcher.svelte': 'menu',
+    'lib/TabOverview.svelte': 'dialog',
     'lib/ThemeStore.svelte': 'sheet',
     'lib/agents/ui/PairingBubble.svelte': 'a program asking to become an agent, under the bar',
     'lib/ai/sidebar/Composer.svelte': "the AI's model or context, over its composer",

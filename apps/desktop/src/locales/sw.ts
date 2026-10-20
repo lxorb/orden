@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const sw: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'Kila kitu kiko tayari',
+  Personalize: 'Binafsisha',
+  Clean: 'Safi',
+  'Live preview': 'Onyesho la moja kwa moja',
+  'Developer mode': 'Hali ya msanidi',
+  'Do you write code?': 'Je, unaandika msimbo?',
+  Yes: 'Ndiyo',
+  No: 'Hapana',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'Kutoka programu nyingine: {key}',
   'From other apps: set in your system settings':
@@ -83,6 +92,7 @@ export const sw: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'Kazi moja',
   'One per line': 'Moja kwa kila mstari',
+  'Add with AI': 'Ongeza kwa AI',
   // Tasks: the projects in the panel
   Favorites: 'Vipendwa',
   'Add project': 'Ongeza mradi',
@@ -126,6 +136,7 @@ export const sw: Dictionary = {
   'Pointing hand on buttons': 'Mkono unaoelekeza kwenye vitufe',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Ongeza kazi',
+  'Apple Shortcuts': 'Apple Njia za mkato',
   Tomorrow: 'Kesho',
   'done {date}': 'imekamilika {date}',
   'Next week': 'Wiki ijayo',
@@ -188,6 +199,7 @@ export const sw: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'Zungusha turubai kwa vidole viwili',
+  'Snap the rotation to right angles': 'Shikisha mzunguko kwenye pembe mraba',
   'Turn upright': 'Nyoosha',
   Canvas: 'Turubai',
   Card: 'Kadi',
@@ -282,6 +294,7 @@ export const sw: Dictionary = {
   Tabs: 'Vichupo',
   'Ctrl+Tab in order of use': 'Ctrl+Tab kwa mpangilio wa matumizi',
   'Swipe between pages': 'Telezesha kati ya kurasa',
+  'Hardware acceleration': 'Uongezaji kasi wa maunzi',
   'Hidden tabs': 'Vichupo vilivyofichwa',
   'Memory saver': 'Kiokoa kumbukumbu',
   Moderate: 'Wastani',
@@ -1161,6 +1174,8 @@ export const sw: Dictionary = {
   Elbow: 'Kiwiko',
   Frame: 'Fremu',
   Ungroup: 'Tenganisha kundi',
+  Lock: 'Funga',
+  Unlock: 'Fungua',
   'The ink of the page': 'Wino wa ukurasa',
   'Write in what is picked': 'Andika ndani ya kilichoteuliwa',
   Pen: 'Kalamu',
@@ -1304,11 +1319,19 @@ export const sw: Dictionary = {
     'vifungu {count} vimesimbwa, na hakuna kinachoweza kuvisoma bila Evernote',
   '{count} notes had a reminder, which the export does not carry':
     'madokezo {count} yalikuwa na kikumbusho, ambacho utoaji hauchukui',
+  '{count} attachments were missing from the export or could not be read': {
+    one: 'viambatisho {count} havikuwa kwenye uhamishaji au havikuweza kusomwa',
+    other: 'viambatisho {count} havikuwa kwenye uhamishaji au havikuweza kusomwa',
+  },
   '{count} notes were in the bin and stay there':
     'madokezo {count} yalikuwa kwenye pipa na yanasalia hapo',
   '{count} archived notes are in a folder called Archive':
     'madokezo {count} yaliyowekwa kumbukumbu yapo kwenye folda inayoitwa Archive',
   'The colours a note had are not kept': 'Rangi ambazo dokezo lilikuwa nazo hazihifadhiwi',
+  '{count} files could not be read, so they were left out': {
+    one: 'Faili {count} hazikuweza kusomwa, kwa hivyo ziliachwa',
+    other: 'Faili {count} hazikuweza kusomwa, kwa hivyo ziliachwa',
+  },
   '{count} block references were written out as the words they pointed at':
     'marejeleo ya vizuizi {count} yaliandikwa kama maneno waliyoelekeza',
   '{count} saved views are left out, and every row is in the table': {
@@ -1337,6 +1360,8 @@ export const sw: Dictionary = {
     'Kadi {count} za hisia na shughuli ni michoro, kwa hivyo maneno yao pekee huvuka',
   '{count} notes are behind a password, which nothing but Notes can open':
     'Madokezo {count} yako nyuma ya nenosiri ambalo Notes pekee huweza kufungua',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    'Madokezo {count} yako nyuma ya nenosiri ambalo Bear pekee huweza kufungua',
   '{count} notes are in Recently Deleted, and stay there':
     'Madokezo {count} yako katika Vilivyofutwa hivi karibuni na yanasalia huko',
   '{count} drawings and scans have no picture on this Mac':
@@ -1587,6 +1612,7 @@ export const sw: Dictionary = {
   'Ask the model': 'Uliza modeli',
   'answered by {model}, {date}': 'ilijibiwa na {model}, {date}',
   'AI block': 'Kizuizi cha AI',
+  'Do with AI': 'Fanya kwa AI',
   'Highlight colour': 'Rangi ya angazio',
   'A single newline breaks the line': 'Mstari mpya mmoja huvunja mstari',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -1917,6 +1943,8 @@ export const sw: Dictionary = {
   'Settings › AI': 'Mipangilio › AI',
   'New chat': 'Mazungumzo mapya',
   'Ask again': 'Uliza tena',
+  'Continue when the limit resets': 'Endelea kikomo kitakapowekwa upya',
+  'Continues at {time}': 'Itaendelea saa {time}',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Uliza chochote, @ kuongeza, / kwa zaidi',
   'What can I help with?': 'Nikusaidie nini?',
@@ -2391,4 +2419,29 @@ export const sw: Dictionary = {
   Peach: 'Pichi',
   Sage: 'Sage',
   Mist: 'Ukungu',
+  // A board, Notion's: its columns, its cards, its settings, a new database
+  'New database': 'Hifadhidata mpya',
+  'New page': 'Ukurasa mpya',
+  'Not started': 'Haijaanza',
+  'In progress': 'Inaendelea',
+  'No {property}': 'Bila {property}',
+  '{card} moved to {group}': '{card} imehamishwa hadi {group}',
+  'Not moved': 'Haijahamishwa',
+  Retry: 'Jaribu tena',
+  Calculate: 'Kokotoa',
+  'Remove sort': 'Ondoa mpangilio',
+  'Remove sort?': 'Ondoa mpangilio?',
+  Groups: 'Makundi',
+  'Hidden groups': 'Makundi yaliyofichwa',
+  'Add as option': 'Ongeza kama chaguo',
+  'Move left': 'Hamisha kushoto',
+  'Move right': 'Hamisha kulia',
+  'Delete option': 'Futa chaguo',
+  'Colour columns': 'Paka rangi safu',
+  'Hide empty groups': 'Ficha makundi matupu',
+  'Card size': 'Ukubwa wa kadi',
+  Small: 'Ndogo',
+  Large: 'Kubwa',
+  Both: 'Zote mbili',
+  'Shown on cards': 'Inaonyeshwa kwenye kadi',
 }

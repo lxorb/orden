@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const fil: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'Handa na ang lahat',
+  Personalize: 'I-personalize',
+  Clean: 'Malinis',
+  'Live preview': 'Live preview',
+  'Developer mode': 'Developer mode',
+  'Do you write code?': 'Nagsusulat ka ba ng code?',
+  Yes: 'Oo',
+  No: 'Hindi',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'Mula sa ibang app: {key}',
   'From other apps: set in your system settings': 'Mula sa ibang app: itakda sa settings ng system',
@@ -82,6 +91,7 @@ export const fil: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'Isang gawain',
   'One per line': 'Isa bawat linya',
+  'Add with AI': 'Idagdag gamit ang AI',
   // Tasks: the projects in the panel
   Favorites: 'Mga paborito',
   'Add project': 'Magdagdag ng proyekto',
@@ -125,6 +135,7 @@ export const fil: Dictionary = {
   'Pointing hand on buttons': 'Nakaturong kamay sa mga button',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Magdagdag ng gawain',
+  'Apple Shortcuts': 'Apple Mga Shortcut',
   Tomorrow: 'Bukas',
   'done {date}': 'tapos {date}',
   'Next week': 'Sa susunod na linggo',
@@ -188,6 +199,7 @@ export const fil: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'Iikot ang canvas gamit ang dalawang daliri',
+  'Snap the rotation to right angles': 'I-snap ang pag-ikot sa mga tamang anggulo',
   'Turn upright': 'Ituwid',
   Canvas: 'Canvas',
   Card: 'Card',
@@ -282,6 +294,7 @@ export const fil: Dictionary = {
   Tabs: 'Mga tab',
   'Ctrl+Tab in order of use': 'Ctrl+Tab ayon sa pagkakagamit',
   'Swipe between pages': 'Mag-swipe sa pagitan ng mga pahina',
+  'Hardware acceleration': 'Pagpapabilis ng hardware',
   'Hidden tabs': 'Mga nakatagong tab',
   'Memory saver': 'Pagtitipid sa memory',
   Moderate: 'Katamtaman',
@@ -1166,6 +1179,8 @@ export const fil: Dictionary = {
   Elbow: 'Siko',
   Frame: 'Kuwadro',
   Ungroup: 'Tanggalin ang grupo',
+  Lock: 'I-lock',
+  Unlock: 'I-unlock',
   'The ink of the page': 'Tinta ng pahina',
   'Write in what is picked': 'Sumulat sa loob ng pinili',
   Pen: 'Panulat',
@@ -1310,11 +1325,19 @@ export const fil: Dictionary = {
     'Naka-encrypt ang {count} bahagi at walang makakabasa nito nang wala ang Evernote',
   '{count} notes had a reminder, which the export does not carry':
     'May paalala ang {count} tala, na hindi kasama sa export',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} attachment ang wala sa export o hindi mabasa',
+    other: '{count} attachment ang wala sa export o hindi mabasa',
+  },
   '{count} notes were in the bin and stay there':
     'Nasa basurahan ang {count} tala at mananatili roon',
   '{count} archived notes are in a folder called Archive':
     'Nasa folder na Archive ang {count} naka-archive na tala',
   'The colours a note had are not kept': 'Hindi itinatago ang kulay na nasa tala',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} file ang hindi mabasa, kaya hindi isinama',
+    other: '{count} file ang hindi mabasa, kaya hindi isinama',
+  },
   '{count} block references were written out as the words they pointed at':
     'Isinulat ang {count} block reference bilang mga salitang tinutukoy nito',
   '{count} saved views are left out, and every row is in the table': {
@@ -1343,6 +1366,8 @@ export const fil: Dictionary = {
     '{count} card ng damdamin at gawain ay mga guhit, kaya salita lang ang pumapasok',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} tala ang nasa likod ng password na Notes lang ang makakabukas',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} tala ang nasa likod ng password na Bear lang ang makakabukas',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} tala ang nasa Kanina lang tinanggal, at doon mananatili',
   '{count} drawings and scans have no picture on this Mac':
@@ -1595,6 +1620,7 @@ export const fil: Dictionary = {
   'Ask the model': 'Tanungin ang modelo',
   'answered by {model}, {date}': 'sinagot ng {model}, {date}',
   'AI block': 'AI block',
+  'Do with AI': 'Gawin gamit ang AI',
   'Highlight colour': 'Kulay ng tampok',
   'A single newline breaks the line': 'Isang bagong linya lang ay humahati ng linya',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -1928,6 +1954,8 @@ export const fil: Dictionary = {
   'Settings › AI': 'Mga setting › AI',
   'New chat': 'Bagong chat',
   'Ask again': 'Itanong muli',
+  'Continue when the limit resets': 'Ituloy kapag na-reset ang limitasyon',
+  'Continues at {time}': 'Itutuloy sa {time}',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more':
     'Magtanong ng kahit ano, @ para magdagdag, / para sa iba pa',
@@ -2403,4 +2431,29 @@ export const fil: Dictionary = {
   Peach: 'Peach',
   Sage: 'Sage',
   Mist: 'Ulap',
+  // A board, Notion's: its columns, its cards, its settings, a new database
+  'New database': 'Bagong database',
+  'New page': 'Bagong pahina',
+  'Not started': 'Hindi pa nasisimulan',
+  'In progress': 'Ginagawa',
+  'No {property}': 'Walang {property}',
+  '{card} moved to {group}': 'Nailipat ang {card} sa {group}',
+  'Not moved': 'Hindi nailipat',
+  Retry: 'Subukang muli',
+  Calculate: 'Kalkulahin',
+  'Remove sort': 'Alisin ang pagsunod-sunod',
+  'Remove sort?': 'Alisin ang pagsunod-sunod?',
+  Groups: 'Mga grupo',
+  'Hidden groups': 'Mga nakatagong grupo',
+  'Add as option': 'Idagdag bilang opsyon',
+  'Move left': 'Ilipat pakaliwa',
+  'Move right': 'Ilipat pakanan',
+  'Delete option': 'Tanggalin ang opsyon',
+  'Colour columns': 'Kulayan ang mga column',
+  'Hide empty groups': 'Itago ang mga walang lamang grupo',
+  'Card size': 'Laki ng card',
+  Small: 'Maliit',
+  Large: 'Malaki',
+  Both: 'Pareho',
+  'Shown on cards': 'Ipinapakita sa mga card',
 }

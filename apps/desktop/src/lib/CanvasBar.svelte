@@ -581,13 +581,24 @@
     animation: none;
   }
 
+  /* The panel comes before the bar, so the row runs from the inner side: the bar
+     keeps to its edge and the panel opens beside it, towards the middle (#646). A
+     right-to-left row starts on the right, so there it runs the other way. */
   .cluster.left {
     left: calc(var(--space-2) + var(--inset-left, 0px));
-    flex-direction: row;
+    flex-direction: row-reverse;
   }
 
   .cluster.right {
     right: calc(var(--space-2) + var(--inset-right, 0px));
+    flex-direction: row;
+  }
+
+  :global([dir='rtl']) .cluster.left {
+    flex-direction: row;
+  }
+
+  :global([dir='rtl']) .cluster.right {
     flex-direction: row-reverse;
   }
 

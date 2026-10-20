@@ -116,6 +116,18 @@ describe('the wire', () => {
     expect(two.awareness.getStates().has(one.doc.clientID)).toBe(false)
   })
 
+  test('hears a forgotten caret said again as it was, the way a reconnect says it', () => {
+    const one = new End()
+    const two = new End()
+
+    one.awareness.setLocalStateField('user', { name: 'One' })
+    two.hear(awarenessUpdate(one.awareness, [one.doc.clientID]))
+    forget(two.awareness, [one.doc.clientID], 'wire')
+
+    two.hear(awarenessUpdate(one.awareness, [one.doc.clientID]))
+    expect(two.awareness.getStates().get(one.doc.clientID)).toEqual({ user: { name: 'One' } })
+  })
+
   test('answers nothing to a message it does not know', () => {
     expect(new End().hear(new Uint8Array([9, 9, 9]))).toBeNull()
   })

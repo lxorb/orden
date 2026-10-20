@@ -14,6 +14,8 @@
   import { type Comment, commentsOf } from '../task-body'
   import Words from '../Words.svelte'
   import { grow } from '../../grow'
+  import Glyph from '../../quick-add/Glyph.svelte'
+  import Message from 'lucide/dist/esm/icons/message-square.mjs'
 
   const { row, path }: { row: Row; path: string } = $props()
 
@@ -72,23 +74,28 @@
       >
     </div>
   {/each}
-  <textarea
-    bind:this={field}
-    bind:value={words}
-    use:grow={words}
-    class="nib-field composer"
-    rows="1"
-    aria-label={t('Comment')}
-    placeholder={t('Comment')}
-    onkeydown={(event) => {
-      if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
-        event.preventDefault()
-        send()
-      } else if (event.key === 'Escape' && words) {
-        event.stopPropagation()
-        words = ''
-      }
-    }}></textarea>
+  <!-- A quiet row like Add sub-task above it, its mark the one a task's row comments
+       with, and the words on the row's line rather than at the top of a box (#667). -->
+  <label class="nib-row composer-row">
+    <span class="nib-row-mark"><Glyph icon={Message} /></span>
+    <textarea
+      bind:this={field}
+      bind:value={words}
+      use:grow={words}
+      class="composer"
+      rows="1"
+      aria-label={t('Comment')}
+      placeholder={t('Comment')}
+      onkeydown={(event) => {
+        if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
+          event.preventDefault()
+          send()
+        } else if (event.key === 'Escape' && words) {
+          event.stopPropagation()
+          words = ''
+        }
+      }}></textarea>
+  </label>
 </div>
 
 <style>
@@ -139,11 +146,40 @@
     opacity: 1;
   }
 
+  .composer-row {
+    align-items: flex-start;
+    color: var(--muted);
+    cursor: text;
+  }
+
+  .composer-row .nib-row-mark {
+    height: var(--row-height);
+  }
+
+  /* One line of words is the row's line, centred in its height the way a row's label
+     is; more lines grow it downwards from there. */
   .composer {
-    margin-top: var(--space-2);
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    padding: calc((var(--row-height) - var(--text-row) * var(--leading-row)) / 2) 0;
+    border: none;
+    background: none;
+    color: var(--text-strong);
+    font: inherit;
+    line-height: var(--leading-row);
     resize: none;
     field-sizing: content;
     min-height: var(--row-height);
     max-height: 30vh;
+    outline: none;
+  }
+
+  .composer::placeholder {
+    color: var(--muted);
+  }
+
+  .composer-row:focus-within {
+    background: var(--surface-hover);
   }
 </style>

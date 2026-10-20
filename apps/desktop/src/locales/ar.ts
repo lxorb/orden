@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ar: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'كل شيء جاهز',
+  Personalize: 'تخصيص',
+  Clean: 'نظيف',
+  'Live preview': 'معاينة مباشرة',
+  'Developer mode': 'وضع المطوّر',
+  'Do you write code?': 'هل تكتب الكود؟',
+  Yes: 'نعم',
+  No: 'لا',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'من التطبيقات الأخرى: {key}',
   'From other apps: set in your system settings': 'من التطبيقات الأخرى: يُحدَّد في إعدادات النظام',
@@ -86,6 +95,7 @@ export const ar: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'مهمة واحدة',
   'One per line': 'واحدة لكل سطر',
+  'Add with AI': 'إضافة بالذكاء الاصطناعي',
   // Tasks: the projects in the panel
   Favorites: 'المفضلة',
   'Add project': 'إضافة مشروع',
@@ -129,6 +139,7 @@ export const ar: Dictionary = {
   'Pointing hand on buttons': 'يد مشيرة فوق الأزرار',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'إضافة مهمة',
+  'Apple Shortcuts': 'Apple الاختصارات',
   Tomorrow: 'غدًا',
   'done {date}': 'أُنجزت {date}',
   'Next week': 'الأسبوع القادم',
@@ -147,6 +158,7 @@ export const ar: Dictionary = {
   'Smart dates': 'تواريخ ذكية',
   'From any app': 'من أي تطبيق',
   'Rotate a canvas with two fingers': 'تدوير اللوحة بإصبعين',
+  'Snap the rotation to right angles': 'محاذاة التدوير إلى الزوايا القائمة',
   'Turn upright': 'إعادة إلى الوضع المستقيم',
   'Show tasks without a start date in Today': 'إظهار المهام التي ليس لها تاريخ بدء في اليوم',
   'Every day': 'كل يوم',
@@ -284,6 +296,7 @@ export const ar: Dictionary = {
   Tabs: 'التبويبات',
   'Ctrl+Tab in order of use': 'Ctrl+Tab حسب ترتيب الاستخدام',
   'Swipe between pages': 'التمرير بين الصفحات',
+  'Hardware acceleration': 'تسريع الأجهزة',
   'Hidden tabs': 'التبويبات المخفية',
   'Memory saver': 'توفير الذاكرة',
   Moderate: 'معتدل',
@@ -1201,6 +1214,8 @@ export const ar: Dictionary = {
   Elbow: 'خط منكسر',
   Frame: 'إطار',
   Ungroup: 'فك التجميع',
+  Lock: 'قفل',
+  Unlock: 'إلغاء القفل',
   'The ink of the page': 'حبر الصفحة',
   'Write in what is picked': 'الكتابة في المحدد',
   Pen: 'قلم',
@@ -1355,10 +1370,26 @@ export const ar: Dictionary = {
     'هناك {count} مقطعًا مشفّرًا، ولا شيء يقرأها دون Evernote',
   '{count} notes had a reminder, which the export does not carry':
     'كان لـ {count} ملاحظة تذكير، والتصدير لا يحمله',
+  '{count} attachments were missing from the export or could not be read': {
+    few: 'تعذّر العثور على {count} من المرفقات في التصدير أو تعذّرت قراءتها',
+    many: 'تعذّر العثور على {count} من المرفقات في التصدير أو تعذّرت قراءتها',
+    one: 'تعذّر العثور على {count} من المرفقات في التصدير أو تعذّرت قراءتها',
+    other: 'تعذّر العثور على {count} من المرفقات في التصدير أو تعذّرت قراءتها',
+    two: 'تعذّر العثور على {count} من المرفقات في التصدير أو تعذّرت قراءتها',
+    zero: 'تعذّر العثور على {count} من المرفقات في التصدير أو تعذّرت قراءتها',
+  },
   '{count} notes were in the bin and stay there': 'كانت {count} ملاحظة في سلة المحذوفات وتبقى فيها',
   '{count} archived notes are in a folder called Archive':
     'هناك {count} ملاحظة مؤرشفة في مجلد باسم Archive',
   'The colours a note had are not kept': 'ألوان الملاحظة لا تُحفظ',
+  '{count} files could not be read, so they were left out': {
+    few: 'تعذّرت قراءة {count} ملفات، فتُركت',
+    many: 'تعذّرت قراءة {count} ملفًا، فتُركت',
+    one: 'تعذّرت قراءة {count} ملف، فتُرك',
+    other: 'تعذّرت قراءة {count} ملف، فتُركت',
+    two: 'تعذّرت قراءة {count} ملفين، فتُركا',
+    zero: 'تعذّرت قراءة {count} ملفات، فتُركت',
+  },
   '{count} block references were written out as the words they pointed at':
     'كُتب {count} مرجع كتلة كالكلمات التي تشير إليها',
   '{count} saved views are left out, and every row is in the table': {
@@ -1396,6 +1427,8 @@ export const ar: Dictionary = {
     '{count} بطاقة مزاج ونشاط هي رسوم، فلا ينتقل منها سوى الكلمات',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} ملاحظة محمية بكلمة سر لا يفتحها سوى Notes',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} ملاحظة محمية بكلمة سر لا يفتحها سوى Bear',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} ملاحظة في المحذوفات حديثاً وتبقى هناك',
   '{count} drawings and scans have no picture on this Mac':
@@ -1665,6 +1698,7 @@ export const ar: Dictionary = {
   'Ask the model': 'اسأل الطراز',
   'answered by {model}, {date}': 'أجاب {model}، {date}',
   'AI block': 'كتلة ذكاء اصطناعي',
+  'Do with AI': 'نفّذ بالذكاء الاصطناعي',
   'Highlight colour': 'لون التظليل',
   'A single newline breaks the line': 'سطر جديد واحد يقطع السطر',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -1996,6 +2030,8 @@ export const ar: Dictionary = {
   'Settings › AI': 'الإعدادات ‹ ذكاء اصطناعي',
   'New chat': 'محادثة جديدة',
   'Ask again': 'اسأل مجددًا',
+  'Continue when the limit resets': 'المتابعة عند تجدد الحد',
+  'Continues at {time}': 'يتابع عند {time}',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'اسأل عن أي شيء، @ للإضافة، / للمزيد',
   'What can I help with?': 'كيف يمكنني المساعدة؟',
@@ -2473,4 +2509,29 @@ export const ar: Dictionary = {
   Peach: 'خوخي',
   Sage: 'مريمية',
   Mist: 'ضباب',
+  // A board, Notion's: its columns, its cards, its settings, a new database
+  'New database': 'قاعدة بيانات جديدة',
+  'New page': 'صفحة جديدة',
+  'Not started': 'لم يبدأ',
+  'In progress': 'قيد التنفيذ',
+  'No {property}': 'بلا {property}',
+  '{card} moved to {group}': 'تم نقل {card} إلى {group}',
+  'Not moved': 'لم يتم النقل',
+  Retry: 'إعادة المحاولة',
+  Calculate: 'حساب',
+  'Remove sort': 'إزالة الترتيب',
+  'Remove sort?': 'إزالة الترتيب؟',
+  Groups: 'المجموعات',
+  'Hidden groups': 'المجموعات المخفية',
+  'Add as option': 'إضافة كخيار',
+  'Move left': 'نقل لليسار',
+  'Move right': 'نقل لليمين',
+  'Delete option': 'حذف الخيار',
+  'Colour columns': 'تلوين الأعمدة',
+  'Hide empty groups': 'إخفاء المجموعات الفارغة',
+  'Card size': 'حجم البطاقة',
+  Small: 'صغير',
+  Large: 'كبير',
+  Both: 'كلاهما',
+  'Shown on cards': 'معروضة على البطاقات',
 }

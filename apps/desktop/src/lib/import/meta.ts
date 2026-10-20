@@ -84,11 +84,13 @@ export function keptText(body: string): string {
 }
 
 /** A property name YAML will read as one word, for a column called
- *  `Last edited time`. */
+ *  `Last edited time`. Letters of every script are letters: a column called
+ *  `Größe` or `期限` keeps its name rather than losing it, and with it the
+ *  column. */
 export function propertyName(key: string): string {
   return key
+    .replace(/[^\p{L}\p{M}\p{N}_ /-]+/gu, '')
     .trim()
-    .replace(/[^\w /-]+/g, '')
     .replace(/\s+/g, '-')
     .toLowerCase()
 }

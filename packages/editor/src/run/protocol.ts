@@ -105,13 +105,55 @@ export function runnerDocument(code: string, run: number, script: string): strin
  *  `'unsafe-inline'` here widens nothing; it only keeps this line from having to
  *  know the hash as well. */
 const RUNNER_POLICY =
-  "default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval'; form-action 'none'"
+  "default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval'; worker-src blob:; form-action 'none'"
 
-/** What the sandbox runs, as the text the frame script evaluates. */
+/** What the sandbox runs, as the text the frame script evaluates: not the note's code
+ *  itself, but a worker that runs it (#525).
+ *
+ *  A frame is no process of its own in WebKit - a Mac, an iPhone, Safari - and code that
+ *  never gives its task back took the app's own thread with it, the timer that was to
+ *  take the frame down included, for good. A worker is a thread of its own in every
+ *  engine, so the frame and the app around it go on whatever the code does, and the
+ *  frame going takes its worker with it: the time limit in run.ts is again the way a
+ *  run is stopped. The worker is made from the frame's own opaque origin, so it reaches
+ *  no more than the frame did, under the same two policies; `worker-src blob:` in
+ *  `RUNNER_POLICY` is what lets the frame make it. What the code no longer has is a
+ *  document, which it never had any use for: its output is the panel. */
 function runnerProgram(code: string, run: number): string {
   return `(function () {
   var RUN = ${run}
   var CODE = ${literal(code)}
+  var RUNNER = ${literal(WORKER)}
+
+  function said(text) {
+    parent.postMessage(
+      { nib: '${KIND}', run: RUN, lines: [{ level: 'exception', text: text }], ready: true, done: true },
+      '*',
+    )
+  }
+
+  var worker
+  try {
+    worker = new Worker(URL.createObjectURL(new Blob([RUNNER], { type: 'text/javascript' })))
+  } catch (error) {
+    said(String(error))
+    return
+  }
+  worker.onmessage = function (event) { parent.postMessage(event.data, '*') }
+  worker.onerror = function (event) {
+    event.preventDefault()
+    said(event.message || 'the code could not be run')
+  }
+  worker.postMessage({ run: RUN, code: CODE })
+})()`
+}
+
+/** The worker the code runs in, told its run and its code by the one message the frame
+ *  sends it. */
+const WORKER = `self.onmessage = function (event) {
+  self.onmessage = null
+  var RUN = event.data.run
+  var CODE = event.data.code
   var format = ${String(formatRunValues)}
 
   var waiting = []
@@ -119,17 +161,22 @@ function runnerProgram(code: string, run: number): string {
   var finished = false
 
   function post(batch, ready, done) {
-    parent.postMessage(
+    self.postMessage(
       { nib: '${KIND}', run: RUN, lines: batch, ready: ready === true, done: done === true },
-      '*',
     )
   }
+
+  // When output last went out. A worker's message leaves at once, whether or not the
+  // code ever gives its thread back, so code that never does still shows what it said
+  // on its way in - a tenth of a second at a time, not a message a line.
+  var sentAt = -Infinity
 
   function send(done) {
     pending = false
     var batch = waiting
     waiting = []
     if (!batch.length && !done) return
+    sentAt = performance.now()
     post(batch, false, done)
   }
 
@@ -144,6 +191,7 @@ function runnerProgram(code: string, run: number): string {
   function add(level, text) {
     if (waiting.length > 600) return
     waiting.push({ level: level, text: text })
+    if (performance.now() - sentAt >= 100) return send(false)
     if (pending) return
     pending = true
     drain.port2.postMessage(0)
@@ -169,13 +217,13 @@ function runnerProgram(code: string, run: number): string {
   // for a drain, and sending here as well would make one message - and so one
   // editor transaction - per error: a loop that rejects a promise each time is
   // exactly what the batching above is for.
-  window.onerror = function (message, source, line, column, error) {
+  self.onerror = function (message, source, line, column, error) {
     if (error) report(error)
     else add('exception', String(message))
     return true
   }
 
-  window.addEventListener('unhandledrejection', function (event) {
+  self.addEventListener('unhandledrejection', function (event) {
     event.preventDefault()
     report(event.reason)
   })
@@ -249,8 +297,8 @@ function runnerProgram(code: string, run: number): string {
   }
 
   // Said before the first line of the note's code runs, and the moment the time
-  // limit starts counting: a sandboxed frame is a browser process of its own,
-  // and coming up is not time the code asked for.
+  // limit starts counting: a frame and its worker can be seconds coming up on a
+  // loaded machine, and coming up is not time the code asked for.
   //
   // The code then waits for the event loop to come round again, which is what
   // makes the word reliable. A message only leaves this frame when the task
@@ -263,5 +311,4 @@ function runnerProgram(code: string, run: number): string {
   gate.port1.onmessage = start
   post([], true, false)
   gate.port2.postMessage(0)
-})()`
-}
+}`

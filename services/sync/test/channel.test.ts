@@ -152,4 +152,13 @@ describe('?channel=', () => {
     expect(answer.json).toEqual({ ok: true })
     expect(answer.headers.get('set-cookie')).toBe(null)
   })
+
+  test('a path that begins with two slashes stays on this site', async () => {
+    env = testEnv({ ASSETS: assets(BOTH) })
+    for (const path of ['//evil.example/x', '/\\evil.example/x']) {
+      const answer = await call(env, `${path}?channel=stable`)
+      expect(answer.status).toBe(302)
+      expect(answer.headers.get('location'), path).toBe('/evil.example/x')
+    }
+  })
 })

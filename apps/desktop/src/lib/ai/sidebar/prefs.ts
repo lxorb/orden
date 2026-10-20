@@ -7,13 +7,18 @@
 
 import type { Effort } from '../chat/types'
 import { isEffort } from '../chat/effort'
+import type { Provider } from '../providers'
 import { FIRST_MODE, type Mode, modeIn } from '../modes'
 import { isRecord, isString, keep, stored } from '../../stored'
 
 const STORAGE_KEY = 'nib:ai-sidebar'
 
+/** The mode a task done with AI works in before anybody picked one (#325). */
+const FIRST_TASK_MODE: Mode = 'auto'
+
 interface Prefs {
   mode: Mode
+  task: Mode
   efforts: Record<string, Effort>
   /** The thread open last, whichever space it is in. */
   last: string | null
@@ -21,14 +26,25 @@ interface Prefs {
    *  read so the thread somebody had open still opens, and written no more. */
   open: Record<string, string>
   rail: boolean
+  /** The model last picked on each provider, which a new thread starts on (#428). */
+  models: Record<string, string>
 }
 
 function read(): Prefs {
   const saved = stored(STORAGE_KEY)
-  const out: Prefs = { mode: FIRST_MODE, efforts: {}, last: null, open: {}, rail: true }
+  const out: Prefs = {
+    mode: FIRST_MODE,
+    task: FIRST_TASK_MODE,
+    efforts: {},
+    last: null,
+    open: {},
+    rail: true,
+    models: {},
+  }
   if (!isRecord(saved)) return out
   if (saved.rail === false) out.rail = false
   out.mode = modeIn(saved.mode) ?? FIRST_MODE
+  out.task = modeIn(saved.task) ?? FIRST_TASK_MODE
   if (isRecord(saved.efforts)) {
     for (const [model, effort] of Object.entries(saved.efforts)) {
       if (isEffort(effort)) out.efforts[model] = effort
@@ -37,6 +53,11 @@ function read(): Prefs {
   if (isString(saved.last)) out.last = saved.last
   if (isRecord(saved.open)) {
     for (const [space, id] of Object.entries(saved.open)) if (isString(id)) out.open[space] = id
+  }
+  if (isRecord(saved.models)) {
+    for (const [provider, model] of Object.entries(saved.models)) {
+      if (isString(model)) out.models[provider] = model
+    }
   }
   return out
 }
@@ -67,12 +88,33 @@ export function rememberMode(mode: Mode): void {
   save()
 }
 
+/** The mode a task done with AI works in: Settings › AI › Do with AI. */
+export function taskMode(): Mode {
+  return held().task
+}
+
+export function rememberTaskMode(mode: Mode): void {
+  held().task = mode
+  save()
+}
+
 export function effortFor(provider: string, model: string): Effort {
   return held().efforts[modelKey(provider, model)] ?? 'auto'
 }
 
 export function rememberEffort(provider: string, model: string, effort: Effort): void {
   held().efforts[modelKey(provider, model)] = effort
+  save()
+}
+
+/** The model a new thread starts on with `provider`: the one last picked on it, else the
+ *  one Settings > AI chose for it. */
+export function modelFor(provider: Provider): string {
+  return held().models[provider.id] ?? provider.model
+}
+
+export function rememberModel(provider: string, model: string): void {
+  held().models[provider] = model
   save()
 }
 

@@ -82,6 +82,37 @@ describe('entries of a map', () => {
     expect(answer.status).toBe(400)
   })
 
+  test('refused for a graph key only the prototype has', async () => {
+    for (const key of ['__proto__', 'constructor', 'toString']) {
+      expect((await patch(laptop, [{ map: 'graph', key, value: 'x'.repeat(1000) }])).status).toBe(
+        400,
+      )
+    }
+    expect((await entries()).entries).toEqual([])
+  })
+
+  test('refused past the most entries a space keeps, and a change to one kept still stands', async () => {
+    const add = env.db.prepare(
+      `insert into space_entries (space_id, map, key, value, seq, at) values (?, 'order', ?, '1', 0, 0)`,
+    )
+    for (let at = 0; at < 10_000; at++) add.run(space, `gone${String(at)}`)
+
+    const over = await patch(laptop, [{ map: 'graph', key: 'orphans', value: true }])
+    expect(over.status).toBe(413)
+    expect((await patch(laptop, [{ map: 'order', key: 'gone0', value: null }])).status).toBe(200)
+  })
+
+  test('refused past the changes one person may make in a minute', async () => {
+    const user = env.db.prepare('select id from users').get() as { id: string }
+    env.db
+      .prepare('insert into limits (scope, key, count, until) values (?, ?, ?, ?)')
+      .run('tree-ops', user.id, 600, Date.now() + 60 * 1000)
+
+    const over = await patch(laptop, [{ map: 'graph', key: 'orphans', value: true }])
+    expect(over.status).toBe(429)
+    expect(over.json.error).toContain('too many changes')
+  })
+
   test('a folder keeps its icon and its order through a rename on a v2 device', async () => {
     await call(env, `/v1/spaces/${space}/notes`, {
       token: laptop,

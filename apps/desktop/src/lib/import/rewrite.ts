@@ -226,13 +226,24 @@ export function rewriteLinks(
       // A note nib would read the bare name as another one from here keeps the path
       // the link went by, as a markdown link from this note: `[[../Plan]]` in
       // `Projects/` meant the root `Plan.md`, and `[[Plan]]` there is the one beside it.
+      // Its whole path from the top of the vault is the first try, though, which
+      // keeps a wikilink one and shows the words it showed.
       const elsewhere = !property && isMarkdownPath(found.path) && !reaches(found, at.now)
-      const written = linkTo(
-        name,
-        words,
-        { path: found.path, from: at.now, embed, fragment },
-        sized || property ? 'wikilink' : elsewhere ? 'relative' : undefined,
-      )
+      const atTop = { ...found, name: withoutExtension(found.path) }
+      const pathed = elsewhere && found.path.includes('/') && reaches(atTop, at.now)
+      const written = pathed
+        ? linkTo(atTop.name, words ?? (embed || fragment ? null : path), {
+            path: found.path,
+            from: at.now,
+            embed,
+            fragment,
+          })
+        : linkTo(
+            name,
+            words,
+            { path: found.path, from: at.now, embed, fragment },
+            sized || property ? 'wikilink' : elsewhere ? 'relative' : undefined,
+          )
       return inCode(stillTables, offset) ? inCell(written) : written
     },
   )
@@ -799,15 +810,13 @@ export class ExportFiles {
   /** Every file in the export, by its export path. */
   private readonly byPath = new Spellings()
 
-  /** The same, by bare name, for the shortest-path links. A name two files share
-   *  answers with the first, which is what any reader of those spaces does. */
-  private readonly byName = new Spellings()
-
-  /** Notes by name without the extension, which is how a wikilink names a note.
-   *  Only notes: Obsidian reads a link with no extension as a link to a note, so
-   *  `[[Budget]]` beside nothing but `Budget.xlsx` is a note nobody has written yet,
-   *  not the spreadsheet, and a canvas or a paper of the same stem never answers. */
-  private readonly byStem = new Spellings()
+  /** The files a bare name could call, by that name folded: every file by its
+   *  whole name, and a note by its name without the extension as well, which is
+   *  how a wikilink names one. Only notes: Obsidian reads a link with no extension
+   *  as a link to a note, so `[[Budget]]` beside nothing but `Budget.xlsx` is a note
+   *  nobody has written yet, not the spreadsheet, and a canvas or a paper of the
+   *  same stem never answers. */
+  private readonly byName = new Map<string, [string, Found][]>()
 
   /** Every file in the export with its export path, in the order they came. */
   private readonly paths: [string, Found][] = []
@@ -828,15 +837,13 @@ export class ExportFiles {
     this.paths.push([was, found])
 
     const name = was.split('/').pop() ?? was
-    this.byName.add(name, found)
-
     const stem = name.replace(/\.[^.]+$/, '')
-    if (stem !== name && isMarkdownPath(found.path)) this.byStem.add(stem, found)
-
     const names = stem !== name && isMarkdownPath(found.path) ? [name, stem] : [name]
     for (const one of names) {
       const key = one.toLowerCase()
       this.called.set(key, (this.called.get(key) ?? 0) + 1)
+      const folded = foldName(one)
+      this.byName.set(folded, [...(this.byName.get(folded) ?? []), [was, found]])
     }
 
     const said = found.name.toLowerCase()
@@ -879,13 +886,25 @@ export class ExportFiles {
     const cleaned = target.replace(/^\.\//, '').replace(/^\/+|\/+$/g, '')
     if (!cleaned) return null
 
+    // A bare name is read the way nib reads it once it arrives: the file of that
+    // name beside the link, then the shallowest. The spelling it was written in
+    // goes first, wherever that file is: `[[bookfusion]]` in `People/BookFusion.md`
+    // means `Plugins/bookfusion.md`, not the note it is written in.
+    if (!rooted && !cleaned.includes('/')) {
+      const found = this.nearest(cleaned, from, true) ?? this.nearest(cleaned, from)
+      return found ? this.byBareName(cleaned, found) : null
+    }
+
     const here = folderOf(from)
     // A wikilink to a note in a folder writes the path without the extension.
     const tries = (rooted ? [cleaned] : [joined(here, cleaned), cleaned]).flatMap((one) => [
       one,
       `${one}.md`,
     ])
-
+    for (const one of tries) {
+      const found = this.byPath.exact(one)
+      if (found) return this.told(found)
+    }
     for (const one of tries) {
       const found = this.byPath.get(one)
       if (found) return this.told(found)
@@ -903,12 +922,38 @@ export class ExportFiles {
     }
 
     const name = cleaned.split('/').pop() ?? cleaned
-    const found = this.byName.get(name) ?? this.byStem.get(name)
-    if (!found) return null
-    // A name only one file in the export had could only mean that file. Once a
-    // renamed file arrives with it as well - `Why?` is `Why` on the way in - the
-    // folder is written in too, so the link still says which.
+    const found = this.nearest(name, from, true) ?? this.nearest(name, from)
+    return found ? this.byBareName(name, found) : null
+  }
+
+  /** A file a link found by its bare name. A name only one file in the export had
+   *  could only mean that file. Once a renamed file arrives with it as well - `Why?`
+   *  is `Why` on the way in - the folder is written in too, so the link still says
+   *  which. */
+  private byBareName(name: string, found: Found): Found {
     return (this.called.get(name.toLowerCase()) ?? 0) < 2 ? this.told(found) : found
+  }
+
+  /** The file a bare name, written in the note at `from`, is read as: of the files
+   *  it names, the one beside the link, then the shallowest, then the first by path.
+   *  That is how nib reads the link once it arrives (see `reaches`), so a link
+   *  between two notes of one name stays the link it was and still goes where it
+   *  went. `exact` holds to the spelling it was written in. */
+  private nearest(name: string, from: string, exact = false): Found | undefined {
+    const spelled = name.normalize('NFC')
+    const fits = (this.byName.get(foldName(name)) ?? []).filter(([was, found]) => {
+      if (!exact) return true
+      const last = (was.split('/').pop() ?? was).normalize('NFC')
+      return last === spelled || (isMarkdownPath(found.path) && withoutExtension(last) === spelled)
+    })
+
+    const here = folderOf(from)
+    const depth = (path: string) => path.split('/').length
+    const beside = (path: string) => (folderOf(path) === here ? 0 : 1)
+    return [...fits].sort(
+      ([one], [other]) =>
+        beside(one) - beside(other) || depth(one) - depth(other) || (one < other ? -1 : 1),
+    )[0]?.[1]
   }
 
   /** A file the link named by its path, with enough of that path kept to say which
@@ -931,18 +976,23 @@ export class ExportFiles {
  *  with its accents apart, a link typed or completed holds them together, and
  *  Obsidian and nib both read the two as one name. */
 class Spellings {
-  private readonly exact = new Map<string, Found>()
+  private readonly exactly = new Map<string, Found>()
   private readonly folded = new Map<string, Found>()
 
   add(key: string, found: Found) {
     const composed = key.normalize('NFC')
-    if (!this.exact.has(composed)) this.exact.set(composed, found)
+    if (!this.exactly.has(composed)) this.exactly.set(composed, found)
     const lower = foldName(key)
     if (!this.folded.has(lower)) this.folded.set(lower, found)
   }
 
   get(key: string): Found | undefined {
-    return this.exact.get(key.normalize('NFC')) ?? this.folded.get(foldName(key))
+    return this.exactly.get(key.normalize('NFC')) ?? this.folded.get(foldName(key))
+  }
+
+  /** The file of exactly this spelling, its accents composed either way. */
+  exact(key: string): Found | undefined {
+    return this.exactly.get(key.normalize('NFC'))
   }
 }
 

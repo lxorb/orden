@@ -104,7 +104,7 @@ pub fn actual_size(app: &AppHandle, window: &str, tab: &str) {
     let Ok(view) = crate::web_tabs::found(app, tab) else {
         return;
     };
-    if view.set_zoom(1.0).is_ok() {
+    if view.set_zoom(crate::page_scale::web(1.0)).is_ok() {
         let heard = Heard {
             tab: tab.to_string(),
             said: Said::Zoom { factor: 1.0 },

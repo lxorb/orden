@@ -98,9 +98,9 @@ export function length(value: string): string | null {
  *  the print dialog, which is the only thing that knows how many there are. */
 export function fill(template: string, title: string, date: string): string {
   return template
-    .replace(/\$\{title\}/g, title)
-    .replace(/\$\{date\}/g, date)
-    .replace(/\$\{year\}/g, date.slice(0, 4))
+    .replace(/\$\{title\}/g, () => title)
+    .replace(/\$\{date\}/g, () => date)
+    .replace(/\$\{year\}/g, () => date.slice(0, 4))
 }
 
 /** The paper half of the print stylesheet. */
@@ -135,11 +135,12 @@ export function withRunningText(
  *  both Word and RTF count a page in. */
 export const TWIPS_PER_INCH = 1440
 
-/** Paper in inches, the unit a native print engine takes. */
+/** Paper in inches, the unit a native print engine takes. The A sizes are reckoned
+ *  from their millimetres, so A4 comes out at Word's own 11906 by 16838 twips. */
 const PAPER_INCHES: Record<Paper, [number, number]> = {
-  A3: [11.69, 16.54],
-  A4: [8.27, 11.69],
-  A5: [5.83, 8.27],
+  A3: [297 / PER_INCH.mm, 420 / PER_INCH.mm],
+  A4: [210 / PER_INCH.mm, 297 / PER_INCH.mm],
+  A5: [148 / PER_INCH.mm, 210 / PER_INCH.mm],
   Letter: [8.5, 11],
   Legal: [8.5, 14],
 }

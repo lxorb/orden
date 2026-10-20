@@ -89,6 +89,22 @@ describe('reading', () => {
     expect(base.views[3]?.filters).toEqual({ and: ['!task.done'] })
   })
 
+  test("a board's own keys, and a card size nib does not know left as written", () => {
+    const source =
+      'views:\n  - type: kanban\n    name: B\n    cardSize: 180\n    nib:\n      cardSize: large\n      groups: [Done, To do]\n      noneFirst: true\n      hideEmpty: true\n      colourColumns: false\n'
+    const base = readBase(source)
+    expect(base.views[0]?.nib).toMatchObject({
+      cardSize: 'large',
+      groups: ['Done', 'To do'],
+      noneFirst: true,
+      hideEmpty: true,
+      colourColumns: false,
+    })
+    expect(base.views[0]?.options.cardSize).toBe(180)
+    expect(writeBase(base, source)).toBe(source)
+    expect(readBase(source.replace('large', 'huge')).views[0]?.nib.cardSize).toBeUndefined()
+  })
+
   test('an empty file is an empty base, and a broken one an error', () => {
     expect(readBase('').views).toEqual([])
     expect(() => readBase('views: [\n')).toThrow()
@@ -147,6 +163,21 @@ describe('writing a change', () => {
     const written = writeBase(base, source)
     expect(written).toContain(`    - '!file.name.contains("Templates")'`)
     expect(written).toContain('    - categories.contains(link("Books"))\n')
+  })
+
+  test('filters set on a base whose own nib could not read replace them, once', () => {
+    // The unreadable filters are kept only until the base is given filters of its
+    // own: kept after them, they would be written over the new ones.
+    const source = 'filters:\n  xor:\n    - a\nviews:\n  - type: table\n    name: A\n'
+    const base = readBase(source)
+    base.filters = 'b == 1'
+    const written = writeBase(base, source)
+    expect(written).toBe('filters: b == 1\nviews:\n  - type: table\n    name: A\n')
+  })
+
+  test("a base's unreadable filters keep their place at the top of a new file", () => {
+    const source = 'filters:\n  xor:\n    - a\nviews:\n  - type: table\n    name: A\n'
+    expect(writeBase(readBase(source))).toBe(source)
   })
 
   test("a view's filters and limit nib cannot read stay as written when another key changes", () => {

@@ -6,9 +6,10 @@
  *  travelled between computers. */
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
+import { sha256 } from '../src/crypto'
 import { readFrame } from '../src/hub/frames'
 import { call, signIn, type TestEnv, testEnv } from './harness'
-import { computer, hub, type Hubs, hubs } from './hub-fakes'
+import { computer, connect, hub, type Hubs, hubs } from './hub-fakes'
 
 const T0 = Date.UTC(2026, 8, 30, 12)
 const KEY = 'k'.repeat(43)
@@ -135,6 +136,20 @@ describe('ending a device', () => {
     const out = await call(env, '/v1/auth/signout', { method: 'POST', token: tablet.token })
     expect(out.status).toBe(200)
     expect(tablet.socket.closedWith?.code).toBe(1008)
+  })
+
+  /** A device row is written by `hello`, so a socket that has not said it yet is
+   *  found by the session it came in on. */
+  test('is what signing out does to a socket that never said hello', async () => {
+    const token = await signIn(env, 'quiet@example.com')
+    const user = (await call(env, '/v1/me', { token })).json.user.id
+    const { id: session } = env.db
+      .prepare('select id from sessions where token_hash = ?')
+      .get(await sha256(token)) as { id: string }
+    const socket = connect(running.of(user).hub, { device: 'device-quiet', who: user, session })
+
+    await call(env, '/v1/auth/signout', { method: 'POST', token })
+    expect(socket.closedWith?.code).toBe(1008)
   })
 
   test('is unknown for a device the account does not have', async () => {

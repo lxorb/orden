@@ -121,4 +121,11 @@ describe('a plane read ahead of the surface that shows it', () => {
 
     expect(both).toBe(1)
   })
+
+  test('and is refused for text that is not a plane, with nothing held for it (#534)', () => {
+    parseAhead(plane(20))
+
+    expect(parseAhead('{"nodes":[],}')).toBe(false)
+    expect(takeParsed(plane(20))).toBeNull()
+  })
 })

@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const am: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'ሁሉም ዝግጁ ነው',
+  Personalize: 'ግላዊ አድርግ',
+  Clean: 'ንጹህ',
+  'Live preview': 'ቀጥታ ቅድመ እይታ',
+  'Developer mode': 'የገንቢ ሁነታ',
+  'Do you write code?': 'ኮድ ይጽፋሉ?',
+  Yes: 'አዎ',
+  No: 'አይ',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'ከሌሎች መተግበሪያዎች፦ {key}',
   'From other apps: set in your system settings': 'ከሌሎች መተግበሪያዎች፦ በስርዓት ቅንብሮች ውስጥ ያዘጋጁ',
@@ -82,6 +91,7 @@ export const am: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'አንድ ተግባር',
   'One per line': 'በየመስመሩ አንድ',
+  'Add with AI': 'በAI ጨምር',
   // Tasks: the projects in the panel
   Favorites: 'ተወዳጆች',
   'Add project': 'ፕሮጀክት አክል',
@@ -124,6 +134,7 @@ export const am: Dictionary = {
   'Pointing hand on buttons': 'በአዝራሮች ላይ የሚጠቁም እጅ',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'ተግባር አክል',
+  'Apple Shortcuts': 'Apple አቋራጮች',
   Tomorrow: 'ነገ',
   'done {date}': 'ተጠናቋል {date}',
   'Next week': 'የሚቀጥለው ሳምንት',
@@ -142,6 +153,7 @@ export const am: Dictionary = {
   'Smart dates': 'ብልህ ቀኖች',
   'From any app': 'ከማንኛውም መተግበሪያ',
   'Rotate a canvas with two fingers': 'ሸራን በሁለት ጣቶች አዙር',
+  'Snap the rotation to right angles': 'ማዞሩን በቀኝ ማዕዘኖች ላይ አጣብቅ',
   'Turn upright': 'ቀጥ አድርግ',
   'Show tasks without a start date in Today': 'የመጀመሪያ ቀን የሌላቸውን ተግባሮች በዛሬ አሳይ',
   'Every day': 'በየቀኑ',
@@ -278,6 +290,7 @@ export const am: Dictionary = {
   Tabs: 'ትሮች',
   'Ctrl+Tab in order of use': 'Ctrl+Tab በአጠቃቀም ቅደም ተከተል',
   'Swipe between pages': 'በገጾች መካከል ማንሸራተት',
+  'Hardware acceleration': 'የሃርድዌር ማፋጠን',
   'Hidden tabs': 'የተደበቁ ትሮች',
   'Memory saver': 'ማህደረ ትውስታ ቆጣቢ',
   Moderate: 'መካከለኛ',
@@ -1139,6 +1152,8 @@ export const am: Dictionary = {
   Elbow: 'ክርን',
   Frame: 'ክፈፍ',
   Ungroup: 'ቡድን ፍታ',
+  Lock: 'ቆልፍ',
+  Unlock: 'ክፈት',
   'The ink of the page': 'የገጹ ቀለም',
   'Write in what is picked': 'በተመረጠው ውስጥ ጻፍ',
   Pen: 'ብዕር',
@@ -1279,10 +1294,18 @@ export const am: Dictionary = {
     '{count} ክፍሎች ተመስጥረዋል፣ እና ያለ Evernote ምንም ሊያነባቸው አይችልም',
   '{count} notes had a reminder, which the export does not carry':
     '{count} ማስታወሻዎች አስታዋሽ ነበራቸው፣ ልኬቱ ግን አይወስደውም',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} አባሪዎች ከመላኪያው ጠፍተዋል ወይም ሊነበቡ አልቻሉም',
+    other: '{count} አባሪዎች ከመላኪያው ጠፍተዋል ወይም ሊነበቡ አልቻሉም',
+  },
   '{count} notes were in the bin and stay there': '{count} ማስታወሻዎች በቆሻሻ ውስጥ ነበሩና እዚያ ይቀራሉ',
   '{count} archived notes are in a folder called Archive':
     '{count} የተቀመጡ ማስታወሻዎች Archive በተባለ ፎልደር ውስጥ ናቸው',
   'The colours a note had are not kept': 'ማስታወሻው የነበሩት ቀለሞች አይቀመጡም',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} ፋይል ሊነበብ ስላልቻለ ቀርቷል',
+    other: '{count} ፋይሎች ሊነበቡ ስላልቻሉ ቀርተዋል',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} የብሎክ ማጣቀሻዎች ወደሚያመለክቱት ቃላት ተጽፈዋል',
   '{count} saved views are left out, and every row is in the table': {
@@ -1309,6 +1332,8 @@ export const am: Dictionary = {
     '{count} የስሜትና የእንቅስቃሴ ካርዶች ሥዕሎች ናቸው፣ ስለዚህ ቃላቶቻቸው ብቻ ይሻገራሉ',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} ማስታወሻዎች Notes ብቻ የሚከፍተው የይለፍ ቃል ጀርባ ናቸው',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} ማስታወሻዎች Bear ብቻ የሚከፍተው የይለፍ ቃል ጀርባ ናቸው',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} ማስታወሻዎች በቅርቡ የጠፋ ውስጥ ናቸውና እዚያ ይቀራሉ',
   '{count} drawings and scans have no picture on this Mac':
@@ -1548,6 +1573,7 @@ export const am: Dictionary = {
   'Ask the model': 'ሞዴሉን ጠይቅ',
   'answered by {model}, {date}': '{model} መለሰ፣ {date}',
   'AI block': 'የAI ብሎክ',
+  'Do with AI': 'በAI አድርግ',
   'Highlight colour': 'የማጉላት ቀለም',
   'A single newline breaks the line': 'አንድ አዲስ መስመር መስመሩን ይሰብራል',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -1865,6 +1891,8 @@ export const am: Dictionary = {
   'Settings › AI': 'ማስተካከያ › AI',
   'New chat': 'አዲስ ውይይት',
   'Ask again': 'እንደገና ጠይቅ',
+  'Continue when the limit resets': 'ገደቡ ሲታደስ ቀጥል',
+  'Continues at {time}': '{time} ላይ ይቀጥላል',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'ማንኛውንም ይጠይቁ፣ ለማከል @፣ ለተጨማሪ /',
   'What can I help with?': 'በምን ልረዳዎት?',
@@ -2334,4 +2362,29 @@ export const am: Dictionary = {
   Peach: 'ኮክ',
   Sage: 'ሴጅ',
   Mist: 'ጭጋግ',
+  // A board, Notion's: its columns, its cards, its settings, a new database
+  'New database': 'አዲስ ዳታቤዝ',
+  'New page': 'አዲስ ገጽ',
+  'Not started': 'አልተጀመረም',
+  'In progress': 'በሂደት ላይ',
+  'No {property}': '{property} የሌለው',
+  '{card} moved to {group}': '{card} ወደ {group} ተንቀሳቅሷል',
+  'Not moved': 'አልተንቀሳቀሰም',
+  Retry: 'እንደገና ይሞክሩ',
+  Calculate: 'አስላ',
+  'Remove sort': 'ቅደም ተከተሉን አስወግድ',
+  'Remove sort?': 'ቅደም ተከተሉ ይወገድ?',
+  Groups: 'ቡድኖች',
+  'Hidden groups': 'የተደበቁ ቡድኖች',
+  'Add as option': 'እንደ አማራጭ አክል',
+  'Move left': 'ወደ ግራ አንቀሳቅስ',
+  'Move right': 'ወደ ቀኝ አንቀሳቅስ',
+  'Delete option': 'አማራጩን አጥፋ',
+  'Colour columns': 'ዓምዶችን ቀለም ቀባ',
+  'Hide empty groups': 'ባዶ ቡድኖችን ደብቅ',
+  'Card size': 'የካርድ መጠን',
+  Small: 'ትንሽ',
+  Large: 'ትልቅ',
+  Both: 'ሁለቱም',
+  'Shown on cards': 'በካርዶች ላይ የሚታዩ',
 }

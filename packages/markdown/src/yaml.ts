@@ -42,6 +42,30 @@ export function unquoted(value: string): string {
   }
 }
 
+/** A value without the comment YAML lets a line end in, and the blanks in front of
+ *  it: a `#` at the start or after a blank, outside quotes. So `a # note` says `a`,
+ *  and `'a # b'` and `a#b` say all of themselves. A quote opens only where a scalar
+ *  or a flow member starts, as in `members` below. */
+export function uncommented(value: string): string {
+  let quote: string | null = null
+
+  for (let at = 0; at < value.length; at++) {
+    const char = value.charAt(at)
+
+    if (quote !== null) {
+      if (quote === '"' && char === '\\') at++
+      else if (quote === "'" && char === "'" && value.charAt(at + 1) === "'") at++
+      else if (char === quote) quote = null
+    } else if (char === '#' && !value.charAt(at - 1).trim()) {
+      return value.slice(0, at).trimEnd()
+    } else if ((char === '"' || char === "'") && /(?:^|[[,])\s*$/.test(value.slice(0, at))) {
+      quote = char
+    }
+  }
+
+  return value
+}
+
 /** A flow sequence: `[a, b, c]`, and `[]` for a list of nothing. */
 const FLOW = /^\[([\s\S]*)\]$/
 
@@ -114,14 +138,18 @@ export function oneLine(value: string): string {
 
 /** What YAML reads as something other than the string it says: nothing at all, a
  *  character that opens a construct where a value begins, a mapping or a comment
- *  opening inside it, a word that is a boolean or a null, or a number. */
+ *  opening inside it, a word that is a boolean or a null, or a number. A number in
+ *  every spelling YAML has for one: `1e3` is a thousand to it, `0x1F` thirty-one and
+ *  `.inf` infinity, and a part number or a code in a column of somebody's table is
+ *  written that way as often as not. */
 function ambiguous(value: string): boolean {
   return (
     !value ||
     /^[-?:,[\]{}#&*!|>'"%@`]/.test(value) ||
     /:\s|:$|\s#/.test(value) ||
     /^(true|false|null|yes|no|on|off|~)$/i.test(value) ||
-    /^[-+]?[\d.]+$/.test(value)
+    /^[-+]?[\d._]+([eE][-+]?\d+)?$/.test(value) ||
+    /^0x[\da-f_]+$|^0o[0-7_]+$|^0b[01_]+$|^[-+]?\.(inf|nan)$/i.test(value)
   )
 }
 

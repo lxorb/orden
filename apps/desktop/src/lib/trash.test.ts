@@ -49,6 +49,9 @@ vi.mock('./tauri', async (importOriginal) => ({
         if (command === 'write_note') notes.set(path, text(args?.content))
         return undefined
       case 'read_tree':
+        // Only the space is a folder; asking after any other path is refused,
+        // as the Rust side refuses a root that is not a folder.
+        if (text(args?.root) !== '/space') throw new Error('not a folder')
         return {
           name: 'space',
           path: '/space',

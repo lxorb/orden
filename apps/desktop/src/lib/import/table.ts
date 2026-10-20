@@ -17,12 +17,16 @@ import { key } from '../i18n.svelte'
 import { recordsOf } from './csv'
 import { type Base, writeBase } from '@nib/bases'
 import { dayOf, noteText, type Meta, propertyName } from './meta'
-import { Names, safeName } from './names'
+import { Names, safeName, withoutNotionId } from './names'
 import type { ImportPlan, Lost, Planned } from './plan'
 import type { Source } from './sources'
 
 /** What a table becomes. */
 export type Rows = 'table' | 'notes'
+
+/** A table's file: a CSV, or the tab separated kind a spreadsheet also saves. Which
+ *  of the two separates the cells is asked of the file itself; see csv.ts. */
+const TABLE = /\.(csv|tsv)$/i
 
 /** The columns that are a date rather than a word, by the names the two
  *  exporters give them. */
@@ -39,12 +43,17 @@ export async function readTable(
   const files: Planned[] = []
   const lost: Lost[] = []
 
-  for (const source of sources) {
-    if (!/\.csv$/i.test(source.path)) continue
+  // Notion writes a database twice, as the view on screen and as `_all`, every
+  // row; where both came, the second is the table.
+  const paths = new Set(sources.map((one) => one.path.toLowerCase()))
 
-    const stem = safeName(
-      (source.path.split('/').pop() ?? source.path).replace(/\.csv$/i, '').replace(/_all$/i, ''),
-    )
+  for (const source of sources) {
+    if (!TABLE.test(source.path)) continue
+    const all = source.path.toLowerCase().replace(/\.csv$/, '_all.csv')
+    if (all !== source.path.toLowerCase() && paths.has(all)) continue
+
+    const name = (source.path.split('/').pop() ?? source.path).replace(/_all(\.csv)$/i, '$1')
+    const stem = safeName(withoutNotionId(name.replace(TABLE, '')))
     const table = recordsOf(await source.text())
     if (!table.columns.length) continue
 
@@ -112,8 +121,10 @@ export function rowNote(
   columns: readonly string[],
   row: Record<string, string>,
 ): { name: string; text: string } {
-  const titleColumn = columns.find((one) => TITLES.test(one)) ?? columns[0] ?? ''
-  const name = safeName(row[titleColumn]?.split('\n')[0] ?? '') || 'Untitled'
+  const titleColumn = titleOf(columns)
+  const said = (row[titleColumn] ?? '').trim()
+  const name = safeName(said.split('\n')[0] ?? '') || 'Untitled'
+  const keys = keysOf(columns)
 
   const meta: Meta = {}
   const extra: [string, string][] = []
@@ -121,13 +132,16 @@ export function rowNote(
 
   for (const column of columns) {
     const value = (row[column] ?? '').trim()
-    if (!value || column === titleColumn) continue
+    const key = keys.get(column) ?? ''
+    // The title is the note's name, and kept as a property as well only where the
+    // name could not say it: a web address, a title with a slash in it, one longer
+    // than a name may be. Otherwise nothing of it would be left.
+    if (!value || (column === titleColumn && !renamed(value, name))) continue
 
-    if (DATES.test(column)) {
-      const day = dayOf(value)
+    if (DATES.test(column) && (key === 'date' || key === 'updated')) {
+      const day = dayIn(value)
       if (day) {
-        if (/created|^date$/i.test(column)) meta.date ??= day
-        else meta.updated ??= day
+        meta[key] ??= day
         continue
       }
     }
@@ -139,12 +153,74 @@ export function rowNote(
       continue
     }
 
-    extra.push([column, value])
+    extra.push([key, value])
   }
 
   if (extra.length) meta.extra = extra
 
-  return { name, text: noteText(name, words.join('\n\n'), meta) }
+  // The title is written here rather than left to `noteText`, which would take the
+  // `## Notes` of a first column of prose for the note's own heading and give it none.
+  return { name, text: noteText(null, [`# ${name}`, ...words].join('\n\n'), meta) }
+}
+
+/** The column a row is named after: the one that says so, or the first. */
+function titleOf(columns: readonly string[]): string {
+  return columns.find((one) => TITLES.test(one)) ?? columns[0] ?? ''
+}
+
+/** Whether a title had to change to be a name, beyond its blanks. */
+function renamed(title: string, name: string): boolean {
+  return title.replace(/\s+/g, ' ') !== name
+}
+
+/** The property each column is written as, the same in every row and in the base.
+ *
+ *  A date column is the note's `date` or `updated`. Two columns that come out as one
+ *  key - `Status?` and `Status!`, or a `Created` and a `Date` - would be one property
+ *  written twice, which is front matter no reader takes at all, so the second steps
+ *  aside as `status-2`. A column whose name has nothing in it to keep is called after
+ *  its place. The date columns are asked first, so the one that says when a row was
+ *  made is the note's `date` whatever stands before it. */
+function keysOf(columns: readonly string[]): Map<string, string> {
+  const keys = new Map<string, string>()
+  const taken = new Set<string>()
+  const take = (column: string, wanted: string) => {
+    let key = wanted
+    for (let step = 2; taken.has(key); step += 1) key = `${wanted}-${step}`
+    taken.add(key)
+    keys.set(column, key)
+  }
+
+  for (const column of columns) {
+    if (DATES.test(column)) take(column, /created|^date$/i.test(column) ? 'date' : 'updated')
+  }
+  for (const [at, column] of columns.entries()) {
+    if (!keys.has(column)) take(column, propertyName(column) || `column-${at + 1}`)
+  }
+
+  return keys
+}
+
+/** The day a date column says, or null where it says less than a day. A spreadsheet
+ *  column called Date holds `12` or `March 2026` as often as a date, and the webview's
+ *  own reading of those is a day it made up - `12` is the first of December 2001 -
+ *  so a day is only read where a year and a day are both written. `4.3.2026` is the
+ *  fourth of March, as everywhere that writes dates with dots. */
+function dayIn(value: string): string | null {
+  if (/^\d{10,19}$/.test(value)) return dayOf(value)
+
+  const dotted = /^(\d{1,2})\.(\d{1,2})\.(\d{4})(?!\d)/.exec(value)
+  if (dotted) return dayOf(`${dotted[3]}-${dotted[2]}-${dotted[1]}`)
+
+  const year = /(?<!\d)\d{4}(?!\d)/.test(value)
+  const day = /(?<!\d)\d{1,2}(?!\d)/.test(value)
+  return year && day ? dayOf(value) : null
+}
+
+/** Whether a row's title is one its note keeps as a property too. */
+function renamedRow(title: string): boolean {
+  const said = title.trim()
+  return said !== '' && renamed(said, safeName(said))
 }
 
 /** The base over a folder of row notes: a table of them, the columns in the file's
@@ -155,12 +231,13 @@ function baseOf(
   columns: readonly string[],
   rows: readonly Record<string, string>[],
 ): string {
-  const title = columns.find((one) => TITLES.test(one)) ?? columns[0] ?? ''
+  const title = titleOf(columns)
+  const keys = keysOf(columns)
   const order = columns
-    .filter((one) => one !== title && !rows.some((row) => (row[one] ?? '').includes('\n')))
-    .map((one) =>
-      DATES.test(one) ? (/created|^date$/i.test(one) ? 'date' : 'updated') : propertyName(one),
-    )
+    .filter((one) => !rows.some((row) => (row[one] ?? '').includes('\n')))
+    // The title column is a property only in the rows whose title is not their name.
+    .filter((one) => one !== title || rows.some((row) => renamedRow(row[one] ?? '')))
+    .map((one) => keys.get(one) ?? '')
   const base: Base = {
     filters: {
       or: [

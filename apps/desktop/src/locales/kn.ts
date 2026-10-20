@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const kn: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'ಎಲ್ಲವೂ ಸಿದ್ಧ',
+  Personalize: 'ವೈಯಕ್ತೀಕರಿಸಿ',
+  Clean: 'ಸ್ವಚ್ಛ',
+  'Live preview': 'ಲೈವ್ ಪೂರ್ವವೀಕ್ಷಣೆ',
+  'Developer mode': 'ಡೆವಲಪರ್ ಮೋಡ್',
+  'Do you write code?': 'ನೀವು ಕೋಡ್ ಬರೆಯುತ್ತೀರಾ?',
+  Yes: 'ಹೌದು',
+  No: 'ಇಲ್ಲ',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'ಇತರ ಆ್ಯಪ್‌ಗಳಿಂದ: {key}',
   'From other apps: set in your system settings':
@@ -83,6 +92,7 @@ export const kn: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'ಒಂದು ಕಾರ್ಯ',
   'One per line': 'ಪ್ರತಿ ಸಾಲಿಗೆ ಒಂದು',
+  'Add with AI': 'AI ಮೂಲಕ ಸೇರಿಸಿ',
   // Tasks: the projects in the panel
   Favorites: 'ಮೆಚ್ಚಿನವು',
   'Add project': 'ಯೋಜನೆ ಸೇರಿಸಿ',
@@ -126,6 +136,7 @@ export const kn: Dictionary = {
   'Pointing hand on buttons': 'ಬಟನ್‌ಗಳ ಮೇಲೆ ಸೂಚಿಸುವ ಕೈ',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'ಕಾರ್ಯ ಸೇರಿಸಿ',
+  'Apple Shortcuts': 'Apple ಶಾರ್ಟ್‌ಕಟ್‌ಗಳು',
   Tomorrow: 'ನಾಳೆ',
   'done {date}': 'ಮುಗಿದಿದೆ {date}',
   'Next week': 'ಮುಂದಿನ ವಾರ',
@@ -188,6 +199,7 @@ export const kn: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'ಎರಡು ಬೆರಳುಗಳಿಂದ ಕ್ಯಾನ್ವಾಸ್ ತಿರುಗಿಸಿ',
+  'Snap the rotation to right angles': 'ತಿರುಗುವಿಕೆಯನ್ನು ಲಂಬಕೋನಗಳಿಗೆ ಸ್ನ್ಯಾಪ್ ಮಾಡಿ',
   'Turn upright': 'ನೇರಗೊಳಿಸಿ',
   Canvas: 'ಕ್ಯಾನ್ವಾಸ್',
   Card: 'ಕಾರ್ಡ್',
@@ -281,6 +293,7 @@ export const kn: Dictionary = {
   Tabs: 'ಟ್ಯಾಬ್‌ಗಳು',
   'Ctrl+Tab in order of use': 'ಬಳಕೆಯ ಕ್ರಮದಲ್ಲಿ Ctrl+Tab',
   'Swipe between pages': 'ಪುಟಗಳ ನಡುವೆ ಸ್ವೈಪ್ ಮಾಡಿ',
+  'Hardware acceleration': 'ಹಾರ್ಡ್‌ವೇರ್ ವೇಗವರ್ಧನೆ',
   'Hidden tabs': 'ಮರೆಮಾಡಿದ ಟ್ಯಾಬ್‌ಗಳು',
   'Memory saver': 'ಮೆಮೊರಿ ಸೇವರ್',
   Moderate: 'ಮಧ್ಯಮ',
@@ -1158,6 +1171,8 @@ export const kn: Dictionary = {
   Elbow: 'ಮೊಣಕೈ ಗೆರೆ',
   Frame: 'ಚೌಕಟ್ಟು',
   Ungroup: 'ಗುಂಪು ಬಿಡಿಸಿ',
+  Lock: 'ಲಾಕ್ ಮಾಡಿ',
+  Unlock: 'ಅನ್‌ಲಾಕ್ ಮಾಡಿ',
   'The ink of the page': 'ಪುಟದ ಶಾಯಿ',
   'Write in what is picked': 'ಆಯ್ದದರಲ್ಲಿ ಬರೆಯಿರಿ',
   Pen: 'ಪೆನ್',
@@ -1302,11 +1317,19 @@ export const kn: Dictionary = {
     '{count} ಭಾಗಗಳು ಎನ್‌ಕ್ರಿಪ್ಟ್ ಆಗಿವೆ, Evernote ಇಲ್ಲದೆ ಅವನ್ನು ಯಾವುದೂ ಓದಲಾಗದು',
   '{count} notes had a reminder, which the export does not carry':
     '{count} ಟಿಪ್ಪಣಿಗಳಿಗೆ ಜ್ಞಾಪನೆ ಇತ್ತು, ಎಕ್ಸ್‌ಪೋರ್ಟ್ ಅದನ್ನು ತರುವುದಿಲ್ಲ',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} ಲಗತ್ತುಗಳು ರಫ್ತಿನಲ್ಲಿ ಇರಲಿಲ್ಲ ಅಥವಾ ಓದಲಾಗಲಿಲ್ಲ',
+    other: '{count} ಲಗತ್ತುಗಳು ರಫ್ತಿನಲ್ಲಿ ಇರಲಿಲ್ಲ ಅಥವಾ ಓದಲಾಗಲಿಲ್ಲ',
+  },
   '{count} notes were in the bin and stay there':
     '{count} ಟಿಪ್ಪಣಿಗಳು ಕಸದಬುಟ್ಟಿಯಲ್ಲಿದ್ದವು, ಅಲ್ಲೇ ಇರುತ್ತವೆ',
   '{count} archived notes are in a folder called Archive':
     '{count} ಆರ್ಕೈವ್ ಟಿಪ್ಪಣಿಗಳು Archive ಫೋಲ್ಡರ್‌ನಲ್ಲಿವೆ',
   'The colours a note had are not kept': 'ಟಿಪ್ಪಣಿಗೆ ಇದ್ದ ಬಣ್ಣಗಳನ್ನು ಇಡಲಾಗುವುದಿಲ್ಲ',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} ಫೈಲ್‌ಗಳನ್ನು ಓದಲಾಗಲಿಲ್ಲ, ಆದ್ದರಿಂದ ಬಿಡಲಾಗಿದೆ',
+    other: '{count} ಫೈಲ್‌ಗಳನ್ನು ಓದಲಾಗಲಿಲ್ಲ, ಆದ್ದರಿಂದ ಬಿಡಲಾಗಿದೆ',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} ಬ್ಲಾಕ್ ಉಲ್ಲೇಖಗಳನ್ನು ಅವು ತೋರಿಸಿದ ಪದಗಳಾಗಿಯೇ ಬರೆಯಲಾಗಿದೆ',
   '{count} saved views are left out, and every row is in the table': {
@@ -1334,6 +1357,8 @@ export const kn: Dictionary = {
     '{count} ಮನಃಸ್ಥಿತಿ ಮತ್ತು ಚಟುವಟಿಕೆ ಕಾರ್ಡುಗಳು ಚಿತ್ರಗಳು, ಹಾಗಾಗಿ ಅವುಗಳ ಪದಗಳಷ್ಟೇ ಬರುತ್ತವೆ',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} ಟಿಪ್ಪಣಿಗಳು ಪಾಸ್‌ವರ್ಡ್ ಹಿಂದಿವೆ, ಅದನ್ನು Notes ಮಾತ್ರ ತೆರೆಯಬಲ್ಲದು',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} ಟಿಪ್ಪಣಿಗಳು ಪಾಸ್‌ವರ್ಡ್ ಹಿಂದಿವೆ, ಅದನ್ನು Bear ಮಾತ್ರ ತೆರೆಯಬಲ್ಲದು',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} ಟಿಪ್ಪಣಿಗಳು ಇತ್ತೀಚೆಗೆ ಅಳಿಸಿದವುಗಳಲ್ಲಿವೆ, ಅಲ್ಲೇ ಉಳಿಯುತ್ತವೆ',
   '{count} drawings and scans have no picture on this Mac':
@@ -1580,6 +1605,7 @@ export const kn: Dictionary = {
   'Ask the model': 'ಮಾದರಿಯನ್ನು ಕೇಳಿ',
   'answered by {model}, {date}': '{model} ಉತ್ತರಿಸಿದೆ, {date}',
   'AI block': 'AI ಬ್ಲಾಕ್',
+  'Do with AI': 'AI ಮೂಲಕ ಮಾಡಿ',
   'Highlight colour': 'ಹೈಲೈಟ್ ಬಣ್ಣ',
   'A single newline breaks the line': 'ಒಂದೇ ಹೊಸ ಸಾಲು ಸಾಲನ್ನು ಮುರಿಯುತ್ತದೆ',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -1907,6 +1933,8 @@ export const kn: Dictionary = {
   'Settings › AI': 'ಸೆಟ್ಟಿಂಗ್‌ಗಳು › AI',
   'New chat': 'ಹೊಸ ಚಾಟ್',
   'Ask again': 'ಮತ್ತೆ ಕೇಳಿ',
+  'Continue when the limit resets': 'ಮಿತಿ ಮರುಹೊಂದಿದಾಗ ಮುಂದುವರಿಸಿ',
+  'Continues at {time}': '{time} ಕ್ಕೆ ಮುಂದುವರಿಯುತ್ತದೆ',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'ಏನಾದರೂ ಕೇಳಿ, ಸೇರಿಸಲು @, ಇನ್ನಷ್ಟಕ್ಕೆ /',
   'What can I help with?': 'ನಾನು ಏನು ಸಹಾಯ ಮಾಡಲಿ?',
@@ -2382,4 +2410,29 @@ export const kn: Dictionary = {
   Peach: 'ಪೀಚ್',
   Sage: 'ಸೇಜ್',
   Mist: 'ಮಂಜು',
+  // A board, Notion's: its columns, its cards, its settings, a new database
+  'New database': 'ಹೊಸ ಡೇಟಾಬೇಸ್',
+  'New page': 'ಹೊಸ ಪುಟ',
+  'Not started': 'ಪ್ರಾರಂಭಿಸಿಲ್ಲ',
+  'In progress': 'ಪ್ರಗತಿಯಲ್ಲಿದೆ',
+  'No {property}': '{property} ಇಲ್ಲ',
+  '{card} moved to {group}': '{card} ಅನ್ನು {group} ಗೆ ಸರಿಸಲಾಗಿದೆ',
+  'Not moved': 'ಸರಿಸಲಾಗಿಲ್ಲ',
+  Retry: 'ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ',
+  Calculate: 'ಲೆಕ್ಕಹಾಕಿ',
+  'Remove sort': 'ಕ್ರಮವನ್ನು ತೆಗೆದುಹಾಕಿ',
+  'Remove sort?': 'ಕ್ರಮವನ್ನು ತೆಗೆದುಹಾಕುವುದೇ?',
+  Groups: 'ಗುಂಪುಗಳು',
+  'Hidden groups': 'ಮರೆಮಾಡಿದ ಗುಂಪುಗಳು',
+  'Add as option': 'ಆಯ್ಕೆಯಾಗಿ ಸೇರಿಸಿ',
+  'Move left': 'ಎಡಕ್ಕೆ ಸರಿಸಿ',
+  'Move right': 'ಬಲಕ್ಕೆ ಸರಿಸಿ',
+  'Delete option': 'ಆಯ್ಕೆಯನ್ನು ಅಳಿಸಿ',
+  'Colour columns': 'ಕಾಲಮ್‌ಗಳಿಗೆ ಬಣ್ಣ ನೀಡಿ',
+  'Hide empty groups': 'ಖಾಲಿ ಗುಂಪುಗಳನ್ನು ಮರೆಮಾಡಿ',
+  'Card size': 'ಕಾರ್ಡ್ ಗಾತ್ರ',
+  Small: 'ಸಣ್ಣ',
+  Large: 'ದೊಡ್ಡ',
+  Both: 'ಎರಡೂ',
+  'Shown on cards': 'ಕಾರ್ಡ್‌ಗಳಲ್ಲಿ ತೋರಿಸಲಾಗಿದೆ',
 }

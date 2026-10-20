@@ -23,7 +23,10 @@
  *  what reads as a node becomes one and what does not is left out rather than
  *  taking the whole canvas with it. Writing puts the spec's fields down in the
  *  order the spec lists them and leaves out every one that is absent, so a
- *  canvas that has not changed is written back byte for byte. */
+ *  canvas that has not changed is written back byte for byte. What is left out of
+ *  reading is not lost from the file, though: setting the icon changes the JSON's own
+ *  key and nothing else, and a merge of two copies puts back whatever either held that
+ *  this module does not read (canvas-extras.ts, #501). */
 
 import { oneEdit, type TextEdit } from './edits'
 import { isPaper, type Paper, PAPERS } from './papers'
@@ -68,6 +71,10 @@ interface NodeBase {
   width: number
   height: number
   color?: CanvasColour
+  /** Held where it is, as a picture under the writing is: nothing picks it, drags it,
+   *  resizes it or bands it until its menu unlocks it (#643). Which nodes are locked is
+   *  listed under `nib.locked`, so the spec's own records stay the spec's. */
+  locked?: true
 }
 
 interface TextNode extends NodeBase {
@@ -368,6 +375,8 @@ function readNode(value: unknown): CanvasNode | null {
     width: Math.max(1, pixels(value.width, DEFAULT_WIDTH)),
     height: Math.max(1, pixels(value.height, DEFAULT_HEIGHT)),
     ...colour(value.color),
+    // Never in a file's own record, as `bare` is not, but a room keeps it there.
+    ...(value.locked === true ? { locked: true } : {}),
   }
 
   switch (value.type) {
@@ -534,6 +543,7 @@ function readShape(value: unknown): ShapeNode | null {
     width: Math.max(1, pixels(value.width, DEFAULT_WIDTH)),
     height: Math.max(1, pixels(value.height, DEFAULT_HEIGHT)),
     ...colour(value.color),
+    ...(value.locked === true ? { locked: true } : {}),
     ...(value.fill === true ? { fill: true } : {}),
     ...(value.up === true ? { up: true } : {}),
     ...(isString(value.text) && value.text ? { text: value.text } : {}),
@@ -700,18 +710,29 @@ export function nodeOf(value: unknown): CanvasNode | null {
 }
 
 /** A canvas out of the text of a file. An empty one for a file that is not JSON
- *  at all, which is what a new or a truncated file looks like: an empty plane is
- *  something to draw on, and an error message is not. */
+ *  at all: a reader that only looks at a plane - search, a merge, an embed - takes
+ *  nothing from one it cannot read. Whether a file may be drawn on, and so written
+ *  over, is `canvasIn`'s question, asked when the file is opened. */
 export function readCanvas(text: string): Canvas {
+  return canvasIn(text) ?? emptyCanvas()
+}
+
+/** The canvas in the text of a file, or null for text that is not one: JSON that
+ *  does not parse, or that parses to something other than an object. Blank text is
+ *  a new plane, and is one. `readCanvas` is this, with the refusal turned into an
+ *  empty plane. */
+export function canvasIn(text: string): Canvas | null {
+  if (!text.trim()) return emptyCanvas()
+
   let parsed: unknown
   try {
     parsed = JSON.parse(text) as unknown
   } catch {
-    // Not JSON, or nothing at all. Either way there is no canvas in it.
-    return emptyCanvas()
+    // Not JSON, so there is no canvas in it.
+    return null
   }
 
-  if (!isRecord(parsed)) return emptyCanvas()
+  if (!isRecord(parsed)) return null
 
   const nodes: CanvasNode[] = []
   const ids = new Set<string>()
@@ -793,6 +814,14 @@ export function readCanvas(text: string): Canvas {
       const record = paged.get(node.id)
       const page = record ? asPage(node, record) : null
       if (page) nodes[at] = page
+    }
+  }
+
+  // What is locked in place; see `locked`. After the pages, which are made afresh.
+  if (Array.isArray(nib.locked)) {
+    const held = new Set(nib.locked.filter(isString))
+    for (const [at, node] of nodes.entries()) {
+      if (held.has(node.id)) nodes[at] = { ...node, locked: true }
     }
   }
 
@@ -1026,6 +1055,7 @@ export function canvasRuns(canvas: Canvas): string[][] {
   const words = canvas.nodes
     .filter((node) => node.type === 'text' && node.bare)
     .map((node) => node.id)
+  const locked = canvas.nodes.filter((node) => node.locked).map((node) => node.id)
   const at = Object.keys(canvas.at).length ? timeLines(canvas.at) : null
   const gone = Object.keys(canvas.gone).length ? timeLines(canvas.gone) : null
   // First in `nib`, because it is the one key in there a person would ever open the
@@ -1035,7 +1065,7 @@ export function canvasRuns(canvas: Canvas): string[][] {
     canvas.icon && canvas.iconColor ? `,\n\t\t"iconColor": ${JSON.stringify(canvas.iconColor)}` : ''
   const nib =
     icon !== '' ||
-    [pages, canvas.ink, shapes, order, words].some((list) => list.length > 0) ||
+    [pages, canvas.ink, shapes, order, words, locked].some((list) => list.length > 0) ||
     at !== null ||
     gone !== null
 
@@ -1063,6 +1093,7 @@ export function canvasRuns(canvas: Canvas): string[][] {
       closes(2, shapes.length) +
         (order.length ? `,\n\t\t"order": ${printed(order, 2)}` : '') +
         (words.length ? `,\n\t\t"words": ${printed(words, 2)}` : '') +
+        (locked.length ? `,\n\t\t"locked": ${printed(locked, 2)}` : '') +
         (at ? ',\n\t\t"at": ' : ''),
     ],
     at ?? [],
@@ -1099,11 +1130,13 @@ export function blankCanvas(): string {
  *  snapshotted and what one undo puts back. `frontMatterEdit` answers exactly this
  *  question for a note; this is its twin for the format that has no front matter.
  *
- *  The file is read and written back, because `nib.icon` sits in JSON rather than
- *  on a line of its own. That costs nothing for a canvas Orden wrote - writing one
- *  is exact, so the only characters that differ are the key - and for a canvas
- *  written by hand it comes out as the file reformatted, which is what any change
- *  to it would have been anyway.
+ *  `nib.icon` and `nib.iconColor` are changed in the file's JSON and nothing else is:
+ *  the file is not read as a canvas and written back, which would leave out whatever
+ *  this build does not read - another app's nodes and the edges that end at them, the
+ *  fields and keys the spec does not name (#501). For a canvas Orden wrote, whose text
+ *  is exactly what `JSON.stringify` prints, the only characters that differ are the
+ *  key's; a canvas written by hand comes out reformatted, which is what any change to
+ *  it would have been anyway.
  *
  *  Nothing at all for a file that is not JSON: an empty canvas standing in for
  *  something unreadable is what lets a truncated file be drawn on, and it must
@@ -1119,7 +1152,27 @@ export function canvasIconEdit(
   const wanted = tint === null || name === null ? null : tint
   if (canvas.icon === name && (canvas.iconColor ?? null) === wanted) return null
 
-  return oneEdit(text, writeCanvas({ ...canvas, icon: name, iconColor: wanted }))
+  // A file with nothing in it yet is a blank canvas wearing the icon, as before.
+  if (!text.trim()) return oneEdit(text, writeCanvas({ ...canvas, icon: name, iconColor: wanted }))
+
+  const file = JSON.parse(text) as Record<string, unknown>
+  const rest: Record<string, unknown> = { ...(isRecord(file.nib) ? file.nib : {}) }
+  const version = rest.version ?? NIB_VERSION
+  delete rest.version
+  delete rest.icon
+  delete rest.iconColor
+  const nib: Record<string, unknown> = {
+    version,
+    ...(name ? { icon: name } : {}),
+    ...(name && wanted ? { iconColor: wanted } : {}),
+    ...rest,
+  }
+  // Nothing of ours left but the version is no key of ours at all, the way
+  // `writeCanvas` leaves `nib` out of a canvas that has nothing to put in it.
+  if (Object.keys(nib).length > 1) file.nib = nib
+  else delete file.nib
+
+  return oneEdit(text, `${JSON.stringify(file, null, '\t')}\n`)
 }
 
 function isCanvasJson(text: string): boolean {

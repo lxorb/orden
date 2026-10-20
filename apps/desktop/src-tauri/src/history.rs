@@ -15,7 +15,7 @@ use tauri::AppHandle;
 
 use crate::clock;
 use crate::paths::{
-    cannot, config_dir, folded, folder_key, inside, made, write_atomically, ORIGIN,
+    cannot, config_dir, folded, inside, kept_folder, made, write_atomically, ORIGIN,
 };
 
 /// How many snapshots of one note are kept before the oldest is dropped.
@@ -269,7 +269,7 @@ fn rehome_in(root: &Path, from: &str, to: &str) -> usize {
         }
 
         let now = format!("{to}{rest}");
-        let there = root.join(folder_key(&now));
+        let there = kept_folder(root, &now);
         // A note already written to at its new path keeps the history it has there;
         // the two are not merged, and the older one waits where it was.
         if there.exists() {
@@ -310,7 +310,7 @@ fn history_dir(app: &AppHandle) -> Result<PathBuf, String> {
 
 /// The folder this one note's history lives in, made if it is not there yet.
 fn history_root(app: &AppHandle, note_path: &str) -> Result<PathBuf, String> {
-    let dir = history_dir(app)?.join(folder_key(note_path));
+    let dir = kept_folder(&history_dir(app)?, note_path);
     made(&dir)?;
     Ok(dir)
 }

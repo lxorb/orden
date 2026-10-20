@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ms: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'Semua sedia',
+  Personalize: 'Peribadikan',
+  Clean: 'Bersih',
+  'Live preview': 'Pratonton langsung',
+  'Developer mode': 'Mod pembangun',
+  'Do you write code?': 'Adakah anda menulis kod?',
+  Yes: 'Ya',
+  No: 'Tidak',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'Dari apl lain: {key}',
   'From other apps: set in your system settings': 'Dari apl lain: tetapkan dalam tetapan sistem',
@@ -79,6 +88,7 @@ export const ms: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'Satu tugas',
   'One per line': 'Satu setiap baris',
+  'Add with AI': 'Tambah dengan AI',
   // Tasks: the projects in the panel
   Favorites: 'Kegemaran',
   'Add project': 'Tambah projek',
@@ -122,6 +132,7 @@ export const ms: Dictionary = {
   'Pointing hand on buttons': 'Tangan menuding pada butang',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Tambah tugasan',
+  'Apple Shortcuts': 'Apple Pintasan',
   Tomorrow: 'Esok',
   'done {date}': 'selesai {date}',
   'Next week': 'Minggu depan',
@@ -184,6 +195,7 @@ export const ms: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'Putar kanvas dengan dua jari',
+  'Snap the rotation to right angles': 'Selarikan putaran pada sudut tegak',
   'Turn upright': 'Tegakkan',
   Canvas: 'Kanvas',
   Card: 'Kad',
@@ -278,6 +290,7 @@ export const ms: Dictionary = {
   Tabs: 'Tab',
   'Ctrl+Tab in order of use': 'Ctrl+Tab mengikut urutan penggunaan',
   'Swipe between pages': 'Leret antara halaman',
+  'Hardware acceleration': 'Pecutan perkakasan',
   'Hidden tabs': 'Tab tersembunyi',
   'Memory saver': 'Penjimat memori',
   Moderate: 'Sederhana',
@@ -1149,6 +1162,8 @@ export const ms: Dictionary = {
   Elbow: 'Siku',
   Frame: 'Kerangka',
   Ungroup: 'Buang kumpulan',
+  Lock: 'Kunci',
+  Unlock: 'Buka kunci',
   'The ink of the page': 'Dakwat halaman',
   'Write in what is picked': 'Tulis dalam yang dipilih',
   Pen: 'Pen',
@@ -1289,11 +1304,15 @@ export const ms: Dictionary = {
     '{count} bahagian tersulit dan tiada apa-apa boleh membacanya tanpa Evernote',
   '{count} notes had a reminder, which the export does not carry':
     '{count} nota mempunyai peringatan, yang tidak dibawa oleh eksport',
+  '{count} attachments were missing from the export or could not be read':
+    '{count} lampiran tiada dalam eksport atau tidak dapat dibaca',
   '{count} notes were in the bin and stay there':
     '{count} nota ada dalam tong sampah dan kekal di sana',
   '{count} archived notes are in a folder called Archive':
     '{count} nota terarkib ada dalam folder bernama Archive',
   'The colours a note had are not kept': 'Warna yang ada pada nota tidak disimpan',
+  '{count} files could not be read, so they were left out':
+    '{count} fail tidak dapat dibaca, jadi ditinggalkan',
   '{count} block references were written out as the words they pointed at':
     '{count} rujukan blok ditulis sebagai perkataan yang dirujuknya',
   '{count} saved views are left out, and every row is in the table':
@@ -1319,6 +1338,8 @@ export const ms: Dictionary = {
     '{count} kad suasana dan aktiviti ialah lukisan, jadi hanya perkataannya sampai',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} nota berada di sebalik kata laluan yang hanya Notes boleh buka',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} nota berada di sebalik kata laluan yang hanya Bear boleh buka',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} nota berada dalam Baru dihapuskan dan kekal di sana',
   '{count} drawings and scans have no picture on this Mac':
@@ -1559,6 +1580,7 @@ export const ms: Dictionary = {
   'Ask the model': 'Tanya model',
   'answered by {model}, {date}': 'dijawab {model}, {date}',
   'AI block': 'Blok AI',
+  'Do with AI': 'Lakukan dengan AI',
   'Highlight colour': 'Warna sorotan',
   'A single newline breaks the line': 'Satu baris baharu memutuskan baris',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -1885,6 +1907,8 @@ export const ms: Dictionary = {
   'Settings › AI': 'Tetapan › AI',
   'New chat': 'Sembang baharu',
   'Ask again': 'Tanya lagi',
+  'Continue when the limit resets': 'Teruskan apabila had ditetapkan semula',
+  'Continues at {time}': 'Diteruskan pada {time}',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Tanya apa sahaja, @ untuk tambah, / untuk lagi',
   'What can I help with?': 'Apa yang boleh saya bantu?',
@@ -2353,4 +2377,29 @@ export const ms: Dictionary = {
   Peach: 'Pic',
   Sage: 'Sage',
   Mist: 'Kabus',
+  // A board, Notion's: its columns, its cards, its settings, a new database
+  'New database': 'Pangkalan data baharu',
+  'New page': 'Halaman baharu',
+  'Not started': 'Belum dimulakan',
+  'In progress': 'Sedang berjalan',
+  'No {property}': 'Tiada {property}',
+  '{card} moved to {group}': '{card} dialihkan ke {group}',
+  'Not moved': 'Tidak dialihkan',
+  Retry: 'Cuba lagi',
+  Calculate: 'Kira',
+  'Remove sort': 'Buang susunan',
+  'Remove sort?': 'Buang susunan?',
+  Groups: 'Kumpulan',
+  'Hidden groups': 'Kumpulan tersembunyi',
+  'Add as option': 'Tambah sebagai pilihan',
+  'Move left': 'Alih ke kiri',
+  'Move right': 'Alih ke kanan',
+  'Delete option': 'Hapuskan pilihan',
+  'Colour columns': 'Warnakan lajur',
+  'Hide empty groups': 'Sembunyikan kumpulan kosong',
+  'Card size': 'Saiz kad',
+  Small: 'Kecil',
+  Large: 'Besar',
+  Both: 'Kedua-duanya',
+  'Shown on cards': 'Ditunjukkan pada kad',
 }

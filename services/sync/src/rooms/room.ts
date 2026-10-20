@@ -758,7 +758,11 @@ export class NoteRoom implements DurableObject {
       socket.close(TOO_LARGE, TOO_LARGE_IN_A_ROOM)
       return
     }
-    const answer = receive(said, this.state.doc, this.awareness, socket)
+    // A socket speaks only for carets no other socket here announced first, which is
+    // also what keeps `deviceOf` naming the one who typed.
+    const answer = receive(said, this.state.doc, this.awareness, socket, (client) =>
+      this.ctx.getWebSockets().every((one) => one === socket || !announcedBy(one).includes(client)),
+    )
     if (answer) socket.send(answer)
   }
 

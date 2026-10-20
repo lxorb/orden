@@ -181,6 +181,22 @@ describe('a Chrome profile brought into nib', () => {
     expect(said).toEqual(['1 page not on the web stays behind'])
   })
 
+  test("brings the Google account's bookmarks a signed-in profile keeps apart", async () => {
+    const account = {
+      roots: {
+        bookmark_bar: {
+          children: [{ type: 'url', url: 'https://wiki.example.com/', name: 'Wiki' }],
+        },
+      },
+    }
+    files.set('AccountBookmarks', toBase64(new TextEncoder().encode(JSON.stringify(account))))
+
+    await landBrowser({ ...CHROME, files: ['AccountBookmarks', ...CHROME.files] }, false)
+
+    const paths = written[0]?.files.map((one) => one.path) ?? []
+    expect(paths).toEqual(['Bookmarks/Bookmarks bar/Wiki.url'])
+  })
+
   test('brings the bookmarks alone where the session is encrypted, and says so', async () => {
     files.set('Bookmarks', bookmarksFile())
     files.set('Sessions_Encrypted/Session_2', toBase64(chromium.LOCKED))

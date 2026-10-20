@@ -34,6 +34,12 @@ describe('breaking a note into slides', () => {
     expect(shown(note)).toEqual(['# One', '# Two'])
   })
 
+  test('empty front matter is not the first slide', () => {
+    const note = '---\n---\n# Title slide\n\n---\n\n# Second\n'
+    expect(shown(note)).toEqual(['# Title slide', '# Second'])
+    expect(isDeck(note)).toBe(true)
+  })
+
   test('front matter alone leaves one slide', () => {
     expect(shown('---\ntitle: Deck\n---\n\n# One')).toEqual(['# One'])
     expect(isDeck('---\ntitle: Deck\n---\n\n# One')).toBe(false)

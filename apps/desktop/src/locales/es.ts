@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const es: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'Todo listo',
+  Personalize: 'Personalizar',
+  Clean: 'Limpio',
+  'Live preview': 'Vista previa en vivo',
+  'Developer mode': 'Modo desarrollador',
+  'Do you write code?': '¿Escribes código?',
+  Yes: 'Sí',
+  No: 'No',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'Desde otras apps: {key}',
   'From other apps: set in your system settings':
@@ -84,6 +93,7 @@ export const es: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'Una tarea',
   'One per line': 'Una por línea',
+  'Add with AI': 'Añadir con IA',
   // Tasks: the projects in the panel
   Favorites: 'Favoritos',
   'Add project': 'Añadir proyecto',
@@ -127,6 +137,7 @@ export const es: Dictionary = {
   'Pointing hand on buttons': 'Mano señaladora en los botones',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Añadir tarea',
+  'Apple Shortcuts': 'Apple Atajos',
   Tomorrow: 'Mañana',
   'done {date}': 'hecha {date}',
   'Next week': 'La próxima semana',
@@ -145,6 +156,7 @@ export const es: Dictionary = {
   'Smart dates': 'Fechas inteligentes',
   'From any app': 'Desde cualquier app',
   'Rotate a canvas with two fingers': 'Girar un lienzo con dos dedos',
+  'Snap the rotation to right angles': 'Ajustar el giro a ángulos rectos',
   'Turn upright': 'Enderezar',
   'Show tasks without a start date in Today': 'Mostrar en Hoy las tareas sin fecha de inicio',
   'Every day': 'Cada día',
@@ -283,6 +295,7 @@ export const es: Dictionary = {
   Tabs: 'Pestañas',
   'Ctrl+Tab in order of use': 'Ctrl+Tab por orden de uso',
   'Swipe between pages': 'Deslizar entre páginas',
+  'Hardware acceleration': 'Aceleración por hardware',
   'Hidden tabs': 'Pestañas ocultas',
   'Memory saver': 'Ahorro de memoria',
   Moderate: 'Moderado',
@@ -1169,6 +1182,8 @@ export const es: Dictionary = {
   Elbow: 'Codo',
   Frame: 'Marco',
   Ungroup: 'Desagrupar',
+  Lock: 'Bloquear',
+  Unlock: 'Desbloquear',
   'The ink of the page': 'La tinta de la página',
   'Write in what is picked': 'Escribir en lo seleccionado',
   Pen: 'Pluma',
@@ -1317,11 +1332,21 @@ export const es: Dictionary = {
     '{count} pasajes están cifrados y nada puede leerlos sin Evernote',
   '{count} notes had a reminder, which the export does not carry':
     '{count} notas tenían un recordatorio, que la exportación no trae',
+  '{count} attachments were missing from the export or could not be read': {
+    many: '{count} adjuntos faltaban en la exportación o no se pudieron leer',
+    one: '{count} adjunto faltaba en la exportación o no se pudo leer',
+    other: '{count} adjuntos faltaban en la exportación o no se pudieron leer',
+  },
   '{count} notes were in the bin and stay there':
     '{count} notas estaban en la papelera y ahí se quedan',
   '{count} archived notes are in a folder called Archive':
     '{count} notas archivadas están en una carpeta llamada Archive',
   'The colours a note had are not kept': 'Los colores que tenía una nota no se conservan',
+  '{count} files could not be read, so they were left out': {
+    many: '{count} archivos no se pudieron leer, así que se dejaron fuera',
+    one: '{count} archivo no se pudo leer, así que se dejó fuera',
+    other: '{count} archivos no se pudieron leer, así que se dejaron fuera',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} referencias de bloque se escribieron como las palabras a las que apuntaban',
   '{count} saved views are left out, and every row is in the table': {
@@ -1350,6 +1375,8 @@ export const es: Dictionary = {
     '{count} tarjetas de ánimo y actividad son dibujos, así que solo pasan sus palabras',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} notas están tras una contraseña que solo Notas puede abrir',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} notas están tras una contraseña que solo Bear puede abrir',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} notas están en Eliminados recientemente y ahí se quedan',
   '{count} drawings and scans have no picture on this Mac':
@@ -1607,6 +1634,7 @@ export const es: Dictionary = {
   'Ask the model': 'Preguntar al modelo',
   'answered by {model}, {date}': 'respondido por {model}, {date}',
   'AI block': 'Bloque de IA',
+  'Do with AI': 'Hacer con IA',
   'Highlight colour': 'Color de resaltado',
   'A single newline breaks the line': 'Un solo salto de línea rompe la línea',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -1941,6 +1969,8 @@ export const es: Dictionary = {
   'Settings › AI': 'Ajustes › IA',
   'New chat': 'Nuevo chat',
   'Ask again': 'Volver a preguntar',
+  'Continue when the limit resets': 'Continuar cuando se restablezca el límite',
+  'Continues at {time}': 'Continúa a las {time}',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Pregunta lo que sea, @ para añadir, / para más',
   'What can I help with?': '¿En qué puedo ayudarte?',
@@ -2418,4 +2448,29 @@ export const es: Dictionary = {
   Peach: 'Melocotón',
   Sage: 'Salvia',
   Mist: 'Niebla',
+  // A board, Notion's: its columns, its cards, its settings, a new database
+  'New database': 'Nueva base de datos',
+  'New page': 'Nueva página',
+  'Not started': 'Sin empezar',
+  'In progress': 'En curso',
+  'No {property}': 'Sin {property}',
+  '{card} moved to {group}': 'Se movió {card} a {group}',
+  'Not moved': 'No se movió',
+  Retry: 'Reintentar',
+  Calculate: 'Calcular',
+  'Remove sort': 'Quitar orden',
+  'Remove sort?': '¿Quitar orden?',
+  Groups: 'Grupos',
+  'Hidden groups': 'Grupos ocultos',
+  'Add as option': 'Añadir como opción',
+  'Move left': 'Mover a la izquierda',
+  'Move right': 'Mover a la derecha',
+  'Delete option': 'Eliminar opción',
+  'Colour columns': 'Colorear columnas',
+  'Hide empty groups': 'Ocultar grupos vacíos',
+  'Card size': 'Tamaño de tarjeta',
+  Small: 'Pequeño',
+  Large: 'Grande',
+  Both: 'Ambos',
+  'Shown on cards': 'Visible en las tarjetas',
 }

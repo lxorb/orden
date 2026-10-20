@@ -318,6 +318,9 @@ describe.runIf(linux)('through a restart of nibd', () => {
     })
     const saved = await first.save(Date.now())
     first.detach()
+    // The output a save hands on as it is taken reached the device before nibd went away.
+    await seen.caught()
+    expect(seen.next).toBeGreaterThanOrEqual(saved.seq)
     // nibd is away: the loop goes on in its holder, which keeps what it prints.
     await new Promise((resolve) => setTimeout(resolve, 1500))
 
