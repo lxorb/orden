@@ -173,7 +173,7 @@ export const TAB_KINDS = {
     glyph: 'ask',
     liveMark: false,
     editor: false,
-    takesDrops: false,
+    takesDrops: true,
     ownBar: false,
     fileDocument: true,
     plane: false,
