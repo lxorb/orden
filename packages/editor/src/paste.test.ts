@@ -201,6 +201,12 @@ describe('an address pasted over a selection', () => {
     expect(pasted('- «one\n- two»', URL)).toBeNull()
   })
 
+  test('escapes a plain bracket among the words, and leaves markup alone', () => {
+    expect(pasted('see «a] b» now', URL)).toBe(`see [a\\] b](${URL}) now`)
+    expect(pasted('«[x [y](https://a.ch) z»', URL)).toBe(`[\\[x [y](https://a.ch) z](${URL})`)
+    expect(pasted('«a\\] `b]` [[c]] d»', URL)).toBe(`[a\\] \`b]\` [[c]] d](${URL})`)
+  })
+
   test('does not reach across paragraphs', () => {
     expect(pasted('«one\n\ntwo»', URL)).toBeNull()
   })

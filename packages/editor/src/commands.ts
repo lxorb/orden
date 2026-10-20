@@ -694,7 +694,7 @@ export function insertTable(rows = 2, columns = 2): StateCommand {
   return insertBlock(() => ({ text: [header, divider, ...body].join('\n'), caret: 2 }))
 }
 
-const INLINE_MARKERS = /(\*\*|__|\*|_|~~|==|`)/g
+const INLINE_MARKERS = /(\*\*|\*|~~|==|`|(?<![\p{L}\p{N}])__?|__?(?![\p{L}\p{N}]))/gu
 
 /** Strips inline markers from the selection - Typora's Clear Format. */
 export const clearFormatting: StateCommand = ({ state, dispatch }) => {
