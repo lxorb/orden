@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ptBR: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'Tudo pronto',
+  Personalize: 'Personalizar',
+  Clean: 'Limpo',
+  'Live preview': 'Prévia ao vivo',
+  'Developer mode': 'Modo desenvolvedor',
+  'Do you write code?': 'Você escreve código?',
+  Yes: 'Sim',
+  No: 'Não',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'De outros apps: {key}',
   'From other apps: set in your system settings':
@@ -84,6 +93,7 @@ export const ptBR: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'Uma tarefa',
   'One per line': 'Uma por linha',
+  'Add with AI': 'Adicionar com IA',
   // Tasks: the projects in the panel
   Favorites: 'Favoritos',
   'Add project': 'Adicionar projeto',
@@ -127,6 +137,7 @@ export const ptBR: Dictionary = {
   'Pointing hand on buttons': 'Mão apontando nos botões',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Adicionar tarefa',
+  'Apple Shortcuts': 'Apple Atalhos',
   Tomorrow: 'Amanhã',
   'done {date}': 'feita {date}',
   'Next week': 'Semana que vem',
@@ -189,6 +200,7 @@ export const ptBR: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'Girar uma tela com dois dedos',
+  'Snap the rotation to right angles': 'Encaixar a rotação em ângulos retos',
   'Turn upright': 'Endireitar',
   Canvas: 'Quadro',
   Card: 'Cartão',
@@ -282,6 +294,7 @@ export const ptBR: Dictionary = {
   Tabs: 'Abas',
   'Ctrl+Tab in order of use': 'Ctrl+Tab por ordem de uso',
   'Swipe between pages': 'Passar o dedo entre páginas',
+  'Hardware acceleration': 'Aceleração de hardware',
   'Hidden tabs': 'Abas ocultas',
   'Memory saver': 'Economia de memória',
   Moderate: 'Moderado',
@@ -1165,6 +1178,8 @@ export const ptBR: Dictionary = {
   Elbow: 'Cotovelo',
   Frame: 'Moldura',
   Ungroup: 'Desagrupar',
+  Lock: 'Bloquear',
+  Unlock: 'Desbloquear',
   'The ink of the page': 'A tinta da página',
   'Write in what is picked': 'Escrever no que está selecionado',
   Pen: 'Caneta',
@@ -1313,10 +1328,20 @@ export const ptBR: Dictionary = {
     '{count} trechos estão criptografados e nada os lê sem o Evernote',
   '{count} notes had a reminder, which the export does not carry':
     '{count} notas tinham um lembrete, que a exportação não traz',
+  '{count} attachments were missing from the export or could not be read': {
+    many: '{count} anexos faltavam na exportação ou não puderam ser lidos',
+    one: '{count} anexo faltava na exportação ou não pôde ser lido',
+    other: '{count} anexos faltavam na exportação ou não puderam ser lidos',
+  },
   '{count} notes were in the bin and stay there': '{count} notas estavam na lixeira e ficam lá',
   '{count} archived notes are in a folder called Archive':
     '{count} notas arquivadas estão numa pasta chamada Archive',
   'The colours a note had are not kept': 'As cores que uma nota tinha não ficam',
+  '{count} files could not be read, so they were left out': {
+    many: '{count} arquivos não puderam ser lidos e ficaram de fora',
+    one: '{count} arquivo não pôde ser lido e ficou de fora',
+    other: '{count} arquivos não puderam ser lidos e ficaram de fora',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} referências de bloco foram escritas como as palavras a que apontavam',
   '{count} saved views are left out, and every row is in the table': {
@@ -1345,6 +1370,8 @@ export const ptBR: Dictionary = {
     '{count} cartões de humor e atividade são desenhos, então só as palavras vêm',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} notas estão atrás de uma senha que só o Notas abre',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} notas estão atrás de uma senha que só o Bear abre',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} notas estão em Excluídos recentemente e ficam lá',
   '{count} drawings and scans have no picture on this Mac':
@@ -1596,6 +1623,7 @@ export const ptBR: Dictionary = {
   'Ask the model': 'Perguntar ao modelo',
   'answered by {model}, {date}': 'respondido por {model}, {date}',
   'AI block': 'Bloco de IA',
+  'Do with AI': 'Fazer com IA',
   'Highlight colour': 'Cor do destaque',
   'A single newline breaks the line': 'Uma única quebra de linha quebra a linha',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -1926,6 +1954,8 @@ export const ptBR: Dictionary = {
   'Settings › AI': 'Configurações › IA',
   'New chat': 'Nova conversa',
   'Ask again': 'Perguntar de novo',
+  'Continue when the limit resets': 'Continuar quando o limite for renovado',
+  'Continues at {time}': 'Continua às {time}',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Pergunte qualquer coisa, @ para anexar, / para mais',
   'What can I help with?': 'Como posso ajudar?',
@@ -2402,4 +2432,29 @@ export const ptBR: Dictionary = {
   Peach: 'Pêssego',
   Sage: 'Sálvia',
   Mist: 'Névoa',
+  // A board, Notion's: its columns, its cards, its settings, a new database
+  'New database': 'Novo banco de dados',
+  'New page': 'Nova página',
+  'Not started': 'Não iniciado',
+  'In progress': 'Em andamento',
+  'No {property}': 'Sem {property}',
+  '{card} moved to {group}': '{card} movido para {group}',
+  'Not moved': 'Não movido',
+  Retry: 'Tentar novamente',
+  Calculate: 'Calcular',
+  'Remove sort': 'Remover ordenação',
+  'Remove sort?': 'Remover ordenação?',
+  Groups: 'Grupos',
+  'Hidden groups': 'Grupos ocultos',
+  'Add as option': 'Adicionar como opção',
+  'Move left': 'Mover para a esquerda',
+  'Move right': 'Mover para a direita',
+  'Delete option': 'Excluir opção',
+  'Colour columns': 'Colorir colunas',
+  'Hide empty groups': 'Ocultar grupos vazios',
+  'Card size': 'Tamanho do cartão',
+  Small: 'Pequeno',
+  Large: 'Grande',
+  Both: 'Ambos',
+  'Shown on cards': 'Exibido nos cartões',
 }

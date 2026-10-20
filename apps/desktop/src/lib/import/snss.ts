@@ -39,12 +39,15 @@ export interface SnssSession {
 /** The commands this reads, by Chromium's numbers. */
 const SET_TAB_WINDOW = 0
 const SET_TAB_INDEX_IN_WINDOW = 2
+const TAB_NAVIGATION_PATH_PRUNED_FROM_BACK = 5
 const UPDATE_TAB_NAVIGATION = 6
 const SET_SELECTED_NAVIGATION_INDEX = 7
 const SET_WINDOW_TYPE = 9
+const TAB_NAVIGATION_PATH_PRUNED_FROM_FRONT = 11
 const SET_PINNED_STATE = 12
 const TAB_CLOSED = 16
 const WINDOW_CLOSED = 17
+const TAB_NAVIGATION_PATH_PRUNED = 24
 const SET_TAB_GROUP = 25
 const SET_TAB_GROUP_METADATA = 26
 const SET_TAB_GROUP_METADATA_2 = 27
@@ -117,6 +120,26 @@ export function readSnss(bytes: Uint8Array): SnssSession | 'locked' | null {
       case SET_TAB_INDEX_IN_WINDOW:
         tabOf(said.int(0)).index = said.int(4)
         return
+      // A tab's history cut: the pages after one it went back to and left for
+      // another, or its oldest once it holds as many as Chromium keeps. Those after
+      // the cut move down by as many as went, and the page it is on with them.
+      case TAB_NAVIGATION_PATH_PRUNED_FROM_BACK: {
+        const tab = tabOf(said.int(0))
+        const from = said.int(4)
+        for (const index of [...tab.pages.keys()]) if (index >= from) tab.pages.delete(index)
+        return
+      }
+      case TAB_NAVIGATION_PATH_PRUNED_FROM_FRONT: {
+        const count = said.int(4)
+        if (count > 0) prune(tabOf(said.int(0)), 0, count)
+        return
+      }
+      case TAB_NAVIGATION_PATH_PRUNED: {
+        const index = said.int(4)
+        const count = said.int(8)
+        if (index >= 0 && count > 0) prune(tabOf(said.int(0)), index, count)
+        return
+      }
       case UPDATE_TAB_NAVIGATION: {
         const pickle = said.pickle()
         const tab = tabOf(pickle.int())
@@ -173,12 +196,30 @@ export function readSnss(bytes: Uint8Array): SnssSession | 'locked' | null {
   return { windows, groups }
 }
 
-/** The page a tab's history is on: the one it says it is on, else its newest. */
+/** `count` pages of a tab's history cut from `from` on, as Chromium replays it: the
+ *  pages after them take their places, and the page the tab is on moves with them,
+ *  or to the one before the cut where it was one of those cut. */
+function prune(tab: Tab, from: number, count: number) {
+  if (tab.selected !== null) {
+    if (tab.selected >= from + count) tab.selected -= count
+    else if (tab.selected >= from) tab.selected = from - 1
+  }
+  const pages = [...tab.pages].sort(([a], [b]) => a - b)
+  tab.pages.clear()
+  for (const [index, page] of pages) {
+    if (index < from) tab.pages.set(index, page)
+    else if (index >= from + count) tab.pages.set(index - count, page)
+  }
+}
+
+/** The page a tab's history is on: the one it says it is on, or the first after
+ *  it where that one is not kept, else its newest; which is how Chromium chooses. */
 function pageOf(tab: Tab): { url: string; title: string } | null {
-  const chosen = tab.selected === null ? undefined : tab.pages.get(tab.selected)
-  if (chosen) return chosen
-  const newest = Math.max(...tab.pages.keys())
-  return tab.pages.get(newest) ?? null
+  const indices = [...tab.pages.keys()].sort((a, b) => a - b)
+  const { selected } = tab
+  const chosen = selected === null ? undefined : indices.find((index) => index >= selected)
+  const at = chosen ?? indices.at(-1)
+  return at === undefined ? null : (tab.pages.get(at) ?? null)
 }
 
 /** What a command says, read at fixed places or as a pickle. */

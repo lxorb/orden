@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const th: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'พร้อมแล้ว',
+  Personalize: 'ปรับแต่ง',
+  Clean: 'สะอาดตา',
+  'Live preview': 'แสดงตัวอย่างสด',
+  'Developer mode': 'โหมดนักพัฒนา',
+  'Do you write code?': 'คุณเขียนโค้ดไหม?',
+  Yes: 'ใช่',
+  No: 'ไม่',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'จากแอปอื่น: {key}',
   'From other apps: set in your system settings': 'จากแอปอื่น: ตั้งในการตั้งค่าระบบ',
@@ -79,6 +88,7 @@ export const th: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'งานเดียว',
   'One per line': 'บรรทัดละงาน',
+  'Add with AI': 'เพิ่มด้วย AI',
   // Tasks: the projects in the panel
   Favorites: 'รายการโปรด',
   'Add project': 'เพิ่มโปรเจกต์',
@@ -122,6 +132,7 @@ export const th: Dictionary = {
   'Pointing hand on buttons': 'มือชี้บนปุ่ม',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'เพิ่มงาน',
+  'Apple Shortcuts': 'Apple คำสั่งลัด',
   Tomorrow: 'พรุ่งนี้',
   'done {date}': 'เสร็จ {date}',
   'Next week': 'สัปดาห์หน้า',
@@ -184,6 +195,7 @@ export const th: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'หมุนแคนวาสด้วยสองนิ้ว',
+  'Snap the rotation to right angles': 'จัดการหมุนให้ตรงมุมฉาก',
   'Turn upright': 'จัดให้ตรง',
   Canvas: 'แคนวาส',
   Card: 'การ์ด',
@@ -277,6 +289,7 @@ export const th: Dictionary = {
   Tabs: 'แท็บ',
   'Ctrl+Tab in order of use': 'Ctrl+Tab ตามลำดับการใช้งาน',
   'Swipe between pages': 'ปัดระหว่างหน้า',
+  'Hardware acceleration': 'การเร่งด้วยฮาร์ดแวร์',
   'Hidden tabs': 'แท็บที่ซ่อนอยู่',
   'Memory saver': 'ประหยัดหน่วยความจำ',
   Moderate: 'ปานกลาง',
@@ -1135,6 +1148,8 @@ export const th: Dictionary = {
   Elbow: 'เส้นหักศอก',
   Frame: 'กรอบ',
   Ungroup: 'ยกเลิกกลุ่ม',
+  Lock: 'ล็อก',
+  Unlock: 'ปลดล็อก',
   'The ink of the page': 'หมึกของหน้านี้',
   'Write in what is picked': 'เขียนในสิ่งที่เลือก',
   Pen: 'ปากกา',
@@ -1275,10 +1290,14 @@ export const th: Dictionary = {
     '{count} ช่วงถูกเข้ารหัส อ่านไม่ได้ถ้าไม่มี Evernote',
   '{count} notes had a reminder, which the export does not carry':
     '{count} โน้ตมีการเตือน ซึ่งไฟล์ส่งออกไม่มีมาด้วย',
+  '{count} attachments were missing from the export or could not be read':
+    'ไฟล์แนบ {count} รายการไม่มีในไฟล์ส่งออกหรืออ่านไม่ได้',
   '{count} notes were in the bin and stay there': '{count} โน้ตอยู่ในถังขยะและยังอยู่ที่นั่น',
   '{count} archived notes are in a folder called Archive':
     '{count} โน้ตที่เก็บถาวรอยู่ในโฟลเดอร์ชื่อ Archive',
   'The colours a note had are not kept': 'สีที่โน้ตมีจะไม่ถูกเก็บไว้',
+  '{count} files could not be read, so they were left out':
+    'อ่านไฟล์ {count} ไฟล์ไม่ได้ จึงไม่ได้นำเข้า',
   '{count} block references were written out as the words they pointed at':
     '{count} การอ้างบล็อกถูกเขียนเป็นข้อความที่มันชี้ไป',
   '{count} saved views are left out, and every row is in the table':
@@ -1303,6 +1322,8 @@ export const th: Dictionary = {
     'การ์ดอารมณ์และกิจกรรม {count} ใบเป็นภาพวาด จึงมาแต่ข้อความ',
   '{count} notes are behind a password, which nothing but Notes can open':
     'โน้ต {count} รายการอยู่หลังรหัสผ่านที่มีแต่ Notes เปิดได้',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    'โน้ต {count} รายการอยู่หลังรหัสผ่านที่มีแต่ Bear เปิดได้',
   '{count} notes are in Recently Deleted, and stay there':
     'โน้ต {count} รายการอยู่ในที่ลบเมื่อเร็วๆ นี้ และยังอยู่ที่นั่น',
   '{count} drawings and scans have no picture on this Mac':
@@ -1538,6 +1559,7 @@ export const th: Dictionary = {
   'Ask the model': 'ถามโมเดล',
   'answered by {model}, {date}': '{model} ตอบ {date}',
   'AI block': 'บล็อก AI',
+  'Do with AI': 'ทำด้วย AI',
   'Highlight colour': 'สีไฮไลต์',
   'A single newline breaks the line': 'ขึ้นบรรทัดใหม่ครั้งเดียวก็ตัดบรรทัด',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -1852,6 +1874,8 @@ export const th: Dictionary = {
   'Settings › AI': 'ตั้งค่า › AI',
   'New chat': 'แชทใหม่',
   'Ask again': 'ถามอีกครั้ง',
+  'Continue when the limit resets': 'ทำต่อเมื่อขีดจำกัดรีเซ็ต',
+  'Continues at {time}': 'ทำต่อเวลา {time}',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'ถามอะไรก็ได้ @ เพื่อแนบ / เพื่อดูเพิ่ม',
   'What can I help with?': 'ให้ช่วยอะไรดี?',
@@ -2319,4 +2343,29 @@ export const th: Dictionary = {
   Peach: 'พีช',
   Sage: 'เสจ',
   Mist: 'หมอก',
+  // A board, Notion's: its columns, its cards, its settings, a new database
+  'New database': 'ฐานข้อมูลใหม่',
+  'New page': 'หน้าใหม่',
+  'Not started': 'ยังไม่เริ่ม',
+  'In progress': 'กำลังดำเนินการ',
+  'No {property}': 'ไม่มี{property}',
+  '{card} moved to {group}': 'ย้าย {card} ไปที่ {group} แล้ว',
+  'Not moved': 'ไม่ได้ย้าย',
+  Retry: 'ลองอีกครั้ง',
+  Calculate: 'คำนวณ',
+  'Remove sort': 'เอาการเรียงออก',
+  'Remove sort?': 'เอาการเรียงออกไหม?',
+  Groups: 'กลุ่ม',
+  'Hidden groups': 'กลุ่มที่ซ่อน',
+  'Add as option': 'เพิ่มเป็นตัวเลือก',
+  'Move left': 'ย้ายไปทางซ้าย',
+  'Move right': 'ย้ายไปทางขวา',
+  'Delete option': 'ลบตัวเลือก',
+  'Colour columns': 'ใส่สีคอลัมน์',
+  'Hide empty groups': 'ซ่อนกลุ่มที่ว่าง',
+  'Card size': 'ขนาดการ์ด',
+  Small: 'เล็ก',
+  Large: 'ใหญ่',
+  Both: 'ทั้งสองแบบ',
+  'Shown on cards': 'แสดงบนการ์ด',
 }

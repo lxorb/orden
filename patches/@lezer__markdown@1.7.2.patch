@@ -1,0 +1,31 @@
+diff --git a/dist/index.js b/dist/index.js
+index e5725e7b76c21832da1a3d2ed188ae042c06224c..ed993b305afb0042168eccb1184611cda6a83a44 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -1506,8 +1506,11 @@ const DefaultInline = {
+                 let link = cx.parts[i] = finishLink(cx, content, part.type == LinkStart ? Type.Link : Type.Image, part.from, start + 1);
+                 // Set any open-link markers before this link to invalid.
+                 if (part.type == LinkStart)
+-                    for (let j = 0; j < i; j++) {
++                    for (let j = i - 1; j >= 0; j--) {
+                         let p = cx.parts[j];
++                        // A link further back already set every marker before it invalid.
++                        if (p instanceof Element && p.type == Type.Link)
++                            break;
+                         if (p instanceof InlineDelimiter && p.type == LinkStart)
+                             p.side = 0 /* Mark.None */;
+                     }
+@@ -2243,9 +2246,11 @@ const Autolink = {
+                     return -1;
+                 if (m[1] || m[2]) { // www., http://
+                     end = autolinkURLEnd(cx.text, pos + m[0].length);
+-                    if (end > -1 && cx.hasOpenLink) {
++                    if (end > -1) {
+                         let noBracket = /([^\[\]]|\[[^\]]*\])*/.exec(cx.text.slice(pos, end));
+-                        end = pos + noBracket[0].length;
++                        // hasOpenLink scans every part back, so ask it only when a bracket would cut the URL.
++                        if (pos + noBracket[0].length < end && cx.hasOpenLink)
++                            end = pos + noBracket[0].length;
+                     }
+                 }
+                 else if (m[3]) { // email address

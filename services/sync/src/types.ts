@@ -89,6 +89,12 @@ export interface Env {
   /** Where a report sent with Send feedback is mailed (#548): the owner's address, set
    *  by hand (`wrangler secret put FEEDBACK_TO`). Unset, reports are kept in D1 only. */
   FEEDBACK_TO?: string
+  /** The private repository each report becomes an issue in (#666), as `owner/name`:
+   *  only its collaborators can read it. A var; unset, no issue is opened. */
+  FEEDBACK_REPO?: string
+  /** lxorbs-minion's token for opening those issues, set by hand
+   *  (`wrangler secret put GITHUB_FEEDBACK_TOKEN`). Unset, reports wait for it. */
+  GITHUB_FEEDBACK_TOKEN?: string
 
   /** Workers AI, which is what listens for an account with no OpenAI key of its own;
    *  see ask/heard.ts. Absent in tests, which hand in a fake, and in a Worker that has
@@ -271,6 +277,9 @@ export interface Note {
   doc_by?: string | null
   updated_by?: string | null
   deleted_in?: number | null
+  /** The hash of the paper a page note holds (migration 0056), whose bytes are a blob;
+   *  null for a note that holds none. See `/v1/notes/:id/paper` in notes.ts. */
+  paper?: string | null
 }
 
 /** What the session guard puts on the request for the routes behind it, and

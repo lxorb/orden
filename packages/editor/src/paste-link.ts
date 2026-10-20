@@ -76,6 +76,18 @@ function halfOfSomething(tree: Tree, from: number, to: number): boolean {
   return half
 }
 
+/** The words as a link's text, with a bracket among them escaped where it is a plain
+ *  one, `\]`, which would otherwise end the link early. A bracket that is markup, an
+ *  escape already or in code, a link, a formula and the like is left as it is. */
+function label(state: EditorState, from: number, to: number): string {
+  const tree = syntaxTree(state)
+  return state.sliceDoc(from, to).replace(/[[\]]/g, (bracket, at: number) => {
+    const node = tree.resolveInner(from + at, 1)
+    const markup = /Mark|Escape/.test(node.name) || enclosingNamed(node, NOT_WORDS) !== null
+    return markup || inCode(state, from + at) ? bracket : `\\${bracket}`
+  })
+}
+
 /** An address as a link's destination: as it is, or in angle brackets where a
  *  bracket in it would otherwise end the link early. A bare `www.` is given the
  *  scheme a browser would have put in front of it. */
@@ -112,7 +124,7 @@ export function linkedPaste(state: EditorState, text: string): TransactionSpec |
   const target = destination(address)
   return {
     ...state.changeByRange((range) => {
-      const insert = `[${state.sliceDoc(range.from, range.to)}](${target})`
+      const insert = `[${label(state, range.from, range.to)}](${target})`
       return {
         changes: { from: range.from, to: range.to, insert },
         range: EditorSelection.cursor(range.from + insert.length),

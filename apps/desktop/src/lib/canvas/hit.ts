@@ -25,16 +25,13 @@ import {
   within,
 } from './geometry'
 import { nearStroke } from './ink'
-import { type Hit, NOTHING } from './pointer'
+import { FORGIVING, type Hit, NOTHING } from './pointer'
 
 /** How big the chrome is on screen, in pixels, whatever the zoom. The handles
  *  and the dots are drawn at these sizes too, so what is grabbed is what is
  *  seen. */
 export const HANDLE = 9
 export const PORT = 9
-/** How far a finger may miss a handle and still find it. A pen and a mouse are
- *  precise; a thumb is not, and the same numbers have to serve both. */
-const FORGIVING = 8
 
 export interface Where {
   canvas: Canvas
@@ -73,7 +70,9 @@ export function hitAt(where: Where, point: Point): Hit {
   const port = portAt(where, point, slack)
   if (port) return { ...NOTHING, port }
 
-  const node = nodeAt(where.canvas.nodes, point, 12)
+  // What is locked in place is under the writing: a press goes through it (#643).
+  const free = where.canvas.nodes.filter((one) => !one.locked)
+  const node = nodeAt(free, point, 12)
   if (node) return { ...NOTHING, node: node.id }
 
   const edge = edgeAt(where.canvas, point, 6 * unit + slack)

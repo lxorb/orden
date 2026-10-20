@@ -414,6 +414,8 @@ export interface AccountSettings {
   archivedSpaces?: string[]
   /** Whether two fingers turn a canvas (#351). */
   canvasTurns?: boolean
+  /** Whether a turned canvas snaps to its right angles (#487). */
+  canvasTurnSnaps?: boolean
   /** What pings for every chat at once (docs/chats.md 4.11): words that call for the
    *  reader as their name does, the hours pings are let through (null for every hour),
    *  and whether a notification shows the words and makes a sound. See
@@ -480,6 +482,8 @@ export interface AccountSettings {
   quietMarks?: boolean
   /** No hints anywhere in the app; see hints.svelte.ts. */
   silent?: boolean
+  /** Whether the tools for writing code are offered; see `developer` in modes.svelte.ts. */
+  developer?: boolean
 }
 
 /** What any read can say about the account's OpenAI key.
@@ -692,10 +696,16 @@ export const routes = {
   askPiece: (token: string, wav: Uint8Array<ArrayBuffer>) => listen(token, wav, '?piece=1'),
 
   /** Named by its own hash, so a repeat costs one request and no storage. */
-  putBlob: async (token: string, hash: string, type: string, bytes: ArrayBuffer) => {
+  putBlob: async (
+    token: string,
+    hash: string,
+    type: string,
+    bytes: ArrayBuffer,
+    headers: Record<string, string> = {},
+  ) => {
     const response = await fetch(`${BASE}/v1/blobs/${hash}`, {
       method: 'PUT',
-      headers: { authorization: `Bearer ${token}`, 'content-type': type },
+      headers: { authorization: `Bearer ${token}`, 'content-type': type, ...headers },
       body: bytes,
     })
 
@@ -707,6 +717,22 @@ export const routes = {
     }
 
     return body as { hash: string; stored: boolean }
+  },
+
+  /** The paper a page note holds, named by bytes already up through `putBlob`: the
+   *  note and its PDF are one thing on the account, kept by the note's id (#551). */
+  holdPaper: (token: string, id: string, hash: string) =>
+    request<{ paper: string }>(`/v1/notes/${id}/paper`, { method: 'PUT', token, body: { hash } }),
+
+  /** The bytes of the paper a page note holds, or null where it holds none the account
+   *  knows of. */
+  notePaper: async (token: string, id: string): Promise<Uint8Array | null> => {
+    const response = await fetch(`${BASE}/v1/notes/${id}/paper`, {
+      headers: { authorization: `Bearer ${token}` },
+    })
+    if (response.status === 404) return null
+    if (!response.ok) throw new ApiError(response.status, `paper not fetched (${response.status})`)
+    return new Uint8Array(await response.arrayBuffer())
   },
 
   reorderSpaces: (token: string, order: string[]) =>

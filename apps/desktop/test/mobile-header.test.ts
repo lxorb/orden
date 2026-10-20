@@ -5,13 +5,12 @@ import { describe, expect, test } from 'vitest'
 
 /** The one row along the top of the app, on a phone and a tablet: the button
  *  that opens and shuts the file list at the left, the document's name in the
- *  middle, and the whole of the app behind three dots at the right.
+ *  middle, and the palette at the right.
  *
  *  Which is a composition rather than a function, so it is read out of the
  *  components the way `reachable.test.ts` and `menus.test.ts` read theirs. What
- *  it guards: there is one sidebar button and it is drawn in one place, the dots
- *  open the menu the desktop's own bar holds rather than a second menu written
- *  for a phone, and no three-bar hamburger is left anywhere a thumb can reach. */
+ *  it guards: there is one sidebar button and it is drawn in one place, and no menu
+ *  of the whole app is left in the bar (#304). */
 
 const SOURCE = fileURLToPath(new URL('../src/', import.meta.url))
 const read = (name: string) => readFileSync(`${SOURCE}${name}`, 'utf8')
@@ -37,12 +36,8 @@ function componentsWith(glyph: string): string[] {
 
 const titlebar = read('lib/Titlebar.svelte')
 const sidebar = read('lib/Sidebar.svelte')
-const appMenu = read('lib/AppMenu.svelte')
-const appMenuPanel = read('lib/AppMenuPanel.svelte')
 const toggle = read('lib/SidebarToggle.svelte')
 
-/** The three bars, as the one component that still draws them writes them. */
-const BARS = 'M1.5 4h13M1.5 8h13M1.5 12h13'
 /** The window with a panel down its left side: the sidebar button's glyph. */
 const PANEL = '<rect x="1" y="2.5" width="12" height="9" rx="1.5" />'
 
@@ -119,35 +114,21 @@ describe('the button that opens the file list', () => {
   })
 })
 
-describe('the three dots at the other end', () => {
-  test('open the menu the desktop bar holds, not a second one', () => {
-    expect(titlebar).toContain('<AppMenu {view} {onpalette} {onhistory} dots />')
-    // No menu of its own: the bar used to build a short list of its own here.
+describe('the menu of the whole app', () => {
+  /** Gone from the window (#304): what it held is the palette's, a note's dots and the
+   *  strip's. A Mac keeps it in the menu bar; see native-menu-bar.svelte.ts. */
+  test('is in no bar, on a desktop or on a phone', () => {
+    expect(titlebar).not.toContain('AppMenu')
     expect(titlebar).not.toContain('menu.show')
-  })
-
-  test('are the same component as the desktop menu, drawn differently', () => {
-    expect(appMenu).toContain('dots = false')
-    expect(appMenu).toContain('class:dots')
-    // One menu surface, so the groups and their submenus cannot drift apart: the one
-    // the button mounts once it is asked for. See AppMenuPanel.svelte.
-    expect(appMenu.match(/role="menu"/g) ?? []).toHaveLength(0)
-    expect(appMenu).toContain('<AppMenuPanel bind:open {groups} />')
-    expect(appMenuPanel.match(/role="menu"/g) ?? []).toHaveLength(1)
+    expect(componentsWith('<AppMenu ')).toEqual([])
   })
 })
 
-describe('the hamburger', () => {
-  test('is drawn in one place and is not what a phone or a tablet gets', () => {
-    expect(appMenu).toContain(BARS)
-    expect(componentsWith(BARS)).toEqual(['lib/AppMenu.svelte'])
-
-    // The bars are the desktop's, at the left end of the bar where the column of
-    // spaces used to keep them; a touch screen reaches the app through the dots
-    // at the other end of that same row instead, and a Mac through the menu bar at
-    // the top of its screen, the way VS Code and Obsidian are reached there.
-    expect(titlebar).toContain(
-      '{#if !viewport.touch && !mac}\n    <AppMenu {view} {onpalette} {onhistory} />',
-    )
+describe('the search button', () => {
+  /** The palette, for somebody who does not know its keys, and on every bar (#304). */
+  test('opens the palette, says its key on the tooltip, and is in both bars', () => {
+    expect(titlebar).toContain("title={shortcuts.tooltip(t('Search'), 'app.palette')}")
+    expect(titlebar).toContain('onclick={() => onpalette()}')
+    expect(titlebar.match(/\{@render searchGlyph\(\)\}/g) ?? []).toHaveLength(2)
   })
 })

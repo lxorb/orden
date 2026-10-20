@@ -9,6 +9,8 @@
  *  Pure, and it says no by answering null rather than by throwing: every caller
  *  has somewhere to put a refusal on screen. */
 
+import { isReserved } from '../naming'
+
 /** The highest code point no file name holds. Below it are the control
  *  characters: the NUL a name is smuggled past a reader with, and the newline
  *  that would make one path read as two. */
@@ -60,40 +62,4 @@ function holdsUnnameable(path: string): boolean {
   }
 
   return false
-}
-
-/** Names Windows refuses whatever the extension, because each names a device
- *  rather than a file. The same list as `RESERVED` in src-tauri/src/paths.rs, and
- *  asked on every platform for the reason given there: a note has to be able to
- *  land on all of the reader's machines. */
-const RESERVED = [
-  'CON',
-  'PRN',
-  'AUX',
-  'NUL',
-  'COM1',
-  'COM2',
-  'COM3',
-  'COM4',
-  'COM5',
-  'COM6',
-  'COM7',
-  'COM8',
-  'COM9',
-  'LPT1',
-  'LPT2',
-  'LPT3',
-  'LPT4',
-  'LPT5',
-  'LPT6',
-  'LPT7',
-  'LPT8',
-  'LPT9',
-]
-
-/** Whether a step names a device, going by the part in front of the first dot,
- *  which is where Windows looks: `NUL.md` names the device as surely as `NUL`. */
-function isReserved(step: string): boolean {
-  const stem = step.split('.')[0] ?? step
-  return RESERVED.includes(stem.toUpperCase())
 }

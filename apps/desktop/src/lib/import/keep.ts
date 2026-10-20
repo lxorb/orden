@@ -36,6 +36,7 @@ interface KeepNote {
   listContent?: unknown
   labels?: unknown
   attachments?: unknown
+  annotations?: unknown
   isTrashed?: unknown
   isArchived?: unknown
   createdTimestampUsec?: unknown
@@ -47,9 +48,13 @@ export async function readKeep(sources: readonly Source[]): Promise<ImportPlan> 
   const written: Planned[] = []
   const lost: Lost[] = []
   const attachments = new Map<string, Source>()
+  // Where each attachment went, so a picture two notes share is written once.
+  const copied = new Map<Source, string>()
   let trashed = 0
   let archived = 0
   let colours = 0
+  let missing = 0
+  let unreadable = 0
 
   for (const source of sources) {
     if (!/\.json$/i.test(source.path)) attachments.set(source.path.toLowerCase(), source)
@@ -59,6 +64,10 @@ export async function readKeep(sources: readonly Source[]): Promise<ImportPlan> 
     if (!/\.json$/i.test(source.path)) continue
 
     const note = parsed(await source.text())
+    if (note === 'broken') {
+      unreadable += 1
+      continue
+    }
     if (!note) continue
     if (note.isTrashed === true) {
       trashed += 1
@@ -71,28 +80,41 @@ export async function readKeep(sources: readonly Source[]): Promise<ImportPlan> 
     const folder = note.isArchived === true ? `${ARCHIVE}/` : ''
     const words: string[] = []
 
-    if (typeof note.textContent === 'string' && note.textContent.trim()) {
-      words.push(note.textContent.trim())
-    }
+    const text =
+      typeof note.textContent === 'string' ? note.textContent.replace(/\r\n?/g, '\n').trim() : ''
+    if (text) words.push(text)
 
     const items = listItems(note.listContent)
-    if (items.length) words.push(items.join('\n'))
+    if (items.length) words.push(items.map(taskLine).join('\n'))
+
+    const links = linksOf(note.annotations, text)
+    if (links.length) words.push(links.join('\n'))
 
     const pictures: string[] = []
     for (const said of filePaths(note.attachments)) {
       const file = beside(attachments, source.path, said)
-      if (!file) continue
+      if (!file) {
+        missing += 1
+        continue
+      }
 
-      const path = names.free(`${ASSETS}/${safeName(said.split('/').pop() ?? said)}`)
-      written.push({ kind: 'file', path, bytes: await file.bytes() })
-      pictures.push(`![](${folder ? '../' : ''}${path.replace(/ /g, '%20')})`)
+      let path = copied.get(file)
+      if (!path) {
+        path = names.free(`${ASSETS}/${safeName(file.path.split('/').pop() ?? said)}`)
+        copied.set(file, path)
+        written.push({ kind: 'file', path, bytes: await file.bytes() })
+      }
+      pictures.push(`![](${folder ? '../' : ''}${encoded(path)})`)
     }
 
     if (pictures.length) words.push(pictures.join('\n'))
 
     const body = words.join('\n\n')
     const said = typeof note.title === 'string' ? note.title.trim() : ''
-    const title = (said ? safeName(said) : titleFrom(body)) ?? 'Untitled'
+    // A note with no title is named after its words, or a list after its first
+    // item: never after the box in front of it or the address of a picture.
+    const title =
+      (said ? safeName(said) : (titleFrom(text) ?? titleFrom(items[0]?.text ?? ''))) ?? 'Untitled'
 
     const meta: Meta = { tags: labelNames(note.labels) }
     const made = dayOf(asNumber(note.createdTimestampUsec))
@@ -121,6 +143,22 @@ export async function readKeep(sources: readonly Source[]): Promise<ImportPlan> 
     })
   }
 
+  if (unreadable) {
+    lost.push({
+      text: key('{count} files could not be read, so they were left out'),
+      one: '{count} file could not be read, so it was left out',
+      values: { count: unreadable },
+    })
+  }
+
+  if (missing) {
+    lost.push({
+      text: key('{count} attachments were missing from the export or could not be read'),
+      one: '{count} attachment was missing from the export or could not be read',
+      values: { count: missing },
+    })
+  }
+
   if (colours) {
     lost.push({ text: key('The colours a note had are not kept') })
   }
@@ -128,37 +166,82 @@ export async function readKeep(sources: readonly Source[]): Promise<ImportPlan> 
   return { format: 'keep', files: written, lost }
 }
 
-/** A note's JSON, or null for a file that is not one: Takeout drops a couple of
- *  its own JSONs into the same folder. */
-function parsed(text: string): (KeepNote & { color?: unknown }) | null {
+/** A note's JSON, null for a file that is not one - Takeout drops a couple of
+ *  its own JSONs into the same folder - and `broken` for one that is not JSON
+ *  at all, which is a note cut short rather than one of Takeout's. */
+function parsed(text: string): (KeepNote & { color?: unknown }) | null | 'broken' {
+  let said: unknown
   try {
-    const said: unknown = JSON.parse(text)
-    if (!said || typeof said !== 'object' || Array.isArray(said)) return null
-
-    const note = said as KeepNote
-    const looksLikeOne =
-      'textContent' in note || 'listContent' in note || 'isTrashed' in note || 'title' in note
-    return looksLikeOne ? note : null
+    said = JSON.parse(text)
   } catch {
-    return null
+    return 'broken'
   }
+
+  if (!said || typeof said !== 'object' || Array.isArray(said)) return null
+
+  const note = said as KeepNote
+  const looksLikeOne =
+    'textContent' in note || 'listContent' in note || 'isTrashed' in note || 'title' in note
+  return looksLikeOne ? note : null
 }
 
 /** A ticked list as a task list, which is what it was. */
-function listItems(said: unknown): string[] {
+function listItems(said: unknown): Item[] {
   if (!Array.isArray(said)) return []
 
-  const items: string[] = []
+  const items: Item[] = []
   for (const one of said) {
     if (!one || typeof one !== 'object') continue
     const item = one as { text?: unknown; isChecked?: unknown }
-    const text = typeof item.text === 'string' ? item.text.trim() : ''
+    // An item is one line in Keep, whatever was pasted into it.
+    const text = typeof item.text === 'string' ? item.text.replace(/\s+/g, ' ').trim() : ''
     if (!text) continue
 
-    items.push(`- [${item.isChecked === true ? 'x' : ' '}] ${text}`)
+    items.push({ checked: item.isChecked === true, text })
   }
 
   return items
+}
+
+interface Item {
+  checked: boolean
+  text: string
+}
+
+function taskLine(item: Item): string {
+  return `- [${item.checked ? 'x' : ' '}] ${item.text}`
+}
+
+/** The pages Keep shows under a note as cards. A card for an address the words
+ *  already hold needs nothing more; one for a page shared into the note from
+ *  elsewhere is in no other place, so it comes as a link. */
+function linksOf(said: unknown, text: string): string[] {
+  if (!Array.isArray(said)) return []
+
+  const links: string[] = []
+  for (const one of said) {
+    if (!one || typeof one !== 'object') continue
+    const card = one as { url?: unknown; title?: unknown }
+    const url = typeof card.url === 'string' ? card.url.trim() : ''
+    if (!/^[a-z][a-z0-9+.-]*:[^\s<>]+$/i.test(url) || text.includes(url)) continue
+
+    const title = typeof card.title === 'string' ? card.title.replace(/\s+/g, ' ').trim() : ''
+    const shown = title.replace(/[\\[\]]/g, (one) => `\\${one}`)
+    links.push(shown ? `- [${shown}](<${url}>)` : `- <${url}>`)
+  }
+
+  return links
+}
+
+/** A file's path as a link's target: the characters a target cannot hold as
+ *  themselves encoded, the way the import's own link rewriting writes them. */
+function encoded(path: string): string {
+  return path
+    .replace(/%/g, '%25')
+    .replace(/#/g, '%23')
+    .replace(/ /g, '%20')
+    .replace(/\(/g, '%28')
+    .replace(/\)/g, '%29')
 }
 
 function labelNames(said: unknown): string[] {
@@ -203,10 +286,23 @@ function beside(
   const folder = at === -1 ? '' : notePath.slice(0, at + 1)
   const name = named.split('/').pop() ?? named
 
-  return (
+  const found =
     files.get(`${folder}${name}`.toLowerCase()) ??
     files.get(named.toLowerCase()) ??
-    [...files.entries()].find(([path]) => path.endsWith(`/${name.toLowerCase()}`))?.[1] ??
-    null
+    [...files.entries()].find(([path]) => path.endsWith(`/${name.toLowerCase()}`))?.[1]
+  if (found) return found
+
+  // Takeout's JSON says `.jpeg` of a picture it wrote as `.jpg`, so one is also
+  // looked for beside the note by its name with any other picture's extension.
+  const stem = /^(.+)\.(jpe?g|png|gif|webp|heic|heif)$/i.exec(name)?.[1]?.toLowerCase()
+  if (!stem) return null
+
+  const picture = new RegExp(
+    `^${escaped(`${folder}${stem}`.toLowerCase())}\\.(jpe?g|png|gif|webp|heic|heif)$`,
   )
+  return [...files.entries()].find(([path]) => picture.test(path))?.[1] ?? null
+}
+
+function escaped(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }

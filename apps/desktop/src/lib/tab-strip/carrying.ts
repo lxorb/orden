@@ -15,6 +15,7 @@ import { zoneAt } from '../workspace/zones'
 import type { Bounds } from './layout'
 import { keyOf, stripOf, type TabDrag } from './drag.svelte'
 import { droppedOnBookmarks, overBookmarks } from './bookmark-drop'
+import { droppedOnChat, overChat } from './chat-drop'
 import { droppedOnSpace, overSpaces } from './space-drop'
 
 /** Where a tab carried out of the strip of `paneId` would land: at a place in another
@@ -37,6 +38,8 @@ function landingAt(x: number, y: number, tabId: string, paneId: string): Landing
   const zone = zoneAt(box.getBoundingClientRect(), x, y, (side) =>
     workspace.canLand(side, id, tabId),
   )
+  // A chat in the pane takes the tab in its middle; see chat-drop.ts.
+  if (zone === 'middle' && under?.closest('[data-chat-drop]')) return null
   return zone === 'middle' && id === paneId ? null : { kind: 'pane', paneId: id, zone }
 }
 
@@ -81,18 +84,20 @@ function unsaved(tabId: string) {
 export function overList(tabId: string, point: { x: number; y: number } | null): void {
   overSpaces({ tab: tabId }, point)
   overBookmarks(tabId, point)
+  overChat(point)
   const folder = point && unsaved(tabId) ? folderAt(point.x, point.y) : null
   if (folder !== null) dropTarget.over(folder)
   else if (dropTarget.folder !== null) dropTarget.clear()
 }
 
 /** Let go of: moved to the space whose row was lit, bookmarked where the line among the
- *  bookmarks was, or saved into the row of the list that was lit, where there was one. */
+ *  bookmarks was, linked in the chat it was over, or saved into the row of the list that
+ *  was lit, where there was one. */
 export function droppedOnList(tabId: string): void {
   const folder = dropTarget.folder
   const tab = unsaved(tabId)
   dropTarget.clear()
-  if (droppedOnSpace({ tab: tabId }) || droppedOnBookmarks(tabId)) return
+  if (droppedOnSpace({ tab: tabId }) || droppedOnBookmarks(tabId) || droppedOnChat(tabId)) return
   if (folder !== null && tab) void workspace.save(tab, folder)
 }
 

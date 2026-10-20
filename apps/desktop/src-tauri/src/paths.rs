@@ -47,24 +47,29 @@ static WRITES: AtomicU64 = AtomicU64::new(0);
 pub const HIGHLIGHTS: &str = ".highlights.json";
 
 /// Names Windows refuses whatever the extension, because each one names a device
-/// rather than a file.
+/// rather than a file. Windows reads the superscripts `¹²³` as digits, so `COM¹`
+/// is a port as surely as `COM1`.
 ///
-/// Here rather than in one of the two modules that ask, because both do: `spaces`
-/// keeps a new space from being called one, and `trash` will not put a file back
-/// under one. A second copy would be a second answer to the same question.
-pub const RESERVED: [&str; 22] = [
-    "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8",
-    "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
+/// Here rather than in one of the modules that ask, because several do: `spaces`
+/// keeps a new space from being called one, `trash` will not put a file back
+/// under one, and `downloads` will not save one. A second copy would be a second
+/// answer to the same question.
+pub const RESERVED: [&str; 32] = [
+    "CON", "PRN", "AUX", "NUL", "CONIN$", "CONOUT$", "COM0", "COM1", "COM2", "COM3", "COM4",
+    "COM5", "COM6", "COM7", "COM8", "COM9", "COM¹", "COM²", "COM³", "LPT0", "LPT1", "LPT2", "LPT3",
+    "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9", "LPT¹", "LPT²", "LPT³",
 ];
 
 /// Whether a name is one of those, going by the part in front of the first dot,
 /// which is where Windows looks: `NUL.md` names the device as surely as `NUL`.
+/// And without the spaces that part ends with, which Windows drops: `CON .md` is
+/// `CON.md`.
 ///
 /// Asked on every platform, not only on Windows. A note the reader syncs is a
 /// note that has to land on all of their machines, and a name only some of them
 /// can hold is not a name.
 pub fn is_reserved(name: &str) -> bool {
-    let stem = name.split('.').next().unwrap_or(name);
+    let stem = name.split('.').next().unwrap_or(name).trim_end_matches(' ');
     RESERVED.contains(&stem.to_ascii_uppercase().as_str())
 }
 
@@ -174,8 +179,43 @@ pub fn held_paper(pdf: &Path) -> bool {
         return false;
     }
 
+    // The note's paper is the one `paper_of` names, so a paper hidden is one that goes
+    // with the note: `Lecture.pages.PDF` is that paper on a disk that ignores case,
+    // and somebody's own PDF on one that does not.
     let holder = pdf.with_extension("");
-    is_pages(&holder) && holder.is_file()
+    let paper = paper_of(&holder);
+    is_pages(&holder) && holder.is_file() && (paper == pdf || crate::notes::same_entry(&paper, pdf))
+}
+
+/// Whether a name is taken: by something there, or, for a page note, by a file where
+/// its paper would go. A PDF called `Report.pages.pdf` is somebody's - macOS Pages names
+/// every PDF it saves that way - and a page note given `Report.pages` would take it for
+/// its paper: moved over it, or hidden from the list as held (#538).
+fn taken(path: &Path) -> bool {
+    path.exists() || (is_pages(path) && paper_of(path).exists())
+}
+
+/// Whether a page note may be called `to`, coming from `from`: not over a file where its
+/// paper would go, unless that file is `from`'s own paper under another spelling of its
+/// name (`same` says whether two paths are one entry; see `respelled` in notes.rs).
+/// Answers the file in the way, to be named in the refusal.
+pub fn paper_in_the_way(
+    from: &Path,
+    to: &Path,
+    same: impl Fn(&Path, &Path) -> bool,
+) -> Option<PathBuf> {
+    if !is_pages(to) {
+        return None;
+    }
+    let there = paper_of(to);
+    if !there.exists() {
+        return None;
+    }
+    let own = is_pages(from) && {
+        let paper = paper_of(from);
+        paper == there || (paper.parent() == there.parent() && same(&paper, &there))
+    };
+    (!own).then_some(there)
 }
 
 /// What a file holds travels with it: a PDF's highlights, and a page note's paper
@@ -192,7 +232,13 @@ pub fn move_held(from: &Path, to: &Path) {
     if is_pages(from) {
         let paper = paper_of(from);
         let moved = paper_of(to);
-        if paper.exists() && crate::carry::move_whole(&paper, &moved, "move").is_ok() {
+        // Never over a file already there, which is somebody's own PDF (#538): the
+        // commands that move a page note refuse such a name first, and this is the
+        // last word on it.
+        if paper.exists()
+            && paper_in_the_way(from, to, crate::notes::same_entry).is_none()
+            && crate::carry::move_whole(&paper, &moved, "move").is_ok()
+        {
             move_held(&paper, &moved);
         }
         return;
@@ -263,7 +309,7 @@ pub fn made(dir: &Path) -> Result<(), String> {
 /// spaces are - so a drive that made itself a space made it in the reader's own
 /// `Documents/Nib`, beside their notes. This is the one way to keep out of them, and
 /// every probe and drive sets it; see docs/automation.md.
-const SPACES_DIR: &str = "NIB_SPACES_DIR";
+pub(crate) const SPACES_DIR: &str = "NIB_SPACES_DIR";
 
 /// The folder a variable names, or `None` for one it does not name: the spaces root in
 /// `NIB_SPACES_DIR`, and a probe's downloads folder in `NIB_DOWNLOADS_DIR` (see
@@ -343,6 +389,13 @@ fn default_spaces(_app: &AppHandle) -> Result<PathBuf, String> {
 /// found is said in the log, and every note command says so after it.
 #[cfg(desktop)]
 pub fn decide_spaces(app: &AppHandle) {
+    // A probe that names its folder decides nothing, and keeps nothing: a kept answer
+    // written by it would be the reader's `Documents/Nib`, waiting for the next launch
+    // of that build without the variable.
+    if folder_named(std::env::var_os(SPACES_DIR).as_deref()).is_some() {
+        return;
+    }
+
     match chosen_spaces(app) {
         Ok(chosen) => {
             let _ = SPACES_CHOSEN.set(chosen);
@@ -896,18 +949,47 @@ fn gather(
 /// folder name.
 ///
 /// Any hash would do; this one is `FNV-1a`, which is a dozen lines and needs no
-/// dependency. Folded case first, because two spellings of one path on Windows are
-/// one file. Here rather than in one of the two modules that keeps something
-/// beside a file, because both do: the version history of a note, and the words
-/// taken out of a PDF.
+/// dependency. Folded case first where the file system ignores it, because two
+/// spellings of one path on Windows are one file; on Linux they are two (#476). Here
+/// rather than in one of the two modules that keeps something beside a file, because
+/// both do: the version history of a note, and the words taken out of a PDF.
 #[must_use]
 pub fn folder_key(path: &str) -> String {
+    folder_key_as(NAMING, path)
+}
+
+/// `folder_key`, for the file system `naming` says.
+fn folder_key_as(naming: Naming, path: &str) -> String {
+    let spelled = if naming == Naming::Exact {
+        path.to_owned()
+    } else {
+        path.to_lowercase()
+    };
     let mut hash: u64 = 0xcbf2_9ce4_8422_2325;
-    for byte in path.to_lowercase().bytes() {
+    for byte in spelled.bytes() {
         hash ^= u64::from(byte);
         hash = hash.wrapping_mul(0x0000_0100_0000_01b3);
     }
     format!("{hash:016x}")
+}
+
+/// The folder under `root` that `folder_key` names for a file.
+///
+/// Linux named one by the lowercased path until #476, so a folder kept then is moved
+/// into place the first time it is asked for, when its `ORIGIN` names this very
+/// spelling; one naming another spelling stays that file's.
+pub fn kept_folder(root: &Path, path: &str) -> PathBuf {
+    kept_folder_named(root, &folder_key(path), path)
+}
+
+/// `kept_folder`, under the name `folder_key` gives, so Linux's can be tested anywhere.
+fn kept_folder_named(root: &Path, name: &str, path: &str) -> PathBuf {
+    let dir = root.join(name);
+    let was = root.join(folder_key_as(Naming::Cased, path));
+    if !dir.exists() && fs::read_to_string(was.join(ORIGIN)).is_ok_and(|origin| origin == path) {
+        let _ = fs::rename(was, &dir);
+    }
+    dir
 }
 
 /// What a folder named by `folder_key` keeps the file's own path in, so the store
@@ -1116,7 +1198,7 @@ fn spill(temp: &Path, bytes: &[u8], private: bool) -> Result<(), String> {
 /// `path` if nothing is there, else the first free `name 2`, `name 3`... - the
 /// number before the extension for a file, after the name for a folder.
 pub fn free_spot(path: &Path, is_file: bool) -> PathBuf {
-    if !path.exists() {
+    if !taken(path) {
         return path.to_path_buf();
     }
 
@@ -1135,7 +1217,7 @@ pub fn free_spot(path: &Path, is_file: bool) -> PathBuf {
     let mut counter = 2;
     loop {
         let candidate = parent.join(format!("{stem} {counter}{extension}"));
-        if !candidate.exists() {
+        if !taken(&candidate) {
             return candidate;
         }
         counter += 1;
@@ -1176,13 +1258,25 @@ pub(crate) fn link_to(target: &Path, link: &Path) -> bool {
 mod tests {
     use super::{
         a_shareable_folder, at_most, copy_held, drop_held, files_in, folded, folder_key,
-        folder_named, free_spot, held_paper, highlights_of, inside, inside_as, is_base, is_canvas,
-        is_markdown, is_pages, is_pdf, is_shortcut, judged, judged_as, judged_beyond, judged_space,
-        link_to, move_held, paper_of, same_path, space_root, upcased, write_atomically, Naming,
-        Picked,
+        folder_key_as, folder_named, free_spot, held_paper, highlights_of, inside, inside_as,
+        is_base, is_canvas, is_markdown, is_pages, is_pdf, is_shortcut, judged, judged_as,
+        judged_beyond, judged_space, kept_folder_named, link_to, move_held, paper_of, same_path,
+        space_root, upcased, write_atomically, Naming, Picked, ORIGIN,
     };
     use std::ffi::OsStr;
     use std::path::{Path, PathBuf};
+
+    /// The device names the list once missed, a stem with the spaces Windows drops
+    /// after it, and names that only begin like a device's.
+    #[test]
+    fn a_device_name_is_reserved_however_it_is_written() {
+        for name in ["COM¹", "LPT².md", "CONIN$", "conout$.md", "CON .md", "COM0"] {
+            assert!(super::is_reserved(name), "{name}");
+        }
+        for name in ["CONSOLE.md", "COM10", "Con Law.md"] {
+            assert!(!super::is_reserved(name), "{name}");
+        }
+    }
 
     /// Every reader is held to a ceiling. A file over it comes back as nothing
     /// rather than as an error, because what to say about it - a note too large to be
@@ -1840,6 +1934,68 @@ mod tests {
         assert!(!highlights_of(&now).exists());
     }
 
+    /// A PDF of the name a page note's paper would take is somebody's own - macOS Pages
+    /// saves every PDF as `Report.pages.pdf` - and a page note renamed or restored to
+    /// `Report.pages` moved its paper over it, or hid it as held (#538).
+    #[test]
+    fn a_page_notes_paper_never_goes_over_a_pdf_already_there() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let here = dir.path();
+        let lecture = here.join("Lecture.pages");
+        let report = here.join("Report.pages");
+        std::fs::write(&lecture, "{}").expect("a page note");
+        std::fs::write(paper_of(&lecture), b"%PDF lecture").expect("its paper");
+        std::fs::write(paper_of(&report), b"%PDF mine").expect("somebody's own PDF");
+        let never = |_: &Path, _: &Path| false;
+
+        // Refused by name before anything moves...
+        assert_eq!(
+            super::paper_in_the_way(&lecture, &report, never),
+            Some(paper_of(&report))
+        );
+        // ...and not moved over even where something asks anyway.
+        std::fs::rename(&lecture, &report).expect("the note's own move");
+        move_held(&lecture, &report);
+        assert_eq!(
+            std::fs::read(paper_of(&report)).expect("still there"),
+            b"%PDF mine"
+        );
+        assert_eq!(
+            std::fs::read(paper_of(&lecture)).expect("left where it was"),
+            b"%PDF lecture"
+        );
+
+        // A new name for a page note steps past it, as it steps past a note.
+        assert_eq!(
+            free_spot(&here.join("Report.pages"), true),
+            here.join("Report 2.pages")
+        );
+    }
+
+    /// A page note renamed to another spelling of its own name keeps its paper, which
+    /// is the file already "there".
+    #[test]
+    fn a_page_note_respelled_is_not_in_its_own_way() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let here = dir.path();
+        let lecture = here.join("Lecture.pages");
+        std::fs::write(paper_of(&lecture), b"%PDF").expect("its paper");
+        let same = |_: &Path, _: &Path| true;
+
+        assert_eq!(
+            super::paper_in_the_way(&lecture, &here.join("lecture.pages"), same),
+            None
+        );
+        assert_eq!(
+            super::paper_in_the_way(&lecture, &here.join("Elsewhere.pages"), same),
+            None
+        );
+        assert_eq!(
+            super::paper_in_the_way(&here.join("Idea.md"), &here.join("Note.md"), same),
+            None
+        );
+    }
+
     #[test]
     fn a_note_has_no_sidecar_to_move() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -1874,6 +2030,12 @@ mod tests {
         std::fs::write(here.join("Lecture.pdf"), "%PDF").expect("a pdf");
         assert!(!held_paper(&here.join("Lecture.pdf")));
         assert!(!held_paper(&here.join("Lecture.pages")));
+        // A capital PDF is the note's paper only where the disk reaches it as one.
+        let capital = here.join("Lecture.pages.PDF");
+        std::fs::remove_file(&paper).expect("the paper, gone");
+        std::fs::write(&capital, "%PDF").expect("a capital PDF");
+        let lecture = here.join("Lecture.pages");
+        assert_eq!(held_paper(&capital), paper_of(&lecture).exists());
     }
 
     #[test]
@@ -2012,7 +2174,30 @@ mod tests {
 
     #[test]
     fn the_same_file_in_another_case_is_the_same_file() {
-        assert_eq!(folder_key(r"C:\Notes\A.md"), folder_key(r"c:\notes\a.md"));
+        let key = |path| folder_key_as(Naming::Win32, path);
+        assert_eq!(key(r"C:\Notes\A.md"), key(r"c:\notes\a.md"));
+    }
+
+    #[test]
+    fn two_names_apart_only_in_case_are_two_files_on_linux() {
+        let key = |path| folder_key_as(Naming::Exact, path);
+        assert_ne!(key("/Notes/Plan.md"), key("/Notes/plan.md"));
+    }
+
+    #[test]
+    fn a_folder_linux_kept_by_the_lowercased_path_goes_with_that_spelling_only() {
+        let root = tempfile::tempdir().expect("a temp folder");
+        let was = root
+            .path()
+            .join(folder_key_as(Naming::Cased, "/Notes/Plan.md"));
+        std::fs::create_dir(&was).expect("an old folder");
+        std::fs::write(was.join(ORIGIN), "/Notes/Plan.md").expect("its origin");
+
+        let kept = |path| kept_folder_named(root.path(), &folder_key_as(Naming::Exact, path), path);
+        assert!(!kept("/Notes/plan.md").exists());
+        assert!(was.exists());
+        assert!(kept("/Notes/Plan.md").join(ORIGIN).exists());
+        assert!(!was.exists());
     }
 
     #[test]

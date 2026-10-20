@@ -55,6 +55,13 @@ describe('slugs', () => {
   test('drops punctuation', () => {
     expect(slugFor("What's new?.md")).toBe('what-s-new')
   })
+
+  test('keeps the letters and marks of any script, composed and lower-cased', () => {
+    expect(slugFor('Привет.md')).toBe('привет')
+    expect(slugFor('Notes/中文.md')).toBe('notes/中文')
+    expect(slugFor('हिन्दी.md')).toBe('हिन्दी')
+    expect(slugFor('Café.md')).toBe('café')
+  })
 })
 
 describe('while a space is private', () => {
@@ -106,6 +113,17 @@ describe('publishing', () => {
     const response = await call(env, '/hello-world', { host: 'field.nibeditor.com' })
     expect(response.text).toContain('<h1 id="hello-world">Hello world</h1>')
     expect(response.text).toContain('<strong>post</strong>')
+  })
+
+  /** The hover card asks for the page's own address with a header, and is answered
+   *  with less of it; a browser that kept the card must not show it for the page. */
+  test('a note and its hover card are two answers to a cache', async () => {
+    await publish({ subdomain: 'field' })
+
+    for (const headers of [{}, { 'x-nib-preview': '1' }]) {
+      const response = await call(env, '/hello-world', { host: 'field.nibeditor.com', headers })
+      expect(response.headers.get('vary')).toContain('x-nib-preview')
+    }
   })
 
   test('an unknown slug is handled', async () => {
@@ -609,6 +627,19 @@ describe('choosing a subdomain', () => {
     expect(response.json.available).toBe(false)
   })
 
+  test('a name another space takes while publishing is refused, not a 500', async () => {
+    const other = await signIn(env, 'other@b.dev')
+    const theirs = (await call(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json
+      .space.id
+    env.justBefore(/update spaces set blog_enabled = 1/, () => {
+      env.db.prepare('update spaces set blog_subdomain = ? where id = ?').run('field', theirs)
+    })
+
+    const response = await publish({ subdomain: 'field' })
+    expect(response.status).toBe(409)
+    expect(response.json.error).toBe('that name is taken')
+  })
+
   test('naming a space that is not yours does not free its name', async () => {
     await publish({ subdomain: 'field' })
 
@@ -896,6 +927,9 @@ describe('a site of one note', () => {
       expect(response.status, path).toBe(404)
       expect(response.headers.get('location'), path).toBeNull()
     }
+
+    // Nor by the address of its bytes, which a hash learned somewhere else asks for.
+    expect((await call(env, `/i/${PRIVATE.hash}.pdf`)).status).toBe(404)
   })
 
   test('nor one its folder rules would have published as a site of the space', async () => {

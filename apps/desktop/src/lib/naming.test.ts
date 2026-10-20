@@ -55,6 +55,13 @@ describe('a name that cannot be written', () => {
     expect(nameFault({ ...naming, typed: 'com4' })).toBe('reserved')
     // The crate looks at the part in front of the first dot, and so does this.
     expect(nameFault({ ...naming, typed: 'NUL.old' })).toBe('reserved')
+    // And with spaces before the dot, which Windows drops.
+    expect(nameFault({ ...naming, typed: 'CON .md' })).toBe('reserved')
+    // The ports Windows numbers in superscript, the ports numbered nought, and the
+    // console's own two.
+    for (const typed of ['COM¹', 'lpt².md', 'COM0', 'LPT0', 'CONIN$', 'conout$']) {
+      expect(nameFault({ ...naming, typed }), typed).toBe('reserved')
+    }
     // And a name that merely starts with those letters is a name.
     expect(nameFault({ ...naming, typed: 'Console' })).toBeNull()
   })
@@ -233,7 +240,7 @@ describe('the names the crate keeps for devices', () => {
 
     // And nothing this refuses is missing from the crate: a name the field takes
     // and the rename then throws out is the failure this module exists to stop.
-    const refused = ['CON', 'PRN', 'AUX', 'NUL', 'COM1', 'COM9', 'LPT1', 'LPT9'].filter(
+    const refused = ['CON', 'NUL', 'CONIN$', 'CONOUT$', 'COM0', 'COM9', 'COM³', 'LPT¹'].filter(
       (name) => !crate.includes(name),
     )
     expect(refused).toEqual([])

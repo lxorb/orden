@@ -1018,9 +1018,13 @@
       opened = true
       return
     }
-    if (note === null) return
 
-    const index = rowOfNote(note)
+    // A plain click picks the row it opens, and that row stays picked only while its
+    // note is the one being read: a note opened any other way - a tab, a link, the
+    // palette, Enter on another row - left the grey on a row nobody was in (#420).
+    const index = note === null ? null : rowOfNote(note)
+    const row = index === null ? undefined : flat[index]
+    if (!row || !workspace.isSelected(row.entry.path)) workspace.clearSelection()
     if (index === null) return
 
     void reach(index)
@@ -1171,9 +1175,10 @@
       style:--level={depth}
     >
       <FileMark mark={markOf(entry, own)} path={markPath(entry, own)} />
+      <!-- A database is a folder, so the name typed for one has no ending to keep. -->
       <NameField
         value={nameToEdit(entry)}
-        extension={extensionOf(entry.name, entry.is_dir)}
+        extension={named.making === 'database' ? '' : extensionOf(entry.name, entry.is_dir)}
         current={named.making ? undefined : entry.name}
         taken={workspace.namesBeside(entry.path)}
         appending={named.appending}

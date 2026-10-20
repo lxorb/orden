@@ -28,12 +28,13 @@
   import { scanHeadings } from './outline'
   import { overlays } from './overlays'
   import { OUTLINE_MARK, GRAPH_MARK, SEARCH_MARK } from './panel-marks'
+  import { browse, RECENT } from './palette/browse'
   import { candidates, headingCandidates, resting, rowKey, type World } from './palette/kinds'
   import { lineAsked, modeOf } from './palette/mode'
   import { choose, type Hands } from './palette/choose'
   import { makeable, typedAddress, withOffers } from './palette/offers'
   import { pieces } from './palette/pieces'
-  import { MOST, ranked } from './palette/rank'
+  import { ranked } from './palette/rank'
   import type { OpenTab, Row } from './palette/rows'
   import UnsavedDot from './UnsavedDot.svelte'
   import { isDraft } from './workspace/drafts'
@@ -257,6 +258,16 @@
   /** The messages found for what is typed now: none for words typed since. */
   const found = $derived(messages.term === term.trim() ? messages : { rows: [], only: false })
 
+  /** Nothing typed: the palette as a menu to browse; see palette/browse.ts. */
+  const browsed = $derived(
+    mode === 'everything' && !term && world
+      ? browse(
+          resting(offered, world, (key) => frecency.last(key), RECENT),
+          commands,
+        )
+      : null,
+  )
+
   const results = $derived.by((): Row[] => {
     if (mode === 'commands') return commandRows()
     if (mode === 'hosts') return hostRows()
@@ -271,7 +282,7 @@
       return [{ kind: 'place', line, text, depth: 0, hint: String(line + 1) }]
     }
 
-    if (!term) return world ? resting(offered, world, (key) => frecency.last(key), MOST) : []
+    if (!term) return browsed?.rows ?? []
     if (found.only) return found.rows
 
     return [
@@ -643,6 +654,8 @@
         {#each results as row, index (`${row.kind}:${label(row)}:${index}`)}
           {@const where = whereOf(row)}
           {@const hint = hintOf(row)}
+          {@const head = browsed?.heads.get(index)}
+          {#if head}<li role="none" class="nib-section">{head}</li>{/if}
           <li role="none">
             <!-- A command that cannot be run right now is faded, and says it is out
                  of anybody's hands rather than only being drawn that way: to

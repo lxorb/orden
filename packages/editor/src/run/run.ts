@@ -8,11 +8,13 @@ import { parseRunMessage, runnerDocument } from './protocol'
 /** How long the code may run before it is stopped and reported as timed out. A
  *  synchronous loop cannot be interrupted from outside, so this is not a
  *  deadline the code is asked to meet: it is when the sandbox is taken down.
+ *  The code runs in a worker of the frame's (protocol.ts), a thread of its own in
+ *  every engine, so this timer is never behind the code it is to stop - in WebKit a
+ *  frame shares the app's thread, and a loop in the frame itself froze both (#525).
  *
  *  Counted from the sandbox saying it is about to start, not from the click. A
- *  frame with an opaque origin is a browser process of its own, and on a loaded
- *  machine it can be seconds coming up; charging that to the note's code would
- *  time out programs that never got to run. */
+ *  frame and its worker can be seconds coming up on a loaded machine; charging
+ *  that to the note's code would time out programs that never got to run. */
 const RUN_TIME_LIMIT = 10_000
 
 /** How long the sandbox itself has to come up before the run is given up on.

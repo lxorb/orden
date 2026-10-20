@@ -1,6 +1,6 @@
 import { type FoldLines, type NoteJump, sameFolds, type SpaceTag } from '@nib/editor'
 import { account } from './account.svelte'
-import { hiddenKinds } from './settings.svelte'
+import { hiddenKinds, settings } from './settings.svelte'
 import { arriving } from './arriving.svelte'
 import {
   blockIds,
@@ -12,7 +12,7 @@ import {
 } from '@nib/markdown/links'
 import { freePath } from '@nib/markdown/paths'
 import { openerFor, sharedKind } from './openers'
-import { links } from './link-index.svelte'
+import { links, type Retargeting } from './link-index.svelte'
 import { noteId } from './note-id'
 import { insideOnly } from './automation/inside'
 import {
@@ -99,9 +99,11 @@ import {
   folderNote,
   folderNotePath,
   isFolderNote,
+  linkedFiles,
   noteToNest,
   unnesting,
 } from './folder-notes'
+import { carriedRows } from './drag-paths'
 import { flatRows } from './tree-flat'
 import { entryAt, withComing, withEntry, withMove, withoutEntry, withoutRows } from './tree-edits'
 import { orderedTree, type SortMode } from './tree-order'
@@ -162,13 +164,13 @@ export type Panel =
  *  workspace/zones.ts. */
 export type PanelSide = 'left' | 'right'
 
-/** The five things the file list makes, each of which arrives as a row waiting
+/** The six things the file list makes, each of which arrives as a row waiting
  *  for a name; see `startNaming`.
  *
  *  No folder among them. A note that holds notes is how a space is organised, so
  *  the folders on disk are made by nesting and by nothing else; see
  *  folder-notes.ts and docs/tree.md. */
-export type NewKind = 'note' | 'canvas' | 'pages' | 'web' | 'chat'
+export type NewKind = 'note' | 'canvas' | 'pages' | 'web' | 'chat' | 'database'
 
 /** A row of the file list waiting for a name, or a space's own name in the header
  *  being typed. One at a time, whichever it is; see `startNaming`. */
@@ -188,6 +190,7 @@ const PLACEHOLDER: Record<NewKind, string> = {
   pages: 'Untitled.pages',
   web: 'Untitled.url',
   chat: 'Chat.chat',
+  database: 'Untitled',
 }
 
 export type { Heading } from './outline'
@@ -504,6 +507,16 @@ class Workspace {
         void papers().then(({ paperGone }) => paperGone(op.path), unfetched)
       }
     })
+    // A board's manual order names its cards by path, so it follows them as links do.
+    this.fileOps.follow((op) => {
+      const tree = this.tree
+      if (op.op !== 'moved' || op.kind === 'space' || !op.root || !tree) return
+      if (!samePath(op.root, this.activeSpace?.root ?? '')) return
+      return import('./views/order-paths').then(
+        ({ orderMoved }) => orderMoved(tree, op.root ?? '', op.from, op.to),
+        unfetched,
+      )
+    })
   }
 
   readonly activeSpace = $derived(
@@ -788,7 +801,10 @@ class Workspace {
     if (!isNative && !isPlugin()) {
       const { seed } = await import('./web/commands')
       // What the old address's handoff waits for; see first-visit.svelte.ts.
-      if (await seed()) (await import('./first-visit.svelte')).firstVisit.seeded()
+      if (await seed()) {
+        ;(await import('./first-visit.svelte')).firstVisit.seeded()
+        settings.setup = -1
+      }
     }
 
     const state = readSession(stored(STORAGE_KEY))
@@ -1728,7 +1744,11 @@ class Workspace {
 
     const path = this.spelled(asked)
     const pageNote = isPagesTarget(path) ? path : await this.pageNoteForPdf(path)
-    if (!pageNote) return
+    // A paper pdf.js will not read, broken or behind a password: no tab, and the reader told.
+    if (!pageNote) {
+      await unread(path)
+      return
+    }
     await this.openPages(pageNote, page, how)
   }
 
@@ -1877,7 +1897,10 @@ class Workspace {
     // and it is not going in it - see test/weight.test.ts. `parseAhead` says why
     // this is not a worker.
     const { parseAhead } = await import('./canvas/format')
-    parseAhead(text)
+    // Text that is not a canvas will not read either: a stray comma or a truncated
+    // save, and a plane drawn over it would take the file with it. Blank text is a
+    // new plane.
+    if (!parseAhead(text)) return unread(path).then(() => null)
     await nextTask()
 
     const file = this.document({
@@ -2560,29 +2583,36 @@ class Workspace {
     const kind = this.kindAt(from)
     this.showMove(from, target)
 
-    // And back where it was if the move did not happen - something already there,
-    // a file that has gone. The listing is what the tree really is, and until it is
-    // read again the row is sitting in a folder that does not hold it; see `remove`,
-    // which puts a row back the same way.
-    try {
-      await invoke('rename_note', { from, to: target })
-    } catch (error) {
-      await this.loadTree()
-      throw error
-    }
-
-    // A note that moved is a note every link to it has to be pointed at again;
-    // see `renameFile`, including why this comes before everything is told.
-    const rewrote = (await this.retarget(from, target)) > 0
+    // One step to undo, the folder it may unnest included; see undo.svelte.ts.
     await this.undone.batch(async () => {
-      this.undone.record({
-        kind: 'move',
-        from,
-        to: target,
-        ...(rewrote ? { rewrote } : {}),
-        ...(how ? { [how]: true } : {}),
+      // After whatever write of anything open in it is in the air, and with every
+      // write of those held until the documents have been told where they went; see
+      // `holdingUnder` in workspace/saving.svelte.ts. Unnesting is a move of its
+      // own, so it comes after the hold rather than inside it.
+      await this.saving.holdingUnder(from, async () => {
+        // And back where it was if the move did not happen - something already
+        // there, a file that has gone. The listing is what the tree really is, and
+        // until it is read again the row is sitting in a folder that does not hold
+        // it; see `remove`, which puts a row back the same way.
+        try {
+          await invoke('rename_note', { from, to: target })
+        } catch (error) {
+          await this.loadTree()
+          throw error
+        }
+
+        // A note that moved is a note every link to it has to be pointed at again;
+        // see `renameFile`, including why this comes before everything is told.
+        const rewrote = (await this.retarget(from, target, { moved: true })) > 0
+        this.undone.record({
+          kind: 'move',
+          from,
+          to: target,
+          ...(rewrote ? { rewrote } : {}),
+          ...(how ? { [how]: true } : {}),
+        })
+        await this.fileMoved(from, target, kind)
       })
-      await this.fileMoved(from, target, kind)
       await this.loadTree()
       await this.unnest(folderOf(from))
     })
@@ -3361,6 +3391,13 @@ class Workspace {
     return this.picked.dragging(path)
   }
 
+  /** The notes a drag out of the list carries, as paths in the space: what a drop on a
+   *  note's words links (wikilink/drop.ts in the editor), and a drop on a chat. */
+  carriedNotes(transfer: DataTransfer | null): readonly string[] {
+    const root = this.activeSpace?.root
+    return root ? linkedFiles(this.tree, root, carriedRows(transfer)) : []
+  }
+
   async moveMany(paths: string[], intoFolder: string) {
     await this.undone.batch(async () => {
       await this.nestFor(intoFolder, paths)
@@ -3773,8 +3810,9 @@ class Workspace {
    *
    *  Nesting is `moveMany` with nothing to move, which is the one call the drop
    *  makes: it is the folder-note rule in one place, with the same rows put in
-   *  optimistically and the same undo. See folder-notes.ts. */
-  async createInside(path: string) {
+   *  optimistically and the same undo. See folder-notes.ts. `make` is
+   *  another kind, from the row's submenu. */
+  async createInside(path: string, make = (folder: string): unknown => this.createNote(folder)) {
     const entry = this.entryAt(path)
     if (!entry) return
 
@@ -3783,7 +3821,7 @@ class Workspace {
 
     await this.undone.batch(async () => {
       if (!entry.is_dir) await this.moveMany([], folder)
-      await this.createNote(folder)
+      await make(folder)
     })
   }
 
@@ -3885,6 +3923,8 @@ class Workspace {
     if (naming.making === 'canvas') await this.createCanvas(dir, name)
     else if (naming.making === 'pages') await this.createPages(dir, name)
     else if (naming.making === 'web') await this.createWebsite(dir, name)
+    else if (naming.making === 'database')
+      await (await import('./views/new-database')).createDatabase(dir, name)
     else if (naming.making !== 'chat') await this.createNote(dir, name)
     else if (!__EVEN_PLUGIN__) await (await import('./chats/view/open')).makeChat(dir, name)
   }
@@ -3936,15 +3976,15 @@ class Workspace {
     const target = joinPath(folderOf(path), clean)
     if (sameSpelling(target, path)) return
 
-    const note = this.opened.at(path)
-    if (!note) {
-      await this.renameFile(path, target, true)
-      return
-    }
-
     // After whatever write of it is in the air, so the write cannot put the old name
-    // back beside the new one.
-    await this.saving.holding(note, () => this.renameFile(path, target, true))
+    // back beside the new one - and of everything open inside it, for a folder.
+    await this.saving.holdingUnder(path, () => this.renameFile(path, target, true))
+  }
+
+  /** One file operation on everything open at or under `path`; see `holdingUnder` in
+   *  workspace/saving.svelte.ts. */
+  holdingUnder(path: string, run: () => Promise<void>): Promise<void> {
+    return this.saving.holdingUnder(path, run)
   }
 
   /** One file under another name in the same folder, and everything that owes: the
@@ -3974,7 +4014,7 @@ class Workspace {
     // Every link to the note now points at a name nothing answers to, so they
     // are rewritten, silently, as Obsidian does. Recorded on the action so that
     // undoing the rename undoes the rewrite with it.
-    const rewrote = (await this.retarget(path, target)) > 0
+    const rewrote = (await this.retarget(path, target, { moved: true })) > 0
     if (undoable) {
       this.undone.record({
         kind: 'rename',
@@ -3994,8 +4034,14 @@ class Workspace {
       // from.
       const was = `# ${shownName(nameOf(path))}`
       if (undoable && (note.text === was || note.text.startsWith(was + '\n'))) {
-        // Nobody typed this, so it goes in the way any other outside edit does.
+        // Nobody typed this, so it goes in the way any other outside edit does. But
+        // it is not what the file says, so it is owed the way typing is: a note with
+        // nothing waiting used to take it quietly and stay clean, the tab saying
+        // `# Groceries` and the file keeping `# Untitled`. Written once the rename
+        // lets go of the note; see `holdingUnder`.
         note.replace(`# ${shownName(nameOf(target))}${note.text.slice(was.length)}`, note.dirty)
+        note.dirty = true
+        this.saving.owed(note)
       }
     }
 
@@ -4075,7 +4121,7 @@ class Workspace {
     // device does, in its own trash folder (see trash.svelte.ts).
     const toAccount = account.signedIn && !unread && !(!isFolder && isPagesTarget(path))
     const held =
-      toAccount && isFolder ? await (await import('./workspace/undoing')).heldIn(this, path) : null
+      toAccount && isFolder ? await (await import('./workspace/undoing')).heldIn(path) : null
 
     try {
       if (toAccount) {
@@ -4149,11 +4195,11 @@ class Workspace {
   /** Rewrites every link in the space that points at `from` so it points at `to`.
    *  Answers how many notes were touched, so a caller can record whether there is
    *  anything to put back. */
-  async retarget(from: string, to: string): Promise<number> {
+  async retarget(from: string, to: string, how: Retargeting = {}): Promise<number> {
     const root = this.activeSpace?.root
     if (!root) return 0
 
-    const touched = await links.retarget(from, to, root)
+    const touched = await links.retarget(from, to, root, (path) => this.documentAt(path), how)
 
     // A note on screen may be one of the notes that was rewritten.
     this.flush()

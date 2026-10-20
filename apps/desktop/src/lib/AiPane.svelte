@@ -33,6 +33,8 @@
   import { listModels } from './ai/complete'
   import { forgetKey, hasKey, keysAreGuarded, writeKey } from './ai/keys'
   import { plans } from './ai/local/status.svelte'
+  import { type Mode, MODES, modeWord } from './ai/modes'
+  import { rememberTaskMode, taskMode } from './ai/sidebar/prefs'
   import { browserVault, keepBrowserInVault, vault } from './ai/vault/start.svelte'
   import PlanRows from './ai/PlanRows.svelte'
   import {
@@ -58,6 +60,7 @@
   let models = $state<Record<string, string[]>>({})
   /** Which provider is being asked for its models, so its row can say so. */
   let asking = $state('')
+  let tasked = $state(taskMode())
   /** What went wrong, by provider, in that provider's own words. */
   let trouble = $state<Record<string, string>>({})
   /** What a base URL looks like, as the address Ollama answers on. An address and
@@ -485,6 +488,27 @@
         </div>
       </div>
     {/each}
+  </div>
+{/if}
+
+<!-- The permission mode a task done with AI works in (#325); the glasses have no AI panel. -->
+{#if !__EVEN_PLUGIN__}
+  <div class="card">
+    <div class="nib-setting setting">
+      <span class="name">{t('Do with AI')}</span>
+      <div class="pick">
+        <Select
+          value={tasked}
+          options={MODES.filter((one) => one !== 'plan').map((one) => ({
+            value: one,
+            label: t(modeWord(one)),
+          }))}
+          onchange={(value: string) => rememberTaskMode((tasked = value as Mode))}
+          label={t('Do with AI')}
+          plain={viewport.touch}
+        />
+      </div>
+    </div>
   </div>
 {/if}
 

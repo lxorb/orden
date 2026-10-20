@@ -106,8 +106,15 @@ describe('the cover a note is given', () => {
     await setCover('/space/covered.md', 'assets/new.jpg')
 
     const touched = sent.filter((one) => one.path === '/space/covered.md')
-    expect(touched.map((one) => one.command)).toEqual(['read_note', 'snapshot_note', 'write_note'])
-    expect(touched[1]?.content).toContain('cover: assets/old.jpg')
+    // Read for the change, and again just before it is written; see `writeClosed`
+    // in workspace/note-text.ts.
+    expect(touched.map((one) => one.command)).toEqual([
+      'read_note',
+      'read_note',
+      'snapshot_note',
+      'write_note',
+    ])
+    expect(touched[2]?.content).toContain('cover: assets/old.jpg')
     expect(workspace.undone.stack).toHaveLength(1)
   })
 

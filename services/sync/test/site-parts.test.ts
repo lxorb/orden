@@ -198,7 +198,16 @@ describe('a form in a note', () => {
     const sent = new FormData()
     sent.set('your-name', 'Ada')
 
-    expect(answersFrom(formOf(fence)!, sent)).toEqual({ wrong: 'What you want to say is needed.' })
+    expect(answersFrom(formOf(fence)!, sent)).toEqual({ wrong: '2-needed' })
+    expect(formHtml(formOf(fence)!, 'note-1', false, '2-needed')).toContain(
+      '<p class="wrong">What you want to say is needed.</p>',
+    )
+  })
+
+  test('says only what the form can say went wrong, not what a link wrote', () => {
+    for (const wrong of ['Pay at evil.example', '9-needed', 'constructor']) {
+      expect(formHtml(formOf(fence)!, 'note-1', false, wrong)).not.toContain('class="wrong"')
+    }
   })
 
   test('and an address that is not one', () => {
@@ -206,20 +215,34 @@ describe('a form in a note', () => {
     sent.set('your-email', 'ada')
     sent.set('what-you-want-to-say', 'Hello')
 
-    expect(answersFrom(formOf(fence)!, sent)).toEqual({
-      wrong: 'Your email does not look like an address.',
-    })
+    expect(answersFrom(formOf(fence)!, sent)).toEqual({ wrong: '1-address' })
   })
 
   test('the answers become a spreadsheet, one column per question', () => {
     const csv = asCsv([
-      { at: 0, answers: { 'Your name': 'Ada', 'What you want to say': 'Hello' } },
-      { at: 1000, answers: { 'Your name': 'Grace' } },
+      { at: 0, path: 'Hello.md', answers: { 'Your name': 'Ada', 'What you want to say': 'Hello' } },
+      { at: 1000, path: 'Hello.md', answers: { 'Your name': 'Grace' } },
     ])
 
-    expect(csv.split('\n')[0]).toBe('"when","Your name","What you want to say"')
-    expect(csv).toContain('"Ada","Hello"')
+    expect(csv.split('\n')[0]).toBe('"when","page","Your name","What you want to say"')
+    expect(csv).toContain('"Hello.md","Ada","Hello"')
     expect(csv).toContain('"Grace",""')
+  })
+
+  test('where an answer is never run as a formula, and a number stays one', () => {
+    const csv = asCsv([
+      { at: 0, path: 'Hello.md', answers: { Name: '=HYPERLINK("http://evil.example","x")' } },
+      { at: 0, path: 'Hello.md', answers: { Name: '@SUM(A1)', Age: '-5' } },
+    ])
+
+    expect(csv).toContain(`"'=HYPERLINK(""http://evil.example"",""x"")"`)
+    expect(csv).toContain(`"'@SUM(A1)","-5"`)
+  })
+
+  test('and a question called page leaves the page column alone', () => {
+    const csv = asCsv([{ at: 0, path: 'Hello.md', answers: { page: 'forged' } }])
+
+    expect(csv).toBe('"when","page","page"\n"1970-01-01T00:00:00.000Z","Hello.md","forged"\n')
   })
 })
 
@@ -275,6 +298,22 @@ describe('a site with forms on it', () => {
     const held = await call(env, `/v1/spaces/${space}/answers`, { token })
     expect(held.json.answers).toHaveLength(1)
     expect(held.json.answers[0]?.answers).toEqual({ 'Your name': 'Ada' })
+  })
+
+  test('a page in another script is sent back to at the address it has', async () => {
+    const wrote = await call(env, `/v1/spaces/${space}/notes`, {
+      token,
+      body: { path: 'Привет.md', content: `# Привет\n\n${FENCE}\n` },
+    })
+    const sent = await call(env, `/form/${wrote.json.note.id}`, {
+      host: HOST,
+      method: 'POST',
+      raw: 'your-name=Ada',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    })
+
+    expect(sent.status).toBe(303)
+    expect(sent.headers.get('location')).toBe(`${encodeURI('/привет')}?sent=${wrote.json.note.id}`)
   })
 
   test('and says so on the page it comes back to', async () => {
@@ -437,9 +476,7 @@ describe('a site with forms on it', () => {
 
     // The five thousandth was the last; the next is refused, and nothing is kept.
     const refused = await answer('Grace')
-    expect(refused.headers.get('location')).toBe(
-      `/hello?wrong=${encodeURIComponent('This form is full.')}`,
-    )
+    expect(refused.headers.get('location')).toBe('/hello?wrong=full')
     expect(env.db.prepare('select count(*) as many from form_answers').get()).toEqual({
       many: 5000,
     })

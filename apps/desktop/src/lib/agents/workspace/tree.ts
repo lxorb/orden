@@ -165,7 +165,7 @@ async function movedAway(place: Place, from: string, to: string, folder: boolean
   const index = await indexOf(place)
 
   await invoke('rename_note', { from, to })
-  await index.retarget(from, to, place.space.root)
+  await index.retarget(from, to, place.space.root, undefined, { moved: true })
   await workspace.fileMoved(from, to, folder ? 'folder' : 'file')
 }
 

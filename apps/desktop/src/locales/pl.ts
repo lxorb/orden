@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const pl: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'Wszystko gotowe',
+  Personalize: 'Personalizuj',
+  Clean: 'Czysty',
+  'Live preview': 'Podgląd na żywo',
+  'Developer mode': 'Tryb dewelopera',
+  'Do you write code?': 'Piszesz kod?',
+  Yes: 'Tak',
+  No: 'Nie',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'Z innych aplikacji: {key}',
   'From other apps: set in your system settings':
@@ -85,6 +94,7 @@ export const pl: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'Jedno zadanie',
   'One per line': 'Jedno na wiersz',
+  'Add with AI': 'Dodaj z AI',
   // Tasks: the projects in the panel
   Favorites: 'Ulubione',
   'Add project': 'Dodaj projekt',
@@ -128,6 +138,7 @@ export const pl: Dictionary = {
   'Pointing hand on buttons': 'Wskazująca dłoń nad przyciskami',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Dodaj zadanie',
+  'Apple Shortcuts': 'Apple Skróty',
   Tomorrow: 'Jutro',
   'done {date}': 'zrobione {date}',
   'Next week': 'W przyszłym tygodniu',
@@ -190,6 +201,7 @@ export const pl: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'Obracaj płótno dwoma palcami',
+  'Snap the rotation to right angles': 'Przyciągaj obrót do kątów prostych',
   'Turn upright': 'Wyprostuj',
   Canvas: 'Kanwa',
   Card: 'Karta',
@@ -283,6 +295,7 @@ export const pl: Dictionary = {
   Tabs: 'Karty',
   'Ctrl+Tab in order of use': 'Ctrl+Tab według ostatniego użycia',
   'Swipe between pages': 'Przesuwanie między stronami',
+  'Hardware acceleration': 'Akceleracja sprzętowa',
   'Hidden tabs': 'Ukryte karty',
   'Memory saver': 'Oszczędzanie pamięci',
   Moderate: 'Umiarkowany',
@@ -1189,6 +1202,8 @@ export const pl: Dictionary = {
   Elbow: 'Kolanko',
   Frame: 'Ramka',
   Ungroup: 'Rozgrupuj',
+  Lock: 'Zablokuj',
+  Unlock: 'Odblokuj',
   'The ink of the page': 'Tusz strony',
   'Write in what is picked': 'Pisz w zaznaczeniu',
   Pen: 'Pióro',
@@ -1339,10 +1354,22 @@ export const pl: Dictionary = {
     'Zaszyfrowanych fragmentów: {count} - nic ich nie przeczyta bez Evernote',
   '{count} notes had a reminder, which the export does not carry':
     'Notatek z przypomnieniem: {count} - eksport go nie przenosi',
+  '{count} attachments were missing from the export or could not be read': {
+    few: 'Brakujących lub nieczytelnych załączników w eksporcie: {count}',
+    many: 'Brakujących lub nieczytelnych załączników w eksporcie: {count}',
+    one: 'Brakujących lub nieczytelnych załączników w eksporcie: {count}',
+    other: 'Brakujących lub nieczytelnych załączników w eksporcie: {count}',
+  },
   '{count} notes were in the bin and stay there': 'Notatek w koszu: {count} - tam zostają',
   '{count} archived notes are in a folder called Archive':
     'Zarchiwizowanych notatek: {count} - są w folderze Archive',
   'The colours a note had are not kept': 'Kolory notatki nie zostają zachowane',
+  '{count} files could not be read, so they were left out': {
+    few: 'Nie udało się odczytać {count} plików, więc je pominięto',
+    many: 'Nie udało się odczytać {count} plików, więc je pominięto',
+    one: 'Nie udało się odczytać {count} pliku, więc go pominięto',
+    other: 'Nie udało się odczytać {count} pliku, więc je pominięto',
+  },
   '{count} block references were written out as the words they pointed at':
     'Odwołań do bloków: {count} - zapisano je jako tekst, na który wskazywały',
   '{count} saved views are left out, and every row is in the table': {
@@ -1377,6 +1404,8 @@ export const pl: Dictionary = {
     'Kart nastroju i aktywności będących rysunkami: {count} - przenoszą się tylko słowa',
   '{count} notes are behind a password, which nothing but Notes can open':
     'Notatek za hasłem, które otwiera tylko Notatki: {count}',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    'Notatek za hasłem, które otwiera tylko Bear: {count}',
   '{count} notes are in Recently Deleted, and stay there':
     'Notatek w Ostatnio usuniętych, które tam zostają: {count}',
   '{count} drawings and scans have no picture on this Mac':
@@ -1639,6 +1668,7 @@ export const pl: Dictionary = {
   'Ask the model': 'Zapytaj model',
   'answered by {model}, {date}': 'odpowiedział {model}, {date}',
   'AI block': 'Blok AI',
+  'Do with AI': 'Zrób z AI',
   'Highlight colour': 'Kolor wyróżnienia',
   'A single newline breaks the line': 'Pojedynczy nowy wiersz przerywa wiersz',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -1970,6 +2000,8 @@ export const pl: Dictionary = {
   'Settings › AI': 'Ustawienia › AI',
   'New chat': 'Nowy czat',
   'Ask again': 'Zapytaj ponownie',
+  'Continue when the limit resets': 'Kontynuuj po odnowieniu limitu',
+  'Continues at {time}': 'Wznowi o {time}',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Zapytaj o cokolwiek, @ aby dodać, / po więcej',
   'What can I help with?': 'W czym mogę pomóc?',
@@ -2446,4 +2478,29 @@ export const pl: Dictionary = {
   Peach: 'Brzoskwinia',
   Sage: 'Szałwia',
   Mist: 'Mgła',
+  // A board, Notion's: its columns, its cards, its settings, a new database
+  'New database': 'Nowa baza danych',
+  'New page': 'Nowa strona',
+  'Not started': 'Nie rozpoczęto',
+  'In progress': 'W toku',
+  'No {property}': 'Bez {property}',
+  '{card} moved to {group}': 'Przeniesiono {card} do {group}',
+  'Not moved': 'Nie przeniesiono',
+  Retry: 'Ponów',
+  Calculate: 'Oblicz',
+  'Remove sort': 'Usuń sortowanie',
+  'Remove sort?': 'Usunąć sortowanie?',
+  Groups: 'Grupy',
+  'Hidden groups': 'Ukryte grupy',
+  'Add as option': 'Dodaj jako opcję',
+  'Move left': 'Przenieś w lewo',
+  'Move right': 'Przenieś w prawo',
+  'Delete option': 'Usuń opcję',
+  'Colour columns': 'Koloruj kolumny',
+  'Hide empty groups': 'Ukryj puste grupy',
+  'Card size': 'Rozmiar karty',
+  Small: 'Małe',
+  Large: 'Duże',
+  Both: 'Oba',
+  'Shown on cards': 'Widoczne na kartach',
 }

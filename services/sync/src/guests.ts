@@ -171,6 +171,10 @@ const OPEN_TO_GUESTS: readonly { method: string; path: RegExp }[] = [
   { method: 'GET', path: /^\/v1\/notes\/[^/]+$/ },
   { method: 'PUT', path: /^\/v1\/notes\/[^/]+$/ },
   { method: 'DELETE', path: /^\/v1\/notes\/[^/]+$/ },
+  // The paper a page note holds is part of the note (#551): a guest handed a page
+  // note writes on that paper, and opens it with nothing under the ink without it.
+  // Read only: what a note holds is the space's to say.
+  { method: 'GET', path: /^\/v1\/notes\/[^/]+\/paper$/ },
   // Deliberately not the versions a note has on the account, nor putting a space
   // back to a moment. The history is the account's record of its own notes, and a
   // guest has no account; a rollback is the whole space at once, which is not
@@ -239,14 +243,16 @@ export async function claimGuest(env: Env, guestId: string, user: User): Promise
     // Whatever the account already had in that space stands: a role the owner
     // gave the person by address is the one they meant, and a link is how they
     // arrived rather than what they are. One row apiece, whichever size of share
-    // it was: a link to one note becomes a membership about that note.
+    // it was: a link to one note becomes a membership about that note. Except
+    // the owner, who followed their own link and is the owner still.
     await env.DB.prepare(
       `insert into space_members (space_id, email, item, role, joined_at, created_at)
-       values (?1, ?2, ?3, ?4, ?5, ?5)
+       select ?1, ?2, ?3, ?4, ?5, ?5
+        where not exists (select 1 from spaces where id = ?1 and user_id = ?6)
        on conflict(space_id, email, item)
          do update set joined_at = coalesce(space_members.joined_at, ?5)`,
     )
-      .bind(held.space_id, user.email, held.item, held.role, now())
+      .bind(held.space_id, user.email, held.item, held.role, now(), user.id)
       .run()
 
     await env.DB.prepare(

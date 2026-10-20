@@ -5,8 +5,9 @@
  *  `POST /v1/feedback`, open to anybody: a person who cannot sign in is often the one
  *  with something to report. A session, when the request carries one, says whose report
  *  it is; a guest's or a program's is not an account and counts as nobody. Each report
- *  is a row (0055) and, where `FEEDBACK_TO` names an address, a mail to it through the
- *  binding every other message goes out by.
+ *  is a row (0055), an issue in the private `FEEDBACK_REPO` (feedback-issues.ts), and,
+ *  where `FEEDBACK_TO` names an address, a mail to it through the binding every other
+ *  message goes out by.
  *
  *  Counted three ways, because the route writes a row and sends a mail for anybody who
  *  asks: per machine, per account, and on the service as a whole. */
@@ -16,6 +17,7 @@ import { requireWhoever } from './auth'
 import { readBody } from './body'
 import { newId, now } from './crypto'
 import { escape, mailer, oneLine } from './email'
+import { openIssue } from './feedback-issues'
 import { machineOf, within } from './limits'
 import { TRY_IN_AN_HOUR } from './refused'
 import type { Env, Variables } from './types'
@@ -65,6 +67,16 @@ feedback.post('/', async (context) => {
   )
     .bind(id, user?.id ?? null, text, version, platform, log, now())
     .run()
+
+  // And an issue of it in the private repository, as lxorbs-minion (#666): after the
+  // answer where the runtime lets work go on past it, and tried again from the cron
+  // until it has worked; see feedback-issues.ts.
+  const issue = openIssue(env, id)
+  try {
+    context.executionCtx.waitUntil(issue)
+  } catch {
+    await issue
+  }
 
   if (env.FEEDBACK_TO) {
     const from = user ? user.email : 'somebody signed out'

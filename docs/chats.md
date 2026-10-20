@@ -786,10 +786,11 @@ Settings, and one function decides.
   Slack's file-access prompt; sending without it sends the link alone. Share is offered to
   the note's owner, as every share is (the routes in 4.4), and what it grants is the
   note alone, to read.
-- **Quote a selection.** The editor's context menu, a note's row in the file list and the
-  palette gain **Send to chat**: pick a chat by name (the note's own space's first, a new
-  chat in it last) and its composer opens with the selection as a quote and a link to the
-  note at that heading, or the note's link alone. Nothing is sent until Enter.
+- **Quote a selection.** The editor's context menu and the palette gain **Send to
+  chat** (a note's row is dragged onto a chat instead, #416): pick a chat by name (the
+  note's own space's first, a new chat in it last) and its composer opens with the
+  selection as a quote and a link to the note at that heading, or the note's link alone.
+  Nothing is sent until Enter.
 - **@-mention a note**: `[[` as above. The message keeps it as a wikilink, and the link
   index reads links out of the store's messages as it reads them out of notes, so the note's
   backlinks list the chat and the message, and a rename of the note is followed there too.

@@ -32,8 +32,6 @@
   import { mark } from './trace'
   import { modes } from './modes.svelte'
   import { PROPERTY_CHOICES } from './property-choices'
-  import { carriedRows } from './drag-paths'
-  import { linkedFiles } from './folder-notes'
   import { type OverlayScrollbar, overlayScrollbar } from './scrollbar'
   import { shortcuts } from './shortcuts.svelte'
   import { trustsHtmlIn } from './sharing.svelte'
@@ -81,12 +79,6 @@
     view?: EditorView | undefined
   } = $props()
   /* eslint-enable prefer-const */
-
-  /** The notes a drag over the words carries; see wikilink/drop.ts in the editor. */
-  function carriedNotes(transfer: DataTransfer | null): readonly string[] {
-    const root = workspace.activeSpace?.root
-    return root ? linkedFiles(workspace.tree, root, carriedRows(transfer)) : []
-  }
 
   /** The editor in the card over a `[[link]]`, fetched with the first card rather than
    *  carried: nothing of it is on screen until a pointer rests on a link, and it is
@@ -141,7 +133,7 @@
       // Links setting reaches the popup the way it reaches the grip's Copy link.
       // See composer.ts.
       writeLink: pickedLink,
-      carriedNotes,
+      carriedNotes: (transfer) => workspace.carriedNotes(transfer),
       ...(onfind ? { onFind: onfind } : {}),
       // The keys the app has a fixed set of answers for, so a property row offers a
       // menu rather than a field somebody has to spell a colour into.

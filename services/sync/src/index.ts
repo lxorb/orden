@@ -49,6 +49,7 @@ import { sweepTreeOps } from './sync2/tree'
 import { spaces } from './spaces'
 import { join } from './spaces/join'
 import { feedback } from './feedback'
+import { openWaitingIssues } from './feedback-issues'
 import { recheckDomains } from './spaces/proof'
 import { expireRequests, sharedWithMe } from './spaces/share'
 import { themes } from './themes'
@@ -78,7 +79,8 @@ const appOrigins = cors({
   // header that is not named here is dropped by the browser before the request
   // leaves, which is a thing that only shows up on the builds whose origin is
   // not the service's own. See versions.ts and apps/desktop/src/lib/device.ts.
-  allowHeaders: ['authorization', 'content-type', 'x-nib-device'],
+  // `x-nib-diagram` is what a drawn diagram's name was hashed from; see blobs.ts.
+  allowHeaders: ['authorization', 'content-type', 'x-nib-device', 'x-nib-diagram'],
   allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   maxAge: 86400,
 })
@@ -404,10 +406,12 @@ const EVERY_MINUTE = '* * * * *'
 function scheduled(event: ScheduledEvent, env: Env, context: ExecutionContext) {
   const at = Date.now()
 
-  // Each minute, the reminders due by now, pushed to the devices that asked for them;
-  // nothing else runs on that one. See push/reminders.ts.
+  // Each minute, the reminders due by now, pushed to the devices that asked for them
+  // (push/reminders.ts), and the reports sent with Send feedback whose issue could not be
+  // opened yet, tried again (feedback-issues.ts).
   if (event.cron === EVERY_MINUTE) {
     context.waitUntil(sendDue(env, at))
+    context.waitUntil(openWaitingIssues(env, at))
     return
   }
 

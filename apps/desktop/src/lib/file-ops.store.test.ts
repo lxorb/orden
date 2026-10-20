@@ -30,6 +30,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 const { workspace } = await import('./workspace.svelte')
 const { sync } = await import('./sync.svelte')
 const { links } = await import('./link-index.svelte')
+const { startup } = await import('./startup.svelte')
 const { keeping } = await import('./workspace/file-ops')
 const { movedTo, within } = await import('./space-paths')
 type FileOp = import('./workspace/file-ops').FileOp
@@ -140,6 +141,227 @@ describe('a store the app has never heard of', () => {
     await workspace.remove(`${ROOT}/Work`, true)
 
     expect(workspace.tabs.map((one) => one.path)).toEqual([`${ROOT}/Workshop.md`])
+  })
+})
+
+describe('a write in the air while a file moves', () => {
+  /** Words typed and on their way down, the write asked for and held open until
+   *  `land` is called: the round trip a write is, with a move landing inside it. */
+  async function typedAndWriting(words: string) {
+    const one = disk.current
+    const original = one?.invoke
+    if (!one || !original) throw new Error('no disk')
+
+    let land = () => {
+      // Replaced the moment the promise below hands over its resolver.
+    }
+    let asked = () => {
+      // And this one by the next.
+    }
+    const landed = new Promise<void>((resolve) => (land = resolve))
+    const writeAsked = new Promise<void>((resolve) => (asked = resolve))
+    one.invoke = async (command, args) => {
+      if (command === 'write_note') {
+        one.invoke = original
+        asked()
+        await landed
+      }
+      return original(command, args)
+    }
+
+    workspace.active?.note.live.replace(words, true)
+    const writing = workspace.writeNow()
+    await writeAsked
+    return { land, writing }
+  }
+
+  test('a note moved into a folder waits for it, and the words follow the note', async () => {
+    await workspace.open(`${ROOT}/Plan.md`)
+    const note = workspace.active?.note
+    const { land, writing } = await typedAndWriting('# Plan\ntyped before the move\n')
+
+    const moving = workspace.move(`${ROOT}/Plan.md`, `${ROOT}/Work`)
+    land()
+    await Promise.all([writing, moving])
+    await workspace.writesSettled()
+
+    // The move used to go ahead under the write: the file went, the write put the
+    // newest words back at the old path, and the document was told the old path
+    // back after it had followed the move - two files, and the tab on the stale one.
+    expect(note?.path).toBe(`${ROOT}/Work/Plan.md`)
+    expect(disk.current?.files.has(`${ROOT}/Plan.md`)).toBe(false)
+    expect(disk.current?.files.get(`${ROOT}/Work/Plan.md`)).toBe('# Plan\ntyped before the move\n')
+  })
+
+  test('and so does a folder renamed with a note open inside it', async () => {
+    await workspace.open(`${ROOT}/Work/Notes.md`)
+    const note = workspace.active?.note
+    const { land, writing } = await typedAndWriting('# Notes\ntyped before the rename\n')
+
+    const renaming = workspace.rename(`${ROOT}/Work`, 'Desk')
+    land()
+    await Promise.all([writing, renaming])
+    await workspace.writesSettled()
+
+    expect(note?.path).toBe(`${ROOT}/Desk/Notes.md`)
+    expect(disk.current?.files.has(`${ROOT}/Work/Notes.md`)).toBe(false)
+    expect(disk.current?.files.get(`${ROOT}/Desk/Notes.md`)).toBe(
+      '# Notes\ntyped before the rename\n',
+    )
+  })
+
+  test('and so does the undo of a move, which is a move back', async () => {
+    await workspace.move(`${ROOT}/Plan.md`, `${ROOT}/Work`)
+    await workspace.open(`${ROOT}/Work/Plan.md`)
+    const note = workspace.active?.note
+    const { land, writing } = await typedAndWriting('# Plan\ntyped before the undo\n')
+
+    // The undo is fetched before it runs, so the write is let go a moment later:
+    // long enough for a move back that did not wait to have happened.
+    const undoing = workspace.undoFileAction()
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    land()
+    await Promise.all([writing, undoing])
+    await workspace.writesSettled()
+
+    expect(note?.path).toBe(`${ROOT}/Plan.md`)
+    expect(disk.current?.files.has(`${ROOT}/Work/Plan.md`)).toBe(false)
+    expect(disk.current?.files.get(`${ROOT}/Plan.md`)).toBe('# Plan\ntyped before the undo\n')
+  })
+})
+
+describe('a note renamed while its heading is still its name', () => {
+  test('has the new heading written to the file, not only shown', async () => {
+    // With no file list on screen a new note is written at once under its
+    // placeholder name, rather than waiting in a row for one.
+    workspace.panel = null
+    await workspace.createNote(ROOT)
+    await workspace.writesSettled()
+    const made = workspace.active?.path
+    if (!made) throw new Error('no note')
+    workspace.panel = 'tree'
+    await workspace.loadTree()
+
+    await workspace.rename(made, 'Groceries.md')
+    await workspace.writesSettled()
+
+    // The heading was rewritten quietly into a note with nothing waiting to be
+    // written, which left it clean: the tab said `# Groceries` and the file kept
+    // `# Untitled` until something else was typed.
+    const shown = workspace.documentAt(`${ROOT}/Groceries.md`)?.text ?? ''
+    expect(shown.startsWith('# Groceries\n')).toBe(true)
+    expect(disk.current?.files.get(`${ROOT}/Groceries.md`)).toBe(shown)
+  })
+})
+
+describe('a link rewritten in a note with typing not yet written', () => {
+  test('keeps both the typing and the new link', async () => {
+    disk.current?.files.set(`${ROOT}/Other.md`, 'see [[Plan]]\n')
+    await workspace.loadTree()
+    // The index waits its turn behind the first frame, which a test has to say has
+    // been drawn; see startup.svelte.ts.
+    void startup.shown()
+    await links.build(ROOT)
+    // This disk answers no scan, so the index hears of the two notes the way it
+    // hears of a note written.
+    links.noteSaved(`${ROOT}/Plan.md`, '# Plan\n')
+    links.noteSaved(`${ROOT}/Other.md`, 'see [[Plan]]\n')
+    await workspace.open(`${ROOT}/Other.md`)
+    const note = workspace.active?.note
+    note?.live.replace('see [[Plan]]\ntyped and waiting\n', true)
+
+    await workspace.rename(`${ROOT}/Plan.md`, 'Goal.md')
+    await workspace.writesSettled()
+
+    // The rewrite went to the file and skipped the document, which had words of
+    // its own; the typing then went down with the old link in it, over the new.
+    expect(note?.text).toBe('see [[Goal]]\ntyped and waiting\n')
+    expect(disk.current?.files.get(`${ROOT}/Other.md`)).toBe('see [[Goal]]\ntyped and waiting\n')
+  })
+})
+
+describe('a note open on screen that links to itself, renamed', () => {
+  test('is rewritten where it went, and nothing comes back under its old name', async () => {
+    disk.current?.files.set(`${ROOT}/Groceries.md`, 'see [[Groceries#Produce]]\n')
+    await workspace.loadTree()
+    void startup.shown()
+    await links.build(ROOT)
+    links.noteSaved(`${ROOT}/Groceries.md`, 'see [[Groceries#Produce]]\n')
+    await workspace.open(`${ROOT}/Groceries.md`)
+    const note = workspace.active?.note
+
+    await workspace.rename(`${ROOT}/Groceries.md`, 'Shopping.md')
+    await workspace.writesSettled()
+
+    // The rewrite read the open document's words and wrote them to the path it
+    // had, which the rename had just emptied: the note came back there.
+    expect(disk.current?.files.has(`${ROOT}/Groceries.md`)).toBe(false)
+    expect(disk.current?.files.get(`${ROOT}/Shopping.md`)).toBe('see [[Shopping#Produce]]\n')
+    expect(note?.text).toBe('see [[Shopping#Produce]]\n')
+  })
+
+  test('closed, is rewritten where it went too', async () => {
+    disk.current?.files.set(`${ROOT}/Groceries.md`, 'see [[Groceries#Produce]]\n')
+    await workspace.loadTree()
+    void startup.shown()
+    await links.build(ROOT)
+    links.noteSaved(`${ROOT}/Groceries.md`, 'see [[Groceries#Produce]]\n')
+
+    await workspace.rename(`${ROOT}/Groceries.md`, 'Shopping.md')
+    await workspace.writesSettled()
+
+    expect(disk.current?.files.has(`${ROOT}/Groceries.md`)).toBe(false)
+    expect(disk.current?.files.get(`${ROOT}/Shopping.md`)).toBe('see [[Shopping#Produce]]\n')
+  })
+})
+
+describe('a note open on screen that links to itself, merged into another', () => {
+  test('leaves the joined words in the note it went into', async () => {
+    disk.current?.files.set(`${ROOT}/A.md`, 'see [[A#Goals]]\n')
+    disk.current?.files.set(`${ROOT}/B.md`, 'kept in B\n')
+    await workspace.loadTree()
+    void startup.shown()
+    await links.build(ROOT)
+    links.noteSaved(`${ROOT}/A.md`, 'see [[A#Goals]]\n')
+    links.noteSaved(`${ROOT}/B.md`, 'kept in B\n')
+    await workspace.open(`${ROOT}/A.md`)
+
+    await workspace.mergeInto(`${ROOT}/A.md`, `${ROOT}/B.md`)
+    await workspace.writesSettled()
+
+    // The rewrite took the merge for a move, and wrote A's own words over B.
+    const b = disk.current?.files.get(`${ROOT}/B.md`) ?? ''
+    expect(b).toContain('kept in B')
+    expect(b).toContain('[[B#Goals]]')
+    expect(disk.current?.files.has(`${ROOT}/A.md`)).toBe(false)
+  })
+
+  test('and undone, gives each note its own words back', async () => {
+    disk.current?.files.set(`${ROOT}/A.md`, 'only A\n')
+    disk.current?.files.set(`${ROOT}/B.md`, 'see [[B#Goals]]\n')
+    disk.current?.files.set(`${ROOT}/C.md`, 'to [[A]]\n')
+    disk.current?.files.set(`${ROOT}/D.md`, 'to [[B]]\n')
+    await workspace.loadTree()
+    void startup.shown()
+    await links.build(ROOT)
+    links.noteSaved(`${ROOT}/A.md`, 'only A\n')
+    links.noteSaved(`${ROOT}/B.md`, 'see [[B#Goals]]\n')
+    links.noteSaved(`${ROOT}/C.md`, 'to [[A]]\n')
+    links.noteSaved(`${ROOT}/D.md`, 'to [[B]]\n')
+
+    await workspace.mergeInto(`${ROOT}/A.md`, `${ROOT}/B.md`)
+    await workspace.writesSettled()
+    await workspace.undoFileAction()
+    await workspace.writesSettled()
+
+    // B is open after the merge; taken for the note that moved, its words went
+    // over the A just put back.
+    expect(disk.current?.files.get(`${ROOT}/A.md`)).toBe('only A\n')
+    expect(disk.current?.files.get(`${ROOT}/B.md`)).toBe('see [[B#Goals]]\n')
+    // The link the merge pointed at B goes back to A; one that always named B
+    // was pointed at A as well.
+    expect(disk.current?.files.get(`${ROOT}/C.md`)).toBe('to [[A]]\n')
+    expect(disk.current?.files.get(`${ROOT}/D.md`)).toBe('to [[B]]\n')
   })
 })
 

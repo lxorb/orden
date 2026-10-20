@@ -15,6 +15,9 @@ vi.stubGlobal('localStorage', {
 const { NoteDoc, Tab } = await import('../workspace/documents.svelte')
 const { CanvasStore } = await import('./store.svelte')
 const { blankCanvas, readCanvas, writeCanvas } = await import('./format')
+const { canvasMenu, run } = await import('./actions')
+const { locking } = await import('./edits')
+const { pens } = await import('./pens.svelte')
 type Canvas = import('./format').Canvas
 type CanvasNode = import('./format').CanvasNode
 type Shared = import('./shared').SharedPlane
@@ -31,7 +34,8 @@ function opened(text = blankCanvas()) {
     () => undefined,
   )
 
-  return { store: new CanvasStore(new Tab(note, 'pane')), note }
+  const tab = new Tab(note, 'pane')
+  return { store: new CanvasStore(tab), note, tab }
 }
 
 /** A room, recorded rather than run: what it was pushed, and what it was asked. */
@@ -172,6 +176,48 @@ describe('a gesture that edits as it goes', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+})
+
+/** The width dial over picked ink edits on every step of its drag, like the eraser. */
+describe('picked ink given another width (#432)', () => {
+  test('widens every picked stroke, and one undo takes the drag back', async () => {
+    const { sized } = await import('./edits')
+    const { store } = opened()
+    const points = [{ x: 0, y: 0, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 }]
+    const stroke = (id: string) => ({ id, tool: 'pen' as const, color: '#000000', size: 2, points })
+    store.edit({ ...store.canvas, ink: [stroke('a'), stroke('b'), stroke('c')] })
+
+    store.edit(sized(store.canvas, ['a', 'b'], 4), 'width:1')
+    store.edit(sized(store.canvas, ['a', 'b'], 6), 'width:1')
+    expect(store.canvas.ink.map((one) => one.size)).toEqual([6, 6, 2])
+
+    store.undo()
+    expect(store.canvas.ink.map((one) => one.size)).toEqual([2, 2, 2])
+  })
+})
+
+/** The stroke eraser reaches as far as its own width says, like the area eraser,
+ *  and as far as a click on a line until the width is turned (#628). */
+describe('the stroke eraser', () => {
+  const line = (y: number) => ({
+    id: `at${y}`,
+    tool: 'pen' as const,
+    color: 'ink' as const,
+    size: 2,
+    points: [0, 40].map((x) => ({ x, y, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 })),
+  })
+
+  test('takes a line as far off as its width reaches, and leaves one further off', () => {
+    const { store } = opened()
+    store.edit({ ...store.canvas, ink: [line(8), line(20)] })
+
+    run.rub(store, { x: 20, y: 0 }, pens.eraser.stroke)
+    expect(store.canvas.ink.map((stroke) => stroke.id)).toEqual(['at8', 'at20'])
+
+    pens.rubbing({ strokeRub: 10 })
+    run.rub(store, { x: 20, y: 0 }, pens.eraser.stroke)
+    expect(store.canvas.ink.map((stroke) => stroke.id)).toEqual(['at20'])
   })
 })
 
@@ -390,5 +436,123 @@ describe('a version put back from the history (#533)', () => {
     store.follow()
 
     expect(ids(store.canvas)).toEqual(['later'])
+  })
+})
+
+describe('ink pasted on its own', () => {
+  test('lands centred on the pointer, as cards do', async () => {
+    const { run } = await import('./actions')
+    const { strokeBox } = await import('./ink')
+    const { store } = opened()
+    const at = (x: number, y: number) => ({ x, y, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 })
+    const points = [at(0, 0), at(100, 0), at(100, 100)]
+    const incoming = { nodes: [], edges: [], at: {}, gone: {} }
+    const ink = [{ id: 's', tool: 'pen' as const, color: '#000000', size: 4, points }]
+
+    run.paste(store, { ...incoming, ink }, '', { x: 1000, y: 2000 })
+
+    const box = strokeBox(store.canvas.ink[0]!)
+    expect(Math.round(box.x + box.width / 2)).toBe(1000)
+    expect(Math.round(box.y + box.height / 2)).toBe(2000)
+  })
+})
+
+describe('a plane whose tab is switched away from and back', () => {
+  test('can still take back what was drawn on it', () => {
+    const { store, note, tab } = opened()
+    store.edit({ ...store.canvas, nodes: [card('a')] })
+    store.part()
+
+    const again = new CanvasStore(tab)
+    again.undo()
+
+    expect(again.canvas.nodes).toEqual([])
+    expect(readCanvas(note.text).nodes).toEqual([])
+  })
+
+  test('but not past words that arrived while it was away', () => {
+    const { store, note, tab } = opened()
+    store.edit({ ...store.canvas, nodes: [card('a')] })
+    store.part()
+    note.replace(writeCanvas({ ...readCanvas(note.text), nodes: [card('b')] }))
+
+    const again = new CanvasStore(tab)
+    again.undo()
+
+    expect(ids(again.canvas)).toEqual(['b'])
+  })
+})
+
+/** Nothing picks what is locked in place: not a press, a band or Ctrl+A (#643). */
+describe('something locked in place', () => {
+  test('is never picked, alone or among others', () => {
+    const { store } = opened()
+    store.edit(locking({ ...store.canvas, nodes: [card('a'), card('b', 300)] }, ['a'], true))
+
+    store.pick('a')
+    expect(store.picked).toEqual([])
+    store.pickAll(['a', 'b'])
+    expect(store.picked).toEqual(['b'])
+  })
+
+  test('is let go when an unlock is taken back', () => {
+    const { store } = opened()
+    store.edit(locking({ ...store.canvas, nodes: [card('a')] }, ['a'], true))
+    store.edit(locking(store.canvas, ['a'], false))
+    store.pick('a')
+
+    store.undo()
+    expect(store.picked).toEqual([])
+  })
+
+  const view = (locked: string | null) => ({
+    ...{ width: 800, height: 600, path: null, name: 'Board', palette: {} as never },
+    ...{ onfind: () => undefined, onnarrow: () => undefined, again: () => undefined },
+    ...{ narrowed: false, trusted: false, bare: locked !== null, locked },
+  })
+  const rows = (store: InstanceType<typeof CanvasStore>, locked: string | null) =>
+    canvasMenu(store, { x: 10, y: 10 }, view(locked))
+  const labels = (store: InstanceType<typeof CanvasStore>, locked: string | null) =>
+    rows(store, locked).map((row) => row?.label)
+  const press = (store: InstanceType<typeof CanvasStore>, locked: string | null, label: string) =>
+    rows(store, locked)
+      .find((row) => row?.label === label)
+      ?.run()
+
+  test('is locked from the menu of what is picked, and let go of', () => {
+    const { store } = opened()
+    store.edit({ ...store.canvas, nodes: [card('a')] })
+    store.pick('a')
+
+    press(store, null, 'Lock')
+    expect(store.canvas.nodes[0]?.locked).toBe(true)
+    expect(store.picked).toEqual([])
+  })
+
+  test('is offered Unlock by its own menu, and nothing it cannot do, and is one step back', () => {
+    const { store } = opened()
+    store.edit(locking({ ...store.canvas, nodes: [card('a')] }, ['a'], true))
+    expect(labels(store, 'a')).toContain('Unlock')
+    expect(labels(store, 'a')).not.toContain('Lock')
+    expect(labels(store, 'a')).not.toContain('Delete')
+
+    press(store, 'a', 'Unlock')
+    expect(store.canvas.nodes[0]?.locked).toBeUndefined()
+    store.undo()
+    expect(store.canvas.nodes[0]?.locked).toBe(true)
+  })
+
+  test('is left alone by both erasers rubbing over it', () => {
+    const { store } = opened()
+    const points = [0, 200].map((x) => ({ x, y: 30, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 }))
+    const ink = [{ id: 'ink', tool: 'pen' as const, color: 'ink', size: 2, points }]
+    store.edit(locking({ ...store.canvas, nodes: [card('a')], ink }, ['a'], true))
+    const before = store.canvas.nodes
+
+    // The line written across it cut through, and then rubbed out whole.
+    run.cut(store, { x: 100, y: 30 }, 20)
+    run.rub(store, { x: 10, y: 30 }, 20)
+    expect(store.canvas.ink).toEqual([])
+    expect(store.canvas.nodes).toBe(before)
   })
 })

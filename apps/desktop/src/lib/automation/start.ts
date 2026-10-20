@@ -88,6 +88,9 @@ export async function startAutomation(): Promise<() => void> {
         void answer(asked.id, asked)
       }),
     )
+    // Only now does the crate send what it was asked: an event before this listener
+    // reached nobody, and the caller waited out the endpoint's patience for nothing.
+    await invoke('automation_listening')
   }
 
   return () => {

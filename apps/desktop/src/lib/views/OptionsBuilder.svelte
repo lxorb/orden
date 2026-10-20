@@ -16,7 +16,8 @@
   import { bare } from './columns'
   import { setBaseNib, setProperty } from './edit'
   import type { Kit } from './kit'
-  import { optionsAt, renamedIn, reprefixed } from './options'
+  import { optionsAt, reprefixed } from './options'
+  import { renameOption } from './board-menus'
   import ToneDot from './ToneDot.svelte'
 
   const { kit, column }: { kit: Kit; column: string } = $props()
@@ -43,15 +44,7 @@
 
   function rename(at: number, words: string) {
     const was = options[at]
-    const value = words.trim()
-    if (!was || !value || value === was.value || options.some((one) => one.value === value)) return
-    change(at, { ...was, value })
-    void writeEach(
-      live.rows.flatMap((row) => {
-        const one = renamedIn(row, column, was.value, value)
-        return one ? [{ row, change: one }] : []
-      }),
-    )
+    if (was) renameOption(kit, column, was.value, words)
   }
 
   function add() {

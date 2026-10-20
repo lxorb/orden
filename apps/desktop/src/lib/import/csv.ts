@@ -15,11 +15,27 @@
  *  table of European numbers is full of semicolons. */
 const MAYBE = [',', ';', '\t'] as const
 
+/** The line Excel writes above the header to say which separator follows, and
+ *  reads to know it: `sep=;`. */
+const SEP = /^"?sep=(.)"?[^\S\r\n]*(\r\n|\r|\n|$)/i
+
 export function readCsv(text: string): string[][] {
+  return parsed(text).rows
+}
+
+/** The rows, and the separator that divided them. */
+function parsed(text: string): { rows: string[][]; delimiter: string } {
   // Excel writes a byte order mark in front of the header, which would otherwise
   // become part of the first column's name and so of every row's first property.
   const body = text.charCodeAt(0) === 0xfeff ? text.slice(1) : text
-  return rows(body, delimiterOf(body))
+  const said = SEP.exec(body)
+  if (said) {
+    const delimiter = said[1] ?? ','
+    return { rows: rows(body.slice(said[0].length), delimiter), delimiter }
+  }
+
+  const delimiter = delimiterOf(body)
+  return { rows: rows(body, delimiter), delimiter }
 }
 
 /** Which separator the file uses: whichever divides the first line into the
@@ -41,25 +57,37 @@ export function delimiterOf(text: string): string {
   return best
 }
 
-/** The first line, counting a quoted newline as part of the line it is in. */
+/** The first line with a word on it, counting a quoted newline as part of the
+ *  line it is in: the header, under the blank rows a spreadsheet may start with. */
 function firstLine(text: string): string {
   let quoted = false
+  let start = 0
 
   for (let at = 0; at < text.length; at += 1) {
     const one = text[at]
     if (one === '"') quoted = !quoted
-    else if (!quoted && (one === '\n' || one === '\r')) return text.slice(0, at)
+    else if (!quoted && (one === '\n' || one === '\r')) {
+      const line = text.slice(start, at)
+      if (/[^,;\t\s"]/.test(line)) return line
+      start = at + 1
+    }
   }
 
-  return text
+  return text.slice(start)
 }
 
-function rows(text: string, delimiter: string): string[][] {
+function rows(
+  text: string,
+  delimiter: string,
+  literal: ReadonlySet<number> = new Set(),
+): string[][] {
   const out: string[][] = []
   let row: string[] = []
   let cell = ''
   let quoted = false
   let at = 0
+  // Where the open quote was, for a file that ends inside it.
+  let opened = -1
 
   const endCell = () => {
     row.push(cell)
@@ -93,8 +121,9 @@ function rows(text: string, delimiter: string): string[][] {
       continue
     }
 
-    if (one === '"' && !cell) {
+    if (one === '"' && !cell && !literal.has(at)) {
       quoted = true
+      opened = at
       at += 1
       continue
     }
@@ -115,6 +144,12 @@ function rows(text: string, delimiter: string): string[][] {
     at += 1
   }
 
+  // A quote that opens a cell and is never closed would make one cell of the rest
+  // of the file, every row after it inside it. No later quote closed it, so it can
+  // only have been a quote somebody typed: the file is read again with that one
+  // quote as a character.
+  if (quoted) return rows(text, delimiter, new Set([...literal, opened]))
+
   // A file that ends with a newline has no last row; one that does not, does.
   if (cell || row.length) endRow()
 
@@ -125,11 +160,29 @@ function rows(text: string, delimiter: string): string[][] {
  *  row is: a note's worth of properties. An empty header column is dropped, so a
  *  trailing comma in the header does not become a property called nothing. */
 export function recordsOf(text: string): { columns: string[]; rows: Record<string, string>[] } {
-  const table = readCsv(text)
+  const { rows: read, delimiter } = parsed(text)
+  // The header is the first row with anything in it: a spreadsheet saved with an
+  // empty row or two above its table writes them as lines of nothing, or of commas.
+  const table = read.slice(
+    Math.max(
+      0,
+      read.findIndex((line) => line.some((cell) => cell.trim())),
+    ),
+  )
   const head = table[0]
   if (!head) return { columns: [], rows: [] }
 
-  const columns = head.map((one) => one.trim())
+  // Two columns of one name would be one property, and the second would write over
+  // the first in every row: the second is `Notes 2`, the way a note's name steps aside.
+  const seen = new Set<string>()
+  const columns = head.map((one) => {
+    const name = one.trim()
+    if (!name) return name
+    let free = name
+    for (let step = 2; seen.has(free.toLowerCase()); step += 1) free = `${name} ${step}`
+    seen.add(free.toLowerCase())
+    return free
+  })
   const found: Record<string, string>[] = []
 
   for (const line of table.slice(1)) {
@@ -138,6 +191,16 @@ export function recordsOf(text: string): { columns: string[]; rows: Record<strin
 
     const record: Record<string, string> = {}
     for (const [at, column] of columns.entries()) if (column) record[column] = line[at] ?? ''
+
+    // More cells than the header has columns is a separator somebody typed into a
+    // cell that was not quoted, nearly always in the last one, where the free text
+    // goes. The cells over are put back into it as they were written rather than
+    // left out.
+    const over = line.slice(columns.length)
+    while (over.length && !over[over.length - 1]?.trim()) over.pop()
+    const last = columns[columns.length - 1]
+    if (over.length && last) record[last] = [record[last] ?? '', ...over].join(delimiter)
+
     found.push(record)
   }
 

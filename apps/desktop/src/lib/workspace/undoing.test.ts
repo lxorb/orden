@@ -15,12 +15,15 @@ const sent: { command: string; path: string; content: string }[] = []
 const refused = new Set<string>()
 
 vi.mock('../tauri', () => ({
+  isNative: true,
   invoke: (command: string, args?: Record<string, unknown>) => {
     const path = typeof args?.path === 'string' ? args.path : ''
     const content = typeof args?.content === 'string' ? args.content : ''
     const id = typeof args?.id === 'string' ? args.id : ''
     sent.push({ command, path, content })
 
+    // The crate refuses a tree whose root is not a folder, and none is here.
+    if (command === 'read_tree') return Promise.reject(new Error('root is not a directory'))
     const named = path || id
     if (refused.has(named)) return Promise.reject(new Error(`${named} will not budge`))
     return Promise.resolve('')
@@ -69,6 +72,8 @@ function store(action: FileAction): PutsBack & { loaded: number; wrote: number }
       return Promise.resolve()
     },
     reload: (path: string) => void told.push(`reloaded ${path}`),
+    // Nothing is open, so a move holds nothing and runs straight away.
+    holdingUnder: (_path: string, run: () => Promise<void>) => run(),
     // A creation undone goes to Recently deleted, which keeps it under an id.
     bin: (path: string) => {
       told.push(`binned ${path}`)
@@ -103,7 +108,13 @@ describe('an entry that goes back', () => {
     const ws = store({ kind: 'delete', path: '/s/a.md', content: '# a' })
     await undoLastFileAction(ws)
 
-    expect(sent).toEqual([{ command: 'write_note', path: '/s/a.md', content: '# a' }])
+    // Asked first whether anything is at the name now, which nothing is here; see
+    // `writeBeside` in undoing.ts.
+    expect(sent).toEqual([
+      { command: 'file_stamp', path: '/s/a.md', content: '' },
+      { command: 'read_tree', path: '', content: '' },
+      { command: 'write_note', path: '/s/a.md', content: '# a' },
+    ])
     expect(ws.undone.stack).toEqual([])
     expect(ws.loaded).toBe(1)
     expect(ws.wrote).toBe(1)
@@ -148,7 +159,12 @@ describe('an entry that cannot go back', () => {
     const ws = store({ kind: 'delete', path: '/s/a.md', content: '# a', trashId: 'trash-1' })
     await undoLastFileAction(ws)
 
-    expect(sent.map((one) => one.command)).toEqual(['restore_trash', 'write_note'])
+    expect(sent.map((one) => one.command)).toEqual([
+      'restore_trash',
+      'file_stamp',
+      'read_tree',
+      'write_note',
+    ])
     expect(ws.undone.stack).toEqual([])
   })
 })
@@ -466,6 +482,9 @@ describe('a gesture of several', () => {
 
     expect(sent.map((one) => `${one.command} ${one.path}`)).toEqual([
       'rename_note ',
+      // Asked first whether the name is still free, as a file or a folder; see `onDisk`.
+      'file_stamp /s/A/b.md',
+      'read_tree ',
       'write_note /s/A/b.md',
     ])
     expect(told).toEqual(['moved /s/A.md -> /s/A/A.md', 'back /s/A/b.md'])
@@ -574,6 +593,9 @@ describe('a folder deleted', () => {
     expect(sent.map((one) => `${one.command} ${one.path}`)).toEqual([
       'create_folder /s/A',
       'create_folder /s/A/B',
+      // Asked first whether the name is still free, as a file or a folder; see `onDisk`.
+      'file_stamp /s/A/B/b.md',
+      'read_tree ',
       'write_note /s/A/B/b.md',
     ])
     expect(told.at(-1)).toBe('back /s/A')

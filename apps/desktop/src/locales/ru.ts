@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ru: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'Всё готово',
+  Personalize: 'Настроить под себя',
+  Clean: 'Чистый',
+  'Live preview': 'Живой просмотр',
+  'Developer mode': 'Режим разработчика',
+  'Do you write code?': 'Вы пишете код?',
+  Yes: 'Да',
+  No: 'Нет',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'Из других приложений: {key}',
   'From other apps: set in your system settings':
@@ -85,6 +94,7 @@ export const ru: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'Одна задача',
   'One per line': 'По одной на строку',
+  'Add with AI': 'Добавить с ИИ',
   // Tasks: the projects in the panel
   Favorites: 'Избранное',
   'Add project': 'Добавить проект',
@@ -128,6 +138,7 @@ export const ru: Dictionary = {
   'Pointing hand on buttons': 'Указывающая рука над кнопками',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Добавить задачу',
+  'Apple Shortcuts': 'Apple Команды',
   Tomorrow: 'Завтра',
   'done {date}': 'выполнено {date}',
   'Next week': 'На следующей неделе',
@@ -190,6 +201,7 @@ export const ru: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'Вращать холст двумя пальцами',
+  'Snap the rotation to right angles': 'Привязывать поворот к прямым углам',
   'Turn upright': 'Выровнять',
   Canvas: 'Полотно',
   Card: 'Карточка',
@@ -283,6 +295,7 @@ export const ru: Dictionary = {
   Tabs: 'Вкладки',
   'Ctrl+Tab in order of use': 'Ctrl+Tab в порядке использования',
   'Swipe between pages': 'Смахивание между страницами',
+  'Hardware acceleration': 'Аппаратное ускорение',
   'Hidden tabs': 'Скрытые вкладки',
   'Memory saver': 'Экономия памяти',
   Moderate: 'Умеренный',
@@ -1192,6 +1205,8 @@ export const ru: Dictionary = {
   Elbow: 'Ломаная',
   Frame: 'Рамка',
   Ungroup: 'Разгруппировать',
+  Lock: 'Заблокировать',
+  Unlock: 'Разблокировать',
   'The ink of the page': 'Чернила страницы',
   'Write in what is picked': 'Писать в выбранном',
   Pen: 'Ручка',
@@ -1342,10 +1357,22 @@ export const ru: Dictionary = {
     'Зашифрованных фрагментов: {count}, без Evernote их не прочитать',
   '{count} notes had a reminder, which the export does not carry':
     'Заметок с напоминанием: {count}, экспорт их не переносит',
+  '{count} attachments were missing from the export or could not be read': {
+    few: 'Вложений, которых нет в экспорте или которые не читаются: {count}',
+    many: 'Вложений, которых нет в экспорте или которые не читаются: {count}',
+    one: 'Вложений, которых нет в экспорте или которые не читаются: {count}',
+    other: 'Вложений, которых нет в экспорте или которые не читаются: {count}',
+  },
   '{count} notes were in the bin and stay there': 'Заметок в корзине: {count}, там они и остаются',
   '{count} archived notes are in a folder called Archive':
     'Архивных заметок: {count}, они в папке Archive',
   'The colours a note had are not kept': 'Цвета заметок не сохраняются',
+  '{count} files could not be read, so they were left out': {
+    few: 'Не удалось прочитать {count} файла, они пропущены',
+    many: 'Не удалось прочитать {count} файлов, они пропущены',
+    one: 'Не удалось прочитать {count} файл, он пропущен',
+    other: 'Не удалось прочитать {count} файла, они пропущены',
+  },
   '{count} block references were written out as the words they pointed at':
     'Ссылок на блоки: {count}, они записаны словами, на которые указывали',
   '{count} saved views are left out, and every row is in the table': {
@@ -1381,6 +1408,8 @@ export const ru: Dictionary = {
     'Карточек настроения и активности, которые являются рисунками: {count} - переносятся только слова',
   '{count} notes are behind a password, which nothing but Notes can open':
     'Заметок под паролем, который открывают только Заметки: {count}',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    'Заметок под паролем, который открывает только Bear: {count}',
   '{count} notes are in Recently Deleted, and stay there':
     'Заметок в «Недавно удалённых», которые там и остаются: {count}',
   '{count} drawings and scans have no picture on this Mac':
@@ -1642,6 +1671,7 @@ export const ru: Dictionary = {
   'Ask the model': 'Спросить модель',
   'answered by {model}, {date}': 'ответил {model}, {date}',
   'AI block': 'Блок ИИ',
+  'Do with AI': 'Сделать с ИИ',
   'Highlight colour': 'Цвет выделения',
   'A single newline breaks the line': 'Один перевод строки разрывает строку',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -1969,6 +1999,8 @@ export const ru: Dictionary = {
   'Settings › AI': 'Настройки › ИИ',
   'New chat': 'Новый чат',
   'Ask again': 'Спросить снова',
+  'Continue when the limit resets': 'Продолжить, когда лимит обновится',
+  'Continues at {time}': 'Продолжит в {time}',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Спросите что угодно, @ чтобы добавить, / для команд',
   'What can I help with?': 'Чем я могу помочь?',
@@ -2446,4 +2478,29 @@ export const ru: Dictionary = {
   Peach: 'Персик',
   Sage: 'Шалфей',
   Mist: 'Туман',
+  // A board, Notion's: its columns, its cards, its settings, a new database
+  'New database': 'Новая база данных',
+  'New page': 'Новая страница',
+  'Not started': 'Не начато',
+  'In progress': 'В процессе',
+  'No {property}': 'Без {property}',
+  '{card} moved to {group}': 'Карточка {card} перемещена в {group}',
+  'Not moved': 'Не перемещено',
+  Retry: 'Повторить',
+  Calculate: 'Вычислить',
+  'Remove sort': 'Убрать сортировку',
+  'Remove sort?': 'Убрать сортировку?',
+  Groups: 'Группы',
+  'Hidden groups': 'Скрытые группы',
+  'Add as option': 'Добавить как вариант',
+  'Move left': 'Переместить влево',
+  'Move right': 'Переместить вправо',
+  'Delete option': 'Удалить вариант',
+  'Colour columns': 'Раскрасить колонки',
+  'Hide empty groups': 'Скрыть пустые группы',
+  'Card size': 'Размер карточки',
+  Small: 'Маленькое',
+  Large: 'Большое',
+  Both: 'Оба',
+  'Shown on cards': 'Показано на карточках',
 }

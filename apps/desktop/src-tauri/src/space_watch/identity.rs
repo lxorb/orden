@@ -18,7 +18,10 @@
 //!   file system says. An inode number is reused as soon as it is free (ext4 hands a
 //!   deleted file's number to the next file made in the same folder), which is the reason
 //!   Syncthing never shipped identity by inode alone; the birth time is what tells the
-//!   two apart, and a rename keeps it.
+//!   two apart, and a rename keeps it. On Linux the inode's generation too, which ext4,
+//!   xfs and btrfs give anew each time they hand a number out again: the birth time is
+//!   read off a clock that moves every few milliseconds, so a file deleted and made again
+//!   at once can be born at the same moment in the same inode.
 //!
 //! The answer is a string, opaque to everybody: the engine keeps it as an entry's
 //! `file_key` and only ever compares two for equality.
@@ -63,10 +66,37 @@ pub fn identity(path: &Path) -> Option<String> {
         .and_then(|at| at.duration_since(std::time::UNIX_EPOCH).ok())
         .map(|since| since.as_nanos());
 
-    Some(match born {
+    let id = match born {
         Some(born) => format!("{:x}:{:x}:{born:x}", meta.dev(), meta.ino()),
         None => format!("{:x}:{:x}", meta.dev(), meta.ino()),
-    })
+    };
+    #[cfg(target_os = "linux")]
+    let id = match generation(path) {
+        Some(generation) => format!("{id}:{generation:x}"),
+        None => id,
+    };
+    Some(id)
+}
+
+/// The generation of the inode at `path`, or None where the file system keeps none
+/// (tmpfs, most network file systems) or the file cannot be opened.
+#[cfg(target_os = "linux")]
+#[allow(unsafe_code, reason = "the generation is asked through an ioctl")]
+fn generation(path: &Path) -> Option<libc::c_int> {
+    use std::os::fd::AsRawFd;
+    use std::os::unix::fs::OpenOptionsExt;
+
+    // Opened without blocking, so a pipe in a space answers too, and never through a link.
+    let file = std::fs::OpenOptions::new()
+        .read(true)
+        .custom_flags(libc::O_NONBLOCK | libc::O_NOFOLLOW)
+        .open(path)
+        .ok()?;
+    let mut generation: libc::c_int = 0;
+    // SAFETY: the file is open for as long as the call, and every file system that answers
+    // writes one int, which is what `generation` holds.
+    let asked = unsafe { libc::ioctl(file.as_raw_fd(), libc::FS_IOC_GETVERSION, &mut generation) };
+    (asked == 0).then_some(generation)
 }
 
 #[cfg(test)]
@@ -112,16 +142,21 @@ mod tests {
     /// Deleted and made again under the same name is a different file, which is what
     /// keeps a new note from inheriting a deleted one's history. Made the way ext4 is
     /// most likely to hand the old inode number straight back: the same name, in the
-    /// same folder, at once.
+    /// same folder, at once, and often, so some go within one tick of the birth clock.
+    /// On the disk the crate is on, since the temporary folder may be tmpfs, which never
+    /// reuses a number.
     #[test]
     fn a_file_made_again_is_another_file() {
-        let dir = tempfile::tempdir().expect("a folder");
+        let dir = tempfile::tempdir_in(env!("CARGO_MANIFEST_DIR")).expect("a folder");
         let path = dir.path().join("Plan.md");
-        fs::write(&path, "one").expect("a note");
-        let first = identity(&path).expect("an identity");
+        for _ in 0..200 {
+            fs::write(&path, "one").expect("a note");
+            let first = identity(&path).expect("an identity");
 
-        fs::remove_file(&path).expect("deleted");
-        fs::write(&path, "one").expect("made again");
-        assert_ne!(identity(&path).expect("an identity"), first);
+            fs::remove_file(&path).expect("deleted");
+            fs::write(&path, "one").expect("made again");
+            assert_ne!(identity(&path).expect("an identity"), first);
+            fs::remove_file(&path).expect("deleted again");
+        }
     }
 }

@@ -43,6 +43,8 @@ interface TreeOptions {
   /** The papers page notes hold, which the list leaves out; see `papers` in the
    *  desktop's tree.rs. */
   papers?: boolean
+  /** Every file, pictures too; see `every` in the desktop's tree.rs. */
+  every?: boolean
 }
 
 const now = () => Date.now()
@@ -190,7 +192,7 @@ async function tree(root: string, options: TreeOptions = {}): Promise<Entry> {
       continue
     }
 
-    if (!listed(row.path)) continue
+    if (!options.every && !listed(row.path)) continue
     if (!options.showHidden && basename(row.path).startsWith('.')) continue
     if (!options.papers && held(row.path)) continue
 
@@ -420,10 +422,20 @@ async function occupied(path: string): Promise<boolean> {
   return (await files.paths()).some((one) => one.startsWith(`${path}/`))
 }
 
+/** Whether anything is at `path` for the trash to take or give back: a note, a folder
+ *  of them, or a picture or a PDF, which live in the asset store alone. Not
+ *  `occupied`, which a rename asks after moving the pictures already. Asking only of
+ *  the notes refused a picture deleted on another device, and sync v2 asked again on
+ *  every pass and got no further. */
+async function holds(path: string): Promise<boolean> {
+  if ((await occupied(path)) || (await assets.get(path))) return true
+  return (await assets.paths()).some((one) => one.startsWith(`${path}/`))
+}
+
 /** `path` if nothing is there, else `name 2`, `name 3`... - before the
  *  extension for a note, after the name for a folder or a space. */
 async function freeSpot(path: string, isFile: boolean): Promise<string> {
-  if (!(await occupied(path))) return path
+  if (!(await holds(path))) return path
 
   const folder = parent(path)
   const file = basename(path)
@@ -433,14 +445,14 @@ async function freeSpot(path: string, isFile: boolean): Promise<string> {
 
   for (let counter = 2; ; counter++) {
     const candidate = join(folder, `${stem} ${counter}${extension}`)
-    if (!(await occupied(candidate))) return candidate
+    if (!(await holds(candidate))) return candidate
   }
 }
 
 async function trashItem(path: string, kind: string): Promise<TrashEntry> {
   const source = normalise(path)
   if (source === '/' || source.startsWith(TRASH)) throw new Error('that cannot be deleted')
-  if (!(await occupied(source))) throw new Error('nothing is there')
+  if (!(await holds(source))) throw new Error('nothing is there')
 
   const id = `${now()}-${trashCounter++}`
   const name = basename(source)
@@ -473,7 +485,7 @@ async function restoreTrash(id: string): Promise<string> {
 
   const held = `${TRASH}/${entry.id}/${entry.name}`
   const rest = entries.filter((one) => one.id !== id)
-  if (!(await occupied(held))) {
+  if (!(await holds(held))) {
     await saveTrash(rest)
     throw new Error('it is already gone')
   }
@@ -879,6 +891,11 @@ export async function webInvoke<T>(
 
     case 'read_tree':
       return (await tree(root, args.options ?? {})) as T
+
+    // A note, a picture or a folder at this path: what the desktop's stamp answers,
+    // and its folders too. See on-disk.ts.
+    case 'path_exists':
+      return (await stats.holds(normalise(path))) as T
 
     // Searching a space is not here: it runs in a worker, because reading every
     // note and scoring every line of them on this thread is keystrokes that do

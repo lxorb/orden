@@ -283,7 +283,7 @@ to `edge`, from `release.yml` once edge's files are up, at `grade: devel`, which
 keeps out of `stable` and `candidate`. Both call `.github/workflows/snap.yml` (`uses:`)
 rather than dispatching it, because a dispatch only finds a workflow on the default
 branch. It finds the two `.deb`s on the release by what they are - a release's page
-calls them `Orden-<version>`, edge `Nib-<version>`, and an edge build's version is in
+and edge call them `Orden-<version>`, and an edge build's version is in
 nothing else - checks the version is one a snap may have (at most 32 of letters, digits
 and `.+~-`, as `0.15.1-688` is), and writes version, grade, URLs and digests in.
 `sudo snap install orden --edge` follows the edge builds, `sudo snap refresh orden
@@ -370,6 +370,18 @@ Mesa keeps it. GStreamer loads its own plugins and nothing else: a
 plugins and all) is dropped, and its registry is the package's own. No
 `LD_PRELOAD`, no `GDK_BACKEND`. The command is `orden`, with `nib` beside it; the desktop entry and
 icons are installed alongside, so it shows up in a launcher.
+
+**The sandbox under Nix.** The release runs Chromium's sandbox in unprivileged user
+namespaces, since the setuid `chrome-sandbox` cannot be in the store; NixOS allows them,
+and so does every system that has not been told otherwise. One that refuses them -
+Ubuntu 23.10 and later through AppArmor, older Debian through
+`kernel.unprivileged_userns_clone` - leaves Chromium no sandbox, and it stops with "No
+usable sandbox!" before a window opens. The wrapper says so before it starts, on stderr
+and as a desktop notification where `notify-send` is there (`nix/userns.sh`): allow the
+namespaces (`sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0`, or an
+AppArmor profile for the program that allows `userns`), or install the `.deb` or the
+AppImage instead. It never starts Chromium with `--no-sandbox` in their place. A setuid
+helper named in `CHROME_DEVEL_SANDBOX` is a sandbox, and then nothing is said.
 
 This is deliberately not a nixpkgs package. nixpkgs wants a maintainer who
 watches the build, and search.nixos.org is the only place a nixpkgs entry would

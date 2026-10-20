@@ -1367,9 +1367,8 @@ class Pages {
     const opener = this.asked.get(tabId)
     if (opener === undefined || !page || page.titled) return
 
-    const { workspace } = await import('../workspace.svelte')
-    if (workspace.tabs.some((one) => one.id === opener)) workspace.activate(opener)
-    workspace.close(tabId)
+    const { closeItself } = await import('./self-close')
+    await closeItself(tabId, opener)
   }
 
   /** Five listeners for the window, started by the first web tab that needs them:

@@ -130,6 +130,14 @@ describe('the table', () => {
     expect(html).toContain('Doing')
     expect(html).toContain('8')
   })
+
+  test('is one tab stop on its first cell before any is pressed, its header row in the grid', () => {
+    const base = readBase('views:\n  - type: table\n    order: [file.name, note.status]\n')
+    const html = render(TableLayout, { props: { kit: kitOf(base, NOTES) } }).body
+    const stops = [...html.matchAll(/role="gridcell" tabindex="(-?\d)"/g)].map((one) => one[1])
+    expect(stops).toEqual(['0', '-1', '-1', '-1'])
+    expect(html).toMatch(/^(?:<!--[^>]*-->)?<div class="table[^>]*role="grid"/)
+  })
 })
 
 describe('the table, as lane 7 left it', () => {
@@ -199,7 +207,9 @@ describe('the cards', () => {
 describe('the board', () => {
   test('keeps a column for every option, in the options’ order, empty ones too', () => {
     const html = render(BoardLayout, { props: { kit: kitOf(BUGS, NOTES) } }).body
-    const heads = [...html.matchAll(/class="name[^"]*">([^<]+)</g)].map(([, name]) => name)
+    const heads = [
+      ...html.matchAll(/class="tag[^"]*"[^>]*>\s*<span class="name[^"]*">([^<]+)</g),
+    ].map(([, name]) => name)
     expect(heads).toEqual(['To do', 'Doing', 'Done'])
     expect(html).toContain('Sync')
   })
@@ -266,18 +276,29 @@ describe('on a phone', () => {
 })
 
 describe('the frame', () => {
-  test('wears Todoist’s head over tasks, and the database’s tools over notes', () => {
+  test('wears Todoist’s head over a built-in view, and the database’s tools over a base', () => {
     const tasks = render(ViewFrame, {
-      props: { kit: kitOf(builtinView('today'), TASKS), title: 'Today' },
+      props: { kit: kitOf(builtinView('today'), TASKS, { builtin: 'today' }), title: 'Today' },
     }).body
     expect(tasks).toContain('aria-label="Display"')
     expect(tasks).not.toContain('aria-label="Filter"')
     expect(tasks).toContain('Call the bank')
 
+    // A base of tasks keeps its tabs, so Rows in its settings never takes them away,
+    // and keeps Display beside Filter and Sort.
+    const based = render(ViewFrame, {
+      props: { kit: kitOf(builtinView('today'), TASKS), title: 'Today' },
+    }).body
+    expect(based).toContain('role="tab"')
+    expect(based).toContain('aria-label="Filter"')
+    expect(based).toContain('aria-label="Display"')
+
     const notes = render(ViewFrame, { props: { kit: kitOf(BUGS, NOTES), title: 'Bugs' } }).body
-    expect(notes.match(/role="tab"/g)?.length).toBeGreaterThanOrEqual(6)
+    // Notion's head: a tab for each view, Filter and Sort, and the view's settings.
+    expect(notes.match(/role="tab"/g)?.length).toBe(BUGS.views.length)
+    expect(notes).toContain('aria-label="New view"')
     expect(notes).toContain('aria-label="Filter"')
     expect(notes).toContain('aria-label="Sort"')
-    expect(notes).toContain('aria-label="Group"')
+    expect(notes).toContain('aria-label="Settings"')
   })
 })

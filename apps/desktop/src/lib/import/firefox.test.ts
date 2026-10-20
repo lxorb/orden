@@ -3,7 +3,7 @@ import { describe, expect, test } from 'vitest'
 import { readShortcut } from '../web-tab/shortcut'
 import { firefoxSidebar } from './firefox'
 import type { FolderWords } from './sidebar-made'
-import { BOOKMARKS, SESSION } from './firefox.fixture'
+import { BOOKMARKS, page, SESSION } from './firefox.fixture'
 import { sidebarImport } from './sidebar-plan'
 
 const WORDS: FolderWords = {
@@ -53,6 +53,25 @@ describe("Firefox's tabs and bookmarks as nib's", () => {
     expect(space?.order['Saved groups/Trip']).toEqual(['Flights.url', 'Hotel.url'])
   })
 
+  test('reads a group open and saved at once as the open one alone', () => {
+    // Firefox saves a window's open groups as it quits, and both are in the file.
+    const session = {
+      ...SESSION,
+      savedGroups: [
+        ...SESSION.savedGroups,
+        {
+          id: 'g1',
+          name: 'Docs',
+          saveOnWindowClose: true,
+          tabs: [{ state: page('https://docs.example.com/guide', 'The guide') }],
+        },
+      ],
+    }
+    const [space] = planned(session).spaces
+    expect(space?.order['Saved groups']).toEqual(['Trip'])
+    expect(space?.files.filter((one) => one.path.endsWith('The guide.url'))).toHaveLength(1)
+  })
+
   test('makes the bookmarks a folder of roots, leaving the tags, the empty and the unpointable', () => {
     const [space] = planned().spaces
     expect(space?.order.Bookmarks).toEqual(['Bookmarks toolbar', 'Bookmarks menu'])
@@ -64,6 +83,63 @@ describe("Firefox's tabs and bookmarks as nib's", () => {
       false,
     )
     expect(paths.some((path) => path.includes('Settings') || path.includes('Secret'))).toBe(false)
+  })
+
+  test('reads a backup an older Firefox wrote, which names each kind rather than numbering it', () => {
+    const older = {
+      guid: 'root________',
+      type: 'text/x-moz-place-container',
+      children: [
+        {
+          guid: 'menu________',
+          title: 'Bookmarks Menu',
+          type: 'text/x-moz-place-container',
+          children: [
+            {
+              guid: 'f1',
+              title: 'Mozilla Firefox',
+              type: 'text/x-moz-place-container',
+              children: [
+                {
+                  guid: 'b1',
+                  title: 'Help and Tutorials',
+                  type: 'text/x-moz-place',
+                  uri: 'http://www.mozilla.com/en-US/firefox/help/',
+                },
+              ],
+            },
+            { guid: 's1', type: 'text/x-moz-place-separator' },
+          ],
+        },
+        // Roots known by the name of the root they are, with no id of their own.
+        {
+          title: 'Bookmarks Toolbar',
+          root: 'toolbarFolder',
+          type: 'text/x-moz-place-container',
+          children: [
+            { title: 'Getting Started', type: 'text/x-moz-place', uri: 'http://start.example/' },
+          ],
+        },
+        {
+          title: 'Tags',
+          root: 'tagsFolder',
+          type: 'text/x-moz-place-container',
+          children: [
+            {
+              title: 'tagged',
+              type: 'text/x-moz-place-container',
+              children: [{ type: 'text/x-moz-place', uri: 'http://start.example/' }],
+            },
+          ],
+        },
+      ],
+    }
+    const [space] = planned(null, older).spaces
+    expect(space?.order.Bookmarks).toEqual(['Bookmarks toolbar', 'Bookmarks menu'])
+    expect(space?.order['Bookmarks/Bookmarks menu/Mozilla Firefox']).toEqual([
+      'Help and Tutorials.url',
+    ])
+    expect(space?.order['Bookmarks/Bookmarks toolbar']).toEqual(['Getting Started.url'])
   })
 
   test('writes a bookmark as kept on the day it was bookmarked, a tab on the day of the import', () => {

@@ -628,6 +628,14 @@ describe('what the microphone heard', () => {
     expect((await heard(new Uint8Array([1]))).json.said).toBeNull()
   })
 
+  test('answers null rather than an error where the key cannot be reached', async () => {
+    vi.stubGlobal('fetch', () => Promise.reject(new TypeError('fetch failed')))
+
+    const { status, json } = await heard(new Uint8Array([1]))
+    expect(status).toBe(200)
+    expect(json.said).toBeNull()
+  })
+
   test('refuses silence and refuses a recording that is too long', async () => {
     vi.stubGlobal('fetch', () => Promise.resolve(new Response('never asked')))
 

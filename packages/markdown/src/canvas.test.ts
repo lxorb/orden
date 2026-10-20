@@ -15,6 +15,7 @@ import {
   SHAPES,
   writeCanvas,
 } from './canvas'
+import { mergeCanvasFiles } from './canvas-merge'
 import { emptyPages, pagesFromPdf } from './pages'
 
 /** A canvas written the way the spec's own examples are: every node type, every
@@ -693,6 +694,52 @@ describe('the icon a canvas wears', () => {
     expect(writeCanvas(readCanvas(written))).toBe(written)
   })
 
+  /** Somebody's Obsidian vault: a node of a plugin's own type, an edge to it, a field
+   *  Advanced Canvas keeps on a card and a key beside the lists. Setting the icon used
+   *  to read the file as a canvas and write it back, which left all four out (#501). */
+  test('changes nothing in the file but the icon', () => {
+    const vault = {
+      nodes: [
+        {
+          id: 'b',
+          type: 'excalidraw',
+          x: 0,
+          y: 0,
+          width: 200,
+          height: 100,
+          file: 'Drawing.excalidraw',
+        },
+        {
+          id: 'c',
+          type: 'text',
+          text: 'hello',
+          x: 300,
+          y: 0,
+          width: 200,
+          height: 60,
+          styleAttributes: { shape: 'pill' },
+        },
+      ],
+      edges: [{ id: 'e', fromNode: 'b', toNode: 'c' }],
+      metadata: { version: '1.0-1.0', frontmatter: {} },
+    }
+    const before = JSON.stringify(vault, null, '\t')
+    const after = applied(before, 'star')
+
+    expect(after).not.toBeNull()
+    expect(JSON.parse(after ?? '')).toEqual({ ...vault, nib: { version: 1, icon: 'star' } })
+    expect(applied(after ?? '', null)).toBe(`${JSON.stringify(vault, null, '\t')}\n`)
+  })
+
+  test('and keeps what a newer build wrote under its own key', () => {
+    const file = JSON.stringify({ nodes: [], edges: [], nib: { version: 1, later: [1, 2] } })
+    expect(JSON.parse(applied(file, 'rocket', 'blue') ?? '')).toEqual({
+      nodes: [],
+      edges: [],
+      nib: { version: 1, icon: 'rocket', iconColor: 'blue', later: [1, 2] },
+    })
+  })
+
   /** The twin of `frontMatterEdit`: what changes is written and not the whole file,
    *  so an open canvas takes the change without being replaced under its reader. */
   test('goes in as an edit of the few characters that moved', () => {
@@ -911,5 +958,70 @@ describe('words with no card round them (#421)', () => {
   test('leave no key of ours in a file of plain cards', () => {
     const plain = writeCanvas({ ...canvas, nodes: [canvas.nodes[0]!] })
     expect(JSON.parse(plain)).not.toHaveProperty('nib')
+  })
+})
+
+describe('something locked in place (#643)', () => {
+  const canvas: Canvas = {
+    ...readCanvas(blankCanvas()),
+    nodes: [
+      {
+        id: 'photo',
+        type: 'file',
+        x: 0,
+        y: 0,
+        width: 400,
+        height: 300,
+        file: 'a.png',
+        locked: true,
+      },
+      { id: 'card', type: 'text', x: 0, y: 320, width: 100, height: 50, text: 'A card' },
+      {
+        id: 'box',
+        type: 'shape',
+        shape: 'rect',
+        x: 0,
+        y: 400,
+        width: 80,
+        height: 80,
+        locked: true,
+      },
+    ],
+  }
+  const written = writeCanvas(canvas)
+  const parsed = JSON.parse(written) as {
+    nodes: Record<string, unknown>[]
+    nib: { locked: string[]; shapes: Record<string, unknown>[] }
+  }
+
+  test('is the record it was to anybody reading the spec, and listed as locked under nib', () => {
+    expect(parsed.nodes.some((node) => 'locked' in node)).toBe(false)
+    expect(parsed.nib.shapes.some((shape) => 'locked' in shape)).toBe(false)
+    expect(parsed.nib.locked).toEqual(['photo', 'box'])
+  })
+
+  test('comes back locked, and the rest as it was', () => {
+    const back = readCanvas(written)
+    expect(back.nodes).toEqual(canvas.nodes)
+    expect(writeCanvas(back)).toBe(written)
+  })
+
+  test('as a room keeps it, field for field', () => {
+    expect(nodeOf({ ...canvas.nodes[0] })).toEqual(canvas.nodes[0])
+    expect(nodeOf({ ...canvas.nodes[2] })).toEqual(canvas.nodes[2])
+  })
+
+  test('leaves no key of ours in a file of plain cards', () => {
+    const plain = writeCanvas({ ...canvas, nodes: [canvas.nodes[1]!] })
+    expect(JSON.parse(plain)).not.toHaveProperty('nib')
+  })
+
+  test('unlocked on one copy later stays unlocked when the two are put together', () => {
+    const free = canvas.nodes.map(({ locked: _locked, ...node }) => node)
+    const ours = writeCanvas({ ...canvas, at: { photo: 100, card: 100, box: 100 } })
+    const theirs = writeCanvas({ ...canvas, nodes: free, at: { photo: 200, card: 100, box: 200 } })
+    const both = mergeCanvasFiles(ours, theirs, 300)
+    expect(readCanvas(both).nodes.some((node) => node.locked)).toBe(false)
+    expect(JSON.parse(both).nib).not.toHaveProperty('locked')
   })
 })

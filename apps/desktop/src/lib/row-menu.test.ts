@@ -45,7 +45,7 @@ vi.mock('./sharing.svelte', () => ({
   shareThisFile: () => undefined,
 }))
 
-const { rowMenu } = await import('./row-menu')
+const { bookmarkAll, rowMenu } = await import('./row-menu')
 const { workspace } = await import('./workspace.svelte')
 const { viewport } = await import('./viewport.svelte')
 type Entry = import('./workspace.svelte').Entry
@@ -151,11 +151,44 @@ describe('a note', () => {
       'Rename',
       'Choose an icon',
       'Set cover',
-      'Add to Essentials',
       'Archive',
       'Duplicate',
       'Delete',
     ])
+  })
+})
+
+describe('a note, with chats to send it to', () => {
+  /** Dragged onto a chat instead (#416); the palette and a selection's menu still send. */
+  test('offers no Send to chat', async () => {
+    const { account } = await import('./account.svelte')
+    Object.defineProperty(account, 'accountToken', { value: 'signed in' })
+    expect(labels(loose)).not.toContain('Send to chat')
+  })
+})
+
+/** New note inside makes a note; its chevron offers every kind the file list's New
+ *  rows make, each made inside the row (#380). */
+describe('new note inside', () => {
+  test('offers every kind, each made in the row', async () => {
+    const row = rowMenu(plain).find((one) => one?.label === 'New note inside')
+    const kinds = (await row?.more?.()) ?? []
+    // A chat is offered too where the chat kind is turned on, which depends on state
+    // other files of the suite leave; the four below are offered either way.
+    expect(kinds.map((one) => one?.label).filter((label) => label !== 'New chat')).toEqual([
+      'New note',
+      'New canvas',
+      'New page note',
+      'New web note',
+    ])
+
+    const made = (['createNote', 'createCanvas', 'createPages', 'createWebsite'] as const).map(
+      (name) => vi.spyOn(workspace, name).mockResolvedValue(undefined),
+    )
+    for (const one of kinds) if (one?.label !== 'New chat') one?.run()
+    await vi.waitFor(() => {
+      for (const spy of made) expect(spy).toHaveBeenCalledWith('/s/Projects')
+    })
   })
 })
 
@@ -199,7 +232,6 @@ describe('a paper', () => {
       'Open in new tab',
       'Open to the side',
       'Rename',
-      'Add to Essentials',
       'Archive',
       'Duplicate',
       'Delete',
@@ -221,7 +253,6 @@ describe('a file the account has a copy of', () => {
       'Rename',
       'Choose an icon',
       'Set cover',
-      'Add to Essentials',
       'Archive',
       'Share',
       'Duplicate',
@@ -242,7 +273,6 @@ describe('a file the account has a copy of', () => {
       'Rename',
       'Choose an icon',
       'Set cover',
-      'Add to Essentials',
       'Archive',
       'Share',
       'Duplicate',
@@ -258,7 +288,6 @@ describe('a file the account has a copy of', () => {
       'Open in new tab',
       'Open to the side',
       'Rename',
-      'Add to Essentials',
       'Archive',
       'Share',
       'Duplicate',
@@ -272,21 +301,19 @@ describe('a row that is part of a selection of several', () => {
     workspace.select('/s/loose.md')
     workspace.toggleSelect('/s/paper.pdf')
 
-    expect(labels(loose)).toEqual(['Open all', 'Add to Essentials', 'Archive', 'Delete 2 items'])
+    expect(labels(loose)).toEqual(['Open all', 'Archive', 'Delete 2 items'])
   })
 
-  test('and bookmarks the lot with one press, or takes the lot out once all are in', () => {
-    workspace.select('/s/loose.md')
-    workspace.toggleSelect('/s/A')
-
+  test('and a tab menu bookmarks the lot, or takes the lot out once all are in', () => {
+    const paths = ['/s/loose.md', '/s/A']
     const press = (label: string) =>
-      rowMenu(loose)
+      bookmarkAll(paths)
         .find((one) => one?.label === label)
         ?.run()
     press('Add to Essentials')
 
     expect(workspace.bookmarks.list.map((one) => one.path)).toEqual(['loose.md', 'A/A.md'])
-    expect(labels(loose)).toContain('Remove from Essentials')
+    expect(bookmarkAll(paths).map((one) => one?.label)).toEqual(['Remove from Essentials'])
 
     press('Remove from Essentials')
     expect(workspace.bookmarks.list).toEqual([])

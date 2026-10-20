@@ -65,6 +65,10 @@ export async function asPageNote(pdf: string, how: Turning): Promise<string> {
   try {
     await how.move(pdf, paper)
   } catch (error) {
+    // The move may have happened and something after it failed. Then the paper is the
+    // note's, the reader's only copy of the PDF, and discarding the note would delete
+    // it with it, for good (#537): the note is kept, and the PDF is in it.
+    if ((await how.exists(paper)) && !(await how.exists(pdf))) return note
     await how.discard(note).catch(() => undefined)
     throw error
   }

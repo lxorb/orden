@@ -537,7 +537,8 @@ describe('another space, without switching', () => {
     expect(indexed).toContainEqual({
       root: '/s/Home',
       asked: 'retarget',
-      args: ['/s/Home/Soup.md', '/s/Home/Food/Soup.md', '/s/Home'],
+      // The note itself went, so its own links are written where it went.
+      args: ['/s/Home/Soup.md', '/s/Home/Food/Soup.md', '/s/Home', undefined, { moved: true }],
     })
     expect(workspace.fileMoved).toHaveBeenCalledWith(
       '/s/Home/Soup.md',
@@ -964,7 +965,7 @@ describe('a page into a note', () => {
     expect(capture()).toMatchObject({
       shape: 'pdf',
       fullPage: false,
-      page: { width: 8.27, height: 11.69, margin: 0.787, landscape: false },
+      page: { width: 210 / 25.4, height: 297 / 25.4, margin: 0.787, landscape: false },
     })
     expect(String(saved()?.name)).toMatch(/\.pdf$/)
     expect(files.get('/s/Work/A page.md')).toMatch(/!\[\[files\/page-[\d-]+\.pdf\]\]/)

@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ha: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'Komai ya shirya',
+  Personalize: 'Keɓance',
+  Clean: 'Mai tsabta',
+  'Live preview': 'Samfoti kai tsaye',
+  'Developer mode': 'Yanayin mai haɓakawa',
+  'Do you write code?': 'Kuna rubuta code?',
+  Yes: 'Eh',
+  No: "A'a",
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'Daga wasu manhajoji: {key}',
   'From other apps: set in your system settings':
@@ -83,6 +92,7 @@ export const ha: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'Aiki ɗaya',
   'One per line': 'Ɗaya kowane layi',
+  'Add with AI': 'Ƙara da AI',
   // Tasks: the projects in the panel
   Favorites: 'Waɗanda aka fi so',
   'Add project': 'Ƙara aiki',
@@ -126,6 +136,7 @@ export const ha: Dictionary = {
   'Pointing hand on buttons': 'Hannun nuni a kan maɓallai',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'Ƙara aiki',
+  'Apple Shortcuts': 'Apple Gajerun hanyoyi',
   Tomorrow: 'Gobe',
   'done {date}': 'an gama {date}',
   'Next week': 'Mako mai zuwa',
@@ -188,6 +199,7 @@ export const ha: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'Juya zane da yatsu biyu',
+  'Snap the rotation to right angles': 'Kafa juyawa a kusurwoyi madaidaita',
   'Turn upright': 'Daidaita',
   Canvas: 'Kanbas',
   Card: 'Kati',
@@ -282,6 +294,7 @@ export const ha: Dictionary = {
   Tabs: 'Shafuka',
   'Ctrl+Tab in order of use': 'Ctrl+Tab bisa jerin amfani',
   'Swipe between pages': 'Goge tsakanin shafuka',
+  'Hardware acceleration': 'Hanzarta kayan aiki',
   'Hidden tabs': 'Ɓoyayyun shafuka',
   'Memory saver': 'Mai adana ƙwaƙwalwa',
   Moderate: 'Matsakaici',
@@ -1162,6 +1175,8 @@ export const ha: Dictionary = {
   Elbow: 'Gwiwar hannu',
   Frame: 'Firam',
   Ungroup: 'Warware rukuni',
+  Lock: 'Kulle',
+  Unlock: 'Buɗe',
   'The ink of the page': 'Tawadar shafin',
   'Write in what is picked': 'Rubuta cikin abin da aka zaɓa',
   Pen: 'Alƙalami',
@@ -1305,11 +1320,19 @@ export const ha: Dictionary = {
     'an ɓoye sassa {count}, kuma babu abin da zai iya karanta su ba tare da Evernote',
   '{count} notes had a reminder, which the export does not carry':
     'bayanan kula {count} suna da tunatarwa, wanda fitarwa ba ta ɗauka',
+  '{count} attachments were missing from the export or could not be read': {
+    one: 'haɗe-haɗe {count} sun ɓace daga fitarwar ko ba a iya karanta su ba',
+    other: 'haɗe-haɗe {count} sun ɓace daga fitarwar ko ba a iya karanta su ba',
+  },
   '{count} notes were in the bin and stay there':
     'bayanan kula {count} suna cikin kwandon shara kuma suna zama can',
   '{count} archived notes are in a folder called Archive':
     'bayanan kula {count} da aka adana suna cikin babban fayil mai suna Archive',
   'The colours a note had are not kept': 'Ba a riƙe launukan da bayanin kula yake da su',
+  '{count} files could not be read, so they were left out': {
+    one: 'Ba a iya karanta fayiloli {count} ba, don haka an bar su',
+    other: 'Ba a iya karanta fayiloli {count} ba, don haka an bar su',
+  },
   '{count} block references were written out as the words they pointed at':
     'an rubuta nassoshin sassa {count} a matsayin kalmomin da suka nuna',
   '{count} saved views are left out, and every row is in the table': {
@@ -1339,6 +1362,8 @@ export const ha: Dictionary = {
     'Katunan yanayi da ayyuka {count} zane ne, don haka kalmominsu kawai ke shigowa',
   '{count} notes are behind a password, which nothing but Notes can open':
     'Bayanan kula {count} suna bayan kalmar sirri da Notes kawai zai iya buɗewa',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    'Bayanan kula {count} suna bayan kalmar sirri da Bear kawai zai iya buɗewa',
   '{count} notes are in Recently Deleted, and stay there':
     'Bayanan kula {count} suna cikin Wanda aka share kwanan nan kuma za su zauna can',
   '{count} drawings and scans have no picture on this Mac':
@@ -1590,6 +1615,7 @@ export const ha: Dictionary = {
   'Ask the model': 'Tambayi samfurin',
   'answered by {model}, {date}': '{model} ya amsa, {date}',
   'AI block': 'Sashen AI',
+  'Do with AI': 'Yi da AI',
   'Highlight colour': 'Launin haske',
   'A single newline breaks the line': 'Sabon layi ɗaya na karya layin',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -1918,6 +1944,8 @@ export const ha: Dictionary = {
   'Settings › AI': 'Saituna › AI',
   'New chat': 'Sabuwar tattaunawa',
   'Ask again': 'Sake tambaya',
+  'Continue when the limit resets': 'Ci gaba idan iyakar ta sabunta',
+  'Continues at {time}': 'Zai ci gaba da {time}',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Tambayi komai, @ don ƙarawa, / don ƙari',
   'What can I help with?': 'Me zan iya taimaka da shi?',
@@ -2391,4 +2419,29 @@ export const ha: Dictionary = {
   Peach: 'Peach',
   Sage: 'Sage',
   Mist: 'Hazo',
+  // A board, Notion's: its columns, its cards, its settings, a new database
+  'New database': 'Sabon rumbun bayanai',
+  'New page': 'Sabon shafi',
+  'Not started': 'Ba a fara ba',
+  'In progress': 'Ana kan aiki',
+  'No {property}': 'Babu {property}',
+  '{card} moved to {group}': 'An matsar da {card} zuwa {group}',
+  'Not moved': 'Ba a matsar ba',
+  Retry: 'Sake gwadawa',
+  Calculate: 'Ƙididdige',
+  'Remove sort': 'Cire tsari',
+  'Remove sort?': 'A cire tsari?',
+  Groups: 'Rukunoni',
+  'Hidden groups': 'Ɓoyayyun rukunoni',
+  'Add as option': 'Ƙara a matsayin zaɓi',
+  'Move left': 'Matsar hagu',
+  'Move right': 'Matsar dama',
+  'Delete option': 'Share zaɓi',
+  'Colour columns': 'Yi wa ginshiƙai launi',
+  'Hide empty groups': 'Ɓoye rukunoni marasa komai',
+  'Card size': 'Girman kati',
+  Small: 'Ƙarami',
+  Large: 'Babba',
+  Both: 'Duka biyu',
+  'Shown on cards': 'Ana nunawa a katuna',
 }

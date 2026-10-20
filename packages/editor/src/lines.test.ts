@@ -1,3 +1,4 @@
+import { deleteCharBackward, deleteCharForward } from '@codemirror/commands'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
 import { EditorSelection, EditorState, type StateCommand } from '@codemirror/state'
 import { describe, expect, test } from 'vitest'
@@ -123,5 +124,13 @@ describe('deleting a line', () => {
 
   test('empties the only line that shows rather than eating the fence', () => {
     expect(run(deleteLine, `${META}words|`).note.startsWith(META)).toBe(true)
+  })
+
+  test('never leaves the caret inside an emoji on the line that comes up', () => {
+    expect(note(deleteLine, 'a|bc\n😀x')).toBe('|😀x')
+    // Typed as view commands, but they take a state and a dispatch as well.
+    for (const key of [deleteCharBackward, deleteCharForward] as unknown as StateCommand[]) {
+      expect(note(key, note(deleteLine, 'zz\na|bc\n😀x'))).not.toMatch(/\p{Cs}/u)
+    }
   })
 })

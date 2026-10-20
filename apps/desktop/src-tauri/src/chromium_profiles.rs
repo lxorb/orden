@@ -4,9 +4,10 @@
 //! All five are Chromium and keep the same folder: a "user data" folder per browser,
 //! with `Local State` in it naming every profile (`profile.info_cache`, in the order
 //! `profile.profiles_order` gives) and a folder per profile. Of a profile the import
-//! reads `Bookmarks`, a JSON file, and its session: the newest `Sessions/Session_*`
-//! first, older ones behind it, and an older Chromium's `Current Session` and `Last
-//! Session`. A newer Chromium writes the same session encrypted into
+//! reads `Bookmarks`, a JSON file, and `AccountBookmarks`, the same file of what a
+//! profile signed in to its Google account keeps there, and its session: the newest
+//! `Sessions/Session_*` first, older ones behind it, and an older Chromium's `Current
+//! Session` and `Last Session`. A newer Chromium writes the same session encrypted into
 //! `Sessions_Encrypted/` too, with a key in the system's keychain that nothing here
 //! asks for; the newest of those is listed so the app can say why it read no tabs. Those
 //! files, by those names, of a profile `Local State` names, and nothing else. Never
@@ -168,13 +169,14 @@ fn is_profile_folder(folder: &str) -> bool {
     !folder.is_empty() && folder != "." && folder != ".." && !folder.contains(['/', '\\', ':'])
 }
 
-/// The files of a profile the import reads: the bookmarks, the sessions newest first,
-/// an older Chromium's two, and the newest encrypted session.
+/// The files of a profile the import reads: the bookmarks and the account's, the
+/// sessions newest first, an older Chromium's two, and the newest encrypted session.
 fn files_of(profile: &Path) -> Vec<String> {
-    let mut found = Vec::new();
-    if profile.join("Bookmarks").is_file() {
-        found.push("Bookmarks".to_owned());
-    }
+    let mut found: Vec<String> = ["Bookmarks", "AccountBookmarks"]
+        .into_iter()
+        .filter(|name| profile.join(name).is_file())
+        .map(str::to_owned)
+        .collect();
     found.extend(newest(profile, "Sessions", SESSIONS_KEPT));
     found.extend(
         ["Current Session", "Last Session"]
@@ -261,11 +263,12 @@ mod tests {
     }
 
     #[test]
-    fn a_profile_lists_its_bookmarks_its_newest_sessions_and_its_newest_encrypted_one() {
+    fn a_profile_lists_both_bookmark_files_its_newest_sessions_and_its_newest_encrypted_one() {
         let home = tempfile::tempdir().expect("a folder");
         let profile = home.path().join("Default");
         for file in [
             "Bookmarks",
+            "AccountBookmarks",
             "Sessions/Session_13436813600000000",
             "Sessions/Session_13436813666016900",
             "Sessions/Session_13436813611111111",
@@ -283,6 +286,7 @@ mod tests {
             files_of(&profile),
             vec![
                 "Bookmarks",
+                "AccountBookmarks",
                 "Sessions/Session_13436813666016900",
                 "Sessions/Session_13436813611111111",
                 "Sessions/Session_13436813600000000",

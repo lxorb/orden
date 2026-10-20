@@ -12,6 +12,7 @@
 
 import { mapSources, sourcesOf } from '@nib/markdown/sources'
 import { fileBytes, parseDataUri, toBase64 } from '../bytes'
+import { isReserved } from '../naming'
 import { claimName } from './naming'
 
 /** One picture, as every writer needs it. */
@@ -77,10 +78,6 @@ function declaredMime(value: string | null | undefined): string | null {
   const type = value?.split(';')[0]?.trim() ?? ''
   return type.startsWith('image/') && MEDIA_TYPE.test(type) ? type : null
 }
-
-/** The names Windows keeps for its own devices, extension and all: `NUL.png` is
- *  the null device and a picture written to it goes nowhere, silently. */
-const RESERVED = /^(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\.|$)/i
 
 /** The file name part of a path or URL, without the query a URL may carry.
  *
@@ -158,7 +155,8 @@ export async function readPictures(
     .filter((one): one is Omit<Picture, 'name'> => one !== null)
     .map((one) => {
       const named = baseName(one.src)
-      const usable = /\.[a-z0-9]+$/i.test(named) && !RESERVED.test(named)
+      // `NUL.png` is the null device, and a picture written to it goes nowhere.
+      const usable = /\.[a-z0-9]+$/i.test(named) && !isReserved(named)
       const wanted = usable ? named : `picture.${suffixFor(one.mime)}`
       return { ...one, name: claimName(wanted, taken) }
     })

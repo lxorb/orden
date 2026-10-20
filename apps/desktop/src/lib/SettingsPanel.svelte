@@ -590,28 +590,35 @@
          rather than above it, so each kind's answer is that kind's own type. -->
     {@const held = field.get()}
     {@const locked = field.locked?.() ?? false}
-    <!-- The whole row is the switch, so there is nothing to miss. A switch and
-         not a button, because a row may carry the `i` that explains it and a
-         button may hold nothing else anybody can press. A locked one is the
-         last kind of tab still offered, and stays as it is. -->
+    <!-- The whole row turns it, so there is nothing to miss, but the switch is the
+         mark at its end: a row may carry the `i` that explains it, and a switch may
+         hold nothing else anybody can press, so Enter on the `i` reached the row's
+         keys and turned the setting over (#522). A locked one is the last kind of
+         tab still offered, and stays as it is. -->
+    <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
     <div
       class="nib-setting setting"
       class:pressable={!locked}
-      role="switch"
-      tabindex="0"
-      aria-checked={held}
-      aria-disabled={locked || undefined}
       onclick={() => {
-        if (!locked) field.set(!field.get())
-      }}
-      onkeydown={(event) => {
-        if (event.key !== ' ' && event.key !== 'Enter') return
-        event.preventDefault()
         if (!locked) field.set(!field.get())
       }}
     >
       {@render named(field, where)}
-      <span class="nib-switch" class:on={held} class:off={locked} aria-hidden="true"></span>
+      <span
+        class="nib-switch"
+        class:on={held}
+        class:off={locked}
+        role="switch"
+        tabindex="0"
+        aria-checked={held}
+        aria-disabled={locked || undefined}
+        aria-label={field.label}
+        onkeydown={(event) => {
+          if (event.key !== ' ' && event.key !== 'Enter') return
+          event.preventDefault()
+          if (!locked) field.set(!field.get())
+        }}
+      ></span>
     </div>
   {:else if field.kind === 'slider'}
     {@const least = field.least?.() ?? field.min}
@@ -684,7 +691,7 @@
     <div class="nib-setting setting">
       {@render named(field, where)}
       <span class="pictures">
-        {#each field.sides as side (side.label)}
+        {#each field.sides as side, index (index)}
           {@const held = side.picture()}
           {@const [x, y] = side.focus()}
           <span class="picture" class:current={side.current}>
@@ -876,10 +883,10 @@
 
 {#snippet pane()}
   {#if current}
-    {#each current.groups as group (group.title)}
+    {#each current.groups as group, index (index)}
       <h3>{group.title}</h3>
       <div class="card">
-        {#each group.fields as field (field.label)}
+        {#each group.fields as field, index (index)}
           {@render row(field)}
         {/each}
       </div>
@@ -1578,6 +1585,13 @@
     display: none;
   }
 
+  /* A pane's name on as many lines as it needs rather than cut short: the column
+     is one width in every language, and Hausa's `Wanda aka share kwanan nan` is
+     longer than it. */
+  .item .nib-row-label {
+    white-space: normal;
+  }
+
   /* ── The pane ──────────────────────────────────────────────────── */
 
   .body {
@@ -1710,11 +1724,13 @@
     stroke-linejoin: round;
   }
 
-  /* Wide enough for the longest choice any pane offers, so a value is read
-     rather than guessed from its first half. */
+  /* Never narrower than the column the choices line up in, and as wide as the
+     chosen one's words where they need more, so a value is read rather than
+     guessed from its first half: at one width for every language, German read
+     `Ansicht: In diesem Bere…`. */
   .pick {
     flex: none;
-    width: 14rem;
+    min-width: 14rem;
   }
 
   /* A row that is itself a control: it shows what it does when pointed at. */
@@ -2493,7 +2509,7 @@
   }
 
   .sheet.phone .pick {
-    width: auto;
+    min-width: 0;
     max-width: 60%;
   }
 

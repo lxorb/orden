@@ -1,7 +1,7 @@
 /** The vault, started on this device: its roads out (the account's routes, the secret
  *  store, the AI store and the plans' sign-ins) and when it reads again - a sign-in, a
- *  word from the hub, a change made here, the window coming back, and every few
- *  minutes besides. Fetched with the AI store, after the first paint. */
+ *  word from the hub or the hub open again, a change made here, the window coming back,
+ *  and every few minutes besides. Fetched with the AI store, after the first paint. */
 
 import { mount, unmount, untrack } from 'svelte'
 import { account } from '../../account.svelte'
@@ -119,6 +119,9 @@ export function startVault(): void {
   ai.onLocalChange(soon)
   keysMoved(soon)
   hub.on('ai', () => void vault.refresh())
+  // And on every connect: a word said while the hub was not open is never said again,
+  // and a phone that has just signed in is answered before its hub is up.
+  hub.opened(() => void vault.refresh())
   setInterval(() => void vault.refresh(), EVERY)
   if (typeof window !== 'undefined') {
     window.addEventListener('focus', () => void vault.refresh())

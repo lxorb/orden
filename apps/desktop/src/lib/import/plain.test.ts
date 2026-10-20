@@ -93,6 +93,24 @@ describe('a folder of markdown', () => {
     expect(plan.files.map((one) => one.path)).toEqual(['A b.md', 'A b 2.md'])
   })
 
+  test("a note saved in Windows' own code page arrives with its accents", async () => {
+    // `Café` as Windows-1252 writes it: the `é` is one byte, and not UTF-8.
+    const bytes = Uint8Array.of(0x43, 0x61, 0x66, 0xe9)
+    const plan = await readPlain([sourceOf('Old.txt', bytes)])
+
+    expect(noteAt(plan, 'Old.md')).toBe('Café\n')
+  })
+
+  test('and one saved as UTF-16 does too', async () => {
+    const said = 'Köln'
+    const bytes = new Uint8Array(2 + said.length * 2)
+    bytes.set([0xff, 0xfe])
+    for (let at = 0; at < said.length; at += 1) bytes[2 + at * 2] = said.charCodeAt(at)
+    const plan = await readPlain([sourceOf('Unicode.txt', bytes)])
+
+    expect(noteAt(plan, 'Unicode.md')).toBe('Köln\n')
+  })
+
   test('a text file is a note', async () => {
     const plan = await readPlain([file('Note.txt', 'Just words')])
 

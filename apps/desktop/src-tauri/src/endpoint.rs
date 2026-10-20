@@ -41,8 +41,8 @@ use std::net::{Ipv4Addr, SocketAddr, TcpListener, TcpStream};
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::mpsc::{sync_channel, SyncSender};
-use std::sync::Mutex;
-use std::time::Duration;
+use std::sync::{Condvar, Mutex};
+use std::time::{Duration, Instant};
 use tauri::{AppHandle, Emitter, Manager};
 
 use crate::paths::{config_dir, made, write_privately};
@@ -108,9 +108,40 @@ struct Kept {
     pid: u32,
 }
 
-/// The requests the window has not answered yet, by the id each was given.
+/// The requests the window has not answered yet, by the id each was given; and whether
+/// the window hears them yet. An event emitted before the page has a listener for it
+/// reaches nobody, so a request that came in while the page was still coming up is held
+/// until the window says it listens, rather than sent into nothing and waited on for the
+/// whole of `PATIENCE`.
 #[derive(Default)]
-pub struct Waiting(Mutex<HashMap<u64, SyncSender<String>>>);
+pub struct Waiting(
+    Mutex<HashMap<u64, SyncSender<String>>>,
+    Mutex<bool>,
+    Condvar,
+);
+
+impl Waiting {
+    /// The window hears requests from now on.
+    fn listens(&self) {
+        if let Ok(mut heard) = self.1.lock() {
+            *heard = true;
+        }
+        self.2.notify_all();
+    }
+
+    /// Whether the window hears requests, waiting at most `patience` for it to start.
+    fn heard_within(&self, patience: Duration) -> bool {
+        self.1
+            .lock()
+            .ok()
+            .and_then(|heard| {
+                self.2
+                    .wait_timeout_while(heard, patience, |heard| !*heard)
+                    .ok()
+            })
+            .is_some_and(|(heard, _)| *heard)
+    }
+}
 
 /// Opens the socket and starts answering on it.
 ///
@@ -156,6 +187,12 @@ pub fn start(app: &AppHandle) {
             });
         }
     });
+}
+
+/// The window saying it listens for requests; see `Waiting`.
+#[tauri::command]
+pub fn automation_listening(waiting: tauri::State<'_, Waiting>) {
+    waiting.listens();
 }
 
 /// The window's answer to one request, handed back to whoever asked.
@@ -431,6 +468,10 @@ fn ask_the_window_within(
 
     let (send, answered) = sync_channel::<String>(1);
     let waiting = app.state::<Waiting>();
+    let deadline = Instant::now() + patience;
+    if !waiting.heard_within(patience) {
+        return Err("the window is not listening yet".to_owned());
+    }
 
     {
         let Ok(mut held) = waiting.0.lock() else {
@@ -444,7 +485,7 @@ fn ask_the_window_within(
         .map_err(|error| format!("the window could not be asked: {error}"))
         .and_then(|()| {
             answered
-                .recv_timeout(patience)
+                .recv_timeout(deadline.saturating_duration_since(Instant::now()))
                 .map_err(|_| "the window did not answer".to_owned())
         });
 
@@ -655,7 +696,7 @@ fn same_secret(said: Option<&str>, secret: &str) -> bool {
 mod tests {
     use super::{
         as_hex, find, is_json, is_local, parse_head, read_request, reason, refused, same_secret,
-        Kept, Request, MOST_BYTES, SECRET_BYTES,
+        Kept, Request, Waiting, MOST_BYTES, SECRET_BYTES,
     };
 
     /// What the file says about who is answering on that port.
@@ -851,5 +892,23 @@ mod tests {
         assert_eq!(refused("no"), r#"{"error":"no"}"#);
         // A quote in the reason cannot break the shape.
         assert_eq!(refused(r#"say "yes""#), r#"{"error":"say \"yes\""}"#);
+    }
+
+    /// A request that came in while the page was still coming up waits for the window
+    /// to listen and is then sent, rather than emitted to nobody; and one the window
+    /// never listens for is refused once the patience is spent.
+    #[test]
+    fn a_request_before_the_window_listens_waits_for_it() {
+        let waiting = std::sync::Arc::new(Waiting::default());
+        assert!(!waiting.heard_within(std::time::Duration::from_millis(10)));
+
+        let asking = std::sync::Arc::clone(&waiting);
+        let asked =
+            std::thread::spawn(move || asking.heard_within(std::time::Duration::from_secs(30)));
+        std::thread::sleep(std::time::Duration::from_millis(50));
+        waiting.listens();
+
+        assert!(asked.join().expect("the asking thread ends"));
+        assert!(waiting.heard_within(std::time::Duration::ZERO));
     }
 }

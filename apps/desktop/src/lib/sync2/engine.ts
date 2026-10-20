@@ -24,6 +24,7 @@ import { atOrUnder, made, moved, removed, unsynced } from './create'
 import type { Doc } from './docs'
 import { HeldList, type Names } from './held'
 import { holdsDocument } from './kinds'
+import { holderOf } from '../pages/held'
 import { foldIn } from './ingest'
 import { settle, type SpaceState } from './places'
 import { pass, type Passed, resting } from './pass'
@@ -227,6 +228,7 @@ export class Engine implements AskedEngine {
   ): Promise<string | null> {
     const placed = this.placed(path)
     if (!placed || placed.space.at(placed.path)) return null
+    if (!folder && (await this.heldPaper(path))) return null
     const { id, changes } = await made(this.core, placed.space, {
       path: placed.path,
       folder,
@@ -247,6 +249,12 @@ export class Engine implements AskedEngine {
     const was = this.placed(from)
     const now = this.placed(to)
     if (!was || !now) return
+    // A PDF that became the paper of a page note is part of the note now, and leaves the
+    // tree: it travels with the note, by the note's id (pages/carried.ts).
+    if (await this.heldPaper(to)) {
+      await this.remove(from)
+      return
+    }
     if (was.space !== now.space) {
       // Out of one space and into another: gone from the one, made in the other - and a
       // folder with everything in it, since the other space's tree has never heard of
@@ -272,6 +280,18 @@ export class Engine implements AskedEngine {
     }
     await this.core.commit(moved(this.core, was.space, was.path, now.path))
     await this.settle(was.space)
+  }
+
+  /** Whether a file is the paper a page note holds: `Lecture.pages.pdf` beside
+   *  `Lecture.pages`. Not an entry of its own, because a page note and its paper are one
+   *  thing (#551): the paper goes to the account and to other devices as part of the
+   *  note, kept by the note's id, so a rename or a move of the note never leaves a file
+   *  of the tree behind under the old name. A PDF of that name with no note beside it
+   *  is a PDF like any other, which is what `held_paper` in src-tauri/src/paths.rs
+   *  says too. */
+  private async heldPaper(path: string): Promise<boolean> {
+    const holder = holderOf(path)
+    return holder !== null && (await this.core.world.disk.read(holder)) !== null
   }
 
   removed(path: string): Promise<void> {

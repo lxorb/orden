@@ -11,6 +11,7 @@
  *  a store rather than a string. */
 
 import { extracted, merged, splitAt } from '../composer'
+import type { Retargeting } from '../link-index.svelte'
 import { folderOf, samePath } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
 import { type Tab, UNTITLED } from './documents.svelte'
@@ -25,7 +26,7 @@ export interface Composes {
   reload(path: string, content: string): void
   /** The note merged away, said the way a delete is; see workspace/file-ops.ts. */
   fileGone(path: string, kind: 'file'): Promise<void>
-  retarget(from: string, to: string): Promise<number>
+  retarget(from: string, to: string, how?: Retargeting): Promise<number>
   open(path: string): Promise<void>
   freeName(dir: string, wanted: string): string
   loadTree(): Promise<void>
@@ -50,13 +51,14 @@ export async function mergeInto(ws: Composes, from: string, into: string): Promi
   ws.reload(into, joined)
 
   // Before the note goes, so the links that pointed at it can still be found.
-  await ws.retarget(from, into)
+  const relinked: string[] = []
+  await ws.retarget(from, into, { touched: relinked })
 
   await invoke('snapshot_note', { path: from, content: fromContent }).catch(() => undefined)
   await invoke('delete_note', { path: from })
   await ws.fileGone(from, 'file')
 
-  ws.undone.record({ kind: 'merge', from, fromContent, into, intoContent })
+  ws.undone.record({ kind: 'merge', from, fromContent, into, intoContent, relinked })
   await ws.loadTree()
   await ws.open(into)
 }

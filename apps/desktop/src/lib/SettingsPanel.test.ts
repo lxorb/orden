@@ -15,9 +15,12 @@ import { describe, expect, test } from 'vitest'
  *  gives: scoped CSS is in the bundle, not in anything a server render hands back.
  *  What it looks like in forty languages is `scripts/locale-e2e.py`'s question. */
 
-const RULE = /\.setting \.nib-segmented \{([^}]*)\}/.exec(
-  readFileSync(fileURLToPath(new URL('./SettingsPanel.svelte', import.meta.url)), 'utf8'),
-)?.[1]
+const SOURCE = readFileSync(
+  fileURLToPath(new URL('./SettingsPanel.svelte', import.meta.url)),
+  'utf8',
+)
+
+const RULE = /\.setting \.nib-segmented \{([^}]*)\}/.exec(SOURCE)?.[1]
 
 describe('a segmented setting', () => {
   test('is never narrower than the column its short choices line up in', () => {
@@ -26,5 +29,15 @@ describe('a segmented setting', () => {
 
   test('and grows to its words rather than holding them to one width', () => {
     expect(RULE).not.toMatch(/(^|[\s;])width:/)
+  })
+})
+
+/** A list keyed by its words is keyed by the reader's language, and two words that
+ *  are two in English can be one word in another: Hausa says `Rubutu` for both Text
+ *  and Writing, the Editor pane's first two groups. Svelte throws on the second, and
+ *  the pane stays on whatever it showed before. */
+describe('a generated pane', () => {
+  test('keys its groups, rows and sides by something no translation can make equal', () => {
+    expect(SOURCE.match(/\{#each [^}]*\(\w+\.(label|title)\)\}/g)).toBeNull()
   })
 })

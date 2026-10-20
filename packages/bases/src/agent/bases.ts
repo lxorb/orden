@@ -143,10 +143,13 @@ function filterOf(value: unknown): Filter {
 
 /** A view's keys as an op says them, onto a view. */
 function viewWith(view: View, said: Args): View {
-  const next: View = { ...view, nib: { ...view.nib } }
+  const next: View = { ...view, nib: { ...view.nib }, options: { ...view.options } }
   if (said.type !== undefined) next.type = words(said.type, 'type')
   if (said.name !== undefined) next.name = words(said.name, 'name')
   if (said.filters !== undefined) {
+    // Filters nib could not read are kept as written only until the view is given
+    // its own, and none is its own too; see `viewPlain` in base-file.ts.
+    delete next.options.filters
     if (said.filters === null) delete next.filters
     else next.filters = filterOf(said.filters)
   }
@@ -165,6 +168,7 @@ function viewWith(view: View, said: Args): View {
     }
   }
   if (said.limit !== undefined) {
+    delete next.options.limit
     if (said.limit === null) delete next.limit
     else if (typeof said.limit === 'number' && said.limit > 0) next.limit = Math.floor(said.limit)
     else throw new AgentError('bad_arguments', 'limit is a number')
@@ -236,7 +240,9 @@ export function editedBase(base: Base, ops: unknown): Base {
       }
       case 'set_filter': {
         if (raw.view === undefined) {
-          next = { ...next }
+          // As a view's: the unreadable filters go once the base is given its own.
+          next = { ...next, kept: { ...next.kept } }
+          delete next.kept.filters
           if (raw.filter === null) delete next.filters
           else next.filters = filterOf(raw.filter)
         } else {

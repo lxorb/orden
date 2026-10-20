@@ -21,6 +21,7 @@ vi.mock('./surfaces.svelte', () => ({
   pagesNavigator: () => new Promise(() => undefined),
   searchPanel: () => new Promise(() => undefined),
   showFeedback: () => undefined,
+  toggleTabOverview: () => undefined,
 }))
 
 const { workspace } = await import('./workspace.svelte')
@@ -392,6 +393,18 @@ describe('a shut side', () => {
 
     expect(html).toContain(`data-panel="${workspace.nextRight}"`)
     expect(html).not.toContain('data-panel="tree"')
+  })
+})
+
+/** Two regions of one page with one name are two a reader cannot tell apart (#523). */
+describe('the two sides', () => {
+  test('have a name each', () => {
+    open('# Head\n')
+    const named = (side: 'left' | 'right') =>
+      /<aside[^>]*aria-label="([^"]+)"/.exec(render(Sidebar, { props: { side } }).body)?.[1]
+
+    expect(named('left')).toBe('Space panel')
+    expect(named('right')).toBe('Right sidebar')
   })
 })
 

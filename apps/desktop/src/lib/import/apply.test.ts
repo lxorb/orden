@@ -24,6 +24,15 @@ vi.mock('../tauri', () => ({
     if (command === 'file_stamp') {
       return Promise.resolve(onDisk.has(String(args.path)) ? { modified: 1, len: 1 } : null)
     }
+    // The browser has no stamps; its listing answers. See on-disk.ts.
+    if (command === 'path_exists') return Promise.resolve(onDisk.has(String(args.path)))
+    if ((command === 'read_note' || command === 'read_asset') && onDisk.has(String(args.path))) {
+      return Promise.resolve('')
+    }
+    if (command === 'read_note' || command === 'read_asset') {
+      return Promise.reject(new Error('nothing there'))
+    }
+    if (command === 'read_tree') return Promise.resolve({ children: [] })
     if (args.path === refusing) return Promise.reject(new Error('the disk is full'))
     if (command === 'write_note') said.set(String(args.path), String(args.content))
     wrote.push({ command, path: String(args.path) })
@@ -35,11 +44,18 @@ vi.mock('../tauri', () => ({
   isNative: false,
 }))
 
+/** Each file the import said it made, as a file operation. */
+const came: string[] = []
+
 vi.mock('../workspace.svelte', () => ({
   workspace: {
     files: [],
     undone: { record: (action: unknown) => void recorded.push(action) },
     loadTree: () => Promise.resolve(),
+    fileCame: (path: string) => {
+      came.push(path)
+      return Promise.resolve()
+    },
   },
 }))
 
@@ -411,6 +427,19 @@ describe('a path no space would take', () => {
     })
 
     expect(heard).toEqual(['saved /Work/Plan.md', 'came back /Work/assets/x.png'])
+  })
+
+  /** Said as file operations, so sync v2 has an entry for each where no watcher reads
+   *  the folder: in a browser an imported paper's page note never reached the account
+   *  (#551). */
+  test('and says each of them was made, as every file operation is said', async () => {
+    came.length = 0
+    await applyImport(planOf([note('Plan.md', '# Plan'), file('assets/x.png')]), {
+      root: '/Work',
+      folder: '',
+    })
+
+    expect(came).toEqual(['/Work/Plan.md', '/Work/assets/x.png'])
   })
 })
 

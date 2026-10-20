@@ -325,6 +325,31 @@ describe('what is left', () => {
     expect(shared.json.members?.map((one) => one.email)).not.toContain(ME)
   })
 
+  test('a guest that only said it was at its address keeps its way in, not the address', async () => {
+    const other = await signIn(env, OTHER)
+    const theirs = (
+      await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
+    ).json.space?.id
+    const made = await call<{ link?: { url: string } }>(env, `/v1/spaces/${theirs}/share/link`, {
+      method: 'PUT',
+      token: other,
+      body: { role: 'write', mode: 'approval' },
+    })
+    const link = /\/join\/([a-f0-9]+)/.exec(made.json.link?.url ?? '')?.[1]
+    const asked = await call<{ token: string }>(env, `/v1/join/${link}`, {
+      method: 'POST',
+      body: { email: ME },
+    })
+    const { id } = env.db.prepare('select id from guests where email = ?').get(ME) as { id: string }
+    await call(env, `/v1/spaces/${theirs}/share/guests/${id}`, { method: 'POST', token: other })
+
+    expect((await leave()).status).toBe(200)
+
+    const listed = await call<LeavingView>(env, '/v1/spaces', { token: asked.json.token })
+    expect(listed.json.spaces?.map((one) => one.id)).toEqual([theirs])
+    expect(env.db.prepare('select email from guests where id = ?').get(id)).toEqual({ email: null })
+  })
+
   test('its own space goes for everybody it was shared with', async () => {
     const other = await signIn(env, OTHER)
     const mine = (await call<LeavingView>(env, '/v1/spaces', { token, body: { name: 'Mine' } }))

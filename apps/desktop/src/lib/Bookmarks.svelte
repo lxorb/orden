@@ -144,14 +144,12 @@
   )
 
   /** A tab carried out of the strip that could be a first tile, or a file carried out of
-   *  the list (#412), which the grid keeps an empty place for while there is none. */
+   *  the list (#412), which the grid keeps an empty place for while there is none - for
+   *  the whole of the drag, so it is there to aim at (#417). */
   const offered = $derived.by(() => {
     if (!workspace.device.essentialTiles || !workspace.panes.dragging) return false
     if (workspace.panes.dragging.tabId === null) {
-      return (
-        !!workspace.panes.dragging.upward &&
-        carried().some((one) => workspace.entryAt(one)?.is_dir === false)
-      )
+      return carried().some((one) => workspace.entryAt(one)?.is_dir === false)
     }
 
     const id = workspace.panes.dragging.tabId
@@ -395,6 +393,7 @@
       <ul
         class="nib-tiles tiles"
         class:is-taking={(landing?.at ?? null) !== null && !tiles.length}
+        class:is-floating={!tiles.length}
         data-bookmark-drop
         aria-label={t('Essentials')}
         onkeydown={(event) => hands?.gridKey(event)}
@@ -503,6 +502,31 @@
 {/if}
 
 <style>
+  /* The empty place for a first tile (#417) stands over the caption under it rather
+     than in front of it, the caption's height, so the rows under a drag that has just
+     begun stay where the pointer found them (#412). */
+  .bookmarks {
+    position: relative;
+  }
+
+  .tiles.is-floating {
+    position: absolute;
+    inset: 0 0 auto;
+    margin-block: 0;
+  }
+
+  .tiles.is-floating .is-empty {
+    height: calc(2 * var(--space-1) + 1lh);
+    font-family: var(--font-ui);
+    font-size: var(--text-xs);
+  }
+
+  .tiles.is-floating + .nib-section,
+  .bookmarks:has(> .is-floating:only-child) + :global(.nib-section) {
+    margin-top: 0;
+    visibility: hidden;
+  }
+
   .list {
     list-style: none;
     margin: 0 0 var(--space-2);

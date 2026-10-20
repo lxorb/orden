@@ -30,6 +30,8 @@ NOTE = (
     "A line with %%a note to myself%% inside it.\n\n"
     "%% a whole line of it %%\n\n"
     "A line with <!-- the other spelling --> inside it.\n\n"
+    "%%\nwritten across\nlines\n%%\n\n"
+    "Before <!-- an aside\nbroken over a line --> after.\n\n"
     "```\n"
     "%% kept, because a fence is showing it %%\n"
     "```\n"
@@ -98,6 +100,12 @@ def drive(browser: Browser) -> None:
     if "A line with  inside it." not in written["shown"]:
         wrong("the words around a comment did not stay")
 
+    # A comment across lines is shown, faded, rather than hidden: the editor may not
+    # hide a line break from a plugin, and doing so once crashed it (#524).
+    for across in ("written across", "broken over a line"):
+        if across not in written["shown"]:
+            wrong(f"a comment across lines is not on the page: {across}")
+
     # And the note itself is untouched: what is written is what is in the file.
     if "%%a note to myself%%" not in written["doc"]:
         wrong("the comment was rewritten in the note")
@@ -117,6 +125,20 @@ def drive(browser: Browser) -> None:
     if "a note to myself" not in revealed["shown"]:
         wrong("the comment did not come back with the caret inside it")
 
+    # Typing after it lands where it was typed, on the page and in the note.
+    page.evaluate(
+        """() => {
+          const end = window.nib.state.doc.length
+          window.nib.dispatch({ changes: { from: end, insert: 'TYPED' }, selection: { anchor: end + 5 } })
+        }"""
+    )
+    page.wait_for_timeout(300)
+    typed = page.evaluate(WRITTEN)
+    if not typed["doc"].endswith("```\nTYPED"):
+        wrong(f"typing went somewhere else: {json.dumps(typed['doc'][-40:])}")
+    if "TYPED" not in typed["shown"]:
+        wrong("what was typed is not on the page")
+
     # And the reading view, which is what anybody else would see.
     page.evaluate("() => window.nibApp.workspace.toggleReading()")
     page.wait_for_timeout(1400)
@@ -124,7 +146,13 @@ def drive(browser: Browser) -> None:
     read = page.evaluate("() => document.querySelector('#write')?.textContent ?? ''")
     say(f"[reading] {json.dumps(read[:160])}")
 
-    for hidden in ("a note to myself", "the other spelling", "a whole line of it"):
+    for hidden in (
+        "a note to myself",
+        "the other spelling",
+        "a whole line of it",
+        "written across",
+        "broken over a line",
+    ):
         if hidden in read:
             wrong(f"a comment reached the reading view: {hidden}")
     if "kept, because a fence is showing it" not in read:

@@ -90,4 +90,14 @@ describe('the window capture', () => {
     expect(cli).toContain('did not say which process it is')
     expect(cli).not.toMatch(/pid \? \[/)
   })
+
+  /** On a Mac the same pid picks the window, and `screencapture` is handed its number.
+   *  Copying the window's rectangle off the screen put whatever was in front of it into
+   *  the picture: a system dialog over the middle, another app's window over a corner. */
+  test('the command line photographs a Mac window by its number, not its rectangle', () => {
+    const cli = read('../../../apps/cli/nib.mjs')
+    expect(cli).toContain('kCGWindowOwnerPID === Number(argv[0])')
+    expect(cli).toMatch(/'-l\$\{id\}'|`-l\$\{id\}`/)
+    expect(cli).not.toMatch(/`-R\$\{/)
+  })
 })

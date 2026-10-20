@@ -492,6 +492,14 @@ describe('the link under a position', () => {
       alias: 'a',
     })
   })
+
+  test('a markdown link to a heading written percent-encoded names the heading it means', () => {
+    expect(linkAt(state('[see](Note.md#Some%20Heading)', 0), 3)).toMatchObject({
+      kind: 'markdown',
+      target: 'Note.md',
+      heading: 'Some Heading',
+    })
+  })
 })
 
 /** Whole-line constructs replaced by a rendered block. */

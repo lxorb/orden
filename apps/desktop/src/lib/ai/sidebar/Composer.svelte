@@ -32,7 +32,7 @@
   import { hostHere } from './host'
   import MentionMark from './MentionMark.svelte'
   import ModeMark from './ModeMark.svelte'
-  import { type Mention, mentionAt, ranked, type Row, sameMention } from './mentions'
+  import { type Mention, mentionAt, mentionOf, ranked, type Row, sameMention } from './mentions'
   import ModelPicker from './ModelPicker.svelte'
   import { minutes, tokens } from './numbers'
   import Queue from './Queue.svelte'
@@ -137,11 +137,8 @@
     }
     out.push({ kind: 'web', id: 'web', label: t('Web search'), word: 'web' })
     out.push({ kind: 'scratchpad', id: 'scratchpad', label: t('Scratchpad'), word: 'scratchpad' })
-    for (const note of workspace.notes) {
-      out.push({ kind: 'note', id: note.path, label: note.name.replace(/\.(?:md|markdown)$/i, '') })
-    }
-    for (const folder of folders())
-      out.push({ kind: 'folder', id: folder.path, label: `${folder.name}/` })
+    for (const note of workspace.notes) out.push(mentionOf(note))
+    for (const folder of folders()) out.push(mentionOf(folder))
     for (const { tag } of links.spaceTags) out.push({ kind: 'tag', id: tag, label: `#${tag}` })
     for (const one of chat.heads) {
       if (one.id !== head?.id && one.title)

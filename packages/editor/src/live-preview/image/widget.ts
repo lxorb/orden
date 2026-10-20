@@ -328,7 +328,10 @@ export class ImageWidget extends NibWidget {
         view.focus()
       }
     })
-    alt.addEventListener('blur', commitAlt)
+    // Chromium blurs the field while the editor is still taking its picture out of the
+    // page, mid-update, so the alt is written once that has settled - to the picture
+    // if it is still there.
+    alt.addEventListener('blur', () => queueMicrotask(commitAlt))
     // The frame would otherwise take the press as a click on the picture.
     alt.addEventListener('pointerdown', (event) => event.stopPropagation())
     tools.append(alt)

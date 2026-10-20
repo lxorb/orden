@@ -6,7 +6,7 @@
  *  so nothing in the app has to know where the format went, and it is where the
  *  handful of things only a surface needs are kept. */
 
-import { type Canvas as Plane, readCanvas as read } from '@nib/markdown/canvas'
+import { type Canvas as Plane, canvasIn } from '@nib/markdown/canvas'
 
 export {
   blankCanvas,
@@ -60,9 +60,14 @@ export { merged, stamped } from '@nib/markdown/canvas-merge'
  *  the tab; the store's `parse` finds the answer waiting and the mount is a mount. */
 let waiting: { text: string; canvas: Plane } | null = null
 
-/** Parses a plane now, for a surface that is about to be built from the same text. */
-export function parseAhead(text: string): void {
-  waiting = { text, canvas: read(text) }
+/** Parses a plane now, for a surface that is about to be built from the same text.
+ *  Answers false for text that is not a plane at all, and holds nothing for it: the
+ *  file is refused by its opener, and nothing is left waiting for a tab that will
+ *  not be made. */
+export function parseAhead(text: string): boolean {
+  const canvas = canvasIn(text)
+  waiting = canvas ? { text, canvas } : null
+  return canvas !== null
 }
 
 /** The plane `parseAhead` read, if it read this one. Once: a second surface on the

@@ -22,6 +22,12 @@ describe('which app an export came out of', () => {
     ).resolves.toBe('notion')
   })
 
+  test('a Notion database exported on its own says so with the id before the _all', async () => {
+    await expect(
+      detect([file('Tasks 1a2b3c4d5e6f78901a2b3c4d5e6f7890_all.csv', 'Name,Status\nOne,Done\n')]),
+    ).resolves.toBe('notion')
+  })
+
   test('a folder of notes with one Notion page kept in it is a folder of notes', async () => {
     const standup = '# Standup\nDate: 2024-03-02\nAttendees: Ann, Bob\n\nShipped the beta.\n'
     const sources = [
@@ -153,6 +159,19 @@ describe('which app an export came out of', () => {
     await expect(detect([file('Books.csv', 'Name\nDune'), file('A.md', '# A')])).resolves.toBe(
       'markdown',
     )
+  })
+
+  test('a tab separated file on its own is a table too', async () => {
+    await expect(detect([file('Books.tsv', 'Name\tPages\nDune\t412')])).resolves.toBe('table')
+  })
+
+  test('a folder of papers is papers, whatever a Mac left beside them', async () => {
+    await expect(
+      detect([file('Papers/One.pdf', '%PDF'), file('Papers/.DS_Store', 'junk')]),
+    ).resolves.toBe('pdf-pages')
+    await expect(
+      detect([file('One.pdf', '%PDF'), file('__MACOSX/._One.pdf', 'junk')]),
+    ).resolves.toBe('pdf-pages')
   })
 
   test("a document only pandoc reads is named as pandoc's", async () => {

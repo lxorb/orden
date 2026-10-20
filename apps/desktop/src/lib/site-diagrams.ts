@@ -138,15 +138,18 @@ export async function drawnBoth(
   spaceId: string,
   fence: DiagramFence,
   draw = drawer,
-): Promise<{ hash: string; svg: string }[]> {
-  const out: { hash: string; svg: string }[] = []
+): Promise<{ hash: string; svg: string; said: string }[]> {
+  const out: { hash: string; svg: string; said: string }[] = []
 
   for (const scheme of DIAGRAM_SCHEMES) {
     const drawn = await draw(fence.code, fence.language, scheme).catch(() => null)
     const svg = drawn === null ? null : asFile(drawn)
     if (svg === null) return []
 
-    out.push({ hash: await diagramKey(spaceId, fence.language, fence.code, scheme), svg })
+    // And what the name was hashed from, so the store can hash it again (#518).
+    const { language, code } = fence
+    const said = new URLSearchParams({ space: spaceId, language, scheme, code }).toString()
+    out.push({ hash: await diagramKey(spaceId, fence.language, fence.code, scheme), svg, said })
   }
 
   return out
@@ -226,10 +229,10 @@ export async function pushDiagrams(
       continue
     }
 
-    for (const { hash, svg } of drawn) {
+    for (const { hash, svg, said } of drawn) {
       const bytes = new TextEncoder().encode(svg)
       const ok = await api
-        .putBlob(token, hash, 'image/svg+xml', bytes.buffer)
+        .putBlob(token, hash, 'image/svg+xml', bytes.buffer, { 'x-nib-diagram': said })
         .then(() => true)
         .catch(() => false)
 

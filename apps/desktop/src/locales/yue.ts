@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const yue: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': '搞掂晒',
+  Personalize: '個人化',
+  Clean: '簡潔',
+  'Live preview': '即時預覽',
+  'Developer mode': '開發人員模式',
+  'Do you write code?': '你寫唔寫程式？',
+  Yes: '係',
+  No: '唔係',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': '喺其他 App：{key}',
   'From other apps: set in your system settings': '喺其他 App：喺系統設定度設定',
@@ -79,6 +88,7 @@ export const yue: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': '一個任務',
   'One per line': '每行一個',
+  'Add with AI': '用 AI 新增',
   // Tasks: the projects in the panel
   Favorites: '最愛',
   'Add project': '加專案',
@@ -122,6 +132,7 @@ export const yue: Dictionary = {
   'Pointing hand on buttons': '喺按鈕上面顯示指住嘅手',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': '加任務',
+  'Apple Shortcuts': 'Apple 捷徑',
   Tomorrow: '聽日',
   'done {date}': '{date} 完成',
   'Next week': '下個禮拜',
@@ -184,6 +195,7 @@ export const yue: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': '用兩隻手指轉畫布',
+  'Snap the rotation to right angles': '轉動吸附到直角',
   'Turn upright': '擺返正',
   Canvas: '畫布',
   Card: '卡片',
@@ -277,6 +289,7 @@ export const yue: Dictionary = {
   Tabs: '標籤頁',
   'Ctrl+Tab in order of use': 'Ctrl+Tab 按使用次序',
   'Swipe between pages': '喺頁面之間掃',
+  'Hardware acceleration': '硬件加速',
   'Hidden tabs': '隱藏標籤頁',
   'Memory saver': '慳記憶體',
   Moderate: '適中',
@@ -1129,6 +1142,8 @@ export const yue: Dictionary = {
   Elbow: '折線',
   Frame: '框架',
   Ungroup: '取消組合',
+  Lock: '鎖定',
+  Unlock: '解鎖',
   'The ink of the page': '頁面嘅墨跡',
   'Write in what is picked': '喺揀咗嘅範圍中書寫',
   Pen: '筆',
@@ -1269,10 +1284,13 @@ export const yue: Dictionary = {
     '有{count}段內容已加密，離開Evernote就冇辦法讀取',
   '{count} notes had a reminder, which the export does not carry':
     '{count}篇筆記設有提醒，匯出檔唔會帶着提醒',
+  '{count} attachments were missing from the export or could not be read':
+    '有{count}個附件唔喺匯出檔入面，或者讀唔到',
   '{count} notes were in the bin and stay there': '{count}篇筆記喺垃圾桶入面，仲留喺嗰度',
   '{count} archived notes are in a folder called Archive':
     '{count}篇已歸檔嘅筆記放喺名為Archive嘅檔案夾中',
   'The colours a note had are not kept': '筆記原有嘅顏色唔會保留',
+  '{count} files could not be read, so they were left out': '有 {count} 個檔案讀唔到，所以冇帶過嚟',
   '{count} block references were written out as the words they pointed at':
     '{count}處區塊引用已寫成佢指向嘅文字',
   '{count} saved views are left out, and every row is in the table':
@@ -1297,6 +1315,8 @@ export const yue: Dictionary = {
     '{count} 張心情同活動卡片係圖畫，所以只有文字轉入',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} 則筆記加咗密碼，只有「備忘錄」開得到',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} 則筆記加咗密碼，只有 Bear 開得到',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} 則筆記喺「最近刪除」，仲留喺嗰度',
   '{count} drawings and scans have no picture on this Mac': '{count} 幅圖畫同掃描喺呢部 Mac 冇圖片',
@@ -1528,6 +1548,7 @@ export const yue: Dictionary = {
   'Ask the model': '問模型',
   'answered by {model}, {date}': '由{model}回答，{date}',
   'AI block': 'AI區塊',
+  'Do with AI': '用AI做',
   'Highlight colour': '突出顯示顏色',
   'A single newline breaks the line': '單一換行即斷行',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -1841,6 +1862,8 @@ export const yue: Dictionary = {
   'Settings › AI': '設定 › AI',
   'New chat': '新對話',
   'Ask again': '再問一次',
+  'Continue when the limit resets': '上限恢復之後繼續',
+  'Continues at {time}': '{time} 繼續',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': '隨便問，@ 加嘢，/ 睇多啲',
   'What can I help with?': '有咩可以幫到你？',
@@ -2303,4 +2326,29 @@ export const yue: Dictionary = {
   Peach: '蜜桃',
   Sage: '鼠尾草',
   Mist: '薄霧',
+  // A board, Notion's: its columns, its cards, its settings, a new database
+  'New database': '新增資料庫',
+  'New page': '新增頁面',
+  'Not started': '未開始',
+  'In progress': '進行緊',
+  'No {property}': '冇{property}',
+  '{card} moved to {group}': '已將{card}搬去{group}',
+  'Not moved': '搬唔到',
+  Retry: '再試一次',
+  Calculate: '計算',
+  'Remove sort': '移除排序',
+  'Remove sort?': '移除排序？',
+  Groups: '分組',
+  'Hidden groups': '收埋咗嘅分組',
+  'Add as option': '加做選項',
+  'Move left': '向左移',
+  'Move right': '向右移',
+  'Delete option': '刪除選項',
+  'Colour columns': '欄位上色',
+  'Hide empty groups': '收埋空嘅分組',
+  'Card size': '卡片大小',
+  Small: '細',
+  Large: '大',
+  Both: '兩樣都要',
+  'Shown on cards': '喺卡片上面顯示',
 }

@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import { kindOf, notionDate, pagesIn } from './notion-database'
+import { kindOf, notionDate, pagesIn, valueAs } from './notion-database'
 
 describe('a Notion date', () => {
   test('is a day, or a day and a minute, in ISO', () => {
@@ -40,6 +40,13 @@ describe('what a column holds', () => {
     expect(kindOf(['12', '007'])).toBe('text')
     expect(kindOf(['March 4, 2026', 'May 1, 2026 9:00 AM'])).toBe('date')
     expect(kindOf([])).toBe('text')
+  })
+
+  test('is a date where some of the dates have an end, whose commas are no list', () => {
+    const column = ['May 1, 2024 → May 3, 2024', 'June 2, 2024', 'June 9, 2024 3:00 PM → 5:00 PM']
+
+    expect(kindOf(column)).toBe('date')
+    expect(valueAs('date', 'May 1, 2024 → May 3, 2024')).toBe('May 1, 2024 → May 3, 2024')
   })
 
   test('is a list only where a label comes back in another row', () => {

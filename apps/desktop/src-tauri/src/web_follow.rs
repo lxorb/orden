@@ -170,7 +170,7 @@ pub fn extent(width: u32, height: u32, scale: f64) -> Option<Extent> {
 /// The window's size now, in the units the window measures in; nothing while it is
 /// minimised.
 pub fn extent_of(window: &Window) -> Option<Extent> {
-    let scale = window.scale_factor().ok()?;
+    let scale = crate::page_scale::of(window).ok()?;
     let size = window.inner_size().ok()?;
     extent(size.width, size.height, scale)
 }
@@ -248,7 +248,7 @@ pub fn rect_of((left, top, width, height): (i32, i32, u32, u32)) -> Rect {
 pub fn heard(window: &Window, event: &WindowEvent) {
     let (now, scale) = match event {
         WindowEvent::Resized(_) => {
-            let Ok(scale) = window.scale_factor() else {
+            let Ok(scale) = crate::page_scale::of(window) else {
                 return;
             };
             (extent_of(window), scale)
@@ -257,10 +257,19 @@ pub fn heard(window: &Window, event: &WindowEvent) {
             scale_factor,
             new_inner_size,
             ..
-        } => (
-            extent(new_inner_size.width, new_inner_size.height, *scale_factor),
-            *scale_factor,
-        ),
+        } => {
+            // On CEF on Linux, the page's own ratio, which GTK's scale is not; see
+            // page_scale.rs.
+            let scale = if cfg!(feature = "cef") {
+                crate::page_scale::of(window).unwrap_or(*scale_factor)
+            } else {
+                *scale_factor
+            };
+            (
+                extent(new_inner_size.width, new_inner_size.height, scale),
+                scale,
+            )
+        }
         _ => return,
     };
     // Minimised: every page keeps its place and its size until the window is back.

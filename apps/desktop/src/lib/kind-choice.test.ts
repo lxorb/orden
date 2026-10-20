@@ -122,6 +122,7 @@ describe('turning a kind off', () => {
       'New note',
       'New page note',
       'New web note',
+      'New database',
     ])
     // Settings still lists it, so it can be turned back on.
     expect(newKinds().map((one) => one.kind)).toContain('canvas')

@@ -148,6 +148,9 @@ notify = "8"
 # file as something tauri builds with, and on every platform now that every platform
 # has a sync store.
 getrandom = "0.3"
+# A tag's name holds letters, marks, digits and emoji, which the standard library cannot
+# tell apart. Already in the lock file as something tauri builds with, so this adds nothing.
+icu_properties = "2"
 
 # Desktop only: a second launch should hand its file to the running window, the
 # app installs its own updates, and files are chosen and saved in a dialog. A
@@ -161,8 +164,10 @@ png = "0.18"
 # The engine's developer tools, for a web tab's page in the build that ships: F12,
 # Ctrl+Shift+I and the page menu's Inspect, as in a browser. A desktop's only, so a
 # phone's webview is never debuggable from outside, and nib's own window turns them
-# off again outside a development build; see `ready` in src/lib.rs.
-tauri = { version = "2", features = ["devtools"] }
+# off again outside a development build; see `ready` in src/lib.rs. `protocol-asset` is
+# here because the Tauri CLI writes it into every `tauri` entry on each build (it follows
+# `assetProtocol` in tauri.conf.json); listed already, a build leaves this file alone.
+tauri = { version = "2", features = ["protocol-asset", "devtools"] }
 tauri-plugin-dialog = "2"
 tauri-plugin-process = "2"
 # Apple Notes keeps its notes in a SQLite database in a group container, which is
@@ -247,8 +252,9 @@ tokio = { version = "1", default-features = false, features = ["time", "sync"] }
 # Open, the stop and Quit (docs/agent-native.md, open question 6). Not on Linux, where
 # the tray library is loaded from the system and is not on every desktop: there the
 # window closes the ordinary way. Already in the lock file, as what tauri builds with.
+# `protocol-asset` as on the desktops' entry above: what the Tauri CLI writes on a build.
 [target.'cfg(any(target_os = "windows", target_os = "macos"))'.dependencies]
-tauri = { version = "2", features = ["tray-icon"] }
+tauri = { version = "2", features = ["protocol-asset", "tray-icon"] }
 
 [target.'cfg(target_os = "ios")'.dependencies]
 keyring = { version = "3", default-features = false, features = ["apple-native"] }
@@ -264,6 +270,10 @@ objc2-ui-kit = { version = "0.3", default-features = false, features = [
 ] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
+# Whether the running app is signed by a developer team, which is when the system lists
+# its App Intents in Shortcuts. Already in the lock file, through keyring and the
+# platform certificate verifier. See src/siri.rs.
+security-framework = "3"
 # The folder a terminal's shell is in, asked of the kernel (`proc_pidinfo`) for the
 # shells that do not say it themselves - zsh, a Mac's own. Already in the lock file, as
 # what portable-pty and tauri build with. See src/terminal/process.rs.
@@ -387,8 +397,13 @@ zbus = { version = "5", default-features = false, features = ["async-io", "block
 # browser is an X11 window, and Chromium keeps the chords from the page and swallows
 # them. Pure Rust, and in Linux's lock file already, through the runtime's windowing.
 # See web_keys.rs and keyboard.rs.
-# And the window's own edges, with a border's cursors (window_drag.rs).
-x11rb = { version = "0.13", default-features = false, features = ["cursor", "resource_manager"] }
+# And the window's own edges, with a border's cursors (window_drag.rs), and the shape
+# of a web tab's page, less the app's layers over it (web_cut.rs).
+x11rb = { version = "0.13", default-features = false, features = ["cursor", "resource_manager", "shape"] }
+# GLib's sources, read by name at run time where the binding cannot be linked: the
+# main thread's loop asleep while nothing happens on CEF (chromium_pump.rs). In the lock
+# file already, as what nearly every crate here builds with.
+libc = "0.2"
 # A window's own X11 window, for what only the window manager is told: quick add
 # floated (linux.rs). In the lock file already, through the runtime's windowing.
 raw-window-handle = "0.6"

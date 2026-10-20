@@ -79,3 +79,18 @@ describe('what a point is on', () => {
     })
   })
 })
+
+/** A picture locked in place is under the writing: a press goes through it (#643). */
+describe('what a point is on, over something locked in place', () => {
+  const photo: CanvasNode = { ...card('photo', -50, -50), width: 400, height: 300, locked: true }
+
+  test('is the card under it', () => {
+    const canvas = { ...CANVAS, nodes: [...NODES, photo] }
+    expect(hitAt(where({ canvas }), { x: 100, y: 30 })).toMatchObject({ node: 'a' })
+  })
+
+  test('is nothing where there is nothing under it', () => {
+    const canvas = { ...CANVAS, nodes: [...NODES, photo] }
+    expect(hitAt(where({ canvas }), { x: 300, y: 200 }).node).toBeNull()
+  })
+})

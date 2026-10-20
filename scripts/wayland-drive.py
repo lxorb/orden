@@ -20,6 +20,9 @@ portrait one at 1.77, one at 1, one at 1.75, one at 2):
     and come back whole after;
   - and the window's own page has to still be drawn after all of it: the tab strip has
     its ink (#387's window flashing between light and dark);
+  - the Undo toast, after a note made and deleted for it, has to float over the page at
+    the foot of the pane, which keeps its hole and shows round the toast, and comes back
+    whole after (#512);
   - and once, the window made smaller: the page follows;
   - and on the last screen, the page clicked into so it holds the keyboard, and
     Ctrl+R pressed three times and F5 once, each a load of the page (#344: the key
@@ -50,10 +53,10 @@ POINTER = OUT / "pointer.fifo"
 SLACK = 3
 failures = []
 
-# What opens over a web tab's page, and the button that opens it.
+# What opens over a web tab's page, and the button that opens it. The app menu was the
+# second until the window had no menu button any more (424fd9d4d).
 LAYERS = [
     ("the web tab's menu", '.webbar button[aria-haspopup="menu"]'),
-    ("the app menu", "button.trigger[aria-expanded]"),
 ]
 
 
@@ -123,12 +126,18 @@ def window_node():
     return found[-1] if found else None
 
 
+# The window's page's pixel ratio: what it measures in, times this, is the window's
+# pixels. More than one where the desktop's scale is the page's zoom (DPI=n); see `look`.
+RATIO = [1.0]
+
+
 def click(node, x, y):
-    """A press of the compositor's pointer at `x`, `y` of the window, and the pointer then
-    left over the middle of the window's page area, out of the way of the strip's cards."""
+    """A press of the compositor's pointer at `x`, `y` of the window, as its page measures
+    them, and the pointer then left over the middle of the window's page area, out of the
+    way of the strip's cards."""
     at = node["rect"]
     with open(POINTER, "w") as pointer:
-        pointer.write(f"move {at['x'] + x} {at['y'] + y}\nclick\n")
+        pointer.write(f"move {at['x'] + x * RATIO[0]} {at['y'] + y * RATIO[0]}\nclick\n")
     time.sleep(0.3)
     with open(POINTER, "w") as pointer:
         pointer.write(f"move {at['x'] + at['width'] * 0.6} {at['y'] + at['height'] * 0.6}\n")
@@ -218,6 +227,17 @@ def bounding(shot):
     return min(xs), min(ys), max(xs) + 1, max(ys) + 1
 
 
+def left_of(hole, layer):
+    """How much of a hole a layer leaves uncovered, both as pictures have them: the most
+    of the hole a page can show in under it."""
+    def size(one):
+        return max(0, one[2] - one[0]) * max(0, one[3] - one[1])
+
+    both = (max(hole[0], layer[0]), max(hole[1], layer[1]), min(hole[2], layer[2]), min(hole[3], layer[3]))
+    whole = size(hole)
+    return (whole - size(both)) / whole if whole else 0
+
+
 def share(shot, area):
     """How much of `area` in a picture is the page's colour."""
     image = Image.open(shot).convert("RGB")
@@ -289,12 +309,20 @@ def look(output, moved=True, tag=""):
         return
     origin = (node["rect"]["x"] - info["rect"]["x"], node["rect"]["y"] - info["rect"]["y"])
 
+    # The window's page measures in its own pixels, which are the window's at its pixel
+    # ratio: more than one where the desktop's scale is the page's zoom (DPI=n).
+    ratio = run("devicePixelRatio") or 1
+    RATIO[0] = ratio
+    # And on a desktop scaled for X11 applications, that ratio is the desktop's scale.
+    if os.environ.get("DPI") and abs(ratio - int(os.environ["DPI"]) / 96) > 0.02:
+        fail(f"{output}: the window's page is drawn at {ratio}, not the desktop's {int(os.environ['DPI']) / 96:.3f}")
+
     def on_screen(rect, inset=0):
         return (
-            (origin[0] + rect["x"] + inset) * scale,
-            (origin[1] + rect["y"] + inset) * scale,
-            (origin[0] + rect["x"] + rect["width"] - inset) * scale,
-            (origin[1] + rect["y"] + rect["height"] - inset) * scale,
+            (origin[0] + (rect["x"] + inset) * ratio) * scale,
+            (origin[1] + (rect["y"] + inset) * ratio) * scale,
+            (origin[0] + (rect["x"] + rect["width"] - inset) * ratio) * scale,
+            (origin[1] + (rect["y"] + rect["height"] - inset) * ratio) * scale,
         )
 
     # The web tab chosen in the strip, as a reader would: a launch may have come up on
@@ -318,7 +346,7 @@ def look(output, moved=True, tag=""):
         if got is not None:
             break
         time.sleep(0.5)
-    print(f"{output} at {scale}: the hole is {tuple(round(v) for v in want)}, the page is {got}")
+    print(f"{output} at {scale}, the page's ratio {ratio}: the hole is {tuple(round(v) for v in want)}, the page is {got}")
     if not near(got, want, scale):
         fail(f"{output} at {scale}: the page is at {got}, its hole at {tuple(round(v) for v in want)}")
         return
@@ -361,6 +389,7 @@ def look(output, moved=True, tag=""):
         )
         slug = name.replace(" ", "-").replace("'", "")
         if not isinstance(layer, dict):
+            shoot(output, f"{tag}missed-{slug}", scale)
             fail(f"{output}: {name} did not open for a click on its button")
         else:
             # A big page's still picture takes a moment longer to stand in under the layer
@@ -370,18 +399,24 @@ def look(output, moved=True, tag=""):
                 shot = shoot(output, f"{tag}{slug}", scale)
                 covered = share(shot, on_screen(layer, 4))
                 under = share(shot, want)
-                if (covered <= 0.05 and under >= 0.5) or time.monotonic() - began > 3:
+                # Most of what the layer leaves of the hole: a big layer on a small
+                # screen leaves less than half of it, and the page still shows there.
+                least = 0.8 * left_of(want, on_screen(layer))
+                if (covered <= 0.05 and under >= least) or time.monotonic() - began > 3:
                     break
                 time.sleep(0.25)
             print(
                 f"{output}: {name} at {layer}: the page is over {covered:.0%} of it,"
-                f" and shows in {under:.0%} of its hole"
+                f" and shows in {under:.0%} of its hole, of {least / 0.8:.0%} it could"
                 f" ({time.monotonic() - began + 1:.1f} s after the click)"
             )
             if covered > 0.05:
                 fail(f"{output}: the page is drawn over {name} ({covered:.0%})")
-            if under < 0.5:
-                fail(f"{output}: under {name} the page is gone ({under:.0%} of its hole)")
+            if under < least:
+                fail(
+                    f"{output}: under {name} the page is gone ({under:.0%} of its hole,"
+                    f" where {least / 0.8:.0%} is not under the layer)"
+                )
         run("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))")
         time.sleep(1.0)
         after = shoot(output, f"{tag}after-{slug}", scale)
@@ -390,6 +425,53 @@ def look(output, moved=True, tag=""):
             fail(f"{output}: the page did not come back whole after {name} ({back})")
         if strip_area and inked and ink(after, strip_area) < inked * 0.3:
             fail(f"{output}: after {name} the window's own page is not drawn: no tab strip")
+
+    # A toast at the foot of the pane - the Undo after a delete, a note made and deleted
+    # for it - floats over the page, which is cut round it and keeps its hole: it used to
+    # take a band of the pane under the page of its own, the page ended above it (#512).
+    run(
+        "(async () => { const path = await nib.workspace.noteFrom('# A toast over a page\\n');"
+        " if (path) await nib.workspace.remove(path, false); return path })()"
+    )
+    card = None
+    for _ in range(20):
+        time.sleep(0.25)
+        card = box("[data-notices] > .toast")
+        if isinstance(card, dict) and card.get("height", 0) > 0:
+            break
+    if not isinstance(card, dict) or card.get("height", 0) <= 0:
+        fail(f"{output}: the Undo toast did not come up")
+    else:
+        # It flies in over a fifth of a second; the page is asked again once it lands.
+        time.sleep(0.8)
+        card = box("[data-notices] > .toast") or card
+        under_card = hole()
+        shot = shoot(output, f"{tag}toast", scale)
+        covered = share(shot, on_screen(card, 4))
+        under = share(shot, want)
+        print(
+            f"{output}: the Undo toast at {card}: the page is over {covered:.0%} of it,"
+            f" shows in {under:.0%} of its hole, and the hole is {under_card}"
+        )
+        if under_card and abs(under_card["height"] - pane["height"]) > 1:
+            fail(
+                f"{output}: the toast took a band of the pane: the page's hole went from"
+                f" {pane['height']:.0f} to {under_card['height']:.0f} tall"
+            )
+        if covered > 0.05:
+            fail(f"{output}: the page is drawn over the Undo toast ({covered:.0%})")
+        if under < 0.5:
+            fail(f"{output}: under the Undo toast the page is gone ({under:.0%} of its hole)")
+        # Gone by itself, after its while.
+        for _ in range(60):
+            gone = box("[data-notices] > .toast")
+            if not isinstance(gone, dict) or gone.get("height", 0) <= 0:
+                break
+            time.sleep(0.25)
+        time.sleep(1.0)
+        back = bounding(shoot(output, f"{tag}after-toast", scale))
+        if not near(back, want, scale):
+            fail(f"{output}: the page did not come back whole after the Undo toast ({back})")
 
 
 def loads():

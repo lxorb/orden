@@ -1,8 +1,9 @@
 /** A `#tag`, as a note writes one and a page draws one.
  *
  *  Obsidian's grammar, so a file means the same in either app: a hash opening a
- *  word, then a letter, then letters, digits, `-`, `_` and `/` - the slash nests
- *  `#work/nib` under `work`. The letter rules out `#42` and a heading's `# `, and
+ *  word, then a letter, mark, digit or emoji, then those and `-`, `_` and `/` - the
+ *  slash nests `#work/nib` under `work`. A name of only digits is no tag, so `#42` is
+ *  not one, nor a heading's `# `, and
  *  the opened word rules out `C#` and an address's `#fragment`. The editor's parser,
  *  the renderer below and the `#` popup read it here; the index's twins are the
  *  app's search/tags.ts and the crate's tags.rs. */
@@ -16,7 +17,9 @@ import type {
 } from 'marked'
 import { attributeUrl, escapeAll } from './html'
 
-export const TAG_NAME = String.raw`\p{L}[\p{L}\p{N}\-_/]*`
+const NAME_CHARS = String.raw`\p{L}\p{M}\p{N}\p{Extended_Pictographic}`
+
+export const TAG_NAME = String.raw`(?!\p{N}+(?![${NAME_CHARS}\-_/]))[${NAME_CHARS}][${NAME_CHARS}\-_/]*`
 
 /** Read where the hash is, so a paragraph is never copied to look at one word. */
 const NAME_AT = new RegExp(TAG_NAME, 'uy')

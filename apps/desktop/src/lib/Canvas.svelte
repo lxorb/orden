@@ -39,8 +39,11 @@
     panned,
     pinching,
     screenPoint,
+    settledTurn,
+    snapped,
     turned,
     turnOf,
+    unsnapped,
     zoomed,
   } from './camera'
   import { actualSize, canvasMenu, place, pull, run } from './canvas/actions'
@@ -49,6 +52,7 @@
     movedBy,
     pickedBox,
     resizedPick,
+    sized,
     subset,
     turnedInk,
     withText,
@@ -69,6 +73,7 @@
     GRID,
     HANDLES,
     isLineShape,
+    nodeAt,
     overlaps,
     type Point,
     rectBetween,
@@ -195,6 +200,25 @@
    *  pattern's offset are both this. */
   const originX = $derived(spanX / 2 - camera.x * camera.scale)
   const originY = $derived(spanY / 2 - camera.y * camera.scale)
+
+  /** The turn two fingers have made, which the rotation snap holds the view to, and
+   *  the turn that left the view at; taken back from the view where anything else has
+   *  turned it since (#487). */
+  let twisted = 0
+  let twistedTo = 0
+
+  /** Two fingers' turn of the view about a point, held upright and at its right
+   *  angles until the twist is plainly meant. */
+  function twist(x: number, y: number, by: number) {
+    if (!modes.canvasTurnSnaps) {
+      store.camera = turned(camera, width, height, x, y, by)
+      return
+    }
+    if (turn !== twistedTo) twisted = unsnapped(turn)
+    twisted = settledTurn(twisted + by)
+    store.camera = turned(camera, width, height, x, y, snapped(twisted) - turn)
+    twistedTo = turnOf(store.camera)
+  }
 
   /** Where a point of the plane is in the pane, the turn included. */
   const onScreen = (point: { x: number; y: number }) => screenPoint(camera, width, height, point)
@@ -750,14 +774,7 @@
       (at, by) => {
         if (!modes.canvasTurns) return
         const rect = element.getBoundingClientRect()
-        store.camera = turned(
-          camera,
-          width,
-          height,
-          at.clientX - rect.left,
-          at.clientY - rect.top,
-          by,
-        )
+        twist(at.clientX - rect.left, at.clientY - rect.top, by)
       },
     )
     return () => {
@@ -1008,7 +1025,7 @@
         predicted = []
         break
       case 'rub':
-        run.rub(store, effect.ids, `rub:${gestures}`)
+        run.rub(store, effect.at, effect.reach, `rub:${gestures}`)
         break
       case 'cut':
         run.cut(store, effect.at, effect.reach, `rub:${gestures}`)
@@ -1023,7 +1040,7 @@
         store.camera = zoomed(camera, width, height, effect.at.x, effect.at.y, effect.by)
         break
       case 'turn':
-        store.camera = turned(camera, width, height, effect.at.x, effect.at.y, effect.by)
+        twist(effect.at.x, effect.at.y, effect.by)
         break
       case 'menu':
         // Only a hold leaves a click behind; the right button does not.
@@ -1324,8 +1341,11 @@
       hit: found,
     })
 
-    // A pen that has stopped moving is a pen asking for its shape to be tidied.
-    if (machine.gesture?.kind === 'draw') waitForHold(point)
+    // A pen that has stopped moving is a pen asking for its shape to be tidied. Begun
+    // only where it went still, not again on every move: a nib on the glass is never
+    // quite still, and an S Pen in Chrome reports a move every few milliseconds as
+    // its pressure wanders, so a wait started over each time never came round (#629).
+    if (machine.gesture?.kind === 'draw' && !holding) waitForHold(point)
   }
 
   function onPointerUp(event: PointerEvent) {
@@ -1489,6 +1509,9 @@
     // lasso caught - makes the menu about that rather than about the bare plane.
     const bare =
       !about && !found.node && !found.edge && !found.stroke && !found.ink && !found.handle
+    // What is drawn under the point, locked or not: the press went through it, and its
+    // menu is how it is let go again (#643).
+    const under = about ? null : nodeAt(shown.nodes, point, 12)
 
     const rect = host?.getBoundingClientRect()
     const at = onScreen(point)
@@ -1499,6 +1522,7 @@
       new MouseEvent('contextmenu', { ...screen, buttons }),
       canvasMenu(store, point, {
         bare,
+        locked: under?.locked ? under.id : null,
         again: (rows, title) =>
           menu.show(new MouseEvent('contextmenu', screen), rows, { title, near }),
         path: tab.path,
@@ -1507,6 +1531,7 @@
         width,
         height,
         narrowed,
+        trusted: trustsHtmlIn(tab.note),
         onnarrow: () => {
           narrowed = !narrowed
           if (narrowed) store.frame(width, height)
@@ -1610,14 +1635,14 @@
   /** What is picked, as a canvas of its own, so it pastes into another canvas
    *  here or in Obsidian. */
   function onCopy(event: ClipboardEvent) {
-    if (store.editing !== null || !store.picked.length) return
+    if (typing(event.target) || store.editing !== null || !store.picked.length) return
 
     event.preventDefault()
     event.clipboardData?.setData('text/plain', writeCanvas(subset(store.canvas, store.picked)))
   }
 
   function onCut(event: ClipboardEvent) {
-    if (store.editing !== null || !store.picked.length) return
+    if (typing(event.target) || store.editing !== null || !store.picked.length) return
 
     onCopy(event)
     run.remove(store)
@@ -1626,7 +1651,7 @@
   /** Cards from another canvas, a picture, an address, or some words: a paste is
    *  read as whichever of the four it turns out to be. */
   function onPaste(event: ClipboardEvent) {
-    if (store.editing !== null) return
+    if (typing(event.target) || store.editing !== null) return
 
     const picture = [...(event.clipboardData?.items ?? [])].find(
       (one) => one.type.startsWith('image/') || one.type === 'application/pdf',
@@ -1799,10 +1824,10 @@
       nib: {
         // The nib is in plane units and the cursor is in pixels, so the dot is the
         // width the pen will really draw at this zoom.
-        size: pens.current.size * camera.scale,
+        size: drawnWidth(pens.current.size, camera.scale) * camera.scale,
         colour: inkColour(pens.current.colour, palette),
       },
-      rub: { size: pens.rub, whole: pens.whole },
+      rub: { size: pens.whole ? pens.strokeRub : pens.rub, whole: pens.whole },
     })
   })
 
@@ -1818,9 +1843,7 @@
   /** Whether a frame is among what is picked, which is what makes the bar's own
    *  button say "ungroup" rather than "group". */
   const onFrame = $derived(
-    store.picked.some((id) =>
-      store.canvas.nodes.some((node) => node.id === id && node.type === 'group'),
-    ),
+    store.canvas.nodes.some((node) => node.type === 'group' && picked.has(node.id)),
   )
 
   /** Whether the plane is empty, which is the one moment the surface says anything
@@ -2144,9 +2167,12 @@
       at={overPicked.at}
       below={overPicked.below}
       colour={pickedColour}
+      size={store.canvas.ink.find((one) => store.isPicked(one.id))?.size}
       recent={pens.recent}
       grouping={onFrame ? 'ungroup' : store.picked.length > 1 ? 'group' : null}
       oncolour={colourPicked}
+      onsize={(size: number, drag: string) =>
+        store.edit(sized(store.canvas, store.picked, size), drag)}
       onduplicate={() => run.duplicate(store)}
       ondelete={() => run.remove(store)}
       ongroup={() => (onFrame ? run.ungroup(store) : run.group(store))}

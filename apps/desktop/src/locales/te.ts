@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const te: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'అంతా సిద్ధం',
+  Personalize: 'వ్యక్తిగతీకరించండి',
+  Clean: 'శుభ్రంగా',
+  'Live preview': 'లైవ్ ప్రివ్యూ',
+  'Developer mode': 'డెవలపర్ మోడ్',
+  'Do you write code?': 'మీరు కోడ్ రాస్తారా?',
+  Yes: 'అవును',
+  No: 'కాదు',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'ఇతర యాప్‌ల నుండి: {key}',
   'From other apps: set in your system settings':
@@ -83,6 +92,7 @@ export const te: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'ఒక పని',
   'One per line': 'ప్రతి పంక్తికి ఒకటి',
+  'Add with AI': 'AI తో జోడించు',
   // Tasks: the projects in the panel
   Favorites: 'ఇష్టమైనవి',
   'Add project': 'ప్రాజెక్ట్ జోడించు',
@@ -126,6 +136,7 @@ export const te: Dictionary = {
   'Pointing hand on buttons': 'బటన్‌లపై సూచించే చేయి',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'పని జోడించు',
+  'Apple Shortcuts': 'Apple షార్ట్‌కట్‌లు',
   Tomorrow: 'రేపు',
   'done {date}': 'పూర్తయింది {date}',
   'Next week': 'వచ్చే వారం',
@@ -188,6 +199,7 @@ export const te: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'రెండు వేళ్లతో కాన్వాస్‌ను తిప్పండి',
+  'Snap the rotation to right angles': 'తిప్పడాన్ని లంబకోణాలకు స్నాప్ చేయండి',
   'Turn upright': 'నిటారుగా చేయండి',
   Canvas: 'క్యాన్వాస్',
   Card: 'కార్డ్',
@@ -281,6 +293,7 @@ export const te: Dictionary = {
   Tabs: 'ట్యాబ్‌లు',
   'Ctrl+Tab in order of use': 'ఉపయోగించిన క్రమంలో Ctrl+Tab',
   'Swipe between pages': 'పేజీల మధ్య స్వైప్ చేయండి',
+  'Hardware acceleration': 'హార్డ్‌వేర్ యాక్సిలరేషన్',
   'Hidden tabs': 'దాచిన ట్యాబ్‌లు',
   'Memory saver': 'మెమరీ సేవర్',
   Moderate: 'మధ్యస్థం',
@@ -1155,6 +1168,8 @@ export const te: Dictionary = {
   Elbow: 'మలుపు గీత',
   Frame: 'ఫ్రేమ్',
   Ungroup: 'గ్రూప్ విడదీయి',
+  Lock: 'లాక్ చేయి',
+  Unlock: 'అన్‌లాక్ చేయి',
   'The ink of the page': 'పేజీ సిరా',
   'Write in what is picked': 'ఎంచుకున్నదానిలో రాయి',
   Pen: 'పెన్',
@@ -1298,11 +1313,19 @@ export const te: Dictionary = {
     '{count} భాగాలు ఎన్‌క్రిప్ట్ అయ్యాయి, Evernote లేకుండా వాటిని ఏదీ చదవలేదు',
   '{count} notes had a reminder, which the export does not carry':
     '{count} నోట్‌లకు రిమైండర్ ఉంది, ఎక్స్‌పోర్ట్ దాన్ని తీసుకురాదు',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} అటాచ్‌మెంట్‌లు ఎగుమతిలో లేవు లేదా చదవలేకపోయాం',
+    other: '{count} అటాచ్‌మెంట్‌లు ఎగుమతిలో లేవు లేదా చదవలేకపోయాం',
+  },
   '{count} notes were in the bin and stay there':
     '{count} నోట్‌లు చెత్తబుట్టలో ఉన్నాయి, అక్కడే ఉంటాయి',
   '{count} archived notes are in a folder called Archive':
     '{count} ఆర్కైవ్ నోట్‌లు Archive ఫోల్డర్‌లో ఉన్నాయి',
   'The colours a note had are not kept': 'నోట్‌కు ఉన్న రంగులు ఉంచబడవు',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} ఫైళ్లను చదవలేకపోయాం, కాబట్టి వదిలేశాం',
+    other: '{count} ఫైళ్లను చదవలేకపోయాం, కాబట్టి వదిలేశాం',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} బ్లాక్ సూచనలు అవి చూపిన పదాలుగానే రాయబడ్డాయి',
   '{count} saved views are left out, and every row is in the table': {
@@ -1329,6 +1352,8 @@ export const te: Dictionary = {
     '{count} మనోభావ, కార్యకలాప కార్డులు గీతలు, కాబట్టి వాటి మాటలే వస్తాయి',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} నోట్లు పాస్‌వర్డ్ వెనుక ఉన్నాయి, దాన్ని Notes మాత్రమే తెరుస్తుంది',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} నోట్లు పాస్‌వర్డ్ వెనుక ఉన్నాయి, దాన్ని Bear మాత్రమే తెరుస్తుంది',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} నోట్లు ఇటీవల తొలగించినవిలో ఉన్నాయి, అక్కడే ఉంటాయి',
   '{count} drawings and scans have no picture on this Mac':
@@ -1574,6 +1599,7 @@ export const te: Dictionary = {
   'Ask the model': 'మోడల్‌ను అడుగు',
   'answered by {model}, {date}': '{model} బదులిచ్చింది, {date}',
   'AI block': 'AI బ్లాక్',
+  'Do with AI': 'AI తో చేయండి',
   'Highlight colour': 'హైలైట్ రంగు',
   'A single newline breaks the line': 'ఒక కొత్త పంక్తి పంక్తిని విరుస్తుంది',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -1898,6 +1924,8 @@ export const te: Dictionary = {
   'Settings › AI': 'సెట్టింగ్‌లు › AI',
   'New chat': 'కొత్త చాట్',
   'Ask again': 'మళ్లీ అడగండి',
+  'Continue when the limit resets': 'పరిమితి రీసెట్ అయ్యాక కొనసాగించు',
+  'Continues at {time}': '{time}కి కొనసాగుతుంది',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'ఏదైనా అడగండి, జోడించడానికి @, మరిన్నింటికి /',
   'What can I help with?': 'నేను ఏమి సహాయం చేయగలను?',
@@ -2371,4 +2399,29 @@ export const te: Dictionary = {
   Peach: 'పీచ్',
   Sage: 'సేజ్',
   Mist: 'పొగమంచు',
+  // A board, Notion's: its columns, its cards, its settings, a new database
+  'New database': 'కొత్త డేటాబేస్',
+  'New page': 'కొత్త పేజీ',
+  'Not started': 'ప్రారంభించలేదు',
+  'In progress': 'జరుగుతోంది',
+  'No {property}': '{property} లేదు',
+  '{card} moved to {group}': '{card} {group}కి తరలించబడింది',
+  'Not moved': 'తరలించబడలేదు',
+  Retry: 'మళ్లీ ప్రయత్నించండి',
+  Calculate: 'లెక్కించు',
+  'Remove sort': 'క్రమాన్ని తీసివేయి',
+  'Remove sort?': 'క్రమాన్ని తీసివేయాలా?',
+  Groups: 'గ్రూప్‌లు',
+  'Hidden groups': 'దాచిన గ్రూప్‌లు',
+  'Add as option': 'ఎంపికగా జోడించు',
+  'Move left': 'ఎడమకు తరలించు',
+  'Move right': 'కుడికి తరలించు',
+  'Delete option': 'ఎంపికను తొలగించు',
+  'Colour columns': 'నిలువు వరుసలకు రంగు వేయి',
+  'Hide empty groups': 'ఖాళీ గ్రూప్‌లను దాచు',
+  'Card size': 'కార్డ్ పరిమాణం',
+  Small: 'చిన్నది',
+  Large: 'పెద్దది',
+  Both: 'రెండూ',
+  'Shown on cards': 'కార్డులపై చూపబడేవి',
 }

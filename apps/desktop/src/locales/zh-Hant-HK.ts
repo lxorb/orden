@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const zhHantHK: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': '一切就緒',
+  Personalize: '個人化',
+  Clean: '簡潔',
+  'Live preview': '即時預覽',
+  'Developer mode': '開發人員模式',
+  'Do you write code?': '你有寫程式嗎？',
+  Yes: '是',
+  No: '否',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': '從其他 App：{key}',
   'From other apps: set in your system settings': '從其他 App：喺系統設定中設定',
@@ -79,6 +88,7 @@ export const zhHantHK: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': '一個任務',
   'One per line': '每行一個',
+  'Add with AI': '用 AI 新增',
   // Tasks: the projects in the panel
   Favorites: '我的最愛',
   'Add project': '新增專案',
@@ -122,6 +132,7 @@ export const zhHantHK: Dictionary = {
   'Pointing hand on buttons': '按鈕上顯示手形指標',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': '新增任務',
+  'Apple Shortcuts': 'Apple 捷徑',
   Tomorrow: '明天',
   'done {date}': '{date} 完成',
   'Next week': '下星期',
@@ -184,6 +195,7 @@ export const zhHantHK: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': '用兩指旋轉畫布',
+  'Snap the rotation to right angles': '旋轉吸附到直角',
   'Turn upright': '擺正',
   Canvas: '畫布',
   Card: '卡片',
@@ -277,6 +289,7 @@ export const zhHantHK: Dictionary = {
   Tabs: '標籤頁',
   'Ctrl+Tab in order of use': 'Ctrl+Tab 按使用次序',
   'Swipe between pages': '在頁面之間掃動',
+  'Hardware acceleration': '硬件加速',
   'Hidden tabs': '隱藏的標籤頁',
   'Memory saver': '記憶體節省',
   Moderate: '適中',
@@ -1128,6 +1141,8 @@ export const zhHantHK: Dictionary = {
   Elbow: '折線',
   Frame: '框架',
   Ungroup: '取消組合',
+  Lock: '鎖定',
+  Unlock: '解鎖',
   'The ink of the page': '頁面的墨跡',
   'Write in what is picked': '在所選範圍中書寫',
   Pen: '筆',
@@ -1268,10 +1283,13 @@ export const zhHantHK: Dictionary = {
     '有{count}段內容已加密，離開Evernote就無法讀取',
   '{count} notes had a reminder, which the export does not carry':
     '{count}篇筆記設有提醒，匯出檔不會帶着提醒',
+  '{count} attachments were missing from the export or could not be read':
+    '有 {count} 個附件不在匯出檔案中或無法讀取',
   '{count} notes were in the bin and stay there': '{count}篇筆記在垃圾桶裏，仍留在那裏',
   '{count} archived notes are in a folder called Archive':
     '{count}篇已歸檔的筆記放在名為Archive的檔案夾中',
   'The colours a note had are not kept': '筆記原有的顏色不會保留',
+  '{count} files could not be read, so they were left out': '{count} 個檔案無法讀取，已略過',
   '{count} block references were written out as the words they pointed at':
     '{count}處區塊引用已寫成它指向的文字',
   '{count} saved views are left out, and every row is in the table':
@@ -1296,6 +1314,8 @@ export const zhHantHK: Dictionary = {
     '{count} 張心情同活動卡片係圖畫，所以只有文字轉入',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} 則筆記加了密碼，只有「備忘錄」開得到',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} 則筆記加了密碼，只有 Bear 開得到',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} 則筆記在「最近刪除」，仍然留在嗰度',
   '{count} drawings and scans have no picture on this Mac':
@@ -1529,6 +1549,7 @@ export const zhHantHK: Dictionary = {
   'Ask the model': '問模型',
   'answered by {model}, {date}': '由{model}回答，{date}',
   'AI block': 'AI區塊',
+  'Do with AI': '用AI完成',
   'Highlight colour': '突出顯示顏色',
   'A single newline breaks the line': '單一換行即斷行',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -1842,6 +1863,8 @@ export const zhHantHK: Dictionary = {
   'Settings › AI': '設定 › AI',
   'New chat': '新對話',
   'Ask again': '再問一次',
+  'Continue when the limit resets': '上限恢復後繼續',
+  'Continues at {time}': '{time} 繼續',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': '隨意發問，@ 加入，/ 更多',
   'What can I help with?': '有甚麼可以幫忙？',
@@ -2304,4 +2327,29 @@ export const zhHantHK: Dictionary = {
   Peach: '蜜桃',
   Sage: '鼠尾草',
   Mist: '薄霧',
+  // A board, Notion's: its columns, its cards, its settings, a new database
+  'New database': '新增資料庫',
+  'New page': '新增頁面',
+  'Not started': '未開始',
+  'In progress': '進行中',
+  'No {property}': '無{property}',
+  '{card} moved to {group}': '已將{card}移至{group}',
+  'Not moved': '未有移動',
+  Retry: '重試',
+  Calculate: '計算',
+  'Remove sort': '移除排序',
+  'Remove sort?': '移除排序？',
+  Groups: '分組',
+  'Hidden groups': '隱藏的分組',
+  'Add as option': '新增為選項',
+  'Move left': '左移',
+  'Move right': '右移',
+  'Delete option': '刪除選項',
+  'Colour columns': '為欄位上色',
+  'Hide empty groups': '隱藏空白分組',
+  'Card size': '卡片大小',
+  Small: '小',
+  Large: '大',
+  Both: '兩者',
+  'Shown on cards': '在卡片上顯示',
 }

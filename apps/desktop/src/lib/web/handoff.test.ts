@@ -139,6 +139,33 @@ describe('the new address, given it', () => {
     expect(now.local.get('nib:language')).toBe('de')
   })
 
+  // An old address from before the listing: its notes came over and the new one's
+  // listing still held only its welcome note, so every one read as not there, to the
+  // file list and to whatever asked whether a name was free before writing.
+  test('lists what came over, when the old address had no listing of its own', async () => {
+    at(before)
+    const old = await opened('nib', 1, notesShape)
+    await write(old, 'files', { path: '/Notes/Mine.md', content: 'old words', modified: 5 })
+    old.close()
+    const handoff = await pack()
+
+    at(now)
+    const fresh = await opened('nib', 2, (db) => {
+      notesShape(db)
+      db.createObjectStore('assets', { keyPath: 'path' })
+      db.createObjectStore('stats', { keyPath: 'path' })
+    })
+    await write(fresh, 'files', { path: '/Notes/Read me.md', content: '# Welcome', modified: 1 })
+    await write(fresh, 'stats', { path: '/Notes/Read me.md', modified: 1, created: 1, size: 9 })
+
+    await unpack(handoff)
+
+    expect((await all(fresh, 'stats')).values).toEqual([
+      { path: '/Notes/Mine.md', modified: 5, created: 5, size: 9 },
+    ])
+    fresh.close()
+  })
+
   test('makes a database it did not have, stores and indexes as they were', async () => {
     at(before)
     const old = await opened('nib-pictures', 3, (db) => {

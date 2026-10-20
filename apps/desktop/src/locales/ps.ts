@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ps: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'هر څه چمتو دي',
+  Personalize: 'شخصي کړئ',
+  Clean: 'پاک',
+  'Live preview': 'ژوندۍ مخکتنه',
+  'Developer mode': 'د پراختیا کوونکي حالت',
+  'Do you write code?': 'ایا تاسو کوډ لیکئ؟',
+  Yes: 'هو',
+  No: 'نه',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'له نورو اپونو: {key}',
   'From other apps: set in your system settings': 'له نورو اپونو: د سیسټم په ترتیباتو کې یې وټاکئ',
@@ -82,6 +91,7 @@ export const ps: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'یوه دنده',
   'One per line': 'په هره کرښه کې یوه',
+  'Add with AI': 'د مصنوعي ځيرکتيا سره ورزياتول',
   // Tasks: the projects in the panel
   Favorites: 'خوښې',
   'Add project': 'پروژه ورزیاته کړئ',
@@ -125,6 +135,7 @@ export const ps: Dictionary = {
   'Pointing hand on buttons': 'په تڼیو باندې اشاره کوونکی لاس',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'دنده ورزيات کړئ',
+  'Apple Shortcuts': 'Apple لنډلارې',
   Tomorrow: 'سبا',
   'done {date}': 'بشپړه {date}',
   'Next week': 'راتلونکې اونۍ',
@@ -187,6 +198,7 @@ export const ps: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'کینوس په دوو ګوتو وګرځوئ',
+  'Snap the rotation to right angles': 'څرخېدل قایمو زاویو ته ونښلوئ',
   'Turn upright': 'سم یې کړئ',
   Canvas: 'تخته',
   Card: 'کارت',
@@ -280,6 +292,7 @@ export const ps: Dictionary = {
   Tabs: 'ټبونه',
   'Ctrl+Tab in order of use': 'د کارونې په ترتیب Ctrl+Tab',
   'Swipe between pages': 'د پاڼو ترمنځ ښویول',
+  'Hardware acceleration': 'د هارډویر چټکتیا',
   'Hidden tabs': 'پټې ټبونه',
   'Memory saver': 'د حافظې سپما',
   Moderate: 'منځنی',
@@ -1150,6 +1163,8 @@ export const ps: Dictionary = {
   Elbow: 'څنګل',
   Frame: 'چوکاټ',
   Ungroup: 'ډله ماتول',
+  Lock: 'قلف کړئ',
+  Unlock: 'قلف خلاص کړئ',
   'The ink of the page': 'د مخ رنګ',
   'Write in what is picked': 'په ټاکل شوي کې ليکل',
   Pen: 'قلم',
@@ -1293,11 +1308,19 @@ export const ps: Dictionary = {
     '{count} برخې رمز شوې دي او بې له Evernote هيڅ يې نه شي لوستلی',
   '{count} notes had a reminder, which the export does not carry':
     '{count} يادښتونه يادونه لرله چې صادره يې نه وړي',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} ضميمې په صادرولو کې نه وې يا ونه لوستل شوې',
+    other: '{count} ضميمې په صادرولو کې نه وې يا ونه لوستل شوې',
+  },
   '{count} notes were in the bin and stay there':
     '{count} يادښتونه په ټوکرۍ کې وو او هلته پاتې کېږي',
   '{count} archived notes are in a folder called Archive':
     '{count} ارشيف شوي يادښتونه په Archive نومي دوتنپوښ کې دي',
   'The colours a note had are not kept': 'هغه رنګونه چې يادښت لرله نه ساتل کېږي',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} دوتنې ونه لوستل شوې، نو پرېښودل شوې',
+    other: '{count} دوتنې ونه لوستل شوې، نو پرېښودل شوې',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} د بلاک حوالې د هغو کلمو په بڼه وليکل شوې چې ورته اشاره کوله',
   '{count} saved views are left out, and every row is in the table': {
@@ -1325,6 +1348,8 @@ export const ps: Dictionary = {
     '{count} د حالت او فعاليت کارتونه انځورونه دي، نو يوازې کلمې يې راځي',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} يادښتونه د پټنوم تر شا دي چې يوازې Notes يې پرانيځي',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} يادښتونه د پټنوم تر شا دي چې يوازې Bear يې پرانيځي',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} يادښتونه په نوی ړنګ شوي کې دي او هلته پاتې کېږي',
   '{count} drawings and scans have no picture on this Mac':
@@ -1570,6 +1595,7 @@ export const ps: Dictionary = {
   'Ask the model': 'له ماډل پوښتنه',
   'answered by {model}, {date}': 'ځواب له {model}، {date}',
   'AI block': 'د مصنوعي ځيرکتيا بلاک',
+  'Do with AI': 'د مصنوعي ځيرکتيا سره يې وکړئ',
   'Highlight colour': 'د ځلاند رنګ',
   'A single newline breaks the line': 'يوه نوې کرښه کرښه ماتوي',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -1890,6 +1916,8 @@ export const ps: Dictionary = {
   'Settings › AI': 'امستنې ‹ مصنوعي ځيرکتيا',
   'New chat': 'نوې خبرې',
   'Ask again': 'بیا پوښتنه وکړئ',
+  'Continue when the limit resets': 'کله چې حد بیا پیل شي، دوام ورکړئ',
+  'Continues at {time}': 'په {time} دوام مومي',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'هر څه وپوښتئ، د زیاتولو لپاره @، د نورو لپاره /',
   'What can I help with?': 'څنګه مرسته کولی شم؟',
@@ -2363,4 +2391,29 @@ export const ps: Dictionary = {
   Peach: 'شفتالو',
   Sage: 'سيج',
   Mist: 'لړه',
+  // A board, Notion's: its columns, its cards, its settings, a new database
+  'New database': 'نوې ډیټابیس',
+  'New page': 'نوی مخ',
+  'Not started': 'نه دی پیل شوی',
+  'In progress': 'روان دی',
+  'No {property}': 'بې {property}',
+  '{card} moved to {group}': '{card} {group} ته وخوځېد',
+  'Not moved': 'ونه خوځېد',
+  Retry: 'بیا هڅه وکړئ',
+  Calculate: 'محاسبه',
+  'Remove sort': 'ترتيب لرې کړئ',
+  'Remove sort?': 'ترتيب لرې شي؟',
+  Groups: 'ډلې',
+  'Hidden groups': 'پټې ډلې',
+  'Add as option': 'د انتخاب په توګه زیات کړئ',
+  'Move left': 'کیڼ لور ته خوځول',
+  'Move right': 'ښي لور ته خوځول',
+  'Delete option': 'انتخاب ړنګول',
+  'Colour columns': 'ستنو ته رنګ ورکړئ',
+  'Hide empty groups': 'تشې ډلې پټې کړئ',
+  'Card size': 'د کارت کچه',
+  Small: 'کوچنی',
+  Large: 'لوی',
+  Both: 'دواړه',
+  'Shown on cards': 'په کارتونو ښودل شوي',
 }

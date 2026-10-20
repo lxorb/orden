@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const my: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'အားလုံး အသင့်ဖြစ်ပါပြီ',
+  Personalize: 'စိတ်ကြိုက်ပြင်ရန်',
+  Clean: 'ရှင်းလင်း',
+  'Live preview': 'တိုက်ရိုက်အစမ်းကြည့်',
+  'Developer mode': 'ဒီဗလပ်ပါမုဒ်',
+  'Do you write code?': 'ကုဒ်ရေးပါသလား?',
+  Yes: 'ဟုတ်ကဲ့',
+  No: 'မဟုတ်ပါ',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'အခြားအက်ပ်များမှ: {key}',
   'From other apps: set in your system settings': 'အခြားအက်ပ်များမှ: စနစ်ဆက်တင်များတွင် သတ်မှတ်ပါ',
@@ -79,6 +88,7 @@ export const my: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'လုပ်ငန်းတစ်ခု',
   'One per line': 'တစ်ကြောင်းလျှင် တစ်ခု',
+  'Add with AI': 'AI ဖြင့် ထည့်ပါ',
   // Tasks: the projects in the panel
   Favorites: 'အကြိုက်ဆုံးများ',
   'Add project': 'ပရောဂျက် ထည့်',
@@ -122,6 +132,7 @@ export const my: Dictionary = {
   'Pointing hand on buttons': 'ခလုတ်များပေါ်တွင် ညွှန်ပြသောလက်',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'လုပ်ငန်း ထည့်ရန်',
+  'Apple Shortcuts': 'Apple ဖြတ်လမ်းများ',
   Tomorrow: 'မနက်ဖြန်',
   'done {date}': 'ပြီးပြီ {date}',
   'Next week': 'နောက်အပတ်',
@@ -184,6 +195,7 @@ export const my: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'လက်နှစ်ချောင်းဖြင့် ကင်းဗတ်ကို လှည့်ရန်',
+  'Snap the rotation to right angles': 'လှည့်ခြင်းကို ထောင့်မှန်များတွင် ချိတ်ရန်',
   'Turn upright': 'တည့်တည့်ပြန်ထားရန်',
   Canvas: 'ကန်ဗတ်',
   Card: 'ကတ်',
@@ -278,6 +290,7 @@ export const my: Dictionary = {
   Tabs: 'တဘ်များ',
   'Ctrl+Tab in order of use': 'သုံးခဲ့သည့်အစဉ်အတိုင်း Ctrl+Tab',
   'Swipe between pages': 'စာမျက်နှာများကြား ပွတ်ဆွဲရန်',
+  'Hardware acceleration': 'ဟာ့ဒ်ဝဲ အရှိန်မြှင့်ခြင်း',
   'Hidden tabs': 'ဝှက်ထားသော တဘ်များ',
   'Memory saver': 'မှတ်ဉာဏ် ချွေတာခြင်း',
   Moderate: 'အလယ်အလတ်',
@@ -1144,6 +1157,8 @@ export const my: Dictionary = {
   Elbow: 'တံတောင်',
   Frame: 'ဘောင်',
   Ungroup: 'အုပ်စုဖြုတ်ပါ',
+  Lock: 'သော့ခတ်ရန်',
+  Unlock: 'သော့ဖွင့်ရန်',
   'The ink of the page': 'စာမျက်နှာ၏ မှင်',
   'Write in what is picked': 'ရွေးထားသည့်အထဲ ရေးပါ',
   Pen: 'ကလောင်',
@@ -1285,11 +1300,15 @@ export const my: Dictionary = {
     'အပိုင်း {count} ကို ကုဒ်ဖြင့်ထားသည်၊ Evernote မရှိလျှင် မည်သည့်အရာမျှ မဖတ်နိုင်ပါ',
   '{count} notes had a reminder, which the export does not carry':
     'မှတ်စု {count} တွင် သတိပေးချက်ရှိခဲ့သည်၊ ထုတ်မှုတွင် မပါဝင်ပါ',
+  '{count} attachments were missing from the export or could not be read':
+    'ပူးတွဲဖိုင် {count} ခုသည် ထုတ်ယူမှုတွင် မပါ သို့မဟုတ် ဖတ်၍မရပါ',
   '{count} notes were in the bin and stay there':
     'မှတ်စု {count} သည် ပုံးထဲတွင်ရှိ၍ ထိုတွင် ကျန်နေမည်',
   '{count} archived notes are in a folder called Archive':
     'သိမ်းထားသော မှတ်စု {count} သည် Archive ဖိုလ်ဒါတွင် ရှိသည်',
   'The colours a note had are not kept': 'မှတ်စုတွင်ရှိခဲ့သော အရောင်များ မထားပါ',
+  '{count} files could not be read, so they were left out':
+    'ဖိုင် {count} ခုကို ဖတ်၍မရသဖြင့် ချန်ထားခဲ့သည်',
   '{count} block references were written out as the words they pointed at':
     'ဘလောက်ရည်ညွှန်း {count} ကို ညွှန်ခဲ့သော စကားလုံးများအဖြစ် ရေးလိုက်သည်',
   '{count} saved views are left out, and every row is in the table':
@@ -1314,6 +1333,8 @@ export const my: Dictionary = {
     'စိတ်နေနှင့် လုပ်ရပ်ကတ် {count} ခု ပုံဆွဲများဖြစ်၍ စာသာ ပါလာသည်',
   '{count} notes are behind a password, which nothing but Notes can open':
     'မှတ်စု {count} ခု Notes သာ ဖွင့်နိုင်သော စကားဝှက်နောက်တွင် ရှိသည်',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    'မှတ်စု {count} ခု Bear သာ ဖွင့်နိုင်သော စကားဝှက်နောက်တွင် ရှိသည်',
   '{count} notes are in Recently Deleted, and stay there':
     'မှတ်စု {count} ခု မကြာမီဖျက်ခဲ့သည်တွင်ရှိ၍ ထိုတွင် ကျန်မည်',
   '{count} drawings and scans have no picture on this Mac':
@@ -1554,6 +1575,7 @@ export const my: Dictionary = {
   'Ask the model': 'မော်ဒယ်ကို မေးပါ',
   'answered by {model}, {date}': '{model} ဖြေသည်၊ {date}',
   'AI block': 'AI ဘလောက်',
+  'Do with AI': 'AI ဖြင့် လုပ်ရန်',
   'Highlight colour': 'မီးမောင်းအရောင်',
   'A single newline breaks the line': 'လိုင်းအသစ်တစ်ခုတည်းဖြင့် လိုင်းပြတ်သည်',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -1874,6 +1896,8 @@ export const my: Dictionary = {
   'Settings › AI': 'ဆက်တင် › AI',
   'New chat': 'စကားဝိုင်းအသစ်',
   'Ask again': 'ထပ်မေးရန်',
+  'Continue when the limit resets': 'ကန့်သတ်ချက် ပြန်စသောအခါ ဆက်လုပ်ရန်',
+  'Continues at {time}': '{time} တွင် ဆက်လုပ်မည်',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'ဘာမဆိုမေးပါ၊ ထည့်ရန် @၊ ပိုမိုရန် /',
   'What can I help with?': 'ဘာကူညီပေးရမလဲ။',
@@ -2343,4 +2367,29 @@ export const my: Dictionary = {
   Peach: 'မက်မွန်',
   Sage: 'ဆေ့ချ်',
   Mist: 'မြူ',
+  // A board, Notion's: its columns, its cards, its settings, a new database
+  'New database': 'ဒေတာဘေ့စ်အသစ်',
+  'New page': 'စာမျက်နှာအသစ်',
+  'Not started': 'မစရသေး',
+  'In progress': 'လုပ်ဆောင်နေဆဲ',
+  'No {property}': '{property} မရှိ',
+  '{card} moved to {group}': '{card} ကို {group} သို့ ရွှေ့ပြီး',
+  'Not moved': 'မရွှေ့ရပါ',
+  Retry: 'ထပ်စမ်းကြည့်ပါ',
+  Calculate: 'တွက်ချက်',
+  'Remove sort': 'စီခြင်းကို ဖယ်ရှား',
+  'Remove sort?': 'စီခြင်းကို ဖယ်ရှားမလား?',
+  Groups: 'အုပ်စုများ',
+  'Hidden groups': 'ဝှက်ထားသော အုပ်စုများ',
+  'Add as option': 'ရွေးချယ်စရာအဖြစ် ထည့်',
+  'Move left': 'ဘယ်သို့ရွှေ့',
+  'Move right': 'ညာသို့ရွှေ့',
+  'Delete option': 'ရွေးချယ်စရာကို ဖျက်',
+  'Colour columns': 'ကော်လံများကို အရောင်ခြယ်',
+  'Hide empty groups': 'အလွတ်အုပ်စုများကို ဝှက်',
+  'Card size': 'ကတ်အရွယ်အစား',
+  Small: 'သေး',
+  Large: 'ကြီး',
+  Both: 'နှစ်ခုလုံး',
+  'Shown on cards': 'ကတ်များပေါ်တွင် ပြသ',
 }

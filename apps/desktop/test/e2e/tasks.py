@@ -203,7 +203,7 @@ def open_base(page: Page, view: str) -> None:
     )
     wait_for(
         page,
-        f"document.querySelector('.view-tab .head .name')?.textContent.trim() === {json.dumps(view)}",
+        f"document.querySelector('.view-tab .head .tab.on .words')?.textContent.trim() === {json.dumps(view)}",
         f"the {view} view of Bugs.base",
     )
     quiet(page)
@@ -378,14 +378,33 @@ def at_phone_width(browser: Browser) -> None:
         wrong(f"Today at phone width holds {words}")
     shot(page, "10-phone-today")
     open_base(page, "Board")
-    if not page.evaluate("document.querySelectorAll('.view-tab .column').length >= 3"):
-        wrong("the board at phone width has no columns")
+    # One column at the whole width, the groups as pills above it to switch between.
+    if not page.evaluate(
+        "document.querySelectorAll('.view-tab .strip .switch').length >= 3"
+        " && document.querySelectorAll('.view-tab .column').length === 1"
+    ):
+        wrong("the board at phone width is not one column under its groups' pills")
+    # The head's tools stay on screen: the tabs scroll, the settings do not leave.
+    edge = page.evaluate(
+        "(() => { const one = document.querySelector('.view-tab .head [aria-label=Settings]')?.getBoundingClientRect();"
+        " const bar = document.querySelector('.view-tab .head .bar')?.getBoundingClientRect();"
+        " const tabs = document.querySelector('.view-tab .head .tabs')?.getBoundingClientRect();"
+        " return [one?.right ?? 9999, bar?.width ?? 0, tabs?.width ?? 0] })()"
+    )
+    print(f"  [phone head] settings right {edge[0]:.0f}, bar {edge[1]:.0f}, tabs {edge[2]:.0f}")
+    if edge[0] > 390:
+        wrong("the view's settings are off the edge of a phone")
     shot(page, "11-phone-board")
     open_base(page, "Due")
     if not page.evaluate("!!document.querySelector('.view-tab .agenda')"):
         wrong("the calendar at phone width is not an agenda")
-    if page.evaluate("!!document.querySelector('.view-tab .head [aria-label=Timeline]')"):
+    page.locator(".view-tab .head [aria-label=Settings]").first.click()
+    wait_for(page, "document.querySelector('.view-tab .settings')", "the view's settings")
+    if page.evaluate(
+        "[...document.querySelectorAll('.view-tab .settings .layouts .nib-chip')].some((one) => one.textContent.trim() === 'Timeline')"
+    ):
         wrong("the timeline is offered at phone width")
+    page.keyboard.press("Escape")
     shot(page, "12-phone-agenda")
     page.close()
 

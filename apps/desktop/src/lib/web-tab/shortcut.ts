@@ -26,9 +26,9 @@
  *  Windows profile-string parser behind `ShellExecute` was built to read. Read with
  *  either.
  *
- *  **`.webloc` is read too, and never written.** It is the same idea on macOS - a
- *  plist with a `URL` string in it - and a page dragged out of Safari into a space
- *  arrives as one. nib opens it as a website rather than as a file it has no use
+ *  **`.webloc` is read too, and only its address written.** It is the same idea on
+ *  macOS - a plist with a `URL` string in it - and a page dragged out of Safari into a
+ *  space arrives as one. nib opens it as a website rather than as a file it has no use
  *  for. Only the XML kind: a binary plist is a format this app has no business
  *  carrying a parser for, and Safari writes XML.
  *
@@ -58,6 +58,9 @@ const DATA_KEY = 'nib-data'
 
 /** What a web note's own web data is named by: sixteen lower case hex digits. */
 const OWN = /^[0-9a-f]{16}$/
+
+/** A `.webloc`'s `URL` string, as written. */
+export const WEBLOC_URL = /(?<=<key>\s*URL\s*<\/key>\s*<string>)[\s\S]*?(?=<\/string>)/i
 
 /** What a shortcut file says. */
 export interface Shortcut {
@@ -230,8 +233,8 @@ export function apartOf(tab: {
 export function readWebloc(text: string | null | undefined): string | null {
   if (!text) return null
 
-  const found = /<key>\s*URL\s*<\/key>\s*<string>([\s\S]*?)<\/string>/i.exec(text)
-  const url = entities((found?.[1] ?? '').trim())
+  const found = WEBLOC_URL.exec(text)
+  const url = entities((found?.[0] ?? '').trim())
   return isWebAddress(url) ? url : null
 }
 

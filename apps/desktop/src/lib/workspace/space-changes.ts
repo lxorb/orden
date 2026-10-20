@@ -70,24 +70,32 @@ export async function renameSpace(ws: HoldsSpaces, id: string, name: string) {
   // held under the root, and the root is what is about to change.
   ws.naming = null
 
-  const renamed = await invoke<{ name: string; path: string }>('rename_space', {
-    from: space.root,
-    name: name.trim(),
-  }).catch(() => null)
+  // The folder moves under every note open in it, so like any other move it waits
+  // for their writes and holds them until they have been told; see `move` in
+  // workspace.svelte.ts.
+  const done = { moved: false }
+  await ws.holdingUnder(space.root, async () => {
+    const renamed = await invoke<{ name: string; path: string }>('rename_space', {
+      from: space.root,
+      name: name.trim(),
+    }).catch(() => null)
 
-  if (!renamed) return
+    if (!renamed) return
 
-  // A space moving is a file operation like any other, said once: the open notes
-  // move with their folder, and everything kept under the root follows it - the
-  // icon, the order its list is read in, the folder icons and the rest, and the
-  // account's table of what it holds, in the same breath as the notes' paths, so a
-  // note is never for a moment at a path the account has no id for. See
-  // workspace/file-ops.ts, and the space-rename drive for what that moment cost.
-  const from = space.root
-  space.name = renamed.name
-  space.root = renamed.path
-  await ws.fileMoved(from, renamed.path, 'space')
+    // A space moving is a file operation like any other, said once: the open notes
+    // move with their folder, and everything kept under the root follows it - the
+    // icon, the order its list is read in, the folder icons and the rest, and the
+    // account's table of what it holds, in the same breath as the notes' paths, so a
+    // note is never for a moment at a path the account has no id for. See
+    // workspace/file-ops.ts, and the space-rename drive for what that moment cost.
+    const from = space.root
+    space.name = renamed.name
+    space.root = renamed.path
+    await ws.fileMoved(from, renamed.path, 'space')
+    done.moved = true
+  })
 
+  if (!done.moved) return
   if (ws.activeSpaceId === id) await ws.loadTree()
   ws.persist()
 }

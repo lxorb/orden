@@ -802,8 +802,35 @@ function holds(tail: string): boolean {
  *  Raised 2026-10-19, to 3,256,000, for #533: a version put back from the history is
  *  said to be one (`restoreVersion` on the workspace and in saving.svelte.ts,
  *  `restoredAt` on a note), so a canvas takes it whole rather than merging with it.
- *  Measured 3,255,185. */
-const BUDGET = 3_256_000
+ *  Measured 3,255,185.
+ *
+ *  Raised 2026-10-19, to 3,257,000, for #537: a link that cannot be rewritten is
+ *  logged and passed over rather than undoing the rename (`retarget` in
+ *  link-index.svelte.ts, which now imports log.ts), and a PDF already moved into its
+ *  page note is never thrown away with it (pages/from-pdf.ts). Measured 3,256,522 on
+ *  unstable with #524 and #538 beside it.
+ *
+ *  Raised 2026-10-20, to 3,258,000, for #527: a link's #fragment is read as the words
+ *  it names, so links.ts decodes every escape in it (`decodeFragment`). Measured
+ *  3,257,920.
+ *
+ *  Raised 2026-10-20, to 3,258,000, for #380: New note inside offers every kind the
+ *  file list makes, each made inside the row (`newFileRows` in row-menu.ts, `make` on
+ *  `createInside`). Measured 3,257,028.
+ *
+ *  Raised 2026-10-20, to 3,268,000, for the fixes arbobendik's branches brought onto
+ *  unstable together (#554 to #645: Ctrl+Tab after a tab closes itself, tags and
+ *  addresses in every script, the table's keys and undo, a chat taking drops and being
+ *  made from the file list, the eraser's width and more). Measured 3,267,616.
+ *
+ *  Raised 2026-10-20, to 3,280,000, for David's branches landed together (#254 developer
+ *  mode, #429 hardened importers, #430 board edits, #447, #474 the Shortcuts action,
+ *  #484 board views and databases, #531 the bug burn-down). Measured 3,279,757.
+ *
+ *  Raised 2026-10-20, to 3,281,000, for #417: the empty Essentials a drag is offered
+ *  stands over the caption rather than pushing the file list down under the pointer
+ *  (`is-floating` in Bookmarks.svelte). Measured 3,280,466. */
+const BUDGET = 3_281_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

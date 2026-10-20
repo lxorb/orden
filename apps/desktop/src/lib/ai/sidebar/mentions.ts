@@ -86,6 +86,13 @@ export function mentionAt(text: string, caret: number): { from: number; query: s
   return { from: caret - query.length - 1, query }
 }
 
+/** A note's or a folder's chip, as `@` offers it and a row dropped on the panel is. */
+export function mentionOf(entry: { path: string; name: string; is_dir: boolean }): Mention {
+  return entry.is_dir
+    ? { kind: 'folder', id: entry.path, label: `${entry.name}/` }
+    : { kind: 'note', id: entry.path, label: entry.name.replace(/\.(?:md|markdown)$/i, '') }
+}
+
 /** The same chip twice is one chip. */
 export function sameMention(one: Mention, other: Mention): boolean {
   return one.kind === other.kind && one.id === other.id

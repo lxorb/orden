@@ -39,6 +39,9 @@ const MOST_FIELDS = 20
 const LONGEST_ANSWER = 4000
 const LONGEST_LABEL = 120
 
+/** How a cell starts that a spreadsheet runs as a formula. */
+const FORMULA = /^[=+\-@\t\r]/
+
 type FieldKind = 'text' | 'email' | 'lines' | 'number' | 'choice'
 
 interface Field {
@@ -138,6 +141,31 @@ function nameOf(field: Field, at: number): string {
   return said || `field-${at + 1}`
 }
 
+/** What a form can come back saying went wrong, by the code the page's address
+ *  carries. The address is anybody's to write, so it names one of these rather
+ *  than holding the words: a link could otherwise put any sentence on somebody's
+ *  site. A code about one question is its place and a kind, `2-needed`. */
+const WRONG_ALL = new Map([
+  ['busy', 'Too many just now. Try later.'],
+  ['full', 'This form is full.'],
+  ['empty', 'Nothing was filled in.'],
+])
+const WRONG_ONE = new Map([
+  ['needed', 'is needed.'],
+  ['address', 'does not look like an address.'],
+  ['number', 'is a number.'],
+  ['choice', 'is one of the choices.'],
+])
+
+/** Every sentence this form can say went wrong, by its code. */
+function wrongsOf(form: Form): Map<string, string> {
+  const wrongs = new Map(WRONG_ALL)
+  for (const [at, one] of form.fields.entries()) {
+    for (const [kind, words] of WRONG_ONE) wrongs.set(`${at}-${kind}`, `${one.label} ${words}`)
+  }
+  return wrongs
+}
+
 /** The form, as the page draws it.
  *
  *  A real form: it posts, the page comes back, and a reader with scripting off is
@@ -171,9 +199,11 @@ export function formHtml(form: Form, noteId: string, sent: boolean, wrong: strin
     })
     .join('')
 
+  const said = wrong === null ? undefined : wrongsOf(form).get(wrong)
+
   return `<form class="form" method="post" action="/form/${escape(noteId)}">
 ${form.title ? `<h3>${escape(form.title)}</h3>` : ''}
-${wrong ? `<p class="wrong">${escape(wrong)}</p>` : ''}
+${said ? `<p class="wrong">${escape(said)}</p>` : ''}
 ${rows}
 <button type="submit">${escape(form.send)}</button>
 </form>`
@@ -196,26 +226,26 @@ export function answersFrom(
     const value = typeof said === 'string' ? said.trim().slice(0, LONGEST_ANSWER) : ''
 
     if (!value) {
-      if (one.required) return { wrong: `${one.label} is needed.` }
+      if (one.required) return { wrong: `${at}-needed` }
       continue
     }
 
     if (one.kind === 'email' && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value)) {
-      return { wrong: `${one.label} does not look like an address.` }
+      return { wrong: `${at}-address` }
     }
 
     if (one.kind === 'number' && !Number.isFinite(Number(value))) {
-      return { wrong: `${one.label} is a number.` }
+      return { wrong: `${at}-number` }
     }
 
     if (one.kind === 'choice' && !one.choices.includes(value)) {
-      return { wrong: `${one.label} is one of the choices.` }
+      return { wrong: `${at}-choice` }
     }
 
     answers[one.label] = value
   }
 
-  if (!Object.keys(answers).length) return { wrong: 'Nothing was filled in.' }
+  if (!Object.keys(answers).length) return { wrong: 'empty' }
 
   return { answers }
 }
@@ -226,17 +256,27 @@ export function answersFrom(
  *  Written here rather than in the app because the shape of an answer is decided
  *  here, and a second writer of the same file is a second answer to what a
  *  column is called. */
-export function asCsv(rows: readonly { at: number; answers: Record<string, string> }[]): string {
-  const columns = ['when', ...new Set(rows.flatMap((one) => Object.keys(one.answers)))]
+export function asCsv(
+  rows: readonly { at: number; path: string; answers: Record<string, string> }[],
+): string {
+  // The export's own columns go by place rather than by name, so a question
+  // called "page" is a column of its own instead of the page it was asked on.
+  const asked = [...new Set(rows.flatMap((one) => Object.keys(one.answers)))]
 
-  const cell = (said: string) => `"${said.replace(/"/g, '""')}"`
-  const lines = [columns.map(cell).join(',')]
+  // A cell a spreadsheet would run as a formula is written as text, the way
+  // OWASP says to; a number, a negative one too, stays a number.
+  const cell = (said: string) => {
+    const text = FORMULA.test(said) && !Number.isFinite(Number(said)) ? `'${said}` : said
+    return `"${text.replace(/"/g, '""')}"`
+  }
+  const lines = [['when', 'page', ...asked].map(cell).join(',')]
 
   for (const row of rows) {
     lines.push(
       [
         new Date(row.at).toISOString(),
-        ...columns.slice(1).map((column) => row.answers[column] ?? ''),
+        row.path,
+        ...asked.map((column) => row.answers[column] ?? ''),
       ]
         .map(cell)
         .join(','),

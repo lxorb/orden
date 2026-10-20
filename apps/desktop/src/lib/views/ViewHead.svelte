@@ -11,7 +11,7 @@
    *  (`live.builder`), whichever layout asked. A locked view shows its padlock, which
    *  shakes when a change is turned away and opens the lock when pressed. The plus's
    *  own menu makes a note from a template. */
-  import { writeBase } from '@nib/bases'
+  import { type Base, writeBase } from '@nib/bases'
   import { t } from '../i18n.svelte'
   import { DIVIDER, menu, type MenuEntry } from '../menu.svelte'
   import { ORDER_MARK } from '../panel-marks'
@@ -25,7 +25,7 @@
   import ColourBuilder from './ColourBuilder.svelte'
   import { grouped } from './column-menu'
   import { copyCsv, saveCsv } from './csv'
-  import { addView, removeView, renameView, setBaseNib, setViewNib } from './edit'
+  import { addView, freeViewName, removeView, renameView, setBaseNib, setViewNib } from './edit'
   import FilterBuilder from './FilterBuilder.svelte'
   import type { Kit } from './kit'
   import { switched } from './layout'
@@ -43,10 +43,13 @@
   import Popover from './Popover.svelte'
   import { copyToBase } from './save'
   import { focusSoon } from './focus-soon'
+  import { copyText } from '../clipboard'
+  import { displayName } from './columns'
+  import ViewSettings from './ViewSettings.svelte'
   import { projectAt, renameProject } from './project-actions'
   import { addSection, projectOf } from './section-actions'
   import { prompt } from '../prompt.svelte'
-  import { type Layout, LAYOUTS, layoutName, layoutOf } from './words'
+  import { type Layout, LAYOUTS, layoutName, layoutOf, propertyName } from './words'
 
   const {
     kit,
@@ -74,12 +77,24 @@
     ),
   )
 
-  let open = $state<'filter' | 'sort' | 'group' | 'display' | null>(null)
+  type Tool = 'filter' | 'sort' | 'group'
+  const TOOLS = [
+    { id: 'filter', mark: FILTER_MARK, label: t('Filter') },
+    { id: 'sort', mark: ORDER_MARK, label: t('Sort') },
+    { id: 'group', mark: GROUP_MARK, label: t('Group') },
+  ] as const
+
+  let open = $state<Tool | 'display' | 'settings' | 'chip-filter' | 'chip-sort' | null>(null)
   /** The project the view is of, whose name is its note's. */
   const project = $derived(projectOf(kit))
-  /** A view of tasks wears Todoist's head: its name, the search, Display and the plus;
-   *  a base of notes keeps the database's tools. */
+  /** A view of tasks has Todoist's Display: in a built-in view's head, its name, the
+   *  search, Display and the plus; in a base's, beside Filter and Sort. */
   const tasky = $derived(kit.spec.builtin !== undefined || view?.nib.rows === 'tasks')
+  /** A base of its own (a `.base` file, a fence, a database) wears Notion's head: its
+   *  title over the view tabs, Filter, Sort, the search, ⋯ for the view's settings and
+   *  New, whichever rows it is of, so Rows in its settings never takes the head away;
+   *  a built-in view keeps its own. */
+  const tabbed = $derived(kit.spec.builtin === undefined)
   const narrowed = $derived(view ? Object.keys(onlyOf(view)).length > 0 : false)
   const notes = $derived((view?.nib.rows ?? 'notes') === 'notes')
 
@@ -133,8 +148,7 @@
   }
   let renaming = $state(false)
 
-  const toggle = (which: 'filter' | 'sort' | 'group' | 'display') =>
-    (open = open === which ? null : which)
+  const toggle = (which: NonNullable<typeof open>) => (open = open === which ? null : which)
 
   /** A view nib ships, the way it came. */
   function reset() {
@@ -146,10 +160,10 @@
     kit.change((one, at) => switched(one, at, next, live.rows))
   }
 
-  function nameMenu(event: MouseEvent) {
-    if (!base) return
+  /** The base's views and what can be done to them: the name's menu's first half. */
+  function viewRows(base: Base): MenuEntry[] {
     const views = base.views
-    const items: MenuEntry[] = [
+    return [
       // A project's own: its note named again, a section added, the note itself.
       ...(project
         ? [
@@ -199,7 +213,15 @@
             },
           ]
         : []),
-      DIVIDER,
+    ]
+  }
+
+  /** The rest of what can be done to a view: its colour, its rows' height, the base's
+   *  automations, its template, the view as CSV, the locks. In the name's menu of a
+   *  built-in view and in the settings of a base's. */
+  function moreRows(event?: MouseEvent): MenuEntry[] {
+    if (!base) return []
+    return [
       {
         label: t('Colour'),
         checked: view?.nib.colour !== undefined,
@@ -264,8 +286,107 @@
           ]
         : []),
     ]
-    menu.show(event, items, { title: named })
   }
+
+  function nameMenu(event: MouseEvent) {
+    if (!base) return
+    menu.show(event, [...viewRows(base), DIVIDER, ...moreRows(event)], { title: named })
+  }
+
+  /** The tab being named again, by its index. */
+  let naming = $state<number | null>(null)
+
+  /** A view picked from the '+': one more, of that layout, after the last, shown. */
+  function addTab(event: MouseEvent) {
+    if (!base) return
+    const last = base.views.length - 1
+    menu.show(
+      event,
+      offered.map((one) => ({
+        label: layoutName(one),
+        run: () =>
+          void kit
+            .changed((b) => {
+              const rows = b.views[live.at]?.nib.rows
+              const fresh: Base = {
+                ...b,
+                views: [
+                  ...b.views,
+                  {
+                    type: 'table',
+                    name: freeViewName(b, layoutName(one)),
+                    order: [],
+                    sort: [],
+                    summaries: {},
+                    // A view of the same rows as the one it was made from.
+                    nib: {
+                      kept: {},
+                      ...(rows ? { rows } : {}),
+                    },
+                    options: {},
+                  },
+                ],
+              }
+              return switched(fresh, last + 1, one, live.rows)
+            }, last + 1)
+            .catch(() => undefined),
+      })),
+      { title: t('New view') },
+    )
+  }
+
+  /** A tab's own menu: name it, duplicate it, link to it, delete it. */
+  function tabMenu(event: MouseEvent, at: number) {
+    if (!base) return
+    event.preventDefault()
+    const one = base.views[at]
+    const file = kit.file
+    menu.show(
+      event,
+      [
+        { label: t('Rename'), run: () => (naming = at) },
+        {
+          label: t('Duplicate view'),
+          run: () => void kit.changed((b) => addView(b, at), at + 1).catch(() => undefined),
+        },
+        ...(file !== null && one?.name
+          ? [
+              {
+                label: t('Copy link'),
+                run: () => {
+                  const root = workspace.activeSpace?.root ?? ''
+                  void copyText(`![[${relativeTo(root, file)}#${one.name}]]`)
+                },
+              },
+            ]
+          : []),
+        ...(base.views.length > 1
+          ? [
+              DIVIDER,
+              {
+                label: t('Delete view'),
+                danger: true,
+                run: () => {
+                  // The view showing stays the one showing, unless it is the one going.
+                  const showing = live.at
+                  void kit
+                    .changed((b) => removeView(b, at), showing > at ? showing - 1 : undefined)
+                    .catch(() => undefined)
+                },
+              },
+            ]
+          : []),
+      ],
+      { title: one?.name.trim() ? one.name : title },
+    )
+  }
+
+  /** The sorts set, as the chip under the tabs reads them. */
+  const sortWords = $derived(
+    (view?.sort ?? [])
+      .map((one) => propertyName(one.property, base ? displayName(base, one.property) : undefined))
+      .join(', '),
+  )
 
   const active = $derived({
     filter: view?.filters !== undefined,
@@ -274,61 +395,31 @@
   })
 </script>
 
-<div class="head" class:compact={kit.compact}>
-  {#if renaming}
-    <input
-      class="nib-field rename"
-      value={project ? named : (view?.name ?? '')}
-      aria-label={t('Rename')}
-      use:focusSoon
-      onkeydown={(event) => {
-        if (event.key === 'Enter') event.currentTarget.blur()
-        if (event.key === 'Escape') {
-          event.preventDefault()
-          event.stopPropagation()
-          renaming = false
-        }
-      }}
-      onblur={(event) => {
-        const name = event.currentTarget.value
-        renaming = false
-        if (project) {
-          if (name.trim() && name.trim() !== project.name)
-            void renameProject(projectAt(project.path), name)
-        } else kit.change((one, at) => renameView(one, at, name))
-      }}
-    />
-  {:else}
-    <div class="tool named">
-      <button type="button" class="name" onclick={nameMenu} oncontextmenu={nameMenu}>
-        <span class="words">{named}</span>
-        <svg viewBox="0 0 13 13" aria-hidden="true"><path d="M3.8 5.2l2.7 2.7 2.7-2.7" /></svg>
-      </button>
-      <Popover
-        start
-        open={live.builder !== null}
-        label={live.builder ? BUILDERS[live.builder.kind] : ''}
-        onclose={() => (live.builder = null)}
-      >
-        {#if live.builder?.kind === 'colour'}
-          <ColourBuilder {kit} />
-        {:else if live.builder?.kind === 'automations'}
-          <AutomationsBuilder {kit} />
-        {:else if live.builder?.kind === 'rollup'}
-          <RollupBuilder {kit} column={live.builder.column} />
-        {:else if live.builder?.kind === 'button'}
-          <ButtonBuilder {kit} column={live.builder.column} />
-        {:else if live.builder?.kind === 'options'}
-          <OptionsBuilder {kit} column={live.builder.column} />
-        {:else if live.builder?.kind === 'formula'}
-          <FormulaBuilder {kit} column={live.builder.column} />
-        {:else if live.builder?.kind === 'name'}
-          <NameBuilder {kit} column={live.builder.column} />
-        {/if}
-      </Popover>
-    </div>
-  {/if}
-
+{#snippet layer(start: boolean)}
+  <Popover
+    {start}
+    open={live.builder !== null}
+    label={live.builder ? BUILDERS[live.builder.kind] : ''}
+    onclose={() => (live.builder = null)}
+  >
+    {#if live.builder?.kind === 'colour'}
+      <ColourBuilder {kit} />
+    {:else if live.builder?.kind === 'automations'}
+      <AutomationsBuilder {kit} />
+    {:else if live.builder?.kind === 'rollup'}
+      <RollupBuilder {kit} column={live.builder.column} />
+    {:else if live.builder?.kind === 'button'}
+      <ButtonBuilder {kit} column={live.builder.column} />
+    {:else if live.builder?.kind === 'options'}
+      <OptionsBuilder {kit} column={live.builder.column} />
+    {:else if live.builder?.kind === 'formula'}
+      <FormulaBuilder {kit} column={live.builder.column} />
+    {:else if live.builder?.kind === 'name'}
+      <NameBuilder {kit} column={live.builder.column} />
+    {/if}
+  </Popover>
+{/snippet}
+{#snippet lock()}
   {#if live.locked}
     {#key live.refused}
       <button
@@ -347,54 +438,8 @@
       </button>
     {/key}
   {/if}
-
-  {#if !tasky}
-    <div class="nib-segmented layouts" role="tablist" aria-label={t('Layout')} use:segmented>
-      {#each offered as one (one)}
-        <button
-          type="button"
-          role="tab"
-          class:on={layout === one}
-          aria-selected={layout === one}
-          title={layoutName(one)}
-          aria-label={layoutName(one)}
-          onclick={() => pick(one)}
-        >
-          <svg viewBox="0 0 13 13"><path d={LAYOUT_MARKS[one]} /></svg>
-        </button>
-      {/each}
-    </div>
-  {/if}
-
-  <span class="spring"></span>
-
-  {#if !tasky}
-    {#each [{ id: 'filter', mark: FILTER_MARK, label: t('Filter') }, { id: 'sort', mark: ORDER_MARK, label: t('Sort') }, { id: 'group', mark: GROUP_MARK, label: t('Group') }] as const as tool (tool.id)}
-      <div class="tool">
-        <button
-          type="button"
-          class="nib-glyph"
-          class:set={active[tool.id]}
-          class:open={open === tool.id}
-          data-opens-popover
-          title={tool.label}
-          aria-label={tool.label}
-          aria-expanded={open === tool.id}
-          onclick={() => toggle(tool.id)}
-        >
-          <svg viewBox="0 0 13 13"><path d={tool.mark} /></svg>
-        </button>
-        <Popover open={open === tool.id} label={tool.label} onclose={() => (open = null)}>
-          {#if tool.id === 'filter'}
-            <FilterBuilder {kit} />
-          {:else}
-            <ArrangeBuilder {kit} part={tool.id} />
-          {/if}
-        </Popover>
-      </div>
-    {/each}
-  {/if}
-
+{/snippet}
+{#snippet searchField()}
   {#if !kit.compact}
     <label class="nib-field search">
       <svg class="nib-field-mark" viewBox="0 0 13 13" aria-hidden="true"
@@ -416,28 +461,54 @@
       />
     </label>
   {/if}
-
-  {#if tasky}
+{/snippet}
+{#snippet tools(which: readonly Tool[])}
+  {#each TOOLS.filter((one) => which.includes(one.id)) as tool (tool.id)}
     <div class="tool">
       <button
         type="button"
         class="nib-glyph"
-        class:set={narrowed}
-        class:open={open === 'display'}
+        class:set={active[tool.id]}
+        class:open={open === tool.id}
         data-opens-popover
-        title={t('Display')}
-        aria-label={t('Display')}
-        aria-expanded={open === 'display'}
-        onclick={() => toggle('display')}
+        title={tool.label}
+        aria-label={tool.label}
+        aria-expanded={open === tool.id}
+        onclick={() => toggle(tool.id)}
       >
-        <svg viewBox="0 0 13 13"><path d={DISPLAY_MARK} /></svg>
+        <svg viewBox="0 0 13 13"><path d={tool.mark} /></svg>
       </button>
-      <Popover open={open === 'display'} label={t('Display')} onclose={() => (open = null)}>
-        <DisplayBuilder {kit} onreset={kit.spec.builtin !== undefined ? reset : undefined} />
+      <Popover open={open === tool.id} label={tool.label} onclose={() => (open = null)}>
+        {#if tool.id === 'filter'}
+          <FilterBuilder {kit} />
+        {:else}
+          <ArrangeBuilder {kit} part={tool.id} />
+        {/if}
       </Popover>
     </div>
-  {/if}
-
+  {/each}
+{/snippet}
+{#snippet display()}
+  <div class="tool">
+    <button
+      type="button"
+      class="nib-glyph"
+      class:set={narrowed}
+      class:open={open === 'display'}
+      data-opens-popover
+      title={t('Display')}
+      aria-label={t('Display')}
+      aria-expanded={open === 'display'}
+      onclick={() => toggle('display')}
+    >
+      <svg viewBox="0 0 13 13"><path d={DISPLAY_MARK} /></svg>
+    </button>
+    <Popover open={open === 'display'} label={t('Display')} onclose={() => (open = null)}>
+      <DisplayBuilder {kit} onreset={kit.spec.builtin !== undefined ? reset : undefined} />
+    </Popover>
+  </div>
+{/snippet}
+{#snippet plusButton()}
   <button
     type="button"
     class="nib-glyph"
@@ -448,7 +519,200 @@
   >
     <svg viewBox="0 0 13 13"><path d={ADD_MARK} /></svg>
   </button>
-</div>
+{/snippet}
+
+{#snippet chip(which: 'chip-filter' | 'chip-sort', label: string, tool: Tool)}
+  <div class="tool">
+    <button
+      type="button"
+      class="nib-chip is-on"
+      data-opens-popover
+      aria-expanded={open === which}
+      onclick={() => toggle(which)}>{label}</button
+    >
+    <Popover start open={open === which} {label} onclose={() => (open = null)}>
+      {#if tool === 'filter'}
+        <FilterBuilder {kit} />
+      {:else}
+        <ArrangeBuilder {kit} part="sort" />
+      {/if}
+    </Popover>
+  </div>
+{/snippet}
+
+{#if tabbed}
+  <div class="head tabbed" class:compact={kit.compact}>
+    {#if kit.file !== null && !kit.compact}
+      <h1 class="title">{title}</h1>
+    {/if}
+    <div class="bar">
+      <div class="tabs" role="tablist" aria-label={t('Views')}>
+        {#each base?.views ?? [] as one, at (at)}
+          {#if naming === at}
+            <input
+              class="nib-field rename"
+              value={one.name}
+              aria-label={t('Rename')}
+              use:focusSoon
+              onkeydown={(event) => {
+                if (event.key === 'Enter') event.currentTarget.blur()
+                if (event.key === 'Escape') {
+                  event.preventDefault()
+                  event.stopPropagation()
+                  naming = null
+                }
+              }}
+              onblur={(event) => {
+                const name = event.currentTarget.value
+                naming = null
+                kit.change((b) => renameView(b, at, name))
+              }}
+            />
+          {:else}
+            <button
+              type="button"
+              role="tab"
+              class="tab"
+              class:on={at === live.at}
+              aria-selected={at === live.at}
+              onclick={() => {
+                open = null
+                live.builder = null
+                live.at = at
+              }}
+              ondblclick={() => (naming = at)}
+              oncontextmenu={(event) => tabMenu(event, at)}
+            >
+              <svg viewBox="0 0 13 13" aria-hidden="true"
+                ><path d={LAYOUT_MARKS[layoutOf(one.type)]} /></svg
+              >
+              <span class="words">{one.name || title}</span>
+            </button>
+          {/if}
+        {/each}
+        <button
+          type="button"
+          class="nib-glyph"
+          title={t('New view')}
+          aria-label={t('New view')}
+          onclick={addTab}
+        >
+          <svg viewBox="0 0 13 13" aria-hidden="true"><path d={ADD_MARK} /></svg>
+        </button>
+      </div>
+      {@render lock()}
+      <span class="spring"></span>
+      {@render tools(['filter', 'sort'])}
+      <!-- A base of tasks keeps what Todoist's Display narrows a view of tasks by. -->
+      {#if tasky}{@render display()}{/if}
+      {@render searchField()}
+      <div class="tool">
+        <button
+          type="button"
+          class="nib-glyph"
+          class:open={open === 'settings'}
+          data-opens-popover
+          title={t('Settings')}
+          aria-label={t('Settings')}
+          aria-expanded={open === 'settings'}
+          onclick={() => toggle('settings')}
+        >
+          <svg viewBox="0 0 13 13" aria-hidden="true" class="dots"
+            ><circle cx="3" cy="6.5" r="0.9" /><circle cx="6.5" cy="6.5" r="0.9" /><circle
+              cx="10"
+              cy="6.5"
+              r="0.9"
+            /></svg
+          >
+        </button>
+        <Popover open={open === 'settings'} label={t('Settings')} onclose={() => (open = null)}>
+          <ViewSettings
+            {kit}
+            more={(event?: MouseEvent) => {
+              const rows = moreRows(event)
+              return rows.map((row) =>
+                row ? { ...row, run: () => ((open = null), row.run()) } : row,
+              )
+            }}
+          />
+        </Popover>
+      </div>
+      <div class="tool">{@render layer(false)}</div>
+      {#if !kit.compact || notes || tasky}{@render plusButton()}{/if}
+    </div>
+    {#if active.filter || active.sort}
+      <div class="chips">
+        {#if active.sort}{@render chip('chip-sort', sortWords, 'sort')}{/if}
+        {#if active.filter}{@render chip('chip-filter', t('Filter'), 'filter')}{/if}
+      </div>
+    {/if}
+  </div>
+{:else}
+  <div class="head" class:compact={kit.compact}>
+    {#if renaming}
+      <input
+        class="nib-field rename"
+        value={project ? named : (view?.name ?? '')}
+        aria-label={t('Rename')}
+        use:focusSoon
+        onkeydown={(event) => {
+          if (event.key === 'Enter') event.currentTarget.blur()
+          if (event.key === 'Escape') {
+            event.preventDefault()
+            event.stopPropagation()
+            renaming = false
+          }
+        }}
+        onblur={(event) => {
+          const name = event.currentTarget.value
+          renaming = false
+          if (project) {
+            if (name.trim() && name.trim() !== project.name)
+              void renameProject(projectAt(project.path), name)
+          } else kit.change((one, at) => renameView(one, at, name))
+        }}
+      />
+    {:else}
+      <div class="tool named">
+        <button type="button" class="name" onclick={nameMenu} oncontextmenu={nameMenu}>
+          <span class="words">{named}</span>
+          <svg viewBox="0 0 13 13" aria-hidden="true"><path d="M3.8 5.2l2.7 2.7 2.7-2.7" /></svg>
+        </button>
+        {@render layer(true)}
+      </div>
+    {/if}
+
+    {@render lock()}
+
+    {#if !tasky}
+      <div class="nib-segmented layouts" role="tablist" aria-label={t('Layout')} use:segmented>
+        {#each offered as one (one)}
+          <button
+            type="button"
+            role="tab"
+            class:on={layout === one}
+            aria-selected={layout === one}
+            title={layoutName(one)}
+            aria-label={layoutName(one)}
+            onclick={() => pick(one)}
+          >
+            <svg viewBox="0 0 13 13"><path d={LAYOUT_MARKS[one]} /></svg>
+          </button>
+        {/each}
+      </div>
+    {/if}
+
+    <span class="spring"></span>
+
+    {#if !tasky}{@render tools(['filter', 'sort', 'group'])}{/if}
+
+    {@render searchField()}
+
+    {#if tasky}{@render display()}{/if}
+
+    {@render plusButton()}
+  </div>
+{/if}
 
 <style>
   .head {
@@ -532,6 +796,95 @@
     color: var(--muted-strong);
   }
 
+  .head.tabbed {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-1);
+    padding-bottom: 0;
+  }
+
+  .head.tabbed.compact {
+    padding-bottom: var(--space-1);
+  }
+
+  .title {
+    margin: var(--space-2) var(--space-2) var(--space-1);
+    color: var(--text-strong);
+    font-size: var(--text-title, 1.6rem);
+    font-weight: var(--weight-strong);
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+
+  .bar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    min-width: 0;
+  }
+
+  .tabs {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .tab {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: var(--space-1);
+    max-width: 14rem;
+    height: var(--row-height);
+    padding: 0 var(--space-2);
+    border: none;
+    border-radius: var(--radius-row) var(--radius-row) 0 0;
+    background: none;
+    box-shadow: inset 0 -2px 0 transparent;
+    color: var(--muted-strong);
+    font: inherit;
+    font-size: var(--text-sm);
+    cursor: default;
+    transition:
+      color var(--dur-fast) var(--ease-out),
+      background var(--dur-fast) var(--ease-out);
+  }
+
+  .tab.on {
+    box-shadow: inset 0 -2px 0 var(--text-strong);
+    color: var(--text-strong);
+    font-weight: var(--weight-strong);
+  }
+
+  @media (hover: hover) {
+    .tab:hover {
+      background: var(--surface-hover);
+    }
+  }
+
+  .tabs .rename {
+    max-width: 12rem;
+  }
+
+  .head svg.dots {
+    fill: currentColor;
+    stroke: none;
+  }
+
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+    padding: var(--space-1) 0 var(--space-2);
+  }
+
+  .chips .nib-chip {
+    max-width: 20rem;
+  }
+
   .lock.shake {
     animation: shake var(--dur-base) var(--ease-out);
     color: var(--accent);
@@ -584,6 +937,12 @@
   :global([data-touch]) .head {
     flex-wrap: wrap;
     row-gap: var(--space-1);
+  }
+
+  /* Notion's head stays a column: a wrapped column sizes to its content and would push
+     the tools past the edge. The tabs scroll instead. */
+  :global([data-touch]) .head.tabbed {
+    flex-wrap: nowrap;
   }
 
   :global([data-touch]) .name {

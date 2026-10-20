@@ -432,8 +432,8 @@ export function smoothed(points: readonly InkPoint[], size: number): readonly In
     // The two samples either side steer the curve. At the ends of a stroke there is
     // no sample to steer with, so one is reflected: the curve then leaves the first
     // point and arrives at the last one straight, which is what a pen does.
-    const before = points[one - 2] ?? mirrored(from, to)
-    const after = points[one + 1] ?? mirrored(to, from)
+    const before = steering(points[one - 2], from, to)
+    const after = steering(points[one + 1], to, from)
     const many = Math.min(MOST_ON_A_STEP, Math.ceil(span / most) - 1)
 
     for (let at = 1; at <= many; at++) {
@@ -445,6 +445,24 @@ export function smoothed(points: readonly InkPoint[], size: number): readonly In
   if (last) out.push(last)
 
   return out
+}
+
+/** The sample that steers the curve leaving `from` for `to`: the one the hand came
+ *  from, unless there is none or the hand turned a corner there (see
+ *  STRAIGHT_ENOUGH). Then one is reflected, as at the end of a stroke, and the
+ *  curve leaves the corner straight: a box held still into shape keeps its sides
+ *  straight instead of bowing them out past its own box (#489). */
+function steering(came: InkPoint | undefined, from: InkPoint, to: InkPoint): InkPoint {
+  if (!came) return mirrored(from, to)
+
+  const inX = from.x - came.x
+  const inY = from.y - came.y
+  const outX = to.x - from.x
+  const outY = to.y - from.y
+  const along =
+    (inX * outX + inY * outY) / Math.max(TINY, Math.hypot(inX, inY) * Math.hypot(outX, outY))
+
+  return along < STRAIGHT_ENOUGH ? mirrored(from, to) : came
 }
 
 /** A sample as far the other side of `from` as `to` is this side of it. */
@@ -649,7 +667,11 @@ export function strokeBox(stroke: InkStroke): Box {
 }
 
 function measured(stroke: InkStroke): Box {
-  const [first] = stroke.points
+  // The curve the outline is drawn through, not the samples: between samples far
+  // apart it bows out past them, and a box short of it leaves that ink behind when
+  // the tiles repair where a rubbed-out stroke was (#645).
+  const points = smoothed(stroke.points, stroke.size)
+  const [first] = points
   if (!first) return { x: 0, y: 0, width: 0, height: 0 }
 
   let least = first.x
@@ -657,7 +679,7 @@ function measured(stroke: InkStroke): Box {
   let lowest = first.y
   let highest = first.y
 
-  for (const point of stroke.points) {
+  for (const point of points) {
     if (point.x < least) least = point.x
     if (point.x > most) most = point.x
     if (point.y < lowest) lowest = point.y

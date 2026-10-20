@@ -116,6 +116,10 @@ describe('pasting spreadsheet cells', () => {
   test('a single column is not a table', () => {
     expect(delimitedToTable('a\nb\nc')).toBeNull()
   })
+
+  test('code indented with tabs is not a table', () => {
+    expect(delimitedToTable('\tx := 1\n\ty := 2\n\treturn x + y')).toBeNull()
+  })
 })
 
 /** An address pasted over selected words makes a link of them, and nothing else
@@ -195,6 +199,12 @@ describe('an address pasted over a selection', () => {
     expect(pasted('«some **bold** words»', URL)).toBe(`[some **bold** words](${URL})`)
     expect(pasted('«some **bo»ld** words', URL)).toBeNull()
     expect(pasted('- «one\n- two»', URL)).toBeNull()
+  })
+
+  test('escapes a plain bracket among the words, and leaves markup alone', () => {
+    expect(pasted('see «a] b» now', URL)).toBe(`see [a\\] b](${URL}) now`)
+    expect(pasted('«[x [y](https://a.ch) z»', URL)).toBe(`[\\[x [y](https://a.ch) z](${URL})`)
+    expect(pasted('«a\\] `b]` [[c]] d»', URL)).toBe(`[a\\] \`b]\` [[c]] d](${URL})`)
   })
 
   test('does not reach across paragraphs', () => {

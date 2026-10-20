@@ -63,6 +63,8 @@ function store(spaces: Space[]) {
       told.push(`gone ${kind} ${path}`)
       return Promise.resolve()
     },
+    // Nothing is open, so a move holds nothing and runs straight away.
+    holdingUnder: (_path: string, run: () => Promise<void>) => run(),
     close: (id: string) => void told.push(`closed ${id}`),
     clearSelection: () => undefined,
     loadTree: () => Promise.resolve(),

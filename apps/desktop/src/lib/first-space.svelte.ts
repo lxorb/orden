@@ -2,7 +2,8 @@
  *
  *  Emil, 2026-10-13, on the first screen that asked where somebody's notes come from:
  *  "rather welcome note instead". Bringing notes over from Obsidian or Notion is
- *  Settings > Import, and the welcome note's last line links there (welcome.ts).
+ *  Settings > Import, and the note does not point there: a newcomer offered imports
+ *  was offered too much (#322).
  *
  *  What the browser build has always opened on, on every build: a space called what the
  *  browser's is, with the note in it, open, and the file list beside it where there is
@@ -15,6 +16,7 @@
 
 import { type Moment, startsFresh } from './fresh-start'
 import { markSeeded, wasSeeded } from './seeded'
+import { settings } from './settings.svelte'
 import { madeSpace } from './space-actions'
 import { joinPath } from './tauri'
 import { viewport } from './viewport.svelte'
@@ -33,7 +35,11 @@ class FirstSpace {
     this.working = true
     try {
       const space = await madeSpace(WELCOME_SPACE)
-      if (space) await this.arrive(space, await this.welcome(space))
+      if (!space) return
+      const note = await this.welcome(space)
+      await this.arrive(space, note)
+      // The first time on this device: the optional questions beside the note.
+      if (note) settings.setup = -1
     } finally {
       this.working = false
     }
@@ -56,7 +62,9 @@ class FirstSpace {
    *  it would hide the very note the space opened on. */
   private async arrive(space: Space, note: string | null) {
     if (workspace.activeSpaceId !== space.id) await workspace.showSpace(space.id)
-    if (note) await workspace.openEntry(note, { activate: true })
+    // A page or a link the app was opened with lands while the space is being made,
+    // and is what somebody asked to see: the note goes in behind it (#392).
+    if (note) await workspace.openEntry(note, { activate: !workspace.tabs.length })
     if (!viewport.drawer) workspace.showPanel('tree')
   }
 }

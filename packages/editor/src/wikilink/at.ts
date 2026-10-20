@@ -1,7 +1,13 @@
 import { syntaxTree } from '@codemirror/language'
 import type { EditorState } from '@codemirror/state'
 import type { SyntaxNode } from '@lezer/common'
-import { isNoteTarget, type LinkKind, parseWikilink, type Wikilink } from '@nib/markdown/links'
+import {
+  decodeFragment,
+  isNoteTarget,
+  type LinkKind,
+  parseWikilink,
+  type Wikilink,
+} from '@nib/markdown/links'
 import { enclosingNamed } from '../nodes'
 
 /** Reading a link out of the document, wherever it is asked about.
@@ -41,7 +47,7 @@ export function noteLinkOfNode(state: EditorState, node: SyntaxNode): LinkSpan |
 
   const hash = written.indexOf('#')
   const target = decode(hash === -1 ? written : written.slice(0, hash))
-  const fragment = hash === -1 ? '' : written.slice(hash + 1)
+  const fragment = hash === -1 ? '' : decodeFragment(written.slice(hash + 1))
   if (!target && !fragment) return null
 
   const open = node.firstChild

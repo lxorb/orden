@@ -356,7 +356,7 @@ def settled(page: Page, label: str) -> None:
 
 def rename(page: Page, name: str) -> None:
     """A guest renaming themselves: the face at the left of the panel's foot,
-    which opens the account pane, and the one field in it.
+    whose menu's Account opens the account pane, and the one field in it.
 
     There is no Save. The field is what the app holds, so leaving it is what
     writes it, which is what every other field in the settings does."""
@@ -366,6 +366,9 @@ def rename(page: Page, name: str) -> None:
     who.wait_for(state="visible", timeout=10_000)
     page.wait_for_timeout(400)
     who.click()
+    entry = page.locator(".menu [role=menuitem]").filter(has_text="Account")
+    entry.wait_for(state="visible", timeout=10_000)
+    entry.click()
 
     field = page.locator(".sheet .body input.inline").first
     field.wait_for(state="visible", timeout=10_000)

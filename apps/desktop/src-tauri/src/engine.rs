@@ -118,6 +118,17 @@ pub(crate) const BROWSER_ARGS: &str = concat!(
     " --overscroll-history-navigation=0",
 );
 
+/// [`BROWSER_ARGS`], and the switches that keep the engine off the graphics card in a run
+/// where Settings turned hardware acceleration off; see gpu.rs.
+#[cfg(all(windows, not(feature = "cef")))]
+pub(crate) fn browser_args(_app: &AppHandle) -> String {
+    if crate::gpu::this_run() {
+        BROWSER_ARGS.to_owned()
+    } else {
+        format!("{BROWSER_ARGS} {}", crate::gpu::OFF.join(" "))
+    }
+}
+
 /// Chromium's own swipe between pages, which both of Windows' engines would run beside
 /// nib's: the feature that is its touchpad half, and the switch, with its value, that is
 /// the whole of it. Written into [`BROWSER_ARGS`] for `WebView2` and handed to nib's own
@@ -170,6 +181,12 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
         .deep_link_schemes(["nib"])
         .disable_features([swipe_feature])
         .command_line_args([(swipe_switch, Some(swipe_off))])
+        // Chromium's scale at 1, which CEF on X11 sizes windows by correctly; the
+        // desktop's is the app's zoom instead. See page_scale.rs.
+        .command_line_args([(
+            crate::page_scale::SWITCH.0,
+            Some(crate::page_scale::SWITCH.1),
+        )])
         .command_line_args(switches(&std::env::var("NIB_CEF_ARGS").unwrap_or_default()))
         // A web tab's developer tools in the build that ships, as in a browser; nib's own
         // window turns its own off outside a development build (`ui_window`).
@@ -183,6 +200,13 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
             .is_some_and(crate::agents::engines::cef::windowless_wanted)
         {
             engine = engine.with_settings(|settings| settings.windowless_rendering_enabled = 1);
+        }
+        // Off the graphics card where Settings turned hardware acceleration off; see gpu.rs.
+        if root
+            .parent()
+            .is_some_and(|config| !crate::gpu::accelerated(config))
+        {
+            engine = engine.command_line_args(crate::gpu::OFF.map(|switch| (switch, None::<&str>)));
         }
         engine = engine.root_cache_path(root);
     }
@@ -283,7 +307,7 @@ pub(crate) fn web_store<R: Runtime>(
     // extensions.rs.
     #[cfg(windows)]
     let builder = builder
-        .additional_browser_args(BROWSER_ARGS)
+        .additional_browser_args(&browser_args(app))
         .browser_extensions_enabled(crate::extensions::in_store(store));
 
     #[cfg(any(windows, target_os = "linux"))]
@@ -393,8 +417,14 @@ pub(crate) fn ui_window<'a, M: tauri::Manager<crate::Engine>>(
 ) -> Result<tauri::WebviewWindowBuilder<'a, crate::Engine, M>, Box<dyn std::error::Error>> {
     let building =
         tauri::WebviewWindowBuilder::from_config(manager, config)?.devtools(cfg!(debug_assertions));
+    // This run's hardware acceleration decided here, as the first window is made and
+    // before the engine starts; every window and page after it asks `gpu::this_run`.
     #[cfg(all(windows, not(feature = "cef")))]
-    let building = building.additional_browser_args(BROWSER_ARGS);
+    if let Ok(settings) = config_dir(manager.app_handle()) {
+        crate::gpu::accelerated(&settings);
+    }
+    #[cfg(all(windows, not(feature = "cef")))]
+    let building = building.additional_browser_args(&browser_args(manager.app_handle()));
     // On CEF, Alloy style: a page and nothing of Chrome's around it, as `WebView2` and
     // `WKWebView` are. A Chrome style browser keeps Chrome's whole accelerator table,
     // which takes Ctrl+Tab, Ctrl+W, Ctrl+T and Ctrl+N before the page is offered them -
@@ -423,7 +453,10 @@ pub(crate) fn own_window<M: tauri::Manager<crate::Engine>>(
     use tauri_runtime_cef::{RuntimeStyle, WebviewWindowBuilderCefExt as _};
     let building = building
         .browser_runtime_style(RuntimeStyle::Alloy)
-        .initialization_script(crate::window_drag::SCRIPT);
+        .initialization_script(crate::window_drag::SCRIPT)
+        .initialization_script(crate::gpu::SCRIPT)
+        .initialization_script(crate::page_scale::SCRIPT)
+        .initialization_script(crate::keyboard::PRESS_SCRIPT);
     match OWN_PROFILE.get() {
         Some(profile) => building.data_directory(profile.clone()),
         None => building,

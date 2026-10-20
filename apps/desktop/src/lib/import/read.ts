@@ -50,7 +50,7 @@ export async function detect(sources: readonly Source[]): Promise<FormatId | nul
   if (has(VAULT)) return 'obsidian'
 
   if (has(/\.enex$/i)) return 'evernote'
-  if (has(/\.note$/i)) return 'tomboy'
+  if (await looksLikeTomboy(sources)) return 'tomboy'
 
   // Papers and nothing else: somebody's own PDF, to be written on rather than
   // converted. Before everything below, because a `.pdf` is the one extension on this
@@ -85,7 +85,7 @@ export async function detect(sources: readonly Source[]): Promise<FormatId | nul
 
   const markdown = paths.filter((one) => /\.(md|markdown|txt)$/i.test(one))
   const html = paths.filter((one) => /\.html?$/i.test(one))
-  const csv = paths.filter((one) => /\.csv$/i.test(one))
+  const csv = paths.filter((one) => /\.(csv|tsv)$/i.test(one))
 
   if (csv.length && (await looksLikeTodoist(sources))) return 'todoist'
   if (csv.length && !markdown.length && !html.length) return 'table'
@@ -109,7 +109,9 @@ export async function detect(sources: readonly Source[]): Promise<FormatId | nul
  *  a note or a web page, bar the `index.html` an HTML export opens on; an export of
  *  nothing but databases has its id on each table instead. */
 function looksLikeNotion(paths: readonly string[]): boolean {
-  const named = (path: string) => hasNotionId(path.split('/').pop() ?? path)
+  // A table of every row is `Tasks <id>_all.csv`, the id before the `_all`.
+  const named = (path: string) =>
+    hasNotionId((path.split('/').pop() ?? path).replace(/_all(\.csv)$/i, '$1'))
   const pages = paths.filter(
     (one) => /\.(md|markdown|html?)$/i.test(one) && !/(^|\/)index\.html$/i.test(one),
   )
@@ -193,6 +195,19 @@ async function looksLikeJournal(sources: readonly Source[]): Promise<boolean> {
 
   const dated = entries.every((one) => /^\d{4}-\d{2}-\d{2}/.test(one.path.split('/').pop() ?? ''))
   return dated && sources.some((one) => /(^|\/)resources\//i.test(one.path))
+}
+
+/** A Tomboy or Gnote note, which says so in its XML. The extension alone is not
+ *  enough: a `.note` somebody wrote by hand among their markdown would otherwise
+ *  have the whole folder read as Tomboy, and every markdown file in it left out. */
+async function looksLikeTomboy(sources: readonly Source[]): Promise<boolean> {
+  const notes = sources.filter((one) => /\.note$/i.test(one.path)).slice(0, PEEK)
+
+  for (const note of notes) {
+    if (/<note-content[\s>/]/.test((await note.text()).slice(0, 8000))) return true
+  }
+
+  return false
 }
 
 /** Apple's own HTML, which is what every Apple Notes exporter hands over: a

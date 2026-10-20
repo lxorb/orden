@@ -99,31 +99,32 @@ export function textsOf(xml: string, name: string): string[] {
   return elements(xml, name).map((one) => plainText(one.inner))
 }
 
-/** CDATA unwrapped and entities resolved, which is what a field holds. */
+/** CDATA unwrapped and entities resolved, which is what a field holds.
+ *
+ *  Entities outside the sections only: what is inside one is taken as written,
+ *  which is what CDATA is for. An Evernote note's body is a section of markup in
+ *  which `a &lt; b` is the words "a < b"; resolved a second time it was a tag, and
+ *  the words after it went with it. */
 export function plainText(inner: string): string {
-  return unescapeXml(withoutCdata(inner))
-}
-
-function withoutCdata(text: string): string {
   let out = ''
   let at = 0
 
-  while (at < text.length) {
-    const open = text.indexOf(CDATA, at)
+  while (at < inner.length) {
+    const open = inner.indexOf(CDATA, at)
     if (open < 0) {
-      out += text.slice(at)
+      out += unescapeXml(inner.slice(at))
       break
     }
 
-    out += text.slice(at, open)
-    const close = text.indexOf(CDATA_END, open + CDATA.length)
+    out += unescapeXml(inner.slice(at, open))
+    const close = inner.indexOf(CDATA_END, open + CDATA.length)
     if (close < 0) {
       // Unterminated, so the rest of the document is the section's contents.
-      out += text.slice(open + CDATA.length)
+      out += inner.slice(open + CDATA.length)
       break
     }
 
-    out += text.slice(open + CDATA.length, close)
+    out += inner.slice(open + CDATA.length, close)
     at = close + CDATA_END.length
   }
 

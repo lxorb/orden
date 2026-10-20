@@ -111,6 +111,7 @@ describe('a page’s text, as a note may hold it', () => {
       expect(escapeText('=== und weiter')).toBe('\\=== und weiter')
       expect(escapeText('~~~ und weiter')).toBe('\\~~~ und weiter')
       expect(escapeText('1. eins')).toBe('1\\. eins')
+      expect(escapeText('1) eins')).toBe('1\\) eins')
     })
 
     test('and is not where the same characters are punctuation', () => {
@@ -118,6 +119,7 @@ describe('a page’s text, as a note may hold it', () => {
       expect(escapeText('#hashtag')).toBe('#hashtag')
       expect(escapeText('sagte sie > mir')).toBe('sagte sie > mir')
       expect(escapeText('Kapitel 1. eins')).toBe('Kapitel 1. eins')
+      expect(escapeText('Kapitel 1) eins')).toBe('Kapitel 1) eins')
     })
   })
 

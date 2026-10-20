@@ -95,9 +95,10 @@
       // lose its first rows off the top, with nothing to scroll them back. It is
       // capped at the window's height in the styles below, so this is now only
       // where it starts.
+      const y = menu.up ? menu.y - element.offsetHeight : menu.y
       position = {
         x: Math.max(8, Math.min(menu.x, window.innerWidth - width - 8)),
-        y: Math.max(8, Math.min(menu.y, window.innerHeight - height - 8)),
+        y: Math.max(8, Math.min(y, window.innerHeight - height - 8)),
       }
       return
     }

@@ -8,6 +8,8 @@
    *  than a gap between two floats. */
 
   import { alone } from './alone.svelte'
+  import { steppedKey } from './direction'
+  import { t } from './i18n.svelte'
   import Pane from './Pane.svelte'
   import PaneTree from './PaneTree.svelte'
   import { type Frame, paneIn, type Split } from './workspace/pane-tree'
@@ -81,6 +83,32 @@
     handle.addEventListener('pointercancel', stop)
   }
 
+  /** How far an arrow moves the divider, as a share of the room. */
+  const STEP = 0.05
+
+  /** The divider moved from the keyboard, as the sidebar's edge is: the arrows along the
+   *  split a step at a time, Home and End to either end, and Enter both sides the same
+   *  again, which is what a double click does (#523). */
+  function nudge(event: KeyboardEvent, split: Split) {
+    if (!host) return
+    const row = split.along === 'row'
+    const to = {
+      Home: 0,
+      End: 1,
+      [row ? 'ArrowLeft' : 'ArrowUp']: split.fraction - STEP,
+      [row ? 'ArrowRight' : 'ArrowDown']: split.fraction + STEP,
+    }[steppedKey(event.key)]
+
+    if (event.key === 'Enter' || event.key === ' ') workspace.panes.equalise(split.id)
+    else if (to === undefined) return
+    else {
+      const box = host.getBoundingClientRect()
+      workspace.panes.resize(split.id, to, row ? box.width : box.height)
+      workspace.panes.settle()
+    }
+    event.preventDefault()
+  }
+
   const share = (split: Split) =>
     `${(split.fraction * 100).toFixed(3)}% 1px ${((1 - split.fraction) * 100).toFixed(3)}%`
 </script>
@@ -98,11 +126,18 @@
          collapsing split is null, and an item keeps the last side. -->
     {#each split.sides as side, at (side.id)}
       {#if at === 1 && kept < 0}
-        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <!-- A separator a key can move, as the sidebar's edge is; see Sidebar.svelte. -->
+        <!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
         <div
           class="divider"
+          role="separator"
+          aria-orientation={split.along === 'row' ? 'vertical' : 'horizontal'}
+          aria-valuenow={Math.round(split.fraction * 100)}
+          tabindex="0"
+          title={t('Drag to resize')}
           onpointerdown={(event) => grab(event, split)}
           ondblclick={() => workspace.panes.equalise(split.id)}
+          onkeydown={(event) => nudge(event, split)}
         ></div>
       {/if}
 
@@ -160,6 +195,7 @@
   }
 
   .divider:hover,
+  .divider:focus-visible,
   .split.sliding > .divider {
     background: var(--accent);
   }

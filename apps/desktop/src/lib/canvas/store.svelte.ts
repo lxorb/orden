@@ -117,7 +117,7 @@ export class CanvasStore implements PlaneSurface {
 
   protected readonly tab: Tab
   private readonly note: NoteDoc
-  private readonly history = new CanvasHistory()
+  private readonly history: CanvasHistory
   /** Which revision of the document this surface has read. Anything past it came
    *  from somewhere else and has to be taken on; see `follow`. */
   private at = -1
@@ -144,6 +144,10 @@ export class CanvasStore implements PlaneSurface {
     this.tab = tab
     this.note = tab.note
     this.read()
+    const left = LEFT.get(tab)
+    this.history =
+      left?.note === this.note && left.revision === this.at ? left.history : new CanvasHistory()
+    this.stackChanged()
     this.restored = tab.camera === undefined ? viewOf(tab.path) : null
 
     // Where this device left the plane, so opening the canvas again - tomorrow, or
@@ -376,6 +380,7 @@ export class CanvasStore implements PlaneSurface {
     // the plane without the word in it. See canvas/writing.ts.
     flushCardEdits()
     this.writing.flush()
+    LEFT.set(this.tab, { note: this.note, revision: this.at, history: this.history })
 
     // Where the reading was left, for this device: coming back to the plane, or opening
     // it again, lands here. Only once it has been framed, so an empty plane nobody moved
@@ -525,7 +530,8 @@ export class CanvasStore implements PlaneSurface {
   private keepPicked() {
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read within this call and thrown away; nothing renders from it
     const held = new Set([
-      ...this.canvas.nodes.map((node) => node.id),
+      // Something locked in place is not picked either, once a lock or an undo says so.
+      ...this.canvas.nodes.filter((node) => !node.locked).map((node) => node.id),
       ...this.canvas.edges.map((edge) => edge.id),
       ...this.canvas.ink.map((stroke) => stroke.id),
     ])
@@ -542,6 +548,7 @@ export class CanvasStore implements PlaneSurface {
   /** A plain click picks one thing; Shift or Ctrl adds to what is picked and
    *  takes an already-picked one out again, the way a file list does. */
   pick(id: string, adding = false) {
+    if (this.lockedIds().has(id)) return
     if (!adding) {
       if (this.picked.length !== 1 || this.picked[0] !== id) this.picked = [id]
       return
@@ -556,9 +563,9 @@ export class CanvasStore implements PlaneSurface {
     const wanted = adding ? [...this.picked, ...ids] : ids
     // Each id once, in the order they arrived. Through a set rather than by
     // looking back along the list, because a rubber band answers on every
-    // pointer event and may have caught five hundred cards.
-    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read within this call and thrown away; nothing renders from it
-    const seen = new Set<string>()
+    // pointer event and may have caught five hundred cards. Begun with what is
+    // locked, so that is never let through.
+    const seen = this.lockedIds()
     const next = wanted.filter((id) => {
       if (seen.has(id)) return false
 
@@ -568,6 +575,13 @@ export class CanvasStore implements PlaneSurface {
     if (next.length === this.picked.length && next.every((id, at) => this.picked[at] === id)) return
 
     this.picked = next
+  }
+
+  /** What is locked in place, which nothing picks: not a press, a band, Ctrl+A or a
+   *  find (#643). Unlocked from the menu, which finds it under the press. */
+  private lockedIds(): Set<string> {
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- read within one call and thrown away; nothing renders from it
+    return new Set(this.canvas.nodes.filter((node) => node.locked).map((node) => node.id))
   }
 
   clearPicked() {
@@ -630,6 +644,13 @@ export class CanvasStore implements PlaneSurface {
  *  else about it and this list never keeps one alive. */
 // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it; see above
 const drawn = new Set<WeakRef<CanvasStore>>()
+
+/** What each tab's plane could take back as it was left: the surface is made again
+ *  every time the tab comes back to the front, and the undo went with it. With the
+ *  document and the revision it was left at, since a tab can move on to another
+ *  document and words can arrive while it is away, and either makes it stale. Weak, so
+ *  a tab that closes takes it along. */
+const LEFT = new WeakMap<Tab, { note: NoteDoc; revision: number; history: CanvasHistory }>()
 
 /** Every plane's file written now. Said to `parting.ts` when this module is first
  *  loaded, which is when the first canvas opens: the launch must not have to load the

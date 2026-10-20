@@ -12,6 +12,7 @@
  *  stays words: people put the date at the end, and the words before it are free to
  *  mention a Friday. */
 
+import { TAG_NAME } from '@nib/markdown/tags'
 import { tagsIn } from '@nib/markdown/task-line'
 import type { Priority, Remind } from '@nib/markdown/task-line'
 import { addDays } from '../dates'
@@ -93,7 +94,7 @@ interface Found {
   apply(into: QuickAdd): void
 }
 
-const TAG = /^[#@%]([\p{L}][\p{L}\p{N}\-_/]*)$/u
+const TAG = new RegExp(String.raw`^[#@%](${TAG_NAME})$`, 'u')
 const PERSON = /^\+([\p{L}][\p{L}\p{N}\-_.]*)$/u
 const PRIORITY = /^p([1-4])$/i
 

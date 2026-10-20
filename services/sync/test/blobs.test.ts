@@ -1,3 +1,4 @@
+import { diagramKey } from '@nib/markdown/diagrams'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { call, file, signIn, testEnv, type TestEnv } from './harness'
 import { QUOTA } from '../src/storage'
@@ -201,6 +202,32 @@ describe('bytes under a hash that is not theirs', () => {
     expect(new Uint8Array(await stored!.arrayBuffer())).toEqual(drawing)
     // And the stranger is given no row for it: a row is what lets a post name a blob.
     expect(env.db.prepare('select hash from blobs where hash = ?').all(key)).toHaveLength(1)
+  })
+
+  /** And a diagram sent with what its name was hashed from is held to that: the
+   *  name has to be the hash of it, in a space the uploader may write in (#518). */
+  test('as a diagram with its fence, are kept only under the name that fence makes', async () => {
+    const space = (env.db.prepare('select id from spaces limit 1').get() as { id: string }).id
+    const fence = { space, language: 'mermaid', scheme: 'light', code: 'graph TD\n  A --> B' }
+    const key = await diagramKey(space, fence.language, fence.code, 'light')
+    const drawing = new TextEncoder().encode('<svg xmlns="http://www.w3.org/2000/svg"/>')
+    const put = (hash: string, said: Record<string, string>, as = token) =>
+      call(env, `/v1/blobs/${hash}`, {
+        method: 'PUT',
+        token: as,
+        raw: drawing,
+        headers: {
+          'content-type': 'image/svg+xml',
+          'x-nib-diagram': new URLSearchParams(said).toString(),
+        },
+      })
+
+    expect((await put('d'.repeat(64), fence)).status).toBe(400)
+    expect((await put(key, { ...fence, code: 'graph TD\n  A --> C' })).status).toBe(400)
+    expect((await put(key, fence, await signIn(env, 'c@d.dev'))).status).toBe(400)
+    expect(env.db.prepare('select hash from blobs where type = ?').all('image/svg+xml')).toEqual([])
+
+    expect((await put(key, fence)).status).toBe(201)
   })
 })
 

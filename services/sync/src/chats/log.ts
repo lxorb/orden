@@ -546,7 +546,6 @@ export class ChatLog implements DurableObject {
       const id = hubIdOf(who)
       const guest = who.startsWith('guest:')
       const reached = await reachAs(this.env, { id, guest }, chat)
-      this.sql.exec('delete from scheduled where id = ?', one.id)
       const post = JSON.parse(one.post) as Post
       const answer = reached
         ? await this.take(
@@ -555,6 +554,9 @@ export class ChatLog implements DurableObject {
             null,
           )
         : ({ t: 'refused', id: post.id, error: ROLE } as const)
+      // Only once it has gone or been refused: a take that threw - the database a
+      // moment away - leaves it for the next alarm, which places it once.
+      this.sql.exec('delete from scheduled where id = ?', one.id)
       if (answer.t === 'refused') {
         this.sql.exec(
           `insert into scheduled (id, message, author, device, send_at, post, refused)

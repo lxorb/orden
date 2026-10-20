@@ -23,8 +23,9 @@
  *  the end of it, and the pages nobody is looking at are the ones to let go of. */
 
 import type { OpenPdf } from '../pdf/document'
-import { openDocument } from '../pdf/document'
+import { openBytes, openDocument } from '../pdf/document'
 import { PDF_TO_CSS } from '../pdf/pages'
+import { isPagesTarget } from '@nib/markdown/links'
 import { paperPlaces } from './held'
 
 /** How much bigger than the page itself a background is drawn. */
@@ -75,6 +76,9 @@ export interface PaperAt {
   note: string | null
   /** The root of the space it is in, or null when it is in none. */
   root: string | null
+  /** The note's id on the account, for a note shared on its own, which has no path
+   *  here: its paper is the account's to hand over (pages/carried.ts). */
+  shared?: string | null
 }
 
 /** One paper, named the same way twice, so two pages of it are one document.
@@ -84,7 +88,8 @@ export interface PaperAt {
  *  in different folders naming the same paper under the space's root open it twice,
  *  which is a worker apiece and rare enough to leave alone. */
 function keyOf(at: PaperAt): string {
-  return paperPlaces(at.file, at.note, at.root).join('\n')
+  const places = paperPlaces(at.file, at.note, at.root)
+  return at.shared ? [...places, `#${at.shared}`].join('\n') : places.join('\n')
 }
 
 /** One page of a paper as a picture, drawn now or already drawn.
@@ -99,8 +104,14 @@ export function paperOf(at: PaperAt, number: number): Promise<Paper | null> {
 
   let one = held.get(key)
   if (!one) {
-    one = { open: opened(at), drawn: new Map(), recent: [] }
-    held.set(key, one)
+    const made: Held = { open: opened(at), drawn: new Map(), recent: [] }
+    // A paper that could not be opened is not kept as one: it may be on its way - from
+    // the account, or a pass from now (pages/carried.ts) - and the next ask tries again.
+    made.open.catch(() => {
+      if (held.get(key) === made) held.delete(key)
+    })
+    held.set(key, made)
+    one = made
   }
 
   const already = one.drawn.get(number)
@@ -138,7 +149,27 @@ async function opened(at: PaperAt): Promise<OpenPdf> {
     }
   }
 
+  // Nowhere here: the paper of a page note is part of the note, and the account has it
+  // where any device has carried it up (#551). Another device's note opened before a
+  // pass brought its paper down, and a note shared on its own, open on it.
+  const fetched = await fromAccount(at).catch(() => null)
+  if (fetched) return await openBytes(fetched)
+
   throw last instanceof Error ? last : new Error(String(last))
+}
+
+/** The paper the account holds for the note a page is in, or null where there is no
+ *  such note or it holds none. */
+async function fromAccount(at: PaperAt): Promise<Uint8Array | null> {
+  const id = at.shared ?? (at.note && isPagesTarget(at.note) ? await accountIdOf(at.note) : null)
+  if (!id) return null
+  const { paperFromAccount } = await import('./carrying')
+  return await paperFromAccount(id, at.shared ? null : at.note)
+}
+
+async function accountIdOf(note: string): Promise<string | null> {
+  const { sync } = await import('../sync.svelte')
+  return sync.tracked(note)?.id ?? null
 }
 
 function touch(one: Held, number: number) {

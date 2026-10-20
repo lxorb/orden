@@ -562,13 +562,16 @@
 >
   <!-- Named, because a region of the page that has no name is one a reader cannot
      tell from the next: the words are the space's, which is what the panel is
-     about. -->
+     about. The right one is called what its toggle is, or the two had one name
+     (#523). -->
   <aside
     bind:this={aside}
     bind:clientWidth={asideWidth}
     data-region={side === 'right' ? 'right' : undefined}
     data-sidebar
-    aria-label={t('{space} panel', { space: workspace.activeSpace?.name ?? t('Space') })}
+    aria-label={side === 'right'
+      ? t('Right sidebar')
+      : t('{space} panel', { space: workspace.activeSpace?.name ?? t('Space') })}
     class:resizing={size.dragging}
     class:right={side === 'right'}
   >
@@ -629,18 +632,7 @@
       </div>
     {/if}
 
-    <!-- A file carried up out of the list; see `offered` in Bookmarks.svelte. -->
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div
-      class="switch"
-      bind:clientWidth={rowWidth}
-      ondragover={() => {
-        const drag = workspace.panes.dragging
-        if (drag?.tabId === null && !drag.upward) {
-          workspace.panes.dragging = { ...drag, upward: true }
-        }
-      }}
-    >
+    <div class="switch" bind:clientWidth={rowWidth}>
       <!-- Four tabs are one tab stop, and left and right move between them. They
          change as they are arrived at, because what each of them shows is already
          worked out and arrives without a wait - which is the rule the ARIA practices

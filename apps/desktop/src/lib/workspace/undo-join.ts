@@ -46,3 +46,30 @@ export function joinLast(undone: FileActions): boolean {
   undone.stack = [...undone.stack.slice(0, -2), action]
   return true
 }
+
+/** The earlier action and the later one as one, wherever the later one wrote: a card
+ *  carried to another column writes its note and the base's order of that column, two
+ *  files, and one undo puts both back. A note both wrote is joined only where the later
+ *  write started from what the earlier left. Null where they cannot be one. */
+export function gatheredAction(
+  earlier: FileAction | undefined,
+  notes: readonly Replaced[],
+): FileAction | null {
+  if (earlier?.kind !== 'replace') return null
+  const mine = notes.filter((note) => earlier.notes.some((one) => samePath(one.path, note.path)))
+  const joined = joinedAction(earlier, mine)
+  if (joined?.kind !== 'replace') return null
+  const rest = notes.filter((note) => !mine.includes(note))
+  return { kind: 'replace', notes: [...joined.notes, ...rest] }
+}
+
+/** Folds the newest undo into the one before it, wherever it wrote; see `gatheredAction`.
+ *  Answers whether it did. */
+export function gatherLast(undone: FileActions): boolean {
+  const last = undone.stack.at(-1)
+  if (last?.kind !== 'replace') return false
+  const action = gatheredAction(undone.stack.at(-2), last.notes)
+  if (!action) return false
+  undone.stack = [...undone.stack.slice(0, -2), action]
+  return true
+}

@@ -8,6 +8,7 @@
     ".": "./src/index.ts",
     "./flow": "./src/live-preview/flow.ts",
     "./menu": "./src/menu.ts",
+    "./note-links": "./src/wikilink/note-links.ts",
     "./review": "./src/review/marks.ts",
     "./task-days": "./src/task-days.ts"
   },
@@ -27,6 +28,7 @@
     "@codemirror/view": "^6.43.10",
     "@lezer/common": "^1.5.2",
     "@lezer/highlight": "^1.2.3",
+    "@lezer/javascript": "^1.5.4",
     "@lezer/markdown": "^1.7.2",
     "@nib/markdown": "workspace:*",
     "@nib/rooms": "workspace:*",

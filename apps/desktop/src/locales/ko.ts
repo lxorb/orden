@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const ko: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': '준비 완료',
+  Personalize: '맞춤 설정',
+  Clean: '깔끔하게',
+  'Live preview': '라이브 미리보기',
+  'Developer mode': '개발자 모드',
+  'Do you write code?': '코드를 작성하시나요?',
+  Yes: '예',
+  No: '아니요',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': '다른 앱에서: {key}',
   'From other apps: set in your system settings': '다른 앱에서: 시스템 설정에서 지정',
@@ -79,6 +88,7 @@ export const ko: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': '작업 하나',
   'One per line': '줄마다 하나',
+  'Add with AI': 'AI로 추가',
   // Tasks: the projects in the panel
   Favorites: '즐겨찾기',
   'Add project': '프로젝트 추가',
@@ -122,6 +132,7 @@ export const ko: Dictionary = {
   'Pointing hand on buttons': '버튼 위에서 손가락 포인터',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': '할 일 추가',
+  'Apple Shortcuts': 'Apple 단축어',
   Tomorrow: '내일',
   'done {date}': '{date} 완료',
   'Next week': '다음 주',
@@ -184,6 +195,7 @@ export const ko: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': '두 손가락으로 캔버스 회전',
+  'Snap the rotation to right angles': '회전을 직각에 맞추기',
   'Turn upright': '똑바로 세우기',
   Canvas: '캔버스',
   Card: '카드',
@@ -277,6 +289,7 @@ export const ko: Dictionary = {
   Tabs: '탭',
   'Ctrl+Tab in order of use': 'Ctrl+Tab을 사용 순서로',
   'Swipe between pages': '페이지 간 쓸어넘기기',
+  'Hardware acceleration': '하드웨어 가속',
   'Hidden tabs': '숨겨진 탭',
   'Memory saver': '메모리 절약',
   Moderate: '보통',
@@ -1140,6 +1153,8 @@ export const ko: Dictionary = {
   Elbow: '꺾은 선',
   Frame: '프레임',
   Ungroup: '그룹 해제',
+  Lock: '잠금',
+  Unlock: '잠금 해제',
   'The ink of the page': '페이지의 잉크',
   'Write in what is picked': '선택한 것 안에 쓰기',
   Pen: '펜',
@@ -1280,11 +1295,15 @@ export const ko: Dictionary = {
     '{count}개 구절이 암호화되어 Evernote 없이는 읽을 수 없습니다',
   '{count} notes had a reminder, which the export does not carry':
     '{count}개 노트에 알림이 있었지만 내보내기에는 담기지 않습니다',
+  '{count} attachments were missing from the export or could not be read':
+    '첨부 파일 {count}개가 내보내기에 없거나 읽을 수 없었습니다',
   '{count} notes were in the bin and stay there':
     '{count}개 노트가 휴지통에 있었고 그대로 남습니다',
   '{count} archived notes are in a folder called Archive':
     '보관된 {count}개 노트가 Archive 폴더에 있습니다',
   'The colours a note had are not kept': '노트에 있던 색은 보관되지 않습니다',
+  '{count} files could not be read, so they were left out':
+    '읽을 수 없는 파일 {count}개는 빠졌습니다',
   '{count} block references were written out as the words they pointed at':
     '{count}개 블록 참조가 가리키던 글로 풀어 써졌습니다',
   '{count} saved views are left out, and every row is in the table':
@@ -1309,6 +1328,8 @@ export const ko: Dictionary = {
     '기분과 활동 카드 {count}개가 그림이라 글만 넘어옵니다',
   '{count} notes are behind a password, which nothing but Notes can open':
     '노트 {count}개가 메모만 열 수 있는 암호 뒤에 있습니다',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '노트 {count}개가 Bear만 열 수 있는 암호 뒤에 있습니다',
   '{count} notes are in Recently Deleted, and stay there':
     '노트 {count}개가 최근 삭제된 항목에 있고 그대로 남습니다',
   '{count} drawings and scans have no picture on this Mac':
@@ -1547,6 +1568,7 @@ export const ko: Dictionary = {
   'Ask the model': '모델에 질문',
   'answered by {model}, {date}': '{model} 답변, {date}',
   'AI block': 'AI 블록',
+  'Do with AI': 'AI로 하기',
   'Highlight colour': '형광펜 색',
   'A single newline breaks the line': '줄바꿈 한 번으로 줄이 나뉨',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -1862,6 +1884,8 @@ export const ko: Dictionary = {
   'Settings › AI': '설정 › AI',
   'New chat': '새 채팅',
   'Ask again': '다시 묻기',
+  'Continue when the limit resets': '한도가 초기화되면 계속',
+  'Continues at {time}': '{time}에 계속합니다',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': '무엇이든 물어보세요. @ 추가, / 더 보기',
   'What can I help with?': '무엇을 도와드릴까요?',
@@ -2329,4 +2353,29 @@ export const ko: Dictionary = {
   Peach: '피치',
   Sage: '세이지',
   Mist: '안개',
+  // A board, Notion's: its columns, its cards, its settings, a new database
+  'New database': '새 데이터베이스',
+  'New page': '새 페이지',
+  'Not started': '시작 전',
+  'In progress': '진행 중',
+  'No {property}': '{property} 없음',
+  '{card} moved to {group}': '{card}을(를) {group}(으)로 이동함',
+  'Not moved': '이동하지 못함',
+  Retry: '다시 시도',
+  Calculate: '계산',
+  'Remove sort': '정렬 제거',
+  'Remove sort?': '정렬을 제거할까요?',
+  Groups: '그룹',
+  'Hidden groups': '숨긴 그룹',
+  'Add as option': '옵션으로 추가',
+  'Move left': '왼쪽으로 이동',
+  'Move right': '오른쪽으로 이동',
+  'Delete option': '옵션 삭제',
+  'Colour columns': '열 색상 지정',
+  'Hide empty groups': '빈 그룹 숨기기',
+  'Card size': '카드 크기',
+  Small: '작게',
+  Large: '크게',
+  Both: '둘 다',
+  'Shown on cards': '카드에 표시',
 }

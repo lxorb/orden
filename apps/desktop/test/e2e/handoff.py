@@ -122,9 +122,8 @@ def opened(made: Any, origin: str) -> Page:
 
 
 def import_pane(page: Page) -> None:
-    """Settings > Import, the way a reader gets there: the welcome note's last line,
-    followed with the modifier, as every link in a note is."""
-    page.get_by_text("Import from Obsidian or Notion").first.click(modifiers=["ControlOrMeta"])
+    """Settings > Import."""
+    page.evaluate("window.nibApp.settings.show('import')")
     wait_for(page, "!!document.querySelector('[role=dialog]')", "Settings > Import")
 
 

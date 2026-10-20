@@ -1,7 +1,7 @@
-import { redo, undo } from '@codemirror/commands'
 import { EditorSelection, type StateCommand } from '@codemirror/state'
-import type { EditorView } from '@codemirror/view'
+import type { Command, EditorView } from '@codemirror/view'
 import { label, type LabelKey } from '../labels'
+import { redoEdit, undoEdit } from '../shared'
 import {
   attached,
   button,
@@ -453,7 +453,12 @@ export class TableView {
 
     cell.addEventListener('focus', () => showSource(cell))
     cell.addEventListener('blur', () => this.left(cell, at))
-    cell.addEventListener('input', () => this.edited(cell, at))
+    // What an input method has not committed yet is not the cell's text: it is
+    // written once the composition ends.
+    cell.addEventListener('input', (event) => {
+      if (!(event as InputEvent).isComposing) this.edited(cell, at)
+    })
+    cell.addEventListener('compositionend', () => this.edited(cell, at))
     cell.addEventListener('keydown', (event) => this.keyInCell(event, cell, at))
     cell.addEventListener('beforeinput', (event) => this.inputInCell(event, cell, at))
     cell.addEventListener('paste', (event) => this.pasteInCell(event, cell, at))
@@ -491,6 +496,11 @@ export class TableView {
   }
 
   private keyInCell(event: KeyboardEvent, cell: HTMLElement, at: CellAddress) {
+    // While an input method composes, its keys are its own: the Enter that picks
+    // a candidate is not a step to the cell below. Safari ends the composition
+    // before that Enter arrives, so only its key code still says so.
+    // eslint-disable-next-line @typescript-eslint/no-deprecated -- the one sign Safari gives
+    if (event.isComposing || event.keyCode === 229) return
     const mod = event.ctrlKey || event.metaKey
     const key = event.key
 
@@ -524,11 +534,11 @@ export class TableView {
     if (mod && !event.altKey) {
       const lower = key.toLowerCase()
       if (lower === 'z' && !event.shiftKey) {
-        this.history(event, undo, cell, at)
+        this.history(event, undoEdit, cell, at)
         return
       }
       if (lower === 'y' || (lower === 'z' && event.shiftKey)) {
-        this.history(event, redo, cell, at)
+        this.history(event, redoEdit, cell, at)
         return
       }
       // The browser's select-all reaches past the cell to the whole document.
@@ -593,7 +603,7 @@ export class TableView {
 
   /** Undo and redo are the editor's, not the browser's: a cell's edits live
    *  in the document. The caret stays in the cell through the redraw. */
-  private history(event: Event, command: StateCommand, cell: HTMLElement, at: CellAddress) {
+  private history(event: Event, command: Command, cell: HTMLElement, at: CellAddress) {
     event.preventDefault()
     this.flush()
     this.focusAfter = { at, offset: caretOffset(cell) }
@@ -620,9 +630,9 @@ export class TableView {
     if (type.startsWith('format') || type === 'insertParagraph' || type === 'insertLineBreak') {
       event.preventDefault()
     } else if (type === 'historyUndo') {
-      this.history(event, undo, cell, at)
+      this.history(event, undoEdit, cell, at)
     } else if (type === 'historyRedo') {
-      this.history(event, redo, cell, at)
+      this.history(event, redoEdit, cell, at)
     }
   }
 

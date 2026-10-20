@@ -79,6 +79,8 @@ describe('what a program may reach', () => {
     expect(programMayReach('GET', '/v1/notes/abc/versions/1/more', false)).toBe(false)
     expect(programMayReach('GET', '/v1/spaces/abc/changes/x', false)).toBe(false)
     expect(programMayReach('GET', '/v1/spaces/abc/notes', false)).toBe(false)
+    // Whether a blog name is free, which only has the change feed's shape.
+    expect(programMayReach('GET', '/v1/spaces/available/changes', false)).toBe(false)
   })
 
   test('and a token that may only read reaches nothing that writes', () => {

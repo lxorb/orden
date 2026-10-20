@@ -1,6 +1,15 @@
 import type { Dictionary } from '../lib/i18n.svelte.js'
 
 export const hi: Dictionary = {
+  // The first run's optional questions, and Settings' Developer mode
+  'All set': 'सब तैयार है',
+  Personalize: 'अपने हिसाब से बनाएँ',
+  Clean: 'साफ़',
+  'Live preview': 'लाइव प्रीव्यू',
+  'Developer mode': 'डेवलपर मोड',
+  'Do you write code?': 'क्या आप कोड लिखते हैं?',
+  Yes: 'हाँ',
+  No: 'नहीं',
   // Keys from other apps, where the system holds them (hotkeys.rs)
   'From other apps: {key}': 'दूसरे ऐप्स से: {key}',
   'From other apps: set in your system settings': 'दूसरे ऐप्स से: सिस्टम सेटिंग्स में तय करें',
@@ -82,6 +91,7 @@ export const hi: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'एक कार्य',
   'One per line': 'हर पंक्ति पर एक',
+  'Add with AI': 'AI से जोड़ें',
   // Tasks: the projects in the panel
   Favorites: 'पसंदीदा',
   'Add project': 'प्रोजेक्ट जोड़ें',
@@ -125,6 +135,7 @@ export const hi: Dictionary = {
   'Pointing hand on buttons': 'बटनों पर इशारा करता हाथ',
   // Tasks: quick add, its controls and its pickers, and the chips in a note
   'Add task': 'कार्य जोड़ें',
+  'Apple Shortcuts': 'Apple शॉर्टकट',
   Tomorrow: 'कल',
   'done {date}': 'पूरा {date}',
   'Next week': 'अगले सप्ताह',
@@ -187,6 +198,7 @@ export const hi: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'दो उंगलियों से कैनवास घुमाएँ',
+  'Snap the rotation to right angles': 'घुमाव को समकोणों पर स्नैप करें',
   'Turn upright': 'सीधा करें',
   Canvas: 'कैनवास',
   Card: 'कार्ड',
@@ -280,6 +292,7 @@ export const hi: Dictionary = {
   Tabs: 'टैब',
   'Ctrl+Tab in order of use': 'उपयोग के क्रम में Ctrl+Tab',
   'Swipe between pages': 'पेजों के बीच स्वाइप करें',
+  'Hardware acceleration': 'हार्डवेयर एक्सेलरेशन',
   'Hidden tabs': 'छिपे हुए टैब',
   'Memory saver': 'मेमोरी सेवर',
   Moderate: 'मध्यम',
@@ -1153,6 +1166,8 @@ export const hi: Dictionary = {
   Elbow: 'कोहनी',
   Frame: 'फ़्रेम',
   Ungroup: 'समूह तोड़ें',
+  Lock: 'लॉक करें',
+  Unlock: 'अनलॉक करें',
   'The ink of the page': 'पेज की स्याही',
   'Write in what is picked': 'चुने हुए में लिखें',
   Pen: 'पेन',
@@ -1293,10 +1308,18 @@ export const hi: Dictionary = {
     '{count} अंश एन्क्रिप्टेड हैं, और Evernote के बिना उन्हें कुछ नहीं पढ़ सकता',
   '{count} notes had a reminder, which the export does not carry':
     '{count} नोट में रिमाइंडर था, जो एक्सपोर्ट में नहीं आता',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} अटैचमेंट एक्सपोर्ट में नहीं थे या पढ़े नहीं जा सके',
+    other: '{count} अटैचमेंट एक्सपोर्ट में नहीं थे या पढ़े नहीं जा सके',
+  },
   '{count} notes were in the bin and stay there': '{count} नोट कूड़े में थे और वहीं रहते हैं',
   '{count} archived notes are in a folder called Archive':
     '{count} संग्रहित नोट Archive नाम के फ़ोल्डर में हैं',
   'The colours a note had are not kept': 'नोट के रंग नहीं रखे जाते',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} फ़ाइल पढ़ी नहीं जा सकी, इसलिए छोड़ दी गई',
+    other: '{count} फ़ाइलें पढ़ी नहीं जा सकीं, इसलिए छोड़ दी गईं',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} ब्लॉक संदर्भ उन शब्दों के रूप में लिखे गए जिन पर वे इशारा करते थे',
   '{count} saved views are left out, and every row is in the table': {
@@ -1323,6 +1346,8 @@ export const hi: Dictionary = {
     '{count} मनोभाव और गतिविधि कार्ड चित्र हैं, इसलिए केवल उनके शब्द आते हैं',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} नोट पासवर्ड के पीछे हैं, जिसे केवल Notes खोल सकता है',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} नोट पासवर्ड के पीछे हैं, जिसे केवल Bear खोल सकता है',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} नोट हाल में हटाए गए में हैं और वहीं रहते हैं',
   '{count} drawings and scans have no picture on this Mac':
@@ -1565,6 +1590,7 @@ export const hi: Dictionary = {
   'Ask the model': 'मॉडल से पूछें',
   'answered by {model}, {date}': '{model} का उत्तर, {date}',
   'AI block': 'AI ब्लॉक',
+  'Do with AI': 'AI से करें',
   'Highlight colour': 'हाइलाइट का रंग',
   'A single newline breaks the line': 'एक ही नई पंक्ति पंक्ति तोड़ती है',
   'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.':
@@ -1884,6 +1910,8 @@ export const hi: Dictionary = {
   'Settings › AI': 'सेटिंग्स › AI',
   'New chat': 'नई चैट',
   'Ask again': 'फिर से पूछें',
+  'Continue when the limit resets': 'सीमा रीसेट होने पर जारी रखें',
+  'Continues at {time}': '{time} पर जारी रहेगा',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'कुछ भी पूछें, जोड़ने के लिए @, और के लिए /',
   'What can I help with?': 'मैं किसमें मदद करूँ?',
@@ -2357,4 +2385,29 @@ export const hi: Dictionary = {
   Peach: 'आड़ू',
   Sage: 'सेज',
   Mist: 'धुंध',
+  // A board, Notion's: its columns, its cards, its settings, a new database
+  'New database': 'नया डेटाबेस',
+  'New page': 'नया पेज',
+  'Not started': 'शुरू नहीं हुआ',
+  'In progress': 'जारी है',
+  'No {property}': '{property} के बिना',
+  '{card} moved to {group}': '{card} को {group} में ले जाया गया',
+  'Not moved': 'नहीं ले जाया गया',
+  Retry: 'फिर से कोशिश करें',
+  Calculate: 'गणना करें',
+  'Remove sort': 'क्रम हटाएँ',
+  'Remove sort?': 'क्रम हटाएँ?',
+  Groups: 'समूह',
+  'Hidden groups': 'छिपे हुए समूह',
+  'Add as option': 'विकल्प के रूप में जोड़ें',
+  'Move left': 'बाएँ ले जाएँ',
+  'Move right': 'दाएँ ले जाएँ',
+  'Delete option': 'विकल्प हटाएँ',
+  'Colour columns': 'कॉलम रंगें',
+  'Hide empty groups': 'खाली समूह छिपाएँ',
+  'Card size': 'कार्ड का आकार',
+  Small: 'छोटा',
+  Large: 'बड़ा',
+  Both: 'दोनों',
+  'Shown on cards': 'कार्ड पर दिखाए गए',
 }

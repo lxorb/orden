@@ -797,7 +797,8 @@ there for an OpenAI model that takes `none` and Max only where the model has `ma
 Code's `modelSettings` remembers it.
 
 **Per thread, not global.** The model and effort are the thread's; a new thread starts on
-Settings > AI > Used for's choice and the last effort used with that model. Switching model
+Settings > AI > Used for's provider, the model last picked with it on this device (#428) and
+the last effort used with that model. Switching model
 mid-thread keeps the conversation and says, in a line between messages, which model answers
 from there (and that the cache starts again where it does).
 
@@ -828,7 +829,8 @@ from there (and that the cache starts again where it does).
   lands where it was asked and nothing moves under a running turn; a new thread starts in
   the space in front, and one nothing has been sent in yet moves with the reader. The
   threads each space kept before are all in the list (`listEveryThread` in
-  `chat/threads.ts`), and the thread open last opens, whichever space it is in. Kept on
+  `chat/threads.ts`), and the thread open last opens, whichever space it is in, or a new
+  one if a new one was open (#428). Kept on
   this device, under the app's data folder by the crate, one folder a space
   (`localStorage` is too small for a history), never synced, never in a note unless
   exported; deleted with `/delete`, and all of a space's with the space.

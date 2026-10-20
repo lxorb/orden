@@ -30,6 +30,9 @@ export interface HoldsSpaces {
   readonly tabs: Tab[]
   fileMoved(from: string, to: string, kind: 'space'): Promise<void>
   fileGone(path: string, kind: 'space'): Promise<void>
+  /** One file operation on everything open under a folder; see `holdingUnder` in
+   *  workspace/saving.svelte.ts. */
+  holdingUnder(path: string, run: () => Promise<void>): Promise<void>
   close(id: string): void
   clearSelection(): void
   loadTree(): Promise<void>

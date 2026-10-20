@@ -144,7 +144,7 @@ CHROME = [
     ["titlebar title", "header .title"],
     ["titlebar more", "header .more"],
     ["status bar", "footer"],
-    ["app menu button", "header .trigger"],
+    ["titlebar search", "header .search"],
 ]
 
 PANELS = {
@@ -173,11 +173,11 @@ PALETTE = [
     ["palette row", ".palette ul li button"],
 ]
 
-MENU = [
-    ["app menu", ".menu"],
-    ["app menu chip", ".menu .groups button"],
-    ["app menu row", ".menu .rows button"],
-    ["app menu rows box", ".menu .rows"],
+# The palette with nothing typed, a menu to browse, which holds what the app menu
+# did (#304); see palette/browse.ts.
+BROWSE = [
+    ["palette browse row", ".palette ul li button"],
+    ["palette browse head", ".palette .nib-section"],
 ]
 
 CONTEXT = [
@@ -343,14 +343,14 @@ def one(
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
 
-    # The bars in the titlebar, which is what opens the app menu; see AppMenu.svelte.
+    # The search in the titlebar, which opens the palette to browse; see Titlebar.svelte.
     # With the drawer shut first, because on a phone the drawer's scrim lies over the
     # whole row and a press on a scrim is a press that shuts the drawer.
     shut_drawer(page)
-    page.click("header .trigger")
+    page.click("header .search")
     page.wait_for_timeout(600)
-    rows.update(measure(page, MENU))
-    shot(page, f"{label}-{name}-menu-{scheme}")
+    rows.update(measure(page, BROWSE))
+    shot(page, f"{label}-{name}-browse-{scheme}")
     page.keyboard.press("Escape")
     page.wait_for_timeout(300)
 

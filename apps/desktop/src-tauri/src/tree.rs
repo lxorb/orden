@@ -59,6 +59,10 @@ pub struct TreeOptions {
     /// draws is the page note. A reader that walks the tree for every file there
     /// is - sync, where it cannot scan the folder - asks for them.
     pub papers: bool,
+    /// Every file, whatever it is: a picture and a PDF's highlights as well. What an
+    /// undo of a folder deleted signed in asks, to know whether it can put the whole
+    /// folder back; see `heldIn` in workspace/undoing.ts.
+    pub every: bool,
 }
 
 /// Reads a space into a tree of notes and folders.
@@ -171,16 +175,17 @@ fn walk(
                     } else {
                         folder(&child, name)
                     });
-                } else if (is_markdown(&child)
-                    || is_pdf(&child)
-                    || is_canvas(&child)
-                    || is_pages(&child)
-                    || is_base(&child)
-                    || is_shortcut(&child)
-                    || is_chat(&child))
-                    // But a page note's paper, which is part of the note beside it
-                    // rather than a file of its own; see `held_paper`.
-                    && (options.papers || !held_paper(&child))
+                } else if options.every
+                    || ((is_markdown(&child)
+                        || is_pdf(&child)
+                        || is_canvas(&child)
+                        || is_pages(&child)
+                        || is_base(&child)
+                        || is_shortcut(&child)
+                        || is_chat(&child))
+                        // But a page note's paper, which is part of the note beside it
+                        // rather than a file of its own; see `held_paper`.
+                        && (options.papers || !held_paper(&child)))
                 {
                     // The notes, the PDFs beside them, the canvases, the stacks
                     // of paper, the websites and the chats: the things a tab can hold.
@@ -400,6 +405,29 @@ mod tests {
         assert_eq!(
             names(&every.children),
             ["Lecture.pages", "Lecture.pages.pdf", "Orphan.pages.pdf"]
+        );
+    }
+
+    /// Asked for every file, the list holds the ones no tab can, beside the rest.
+    #[test]
+    fn every_file_is_listed_when_asked_for() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let here = dir.path();
+        std::fs::write(here.join("Idea.md"), "").expect("a note");
+        std::fs::write(here.join("shot.png"), "").expect("a picture");
+        std::fs::write(here.join("paper.pdf.highlights.json"), "{}").expect("highlights");
+
+        assert_eq!(names(&read(here, &options()).children), ["Idea.md"]);
+        let every = read(
+            here,
+            &TreeOptions {
+                every: true,
+                ..options()
+            },
+        );
+        assert_eq!(
+            names(&every.children),
+            ["Idea.md", "paper.pdf.highlights.json", "shot.png"]
         );
     }
 

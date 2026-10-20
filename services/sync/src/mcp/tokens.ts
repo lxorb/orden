@@ -22,16 +22,30 @@ function mint(): string {
   return `nib_${randomToken()}`
 }
 
-async function issueToken(env: Env, userId: string, readOnly: boolean): Promise<string> {
+/** A token works only while the session it was handed out through is signed in, so
+ *  ending that session ends the token (#461). A row from before tokens named a session
+ *  has none, and keeps working. Written once, so every reader asks the same question. */
+function liveToken(at: string): string {
+  return `(session_hash is null or exists (select 1 from sessions s
+            where s.token_hash = mcp_tokens.session_hash and s.expires_at > ${at}))`
+}
+
+async function issueToken(
+  env: Env,
+  userId: string,
+  readOnly: boolean,
+  sessionHash: string,
+): Promise<string> {
   const token = mint()
 
   // One token at a time: a second one nobody remembers issuing is a way in
   // that nobody would think to close.
   await env.DB.prepare('delete from mcp_tokens where user_id = ?').bind(userId).run()
   await env.DB.prepare(
-    'insert into mcp_tokens (token_hash, user_id, read_only, created_at) values (?, ?, ?, ?)',
+    `insert into mcp_tokens (token_hash, user_id, read_only, created_at, session_hash)
+     values (?, ?, ?, ?, ?)`,
   )
-    .bind(await sha256(token), userId, readOnly ? 1 : 0, now())
+    .bind(await sha256(token), userId, readOnly ? 1 : 0, now(), sessionHash)
     .run()
 
   return token
@@ -49,9 +63,10 @@ export async function bearer(env: Env, header: string | undefined): Promise<Toke
   if (grant) return { token_hash: '', ...grant }
 
   const row = await env.DB.prepare(
-    'select token_hash, user_id, read_only from mcp_tokens where token_hash = ?',
+    `select token_hash, user_id, read_only from mcp_tokens
+      where token_hash = ?1 and ${liveToken('?2')}`,
   )
-    .bind(await sha256(token))
+    .bind(await sha256(token), now())
     .first<TokenRow>()
 
   if (row) {
@@ -71,9 +86,10 @@ mcpAdmin.get('/token', async (context) => {
   const userId = context.get('user').id
 
   const row = await context.env.DB.prepare(
-    'select read_only, created_at, last_used_at from mcp_tokens where user_id = ?',
+    `select read_only, created_at, last_used_at from mcp_tokens
+      where user_id = ?1 and ${liveToken('?2')}`,
   )
-    .bind(userId)
+    .bind(userId, now())
     .first<{ read_only: number; created_at: number; last_used_at: number | null }>()
 
   const { results } = await context.env.DB.prepare(
@@ -119,7 +135,9 @@ mcpAdmin.post('/token', async (context) => {
     return context.json({ error: 'readOnly must be true or false' }, 400)
   }
 
-  const token = await issueToken(context.env, context.get('user').id, asked !== false)
+  // The session asking: the token lives only as long as it does; see liveToken.
+  const session = await sha256(tokenIn(context.req.header('authorization')) ?? '')
+  const token = await issueToken(context.env, context.get('user').id, asked !== false, session)
   return context.json({ token })
 })
 

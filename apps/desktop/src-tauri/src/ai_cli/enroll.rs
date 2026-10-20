@@ -24,11 +24,14 @@
 //! being this app's while it is still the same app: a Nix update leaves the old store
 //! path behind for the garbage collector, an `AppImage` moves on to the next release, and
 //! an `AppImage` of an earlier version named its own mount, which is gone the moment it
-//! quits (mcp/program.rs). An entry naming such a copy is given this one's program on
-//! launch, the way an entry under the old name is given the new name.
+//! quits (mcp/program.rs). On a Mac it is a copy run from its disk image or translocated,
+//! whose folder is gone by the next launch, or one in a folder of an old name. An entry
+//! naming such a copy is given this one's program on launch, the way an entry under the
+//! old name is given the new name.
 //!
 //! **Only the app somebody installed**: a release under the shipped identifier, not a
-//! probe and not a development build, whose program would be a copy about to be deleted.
+//! probe, not a development build and not a Mac copy that cannot stay where it is
+//! (`app_place.rs`), whose program would be a copy about to be deleted.
 //! A test points it at homes of its own with `NIB_ENROLL_HOME`, and nothing else does;
 //! the reader's `~/.claude.json` and `~/.codex` are never a test's.
 
@@ -87,7 +90,8 @@ fn offered(app: &AppHandle) -> bool {
     test_home().is_some()
         || (!cfg!(debug_assertions)
             && app.config().identifier == SHIPPED
-            && crate::placement::away().is_none())
+            && crate::placement::away().is_none()
+            && !crate::app_place::app_stuck())
 }
 
 /// The program's arguments for one of the three, for the server called `name`.

@@ -10,6 +10,7 @@
  *  and the thread that started it keeps their ids for the review (lane 3), so one review
  *  covers every change they made. */
 
+import { TAG_NAME } from '@nib/markdown/tags'
 import { t } from '../../i18n.svelte'
 import type { Query } from '../../search/query'
 import { workspace } from '../../workspace.svelte'
@@ -104,12 +105,14 @@ export async function subtask(host: Host, parent: Thread, task: string): Promise
   host.line(parent, answered(task, ended))
 }
 
+const TAG_WORD = new RegExp(String.raw`^#${TAG_NAME}$`, 'u')
+
 /** The folders (`Inbox/`) and tags (`#todo`) an instruction names. */
 export function batchTargets(instruction: string): { folders: string[]; tags: string[] } {
   const words = instruction.split(/\s+/).map((one) => one.replace(/^@/, '').replace(/[.,;:]+$/, ''))
   return {
     folders: words.filter((one) => one.length > 1 && one.endsWith('/')),
-    tags: words.filter((one) => /^#[\p{L}\p{N}_/-]+$/u.test(one)).map((one) => one.slice(1)),
+    tags: words.filter((one) => TAG_WORD.test(one)).map((one) => one.slice(1)),
   }
 }
 

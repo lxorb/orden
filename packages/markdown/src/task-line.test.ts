@@ -166,6 +166,21 @@ describe('a task line read the way the Tasks plugin reads it', () => {
     })
   })
 
+  test('reads a reminder, a priority and dependencies among the words like a date', () => {
+    const task = readTask('- [ ] call mom [remind:: 15m] tomorrow [time:: 10:00] 🛫 2026-10-06')
+    expect(task).toMatchObject({ text: 'call mom tomorrow', remind: [{ before: 15 }], fields: {} })
+    expect(readTask('- [ ] a [priority:: high] b')).toMatchObject({ priority: 2, fields: {} })
+    expect(readTask('- [ ] a [dependsOn:: x1, y2] b')).toMatchObject({
+      dependsOn: ['x1', 'y2'],
+      fields: {},
+    })
+    // The one at the end is the one read, as for any field written twice.
+    expect(readTask('- [ ] a [remind:: 1h] b [remind:: 15m]')).toMatchObject({
+      remind: [{ before: 15 }],
+      fields: { remind: '1h' },
+    })
+  })
+
   test('keeps a value a field cannot hold as an unknown field', () => {
     const task = readTask('- [ ] a [due:: someday]')
     expect(task?.due).toBeUndefined()
@@ -215,6 +230,11 @@ describe('the values of nib fields', () => {
     expect(readTime('9:05')).toEqual({ time: '09:05' })
     expect(readTime('24:00')).toBeNull()
     expect(readTime('16:00:30')).toEqual({ time: '16:00' })
+  })
+
+  test('a zone with digits in its name', () => {
+    expect(readTime('16:00 Etc/GMT+5')).toEqual({ time: '16:00', zone: 'Etc/GMT+5' })
+    expect(readTime('16:00 EST5EDT')).toEqual({ time: '16:00', zone: 'EST5EDT' })
   })
 
   test('reminders: before, at a time on the day, at a moment', () => {

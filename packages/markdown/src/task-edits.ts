@@ -18,11 +18,13 @@
  *  format. See task-line.ts for the reading. */
 
 import { appliedEdits, type TextEdit } from './edits'
+import { tagNameAt } from './tags'
 import {
   DEPENDS_EMOJI,
   EMOJI_BY_DATE,
   EMOJI_BY_PRIORITY,
   type FieldName,
+  fieldOfKey,
   type FieldToken,
   ID_EMOJI,
   KEY_BY_FIELD,
@@ -223,6 +225,10 @@ export function writeTask(line: string, change: TaskChange): TextEdit[] {
   const edits: TextEdit[] = []
   const gone = new Set<FieldToken>()
   const arriving: Arrival[] = []
+  // Every span taken off the line, whichever field it holds, goes through one
+  // `removals`: a tag and a field side by side would otherwise each claim the
+  // blank between them, in edits that overlap.
+  const taking: { from: number; to: number }[] = []
   const form = bracketStyle(parsed) ? 'bracket' : 'emoji'
 
   const status = nextStatus(fields, change)
@@ -235,11 +241,12 @@ export function writeTask(line: string, change: TaskChange): TextEdit[] {
     const kept = inline
       .filter((token) => !touches(change, token))
       .map((token) => line.slice(token.from, token.to))
-    edits.push({
-      from: parsed.wordsFrom,
-      to: parsed.wordsTo,
-      insert: [change.text, ...kept].filter((part) => part !== '').join(' '),
-    })
+    const words = [change.text, ...kept].filter((part) => part !== '').join(' ')
+    // Words where there were none stand between the box and a field, a blank apart
+    // from each.
+    const open = words !== '' && /\S/.test(line.charAt(parsed.wordsFrom - 1)) ? ' ' : ''
+    const close = words !== '' && /\S/.test(line.charAt(parsed.wordsTo)) ? ' ' : ''
+    edits.push({ from: parsed.wordsFrom, to: parsed.wordsTo, insert: open + words + close })
     for (const token of inline) gone.add(token)
   }
 
@@ -261,7 +268,7 @@ export function writeTask(line: string, change: TaskChange): TextEdit[] {
         spans.push({ from: at, to: at + tag.length + 1 })
       }
     }
-    edits.push(...removals(line, spans, parsed.wordsFrom))
+    taking.push(...spans)
     for (const tag of next.filter((one) => !fields.tags.includes(one))) {
       arriving.push({ rank: RANK.tag, text: `#${tag}` })
     }
@@ -295,9 +302,15 @@ export function writeTask(line: string, change: TaskChange): TextEdit[] {
     if (value === was || (token === undefined && value === null)) continue
 
     if (token && value === null) {
-      // Every one of them, or the one left behind would be read in its place.
-      for (const one of written) gone.add(one)
-      edits.push(...removals(line, written, parsed.wordsFrom))
+      // Every one of them, the copies among the words the reading set aside as other
+      // fields included, or the one left behind would be read in its place.
+      const every = tokens.filter(
+        (one) =>
+          !gone.has(one) &&
+          (one.field === field || (one.key !== undefined && fieldOfKey(one.key) === field)),
+      )
+      for (const one of every) gone.add(one)
+      taking.push(...every)
     } else if (token && value !== null) {
       const whole = field === 'priority' && token.form === 'emoji'
       edits.push(
@@ -310,19 +323,21 @@ export function writeTask(line: string, change: TaskChange): TextEdit[] {
     }
   }
 
-  edits.push(...unknownFieldEdits(line, parsed, change, gone, arriving))
+  edits.push(...unknownFieldEdits(parsed, change, gone, arriving, taking))
   edits.push(...arrivals(line, parsed, gone, arriving))
+  edits.push(...removals(line, taking, parsed.wordsFrom))
 
   return ordered(edits)
 }
 
-/** The edits for Dataview fields nib has no name for. */
+/** The edits for Dataview fields nib has no name for. The ones taken off are put
+ *  among `taking`, to go with the rest; see `writeTask`. */
 function unknownFieldEdits(
-  line: string,
   parsed: ParsedTask,
   change: TaskChange,
   gone: Set<FieldToken>,
   arriving: Arrival[],
+  taking: { from: number; to: number }[],
 ): TextEdit[] {
   if (change.fields == null) return []
   const edits: TextEdit[] = []
@@ -344,7 +359,7 @@ function unknownFieldEdits(
     }
     if (!Object.hasOwn(next, key)) {
       gone.add(token)
-      edits.push(removal(line, token.from, token.to, parsed.wordsFrom))
+      taking.push(token)
     } else if (own(next, key) !== own(before, key)) {
       edits.push({ from: token.valueFrom, to: token.valueTo, insert: own(next, key) ?? '' })
     }
@@ -363,8 +378,7 @@ function tagsAmongWords(line: string, tag: string, from: number, to: number): nu
   let at = words.indexOf(`#${tag}`)
   while (at !== -1) {
     const before = words.charAt(at - 1)
-    const after = words.charAt(at + tag.length + 1)
-    if ((before === '' || /\s|\(/.test(before)) && !/[\p{L}\p{N}\-_/]/u.test(after))
+    if ((before === '' || /\s|\(/.test(before)) && tagNameAt(words, at) === tag)
       found.push(from + at)
     at = words.indexOf(`#${tag}`, at + 1)
   }

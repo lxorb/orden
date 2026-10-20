@@ -4,6 +4,8 @@ import {
   duplicateBlock,
   EditorView,
   expandSelection,
+  findNext,
+  findPrevious,
   foldHeadings,
   foldLess,
   foldMore,
@@ -26,6 +28,8 @@ import {
   lowerCase,
   moveBlockDown,
   moveBlockUp,
+  pastePlain,
+  redoEdit,
   reformatDocument,
   reverseLines,
   selectWord,
@@ -41,7 +45,9 @@ import {
   toggleOrderedList,
   toggleQuote,
   toggleTaskList,
+  toggleWrap,
   type Transaction,
+  undoEdit,
   unfoldEverything,
   upperCase,
 } from '@nib/editor'
@@ -84,7 +90,9 @@ import { touchedBy } from './agents/docs/touched'
 import { agentMarks } from './agent-marks.svelte'
 import { shortcuts } from './shortcuts.svelte'
 import { toggleFill } from './tab-fill/fill'
-import { closeWindow, invoke, isDesktop, isNative } from './tauri'
+import { fullscreen } from './fullscreen.svelte'
+import { ISSUES_URL, RELEASES_URL, SOURCE_URL } from './links'
+import { closeWindow, invoke, isDesktop, isNative, openExternal } from './tauri'
 import { SCHEME_CHOICES, SCHEME_NAMES } from './schemes'
 import { theme } from './theme.svelte'
 import { viewport } from './viewport.svelte'
@@ -94,7 +102,7 @@ import { isUnsaved } from './workspace/drafts'
 import { askPlace } from './save-place/door'
 import { pages, type Step } from './web-tab/pages.svelte'
 import { openRandomNote, randomChoices } from './random-note'
-import { showFeedback, showQuickAdd } from './surfaces.svelte'
+import { showFeedback, showQuickAdd, toggleTabOverview } from './surfaces.svelte'
 
 /** Opens `custom.css` in the editor itself - it is a text file like any other. */
 async function openCustomCss() {
@@ -167,7 +175,7 @@ export function exportCommands(): Command[] {
    *  slide. Both come out of the slides code, which builds them from one page. */
   const slidesOut = async (id: 'slides-html' | 'slides-pdf') => {
     const m = await import('./slides/file')
-    const deck = { text: source(), path: note()?.path ?? null }
+    const deck = { text: source(), path: note()?.path ?? null, trusted: target().trusted }
     const options = {
       resolveImage: (src: string) => imagePath(src, note()?.path, source()) ?? src,
       ...(await look()),
@@ -190,6 +198,7 @@ export function exportCommands(): Command[] {
       name: name(),
       path: note()?.path ?? null,
       root: workspace.activeSpace?.root ?? null,
+      trusted: target().trusted,
     })
 
     if (id === 'png') await picture.exportCanvasPng(drawing)
@@ -774,6 +783,16 @@ function lineCommands(view?: EditorView): Command[] {
     row('edit.duplicate-block', t('Duplicate the block'), duplicateBlock),
     row('edit.move-block-up', t('Move the block up'), moveBlockUp),
     row('edit.move-block-down', t('Move the block down'), moveBlockDown),
+    // The app menu's rows that had no other way in but the menu (#304). Undo and Redo
+    // too, which a phone's keyboard has no key for.
+    row('edit.undo', t('Undo'), undoEdit),
+    row('edit.redo', t('Redo'), redoEdit),
+    row('format.inline-math', t('Inline math'), toggleWrap('$')),
+    row('format.superscript', t('Superscript'), toggleWrap('^')),
+    row('format.subscript', t('Subscript'), toggleWrap('~')),
+    row('edit.paste-plain', t('Paste as plain text'), pastePlain),
+    row('edit.find-next', t('Find next'), findNext, false),
+    row('edit.find-previous', t('Find previous'), findPrevious, false),
   ]
 }
 
@@ -1112,6 +1131,11 @@ export function appCommands(view?: EditorView): Command[] {
     { id: 'new-canvas', label: t('New canvas'), run: () => void workspace.createCanvas() },
     { id: 'new-pages', label: t('New page note'), run: () => void workspace.createPages() },
     {
+      id: 'new-database',
+      label: t('New database'),
+      run: () => void import('./views/new-database').then((one) => one.createDatabase()),
+    },
+    {
       id: 'new-from-template',
       label: t('New note from template'),
       run: () => void import('./views/templates').then((one) => one.pickTemplate()),
@@ -1139,8 +1163,9 @@ export function appCommands(view?: EditorView): Command[] {
           },
         ]),
     // A shell in a tab, in the one Settings chose; the plus and Ctrl+T offer the others.
-    // A desktop's alone, and never the glasses' plugin's. See docs/terminal.md.
-    ...(!__EVEN_PLUGIN__ && isDesktop
+    // A desktop's alone, and never the glasses' plugin's. See docs/terminal.md. Like
+    // every terminal, only for somebody who writes code; see `developer` in modes.
+    ...(!__EVEN_PLUGIN__ && isDesktop && modes.coder
       ? [
           {
             id: 'new-terminal',
@@ -1161,7 +1186,7 @@ export function appCommands(view?: EditorView): Command[] {
     // A shell on the reader's machine in the cloud, on every device; and its machine
     // started or stopped by hand. Never by a link or the command line, as a terminal
     // here is not. See docs/online-terminal.md 4.10.
-    ...(__EVEN_PLUGIN__
+    ...(__EVEN_PLUGIN__ || !modes.coder
       ? []
       : [
           {
@@ -1435,6 +1460,22 @@ export function appCommands(view?: EditorView): Command[] {
             run: () => void toggleFill(),
           },
         ]),
+    {
+      id: 'fullscreen',
+      label: fullscreen.on ? t('Leave fullscreen') : t('Fullscreen'),
+      hint: shortcuts.hint('app.fullscreen'),
+      run: () => void fullscreen.toggle(workspace.panes),
+    },
+    ...(isDesktop
+      ? [
+          {
+            id: 'always-on-top',
+            label: t('Always on top'),
+            checked: modes.alwaysOnTop,
+            run: () => modes.toggleAlwaysOnTop(),
+          },
+        ]
+      : []),
 
     {
       id: 'punctuation',
@@ -1603,6 +1644,9 @@ export function appCommands(view?: EditorView): Command[] {
       // command that appears to do nothing at all.
       run: () => void updates.check(),
     },
+    { id: 'whats-new', label: t('What is new'), run: () => void openExternal(RELEASES_URL) },
+    { id: 'report-issue', label: t('Report an issue'), run: () => void openExternal(ISSUES_URL) },
+    { id: 'source-code', label: t('Source code'), run: () => void openExternal(SOURCE_URL) },
     {
       id: 'sidebar',
       label: workspace.panel ? t('Hide left sidebar') : t('Show left sidebar'),
@@ -1735,6 +1779,12 @@ export function appCommands(view?: EditorView): Command[] {
       label: t('Spaces'),
       hint: shortcuts.hint('space.switcher'),
       run: () => spacePicker.toggle(),
+    },
+    {
+      id: 'tab-overview',
+      label: t('Tabs'),
+      hint: shortcuts.hint('app.tab-overview'),
+      run: toggleTabOverview,
     },
     {
       id: 'space-next',

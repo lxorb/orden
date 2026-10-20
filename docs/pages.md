@@ -333,9 +333,17 @@ name it has; nothing is kept where nobody can see it. Deleting a page note alway
 to this device's Recently deleted, signed in or not, because that is the one place that
 keeps the paper with it.
 
-**Sync carries the paper as the file it is.** A desktop's sync scans the folder, which
-has the paper in it; a phone or a browser, which reads the tree instead, asks for the
-papers the list leaves out (`papers` in the tree's options).
+**The account keeps the paper as part of the note** (#551), by the note's id and not by
+a name: the note's row names the hash of its paper, and the bytes are a blob like any
+other (`/v1/notes/:id/paper`). So the paper reaches whoever reaches the note - the
+account's other devices, on either sync, and somebody the note was shared with on its
+own, who has no space to find a file in - and a rename, a move or Recently deleted take
+it along with no second file to pair up again. After a pass, every page note the account
+holds is carried: its paper goes up the first time from the device that has it, which
+is also what sends up the paper of a page note made before this, and comes down beside
+the note on a device that has none. A page that opens before a pass brought its paper
+asks the account for it itself. Sync v2 keeps no entry of the tree for a held paper;
+it is part of its note. See `apps/desktop/src/lib/pages/carried.ts`.
 
 **A PDF in a dropped folder stays a PDF** until it is opened: it is that folder's, the
 attachment a note in it points at, and turning it into a page note on the way in would

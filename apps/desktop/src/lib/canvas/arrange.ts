@@ -131,7 +131,9 @@ export function ordered(canvas: Canvas, picked: readonly string[], how: Order): 
   if (!wanted.size || nodes.every((node) => wanted.has(node.id))) return canvas
 
   if (how === 'front' || how === 'back') {
-    const moving = nodes.filter((node) => wanted.has(node.id))
+    // New objects for what moves, as every edit hands back for what it touched, so
+    // the move is stamped and a merge keeps it (canvas-merge.ts).
+    const moving = nodes.filter((node) => wanted.has(node.id)).map((node) => ({ ...node }))
     const still = nodes.filter((node) => !wanted.has(node.id))
     if (!moving.length) return canvas
 
@@ -155,7 +157,7 @@ export function ordered(canvas: Canvas, picked: readonly string[], how: Order): 
     if (!other || wanted.has(other.id)) continue
 
     next[index] = other
-    next[to] = node
+    next[to] = { ...node }
   }
 
   return { ...canvas, nodes: next }

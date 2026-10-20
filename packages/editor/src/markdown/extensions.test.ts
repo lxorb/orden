@@ -418,3 +418,49 @@ describe('fenced code while editing', () => {
     expect(found.filter((name) => name === 'FencedCode')).toHaveLength(1)
   })
 })
+
+describe('a long paragraph', () => {
+  /** A pasted log is one paragraph, and a paragraph is parsed in one go. Each `[INFO]`
+   *  that closed a link, and each address that asked whether a link was open, walked
+   *  back over everything before it in the paragraph: forty thousand lines took
+   *  twenty seconds. See patches/@lezer__markdown@1.7.2.patch. A clock's limit failed on
+   *  a busy runner, so the test asks how the time grows instead: four times the lines
+   *  take about four times as long, where walking back took sixteen. */
+  test('parses in time that grows with its length', () => {
+    const parser = markdown({ base: markdownLanguage, extensions: nibMarkdownExtensions }).language
+      .parser
+    const log = (lines: number) => {
+      let doc = ''
+      for (let line = 0; line < lines; line++) {
+        doc += `2026-10-19 12:00:00 [INFO] request ${line} url=https://example.com/${line}\n`
+      }
+      return doc
+    }
+    // The quicker of two parses, so a pause on a busy machine is not counted.
+    const timed = (doc: string) => {
+      const found = { Link: 0, URL: 0 }
+      let least = Infinity
+      for (let round = 0; round < 2; round++) {
+        found.Link = found.URL = 0
+        const start = performance.now()
+        parser.parse(doc).iterate({
+          enter: (node) => {
+            if (node.name === 'Link' || node.name === 'URL') found[node.name]++
+          },
+        })
+        least = Math.min(least, performance.now() - start)
+      }
+      return { found, took: least }
+    }
+    const short = timed(log(5_000))
+    const long = timed(log(20_000))
+    expect(long.found).toEqual({ Link: 20_000, URL: 20_000 })
+    expect(long.took / short.took).toBeLessThan(9)
+  })
+
+  test('still ends an address at the bracket of the link it is in', () => {
+    expect(tree('[a [b](c) www.example.com] and [see www.example.com]').match(/URL ".*"/g)).toEqual(
+      ['URL "c"', 'URL "www.example.com"', 'URL "www.example.com"'],
+    )
+  })
+})
