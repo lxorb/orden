@@ -1324,8 +1324,11 @@
       hit: found,
     })
 
-    // A pen that has stopped moving is a pen asking for its shape to be tidied.
-    if (machine.gesture?.kind === 'draw') waitForHold(point)
+    // A pen that has stopped moving is a pen asking for its shape to be tidied. Begun
+    // only where it went still, not again on every move: a nib on the glass is never
+    // quite still, and an S Pen in Chrome reports a move every few milliseconds as
+    // its pressure wanders, so a wait started over each time never came round (#629).
+    if (machine.gesture?.kind === 'draw' && !holding) waitForHold(point)
   }
 
   function onPointerUp(event: PointerEvent) {
