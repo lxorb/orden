@@ -343,8 +343,8 @@ jobs:
   # downloads by itself goes on one pre-release, `updates`, beside every other version's:
   # the bundles the updater installs. They keep the name `Nib-`, because every build
   # before 0.14 takes an update only from a file called that (`names()` in
-  # src-tauri/src/updates.rs), and the one manifest serves them all. A build of main
-  # keeps everything on `edge`, as it always has.
+  # src-tauri/src/updates.rs), and the one manifest serves them all. A build of
+  # `unstable` puts both on `edge`.
   publish:
     needs: [version, build, macos]
     # Only `unstable` and tags: a dispatch on any other branch is a trial and
@@ -360,7 +360,6 @@ jobs:
     env:
       TAG: ${{ needs.version.outputs.tag }}
       VERSION: ${{ needs.version.outputs.version }}
-      ROLLING: ${{ needs.version.outputs.rolling }}
       # Where the files the app downloads by itself go.
       FILES: ${{ needs.version.outputs.rolling == 'true' && needs.version.outputs.tag || 'updates' }}
       GH_TOKEN: ${{ github.token }}
@@ -391,14 +390,14 @@ jobs:
         run: |
           notes="Built from $GITHUB_SHA."
           if gh release view "$TAG" >/dev/null 2>&1; then
-            gh release edit "$TAG" --prerelease --title "main · $VERSION" --notes "$notes"
+            gh release edit "$TAG" --prerelease --title "$GITHUB_REF_NAME · $VERSION" --notes "$notes"
             if ! moved=$(gh api -i -X PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/$TAG" \
               -f sha="$GITHUB_SHA" -F force=true 2>&1); then
               grep -iE '^(HTTP/|x-accepted-github-permissions|x-github-request-id)|"message"' <<<"$moved" || true
               echo "::warning::the $TAG tag could not be moved to $GITHUB_SHA; the release keeps it where it was and takes this build's files"
             fi
           elif ! made=$(gh api -i -X POST "repos/$GITHUB_REPOSITORY/releases" \
-            -f tag_name="$TAG" -f target_commitish="$GITHUB_SHA" -f name="main · $VERSION" \
+            -f tag_name="$TAG" -f target_commitish="$GITHUB_SHA" -f name="$GITHUB_REF_NAME · $VERSION" \
             -f body="$notes" -F prerelease=true 2>&1); then
             # What GitHub says it wanted, which is the question when this is refused.
             grep -iE '^(HTTP/|x-accepted-github-permissions|x-github-request-id)|"message"' <<<"$made" || true
@@ -422,25 +421,18 @@ jobs:
         run: |
           # Every file before the manifest that names it: the updater is never offered
           # a version whose installer is still on its way.
-          if [ "$ROLLING" = true ]; then
-            # The .app.tar.gz is what the updater downloads on a Mac, so it has to
-            # be a release asset even though nobody clicks it.
-            find artifacts -type f \( -name '*.exe' -o -name '*.msi' -o -name '*.AppImage' -o -name '*.deb' -o -name '*.rpm' -o -name '*.dmg' -o -name '*.app.tar.gz' \) \
-              -exec gh release upload "$TAG" {} --clobber \;
-          else
-            # What latest.json names: the setups, the AppImages and the Mac's .app.tar.gz.
-            find artifacts -type f \( -name '*-setup.exe' -o -name '*.AppImage' -o -name '*.app.tar.gz' \) \
-              -exec gh release upload "$FILES" {} --clobber \;
-            # And the installers, under the product's name, on the release's own page.
-            mkdir installers
-            find artifacts -type f \( -name '*.exe' -o -name '*.msi' -o -name '*.AppImage' -o -name '*.deb' -o -name '*.rpm' -o -name '*.dmg' \) |
-              while read -r file; do
-                name=$(basename "$file")
-                cp "$file" "installers/Orden-${name#Nib-}"
-              done
-            ls -l installers
-            gh release upload "$TAG" installers/* --clobber
-          fi
+          # What latest.json names: the setups, the AppImages and the Mac's .app.tar.gz.
+          find artifacts -type f \( -name '*-setup.exe' -o -name '*.AppImage' -o -name '*.app.tar.gz' \) \
+            -exec gh release upload "$FILES" {} --clobber \;
+          # And the installers, under the product's name, on the release's own page.
+          mkdir installers
+          find artifacts -type f \( -name '*.exe' -o -name '*.msi' -o -name '*.AppImage' -o -name '*.deb' -o -name '*.rpm' -o -name '*.dmg' \) |
+            while read -r file; do
+              name=$(basename "$file")
+              cp "$file" "installers/Orden-${name#Nib-}"
+            done
+          ls -l installers
+          gh release upload "$TAG" installers/* --clobber
           gh release upload "$TAG" latest.json --clobber
 
       # And off edge, everything this build did not put there: the last build's files,
@@ -449,7 +441,7 @@ jobs:
       - name: Take the last build's files off edge
         if: needs.version.outputs.rolling == 'true'
         run: |
-          kept=$(find artifacts -type f \( -name '*.exe' -o -name '*.msi' -o -name '*.AppImage' -o -name '*.deb' -o -name '*.rpm' -o -name '*.dmg' -o -name '*.app.tar.gz' \) -printf '%f\n'; echo latest.json)
+          kept=$(find artifacts installers -type f \( -name '*.exe' -o -name '*.msi' -o -name '*.AppImage' -o -name '*.deb' -o -name '*.rpm' -o -name '*.dmg' -o -name '*.app.tar.gz' \) -printf '%f\n'; echo latest.json)
           gh release view "$TAG" --json assets --jq '.assets[].name' | while read -r name; do
             grep -qxF "$name" <<<"$kept" || gh release delete-asset "$TAG" "$name" --yes
           done

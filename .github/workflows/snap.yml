@@ -80,7 +80,7 @@ jobs:
           assets=$(gh release view "$TAG" --repo "$REPO" --json assets)
 
           # The two .debs, found by what they are rather than by a name built here: a
-          # release's page calls them Orden-<version>, edge Nib-<version>, and the version
+          # release's page and edge call them Orden-<version>, and the version
           # of an edge build is in nothing but its files' names.
           name() { jq -r --arg end "-linux-$1.deb" '[.assets[] | select(.name | endswith($end)) | .name] | if length == 1 then .[0] else empty end' <<<"$assets"; }
           x64deb=$(name x64)
