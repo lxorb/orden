@@ -16,6 +16,7 @@ import {
   type ChangeSpec,
   EditorSelection,
   type EditorState,
+  findClusterBreak,
   type Line,
   type StateCommand,
 } from '@codemirror/state'
@@ -154,7 +155,10 @@ export const deleteLine: StateCommand = ({ state, dispatch }) => {
   const after = set.apply(doc)
   const ranges = carets.map((at) => {
     const line = after.lineAt(set.mapPos(at, 1))
-    return EditorSelection.cursor(line.from + Math.min(column, line.length))
+    // The last character boundary at or before the column, never between the two
+    // halves of an emoji, where the next Backspace would leave half of it.
+    const along = findClusterBreak(line.text, Math.min(column, line.length) + 1, false)
+    return EditorSelection.cursor(line.from + along)
   })
 
   dispatch(
