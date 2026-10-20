@@ -509,9 +509,15 @@
             #
             # The engine beside the program, where it looks for libcef.so and Chromium for
             # its resources; not the sandbox helper, which only works setuid root.
+            #
+            # cargoInstallHook also copies what the `cef` crate put beside the build -
+            # chrome-sandbox into bin and the engine's libraries into lib - and the
+            # engine in libexec is the one the program uses, so those copies go.
             postInstall = ''
               install -Dm755 $out/bin/nib $out/libexec/${pname}/nib
               rm $out/bin/nib
+              rm -f $out/bin/chrome-sandbox
+              rm -rf $out/lib
               for one in ${cef}/*; do
                 case "$(basename "$one")" in
                   CMakeLists.txt | cmake | include | libcef_dll | archive.json | chrome-sandbox) ;;
