@@ -47,7 +47,16 @@ if [ "${KWIN:-0}" = 1 ]; then
   fi
   echo "KWin is the window manager: $(xprop -root _NET_SUPPORTING_WM_CHECK)"
 fi
-if [ "${DRAG:-0}" = 1 ]; then
+# With POPUP=1, a page of one colour served, for a web tab the popups open over.
+site=""
+if [ "${POPUP:-0}" = 1 ]; then
+  mkdir -p "$out/site"
+  printf '<!doctype html><title>one colour</title><style>html,body{margin:0;height:100%%;background:#ff00ff}</style>' > "$out/site/index.html"
+  python3 -m http.server 8765 --bind 127.0.0.1 --directory "$out/site" > "$out/site.log" 2>&1 &
+  site=$!
+  set -- "$@" http://127.0.0.1:8765/
+fi
+if [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ]; then
   # The app's endpoint open to `eval`, for where its tab strip is.
   config="${XDG_CONFIG_HOME:-$HOME/.config}/ch.emilvinu.nib"
   mkdir -p "$config"
@@ -88,6 +97,9 @@ if [ "$status" = 0 ] && [ "${IDLE:-0}" = 1 ]; then
   find "$HOME" -path '*ch.emilvinu.nib*' -name nib.log -exec grep -hE ' (pump|gpu): ' {} + 2>/dev/null | tee -a "$out/idle.txt" || true
 fi
 
+if [ "$status" = 0 ] && [ "${POPUP:-0}" = 1 ]; then
+  python3 "$here/popup-drive.py" x11 "$out" "$app" || status=1
+fi
 if [ "$status" = 0 ] && [ "${DRAG:-0}" = 1 ]; then
   python3 "$here/window-drag.py" x11 "$out" "$app" || status=1
   if [ -n "$wm" ] && ! kill -0 "$wm" 2>/dev/null; then
@@ -100,6 +112,7 @@ kill "$app" 2>/dev/null || true
 wait "$app" 2>/dev/null || true
 [ -n "$wm" ] && kill "$wm" 2>/dev/null || true
 kill "$xvfb" 2>/dev/null || true
+[ -n "$site" ] && kill "$site" 2>/dev/null || true
 find "$HOME" -path '*ch.emilvinu.nib*' -name 'nib.log' -exec cp {} "$out/nib.log" \; 2>/dev/null || true
 [ -f "$out/nib.log" ] && { echo "::group::nib.log"; cat "$out/nib.log"; echo "::endgroup::"; }
 echo "::group::orden's output"
