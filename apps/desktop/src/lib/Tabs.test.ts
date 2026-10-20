@@ -100,5 +100,21 @@ describe('the tab in front', () => {
 
     expect(current).toHaveLength(1)
     expect(current[0]?.[0]).toContain(`data-tab="${front}"`)
+})
+
+/** The bar's line under the strip, which the open tab leaves itself out of and the
+ *  strip draws whole while none of its tabs is open (#425). */
+describe("the strip's line", () => {
+  test('runs its whole width while what is open is an essential, which is no tab of it', () => {
+    const paneId = strip(2)
+    const shown = workspace.tabs[0]
+    if (!shown) throw new Error('no tab to show')
+    shown.essential = '/space/Note 0.md'
+    workspace.panes.activate(paneId, shown.id)
+
+    const drawn = render(Tabs, { props: { paneId } })
+
+    expect(drawn.body.split('data-tab=').length - 1).toBe(1)
+    expect(drawn.body).toMatch(/class="tabs\b[^"]*\bbare\b/)
   })
 })
