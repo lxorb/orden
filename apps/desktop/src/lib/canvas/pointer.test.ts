@@ -11,7 +11,9 @@ import {
   step,
   type Tool,
 } from './pointer'
-import { RUB } from './pens.svelte'
+import type { InkStroke } from './format'
+import { nearStroke } from './ink'
+import { RUB, STROKE_RUB } from './pens.svelte'
 
 /** The machine has no DOM in it, so a gesture is a list of values and a test is
  *  that list written down. Everything below is one sequence of events and what
@@ -27,7 +29,7 @@ function context(over: Partial<Context> = {}): Context {
     scale: 1,
     inkBox: null,
     pen: { tool: 'pen', size: 3, color: '#000', opacity: 1 },
-    eraser: { whole: false, size: RUB },
+    eraser: { whole: false, size: RUB, stroke: STROKE_RUB },
     lassoBox: false,
     aspect: false,
     straighten: true,
@@ -793,20 +795,10 @@ describe('rubbing out', () => {
     expect(verbs(effects)).toEqual(['cut', 'cut', 'cut'])
   })
 
-  test('with shift it takes whole strokes instead, each one once', () => {
-    const { effects } = play(
-      [
-        down({ shift: true, hit: hit({ stroke: 's1' }) }),
-        { kind: 'move', id: 1, at: HERE, screen: HERE, samples: [], hit: hit({ stroke: 's1' }) },
-        { kind: 'move', id: 1, at: HERE, screen: HERE, samples: [], hit: hit({ stroke: 's2' }) },
-      ],
-      context({ tool: 'erase' }),
-    )
+  test('with shift it takes whole strokes instead, as far as the stroke eraser reaches', () => {
+    const { effects } = play([down({ shift: true })], context({ tool: 'erase', scale: 2 }))
 
-    expect(effects).toEqual([
-      { do: 'rub', ids: ['s1'] },
-      { do: 'rub', ids: ['s2'] },
-    ])
+    expect(effects).toEqual([{ do: 'rub', at: HERE, reach: STROKE_RUB / 2 }])
   })
 
   /** The bar's own row asks the same question shift asks, and asks it for a
@@ -814,26 +806,16 @@ describe('rubbing out', () => {
   test('takes whole strokes when the bar says so, with no key held', () => {
     const { effects } = play(
       [down({ hit: hit({ stroke: 's1' }) })],
-      context({ tool: 'erase', eraser: { whole: true, size: RUB } }),
+      context({ tool: 'erase', eraser: { whole: true, size: RUB, stroke: 6 } }),
     )
 
-    expect(effects).toEqual([{ do: 'rub', ids: ['s1'] }])
-  })
-
-  test('says nothing when a whole-stroke rub landed on no stroke', () => {
-    const { machine, effects } = play(
-      [down()],
-      context({ tool: 'erase', eraser: { whole: true, size: RUB } }),
-    )
-
-    expect(machine.gesture?.kind).toBe('erase')
-    expect(effects).toEqual([])
+    expect(effects).toEqual([{ do: 'rub', at: HERE, reach: 6 }])
   })
 
   test('reaches as far as the bar says, in plane units at this zoom', () => {
     const { effects } = play(
       [down()],
-      context({ tool: 'erase', eraser: { whole: false, size: 48 }, scale: 2 }),
+      context({ tool: 'erase', eraser: { whole: false, size: 48, stroke: STROKE_RUB }, scale: 2 }),
     )
 
     expect(effects).toEqual([{ do: 'cut', at: HERE, reach: 24 }])
@@ -845,7 +827,7 @@ describe('rubbing out', () => {
         down(),
         { kind: 'move', id: 1, at: { x: 5, y: 0 }, screen: HERE, samples: [], hit: NOTHING },
       ],
-      context({ tool: 'erase', eraser: { whole: false, size: 30 }, scale: 1 }),
+      context({ tool: 'erase', eraser: { whole: false, size: 30, stroke: STROKE_RUB }, scale: 1 }),
     )
 
     expect(effects).toEqual([
@@ -854,15 +836,35 @@ describe('rubbing out', () => {
     ])
   })
 
+  /** A finger has the room to miss a line by that a tap on one has, on top of the
+   *  stroke eraser's width; a pen and a mouse are precise. */
+  test('takes a whole line 8 px off under a finger, and not under a pen', () => {
+    const line: InkStroke = {
+      id: 's1',
+      tool: 'pen',
+      color: 'ink',
+      size: 2,
+      points: [0, 40].map((x) => ({ x, y: 8, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 })),
+    }
+    const reaches = (pointer: 'touch' | 'pen') =>
+      play(
+        [down({ pointer })],
+        context({ tool: 'erase', eraser: { ...context().eraser, whole: true } }),
+      ).effects.some((one) => one.do === 'rub' && nearStroke(line, one.at, one.reach))
+
+    expect(reaches('touch')).toBe(true)
+    expect(reaches('pen')).toBe(false)
+  })
+
   /** The stylus button is the eraser, so it rubs the way the bar has the eraser
    *  set rather than being a second eraser with a mind of its own. */
   test('the pen button rubs the way the bar is set', () => {
     const { effects } = play(
       [down({ pointer: 'pen', eraser: true, hit: hit({ stroke: 's1' }) })],
-      context({ tool: 'draw', eraser: { whole: true, size: RUB } }),
+      context({ tool: 'draw', eraser: { whole: true, size: RUB, stroke: 6 } }),
     )
 
-    expect(effects).toEqual([{ do: 'rub', ids: ['s1'] }])
+    expect(effects).toEqual([{ do: 'rub', at: HERE, reach: 6 }])
   })
 })
 
@@ -1300,10 +1302,10 @@ describe('the pen with its button held', () => {
   test('takes a whole stroke where the bar says whole strokes', () => {
     const { effects } = play(
       [down({ pointer: 'pen', button: 2, eraser: true, hit: hit({ stroke: 's1' }) })],
-      context({ tool: 'draw', eraser: { whole: true, size: RUB } }),
+      context({ tool: 'draw', eraser: { whole: true, size: RUB, stroke: 6 } }),
     )
 
-    expect(effects).toEqual([{ do: 'rub', ids: ['s1'] }])
+    expect(effects).toEqual([{ do: 'rub', at: HERE, reach: 6 }])
   })
 
   test('asks for no menu, which belongs to the mouse', () => {
@@ -1394,10 +1396,10 @@ describe('a contact that turns out to be a pen', () => {
         { kind: 'move', id: 1, at: { x: 9, y: 9 }, screen: HERE, samples: [nib], hit: NOTHING },
         { ...penned, eraser: true, hit: hit({ stroke: 's1' }) },
       ],
-      context({ tool: 'draw', eraser: { whole: true, size: RUB } }),
+      context({ tool: 'draw', eraser: { whole: true, size: RUB, stroke: 6 } }),
     )
 
-    expect(effects.at(-1)).toEqual({ do: 'rub', ids: ['s1'] })
+    expect(effects.at(-1)).toEqual({ do: 'rub', at: penned.at, reach: 6 })
   })
 
   test('leaves a plane that has been panned where the hand put it', () => {

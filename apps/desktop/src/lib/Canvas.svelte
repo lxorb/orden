@@ -1024,7 +1024,7 @@
         predicted = []
         break
       case 'rub':
-        run.rub(store, effect.ids, `rub:${gestures}`)
+        run.rub(store, effect.at, effect.reach, `rub:${gestures}`)
         break
       case 'cut':
         run.cut(store, effect.at, effect.reach, `rub:${gestures}`)
@@ -1821,7 +1821,7 @@
         size: pens.current.size * camera.scale,
         colour: inkColour(pens.current.colour, palette),
       },
-      rub: { size: pens.rub, whole: pens.whole },
+      rub: { size: pens.whole ? pens.strokeRub : pens.rub, whole: pens.whole },
     })
   })
 

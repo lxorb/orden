@@ -15,6 +15,7 @@ import {
   PEN_SLOTS,
   pens,
   readPens,
+  STROKE_RUB,
   upright,
 } from './pens.svelte'
 
@@ -167,7 +168,7 @@ describe('straightening', () => {
 describe('the eraser', () => {
   test('says how it is set the way the pointer machine asks', () => {
     pens.rubbing({ whole: true, rub: 30 })
-    expect(pens.eraser).toEqual({ whole: true, size: 30 })
+    expect(pens.eraser).toEqual({ whole: true, size: 30, stroke: STROKE_RUB })
   })
 
   test('keeps its width inside what a finger can judge', () => {
@@ -219,6 +220,7 @@ describe('what the store holds', () => {
       shut: true,
       whole: true,
       rub: 24,
+      strokeRub: 6,
       straighten: false,
       box: true,
       partly: true,
@@ -232,6 +234,7 @@ describe('what the store holds', () => {
       shut: true,
       whole: true,
       rub: 24,
+      strokeRub: 6,
       straighten: false,
       box: true,
       partly: true,

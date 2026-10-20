@@ -15,6 +15,8 @@ vi.stubGlobal('localStorage', {
 const { NoteDoc, Tab } = await import('../workspace/documents.svelte')
 const { CanvasStore } = await import('./store.svelte')
 const { blankCanvas, readCanvas, writeCanvas } = await import('./format')
+const { run } = await import('./actions')
+const { pens } = await import('./pens.svelte')
 type Canvas = import('./format').Canvas
 type CanvasNode = import('./format').CanvasNode
 type Shared = import('./shared').SharedPlane
@@ -191,6 +193,29 @@ describe('picked ink given another width (#432)', () => {
 
     store.undo()
     expect(store.canvas.ink.map((one) => one.size)).toEqual([2, 2, 2])
+})
+
+/** The stroke eraser reaches as far as its own width says, like the area eraser,
+ *  and as far as a click on a line until the width is turned (#628). */
+describe('the stroke eraser', () => {
+  const line = (y: number) => ({
+    id: `at${y}`,
+    tool: 'pen' as const,
+    color: 'ink' as const,
+    size: 2,
+    points: [0, 40].map((x) => ({ x, y, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 })),
+  })
+
+  test('takes a line as far off as its width reaches, and leaves one further off', () => {
+    const { store } = opened()
+    store.edit({ ...store.canvas, ink: [line(8), line(20)] })
+
+    run.rub(store, { x: 20, y: 0 }, pens.eraser.stroke)
+    expect(store.canvas.ink.map((stroke) => stroke.id)).toEqual(['at8', 'at20'])
+
+    pens.rubbing({ strokeRub: 10 })
+    run.rub(store, { x: 20, y: 0 }, pens.eraser.stroke)
+    expect(store.canvas.ink.map((stroke) => stroke.id)).toEqual(['at20'])
   })
 })
 
