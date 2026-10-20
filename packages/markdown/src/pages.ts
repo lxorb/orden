@@ -81,11 +81,11 @@ export function laidOut(pages: readonly PageNode[]): PageNode[] {
 }
 
 /** The same, done to the whole canvas: the pages put back where the column says
- *  they are, and everything else left exactly where it was.
+ *  they are, and what was on each of `before` carried by however far that page went.
  *
  *  Hands back the very same canvas when nothing moved, which is what every edit in
  *  this app does and what lets a store tell an edit from a no-op. */
-export function settled(canvas: Canvas): Canvas {
+export function settled(canvas: Canvas, before: readonly PageNode[] = pagesOf(canvas)): Canvas {
   const pages = pagesOf(canvas)
   if (!pages.length) return canvas
 
@@ -93,7 +93,24 @@ export function settled(canvas: Canvas): Canvas {
   if (placed.every((page, at) => page === pages[at])) return canvas
 
   const byId = new Map(placed.map((page) => [page.id, page]))
-  return { ...canvas, nodes: canvas.nodes.map((node) => byId.get(node.id) ?? node) }
+  const shifts = before.flatMap((was) => {
+    const is = byId.get(was.id)
+    const shift = is && { box: was, x: is.x - was.x, y: is.y - was.y }
+    return shift && (shift.x || shift.y) ? [shift] : []
+  })
+  const by = <T extends { x: number; y: number }>(thing: T, shift?: { x: number; y: number }) =>
+    shift ? { ...thing, x: thing.x + shift.x, y: thing.y + shift.y } : thing
+
+  const nodes = canvas.nodes.map((node) => {
+    const shift = shifts.find((one) => on(node, one.box))
+    return byId.get(node.id) ?? by(node, shift)
+  })
+  const ink = canvas.ink.map((stroke) => {
+    const shift = shifts.find((one) => onPage(stroke, one.box))
+    return shift ? { ...stroke, points: stroke.points.map((one) => by(one, shift)) } : stroke
+  })
+
+  return { ...canvas, nodes, ink }
 }
 
 /** How tall the column is, which is what a scroll can reach. Nought for a note
@@ -163,7 +180,7 @@ export function added(canvas: Canvas, after: string | null = null): { canvas: Ca
   if (at < 0) nodes.push(page)
   else nodes.splice(at + 1, 0, page)
 
-  return { canvas: settled({ ...canvas, nodes }), id: page.id }
+  return { canvas: settled({ ...canvas, nodes }, pages), id: page.id }
 }
 
 /** A page taken out, and everything that was written on it with it.
@@ -191,7 +208,7 @@ export function removed(canvas: Canvas, id: string): Canvas {
   const nodes = canvas.nodes.filter((node) => node.id !== id && !(isPage(node) ? false : on(node)))
   const ink = canvas.ink.filter((stroke) => !onPage(stroke, box))
 
-  return settled({ ...canvas, nodes, ink })
+  return settled({ ...canvas, nodes, ink }, pages)
 }
 
 /** Whether a stroke belongs to a page: where its first point landed, which is
@@ -219,8 +236,8 @@ export function onPage(
  *
  *  What is on a page moves with it, which is what makes this a reorder and not a
  *  shuffle of empty sheets. The pages are reordered first, the column is laid out
- *  again, and everything that was on the moved page is shifted by however far the
- *  page itself went.
+ *  again, and everything on each page that went somewhere else is shifted by however
+ *  far its page went; see `settled`.
  *
  *  `to` counts pages, not nodes: 0 puts it first. Out of range is clamped, and a
  *  page already there comes back as the very same canvas. */
@@ -238,38 +255,14 @@ export function moved(canvas: Canvas, id: string, to: number): Canvas {
   const order = pages.filter((one) => one.id !== id)
   order.splice(target, 0, page)
 
-  const placed = laidOut(order)
-  const was = pages[from]
-  const is = placed.find((one) => one.id === id)
-  if (!was || !is) return canvas
-
-  const by = is.y - was.y
-  const box = { x: was.x, y: was.y, width: was.width, height: was.height }
-
   // The pages back into the slots the pages already occupied, in their new order.
   // Their order in `nodes` is what the file writes and what `pagesOf` reads back, so
   // a reorder that only moved the boxes would come back in the old order the next
   // time the file was read.
   let next = 0
-  const nodes = canvas.nodes.map((node) => {
-    if (isPage(node)) return placed[next++] ?? node
+  const nodes = canvas.nodes.map((node) => (isPage(node) ? (order[next++] ?? node) : node))
 
-    // Everything the moved page was carrying, by the same amount. Worked out against
-    // where the page was before the column was laid out again, because that is where
-    // the cards and the strokes still are.
-    return by !== 0 && on(node, box) ? { ...node, y: node.y + by } : node
-  })
-
-  const ink =
-    by === 0
-      ? canvas.ink
-      : canvas.ink.map((stroke) =>
-          onPage(stroke, box)
-            ? { ...stroke, points: stroke.points.map((one) => ({ ...one, y: one.y + by })) }
-            : stroke,
-        )
-
-  return { ...canvas, nodes, ink }
+  return settled({ ...canvas, nodes }, pages)
 }
 
 function on(
@@ -309,7 +302,7 @@ export function reshaped(
     return { ...node, paper, pattern, width: size.width, height }
   })
 
-  return settled({ ...canvas, nodes })
+  return settled({ ...canvas, nodes }, pagesOf(canvas))
 }
 
 /** A long page grown to hold what is now on it, or the very same canvas where no
@@ -343,7 +336,7 @@ export function grown(canvas: Canvas, lowest: ReadonlyMap<string, number>): Canv
   // here does and what lets the store tell an edit from a no-op.
   if (nodes.every((node, at) => node === canvas.nodes[at])) return canvas
 
-  return settled({ ...canvas, nodes })
+  return settled({ ...canvas, nodes }, pagesOf(canvas))
 }
 
 /** A page note with one blank page on it: what a new one says before anybody has
