@@ -16,6 +16,7 @@
 import { type OpResult, type Op } from '@nib/sync-core/wire'
 import { inForeignCopy } from '@nib/sync-core/foreign'
 import { applyOp, nameKey, type TreeEntry, type TreeState, treeState } from '@nib/sync-core/tree'
+import { isReserved } from '../naming'
 import type { Outgoing } from './records'
 import type { EntryRow, OutboxRow, SpaceRow } from './store'
 import type { Disk, World } from './world'
@@ -43,9 +44,6 @@ export function joined(folder: string, name: string): string {
   return folder ? `${folder}${SEP}${name}` : name
 }
 
-/** Names Windows will not hold, whatever their extension. */
-const RESERVED = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])(\.|$)/i
-
 /** What Windows holds in no name, beside the control characters. */
 const FORBIDDEN = '<>:"\\|?*'
 
@@ -56,7 +54,7 @@ function localName(name: string, platform: World['platform']): string {
     let out = Array.from(name, (char) =>
       char < ' ' || FORBIDDEN.includes(char) ? '_' : char,
     ).join('')
-    if (RESERVED.test(out)) out = `_${out}`
+    if (isReserved(out)) out = `_${out}`
     return out.replace(/[. ]+$/, (tail) => '_'.repeat(tail.length))
   }
   if (platform === 'mac') return name.replace(/:/g, '_')
