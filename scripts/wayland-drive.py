@@ -292,12 +292,16 @@ def look(output, moved=True, tag=""):
         return
     origin = (node["rect"]["x"] - info["rect"]["x"], node["rect"]["y"] - info["rect"]["y"])
 
+    # The window's page measures in its own pixels, which are the window's at its pixel
+    # ratio: more than one where the desktop's scale is the page's zoom (DPI=n).
+    ratio = run("devicePixelRatio") or 1
+
     def on_screen(rect, inset=0):
         return (
-            (origin[0] + rect["x"] + inset) * scale,
-            (origin[1] + rect["y"] + inset) * scale,
-            (origin[0] + rect["x"] + rect["width"] - inset) * scale,
-            (origin[1] + rect["y"] + rect["height"] - inset) * scale,
+            (origin[0] + (rect["x"] + inset) * ratio) * scale,
+            (origin[1] + (rect["y"] + inset) * ratio) * scale,
+            (origin[0] + (rect["x"] + rect["width"] - inset) * ratio) * scale,
+            (origin[1] + (rect["y"] + rect["height"] - inset) * ratio) * scale,
         )
 
     # The web tab chosen in the strip, as a reader would: a launch may have come up on
@@ -321,7 +325,7 @@ def look(output, moved=True, tag=""):
         if got is not None:
             break
         time.sleep(0.5)
-    print(f"{output} at {scale}: the hole is {tuple(round(v) for v in want)}, the page is {got}")
+    print(f"{output} at {scale}, the page's ratio {ratio}: the hole is {tuple(round(v) for v in want)}, the page is {got}")
     if not near(got, want, scale):
         fail(f"{output} at {scale}: the page is at {got}, its hole at {tuple(round(v) for v in want)}")
         return

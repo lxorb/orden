@@ -127,7 +127,7 @@ jobs:
       - name: The .deb, sway, Mesa and a session bus
         run: |
           sudo apt-get update
-          sudo apt-get install -y ./packages/deb/*.deb sway xwayland grim dbus python3-gi python3-pil gir1.2-glib-2.0 libgl1-mesa-dri libegl-mesa0 libxkbcommon-tools ffmpeg
+          sudo apt-get install -y ./packages/deb/*.deb sway xwayland grim dbus python3-gi python3-pil gir1.2-glib-2.0 libgl1-mesa-dri libegl-mesa0 libxkbcommon-tools ffmpeg xsettingsd
       - name: Under Wayland, the portal's key reaching quick add
         env:
           OUT: wayland-out/portal
@@ -143,6 +143,19 @@ jobs:
           DRIVE: '1'
           COLD: '4'
         run: dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+      # #427: the same on a desktop scaled for X11 applications as KDE scales them, 133
+      # per cent by XSETTINGS: the page was drawn over the sidebar and the address bar, a
+      # quarter short of its hole, and the window's own page cut off at its edges.
+      - name: A web tab's page where its tab is, on a desktop scaled for X11 applications
+        if: always()
+        env:
+          OUT: wayland-out/scaled
+          DRIVE: '1'
+          DPI: '128'
+        run: |
+          pkill -f /usr/share/Orden/nib || true
+          rm -rf "$HOME/.config/ch.emilvinu.nib"
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       # #427: the window moved by its tab strip and resized by its edge, floated.
       - name: The window moved by its strip and resized by its edge, under sway
         if: always()

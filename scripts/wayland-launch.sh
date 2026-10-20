@@ -83,6 +83,15 @@ for _ in $(seq 100); do
 done
 [ -n "${DISPLAY:-}" ] || { echo "::error::sway started no Xwayland"; cat "$out/sway.log"; exit 1; }
 echo "Xwayland on $DISPLAY"
+
+# With DPI=n, the desktop scaled for X11 applications as KDE scales it: XSETTINGS saying
+# n dots an inch (Xft/DPI), which Chromium takes its scale from (#427, page_scale.rs).
+if [ -n "${DPI:-}" ]; then
+  printf 'Xft/DPI %s\n' "$((DPI * 1024))" > "$out/xsettingsd.conf"
+  xsettingsd -c "$out/xsettingsd.conf" > "$out/xsettingsd.log" 2>&1 &
+  sleep 1
+  echo "XSETTINGS: Xft/DPI $DPI"
+fi
 echo "sway on $WAYLAND_DISPLAY, outputs:"
 python3 -c 'import json,sys; [print(" ", o["name"], o["rect"], "scale", o["scale"], o["transform"]) for o in json.load(open(sys.argv[1]))]' "$out/outputs.json"
 
