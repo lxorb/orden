@@ -411,6 +411,16 @@ export function coloured(canvas: Canvas, picked: readonly string[], colour: stri
   }
 }
 
+/** Every picked stroke of ink at one width. Cards and connectors have none to set. */
+export function sized(canvas: Canvas, picked: readonly string[], size: number): Canvas {
+  const chosen = new Set(picked)
+
+  return {
+    ...canvas,
+    ink: canvas.ink.map((stroke) => (chosen.has(stroke.id) ? { ...stroke, size } : stroke)),
+  }
+}
+
 /** One optional field set, or dropped for null.
  *
  *  Dropped rather than set to undefined, because what goes into the file is only

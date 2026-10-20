@@ -53,7 +53,7 @@
   import PagesZoom from './PagesZoom.svelte'
   import { type Camera, ctrlWheelZoom, graphPoint, heldGestures, NOTCH, pinching } from './camera'
   import { putWords, toolPressed, wordsAt } from './canvas/actions'
-  import { coloured, copied, movedBy, pickedBox, removed, withText } from './canvas/edits'
+  import { coloured, copied, movedBy, pickedBox, removed, sized, withText } from './canvas/edits'
   import { freshId, type InkPoint, type InkStroke } from './canvas/format'
   import { Contacts, hovering, penKind, Stylus } from './canvas/contacts'
   import { hand } from './canvas/hand.svelte'
@@ -1261,9 +1261,11 @@
       at={overPicked.at}
       below={overPicked.below}
       colour={pickedColour}
+      size={canvas.ink.find((one) => store.isPicked(one.id))?.size}
       recent={pens.recent}
       grouping={null}
       oncolour={colourPicked}
+      onsize={(size: number, drag: string) => store.edit(sized(canvas, store.picked, size), drag)}
       onduplicate={duplicatePicked}
       ondelete={deletePicked}
       ongroup={() => undefined}

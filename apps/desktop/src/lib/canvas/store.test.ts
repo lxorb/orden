@@ -176,6 +176,24 @@ describe('a gesture that edits as it goes', () => {
   })
 })
 
+/** The width dial over picked ink edits on every step of its drag, like the eraser. */
+describe('picked ink given another width (#432)', () => {
+  test('widens every picked stroke, and one undo takes the drag back', async () => {
+    const { sized } = await import('./edits')
+    const { store } = opened()
+    const points = [{ x: 0, y: 0, pressure: 0.5, tiltX: 0, tiltY: 0, t: 0 }]
+    const stroke = (id: string) => ({ id, tool: 'pen' as const, color: '#000000', size: 2, points })
+    store.edit({ ...store.canvas, ink: [stroke('a'), stroke('b'), stroke('c')] })
+
+    store.edit(sized(store.canvas, ['a', 'b'], 4), 'width:1')
+    store.edit(sized(store.canvas, ['a', 'b'], 6), 'width:1')
+    expect(store.canvas.ink.map((one) => one.size)).toEqual([6, 6, 2])
+
+    store.undo()
+    expect(store.canvas.ink.map((one) => one.size)).toEqual([2, 2, 2])
+  })
+})
+
 describe('a plane that is in a room', () => {
   test('sends what it changed to the room rather than remembering it here', () => {
     const { store } = opened()
