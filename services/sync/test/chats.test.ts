@@ -765,6 +765,35 @@ describe('chats', () => {
         refused: 'role',
       })
     })
+
+    test('one the database could not check a moment is kept for the next alarm', async () => {
+      const chat = await chatOfOwner()
+      const hash = 'a'.repeat(64)
+      env.db
+        .prepare(
+          "insert into blobs (hash, user_id, size, type, created_at) values (?, ?, 4, 'image/png', 1)",
+        )
+        .run(hash, ids.writer)
+      const later = postOf('the figure', {
+        files: [{ hash, name: 'figure.png', size: 4, type: 'image/png' }],
+      })
+      await send(people.writer, chat, {
+        kind: 'schedule',
+        id: id(),
+        sendAt: T0 + 260_000,
+        post: later,
+      })
+
+      at(260_000)
+      env.justBefore(/select distinct hash from blobs/, () => {
+        throw new Error('D1 is not answering')
+      })
+      await fire(logs.of(chat))
+      expect((await events(people.owner, chat)).events).toEqual([])
+
+      await fire(logs.of(chat))
+      expect((await events(people.owner, chat)).events).toMatchObject([{ id: later.id }])
+    })
   })
 
   describe('search', () => {

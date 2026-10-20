@@ -554,6 +554,9 @@ ${shell.right ?? ''}
       // A page nobody has said the password for is that reader's own to hold and
       // no shared cache's.
       'cache-control': options.locked ? 'private, no-store' : 'public, max-age=60',
+      // A hover card asks for the page's own address and is answered with less of
+      // it, so a browser that kept the card would show it as the page; see `served`.
+      vary: 'x-nib-preview',
       'content-security-policy': csp({
         scripts,
         ...(shell.counter ? { counter: new URL(counterUrl(shell.counter)).origin } : {}),

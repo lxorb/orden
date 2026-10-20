@@ -31,8 +31,11 @@ export const PASSWORD_LIMIT = 200
 const LASTS = 30 * 24 * 60 * 60 * 1000
 
 /** What the cookie is called. Named for what it is: the reader has been let in
- *  to one site, and a site is one hostname, so nothing about it travels. */
-const TICKET = 'nib_site'
+ *  to one site, and a site is one hostname, so nothing about it travels. `__Host-`
+ *  because every site is a name under one root, and a script on any of them may
+ *  set a cookie for the whole root, which every other site is sent ahead of its
+ *  own; a browser takes one by this name only from the hostname itself. */
+const TICKET = '__Host-nib_site'
 
 /** How hard the hash is to try. A hundred thousand rounds of PBKDF2 is what a
  *  Worker can do inside one request and what a password guesser cannot do a
