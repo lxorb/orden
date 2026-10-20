@@ -25,6 +25,9 @@ interface MenuOptions {
   near?: boolean
   /** Leave the keyboard in the text field it is about; see field-menu.ts. */
   keepFocus?: boolean
+  /** Open upward from the point, for a button at the bottom of the window: the
+   *  account's row in the sidebar's foot, which a menu below would cover. */
+  up?: boolean
 }
 
 class ContextMenu {
@@ -35,6 +38,7 @@ class ContextMenu {
   title = $state<string | null>(null)
   near = $state(false)
   keepFocus = $state(false)
+  up = $state(false)
   /** The row a key lit while the keyboard stays in a field, or -1. */
   lit = $state(-1)
   /** Where a press still held opened it; see menu-release.ts. */
@@ -53,6 +57,7 @@ class ContextMenu {
     this.title = options.title ?? null
     this.near = !!options.near
     this.keepFocus = !!options.keepFocus
+    this.up = !!options.up
     this.lit = -1
     this.x = event.clientX
     this.y = event.clientY
