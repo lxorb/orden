@@ -389,6 +389,13 @@ fn default_spaces(_app: &AppHandle) -> Result<PathBuf, String> {
 /// found is said in the log, and every note command says so after it.
 #[cfg(desktop)]
 pub fn decide_spaces(app: &AppHandle) {
+    // A probe that names its folder decides nothing, and keeps nothing: a kept answer
+    // written by it would be the reader's `Documents/Nib`, waiting for the next launch
+    // of that build without the variable.
+    if folder_named(std::env::var_os(SPACES_DIR).as_deref()).is_some() {
+        return;
+    }
+
     match chosen_spaces(app) {
         Ok(chosen) => {
             let _ = SPACES_CHOSEN.set(chosen);
