@@ -4,10 +4,12 @@
 ;(function () {
   if (window.top !== window) return
   let said = 0
-  function say() {
+  // `again` says it even where it has not changed: a zoom asked for while the page was
+  // still settling can be dropped, and a ratio still wrong is asked about once more.
+  function say(again) {
     const internals = window.__TAURI_INTERNALS__
     if (!internals || typeof internals.invoke !== 'function') return false
-    if (devicePixelRatio !== said) {
+    if (again || devicePixelRatio !== said) {
       said = devicePixelRatio
       internals.invoke('page_scale_seen', { ratio: said }).catch(() => null)
     }
@@ -15,11 +17,15 @@
   }
   // A change of ratio is a media query that stops matching; the next is asked for then.
   function watch() {
-    say()
+    say(false)
     matchMedia(`(resolution: ${devicePixelRatio}dppx)`).addEventListener('change', watch, {
       once: true,
     })
   }
-  if (!say()) document.addEventListener('DOMContentLoaded', say, { once: true })
+  if (!say(false)) document.addEventListener('DOMContentLoaded', () => say(false), { once: true })
+  window.addEventListener('load', () => {
+    say(true)
+    setTimeout(() => say(true), 2000)
+  })
   watch()
 })()
