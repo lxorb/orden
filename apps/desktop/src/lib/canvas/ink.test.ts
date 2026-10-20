@@ -608,6 +608,24 @@ describe('what a held pen meant to draw', () => {
     expect(new Set(tidy.points.map((p) => p.pressure)).size).toBe(1)
   })
 
+  /** The painter clips a stroke to its box, so a box tidied into four points whose
+   *  sides were curved through the corners bowed out past it and painted as its
+   *  four corners alone (#489). */
+  test('a tidied box keeps its straight sides inside its own box, for every tool', () => {
+    for (const tool of INK_TOOLS) {
+      const corners = [point(0, 0), point(200, 0), point(200, 150), point(0, 150), point(0, 0)]
+      const tidy = tidied(tidyShape(stroke(corners, { tool }), 'rectangle'))
+      const box = strokeBox(tidy)
+
+      for (const one of outlineOf(tidy)) {
+        expect(one.x, tool).toBeGreaterThanOrEqual(box.x)
+        expect(one.x, tool).toBeLessThanOrEqual(box.x + box.width)
+        expect(one.y, tool).toBeGreaterThanOrEqual(box.y)
+        expect(one.y, tool).toBeLessThanOrEqual(box.y + box.height)
+      }
+    }
+  })
+
   test('a tidied ring is a ring', () => {
     const ring = Array.from({ length: 40 }, (_one, i) => {
       const a = (i / 39) * Math.PI * 2
@@ -929,6 +947,16 @@ describe('a stroke reported coarsely', () => {
   test('leaves a straight run straight', () => {
     const out = smoothed([point(0, 0), point(40, 0), point(80, 0), point(120, 0)], 4)
     for (const one of out) expect(Math.abs(one.y)).toBeLessThan(0.001)
+  })
+
+  /** A line held straight mid-stroke is two points far apart, and the pen going on
+   *  round a corner used to bend it the moment it moved (#489). */
+  test('keeps a line straight where the pen turns a corner off it', () => {
+    const out = smoothed([point(0, 0), point(300, 0), point(300, 3), point(300, 6)], 3)
+    const line = out.filter((one) => one.x < 300)
+
+    expect(line.length).toBeGreaterThan(2)
+    for (const one of line) expect(Math.abs(one.y), `${one.x}`).toBeLessThan(0.001)
   })
 
   test('carries everything the digitiser said along the curve', () => {
