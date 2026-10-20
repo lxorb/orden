@@ -9,9 +9,9 @@ import { laterOf, pokeSpace } from '../hub/poke'
 import { mayChangeTree, mayPushDocuments } from '../limits'
 import { NO_SUCH_NOTE, TOO_MANY_CHANGES } from '../refused'
 import { atLeast, refusal, spaceOf } from '../spaces/space'
-import type { Env, Variables, Whoever } from '../types'
+import type { Env, Variables } from '../types'
 import { deviceIn } from '../versions'
-import { deviceOf } from './device'
+import { deviceOf, whoseId } from './device'
 import { keepDoc, pullDocs, pushDocs, snapshotPage } from './docs'
 import { answer, requestBody } from './envelope'
 import { feedPage } from './feed'
@@ -27,11 +27,6 @@ interface App {
 /** What a request that is not the one the route reads is told. A correct client never
  *  sends one, so this reaches no reader and has no catalogue row. */
 const NOT_A_REQUEST = 'that is not a request this route reads'
-
-/** Whose ceilings a request counts against: the account's, or the guest's. */
-function whoseId(who: Whoever): string {
-  return who.kind === 'user' ? who.user.id : who.guest.id
-}
 
 /** A cursor off a query string: a whole number the space handed out, or the start. */
 function cursorIn(value: string | undefined): number {
@@ -122,8 +117,12 @@ v2Docs.post('/push', async (context) => {
 v2Docs.post('/keep', async (context) => {
   const request = keepRequestOf(await requestBody(context))
   if (!request) return context.json({ error: NOT_A_REQUEST }, 400)
+  const who = context.get('who')
+  if (!(await mayPushDocuments(context.env, whoseId(who)))) {
+    return context.json({ error: TOO_MANY_CHANGES }, 429)
+  }
 
-  const kept = await keepDoc(context.env, context.get('who'), request)
+  const kept = await keepDoc(context.env, who, request)
   if (kept === 'gone') return context.json({ error: NO_SUCH_NOTE }, 404)
   if (kept === 'role') return context.json({ error: refusal('write') }, 403)
   return answer(context, { ok: true })

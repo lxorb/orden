@@ -21,7 +21,8 @@
 import { Hono } from 'hono'
 import { byteLength, newId, now } from '../crypto'
 import { laterOf, pokeSpace } from '../hub/poke'
-import { NOT_AN_OBJECT } from '../refused'
+import { mayChangeTree } from '../limits'
+import { NOT_AN_OBJECT, TOO_MANY_CHANGES } from '../refused'
 import { readBookmarks } from '../spaces/bookmarks'
 import { MOST_BYTES } from '../spaces/columns'
 import { readExcluded } from '../spaces/excluded'
@@ -30,7 +31,7 @@ import { readIcons, readTints } from '../spaces/icons'
 import { readArranged } from '../spaces/arranged'
 import { atLeast, spaceOf } from '../spaces/space'
 import type { Env, Space, Variables } from '../types'
-import { deviceOf } from './device'
+import { deviceOf, whoseId } from './device'
 import { readTree, type Tree } from './tree'
 
 export type MapName = 'bookmark' | 'icon' | 'order' | 'graph' | 'excluded'
@@ -54,6 +55,10 @@ const LONGEST_KEY = 512
 /** The most entries one request changes, and one page of the feed carries. */
 const MOST_CHANGED = 200
 const PAGE = 1000
+/** The most entries a space keeps, the taken-away ones among them: every PATCH reads
+ *  them all, and an entry the columns drop (an id the tree does not hold, a null) is
+ *  counted by nothing else. The columns come to a few thousand entries at most. */
+const MOST_ENTRIES = 10_000
 
 const PATH = 'path:'
 
@@ -89,7 +94,7 @@ function holds(map: MapName, key: string, value: unknown): boolean {
     case 'order':
       return isPosition(value)
     case 'graph':
-      return key in readGraph(JSON.stringify({ [key]: value }))
+      return Object.hasOwn(readGraph(JSON.stringify({ [key]: value })), key)
     case 'excluded':
       return value === true && readExcluded(JSON.stringify([key])).includes(key)
   }
@@ -318,7 +323,7 @@ async function writeEntries(
   const at = now()
   const provisional = overlaid(kept, changes, 0, at)
   const columns = projected(provisional, tree)
-  if (!fitting(columns)) return null
+  if (provisional.length > MOST_ENTRIES || !fitting(columns)) return null
 
   const stamped = changes.map((one, index) => ({ ...one, seq: index, at }))
   return await writeAtBlock(env, spaceId, stamped, columns, by)
@@ -501,6 +506,9 @@ v2Maps.patch('/:space/maps', atLeast('write', 'space'), async (context) => {
   if (!isRecord(body)) return context.json({ error: NOT_AN_OBJECT }, 400)
   const changes = changesIn(body)
   if (!changes) return context.json({ error: NOT_AN_ENTRY }, 400)
+  if (!(await mayChangeTree(context.env, whoseId(context.get('who'))))) {
+    return context.json({ error: TOO_MANY_CHANGES }, 429)
+  }
   if (!changes.length) return context.json({ cursor: 0 })
 
   const device = await deviceOf(context)

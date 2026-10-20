@@ -12,7 +12,7 @@ import type { Context } from 'hono'
 import { tokenIn } from '../auth'
 import { sha256 } from '../crypto'
 import { deviceOfSession } from '../hub/devices'
-import type { Env, Variables } from '../types'
+import type { Env, Variables, Whoever } from '../types'
 
 export async function deviceOf(
   context: Context<{ Bindings: Env; Variables: Variables }>,
@@ -28,4 +28,9 @@ export async function deviceOf(
   // Short: it is written beside every change, and sixteen hex digits of a hash tell
   // a person's sessions apart without saying anything about the token.
   return `session:${(await sha256(tokenIn(header) ?? '')).slice(0, 16)}`
+}
+
+/** Whose ceilings a request counts against: the account's, or the guest's. */
+export function whoseId(who: Whoever): string {
+  return who.kind === 'user' ? who.user.id : who.guest.id
 }
