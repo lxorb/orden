@@ -29,6 +29,7 @@ import {
   moveBlockDown,
   moveBlockUp,
   pastePlain,
+  redoEdit,
   reformatDocument,
   reverseLines,
   selectWord,
@@ -46,6 +47,7 @@ import {
   toggleTaskList,
   toggleWrap,
   type Transaction,
+  undoEdit,
   unfoldEverything,
   upperCase,
 } from '@nib/editor'
@@ -780,7 +782,10 @@ function lineCommands(view?: EditorView): Command[] {
     row('edit.duplicate-block', t('Duplicate the block'), duplicateBlock),
     row('edit.move-block-up', t('Move the block up'), moveBlockUp),
     row('edit.move-block-down', t('Move the block down'), moveBlockDown),
-    // The app menu's rows that had no other way in but the menu (#304).
+    // The app menu's rows that had no other way in but the menu (#304). Undo and Redo
+    // too, which a phone's keyboard has no key for.
+    row('edit.undo', t('Undo'), undoEdit),
+    row('edit.redo', t('Redo'), redoEdit),
     row('format.inline-math', t('Inline math'), toggleWrap('$')),
     row('format.superscript', t('Superscript'), toggleWrap('^')),
     row('format.subscript', t('Subscript'), toggleWrap('~')),

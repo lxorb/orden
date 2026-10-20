@@ -134,7 +134,7 @@ describe('File', () => {
   test('and every row only the menu had is in the palette now', () => {
     const offered = appCommands().map((one) => one.label)
     for (const label of [
-      ...['Inline math', 'Superscript', 'Subscript', 'Paste as plain text'],
+      ...['Undo', 'Redo', 'Inline math', 'Superscript', 'Subscript', 'Paste as plain text'],
       ...['Find next', 'Find previous', 'Fullscreen'],
       ...['What is new', 'Report an issue', 'Source code'],
     ]) {
