@@ -141,6 +141,13 @@ describe('a change', () => {
     expect(changedTask('- [ ] 📅 2026-10-01 📅 2026-10-05', { due: null })).toBe('- [ ] ')
   })
 
+  test('taken off goes from among the words too', () => {
+    const twice = '- [ ] [deadline:: 2026-10-10] word [deadline:: 2026-10-10]'
+    expect(readTask(changedTask(twice, { deadline: null }))?.deadline).toBeUndefined()
+    const timed = '- [ ] (time:: 09:00) word [time:: 10:00]'
+    expect(readTask(changedTask(timed, { time: null }))?.time).toBeUndefined()
+  })
+
   // A date field holds its first ten characters, the date, and what is written
   // after it is somebody's own - a time, most often - which moving the date keeps.
   test('of a date written with a time moves the date and keeps the time', () => {

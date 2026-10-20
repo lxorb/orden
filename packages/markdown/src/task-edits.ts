@@ -24,6 +24,7 @@ import {
   EMOJI_BY_DATE,
   EMOJI_BY_PRIORITY,
   type FieldName,
+  fieldOfKey,
   type FieldToken,
   ID_EMOJI,
   KEY_BY_FIELD,
@@ -297,9 +298,15 @@ export function writeTask(line: string, change: TaskChange): TextEdit[] {
     if (value === was || (token === undefined && value === null)) continue
 
     if (token && value === null) {
-      // Every one of them, or the one left behind would be read in its place.
-      for (const one of written) gone.add(one)
-      edits.push(...removals(line, written, parsed.wordsFrom))
+      // Every one of them, the copies among the words the reading set aside as other
+      // fields included, or the one left behind would be read in its place.
+      const every = tokens.filter(
+        (one) =>
+          !gone.has(one) &&
+          (one.field === field || (one.key !== undefined && fieldOfKey(one.key) === field)),
+      )
+      for (const one of every) gone.add(one)
+      edits.push(...removals(line, every, parsed.wordsFrom))
     } else if (token && value !== null) {
       const whole = field === 'priority' && token.form === 'emoji'
       edits.push(

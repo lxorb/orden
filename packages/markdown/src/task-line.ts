@@ -361,8 +361,13 @@ function keyOf(written: string): string {
     .replace(/[\s_-]+/g, '')
 }
 
-/** `16:00`, `9:05`, `16:00 Europe/Zurich`. */
-const TIME = /^(\d{1,2}):(\d{2})(?::\d{2})?(?:\s+([A-Za-z_]+(?:\/[A-Za-z_+-]+)*))?$/
+/** The field a bracket field's key names, if nib knows one by it. */
+export function fieldOfKey(key: string): FieldName | undefined {
+  return FIELD_BY_KEY.get(keyOf(key))
+}
+
+/** `16:00`, `9:05`, `16:00 Europe/Zurich`, `16:00 Etc/GMT+5`. */
+const TIME = /^(\d{1,2}):(\d{2})(?::\d{2})?(?:\s+([A-Za-z_][\w+-]*(?:\/[\w+-]+)*))?$/
 
 export function readTime(value: string): { time: string; zone?: string } | null {
   const found = TIME.exec(value.trim())

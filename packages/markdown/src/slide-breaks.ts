@@ -17,7 +17,7 @@ export const BLANK = /^[ \t]*$/
 export function bodyStart(source: string): number {
   if (!source.startsWith('---')) return 0
 
-  const matter = /^---\r?\n[\s\S]*?\r?\n---[ \t]*(?:\r?\n|$)/.exec(source)
+  const matter = /^---\r?\n(?:[\s\S]*?\r?\n)??---[ \t]*(?:\r?\n|$)/.exec(source)
   return matter ? matter[0].length : 0
 }
 

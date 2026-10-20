@@ -232,6 +232,11 @@ describe('the values of nib fields', () => {
     expect(readTime('16:00:30')).toEqual({ time: '16:00' })
   })
 
+  test('a zone with digits in its name', () => {
+    expect(readTime('16:00 Etc/GMT+5')).toEqual({ time: '16:00', zone: 'Etc/GMT+5' })
+    expect(readTime('16:00 EST5EDT')).toEqual({ time: '16:00', zone: 'EST5EDT' })
+  })
+
   test('reminders: before, at a time on the day, at a moment', () => {
     expect(readRemind('15m, 1h, 1d, 9:00, 2026-10-06 09:00')).toEqual([
       { before: 15 },

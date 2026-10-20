@@ -233,6 +233,17 @@ describe('merging two copies of a canvas', () => {
     expect(writeCanvas(merged(shared, shared, 1000))).toBe(writeCanvas(shared))
   })
 
+  test('keeps a card where the side that moved it later put it', () => {
+    const ours = plane({ nodes: [card('b'), card('a')], at: { a: 200, b: 100 } })
+    const theirs = plane({
+      nodes: [card('a'), card('b'), card('c')],
+      at: { a: 100, b: 100, c: 210 },
+    })
+
+    expect(ids(merged(ours, theirs, 1000))).toEqual(['b', 'a', 'c'])
+    expect(ids(merged(theirs, ours, 1000))).toEqual(['b', 'a', 'c'])
+  })
+
   test('settles a tie without either side having to ask the other', () => {
     const shared = stamped(plane(), plane({ nodes: [card('a', 'first')] }), 100)
     const ours = stamped(shared, { ...shared, nodes: [card('a', 'ours')] }, 200)

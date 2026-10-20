@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { aligned, ALIGNMENTS, distributed, ordered } from './arrange'
-import type { Canvas, CanvasNode } from './format'
+import { type Canvas, type CanvasNode, merged, stamped } from './format'
 
 function card(id: string, x: number, y: number, width = 100, height = 100): CanvasNode {
   return { id, type: 'text', x, y, width, height, text: id }
@@ -144,6 +144,14 @@ describe('the z order', () => {
   test('several keep their own order among themselves', () => {
     expect(order(ordered(canvas, ['a', 'b'], 'front'))).toEqual(['c', 'd', 'a', 'b'])
     expect(order(ordered(canvas, ['a', 'b'], 'forward'))).toEqual(['c', 'a', 'b', 'd'])
+  })
+
+  test('survives a merge with a copy that added a card meanwhile', () => {
+    const base = stamped(plane([]), canvas, 100)
+    const ours = stamped(base, ordered(base, ['a'], 'front'), 200)
+    const theirs = stamped(base, { ...base, nodes: [...base.nodes, card('e', 0, 0)] }, 210)
+
+    expect(order(merged(ours, theirs, 1000))).toEqual(['b', 'c', 'd', 'a', 'e'])
   })
 
   test('everything picked is nothing to reorder', () => {

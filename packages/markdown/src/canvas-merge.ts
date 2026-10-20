@@ -174,9 +174,11 @@ function later<T extends Thing>(ours: T, ourTime: number, theirs: T, theirTime: 
  *  and anything a tombstone outlives left out.
  *
  *  The order is the same on both sides because it is worked out from both: a
- *  thing sits where it sits on the side that has it earlier, and two things that
- *  would sit in the same place are ordered by their ids. That is what makes the
- *  z order of a merged canvas the same on every device. */
+ *  thing sits where the side that touched it later put it - bringing a card to
+ *  the front touches it - and, where neither did so later, where it sits on the
+ *  side that has it earlier; two things that would sit in the same place are
+ *  ordered by their ids. That is what makes the z order of a merged canvas the
+ *  same on every device. */
 function mergeList<T extends Thing>(
   ours: readonly T[],
   theirs: readonly T[],
@@ -191,7 +193,10 @@ function mergeList<T extends Thing>(
   ours.forEach((thing, index) => places.set(thing.id, index))
   theirs.forEach((thing, index) => {
     const seen = places.get(thing.id)
-    places.set(thing.id, seen === undefined ? index : Math.min(seen, index))
+    const ourTime = timeOf(ourCanvas, thing.id)
+    const theirTime = timeOf(theirCanvas, thing.id)
+    if (seen === undefined || theirTime > ourTime) places.set(thing.id, index)
+    else if (theirTime === ourTime) places.set(thing.id, Math.min(seen, index))
   })
 
   const out: { thing: T; place: number }[] = []
