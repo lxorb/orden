@@ -4,6 +4,8 @@ import {
   duplicateBlock,
   EditorView,
   expandSelection,
+  findNext,
+  findPrevious,
   foldHeadings,
   foldLess,
   foldMore,
@@ -26,6 +28,8 @@ import {
   lowerCase,
   moveBlockDown,
   moveBlockUp,
+  pastePlain,
+  redoEdit,
   reformatDocument,
   reverseLines,
   selectWord,
@@ -41,7 +45,9 @@ import {
   toggleOrderedList,
   toggleQuote,
   toggleTaskList,
+  toggleWrap,
   type Transaction,
+  undoEdit,
   unfoldEverything,
   upperCase,
 } from '@nib/editor'
@@ -84,7 +90,9 @@ import { touchedBy } from './agents/docs/touched'
 import { agentMarks } from './agent-marks.svelte'
 import { shortcuts } from './shortcuts.svelte'
 import { toggleFill } from './tab-fill/fill'
-import { closeWindow, invoke, isDesktop, isNative } from './tauri'
+import { fullscreen } from './fullscreen.svelte'
+import { ISSUES_URL, RELEASES_URL, SOURCE_URL } from './links'
+import { closeWindow, invoke, isDesktop, isNative, openExternal } from './tauri'
 import { SCHEME_CHOICES, SCHEME_NAMES } from './schemes'
 import { theme } from './theme.svelte'
 import { viewport } from './viewport.svelte'
@@ -774,6 +782,16 @@ function lineCommands(view?: EditorView): Command[] {
     row('edit.duplicate-block', t('Duplicate the block'), duplicateBlock),
     row('edit.move-block-up', t('Move the block up'), moveBlockUp),
     row('edit.move-block-down', t('Move the block down'), moveBlockDown),
+    // The app menu's rows that had no other way in but the menu (#304). Undo and Redo
+    // too, which a phone's keyboard has no key for.
+    row('edit.undo', t('Undo'), undoEdit),
+    row('edit.redo', t('Redo'), redoEdit),
+    row('format.inline-math', t('Inline math'), toggleWrap('$')),
+    row('format.superscript', t('Superscript'), toggleWrap('^')),
+    row('format.subscript', t('Subscript'), toggleWrap('~')),
+    row('edit.paste-plain', t('Paste as plain text'), pastePlain),
+    row('edit.find-next', t('Find next'), findNext, false),
+    row('edit.find-previous', t('Find previous'), findPrevious, false),
   ]
 }
 
@@ -1435,6 +1453,22 @@ export function appCommands(view?: EditorView): Command[] {
             run: () => void toggleFill(),
           },
         ]),
+    {
+      id: 'fullscreen',
+      label: fullscreen.on ? t('Leave fullscreen') : t('Fullscreen'),
+      hint: shortcuts.hint('app.fullscreen'),
+      run: () => void fullscreen.toggle(workspace.panes),
+    },
+    ...(isDesktop
+      ? [
+          {
+            id: 'always-on-top',
+            label: t('Always on top'),
+            checked: modes.alwaysOnTop,
+            run: () => modes.toggleAlwaysOnTop(),
+          },
+        ]
+      : []),
 
     {
       id: 'punctuation',
@@ -1603,6 +1637,9 @@ export function appCommands(view?: EditorView): Command[] {
       // command that appears to do nothing at all.
       run: () => void updates.check(),
     },
+    { id: 'whats-new', label: t('What is new'), run: () => void openExternal(RELEASES_URL) },
+    { id: 'report-issue', label: t('Report an issue'), run: () => void openExternal(ISSUES_URL) },
+    { id: 'source-code', label: t('Source code'), run: () => void openExternal(SOURCE_URL) },
     {
       id: 'sidebar',
       label: workspace.panel ? t('Hide left sidebar') : t('Show left sidebar'),

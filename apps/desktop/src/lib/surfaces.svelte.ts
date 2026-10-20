@@ -456,7 +456,6 @@ export async function warmDoors(): Promise<void> {
     () => searchPanel(),
     () => linksPanel(),
     () => appMenuRows(),
-    () => appMenuPanel.ask(),
     () => readingSurface(),
     () => loadFind(),
     // The line, case and grow-the-selection commands, so that the first Ctrl+J or

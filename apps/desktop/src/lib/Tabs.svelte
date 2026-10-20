@@ -96,6 +96,11 @@
     )
   }
 
+  /** What the note in this pane offers, fetched on the press; see note-menu.ts. */
+  function showNoteMenu(event: MouseEvent) {
+    void import('./note-menu').then(({ noteMenu }) => menu.show(event, noteMenu(event, paneId)))
+  }
+
   /** A press on a stopped agent's mark resumes it (docs/agent-native.md 9.5). Read on
    *  the press, which is where the pointer was: the tab captures it, so the click lands
    *  on the tab as a whole. */
@@ -1084,6 +1089,19 @@
       </svg>
     </button>
   {/if}
+
+  <!-- The note's own menu, while this pane shows a note (#304). -->
+  {#if walking?.kind === 'note'}
+    <button
+      class="nib-glyph more"
+      title={t('More')}
+      aria-label={t('More')}
+      aria-haspopup="menu"
+      onclick={showNoteMenu}
+    >
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 8h0M8 8h0M13 8h0" /></svg>
+    </button>
+  {/if}
 </div>
 
 {#if chip && carriedTab && Chip}
@@ -1690,6 +1708,14 @@
   .link.on {
     color: var(--accent);
     background: var(--surface-selected);
+  }
+
+  .more {
+    align-self: center;
+  }
+
+  .more svg {
+    stroke-width: 2.6;
   }
 
   .link svg {
