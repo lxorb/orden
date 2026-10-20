@@ -609,6 +609,19 @@ describe('choosing a subdomain', () => {
     expect(response.json.available).toBe(false)
   })
 
+  test('a name another space takes while publishing is refused, not a 500', async () => {
+    const other = await signIn(env, 'other@b.dev')
+    const theirs = (await call(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })).json
+      .space.id
+    env.justBefore(/update spaces set blog_enabled = 1/, () => {
+      env.db.prepare('update spaces set blog_subdomain = ? where id = ?').run('field', theirs)
+    })
+
+    const response = await publish({ subdomain: 'field' })
+    expect(response.status).toBe(409)
+    expect(response.json.error).toBe('that name is taken')
+  })
+
   test('naming a space that is not yours does not free its name', async () => {
     await publish({ subdomain: 'field' })
 

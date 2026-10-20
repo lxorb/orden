@@ -198,6 +198,20 @@ describe("a domain of one's own", () => {
     expect(cloudflare.hostnames.size).toBe(1)
   })
 
+  test('taken by another space while publishing is refused, not a 500', async () => {
+    const other = await signIn(env, 'other@b.dev')
+    const theirs = await call(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
+    env.justBefore(/update spaces set blog_enabled = 1/, () => {
+      env.db
+        .prepare('update spaces set blog_domain = ? where id = ?')
+        .run('notes.example.com', theirs.json.space.id)
+    })
+
+    const response = await publish({ domain: 'notes.example.com' })
+    expect(response.status).toBe(409)
+    expect(response.json.error).toBe('that domain is taken')
+  })
+
   test('is recorded even when Cloudflare refuses, and the refusal is reported', async () => {
     // Someone else's zone already holds the hostname, say. The row is the
     // truth; the status is where the trouble shows.
