@@ -55,6 +55,13 @@ describe('slugs', () => {
   test('drops punctuation', () => {
     expect(slugFor("What's new?.md")).toBe('what-s-new')
   })
+
+  test('keeps the letters and marks of any script, composed and lower-cased', () => {
+    expect(slugFor('Привет.md')).toBe('привет')
+    expect(slugFor('Notes/中文.md')).toBe('notes/中文')
+    expect(slugFor('हिन्दी.md')).toBe('हिन्दी')
+    expect(slugFor('Café.md')).toBe('café')
+  })
 })
 
 describe('while a space is private', () => {

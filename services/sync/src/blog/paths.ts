@@ -21,7 +21,8 @@
 import type { Env, Note } from '../types'
 import { readFront, type NoteFront } from './front'
 
-/** `Notes/First Idea.md` becomes `notes/first-idea`. */
+/** `Notes/First Idea.md` becomes `notes/first-idea`. Letters, marks and digits of any
+ *  script stay, composed and lower-cased: `Notes/Привет.md` becomes `notes/привет`. */
 export function slugFor(path: string): string {
   return path
     .replace(/\.(md|markdown|mdown|mkd)$/i, '')
@@ -29,8 +30,9 @@ export function slugFor(path: string): string {
     .map((part) =>
       part
         .toLowerCase()
-        .replace(/[^a-z0-9]+/g, '-')
-        .replace(/^-|-$/g, ''),
+        .replace(/[^\p{L}\p{M}\p{N}]+/gu, '-')
+        .replace(/^-|-$/g, '')
+        .normalize('NFC'),
     )
     .filter(Boolean)
     .join('/')

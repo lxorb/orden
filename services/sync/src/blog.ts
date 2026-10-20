@@ -1076,7 +1076,9 @@ async function takeAnswer(
   // field the note does not have cannot be sent, whatever a machine posts.
   const fence = codeBlocks(source).find((one) => one.language.toLowerCase() === 'form')
   const form = fence ? formOf(fence.code) : null
-  const where = space.blog_note ? '/' : `/${pageOf(note.path, front)}`
+  const where = space.blog_note
+    ? '/'
+    : new URL(`/${pageOf(note.path, front)}`, request.url).pathname
   if (!form) return back(where)
 
   // Counting, which is the whole of what is done about spam here: no captcha,
@@ -1476,13 +1478,16 @@ async function served(
     )
   }
 
-  const found = pageList.find((one) => pathsOf(one.note.path, one.front).includes(slug))
+  // The name the page knows it by: a browser escapes every letter outside ASCII, and a
+  // half-written escape names no page.
+  const decodedSlug = decoded(slug) ?? slug
+  const found = pageList.find((one) => pathsOf(one.note.path, one.front).includes(decodedSlug))
 
   if (!found) {
     // A path this site used to answer on. Somebody's link, somebody's history or
     // somebody's feed reader still says it, so it goes where the page went rather
     // than nowhere. Permanent, because the page did move; see blog/paths.ts.
-    const was = await rememberedNote(env, space.id, slug)
+    const was = await rememberedNote(env, space.id, decodedSlug)
     const moved = was ? pageList.find((one) => one.note.id === was) : null
     if (moved) return Response.redirect(new URL(`/${moved.slug}`, url).toString(), 301)
 

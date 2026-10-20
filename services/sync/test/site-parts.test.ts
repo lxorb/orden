@@ -277,6 +277,22 @@ describe('a site with forms on it', () => {
     expect(held.json.answers[0]?.answers).toEqual({ 'Your name': 'Ada' })
   })
 
+  test('a page in another script is sent back to at the address it has', async () => {
+    const wrote = await call(env, `/v1/spaces/${space}/notes`, {
+      token,
+      body: { path: 'Привет.md', content: `# Привет\n\n${FENCE}\n` },
+    })
+    const sent = await call(env, `/form/${wrote.json.note.id}`, {
+      host: HOST,
+      method: 'POST',
+      raw: 'your-name=Ada',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    })
+
+    expect(sent.status).toBe(303)
+    expect(sent.headers.get('location')).toBe(`${encodeURI('/привет')}?sent=${wrote.json.note.id}`)
+  })
+
   test('and says so on the page it comes back to', async () => {
     const answer = await call(env, `/hello?sent=${note}`, { host: HOST })
     expect(answer.text).toContain('Thank you')

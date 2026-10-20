@@ -262,6 +262,32 @@ describe('where a page lives', () => {
     expect((await page('/the-plan')).status).toBe(200)
   })
 
+  test('a name in another script is an address of its own, and a browser finds it', async () => {
+    await note('Привет.md', '# Привет\n\nHi.\n')
+    await note('日本語.md', '# 日本語\n\nKonnichiwa.\n')
+    await note('Notes/中文.md', '# 中文\n\nNihao.\n')
+    await note('Notes.md', '# Notes\n\nPlain.\n')
+    await publish()
+
+    const index = await page('/')
+    expect(index.text).toContain('<a href="/привет">Привет</a>')
+    expect(index.text).toContain('<a href="/日本語">日本語</a>')
+    expect(index.text).toContain('<a href="/notes/中文">中文</a>')
+    expect(index.text).toContain('<a href="/notes">Notes</a>')
+
+    expect((await page(encodeURI('/привет'))).text).toContain('Hi.')
+    expect((await page(encodeURI('/日本語'))).text).toContain('Konnichiwa.')
+    expect((await page(encodeURI('/notes/中文'))).text).toContain('Nihao.')
+  })
+
+  test('a permalink or an alias in another script finds it too', async () => {
+    await note('Plan.md', '---\npermalink: планы/март\naliases:\n  - план\n---\n\n# Plan\n')
+    await publish()
+
+    expect((await page(encodeURI('/планы/март'))).status).toBe(200)
+    expect((await page(encodeURI('/план'))).status).toBe(200)
+  })
+
   test('a rename leaves the old path redirecting', async () => {
     const made = await note('Plan.md', '# Plan\n\nWords.\n')
     await publish()
