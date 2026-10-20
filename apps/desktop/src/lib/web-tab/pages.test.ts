@@ -117,8 +117,11 @@ const { pages, readOpening } = await import('./pages.svelte')
 
 // What the window's listeners are fetched with, behind the first page; see `listen` in
 // pages.svelte.ts. Fetched here first: a whole gate compiles them cold on a busy
-// machine, and that has outlasted even ten seconds of waiting inside a test.
+// machine, and that has outlasted even ten seconds of waiting inside a test. So is the
+// web data store every build waits for before it asks for a page, with the merge it
+// fetches on the way; see `store` in web-data.svelte.ts.
 await Promise.all([
+  import('./web-data.svelte').then((one) => one.webData.merged()),
   import('./permissions.svelte'),
   import('./dialogs.svelte'),
   import('./keys'),
