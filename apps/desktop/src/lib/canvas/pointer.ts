@@ -207,7 +207,7 @@ export type Effect =
    *  drag in it means. */
   | { do: 'place'; tool: PutTool; at: Point }
   | { do: 'stroke'; stroke: PendingStroke }
-  | { do: 'rub'; ids: string[] }
+  | { do: 'rub'; at: Point; reach: number }
   | { do: 'cut'; at: Point; reach: number }
   | { do: 'catch'; lasso: Point[] }
   | { do: 'ink'; dx: number; dy: number; scale: number; turn: number; about: Point }
@@ -261,7 +261,7 @@ type Gesture =
    *  a connector rather than a line lying across them. */
   | { kind: 'pull'; tool: PutTool; from: Point; to: Point; fromNode: string | null }
   | { kind: 'draw'; stroke: PendingStroke; id: number }
-  | { kind: 'erase'; whole: boolean; hit: string[]; id: number }
+  | { kind: 'erase'; whole: boolean; id: number }
   /** A loop drawn by hand, or a box pulled out. Either way it is the ring it
    *  caught things with, so what draws it and what reads it know one shape. */
   | { kind: 'lasso'; from: Point; points: Point[]; box: boolean }
@@ -307,6 +307,10 @@ export function start(): Machine {
  *  in plane units at one to one. */
 const SLOP = 3
 
+/** How far a finger may miss a handle and still find it. A pen and a mouse are
+ *  precise; a thumb is not, and the same numbers have to serve both. */
+export const FORGIVING = 8
+
 /** How soon after a gesture began a second finger is the plane rather than a palm,
  *  in milliseconds.
  *
@@ -341,9 +345,10 @@ export interface Context {
   inkBox: Box | null
   /** The pen as the bar has it set. */
   pen: { tool: InkTool; size: number; color: string; opacity: number }
-  /** The eraser as the bar has it set: how wide it is on screen, and whether it
-   *  takes a whole stroke rather than the part under it. */
-  eraser: { whole: boolean; size: number }
+  /** The eraser as the bar has it set: how wide it is on screen, how wide when it
+   *  takes a whole stroke, and whether it takes a whole stroke rather than the
+   *  part under it. */
+  eraser: { whole: boolean; size: number; stroke: number }
   /** Whether the lasso is a box pulled out rather than a loop drawn by hand. */
   lassoBox: boolean
   /** Whether a resize holds the shape of the box without being asked. What a
@@ -365,35 +370,27 @@ export interface Context {
  *
  *  Shift is the other way of asking for a whole stroke, which is what a keyboard
  *  had before there was a popover to ask in. */
-function rubbing(context: Context, shift: boolean): { whole: boolean; reach: number } {
-  return {
-    whole: context.eraser.whole || shift,
-    reach: context.eraser.size / context.scale,
-  }
+function rubbing(context: Context, shift: boolean, touch: boolean) {
+  const whole = context.eraser.whole || shift
+  // A finger misses a line by as much as it may miss one it taps.
+  const stroke = context.eraser.stroke + (touch ? FORGIVING : 0)
+  return { whole, reach: (whole ? stroke : context.eraser.size) / context.scale }
 }
 
-/** What the first touch of the eraser does: take the stroke it landed on whole,
- *  or bite a hole where it is. */
-function rubbed(
-  rub: { whole: boolean; reach: number },
-  input: Down,
-  hit: readonly string[],
-): Effect[] {
-  if (!rub.whole) return [{ do: 'cut', at: input.at, reach: rub.reach }]
-  return hit.length ? [{ do: 'rub', ids: [...hit] }] : []
+/** What every point of the eraser does: take whole every stroke it reaches, or
+ *  bite a hole where it is. */
+function rubbed(rub: { whole: boolean; reach: number }, at: Point): Effect {
+  return { do: rub.whole ? 'rub' : 'cut', at, reach: rub.reach }
 }
 
 /** The eraser taken up: the pen's own button, or the tool on the bar. Both are
  *  the eraser, set the way the bar has the eraser set. */
 function rubbingOut(held: Machine, input: Down, context: Context): Step {
-  const rub = rubbing(context, input.shift)
-  // What was rubbed is remembered, so dragging back over a stroke that has
-  // already gone does not ask for it again.
-  const first = rub.whole && input.hit.stroke ? [input.hit.stroke] : []
+  const rub = rubbing(context, input.shift, input.pointer === 'touch')
 
   return {
-    machine: { ...held, gesture: { kind: 'erase', whole: rub.whole, hit: first, id: input.id } },
-    effects: rubbed(rub, input, first),
+    machine: { ...held, gesture: { kind: 'erase', whole: rub.whole, id: input.id } },
+    effects: [rubbed(rub, input.at)],
   }
 }
 
@@ -1016,17 +1013,8 @@ function onMove(machine: Machine, input: Move, context: Context): Step {
     case 'erase': {
       if (input.id !== one.id) return { machine, effects: [] }
 
-      if (!one.whole) {
-        const reach = context.eraser.size / context.scale
-        return { machine, effects: [{ do: 'cut', at: input.at, reach }] }
-      }
-
-      if (!input.hit.stroke || one.hit.includes(input.hit.stroke)) return { machine, effects: [] }
-
-      return {
-        machine: { ...machine, gesture: { ...one, hit: [...one.hit, input.hit.stroke] } },
-        effects: [{ do: 'rub', ids: [input.hit.stroke] }],
-      }
+      const touch = machine.driver?.kind === 'touch'
+      return { machine, effects: [rubbed(rubbing(context, one.whole, touch), input.at)] }
     }
 
     case 'lasso':

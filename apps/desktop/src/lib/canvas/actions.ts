@@ -157,14 +157,12 @@ export const run = {
     store.edit({ ...store.canvas, ink: [] })
   },
 
-  /** Whole strokes gone, which is what the stroke eraser does: touch a line
-   *  anywhere and the line goes. `run` names the drag it is part of, so the whole
-   *  drag is one step to take back; see `edit` in store.svelte.ts. */
-  rub(store: CanvasStore, ids: readonly string[], run?: string) {
-    if (!ids.length) return
-
-    const going = new Set(ids)
-    store.edit({ ...store.canvas, ink: store.canvas.ink.filter((one) => !going.has(one.id)) }, run)
+  /** Whole strokes gone, which is what the stroke eraser does: come within its
+   *  reach of a line anywhere and the line goes. `run` names the drag it is part
+   *  of, so the whole drag is one step to take back; see `edit` in store.svelte.ts. */
+  rub(store: CanvasStore, at: Point, reach: number, run?: string) {
+    const next = cutInk(store.canvas, (stroke) => (nearStroke(stroke, at, reach) ? [] : [stroke]))
+    store.edit(next, run)
   },
 
   /** A hole rubbed through whatever is under the eraser, which may leave the two

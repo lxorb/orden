@@ -1008,7 +1008,7 @@
         predicted = []
         break
       case 'rub':
-        run.rub(store, effect.ids, `rub:${gestures}`)
+        run.rub(store, effect.at, effect.reach, `rub:${gestures}`)
         break
       case 'cut':
         run.cut(store, effect.at, effect.reach, `rub:${gestures}`)

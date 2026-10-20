@@ -94,6 +94,8 @@ export const LEAST_RUB = 4
 export const MOST_RUB = 64
 /** And how wide it is when nobody has said. */
 export const RUB = 10
+/** How far the stroke eraser reaches, which is as far as a click on a line does. */
+export const STROKE_RUB = 2
 
 /** The width a stroke drawn now is written with, on the plane, for a pen of `size`
  *  with the view at `scale`. Zoomed in, the width is the one on the screen: a hand
@@ -260,8 +262,8 @@ class Pens {
   }
 
   /** The eraser as the pointer machine wants it. */
-  get eraser(): { whole: boolean; size: number } {
-    return { whole: this.whole, size: this.rub }
+  get eraser(): { whole: boolean; size: number; stroke: number } {
+    return { whole: this.whole, size: this.rub, stroke: STROKE_RUB }
   }
 
   /** A pen picked out of the row. */
