@@ -371,6 +371,18 @@ plugins and all) is dropped, and its registry is the package's own. No
 `LD_PRELOAD`, no `GDK_BACKEND`. The command is `orden`, with `nib` beside it; the desktop entry and
 icons are installed alongside, so it shows up in a launcher.
 
+**The sandbox under Nix.** The release runs Chromium's sandbox in unprivileged user
+namespaces, since the setuid `chrome-sandbox` cannot be in the store; NixOS allows them,
+and so does every system that has not been told otherwise. One that refuses them -
+Ubuntu 23.10 and later through AppArmor, older Debian through
+`kernel.unprivileged_userns_clone` - leaves Chromium no sandbox, and it stops with "No
+usable sandbox!" before a window opens. The wrapper says so before it starts, on stderr
+and as a desktop notification where `notify-send` is there (`nix/userns.sh`): allow the
+namespaces (`sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0`, or an
+AppArmor profile for the program that allows `userns`), or install the `.deb` or the
+AppImage instead. It never starts Chromium with `--no-sandbox` in their place. A setuid
+helper named in `CHROME_DEVEL_SANDBOX` is a sandbox, and then nothing is said.
+
 This is deliberately not a nixpkgs package. nixpkgs wants a maintainer who
 watches the build, and search.nixos.org is the only place a nixpkgs entry would
 be more discoverable than this flake - a small audience for a large standing

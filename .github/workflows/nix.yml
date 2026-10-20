@@ -261,6 +261,17 @@ jobs:
           if [ "$engine" = webkit ]; then
             grep -q '/proc/driver/nvidia/version ]; then export WEBKIT_DISABLE_DMABUF_RENDERER=1' "result/bin/$pname"
           fi
+          # On CEF the release's wrapper says so before it starts on a system that
+          # refuses the user namespaces its sandbox needs - this runner, until the step
+          # below allows them - and never starts without one (#438).
+          if [ "$engine" = cef ] && [ "$pname" = orden ]; then
+            check=$(grep -o "/nix/store/[^' ]*-userns.sh" "result/bin/$pname")
+            test -f "$check"
+            if grep -q no-sandbox "result/bin/$pname"; then exit 1; fi
+            if [ "$(cat /proc/sys/kernel/apparmor_restrict_unprivileged_userns 2>/dev/null)" = 1 ]; then
+              bash -ec ". $check" 2>&1 | tee userns.log | grep -q 'No usable sandbox'
+            fi
+          fi
           nix shell nixpkgs#pax-utils -c lddtree "result/libexec/$pname/nib" | head -80
           nix shell nixpkgs#desktop-file-utils -c desktop-file-validate "result/share/applications/$pname.desktop"
           cat "result/share/applications/$pname.desktop"
