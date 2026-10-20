@@ -1,6 +1,6 @@
 <script lang="ts">
   /** The rows that bring notes over from another app, each into a space of its own:
-   *  Settings' Import pane, which the welcome note links to (welcome.ts).
+   *  Settings' Import pane.
    *
    *  The iPhone's "Transfer Your Apps & Data": a row per place the notes could come
    *  from and nothing to read. Obsidian and Notion by name, because they are where

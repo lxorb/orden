@@ -34,7 +34,8 @@ export const WELCOME_NAME = 'Read me.md'
 /** Where the shim writes it, in the virtual file system's own absolute form. */
 export const WELCOME_PATH = `/${WELCOME_SPACE}/${WELCOME_NAME}`
 
-/** The way to Settings > Import, which every seed before 2026-10-13 was without. */
+/** The way to Settings > Import that the seeds of 2026-10-13 to 2026-10-20 ended in.
+ *  A newcomer offered imports was offered too much (#322), so a seed is the note alone. */
 const IMPORT_LINE = '\n[Import from Obsidian or Notion](nib://settings/import)\n'
 
 /** Written by every build - see first-space.svelte.ts - so it names none. */
@@ -55,7 +56,7 @@ const hello = 'world'
 | ---- | ----- |
 | Notes | this device |
 | Synced notes | your account |
-${IMPORT_LINE}`
+`
 
 /** The seed as it was written while the app was called nibeditor, and before that
  *  Nib. Word for word, because that is what an untouched one is. */
@@ -83,7 +84,5 @@ const EARLIER = [
 export function isUntouchedWelcome(path: string, content: string): boolean {
   const name = path.split(/[\\/]/u).at(-1) ?? ''
   if (name !== WELCOME_NAME) return false
-  return [WELCOME, ...EARLIER].some(
-    (seed) => content === seed || content === seed.replace(IMPORT_LINE, ''),
-  )
+  return [WELCOME, ...EARLIER].some((seed) => content === seed || content === seed + IMPORT_LINE)
 }

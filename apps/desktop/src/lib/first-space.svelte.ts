@@ -2,7 +2,8 @@
  *
  *  Emil, 2026-10-13, on the first screen that asked where somebody's notes come from:
  *  "rather welcome note instead". Bringing notes over from Obsidian or Notion is
- *  Settings > Import, and the welcome note's last line links there (welcome.ts).
+ *  Settings > Import, and the note does not point there: a newcomer offered imports
+ *  was offered too much (#322).
  *
  *  What the browser build has always opened on, on every build: a space called what the
  *  browser's is, with the note in it, open, and the file list beside it where there is
