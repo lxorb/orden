@@ -127,7 +127,7 @@ fn quick_window(app: &AppHandle) -> tauri::Result<tauri::WebviewWindow<crate::En
     // The same switches as the first window, which runs on the same user data folder
     // and would refuse a webview started any other way; see `engine::BROWSER_ARGS`.
     #[cfg(all(windows, not(feature = "cef")))]
-    let builder = builder.additional_browser_args(crate::engine::BROWSER_ARGS);
+    let builder = builder.additional_browser_args(&crate::engine::browser_args(app));
 
     // On Linux the window is an X11 one, and the size it may not leave is said to the
     // window manager as well - the least and the most it may be, the same - which is

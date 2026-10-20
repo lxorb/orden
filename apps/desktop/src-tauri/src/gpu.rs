@@ -7,7 +7,12 @@
 //! page says, once it has settled, which renderer WebGL draws with (`SCRIPT`), and the
 //! log says it in one line a reader can send: `gpu: hardware (…)` or `gpu: software (…)`,
 //! with whether a GPU process is running at all.
+//!
+//! And where it should not draw on the card at all, Settings › General › Hardware
+//! acceleration says so (#550): a file in the app's own settings folder, since the engine
+//! reads it before anything of it starts (`accelerated`).
 
+use std::path::Path;
 use std::sync::OnceLock;
 
 /// What the app's own page runs on CEF to say it; see the top of this file.
@@ -27,6 +32,31 @@ pub struct Seen {
 
 static SEEN: OnceLock<Seen> = OnceLock::new();
 
+/// Where Hardware acceleration is kept, in the app's own settings folder: `off` for a
+/// reader who turned it off. No file, or anything else in it, is on.
+const FILE: &str = "gpu.txt";
+
+/// The switches that keep Chromium off the graphics card: no GPU process, and the pages
+/// put together on the CPU too, as Chrome's own setting does.
+#[cfg_attr(not(any(windows, feature = "cef")), allow(dead_code))]
+pub(crate) const OFF: [&str; 2] = ["--disable-gpu", "--disable-gpu-compositing"];
+
+/// Whether this run's engine draws on the graphics card: decided once, by `accelerated`.
+static ACCELERATED: OnceLock<bool> = OnceLock::new();
+
+/// Whether this run's engine draws on the graphics card: decided once, before the engine
+/// starts, from the setting in `config`; the answer is this run's, so every webview of it
+/// starts with the same switches whatever the setting says by then.
+#[cfg_attr(not(any(windows, feature = "cef")), allow(dead_code))]
+pub fn accelerated(config: &Path) -> bool {
+    *ACCELERATED.get_or_init(|| chosen(config))
+}
+
+/// What the setting in `config` says now, which the next run starts with.
+fn chosen(config: &Path) -> bool {
+    !std::fs::read_to_string(config.join(FILE)).is_ok_and(|said| said.trim() == "off")
+}
+
 /// What draws the app's pages, once the first page has said; `None` before then.
 #[allow(
     dead_code,
@@ -34,6 +64,21 @@ static SEEN: OnceLock<Seen> = OnceLock::new();
 )]
 pub fn seen() -> Option<&'static Seen> {
     SEEN.get()
+}
+
+/// Hardware acceleration as Settings shows it: what the next run starts with.
+#[tauri::command(async)]
+pub fn gpu_chosen(app: tauri::AppHandle<crate::Engine>) -> Result<bool, String> {
+    Ok(chosen(&crate::paths::config_dir(&app)?))
+}
+
+/// Hardware acceleration turned on or off, kept for the next run; this one goes on as it
+/// started, which is why Settings asks for a restart.
+#[tauri::command(async)]
+pub fn gpu_choose(app: tauri::AppHandle<crate::Engine>, on: bool) -> Result<(), String> {
+    let config = crate::paths::config_dir(&app)?;
+    crate::paths::made(&config)?;
+    crate::paths::write_atomically(&config.join(FILE), if on { b"on" } else { b"off" })
 }
 
 /// Whether a renderer WebGL names is one that draws on the CPU.
@@ -112,7 +157,20 @@ pub fn gpu_seen(app: tauri::AppHandle<crate::Engine>, renderer: Option<String>) 
 
 #[cfg(test)]
 mod tests {
-    use super::{software, SCRIPT};
+    use super::{chosen, software, FILE, SCRIPT};
+
+    /// Hardware acceleration is on until the file says `off`, and only that turns it off.
+    #[test]
+    fn only_off_in_the_file_turns_hardware_acceleration_off() {
+        let config = tempfile::tempdir().unwrap();
+        assert!(chosen(config.path()), "no file is on");
+        std::fs::write(config.path().join(FILE), "off\n").unwrap();
+        assert!(!chosen(config.path()));
+        std::fs::write(config.path().join(FILE), "on").unwrap();
+        assert!(chosen(config.path()));
+        std::fs::write(config.path().join(FILE), "").unwrap();
+        assert!(chosen(config.path()), "half a file is on");
+    }
 
     /// The renderers that draw on the CPU are told from the cards.
     #[test]

@@ -432,6 +432,8 @@ macro_rules! desktop_commands {
             full_screen::window_fullscreen,
             window_drag::window_move_resize,
             gpu::gpu_seen,
+            gpu::gpu_chosen,
+            gpu::gpu_choose,
             window_drag::window_frame,
             full_screen::window_is_fullscreen,
             zen_profiles::zen_profiles,
