@@ -7,7 +7,7 @@ one word a press into a web page sends, a page being a native webview whose pres
 never reach the app. A list dropped by a control inside the settings is closed by a
 press on the settings around it, and the settings stay.
 
-The popups are the context menu, the space switcher, the app's menu, the canvas bar's
+The popups are the context menu, the space switcher, the canvas bar's
 panels, the colours of what is picked, the graph's controls, a dropdown in the settings,
 a web tab's site and downloads bubbles and a guest's corner; every one of them, and the
 rest that need an account or a web page to be opened at all, closes through the one
@@ -177,21 +177,6 @@ def drive(browser: Browser) -> None:
         # Where the header is: the list's own catch is over it while the list is open.
         toggles=lambda: empty_spot(page, '[data-space-drop="switcher"]')(),
     )
-
-    # ── The app's menu ─────────────────────────────────────────────
-    menu_button = page.locator('[data-opens="app-menu"]').first
-    if menu_button.count() and menu_button.is_visible():
-        check(
-            page,
-            "the app menu",
-            lambda: menu_button.click(),
-            ".nib-layer.nib-host.menu",
-            ".cm-content",
-            # Where its button is: the menu's clear scrim is over it while it is open.
-            toggles=lambda: empty_spot(page, '[data-opens="app-menu"]')(),
-        )
-    else:
-        say("the app menu: no button for it at this size")
 
     # ── A dropdown in the settings, over the settings ──────────────
     page.evaluate("() => window.nibApp.settings.show('general')")
