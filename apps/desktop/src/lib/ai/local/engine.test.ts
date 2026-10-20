@@ -398,10 +398,14 @@ describe('a Claude Code thread', () => {
     ]
     const on = thread(CLAUDE)
     const events = await send(CLAUDE, on, 'hi')
-    expect(events.some((one) => one.type === 'limit')).toBe(true)
+    // The refusal's words name no time; the plan's word before them did, and it stays.
+    expect(events.filter((one) => one.type === 'limit').at(-1)).toEqual({
+      type: 'limit',
+      limit: { state: 'reached', until: 1790819400_000, untilWords: null },
+    })
     const done = events.at(-1)
     expect(done).toMatchObject({ type: 'done', stop: 'error' })
-    expect(done?.type === 'done' && done.error).toMatch(/Claude plan is at its limit/)
+    expect(done?.type === 'done' && done.error).toMatch(/Claude plan is at its limit until /)
   })
 
   test('words steered into a running turn are a message, answered after it', async () => {
