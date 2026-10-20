@@ -169,7 +169,7 @@ const { startup } = await import('./startup.svelte')
 const ops = await import('./tab-strip/ops')
 const { Tab } = await import('./workspace/documents.svelte')
 const { isDraft } = await import('./workspace/drafts')
-const { apartOf, writeShortcut } = await import('./web-tab/shortcut')
+const { apartOf, readShortcut, readWebloc, writeShortcut } = await import('./web-tab/shortcut')
 const { STARTS_RIGHT } = await import('./workspace/panels')
 const { shown: pad } = await import('./scratchpad/is.svelte')
 type Entry = import('./workspace.svelte').Entry
@@ -4199,6 +4199,58 @@ describe('a file asked for as a note and then as a website', () => {
     expect(workspace.documentAt(WEB_NOTE)).toBe(note)
     // And nothing was written under the document that was open on it.
     expect(sent.filter((one) => one.command === 'write_note')).toEqual([])
+  })
+})
+
+/** An address typed into a website's bar goes into its file in the file's own format:
+ *  a `.webloc` a Mac wrote stays a plist a Mac reads, its other keys and all (#370). */
+describe('an address typed into a website bar', () => {
+  beforeEach(() => {
+    workspace.tabs = []
+    workspace.spaces = [{ id: 'one', name: 'One', root: '/space' }]
+    workspace.activeSpaceId = 'one'
+  })
+
+  afterEach(() => {
+    workspace.tabs = []
+    delete notes['/space/Docs.webloc']
+    delete notes['/space/Docs.url']
+  })
+
+  const aimedAt = async (path: string, was: string, url: string) => {
+    notes[path] = was
+    await workspace.openWeb(path)
+    const tab = workspace.active
+    if (!tab) throw new Error('no tab')
+    sent.length = 0
+    await workspace.webAimed(tab, url)
+    return sent.find((one) => one.command === 'write_note')?.content
+  }
+
+  test('keeps a .webloc a plist, with nothing in it changed but the address', async () => {
+    const plist = (url: string) =>
+      '<?xml version="1.0" encoding="UTF-8"?>\n<plist version="1.0">\n<dict>\n' +
+      `\t<key>Name</key>\n\t<string>Docs</string>\n\t<key>URL</key>\n\t<string>${url}</string>\n` +
+      '</dict>\n</plist>\n'
+
+    const written = await aimedAt(
+      '/space/Docs.webloc',
+      plist('https://svelte.dev/'),
+      'https://a.example/?a=1&b=2',
+    )
+
+    expect(written).toBe(plist('https://a.example/?a=1&amp;b=2'))
+    expect(readWebloc(written)).toBe('https://a.example/?a=1&b=2')
+  })
+
+  test('and a .url an internet shortcut', async () => {
+    const written = await aimedAt(
+      '/space/Docs.url',
+      '[InternetShortcut]\r\nURL=https://svelte.dev/\r\n',
+      'https://svelte.dev/docs',
+    )
+
+    expect(readShortcut(written)?.url).toBe('https://svelte.dev/docs')
   })
 })
 
