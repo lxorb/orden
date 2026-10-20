@@ -240,6 +240,32 @@ fn returned(window: &str) {
     }
 }
 
+/// What the app's own page runs on CEF to say a press landed in it; see `pressed`.
+#[cfg_attr(not(feature = "cef"), allow(dead_code))]
+pub const PRESS_SCRIPT: &str = include_str!("keyboard_press.js");
+
+/// A press landed in the app's own page: on CEF on Linux, its browser is given the
+/// keyboard outright, as it is the one pressed. A window's keyboard on X11 otherwise
+/// follows the pointer between its child windows, which a web tab's page is one of, and
+/// the pointer crossing the page took it from a menu just opened over the page (#427,
+/// #512). A press in the page itself takes it from there, as it always has.
+#[tauri::command]
+#[cfg_attr(
+    not(feature = "cef"),
+    allow(
+        clippy::needless_pass_by_value,
+        reason = "a command's arguments are its own"
+    )
+)]
+pub fn keyboard_pressed(webview: Webview) {
+    #[cfg(feature = "cef")]
+    if webview.label() == webview.window().label() {
+        let _ = native::take(webview.app_handle(), webview.label());
+    }
+    #[cfg(not(feature = "cef"))]
+    let _ = webview;
+}
+
 /// Starts following a window, once, as its page comes up.
 #[tauri::command]
 pub fn keyboard_watch(webview: Webview) {

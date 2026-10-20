@@ -449,7 +449,8 @@ pub(crate) fn own_window<M: tauri::Manager<crate::Engine>>(
         .browser_runtime_style(RuntimeStyle::Alloy)
         .initialization_script(crate::window_drag::SCRIPT)
         .initialization_script(crate::gpu::SCRIPT)
-        .initialization_script(crate::page_scale::SCRIPT);
+        .initialization_script(crate::page_scale::SCRIPT)
+        .initialization_script(crate::keyboard::PRESS_SCRIPT);
     match OWN_PROFILE.get() {
         Some(profile) => building.data_directory(profile.clone()),
         None => building,

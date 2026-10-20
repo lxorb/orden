@@ -522,6 +522,7 @@ macro_rules! desktop_commands {
             extensions::popup::extension_popup_close,
             web_tabs::web_place,
             keyboard::keyboard_watch,
+            keyboard::keyboard_pressed,
             keyboard::keyboard_here,
             keyboard::keyboard_went,
             keyboard::keyboard_back,
