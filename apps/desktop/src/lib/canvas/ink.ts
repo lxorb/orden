@@ -432,8 +432,8 @@ export function smoothed(points: readonly InkPoint[], size: number): readonly In
     // The two samples either side steer the curve. At the ends of a stroke there is
     // no sample to steer with, so one is reflected: the curve then leaves the first
     // point and arrives at the last one straight, which is what a pen does.
-    const before = points[one - 2] ?? mirrored(from, to)
-    const after = points[one + 1] ?? mirrored(to, from)
+    const before = steering(points[one - 2], from, to)
+    const after = steering(points[one + 1], to, from)
     const many = Math.min(MOST_ON_A_STEP, Math.ceil(span / most) - 1)
 
     for (let at = 1; at <= many; at++) {
@@ -445,6 +445,24 @@ export function smoothed(points: readonly InkPoint[], size: number): readonly In
   if (last) out.push(last)
 
   return out
+}
+
+/** The sample that steers the curve leaving `from` for `to`: the one the hand came
+ *  from, unless there is none or the hand turned a corner there (see
+ *  STRAIGHT_ENOUGH). Then one is reflected, as at the end of a stroke, and the
+ *  curve leaves the corner straight: a box held still into shape keeps its sides
+ *  straight instead of bowing them out past its own box (#489). */
+function steering(came: InkPoint | undefined, from: InkPoint, to: InkPoint): InkPoint {
+  if (!came) return mirrored(from, to)
+
+  const inX = from.x - came.x
+  const inY = from.y - came.y
+  const outX = to.x - from.x
+  const outY = to.y - from.y
+  const along =
+    (inX * outX + inY * outY) / Math.max(TINY, Math.hypot(inX, inY) * Math.hypot(outX, outY))
+
+  return along < STRAIGHT_ENOUGH ? mirrored(from, to) : came
 }
 
 /** A sample as far the other side of `from` as `to` is this side of it. */
