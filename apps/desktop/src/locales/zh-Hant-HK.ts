@@ -1141,6 +1141,8 @@ export const zhHantHK: Dictionary = {
   Elbow: '折線',
   Frame: '框架',
   Ungroup: '取消組合',
+  Lock: '鎖定',
+  Unlock: '解鎖',
   'The ink of the page': '頁面的墨跡',
   'Write in what is picked': '在所選範圍中書寫',
   Pen: '筆',

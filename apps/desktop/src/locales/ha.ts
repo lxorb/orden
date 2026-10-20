@@ -1175,6 +1175,8 @@ export const ha: Dictionary = {
   Elbow: 'Gwiwar hannu',
   Frame: 'Firam',
   Ungroup: 'Warware rukuni',
+  Lock: 'Kulle',
+  Unlock: 'Buɗe',
   'The ink of the page': 'Tawadar shafin',
   'Write in what is picked': 'Rubuta cikin abin da aka zaɓa',
   Pen: 'Alƙalami',

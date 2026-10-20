@@ -1153,6 +1153,8 @@ export const ko: Dictionary = {
   Elbow: '꺾은 선',
   Frame: '프레임',
   Ungroup: '그룹 해제',
+  Lock: '잠금',
+  Unlock: '잠금 해제',
   'The ink of the page': '페이지의 잉크',
   'Write in what is picked': '선택한 것 안에 쓰기',
   Pen: '펜',

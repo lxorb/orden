@@ -1214,6 +1214,8 @@ export const ar: Dictionary = {
   Elbow: 'خط منكسر',
   Frame: 'إطار',
   Ungroup: 'فك التجميع',
+  Lock: 'قفل',
+  Unlock: 'إلغاء القفل',
   'The ink of the page': 'حبر الصفحة',
   'Write in what is picked': 'الكتابة في المحدد',
   Pen: 'قلم',

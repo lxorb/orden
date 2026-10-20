@@ -1171,6 +1171,8 @@ export const kn: Dictionary = {
   Elbow: 'ಮೊಣಕೈ ಗೆರೆ',
   Frame: 'ಚೌಕಟ್ಟು',
   Ungroup: 'ಗುಂಪು ಬಿಡಿಸಿ',
+  Lock: 'ಲಾಕ್ ಮಾಡಿ',
+  Unlock: 'ಅನ್‌ಲಾಕ್ ಮಾಡಿ',
   'The ink of the page': 'ಪುಟದ ಶಾಯಿ',
   'Write in what is picked': 'ಆಯ್ದದರಲ್ಲಿ ಬರೆಯಿರಿ',
   Pen: 'ಪೆನ್',

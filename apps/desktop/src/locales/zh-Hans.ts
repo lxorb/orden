@@ -1141,6 +1141,8 @@ export const zhHans: Dictionary = {
   Elbow: '折线',
   Frame: '画框',
   Ungroup: '取消编组',
+  Lock: '锁定',
+  Unlock: '解锁',
   'The ink of the page': '页面的墨迹',
   'Write in what is picked': '在所选中书写',
   Pen: '笔',

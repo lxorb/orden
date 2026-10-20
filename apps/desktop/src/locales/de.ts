@@ -1178,6 +1178,8 @@ export const de: Dictionary = {
   Elbow: 'Knick',
   Frame: 'Rahmen',
   Ungroup: 'Gruppe auflösen',
+  Lock: 'Sperren',
+  Unlock: 'Entsperren',
   'The ink of the page': 'Die Tinte der Seite',
   'Write in what is picked': 'In das Gewählte schreiben',
   Pen: 'Kugelschreiber',

@@ -1205,6 +1205,8 @@ export const ru: Dictionary = {
   Elbow: 'Ломаная',
   Frame: 'Рамка',
   Ungroup: 'Разгруппировать',
+  Lock: 'Заблокировать',
+  Unlock: 'Разблокировать',
   'The ink of the page': 'Чернила страницы',
   'Write in what is picked': 'Писать в выбранном',
   Pen: 'Ручка',

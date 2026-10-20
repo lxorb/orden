@@ -1154,6 +1154,8 @@ export const vi: Dictionary = {
   Elbow: 'Gấp khúc',
   Frame: 'Khung',
   Ungroup: 'Bỏ nhóm',
+  Lock: 'Khóa',
+  Unlock: 'Mở khóa',
   'The ink of the page': 'Mực của trang',
   'Write in what is picked': 'Viết vào phần đã chọn',
   Pen: 'Bút',

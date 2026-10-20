@@ -70,7 +70,9 @@ export function hitAt(where: Where, point: Point): Hit {
   const port = portAt(where, point, slack)
   if (port) return { ...NOTHING, port }
 
-  const node = nodeAt(where.canvas.nodes, point, 12)
+  // What is locked in place is under the writing: a press goes through it (#643).
+  const free = where.canvas.nodes.filter((one) => !one.locked)
+  const node = nodeAt(free, point, 12)
   if (node) return { ...NOTHING, node: node.id }
 
   const edge = edgeAt(where.canvas, point, 6 * unit + slack)

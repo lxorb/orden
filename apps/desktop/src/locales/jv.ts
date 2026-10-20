@@ -1157,6 +1157,8 @@ export const jv: Dictionary = {
   Elbow: 'Sikut',
   Frame: 'Kerangka',
   Ungroup: 'Uculake grup',
+  Lock: 'Kunci',
+  Unlock: 'Bukak kunci',
   'The ink of the page': 'Mangsi kaca',
   'Write in what is picked': 'Nulis ing njero sing dipilih',
   Pen: 'Potlot mangsi',

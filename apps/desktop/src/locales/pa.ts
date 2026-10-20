@@ -1169,6 +1169,8 @@ export const pa: Dictionary = {
   Elbow: 'ਕੂਹਣੀ',
   Frame: 'ਚੌਖਟਾ',
   Ungroup: 'ਸਮੂਹ ਤੋੜੋ',
+  Lock: 'ਲੌਕ ਕਰੋ',
+  Unlock: 'ਅਨਲੌਕ ਕਰੋ',
   'The ink of the page': 'ਸਫ਼ੇ ਦੀ ਸਿਆਹੀ',
   'Write in what is picked': 'ਚੁਣੇ ਵਿੱਚ ਲਿਖੋ',
   Pen: 'ਕਲਮ',

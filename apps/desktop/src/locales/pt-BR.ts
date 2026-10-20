@@ -1178,6 +1178,8 @@ export const ptBR: Dictionary = {
   Elbow: 'Cotovelo',
   Frame: 'Moldura',
   Ungroup: 'Desagrupar',
+  Lock: 'Bloquear',
+  Unlock: 'Desbloquear',
   'The ink of the page': 'A tinta da página',
   'Write in what is picked': 'Escrever no que está selecionado',
   Pen: 'Caneta',

@@ -1157,6 +1157,8 @@ export const my: Dictionary = {
   Elbow: 'တံတောင်',
   Frame: 'ဘောင်',
   Ungroup: 'အုပ်စုဖြုတ်ပါ',
+  Lock: 'သော့ခတ်ရန်',
+  Unlock: 'သော့ဖွင့်ရန်',
   'The ink of the page': 'စာမျက်နှာ၏ မှင်',
   'Write in what is picked': 'ရွေးထားသည့်အထဲ ရေးပါ',
   Pen: 'ကလောင်',

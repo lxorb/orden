@@ -15,6 +15,7 @@ import {
   coloured,
   cutInk,
   grouped,
+  locking,
   movedBy,
   pasted,
   placedAt,
@@ -101,6 +102,17 @@ export const run = {
 
     store.edit(made.canvas)
     store.pick(made.id)
+  },
+
+  /** What is picked locked in place, and so let go of: nothing picks it now (#643). */
+  lock(store: CanvasStore) {
+    store.edit(locking(store.canvas, store.picked, true))
+    store.pickAll(store.picked)
+  },
+
+  /** Something locked in place let go again, from its own menu. */
+  unlock(store: CanvasStore, id: string) {
+    store.edit(locking(store.canvas, [id], false))
   },
 
   /** The frames among what is picked, gone, and what they held picked instead. */
@@ -822,6 +834,9 @@ export interface MenuView extends KeyView {
   bare: boolean
   /** Rows shown in the menu's place, where it was opened: what pressing Arrange does. */
   again: (rows: MenuEntry[], title: string) => void
+  /** What is locked in place under the press, which a press cannot pick: the menu is
+   *  the one way back to it (#643). */
+  locked: string | null
 }
 
 /** Groups of rows with a rule between each, leaving out the groups with nothing in
@@ -851,11 +866,14 @@ export function canvasMenu(store: CanvasStore, at: Point, view: MenuView): MenuE
   const onFrame = store.picked.some((id) =>
     store.canvas.nodes.some((node) => node.id === id && node.type === 'group'),
   )
+  const onNode = store.picked.some((id) => store.canvas.nodes.some((node) => node.id === id))
+  const locked = view.locked
   const putting = { colour: tools.colour, path: view.path }
 
   const arranging = arrangeRows(store, several, many)
 
   return sections(
+    locked ? [{ label: t('Unlock'), run: () => run.unlock(store, locked) }] : [],
     view.bare
       ? [
           { label: t('Card'), run: () => void place(store, 'text', at, putting) },
@@ -874,6 +892,7 @@ export function canvasMenu(store: CanvasStore, at: Point, view: MenuView): MenuE
             : []),
           { label: t('Group'), run: () => run.group(store) },
           ...(onFrame ? [{ label: t('Ungroup'), run: () => run.ungroup(store) }] : []),
+          ...(onNode ? [{ label: t('Lock'), run: () => run.lock(store) }] : []),
           {
             label: t('Arrange'),
             more: () => Promise.resolve(arranging),

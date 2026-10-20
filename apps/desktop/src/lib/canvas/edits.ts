@@ -411,6 +411,19 @@ export function coloured(canvas: Canvas, picked: readonly string[], colour: stri
   }
 }
 
+/** These nodes locked in place, or let go again (#643). Nodes only: the ink and the
+ *  connectors are what is written over a picture, not the picture. */
+export function locking(canvas: Canvas, ids: readonly string[], locked: boolean): Canvas {
+  const chosen = new Set(ids)
+
+  return {
+    ...canvas,
+    nodes: canvas.nodes.map((node) =>
+      chosen.has(node.id) && !node.locked === locked ? put(node, 'locked', locked || null) : node,
+    ),
+  }
+}
+
 /** Every picked stroke of ink at one width. Cards and connectors have none to set. */
 export function sized(canvas: Canvas, picked: readonly string[], size: number): Canvas {
   const chosen = new Set(picked)

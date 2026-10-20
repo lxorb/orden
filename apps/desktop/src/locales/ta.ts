@@ -1176,6 +1176,8 @@ export const ta: Dictionary = {
   Elbow: 'மூட்டுக்கோடு',
   Frame: 'சட்டகம்',
   Ungroup: 'குழுவைப் பிரி',
+  Lock: 'பூட்டு',
+  Unlock: 'பூட்டைத் திற',
   'The ink of the page': 'பக்கத்தின் மை',
   'Write in what is picked': 'தேர்ந்ததில் எழுது',
   Pen: 'பேனா',

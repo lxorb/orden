@@ -1168,6 +1168,8 @@ export const gsw: Dictionary = {
   Elbow: 'Chnick',
   Frame: 'Rahme',
   Ungroup: 'Gruppe uuflöse',
+  Lock: 'Sperre',
+  Unlock: 'Entsperre',
   'The ink of the page': 'D Tinte vo de Syte',
   'Write in what is picked': 'Is Gwählte schrybe',
   Pen: 'Kugelschriiber',

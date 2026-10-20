@@ -1182,6 +1182,8 @@ export const es: Dictionary = {
   Elbow: 'Codo',
   Frame: 'Marco',
   Ungroup: 'Desagrupar',
+  Lock: 'Bloquear',
+  Unlock: 'Desbloquear',
   'The ink of the page': 'La tinta de la página',
   'Write in what is picked': 'Escribir en lo seleccionado',
   Pen: 'Pluma',

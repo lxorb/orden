@@ -1177,6 +1177,8 @@ export const ml: Dictionary = {
   Elbow: 'മുട്ടുവര',
   Frame: 'ഫ്രെയിം',
   Ungroup: 'ഗ്രൂപ്പ് വേർപെടുത്തുക',
+  Lock: 'ലോക്ക് ചെയ്യുക',
+  Unlock: 'അൺലോക്ക് ചെയ്യുക',
   'The ink of the page': 'പേജിന്റെ മഷി',
   'Write in what is picked': 'തിരഞ്ഞെടുത്തതിൽ എഴുതുക',
   Pen: 'പെൻ',

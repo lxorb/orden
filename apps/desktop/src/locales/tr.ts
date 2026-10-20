@@ -1168,6 +1168,8 @@ export const tr: Dictionary = {
   Elbow: 'Dirsek',
   Frame: 'Çerçeve',
   Ungroup: 'Grubu çöz',
+  Lock: 'Kilitle',
+  Unlock: 'Kilidini aç',
   'The ink of the page': 'Sayfanın mürekkebi',
   'Write in what is picked': 'Seçilenin içine yaz',
   Pen: 'Kalem',
