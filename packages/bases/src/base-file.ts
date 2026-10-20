@@ -18,6 +18,7 @@ import { BasesError } from './errors'
 import { readFilter } from './filter'
 import type {
   Base,
+  CardSize,
   NibBase,
   NibProperty,
   NibView,
@@ -88,7 +89,14 @@ const NIB_VIEW_KEYS = [
   'freeze',
   'template',
   'required',
+  'cardSize',
+  'groups',
+  'noneFirst',
+  'hideEmpty',
+  'colourColumns',
 ]
+
+const CARD_SIZES: readonly CardSize[] = ['small', 'medium', 'large']
 
 function readNibView(raw: unknown): NibView {
   const nib: NibView = { kept: {} }
@@ -115,6 +123,11 @@ function readNibView(raw: unknown): NibView {
   if (typeof raw.freeze === 'number' && raw.freeze >= 0) nib.freeze = Math.floor(raw.freeze)
   if (typeof raw.template === 'string') nib.template = raw.template
   if (Array.isArray(raw.required)) nib.required = raw.required.map(String)
+  if (CARD_SIZES.includes(raw.cardSize as CardSize)) nib.cardSize = raw.cardSize as CardSize
+  if (Array.isArray(raw.groups)) nib.groups = raw.groups.map(String)
+  if (typeof raw.noneFirst === 'boolean') nib.noneFirst = raw.noneFirst
+  if (typeof raw.hideEmpty === 'boolean') nib.hideEmpty = raw.hideEmpty
+  if (typeof raw.colourColumns === 'boolean') nib.colourColumns = raw.colourColumns
   nib.kept = rest(raw, NIB_VIEW_KEYS)
   return nib
 }
@@ -254,6 +267,11 @@ function nibViewPlain(nib: NibView): Plain {
     ['freeze', nib.freeze],
     ['template', nib.template],
     ['required', nib.required],
+    ['cardSize', nib.cardSize],
+    ['groups', nib.groups],
+    ['noneFirst', nib.noneFirst],
+    ['hideEmpty', nib.hideEmpty],
+    ['colourColumns', nib.colourColumns],
     ...Object.entries(nib.kept),
   ])
 }

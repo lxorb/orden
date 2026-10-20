@@ -378,10 +378,23 @@ const MAKERS: Partial<Record<KindName, (folder?: string) => unknown>> = {
 }
 
 export function newFileRows(inside?: string): MenuEntry[] {
-  return hiddenKinds.shown.flatMap((kind) => {
-    const make = MAKERS[kind]
-    if (!make) return []
-    const run = inside ? () => void workspace.createInside(inside, make) : () => void make()
-    return [{ label: kindLabel(kind), run }]
-  })
+  return [
+    ...hiddenKinds.shown.flatMap((kind) => {
+      const make = MAKERS[kind]
+      if (!make) return []
+      const run = inside ? () => void workspace.createInside(inside, make) : () => void make()
+      return [{ label: kindLabel(kind), run }]
+    }),
+    // A folder of notes with a board over them, Notion's database; see new-database.ts.
+    // Not on the glasses, which draw no views. Made at the top level only, since
+    // createDatabase takes no folder.
+    ...(__EVEN_PLUGIN__ || inside
+      ? []
+      : [
+          {
+            label: t('New database'),
+            run: () => void import('./views/new-database').then((one) => one.createDatabase()),
+          },
+        ]),
+  ]
 }

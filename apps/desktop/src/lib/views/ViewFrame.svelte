@@ -92,13 +92,25 @@
     if (event.key === 'g') {
       going = true
       goingTimer = setTimeout(() => (going = false), 1200)
-    } else if (shortcuts.pressed('tasks.quick-add', event) && layout !== 'list') {
+    } else if (
+      shortcuts.pressed('tasks.quick-add', event) &&
+      layout !== 'list' &&
+      // A layout that added for the key itself (a board's column) has said so.
+      !event.defaultPrevented
+    ) {
       event.preventDefault()
       add()
     }
   }
 
+  /** How many times New asked a board of notes for a page: its first column's. */
+  let boardAdding = $state(0)
+
   function add() {
+    if (layout === 'kanban' && (live.view?.nib.rows ?? 'notes') === 'notes') {
+      boardAdding++
+      return
+    }
     adding = true
     asked++
   }
@@ -130,7 +142,7 @@
         {:else if layout === 'cards'}
           <CardsLayout {kit} />
         {:else if layout === 'kanban'}
-          <BoardLayout {kit} />
+          <BoardLayout {kit} adding={boardAdding} />
         {:else if layout === 'calendar'}
           {#if phone}<AgendaLayout {kit} />{:else}<CalendarLayout {kit} />{/if}
         {:else if layout === 'timeline'}

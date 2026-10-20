@@ -168,6 +168,9 @@ export interface NibBase {
   kept: Record<string, unknown>
 }
 
+/** A board card's three heights. */
+export type CardSize = 'small' | 'medium' | 'large'
+
 /** Which rows a view is about. */
 export type RowKinds = 'notes' | 'tasks' | 'both'
 
@@ -200,6 +203,18 @@ export interface NibView {
   template?: string
   /** A form's fields that must be filled before it is sent. */
   required?: string[]
+  /** How tall a board's cards are: the title's lines and the property lines under it.
+   *  nib's own, beside Obsidian's numeric `cardSize`, which Cards reads in pixels. */
+  cardSize?: CardSize
+  /** A board's columns in this view's own order, by group key as text; a group it does
+   *  not name follows in the options' order. */
+  groups?: string[]
+  /** The group of rows with no value comes first, as Notion's board puts it. */
+  noneFirst?: boolean
+  /** Groups no row is in are left out. */
+  hideEmpty?: boolean
+  /** False draws a board's columns without their options' tones. */
+  colourColumns?: boolean
   /** Every other key, as written. */
   kept: Record<string, unknown>
 }

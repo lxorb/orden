@@ -236,6 +236,28 @@ describe('a drop into a group', () => {
     expect(dropInto('file.size', 3, bank, TODAY)).toBeNull()
   })
 
+  test("carries one member of a list from its column to another's, and no other", () => {
+    const card = noteRow('Bug.md', 'tags: [iOS, Sync]')
+    expect(dropInto('note.tags', 'Mac', card, TODAY, 'iOS')).toEqual({
+      change: { note: { tags: ['Sync', 'Mac'] } },
+    })
+    // Onto a member it already holds: the one it came from goes.
+    expect(dropInto('note.tags', 'Sync', card, TODAY, 'iOS')).toEqual({
+      change: { note: { tags: ['Sync'] } },
+    })
+    // Onto no value: that member alone goes, and the last one takes the key away.
+    expect(dropInto('note.tags', null, card, TODAY, 'iOS')).toEqual({
+      change: { note: { tags: ['Sync'] } },
+    })
+    expect(dropInto('note.tags', null, noteRow('a.md', 'tags: [iOS]'), TODAY, 'iOS')).toEqual({
+      change: { note: { tags: null } },
+    })
+    // Out of no value: one added.
+    expect(dropInto('note.tags', 'iOS', noteRow('a.md', 'tags: []'), TODAY, null)).toEqual({
+      change: { note: { tags: ['iOS'] } },
+    })
+  })
+
   test('takes the date off in the group with none', () => {
     expect(dropInto('task.due', null, bank, TODAY)).toEqual({ change: { task: { due: null } } })
   })

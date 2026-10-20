@@ -164,13 +164,13 @@ export type Panel =
  *  workspace/zones.ts. */
 export type PanelSide = 'left' | 'right'
 
-/** The five things the file list makes, each of which arrives as a row waiting
+/** The six things the file list makes, each of which arrives as a row waiting
  *  for a name; see `startNaming`.
  *
  *  No folder among them. A note that holds notes is how a space is organised, so
  *  the folders on disk are made by nesting and by nothing else; see
  *  folder-notes.ts and docs/tree.md. */
-export type NewKind = 'note' | 'canvas' | 'pages' | 'web' | 'chat'
+export type NewKind = 'note' | 'canvas' | 'pages' | 'web' | 'chat' | 'database'
 
 /** A row of the file list waiting for a name, or a space's own name in the header
  *  being typed. One at a time, whichever it is; see `startNaming`. */
@@ -190,6 +190,7 @@ const PLACEHOLDER: Record<NewKind, string> = {
   pages: 'Untitled.pages',
   web: 'Untitled.url',
   chat: 'Chat.chat',
+  database: 'Untitled',
 }
 
 export type { Heading } from './outline'
@@ -505,6 +506,16 @@ class Workspace {
       } else if (op.op === 'removed') {
         void papers().then(({ paperGone }) => paperGone(op.path), unfetched)
       }
+    })
+    // A board's manual order names its cards by path, so it follows them as links do.
+    this.fileOps.follow((op) => {
+      const tree = this.tree
+      if (op.op !== 'moved' || op.kind === 'space' || !op.root || !tree) return
+      if (!samePath(op.root, this.activeSpace?.root ?? '')) return
+      return import('./views/order-paths').then(
+        ({ orderMoved }) => orderMoved(tree, op.root ?? '', op.from, op.to),
+        unfetched,
+      )
     })
   }
 
@@ -3905,6 +3916,8 @@ class Workspace {
     if (naming.making === 'canvas') await this.createCanvas(dir, name)
     else if (naming.making === 'pages') await this.createPages(dir, name)
     else if (naming.making === 'web') await this.createWebsite(dir, name)
+    else if (naming.making === 'database')
+      await (await import('./views/new-database')).createDatabase(dir, name)
     else if (naming.making !== 'chat') await this.createNote(dir, name)
     else if (!__EVEN_PLUGIN__) await (await import('./chats/view/open')).makeChat(dir, name)
   }

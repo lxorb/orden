@@ -89,6 +89,22 @@ describe('reading', () => {
     expect(base.views[3]?.filters).toEqual({ and: ['!task.done'] })
   })
 
+  test("a board's own keys, and a card size nib does not know left as written", () => {
+    const source =
+      'views:\n  - type: kanban\n    name: B\n    cardSize: 180\n    nib:\n      cardSize: large\n      groups: [Done, To do]\n      noneFirst: true\n      hideEmpty: true\n      colourColumns: false\n'
+    const base = readBase(source)
+    expect(base.views[0]?.nib).toMatchObject({
+      cardSize: 'large',
+      groups: ['Done', 'To do'],
+      noneFirst: true,
+      hideEmpty: true,
+      colourColumns: false,
+    })
+    expect(base.views[0]?.options.cardSize).toBe(180)
+    expect(writeBase(base, source)).toBe(source)
+    expect(readBase(source.replace('large', 'huge')).views[0]?.nib.cardSize).toBeUndefined()
+  })
+
   test('an empty file is an empty base, and a broken one an error', () => {
     expect(readBase('').views).toEqual([])
     expect(() => readBase('views: [\n')).toThrow()

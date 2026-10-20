@@ -12,7 +12,7 @@
  *  makes its next occurrence as a tick in the editor would. */
 
 import { deadlineField, startField } from '@nib/markdown/task-dates'
-import type { Priority, Row, TaskChange, Value } from '@nib/bases'
+import { groupName, type Priority, type Row, type TaskChange, type Value } from '@nib/bases'
 import type { RowChange } from '../rows/write'
 import { bare, isNoteProperty } from './columns'
 import { dayIn } from './values'
@@ -87,8 +87,18 @@ function taskDrop(field: string, key: Value, row: Row, today: string): Drop | nu
 }
 
 /** The drop into the group keyed `key` of a view grouped by `property`, or null
- *  where no write would put the row there. `today` is the reader's day. */
-export function dropInto(property: string, key: Value, row: Row, today: string): Drop | null {
+ *  where no write would put the row there. `today` is the reader's day. `from` is the
+ *  key of the group the row was carried out of, where it was in one: a card of a list
+ *  sits in a column per member, and carrying it from one to another swaps that member
+ *  alone, carrying it to the group of no value takes that member out, and carrying it
+ *  out of the group of no value adds one. */
+export function dropInto(
+  property: string,
+  key: Value,
+  row: Row,
+  today: string,
+  from?: Value,
+): Drop | null {
   if (property.startsWith('task.')) return taskDrop(property.slice(5), key, row, today)
 
   // The built-in views' own groupings: Today's overdue half and its today half, and
@@ -107,8 +117,20 @@ export function dropInto(property: string, key: Value, row: Row, today: string):
   if (!isNoteProperty(property)) return null
   const name = bare(property)
   const now = row.note[name] ?? null
-  // A list stays a list: a card of tags dropped on one tag's column holds that tag.
-  const next = Array.isArray(now) && key !== null && !Array.isArray(key) ? [key] : key
+  const next = Array.isArray(now) ? swapped(now, key, from) : key
   if (JSON.stringify(now) === JSON.stringify(next)) return null
   return { change: { note: { [name]: next } } }
+}
+
+/** A list with the member it was carried out of (`from`) swapped for `key`: taken out
+ *  where `key` is no value, added where it came from no value. Carried from nowhere
+ *  known, the list becomes that one member, as a drop always made it. */
+function swapped(now: readonly Value[], key: Value, from: Value | undefined): Value {
+  if (Array.isArray(key)) return key
+  if (from === undefined) return key === null ? null : [key]
+  const named = (one: Value) => (one === null ? '' : groupName(one))
+  if (named(from) === named(key)) return [...now]
+  const kept = named(from) === '' ? [...now] : now.filter((one) => named(one) !== named(from))
+  if (key === null || named(key) === '') return kept.length ? kept : null
+  return kept.some((one) => named(one) === named(key)) ? kept : [...kept, key]
 }
