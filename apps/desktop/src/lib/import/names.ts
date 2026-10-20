@@ -9,10 +9,7 @@
  *  imported note is named the way every other note is. */
 
 import { freePath, withoutForbidden } from '@nib/markdown/paths'
-
-/** The names MS-DOS took and Windows never gave back, with or without an
- *  extension after them. */
-const DEVICES = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i
+import { isReserved } from '../naming'
 
 /** Long enough for any title somebody wrote on purpose, short enough that the
  *  folders above it still fit in a path. */
@@ -75,7 +72,7 @@ export function keptName(name: string, extension = ''): string {
 function undeviced(name: string): string {
   const at = name.indexOf('.')
   const first = at < 0 ? name : name.slice(0, at)
-  return DEVICES.test(first) ? `${first}-${name.slice(first.length)}` : name
+  return isReserved(first) ? `${first}-${name.slice(first.length)}` : name
 }
 
 /** The name without the id its exporter stuck on the end. */

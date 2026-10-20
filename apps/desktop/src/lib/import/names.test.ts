@@ -22,6 +22,8 @@ describe('a title as a file name', () => {
   test('steps around the names MS-DOS took', () => {
     expect(safeName('con')).toBe('con-')
     expect(safeName('LPT1')).toBe('LPT1-')
+    expect(safeName('LPT²')).toBe('LPT²-')
+    expect(safeName('CONIN$')).toBe('CONIN$-')
     expect(safeName('console')).toBe('console')
   })
 
