@@ -8,7 +8,7 @@
 //! A tag is written two ways, which is Obsidian's pair and so what a file
 //! written by either app says. Inline, `#work/nib`: a heading is not one
 //! because it has a space after the hash and a tag never does, a tag starts a
-//! word, and its first character is a letter, which is what rules out `#42`.
+//! word, and its name is not all digits, which is what rules out `#42`.
 //! And in the front matter, under `tags:`, as a list on the line or as items
 //! under it, where the hash is optional because YAML would read one as a
 //! comment.
@@ -20,6 +20,8 @@
 //! decides how deep that tree can go.
 
 use crate::front_matter;
+use icu_properties::props::{ExtendedPictographic, GeneralCategory, GeneralCategoryGroup};
+use icu_properties::{CodePointMapData, CodePointSetData};
 
 /// Every tag in one note's text, with the hash, in the order they are used.
 #[must_use]
@@ -117,15 +119,29 @@ fn read_values(text: &str, found: &mut Vec<String>) {
     }
 }
 
-/// Whether a name is one a tag may have: a letter, then letters, digits, and
-/// the three characters that join words, the slash among them.
+/// Whether a name is one a tag may have: opened by a letter, mark, digit or emoji,
+/// then those and the three joiners, and not all digits.
 fn named(name: &str) -> bool {
     let mut letters = name.chars();
     let Some(first) = letters.next() else {
         return false;
     };
 
-    first.is_alphabetic() && letters.all(|one| one.is_alphanumeric() || "-_/".contains(one))
+    name_start(first) && letters.all(name_char) && !name.chars().all(char::is_numeric)
+}
+
+/// A character a name may open with: a letter, mark, digit or emoji.
+fn name_start(one: char) -> bool {
+    let category = CodePointMapData::<GeneralCategory>::new().get(one);
+    GeneralCategoryGroup::Letter.contains(category)
+        || GeneralCategoryGroup::Mark.contains(category)
+        || GeneralCategoryGroup::Number.contains(category)
+        || CodePointSetData::new::<ExtendedPictographic>().contains(one)
+}
+
+/// A character a name holds after its first: those, and the three that join words.
+fn name_char(one: char) -> bool {
+    name_start(one) || "-_/".contains(one)
 }
 
 /// Every `#tag` in the note's own words. The front matter is left out of this
@@ -158,14 +174,13 @@ fn read_inline(body: &str, front: usize, found: &mut Vec<String>) {
                 .next_back()
                 .is_none_or(|one| one.is_whitespace() || one == '(');
 
-            // The name is what a tag may hold, and the first character of it has
-            // to be a letter, which rules out `#1`.
+            // The name is what a tag may hold, which rules out `#1`.
             let rest = &line[start + 1..];
             let name = rest
-                .find(|one: char| !(one.is_alphanumeric() || "-_/".contains(one)))
+                .find(|one: char| !name_char(one))
                 .map_or(rest, |end| &rest[..end]);
 
-            if opens && name.starts_with(char::is_alphabetic) {
+            if opens && named(name) {
                 found.push(line[start..start + 1 + name.len()].to_string());
             }
 
@@ -196,6 +211,14 @@ mod tests {
         assert_eq!(
             tags_in("#work/2026 #a-b #c_d"),
             vec!["#work/2026", "#a-b", "#c_d"]
+        );
+    }
+
+    #[test]
+    fn a_name_holds_marks_and_emoji_and_is_not_all_digits() {
+        assert_eq!(
+            tags_in("#हिन्दी #cafe\u{301} #tag👍 #2024-review #2024"),
+            vec!["#हिन्दी", "#cafe\u{301}", "#tag👍", "#2024-review"]
         );
     }
 

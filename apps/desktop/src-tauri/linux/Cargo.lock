@@ -3046,6 +3046,7 @@ dependencies = [
  "file-id",
  "flate2",
  "getrandom 0.3.4",
+ "icu_properties",
  "keyring",
  "libc",
  "notify",

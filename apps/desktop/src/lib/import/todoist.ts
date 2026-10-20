@@ -86,7 +86,7 @@ export function tagOf(label: string): string {
     .trim()
     .replace(/^[@#]/, '')
     .replace(/\s+/g, '-')
-    .replace(/[^\p{L}\p{N}_/-]/gu, '')
+    .replace(/[^\p{L}\p{M}\p{N}\p{Extended_Pictographic}_/-]/gu, '')
 }
 
 /** Todoist's rule in the words the Tasks plugin reads, or null where it reads none:

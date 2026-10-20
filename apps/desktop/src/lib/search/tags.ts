@@ -8,7 +8,7 @@
  *  A tag is written two ways, which is Obsidian's pair and so what a file
  *  written by either app says. Inline, `#work/nib`: a heading is not one because
  *  it has a space after the hash and a tag never does, a tag starts a word, and
- *  its first character is a letter, which is what rules out `#42`. And in the
+ *  its name is not all digits, which is what rules out `#42`. And in the
  *  front matter, under `tags:`, as a list on the line or as items under it,
  *  where the hash is optional because YAML would read it as a comment.
  *
@@ -19,6 +19,7 @@
  *  tree can go. */
 
 import { type FrontMatterBlock, frontMatterBlock } from '@nib/markdown/front-matter'
+import { TAG_NAME } from '@nib/markdown/tags'
 
 /** Where one use of a tag sits: the offsets of its name, the hash not included,
  *  so a rename splices a new path in and leaves whatever hung off the old one. */
@@ -29,12 +30,10 @@ export interface TagUse {
   to: number
 }
 
-/** What a tag's name may hold. The first character is a letter; after it,
- *  letters, digits, and the three characters that join words - the slash among
- *  them, which is what makes a tag nestable. */
-const NAME = /^\p{L}[\p{L}\p{N}\-_/]*$/u
+/** What a tag's name may hold: the grammar `@nib/markdown` reads tags with. */
+const NAME = new RegExp(`^${TAG_NAME}$`, 'u')
 
-const TAG = /(^|[\s(])#(\p{L}[\p{L}\p{N}\-_/]*)/gu
+const TAG = new RegExp(String.raw`(^|[\s(])#(${TAG_NAME})`, 'gu')
 
 const FENCE = /^\s*(```|~~~)/
 

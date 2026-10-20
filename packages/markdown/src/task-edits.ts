@@ -18,6 +18,7 @@
  *  format. See task-line.ts for the reading. */
 
 import { appliedEdits, type TextEdit } from './edits'
+import { tagNameAt } from './tags'
 import {
   DEPENDS_EMOJI,
   EMOJI_BY_DATE,
@@ -364,8 +365,7 @@ function tagsAmongWords(line: string, tag: string, from: number, to: number): nu
   let at = words.indexOf(`#${tag}`)
   while (at !== -1) {
     const before = words.charAt(at - 1)
-    const after = words.charAt(at + tag.length + 1)
-    if ((before === '' || /\s|\(/.test(before)) && !/[\p{L}\p{N}\-_/]/u.test(after))
+    if ((before === '' || /\s|\(/.test(before)) && tagNameAt(words, at) === tag)
       found.push(from + at)
     at = words.indexOf(`#${tag}`, at + 1)
   }
