@@ -263,7 +263,7 @@
 
   const quiet = $derived(!focused && !alone)
   /** No open tab to leave out of the bar's line. */
-  const bare = $derived(!activeId || (drag.out && lifted.includes(activeId)))
+  const bare = $derived(!sized.some((one) => one.active && !(drag.out && lifted.includes(one.id))))
 
   /** Where a point on the glass is along the strip, from the start of the first
    *  tab, in the direction the interface reads, the strip's own scroll included. */
