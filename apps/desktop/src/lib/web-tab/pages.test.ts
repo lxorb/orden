@@ -8,6 +8,8 @@
 
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
+import type { Tab } from '../workspace.svelte'
+
 interface Call {
   command: string
   args: Record<string, unknown>
@@ -1057,5 +1059,68 @@ describe('what a page asking for a window says', () => {
   test('names nothing a tab may not hold', () => {
     expect(readOpening({ tab: 't', url: 'file:///C:/Windows/', behind: true })).toBeNull()
     expect(readOpening({ url: 'https://example.com/' })).toBeNull()
+  })
+})
+
+describe('a tab that closes itself when its download starts', () => {
+  const FILE = 'https://example.com/slides.pdf'
+
+  /** What the workspace was asked to do, in order, and the tab it has in front. */
+  let did: string[] = []
+  let inFront = 'b'
+
+  beforeEach(async () => {
+    did = []
+    inFront = 'b'
+    const { workspace } = await import('../workspace.svelte')
+    vi.spyOn(workspace, 'activeTabId', 'get').mockImplementation(() => inFront)
+    vi.spyOn(workspace, 'tabs', 'get').mockReturnValue([{ id: 'a' }, { id: 'b' }] as Tab[])
+    vi.spyOn(workspace, 'openPage').mockImplementation((_url, _ask, opener) => {
+      did.push(`open from ${opener ?? ''}`)
+      return 'b'
+    })
+    vi.spyOn(workspace, 'activate').mockImplementation((id) => void did.push(`activate ${id}`))
+    vi.spyOn(workspace, 'close').mockImplementation((id) => void did.push(`close ${id}`))
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
+  /** Tab `a` is open; a link in it opens `b`, which is shown and starts a file in it. */
+  async function downloadFromB(id: number): Promise<void> {
+    const shownA = pages.show('a', SITE, PANE)
+    const arriveA = await asked()
+    arriveA()
+    await shownA
+
+    const opening = await hearing('nib://web-open')
+    opening({ payload: { tab: 'a', url: FILE } })
+    await settle()
+
+    building = null
+    const shownB = pages.show('b', FILE, PANE)
+    const arriveB = await asked()
+    arriveB()
+    await shownB
+    await settle()
+
+    const download = await hearing('nib://web-download')
+    download({ payload: { id, tab: 'b', url: FILE, name: 'slides.pdf', state: 'going' } })
+  }
+
+  test('hands the keyboard to the app when the tab in front closes itself', async () => {
+    await downloadFromB(1)
+
+    await vi.waitFor(() => expect(did).toEqual(['open from a', 'activate a', 'close b']))
+    expect(commands()).toContain('take_keyboard')
+  })
+
+  test('leaves the keyboard where it was when the tab behind closes itself', async () => {
+    inFront = 'a'
+    await downloadFromB(2)
+
+    await vi.waitFor(() => expect(did).toContain('close b'))
+    expect(commands()).not.toContain('take_keyboard')
   })
 })
