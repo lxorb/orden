@@ -53,10 +53,10 @@ POINTER = OUT / "pointer.fifo"
 SLACK = 3
 failures = []
 
-# What opens over a web tab's page, and the button that opens it.
+# What opens over a web tab's page, and the button that opens it. The app menu was the
+# second until the window had no menu button any more (424fd9d4d).
 LAYERS = [
     ("the web tab's menu", '.webbar button[aria-haspopup="menu"]'),
-    ("the app menu", "button.trigger[aria-expanded]"),
 ]
 
 
