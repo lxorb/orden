@@ -1890,6 +1890,8 @@ export const ps: Dictionary = {
   'Settings › AI': 'امستنې ‹ مصنوعي ځيرکتيا',
   'New chat': 'نوې خبرې',
   'Ask again': 'بیا پوښتنه وکړئ',
+  'Continue when the limit resets': 'کله چې حد بیا پیل شي، دوام ورکړئ',
+  'Continues at {time}': 'په {time} دوام مومي',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'هر څه وپوښتئ، د زیاتولو لپاره @، د نورو لپاره /',
   'What can I help with?': 'څنګه مرسته کولی شم؟',

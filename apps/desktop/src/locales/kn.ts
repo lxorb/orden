@@ -1907,6 +1907,8 @@ export const kn: Dictionary = {
   'Settings › AI': 'ಸೆಟ್ಟಿಂಗ್‌ಗಳು › AI',
   'New chat': 'ಹೊಸ ಚಾಟ್',
   'Ask again': 'ಮತ್ತೆ ಕೇಳಿ',
+  'Continue when the limit resets': 'ಮಿತಿ ಮರುಹೊಂದಿದಾಗ ಮುಂದುವರಿಸಿ',
+  'Continues at {time}': '{time} ಕ್ಕೆ ಮುಂದುವರಿಯುತ್ತದೆ',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'ಏನಾದರೂ ಕೇಳಿ, ಸೇರಿಸಲು @, ಇನ್ನಷ್ಟಕ್ಕೆ /',
   'What can I help with?': 'ನಾನು ಏನು ಸಹಾಯ ಮಾಡಲಿ?',

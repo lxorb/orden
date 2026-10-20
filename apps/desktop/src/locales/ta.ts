@@ -1918,6 +1918,8 @@ export const ta: Dictionary = {
   'Settings › AI': 'அமைப்புகள் › AI',
   'New chat': 'புதிய அரட்டை',
   'Ask again': 'மீண்டும் கேள்',
+  'Continue when the limit resets': 'வரம்பு மீட்டமைந்ததும் தொடர்',
+  'Continues at {time}': '{time} மணிக்குத் தொடரும்',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'எதையும் கேளுங்கள், சேர்க்க @, மேலும் /',
   'What can I help with?': 'நான் எதில் உதவலாம்?',

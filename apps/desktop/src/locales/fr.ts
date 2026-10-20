@@ -1952,6 +1952,8 @@ export const fr: Dictionary = {
   'Settings › AI': 'Réglages › IA',
   'New chat': 'Nouvelle discussion',
   'Ask again': 'Redemander',
+  'Continue when the limit resets': 'Continuer quand la limite sera réinitialisée',
+  'Continues at {time}': 'Reprend à {time}',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Demandez, @ pour ajouter, / pour plus',
   'What can I help with?': 'Comment puis-je vous aider ?',

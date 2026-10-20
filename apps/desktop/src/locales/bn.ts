@@ -1887,6 +1887,8 @@ export const bn: Dictionary = {
   'Settings › AI': 'সেটিংস › AI',
   'New chat': 'নতুন চ্যাট',
   'Ask again': 'আবার জিজ্ঞাসা করুন',
+  'Continue when the limit resets': 'সীমা নতুন হলে চালিয়ে যান',
+  'Continues at {time}': '{time}-এ চালিয়ে যাবে',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'যা খুশি জিজ্ঞেস করুন, যোগ করতে @, আরও জন্য /',
   'What can I help with?': 'কীভাবে সাহায্য করতে পারি?',

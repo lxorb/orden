@@ -1890,6 +1890,8 @@ export const mr: Dictionary = {
   'Settings › AI': 'सेटिंग्ज › AI',
   'New chat': 'नवीन चॅट',
   'Ask again': 'पुन्हा विचारा',
+  'Continue when the limit resets': 'मर्यादा रीसेट झाल्यावर पुढे चालू ठेवा',
+  'Continues at {time}': '{time} वाजता पुढे चालू होईल',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'काहीही विचारा, जोडण्यासाठी @, अधिकसाठी /',
   'What can I help with?': 'मी कशात मदत करू?',

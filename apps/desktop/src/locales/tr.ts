@@ -1899,6 +1899,8 @@ export const tr: Dictionary = {
   'Settings › AI': 'Ayarlar › YZ',
   'New chat': 'Yeni sohbet',
   'Ask again': 'Yeniden sor',
+  'Continue when the limit resets': 'Sınır sıfırlanınca devam et',
+  'Continues at {time}': '{time} saatinde devam edecek',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Her şeyi sor, eklemek için @, fazlası için /',
   'What can I help with?': 'Nasıl yardımcı olabilirim?',

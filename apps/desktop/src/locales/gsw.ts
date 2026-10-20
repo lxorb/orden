@@ -1899,6 +1899,8 @@ export const gsw: Dictionary = {
   'Settings › AI': 'Iistellige › KI',
   'New chat': 'Neue Chat',
   'Ask again': 'Nomol frage',
+  'Continue when the limit resets': 'Wiiter, sobald s Limit zrugggsetzt isch',
+  'Continues at {time}': 'Gaht um {time} wiiter',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Frög öppis, @ zum Aahänke, / für meh',
   'What can I help with?': 'Wobi chan ich hälfe?',

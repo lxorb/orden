@@ -1891,6 +1891,8 @@ export const fa: Dictionary = {
   'Settings › AI': 'تنظیم ‹ هوش مصنوعی',
   'New chat': 'گفتگوی تازه',
   'Ask again': 'دوباره بپرس',
+  'Continue when the limit resets': 'ادامه پس از بازنشانی سقف',
+  'Continues at {time}': 'در {time} ادامه می‌دهد',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'هر چیزی بپرسید، @ برای افزودن، / برای بیشتر',
   'What can I help with?': 'چه کمکی از من برمی‌آید؟',

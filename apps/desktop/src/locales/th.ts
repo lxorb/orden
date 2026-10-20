@@ -1852,6 +1852,8 @@ export const th: Dictionary = {
   'Settings › AI': 'ตั้งค่า › AI',
   'New chat': 'แชทใหม่',
   'Ask again': 'ถามอีกครั้ง',
+  'Continue when the limit resets': 'ทำต่อเมื่อขีดจำกัดรีเซ็ต',
+  'Continues at {time}': 'ทำต่อเวลา {time}',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'ถามอะไรก็ได้ @ เพื่อแนบ / เพื่อดูเพิ่ม',
   'What can I help with?': 'ให้ช่วยอะไรดี?',

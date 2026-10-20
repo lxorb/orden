@@ -1876,6 +1876,8 @@ export const jv: Dictionary = {
   'Settings › AI': 'Setelan › AI',
   'New chat': 'Obrolan anyar',
   'Ask again': 'Takon maneh',
+  'Continue when the limit resets': 'Terusake yen wates wis direset',
+  'Continues at {time}': 'Diterusake jam {time}',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Takon apa wae, @ kanggo nambah, / kanggo liyane',
   'What can I help with?': 'Apa sing bisa dakbantu?',

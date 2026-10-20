@@ -1918,6 +1918,8 @@ export const ha: Dictionary = {
   'Settings › AI': 'Saituna › AI',
   'New chat': 'Sabuwar tattaunawa',
   'Ask again': 'Sake tambaya',
+  'Continue when the limit resets': 'Ci gaba idan iyakar ta sabunta',
+  'Continues at {time}': 'Zai ci gaba da {time}',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Tambayi komai, @ don ƙarawa, / don ƙari',
   'What can I help with?': 'Me zan iya taimaka da shi?',

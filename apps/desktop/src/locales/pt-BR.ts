@@ -1926,6 +1926,8 @@ export const ptBR: Dictionary = {
   'Settings › AI': 'Configurações › IA',
   'New chat': 'Nova conversa',
   'Ask again': 'Perguntar de novo',
+  'Continue when the limit resets': 'Continuar quando o limite for renovado',
+  'Continues at {time}': 'Continua às {time}',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Pergunte qualquer coisa, @ para anexar, / para mais',
   'What can I help with?': 'Como posso ajudar?',

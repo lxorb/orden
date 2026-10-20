@@ -1917,6 +1917,8 @@ export const sw: Dictionary = {
   'Settings › AI': 'Mipangilio › AI',
   'New chat': 'Mazungumzo mapya',
   'Ask again': 'Uliza tena',
+  'Continue when the limit resets': 'Endelea kikomo kitakapowekwa upya',
+  'Continues at {time}': 'Itaendelea saa {time}',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Uliza chochote, @ kuongeza, / kwa zaidi',
   'What can I help with?': 'Nikusaidie nini?',

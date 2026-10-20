@@ -1963,6 +1963,8 @@ export const uk: Dictionary = {
   'Settings › AI': 'Налаштування › ШІ',
   'New chat': 'Новий чат',
   'Ask again': 'Запитати знову',
+  'Continue when the limit resets': 'Продовжити, коли ліміт оновиться',
+  'Continues at {time}': 'Продовжить о {time}',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Запитайте що завгодно, @ щоб додати, / для команд',
   'What can I help with?': 'Чим я можу допомогти?',

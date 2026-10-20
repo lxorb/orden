@@ -1930,6 +1930,8 @@ export const de: Dictionary = {
   'Settings › AI': 'Einstellungen › KI',
   'New chat': 'Neuer Chat',
   'Ask again': 'Nochmals fragen',
+  'Continue when the limit resets': 'Weiter, sobald das Limit zurückgesetzt ist',
+  'Continues at {time}': 'Geht um {time} weiter',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Frag etwas, @ zum Anhängen, / für mehr',
   'What can I help with?': 'Wobei kann ich helfen?',
