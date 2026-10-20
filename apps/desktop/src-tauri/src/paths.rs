@@ -933,18 +933,47 @@ fn gather(
 /// folder name.
 ///
 /// Any hash would do; this one is `FNV-1a`, which is a dozen lines and needs no
-/// dependency. Folded case first, because two spellings of one path on Windows are
-/// one file. Here rather than in one of the two modules that keeps something
-/// beside a file, because both do: the version history of a note, and the words
-/// taken out of a PDF.
+/// dependency. Folded case first where the file system ignores it, because two
+/// spellings of one path on Windows are one file; on Linux they are two (#476). Here
+/// rather than in one of the two modules that keeps something beside a file, because
+/// both do: the version history of a note, and the words taken out of a PDF.
 #[must_use]
 pub fn folder_key(path: &str) -> String {
+    folder_key_as(NAMING, path)
+}
+
+/// `folder_key`, for the file system `naming` says.
+fn folder_key_as(naming: Naming, path: &str) -> String {
+    let spelled = if naming == Naming::Exact {
+        path.to_owned()
+    } else {
+        path.to_lowercase()
+    };
     let mut hash: u64 = 0xcbf2_9ce4_8422_2325;
-    for byte in path.to_lowercase().bytes() {
+    for byte in spelled.bytes() {
         hash ^= u64::from(byte);
         hash = hash.wrapping_mul(0x0000_0100_0000_01b3);
     }
     format!("{hash:016x}")
+}
+
+/// The folder under `root` that `folder_key` names for a file.
+///
+/// Linux named one by the lowercased path until #476, so a folder kept then is moved
+/// into place the first time it is asked for, when its `ORIGIN` names this very
+/// spelling; one naming another spelling stays that file's.
+pub fn kept_folder(root: &Path, path: &str) -> PathBuf {
+    kept_folder_named(root, &folder_key(path), path)
+}
+
+/// `kept_folder`, under the name `folder_key` gives, so Linux's can be tested anywhere.
+fn kept_folder_named(root: &Path, name: &str, path: &str) -> PathBuf {
+    let dir = root.join(name);
+    let was = root.join(folder_key_as(Naming::Cased, path));
+    if !dir.exists() && fs::read_to_string(was.join(ORIGIN)).is_ok_and(|origin| origin == path) {
+        let _ = fs::rename(was, &dir);
+    }
+    dir
 }
 
 /// What a folder named by `folder_key` keeps the file's own path in, so the store
@@ -1213,10 +1242,10 @@ pub(crate) fn link_to(target: &Path, link: &Path) -> bool {
 mod tests {
     use super::{
         a_shareable_folder, at_most, copy_held, drop_held, files_in, folded, folder_key,
-        folder_named, free_spot, held_paper, highlights_of, inside, inside_as, is_base, is_canvas,
-        is_markdown, is_pages, is_pdf, is_shortcut, judged, judged_as, judged_beyond, judged_space,
-        link_to, move_held, paper_of, same_path, space_root, upcased, write_atomically, Naming,
-        Picked,
+        folder_key_as, folder_named, free_spot, held_paper, highlights_of, inside, inside_as,
+        is_base, is_canvas, is_markdown, is_pages, is_pdf, is_shortcut, judged, judged_as,
+        judged_beyond, judged_space, kept_folder_named, link_to, move_held, paper_of, same_path,
+        space_root, upcased, write_atomically, Naming, Picked, ORIGIN,
     };
     use std::ffi::OsStr;
     use std::path::{Path, PathBuf};
@@ -2111,7 +2140,30 @@ mod tests {
 
     #[test]
     fn the_same_file_in_another_case_is_the_same_file() {
-        assert_eq!(folder_key(r"C:\Notes\A.md"), folder_key(r"c:\notes\a.md"));
+        let key = |path| folder_key_as(Naming::Win32, path);
+        assert_eq!(key(r"C:\Notes\A.md"), key(r"c:\notes\a.md"));
+    }
+
+    #[test]
+    fn two_names_apart_only_in_case_are_two_files_on_linux() {
+        let key = |path| folder_key_as(Naming::Exact, path);
+        assert_ne!(key("/Notes/Plan.md"), key("/Notes/plan.md"));
+    }
+
+    #[test]
+    fn a_folder_linux_kept_by_the_lowercased_path_goes_with_that_spelling_only() {
+        let root = tempfile::tempdir().expect("a temp folder");
+        let was = root
+            .path()
+            .join(folder_key_as(Naming::Cased, "/Notes/Plan.md"));
+        std::fs::create_dir(&was).expect("an old folder");
+        std::fs::write(was.join(ORIGIN), "/Notes/Plan.md").expect("its origin");
+
+        let kept = |path| kept_folder_named(root.path(), &folder_key_as(Naming::Exact, path), path);
+        assert!(!kept("/Notes/plan.md").exists());
+        assert!(was.exists());
+        assert!(kept("/Notes/Plan.md").join(ORIGIN).exists());
+        assert!(!was.exists());
     }
 
     #[test]
