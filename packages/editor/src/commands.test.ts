@@ -280,6 +280,12 @@ describe('clear formatting', () => {
   test('leaves text outside the selection alone', () => {
     expect(run(clearFormatting, '**keep** [**drop**]')).toBe('**keep** drop')
   })
+
+  test('keeps the underscores inside a word', () => {
+    expect(run(clearFormatting, '[see my_file_name.txt and __b__ _i_]')).toBe(
+      'see my_file_name.txt and b i',
+    )
+  })
 })
 
 describe('select word', () => {
