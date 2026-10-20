@@ -156,6 +156,28 @@ jobs:
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+      # #661: a press in a popup over a web tab's page chooses what it is on, and the
+      # popup is not closed as though the press had been outside it; and the same on a
+      # desktop scaled for X11 applications.
+      - name: Popups chosen from over a web tab's page, under sway
+        if: always()
+        env:
+          OUT: wayland-out/popups
+          POPUP: '1'
+        run: |
+          pkill -f /usr/share/Orden/nib || true
+          rm -rf "$HOME/.config/ch.emilvinu.nib"
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+      - name: Popups chosen from over a web tab's page, under sway, scaled
+        if: always()
+        env:
+          OUT: wayland-out/popups-scaled
+          POPUP: '1'
+          DPI: '128'
+        run: |
+          pkill -f /usr/share/Orden/nib || true
+          rm -rf "$HOME/.config/ch.emilvinu.nib"
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       # #427: the window moved by its tab strip and resized by its edge, floated.
       - name: The window moved by its strip and resized by its edge, under sway
         if: always()
@@ -210,14 +232,24 @@ jobs:
           ./*.AppImage --appimage-extract > /dev/null
           [ -d squashfs-root ] || mv AppDir squashfs-root
       # As root in a container, where Chromium will not start sandboxed.
+      - name: Popups chosen from over a web tab's page, under KWin
+        env:
+          OUT: kwin-out/popups
+          KWIN: '1'
+          POPUP: '1'
+          NIB_CEF_SANDBOX: disabled
+        run: dbus-run-session -- bash scripts/x11-launch.sh "$GITHUB_WORKSPACE/packages/appimage/squashfs-root/AppRun"
       - name: Moved, resized and maximised under KWin
+        if: always()
         env:
           OUT: kwin-out
           KWIN: '1'
           IDLE: '1'
           DRAG: '1'
           NIB_CEF_SANDBOX: disabled
-        run: dbus-run-session -- bash scripts/x11-launch.sh "$GITHUB_WORKSPACE/packages/appimage/squashfs-root/AppRun"
+        run: |
+          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          dbus-run-session -- bash scripts/x11-launch.sh "$GITHUB_WORKSPACE/packages/appimage/squashfs-root/AppRun"
       - if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:

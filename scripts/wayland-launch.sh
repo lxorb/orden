@@ -21,6 +21,9 @@
 #     run on the web tab it came back to;
 #   - with IDLE=1, what the app costs the CPU while nothing happens, before anything
 #     else is done with it (scripts/idle-cpu.py);
+#   - with POPUP=1, the space switcher, the web tab's menu and a canvas's pens' panel
+#     chosen from with the compositor's pointer, over a web tab's page, round after
+#     round (#661, scripts/popup-drive.py);
 #   - with DRAG=1, the window moved by its tab strip and resized by its edge with the
 #     compositor's own pointer (scripts/window-drag.py, #427);
 #   - with CHECK=1, what #418 asked of the engine, looked at and measured by
@@ -146,7 +149,7 @@ endpoint() {
   chmod 600 "$config/automation.json"
 }
 command=("$@")
-if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ]; then
+if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ]; then
   mkdir -p "$out/site"
   video=""
   [ "${MEDIA:-0}" = 1 ] && video='<video src="none.webm" autoplay muted></video>'
@@ -193,7 +196,7 @@ PAGE
   endpoint
   set -- "$@" http://127.0.0.1:8765/
 fi
-if [ "${DRIVE:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ]; then
+if [ "${DRIVE:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ]; then
   # And a keyboard with it, where xkbcommon's tools can say what its keys are.
   if command -v xkbcli > /dev/null; then
     xkbcli compile-keymap --layout us > "$out/keymap.txt"
@@ -266,6 +269,11 @@ fi
 
 if [ "$status" = 0 ] && [ "${DRIVE:-0}" = 1 ]; then
   python3 "$here/wayland-drive.py" "$out" "$app_pid" || status=1
+fi
+
+if [ "$status" = 0 ] && [ "${POPUP:-0}" = 1 ]; then
+  sleep 3
+  python3 "$here/popup-drive.py" sway "$out" "$app_pid" || status=1
 fi
 
 if [ "$status" = 0 ] && [ "${DRAG:-0}" = 1 ]; then
