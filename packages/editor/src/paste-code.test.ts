@@ -15,18 +15,6 @@ beforeAll(() => {
   return import('@nib/markdown/from-html')
 })
 
-// jsdom measures no text: CodeMirror's measuring after a paste asks a Range for its
-// rectangles, which jsdom's Range does not have, and the error lands after the test.
-beforeAll(() => {
-  const range = Range.prototype as Partial<Pick<Range, 'getClientRects' | 'getBoundingClientRect'>>
-  if (!('getClientRects' in Range.prototype)) {
-    range.getClientRects = () => [] as unknown as DOMRectList
-  }
-  if (!('getBoundingClientRect' in Range.prototype)) {
-    range.getBoundingClientRect = () => new DOMRect()
-  }
-})
-
 /** The note after `text` (and `html`, where there is some) is pasted at the `|`. */
 async function pasted(marked: string, text: string, html = ''): Promise<string> {
   const caret = marked.indexOf('|')
