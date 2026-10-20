@@ -72,6 +72,14 @@ pub fn accelerated(config: &Path) -> bool {
     *ACCELERATED.get_or_init(|| chosen(config))
 }
 
+/// What `accelerated` decided for this run, for what is made after it has: on, where
+/// it has not decided. Nothing read, so nothing waited on, by the windows and pages
+/// made later on whatever thread makes them.
+#[cfg_attr(not(all(windows, not(feature = "cef"))), allow(dead_code))]
+pub fn this_run() -> bool {
+    ACCELERATED.get().copied().unwrap_or(true)
+}
+
 /// What the setting in `config` says now, which the next run starts with.
 fn chosen(config: &Path) -> bool {
     !std::fs::read_to_string(config.join(FILE)).is_ok_and(|said| said.trim() == "off")

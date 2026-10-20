@@ -121,11 +121,11 @@ pub(crate) const BROWSER_ARGS: &str = concat!(
 /// [`BROWSER_ARGS`], and the switches that keep the engine off the graphics card in a run
 /// where Settings turned hardware acceleration off; see gpu.rs.
 #[cfg(all(windows, not(feature = "cef")))]
-pub(crate) fn browser_args(app: &AppHandle) -> String {
-    if config_dir(app).is_ok_and(|config| !crate::gpu::accelerated(&config)) {
-        format!("{BROWSER_ARGS} {}", crate::gpu::OFF.join(" "))
-    } else {
+pub(crate) fn browser_args(_app: &AppHandle) -> String {
+    if crate::gpu::this_run() {
         BROWSER_ARGS.to_owned()
+    } else {
+        format!("{BROWSER_ARGS} {}", crate::gpu::OFF.join(" "))
     }
 }
 
@@ -417,6 +417,12 @@ pub(crate) fn ui_window<'a, M: tauri::Manager<crate::Engine>>(
 ) -> Result<tauri::WebviewWindowBuilder<'a, crate::Engine, M>, Box<dyn std::error::Error>> {
     let building =
         tauri::WebviewWindowBuilder::from_config(manager, config)?.devtools(cfg!(debug_assertions));
+    // This run's hardware acceleration decided here, as the first window is made and
+    // before the engine starts; every window and page after it asks `gpu::this_run`.
+    #[cfg(all(windows, not(feature = "cef")))]
+    if let Ok(settings) = config_dir(manager.app_handle()) {
+        crate::gpu::accelerated(&settings);
+    }
     #[cfg(all(windows, not(feature = "cef")))]
     let building = building.additional_browser_args(&browser_args(manager.app_handle()));
     // On CEF, Alloy style: a page and nothing of Chrome's around it, as `WebView2` and
