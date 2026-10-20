@@ -295,6 +295,9 @@ def look(output, moved=True, tag=""):
     # The window's page measures in its own pixels, which are the window's at its pixel
     # ratio: more than one where the desktop's scale is the page's zoom (DPI=n).
     ratio = run("devicePixelRatio") or 1
+    # And on a desktop scaled for X11 applications, that ratio is the desktop's scale.
+    if os.environ.get("DPI") and abs(ratio - int(os.environ["DPI"]) / 96) > 0.02:
+        fail(f"{output}: the window's page is drawn at {ratio}, not the desktop's {int(os.environ['DPI']) / 96:.3f}")
 
     def on_screen(rect, inset=0):
         return (
