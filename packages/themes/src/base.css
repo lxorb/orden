@@ -84,6 +84,7 @@ button {
     [role='menuitemradio'],
     [role='option'],
     [role='switch'],
+    .nib-setting.pressable,
     .nib-row
   ):not(:disabled, [aria-disabled='true']) {
   cursor: pointer;

@@ -590,28 +590,35 @@
          rather than above it, so each kind's answer is that kind's own type. -->
     {@const held = field.get()}
     {@const locked = field.locked?.() ?? false}
-    <!-- The whole row is the switch, so there is nothing to miss. A switch and
-         not a button, because a row may carry the `i` that explains it and a
-         button may hold nothing else anybody can press. A locked one is the
-         last kind of tab still offered, and stays as it is. -->
+    <!-- The whole row turns it, so there is nothing to miss, but the switch is the
+         mark at its end: a row may carry the `i` that explains it, and a switch may
+         hold nothing else anybody can press, so Enter on the `i` reached the row's
+         keys and turned the setting over (#522). A locked one is the last kind of
+         tab still offered, and stays as it is. -->
+    <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
     <div
       class="nib-setting setting"
       class:pressable={!locked}
-      role="switch"
-      tabindex="0"
-      aria-checked={held}
-      aria-disabled={locked || undefined}
       onclick={() => {
-        if (!locked) field.set(!field.get())
-      }}
-      onkeydown={(event) => {
-        if (event.key !== ' ' && event.key !== 'Enter') return
-        event.preventDefault()
         if (!locked) field.set(!field.get())
       }}
     >
       {@render named(field, where)}
-      <span class="nib-switch" class:on={held} class:off={locked} aria-hidden="true"></span>
+      <span
+        class="nib-switch"
+        class:on={held}
+        class:off={locked}
+        role="switch"
+        tabindex="0"
+        aria-checked={held}
+        aria-disabled={locked || undefined}
+        aria-label={field.label}
+        onkeydown={(event) => {
+          if (event.key !== ' ' && event.key !== 'Enter') return
+          event.preventDefault()
+          if (!locked) field.set(!field.get())
+        }}
+      ></span>
     </div>
   {:else if field.kind === 'slider'}
     {@const least = field.least?.() ?? field.min}
