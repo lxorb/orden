@@ -37,6 +37,18 @@ describe('spaces', () => {
     expect((await call(env, '/v1/spaces', { token, body: { name: '  ' } })).status).toBe(400)
   })
 
+  test('a name of only invisible characters is no name', async () => {
+    for (const name of ['\u200b', '\u202e', ' \u2060\u200b ']) {
+      expect((await call(env, '/v1/spaces', { token, body: { name } })).status).toBe(400)
+    }
+    const renamed = await call(env, `/v1/spaces/${space}`, {
+      method: 'PATCH',
+      token,
+      body: { name: '\u200b' },
+    })
+    expect(renamed.status).toBe(400)
+  })
+
   test('listing shows only your own', async () => {
     const other = await signIn(env, 'other@b.dev')
     await call(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
