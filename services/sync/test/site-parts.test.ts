@@ -198,7 +198,16 @@ describe('a form in a note', () => {
     const sent = new FormData()
     sent.set('your-name', 'Ada')
 
-    expect(answersFrom(formOf(fence)!, sent)).toEqual({ wrong: 'What you want to say is needed.' })
+    expect(answersFrom(formOf(fence)!, sent)).toEqual({ wrong: '2-needed' })
+    expect(formHtml(formOf(fence)!, 'note-1', false, '2-needed')).toContain(
+      '<p class="wrong">What you want to say is needed.</p>',
+    )
+  })
+
+  test('says only what the form can say went wrong, not what a link wrote', () => {
+    for (const wrong of ['Pay at evil.example', '9-needed', 'constructor']) {
+      expect(formHtml(formOf(fence)!, 'note-1', false, wrong)).not.toContain('class="wrong"')
+    }
   })
 
   test('and an address that is not one', () => {
@@ -206,9 +215,7 @@ describe('a form in a note', () => {
     sent.set('your-email', 'ada')
     sent.set('what-you-want-to-say', 'Hello')
 
-    expect(answersFrom(formOf(fence)!, sent)).toEqual({
-      wrong: 'Your email does not look like an address.',
-    })
+    expect(answersFrom(formOf(fence)!, sent)).toEqual({ wrong: '1-address' })
   })
 
   test('the answers become a spreadsheet, one column per question', () => {
@@ -437,9 +444,7 @@ describe('a site with forms on it', () => {
 
     // The five thousandth was the last; the next is refused, and nothing is kept.
     const refused = await answer('Grace')
-    expect(refused.headers.get('location')).toBe(
-      `/hello?wrong=${encodeURIComponent('This form is full.')}`,
-    )
+    expect(refused.headers.get('location')).toBe('/hello?wrong=full')
     expect(env.db.prepare('select count(*) as many from form_answers').get()).toEqual({
       many: 5000,
     })

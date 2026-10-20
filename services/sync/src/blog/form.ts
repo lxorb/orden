@@ -138,6 +138,31 @@ function nameOf(field: Field, at: number): string {
   return said || `field-${at + 1}`
 }
 
+/** What a form can come back saying went wrong, by the code the page's address
+ *  carries. The address is anybody's to write, so it names one of these rather
+ *  than holding the words: a link could otherwise put any sentence on somebody's
+ *  site. A code about one question is its place and a kind, `2-needed`. */
+const WRONG_ALL = new Map([
+  ['busy', 'Too many just now. Try later.'],
+  ['full', 'This form is full.'],
+  ['empty', 'Nothing was filled in.'],
+])
+const WRONG_ONE = new Map([
+  ['needed', 'is needed.'],
+  ['address', 'does not look like an address.'],
+  ['number', 'is a number.'],
+  ['choice', 'is one of the choices.'],
+])
+
+/** Every sentence this form can say went wrong, by its code. */
+function wrongsOf(form: Form): Map<string, string> {
+  const wrongs = new Map(WRONG_ALL)
+  for (const [at, one] of form.fields.entries()) {
+    for (const [kind, words] of WRONG_ONE) wrongs.set(`${at}-${kind}`, `${one.label} ${words}`)
+  }
+  return wrongs
+}
+
 /** The form, as the page draws it.
  *
  *  A real form: it posts, the page comes back, and a reader with scripting off is
@@ -171,9 +196,11 @@ export function formHtml(form: Form, noteId: string, sent: boolean, wrong: strin
     })
     .join('')
 
+  const said = wrong === null ? undefined : wrongsOf(form).get(wrong)
+
   return `<form class="form" method="post" action="/form/${escape(noteId)}">
 ${form.title ? `<h3>${escape(form.title)}</h3>` : ''}
-${wrong ? `<p class="wrong">${escape(wrong)}</p>` : ''}
+${said ? `<p class="wrong">${escape(said)}</p>` : ''}
 ${rows}
 <button type="submit">${escape(form.send)}</button>
 </form>`
@@ -196,26 +223,26 @@ export function answersFrom(
     const value = typeof said === 'string' ? said.trim().slice(0, LONGEST_ANSWER) : ''
 
     if (!value) {
-      if (one.required) return { wrong: `${one.label} is needed.` }
+      if (one.required) return { wrong: `${at}-needed` }
       continue
     }
 
     if (one.kind === 'email' && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value)) {
-      return { wrong: `${one.label} does not look like an address.` }
+      return { wrong: `${at}-address` }
     }
 
     if (one.kind === 'number' && !Number.isFinite(Number(value))) {
-      return { wrong: `${one.label} is a number.` }
+      return { wrong: `${at}-number` }
     }
 
     if (one.kind === 'choice' && !one.choices.includes(value)) {
-      return { wrong: `${one.label} is one of the choices.` }
+      return { wrong: `${at}-choice` }
     }
 
     answers[one.label] = value
   }
 
-  if (!Object.keys(answers).length) return { wrong: 'Nothing was filled in.' }
+  if (!Object.keys(answers).length) return { wrong: 'empty' }
 
   return { answers }
 }
