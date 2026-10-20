@@ -173,7 +173,9 @@ interface Saved {
   keepVersions: number
   remindBefore: number
   undatedInToday: boolean
-  canvasTurns: boolean
+  /** `canvasTurns` before turning became the default; see `restore`. */
+  turnsCanvas: boolean
+  canvasTurnSnaps: boolean
   highlightTone: number | null
   hardBreaks: boolean
   linkFormat: LinkFormat
@@ -288,7 +290,8 @@ export const DEFAULTS = {
   keepVersions: KEEP_MONTH,
   remindBefore: 0,
   undatedInToday: false,
-  canvasTurns: false,
+  canvasTurns: true,
+  canvasTurnSnaps: true,
   highlightTone: null as number | null,
   hardBreaks: false,
   linkFormat: 'wikilink' as LinkFormat,
@@ -489,6 +492,9 @@ class Modes {
   /** Whether two fingers turn a canvas (#351). */
   canvasTurns = $state(DEFAULTS.canvasTurns)
 
+  /** Whether a turned canvas snaps to its right angles (#487); see `snapped` in camera.ts. */
+  canvasTurnSnaps = $state(DEFAULTS.canvasTurnSnaps)
+
   /** Which colour the highlight button writes, as the palette tone it names, or
    *  null for a highlight with no colour of its own - which is what nib has always
    *  written and so is where this starts.
@@ -609,6 +615,10 @@ class Modes {
             ? 'source'
             : DEFAULTS.properties
       stale ||= 'properties' in saved
+      // Kept as `turnsCanvas` since turning became the default (#487): an older build
+      // wrote `canvasTurns` down for everybody, so its off was no choice, its on is ours.
+      this.canvasTurns = on(saved.turnsCanvas, DEFAULTS.canvasTurns)
+      stale ||= 'canvasTurns' in saved
     }
     // The renderer and the one link writer are told once, here and in the setters
     // below, rather than asked by every caller; see `setHardBreaks` in
@@ -1132,6 +1142,15 @@ class Modes {
     this.share({ canvasTurns: on })
   }
 
+  /** Whether a turned canvas snaps to its right angles. */
+  setCanvasTurnSnaps(on: boolean) {
+    if (on === this.canvasTurnSnaps) return
+
+    this.canvasTurnSnaps = on
+    this.persist()
+    this.share({ canvasTurnSnaps: on })
+  }
+
   /** Takes over the account's settings: signing in on a new machine brings
    *  them along, and a change made on another shows up at the next start.
    *  What the account has not decided stays as this machine had it.
@@ -1223,6 +1242,12 @@ class Modes {
     const turns = remote.canvasTurns
     if (typeof turns === 'boolean' && unheard && turns !== this.canvasTurns) {
       this.canvasTurns = turns
+      this.persist()
+    }
+
+    const snaps = remote.canvasTurnSnaps
+    if (typeof snaps === 'boolean' && unheard && snaps !== this.canvasTurnSnaps) {
+      this.canvasTurnSnaps = snaps
       this.persist()
     }
 
@@ -1525,7 +1550,8 @@ class Modes {
       keepVersions: this.keepVersions,
       remindBefore: this.remindBefore,
       undatedInToday: this.undatedInToday,
-      canvasTurns: this.canvasTurns,
+      turnsCanvas: this.canvasTurns,
+      canvasTurnSnaps: this.canvasTurnSnaps,
       highlightTone: this.highlightTone,
       hardBreaks: this.hardBreaks,
       frontMatter: this.properties,

@@ -187,6 +187,7 @@ export const ur: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'دو انگلیوں سے کینوس گھمائیں',
+  'Snap the rotation to right angles': 'گھماؤ کو قائمہ زاویوں پر جمائیں',
   'Turn upright': 'سیدھا کریں',
   Canvas: 'کینوس',
   Card: 'کارڈ',

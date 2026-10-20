@@ -189,6 +189,7 @@ export const ptBR: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'Girar uma tela com dois dedos',
+  'Snap the rotation to right angles': 'Encaixar a rotação em ângulos retos',
   'Turn upright': 'Endireitar',
   Canvas: 'Quadro',
   Card: 'Cartão',

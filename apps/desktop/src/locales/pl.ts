@@ -190,6 +190,7 @@ export const pl: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'Obracaj płótno dwoma palcami',
+  'Snap the rotation to right angles': 'Przyciągaj obrót do kątów prostych',
   'Turn upright': 'Wyprostuj',
   Canvas: 'Kanwa',
   Card: 'Karta',

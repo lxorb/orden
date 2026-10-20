@@ -188,6 +188,7 @@ export const gsw: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'Liiwand mit zwei Finger drähe',
+  'Snap the rotation to right angles': 'Drähig a rächte Winkel iirasta',
   'Turn upright': 'Grad richte',
   Canvas: 'Liinwand',
   Card: 'Chärtli',

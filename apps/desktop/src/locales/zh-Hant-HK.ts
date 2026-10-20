@@ -184,6 +184,7 @@ export const zhHantHK: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': '用兩指旋轉畫布',
+  'Snap the rotation to right angles': '旋轉吸附到直角',
   'Turn upright': '擺正',
   Canvas: '畫布',
   Card: '卡片',

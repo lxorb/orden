@@ -184,6 +184,7 @@ export const vi: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'Xoay canvas bằng hai ngón tay',
+  'Snap the rotation to right angles': 'Bám góc xoay vào các góc vuông',
   'Turn upright': 'Đặt thẳng lại',
   Canvas: 'Canvas',
   Card: 'Thẻ',

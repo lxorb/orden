@@ -39,8 +39,11 @@
     panned,
     pinching,
     screenPoint,
+    settledTurn,
+    snapped,
     turned,
     turnOf,
+    unsnapped,
     zoomed,
   } from './camera'
   import { actualSize, canvasMenu, place, pull, run } from './canvas/actions'
@@ -196,6 +199,25 @@
    *  pattern's offset are both this. */
   const originX = $derived(spanX / 2 - camera.x * camera.scale)
   const originY = $derived(spanY / 2 - camera.y * camera.scale)
+
+  /** The turn two fingers have made, which the rotation snap holds the view to, and
+   *  the turn that left the view at; taken back from the view where anything else has
+   *  turned it since (#487). */
+  let twisted = 0
+  let twistedTo = 0
+
+  /** Two fingers' turn of the view about a point, held upright and at its right
+   *  angles until the twist is plainly meant. */
+  function twist(x: number, y: number, by: number) {
+    if (!modes.canvasTurnSnaps) {
+      store.camera = turned(camera, width, height, x, y, by)
+      return
+    }
+    if (turn !== twistedTo) twisted = unsnapped(turn)
+    twisted = settledTurn(twisted + by)
+    store.camera = turned(camera, width, height, x, y, snapped(twisted) - turn)
+    twistedTo = turnOf(store.camera)
+  }
 
   /** Where a point of the plane is in the pane, the turn included. */
   const onScreen = (point: { x: number; y: number }) => screenPoint(camera, width, height, point)
@@ -751,14 +773,7 @@
       (at, by) => {
         if (!modes.canvasTurns) return
         const rect = element.getBoundingClientRect()
-        store.camera = turned(
-          camera,
-          width,
-          height,
-          at.clientX - rect.left,
-          at.clientY - rect.top,
-          by,
-        )
+        twist(at.clientX - rect.left, at.clientY - rect.top, by)
       },
     )
     return () => {
@@ -1024,7 +1039,7 @@
         store.camera = zoomed(camera, width, height, effect.at.x, effect.at.y, effect.by)
         break
       case 'turn':
-        store.camera = turned(camera, width, height, effect.at.x, effect.at.y, effect.by)
+        twist(effect.at.x, effect.at.y, effect.by)
         break
       case 'menu':
         // Only a hold leaves a click behind; the right button does not.

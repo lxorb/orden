@@ -188,6 +188,7 @@ export const tr: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'Tuvali iki parmakla döndür',
+  'Snap the rotation to right angles': 'Döndürmeyi dik açılara oturt',
   'Turn upright': 'Düzelt',
   Canvas: 'Tuval',
   Card: 'Kart',

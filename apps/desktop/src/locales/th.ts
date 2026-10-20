@@ -184,6 +184,7 @@ export const th: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'หมุนแคนวาสด้วยสองนิ้ว',
+  'Snap the rotation to right angles': 'จัดการหมุนให้ตรงมุมฉาก',
   'Turn upright': 'จัดให้ตรง',
   Canvas: 'แคนวาส',
   Card: 'การ์ด',

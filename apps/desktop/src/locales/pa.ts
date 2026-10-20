@@ -187,6 +187,7 @@ export const pa: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'ਦੋ ਉਂਗਲਾਂ ਨਾਲ ਕੈਨਵਸ ਘੁਮਾਓ',
+  'Snap the rotation to right angles': 'ਘੁਮਾਉਣ ਨੂੰ ਸਮਕੋਣਾਂ ਤੇ ਸਨੈਪ ਕਰੋ',
   'Turn upright': 'ਸਿੱਧਾ ਕਰੋ',
   Canvas: 'ਕੈਨਵਸ',
   Card: 'ਕਾਰਡ',

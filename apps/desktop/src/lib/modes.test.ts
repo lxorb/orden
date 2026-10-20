@@ -90,6 +90,7 @@ interface Held {
   silent?: boolean
   undatedInToday?: boolean
   canvasTurns?: boolean
+  canvasTurnSnaps?: boolean
 }
 
 vi.mock('./api', async (importOriginal) => ({
@@ -445,10 +446,24 @@ describe('Silent mode', () => {
 })
 
 describe('turning a canvas with two fingers (#351)', () => {
-  test('starts off, and is remembered across a restart', async () => {
-    expect(modes.canvasTurns).toBe(false)
-    modes.setCanvasTurns(true)
-    expect((await restarted()).canvasTurns).toBe(true)
+  test('starts on, and is remembered off across a restart (#487)', async () => {
+    expect(modes.canvasTurns).toBe(true)
+    modes.setCanvasTurns(false)
+    expect((await restarted()).canvasTurns).toBe(false)
+  })
+
+  test('takes no off from an older build, which wrote it down for everybody', async () => {
+    localStorage.setItem('nib:modes', JSON.stringify({ canvasTurns: false, vim: true }))
+    const back = await restarted()
+    expect(back.canvasTurns).toBe(true)
+    expect(back.vim).toBe(true)
+    expect(localStorage.getItem('nib:modes')).not.toContain('"canvasTurns"')
+  })
+
+  test('snaps to its right angles unless that is turned off (#487)', async () => {
+    expect(modes.canvasTurnSnaps).toBe(true)
+    modes.setCanvasTurnSnaps(false)
+    expect((await restarted()).canvasTurnSnaps).toBe(false)
   })
 })
 

@@ -184,6 +184,7 @@ export const zhHans: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': '用双指旋转画布',
+  'Snap the rotation to right angles': '旋转吸附到直角',
   'Turn upright': '摆正',
   Canvas: '画布',
   Card: '卡片',

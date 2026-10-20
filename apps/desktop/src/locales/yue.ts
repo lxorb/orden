@@ -184,6 +184,7 @@ export const yue: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': '用兩隻手指轉畫布',
+  'Snap the rotation to right angles': '轉動吸附到直角',
   'Turn upright': '擺返正',
   Canvas: '畫布',
   Card: '卡片',

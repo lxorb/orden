@@ -187,6 +187,7 @@ export const hi: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'दो उंगलियों से कैनवास घुमाएँ',
+  'Snap the rotation to right angles': 'घुमाव को समकोणों पर स्नैप करें',
   'Turn upright': 'सीधा करें',
   Canvas: 'कैनवास',
   Card: 'कार्ड',

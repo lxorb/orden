@@ -188,6 +188,7 @@ export const fil: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'Iikot ang canvas gamit ang dalawang daliri',
+  'Snap the rotation to right angles': 'I-snap ang pag-ikot sa mga tamang anggulo',
   'Turn upright': 'Ituwid',
   Canvas: 'Canvas',
   Card: 'Card',

@@ -180,6 +180,32 @@ export class Twist {
   }
 }
 
+/** How far either side of upright, and of each right angle, the rotation snap holds a
+ *  turned canvas, in radians (#487): twenty degrees of twist before it moves at all,
+ *  which only a turn that is meant gets past. */
+export const TURN_SNAP = (20 * Math.PI) / 180
+
+/** A right angle, and how much faster than the fingers the view turns once past the
+ *  snap: enough to meet them again halfway to the next right angle, so it never jumps. */
+const RIGHT = Math.PI / 2
+const STRETCH = RIGHT / 2 / (RIGHT / 2 - TURN_SNAP)
+
+/** The turn a view is shown at for the turn two fingers have made: the nearest right
+ *  angle within the snap of it, and past the snap, stretched to meet the fingers. */
+export function snapped(twisted: number): number {
+  const right = Math.round(twisted / RIGHT) * RIGHT
+  const off = twisted - right
+  return settledTurn(right + Math.sign(off) * Math.max(0, Math.abs(off) - TURN_SNAP) * STRETCH)
+}
+
+/** `snapped` the other way round: the twist that shows a turn, and for a right angle
+ *  the right angle itself. */
+export function unsnapped(turn: number): number {
+  const right = Math.round(turn / RIGHT) * RIGHT
+  const off = turn - right
+  return right + Math.sign(off) * (TURN_SNAP + Math.abs(off) / STRETCH)
+}
+
 /** The point of the plane a screen point is over. */
 export function graphPoint(
   camera: Camera,

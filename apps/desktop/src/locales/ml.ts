@@ -189,6 +189,7 @@ export const ml: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'രണ്ട് വിരലുകൾ കൊണ്ട് ക്യാൻവാസ് തിരിക്കുക',
+  'Snap the rotation to right angles': 'തിരിക്കൽ മട്ടകോണുകളിലേക്ക് സ്നാപ്പ് ചെയ്യുക',
   'Turn upright': 'നേരെയാക്കുക',
   Canvas: 'ക്യാൻവാസ്',
   Card: 'കാർഡ്',

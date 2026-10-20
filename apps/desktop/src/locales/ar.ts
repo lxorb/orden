@@ -147,6 +147,7 @@ export const ar: Dictionary = {
   'Smart dates': 'تواريخ ذكية',
   'From any app': 'من أي تطبيق',
   'Rotate a canvas with two fingers': 'تدوير اللوحة بإصبعين',
+  'Snap the rotation to right angles': 'محاذاة التدوير إلى الزوايا القائمة',
   'Turn upright': 'إعادة إلى الوضع المستقيم',
   'Show tasks without a start date in Today': 'إظهار المهام التي ليس لها تاريخ بدء في اليوم',
   'Every day': 'كل يوم',

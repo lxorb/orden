@@ -188,6 +188,7 @@ export const ha: Dictionary = {
   '{at} / {count}': '{at} / {count}',
   '{label} ({key})': '{label} ({key})',
   'Rotate a canvas with two fingers': 'Juya zane da yatsu biyu',
+  'Snap the rotation to right angles': 'Kafa juyawa a kusurwoyi madaidaita',
   'Turn upright': 'Daidaita',
   Canvas: 'Kanbas',
   Card: 'Kati',
