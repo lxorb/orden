@@ -1866,6 +1866,8 @@ export const ko: Dictionary = {
   'Settings › AI': '설정 › AI',
   'New chat': '새 채팅',
   'Ask again': '다시 묻기',
+  'Continue when the limit resets': '한도가 초기화되면 계속',
+  'Continues at {time}': '{time}에 계속합니다',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': '무엇이든 물어보세요. @ 추가, / 더 보기',
   'What can I help with?': '무엇을 도와드릴까요?',

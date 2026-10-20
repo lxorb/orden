@@ -1883,6 +1883,8 @@ export const gu: Dictionary = {
   'Settings › AI': 'ગોઠવણ › AI',
   'New chat': 'નવી ચેટ',
   'Ask again': 'ફરી પૂછો',
+  'Continue when the limit resets': 'મર્યાદા ફરી શરૂ થાય ત્યારે ચાલુ રાખો',
+  'Continues at {time}': '{time} એ ચાલુ થશે',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'કંઈ પણ પૂછો, ઉમેરવા @, વધુ માટે /',
   'What can I help with?': 'હું કેવી રીતે મદદ કરી શકું?',

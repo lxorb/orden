@@ -1887,6 +1887,8 @@ export const id: Dictionary = {
   'Settings › AI': 'Pengaturan › AI',
   'New chat': 'Obrolan baru',
   'Ask again': 'Tanya lagi',
+  'Continue when the limit resets': 'Lanjutkan saat batas diatur ulang',
+  'Continues at {time}': 'Berlanjut pukul {time}',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Tanyakan apa saja, @ untuk menambah, / untuk lainnya',
   'What can I help with?': 'Apa yang bisa saya bantu?',

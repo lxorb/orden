@@ -1847,6 +1847,8 @@ export const zhHans: Dictionary = {
   'Settings › AI': '设置 › AI',
   'New chat': '新对话',
   'Ask again': '再问一次',
+  'Continue when the limit resets': '上限恢复后继续',
+  'Continues at {time}': '{time} 继续',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': '随便问，@ 添加，/ 更多',
   'What can I help with?': '有什么可以帮忙的？',

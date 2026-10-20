@@ -2000,6 +2000,8 @@ export const ar: Dictionary = {
   'Settings › AI': 'الإعدادات ‹ ذكاء اصطناعي',
   'New chat': 'محادثة جديدة',
   'Ask again': 'اسأل مجددًا',
+  'Continue when the limit resets': 'المتابعة عند تجدد الحد',
+  'Continues at {time}': 'يتابع عند {time}',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'اسأل عن أي شيء، @ للإضافة، / للمزيد',
   'What can I help with?': 'كيف يمكنني المساعدة؟',

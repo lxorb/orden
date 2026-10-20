@@ -1889,6 +1889,8 @@ export const ms: Dictionary = {
   'Settings › AI': 'Tetapan › AI',
   'New chat': 'Sembang baharu',
   'Ask again': 'Tanya lagi',
+  'Continue when the limit resets': 'Teruskan apabila had ditetapkan semula',
+  'Continues at {time}': 'Diteruskan pada {time}',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Tanya apa sahaja, @ untuk tambah, / untuk lagi',
   'What can I help with?': 'Apa yang boleh saya bantu?',

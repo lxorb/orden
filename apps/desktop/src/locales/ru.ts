@@ -1973,6 +1973,8 @@ export const ru: Dictionary = {
   'Settings › AI': 'Настройки › ИИ',
   'New chat': 'Новый чат',
   'Ask again': 'Спросить снова',
+  'Continue when the limit resets': 'Продолжить, когда лимит обновится',
+  'Continues at {time}': 'Продолжит в {time}',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Спросите что угодно, @ чтобы добавить, / для команд',
   'What can I help with?': 'Чем я могу помочь?',

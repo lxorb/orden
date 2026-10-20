@@ -1878,6 +1878,8 @@ export const my: Dictionary = {
   'Settings › AI': 'ဆက်တင် › AI',
   'New chat': 'စကားဝိုင်းအသစ်',
   'Ask again': 'ထပ်မေးရန်',
+  'Continue when the limit resets': 'ကန့်သတ်ချက် ပြန်စသောအခါ ဆက်လုပ်ရန်',
+  'Continues at {time}': '{time} တွင် ဆက်လုပ်မည်',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'ဘာမဆိုမေးပါ၊ ထည့်ရန် @၊ ပိုမိုရန် /',
   'What can I help with?': 'ဘာကူညီပေးရမလဲ။',

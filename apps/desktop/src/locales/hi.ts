@@ -1888,6 +1888,8 @@ export const hi: Dictionary = {
   'Settings › AI': 'सेटिंग्स › AI',
   'New chat': 'नई चैट',
   'Ask again': 'फिर से पूछें',
+  'Continue when the limit resets': 'सीमा रीसेट होने पर जारी रखें',
+  'Continues at {time}': '{time} पर जारी रहेगा',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'कुछ भी पूछें, जोड़ने के लिए @, और के लिए /',
   'What can I help with?': 'मैं किसमें मदद करूँ?',

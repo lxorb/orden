@@ -1869,6 +1869,8 @@ export const am: Dictionary = {
   'Settings › AI': 'ማስተካከያ › AI',
   'New chat': 'አዲስ ውይይት',
   'Ask again': 'እንደገና ጠይቅ',
+  'Continue when the limit resets': 'ገደቡ ሲታደስ ቀጥል',
+  'Continues at {time}': '{time} ላይ ይቀጥላል',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'ማንኛውንም ይጠይቁ፣ ለማከል @፣ ለተጨማሪ /',
   'What can I help with?': 'በምን ልረዳዎት?',

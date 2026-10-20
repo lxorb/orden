@@ -1896,6 +1896,8 @@ export const pa: Dictionary = {
   'Settings › AI': 'ਸੈਟਿੰਗਾਂ › AI',
   'New chat': 'ਨਵੀਂ ਚੈਟ',
   'Ask again': 'ਦੁਬਾਰਾ ਪੁੱਛੋ',
+  'Continue when the limit resets': 'ਸੀਮਾ ਰੀਸੈੱਟ ਹੋਣ ’ਤੇ ਜਾਰੀ ਰੱਖੋ',
+  'Continues at {time}': '{time} ’ਤੇ ਜਾਰੀ ਰਹੇਗਾ',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'ਕੁਝ ਵੀ ਪੁੱਛੋ, ਜੋੜਨ ਲਈ @, ਹੋਰ ਲਈ /',
   'What can I help with?': 'ਮੈਂ ਕੀ ਮਦਦ ਕਰ ਸਕਦਾ ਹਾਂ?',

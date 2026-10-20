@@ -1884,6 +1884,8 @@ export const ja: Dictionary = {
   'Settings › AI': '設定 › AI',
   'New chat': '新しいチャット',
   'Ask again': 'もう一度質問',
+  'Continue when the limit resets': '上限がリセットされたら続ける',
+  'Continues at {time}': '{time} に再開します',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': '何でも質問、@ で追加、/ でその他',
   'What can I help with?': '何かお手伝いできることはありますか？',

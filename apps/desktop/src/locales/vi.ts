@@ -1873,6 +1873,8 @@ export const vi: Dictionary = {
   'Settings › AI': 'Cài đặt › AI',
   'New chat': 'Cuộc trò chuyện mới',
   'Ask again': 'Hỏi lại',
+  'Continue when the limit resets': 'Tiếp tục khi giới hạn được đặt lại',
+  'Continues at {time}': 'Tiếp tục lúc {time}',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'Hỏi bất cứ điều gì, @ để thêm, / để xem thêm',
   'What can I help with?': 'Tôi có thể giúp gì?',

@@ -1902,6 +1902,8 @@ export const te: Dictionary = {
   'Settings › AI': 'సెట్టింగ్‌లు › AI',
   'New chat': 'కొత్త చాట్',
   'Ask again': 'మళ్లీ అడగండి',
+  'Continue when the limit resets': 'పరిమితి రీసెట్ అయ్యాక కొనసాగించు',
+  'Continues at {time}': '{time}కి కొనసాగుతుంది',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'ఏదైనా అడగండి, జోడించడానికి @, మరిన్నింటికి /',
   'What can I help with?': 'నేను ఏమి సహాయం చేయగలను?',

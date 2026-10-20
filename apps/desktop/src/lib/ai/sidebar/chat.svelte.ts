@@ -58,6 +58,10 @@ import { engineOf } from './setup'
 import { snapshot } from './snapshot'
 import { editMessage, lastMessage, openRewind } from '../review'
 
+/** How long after a plan resets a message waiting for it goes again: the window ends by
+ *  the provider's clock, not this one. */
+const AFTER_RESET = 30_000
+
 /** A message waiting behind a running turn. */
 export interface Queued {
   id: string
@@ -130,6 +134,9 @@ class Chat implements Panel {
   steering = $state.raw<Record<string, string[]>>({})
   /** What went wrong before any turn could say it: no provider, no engine. */
   trouble = $state<string | null>(null)
+  /** When each thread's plan resets, where its last send ended at the plan's limit, and
+   *  whether its last message goes again then. */
+  resets = $state.raw<Record<string, { until: number; waiting: boolean }>>({})
 
   /** The field, and the chips added to it by hand. */
   text = $state('')
@@ -160,6 +167,8 @@ class Chat implements Panel {
   private live = new Map<string, Thread>()
   private open: Thread | null = null
   private stoppers = new Map<string, AbortController>()
+  /** One timer a thread waiting for its plan to reset. */
+  private timers = new Map<string, ReturnType<typeof setTimeout>>()
   /** Which turns changed since the last frame drew the open thread. */
   private changed = new Set<string>()
   private everything = false
@@ -579,6 +588,8 @@ class Chat implements Panel {
   /** A thread starts answering: its stop, its mark in the list, its message drawn. */
   private begin(thread: Thread, text?: string): AbortController {
     const stopper = new AbortController()
+    // Whatever the thread does now takes the place of waiting for its plan to reset.
+    this.unwait(thread.id)
     this.stoppers.set(thread.id, stopper)
     this.running = [...this.running, thread.id]
     if (text !== undefined) this.pending = { ...this.pending, [thread.id]: text }
@@ -626,6 +637,8 @@ class Chat implements Panel {
     )
     // How long the answer worked, for the row its steps fold into (steps.ts).
     if (ended.turn) ended.turn.took = Date.now() - ended.turn.at
+    if (ended.stop === 'error' && ended.limit?.state === 'reached' && ended.limit.until !== null)
+      this.resets = { ...this.resets, [thread.id]: { until: ended.limit.until, waiting: false } }
     // A send refused before any turn (no provider, no engine) has nowhere to say so but
     // under the thread.
     if (ended.stop === 'error' && !ended.turn && ended.error) throw new Error(ended.error)
@@ -726,8 +739,7 @@ class Chat implements Panel {
 
   /** The last message again, in place of its answer (Ask again); with a model named,
    *  that model answers this time and from here on (retry with another model). */
-  retry(model?: { provider: string; id: string }): void {
-    const thread = this.open
+  retry(model?: { provider: string; id: string }, thread = this.open): void {
     if (!thread || this.running.includes(thread.id)) return
     if (model) this.setModel(model.provider, model.id)
     let at = thread.turns.length - 1
@@ -743,6 +755,29 @@ class Chat implements Panel {
     void this.sendDraft(thread, provider, asked.draft, stopper)
       .catch((error: unknown) => (this.trouble = message(error, t('The model did not answer.'))))
       .finally(() => void this.finish(thread))
+  }
+
+  /** The open thread's last message again a little after its plan resets (the button
+   *  under the limit), or that taken back. Kept while other chats are open, not over a
+   *  restart. */
+  waitForReset(on: boolean): void {
+    const thread = this.open
+    const reset = thread && this.resets[thread.id]
+    if (!thread || !reset) return
+    clearTimeout(this.timers.get(thread.id))
+    this.resets = { ...this.resets, [thread.id]: { until: reset.until, waiting: on } }
+    if (!on) return
+    const after = reset.until + AFTER_RESET - Date.now()
+    this.timers.set(
+      thread.id,
+      setTimeout(() => this.retry(undefined, thread), after),
+    )
+  }
+
+  private unwait(id: string): void {
+    clearTimeout(this.timers.get(id))
+    this.timers.delete(id)
+    this.resets = without(this.resets, id)
   }
 
   // ── Mode, model, effort ────────────────────────────────
@@ -947,6 +982,7 @@ class Chat implements Panel {
     })
     if (!sure) return
     this.stoppers.get(id)?.abort()
+    this.unwait(id)
     await deleteThread(this.spaceOf(id), id).catch(() => undefined)
     this.live.delete(id)
     if (this.open?.id === id) this.newThread()

@@ -1916,6 +1916,8 @@ export const ml: Dictionary = {
   'Settings › AI': 'സെറ്റിംഗ്സ് › AI',
   'New chat': 'പുതിയ ചാറ്റ്',
   'Ask again': 'വീണ്ടും ചോദിക്കുക',
+  'Continue when the limit resets': 'പരിധി പുതുക്കുമ്പോൾ തുടരുക',
+  'Continues at {time}': '{time}-ന് തുടരും',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'എന്തും ചോദിക്കൂ, ചേർക്കാൻ @, കൂടുതലിന് /',
   'What can I help with?': 'ഞാൻ എന്ത് സഹായിക്കണം?',

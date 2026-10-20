@@ -1889,6 +1889,8 @@ export const ur: Dictionary = {
   'Settings › AI': 'ترتیبات ‹ AI',
   'New chat': 'نئی چیٹ',
   'Ask again': 'دوبارہ پوچھیں',
+  'Continue when the limit resets': 'حد ری سیٹ ہونے پر جاری رکھیں',
+  'Continues at {time}': '{time} پر جاری رہے گا',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': 'کچھ بھی پوچھیں، شامل کرنے کے لیے @، مزید کے لیے /',
   'What can I help with?': 'میں کیا مدد کر سکتا ہوں؟',

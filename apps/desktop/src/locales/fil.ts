@@ -1932,6 +1932,8 @@ export const fil: Dictionary = {
   'Settings › AI': 'Mga setting › AI',
   'New chat': 'Bagong chat',
   'Ask again': 'Itanong muli',
+  'Continue when the limit resets': 'Ituloy kapag na-reset ang limitasyon',
+  'Continues at {time}': 'Itutuloy sa {time}',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more':
     'Magtanong ng kahit ano, @ para magdagdag, / para sa iba pa',

@@ -1847,6 +1847,8 @@ export const zhHant: Dictionary = {
   'Settings › AI': '設定 › AI',
   'New chat': '新對話',
   'Ask again': '再問一次',
+  'Continue when the limit resets': '上限恢復後繼續',
+  'Continues at {time}': '{time} 繼續',
   // The AI panel: its modes, the model and effort, the ring, the queue, the threads.
   'Ask anything, @ to add, / for more': '隨意提問，@ 加入，/ 更多',
   'What can I help with?': '有什麼可以幫忙的？',
