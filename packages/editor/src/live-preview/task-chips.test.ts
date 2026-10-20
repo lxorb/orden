@@ -1,7 +1,14 @@
+// @vitest-environment jsdom
 import { history, undo } from '@codemirror/commands'
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown'
-import { EditorSelection, EditorState, Transaction, type TransactionSpec } from '@codemirror/state'
-import type { EditorView } from '@codemirror/view'
+import {
+  EditorSelection,
+  EditorState,
+  StateEffect,
+  Transaction,
+  type TransactionSpec,
+} from '@codemirror/state'
+import { EditorView } from '@codemirror/view'
 import type { TextEdit } from '@nib/markdown/edits'
 import { beforeAll, describe, expect, test } from 'vitest'
 import { parsed } from '../../test/parsed'
@@ -12,6 +19,7 @@ import { buildDecorations, loadTaskChips } from './decorate'
 import { chipsOf, CommentChipsWidget, commentDrawing, TaskChipsWidget } from './task-chips'
 import { dayWords } from '../task-days'
 import { takeHint, taskHint } from './task-hint'
+import { livePreview } from '.'
 
 /** A task line in a note: its fields hidden like marks and said again as chips, the
  *  source back with the caret on its line (docs/tasks.md 5.7); a box ticked the way the
@@ -283,5 +291,30 @@ describe("a task's comment", () => {
     ])
     expect(commentDrawing('- [ ] A task [at:: 2026-10-06]', '2026-10-06')).toBeNull()
     expect(commentDrawing('  - Nothing to say', '2026-10-06')).toBeNull()
+  })
+})
+
+describe('a chip pressed', () => {
+  test('picks for its own task after a line is written above it', () => {
+    Range.prototype.getClientRects = () => [] as unknown as DOMRectList
+    Range.prototype.getBoundingClientRect = () => new DOMRect()
+    const doc = '- [ ] first ⏫\n- [ ] second 🔼\n\nend'
+    let picked: Parameters<TaskHelp['pick']>[4] = () => undefined
+    const help: TaskHelp = {
+      ...HELP,
+      pick: (_field, _fields, _at, _due, change) => (picked = change),
+    }
+    const view = new EditorView({
+      state: stateOf(doc, doc.length, help).update({
+        effects: StateEffect.appendConfig.of(livePreview()),
+      }).state,
+      parent: document.body,
+    })
+    const chip = view.contentDOM.querySelectorAll('.nib-task-chip')[1]
+    chip?.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }))
+    view.dispatch({ changes: { from: 0, insert: 'new\n' } })
+    picked({ priority: 1 })
+    expect(view.state.doc.toString()).toBe('new\n- [ ] first ⏫\n- [ ] second 🔺\n\nend')
+    view.destroy()
   })
 })

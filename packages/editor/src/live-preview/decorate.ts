@@ -593,7 +593,7 @@ class Decorator {
     if (shown || !drawn.chips.length) return
     this.marks.push(
       Decoration.widget({
-        widget: new chips.TaskChipsWidget(drawn.chips, line.from),
+        widget: new chips.TaskChipsWidget(drawn.chips),
         side: 1,
       }).range(line.to),
     )
