@@ -36,8 +36,6 @@ export interface Dragging {
   /** The tab being dragged, or null when what is moving came out of the file
    *  list rather than out of a strip. */
   tabId: string | null
-  /** A file carried up past the list, which the Essentials then make room for (#412). */
-  upward?: boolean
 }
 
 export class Panes {

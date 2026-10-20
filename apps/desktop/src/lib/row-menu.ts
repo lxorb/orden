@@ -23,7 +23,6 @@ import { kindLabel } from './kind-words'
 import { key, plural, t } from './i18n.svelte'
 import {
   archiveEntry,
-  bookmarkEntry,
   coverEntries,
   DIVIDER,
   iconEntries,
@@ -91,7 +90,6 @@ export function rowMenu(entry: Entry): MenuEntry[] {
     // like; see `coverEntries`.
     ...coverEntries(marked.path),
     ...wallpaperEntry(entry),
-    ...bookmarkEntry(workspace.bookmarks.forEntry(marked)),
     ...webDataEntry(entry),
     // Only for a row already left out of search, so nothing stays out with no way
     // back; see `searchAgainEntry`.
@@ -145,7 +143,6 @@ function selectionMenu(entry: Entry): MenuEntry[] | null {
     { label: t('Open all'), run: () => void openAll(paths) },
     DIVIDER,
     ...(viewport.touch ? [{ label: t('Move'), run: () => void moveAllTo(paths) }] : []),
-    ...bookmarkAll(paths),
     ...archiveAll(paths),
     DIVIDER,
     {
@@ -203,9 +200,9 @@ async function openAll(paths: readonly string[]) {
   for (const path of rest) await workspace.openRow(path, howFor('behind'))
 }
 
-/** The selection bookmarked with one press, as a row bookmarks itself: the note a
- *  folder is drawn as where it has one. The word says which way the press goes. A
- *  tab's menu offers the same row for the files its tabs show; see tab-strip/menu.ts. */
+/** The files of the tabs a tab's menu is about, bookmarked with one press: the note a
+ *  folder is drawn as where it has one. The word says which way the press goes; see
+ *  tab-strip/menu.ts. A row of the file list is dragged onto the Essentials (#417). */
 export function bookmarkAll(paths: readonly string[]): MenuEntry[] {
   const marks = paths.flatMap((path) => {
     const entry = entryAt(workspace.tree, path)

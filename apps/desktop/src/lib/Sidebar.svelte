@@ -629,18 +629,7 @@
       </div>
     {/if}
 
-    <!-- A file carried up out of the list; see `offered` in Bookmarks.svelte. -->
-    <!-- svelte-ignore a11y_no_static_element_interactions -->
-    <div
-      class="switch"
-      bind:clientWidth={rowWidth}
-      ondragover={() => {
-        const drag = workspace.panes.dragging
-        if (drag?.tabId === null && !drag.upward) {
-          workspace.panes.dragging = { ...drag, upward: true }
-        }
-      }}
-    >
+    <div class="switch" bind:clientWidth={rowWidth}>
       <!-- Four tabs are one tab stop, and left and right move between them. They
          change as they are arrived at, because what each of them shows is already
          worked out and arrives without a wait - which is the rule the ARIA practices
