@@ -26,6 +26,13 @@ describe('a value typed into a row', () => {
     )
   })
 
+  /** Two rows, and each one's field writes its own line. */
+  test('changes the key it names where another is spelled in another case', () => {
+    const both = '---\nTitle: a\ntitle: b\n---\n'
+    expect(applied(both, writeProperty(both, 'title', 'c'))).toBe('---\nTitle: a\ntitle: c\n---\n')
+    expect(applied(both, writeProperty(both, 'Title', null))).toBe('---\ntitle: b\n---\n')
+  })
+
   test('is written as YAML says it, so a word that reads as something else is quoted', () => {
     const written = applied(NOTE, writeProperty(NOTE, 'title', 'true'))
 

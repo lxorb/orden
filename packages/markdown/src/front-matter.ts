@@ -204,9 +204,12 @@ export function frontMatterValue(source: string, key: string): string | null {
 }
 
 /** The line a key is written on, or null when the block has no such key. The
- *  first one wins, the way YAML reads a duplicated key. */
+ *  first one wins, the way YAML reads a duplicated key. A key in another case is
+ *  read where the note has none in this one; where it has both they are two keys,
+ *  as they are to YAML and to the rows, and `title` is never the `Title` line. */
 function keyLine(source: string, block: FrontMatterBlock, key: string): KeyLine | null {
   const wanted = key.toLowerCase()
+  let other: KeyLine | null = null
   let at = block.body.from
 
   while (at < block.body.to) {
@@ -219,14 +222,16 @@ function keyLine(source: string, block: FrontMatterBlock, key: string): KeyLine 
       // The value ends where a comment starts, so a value set leaves the comment.
       const value = at + found[0].length
       const to = value + uncommented(text.slice(found[0].length)).length
-      return { from: at, to: stop, value: { from: value, to } }
+      const line = { from: at, to: stop, value: { from: value, to } }
+      if (found[1] === key) return line
+      other ??= line
     }
 
     if (end === -1) break
     at = end + 1
   }
 
-  return null
+  return other
 }
 
 /** One edit that sets several top-level keys at once, in the order given, or null
