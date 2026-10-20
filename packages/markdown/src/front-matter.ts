@@ -53,9 +53,11 @@ interface KeyLine {
   value: { from: number; to: number }
 }
 
-/** A top-level `key:` and whatever follows it on the line. Indented lines are
- *  somebody else's key, and a line that is only a value is part of a list. */
-const KEY = /^([A-Za-z_][\w-]*)[ \t]*:/
+/** A top-level `key:` and whatever follows it on the line: an unindented line up to
+ *  its first colon with a blank or nothing after it, so `due date`, `日期` and `a.b`
+ *  are keys as YAML has them. Indented lines are somebody else's key, a `#` line is
+ *  a comment and a `- ` line is part of a list. */
+const KEY = /^([^\s#-].*?)[ \t]*:(?=\s|$)/
 
 /** Where the front matter block sits, or null when the note opens with anything
  *  else - which is most notes.
@@ -280,7 +282,8 @@ export function frontMatterEdit(
     return { from: 0, to: 0, insert: `---${nl}${key}: ${value}${nl}---${nl}` }
   }
 
-  const line = keyLine(source, block, key)
+  const found = keyLine(source, block, key)
+  const line = found && withUnder(source, block, found)
 
   if (value === null) {
     if (!line) return null
@@ -302,6 +305,21 @@ export function frontMatterEdit(
   }
 
   return { from: block.close, to: block.close, insert: `${key}: ${value}${nl}` }
+}
+
+/** A key's line through what is written under it: the indented lines and the
+ *  `- item` lines after it, up to a blank line or the next key. They are the key's
+ *  value as much as its own line is, so a value written over it replaces them and
+ *  taking it away takes them, rather than leaving them hanging under the key above. */
+function withUnder(source: string, block: FrontMatterBlock, line: KeyLine): KeyLine {
+  let to = line.to
+  while (to + 1 < block.body.to) {
+    const stop = source.indexOf('\n', to + 1)
+    const text = source.slice(to + 1, stop).trimEnd()
+    if (!text || (!/^[ \t]/.test(text) && listItem(text) === null)) break
+    to = stop
+  }
+  return to === line.to ? line : { ...line, to, value: { ...line.value, to } }
 }
 
 /** Where the cut of a key's line ends: past its line break, so the line is gone

@@ -135,6 +135,24 @@ describe('setting a key', () => {
     )
     expect(applied('# Plan\r\n', 'icon', 'rocket')).toBe('---\r\nicon: rocket\r\n---\r\n# Plan\r\n')
   })
+
+  test('finds a key that is not a word of letters, and edits it where it is', () => {
+    const twice = applied(applied('---\n日期: a\n---\nbody\n', '日期', 'b'), '日期', 'c')
+    expect(twice).toBe('---\n日期: c\n---\nbody\n')
+    expect(frontMatterValue(twice, '日期')).toBe('c')
+    for (const key of ['due date', 'Größe', '1st', 'a.b']) {
+      expect(applied(`---\n${key}: a\n# note\n---\n`, key, 'b')).toBe(
+        `---\n${key}: b\n# note\n---\n`,
+      )
+      expect(applied(`---\n${key}: a\n# note\n---\n`, key, null)).toBe('---\n# note\n---\n')
+    }
+  })
+
+  test('a list written under the key goes with the value it is replaced by', () => {
+    expect(applied('---\ntitle: a\ntags:\n  - x\n  - y\n---\nbody\n', 'tags', 'z')).toBe(
+      '---\ntitle: a\ntags: z\n---\nbody\n',
+    )
+  })
 })
 
 describe('taking a key away', () => {
@@ -165,6 +183,15 @@ describe('taking a key away', () => {
       '---\r\ntitle: Plan\r\n---\r\nwords',
     )
     expect(applied('---\r\nicon: rocket\r\n---\r\n\r\n# Plan\r\n', 'icon')).toBe('# Plan\r\n')
+  })
+
+  test('takes the list written under it too, and leaves the next key its own', () => {
+    expect(applied('---\ntitle: a\ntags:\n  - x\n  - y\n---\nbody\n', 'tags')).toBe(
+      '---\ntitle: a\n---\nbody\n',
+    )
+    expect(applied('---\ntags:\n- x\n- y\ntitle: a\n---\nbody\n', 'tags')).toBe(
+      '---\ntitle: a\n---\nbody\n',
+    )
   })
 })
 
