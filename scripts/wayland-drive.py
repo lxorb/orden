@@ -126,12 +126,18 @@ def window_node():
     return found[-1] if found else None
 
 
+# The window's page's pixel ratio: what it measures in, times this, is the window's
+# pixels. More than one where the desktop's scale is the page's zoom (DPI=n); see `look`.
+RATIO = [1.0]
+
+
 def click(node, x, y):
-    """A press of the compositor's pointer at `x`, `y` of the window, and the pointer then
-    left over the middle of the window's page area, out of the way of the strip's cards."""
+    """A press of the compositor's pointer at `x`, `y` of the window, as its page measures
+    them, and the pointer then left over the middle of the window's page area, out of the
+    way of the strip's cards."""
     at = node["rect"]
     with open(POINTER, "w") as pointer:
-        pointer.write(f"move {at['x'] + x} {at['y'] + y}\nclick\n")
+        pointer.write(f"move {at['x'] + x * RATIO[0]} {at['y'] + y * RATIO[0]}\nclick\n")
     time.sleep(0.3)
     with open(POINTER, "w") as pointer:
         pointer.write(f"move {at['x'] + at['width'] * 0.6} {at['y'] + at['height'] * 0.6}\n")
@@ -295,6 +301,7 @@ def look(output, moved=True, tag=""):
     # The window's page measures in its own pixels, which are the window's at its pixel
     # ratio: more than one where the desktop's scale is the page's zoom (DPI=n).
     ratio = run("devicePixelRatio") or 1
+    RATIO[0] = ratio
     # And on a desktop scaled for X11 applications, that ratio is the desktop's scale.
     if os.environ.get("DPI") and abs(ratio - int(os.environ["DPI"]) / 96) > 0.02:
         fail(f"{output}: the window's page is drawn at {ratio}, not the desktop's {int(os.environ['DPI']) / 96:.3f}")
