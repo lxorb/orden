@@ -395,6 +395,18 @@ describe('a shut side', () => {
   })
 })
 
+/** Two regions of one page with one name are two a reader cannot tell apart (#523). */
+describe('the two sides', () => {
+  test('have a name each', () => {
+    open('# Head\n')
+    const named = (side: 'left' | 'right') =>
+      /<aside[^>]*aria-label="([^"]+)"/.exec(render(Sidebar, { props: { side } }).body)?.[1]
+
+    expect(named('left')).toBe('Space panel')
+    expect(named('right')).toBe('Right sidebar')
+  })
+})
+
 /** A phone and a tablet have no AI panel (#403): not its tab on the right, not a way to
  *  it from the palette or a key, and not a panel left open on it by a sitting before. */
 describe('the AI panel on a phone and a tablet', () => {
