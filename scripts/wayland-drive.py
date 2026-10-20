@@ -227,6 +227,17 @@ def bounding(shot):
     return min(xs), min(ys), max(xs) + 1, max(ys) + 1
 
 
+def left_of(hole, layer):
+    """How much of a hole a layer leaves uncovered, both as pictures have them: the most
+    of the hole a page can show in under it."""
+    def size(one):
+        return max(0, one[2] - one[0]) * max(0, one[3] - one[1])
+
+    both = (max(hole[0], layer[0]), max(hole[1], layer[1]), min(hole[2], layer[2]), min(hole[3], layer[3]))
+    whole = size(hole)
+    return (whole - size(both)) / whole if whole else 0
+
+
 def share(shot, area):
     """How much of `area` in a picture is the page's colour."""
     image = Image.open(shot).convert("RGB")
@@ -388,18 +399,24 @@ def look(output, moved=True, tag=""):
                 shot = shoot(output, f"{tag}{slug}", scale)
                 covered = share(shot, on_screen(layer, 4))
                 under = share(shot, want)
-                if (covered <= 0.05 and under >= 0.5) or time.monotonic() - began > 3:
+                # Most of what the layer leaves of the hole: a big layer on a small
+                # screen leaves less than half of it, and the page still shows there.
+                least = 0.8 * left_of(want, on_screen(layer))
+                if (covered <= 0.05 and under >= least) or time.monotonic() - began > 3:
                     break
                 time.sleep(0.25)
             print(
                 f"{output}: {name} at {layer}: the page is over {covered:.0%} of it,"
-                f" and shows in {under:.0%} of its hole"
+                f" and shows in {under:.0%} of its hole, of {least / 0.8:.0%} it could"
                 f" ({time.monotonic() - began + 1:.1f} s after the click)"
             )
             if covered > 0.05:
                 fail(f"{output}: the page is drawn over {name} ({covered:.0%})")
-            if under < 0.5:
-                fail(f"{output}: under {name} the page is gone ({under:.0%} of its hole)")
+            if under < least:
+                fail(
+                    f"{output}: under {name} the page is gone ({under:.0%} of its hole,"
+                    f" where {least / 0.8:.0%} is not under the layer)"
+                )
         run("document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))")
         time.sleep(1.0)
         after = shoot(output, f"{tag}after-{slug}", scale)
