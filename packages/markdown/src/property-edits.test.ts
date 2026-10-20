@@ -49,6 +49,13 @@ describe('a value typed into a row', () => {
   test('writes nothing at all when the note already says it', () => {
     expect(writeProperty(NOTE, 'title', 'A note')).toBeNull()
   })
+
+  test('over a list written under its key, leaves none of the items behind', () => {
+    const listed = '---\ntitle: a\ntags:\n  - x\n  - y\n---\nbody\n'
+    const written = applied(listed, writeProperty(listed, 'tags', 'z'))
+    expect(written).toBe('---\ntitle: a\ntags: z\n---\nbody\n')
+    expect(readProperties(applied(listed, writeProperty(listed, 'tags', null)))).toHaveLength(1)
+  })
 })
 
 describe('a checkbox and a number', () => {
