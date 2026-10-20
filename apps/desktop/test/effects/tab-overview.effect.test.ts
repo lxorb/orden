@@ -1,9 +1,10 @@
 import { flushSync, mount, tick, unmount } from 'svelte'
-import { afterEach, beforeEach, expect, test } from 'vitest'
+import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
 /** Every tab of the space as a card (issue #331), opened from the palette's row or
- *  Ctrl+Alt+Up: one card per tab of every pane, Enter on one goes to it, Escape and the
- *  key again put it away. In the jsdom project because the cards are mounted. */
+ *  Ctrl+Alt+Up: one card per tab of every pane, the arrows walk the grid, Enter on one
+ *  goes to it, Escape and the key again put it away. In the jsdom project because the
+ *  cards are mounted. */
 
 /** Svelte plays a transition through the Web Animations API, which jsdom has not got. */
 Element.prototype.animate = () =>
@@ -37,6 +38,7 @@ afterEach(() => {
   tabOverview.open = false
   flushSync()
   close()
+  vi.restoreAllMocks()
 })
 
 const cards = () => [...document.querySelectorAll<HTMLButtonElement>('.nib-tile')]
@@ -68,6 +70,22 @@ test('the palette’s row shows one card per tab, Enter on one goes to it and pu
   expect(workspace.activeTabId).toBe(workspace.tabs[0]?.id)
   expect(tabOverview.open).toBe(false)
   expect(overlays.depth).toBe(0)
+})
+
+test('Down and Up walk a row of the grid at a time, and Right a tile', async () => {
+  // Two tiles to a row: jsdom lays nothing out, so each tile says which row it is on.
+  vi.spyOn(HTMLElement.prototype, 'offsetTop', 'get').mockImplementation(function (this: Element) {
+    return Math.floor(cards().indexOf(this as HTMLButtonElement) / 2)
+  })
+  await opened()
+  cards()[0]?.focus()
+
+  press('ArrowDown')
+  expect(document.activeElement).toBe(cards()[2])
+  press('ArrowRight')
+  expect(document.activeElement).toBe(cards()[3])
+  press('ArrowUp')
+  expect(document.activeElement).toBe(cards()[1])
 })
 
 test('Escape puts it away and goes nowhere', async () => {
