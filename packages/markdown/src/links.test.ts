@@ -331,6 +331,13 @@ describe('finding the links in a note', () => {
     expect(link).toMatchObject({ target: 'My Note.md', heading: 'a-heading' })
   })
 
+  test('a markdown heading is the words it names, every escape undone', () => {
+    const found = findLinks(
+      '[x](Note.md#Some%20Heading) [y](Note.md#Q&A:%20why%3F) [z](Note.md#50%%20off)',
+    )
+    expect(found.map((one) => one.heading)).toEqual(['Some Heading', 'Q&A: why?', '50% off'])
+  })
+
   test('an angled markdown target holds spaces', () => {
     const text = '[x](<My Note.md>)'
     const [link] = findLinks(text)
@@ -473,6 +480,12 @@ describe('the part of a note a link points into', () => {
 
   test('and a note with no heading named is the whole of it', () => {
     expect(sectionOf('words\n', { heading: null, block: null })).toBe('words\n')
+  })
+
+  test('a heading an Obsidian link writes percent-encoded finds its section', () => {
+    const note = '# Some Heading\n\nwords\n'
+    const [link] = findLinks('[x](Note.md#Some%20Heading)')
+    expect(sectionOf(note, link!)).toBe('# Some Heading\n\nwords')
   })
 })
 

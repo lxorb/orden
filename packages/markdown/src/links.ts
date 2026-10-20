@@ -479,7 +479,7 @@ function collect(line: string, offset: number, at: number, found: FoundLink[]) {
 
     const hash = written.indexOf('#')
     const target = hash === -1 ? written : written.slice(0, hash)
-    const fragment = hash === -1 ? '' : written.slice(hash + 1)
+    const fragment = hash === -1 ? '' : decodeFragment(written.slice(hash + 1))
     if (!target && !fragment) continue
 
     const from = offset + match.index
@@ -517,6 +517,24 @@ function decodeTarget(target: string): string {
   } catch {
     return target
   }
+}
+
+/** One or more percent escapes in a row: how a heading's words are written in a link
+ *  when they hold a space or a character a URL cannot. */
+const ESCAPES = /(?:%[0-9A-Fa-f]{2})+/g
+
+/** The UTF-8 a run of escapes is read as. Not fatal, so a run that is not valid
+ *  encoding comes out as replacement characters rather than as an error. */
+const UTF8 = new TextDecoder('utf-8', { fatal: false, ignoreBOM: true })
+
+/** The `#fragment` of a link as the words it names. What a note writes in a link is
+ *  a URL, so `Some%20Heading` is `Some Heading` and `Why%3F` is `Why?`: every escape
+ *  is undone, which `decodeURI` does not do for the characters a URL reserves. A `%`
+ *  that does not begin an escape is taken as written. */
+export function decodeFragment(fragment: string): string {
+  return fragment.replace(ESCAPES, (run) =>
+    UTF8.decode(Uint8Array.from(run.slice(1).split('%'), (hex) => Number.parseInt(hex, 16))),
+  )
 }
 
 /** The name a block link points at, when a line ends by naming one.
