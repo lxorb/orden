@@ -317,6 +317,15 @@ export const syncMark = latched(() =>
  *  SpacePicker.svelte and space-picker.svelte.ts. */
 export const spacePickerDialog = latched(() => import('./SpacePicker.svelte'))
 
+/** Every tab of the space as cards (issue #331), fetched with the first press. */
+export const tabOverviewSheet = latched(() => import('./TabOverview.svelte'))
+export const tabOverview = $state({ open: false })
+
+export function toggleTabOverview(): void {
+  void tabOverviewSheet.ask()
+  tabOverview.open = !tabOverview.open
+}
+
 /** Remote's hosts in the middle of the window, fetched with the first press; see
  *  remote/HostPicker.svelte. */
 export const hostPickerDialog = latched(() =>

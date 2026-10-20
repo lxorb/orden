@@ -24,7 +24,7 @@ import { t } from '../i18n.svelte'
 import { modes } from '../modes.svelte'
 import { searchFrom } from '../search.svelte'
 import { askQuickly } from '../ai/quick-door'
-import { showQuickAdd } from '../surfaces.svelte'
+import { showQuickAdd, toggleTabOverview } from '../surfaces.svelte'
 import { toggleScratchpad } from '../scratchpad/is.svelte'
 import { hiddenKinds, settings } from '../settings.svelte'
 // The space actions are already in the first chunk, since the sidebar and the app
@@ -719,6 +719,16 @@ const APP_ENTRIES: Shortcut[] = [
     scope: 'app',
     key: 'Mod-Alt-o',
     run: () => workspace.panes.focusNext(),
+  },
+  // Every tab at once, as cards: up, beside the two splits, the way three fingers swipe
+  // up for the windows (issue #331). The key again puts them away.
+  {
+    id: 'app.tab-overview',
+    label: () => t('Tabs'),
+    category: 'view',
+    scope: 'app',
+    key: 'Mod-Alt-ArrowUp',
+    run: () => toggleTabOverview(),
   },
   // Shift twice, JetBrains' key and Emil's, and Ctrl+O. See tapped.ts.
   {

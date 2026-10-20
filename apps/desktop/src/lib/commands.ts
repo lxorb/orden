@@ -102,7 +102,7 @@ import { isUnsaved } from './workspace/drafts'
 import { askPlace } from './save-place/door'
 import { pages, type Step } from './web-tab/pages.svelte'
 import { openRandomNote, randomChoices } from './random-note'
-import { showFeedback, showQuickAdd } from './surfaces.svelte'
+import { showFeedback, showQuickAdd, toggleTabOverview } from './surfaces.svelte'
 
 /** Opens `custom.css` in the editor itself - it is a text file like any other. */
 async function openCustomCss() {
@@ -1772,6 +1772,12 @@ export function appCommands(view?: EditorView): Command[] {
       label: t('Spaces'),
       hint: shortcuts.hint('space.switcher'),
       run: () => spacePicker.toggle(),
+    },
+    {
+      id: 'tab-overview',
+      label: t('Tabs'),
+      hint: shortcuts.hint('app.tab-overview'),
+      run: toggleTabOverview,
     },
     {
       id: 'space-next',
