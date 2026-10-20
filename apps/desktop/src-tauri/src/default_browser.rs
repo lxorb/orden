@@ -218,13 +218,15 @@ fn exe_of(command: &str) -> Option<String> {
     not(any(target_os = "linux", test)),
     allow(dead_code, reason = "only Linux names a program by its desktop entry")
 )]
-const ENTRIES: [&str; 6] = [
+const ENTRIES: [&str; 8] = [
     "nib-handler.desktop",
     "nib.desktop",
     "nibeditor.desktop",
     "orden.desktop",
     "ch.emilvinu.nib.desktop",
     "nib_nib.desktop",
+    "so.orden.Orden.desktop",
+    "orden_orden.desktop",
 ];
 
 /// Whether the entry `entry` is in the `applications` folder of the person's own data
@@ -627,6 +629,14 @@ mod tests {
         assert!(!is_ours("nibbles.desktop"));
         assert!(!is_ours(""));
         assert!(!is_ours("ordenx.desktop"));
+    }
+
+    /// The Snap's entry, which snapd names after the snap and its app, and Flathub's,
+    /// named after its app ID: packaging/snap/snapcraft.yaml, packaging/flathub/.
+    #[test]
+    fn the_snap_s_and_flathub_s_entries_are_ours() {
+        assert!(is_ours("orden_orden.desktop"));
+        assert!(is_ours("so.orden.Orden.desktop"));
     }
 
     /// An entry counts as there when it is in the person's own applications or the
