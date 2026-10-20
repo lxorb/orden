@@ -20,8 +20,9 @@ portrait one at 1.77, one at 1, one at 1.75, one at 2):
     and come back whole after;
   - and the window's own page has to still be drawn after all of it: the tab strip has
     its ink (#387's window flashing between light and dark);
-  - the update notice put up at the foot of the pane has to float over the page, which
-    keeps its hole and shows round the card, and come back whole after (#512);
+  - the Undo toast, after a note made and deleted for it, has to float over the page at
+    the foot of the pane, which keeps its hole and shows round the toast, and comes back
+    whole after (#512);
   - and once, the window made smaller: the page follows;
   - and on the last screen, the page clicked into so it holds the keyboard, and
     Ctrl+R pressed three times and F5 once, each a load of the page (#344: the key
@@ -363,6 +364,7 @@ def look(output, moved=True, tag=""):
         )
         slug = name.replace(" ", "-").replace("'", "")
         if not isinstance(layer, dict):
+            shoot(output, f"{tag}missed-{slug}", scale)
             fail(f"{output}: {name} did not open for a click on its button")
         else:
             # A big page's still picture takes a moment longer to stand in under the layer
@@ -393,44 +395,52 @@ def look(output, moved=True, tag=""):
         if strip_area and inked and ink(after, strip_area) < inked * 0.3:
             fail(f"{output}: after {name} the window's own page is not drawn: no tab strip")
 
-    # A notice at the foot of the pane - the update notice, which the toasts share a row
-    # with - floats over the page, which is cut round it and keeps its hole: it used to
+    # A toast at the foot of the pane - the Undo after a delete, a note made and deleted
+    # for it - floats over the page, which is cut round it and keeps its hole: it used to
     # take a band of the pane under the page of its own, the page ended above it (#512).
-    run("window.nibApp.updates.ready = '9.9.9'")
+    run(
+        "(async () => { const path = await nib.workspace.noteFrom('# A toast over a page\\n');"
+        " if (path) await nib.workspace.remove(path, false); return path })()"
+    )
     card = None
-    for _ in range(12):
+    for _ in range(20):
         time.sleep(0.25)
-        card = box("[data-notices] > .notice")
+        card = box("[data-notices] > .toast")
         if isinstance(card, dict) and card.get("height", 0) > 0:
             break
-    if not isinstance(card, dict):
-        fail(f"{output}: the update notice did not come up")
+    if not isinstance(card, dict) or card.get("height", 0) <= 0:
+        fail(f"{output}: the Undo toast did not come up")
     else:
         # It flies in over a fifth of a second; the page is asked again once it lands.
-        time.sleep(1.0)
-        card = box("[data-notices] > .notice")
+        time.sleep(0.8)
+        card = box("[data-notices] > .toast") or card
         under_card = hole()
-        shot = shoot(output, f"{tag}notice", scale)
+        shot = shoot(output, f"{tag}toast", scale)
         covered = share(shot, on_screen(card, 4))
         under = share(shot, want)
         print(
-            f"{output}: the update notice at {card}: the page is over {covered:.0%} of it,"
+            f"{output}: the Undo toast at {card}: the page is over {covered:.0%} of it,"
             f" shows in {under:.0%} of its hole, and the hole is {under_card}"
         )
         if under_card and abs(under_card["height"] - pane["height"]) > 1:
             fail(
-                f"{output}: the notice took a band of the pane: the page's hole went from"
+                f"{output}: the toast took a band of the pane: the page's hole went from"
                 f" {pane['height']:.0f} to {under_card['height']:.0f} tall"
             )
         if covered > 0.05:
-            fail(f"{output}: the page is drawn over the update notice ({covered:.0%})")
+            fail(f"{output}: the page is drawn over the Undo toast ({covered:.0%})")
         if under < 0.5:
-            fail(f"{output}: under the update notice the page is gone ({under:.0%} of its hole)")
-    run("window.nibApp.updates.dismiss()")
-    time.sleep(1.0)
-    back = bounding(shoot(output, f"{tag}after-notice", scale))
-    if not near(back, want, scale):
-        fail(f"{output}: the page did not come back whole after the update notice ({back})")
+            fail(f"{output}: under the Undo toast the page is gone ({under:.0%} of its hole)")
+        # Gone by itself, after its while.
+        for _ in range(60):
+            gone = box("[data-notices] > .toast")
+            if not isinstance(gone, dict) or gone.get("height", 0) <= 0:
+                break
+            time.sleep(0.25)
+        time.sleep(1.0)
+        back = bounding(shoot(output, f"{tag}after-toast", scale))
+        if not near(back, want, scale):
+            fail(f"{output}: the page did not come back whole after the Undo toast ({back})")
 
 
 def loads():
