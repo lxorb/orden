@@ -453,7 +453,12 @@ export class TableView {
 
     cell.addEventListener('focus', () => showSource(cell))
     cell.addEventListener('blur', () => this.left(cell, at))
-    cell.addEventListener('input', () => this.edited(cell, at))
+    // What an input method has not committed yet is not the cell's text: it is
+    // written once the composition ends.
+    cell.addEventListener('input', (event) => {
+      if (!(event as InputEvent).isComposing) this.edited(cell, at)
+    })
+    cell.addEventListener('compositionend', () => this.edited(cell, at))
     cell.addEventListener('keydown', (event) => this.keyInCell(event, cell, at))
     cell.addEventListener('beforeinput', (event) => this.inputInCell(event, cell, at))
     cell.addEventListener('paste', (event) => this.pasteInCell(event, cell, at))
@@ -491,6 +496,11 @@ export class TableView {
   }
 
   private keyInCell(event: KeyboardEvent, cell: HTMLElement, at: CellAddress) {
+    // While an input method composes, its keys are its own: the Enter that picks
+    // a candidate is not a step to the cell below. Safari ends the composition
+    // before that Enter arrives, so only its key code still says so.
+    // eslint-disable-next-line @typescript-eslint/no-deprecated -- the one sign Safari gives
+    if (event.isComposing || event.keyCode === 229) return
     const mod = event.ctrlKey || event.metaKey
     const key = event.key
 
