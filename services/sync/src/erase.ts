@@ -31,10 +31,6 @@ import type { Env, User } from './types'
  *  account's id, `?2` its address, `?3` the moment. */
 const OWNED = 'select id from spaces where user_id = ?1'
 const OWNED_NOTES = `select id from notes where space_id in (${OWNED})`
-/** Guests who said they were at this address. A label nobody proved, and still the
- *  address: it is what a sign-in there would claim for the account, and a fresh
- *  account at the same address starts with nothing. */
-const GUESTS_AT = 'select id from guests where email = ?2'
 /** The chats of those spaces; see chats/. */
 const OWNED_CHATS = `select id from chats where space_id in (${OWNED})`
 
@@ -57,8 +53,8 @@ const NOTED: readonly string[] = [
   `insert or ignore into leftovers (what, since)
      select 'blobs/' || hash, ?3 from blobs where user_id = ?1`,
   // The bytes of web logins that travelled between computers, kept until those were
-  // removed (#393) and swept with the account still, and the hubs of the account and of
-  // the guests at its address, which keep storage of their own.
+  // removed (#393) and swept with the account still, and the account's hub, which keeps
+  // storage of its own.
   `insert or ignore into leftovers (what, since)
      select 'web/' || user_id || '/' || key, ?3 from web_states where user_id = ?1`,
   `insert or ignore into leftovers (what, since)
@@ -70,8 +66,6 @@ const NOTED: readonly string[] = [
      select 'machines/' || id, ?3 from machines where user_id = ?1`,
   `insert or ignore into leftovers (what, since)
      select 'homes/' || backup_key, ?3 from machines where user_id = ?1 and backup_key is not null`,
-  `insert or ignore into leftovers (what, since)
-     select 'hubs/' || id, ?3 from guests where email = ?2`,
   // The chats of its spaces, whose objects keep their logs in storage of their own.
   `insert or ignore into leftovers (what, since) select 'chats/' || id, ?3 from (${OWNED_CHATS})`,
   // And the files it posted into chats of other people's spaces, handed to each space's
@@ -85,7 +79,7 @@ const NOTED: readonly string[] = [
   // Its messages in other people's chats stay, as a deleted account's (decision 7.8);
   // the line saying who wrote a chat's last one names nobody now.
   `update chats set last_by = null
-    where last_by = 'user:' || ?1 or last_by in (select 'guest:' || id from guests where email = ?2)`,
+    where last_by = 'user:' || ?1`,
 ]
 
 /** Every table an account leaves a row in, and the statement that takes those rows
@@ -98,21 +92,15 @@ export const ERASED: readonly (readonly [table: string, sql: string])[] = [
   ['note_search', `delete from note_search where space_id in (${OWNED})`],
   ['blog_paths', `delete from blog_paths where space_id in (${OWNED})`],
   ['form_answers', `delete from form_answers where space_id in (${OWNED})`],
-  [
-    'room_sockets',
-    `delete from room_sockets where space_id in (${OWNED}) or who = ?1 or who in (${GUESTS_AT})`,
-  ],
+  ['room_sockets', `delete from room_sockets where space_id in (${OWNED}) or who = ?1`],
   // Its spaces' chats, and its read places and open sockets in everybody's. Its
   // messages in other people's chats stay, as a deleted account's (docs/chats.md 4.18).
-  [
-    'chat_reads',
-    `delete from chat_reads where chat_id in (${OWNED_CHATS}) or who = ?1 or who in (${GUESTS_AT})`,
-  ],
+  ['chat_reads', `delete from chat_reads where chat_id in (${OWNED_CHATS}) or who = ?1`],
   ['chat_files', `delete from chat_files where chat_id in (${OWNED_CHATS})`],
   [
     'chat_sockets',
     `delete from chat_sockets
-      where chat_id in (${OWNED_CHATS}) or who = ?1 or who in (${GUESTS_AT})`,
+      where chat_id in (${OWNED_CHATS}) or who = ?1`,
   ],
   ['chats', `delete from chats where space_id in (${OWNED})`],
   // Everybody's way into this account's spaces, and this account's way into
@@ -120,12 +108,10 @@ export const ERASED: readonly (readonly [table: string, sql: string])[] = [
   ['space_members', `delete from space_members where space_id in (${OWNED}) or email = ?2`],
   ['space_links', `delete from space_links where space_id in (${OWNED})`],
   ['space_requests', `delete from space_requests where space_id in (${OWNED}) or email = ?2`],
-  [
-    'guest_members',
-    `delete from guest_members where space_id in (${OWNED}) or guest_id in (${GUESTS_AT})`,
-  ],
-  ['guest_sessions', `delete from guest_sessions where guest_id in (${GUESTS_AT})`],
-  ['guests', 'delete from guests where email = ?2'],
+  ['guest_members', `delete from guest_members where space_id in (${OWNED})`],
+  // A guest who said it was at this address only said so: it is not the account's to
+  // take away, but the address it typed is, and no sign-in there claims it now (#488).
+  ['guests', 'update guests set email = null where email = ?2'],
   ['notes', `delete from notes where space_id in (${OWNED})`],
   // Sync v2's tree of those spaces, the answers it gave their operations, and the maps
   // they keep per entry; see sync2/.
@@ -205,15 +191,15 @@ export async function eraseAccount(env: Env, user: User): Promise<void> {
 
   const { results: open } = await env.DB.prepare(
     `select note_id, who from room_sockets
-      where space_id in (${OWNED}) or who = ?1 or who in (${GUESTS_AT})`,
+      where space_id in (${OWNED}) or who = ?1`,
   )
-    .bind(user.id, user.email)
+    .bind(user.id)
     .all<{ note_id: string; who: string }>()
 
   const { results: chatting } = await env.DB.prepare(
-    `select chat_id, who from chat_sockets where who = ?1 or who in (${GUESTS_AT})`,
+    'select chat_id, who from chat_sockets where who = ?1',
   )
-    .bind(user.id, user.email)
+    .bind(user.id)
     .all<{ chat_id: string; who: string }>()
 
   const handed = await handedOn(env, user, at)
