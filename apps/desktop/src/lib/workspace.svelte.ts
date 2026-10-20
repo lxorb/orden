@@ -99,9 +99,11 @@ import {
   folderNote,
   folderNotePath,
   isFolderNote,
+  linkedFiles,
   noteToNest,
   unnesting,
 } from './folder-notes'
+import { carriedRows } from './drag-paths'
 import { flatRows } from './tree-flat'
 import { entryAt, withComing, withEntry, withMove, withoutEntry, withoutRows } from './tree-edits'
 import { orderedTree, type SortMode } from './tree-order'
@@ -3366,6 +3368,13 @@ class Workspace {
    *  of it, the row alone otherwise. */
   dragPayload(path: string): string[] {
     return this.picked.dragging(path)
+  }
+
+  /** The notes a drag out of the list carries, as paths in the space: what a drop on a
+   *  note's words links (wikilink/drop.ts in the editor), and a drop on a chat. */
+  carriedNotes(transfer: DataTransfer | null): readonly string[] {
+    const root = this.activeSpace?.root
+    return root ? linkedFiles(this.tree, root, carriedRows(transfer)) : []
   }
 
   async moveMany(paths: string[], intoFolder: string) {
