@@ -82,6 +82,7 @@ export const hi: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'एक कार्य',
   'One per line': 'हर पंक्ति पर एक',
+  'Add with AI': 'AI से जोड़ें',
   // Tasks: the projects in the panel
   Favorites: 'पसंदीदा',
   'Add project': 'प्रोजेक्ट जोड़ें',

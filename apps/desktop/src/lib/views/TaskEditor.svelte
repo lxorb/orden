@@ -8,6 +8,7 @@
    *  fields saved put it away. Every write is quick add's own (quick-add/write.ts) or the
    *  views' one write path (act.ts). */
   import type { Row } from '@nib/bases'
+  import { ai } from '../ai/store.svelte'
   import { onMount } from 'svelte'
   import { i18n } from '../i18n.svelte'
   import { quickAdd } from '../quick-add/asked.svelte'
@@ -100,6 +101,7 @@
       {notes}
       {tags}
       headingsOf={(note: string) => (root ? headingsOf(root, note) : [])}
+      provider={ai.providerFor('ask')}
       prefill={start}
       smart={quickAdd.smart}
       mode={row ? 'edit' : 'add'}

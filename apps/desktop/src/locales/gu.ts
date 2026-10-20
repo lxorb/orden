@@ -82,6 +82,7 @@ export const gu: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'એક કાર્ય',
   'One per line': 'દરેક લીટીએ એક',
+  'Add with AI': 'AI વડે ઉમેરો',
   // Tasks: the projects in the panel
   Favorites: 'મનપસંદ',
   'Add project': 'પ્રોજેક્ટ ઉમેરો',

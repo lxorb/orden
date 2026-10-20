@@ -82,6 +82,7 @@ export const am: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'አንድ ተግባር',
   'One per line': 'በየመስመሩ አንድ',
+  'Add with AI': 'በAI ጨምር',
   // Tasks: the projects in the panel
   Favorites: 'ተወዳጆች',
   'Add project': 'ፕሮጀክት አክል',

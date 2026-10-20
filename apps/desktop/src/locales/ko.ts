@@ -79,6 +79,7 @@ export const ko: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': '작업 하나',
   'One per line': '줄마다 하나',
+  'Add with AI': 'AI로 추가',
   // Tasks: the projects in the panel
   Favorites: '즐겨찾기',
   'Add project': '프로젝트 추가',

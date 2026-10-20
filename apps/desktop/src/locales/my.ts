@@ -79,6 +79,7 @@ export const my: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'လုပ်ငန်းတစ်ခု',
   'One per line': 'တစ်ကြောင်းလျှင် တစ်ခု',
+  'Add with AI': 'AI ဖြင့် ထည့်ပါ',
   // Tasks: the projects in the panel
   Favorites: 'အကြိုက်ဆုံးများ',
   'Add project': 'ပရောဂျက် ထည့်',

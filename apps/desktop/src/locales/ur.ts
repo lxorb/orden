@@ -82,6 +82,7 @@ export const ur: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'ایک کام',
   'One per line': 'ہر سطر کا ایک',
+  'Add with AI': 'AI سے شامل کریں',
   // Tasks: the projects in the panel
   Favorites: 'پسندیدہ',
   'Add project': 'پروجیکٹ شامل کریں',

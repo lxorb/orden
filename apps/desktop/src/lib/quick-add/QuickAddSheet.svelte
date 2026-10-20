@@ -15,6 +15,7 @@
   import type { Entry } from './entry'
   import QuickAdd from './QuickAdd.svelte'
   import { links } from '../link-index.svelte'
+  import { ai } from '../ai/store.svelte'
   import { addTask, headingsOf, noteNames } from './write'
 
   const root = $derived(workspace.activeSpace?.root ?? null)
@@ -51,6 +52,7 @@
       {notes}
       tags={links.spaceTags.map((one) => one.tag)}
       headingsOf={(note: string) => (root ? headingsOf(root, note) : [])}
+      provider={ai.providerFor('ask')}
       prefill={quickAdd.prefill}
       smart={quickAdd.smart}
       onsubmit={added}

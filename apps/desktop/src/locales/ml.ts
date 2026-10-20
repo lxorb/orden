@@ -83,6 +83,7 @@ export const ml: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'ഒരു ജോലി',
   'One per line': 'ഓരോ വരിക്കും ഒന്ന്',
+  'Add with AI': 'AI ഉപയോഗിച്ച് ചേർക്കുക',
   // Tasks: the projects in the panel
   Favorites: 'പ്രിയപ്പെട്ടവ',
   'Add project': 'പ്രോജക്റ്റ് ചേർക്കുക',

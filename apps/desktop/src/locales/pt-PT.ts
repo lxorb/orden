@@ -84,6 +84,7 @@ export const ptPT: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'Uma tarefa',
   'One per line': 'Uma por linha',
+  'Add with AI': 'Adicionar com IA',
   // Tasks: the projects in the panel
   Favorites: 'Favoritos',
   'Add project': 'Adicionar projeto',

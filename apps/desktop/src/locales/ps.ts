@@ -82,6 +82,7 @@ export const ps: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'یوه دنده',
   'One per line': 'په هره کرښه کې یوه',
+  'Add with AI': 'د مصنوعي ځيرکتيا سره ورزياتول',
   // Tasks: the projects in the panel
   Favorites: 'خوښې',
   'Add project': 'پروژه ورزیاته کړئ',

@@ -79,6 +79,7 @@ export const jv: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'Siji tugas',
   'One per line': 'Siji saben baris',
+  'Add with AI': 'Tambah nganggo AI',
   // Tasks: the projects in the panel
   Favorites: 'Favorit',
   'Add project': 'Tambah proyek',

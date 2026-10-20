@@ -83,6 +83,7 @@ export const gsw: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'Ei Ufgab',
   'One per line': 'Eini pro Ziile',
+  'Add with AI': 'Mit KI hinzuefüege',
   // Tasks: the projects in the panel
   Favorites: 'Favorite',
   'Add project': 'Projekt dezuetue',

@@ -82,6 +82,7 @@ export const fil: Dictionary = {
   // Tasks: several lines pasted into quick add
   'One task': 'Isang gawain',
   'One per line': 'Isa bawat linya',
+  'Add with AI': 'Idagdag gamit ang AI',
   // Tasks: the projects in the panel
   Favorites: 'Mga paborito',
   'Add project': 'Magdagdag ng proyekto',

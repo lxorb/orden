@@ -3,9 +3,11 @@
  *  and answers in JSON, of which only what checks out is kept: a label the space has, a
  *  note it has, a real date, a priority there is. */
 
+import { todayOf } from '@nib/bases'
 import type { QuickFields } from '@nib/bases/language'
 import { isDate } from '@nib/markdown/task-line'
-import type { Message } from '../ai/providers'
+import { complete } from '../ai/complete'
+import type { Message, Provider } from '../ai/providers'
 import { isPriority } from '../views/drop'
 import type { Entry } from './entry'
 
@@ -55,4 +57,17 @@ export function entryFrom(
   const text = typeof read.text === 'string' && read.text.trim() ? read.text.trim() : said
   const note = notes.find((one) => one === read.note)
   return { text, fields, ...(note === undefined ? {} : { note }) }
+}
+
+/** The task the model makes of the sentence. Throws where it answered with none. */
+export async function askedEntry(
+  provider: Provider,
+  said: string,
+  tags: readonly string[],
+  notes: readonly string[],
+): Promise<Entry> {
+  const zone = Intl.DateTimeFormat().resolvedOptions().timeZone
+  const messages = entryMessages(said, tags, notes, todayOf(), zone)
+  const reply = await complete({ provider, model: provider.model, messages })
+  return entryFrom(reply, said, tags, notes)
 }
