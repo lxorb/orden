@@ -108,6 +108,16 @@ describe('a fresh start', () => {
     expect(workspace.active?.path).toBe(welcome)
   })
 
+  /** The page the app was opened for is taken while the space is still being made. */
+  test('leaves a page the app was opened with in front, the note behind it', async () => {
+    const starting = firstSpace.start(FRESH)
+    const page = workspace.openPage('https://example.com/', 'front')
+    await starting
+
+    expect(workspace.active?.id).toBe(page)
+    expect(workspace.tabs.map((one) => one.path)).toContain(welcome)
+  })
+
   test('asks nothing, and makes one space however often it is asked at once', async () => {
     await Promise.all([firstSpace.start(FRESH), firstSpace.start(FRESH)])
 

@@ -56,7 +56,9 @@ class FirstSpace {
    *  it would hide the very note the space opened on. */
   private async arrive(space: Space, note: string | null) {
     if (workspace.activeSpaceId !== space.id) await workspace.showSpace(space.id)
-    if (note) await workspace.openEntry(note, { activate: true })
+    // A page or a link the app was opened with lands while the space is being made,
+    // and is what somebody asked to see: the note goes in behind it (#392).
+    if (note) await workspace.openEntry(note, { activate: !workspace.tabs.length })
     if (!viewport.drawer) workspace.showPanel('tree')
   }
 }
