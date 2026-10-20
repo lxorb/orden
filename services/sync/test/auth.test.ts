@@ -245,6 +245,16 @@ describe('verifying a code', () => {
     expect(replay.status).toBe(400)
   })
 
+  test('a code spent by a request alongside gives no second session', async () => {
+    const code = await requestCode('a@b.dev')
+    const spentElsewhere = env.losing(/delete from login_codes where email = \?/)
+
+    const second = await call(env, '/v1/auth/verify', { body: { email: 'a@b.dev', code } })
+    expect(spentElsewhere()).toBe(1)
+    expect(second.status).toBe(400)
+    expect(second.json.token).toBeUndefined()
+  })
+
   test('treats the address case-insensitively', async () => {
     const code = await requestCode('Mixed@B.dev')
     const response = await call(env, '/v1/auth/verify', {

@@ -1033,10 +1033,6 @@ function fencesOf(noteId: string, url: URL, request: Request, drawn: ReadonlyMap
   }
 }
 
-/** What a reader is told when the space already holds as many answers as it
- *  keeps. The page's own words, like the other two a form can come back with. */
-const FORM_FULL = 'This form is full.'
-
 /** An answer somebody typed into a form on a page.
  *
  *  Answered with a redirect rather than a page, so that a reload after sending
@@ -1104,19 +1100,19 @@ async function takeAnswer(
   // kept. See limits.ts.
   const machine = machineIn(request)
   if (!(await maySendAnswer(env, machine)) || !(await mayTakeAnswer(env, space.id))) {
-    return back(`${where}?wrong=${encodeURIComponent('Too many just now. Try later.')}`)
+    return back(`${where}?wrong=busy`)
   }
 
   const sent = await request.formData().catch(() => null)
   if (!sent) return back(where)
 
   const read = answersFrom(form, sent)
-  if ('wrong' in read) return back(`${where}?wrong=${encodeURIComponent(read.wrong)}`)
+  if ('wrong' in read) return back(`${where}?wrong=${read.wrong}`)
 
   // A space keeps so many answers and no more; one that is full says so, and the
   // owner sees the same word in the publish sheet. See spaces/answers.ts.
   if (!(await keepAnswer(env, space.id, note.id, read.answers))) {
-    return back(`${where}?wrong=${encodeURIComponent(FORM_FULL)}`)
+    return back(`${where}?wrong=full`)
   }
 
   return back(`${where}?sent=${encodeURIComponent(note.id)}`)

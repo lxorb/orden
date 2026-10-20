@@ -193,8 +193,8 @@ async function openAiHeard(audio: ArrayBuffer, key: string, like = ''): Promise<
       method: 'POST',
       headers: { authorization: `Bearer ${key}` },
       body: form,
-    })
-    if (!answered.ok) continue
+    }).catch(() => null)
+    if (!answered?.ok) continue
 
     const said = (await answered.text()).trim()
     if (said) return said

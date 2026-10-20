@@ -33,8 +33,9 @@ const OPEN_TO_PROGRAMS: readonly { method: string; path: RegExp; reads?: true }[
   // Which spaces there are, so a script can name one by its name.
   { method: 'GET', path: /^\/v1\/spaces$/ },
   // The change feed, which is how a checkout catches up without asking for
-  // every note: a cursor in, the notes that moved out.
-  { method: 'GET', path: /^\/v1\/spaces\/[^/]+\/changes$/ },
+  // every note: a cursor in, the notes that moved out. Not `available/changes`,
+  // which is whether a blog name is free, under the same shape.
+  { method: 'GET', path: /^\/v1\/spaces\/(?!available\/)[^/]+\/changes$/ },
   // One note's words, and a note written back.
   { method: 'GET', path: /^\/v1\/notes\/[^/]+$/ },
   { method: 'PUT', path: /^\/v1\/notes\/[^/]+$/ },
