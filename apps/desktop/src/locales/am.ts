@@ -1282,10 +1282,18 @@ export const am: Dictionary = {
     '{count} ክፍሎች ተመስጥረዋል፣ እና ያለ Evernote ምንም ሊያነባቸው አይችልም',
   '{count} notes had a reminder, which the export does not carry':
     '{count} ማስታወሻዎች አስታዋሽ ነበራቸው፣ ልኬቱ ግን አይወስደውም',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} አባሪዎች ከመላኪያው ጠፍተዋል ወይም ሊነበቡ አልቻሉም',
+    other: '{count} አባሪዎች ከመላኪያው ጠፍተዋል ወይም ሊነበቡ አልቻሉም',
+  },
   '{count} notes were in the bin and stay there': '{count} ማስታወሻዎች በቆሻሻ ውስጥ ነበሩና እዚያ ይቀራሉ',
   '{count} archived notes are in a folder called Archive':
     '{count} የተቀመጡ ማስታወሻዎች Archive በተባለ ፎልደር ውስጥ ናቸው',
   'The colours a note had are not kept': 'ማስታወሻው የነበሩት ቀለሞች አይቀመጡም',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} ፋይል ሊነበብ ስላልቻለ ቀርቷል',
+    other: '{count} ፋይሎች ሊነበቡ ስላልቻሉ ቀርተዋል',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} የብሎክ ማጣቀሻዎች ወደሚያመለክቱት ቃላት ተጽፈዋል',
   '{count} saved views are left out, and every row is in the table': {
@@ -1312,6 +1320,8 @@ export const am: Dictionary = {
     '{count} የስሜትና የእንቅስቃሴ ካርዶች ሥዕሎች ናቸው፣ ስለዚህ ቃላቶቻቸው ብቻ ይሻገራሉ',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} ማስታወሻዎች Notes ብቻ የሚከፍተው የይለፍ ቃል ጀርባ ናቸው',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} ማስታወሻዎች Bear ብቻ የሚከፍተው የይለፍ ቃል ጀርባ ናቸው',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} ማስታወሻዎች በቅርቡ የጠፋ ውስጥ ናቸውና እዚያ ይቀራሉ',
   '{count} drawings and scans have no picture on this Mac':

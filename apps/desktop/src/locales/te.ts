@@ -1301,11 +1301,19 @@ export const te: Dictionary = {
     '{count} భాగాలు ఎన్‌క్రిప్ట్ అయ్యాయి, Evernote లేకుండా వాటిని ఏదీ చదవలేదు',
   '{count} notes had a reminder, which the export does not carry':
     '{count} నోట్‌లకు రిమైండర్ ఉంది, ఎక్స్‌పోర్ట్ దాన్ని తీసుకురాదు',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} అటాచ్‌మెంట్‌లు ఎగుమతిలో లేవు లేదా చదవలేకపోయాం',
+    other: '{count} అటాచ్‌మెంట్‌లు ఎగుమతిలో లేవు లేదా చదవలేకపోయాం',
+  },
   '{count} notes were in the bin and stay there':
     '{count} నోట్‌లు చెత్తబుట్టలో ఉన్నాయి, అక్కడే ఉంటాయి',
   '{count} archived notes are in a folder called Archive':
     '{count} ఆర్కైవ్ నోట్‌లు Archive ఫోల్డర్‌లో ఉన్నాయి',
   'The colours a note had are not kept': 'నోట్‌కు ఉన్న రంగులు ఉంచబడవు',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} ఫైళ్లను చదవలేకపోయాం, కాబట్టి వదిలేశాం',
+    other: '{count} ఫైళ్లను చదవలేకపోయాం, కాబట్టి వదిలేశాం',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} బ్లాక్ సూచనలు అవి చూపిన పదాలుగానే రాయబడ్డాయి',
   '{count} saved views are left out, and every row is in the table': {
@@ -1332,6 +1340,8 @@ export const te: Dictionary = {
     '{count} మనోభావ, కార్యకలాప కార్డులు గీతలు, కాబట్టి వాటి మాటలే వస్తాయి',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} నోట్లు పాస్‌వర్డ్ వెనుక ఉన్నాయి, దాన్ని Notes మాత్రమే తెరుస్తుంది',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} నోట్లు పాస్‌వర్డ్ వెనుక ఉన్నాయి, దాన్ని Bear మాత్రమే తెరుస్తుంది',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} నోట్లు ఇటీవల తొలగించినవిలో ఉన్నాయి, అక్కడే ఉంటాయి',
   '{count} drawings and scans have no picture on this Mac':

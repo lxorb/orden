@@ -1345,10 +1345,22 @@ export const ru: Dictionary = {
     'Зашифрованных фрагментов: {count}, без Evernote их не прочитать',
   '{count} notes had a reminder, which the export does not carry':
     'Заметок с напоминанием: {count}, экспорт их не переносит',
+  '{count} attachments were missing from the export or could not be read': {
+    few: 'Вложений, которых нет в экспорте или которые не читаются: {count}',
+    many: 'Вложений, которых нет в экспорте или которые не читаются: {count}',
+    one: 'Вложений, которых нет в экспорте или которые не читаются: {count}',
+    other: 'Вложений, которых нет в экспорте или которые не читаются: {count}',
+  },
   '{count} notes were in the bin and stay there': 'Заметок в корзине: {count}, там они и остаются',
   '{count} archived notes are in a folder called Archive':
     'Архивных заметок: {count}, они в папке Archive',
   'The colours a note had are not kept': 'Цвета заметок не сохраняются',
+  '{count} files could not be read, so they were left out': {
+    few: 'Не удалось прочитать {count} файла, они пропущены',
+    many: 'Не удалось прочитать {count} файлов, они пропущены',
+    one: 'Не удалось прочитать {count} файл, он пропущен',
+    other: 'Не удалось прочитать {count} файла, они пропущены',
+  },
   '{count} block references were written out as the words they pointed at':
     'Ссылок на блоки: {count}, они записаны словами, на которые указывали',
   '{count} saved views are left out, and every row is in the table': {
@@ -1384,6 +1396,8 @@ export const ru: Dictionary = {
     'Карточек настроения и активности, которые являются рисунками: {count} - переносятся только слова',
   '{count} notes are behind a password, which nothing but Notes can open':
     'Заметок под паролем, который открывают только Заметки: {count}',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    'Заметок под паролем, который открывает только Bear: {count}',
   '{count} notes are in Recently Deleted, and stay there':
     'Заметок в «Недавно удалённых», которые там и остаются: {count}',
   '{count} drawings and scans have no picture on this Mac':

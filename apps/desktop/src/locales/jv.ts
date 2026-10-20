@@ -1287,11 +1287,15 @@ export const jv: Dictionary = {
     '{count} bagean disinandi, lan ora ana sing bisa maca tanpa Evernote',
   '{count} notes had a reminder, which the export does not carry':
     '{count} cathetan duwe pangeling, sing ora digawa ekspor',
+  '{count} attachments were missing from the export or could not be read':
+    '{count} lampiran ora ana ing ekspor utawa ora bisa diwaca',
   '{count} notes were in the bin and stay there':
     '{count} cathetan ana ing kranjang lan tetep ing kono',
   '{count} archived notes are in a folder called Archive':
     '{count} cathetan arsip ana ing folder jenenge Archive',
   'The colours a note had are not kept': 'Warna sing didhuweni cathetan ora disimpen',
+  '{count} files could not be read, so they were left out':
+    '{count} berkas ora bisa diwaca, mula ora dilebokake',
   '{count} block references were written out as the words they pointed at':
     '{count} referensi blok ditulis minangka tembung sing dituding',
   '{count} saved views are left out, and every row is in the table':
@@ -1318,6 +1322,8 @@ export const jv: Dictionary = {
     '{count} kartu swasana lan kegiatan iku gambar, mula mung tembunge sing mlebu',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} cathetan ana ing mburi tembung sandhi sing mung Notes bisa mbukak',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} cathetan ana ing mburi tembung sandhi sing mung Bear bisa mbukak',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} cathetan ana ing Anyar dibusak lan tetep ing kono',
   '{count} drawings and scans have no picture on this Mac':

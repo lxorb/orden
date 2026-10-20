@@ -1302,11 +1302,19 @@ export const pa: Dictionary = {
     '{count} ਹਿੱਸੇ ਗੁਪਤ ਹਨ, ਤੇ Evernote ਬਿਨਾਂ ਕੋਈ ਉਨ੍ਹਾਂ ਨੂੰ ਨਹੀਂ ਪੜ੍ਹ ਸਕਦਾ',
   '{count} notes had a reminder, which the export does not carry':
     '{count} ਨੋਟਾਂ ਵਿੱਚ ਯਾਦ ਸੀ, ਜੋ ਬਾਹਰ ਭੇਜਣ ਨਾਲ ਨਹੀਂ ਜਾਂਦਾ',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} ਅਟੈਚਮੈਂਟ ਐਕਸਪੋਰਟ ਵਿੱਚ ਨਹੀਂ ਸਨ ਜਾਂ ਪੜ੍ਹੇ ਨਹੀਂ ਜਾ ਸਕੇ',
+    other: '{count} ਅਟੈਚਮੈਂਟ ਐਕਸਪੋਰਟ ਵਿੱਚ ਨਹੀਂ ਸਨ ਜਾਂ ਪੜ੍ਹੇ ਨਹੀਂ ਜਾ ਸਕੇ',
+  },
   '{count} notes were in the bin and stay there':
     '{count} ਨੋਟਾਂ ਕੂੜੇਦਾਨ ਵਿੱਚ ਸਨ ਤੇ ਉੱਥੇ ਰਹਿੰਦੀਆਂ ਹਨ',
   '{count} archived notes are in a folder called Archive':
     '{count} ਸਾਂਭੀਆਂ ਨੋਟਾਂ Archive ਨਾਂ ਦੇ ਫੋਲਡਰ ਵਿੱਚ ਹਨ',
   'The colours a note had are not kept': 'ਨੋਟ ਦੇ ਰੰਗ ਨਹੀਂ ਰੱਖੇ ਜਾਂਦੇ',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} ਫ਼ਾਈਲਾਂ ਪੜ੍ਹੀਆਂ ਨਹੀਂ ਜਾ ਸਕੀਆਂ, ਇਸ ਲਈ ਛੱਡ ਦਿੱਤੀਆਂ',
+    other: '{count} ਫ਼ਾਈਲਾਂ ਪੜ੍ਹੀਆਂ ਨਹੀਂ ਜਾ ਸਕੀਆਂ, ਇਸ ਲਈ ਛੱਡ ਦਿੱਤੀਆਂ',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} ਬਲਾਕ ਹਵਾਲੇ ਉਨ੍ਹਾਂ ਸ਼ਬਦਾਂ ਵਜੋਂ ਲਿਖੇ ਗਏ ਜਿਨ੍ਹਾਂ ਵੱਲ ਉਹ ਇਸ਼ਾਰਾ ਕਰਦੇ ਸਨ',
   '{count} saved views are left out, and every row is in the table': {
@@ -1333,6 +1341,8 @@ export const pa: Dictionary = {
     '{count} ਮਨੋਭਾਵ ਤੇ ਸਰਗਰਮੀ ਕਾਰਡ ਚਿੱਤਰ ਹਨ, ਇਸ ਲਈ ਸਿਰਫ਼ ਉਨ੍ਹਾਂ ਦੇ ਸ਼ਬਦ ਆਉਂਦੇ ਹਨ',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} ਨੋਟਾਂ ਪਾਸਵਰਡ ਪਿੱਛੇ ਹਨ, ਜਿਸ ਨੂੰ ਸਿਰਫ਼ Notes ਖੋਲ੍ਹ ਸਕਦਾ ਹੈ',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} ਨੋਟਾਂ ਪਾਸਵਰਡ ਪਿੱਛੇ ਹਨ, ਜਿਸ ਨੂੰ ਸਿਰਫ਼ Bear ਖੋਲ੍ਹ ਸਕਦਾ ਹੈ',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} ਨੋਟਾਂ ਹਾਲ ਵਿੱਚ ਮਿਟਾਏ ਵਿੱਚ ਹਨ ਤੇ ਉੱਥੇ ਹੀ ਰਹਿੰਦੀਆਂ ਹਨ',
   '{count} drawings and scans have no picture on this Mac':

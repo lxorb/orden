@@ -151,6 +151,33 @@ describe('an Apple Journal export', () => {
     expect(said.some((one) => one.includes('mood and activity'))).toBe(true)
   })
 
+  test('a picture an entry shows that the export did not hold is counted', async () => {
+    const plan = await readJournal([
+      file(
+        'AppleJournalEntries/Entries/2026-01-05_A.html',
+        '<html><body><div class="pageHeader">x</div><div class="bodyText"><p>Hi</p>' +
+          '<img src="../Resources/IMG%201.jpeg"><img src="../Resources/gone.jpeg"></div></body></html>',
+      ),
+      sourceOf('AppleJournalEntries/Resources/IMG 1.jpeg', new Uint8Array([1])),
+    ])
+
+    expect(noteAt(plan, '2026-01-05.md')).toContain('![](assets/IMG%201.jpeg)')
+    expect(plan.lost.find((one) => one.text.includes('missing'))?.values).toEqual({ count: 1 })
+  })
+
+  test('a map of several places is one of the cards Journal draws', async () => {
+    const plan = await readJournal([
+      file(
+        'AppleJournalEntries/Entries/2023-12-17_A.html',
+        '<div class="pageHeader">x</div><div class="gridItem assetType_multiPinMap">' +
+          '<div class="gridItemOverlayFooter">Old Town Market Place</div></div>',
+      ),
+    ])
+
+    expect(noteAt(plan, '2023-12-17.md')).toContain('Old Town Market Place')
+    expect(plan.lost.find((one) => one.text.includes('mood'))?.values).toEqual({ count: 1 })
+  })
+
   test('an entry with no date anywhere is still a note', async () => {
     const plan = await readJournal([
       file('Entries/whatever.html', '<html><body>Words</body></html>'),

@@ -1301,11 +1301,19 @@ export const gsw: Dictionary = {
     '{count} Abschnitt sind verschlüsslet und ohni Evernote nöd läsbar',
   '{count} notes had a reminder, which the export does not carry':
     '{count} Notize hend en Erinnerig gha, wo im Export nöd drin isch',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} Aahang het im Export gfählt oder isch nöd läsbar gsi',
+    other: '{count} Aahäng händ im Export gfählt oder sind nöd läsbar gsi',
+  },
   '{count} notes were in the bin and stay there':
     '{count} Notize sind im Papierchorb und bliibed det',
   '{count} archived notes are in a folder called Archive':
     '{count} archivierti Notize sind imene Ordner namens Archive',
   'The colours a note had are not kept': 'D Farbe vo de Notize werded nöd übernoh',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} Datei het mer nöd chöne läse, si bliibt dusse',
+    other: '{count} Dateie het mer nöd chöne läse, si bliibed dusse',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} Blockverwiis sind as de Text gschribe worde, wo si zeigt hend',
   '{count} saved views are left out, and every row is in the table': {
@@ -1333,6 +1341,8 @@ export const gsw: Dictionary = {
     '{count} Stimmigs- und Aktivitätscharte sind Zeichnige: nur ihri Wort chömed mit',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} Notize sind hinder eme Passwort, wo nur Notize ufmacht',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} Notize sind hinder eme Passwort, wo nur Bear ufmacht',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} Notize sind i Zletscht glöscht und bliibed det',
   '{count} drawings and scans have no picture on this Mac':

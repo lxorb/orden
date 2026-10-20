@@ -1283,11 +1283,15 @@ export const ko: Dictionary = {
     '{count}개 구절이 암호화되어 Evernote 없이는 읽을 수 없습니다',
   '{count} notes had a reminder, which the export does not carry':
     '{count}개 노트에 알림이 있었지만 내보내기에는 담기지 않습니다',
+  '{count} attachments were missing from the export or could not be read':
+    '첨부 파일 {count}개가 내보내기에 없거나 읽을 수 없었습니다',
   '{count} notes were in the bin and stay there':
     '{count}개 노트가 휴지통에 있었고 그대로 남습니다',
   '{count} archived notes are in a folder called Archive':
     '보관된 {count}개 노트가 Archive 폴더에 있습니다',
   'The colours a note had are not kept': '노트에 있던 색은 보관되지 않습니다',
+  '{count} files could not be read, so they were left out':
+    '읽을 수 없는 파일 {count}개는 빠졌습니다',
   '{count} block references were written out as the words they pointed at':
     '{count}개 블록 참조가 가리키던 글로 풀어 써졌습니다',
   '{count} saved views are left out, and every row is in the table':
@@ -1312,6 +1316,8 @@ export const ko: Dictionary = {
     '기분과 활동 카드 {count}개가 그림이라 글만 넘어옵니다',
   '{count} notes are behind a password, which nothing but Notes can open':
     '노트 {count}개가 메모만 열 수 있는 암호 뒤에 있습니다',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '노트 {count}개가 Bear만 열 수 있는 암호 뒤에 있습니다',
   '{count} notes are in Recently Deleted, and stay there':
     '노트 {count}개가 최근 삭제된 항목에 있고 그대로 남습니다',
   '{count} drawings and scans have no picture on this Mac':

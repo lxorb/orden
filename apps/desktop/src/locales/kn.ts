@@ -1305,11 +1305,19 @@ export const kn: Dictionary = {
     '{count} ಭಾಗಗಳು ಎನ್‌ಕ್ರಿಪ್ಟ್ ಆಗಿವೆ, Evernote ಇಲ್ಲದೆ ಅವನ್ನು ಯಾವುದೂ ಓದಲಾಗದು',
   '{count} notes had a reminder, which the export does not carry':
     '{count} ಟಿಪ್ಪಣಿಗಳಿಗೆ ಜ್ಞಾಪನೆ ಇತ್ತು, ಎಕ್ಸ್‌ಪೋರ್ಟ್ ಅದನ್ನು ತರುವುದಿಲ್ಲ',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} ಲಗತ್ತುಗಳು ರಫ್ತಿನಲ್ಲಿ ಇರಲಿಲ್ಲ ಅಥವಾ ಓದಲಾಗಲಿಲ್ಲ',
+    other: '{count} ಲಗತ್ತುಗಳು ರಫ್ತಿನಲ್ಲಿ ಇರಲಿಲ್ಲ ಅಥವಾ ಓದಲಾಗಲಿಲ್ಲ',
+  },
   '{count} notes were in the bin and stay there':
     '{count} ಟಿಪ್ಪಣಿಗಳು ಕಸದಬುಟ್ಟಿಯಲ್ಲಿದ್ದವು, ಅಲ್ಲೇ ಇರುತ್ತವೆ',
   '{count} archived notes are in a folder called Archive':
     '{count} ಆರ್ಕೈವ್ ಟಿಪ್ಪಣಿಗಳು Archive ಫೋಲ್ಡರ್‌ನಲ್ಲಿವೆ',
   'The colours a note had are not kept': 'ಟಿಪ್ಪಣಿಗೆ ಇದ್ದ ಬಣ್ಣಗಳನ್ನು ಇಡಲಾಗುವುದಿಲ್ಲ',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} ಫೈಲ್‌ಗಳನ್ನು ಓದಲಾಗಲಿಲ್ಲ, ಆದ್ದರಿಂದ ಬಿಡಲಾಗಿದೆ',
+    other: '{count} ಫೈಲ್‌ಗಳನ್ನು ಓದಲಾಗಲಿಲ್ಲ, ಆದ್ದರಿಂದ ಬಿಡಲಾಗಿದೆ',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} ಬ್ಲಾಕ್ ಉಲ್ಲೇಖಗಳನ್ನು ಅವು ತೋರಿಸಿದ ಪದಗಳಾಗಿಯೇ ಬರೆಯಲಾಗಿದೆ',
   '{count} saved views are left out, and every row is in the table': {
@@ -1337,6 +1345,8 @@ export const kn: Dictionary = {
     '{count} ಮನಃಸ್ಥಿತಿ ಮತ್ತು ಚಟುವಟಿಕೆ ಕಾರ್ಡುಗಳು ಚಿತ್ರಗಳು, ಹಾಗಾಗಿ ಅವುಗಳ ಪದಗಳಷ್ಟೇ ಬರುತ್ತವೆ',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} ಟಿಪ್ಪಣಿಗಳು ಪಾಸ್‌ವರ್ಡ್ ಹಿಂದಿವೆ, ಅದನ್ನು Notes ಮಾತ್ರ ತೆರೆಯಬಲ್ಲದು',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} ಟಿಪ್ಪಣಿಗಳು ಪಾಸ್‌ವರ್ಡ್ ಹಿಂದಿವೆ, ಅದನ್ನು Bear ಮಾತ್ರ ತೆರೆಯಬಲ್ಲದು',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} ಟಿಪ್ಪಣಿಗಳು ಇತ್ತೀಚೆಗೆ ಅಳಿಸಿದವುಗಳಲ್ಲಿವೆ, ಅಲ್ಲೇ ಉಳಿಯುತ್ತವೆ',
   '{count} drawings and scans have no picture on this Mac':

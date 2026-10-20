@@ -1311,11 +1311,19 @@ export const ml: Dictionary = {
     '{count} ഭാഗങ്ങൾ എൻക്രിപ്റ്റ് ചെയ്തിരിക്കുന്നു, Evernote ഇല്ലാതെ അവ വായിക്കാൻ ഒന്നിനുമാകില്ല',
   '{count} notes had a reminder, which the export does not carry':
     '{count} കുറിപ്പുകൾക്ക് റിമൈൻഡർ ഉണ്ടായിരുന്നു, എക്സ്പോർട്ട് അത് കൊണ്ടുവരില്ല',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} അറ്റാച്ച്മെന്റുകൾ എക്സ്പോർട്ടിൽ ഇല്ലായിരുന്നു, അല്ലെങ്കിൽ വായിക്കാനായില്ല',
+    other: '{count} അറ്റാച്ച്മെന്റുകൾ എക്സ്പോർട്ടിൽ ഇല്ലായിരുന്നു, അല്ലെങ്കിൽ വായിക്കാനായില്ല',
+  },
   '{count} notes were in the bin and stay there':
     '{count} കുറിപ്പുകൾ ചവറ്റുകുട്ടയിലായിരുന്നു, അവിടെത്തന്നെ നിൽക്കും',
   '{count} archived notes are in a folder called Archive':
     '{count} ആർക്കൈവ് കുറിപ്പുകൾ Archive ഫോൾഡറിലാണ്',
   'The colours a note had are not kept': 'കുറിപ്പിനുണ്ടായിരുന്ന നിറങ്ങൾ സൂക്ഷിക്കില്ല',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} ഫയലുകൾ വായിക്കാനായില്ല, അതിനാൽ ഒഴിവാക്കി',
+    other: '{count} ഫയലുകൾ വായിക്കാനായില്ല, അതിനാൽ ഒഴിവാക്കി',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} ബ്ലോക്ക് റഫറൻസുകൾ അവ ചൂണ്ടിയ വാക്കുകളായി എഴുതി',
   '{count} saved views are left out, and every row is in the table': {
@@ -1343,6 +1351,8 @@ export const ml: Dictionary = {
     '{count} മനോഭാവ, പ്രവൃത്തി കാർഡുകൾ വരകളാണ്, അതിനാൽ അവയുടെ വാക്കുകൾ മാത്രം വരും',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} കുറിപ്പുകൾ പാസ്‌വേഡിനു പിന്നിലാണ്, അത് Notes മാത്രം തുറക്കും',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} കുറിപ്പുകൾ പാസ്‌വേഡിനു പിന്നിലാണ്, അത് Bear മാത്രം തുറക്കും',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} കുറിപ്പുകൾ അടുത്തിടെ മായ്ച്ചവയിലാണ്, അവിടെത്തന്നെ നിൽക്കും',
   '{count} drawings and scans have no picture on this Mac':

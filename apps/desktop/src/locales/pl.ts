@@ -1342,10 +1342,22 @@ export const pl: Dictionary = {
     'Zaszyfrowanych fragmentów: {count} - nic ich nie przeczyta bez Evernote',
   '{count} notes had a reminder, which the export does not carry':
     'Notatek z przypomnieniem: {count} - eksport go nie przenosi',
+  '{count} attachments were missing from the export or could not be read': {
+    few: 'Brakujących lub nieczytelnych załączników w eksporcie: {count}',
+    many: 'Brakujących lub nieczytelnych załączników w eksporcie: {count}',
+    one: 'Brakujących lub nieczytelnych załączników w eksporcie: {count}',
+    other: 'Brakujących lub nieczytelnych załączników w eksporcie: {count}',
+  },
   '{count} notes were in the bin and stay there': 'Notatek w koszu: {count} - tam zostają',
   '{count} archived notes are in a folder called Archive':
     'Zarchiwizowanych notatek: {count} - są w folderze Archive',
   'The colours a note had are not kept': 'Kolory notatki nie zostają zachowane',
+  '{count} files could not be read, so they were left out': {
+    few: 'Nie udało się odczytać {count} plików, więc je pominięto',
+    many: 'Nie udało się odczytać {count} plików, więc je pominięto',
+    one: 'Nie udało się odczytać {count} pliku, więc go pominięto',
+    other: 'Nie udało się odczytać {count} pliku, więc je pominięto',
+  },
   '{count} block references were written out as the words they pointed at':
     'Odwołań do bloków: {count} - zapisano je jako tekst, na który wskazywały',
   '{count} saved views are left out, and every row is in the table': {
@@ -1380,6 +1392,8 @@ export const pl: Dictionary = {
     'Kart nastroju i aktywności będących rysunkami: {count} - przenoszą się tylko słowa',
   '{count} notes are behind a password, which nothing but Notes can open':
     'Notatek za hasłem, które otwiera tylko Notatki: {count}',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    'Notatek za hasłem, które otwiera tylko Bear: {count}',
   '{count} notes are in Recently Deleted, and stay there':
     'Notatek w Ostatnio usuniętych, które tam zostają: {count}',
   '{count} drawings and scans have no picture on this Mac':

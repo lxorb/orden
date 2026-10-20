@@ -1290,11 +1290,15 @@ export const ja: Dictionary = {
     '{count} 件の本文は暗号化されており、Evernote なしでは読めません',
   '{count} notes had a reminder, which the export does not carry':
     '{count} 件のノートにリマインダーがありましたが、書き出しには含まれていません',
+  '{count} attachments were missing from the export or could not be read':
+    '{count} 件の添付ファイルがエクスポートになかったか、読み取れませんでした',
   '{count} notes were in the bin and stay there':
     '{count} 件のノートはゴミ箱にあり、そのままにします',
   '{count} archived notes are in a folder called Archive':
     'アーカイブ済みの {count} 件は Archive フォルダーに入ります',
   'The colours a note had are not kept': 'ノートの色は引き継がれません',
+  '{count} files could not be read, so they were left out':
+    '読み込めなかったファイル {count} 件は省きました',
   '{count} block references were written out as the words they pointed at':
     '{count} 件のブロック参照は、参照先の文に置き換えました',
   '{count} saved views are left out, and every row is in the table':
@@ -1319,6 +1323,8 @@ export const ja: Dictionary = {
     '{count} 件の気分とアクティビティのカードは絵なので、文字だけが入ります',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} 件のメモはパスワードで保護され、メモ以外では開けません',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} 件のメモはパスワードで保護され、Bear 以外では開けません',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} 件のメモは最近削除した項目にあり、そこに残ります',
   '{count} drawings and scans have no picture on this Mac':

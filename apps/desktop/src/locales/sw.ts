@@ -1307,11 +1307,19 @@ export const sw: Dictionary = {
     'vifungu {count} vimesimbwa, na hakuna kinachoweza kuvisoma bila Evernote',
   '{count} notes had a reminder, which the export does not carry':
     'madokezo {count} yalikuwa na kikumbusho, ambacho utoaji hauchukui',
+  '{count} attachments were missing from the export or could not be read': {
+    one: 'viambatisho {count} havikuwa kwenye uhamishaji au havikuweza kusomwa',
+    other: 'viambatisho {count} havikuwa kwenye uhamishaji au havikuweza kusomwa',
+  },
   '{count} notes were in the bin and stay there':
     'madokezo {count} yalikuwa kwenye pipa na yanasalia hapo',
   '{count} archived notes are in a folder called Archive':
     'madokezo {count} yaliyowekwa kumbukumbu yapo kwenye folda inayoitwa Archive',
   'The colours a note had are not kept': 'Rangi ambazo dokezo lilikuwa nazo hazihifadhiwi',
+  '{count} files could not be read, so they were left out': {
+    one: 'Faili {count} hazikuweza kusomwa, kwa hivyo ziliachwa',
+    other: 'Faili {count} hazikuweza kusomwa, kwa hivyo ziliachwa',
+  },
   '{count} block references were written out as the words they pointed at':
     'marejeleo ya vizuizi {count} yaliandikwa kama maneno waliyoelekeza',
   '{count} saved views are left out, and every row is in the table': {
@@ -1340,6 +1348,8 @@ export const sw: Dictionary = {
     'Kadi {count} za hisia na shughuli ni michoro, kwa hivyo maneno yao pekee huvuka',
   '{count} notes are behind a password, which nothing but Notes can open':
     'Madokezo {count} yako nyuma ya nenosiri ambalo Notes pekee huweza kufungua',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    'Madokezo {count} yako nyuma ya nenosiri ambalo Bear pekee huweza kufungua',
   '{count} notes are in Recently Deleted, and stay there':
     'Madokezo {count} yako katika Vilivyofutwa hivi karibuni na yanasalia huko',
   '{count} drawings and scans have no picture on this Mac':

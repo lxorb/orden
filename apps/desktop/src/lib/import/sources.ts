@@ -40,7 +40,7 @@ const MOST_BYTES = 512 * 1024 * 1024
 export function sourceOf(path: string, bytes: Uint8Array): Source {
   return {
     path: tidyPath(path),
-    text: () => Promise.resolve(new TextDecoder().decode(bytes)),
+    text: () => Promise.resolve(decoded(bytes)),
     bytes: () => Promise.resolve(bytes),
   }
 }
@@ -210,7 +210,7 @@ function lazily(path: string, read: () => Promise<Uint8Array>): Source {
 
   return {
     path,
-    text: async () => new TextDecoder().decode(await once()),
+    text: async () => decoded(await once()),
     bytes: once,
   }
 }
@@ -239,6 +239,23 @@ function isZip(path: string, bytes: Uint8Array): boolean {
  *  write in front of everything taken off. */
 export function tidyPath(path: string): string {
   return path.replace(/\\/g, '/').replace(/^\.\//, '').replace(/^\/+/, '')
+}
+
+/** A file's bytes as text, in whichever encoding it was saved in. UTF-8 is what
+ *  nearly everything writes, and is read first. A file that is not UTF-8 is older
+ *  than that or came out of Windows: Excel's plain "CSV" and a note Notepad saved
+ *  are in the system's code page, Windows-1252 in the West, where `Café` read as
+ *  UTF-8 arrives as `Caf\uFFFD`; and Excel's "Unicode text" is UTF-16 behind its
+ *  byte order mark. Bytes that are not UTF-8 are read as 1252, which every byte is
+ *  something in. */
+function decoded(bytes: Uint8Array): string {
+  if (bytes[0] === 0xff && bytes[1] === 0xfe) return new TextDecoder('utf-16le').decode(bytes)
+  if (bytes[0] === 0xfe && bytes[1] === 0xff) return new TextDecoder('utf-16be').decode(bytes)
+  try {
+    return new TextDecoder('utf-8', { fatal: true }).decode(bytes)
+  } catch {
+    return new TextDecoder('windows-1252').decode(bytes)
+  }
 }
 
 /** Whether a set of files is more than this can hold. */

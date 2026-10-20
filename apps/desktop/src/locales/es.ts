@@ -1320,11 +1320,21 @@ export const es: Dictionary = {
     '{count} pasajes están cifrados y nada puede leerlos sin Evernote',
   '{count} notes had a reminder, which the export does not carry':
     '{count} notas tenían un recordatorio, que la exportación no trae',
+  '{count} attachments were missing from the export or could not be read': {
+    many: '{count} adjuntos faltaban en la exportación o no se pudieron leer',
+    one: '{count} adjunto faltaba en la exportación o no se pudo leer',
+    other: '{count} adjuntos faltaban en la exportación o no se pudieron leer',
+  },
   '{count} notes were in the bin and stay there':
     '{count} notas estaban en la papelera y ahí se quedan',
   '{count} archived notes are in a folder called Archive':
     '{count} notas archivadas están en una carpeta llamada Archive',
   'The colours a note had are not kept': 'Los colores que tenía una nota no se conservan',
+  '{count} files could not be read, so they were left out': {
+    many: '{count} archivos no se pudieron leer, así que se dejaron fuera',
+    one: '{count} archivo no se pudo leer, así que se dejó fuera',
+    other: '{count} archivos no se pudieron leer, así que se dejaron fuera',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} referencias de bloque se escribieron como las palabras a las que apuntaban',
   '{count} saved views are left out, and every row is in the table': {
@@ -1353,6 +1363,8 @@ export const es: Dictionary = {
     '{count} tarjetas de ánimo y actividad son dibujos, así que solo pasan sus palabras',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} notas están tras una contraseña que solo Notas puede abrir',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} notas están tras una contraseña que solo Bear puede abrir',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} notas están en Eliminados recientemente y ahí se quedan',
   '{count} drawings and scans have no picture on this Mac':

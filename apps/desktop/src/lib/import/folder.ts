@@ -15,6 +15,9 @@ import type { FormatId, ImportPlan, Lost, Planned } from './plan'
 import { canvasFollowed, ExportFiles, isCanvas, rewriteLinks } from './rewrite'
 import type { Source } from './sources'
 
+// Asked by read.ts before any reader is loaded, so it lives with the names.
+export { isJunk } from './names'
+
 /** What a note's file says, once the format has had a look at it. */
 interface Written {
   text: string
@@ -107,20 +110,4 @@ export function isNoteFile(path: string): boolean {
  *  program's business, which the space's file list and sync leave out as well. */
 export function isHidden(path: string): boolean {
   return path.split('/').some((part) => part.startsWith('.'))
-}
-
-/** Files no export meant to hand over: a folder's own metadata, the rubbish two
- *  desktops leave in every folder they touch. `Icon\r` is where Finder keeps a
- *  folder's own icon, named with a character Windows cannot write. */
-export function isJunk(path: string): boolean {
-  const name = path.split('/').pop() ?? path
-  return (
-    name === '.DS_Store' ||
-    name === 'Thumbs.db' ||
-    name === 'desktop.ini' ||
-    name === 'Icon\r' ||
-    name.startsWith('._') ||
-    path.startsWith('__MACOSX/') ||
-    path.includes('/__MACOSX/')
-  )
 }

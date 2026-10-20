@@ -1322,10 +1322,20 @@ export const ptPT: Dictionary = {
     '{count} passagens estão cifradas e nada as lê sem o Evernote',
   '{count} notes had a reminder, which the export does not carry':
     '{count} notas tinham um lembrete, que a exportação não traz',
+  '{count} attachments were missing from the export or could not be read': {
+    many: '{count} anexos faltavam na exportação ou não puderam ser lidos',
+    one: '{count} anexo faltava na exportação ou não pôde ser lido',
+    other: '{count} anexos faltavam na exportação ou não puderam ser lidos',
+  },
   '{count} notes were in the bin and stay there': '{count} notas estavam na reciclagem e lá ficam',
   '{count} archived notes are in a folder called Archive':
     '{count} notas arquivadas estão numa pasta chamada Archive',
   'The colours a note had are not kept': 'As cores que uma nota tinha não ficam',
+  '{count} files could not be read, so they were left out': {
+    many: '{count} ficheiros não puderam ser lidos e ficaram de fora',
+    one: '{count} ficheiro não pôde ser lido e ficou de fora',
+    other: '{count} ficheiros não puderam ser lidos e ficaram de fora',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} referências de bloco foram escritas como as palavras a que apontavam',
   '{count} saved views are left out, and every row is in the table': {
@@ -1359,6 +1369,8 @@ export const ptPT: Dictionary = {
     '{count} cartões de humor e atividade são desenhos, pelo que só as palavras passam',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} notas estão atrás de uma palavra-passe que só o Notas abre',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} notas estão atrás de uma palavra-passe que só o Bear abre',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} notas estão em Eliminados recentemente e lá ficam',
   '{count} drawings and scans have no picture on this Mac':

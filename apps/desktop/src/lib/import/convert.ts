@@ -67,30 +67,66 @@ export function converted(text: string, names: readonly string[] = []): Converte
   }
 }
 
-/** Bear's closed tags, leaving every fenced block exactly as written. */
+/** Bear's closed tags, leaving every block and span of code exactly as written. */
 export function convertTags(text: string): Converted {
-  let fenced = false
   let changes = 0
 
-  const lines = text.split('\n').map((line) => {
-    if (/^\s*(```|~~~)/.test(line)) {
-      fenced = !fenced
-      return line
-    }
-
-    if (fenced) return line
-
-    return line.replace(CLOSED_TAG, (whole, before: string, inside: string) => {
+  const said = outsideCode(text, (words) =>
+    words.replace(CLOSED_TAG, (whole, before: string, inside: string) => {
       const name = tagFrom(inside)
       // A pair of hashes around something that is not a name is words.
       if (!name) return whole
 
       changes += 1
       return `${before}#${name}`
-    })
-  })
+    }),
+  )
 
-  return { text: lines.join('\n'), changes }
+  return { text: said, changes }
+}
+
+/** The line that opens a fence: three or more backticks or tildes. */
+const FENCE_OPENS = /^\s*(`{3,}|~{3,})/
+
+/** A span of code on one line: a run of backticks, and the same run closing it. */
+const CODE_SPAN = /(`+)(?:[^`]|`(?!\1))*?\1(?!`)/g
+
+/** `change` done to every stretch of a note that is not code: a fence is closed
+ *  only by a run of its own character at least as long, so a `~~~` inside a
+ *  backtick fence is still code, and a span of code inside a line is left as
+ *  written too, since `#include` or `~/path~` between backticks is an example. */
+export function outsideCode(text: string, change: (words: string) => string): string {
+  let fence: string | null = null
+
+  return text
+    .split('\n')
+    .map((line) => {
+      const mark = FENCE_OPENS.exec(line)?.[1]
+
+      if (fence !== null) {
+        const closes =
+          mark !== undefined &&
+          mark.startsWith(fence.charAt(0)) &&
+          mark.length >= fence.length &&
+          line.trim() === mark
+        if (closes) fence = null
+        return line
+      }
+
+      if (mark !== undefined) {
+        fence = mark
+        return line
+      }
+
+      let out = ''
+      let at = 0
+      for (const span of line.matchAll(CODE_SPAN)) {
+        out += change(line.slice(at, span.index)) + span[0]
+        at = span.index + span[0].length
+      }
+      return out + change(line.slice(at))
+    })
+    .join('\n')
 }
 
 /** A tag out of what Bear allowed inside one: no spaces, no punctuation on the

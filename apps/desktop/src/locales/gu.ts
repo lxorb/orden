@@ -1293,10 +1293,18 @@ export const gu: Dictionary = {
     '{count} ભાગ એન્ક્રિપ્ટ થયેલા છે, અને Evernote વિના તે કોઈ વાંચી શકતું નથી',
   '{count} notes had a reminder, which the export does not carry':
     '{count} નોંધમાં યાદ હતું, જે નિકાસ લઈ જતો નથી',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} જોડાણો એક્સપોર્ટમાં ન હતાં અથવા વાંચી શકાયાં નહીં',
+    other: '{count} જોડાણો એક્સપોર્ટમાં ન હતાં અથવા વાંચી શકાયાં નહીં',
+  },
   '{count} notes were in the bin and stay there': '{count} નોંધ કચરાપેટીમાં હતી અને ત્યાં રહે છે',
   '{count} archived notes are in a folder called Archive':
     '{count} સંગ્રહેલી નોંધ Archive નામના ફોલ્ડરમાં છે',
   'The colours a note had are not kept': 'નોંધ પાસે જે રંગ હતા તે રખાતા નથી',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} ફાઇલો વાંચી શકાઈ નહીં, તેથી છોડી દેવાઈ',
+    other: '{count} ફાઇલો વાંચી શકાઈ નહીં, તેથી છોડી દેવાઈ',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} બ્લૉક સંદર્ભ તે જે શબ્દો તાકતા હતા તે રીતે લખાયા',
   '{count} saved views are left out, and every row is in the table': {
@@ -1323,6 +1331,8 @@ export const gu: Dictionary = {
     '{count} મનોભાવ અને પ્રવૃત્તિ કાર્ડ ચિત્રો છે, તેથી ફક્ત તેમના શબ્દો આવે છે',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} નોંધ પાસવર્ડ પાછળ છે, જે ફક્ત Notes ખોલી શકે',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} નોંધ પાસવર્ડ પાછળ છે, જે ફક્ત Bear ખોલી શકે',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} નોંધ હાલમાં કાઢેલામાં છે અને ત્યાં જ રહે છે',
   '{count} drawings and scans have no picture on this Mac':

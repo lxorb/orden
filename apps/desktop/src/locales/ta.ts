@@ -1310,11 +1310,19 @@ export const ta: Dictionary = {
     '{count} பகுதிகள் மறையாக்கம் செய்யப்பட்டுள்ளன, Evernote இல்லாமல் எதுவும் அவற்றைப் படிக்க முடியாது',
   '{count} notes had a reminder, which the export does not carry':
     '{count} குறிப்புகளில் நினைவூட்டல் இருந்தது, ஏற்றுமதி அதைக் கொண்டுவராது',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} இணைப்புகள் ஏற்றுமதியில் இல்லை அல்லது படிக்க முடியவில்லை',
+    other: '{count} இணைப்புகள் ஏற்றுமதியில் இல்லை அல்லது படிக்க முடியவில்லை',
+  },
   '{count} notes were in the bin and stay there':
     '{count} குறிப்புகள் குப்பையில் இருந்தன, அங்கேயே இருக்கும்',
   '{count} archived notes are in a folder called Archive':
     '{count} காப்பகக் குறிப்புகள் Archive எனும் கோப்புறையில் உள்ளன',
   'The colours a note had are not kept': 'குறிப்புக்கு இருந்த நிறங்கள் வைக்கப்படவில்லை',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} கோப்புகளைப் படிக்க முடியவில்லை, எனவே விடப்பட்டன',
+    other: '{count} கோப்புகளைப் படிக்க முடியவில்லை, எனவே விடப்பட்டன',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} தொகுதிச் சுட்டுகள் அவை சுட்டிய சொற்களாகவே எழுதப்பட்டன',
   '{count} saved views are left out, and every row is in the table': {
@@ -1342,6 +1350,8 @@ export const ta: Dictionary = {
     '{count} மனநிலை மற்றும் செயல் அட்டைகள் வரைபடங்கள், எனவே அவற்றின் சொற்கள் மட்டுமே வரும்',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} குறிப்புகள் கடவுச்சொல்லுக்குப் பின் உள்ளன, அதை Notes மட்டுமே திறக்கும்',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} குறிப்புகள் கடவுச்சொல்லுக்குப் பின் உள்ளன, அதை Bear மட்டுமே திறக்கும்',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} குறிப்புகள் சமீபத்தில் நீக்கியவற்றில் உள்ளன, அங்கேயே இருக்கும்',
   '{count} drawings and scans have no picture on this Mac':

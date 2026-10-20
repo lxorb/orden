@@ -1326,10 +1326,20 @@ export const it: Dictionary = {
     '{count} passaggi sono cifrati e nulla può leggerli senza Evernote',
   '{count} notes had a reminder, which the export does not carry':
     '{count} note avevano un promemoria, che l’esportazione non porta',
+  '{count} attachments were missing from the export or could not be read': {
+    many: '{count} allegati mancavano nell’esportazione o non erano leggibili',
+    one: '{count} allegato mancava nell’esportazione o non era leggibile',
+    other: '{count} allegati mancavano nell’esportazione o non erano leggibili',
+  },
   '{count} notes were in the bin and stay there': '{count} note erano nel cestino e lì restano',
   '{count} archived notes are in a folder called Archive':
     '{count} note archiviate sono in una cartella chiamata Archive',
   'The colours a note had are not kept': 'I colori di una nota non vengono mantenuti',
+  '{count} files could not be read, so they were left out': {
+    many: '{count} file non si sono potuti leggere e sono stati lasciati fuori',
+    one: '{count} file non si è potuto leggere ed è stato lasciato fuori',
+    other: '{count} file non si sono potuti leggere e sono stati lasciati fuori',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} riferimenti a blocchi sono stati scritti come il testo a cui puntavano',
   '{count} saved views are left out, and every row is in the table': {
@@ -1359,6 +1369,8 @@ export const it: Dictionary = {
     '{count} schede di umore e attività sono disegni, quindi passano solo le parole',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} note sono dietro una password che solo Note può aprire',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} note sono dietro una password che solo Bear può aprire',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} note sono in Eliminati di recente e lì restano',
   '{count} drawings and scans have no picture on this Mac':

@@ -85,6 +85,31 @@ describe("Apple Notes off the Mac's own database", () => {
     expect(note).toContain('![](../assets/photo.png)')
   })
 
+  /** The crate encodes what a title may hold and a link may not, so `Re: lunch` is
+   *  not read as an address in a scheme called `Re`. */
+  test('a link to a note whose title has a colon in it still finds it', async () => {
+    const plan = await planFor({
+      ...read(),
+      notes: [
+        {
+          ...read().notes[0]!,
+          path: 'Work/Re: lunch #2.md',
+          title: 'Re: lunch #2',
+          text: '# Re: lunch #2\n',
+        },
+        {
+          ...read().notes[0]!,
+          path: 'Links.md',
+          title: 'Links',
+          text: '# Links\n\n[Re: lunch #2](Work/Re%3A%20lunch%20%232.md)\n',
+        },
+      ],
+    })
+
+    const note = noteAt(plan, 'Links.md')
+    expect(note).toContain('[[Re lunch #2|Re: lunch #2]]')
+  })
+
   test('says what Notes keeps to itself, with the counts', async () => {
     const said = (await planFor(read())).lost.map((one) => one.text)
 

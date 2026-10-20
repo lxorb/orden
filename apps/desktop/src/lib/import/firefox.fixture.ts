@@ -3,7 +3,7 @@
  *  container and a saved group, and the bookmark tree its daily backup holds. Shaped
  *  after Firefox's SessionStore.sys.mjs and PlacesBackups.sys.mjs. */
 
-const page = (url: string, title: string) => ({ entries: [{ url, title }], index: 1 })
+export const page = (url: string, title: string) => ({ entries: [{ url, title }], index: 1 })
 
 export const SESSION = {
   version: ['sessionrestore', 1],

@@ -1301,10 +1301,18 @@ export const tr: Dictionary = {
     '{count} bölüm şifreli ve Evernote olmadan hiçbir şey okuyamaz',
   '{count} notes had a reminder, which the export does not carry':
     '{count} notta anımsatıcı vardı, dışa aktarma onu taşımıyor',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} ek dışa aktarımda yoktu ya da okunamadı',
+    other: '{count} ek dışa aktarımda yoktu ya da okunamadı',
+  },
   '{count} notes were in the bin and stay there': '{count} not çöp kutusundaydı ve orada kalıyor',
   '{count} archived notes are in a folder called Archive':
     '{count} arşivlenmiş not Archive adlı bir klasörde',
   'The colours a note had are not kept': 'Bir notun renkleri korunmaz',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} dosya okunamadı, bu yüzden dışarıda kaldı',
+    other: '{count} dosya okunamadı, bu yüzden dışarıda kaldı',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} blok göndermesi, işaret ettikleri sözcükler olarak yazıldı',
   '{count} saved views are left out, and every row is in the table': {
@@ -1333,6 +1341,8 @@ export const tr: Dictionary = {
     '{count} ruh hâli ve etkinlik kartı çizimdir, bu yüzden yalnızca sözcükleri geçer',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} not, yalnızca Notlar’ın açabildiği bir parolanın ardındadır',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} not, yalnızca Bear’ın açabildiği bir parolanın ardındadır',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} not Son Silinenler’dedir ve orada kalır',
   '{count} drawings and scans have no picture on this Mac':

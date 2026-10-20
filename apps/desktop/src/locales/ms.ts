@@ -1292,11 +1292,15 @@ export const ms: Dictionary = {
     '{count} bahagian tersulit dan tiada apa-apa boleh membacanya tanpa Evernote',
   '{count} notes had a reminder, which the export does not carry':
     '{count} nota mempunyai peringatan, yang tidak dibawa oleh eksport',
+  '{count} attachments were missing from the export or could not be read':
+    '{count} lampiran tiada dalam eksport atau tidak dapat dibaca',
   '{count} notes were in the bin and stay there':
     '{count} nota ada dalam tong sampah dan kekal di sana',
   '{count} archived notes are in a folder called Archive':
     '{count} nota terarkib ada dalam folder bernama Archive',
   'The colours a note had are not kept': 'Warna yang ada pada nota tidak disimpan',
+  '{count} files could not be read, so they were left out':
+    '{count} fail tidak dapat dibaca, jadi ditinggalkan',
   '{count} block references were written out as the words they pointed at':
     '{count} rujukan blok ditulis sebagai perkataan yang dirujuknya',
   '{count} saved views are left out, and every row is in the table':
@@ -1322,6 +1326,8 @@ export const ms: Dictionary = {
     '{count} kad suasana dan aktiviti ialah lukisan, jadi hanya perkataannya sampai',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} nota berada di sebalik kata laluan yang hanya Notes boleh buka',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} nota berada di sebalik kata laluan yang hanya Bear boleh buka',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} nota berada dalam Baru dihapuskan dan kekal di sana',
   '{count} drawings and scans have no picture on this Mac':

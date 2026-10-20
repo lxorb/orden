@@ -51,6 +51,28 @@ describe("Zen's spaces as nib's", () => {
     expect(later).toEqual({ kind: 'note', path: 'Later.md', text: '' })
   })
 
+  test('names an empty folder apart from a folder of the same name', () => {
+    const read = session()
+    const work = read.spaces.find((one) => one.name === 'Work')?.id ?? null
+    const folder = (id: string, name: string) => ({
+      id,
+      name,
+      icon: null,
+      parent: null,
+      space: work,
+      split: false,
+    })
+    const named = {
+      ...read,
+      folders: [folder('f-empty', 'Docs'), ...read.folders, folder('f-empty-2', 'Docs')],
+    }
+    const paths = zenImport(named, NOW).spaces[1]?.files.map((one) => one.path)
+    expect(paths).toContain('Docs/The guide.url')
+    expect(paths).not.toContain('Docs.md')
+    expect(paths).toContain('Docs 2.md')
+    expect(paths).toContain('Docs 3.md')
+  })
+
   test('makes each tab a web note: its page, where it was pinned, its mark as a picture', () => {
     const [home, work] = spaces()
     const news = home?.files.find((one) => one.path === 'News today.url')

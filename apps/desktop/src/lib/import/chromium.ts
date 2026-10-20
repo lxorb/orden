@@ -12,6 +12,9 @@
  *    bookmarks and the phone's - and they come as Firefox's do: a folder called
  *    Bookmarks after everything else, a folder for each root that holds any, every
  *    folder in them a folder and each bookmark a web note kept on the day it was made.
+ *    A profile signed in to its Google account keeps the account's bookmarks apart, in
+ *    `AccountBookmarks`, of the same three roots; Chromium shows each root's two
+ *    together, the account's first, and so do these.
  *
  *  A group closed and saved is kept in the profile's sync database rather than in its
  *  session, and does not come. A session written encrypted cannot be read at all, and
@@ -31,18 +34,26 @@ const ROOTS: [string, keyof FolderWords][] = [
   ['synced', 'mobile'],
 ]
 
-/** A profile as one space named `name`: its open tabs and groups, then its bookmarks.
- *  Either may be null, for a file that was not there or did not read. */
+/** A profile as one space named `name`: its open tabs and groups, then its bookmarks,
+ *  the account's with them. Any may be null, for a file that was not there or did not
+ *  read. */
 export function chromiumSidebar(
   session: SnssSession | null,
   bookmarks: unknown,
   name: string,
   words: FolderWords,
+  account: unknown = null,
 ): Sidebar {
   const made = new Made()
   if (session) readWindows(session, made, words)
-  if (isObject(bookmarks) && isObject(bookmarks.roots)) readBookmarks(bookmarks.roots, made, words)
+  readBookmarks([rootsOf(account, 'account:'), rootsOf(bookmarks, '')], made, words)
   return made.sidebar(name)
+}
+
+/** A bookmarks file's roots, and what its folders' ids are told apart from another
+ *  file's by. */
+function rootsOf(file: unknown, prefix: string): { roots: Said; prefix: string } | null {
+  return isObject(file) && isObject(file.roots) ? { roots: file.roots, prefix } : null
 }
 
 function readWindows(session: SnssSession, made: Made, words: FolderWords) {
@@ -68,21 +79,34 @@ function readWindows(session: SnssSession, made: Made, words: FolderWords) {
 
 /** Each root that holds a bookmark a folder in Bookmarks, under the reader's name for
  *  it: Chromium writes its roots' names in English whatever language it is in. */
-function readBookmarks(roots: Said, made: Made, words: FolderWords) {
+function readBookmarks(
+  files: ({ roots: Said; prefix: string } | null)[],
+  made: Made,
+  words: FolderWords,
+) {
   for (const [key, word] of ROOTS) {
-    const root = roots[key]
-    if (!isObject(root)) continue
-    made.folder('bookmarks', words.bookmarks, null)
-    const id = `bookmark:${key}`
-    made.folder(id, words[word], 'bookmarks')
-    walk(root, id, made, words, 0)
+    for (const file of files) {
+      const root = file?.roots[key]
+      if (!file || !isObject(root)) continue
+      made.folder('bookmarks', words.bookmarks, null)
+      const id = `bookmark:${key}`
+      made.folder(id, words[word], 'bookmarks')
+      walk(root, id, file.prefix, made, words, 0)
+    }
   }
 }
 
 /** Deeper than anybody nests, and a stop for a tree that goes round. */
 const DEEPEST = 64
 
-function walk(folder: Said, id: string, made: Made, words: FolderWords, depth: number) {
+function walk(
+  folder: Said,
+  id: string,
+  prefix: string,
+  made: Made,
+  words: FolderWords,
+  depth: number,
+) {
   if (depth > DEEPEST) return
   list(folder.children).forEach((node, at) => {
     if (node.type === 'url') {
@@ -98,9 +122,9 @@ function walk(folder: Said, id: string, made: Made, words: FolderWords, depth: n
         ...addedOf(node.date_added),
       })
     } else if (node.type === 'folder') {
-      const inner = `bookmark:${text(node.guid) ?? text(node.id) ?? `${id}/${String(at)}`}`
+      const inner = `bookmark:${prefix}${text(node.guid) ?? text(node.id) ?? `${id}/${String(at)}`}`
       made.folder(inner, text(node.name) ?? words.other, id)
-      walk(node, inner, made, words, depth + 1)
+      walk(node, inner, prefix, made, words, depth + 1)
     }
   })
 }

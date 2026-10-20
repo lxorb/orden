@@ -1278,10 +1278,14 @@ export const th: Dictionary = {
     '{count} ช่วงถูกเข้ารหัส อ่านไม่ได้ถ้าไม่มี Evernote',
   '{count} notes had a reminder, which the export does not carry':
     '{count} โน้ตมีการเตือน ซึ่งไฟล์ส่งออกไม่มีมาด้วย',
+  '{count} attachments were missing from the export or could not be read':
+    'ไฟล์แนบ {count} รายการไม่มีในไฟล์ส่งออกหรืออ่านไม่ได้',
   '{count} notes were in the bin and stay there': '{count} โน้ตอยู่ในถังขยะและยังอยู่ที่นั่น',
   '{count} archived notes are in a folder called Archive':
     '{count} โน้ตที่เก็บถาวรอยู่ในโฟลเดอร์ชื่อ Archive',
   'The colours a note had are not kept': 'สีที่โน้ตมีจะไม่ถูกเก็บไว้',
+  '{count} files could not be read, so they were left out':
+    'อ่านไฟล์ {count} ไฟล์ไม่ได้ จึงไม่ได้นำเข้า',
   '{count} block references were written out as the words they pointed at':
     '{count} การอ้างบล็อกถูกเขียนเป็นข้อความที่มันชี้ไป',
   '{count} saved views are left out, and every row is in the table':
@@ -1306,6 +1310,8 @@ export const th: Dictionary = {
     'การ์ดอารมณ์และกิจกรรม {count} ใบเป็นภาพวาด จึงมาแต่ข้อความ',
   '{count} notes are behind a password, which nothing but Notes can open':
     'โน้ต {count} รายการอยู่หลังรหัสผ่านที่มีแต่ Notes เปิดได้',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    'โน้ต {count} รายการอยู่หลังรหัสผ่านที่มีแต่ Bear เปิดได้',
   '{count} notes are in Recently Deleted, and stay there':
     'โน้ต {count} รายการอยู่ในที่ลบเมื่อเร็วๆ นี้ และยังอยู่ที่นั่น',
   '{count} drawings and scans have no picture on this Mac':

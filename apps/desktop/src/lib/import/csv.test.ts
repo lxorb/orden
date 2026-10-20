@@ -41,6 +41,14 @@ describe('reading a CSV', () => {
     expect(delimiterOf('one value\nanother')).toBe(',')
   })
 
+  test('a quote that never closes is a quote, not the rest of the file', () => {
+    expect(readCsv('a,b\n"Hello,1\n2,3\n')).toEqual([
+      ['a', 'b'],
+      ['"Hello', '1'],
+      ['2', '3'],
+    ])
+  })
+
   test('a separator inside quotes is not one', () => {
     expect(delimiterOf('"a;b;c;d",second\n1,2')).toBe(',')
   })
@@ -69,5 +77,32 @@ describe('the rows as records', () => {
 
   test('answers nothing for a file with nothing in it', () => {
     expect(recordsOf('')).toEqual({ columns: [], rows: [] })
+  })
+
+  test('the header is the first row with anything in it', () => {
+    const { columns, rows } = recordsOf('\n;;\nName;Status\nPlan;Done\n')
+
+    expect(columns).toEqual(['Name', 'Status'])
+    expect(rows).toEqual([{ Name: 'Plan', Status: 'Done' }])
+  })
+
+  test('the separator Excel names on a line of its own is the one used', () => {
+    const { columns, rows } = recordsOf('sep=;\nName;Price\nPlan;1,5\n')
+
+    expect(columns).toEqual(['Name', 'Price'])
+    expect(rows).toEqual([{ Name: 'Plan', Price: '1,5' }])
+  })
+
+  test('two columns of one name are both kept', () => {
+    const { columns, rows } = recordsOf('Name,Notes,Notes\nPlan,one,two\n')
+
+    expect(columns).toEqual(['Name', 'Notes', 'Notes 2'])
+    expect(rows[0]).toEqual({ Name: 'Plan', Notes: 'one', 'Notes 2': 'two' })
+  })
+
+  test('a row with more cells than the header puts the rest back into the last', () => {
+    const { rows } = recordsOf('Name,Notes\nPlan,first, then second,\n')
+
+    expect(rows[0]).toEqual({ Name: 'Plan', Notes: 'first, then second' })
   })
 })

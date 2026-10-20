@@ -1271,10 +1271,13 @@ export const zhHantHK: Dictionary = {
     '有{count}段內容已加密，離開Evernote就無法讀取',
   '{count} notes had a reminder, which the export does not carry':
     '{count}篇筆記設有提醒，匯出檔不會帶着提醒',
+  '{count} attachments were missing from the export or could not be read':
+    '有 {count} 個附件不在匯出檔案中或無法讀取',
   '{count} notes were in the bin and stay there': '{count}篇筆記在垃圾桶裏，仍留在那裏',
   '{count} archived notes are in a folder called Archive':
     '{count}篇已歸檔的筆記放在名為Archive的檔案夾中',
   'The colours a note had are not kept': '筆記原有的顏色不會保留',
+  '{count} files could not be read, so they were left out': '{count} 個檔案無法讀取，已略過',
   '{count} block references were written out as the words they pointed at':
     '{count}處區塊引用已寫成它指向的文字',
   '{count} saved views are left out, and every row is in the table':
@@ -1299,6 +1302,8 @@ export const zhHantHK: Dictionary = {
     '{count} 張心情同活動卡片係圖畫，所以只有文字轉入',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} 則筆記加了密碼，只有「備忘錄」開得到',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} 則筆記加了密碼，只有 Bear 開得到',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} 則筆記在「最近刪除」，仍然留在嗰度',
   '{count} drawings and scans have no picture on this Mac':

@@ -1272,10 +1272,13 @@ export const yue: Dictionary = {
     '有{count}段內容已加密，離開Evernote就冇辦法讀取',
   '{count} notes had a reminder, which the export does not carry':
     '{count}篇筆記設有提醒，匯出檔唔會帶着提醒',
+  '{count} attachments were missing from the export or could not be read':
+    '有{count}個附件唔喺匯出檔入面，或者讀唔到',
   '{count} notes were in the bin and stay there': '{count}篇筆記喺垃圾桶入面，仲留喺嗰度',
   '{count} archived notes are in a folder called Archive':
     '{count}篇已歸檔嘅筆記放喺名為Archive嘅檔案夾中',
   'The colours a note had are not kept': '筆記原有嘅顏色唔會保留',
+  '{count} files could not be read, so they were left out': '有 {count} 個檔案讀唔到，所以冇帶過嚟',
   '{count} block references were written out as the words they pointed at':
     '{count}處區塊引用已寫成佢指向嘅文字',
   '{count} saved views are left out, and every row is in the table':
@@ -1300,6 +1303,8 @@ export const yue: Dictionary = {
     '{count} 張心情同活動卡片係圖畫，所以只有文字轉入',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} 則筆記加咗密碼，只有「備忘錄」開得到',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} 則筆記加咗密碼，只有 Bear 開得到',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} 則筆記喺「最近刪除」，仲留喺嗰度',
   '{count} drawings and scans have no picture on this Mac': '{count} 幅圖畫同掃描喺呢部 Mac 冇圖片',

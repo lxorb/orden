@@ -1296,11 +1296,19 @@ export const ps: Dictionary = {
     '{count} برخې رمز شوې دي او بې له Evernote هيڅ يې نه شي لوستلی',
   '{count} notes had a reminder, which the export does not carry':
     '{count} يادښتونه يادونه لرله چې صادره يې نه وړي',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} ضميمې په صادرولو کې نه وې يا ونه لوستل شوې',
+    other: '{count} ضميمې په صادرولو کې نه وې يا ونه لوستل شوې',
+  },
   '{count} notes were in the bin and stay there':
     '{count} يادښتونه په ټوکرۍ کې وو او هلته پاتې کېږي',
   '{count} archived notes are in a folder called Archive':
     '{count} ارشيف شوي يادښتونه په Archive نومي دوتنپوښ کې دي',
   'The colours a note had are not kept': 'هغه رنګونه چې يادښت لرله نه ساتل کېږي',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} دوتنې ونه لوستل شوې، نو پرېښودل شوې',
+    other: '{count} دوتنې ونه لوستل شوې، نو پرېښودل شوې',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} د بلاک حوالې د هغو کلمو په بڼه وليکل شوې چې ورته اشاره کوله',
   '{count} saved views are left out, and every row is in the table': {
@@ -1328,6 +1336,8 @@ export const ps: Dictionary = {
     '{count} د حالت او فعاليت کارتونه انځورونه دي، نو يوازې کلمې يې راځي',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} يادښتونه د پټنوم تر شا دي چې يوازې Notes يې پرانيځي',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} يادښتونه د پټنوم تر شا دي چې يوازې Bear يې پرانيځي',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} يادښتونه په نوی ړنګ شوي کې دي او هلته پاتې کېږي',
   '{count} drawings and scans have no picture on this Mac':

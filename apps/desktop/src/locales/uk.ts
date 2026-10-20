@@ -1343,11 +1343,23 @@ export const uk: Dictionary = {
     'Зашифрованих фрагментів: {count}, без Evernote їх не прочитати',
   '{count} notes had a reminder, which the export does not carry':
     'Нотаток із нагадуванням: {count}, експорт їх не переносить',
+  '{count} attachments were missing from the export or could not be read': {
+    few: 'Вкладень, яких немає в експорті або які не читаються: {count}',
+    many: 'Вкладень, яких немає в експорті або які не читаються: {count}',
+    one: 'Вкладень, яких немає в експорті або які не читаються: {count}',
+    other: 'Вкладень, яких немає в експорті або які не читаються: {count}',
+  },
   '{count} notes were in the bin and stay there':
     'Нотаток у смітнику: {count}, там вони й залишаються',
   '{count} archived notes are in a folder called Archive':
     'Архівних нотаток: {count}, вони в папці Archive',
   'The colours a note had are not kept': 'Кольори нотаток не зберігаються',
+  '{count} files could not be read, so they were left out': {
+    few: 'Не вдалося прочитати {count} файли, їх пропущено',
+    many: 'Не вдалося прочитати {count} файлів, їх пропущено',
+    one: 'Не вдалося прочитати {count} файл, його пропущено',
+    other: 'Не вдалося прочитати {count} файлу, їх пропущено',
+  },
   '{count} block references were written out as the words they pointed at':
     'Посилань на блоки: {count}, вони записані словами, на які вказували',
   '{count} saved views are left out, and every row is in the table': {
@@ -1381,6 +1393,8 @@ export const uk: Dictionary = {
     'Карток настрою та активності, що є малюнками: {count} - переносяться лише слова',
   '{count} notes are behind a password, which nothing but Notes can open':
     'Нотаток під паролем, який відкривають лише Нотатки: {count}',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    'Нотаток під паролем, який відкриває лише Bear: {count}',
   '{count} notes are in Recently Deleted, and stay there':
     'Нотаток у «Нещодавно видалених», які там і залишаються: {count}',
   '{count} drawings and scans have no picture on this Mac':

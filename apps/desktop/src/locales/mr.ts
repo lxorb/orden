@@ -1295,10 +1295,18 @@ export const mr: Dictionary = {
     '{count} उतारे एन्क्रिप्ट केलेले आहेत, आणि Evernote विना ते कोणीच वाचू शकत नाही',
   '{count} notes had a reminder, which the export does not carry':
     '{count} नोंदींना स्मरणपत्र होते, जे एक्सपोर्टमध्ये येत नाही',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} संलग्नके एक्सपोर्टमध्ये नव्हती किंवा वाचता आली नाहीत',
+    other: '{count} संलग्नके एक्सपोर्टमध्ये नव्हती किंवा वाचता आली नाहीत',
+  },
   '{count} notes were in the bin and stay there': '{count} नोंदी कचऱ्यात होत्या आणि तिथेच राहतात',
   '{count} archived notes are in a folder called Archive':
     '{count} संग्रहित नोंदी Archive नावाच्या फोल्डरमध्ये आहेत',
   'The colours a note had are not kept': 'नोंदीचे रंग ठेवले जात नाहीत',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} फायली वाचता आल्या नाहीत, म्हणून वगळल्या',
+    other: '{count} फायली वाचता आल्या नाहीत, म्हणून वगळल्या',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} ब्लॉक संदर्भ ज्या शब्दांकडे निर्देश करत होते त्या शब्दांत लिहिले',
   '{count} saved views are left out, and every row is in the table': {
@@ -1325,6 +1333,8 @@ export const mr: Dictionary = {
     '{count} मनःस्थिती व कृती कार्डे रेखाटने आहेत, म्हणून फक्त त्यांचे शब्द येतात',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} नोंदी पासवर्डच्या मागे आहेत, जो फक्त Notes उघडू शकते',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} नोंदी पासवर्डच्या मागे आहेत, जो फक्त Bear उघडू शकते',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} नोंदी अलीकडे काढलेल्यांत आहेत आणि तिथेच राहतात',
   '{count} drawings and scans have no picture on this Mac':

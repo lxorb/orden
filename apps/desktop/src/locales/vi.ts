@@ -1284,10 +1284,14 @@ export const vi: Dictionary = {
     '{count} đoạn được mã hoá, không gì đọc được mà không có Evernote',
   '{count} notes had a reminder, which the export does not carry':
     '{count} ghi chú có lời nhắc, bản xuất không mang theo',
+  '{count} attachments were missing from the export or could not be read':
+    '{count} tệp đính kèm không có trong bản xuất hoặc không đọc được',
   '{count} notes were in the bin and stay there': '{count} ghi chú ở trong thùng rác và vẫn ở đó',
   '{count} archived notes are in a folder called Archive':
     '{count} ghi chú lưu trữ nằm trong thư mục tên Archive',
   'The colours a note had are not kept': 'Màu mà ghi chú từng có không được giữ',
+  '{count} files could not be read, so they were left out':
+    'Không đọc được {count} tệp nên đã bỏ qua',
   '{count} block references were written out as the words they pointed at':
     '{count} tham chiếu khối được viết ra thành chữ mà chúng trỏ tới',
   '{count} saved views are left out, and every row is in the table':
@@ -1313,6 +1317,8 @@ export const vi: Dictionary = {
     '{count} thẻ tâm trạng và hoạt động là hình vẽ, nên chỉ chữ được chuyển sang',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} ghi chú nằm sau mật khẩu mà chỉ Notes mở được',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} ghi chú nằm sau mật khẩu mà chỉ Bear mở được',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} ghi chú nằm trong Đã xoá gần đây và vẫn ở đó',
   '{count} drawings and scans have no picture on this Mac':

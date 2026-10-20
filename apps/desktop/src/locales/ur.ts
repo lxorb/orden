@@ -1297,10 +1297,18 @@ export const ur: Dictionary = {
     '{count} اقتباسات مخفی ہیں، اور Evernote کے بغیر کوئی انہیں نہیں پڑھ سکتا',
   '{count} notes had a reminder, which the export does not carry':
     '{count} نوٹس میں یاد دہانی تھی، جو ایکسپورٹ ساتھ نہیں لاتا',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} منسلکات ایکسپورٹ میں نہیں تھیں یا پڑھی نہ جا سکیں',
+    other: '{count} منسلکات ایکسپورٹ میں نہیں تھیں یا پڑھی نہ جا سکیں',
+  },
   '{count} notes were in the bin and stay there': '{count} نوٹس ردی میں تھے اور وہیں رہیں گے',
   '{count} archived notes are in a folder called Archive':
     '{count} محفوظ شدہ نوٹس Archive نامی فولڈر میں ہیں',
   'The colours a note had are not kept': 'نوٹ کے رنگ محفوظ نہیں رہتے',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} فائلیں پڑھی نہیں جا سکیں، اس لیے چھوڑ دی گئیں',
+    other: '{count} فائلیں پڑھی نہیں جا سکیں، اس لیے چھوڑ دی گئیں',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} بلاک حوالے ان الفاظ کے طور پر لکھے گئے جن کی طرف وہ اشارہ کرتے تھے',
   '{count} saved views are left out, and every row is in the table': {
@@ -1327,6 +1335,8 @@ export const ur: Dictionary = {
     '{count} موڈ اور سرگرمی کارڈ خاکے ہیں، اس لیے صرف ان کے الفاظ آتے ہیں',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} نوٹس پاس ورڈ کے پیچھے ہیں، جسے صرف Notes کھول سکتا ہے',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} نوٹس پاس ورڈ کے پیچھے ہیں، جسے صرف Bear کھول سکتا ہے',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} نوٹس حال میں حذف شدہ میں ہیں اور وہیں رہتے ہیں',
   '{count} drawings and scans have no picture on this Mac':

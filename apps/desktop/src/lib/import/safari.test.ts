@@ -51,6 +51,27 @@ describe("Safari's tabs, bookmarks and Reading List as nib's", () => {
     expect(sidebar.dropped).toBe(1)
   })
 
+  test('leaves the tabs of Private Browsing, pinned or not', () => {
+    const folder = (id: number, title: string) => ({ id, parent: 2, type: 1, title, order: id })
+    const tab = (id: number, parent: number, url: string) => ({
+      id,
+      parent,
+      type: 0,
+      title: url,
+      url,
+      order: id,
+    })
+    const tabs = [
+      ...TABS,
+      folder(20, 'private'),
+      tab(21, 20, 'https://secret.example.com/'),
+      folder(22, 'privatePinned'),
+      tab(23, 22, 'https://pinned-secret.example.com/'),
+    ]
+    const paths = space({ tabs }).space?.files.map((one) => one.path) ?? []
+    expect(paths.some((path) => path.includes('secret'))).toBe(false)
+  })
+
   test('makes Favorites, the menu and the other lists the Bookmarks folder, History left', () => {
     const { space: safari } = space({ bookmarks: BOOKMARKS })
     expect(safari?.order.Bookmarks).toEqual(['Favorites', 'Bookmarks menu', 'Trips'])

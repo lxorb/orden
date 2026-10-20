@@ -1324,11 +1324,21 @@ export const fr: Dictionary = {
     '{count} passages sont chiffrés et illisibles sans Evernote',
   '{count} notes had a reminder, which the export does not carry':
     '{count} notes avaient un rappel, absent de l’export',
+  '{count} attachments were missing from the export or could not be read': {
+    many: '{count} pièces jointes manquaient dans l’export ou étaient illisibles',
+    one: '{count} pièce jointe manquait dans l’export ou était illisible',
+    other: '{count} pièces jointes manquaient dans l’export ou étaient illisibles',
+  },
   '{count} notes were in the bin and stay there':
     '{count} notes étaient à la corbeille et y restent',
   '{count} archived notes are in a folder called Archive':
     '{count} notes archivées sont dans un dossier nommé Archive',
   'The colours a note had are not kept': 'Les couleurs d’une note ne sont pas conservées',
+  '{count} files could not be read, so they were left out': {
+    many: '{count} fichiers illisibles ont été laissés de côté',
+    one: '{count} fichier illisible a été laissé de côté',
+    other: '{count} fichiers illisibles ont été laissés de côté',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} références de bloc ont été remplacées par le texte visé',
   '{count} saved views are left out, and every row is in the table': {
@@ -1361,6 +1371,8 @@ export const fr: Dictionary = {
     '{count} cartes d’humeur et d’activité sont des dessins : seuls leurs mots arrivent',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} notes sont protégées par un mot de passe que seul Notes peut ouvrir',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} notes sont protégées par un mot de passe que seul Bear peut ouvrir',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} notes sont dans Supprimés récemment et y restent',
   '{count} drawings and scans have no picture on this Mac':

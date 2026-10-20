@@ -1308,11 +1308,19 @@ export const ha: Dictionary = {
     'an ɓoye sassa {count}, kuma babu abin da zai iya karanta su ba tare da Evernote',
   '{count} notes had a reminder, which the export does not carry':
     'bayanan kula {count} suna da tunatarwa, wanda fitarwa ba ta ɗauka',
+  '{count} attachments were missing from the export or could not be read': {
+    one: 'haɗe-haɗe {count} sun ɓace daga fitarwar ko ba a iya karanta su ba',
+    other: 'haɗe-haɗe {count} sun ɓace daga fitarwar ko ba a iya karanta su ba',
+  },
   '{count} notes were in the bin and stay there':
     'bayanan kula {count} suna cikin kwandon shara kuma suna zama can',
   '{count} archived notes are in a folder called Archive':
     'bayanan kula {count} da aka adana suna cikin babban fayil mai suna Archive',
   'The colours a note had are not kept': 'Ba a riƙe launukan da bayanin kula yake da su',
+  '{count} files could not be read, so they were left out': {
+    one: 'Ba a iya karanta fayiloli {count} ba, don haka an bar su',
+    other: 'Ba a iya karanta fayiloli {count} ba, don haka an bar su',
+  },
   '{count} block references were written out as the words they pointed at':
     'an rubuta nassoshin sassa {count} a matsayin kalmomin da suka nuna',
   '{count} saved views are left out, and every row is in the table': {
@@ -1342,6 +1350,8 @@ export const ha: Dictionary = {
     'Katunan yanayi da ayyuka {count} zane ne, don haka kalmominsu kawai ke shigowa',
   '{count} notes are behind a password, which nothing but Notes can open':
     'Bayanan kula {count} suna bayan kalmar sirri da Notes kawai zai iya buɗewa',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    'Bayanan kula {count} suna bayan kalmar sirri da Bear kawai zai iya buɗewa',
   '{count} notes are in Recently Deleted, and stay there':
     'Bayanan kula {count} suna cikin Wanda aka share kwanan nan kuma za su zauna can',
   '{count} drawings and scans have no picture on this Mac':

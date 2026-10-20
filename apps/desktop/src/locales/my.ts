@@ -1288,11 +1288,15 @@ export const my: Dictionary = {
     'အပိုင်း {count} ကို ကုဒ်ဖြင့်ထားသည်၊ Evernote မရှိလျှင် မည်သည့်အရာမျှ မဖတ်နိုင်ပါ',
   '{count} notes had a reminder, which the export does not carry':
     'မှတ်စု {count} တွင် သတိပေးချက်ရှိခဲ့သည်၊ ထုတ်မှုတွင် မပါဝင်ပါ',
+  '{count} attachments were missing from the export or could not be read':
+    'ပူးတွဲဖိုင် {count} ခုသည် ထုတ်ယူမှုတွင် မပါ သို့မဟုတ် ဖတ်၍မရပါ',
   '{count} notes were in the bin and stay there':
     'မှတ်စု {count} သည် ပုံးထဲတွင်ရှိ၍ ထိုတွင် ကျန်နေမည်',
   '{count} archived notes are in a folder called Archive':
     'သိမ်းထားသော မှတ်စု {count} သည် Archive ဖိုလ်ဒါတွင် ရှိသည်',
   'The colours a note had are not kept': 'မှတ်စုတွင်ရှိခဲ့သော အရောင်များ မထားပါ',
+  '{count} files could not be read, so they were left out':
+    'ဖိုင် {count} ခုကို ဖတ်၍မရသဖြင့် ချန်ထားခဲ့သည်',
   '{count} block references were written out as the words they pointed at':
     'ဘလောက်ရည်ညွှန်း {count} ကို ညွှန်ခဲ့သော စကားလုံးများအဖြစ် ရေးလိုက်သည်',
   '{count} saved views are left out, and every row is in the table':
@@ -1317,6 +1321,8 @@ export const my: Dictionary = {
     'စိတ်နေနှင့် လုပ်ရပ်ကတ် {count} ခု ပုံဆွဲများဖြစ်၍ စာသာ ပါလာသည်',
   '{count} notes are behind a password, which nothing but Notes can open':
     'မှတ်စု {count} ခု Notes သာ ဖွင့်နိုင်သော စကားဝှက်နောက်တွင် ရှိသည်',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    'မှတ်စု {count} ခု Bear သာ ဖွင့်နိုင်သော စကားဝှက်နောက်တွင် ရှိသည်',
   '{count} notes are in Recently Deleted, and stay there':
     'မှတ်စု {count} ခု မကြာမီဖျက်ခဲ့သည်တွင်ရှိ၍ ထိုတွင် ကျန်မည်',
   '{count} drawings and scans have no picture on this Mac':

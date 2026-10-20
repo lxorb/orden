@@ -1297,10 +1297,18 @@ export const fa: Dictionary = {
     '{count} بند رمزگذاری‌شده‌اند و بی Evernote چیزی آن‌ها را نمی‌خواند',
   '{count} notes had a reminder, which the export does not carry':
     '{count} یادداشت یادآور داشتند که برون‌بری آن را نمی‌برد',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} پیوست در خروجی نبود یا خوانده نشد',
+    other: '{count} پیوست در خروجی نبود یا خوانده نشد',
+  },
   '{count} notes were in the bin and stay there': '{count} یادداشت در سبد بودند و همان‌جا می‌مانند',
   '{count} archived notes are in a folder called Archive':
     '{count} یادداشت بایگانی‌شده در پوشه‌ای به نام Archive است',
   'The colours a note had are not kept': 'رنگ‌هایی که یادداشت داشت نگه داشته نمی‌شوند',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} فایل خوانده نشد و کنار گذاشته شد',
+    other: '{count} فایل خوانده نشد و کنار گذاشته شد',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} ارجاع بلوک به شکل واژه‌هایی که به آن‌ها اشاره داشتند نوشته شد',
   '{count} saved views are left out, and every row is in the table': {
@@ -1328,6 +1336,8 @@ export const fa: Dictionary = {
     '{count} کارت حال و فعالیت نقش‌اند، پس تنها واژه‌هایشان می‌آید',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} یادداشت پشت گذرواژه‌ای است که تنها Notes می‌گشاید',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} یادداشت پشت گذرواژه‌ای است که تنها Bear می‌گشاید',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} یادداشت در «تازه حذف‌شده» است و همان‌جا می‌ماند',
   '{count} drawings and scans have no picture on this Mac':

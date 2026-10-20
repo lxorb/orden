@@ -1358,10 +1358,26 @@ export const ar: Dictionary = {
     'هناك {count} مقطعًا مشفّرًا، ولا شيء يقرأها دون Evernote',
   '{count} notes had a reminder, which the export does not carry':
     'كان لـ {count} ملاحظة تذكير، والتصدير لا يحمله',
+  '{count} attachments were missing from the export or could not be read': {
+    few: 'تعذّر العثور على {count} من المرفقات في التصدير أو تعذّرت قراءتها',
+    many: 'تعذّر العثور على {count} من المرفقات في التصدير أو تعذّرت قراءتها',
+    one: 'تعذّر العثور على {count} من المرفقات في التصدير أو تعذّرت قراءتها',
+    other: 'تعذّر العثور على {count} من المرفقات في التصدير أو تعذّرت قراءتها',
+    two: 'تعذّر العثور على {count} من المرفقات في التصدير أو تعذّرت قراءتها',
+    zero: 'تعذّر العثور على {count} من المرفقات في التصدير أو تعذّرت قراءتها',
+  },
   '{count} notes were in the bin and stay there': 'كانت {count} ملاحظة في سلة المحذوفات وتبقى فيها',
   '{count} archived notes are in a folder called Archive':
     'هناك {count} ملاحظة مؤرشفة في مجلد باسم Archive',
   'The colours a note had are not kept': 'ألوان الملاحظة لا تُحفظ',
+  '{count} files could not be read, so they were left out': {
+    few: 'تعذّرت قراءة {count} ملفات، فتُركت',
+    many: 'تعذّرت قراءة {count} ملفًا، فتُركت',
+    one: 'تعذّرت قراءة {count} ملف، فتُرك',
+    other: 'تعذّرت قراءة {count} ملف، فتُركت',
+    two: 'تعذّرت قراءة {count} ملفين، فتُركا',
+    zero: 'تعذّرت قراءة {count} ملفات، فتُركت',
+  },
   '{count} block references were written out as the words they pointed at':
     'كُتب {count} مرجع كتلة كالكلمات التي تشير إليها',
   '{count} saved views are left out, and every row is in the table': {
@@ -1399,6 +1415,8 @@ export const ar: Dictionary = {
     '{count} بطاقة مزاج ونشاط هي رسوم، فلا ينتقل منها سوى الكلمات',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} ملاحظة محمية بكلمة سر لا يفتحها سوى Notes',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} ملاحظة محمية بكلمة سر لا يفتحها سوى Bear',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} ملاحظة في المحذوفات حديثاً وتبقى هناك',
   '{count} drawings and scans have no picture on this Mac':

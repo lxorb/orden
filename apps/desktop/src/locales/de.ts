@@ -1311,11 +1311,19 @@ export const de: Dictionary = {
     '{count} Abschnitte sind verschlüsselt und ohne Evernote nicht lesbar',
   '{count} notes had a reminder, which the export does not carry':
     '{count} Notizen hatten eine Erinnerung, die der Export nicht enthält',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count} Anhang fehlte im Export oder ließ sich nicht lesen',
+    other: '{count} Anhänge fehlten im Export oder ließen sich nicht lesen',
+  },
   '{count} notes were in the bin and stay there':
     '{count} Notizen lagen im Papierkorb und bleiben dort',
   '{count} archived notes are in a folder called Archive':
     '{count} archivierte Notizen liegen in einem Ordner namens Archive',
   'The colours a note had are not kept': 'Die Farben einer Notiz werden nicht übernommen',
+  '{count} files could not be read, so they were left out': {
+    one: '{count} Datei war nicht lesbar und bleibt draussen',
+    other: '{count} Dateien waren nicht lesbar und bleiben draussen',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count} Blockverweise wurden als der Text geschrieben, auf den sie zeigten',
   '{count} saved views are left out, and every row is in the table': {
@@ -1344,6 +1352,8 @@ export const de: Dictionary = {
     '{count} Stimmungs- und Aktivitätskarten sind Zeichnungen: nur ihre Worte kommen mit',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count} Notizen liegen hinter einem Passwort, das nur Notizen öffnet',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count} Notizen liegen hinter einem Passwort, das nur Bear öffnet',
   '{count} notes are in Recently Deleted, and stay there':
     '{count} Notizen liegen in Zuletzt gelöscht und bleiben dort',
   '{count} drawings and scans have no picture on this Mac':

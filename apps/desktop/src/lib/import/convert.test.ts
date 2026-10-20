@@ -17,6 +17,20 @@ describe("Bear's closed tags", () => {
     expect(said.text).toContain('#define Y#')
   })
 
+  test('are left alone in a span of code, which is an example of one', () => {
+    const said = convertTags('Bear writes `#two words#` for #two words#')
+
+    expect(said.text).toBe('Bear writes `#two words#` for #two-words')
+    expect(said.changes).toBe(1)
+  })
+
+  test('a fence is closed only by its own kind of fence', () => {
+    // The tildes are a line of the code, and the backticks are what close it.
+    const said = convertTags('```\n~~~\n#a b#\n```\n#c d#')
+
+    expect(said.text).toBe('```\n~~~\n#a b#\n```\n#c-d')
+  })
+
   test('a tag that is already one is not a change', () => {
     expect(convertTags('#work and #home/kitchen').changes).toBe(0)
   })

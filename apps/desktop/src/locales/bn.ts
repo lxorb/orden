@@ -1296,10 +1296,18 @@ export const bn: Dictionary = {
     '{count}টি অংশ এনক্রিপ্ট করা, Evernote ছাড়া কিছুই সেগুলো পড়তে পারে না',
   '{count} notes had a reminder, which the export does not carry':
     '{count}টি নোটে রিমাইন্ডার ছিল, যা এক্সপোর্ট বহন করে না',
+  '{count} attachments were missing from the export or could not be read': {
+    one: '{count}টি সংযুক্তি এক্সপোর্টে ছিল না বা পড়া যায়নি',
+    other: '{count}টি সংযুক্তি এক্সপোর্টে ছিল না বা পড়া যায়নি',
+  },
   '{count} notes were in the bin and stay there': '{count}টি নোট বিনে ছিল, সেখানেই থাকবে',
   '{count} archived notes are in a folder called Archive':
     '{count}টি আর্কাইভ করা নোট Archive নামের ফোল্ডারে আছে',
   'The colours a note had are not kept': 'নোটের রং রাখা হয় না',
+  '{count} files could not be read, so they were left out': {
+    one: '{count}টি ফাইল পড়া যায়নি, তাই বাদ দেওয়া হয়েছে',
+    other: '{count}টি ফাইল পড়া যায়নি, তাই বাদ দেওয়া হয়েছে',
+  },
   '{count} block references were written out as the words they pointed at':
     '{count}টি ব্লক রেফারেন্স যে শব্দ দেখাত, সেই শব্দ হিসেবেই লেখা হয়েছে',
   '{count} saved views are left out, and every row is in the table': {
@@ -1326,6 +1334,8 @@ export const bn: Dictionary = {
     '{count}টি মন ও কাজের কার্ড আঁকা, তাই কেবল তাদের লেখা আসে',
   '{count} notes are behind a password, which nothing but Notes can open':
     '{count}টি নোট পাসওয়ার্ডের পিছনে, যা কেবল Notes খুলতে পারে',
+  '{count} notes are behind a password, which nothing but Bear can open':
+    '{count}টি নোট পাসওয়ার্ডের পিছনে, যা কেবল Bear খুলতে পারে',
   '{count} notes are in Recently Deleted, and stay there':
     '{count}টি নোট সাম্প্রতিক মুছে ফেলায় আছে এবং সেখানেই থাকে',
   '{count} drawings and scans have no picture on this Mac':
