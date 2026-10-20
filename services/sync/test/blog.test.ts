@@ -108,6 +108,17 @@ describe('publishing', () => {
     expect(response.text).toContain('<strong>post</strong>')
   })
 
+  /** The hover card asks for the page's own address with a header, and is answered
+   *  with less of it; a browser that kept the card must not show it for the page. */
+  test('a note and its hover card are two answers to a cache', async () => {
+    await publish({ subdomain: 'field' })
+
+    for (const headers of [{}, { 'x-nib-preview': '1' }]) {
+      const response = await call(env, '/hello-world', { host: 'field.nibeditor.com', headers })
+      expect(response.headers.get('vary')).toContain('x-nib-preview')
+    }
+  })
+
   test('an unknown slug is handled', async () => {
     await publish({ subdomain: 'field' })
 
