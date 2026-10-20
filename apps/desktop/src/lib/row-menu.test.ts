@@ -45,7 +45,7 @@ vi.mock('./sharing.svelte', () => ({
   shareThisFile: () => undefined,
 }))
 
-const { rowMenu } = await import('./row-menu')
+const { bookmarkAll, rowMenu } = await import('./row-menu')
 const { workspace } = await import('./workspace.svelte')
 const { viewport } = await import('./viewport.svelte')
 type Entry = import('./workspace.svelte').Entry
@@ -151,7 +151,6 @@ describe('a note', () => {
       'Rename',
       'Choose an icon',
       'Set cover',
-      'Add to Essentials',
       'Archive',
       'Duplicate',
       'Delete',
@@ -199,7 +198,6 @@ describe('a paper', () => {
       'Open in new tab',
       'Open to the side',
       'Rename',
-      'Add to Essentials',
       'Archive',
       'Duplicate',
       'Delete',
@@ -221,7 +219,6 @@ describe('a file the account has a copy of', () => {
       'Rename',
       'Choose an icon',
       'Set cover',
-      'Add to Essentials',
       'Archive',
       'Share',
       'Duplicate',
@@ -242,7 +239,6 @@ describe('a file the account has a copy of', () => {
       'Rename',
       'Choose an icon',
       'Set cover',
-      'Add to Essentials',
       'Archive',
       'Share',
       'Duplicate',
@@ -258,7 +254,6 @@ describe('a file the account has a copy of', () => {
       'Open in new tab',
       'Open to the side',
       'Rename',
-      'Add to Essentials',
       'Archive',
       'Share',
       'Duplicate',
@@ -272,21 +267,19 @@ describe('a row that is part of a selection of several', () => {
     workspace.select('/s/loose.md')
     workspace.toggleSelect('/s/paper.pdf')
 
-    expect(labels(loose)).toEqual(['Open all', 'Add to Essentials', 'Archive', 'Delete 2 items'])
+    expect(labels(loose)).toEqual(['Open all', 'Archive', 'Delete 2 items'])
   })
 
-  test('and bookmarks the lot with one press, or takes the lot out once all are in', () => {
-    workspace.select('/s/loose.md')
-    workspace.toggleSelect('/s/A')
-
+  test('and a tab menu bookmarks the lot, or takes the lot out once all are in', () => {
+    const paths = ['/s/loose.md', '/s/A']
     const press = (label: string) =>
-      rowMenu(loose)
+      bookmarkAll(paths)
         .find((one) => one?.label === label)
         ?.run()
     press('Add to Essentials')
 
     expect(workspace.bookmarks.list.map((one) => one.path)).toEqual(['loose.md', 'A/A.md'])
-    expect(labels(loose)).toContain('Remove from Essentials')
+    expect(bookmarkAll(paths).map((one) => one?.label)).toEqual(['Remove from Essentials'])
 
     press('Remove from Essentials')
     expect(workspace.bookmarks.list).toEqual([])

@@ -144,14 +144,12 @@
   )
 
   /** A tab carried out of the strip that could be a first tile, or a file carried out of
-   *  the list (#412), which the grid keeps an empty place for while there is none. */
+   *  the list (#412), which the grid keeps an empty place for while there is none - for
+   *  the whole of the drag, so it is there to aim at (#417). */
   const offered = $derived.by(() => {
     if (!workspace.device.essentialTiles || !workspace.panes.dragging) return false
     if (workspace.panes.dragging.tabId === null) {
-      return (
-        !!workspace.panes.dragging.upward &&
-        carried().some((one) => workspace.entryAt(one)?.is_dir === false)
-      )
+      return carried().some((one) => workspace.entryAt(one)?.is_dir === false)
     }
 
     const id = workspace.panes.dragging.tabId
