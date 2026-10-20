@@ -121,11 +121,11 @@ pub(crate) const BROWSER_ARGS: &str = concat!(
 /// [`BROWSER_ARGS`], and the switches that keep the engine off the graphics card in a run
 /// where Settings turned hardware acceleration off; see gpu.rs.
 #[cfg(all(windows, not(feature = "cef")))]
-pub(crate) fn browser_args(app: &AppHandle) -> String {
-    if config_dir(app).is_ok_and(|config| !crate::gpu::accelerated(&config)) {
-        format!("{BROWSER_ARGS} {}", crate::gpu::OFF.join(" "))
-    } else {
+pub(crate) fn browser_args() -> String {
+    if crate::gpu::accelerated() {
         BROWSER_ARGS.to_owned()
+    } else {
+        format!("{BROWSER_ARGS} {}", crate::gpu::OFF.join(" "))
     }
 }
 
@@ -196,10 +196,10 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
             engine = engine.with_settings(|settings| settings.windowless_rendering_enabled = 1);
         }
         // Off the graphics card where Settings turned hardware acceleration off; see gpu.rs.
-        if root
-            .parent()
-            .is_some_and(|config| !crate::gpu::accelerated(config))
-        {
+        if let Some(config) = root.parent() {
+            crate::gpu::decide(config);
+        }
+        if !crate::gpu::accelerated() {
             engine = engine.command_line_args(crate::gpu::OFF.map(|switch| (switch, None::<&str>)));
         }
         engine = engine.root_cache_path(root);
@@ -301,7 +301,7 @@ pub(crate) fn web_store<R: Runtime>(
     // extensions.rs.
     #[cfg(windows)]
     let builder = builder
-        .additional_browser_args(&browser_args(app))
+        .additional_browser_args(&browser_args())
         .browser_extensions_enabled(crate::extensions::in_store(store));
 
     #[cfg(any(windows, target_os = "linux"))]
@@ -411,8 +411,13 @@ pub(crate) fn ui_window<'a, M: tauri::Manager<crate::Engine>>(
 ) -> Result<tauri::WebviewWindowBuilder<'a, crate::Engine, M>, Box<dyn std::error::Error>> {
     let building =
         tauri::WebviewWindowBuilder::from_config(manager, config)?.devtools(cfg!(debug_assertions));
+    // Whether the engine draws on the graphics card, decided as the first window is
+    // built, before any webview starts; see gpu.rs.
     #[cfg(all(windows, not(feature = "cef")))]
-    let building = building.additional_browser_args(&browser_args(manager.app_handle()));
+    let building = {
+        crate::gpu::decide(&config_dir(manager.app_handle())?);
+        building.additional_browser_args(&browser_args())
+    };
     // On CEF, Alloy style: a page and nothing of Chrome's around it, as `WebView2` and
     // `WKWebView` are. A Chrome style browser keeps Chrome's whole accelerator table,
     // which takes Ctrl+Tab, Ctrl+W, Ctrl+T and Ctrl+N before the page is offered them -

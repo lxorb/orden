@@ -10,7 +10,7 @@
 //!
 //! And where it should not draw on the card at all, Settings › General › Hardware
 //! acceleration says so (#550): a file in the app's own settings folder, since the engine
-//! reads it before anything of it starts (`accelerated`).
+//! reads it before anything of it starts (`decide`).
 
 use std::path::Path;
 use std::sync::OnceLock;
@@ -61,15 +61,22 @@ const FILE: &str = "gpu.txt";
 #[cfg_attr(not(any(windows, feature = "cef")), allow(dead_code))]
 pub(crate) const OFF: [&str; 2] = ["--disable-gpu", "--disable-gpu-compositing"];
 
-/// Whether this run's engine draws on the graphics card: decided once, by `accelerated`.
+/// Whether this run's engine draws on the graphics card: decided once, by `decide`.
 static ACCELERATED: OnceLock<bool> = OnceLock::new();
 
-/// Whether this run's engine draws on the graphics card: decided once, before the engine
-/// starts, from the setting in `config`; the answer is this run's, so every webview of it
-/// starts with the same switches whatever the setting says by then.
+/// Decides whether this run's engine draws on the graphics card, from the setting in
+/// `config`: once, as Orden starts and before the engine does. The answer is this run's,
+/// so every webview of it starts with the same switches whatever the setting says by
+/// then, and none of them waits on the disk for it.
 #[cfg_attr(not(any(windows, feature = "cef")), allow(dead_code))]
-pub fn accelerated(config: &Path) -> bool {
-    *ACCELERATED.get_or_init(|| chosen(config))
+pub fn decide(config: &Path) {
+    let _ = ACCELERATED.set(chosen(config));
+}
+
+/// Whether this run's engine draws on the graphics card, as `decide` found it.
+#[cfg_attr(not(any(windows, feature = "cef")), allow(dead_code))]
+pub fn accelerated() -> bool {
+    ACCELERATED.get() != Some(&false)
 }
 
 /// What the setting in `config` says now, which the next run starts with.

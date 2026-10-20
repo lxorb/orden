@@ -231,7 +231,7 @@ where
     // The same switches as the app's own window, which is running on the same user data
     // folder and would refuse a webview started any other way; see `engine::BROWSER_ARGS`.
     #[cfg(all(windows, not(feature = "cef")))]
-    let building = building.additional_browser_args(&crate::engine::browser_args(app));
+    let building = building.additional_browser_args(&crate::engine::browser_args());
 
     let window = building
         .title("Orden")
