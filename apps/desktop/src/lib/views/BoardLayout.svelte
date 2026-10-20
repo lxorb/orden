@@ -863,6 +863,7 @@
     role="group"
     aria-label={`${columnName(group)}, ${rows.length}`}
     onpointerdowncapture={() => (pickedFrom = { column: name, lane })}
+    data-drop-below
     use:droppable={(row, at, place) => land(row, group, laneKey, at, place)}
   >
     {#if laneKey === undefined}{@render head(group)}{/if}

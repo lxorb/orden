@@ -74,10 +74,20 @@ export function droppable(node: HTMLElement, take: Take) {
   }
 }
 
-/** The place under a point that takes rows, if any. */
+/** The place under a point that takes rows, if any. A place marked `data-drop-below`
+ *  takes the empty space straight below it too, in the box that holds it: a board's
+ *  column, only as tall as its cards, still takes a card let go under its last one. */
 function targetAt(at: Point): HTMLElement | null {
-  const found = document.elementFromPoint(at.x, at.y)?.closest<HTMLElement>('[data-drop]')
-  return found ?? null
+  const under = document.elementFromPoint(at.x, at.y)
+  const found = under?.closest<HTMLElement>('[data-drop]')
+  if (found || !under) return found ?? null
+  const below = [...under.querySelectorAll<HTMLElement>(':scope > [data-drop-below]')]
+  return (
+    below.find((one) => {
+      const box = one.getBoundingClientRect()
+      return at.x >= box.left && at.x < box.right && at.y >= box.bottom
+    }) ?? null
+  )
 }
 
 /** The nearest box that scrolls, for carrying a row past the edge of what is shown. */
