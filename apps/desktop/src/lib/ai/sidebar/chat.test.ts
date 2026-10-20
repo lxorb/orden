@@ -141,6 +141,18 @@ describe('the panel’s chats', () => {
     expect(chat.thread?.space).toBe('home')
   })
 
+  test('start a new one on the model last picked, the next time too', async () => {
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work', 'home'])
+    chat.setModel('p', 'picked')
+
+    const next = await launched()
+    next.here('work')
+    next.know(['work', 'home'])
+    expect(next.head?.model).toBe('picked')
+  })
+
   test('open the one open last, whichever space it is in', async () => {
     const garden = await had('home', 'Garden', 1_000)
     await had('work', 'Quarterly plan', 9_000)

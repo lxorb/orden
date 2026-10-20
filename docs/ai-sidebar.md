@@ -797,7 +797,8 @@ there for an OpenAI model that takes `none` and Max only where the model has `ma
 Code's `modelSettings` remembers it.
 
 **Per thread, not global.** The model and effort are the thread's; a new thread starts on
-Settings > AI > Used for's choice and the last effort used with that model. Switching model
+Settings > AI > Used for's provider, the model last picked with it on this device (#428) and
+the last effort used with that model. Switching model
 mid-thread keeps the conversation and says, in a line between messages, which model answers
 from there (and that the cache starts again where it does).
 

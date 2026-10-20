@@ -52,7 +52,16 @@ import { threadMarkdown } from './export'
 import { draftOf, type Front } from './gather'
 import type { Mention } from './mentions'
 import { OLD_KEY, oldSpaces, threadFromAsk } from './migrate'
-import { effortFor, lastMode, lastOpen, rememberEffort, rememberMode, rememberOpen } from './prefs'
+import {
+  effortFor,
+  lastMode,
+  lastOpen,
+  modelFor,
+  rememberEffort,
+  rememberMode,
+  rememberModel,
+  rememberOpen,
+} from './prefs'
 import type { Attached, Ended, Once, Panel } from '../commands/types'
 import { engineOf } from './setup'
 import { snapshot } from './snapshot'
@@ -276,7 +285,7 @@ class Chat implements Panel {
    *  written down until something is sent in it. */
   private fresh(): Thread {
     const provider = this.providerForNew()
-    const model = provider?.model ?? ''
+    const model = provider ? modelFor(provider) : ''
     const effort = provider ? effortFor(provider.id, model) : 'auto'
     return newThread(
       this.space || (this.spaces[0] ?? ''),
@@ -294,8 +303,8 @@ class Chat implements Panel {
     const thread = this.open
     if (!thread || thread.turns.length || !provider || thread.provider === provider.id) return
     thread.provider = provider.id
-    thread.model = provider.model
-    thread.effort = effortFor(provider.id, provider.model)
+    thread.model = modelFor(provider)
+    thread.effort = effortFor(provider.id, thread.model)
     thread.usage = noUsage(null)
     this.head = headOf(thread)
     void this.loadModels(provider)
@@ -777,6 +786,7 @@ class Chat implements Panel {
     const changed = thread.provider !== provider
     thread.provider = provider
     thread.model = model
+    rememberModel(provider, model)
     const info = this.models[provider]?.find((one) => one.id === model)
     thread.effort = within(effortFor(provider, model), info?.efforts ?? ['auto'])
     if (changed) thread.usage = noUsage(info?.window ?? null)
