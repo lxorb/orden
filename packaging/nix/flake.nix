@@ -455,7 +455,13 @@
             inherit pname version;
             TAURI_CONFIG = builtins.toJSON { inherit version; };
             src = workspace;
+            # cargoRoot is only where the vendored dependencies go; Cargo itself runs in
+            # buildAndTestSubdir, and without it in the workspace root, where there is
+            # no Cargo.toml.
             cargoRoot = "apps/desktop/src-tauri";
+            buildAndTestSubdir = "apps/desktop/src-tauri";
+            # The app's tests run in CI against the checkout; the package only builds.
+            doCheck = false;
             # Linux is built from a manifest of its own, on Tauri 3 and CEF, put in place
             # of the app's before anything reads it; see scripts/linux-cef.sh.
             cargoLock.lockFile = "${workspace}/apps/desktop/src-tauri/linux/Cargo.lock";
