@@ -171,6 +171,10 @@ const OPEN_TO_GUESTS: readonly { method: string; path: RegExp }[] = [
   { method: 'GET', path: /^\/v1\/notes\/[^/]+$/ },
   { method: 'PUT', path: /^\/v1\/notes\/[^/]+$/ },
   { method: 'DELETE', path: /^\/v1\/notes\/[^/]+$/ },
+  // The paper a page note holds is part of the note (#551): a guest handed a page
+  // note writes on that paper, and opens it with nothing under the ink without it.
+  // Read only: what a note holds is the space's to say.
+  { method: 'GET', path: /^\/v1\/notes\/[^/]+\/paper$/ },
   // Deliberately not the versions a note has on the account, nor putting a space
   // back to a moment. The history is the account's record of its own notes, and a
   // guest has no account; a rollback is the whole space at once, which is not
