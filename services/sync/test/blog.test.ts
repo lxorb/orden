@@ -903,6 +903,9 @@ describe('a site of one note', () => {
       expect(response.status, path).toBe(404)
       expect(response.headers.get('location'), path).toBeNull()
     }
+
+    // Nor by the address of its bytes, which a hash learned somewhere else asks for.
+    expect((await call(env, `/i/${PRIVATE.hash}.pdf`)).status).toBe(404)
   })
 
   test('nor one its folder rules would have published as a site of the space', async () => {
