@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onDestroy, onMount, untrack } from 'svelte'
+  import { onDestroy, onMount, tick, untrack } from 'svelte'
   import { fade } from 'svelte/transition'
   import { quintOut } from 'svelte/easing'
   import { agentMarks } from './agent-marks.svelte'
@@ -347,7 +347,16 @@
       )
     }
 
-    void workspace.closeAsking(tab.id)
+    void (by ? workspace.closeAsking(tab.id) : closeByKey(tab.id))
+  }
+
+  /** A tab closed from the keyboard, Delete on it or Enter on its cross, hands the
+   *  keyboard on to the tab in front rather than to nothing as it goes (#523). */
+  async function closeByKey(id: string) {
+    await workspace.closeAsking(id)
+    await tick()
+    if (!workspace.tabs.some((one) => one.id === id))
+      strip?.querySelector<HTMLElement>(`.pick[data-tab="${activeId}"]`)?.focus()
   }
 
   /** What pressed the cross: a click a key sent has no pointer behind it. */
@@ -823,7 +832,7 @@
       quiet: '.shut',
       open: (row) => row.click(),
       peek: (row) => row.click(),
-      remove: (row) => void workspace.closeAsking(row.dataset.tab ?? ''),
+      remove: (row) => void closeByKey(row.dataset.tab ?? ''),
       menu: (row, at) => row.dispatchEvent(at),
     }}
     class:quiet
@@ -901,12 +910,14 @@
           <!-- Named by the note, and named on the button. A pinned tab is a mark and
              no words, and the name used to be put on the `span` around the mark -
              which has no role, so nothing read it and the tab was a button with
-             nothing to call it. No `title`: the hover card says the name. -->
+             nothing to call it. No `title`: the hover card says the name. And the one in
+             front says so, which the strip drew and nothing read (#523). -->
           <button
             class="pick"
             class:centred={parts.centred}
             data-tab={tab.id}
             aria-label={tab.shown}
+            aria-current={tab.id === activeId ? 'page' : undefined}
             onfocus={(event) => {
               if (event.currentTarget.matches(':focus-visible'))
                 card(tab, event.currentTarget, true)

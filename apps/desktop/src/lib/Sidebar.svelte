@@ -562,13 +562,16 @@
 >
   <!-- Named, because a region of the page that has no name is one a reader cannot
      tell from the next: the words are the space's, which is what the panel is
-     about. -->
+     about. The right one is called what its toggle is, or the two had one name
+     (#523). -->
   <aside
     bind:this={aside}
     bind:clientWidth={asideWidth}
     data-region={side === 'right' ? 'right' : undefined}
     data-sidebar
-    aria-label={t('{space} panel', { space: workspace.activeSpace?.name ?? t('Space') })}
+    aria-label={side === 'right'
+      ? t('Right sidebar')
+      : t('{space} panel', { space: workspace.activeSpace?.name ?? t('Space') })}
     class:resizing={size.dragging}
     class:right={side === 'right'}
   >

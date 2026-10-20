@@ -12,6 +12,7 @@
    *  (press.ts). */
   import type { Row, Value } from '@nib/bases'
   import { cellValue } from '@nib/bases'
+  import { tick } from 'svelte'
   import type { Property } from '@nib/markdown/properties'
   import { t } from '../i18n.svelte'
   import PropertyValue from '../properties/PropertyValue.svelte'
@@ -117,7 +118,10 @@
     if (event.key === 'Escape') {
       event.preventDefault()
       event.stopPropagation()
+      // Back to the cell once the control has gone, or the keyboard went with it (#523).
+      const cell = (event.currentTarget as HTMLElement).closest<HTMLElement>('[role="gridcell"]')
       onstop?.()
+      void tick().then(() => cell?.focus())
     }
   }
 
