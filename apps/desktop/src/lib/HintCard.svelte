@@ -58,7 +58,9 @@
   .hint {
     position: absolute;
     inset-inline-start: var(--space-2);
-    z-index: var(--z-popover);
+    /* A step under the popovers: a hint shown while the list of spaces is open sits
+       where that list's rows are, and a press there is the row's, not the hint's (#661). */
+    z-index: calc(var(--z-popover) - 1);
     display: flex;
     align-items: center;
     gap: var(--space-1);
