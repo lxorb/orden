@@ -1,14 +1,13 @@
-"""A space's own tabs, driven in the built app: two spaces, one set to keep its own.
+"""A space's own tabs, driven in the built app: two spaces, each with its own.
 
-Emil, 2026-10-01: "there should be an option whether the tabs are global or only for the
-space. Only for the space means the whole open configuration is saved for that space, and
-it changes automatically when you switch to another space." What this presses and looks at:
+Emil, 2026-10-01: "Only for the space means the whole open configuration is saved for that
+space, and it changes automatically when you switch to another space." Since #674 every
+space does, with no choice to make. What this presses and looks at:
 
-  * **The row**: the space's menu holds Tabs under Web data's place, and Tabs opens into
-    Global and Space with the one in force ticked, as Web data does. Photographed in the
-    light and in the dark.
-  * **Space**: Notes is set to keep its own tabs - a split of two notes - and Home is put
-    on screen: Home's strip holds Home's tabs and nothing of Notes'.
+  * **No row**: the space's menu has no Tabs row any more. Photographed in the light and
+    in the dark.
+  * **Its own**: Notes has a split of two notes, and Home is put on screen: Home's strip
+    holds Home's tabs and nothing of Notes'.
   * **Back and forth**: Notes comes back split as it was, the same tab in front of each
     pane; Home comes back with its own; every frame between shows one set or the other,
     never both and never neither.
@@ -101,10 +100,6 @@ def look(page: Page) -> dict:
 #: lies over the first rows of the list of spaces, which is where this drive presses.
 HINTS_SEEN = "try { localStorage.setItem('nib:hints', JSON.stringify(['graph', 'palette'])) } catch {}"
 
-#: Tabs pressed in the space's menu, and its two choices in the menu's place.
-TABS_OPEN = "[...document.querySelectorAll('.menu .nib-row-label')].some((one) => one.textContent.trim() === 'Space')"
-
-
 def opened(browser: Browser, scheme: str, motion: str = "reduce") -> tuple[Page, dict]:
     context = browser.new_context(viewport=SIZE, color_scheme=scheme, reduced_motion=motion)
     context.add_init_script(HIDE_CARET)
@@ -133,25 +128,17 @@ def space_menu(page: Page, name: str) -> None:
     wait_for(page, "document.querySelector('[role=menu].menu')", "the space's menu")
 
 
-def the_row(page: Page, scheme: str) -> None:
+def no_row(page: Page, scheme: str) -> None:
+    """The space's menu, with no Tabs row: every space keeps its own (#674)."""
     space_menu(page, "Notes")
     rows = page.locator(".menu [role=menuitem] .nib-row-label").all_inner_texts()
     say(f"[{scheme}] the space's menu: {rows}")
-    if "Tabs" not in rows:
-        wrong(f"the space's menu has no Tabs row: {rows}")
+    if "Tabs" in rows:
+        wrong(f"the space's menu still has a Tabs row: {rows}")
     quiet(page)
     DRIVE.steady(page, f"{scheme}-01-menu")
-
-    page.locator(".menu [role=menuitem]").filter(has_text="Tabs").click()
-    wait_for(page, TABS_OPEN, "Tabs to open into its choices")
-    choices = page.locator(".menu [role=menuitem]").all_inner_texts()
-    say(f"[{scheme}] Tabs: {choices}")
-    if [one.split("\n")[0].strip() for one in choices] != ["Global", "Space"]:
-        wrong(f"Tabs does not offer Global and Space: {choices}")
-    if "✓" not in choices[0]:
-        wrong(f"Global is not the one ticked: {choices}")
-    quiet(page)
-    DRIVE.steady(page, f"{scheme}-02-tabs")
+    page.keyboard.press("Escape")
+    wait_for(page, "!document.querySelector('[role=menu].menu')", "the menu to close")
 
 
 def switch(page: Page, name: str) -> None:
@@ -163,11 +150,9 @@ def switch(page: Page, name: str) -> None:
 
 def drive(browser: Browser) -> None:
     page, ids = opened(browser, "light")
-    the_row(page, "light")
+    no_row(page, "light")
 
-    # Space: Notes keeps the split it has.
-    page.locator(".menu [role=menuitem]").filter(has_text="Space").click()
-    wait_for(page, "!document.querySelector('[role=menu].menu')", "the menu to close")
+    # Notes keeps the split it has.
     before = look(page)
     say(f"Notes, its own: {json.dumps(before)}")
 
@@ -215,14 +200,6 @@ def drive(browser: Browser) -> None:
 
     # Every frame of a switch, with the motion on: one set or the other, never both.
     page, ids = opened(browser, "light", motion="no-preference")
-    space_menu(page, "Notes")
-    page.locator(".menu [role=menuitem]").filter(has_text="Tabs").click()
-    # Waited for, as `the_row` waits: with the motion on, the menu is still the space's
-    # own for a moment after Tabs is pressed, and "Space" there is Delete space - which
-    # opened the question over everything and left every later press under it.
-    wait_for(page, TABS_OPEN, "Tabs to open into its choices")
-    page.locator(".menu [role=menuitem]").filter(has_text="Space").click()
-    wait_for(page, "!document.querySelector('[role=menu].menu')", "the menu to close")
     switch(page, "Home")
     page.evaluate(
         "async () => { const ws = window.nibApp.workspace; const food = ws.notes.find((one) => one.name.startsWith('Food')); await ws.openEntry(food.path, { activate: true }) }"
@@ -243,9 +220,9 @@ def drive(browser: Browser) -> None:
             break
     page.context.close()
 
-    # The row in the dark.
+    # The menu in the dark.
     page, _ids = opened(browser, "dark")
-    the_row(page, "dark")
+    no_row(page, "dark")
     page.context.close()
 
 
