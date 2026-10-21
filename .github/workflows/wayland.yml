@@ -166,7 +166,7 @@ jobs:
           POPUP: '1'
         run: |
           pkill -f /usr/share/Orden/nib || true
-          rm -rf "$HOME/.config/ch.emilvinu.nib"
+          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       - name: Popups chosen from over a web tab's page, under sway, scaled
         if: always()
@@ -176,7 +176,7 @@ jobs:
           DPI: '128'
         run: |
           pkill -f /usr/share/Orden/nib || true
-          rm -rf "$HOME/.config/ch.emilvinu.nib"
+          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       # #427: the window moved by its tab strip and resized by its edge, floated.
       - name: The window moved by its strip and resized by its edge, under sway
