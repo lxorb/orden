@@ -8,24 +8,36 @@ import {
   ownerOf,
   readSets,
   setKey,
-  sharedHome,
+  sharedGoesTo,
   tidied,
 } from './sets'
 
 /** A space's own tabs, decided: which set a space shows, what a set out of sight is
  *  written down as, and what a frame is once its tabs have changed out of sight. */
 
-const owns = (space: string) => space === 'work'
-
 describe('which set a space shows', () => {
-  test('its own, where it keeps one', () => {
-    expect(setKey('work', owns)).toBe('work')
+  test('its own, every space', () => {
+    expect(setKey('work')).toBe('work')
+    expect(setKey('home')).toBe('home')
   })
 
-  test('the shared one for every other space, and for no space at all', () => {
-    expect(setKey('home', owns)).toBe(GLOBAL)
-    expect(setKey('uni', owns)).toBe(GLOBAL)
-    expect(setKey(null, owns)).toBe(GLOBAL)
+  test("the window's own where there is no space at all", () => {
+    expect(setKey(null)).toBe(GLOBAL)
+  })
+})
+
+/** Before #674 a space chose: Global, sharing one set, or its own. The shared set
+ *  becomes one space's, once, so nobody loses a tab. */
+describe('where the set every Global space shared goes', () => {
+  const spaces = ['work', 'home', 'uni']
+
+  test('to the first space that shared it and has no set of its own yet', () => {
+    expect(sharedGoesTo(spaces, new Set(['work']), () => false)).toBe('home')
+    expect(sharedGoesTo(spaces, new Set(), (one) => one === 'work')).toBe('home')
+  })
+
+  test('nowhere where every space has a set of its own', () => {
+    expect(sharedGoesTo(spaces, new Set(['work', 'home']), (one) => one === 'uni')).toBeNull()
   })
 })
 
@@ -69,21 +81,6 @@ describe('which space a tab belongs to', () => {
 
   test('a folder whose name starts like another is not inside it', () => {
     expect(ownerOf('/spaces/Workshop/Note.md', null, spaces)).toBeNull()
-  })
-})
-
-describe('where a hidden tab of the shared set comes back', () => {
-  test('in its own space, where that space shares the set', () => {
-    expect(sharedHome('home', 'uni', ['home', 'uni'])).toBe('home')
-  })
-
-  test('else in the shared space shown last, else the first', () => {
-    expect(sharedHome('work', 'uni', ['home', 'uni'])).toBe('uni')
-    expect(sharedHome(null, 'gone', ['home', 'uni'])).toBe('home')
-  })
-
-  test('nowhere, where every space keeps its own', () => {
-    expect(sharedHome('home', null, [])).toBeNull()
   })
 })
 

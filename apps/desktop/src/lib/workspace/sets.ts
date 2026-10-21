@@ -1,18 +1,12 @@
 /** A space's own tabs, decided: which set of tabs a space shows, what a set out of sight
- *  is written down as, and what happens to the tabs when the choice changes.
+ *  is written down as, and where the one set older builds shared goes.
  *
- *  Emil, 2026-10-01: *"just as you can choose whether cookies are per space or separate,
- *  there should be an option whether the tabs are global or only for the space. Only for
- *  the space means the whole open configuration is saved for that space, and it changes
- *  automatically when you switch to another space."*
- *
- *  So every space is one of two, the way its web data is one of three (web-data.ts):
- *
- *  - **global** - the one set every such space shares, which is what every space has
- *    always had: moving between two of them changes nothing on screen.
- *  - **space** - a set of the space's own: its tabs, its panes and splits, which tab is
- *    in front in each, the sidebars, the preview and where the keyboard was. Arc's
- *    spaces and VS Code's windows, where a workspace is its own editors.
+ *  Emil, 2026-10-01: *"Only for the space means the whole open configuration is saved
+ *  for that space, and it changes automatically when you switch to another space."* For
+ *  a while that was a choice, Tabs: Global or Space; since #674 it is what every space
+ *  does. A space's set is its tabs, its panes and splits, which tab is in front in each,
+ *  the sidebars, the preview and where the keyboard was - Arc's spaces and VS Code's
+ *  windows, where a workspace is its own editors.
  *
  *  Pure, so every rule here is read off lists in a test; sets.svelte.ts carries it out
  *  on the workspace, and docs/chrome-tabs.md says it for a reader. */
@@ -23,21 +17,27 @@ import type { Panel } from '../workspace.svelte'
 import { type Frame, paneIn, panesIn, withoutPane } from './pane-tree'
 import { isPanel, type Layout, readLayout } from './session'
 
-/** Whether a space shares the global tabs or keeps its own. */
-export type TabsMode = 'global' | 'space'
-
-/** The two, in the order they are offered: the same order the web data row offers its
- *  first two in, so the two rows read alike. */
-export const TABS_MODES: readonly TabsMode[] = ['global', 'space']
-
-/** What the set every Global space shares is kept under, beside the spaces' own ids. A
- *  space's id is a counter and a dash (identifier.ts), so no space is called this. */
+/** The set of a window in no space at all, one with none yet. Also the key the one set
+ *  every Global space shared was kept under before #674, read once to give it a space;
+ *  see `sharedGoesTo`. A space's id is a counter and a dash (identifier.ts), so no space
+ *  is called this. */
 export const GLOBAL = 'global'
 
-/** Which set a space shows: its own, or the shared one. No space at all - a window that
- *  has none yet - shows the shared one. */
-export function setKey(space: string | null, owns: (space: string) => boolean): string {
-  return space !== null && owns(space) ? space : GLOBAL
+/** Which set a space shows: its own. No space at all shows the window's. */
+export function setKey(space: string | null): string {
+  return space ?? GLOBAL
+}
+
+/** Where the set every Global space shared goes, once (#674): to the first space that
+ *  shared it and keeps no set of its own yet, so its tabs stay one space's tabs and
+ *  none is lost. Null where every space has one already; the caller then puts the tabs
+ *  into the set on screen. `owned` is the spaces that kept their own tabs back then. */
+export function sharedGoesTo(
+  spaces: readonly string[],
+  owned: ReadonlySet<string>,
+  hasSet: (space: string) => boolean,
+): string | null {
+  return spaces.find((one) => !owned.has(one) && !hasSet(one)) ?? null
 }
 
 /** Whether the tabs of a space out of sight keep running, are paused, or the reader is
@@ -66,19 +66,6 @@ export function ownerOf(
 ): string | null {
   if (path === null) return home
   return spaces.find((one) => within(one.root, path) !== null)?.id ?? null
-}
-
-/** The space a hidden tab of the shared set comes back into view in: its own, where its
- *  own shares the set, else the Global space the reader was in last, else the first one.
- *  Null where no space shares the set any more. */
-export function sharedHome(
-  owner: string | null,
-  last: string | null,
-  shared: readonly string[],
-): string | null {
-  if (owner !== null && shared.includes(owner)) return owner
-  if (last !== null && shared.includes(last)) return last
-  return shared[0] ?? null
 }
 
 /** A set's frame after its tabs have changed out of sight: a pane with no tab left goes

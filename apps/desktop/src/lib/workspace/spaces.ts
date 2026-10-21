@@ -14,7 +14,6 @@
 
 import { spacesAhead } from './ahead'
 import { identifier } from '../identifier'
-import { isRecord, stored } from '../stored'
 import { invoke } from '../tauri'
 import type { Entry, Naming, Panel, Space } from '../workspace.svelte'
 import type { Tab } from './documents.svelte'
@@ -111,23 +110,23 @@ export function applySpaceOrder(ws: HoldsSpaces, names: string[]): boolean {
   return true
 }
 
-/** Where each space's choice of tabs is kept, on this device; see sets.ts. */
+/** Where each space's choice of tabs was kept on this device, before every space kept its
+ *  own (#674): read once, to give the set the Global spaces shared to one of them, and
+ *  forgotten. See `handOver` in sets.svelte.ts. */
 export const TABS_KEY = 'nib:space-tabs'
-
-/** Whether a space keeps tabs of its own rather than the ones every space shares. */
-export function ownTabs(id: string | null): boolean {
-  const kept = stored(TABS_KEY)
-  return id !== null && isRecord(kept) && kept[id] === 'space'
-}
 
 /** Whether this window has fetched sets.svelte.ts, which every switch goes through then. */
 export const tabSets = { fetched: false }
 
 /** `shown` is the switcher's way in. Picking a space with the sidebar closed showed
- *  nothing, so the sidebar comes up with the tree, as Ctrl+Shift+L opens it. */
+ *  nothing, so the sidebar comes up with the tree, as Ctrl+Shift+L opens it.
+ *
+ *  Every space keeps its own tabs (#674), so a switch with any tab open puts them aside
+ *  and brings the space's own in (sets.svelte.ts), fetched with the first such switch.
+ *  A window with nothing open and no sets yet has nothing to put aside, and only says
+ *  which space it is in. */
 export async function selectSpace(ws: HoldsSpaces, id: string, shown = false) {
-  // A space with tabs of its own on either side swaps them; see sets.svelte.ts.
-  if (tabSets.fetched || ownTabs(ws.activeSpaceId) || ownTabs(id)) {
+  if (tabSets.fetched || ws.tabs.length) {
     const { sets } = await import('./sets.svelte')
     return sets.toSpace(id, shown)
   }

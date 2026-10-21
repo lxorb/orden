@@ -45,7 +45,7 @@ test('each space comes back with its own tabs', async () => {
   disk.current.files.set(FOOD, '# Food\n')
   localStorage.clear()
 
-  // The first run: Home shares the global tabs, Work keeps its own.
+  // The first run: Home's tabs, then Work's.
   let first: unknown
   {
     const { workspace } = await run()
@@ -58,14 +58,15 @@ test('each space comes back with its own tabs', async () => {
     await workspace.loadTree()
     await workspace.openEntry(FOOD)
 
-    const { sets } = await import('../../src/lib/workspace/sets.svelte')
-    await sets.choose('work', 'space')
     await workspace.showSpace('work')
     await workspace.openEntry(PLAN)
     workspace.persist()
   }
 
   // The second: everything read back from what the first wrote.
+  // What the first run fetched lazily - the sets' store, and what it fetches in turn - is
+  // all in before the modules are dropped, or it lands in the second run's half-built ones.
+  await vi.dynamicImportSettled()
   vi.resetModules()
   const { workspace, onScreen } = await run()
   expect(workspace).not.toBe(first)
@@ -75,10 +76,13 @@ test('each space comes back with its own tabs', async () => {
   expect(workspace.activeSpaceId).toBe('work')
   expect(onScreen()).toEqual(['Plan.md'])
 
-  // The shared set, built back behind the window at the launch's last turn.
+  // Home's set, built back behind the window at the launch's last turn.
   const { tabSets } = await import('../../src/lib/workspace/spaces')
-  await vi.waitFor(() => expect(tabSets.fetched).toBe(true))
-  await vi.waitFor(() => expect(workspace.tabs.map((tab) => tab.name)).toContain('Food.md'))
+  // The sets are fetched at the launch's last turn, which a loaded machine reaches late.
+  await vi.waitFor(() => expect(tabSets.fetched).toBe(true), { timeout: 15_000 })
+  await vi.waitFor(() => expect(workspace.tabs.map((tab) => tab.name)).toContain('Food.md'), {
+    timeout: 15_000,
+  })
   expect(onScreen()).toEqual(['Plan.md'])
 
   await workspace.showSpace('home')

@@ -13,8 +13,7 @@
  *    follows. Arc's Move to space carries a pinned tab - the space's saved thing - out of
  *    one sidebar into the other, and Edge's takes the tab out of the workspace it was in;
  *    the saved thing here is the file. Only the tab moving would put a Work note in Home's
- *    tabs while Home's list does not have it, and send it back the next time Work's tabs
- *    are given back to the shared set: a move that does not stick.
+ *    tabs while Home's list does not have it: a move that does not stick.
  *  - **a tab with no file** - a new note, a terminal, a web tab nobody kept, the graph - is
  *    given the other space as its home: saved there, searched there, a page's web data
  *    that space's, a terminal's last lines kept under it.
