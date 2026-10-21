@@ -96,6 +96,11 @@ if DESK == "sway":
     def shoot(name):
         subprocess.run(["grim", str(OUT / f"popup-{name}.png")], check=False)
 
+    # On the wide screen at scale 1, where the sidebar and its space switcher show: on
+    # the narrow one the sidebar is folded away.
+    subprocess.run(["swaymsg", f"[pid={APP}] move container to output HEADLESS-2, focus"], check=False)
+    time.sleep(2)
+
 else:
 
     def xdo(*words):
@@ -161,8 +166,22 @@ def until(code, seconds=4):
     return None
 
 
+HEARD = (
+    "(() => { if (window.__popupHeard) return true; window.__popupHeard = [];"
+    " const say = (what) => { window.__popupHeard.push(Math.round(performance.now()) + ' ' + what);"
+    " if (window.__popupHeard.length > 40) window.__popupHeard.shift() };"
+    " addEventListener('blur', (e) => { if (!(e.target instanceof Node)) say('window blur') }, true);"
+    " addEventListener('focus', (e) => { if (!(e.target instanceof Node)) say('window focus') }, true);"
+    " addEventListener('pointerdown', (e) => say('pointerdown on ' + (e.target.className || e.target.tagName)"
+    " + ' at ' + Math.round(e.clientX) + ',' + Math.round(e.clientY)), true);"
+    " addEventListener('click', (e) => say('click on ' + (e.target.className || e.target.tagName)), true);"
+    " return true })()"
+)
+
+
 def fail(what, name):
     print(f"::error::{DESK}: {what}")
+    print(f"{DESK}: the page heard: {run('window.__popupHeard')}")
     failures.append(what)
     shoot(name)
 
@@ -200,6 +219,16 @@ def choose_space(name, round_):
     if not isinstance(row, dict):
         fail(f"round {round_}: no row for the space {name}", f"{round_}-switcher-row")
         return
+    # What is on top where the row is, as the page has it: the row, or something drawn
+    # over it that a press there would land on instead.
+    under = run(
+        f"(() => {{ const r = [...document.querySelectorAll('{SPACES} [role=menuitem] .nib-row-label')]"
+        f".find((o) => o.textContent.trim() === {json.dumps(name)}); if (!r) return null;"
+        " const b = r.getBoundingClientRect(); const on = document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2);"
+        " if (!on) return 'nothing'; if (on.closest('[data-spaces-open]')) return 'the row';"
+        " const card = on.closest('.nib-bubble, .nib-layer'); const one = card || on;"
+        " return (one.getAttribute('class') || one.tagName) + ': ' + one.textContent.trim().slice(0, 60) })()"
+    )
     press(row)
     if until(f"({ACTIVE}) === {json.dumps(name)}"):
         done.append(f"round {round_}: {name} chosen from the space switcher")
@@ -208,7 +237,7 @@ def choose_space(name, round_):
         open_ = run(f"!!document.querySelector('{SPACES}')")
         fail(
             f"round {round_}: a press on {name} in the space switcher did not choose it"
-            f" (the switcher is {'still open' if open_ else 'closed'})",
+            f" (the switcher is {'still open' if open_ else 'closed'}; on top where the row is: {under})",
             f"{round_}-switcher-missed",
         )
 
@@ -343,6 +372,7 @@ if (run("nib.workspace.spaces.length") or 0) < 2:
 other = run(f"nib.workspace.spaces.map((s) => s.name).find((name) => name !== {json.dumps(first)})")
 print(f"{DESK}: spaces {first!r} and {other!r}, the page's ratio {ratio()}")
 
+run(HEARD)
 for round_ in range(1, ROUNDS + 1):
     if first and other:
         choose_space(other, round_)
