@@ -209,6 +209,14 @@ def choose_space(name, round_):
     if not isinstance(button, dict):
         fail(f"round {round_}: no space switcher to open", f"{round_}-switcher")
         return
+    on_top = run(
+        f"(() => {{ const b = document.querySelector('{SWITCHER}').getBoundingClientRect();"
+        " const on = document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2);"
+        f" return !!on && !!on.closest('{SWITCHER}') }})()"
+    )
+    if not on_top:
+        fail(f"round {round_}: the space switcher is not in sight: the sidebar is shut", f"{round_}-switcher-hidden")
+        return
     press(button)
     if not until(f"!!document.querySelector('{SPACES}')"):
         fail(f"round {round_}: the space switcher did not open", f"{round_}-switcher-shut")
