@@ -5,9 +5,6 @@ import { prompt } from './prompt.svelte'
 import { canPublish, canShare, isShared, roleOf, share } from './sharing.svelte'
 import { type Space, workspace } from './workspace.svelte'
 
-/** The rows that open into a choice, fetched with the press; see space-choices.ts. */
-const choices = () => import('./space-choices')
-
 /** Putting a space away, fetched with the press; see space-archive.ts. */
 const archiving = () => import('./space-archive')
 
@@ -132,8 +129,6 @@ export function spaceMenu(space: Space): MenuEntry[] {
           },
         ]
       : []),
-    // Whether its tabs are its own, under the row it mirrors; see workspace/sets.ts.
-    { label: t('Tabs'), keep: true, run: () => void choices().then((one) => one.showTabs(space)) },
     DIVIDER,
     // Where a space sits in the list. Left out at the ends rather than offered
     // as a row that does nothing.

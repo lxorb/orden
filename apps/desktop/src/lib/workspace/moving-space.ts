@@ -17,7 +17,6 @@ import type { Tab } from '../workspace.svelte'
 import { workspace } from '../workspace.svelte'
 import { ownerOf } from './sets'
 import { carried, movingOf, spacesFor } from './space-move'
-import { ownTabs, tabSets } from './spaces'
 
 /** The tabs, moved to `space`. A file that cannot move - a file of that name already
  *  there - keeps its tab where it is, so nothing is ever half moved. */
@@ -44,12 +43,8 @@ export async function moveToSpace(ids: readonly string[], space: string): Promis
   }
   if (!moved.length) return
 
-  if (tabSets.fetched || ws.spaces.some((one) => ownTabs(one.id))) {
-    const { sets } = await import('./sets.svelte')
-    await sets.adopt(moved, space)
-  } else {
-    ws.persist()
-  }
+  const { sets } = await import('./sets.svelte')
+  await sets.adopt(moved, space)
 }
 
 /** A tab's file moved into the space's root: the one move between spaces there is, with

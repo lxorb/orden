@@ -55,8 +55,6 @@ test('a set comes back on the tab it was left on when one before it has gone', a
     ]
     workspace.activeSpaceId = 'home'
     await workspace.loadTree()
-    const { sets } = await import('../../src/lib/workspace/sets.svelte')
-    await sets.choose('work', 'space')
     await workspace.showSpace('work')
     for (const path of [PLAN, IDEAS, NOTES]) await workspace.openEntry(path)
     await workspace.showSpace('home')
@@ -65,12 +63,18 @@ test('a set comes back on the tab it was left on when one before it has gone', a
   }
 
   disk.current.files.delete(IDEAS)
+  // What the first run fetched lazily - the sets' store, and what it fetches in turn - is
+  // all in before the modules are dropped, or it lands in the second run's half-built ones.
+  await vi.dynamicImportSettled()
   vi.resetModules()
   const { workspace, onScreen } = await run()
   await workspace.restore()
   const { tabSets } = await import('../../src/lib/workspace/spaces')
-  await vi.waitFor(() => expect(tabSets.fetched).toBe(true))
-  await vi.waitFor(() => expect(workspace.tabs.map((tab) => tab.name)).toContain('Notes.md'))
+  // The sets are fetched at the launch's last turn, which a loaded machine reaches late.
+  await vi.waitFor(() => expect(tabSets.fetched).toBe(true), { timeout: 15_000 })
+  await vi.waitFor(() => expect(workspace.tabs.map((tab) => tab.name)).toContain('Notes.md'), {
+    timeout: 15_000,
+  })
 
   await workspace.showSpace('work')
   expect(onScreen()).toEqual(['Plan.md', 'Notes.md'])

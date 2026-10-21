@@ -1,8 +1,8 @@
 import { flushSync } from 'svelte'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** Move to space, on the real workspace: the same tab goes to the other space's set - its
- *  own, or the shared one - and takes with it what makes it that space's: its file, or
+/** Move to space, on the real workspace: the same tab goes to the other space's own set
+ *  and takes with it what makes it that space's: its file, or
  *  the space as its home. Nothing is closed and opened again, so nothing is lost.
  *
  *  In the effects project beside space-tabs.effect.test.ts, whose sets this moves tabs
@@ -36,7 +36,8 @@ const { Disk } = await import('../disk')
 disk.current = new Disk()
 
 const { workspace } = await import('../../src/lib/workspace.svelte')
-const { sets } = await import('../../src/lib/workspace/sets.svelte')
+// The sets' store, fetched as the app fetches it with the first switch.
+await import('../../src/lib/workspace/sets.svelte')
 const { pane } = await import('../../src/lib/workspace/pane-tree')
 const { moveToSpace } = await import('../../src/lib/workspace/moving-space')
 const { written } = await import('../../src/lib/parting')
@@ -69,8 +70,6 @@ const files = () => {
 }
 
 beforeEach(async () => {
-  for (const space of workspace.spaces) await sets.choose(space.id, 'global')
-
   const one = disk.current
   if (!one) throw new Error('no disk')
   one.reset()
@@ -84,18 +83,17 @@ beforeEach(async () => {
     { id: 'home', name: 'Home', root: '/spaces/Home' },
     { id: 'uni', name: 'Uni', root: '/spaces/Uni' },
   ]
+  // Back in Work, then nothing open in any space; see space-tabs.effect.test.ts.
+  await workspace.showSpace('work')
   for (const tab of [...workspace.tabs]) workspace.close(tab.id, false)
   const first = pane('first')
   workspace.panes.restore(first, first.id)
-  workspace.activeSpaceId = 'work'
   await workspace.loadTree()
   flushSync()
 })
 
-describe('a tab moved to a space that keeps its own tabs', () => {
+describe('a tab moved to another space', () => {
   test('leaves the strip, is in front of that space’s, and the window stays where it is', async () => {
-    await sets.choose('work', 'space')
-    await sets.choose('home', 'space')
     await workspace.openEntry(PLAN)
     await workspace.openEntry(IDEAS)
     const ideas = tabAt(IDEAS)
@@ -111,7 +109,6 @@ describe('a tab moved to a space that keeps its own tabs', () => {
   })
 
   test('its file goes with it, into the root of that space', async () => {
-    await sets.choose('work', 'space')
     await workspace.openEntry(PLAN)
     const plan = tabAt(PLAN)
 
@@ -123,7 +120,6 @@ describe('a tab moved to a space that keeps its own tabs', () => {
   })
 
   test('an unsaved note keeps its words and is saved in its new space', async () => {
-    await sets.choose('work', 'space')
     const draft = blank('# Shopping\n\nmilk')
 
     await moveToSpace([draft.id], 'uni')
@@ -137,7 +133,6 @@ describe('a tab moved to a space that keeps its own tabs', () => {
   })
 
   test('a terminal is the same tab, its lines moved to the new space’s folder', async () => {
-    await sets.choose('home', 'space')
     workspace.openUnsaved(
       'terminal',
       JSON.stringify({ shell: 'cmd', folder: '/spaces/Work', key: 'k1' }),
@@ -159,7 +154,6 @@ describe('a tab moved to a space that keeps its own tabs', () => {
   })
 
   test('a preview moved is kept, and the pane it left falls back to the tab before', async () => {
-    await sets.choose('work', 'space')
     await workspace.openEntry(PLAN)
     await workspace.open(IDEAS, { preview: true })
     const ideas = tabAt(IDEAS)
@@ -171,7 +165,6 @@ describe('a tab moved to a space that keeps its own tabs', () => {
   })
 
   test('a file takes every view of it, and a pane left with nothing goes', async () => {
-    await sets.choose('work', 'space')
     await workspace.openEntry(PLAN)
     await workspace.openEntry(IDEAS)
     workspace.split('row', tabAt(IDEAS).id)
@@ -183,36 +176,9 @@ describe('a tab moved to a space that keeps its own tabs', () => {
   })
 })
 
-describe('a tab moved to a Global space', () => {
-  test('joins the shared set', async () => {
-    await sets.choose('work', 'space')
-    await workspace.showSpace('home')
-    await workspace.openEntry(FOOD)
-    await workspace.showSpace('work')
-    const draft = blank('notes')
-
-    await moveToSpace([draft.id], 'uni')
-    expect(onScreen()).toEqual([])
-
-    await workspace.showSpace('home')
-    expect(onScreen()).toEqual(['Food.md', draft.name])
-  })
-
-  test('from another Global space, it stays on screen and only its space changes', async () => {
-    const draft = blank('notes')
-    const frame = workspace.panes.frame
-
-    await moveToSpace([draft.id], 'home')
-    expect(draft.note.home).toBe('home')
-    expect(workspace.panes.frame).toBe(frame)
-    expect(onScreen()).toEqual([draft.name])
-  })
-})
-
 describe('what is never lost', () => {
   test('a file whose name is taken there stays, and so does its tab', async () => {
     files().set('/spaces/Home/Plan.md', '# Another plan\n')
-    await sets.choose('work', 'space')
     await workspace.openEntry(PLAN)
     const plan = tabAt(PLAN)
 
@@ -245,7 +211,6 @@ describe('what is never lost', () => {
 
 describe('the session', () => {
   test('writes the tab under the space it went to', async () => {
-    await sets.choose('work', 'space')
     const draft = blank('notes')
 
     await moveToSpace([draft.id], 'uni')

@@ -92,10 +92,10 @@ export interface From {
  *
  *  Only where that is not the space on screen. Arc marks a tab with its space only
  *  where it can turn up outside it - its command bar, Little Arc - and never in the
- *  sidebar, where every tab is the space's own; nib's strip is the same, since a space
- *  that keeps its own tabs only ever shows its own. So the card says it where it is
- *  news, a page of another space's in the tabs every Global space shares, and spends
- *  no words where the answer is the space the reader is already in. */
+ *  sidebar, where every tab is the space's own; nib's strip is the same, since every
+ *  space keeps its own tabs (#674). So the card says it where it is news - a page of
+ *  another space's opened here, by a link or from the palette - and spends no words
+ *  where the answer is the space the reader is already in. */
 export function fromOf(
   path: string | null,
   home: string | null,
