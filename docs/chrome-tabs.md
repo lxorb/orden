@@ -105,12 +105,19 @@ them there rather than keeping a second record.
 
 ### A space's own tabs
 
-**A space shares the window's tabs or keeps its own: Tabs, Global or Space, in the space's
-menu**, built the way a web note's Web data row is, with the same word for the shared one. Emil,
-2026-10-01: *"there should be an option whether the tabs are global or only for the space.
-Only for the space means the whole open configuration is saved for that space, and it
-changes automatically when you switch to another space."* Every space is Global until
-asked, which is what every space was before, so nothing moves because the row exists.
+**Every space keeps its own tabs.** Emil, 2026-10-01: *"Only for the space means the whole
+open configuration is saved for that space, and it changes automatically when you switch
+to another space."* For three weeks it was a choice, Tabs: Global or Space in the space's
+menu; since #674 it is what every space does, and the row, its setting and everything
+that only served a shared set are gone. Web data is another matter and stays shared, with
+Separate web data per web note (#239; docs/web-tabs.md).
+
+**Moving over, once.** A window an older build wrote is read the way it was left, and no
+tab is lost: the set the Global spaces shared becomes the own set of the space it was on
+screen in, or, where it was out of sight, of the first space that shared it and has no
+set yet - and where every space has one, its tabs join the set on screen. Every other
+space starts from what it last showed. The device's record of which spaces kept their
+own (`nib:space-tabs`) is read for this and forgotten (`handOver` in sets.svelte.ts).
 
 - **What a set is**: the tabs - notes, tabs with no file, web tabs, terminals, pinned
   and previewed ones - their order, the panes and splits, which tab is in front in each
@@ -121,7 +128,7 @@ asked, which is what every space was before, so nothing moves because the row ex
 - **A switch** puts the set on screen aside and brings the space's own in, in the step
   that changes the space, so the first frame after it is the new set. The strip arrives
   in place, fading in and rising its last four pixels in 150 ms, and the set that left
-  goes at once; between two Global spaces nothing is swapped at all.
+  goes at once. A window with nothing open yet only says which space it is in.
 - **Out of sight nothing closes.** Every tab of every set is in the window's one strip,
   with a pane nobody is showing, so one document per file and one tab per web note hold
   across sets, and a terminal and a page go on as long as their tab is open; Hidden tabs
@@ -131,17 +138,12 @@ asked, which is what every space was before, so nothing moves because the row ex
   another space's set - the space switches, as Arc's command bar goes to a tab's space,
   VS Code goes to the window a folder is open in and Chrome to an open saved group.
   Anything not open opens in the set on screen.
-- **Global to Space**: the space keeps the tabs that are its own (its files, and the
-  tabs with no file opened in it); the rest stay shared and leave the strip with the
-  close motion. **Space to Global**: its tabs join the shared set at the end of the strip
-  in front. Nothing is closed either way.
 - **A restart** brings each set back: the one on screen is the session's arrangement,
   the others are written beside it as the same `Layout` and built back through the same
   restore at the launch's last turn. A web tab of one comes back without a page until it
   is shown, a terminal starts when it is first shown.
-- **Windows**: the choice is the space's, on this device; each window keeps its own sets
-  as it keeps its own tabs, and the session is the window that wrote last, as it always
-  was.
+- **Windows**: each window keeps its own sets as it keeps its own tabs, and the session is
+  the window that wrote last, as it always was.
 
 See `workspace/sets.ts` for the rules and `workspace/sets.svelte.ts` for the store.
 
@@ -162,9 +164,8 @@ both.
 
 - **The same tab.** Nothing closes and opens again: a terminal is the same shell, its
   process and its screen; a page keeps its place; an unsaved note keeps its words and its
-  undo. It joins the end of the strip in front in the other space's own set, or of the
-  shared set where that space is Global, in front of its pane; between two Global spaces
-  nothing moves on screen.
+  undo. It joins the end of the strip in front in the other space's own set, in front
+  of its pane.
 - **The window stays.** Edge opens the workspace a tab is moved to and loads all of it,
   and that is the complaint its users have; the tab is waiting when the space is next
   shown. The set it left falls back to the tab used before, as after a close.
@@ -173,7 +174,7 @@ both.
   and its Undo, and every view of it follows. Arc's Move to space carries a pinned tab -
   the space's saved thing - out of one sidebar into the other, and Edge's takes the tab
   out of the workspace it was in; the saved thing here is the file, and a tab whose file
-  stayed behind would be sent back the next time its space's tabs went Global. A tab with
+  stayed behind would be a tab of the other space whose file its list does not have. A tab with
   no file is given the other space as its home: saved there, searched there, a terminal's
   last lines kept under it (docs/terminal.md). A file in no space and a note shared on its
   own move as the tab alone. A file of that name already there stays, and so does its tab.
