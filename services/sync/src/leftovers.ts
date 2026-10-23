@@ -9,10 +9,16 @@
  *  Every step is safe to repeat. Deleting an object that is not there is nothing,
  *  and so is emptying a room nobody kept anything in; a row goes from the list only
  *  once what it names has gone, so a sweep that stops half way leaves the rest for
- *  the next one. */
+ *  the next one. Withdrawing an issue a report became on GitHub is the same: writing
+ *  over one already withdrawn changes nothing.
+ *
+ *  The account's reports are copied into issues on GitHub (feedback-issues.ts), which
+ *  no transaction reaches either, so those are on the list too, as `issues/<number>`,
+ *  and withdrawn a request at a time like a room. */
 
 import { askInChunks, chunks, places } from './bound'
 import { eraseChats } from './chats/ask'
+import { ISSUES, withdrawIssues } from './feedback-issues'
 import { eraseHubs } from './hub/reach'
 import { eraseMachines } from './machines/ask'
 import type { Env } from './types'
@@ -41,7 +47,11 @@ const HOME = 'homes/'
 
 /** Whether a name is an object's storage rather than the bucket's. */
 const isObject = (name: string) =>
-  name.startsWith(ROOM) || name.startsWith(HUB) || name.startsWith(MACHINE) || name.startsWith(CHAT)
+  name.startsWith(ROOM) ||
+  name.startsWith(HUB) ||
+  name.startsWith(MACHINE) ||
+  name.startsWith(CHAT) ||
+  name.startsWith(ISSUES)
 
 /** Empties the oldest of what the list names, as much as one sweep takes on, and
  *  answers how many it crossed off. */
@@ -49,21 +59,21 @@ export async function sweepLeftovers(env: Env): Promise<number> {
   const taken = async (sql: string, most: number) =>
     (
       await env.DB.prepare(sql)
-        .bind(`${ROOM}%`, `${HUB}%`, `${MACHINE}%`, `${CHAT}%`, most)
+        .bind(`${ROOM}%`, `${HUB}%`, `${MACHINE}%`, `${CHAT}%`, `${ISSUES}%`, most)
         .all<{ what: string }>()
     ).results
 
   const results = [
     ...(await taken(
       `select what from leftovers where what not like ?1 and what not like ?2
-          and what not like ?3 and what not like ?4
-        order by since, what limit ?5`,
+          and what not like ?3 and what not like ?4 and what not like ?5
+        order by since, what limit ?6`,
       OBJECTS_AT_ONCE,
     )),
     ...(await taken(
       `select what from leftovers where what like ?1 or what like ?2 or what like ?3
-          or what like ?4
-        order by since, what limit ?5`,
+          or what like ?4 or what like ?5
+        order by since, what limit ?6`,
       ROOMS_AT_ONCE,
     )),
   ]
@@ -98,12 +108,13 @@ export async function sweepLeftovers(env: Env): Promise<number> {
     ...(await eraseHubs(env, of(HUB))).map((id) => HUB + id),
     ...(await eraseMachines(env, of(MACHINE))).map((id) => MACHINE + id),
     ...(await eraseChats(env, of(CHAT))).map((id) => CHAT + id),
+    ...(await withdrawIssues(env, of(ISSUES).map(Number))).map((n) => ISSUES + String(n)),
     ...(homesBucket ? homes : []),
   ])
 
-  // Everything the bucket took, every room, hub and machine that answered, and every
-  // name that turned out to be somebody else's. One that did not answer stays for the
-  // next sweep.
+  // Everything the bucket took, every room, hub and machine that answered, every issue
+  // GitHub took, and every name that turned out to be somebody else's. One that did not
+  // answer stays for the next sweep.
   const done = names.filter(
     (one) => (!isObject(one) && !one.startsWith(HOME)) || named.has(one) || emptied.has(one),
   )

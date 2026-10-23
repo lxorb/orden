@@ -76,6 +76,11 @@ const NOTED: readonly string[] = [
        join chats c on c.id = f.chat_id join spaces sp on sp.id = c.space_id
       where b.user_id = ?1 and sp.user_id <> ?1
    on conflict(hash, user_id) do nothing`,
+  // The issues its reports became on GitHub, which keep the words, the log and the
+  // address; see feedback-issues.ts.
+  `insert or ignore into leftovers (what, since)
+     select 'issues/' || issue_number, ?3 from feedback
+      where user_id = ?1 and issue_number is not null`,
   // Its messages in other people's chats stay, as a deleted account's (decision 7.8);
   // the line saying who wrote a chat's last one names nobody now.
   `update chats set last_by = null
