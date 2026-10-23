@@ -205,6 +205,30 @@ describe('groups', () => {
     ])
   })
 
+  test("a lane keeps its column's order, not the order of a column of its name", () => {
+    // The board writes a lane's order into its column's. Here both cards once stood
+    // in the column of no status, whose order still names them, and the lane of no
+    // priority in Doing was then sorted b before a.
+    const cards = [noteRow('a.md', 'status: Doing'), noteRow('b.md', 'status: Doing')]
+    const view = readBase(`views:
+  - type: kanban
+    name: K
+    groupBy:
+      property: status
+      direction: ASC
+    nib:
+      subGroupBy:
+        property: priority
+        direction: ASC
+      order:
+        Doing: [b.md, a.md]
+        "": [a.md, b.md]
+`)
+    const doing = answer(view, 'K', cards, context).groups.find((group) => group.key === 'Doing')
+    expect(names(doing?.rows ?? [])).toEqual(['b', 'a'])
+    expect(doing?.sub?.map((lane) => [lane.key, names(lane.rows)])).toEqual([[null, ['b', 'a']]])
+  })
+
   test('in the order their first row comes, for headings', () => {
     const tasks = [
       taskRow('P.md', '- [ ] one', 2, { section: ['Zeta'] }),
