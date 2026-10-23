@@ -137,6 +137,22 @@ Same method and severity scale as round 1.
 | B82 | Medium | A CSV attached to a Notion page became a database and a note per row, and the CSV itself was not imported | Fixed, [#698](https://github.com/lxorb/orden/pull/698) | Every CSV in a Notion export was read as a database | Only a CSV whose name carries a Notion id is a database | `notion.test.ts` "a CSV attached to a page is the file it was…" (failed before); import 519 passed; svelte-check 0 errors; eslint, prettier clean |
 | B83 | Medium | Renaming a folder lost the board order of every database further inside it | Fixed, [#684](https://github.com/lxorb/orden/pull/684) | `orderMoved` read only the moved folder's own note and the notes above it | The notes of every folder under the moved one are read too | `order-paths.test.ts` "…the databases a renamed folder holds, however deep" (failed before); desktop views/workspace 1000 passed; svelte-check 0 errors |
 | B84 | Low | A database named `...md` was written into the folder above, over a note of that name | Fixed, [#688](https://github.com/lxorb/orden/pull/688) | `.md` stripped left `..`, which the name cleaning kept | A name of dots alone falls back to the default | `new-database.test.ts` (failed before); views 147 passed; svelte-check 0 errors |
+| B85 | Low | A reconnect while the old socket is half open hides this device's caret and credits its edits to nobody until the old socket closes | Open, accepted | `mayAnnounce` drops awareness from a second socket with the same `clientID` (`rooms/room.ts`) | - (heals at the old socket's close and the 15 s renewal) | Read from the code |
+| B86 | Low | Watching a space can run for ever on two links to `.` beside an unreadable folder | Open, accepted | `watch_tree` recurses through symlinked folders with no `Seen` guard | - (needs self-links and an unreadable folder together) | Read from the code |
+| B87 | Low | "Add task" from Shortcuts writes the inbox with a plain `fs::write` | Open, accepted | Not `write_atomically` | - (a crash in the write itself) | Read from the code |
+| B88 | Low | An imported name's part after its last dot is not cleaned (`Notes 1.5: ideas`) | Open, accepted | `safeParts` cleans the stem only | - (Windows refuses the write; elsewhere the name lands) | Scratch test |
+| B89 | Low | Two Todoist projects of one name: every link goes to the second | Open, accepted | Todoist's `planOf` uses no `Names`; `restamped` keys by path | - (no file is overwritten) | Scratch test |
+| B90 | Low | Renaming a swimlane option renames a column of the same name's order, hidden and groups | Open, accepted | `renamedGroup`/`forgottenGroup` run for `subGroupBy` too | - (only where lane and column options share a name) | Scratch test |
+| B91 | Low | A board grouped by `file.path` keeps a renamed note's old column key | Open, accepted | `movedOrder` rewrites ids, not group keys, `groups` or `hidden` | - (the column's manual place only) | Scratch test |
+| B92 | Low | A task dropped into another note's column lands after the ordered cards | Open, accepted | The order is written with the id from before the move | - (the task itself is safe) | Read from the code |
+| B93 | Low | "Add with AI" keeps whatever the model writes in `text`, extra lines and marks included | Open, accepted | `ai-entry.ts` takes `text` as it came | - (written into the person's own note, which they see) | Scratch test |
+| B94 | Low | A stray `.enex` beside only pictures or PDFs still reads as Evernote and drops them (rest of B78) | Open, accepted | `detect` falls back to the format where no notes sit beside it | - (a `lost` line needs new translated words) | - |
+
+Skipped, counted with the insignificant Lows (cannot be fixed alone):
+
+| # | Severity | Bug | Why skipped |
+| --- | --- | --- | --- |
+| B95 | Low | A header-less SVG upload under a diagram's name not yet drawn is kept unchecked, so a reader of the space who knows a fence could draw it first | The window is #518's on purpose, for apps from before the `x-nib-diagram` header; closing it means deciding when those apps are cut off. Needs the space's id, never printed on a page, and the fence's code |
 
 ### Round 2 status (paused 2026-10-23, to continue in another session)
 
