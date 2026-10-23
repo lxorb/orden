@@ -357,6 +357,28 @@ describe('diverge', () => {
     )
   })
 
+  test('a task each side added, either side of one both deleted, leaves the rest alone', () => {
+    // One device added a task at the top and the other at the bottom, and both deleted
+    // the same one. Read letter by letter, the line added at the top shifts every task
+    // below it down by one, so both sides seemed to rewrite the deleted line.
+    const base = '- [ ] alpha\n- [ ] gone item\n- [ ] beta\n- [ ] gamma\n'
+    const local = '- [ ] call Ann\n- [ ] alpha\n- [ ] beta\n- [ ] gamma\n'
+    const remote = '- [ ] alpha\n- [ ] beta\n- [ ] gamma\n- [ ] call Eve\n'
+    const merged = crdtMerge(base, local, remote)
+
+    for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
+      for (const crdt of [undefined, merged]) {
+        const result = diverge(base, local, remote, times, crdt)
+        expect(result.verdict).toBe('clean')
+        for (const task of ['alpha', 'beta', 'gamma']) {
+          expect(result.resolution).toContain(`- [ ] ${task}\n`)
+        }
+        expect(result.resolution).toMatch(/^(- \[ \] )?call Ann\n.*call Eve\n$/s)
+        expect(result.resolution).not.toContain('gone item')
+      }
+    }
+  })
+
   test('words each side wrote anew in a place of its own are both kept, the same or not', () => {
     const base = 'First line.\n\nSecond line.\n'
     const local = 'First line, the plan.\n\nSecond line.\n'

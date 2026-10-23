@@ -183,7 +183,9 @@ function whole(old: string, edits: readonly Edit[]): Edit[] {
  *  person would call the change, and what the classifier has to see: two rewrites of
  *  one sentence must not look like twenty small edits that happen not to touch, and
  *  `noon` changed to `one` must not look like two letters deleted and one typed
- *  just beside the other side's change.
+ *  just beside the other side's change. Lines are compared as lines first, so a
+ *  line added above another taken out is those two edits, not the lines between
+ *  them rewritten.
  *
  *  `operations` is for writing into a shared text: only the agreements too short to
  *  be worth two more operations are folded, the library's efficiency cleanup, so a
@@ -256,16 +258,87 @@ export function edits(old: string, now: string, tidy: Tidy): Edit[] {
     return tidy === 'semantic' ? worded(old, now, [middle]) : [middle]
   }
 
+  if (tidy === 'semantic') return worded(old, now, whole(old, read(old, now, middle)))
+
   const long = before.length > MOST_DIFFED || middle.insert.length > MOST_DIFFED
   const diffs = long ? lines(before, middle.insert) : characters(before, middle.insert)
   diffCleanupMerge(diffs)
-  if (tidy === 'operations') {
-    diffCleanupEfficiency(diffs)
-    return whole(old, editsOf(diffs, middle.from))
+  diffCleanupEfficiency(diffs)
+  return whole(old, editsOf(diffs, middle.from))
+}
+
+/** The edits a person would name, between the whole lines around `middle`: lines
+ *  added, lines taken out, and lines rewritten, each run of changed lines then read
+ *  character by character on its own.
+ *
+ *  Read letter by letter, a line added above a line taken out is every line between
+ *  them rewritten as the one before it, each word replaced by the word above; two
+ *  sides that took the same line out would then seem to have rewritten it two ways
+ *  (`alpha` over `gone item` on the one, `beta` over it on the other). Only a
+ *  line kept between two rewritten ones is joined into them, as the library's
+ *  semantic cleanup would, so two rewrites of one passage still read as one. */
+function read(old: string, now: string, middle: Edit): Edit[] {
+  // The text either side of `middle` is the same in both, so widening it to whole
+  // lines takes the same characters into both sides.
+  const from = middle.from === 0 ? 0 : old.lastIndexOf('\n', middle.from - 1) + 1
+  const ends = middle.to === 0 || middle.to === old.length || old.charAt(middle.to - 1) === '\n'
+  const newline = ends ? -1 : old.indexOf('\n', middle.to)
+  const to = ends ? middle.to : newline === -1 ? old.length : newline + 1
+  const after = old.length - to
+
+  const { chars1, chars2, lineArray } = diffLinesToChars(
+    old.slice(from, to),
+    now.slice(from, now.length - after),
+  )
+  const coarse = diffMain(chars1, chars2, UNCLOCKED, false)
+  diffCharsToLines(coarse, lineArray)
+
+  // Each run is the lines changed there and the lines kept after them.
+  let run = { gone: '', come: '', kept: '' }
+  const runs = [run]
+  for (const [operation, text] of coarse) {
+    if (operation === DIFF_EQUAL) {
+      run.kept += text
+      continue
+    }
+    if (run.kept) runs.push((run = { gone: '', come: '', kept: '' }))
+    if (operation === DIFF_DELETE) run.gone += text
+    else run.come += text
   }
 
-  diffCleanupSemantic(diffs)
-  return worded(old, now, whole(old, editsOf(diffs, middle.from)))
+  const rewrites = (one: { gone: string; come: string }) => one.gone !== '' && one.come !== ''
+  const longest = (one: { gone: string; come: string }) =>
+    Math.max(one.gone.length, one.come.length)
+  const diffs: Diff[] = []
+  const open = { gone: '', come: '' }
+  const flush = () => {
+    if (!open.gone && !open.come) return
+    const part = characters(open.gone, open.come)
+    diffCleanupMerge(part)
+    diffCleanupSemantic(part)
+    diffs.push(...part)
+    open.gone = ''
+    open.come = ''
+  }
+  for (const [index, { gone, come, kept }] of runs.entries()) {
+    open.gone += gone
+    open.come += come
+    const next = runs[index + 1]
+    if (
+      next &&
+      rewrites(open) &&
+      rewrites(next) &&
+      kept.length <= Math.min(longest(open), longest(next))
+    ) {
+      open.gone += kept
+      open.come += kept
+      continue
+    }
+    flush()
+    if (kept) diffs.push([DIFF_EQUAL, kept])
+  }
+  flush()
+  return editsOf(diffs, from)
 }
 
 /** How `old` becomes `now` word by word: a word is the same word or a different one,
