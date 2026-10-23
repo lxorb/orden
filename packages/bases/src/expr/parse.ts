@@ -10,7 +10,9 @@
 import { BasesError } from '../errors'
 
 export type Node =
-  | { type: 'literal'; value: null | boolean | number | string }
+  /** A string also says where its quotes stand in the source, so a rewrite can
+   *  replace just it (`renamedLiteral`). */
+  | { type: 'literal'; value: null | boolean | number | string; at?: number; end?: number }
   | { type: 'regex'; pattern: string; flags: string }
   | { type: 'list'; items: Node[] }
   | { type: 'object'; entries: [string, Node][] }
@@ -266,7 +268,12 @@ export function parseExpression(source: string): Node {
       case 'number':
         return { type: 'literal', value: Number(token.value) }
       case 'string':
-        return { type: 'literal', value: String(token.value) }
+        return {
+          type: 'literal',
+          value: String(token.value),
+          at: token.at,
+          end: token.at + token.text.length,
+        }
       case 'regex':
         return { type: 'regex', pattern: token.text, flags: String(token.value) }
       case 'name':
