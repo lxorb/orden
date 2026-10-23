@@ -24,7 +24,8 @@ use security_framework::os::macos::code_signing::{Flags, SecCode, SecRequirement
 use tauri::AppHandle;
 
 use crate::paths::{
-    config_dir, folder_named, in_spaces, inside, made, write_atomically, SPACES_DIR, TRASH,
+    config_dir, folder_named, in_spaces, inside, made, spaces_folder, write_atomically, SPACES,
+    SPACES_DIR, SPACES_KEPT, TRASH,
 };
 
 /// The inbox of a space that says nothing else.
@@ -137,8 +138,12 @@ fn spaces_dir() -> Result<PathBuf, String> {
 /// from already found: the one the settings folder keeps, else `Documents/Nib` where it
 /// is there, else `Spaces` in the app's data - which on a Mac is the settings folder.
 /// Not `Documents/Nib` alone, which is where spaces were only until #376.
-fn spaces_in(_settings: &Path, documents: Option<&Path>) -> PathBuf {
-    documents.map(|base| base.join("Nib")).unwrap_or_default()
+fn spaces_in(settings: &Path, documents: Option<&Path>) -> PathBuf {
+    let said = fs::read_to_string(settings.join(SPACES_KEPT)).ok();
+    let old = documents
+        .map(|base| base.join("Nib"))
+        .filter(|dir| dir.is_dir());
+    spaces_folder(said.as_deref(), old, settings.join(SPACES))
 }
 
 /// The first space, alphabetical, as the space list orders them.
@@ -205,7 +210,6 @@ fn is_item(line: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::paths::{SPACES, SPACES_KEPT};
 
     #[test]
     fn a_task_lands_at_the_end_of_the_inbox() {
