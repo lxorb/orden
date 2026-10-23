@@ -9,6 +9,8 @@
  *  Nothing in here touches the DOM, so a test hands over plain objects and the
  *  app hands over the browser's own `File`. */
 
+import { isJunk } from './names'
+
 /** Enough of `File` to read one. */
 export interface Picked {
   name: string
@@ -23,9 +25,6 @@ export interface Source {
   text(): Promise<string>
   bytes(): Promise<Uint8Array>
 }
-
-/** A vault's settings folder, at the top of what was picked or one folder in. */
-const VAULT = /^([^/]+\/)?\.obsidian\//
 
 /** How deep a zip inside a zip is followed. Notion splits a large export into
  *  `Part-1.zip` and the rest, and nothing anybody exports nests deeper than
@@ -79,10 +78,7 @@ export function insideFolder(picked: readonly Picked[]): Picked[] {
 /** Every file behind what the reader picked, zips opened. */
 export async function sourcesFrom(picked: readonly Picked[]): Promise<Source[]> {
   const found: Source[] = []
-  // A folder that is an Obsidian vault holds its zips as attachments, which a note
-  // links and the vault list brings whole, rather than exports to open. See VAULT in
-  // read.ts, which knows a vault the same way.
-  const vault = picked.some((one) => VAULT.test(tidyPath((one.webkitRelativePath ?? '').trim())))
+  const parts = onlyZips(picked.map((one) => tidyPath((one.webkitRelativePath ?? '').trim())))
 
   for (const one of picked) {
     // The relative path when the browser gave one, and the bare name when it
@@ -90,11 +86,12 @@ export async function sourcesFrom(picked: readonly Picked[]): Promise<Source[]> 
     const inside = (one.webkitRelativePath ?? '').trim()
     const path = tidyPath(inside.length ? inside : one.name)
     const bytes = new Uint8Array(await one.arrayBuffer())
-    // A file out of a picked folder is opened only when its name says zip, the way
-    // a zip inside a zip is: the folder is what was picked, and a mind map or a
-    // Sketch file kept in a vault is a zip underneath that nobody meant unpacked.
-    // A file picked on its own may be an export whatever it is called.
-    if (inside.length && (vault || !path.toLowerCase().endsWith('.zip')))
+    // A file out of a picked folder is opened only when its name says zip and the
+    // folder holds nothing else, the way a zip inside a zip is: the folder is what
+    // was picked, and a mind map or a Sketch file kept in a vault is a zip
+    // underneath that nobody meant unpacked. A file picked on its own may be an
+    // export whatever it is called.
+    if (inside.length && (!parts || !path.toLowerCase().endsWith('.zip')))
       found.push(sourceOf(path, bytes))
     else found.push(...(await expand(path, bytes, 0)))
   }
@@ -128,14 +125,12 @@ async function expand(path: string, bytes: Uint8Array, depth: number): Promise<S
     entries.push({ path: tidyPath(entryPath), read: () => entry.async('uint8array') })
   })
 
-  // A zipped vault holds its zips as attachments, as a vault picked as a folder does,
-  // rather than exports to open.
-  const vault = entries.some((entry) => VAULT.test(entry.path))
+  const parts = onlyZips(entries.map((entry) => entry.path))
 
   for (const entry of entries) {
     // A zip inside a zip is read now, because knowing whether one holds notes
     // means reading it, and the sheet counts what it is about to write.
-    if (!vault && entry.path.toLowerCase().endsWith('.zip')) {
+    if (parts && entry.path.toLowerCase().endsWith('.zip')) {
       inside.push(...(await expand(entry.path, await entry.read(), depth + 1)))
       continue
     }
@@ -144,6 +139,16 @@ async function expand(path: string, bytes: Uint8Array, depth: number): Promise<S
   }
 
   return inside
+}
+
+/** Whether these files are the parts of an export and nothing else: Notion's large
+ *  export, a zip of `Part-1.zip` and the rest, or those parts downloaded into a
+ *  folder. A zip beside notes is an attachment one of them links - a vault's, or
+ *  `attachments/code.zip` in a folder of markdown - and is brought whole, since its
+ *  files unpacked would land among the notes under names nothing links. */
+function onlyZips(paths: readonly string[]): boolean {
+  const kept = paths.filter((one) => !isJunk(one))
+  return kept.length > 0 && kept.every((one) => one.toLowerCase().endsWith('.zip'))
 }
 
 /** The upper half of IBM code page 437, which the zip format names for a file name
