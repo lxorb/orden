@@ -791,8 +791,62 @@ describe('chats', () => {
       await fire(logs.of(chat))
       expect((await events(people.owner, chat)).events).toEqual([])
 
+      at(260_000 + 30_000)
       await fire(logs.of(chat))
       expect((await events(people.owner, chat)).events).toMatchObject([{ id: later.id }])
+    })
+
+    test('one that keeps throwing is tried again later, and the others still go', async () => {
+      const chat = await chatOfOwner()
+      const hash = 'a'.repeat(64)
+      env.db
+        .prepare(
+          "insert into blobs (hash, user_id, size, type, created_at) values (?, ?, 4, 'image/png', 1)",
+        )
+        .run(hash, ids.writer)
+      const stuck = postOf('the figure', {
+        files: [{ hash, name: 'figure.png', size: 4, type: 'image/png' }],
+      })
+      const fine = postOf('good morning')
+      await send(people.writer, chat, {
+        kind: 'schedule',
+        id: id(),
+        sendAt: T0 + 260_000,
+        post: stuck,
+      })
+      await send(people.owner, chat, {
+        kind: 'schedule',
+        id: id(),
+        sendAt: T0 + 261_000,
+        post: fine,
+      })
+
+      let down = true
+      const failing = () =>
+        env.justBefore(/select distinct hash from blobs/, () => {
+          if (!down) return
+          failing()
+          throw new Error('D1 is not answering')
+        })
+      failing()
+
+      at(262_000)
+      await fire(logs.of(chat))
+      expect((await events(people.owner, chat)).events).toMatchObject([{ id: fine.id }])
+      // The head is told to D1 at once, and then nothing until the stuck one is tried
+      // again: not straight away, which is an alarm going off as fast as it is set.
+      expect(await fire(logs.of(chat))).toBe(true)
+      expect(logs.of(chat).state.alarm).toBeGreaterThan(Date.now())
+      expect(await fire(logs.of(chat))).toBe(false)
+
+      down = false
+      at(262_000 + 3_600_000)
+      await fire(logs.of(chat))
+      expect((await events(people.owner, chat)).events).toMatchObject([
+        { id: fine.id },
+        { id: stuck.id },
+      ])
+      expect(logs.of(chat).state.db.prepare('select * from scheduled_tries').all()).toEqual([])
     })
   })
 
