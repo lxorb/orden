@@ -121,3 +121,39 @@ Same method and severity scale as round 1.
 | --- | --- | --- | --- | --- | --- | --- |
 | B67 | Medium | On a board with swimlanes, a card dragged within a lane could snap back, most often in the lane of no value | Fixed, [#681](https://github.com/lxorb/orden/pull/681) | The board writes a lane's order into its column's; `answer()` sorted each lane again by the order under the lane's own name, which is a column's (the no-value lane read the No-value column's stale order) | A sub-group keeps the order its group gave its members | `answer.test.ts` "a lane keeps its column's order…" (failed before); bases 803 passed, desktop views 145 passed; tsc, eslint, prettier clean |
 | B68 | Low | Two tasks with the same words in one note cannot be ordered apart on a board | Open, accepted | `orderId` names a task by its words' hash, which the two share | - (only the relative order of two identical lines) | Reproduced by a scratch test |
+
+### Round 2 status (paused 2026-10-23, to continue in another session)
+
+Not finished: the round's audit is incomplete, and no full-suite run or final
+re-audit has been done. No claim is made yet about what remains.
+
+Audited and judged sound (no finding kept):
+
+- `services/sync`: `feedback.ts`, `feedback-issues.ts` (issue retry, claims, mention
+  quieting, body limit), `mcp/tokens.ts` (tokens end with their session; sessions do
+  not rotate), `erase.ts` guest changes, `notes.ts` paper routes, sync2 rate limits,
+  `publish.ts` race fix, `guests.ts` owner claim.
+- `apps/desktop`: `feedback.svelte.ts`, `naming.ts`, `undo-join.ts`, `workspace.svelte.ts`
+  (canvas open guard: blank text still reads as a new plane), `automation/inside.ts`,
+  canvas eraser/lock/PDF-import changes (`cutInk` keeps identity, so no empty edits),
+  `apps/cli/nib.mjs` screenshot change.
+- Round 1's open Lows re-checked: B48, B53, B54, B55 stay Low. B56 stays Low: the
+  window is the milliseconds between the agent's read and the re-read, and the agent's
+  next edit carries the stale `ifRev` and is refused.
+
+Still to audit (each was started by a sub-agent and stopped before it reported):
+
+- `services/sync/src` rest of the diff: blobs (`x-nib-diagram`), `blog/*`, `rooms/room.ts`,
+  `hub/*`, `chats/log.ts`, `spaces/answers.ts`, `settings.ts`, `programs.ts`.
+- `apps/desktop/src/lib/import/*` (archive entry paths, collisions, content loss).
+- `apps/desktop/src/lib/views/*` and `packages/bases` beyond B67/B68 (`order-paths.ts`,
+  `edit.ts`, `board.ts`, `peek.ts`, `new-database.ts`, task view).
+- `apps/desktop/src-tauri` (`paths.rs` first, then new commands and capabilities).
+- `packages/markdown` (`canvas-extras.ts`, `canvas.ts`, the marked patch), `packages/editor`
+  (`loop-guard.ts`), `packages/sync-core/src/diverge.ts` (lead: both sides remove the same
+  task and each adds a different one), `apps/desktop/src/lib/pages`, `sync2/binding.ts`,
+  `quick-add/ai-entry.ts`.
+
+Then: the full suite, then a complete re-audit. Note for the full suite: the container
+restarted twice while `pnpm test` ran with `--workspace-concurrency=2`, so run it one
+package at a time (`pnpm -r --workspace-concurrency=1 test`).
