@@ -158,7 +158,15 @@ fn appended(note: &str, line: &str) -> String {
     let Some(last) = lines.iter().rposition(|one| !one.trim().is_empty()) else {
         return format!("{line}{eol}");
     };
-    let kept: usize = lines[..=last].iter().map(|one| one.len()).sum::<usize>() + last * eol.len();
+    // Where the last words end, counted on the note as it is: a note edited on two
+    // systems ends some lines with `\r\n` and some with `\n`, so `eol` is not what
+    // every line before them ends with.
+    let kept = note
+        .split('\n')
+        .take(last)
+        .map(|one| one.len() + 1)
+        .sum::<usize>()
+        + lines[last].len();
     let gap = if ends_in_list(&lines[..=last]) {
         eol.to_owned()
     } else {
