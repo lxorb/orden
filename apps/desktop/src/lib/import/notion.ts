@@ -26,7 +26,7 @@ import { htmlToMarkdown } from '@nib/markdown/from-html'
 import { key } from '../i18n.svelte'
 import { folderPlan, isJunk } from './folder'
 import { dayOf, type Meta, noteText, propertyName, type Property } from './meta'
-import { Names, safeName, safeParts, withoutNotionId } from './names'
+import { hasNotionId, Names, safeName, safeParts, withoutNotionId } from './names'
 import {
   baseBlock,
   type Database,
@@ -85,7 +85,7 @@ export async function readNotion(exported: readonly Source[]): Promise<ImportPla
     place: (source) => {
       if (isJunk(source.path) || isIndex(source.path)) return { to: null }
 
-      if (CSV.test(source.path)) {
+      if (isTable(source.path)) {
         if (!kept.has(source.path)) {
           views += 1
           return { to: null }
@@ -319,11 +319,20 @@ function keyOf(column: string): string {
   return propertyName(column)
 }
 
+/** Whether a CSV is a database's table, which Notion names with the database's id
+ *  as it names every page, before the `_all` where there is one. A CSV without one
+ *  is a file somebody attached to a page, brought as the file it was: read as a
+ *  database it became a note of rows, and the link to it led nowhere. */
+function isTable(path: string): boolean {
+  const name = (path.split('/').pop() ?? path).replace(/_all(\.csv)$/i, '$1')
+  return CSV.test(name) && hasNotionId(name)
+}
+
 /** Which of the CSVs to read. Notion writes `Table id.csv` for the view that was
  *  on screen and `Table id_all.csv` for every row; where both are there the
  *  second is the one that holds the database. */
 function usefulCsvs(sources: readonly Source[]): Set<string> {
-  const csvs = sources.filter((one) => CSV.test(one.path)).map((one) => one.path)
+  const csvs = sources.filter((one) => isTable(one.path)).map((one) => one.path)
   const alls = new Set(
     csvs.filter((one) => /_all\.csv$/i.test(one)).map((one) => one.replace(/_all\.csv$/i, '')),
   )
