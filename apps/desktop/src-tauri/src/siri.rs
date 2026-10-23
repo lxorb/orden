@@ -210,6 +210,24 @@ mod tests {
         assert_eq!(appended("- [ ] a\r\n", "- [ ] b"), "- [ ] a\r\n- [ ] b\r\n");
     }
 
+    /// A note edited on two systems has both line endings, and the place after its last
+    /// words is where they end, whatever ends the lines before them.
+    #[test]
+    fn a_task_lands_after_the_last_words_of_a_note_of_mixed_endings() {
+        assert_eq!(
+            appended("a\nb\nc\nd\r\n", "- [ ] x"),
+            "a\nb\nc\nd\r\n\r\n- [ ] x\r\n"
+        );
+        assert_eq!(
+            appended("Einkauf\nÄpfel\nBirnen\nÄ\r\n", "- [ ] x"),
+            "Einkauf\nÄpfel\nBirnen\nÄ\r\n\r\n- [ ] x\r\n"
+        );
+        assert_eq!(
+            appended("- a\n- b\r\n", "- [ ] x"),
+            "- a\n- b\r\n- [ ] x\r\n"
+        );
+    }
+
     #[test]
     fn the_default_space_is_the_first_on_disk() {
         let dir = tempfile::tempdir().unwrap();
