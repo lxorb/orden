@@ -245,17 +245,17 @@ const MOST_READ = 250
 /** A picture in a note, as the app writes it: the service's `/i/` and the hash. */
 const PICTURE = /\/i\/([a-f0-9]{64})/g
 
-/** The pictures and files this account put into somebody else's space, handed to
- *  that space's owner.
+/** The pictures, files and papers this account put into somebody else's space,
+ *  handed to that space's owner.
  *
  *  A picture is held by whoever uploaded it, and a writer in a shared space uploads
  *  their own: so the picture in the owner's note is the writer's row, and deleting
  *  the writer would otherwise take the picture out of a space that stays. Whatever
  *  another account already holds is left alone - its row keeps the bytes. For the
- *  rest, every space this account may write in is read for them: its files, and the
- *  pictures in its notes. A space bigger than what is left to read hands over
- *  everything unread rather than guessing, because a picture somebody pays for is
- *  better than a hole in their note.
+ *  rest, every space this account may write in is read for them: its files, the
+ *  papers of its page notes and the pictures in its notes. A space bigger than what
+ *  is left to read hands over everything unread rather than guessing, because a
+ *  picture somebody pays for is better than a hole in their note.
  *
  *  What cannot be found this way is a picture put into a space this account has
  *  since been taken out of; nothing records who wrote what once they have gone. */
@@ -288,10 +288,14 @@ async function handedOn(env: Env, user: User, at: number): Promise<D1PreparedSta
     for (const file of readSpaceFiles(one.files)) if (mine.has(file.hash)) found.add(file.hash)
 
     // And the files of the space's tree (sync v2), whose bytes are these blobs by
-    // their hash; see sync2/files.ts.
+    // their hash; see sync2/files.ts. A page note's paper is a blob the same way,
+    // uploaded by whoever made the page note, so it is handed over beside them.
     const { results: files } = await env.DB.prepare(
       `select hash from notes where space_id = ?1 and kind = 'file'
-          and hash in (select value from json_each(?2))`,
+          and hash in (select value from json_each(?2))
+       union
+       select paper as hash from notes where space_id = ?1
+          and paper in (select value from json_each(?2))`,
     )
       .bind(one.space, JSON.stringify([...mine]))
       .all<{ hash: string }>()

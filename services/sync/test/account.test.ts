@@ -3,6 +3,7 @@
  *  erase.test.ts; this file is about the door and about the people on either side
  *  of a share. */
 
+import { createHash } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { codeAt } from '../src/second'
 import { call, file, mail, signIn, type Answer, type TestEnv, testEnv } from './harness'
@@ -444,6 +445,47 @@ describe('what is left', () => {
     ])
     // Only what that space shows: the one it never used went with the account.
     expect((await call(env, `/i/${kept}.png`)).status).toBe(404)
+  })
+
+  test('a paper it hung on a page note in a space that stays is handed to that space’s owner', async () => {
+    const other = await signIn(env, OTHER)
+    const theirs = (
+      await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
+    ).json.space?.id
+
+    const sent = await mail(() =>
+      call(env, `/v1/spaces/${theirs}/share/invite`, {
+        token: other,
+        body: { email: ME, role: 'write' },
+      }),
+    )
+    await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
+      method: 'POST',
+      token,
+    })
+
+    const pages = (
+      await call<LeavingView>(env, `/v1/spaces/${theirs}/notes`, {
+        token,
+        body: { path: 'Lecture.pages', content: '{}' },
+      })
+    ).json.note?.id
+    const bytes = new TextEncoder().encode('%PDF-1.4\na lecture\n%%EOF\n')
+    const hash = createHash('sha256').update(bytes).digest('hex')
+    await call(env, `/v1/blobs/${hash}`, {
+      method: 'PUT',
+      token,
+      raw: bytes,
+      headers: { 'content-type': 'application/pdf' },
+    })
+    await call(env, `/v1/notes/${pages}/paper`, { method: 'PUT', token, body: { hash } })
+
+    expect((await leave()).status).toBe(200)
+
+    expect((await call(env, `/v1/notes/${pages}/paper`, { token: other })).status).toBe(200)
+    expect(env.db.prepare('select user_id from blobs where hash = ?').all(hash)).toEqual([
+      { user_id: (await me(other)).json.user?.id },
+    ])
   })
 
   test('a published site stops answering', async () => {
