@@ -365,6 +365,11 @@ function putTwice(
   const said = wordsOf(resolution)
   const [before, ours, others] = [wordsOf(base), wordsOf(mine), wordsOf(theirs)]
   const moved = [...said].filter(([word, count]) => {
+    // A list's dash or a task's box is how every new line of its kind starts, so each
+    // side that took one line out and wrote another has it as often as the ancestor did
+    // and the merge once more, the shape of a move; but it is the line's structure,
+    // which nobody moves, and taking it out would leave the older side's line plain.
+    if (!/[\p{L}\p{N}]/u.test(word)) return false
     const inBase = before.get(word) ?? 0
     const inMine = ours.get(word) ?? 0
     const inTheirs = others.get(word) ?? 0

@@ -357,6 +357,25 @@ describe('diverge', () => {
     )
   })
 
+  test('a task each side added, after one both deleted, keeps its box', () => {
+    // Both devices ticked off the same task and each added one of its own at the end.
+    // The task boxes the two new lines share are not a word moved twice, and the older
+    // side's line lost its own.
+    const base = '- [ ] Buy milk\n- [ ] Pay rent\n- [ ] Call mum\n- [ ] Book dentist\n'
+    const local = '- [ ] Buy milk\n- [ ] Call mum\n- [ ] Book dentist\n- [ ] Water plants\n'
+    const remote = '- [ ] Buy milk\n- [ ] Call mum\n- [ ] Book dentist\n- [ ] Renew passport\n'
+    const merged = crdtMerge(base, local, remote)
+
+    for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
+      for (const crdt of [undefined, merged]) {
+        const result = diverge(base, local, remote, times, crdt)
+        expect(result.verdict).toBe('clean')
+        expect(result.resolution).toContain('- [ ] Water plants\n')
+        expect(result.resolution).toContain('- [ ] Renew passport\n')
+      }
+    }
+  })
+
   test('words each side wrote anew in a place of its own are both kept, the same or not', () => {
     const base = 'First line.\n\nSecond line.\n'
     const local = 'First line, the plan.\n\nSecond line.\n'
