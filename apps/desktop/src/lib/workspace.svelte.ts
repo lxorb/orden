@@ -3840,7 +3840,13 @@ class Workspace {
     // the one is taken by the other, and writing it would be writing over it.
     const taken = pathKeys(this.everyPath(), dir)
     if (except !== undefined) taken.delete(pathKey(except, dir))
-    return freePath(wanted, (candidate) => taken.has(pathKey(joinPath(dir, candidate), dir)))
+    const has = (name: string) => taken.has(pathKey(joinPath(dir, name), dir))
+    // A page note's paper lands beside it as `<name>.pdf`, and a PDF already there is
+    // somebody's own (#538), so that name is taken too.
+    return freePath(
+      wanted,
+      (candidate) => has(candidate) || (/\.pages$/i.test(candidate) && has(`${candidate}.pdf`)),
+    )
   }
 
   /** Every path in the open space. `notes` holds only files; this counts the
