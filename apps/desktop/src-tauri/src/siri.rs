@@ -122,15 +122,23 @@ fn inbox_in(spaces: &Path, front: Option<&Path>) -> Result<PathBuf, String> {
     }
 }
 
-/// The folder every space lives in: `NIB_SPACES_DIR`, else `Documents/Nib`.
+/// The folder every space lives in, the one the app itself decided on (`decide_spaces`
+/// in paths.rs): `NIB_SPACES_DIR`, else `spaces_in` the settings folder.
 fn spaces_dir() -> Result<PathBuf, String> {
     if let Some(named) = folder_named(std::env::var_os(SPACES_DIR).as_deref()) {
         return Ok(named);
     }
-    dirs::document_dir()
-        .or_else(dirs::home_dir)
-        .map(|base| base.join("Nib"))
-        .ok_or_else(|| "no documents folder".to_owned())
+    let settings = crate::mcp::home::config_dir().ok_or_else(|| "no settings folder".to_owned())?;
+    let documents = dirs::document_dir().or_else(dirs::home_dir);
+    Ok(spaces_in(&settings, documents.as_deref()))
+}
+
+/// The spaces folder as `chosen_spaces` in paths.rs finds it, with the folders it starts
+/// from already found: the one the settings folder keeps, else `Documents/Nib` where it
+/// is there, else `Spaces` in the app's data - which on a Mac is the settings folder.
+/// Not `Documents/Nib` alone, which is where spaces were only until #376.
+fn spaces_in(_settings: &Path, documents: Option<&Path>) -> PathBuf {
+    documents.map(|base| base.join("Nib")).unwrap_or_default()
 }
 
 /// The first space, alphabetical, as the space list orders them.
@@ -197,6 +205,7 @@ fn is_item(line: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::paths::{SPACES, SPACES_KEPT};
 
     #[test]
     fn a_task_lands_at_the_end_of_the_inbox() {
@@ -208,6 +217,37 @@ mod tests {
             "1. a\n  more\n- [ ] b\n\n"
         );
         assert_eq!(appended("- [ ] a\r\n", "- [ ] b"), "- [ ] a\r\n- [ ] b\r\n");
+    }
+
+    #[test]
+    fn the_spaces_folder_is_the_one_the_app_chose() {
+        let dir = tempfile::tempdir().unwrap();
+        let settings = dir.path().join("Application Support").join("nib");
+        let documents = dir.path().join("Documents");
+        fs::create_dir_all(&settings).unwrap();
+        fs::create_dir_all(&documents).unwrap();
+
+        // A fresh install: no Documents/Nib, so the app's own data.
+        assert_eq!(
+            spaces_in(&settings, Some(&documents)),
+            settings.join(SPACES)
+        );
+
+        // An install from before #376, whose spaces stayed where they were.
+        fs::create_dir(documents.join("Nib")).unwrap();
+        assert_eq!(
+            spaces_in(&settings, Some(&documents)),
+            documents.join("Nib")
+        );
+
+        // And whatever the settings folder says, once the app has said it.
+        let kept = dir.path().join("Elsewhere");
+        fs::write(
+            settings.join(SPACES_KEPT),
+            kept.to_string_lossy().as_bytes(),
+        )
+        .unwrap();
+        assert_eq!(spaces_in(&settings, Some(&documents)), kept);
     }
 
     #[test]

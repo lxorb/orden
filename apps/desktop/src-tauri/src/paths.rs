@@ -331,7 +331,7 @@ pub(crate) fn folder_named(said: Option<&OsStr>) -> Option<PathBuf> {
 /// 2026-10-17 (#376), in German: the default nib sync folder belongs in app data rather
 /// than in Documents - it is nothing a person should reach directly, but through Orden.
 #[cfg(desktop)]
-const SPACES: &str = "Spaces";
+pub(crate) const SPACES: &str = "Spaces";
 
 /// The file in the settings folder that says which folder this install's spaces are in,
 /// written the first time it is decided and read from then on, so the answer never
@@ -340,7 +340,7 @@ const SPACES: &str = "Spaces";
 /// is where the spaces are from the next launch, which is the one way to put them
 /// somewhere else.
 #[cfg(desktop)]
-const SPACES_KEPT: &str = "spaces-folder";
+pub(crate) const SPACES_KEPT: &str = "spaces-folder";
 
 /// What a desktop decided, once a launch, before anything else: `spaces_dir` is asked
 /// before every note, and many of the commands that ask it answer on the window's own
@@ -450,7 +450,7 @@ fn documents_nib(app: &AppHandle) -> Result<PathBuf, String> {
 /// the new default in the app's data (`fresh`). Pure, so the rule is tested without an
 /// app or a disk.
 #[cfg(desktop)]
-fn spaces_folder(said: Option<&str>, old: Option<PathBuf>, fresh: PathBuf) -> PathBuf {
+pub(crate) fn spaces_folder(said: Option<&str>, old: Option<PathBuf>, fresh: PathBuf) -> PathBuf {
     if let Some(kept) = folder_named(said.map(str::trim).map(OsStr::new)) {
         return kept;
     }
