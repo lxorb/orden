@@ -133,6 +133,24 @@ describe('publishing', () => {
     expect(response.text).toContain('Not found')
   })
 
+  /** Addresses once dropped every letter outside ASCII, so `Über mich.md` was
+   *  `/ber-mich`. That address is in feeds and other people's links. */
+  test('the address a page had before its letters were kept redirects to it', async () => {
+    await addNote('Über mich.md', '# Über mich\n')
+    await addNote('Team.md', '---\npermalink: Über uns\naliases:\n  - Für Presse\n---\n\n# Team\n')
+    await publish({ subdomain: 'field' })
+
+    for (const [old, now] of [
+      ['/ber-mich', '/%C3%BCber-mich'],
+      ['/ber-uns', '/%C3%BCber-uns'],
+      ['/f-r-presse', '/%C3%BCber-uns'],
+    ]) {
+      const response = await call(env, old!, { host: 'field.nibeditor.com' })
+      expect(response.status).toBe(301)
+      expect(response.headers.get('location')).toBe(`https://field.nibeditor.com${now}`)
+    }
+  })
+
   test('front matter is not printed', async () => {
     await call(env, `/v1/spaces/${space}/notes`, {
       token,
