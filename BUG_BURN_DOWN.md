@@ -147,6 +147,7 @@ Same method and severity scale as round 1.
 | B92 | Low | A task dropped into another note's column lands after the ordered cards | Open, accepted | The order is written with the id from before the move | - (the task itself is safe) | Read from the code |
 | B93 | Low | "Add with AI" keeps whatever the model writes in `text`, extra lines and marks included | Open, accepted | `ai-entry.ts` takes `text` as it came | - (written into the person's own note, which they see) | Scratch test |
 | B94 | Low | A stray `.enex` beside only pictures or PDFs still reads as Evernote and drops them (rest of B78) | Open, accepted | `detect` falls back to the format where no notes sit beside it | - (a `lost` line needs new translated words) | - |
+| B96 | Low | sync-core's own million-seed walk (`sim:long`, not run in CI) fails 3 of the 10,000 seeds from 20749000000: a word typed into a note made and deleted is in no note and no version | Open, accepted | In the reference device and account in `packages/sync-core/test/sim`, not in the product: the engine (`apps/desktop` `sim:long`, `SIM_FROM=<seed> SIM_SEEDS=1`) passes all three seeds | - (test model only) | Seeds 20749005331, 20749006294, 20749007667, the same on `main` and with B71 |
 
 Skipped, counted with the insignificant Lows (cannot be fixed alone):
 
