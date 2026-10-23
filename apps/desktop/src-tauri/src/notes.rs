@@ -518,6 +518,26 @@ mod tests {
         assert!(dir.path().join("paper copy.pdf.highlights.json").exists());
     }
 
+    /// `Report.pages.pdf` is what macOS Pages names a PDF it saves, and a page note
+    /// copied in as `Report.pages` would take it for its paper (#538).
+    #[test]
+    fn a_page_note_copied_never_takes_a_pdf_already_there() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        fs::create_dir_all(dir.path().join("A")).expect("A");
+        fs::create_dir_all(dir.path().join("B")).expect("B");
+        let source = dir.path().join("A/Report.pages");
+        fs::write(&source, "{}").expect("the page note");
+        fs::write(dir.path().join("A/Report.pages.pdf"), b"%PDF ours").expect("its paper");
+        let theirs = dir.path().join("B/Report.pages.pdf");
+        fs::write(&theirs, b"%PDF theirs").expect("somebody's PDF");
+
+        let error = copied(&source, &dir.path().join("B/Report.pages"))
+            .expect_err("a name whose paper is taken to be refused");
+        assert!(error.contains("already there"), "{error}");
+        assert!(!dir.path().join("B/Report.pages").exists());
+        assert_eq!(fs::read(&theirs).expect("theirs"), b"%PDF theirs");
+    }
+
     #[test]
     fn never_writes_over_anything() {
         let dir = tempfile::tempdir().expect("a temp folder");
