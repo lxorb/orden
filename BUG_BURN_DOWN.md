@@ -106,3 +106,18 @@ Not fixed, judged insignificant or out of scope: GFM's escaped backslash before 
 pipe in tables (text written back unchanged); Todoist `date before: Oct 6, 2026`
 (the comma splits the filter; unclear Todoist accepts it); NFC/NFD names treated as
 one file on ext4 (not reproduced).
+
+## Round 2
+
+Started 2026-10-23 on `claude/inspiring-feynman-tip6ma`, from `main` at `832b602`
+(v0.18.0). It continues from round 1: the audit covers what changed since round 1
+ended (`7a53572..832b602`, 383 commits), and round 1's open Low rows are looked at
+again. Each fixed bug has its own branch (`claude/inspiring-feynman-tip6ma-bNN`) and
+pull request off `main`; this log is on the round's own branch.
+
+Same method and severity scale as round 1.
+
+| # | Severity | Bug | Status | Root cause | Fix | Verification |
+| --- | --- | --- | --- | --- | --- | --- |
+| B67 | Medium | On a board with swimlanes, a card dragged within a lane could snap back, most often in the lane of no value | Fixed, [#681](https://github.com/lxorb/orden/pull/681) | The board writes a lane's order into its column's; `answer()` sorted each lane again by the order under the lane's own name, which is a column's (the no-value lane read the No-value column's stale order) | A sub-group keeps the order its group gave its members | `answer.test.ts` "a lane keeps its column's order…" (failed before); bases 803 passed, desktop views 145 passed; tsc, eslint, prettier clean |
+| B68 | Low | Two tasks with the same words in one note cannot be ordered apart on a board | Open, accepted | `orderId` names a task by its words' hash, which the two share | - (only the relative order of two identical lines) | Reproduced by a scratch test |
