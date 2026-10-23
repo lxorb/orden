@@ -277,14 +277,17 @@ function resolved(
   return best
 }
 
-/** How many characters the check below compares at a time, white space left out: a
- *  short word. */
+/** How many characters the check below compares at a time, only letters and digits
+ *  counted: a short word. */
 const RUN = 4
 
-/** How often each run of `RUN` characters is in a text, white space left out, so two
- *  words a merge set side by side read the way they did apart. */
+/** How often each run of `RUN` characters is in a text, only letters and digits
+ *  counted. White space is left out so two words a merge set side by side read the way
+ *  they did apart; marks are left out because a list's dash or a task's box starts
+ *  every line of its kind, and two tasks that each side wrote, both starting with one
+ *  short word, would otherwise read as one passage said twice. */
 function runsOf(text: string): Map<string, number> {
-  const bare = text.replace(/\s+/g, '')
+  const bare = text.replace(/[^\p{L}\p{N}]+/gu, '')
   const counts = new Map<string, number>()
   for (let at = 0; at + RUN <= bare.length; at += 1) {
     const run = bare.slice(at, at + RUN)

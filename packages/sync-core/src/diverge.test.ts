@@ -357,6 +357,24 @@ describe('diverge', () => {
     )
   })
 
+  test('two new tasks that start with the same word are not one passage said twice', () => {
+    // Each side wrote a task of its own starting "- [ ] new", which read to the repeat
+    // check as one passage written twice, and the CRDT's text it fell back to had the
+    // two sides' letters woven into a word neither of them wrote.
+    const base = '- [ ] a task\n- [ ] gone task\n'
+    const local = '- [ ] a task\n- [ ] new task\n'
+    const remote = '- [ ] new item\n- [ ] a task\n'
+    const words = new Set(`${local} ${remote}`.split(/\s+/))
+
+    for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
+      const result = diverge(base, local, remote, times, crdtMerge(base, local, remote))
+      expect(result.verdict).toBe('minor')
+      for (const word of result.resolution?.split(/\s+/) ?? []) {
+        expect(words.has(word), word).toBe(true)
+      }
+    }
+  })
+
   test('words each side wrote anew in a place of its own are both kept, the same or not', () => {
     const base = 'First line.\n\nSecond line.\n'
     const local = 'First line, the plan.\n\nSecond line.\n'
