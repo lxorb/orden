@@ -223,6 +223,18 @@ describe('an Evernote export that is not quite what the format says', () => {
     expect(plan.lost.map((one) => one.values)).toEqual([{ count: 1 }])
   })
 
+  test('an attachment named with a hash or a percent sign is still what its link reaches', async () => {
+    const named = bodied(
+      'Named',
+      `<en-media type="image/png" hash="${HASH}"/>`,
+      picture(BASE64, '100% done #3.png'),
+    )
+    const plan = await readEvernote([file('A.enex', enex(named))])
+
+    expect(plan.files.some((one) => one.path === 'assets/100% done #3.png')).toBe(true)
+    expect(noteAt(plan, 'Named.md')).toContain('![](assets/100%25%20done%20%233.png)')
+  })
+
   test('a hash in single quotes still finds its picture', async () => {
     const plan = await readEvernote([
       file(
