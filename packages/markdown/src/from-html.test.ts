@@ -116,6 +116,32 @@ describe('a page as markdown', () => {
     )
   })
 
+  /** An export's video, recording or embedded paper is a file that arrives beside the
+   *  note, and the note is the one place left that says where it was. */
+  test('and a video, a recording or an embedded file is a link for the caller that keeps them', () => {
+    const html = [
+      '<p>Before</p>',
+      '<video src="media/clip.mp4" controls>No player</video>',
+      '<audio controls><source src="media/Voice%20memo.m4a"></audio>',
+      '<embed src="media/paper.pdf">',
+      '<object data="media/sheet.pdf"></object>',
+      '<iframe src="media/page.html"></iframe>',
+      '<video src="javascript:alert(1)"></video>',
+    ].join('')
+
+    expect(htmlToMarkdown(html)).toBe('Before')
+    expect(htmlToMarkdown(html, { mediaLinks: true })).toBe(
+      [
+        'Before',
+        '[clip.mp4](media/clip.mp4)',
+        '[Voice memo.m4a](media/Voice%20memo.m4a)',
+        '[paper.pdf](media/paper.pdf)',
+        '[sheet.pdf](media/sheet.pdf)',
+        '[page.html](media/page.html)',
+      ].join('\n\n'),
+    )
+  })
+
   test('while that caller still gets no target a note could never follow', () => {
     expect(htmlToMarkdown('<a href="javascript:alert(1)">x</a>', { fileTargets: true })).toBe('x')
     expect(

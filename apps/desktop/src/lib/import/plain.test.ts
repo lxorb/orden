@@ -153,4 +153,13 @@ describe('a folder of HTML', () => {
 
     expect(noteAt(plan, 'A.md')).toContain('[[B|to B]]')
   })
+
+  test('a video in a page is a link to the file that arrived beside it', async () => {
+    const plan = await readPlain([
+      file('Page.html', '<h1>Page</h1><video src="media/clip.mp4" controls></video>'),
+      file('media/clip.mp4', 'MP4'),
+    ])
+
+    expect(noteAt(plan, 'Page.md')).toContain('[clip.mp4](media/clip.mp4)')
+  })
 })
