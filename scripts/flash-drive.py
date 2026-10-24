@@ -244,7 +244,16 @@ if DESK == "sway":
     recorder.send_signal(2)
 else:
     recorder.communicate(b"q", timeout=30)
-recorder.wait(timeout=30)
+try:
+    recorder.wait(timeout=15)
+except subprocess.TimeoutExpired:
+    # wf-recorder on a headless output can wait on a frame that never comes to stop;
+    # what it has written is kept.
+    recorder.terminate()
+    try:
+        recorder.wait(timeout=15)
+    except subprocess.TimeoutExpired:
+        recorder.kill()
 
 # Every frame's pane: how much of it is white.
 frames = OUT / "frames"
