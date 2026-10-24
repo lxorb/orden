@@ -142,6 +142,8 @@ export function remoteFiles(reaching: Reaching): Pick<Blobs, 'up' | 'down' | 're
       )
       if (response === null) return null
       if (response.status === 404) return { gone: true }
+      // The space is one this account may only read; nothing but the role is a 403 here.
+      if (response.status === 403) return { refused: 'role' }
       if (!response.ok) return null
       const said: unknown = await response.json().catch(() => null)
       if (typeof said !== 'object' || said === null) return null

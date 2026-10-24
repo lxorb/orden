@@ -239,6 +239,14 @@ function refused(core: Core, space: SpaceState, op: Op, why: string): Change[] {
       core.events.resurrected?.({ id: op.id, name: entry.name, device: core.by.get(op.id) ?? '' })
     return []
   }
+  // A file, a note or a folder another program made in a space this account may only
+  // read. Shown as the account has it, the tree would take the file off this disk: it
+  // stays where it is instead, as v1 leaves it, and this device forgets it ever made it,
+  // so it is not asked about again every pass.
+  if ((op.t === 'create' || op.t === 'mkdir') && why === 'role') {
+    space.entries.delete(op.id)
+    return [remove('entries', op.id), ...core.forgetChanges(op.id)]
+  }
   // A note made here whose folder the account no longer has: made again at the top of
   // the space, rather than its words waiting on a folder that is not coming back.
   if (op.t === 'create' && why === 'gone' && op.parent !== null) {
