@@ -15,6 +15,9 @@
  *  holds as a picture: a paper or a file is named by its own column, and a hash
  *  somebody wrote into a note of their own does not make the bytes theirs. */
 
+import { FRONT_REV } from './blog/front'
+import { noteKey } from './notes'
+import { picturesOf } from './pictures'
 import { readSpaceFiles } from './spaces/files'
 import type { Env } from './types'
 
@@ -101,4 +104,89 @@ export function handedTo(
          on conflict(hash, user_id) do nothing`,
       ).bind(userId, owner, at, JSON.stringify([...hashes])),
     )
+}
+
+/** How many note bodies `unreadUses` reads, over every space it looks in: a bound on
+ *  what one request asks of the bucket. */
+const MOST_READ = 250
+
+/** And the pictures in notes written before their pictures were written down, which
+ *  have none yet until the nightly sweep reads them (blog/fill.ts), added to `owed`.
+ *
+ *  Their bodies are read the old way, in the spaces this account is still a member of,
+ *  whatever its role, because a writer made a reader wrote what they wrote. A space
+ *  with more of them than is left to read hands over every picture where this account
+ *  may write, rather than guessing, because a picture somebody pays for is better than
+ *  a hole in their note; in one it only reads, that would hand the owner pictures that
+ *  were never there, so it is read as far as what is left goes. What this cannot reach
+ *  is an unread note of a space this account is no longer in, which the sweep shrinks
+ *  to nothing. */
+export async function unreadUses(
+  env: Env,
+  user: { id: string; email: string },
+  pictures: ReadonlySet<string>,
+  owed: Map<string, Set<string>>,
+): Promise<void> {
+  if (!pictures.size) return
+  const owe = (owner: string, hash: string) => {
+    const found = owed.get(owner) ?? new Set<string>()
+    owed.set(owner, found)
+    found.add(hash)
+  }
+
+  const { results: written } = await env.DB.prepare(
+    `select sp.id as space, sp.user_id as owner, m.item as item, m.role as role
+       from space_members m join spaces sp on sp.id = m.space_id
+      where m.email = ?1 and sp.user_id <> ?2`,
+  )
+    .bind(user.email, user.id)
+    .all<{ space: string; owner: string; item: string; role: string }>()
+
+  let budget = MOST_READ
+
+  for (const one of written) {
+    const { results: notes } = await env.DB.prepare(
+      one.item
+        ? `select id from notes where space_id = ?1 and id = ?2 and size > 0 and kind != 'file'
+              and front_rev < ?3`
+        : `select id from notes where space_id = ?1 and size > 0 and kind != 'file'
+              and front_rev < ?3 limit ?2`,
+    )
+      .bind(one.space, one.item || budget + 1, FRONT_REV)
+      .all<{ id: string }>()
+
+    if (notes.length > budget && one.role === 'write') {
+      for (const hash of pictures) owe(one.owner, hash)
+      budget = 0
+      continue
+    }
+    if (notes.length > budget) notes.length = budget
+
+    budget -= notes.length
+    for (const hash of await picturesIn(env, one.space, notes)) {
+      if (pictures.has(hash)) owe(one.owner, hash)
+    }
+  }
+}
+
+/** Every picture the service holds that these notes show, read a handful at a time. */
+async function picturesIn(
+  env: Env,
+  space: string,
+  notes: readonly { id: string }[],
+): Promise<Set<string>> {
+  const found = new Set<string>()
+
+  for (let from = 0; from < notes.length; from += 25) {
+    const bodies = await Promise.all(
+      notes.slice(from, from + 25).map(async (one) => {
+        const object = await env.NOTES.get(noteKey(space, one.id))
+        return object ? await object.text() : ''
+      }),
+    )
+
+    for (const body of bodies) for (const hash of picturesOf(body)) found.add(hash)
+  }
+
+  return found
 }

@@ -16,13 +16,48 @@ describe('the pictures a body shows', () => {
     expect([...picturesOf(`<img alt="x" src="${URL}">`)]).toEqual([HASH])
   })
 
+  /** Every way the app itself puts a picture in a note, a canvas or a cover. */
+  test.each([
+    ['a picture in a list item', `- item\n\n    ![](${URL})\n`],
+    ['a picture in a nested list', `- a\n    - b ![](${URL})\n`],
+    ['a picture in a quote', `> ![](${URL})`],
+    ['a picture in a callout', `> [!note]\n> ![](${URL})`],
+    ['a picture in a table', `| a |\n|---|\n| ![](${URL}) |`],
+    ['a picture inside a link', `[![](${URL})](https://example.com)`],
+    ['an image tag over several lines', `<div>\n<img\n  src="${URL}">\n</div>`],
+    ['a picture whose words hold brackets', `![a [b] c](${URL})`],
+    ['a picture after a code span', `\`x\` ![](${URL})`],
+    ['a picture under a numbered list', `1. a\n\n\t![](${URL})`],
+    ['a wiki embed of the address', `![[${URL}]]`],
+    ['a cover', `---\ncover: ${URL}\n---\nbody`],
+    ['a page image', `---\nimage: ${URL}\n---\nbody`],
+    ['an address without the host', `![](/i/${HASH}.png)`],
+    ['an extension in capitals', `![](${URL.replace('.png', '.PNG')})`],
+    ['a picture with a size', `![|300](${URL})`],
+    ['a picture by reference', `![a][r]\n\n[r]: ${URL}\n`],
+    ['a picture by a collapsed reference', `![Shot][]\n\n[shot]: <${URL}>\n`],
+    ['a picture after a fence that held another mark', `~~~\n\`\`\`\n~~~\n![](${URL})`],
+    [
+      'a picture card on a canvas',
+      JSON.stringify({ nodes: [{ id: 'a', type: 'file', file: URL, x: 0, y: 0 }], edges: [] }),
+    ],
+    [
+      'a picture in a canvas text card',
+      JSON.stringify({ nodes: [{ id: 'a', type: 'text', text: `![](${URL})` }], edges: [] }),
+    ],
+  ])('count %s', (_, body) => {
+    expect([...picturesOf(body)]).toEqual([HASH])
+  })
+
   test.each([
     ['prose', `see /i/${HASH} here`],
     ['a link that is not a picture', `[the file](${URL})`],
+    ['a reference only a link uses', `[a][r]\n\n[r]: ${URL}\n`],
     ['a code span', `see \`![](${URL})\``],
     ['a fence', `\`\`\`\n![](${URL})\n\`\`\`\n`],
     ['a comment', `%% ![](${URL}) %%`],
     ['another address', `![](https://nibeditor.com/x/${HASH}.png)`],
+    ['a canvas text card', JSON.stringify({ nodes: [{ id: 'a', type: 'text', text: URL }] })],
   ])('and not a hash named in %s', (_, body) => {
     expect([...picturesOf(body)]).toEqual([])
   })
