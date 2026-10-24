@@ -2137,7 +2137,7 @@ class Workspace {
     if (__EVEN_PLUGIN__ || viewport.touch) return
 
     const dir = folder ?? this.activeSpace?.root
-    if (!dir) return
+    if (!dir || !(await this.writableAt(dir))) return
     if (named === undefined && this.startNaming('web', dir)) return
 
     const { newSite } = await import('./web-tab/new-site')
@@ -2288,7 +2288,7 @@ class Workspace {
    *  where there is a list to ask in, exactly as a note's and a canvas's do. */
   async createPages(folder?: string, named?: string) {
     const dir = folder ?? this.activeSpace?.root
-    if (!dir) return
+    if (!dir || !(await this.writableAt(dir))) return
     if (named === undefined && this.startNaming('pages', dir)) return
 
     // What an empty stack of paper says, fetched with the first one asked for. The
@@ -2578,6 +2578,8 @@ class Workspace {
     const target = joinPath(intoFolder, name)
 
     if (samePath(target, from) || within(from, intoFolder) !== null) return
+    // Out of a space shared to be read is a delete there, and into one a write.
+    if (!(await this.writableAt(from, intoFolder))) return
 
     // The row is in its new folder as soon as the drop lands.
     const kind = this.kindAt(from)
@@ -3399,6 +3401,13 @@ class Workspace {
   }
 
   async moveMany(paths: string[], intoFolder: string) {
+    // All or nothing, and before the folder a drop on a note makes: a move that left
+    // half a selection behind, or nested a note it then put nothing in, is not one
+    // anybody asked for. `move` refuses each of them as well.
+    if (!(await this.writableAt(intoFolder, ...paths))) {
+      this.clearSelection()
+      return
+    }
     await this.undone.batch(async () => {
       await this.nestFor(intoFolder, paths)
       for (const path of outermost(paths)) await this.move(path, intoFolder)
@@ -3427,6 +3436,7 @@ class Workspace {
    *  means is workspace/copying.ts, fetched with the first copy: a window that
    *  never copies anything never reads it. */
   async copyMany(paths: string[], intoFolder: string) {
+    if (!(await this.writableAt(intoFolder))) return
     await this.nestFor(intoFolder, paths)
     const { copyRows } = await import('./workspace/copying')
     const rows = outermost(paths).map((from) => ({ from, into: intoFolder }))
@@ -3436,12 +3446,16 @@ class Workspace {
   /** A second copy of each row, beside the first. */
   async duplicateMany(paths: string[]) {
     const { copyRows } = await import('./workspace/copying')
-    const rows = outermost(paths).map((from) => ({ from, into: folderOf(from) }))
+    const rows = outermost(await this.writableOf(paths)).map((from) => ({
+      from,
+      into: folderOf(from),
+    }))
     await this.copied(await copyRows(this, rows), null)
   }
 
   /** Files dropped on the list from outside the app, copied into a folder. */
   async bringIn(files: readonly Picked[], intoFolder: string) {
+    if (!(await this.writableAt(intoFolder))) return
     await this.nestFor(intoFolder, [])
     const { bringIn } = await import('./workspace/copying')
     await this.copied(await bringIn(this, files, intoFolder), intoFolder)
@@ -3472,13 +3486,31 @@ class Workspace {
   }
 
   async removeMany(paths: string[]) {
+    const writable = await this.writableOf(this.deletable(paths))
     await this.undone.batch(async () => {
-      for (const path of this.deletable(paths)) {
+      for (const path of writable) {
         const entry = this.entryAt(path)
         if (entry) await this.remove(path, entry.is_dir)
       }
     })
     this.clearSelection()
+  }
+
+  /** Whether a file may be written at every one of these paths: none of them in a
+   *  space shared with this account to be read. Writing there would make the copy
+   *  here stop being the space's, and the sync refuses it on every pass, so every
+   *  call below that makes, renames, moves, copies or deletes asks this first rather
+   *  than trusting each menu and key to have looked. Fetched, as sharing.svelte.ts
+   *  reads this store. */
+  private async writableAt(...paths: string[]): Promise<boolean> {
+    const { canWriteAt } = await import('./sharing.svelte')
+    return paths.every((path) => canWriteAt(path))
+  }
+
+  /** The paths of these that may be written at; see `writableAt`. */
+  private async writableOf(paths: readonly string[]): Promise<string[]> {
+    const { canWriteAt } = await import('./sharing.svelte')
+    return paths.filter((path) => canWriteAt(path))
   }
 
   /** The rows of a selection that may be deleted, which is what its menu counts. */
@@ -3706,7 +3738,7 @@ class Workspace {
    *  that made nothing at all would read as one that failed. */
   async createNote(folder?: string, named?: string) {
     const dir = folder ?? this.activeSpace?.root
-    if (!dir) return
+    if (!dir || !(await this.writableAt(dir))) return
     if (named === undefined && this.startNaming('note', dir)) return
 
     // Opens with its own name as the title, so there is something to write
@@ -3747,13 +3779,10 @@ class Workspace {
    *  looking at, and a note that opened over the plane would take them away from
    *  it. The name is stepped like every other new file's.
    *
-   *  Null too in a space shared to be read, which the sync would refuse forever.
-   *  Fetched, as sharing.svelte.ts reads this store. */
+   *  Null too in a space shared to be read; see `writableAt`. */
   async noteFrom(text: string, folder?: string): Promise<string | null> {
     const dir = folder ?? this.activeSpace?.root
-    if (!dir) return null
-    const { canWriteAt } = await import('./sharing.svelte')
-    if (!canWriteAt(dir)) return null
+    if (!dir || !(await this.writableAt(dir))) return null
 
     const stem = nameFromContent(text) ?? UNTITLED
     const path = joinPath(dir, this.freeName(dir, `${stem}.md`))
@@ -3772,7 +3801,7 @@ class Workspace {
    *  disk say the same thing from the first frame. */
   async createCanvas(folder?: string, named?: string) {
     const dir = folder ?? this.activeSpace?.root
-    if (!dir) return
+    if (!dir || !(await this.writableAt(dir))) return
     if (named === undefined && this.startNaming('canvas', dir)) return
 
     // What an empty plane says, fetched with the first one asked for: the reader and
@@ -3819,7 +3848,7 @@ class Workspace {
    *  another kind, from the row's submenu. */
   async createInside(path: string, make = (folder: string): unknown => this.createNote(folder)) {
     const entry = this.entryAt(path)
-    if (!entry) return
+    if (!entry || !(await this.writableAt(path))) return
 
     const folder = entry.is_dir ? path : folderFor(path)
     if (samePath(folder, path) && !entry.is_dir) return
@@ -3979,7 +4008,7 @@ class Workspace {
     // Spelled the same, not the same file: a name that only changes its case is a
     // rename, and the crate respells it; see `respell` in notes.rs.
     const target = joinPath(folderOf(path), clean)
-    if (sameSpelling(target, path)) return
+    if (sameSpelling(target, path) || !(await this.writableAt(path))) return
 
     // After whatever write of it is in the air, so the write cannot put the old name
     // back beside the new one - and of everything open inside it, for a folder.
@@ -4087,9 +4116,9 @@ class Workspace {
 
   /** `source`: an agent the last version is kept for (docs/agent-native.md 8.5). */
   async remove(path: string, isFolder: boolean, source?: string) {
-    // Nothing archived is deleted; the menus and keys never ask, and this is for a
-    // caller that did not look.
-    if (this.keepsArchived(path)) return
+    // Nothing archived is deleted, and nothing in a space shared to be read; the
+    // menus and keys never ask, and this is for a caller that did not look.
+    if (this.keepsArchived(path) || !(await this.writableAt(path))) return
 
     await this.undone.batch(async () => {
       // Gone from the tree before the snapshot has been taken and the file has
@@ -4369,7 +4398,7 @@ class Workspace {
    *  see note-id.ts and the Editor settings. */
   async createUniqueNote(format: string, folder?: string) {
     const dir = folder ?? this.activeSpace?.root
-    if (!dir) return
+    if (!dir || !(await this.writableAt(dir))) return
 
     // Two notes made in the same minute is the one way a moment can be taken, and
     // it steps aside the way every other name in the app does - `Name 2.md`,
