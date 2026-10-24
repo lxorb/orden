@@ -4273,7 +4273,12 @@ class Workspace {
     await this.fileOps.tell({ op: 'created', path, kind, root, ...(key ? { key } : {}) })
   }
 
-  private rootHolding(path: string): string | null {
+  /** The root of the space holding `path`, else the active one's. Asked by anything
+   *  that writes a path relative to a space on behalf of a file that may not be in the
+   *  active one: tabs are shared across spaces, so a canvas of one space stays open
+   *  while another is active, and its cards are relative to its own. */
+  rootHolding(path: string | null): string | null {
+    if (path === null) return this.activeSpace?.root ?? null
     const holding = this.spaces.find((one) => within(one.root, path) !== null)
     return holding?.root ?? this.activeSpace?.root ?? null
   }

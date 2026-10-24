@@ -48,7 +48,7 @@
   const store = $derived(showing.current?.store ?? null)
   const pages = $derived(store?.pages ?? [])
   /** The space the note is in, which is the other place a page's `file` can point. */
-  const spaceRoot = $derived(workspace.activeSpace?.root ?? null)
+  const spaceRoot = $derived(workspace.rootHolding(store?.path ?? null))
   /** Which page is being looked at, read off the store the way the status bar reads it. */
   const on = $derived(store?.showing ?? 0)
 

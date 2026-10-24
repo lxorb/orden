@@ -77,12 +77,15 @@ export function renamesFromTab(tab: Tab): boolean {
 
 export function renameFromTab(id: string) {
   const tab = workspace.tabs.find((one) => one.id === id)
-  if (tab?.kind === 'terminal') {
+  // Asked before the terminal's name field opens: an online terminal's name is its
+  // file's, and in a space shared to be read the field would only lose what was typed.
+  if (!tab || !renamesFromTab(tab)) return
+  if (tab.kind === 'terminal') {
     void nameInStrip(tab)
     return
   }
-  const path = tab?.path
-  if (!tab || !path || !renamesFromTab(tab)) return
+  const path = tab.path
+  if (!path) return
 
   const folder = workspace.entryAt(folderOf(path))
   const row = folder && folderNote(folder)?.path === path ? folder.path : path
