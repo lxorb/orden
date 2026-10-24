@@ -374,6 +374,7 @@ Same method and severity scale as round 1.
 | B323 | Low | With no space that may be written at all and no inbox ever remembered, the Mac's Siri inbox still falls back to the first space on disk, which may be shared to read (rest of B312) | Open, accepted | `default_space` in siri.rs picks the first space when none is remembered | - (macOS-only Rust; needs a "none" answer from the app) | Code reading |
 | B328 | Low | The Mac's Siri inbox stays on a space whose role was lowered to reader: with no writable space the app tells the crate nothing, and `inbox.txt` keeps the old one (rest of B312, B323) | Open, accepted | No way to tell the crate to forget | - (macOS-only Rust) | Code reading |
 | B329 | Low | In the browser build, `rename_note` moves assets before checking the target, so it can replace a picture or PDF there or half-move a folder (older than this round; desktop refuses) | Open, accepted | `moveAssets` runs before `occupied` | - | Code reading |
+| B339 | Low | Fifteenth re-audit, desktop: "Tidy up this note" runs on any text file a tab can open (a `custom.css` comment's `__x__` becomes `**x**`; editor undo reverses it); the AI's "Save as note", "Export thread" and `/export` stay offered in a read space and do nothing when pressed (the answer stays in the thread) | Open, accepted | Per item | - | Scratch probe and code reading |
 
 Skipped, counted with the insignificant Lows (cannot be fixed alone):
 
