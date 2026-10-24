@@ -19,8 +19,6 @@
 
 import { oneEdit, type TextEdit } from './edits'
 import { frontMatterBlock, frontMatterEdit, isPropertyName } from './front-matter'
-import { type Property, type PropertyKind, readProperties } from './properties'
-import { frontMatterBlock, frontMatterEdit } from './front-matter'
 import { type Property, type PropertyKind, keyCalled, readProperties } from './properties'
 import { flowItem, scalar } from './yaml'
 
