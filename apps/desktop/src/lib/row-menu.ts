@@ -45,6 +45,9 @@ import { workspace } from './workspace.svelte'
 /** A `.url` web note's web data, shared or its own (#239); see web-tab/own-data.ts. */
 export function webDataEntry(entry: { path: string; is_dir: boolean }): MenuEntry[] {
   if (!isDesktop || entry.is_dir || !/\.url$/i.test(entry.path)) return []
+  // Either choice writes the note's file, so a space shared to be read is not offered
+  // it (B288): its pages use the web data every page shares.
+  if (!canWriteAt(entry.path)) return []
   const path = entry.path
   return [
     {

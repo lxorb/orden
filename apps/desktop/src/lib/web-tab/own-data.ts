@@ -20,6 +20,7 @@
 import { t } from '../i18n.svelte'
 import { menu } from '../menu.svelte'
 import { prompt } from '../prompt.svelte'
+import { canWriteAt } from '../sharing.svelte'
 import { invoke } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import { writeFile } from '../workspace/write-file'
@@ -63,6 +64,9 @@ export async function showWebData(path: string): Promise<void> {
  *  settle is a second writer over the same file, and the two used to land in whichever
  *  order the pause fell in. See keep.ts and #353. */
 async function choose(path: string, where: Where): Promise<void> {
+  // The choice is the file, and a space shared to be read is not written in (B288);
+  // its menus do not offer this there, and this asks for a caller that did not look.
+  if (!canWriteAt(path)) return
   keepNow(path)
   const text = await textOf(path)
   if (text === null) return

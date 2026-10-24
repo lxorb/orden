@@ -1965,6 +1965,13 @@ class Workspace {
     // be one - somebody took the line out - opens as the note it is. The conversion
     // is fetched by the first such note rather than carried: only a space an older
     // nib wrote has any, and a window opens on a note. See test/weight.test.ts.
+    // Not in a space shared to be read, where writing the shortcut and putting the note
+    // in the trash would both change what the owner left (B288): the note stays as it
+    // is, and the page it points at opens in a tab with no file, which writes nothing.
+    if (!isWebTarget(path) && !(await this.writableAt(path))) {
+      await this.browseOldWebsite(path, how)
+      return
+    }
     const opening = isWebTarget(path)
       ? path
       : await import('./web-tab/convert').then(({ asShortcut }) => asShortcut(this, path))
@@ -1974,6 +1981,22 @@ class Workspace {
     }
 
     this.showTab(await this.opened.opening(opening, () => this.openSite(opening, how)), how)
+  }
+
+  /** A website written in the old format, in a space shared to be read: the address
+   *  read out of the note and opened as a page with no file, or the note itself where
+   *  it says none. Off the desktop app the browser has the page, as for a shortcut. */
+  private async browseOldWebsite(path: string, how: OpenHow) {
+    const text = await invoke<string>('read_note', { path }).catch(() => null)
+    // Fetched, with the conversion it stands in for; see test/weight.test.ts.
+    const { webUrlOf } = await import('./web-tab/note')
+    const url = webUrlOf(text)
+    if (url === null) {
+      await this.open(path, how)
+      return
+    }
+    this.remember(path)
+    if (!isDesktop || this.openPage(url) === null) await openExternal(url)
   }
 
   /** A web note's address given to the browser off the desktop app; whether it was. */
@@ -2034,6 +2057,10 @@ class Workspace {
   /** Every website still written as a note, converted where it stands; see
    *  web-tab/convert. Answers how many there were, for the palette. */
   async convertWebsites(): Promise<number> {
+    // Not a space shared to be read: each note would gain a shortcut beside it and go
+    // to the trash (B288). The palette greys the row there; this is for any other caller.
+    const root = this.activeSpace?.root
+    if (!root || !(await this.writableAt(root))) return 0
     const { convertWebsites } = await import('./web-tab/convert')
     return convertWebsites(this)
   }
