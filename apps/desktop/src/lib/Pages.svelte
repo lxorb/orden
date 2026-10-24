@@ -1222,6 +1222,7 @@
         root={workspace.rootHolding(tab.note.path)}
         picked={store.isPicked(node.id)}
         editing={store.editing === node.id}
+        readOnly={store.readOnly}
         offset={store.isPicked(node.id) ? dragging : { x: 0, y: 0 }}
         ontext={(text: string) => store.edit(withText(canvas, node.id, text))}
         onleave={() => (store.editing = null)}

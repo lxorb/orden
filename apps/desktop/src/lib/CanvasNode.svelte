@@ -16,6 +16,7 @@
     type EditorView,
     embedClicks,
     type NoteOpener,
+    setReadOnlyMode,
     type Text,
   } from '@nib/editor'
   import type { CanvasNode } from './canvas/format'
@@ -39,6 +40,7 @@
     picked,
     dimmed = false,
     editing,
+    readOnly = false,
     offset,
     ontext,
     onleave,
@@ -59,6 +61,8 @@
     dimmed?: boolean
     /** Whether this card is the one being written in. */
     editing: boolean
+    /** Whether the plane may not be written in, so the card's editor is for reading. */
+    readOnly?: boolean
     /** How far a drag has carried it since the pointer went down. */
     offset: { x: number; y: number }
     ontext?: (text: string) => void
@@ -214,6 +218,9 @@
       openLink: followHref,
       shortcuts: shortcuts.forEditor,
     })
+    // The surface opens no card for typing on a plane that may not be written in;
+    // should one open anyway, it is for reading, since the store drops what is typed.
+    if (readOnly) setReadOnlyMode(editor, true)
     editor.focus()
     cardWriting(hand)
 
