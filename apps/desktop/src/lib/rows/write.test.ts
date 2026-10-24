@@ -157,9 +157,53 @@ describe('a property written from a view', () => {
     )
     // A chip the list already has writes nothing.
     expect(changed(text, row, { list: { flags: { add: '1234.5' } } })).toBe(text)
-    // Nor does one put on a map, which is no list.
+    // A map is no list: a chip put on one is refused rather than written over it.
     const mapped = '---\nexport:\n  paper: A4\n---\n'
-    expect(changed(mapped, row, { list: { export: { add: 'b' } } })).toBe(mapped)
+    expect(changed(mapped, row, { list: { export: { add: 'b' } } })).toBeNull()
+  })
+
+  test('puts a chip on or takes one off a list in a block the rows cannot draw', () => {
+    // A comment line and a block scalar each make the rows' reader give up; the list
+    // is still the one the cell showed, read by YAML, and the rest stays as it was.
+    const commented = '---\n# kept\ntags: [a, "b"]\n---\n# N\n'
+    const row = noteRow(commented)
+    expect(changed(commented, row, { list: { tags: { add: 'z' } } })).toBe(
+      '---\n# kept\ntags: [a, "b", z]\n---\n# N\n',
+    )
+    expect(changed(commented, row, { list: { tags: { remove: 0 } } })).toBe(
+      '---\n# kept\ntags: ["b"]\n---\n# N\n',
+    )
+
+    const scalar =
+      '---\nsummary: |\n  Line one.\n  Line two.\ntags:\n  - a\n  - 007\nafter: x\n---\n'
+    expect(changed(scalar, row, { list: { tags: { add: 'z' } } })).toBe(
+      '---\nsummary: |\n  Line one.\n  Line two.\ntags: [a, 007, z]\nafter: x\n---\n',
+    )
+    expect(changed(scalar, row, { list: { tags: { remove: 1 } } })).toBe(
+      '---\nsummary: |\n  Line one.\n  Line two.\ntags: [a]\nafter: x\n---\n',
+    )
+
+    // A key such a block does not hold yet is added beside the others.
+    expect(changed('---\n# kept\ntitle: x\n---\n', row, { list: { tags: { add: 'z' } } })).toBe(
+      '---\n# kept\ntitle: x\ntags: [z]\n---\n',
+    )
+  })
+
+  test('refuses a chip it cannot write without losing what the block says', () => {
+    const row = noteRow('---\ntags: [a]\n---\n')
+    for (const text of [
+      // A comment inside the list itself, which a rewrite would drop.
+      '---\n# kept\ntags:\n  - a # why\n  - b\n---\n',
+      // A block that is not YAML at all.
+      '---\n# kept\ntags: [a\n---\n',
+      // A list of lists.
+      '---\n# kept\ntags:\n  - - a\n---\n',
+      // The same key twice.
+      '---\n# kept\ntags: [a]\ntags: [b]\n---\n',
+    ]) {
+      expect(changed(text, row, { list: { tags: { add: 'z' } } }), text).toBeNull()
+      expect(changed(text, row, { list: { tags: { remove: 0 } } }), text).toBeNull()
+    }
   })
 
   test('rewrites a list with the members it did not change exactly as written', () => {
