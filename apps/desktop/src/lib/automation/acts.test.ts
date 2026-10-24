@@ -406,6 +406,9 @@ describe('a property an automation sets', () => {
 
     await setProperty({ path: 'Plan.md', key: 'status', value: 'In progress' })
     expect(written[0]?.after).toBe('---\nstatus: In progress\n---\n# Plan\n')
+  })
+})
+
 /** A space shared with this account to be read is one nothing may be written in: the
  *  copy here would stop being the space's, and the sync would refuse the change on
  *  every pass. A link and the command line can only do what somebody at the keyboard
