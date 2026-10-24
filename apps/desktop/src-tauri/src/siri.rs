@@ -81,7 +81,7 @@ pub extern "C" fn nib_add_to_inbox(text: *const c_char) -> i32 {
     let front = crate::mcp::home::config_dir()
         .and_then(|dir| fs::read_to_string(dir.join(FRONT)).ok())
         .map(|said| PathBuf::from(said.trim()));
-    match spaces_dir().and_then(|spaces| add_to_inbox(&spaces, front.as_deref(), &text)) {
+    match decided_spaces().and_then(|spaces| add_to_inbox(&spaces, front.as_deref(), &text)) {
         Ok(_) => 0,
         Err(error) => {
             eprintln!("siri: no task added: {error}");
@@ -125,7 +125,7 @@ fn inbox_in(spaces: &Path, front: Option<&Path>) -> Result<PathBuf, String> {
 
 /// The folder every space lives in, the one the app itself decided on (`decide_spaces`
 /// in paths.rs): `NIB_SPACES_DIR`, else `spaces_in` the settings folder.
-fn spaces_dir() -> Result<PathBuf, String> {
+fn decided_spaces() -> Result<PathBuf, String> {
     if let Some(named) = folder_named(std::env::var_os(SPACES_DIR).as_deref()) {
         return Ok(named);
     }
