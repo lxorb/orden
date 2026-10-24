@@ -1,4 +1,5 @@
 import { renderMarkdown } from '@nib/markdown'
+import { readTask } from '@nib/markdown/task-line'
 import { describe, expect, test } from 'vitest'
 import {
   type Arrived,
@@ -13,6 +14,7 @@ import {
   sharedMarkdown,
   sharedWords,
 } from './shared'
+import { plain } from '../views/inline'
 
 /** What another app hands nib, and what that becomes.
  *
@@ -152,6 +154,27 @@ describe('a share as a task', () => {
     ).toBe('[Cost \\$5-\\$10](https://x.test/a)')
     const line = `- [ ] ${sharedTask(arrived({ items: [item({ text: 'Prices $5-$10 ~5 min' })] }))}`
     expect(renderMarkdown(line)).toContain('Prices $5-$10 ~5 min</li>')
+  })
+
+  /** What the task reader takes back out of the line the share became: the words,
+   *  and none of them read as a tag, a date, a priority, a recurrence or a field. */
+  test('no word of it is read as a field of the task', () => {
+    for (const said of [
+      'Read later #tips',
+      'Concert 📅 2026-11-01 ⏫',
+      'Pay rent 🔁 every month',
+      'Plan it ^abc',
+    ]) {
+      const task = readTask(`- [ ] ${sharedTask(arrived({ items: [item({ text: said })] }))}`)
+      expect(task?.tags).toEqual([])
+      expect(task?.due).toBeUndefined()
+      expect(task?.priority).toBe(4)
+      expect(task?.recurrence).toBeUndefined()
+      expect(task?.fields).toEqual({})
+      expect(plain(task?.text ?? '').replace(/\u2060/g, '')).toBe(said)
+    }
+    const line = `- [ ] ${sharedTask(arrived({ items: [item({ text: 'Read later #tips' })] }))}`
+    expect(renderMarkdown(line, { tagHref: (tag) => `#${tag}` })).toContain('Read later #tips</li>')
   })
 
   test('a tag in what was shared is not a tag in the task', () => {

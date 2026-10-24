@@ -743,3 +743,25 @@ export function parseTask(line: string): ParsedTask | null {
 export function readTask(line: string): TaskFields | null {
   return parseTask(line)?.fields ?? null
 }
+
+/** The emoji the Tasks plugin reads a field from: the priorities, the dates, a
+ *  recurrence, what happens on completion, an id and what a task waits on. */
+const FIELD_EMOJI = /(🔺|⏫|🔼|🔽|⏬|✅|❌|📅|📆|🗓|⏳|⌛|🛫|➕|🔁|🏁|🆔|⛔)\uFE0F?/gu
+
+/** Words somebody else wrote, as a task line's text that reads back as exactly
+ *  those words: the escapes `plainWords` would write are the caller's, and this adds
+ *  what only the task reader would take apart. A `#` that would open a tag is
+ *  escaped, as is the second colon of a `[key:: value]` field, and every field emoji
+ *  is followed by a word joiner, which draws nothing and leaves the emoji, the date
+ *  or the words after it read as none of the patterns at the end of a line. */
+export function taskWords(words: string): string {
+  let out = ''
+  for (let at = 0; at < words.length; at++) {
+    const char = words.charAt(at)
+    if (char === '#' && opensTag(words.charAt(at - 1)) && words.charAt(at - 1) !== '\\')
+      out += '\\#'
+    else if (char === ':' && words.charAt(at - 1) === ':') out += '\\:'
+    else out += char
+  }
+  return out.replace(FIELD_EMOJI, '$&\u2060')
+}
