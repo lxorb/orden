@@ -2057,6 +2057,42 @@ mod tests {
         );
     }
 
+    /// A folder called `Report.pages` - a macOS Pages document is one - is no page
+    /// note and holds no paper, so a `Report.pages.pdf` beside it is a PDF of its own:
+    /// it stays where it is when the folder moves, and a copy of the folder has none.
+    #[test]
+    fn a_folder_of_a_page_notes_name_holds_no_paper() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let here = dir.path();
+        let package = here.join("Report.pages");
+        std::fs::create_dir_all(&package).expect("a Pages document");
+        std::fs::write(paper_of(&package), b"%PDF mine").expect("a PDF beside it");
+        let never = |_: &Path, _: &Path| false;
+
+        // Copied, the copy has no paper...
+        let copy = here.join("Copy.pages");
+        std::fs::create_dir_all(&copy).expect("the copy");
+        copy_held(&package, &copy);
+        assert!(!paper_of(&copy).exists());
+
+        // ...moved, the PDF stays...
+        let moved = here.join("Final.pages");
+        std::fs::rename(&package, &moved).expect("the folder's own move");
+        move_held(&package, &moved);
+        assert_eq!(
+            std::fs::read(paper_of(&package)).expect("still there"),
+            b"%PDF mine"
+        );
+        assert!(!paper_of(&moved).exists());
+
+        // ...and a PDF where the folder's paper would be is not in its way.
+        std::fs::write(here.join("Other.pages.pdf"), b"%PDF other").expect("another PDF");
+        assert_eq!(
+            super::paper_in_the_way(&moved, &here.join("Other.pages"), never),
+            None
+        );
+    }
+
     #[test]
     fn a_note_has_no_sidecar_to_move() {
         let dir = tempfile::tempdir().expect("a temp folder");
