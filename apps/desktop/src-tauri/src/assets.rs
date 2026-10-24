@@ -304,6 +304,31 @@ mod tests {
         assert_eq!(stored(here, "a.png", b"png"), Ok(here.join("a.png")));
     }
 
+    /// Dropped twice, the same file is the one copy, wherever it stepped aside to; and a
+    /// file whose bytes are a page note's paper is a copy of its own, not the paper,
+    /// which goes when the note does.
+    #[test]
+    fn an_attachment_stepped_aside_is_still_the_one_copy() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let here = dir.path();
+        std::fs::write(here.join("Report.pages"), "{}").expect("a blank page note");
+        std::fs::write(here.join("X.pdf.highlights.json"), "[]").expect("leftovers");
+        std::fs::write(here.join("Lecture.pages"), "{}").expect("a page note");
+        std::fs::write(here.join("Lecture.pages.pdf"), b"%PDF paper").expect("its paper");
+
+        for _ in 0..2 {
+            assert_eq!(
+                stored(here, "Report.pages.pdf", b"%PDF dropped"),
+                Ok(here.join("Report.pages 2.pdf"))
+            );
+            assert_eq!(stored(here, "X.pdf", b"%PDF x"), Ok(here.join("X 2.pdf")));
+        }
+        assert_eq!(
+            stored(here, "Lecture.pages.pdf", b"%PDF paper"),
+            Ok(here.join("Lecture.pages 2.pdf"))
+        );
+    }
+
     /// `CON.png` is a name Windows gives to a device, and a file saved under it is one
     /// nobody can open, move or delete there; see `is_reserved` in paths.rs.
     #[test]

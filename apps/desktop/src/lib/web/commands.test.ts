@@ -769,6 +769,30 @@ describe('a pasted picture', () => {
     expect([...disk.assets.keys()]).toEqual(['/Notes/Report.pages 2.pdf'])
   })
 
+  const drop = (name: string, bytes = [1]) =>
+    webInvoke<string>('save_asset', { notePath: '/Notes/Read me.md', folder: '', name, bytes })
+
+  test('keeps both of two pictures of one name', async () => {
+    expect(await drop('scan.pdf', [1])).toBe('scan.pdf')
+    expect(await drop('scan.pdf', [2])).toBe('scan 2.pdf')
+    expect(await drop('scan.pdf', [2])).toBe('scan 2.pdf')
+    expect(disk.assets.size).toBe(2)
+  })
+
+  test('is the one copy dropped twice, wherever it stepped aside to', async () => {
+    await webInvoke('write_note', { path: '/Notes/Report.pages', content: '{}' })
+    expect(await drop('Report.pages.pdf')).toBe('Report.pages 2.pdf')
+    expect(await drop('Report.pages.pdf')).toBe('Report.pages 2.pdf')
+  })
+
+  /** Highlights a gone PDF left are still a PDF's, and `CON.png` is a device on
+   *  Windows; see `taken` in paths.rs and `safe_name` in assets.rs. */
+  test('steps past leftover highlights and a device name', async () => {
+    await webInvoke('write_note', { path: '/Notes/X.pdf.highlights.json', content: '[]' })
+    expect(await drop('X.pdf')).toBe('X 2.pdf')
+    expect(await drop('CON.png')).toBe('_CON.png')
+  })
+
   test('keeps the folder an older build wrote when none is sent', async () => {
     const written = await webInvoke<string>('save_asset', {
       notePath: '/Notes/Read me.md',
