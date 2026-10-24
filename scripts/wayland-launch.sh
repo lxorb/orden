@@ -21,6 +21,8 @@
 #     run on the web tab it came back to;
 #   - with IDLE=1, what the app costs the CPU while nothing happens, before anything
 #     else is done with it (scripts/idle-cpu.py);
+#   - with SCHEME=1, a web tab's page drawn in the app's scheme as the app's scheme is
+#     switched, light and dark (#427, scripts/scheme-drive.py);
 #   - with POPUP=1, the space switcher, the web tab's menu and a canvas's pens' panel
 #     chosen from with the compositor's pointer, over a web tab's page, round after
 #     round (#661, scripts/popup-drive.py);
@@ -149,11 +151,13 @@ endpoint() {
   chmod 600 "$config/automation.json"
 }
 command=("$@")
-if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ]; then
+if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${SCHEME:-0}" = 1 ]; then
   mkdir -p "$out/site"
   video=""
   [ "${MEDIA:-0}" = 1 ] && video='<video src="none.webm" autoplay muted></video>'
   printf '<!doctype html><title>one colour</title><style>html,body{margin:0;height:100%%;background:#ff00ff}</style>%s' "$video" > "$out/site/index.html"
+  # With SCHEME=1, a page whose colour says the scheme it is asked for (#427).
+  [ "${SCHEME:-0}" = 1 ] && printf '<!doctype html><title>scheme</title><style>html,body{margin:0;height:100%%;background:#0000ff}@media (prefers-color-scheme: dark){html,body{background:#00ff00}}</style>' > "$out/site/index.html"
   if [ "${CHECK:-0}" = 1 ]; then
     clip=(-f lavfi -i testsrc2=size=320x240:rate=30 -f lavfi -i sine=frequency=440 -t 4)
     ffmpeg -loglevel error -y "${clip[@]}" -c:v libvpx-vp9 -b:v 300k -c:a libopus "$out/site/vp9.webm"
@@ -196,7 +200,7 @@ PAGE
   endpoint
   set -- "$@" http://127.0.0.1:8765/
 fi
-if [ "${DRIVE:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ]; then
+if [ "${DRIVE:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${SCHEME:-0}" = 1 ]; then
   # And a keyboard with it, where xkbcommon's tools can say what its keys are.
   if command -v xkbcli > /dev/null; then
     xkbcli compile-keymap --layout us > "$out/keymap.txt"
@@ -269,6 +273,11 @@ fi
 
 if [ "$status" = 0 ] && [ "${DRIVE:-0}" = 1 ]; then
   python3 "$here/wayland-drive.py" "$out" "$app_pid" || status=1
+fi
+
+if [ "$status" = 0 ] && [ "${SCHEME:-0}" = 1 ]; then
+  sleep 3
+  python3 "$here/scheme-drive.py" sway "$out" "$app_pid" || status=1
 fi
 
 if [ "$status" = 0 ] && [ "${POPUP:-0}" = 1 ]; then
