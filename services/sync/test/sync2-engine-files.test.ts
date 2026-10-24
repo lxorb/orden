@@ -202,6 +202,29 @@ describe('a file that is not a note, under v2', () => {
     expect(bytesAt(laptop, 'photo.png')).toEqual(picture(7))
   })
 
+  test('fetched onto a file this device has not read yet, it waits and both are kept', async () => {
+    // The app was closed when a different Scan.pdf was dropped here, and the launch
+    // pass ran before the scan made it an entry: the laptop's was written over it.
+    const laptop = await device('laptop')
+    const desktop = await device('desktop')
+    await laptop.disk.writeBytes(`${laptop.root}/Scan.pdf`, picture(3))
+    await laptop.engine.created(`${laptop.root}/Scan.pdf`, false)
+    await desktop.disk.writeBytes(`${desktop.root}/Scan.pdf`, picture(7))
+    await laptop.engine.pass(space)
+    await rooms.settle()
+    await desktop.engine.pass(space)
+    await rooms.settle()
+
+    expect(bytesAt(desktop, 'Scan.pdf')).toEqual(picture(7))
+
+    await desktop.engine.created(`${desktop.root}/Scan.pdf`, false)
+    await passed(laptop, desktop)
+    for (const one of [laptop, desktop]) {
+      const kept = [...one.disk.bytes.values()].map((bytes) => bytes[1])
+      expect(kept.sort()).toEqual([picture(3)[1], picture(7)[1]].sort())
+    }
+  })
+
   test('deleted on one device, it is gone from the other', async () => {
     const laptop = await device('laptop', { 'photo.png': picture(3) })
     const phone = await device('phone')
