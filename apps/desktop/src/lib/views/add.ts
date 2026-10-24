@@ -11,7 +11,8 @@
 import { type Base, inBase, nextId, type Priority, type Value } from '@nib/bases'
 import { noteName, plainValue, rowPlace, withProperties } from '@nib/bases/agent'
 import { joinPath } from '../tauri'
-import { folderOf, insideSpace, withinSpace } from '../space-paths'
+import { insideOnly } from '../automation/inside'
+import { folderOf, insideSpace, within, withinSpace } from '../space-paths'
 import { contextFor } from './context'
 import { nowHere, todayHere } from './days'
 import { templatePath, templateWords } from './templates'
@@ -137,16 +138,24 @@ export async function addNote(
   group?: { property: string; key: Value },
   made: NewNote = {},
 ): Promise<string | null> {
-  const space = workspace.activeSpace
+  // The base's own space, which a base open in a tab kept across a space switch is
+  // not: its rows are that space's, and so is the folder its filter names.
+  const space =
+    (file === null ? null : workspace.spaces.find((one) => within(one.root, file) !== null)) ??
+    workspace.activeSpace
   if (!space) return null
   const view = base.views[at]
   const place = rowPlace(base, view?.name)
+  // The folder is words in a base file, which in a shared space anybody it is shared
+  // with can write. Joined as written, `../Private` climbed out into another space
+  // and wrote over what was there, and `./Projects` named a folder no listing spells
+  // that way, so a note already there was not seen. Read the way a link's path is,
+  // and the same refusal the agents' `addRow` gives; see automation/inside.ts.
+  const folder =
+    place.folder !== undefined && place.folder !== '' ? insideOnly(place.folder) : undefined
+  if (folder === null) return null
   const dir =
-    place.folder !== undefined && place.folder !== ''
-      ? joinPath(space.root, place.folder)
-      : file
-        ? folderOf(file)
-        : space.root
+    folder !== undefined ? insideSpace(space.root, folder) : file ? folderOf(file) : space.root
 
   const props: Record<string, unknown> = { ...place.properties }
   // The column the plus was pressed in: the value its property has there.

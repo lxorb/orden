@@ -4,6 +4,7 @@
 
 import { readBase, readAutomations, repeatDue, type Row } from '@nib/bases'
 import { withProperties } from '@nib/bases/agent'
+import { insideOnly } from '../automation/inside'
 import { show } from '../reminders/platform'
 import { rows } from '../rows/rows.svelte'
 import { insideSpace, within } from '../space-paths'
@@ -135,10 +136,13 @@ export async function repeatTemplates() {
     const due = repeatDue(row.note, today)
     if (!due) continue
 
-    const to =
-      typeof row.note.folder === 'string' && row.note.folder.trim()
-        ? joinPath(space.root, row.note.folder.trim())
-        : space.root
+    // The template's `folder:` is words anybody who can write the space can write, and
+    // joined as written `../Private` made the note in another space, over what was
+    // there. Read the way a link's path is; one that leaves the space makes nothing.
+    const said = typeof row.note.folder === 'string' ? row.note.folder.trim() : ''
+    const inside = said ? insideOnly(said) : ''
+    if (inside === null) continue
+    const to = inside ? insideSpace(space.root, inside) : space.root
     await invoke('create_folder', { path: to }).catch(() => undefined)
     const title = `${row.file.basename} ${due.day}`
     const name = workspace.freeName(to, `${title}.md`)
