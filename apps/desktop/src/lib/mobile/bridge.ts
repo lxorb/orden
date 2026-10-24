@@ -84,7 +84,8 @@ export function onTheActivity(): boolean {
   return !!method('insets')
 }
 
-/** This launch's word, asked for once and kept for as long as the page lives.
+/** This launch's word, asked for until the activity says it and kept for as long
+ *  as the page lives.
  *
  *  Asked for rather than pushed, because the page is what needs it and the page
  *  knows when. The activity answers by running a line in the main frame, so a frame
@@ -95,21 +96,38 @@ export function onTheActivity(): boolean {
  *  One promise, shared: two features asking at the same moment are one question. */
 let word: Promise<string> | undefined
 
-/** How long the activity has to answer before the page gives up on it. An answer is
- *  one line run in the page and is there within a frame; a wait with no end would be
- *  a key field that never settles on an older build of the app. */
+/** The word once the activity has said it. Kept apart from the question, because an
+ *  answer can land after the question was given up on, and from then on it is the
+ *  word all the same. */
+let known: string | undefined
+
+/** How long a caller waits for the answer before it goes on with no word. An answer
+ *  is one line run in the page and is usually there within a frame, but it goes
+ *  through the UI thread, which on a cold start can be busy for longer than that -
+ *  and it never comes while the activity has no page yet, or to a framed page that
+ *  asks. So a caller is told nothing after this long, but nothing is not kept: the
+ *  next caller asks again, and an answer that lands late is the word from then on
+ *  (B456). A wait with no end would be a key field that never settles. */
 const PATIENCE = 2000
 
 export function frameWord(): Promise<string> {
+  if (known) return Promise.resolve(known)
   if (word) return word
 
   const ask = method('askForTheFrame')
   if (!ask) return Promise.resolve('')
 
   word = new Promise<string>((said) => {
-    const timer = setTimeout(() => said(''), PATIENCE)
+    const timer = setTimeout(() => {
+      word = undefined
+      said('')
+    }, PATIENCE)
+    // Left on the window after a wait is given up on, so a late answer is still
+    // heard; a second answer to a second question says the same word.
     answer('__nibFrame', (text: string) => {
+      if (text) known = text
       clearTimeout(timer)
+      word = undefined
       said(text)
     })
     ask()
