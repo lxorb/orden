@@ -25,7 +25,14 @@ import { flowItem, scalar } from './yaml'
 /** One item of a list as what it means: words, a number, a yes or no, or nothing.
  *  A list is not only tags; `scores: [1, 2, 10]` holds numbers, and a list rewritten
  *  as strings would have every base that reads it sort `10` before `2`. */
-export type ListItem = string | number | boolean | null
+export type ListItem = string | number | boolean | null | KeptItem
+
+/** A member a rewrite leaves alone, as the note wrote it: put back character for
+ *  character, so `1.10`, `007` and `1234567890123456789` are not read as numbers and
+ *  written again as `1.1`, `7` and `1234567890123456800`, and `"a"` keeps its quotes. */
+export interface KeptItem {
+  asWritten: string
+}
 
 /** A list as a note writes one: a flow sequence, which is what Obsidian writes and
  *  what `frontMatterList` reads back. `[]` for a list with nothing in it, because a
@@ -40,24 +47,27 @@ export function writtenList(items: readonly ListItem[]): string {
 
 function writtenItem(item: ListItem): string {
   if (item === null || typeof item === 'boolean') return String(item)
+  if (typeof item === 'object') return item.asWritten
   if (typeof item === 'number') return Number.isFinite(item) ? String(item) : flowItem(String(item))
   return flowItem(item)
 }
 
-/** A list row's items as what they mean, read the way the bases read a value: a
- *  quoted item is words whatever it says, and a plain one is a number, a yes or no,
- *  or nothing where it says one. This is what a chip edit writes back, so taking
- *  `2` off `[1, 2, 10]` leaves `[1, 10]` rather than `['1', '10']`. */
+/** A list row's items as the note wrote them. This is what a chip edit writes back
+ *  for the members it did not touch, so taking `2` off `[1, 2, 10]` leaves `[1, 10]`
+ *  rather than `['1', '10']`, and taking `5` off `[1.10, 5, 007]` leaves `[1.10, 007]`
+ *  rather than the numbers those read as.
+ *
+ *  A block list is written back as a flow one, where a plain member holding a comma
+ *  or a bracket would be cut into several; that one alone is quoted, which is the
+ *  same words to YAML. */
 export function listItems(property: Property): ListItem[] {
   const quoted = property.quotedItems ?? []
-  return property.items.map((item, at) => (quoted[at] ? item : plainItem(item)))
-}
-
-function plainItem(item: string): ListItem {
-  if (item === '' || item === 'null' || item === '~') return null
-  if (/^(true|false)$/i.test(item)) return item.toLowerCase() === 'true'
-  if (/^-?\d+(?:\.\d+)?$/.test(item)) return Number(item)
-  return item
+  const written = property.writtenItems ?? []
+  return property.items.map((item, at) => {
+    if (quoted[at]) return { asWritten: written[at] ?? flowItem(item) }
+    if (/[,[\]{}]/.test(item)) return item
+    return { asWritten: item }
+  })
 }
 
 /** How a value is written for each kind of control.

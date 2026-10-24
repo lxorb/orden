@@ -121,21 +121,23 @@
             : Array.isArray(value)
               ? ''
               : shown
-    // A member that is words says so, as quotes would in the note: a chip taken off
-    // `['1', 2]` must not write the words `1` back as the number.
-    const quotedItems = Array.isArray(value) ? value.map((one) => typeof one === 'string') : []
     return {
       key: bare(property),
       kind,
       value: said,
       items,
-      ...(quotedItems.includes(true) ? { quotedItems } : {}),
       from: 0,
       to: 0,
     }
   })
 
   const choices = $derived(kit.live.base ? optionsOf(kit.live.base, property) : [])
+
+  /** A member of a list the control wrote whole, which is a task's tags: one it left
+   *  alone comes back as the words it was shown as. */
+  function shownMember(item: ListItem): Value {
+    return item !== null && typeof item === 'object' ? item.asWritten : item
+  }
 
   /** Words written from the shared control, as the value the field holds. */
   function fromWords(words: string | null): Value | null {
@@ -268,7 +270,7 @@
         choices={choices.length ? choices : null}
         autofocus
         onwrite={(words: string | null) => write(fromWords(words))}
-        onitems={(items: ListItem[]) => write(items)}
+        onitems={(items: ListItem[]) => write(items.map(shownMember))}
         onchip={isNoteProperty(property)
           ? (chip: ListChange) => kit.write(row, { list: { [bare(property)]: chip } })
           : undefined}

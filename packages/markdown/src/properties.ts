@@ -63,6 +63,10 @@ export interface Property {
   /** The same for each of a list's items, or each pair's value in a map, in the
    *  order of `items`. Set only where at least one of them was quoted. */
   quotedItems?: boolean[]
+  /** A list's items as written, quotes on, set with `quotedItems`: a plain item is
+   *  written as `items` says it, and a quoted one is what a rewrite of the list puts
+   *  back, in the quotes it had, rather than quoting it again its own way. */
+  writtenItems?: string[]
   /** Where the key's own line sits in the note, so a click can put the caret on
    *  it rather than somewhere near it. */
   from: number
@@ -174,7 +178,7 @@ export function readProperties(source: string): Property[] | null {
         kind: 'list',
         value: '',
         items: listed.map(unquoted),
-        ...quotes(listed),
+        ...quotes(listed, true),
         from: line.from,
         to: line.to,
       })
@@ -244,7 +248,7 @@ export function readProperties(source: string): Property[] | null {
       kind: mapped ? 'map' : items.length ? 'list' : 'text',
       value: '',
       items,
-      ...quotes(writtenItems),
+      ...quotes(writtenItems, !mapped),
       from: line.from,
       to: last,
     })
@@ -253,10 +257,15 @@ export function readProperties(source: string): Property[] | null {
   return out
 }
 
-/** `quotedItems` for items as written, or nothing where none of them is quoted. */
-function quotes(written: readonly string[]): { quotedItems?: boolean[] } {
+/** `quotedItems` for items as written, and for a list `writtenItems`, or nothing
+ *  where none of them is quoted. */
+function quotes(
+  written: readonly string[],
+  list: boolean,
+): { quotedItems?: boolean[]; writtenItems?: string[] } {
   const quoted = written.map(isQuoted)
-  return quoted.includes(true) ? { quotedItems: quoted } : {}
+  if (!quoted.includes(true)) return {}
+  return list ? { quotedItems: quoted, writtenItems: [...written] } : { quotedItems: quoted }
 }
 
 /** The rows as markup, for the editor's block and for the reading view, so the

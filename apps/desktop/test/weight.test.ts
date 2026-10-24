@@ -835,9 +835,13 @@ function holds(tail: string): boolean {
  *  shared to be read, in the workspace's own calls (`writableAt`) and in the row menu,
  *  the tree's keys and the palette. Measured 3,283,904.
  *
- *  Raised 2026-10-24, to 3,286,000, for #855: Recently deleted reads where a device
- *  row was from the notes folder before asking whether it may go back
- *  (`whereFrom` in trash.svelte.ts). Measured 3,285,287. */
+ *  Raised 2026-10-24, to 3,286,000, for #847: a list keeps its members' types and
+ *  the way each was written when one is added or taken out (`listItems`, `typedItem`
+ *  in packages/markdown/src/property-edits.ts). Measured 3,285,282.
+ *
+ *  Raised 2026-10-24, to 3,287,000, for #868: an untouched list member is written
+ *  back exactly as the note had it (`KeptItem` in packages/markdown/src/property-edits.ts).
+ *  Measured 3,286,180. */
 const BUDGET = 3_300_000 // combined branch only
 const MOST_FILES = 382
 
