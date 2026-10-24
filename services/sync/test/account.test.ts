@@ -446,6 +446,54 @@ describe('what is left', () => {
     expect((await call(env, `/i/${kept}.png`)).status).toBe(404)
   })
 
+  /** And by somebody who wrote it there and may only read there now: they are still in
+   *  the space, and what they put into it is still in its notes. */
+  test('a picture it put into a space it may now only read is handed over too', async () => {
+    const other = await signIn(env, OTHER)
+    const theirs = (
+      await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
+    ).json.space?.id
+
+    const sent = await mail(() =>
+      call(env, `/v1/spaces/${theirs}/share/invite`, {
+        token: other,
+        body: { email: ME, role: 'write' },
+      }),
+    )
+    await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
+      method: 'POST',
+      token,
+    })
+
+    const picture = file(3, 6)
+    await call(env, `/v1/blobs/${picture.hash}`, {
+      method: 'PUT',
+      token,
+      raw: picture.bytes,
+      headers: { 'content-type': 'image/png' },
+    })
+    await call(env, `/v1/spaces/${theirs}/notes`, {
+      token,
+      body: {
+        path: 'with a picture.md',
+        content: `![](https://nibeditor.com/i/${picture.hash}.png)`,
+      },
+    })
+    const demoted = await call(
+      env,
+      `/v1/spaces/${theirs}/share/members/${encodeURIComponent(ME)}`,
+      { method: 'PATCH', token: other, body: { role: 'read' } },
+    )
+    expect(demoted.status).toBe(200)
+
+    expect((await leave()).status).toBe(200)
+
+    expect((await call(env, `/i/${picture.hash}.png`)).status).toBe(200)
+    expect(env.db.prepare('select user_id from blobs where hash = ?').all(picture.hash)).toEqual([
+      { user_id: (await me(other)).json.user?.id },
+    ])
+  })
+
   test('a published site stops answering', async () => {
     const space = (await call<LeavingView>(env, '/v1/spaces', { token, body: { name: 'Site' } }))
       .json.space?.id

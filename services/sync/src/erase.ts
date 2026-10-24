@@ -252,8 +252,9 @@ const PICTURE = /\/i\/([a-f0-9]{64})/g
  *  their own: so the picture in the owner's note is the writer's row, and deleting
  *  the writer would otherwise take the picture out of a space that stays. Whatever
  *  another account already holds is left alone - its row keeps the bytes. For the
- *  rest, every space this account may write in is read for them: its files, and the
- *  pictures in its notes. A space bigger than what is left to read hands over
+ *  rest, every space this account is a member of is read for them: its files, and the
+ *  pictures in its notes. Whatever its role now, because a writer made a reader
+ *  wrote what they wrote, and only what the space itself uses is handed over. A space bigger than what is left to read hands over
  *  everything unread rather than guessing, because a picture somebody pays for is
  *  better than a hole in their note.
  *
@@ -271,7 +272,7 @@ async function handedOn(env: Env, user: User, at: number): Promise<D1PreparedSta
   const { results: written } = await env.DB.prepare(
     `select sp.id as space, sp.user_id as owner, sp.files as files, m.item as item
        from space_members m join spaces sp on sp.id = m.space_id
-      where m.email = ?1 and m.role = 'write' and sp.user_id <> ?2`,
+      where m.email = ?1 and sp.user_id <> ?2`,
   )
     .bind(user.email, user.id)
     .all<{ space: string; owner: string; files: string; item: string }>()
