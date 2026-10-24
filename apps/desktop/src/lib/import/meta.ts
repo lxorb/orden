@@ -79,13 +79,31 @@ export function noteText(title: string | null, body: string, meta: Meta = {}): s
   // Only the blank lines above the words go: the first line's own indent is what
   // makes a note that opens with an indented code block open with code.
   const all = body.replace(/^(?:[ \t]*\r?\n)+/, '').replace(/\s+$/, '')
-  const own = frontMatterBlock(all)
+  const own = ownBlock(all)
   const words = own ? all.slice(own.to).replace(/^(?:[ \t]*\r?\n)+/, '') : all
   const heads = /^#{1,6}\s/.test(words)
   const head = title && !heads ? `# ${title}\n\n` : ''
   const props = own ? `${withMeta(all, own.close, meta)}\n\n` : frontMatterFor(meta)
 
   return `${props}${head}${words}${words ? '\n' : ''}`
+}
+
+/** A key's line, a line under one, a list's item or a comment: what a block of
+ *  properties is made of. The key is @nib/markdown/front-matter's: an unindented
+ *  line up to its first colon with a blank or nothing after it. */
+const BLOCK_LINE = /^(?:[^\s#-].*?[ \t]*:(?:\s|$)|[ \t]|-(?:\s|$)|#)/
+
+/** The block of properties a body opens with, or null where it opens with anything
+ *  else. Two `---` lines are not enough: an HTML page's `<hr>` is one as Markdown,
+ *  and a note that opens with a rule, a paragraph and another rule is words. So
+ *  every line between the fences has to be one a block is made of, and one of them
+ *  a key. */
+function ownBlock(body: string): ReturnType<typeof frontMatterBlock> {
+  const block = frontMatterBlock(body)
+  if (!block || !frontMatterKeys(body).length) return null
+
+  const lines = body.slice(block.body.from, block.body.to).split(/\r?\n/)
+  return lines.every((line) => !line.trim() || BLOCK_LINE.test(line)) ? block : null
 }
 
 /** A note's own block with the rows of `meta` it does not say added in front of

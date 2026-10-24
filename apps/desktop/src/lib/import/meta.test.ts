@@ -75,6 +75,18 @@ describe('a whole note', () => {
     )
   })
 
+  test('a rule at the top of a note is a rule, not properties', () => {
+    expect(
+      noteText('Trip', '---\n\nIntro paragraph.\n\n---\n\nRest\n', {
+        date: '2024-01-02',
+        tags: ['travel'],
+      }),
+    ).toBe(
+      '---\ndate: 2024-01-02\ntags: [travel]\n---\n\n# Trip\n\n---\n\nIntro paragraph.\n\n---\n\nRest\n',
+    )
+    expect(noteText(null, '---\n---\nWords.\n')).toBe('---\n---\nWords.\n')
+  })
+
   test('a note whose own block is all it says still opens with it', () => {
     expect(noteText('Trip', '---\nstatus: draft\n---', {})).toBe(
       '---\nstatus: draft\n---\n\n# Trip\n\n',
