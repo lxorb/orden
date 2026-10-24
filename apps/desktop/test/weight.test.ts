@@ -860,8 +860,12 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-24, to 3,299,000, for #916: embeds, canvas cards and exports of a
  *  note of another space read that space (`spaceRead` in link-index.svelte.ts).
- *  Measured 3,298,480. */
-const BUDGET = 3_299_000
+ *  Measured 3,298,480.
+ *
+ *  Raised 2026-10-24, to 3,300,000, for #918 and #920: a chat of another space links in
+ *  that space, and a link is followed in the space of the note it is in
+ *  (`followNoteFrom` in open-link.ts). Measured 3,299,514. */
+const BUDGET = 3_300_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
