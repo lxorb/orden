@@ -270,6 +270,26 @@ export async function settle(space: SpaceState, how: Settling): Promise<EntryRow
       throw error
     }
   }
+  // The same for a delete the disk refuses, a file another program holds open: it stays
+  // known where it is, so the next pass tries again rather than reading it as made here.
+  const removes = async (path: string, kind: FileKind) => {
+    try {
+      await how.disk.remove(full(path), kind)
+      return true
+    } catch (error) {
+      if (await how.disk.exists(full(path))) return false
+      throw error
+    }
+  }
+  // And a folder the disk will not make: whatever was going into it waits with it.
+  const makes = async (path: string) => {
+    try {
+      await how.disk.mkdir(full(path))
+      return true
+    } catch {
+      return false
+    }
+  }
 
   for (const entry of space.entries.values()) {
     if (!entry.local_path || wanted.has(entry.id)) continue
@@ -280,7 +300,8 @@ export async function settle(space: SpaceState, how: Settling): Promise<EntryRow
     // Another sync tool's copy stays: the account letting go of one is not anybody
     // deleting a file, and the tool that made it would carry a delete to every disk.
     if (!inForeignCopy(entry.local_path) && (await how.disk.exists(full(entry.local_path)))) {
-      await how.disk.remove(full(entry.local_path), entry.kind === 'folder' ? 'folder' : 'file')
+      const kind = entry.kind === 'folder' ? 'folder' : 'file'
+      if (!(await removes(entry.local_path, kind))) continue
     }
     if (entry.kind === 'folder') forgetUnder(space, entry.local_path, moved, how)
     entry.local_path = ''
@@ -337,7 +358,7 @@ export async function settle(space: SpaceState, how: Settling): Promise<EntryRow
         // entry stays where it was until that file has become an entry of its own.
         continue
       }
-      await how.disk.mkdir(full(folderOf(want)))
+      if (!(await makes(folderOf(want)))) continue
       if (!(await moves(entry.local_path, want, kind))) continue
       carry(space, entry, want, moved)
       progress += 1
@@ -350,7 +371,7 @@ export async function settle(space: SpaceState, how: Settling): Promise<EntryRow
   for (const [id, want] of wanted) {
     const entry = space.entries.get(id)
     if (entry?.kind !== 'folder' || entry.local_path) continue
-    await how.disk.mkdir(full(want))
+    if (!(await makes(want))) continue
     entry.local_path = want
     moved.add(entry)
   }

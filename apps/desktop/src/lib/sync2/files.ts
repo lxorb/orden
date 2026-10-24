@@ -171,8 +171,15 @@ export async function settleFiles(
       const bytes = await blobs.down(space.id, entry.id)
       if (!alive() || bytes === null) return false
       if (bytes === 'gone') continue
-      await core.world.disk.mkdir(core.world.join(space.row.root, folderPath(path)))
-      await blobs.write(full, bytes)
+      try {
+        await core.world.disk.mkdir(core.world.join(space.row.root, folderPath(path)))
+        await blobs.write(full, bytes)
+      } catch {
+        // Refused, a file another program holds open: this one waits for the next pass,
+        // its entry as it was, and the rest of the space settles. Thrown, it stopped
+        // every pass before anything after it came or went.
+        continue
+      }
       entry.local_path = path
       entry.file_key = await blobs.hash(bytes)
       await written(core, entry, entry.file_key, bytes)
