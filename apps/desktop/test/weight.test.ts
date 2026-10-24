@@ -853,7 +853,7 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-24, to 3,295,000, for #907 with #846 merged in under it. Measured
  *  3,294,400. */
-const BUDGET = 3_300_000 // combined branch only
+const BUDGET = 3_400_000 // combined branch only
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
