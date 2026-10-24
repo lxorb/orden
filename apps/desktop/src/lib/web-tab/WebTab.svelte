@@ -1001,7 +1001,9 @@
           <img class="mark" src={mark} alt="" draggable="false" onerror={() => (marked = false)} />
         {/if}
         <p class="name">{page.title || plainOrigin(address)}</p>
-        <p class="site">{plainOrigin(address)}</p>
+        <!-- Where the card would take the reader, whole: the name above already says
+             whose page it is (#774). -->
+        <p class="site">{address}</p>
 
         <div class="rows">
           <button
@@ -1147,5 +1149,7 @@
   .site {
     margin: 0;
     font-size: var(--text-sm);
+    /* A whole address has no spaces to break at. */
+    overflow-wrap: anywhere;
   }
 </style>
