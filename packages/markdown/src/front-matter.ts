@@ -60,6 +60,25 @@ interface KeyLine {
  *  a comment and a `- ` line is part of a list. */
 const KEY = /^([^\s#-].*?)[ \t]*:(?=\s|$)/
 
+/** A name `KEY` reads back as that same key, and YAML as a plain word: the one rule
+ *  every writer of a key asks and the rows read by, so a key one of them writes is a
+ *  key the others find. Anything else goes - `priorität`, `Size (cm)`, `R&D`, `💰`.
+ *
+ *  What it keeps out is a name that would come back as something else. A blank at
+ *  the end is trimmed off, so `tags ` is a twin of `tags`, and one in front indents
+ *  the line under the key above. A colon before
+ *  a blank or at the end ends the key early, a blank before `#` starts a comment, and
+ *  a line break or another control character is a second line. A first character
+ *  `KEY` passes over (`#`, `-`) or YAML reads as more than a letter (a quote, a
+ *  bracket, an anchor, a tag, a block scalar, a reserved sign, `?`, `:`, `,`) makes
+ *  the line a comment, a list item or a YAML shape that is not this key. */
+const NAME = /^(?![\s#\-?:,[\]{}&*!|>'"%@`])(?!.*:(?:\s|$))(?!.*\s#)[^\p{Cc}\p{Zl}\p{Zp}]+(?<!\s)$/u
+
+/** Whether a key may be written under this name; see `NAME`. */
+export function isPropertyName(name: string): boolean {
+  return NAME.test(name)
+}
+
 /** Where the front matter block sits, or null when the note opens with anything
  *  else - which is most notes.
  *

@@ -17,7 +17,7 @@
  *  door, which is built on `frontMatterEdit` so that whatever a control does to a
  *  note, the note stays plain front matter that every other reader can read. */
 
-import { frontMatterBlock } from './front-matter'
+import { frontMatterBlock, isPropertyName } from './front-matter'
 import { escape } from './html'
 import { flowItems, listItem, uncommented, unquoted } from './yaml'
 
@@ -62,12 +62,21 @@ export interface Property {
 }
 
 /** A top-level `key:`. Indented lines belong to the key above them, and a line
- *  that is only a value is part of a list. */
-const KEY = /^([A-Za-z_][\w-]*)[ \t]*:(.*)$/
+ *  that is only a value is part of a list. Up to the first colon with a blank or
+ *  nothing after it, as front-matter.ts reads a key, and only a name `isPropertyName`
+ *  takes is one: the rows read every key the writers write, and a key they would not
+ *  write is a shape the block goes back to source for. */
+const KEY = /^([^\s#-].*?)[ \t]*:(?=[ \t]|$)(.*)$/
 
 /** A `key: value` line indented under another key: the shape `export:` uses to
- *  say what paper a note prints on. */
-const NESTED = /^[ \t]+([A-Za-z_][\w-]*)[ \t]*:[ \t]*(.*)$/
+ *  say what paper a note prints on. Its key is read the way `KEY` reads one. */
+const NESTED = /^[ \t]+([^\s#-].*?)[ \t]*:(?=[ \t]|$)[ \t]*(.*)$/
+
+/** The key and the rest of the line, where the line is a key `isPropertyName` takes. */
+function keyed(pattern: RegExp, text: string): RegExpExecArray | null {
+  const found = pattern.exec(text)
+  return found && isPropertyName(found[1] ?? '') ? found : null
+}
 
 /** `true` and `false`, which is how Obsidian writes a checkbox. YAML 1.1 also
  *  reads `yes` and `no` as booleans, and this deliberately does not: a note whose
@@ -133,7 +142,7 @@ export function readProperties(source: string): Property[] | null {
     // is keeping notes in. Left as source rather than silently dropped.
     if (line.text.trimStart().startsWith('#')) return null
 
-    const found = KEY.exec(line.text)
+    const found = keyed(KEY, line.text)
     if (!found) return null
 
     // Asked before the row is made rather than after, so that every shape of row
@@ -179,7 +188,7 @@ export function readProperties(source: string): Property[] | null {
       const indented = next.text.startsWith(' ') || next.text.startsWith('\t')
       if (item === null && !indented) break
 
-      const pair = item === null ? NESTED.exec(next.text) : null
+      const pair = item === null ? keyed(NESTED, next.text) : null
       if (item === null && !pair) return null
       // One or the other, never both: a key with a list and a map under it is
       // not something YAML means either.

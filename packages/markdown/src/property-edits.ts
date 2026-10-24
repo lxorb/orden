@@ -18,7 +18,7 @@
  *  file at all. */
 
 import { oneEdit, type TextEdit } from './edits'
-import { frontMatterBlock, frontMatterEdit } from './front-matter'
+import { frontMatterBlock, frontMatterEdit, isPropertyName } from './front-matter'
 import { type Property, type PropertyKind, readProperties } from './properties'
 import { flowItem, scalar } from './yaml'
 
@@ -89,16 +89,13 @@ export function withoutItem(property: Property, item: string): string[] | null {
   return property.items.filter((one) => one !== item)
 }
 
-/** What a key may be called: the shape `readProperties` reads a key by. */
-const KEY_NAME = /^[A-Za-z_][\w-]*$/
-
 /** One edit that renames a key and touches nothing else: its value, its place and
  *  every other line of the block stay byte for byte. Null for a name that is not a
  *  key, the same name, or a name another key of the block already has - two keys
  *  of one name is a block YAML reads as the last of them. */
 export function renameProperty(source: string, key: string, next: string): TextEdit | null {
   const name = next.trim()
-  if (!KEY_NAME.test(name) || name === key) return null
+  if (!isPropertyName(name) || name === key) return null
 
   const rows = readProperties(source) ?? []
   const found = rows.find((one) => one.key === key)
