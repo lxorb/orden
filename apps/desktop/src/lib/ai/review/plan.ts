@@ -38,16 +38,17 @@ const EDITS = new Set(['edit_note', 'write_note', 'append_note', 'set_property',
 /** The verbs whose files the review moves back or brings back (files.ts). */
 const MOVES = new Set(['move_file', 'trash_file'])
 
-/** Whether a call made something a rewind sends to Recently deleted. */
-function makes(verb: string): boolean {
-  return verb.startsWith('create_')
-}
-
-/** What a call that made a file made. */
+/** What a call made that a rewind sends to Recently deleted, or null: only a note,
+ *  canvas, page or web note `create_note` says it made, at the path it answered. A
+ *  folder is not a file, and `create_folder` answers a folder's path even when the
+ *  folder was there already; read as a note's name, `Projects` became the reader's own
+ *  `Projects.md`, sent to Recently deleted on every device. */
 function madeBy(part: Extract<Part, { kind: 'tool' }>): Made | null {
+  if (verbOf(part.verb) !== 'create_note') return null
   const args = argsOf(part)
   const said = answerOf(part)
-  const path = typeof said?.path === 'string' ? said.path : args.path
+  if (said?.created !== true) return null
+  const path = said.path
   if (typeof path !== 'string' || !path) return null
   return typeof args.space === 'string' && args.space ? { path, space: args.space } : { path }
 }
@@ -84,7 +85,7 @@ export function planFor(
   for (const part of callsSince(thread.turns, turn)) {
     const verb = verbOf(part.verb)
     if (LOOKS.test(verb) || EDITS.has(verb)) continue
-    const file = makes(verb) ? madeBy(part) : null
+    const file = madeBy(part)
     const moved = fileChangeOf(part)
     if (file) made.push(file)
     else if (moved) {
