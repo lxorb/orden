@@ -604,6 +604,28 @@ describe('a note renamed on this machine', () => {
     expect(fake.disk.get(`${ROOT}/Two.md`)).toBe(`${HERE}here\n`)
   })
 
+  test('and a note waiting to be settled, renamed while the account was away, is kept', async () => {
+    const { mirror, id } = await paired('One.md', HERE)
+    fake.disk.set(`${ROOT}/One.md`, `${HERE}here\n`)
+    fake.editRemote(id, `${HERE}there\n`)
+    await pull(mirror, 'token', NOBODY, { rule: 'ask', clashed: () => undefined })
+    renameOnDisk('One.md', 'Two.md')
+    fake.refusing.delete = null
+    const reading = fake.api.readNote
+    fake.api.readNote = () => Promise.reject(new TypeError('Failed to fetch'))
+    expect(
+      await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Two.md`, new Set([id])),
+    ).toBe(false)
+    fake.api.readNote = reading
+    fake.calls.length = 0
+
+    await pull(mirror, 'token', NOBODY, { rule: 'ask', clashed: () => undefined })
+    await push(mirror, 'token', NOBODY, { held: new Set([`${ROOT}/Two.md`]), asked: new Set([id]) })
+
+    expect(fake.calls.filter((one) => /^(deleteNote|createNote)/.test(one))).toEqual([])
+    expect(fake.remote.get(id)).toMatchObject({ deleted: false, content: `${HERE}there\n` })
+  })
+
   test('and a folder carries every note under it', async () => {
     const { mirror } = await paired('Kept/One.md', HERE)
     fake.addRemote('Keptish.md', '# elsewhere' + String.fromCharCode(10))

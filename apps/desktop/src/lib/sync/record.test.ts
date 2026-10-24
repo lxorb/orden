@@ -192,6 +192,26 @@ describe('a note waiting to be settled', () => {
     expect(invoked).toContainEqual({ command: 'write_note', path: '/Work/Goals.md' })
   })
 
+  /** Renamed while the account could not be told: the record still has the note at
+   *  its old name, and the file is where the question followed it. Answered at the
+   *  old name, the rename was undone and the file at the new one became a second note. */
+  test('is settled where it followed its file when the record is behind', async () => {
+    held([aClash('/Work/Goals.md')])
+    const told: string[] = []
+    record.notes = {
+      at: () => '/Work/Plan.md',
+      of: () => null,
+      moved: (from, to) => void told.push(`${from} ${to}`),
+    }
+
+    await record.settle(record.clashes[0]!, 'theirs')
+    record.notes = null
+
+    expect(invoked).toContainEqual({ command: 'write_note', path: '/Work/Goals.md' })
+    expect(invoked).not.toContainEqual({ command: 'write_note', path: '/Work/Plan.md' })
+    expect(told).toEqual(['/Work/Plan.md /Work/Goals.md'])
+  })
+
   test('never writes over another note that has its old name by now', async () => {
     held([aClash('/Work/Plan.md')])
     record.notes = { at: () => null, of: () => 'another-id' }

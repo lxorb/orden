@@ -109,7 +109,12 @@ class Record {
 
   /** Where the notes on this device are, by id and by path, handed in by the sync
    *  store (sync.svelte.ts), which is restored after this one. Null until then. */
-  notes: { at(id: string): string | null; of(path: string): string | null } | null = null
+  notes: {
+    at(id: string): string | null
+    of(path: string): string | null
+    /** A rename the account was not told of, told again. */
+    moved?(from: string, to: string): unknown
+  } | null = null
 
   /** A file operation, heard the way everything kept by path hears one; see
    *  workspace/file-ops.ts. A clash is about a note, and the note can be renamed,
@@ -164,8 +169,23 @@ class Record {
     // Where the note is now, by its id: a rename the store did not hear of, a swap
     // pulled from another device. And never another note's file: one that has the
     // name by now keeps its own words, and the other copy is kept beside it.
-    const now = this.notes?.at(clash.id) ?? null
-    const there = now === null ? (this.notes?.of(clash.path) ?? null) : null
+    //
+    // Except where the question followed its file and the record is behind: a rename
+    // the account could not be told of leaves the entry at the old name. There the
+    // file is the note, and the rename is told again once answered.
+    const recorded = this.notes?.at(clash.id) ?? null
+    const judged = await placed(clash.path)
+    const followed =
+      recorded !== null &&
+      judged !== null &&
+      recorded !== judged &&
+      this.notes?.of(judged) === null &&
+      (await invoke<string>('read_note', { path: judged }).then(
+        () => true,
+        () => false,
+      ))
+    const now = followed ? null : recorded
+    const there = now === null && !followed ? (this.notes?.of(clash.path) ?? null) : null
     const elsewhere = there !== null && there !== clash.id
     const path = await placed(now ?? clash.path)
     if (path === null) {
@@ -226,6 +246,7 @@ class Record {
     }
 
     this.forget(clash.path)
+    if (followed) void this.notes?.moved?.(recorded, path)
   }
 
   forget(path: string) {

@@ -788,6 +788,7 @@ class Sync {
 
         const sending = {
           held: record.held,
+          asked: new Set(record.clashes.map((one) => one.id)),
           sent: () => (this.pushed += 1),
           // An old copy of a web note folded into it: the note open in a tab takes
           // what it now says, the copy leaves the list. See sync/web-copies.ts.
@@ -1060,4 +1061,5 @@ workspace.fileOps.follow((op) => record.follow(op))
 record.notes = {
   at: (id) => sync.pathOf(id),
   of: (path) => sync.tracked(path)?.id ?? null,
+  moved: (from, to) => sync.moved(from, to),
 }

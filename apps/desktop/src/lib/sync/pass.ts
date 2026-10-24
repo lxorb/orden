@@ -1042,6 +1042,9 @@ export interface Sending {
    *  one is what would write over the copy nobody has read yet. Paths as this
    *  machine spells them; see sync/conflicts.ts. */
   held?: ReadonlySet<string>
+  /** The same notes by id, which a file gone from its name does not delete: the note
+   *  may have been renamed while the account could not be told. */
+  asked?: ReadonlySet<string>
   /** One note sent, by its path in the space. What the log counts. */
   sent?: (path: string) => void
   /** A web note's old copy folded into the note, both as this machine spells them;
@@ -1160,7 +1163,13 @@ export async function push(
 
   // A file that vanished locally is a delete, not a gap.
   for (const [path, tracked] of Object.entries(mirror.notes)) {
-    if (seen.has(path) || inForeignCopy(path) || waits.has(tracked.id)) continue
+    if (
+      seen.has(path) ||
+      inForeignCopy(path) ||
+      waits.has(tracked.id) ||
+      sending.asked?.has(tracked.id)
+    )
+      continue
 
     // Its words wait aside, from a swap a pass did not get to finish, and are never
     // read as a note gone from here: the next pull moves it on or puts it back.
