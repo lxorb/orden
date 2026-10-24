@@ -19,7 +19,7 @@ use tauri::AppHandle;
 use crate::carry::move_whole;
 use crate::clock;
 use crate::paths::{
-    folded, free_spot, in_spaces, inside, is_reserved, made, move_held, spaces_dir,
+    folded, free_spot, in_spaces, inside, is_reserved, made, move_held, move_paper, spaces_dir,
     write_atomically, HIGHLIGHTS, TRASH,
 };
 
@@ -57,8 +57,19 @@ pub struct TrashEntry {
 }
 
 /// Moves a note, folder or space into the trash and says what it became.
+///
+/// `alone` is sync's delete (sync2/app-world.ts), which leaves what the account holds
+/// as an entry of its own, a PDF's highlights, for that entry's own delete or move: a
+/// PDF turned into its page note elsewhere is a delete of the PDF here and a move of its
+/// highlights, and the delete runs first. A page note's paper is no entry (#551) and
+/// still goes with the note, though not the paper's highlights. See `rename_note`.
 #[tauri::command(async)]
-pub fn trash_item(app: AppHandle, path: String, kind: String) -> Result<TrashEntry, String> {
+pub fn trash_item(
+    app: AppHandle,
+    path: String,
+    kind: String,
+    alone: Option<bool>,
+) -> Result<TrashEntry, String> {
     if !KINDS.contains(&kind.as_str()) {
         return Err(format!("{kind} is not something Orden can delete"));
     }
@@ -72,12 +83,24 @@ pub fn trash_item(app: AppHandle, path: String, kind: String) -> Result<TrashEnt
 
     let _guard = locked();
     let dir = trash_dir(&app)?;
+    trashed(&dir, &source, from, name, kind, alone == Some(true))
+}
+
+/// `trash_item` past its gate and its lock, into the trash at `dir`.
+fn trashed(
+    dir: &Path,
+    source: &Path,
+    from: String,
+    name: String,
+    kind: String,
+    alone: bool,
+) -> Result<TrashEntry, String> {
     let id = new_id();
     let slot = dir.join(&id);
     made(&slot)?;
 
     let held = slot.join(&name);
-    if let Err(error) = move_whole(&source, &held, "delete") {
+    if let Err(error) = move_whole(source, &held, "delete") {
         // The slot only if it is empty: a move that could not put back what it took
         // leaves its copy there, and that copy is the one whole one; see carry.rs.
         let _ = fs::remove_dir(&slot);
@@ -85,8 +108,15 @@ pub fn trash_item(app: AppHandle, path: String, kind: String) -> Result<TrashEnt
     }
 
     // A deleted PDF takes its highlights into the same folder, and a page note its
-    // paper, so putting it back puts them back with it.
-    move_held(&source, &held);
+    // paper, so putting it back puts them back with it. Sync's takes only the paper.
+    let carry = |from: &Path, to: &Path| {
+        if alone {
+            move_paper(from, to);
+        } else {
+            move_held(from, to);
+        }
+    };
+    carry(source, &held);
 
     let entry = TrashEntry {
         id,
@@ -100,9 +130,9 @@ pub fn trash_item(app: AppHandle, path: String, kind: String) -> Result<TrashEnt
     // it goes back where it came from instead. And stays in its slot if it cannot
     // go back: a note in the trash that the list does not show is still a note,
     // where one taken away with the slot would not be.
-    recorded(&dir, entry, || {
-        if move_whole(&held, &source, "restore").is_ok() {
-            move_held(&held, &source);
+    recorded(dir, entry, || {
+        if move_whole(&held, source, "restore").is_ok() {
+            carry(&held, source);
             let _ = fs::remove_dir(&slot);
         }
     })
@@ -763,5 +793,74 @@ mod tests {
 
         assert!(read_manifest(dir.path()).is_empty());
         assert!(dir.path().join("manifest.json.unreadable").exists());
+    }
+
+    /// A space with a PDF and its highlights, and a page note with its paper and the
+    /// paper's highlights, and a trash beside it.
+    fn a_space() -> tempfile::TempDir {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        for (name, words) in [
+            ("X.pdf", "%PDF"),
+            ("X.pdf.highlights.json", "{}"),
+            ("L.pages", "{}"),
+            ("L.pages.pdf", "%PDF"),
+            ("L.pages.pdf.highlights.json", "{}"),
+        ] {
+            std::fs::write(dir.path().join(name), words).expect("a file");
+        }
+        std::fs::create_dir(dir.path().join(".trash")).expect("the trash");
+        dir
+    }
+
+    fn trash(dir: &Path, name: &str, alone: bool) {
+        super::trashed(
+            &dir.join(".trash"),
+            &dir.join(name),
+            name.into(),
+            name.into(),
+            "note".into(),
+            alone,
+        )
+        .expect("deleted");
+    }
+
+    /// Sync's delete leaves what sync carries as an entry of its own, a PDF's
+    /// highlights. A PDF turned into its page note elsewhere comes here as a delete of
+    /// the PDF and a move of its highlights to the paper's: the delete took them into
+    /// the trash, the move found nothing, and the next scan deleted them everywhere.
+    #[test]
+    fn a_pdf_deleted_alone_leaves_its_highlights() {
+        let dir = a_space();
+        trash(dir.path(), "X.pdf", true);
+
+        assert!(!dir.path().join("X.pdf").exists());
+        assert!(dir.path().join("X.pdf.highlights.json").exists());
+    }
+
+    /// And takes what sync does not carry: a page note's paper, which goes with the
+    /// note (#551), though not the paper's highlights, which are an entry.
+    #[test]
+    fn a_page_note_deleted_alone_takes_its_paper() {
+        let dir = a_space();
+        trash(dir.path(), "L.pages", true);
+
+        assert!(!dir.path().join("L.pages").exists());
+        assert!(!dir.path().join("L.pages.pdf").exists());
+        assert!(dir.path().join("L.pages.pdf.highlights.json").exists());
+    }
+
+    #[test]
+    fn a_file_deleted_by_hand_takes_what_it_holds() {
+        let dir = a_space();
+        trash(dir.path(), "X.pdf", false);
+        trash(dir.path(), "L.pages", false);
+
+        for name in [
+            "X.pdf.highlights.json",
+            "L.pages.pdf",
+            "L.pages.pdf.highlights.json",
+        ] {
+            assert!(!dir.path().join(name).exists(), "{name}");
+        }
     }
 }

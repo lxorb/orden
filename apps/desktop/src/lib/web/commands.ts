@@ -499,14 +499,15 @@ async function pairedTaken(path: string): Promise<boolean> {
   return false
 }
 
-async function trashItem(path: string, kind: string): Promise<TrashEntry> {
+/** `alone` is sync's delete, which leaves a PDF's highlights; see `trash_item`. */
+async function trashItem(path: string, kind: string, alone = false): Promise<TrashEntry> {
   const source = normalise(path)
   if (source === '/' || source.startsWith(TRASH)) throw new Error('that cannot be deleted')
   if (!(await holds(source))) throw new Error('nothing is there')
 
   const id = `${now()}-${trashCounter++}`
   const name = basename(source)
-  await renameNote(source, `${TRASH}/${id}/${name}`)
+  await renameNote(source, `${TRASH}/${id}/${name}`, false, alone)
 
   const entry = { id, kind, name, from: source, trashedAt: now() }
   await saveTrash([...(await trashEntries()), entry])
@@ -997,7 +998,7 @@ export async function webInvoke<T>(
       return undefined as T
 
     case 'trash_item':
-      return (await trashItem(path, args.kind as string)) as T
+      return (await trashItem(path, args.kind as string, args.alone === true)) as T
 
     case 'trash_words':
       return (await trashWords(path, args.content as string)) as T

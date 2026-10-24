@@ -7,6 +7,7 @@ import { describe, expect, test, vi } from 'vitest'
 
 const notes = new Map([['/s/Plan.md', '# Plan\n']])
 const renames: Record<string, unknown>[] = []
+const trashed: Record<string, unknown>[] = []
 
 vi.mock('../tauri', () => ({
   isNative: false,
@@ -43,6 +44,15 @@ vi.mock('../tauri', () => ({
         else notes.set(`${to}.highlights.json`, sidecar)
       }
       return Promise.resolve()
+    }
+    if (command === 'trash_item') {
+      // The crate's `trash_item`: a PDF's highlights go with it, unless the delete is
+      // sync's, which leaves what the account holds as an entry of its own.
+      trashed.push({ ...args })
+      notes.delete(path)
+      if (path.endsWith('.pdf') && (args as { alone?: boolean }).alone !== true)
+        notes.delete(`${path}.highlights.json`)
+      return Promise.resolve({})
     }
     if (command === 'file_stamp') return Promise.resolve(null)
     if (command === 'path_exists') return Promise.resolve(notes.has(path))
@@ -142,5 +152,28 @@ describe('a page note another device renamed', () => {
     expect(notes.has('/s/Y.pages')).toBe(true)
     expect(notes.get('/s/Y.pages.pdf')).toBe('%PDF')
     expect(notes.has('/s/X.pages.pdf')).toBe(false)
+  })
+})
+
+describe('a highlighted PDF another device turned into its page note', () => {
+  // There the PDF went to the paper and its highlights with it; here that comes as a
+  // delete of the PDF, run first, and a move of its highlights. The delete took the
+  // highlights into the trash, the move found nothing, and the next scan sent the
+  // highlights' delete everywhere.
+  test('keeps the highlights', async () => {
+    notes.set('/s/T.pdf', '%PDF')
+    notes.set('/s/T.pdf.highlights.json', '{"version":1}')
+    const telling = {
+      touching: () => undefined,
+      moved: () => Promise.resolve(),
+      gone: () => Promise.resolve(),
+    } as unknown as Parameters<typeof appWorld>[1]
+    const { disk } = appWorld(() => null, telling)
+
+    await disk.remove('/s/T.pdf', 'file')
+    await disk.move('/s/T.pdf.highlights.json', '/s/T.pages.pdf.highlights.json', 'file')
+
+    expect(trashed.at(-1)).toEqual({ path: '/s/T.pdf', kind: 'note', alone: true })
+    expect(notes.get('/s/T.pages.pdf.highlights.json')).toBe('{"version":1}')
   })
 })
