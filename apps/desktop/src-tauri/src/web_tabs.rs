@@ -1813,6 +1813,14 @@ pub fn web_place(
     let scale = crate::page_scale::of(&window)
         .map_err(|error| format!("that page could not be placed: {error}"))?;
     let (_, _, width, height) = crate::web_follow::edges(bounds, scale);
+    // A page going out of sight goes before it is moved, and is not drawn white on the
+    // way; see page_hide.rs.
+    if !visible {
+        let _doing = crate::stall::doing("web_place: hidden");
+        crate::page_hide::out_of_sight(&view);
+        view.hide()
+            .map_err(|error| format!("that page could not be hidden: {error}"))?;
+    }
     // Each step says itself while it runs, so a stall names the one that waited; see
     // stall.rs.
     {
@@ -1829,13 +1837,9 @@ pub fn web_place(
         crate::web_cut::apply(&view, cut.clone(), width, height, scale);
     }
 
-    {
-        let _doing = crate::stall::doing(if visible {
-            "web_place: shown"
-        } else {
-            "web_place: hidden"
-        });
-        if visible { view.show() } else { view.hide() }
+    if visible {
+        let _doing = crate::stall::doing("web_place: shown");
+        view.show()
             .map_err(|error| format!("that page could not be shown: {error}"))?;
     }
 
