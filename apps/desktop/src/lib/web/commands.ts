@@ -245,10 +245,8 @@ async function renameNote(from: string, to: string, hold = false, alone = false)
 
   // Before anything moves; see `paperInTheWay`. `hold` is the window turning a PDF into
   // its page note, the one move that may put a PDF where a page note takes it.
-  // Nor is anything in the way of sync's move of the one file, whose companion came by
-  // a move of its own; see `alone` on `rename_note` in notes.rs.
   const turning = hold && isPdf(target) && parent(source) === parent(target)
-  const there = alone ? null : await paperInTheWay(source, target)
+  const there = await paperInTheWay(source, target)
   if (there && !turning) throw new Error(`${there} is already there`)
 
   const pictures = await moveAssets(source, target)
