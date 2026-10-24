@@ -11,6 +11,7 @@ import { insideOnly } from '../automation/inside'
 import { changeOf } from '../search/replace'
 import { insideSpace, isMarkdownPath, relativeTo, withoutExtension } from '../space-paths'
 import { links } from '../link-index.svelte'
+import { onDisk } from '../on-disk'
 import { workspace } from '../workspace.svelte'
 import { noteText, replaceInNotes } from '../workspace/note-text'
 import { writeFile } from '../workspace/write-file'
@@ -33,16 +34,17 @@ export function headingsOf(root: string, said: string): readonly string[] {
   return links.held().find((one) => one.path === relative)?.headings ?? []
 }
 
-/** The note a `>` names: one whose path or name is the words, case aside. */
+/** The note a `>` names: one whose path or name is the words, case aside.
+ *
+ *  And composed alike: a Mac keeps `Café` with the accent as a character of its
+ *  own and a keyboard types it inside the letter, and compared as written the
+ *  note was not found and made again, empty, over itself. */
 function named(root: string, said: string): string | null {
-  const wanted = said.replace(/\.md$/i, '').toLowerCase()
+  const key = (words: string) => words.normalize('NFC').toLowerCase()
+  const wanted = key(said.replace(/\.md$/i, ''))
   const found =
-    workspace.notes.find(
-      (one) => withoutExtension(relativeTo(root, one.path)).toLowerCase() === wanted,
-    ) ??
-    workspace.notes.find(
-      (one) => withoutExtension(one.name).toLowerCase() === wanted.split('/').at(-1),
-    )
+    workspace.notes.find((one) => key(withoutExtension(relativeTo(root, one.path))) === wanted) ??
+    workspace.notes.find((one) => key(withoutExtension(one.name)) === wanted.split('/').at(-1))
   return found?.path ?? null
 }
 
@@ -59,6 +61,10 @@ async function targetOf(entry: Entry, root: string): Promise<string | null> {
   const relative = insideOnly(`${entry.note.replace(/\.md$/i, '')}.md`)
   if (relative === null) return null
   const path = insideSpace(root, relative)
+  // The listing is a round trip behind the disk, and a name it misses can still be
+  // a note with words in it: writing the empty file then replaced them, with no
+  // version kept. So the disk is asked first, and a note that is there is used.
+  if (await onDisk(path)) return path
   await writeFile(path, '')
   await workspace.loadTree()
   await workspace.fileCame(path, 'file')
