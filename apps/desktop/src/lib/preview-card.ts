@@ -17,14 +17,20 @@
  *  canvas card's is: five hundred links must not be five hundred editors, and the one
  *  that exists is the size of the card it is in. */
 
-import { createEditor, EditorView, modeEffects, type PreviewNote } from '@nib/editor'
+import {
+  createEditor,
+  EditorView,
+  modeEffects,
+  type PreviewNote,
+  setReadOnlyMode,
+} from '@nib/editor'
 import { frontMatterBlock } from '@nib/markdown/front-matter'
 import { pickedLink } from './composer'
 import { links } from './link-index.svelte'
 import { modes } from './modes.svelte'
 import { notePicture } from './note-images'
 import { PROPERTY_CHOICES } from './property-choices'
-import { trustsHtmlAt } from './sharing.svelte'
+import { canWriteAt, trustsHtmlAt } from './sharing.svelte'
 import { shortcuts } from './shortcuts.svelte'
 import { insideSpace } from './space-paths'
 import { followHref } from './open-link'
@@ -39,15 +45,27 @@ import { workspace } from './workspace.svelte'
 const SETTLES_AFTER = 900
 
 /** Mounts the editor, or answers null where there is nothing to write back to: a
- *  note outside any open space has no path the app can write. */
-export function mountPreview(host: HTMLElement, note: PreviewNote): (() => void) | null {
-  const root = workspace.activeSpace?.root
-  if (root === undefined) return null
+ *  note outside any open space has no path the app can write.
+ *
+ *  `from` is the note the link was written in. The card's path is relative to that
+ *  note's space, which is not always the active one: tabs are shared across spaces, and
+ *  a card over `[[Plan]]` in a note of A shows A's Plan however B is the space open. */
+export function mountPreview(
+  host: HTMLElement,
+  note: PreviewNote,
+  from: string | null = null,
+): (() => void) | null {
+  const root = workspace.rootHolding(from)
+  if (root === null) return null
 
   const path = insideSpace(root, note.path)
+  const writable = canWriteAt(path)
 
-  /** What the card says now, and the timer that will write it. */
+  /** What the card says now, whether anybody typed it, and the timer that will
+   *  write it. Only typing writes: a card opened and closed is a glance, and the words
+   *  it opened on are no reason to touch the file. */
   let said = note.text
+  let typed = false
   let settling: ReturnType<typeof setTimeout> | undefined
 
   /** The words in the card, into the file. Read again first rather than remembered
@@ -55,6 +73,7 @@ export function mountPreview(host: HTMLElement, note: PreviewNote): (() => void)
    *  is there, and something else may have written it while the card was up. */
   const write = async () => {
     settling = undefined
+    if (!typed || !writable) return
     const after = said
     const before = await workspace.noteText(path)
     if (before === null || before === after) return
@@ -71,6 +90,7 @@ export function mountPreview(host: HTMLElement, note: PreviewNote): (() => void)
     selection: { anchor: caretFor(note) },
     onChange: (doc) => {
       said = doc.toString()
+      typed = true
       clearTimeout(settling)
       settling = setTimeout(() => void write(), SETTLES_AFTER)
     },
@@ -103,6 +123,8 @@ export function mountPreview(host: HTMLElement, note: PreviewNote): (() => void)
   // The reader's own modes, which is what makes this the same surface as the pane
   // behind it rather than a second editor with its own defaults.
   view.dispatch({ effects: modeEffects(modes.settings) })
+  // A note in a space shared to be read is a reading here as it is in a pane.
+  if (!writable) setReadOnlyMode(view, true)
   scrollTo(view, note.at)
 
   return () => {

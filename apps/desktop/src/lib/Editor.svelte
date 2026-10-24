@@ -88,10 +88,12 @@
   function previewCard(host: HTMLElement, note: PreviewNote): (() => void) | null {
     if (workspace.activeSpace?.root === undefined) return null
 
+    // The note the link is in, read now: the card's path is relative to its space.
+    const from = tab.path
     let release: (() => void) | null = null
     let gone = false
     void import('./preview-card').then(({ mountPreview }) => {
-      if (!gone) release = mountPreview(host, note)
+      if (!gone) release = mountPreview(host, note, from)
     })
 
     return () => {
