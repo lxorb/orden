@@ -545,6 +545,35 @@ describe('diverge', () => {
   )
 
   test.each([
+    // A line one side took out and the other added to, beside a line the other added.
+    [
+      '- cafe\n- now tag uber Z\n',
+      '- cafe\n- now tag uber Z Z\neggs\n',
+      'noon cafe now a R eggs eggs resume noon call call brown and cafe\n- cafe\n',
+    ],
+    [
+      'top\n- cafe\n- now tag uber Z\n',
+      'top\n- cafe\n- now tag uber Z Z\neggs\n',
+      'top\nsome long new line written here ending in cafe\n- cafe\n',
+    ],
+    // A box ticked on one side where the other wrote over its bracket.
+    [
+      '- [ ] R\n- [x] rent noon\n- [x] to naïve note milk\n',
+      '- [ 😀 R\n- [x] rent noon\n- [x] to naïve note milk\n',
+      '- [x] R\n- [x] to naïve note milk\n',
+    ],
+  ])('a merge that keeps a version writes only lines someone wrote (%j)', (base, local, remote) => {
+    // Kept both, the one side's words ran into the line after the one the other took
+    // out (` Zeggs`), or two replacements ran into one token (`[x😀`).
+    const lines = new Set([base, local, remote].flatMap((text) => text.split('\n')))
+    for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
+      const result = diverge(base, local, remote, times)
+      if (result.resolution === null) continue
+      expect(result.resolution.split('\n').filter((line) => !lines.has(line))).toEqual([])
+    }
+  })
+
+  test.each([
     [
       '- [ ] Call Bob\n- [ ] Buy milk\n',
       '- [ ] Call Bob at noon\n- [ ] Pay rent\n- [ ] Buy milk\n',
