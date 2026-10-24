@@ -58,6 +58,7 @@ describe('what a value is worth', () => {
     const plain: ThemeSetting = {
       id: 'colour',
       label: 'Colour',
+      hint: '',
       kind: 'colour',
       options: swatches,
       initial: 'dawn',
@@ -100,6 +101,7 @@ describe('a theme that paints a setting’s tokens itself', () => {
   const accent: ThemeSetting = {
     id: 'accent',
     label: 'Accent',
+    hint: '',
     shared: true,
     kind: 'colour',
     initial: 'violet',

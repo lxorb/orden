@@ -13,9 +13,10 @@ describe('putting settings back', () => {
   test('writes each field of every kind that differs back to where it started', () => {
     const { written, write } = recorder()
     const fields: Field[] = [
-      { kind: 'switch', label: 'On', initial: true, get: () => false, set: write },
+      { kind: 'switch', hint: '', label: 'On', initial: true, get: () => false, set: write },
       {
         kind: 'slider',
+        hint: '',
         label: 'Size',
         min: 8,
         max: 32,
@@ -26,6 +27,7 @@ describe('putting settings back', () => {
       },
       {
         kind: 'select',
+        hint: '',
         label: 'Scheme',
         options: [],
         initial: 'system',
@@ -34,6 +36,7 @@ describe('putting settings back', () => {
       },
       {
         kind: 'segmented',
+        hint: '',
         label: 'Side',
         options: [],
         initial: 'left',
@@ -42,6 +45,7 @@ describe('putting settings back', () => {
       },
       {
         kind: 'text',
+        hint: '',
         label: 'Phrase',
         placeholder: 'next',
         initial: '',
@@ -59,6 +63,7 @@ describe('putting settings back', () => {
     let on = true
     const toggle: Field = {
       kind: 'switch',
+      hint: '',
       label: 'On',
       initial: true,
       get: () => on,
@@ -76,7 +81,16 @@ describe('putting settings back', () => {
     const { written, write } = recorder()
 
     resetFields([
-      { kind: 'slider', label: 'Width', min: 0, max: 80, step: 1, get: () => 40, set: write },
+      {
+        kind: 'slider',
+        hint: '',
+        label: 'Width',
+        min: 0,
+        max: 80,
+        step: 1,
+        get: () => 40,
+        set: write,
+      },
     ])
 
     expect(written).toEqual([])

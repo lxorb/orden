@@ -32,7 +32,13 @@
  *  described, and the theme's own file is the only thing that says what the app
  *  should draw. */
 
+import { key } from '../i18n.svelte'
 import { DECLARES, type ThemeSetting, WRITES } from './settings'
+
+/** What the `?` beside a theme file's own row says (#768). A file declares a label
+ *  and no sentence, and what the setting does is the author's business, so the row
+ *  says whose it is. */
+const OFFERED = key('One of this theme’s own settings, offered by its author.')
 
 /** What a theme may ask for. A theme with more dials than this is a control
  *  panel, which is the thing a theme setting is not; the rest are bounds on how
@@ -162,6 +168,7 @@ export function settingOf(id: string, spec: string): ThemeSetting | null {
     return {
       id,
       label,
+      hint: OFFERED,
       kind: 'range',
       min: low,
       max: high,
@@ -181,6 +188,7 @@ export function settingOf(id: string, spec: string): ThemeSetting | null {
     return {
       id,
       label,
+      hint: OFFERED,
       kind: 'switch',
       initial: rest[0] === 'on',
       paint: (value) => writes(id, value === true ? '1' : '0'),
@@ -194,6 +202,7 @@ export function settingOf(id: string, spec: string): ThemeSetting | null {
     return {
       id,
       label,
+      hint: OFFERED,
       kind: 'choice',
       options: listed.map(([name, value]) => ({ value, label: name })),
       // The first, because a list has to start somewhere and the author wrote
@@ -210,6 +219,7 @@ export function settingOf(id: string, spec: string): ThemeSetting | null {
     return {
       id,
       label,
+      hint: OFFERED,
       kind: 'colour',
       options: listed.map(([name, hex]) => ({ value: hex, name, dark: hex, light: hex })),
       initial: listed[0]?.[1] ?? '',

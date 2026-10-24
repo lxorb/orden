@@ -37,6 +37,8 @@ interface Common {
   id: string
   /** What the row says, through `t()` where it is drawn. */
   label: string
+  /** The sentence behind the row's `?` (#768), through `t()` where it is drawn. */
+  hint: string
   /** The app's own rather than a theme's: inherited by every theme that does not
    *  paint over it, and filed under the app, so it follows the reader across themes. */
   shared?: boolean

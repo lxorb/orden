@@ -85,3 +85,26 @@ describe('a key that is both, in Settings', () => {
     }
   })
 })
+
+/** The rows only a desktop has are held to the same rule as the rest (#768): a `?`
+ *  with one plain sentence behind it, Memory saver's above all, which is the row the
+ *  issue named. */
+describe('a desktop’s own rows', () => {
+  test('each say in one sentence what they do', () => {
+    shells.setWay('app.close', 'shell')
+    try {
+      const fields = preferences().flatMap((pane) => pane.groups.flatMap((group) => group.fields))
+      const labels = fields.map((one) => one.label)
+      for (const label of ['Memory saver', 'Hidden tabs', 'Shell', 'Ctrl+W in a terminal']) {
+        expect(labels).toContain(label)
+      }
+      for (const one of fields) {
+        expect(one.hint.replace(/\d\.(\d)?/g, ''), one.label).toMatch(/^[^.]*\.$/)
+        expect(one.hint.length, one.label).toBeLessThan(110)
+      }
+      expect(fields.find((one) => one.label === 'Memory saver')?.hint).toMatch(/memory/)
+    } finally {
+      shells.setWay('app.close', null)
+    }
+  })
+})

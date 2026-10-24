@@ -22,6 +22,7 @@ export function exportPane(): Pane {
           {
             kind: 'select',
             label: t('Paper'),
+            hint: t('The paper size of a PDF or a print.'),
             options: PAPER_SIZES.map((size) => ({ value: size, label: size })),
             get: () => settings.page.paper,
             set: (value) => settings.setPage({ paper: value as never }),
@@ -29,6 +30,7 @@ export function exportPane(): Pane {
           {
             kind: 'select',
             label: t('Orientation'),
+            hint: t('Whether pages are upright or on their side.'),
             options: ORIENTATIONS.map((one) => ({ value: one, label: t(one) })),
             get: () => settings.page.orientation,
             set: (value) => settings.setPage({ orientation: value as never }),
@@ -36,6 +38,7 @@ export function exportPane(): Pane {
           {
             kind: 'text',
             label: t('Margin'),
+            hint: t('The space around the edge of each page, such as 20mm or 1in.'),
             placeholder: DEFAULT_PAGE_SETUP.margin,
             live: true,
             get: () => settings.page.margin,
@@ -46,6 +49,7 @@ export function exportPane(): Pane {
           {
             kind: 'text',
             label: t('Header'),
+            hint: t('Text at the top of every page; ${title}, ${date} and ${year} are filled in.'),
             placeholder: '${title}',
             live: true,
             get: () => settings.page.header,
@@ -54,6 +58,9 @@ export function exportPane(): Pane {
           {
             kind: 'text',
             label: t('Footer'),
+            hint: t(
+              'Text at the bottom of every page; ${title}, ${date} and ${year} are filled in.',
+            ),
             placeholder: '${date}',
             live: true,
             get: () => settings.page.footer,
@@ -62,6 +69,7 @@ export function exportPane(): Pane {
           {
             kind: 'select',
             label: t('Appearance'),
+            hint: t('Whether an export is light, dark, or as the app is now.'),
             options: [
               { value: 'light', label: t('Light') },
               { value: 'dark', label: t('Dark') },

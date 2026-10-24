@@ -11,9 +11,16 @@ const panes: Pane[] = [
       {
         title: 'Saving',
         fields: [
-          { kind: 'switch', label: 'Save as I type', get: () => true, set: () => undefined },
+          {
+            kind: 'switch',
+            hint: '',
+            label: 'Save as I type',
+            get: () => true,
+            set: () => undefined,
+          },
           {
             kind: 'slider',
+            hint: '',
             label: 'Wait before saving',
             min: 0,
             max: 10,
@@ -29,6 +36,7 @@ const panes: Pane[] = [
         fields: [
           {
             kind: 'select',
+            hint: '',
             label: 'Language',
             options: [
               { value: 'en', label: 'English' },
@@ -51,6 +59,7 @@ const panes: Pane[] = [
           },
           {
             kind: 'segmented',
+            hint: '',
             label: 'Mode',
             options: [
               { value: 'system', label: 'System' },

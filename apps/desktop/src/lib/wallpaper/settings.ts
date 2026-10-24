@@ -29,18 +29,35 @@ const FIT_NAMES: Record<Fit, string> = {
 
 export function wallpaperSettings(): ThemeSetting[] {
   return [
-    range('blur', t('Blur'), 0, 60, 28, 'px'),
+    range('blur', t('Blur'), t('How much the picture is blurred.'), 0, 60, 28, 'px'),
     {
-      ...range('dim', t('Dim'), 0, 90, 10, '%'),
+      ...range('dim', t('Dim'), t('How much the picture is darkened.'), 0, 90, 10, '%'),
       paint: (value) => ({ '--nib-dim': `${String(value)}%` }),
     },
-    range('saturation', t('Saturation'), 0, 200, 100, '%'),
-    range('tint', t('Tint'), 0, 100, 0, '%'),
+    range(
+      'saturation',
+      t('Saturation'),
+      t('How vivid the colours of the picture are.'),
+      0,
+      200,
+      100,
+      '%',
+    ),
+    range(
+      'tint',
+      t('Tint'),
+      t('How strongly the tint colour lies over the picture.'),
+      0,
+      100,
+      0,
+      '%',
+    ),
     tintColourSetting('tint-colour', () => Number(theme.values.tint ?? 0) > 0),
-    range('grain', t('Grain'), 0, 100, 0, '%'),
+    range('grain', t('Grain'), t('Adds a film grain over the picture.'), 0, 100, 0, '%'),
     {
       id: 'fit',
       label: t('Fit'),
+      hint: t('How the picture fills the window.'),
       own: true,
       kind: 'choice',
       options: FITS.map((value) => ({ value, label: t(FIT_NAMES[value]) })),
@@ -50,6 +67,7 @@ export function wallpaperSettings(): ThemeSetting[] {
     {
       id: 'empty',
       label: t('Empty panes'),
+      hint: t('An empty pane shows the picture rather than paper.'),
       own: true,
       kind: 'switch',
       initial: true,
