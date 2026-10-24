@@ -91,8 +91,13 @@ async function agree(
     return mine
   }
   const resolution = judged.resolution
+  // Settled without asking, one side's words in the overlap stand and the other's are
+  // kept as a version, as every other meeting of two sides keeps them (ingest.ts,
+  // pass.ts). Left out here, what the document said lost was in no version at all.
+  // Kept after the two are one, so nothing typed in the meantime falls between them.
   doc.write((live) => turn('words', live, theirs, resolution, MINE))
   arrive(note, mine, resolution)
+  await engine.keepLost(id, judged.lost, mine, theirs)
   return null
 }
 
