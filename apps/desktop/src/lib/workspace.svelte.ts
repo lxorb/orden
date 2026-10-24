@@ -1027,6 +1027,13 @@ class Workspace {
       (await ahead.noteAhead(path)) ??
       (await invoke<string>('read_note', { path }).catch(() => null))
     if (text === null) return null
+    // A canvas or a page note whose text stopped being one while nib was closed is
+    // not put back as a blank plane, which its first stroke would write over the
+    // file: it is refused as its open refuses it (`openCanvas`, `openDeck`).
+    if (draft.kind === 'canvas' || draft.kind === 'pages') {
+      const { parseAhead } = await import('./canvas/format')
+      if (!parseAhead(text)) return unread(path).then(() => null)
+    }
 
     return this.opened.make({
       kind: draft.kind,
