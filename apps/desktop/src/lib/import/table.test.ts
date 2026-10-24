@@ -47,6 +47,18 @@ describe('a CSV as one table', () => {
 
     expect(table.split('\n')[2]).toBe('| one \\| two |')
   })
+
+  /** A spreadsheet's text is plain text: a `<b>` somebody typed into a cell is the
+   *  words they typed, never a tag the note would render. */
+  test('a tag typed into a cell or a column name opens no markup', () => {
+    const table = tableOf(
+      ['<b>Name</b>'],
+      [{ '<b>Name</b>': '<img src="https://x.example/p.png">' }],
+    )
+
+    expect(table).not.toMatch(/(?<!\\)<(?=[A-Za-z/])/)
+    expect(table).toContain('\\<b>Name\\</b>')
+  })
 })
 
 describe('a CSV as one note per row', () => {
@@ -90,6 +102,16 @@ describe('a CSV as one note per row', () => {
 
     expect(note.text).toContain('## Notes')
     expect(note.text).toContain('One line\nAnother line')
+  })
+
+  test('and neither the name of that column nor its words open markup', () => {
+    const note = rowNote(['Name', '<i>Notes</i>'], {
+      Name: 'Dune',
+      '<i>Notes</i>': 'One <style>*{display:none}</style>\nAnother line',
+    })
+
+    expect(note.text).not.toMatch(/(?<!\\)<(?=[A-Za-z/])/)
+    expect(note.text).toContain('One \\<style>')
   })
 
   test('a row with no name is still a note', () => {
