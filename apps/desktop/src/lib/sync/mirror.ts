@@ -68,6 +68,9 @@ export interface Mirror {
    *  the next pass tell, after a quit, whether it was made. See `movedThere` in
    *  pass.ts. Absent nearly always. */
   moving?: Moving
+  /** Renames of notes waiting on a question that the account missed, by id; see
+   *  `movedOne` in pass.ts. Absent nearly always. */
+  untold?: Record<string, Untold>
 }
 
 /** One rename of a note's file, by the note's id and the paths in the space. */
@@ -75,6 +78,13 @@ export interface Moving {
   id: string
   from: string
   to: string
+}
+
+/** Paths in the space, and whether the question still waited when last told. */
+export interface Untold {
+  from: string
+  to: string
+  held: boolean
 }
 
 /** A folder just paired with a space, which knows nothing about it yet. One
@@ -174,7 +184,21 @@ export function readMirror(root: string, value: unknown): Mirror | null {
     isString(value.moving.to)
       ? { moving: { id: value.moving.id, from: value.moving.from, to: value.moving.to } }
       : {}),
+    ...readUntold(value.untold),
   }
+}
+
+function readUntold(value: unknown): { untold?: Record<string, Untold> } {
+  if (!isRecord(value)) return {}
+
+  const out: Record<string, Untold> = {}
+  for (const [id, one] of Object.entries(value)) {
+    if (!isRecord(one) || !isString(one.from) || !isString(one.to)) continue
+
+    out[id] = { from: one.from, to: one.to, held: one.held === true }
+  }
+
+  return Object.keys(out).length ? { untold: out } : {}
 }
 
 /** The PDFs the last pass knew about. An entry that no longer reads as one is
