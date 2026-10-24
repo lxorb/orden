@@ -76,9 +76,11 @@ export function seedOf(shape: Shape, id: string, epoch: number, text: string): U
 
 /** Whether text read off the disk says what a document of this shape can hold. Only a
  *  plane can fail: `readCanvas` reads text that is not a canvas as one with nothing on
- *  it, and a document turned to that deletes every node there was, on every device. */
+ *  it, and a document turned to that deletes every node there was, on every device. A
+ *  file with nothing in it is no plane either: every canvas written has its braces, and
+ *  an empty one is a save caught between emptying the file and writing it. */
 export function readable(shape: Shape, text: string): boolean {
-  return shape !== 'plane' || canvasIn(text) !== null
+  return shape !== 'plane' || (text.trim() !== '' && canvasIn(text) !== null)
 }
 
 /** Turns a document that reads `from` into one that reads `to`, as the few operations the

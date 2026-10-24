@@ -818,4 +818,23 @@ describe('another program’s unreadable canvas', () => {
 
     expect((await one.engine.core.doc(id))?.text()).toContain('keep me')
   })
+
+  /** A program that saves by emptying the file before it writes it leaves it with
+   *  nothing in it for a moment, and a watcher can hear that moment. */
+  test('nor is one emptied for a moment by a save', async () => {
+    const one = await device()
+    const path = `${ROOT}/Board.canvas`
+    const good = JSON.stringify({
+      nodes: [{ id: 'a', type: 'text', text: 'keep me', x: 0, y: 0, width: 100, height: 50 }],
+      edges: [],
+    })
+    await one.disk.write(path, good)
+    await one.engine.created(path, false, good)
+    const id = one.engine.entryAt(path)?.id ?? ''
+
+    await one.disk.write(path, '')
+    await one.engine.foreign(path)
+
+    expect((await one.engine.core.doc(id))?.text()).toContain('keep me')
+  })
 })
