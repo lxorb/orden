@@ -635,8 +635,11 @@ notes.get('/notes/:id/paper', async (context) => {
 /** The paper a page note holds, named by the hash of bytes already uploaded to
  *  `/v1/blobs`. Somebody who can write in the space only: what a note is made of is
  *  the space's to say, and somebody handed the one note writes on its pages, not under
- *  them. The bytes have to be the asker's or the space owner's already, so nobody can
- *  hang a paper they could not upload onto a note. */
+ *  them. The bytes have to be the asker's own already, so nobody can hang a paper they
+ *  could not upload onto a note - or the space owner's and already in this space, as a
+ *  paper or a file of it, which is bytes everybody here can read anyway. Not every blob
+ *  the owner keeps: a hash can be learned without the file, and somebody who writes in
+ *  one of the owner's spaces would otherwise read a PDF the owner keeps for another. */
 notes.put('/notes/:id/paper', async (context) => {
   const found = await reachedNote(context.env, context.get('who'), context.req.param('id'))
   if (!found) return context.json({ error: NO_SUCH_NOTE }, 404)
@@ -654,9 +657,17 @@ notes.put('/notes/:id/paper', async (context) => {
 
   const who = context.get('who')
   const kept = await context.env.DB.prepare(
-    'select 1 as one from blobs where hash = ?1 and user_id in (?2, ?3) limit 1',
+    `select 1 as one from blobs
+      where hash = ?1
+        and (user_id = ?2
+             or (user_id = ?3
+                 and (exists (select 1 from notes where space_id = ?4
+                                and (paper = ?1 or (kind = 'file' and hash = ?1)))
+                      or exists (select 1 from spaces s, json_each(s.files) f
+                                  where s.id = ?4 and json_extract(f.value, '$.hash') = ?1))))
+      limit 1`,
   )
-    .bind(hash, who.kind === 'user' ? who.user.id : '', space.user_id)
+    .bind(hash, who.kind === 'user' ? who.user.id : '', space.user_id, space.id)
     .first<{ one: number }>()
   if (!kept) return context.json({ error: NO_PAPER }, 409)
 

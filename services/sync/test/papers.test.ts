@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { call, signIn, testEnv, type TestEnv } from './harness'
+import { call, mail, signIn, testEnv, type TestEnv } from './harness'
 
 /** The paper a page note holds, kept by the note's id (#551): what a second device and
  *  somebody the note was shared with on its own open the note's pages on. */
@@ -51,6 +51,19 @@ async function guestOf(item: string): Promise<string> {
   if (!found?.[1]) throw new Error('no link was made')
   const joined = await call(env, `/v1/join/${found[1]}`, { method: 'POST' })
   return joined.json.token
+}
+
+/** Somebody invited to write in the space: their token. */
+async function editor(): Promise<string> {
+  const token = await signIn(env, 'editor@example.com')
+  const sent = await mail(() =>
+    call(env, `/v1/spaces/${space}/share/invite`, {
+      token: owner,
+      body: { email: 'editor@example.com', role: 'write' },
+    }),
+  )
+  await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, { method: 'POST', token })
+  return token
 }
 
 beforeEach(async () => {
@@ -115,6 +128,47 @@ describe('the paper a page note holds', () => {
 
   test('cannot name bytes nobody here uploaded', async () => {
     expect((await hold(pages, paper('never sent').hash)).status).toBe(409)
+  })
+
+  test('cannot name bytes the owner keeps for something outside this space', async () => {
+    const writer = await editor()
+    const elsewhere = paper('the owner’s own, kept for another space')
+    await upload(elsewhere)
+
+    expect((await hold(pages, elsewhere.hash, writer)).status).toBe(409)
+    expect((await call(env, `/v1/notes/${pages}/paper`, { token: writer })).status).toBe(404)
+  })
+
+  test('can name a paper this space already holds, for somebody who writes in it', async () => {
+    const writer = await editor()
+    const one = paper()
+    await upload(one)
+    await hold(pages, one.hash)
+    const again = (await note('Lecture again.pages')).json.note.id
+
+    expect((await hold(again, one.hash, writer)).status).toBe(200)
+    expect((await call(env, `/v1/notes/${again}/paper`, { token: writer })).text).toBe(one.text)
+  })
+
+  test('or a PDF this space keeps as a file', async () => {
+    const writer = await editor()
+    const one = paper()
+    await upload(one)
+    await call(env, `/v1/spaces/${space}/files`, {
+      method: 'PUT',
+      token: owner,
+      body: { files: [{ path: 'Lecture.pdf', hash: one.hash }] },
+    })
+
+    expect((await hold(pages, one.hash, writer)).status).toBe(200)
+  })
+
+  test('can name bytes of their own, for somebody who writes in it', async () => {
+    const writer = await editor()
+    const one = paper('the editor’s')
+    expect((await upload(one, writer)).status).toBe(201)
+
+    expect((await hold(pages, one.hash, writer)).status).toBe(200)
   })
 
   test('is a page note’s alone', async () => {
