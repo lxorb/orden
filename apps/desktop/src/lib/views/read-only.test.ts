@@ -75,6 +75,7 @@ vi.mock('../workspace.svelte', () => ({
     activeSpace: THEIRS,
     notes: [],
     freeName: (_dir: string, name: string) => name,
+    freeNameOnDisk: (_dir: string, name: string) => Promise.resolve(name),
     loadTree: () => Promise.resolve(),
     fileCame: () => Promise.resolve(),
     open: () => Promise.resolve(),
