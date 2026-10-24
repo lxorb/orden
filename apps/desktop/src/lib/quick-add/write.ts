@@ -66,17 +66,30 @@ async function targetOf(entry: Entry, root: string): Promise<string | null> {
   return path
 }
 
+/** The space a task goes to. A space shared to be read takes nothing, not even the
+ *  inbox the add would make: the copy here would stop being the space's, and the sync
+ *  refuses it on every pass. So a task that names no note, typed while such a space is
+ *  in front, goes to the inbox of the first space that takes it, the rule a task from
+ *  Shortcuts follows; one that names a note, or was handed its space by an add button,
+ *  meant that space and no other, and goes nowhere. */
+async function spaceFor(entry: Entry, given: string | undefined): Promise<string | null> {
+  const root = given ?? workspace.activeSpace?.root
+  if (root === undefined) return null
+  if (canWriteAt(root)) return root
+  if (given !== undefined || entry.note !== undefined) return null
+  const { inboxSpace } = await import('../rows/inbox')
+  const roots = workspace.spaces.map((one) => one.root)
+  return inboxSpace(root, roots, canWriteAt)
+}
+
 /** Writes the task; answers where it went, or null where it went nowhere, which is
- *  also the answer in a space shared with this account to be read. */
+ *  also the answer where no space shared with this account may take it. */
 export async function addTask(
   entry: Entry,
   options: { open?: boolean; root?: string } = {},
 ): Promise<{ path: string; line: number } | null> {
-  const root = options.root ?? workspace.activeSpace?.root
-  if (root === undefined) return null
-  // A space shared to be read takes nothing, not even the inbox the add would make:
-  // the copy here would stop being the space's, and the sync refuses it on every pass.
-  if (!canWriteAt(root)) return null
+  const root = await spaceFor(entry, options.root)
+  if (root === null) return null
 
   const path = await targetOf(entry, root)
   if (path === null) return null

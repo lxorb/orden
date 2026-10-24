@@ -19,7 +19,8 @@
    *  question. The same field edits a task where a view asks it to (`mode: 'edit'`),
    *  holding what the task says in its controls; a field in a list (`oncancel`) has the
    *  Cancel beside its button. What happens to the task is the caller's (`onsubmit`): the
-   *  sheet writes it, a view writes or changes it, the global window hands it to the app. */
+   *  sheet writes it, a view writes or changes it, the global window hands it to the app.
+   *  A caller that answers `false` took nothing, and the field keeps what was typed. */
   import type { Priority } from '@nib/markdown/task-line'
   import { parseQuickAdd, type QuickFields } from '@nib/bases/language'
   import { todayOf } from '@nib/bases'
@@ -79,7 +80,8 @@
     smart?: boolean
     /** Adding a task, or changing the one the prefill says. */
     mode?: 'add' | 'edit'
-    onsubmit: (entry: Entry, open: boolean) => void | Promise<void>
+    /** `false` where the task went nowhere, so the field keeps it. */
+    onsubmit: (entry: Entry, open: boolean) => unknown
     onclose: () => void
     /** A field standing in a list: Cancel beside its button. */
     oncancel?: () => void
@@ -392,8 +394,9 @@
   async function submit(open: boolean) {
     const entry = entryOf(read.text, fields)
     if (!entry || thinking) return
-    if (mode === 'add') clear()
-    await onsubmit(entry, open)
+    // Emptied only once the task is in: one refused, in a space shared to be read,
+    // stays where it was typed rather than going nowhere.
+    if ((await onsubmit(entry, open)) !== false && mode === 'add') clear()
   }
 
   /** Add with AI (#328): the task the model makes of the line, with the field's labels and
@@ -409,8 +412,7 @@
     const entry = entryOf(made.text, own)
     if (!entry) return
     if (note === undefined && made.note !== undefined) entry.note = made.note
-    clear()
-    await onsubmit(entry, false)
+    if ((await onsubmit(entry, false)) !== false) clear()
   }
 
   /** Several lines pasted: one task each, read the way a typed line is, with what the
@@ -418,13 +420,17 @@
   async function submitEach() {
     const lines = pasted ?? []
     pasted = null
-    for (const line of lines) {
+    for (const [index, line] of lines.entries()) {
       const said = smart ? parseQuickAdd(line, langs, new Date(), { notes }) : null
       const own: QuickFields = said
         ? { ...fields, ...said.fields, tags: [...new Set([...fields.tags, ...said.fields.tags])] }
         : fields
       const entry = entryOf(said ? said.text || line : line, own)
-      if (entry) await onsubmit(entry, false)
+      // The lines not yet in are asked about again rather than dropped.
+      if (entry && (await onsubmit(entry, false)) === false) {
+        pasted = lines.slice(index)
+        return
+      }
     }
     clear()
   }

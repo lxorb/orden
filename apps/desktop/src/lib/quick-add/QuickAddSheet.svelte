@@ -26,9 +26,11 @@
   $effect(() => (quickAdd.open ? overlays.show(() => quickAdd.hide()) : undefined))
   $effect(() => closeOnBack(quickAdd.open, () => quickAdd.hide()))
 
-  async function added(entry: Entry, open: boolean) {
-    if (open) quickAdd.hide()
-    await addTask(entry, { open })
+  /** Put away only once the task is in, so one that went nowhere stays in the field. */
+  async function added(entry: Entry, open: boolean): Promise<boolean> {
+    const went = (await addTask(entry, { open })) !== null
+    if (went && open) quickAdd.hide()
+    return went
   }
 </script>
 
