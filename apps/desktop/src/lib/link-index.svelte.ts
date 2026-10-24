@@ -1330,7 +1330,10 @@ class Links {
       if (before === null) continue
 
       const points = (link: FoundLink) => this.resolveFrom(note.path, link) === was
-      const after = rewriteLinks(before, self ? now : note.path, move, points)
+      // A plane is JSON, and is rewritten as JSON; see canvas-rewrite.ts.
+      const plane = isCanvasTarget(note.path) || isPagesTarget(note.path)
+      const rewrite = plane ? (await import('./canvas-rewrite')).rewriteCanvasLinks : rewriteLinks
+      const after = rewrite(before, self ? now : note.path, move, points)
       if (after === null || after === before) continue
 
       // Taken by the document in the same breath as its words were read, so no
