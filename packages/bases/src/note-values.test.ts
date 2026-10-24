@@ -4,7 +4,7 @@ import { contextAt, noteRow } from './fixtures/rows'
 import { readProperties } from '@nib/markdown/properties'
 import { withItem, writeList } from '@nib/markdown/property-edits'
 import { parse } from 'yaml'
-import { noteValues, scalarValue, taskHash } from './note-values'
+import { listAsWritten, noteValues, scalarValue, taskHash } from './note-values'
 
 describe('front matter as values', () => {
   test('reads every kind the Properties panel draws', () => {
@@ -122,5 +122,18 @@ describe('a block list rewritten with a chip', () => {
     expect(readBack('---\nids:\n  - a\n  - e # note\n  - 007\n---\n')).toEqual(['a', 'e', 7, 'z'])
     expect(readBack('---\nids:\n- - x\n- b\n---\n')).toEqual([['x'], 'b', 'z'])
     expect(readBack('---\nids:\n  - a, b\n  - c: d\n---\n')).toEqual(['a, b', { c: 'd' }, 'z'])
+  })
+})
+
+describe('a list in a block the rows cannot draw', () => {
+  test('is read in a note whose lines end in CRLF, its span short of the line break', () => {
+    const note = '---\r\n# kept\r\nids:\r\n  - 007\r\n  - "x"\r\ntitle: t\r\n---\r\n'
+    const found = listAsWritten(note, 'ids')
+    expect(found).not.toBeNull()
+    expect(found).not.toBe('absent')
+    if (!found || found === 'absent') return
+    expect(note.slice(found.from, found.to)).toBe('ids:\r\n  - 007\r\n  - "x"')
+    expect(found.property.items).toEqual(['007', 'x'])
+    expect(found.property.writtenItems).toEqual(['007', '"x"'])
   })
 })

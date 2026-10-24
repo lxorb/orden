@@ -222,6 +222,28 @@ describe('a property written from a view', () => {
     )
   })
 
+  test('edits a list in a note whose lines end in CRLF', () => {
+    const row = noteRow('---\ntags: [a]\n---\n')
+    const crlf = (text: string) => text.replace(/\n/g, '\r\n')
+    for (const lead of ['', '# kept\n']) {
+      const flow = crlf(`---\n${lead}ids: [007, 1.10, "x", a]\ntitle: t\n---\nbody\n`)
+      expect(changed(flow, row, { list: { ids: { add: 'z' } } }), lead).toBe(
+        crlf(`---\n${lead}ids: [007, 1.10, "x", a, z]\ntitle: t\n---\nbody\n`),
+      )
+      expect(changed(flow, row, { list: { ids: { remove: 3 } } }), lead).toBe(
+        crlf(`---\n${lead}ids: [007, 1.10, "x"]\ntitle: t\n---\nbody\n`),
+      )
+      // A whole list keeps the members it did not change as written.
+      expect(changed(flow, row, { note: { ids: [7, 1.1, 'x', 'b'] } }), lead).toBe(
+        crlf(`---\n${lead}ids: [007, 1.10, "x", b]\ntitle: t\n---\nbody\n`),
+      )
+      const block = crlf(`---\n${lead}ids:\n  - 007\n  - "x"\ntitle: t\n---\nbody\n`)
+      expect(changed(block, row, { list: { ids: { add: 'z' } } }), lead).toBe(
+        crlf(`---\n${lead}ids: [007, "x", z]\ntitle: t\n---\nbody\n`),
+      )
+    }
+  })
+
   test('refuses a chip it cannot write without losing what the block says', () => {
     const row = noteRow('---\ntags: [a]\n---\n')
     for (const text of [

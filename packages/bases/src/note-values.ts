@@ -155,7 +155,8 @@ export function listAsWritten(
   const held = read[spelled]
 
   // The key's own lines: its line, and every line after it that is indented under it
-  // or is one of its `- ` items, which YAML lets sit at the key's own margin.
+  // or is one of its `- ` items, which YAML lets sit at the key's own margin. Cut at
+  // `\n` so the offsets stay the note's; a CRLF note's lines each keep their `\r`.
   const lines = body.split('\n')
   const opens = new RegExp(`^${spelled.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[ \\t]*:`)
   const starts = lines.flatMap((line, at) => (opens.test(line) ? [at] : []))
@@ -165,12 +166,15 @@ export function listAsWritten(
   let last = first
   while (last + 1 < lines.length) {
     const next = lines[last + 1] ?? ''
-    if (!/^[ \t]/.test(next) && !/^-(?:[ \t]|$)/.test(next)) break
+    if (!/^[ \t]/.test(next) && !/^-(?:[ \t\r]|$)/.test(next)) break
     last++
   }
   const from = block.body.from + lines.slice(0, first).reduce((sum, one) => sum + one.length + 1, 0)
-  const span = lines.slice(first, last + 1).join('\n')
-  const to = from + span.length
+  const own = lines.slice(first, last + 1)
+  // The span stops short of the last line's `\r`, which belongs to its line break, and
+  // is read without the `\r`s, which YAML takes for part of a value.
+  const to = from + own.join('\n').replace(/\r$/, '').length
+  const span = own.map((line) => line.replace(/\r$/, '')).join('\n')
 
   let doc
   try {
