@@ -98,6 +98,14 @@ vi.mock('./tauri', async (importOriginal) => ({
   },
 }))
 
+/** Spaces shared with this account to be read; see sharing.svelte.ts. */
+const readOnly = vi.hoisted(() => new Set<string>())
+vi.mock('./sharing.svelte', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./sharing.svelte')>()),
+  canWriteAt: (path: string) =>
+    ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
+}))
+
 const remote = {
   spaces: [] as { id: string; name: string; deletedAt: number; purgeAt: number; notes: number }[],
   notes: [] as {
@@ -180,6 +188,7 @@ beforeEach(() => {
   account.user = null
   trash.items = []
   trash.loaded = false
+  readOnly.clear()
 })
 
 afterEach(() => {
@@ -316,6 +325,41 @@ describe('signed out', () => {
     expect(trash.error).toBe('nothing to restore')
     expect(trash.busy).toBe(false)
     expect(trash.items).toEqual([])
+  })
+
+  /** The owner deleted a note of a space shared with this account to be read, and the
+   *  sync here put the copy of it into this device's trash. Putting it back would be
+   *  writing into a space this account may only read, which the sync refuses on every
+   *  pass, so the row stays where it is and only Delete now takes it. */
+  test('a note of a space shared to be read is not put back', async () => {
+    await workspace.remove('/space/Idea.md', false)
+    await trash.load()
+    const [only] = trash.items
+    if (!only) throw new Error('the deleted note is not in the list')
+    readOnly.add('/space')
+    calls.length = 0
+
+    expect(trash.restorable(only)).toBe(false)
+    await trash.restore(only)
+
+    expect(calls).not.toContain('restore_trash')
+    expect(notes.has('/space/Idea.md')).toBe(false)
+    expect(trash.items).toHaveLength(1)
+
+    const asked = vi.spyOn(prompt, 'confirm').mockResolvedValue(true)
+    await trash.purge(only)
+    expect(calls).toContain('purge_trash')
+    expect(trash.items).toEqual([])
+    asked.mockRestore()
+  })
+
+  test('and one of a space that may be written is', async () => {
+    await workspace.remove('/space/Idea.md', false)
+    await trash.load()
+    const [only] = trash.items
+    if (!only) throw new Error('the deleted note is not in the list')
+
+    expect(trash.restorable(only)).toBe(true)
   })
 
   test('the sweep drops what is older than 14 days', async () => {
