@@ -3745,10 +3745,15 @@ class Workspace {
    *
    *  No tab and no renaming: the card it came from is still what the reader is
    *  looking at, and a note that opened over the plane would take them away from
-   *  it. The name is stepped like every other new file's. */
+   *  it. The name is stepped like every other new file's.
+   *
+   *  Null too in a space shared to be read, which the sync would refuse forever.
+   *  Fetched, as sharing.svelte.ts reads this store. */
   async noteFrom(text: string, folder?: string): Promise<string | null> {
     const dir = folder ?? this.activeSpace?.root
     if (!dir) return null
+    const { canWriteAt } = await import('./sharing.svelte')
+    if (!canWriteAt(dir)) return null
 
     const stem = nameFromContent(text) ?? UNTITLED
     const path = joinPath(dir, this.freeName(dir, `${stem}.md`))
