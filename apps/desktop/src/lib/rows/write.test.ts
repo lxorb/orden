@@ -194,6 +194,34 @@ describe('a property written from a view', () => {
     )
   })
 
+  test('puts a chip on the list a note writes in another case, in its own spelling', () => {
+    const row = noteRow('---\ntags: [a]\n---\n')
+    const flow = '---\nTags: [x, y]\n---\nbody\n'
+    expect(changed(flow, row, { list: { tags: { add: 'z' } } })).toBe(
+      '---\nTags: [x, y, z]\n---\nbody\n',
+    )
+    expect(changed(flow, row, { list: { tags: { remove: 0 } } })).toBe(
+      '---\nTags: [y]\n---\nbody\n',
+    )
+    const block = '---\nTags:\n  - x\n  - y\ntitle: a\n---\nbody\n'
+    expect(changed(block, row, { list: { tags: { add: 'z' } } })).toBe(
+      '---\nTags: [x, y, z]\ntitle: a\n---\nbody\n',
+    )
+    // In a block the rows cannot draw, too.
+    const commented = '---\n# kept\nTags:\n  - x\n  - 007\n---\nbody\n'
+    expect(changed(commented, row, { list: { tags: { add: 'z' } } })).toBe(
+      '---\n# kept\nTags: [x, 007, z]\n---\nbody\n',
+    )
+    // A whole list keeps the members it did not change as the note wrote them.
+    expect(changed('---\nTags: [007, x]\n---\n', row, { note: { tags: [7, 'x', 'z'] } })).toBe(
+      '---\nTags: [007, x, z]\n---\n',
+    )
+    // Where the note has both spellings, they are two keys, and `tags` is its own.
+    expect(changed('---\nTags: [x]\ntags: [y]\n---\n', row, { list: { tags: { add: 'z' } } })).toBe(
+      '---\nTags: [x]\ntags: [y, z]\n---\n',
+    )
+  })
+
   test('refuses a chip it cannot write without losing what the block says', () => {
     const row = noteRow('---\ntags: [a]\n---\n')
     for (const text of [

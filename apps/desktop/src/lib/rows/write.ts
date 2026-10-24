@@ -18,7 +18,7 @@
 import type { DateValue, DurationValue, LinkValue, Row, TaskChange, Value } from '@nib/bases'
 import { listAsWritten, noteValues, taskHash, tick, todayOf } from '@nib/bases'
 import { appliedEdits, oneEdit, type TextEdit } from '@nib/markdown/edits'
-import { type Property, readProperties } from '@nib/markdown/properties'
+import { type Property, propertyNamed, readProperties } from '@nib/markdown/properties'
 import {
   type ListItem,
   listItems,
@@ -184,17 +184,20 @@ function asList(
       write: (items) => ({
         from: found.from,
         to: found.to,
-        insert: listLines(key, items),
+        insert: listLines(found.property.key, items),
       }),
     }
   }
-  const found = rows.find((one) => one.key === key)
+  // The key in the note's own spelling where it is in another case, as `writeList`
+  // and `frontMatterEdit` find it: taken as missing, a chip wrote a list of one over it.
+  const found = propertyNamed(rows, key)
   if (found?.kind === 'map') return null
   if (!found) return whole(empty)
   if (found.kind === 'list') return whole(found)
-  if (found.value === '') return whole(empty)
+  if (found.value === '') return whole({ ...empty, key: found.key })
   return whole({
     ...empty,
+    key: found.key,
     items: [found.value],
     ...(found.quoted ? { quotedItems: [true] } : {}),
   })
@@ -242,7 +245,7 @@ function propertyEdit(text: string, key: string, value: Value): TextEdit | null 
  *  key that holds no list. */
 function keptMembers(text: string, key: string): (value: Value) => ListItem | null {
   const list = asList(text, key)?.property
-  const values = noteValues(text)[key]
+  const values = list ? noteValues(text)[list.key] : undefined
   if (!list || !Array.isArray(values) || values.length !== list.items.length) return () => null
   const members = listItems(list)
   const left = values.map((one, at) => ({ said: JSON.stringify(one), member: members[at] }))

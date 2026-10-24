@@ -145,12 +145,19 @@ export function listAsWritten(
     return null
   }
   if (whole !== null && (typeof whole !== 'object' || Array.isArray(whole))) return null
-  const held = whole === null ? undefined : (whole as Record<string, unknown>)[key]
+  // The key in the note's own spelling, found the way `frontMatterEdit` finds it: in
+  // the case asked for where the note has it, else the first in another.
+  const read = whole === null ? {} : (whole as Record<string, unknown>)
+  const spelled =
+    key in read
+      ? key
+      : (Object.keys(read).find((one) => one.toLowerCase() === key.toLowerCase()) ?? key)
+  const held = read[spelled]
 
   // The key's own lines: its line, and every line after it that is indented under it
   // or is one of its `- ` items, which YAML lets sit at the key's own margin.
   const lines = body.split('\n')
-  const opens = new RegExp(`^${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[ \\t]*:`)
+  const opens = new RegExp(`^${spelled.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[ \\t]*:`)
   const starts = lines.flatMap((line, at) => (opens.test(line) ? [at] : []))
   if (starts.length === 0) return held === undefined ? 'absent' : null
   if (starts.length > 1) return null
@@ -207,7 +214,7 @@ export function listAsWritten(
   if (JSON.stringify(members) !== JSON.stringify(expected)) return null
 
   const property: Property = {
-    key,
+    key: spelled,
     kind: 'list',
     value: '',
     items,
