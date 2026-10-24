@@ -94,7 +94,7 @@ mod engine {
 
     use super::Scheme;
 
-    /// The page's WebView2 profile told the scheme.
+    /// The page's `WebView2` profile told the scheme.
     #[allow(
         unsafe_code,
         reason = "the page's profile is reached through WebView2's COM interfaces"
