@@ -107,7 +107,8 @@ export function tableOf(
 
 /** One cell, safe to put between two pipes: a pipe of its own is escaped, and the
  *  newlines in a paragraph somebody typed into a spreadsheet become spaces,
- *  because a markdown table has no way to hold a line break. */
+ *  because a markdown table has no way to hold a line break. A spreadsheet holds
+ *  plain text, so a `<b>` in it is words and opens no tag (`plainWords`). */
 function cell(value: string): string {
   // Escaped as the plain text a spreadsheet holds before the pipes are, so a pipe's
   // backslash is not read as one of the cell's own.
