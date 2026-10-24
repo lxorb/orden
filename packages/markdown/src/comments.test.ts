@@ -1,6 +1,8 @@
 import { describe, expect, test } from 'vitest'
 import { withoutComments } from './comments'
+import { htmlToMarkdown } from './from-html'
 import { renderMarkdown } from './index'
+import { asWords } from './words'
 
 describe('a comment in the source', () => {
   test('goes, and the words around it stay', () => {
@@ -56,6 +58,28 @@ describe('a comment in the source', () => {
 })
 
 /** Obsidian's spelling of the same thing, read by the same scan. */
+/** A backslash in front of a character is that character as words, which is how
+ *  a conversion writes a page's own `<!--` - and how anybody writes one by hand. */
+describe('an escaped comment marker', () => {
+  test('opens no comment, and the rest of the note stays', () => {
+    const source = 'Write \\<!-- to open a comment.\n\nSecond paragraph.'
+    expect(withoutComments(source)).toBe(source)
+  })
+
+  test('opens no comment after an escaped bracket or backtick either', () => {
+    expect(withoutComments('a \\[<!-- b --> c')).toBe('a \\[ c')
+    expect(withoutComments('a \\`<!-- b -->` c')).toBe('a \\`` c')
+  })
+
+  test('opens one when the backslash is itself escaped', () => {
+    expect(withoutComments('a \\\\<!-- b --> c')).toBe('a \\\\ c')
+  })
+
+  test('is left alone inside backticks, backslash and all', () => {
+    expect(withoutComments('`a\\`<!-- b -->')).toBe('`a\\`')
+  })
+})
+
 describe('a percent comment', () => {
   test('goes, and the words around it stay', () => {
     expect(withoutComments('before %%aside%% after')).toBe('before  after')
@@ -94,6 +118,17 @@ describe('a percent comment', () => {
 })
 
 describe('a comment on the page', () => {
+  test('written as words by a conversion stays words, and so does the rest', () => {
+    const code = htmlToMarkdown('<p>Write &lt;!-- to open a comment.</p><p>Second paragraph.</p>')
+    expect(code).toBe('Write \\<!-- to open a comment.\n\nSecond paragraph.')
+    expect(renderMarkdown(code)).toBe(
+      '<p>Write &lt;!-- to open a comment.</p>\n<p>Second paragraph.</p>\n',
+    )
+    expect(renderMarkdown(asWords('Write <!-- to open a comment.\n\nSecond paragraph.'))).toBe(
+      '<p>Write &lt;!-- to open a comment.</p>\n<p>Second paragraph.</p>\n',
+    )
+  })
+
   test('is nowhere in the rendered HTML', () => {
     const html = renderMarkdown('# Head\n\n<!-- a note to myself -->\n\nWords.\n')
     expect(html).not.toContain('a note to myself')
