@@ -47,7 +47,7 @@ vi.mock('../tauri', async (original) => ({
   },
 }))
 
-const { ensureInbox, INBOX, inboxes, inboxOf, rememberInbox, setInbox, STORAGE_KEY } =
+const { ensureInbox, INBOX, inboxes, inboxOf, inboxSpace, rememberInbox, setInbox, STORAGE_KEY } =
   await import('./inbox')
 
 const ROOT = '/spaces/Work'
@@ -138,5 +138,30 @@ describe('the inbox a task from Shortcuts goes to', () => {
     rememberInbox(null)
     setInbox(ROOT, 'Lists/Todo.md')
     expect(told).toEqual([])
+  })
+})
+
+describe('the space whose inbox Shortcuts is told', () => {
+  const HOME = '/spaces/Home'
+  const READ = '/spaces/Read'
+  const writable = (root: string) => root !== READ
+
+  test('is the space in front where it can be written in', () => {
+    expect(inboxSpace(ROOT, [READ, HOME, ROOT], writable)).toBe(ROOT)
+  })
+
+  test('is the first space that can be written in where the one in front is shared to read', () => {
+    expect(inboxSpace(READ, [READ, HOME, ROOT], writable)).toBe(HOME)
+  })
+
+  // Where nothing is in front the crate would fall back to the first space on disk,
+  // which may be one shared to read; a space that can be written in is named instead.
+  test('is the first space that can be written in where none is in front', () => {
+    expect(inboxSpace(null, [READ, ROOT], writable)).toBe(ROOT)
+  })
+
+  test('is none where no space can be written in', () => {
+    expect(inboxSpace(READ, [READ], writable)).toBeNull()
+    expect(inboxSpace(null, [], writable)).toBeNull()
   })
 })
