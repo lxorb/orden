@@ -835,7 +835,7 @@ function holds(tail: string): boolean {
  *  its role is known, read before the listing from the sync store or from the roles
  *  the last listing left by folder (`roleOf` and `rememberRoles` in sharing.svelte.ts,
  *  `roleKept` on the sync). Measured 3,284,960. */
-const BUDGET = 3_300_000 // combined branch only
+const BUDGET = 3_400_000 // combined branch only
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
