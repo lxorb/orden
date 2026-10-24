@@ -392,6 +392,55 @@ describe('whether anything is at a path', () => {
   })
 })
 
+describe('a file the app reads as words, written as bytes', () => {
+  // What sync hands a file it carries as a blob - a PDF's highlights, a base, a plane
+  // dropped in - and what it reads back to send one: bytes on both sides, words in
+  // between, so the two stores have to agree on where those words are.
+  const base64 = (text: string) => Buffer.from(text, 'utf8').toString('base64')
+  const bytesOf = async (path: string) => {
+    const uri = await webInvoke<string>('read_asset', { path })
+    return Buffer.from(uri.slice(uri.indexOf(',') + 1), 'base64').toString('utf8')
+  }
+  const PDF = '/Notes/Paper.pdf'
+  const SIDE = '/Notes/Paper.pdf.highlights.json'
+
+  test('is read as words: a PDF’s highlights, a base and a plane', async () => {
+    await webInvoke('write_bytes', { path: SIDE, base64: base64('{"v":1,"from":"desktop"}') })
+    await webInvoke('write_bytes', { path: '/Notes/Bugs.base', base64: base64('views: []\n') })
+    await webInvoke('write_bytes', { path: '/Notes/Board.canvas', base64: base64('{"nodes":[]}') })
+
+    expect(await webInvoke('read_highlights', { path: PDF })).toBe('{"v":1,"from":"desktop"}')
+    expect(await read('/Notes/Bugs.base')).toBe('views: []\n')
+    expect(await read('/Notes/Board.canvas')).toBe('{"nodes":[]}')
+  })
+
+  test('is read back as the bytes of the words written here since', async () => {
+    await webInvoke('write_bytes', { path: SIDE, base64: base64('{"v":1,"old":true}') })
+    await webInvoke('write_highlights', { path: PDF, content: '{"v":1,"new":true}' })
+
+    expect(await bytesOf(SIDE)).toBe('{"v":1,"new":true}')
+  })
+
+  test('left among the pictures by an earlier build, is read as words', async () => {
+    disk.assets.set(SIDE, {
+      path: SIDE,
+      type: 'application/octet-stream',
+      data: base64('{"v":1,"kept":true}'),
+      modified: 5,
+    })
+
+    expect(await webInvoke('read_highlights', { path: PDF })).toBe('{"v":1,"kept":true}')
+    expect(disk.assets.has(SIDE)).toBe(false)
+    expect(disk.files.get(SIDE)?.content).toBe('{"v":1,"kept":true}')
+  })
+
+  test('a picture is still a picture', async () => {
+    await webInvoke('write_bytes', { path: '/Notes/shot.png', base64: 'AAEC' })
+    expect(disk.assets.get('/Notes/shot.png')?.data).toBe('AAEC')
+    expect(disk.files.has('/Notes/shot.png')).toBe(false)
+  })
+})
+
 describe('the trash', () => {
   test('holds what was deleted and puts it back where it came from', async () => {
     await write('/Notes/Idea.md', '# Idea')

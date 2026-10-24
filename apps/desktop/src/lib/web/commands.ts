@@ -24,7 +24,7 @@ import {
 } from './paths'
 import { isBaseTarget, isChatTarget, isWebTarget } from '@nib/markdown/links'
 import { assetType } from './asset-route'
-import { assets, files, KEEP, meta, snapshots, stats } from './store'
+import { assets, type FileRow, files, KEEP, meta, snapshots, stats } from './store'
 import { markSeeded, wasSeeded } from '../seeded'
 import { breathe } from '../breathe'
 import { WELCOME, WELCOME_PATH } from '../welcome'
@@ -221,6 +221,69 @@ async function tree(root: string, options: TreeOptions = {}): Promise<Entry> {
 
   sort(top)
   return top
+}
+
+/** Whether the app reads the file at a path as words (`read_note`, `read_highlights`):
+ *  a document of any kind, a base, a PDF's highlights. On the desktop that is one
+ *  disk; here words live in `files` and pictures in `assets`, and sync carries some
+ *  of these as bytes (`kindOfName` in sync-core makes a base and a sidecar a file).
+ *  Whatever arrives as bytes for one of them goes to `files`, so there is one place
+ *  each path's words are, whoever wrote them. */
+function readsAsText(path: string): boolean {
+  return (
+    isMarkdown(path) ||
+    isCanvas(path) ||
+    isPages(path) ||
+    path.endsWith(SIDECAR) ||
+    /\.(base|url|webloc|term|chat)$/i.test(path)
+  )
+}
+
+/** Words written as base64, the way `write_bytes` and `save_asset` are handed them. */
+function wordsOf(base64: string): string {
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let at = 0; at < binary.length; at += 1) bytes[at] = binary.charCodeAt(at)
+  return new TextDecoder().decode(bytes)
+}
+
+function base64Of(words: string): string {
+  let binary = ''
+  for (const byte of new TextEncoder().encode(words)) binary += String.fromCharCode(byte)
+  return btoa(binary)
+}
+
+/** Bytes for a path: words into `files` for a path the app reads as words, a picture
+ *  into `assets` for any other. A row an earlier build left in the other store goes,
+ *  so nothing reads the old one back. */
+async function writeBytes(path: string, base64: string, type: string) {
+  const at = normalise(path)
+  if (!readsAsText(at)) {
+    await assets.put({ path: at, type, data: base64, modified: now() })
+    return
+  }
+  // Before the words, since dropping an asset drops the listing of its path too.
+  if (await assets.get(at)) await assets.remove(at)
+  await writeNote(at, wordsOf(base64))
+}
+
+/** The words at a path the app reads as words, moving them over from `assets` where
+ *  an earlier build put them: the newer of the two stands, and the asset goes. */
+async function textRow(path: string): Promise<FileRow | undefined> {
+  const at = normalise(path)
+  const file = await files.get(at)
+  if (!readsAsText(at)) return file
+  const asset = await assets.get(at)
+  if (!asset) return file
+
+  await assets.remove(at)
+  if (file && file.modified >= asset.modified) {
+    // The listing went with the asset; the file's own row puts it back.
+    await files.put(file)
+    return file
+  }
+  await writeNote(at, wordsOf(asset.data))
+  return await files.get(at)
 }
 
 async function writeNote(path: string, content: string) {
@@ -833,7 +896,7 @@ export async function webInvoke<T>(
 
   switch (command) {
     case 'read_note': {
-      const row = await files.get(normalise(path))
+      const row = await textRow(path)
       if (!row) throw new Error('no such note')
       if (tooLarge(row.content)) throw new Error(TOO_LARGE)
       return row.content as T
@@ -848,12 +911,7 @@ export async function webInvoke<T>(
       // and papers are. `save_asset` below is the same write with the app's own
       // naming rule in front of it, for a picture that was pasted rather than
       // brought along.
-      await assets.put({
-        path: normalise(path),
-        type: assetType(path),
-        data: args.base64 as string,
-        modified: now(),
-      })
+      await writeBytes(path, args.base64 as string, assetType(path))
       return undefined as T
 
     case 'delete_note':
@@ -983,22 +1041,17 @@ export async function webInvoke<T>(
       let binary = ''
       for (const byte of bytes) binary += String.fromCharCode(byte)
 
-      await assets.put({
-        path: join(folder, name),
-        // What the name says it is rather than the extension with `image/` in
-        // front: `image/svg` draws nothing, and the asset worker hands this row
-        // straight to an `<img>`. See asset-route.ts.
-        type: assetType(name),
-        data: btoa(binary),
-        modified: now(),
-      })
+      // What the name says it is rather than the extension with `image/` in front:
+      // `image/svg` draws nothing, and the asset worker hands this row straight to an
+      // `<img>`. See asset-route.ts.
+      await writeBytes(join(folder, name), btoa(binary), assetType(name))
 
       return (relative ? `${relative}/${name}` : name) as T
     }
 
     case 'read_highlights': {
       if (!isPdf(path)) throw new Error(`${path} is not a PDF`)
-      return ((await files.get(sidecarOf(path)))?.content ?? '') as T
+      return ((await textRow(sidecarOf(path)))?.content ?? '') as T
     }
 
     case 'write_highlights': {
@@ -1021,6 +1074,9 @@ export async function webInvoke<T>(
       return (await paperRecords()).map(({ path: at, size }) => ({ path: at, size })) as T
 
     case 'read_asset': {
+      // Words read as bytes, which is how sync sends a base or a PDF's highlights.
+      const words = readsAsText(path) ? await textRow(path) : undefined
+      if (words) return `data:${assetType(path)};base64,${base64Of(words.content)}` as T
       const row = await assets.get(normalise(path))
       if (!row) throw new Error('no such image')
       // The name first, the row second: a row written before the name was asked
