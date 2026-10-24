@@ -518,6 +518,24 @@ mod tests {
         assert!(dir.path().join("paper copy.pdf.highlights.json").exists());
     }
 
+    /// `Report.pages.pdf` is what macOS Pages names a PDF it saves, and one copied in
+    /// beside a page note `Report.pages` with no paper yet would become its paper, and
+    /// go with the note when it is deleted.
+    #[test]
+    fn a_pdf_copied_never_becomes_a_page_notes_paper() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        fs::create_dir_all(dir.path().join("A")).expect("A");
+        fs::create_dir_all(dir.path().join("B")).expect("B");
+        let source = dir.path().join("A/Report.pages.pdf");
+        fs::write(&source, b"%PDF mine").expect("somebody's PDF");
+        fs::write(dir.path().join("B/Report.pages"), "{}").expect("a page note");
+
+        let error = copied(&source, &dir.path().join("B/Report.pages.pdf"))
+            .expect_err("a PDF a page note would hold to be refused");
+        assert!(error.contains("already there"), "{error}");
+        assert!(!dir.path().join("B/Report.pages.pdf").exists());
+    }
+
     #[test]
     fn never_writes_over_anything() {
         let dir = tempfile::tempdir().expect("a temp folder");

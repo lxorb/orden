@@ -1996,6 +1996,45 @@ mod tests {
         );
     }
 
+    /// The other way round: a PDF called `Report.pages.pdf` - macOS Pages names every
+    /// PDF it saves that way - brought beside a page note `Report.pages` that has no
+    /// paper yet would be taken for its paper, hidden from the list, drawn over, and
+    /// deleted with the note.
+    #[test]
+    fn a_pdf_never_lands_where_a_page_note_would_take_it_for_its_paper() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let mine = dir.path().join("A");
+        let here = dir.path().join("B");
+        std::fs::create_dir_all(&mine).expect("A");
+        std::fs::create_dir_all(&here).expect("B");
+        let note = here.join("Report.pages");
+        std::fs::write(&note, "{}").expect("a page note of blank sheets");
+        let pdf = mine.join("Report.pages.pdf");
+        std::fs::write(&pdf, b"%PDF mine").expect("somebody's own PDF");
+        let never = |_: &Path, _: &Path| false;
+
+        // Refused by name before anything moves...
+        assert_eq!(
+            super::paper_in_the_way(&pdf, &here.join("Report.pages.pdf"), never),
+            Some(note.clone())
+        );
+        // ...and a new place for it steps past the name.
+        assert_eq!(
+            free_spot(&here.join("Report.pages.pdf"), true),
+            here.join("Report.pages 2.pdf")
+        );
+
+        // A PDF moved in beside its note in its own folder is how a PDF becomes a page
+        // note's paper (pages/from-pdf.ts), and that one is let through.
+        let lecture = here.join("Lecture.pdf");
+        std::fs::write(&lecture, b"%PDF lecture").expect("a PDF");
+        std::fs::write(here.join("Lecture.pages"), "{}").expect("its note");
+        assert_eq!(
+            super::paper_in_the_way(&lecture, &here.join("Lecture.pages.pdf"), never),
+            None
+        );
+    }
+
     #[test]
     fn a_note_has_no_sidecar_to_move() {
         let dir = tempfile::tempdir().expect("a temp folder");

@@ -335,6 +335,24 @@ mod tests {
         assert!(!handed.holds(dir.path()));
     }
 
+    /// A PDF macOS Pages saved, `Report.pages.pdf`, handed over to a space with a page
+    /// note `Report.pages` in it lands under a name of its own: under that one the note
+    /// would take it for its paper.
+    #[test]
+    fn a_pdf_handed_over_never_becomes_a_page_notes_paper() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let space = dir.path().join("Space");
+        file(&space.join("Report.pages"), b"{}");
+        let from = dir.path().join("Downloads").join("Report.pages.pdf");
+        file(&from, b"%PDF mine");
+
+        let put = landed(&from, &space).expect("brought in");
+        assert_eq!(
+            Path::new(&put.path),
+            space.join("Report.pages 2.pdf").as_path()
+        );
+    }
+
     #[test]
     fn a_pdf_is_copied_to_the_top_of_the_space_beside_one_of_its_name() {
         let dir = tempfile::tempdir().expect("a temp folder");
