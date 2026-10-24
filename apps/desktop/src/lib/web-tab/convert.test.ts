@@ -68,6 +68,8 @@ function urlNote(url: string, title: string, extra = ''): string {
 }
 
 /** A store over the disk, with the tree-edit calls recorded. */
+const binned: string[] = []
+
 function store(notes: Record<string, string>) {
   disk.clear()
   for (const [path, text] of Object.entries(notes)) disk.set(path, text)
@@ -97,6 +99,11 @@ function store(notes: Record<string, string>) {
       return Promise.resolve()
     },
     loadTree: () => Promise.resolve(),
+    bin: (path: string) => {
+      binned.push(path)
+      disk.delete(path)
+      return Promise.resolve(null)
+    },
   }
 
   return { ws: ws as unknown as Converts, shown }
@@ -129,15 +136,16 @@ describe('a note that is a website', () => {
     expect(told).toEqual([`saved ${SPACE}/Svelte docs.url`, `gone ${NOTE}`])
   })
 
-  test('and its file is deleted when signed in, trashed when not', async () => {
+  /** Signed in, the account's Recently deleted gives back only a note it holds in a
+   *  space this account owns; a writer's note, or one made offline, went for good
+   *  with its front matter. So the note goes the way any delete does (`bin`). */
+  test('and its file goes the way a deleted note goes', async () => {
+    binned.length = 0
     const made = store({ [NOTE]: urlNote('https://svelte.dev', 'Svelte docs') })
     await asShortcut(made.ws, NOTE)
-    expect(sent.map((one) => one.command)).toContain('delete_note')
 
-    signedIn = false
-    const again = store({ [NOTE]: urlNote('https://svelte.dev', 'Svelte docs') })
-    await asShortcut(again.ws, NOTE)
-    expect(sent.map((one) => one.command)).toContain('trash_item')
+    expect(binned).toEqual([NOTE])
+    expect(sent.map((one) => one.command)).not.toContain('delete_note')
   })
 })
 

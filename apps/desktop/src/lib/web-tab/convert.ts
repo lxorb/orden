@@ -13,7 +13,6 @@
  *  and then opens what it points at; see the workspace section of
  *  docs/conventions.md. */
 
-import { account } from '../account.svelte'
 import { links } from '../link-index.svelte'
 import { onDisk } from '../on-disk'
 import { shownName } from '../note-name'
@@ -44,6 +43,9 @@ export interface Converts {
    *  workspace/file-ops.ts. */
   fileGone(path: string, kind: 'file'): Promise<void>
   loadTree(): Promise<void>
+  /** Deletes the way any delete does, to the account or this device's trash; see
+   *  `bin` in workspace.svelte.ts. */
+  bin(path: string, isFolder: boolean): Promise<unknown>
 }
 
 /** Turns the note at `path` into a shortcut and answers where the website now
@@ -100,7 +102,7 @@ export async function asShortcut(ws: Converts, path: string): Promise<string | n
   // is told whichever it was: a note that stays is still a note `[[its name]]` reaches.
   const kept = keptBody(text)
   if (kept === null) {
-    await oldNoteGone(path)
+    await oldNoteGone(ws, path)
     await ws.fileGone(path, 'file')
   } else await writeFile(path, kept).catch(() => undefined)
 
@@ -111,13 +113,13 @@ export async function asShortcut(ws: Converts, path: string): Promise<string | n
 /** The note a website used to be, put where a deleted note goes.
  *
  *  Nothing is lost and nothing is recorded: a conversion is not a delete somebody
- *  asked for, so there is no undo step for it, but the file is in Recently deleted
- *  for anybody who wants it back. A file that will not go is a file left beside its
- *  shortcut, which breaks nothing: the shortcut is what its name opens now. */
-async function oldNoteGone(path: string) {
+ *  asked for, so there is no undo step for it, but the file is in a Recently deleted
+ *  for anybody who wants it back - the account's only where it holds the note, which
+ *  `bin` decides, and this device's otherwise. A file that will not go is a file left
+ *  beside its shortcut, which breaks nothing: the shortcut is what its name opens now. */
+async function oldNoteGone(ws: Converts, path: string) {
   try {
-    if (account.signedIn) await invoke('delete_note', { path })
-    else await invoke('trash_item', { path, kind: 'note' })
+    await ws.bin(path, false)
   } catch {
     // Said above: a note that stays is a note beside a shortcut, and harmless.
   }
