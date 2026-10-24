@@ -80,6 +80,50 @@ export interface FromHtmlOptions {
    *  what the schemes are held to: the ones that run code or serve a document of the
    *  author's own are refused whoever is asking. */
   appTargets?: boolean
+
+  /** Whether a video, a recording or an embedded file is written as a link to it.
+   *
+   *  Off by default, which is what a clip and a paste want: a page's player is
+   *  chrome, and the file behind it stays on the page's own server.
+   *
+   *  On for the imports, where that file arrives beside the note and the element is
+   *  the one place that says the note held it. A note is markdown and markdown has
+   *  no player, so it becomes a link, held to the same rule as any other; see
+   *  `mayPointAt`. */
+  mediaLinks?: boolean
+}
+
+/** The elements of `NEVER` that point at a file, and the attribute each says it in.
+ *  A video or a recording may name it in a `<source>` inside instead. */
+const MEDIA: Record<string, string> = {
+  video: 'src',
+  audio: 'src',
+  embed: 'src',
+  iframe: 'src',
+  object: 'data',
+}
+
+/** A video, a recording or an embedded file as a link to the file, named by the
+ *  file's own name; nothing where it names no file a note may point at. */
+function mediaLink(node: Element, options: FromHtmlOptions): string {
+  const attribute = MEDIA[node.nodeName.toLowerCase()] ?? 'src'
+  const source = (
+    node.getAttribute(attribute) ??
+    node.querySelector('source[src]')?.getAttribute('src') ??
+    ''
+  ).trim()
+  if (!source || !mayPointAt(source, options)) return ''
+
+  const name = source.split(/[?#]/)[0]?.split('/').pop() ?? ''
+  let shown = name
+  try {
+    shown = decodeURIComponent(name)
+  } catch {
+    // Not an escape after all; the name is shown as it was written.
+  }
+
+  const words = (shown || source).replace(/([\\[\]])/g, '\\$1')
+  return `\n\n[${words}](${destination(source)})\n\n`
 }
 
 /** The TeX a formula carries about itself.
@@ -489,6 +533,13 @@ function converter(options: FromHtmlOptions): TurndownService {
     emDelimiter: '*',
     strongDelimiter: '**',
     linkStyle: 'inlined',
+    // Turndown hands an element with no words in it here rather than to a rule, and
+    // an `<object>` holds none; see `mediaLinks`. Anything else is what turndown's
+    // own does with it, from the `isBlock` turndown marks every node it walks with.
+    blankReplacement: (_content, node) => {
+      if (options.mediaLinks === true && node.nodeName === 'OBJECT') return mediaLink(node, options)
+      return (node as { isBlock?: boolean }).isBlock ? '\n\n' : ''
+    },
   })
 
   service.use(gfm)
@@ -505,6 +556,14 @@ function converter(options: FromHtmlOptions): TurndownService {
   // extractor's own DOM cleaning; for a paste it is the only one, since a clipboard's HTML
   // arrives as a whole document with a head on it.
   service.remove((node) => NEVER.includes(node.nodeName.toLowerCase()))
+
+  // Turndown asks its rules before what it removes, so the elements of the list
+  // that point at a file are links instead for the caller that keeps the files.
+  if (options.mediaLinks === true)
+    service.addRule('media', {
+      filter: (node) => node.nodeName.toLowerCase() in MEDIA,
+      replacement: (_content, node) => mediaLink(node, options),
+    })
 
   // A formula's drawing, which the formula beside it already says; see
   // `drawnBeside`. The note keeps the maths rather than the letters it was drawn

@@ -90,7 +90,7 @@ export async function readPlain(
         return {
           to,
           read: (text) => ({
-            text: htmlToMarkdown(text, { fileTargets: true, appTargets: true }),
+            text: htmlToMarkdown(text, { fileTargets: true, appTargets: true, mediaLinks: true }),
             title: null,
           }),
         }

@@ -481,7 +481,11 @@ async function readNotionHtml(sources: readonly Source[]): Promise<ImportPlan> {
         read: (text) => {
           const said = notionHtml(text)
           return {
-            text: htmlToMarkdown(said.html, { fileTargets: true, appTargets: true }),
+            text: htmlToMarkdown(said.html, {
+              fileTargets: true,
+              appTargets: true,
+              mediaLinks: true,
+            }),
             title: null,
             meta: said.meta,
           }
