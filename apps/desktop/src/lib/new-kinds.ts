@@ -44,6 +44,7 @@ import { hiddenKinds, type KindName, kindsHere } from './settings.svelte'
 import { kindLabel } from './kind-words'
 import { menu, type MenuEntry } from './menu.svelte'
 import { openTerminal, shellRows } from './terminal/open'
+import { canWriteAt } from './sharing.svelte'
 import { shells } from './terminal/shells.svelte'
 import { workspace } from './workspace.svelte'
 
@@ -95,7 +96,11 @@ export function newKinds(): NewKindRow[] {
  *  off in Settings. See kind-choice.ts. */
 export function offeredKinds(): NewKindRow[] {
   const shown = hiddenKinds.shown
-  return newKinds().filter((one) => shown.includes(one.kind))
+  // A chat is made in the space at once, so one shared to be read is not offered it.
+  // The others open as drafts and are saved where the reader chooses.
+  const root = workspace.activeSpace?.root
+  const chats = !root || canWriteAt(root)
+  return newKinds().filter((one) => shown.includes(one.kind) && (chats || one.kind !== 'chat'))
 }
 
 /** Each kind's row. Which of them a device has is `kindsHere`, so nothing here asks. */
