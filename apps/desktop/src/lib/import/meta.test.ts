@@ -65,11 +65,16 @@ describe('a whole note', () => {
 
   test('a note that opens with its own properties keeps one block, its own keys first', () => {
     expect(
-      noteText('Trip', '---\ntitle: Trip\nDate: 2020-01-01\nstatus: draft\n---\nWords.\n', {
-        date: '2024-01-02',
-        updated: '2024-02-03',
-        extra: [['Status', 'done']],
-      }),
+      noteText(
+        'Trip',
+        '---\ntitle: Trip\nDate: 2020-01-01\nstatus: draft\n---\nWords.\n',
+        {
+          date: '2024-01-02',
+          updated: '2024-02-03',
+          extra: [['Status', 'done']],
+        },
+        true,
+      ),
     ).toBe(
       '---\ntitle: Trip\nDate: 2020-01-01\nstatus: draft\nupdated: 2024-02-03\n---\n\n# Trip\n\nWords.\n',
     )
@@ -87,8 +92,26 @@ describe('a whole note', () => {
     expect(noteText(null, '---\n---\nWords.\n')).toBe('---\n---\nWords.\n')
   })
 
+  test('words an import made are never a block of the note’s own', () => {
+    const meta = { date: '2024-01-02' }
+    for (const body of [
+      '---\n\nNote: this page is a draft.\n\n---\n\nBody text',
+      '---\nIngredients:\n- flour\n---\nMix well.',
+      '---\nWhen: Tuesday\nWhere: Office\n---\nAgenda below',
+    ]) {
+      expect(noteText('Trip', body, meta)).toBe(`---\ndate: 2024-01-02\n---\n\n# Trip\n\n${body}\n`)
+    }
+  })
+
+  test('a block of the note’s own opens with a key, right under its fence', () => {
+    const body = '---\n\nNote: this page is a draft.\n\n---\n\nBody text'
+    expect(noteText('Trip', body, { date: '2024-01-02' }, true)).toBe(
+      `---\ndate: 2024-01-02\n---\n\n# Trip\n\n${body}\n`,
+    )
+  })
+
   test('a note whose own block is all it says still opens with it', () => {
-    expect(noteText('Trip', '---\nstatus: draft\n---', {})).toBe(
+    expect(noteText('Trip', '---\nstatus: draft\n---', {}, true)).toBe(
       '---\nstatus: draft\n---\n\n# Trip\n\n',
     )
   })

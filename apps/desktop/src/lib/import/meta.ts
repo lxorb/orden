@@ -74,35 +74,44 @@ function said(value: Property): boolean {
  *  page somebody gave a block - keeps that block as the one the note opens with,
  *  and what the export knew goes into it, under the keys it does not say already:
  *  a second block under the first would be words to every reader, the note's own
- *  keys among them, and the heading goes below it rather than above it. */
-export function noteText(title: string | null, body: string, meta: Meta = {}): string {
+ *  keys among them, and the heading goes below it rather than above it.
+ *
+ *  Only `own` words are asked, the Markdown a person wrote in a format that can
+ *  carry a block. Words an import made itself, out of a web page, a note in XML or
+ *  a JSON, never open with one: a `---` there is a rule (an `<hr>`), and a rule, a
+ *  `Note: a draft` and another rule are words. */
+export function noteText(title: string | null, body: string, meta: Meta = {}, own = false): string {
   // Only the blank lines above the words go: the first line's own indent is what
   // makes a note that opens with an indented code block open with code.
   const all = body.replace(/^(?:[ \t]*\r?\n)+/, '').replace(/\s+$/, '')
-  const own = ownBlock(all)
-  const words = own ? all.slice(own.to).replace(/^(?:[ \t]*\r?\n)+/, '') : all
+  const block = own ? ownBlock(all) : null
+  const words = block ? all.slice(block.to).replace(/^(?:[ \t]*\r?\n)+/, '') : all
   const heads = /^#{1,6}\s/.test(words)
   const head = title && !heads ? `# ${title}\n\n` : ''
-  const props = own ? `${withMeta(all, own.close, meta)}\n\n` : frontMatterFor(meta)
+  const props = block ? `${withMeta(all, block.close, meta)}\n\n` : frontMatterFor(meta)
 
   return `${props}${head}${words}${words ? '\n' : ''}`
 }
 
+/** A key's line, as @nib/markdown/front-matter reads one: an unindented line up to
+ *  its first colon with a blank or nothing after it. */
+const KEY_LINE = /^[^\s#-].*?[ \t]*:(?:\s|$)/
+
 /** A key's line, a line under one, a list's item or a comment: what a block of
- *  properties is made of. The key is @nib/markdown/front-matter's: an unindented
- *  line up to its first colon with a blank or nothing after it. */
-const BLOCK_LINE = /^(?:[^\s#-].*?[ \t]*:(?:\s|$)|[ \t]|-(?:\s|$)|#)/
+ *  properties is made of. */
+const BLOCK_LINE = new RegExp(`${KEY_LINE.source}|^(?:[ \\t]|-(?:\\s|$)|#)`)
 
 /** The block of properties a body opens with, or null where it opens with anything
- *  else. Two `---` lines are not enough: an HTML page's `<hr>` is one as Markdown,
- *  and a note that opens with a rule, a paragraph and another rule is words. So
- *  every line between the fences has to be one a block is made of, and one of them
- *  a key. */
+ *  else. Two `---` lines are not enough: a note may open with a rule, a paragraph
+ *  and another rule. A block is the fence with a key on the line right under it,
+ *  as every app writes one, and nothing between the fences but lines a block is
+ *  made of; a rule is followed by a blank line or by words. */
 function ownBlock(body: string): ReturnType<typeof frontMatterBlock> {
   const block = frontMatterBlock(body)
-  if (!block || !frontMatterKeys(body).length) return null
+  if (!block) return null
 
   const lines = body.slice(block.body.from, block.body.to).split(/\r?\n/)
+  if (!KEY_LINE.test(lines[0] ?? '')) return null
   return lines.every((line) => !line.trim() || BLOCK_LINE.test(line)) ? block : null
 }
 
