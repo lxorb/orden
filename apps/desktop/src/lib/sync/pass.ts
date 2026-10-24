@@ -34,7 +34,14 @@ import { settleShortcuts } from '../web-tab/settle'
 import { isUntouchedWelcome } from '../welcome'
 import { baseOf, behind, unixLines } from './ancestry'
 import { type Clash, type ConflictRule, DEFAULT_RULE } from './conflicts'
-import { fileStamp, type Mirror, type Tracked, type TrackedFile, within } from './mirror'
+import {
+  fileStamp,
+  type Mirror,
+  type Moving,
+  type Tracked,
+  type TrackedFile,
+  within,
+} from './mirror'
 import { type Folded, foldWebCopies } from './web-copies'
 import { writeDown } from './write-down'
 import type { Entry } from '../workspace.svelte'
@@ -179,6 +186,9 @@ export interface Waiting {
   listed?: (paths: string[]) => void
   /** One note written, by the path it landed at. */
   wrote?: (path: string) => void
+  /** The record written down now, in the middle of a pass: before and after each
+   *  rename of a round of moves, so a quit at any point can be finished from. */
+  save?: () => void
   /** One note moved here because another device renamed or moved it, by the paths
    *  it had and has. */
   moved?: (from: string, to: string) => void
@@ -216,6 +226,7 @@ export async function pull(
   // listed under the old one.
   const root = mirror.root
   let moved = false
+  await journalled(mirror)
 
   for (;;) {
     const page = await api.changes(token, mirror.spaceId, mirror.cursor)
@@ -237,13 +248,16 @@ export async function pull(
     // onto it in the same page; then every move at once, see `movedThere`. Neither
     // depends on the order the page came in: a delete names its note by id, and the
     // live notes below are each settled against their own file.
+    // Where each note this machine knows lives here, by its id.
+    const known = new Map(Object.entries(mirror.notes).map(([path, one]) => [one.id, path]))
+    const named = new Set(notes.filter((one) => !one.deleted).map((one) => one.path))
     for (const remote of notes) {
       if (!remote.deleted || !carried(remote)) continue
       const target = joinPath(root, remote.path)
-      await deletedThere(mirror, remote, target, joined, waiting?.kept?.(target) === true)
+      const here = known.get(remote.id) ?? remote.path
+      await deletedThere(mirror, remote, here, joined, waiting?.kept?.(target) === true, named)
     }
 
-    // Where each note this machine knows lives here, by its id.
     const places = new Map(Object.entries(mirror.notes).map(([path, one]) => [one.id, path]))
     const moves = notes.flatMap((remote) => {
       const was = places.get(remote.id)
@@ -253,6 +267,13 @@ export async function pull(
     })
     const waits = moves.length ? await movedThere(mirror, moves, waiting) : new Set<string>()
     unsettled.set(mirror, waits)
+    // A note left aside that this page no longer moves, from a round long past, is put
+    // back in sight rather than kept hidden for good.
+    for (const [path, one] of Object.entries(mirror.notes)) {
+      if (isAside(path) && !waits.has(one.id) && (await present(joinPath(root, path)))) {
+        await shownAgain(mirror, path, one.id, named)
+      }
+    }
 
     for (const remote of notes) {
       // A name that would land outside the space is left where it is; see
@@ -503,11 +524,12 @@ export async function pull(
  *  another moving note's here: two notes that swapped names, or three that went round.
  *  Taken one at a time, the first found its name held and was let go, and the pull
  *  then wrote its words over the other note's file under the other note's id, which
- *  the push sent everywhere. So the entries of every moving note come out of the table
- *  first, a move whose name is free goes, and when none can, the note in the way
- *  waits aside under a name of its own, as sync v2's `settle` does. The aside name
- *  keeps the file's own name at its end, so a page note's paper follows it there and
- *  back.
+ *  the push sent everywhere. So a move whose name no entry holds goes, and when none
+ *  can, the note in the way waits aside under a name of its own, as sync v2's
+ *  `settle` does. The aside name keeps the file's own name at its end, so a page
+ *  note's paper follows it there and back. Every entry stays at the name its file
+ *  has, and the record is written down around each rename, so a quit anywhere in a
+ *  round leaves the next pass knowing where each note's file is.
  *
  *  A file already gone from the old name went away here, and the entry moves anyway,
  *  so the push reads the gap as the delete it always has. A file found aside instead,
@@ -523,84 +545,87 @@ async function movedThere(
   waiting?: Waiting,
 ): Promise<Set<string>> {
   const full = (path: string) => joinPath(mirror.root, path)
-  const pending: {
-    id: string
-    was: string
-    at: string | null
-    now: string
-    tracked: Tracked
-    offered: string | undefined
-  }[] = []
+  const pending: { id: string; was: string; at: string | null; now: string }[] = []
 
   for (const { remote, was } of moves) {
-    const tracked = mirror.notes[was]
-    if (tracked?.id !== remote.id) continue
+    if (mirror.notes[was]?.id !== remote.id) continue
 
+    // A note is only ever set aside from its own file, so an aside of its name is its
+    // file wherever the record says it is: written down from before a round that
+    // stopped halfway, the record names the old file, which by then can hold the words
+    // of the note that took its name.
     const aside = asideOf(was, remote.id)
-    const at = (await present(full(was))) ? was : (await present(full(aside))) ? aside : null
-    pending.push({
-      id: remote.id,
-      was,
-      at,
-      now: remote.path,
-      tracked,
-      offered: mirror.offered[was],
-    })
-    mirror.notes = without(mirror.notes, was)
-    mirror.offered = without(mirror.offered, was)
+    let at: string | null = null
+    if (!isAside(was) && (await present(full(aside)))) {
+      rekey(mirror, was, aside)
+      at = aside
+    } else if (await present(full(was))) {
+      at = was
+    }
+    pending.push({ id: remote.id, was, at, now: remote.path })
   }
 
-  const rename = (from: string, to: string) =>
-    invoke('rename_note', { from: full(from), to: full(to) }).then(
+  // Every rename is written down twice: what it is about to do before it, and where
+  // the file is after it, so a quit at any point leaves a record the next pass can
+  // finish from exactly. See `journalled`.
+  const move = async (one: (typeof pending)[number], to: string): Promise<boolean> => {
+    const from = one.at
+    if (from === null) return false
+    mirror.moving = { id: one.id, from, to }
+    waiting?.save?.()
+    const done = await invoke('rename_note', { from: full(from), to: full(to) }).then(
       () => true,
       (error: unknown) => {
         log('warn', `sync: ${full(from)} not moved to ${full(to)} - ${String(error)}`)
         return false
       },
     )
+    if (done) {
+      rekey(mirror, from, to)
+      one.at = to
+    }
+    delete mirror.moving
+    waiting?.save?.()
+    return done
+  }
 
   const left = new Set(pending)
-  const done = (one: (typeof pending)[number]) => {
-    left.delete(one)
-    mirror.notes[one.now] = one.tracked
-    if (one.offered !== undefined) mirror.offered = { ...mirror.offered, [one.now]: one.offered }
-    if (one.at !== null) waiting?.moved?.(full(one.was), full(one.now))
-  }
+  const where = (one: (typeof pending)[number]) => one.at ?? one.was
 
   // Each round moves a note or sets one aside, and a note is set aside once at most.
   for (let round = 0; round <= 2 * pending.length && left.size; round += 1) {
     let progress = false
     for (const one of [...left]) {
-      // Another note's name here, one that is not moving: let go below.
+      // The name is another note's here, by its entry: one still to move, or one
+      // staying, which lets this one go below.
       if (mirror.notes[one.now]) continue
-      // A note gone from here takes no file along, but its name is not free while
-      // another moving note's file is still on it.
-      if (one.at === null && [...left].some((other) => other.at === one.now)) continue
-      if (one.at === null || (await rename(one.at, one.now))) {
-        done(one)
-        progress = true
+      const from = where(one)
+      if (one.at === null) {
+        // Gone from here, so there is no file to take along; the push reads the gap.
+        rekey(mirror, from, one.now)
+      } else if (!(await move(one, one.now))) {
+        continue
       }
+      left.delete(one)
+      progress = true
+      if (one.at !== null) waiting?.moved?.(full(one.was), full(one.now))
     }
     if (progress) continue
 
-    // Nothing could move, so every free name is taken by a file. Where that file is
-    // another moving note's, it steps aside and the next round goes on.
+    // Nothing could move, so every free name is taken. Where it is taken by another
+    // moving note's file, that note steps aside and the next round goes on.
     const holder = [...left].find(
       (one) =>
         one.at !== null &&
-        [...left].some(
-          (other) => other !== one && other.now === one.at && !mirror.notes[other.now],
-        ),
+        !isAside(one.at) &&
+        [...left].some((other) => other !== one && other.now === one.at),
     )
-    if (!holder?.at) break
-    const out = asideOf(holder.at, holder.id)
-    if (!(await rename(holder.at, out))) break
-    holder.at = out
+    if (!holder?.at || !(await move(holder, asideOf(holder.at, holder.id)))) break
   }
 
   // A note whose name is another moving note's, or whose own name another moving note
   // wants, is one of a swap or a round that did not finish: a file held open, most
-  // likely. Each such note keeps the file it has and its entry beside it, back at its
+  // likely. Each such note keeps the file it has with its entry beside it, back at its
   // old name where that is free, and waits for the next pass. Let go instead, each
   // file was found at the other note's name, read as somebody's writing there and
   // sent up as the other note.
@@ -609,33 +634,48 @@ async function movedThere(
     const tied = pending.some(
       (other) => other !== one && (other.was === one.now || other.now === one.was),
     )
-    if (one.at !== null && one.at !== one.was && !mirror.notes[one.was]) {
-      if (await rename(one.at, one.was)) one.at = one.was
+    if (one.at !== null && isAside(one.at) && !mirror.notes[one.was]) {
+      if (!(await present(full(one.was)))) await move(one, one.was)
     }
-
-    // Anything else stays as a file of its own, and is no longer this note.
-    if (!tied) {
-      if (one.at !== null && one.at !== one.was) {
-        log('warn', `sync: ${full(one.was)} stays at ${full(one.at)}`)
-      }
+    if (tied) {
+      waits.add(one.id)
       continue
     }
 
-    waits.add(one.id)
-    const place = one.at ?? (mirror.notes[one.was] ? null : one.was)
-    if (place === null) continue
-    mirror.notes[place] = one.tracked
-    if (one.offered !== undefined) mirror.offered = { ...mirror.offered, [place]: one.offered }
+    // Anything else stays as a file of its own, in sight, and is no longer this note.
+    const at = where(one)
+    if (isAside(at)) await shownAgain(mirror, at, one.id, new Set())
+    const now = Object.keys(mirror.notes).find((path) => mirror.notes[path]?.id === one.id)
+    if (now !== undefined) {
+      mirror.notes = without(mirror.notes, now)
+      mirror.offered = without(mirror.offered, now)
+    }
   }
   return waits
 }
+
+/** An entry, and a write in the air about it, from one name to another. */
+function rekey(mirror: Mirror, from: string, to: string) {
+  const tracked = mirror.notes[from]
+  if (!tracked || from === to) return
+  const offered = mirror.offered[from]
+  mirror.notes = { ...without(mirror.notes, from), [to]: tracked }
+  mirror.offered = without(mirror.offered, from)
+  if (offered !== undefined) mirror.offered = { ...mirror.offered, [to]: offered }
+}
+
+const ASIDE = '.nib-moving-'
 
 /** Where a note waits while another takes its name, beside it and with its own name
  *  at the end, so a page note's paper goes along: `.nib-moving-<id>-<name>`. Hidden,
  *  so the list and the push never see it. */
 function asideOf(path: string, id: string): string {
   const folder = folderOf(path)
-  return `${folder ? `${folder}/` : ''}.nib-moving-${id}-${nameOf(path)}`
+  return `${folder ? `${folder}/` : ''}${ASIDE}${id}-${nameOf(path)}`
+}
+
+function isAside(path: string): boolean {
+  return nameOf(path).startsWith(ASIDE)
 }
 
 /** Whether a file is there, read or stamped. */
@@ -645,6 +685,74 @@ async function present(path: string): Promise<boolean> {
     () => false,
   )
   return read || (await fileStamp(path)) !== null
+}
+
+/** A note waiting aside put back in sight: at the name it was set aside from where
+ *  that is free, else beside it, `A 2.md`, never over anything. Answers where it is
+ *  now, with its entry, if it has one, re-keyed there. */
+async function shownAgain(
+  mirror: Pick<Mirror, 'root' | 'notes' | 'offered'>,
+  aside: string,
+  id: string,
+  avoid: ReadonlySet<string>,
+): Promise<string> {
+  const full = (path: string) => joinPath(mirror.root, path)
+  const prefix = `${ASIDE}${id}-`
+  const name = nameOf(aside).startsWith(prefix)
+    ? nameOf(aside).slice(prefix.length)
+    : nameOf(aside).slice(ASIDE.length)
+  const folder = folderOf(aside)
+  const dot = name.lastIndexOf('.')
+  const stem = dot > 0 ? name.slice(0, dot) : name
+  const ext = dot > 0 ? name.slice(dot) : ''
+
+  for (let n = 1; n < 100; n += 1) {
+    const path = `${folder ? `${folder}/` : ''}${n === 1 ? name : `${stem} ${n}${ext}`}`
+    const theirs = mirror.notes[path] && mirror.notes[path].id !== id
+    if (avoid.has(path) || theirs || (await present(full(path)))) continue
+    const done = await invoke('rename_note', { from: full(aside), to: full(path) }).then(
+      () => true,
+      () => false,
+    )
+    if (!done) break
+    if (mirror.notes[aside]) rekey(mirror as Mirror, aside, path)
+    return path
+  }
+  log('warn', `sync: ${full(aside)} could not be put back in sight`)
+  return aside
+}
+
+/** Finishes what the record says a quit cut short: a rename it was about to make,
+ *  found made or not by where the file is. See `movedThere`. */
+async function journalled(mirror: Mirror): Promise<void> {
+  const moving = mirror.moving
+  if (!moving) return
+  delete mirror.moving
+  if (mirror.notes[moving.from]?.id !== moving.id || mirror.notes[moving.to]) return
+
+  const full = (path: string) => joinPath(mirror.root, path)
+  if (!(await present(full(moving.from))) && (await present(full(moving.to)))) {
+    rekey(mirror, moving.from, moving.to)
+  }
+}
+
+/** A v1 record made whole before sync v2 reads the folder by it: a rename a quit cut
+ *  short is settled, and a note waiting aside from a swap v1 did not finish is put
+ *  back in sight. Read as it was, the hidden file was a note gone from the disk, and
+ *  v2 sent its delete. Answers the notes by where each file now is. */
+export async function asidesBack(
+  root: string,
+  notes: Readonly<Record<string, Tracked>>,
+  moving?: Moving,
+): Promise<Record<string, Tracked>> {
+  const record = { root, notes: { ...notes }, offered: {}, ...(moving ? { moving } : {}) }
+  await journalled(record as Mirror)
+  for (const path of Object.keys(record.notes)) {
+    if (isAside(path) && (await present(joinPath(root, path)))) {
+      await shownAgain(record, path, record.notes[path]?.id ?? '', new Set())
+    }
+  }
+  return record.notes
 }
 
 /** The notes of a swap or a round that `pull` could not finish, by mirror, which the
@@ -706,18 +814,25 @@ async function mergedOver(
 async function deletedThere(
   mirror: Mirror,
   remote: RemoteNote,
-  target: string,
+  here: string,
   joined: Joined,
-  kept = false,
+  kept: boolean,
+  named: ReadonlySet<string>,
 ) {
-  const tracked = mirror.notes[remote.path]
+  const tracked = mirror.notes[here]
   if (tracked && tracked.id !== remote.id) return
 
   // A write that was in the air about a note that has since gone says nothing
   // about whatever is made at that name next.
   mirror.offered = without(mirror.offered, remote.path)
   if (!tracked) return
-  mirror.notes = without(mirror.notes, remote.path)
+
+  // Waiting aside from a swap a pass did not finish: put back in sight first, so what
+  // is kept or trashed below is a file somebody can find.
+  const path = isAside(here) ? await shownAgain(mirror, here, remote.id, named) : here
+  mirror.offered = without(mirror.offered, path)
+  mirror.notes = without(mirror.notes, path)
+  const target = joinPath(mirror.root, path)
 
   const local = await invoke<string>('read_note', { path: target }).catch(() => null)
   if (local === null && (await fileStamp(target)) === null) return
@@ -988,13 +1103,12 @@ export async function push(
   for (const [path, tracked] of Object.entries(mirror.notes)) {
     if (seen.has(path) || inForeignCopy(path) || waits.has(tracked.id)) continue
 
-    // Its words wait aside, from a swap a pass did not get to finish: the app quit
-    // before the note took its new name. Put back, the next pull moves it on.
+    // Its words wait aside, from a swap a pass did not get to finish, and are never
+    // read as a note gone from here: the next pull moves it on or puts it back.
+    if (isAside(path) && (await present(joinPath(root, path)))) continue
     const aside = asideOf(path, tracked.id)
     if (await present(joinPath(root, aside))) {
-      await invoke('rename_note', { from: joinPath(root, aside), to: joinPath(root, path) }).catch(
-        (error: unknown) => log('warn', `sync: ${aside} not put back - ${String(error)}`),
-      )
+      await shownAgain(mirror, aside, tracked.id, new Set())
       continue
     }
 

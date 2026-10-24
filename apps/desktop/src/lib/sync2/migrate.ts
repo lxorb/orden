@@ -32,7 +32,7 @@
  *  holds (`mirrorsFrom`). */
 
 import { holderOf } from '../pages/held'
-import type { Mirror, Tracked } from '../sync/mirror'
+import type { Mirror, Moving, Tracked } from '../sync/mirror'
 import type { Core } from './core'
 import { kindOfName, made, moved } from './create'
 import { MINE } from './docs'
@@ -50,6 +50,8 @@ import * as Y from 'yjs'
 export interface V1Space {
   cursor: number
   notes: Readonly<Record<string, Tracked>>
+  /** A rename v1 was making when it last wrote itself down; see `Mirror`. */
+  moving?: Moving
 }
 
 const EMPTY_SV = Y.encodeStateVector(new Y.Doc())

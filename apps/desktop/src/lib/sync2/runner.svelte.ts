@@ -81,9 +81,25 @@ function v1Spaces(accountId: string): Map<string, V1Space> {
   const held = isRecord(saved.mirrors) ? saved.mirrors : saved
   for (const [root, one] of Object.entries(held)) {
     const mirror: Mirror | null = readMirror(root, one)
-    if (mirror) out.set(mirror.spaceId, { cursor: mirror.cursor, notes: mirror.notes })
+    if (mirror) {
+      out.set(mirror.spaceId, {
+        cursor: mirror.cursor,
+        notes: mirror.notes,
+        ...(mirror.moving ? { moving: mirror.moving } : {}),
+      })
+    }
   }
   return out
+}
+
+/** v1's record of a space with what a pass of its left half done settled first: a
+ *  note waiting aside from a swap, which the first pass would read as deleted here.
+ *  v1's pass is fetched only for a record that has one; see `asidesBack`. */
+async function wholeV1(root: string, v1: V1Space | null): Promise<V1Space | null> {
+  const waiting = (path: string) => (path.split('/').pop() ?? '').startsWith('.nib-moving-')
+  if (!v1 || (!v1.moving && !Object.keys(v1.notes).some(waiting))) return v1
+  const { asidesBack } = await import('../sync/pass')
+  return { cursor: v1.cursor, notes: await asidesBack(root, v1.notes, v1.moving) }
 }
 
 class Runner {
@@ -436,7 +452,10 @@ class Runner {
         const space = engine.core.spaces.get(id)
         if (!space) continue
         if (!(await this.firstDone(engine, id))) {
-          const v1 = this.accountId ? (v1Spaces(this.accountId).get(id) ?? null) : null
+          const v1 = await wholeV1(
+            space.row.root,
+            this.accountId ? (v1Spaces(this.accountId).get(id) ?? null) : null,
+          )
           if (!(await firstPass(engine.core, space, v1))) {
             offline = true
             await engine.core.commit([
