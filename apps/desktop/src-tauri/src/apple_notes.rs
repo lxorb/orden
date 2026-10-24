@@ -641,9 +641,11 @@ mod mac {
         }
 
         /// A tag or a mention, which Notes stores as an attachment holding the
-        /// words it draws.
+        /// words it draws. Those are whatever the row says, and a store somebody
+        /// was handed can say a tag, so they come over as words and never as markup.
         fn words(&self, id: &str) -> Option<String> {
             self.column(id, "zalttext")
+                .map(|words| apple_text::as_words(&words))
         }
 
         /// A link to another note, which becomes a link to wherever that note
@@ -951,13 +953,26 @@ mod mac {
     }
 
     /// A note's title as the words of a link: a bracket of its own would end them,
-    /// and a line break would leave the link behind on the line above.
+    /// and a line break would leave the link behind on the line above. A card's
+    /// title is whatever the linked page called itself, so a `<` that would open a
+    /// tag is escaped as well. Every backslash is already doubled by then, so one
+    /// more in front is enough.
     fn label(words: &str) -> String {
-        words
+        let said = words
             .replace('\\', "\\\\")
             .replace('[', "\\[")
             .replace(']', "\\]")
-            .replace(['\n', '\r'], " ")
+            .replace(['\n', '\r'], " ");
+
+        let mut out = String::with_capacity(said.len());
+        let mut chars = said.chars().peekable();
+        while let Some(one) = chars.next() {
+            if one == '<' && apple_text::opens_tag(chars.peek().copied()) {
+                out.push('\\');
+            }
+            out.push(one);
+        }
+        out
     }
 
     /// Where a link goes, with what a title may hold and a link may not encoded: a
