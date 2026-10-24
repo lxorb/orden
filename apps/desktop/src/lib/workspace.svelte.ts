@@ -3578,8 +3578,10 @@ class Workspace {
     await this.copied(await bringIn(this, files, intoFolder), intoFolder)
   }
 
-  /** Where a PDF opened with nib is once in the space; see pdf/handed.ts. */
+  /** Where a PDF opened with nib is once in the space; see pdf/handed.ts. Null for a
+   *  space shared to be read, which the copy would be written into. */
   async bringInPdf(from: string, root: string): Promise<string | null> {
+    if (!(await this.writableAt(root))) return null
     const { broughtPdf } = await import('./workspace/copying')
     const landed = await broughtPdf(this, from, root)
     if (landed) await this.copied([landed], root)
