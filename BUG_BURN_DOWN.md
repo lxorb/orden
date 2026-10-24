@@ -505,38 +505,27 @@ Skipped, counted with the insignificant Lows (cannot be fixed alone):
 | B192 | Low | A task one side ticked and the other deleted is settled for the newer side without asking, the tick kept as a version, where `main` asked | The existing rule: a passage deleted on one side and changed by 16 characters or fewer on the other does not ask; making a tick against a delete always ask changes that rule, the owner's call |
 | B212 | Low | A `.term` file just made, opened by a writer before its maker's first request, starts its session on the writer's machine (rest of B202) | The server records no maker for a file; closing it needs a column written at creation in the v1 and v2 create paths, a schema decision for the owner |
 
-### Round 2 status (paused 2026-10-23, to continue in another session)
+### Round 2 status (closed 2026-10-24)
 
-Not finished: the round's audit is incomplete, and no full-suite run or final
-re-audit has been done. No claim is made yet about what remains.
+Stopped on request after the twenty-second re-audit, without a further one: every
+Critical, High and Medium that the re-audits found has a fix, and no new search was
+made after that. Twenty-two complete re-audits ran; each found new Mediums, most in
+links across spaces, escapes in plain text and the 'ask' clashes of sync, and many of
+those were regressions of the round before. So this says what was found and fixed,
+not that nothing is left.
 
-Audited and judged sound (no finding kept):
+| Severity | Found | Fixed | Open |
+| --- | --: | --: | --: |
+| Critical | 2 | 2 | 0 |
+| High | 50 | 50 | 0 |
+| Medium | 191 | 190 | 1 (B182, skipped) |
+| Low | 136 | 24 | 112 |
 
-- `services/sync`: `feedback.ts`, `feedback-issues.ts` (issue retry, claims, mention
-  quieting, body limit), `mcp/tokens.ts` (tokens end with their session; sessions do
-  not rotate), `erase.ts` guest changes, `notes.ts` paper routes, sync2 rate limits,
-  `publish.ts` race fix, `guests.ts` owner claim.
-- `apps/desktop`: `feedback.svelte.ts`, `naming.ts`, `undo-join.ts`, `workspace.svelte.ts`
-  (canvas open guard: blank text still reads as a new plane), `automation/inside.ts`,
-  canvas eraser/lock/PDF-import changes (`cutInk` keeps identity, so no empty edits),
-  `apps/cli/nib.mjs` screenshot change.
-- Round 1's open Lows re-checked: B48, B53, B54, B55 stay Low. B56 stays Low: the
-  window is the milliseconds between the agent's read and the re-read, and the agent's
-  next edit carries the stale `ifRev` and is refused.
+The skipped list (B95, B114, B182, B191, B192, B212) holds what could not be fixed or
+verified here; it counts with the Lows. B324 was withdrawn. The last full suite passed
+everywhere but `services/machine`'s `linux.test.ts`, whose 14 tests need node-pty,
+which does not build on this machine; Rust and Android are verified by CI only.
 
-Still to audit (each was started by a sub-agent and stopped before it reported):
-
-- `services/sync/src` rest of the diff: blobs (`x-nib-diagram`), `blog/*`, `rooms/room.ts`,
-  `hub/*`, `chats/log.ts`, `spaces/answers.ts`, `settings.ts`, `programs.ts`.
-- `apps/desktop/src/lib/import/*` (archive entry paths, collisions, content loss).
-- `apps/desktop/src/lib/views/*` and `packages/bases` beyond B67/B68 (`order-paths.ts`,
-  `edit.ts`, `board.ts`, `peek.ts`, `new-database.ts`, task view).
-- `apps/desktop/src-tauri` (`paths.rs` first, then new commands and capabilities).
-- `packages/markdown` (`canvas-extras.ts`, `canvas.ts`, the marked patch), `packages/editor`
-  (`loop-guard.ts`), `packages/sync-core/src/diverge.ts` (lead: both sides remove the same
-  task and each adds a different one), `apps/desktop/src/lib/pages`, `sync2/binding.ts`,
-  `quick-add/ai-entry.ts`.
-
-Then: the full suite, then a complete re-audit. Note for the full suite: the container
-restarted twice while `pnpm test` ran with `--workspace-concurrency=2`, so run it one
-package at a time (`pnpm -r --workspace-concurrency=1 test`).
+All fixes land together through one integration branch, which merges every PR's head
+and resolves their conflicts once; the first-paint weight and the bundle's code budget
+are raised there for the sum of them.
