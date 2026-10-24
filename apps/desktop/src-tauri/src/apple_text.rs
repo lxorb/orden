@@ -521,7 +521,7 @@ fn escaped(words: &str) -> String {
 }
 
 /// Whether a `<` followed by this reads as the start of a tag, a closing tag, a
-/// comment or a processing instruction: the four things CommonMark lets raw HTML
+/// comment or a processing instruction: the four things markdown lets raw HTML
 /// begin with. `a < b` is not one of them and keeps its bracket. The same rule as
 /// `OPENS_MARKUP` in `packages/markdown/src/words.ts`.
 pub fn opens_tag(next: Option<char>) -> bool {
