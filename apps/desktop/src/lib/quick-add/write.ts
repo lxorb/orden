@@ -13,6 +13,7 @@ import { insideSpace, isMarkdownPath, relativeTo, withoutExtension } from '../sp
 import { links } from '../link-index.svelte'
 import { onDisk } from '../on-disk'
 import { readIfThere, toldIfUnreadable } from '../read-if-there'
+import { canWriteAt } from '../sharing.svelte'
 import { workspace } from '../workspace.svelte'
 import { noteText, replaceInNotes } from '../workspace/note-text'
 import { writeFile } from '../workspace/write-file'
@@ -72,13 +73,17 @@ async function targetOf(entry: Entry, root: string): Promise<string | null> {
   return path
 }
 
-/** Writes the task; answers where it went, or null where it went nowhere. */
+/** Writes the task; answers where it went, or null where it went nowhere, which is
+ *  also the answer in a space shared with this account to be read. */
 export async function addTask(
   entry: Entry,
   options: { open?: boolean; root?: string } = {},
 ): Promise<{ path: string; line: number } | null> {
   const root = options.root ?? workspace.activeSpace?.root
   if (root === undefined) return null
+  // A space shared to be read takes nothing, not even the inbox the add would make:
+  // the copy here would stop being the space's, and the sync refuses it on every pass.
+  if (!canWriteAt(root)) return null
 
   const path = await targetOf(entry, root)
   if (path === null) return null

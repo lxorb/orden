@@ -24,6 +24,7 @@ import {
 import { account } from './account.svelte'
 import { message } from './i18n.svelte'
 import { rooms } from './rooms.svelte'
+import { samePath } from './space-paths'
 import { within } from './sync/mirror'
 import { sync } from './sync.svelte'
 import { type Origin, originOf, trustsHtml } from './trust'
@@ -104,9 +105,13 @@ function canWrite(root: string): boolean {
 }
 
 /** What may be done where a note sits. A path in no space this machine knows
- *  about is this machine's own, so it can be written in. */
+ *  about is this machine's own, so it can be written in. The space's own folder
+ *  answers as its notes do, since a new note asks of the folder it goes in and the
+ *  space's top is where most of them go. */
 export function canWriteAt(path: string): boolean {
-  const space = workspace.spaces.find((one) => within(one.root, path) !== null)
+  const space = workspace.spaces.find(
+    (one) => samePath(one.root, path) || within(one.root, path) !== null,
+  )
   return !space || canWrite(space.root)
 }
 

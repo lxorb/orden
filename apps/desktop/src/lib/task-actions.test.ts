@@ -19,6 +19,10 @@ vi.mock('./workspace.svelte', () => ({
   },
 }))
 
+// Every space here is the reader's own; what a space shared to be read refuses is
+// quick-add/write.test.ts's.
+vi.mock('./sharing.svelte', () => ({ canWriteAt: () => true }))
+
 vi.mock('./workspace/note-text', () => ({
   noteText: (_ws: unknown, path: string) => Promise.resolve(files.get(path) ?? null),
   replaceInNotes: (_ws: unknown, changes: { path: string; after: string }[]) => {

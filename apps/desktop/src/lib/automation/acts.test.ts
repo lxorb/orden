@@ -124,7 +124,16 @@ vi.mock('../views.svelte', () => ({ views: { of: () => undefined } }))
 // note another device made; nothing here is about syncing.
 vi.mock('../sync.svelte', () => ({ sync: { mergeable: () => undefined } }))
 
-const { appendNote, openNote, runCommand, setProperty } = await import('./acts')
+/** The spaces shared with this account to be read, by root. What may be written where
+ *  is sharing.svelte.ts's, which wants an account a unit test has none of. */
+const readOnly = new Set<string>()
+vi.mock('../sharing.svelte', () => ({
+  canWriteAt: (path: string) =>
+    ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
+}))
+
+const { appendNote, deleteFile, moveFile, newNote, openNote, runCommand, setProperty, writeFile } =
+  await import('./acts')
 
 describe('a note named rather than pathed', () => {
   test('is opened at the path the index holds it under', async () => {
@@ -397,5 +406,30 @@ describe('a property an automation sets', () => {
 
     await setProperty({ path: 'Plan.md', key: 'status', value: 'In progress' })
     expect(written[0]?.after).toBe('---\nstatus: In progress\n---\n# Plan\n')
+/** A space shared with this account to be read is one nothing may be written in: the
+ *  copy here would stop being the space's, and the sync would refuse the change on
+ *  every pass. A link and the command line can only do what somebody at the keyboard
+ *  could, and they could not write there either. */
+describe('a space shared to be read', () => {
+  test('takes no write from a verb, and says why', async () => {
+    held.clear()
+    held.set('/Work/Plan.md', '# Plan')
+    written.length = 0
+    made.length = 0
+    readOnly.add('/Work')
+
+    const asked = [
+      () => setProperty({ path: 'Plan.md', key: 'status', value: 'done' }),
+      () => appendNote({ path: 'Daily.md', content: 'A line.' }),
+      () => newNote({ path: 'Fresh.md' }),
+      () => writeFile({ path: 'Plan.md', content: 'Gone.' }),
+      () => moveFile({ path: 'Plan.md', to: 'Later.md' }),
+      () => deleteFile({ path: 'Plan.md' }),
+    ]
+    for (const one of asked) await expect(one()).rejects.toThrow(/shared with you to read/)
+
+    expect(written).toEqual([])
+    expect(made).toEqual([])
+    readOnly.clear()
   })
 })
