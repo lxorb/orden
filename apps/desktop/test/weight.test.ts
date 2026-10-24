@@ -831,31 +831,13 @@ function holds(tail: string): boolean {
  *  stands over the caption rather than pushing the file list down under the pointer
  *  (`is-floating` in Bookmarks.svelte). Measured 3,280,466.
  *
- *  Raised 2026-10-24, to 3,282,000, for #752: a merge records what the note it went
- *  into says once its links are rewritten, so undoing it checks against those words
- *  (`mergeInto` in workspace/composing.ts). Measured 3,281,333.
+ *  Raised 2026-10-24, to 3,282,000, for #737: a note made in a folder taken from a
+ *  tab asks the disk for its name, since the tab can be from a space not on screen
+ *  (`freeNameOnDisk` in workspace.svelte.ts). Measured 3,281,445.
  *
- *  Raised 2026-10-24, to 3,283,000, for #778: signed in, a delete goes to the account
- *  only when its space is on the account, and an undone copy or import to this
- *  device's trash (`bin` in workspace.svelte.ts). Measured 3,282,517.
- *
- *  Raised 2026-10-24, to 3,284,000, for #795: a delete goes to the account only with
- *  what the account holds, every file pushed and no dotfile (`holds` in
- *  sync.svelte.ts, `accountHolds` in workspace.svelte.ts). Measured 3,283,653.
- *
- *  Raised 2026-10-24, to 3,285,000, for #809: a paper or a picture goes to this
- *  device's trash, signed in or not, since the account's Recently deleted gives back
- *  notes alone (`accountHolds` in workspace.svelte.ts), and a paper that would not
- *  read is not recorded as sent (`pushFiles` in sync/pass.ts). Measured 3,284,087.
- *
- *  Raised 2026-10-24, to 3,285,000, for #811: the file list's gestures refuse a space
- *  shared to be read, in the workspace's own calls (`writableAt`) and in the row menu,
- *  the tree's keys and the palette. Measured 3,283,904.
- *
- *  Raised 2026-10-24, to 3,290,000, for #832: #811 and #820 together measured
- *  3,287,847, and a website in a space shared to be read browses without writing its
- *  file (`canWriteAt` in web-tab/keep.ts and aimed.ts, `browseOldWebsite` in
- *  workspace.svelte.ts). Measured 3,289,263. */
+ *  Raised 2026-10-24, to 3,285,000, for #835: the b247 branch it merges in,
+ *  and Split at caret and Extract selection asking what a merge asks before they
+ *  write a note beside a file (`canWrite` in composer-commands.ts). Measured 3,284,761. */
 const BUDGET = 3_300_000 // combined branch only
 const MOST_FILES = 382
 

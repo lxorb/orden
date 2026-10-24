@@ -157,3 +157,45 @@ describe('the notes offered to merge into', () => {
     expect(workspace.merged).toEqual([`${SPACE}/a.md -> ${SPACE}/b.md`])
   })
 })
+
+/** An editor that may be typed in, with words selected and words after the caret:
+ *  everything a split or an extraction asks of the view. */
+const typing = {
+  state: {
+    readOnly: false,
+    selection: { main: { empty: false, head: 0, from: 0, to: 4 } },
+    doc: { sliceString: () => 'some words' },
+  },
+} as unknown as EditorView
+
+function offered(id: string, view?: EditorView): boolean {
+  return !composerCommands(view).find((command) => command.id === id)?.disabled
+}
+
+// A split or an extraction writes a `.md` beside the file and a `[[link]]` into it,
+// which only a markdown note of the open space that may be written can take: in
+// `snippets.json` or `custom.css` the link breaks the file it is written into.
+describe.each(['split-at-caret', 'extract-selection'])('%s', (id) => {
+  test('is offered for a note of the open space', () => {
+    openAt(`${SPACE}/a.md`)
+    expect(offered(id, typing)).toBe(true)
+  })
+
+  test('is not offered for a file that is not a markdown note', () => {
+    for (const file of ['snippets.json', 'custom.css', 'notes.txt', 'main.rs', 'Board.canvas']) {
+      openAt(`${SPACE}/${file}`)
+      expect(offered(id, typing)).toBe(false)
+    }
+  })
+
+  test('is not offered for a note of a space that is not the open one', () => {
+    openAt('/other/a.md')
+    expect(offered(id, typing)).toBe(false)
+  })
+
+  test('is not offered in a space shared to be read', () => {
+    readOnly.add(SPACE)
+    openAt(`${SPACE}/a.md`)
+    expect(offered(id, typing)).toBe(false)
+  })
+})
