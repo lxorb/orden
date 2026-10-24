@@ -20,7 +20,7 @@ use crate::carry::move_whole;
 use crate::clock;
 use crate::paths::{
     folded, free_spot, in_spaces, inside, is_reserved, made, move_held, move_paper,
-    rejoins_highlights, restore_held, spaces_dir, write_atomically, TRASH,
+    rejoins_highlights, restore_held, spaces_dir, write_atomically, HIGHLIGHTS, TRASH,
 };
 
 /// The record of what is in the trash, written beside the folders it describes.
@@ -183,21 +183,33 @@ pub fn trash_words(app: AppHandle, path: String, content: String) -> Result<Tras
 fn placed(app: &AppHandle, path: &str) -> Result<(PathBuf, String, String), String> {
     let base = spaces_dir(app)?;
     let source = in_spaces(app, path)?;
+    let (from, name) = manifest_place(&base, &source)?;
+    Ok((source, from, name))
+}
 
+/// Where `source` is inside the notes folder `base`, with `/` between parts, and its
+/// name: what the manifest writes down.
+fn manifest_place(base: &Path, source: &Path) -> Result<(String, String), String> {
     let relative = source
-        .strip_prefix(&base)
-        .map_err(|_| format!("{path} is not in the notes folder"))?;
+        .strip_prefix(base)
+        .map_err(|_| format!("{} is not in the notes folder", source.display()))?;
     if relative.as_os_str().is_empty() {
         return Err("that cannot be deleted".into());
     }
-    let from = relative.to_string_lossy().replace('\\', "/");
+    // Part by part rather than by replacing `\\`, which is a letter in a name on a Mac
+    // or Linux and only Windows's separator.
+    let from = relative
+        .components()
+        .map(|part| part.as_os_str().to_string_lossy())
+        .collect::<Vec<_>>()
+        .join("/");
 
     let name = source
         .file_name()
         .map(|name| name.to_string_lossy().to_string())
         .ok_or("that has no name")?;
 
-    Ok((source, from, name))
+    Ok((from, name))
 }
 
 /// One more entry in the manifest. One that cannot be written down is something
@@ -269,13 +281,41 @@ fn restored(base: &Path, dir: &Path, id: &str) -> Result<String, String> {
     // paper under its page note's, which is not the old one when something has
     // taken its place in the meantime.
     restore_held(&held, &target);
-    // Only once it is empty: a paper or highlights that could not follow are still in
-    // the slot, and taking the slot with them would be deleting them for good.
-    let _ = fs::remove_dir(&slot);
 
-    entries.remove(position);
+    // A paper or highlights that could not follow are still in the slot, and stay in
+    // the trash as the file they are rather than going with the slot or staying in
+    // one nobody can see.
+    match left_in(&slot) {
+        None => {
+            let _ = fs::remove_dir(&slot);
+            entries.remove(position);
+        }
+        Some(left) => {
+            let folder = entry.from.rsplit_once('/').map_or("", |(folder, _)| folder);
+            entries[position].from = if folder.is_empty() {
+                left.clone()
+            } else {
+                format!("{folder}/{left}")
+            };
+            entries[position].name = left;
+            entries[position].kind = "note".into();
+        }
+    }
     write_manifest(dir, &entries)?;
     Ok(target.to_string_lossy().to_string())
+}
+
+/// What is still in a slot once its file has gone back: a paper or highlights that
+/// could not follow it, named by the one to put back first - a paper brings its own
+/// highlights with it.
+fn left_in(slot: &Path) -> Option<String> {
+    let mut left: Vec<String> = fs::read_dir(slot)
+        .ok()?
+        .flatten()
+        .map(|one| one.file_name().to_string_lossy().into_owned())
+        .collect();
+    left.sort_by_key(|name| name.ends_with(HIGHLIGHTS));
+    left.into_iter().next()
 }
 
 /// Takes one thing away for good.
@@ -418,7 +458,7 @@ fn restore_target(base: &Path, entry: &TrashEntry) -> Result<PathBuf, String> {
         return Err("that did not come from the notes folder".into());
     }
 
-    if entry.apart && rejoins_highlights(&wanted) {
+    if entry.apart && entry.kind == "note" && rejoins_highlights(&wanted) {
         return Ok(wanted);
     }
     Ok(free_spot(&wanted, entry.kind == "note"))
@@ -468,8 +508,8 @@ fn is_name(name: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
-        is_name, is_slot, purge, read_manifest, recorded, restore_target, write_manifest,
-        TrashEntry, MANIFEST,
+        is_name, is_slot, manifest_place, purge, read_manifest, recorded, restore_target,
+        write_manifest, TrashEntry, MANIFEST,
     };
     use std::path::{Path, PathBuf};
 
@@ -624,6 +664,48 @@ mod tests {
                 "{name}"
             );
         }
+    }
+
+    /// A `\\` in a name is a letter on a Mac or Linux, where Finder allows one: written
+    /// down as a `/` it came back as a folder `back` with `slash.md` in it, its name
+    /// lost and every link to it broken. Only Windows writes its paths with `\\`.
+    #[cfg(unix)]
+    #[test]
+    fn a_name_with_a_backslash_comes_back_under_it() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let base = dir.path();
+        let source = base.join(r"Q\4").join(r"back\slash.md");
+
+        let (from, name) = manifest_place(base, &source).expect("placed");
+        assert_eq!(from, r"Q\4/back\slash.md");
+        assert_eq!(name, r"back\slash.md");
+        assert_eq!(
+            restore_target(base, &entry("1-0", &name, &from)),
+            Ok(base.join(r"Q\4").join(r"back\slash.md"))
+        );
+    }
+
+    #[test]
+    fn a_place_is_written_with_slashes() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let base = dir.path();
+        let (from, name) =
+            manifest_place(base, &base.join("Work").join("Idea.md")).expect("placed");
+        assert_eq!((from.as_str(), name.as_str()), ("Work/Idea.md", "Idea.md"));
+        assert!(manifest_place(base, base).is_err());
+    }
+
+    /// A folder called `Report.pages` - a macOS Pages document is one - holds no paper,
+    /// so a `Report.pages.pdf` beside it does not take its name.
+    #[test]
+    fn a_folder_of_a_page_notes_name_restores_beside_a_pdf_of_its_papers_name() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let base = dir.path();
+        std::fs::write(base.join("Report.pages.pdf"), b"%PDF mine").expect("a PDF");
+        let mut folder = entry("1-0", "Report.pages", "Report.pages");
+        folder.kind = "folder".into();
+
+        assert_eq!(restore_target(base, &folder), Ok(base.join("Report.pages")));
     }
 
     #[test]

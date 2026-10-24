@@ -125,7 +125,7 @@ fn stored(dir: &Path, safe: &str, bytes: &[u8]) -> Result<PathBuf, String> {
     // Anything else steps aside: a different picture of the name would be taken away,
     // and a name that is free may still be taken, as `Report.pages.pdf` is beside a page
     // note `Report.pages`, which would take it for its paper (#538).
-    let target = first_spot(&dir.join(safe), true, |one| !taken(one) || ours(one));
+    let target = first_spot(&dir.join(safe), true, |one| !taken(one, true) || ours(one));
 
     if !ours(&target) {
         fs::write(&target, bytes).map_err(|error| cannot("write", &target, &error))?;

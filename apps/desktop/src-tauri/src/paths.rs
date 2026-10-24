@@ -213,11 +213,15 @@ fn holds_paper(path: &Path) -> bool {
 /// round: such a PDF put beside a page note `Report.pages` with no paper yet is taken
 /// by that note for its paper, so for a PDF the name is taken where the note is. And
 /// where highlights a gone PDF left behind are, which a new one would show as its own.
-pub fn taken(path: &Path) -> bool {
+///
+/// Only for a file: a folder called `Report.pages`, which a macOS Pages document is,
+/// holds no paper and is no paper.
+pub fn taken(path: &Path, is_file: bool) -> bool {
     path.exists()
-        || (is_pages(path) && paper_of(path).exists())
-        || paper_holder(path).is_some()
-        || (is_pdf(path) && highlights_of(path).exists())
+        || (is_file
+            && ((is_pages(path) && paper_of(path).exists())
+                || paper_holder(path).is_some()
+                || (is_pdf(path) && highlights_of(path).exists())))
 }
 
 /// Whether a page note may be called `to`, coming from `from`: not over a file where its
@@ -1271,7 +1275,7 @@ fn spill(temp: &Path, bytes: &[u8], private: bool) -> Result<(), String> {
 /// `path` if nothing is there, else the first free `name 2`, `name 3`... - the
 /// number before the extension for a file, after the name for a folder.
 pub fn free_spot(path: &Path, is_file: bool) -> PathBuf {
-    first_spot(path, is_file, |one| !taken(one))
+    first_spot(path, is_file, |one| !taken(one, is_file))
 }
 
 /// The first of `path`, `name 2`, `name 3`... that `fits`, numbered as `free_spot`
