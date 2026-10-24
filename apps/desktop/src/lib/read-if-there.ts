@@ -6,7 +6,7 @@ import { invoke } from './tauri'
 
 /** A file that is there and would not read as a note: written in an encoding that is
  *  not UTF-8, over the size the crate reads, or held by a cloud that cannot fetch it. */
-export class Unreadable extends Error {
+class Unreadable extends Error {
   constructor(readonly path: string) {
     super(`${path} is there and would not read, and nothing is written over it`)
     this.name = 'Unreadable'

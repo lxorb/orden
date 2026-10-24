@@ -32,7 +32,7 @@ function pointersUnder(entry: Entry, found: string[] = []): string[] {
 
 /** The pointers a move of this path carries: the file itself, or every one in the
  *  folder, as the open space's tree has them. */
-export function pointersIn(path: string): string[] {
+function pointersIn(path: string): string[] {
   const entry = workspace.entryAt(path)
   if (entry) return pointersUnder(entry)
   return isChatTarget(path) ? [path] : []

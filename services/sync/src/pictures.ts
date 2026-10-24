@@ -201,7 +201,7 @@ const DRAWN = new Set(['src', 'srcset', 'poster', 'style'])
 /** Every address raw HTML draws a picture from, read the way a browser reads a tag: an
  *  attribute's value whole, quotes and all - so a `>` inside one does not end the tag -
  *  with its character references decoded, and only inside tags, never between them. */
-export function drawnByHtml(html: string): string[] {
+function drawnByHtml(html: string): string[] {
   const found: string[] = []
   let at = 0
   while ((at = html.indexOf('<', at)) !== -1) {

@@ -60,7 +60,7 @@ const DATA_KEY = 'nib-data'
 const OWN = /^[0-9a-f]{16}$/
 
 /** A `.webloc`'s `URL` string, as written. */
-export const WEBLOC_URL = /(?<=<key>\s*URL\s*<\/key>\s*<string>)[\s\S]*?(?=<\/string>)/i
+const WEBLOC_URL = /(?<=<key>\s*URL\s*<\/key>\s*<string>)[\s\S]*?(?=<\/string>)/i
 
 /** What a shortcut file says. */
 export interface Shortcut {
