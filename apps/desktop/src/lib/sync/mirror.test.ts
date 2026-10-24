@@ -1784,7 +1784,9 @@ describe('a delete the account did not take', () => {
 
 /** Another device deleted a note this one holds. Words typed here since the last pass
  *  are words that device never saw, so the edit beats the delete and goes back up; a
- *  note nobody wrote in here goes to this device's trash, never off the disk. */
+ *  note nobody wrote in here goes, a version of it kept, and the account's Recently
+ *  deleted is where it comes back from - not this device's as well, where it was listed
+ *  a second time (#765). */
 describe('a note deleted on another device', () => {
   const live = () =>
     [...fake.remote.values()].filter((one) => !one.deleted).map((one) => [one.path, one.content])
@@ -1802,7 +1804,7 @@ describe('a note deleted on another device', () => {
     expect(live()).toEqual([['Plan.md', '# Plan\ntyped offline\n']])
   })
 
-  test('goes to this device’s trash when nothing was written here, with a version', async () => {
+  test('goes when nothing was written here, with a version, and not to this device’s trash', async () => {
     const { mirror, id } = await paired('Plan.md', '# Plan\n')
     fake.deleteRemote(id)
 
@@ -1810,22 +1812,19 @@ describe('a note deleted on another device', () => {
     await push(mirror, 'token', NOBODY)
 
     expect(fake.disk.has(`${ROOT}/Plan.md`)).toBe(false)
-    expect(fake.calls).toEqual([`trash ${ROOT}/Plan.md`])
+    expect(fake.calls).toEqual([`delete ${ROOT}/Plan.md`])
     expect(fake.history.get(`${ROOT}/Plan.md`)).toEqual(['# Plan\n'])
+    expect([...fake.trash.keys()]).toEqual([])
     expect(live()).toEqual([])
   })
 
-  test('and comes back from the trash, and up to the account with it', async () => {
-    const { mirror, id } = await paired('Plan.md', '# Plan\n')
+  test('but a page note goes to this device’s trash, which keeps its paper beside it', async () => {
+    const { mirror, id } = await paired('Lecture.pages', '{}')
     fake.deleteRemote(id)
+
     await pull(mirror, 'token', NOBODY)
 
-    const [held] = fake.trash.keys()
-    await fake.invoke('restore_trash', { id: held })
-    await push(mirror, 'token', NOBODY)
-
-    expect(fake.disk.get(`${ROOT}/Plan.md`)).toBe('# Plan\n')
-    expect(live()).toEqual([['Plan.md', '# Plan\n']])
+    expect(fake.calls).toEqual([`trash ${ROOT}/Lecture.pages`])
   })
 
   test('in a folder deleted there keeps the one note written in here', async () => {
@@ -1845,7 +1844,7 @@ describe('a note deleted on another device', () => {
 
     expect(fake.disk.get(`${ROOT}/Work/Kept.md`)).toBe('# Kept\nand more\n')
     expect(fake.disk.has(`${ROOT}/Work/Left.md`)).toBe(false)
-    expect(fake.calls).toEqual([`trash ${ROOT}/Work/Left.md`, 'createNote Work/Kept.md'])
+    expect(fake.calls).toEqual([`delete ${ROOT}/Work/Left.md`, 'createNote Work/Kept.md'])
   })
 
   test('is kept when the file here will not read, since nobody can say it is unchanged', async () => {
@@ -1862,7 +1861,7 @@ describe('a note deleted on another device', () => {
   /** A room carries every keystroke up as it is typed, so the account - and its
    *  Recently deleted - already holds what the file says, however far the file has
    *  moved from the last pass. */
-  test('goes to the trash when its room already carried the writing up', async () => {
+  test('goes when its room already carried the writing up', async () => {
     const { mirror, id } = await paired('Plan.md', '# Plan\n')
     fake.disk.set(`${ROOT}/Plan.md`, '# Plan\ntyped in the room\n')
     fake.deleteRemote(id)
@@ -1870,7 +1869,7 @@ describe('a note deleted on another device', () => {
     await pull(mirror, 'token', new Set([id]))
 
     expect(fake.disk.has(`${ROOT}/Plan.md`)).toBe(false)
-    expect(fake.calls).toEqual([`trash ${ROOT}/Plan.md`])
+    expect(fake.calls).toEqual([`delete ${ROOT}/Plan.md`])
   })
 
   /** A delete names a note, not a path. The name can belong to another note by the

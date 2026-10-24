@@ -18,6 +18,7 @@ import { invoke, isDesktop, joinPath, platform } from '../tauri'
 import { classifier } from './classify'
 import { accountOver, remoteFiles } from './transport'
 import type { Disk, FileKind, World } from './world'
+import { syncDeletes } from '../sync/deletes'
 
 /** What the engine's own changes to the disk owe the rest of the app. */
 export interface Telling {
@@ -75,22 +76,22 @@ function diskOf(telling: Telling): Disk {
     },
     async remove(path, kind) {
       telling.touching(path)
-      // To this device's trash, with a version of the words kept first, the way a
-      // delete made here keeps one: a note another device deleted is still a note
-      // somebody might want back.
+      // A version of the words kept first, the way a delete made here keeps one.
       if (kind === 'file') {
         const words = await invoke<string>('read_note', { path }).catch(() => null)
         if (words?.trim())
           await invoke('snapshot_note', { path, content: words }).catch(() => undefined)
       }
-      // Leaving what the account holds as an entry of its own, a PDF's highlights, for
-      // that entry's own move or delete: a PDF turned into its page note elsewhere comes
-      // as this delete, run first, and a move of its highlights, which found none.
-      await invoke('trash_item', {
-        path,
-        kind: kind === 'folder' ? 'folder' : 'note',
-        alone: true,
-      })
+      // Then gone the way a delete made here, signed in, goes (`deleteEntry` in
+      // workspace.svelte.ts): what the account keeps in its own Recently deleted - a
+      // note another device deleted, a day's note whose words went into the one that
+      // was there - is not put in this device's as well. It showed up there twice, or
+      // as something nobody here deleted (#765). What the account's Recently deleted
+      // does not hold goes to this device's: a folder, which may hold files that never
+      // travel; a page note, whose paper only this trash keeps beside it; and any other
+      // file, whose bytes the account keeps only as a version.
+      if (syncDeletes(path, kind)) await invoke('delete_note', { path })
+      else await invoke('trash_item', { path, kind: kind === 'folder' ? 'folder' : 'note' })
       await telling.gone(path, kind)
     },
     mkdir: (path) => invoke('create_folder', { path }).then(() => undefined),
