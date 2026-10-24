@@ -831,7 +831,8 @@ function holds(tail: string): boolean {
  *  stands over the caption rather than pushing the file list down under the pointer
  *  (`is-floating` in Bookmarks.svelte). Measured 3,280,466.
  *
- *  Raised 2026-10-24, to 3,282,000, for #720: a note's own front matter is kept as the one block on import (`frontMatterKeys`). Measured 3,281,007. */
+ *  Raised 2026-10-24, to 3,282,000, for #720: a note's own front matter is kept as the
+ *  one block on import (`frontMatterKeys`). Measured 3,281,007. */
 const BUDGET = 3_282_000
 const MOST_FILES = 382
 
