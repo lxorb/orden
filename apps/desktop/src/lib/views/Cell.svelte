@@ -18,11 +18,20 @@
   import { t } from '../i18n.svelte'
   import PropertyValue from '../properties/PropertyValue.svelte'
   import { valueText } from './chips'
-  import { bare, changeOf, type Editor, formatOf, optionsOf, toneOf } from './columns'
+  import {
+    bare,
+    changeOf,
+    type Editor,
+    formatOf,
+    isNoteProperty,
+    optionsOf,
+    toneOf,
+  } from './columns'
   import { formatted } from './format'
   import { toneColour } from './chips'
   import { openExternal } from '../tauri'
   import type { Kit } from './kit'
+  import type { ListChange } from '../rows/write'
   import TaskBox from './TaskBox.svelte'
   import { dayIn, isDateValue } from './values'
   import Words from './Words.svelte'
@@ -75,7 +84,10 @@
     if (change) kit.write(row, change)
   }
 
-  /** The value as a property row, for the shared control. */
+  /** The value as a property row, for the shared control. Its items are the members
+   *  as shown, which is all a cell holds: a note's list is changed a chip at a time
+   *  (`onchip`), against the members as the note writes them, so a link stays a link
+   *  and a date a date rather than the words `Beta` or `Today`. */
   const asProperty = $derived.by((): Property => {
     const items = Array.isArray(value) ? value.map((one) => valueText(one, kit.live.today)) : []
     const kind =
@@ -241,6 +253,9 @@
         autofocus
         onwrite={(words: string | null) => write(fromWords(words))}
         onitems={(items: ListItem[]) => write(items)}
+        onchip={isNoteProperty(property)
+          ? (chip: ListChange) => kit.write(row, { list: { [bare(property)]: chip } })
+          : undefined}
       />
     {/if}
   </span>

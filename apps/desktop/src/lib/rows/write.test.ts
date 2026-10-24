@@ -124,6 +124,44 @@ describe('a property written from a view', () => {
     )
   })
 
+  test('takes a chip off a list and writes the other members as the note has them', () => {
+    const text =
+      '---\nrelated: ["[[Projects/Alpha]]", "[[Beta|B]]", "[[Gamma]]"]\ndue: [2026-10-24, 2026-11-02]\nflags: [true, false, 1234.5]\n---\n# N\n'
+    const row = noteRow(text)
+    expect(changed(text, row, { list: { related: { remove: 1 } } })).toBe(
+      "---\nrelated: ['[[Projects/Alpha]]', '[[Gamma]]']\ndue: [2026-10-24, 2026-11-02]\nflags: [true, false, 1234.5]\n---\n# N\n",
+    )
+    expect(changed(text, row, { list: { due: { remove: 1 } } })).toBe(
+      '---\nrelated: ["[[Projects/Alpha]]", "[[Beta|B]]", "[[Gamma]]"]\ndue: [2026-10-24]\nflags: [true, false, 1234.5]\n---\n# N\n',
+    )
+    expect(changed(text, row, { list: { flags: { remove: 0 } } })).toBe(
+      '---\nrelated: ["[[Projects/Alpha]]", "[[Beta|B]]", "[[Gamma]]"]\ndue: [2026-10-24, 2026-11-02]\nflags: [false, 1234.5]\n---\n# N\n',
+    )
+  })
+
+  test('puts a chip on a list with the other members as the note has them', () => {
+    const text = '---\ndue: [2026-10-24, 2026-11-02]\nflags: [true, false, 1234.5]\n---\n# N\n'
+    const row = noteRow(text)
+    expect(changed(text, row, { list: { due: { add: '2026-12-01' } } })).toBe(
+      '---\ndue: [2026-10-24, 2026-11-02, 2026-12-01]\nflags: [true, false, 1234.5]\n---\n# N\n',
+    )
+    expect(changed(text, row, { list: { flags: { add: '3' } } })).toBe(
+      '---\ndue: [2026-10-24, 2026-11-02]\nflags: [true, false, 1234.5, 3]\n---\n# N\n',
+    )
+    // A list the note does not hold yet, and one written as a single value.
+    expect(changed('---\ntags: a\n---\n', row, { list: { tags: { add: 'b' } } })).toBe(
+      '---\ntags: [a, b]\n---\n',
+    )
+    expect(changed('---\ntags: a\n---\n', row, { list: { links: { add: 'b' } } })).toBe(
+      '---\ntags: a\nlinks: [b]\n---\n',
+    )
+    // A chip the list already has writes nothing.
+    expect(changed(text, row, { list: { flags: { add: '1234.5' } } })).toBe(text)
+    // Nor does one put on a map, which is no list.
+    const mapped = '---\nexport:\n  paper: A4\n---\n'
+    expect(changed(mapped, row, { list: { export: { add: 'b' } } })).toBe(mapped)
+  })
+
   test('opens a block in a note that has none', () => {
     expect(changed('# Plan\n', note, { note: { priority: 2 } })).toBe(
       '---\npriority: 2\n---\n# Plan\n',
