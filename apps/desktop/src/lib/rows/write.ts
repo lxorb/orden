@@ -139,10 +139,16 @@ export function taskLine(
 function propertyEdit(text: string, key: string, value: Value): TextEdit | null | undefined {
   if (value === null) return writeProperty(text, key, null)
   if (Array.isArray(value)) {
+    // Each member as what it is: a number, a yes or no and nothing stay themselves,
+    // where turning them into words would write `[1, 10]` back as `['1', '10']`.
     return writeList(
       text,
       key,
-      value.map((one) => written(one) ?? ''),
+      value.map((one) =>
+        one === null || typeof one === 'number' || typeof one === 'boolean'
+          ? one
+          : (written(one) ?? ''),
+      ),
     )
   }
   if (typeof value === 'boolean') return writeProperty(text, key, String(value), 'checkbox')

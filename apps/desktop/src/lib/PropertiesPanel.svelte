@@ -23,6 +23,7 @@
   import { frontMatterBlock } from '@nib/markdown/front-matter'
   import { type Property, readProperties } from '@nib/markdown/properties'
   import {
+    type ListItem,
     removeProperty,
     renameProperty,
     writeList,
@@ -81,7 +82,7 @@
     apply(writeProperty(source(), property.key, value, property.kind))
   }
 
-  function writeItems(key: string, items: string[]) {
+  function writeItems(key: string, items: ListItem[]) {
     apply(writeList(source(), key, items))
   }
 
@@ -203,7 +204,7 @@
             {writable}
             choices={PROPERTY_CHOICES[property.key] ?? null}
             onwrite={(value: string | null) => write(property, value)}
-            onitems={(items: string[]) => writeItems(property.key, items)}
+            onitems={(items: ListItem[]) => writeItems(property.key, items)}
             {onsearch}
           />
         </div>

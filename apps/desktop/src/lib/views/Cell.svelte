@@ -14,6 +14,7 @@
   import { cellValue } from '@nib/bases'
   import { tick } from 'svelte'
   import type { Property } from '@nib/markdown/properties'
+  import type { ListItem } from '@nib/markdown/property-edits'
   import { t } from '../i18n.svelte'
   import PropertyValue from '../properties/PropertyValue.svelte'
   import { valueText } from './chips'
@@ -97,7 +98,18 @@
             : Array.isArray(value)
               ? ''
               : shown
-    return { key: bare(property), kind, value: said, items, from: 0, to: 0 }
+    // A member that is words says so, as quotes would in the note: a chip taken off
+    // `['1', 2]` must not write the words `1` back as the number.
+    const quotedItems = Array.isArray(value) ? value.map((one) => typeof one === 'string') : []
+    return {
+      key: bare(property),
+      kind,
+      value: said,
+      items,
+      ...(quotedItems.includes(true) ? { quotedItems } : {}),
+      from: 0,
+      to: 0,
+    }
   })
 
   const choices = $derived(kit.live.base ? optionsOf(kit.live.base, property) : [])
@@ -228,7 +240,7 @@
         choices={choices.length ? choices : null}
         autofocus
         onwrite={(words: string | null) => write(fromWords(words))}
-        onitems={(items: string[]) => write(items)}
+        onitems={(items: ListItem[]) => write(items)}
       />
     {/if}
   </span>

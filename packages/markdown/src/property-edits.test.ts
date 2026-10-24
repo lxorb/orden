@@ -168,6 +168,41 @@ describe('a list', () => {
     ])
   })
 
+  test('a chip taken off a list of numbers leaves the others numbers', () => {
+    const note = '---\nscores: [1, 2, 10]\n---\n'
+    const scores = readProperties(note)?.find((one) => one.key === 'scores')
+    expect(scores).toBeDefined()
+    // Asserted on the line above.
+    const written = applied(note, writeList(note, 'scores', withoutItem(scores!, '2') ?? []))
+    expect(written).toBe('---\nscores: [1, 10]\n---\n')
+  })
+
+  test('each item keeps its type: bare where it is a number, a yes or nothing', () => {
+    expect(writtenList([1, 2.5, -3, true, false, null, 'one'])).toBe(
+      '[1, 2.5, -3, true, false, null, one]',
+    )
+    // Words that YAML would read as something else stay words.
+    expect(writtenList(['1', 'true', 'null', '~', ''])).toBe("['1', 'true', 'null', '~', '']")
+  })
+
+  test('a chip off a mixed list leaves quoted items quoted and plain ones plain', () => {
+    const note = "---\nmixed: [1, '2', true, 'false', null, x, y]\n---\n"
+    const mixed = readProperties(note)?.find((one) => one.key === 'mixed')
+    expect(mixed).toBeDefined()
+    // Asserted on the line above.
+    const written = applied(note, writeList(note, 'mixed', withoutItem(mixed!, 'y') ?? []))
+    expect(written).toBe("---\nmixed: [1, '2', true, 'false', null, x]\n---\n")
+  })
+
+  test('a chip added to a list keeps the items before it as they were', () => {
+    const note = '---\nscores:\n  - 1\n  - true\n---\n'
+    const scores = readProperties(note)?.find((one) => one.key === 'scores')
+    expect(scores).toBeDefined()
+    // Asserted on the line above.
+    const written = applied(note, writeList(note, 'scores', withItem(scores!, 'more') ?? []))
+    expect(written).toBe('---\nscores: [1, true, more]\n---\n')
+  })
+
   test('the last chip off leaves the key with an empty list rather than no key', () => {
     const written = applied(NOTE, writeList(NOTE, 'tags', []))
 

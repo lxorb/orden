@@ -288,6 +288,9 @@ describe('bases', () => {
       withProperties('Words', { status: 'done', pages: 3, read: true, tags: ['a', 'b'] }),
     ).toBe('---\nstatus: done\npages: 3\nread: true\ntags: [a, b]\n---\nWords')
     expect(withProperties('---\nstatus: done\n---\nWords', { status: null })).toBe('Words')
+    expect(withProperties('Words', { scores: [1, 10, true, null, '2'] })).toBe(
+      "---\nscores: [1, 10, true, null, '2']\n---\nWords",
+    )
     expect(() => withProperties('', { 'a:b': 1 })).toThrow(AgentError)
   })
 

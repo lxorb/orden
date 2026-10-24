@@ -24,7 +24,13 @@
 import { EditorSelection, Facet } from '@codemirror/state'
 import type { EditorView } from '@codemirror/view'
 import { type Property, propertiesTable, readProperties } from '@nib/markdown/properties'
-import { withItem, withoutItem, writeList, writeProperty } from '@nib/markdown/property-edits'
+import {
+  type ListItem,
+  withItem,
+  withoutItem,
+  writeList,
+  writeProperty,
+} from '@nib/markdown/property-edits'
 import { label } from '../labels'
 import { applied, clearOfBlock } from './front-matter'
 import { pressedByKey } from '../press'
@@ -122,7 +128,7 @@ function write(view: EditorView, property: Property, value: string | null): bool
   return true
 }
 
-function writeItems(view: EditorView, key: string, items: readonly string[] | null): boolean {
+function writeItems(view: EditorView, key: string, items: readonly ListItem[] | null): boolean {
   if (view.state.readOnly || items === null) return false
 
   const source = view.state.doc.toString()

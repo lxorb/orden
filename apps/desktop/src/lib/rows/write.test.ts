@@ -117,6 +117,13 @@ describe('a property written from a view', () => {
     ).toBe("---\nstatus: open\ntags: [a, b]\nproject: '[[Thesis]]'\n---\n# Plan\n")
   })
 
+  test('writes a list of numbers, yeses and nothing bare, and words that read as one quoted', () => {
+    const text = '---\nstatus: open\n---\n# Plan\n'
+    expect(changed(text, note, { note: { scores: [1, 10, true, null, '2'] } })).toBe(
+      "---\nstatus: open\nscores: [1, 10, true, null, '2']\n---\n# Plan\n",
+    )
+  })
+
   test('opens a block in a note that has none', () => {
     expect(changed('# Plan\n', note, { note: { priority: 2 } })).toBe(
       '---\npriority: 2\n---\n# Plan\n',
