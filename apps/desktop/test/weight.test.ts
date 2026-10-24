@@ -831,15 +831,14 @@ function holds(tail: string): boolean {
  *  stands over the caption rather than pushing the file list down under the pointer
  *  (`is-floating` in Bookmarks.svelte). Measured 3,280,466.
  *
- *  Raised 2026-10-24, to 3,285,000, for #811: the file list's gestures refuse a space
- *  shared to be read, in the workspace's own calls (`writableAt`) and in the row menu,
- *  the tree's keys and the palette. Measured 3,283,904.
+ *  Raised 2026-10-24, to 3,284,000, for #810: a PDF in a space shared to be read opens
+ *  as itself rather than being turned into its page note (`mayTurn` and `openPaper` in
+ *  workspace.svelte.ts). Measured 3,283,566 on top of #805.
  *
- *  Raised 2026-10-24 again, to 3,287,000, for B361: words shared from another app are written
- *  to read back as themselves (`sharedMarkdown` in mobile/shared.ts, `plainWords` in
- *  @nib/markdown's escapes.ts), so `$5-$10` is two prices rather than a formula.
- *  Measured 3,286,369, with the importer fixes merged beside it. */
-const BUDGET = 3_327_000 // combined branch only, measured 3326303
+ *  Raised 2026-10-24, to 3,285,000, for #901: a PDF a page note already holds opens
+ *  that note before anything asks whether it may be turned (`heldBy` in
+ *  workspace.svelte.ts). Measured 3,284,600 on top of #810. */
+const BUDGET = 3_300_000 // combined branch only
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
