@@ -25,6 +25,9 @@
   // eslint-disable-next-line svelte/prefer-svelte-reactivity -- nothing renders from it
   const waiting = new Map<number, (ok: boolean) => void>()
   let next = 0
+  /** How long the app may take to write a task, in milliseconds: long enough for an
+   *  inbox made the first time and a note open in a pane taking the line. */
+  const ANSWER_WITHIN = 10_000
 
   channel.onmessage = (event: MessageEvent) => {
     const said = heard(event.data)
@@ -47,7 +50,16 @@
   async function added(entry: Entry, open: boolean): Promise<boolean> {
     const id = next++
     const ok = await new Promise<boolean>((resolve) => {
-      waiting.set(id, resolve)
+      // No window of the app answering is a task not taken: the field keeps it, and
+      // Enter tries again, rather than the window waiting on nobody for ever.
+      const unanswered = setTimeout(() => {
+        waiting.delete(id)
+        resolve(false)
+      }, ANSWER_WITHIN)
+      waiting.set(id, (ok) => {
+        clearTimeout(unanswered)
+        resolve(ok)
+      })
       say({ kind: 'task', id, entry, open })
     })
     if (ok) hide(open)

@@ -564,3 +564,31 @@ describe('copy to a base, in a space shared to be read', () => {
     expect(written).toEqual([])
   })
 })
+
+/** A task's own view, of a task of the space shared to be read and of the reader's. */
+function sheetOf(space: 'Theirs' | 'Mine') {
+  const row = taskRow(PLAN, TASK, 3, { space })
+  shown = [row]
+  const { kit } = viewOver(null)
+  const ref = { space, path: PLAN, line: 3, hash: row.anchor?.hash ?? '' }
+  return render(TaskSheet, { props: { shown: { ref, list: [ref], kit } } }).body
+}
+
+describe("a task's view, in a space shared to be read", () => {
+  test('takes no words, no comment and no sub-task', () => {
+    const html = sheetOf('Theirs')
+    expect(html).toContain('water the plants')
+    expect(html).toMatch(/<input[^>]*class="title[^>]*readonly/)
+    expect(html).not.toContain('aria-label="Comment"')
+    expect(html).not.toContain('Add sub-task')
+    expect(html).not.toContain('add-tag')
+  })
+
+  test("while the reader's own still does", () => {
+    const html = sheetOf('Mine')
+    expect(html).not.toMatch(/<input[^>]*class="title[^>]*readonly/)
+    expect(html).toContain('aria-label="Comment"')
+    expect(html).toContain('Add sub-task')
+    expect(html).toContain('add-tag')
+  })
+})

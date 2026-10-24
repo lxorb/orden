@@ -146,13 +146,23 @@
     if (shown.comment && field) untrack(() => void tick().then(() => field.focus()))
   })
 
+  /** A sub-task on its way: its words stay in the field until it is written, and a
+   *  second Enter in that time would write it again. */
+  let writingSubtask = false
+
   async function writeSubtask() {
     const words = subtask.trim()
-    if (!words || !row || !writes) return
+    if (!words || !row || !writes || writingSubtask) return
     const read = parseQuickAdd(words, [i18n.language], new Date())
     const [line] = linesOf({ text: read.text || words, fields: read.fields })
-    // Cleared once written, so a sub-task turned away is still in the field.
-    if (line && (await addSubtask(row, line)) && subtask.trim() === words) subtask = ''
+    if (!line) return
+    writingSubtask = true
+    try {
+      // Cleared once written, so a sub-task turned away is still in the field.
+      if ((await addSubtask(row, line)) && subtask.trim() === words) subtask = ''
+    } finally {
+      writingSubtask = false
+    }
   }
 
   const anchorNow = () => row?.anchor ?? null
