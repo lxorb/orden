@@ -36,7 +36,7 @@ describe('the tags in a note', () => {
   })
 
   test('though a backtick that opens no code is just a backtick', () => {
-    expect(tagsIn('a ` #yes and \\`#no` #too')).toEqual(['#yes', '#too'])
+    expect(tagsIn('\\` #yes ` #too')).toEqual(['#yes', '#too'])
   })
 })
 

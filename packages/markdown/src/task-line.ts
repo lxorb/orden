@@ -14,7 +14,7 @@
  *  the rows engine all ask it about the same line. `taskAt` (tasks.ts) still answers
  *  the narrower question of where the box is. */
 
-import { codeAndWords, plainWords } from './escapes'
+import { codeAndWords, codeSpans, inCode, plainWords } from './escapes'
 import { taskAt } from './tasks'
 import { TAG_NAME, opensTag } from './tags'
 
@@ -327,17 +327,6 @@ function fieldAt(text: string, at: number, last: number): Found | null {
   return { index: at, 0: text.slice(at, end + 1), 1: found[1], 2: text.slice(from, to) }
 }
 
-/** Where the code spans in `text` start and end, so a field inside one is not read. */
-function codeSpans(text: string): [number, number][] {
-  const out: [number, number][] = []
-  let at = 0
-  for (const one of codeAndWords(text)) {
-    if (one.code) out.push([at, at + one.text.length])
-    at += one.text.length
-  }
-  return out
-}
-
 /** Whether the character at `at` stands behind an odd run of backslashes. */
 function escaped(text: string, at: number): boolean {
   let before = at
@@ -360,7 +349,7 @@ function fieldAtEnd(head: string): Found | null {
   let at = head.indexOf(open, head.lastIndexOf(shut, end - 1) + 1)
   const code = codeSpans(head)
   for (; at !== -1 && at < end; at = head.indexOf(open, at + 1)) {
-    if (code.some(([from, to]) => at >= from && at < to)) continue
+    if (inCode(code, at)) continue
     const found = fieldAt(head, at, end)
     if (found) return found
   }
@@ -650,7 +639,7 @@ function trailingTokens(
     } else if ((found = AT_END.onCompletion.exec(head))) {
       read('onCompletion', found[1] ?? '')
       take(found, 'onCompletion', 'emoji', 1)
-    } else if ((found = AT_END.tag.exec(head))) {
+    } else if ((found = AT_END.tag.exec(head)) && !inCode(codeSpans(head), found.index)) {
       take(found, 'tag', 'tag', 0)
     } else if ((found = AT_END.id.exec(head))) {
       read('id', found[1] ?? '')
@@ -727,8 +716,9 @@ function inlineTokens(
 /** Every tag in a run of text, without its `#`, in the order written. */
 export function tagsIn(text: string): string[] {
   const out: string[] = []
+  const code = codeSpans(text)
   for (const found of text.matchAll(TAG)) {
-    if (!opensTag(text.charAt(found.index - 1))) continue
+    if (!opensTag(text.charAt(found.index - 1)) || inCode(code, found.index)) continue
     const name = found[1] ?? ''
     if (!out.includes(name)) out.push(name)
   }

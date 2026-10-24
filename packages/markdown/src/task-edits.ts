@@ -18,6 +18,7 @@
  *  format. See task-line.ts for the reading. */
 
 import { appliedEdits, type TextEdit } from './edits'
+import { codeSpans, inCode } from './escapes'
 import { tagNameAt } from './tags'
 import {
   DEPENDS_EMOJI,
@@ -395,12 +396,13 @@ function unknownFieldEdits(
 /** Where each time a tag is written among the words starts. */
 function tagsAmongWords(line: string, tag: string, from: number, to: number): number[] {
   const words = line.slice(from, to)
+  const code = codeSpans(words)
   const found: number[] = []
   let at = words.indexOf(`#${tag}`)
   while (at !== -1) {
     const before = words.charAt(at - 1)
-    if ((before === '' || /\s|\(/.test(before)) && tagNameAt(words, at) === tag)
-      found.push(from + at)
+    const opens = before === '' || /\s|\(/.test(before)
+    if (opens && !inCode(code, at) && tagNameAt(words, at) === tag) found.push(from + at)
     at = words.indexOf(`#${tag}`, at + 1)
   }
   return found
