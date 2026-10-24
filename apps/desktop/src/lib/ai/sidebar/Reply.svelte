@@ -153,10 +153,8 @@
     editor.focus()
   }
 
-  async function saveAsNote() {
-    const path = await workspace.noteFrom(asNote)
-    if (path) await workspace.open(path)
-  }
+  // In the thread's own space, where the sources `asNote` links to are.
+  const saveAsNote = () => chat.noteFrom(asNote)
 
   let copied = $state(false)
   let copying: ReturnType<typeof setTimeout> | undefined
