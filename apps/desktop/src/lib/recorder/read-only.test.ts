@@ -124,6 +124,22 @@ describe('the note a recording goes into', () => {
   })
 })
 
+/** A tab of a `.txt` or a `.json` is a note tab too, and an embed written into one is
+ *  a line of Markdown in a file that is not. So a recording over one goes into a new
+ *  note, as one over no note at all does. */
+describe('over a file that is not Markdown', () => {
+  test('a recording goes into a new note rather than into the file', async () => {
+    inFront(MINE, `${MINE}/data.json`)
+    const create = vi.spyOn(workspace, 'createNote').mockImplementation(() => {
+      inFront(MINE, `${MINE}/Recording.md`)
+      return Promise.resolve(undefined)
+    })
+
+    expect(await noteToRecordInto()).toBe(`${MINE}/Recording.md`)
+    expect(create).toHaveBeenCalledOnce()
+  })
+})
+
 describe('keeping a recording', () => {
   /** A recording started over a note that could be written, and stopped once it no
    *  longer can: the space shared to be read meanwhile, or Read-only turned on. */
