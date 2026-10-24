@@ -24,6 +24,7 @@ import {
 } from './paths'
 import { isBaseTarget, isChatTarget, isWebTarget } from '@nib/markdown/links'
 import { assetType } from './asset-route'
+import { isReserved } from '../naming'
 import { assets, files, KEEP, meta, snapshots, stats } from './store'
 import { markSeeded, wasSeeded } from '../seeded'
 import { breathe } from '../breathe'
@@ -435,7 +436,17 @@ async function holds(path: string): Promise<boolean> {
 /** `path` if nothing is there, else `name 2`, `name 3`... - before the
  *  extension for a note, after the name for a folder or a space. */
 async function freeSpot(path: string, isFile: boolean): Promise<string> {
-  if (!(await taken(path))) return path
+  return firstSpot(path, isFile, async (one) => !(await taken(one)))
+}
+
+/** The first of `path`, `name 2`, `name 3`... that `fits`; see `first_spot` in
+ *  paths.rs. */
+async function firstSpot(
+  path: string,
+  isFile: boolean,
+  fits: (one: string) => Promise<boolean>,
+): Promise<string> {
+  if (await fits(path)) return path
 
   const folder = parent(path)
   const file = basename(path)
@@ -445,14 +456,16 @@ async function freeSpot(path: string, isFile: boolean): Promise<string> {
 
   for (let counter = 2; ; counter++) {
     const candidate = join(folder, `${stem} ${counter}${extension}`)
-    if (!(await taken(candidate))) return candidate
+    if (await fits(candidate)) return candidate
   }
 }
 
-/** Whether a name is taken: by something there, or by a page note and its paper,
- *  `X.pages` and `X.pages.pdf`, which take each other's name; see `taken` in paths.rs. */
+/** Whether a name is taken: by something there, by a page note and its paper,
+ *  `X.pages` and `X.pages.pdf`, which take each other's name, or by highlights a gone
+ *  PDF left; see `taken` in paths.rs. */
 async function taken(path: string): Promise<boolean> {
-  return (await holds(path)) || (await pairedTaken(path))
+  if ((await holds(path)) || (await pairedTaken(path))) return true
+  return isPdf(path) && !!(await files.get(sidecarOf(path)))
 }
 
 async function pairedTaken(path: string): Promise<boolean> {
@@ -978,7 +991,9 @@ export async function webInvoke<T>(
 
     case 'save_asset': {
       const bytes = args.bytes as number[]
-      const name = (args.name as string) || `pasted-${now()}.png`
+      const given = (args.name as string) || `pasted-${now()}.png`
+      // `CON.png` is a device on Windows; see `safe_name` in assets.rs.
+      const name = isReserved(given) ? `_${given}` : given
       const notePath = args.notePath as string
       // Relative to the note's own folder, as the desktop command takes it; see
       // attachments.ts for which of the three it is.
@@ -995,11 +1010,19 @@ export async function webInvoke<T>(
       let binary = ''
       for (const byte of bytes) binary += String.fromCharCode(byte)
 
-      // A name a page note and its paper would share steps aside; any other is the same
-      // picture again, as the desktop's hashed names are.
-      const at = join(folder, name)
-      const target = (await pairedTaken(at)) ? await freeSpot(at, true) : at
+      // The same picture again is the one copy, at whichever name it stepped aside to,
+      // unless it is a page note's paper; anything else steps aside. See `stored` in
+      // assets.rs.
+      const data = btoa(binary)
+      const same = async (one: string) =>
+        (await assets.get(one))?.data === data && !(isPdf(one) && (await pairedTaken(one)))
+      const target = await firstSpot(
+        join(folder, name),
+        true,
+        async (one) => !(await taken(one)) || (await same(one)),
+      )
       const file = basename(target)
+      if (await same(target)) return (relative ? `${relative}/${file}` : file) as T
 
       await assets.put({
         path: target,
@@ -1007,7 +1030,7 @@ export async function webInvoke<T>(
         // front: `image/svg` draws nothing, and the asset worker hands this row
         // straight to an `<img>`. See asset-route.ts.
         type: assetType(file),
-        data: btoa(binary),
+        data,
         modified: now(),
       })
 

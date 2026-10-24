@@ -11,8 +11,8 @@ use std::path::{Component, Path, PathBuf};
 use tauri::AppHandle;
 
 use crate::paths::{
-    at_most, cannot, folded, free_spot, in_spaces, inside, is_reserved, made, space_root,
-    spaces_dir,
+    at_most, cannot, first_spot, folded, held_paper, in_spaces, inside, is_reserved, made,
+    space_root, spaces_dir, taken,
 };
 
 /// Bigger than any picture belongs in a document, and small enough that turning
@@ -117,28 +117,19 @@ pub fn save_asset(
 /// The picture written into `dir` under `safe`, or the copy of it already there, and
 /// where that is.
 fn stored(dir: &Path, safe: &str, bytes: &[u8]) -> Result<PathBuf, String> {
-    let mut target = dir.join(safe);
+    // The caller names the file after a hash of its contents, so a name that is
+    // already taken usually holds this very picture, and pasting the same one twice
+    // should cost nothing - at whichever name it stepped aside to before. Unless it is
+    // a page note's paper, which goes when the note does.
+    let same = |one: &Path| !held_paper(one) && fs::read(one).is_ok_and(|held| held == bytes);
+    // Anything else steps aside: a different picture of the name would be taken away,
+    // and a name that is free may still be taken, as `Report.pages.pdf` is beside a page
+    // note `Report.pages`, which would take it for its paper (#538).
+    let target = first_spot(&dir.join(safe), true, |one| !taken(one) || same(one));
 
-    match fs::read(&target) {
-        // The caller names the file after a hash of its contents, so a name that
-        // is already taken usually holds this very picture. Pasting the same one
-        // twice should cost nothing.
-        Ok(held) if held == bytes => {}
-        // The same name over a different picture would take the first one away,
-        // so both are kept.
-        Ok(_) => {
-            target = free_spot(&target, true);
-            fs::write(&target, bytes).map_err(|error| cannot("write", &target, &error))?;
-        }
-        // Nothing there, but the name may still be taken: a page note beside it would take
-        // `Report.pages.pdf` for its paper, and `Report.pages` would take the PDF beside
-        // it for its own (#538). Such a name steps aside, as a restore's does.
-        Err(_) => {
-            target = free_spot(&target, true);
-            fs::write(&target, bytes).map_err(|error| cannot("write", &target, &error))?;
-        }
+    if !same(&target) {
+        fs::write(&target, bytes).map_err(|error| cannot("write", &target, &error))?;
     }
-
     Ok(target)
 }
 

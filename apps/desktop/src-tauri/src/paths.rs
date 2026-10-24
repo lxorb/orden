@@ -213,7 +213,7 @@ fn holds_paper(path: &Path) -> bool {
 /// round: such a PDF put beside a page note `Report.pages` with no paper yet is taken
 /// by that note for its paper, so for a PDF the name is taken where the note is. And
 /// where highlights a gone PDF left behind are, which a new one would show as its own.
-fn taken(path: &Path) -> bool {
+pub fn taken(path: &Path) -> bool {
     path.exists()
         || (is_pages(path) && paper_of(path).exists())
         || paper_holder(path).is_some()
@@ -1240,7 +1240,14 @@ fn spill(temp: &Path, bytes: &[u8], private: bool) -> Result<(), String> {
 /// `path` if nothing is there, else the first free `name 2`, `name 3`... - the
 /// number before the extension for a file, after the name for a folder.
 pub fn free_spot(path: &Path, is_file: bool) -> PathBuf {
-    if !taken(path) {
+    first_spot(path, is_file, |one| !taken(one))
+}
+
+/// The first of `path`, `name 2`, `name 3`... that `fits`, numbered as `free_spot`
+/// numbers them. `fits` is told only of names; whether one is free is `taken`'s to say,
+/// which a caller that may also land on its own copy asks itself.
+pub fn first_spot(path: &Path, is_file: bool, fits: impl Fn(&Path) -> bool) -> PathBuf {
+    if fits(path) {
         return path.to_path_buf();
     }
 
@@ -1259,7 +1266,7 @@ pub fn free_spot(path: &Path, is_file: bool) -> PathBuf {
     let mut counter = 2;
     loop {
         let candidate = parent.join(format!("{stem} {counter}{extension}"));
-        if !taken(&candidate) {
+        if fits(&candidate) {
             return candidate;
         }
         counter += 1;
