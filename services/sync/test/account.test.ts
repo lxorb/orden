@@ -813,6 +813,70 @@ describe('what is left', () => {
     expect(env.db.prepare('select user_id from blobs where hash = ?').all(hash)).toEqual([])
   })
 
+  /** What was emptied for good is not a space's use any more: a purged page note's
+   *  paper and a file a purged space listed go with the account, and nobody is handed
+   *  them to pay for. */
+  test.each(['a page note', 'a space'])(
+    'a paper in %s emptied for good is not handed over',
+    async (what) => {
+      const other = await signIn(env, OTHER)
+      const theirs = (
+        await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
+      ).json.space?.id
+      const sent = await mail(() =>
+        call(env, `/v1/spaces/${theirs}/share/invite`, {
+          token: other,
+          body: { email: ME, role: 'write' },
+        }),
+      )
+      await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
+        method: 'POST',
+        token,
+      })
+
+      const bytes = new TextEncoder().encode('%PDF-1.4\nemptied\n%%EOF\n')
+      const hash = createHash('sha256').update(bytes).digest('hex')
+      await call(env, `/v1/blobs/${hash}`, {
+        method: 'PUT',
+        token,
+        raw: bytes,
+        headers: { 'content-type': 'application/pdf' },
+      })
+      if (what === 'a page note') {
+        const pages = (
+          await call<LeavingView>(env, `/v1/spaces/${theirs}/notes`, {
+            token,
+            body: { path: 'L.pages', content: '{}' },
+          })
+        ).json.note?.id
+        await call(env, `/v1/notes/${pages}/paper`, { method: 'PUT', token, body: { hash } })
+        await call(env, `/v1/notes/${pages}`, { method: 'DELETE', token: other })
+        const purged = await call(env, `/v1/trash/notes/${pages}`, {
+          method: 'DELETE',
+          token: other,
+        })
+        expect(purged.status).toBe(200)
+      } else {
+        const listed = await call(env, `/v1/spaces/${theirs}/files`, {
+          method: 'PUT',
+          token,
+          body: { files: [{ path: 'a.pdf', hash }] },
+        })
+        expect(listed.status).toBe(200)
+        await call(env, `/v1/spaces/${theirs}`, { method: 'DELETE', token: other })
+        const purged = await call(env, `/v1/trash/spaces/${theirs}`, {
+          method: 'DELETE',
+          token: other,
+        })
+        expect(purged.status).toBe(200)
+      }
+
+      expect((await leave()).status).toBe(200)
+
+      expect(env.db.prepare('select user_id from blobs where hash = ?').all(hash)).toEqual([])
+    },
+  )
+
   /** A space too big to read hands over everything rather than guess, which is right
    *  only where this account could have put something: a reader who never wrote there
    *  keeps its own pictures to itself, and they go with it. */

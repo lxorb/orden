@@ -264,3 +264,39 @@ describe('0042, the answers a form took before they were measured', () => {
     database.close()
   })
 })
+
+describe('0060, what a note or a space emptied for good still named', () => {
+  test('lets go of the paper and the files of purged rows, and of nothing live', () => {
+    const database = upTo('0059_note_pictures.sql')
+    seed(database)
+    const paper = 'ab'.repeat(32)
+    const files = JSON.stringify([{ path: 'a.pdf', hash: paper }])
+    database.exec(
+      `insert into notes (id, space_id, path, seq, updated_at, deleted, deleted_at, size, hash,
+                          paper)
+       values ('purged', 'sp', 'P.pages', 1, 1, 1, null, 0, '', '${paper}'),
+              ('trashed', 'sp', 'T.pages', 2, 1, 1, 5, 2, 'abc', '${paper}'),
+              ('live', 'sp', 'L.pages', 3, 1, 0, null, 2, 'abc', '${paper}')`,
+    )
+    database.exec(
+      `insert into spaces (id, user_id, name, created_at, updated_at, deleted, deleted_at, files)
+       values ('gone', 'u', 'Gone', 1, 1, 1, null, '${files}'),
+              ('binned', 'u', 'Binned', 1, 1, 1, 5, '${files}')`,
+    )
+    database.exec(`update spaces set files = '${files}' where id = 'sp'`)
+
+    database.exec(sql('0060_purged_papers.sql'))
+
+    expect(database.prepare('select id, paper from notes order by id').all()).toEqual([
+      { id: 'live', paper },
+      { id: 'purged', paper: null },
+      { id: 'trashed', paper },
+    ])
+    expect(database.prepare('select id, files from spaces order by id').all()).toEqual([
+      { id: 'binned', files },
+      { id: 'gone', files: '[]' },
+      { id: 'sp', files },
+    ])
+    database.close()
+  })
+})

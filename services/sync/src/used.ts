@@ -18,6 +18,11 @@
 import { readSpaceFiles } from './spaces/files'
 import type { Env } from './types'
 
+/** A space that has not been emptied for good: a purged space keeps its row as a marker
+ *  (trash.ts), and what is still named under it - a chat's files, kept a month - is not
+ *  anything a space uses. */
+const LIVE = '(sp.deleted = 0 or sp.deleted_at is not null)'
+
 /** The owners other than this account of the spaces that use any of these hashes, and
  *  which of the hashes each one's spaces use. */
 export async function usedElsewhere(
@@ -38,22 +43,23 @@ export async function usedElsewhere(
   const { results: used } = await env.DB.prepare(
     `select sp.user_id as owner, n.hash as hash
        from notes n join spaces sp on sp.id = n.space_id
-      where n.kind = 'file' and n.hash in (select value from json_each(?2)) and sp.user_id <> ?1
+      where n.kind = 'file' and n.hash in (select value from json_each(?2))
+        and sp.user_id <> ?1 and ${LIVE}
      union
      select sp.user_id as owner, n.paper as hash
        from notes n join spaces sp on sp.id = n.space_id
       where n.paper is not null and n.paper in (select value from json_each(?2))
-        and sp.user_id <> ?1
+        and sp.user_id <> ?1 and ${LIVE}
      union
      select sp.user_id as owner, p.hash as hash
        from note_pictures p join notes n on n.id = p.note_id join spaces sp on sp.id = n.space_id
-      where p.hash in (select value from json_each(?2)) and sp.user_id <> ?1
+      where p.hash in (select value from json_each(?2)) and sp.user_id <> ?1 and ${LIVE}
         and exists (select 1 from blobs b
                      where b.hash = p.hash and b.user_id = ?1 and b.type like 'image/%')
      union
      select sp.user_id as owner, f.hash as hash
        from chat_files f join chats c on c.id = f.chat_id join spaces sp on sp.id = c.space_id
-      where f.hash in (select value from json_each(?2)) and sp.user_id <> ?1`,
+      where f.hash in (select value from json_each(?2)) and sp.user_id <> ?1 and ${LIVE}`,
   )
     .bind(userId, held)
     .all<{ owner: string; hash: string }>()
@@ -63,7 +69,7 @@ export async function usedElsewhere(
   // whose list has one of the hashes in it at all are read, and then read properly.
   const { results: listing } = await env.DB.prepare(
     `select user_id as owner, files from spaces sp
-      where user_id <> ?1
+      where user_id <> ?1 and ${LIVE}
         and exists (select 1 from json_each(?2) m where instr(lower(sp.files), m.value) > 0)`,
   )
     .bind(userId, held)

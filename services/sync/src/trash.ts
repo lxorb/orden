@@ -105,7 +105,11 @@ async function purgeNote(env: Env, note: Pick<Note, 'id' | 'space_id'>) {
   await forgetVersions(env, note.id)
   await forgetWords(env, note.id).catch(() => undefined)
   await forgetPictures(env, note.id).catch(() => undefined)
-  await env.DB.prepare("update notes set size = 0, hash = '', deleted_at = null where id = ?")
+  // And its paper, which the tombstone would otherwise still serve to whoever reaches
+  // the note, and which the bytes would still be kept for as a use of the space.
+  await env.DB.prepare(
+    "update notes set size = 0, hash = '', paper = null, deleted_at = null where id = ?",
+  )
     .bind(note.id)
     .run()
 
@@ -236,7 +240,11 @@ async function purgeSpace(env: Env, space: Pick<Space, 'id'>, budget = AT_ONCE):
         at,
         space.id,
       ),
-      env.DB.prepare('update spaces set deleted_at = null where id = ?').bind(space.id),
+      // And the files it listed, which the marker would otherwise still name as the
+      // space's own: bytes kept, handed over and counted for a space that is gone.
+      env.DB.prepare("update spaces set files = '[]', deleted_at = null where id = ?").bind(
+        space.id,
+      ),
     ])
     for (const guest of guests) await forgetEmptyGuest(env, guest)
   }
