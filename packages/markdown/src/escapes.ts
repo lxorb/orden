@@ -152,6 +152,14 @@ function escapeAt(text: string, at: number, midLine: boolean): string {
     // is a bullet instead.
     case '*':
       return midLine && isBlank(before) && isBlank(after) ? '*' : '\\*'
+    // Lowered and raised text, `H~2~O` and `x^2^`, open on a mark with something
+    // other than a blank after it and close on the next one, so `~5 min or ~10`
+    // would lower the words between. Two tildes are a line through. A mark with a
+    // blank after it opens neither, and with every one that could escaped there is
+    // nothing for it to close.
+    case '~':
+    case '^':
+      return isBlank(after) ? one : `\\${one}`
     case '`':
     case '[':
     case ']':
