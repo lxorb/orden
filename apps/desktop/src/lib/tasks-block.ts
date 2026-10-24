@@ -18,13 +18,18 @@ import { insideSpace } from './space-paths'
 /** How many rows a fence in a note is worth; see query-block.ts. */
 const MOST = 50
 
-/** The rows of the open space, once they have been read. */
-async function rowsOfSpace(): Promise<{ rows: readonly Row[]; root: string } | null> {
+/** The rows of the space at `root`, once they have been read: the space the fence's
+ *  note is in, which a note still open from another space is not the active one; the
+ *  space in front where a caller cannot say. */
+async function rowsOfSpace(
+  root: string | null,
+): Promise<{ rows: readonly Row[]; root: string } | null> {
   const [{ rows }, { workspace }] = await Promise.all([
     import('./rows/rows.svelte'),
     import('./workspace.svelte'),
   ])
-  const space = workspace.activeSpace
+  const space =
+    root === null ? workspace.activeSpace : workspace.spaces.find((one) => one.root === root)
   if (!space) return null
   if (!rows.ready) {
     await new Promise<void>((resolve) => {
@@ -84,12 +89,16 @@ function drawn(
 }
 
 /** What one fence answers with, or null where there is nothing to answer from. */
-export async function tasksRowsHtml(code: string, nothing: string): Promise<string | null> {
+export async function tasksRowsHtml(
+  code: string,
+  nothing: string,
+  root: string | null = null,
+): Promise<string | null> {
   const [{ answer, groupName }, { readTasksQuery }, { todayOf }, space] = await Promise.all([
     import('@nib/bases/answer'),
     import('@nib/bases/tasks-query'),
     import('@nib/bases'),
-    rowsOfSpace(),
+    rowsOfSpace(root),
   ])
   if (!space) return null
   const { base, unsupported } = readTasksQuery(code)
