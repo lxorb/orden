@@ -440,6 +440,21 @@ describe('a note renamed on this machine', () => {
   })
 
   /** A folder is the same move said once per note under it. */
+  test('and a note waiting to be settled keeps the copy nobody has looked at', async () => {
+    const { mirror, id } = await paired('One.md', HERE)
+    fake.disk.set(`${ROOT}/One.md`, `${HERE}here\n`)
+    fake.editRemote(id, `${HERE}there\n`)
+    await pull(mirror, 'token', NOBODY, { rule: 'ask', clashed: () => undefined })
+    renameOnDisk('One.md', 'Two.md')
+
+    await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Two.md`, new Set([id]))
+
+    // Renamed on the account, still with the words the question is about.
+    expect(fake.remote.get(id)).toMatchObject({ path: 'Two.md', content: `${HERE}there\n` })
+    expect(mirror.notes['Two.md']).toMatchObject({ id, hash: '' })
+    expect(fake.disk.get(`${ROOT}/Two.md`)).toBe(`${HERE}here\n`)
+  })
+
   test('and a folder carries every note under it', async () => {
     const { mirror } = await paired('Kept/One.md', HERE)
     fake.addRemote('Keptish.md', '# elsewhere' + String.fromCharCode(10))
