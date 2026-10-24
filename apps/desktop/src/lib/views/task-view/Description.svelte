@@ -24,11 +24,16 @@
   const {
     path,
     anchor,
+    writable = true,
   }: {
     /** The note, on this disk. */
     path: string
     /** Where the task is now, asked at every write: its words may have changed. */
     anchor: () => { line: number; hash: string } | null
+    /** Whether the note may be written. A task of a space shared with this account to
+     *  be read has its description read here and never typed into: what was typed would
+     *  be turned away by the store a moment later, and lost (B285). */
+    writable?: boolean
   } = $props()
 
   let host = $state<HTMLDivElement>()
@@ -39,7 +44,7 @@
   function flush() {
     save.cancel()
     const at = anchor()
-    if (!view || !at) return
+    if (!view || !at || !writable) return
     void describe(path, at, view.state.doc.toString())
   }
   const save = afterQuiet(flush, 400)
@@ -67,7 +72,10 @@
         propertyChoices: PROPERTY_CHOICES,
         trustedMarkup: false,
       })
-      made.dispatch({ effects: modeEffects(modes.settings) })
+      const settings = writable
+        ? modes.settings
+        : { ...modes.settings, readOnly: true, source: false }
+      made.dispatch({ effects: modeEffects(settings) })
       view = made
     })()
     return () => {
