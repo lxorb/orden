@@ -32,6 +32,11 @@ export type ListItem = string | number | boolean | null | KeptItem
  *  written again as `1.1`, `7` and `1234567890123456800`, and `"a"` keeps its quotes. */
 export interface KeptItem {
   asWritten: string
+  /** Set where the member as written means itself only in a block list: one with a
+   *  comment after it, a list or a map of its own. A list holding one is written back
+   *  as a block list, since in a flow one the comment would close the list early and
+   *  the rest would be words. */
+  block?: true
 }
 
 /** A list as a note writes one: a flow sequence, which is what Obsidian writes and
@@ -65,9 +70,25 @@ export function listItems(property: Property): ListItem[] {
   const written = property.writtenItems ?? []
   return property.items.map((item, at) => {
     if (quoted[at]) return { asWritten: written[at] ?? flowItem(item) }
+    // `-` with nothing after it is a member that is nothing, which a flow list has to
+    // say: `[, b]` is not YAML.
+    if (item === '') return null
+    if (BLOCK_ONLY.test(item)) return { asWritten: item, block: true }
     if (/[,[\]{}]/.test(item)) return item
     return { asWritten: item }
   })
+}
+
+/** A plain member that means what it says only as a line of a block list: a comment
+ *  after it, a list of its own (`- - x`), a map (`- a: b`) or a block scalar. */
+const BLOCK_ONLY = /(?:^|\s)#|^-(?:\s|$)|^[?:](?:\s|$)|:(?:\s|$)|^[|>]/
+
+/** A key and its list as the lines a note writes them: a flow list on the key's line,
+ *  or, where a member means itself only in a block list, a `- ` line for each. */
+export function listLines(key: string, items: readonly ListItem[]): string {
+  const block = items.some((one) => one !== null && typeof one === 'object' && one.block)
+  if (!block) return `${key}: ${writtenList(items)}`
+  return [`${key}:`, ...items.map((one) => `  - ${writtenItem(one)}`)].join('\n')
 }
 
 /** How a value is written for each kind of control.
@@ -115,7 +136,7 @@ export function writeList(
   const found = readProperties(source)?.find((one) => one.key === key)
   if (!found) return frontMatterEdit(source, key, writtenList(items))
 
-  const after = `${source.slice(0, found.from)}${key}: ${writtenList(items)}${source.slice(found.to)}`
+  const after = `${source.slice(0, found.from)}${listLines(key, items)}${source.slice(found.to)}`
   return oneEdit(source, after)
 }
 
