@@ -16,6 +16,7 @@ import { isWho } from '@nib/chats/wire'
 import { chatLink } from '@nib/chats/links'
 import { storeBeside } from '../../assets'
 import { t } from '../../i18n.svelte'
+import { canWriteAt } from '../../sharing.svelte'
 import { folderOf } from '../../space-paths'
 import { showQuickAdd } from '../../surfaces.svelte'
 import { joinPath } from '../../tauri'
@@ -44,14 +45,18 @@ export function addAsTask(page: ChatPage, message: Message, space: string | null
   })
 }
 
-/** Save as note: written beside the chat, and opened. */
+/** Save as note: written beside the chat, and opened.
+ *
+ *  Nothing beside a chat in a space shared with this account to be read: the note and
+ *  its files would be written into the owner's space, and every member of the chat
+ *  has its menu, readers of the space as well. */
 export async function saveAsNote(
   page: ChatPage,
   message: Message,
   space: string | null,
 ): Promise<void> {
   const entry = page.entry
-  if (!entry?.path) return
+  if (!entry?.path || !canWriteAt(entry.path)) return
   const folder = folderOf(entry.path)
   const name = noteNameOf(message.body, entry.name ?? t('Chat'))
   // The chat can be a tab from a space that is not on screen, so the disk is asked.
