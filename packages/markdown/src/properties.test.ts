@@ -11,6 +11,20 @@ const said = (source: string) =>
   }))
 
 describe('a note read as rows', () => {
+  test('a quoted value is text, whatever it says', () => {
+    const rows = readProperties(
+      "---\nzip: '007'\nflag: \"true\"\nnothing: 'null'\nids: ['01', x]\nwhen: '2025-09-08'\n---\n",
+    )
+    expect(rows?.map((one) => [one.key, one.kind, one.value, one.quoted ?? false])).toEqual([
+      ['zip', 'text', '007', true],
+      ['flag', 'text', 'true', true],
+      ['nothing', 'text', 'null', true],
+      ['ids', 'list', '', false],
+      ['when', 'date', '2025-09-08', true],
+    ])
+    expect(rows?.[3]?.quotedItems).toEqual([true, false])
+  })
+
   test('the shapes a note actually holds', () => {
     expect(
       said(

@@ -66,6 +66,17 @@ describe('a value typed into a row', () => {
 })
 
 describe('a checkbox and a number', () => {
+  test('a quoted value edited in its row keeps its quotes', () => {
+    const note = '---\nzip: \'007\'\nflag: "true"\n---\n'
+    const rows = readProperties(note) ?? []
+    const zip = rows.find((one) => one.key === 'zip')
+    const flag = rows.find((one) => one.key === 'flag')
+    expect(applied(note, writeProperty(note, 'zip', '0071', zip?.kind))).toContain("zip: '0071'")
+    expect(applied(note, writeProperty(note, 'flag', 'false', flag?.kind))).toContain(
+      "flag: 'false'",
+    )
+  })
+
   test('are the words YAML reads as a boolean and a number', () => {
     const ticked = applied(NOTE, writeProperty(NOTE, 'done', 'true', 'checkbox'))
     expect(ticked).toContain('done: true')

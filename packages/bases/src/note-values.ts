@@ -20,13 +20,22 @@ const WIKILINK = /^!?\[\[([^\]|#]*(?:#[^\]|]*)?)(?:\|([^\]]*))?\]\]$/
 /** A date, a date with a time, as YAML and Obsidian write them. */
 const DATE = /^(\d{4}-\d{2}-\d{2})(?:[T ](\d{2}:\d{2}(?::\d{2})?)(?:\.\d+)?(Z|[+-]\d{2}:?\d{2})?)?$/
 
-/** A scalar written in front matter, as the value it means. */
+/** A scalar written in front matter, as the value it means. Written plain, that is:
+ *  a value that was in quotes is `stringValue`'s, because the quotes are YAML saying
+ *  "these characters", and `'007'` read as the number seven is a zip code lost. */
 export function scalarValue(written: string): Value {
   const text = written.trim()
   if (text === '' || text === 'null' || text === '~') return null
   if (/^(true|false)$/i.test(text)) return text.toLowerCase() === 'true'
   if (/^-?\d+(?:\.\d+)?$/.test(text)) return Number(text)
+  return stringValue(text)
+}
 
+/** A string as the value it means: never nothing, a box or a number, which only a
+ *  plain scalar can be, but still a link or a date, because those are strings to
+ *  YAML too and Obsidian writes a link in quotes as often as not. */
+function stringValue(written: string): Value {
+  const text = written.trim()
   const link = WIKILINK.exec(text)
   if (link) {
     const target = (link[1] ?? '').trim()
@@ -45,31 +54,39 @@ export function scalarValue(written: string): Value {
   return text
 }
 
+/** A value the reader handed back with its quotes off, read the way its quotes say. */
+function readValue(text: string, quoted: boolean | undefined): Value {
+  return quoted ? stringValue(text) : scalarValue(text)
+}
+
 /** A row of the properties reader as a value. */
 function propertyValue(property: Property): Value {
+  const quoted = property.quotedItems ?? []
   switch (property.kind) {
     case 'list':
-      return property.items.map(scalarValue)
+      return property.items.map((item, at) => readValue(item, quoted[at]))
     case 'map':
       return Object.fromEntries(
-        property.items.map((item) => {
-          const at = item.indexOf(':')
-          return [item.slice(0, at).trim(), scalarValue(item.slice(at + 1))]
+        property.items.map((item, at) => {
+          const colon = item.indexOf(':')
+          return [item.slice(0, colon).trim(), readValue(item.slice(colon + 1), quoted[at])]
         }),
       )
     case 'text':
     case 'number':
     case 'date':
     case 'checkbox':
-      return scalarValue(property.value)
+      return readValue(property.value, property.quoted)
   }
 }
 
-/** What a YAML parser answered, as values: strings read the way a scalar is, so a
- *  link and a date mean the same whichever reader met them. */
+/** What a YAML parser answered, as values: strings read the way a quoted scalar is,
+ *  so a link and a date mean the same whichever reader met them. Not as a plain one:
+ *  the parser has already made every plain `7`, `true` and `null` what it means, so
+ *  a string that still says one of them was written in quotes to stay a string. */
 function fromYaml(read: unknown): Value {
   if (read === null || read === undefined) return null
-  if (typeof read === 'string') return scalarValue(read)
+  if (typeof read === 'string') return stringValue(read)
   if (typeof read === 'number' || typeof read === 'boolean') return read
   if (Array.isArray(read)) return read.map(fromYaml)
   if (typeof read === 'object') {

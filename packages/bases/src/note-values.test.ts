@@ -1,4 +1,6 @@
 import { describe, expect, test } from 'vitest'
+import { compile } from './expr/compile'
+import { contextAt, noteRow } from './fixtures/rows'
 import { noteValues, scalarValue, taskHash } from './note-values'
 
 describe('front matter as values', () => {
@@ -50,6 +52,34 @@ describe('front matter as values', () => {
 
   test('a key named kind is a key like any other', () => {
     expect(noteValues('---\n# c\nkind: date\n---\n')).toEqual({ kind: 'date' })
+  })
+
+  test('a quoted value is the string it says, as YAML reads it', () => {
+    const quoted = [
+      "zip: '007'",
+      'flag: "true"',
+      "nothing: 'null'",
+      'ids: [\'01\', "false", 2]',
+      'more:',
+      "  - '3'",
+      'author: "[[Frank Herbert]]"',
+    ]
+    const expected = {
+      zip: '007',
+      flag: 'true',
+      nothing: 'null',
+      ids: ['01', 'false', 2],
+      more: ['3'],
+      author: { kind: 'link', target: 'Frank Herbert' },
+    }
+    expect(noteValues(`---\n${quoted.join('\n')}\n---\n`)).toEqual(expected)
+    // The same block with a comment in it goes the YAML way, and has to agree.
+    expect(noteValues(`---\n# c\n${quoted.join('\n')}\n---\n`)).toEqual(expected)
+  })
+
+  test('a filter on a quoted zip code finds it', () => {
+    const row = noteRow('A.md', "---\nzip: '007'\n---\n")
+    expect(compile('zip == "007"').evaluate(row, contextAt(), {})).toBe(true)
   })
 
   test('scalars', () => {

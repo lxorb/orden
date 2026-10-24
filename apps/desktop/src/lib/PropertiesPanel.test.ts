@@ -41,6 +41,15 @@ describe('the rows', () => {
     expect(html).toContain('Properties<span>6</span>')
   })
 
+  test('give a quoted value a text field, whatever it says', () => {
+    // `'007'` is a zip code and `"true"` a word; a number field would write back 7.
+    const html = drawn('---\nzip: \'007\'\nflag: "true"\n---\nWords.\n')
+
+    expect(html).not.toContain('type="number"')
+    expect(html).not.toContain('type="checkbox"')
+    expect(html).toContain('value="007"')
+  })
+
   test('offer a way to add one, at their foot', () => {
     expect(drawn(NOTE)).toContain('Add a property')
     expect(drawn('Words with no front matter.\n')).toContain('Add a property')
