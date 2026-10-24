@@ -400,6 +400,9 @@ export interface AccountSettings {
   /** Whether this account has ever had the plugin in front of a pair of glasses.
    *  What the Glasses section on every other device waits for. */
   glassesSeen?: boolean
+  /** Whether this account has ever been used on a phone or a tablet. What the Mobile
+   *  section on every other device waits for (#769). */
+  mobileSeen?: boolean
   /** Which model answers, out of the families the API itself listed. */
   glassesModel?: string
   /** How hard it is asked to think, from the API's own list of efforts. */

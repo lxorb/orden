@@ -198,6 +198,8 @@ const KNOWN: Record<string, Check> = {
   glassesMarks: switchMap('glassesMarks', GLASSES_MARKS),
   glassesWords: phraseMap,
   glassesSeen: switched('glassesSeen'),
+  // What the Mobile section on a desktop waits for (#769).
+  mobileSeen: switched('mobileSeen'),
   // `glassesKey` was here, and was a plaintext OpenAI key in a column that every
   // read handed back. It is not a setting any more: it is encrypted on the user's
   // row and written through `PUT /v1/ask/key`, which is the only way in. An older

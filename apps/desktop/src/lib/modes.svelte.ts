@@ -35,6 +35,7 @@ import { type PropertiesMode, propertiesMode } from '@nib/markdown/properties'
 import { SvelteMap } from 'svelte/reactivity'
 import { account } from './account.svelte'
 import { api, type AccountSettings } from './api'
+import { viewport } from './viewport.svelte'
 import { type AttachmentFolder, isAttachmentFolder } from './attachments'
 import { isPaper, type Paper } from '@nib/markdown/papers'
 import { isLinkFormat, type LinkFormat, setLinkWriting } from './link-format'
@@ -165,6 +166,7 @@ interface Saved {
   glassesMarks: Marks
   glassesWords: Record<string, unknown>
   glassesSeen: boolean
+  mobileSeen: boolean
   glassesModel: string
   glassesEffort: string
   vim: boolean
@@ -282,6 +284,7 @@ export const DEFAULTS = {
   glassesVoice: false,
   glassesCompaction: DEFAULT_COMPACTION,
   glassesSeen: false,
+  mobileSeen: false,
   glassesModel: '',
   glassesEffort: 'low' as Effort,
   vim: false,
@@ -439,6 +442,16 @@ class Modes {
    *  never worn a pair should not be offered a pane of settings about them. Set
    *  once, by the plugin, the first time a bridge answers. */
   glassesSeen = $state(DEFAULTS.glassesSeen)
+  /** Whether this account has ever been used on a phone or a tablet (#769).
+   *
+   *  What the Mobile section waits for, the way Glasses waits for `glassesSeen`: its
+   *  bar over the keyboard and its pull past the top are a phone's and a tablet's
+   *  alone (`viewport.touch`), and a laptop on an account that has never been on one
+   *  was offered a pane about a device it does not have. On the account, so the bar
+   *  is still put together on the desktop, with a keyboard, once there is a phone to
+   *  put it together for. Set once, by the first handheld sitting; never taken back.
+   *  See `tellOfMobile`. */
+  mobileSeen = $state(DEFAULTS.mobileSeen)
   /** Which model answers. Empty until the reader has chosen one from the list the
    *  API itself gave; see even/models.ts. */
   glassesModel = $state(DEFAULTS.glassesModel)
@@ -1339,7 +1352,32 @@ class Modes {
     // nobody's idea of an evening.
     if (unheard) this.adoptGlasses(remote)
 
+    this.tellOfMobile(token, remote)
+
     return remote
+  }
+
+  /** The Mobile section's answer, both ways (#769): taken from the account where it
+   *  says a handheld has been here, and said to it from a handheld that finds it has
+   *  not heard yet. Once a pull, which is once a launch and once a sign-in.
+   *
+   *  Said in a request of its own rather than through `share`: the Worker refuses a
+   *  whole patch over one setting it does not know, and a build that runs ahead of
+   *  the Worker it talks to - the web app's edge beside main's - would otherwise hold
+   *  every other setting owed behind this one. Refused, it is said again next time. */
+  private tellOfMobile(token: string, remote: AccountSettings): void {
+    if (remote.mobileSeen === true) {
+      if (!this.mobileSeen) {
+        this.mobileSeen = true
+        this.persist()
+      }
+      return
+    }
+    if (!viewport.touch) return
+
+    this.mobileSeen = true
+    this.persist()
+    void api.saveSettings(token, { mobileSeen: true }).catch(() => undefined)
   }
 
   /** The Glasses settings, as the account has them.
@@ -1562,6 +1600,7 @@ class Modes {
       glassesMarks: this.glassesMarks,
       glassesWords: this.glassesWords,
       glassesSeen: this.glassesSeen,
+      mobileSeen: this.mobileSeen,
       glassesModel: this.glassesModel,
       glassesEffort: this.glassesEffort,
       vim: this.vim,

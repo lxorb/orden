@@ -86,6 +86,7 @@ interface Held {
   attachments?: string
   vim?: boolean
   glassesSeen?: boolean
+  mobileSeen?: boolean
   quietMarks?: boolean
   silent?: boolean
   developer?: boolean
@@ -977,6 +978,66 @@ describe('taking over what the account holds', () => {
     expect(modes.glassesSeen).toBe(true)
     modes.sawGlasses()
     expect(patches).toEqual([])
+  })
+
+  /** The Mobile section waits for a handheld on the account (#769): a reader on a
+   *  NixOS laptop, *"I am on the laptop but I see mobile tab, should it be hidden?"* */
+  describe('a phone or a tablet on the account', () => {
+    async function adoptedOn(device: 'desktop' | 'phone', account: Held) {
+      const patches: Held[] = []
+      api.saveSettings = async (_token: string, patch: Held) => {
+        patches.push(patch)
+        return { settings: {} }
+      }
+      api.settings = async () => ({ settings: account })
+      const { viewport } = await import('./viewport.svelte')
+      viewport.device = device
+      await modes.adopt('token')
+      return patches
+    }
+
+    test('is never said by a laptop', async () => {
+      expect(await adoptedOn('desktop', {})).toEqual([])
+      expect(modes.mobileSeen).toBe(false)
+    })
+
+    test('is said by a phone, in a request of its own', async () => {
+      expect(await adoptedOn('phone', {})).toEqual([{ mobileSeen: true }])
+      expect(modes.mobileSeen).toBe(true)
+    })
+
+    test('is taken from the account on a laptop, and kept across a restart', async () => {
+      expect(await adoptedOn('desktop', { mobileSeen: true })).toEqual([])
+      expect(modes.mobileSeen).toBe(true)
+      expect((await restarted()).mobileSeen).toBe(true)
+    })
+
+    test('is not said again by a phone the account has already heard from', async () => {
+      expect(await adoptedOn('phone', { mobileSeen: true })).toEqual([])
+    })
+
+    /** The web app's edge talks to main's Worker, which may not know the setting yet
+     *  and refuses a whole patch over it: nothing else may wait behind it. */
+    test('is never owed with the other settings when the account refuses it', async () => {
+      api.saveSettings = async () => {
+        throw new Error('unknown setting mobileSeen')
+      }
+      api.settings = async () => ({ settings: {} })
+      const { viewport } = await import('./viewport.svelte')
+      viewport.device = 'phone'
+      await modes.adopt('token')
+
+      // A switch turned with no session to tell, and then the next pull: what was owed
+      // goes up alone, and the handheld is said again, apart from it.
+      modes.toggleSilent()
+      const patches: Held[] = []
+      api.saveSettings = async (_token: string, patch: Held) => {
+        patches.push(patch)
+        return { settings: {} }
+      }
+      await modes.adopt('token')
+      expect(patches).toEqual([{ silent: modes.silent }, { mobileSeen: true }])
+    })
   })
 })
 
