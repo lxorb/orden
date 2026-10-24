@@ -146,6 +146,31 @@ describe('a page’s text, as a note may hold it', () => {
     expect(escapeText('100% sure, 50 % off')).toBe('100% sure, 50 % off')
   })
 
+  /** The renderer links a bare address as it is written, backslashes and all, so an
+   *  escape inside one is a broken link rather than a safer one. */
+  test('a bare web address is kept as it was written', () => {
+    expect(escapeText('see https://www.cs.cmu.edu/~bob/ now')).toBe(
+      'see https://www.cs.cmu.edu/~bob/ now',
+    )
+    expect(escapeText('https://ex.com/page#:~:text=hello')).toBe(
+      'https://ex.com/page#:~:text=hello',
+    )
+    // But for its brackets and backticks, which could close or open something
+    // around it where the address is a link's text. The renderer reads past those.
+    expect(escapeText('at www.example.com/_next/x and https://ex.com/a?b=[1]&c=`d`.')).toBe(
+      'at www.example.com/_next/x and https://ex.com/a?b=\\[1\\]&c=\\`d\\`.',
+    )
+    expect(escapeText('a <https://ex.com/x>')).toBe('a \\<https://ex.com/x>')
+    // What the renderer leaves off the end of an address is words again.
+    expect(escapeText('(https://ex.com/a_b) and *ftp://ex.com/x*')).toBe(
+      '(https://ex.com/a_b) and \\*ftp://ex.com/x\\*',
+    )
+    // Not an address: nothing after the scheme, or no scheme the renderer links.
+    expect(escapeText('https:// and mailto:a_b [x]')).toBe('https:// and mailto:a_b \\[x\\]')
+    // Nor one that holds a comment's two percent signs, which no writing keeps.
+    expect(escapeText('https://ex.com/a%%b')).toBe('https://ex.com/a%\\%b')
+  })
+
   test('nothing in, nothing out', () => {
     expect(escapeText('')).toBe('')
   })

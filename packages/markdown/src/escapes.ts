@@ -85,6 +85,42 @@ const A_CODE_SPAN = /(`{1,3})([^`]+)\1(?!`)/y
  *  phrase in bold, and never markup of its own in somebody's note. */
 const A_STRONG = /(\*\*|__)([^`*_[\]\\<%]+)\1/y
 
+/** A bare web address, the way the renderer's autolink reads one: marked's GFM
+ *  `url` rule, a scheme it links or `www.` and then everything up to a blank or a
+ *  `<`. What it then trims off the end is `TRAILING`'s to say.
+ *
+ *  Kept as it was written because the renderer links the address character for
+ *  character, backslashes included: `https://www.cs.cmu.edu/\~bob/` is drawn as a
+ *  link to `/%5C~bob/`, a page that does not exist. And nothing inside one needs an
+ *  escape, because once the autolink has the address nothing else reads it. */
+const A_URL = /(?:(?:[hH][tT][tT][pP][sS]?|[fF][tT][pP]):\/\/|www\.)(?:[a-zA-Z0-9-]+\.?)+[^\s<]*/y
+
+/** marked's `_backpedal`: the punctuation an address does not end in, so the full
+ *  stop after one is the sentence's and a bracket is the one around it. Run until
+ *  it changes nothing, as marked runs it. */
+const TRAILING = /(?:[^?!.,:;*_'"~()&]+|\([^)]*\)|&(?![a-zA-Z0-9]+;$)|[?!.,:;*_'"~)]+(?!$))+/
+
+/** The letters an address can start with, asked before the pattern is run: a
+ *  conversion walks every character of a page and almost all of them are letters
+ *  that start nothing. */
+const AN_ADDRESS = /[hHfFw]/
+
+/** The address that starts here, as the renderer would link it, or nothing. Not one
+ *  holding two percent signs: those open a comment, which takes the address out of
+ *  the page whatever is done to it, so it is escaped as the words it is. */
+function addressAt(text: string, at: number): string | null {
+  if (!AN_ADDRESS.test(text[at] ?? '')) return null
+  A_URL.lastIndex = at
+  let address = A_URL.exec(text)?.[0]
+  if (!address) return null
+
+  for (let before = ''; before !== address;) {
+    before = address
+    address = TRAILING.exec(address)?.[0] ?? ''
+  }
+  return address && !address.includes('%%') ? address : null
+}
+
 /** Whether a run markdown would read may stay as it was written: nothing blank
  *  against the markers, which is where markdown stops reading one, and no more of
  *  the same marker on either side of it - `***a***` is not this rule's to judge. */
@@ -188,6 +224,23 @@ export function escapeText(text: string): string {
   let midLine = at > 0
 
   while (at < text.length) {
+    const address = addressAt(text, at)
+
+    if (address) {
+      // Written as it is but for its brackets and backticks. The same words can be a
+      // link's text, where nothing autolinks and a bare `]` would close the brackets
+      // around it - `[https://a.test/](https://evil.test)` - and a backtick would open
+      // code that runs past them. Escaped, they are the characters a link's text shows,
+      // and the renderer's autolink takes the escapes back off; see `bareAddress`
+      // in index.ts. A `<` just before is asked about with the address after it.
+      out.push(bracketsOf(escaped + address).slice(0, -address.length))
+      out.push(address.replace(/[[\]`]/g, '\\$&'))
+      escaped = ''
+      at += address.length
+      midLine = true
+      continue
+    }
+
     const kept = keptAt(text, at)
 
     if (kept) {
