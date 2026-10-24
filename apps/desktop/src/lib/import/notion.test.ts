@@ -251,6 +251,135 @@ describe('a Notion export', () => {
     expect(row).not.toContain('Serviced |')
   })
 
+  test('a page dated twice, or with a range, keeps every date', async () => {
+    const plan = await readNotion([
+      file(`Two ${PLAN}.md`, '# Two\nCreated: January 2, 2026\nDate: March 5, 2026\n\nWords.\n'),
+      file(`Trip ${SUB}.md`, '# Trip\nDate: May 1, 2026 → May 3, 2026\n\nWords.\n'),
+    ])
+
+    const two = noteAt(plan, 'Two.md')
+    expect(two.match(/^date:/gm)).toHaveLength(1)
+    expect(two).toContain('date: 2026-01-02\n')
+    expect(two).toContain('date-2: 2026-03-05\n')
+    expect(two).not.toContain('Date: March')
+
+    const trip = noteAt(plan, 'Trip.md')
+    expect(trip.match(/^date:/gm)).toHaveLength(1)
+    expect(trip).toContain('May 1, 2026 → May 3, 2026')
+    expect(trip).not.toContain('Date: May')
+  })
+
+  test('a database keeps every column under one key of its own, in its rows and its base', async () => {
+    const plan = await readNotion([
+      file(
+        `Tasks ${TASKS}_all.csv`,
+        [
+          'Name,Created,Date,Status,Status?,⭐',
+          'One,"January 2, 2026","March 5, 2026",Doing,done,5',
+          'Two,"January 3, 2026","May 1, 2026 → May 3, 2026",,later,4',
+        ].join('\n'),
+      ),
+      file(
+        `Tasks ${TASKS}/One ${ROW}.md`,
+        '# One\nCreated: January 2, 2026\nDate: March 5, 2026\nStatus: Doing\nStatus?: done\n⭐: 5\n\nWords.\n',
+      ),
+    ])
+
+    const one = noteAt(plan, 'Tasks/One.md')
+    expect(one).toContain('date: 2026-01-02\n')
+    expect(one).toContain('date-2: 2026-03-05\n')
+    expect(one).toContain('status: Doing\n')
+    expect(one).toContain('status-2: done\n')
+    expect(one).toContain('column-6: 5\n')
+
+    const two = noteAt(plan, 'Tasks/Two.md')
+    expect(two).toContain('date: 2026-01-03\n')
+    expect(two).toContain('date-2: May 1, 2026 → May 3, 2026\n')
+    expect(two).toContain('status-2: later\n')
+    expect(two).not.toMatch(/^status:/m)
+    expect(two).toContain('column-6: 4\n')
+
+    const base = readBase(fenced(noteAt(plan, 'Tasks.md')))
+    expect(base.views[0]?.order).toEqual([
+      'file.name',
+      'note.date',
+      'note.date-2',
+      'note.status',
+      'note.status-2',
+      'note.column-6',
+    ])
+    expect(base.properties['note.date-2']?.displayName).toBe('Date')
+    expect(base.properties['note.status-2']?.displayName).toBe('Status?')
+    expect(base.properties['note.column-6']?.displayName).toBe('⭐')
+  })
+
+  test('a database dates its rows by the column that reads as a day, whatever stands before it', async () => {
+    const plan = await readNotion([
+      file(
+        `Trips ${TASKS}_all.csv`,
+        [
+          'Name,Date,Created',
+          'One,"May 1, 2026 → May 3, 2026","January 2, 2026"',
+          'Two,,"January 3, 2026"',
+        ].join('\n'),
+      ),
+      file(
+        `Visits ${TASKS}_all.csv`,
+        [
+          'Name,Date,Created',
+          'One,"March 5, 2026","January 2, 2026"',
+          'Two,,"January 3, 2026"',
+        ].join('\n'),
+      ),
+    ])
+
+    // A Date that reads as days but is blank in a row still leaves the row its date.
+    expect(noteAt(plan, 'Visits/One.md')).toContain('date: 2026-01-02\n')
+    expect(noteAt(plan, 'Visits/One.md')).toContain('date-2: 2026-03-05\n')
+    expect(noteAt(plan, 'Visits/Two.md')).toContain('date: 2026-01-03\n')
+
+    const one = noteAt(plan, 'Trips/One.md')
+    expect(one.match(/^date:/gm)).toHaveLength(1)
+    expect(one).toContain('date: 2026-01-02\n')
+    expect(one).toContain('date-2: May 1, 2026 → May 3, 2026\n')
+
+    const two = noteAt(plan, 'Trips/Two.md')
+    expect(two).toContain('date: 2026-01-03\n')
+    expect(two).not.toContain('date-2')
+
+    const base = readBase(fenced(noteAt(plan, 'Trips.md')))
+    expect(base.views[0]?.order).toEqual(['file.name', 'note.date-2', 'note.date'])
+    expect(base.properties['note.date']?.displayName).toBe('Created')
+    expect(base.properties['note.date-2']?.displayName).toBe('Date')
+  })
+
+  test('an HTML export keeps a date it cannot read as a day beside the one it can', async () => {
+    const plan = await readNotion([
+      file(
+        `Gear ${PLAN}/Trip ${SUB}.html`,
+        [
+          '<html><body><article><header><h1 class="page-title">Trip</h1>',
+          '<table class="properties"><tbody>',
+          '<tr class="property-row property-row-created_time"><th>Created</th><td><time>@January 2, 2026</time></td></tr>',
+          '<tr class="property-row property-row-date"><th>Date</th><td><time>@May 1, 2026 → May 3, 2026</time></td></tr>',
+          '<tr class="property-row property-row-text"><th>Status</th><td>Doing</td></tr>',
+          '<tr class="property-row property-row-text"><th>status</th><td>done</td></tr>',
+          '<tr class="property-row property-row-number"><th>⭐</th><td>5</td></tr>',
+          '</tbody></table></header><div class="page-body"><p>Words</p></div></article></body></html>',
+        ].join(''),
+      ),
+      file(`Gear ${PLAN}.html`, '<h1>Gear</h1>'),
+    ])
+
+    const row = noteAt(plan, 'Gear/Trip.md')
+    expect(row.match(/^date:/gm)).toHaveLength(1)
+    expect(row).toContain('date: 2026-01-02\n')
+    expect(row).toContain('May 1, 2026 → May 3, 2026')
+    expect(row).toContain('status: Doing\n')
+    expect(row).toContain('status-2: done\n')
+    expect(row).toMatch(/^property-\d+: 5$/m)
+  })
+
   test('an HTML export is read as HTML rather than refused', async () => {
     const plan = await readNotion([
       file(`Plan ${PLAN}.html`, '<h1>Plan</h1><p>Words</p>'),
