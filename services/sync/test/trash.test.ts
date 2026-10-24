@@ -261,6 +261,17 @@ describe('purging', () => {
     expect((await call(env, '/v1/spaces', { token })).json.deleted).toEqual([space])
   })
 
+  /** The words a note was searched by are its words too, and go when it does, as
+   *  they do when a note is emptied out of the trash on its own. */
+  test('a space now keeps no words of its notes to search by', async () => {
+    const id = await addNote('Secret.md', 'my bank pin is 4711')
+    expect(env.db.prepare('select 1 from note_search where note_id = ?').all(id)).toHaveLength(1)
+    await call(env, `/v1/spaces/${space}`, { method: 'DELETE', token })
+
+    await call(env, `/v1/trash/spaces/${space}`, { method: 'DELETE', token })
+    expect(env.db.prepare('select 1 from note_search where note_id = ?').all(id)).toEqual([])
+  })
+
   test('by age: nothing before 14 days, everything after', async () => {
     const note = await addNote('Idea.md', '# Idea')
     const other = await addSpace('Old')

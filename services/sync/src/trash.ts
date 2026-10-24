@@ -193,7 +193,8 @@ async function purgeSpace(env: Env, space: Pick<Space, 'id'>, budget = AT_ONCE):
   // its room, and the bodies of its versions, which go once no other row names the
   // same hash - emptied from `leftovers` as an account's are. And the id itself is
   // retired, so that no create anywhere is made under it again and handed what the
-  // room held (0052).
+  // room held (0052). And the words it was searched by go with it, as they do when a
+  // note is emptied on its own (`forgetWords`).
   const at = now()
   for (const chunk of chunks(results.map((note) => note.id))) {
     const list = places(chunk.length)
@@ -210,6 +211,7 @@ async function purgeSpace(env: Env, space: Pick<Space, 'id'>, budget = AT_ONCE):
         `insert or ignore into retired_notes (id, since)
            select id, ? from notes where id in (${list})`,
       ).bind(at, ...chunk),
+      env.DB.prepare(`delete from note_search where note_id in (${list})`).bind(...chunk),
       env.DB.prepare(`delete from notes where id in (${list})`).bind(...chunk),
     ])
   }
