@@ -584,10 +584,22 @@ describe('a note renamed on this machine', () => {
     await pull(mirror, 'token', NOBODY, { rule: 'ask', clashed: () => undefined })
     renameOnDisk('One.md', 'Two.md')
 
-    await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Two.md`, new Set([id]))
+    const asked: Clash[] = []
+    await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Two.md`, new Set([id]), (one) =>
+      asked.push(one),
+    )
 
     // Renamed on the account, still with the words the question is about.
     expect(fake.remote.get(id)).toMatchObject({ path: 'Two.md', content: `${HERE}there\n` })
+    // And the question holds the words and the version the account was read at.
+    expect(asked).toEqual([
+      expect.objectContaining({
+        path: `${ROOT}/Two.md`,
+        id,
+        version: fake.remote.get(id)!.version,
+        theirs: `${HERE}there\n`,
+      }),
+    ])
     expect(mirror.notes['Two.md']).toMatchObject({ id, hash: '' })
     expect(fake.disk.get(`${ROOT}/Two.md`)).toBe(`${HERE}here\n`)
   })

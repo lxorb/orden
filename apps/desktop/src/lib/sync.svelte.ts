@@ -320,7 +320,7 @@ class Sync {
     try {
       const { movedHere } = await import('./sync/pass')
       for (const mirror of Object.values(this.mirrors)) {
-        if (await movedHere(mirror, token, from, to, held)) this.save()
+        if (await movedHere(mirror, token, from, to, held, (one) => record.clash(one))) this.save()
       }
     } finally {
       if (moving.length) this.moving = this.moving.filter((one) => !moving.includes(one))
