@@ -140,6 +140,13 @@ describe('a share as a task', () => {
       sharedTask(arrived({ items: [item({ text: 'Call the plumber\nabout the sink' })] })),
     ).toBe('Call the plumber')
   })
+
+  test('a tag in what was shared is not a tag in the task', () => {
+    const task = sharedTask(
+      arrived({ items: [item({ text: '<img src=https://t.example/p.gif> https://x.test/a' })] }),
+    )
+    expect(task).not.toMatch(/(?<!\\)<(?=[A-Za-z/])/)
+  })
 })
 
 describe('the markdown for one thing', () => {
@@ -155,6 +162,25 @@ describe('the markdown for one thing', () => {
 
 describe('what a share becomes', () => {
   const day = new Date('2026-09-12T10:00:00Z')
+
+  test('shared words are words, and a tag in them opens no markup', () => {
+    const plan = sharedPlan(
+      arrived({
+        subject: 'A page',
+        items: [
+          item({ text: 'Fine <img src=https://t.example/p.gif><style>body{display:none}</style>' }),
+        ],
+      }),
+      new Map(),
+      day,
+      'assets',
+    )
+
+    const note = plan.files[0]
+    const text = note?.kind === 'note' ? note.text : ''
+    expect(text).toContain('Fine \\<img src=https://t.example/p.gif>\\<style>')
+    expect(text).not.toMatch(/(?<!\\)<(?=[A-Za-z/])/)
+  })
 
   test('a link, with where it came from and when', () => {
     const plan = sharedPlan(
