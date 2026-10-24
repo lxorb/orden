@@ -3,7 +3,7 @@
  *
  *  Moving the notes of one space is next door, in sync/pass.ts. */
 
-import { api, ApiError } from './api'
+import { api, ApiError, type SpaceRole } from './api'
 import { arriving } from './arriving.svelte'
 import { without } from './records'
 import { log } from './log'
@@ -342,13 +342,19 @@ class Sync {
    *
    *  A space somebody shared is not this account's to delete, so the same
    *  gesture lets go of it instead: the membership ends, and the space carries
-   *  on being everybody else's. */
-  async forget(root: string) {
+   *  on being everybody else's.
+   *
+   *  Which of the two is `role`, the one the dialog asked about (`roleOf`), so what
+   *  is done is what was said. Unknown, the account's copy is left alone: deleting
+   *  a space after saying "Leave" is the one mistake here nobody can take back. */
+  async forget(root: string, role: SpaceRole | null) {
     const spaceId = this.remoteIdFor(root)
     if (spaceId === null) return
-    const role = account.spaces.find((one) => one.id === spaceId)?.role
-    const theirs =
-      V2 && this.v2 ? role !== undefined && role !== 'owner' : !!this.mirrors[root]?.shared
+    // v1 keeps its own word that the space is somebody else's, which no role
+    // overrides: a space it never owned is never deleted.
+    const shared = !(V2 && this.v2) && !!this.mirrors[root]?.shared
+    const theirs = shared || (role !== null && role !== 'owner')
+    const mine = !shared && role === 'owner'
 
     if (V2 && this.v2) {
       await this.v2.forget(root)
@@ -358,7 +364,7 @@ class Sync {
     }
 
     const token = account.token
-    if (!token) return
+    if (!token || (!theirs && !mine)) return
 
     const letting = theirs ? api.leaveSpace(token, spaceId) : api.deleteSpace(token, spaceId)
 

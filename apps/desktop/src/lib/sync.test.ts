@@ -886,7 +886,7 @@ describe('a space somebody shared', () => {
     fake.remote.calls = []
 
     const [space] = workspace.spaces
-    if (space) await sync.forget(space.root)
+    if (space) await sync.forget(space.root, 'write')
 
     expect(fake.remote.calls).toEqual(['leaveSpace s-Theirs'])
   })
@@ -1720,6 +1720,58 @@ describe('a pass that fails partway through', () => {
     } finally {
       fake.api.createSpace = real
       sync.stop()
+    }
+  })
+})
+
+describe('a v2 space whose role is not known yet', () => {
+  /** A paired space under v2 the account has not listed yet and the sync store kept no
+   *  role for: the first seconds of a launch, or a session with no network. */
+  async function unknown() {
+    await signIn()
+    const forgotten: string[] = []
+    const runner = {
+      remoteIdFor: (root: string) => (root === '/Plan' ? 's-Plan' : null),
+      roleKept: () => null,
+      forget: (root: string) => {
+        forgotten.push(root)
+        return Promise.resolve()
+      },
+    }
+    ;(sync as unknown as { v2: typeof runner }).v2 = runner
+    account.spaces = []
+    account.listed = false
+    fake.remote.calls = []
+    return { forgotten, done: () => ((sync as unknown as { v2: null }).v2 = null) }
+  }
+
+  test('is never deleted from the account when it is let go of', async () => {
+    const { roleOf } = await import('./sharing.svelte')
+    const { forgotten, done } = await unknown()
+    try {
+      const role = roleOf('/Plan')
+      expect(role).toBeNull()
+      await sync.forget('/Plan', role)
+
+      expect(forgotten).toEqual(['/Plan'])
+      expect(fake.remote.calls).not.toContain('deleteSpace s-Plan')
+    } finally {
+      done()
+    }
+  })
+
+  test('is deleted from the account once the listing says it is this account’s', async () => {
+    const { roleOf } = await import('./sharing.svelte')
+    const { done } = await unknown()
+    try {
+      account.listed = true
+      const role = roleOf('/Plan')
+      expect(role).toBe('owner')
+      await sync.forget('/Plan', role)
+
+      expect(fake.remote.calls).toContain('deleteSpace s-Plan')
+    } finally {
+      done()
     }
   })
 })
