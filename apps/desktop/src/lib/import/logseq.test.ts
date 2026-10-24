@@ -46,6 +46,28 @@ describe('a Logseq graph', () => {
     expect(text).toContain('- Words')
   })
 
+  test('a page dated twice keeps both, each under a key of its own', async () => {
+    const plan = await readLogseq([
+      file(
+        'pages/A.md',
+        'created-at:: 1700000000000\ndate:: [[Someday]]\nDue Date:: x\ndue-date:: y\n\n- hi\n',
+      ),
+      file('pages/B.md', 'created-at:: 1700000000000\ndate:: 2026-05-01\n\n- hi\n'),
+    ])
+
+    const a = noteAt(plan, 'A.md')
+    expect(a.match(/^date:/gm)).toHaveLength(1)
+    expect(a.match(/^due-date:/gm)).toHaveLength(1)
+    expect(a).toContain('date-2:')
+    expect(a).toContain('Someday')
+    expect(a).toContain('due-date: x')
+    expect(a).toContain('due-date-2: y')
+
+    const b = noteAt(plan, 'B.md')
+    expect(b.match(/^date:/gm)).toHaveLength(1)
+    expect(b).toContain('date-2: 2026-05-01')
+  })
+
   test('a task marker is a task', async () => {
     const plan = await readLogseq([
       file(

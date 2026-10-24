@@ -42,9 +42,14 @@ export function frontMatterFor(meta: Meta): string {
   const tags = tagList(meta.tags ?? [])
   if (tags.length) rows.push(['tags', tags])
 
-  for (const [key, value] of meta.extra ?? []) {
-    const name = propertyName(key)
-    if (name && said(value)) rows.push([name, value])
+  // Two properties that come out as one key - `Status` and `status`, or a `Date`
+  // beside the note's own date - would be one key written twice, which is front
+  // matter no reader takes at all, so the second steps aside under a name of its
+  // own. A name with nothing in it to keep, a `⭐`, is called after its place
+  // rather than left out with its value.
+  const taken = new Set(rows.map(([key]) => key))
+  for (const [at, [key, value]] of (meta.extra ?? []).entries()) {
+    if (said(value)) rows.push([freeKey(propertyName(key) || `property-${at + 1}`, taken), value])
   }
 
   const written = writeFrontMatter(rows)
@@ -93,6 +98,15 @@ export function propertyName(key: string): string {
     .trim()
     .replace(/\s+/g, '-')
     .toLowerCase()
+}
+
+/** The key wanted, or the first of `key-2`, `key-3` and on that is not taken yet,
+ *  and taken from then on. */
+export function freeKey(wanted: string, taken: Set<string>): string {
+  let key = wanted
+  for (let step = 2; taken.has(key); step += 1) key = `${wanted}-${step}`
+  taken.add(key)
+  return key
 }
 
 /** What another app called a label, as a tag nib can hold: no spaces, no hash in

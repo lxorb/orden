@@ -16,7 +16,7 @@
 import { key } from '../i18n.svelte'
 import { recordsOf } from './csv'
 import { type Base, writeBase } from '@nib/bases'
-import { dayOf, noteText, type Meta, propertyName } from './meta'
+import { dayOf, freeKey, noteText, type Meta, propertyName } from './meta'
 import { Names, safeName, withoutNotionId } from './names'
 import type { ImportPlan, Lost, Planned } from './plan'
 import type { Source } from './sources'
@@ -184,12 +184,7 @@ function renamed(title: string, name: string): boolean {
 function keysOf(columns: readonly string[]): Map<string, string> {
   const keys = new Map<string, string>()
   const taken = new Set<string>()
-  const take = (column: string, wanted: string) => {
-    let key = wanted
-    for (let step = 2; taken.has(key); step += 1) key = `${wanted}-${step}`
-    taken.add(key)
-    keys.set(column, key)
-  }
+  const take = (column: string, wanted: string) => keys.set(column, freeKey(wanted, taken))
 
   for (const column of columns) {
     if (DATES.test(column)) take(column, /created|^date$/i.test(column) ? 'date' : 'updated')

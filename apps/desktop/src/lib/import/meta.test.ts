@@ -40,6 +40,40 @@ describe('front matter for an imported note', () => {
     expect(block).toContain('when: today')
   })
 
+  test('writes each key once, a column that folds into one already written under a name of its own', () => {
+    const block = frontMatterFor({
+      date: '2026-01-02',
+      tags: ['work'],
+      extra: [
+        ['Status', 'Doing'],
+        ['status', 'Done'],
+        ['Date', 'May 1, 2026 → May 3, 2026'],
+        ['Tags', 'loose'],
+      ],
+    })
+
+    expect(block.match(/^status:/gm)).toHaveLength(1)
+    expect(block.match(/^date:/gm)).toHaveLength(1)
+    expect(block.match(/^tags:/gm)).toHaveLength(1)
+    expect(block).toContain('status: Doing')
+    expect(block).toContain('status-2: Done')
+    expect(block).toContain('date: 2026-01-02')
+    expect(block).toContain('date-2: May 1, 2026 → May 3, 2026')
+    expect(block).toContain('tags-2: loose')
+  })
+
+  test('keeps a column whose name has nothing in it to keep, under its place', () => {
+    const block = frontMatterFor({
+      extra: [
+        ['Due', 'soon'],
+        ['⭐', '5'],
+      ],
+    })
+
+    expect(block).toContain('due: soon')
+    expect(block).toContain("property-2: '5'")
+  })
+
   test('a note with nothing to say carries no fence at all', () => {
     expect(frontMatterFor({})).toBe('')
     expect(frontMatterFor({ tags: [], extra: [['Empty', '  ']] })).toBe('')

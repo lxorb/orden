@@ -471,9 +471,11 @@ export function logseqNote(
     }
 
     if (/^(created-at|date)$/i.test(name)) {
+      // Only the first is the note's date: a second, a `date::` under a
+      // `created-at::`, is kept as the property it was rather than dropped.
       const day = dayOf(value)
-      if (day) {
-        meta.date ??= day
+      if (day && !meta.date) {
+        meta.date = day
         continue
       }
     }

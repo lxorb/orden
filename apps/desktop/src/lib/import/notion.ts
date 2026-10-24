@@ -25,7 +25,7 @@ import { htmlToMarkdown } from '@nib/markdown/from-html'
 
 import { key } from '../i18n.svelte'
 import { folderPlan, isJunk } from './folder'
-import { dayOf, type Meta, noteText, propertyName, type Property } from './meta'
+import { dayOf, freeKey, type Meta, noteText, propertyName, type Property } from './meta'
 import { Names, safeName, safeParts, withoutNotionId } from './names'
 import {
   baseBlock,
@@ -102,8 +102,9 @@ export async function readNotion(exported: readonly Source[]): Promise<ImportPla
           to: path,
           read: () => {
             const name = (path.split('/').pop() ?? path).replace(MARKDOWN, '')
-            const text = database ? baseBlock(database, keyOf) : ''
-            return { text, title: name }
+            if (!database) return { text: '', title: name }
+            const keys = keysOf(database.columns)
+            return { text: baseBlock(database, (one) => keys.get(one) ?? ''), title: name }
           },
         }
       }
@@ -111,11 +112,11 @@ export async function readNotion(exported: readonly Source[]): Promise<ImportPla
       if (!MARKDOWN.test(source.path))
         return { to: names.free(safeParts(source.path, withoutNotionId)) }
 
-      const kinds = databases.get(parentOf(source.path))?.kinds
+      const database = databases.get(parentOf(source.path))
       return {
         to: names.free(safeParts(source.path, withoutNotionId)),
         read: (text) => {
-          const said = notionPage(text, kinds)
+          const said = notionPage(text, database?.kinds, database && keysOf(database.columns))
           return {
             text: viewsFollowed(said.body, source.path, paths),
             title: null,
@@ -297,7 +298,7 @@ async function missingRows(
     out.push({
       kind: 'note',
       path: names.free(`${into}/${name}.md`),
-      text: noteText(name, '', metaOf(said, database.kinds)),
+      text: noteText(name, '', metaOf(said, database.kinds, keysOf(database.columns))),
     })
   }
 
@@ -309,14 +310,33 @@ function matchable(name: string): string {
   return name.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '')
 }
 
-/** The key a column is written under in a row's front matter: the page's own
- *  dates and its labels under nib's names for them, every other column under its
- *  own. */
-function keyOf(column: string): string {
-  if (MADE.test(column)) return 'date'
-  if (CHANGED.test(column)) return 'updated'
-  if (LABELS.test(column)) return 'tags'
-  return propertyName(column)
+/** The key each column is written under, the same in every row's front matter and
+ *  in the base: the page's own dates and its labels under nib's names for them,
+ *  every other column under its own.
+ *
+ *  Only the first date of each kind is the page's own. Two columns that come out
+ *  as one key - a `Created` and a `Date`, or `Status` and `Status?` - would be one
+ *  property written twice, so the second steps aside as `date-2`, and a column
+ *  whose name has nothing in it to keep is called after its place, as a CSV's are
+ *  (see table.ts). Every label column is the one list of tags, and is asked first
+ *  so that no column of words takes the name. The title is the note's name and
+ *  has no key. */
+function keysOf(columns: readonly string[]): Map<string, string> {
+  const keys = new Map<string, string>()
+  const taken = new Set<string>()
+
+  for (const column of columns.slice(1)) {
+    if (LABELS.test(column)) keys.set(column, 'tags')
+  }
+  if (keys.size) taken.add('tags')
+
+  for (const [at, column] of columns.entries()) {
+    if (at === 0 || keys.has(column)) continue
+    const own = MADE.test(column) ? 'date' : CHANGED.test(column) ? 'updated' : null
+    keys.set(column, freeKey(own ?? (propertyName(column) || `column-${at + 1}`), taken))
+  }
+
+  return keys
 }
 
 /** Which of the CSVs to read. Notion writes `Table id.csv` for the view that was
@@ -351,11 +371,12 @@ function usefulCsvs(sources: readonly Source[]): Set<string> {
 export function notionPage(
   text: string,
   kinds?: ReadonlyMap<string, Kind>,
+  keys?: ReadonlyMap<string, string>,
 ): { body: string; meta: Meta } {
   const found = propertiesOf(text, kinds)
   if (!found) return { body: text, meta: {} }
 
-  return { body: found.body, meta: metaOf(found.said, kinds) }
+  return { body: found.body, meta: metaOf(found.said, kinds, keys) }
 }
 
 /** The property block of a page, as `notionPage` finds it, and the page without
@@ -421,9 +442,19 @@ function propertyIn(line: string, kinds?: ReadonlyMap<string, Kind>): [string, s
 }
 
 /** A page's properties as front matter: its own dates and labels under nib's
- *  names, and every other one as what its column holds. A page that is not a row
- *  of a database read here has its values judged one by one. */
-function metaOf(said: readonly [string, string][], kinds?: ReadonlyMap<string, Kind>): Meta {
+ *  names, and every other one as what its column holds. A row of a database read
+ *  here is written under its columns' keys (see `keysOf`); a page that is not one
+ *  has its values judged one by one.
+ *
+ *  A date is the page's own only where a day can be read out of it and no date
+ *  before it was: a range, `May 1, 2026 → May 3, 2026`, or a `Date` under a
+ *  `Created`, is a property like any other rather than a value that is taken out
+ *  of the page and written nowhere. */
+function metaOf(
+  said: readonly [string, string][],
+  kinds?: ReadonlyMap<string, Kind>,
+  keys?: ReadonlyMap<string, string>,
+): Meta {
   const meta: Meta = {}
   const extra: [string, Property][] = []
   const tags: string[] = []
@@ -431,17 +462,22 @@ function metaOf(said: readonly [string, string][], kinds?: ReadonlyMap<string, K
   for (const [name, value] of said) {
     const plain = value.trim()
     if (!plain) continue
+    const key = keys?.get(name)
 
-    if (MADE.test(name)) {
+    if (MADE.test(name) && !meta.date && (key ?? 'date') === 'date') {
       const day = dayOf(plain)
-      if (day) meta.date ??= day
-      continue
+      if (day) {
+        meta.date = day
+        continue
+      }
     }
 
-    if (CHANGED.test(name)) {
+    if (CHANGED.test(name) && !meta.updated && (key ?? 'updated') === 'updated') {
       const day = dayOf(plain)
-      if (day) meta.updated ??= day
-      continue
+      if (day) {
+        meta.updated = day
+        continue
+      }
     }
 
     if (LABELS.test(name)) {
@@ -449,7 +485,7 @@ function metaOf(said: readonly [string, string][], kinds?: ReadonlyMap<string, K
       continue
     }
 
-    extra.push([name, valueAs(kinds?.get(name) ?? kindOf([plain]), plain)])
+    extra.push([key ?? name, valueAs(kinds?.get(name) ?? kindOf([plain]), plain)])
   }
 
   if (tags.length) meta.tags = tags
@@ -560,9 +596,16 @@ function propertiesTable(table: string): Meta {
 
     if (MADE.test(name) || CHANGED.test(name)) {
       const day = notionDate(plain)?.slice(0, 10) ?? dayOf(plain)
-      if (day && MADE.test(name)) meta.date ??= day
-      if (day && CHANGED.test(name)) meta.updated ??= day
-      if (day) continue
+      // Only the first date of each kind is the page's own, and one that does not
+      // read as a day is kept as the property it was; see `metaOf`.
+      if (day && MADE.test(name) && !meta.date) {
+        meta.date = day
+        continue
+      }
+      if (day && CHANGED.test(name) && !meta.updated) {
+        meta.updated = day
+        continue
+      }
     }
 
     if (LABELS.test(name)) {
