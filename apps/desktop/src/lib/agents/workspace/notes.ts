@@ -10,7 +10,7 @@
  *  off that space's own index. The four verbs past the first three are anchored edits
  *  too, so each is one undo step with the agent's caret, like any other. */
 
-import { frontMatterEdit } from '@nib/markdown/front-matter'
+import { frontMatterEdit, isPropertyName } from '@nib/markdown/front-matter'
 import { taskAt } from '@nib/markdown/tasks'
 import { flowItem, scalar } from '@nib/markdown/yaml'
 import type { AgentAnswer } from '../../automation/caller'
@@ -180,7 +180,7 @@ export async function setProperty(call: Call): Promise<AgentAnswer> {
   const named = noteOf(call, true)
   const { relative } = named
   const key = need(call, 'key')
-  if (!/^[\w-][\w -]*$/.test(key)) throw new Refused('bad_arguments', `${key} is not a key`)
+  if (!isPropertyName(key)) throw new Refused('bad_arguments', `${key} is not a key`)
   if (!('value' in call.args)) throw new Refused('bad_arguments', 'say the value, or null')
   const value = yamlOf(call.args.value)
 

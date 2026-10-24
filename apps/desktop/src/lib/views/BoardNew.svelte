@@ -84,6 +84,14 @@
         { title, open: false, properties: valued() },
       )
       if (path) onmade?.(path)
+    } catch {
+      // The card was emptied for the next title before the note was written, so a write
+      // that failed would take the title typed with it. It goes back into the card, still
+      // open, which is the sign nothing was made, unless a next title is already there.
+      // Focus is left where it went, so a blur that failed does not pull it back.
+      if (!words) words = title
+      typing = true
+      return
     } finally {
       making = false
     }
