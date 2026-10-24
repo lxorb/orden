@@ -845,7 +845,14 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-24, to 3,292,000, for #904 with #846 merged in: the hover card writes
  *  in the source note's own space, only after typing, and is locked where the note is
- *  read-only. Measured 3,291,479. */
+ *  read-only. Measured 3,291,479.
+ *
+ *  Raised 2026-10-24, to 3,294,000, for #904, #905 and #907: the hover card, block
+ *  names, block search, the reading view and a link followed early all keep to the
+ *  note's own space (`targetWhenRead` in link-index.svelte.ts). Measured 3,293,189.
+ *
+ *  Raised 2026-10-24, to 3,295,000, for #907 with #846 merged in under it. Measured
+ *  3,294,400. */
 const BUDGET = 3_300_000 // combined branch only
 const MOST_FILES = 382
 
