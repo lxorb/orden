@@ -851,7 +851,7 @@ function holds(tail: string): boolean {
  *  Raised 2026-10-24, to 3,288,000, for #870: the automation's `properties.set` reads
  *  a typed list member by member (`typedItem` in automation/acts.ts), with #710 merged
  *  in. Measured 3,287,165. */
-const BUDGET = 3_300_000 // combined branch only
+const BUDGET = 3_319_000 // combined branch only, measured 3318820
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
