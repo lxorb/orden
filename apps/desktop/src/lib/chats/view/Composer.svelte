@@ -26,7 +26,7 @@
   import { DIVIDER, menu } from '../../menu.svelte'
   import { modes } from '../../modes.svelte'
   import { dur } from '../../motion'
-  import { followHref, followNote } from '../../open-link'
+  import { followHref, followNoteFrom } from '../../open-link'
   import { PROPERTY_CHOICES } from '../../property-choices'
   import { shortcuts } from '../../shortcuts.svelte'
   import { insideSpace } from '../../space-paths'
@@ -137,7 +137,7 @@
         mentionLit = 0
       },
       notes: links.index(path),
-      openNote: followNote,
+      openNote: followNoteFrom(path),
       openLink: followHref,
       writeLink: pickedLink,
       shortcuts: shortcuts.forEditor,

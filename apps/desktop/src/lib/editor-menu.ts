@@ -555,7 +555,11 @@ function recordingEntries(view: EditorView | undefined, at: number | null): Menu
  *  read off the decoration under the pointer rather than out of the document, because
  *  that decoration is what the press landed on; the document says where the link is
  *  written, which is what the two edits change. See link-edit.ts in @nib/editor. */
-function linkEntries(view: EditorView | undefined, event: MouseEvent): MenuEntry[] {
+function linkEntries(
+  view: EditorView | undefined,
+  event: MouseEvent,
+  path: string | null | undefined,
+): MenuEntry[] {
   const target = event.target
   const link = target instanceof Element ? target.closest('.nib-link') : null
   if (!link) return []
@@ -566,7 +570,7 @@ function linkEntries(view: EditorView | undefined, event: MouseEvent): MenuEntry
   const jump = view && at !== null && link.hasAttribute('data-note') ? jumpAt(view.state, at) : null
 
   return [
-    ...(jump ? noteEntries(jump) : []),
+    ...(jump ? noteEntries(jump, path ?? null) : []),
     ...(href && webHref(href) !== null
       ? [{ label: t('Open in the browser'), run: () => void openExternal(href) }]
       : []),
@@ -588,12 +592,17 @@ function linkEntries(view: EditorView | undefined, event: MouseEvent): MenuEntry
  *  right, which is Ctrl+Alt+click's. Not on a phone, which has no pane to put beside
  *  another. And the link itself, written the way the space writes links and from
  *  nowhere in particular, so it reads the same wherever it is pasted; see `linkTo`. */
-function noteEntries(jump: NoteJump): MenuEntry[] {
+function noteEntries(jump: NoteJump, from: string | null): MenuEntry[] {
   return [
-    { label: t('Open in new tab'), run: () => void workspace.followLink(jump, 'behind') },
+    { label: t('Open in new tab'), run: () => void workspace.followLink(jump, 'behind', from) },
     ...(viewport.touch
       ? []
-      : [{ label: t('Open to the side'), run: () => void workspace.followLink(jump, 'aside') }]),
+      : [
+          {
+            label: t('Open to the side'),
+            run: () => void workspace.followLink(jump, 'aside', from),
+          },
+        ]),
     { label: t('Copy link'), run: () => void copyText(linkOf(jump)) },
   ]
 }
@@ -659,7 +668,7 @@ export function showEditorMenu(
     event,
     [
       ...pictureEntries(view, event),
-      ...linkEntries(view, event),
+      ...linkEntries(view, event, path),
       ...editorMenu(view, blockEntries(view, at, path)),
       ...recordingEntries(view, at),
       ...spellingEntries(view, event),

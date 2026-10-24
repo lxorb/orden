@@ -197,7 +197,8 @@ export function exportCommands(): Command[] {
       text: source(),
       name: name(),
       path: note()?.path ?? null,
-      root: workspace.activeSpace?.root ?? null,
+      // The space the canvas is in, which its cards are relative to.
+      root: workspace.rootHolding(note()?.path ?? null),
       trusted: target().trusted,
     })
 
@@ -215,7 +216,7 @@ export function exportCommands(): Command[] {
       text: source(),
       name: name(),
       path: note()?.path ?? null,
-      root: workspace.activeSpace?.root ?? null,
+      root: workspace.rootHolding(note()?.path ?? null),
     })
 
     if (id === 'pdf') await out.exportPagesPdf(about)
