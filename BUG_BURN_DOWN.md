@@ -441,6 +441,7 @@ Same method and severity scale as round 1.
 | B396 | Low | A new note in a base of another space gets an id counted among the open space's rows, so it can duplicate one (`idRepairs` later renumbers the younger) (nineteenth re-audit) | Open, accepted | `idFor` reads `workspace.activeSpace`'s rows | - | Code reading |
 | B397 | Low | Sync v1: with storage full, the record falls back to one without the note table, losing the per-rename journal of B387; recovery then rests on the aside-first rule alone (tested for two notes) | Open, accepted | The fallback drops the table | - | Code reading |
 | B398 | Low | An AI thread's change row (`PartRow.svelte`) opens the changed path against the open space, not the conversation's (nineteenth re-audit sweep) | Open, accepted | The AI thread's root is not passed there | - | Code reading |
+| B402 | Low | Twentieth re-audit, Rust: renaming a PDF by hand onto `B.pdf` while sync has just brought `B.pdf`'s highlights ahead of their PDF clears them (narrow window); restoring an apart PDF rejoins whatever highlights sit at its old name, even another deleted PDF's | Open, accepted | `held_moved` with `clear`, `rejoins_highlights` | - | Code reading |
 | B353 | Low | If the app answers quick add's window after its 10 s timeout, the task is written though the window kept the text, so a retry adds it twice (rest of B342) | Open, accepted | No cancel reaches a task already handed over | - (needs a slow app and a retry) | Code reading |
 
 Skipped, counted with the insignificant Lows (cannot be fixed alone):
