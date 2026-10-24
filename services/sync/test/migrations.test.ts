@@ -264,3 +264,35 @@ describe('0042, the answers a form took before they were measured', () => {
     database.close()
   })
 })
+
+describe('0063, what a note emptied for good still had sent to it', () => {
+  test('lets go of its answers and its old paths, and of nothing a live note has', () => {
+    const database = upTo('0058_feedback_issue.sql')
+    seed(database)
+    database.exec(
+      `insert into notes (id, space_id, path, seq, updated_at, deleted, deleted_at, size, hash)
+       values ('purged', 'sp', 'P.md', 1, 1, 1, null, 0, ''),
+              ('trashed', 'sp', 'T.md', 2, 1, 1, 5, 2, 'abc'),
+              ('live', 'sp', 'L.md', 3, 1, 0, null, 2, 'abc')`,
+    )
+    for (const note of ['purged', 'trashed', 'live']) {
+      database.exec(
+        `insert into form_answers (id, space_id, note_id, at, answers, bytes)
+         values ('${note}', 'sp', '${note}', 1, '{}', 2)`,
+      )
+      database.exec(
+        `insert into blog_paths (space_id, slug, note_id, at) values ('sp', '${note}', '${note}', 1)`,
+      )
+    }
+
+    database.exec(sql('0063_purged_answers.sql'))
+
+    for (const table of ['form_answers', 'blog_paths']) {
+      expect(
+        database.prepare(`select note_id from ${table} order by note_id`).all(),
+        table,
+      ).toEqual([{ note_id: 'live' }, { note_id: 'trashed' }])
+    }
+    database.close()
+  })
+})

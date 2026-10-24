@@ -122,6 +122,12 @@ async function purgeNote(env: Env, note: Pick<Note, 'id' | 'space_id'>) {
       at,
       note.id,
     ),
+    // And what strangers sent through a form in it, and the addresses it answered on
+    // once. Both would go with the row, but the row stays as a tombstone, so nothing
+    // cascades: a message somebody typed into the page is the page's, and stays no
+    // longer than its words do.
+    env.DB.prepare('delete from form_answers where note_id = ?').bind(note.id),
+    env.DB.prepare('delete from blog_paths where note_id = ?').bind(note.id),
   ])
 
   // And whatever was shared about this one file. A share about a note whose

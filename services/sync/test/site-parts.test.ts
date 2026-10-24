@@ -534,6 +534,40 @@ describe('a site with forms on it', () => {
     expect(answer.text).toContain(`/i/${hash}.css`)
     expect(answer.text.indexOf(`/i/${hash}.css`)).toBeGreaterThan(answer.text.indexOf('/s/'))
   })
+
+  /** A stranger's message is the note's: emptied from Recently deleted for good, the
+   *  note takes its answers with it, and the old addresses it answered on too. */
+  test('a note emptied for good takes its answers and its old paths with it', async () => {
+    const sent = await call(env, `/form/${note}`, {
+      host: HOST,
+      method: 'POST',
+      raw: 'your-name=Ada',
+      headers: { 'content-type': 'application/x-www-form-urlencoded' },
+    })
+    expect(sent.status).toBe(303)
+    const version = (await call(env, `/v1/notes/${note}`, { token })).json.note.version
+    await call(env, `/v1/notes/${note}`, {
+      method: 'PUT',
+      token,
+      body: { path: 'Renamed.md', content: `# Hello\n\n${FENCE}\n`, baseVersion: version },
+    })
+    expect(
+      env.db.prepare('select count(*) as n from blog_paths where note_id = ?').get(note),
+    ).toEqual({ n: 1 })
+
+    await call(env, `/v1/notes/${note}`, { method: 'DELETE', token })
+    expect((await call(env, `/v1/trash/notes/${note}`, { method: 'DELETE', token })).status).toBe(
+      200,
+    )
+
+    expect((await call(env, `/v1/spaces/${space}/answers`, { token })).json.answers).toEqual([])
+    for (const table of ['form_answers', 'blog_paths']) {
+      expect(
+        env.db.prepare(`select count(*) as n from ${table} where note_id = ?`).get(note),
+        table,
+      ).toEqual({ n: 0 })
+    }
+  })
 })
 
 /** A form on a site behind a password. The answer is taken before the gate, so
