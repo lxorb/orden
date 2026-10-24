@@ -20,6 +20,9 @@ export function markdownPane(view: EditorView | undefined): Pane {
             // Obsidian's live preview, where a mark shows while the caret is in it.
             kind: 'switch',
             label: t('Show markdown while writing'),
+            hint: t(
+              'Shows a mark such as ** or # while the cursor is in it; off keeps every mark out of sight.',
+            ),
             words: ['syntax', 'marks', 'wysiwyg', 'rich text'],
             initial: true,
             get: () => !modes.quietMarks,
@@ -29,6 +32,7 @@ export function markdownPane(view: EditorView | undefined): Pane {
             // Obsidian's "Default editing mode"; #232.
             kind: 'switch',
             label: t('Open notes in source mode'),
+            hint: t('Notes open as plain markdown text rather than formatted.'),
             words: ['source mode', 'raw', 'plain text', 'default editing mode'],
             initial: DEFAULTS.opensInSource,
             get: () => modes.opensInSource,
@@ -113,6 +117,7 @@ export function markdownPane(view: EditorView | undefined): Pane {
           {
             kind: 'switch',
             label: t('Right to left'),
+            hint: t('Writes notes from right to left, for Arabic, Hebrew and other such scripts.'),
             initial: DEFAULTS.rtl,
             get: () => modes.rtl,
             set: () => modes.toggleRightToLeft(view),

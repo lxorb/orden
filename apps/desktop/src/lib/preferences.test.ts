@@ -59,42 +59,29 @@ function readsAsOneSentence(hint: string, label: string) {
   expect(hint.replace(/\d\.(\d)?/g, ''), label).toMatch(/^[^.]*\.$/)
 }
 
-/** The `i` beside a label: for the settings whose name only means something to
- *  somebody who already knows the word. */
+/** The `?` beside a label (#768). Every setting has one: a name says what is set, and
+ *  only a sentence says what setting it does. The type holds the sentence to being
+ *  there; this holds it to being one. */
 describe('the sentence behind a setting', () => {
-  /** Each with the pane it is in, and in the order the panes offer them: how a link
-   *  is written is a setting about the editor and sits there, and the rest are about
-   *  the markdown itself. */
-  const HINTED: readonly (readonly [pane: string, label: string])[] = [
-    ['general', 'Web version'],
-    ['editor', 'New links'],
-    ['markdown', 'Strict CommonMark'],
-    ['markdown', 'Smart punctuation'],
-    ['markdown', 'A single newline breaks the line'],
-    ['markdown', 'Front matter'],
-    ['markdown', 'Number headings'],
-    ['markdown', 'Number equations'],
-  ]
+  const every = panes.flatMap((one) => one.groups.flatMap((group) => group.fields))
 
-  test('is there for the settings a word does not explain', () => {
-    for (const [pane, label] of HINTED) {
-      expect(field(pane, label).hint, label).toBeTruthy()
-    }
+  test('is there for every setting, the ones a word explains too', () => {
+    expect(every.length).toBeGreaterThan(40)
+    for (const one of every) expect(one.hint, one.label).toBeTruthy()
   })
 
-  test('and for no other setting, because a name that explains itself needs none', () => {
-    const hinted = panes
-      .flatMap((one) => one.groups.flatMap((group) => group.fields))
-      .filter((one) => one.hint)
-      .map((one) => one.label)
-
-    expect(hinted).toEqual(HINTED.map(([, label]) => label))
+  test('says more than the name does', () => {
+    for (const one of every)
+      expect(one.hint.toLowerCase(), one.label).not.toBe(one.label.toLowerCase())
   })
 
   test('is one plain sentence, which is all a tooltip has room for', () => {
-    for (const [pane, label] of HINTED) {
-      readsAsOneSentence(field(pane, label).hint ?? '', label)
-    }
+    for (const one of every) readsAsOneSentence(one.hint, one.label)
+  })
+
+  test('still explains the words that explain nothing to somebody new', () => {
+    expect(field('general', 'Smart dates').hint).toMatch(/dates/)
+    expect(field('markdown', 'Strict CommonMark').hint).toMatch(/standard markdown/)
   })
 })
 
@@ -320,7 +307,7 @@ describe('the release channel', () => {
   })
 
   test('says what the two words mean, since neither explains itself', () => {
-    const hint = row().hint ?? ''
+    const hint = row().hint
 
     readsAsOneSentence(hint, 'Release channel')
     // The sentence is the whole warning, so it has to do three things: name both
@@ -367,7 +354,7 @@ describe('the web version', () => {
   })
 
   test('says what the two words mean, and which of them can break', () => {
-    const hint = row().hint ?? ''
+    const hint = row().hint
     expect(hint).toContain('Stable')
     expect(hint).toContain('Unstable')
     expect(hint).toContain('break')

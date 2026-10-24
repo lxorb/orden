@@ -27,11 +27,12 @@ interface Common {
    *  reader's own language. The settings' own box and the palette both read them;
    *  see settings-search.ts and palette/settings.ts. */
   words?: string[]
-  /** One plain sentence about what the setting does, shown behind a small `i`
-   *  beside the label. For the settings whose name only means something to
-   *  somebody who already knows the word; one that explains itself has none, and
-   *  shows no glyph at all. */
-  hint?: string
+  /** One plain sentence about what the setting does, shown behind a small `?`
+   *  beside the label (#768). Every setting has one: a name says what is set, and
+   *  only a sentence says what setting it does - Memory saver names a thing, and
+   *  nobody who has not met it knows what it puts to sleep. Required rather than
+   *  optional, so a setting added later cannot come without one. */
+  hint: string
   /** A drawing before the name, for a row about a thing that has one: a kind of tab in
    *  Note types wears the mark its cards and its files wear. */
   icon?: IconNode

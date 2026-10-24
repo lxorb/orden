@@ -27,6 +27,9 @@ export function chatsGroups(): Group[] {
         {
           kind: 'text',
           label: t('My keywords'),
+          hint: t(
+            'Words that notify you whenever someone writes them in a chat, separated by commas.',
+          ),
           words: ['chat', 'notification', 'mention', 'highlight', 'alert'],
           placeholder: t('None'),
           initial: '',
@@ -36,6 +39,7 @@ export function chatsGroups(): Group[] {
         {
           kind: 'select',
           label: t('Hours'),
+          hint: t('When chats may notify you; outside these hours they stay quiet.'),
           words: ['chat', 'notification', 'schedule', 'quiet', 'do not disturb', 'night'],
           options: [
             { value: 'always', label: t('Always') },
@@ -55,6 +59,7 @@ export function chatsGroups(): Group[] {
               {
                 kind: 'select',
                 label: t('Starts'),
+                hint: t('When the hours chats may notify you begin.'),
                 options: hourOptions,
                 get: () => String(hours.from),
                 set: (value) => hush.setHours({ ...hours, from: Number(value) }),
@@ -62,6 +67,7 @@ export function chatsGroups(): Group[] {
               {
                 kind: 'select',
                 label: t('Ends'),
+                hint: t('When the hours chats may notify you end.'),
                 options: hourOptions,
                 get: () => String(hours.to),
                 set: (value) => hush.setHours({ ...hours, to: Number(value) }),
@@ -71,6 +77,7 @@ export function chatsGroups(): Group[] {
         {
           kind: 'switch',
           label: t('Previews'),
+          hint: t('Notifications show the message itself; off shows only who wrote.'),
           words: ['chat', 'notification', 'privacy', 'hide', 'message'],
           initial: true,
           get: () => hush.previews,
@@ -79,6 +86,7 @@ export function chatsGroups(): Group[] {
         {
           kind: 'switch',
           label: t('Sound'),
+          hint: t('Notifications make a sound.'),
           words: ['chat', 'notification', 'audio', 'ping'],
           initial: false,
           get: () => hush.sound,

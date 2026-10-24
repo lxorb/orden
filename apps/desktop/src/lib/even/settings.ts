@@ -89,6 +89,7 @@ type Say = (text: string) => string
 function chooser(
   say: Say,
   label: string,
+  hint: string,
   values: readonly string[],
   words: Record<string, string>,
   initial: string,
@@ -98,6 +99,7 @@ function chooser(
   return {
     kind: 'select',
     label,
+    hint,
     options: values.map((value) => ({ value, label: say(words[value] ?? value) })),
     initial,
     get,
@@ -127,6 +129,7 @@ export function glassesSettings(say: Say = t): Setting[] {
         // note cut every seven lines wherever they fall is a scroll.
         kind: 'select',
         label: say('New page at'),
+        hint: t('Which headings start a new page on the glasses.'),
         options: [
           { value: '1', label: say('H1') },
           { value: '2', label: say('H2 and above') },
@@ -148,6 +151,7 @@ export function glassesSettings(say: Say = t): Setting[] {
       field: {
         kind: 'switch',
         label: say('Line numbers'),
+        hint: t('Shows line numbers on the glasses.'),
         initial: true,
         get: () => modes.glassesLineNumbers,
         set: (on) => modes.setGlassesLineNumbers(on),
@@ -160,6 +164,7 @@ export function glassesSettings(say: Say = t): Setting[] {
       field: chooser(
         say,
         say('Blank lines'),
+        t('How many blank lines the glasses keep between blocks.'),
         COMPACTIONS,
         COMPACTION_WORDS,
         DEFAULT_COMPACTION,
@@ -174,6 +179,7 @@ export function glassesSettings(say: Say = t): Setting[] {
       field: {
         kind: 'switch',
         label: say(one.label),
+        hint: t('Shows this markdown mark on the glasses rather than hiding it.'),
         initial: MARKS_INITIAL[one.id],
         get: () => modes.glassesMarks[one.id],
         set: (on) => modes.setGlassesMark(one.id, on),
@@ -187,6 +193,7 @@ export function glassesSettings(say: Say = t): Setting[] {
       field: {
         kind: 'switch',
         label: say('Voice commands'),
+        hint: t('Lets you run commands on the glasses by speaking.'),
         initial: false,
         get: () => modes.glassesVoice,
         set: (on) => modes.setGlassesVoice(on),
@@ -228,6 +235,7 @@ export function wordFields(): Field[] {
   return commandWords().map((one): Field => ({
     kind: 'text',
     label: t(one.label),
+    hint: t('What you say to run this command; left empty, the phrase shown is used.'),
     placeholder: one.said,
     initial: '',
     get: () => modes.glassesWords[one.id] ?? '',

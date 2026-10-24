@@ -39,6 +39,9 @@ function twoWayFields(): Field[] {
     .map((command): Field => ({
       kind: 'select',
       label: bothName(command),
+      hint: t(
+        'Whether this key goes to Orden or to the program in the terminal, or asks each time.',
+      ),
       words: ['shortcut', 'key', 'shell', 'conflict', 'ask'],
       options: [
         { value: 'ask', label: t('Always ask') },
@@ -62,6 +65,7 @@ function terminalGroup(): Group {
       {
         kind: 'select',
         label: t('Shell'),
+        hint: t('The shell a new terminal starts.'),
         options: shells.list.map((one) => ({ value: one.id, label: shellName(one) })),
         get: () => shells.chosen?.id ?? '',
         set: (id) => shells.choose(id),
@@ -69,6 +73,7 @@ function terminalGroup(): Group {
       {
         kind: 'slider',
         label: t('Text size'),
+        hint: t('How large the text in terminals is.'),
         min: SIZES.least,
         max: SIZES.most,
         step: 1,
@@ -80,6 +85,9 @@ function terminalGroup(): Group {
       {
         kind: 'switch',
         label: t('Restore history'),
+        hint: t(
+          'Brings back what each terminal showed after Orden restarts; off forgets it on quit.',
+        ),
         words: ['scrollback', 'session', 'restart', 'privacy'],
         initial: true,
         get: () => shells.restoring,
@@ -88,6 +96,9 @@ function terminalGroup(): Group {
       {
         kind: 'select',
         label: t('Warn before quitting'),
+        hint: t(
+          'Asks before Orden quits with terminals open: always, or only while something runs in one.',
+        ),
         words: ['quit', 'close', 'exit', 'confirm', 'running', 'process', 'claude'],
         options: [
           { value: 'always', label: t('Always') },
@@ -113,6 +124,9 @@ function gpuGroup(): Group {
       {
         kind: 'switch',
         label: t('Hardware acceleration'),
+        hint: t(
+          'Draws the app on the graphics card; turn it off if the window flickers or stays blank.',
+        ),
         words: ['gpu', 'graphics', 'software', 'rendering', 'cpu', 'restart'],
         initial: true,
         get: () => gpu.on,
@@ -151,6 +165,7 @@ function remindersGroup(): Group {
       {
         kind: 'select',
         label: t('Automatic'),
+        hint: t('How long before a task’s time it reminds you, unless the task says otherwise.'),
         words: ['reminder', 'notification', 'alarm', 'due', 'time', 'before'],
         options: REMIND_BEFORE.map((minutes) => ({
           value: String(minutes),
@@ -170,6 +185,9 @@ function remindersGroup(): Group {
             {
               kind: 'switch',
               label: t('Stay in the tray'),
+              hint: t(
+                'Keeps Orden running in the tray after its window closes, so reminders still ring.',
+              ),
               words: ['tray', 'background', 'menu bar', 'close', 'quit', 'reminder'],
               get: () => residency.on,
               set: (on) => residency.set(on),
@@ -181,6 +199,9 @@ function remindersGroup(): Group {
             {
               kind: 'switch',
               label: t('Exact alarms'),
+              hint: t(
+                'Lets reminders ring at the exact minute rather than when the phone gets round to it.',
+              ),
               words: ['alarm', 'reminder', 'exact', 'battery'],
               get: () => exact(),
               set: () => ask(),
@@ -221,6 +242,9 @@ export function generalPane(): Pane {
           {
             kind: 'select',
             label: t('Keep a version every'),
+            hint: t(
+              'How often a note you are editing is saved as a version you can go back to in History.',
+            ),
             words: ['backup', 'history', 'snapshot'],
             options: SNAPSHOT_MINUTES.map((minutes) => ({
               value: String(minutes),
@@ -233,6 +257,7 @@ export function generalPane(): Pane {
           {
             kind: 'select',
             label: t('Keep versions for'),
+            hint: t('How long those versions are kept before they are deleted.'),
             options: KEEP_DAYS.map((days) => ({
               value: String(days),
               label: plural(days, { one: '{count} day', other: '{count} days' }),
@@ -252,6 +277,9 @@ export function generalPane(): Pane {
           {
             kind: 'switch',
             label: t('Ctrl+Tab in order of use'),
+            hint: t(
+              'Ctrl+Tab goes to the tab used last, as in VS Code; off goes through the tabs in the order they sit.',
+            ),
             words: ['tabs', 'recent', 'switcher'],
             initial: false,
             get: () => tabCycle.byUse,
@@ -266,6 +294,7 @@ export function generalPane(): Pane {
                 {
                   kind: 'switch',
                   label: t('Swipe between pages'),
+                  hint: t('Two fingers sideways on the touchpad go back and forward.'),
                   words: ['swipe', 'gesture', 'touchpad', 'trackpad', 'back', 'forward', 'history'],
                   initial: true,
                   get: () => swipeChoice.on,
@@ -279,6 +308,9 @@ export function generalPane(): Pane {
                 {
                   kind: 'segmented',
                   label: t('Hidden tabs'),
+                  hint: t(
+                    'What the web pages of another space do while it is out of sight: keep running, pause, or ask the first time.',
+                  ),
                   words: ['spaces', 'background', 'pause', 'sleep', 'freeze', 'audio'],
                   options: [
                     { value: 'run', label: t('Keep running') },
@@ -294,6 +326,9 @@ export function generalPane(): Pane {
                 {
                   kind: 'select',
                   label: t('Memory saver'),
+                  hint: t(
+                    'Unloads web pages that have been out of sight for a while to free memory; they load again when you return.',
+                  ),
                   words: ['memory', 'ram', 'discard', 'sleep', 'reload', 'performance'],
                   options: [
                     { value: 'off', label: t('Off') },
@@ -321,6 +356,9 @@ export function generalPane(): Pane {
           {
             kind: 'switch',
             label: t('Smart dates'),
+            hint: t(
+              'Reads dates, times and fields out of what you type into Add task, such as “tomorrow 9am”.',
+            ),
             words: ['tasks', 'quick add', 'natural language', 'parse', 'todoist'],
             initial: true,
             get: () => quickAdd.smart,
@@ -333,6 +371,9 @@ export function generalPane(): Pane {
                 {
                   kind: 'select',
                   label: t('Projects folder'),
+                  hint: t(
+                    'The folder of this space whose folders the Tasks panel lists as projects.',
+                  ),
                   words: ['tasks', 'projects', 'folder', 'todoist'],
                   options: projectFolderChoices(workspace.activeSpace.root),
                   get: () => projectsOf(workspace.activeSpace?.root ?? ''),
@@ -348,6 +389,9 @@ export function generalPane(): Pane {
           {
             kind: 'switch',
             label: t('Show tasks without a start date in Today'),
+            hint: t(
+              'Today also lists the tasks that have no start date; off shows only those dated today or earlier.',
+            ),
             words: ['tasks', 'today', 'start date', 'undated', 'no date', 'todoist'],
             initial: DEFAULTS.undatedInToday,
             get: () => modes.undatedInToday,
@@ -358,6 +402,7 @@ export function generalPane(): Pane {
                 {
                   kind: 'switch',
                   label: t('From any app'),
+                  hint: t('The Add task shortcut works even while another app is in front.'),
                   words: ['tasks', 'quick add', 'global', 'hotkey', 'shortcut', 'system'],
                   initial: true,
                   get: () => quickAdd.anywhere,
@@ -379,6 +424,7 @@ export function generalPane(): Pane {
                 {
                   kind: 'switch' as const,
                   label: t('Developer mode'),
+                  hint: t('Shows terminals and the other tools for writing code.'),
                   words: ['coder', 'coding', 'programmer', 'terminal', 'shell', 'ssh'],
                   initial: true,
                   get: () => modes.coder,
@@ -397,6 +443,7 @@ export function generalPane(): Pane {
                 {
                   kind: 'switch' as const,
                   label: t('Silent mode'),
+                  hint: t('Hides the tips Orden shows while you get to know it.'),
                   words: ['tips', 'hints', 'quiet', 'clean', 'onboarding'],
                   initial: DEFAULTS.silent,
                   get: () => modes.silent,
@@ -425,6 +472,7 @@ export function generalPane(): Pane {
           {
             kind: 'select',
             label: t('Language'),
+            hint: t('The language Orden’s menus and settings are in.'),
             // Each row says for itself whether its catalogue was read through;
             // see language-options.ts.
             options: languageOptions(),

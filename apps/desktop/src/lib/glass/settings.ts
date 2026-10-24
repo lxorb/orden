@@ -59,6 +59,7 @@ export function glassSettings(): ThemeSetting[] {
           {
             id: 'material',
             label: t('Material'),
+            hint: t('What Windows draws behind the window: Mica, Acrylic, or no blur.'),
             own: true,
             reapplies: true,
             kind: 'choice',
@@ -67,7 +68,15 @@ export function glassSettings(): ThemeSetting[] {
             paint: () => ({}),
           },
           {
-            ...rangeSetting('opacity', t('Opacity'), 0, 100, Math.round(DIALS.opacity * 100), '%'),
+            ...rangeSetting(
+              'opacity',
+              t('Opacity'),
+              t('How much of the window’s own colour lies over what is behind it.'),
+              0,
+              100,
+              Math.round(DIALS.opacity * 100),
+              '%',
+            ),
             least: () => Math.ceil(chrome.floor * 100),
           },
         ] satisfies ThemeSetting[])
@@ -75,15 +84,25 @@ export function glassSettings(): ThemeSetting[] {
     {
       id: 'follow',
       label: t('Follow the page'),
+      hint: t('The frame takes its colour from what is open.'),
       own: true,
       kind: 'switch',
       initial: true,
       paint: () => ({}),
     },
-    rangeSetting('tint', t('Tint'), 0, 100, Math.round(DIALS.strength * 100), '%'),
+    rangeSetting(
+      'tint',
+      t('Tint'),
+      t('How strongly the frame is coloured.'),
+      0,
+      100,
+      Math.round(DIALS.strength * 100),
+      '%',
+    ),
     {
       id: 'pair',
       label: t('Tint colour'),
+      hint: t('The colours the frame takes where nothing open has a colour of its own.'),
       own: true,
       kind: 'colour',
       initial: DAWN.id,
@@ -106,6 +125,7 @@ export function glassSettings(): ThemeSetting[] {
     {
       id: 'tab',
       label: t('Coloured tab'),
+      hint: t('A web tab takes the colour of its page.'),
       own: true,
       kind: 'switch',
       initial: true,

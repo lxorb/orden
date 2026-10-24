@@ -17,6 +17,7 @@ function kindGroups(): Group[] {
     fields: line.map((one): Field => ({
       kind: 'switch',
       label: kindName(one.kind),
+      hint: t('Offers this type when you make something new; off only takes it out of that list.'),
       // `new tab` and `ctrl+t`, because the new tab is where these are offered, and that is
       // what somebody who wants one gone looks for (#355).
       words: ['type', 'kind', 'new', 'new tab', 'ctrl+t', 'create', 'hide', 'show', one.kind],

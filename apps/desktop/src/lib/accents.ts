@@ -122,6 +122,7 @@ export function accentSetting(): ThemeSetting {
   return {
     id: 'accent',
     label: t('Accent'),
+    hint: t('The colour of buttons, links and the selection.'),
     shared: true,
     kind: 'colour',
     initial: DEFAULT_ACCENT,

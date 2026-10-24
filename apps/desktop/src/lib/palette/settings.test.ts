@@ -16,6 +16,7 @@ const PANES: Pane[] = [
         fields: [
           {
             kind: 'slider',
+            hint: '',
             label: 'Text size',
             words: ['font'],
             min: 12,
@@ -25,7 +26,13 @@ const PANES: Pane[] = [
             get: () => size,
             set: (to) => (size = to),
           },
-          { kind: 'switch', label: 'Focus mode', get: () => focus, set: (to) => (focus = to) },
+          {
+            kind: 'switch',
+            hint: '',
+            label: 'Focus mode',
+            get: () => focus,
+            set: (to) => (focus = to),
+          },
         ],
       },
     ],
@@ -39,6 +46,7 @@ const PANES: Pane[] = [
         fields: [
           {
             kind: 'segmented',
+            hint: '',
             label: 'Mode',
             options: [
               { value: 'light', label: 'Light' },

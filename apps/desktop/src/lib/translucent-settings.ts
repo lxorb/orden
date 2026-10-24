@@ -24,6 +24,9 @@ export function contentSetting(): ThemeSetting {
   return {
     id: 'content',
     label: t('Content'),
+    hint: t(
+      'How much of what is behind the window shows under notes and terminals; the words always stay readable.',
+    ),
     own: true,
     kind: 'choice',
     options: CONTENT_LEVELS.map((value) => ({ value, label: t(NAMES[value]) })),
@@ -41,6 +44,7 @@ export function contentOf(value: unknown): ContentLevel {
 export function rangeSetting(
   id: string,
   label: string,
+  hint: string,
   min: number,
   max: number,
   initial: number,
@@ -49,6 +53,7 @@ export function rangeSetting(
   return {
     id,
     label,
+    hint,
     own: true,
     kind: 'range',
     min,
@@ -68,6 +73,7 @@ export function tintColourSetting(id: string, when: () => boolean): ThemeSetting
   return {
     id,
     label: t('Tint colour'),
+    hint: t('The colour laid over the picture.'),
     own: true,
     kind: 'colour',
     initial: ACCENT_SWATCH,

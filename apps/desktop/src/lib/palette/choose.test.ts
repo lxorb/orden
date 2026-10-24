@@ -142,6 +142,7 @@ describe('choosing the rest', () => {
     let on = false
     const field: Field = {
       kind: 'switch',
+      hint: '',
       label: 'Focus mode',
       get: () => on,
       set: (to) => (on = to),
@@ -163,6 +164,7 @@ describe('choosing the rest', () => {
     let pressed = 0
     const field: Field = {
       kind: 'value',
+      hint: '',
       label: 'Version',
       get: () => '0.16.1-779',
       press: () => (pressed += 1),

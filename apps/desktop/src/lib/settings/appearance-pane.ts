@@ -30,7 +30,7 @@ function asChoice(value: string): SchemeChoice {
 function themeField(setting: ThemeSetting): Field {
   const label = t(setting.label)
   const get = () => theme.values[setting.id]
-  const common = { label, initial: setting.initial }
+  const common = { label, hint: t(setting.hint), initial: setting.initial }
 
   if (setting.kind === 'range') {
     return {
@@ -117,6 +117,9 @@ function pictureField(): Field {
   return {
     kind: 'picture',
     label: t('Picture'),
+    hint: t(
+      'The picture behind the window, one for light and one for dark; drag it to move its centre.',
+    ),
     words: ['wallpaper', 'background', 'image', 'photo', 'focal point'],
     get: () => wallpaper.of(theme.current)?.picture ?? '',
     set: (value) => {
@@ -152,6 +155,7 @@ export function appearancePane(): Pane {
             // below picks which side of it the app is showing.
             kind: 'select',
             label: t('Style'),
+            hint: t('The theme Orden is drawn in.'),
             words: ['theme', 'look'],
             options: theme.all.map((one) => ({ value: one.id, label: t(one.name) })),
             get: () => theme.id,
@@ -168,6 +172,7 @@ export function appearancePane(): Pane {
             // could not reach it.
             kind: 'segmented',
             label: t('Mode'),
+            hint: t('Light, dark, or whichever the system is in.'),
             words: ['dark', 'light', 'night', 'theme'],
             options: SCHEME_CHOICES.map((one) => ({
               value: one,
@@ -208,6 +213,9 @@ export function appearancePane(): Pane {
           {
             kind: 'segmented',
             label: t('Essentials'),
+            hint: t(
+              'Whether the bookmarks at the top of the file list show as tiles or as a list.',
+            ),
             words: ['bookmarks', t('Bookmarks'), 'favorites', 'pinned', 'tiles', 'grid', 'list'],
             options: [
               { value: 'tiles', label: t('Grid') },
@@ -228,6 +236,7 @@ export function appearancePane(): Pane {
             // arrow stays the default; the Claude app offers the same switch.
             kind: 'switch',
             label: t('Pointing hand on buttons'),
+            hint: t('Shows a pointing hand over buttons, as web pages do.'),
             words: ['cursor', 'mouse', 'hand', 'click'],
             initial: DEFAULTS.hand,
             get: () => modes.hand,
@@ -254,6 +263,7 @@ export function appearancePane(): Pane {
                 {
                   kind: 'segmented',
                   label: t('Frame'),
+                  hint: t('Orden’s own title bar, or the window frame of your system.'),
                   words: ['title bar', 'window'],
                   options: [
                     { value: 'nib', label: t('Orden’s own') },

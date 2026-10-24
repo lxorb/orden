@@ -18,6 +18,7 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
           {
             kind: 'slider',
             label: t('Text size'),
+            hint: t('How large the text of notes is.'),
             words: ['font', 'zoom', 'bigger', 'smaller'],
             min: 0.8,
             max: 1.6,
@@ -30,6 +31,7 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
           {
             kind: 'slider',
             label: t('Line spacing'),
+            hint: t('The space between the lines of a note.'),
             words: ['line height', 'leading'],
             min: 1.3,
             max: 2.2,
@@ -41,6 +43,7 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
           {
             kind: 'slider',
             label: t('Line width'),
+            hint: t('How wide a line of a note grows before it wraps.'),
             words: ['column', 'wide', 'readable width'],
             min: 30,
             max: 70,
@@ -58,6 +61,7 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
           {
             kind: 'switch',
             label: t('Close brackets and quotes'),
+            hint: t('Typing an opening bracket or quote adds the closing one too.'),
             words: ['auto pair', 'autoclose'],
             initial: DEFAULTS.closeBrackets,
             get: () => modes.closeBrackets,
@@ -66,6 +70,7 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
           {
             kind: 'switch',
             label: t('Typewriter mode'),
+            hint: t('Keeps the line you are writing in the middle of the screen.'),
             words: ['centre', 'center', 'scroll'],
             initial: DEFAULTS.typewriter,
             get: () => modes.typewriter,
@@ -74,6 +79,7 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
           {
             kind: 'switch',
             label: t('Focus mode'),
+            hint: t('Dims everything but the paragraph you are writing in.'),
             words: ['zen', 'distraction free', 'dim'],
             initial: DEFAULTS.focus,
             get: () => modes.focus,
@@ -86,6 +92,7 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
             // its own.
             kind: 'select',
             label: t('Ligatures'),
+            hint: t('Joins pairs such as -> or != into one sign, in code only or everywhere.'),
             words: ['font'],
             options: [
               { value: 'off', label: t('Off') },
@@ -102,6 +109,7 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
             // nothing about notes already written.
             kind: 'select',
             label: t('Attachments'),
+            hint: t('Where a picture or file you paste or drop into a note is saved.'),
             words: ['images', 'pictures', 'paste', 'assets'],
             options: [
               { value: 'space', label: t('Assets folder of the space') },
@@ -123,6 +131,7 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
           {
             kind: 'switch',
             label: t('Rotate a canvas with two fingers'),
+            hint: t('Turning two fingers on a touchpad or screen rotates the canvas.'),
             words: ['canvas', 'rotate', 'turn', 'two fingers', 'pinch', 'concepts', 'trackpad'],
             initial: DEFAULTS.canvasTurns,
             get: () => modes.canvasTurns,
@@ -131,6 +140,7 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
           {
             kind: 'switch',
             label: t('Snap the rotation to right angles'),
+            hint: t('A rotation that ends near a right angle settles on it.'),
             words: ['canvas', 'rotate', 'turn', 'snap', 'upright', 'right angle', 'straight'],
             initial: DEFAULTS.canvasTurnSnaps,
             get: () => modes.canvasTurnSnaps,
@@ -147,6 +157,7 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
           {
             kind: 'select',
             label: t('New pages'),
+            hint: t('The paper size a new page note starts with.'),
             options: [
               { value: 'a4', label: t('A4') },
               { value: 'letter', label: t('Letter') },
@@ -166,6 +177,7 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
           {
             kind: 'select',
             label: t('Name'),
+            hint: t('How the name of a new unique note is made from the date and time.'),
             options: ID_FORMATS.map((format) => ({
               value: format,
               label: noteId(format, moment),
@@ -206,6 +218,7 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
           {
             kind: 'select',
             label: t('Highlighting'),
+            hint: t('The colours code in a note is highlighted in.'),
             words: ['syntax', 'code colours', 'code colors'],
             options: CODE_PALETTES.map((one) => ({ value: one.id, label: one.name })),
             initial: DEFAULTS.codeTheme,
@@ -215,6 +228,7 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
           {
             kind: 'switch',
             label: t('Line numbers'),
+            hint: t('Numbers the lines of code blocks.'),
             words: ['gutter'],
             initial: DEFAULTS.lineNumbers,
             get: () => modes.lineNumbers,

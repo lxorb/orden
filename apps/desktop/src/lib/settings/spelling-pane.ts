@@ -31,6 +31,7 @@ export function spellingPane(view: EditorView | undefined): Pane {
           {
             kind: 'switch',
             label: t('Check spelling'),
+            hint: t('Underlines misspelled words as you write.'),
             words: ['spellcheck', 'spell check', 'typos'],
             initial: DEFAULTS.spellcheck,
             get: () => modes.spellcheck,
@@ -47,6 +48,9 @@ export function spellingPane(view: EditorView | undefined): Pane {
           {
             kind: 'select',
             label: t('Language'),
+            hint: t(
+              'The dictionary spelling is checked against; Match the system uses your system’s language.',
+            ),
             options: DICTIONARIES.map((one) => ({ value: one.id, label: t(one.name) })),
             initial: DEFAULTS.spellLanguage,
             get: () => modes.spellLanguage,
