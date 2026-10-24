@@ -829,8 +829,12 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-20, to 3,281,000, for #417: the empty Essentials a drag is offered
  *  stands over the caption rather than pushing the file list down under the pointer
- *  (`is-floating` in Bookmarks.svelte). Measured 3,280,466. */
-const BUDGET = 3_281_000
+ *  (`is-floating` in Bookmarks.svelte). Measured 3,280,466.
+ *
+ *  Raised 2026-10-24, to 3,282,000, for B223: a `.webloc` that follows the reading has
+ *  only its address changed (`aimWebloc` in shortcut.ts, which keep.ts now calls) rather
+ *  than an internet shortcut written into it. Measured 3,281,141. */
+const BUDGET = 3_282_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
