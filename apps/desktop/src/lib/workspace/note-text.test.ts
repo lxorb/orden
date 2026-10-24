@@ -220,6 +220,17 @@ describe('a space shared to be read', () => {
     expect(sent.some((one) => one.path === '/theirs/b.md')).toBe(false)
   })
 
+  test('and a move, which must land at both ends, writes neither where one is read', async () => {
+    const { ws } = space({ [`${SPACE}/a.md`]: 'before', '/theirs/b.md': 'before' })
+    disk.set('/theirs/b.md', 'before')
+    readOnly.add('/theirs')
+
+    const both = [change(`${SPACE}/a.md`), change('/theirs/b.md')]
+    expect(await replaceInNotes(ws, both, { together: true })).toBe(0)
+    expect(disk.get(`${SPACE}/a.md`)).toBe('before')
+    expect(ws.undone.stack).toHaveLength(0)
+  })
+
   test('ticks no task', async () => {
     const { ws } = space({ [`${SPACE}/todo.md`]: '- [ ] wash up\n' })
     readOnly.add(SPACE)
