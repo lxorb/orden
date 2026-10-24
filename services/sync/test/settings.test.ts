@@ -370,6 +370,13 @@ describe('the glasses an account reads on', () => {
     expect((await patch({ glassesWords: { next: 12 } })).status).toBe(400)
   })
 
+  /** What the Mobile section on a laptop waits for (#769), said by a phone or a tablet. */
+  test('remember that a phone or a tablet has been used', async () => {
+    expect((await patch({ mobileSeen: true })).status).toBe(200)
+    expect((await call(env, '/v1/settings', { token })).json.settings.mobileSeen).toBe(true)
+    expect((await patch({ mobileSeen: 'yes' })).status).toBe(400)
+  })
+
   /** What the Glasses section on every other device waits for. */
   test('remember that a pair of glasses has answered', async () => {
     expect((await patch({ glassesSeen: true })).status).toBe(200)
