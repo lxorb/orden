@@ -829,8 +829,17 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-20, to 3,281,000, for #417: the empty Essentials a drag is offered
  *  stands over the caption rather than pushing the file list down under the pointer
- *  (`is-floating` in Bookmarks.svelte). Measured 3,280,466. */
-const BUDGET = 3_281_000
+ *  (`is-floating` in Bookmarks.svelte). Measured 3,280,466.
+ *
+ *  Raised 2026-10-24, to 3,285,000, for #811: the file list's gestures refuse a space
+ *  shared to be read, in the workspace's own calls (`writableAt`) and in the row menu,
+ *  the tree's keys and the palette. Measured 3,283,904.
+ *
+ *  Raised 2026-10-24 again, to 3,287,000, for B361: words shared from another app are written
+ *  to read back as themselves (`sharedMarkdown` in mobile/shared.ts, `plainWords` in
+ *  @nib/markdown's escapes.ts), so `$5-$10` is two prices rather than a formula.
+ *  Measured 3,286,369, with the importer fixes merged beside it. */
+const BUDGET = 3_287_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

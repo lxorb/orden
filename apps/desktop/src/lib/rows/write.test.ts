@@ -33,6 +33,10 @@ vi.mock('../link-index.svelte', () => ({
 
 vi.mock('../sync.svelte', () => ({ sync: { nudge: () => undefined } }))
 
+/** Whether the space is one shared with this account to be read. */
+const share = vi.hoisted(() => ({ readOnly: false }))
+vi.mock('../sharing.svelte', () => ({ canWriteAt: () => !share.readOnly }))
+
 const { changed, taskLine, writeRow } = await import('./write')
 const { FileActions } = await import('../workspace/undo.svelte')
 const { NoteDoc } = await import('../workspace/documents.svelte')
@@ -89,6 +93,7 @@ function holding(text: string, open?: string) {
 
 beforeEach(() => {
   sent.length = 0
+  share.readOnly = false
   // Ticking writes today's date, so today is held still.
   vi.useFakeTimers({ toFake: ['Date'] })
   vi.setSystemTime(new Date(2026, 9, 7, 10, 0))
@@ -196,6 +201,18 @@ describe('the write itself', () => {
     )
     expect(note?.text).toBe('- [x] Go ✅ 2026-10-07\nwords typed since\n')
     expect(disk.get(PATH)).toBe('- [x] Go ✅ 2026-10-07\nwords typed since\n')
+  })
+
+  // A row of a space shared to be read: Today and a base across every space draw them,
+  // and the replacement passes their note over (B280). Nothing written is not done.
+  test('a note in a space shared to be read is not written, and answers so', async () => {
+    const text = '- [ ] Go\n'
+    const { ws, undone } = holding(text)
+    share.readOnly = true
+
+    expect(await writeRow(ws, PATH, taskRow(text, 'Go'), { task: { done: true } })).toBe(false)
+    expect(disk.get(PATH)).toBe(text)
+    expect(undone.last).toBeUndefined()
   })
 
   test('a change the note already says writes nothing', async () => {

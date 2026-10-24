@@ -70,6 +70,13 @@ vi.mock('../link-index.svelte', () => ({
 }))
 vi.mock('../sync.svelte', () => ({ sync: { nudge: () => undefined } }))
 
+/** The roots of the spaces shared with this account to be read. */
+const readOnly = new Set<string>()
+vi.mock('../sharing.svelte', () => ({
+  canWriteAt: (path: string) =>
+    ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
+}))
+
 const { applyImport, restamped } = await import('./apply')
 
 beforeEach(() => {
@@ -77,6 +84,7 @@ beforeEach(() => {
   heard.length = 0
   recorded.length = 0
   refusing = null
+  readOnly.clear()
   onDisk.clear()
   said.clear()
 })
@@ -458,5 +466,21 @@ describe('an import that fails partway', () => {
     ).rejects.toThrow('the disk is full')
 
     expect(recorded).toEqual([{ kind: 'import', paths: ['/Space/A.md', '/Space/B.md'] }])
+  })
+})
+
+/** A space shared with this account to be read takes no import: the copy here would
+ *  stop being the space's, and the sync refuses it on every pass (B280). Asked here, as
+ *  every import lands through here: the sheet, a browser's spaces, a share on a phone. */
+describe('a space shared to be read', () => {
+  test('is refused before a single file is written', async () => {
+    readOnly.add('/Theirs')
+    const plan = planOf([note('Plan.md', '# Plan'), file('assets/x.png')])
+
+    await expect(applyImport(plan, { root: '/Theirs', folder: 'In' })).rejects.toThrow(
+      /could not be written/,
+    )
+    expect(wrote).toEqual([])
+    expect(recorded).toEqual([])
   })
 })

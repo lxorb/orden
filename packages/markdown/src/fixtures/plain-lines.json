@@ -89,7 +89,7 @@
   },
   {
     "words": "%%not a comment%%",
-    "markdown": "\\%\\%not a comment\\%\\%"
+    "markdown": "%\\%not a comment%\\%"
   },
   {
     "words": "&lt;b&gt; and R&D",
@@ -106,5 +106,9 @@
   {
     "words": "#  two",
     "markdown": "\\#  two"
+  },
+  {
+    "words": "Tickets $5-$10, ~5 or ~10, a $ b ~ c",
+    "markdown": "Tickets \\$5-\\$10, \\~5 or \\~10, a $ b ~ c"
   }
 ]

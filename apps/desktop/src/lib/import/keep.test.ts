@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'vitest'
 
+import { renderMarkdown } from '@nib/markdown'
+
 import { readKeep } from './keep'
 import type { ImportPlan } from './plan'
 import { sourceOf, type Source } from './sources'
@@ -38,6 +40,25 @@ describe('a Google Keep export', () => {
     expect(text).toContain('date: 2026-01-02')
     expect(text).toContain('tags: [Home, to-do]')
     expect(text).toContain('Bread and milk')
+  })
+
+  test("a note's dollars, tildes and percent signs are its words", async () => {
+    const plan = await readKeep([
+      file(
+        'Keep/Prices.json',
+        keepNote({
+          title: 'Prices',
+          textContent: 'Tickets $5-$10\nwait ~5 min or ~10 min, format is %%d\nrest',
+          listContent: [{ text: 'Pay $5-$10', isChecked: false }],
+        }),
+      ),
+    ])
+
+    const html = renderMarkdown(noteAt(plan, 'Prices.md'))
+    expect(html).toContain('Tickets $5-$10\nwait ~5 min or ~10 min, format is %%d\nrest')
+    expect(html).toContain('Pay $5-$10')
+    expect(html).not.toContain('<sub>')
+    expect(html).not.toContain('math')
   })
 
   test('a list is a task list, in the state it was left in', async () => {
@@ -215,5 +236,68 @@ describe('what a real Takeout does', () => {
     const text = noteAt(plan, 'Links.md')
     expect(text).toContain('- [Cloudflare \\[CDN\\]](<https://www.cloudflare.com/>)')
     expect(text.match(/example\.com\/a/g)).toHaveLength(1)
+  })
+  test("a shared page's title opens no markup, since Keep took it from the page", async () => {
+    const plan = await readKeep([
+      file(
+        'Keep/Card.json',
+        keepNote({
+          title: 'Card',
+          textContent: 'x',
+          annotations: [
+            {
+              source: 'WEBLINK',
+              title: 'Fine <img src=https://t.example/p.gif><style>body{display:none}</style>',
+              url: 'https://example.com/',
+            },
+          ],
+        }),
+      ),
+    ])
+
+    const text = noteAt(plan, 'Card.md')
+    expect(text).toContain('Fine \\<img src=https://t.example/p.gif>')
+    expect(text).not.toMatch(/(?<!\\)<\/?(img|style)/)
+  })
+
+  test("a note's words and a list's items open no markup, since Keep shows them as text", async () => {
+    const plan = await readKeep([
+      file(
+        'Keep/Typed.json',
+        keepNote({
+          title: 'Typed',
+          textContent: 'Seen <img src=https://t.example/p.gif> and <iframe src=https://t.example/>',
+          listContent: [{ text: 'Buy <style>body{display:none}</style>', isChecked: false }],
+        }),
+      ),
+    ])
+
+    const text = noteAt(plan, 'Typed.md')
+    expect(text).toContain('Seen \\<img src=https://t.example/p.gif>')
+    expect(text).toContain('- [ ] Buy \\<style>')
+    expect(text).not.toMatch(/(?<!\\)<\/?(img|style|iframe)/)
+  })
+
+  test("a backslash in a shared page's title is shown as it was written", async () => {
+    const card = (title: string, page: string) => ({
+      source: 'WEBLINK',
+      title,
+      url: `https://example.com/${page}`,
+    })
+    const plan = await readKeep([
+      file(
+        'Keep/Slashes.json',
+        keepNote({
+          title: 'Slashes',
+          textContent: 'x',
+          annotations: [card('a\\<b>', 'a'), card('end\\', 'b'), card('x\\[y]', 'c')],
+        }),
+      ),
+    ])
+
+    const text = noteAt(plan, 'Slashes.md')
+    expect(text).toContain('- [a\\\\\\<b>](<https://example.com/a>)')
+    expect(text).toContain('- [end\\\\](<https://example.com/b>)')
+    expect(text).toContain('- [x\\\\\\[y\\]](<https://example.com/c>)')
   })
 })

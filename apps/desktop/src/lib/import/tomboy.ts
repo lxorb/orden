@@ -13,6 +13,9 @@
  *  A notebook is a tag of the form `system:notebook:Work`, which becomes a folder,
  *  because that is what a notebook is. Every other tag is a tag. */
 
+import { plainWords } from '@nib/markdown/escapes'
+import { asWords, OPENS_MARKUP } from '@nib/markdown/words'
+
 import { key } from '../i18n.svelte'
 
 import { dayOf, noteText, type Meta } from './meta'
@@ -177,15 +180,19 @@ export function tomboyMarkdown(
     }
   }
 
+  // Tomboy is plain text, so its words are written to read back as themselves:
+  // `$5-$10` is two prices rather than a formula; see `plainWords`. Monospace takes
+  // its escapes back off as it becomes code; see `unescaped`.
+
   const words = (text: string) => {
     if (!item) {
-      write(text)
+      write(plainWords(text))
       return
     }
 
     const said = text.replace(/^[ \t]+/, '')
     if (said) item = false
-    write(said)
+    write(plainWords(said))
   }
 
   for (const tag of tagsIn(content)) {
@@ -265,7 +272,7 @@ export function tomboyMarkdown(
     // heading, and a heading in the middle of a note would be a change of shape.
   }
 
-  write(unescapeXml(content.slice(at)))
+  write(plainWords(unescapeXml(content.slice(at))))
 
   return out
     .join('')
@@ -284,9 +291,17 @@ function marked(text: string, mark: string): string {
     .map((line) => {
       const [, lead = '', words = '', tail = ''] = /^(\s*(?:- )?\s*)(.*?)(\s*)$/.exec(line) ?? []
       if (!words) return line
-      return `${lead}${mark === '`' ? code(words) : `${mark}${words}${mark}`}${tail}`
+      return `${lead}${mark === '`' ? code(unescaped(words)) : `${mark}${words}${mark}`}${tail}`
     })
     .join('\n')
+}
+
+/** Words as they were before `plainWords`, for inside code, which reads no markup
+ *  and would show the backslash. Every escape `plainWords` writes is a backslash in
+ *  front of a punctuation mark, the words' own backslash included, so taking each
+ *  pair back to its mark, left to right, gives back what the words had. */
+function unescaped(words: string): string {
+  return words.replace(/\\([!-/:-@[-`{-~])/g, '$1')
 }
 
 /** Words as inline code, fenced with more backticks than they hold in a row. */
@@ -331,9 +346,14 @@ function linkTo(to: string, from: string, title: string, shared: boolean): strin
     return `[[${name}${shown}]]`
   }
 
-  const words = title.replace(/[\\[\]]/g, (one) => `\\${one}`)
-  return `[${words}](${encoded(relative(to, from))})`
+  return `[${asWords(title.replace(LITERAL, (one) => `\\${one}`))}](${encoded(relative(to, from))})`
 }
+
+/** What a link's words escape themselves before `asWords`: a bracket, which would
+ *  end them, and a backslash, which would escape what comes after it. Not the run
+ *  of backslashes in front of a tag, which `asWords` doubles itself, and doubling
+ *  it twice would show two backslashes for the one the title had. */
+const LITERAL = new RegExp(`\\\\(?!\\\\*${OPENS_MARKUP.source})|[[\\]]`, 'g')
 
 /** Where `to` is from the folder of the note at `from`. */
 function relative(to: string, from: string): string {

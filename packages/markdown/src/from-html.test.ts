@@ -148,6 +148,46 @@ describe('a page as markdown', () => {
    *  picture of its own - and their text has been escaped on the way, backslash
    *  and brackets together. So they are written as they came, and a page cannot
    *  close the brackets early from inside them. */
+  /** Nothing autolinks inside a link's brackets, so an address there is words like
+   *  any other and is escaped like them. */
+  test("an address as a link's own text is drawn as its characters", () => {
+    const cases = [
+      'https://github.com/x/y/blob/main/pkg/__init__.py',
+      'https://a.test/~al/~bo',
+      'https://a.test/x/_y_/z',
+      'https://a.test/?a=$x$',
+    ]
+    for (const address of cases) {
+      const link = htmlToMarkdown(`<p><a href="${address}">${address}</a></p>`)
+      const shown = address.replace(/&/g, '&amp;')
+      expect(renderMarkdown(link)).toBe(`<p><a class="url" href="${shown}">${shown}</a></p>\n`)
+    }
+    expect(htmlToMarkdown('<a href="https://a.test/~al/~bo">https://a.test/~al/~bo</a>')).toBe(
+      '[https://a.test/\\~al/\\~bo](https://a.test/~al/~bo)',
+    )
+  })
+
+  test('a bare address beside a link is still kept as it was written', () => {
+    const page = htmlToMarkdown(
+      '<p>See <a href="https://x.test/">the site</a> or https://a.test/~al/_y_/ here</p>',
+    )
+    expect(page).toBe('See [the site](https://x.test/) or https://a.test/~al/_y_/ here')
+    expect(renderMarkdown(page)).toBe(
+      '<p>See <a href="https://x.test/">the site</a> or ' +
+        '<a class="url" href="https://a.test/~al/_y_/">https://a.test/~al/_y_/</a> here</p>\n',
+    )
+  })
+
+  test('an address as a link text cannot close its brackets', () => {
+    const link = htmlToMarkdown(
+      '<a href="https://x.test/ok">https://a.test/](https://evil.test)[b</a>',
+    )
+    expect(link).toBe('[https://a.test/\\](https://evil.test)\\[b](https://x.test/ok)')
+    expect(renderMarkdown(link)).toBe(
+      '<p><a href="https://x.test/ok">https://a.test/](https://evil.test)[b</a></p>\n',
+    )
+  })
+
   test('a backslash in a link text cannot close its brackets', () => {
     expect(htmlToMarkdown('<a href="https://x.test/ok">a\\](https://evil.test)[b</a>')).toBe(
       '[a\\\\\\](https://evil.test)\\[b](https://x.test/ok)',
@@ -382,9 +422,76 @@ describe('a page as markdown', () => {
     expect(htmlToMarkdown('<p>x<sup>2</sup> and H<sub>2</sub>O</p>')).toBe('x^2^ and H~2~O')
   })
 
+  test('a bare web address stays a link to where it says', () => {
+    const page = htmlToMarkdown(
+      '<p>See https://www.cs.cmu.edu/~bob/ and https://ex.com/page#:~:text=hi or https://ex.com/_next/x?b=[1].</p>',
+    )
+    expect(page).toBe(
+      'See https://www.cs.cmu.edu/~bob/ and https://ex.com/page#:~:text=hi or https://ex.com/_next/x?b=\\[1\\].',
+    )
+    expect(renderMarkdown(page)).toBe(
+      '<p>See <a class="url" href="https://www.cs.cmu.edu/~bob/">https://www.cs.cmu.edu/~bob/</a>' +
+        ' and <a class="url" href="https://ex.com/page#:~:text=hi">https://ex.com/page#:~:text=hi</a>' +
+        ' or <a class="url" href="https://ex.com/_next/x?b=%5B1%5D">https://ex.com/_next/x?b=[1]</a>.</p>\n',
+    )
+  })
+
+  /** What the renderer leaves off the end of an address is words again, and an
+   *  underscore or a star there is escaped as words are: the escape is no part of
+   *  the address, so neither is its backslash. */
+  test('an escape right after a bare web address stays out of the link', () => {
+    const page = htmlToMarkdown('<p>(see https://a.test/a_b_) and *https://a.test/x*</p>')
+    expect(page).toBe('(see https://a.test/a_b\\_) and \\*https://a.test/x\\*')
+    expect(renderMarkdown(page)).toBe(
+      '<p>(see <a class="url" href="https://a.test/a_b">https://a.test/a_b</a>_) and ' +
+        '*<a class="url" href="https://a.test/x">https://a.test/x</a>*</p>\n',
+    )
+  })
+
+  test('two percent signs in words hide nothing as a comment', () => {
+    const code = htmlToMarkdown('<p>printf("%%d") and then printf("%%s") again</p>')
+    expect(code).toBe('printf("%\\%d") and then printf("%\\%s") again')
+    expect(renderMarkdown(code)).toBe(
+      '<p>printf(&quot;%%d&quot;) and then printf(&quot;%%s&quot;) again</p>\n',
+    )
+  })
+
+  test('dollars in words draw no maths', () => {
+    const prices = htmlToMarkdown('<p>Tickets cost $5-$10 each</p>')
+    expect(prices).toBe('Tickets cost \\$5-\\$10 each')
+    expect(renderMarkdown(prices)).toBe('<p>Tickets cost $5-$10 each</p>\n')
+  })
+
+  /** The converter's own formula is written as `$…$` and is not the page's words,
+   *  so it stays maths with the page's dollars escaped on either side of it. */
+  test('a formula between dollars in words stays a formula', () => {
+    const both = htmlToMarkdown('<p>$5 for <math alttext="x^2"><mi>x</mi></math> or $10</p>')
+    expect(both).toBe('\\$5 for $x^2$ or \\$10')
+    const drawn = renderMarkdown(both)
+    expect(drawn).toContain('<span class="math-inline" data-tex="x^2">')
+    expect(drawn.match(/math-inline/g)).toHaveLength(1)
+    expect(drawn).toMatch(/^<p>\$5 for <span/)
+    expect(drawn).toMatch(/<\/span> or \$10<\/p>\n$/)
+  })
+
+  test('a tilde or a caret in words opens no lowered or raised text', () => {
+    const about = htmlToMarkdown('<p>It takes ~5 min or ~10 min.</p>')
+    expect(about).toBe('It takes \\~5 min or \\~10 min.')
+    expect(renderMarkdown(about)).toBe('<p>It takes ~5 min or ~10 min.</p>\n')
+
+    const powers = htmlToMarkdown('<p>2^10 and 3^4</p>')
+    expect(powers).toBe('2\\^10 and 3\\^4')
+    expect(renderMarkdown(powers)).toBe('<p>2^10 and 3^4</p>\n')
+
+    // Nor a line through, which two of them would otherwise draw.
+    const doubled = htmlToMarkdown('<p>~~kept~~ and a ~ b</p>')
+    expect(doubled).toBe('\\~\\~kept\\~~ and a ~ b')
+    expect(renderMarkdown(doubled)).toBe('<p>~~kept~~ and a ~ b</p>\n')
+  })
+
   test('a body the marker cannot hold keeps the tag instead', () => {
-    expect(htmlToMarkdown('<p>a<sup>b^c</sup></p>')).toBe('a<sup>b^c</sup>')
-    expect(htmlToMarkdown('<p>a<sub>b~c</sub></p>')).toBe('a<sub>b~c</sub>')
+    expect(htmlToMarkdown('<p>a<sup>b^c</sup></p>')).toBe('a<sup>b\\^c</sup>')
+    expect(htmlToMarkdown('<p>a<sub>b~c</sub></p>')).toBe('a<sub>b\\~c</sub>')
   })
 
   test('a raised footnote mark keeps the link it wraps', () => {

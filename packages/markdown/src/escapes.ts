@@ -38,7 +38,13 @@
  *  - which is the same promise from-html.ts makes about the rest of its markers:
  *  a page pasted into a note and the same page clipped come out as one file. */
 
-import { asWords } from './words'
+import { OPENS_MARKUP } from './words'
+
+/** A `<` that would open a tag, escaped. Not `asWords`, which doubles the backslashes
+ *  in front of one: here every backslash has been escaped already, by `escapeAt`. */
+function bracketsOf(text: string): string {
+  return text.replace(OPENS_MARKUP, '\\<')
+}
 
 /** What a backslash escapes, which is ASCII punctuation and nothing else: `\*`
  *  is a star, and `\U` is a backslash and a U. */
@@ -75,9 +81,46 @@ const A_CODE_SPAN = /(`{1,3})([^`]+)\1(?!`)/y
 
 /** A doubled emphasis marker around plain words. The words may hold nothing the
  *  escaping was protecting the note from - no marker, no bracket, no backslash,
- *  no `<` - so what a page gets to keep is a phrase in bold, and never markup of
- *  its own in somebody's note. */
-const A_STRONG = /(\*\*|__)([^`*_[\]\\<]+)\1/y
+ *  no `<`, no `%` that could open a comment, no `$` that could open maths - so
+ *  what a page gets to keep is a phrase in bold, and never markup of its own in
+ *  somebody's note. */
+const A_STRONG = /(\*\*|__)([^`*_[\]\\<%$]+)\1/y
+
+/** A bare web address, the way the renderer's autolink reads one: marked's GFM
+ *  `url` rule, a scheme it links or `www.` and then everything up to a blank or a
+ *  `<`. What it then trims off the end is `TRAILING`'s to say.
+ *
+ *  Kept as it was written because the renderer links the address character for
+ *  character, backslashes included: `https://www.cs.cmu.edu/\~bob/` is drawn as a
+ *  link to `/%5C~bob/`, a page that does not exist. And nothing inside one needs an
+ *  escape, because once the autolink has the address nothing else reads it. */
+const A_URL = /(?:(?:[hH][tT][tT][pP][sS]?|[fF][tT][pP]):\/\/|www\.)(?:[a-zA-Z0-9-]+\.?)+[^\s<]*/y
+
+/** marked's `_backpedal`: the punctuation an address does not end in, so the full
+ *  stop after one is the sentence's and a bracket is the one around it. Run until
+ *  it changes nothing, as marked runs it. */
+const TRAILING = /(?:[^?!.,:;*_'"~()&]+|\([^)]*\)|&(?![a-zA-Z0-9]+;$)|[?!.,:;*_'"~)]+(?!$))+/
+
+/** The letters an address can start with, asked before the pattern is run: a
+ *  conversion walks every character of a page and almost all of them are letters
+ *  that start nothing. */
+const AN_ADDRESS = /[hHfFw]/
+
+/** The address that starts here, as the renderer would link it, or nothing. Not one
+ *  holding two percent signs: those open a comment, which takes the address out of
+ *  the page whatever is done to it, so it is escaped as the words it is. */
+function addressAt(text: string, at: number): string | null {
+  if (!AN_ADDRESS.test(text[at] ?? '')) return null
+  A_URL.lastIndex = at
+  let address = A_URL.exec(text)?.[0]
+  if (!address) return null
+
+  for (let before = ''; before !== address;) {
+    before = address
+    address = TRAILING.exec(address)?.[0] ?? ''
+  }
+  return address && !address.includes('%%') ? address : null
+}
 
 /** Whether a run markdown would read may stay as it was written: nothing blank
  *  against the markers, which is where markdown stops reading one, and no more of
@@ -146,6 +189,27 @@ function escapeAt(text: string, at: number, midLine: boolean): string {
     // is a bullet instead.
     case '*':
       return midLine && isBlank(before) && isBlank(after) ? '*' : '\\*'
+    // Lowered and raised text, `H~2~O` and `x^2^`, open on a mark with something
+    // other than a blank after it and close on the next one, so `~5 min or ~10`
+    // would lower the words between. Two tildes are a line through. A mark with a
+    // blank after it opens neither, and with every one that could escaped there is
+    // nothing for it to close.
+    case '~':
+    case '^':
+      return isBlank(after) ? one : `\\${one}`
+    // Two percent signs open a comment and the next two close it, which takes the
+    // words between out of the page: `printf("%%d")` quoted twice would lose a
+    // sentence. One sign is a percentage and never anything else, so only the
+    // second of a pair is escaped, and `%\%` reads as the two signs it says.
+    case '%':
+      return before === '%' ? '\\%' : '%'
+    // Inline maths opens on a dollar with something other than a blank after it
+    // and closes on one with something other than a blank before it, so in
+    // `$5-$10` the two prices would be a formula of `5-`. A dollar with a blank on
+    // each side can do neither, and with every other one escaped there is nothing
+    // for a later dollar to pair with.
+    case '$':
+      return isBlank(before) && isBlank(after) ? '$' : '\\$'
     case '`':
     case '[':
     case ']':
@@ -155,8 +219,17 @@ function escapeAt(text: string, at: number, midLine: boolean): string {
   }
 }
 
-/** A page's words, as a note may hold them. */
-export function escapeText(text: string): string {
+/** A page's words, as a note may hold them.
+ *
+ *  `addresses` says whether a bare web address is kept as written, which is only
+ *  right where the renderer will autolink it. Inside a link's brackets nothing
+ *  does - marked and the editor both read a link's text as markdown - so there an
+ *  address is words like any other, and `pkg/__init__.py` unescaped would be
+ *  `init` in bold. */
+export function escapeText(
+  text: string,
+  { addresses = true }: { addresses?: boolean } = {},
+): string {
   const out: string[] = []
   const numbered = A_NUMBER.exec(text)
   const block = numbered ? null : A_BLOCK.exec(text)
@@ -168,14 +241,42 @@ export function escapeText(text: string): string {
   let midLine = at > 0
 
   while (at < text.length) {
+    const address = addressAt(text, at)
+
+    // In a link's text an address is words, every character of it escaped as words
+    // are: not kept, and not a place a kept run may start either, which would make
+    // the `__init__` of `pkg/__init__.py` bold.
+    if (address && !addresses) {
+      for (const end = at + address.length; at < end; at++) {
+        escaped += escapeAt(text, at, midLine)
+      }
+      midLine = true
+      continue
+    }
+
+    if (address) {
+      // Written as it is but for its brackets and backticks. The same words can be a
+      // link's text, where nothing autolinks and a bare `]` would close the brackets
+      // around it - `[https://a.test/](https://evil.test)` - and a backtick would open
+      // code that runs past them. Escaped, they are the characters a link's text shows,
+      // and the renderer's autolink takes the escapes back off; see `bareAddress`
+      // in index.ts. A `<` just before is asked about with the address after it.
+      out.push(bracketsOf(escaped + address).slice(0, -address.length))
+      out.push(address.replace(/[[\]`]/g, '\\$&'))
+      escaped = ''
+      at += address.length
+      midLine = true
+      continue
+    }
+
     const kept = keptAt(text, at)
 
     if (kept) {
       // The words on either side of a kept run are escaped as the text they are,
-      // and `asWords` reads two characters at a time - so a run is a boundary for
+      // and `bracketsOf` reads two characters at a time - so a run is a boundary for
       // it as well. Nothing it looks for spans one: a `<` before a kept run is
       // followed by a marker, and a marker opens no tag.
-      out.push(asWords(escaped), kept)
+      out.push(bracketsOf(escaped), kept)
       escaped = ''
       at += kept.length
       midLine = true
@@ -187,6 +288,31 @@ export function escapeText(text: string): string {
     at += 1
   }
 
-  out.push(asWords(escaped))
+  out.push(bracketsOf(escaped))
   return out.join('')
+}
+
+/** The marker a line of plain text opens a list item with: a bullet or a number,
+ *  indented or not. Plain text typed in another app writes a list that way and
+ *  every reader of it, markdown or not, sees one. */
+const A_LIST_ITEM = /^[ \t]*(?:[-*+]|\d{1,9}[.)])[ \t]+/
+
+/** Words typed in another app that never meant markdown - a Keep note, a Tomboy
+ *  note's text, a spreadsheet's cell - as a note may hold them: written so they
+ *  read back as the characters they are.
+ *
+ *  `escapeText` already knows what each character would do in a note, and the
+ *  same escapes are wanted here: a tag opener, the dollars of `$5-$10`, the
+ *  tildes of `~5 min or ~10`, the second of two percent signs. It is asked a line
+ *  at a time, because plain text keeps its line breaks and each line starts where
+ *  a block could. A line that opens a list item keeps its marker, since that is a
+ *  list in the app it came from as well; its words are escaped as words. */
+export function plainWords(text: string): string {
+  return text
+    .split('\n')
+    .map((line) => {
+      const marker = A_LIST_ITEM.exec(line)?.[0] ?? ''
+      return marker + escapeText(line.slice(marker.length))
+    })
+    .join('\n')
 }

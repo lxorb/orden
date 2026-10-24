@@ -1,10 +1,34 @@
 import { describe, expect, test } from 'vitest'
-import { escapeText } from './escapes'
+import { escapeText, plainWords } from './escapes'
+import { renderMarkdown } from './index'
 
 /** One text node at a time, which is how turndown hands a page's words over.
  *  from-html.test.ts is the same rule seen through a conversion; what is here is
  *  the rule itself, including the edges a page rarely reaches and an adversarial
  *  one aims for. */
+/** Words typed in another app that never meant markdown, a line at a time: they
+ *  read back as themselves, but a line that is a list item stays one. */
+describe('plain text, as a note may hold it', () => {
+  test('a dollar, a tilde, a caret and two percent signs are the characters', () => {
+    expect(plainWords('Tickets $5-$10\nwait ~5 min or ~10 min\nx^2 and format is %%d')).toBe(
+      'Tickets \\$5-\\$10\nwait \\~5 min or \\~10 min\nx\\^2 and format is %\\%d',
+    )
+    expect(renderMarkdown(plainWords('Tickets $5-$10, format is %%d\nrest'))).toBe(
+      '<p>Tickets $5-$10, format is %%d\nrest</p>\n',
+    )
+  })
+
+  test('a list item stays a list item, and a heading-like line is words', () => {
+    expect(plainWords('- milk at ~2\n  * eggs $3\n1. one\n# not a heading')).toBe(
+      '- milk at \\~2\n  * eggs \\$3\n1. one\n\\# not a heading',
+    )
+  })
+
+  test('a bare address still links', () => {
+    expect(plainWords('see https://a.test/~al/_x_/ now')).toBe('see https://a.test/~al/_x_/ now')
+  })
+})
+
 describe('a page’s text, as a note may hold it', () => {
   test('prose is prose', () => {
     expect(escapeText('Schauen Sie sich das Cheatsheet an.')).toBe(
@@ -133,6 +157,58 @@ describe('a page’s text, as a note may hold it', () => {
       '**kurz** \\<script>alert(1)\\</script>',
     )
     expect(escapeText('a < b')).toBe('a < b')
+  })
+
+  /** Obsidian's comment opens on two percent signs and closes on the next two, so
+   *  a page quoting `printf("%%d")` twice would lose every word between them. */
+  test('a percent sign that would open or close a comment is escaped', () => {
+    expect(escapeText('printf("%%d") and then printf("%%s") again')).toBe(
+      'printf("%\\%d") and then printf("%\\%s") again',
+    )
+    expect(escapeText('%%%')).toBe('%\\%\\%')
+    expect(escapeText('**a %% b** and %%')).toBe('\\*\\*a %\\% b\\*\\* and %\\%')
+    expect(escapeText('100% sure, 50 % off')).toBe('100% sure, 50 % off')
+  })
+
+  /** The renderer links a bare address as it is written, backslashes and all, so an
+   *  escape inside one is a broken link rather than a safer one. */
+  test('a bare web address is kept as it was written', () => {
+    expect(escapeText('see https://www.cs.cmu.edu/~bob/ now')).toBe(
+      'see https://www.cs.cmu.edu/~bob/ now',
+    )
+    expect(escapeText('https://ex.com/page#:~:text=hello')).toBe(
+      'https://ex.com/page#:~:text=hello',
+    )
+    // But for its brackets and backticks, which could close or open something
+    // around it where the address is a link's text. The renderer reads past those.
+    expect(escapeText('at www.example.com/_next/x and https://ex.com/a?b=[1]&c=`d`.')).toBe(
+      'at www.example.com/_next/x and https://ex.com/a?b=\\[1\\]&c=\\`d\\`.',
+    )
+    expect(escapeText('a <https://ex.com/x>')).toBe('a \\<https://ex.com/x>')
+    // What the renderer leaves off the end of an address is words again.
+    expect(escapeText('(https://ex.com/a_b) and *ftp://ex.com/x*')).toBe(
+      '(https://ex.com/a_b) and \\*ftp://ex.com/x\\*',
+    )
+    // Not an address: nothing after the scheme, or no scheme the renderer links.
+    expect(escapeText('https:// and mailto:a_b [x]')).toBe('https:// and mailto:a_b \\[x\\]')
+    // Nor one that holds a comment's two percent signs, which no writing keeps.
+    expect(escapeText('https://ex.com/a%%b')).toBe('https://ex.com/a%\\%b')
+  })
+
+  /** Inline maths opens on a dollar with something other than a blank after it
+   *  and closes on the next one with something other than a blank before it, so
+   *  two prices in a sentence would draw the words between as a formula. */
+  test('a dollar that would open or close maths is escaped', () => {
+    expect(escapeText('Tickets cost $5-$10 each')).toBe('Tickets cost \\$5-\\$10 each')
+    expect(escapeText('5$ or 10$')).toBe('5\\$ or 10\\$')
+    expect(escapeText('$$')).toBe('\\$\\$')
+    expect(escapeText('a $ b')).toBe('a $ b')
+  })
+
+  /** A kept run is written as it is, so a dollar inside one would be a dollar the
+   *  rule above never saw: `**$5** and **$6**` would be maths from one to the other. */
+  test('a doubled marker around a dollar is escaped rather than kept', () => {
+    expect(escapeText('**$5** and **$6**')).toBe('\\*\\*\\$5\\*\\* and \\*\\*\\$6\\*\\*')
   })
 
   test('nothing in, nothing out', () => {

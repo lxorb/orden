@@ -1,4 +1,4 @@
-import { Marked, Renderer } from 'marked'
+import { Marked, Renderer, Tokenizer } from 'marked'
 import { hardBreaks } from './breaks'
 import type { Token, Tokens } from 'marked'
 import { chartFigure } from './chart'
@@ -208,6 +208,40 @@ function noteLink(href: string): { target: string; fragment: string } | null {
  *  this is a question about a path rather than about a target. */
 const NOTE_LINK = /\.(md|markdown|mdown|mkd|canvas|pages|pdf)$/i
 
+/** A backslash escape: one in front of ASCII punctuation, which is what markdown
+ *  lets one escape. */
+const AN_ESCAPE = /\\([!-/:-@[-`{-~])/g
+
+/** The ASCII punctuation a backslash escapes. */
+const PUNCTUATION = /^[!-/:-@[-`{-~]$/
+
+/** GFM's bare address, with any markdown escape inside it read as the character it
+ *  escapes. marked links a bare address character for character, so the `\[` a
+ *  page's `?b=[1]` is written with - it has to be, where the same words are a
+ *  link's text; see `escapeText` - would be a backslash in the address and a link
+ *  to a page that is not there. An address typed by hand with a backslash in it
+ *  is not one anybody meant either. */
+function bareAddress(this: Tokenizer, src: string): Tokens.Link | undefined {
+  const token = Tokenizer.prototype.url.call(this, src)
+  if (!token) return undefined
+
+  // A backslash the address ends on, in front of punctuation, escapes the words
+  // after it: `(see https://a.test/a_b\_)` is an address and then `_)`, because
+  // what marked leaves off the end of an address is words again and `escapeText`
+  // escapes them as words. Kept, it would be a link to `a_b%5C`. So it is left for
+  // the words, where it is the escape it was written as.
+  const ends = token.raw.endsWith('\\') && PUNCTUATION.test(src[token.raw.length] ?? '') ? 1 : 0
+  const raw = token.raw.slice(0, token.raw.length - ends)
+  const text = token.text.slice(0, token.text.length - ends).replace(AN_ESCAPE, '$1')
+  return {
+    ...token,
+    raw,
+    text,
+    href: token.href.slice(0, token.href.length - ends).replace(AN_ESCAPE, '$1'),
+    tokens: [{ type: 'text', raw: text, text }],
+  }
+}
+
 /** One renderer, shared by export and the published blog, so a note looks the
  *  same wherever it is read. The headings list is filled in while rendering,
  *  which is why a renderer that numbers them is built per document. */
@@ -224,6 +258,7 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
     }),
   )
   marked.use(hashtags(options.tagHref))
+  marked.use({ tokenizer: { url: bareAddress } })
 
   const taken = new Map<string, number>()
 
@@ -266,7 +301,9 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
         if (!href) return body
 
         // A bare address, or an autolink, stands for itself and says so.
-        const bare = !token.raw.startsWith('[') || token.text === token.href
+        // Its text read past escapes, which an address as a link's text is written with.
+        const bare =
+          !token.raw.startsWith('[') || token.text.replace(AN_ESCAPE, '$1') === token.href
         const attributes = [bare ? ' class="url"' : '', ` href="${href}"`]
         if (token.title) attributes.push(` title="${escape(token.title)}"`)
         return `<a${attributes.join('')}>${body}</a>`

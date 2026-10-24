@@ -542,11 +542,16 @@ fn escaped(words: &str) -> String {
             '_' => !(word(before) && word(after)),
             // A star with a blank on each side can neither open emphasis nor close it.
             '*' => !(mid && blank(before) && blank(after)),
-            // Doubled, a highlight (`==`) or a comment (`%%`).
-            '=' | '%' => before == Some(one) || after == Some(one),
+            // Doubled, a highlight (`==`).
+            '=' => before == Some(one) || after == Some(one),
+            // The second of two, which would open a comment and hide the rest.
+            '%' => before == Some(one),
+            // Maths, unless it stands alone: `$5-$10` is two prices, `a $ b` a dollar.
+            '$' => !(blank(before) && blank(after)),
+            // Lowered or raised text, or a strike, unless nothing follows to lower.
+            '~' | '^' => !blank(after),
             // A tag opened, where the words say `<b>` or `<script>`.
-            '<' => after
-                .is_some_and(|next| next.is_ascii_alphabetic() || matches!(next, '/' | '!' | '?')),
+            '<' => opens_tag(after),
             // An entity, which would show as the character it names; `R&D` is none.
             '&' => {
                 let named = chars[at + 1..]
@@ -555,8 +560,8 @@ fn escaped(words: &str) -> String {
                     .count();
                 named > 0 && chars.get(at + 1 + named) == Some(&';')
             }
-            // A link or a wikilink, code, math, a strike, a lowered and a raised run.
-            '[' | ']' | '`' | '$' | '~' | '^' => true,
+            // A link or a wikilink, and code.
+            '[' | ']' | '`' => true,
             _ => false,
         };
 
@@ -604,6 +609,43 @@ fn opened(words: &str) -> String {
     }
 
     words.to_string()
+}
+
+/// Whether a `<` followed by this reads as the start of a tag, a closing tag, a
+/// comment or a processing instruction: the four things markdown lets raw HTML
+/// begin with. `a < b` is not one of them and keeps its bracket. The same rule as
+/// `OPENS_MARKUP` in `packages/markdown/src/words.ts`.
+pub fn opens_tag(next: Option<char>) -> bool {
+    next.is_some_and(|next| next.is_ascii_alphabetic() || matches!(next, '/' | '!' | '?'))
+}
+
+/// Words from outside a note, with nothing in them that can open a tag. A note's
+/// own markup is markup, and the app renders the HTML in it, so a page that calls
+/// itself `Fine <img src=x onerror=...>` would otherwise write a tag into the note.
+///
+/// A backslash already in front of the `<` would take the escape for itself and
+/// leave the tag live, so those are doubled too. Everything else is left alone: a
+/// `#` in a tag is the tag.
+pub fn as_words(words: &str) -> String {
+    let mut out = String::with_capacity(words.len());
+    let mut slashes = 0_usize;
+    let mut chars = words.chars().peekable();
+
+    while let Some(one) = chars.next() {
+        if one == '\\' {
+            slashes += 1;
+            continue;
+        }
+
+        let opens = one == '<' && opens_tag(chars.peek().copied());
+        let kept = if opens { slashes * 2 + 1 } else { slashes };
+        out.extend(std::iter::repeat_n('\\', kept));
+        slashes = 0;
+        out.push(one);
+    }
+
+    out.extend(std::iter::repeat_n('\\', slashes));
+    out
 }
 
 /// Where a link goes, as markdown writes it: in angle brackets where it holds a space
@@ -1599,6 +1641,37 @@ mod tests {
     fn words_that_look_like_html_are_words() {
         let said = as_markdown("<script src=x> and 1 < 2", &[run(24, &[])]);
         assert_eq!(said, "\\<script src=x> and 1 < 2");
+    }
+
+    /// A note that says `$5-$10` says two prices, and `~5 or ~10` and `%%d` say those
+    /// characters, rather than a formula, lowered words or a comment hiding the rest.
+    #[test]
+    fn dollars_tildes_carets_and_percent_signs_are_words() {
+        let words = "Tickets $5-$10, ~5 or ~10, %%d, x^2, a $ b ~ c";
+        let said = as_markdown(words, &[run(words.len() as u64, &[])]);
+        assert_eq!(
+            said,
+            "Tickets \\$5-\\$10, \\~5 or \\~10, %\\%d, x\\^2, a $ b ~ c"
+        );
+    }
+
+    /// A backslash somebody typed in front of a tag would otherwise take the escape
+    /// for itself: `\<img>` is a backslash and then a live tag.
+    #[test]
+    fn a_backslash_in_front_of_html_does_not_let_it_through() {
+        let said = as_markdown("\\<img src=x onerror=alert(1)>", &[run(29, &[])]);
+        assert_eq!(said, "\\\\\\<img src=x onerror=alert(1)>");
+    }
+
+    /// Where a link goes comes from outside the note, and nothing in it may end the
+    /// link early and leave the rest of it as markup on the line.
+    #[test]
+    fn where_a_link_goes_cannot_end_the_link() {
+        assert_eq!(
+            super::destination("https://x.test/a) <img src=x onerror=alert(1)>"),
+            "<https://x.test/a) %3Cimg src=x onerror=alert(1)%3E>"
+        );
+        assert_eq!(super::destination("https://x.test/a"), "https://x.test/a");
     }
 
     /// A link with a space or a bracket in where it goes is still one link.

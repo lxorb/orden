@@ -498,7 +498,14 @@ function converter(options: FromHtmlOptions): TurndownService {
   // left alone where a run of the page's words already is markdown. Hung on the
   // instance because that is where turndown looks it up - and it looks it up only
   // for text that is not inside code, which is what keeps a fence's brackets.
-  service.escape = escapeText
+  //
+  // Except that an address is kept as written only outside a link: inside one the
+  // renderer autolinks nothing and the address is words; see `escapeText`. turndown
+  // hands `escape` the text alone, so the link rule says when it is inside one: its
+  // filter is asked once for an element, just before that element's words are
+  // converted, and its replacement once they have been.
+  let insideLinks = 0
+  service.escape = (text) => escapeText(text, { addresses: insideLinks === 0 })
 
   // A filter rather than the list itself, because `svg` is not an HTML tag and
   // the list is one. For a clip this is a second line of defence behind the
@@ -679,9 +686,17 @@ function converter(options: FromHtmlOptions): TurndownService {
   // and its text nodes have been through `escape` above, which is where a
   // backslash and the brackets are already dealt with.
   service.addRule('link', {
-    filter: (node) => node.nodeName === 'A' && !!node.getAttribute('href'),
+    filter: (node) => {
+      const href = node.nodeName === 'A' ? node.getAttribute('href') : null
+      if (!href) return false
+      // Words that stay words, where the target may not be written down, are prose
+      // and keep their addresses.
+      if (mayPointAt(href, options)) insideLinks += 1
+      return true
+    },
     replacement: (content, node) => {
       const href = node.getAttribute('href') ?? ''
+      if (mayPointAt(href, options)) insideLinks -= 1
       // The words stay where the target may not be written down, which is what an
       // unresolvable link is anywhere; see `mayPointAt`.
       if (!mayPointAt(href, options)) return content

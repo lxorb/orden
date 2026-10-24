@@ -26,6 +26,7 @@ import {
 import type { Rows } from './import/table'
 import { safeName } from './import/names'
 import { moveTargets } from './move-targets'
+import { canWriteAt } from './sharing.svelte'
 import { insideSpace, relativeTo } from './space-paths'
 import { importSheet } from './surfaces.svelte'
 import { invoke, isDesktop, platform } from './tauri'
@@ -92,7 +93,7 @@ class Importing {
   show() {
     void importSheet.ask()
     this.open = true
-    if (this.stage === 'waiting') this.root = workspace.activeSpace?.root ?? null
+    if (this.stage === 'waiting') this.root = landing()
   }
 
   close() {
@@ -120,7 +121,7 @@ class Importing {
 
     this.stage = 'reading'
     this.error = null
-    this.root ??= workspace.activeSpace?.root ?? null
+    this.root ??= landing()
 
     try {
       // A folder picked whole is the import's own folder, named after it below, so
@@ -261,7 +262,8 @@ class Importing {
       tree: workspace.tree,
       spaces: workspace.spaces,
       here: workspace.activeSpace?.root ?? null,
-    })
+      // Not a space shared to be read, nor a folder of it, which take no import.
+    }).filter((target) => canWriteAt(target.id))
 
     const { prompt } = await import('./prompt.svelte')
     const into = await prompt.find({ title: t('Import into'), options: [...targets] })
@@ -299,6 +301,16 @@ class Importing {
       this.error = message(error, t('That import could not be written.'))
     }
   }
+}
+
+/** Where an import lands until the reader picks: the open space, or where that is
+ *  one shared with this account to be read, which takes no import, the first space
+ *  that is their own to write in. None where there is no such space, and the sheet
+ *  writes nothing. */
+function landing(): string | null {
+  const open = workspace.activeSpace?.root ?? null
+  if (open !== null && canWriteAt(open)) return open
+  return workspace.spaces.find((space) => canWriteAt(space.root))?.root ?? null
 }
 
 /** Todoist's Inbox, written, as the space's inbox where the space has none of its own

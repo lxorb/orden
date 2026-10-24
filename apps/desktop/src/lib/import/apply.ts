@@ -72,6 +72,15 @@ export async function applyImport(
   target: ImportTarget,
   options: Writing = {},
 ): Promise<Landed> {
+  // Not into a space shared with this account to be read: the copy here would stop
+  // being the space's, and the sync refuses it on every pass. Asked here because every
+  // import lands through here - the sheet, a browser's spaces, a share on a phone -
+  // and before anything is written, as a path that escapes is. Fetched, as
+  // sharing.svelte.ts reads the workspace this writes into.
+  const { canWriteAt } = await import('../sharing.svelte')
+  const into = target.folder ? joinPath(target.root, target.folder) : target.root
+  if (!canWriteAt(into)) throw new Error(UNWRITABLE)
+
   const { files, stepped } = await restampedOnDisk(plan, target)
   const paths: string[] = []
   let done = 0
@@ -139,6 +148,8 @@ function judged(files: readonly Planned[]): Planned[] {
     return { ...file, path: inside }
   })
 }
+
+const UNWRITABLE = key('That import could not be written.')
 
 const ESCAPING = key('That import would have landed outside the space, so nothing was written.')
 

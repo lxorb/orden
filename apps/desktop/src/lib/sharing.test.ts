@@ -394,6 +394,15 @@ describe('what may be done in a space', () => {
     expect(isShared('Notes')).toBe(true)
   })
 
+  test('answers for the space’s own folder as for a note inside it', () => {
+    // What makes a new note asks of the folder it goes in, and the space’s top is the
+    // folder most of them go in.
+    world.mirrors = { Notes: 'space-1' }
+    account.spaces = [remote('space-1', 'read', true)]
+
+    expect(canWriteAt('Notes')).toBe(false)
+  })
+
   test('leaves a note in no space alone, which is every note outside one', () => {
     world.mirrors = { Notes: 'space-1' }
     account.spaces = [remote('space-1', 'read', true)]

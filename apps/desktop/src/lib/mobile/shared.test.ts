@@ -1,3 +1,4 @@
+import { renderMarkdown } from '@nib/markdown'
 import { describe, expect, test } from 'vitest'
 import {
   type Arrived,
@@ -9,6 +10,7 @@ import {
   sharedPlan,
   sharedTask,
   sharedTitle,
+  sharedMarkdown,
   sharedWords,
 } from './shared'
 
@@ -140,6 +142,13 @@ describe('a share as a task', () => {
       sharedTask(arrived({ items: [item({ text: 'Call the plumber\nabout the sink' })] })),
     ).toBe('Call the plumber')
   })
+
+  test('a tag in what was shared is not a tag in the task', () => {
+    const task = sharedTask(
+      arrived({ items: [item({ text: '<img src=https://t.example/p.gif> https://x.test/a' })] }),
+    )
+    expect(task).not.toMatch(/(?<!\\)<(?=[A-Za-z/])/)
+  })
 })
 
 describe('the markdown for one thing', () => {
@@ -151,10 +160,37 @@ describe('the markdown for one thing', () => {
       embedFor(item({ name: 'report.pdf', mime: 'application/pdf' }), 'assets/report.pdf'),
     ).toBe('[report.pdf](assets/report.pdf)')
   })
+
+  test("a file's name is words, its tags and brackets as well", () => {
+    const linked = embedFor(item({ name: '<img src=x>[1].zip' }), 'assets/a.zip')
+    expect(linked).toBe('[\\<img src=x>\\[1\\].zip](assets/a.zip)')
+    expect(renderMarkdown(linked)).toBe(
+      '<p><a href="assets/a.zip">&lt;img src=x&gt;[1].zip</a></p>\n',
+    )
+  })
 })
 
 describe('what a share becomes', () => {
   const day = new Date('2026-09-12T10:00:00Z')
+
+  test('shared words are words, and a tag in them opens no markup', () => {
+    const plan = sharedPlan(
+      arrived({
+        subject: 'A page',
+        items: [
+          item({ text: 'Fine <img src=https://t.example/p.gif><style>body{display:none}</style>' }),
+        ],
+      }),
+      new Map(),
+      day,
+      'assets',
+    )
+
+    const note = plan.files[0]
+    const text = note?.kind === 'note' ? note.text : ''
+    expect(text).toContain('Fine \\<img src=https://t.example/p.gif>\\<style>')
+    expect(text).not.toMatch(/(?<!\\)<(?=[A-Za-z/])/)
+  })
 
   test('a link, with where it came from and when', () => {
     const plan = sharedPlan(
@@ -170,6 +206,29 @@ describe('what a share becomes', () => {
     expect(note?.path).toBe('A page.md')
     expect(note?.kind === 'note' && note.text).toBe(
       '---\ndate: 2026-09-12\nsource: https://x.test/a\n---\n\n# A page\n\nRead this: https://x.test/a\n',
+    )
+  })
+
+  test('shared words read back as themselves, and shared markdown stays markdown', () => {
+    const plan = sharedPlan(
+      arrived({
+        subject: 'Prices',
+        items: [
+          item({ mime: 'text/plain', text: 'Tickets $5-$10, format is %%d\nrest' }),
+          item({ mime: 'text/markdown', text: 'Some **bold** and $x^2$' }),
+        ],
+      }),
+      new Map(),
+      day,
+      'assets',
+    )
+
+    const note = plan.files[0]
+    expect(note?.kind === 'note' && note.text).toContain(
+      'Tickets \\$5-\\$10, format is %\\%d\nrest\n\nSome **bold** and $x^2$',
+    )
+    expect(sharedMarkdown(arrived({ items: [item({ text: 'wait ~5 or ~10' })] }))).toBe(
+      'wait \\~5 or \\~10',
     )
   })
 

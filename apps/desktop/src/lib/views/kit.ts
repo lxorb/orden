@@ -5,6 +5,7 @@
 
 import { type Base, BUTTON, groupName, type Row, type Value } from '@nib/bases'
 import type { RowChange } from '../rows/write'
+import { canWriteAt } from '../sharing.svelte'
 import { insideSpace } from '../space-paths'
 import { workspace } from '../workspace.svelte'
 import { dropRow, tickRow, writeRow } from './act'
@@ -30,7 +31,17 @@ export interface Kit {
   /** What a press on a row opens: a task's view, a note beside the view; with `tab`
    *  (Ctrl or Cmd held), the note in a tab of its own either way. */
   choose(row: Row, tab?: boolean): void
-  tick(row: Row): void
+  /** Whether the note a row is in may be written: not in a space shared with this
+   *  account to be read, which Today, Upcoming and a base across every space show
+   *  beside the reader's own. A layout offers no tick, cell or drag of a row where
+   *  this is false, and the writes below refuse it either way. */
+  writes(row: Row): boolean
+  /** Whether the view itself may be changed and added to: false for a base file or a
+   *  fence in a space shared to be read, whose words that space keeps. */
+  readonly writable: boolean
+  /** Ticks a task; answers whether its note was written, so a box drawn ticked at the
+   *  press goes back where nothing was. */
+  tick(row: Row): Promise<boolean>
   write(row: Row, change: RowChange): void
   /** A button cell pressed: `column` is `button.<name>`. */
   press(row: Row, column: string): void
@@ -73,11 +84,21 @@ function walkOf(live: LiveView): string[] {
 }
 
 export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, compact: boolean): Kit {
+  // A row of a space no longer here is not refused: its write finds no note anyway.
+  const writes = (row: Row) => {
+    const path = notePath(row)
+    return path === null || canWriteAt(path)
+  }
   const kit: Kit = {
     live,
     spec,
     file,
     compact,
+    writes,
+    get writable() {
+      const at = live.writtenAt
+      return at === null || canWriteAt(at)
+    },
     open(row, how = 'aside') {
       const path = notePath(row)
       if (path === null) return
@@ -99,17 +120,17 @@ export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, comp
       else kit.open(row, tab ? 'tab' : 'aside')
     },
     tick(row) {
-      void tickRow(row, live.today)
+      return writes(row) ? tickRow(row, live.today) : Promise.resolve(false)
     },
     write(row, change) {
-      void writeRow(row, change)
+      if (writes(row)) void writeRow(row, change)
     },
     press(row, column) {
       if (live.base) void pressButton(live.base, column.slice(BUTTON.length), row)
     },
     drop(row, key, property) {
       const by = property ?? live.view?.groupBy?.property
-      if (by === undefined) return
+      if (by === undefined || !writes(row)) return
       const drop = dropInto(by, key, row, live.today)
       if (drop) void dropRow(row, drop)
     },
@@ -117,7 +138,10 @@ export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, comp
       const base = live.base
       const kinds = live.view?.nib.rows ?? 'notes'
       if (base && kinds === 'notes') {
-        void addNote(base, live.at, file, group, template === undefined ? {} : { template })
+        // The note's own space is asked by addNote, which every way of adding one takes.
+        if (kit.writable) {
+          void addNote(base, live.at, file, group, template === undefined ? {} : { template })
+        }
         return null
       }
       const prefill = prefillOf(spec, live.today, group)
@@ -125,7 +149,7 @@ export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, comp
     },
     change(edit, unlocking = false) {
       const base = live.base
-      if (!base) return
+      if (!base || !kit.writable) return
       if (live.locked && !unlocking) {
         live.refused++
         return
@@ -134,7 +158,7 @@ export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, comp
     },
     async changed(edit, show) {
       const base = live.base
-      if (!base) return false
+      if (!base || !kit.writable) return false
       if (live.locked) {
         live.refused++
         return false
