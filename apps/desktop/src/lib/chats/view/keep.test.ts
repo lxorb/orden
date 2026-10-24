@@ -17,6 +17,7 @@ vi.mock('../../workspace/write-file', () => ({
 vi.mock('../../workspace.svelte', () => ({
   workspace: {
     freeName: (_folder: string, wanted: string) => wanted,
+    freeNameOnDisk: (_folder: string, wanted: string) => Promise.resolve(wanted),
     fileCame: () => Promise.resolve(),
     open: () => Promise.resolve(),
   },
