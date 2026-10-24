@@ -264,7 +264,137 @@ fn complaint(stderr: &[u8], fallback: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{complaint, is_format, reading};
+    use super::{complaint, has_pandoc, is_format, pandoc, reading};
+    use std::fs;
+    use std::path::Path;
+
+    /// An import, run the way `import_document` runs it, on a document in `beside`:
+    /// what pandoc printed, and what it said on the way.
+    fn imported(beside: &Path, name: &str) -> (String, String) {
+        let source = beside.join(name).to_string_lossy().to_string();
+        let result = pandoc()
+            .current_dir(beside)
+            .args(reading(&source))
+            .output()
+            .expect("pandoc runs");
+        (
+            String::from_utf8_lossy(&result.stdout).to_string(),
+            String::from_utf8_lossy(&result.stderr).to_string(),
+        )
+    }
+
+    /// Whether these tests can run pandoc; the CI's Linux row installs it.
+    fn pandoc_here() -> bool {
+        let here = has_pandoc();
+        if !here {
+            eprintln!("pandoc is not installed here, so this test checks nothing");
+        }
+        here
+    }
+
+    /// The reader's own document is somebody else's words: an include in it must
+    /// not read a file of this machine into the note, which then syncs.
+    #[test]
+    fn an_import_runs_pandoc_in_its_sandbox() {
+        let args = reading("paper.tex");
+        let sandbox = args.iter().position(|one| *one == "--sandbox");
+        let marker = args.iter().position(|one| *one == "--");
+        assert!(sandbox.is_some_and(|at| marker.is_some_and(|end| at < end)));
+    }
+
+    #[test]
+    fn an_include_in_a_document_reads_no_file_of_this_machine() {
+        if !pandoc_here() {
+            return;
+        }
+        let secrets = tempfile::tempdir().expect("a folder");
+        let key = secrets.path().join("id_rsa");
+        fs::write(&key, "PRIVATE KEY 7f3a\n").expect("written");
+        // Forward slashes, which LaTeX, RST and Org all read as a path.
+        let key = key.to_string_lossy().replace('\\', "/");
+
+        let documents = tempfile::tempdir().expect("a folder");
+        let beside = documents.path();
+        fs::write(
+            beside.join("paper.tex"),
+            format!(
+                "\\documentclass{{article}}\n\\usepackage{{listings}}\n\\begin{{document}}\nHi\n\\lstinputlisting{{{key}}}\n\\end{{document}}\n"
+            ),
+        )
+        .expect("written");
+        fs::write(
+            beside.join("notes.rst"),
+            format!("Hi\n\n.. include:: {key}\n   :literal:\n"),
+        )
+        .expect("written");
+        fs::write(
+            beside.join("plan.org"),
+            format!("Hi\n\n#+INCLUDE: \"{key}\" src text\n"),
+        )
+        .expect("written");
+
+        for name in ["paper.tex", "notes.rst", "plan.org"] {
+            let (markdown, said) = imported(beside, name);
+            assert!(
+                !markdown.contains("PRIVATE KEY"),
+                "{name}: {markdown}\n{said}"
+            );
+            assert!(markdown.contains("Hi"), "{name}: {markdown}\n{said}");
+        }
+    }
+
+    /// The sandbox keeps the pictures inside a Word file, which come out beside it.
+    #[test]
+    fn a_picture_inside_a_document_still_comes_out_beside_it() {
+        if !pandoc_here() {
+            return;
+        }
+        let folder = tempfile::tempdir().expect("a folder");
+        let beside = folder.path();
+        fs::write(beside.join("dot.png"), DOT).expect("written");
+        let made = pandoc()
+            .current_dir(beside)
+            .args([
+                "--from",
+                "markdown",
+                "--to",
+                "docx",
+                "--output",
+                "with.docx",
+            ])
+            .arg("--")
+            .arg("-")
+            .stdin(std::process::Stdio::piped())
+            .spawn()
+            .and_then(|mut child| {
+                use std::io::Write as _;
+                child
+                    .stdin
+                    .take()
+                    .expect("stdin")
+                    .write_all(b"Text\n\n![a dot](dot.png)\n")?;
+                child.wait()
+            })
+            .expect("pandoc writes a docx");
+        assert!(made.success());
+        fs::remove_file(beside.join("dot.png")).expect("removed");
+
+        let (markdown, said) = imported(beside, "with.docx");
+        assert!(markdown.contains("media/"), "{markdown}\n{said}");
+        let media = fs::read_dir(beside.join("media"))
+            .expect("a media folder")
+            .count();
+        assert_eq!(media, 1, "{said}");
+    }
+
+    /// A one-pixel PNG.
+    const DOT: &[u8] = &[
+        0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44,
+        0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x08, 0x06, 0x00, 0x00, 0x00, 0x1f,
+        0x15, 0xc4, 0x89, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9c, 0x63, 0xf8,
+        0xff, 0xff, 0x3f, 0x00, 0x05, 0xfe, 0x02, 0xfe, 0xa7, 0x35, 0x81, 0x84, 0x00, 0x00, 0x00,
+        0x00, 0x49, 0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82,
+    ];
 
     /// A path is the reader's own, and pandoc reads a leading dash as an option.
     #[test]

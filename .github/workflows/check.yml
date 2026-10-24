@@ -373,12 +373,13 @@ jobs:
 
       # Tauri needs a webview to compile against. Windows has WebView2 in the image
       # already and macOS has WebKit in the system; Linux's is CEF, which its crate's
-      # build script downloads, on GTK 4 - 4.14 at least, so Ubuntu 24.04's.
+      # build script downloads, on GTK 4 - 4.14 at least, so Ubuntu 24.04's. And
+      # pandoc, so the tests in pandoc.rs run it for real on one row at least.
       - name: System dependencies
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-4-dev libdbus-1-dev cmake ninja-build
+          sudo apt-get install -y libgtk-4-dev libdbus-1-dev cmake ninja-build pandoc
           bash scripts/linux-cef.sh cef
 
       # Tauri's build script embeds the built frontend, so it has to exist
