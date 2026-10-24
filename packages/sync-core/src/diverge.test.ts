@@ -930,3 +930,31 @@ describe('diverge', () => {
     expect(result.resolution).toContain('draw again')
   })
 })
+
+/** Seed 1111002428 (#779): one side wrote around a word - in front of `after` and behind
+ *  it - and the other typed in front of the same word. The diff read the first side as
+ *  `after` rewritten, so the other's words could only go before all of it or after all of
+ *  it; after it put them behind `after`, glued to the word there, and the next merge
+ *  said that word twice. */
+describe('words typed in front of a word the other side wrote around', () => {
+  const base = 'We ship on Monday after the review.\n\n- milk\n- eggs\n'
+  const local = 'We ship on Monday the mk22z on after the review.\n\n- milk'
+  const remote =
+    'We ship on Monday review mk3z mk4z review on mk8z we after mk2z the review.\n\n- milk\n- eggs\n'
+
+  test('stay in front of it, as the CRDT has them', () => {
+    const merged =
+      'We ship on Monday review mk3z mk4z review on mk8z we the mk22z on after mk2z the review.\n\n- milk'
+    const { verdict, resolution } = diverge(base, local, remote, { local: 2, remote: 1 }, merged)
+
+    expect(verdict).toBe('clean')
+    expect(resolution).toBe(merged)
+  })
+
+  test('are a shared point, the word kept by both', () => {
+    const analysis = analyse(base, local, remote)
+    expect(analysis.remote.filter((edit) => edit.from === 18)).toEqual([
+      { from: 18, to: 18, insert: 'review mk3z mk4z review on mk8z we ' },
+    ])
+  })
+})

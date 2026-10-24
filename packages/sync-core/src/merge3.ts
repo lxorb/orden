@@ -427,11 +427,43 @@ function grouped(base: string, local: readonly Edit[], remote: readonly Edit[]):
   return meetings.sort((a, b) => a.base.from - b.base.from)
 }
 
+/** A side's replacements split into the edits they are made of, where the other side
+ *  inserted right at one of their edges (#779).
+ *
+ *  A semantic diff reads two insertions with a short word between them as one
+ *  replacement of that word: `after` becoming `review ... we after mk2z` is the words
+ *  put in front of `after` and the word put behind it, but the diff says the word itself
+ *  was rewritten. Then the other side's insertion at the word's start meets nothing, and
+ *  the one choice left is to put it before the whole replacement or after it - and
+ *  after it is after `after`, a place in the ancestor neither side wrote at, so the
+ *  merge glued the words to their neighbours and said one of them twice once the next
+ *  merge took it from there. Split at the character, the kept word is kept, both sides'
+ *  insertions are at the one point they share, and the order there is the CRDT's like
+ *  at any other such point. Only where the other side writes at the edge and the
+ *  replacement keeps every character it replaced, so every other replacement reads as
+ *  the diff said it. */
+function apart(base: string, side: readonly Edit[], other: readonly Edit[]): Edit[] {
+  const points = new Set(other.filter((one) => one.from === one.to).map((one) => one.from))
+  return side.flatMap((edit) => {
+    if (edit.from === edit.to || (!points.has(edit.from) && !points.has(edit.to))) return [edit]
+    const finer = edits(base.slice(edit.from, edit.to), edit.insert, 'operations').map((one) => ({
+      from: one.from + edit.from,
+      to: one.to + edit.from,
+      insert: one.insert,
+    }))
+    // Only a replacement that keeps all it replaced, the words written around it: one
+    // that rewrote any of them is a rewrite, and reads as one.
+    return finer.length > 1 && finer.every((one) => one.from === one.to) ? finer : [edit]
+  })
+}
+
 /** Where two sides wrote: each side's edits, the ones they share, the meetings, and
  *  what meets nothing. */
 export function analyse(base: string, local: string, remote: string): Analysis {
-  const mine = edits(base, local, 'semantic')
-  const theirs = edits(base, remote, 'semantic')
+  const roughMine = edits(base, local, 'semantic')
+  const roughTheirs = edits(base, remote, 'semantic')
+  const mine = apart(base, roughMine, roughTheirs)
+  const theirs = apart(base, roughTheirs, roughMine)
   const { identical, local: onlyMine, remote: onlyTheirs } = paired(mine, theirs)
   const meetings = grouped(base, onlyMine, onlyTheirs)
 
