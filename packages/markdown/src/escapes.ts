@@ -310,16 +310,36 @@ const A_LIST_ITEM = /^[ \t]*(?:[-*+]|\d{1,9}[.)])[ \t]+/
  *
  *  `escapeText` already knows what each character would do in a note, and the
  *  same escapes are wanted here: a tag opener, the dollars of `$5-$10`, the
- *  tildes of `~5 min or ~10`, the second of two percent signs. It is asked a line
+ *  tildes of `~5 or ~10`, the second of two percent signs. It is asked a line
  *  at a time, because plain text keeps its line breaks and each line starts where
  *  a block could. A line that opens a list item keeps its marker, since that is a
- *  list in the app it came from as well; its words are escaped as words. */
+ *  list in the app it came from as well; its words are escaped as words.
+ *
+ *  And it is asked past the line's indentation, which markdown reads through: up to
+ *  three spaces in front, `   # x` is still a heading and `  > x` a quote. Four make
+ *  the line code, where every escape would be shown as a backslash, so an indent that
+ *  deep is written in no-break spaces, which hold the line where it was and open
+ *  nothing. */
 export function plainWords(text: string): string {
   return text
     .split('\n')
     .map((line) => {
-      const marker = A_LIST_ITEM.exec(line)?.[0] ?? ''
-      return marker + escapeText(line.slice(marker.length), { addresses: true })
+      const marker = A_LIST_ITEM.exec(line)?.[0]
+      if (marker) return marker + escapeText(line.slice(marker.length), { addresses: true })
+
+      const indent = /^[ \t]*/.exec(line)?.[0] ?? ''
+      const words = escapeText(line.slice(indent.length), { addresses: true })
+      return (columnsOf(indent) < 4 ? indent : NO_BREAK.repeat(columnsOf(indent))) + words
     })
     .join('\n')
+}
+
+const NO_BREAK = '\u00a0'
+
+/** How far in an indent reaches, a tab going on to the next stop of four, as
+ *  markdown counts it. */
+function columnsOf(indent: string): number {
+  let columns = 0
+  for (const one of indent) columns = one === '\t' ? columns + 4 - (columns % 4) : columns + 1
+  return columns
 }
