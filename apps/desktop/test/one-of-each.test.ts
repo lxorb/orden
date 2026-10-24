@@ -793,13 +793,21 @@ describe('the sentence behind a setting', () => {
     expect(draw(/\.explain\b|\.sentence\b/)).toEqual(['lib/Hint.svelte'])
   })
 
-  test('and the panel asks for it rather than drawing its own', () => {
+  /** The panel, and the panes of it that are components of their own: every setting
+   *  has a `?` (#768), wherever its row is written. */
+  test('and the settings ask for it rather than drawing their own', () => {
     const own = components
       .filter((one) => /<Hint\b/.test(one.text))
       .map((one) => one.name)
       .sort()
 
-    expect(own).toEqual(['lib/SettingsPanel.svelte'])
+    expect(own).toEqual([
+      'lib/AiPane.svelte',
+      'lib/SettingsPanel.svelte',
+      'lib/SyncPane.svelte',
+      'lib/access/Access.svelte',
+      'lib/people/ProfileRows.svelte',
+    ])
   })
 })
 

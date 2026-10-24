@@ -563,7 +563,7 @@
   {/if}
 {/snippet}
 
-<!-- What every row says about itself: the setting's name, the `i` that explains
+<!-- What every row says about itself: the setting's name, the `?` that explains
      it where the name is not enough, and the pane it lives in when search is
      showing it out of context. One snippet, so the glyph lands in the same slot
      after the label on every kind of row and a row without one does not shift. -->
@@ -591,8 +591,8 @@
     {@const held = field.get()}
     {@const locked = field.locked?.() ?? false}
     <!-- The whole row turns it, so there is nothing to miss, but the switch is the
-         mark at its end: a row may carry the `i` that explains it, and a switch may
-         hold nothing else anybody can press, so Enter on the `i` reached the row's
+         mark at its end: a row may carry the `?` that explains it, and a switch may
+         hold nothing else anybody can press, so Enter on the `?` reached the row's
          keys and turned the setting over (#522). A locked one is the last kind of
          tab still offered, and stays as it is. -->
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
@@ -789,13 +789,25 @@
   <h3>{t('Browser')}</h3>
   <div class="card">
     <div class="nib-setting setting">
-      <span class="name">{t('Default browser')}</span>
+      <span class="name"
+        ><span class="what"
+          >{t('Default browser')}<Hint
+            text={t('Makes Orden the browser that links from other programs open in.')}
+          /></span
+        ></span
+      >
       <DefaultBrowser />
     </div>
     <!-- Where a few words typed in the address field go: Chrome's list for the reader's
          region, and a custom one with `%s` where the words go. See web-tab/engines.ts. -->
     <div class="nib-setting setting">
-      <span class="name">{t('Search engine')}</span>
+      <span class="name"
+        ><span class="what"
+          >{t('Search engine')}<Hint
+            text={t('Where words typed into a web tab’s address bar are searched.')}
+          /></span
+        ></span
+      >
       <div class="pick">
         <Select
           value={customising ? CUSTOM : searchEngine.id}
@@ -814,7 +826,13 @@
     </div>
     {#if customising || searchEngine.id === CUSTOM}
       <label class="nib-setting setting" transition:slide={{ duration: dur(160) }}>
-        <span class="name">{t('Address')}</span>
+        <span class="name"
+          ><span class="what"
+            >{t('Address')}<Hint
+              text={t('The search address, with %s where the words go.')}
+            /></span
+          ></span
+        >
         <input
           class="inline"
           type="url"
@@ -851,7 +869,11 @@
   <h3>{t('Your words')}</h3>
   <div class="card">
     <div class="nib-setting setting words">
-      <span class="name"><span class="what">{t('Words')}</span></span>
+      <span class="name"
+        ><span class="what"
+          >{t('Words')}<Hint text={t('Words the spelling check never marks as wrong.')} /></span
+        ></span
+      >
       {#if modes.spellWords.length}
         <div class="chips">
           {#each modes.spellWords as word (word)}
@@ -944,7 +966,13 @@
       <h3>{t('Account')}</h3>
       <div class="card">
         <label class="nib-setting setting">
-          <span class="name">{t('Display name')}</span>
+          <span class="name"
+            ><span class="what"
+              >{t('Display name')}<Hint
+                text={t('The name the others see on what you share and in chats.')}
+              /></span
+            ></span
+          >
           <input
             class="inline"
             value={account.user.name ?? ''}
@@ -1133,7 +1161,13 @@
   <!-- Whose keyboard this is, before the list of what is on it. -->
   <div class="card">
     <div class="nib-setting setting">
-      <span class="name">{t('Shortcuts')}</span>
+      <span class="name"
+        ><span class="what"
+          >{t('Shortcuts')}<Hint
+            text={t('Which app’s keys Orden follows; any key below can still be changed.')}
+          /></span
+        ></span
+      >
       <div class="pick">
         <Select
           value={shortcuts.preset}
@@ -1151,6 +1185,7 @@
       // over the Obsidian or the Notion map instead.
       kind: 'switch',
       label: t('Vim keys'),
+      hint: t('Moves and edits in notes with Vim’s keys.'),
       get: () => modes.vim,
       set: (on) => modes.setVimKeys(on, view),
     })}
@@ -1328,7 +1363,13 @@
   <h3>{t('Pulling down')}</h3>
   <div class="card">
     <div class="nib-setting setting">
-      <span class="name">{t('A pull past the top runs')}</span>
+      <span class="name"
+        ><span class="what"
+          >{t('A pull past the top runs')}<Hint
+            text={t('What pulling a note down past its top does on a phone.')}
+          /></span
+        ></span
+      >
       <div class="pick">
         <Select
           value={pull.id}
@@ -1391,7 +1432,13 @@
   <div class="card">
     {#if glassesKey.set && !replacingKey}
       <div class="nib-setting setting keyed">
-        <span class="name">{t('OpenAI key')}</span>
+        <span class="name"
+          ><span class="what"
+            >{t('OpenAI key')}<Hint
+              text={t('The OpenAI key the glasses ask their questions with.')}
+            /></span
+          ></span
+        >
         <div class="row">
           <span class="hint">{t('set, ends in …{tail}', { tail: glassesKey.tail })}</span>
           <button class="nib-chip" onclick={() => (replacingKey = true)}>{t('Replace')}</button>
@@ -1403,7 +1450,13 @@
     {:else}
       <!-- svelte-ignore a11y_autofocus -->
       <label class="nib-setting setting">
-        <span class="name">{t('OpenAI key')}</span>
+        <span class="name"
+          ><span class="what"
+            >{t('OpenAI key')}<Hint
+              text={t('The OpenAI key the glasses ask their questions with.')}
+            /></span
+          ></span
+        >
         <input
           class="inline"
           type="password"
@@ -1422,7 +1475,13 @@
 
     {#if offered.models.length}
       <div class="nib-setting setting">
-        <span class="name">{t('Model')}</span>
+        <span class="name"
+          ><span class="what"
+            >{t('Model')}<Hint
+              text={t('The model that answers what you ask on the glasses.')}
+            /></span
+          ></span
+        >
         <div class="pick">
           <Select
             value={modes.glassesModel}
@@ -1434,7 +1493,13 @@
         </div>
       </div>
       <div class="nib-setting setting">
-        <span class="name">{t('Reasoning')}</span>
+        <span class="name"
+          ><span class="what"
+            >{t('Reasoning')}<Hint
+              text={t('How long the model thinks before it answers; longer is slower.')}
+            /></span
+          ></span
+        >
         <div class="pick">
           <Select
             value={modes.glassesEffort}
@@ -1481,6 +1546,9 @@
         {@render row({
           kind: 'switch',
           label: t('Show in Explorer’s New menu'),
+          hint: t(
+            'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.',
+          ),
           get: () => settings.newMenu,
           set: (on) => void settings.setNewMenu(on),
         })}
@@ -1661,7 +1729,7 @@
     gap: 1px;
   }
 
-  /* The name and the `i` beside it on one line, so the glyph reads as belonging
+  /* The name and the `?` beside it on one line, so the glyph reads as belonging
      to the word rather than to the row. */
   .setting .name .what {
     display: flex;

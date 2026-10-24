@@ -37,6 +37,7 @@
   import { asking, type Engine } from './sync2/asking.svelte'
   import { scan } from './sync2/store'
   import { workspace } from './workspace.svelte'
+  import Hint from './Hint.svelte'
 
   let days = $state(1)
 
@@ -243,7 +244,13 @@
 
   <div class="card">
     <div class="nib-setting setting">
-      <span class="name">{t('On two devices')}</span>
+      <span class="name"
+        ><span class="nib-named"
+          >{t('On two devices')}<Hint
+            text={t('What happens when one note was changed on two devices before they synced.')}
+          /></span
+        ></span
+      >
       <div class="pick">
         <Select
           value={modes.conflicts}
@@ -267,7 +274,13 @@
 
 <div class="card">
   <div class="nib-setting setting">
-    <span class="name">{t('Keep versions')}</span>
+    <span class="name"
+      ><span class="nib-named"
+        >{t('Keep versions')}<Hint
+          text={t('How far back the account keeps earlier versions of your notes.')}
+        /></span
+      ></span
+    >
     <div class="pick">
       <Select
         value={String(modes.keepVersions)}
@@ -375,7 +388,13 @@
 
 <div class="card">
   <div class="nib-setting setting">
-    <span class="name">{t('This space, as it was')}</span>
+    <span class="name"
+      ><span class="nib-named"
+        >{t('This space, as it was')}<Hint
+          text={t('How far back Go back takes this space; it says first what would change.')}
+        /></span
+      ></span
+    >
     <div class="pick">
       <Select
         value={String(chosen)}
