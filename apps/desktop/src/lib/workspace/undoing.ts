@@ -18,7 +18,7 @@ import { applied, type Edit } from '../search/replace'
 import type { Retargeting } from '../link-index.svelte'
 import type { Holding } from '../sync/holding'
 import { onDisk } from '../on-disk'
-import { folderOf, samePath } from '../space-paths'
+import { folderOf, isMarkdownPath, samePath } from '../space-paths'
 import { invoke } from '../tauri'
 import type { Entry } from '../workspace.svelte'
 import type { Archive } from './archive.svelte'
@@ -299,9 +299,10 @@ export async function heldIn(path: string): Promise<Pick<Kept, 'notes' | 'folder
 /** Whether the account holds everything in a folder about to be deleted signed in,
  *  so the account's copy can stand in for it. A dotfile anywhere under it says no:
  *  sync never hands the account one, so `.obsidian/` or `.git/` deleted outright was
- *  gone for good. So does a file sync has not pushed yet, a picture or a paper
- *  dropped in offline or since the last pass, and one written since it was pushed,
- *  whose newest bytes only this disk has. So does a folder the listing could not
+ *  gone for good. So does any file that is not a note, a picture or a paper: the
+ *  account's Recently deleted gives back notes and nothing else. So does a note sync
+ *  has not pushed yet, and one written since it was pushed, whose newest words only
+ *  this disk has. So does a folder the listing could not
  *  read into - a link out of the space, or one nested past the depth the listing
  *  stops at - which looks empty and is not. What sync leaves alone as clutter is not
  *  worth keeping either way.
@@ -324,10 +325,13 @@ export async function accountHoldsAll(
       if (one.name.startsWith('.')) return false
       if (one.is_dir) {
         if (!(await walk(one))) return false
-      } else if (
-        !CLUTTER.test(one.name) &&
-        !(await holds(one.path, { modified: one.modified, budget }))
-      ) {
+      } else if (CLUTTER.test(one.name)) {
+        continue
+      } else if (!isMarkdownPath(one.name)) {
+        // The account's Recently deleted gives back notes and nothing else: a paper
+        // or a picture deleted outright with its folder is gone, held bytes or not.
+        return false
+      } else if (!(await holds(one.path, { modified: one.modified, budget }))) {
         return false
       }
     }

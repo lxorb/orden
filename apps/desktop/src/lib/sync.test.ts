@@ -1895,13 +1895,24 @@ describe('what the account holds of a file', () => {
     vi.stubGlobal('localStorage', memoryStorage())
   })
 
-  test('a paper as it was pushed is held, and goes to the account', async () => {
+  test('a note as it was pushed is held, and goes to the account', async () => {
+    fake.disk.set('/Notes/a.md', '# a')
+    await mirrored({}, { 'a.md': '# a' })
+
+    await workspace.remove('/Notes/a.md', false)
+    expect(fake.remote.local).toContain('delete_note /Notes/a.md')
+  })
+
+  // The account's Recently deleted lists notes, never a paper: a paper deleted
+  // outright there is gone for good, however well the account held its bytes.
+  test('a paper as it was pushed is held, and still goes to the trash', async () => {
     fake.disk.set('/Notes/paper.pdf', '%PDF')
     await mirrored({ 'paper.pdf': '%PDF' }, {})
 
     expect(await sync.holds('/Notes/paper.pdf')).toBe(true)
     await workspace.remove('/Notes/paper.pdf', false)
-    expect(fake.remote.local).toContain('delete_note /Notes/paper.pdf')
+    expect(fake.remote.local).toContain('trash_item /Notes/paper.pdf')
+    expect(fake.remote.local).not.toContain('delete_note /Notes/paper.pdf')
   })
 
   test('a paper highlighted since the last push goes to the trash', async () => {
@@ -1949,10 +1960,32 @@ describe('what the account holds of a file', () => {
     expect(fake.remote.local).not.toContain('delete_folder /Notes/Work')
   })
 
-  test('and one the account holds all of goes to the account', async () => {
+  test('a folder holding a paper the account holds goes to the trash', async () => {
     fake.disk.set('/Notes/Work/a.md', '# a')
     fake.disk.set('/Notes/Work/paper.pdf', '%PDF')
     await mirrored({ 'Work/paper.pdf': '%PDF' }, { 'Work/a.md': '# a' })
+
+    await workspace.remove('/Notes/Work', true)
+
+    expect(fake.remote.local).toContain('trash_item /Notes/Work')
+    expect(fake.remote.local).not.toContain('delete_folder /Notes/Work')
+  })
+
+  test('and so does one holding a picture', async () => {
+    fake.disk.set('/Notes/Work/a.md', '# a')
+    fake.disk.set('/Notes/Work/Pictures/cat.png', 'png')
+    await mirrored({}, { 'Work/a.md': '# a' })
+
+    await workspace.remove('/Notes/Work', true)
+
+    expect(fake.remote.local).toContain('trash_item /Notes/Work')
+    expect(fake.remote.local).not.toContain('delete_folder /Notes/Work')
+  })
+
+  test('a folder of notes the account holds all of goes to the account', async () => {
+    fake.disk.set('/Notes/Work/a.md', '# a')
+    fake.disk.set('/Notes/Work/Deeper/b.md', '# b')
+    await mirrored({}, { 'Work/a.md': '# a', 'Work/Deeper/b.md': '# b' })
 
     await workspace.remove('/Notes/Work', true)
 

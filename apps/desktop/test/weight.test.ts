@@ -839,21 +839,15 @@ function holds(tail: string): boolean {
  *  Raised 2026-10-24, to 3,282,000, for #720: a note's own front matter is kept as the
  *  one block on import (`frontMatterKeys`). Measured 3,281,007.
  *
- *  Raised 2026-10-24, to 3,282,000, for B223: a `.webloc` that follows the reading has
- *  only its address changed (`aimWebloc` in shortcut.ts, which keep.ts now calls) rather
- *  than an internet shortcut written into it. Measured 3,281,141.
+ *  Raised 2026-10-24, to 3,284,000, for #795: a delete goes to the account only with
+ *  what the account holds, every file pushed and no dotfile (`holds` in
+ *  sync.svelte.ts, `accountHolds` in workspace.svelte.ts). Measured 3,283,653.
  *
- *  Raised 2026-10-24, to 3,282,000, for #758: a block named from a link in a note
- *  open in another tab is named in that tab's document too, or its next save drops
- *  the name (`nameBlock` in link-index.svelte.ts). Measured 3,281,488.
- *
- *  Raised 2026-10-24, to 3,282,000, for #737: a note made in a folder taken from a
- *  tab asks the disk for its name, since the tab can be from a space not on screen
- *  (`freeNameOnDisk` in workspace.svelte.ts). Measured 3,281,445.
- *
- *  Raised 2026-10-24, to 3,284,000, for #793: #741's paper pairs merged in, and a name
- *  asked of the disk steps past its paper too (`freeNameOnDisk`). Measured 3,283,684. */
-const BUDGET = 3_299_000 // combined branch only, measured 3298537
+ *  Raised 2026-10-24, to 3,285,000, for #809: a paper or a picture goes to this
+ *  device's trash, signed in or not, since the account's Recently deleted gives back
+ *  notes alone (`accountHolds` in workspace.svelte.ts), and a paper that would not
+ *  read is not recorded as sent (`pushFiles` in sync/pass.ts). Measured 3,284,087. */
+const BUDGET = 3_300_000 // combined branch only
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

@@ -48,6 +48,12 @@ const fake = vi.hoisted(() => {
   const unreadable = new Set<string>()
   /** What the account answers a delete with, where it does not simply take it. */
   const refusing: { delete: Error | null } = { delete: null }
+  /** How many more times a file reads before it stops, as one moved away mid-pass
+   *  does; a file with no count reads every time. */
+  const readsLeft = new Map<string, number>()
+  /** The blobs the account holds bytes for, by hash, and every hash put up. */
+  const blobs = new Set<string>()
+  const blobsPut: string[] = []
   /** This device's trash, by the id each thing put in it was given: where it was and
    *  what it said. See src-tauri/src/trash.rs. */
   const trash = new Map<string, { path: string; content: string }>()
@@ -122,6 +128,16 @@ const fake = vi.hoisted(() => {
       trash.delete(text(args.id))
       disk.set(held.path, held.content)
       return Promise.resolve(held.path as T)
+    }
+
+    if (command === 'read_file') {
+      const held = disk.get(path)
+      const left = readsLeft.get(path)
+      if (held === undefined || left === 0) {
+        return Promise.reject(new Error(`no such file: ${path}`))
+      }
+      if (left !== undefined) readsLeft.set(path, left - 1)
+      return Promise.resolve(new TextEncoder().encode(held).buffer as T)
     }
 
     if (command === 'read_tree') {
@@ -238,7 +254,18 @@ const fake = vi.hoisted(() => {
       if (note) Object.assign(note, { deleted: true, seq: ++seq })
       return Promise.resolve({ ok: true as const })
     },
-    saveSpaceFiles: () => Promise.resolve({ files: [], missing: [] as string[] }),
+    // The account keeps a row only for a file it holds the bytes of, and names the
+    // hashes it has none for; see services/sync/src/spaces/files.ts.
+    saveSpaceFiles: (_token: string, _spaceId: string, files: { hash: string }[]) =>
+      Promise.resolve({
+        files: [],
+        missing: files.map((one) => one.hash).filter((hash) => !blobs.has(hash)),
+      }),
+    putBlob: (_token: string, hash: string) => {
+      blobs.add(hash)
+      blobsPut.push(hash)
+      return Promise.resolve({ ok: true as const })
+    },
     // An account that keeps no history: no copy here is ever only behind it, and no
     // base is ever found for a merge.
     said: () => Promise.resolve({ said: [] as string[] }),
@@ -270,6 +297,9 @@ const fake = vi.hoisted(() => {
     modified.clear()
     unreadable.clear()
     trash.clear()
+    readsLeft.clear()
+    blobs.clear()
+    blobsPut.length = 0
     refusing.delete = null
     calls.length = 0
     fetched.length = 0
@@ -279,6 +309,7 @@ const fake = vi.hoisted(() => {
   return {
     addRemote,
     api,
+    blobsPut,
     calls,
     deleteRemote,
     disk,
@@ -287,6 +318,7 @@ const fake = vi.hoisted(() => {
     history,
     invoke,
     modified,
+    readsLeft,
     refusing,
     remote,
     reset,
@@ -1465,5 +1497,25 @@ describe('another sync tool’s copy', () => {
     expect(await movedHere(mirror, 'token', `${ROOT}/Plan.md`, `${ROOT}/${CLASH}`)).toBe(false)
     expect(fake.calls).toEqual([])
     expect(Object.keys(mirror.notes)).toEqual(['Plan.md'])
+  })
+})
+
+/** A paper goes up as a blob, and the mirror records the hash it was sent as: what
+ *  `holds` reads to say a delete can be left to the account. A paper that stopped
+ *  reading between being hashed and being sent was never sent. */
+describe('a paper the account was never sent', () => {
+  test('is not recorded as sent, and goes up on the next pass', async () => {
+    fake.disk.set(`${ROOT}/paper.pdf`, '%PDF')
+    fake.readsLeft.set(`${ROOT}/paper.pdf`, 1)
+    const mirror = newMirror('s-one', ROOT)
+
+    await push(mirror, 'token', NOBODY)
+    expect(fake.blobsPut).toEqual([])
+    expect(mirror.files['paper.pdf']).toBeUndefined()
+
+    fake.readsLeft.delete(`${ROOT}/paper.pdf`)
+    await push(mirror, 'token', NOBODY)
+    expect(fake.blobsPut).toHaveLength(1)
+    expect(mirror.files['paper.pdf']?.hash).toBe(fake.blobsPut[0])
   })
 })

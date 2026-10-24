@@ -821,6 +821,26 @@ describe('what the account holds of a folder', () => {
     expect(await accountHoldsAll('/s/Work', holdsAll)).toBe(true)
   })
 
+  // The account's Recently deleted lists notes and nothing else, so a picture or a
+  // paper the account holds the bytes of is still not one it can give back.
+  test('one holding a picture is not, however well the account holds it', async () => {
+    trees.set('/s/Work', at('/s/Work', [at('/s/Work/a.md'), at('/s/Work/cat.png')]))
+
+    expect(await accountHoldsAll('/s/Work', holdsAll)).toBe(false)
+  })
+
+  test('nor one holding a paper deeper down', async () => {
+    trees.set('/s/Work', at('/s/Work', [at('/s/Work/Inner', [at('/s/Work/Inner/paper.pdf')])]))
+
+    expect(await accountHoldsAll('/s/Work', holdsAll)).toBe(false)
+  })
+
+  test('clutter sync leaves alone does not count against it', async () => {
+    trees.set('/s/Work', at('/s/Work', [at('/s/Work/a.md'), at('/s/Work/Thumbs.db')]))
+
+    expect(await accountHoldsAll('/s/Work', holdsAll)).toBe(true)
+  })
+
   test('one holding a folder the listing did not read into is not', async () => {
     trees.set('/s/Work', at('/s/Work', [at('/s/Work/linked', [], { unlisted: true })]))
 

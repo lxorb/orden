@@ -282,16 +282,19 @@ describe('a folder deleted signed in, undone after a note took a name in it', ()
     expect(files().get('/space/Journal/2026-10-19.md')).toBe('# Today\nthe old words\n')
   })
 
-  test('holding a picture, is left to Recently deleted rather than put back without it', async () => {
+  test('holding a picture, goes to the trash, which keeps the picture with it', async () => {
     files().set('/space/Journal/shot.png', 'not words')
     disk.current?.unreadable.add('/space/Journal/shot.png')
     await workspace.loadTree()
 
     await workspace.remove('/space/Journal', true)
 
-    // The file list leaves the picture out, and an undo read from it put the note
-    // back and said nothing of the picture.
-    expect(workspace.undone.stack).toEqual([])
+    // An undo read from the file list put the note back and said nothing of the
+    // picture, and the account's Recently deleted gives back notes, never a picture.
+    // Only this device's trash keeps the folder whole.
+    expect(workspace.undone.stack).toEqual([
+      { kind: 'delete', path: '/space/Journal', content: '', folder: true, trashId: 'trash-1' },
+    ])
   })
 
   test("holding a Finder's .DS_Store and a desktop.ini, is still put back", async () => {
