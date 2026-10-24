@@ -19,7 +19,7 @@ use tauri::AppHandle;
 use crate::carry::move_whole;
 use crate::clock;
 use crate::paths::{
-    folded, free_spot, in_spaces, inside, is_reserved, made, move_held, spaces_dir,
+    folded, free_spot, in_spaces, inside, is_reserved, made, move_held, move_paper, spaces_dir,
     write_atomically, TRASH,
 };
 
@@ -108,9 +108,14 @@ fn trashed(
     }
 
     // A deleted PDF takes its highlights into the same folder, and a page note its
-    // paper, so putting it back puts them back with it.
-    let _ = alone;
-    let carry = move_held;
+    // paper, so putting it back puts them back with it. Sync's takes only the paper.
+    let carry = |from: &Path, to: &Path| {
+        if alone {
+            move_paper(from, to);
+        } else {
+            move_held(from, to);
+        }
+    };
     carry(source, &held);
 
     let entry = TrashEntry {

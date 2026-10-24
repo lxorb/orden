@@ -83,7 +83,14 @@ function diskOf(telling: Telling): Disk {
         if (words?.trim())
           await invoke('snapshot_note', { path, content: words }).catch(() => undefined)
       }
-      await invoke('trash_item', { path, kind: kind === 'folder' ? 'folder' : 'note' })
+      // Leaving what the account holds as an entry of its own, a PDF's highlights, for
+      // that entry's own move or delete: a PDF turned into its page note elsewhere comes
+      // as this delete, run first, and a move of its highlights, which found none.
+      await invoke('trash_item', {
+        path,
+        kind: kind === 'folder' ? 'folder' : 'note',
+        alone: true,
+      })
       await telling.gone(path, kind)
     },
     mkdir: (path) => invoke('create_folder', { path }).then(() => undefined),
