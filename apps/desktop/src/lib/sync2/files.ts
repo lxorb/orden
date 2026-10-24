@@ -158,10 +158,19 @@ export async function settleFiles(
       continue
     }
     if (changedThere || !entry.local_path) {
+      const full = core.world.join(space.row.root, path)
+      if (!entry.local_path) {
+        // Another entry's file is still where this one is going: it moves on first.
+        const holder = space.at(path)
+        if (holder && holder !== entry) continue
+        // A file nobody here has named yet is in the way, dropped here while the app
+        // was closed or a page note's paper: it becomes an entry of its own (ingest),
+        // and nothing is written over it, as with a document (`project`).
+        if (await core.world.disk.exists(full)) continue
+      }
       const bytes = await blobs.down(space.id, entry.id)
       if (!alive() || bytes === null) return false
       if (bytes === 'gone') continue
-      const full = core.world.join(space.row.root, path)
       await core.world.disk.mkdir(core.world.join(space.row.root, folderPath(path)))
       await blobs.write(full, bytes)
       entry.local_path = path
