@@ -11,6 +11,8 @@ import type { Command } from './commands'
 import { t } from './i18n.svelte'
 import type { MenuEntry } from './menu.svelte'
 import { shownName } from './note-name'
+import { canWriteAt, canWriteIn } from './sharing.svelte'
+import { mergeable } from './workspace/composing'
 import { workspace } from './workspace.svelte'
 
 /** The note to merge into, found by typing its name in the prompt sheet - which
@@ -39,6 +41,16 @@ function hasRest(view?: EditorView): boolean {
   return view.state.doc.sliceString(at).trim().length > 0
 }
 
+/** Whether the note in front of the reader may be merged into another: one the
+ *  open space holds and that may be written, in an editor that may be typed in.
+ *  The note it goes into is asked the same by the merge itself. */
+function canMerge(path: string | null, view?: EditorView): boolean {
+  if (!path || workspace.notes.length < 2) return false
+  if (view?.state.readOnly || !canWriteIn(workspace.active?.note)) return false
+
+  return mergeable(workspace.activeSpace?.root ?? null, path, canWriteAt)
+}
+
 export function composerCommands(view?: EditorView): Command[] {
   const path = workspace.active?.path ?? null
 
@@ -46,7 +58,7 @@ export function composerCommands(view?: EditorView): Command[] {
     {
       id: 'merge-into',
       label: t('Merge into…'),
-      disabled: !path || workspace.notes.length < 2,
+      disabled: !canMerge(path, view),
       run: () => {
         if (path) void merge(path)
       },

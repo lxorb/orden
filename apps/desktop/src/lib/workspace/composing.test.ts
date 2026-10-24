@@ -35,12 +35,20 @@ vi.mock('../link-index.svelte', () => ({
   },
 }))
 
+/** The spaces shared with this account to be read, by root. What may be written
+ *  where is sharing.svelte.ts's, which wants an account a unit test has none of. */
+const readOnly = new Set<string>()
+vi.mock('../sharing.svelte', () => ({
+  canWriteAt: (path: string) => ![...readOnly].some((root) => path.startsWith(`${root}/`)),
+}))
+
 const { freePath } = await import('@nib/markdown/paths')
 const { extractSelection, mergeInto, splitAtCaret } = await import('./composing')
 const { FileActions } = await import('./undo.svelte')
 type Composes = import('./composing').Composes
 
 const SPACE = '/space'
+const OTHER = '/other'
 
 /** A store with the given notes on its disk, and the first of them open. */
 function space(notes: Record<string, string>, openAt?: string) {
@@ -50,6 +58,7 @@ function space(notes: Record<string, string>, openAt?: string) {
   const tab = openAt ? { id: 't1', path: openAt, doc: notes[openAt] ?? '' } : null
 
   const ws = {
+    activeSpace: { id: 's1', name: 'space', root: SPACE },
     active: tab,
     tabs: tab ? [tab] : [],
     undone: new FileActions(),
@@ -83,6 +92,7 @@ function space(notes: Record<string, string>, openAt?: string) {
 beforeEach(() => {
   sent.length = 0
   told.length = 0
+  readOnly.clear()
 })
 
 describe('a note merged into another', () => {
@@ -138,6 +148,42 @@ describe('a note merged into another', () => {
 
     expect(disk.get(A)).toBe('# a\n')
     expect(ws.undone.stack).toEqual([])
+  })
+})
+
+describe('a merge that may not be made', () => {
+  const A = `${SPACE}/a.md`
+  const B = `${SPACE}/b.md`
+
+  test('leaves both notes alone in a space shared to be read', async () => {
+    readOnly.add(SPACE)
+    const ws = space({ [A]: '# a\n', [B]: '# b\n' })
+    await mergeInto(ws, A, B)
+
+    expect(sent).toEqual([])
+    expect(disk.get(A)).toBe('# a\n')
+    expect(ws.undone.stack).toEqual([])
+  })
+
+  test('leaves a note of another space where it is', async () => {
+    // A tab outlives a switch of space, so the note in front of the reader can be
+    // one the open space does not hold, while the notes on offer are the open one's.
+    const away = `${OTHER}/a.md`
+    const ws = space({ [away]: '# a\n', [B]: '# b\n' })
+    await mergeInto(ws, away, B)
+
+    expect(sent).toEqual([])
+    expect(disk.get(away)).toBe('# a\n')
+    expect(disk.get(B)).toBe('# b\n')
+  })
+
+  test('and does not reach into another space either', async () => {
+    const away = `${OTHER}/b.md`
+    const ws = space({ [A]: '# a\n', [away]: '# b\n' })
+    await mergeInto(ws, A, away)
+
+    expect(sent).toEqual([])
+    expect(disk.has(A)).toBe(true)
   })
 })
 
