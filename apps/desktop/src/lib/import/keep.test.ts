@@ -238,4 +238,22 @@ describe('what a real Takeout does', () => {
     expect(text).toContain('Fine \\<img src=https://t.example/p.gif>')
     expect(text).not.toMatch(/(?<!\\)<\/?(img|style)/)
   })
+
+  test("a note's words and a list's items open no markup, since Keep shows them as text", async () => {
+    const plan = await readKeep([
+      file(
+        'Keep/Typed.json',
+        keepNote({
+          title: 'Typed',
+          textContent: 'Seen <img src=https://t.example/p.gif> and <iframe src=https://t.example/>',
+          listContent: [{ text: 'Buy <style>body{display:none}</style>', isChecked: false }],
+        }),
+      ),
+    ])
+
+    const text = noteAt(plan, 'Typed.md')
+    expect(text).toContain('Seen \\<img src=https://t.example/p.gif>')
+    expect(text).toContain('- [ ] Buy \\<style>')
+    expect(text).not.toMatch(/(?<!\\)<\/?(img|style|iframe)/)
+  })
 })

@@ -84,7 +84,9 @@ export async function readKeep(sources: readonly Source[]): Promise<ImportPlan> 
 
     const text =
       typeof note.textContent === 'string' ? note.textContent.replace(/\r\n?/g, '\n').trim() : ''
-    if (text) words.push(text)
+    // Keep shows a note's words as text, so a tag somebody typed or pasted into
+    // one is words here too, rather than markup the note would render.
+    if (text) words.push(asWords(text))
 
     const items = listItems(note.listContent)
     if (items.length) words.push(items.map(taskLine).join('\n'))
@@ -210,8 +212,9 @@ interface Item {
   text: string
 }
 
+/** An item's words are text in Keep, as a note's are. */
 function taskLine(item: Item): string {
-  return `- [${item.checked ? 'x' : ' '}] ${item.text}`
+  return `- [${item.checked ? 'x' : ' '}] ${asWords(item.text)}`
 }
 
 /** The pages Keep shows under a note as cards. A card for an address the words
