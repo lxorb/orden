@@ -102,6 +102,9 @@ describe('a note merged into another', () => {
       `read_note ${B}`,
       `snapshot_note ${B}`,
       `write_note ${B}`,
+      // What B says once the links are rewritten, which is what an undo checks it
+      // against.
+      `read_note ${B}`,
       `snapshot_note ${A}`,
       `delete_note ${A}`,
     ])

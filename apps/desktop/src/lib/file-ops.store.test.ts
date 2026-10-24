@@ -363,6 +363,28 @@ describe('a note open on screen that links to itself, merged into another', () =
     expect(disk.current?.files.get(`${ROOT}/C.md`)).toBe('to [[A]]\n')
     expect(disk.current?.files.get(`${ROOT}/D.md`)).toBe('to [[B]]\n')
   })
+
+  /** The merge points the links that came to A at B, and B's own are among them. So
+   *  what B says once the merge is done is the joined words with that link rewritten,
+   *  and an undo comparing against the joined words alone took that for typing and
+   *  refused. */
+  test('and undone, where the note it went into linked to it', async () => {
+    disk.current?.files.set(`${ROOT}/A.md`, 'only A\n')
+    disk.current?.files.set(`${ROOT}/B.md`, 'see [[A]]\n')
+    await workspace.loadTree()
+    void startup.shown()
+    await links.build(ROOT)
+    links.noteSaved(`${ROOT}/A.md`, 'only A\n')
+    links.noteSaved(`${ROOT}/B.md`, 'see [[A]]\n')
+
+    await workspace.mergeInto(`${ROOT}/A.md`, `${ROOT}/B.md`)
+    await workspace.writesSettled()
+    await workspace.undoFileAction()
+    await workspace.writesSettled()
+
+    expect(disk.current?.files.get(`${ROOT}/A.md`)).toBe('only A\n')
+    expect(disk.current?.files.get(`${ROOT}/B.md`)).toBe('see [[A]]\n')
+  })
 })
 
 describe('the stores the app keeps by path', () => {
