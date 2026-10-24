@@ -10,6 +10,8 @@ import { askMachine } from '../src/machines/ask'
 import { PING_EVERY, QUIET_FOR } from '@nib/online/wire'
 import { Machine, resumeOf } from '../src/machines/machine'
 import { reachAgain } from '../src/machines/reach'
+import { eraseAccount } from '../src/erase'
+import { purgeExpired } from '../src/trash'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 import { doorway, fire, join, machine, nibd, say } from './machine-fakes'
 
@@ -784,6 +786,166 @@ describe('a session made on sync v1, asked for by its file under v2', () => {
     })
     expect(asked.json).toEqual(had.json)
     expect(keyOf(old.session)).toBe(old.session)
+  })
+})
+
+/** A `.term` file purged from Recently deleted ends its session (4.5): deleting it leaves
+ *  the shell running, and emptying the trash, by the button, by the nightly job, with its
+ *  space or with the account that owned the space, is what ends it. Before, every purge
+ *  left the row live, so the shell ran on out of reach and counted toward the eight. */
+describe('emptying the trash of a .term file', () => {
+  interface Term {
+    v: number
+    machine: string
+    session: string
+  }
+  const endedAt = (term: string) =>
+    (
+      env.db.prepare('select ended_at from term_sessions where term = ?').get(term) as {
+        ended_at: number | null
+      }
+    ).ended_at
+  const ends = () =>
+    door.asked
+      .filter((one) => one.headers.get('x-nib-machine') === 'end')
+      .map((one) => ({ machine: one.id, session: one.headers.get('x-nib-session') }))
+
+  /** The owner's session for `term-1`, and the writer's own for `copy-1`, on their own
+   *  machine in the owner's space. */
+  async function two() {
+    const people = await world()
+    serviceOn()
+    allow(OWNER)
+    allow(WRITER)
+    const mine = await call<Term>(env, '/v2/online/terms', {
+      token: people.owner,
+      body: { term: 'term-1' },
+    })
+    const theirs = await call<Term>(env, '/v2/online/terms', {
+      token: people.writer,
+      body: { term: 'copy-1' },
+    })
+    expect([mine.status, theirs.status]).toEqual([200, 200])
+    env.db
+      .prepare('update notes set deleted = 1, deleted_at = ? where space_id = ?')
+      .run(Date.now(), 'space-1')
+    door.asked.length = 0
+    return { ...people, mine: mine.json, theirs: theirs.json }
+  }
+
+  test('one note at a time: its session ends, on the machine, and frees its place', async () => {
+    const { owner, mine, theirs } = await two()
+    expect(endedAt('term-1')).toBeNull()
+
+    const purged = await call(env, '/v1/trash/notes/term-1', { token: owner, method: 'DELETE' })
+    expect(purged.status).toBe(200)
+    expect(endedAt('term-1')).not.toBeNull()
+    expect(endedAt('copy-1')).toBeNull()
+    expect(ends()).toEqual([{ machine: mine.machine, session: mine.session }])
+
+    // The writer's, in the same space, ends with its own file, on the writer's machine.
+    await call(env, '/v1/trash', { token: owner, method: 'DELETE' })
+    expect(endedAt('copy-1')).not.toBeNull()
+    expect(ends().at(-1)).toEqual({ machine: theirs.machine, session: theirs.session })
+  })
+
+  test('a whole space: every session of its files, whoever’s machine it is on', async () => {
+    const { owner, mine, theirs } = await two()
+    env.db
+      .prepare("update spaces set deleted = 1, deleted_at = ? where id = 'space-1'")
+      .run(Date.now())
+    expect(
+      (await call(env, '/v1/trash/spaces/space-1', { token: owner, method: 'DELETE' })).status,
+    ).toBe(200)
+    expect([endedAt('term-1'), endedAt('copy-1')]).not.toContain(null)
+    expect(ends()).toEqual(
+      expect.arrayContaining([
+        { machine: mine.machine, session: mine.session },
+        { machine: theirs.machine, session: theirs.session },
+      ]),
+    )
+  })
+
+  test('the nightly job, once the file has waited its 14 days', async () => {
+    const { mine } = await two()
+    await purgeExpired(env, Date.now())
+    expect(endedAt('term-1')).toBeNull()
+    await purgeExpired(env, Date.now() + 15 * 24 * 60 * 60 * 1000)
+    expect(endedAt('term-1')).not.toBeNull()
+    expect(ends()).toContainEqual({ machine: mine.machine, session: mine.session })
+  })
+
+  test('the account that owned the space: a writer’s session in it ends too', async () => {
+    const { theirs } = await two()
+    await eraseAccount(env, { id: idOf(OWNER), email: OWNER, name: null, created_at: 1 })
+    expect(endedAt('copy-1')).not.toBeNull()
+    expect(ends()).toContainEqual({ machine: theirs.machine, session: theirs.session })
+  })
+
+  test('only deleting it leaves the session running, as before', async () => {
+    const { owner } = await two()
+    expect((await call(env, '/v1/trash', { token: owner })).status).toBe(200)
+    expect([endedAt('term-1'), endedAt('copy-1')]).toEqual([null, null])
+    expect(ends()).toEqual([])
+  })
+})
+
+/** A session made with no file is kept under its own id, and a note's id is the
+ *  device's to choose: a stranger who learns the id (it is in an old `.term` file's
+ *  words) and makes a note of that id in a space of their own reaches nobody's session
+ *  through it, and ends nobody's by emptying that note out of the trash. */
+describe('a note made under a session’s own id', () => {
+  async function stranded() {
+    const people = await world()
+    serviceOn()
+    allow(OWNER)
+    const made = await call<{ session: string }>(env, '/v2/online/terms', {
+      token: people.owner,
+      body: {},
+    })
+    expect(made.status).toBe(200)
+    const stranger = await session('stranger@example.com')
+    const theirs = (
+      await call<{ space: { id: string } }>(env, '/v1/spaces', {
+        token: stranger,
+        body: { name: 'Mine' },
+      })
+    ).json.space.id
+    await call(env, `/v2/spaces/${theirs}/prepare`, { token: stranger, method: 'POST' })
+    await call(env, `/v2/spaces/${theirs}/ops`, {
+      token: stranger,
+      body: {
+        ops: [
+          {
+            op: 'o1',
+            t: 'create',
+            id: made.json.session,
+            kind: 'note',
+            parent: null,
+            name: 'x.term',
+            seen: 0,
+          },
+        ],
+      },
+    })
+    return { ...people, stranger, theirs, id: made.json.session }
+  }
+
+  test('lets nobody but the session’s own account through the door', async () => {
+    const { stranger, id } = await stranded()
+    expect(refusal(await knock(id, stranger))).toBe('gone')
+  })
+
+  test('ends nobody’s session when it is emptied out of the trash', async () => {
+    const { stranger, theirs, id } = await stranded()
+    await call(env, `/v2/spaces/${theirs}/ops`, {
+      token: stranger,
+      body: { ops: [{ op: 'o2', t: 'delete', id, seen: 1 }] },
+    })
+    await call(env, `/v1/trash/notes/${id}`, { token: stranger, method: 'DELETE' })
+    expect(env.db.prepare('select ended_at from term_sessions where session = ?').get(id)).toEqual({
+      ended_at: null,
+    })
   })
 })
 

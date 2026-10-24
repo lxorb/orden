@@ -17,6 +17,7 @@ import { readSpaceFiles } from './spaces/files'
 import { readSite } from './blog/site'
 import { FRONT_REV } from './blog/front'
 import { forgetEmptyGuest } from './guests'
+import { endTerms } from './machines/end'
 
 /** How long Recently deleted holds on to something. */
 const KEEP_FOR = 14 * 24 * 60 * 60 * 1000
@@ -130,7 +131,7 @@ async function usedBy(env: Env, note: Pick<Note, 'id' | 'space_id'>): Promise<Se
 
 /** Takes a note's content away for good. The row stays as the tombstone the
  *  change feed relies on, and stops being listed. */
-async function purgeNote(env: Env, note: Pick<Note, 'id' | 'space_id'>) {
+async function purgeNote(env: Env, note: Pick<Note, 'id' | 'space_id'>, who: string | null) {
   // What the note used of the owner's blobs, read before the purge takes it away; see
   // unused.ts. A note written before its pictures were has its body read for them.
   const used = await usedBy(env, note)
@@ -177,6 +178,9 @@ async function purgeNote(env: Env, note: Pick<Note, 'id' | 'space_id'>) {
     env.DB.prepare('delete from form_answers where note_id = ?').bind(note.id),
     env.DB.prepare('delete from blog_paths where note_id = ?').bind(note.id),
   ])
+  // And the online terminal session its `.term` file named, which deleting the file left
+  // running for its owner and emptying the trash ends (machines/end.ts).
+  await endTerms(env, [note.id], who)
 
   // And whatever was shared about this one file. A share about a note whose
   // words have gone reaches nothing - every read of one joins the live note -
@@ -226,7 +230,12 @@ async function guestsOf(env: Env, spaceId: string, item: string | null): Promise
  *  listed as having anything to purge. `deleted_at` stays set while there is more,
  *  which is what brings the next tap of the button, or the next night's run, back
  *  here to finish. */
-async function purgeSpace(env: Env, space: Pick<Space, 'id'>, budget = AT_ONCE): Promise<number> {
+async function purgeSpace(
+  env: Env,
+  space: Pick<Space, 'id'>,
+  who: string | null,
+  budget = AT_ONCE,
+): Promise<number> {
   const take = Math.max(0, Math.min(budget, AT_ONCE))
   if (!take) return 0
 
@@ -249,8 +258,11 @@ async function purgeSpace(env: Env, space: Pick<Space, 'id'>, budget = AT_ONCE):
   // retired, so that no create anywhere is made under it again and handed what the
   // room held (0052). And the words it was searched by go with it, as they do when a
   // note is emptied on its own (`forgetWords`).
+  // The online terminal sessions its `.term` files named end first,
+  // whoever's machine they are on, while the rows still say which files were here.
   const at = now()
   for (const chunk of chunks(results.map((note) => note.id))) {
+    await endTerms(env, chunk, who)
     const list = places(chunk.length)
     await env.DB.batch([
       // The blobs those notes used, written down for their owner before the rows that
@@ -349,7 +361,7 @@ export async function purgeExpired(
   )
     .bind(cutoff, AT_ONCE)
     .all<Pick<Note, 'id' | 'space_id'>>()
-  for (const note of notes.results) await purgeNote(env, note)
+  for (const note of notes.results) await purgeNote(env, note, null)
 
   const spaces = await env.DB.prepare(
     `select id from spaces
@@ -362,7 +374,7 @@ export async function purgeExpired(
   let emptied = 0
   for (const space of spaces.results) {
     if (budget <= 0) break
-    budget -= await purgeSpace(env, space, budget)
+    budget -= await purgeSpace(env, space, null, budget)
     emptied++
   }
 
@@ -495,7 +507,7 @@ trash.delete('/notes/:id', async (context) => {
   const note = await deletedNote(context.env, user.id, context.req.param('id'))
   if (!note) return context.json({ error: 'nothing to delete' }, 404)
 
-  await purgeNote(context.env, note)
+  await purgeNote(context.env, note, user.id)
   await sweepUnused(context.env, RIGHT_AFTER, user.id)
   return context.json({ ok: true })
 })
@@ -505,7 +517,7 @@ trash.delete('/spaces/:id', async (context) => {
   const space = await deletedSpace(context.env, user.id, context.req.param('id'))
   if (!space) return context.json({ error: 'nothing to delete' }, 404)
 
-  await purgeSpace(context.env, space)
+  await purgeSpace(context.env, space, user.id)
   await sweepUnused(context.env, RIGHT_AFTER, user.id)
   return context.json({ ok: true })
 })
@@ -518,12 +530,12 @@ trash.delete('/', async (context) => {
   const env = context.env
 
   const notes = await deletedNotes(env, user.id)
-  for (const note of notes) await purgeNote(env, note)
+  for (const note of notes) await purgeNote(env, note, user.id)
 
   let budget = AT_ONCE - notes.length
   for (const space of await deletedSpaces(env, user.id)) {
     if (budget <= 0) break
-    budget -= await purgeSpace(env, space, budget)
+    budget -= await purgeSpace(env, space, user.id, budget)
   }
   await sweepUnused(env, RIGHT_AFTER, user.id)
 
