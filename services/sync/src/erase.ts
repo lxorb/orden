@@ -21,13 +21,10 @@ import { goneMessage, mailer } from './email'
 import { note } from './failed'
 import { releaseDomain } from './hostnames'
 import { sweepLeftovers } from './leftovers'
-import { FRONT_REV } from './blog/front'
-import { noteKey } from './notes'
-import { picturesOf } from './pictures'
 import { closeChats } from './chats/ask'
 import { closeRooms } from './rooms'
 import type { Env, User } from './types'
-import { handedTo, usedElsewhere } from './used'
+import { handedTo, unreadUses, usedElsewhere } from './used'
 
 /** Every statement here is written with three numbered parameters: `?1` the
  *  account's id, `?2` its address, `?3` the moment. */
@@ -232,11 +229,6 @@ function bound(env: Env, sql: string, values: readonly unknown[]): D1PreparedSta
   return env.DB.prepare(sql).bind(...values.slice(0, most))
 }
 
-/** How many note bodies the hand-over below reads, over every space it looks in:
- *  a bound on what one request asks of the bucket, beside the rooms the sweep
- *  after it asks. */
-const MOST_READ = 250
-
 /** The pictures, files and papers this account put into somebody else's space,
  *  handed to that space's owner.
  *
@@ -252,13 +244,7 @@ const MOST_READ = 250
  *  to its owner; see used.ts.
  *
  *  A note written before its pictures were written down has none yet, until the
- *  nightly sweep reads it (blog/fill.ts). Those are read here the old way, in the
- *  spaces this account is still a member of, whatever its role, because a writer
- *  made a reader wrote what they wrote. A space with more of them than is left to
- *  read hands over everything unread where this account may write, rather than
- *  guessing, because a picture somebody pays for is better than a hole in their
- *  note. What that cannot reach is an unread note of a space this account is no
- *  longer in, which the sweep shrinks to nothing. */
+ *  nightly sweep reads it; those are read the old way (`unreadUses`). */
 async function handedOn(env: Env, user: User, at: number): Promise<D1PreparedStatement[]> {
   const { results: alone } = await env.DB.prepare(
     `select hash, type from blobs b where user_id = ?1
@@ -275,70 +261,7 @@ async function handedOn(env: Env, user: User, at: number): Promise<D1PreparedSta
     alone.filter((one) => one.type.startsWith('image/')).map((one) => one.hash),
   )
   const owed = await usedElsewhere(env, user.id, mine)
-  const owe = (owner: string, hash: string) => {
-    const found = owed.get(owner) ?? new Set<string>()
-    owed.set(owner, found)
-    found.add(hash)
-  }
-
-  const { results: written } = await env.DB.prepare(
-    `select sp.id as space, sp.user_id as owner, m.item as item, m.role as role
-       from space_members m join spaces sp on sp.id = m.space_id
-      where m.email = ?1 and sp.user_id <> ?2`,
-  )
-    .bind(user.email, user.id)
-    .all<{ space: string; owner: string; item: string; role: string }>()
-
-  let budget = MOST_READ
-
-  for (const one of written) {
-    const { results: notes } = await env.DB.prepare(
-      one.item
-        ? `select id from notes where space_id = ?1 and id = ?2 and size > 0 and kind != 'file'
-              and front_rev < ?3`
-        : `select id from notes where space_id = ?1 and size > 0 and kind != 'file'
-              and front_rev < ?3 limit ?2`,
-    )
-      .bind(one.space, one.item || budget + 1, FRONT_REV)
-      .all<{ id: string }>()
-
-    // The guess is for a space this account may write in, where anything of its own
-    // may be: in one it only reads, it would hand the owner pictures that were never
-    // there. That one is read as far as what is left goes.
-    if (notes.length > budget && one.role === 'write') {
-      for (const hash of pictures) owe(one.owner, hash)
-      budget = 0
-      continue
-    }
-    if (notes.length > budget) notes.length = budget
-
-    budget -= notes.length
-    for (const hash of await picturesIn(env, one.space, notes)) {
-      if (pictures.has(hash)) owe(one.owner, hash)
-    }
-  }
+  await unreadUses(env, user, pictures, owed)
 
   return handedTo(env, user.id, owed, at)
-}
-
-/** Every picture the service holds that these notes show, read a handful at a time. */
-async function picturesIn(
-  env: Env,
-  space: string,
-  notes: readonly { id: string }[],
-): Promise<Set<string>> {
-  const found = new Set<string>()
-
-  for (let from = 0; from < notes.length; from += 25) {
-    const bodies = await Promise.all(
-      notes.slice(from, from + 25).map(async (one) => {
-        const object = await env.NOTES.get(noteKey(space, one.id))
-        return object ? await object.text() : ''
-      }),
-    )
-
-    for (const body of bodies) for (const hash of picturesOf(body)) found.add(hash)
-  }
-
-  return found
 }

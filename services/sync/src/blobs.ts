@@ -9,7 +9,7 @@ import { allows, reachedSpace } from './spaces/space'
 import { BYTES, hashOfBytes, held, holdsItsName, WRONG_BYTES } from './sync2/files'
 import { fits, fitsSql } from './storage'
 import type { Env, Space, Variables, Whoever } from './types'
-import { handedTo, usedElsewhere } from './used'
+import { handedTo, unreadUses, usedElsewhere } from './used'
 
 /** What may be stored, and how much of each.
  *
@@ -179,7 +179,22 @@ export async function letGo(env: Env, userId: string, hash: string): Promise<voi
   const others = await env.DB.prepare('select 1 from blobs where hash = ? and user_id <> ? limit 1')
     .bind(hash, userId)
     .first()
-  const owed = others ? new Map() : await usedElsewhere(env, userId, new Set([hash]))
+  const owed = new Map<string, Set<string>>()
+  if (!others) {
+    for (const [owner, hashes] of await usedElsewhere(env, userId, new Set([hash]))) {
+      owed.set(owner, hashes)
+    }
+    // And the notes written before their pictures were, read the way an erase reads
+    // them, if the bytes are a picture this account holds.
+    const mine = await env.DB.prepare(
+      'select u.email, b.type from blobs b join users u on u.id = b.user_id where b.hash = ? and b.user_id = ?',
+    )
+      .bind(hash, userId)
+      .first<{ email: string; type: string }>()
+    if (mine?.type.startsWith('image/')) {
+      await unreadUses(env, { id: userId, email: mine.email }, new Set([hash]), owed)
+    }
+  }
 
   await env.DB.batch([
     ...handedTo(env, userId, owed, now()),
