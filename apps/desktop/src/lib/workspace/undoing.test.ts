@@ -11,8 +11,13 @@ import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 const sent: { command: string; path: string; content: string }[] = []
 
-/** Commands the disk refuses, by the path or the trash id they name. */
+/** Commands the disk refuses, by the path or the trash id they name, or by one
+ *  command and the path it names. */
 const refused = new Set<string>()
+
+/** What a file says now, by its path, for the steps that look before they write. A
+ *  path with nothing here reads empty and has no stamp, so nothing is at it. */
+const disk = new Map<string, string>()
 
 vi.mock('../tauri', () => ({
   isNative: true,
@@ -25,7 +30,10 @@ vi.mock('../tauri', () => ({
     // The crate refuses a tree whose root is not a folder, and none is here.
     if (command === 'read_tree') return Promise.reject(new Error('root is not a directory'))
     const named = path || id
-    if (refused.has(named)) return Promise.reject(new Error(`${named} will not budge`))
+    if (refused.has(named) || refused.has(`${command} ${named}`))
+      return Promise.reject(new Error(`${named} will not budge`))
+    if (command === 'read_note') return Promise.resolve(disk.get(path) ?? '')
+    if (command === 'file_stamp') return Promise.resolve(disk.has(path) ? { modified: 0 } : '')
     return Promise.resolve('')
   },
 }))
@@ -101,6 +109,7 @@ beforeEach(() => {
   sent.length = 0
   told.length = 0
   refused.clear()
+  disk.clear()
 })
 
 describe('an entry that goes back', () => {
@@ -304,6 +313,7 @@ describe('doing it again', () => {
       fromContent: 'a',
       into: '/s/b.md',
       intoContent: 'b',
+      intoAfter: '',
     })
     await undoLastFileAction(ws)
 
@@ -335,17 +345,33 @@ describe('a name put back', () => {
 })
 
 describe('a merge and a carve put back', () => {
+  const MERGE = {
+    kind: 'merge',
+    from: '/s/a.md',
+    fromContent: '# a',
+    into: '/s/b.md',
+    intoContent: '# b',
+    intoAfter: '# b\n\n# a',
+  } as const
+
+  const SPLIT = {
+    kind: 'split',
+    from: '/s/a.md',
+    fromContent: '# a\n\n## b\n',
+    fromAfter: '# a\n\n[[b]]\n',
+    created: '/s/b.md',
+    createdContent: '## b\n',
+  } as const
+
   test('a merge writes both notes and points the links back at the one that left', async () => {
-    const ws = store({
-      kind: 'merge',
-      from: '/s/a.md',
-      fromContent: '# a',
-      into: '/s/b.md',
-      intoContent: '# b',
-    })
+    disk.set('/s/b.md', MERGE.intoAfter)
+    const ws = store({ ...MERGE })
     await undoLastFileAction(ws)
 
-    expect(sent.map((one) => one.path)).toEqual(['/s/b.md', '/s/a.md'])
+    expect(sent.filter((one) => one.command === 'write_note').map((one) => one.path)).toEqual([
+      '/s/b.md',
+      '/s/a.md',
+    ])
     expect(told).toEqual([
       'saved /s/b.md',
       'saved /s/a.md',
@@ -354,25 +380,83 @@ describe('a merge and a carve put back', () => {
     ])
   })
 
-  test('a split writes the note whole again and takes the carved one away', async () => {
-    const ws = store({
-      kind: 'split',
-      from: '/s/a.md',
-      fromContent: '# a\n\n## b\n',
-      created: '/s/b.md',
-    })
+  /** The note a merge went into is the note it opens, and the reader goes on typing
+   *  in it. Its words from before the merge written over that took the typing with
+   *  them, with no version kept, so the merge is left where it is instead, to be
+   *  taken apart by hand. */
+  test('and leaves a merge alone whose note has been written in since', async () => {
+    disk.set('/s/b.md', `${MERGE.intoAfter}\n\ntyped since`)
+    const ws = store({ ...MERGE })
     await undoLastFileAction(ws)
 
-    expect(sent.map((one) => `${one.command} ${one.path}`)).toEqual([
-      'write_note /s/a.md',
-      'delete_note /s/b.md',
+    expect(sent.filter((one) => one.command === 'write_note')).toEqual([])
+    expect(ws.undone.last?.kind).toBe('merge')
+  })
+
+  /** The name the folded note had is free once it goes, and a note can arrive at it
+   *  before the undo: made here, synced in, or written by an agent. That note stays,
+   *  and the old words step aside the way a deleted note's do when it comes back. */
+  test('and writes the folded note beside one that has arrived at its name', async () => {
+    disk.set('/s/b.md', MERGE.intoAfter)
+    disk.set('/s/a.md', '# a, arrived since')
+    const ws = store({ ...MERGE })
+    await undoLastFileAction(ws)
+
+    expect(sent.filter((one) => one.command === 'write_note').map((one) => one.path)).toEqual([
+      '/s/b.md',
+      '/s/a 2.md',
     ])
+    expect(told).toContain('retargeted /s/b.md -> /s/a 2.md')
+  })
+
+  test('a split writes the note whole again and takes the carved one away', async () => {
+    disk.set('/s/a.md', SPLIT.fromAfter)
+    disk.set('/s/b.md', SPLIT.createdContent)
+    const ws = store({ ...SPLIT })
+    await undoLastFileAction(ws)
+
+    expect(
+      sent
+        .filter((one) => one.command === 'write_note' || one.command === 'delete_note')
+        .map((one) => `${one.command} ${one.path}`),
+    ).toEqual(['write_note /s/a.md', 'delete_note /s/b.md'])
     expect(told).toEqual(['saved /s/a.md', 'gone /s/b.md', 'reloaded /s/a.md'])
   })
 
+  test('and leaves a split alone whose note has been written in since', async () => {
+    disk.set('/s/a.md', `${SPLIT.fromAfter}typed since\n`)
+    disk.set('/s/b.md', SPLIT.createdContent)
+    const ws = store({ ...SPLIT })
+    await undoLastFileAction(ws)
+
+    expect(
+      sent.filter((one) => one.command === 'write_note' || one.command === 'delete_note'),
+    ).toEqual([])
+    expect(ws.undone.last?.kind).toBe('split')
+  })
+
+  test('and keeps a carved note that has been written in since', async () => {
+    disk.set('/s/a.md', SPLIT.fromAfter)
+    disk.set('/s/b.md', `${SPLIT.createdContent}typed since\n`)
+    const ws = store({ ...SPLIT })
+    await undoLastFileAction(ws)
+
+    expect(sent.filter((one) => one.command === 'delete_note')).toEqual([])
+    expect(told).toEqual(['saved /s/a.md', 'reloaded /s/a.md'])
+  })
+
   test('and a carved note that will not go does not stop the note coming back', async () => {
-    refused.add('/s/b.md')
-    const ws = store({ kind: 'extract', from: '/s/a.md', fromContent: '# a', created: '/s/b.md' })
+    refused.add('delete_note /s/b.md')
+    disk.set('/s/a.md', '[[b]]')
+    disk.set('/s/b.md', '')
+    const ws = store({
+      kind: 'extract',
+      from: '/s/a.md',
+      fromContent: '# a',
+      fromAfter: '[[b]]',
+      created: '/s/b.md',
+      createdContent: '',
+    })
     await undoLastFileAction(ws)
 
     expect(ws.undone.stack).toEqual([])

@@ -58,7 +58,15 @@ export async function mergeInto(ws: Composes, from: string, into: string): Promi
   await invoke('delete_note', { path: from })
   await ws.fileGone(from, 'file')
 
-  ws.undone.record({ kind: 'merge', from, fromContent, into, intoContent, relinked })
+  ws.undone.record({
+    kind: 'merge',
+    from,
+    fromContent,
+    into,
+    intoContent,
+    intoAfter: joined,
+    relinked,
+  })
   await ws.loadTree()
   await ws.open(into)
 }
@@ -109,7 +117,14 @@ async function carve(
   await writeFile(path, carved.kept)
   ws.reload(path, carved.kept)
 
-  ws.undone.record({ kind, from: path, fromContent: before, created })
+  ws.undone.record({
+    kind,
+    from: path,
+    fromContent: before,
+    fromAfter: carved.kept,
+    created,
+    createdContent: carved.taken,
+  })
   await ws.loadTree()
   ws.persist()
 }

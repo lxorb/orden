@@ -120,7 +120,15 @@ describe('a note merged into another', () => {
 
     expect(ws.undone.stack).toEqual([
       // Nothing linked to A here, so no note's links are to put back.
-      { kind: 'merge', from: A, fromContent: '# a\n', into: B, intoContent: '# b\n', relinked: [] },
+      {
+        kind: 'merge',
+        from: A,
+        fromContent: '# a\n',
+        into: B,
+        intoContent: '# b\n',
+        intoAfter: disk.get(B),
+        relinked: [],
+      },
     ])
   })
 

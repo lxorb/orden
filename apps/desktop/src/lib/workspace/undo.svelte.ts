@@ -47,10 +47,22 @@ export type FileAction =
       fromContent: string
       into: string
       intoContent: string
+      /** What the merge left `into` saying, so an undo can tell whether it has been
+       *  written in since. */
+      intoAfter: string
       /** The notes whose links to `from` were pointed at `into`. */
       relinked?: string[]
     }
-  | { kind: 'split' | 'extract'; from: string; fromContent: string; created: string }
+  | {
+      kind: 'split' | 'extract'
+      from: string
+      fromContent: string
+      /** What the carve left in `from` and wrote to `created`, so an undo can tell
+       *  whether either has been written in since. */
+      fromAfter: string
+      created: string
+      createdContent: string
+    }
   /** A replacement run across the space. However many notes it touched, it is
    *  one thing somebody did and so one thing to take back. Each note keeps the
    *  words it had, the edits that put them back and the words those edits are
