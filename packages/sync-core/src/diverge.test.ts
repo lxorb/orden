@@ -811,6 +811,27 @@ describe('diverge', () => {
     expect(same).toBeGreaterThan(clean * 0.9)
   })
 
+  test('a line replaced by a paste of long lines on each side is read in about the time of one diff', () => {
+    // Each pasted line was compared letter by letter with the line it replaced, two
+    // unrelated stretches at a time: 25 seconds for this one.
+    const words = ['the', 'cat', 'sat', 'on', 'mat', 'we', 'met', 'at', 'noon', 'it', 'was', 'late']
+    let seed = 1
+    const next = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648
+    const line = () => {
+      let text = ''
+      while (text.length < 990) text += `${words[Math.floor(next() * words.length)]} `
+      return text.slice(0, 990)
+    }
+    const paste = () => `${Array.from({ length: 400 }, line).join('\n')}\n`
+    const base = `${line()}\n`
+    const local = paste()
+    const remote = paste()
+
+    const started = performance.now()
+    diverge(base, local, remote, LOCAL_NEWER)
+    expect(performance.now() - started).toBeLessThan(2_500)
+  })
+
   test('a word changed at each end of a hundred kilobytes is clean', () => {
     const paragraph = 'The plan for tomorrow is to write, then to rest, then to write again.\n\n'
     const base = paragraph.repeat(Math.ceil(100_000 / paragraph.length))
