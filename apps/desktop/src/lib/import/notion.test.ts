@@ -132,6 +132,17 @@ describe('a Notion export', () => {
     expect(noteAt(plan, 'Tasks/A B.md')).toContain('note: one two')
   })
 
+  test('a CSV attached to a page is the file it was, not a database', async () => {
+    const plan = await readNotion([
+      file(`Plan ${PLAN}.md`, `# Plan\n\n[budget.csv](Plan%20${PLAN}/budget.csv)\n`),
+      file(`Plan ${PLAN}/budget.csv`, 'Item,Cost\nTent,120\n'),
+    ])
+
+    expect(pathsOf(plan)).toEqual(['Plan.md', 'Plan/budget.csv'])
+    expect(plan.files.find((one) => one.path === 'Plan/budget.csv')?.kind).toBe('file')
+    expect(noteAt(plan, 'Plan.md')).toContain('(Plan/budget.csv)')
+  })
+
   test('lands as the workspace, not inside the folder Notion zipped it in', async () => {
     const wrap = 'Export-d2b14fbf-86de-4508-a1b2-6515ff8d7aab'
     const plan = await readNotion([
