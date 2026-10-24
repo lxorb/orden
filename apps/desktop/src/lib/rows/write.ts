@@ -18,18 +18,32 @@
 import type { DateValue, DurationValue, LinkValue, Row, TaskChange, Value } from '@nib/bases'
 import { taskHash, tick, todayOf } from '@nib/bases'
 import { appliedEdits, oneEdit, type TextEdit } from '@nib/markdown/edits'
-import { writeList, writeProperty } from '@nib/markdown/property-edits'
+import { type Property, readProperties } from '@nib/markdown/properties'
+import {
+  type ListItem,
+  listItems,
+  withItem,
+  writeList,
+  writeProperty,
+} from '@nib/markdown/property-edits'
 import { writeTask } from '@nib/markdown/task-edits'
 import { readTask } from '@nib/markdown/task-line'
 import { changeOf } from '../search/replace'
 import { type HoldsNotes, noteText, replaceInNotes } from '../workspace/note-text'
 
 /** What a write changes: properties of the note (null takes one away), fields of the
- *  task (null takes one away), or both. */
+ *  task (null takes one away), chips put on or taken off the note's lists, or several. */
 export interface RowChange {
   note?: Record<string, Value | null>
   task?: TaskChange
+  list?: Record<string, ListChange>
 }
+
+/** One chip of a list: words typed onto its end, or the member at a place taken off.
+ *  Said as the gesture rather than as the list it leaves, because a cell only holds
+ *  the members as they are shown - a link as its words, a date as `Today` - and the
+ *  list written back has to be the members as the note writes them. */
+export type ListChange = { add: string } | { remove: number }
 
 /** Writes one change to the note a row is in. Answers whether anything was written:
  *  false for a task whose line is no longer in the note, for a change the note
@@ -61,6 +75,14 @@ export function changed(text: string, row: Row, change: RowChange): string | nul
     const edit = propertyEdit(after, key, value)
     if (edit === undefined) return null
     if (edit) after = appliedEdits(after, [edit])
+  }
+
+  for (const [key, edit] of Object.entries(change.list ?? {})) {
+    const list = asList(after, key)
+    const items = list && listChanged(list, edit)
+    if (!items) continue
+    const written = writeList(after, key, items)
+    if (written) after = appliedEdits(after, [written])
   }
 
   if (change.task && Object.keys(change.task).length) {
@@ -132,6 +154,26 @@ export function taskLine(
     if (distance && names(anchor.line + distance)) return lines[anchor.line + distance] ?? null
   }
   return null
+}
+
+/** A key of the note's front matter as a list row: its members as written, a single
+ *  value as a list of one, and nothing for a key the note does not hold. Null for a
+ *  map, which a chip must not turn into a list. */
+function asList(text: string, key: string): Property | null {
+  const found = readProperties(text)?.find((one) => one.key === key)
+  const empty: Property = { key, kind: 'list', value: '', items: [], from: 0, to: 0 }
+  if (found?.kind === 'map') return null
+  if (!found) return empty
+  if (found.kind === 'list') return found
+  if (found.value === '') return empty
+  return { ...empty, items: [found.value], ...(found.quoted ? { quotedItems: [true] } : {}) }
+}
+
+/** The members a chip leaves, or null where it changes nothing. */
+function listChanged(property: Property, edit: ListChange): ListItem[] | null {
+  if ('add' in edit) return withItem(property, edit.add)
+  if (edit.remove < 0 || edit.remove >= property.items.length) return null
+  return listItems(property).filter((_, at) => at !== edit.remove)
 }
 
 /** One property's edit: null where the note already says it, undefined for a value no

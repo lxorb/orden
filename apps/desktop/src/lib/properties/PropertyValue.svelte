@@ -19,6 +19,7 @@
     choices = null,
     onwrite,
     onitems,
+    onchip,
     onsearch,
     autofocus = false,
   }: {
@@ -30,6 +31,10 @@
     onwrite: (value: string | null) => void
     /** A list written whole. */
     onitems: (items: ListItem[]) => void
+    /** A chip put on or taken off, in place of the list written whole: for a holder
+     *  whose items are the members as shown rather than as the note writes them (a
+     *  table's cell), which has to make the list from the note's own members. */
+    onchip?: ((change: { add: string } | { remove: number }) => void) | undefined
     /** A tag pressed, which asks the space about it. */
     onsearch?: ((text: string) => void) | undefined
     autofocus?: boolean
@@ -58,6 +63,10 @@
   function addItem(field: HTMLInputElement) {
     const said = field.value
     field.value = ''
+    if (onchip) {
+      if (said.trim()) onchip({ add: said.trim() })
+      return
+    }
     const items = withItem(property, said)
     if (items) onitems(items)
   }
@@ -72,7 +81,7 @@
 
 <span class="value">
   {#if property.kind === 'list' || property.kind === 'map'}
-    {#each property.items as item (item)}
+    {#each property.items as item, at (`${at}:${item}`)}
       <span class="chip">
         {#if tagged && onsearch}
           <button class="chip-word" onclick={() => onsearch(`tag:${item}`)}>{item}</button>
@@ -85,6 +94,7 @@
             title={t('Remove')}
             aria-label={t('Remove')}
             onclick={() => {
+              if (onchip) return onchip({ remove: at })
               const items = withoutItem(property, item)
               if (items) onitems(items)
             }}><Cross small /></button
