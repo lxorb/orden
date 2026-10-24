@@ -48,6 +48,18 @@ describe('plain text, as a note may hold it', () => {
     )
   })
 
+  test('an indented bullet that no list is open for is words, and a nested one nests', () => {
+    const NBSP = '\u00a0'
+    const alone = plainWords('Steps\n\n\t* one [x]\n    - two')
+    expect(alone).toBe(`Steps\n\n${NBSP.repeat(4)}\\* one \\[x\\]\n${NBSP.repeat(4)}\\- two`)
+    expect(renderMarkdown(alone)).toBe(
+      `<p>Steps</p>\n<p>${NBSP.repeat(4)}* one [x]\n${NBSP.repeat(4)}- two</p>\n`,
+    )
+    const nested = plainWords('- a\n    - b [x]\n\n    - c')
+    expect(nested).toBe('- a\n    - b \\[x\\]\n\n    - c')
+    expect(renderMarkdown(nested)).toContain('<li>a<ul>\n<li><p>b [x]</p>')
+  })
+
   test('a bare address still links', () => {
     expect(plainWords('see https://a.test/~al/_x_/ now')).toBe('see https://a.test/~al/_x_/ now')
   })
