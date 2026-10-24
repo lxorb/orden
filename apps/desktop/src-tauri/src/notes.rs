@@ -205,7 +205,9 @@ pub fn delete_note(app: AppHandle, path: String) -> Result<(), String> {
 /// `alone` is sync's move (sync2/app-world.ts), which moves the one file and nothing it
 /// holds: a PDF's highlights and a page note's paper are entries of their own in the
 /// account, moved by moves of their own, in whichever order those come. Highlights that
-/// came ahead of their PDF were otherwise cleared as left by another (#733).
+/// came ahead of their PDF were otherwise cleared as left by another (#733). Nor is a
+/// paper where a page note goes in the way of sync's move: the account holds the two as
+/// a pair, and whichever of their moves comes second finds the other already there.
 #[tauri::command(async)]
 pub fn rename_note(
     app: AppHandle,
@@ -226,9 +228,15 @@ fn renamed(source: &Path, target: &Path, hold: bool, alone: bool) -> Result<(), 
     // A page note brings its paper, `<name>.pages.pdf`, and a file of that name already
     // there is somebody's own: it was moved over, or hidden as held (#538). And a PDF
     // put where a page note takes it for its paper is somebody's own as well, unless
-    // it is being turned into that note.
+    // it is being turned into that note. Sync's move of the one file is neither: what
+    // is there came by a move of its own (see `rename_note`).
     let holding = hold && is_pdf(target) && source.parent() == target.parent();
-    if let Some(there) = paper_in_the_way(source, target, same_entry).filter(|_| !holding) {
+    let way = if alone {
+        None
+    } else {
+        paper_in_the_way(source, target, same_entry)
+    };
+    if let Some(there) = way.filter(|_| !holding) {
         return Err(format!("{} is already there", there.display()));
     }
 
