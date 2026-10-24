@@ -16,6 +16,7 @@ import { blockIds, freeBlockId } from '@nib/markdown/links'
 import { taskLine as lineWords } from '@nib/markdown/task-edits'
 import type { TaskFields } from '@nib/markdown/task-line'
 import { rows } from '../rows/rows.svelte'
+import { canWriteAt } from '../sharing.svelte'
 import { changed, type RowChange } from '../rows/write'
 import type { Change } from '../search/apply'
 import { changeOf } from '../search/replace'
@@ -68,6 +69,7 @@ async function rewrite(
 export async function rewriteNotes(
   edits: readonly { path: string; after: (before: string) => string | null }[],
   said?: Said,
+  together = false,
 ): Promise<boolean> {
   const changes = []
   for (const { path, after } of edits) {
@@ -78,7 +80,7 @@ export async function rewriteNotes(
     if (edit) changes.push(changeOf(path, before, [edit]))
   }
   if (!changes.length) return false
-  return replaced(changes, said)
+  return replaced(changes, said, together)
 }
 
 /** A write of notes, as one undo; `said` is the word the undo toast offers it back
@@ -86,8 +88,12 @@ export async function rewriteNotes(
  *  whether any note was written: none is in a space shared to be read, which the
  *  replacement passes over, and every write here answers that rather than true, so a
  *  box drawn ticked in Today goes back to what its note still says. */
-async function replaced(changes: readonly Change[], said?: Said): Promise<boolean> {
-  if (!(await replaceInNotes(workspace, changes))) return false
+async function replaced(
+  changes: readonly Change[],
+  said?: Said,
+  together = false,
+): Promise<boolean> {
+  if (!(await replaceInNotes(workspace, changes, { together }))) return false
   const last = workspace.undone.last
   if (said && last) undoToast.tell(last, said, workspace.undone.stack)
   return true
@@ -306,6 +312,10 @@ export function duplicateRows(many: readonly Row[]): Promise<boolean> {
  *  The note has to be there. Every note written as one write, so one undo puts all of
  *  them back. */
 export async function moveRowsTo(many: readonly Row[], target: string): Promise<boolean> {
+  // Both ends asked first: a cut without its arrival loses the task, and an arrival
+  // without its cut, from a space shared to be read, is a copy that says it moved.
+  const from = many.map(pathOf).filter((path) => path !== null)
+  if (![target, ...from].every((path) => canWriteAt(path))) return false
   const was = await noteText(workspace, target)
   if (was === null) return false
   let there = was
@@ -330,7 +340,7 @@ export async function moveRowsTo(many: readonly Row[], target: string): Promise<
   const arrive = oneEdit(was, there)
   if (arrive) changes.push(changeOf(target, was, [arrive]))
   if (!changes.length) return false
-  return replaced(changes, 'moved')
+  return replaced(changes, 'moved', true)
 }
 
 /** The link to a task, Obsidian's block reference: the task's block name, given it the

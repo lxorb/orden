@@ -28,7 +28,7 @@ import {
   writeEach,
 } from './act'
 import type { Kit } from './kit'
-import { placeEntries } from './project-actions'
+import { offersPlaces, placeEntries } from './project-actions'
 import type { RowKey } from './row-keys'
 import { deadlineField, deadlineOf, startOf } from '@nib/markdown/task-dates'
 import { changeFor, loadByDay } from './schedule/schedule'
@@ -197,7 +197,7 @@ export function taskMenu(
       priorityEntries(one ? task.priority : 0, (priority) => void prioritise(tasks, priority)),
     ),
     more(t('Labels'), () => labelEntries(tasks)),
-    more(t('Move to'), () => moveEntries(tasks)),
+    ...(offersPlaces() ? [more(t('Move to'), () => moveEntries(tasks))] : []),
     DIVIDER,
     { label: t('Duplicate'), run: () => void duplicateRows(tasks) },
     { label: t('Copy link'), run: () => void copyLinks(tasks) },

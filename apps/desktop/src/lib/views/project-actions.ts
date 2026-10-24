@@ -14,6 +14,7 @@ import { t } from '../i18n.svelte'
 import type { MenuEntry } from '../menu.svelte'
 import { inboxOf } from '../rows/inbox'
 import { inboxNote } from '../rows/inbox-note'
+import { canWriteAt } from '../sharing.svelte'
 import { folderOf, insideSpace, nameOf, samePath, within } from '../space-paths'
 import { joinPath } from '../tauri'
 import { entryAt } from '../tree-edits'
@@ -107,15 +108,23 @@ async function ensureProject(note: string): Promise<void> {
 /** The inbox of a space, on this disk, whether it is there yet or not. */
 const inboxNoteAt = (root: string) => insideSpace(root, inboxOf(root))
 
+/** Whether there is anywhere in the open space to take a task or a section to: not in
+ *  one shared to be read, where Move to is not offered. */
+export function offersPlaces(): boolean {
+  const root = workspace.activeSpace?.root
+  return root !== undefined && canWriteAt(root)
+}
+
 /** The places a task or a section can be taken to, as menu rows: the Inbox and every
  *  project of the open space, a sub-project under its parent's name. `go` is handed the
- *  note on this disk, made first where it is not there yet; `here` ticks a row. */
+ *  note on this disk, made first where it is not there yet; `here` ticks a row. None
+ *  where the open space is shared to be read: nothing can arrive there. */
 export function placeEntries(
   go: (note: string) => void,
   here: (note: string) => boolean = () => false,
 ): MenuEntry[] {
   const root = workspace.activeSpace?.root
-  if (root === undefined) return []
+  if (root === undefined || !offersPlaces()) return []
   const out: MenuEntry[] = [
     {
       label: t('Inbox'),

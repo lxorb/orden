@@ -55,7 +55,13 @@ vi.mock('../workspace/write-file', () => ({
 vi.mock('../workspace/note-text', () => ({
   noteText: (_ws: unknown, path: string) => Promise.resolve(disk.get(path) ?? null),
   writeNoteText: () => Promise.resolve(),
-  replaceInNotes: (_ws: unknown, changes: { path: string; after: string }[]) => {
+  replaceInNotes: (
+    _ws: unknown,
+    changes: { path: string; after: string }[],
+    keeping: { together?: boolean } = {},
+  ) => {
+    const refused = (path: string) => [...readOnly].some((root) => insideOf(root, path))
+    if (keeping.together && changes.some((one) => refused(one.path))) return Promise.resolve(0)
     let done = 0
     for (const one of changes) {
       if ([...readOnly].some((root) => insideOf(root, one.path))) continue
@@ -120,7 +126,8 @@ vi.mock('./automate', () => ({ planned: () => planning.plan }))
 
 const { noteRow, taskRow } = await import('./fixture')
 const { kitFor } = await import('./kit')
-const { tickRow, writeEach } = await import('./act')
+const { moveRowsTo, tickRow, writeEach } = await import('./act')
+const { offersPlaces, placeEntries } = await import('./project-actions')
 const { addNote } = await import('./add')
 const { heard, readHeld, repeatTemplates } = await import('./running')
 const { contextFor } = await import('./context')
@@ -415,5 +422,29 @@ describe("a task's view, in a space shared to be read", () => {
     expect(html).toContain('aria-label="Comment"')
     expect(html).toContain('Add sub-task')
     expect(html).toContain('add-tag')
+  })
+})
+
+/** A move between spaces writes two notes, the cut and the arrival, and is only a move
+ *  where both land (B287). */
+describe('a move with one end in a space shared to be read', () => {
+  const mine = () => taskRow(PLAN, TASK, 3, { space: 'Mine' })
+
+  test('does not take a task of mine into their note, and keeps it in mine', async () => {
+    expect(await moveRowsTo([mine()], `${THEIRS.root}/${PLAN}`)).toBe(false)
+    expect(written).toEqual([])
+    expect(disk.get(`${MINE.root}/${PLAN}`)).toContain(TASK)
+  })
+
+  test('does not copy one of theirs into mine', async () => {
+    disk.set(`${MINE.root}/Inbox.md`, '')
+    expect(await moveRowsTo([theirTask()], `${MINE.root}/Inbox.md`)).toBe(false)
+    expect(written).toEqual([])
+    expect(disk.get(`${MINE.root}/Inbox.md`)).toBe('')
+  })
+
+  test('offers no place in a space shared to be read', () => {
+    expect(offersPlaces()).toBe(false)
+    expect(placeEntries(() => undefined)).toEqual([])
   })
 })

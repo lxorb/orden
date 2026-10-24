@@ -174,6 +174,10 @@ export interface Keeping {
   /** Who it was kept for, written beside it and shown in the versions list. */
   source?: string
   undoable?: boolean
+  /** Whether the changes stand or fall as one: a move writes the cut from one note and
+   *  the arrival in another, and a cut written without its arrival loses what it cut.
+   *  So where any of them is in a space shared to be read, none is written. */
+  together?: boolean
 }
 
 /** Keeps the version a write is about to replace, as `keeping` says. */
@@ -210,7 +214,7 @@ export async function replaceInNotes(
 
   const { canWriteAt } = await import('../sharing.svelte')
   const writable = changes.filter((change) => canWriteAt(change.path))
-  if (!writable.length) return 0
+  if (!writable.length || (keeping.together && writable.length < changes.length)) return 0
 
   const done: Undone[] = []
 
