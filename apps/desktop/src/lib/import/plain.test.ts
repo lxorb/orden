@@ -116,6 +116,25 @@ describe('a folder of markdown', () => {
 
     expect(plan.files[0]?.path).toBe('Note.md')
   })
+
+  /** Plain text never meant markdown: Tomboy, Keep and Apple's own exporters write
+   *  it, and its words have to read back as the characters they are. */
+  test("and a text file's words read back as themselves, not as markdown", async () => {
+    const plan = await readPlain([
+      file('Note.txt', 'Costs $5-$10\nFine <img src=x onerror=alert(1)>\nTitle\n---\n'),
+    ])
+
+    const text = noteAt(plan, 'Note.md')
+    expect(text).toContain('\\$5-\\$10')
+    expect(text).not.toMatch(/(?<!\\)<img/)
+    expect(text).not.toMatch(/^---$/m)
+  })
+
+  test('while a markdown file keeps its markdown', async () => {
+    const plan = await readPlain([file('Note.md', 'Costs $x$\n\n<u>under</u>\n')])
+
+    expect(noteAt(plan, 'Note.md')).toBe('Costs $x$\n\n<u>under</u>\n')
+  })
 })
 
 describe('a TextBundle', () => {
