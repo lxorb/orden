@@ -23,6 +23,7 @@
     changeOf,
     type Editor,
     formatOf,
+    holdsLists,
     isNoteProperty,
     optionsOf,
     toneOf,
@@ -84,22 +85,29 @@
     if (change) kit.write(row, change)
   }
 
+  /** Whether the cell is edited as a list: a list column, and one with options whose
+   *  value is a list, or whose column holds lists. Options make a column a select, and
+   *  a select is one value - picking `b` for `tags: [a, c]` would write `tags: b`. */
+  const listed = $derived(
+    editor === 'list' ||
+      (editor === 'select' && (Array.isArray(value) || holdsLists(property, kit.live.rows))),
+  )
+
   /** The value as a property row, for the shared control. Its items are the members
    *  as shown, which is all a cell holds: a note's list is changed a chip at a time
    *  (`onchip`), against the members as the note writes them, so a link stays a link
    *  and a date a date rather than the words `Beta` or `Today`. */
   const asProperty = $derived.by((): Property => {
     const items = Array.isArray(value) ? value.map((one) => valueText(one, kit.live.today)) : []
-    const kind =
-      editor === 'list'
-        ? 'list'
-        : editor === 'number'
-          ? 'number'
-          : editor === 'date'
-            ? 'date'
-            : editor === 'checkbox'
-              ? 'checkbox'
-              : 'text'
+    const kind = listed
+      ? 'list'
+      : editor === 'number'
+        ? 'number'
+        : editor === 'date'
+          ? 'date'
+          : editor === 'checkbox'
+            ? 'checkbox'
+            : 'text'
     const said =
       value === null
         ? ''

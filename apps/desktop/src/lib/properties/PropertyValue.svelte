@@ -25,7 +25,8 @@
   }: {
     property: Property
     writable: boolean
-    /** The fixed answers, where the property has them. */
+    /** The fixed answers, where the property has them: a menu for one value, and for
+     *  a list the words its add field offers. */
     choices?: readonly string[] | null
     /** A scalar written: the words as the file writes them, or null to empty it. */
     onwrite: (value: string | null) => void
@@ -39,6 +40,11 @@
     onsearch?: ((text: string) => void) | undefined
     autofocus?: boolean
   } = $props()
+
+  const uid = $props.id()
+
+  /** The answers a list's add field offers: those it does not hold yet. */
+  const offered = $derived(choices?.filter((one) => !property.items.includes(one)) ?? [])
 
   /** A field commits on Enter as well as on leaving it. */
   function commitOnEnter(event: KeyboardEvent) {
@@ -107,6 +113,7 @@
         class="field add"
         placeholder={t('Add')}
         aria-label={t('Add')}
+        list={offered.length ? `${uid}-offered` : undefined}
         use:focusOnMount
         onkeydown={(event) => {
           if (event.key !== 'Enter' || event.isComposing) return
@@ -115,6 +122,11 @@
         }}
         onblur={(event) => addItem(event.currentTarget)}
       />
+      {#if offered.length}
+        <datalist id="{uid}-offered">
+          {#each offered as one (one)}<option value={one}></option>{/each}
+        </datalist>
+      {/if}
     {/if}
   {:else if property.kind === 'checkbox'}
     <input
