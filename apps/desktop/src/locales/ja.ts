@@ -2551,8 +2551,6 @@ export const ja: Dictionary = {
   'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
     'アラビア語やヘブライ語などのために、ノートを右から左へ書きます。',
   'Underlines misspelled words as you write.': '入力中にスペルの誤りに下線を引きます。',
-  'The dictionary spelling is checked against; Match the system uses your system’s language.':
-    'スペルチェックに使う辞書で、「システムに合わせる」ではシステムの言語を使います。',
   'The version of Orden that is running; press to copy it.':
     '実行中の Orden のバージョンで、押すとコピーします。',
   'One of this theme’s own settings, offered by its author.':
@@ -2579,4 +2577,8 @@ export const ja: Dictionary = {
     'プロフィールで他の人に見える、あなたについての短い言葉です。',
   'What you are up to, shown to the others beside your name until it clears.':
     '今していることです。消えるまであなたの名前の横に他の人に表示されます。',
+  'Words are checked against this dictionary as well as every other one that is on.':
+    'この辞書と、オンにしているほかのすべての辞書で単語をチェックします。',
+  'Words are checked in the languages your system or browser is set to.':
+    'システムまたはブラウザに設定されている言語で単語をチェックします。',
 }

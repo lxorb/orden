@@ -2523,8 +2523,6 @@ export const th: Dictionary = {
   'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
     'เขียนโน้ตจากขวาไปซ้าย สำหรับอักษรอาหรับ ฮีบรู และอักษรอื่นแบบเดียวกัน',
   'Underlines misspelled words as you write.': 'ขีดเส้นใต้คำที่สะกดผิดขณะเขียน',
-  'The dictionary spelling is checked against; Match the system uses your system’s language.':
-    'พจนานุกรมที่ใช้ตรวจตัวสะกด ตามระบบ จะใช้ภาษาของระบบคุณ',
   'The version of Orden that is running; press to copy it.':
     'เวอร์ชันของ Orden ที่กำลังทำงาน กดเพื่อคัดลอก',
   'One of this theme’s own settings, offered by its author.':
@@ -2550,4 +2548,8 @@ export const th: Dictionary = {
     'ข้อความสั้น ๆ เกี่ยวกับคุณที่คนอื่นเห็นในโปรไฟล์ของคุณ',
   'What you are up to, shown to the others beside your name until it clears.':
     'สิ่งที่คุณกำลังทำอยู่ แสดงให้คนอื่นเห็นข้างชื่อของคุณจนกว่าจะถูกล้าง',
+  'Words are checked against this dictionary as well as every other one that is on.':
+    'คำจะถูกตรวจกับพจนานุกรมนี้และพจนานุกรมอื่นทุกเล่มที่เปิดอยู่',
+  'Words are checked in the languages your system or browser is set to.':
+    'คำจะถูกตรวจในภาษาที่ตั้งไว้ในระบบหรือเบราว์เซอร์ของคุณ',
 }

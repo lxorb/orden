@@ -2573,8 +2573,6 @@ export const ur: Dictionary = {
     'نوٹس دائیں سے بائیں لکھتا ہے، عربی، عبرانی اور ایسی دوسری تحریروں کے لیے۔',
   'Underlines misspelled words as you write.':
     'لکھتے وقت غلط ہجے والے الفاظ کے نیچے لکیر لگاتا ہے۔',
-  'The dictionary spelling is checked against; Match the system uses your system’s language.':
-    'وہ لغت جس سے ہجے جانچے جاتے ہیں؛ “سسٹم کے مطابق” آپ کے سسٹم کی زبان استعمال کرتا ہے۔',
   'The version of Orden that is running; press to copy it.':
     'چلنے والا Orden ورژن؛ کاپی کرنے کے لیے دبائیں۔',
   'One of this theme’s own settings, offered by its author.':
@@ -2600,4 +2598,8 @@ export const ur: Dictionary = {
     'آپ کے بارے میں چند الفاظ جو دوسرے آپ کی پروفائل پر دیکھتے ہیں۔',
   'What you are up to, shown to the others beside your name until it clears.':
     'آپ کیا کر رہے ہیں، ہٹنے تک دوسروں کو آپ کے نام کے ساتھ دکھایا جاتا ہے۔',
+  'Words are checked against this dictionary as well as every other one that is on.':
+    'الفاظ اس لغت اور ہر دوسری آن لغت سے جانچے جاتے ہیں۔',
+  'Words are checked in the languages your system or browser is set to.':
+    'الفاظ ان زبانوں میں جانچے جاتے ہیں جن پر آپ کا سسٹم یا براؤزر سیٹ ہے۔',
 }

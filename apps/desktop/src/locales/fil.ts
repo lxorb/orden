@@ -2629,8 +2629,6 @@ export const fil: Dictionary = {
     'Isinusulat ang mga tala mula kanan pakaliwa, para sa Arabic, Hebrew at iba pang ganoong sulat.',
   'Underlines misspelled words as you write.':
     'Sinasalungguhitan ang mga maling baybay na salita habang sumusulat ka.',
-  'The dictionary spelling is checked against; Match the system uses your system’s language.':
-    'Ang diksiyonaryong pinagbabatayan ng spell check; ginagamit ng Sundin ang sistema ang wika ng iyong sistema.',
   'The version of Orden that is running; press to copy it.':
     'Ang bersyon ng Orden na tumatakbo; pindutin para kopyahin ito.',
   'One of this theme’s own settings, offered by its author.':
@@ -2659,4 +2657,8 @@ export const fil: Dictionary = {
     'Ilang salita tungkol sa iyo na nakikita ng iba sa iyong profile.',
   'What you are up to, shown to the others beside your name until it clears.':
     'Ang ginagawa mo ngayon, ipinapakita sa iba sa tabi ng iyong pangalan hanggang sa maalis ito.',
+  'Words are checked against this dictionary as well as every other one that is on.':
+    'Sinusuri ang mga salita gamit ang diksyunaryong ito at ang bawat iba pang nakabukas.',
+  'Words are checked in the languages your system or browser is set to.':
+    'Sinusuri ang mga salita sa mga wikang nakatakda sa iyong sistema o browser.',
 }

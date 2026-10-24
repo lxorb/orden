@@ -2583,8 +2583,6 @@ export const fa: Dictionary = {
   'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
     'یادداشت‌ها را از راست به چپ می‌نویسد، برای عربی، عبری و خط‌های همانند.',
   'Underlines misspelled words as you write.': 'هنگام نوشتن زیر واژه‌های غلط خط می‌کشد.',
-  'The dictionary spelling is checked against; Match the system uses your system’s language.':
-    'واژه‌نامه‌ای که املا با آن سنجیده می‌شود؛ «پیروی از سامانه» زبان سامانهٔ شما را به کار می‌برد.',
   'The version of Orden that is running; press to copy it.':
     'نسخهٔ Orden که در حال اجراست؛ برای رونوشت آن را بزنید.',
   'One of this theme’s own settings, offered by its author.':
@@ -2611,4 +2609,8 @@ export const fa: Dictionary = {
     'چند کلمه درباره شما که دیگران در نمایه‌تان می‌بینند.',
   'What you are up to, shown to the others beside your name until it clears.':
     'کاری که اکنون می‌کنید، کنار نام شما به دیگران نشان داده می‌شود تا وقتی برداشته شود.',
+  'Words are checked against this dictionary as well as every other one that is on.':
+    'واژه‌ها با این واژه‌نامه و هر واژه‌نامهٔ روشن دیگری سنجیده می‌شوند.',
+  'Words are checked in the languages your system or browser is set to.':
+    'واژه‌ها به زبان‌هایی سنجیده می‌شوند که سامانه یا مرورگر شما روی آن‌ها تنظیم شده است.',
 }

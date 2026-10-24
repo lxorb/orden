@@ -2536,8 +2536,6 @@ export const am: Dictionary = {
   'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
     'ለዓረብኛ፣ ለዕብራይስጥ እና ለሌሎች እንደነሱ ላሉ ፊደላት ማስታወሻዎችን ከቀኝ ወደ ግራ ይጽፋል።',
   'Underlines misspelled words as you write.': 'ሲጽፉ በስህተት የተጻፉ ቃላትን ያሰምራል።',
-  'The dictionary spelling is checked against; Match the system uses your system’s language.':
-    'ፊደል አጻጻፍ የሚፈተሽበት መዝገበ ቃላት፤ ሥርዓቱን ተከተል የሥርዓትዎን ቋንቋ ይጠቀማል።',
   'The version of Orden that is running; press to copy it.': 'እየሠራ ያለው የOrden ስሪት፤ ለመቅዳት ይጫኑ።',
   'One of this theme’s own settings, offered by its author.': 'ከዚህ ገጽታ የራሱ ቅንብሮች አንዱ፣ በደራሲው የቀረበ።',
   'How much of what is behind the window shows under notes and terminals; the words always stay readable.':
@@ -2560,4 +2558,8 @@ export const am: Dictionary = {
     'ሌሎች በመገለጫዎ ላይ የሚያዩት ስለ እርስዎ ጥቂት ቃላት።',
   'What you are up to, shown to the others beside your name until it clears.':
     'አሁን የሚያደርጉት ነገር፣ እስኪጠፋ ድረስ ከስምዎ አጠገብ ለሌሎች ይታያል።',
+  'Words are checked against this dictionary as well as every other one that is on.':
+    'ቃላት በዚህ መዝገበ ቃላትና በሌሎቹ የበሩ መዝገበ ቃላት ሁሉ ይፈተሻሉ።',
+  'Words are checked in the languages your system or browser is set to.':
+    'ቃላት ሥርዓትዎ ወይም አሳሽዎ በተቀናበረባቸው ቋንቋዎች ይፈተሻሉ።',
 }

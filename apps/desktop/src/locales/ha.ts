@@ -2615,8 +2615,6 @@ export const ha: Dictionary = {
     'Yana rubuta bayanan kula daga dama zuwa hagu, don Larabci, Ibrananci da sauran irin waɗannan rubutu.',
   'Underlines misspelled words as you write.':
     'Yana ja layi a ƙarƙashin kalmomin da aka rubuta ba daidai ba yayin da kake rubutu.',
-  'The dictionary spelling is checked against; Match the system uses your system’s language.':
-    'Ƙamus ɗin da ake duba rubutun kalma da shi; Bi tsarin yana amfani da harshen tsarinka.',
   'The version of Orden that is running; press to copy it.':
     'Sigar Orden da ke gudana; danna don kwafa ta.',
   'One of this theme’s own settings, offered by its author.':
@@ -2644,4 +2642,8 @@ export const ha: Dictionary = {
     'Wasu kalmomi game da kai da sauran ke gani a bayanan martabarka.',
   'What you are up to, shown to the others beside your name until it clears.':
     'Abin da kake yi, ana nuna wa sauran kusa da sunanka har sai an cire shi.',
+  'Words are checked against this dictionary as well as every other one that is on.':
+    'Ana duba kalmomi da wannan ƙamus da kuma kowane ƙamus da ke a kunne.',
+  'Words are checked in the languages your system or browser is set to.':
+    'Ana duba kalmomi a harsunan da aka saita tsarinka ko birawuzarka a kai.',
 }

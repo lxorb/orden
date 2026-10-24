@@ -2565,8 +2565,6 @@ export const gu: Dictionary = {
   'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
     'અરબી, હિબ્રૂ અને એવી બીજી લિપિઓ માટે નોંધો જમણેથી ડાબે લખે છે.',
   'Underlines misspelled words as you write.': 'લખતી વખતે ખોટી જોડણીવાળા શબ્દો નીચે લીટી દોરે છે.',
-  'The dictionary spelling is checked against; Match the system uses your system’s language.':
-    'જે શબ્દકોશ સામે જોડણી તપાસાય છે; સિસ્ટમ પ્રમાણે તમારી સિસ્ટમની ભાષા વાપરે છે.',
   'The version of Orden that is running; press to copy it.':
     'ચાલતી Orden ની આવૃત્તિ; નકલ કરવા દબાવો.',
   'One of this theme’s own settings, offered by its author.':
@@ -2592,4 +2590,8 @@ export const gu: Dictionary = {
     'તમારા વિશે થોડા શબ્દો, જે બીજાઓ તમારી પ્રોફાઇલ પર જુએ છે.',
   'What you are up to, shown to the others beside your name until it clears.':
     'તમે હમણાં શું કરો છો, તે દૂર ન થાય ત્યાં સુધી તમારા નામ પાસે બીજાઓને દેખાય છે.',
+  'Words are checked against this dictionary as well as every other one that is on.':
+    'શબ્દો આ શબ્દકોશ અને ચાલુ હોય તેવા બીજા દરેક શબ્દકોશ સામે તપાસાય છે.',
+  'Words are checked in the languages your system or browser is set to.':
+    'તમારી સિસ્ટમ કે બ્રાઉઝરમાં જે ભાષાઓ ગોઠવેલી છે તેમાં શબ્દો તપાસાય છે.',
 }

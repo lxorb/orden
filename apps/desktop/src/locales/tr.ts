@@ -2591,8 +2591,6 @@ export const tr: Dictionary = {
   'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
     'Notları Arapça, İbranice ve benzeri yazılar için sağdan sola yazar.',
   'Underlines misspelled words as you write.': 'Yazarken yanlış yazılmış sözcüklerin altını çizer.',
-  'The dictionary spelling is checked against; Match the system uses your system’s language.':
-    'Yazımın denetlendiği sözlük; Sistemle aynı, sisteminizin dilini kullanır.',
   'The version of Orden that is running; press to copy it.':
     'Çalışan Orden sürümü; kopyalamak için basın.',
   'One of this theme’s own settings, offered by its author.':
@@ -2620,4 +2618,8 @@ export const tr: Dictionary = {
     'Diğerlerinin profilinizde gördüğü, sizinle ilgili birkaç söz.',
   'What you are up to, shown to the others beside your name until it clears.':
     'Ne yaptığınız; temizlenene kadar diğerlerine adınızın yanında gösterilir.',
+  'Words are checked against this dictionary as well as every other one that is on.':
+    'Sözcükler bu sözlükle ve açık olan diğer tüm sözlüklerle denetlenir.',
+  'Words are checked in the languages your system or browser is set to.':
+    'Sözcükler, sisteminizin veya tarayıcınızın ayarlı olduğu dillerde denetlenir.',
 }

@@ -2641,8 +2641,6 @@ export const ptPT: Dictionary = {
     'Escreve as notas da direita para a esquerda, para árabe, hebraico e outras escritas semelhantes.',
   'Underlines misspelled words as you write.':
     'Sublinha as palavras com erros ortográficos enquanto escreve.',
-  'The dictionary spelling is checked against; Match the system uses your system’s language.':
-    'O dicionário com que a ortografia é verificada; Como o sistema usa o idioma do seu sistema.',
   'The version of Orden that is running; press to copy it.':
     'A versão do Orden em execução; prima para a copiar.',
   'One of this theme’s own settings, offered by its author.':
@@ -2671,4 +2669,8 @@ export const ptPT: Dictionary = {
     'Algumas palavras sobre si que os outros veem no seu perfil.',
   'What you are up to, shown to the others beside your name until it clears.':
     'O que está a fazer, mostrado aos outros ao lado do seu nome até ser retirado.',
+  'Words are checked against this dictionary as well as every other one that is on.':
+    'As palavras são verificadas com este dicionário e com todos os outros que estiverem ligados.',
+  'Words are checked in the languages your system or browser is set to.':
+    'As palavras são verificadas nos idiomas definidos no seu sistema ou navegador.',
 }

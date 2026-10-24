@@ -2663,8 +2663,6 @@ export const uk: Dictionary = {
   'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
     'Пише нотатки справа наліво, для арабської, івриту та інших подібних писемностей.',
   'Underlines misspelled words as you write.': 'Підкреслює слова з помилками, поки ви пишете.',
-  'The dictionary spelling is checked against; Match the system uses your system’s language.':
-    'Словник для перевірки правопису; Як у системі використовує мову вашої системи.',
   'The version of Orden that is running; press to copy it.':
     'Запущена версія Orden; натисніть, щоб скопіювати.',
   'One of this theme’s own settings, offered by its author.':
@@ -2692,4 +2690,8 @@ export const uk: Dictionary = {
     'Кілька слів про вас, які інші бачать у вашому профілі.',
   'What you are up to, shown to the others beside your name until it clears.':
     'Чим ви зараз зайняті; показується іншим поруч із вашим ім’ям, доки не зникне.',
+  'Words are checked against this dictionary as well as every other one that is on.':
+    'Слова перевіряються за цим словником і за всіма іншими увімкненими.',
+  'Words are checked in the languages your system or browser is set to.':
+    'Слова перевіряються мовами, заданими у вашій системі або браузері.',
 }

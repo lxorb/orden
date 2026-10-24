@@ -2549,8 +2549,6 @@ export const vi: Dictionary = {
   'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
     'Viết ghi chú từ phải sang trái, cho tiếng Ả Rập, Do Thái và các chữ viết tương tự.',
   'Underlines misspelled words as you write.': 'Gạch dưới từ sai chính tả khi bạn viết.',
-  'The dictionary spelling is checked against; Match the system uses your system’s language.':
-    'Từ điển dùng để kiểm tra chính tả; Theo hệ thống dùng ngôn ngữ của hệ thống.',
   'The version of Orden that is running; press to copy it.':
     'Phiên bản Orden đang chạy; nhấn để sao chép.',
   'One of this theme’s own settings, offered by its author.':
@@ -2576,4 +2574,8 @@ export const vi: Dictionary = {
     'Vài lời về bạn mà người khác thấy trên hồ sơ của bạn.',
   'What you are up to, shown to the others beside your name until it clears.':
     'Bạn đang làm gì, hiển thị cho người khác bên cạnh tên bạn cho đến khi được xóa.',
+  'Words are checked against this dictionary as well as every other one that is on.':
+    'Từ được kiểm tra theo từ điển này và mọi từ điển khác đang bật.',
+  'Words are checked in the languages your system or browser is set to.':
+    'Từ được kiểm tra theo các ngôn ngữ mà hệ thống hoặc trình duyệt của bạn đang đặt.',
 }

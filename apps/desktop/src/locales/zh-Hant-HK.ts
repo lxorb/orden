@@ -2500,8 +2500,6 @@ export const zhHantHK: Dictionary = {
   'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
     '由右向左書寫筆記，適用於阿拉伯文、希伯來文等文字。',
   'Underlines misspelled words as you write.': '在你書寫時為拼錯的詞語加底線。',
-  'The dictionary spelling is checked against; Match the system uses your system’s language.':
-    '拼寫檢查所依據的詞典，「跟隨系統」使用系統的語言。',
   'The version of Orden that is running; press to copy it.':
     '正在執行的 Orden 版本，按下即可複製。',
   'One of this theme’s own settings, offered by its author.':
@@ -2527,4 +2525,8 @@ export const zhHantHK: Dictionary = {
     '其他人在你的個人檔案中看到的幾句關於你的話。',
   'What you are up to, shown to the others beside your name until it clears.':
     '你正在做甚麼，顯示在你名字旁供其他人看到，直至清除為止。',
+  'Words are checked against this dictionary as well as every other one that is on.':
+    '會以此詞典及其他所有已開啟的詞典檢查詞語。',
+  'Words are checked in the languages your system or browser is set to.':
+    '會以你的系統或瀏覽器所設定的語言檢查詞語。',
 }

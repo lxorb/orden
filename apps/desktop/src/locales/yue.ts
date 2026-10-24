@@ -2497,8 +2497,6 @@ export const yue: Dictionary = {
   'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
     '由右向左寫筆記，啱阿拉伯文、希伯來文等文字用。',
   'Underlines misspelled words as you write.': '寫嘢時喺串錯嘅字下面劃線。',
-  'The dictionary spelling is checked against; Match the system uses your system’s language.':
-    '拼字檢查用嘅詞典；「跟隨系統」會用你系統嘅語言。',
   'The version of Orden that is running; press to copy it.': '運行緊嘅 Orden 版本；㩒一下就複製。',
   'One of this theme’s own settings, offered by its author.':
     '呢個主題自己嘅設定之一，由作者提供。',
@@ -2522,4 +2520,8 @@ export const yue: Dictionary = {
     '其他人喺你個人檔案見到、關於你嘅幾句說話。',
   'What you are up to, shown to the others beside your name until it clears.':
     '你而家做緊咩，喺你名旁邊俾其他人睇，直至清除為止。',
+  'Words are checked against this dictionary as well as every other one that is on.':
+    '會用呢本詞典同其他開咗嘅詞典一齊檢查啲字。',
+  'Words are checked in the languages your system or browser is set to.':
+    '會用你系統或者瀏覽器設定咗嘅語言檢查啲字。',
 }
