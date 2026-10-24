@@ -154,3 +154,24 @@ test('the file refused after the chat moved, the chat is moved back', async () =
   ])
   expect(there(POINTER)).toBe(true)
 })
+
+test('a move between spaces undone moves the chat back first', async () => {
+  const { undoLastFileAction } = await import('./undoing')
+  await workspace.moveMany([POINTER], OWNERS)
+  await undoLastFileAction(workspace)
+  expect(there(POINTER)).toBe(true)
+  expect(asked.moves).toEqual([
+    [CHAT, 'r-lab'],
+    [CHAT, 'r-team'],
+  ])
+})
+
+test('the account refusing the way back, the undo stays to be asked for again', async () => {
+  const { undoLastFileAction } = await import('./undoing')
+  await workspace.moveMany([POINTER], OWNERS)
+  asked.answer = () => Promise.reject(new ApiError(403, 'only the owner can do that'))
+  await undoLastFileAction(workspace)
+  expect(there(`${OWNERS}/Plans.chat`)).toBe(true)
+  expect(there(POINTER)).toBe(false)
+  expect(workspace.undone.last).not.toBeNull()
+})
