@@ -30,8 +30,7 @@ export interface TrashItem {
   source: 'account' | 'device'
   /** The id the source knows it by. */
   ref: string
-  /** Where a thing in this device's trash goes back to. The account's own restore is
-   *  the server's to allow, so its rows have none. */
+  /** A device entry's place in the notes folder. */
   from?: string
 }
 
@@ -56,13 +55,20 @@ class Trash {
 
   async load() {
     this.error = null
-    const [device, remote] = await Promise.all([
+    const [found, remote] = await Promise.all([
       this.fromDevice(),
       account.accountToken ? this.fromAccount(account.accountToken) : Promise.resolve([]),
     ])
+    // Sync's doubles of the account's own entries go (#765); see trash-doubles.ts.
+    const device =
+      remote.length && found.length
+        ? await (await import('./trash-doubles')).withoutDoubles(found, this.remoteNotes)
+        : found
     this.items = [...remote, ...device].sort((a, b) => b.deletedAt - a.deletedAt)
     this.loaded = true
   }
+
+  private remoteNotes: { spaceId: string; path: string; deletedAt: number }[] = []
 
   private async fromDevice(): Promise<TrashItem[]> {
     const entries = await invoke<DeviceEntry[]>('list_trash').catch(() => [] as DeviceEntry[])
@@ -75,7 +81,7 @@ class Trash {
       deletedAt: entry.trashedAt,
       purgeAt: entry.trashedAt + KEEP_FOR,
       source: 'device' as const,
-      from: entry.from,
+      from: entry.from.replace(/\\/g, '/'),
     }))
   }
 
@@ -99,6 +105,7 @@ class Trash {
       source: 'account' as const,
     }))
 
+    this.remoteNotes = listing.notes
     const notes = listing.notes.map((note) => ({
       id: `note:${note.id}`,
       ref: note.id,
