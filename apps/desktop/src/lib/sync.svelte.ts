@@ -574,6 +574,19 @@ class Sync {
     return moving ? { id: moving.id, version: moving.version, hash: moving.hash } : null
   }
 
+  /** Whether the account holds a copy of this file, so a delete can be left to it:
+   *  a note or paper it has been handed, and not one written since the last push.
+   *  The first sync keeps only notes in `tracked` and the PDFs beside them in the
+   *  mirror's `files`; the second keeps every file it has pushed under one entry. */
+  holds(path: string): boolean {
+    if (this.tracked(path)) return true
+    if (V2 && this.v2) return false
+    return Object.values(this.mirrors).some((mirror) => {
+      const relative = within(mirror.root, path)
+      return relative !== null && mirror.files[relative] !== undefined
+    })
+  }
+
   /** What a pull over this space tells whoever is waiting on it, and what it
    *  fetches first.
    *
