@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 import type { EditorView } from '@nib/editor'
-import { glassesBreak, KEEP_MONTH, KEEP_YEAR, rollbackSteps } from './modes.svelte'
+import { familyName, glassesBreak, KEEP_MONTH, KEEP_YEAR, rollbackSteps } from './modes.svelte'
 
 /** The store writes to the browser's storage the moment anything is toggled,
  *  and sets the zoom on the document element. Under node there is neither, so
@@ -25,8 +25,9 @@ vi.stubGlobal('localStorage', memoryStorage())
  *  text size, and two attributes the window's own settings say out loud for the
  *  stylesheet to read. Both are readable here, because what the app draws from is what
  *  a test about them should look at. */
+const styled = new Map<string, string>()
 const root = {
-  style: { setProperty: () => undefined },
+  style: { setProperty: (name: string, value: string) => void styled.set(name, value) },
   dataset: {} as Record<string, string>,
   attributes: new Set<string>(),
   toggleAttribute(name: string, on?: boolean) {
@@ -1215,5 +1216,37 @@ describe('the front matter', () => {
   test('but keeps the source, which nobody had without asking for it', async () => {
     localStorage.setItem('nib:modes', JSON.stringify({ properties: 'source' }))
     expect((await restarted()).properties).toBe('source')
+  })
+})
+
+/** A face the reader chose, in front of the app's own (#772). */
+describe('the faces to read in', () => {
+  test('are the app’s own until one is chosen', () => {
+    expect(modes.fonts).toEqual({ ui: '', content: '', mono: '' })
+  })
+
+  test('go in front of the stack each is for, and come away with nothing', () => {
+    modes.setFont('content', 'Literata')
+    expect(styled.get('--font-content-chosen')).toBe('"Literata",')
+    modes.setFont('content', '')
+    expect(styled.get('--font-content-chosen')).toBe('')
+  })
+
+  test('are remembered across a restart, each in its own place', async () => {
+    modes.setFont('mono', 'JetBrains Mono')
+    modes.setFont('ui', 'Inter')
+    const again = await restarted()
+    expect(again.fonts).toEqual({ ui: 'Inter', content: '', mono: 'JetBrains Mono' })
+    expect(styled.get('--font-mono-chosen')).toBe('"JetBrains Mono",')
+  })
+
+  /** A name goes into the root's style as it is written, so a name is all it may be. */
+  test('are names and nothing a stylesheet would read as its own', () => {
+    expect(familyName('  Noto   Sans  ')).toBe('Noto Sans')
+    expect(familyName('Source Code Pro')).toBe('Source Code Pro')
+    expect(familyName('思源黑体')).toBe('思源黑体')
+    for (const bad of ['', 'a"; } body { color: red', "Fira'", 'x;y', '\\66 oo', 4, null]) {
+      expect(familyName(bad)).toBe('')
+    }
   })
 })

@@ -45,13 +45,23 @@
 
      `--font-arabic` is named once and spliced into all three stacks, so a Persian
      comment inside a code fence shapes as well as a Persian heading. Urdu wants
-     something else again, which is the `[lang|='ur']` block below. */
+     something else again, which is the `[lang|='ur']` block below.
+
+     And a face the reader chose goes in front of each (#772), as `--font-*-chosen`:
+     the family and a comma, written on the root by modes.svelte.ts, or nothing at all,
+     which leaves the stack as it was. In front rather than in place, so a character
+     the chosen face has not got still comes from the app's own, and Arabic from the
+     faces the platforms ship. */
   --font-arabic: 'Orden Arabic';
-  --font-ui: 'Geist', var(--font-arabic), ui-sans-serif, system-ui, 'Segoe UI', sans-serif;
+  --font-ui:
+    var(--font-ui-chosen,) 'Geist', var(--font-arabic), ui-sans-serif, system-ui, 'Segoe UI',
+    sans-serif;
   --font-content:
-    'iA Writer Quattro', var(--font-arabic), ui-sans-serif, system-ui, 'Segoe UI', sans-serif;
+    var(--font-content-chosen,) 'iA Writer Quattro', var(--font-arabic), ui-sans-serif, system-ui,
+    'Segoe UI', sans-serif;
   --font-mono:
-    'iA Writer Mono S', ui-monospace, 'Cascadia Code', 'Consolas', var(--font-arabic), monospace;
+    var(--font-mono-chosen,) 'iA Writer Mono S', ui-monospace, 'Cascadia Code', 'Consolas',
+    var(--font-arabic), monospace;
 
   --text-xs: 11px;
   --text-sm: 12.5px;
