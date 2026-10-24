@@ -724,6 +724,52 @@ describe("a PDF's highlights", () => {
   })
 })
 
+/** A page note's paper is `<name>.pages.pdf` beside it, held out of the list, so a
+ *  rename or a copy never puts a page note where its paper would go over somebody's
+ *  PDF, nor a PDF where a page note would take it for its paper (#538), as the
+ *  desktop's `paper_in_the_way` has it. */
+describe('a page note and a PDF of its paper’s name', () => {
+  const pdf = (path: string) => webInvoke('write_bytes', { path, base64: btoa('%PDF mine') })
+
+  beforeEach(async () => {
+    await write('/Notes/A/Report.pages', '{}')
+    await pdf('/Notes/B/Report.pages.pdf')
+    await write('/Notes/B/Blank.pages', '{}')
+    await pdf('/Notes/B/slides.pdf')
+  })
+
+  test('a page note is not renamed or copied where its paper would go', async () => {
+    for (const command of ['rename_note', 'copy_path']) {
+      await expect(
+        webInvoke(command, { from: '/Notes/A/Report.pages', to: '/Notes/B/Report.pages' }),
+        command,
+      ).rejects.toThrow(/already there/)
+    }
+    expect(disk.files.has('/Notes/A/Report.pages')).toBe(true)
+    expect(disk.files.has('/Notes/B/Report.pages')).toBe(false)
+  })
+
+  test('nor a PDF where a page note would take it for its paper', async () => {
+    for (const command of ['rename_note', 'copy_path']) {
+      await expect(
+        webInvoke(command, { from: '/Notes/B/slides.pdf', to: '/Notes/B/Blank.pages.pdf' }),
+        command,
+      ).rejects.toThrow(/already there/)
+    }
+    expect(disk.assets.has('/Notes/B/slides.pdf')).toBe(true)
+    expect(disk.assets.has('/Notes/B/Blank.pages.pdf')).toBe(false)
+  })
+
+  test('unless it is a PDF being turned into its page note, which says so', async () => {
+    await webInvoke('rename_note', {
+      from: '/Notes/B/slides.pdf',
+      to: '/Notes/B/Blank.pages.pdf',
+      hold: true,
+    })
+    expect(disk.assets.has('/Notes/B/Blank.pages.pdf')).toBe(true)
+  })
+})
+
 describe('a pasted picture', () => {
   const save = (notePath: string, folder: string) =>
     webInvoke<string>('save_asset', { notePath, folder, name: 'pic.png', bytes: [1, 2, 3] })
@@ -791,6 +837,11 @@ describe('a pasted picture', () => {
     await webInvoke('write_note', { path: '/Notes/X.pdf.highlights.json', content: '[]' })
     expect(await drop('X.pdf')).toBe('X 2.pdf')
     expect(await drop('CON.png')).toBe('_CON.png')
+  })
+
+  test('never names a folder with a slash in its name', async () => {
+    expect(await drop('a/b.png')).toBe('a-b.png')
+    expect([...disk.assets.keys()]).toEqual(['/Notes/a-b.png'])
   })
 
   test('keeps the folder an older build wrote when none is sent', async () => {
