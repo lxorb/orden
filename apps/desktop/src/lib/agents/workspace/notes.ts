@@ -14,6 +14,7 @@ import { frontMatterEdit, isPropertyName } from '@nib/markdown/front-matter'
 import { taskAt } from '@nib/markdown/tasks'
 import { flowItem, scalar } from '@nib/markdown/yaml'
 import type { AgentAnswer } from '../../automation/caller'
+import { onDisk as there } from '../../on-disk'
 import { canWriteAt } from '../../sharing.svelte'
 import { isMarkdownPath, nameOf } from '../../space-paths'
 import { writeFile } from '../../workspace/write-file'
@@ -262,6 +263,15 @@ export async function createNote(call: Call): Promise<AgentAnswer> {
  *  only in the space the reader is in: opening one in another would move them. */
 export async function made(place: Place, relative: string, words: string, open: boolean) {
   const path = onDisk(place, relative)
+  // Every caller makes the note because a read of it failed, and a read also fails for
+  // a note that is there and would not read. The disk is asked rather than the read
+  // trusted, so such a note is refused and kept instead of emptied.
+  if (await there(path)) {
+    throw new Refused(
+      'exists',
+      `${relative} is there and would not read, and nothing is written over it`,
+    )
+  }
   await writeFile(path, words)
 
   if (place.open) {

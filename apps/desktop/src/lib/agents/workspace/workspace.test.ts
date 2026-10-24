@@ -39,6 +39,9 @@ const secret = { id: 'secret', name: 'Secret', root: '/s/Secret' }
 /** Every file of every space, by its path on this disk. */
 const files = new Map<string, string>()
 const folders = new Set<string>()
+/** Files that are there and will not read as text: written in Windows-1252 by another
+ *  program, over the size the crate reads, or held by a cloud that is offline. */
+const unreadable = new Set<string>()
 
 interface Entry {
   name: string
@@ -189,7 +192,11 @@ function crate(command: string, args: Record<string, unknown> = {}): Promise<unk
     case 'read_tree':
       return Promise.resolve(treeOf(String(args.root)))
     case 'read_note':
+      if (unreadable.has(path))
+        return Promise.reject(new Error('stream did not contain valid UTF-8'))
       return files.has(path) ? Promise.resolve(files.get(path)) : Promise.reject(new Error('gone'))
+    case 'path_exists':
+      return Promise.resolve(files.has(path) || unreadable.has(path) || folders.has(path))
     case 'write_note':
       files.set(path, String(args.content))
       return Promise.resolve()
@@ -434,6 +441,7 @@ function call(verb: string, args: Record<string, unknown>, caller: Caller = agen
 beforeEach(() => {
   files.clear()
   folders.clear()
+  unreadable.clear()
   files.set('/s/Work/Plan.md', '# Plan\n')
   files.set('/s/Work/Pinned.md', '# Pinned\n')
   files.set('/s/Home/Recipes.md', '# Recipes\n\nSee [[Soup]] tonight.\n')
@@ -949,6 +957,20 @@ describe('the notes, on the road', () => {
       result: { path: 'Broth.md', created: true },
     })
     expect(files.get('/s/Home/Broth.md')).toBe('# Broth\n')
+  })
+
+  test('a note that is there and will not read is refused, and never made again over itself', async () => {
+    unreadable.add('/s/Home/Inbox.md')
+    const calls: [string, Record<string, unknown>][] = [
+      ['write_note', { space: 'Home', path: 'Inbox', content: 'New.' }],
+      ['append_note', { space: 'Home', path: 'Inbox', content: 'More.' }],
+      ['create_note', { space: 'Home', path: 'Inbox' }],
+      ['add_task', { space: 'Home', text: 'Call mum' }],
+    ]
+    for (const [verb, args] of calls) {
+      expect(await call(verb, args), verb).toMatchObject({ code: 'exists' })
+    }
+    expect(asked.filter((one) => one.command === 'write_note')).toEqual([])
   })
 })
 

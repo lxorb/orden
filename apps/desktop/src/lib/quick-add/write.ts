@@ -12,6 +12,7 @@ import { changeOf } from '../search/replace'
 import { insideSpace, isMarkdownPath, relativeTo, withoutExtension } from '../space-paths'
 import { links } from '../link-index.svelte'
 import { onDisk } from '../on-disk'
+import { readIfThere, toldIfUnreadable } from '../read-if-there'
 import { workspace } from '../workspace.svelte'
 import { noteText, replaceInNotes } from '../workspace/note-text'
 import { writeFile } from '../workspace/write-file'
@@ -82,7 +83,14 @@ export async function addTask(
   const path = await targetOf(entry, root)
   if (path === null) return null
 
-  const before = (await noteText(workspace, path)) ?? ''
+  // A note that would not read is not an empty one: the read is asked again of the
+  // disk, which throws for one that is there, and the reader is told it was kept.
+  let before: string
+  try {
+    before = (await noteText(workspace, path)) ?? (await readIfThere(path)) ?? ''
+  } catch (error) {
+    return toldIfUnreadable(error)
+  }
   const placed = placeIn(before, linesOf(entry), entry.heading)
   await replaceInNotes(workspace, [
     changeOf(path, before, [{ from: placed.at, to: placed.at, insert: placed.insert }]),

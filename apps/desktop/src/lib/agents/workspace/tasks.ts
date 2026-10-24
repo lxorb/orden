@@ -39,6 +39,7 @@ import { taskLine } from '@nib/markdown/task-edits'
 import { taskHash } from '@nib/bases'
 import type { AgentAnswer } from '../../automation/caller'
 import { modes } from '../../modes.svelte'
+import { onDisk as there } from '../../on-disk'
 import { isShared } from '../../sharing.svelte'
 import { folderOf, nameOf } from '../../space-paths'
 import { invoke } from '../../tauri'
@@ -343,7 +344,10 @@ async function freePath(place: Place, folder: string, name: string): Promise<str
   for (let counter = 1; counter < 100; counter++) {
     const file = counter === 1 ? `${name}.md` : `${name} ${counter}.md`
     const relative = folder ? `${folder}/${file}` : file
-    if ((await workspace.noteText(onDisk(place, relative))) === null) return relative
+    // Free means nothing is there, which a failed read does not say: a note that
+    // would not read is there all the same, and the name is taken.
+    const path = onDisk(place, relative)
+    if ((await workspace.noteText(path)) === null && !(await there(path))) return relative
   }
   throw new Refused('exists', `${name} is taken a hundred times over in ${folder || 'the space'}`)
 }
