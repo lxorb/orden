@@ -2168,41 +2168,58 @@ select:focus-visible,
 
 /* The same bar on every platform. Only where a pointer can actually grab it:
    touch scrollbars are already transient overlays, and styling them would make
-   them permanent and reserve layout width on a screen with none to give. */
+   them permanent and reserve layout width on a screen with none to give.
+
+   And not where the engine draws overlay bars of its own (`data-engine-bars`, nib's
+   own Chromium on Linux; see main.ts and `cef_runtime` in src-tauri/src/engine.rs),
+   because a bar styled here is never drawn as one: Chromium makes every styled bar a
+   classic one, a gutter and a thumb standing the whole time the content runs past -
+   over every menu, list and sheet in the app, and over the palette's list where all
+   that ran past it was its own padding (#775). The overlay one is thin, comes in on a
+   scroll or a hover and goes again, and is grabbed and dragged like any other, which
+   is what a Linux desktop's own bars do. A styled bar also takes no later change of
+   style, so none of this could be done by showing the thumb on a hover instead. */
 @media (pointer: fine) {
   /* Chromium and WebKit take the pseudo elements. Setting `scrollbar-width`
      alongside them would make Chromium drop them, so Firefox is served in a
      separate block below. */
   @supports selector(::-webkit-scrollbar) {
-    ::-webkit-scrollbar {
+    :root:not([data-engine-bars]) ::-webkit-scrollbar,
+    :root:not([data-engine-bars])::-webkit-scrollbar {
       width: 11px;
       height: 11px;
     }
 
-    ::-webkit-scrollbar-track,
-    ::-webkit-scrollbar-corner {
+    :root:not([data-engine-bars]) ::-webkit-scrollbar-track,
+    :root:not([data-engine-bars])::-webkit-scrollbar-track,
+    :root:not([data-engine-bars]) ::-webkit-scrollbar-corner,
+    :root:not([data-engine-bars])::-webkit-scrollbar-corner {
       background: transparent;
     }
 
     /* A transparent border clipped to the padding box is what insets the
        thumb, so it reads as floating rather than filling a gutter. */
-    ::-webkit-scrollbar-thumb {
+    :root:not([data-engine-bars]) ::-webkit-scrollbar-thumb,
+    :root:not([data-engine-bars])::-webkit-scrollbar-thumb {
       background-color: var(--scrollbar);
       background-clip: padding-box;
       border: 3px solid transparent;
       border-radius: 99px;
     }
 
-    ::-webkit-scrollbar-thumb:hover {
+    :root:not([data-engine-bars]) ::-webkit-scrollbar-thumb:hover,
+    :root:not([data-engine-bars])::-webkit-scrollbar-thumb:hover {
       background-color: var(--scrollbar-hover);
     }
 
-    ::-webkit-scrollbar-thumb:active {
+    :root:not([data-engine-bars]) ::-webkit-scrollbar-thumb:active,
+    :root:not([data-engine-bars])::-webkit-scrollbar-thumb:active {
       background-color: var(--muted);
     }
 
     /* Arrow buttons are a platform habit, not a design decision. */
-    ::-webkit-scrollbar-button {
+    :root:not([data-engine-bars]) ::-webkit-scrollbar-button,
+    :root:not([data-engine-bars])::-webkit-scrollbar-button {
       display: none;
     }
   }

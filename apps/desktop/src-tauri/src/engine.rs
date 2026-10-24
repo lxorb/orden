@@ -192,6 +192,15 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
         // window turns its own off outside a development build (`ui_window`).
         .devtools(DevToolsPolicy::Allowed)
         .remote_debugging(debugging);
+    // Overlay scrollbars on Linux, as the desktop's own toolkits draw them (#775): thin,
+    // in on a scroll or a hover and gone again, rather than Chromium's classic gutter and
+    // thumb standing over every list whose content runs past it. The window's stylesheet
+    // leaves its own bars unstyled here so that the engine's are what is drawn; see
+    // `data-engine-bars` in src/main.ts and packages/themes/src/base.css.
+    #[cfg(target_os = "linux")]
+    {
+        engine = engine.enable_features([OVERLAY_BARS]);
+    }
     if let Some(root) = cef_root() {
         // An agent's own tab is a browser with no window, which CEF can make only when
         // the whole process started able to; see agents/engines/cef.rs.
@@ -212,6 +221,10 @@ pub(crate) fn cef_runtime() -> tauri_runtime_cef::Cef {
     }
     engine
 }
+
+/// Chromium's feature for the overlay scrollbars Linux gets; see `cef_runtime`.
+#[cfg(all(feature = "cef", target_os = "linux"))]
+const OVERLAY_BARS: &str = "OverlayScrollbar";
 
 /// Chromium's user data directory before Tauri has started, so before `config_dir` can
 /// be asked: the same `<config>/<identifier>/chromium` that [`root`] answers once it has.
