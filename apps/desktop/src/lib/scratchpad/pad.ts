@@ -80,6 +80,13 @@ class Scratchpad {
     return true
   }
 
+  /** What the card opens on: the file's words, or nothing where there is no file
+   *  yet. Throws where the file is there and will not read, since a card opened empty
+   *  on it saved over everything it held at the first keystroke. */
+  async editable(): Promise<string> {
+    return this.toChange(await this.where())
+  }
+
   /** What a write changes: the card's words while it is up, else the file's, and
    *  nothing where there is no file yet. A file that is there and will not read -
    *  another encoding, a lock - reads as nothing too, and a write worked out against
