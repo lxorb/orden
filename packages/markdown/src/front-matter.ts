@@ -279,7 +279,10 @@ export function frontMatterEdits(
  *    pair of fences at the top of a note is litter rather than metadata.
  *
  *  The line ending is whatever the note already uses, so a file written on
- *  Windows does not come back with one line in the other convention. */
+ *  Windows does not come back with one line in the other convention.
+ *
+ *  The value is written after the colon as it is given, so it is YAML already: a
+ *  caller holding somebody's words quotes them with `scalar` first. */
 export function frontMatterEdit(
   source: string,
   key: string,
@@ -310,7 +313,9 @@ export function frontMatterEdit(
 
   if (line) {
     const said = source.slice(line.value.from, line.value.to).trim()
-    if (unquoted(said) === value) return null
+    // The same spelling is no change either: a caller that quoted its value as a
+    // scalar hands `'yes'` itself, where the line read through its quotes says `yes`.
+    if (said === value || unquoted(said) === value) return null
 
     const to = source[line.value.to - 1] === '\r' ? line.value.to - 1 : line.value.to
     return { from: line.value.from, to, insert: ` ${value}` }

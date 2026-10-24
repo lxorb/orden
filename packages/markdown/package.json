@@ -49,7 +49,8 @@
     "./task-reminders": "./src/task-reminders.ts",
     "./tasks": "./src/tasks.ts",
     "./web-embed": "./src/web-embed.ts",
-    "./words": "./src/words.ts"
+    "./words": "./src/words.ts",
+    "./yaml": "./src/yaml.ts"
   },
   "scripts": {
     "test": "vitest run",

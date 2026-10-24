@@ -7,6 +7,7 @@
  *  hands a name and a caller that hands a path cannot come to different ends. */
 
 import { describe, expect, test, vi } from 'vitest'
+import { frontMatterValue } from '@nib/markdown/front-matter'
 
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
@@ -123,7 +124,7 @@ vi.mock('../views.svelte', () => ({ views: { of: () => undefined } }))
 // note another device made; nothing here is about syncing.
 vi.mock('../sync.svelte', () => ({ sync: { mergeable: () => undefined } }))
 
-const { appendNote, openNote, runCommand } = await import('./acts')
+const { appendNote, openNote, runCommand, setProperty } = await import('./acts')
 
 describe('a note named rather than pathed', () => {
   test('is opened at the path the index holds it under', async () => {
@@ -312,5 +313,49 @@ describe('words appended to a note', () => {
     // note gets the end of it, which is what the action is called.
     await appendNote({ path: 'Daily.md', content: 'Added.', prepend: true })
     expect(written[0]?.after).toBe('Already here.\n\nAdded.\n')
+  })
+})
+
+describe('a property an automation sets', () => {
+  test('lands as the words it was given, whatever YAML would read them as bare', async () => {
+    // Each of these, written bare after the colon, is a mapping, a comment, a list, a
+    // boolean, a number or a reserved indicator to YAML rather than the words.
+    const values = ['Meeting: notes', '#tag', '- item', '[x]', 'yes', '@home', '012', 'a #b']
+
+    for (const value of values) {
+      held.set('/Work/Plan.md', '---\ntitle: Plan\n---\n# Plan\n')
+      written.length = 0
+
+      await setProperty({ path: 'Plan.md', key: 'status', value })
+      const after = written[0]?.after ?? ''
+      expect(after, value).toMatch(/^---\ntitle: Plan\nstatus: '.*'\n---\n# Plan\n$/)
+      expect(frontMatterValue(after, 'status'), value).toBe(value)
+    }
+  })
+
+  test('is one line however many the value had', async () => {
+    held.set('/Work/Plan.md', '# Plan\n')
+    written.length = 0
+
+    await setProperty({ path: 'Plan.md', key: 'status', value: 'one\n---\ntwo' })
+    expect(written[0]?.after).toBe('---\nstatus: one --- two\n---\n# Plan\n')
+  })
+
+  test('that the note already says is no change, quoted or not', async () => {
+    held.set('/Work/Plan.md', "---\nstatus: 'yes'\n---\n# Plan\n")
+    written.length = 0
+
+    expect(await setProperty({ path: 'Plan.md', key: 'status', value: 'yes' })).toMatchObject({
+      changed: false,
+    })
+    expect(written).toEqual([])
+  })
+
+  test('that YAML reads as itself stays bare', async () => {
+    held.set('/Work/Plan.md', '# Plan\n')
+    written.length = 0
+
+    await setProperty({ path: 'Plan.md', key: 'status', value: 'In progress' })
+    expect(written[0]?.after).toBe('---\nstatus: In progress\n---\n# Plan\n')
   })
 })

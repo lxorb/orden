@@ -12,7 +12,7 @@
  *  What is deliberately not here: anything that would delete or overwrite without
  *  being asked twice. `confirms` in verbs.ts is what asks. */
 
-import { frontMatterEdit } from '@nib/markdown/front-matter'
+import { writeProperty } from '@nib/markdown/property-edits'
 import { appCommands } from '../commands'
 import { links } from '../link-index.svelte'
 import { extensionOf, nameToWrite } from '../naming'
@@ -399,7 +399,11 @@ export async function setProperty(args: Said): Promise<unknown> {
   if (!key) throw new Error('say which key')
 
   const value = said(args, 'value')
-  const edit = frontMatterEdit(note.text, key, value)
+  // Written the way a property row writes typed words, rather than handed to the
+  // block edit as they stand: that edit puts whatever it is given after the colon,
+  // and `Meeting: notes`, `#tag` or `yes` written bare would read back as a mapping,
+  // a comment or a boolean, and a line break would end the block.
+  const edit = writeProperty(note.text, key, value)
   if (!edit) return { path: note.relative, key, value, changed: false }
 
   const after = note.text.slice(0, edit.from) + edit.insert + note.text.slice(edit.to)

@@ -12,6 +12,7 @@
 
 import { frontMatterEdit } from '@nib/markdown/front-matter'
 import { taskAt } from '@nib/markdown/tasks'
+import { flowItem, scalar } from '@nib/markdown/yaml'
 import type { AgentAnswer } from '../../automation/caller'
 import { canWriteAt } from '../../sharing.svelte'
 import { isMarkdownPath, nameOf } from '../../space-paths'
@@ -161,11 +162,18 @@ export async function appendNote(call: Call): Promise<AgentAnswer> {
 function yamlOf(value: unknown): string | null {
   if (value === null) return null
   if (typeof value === 'number' || typeof value === 'boolean') return String(value)
-  if (Array.isArray(value)) return `[${value.map((one) => yamlOf(String(one))).join(', ')}]`
+  if (Array.isArray(value)) return `[${value.map(memberOf).join(', ')}]`
 
-  const words = typeof value === 'string' ? value.replace(/[\r\n]+/g, ' ').trim() : ''
-  const plain = /^[^\s\-?:,[\]{}#&*!|>'"%@`][^:#]*$/.test(words) && !/\s$/.test(words)
-  return plain ? words : JSON.stringify(words)
+  // Through the package's own quoting rather than a guess at what reads bare: words
+  // like `yes`, `012` or `1e3` pass any test of their characters and still come back
+  // as a boolean or a number.
+  return scalar(typeof value === 'string' ? value : '')
+}
+
+/** One member of a list, where a comma or a bracket in the words would also end it. */
+function memberOf(value: unknown): string {
+  if (typeof value === 'number' || typeof value === 'boolean') return String(value)
+  return flowItem(String(value))
 }
 
 export async function setProperty(call: Call): Promise<AgentAnswer> {

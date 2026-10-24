@@ -20,6 +20,7 @@
 
 import { COVER_KEY, COVER_POSITION_KEY } from '@nib/markdown/cover'
 import { frontMatterEdits } from '@nib/markdown/front-matter'
+import { scalar } from '@nib/markdown/yaml'
 import { storeImage } from './assets'
 import { busy } from './busy.svelte'
 import { chooseFiles, PICTURES } from './choose-files'
@@ -48,9 +49,11 @@ export async function setCover(path: string, src: string | null): Promise<void> 
   // A position with no picture to position is not a position, so taking the cover
   // away takes both keys. A new picture starts in the middle, which is what a note
   // that never said gets - and what `coverOf` answers - so the key is left off
-  // rather than written out as the number it would mean anyway.
+  // rather than written out as the number it would mean anyway. The picture's path
+  // goes in as a scalar, because the edit writes what it is handed as it stands and a
+  // file named `Meeting: notes.jpg` written bare is a mapping rather than a path.
   const edit = frontMatterEdits(before, [
-    [COVER_KEY, src],
+    [COVER_KEY, src === null ? null : scalar(src)],
     [COVER_POSITION_KEY, null],
   ])
   if (!edit) return

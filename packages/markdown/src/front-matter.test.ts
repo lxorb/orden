@@ -155,6 +155,8 @@ describe('setting a key', () => {
   test('a key already saying it is not written again', () => {
     expect(frontMatterEdit('---\nicon: rocket\n---\n', 'icon', 'rocket')).toBeNull()
     expect(frontMatterEdit('---\nicon: "rocket"\n---\n', 'icon', 'rocket')).toBeNull()
+    // A value handed already quoted as a scalar, the way a property row writes one.
+    expect(frontMatterEdit("---\nstatus: 'yes'\n---\n", 'status', "'yes'")).toBeNull()
   })
 
   test('keeps the line endings the file was written with', () => {
