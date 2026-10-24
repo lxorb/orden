@@ -20,6 +20,7 @@
  *  the column it slides in PadColumn.svelte, the card ScratchpadCard.svelte. */
 
 import type { EditorView } from '@nib/editor'
+import { onDisk } from '../on-disk'
 import { applied, type Edit } from '../search/replace'
 import { invoke } from '../tauri'
 import { workspace } from '../workspace.svelte'
@@ -71,7 +72,7 @@ class Scratchpad {
   async replace(before: string, edits: readonly Edit[]): Promise<boolean> {
     const path = await this.where()
     const live = this.live
-    const now = live ? live.state.doc.toString() : ((await workspace.noteText(path)) ?? '')
+    const now = live ? live.state.doc.toString() : await this.toChange(path)
     if (now.replace(/\r\n?/g, '\n') !== before) return false
 
     live?.dispatch({ changes: [...edits] })
@@ -79,9 +80,21 @@ class Scratchpad {
     return true
   }
 
+  /** What a write changes: the card's words while it is up, else the file's, and
+   *  nothing where there is no file yet. A file that is there and will not read -
+   *  another encoding, a lock - reads as nothing too, and a write worked out against
+   *  nothing emptied it; so that refuses instead. */
+  private async toChange(path: string): Promise<string> {
+    if (this.live) return this.live.state.doc.toString()
+    const words = await workspace.noteText(path)
+    if (words !== null) return words
+    if (await onDisk(path)) throw new Error(`${path} is there and would not read`)
+    return ''
+  }
+
   private async write(change: (before: string) => string): Promise<void> {
     const path = await this.where()
-    const before = await this.text()
+    const before = await this.toChange(path)
     const after = change(before)
     if (after === before) return
 
