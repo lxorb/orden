@@ -1,6 +1,7 @@
 package ch.emilvinu.nib
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
@@ -17,6 +18,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
+import java.security.MessageDigest
 import java.util.UUID
 import org.json.JSONObject
 
@@ -38,6 +40,39 @@ class MainActivity : TauriActivity() {
      *  - a process killed in the background and restored with the intent it was
      *  started with - does not make the same note twice. */
     private const val EXTRA_READ = "ch.emilvinu.nib.read"
+
+    /** A word made up once per install and kept in the app's private prefs, which
+     *  every intent the app makes for this activity carries - a tile, a widget row,
+     *  a Today box, a reminder's press.
+     *
+     *  The activity is exported and opens on a `nib://` link, so a web page
+     *  (`intent://...;S.ch.emilvinu.nib.command=record;end`) or any app could
+     *  hand it a command, a note or a task to tick: one tap started or stopped a
+     *  recording. Nothing else on the phone can read the extras of a
+     *  PendingIntent this app made, so an intent that has the word is one of ours,
+     *  and the extras of any other are dropped. */
+    private const val EXTRA_SEAL = "ch.emilvinu.nib.seal"
+    private const val SEALS = "nib-seal"
+
+    /** The install's word, made the first time it is asked for. */
+    @Synchronized
+    private fun seal(context: Context): String {
+      val prefs = context.getSharedPreferences(SEALS, Context.MODE_PRIVATE)
+      prefs.getString(SEALS, null)?.let { return it }
+      val made = UUID.randomUUID().toString()
+      prefs.edit().putString(SEALS, made).commit()
+      return made
+    }
+
+    /** An intent for this activity, marked as the app's own. */
+    fun sealed(context: Context, intent: Intent): Intent =
+      intent.putExtra(EXTRA_SEAL, seal(context))
+
+    /** Whether the app made this intent itself. */
+    private fun sealedBy(context: Context, intent: Intent): Boolean {
+      val said = intent.getStringExtra(EXTRA_SEAL) ?: return false
+      return MessageDigest.isEqual(said.toByteArray(), seal(context).toByteArray())
+    }
 
     /** Asking for the microphone. Its own number so the answer can be told from
      *  anything else the app ever asks for. */
@@ -142,9 +177,12 @@ class MainActivity : TauriActivity() {
     if (intent == null || intent.getBooleanExtra(EXTRA_READ, false)) return false
     intent.putExtra(EXTRA_READ, true)
 
-    val asked = intent.getStringExtra(EXTRA_COMMAND) ?: ""
-    val note = intent.getStringExtra(EXTRA_OPEN) ?: ""
-    val tick = intent.getStringExtra(EXTRA_TICK) ?: ""
+    // A share is anybody's to send. A command, a note, a task or a reminder is
+    // taken only from an intent the app sealed; see EXTRA_SEAL.
+    val ours = sealedBy(this, intent)
+    val asked = if (ours) intent.getStringExtra(EXTRA_COMMAND) ?: "" else ""
+    val note = if (ours) intent.getStringExtra(EXTRA_OPEN) ?: "" else ""
+    val tick = if (ours) intent.getStringExtra(EXTRA_TICK) ?: "" else ""
     if (asked.isNotEmpty()) command = asked
     if (note.isNotEmpty()) opening = note
     if (tick.isNotEmpty()) {
@@ -154,9 +192,11 @@ class MainActivity : TauriActivity() {
 
     // A reminder's notification pressed: its note opened at the task, which is the
     // page's to do; see Reminders.kt.
-    Reminders.carried(intent)?.let {
-      Reminders.pressed(this, "open", it)
-      reminded()
+    if (ours) {
+      Reminders.carried(intent)?.let {
+        Reminders.pressed(this, "open", it)
+        reminded()
+      }
     }
 
     val shared = Shared.take(this, intent)
