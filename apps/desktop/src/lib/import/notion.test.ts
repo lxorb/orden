@@ -302,6 +302,46 @@ describe('a Notion export', () => {
     expect(base.properties['note.column-6']?.displayName).toBe('⭐')
   })
 
+  test('a database dates its rows by the column that reads as a day, whatever stands before it', async () => {
+    const plan = await readNotion([
+      file(
+        `Trips ${TASKS}_all.csv`,
+        [
+          'Name,Date,Created',
+          'One,"May 1, 2026 → May 3, 2026","January 2, 2026"',
+          'Two,,"January 3, 2026"',
+        ].join('\n'),
+      ),
+      file(
+        `Visits ${TASKS}_all.csv`,
+        [
+          'Name,Date,Created',
+          'One,"March 5, 2026","January 2, 2026"',
+          'Two,,"January 3, 2026"',
+        ].join('\n'),
+      ),
+    ])
+
+    // A Date that reads as days but is blank in a row still leaves the row its date.
+    expect(noteAt(plan, 'Visits/One.md')).toContain('date: 2026-01-02\n')
+    expect(noteAt(plan, 'Visits/One.md')).toContain('date-2: 2026-03-05\n')
+    expect(noteAt(plan, 'Visits/Two.md')).toContain('date: 2026-01-03\n')
+
+    const one = noteAt(plan, 'Trips/One.md')
+    expect(one.match(/^date:/gm)).toHaveLength(1)
+    expect(one).toContain('date: 2026-01-02\n')
+    expect(one).toContain('date-2: May 1, 2026 → May 3, 2026\n')
+
+    const two = noteAt(plan, 'Trips/Two.md')
+    expect(two).toContain('date: 2026-01-03\n')
+    expect(two).not.toContain('date-2')
+
+    const base = readBase(fenced(noteAt(plan, 'Trips.md')))
+    expect(base.views[0]?.order).toEqual(['file.name', 'note.date-2', 'note.date'])
+    expect(base.properties['note.date']?.displayName).toBe('Created')
+    expect(base.properties['note.date-2']?.displayName).toBe('Date')
+  })
+
   test('an HTML export keeps a date it cannot read as a day beside the one it can', async () => {
     const plan = await readNotion([
       file(

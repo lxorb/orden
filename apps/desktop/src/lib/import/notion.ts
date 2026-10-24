@@ -103,7 +103,7 @@ export async function readNotion(exported: readonly Source[]): Promise<ImportPla
           read: () => {
             const name = (path.split('/').pop() ?? path).replace(MARKDOWN, '')
             if (!database) return { text: '', title: name }
-            const keys = keysOf(database.columns)
+            const keys = keysOf(database)
             return { text: baseBlock(database, (one) => keys.get(one) ?? ''), title: name }
           },
         }
@@ -116,7 +116,7 @@ export async function readNotion(exported: readonly Source[]): Promise<ImportPla
       return {
         to: names.free(safeParts(source.path, withoutNotionId)),
         read: (text) => {
-          const said = notionPage(text, database?.kinds, database && keysOf(database.columns))
+          const said = notionPage(text, database?.kinds, database && keysOf(database))
           return {
             text: viewsFollowed(said.body, source.path, paths),
             title: null,
@@ -298,7 +298,7 @@ async function missingRows(
     out.push({
       kind: 'note',
       path: names.free(`${into}/${name}.md`),
-      text: noteText(name, '', metaOf(said, database.kinds, keysOf(database.columns))),
+      text: noteText(name, '', metaOf(said, database.kinds, keysOf(database))),
     })
   }
 
@@ -314,29 +314,52 @@ function matchable(name: string): string {
  *  in the base: the page's own dates and its labels under nib's names for them,
  *  every other column under its own.
  *
- *  Only the first date of each kind is the page's own. Two columns that come out
- *  as one key - a `Created` and a `Date`, or `Status` and `Status?` - would be one
- *  property written twice, so the second steps aside as `date-2`, and a column
- *  whose name has nothing in it to keep is called after its place, as a CSV's are
- *  (see table.ts). Every label column is the one list of tags, and is asked first
- *  so that no column of words takes the name. The title is the note's name and
- *  has no key. */
-function keysOf(columns: readonly string[]): Map<string, string> {
+ *  The page's own date is the column that says when each row was made, the
+ *  `Created` one, whatever stands before it, and failing that the first date
+ *  column whose every value reads as a day: a `Date` of ranges, or one left blank
+ *  in some rows, ahead of a `Created` would otherwise take the key and leave those
+ *  rows with no date at all. The last-edited day is the first such column of its
+ *  kind. Two columns
+ *  that come out as one key - a `Created` and a `Date`, or `Status` and `Status?`
+ *  - would be one property written twice, so the second steps aside as `date-2`,
+ *  and a column whose name has nothing in it to keep is called after its place, as
+ *  a CSV's are (see table.ts). `date` and `updated` are kept for the page's own
+ *  even where no column reads, so no column of words is written as the note's
+ *  date. Every label column is the one list of tags, and is asked first so that no
+ *  column of words takes the name. The title is the note's name and has no key. */
+function keysOf(database: Database): Map<string, string> {
+  const columns = database.columns.slice(1)
   const keys = new Map<string, string>()
-  const taken = new Set<string>()
+  const taken = new Set<string>(['date', 'updated'])
 
-  for (const column of columns.slice(1)) {
+  for (const column of columns) {
     if (LABELS.test(column)) keys.set(column, 'tags')
   }
   if (keys.size) taken.add('tags')
 
+  for (const [kind, own] of [
+    [MADE, 'date'],
+    [CHANGED, 'updated'],
+  ] as const) {
+    const days = [...columns]
+      .sort((one, two) => Number(/^created/i.test(two)) - Number(/^created/i.test(one)))
+      .find((column) => kind.test(column) && readsAsDays(database, column))
+    if (days) keys.set(days, own)
+  }
+
   for (const [at, column] of columns.entries()) {
-    if (at === 0 || keys.has(column)) continue
+    if (keys.has(column)) continue
     const own = MADE.test(column) ? 'date' : CHANGED.test(column) ? 'updated' : null
-    keys.set(column, freeKey(own ?? (propertyName(column) || `column-${at + 1}`), taken))
+    keys.set(column, freeKey(own ?? (propertyName(column) || `column-${at + 2}`), taken))
   }
 
   return keys
+}
+
+/** Whether a column says a day in some row and nothing but a day in any. */
+function readsAsDays(database: Database, column: string): boolean {
+  const said = database.rows.map((row) => (row[column] ?? '').trim()).filter(Boolean)
+  return said.length > 0 && said.every((one) => dayOf(one) !== null)
 }
 
 /** Which of the CSVs to read. Notion writes `Table id.csv` for the view that was
