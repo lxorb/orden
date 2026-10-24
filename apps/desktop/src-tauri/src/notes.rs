@@ -1017,8 +1017,12 @@ mod tests {
         );
     }
 
+    /// Sync's move leaves what sync carries as an entry of its own, a PDF's highlights,
+    /// and takes what it does not: a page note's paper goes with the note (#551,
+    /// pages/carried.ts). A paper left behind was downloaded again under the new name
+    /// and the old one listed as a new PDF, which spread to every device.
     #[test]
-    fn a_file_moved_alone_takes_nothing_with_it() {
+    fn a_file_moved_alone_takes_only_what_sync_does_not_carry() {
         let dir = tempfile::tempdir().expect("a temp folder");
         let pdf = dir.path().join("A.pdf");
         fs::write(&pdf, "%PDF").expect("the PDF");
@@ -1026,14 +1030,21 @@ mod tests {
         let note = dir.path().join("Lecture.pages");
         fs::write(&note, "{}").expect("the page note");
         fs::write(dir.path().join("Lecture.pages.pdf"), "%PDF").expect("its paper");
+        fs::write(dir.path().join("Lecture.pages.pdf.highlights.json"), "{}")
+            .expect("the paper's highlights");
 
         super::renamed(&pdf, &dir.path().join("B.pdf"), false, true).expect("the PDF");
         super::renamed(&note, &dir.path().join("Week.pages"), false, true).expect("the note");
 
         assert!(dir.path().join("A.pdf.highlights.json").exists());
         assert!(!dir.path().join("B.pdf.highlights.json").exists());
-        assert!(dir.path().join("Lecture.pages.pdf").exists());
-        assert!(!dir.path().join("Week.pages.pdf").exists());
+        assert!(!dir.path().join("Lecture.pages.pdf").exists());
+        assert!(dir.path().join("Week.pages.pdf").exists());
+        assert!(dir
+            .path()
+            .join("Lecture.pages.pdf.highlights.json")
+            .exists());
+        assert!(!dir.path().join("Week.pages.pdf.highlights.json").exists());
     }
 
     #[test]

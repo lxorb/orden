@@ -644,13 +644,18 @@ describe("a page note's paper", () => {
     expect(disk.files.has('/Notes/Week 1.pages.pdf.highlights.json')).toBe(true)
   })
 
-  test('stays where it is when sync moves the note alone', async () => {
-    // The paper is a file of its own to sync, moved by its own entry.
+  test('follows the note when sync moves it, and leaves its highlights', async () => {
+    // Sync carries the paper with the note and never as an entry of its own (#551), and
+    // the paper's highlights as one of their own, moved by their own move.
+    await webInvoke('write_highlights', { path: paper, content: '{"version":1}' })
+
     await webInvoke('rename_note', { from: note, to: '/Notes/Week 1.pages', alone: true })
 
     expect(disk.files.has('/Notes/Week 1.pages')).toBe(true)
-    expect(disk.assets.has(paper)).toBe(true)
-    expect(disk.assets.has('/Notes/Week 1.pages.pdf')).toBe(false)
+    expect(disk.assets.has(paper)).toBe(false)
+    expect(disk.assets.get('/Notes/Week 1.pages.pdf')?.data).toBe('JVBERg==')
+    expect(disk.files.has('/Notes/Lecture.pages.pdf.highlights.json')).toBe(true)
+    expect(disk.files.has('/Notes/Week 1.pages.pdf.highlights.json')).toBe(false)
   })
 
   test('is never taken from somebody else, however the note moves', async () => {

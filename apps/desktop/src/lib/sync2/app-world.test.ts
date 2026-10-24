@@ -30,6 +30,12 @@ vi.mock('../tauri', () => ({
       if (notes.has(from)) notes.set(to, notes.get(from)!)
       notes.delete(from)
       const alone = (args as { alone?: boolean }).alone === true
+      // A page note's paper goes with it either way: sync carries it with the note, never
+      // as an entry of its own.
+      if (from.endsWith('.pages') && notes.has(`${from}.pdf`)) {
+        notes.set(`${to}.pdf`, notes.get(`${from}.pdf`)!)
+        notes.delete(`${from}.pdf`)
+      }
       if (from.endsWith('.pdf') && !alone) {
         const sidecar = notes.get(`${from}.highlights.json`)
         notes.delete(`${from}.highlights.json`)
@@ -116,5 +122,25 @@ describe('a PDF another device renamed, with its highlights', () => {
 
     expect(notes.get('/s/B.pdf.highlights.json')).toBe('{"version":1}')
     expect(renames.at(-1)).toEqual({ from: '/s/A.pdf', to: '/s/B.pdf', alone: true })
+  })
+})
+
+describe('a page note another device renamed', () => {
+  // The paper is no entry of the account's (#551): it goes with the note. Left behind,
+  // it was downloaded again under the new name and the old one listed as a new PDF.
+  test('moves the note and its paper', async () => {
+    notes.set('/s/X.pages', '{}')
+    notes.set('/s/X.pages.pdf', '%PDF')
+    const telling = {
+      touching: () => undefined,
+      moved: () => Promise.resolve(),
+    } as unknown as Parameters<typeof appWorld>[1]
+    const { disk } = appWorld(() => null, telling)
+
+    await disk.move('/s/X.pages', '/s/Y.pages', 'file')
+
+    expect(notes.has('/s/Y.pages')).toBe(true)
+    expect(notes.get('/s/Y.pages.pdf')).toBe('%PDF')
+    expect(notes.has('/s/X.pages.pdf')).toBe(false)
   })
 })
