@@ -88,7 +88,7 @@ describe('a note made beside a tab from a space that is not on screen', () => {
     await workspace.selectSpace('away')
   })
 
-  test('extracted, steps past a note of the same name there', async () => {
+  test('extracted, writes nothing there: only a note of the open space is carved', async () => {
     const tab = workspace.active
     if (tab?.path !== '/home/Plan.md') throw new Error('Plan.md is not in front')
     const text = '# Plan\n\n# Ideas\n\nnew\n'
@@ -96,7 +96,7 @@ describe('a note made beside a tab from a space that is not on screen', () => {
     await workspace.extractSelection(text.indexOf('# Ideas'), text.length)
 
     expect(files().get('/home/Ideas.md')).toBe('my ideas\n')
-    expect(files().get('/home/Ideas 2.md')).toContain('new')
+    expect(files().has('/home/Ideas 2.md')).toBe(false)
   })
 
   test('out of a canvas card, steps past a note of the same name there', async () => {
