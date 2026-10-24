@@ -15,6 +15,7 @@ import { openerFor, sharedKind } from './openers'
 import { links, type Retargeting } from './link-index.svelte'
 import { onDisk } from './on-disk'
 import { noteId } from './note-id'
+import { onDisk } from './on-disk'
 import { insideOnly } from './automation/inside'
 import {
   askCase,
@@ -3752,7 +3753,8 @@ class Workspace {
     if (!dir) return null
 
     const stem = nameFromContent(text) ?? UNTITLED
-    const path = joinPath(dir, this.freeName(dir, `${stem}.md`))
+    // A card's folder can be one in a space that is not on screen.
+    const path = joinPath(dir, await this.freeNameOnDisk(dir, `${stem}.md`))
     this.showEntry(this.freshEntry(path, false))
 
     await writeFile(path, text)
@@ -3842,6 +3844,22 @@ class Workspace {
     const taken = pathKeys(this.everyPath(), dir)
     if (except !== undefined) taken.delete(pathKey(except, dir))
     return freePath(wanted, (candidate) => taken.has(pathKey(joinPath(dir, candidate), dir)))
+  }
+
+  /** `freeName`, with the disk asked too, for a folder taken from a tab rather than
+   *  from the list. Tabs outlive a space switch and `freeName` knows only the
+   *  listing on screen, so `Ideas.md` in the other space came back free and was
+   *  written over. Stepped like a draft's place; see `claim` in saving.svelte.ts. */
+  async freeNameOnDisk(dir: string, wanted: string): Promise<string> {
+    const found: string[] = []
+    for (;;) {
+      const name = freePath(
+        wanted,
+        (candidate) => found.includes(candidate) || this.freeName(dir, candidate) !== candidate,
+      )
+      if (await onDisk(joinPath(dir, name))) found.push(name)
+      else if (this.freeName(dir, name) === name) return name
+    }
   }
 
   /** Every path in the open space. `notes` holds only files; this counts the

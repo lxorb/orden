@@ -70,9 +70,9 @@ function space(notes: Record<string, string>, openAt?: string) {
       return Promise.resolve()
     },
     // The store's own numbering, which is `freePath` over everything the space
-    // holds; see `freeName` in workspace.svelte.ts.
-    freeName: (dir: string, wanted: string) =>
-      freePath(wanted, (candidate) => disk.has(`${dir}/${candidate}`)),
+    // holds and the disk; see `freeNameOnDisk` in workspace.svelte.ts.
+    freeNameOnDisk: (dir: string, wanted: string) =>
+      Promise.resolve(freePath(wanted, (candidate) => disk.has(`${dir}/${candidate}`))),
     loadTree: () => Promise.resolve(),
     persist: () => undefined,
   }

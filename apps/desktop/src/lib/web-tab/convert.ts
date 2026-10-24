@@ -15,6 +15,7 @@
 
 import { account } from '../account.svelte'
 import { links } from '../link-index.svelte'
+import { onDisk } from '../on-disk'
 import { shownName } from '../note-name'
 import { folderOf, isMarkdownPath, nameOf, withoutExtension } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
@@ -36,7 +37,7 @@ export interface Converts {
    *  makes a conversion something done to a file rather than to a file somebody
    *  is looking at; see `asShortcut`. */
   documentAt(path: string): NoteDoc | null
-  freeName(dir: string, wanted: string): string
+  freeNameOnDisk(dir: string, wanted: string): Promise<string>
   showEntry(entry: Entry): void
   freshEntry(path: string, isFolder: boolean): Entry
   /** The note that went, said the way every file operation is; see
@@ -79,13 +80,15 @@ export async function asShortcut(ws: Converts, path: string): Promise<string | n
   // somebody else put there. The first is this note already, and it stays the one
   // file rather than gaining a `Docs 2.url` beside it; anything else keeps this one
   // under a name of its own.
-  const taken = ws.entryAt(shortcut) !== null
+  // The disk is asked as well as the listing: the note can be in a space that is
+  // not on screen, whose files no listing here has read.
+  const taken = ws.entryAt(shortcut) !== null || (await onDisk(shortcut))
   const there = taken
     ? await invoke<string>('read_note', { path: shortcut }).catch(() => null)
     : null
   const said = there === null ? null : readWebFile(shortcut, there)
   const already = said !== null && sameSite(said.home ?? said.url, url)
-  const free = taken && !already ? ws.freeName(folderOf(path), nameOf(shortcut)) : null
+  const free = taken && !already ? await ws.freeNameOnDisk(folderOf(path), nameOf(shortcut)) : null
   const target = free === null ? shortcut : joinPath(folderOf(path), free)
 
   if (!already) {
