@@ -35,6 +35,7 @@ vi.mock('../import/apply', () => ({
 
 vi.mock('./bridge', () => ({
   onTheActivity: () => true,
+  frameWord: () => Promise.resolve('word'),
   method: (name: string) =>
     ({
       handed: () => '',
