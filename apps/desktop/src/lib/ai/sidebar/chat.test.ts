@@ -46,6 +46,12 @@ const place = vi.hoisted(() => ({
   notes: [],
   leftOutOf: () => [],
   noteText: () => Promise.resolve(null),
+  // A note made of the thread's words: the path it was written at, or null where the
+  // folder may not be written.
+  noteFrom: vi.fn((_text: string, folder?: string) =>
+    Promise.resolve<string | null>(folder ? `${folder}/Answer.md` : null),
+  ),
+  open: vi.fn(() => Promise.resolve()),
 }))
 
 vi.mock('../../workspace.svelte', () => ({ workspace: place }))
@@ -261,5 +267,126 @@ describe('the panel’s chats', () => {
     await vi.advanceTimersByTimeAsync(7_200_000)
     vi.useRealTimers()
     expect(engine.send).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('the field while a message is changed', () => {
+  beforeEach(() => {
+    kept.clear()
+    localStorage.clear()
+  })
+
+  /** A thread with one message of the reader's in it, open. */
+  async function asked() {
+    const { keepThread, newThread } = await import('../chat/threads')
+    const thread = newThread('work', 'p', 'm')
+    thread.title = 'Plan'
+    thread.turns = [
+      { id: 'u1', role: 'you', at: 1, parts: [], draft: { text: 'old question', attachments: [] } },
+    ]
+    await keepThread(thread)
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work'])
+    await chat.openThread(thread.id, false)
+    return chat
+  }
+
+  const note = { kind: 'note', path: '/notes/Work/Plan.md', name: 'Plan' } as never
+
+  test('keeps the draft aside while an earlier message is edited, and gives it back on Escape', async () => {
+    const chat = await asked()
+    chat.text = 'a long new draft'
+    chat.chips = [note]
+
+    chat.startEdit('u1')
+    expect(chat.text).toBe('old question')
+    chat.cancelEdit()
+
+    expect(chat.text).toBe('a long new draft')
+    expect(chat.chips).toEqual([note])
+  })
+
+  test('gives the draft back once the edited message is sent', async () => {
+    const chat = await asked()
+    chat.text = 'a long new draft'
+
+    chat.startEdit('u1')
+    chat.text = 'old question, fixed'
+    chat.submit({ front: null, selection: '' })
+
+    expect(chat.editing).toBe(null)
+    expect(chat.text).toBe('a long new draft')
+  })
+
+  test('keeps the draft aside while a queued message is changed, and gives it back once sent', async () => {
+    const chat = await asked()
+    const id = String(chat.thread?.id)
+    const around = { front: null, selection: '' }
+    ;(chat as unknown as { queued: Record<string, unknown[]> }).queued = {
+      [id]: [{ id: 'q1', text: 'queued words', chips: [], around }],
+    }
+    chat.text = 'a long new draft'
+    chat.chips = [note]
+
+    chat.editQueued('q1')
+    expect([chat.text, chat.chips]).toEqual(['queued words', []])
+    chat.submit(around)
+
+    expect(chat.text).toBe('a long new draft')
+    expect(chat.chips).toEqual([note])
+  })
+})
+
+describe('a note made of a thread', () => {
+  beforeEach(() => {
+    kept.clear()
+    localStorage.clear()
+    place.noteFrom.mockClear()
+  })
+
+  /** A thread asked in `space`, open while `front` is the space in front. */
+  async function openIn(space: string, front: string) {
+    const thread = await had(space, 'Plan', 1_000)
+    const chat = await launched()
+    chat.here(space)
+    chat.know(['work', 'home'])
+    await chat.openThread(thread.id, false)
+    chat.here(front)
+    place.activeSpaceId = front
+    return chat
+  }
+
+  const said = (chat: { thread: Thread | null }) =>
+    chat.thread?.turns.flatMap((turn) =>
+      turn.parts.flatMap((part) => (part.kind === 'notice' ? [part.text] : [])),
+    )
+
+  test('is written in the thread’s own space, not the one in front', async () => {
+    const chat = await openIn('work', 'home')
+
+    await chat.exportThread()
+
+    expect(place.noteFrom.mock.calls.map((call) => call[1])).toEqual(['/notes/Work'])
+  })
+
+  test('is refused, and says so, where the thread’s space may only be read', async () => {
+    const chat = await openIn('work', 'home')
+    place.noteFrom.mockResolvedValueOnce(null)
+
+    await chat.noteFrom('# Answer\n')
+
+    expect(place.noteFrom).toHaveBeenCalledTimes(1)
+    await vi.waitFor(() => expect(said(chat)).toEqual(['Save as a note · you can only read this space']))
+  })
+
+  test('is refused, and says so, where the thread’s space is not on this device', async () => {
+    const chat = await openIn('work', 'home')
+    if (chat.thread) chat.thread.space = 'gone'
+
+    await chat.noteFrom('# Answer\n')
+
+    expect(place.noteFrom).not.toHaveBeenCalled()
+    await vi.waitFor(() => expect(said(chat)).toEqual(['Save as a note · no such space']))
   })
 })
