@@ -13,6 +13,7 @@
  *  changed after it was written does not carry it. */
 
 import { type FrontMatterRow, writeFrontMatter } from '@nib/markdown/front-matter'
+import { TAG_NAME } from '@nib/markdown/tags'
 
 export interface Meta {
   /** The day it was made, `YYYY-MM-DD`. */
@@ -39,8 +40,9 @@ export function frontMatterFor(meta: Meta): string {
   if (meta.date) rows.push(['date', meta.date])
   if (meta.updated && meta.updated !== meta.date) rows.push(['updated', meta.updated])
 
-  const tags = tagList(meta.tags ?? [])
+  const { tags, words } = tagList(meta.tags ?? [])
   if (tags.length) rows.push(['tags', tags])
+  if (words.length) rows.push(['labels', words])
 
   // Two properties that come out as one key - `Status` and `status`, or a `Date`
   // beside the note's own date - would be one key written twice, which is front
@@ -109,29 +111,51 @@ export function freeKey(wanted: string, taken: Set<string>): string {
   return key
 }
 
+/** What a tag's name may hold: the grammar the app reads a tag with, a letter, a
+ *  mark, a digit or an emoji, then those and `-`, `_` and `/`, and never only
+ *  digits. */
+const TAG = new RegExp(`^${TAG_NAME}$`, 'u')
+
 /** What another app called a label, as a tag nib can hold: no spaces, no hash in
- *  front, and the slashes kept, because a nested tag is a nested tag in both. */
+ *  front, and the slashes kept, because a nested tag is a nested tag in both. A
+ *  character the app's tags cannot hold is a hyphen; one they can, an accent
+ *  written as a mark or a `🔥`, stays. */
 export function tagName(label: string): string {
-  const one = label
+  return tidied(label.replace(/[^\p{L}\p{M}\p{N}\p{Extended_Pictographic}\s/_-]+/gu, '-'))
+}
+
+/** A label with its blanks as hyphens and its hash off, and nothing else changed. */
+function tidied(label: string): string {
+  return label
     .trim()
     .replace(/^#+/, '')
-    .replace(/[^\p{L}\p{N}/_-]+/gu, '-')
+    .replace(/\s+/g, '-')
     .replace(/-{2,}/g, '-')
     .replace(/^-+|-+$/g, '')
     .replace(/\/{2,}/g, '/')
-
-  return one
 }
 
-function tagList(tags: readonly string[]): string[] {
-  const out: string[] = []
+/** A note's labels as tags, and the words of the ones that cannot be one.
+ *
+ *  Only blanks and a hash in front are what a label loses on its way to a tag.
+ *  One that would lose more - `C++` and `C#`, which would both be `C`, or `2026`,
+ *  which is no tag at all - is not made into a tag it never was, nor left out:
+ *  its words are kept under `labels`, as it was written. */
+function tagList(labels: readonly string[]): { tags: string[]; words: string[] } {
+  const tags: string[] = []
+  const words: string[] = []
 
-  for (const tag of tags) {
-    const name = tagName(tag)
-    if (name && !out.includes(name)) out.push(name)
+  for (const label of labels) {
+    const name = tagName(label)
+    const said = label.trim()
+    if (name && name === tidied(label) && TAG.test(name)) {
+      if (!tags.includes(name)) tags.push(name)
+    } else if (said && !words.includes(said)) {
+      words.push(said)
+    }
   }
 
-  return out
+  return { tags, words }
 }
 
 /** The day a date lands on, `YYYY-MM-DD`, out of whichever shape the export

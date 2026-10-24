@@ -74,6 +74,17 @@ describe('front matter for an imported note', () => {
     expect(block).toContain("property-2: '5'")
   })
 
+  test('keeps every tag the app can hold, and the words of a label that cannot be one', () => {
+    const block = frontMatterFor({
+      tags: ['🔥', 'C++', 'C#', 'work', 'café', '2026', 'half-done!'],
+    })
+
+    expect(block).toContain('tags: [🔥, work, café]\n')
+    expect(block).toContain('labels:')
+    for (const words of ['C++', 'C#', '2026', 'half-done!']) expect(block).toContain(words)
+    expect(block).not.toMatch(/tags: .*\bC\b/)
+  })
+
   test('a note with nothing to say carries no fence at all', () => {
     expect(frontMatterFor({})).toBe('')
     expect(frontMatterFor({ tags: [], extra: [['Empty', '  ']] })).toBe('')
@@ -113,6 +124,8 @@ describe('a tag out of a label', () => {
 
   test('keeps letters that are not English ones', () => {
     expect(tagName('Zürich')).toBe('Zürich')
+    expect(tagName('🔥')).toBe('🔥')
+    expect(tagName('Zu\u0308rich')).toBe('Zu\u0308rich')
     expect(tagName('日本語')).toBe('日本語')
   })
 })
