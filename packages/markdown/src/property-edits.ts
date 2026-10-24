@@ -19,7 +19,7 @@
 
 import { oneEdit, type TextEdit } from './edits'
 import { frontMatterBlock, frontMatterEdit } from './front-matter'
-import { type Property, type PropertyKind, readProperties } from './properties'
+import { type Property, type PropertyKind, propertyNamed, readProperties } from './properties'
 import { flowItem, scalar } from './yaml'
 
 /** One item of a list as what it means: words, a number, a yes or no, or nothing.
@@ -133,10 +133,13 @@ export function writeList(
   key: string,
   items: readonly ListItem[],
 ): TextEdit | null {
-  const found = readProperties(source)?.find((one) => one.key === key)
+  const rows = readProperties(source)
+  const found = rows && propertyNamed(rows, key)
   if (!found) return frontMatterEdit(source, key, writtenList(items))
 
-  const after = `${source.slice(0, found.from)}${listLines(key, items)}${source.slice(found.to)}`
+  // In the note's own spelling of the key, which may be another case than asked.
+  const lines = listLines(found.key, items)
+  const after = `${source.slice(0, found.from)}${lines}${source.slice(found.to)}`
   return oneEdit(source, after)
 }
 

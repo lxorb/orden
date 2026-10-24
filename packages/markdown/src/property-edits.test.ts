@@ -276,6 +276,13 @@ describe('a list', () => {
     expect(added('---\nids:\n- - x\n- b\n---\n')).toBe('---\nids:\n  - - x\n  - b\n  - z\n---\n')
   })
 
+  test('a list is written over the key the note spells in another case', () => {
+    const note = '---\nTags:\n  - x\n  - y\ntitle: a\n---\n'
+    expect(applied(note, writeList(note, 'tags', ['x', 'z']))).toBe(
+      '---\nTags: [x, z]\ntitle: a\n---\n',
+    )
+  })
+
   test('the last chip off leaves the key with an empty list rather than no key', () => {
     const written = applied(NOTE, writeList(NOTE, 'tags', []))
 
