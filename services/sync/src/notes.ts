@@ -968,6 +968,11 @@ notes.delete('/notes/:id', async (context) => {
     return context.json({ ok: true })
   }
 
+  // Deleted already, as the tree answers too: a second delete would start the 14 days
+  // of Recently deleted again, and on a purged tombstone it would put an empty note
+  // back there for somebody to restore.
+  if (note.deleted) return context.json({ ok: true })
+
   const at = now()
   await atNextSeq(
     context.env,
