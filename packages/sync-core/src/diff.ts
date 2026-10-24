@@ -166,6 +166,13 @@ function paired(gone: string, come: string): Diff[] {
   const m = after.length
   if (!n || !m || (n === 1 && m === 1) || n * m > MOST_PAIRED) return tidied(gone, come)
 
+  // A line split in two, or two joined, pairs with one of its halves and reads as the
+  // rest of it taken out and typed again on a line of its own. Read as one stretch it
+  // is the break put in or taken out, and it writes far less: where the run differs
+  // only in white space, or that reading writes a third less, it is the one.
+  const plain = tidied(gone, come)
+  if (plain.every(([operation, text]) => operation === DIFF_EQUAL || !text.trim())) return plain
+
   // The pairs that make the run most alike, in order: a longest common subsequence
   // weighted by how alike each pair reads, each pair read once.
   let budget = MOST_COMPARED
@@ -204,6 +211,8 @@ function paired(gone: string, come: string): Diff[] {
     else if (gap.come) out.push([DIFF_INSERT, gap.come])
     gap = { gone: '', come: '' }
   }
+  // No two lines alike: the run is one stretch.
+  if (!(best[0]?.[0] ?? 0)) return plain
   let i = 0
   let j = 0
   while (i < n || j < m) {
@@ -223,13 +232,7 @@ function paired(gone: string, come: string): Diff[] {
     }
   }
   close()
-  // A line split in two, or two joined, pairs with one of its halves and reads as the
-  // rest of it taken out and typed again on a line of its own. Read as one stretch it
-  // is the break put in or taken out, and it writes far less: where the run differs
-  // only in white space, or that reading writes a third less, it is the one.
-  const plain = tidied(gone, come)
-  const spaces = plain.every(([operation, text]) => operation === DIFF_EQUAL || !text.trim())
-  return spaces || cost(plain) * 3 <= cost(out) * 2 ? plain : out
+  return cost(plain) * 3 <= cost(out) * 2 ? plain : out
 }
 
 /** How many characters a diff takes out and puts in. */
