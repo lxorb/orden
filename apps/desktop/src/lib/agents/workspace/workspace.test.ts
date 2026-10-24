@@ -890,6 +890,30 @@ describe('the notes, on the road', () => {
     )
   })
 
+  test('a property given as words is written as those words, not what YAML reads bare', async () => {
+    // `yes` bare is a boolean, `012` a number, and `a, b` two members of the list.
+    await call('set_property', { space: 'Home', path: 'Soup', key: 'status', value: 'yes' })
+    expect(docs.writeNote).toHaveBeenLastCalledWith(
+      expect.anything(),
+      expect.anything(),
+      "---\nstatus: 'yes'\n---\n# Soup\n\n- [ ] Buy milk\n",
+      'r1',
+    )
+
+    await call('set_property', {
+      space: 'Home',
+      path: 'Soup',
+      key: 'tags',
+      value: ['012', 'salt, pepper', 3, true],
+    })
+    expect(docs.writeNote).toHaveBeenLastCalledWith(
+      expect.anything(),
+      expect.anything(),
+      "---\ntags: ['012', 'salt, pepper', 3, true]\n---\n# Soup\n\n- [ ] Buy milk\n",
+      'r1',
+    )
+  })
+
   test('a task is ticked on its own line', async () => {
     await call('set_task', { space: 'Home', path: 'Soup', at: { task: 'Buy milk' }, done: true })
     expect(docs.editNote).toHaveBeenCalledWith(
