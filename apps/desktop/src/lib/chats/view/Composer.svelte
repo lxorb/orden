@@ -16,7 +16,7 @@
    *  the composer's words and nothing else. */
   import type { FileRef, Member, Poll } from '@nib/chats'
   import { ASK_EVERYONE_PAST } from '@nib/chats/limits'
-  import { createEditor, EditorView, modeEffects } from '@nib/editor'
+  import { createEditor, EditorView, modeEffects, setNoteIndex } from '@nib/editor'
   import { onMount, untrack } from 'svelte'
   import { fade } from 'svelte/transition'
   import { chooseFiles } from '../../choose-files'
@@ -169,6 +169,14 @@
       made.destroy()
       attachments.clear()
     }
+  })
+
+  // The chat's space's links, kept up to date the way a pane's are (Editor.svelte):
+  // handed once as the field came, a note made since was a link to nothing, and one
+  // the scan had not reached yet was too.
+  $effect(() => {
+    const index = links.index(path)
+    if (editor) setNoteIndex(editor, index)
   })
 
   // An edit takes the composer over with the message's words; leaving it gives the
