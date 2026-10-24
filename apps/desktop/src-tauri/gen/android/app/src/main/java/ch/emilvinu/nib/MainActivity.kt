@@ -112,7 +112,12 @@ class MainActivity : TauriActivity() {
 
     // Read before the page exists, which is the usual case: a share is what
     // started the app. The page asks for it as it comes up; see mobile/handed.ts.
-    read(intent)
+    // Only on a fresh start: an activity made again after the process died, or
+    // opened from Recents, is handed the intent it first started with, and reading
+    // it again started the recording again or brought a share back twice.
+    val fresh = savedInstanceState == null &&
+      ((intent?.flags ?: 0) and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) == 0
+    if (fresh) read(intent)
   }
 
   /** An intent for an app that is already open. `singleTask` means every share
