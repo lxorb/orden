@@ -16,6 +16,7 @@ import { freePath } from '@nib/markdown/paths'
 import { sha256 } from '../bytes'
 import { applied, type Edit } from '../search/replace'
 import type { Retargeting } from '../link-index.svelte'
+import type { Holding } from '../sync/holding'
 import { onDisk } from '../on-disk'
 import { folderOf, samePath } from '../space-paths'
 import { invoke } from '../tauri'
@@ -299,24 +300,46 @@ export async function heldIn(path: string): Promise<Pick<Kept, 'notes' | 'folder
  *  so the account's copy can stand in for it. A dotfile anywhere under it says no:
  *  sync never hands the account one, so `.obsidian/` or `.git/` deleted outright was
  *  gone for good. So does a file sync has not pushed yet, a picture or a paper
- *  dropped in offline or since the last pass. What sync leaves alone as clutter is
- *  not worth keeping either way. */
+ *  dropped in offline or since the last pass, and one written since it was pushed,
+ *  whose newest bytes only this disk has. So does a folder the listing could not
+ *  read into - a link out of the space, or one nested past the depth the listing
+ *  stops at - which looks empty and is not. What sync leaves alone as clutter is not
+ *  worth keeping either way.
+ *
+ *  Asked one file at a time, each against what the account was handed, with one
+ *  allowance of bytes for the whole folder: a folder of thousands of notes is not
+ *  worth reading through, and once the allowance is spent the answer is no. */
 export async function accountHoldsAll(
   path: string,
-  holds: (path: string) => boolean,
+  holds: (path: string, how: Holding) => Promise<boolean>,
 ): Promise<boolean> {
   const options = { papers: true, every: true, showHidden: true }
   const listed = await invoke<Entry>('read_tree', { root: path, options }).catch(() => null)
   if (!listed) return false
 
-  const walk = (entry: Entry): boolean =>
-    entry.children.every((one) => {
+  const budget = { left: HOLDS_READ }
+  const walk = async (entry: Entry): Promise<boolean> => {
+    if (entry.unlisted) return false
+    for (const one of entry.children) {
       if (one.name.startsWith('.')) return false
-      if (one.is_dir) return walk(one)
-      return CLUTTER.test(one.name) || holds(one.path)
-    })
+      if (one.is_dir) {
+        if (!(await walk(one))) return false
+      } else if (
+        !CLUTTER.test(one.name) &&
+        !(await holds(one.path, { modified: one.modified, budget }))
+      ) {
+        return false
+      }
+    }
+    return true
+  }
   return walk(listed)
 }
+
+/** How much of a folder's files asking whether the account holds them may read. A
+ *  folder of notes is well inside it; one of papers written since their last push is
+ *  not read at all, and past it the folder goes to the trash. */
+const HOLDS_READ = 16_000_000
 
 /** What sync leaves alone besides dotfiles; see `ignored` in space_watch/walk.rs. */
 const CLUTTER = /^(~\$.*|thumbs\.db|desktop\.ini|Icon\r)$/i

@@ -44,6 +44,13 @@ pub struct Entry {
     /// receives everywhere else.
     #[serde(skip_serializing_if = "std::ops::Not::not")]
     evicted: bool,
+    /// A folder whose children were not read: a link out of the space, one the read
+    /// had been inside already, or one past `MAX_DEPTH`, and one that could not be
+    /// opened. It looks empty and may not be, which is what a delete has to know
+    /// before it leaves a folder to the account; see `accountHoldsAll` in
+    /// lib/workspace/undoing.ts.
+    #[serde(skip_serializing_if = "std::ops::Not::not")]
+    unlisted: bool,
 }
 
 /// How the window would like the tree read, which is whatever its own settings
@@ -136,9 +143,11 @@ fn walk(
     left: &mut usize,
 ) -> Result<Entry, String> {
     let mut children = Vec::new();
+    let mut unlisted = true;
 
     if depth < MAX_DEPTH && seen.first_time(path) {
         if let Ok(entries) = fs::read_dir(path) {
+            unlisted = false;
             for entry in entries.flatten() {
                 let (child, name, evicted) = named(&entry);
 
@@ -173,7 +182,10 @@ fn walk(
                     children.push(if in_the_space(space, &child) {
                         walk(space, &child, options, depth + 1, seen, left)?
                     } else {
-                        folder(&child, name)
+                        Entry {
+                            unlisted: true,
+                            ..folder(&child, name)
+                        }
                     });
                 } else if options.every
                     || ((is_markdown(&child)
@@ -218,6 +230,7 @@ fn walk(
         ),
     );
     here.children = children;
+    here.unlisted = unlisted;
     Ok(here)
 }
 
@@ -253,6 +266,7 @@ fn listed(path: &Path, name: String, is_dir: bool, meta: Option<fs::Metadata>) -
         created: clock::of(meta.as_ref().and_then(|one| one.created().ok())),
         children: Vec::new(),
         evicted: false,
+        unlisted: false,
     }
 }
 
@@ -314,6 +328,7 @@ mod tests {
             created: modified,
             children: Vec::new(),
             evicted: false,
+            unlisted: false,
         }
     }
 
@@ -506,6 +521,30 @@ mod tests {
         let out = &top.children[0];
         assert!(out.is_dir, "a folder is what it is");
         assert!(out.children.is_empty(), "the walk left the space");
+        // And says so: empty here is not the same as empty, which is what a delete
+        // asks before it leaves the folder to the account.
+        assert!(out.unlisted, "a link out is not read into");
+        assert!(!top.unlisted, "the space itself is read");
+    }
+
+    /// A folder nested past `MAX_DEPTH` is listed and not read, and says so.
+    #[test]
+    fn a_folder_past_the_depth_limit_says_it_was_not_read() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let here = dir.path();
+        let mut deep = here.to_path_buf();
+        for _ in 0..super::MAX_DEPTH {
+            deep = deep.join("d");
+        }
+        std::fs::create_dir_all(&deep).expect("a deep folder");
+        std::fs::write(deep.join("Deep.md"), "").expect("a note past the limit");
+
+        let mut last = read(here, &options());
+        while let Some(next) = last.children.pop() {
+            last = next;
+        }
+        assert!(last.children.is_empty(), "past the limit nothing is read");
+        assert!(last.unlisted, "and the folder says so");
     }
 
     /// The tightest loop there is: a folder holding a link to itself. The link is
@@ -527,6 +566,7 @@ mod tests {
         let notes = &top.children[0];
         assert_eq!(names(&notes.children), ["itself"]);
         assert!(notes.children[0].children.is_empty(), "read twice");
+        assert!(notes.children[0].unlisted, "and says it was not read again");
     }
 
     /// A space larger than a tree is refused in words. Half a tree is the answer

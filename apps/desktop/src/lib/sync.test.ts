@@ -56,7 +56,11 @@ const fake = vi.hoisted(() => {
   const spaces = () => [...new Set([...disk.keys()].map((path) => `/${path.split('/')[1]}`))].sort()
 
   function tree(root: string): Entry {
-    if (!spaces().includes(root)) throw new Error('root is not a directory')
+    // A folder exists while something is in it, a space or one inside it; asking
+    // after anything else is refused, as the crate refuses a root that is not a folder.
+    if (![...disk.keys()].some((one) => one.startsWith(`${root}/`))) {
+      throw new Error('root is not a directory')
+    }
 
     const node = (path: string): Entry => ({
       name: basename(path),
@@ -114,11 +118,14 @@ const fake = vi.hoisted(() => {
       }
       case 'delete_space':
       case 'trash_item':
-        // Which of the two a folder went through is the difference between
+      case 'delete_note':
+      case 'delete_folder':
+        // Which of these a file or a folder went through is the difference between
         // gone and recoverable, so the fake writes it down.
         remote.local.push(`${command} ${path}`)
+        disk.delete(path)
         for (const key of [...disk.keys()]) if (key.startsWith(`${path}/`)) disk.delete(key)
-        return undefined as T
+        return { id: `trash-${path}` } as T
       case 'read_tree':
         return tree(text(args.root)) as T
       case 'read_note': {
@@ -129,9 +136,12 @@ const fake = vi.hoisted(() => {
       case 'write_note':
         disk.set(path, text(args.content))
         return undefined as T
-      case 'delete_note':
-        disk.delete(path)
-        return undefined as T
+      case 'read_file': {
+        // A paper's bytes, which here are words: what is hashed is the same either way.
+        const bytes = disk.get(path)
+        if (bytes === undefined) throw new Error(`no such file: ${path}`)
+        return new TextEncoder().encode(bytes).buffer as T
+      }
       default:
         return undefined as T
     }
@@ -1836,5 +1846,116 @@ describe('an account gone back to v1 on a device that kept its spaces under v2',
       vi.doUnmock('./sync2/runner.svelte')
       vi.unstubAllGlobals()
     }
+  })
+})
+
+/** Signed in, a delete in a space on the account goes to the account outright, which
+ *  keeps a copy for 14 days. That copy is whatever the last push handed it: a paper
+ *  highlighted or replaced offline since, deleted outright, came back as the bytes from
+ *  before, and a folder's notes edited since came back without the edit. */
+describe('what the account holds of a file', () => {
+  /** A space this machine mirrors, as the last pass left it: each paper and note by
+   *  the words it pushed. The disk here says every file was written at time 0, so a
+   *  paper pushed at another time has been written since. */
+  async function mirrored(
+    files: Record<string, string>,
+    notes: Record<string, string>,
+    pushedAt = 0,
+  ) {
+    const { sha256 } = await import('./bytes')
+    const tracked: Record<string, { hash: string; modified: number }> = {}
+    for (const [path, words] of Object.entries(files)) {
+      tracked[path] = { hash: await sha256(words), modified: pushedAt }
+    }
+    const held: Record<string, { id: string; version: number; hash: string }> = {}
+    for (const [path, words] of Object.entries(notes)) {
+      held[path] = { id: `n-${path}`, version: 1, hash: await sha256(words) }
+    }
+    localStorage.setItem(
+      'nib:mirrors',
+      JSON.stringify({
+        account: 'u1',
+        mirrors: { '/Notes': { spaceId: 's-Notes', root: '/Notes', files: tracked, notes: held } },
+      }),
+    )
+    standInForTheWindow()
+    vi.useFakeTimers()
+    await signIn()
+    account.settled()
+    sync.start()
+    workspace.spaces = [{ id: 'local', name: 'Notes', root: '/Notes' }]
+    workspace.activeSpaceId = 'local'
+    await workspace.loadTree()
+  }
+
+  afterEach(() => {
+    sync.stop()
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+    vi.stubGlobal('localStorage', memoryStorage())
+  })
+
+  test('a paper as it was pushed is held, and goes to the account', async () => {
+    fake.disk.set('/Notes/paper.pdf', '%PDF')
+    await mirrored({ 'paper.pdf': '%PDF' }, {})
+
+    expect(await sync.holds('/Notes/paper.pdf')).toBe(true)
+    await workspace.remove('/Notes/paper.pdf', false)
+    expect(fake.remote.local).toContain('delete_note /Notes/paper.pdf')
+  })
+
+  test('a paper highlighted since the last push goes to the trash', async () => {
+    fake.disk.set('/Notes/paper.pdf', '%PDF highlighted offline')
+    await mirrored({ 'paper.pdf': '%PDF' }, {}, 1)
+
+    expect(await sync.holds('/Notes/paper.pdf')).toBe(false)
+    await workspace.remove('/Notes/paper.pdf', false)
+    expect(fake.remote.local).toContain('trash_item /Notes/paper.pdf')
+    expect(fake.remote.local).not.toContain('delete_note /Notes/paper.pdf')
+  })
+
+  test('and so does a folder whose note was typed into offline', async () => {
+    fake.disk.set('/Notes/Work/a.md', '# a\nwritten offline')
+    await mirrored({}, { 'Work/a.md': '# a' })
+
+    await workspace.remove('/Notes/Work', true)
+
+    expect(fake.remote.local).toContain('trash_item /Notes/Work')
+    expect(fake.remote.local).not.toContain('delete_folder /Notes/Work')
+  })
+
+  test('a note edited since the last push is not held', async () => {
+    fake.disk.set('/Notes/a.md', '# a\nwritten offline')
+    await mirrored({}, { 'a.md': '# a' })
+
+    expect(await sync.holds('/Notes/a.md')).toBe(false)
+  })
+
+  test('a note as it was pushed is held, whichever line endings the file keeps', async () => {
+    fake.disk.set('/Notes/a.md', '# a\r\nb')
+    await mirrored({}, { 'a.md': '# a\nb' })
+
+    expect(await sync.holds('/Notes/a.md')).toBe(true)
+  })
+
+  test('a folder whose paper was replaced since the last push goes to the trash', async () => {
+    fake.disk.set('/Notes/Work/a.md', '# a')
+    fake.disk.set('/Notes/Work/paper.pdf', '%PDF replaced')
+    await mirrored({ 'Work/paper.pdf': '%PDF' }, { 'Work/a.md': '# a' }, 1)
+
+    await workspace.remove('/Notes/Work', true)
+
+    expect(fake.remote.local).toContain('trash_item /Notes/Work')
+    expect(fake.remote.local).not.toContain('delete_folder /Notes/Work')
+  })
+
+  test('and one the account holds all of goes to the account', async () => {
+    fake.disk.set('/Notes/Work/a.md', '# a')
+    fake.disk.set('/Notes/Work/paper.pdf', '%PDF')
+    await mirrored({ 'Work/paper.pdf': '%PDF' }, { 'Work/a.md': '# a' })
+
+    await workspace.remove('/Notes/Work', true)
+
+    expect(fake.remote.local).toContain('delete_folder /Notes/Work')
   })
 })
