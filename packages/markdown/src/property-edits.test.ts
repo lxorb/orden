@@ -203,6 +203,28 @@ describe('a list', () => {
     expect(written).toBe('---\nscores: [1, true, more]\n---\n')
   })
 
+  test('a chip typed into a list is written the way it would be typed bare', () => {
+    const note = '---\nscores: [1, 10]\n---\n'
+    const scores = readProperties(note)?.find((one) => one.key === 'scores')
+    expect(scores).toBeDefined()
+    // Asserted on the line above.
+    const added = (typed: string) =>
+      applied(note, writeList(note, 'scores', withItem(scores!, typed) ?? []))
+
+    expect(added('3')).toBe('---\nscores: [1, 10, 3]\n---\n')
+    expect(added('-2.5')).toBe('---\nscores: [1, 10, -2.5]\n---\n')
+    expect(added('true')).toBe('---\nscores: [1, 10, true]\n---\n')
+    // Bare, each of these would read back as something other than what was typed.
+    expect(added('007')).toBe("---\nscores: [1, 10, '007']\n---\n")
+    expect(added('1e3')).toBe("---\nscores: [1, 10, '1e3']\n---\n")
+    expect(added('yes')).toBe("---\nscores: [1, 10, 'yes']\n---\n")
+    expect(added('null')).toBe("---\nscores: [1, 10, 'null']\n---\n")
+    expect(added('True')).toBe("---\nscores: [1, 10, 'True']\n---\n")
+    expect(added('a: b')).toBe("---\nscores: [1, 10, 'a: b']\n---\n")
+    expect(added('#x')).toBe("---\nscores: [1, 10, '#x']\n---\n")
+    expect(added('more')).toBe('---\nscores: [1, 10, more]\n---\n')
+  })
+
   test('the last chip off leaves the key with an empty list rather than no key', () => {
     const written = applied(NOTE, writeList(NOTE, 'tags', []))
 

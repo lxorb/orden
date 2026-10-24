@@ -114,7 +114,19 @@ export function writeList(
 export function withItem(property: Property, item: string): ListItem[] | null {
   const said = item.trim()
   if (!said || property.items.includes(said)) return null
-  return [...listItems(property), said]
+  return [...listItems(property), typedItem(said)]
+}
+
+/** A chip somebody typed, as what they would have meant typing it bare into the
+ *  note: `3` is the number and `true` the yes, so a chip added to `scores: [1, 10]`
+ *  sums with the others. Only where YAML reads the bare text back as that same
+ *  text, though - `007` would come back as 7, `1e3` as a thousand and `yes` or
+ *  `True` as a yes spelled differently - and those stay the words, which
+ *  `flowItem` quotes. */
+function typedItem(said: string): ListItem {
+  if (said === 'true' || said === 'false') return said === 'true'
+  if (/^-?\d+(?:\.\d+)?$/.test(said) && String(Number(said)) === said) return Number(said)
+  return said
 }
 
 /** The same list with `item` gone. Null where it was not in it, which is a chip
