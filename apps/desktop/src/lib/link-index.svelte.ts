@@ -1434,9 +1434,18 @@ class Links {
 
   /** Gives a block of another note a name, so a link can point at the block.
    *  Called by the editor's `[[…#^` completion, which has nowhere else to get
-   *  one: the block is in a note that is not open. */
+   *  one: the block is in a note that is not open.
+   *
+   *  Nothing is named in a space shared with this account to be read: the copy here
+   *  would stop being the space's, and the sync refuses the change on every pass. A
+   *  tab of another space is handed the open space's notes, so the open space is
+   *  asked about whatever space the tab is in. Imported here rather than at the top,
+   *  because the sharing store reaches the workspace, which reaches this file. */
   async nameBlock(relative: string, line: number, root: string): Promise<string | null> {
     const absolute = insideSpace(root, relative)
+    const { canWriteAt } = await import('./sharing.svelte')
+    if (!canWriteAt(absolute)) return null
+
     const before = await invoke<string>('read_note', { path: absolute }).catch(() => null)
     if (before === null) return null
 

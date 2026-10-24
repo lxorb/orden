@@ -93,6 +93,14 @@ vi.mock('./tauri', async (importOriginal) => ({
   },
 }))
 
+/** The spaces shared with this account to be read, by root. What may be written
+ *  where is sharing.svelte.ts's, which wants an account a unit test has none of. */
+const readOnly = new Set<string>()
+vi.mock('./sharing.svelte', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./sharing.svelte')>()),
+  canWriteAt: (path: string) => ![...readOnly].some((root) => path.startsWith(`${root}/`)),
+}))
+
 /** The space search, stood in for. The index asks it for the mentions of a note,
  *  and the real one is either behind the Rust crate or inside a worker; neither is
  *  here. What matters is the shape of the question and the answer, so the matcher
@@ -927,6 +935,22 @@ describe('naming a block of another note', () => {
 
     const id = await links.nameBlock('Plan.md', 2, ROOT)
     expect(id).not.toBe('aaaaaa')
+  })
+
+  /** A tab of another space is handed the open space's notes, so the root asked
+   *  about may be one shared to be read: its copy here would stop being the space's,
+   *  and the sync would refuse the change on every pass. */
+  test('names nothing in a space shared to be read, and writes nothing there', async () => {
+    await space({ 'Plan.md': '# Plan\n\na line\n' })
+    readOnly.add(ROOT)
+
+    try {
+      expect(await links.nameBlock('Plan.md', 2, ROOT)).toBeNull()
+      expect(written).toEqual([])
+      expect(snapshots).toEqual([])
+    } finally {
+      readOnly.clear()
+    }
   })
 })
 
