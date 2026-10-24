@@ -293,6 +293,9 @@ export const run = {
   /** A picture pasted or dropped: stored where every other pasted picture goes,
    *  and put on the plane as a card of its own. */
   async dropImage(store: CanvasStore, file: File, where: Point | Box, notePath: string | null) {
+    // Before the picture is stored: a plane that may not be written in would refuse
+    // the card, and the file would be left behind with nothing pointing at it.
+    if (store.readOnly) return
     const stored = await storeImage(file, notePath).catch(() => null)
     if (!stored) return
 
@@ -315,7 +318,8 @@ export const run = {
    *  Each imported sheet becomes a picture, so it can be moved and resized like
    *  any other image on the canvas. */
   async dropPdf(store: CanvasStore, file: File, at: Point, notePath: string | null) {
-    if (!notePath) return
+    // Before the question and before every page is rendered and stored; see dropImage.
+    if (!notePath || store.readOnly) return
     const mode = await prompt.choose({
       title: t('Import PDF'),
       detail: t('Choose how to add the pages to the canvas.'),
@@ -427,8 +431,11 @@ export const run = {
       return
     }
 
+    // On a plane that may not be written in, a double click only follows what a card
+    // points at: a card opened to type in would take words the store then drops.
     switch (node.type) {
       case 'text':
+        if (store.readOnly) break
         store.pick(node.id)
         store.editing = node.id
         break
@@ -448,6 +455,7 @@ export const run = {
       }
       // A shape holds words the way a card does, so opening one opens the words.
       case 'shape':
+        if (store.readOnly) break
         store.pick(node.id)
         store.editing = node.id
         break
@@ -649,6 +657,7 @@ export interface KeyView {
 }
 
 function putText(store: CanvasStore, text: string, box: Box, writing = false) {
+  if (store.readOnly) return
   const id = freshId()
   store.edit(withNode(store.canvas, { ...box, id, type: 'text', text }))
   store.pick(id)
@@ -661,6 +670,7 @@ function putText(store: CanvasStore, text: string, box: Box, writing = false) {
  *  PDF viewer's do. Left empty, it goes again, as an empty card does. The arrow is in
  *  hand after it, so the next press picks rather than starting another. */
 export function putWords(store: CanvasStore, box: Box) {
+  if (store.readOnly) return
   const id = freshId()
   store.edit(withNode(store.canvas, { ...box, id, type: 'text', text: '', bare: true }))
   store.pick(id)
@@ -681,6 +691,7 @@ function putFile(store: CanvasStore, file: string, box: Box) {
 }
 
 async function askLabel(store: CanvasStore, id: string) {
+  if (store.readOnly) return
   const node = store.canvas.nodes.find((one) => one.id === id)
   const was =
     node?.type === 'group'
@@ -772,6 +783,9 @@ async function putDown(
   from?: Point,
   to?: Point,
 ) {
+  // Every tool puts something on the plane, which one that may not be written in
+  // refuses; the questions some of them ask first would be answered for nothing.
+  if (store.readOnly) return
   if (isShape(tool)) {
     const corner = from ?? { x: box.x, y: box.y }
     const other = to ?? { x: box.x + box.width, y: box.y + box.height }
