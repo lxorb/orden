@@ -281,6 +281,30 @@ describe('the routes', () => {
     })
   })
 
+  /** A face given back while one of the account's own notes written before their
+   *  pictures were might show it is not decided then, and not kept for good either: it
+   *  is asked about again, as a purge's leftovers are. */
+  test('a face given back that cannot be decided yet is asked about again', async () => {
+    const small = await upload(owner, 'small undecided')
+    const large = await upload(owner, 'large undecided')
+    await call(env, '/v2/me/avatar', { method: 'PUT', token: owner, body: { s: small, l: large } })
+    const old = (
+      await call(env, `/v1/spaces/${space}/notes`, {
+        token: owner,
+        body: { path: 'old.md', content: 'words' },
+      })
+    ).json.note.id
+    env.db.prepare('update notes set front_rev = 1 where id = ?').run(old)
+
+    await call(env, '/v2/me/avatar', { method: 'DELETE', token: owner })
+
+    const queued = env.db
+      .prepare('select hash from unused_blobs order by hash')
+      .all()
+      .map((row) => (row as { hash: string }).hash)
+    expect(queued).toEqual([small, large].sort())
+  })
+
   test('a face that is not WebP or JPEG, or not this account’s, is refused', async () => {
     const png = await upload(member, 'png bytes', 'image/png')
     const webp = await upload(member, 'webp bytes')

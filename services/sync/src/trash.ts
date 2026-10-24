@@ -480,7 +480,7 @@ trash.delete('/notes/:id', async (context) => {
   if (!note) return context.json({ error: 'nothing to delete' }, 404)
 
   await purgeNote(context.env, note)
-  await sweepUnused(context.env, RIGHT_AFTER)
+  await sweepUnused(context.env, RIGHT_AFTER, user.id)
   return context.json({ ok: true })
 })
 
@@ -490,7 +490,7 @@ trash.delete('/spaces/:id', async (context) => {
   if (!space) return context.json({ error: 'nothing to delete' }, 404)
 
   await purgeSpace(context.env, space)
-  await sweepUnused(context.env, RIGHT_AFTER)
+  await sweepUnused(context.env, RIGHT_AFTER, user.id)
   return context.json({ ok: true })
 })
 
@@ -509,7 +509,7 @@ trash.delete('/', async (context) => {
     if (budget <= 0) break
     budget -= await purgeSpace(env, space, budget)
   }
-  await sweepUnused(env, RIGHT_AFTER)
+  await sweepUnused(env, RIGHT_AFTER, user.id)
 
   return context.json({ ok: true })
 })

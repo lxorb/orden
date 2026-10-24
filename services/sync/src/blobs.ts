@@ -9,7 +9,7 @@ import { allows, reachedSpace } from './spaces/space'
 import { BYTES, hashOfBytes, held, holdsItsName, WRONG_BYTES } from './sync2/files'
 import { fits, fitsSql } from './storage'
 import type { Env, Space, Variables, Whoever } from './types'
-import { handedTo, ownOtherwise, unreadUses, usedElsewhere } from './used'
+import { handedTo, ownOtherwise, type Reading, reading, unreadUses, usedElsewhere } from './used'
 
 /** What may be stored, and how much of each.
  *
@@ -188,8 +188,15 @@ blobs.delete('/:hash', async (context) => {
  *  Answers false, and keeps the row, while a space this account is in has more notes
  *  written before their pictures were than one request reads: whether one of them
  *  shows the picture cannot be told yet, and neither deleting it nor handing it over
- *  on a guess is right. The nightly sweep reads them (blog/fill.ts). */
-export async function letGo(env: Env, userId: string, hash: string, own = false): Promise<boolean> {
+ *  on a guess is right. The nightly sweep reads them (blog/fill.ts). `done` is what a
+ *  caller asking about many has read already; see `Reading` in used.ts. */
+export async function letGo(
+  env: Env,
+  userId: string,
+  hash: string,
+  own = false,
+  done: Reading = reading(),
+): Promise<boolean> {
   const owed = await usedElsewhere(env, userId, new Set([hash]), own)
   if (owed.has(userId)) return true
 
@@ -215,7 +222,7 @@ export async function letGo(env: Env, userId: string, hash: string, own = false)
   // chance, until the sweep has read the rest.
   if (mine && picture) {
     const user = { id: userId, email: mine.email }
-    if (!(await unreadUses(env, user, new Set([hash]), owed, false))) return false
+    if (!(await unreadUses(env, user, new Set([hash]), owed, false, done))) return false
   }
 
   await env.DB.batch([

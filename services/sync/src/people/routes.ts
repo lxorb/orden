@@ -204,8 +204,16 @@ async function giveBack(
   if (!old) return
   for (const hash of new Set([old.s, old.l])) {
     // A face's bytes may be a picture in one of the account's own notes too, which
-    // nothing about the face says; see `letGo`.
-    if (!keeping.includes(hash)) await letGo(env, userId, hash, true)
+    // nothing about the face says; see `letGo`. One that cannot be decided yet is asked
+    // about again with what a purge leaves, rather than kept for good (unused.ts).
+    if (keeping.includes(hash)) continue
+    if (!(await letGo(env, userId, hash, true))) {
+      await env.DB.prepare(
+        'insert or ignore into unused_blobs (user_id, hash, since) values (?, ?, ?)',
+      )
+        .bind(userId, hash, now())
+        .run()
+    }
   }
 }
 

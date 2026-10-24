@@ -147,6 +147,21 @@ export function handedTo(
  *  what one request asks of the bucket. */
 const MOST_READ = 250
 
+/** What has been read of the notes written before their pictures were, kept across
+ *  every question one request asks: a space's unread notes are the same bodies whoever
+ *  asks and about whichever picture, so a sweep that asks about many reads them once,
+ *  and one budget of bodies is shared between all of it. */
+export interface Reading {
+  left: number
+  /** By space (and note, for somebody handed one note): the pictures its unread notes
+   *  show, and whether every one of them was read. */
+  read: Map<string, { pictures: Set<string>; whole: boolean }>
+}
+
+export function reading(): Reading {
+  return { left: MOST_READ, read: new Map() }
+}
+
 /** And the pictures in notes written before their pictures were written down, which
  *  have none yet until the nightly sweep reads them (blog/fill.ts), added to `owed`.
  *
@@ -163,13 +178,16 @@ const MOST_READ = 250
  *  over on the chance it shows a picture, and the answer is false: not everything that
  *  might use the pictures was read. That is for giving a file back, where the person
  *  is asking to stop paying for it and handing it to somebody else blindly would make
- *  them pay instead; an erase guesses, because keeping is better than losing there. */
+ *  them pay instead; an erase guesses, because keeping is better than losing there.
+ *
+ *  `done` is what was read already in this request; see `Reading`. */
 export async function unreadUses(
   env: Env,
   user: { id: string; email: string },
   pictures: ReadonlySet<string>,
   owed: Map<string, Set<string>>,
   guess = true,
+  done: Reading = reading(),
 ): Promise<boolean> {
   if (!pictures.size) return true
   const owe = (owner: string, hash: string) => {
@@ -186,37 +204,40 @@ export async function unreadUses(
     .bind(user.email, user.id)
     .all<{ space: string; owner: string; item: string; role: string }>()
 
-  let budget = MOST_READ
-  let read = true
+  let complete = true
 
   for (const one of written) {
-    const { results: notes } = await env.DB.prepare(
-      one.item
-        ? `select id from notes where space_id = ?1 and id = ?2 and size > 0 and kind != 'file'
-              and front_rev < ?3`
-        : `select id from notes where space_id = ?1 and size > 0 and kind != 'file'
-              and front_rev < ?3 limit ?2`,
-    )
-      .bind(one.space, one.item || budget + 1, FRONT_REV)
-      .all<{ id: string }>()
+    const at = one.item ? `${one.space}/${one.item}` : one.space
+    let known = done.read.get(at)
 
-    if (notes.length > budget && one.role === 'write' && guess) {
-      for (const hash of pictures) owe(one.owner, hash)
-      budget = 0
-      continue
-    }
-    if (notes.length > budget) {
-      notes.length = budget
-      read = false
+    if (!known) {
+      const { results: notes } = await env.DB.prepare(
+        one.item
+          ? `select id from notes where space_id = ?1 and id = ?2 and size > 0 and kind != 'file'
+                and front_rev < ?3`
+          : `select id from notes where space_id = ?1 and size > 0 and kind != 'file'
+                and front_rev < ?3 limit ?2`,
+      )
+        .bind(one.space, one.item || done.left + 1, FRONT_REV)
+        .all<{ id: string }>()
+
+      if (notes.length > done.left && one.role === 'write' && guess) {
+        for (const hash of pictures) owe(one.owner, hash)
+        done.left = 0
+        continue
+      }
+      const whole = notes.length <= done.left
+      if (!whole) notes.length = done.left
+      done.left -= notes.length
+      known = { pictures: await picturesIn(env, one.space, notes), whole }
+      done.read.set(at, known)
     }
 
-    budget -= notes.length
-    for (const hash of await picturesIn(env, one.space, notes)) {
-      if (pictures.has(hash)) owe(one.owner, hash)
-    }
+    if (!known.whole) complete = false
+    for (const hash of known.pictures) if (pictures.has(hash)) owe(one.owner, hash)
   }
 
-  return read
+  return complete
 }
 
 /** Every picture the service holds that these notes show, read a handful at a time. */

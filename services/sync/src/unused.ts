@@ -14,6 +14,7 @@
 
 import { letGo } from './blobs'
 import { now } from './crypto'
+import { reading } from './used'
 import type { Env } from './types'
 
 /** How many one sweep asks about. Each is a give-back, which is a handful of
@@ -37,25 +38,29 @@ export function noteUnused(
 }
 
 /** Asks about the oldest on the list, as many as `most`, and answers how many were
- *  decided. */
-export async function sweepUnused(env: Env, most = NIGHTLY): Promise<number> {
+ *  decided. The bodies it reads are read once between all of them, within one budget
+ *  (`Reading` in used.ts), so a sweep costs the bucket the same however much is on the
+ *  list. A request that purged asks about its own account's first, so what it just
+ *  purged stops counting against it before anybody else's leftovers are looked at. */
+export async function sweepUnused(env: Env, most = NIGHTLY, first = ''): Promise<number> {
   const { results } = await env.DB.prepare(
-    'select user_id, hash from unused_blobs order by since, hash limit ?',
+    'select user_id, hash from unused_blobs order by user_id = ?2 desc, since, hash limit ?1',
   )
-    .bind(most)
+    .bind(most, first)
     .all<{ user_id: string; hash: string }>()
 
+  const done = reading()
   let decided = 0
   for (const one of results) {
-    const done = await letGo(env, one.user_id, one.hash, true)
+    const settled = await letGo(env, one.user_id, one.hash, true, done)
     await env.DB.prepare(
-      done
+      settled
         ? 'delete from unused_blobs where user_id = ?1 and hash = ?2'
         : 'update unused_blobs set since = ?3 where user_id = ?1 and hash = ?2',
     )
-      .bind(one.user_id, one.hash, ...(done ? [] : [now()]))
+      .bind(one.user_id, one.hash, ...(settled ? [] : [now()]))
       .run()
-    if (done) decided += 1
+    if (settled) decided += 1
   }
   return decided
 }

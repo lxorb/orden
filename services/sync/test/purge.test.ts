@@ -12,7 +12,7 @@ import { TEXT } from '@nib/rooms'
 import * as Y from 'yjs'
 import { sweepChats } from '../src/chats/sweep'
 import { sweepLeftovers } from '../src/leftovers'
-import { call, type ShareView, signIn, type TestEnv, testEnv } from './harness'
+import { call, mail, type ShareView, signIn, type TestEnv, testEnv } from './harness'
 import { framed, type Live, live } from './sync2'
 
 let env: TestEnv
@@ -403,5 +403,56 @@ describe('what a purge stops paying for', () => {
     expect((await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })).status).toBe(200)
 
     expect(await used()).toBe(before)
+  })
+
+  /** One sweep reads the bodies it needs once, whatever it asks about: a purge of a
+   *  note with many pictures, by a writer in a space of unread notes, reads that space
+   *  once and not once per picture. */
+  test('reads the unread notes once for everything a sweep asks about', async () => {
+    const other = await signIn(env, 'other@example.com')
+    const theirs = (await call(env, '/v1/spaces', { token: other, body: { name: 'Big' } })).json
+      .space.id
+    const sent = await mail(() =>
+      call(env, `/v1/spaces/${theirs}/share/invite`, {
+        token: other,
+        body: { email: 'owner@example.com', role: 'write' },
+      }),
+    )
+    await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
+      method: 'POST',
+      token,
+    })
+    for (let at = 0; at < 260; at++) {
+      env.db
+        .prepare(
+          `insert into notes (id, space_id, path, seq, updated_at, size, hash, front_rev)
+           values (?, ?, ?, ?, 1, 5, 'h', 1)`,
+        )
+        .run(`old${String(at)}`, theirs, `old${String(at)}.md`, 1000 + at)
+    }
+    const lines: string[] = []
+    for (let at = 0; at < 25; at++) {
+      const hash = await upload(`picture ${String(at)}`, 'image/png')
+      lines.push(`![](https://nibeditor.com/i/${hash}.png)`)
+    }
+    const id = (
+      await call(env, `/v1/spaces/${space}/notes`, {
+        token,
+        body: { path: 'P.md', content: lines.join('\n') },
+      })
+    ).json.note.id
+    await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })
+
+    const bucket = env.NOTES as unknown as { get: (...asked: unknown[]) => unknown }
+    const real = bucket.get.bind(bucket)
+    let gets = 0
+    bucket.get = (...asked: unknown[]) => {
+      gets += 1
+      return real(...asked)
+    }
+    expect((await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })).status).toBe(200)
+
+    // One budget of bodies, and the purged note's own.
+    expect(gets).toBeLessThanOrEqual(251)
   })
 })
