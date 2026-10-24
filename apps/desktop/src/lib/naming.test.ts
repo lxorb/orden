@@ -87,6 +87,27 @@ describe('a name already in the folder', () => {
     expect(nameFault({ typed: 'Übersicht', extension: '.md', taken })).toBe('taken')
   })
 
+  /** A page note's paper is `<name>.pages.pdf` beside it, held out of the list, so a
+   *  PDF given that name beside `<name>.pages` would become the note's paper - and a
+   *  page note given `<name>.pages` beside a PDF of that name would take it. */
+  test('and so is a name a page note and its paper would share', () => {
+    expect(
+      nameFault({ typed: 'Lecture.pages', extension: '.pdf', taken: beside('Lecture.pages') }),
+    ).toBe('taken')
+    expect(
+      nameFault({ typed: 'lecture.pages.pdf', extension: '.pdf', taken: beside('Lecture.pages') }),
+    ).toBe('taken')
+    expect(
+      nameFault({ typed: 'Report', extension: '.pages', taken: beside('Report.pages.pdf') }),
+    ).toBe('taken')
+    expect(
+      nameFault({ typed: 'Lecture', extension: '.pdf', taken: beside('Lecture.pages') }),
+    ).toBeNull()
+    expect(
+      nameFault({ typed: 'Report', extension: '.md', taken: beside('Report.pages.pdf') }),
+    ).toBeNull()
+  })
+
   /** Which is the folder-note layout: `A.md` becomes `A/A.md`, and a note beside
    *  the folder of its own name is the pair the whole convention is made of. */
   test('but a folder of the same name is not, because a note may sit beside one', () => {

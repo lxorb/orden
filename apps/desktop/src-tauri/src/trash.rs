@@ -231,7 +231,9 @@ pub fn restore_trash(app: AppHandle, id: String) -> Result<String, String> {
     // paper under its page note's, which is not the old one when something has
     // taken its place in the meantime.
     move_held(&held, &target);
-    let _ = fs::remove_dir_all(&slot);
+    // Only once it is empty: a paper or highlights that could not follow are still in
+    // the slot, and taking the slot with them would be deleting them for good.
+    let _ = fs::remove_dir(&slot);
 
     entries.remove(position);
     write_manifest(&dir, &entries)?;
@@ -600,6 +602,19 @@ mod tests {
         let target =
             restore_target(base, &entry("1-0", "Report.pages", "Report.pages")).expect("a place");
         assert_eq!(target, base.join("Report 2.pages"));
+    }
+
+    /// And a PDF of a page note's paper's name comes back beside the note under a name
+    /// of its own: under that one the note would take it for its paper.
+    #[test]
+    fn a_pdf_restores_beside_a_page_note_of_its_name() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let base = dir.path();
+        std::fs::write(base.join("Report.pages"), "{}").expect("a page note");
+
+        let target = restore_target(base, &entry("1-0", "Report.pages.pdf", "Report.pages.pdf"))
+            .expect("a place");
+        assert_eq!(target, base.join("Report.pages 2.pdf"));
     }
 
     /// An entry goes on the end of what the manifest already holds, and nothing is
