@@ -494,6 +494,60 @@ describe('what is left', () => {
     ])
   })
 
+  /** A space too big to read hands over everything rather than guess, which is right
+   *  only where this account could have put something: a reader who never wrote there
+   *  keeps its own pictures to itself, and they go with it. */
+  test('a picture of its own is not handed to a big space it only reads', async () => {
+    const other = await signIn(env, OTHER)
+    const big = (
+      await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Big' } })
+    ).json.space?.id
+    if (!big) throw new Error('no space was made')
+    await call(env, `/v1/spaces/${big}/notes`, {
+      token: other,
+      body: { path: 'n0.md', content: 'hello' },
+    })
+    const row = env.db
+      .prepare('select seq, updated_at, hash from notes where space_id = ?')
+      .get(big) as { seq: number; updated_at: number; hash: string }
+    for (let at = 1; at < 260; at++) {
+      env.db
+        .prepare(
+          'insert into notes (id, space_id, path, seq, updated_at, size, hash) values (?, ?, ?, ?, ?, ?, ?)',
+        )
+        .run(`n${String(at)}`, big, `n${String(at)}.md`, row.seq + at, row.updated_at, 5, row.hash)
+    }
+    const sent = await mail(() =>
+      call(env, `/v1/spaces/${big}/share/invite`, {
+        token: other,
+        body: { email: ME, role: 'read' },
+      }),
+    )
+    await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
+      method: 'POST',
+      token,
+    })
+
+    const own = (await call<LeavingView>(env, '/v1/spaces', { token, body: { name: 'Mine' } })).json
+      .space?.id
+    const picture = file(3, 9)
+    await call(env, `/v1/blobs/${picture.hash}`, {
+      method: 'PUT',
+      token,
+      raw: picture.bytes,
+      headers: { 'content-type': 'image/png' },
+    })
+    await call(env, `/v1/spaces/${own}/notes`, {
+      token,
+      body: { path: 'diary.md', content: `![](https://nibeditor.com/i/${picture.hash}.png)` },
+    })
+
+    expect((await leave()).status).toBe(200)
+
+    expect(env.db.prepare('select user_id from blobs where hash = ?').all(picture.hash)).toEqual([])
+    expect((await call(env, `/i/${picture.hash}.png`)).status).toBe(404)
+  })
+
   test('a published site stops answering', async () => {
     const space = (await call<LeavingView>(env, '/v1/spaces', { token, body: { name: 'Site' } }))
       .json.space?.id

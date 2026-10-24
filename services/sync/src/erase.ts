@@ -270,12 +270,13 @@ async function handedOn(env: Env, user: User, at: number): Promise<D1PreparedSta
   if (!alone.length) return []
 
   const { results: written } = await env.DB.prepare(
-    `select sp.id as space, sp.user_id as owner, sp.files as files, m.item as item
+    `select sp.id as space, sp.user_id as owner, sp.files as files, m.item as item,
+            m.role as role
        from space_members m join spaces sp on sp.id = m.space_id
       where m.email = ?1 and sp.user_id <> ?2`,
   )
     .bind(user.email, user.id)
-    .all<{ space: string; owner: string; files: string; item: string }>()
+    .all<{ space: string; owner: string; files: string; item: string; role: string }>()
   if (!written.length) return []
 
   const mine = new Set(alone.map((one) => one.hash))
@@ -306,11 +307,15 @@ async function handedOn(env: Env, user: User, at: number): Promise<D1PreparedSta
       .bind(one.space, one.item || budget + 1)
       .all<{ id: string }>()
 
-    if (notes.length > budget) {
+    // The guess is for a space this account may write in, where anything of its own
+    // may be: in one it only reads, it would hand the owner pictures that were never
+    // there. That one is read as far as what is left goes.
+    if (notes.length > budget && one.role === 'write') {
       for (const hash of mine) found.add(hash)
       budget = 0
       continue
     }
+    if (notes.length > budget) notes.length = budget
 
     budget -= notes.length
     for (const hash of await picturesIn(env, one.space, notes)) {
