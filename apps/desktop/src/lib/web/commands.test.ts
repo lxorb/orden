@@ -644,6 +644,15 @@ describe("a page note's paper", () => {
     expect(disk.files.has('/Notes/Week 1.pages.pdf.highlights.json')).toBe(true)
   })
 
+  test('stays where it is when sync moves the note alone', async () => {
+    // The paper is a file of its own to sync, moved by its own entry.
+    await webInvoke('rename_note', { from: note, to: '/Notes/Week 1.pages', alone: true })
+
+    expect(disk.files.has('/Notes/Week 1.pages')).toBe(true)
+    expect(disk.assets.has(paper)).toBe(true)
+    expect(disk.assets.has('/Notes/Week 1.pages.pdf')).toBe(false)
+  })
+
   test('goes to the trash and comes back with it', async () => {
     const entry = await webInvoke<{ id: string }>('trash_item', { path: note, kind: 'note' })
     expect(disk.assets.has(paper)).toBe(false)
@@ -716,6 +725,21 @@ describe("a PDF's highlights", () => {
     expect(disk.assets.has(pdf)).toBe(false)
     expect(disk.files.has('/Notes/paper.pages.pdf.highlights.json')).toBe(true)
     expect(disk.files.has(sidecar)).toBe(false)
+  })
+
+  test('stay where they are when sync moves the PDF alone', async () => {
+    // Sync carries the highlights as a file of their own, moved by their own entry, and
+    // in whichever order the two arrive. The PDF's move takes nothing along, and leaves
+    // highlights already moved ahead of it where they landed.
+    disk.assets.set(pdf, { path: pdf, type: 'application/pdf', data: '', modified: 1 })
+    await webInvoke('write_highlights', { path: '/Notes/moved.pdf', content: '{"version":2}' })
+    await webInvoke('write_highlights', { path: pdf, content: '{"version":1}' })
+
+    await webInvoke('rename_note', { from: pdf, to: '/Notes/moved.pdf', alone: true })
+
+    expect(disk.assets.has('/Notes/moved.pdf')).toBe(true)
+    expect(disk.files.get(sidecar)?.content).toBe('{"version":1}')
+    expect(disk.files.get('/Notes/moved.pdf.highlights.json')?.content).toBe('{"version":2}')
   })
 
   test('go when the PDF goes', async () => {

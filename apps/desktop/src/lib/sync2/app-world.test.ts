@@ -24,6 +24,18 @@ vi.mock('../tauri', () => ({
       const held = (args as { hold?: boolean }).hold === true
       if (args?.to?.endsWith('.pages.pdf') && holder && notes.has(holder) && !held)
         return Promise.reject(new Error(`${holder} is already there`))
+      // And `move_held`: a PDF's highlights go with it, and highlights already at the
+      // new name are cleared where it has none, unless the move is the file alone.
+      const { from = '', to = '' } = args ?? {}
+      if (notes.has(from)) notes.set(to, notes.get(from)!)
+      notes.delete(from)
+      const alone = (args as { alone?: boolean }).alone === true
+      if (from.endsWith('.pdf') && !alone) {
+        const sidecar = notes.get(`${from}.highlights.json`)
+        notes.delete(`${from}.highlights.json`)
+        if (sidecar === undefined) notes.delete(`${to}.highlights.json`)
+        else notes.set(`${to}.highlights.json`, sidecar)
+      }
       return Promise.resolve()
     }
     if (command === 'file_stamp') return Promise.resolve(null)
@@ -63,7 +75,12 @@ describe('a PDF another device turned into its page note', () => {
 
     await disk.move('/s/X.pdf', '/s/X.pages.pdf', 'file')
 
-    expect(renames.at(-1)).toEqual({ from: '/s/X.pdf', to: '/s/X.pages.pdf', hold: true })
+    expect(renames.at(-1)).toEqual({
+      from: '/s/X.pdf',
+      to: '/s/X.pages.pdf',
+      alone: true,
+      hold: true,
+    })
   })
 
   test('holds nothing for any other move', async () => {
@@ -75,6 +92,29 @@ describe('a PDF another device turned into its page note', () => {
 
     await disk.move('/s/Plan.md', '/s/Done.md', 'file')
 
-    expect(renames.at(-1)).toEqual({ from: '/s/Plan.md', to: '/s/Done.md' })
+    expect(renames.at(-1)).toEqual({ from: '/s/Plan.md', to: '/s/Done.md', alone: true })
+  })
+})
+
+describe('a PDF another device renamed, with its highlights', () => {
+  // The other device moved `A.pdf` to `B.pdf` and its highlights with it, and the
+  // account holds the two as moves of their own, which come here in either order.
+  // Highlights first, then the PDF: a move that took companions found none at `A.pdf`,
+  // cleared the ones that had just arrived at `B.pdf`, and the next scan sent that
+  // delete everywhere.
+  test('keeps the highlights that arrived ahead of the PDF', async () => {
+    notes.set('/s/A.pdf', '%PDF')
+    notes.set('/s/A.pdf.highlights.json', '{"version":1}')
+    const telling = {
+      touching: () => undefined,
+      moved: () => Promise.resolve(),
+    } as unknown as Parameters<typeof appWorld>[1]
+    const { disk } = appWorld(() => null, telling)
+
+    await disk.move('/s/A.pdf.highlights.json', '/s/B.pdf.highlights.json', 'file')
+    await disk.move('/s/A.pdf', '/s/B.pdf', 'file')
+
+    expect(notes.get('/s/B.pdf.highlights.json')).toBe('{"version":1}')
+    expect(renames.at(-1)).toEqual({ from: '/s/A.pdf', to: '/s/B.pdf', alone: true })
   })
 })

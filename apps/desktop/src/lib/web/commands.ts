@@ -238,7 +238,7 @@ async function writeNote(path: string, content: string) {
 
 /** Everything under `from` moves, so renaming a folder takes its notes along -
  *  and the files beside them, which is how a PDF's own highlights follow it. */
-async function renameNote(from: string, to: string, hold = false) {
+async function renameNote(from: string, to: string, hold = false, alone = false) {
   const source = normalise(from)
   const target = normalise(to)
   if (source === target) return
@@ -261,9 +261,10 @@ async function renameNote(from: string, to: string, hold = false) {
   )
 
   // A PDF on its own is a row of the asset store alone, and has moved already; its
-  // highlights follow it, as they do on a desktop.
+  // highlights follow it, as they do on a desktop, unless sync is moving the one file
+  // (see `alone` on `rename_note` in notes.rs).
   if (!rows.length && pictures) {
-    if (isPdf(source)) await moveHighlights(source, target)
+    if (isPdf(source) && !alone) await moveHighlights(source, target)
     return
   }
   if (!rows.length) throw new Error('nothing to rename')
@@ -277,7 +278,7 @@ async function renameNote(from: string, to: string, hold = false) {
   )
 
   // A page note's paper follows the note, as `move_held` has it on a desktop.
-  if (isPages(source)) await renamePaper(paperOf(source), paperOf(target))
+  if (isPages(source) && !alone) await renamePaper(paperOf(source), paperOf(target))
 }
 
 /** The file a rename or a copy of `source` to `target` would put a page note and its
@@ -916,7 +917,12 @@ export async function webInvoke<T>(
       return undefined as T
 
     case 'rename_note':
-      await renameNote(args.from as string, args.to as string, args.hold === true)
+      await renameNote(
+        args.from as string,
+        args.to as string,
+        args.hold === true,
+        args.alone === true,
+      )
       return undefined as T
 
     case 'copy_path':

@@ -201,31 +201,44 @@ pub fn delete_note(app: AppHandle, path: String) -> Result<(), String> {
 /// `hold` is a PDF being turned into its page note (pages/from-pdf.ts): moved, in its
 /// own folder, to the paper of the note just made for it or made for it before. Only
 /// that move may put a PDF where a page note takes it for its paper.
+///
+/// `alone` is sync's move (sync2/app-world.ts), which moves the one file and nothing it
+/// holds: a PDF's highlights and a page note's paper are entries of their own in the
+/// account, moved by moves of their own, in whichever order those come. Highlights that
+/// came ahead of their PDF were otherwise cleared as left by another (#733).
 #[tauri::command(async)]
 pub fn rename_note(
     app: AppHandle,
     from: String,
     to: String,
     hold: Option<bool>,
+    alone: Option<bool>,
 ) -> Result<(), String> {
     let source = in_spaces(&app, &from)?;
     let target = in_spaces(&app, &to)?;
-    let respelling = respelled(&source, &target, same_entry);
+    renamed(&source, &target, hold == Some(true), alone == Some(true))
+}
+
+/// `rename_note` past its gate, which wants an app around it.
+fn renamed(source: &Path, target: &Path, hold: bool, alone: bool) -> Result<(), String> {
+    let respelling = respelled(source, target, same_entry);
 
     // A page note brings its paper, `<name>.pages.pdf`, and a file of that name already
     // there is somebody's own: it was moved over, or hidden as held (#538). And a PDF
     // put where a page note takes it for its paper is somebody's own as well, unless
     // it is being turned into that note.
-    let holding = hold == Some(true) && is_pdf(&target) && source.parent() == target.parent();
-    if let Some(there) = paper_in_the_way(&source, &target, same_entry).filter(|_| !holding) {
+    let holding = hold && is_pdf(target) && source.parent() == target.parent();
+    if let Some(there) = paper_in_the_way(source, target, same_entry).filter(|_| !holding) {
         return Err(format!("{} is already there", there.display()));
     }
 
-    move_entry(&source, &target, respelling)?;
+    move_entry(source, target, respelling)?;
 
     // A PDF's highlights follow it, and a page note's paper follows the note, so a
     // rename or a move keeps them.
-    move_held(&source, &target);
+    if !alone {
+        move_held(source, target);
+    }
     Ok(())
 }
 
@@ -1033,5 +1046,58 @@ mod tests {
 
         assert_eq!(names(dir.path()).len(), 1);
         assert_eq!(fs::read_to_string(&composed).expect("the note"), "overview");
+    }
+
+    /// Sync moves every file on its own: a PDF's highlights and a page note's paper are
+    /// entries of their own in the account, moved by their own moves and in whichever
+    /// order those come. Highlights that came ahead of their PDF were cleared by the
+    /// PDF's move as leftovers, and the next scan sent that delete to every device.
+    #[test]
+    fn a_pdf_moved_alone_keeps_the_highlights_that_came_ahead_of_it() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let was = dir.path().join("A.pdf");
+        let now = dir.path().join("B.pdf");
+        fs::write(&was, "%PDF").expect("the PDF");
+        fs::write(dir.path().join("B.pdf.highlights.json"), "{}").expect("its highlights");
+
+        super::renamed(&was, &now, false, true).expect("the move");
+
+        assert!(now.exists());
+        assert_eq!(
+            fs::read_to_string(dir.path().join("B.pdf.highlights.json")).expect("highlights"),
+            "{}"
+        );
+    }
+
+    #[test]
+    fn a_file_moved_alone_takes_nothing_with_it() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let pdf = dir.path().join("A.pdf");
+        fs::write(&pdf, "%PDF").expect("the PDF");
+        fs::write(dir.path().join("A.pdf.highlights.json"), "{}").expect("its highlights");
+        let note = dir.path().join("Lecture.pages");
+        fs::write(&note, "{}").expect("the page note");
+        fs::write(dir.path().join("Lecture.pages.pdf"), "%PDF").expect("its paper");
+
+        super::renamed(&pdf, &dir.path().join("B.pdf"), false, true).expect("the PDF");
+        super::renamed(&note, &dir.path().join("Week.pages"), false, true).expect("the note");
+
+        assert!(dir.path().join("A.pdf.highlights.json").exists());
+        assert!(!dir.path().join("B.pdf.highlights.json").exists());
+        assert!(dir.path().join("Lecture.pages.pdf").exists());
+        assert!(!dir.path().join("Week.pages.pdf").exists());
+    }
+
+    #[test]
+    fn a_file_moved_by_hand_takes_what_it_holds() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let pdf = dir.path().join("A.pdf");
+        fs::write(&pdf, "%PDF").expect("the PDF");
+        fs::write(dir.path().join("A.pdf.highlights.json"), "{}").expect("its highlights");
+
+        super::renamed(&pdf, &dir.path().join("B.pdf"), false, false).expect("the move");
+
+        assert!(!dir.path().join("A.pdf.highlights.json").exists());
+        assert!(dir.path().join("B.pdf.highlights.json").exists());
     }
 }
