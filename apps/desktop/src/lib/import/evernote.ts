@@ -26,6 +26,7 @@ import { dayOf, noteText, type Meta } from './meta'
 import { md5 } from './md5'
 import { Names, safeName, titleFrom } from './names'
 import type { ImportPlan, Lost, Planned } from './plan'
+import { encodeTarget } from './rewrite'
 import type { Source } from './sources'
 import { closingOf, element, elements, plainText, textOf, textsOf } from './xml'
 
@@ -297,7 +298,9 @@ function withoutEvernote(
   const shown = new Set<string>()
 
   const pointAt = (attachment: Attachment, type: string): string => {
-    const address = `${folder}${attachment.path}`.replace(/ /g, '%20')
+    // Encoded the way every other link the import writes is, so an attachment named
+    // `Report #3.pdf` or `100% done.png` is reached and not cut at the `#`.
+    const address = `${folder}${encodeTarget(attachment.path)}`
     const name = attachment.path.split('/').pop() ?? attachment.path
 
     // A picture is shown and everything else is a link to the file, which is
