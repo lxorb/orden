@@ -3851,15 +3851,28 @@ class Workspace {
    *  disk. Tabs outlive a space switch, so `Ideas.md` in the other space came back
    *  free and was written over; and the listing leaves out what is named with a dot
    *  unless hidden files are shown, so `.notes/Plan.md` did too. Stepped like a
-   *  draft's place; see `claim` in saving.svelte.ts. */
+   *  draft's place; see `claim` in saving.svelte.ts.
+   *
+   *  A name is taken by the other half of its pair as well. A page note landing
+   *  beside a PDF named as its paper takes that PDF for its own, and deleting the
+   *  note deletes the PDF; a paper landing beside a page note of its name is hidden
+   *  in it the same way. The listing that would have shown either is not there for
+   *  a dot folder or another space, so the disk is asked for both. */
   async freeNameOnDisk(dir: string, wanted: string): Promise<string> {
+    // Fetched here rather than imported at the top, as `claim` fetches it: this file
+    // is in the first paint, and a new file is not.
+    const { pairOf } = await import('./pages/held')
     const found: string[] = []
     for (;;) {
       const name = freePath(
         wanted,
         (candidate) => found.includes(candidate) || this.freeName(dir, candidate) !== candidate,
       )
-      if (await onDisk(joinPath(dir, name))) found.push(name)
+      const other = pairOf(name)
+      const taken =
+        (await onDisk(joinPath(dir, name))) ||
+        (other !== null && (await onDisk(joinPath(dir, other))))
+      if (taken) found.push(name)
       else if (this.freeName(dir, name) === name) return name
     }
   }
