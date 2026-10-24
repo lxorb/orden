@@ -43,6 +43,9 @@ const DOCUMENTS = new Set(['application/pdf'])
 
 const HASH = /^[a-f0-9]{64}$/
 
+/** A give-back that cannot be answered yet; see `letGo`. */
+const STILL_READING = 'that file may still be in a note - try again tomorrow'
+
 /** The type a request declares, with any parameters after it left off:
  *  `application/pdf; charset=binary` is a PDF. */
 function typeOf(header: string): string {
@@ -162,7 +165,9 @@ blobs.delete('/:hash', async (context) => {
   // stored cannot become a delete against the bucket.
   if (!HASH.test(hash)) return context.json({ error: NOT_A_HASH }, 400)
 
-  await letGo(context.env, user.id, hash)
+  if (!(await letGo(context.env, user.id, hash))) {
+    return context.json({ error: STILL_READING }, 409)
+  }
   return context.json({ ok: true })
 })
 
@@ -178,20 +183,28 @@ blobs.delete('/:hash', async (context) => {
  *  a file back is not a way to take it out of a note in a space that is not yours.
  *
  *  With `own`, a use in this account's own spaces keeps its row: a face is let go of
- *  without anybody asking about the notes, and its bytes may be a picture in them. */
-export async function letGo(env: Env, userId: string, hash: string, own = false): Promise<void> {
+ *  without anybody asking about the notes, and its bytes may be a picture in them.
+ *
+ *  Answers false, and keeps the row, while a space this account is in has more notes
+ *  written before their pictures were than one request reads: whether one of them
+ *  shows the picture cannot be told yet, and neither deleting it nor handing it over
+ *  on a guess is right. The nightly sweep reads them (blog/fill.ts). */
+export async function letGo(env: Env, userId: string, hash: string, own = false): Promise<boolean> {
   const owed = await usedElsewhere(env, userId, new Set([hash]), own)
-  if (owed.has(userId)) return
+  if (owed.has(userId)) return true
 
   // And the notes written before their pictures were, read the way an erase reads
-  // them, if the bytes are a picture this account holds.
+  // them, if the bytes are a picture this account holds. Without guessing: a picture
+  // not found in the notes that could be read is kept rather than handed over on a
+  // chance, until the sweep has read the rest.
   const mine = await env.DB.prepare(
     'select u.email, b.type from blobs b join users u on u.id = b.user_id where b.hash = ? and b.user_id = ?',
   )
     .bind(hash, userId)
     .first<{ email: string; type: string }>()
   if (mine?.type.startsWith('image/')) {
-    await unreadUses(env, { id: userId, email: mine.email }, new Set([hash]), owed)
+    const user = { id: userId, email: mine.email }
+    if (!(await unreadUses(env, user, new Set([hash]), owed, false))) return false
   }
 
   await env.DB.batch([
@@ -203,6 +216,7 @@ export async function letGo(env: Env, userId: string, hash: string, own = false)
     .bind(hash)
     .first()
   if (!others) await env.NOTES.delete(key(hash))
+  return true
 }
 
 /** Serving, which carries no session: a note is read by whoever it was shared

@@ -466,6 +466,48 @@ describe('giving an image back', () => {
     expect((await call(env, '/v1/usage', { token })).json.used).toBe(start)
   })
 
+  /** Giving a file back is asking to stop paying for it, so nothing is guessed: a space
+   *  with more unread notes than one request reads is not handed the picture on the
+   *  chance it shows it. The asker keeps it until the sweep has read those notes. */
+  test('keeps it rather than guessing while a space it writes in is unread', async () => {
+    const owner = await signIn(env, 'owner@b.dev')
+    const theirs = (
+      await call<{ space: { id: string } }>(env, '/v1/spaces', {
+        token: owner,
+        body: { name: 'Theirs' },
+      })
+    ).json.space.id
+    const sent = await mail(() =>
+      call(env, `/v1/spaces/${theirs}/share/invite`, {
+        token: owner,
+        body: { email: 'a@b.dev', role: 'write' },
+      }),
+    )
+    await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
+      method: 'POST',
+      token,
+    })
+    for (let at = 0; at < 260; at++) {
+      env.db
+        .prepare(
+          `insert into notes (id, space_id, path, seq, updated_at, size, hash, front_rev)
+           values (?, ?, ?, ?, ?, 5, 'h', 1)`,
+        )
+        .run(`old${String(at)}`, theirs, `old${String(at)}.md`, 1000 + at, 1)
+    }
+    const ownerBefore = (await call(env, '/v1/usage', { token: owner })).json.used
+
+    const picture = sized(4096)
+    await upload(picture)
+    const given = await call(env, `/v1/blobs/${picture.hash}`, { method: 'DELETE', token })
+
+    expect(given.status).toBe(409)
+    expect((await call(env, '/v1/usage', { token: owner })).json.used).toBe(ownerBefore)
+    expect(
+      env.db.prepare('select count(*) as n from blobs where hash = ?').get(picture.hash),
+    ).toEqual({ n: 1 })
+  })
+
   test('and deletes it when only its own notes show it', async () => {
     const own = (
       await call<{ space: { id: string } }>(env, '/v1/spaces', { token, body: { name: 'Mine' } })
