@@ -105,6 +105,24 @@ describe("Tomboy's own markup", () => {
     expect(tomboyMarkdown('a <size:large>big</size:large> word')).toBe('a big word')
   })
 
+  /** A size is dropped and its words kept, so the words on either side of it are one
+   *  run of text and are escaped as one: escaped a run at a time, two halves that are
+   *  harmless apart met as a tag, a comment or an autolink. */
+  test('words a dropped size joins are escaped as the one run they become', () => {
+    const tag = tomboyMarkdown('a &lt;<size:large>img src=x onerror=alert(1)&gt;</size:large> b')
+    expect(tag).not.toMatch(/(?<!\\)<img/)
+
+    const percent = tomboyMarkdown(
+      '50%<size:large>%d</size:large> kept 50%<size:large>%</size:large> end',
+    )
+    expect(percent).not.toMatch(/(?<!\\)%%/)
+    expect(percent).toContain('kept')
+
+    // The address in its brackets, as the same words written in one run say it.
+    const address = tomboyMarkdown('&lt;<link:url>https://x.com/a</link:url>&gt;')
+    expect(address).toBe(tomboyMarkdown('&lt;https://x.com/a&gt;'))
+  })
+
   test('entities are the characters they stand for', () => {
     expect(tomboyMarkdown('a &lt; b &amp; c')).toBe('a < b & c')
   })
