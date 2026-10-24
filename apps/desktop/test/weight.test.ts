@@ -833,8 +833,13 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-24, to 3,282,000, for #768: every setting says what it does behind a
  *  `?` beside its name, so each declared row in the panes carries a sentence (`hint` in
- *  settings/fields.ts, now required). Measured 3,281,144, from 3,280,981 at 7a57b7518. */
-const BUDGET = 3_282_000
+ *  settings/fields.ts, now required). Measured 3,281,144, from 3,280,981 at 7a57b7518.
+ *
+ *  Raised 2026-10-24, to 3,283,000, for #769: Settings lists Mobile only on a phone or a
+ *  tablet, or once the account has been on one (`mobileSeen` and `tellOfMobile` in
+ *  modes.svelte.ts, read by settings/sections.ts). Measured 3,282,950, from 3,281,144 at
+ *  56bca6203. */
+const BUDGET = 3_283_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
