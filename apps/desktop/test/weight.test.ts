@@ -831,14 +831,10 @@ function holds(tail: string): boolean {
  *  stands over the caption rather than pushing the file list down under the pointer
  *  (`is-floating` in Bookmarks.svelte). Measured 3,280,466.
  *
- *  Raised 2026-10-24, to 3,285,000, for #811: the file list's gestures refuse a space
- *  shared to be read, in the workspace's own calls (`writableAt`) and in the row menu,
- *  the tree's keys and the palette. Measured 3,283,904.
- *
- *  Raised 2026-10-24, to 3,285,500, for #846: the card over a link says whether the
- *  note under it is read-only (`previewNoteOf` in @nib/editor's wikilink/hover.ts).
- *  Measured 3,285,115. */
-const BUDGET = 3_316_000 // combined branch only, measured 3315708
+ *  Raised 2026-10-24, to 3,283,000, for #830: a quoted front-matter value keeps
+ *  being words, so the property readers carry whether it was quoted
+ *  (`quoted` in packages/markdown/src/properties.ts). Measured 3,282,986. */
+const BUDGET = 3_300_000 // combined branch only
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
