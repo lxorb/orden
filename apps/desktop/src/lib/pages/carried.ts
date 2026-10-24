@@ -103,10 +103,25 @@ async function carryOne(note: Carried, how: Carrying): Promise<void> {
     lacking.set(note.id, Date.now())
     return
   }
+  // Carrying runs beside the next pass, and the note may have been renamed, moved or
+  // deleted while its paper came down. Written at the old name it would be beside no
+  // note, a PDF of its own that sync sends everywhere; the note's new path is carried
+  // on its own, and fetches its paper there.
+  if (!(await stillWanted(note.path, paper, how))) return
   await how.write(paper, bytes)
   how.carried.set(note.id, await how.hash(bytes))
   how.kept()
   settled.add(key)
+}
+
+/** Whether a paper that came down still belongs where it was going: the note still at
+ *  its path, and no paper there yet, since one that arrived meanwhile is the note's. */
+async function stillWanted(
+  note: string,
+  paper: string,
+  how: Pick<Carrying, 'exists'>,
+): Promise<boolean> {
+  return (await how.exists(note)) && !(await how.exists(paper))
 }
 
 /** Whether a page note's pages are drawn on a paper: a note of blank sheets holds none,
@@ -128,11 +143,12 @@ export function namesAPaper(text: string | null): boolean {
 export async function paperFor(
   id: string,
   note: string | null,
-  how: Pick<Carrying, 'down' | 'write' | 'hash' | 'carried' | 'kept'>,
+  how: Pick<Carrying, 'exists' | 'down' | 'write' | 'hash' | 'carried' | 'kept'>,
 ): Promise<Uint8Array | null> {
   const bytes = await how.down(id).catch(() => null)
   if (!bytes) return null
-  if (note) {
+  // Shown either way; written only where the note still is (`carryOne`).
+  if (note && (await stillWanted(note, paperOf(note), how))) {
     await how.write(paperOf(note), bytes)
     how.carried.set(id, await how.hash(bytes))
     how.kept()
