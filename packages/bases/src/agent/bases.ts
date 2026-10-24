@@ -8,7 +8,6 @@
  *  `prop == "value"` names, so the row it makes is a row of the view it was made from. */
 
 import { isPropertyName } from '@nib/markdown/front-matter'
-import { writeList, writeProperty } from '@nib/markdown/property-edits'
 import { type ListItem, writeList, writeProperty } from '@nib/markdown/property-edits'
 import { readFilter } from '../filter'
 import type { Base, Filter, Sort, View } from '../types'

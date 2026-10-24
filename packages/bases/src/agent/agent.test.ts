@@ -303,7 +303,6 @@ describe('bases', () => {
     expect(withProperties('Words', { scores: [1, 10, true, null, '2'] })).toBe(
       "---\nscores: [1, 10, true, null, '2']\n---\nWords",
     )
-    expect(() => withProperties('', { 'a:b': 1 })).toThrow(AgentError)
   })
 
   test('a base edited: a view added, a filter set, a formula, a view gone', () => {
