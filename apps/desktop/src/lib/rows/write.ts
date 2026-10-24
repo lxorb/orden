@@ -16,7 +16,7 @@
  *  and, where the words have moved, the nearest line with the same words is the one. */
 
 import type { DateValue, DurationValue, LinkValue, Row, TaskChange, Value } from '@nib/bases'
-import { noteValues, taskHash, tick, todayOf } from '@nib/bases'
+import { listAsWritten, noteValues, taskHash, tick, todayOf } from '@nib/bases'
 import { appliedEdits, oneEdit, type TextEdit } from '@nib/markdown/edits'
 import { type Property, readProperties } from '@nib/markdown/properties'
 import {
@@ -25,6 +25,7 @@ import {
   withItem,
   writeList,
   writeProperty,
+  writtenList,
 } from '@nib/markdown/property-edits'
 import { writeTask } from '@nib/markdown/task-edits'
 import { readTask } from '@nib/markdown/task-line'
@@ -79,9 +80,11 @@ export function changed(text: string, row: Row, change: RowChange): string | nul
 
   for (const [key, edit] of Object.entries(change.list ?? {})) {
     const list = asList(after, key)
-    const items = list && listChanged(list, edit)
+    // A list that cannot be written back whole is refused, never written over.
+    if (!list) return null
+    const items = listChanged(list.property, edit)
     if (!items) continue
-    const written = writeList(after, key, items)
+    const written = list.write(items)
     if (written) after = appliedEdits(after, [written])
   }
 
@@ -156,17 +159,45 @@ export function taskLine(
   return null
 }
 
-/** A key of the note's front matter as a list row: its members as written, a single
- *  value as a list of one, and nothing for a key the note does not hold. Null for a
- *  map, which a chip must not turn into a list. */
-function asList(text: string, key: string): Property | null {
-  const found = readProperties(text)?.find((one) => one.key === key)
+/** A key of the note's front matter as a list row, and how members are written back
+ *  in its place: its members as written, a single value as a list of one, and nothing
+ *  for a key the note does not hold. Null for a map, which a chip must not turn into a
+ *  list, and for a list in a block the rows cannot draw that cannot be rewritten
+ *  without losing something (`listAsWritten`): a chip there is refused rather than
+ *  written over the members the cell showed. */
+function asList(
+  text: string,
+  key: string,
+): { property: Property; write: (items: ListItem[]) => TextEdit | null } | null {
   const empty: Property = { key, kind: 'list', value: '', items: [], from: 0, to: 0 }
+  const whole = (property: Property) => ({
+    property,
+    write: (items: ListItem[]) => writeList(text, key, items),
+  })
+  const rows = readProperties(text)
+  if (!rows) {
+    const found = listAsWritten(text, key)
+    if (found === null) return null
+    if (found === 'absent') return whole(empty)
+    return {
+      property: found.property,
+      write: (items) => ({
+        from: found.from,
+        to: found.to,
+        insert: `${key}: ${writtenList(items)}`,
+      }),
+    }
+  }
+  const found = rows.find((one) => one.key === key)
   if (found?.kind === 'map') return null
-  if (!found) return empty
-  if (found.kind === 'list') return found
-  if (found.value === '') return empty
-  return { ...empty, items: [found.value], ...(found.quoted ? { quotedItems: [true] } : {}) }
+  if (!found) return whole(empty)
+  if (found.kind === 'list') return whole(found)
+  if (found.value === '') return whole(empty)
+  return whole({
+    ...empty,
+    items: [found.value],
+    ...(found.quoted ? { quotedItems: [true] } : {}),
+  })
 }
 
 /** The members a chip leaves, or null where it changes nothing. */
@@ -210,7 +241,7 @@ function propertyEdit(text: string, key: string, value: Value): TextEdit | null 
  *  member as written, each written member handed out once, in order. Nothing for a
  *  key that holds no list. */
 function keptMembers(text: string, key: string): (value: Value) => ListItem | null {
-  const list = asList(text, key)
+  const list = asList(text, key)?.property
   const values = noteValues(text)[key]
   if (!list || !Array.isArray(values) || values.length !== list.items.length) return () => null
   const members = listItems(list)

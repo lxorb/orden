@@ -11,7 +11,7 @@
 
 import { frontMatterBlock } from '@nib/markdown/front-matter'
 import { type Property, readProperties } from '@nib/markdown/properties'
-import { parse } from 'yaml'
+import { isScalar, isSeq, parse, parseDocument, type Scalar, visit } from 'yaml'
 import type { Value } from './types'
 
 /** `[[target]]`, `[[target|display]]`, `![[target]]`, as a property holds one. */
@@ -117,6 +117,105 @@ export function noteValues(text: string): Record<string, Value> {
     // A block that is not YAML holds no values; the note is still a row.
     return {}
   }
+}
+
+/** Where a key's list sits in a block the properties reader will not draw (a comment
+ *  line, a block scalar), with its members as written, read by YAML: what a chip put on
+ *  or taken off such a list is applied to, so the members the cell showed are the ones
+ *  written back. `absent` for a block that reads as YAML and holds no such key, and
+ *  null wherever the list cannot be rewritten without losing something the block says:
+ *  a block that is not YAML, the key twice, a comment among the members, a member that
+ *  is not a single value, or a span that does not hold every member YAML reads there.
+ *
+ *  `from` and `to` are the key's own lines in `text`, so a rewrite replaces those and
+ *  nothing else. A single value is a list of one, and a key with nothing a list of
+ *  none. */
+export function listAsWritten(
+  text: string,
+  key: string,
+): 'absent' | { from: number; to: number; property: Property } | null {
+  const block = frontMatterBlock(text)
+  if (!block) return 'absent'
+  const body = text.slice(block.body.from, block.body.to)
+
+  let whole: unknown
+  try {
+    whole = parse(body, { schema: 'core' })
+  } catch {
+    return null
+  }
+  if (whole !== null && (typeof whole !== 'object' || Array.isArray(whole))) return null
+  const held = whole === null ? undefined : (whole as Record<string, unknown>)[key]
+
+  // The key's own lines: its line, and every line after it that is indented under it
+  // or is one of its `- ` items, which YAML lets sit at the key's own margin.
+  const lines = body.split('\n')
+  const opens = new RegExp(`^${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[ \\t]*:`)
+  const starts = lines.flatMap((line, at) => (opens.test(line) ? [at] : []))
+  if (starts.length === 0) return held === undefined ? 'absent' : null
+  if (starts.length > 1) return null
+  const first = starts[0] ?? 0
+  let last = first
+  while (last + 1 < lines.length) {
+    const next = lines[last + 1] ?? ''
+    if (!/^[ \t]/.test(next) && !/^-(?:[ \t]|$)/.test(next)) break
+    last++
+  }
+  const from = block.body.from + lines.slice(0, first).reduce((sum, one) => sum + one.length + 1, 0)
+  const span = lines.slice(first, last + 1).join('\n')
+  const to = from + span.length
+
+  let doc
+  try {
+    doc = parseDocument(span, { schema: 'core' })
+  } catch {
+    return null
+  }
+  if (doc.errors.length) return null
+  let commented = Boolean(doc.comment) || Boolean(doc.commentBefore)
+  visit(doc, (_, node) => {
+    if (node && typeof node === 'object' && ('comment' in node || 'commentBefore' in node)) {
+      const said = node as { comment?: string | null; commentBefore?: string | null }
+      if (said.comment || said.commentBefore) commented = true
+    }
+  })
+  if (commented) return null
+
+  const pair = doc.contents && 'items' in doc.contents ? doc.contents.items[0] : undefined
+  const value = pair && typeof pair === 'object' && 'value' in pair ? pair.value : undefined
+  const nodes = isSeq(value) ? value.items : isScalar(value) && value.value !== null ? [value] : []
+  if (value !== null && value !== undefined && !isSeq(value) && !isScalar(value)) return null
+
+  const items: string[] = []
+  const written: string[] = []
+  const quoted: boolean[] = []
+  for (const node of nodes) {
+    if (!isScalar(node) || !node.range) return null
+    if (node.type !== 'PLAIN' && node.type !== 'QUOTE_DOUBLE' && node.type !== 'QUOTE_SINGLE')
+      return null
+    const said = span.slice(node.range[0], node.range[1])
+    const inQuotes = node.type !== 'PLAIN'
+    items.push(inQuotes ? String(node.value) : said)
+    written.push(said)
+    quoted.push(inQuotes)
+  }
+
+  // Every member YAML reads under the key is in the span, or the rewrite would leave
+  // the rest behind as lines of their own.
+  const members: unknown = isSeq(value) ? value.toJSON() : nodes.map((one) => (one as Scalar).value)
+  const expected = held === undefined || held === null ? [] : Array.isArray(held) ? held : [held]
+  if (JSON.stringify(members) !== JSON.stringify(expected)) return null
+
+  const property: Property = {
+    key,
+    kind: 'list',
+    value: '',
+    items,
+    ...(quoted.includes(true) ? { quotedItems: quoted, writtenItems: written } : {}),
+    from,
+    to,
+  }
+  return { from, to, property }
 }
 
 export { taskHash } from './task-hash'
