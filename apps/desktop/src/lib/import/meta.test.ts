@@ -1,3 +1,4 @@
+import { renderMarkdown } from '@nib/markdown'
 import { describe, expect, test } from 'vitest'
 
 import { dayOf, frontMatterFor, noteText, tagName } from './meta'
@@ -101,5 +102,27 @@ describe('the day a date lands on', () => {
     expect(dayOf('soon')).toBeNull()
     expect(dayOf(0)).toBeNull()
     expect(dayOf('0001-01-01')).toBeNull()
+  })
+})
+
+/** A title another app kept is somebody's words, typed where nothing read markdown,
+ *  and the heading it becomes reads markdown: dollars as maths, `==` as a highlight,
+ *  `#work` as a tag, `[[Other]]` as a link, tildes as a subscript, a `#` at the end
+ *  as the heading's own closing mark. Each title reads back as itself. */
+describe('a title as the note heading', () => {
+  const TITLES = [
+    'Tickets $5-$10',
+    'a==b and c==d',
+    'Ideas #work',
+    'See [[Other]]',
+    'H~2~O',
+    'Issue #',
+  ]
+
+  test.each(TITLES)('%s is its words', (title) => {
+    const html = renderMarkdown(noteText(title, 'Words.'))
+    const shown = title.replace(/&/g, '&amp;').replace(/</g, '&lt;')
+
+    expect(html).toContain(`<h1>${shown}</h1>`)
   })
 })
