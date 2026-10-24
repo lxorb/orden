@@ -839,7 +839,9 @@ function holds(tail: string): boolean {
  *  the way each was written when one is added or taken out (`listItems`, `typedItem`
  *  in packages/markdown/src/property-edits.ts). Measured 3,285,282.
  *
- *  Raised 2026-10-24, to 3,287,000, for #868: an untouched list member is written back exactly as the note had it (`KeptItem` in packages/markdown/src/property-edits.ts). Measured 3,286,180. */
+ *  Raised 2026-10-24, to 3,287,000, for #868: an untouched list member is written
+ *  back exactly as the note had it (`KeptItem` in packages/markdown/src/property-edits.ts).
+ *  Measured 3,286,180. */
 const BUDGET = 3_287_000
 const MOST_FILES = 382
 
