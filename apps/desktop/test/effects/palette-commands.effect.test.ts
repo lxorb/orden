@@ -1,8 +1,27 @@
 import { flushSync, mount, unmount } from 'svelte'
 import { afterEach, beforeEach, expect, test } from 'vitest'
-import { overlays } from '../../src/lib/overlays'
-import Palette from '../../src/lib/Palette.svelte'
 import { viewport } from '../../src/lib/viewport.svelte'
+
+/** The list wears the app's own scrollbar (#775), which watches the list's size; jsdom
+ *  lays nothing out, so nothing is ever there to see. */
+class NoLayout {
+  observe() {
+    // jsdom never moves anything.
+  }
+
+  unobserve() {
+    // Said above.
+  }
+
+  disconnect() {
+    // Said above.
+  }
+}
+
+globalThis.ResizeObserver = NoLayout
+
+const { overlays } = await import('../../src/lib/overlays')
+const { default: Palette } = await import('../../src/lib/Palette.svelte')
 
 /** The palette opened on the commands, which is what Ctrl+Shift+P does.
  *

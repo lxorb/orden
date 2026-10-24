@@ -23,6 +23,24 @@ Element.prototype.animate = () =>
 
 Element.prototype.scrollIntoView = () => undefined
 
+/** The list wears the app's own scrollbar (#775), which watches the list's size; jsdom
+ *  lays nothing out, so nothing is ever there to see. */
+class NoLayout {
+  observe() {
+    // jsdom never moves anything.
+  }
+
+  unobserve() {
+    // Said above.
+  }
+
+  disconnect() {
+    // Said above.
+  }
+}
+
+globalThis.ResizeObserver = NoLayout
+
 const { default: Palette } = await import('../../src/lib/Palette.svelte')
 const { modes } = await import('../../src/lib/modes.svelte')
 const { theme } = await import('../../src/lib/theme.svelte')
