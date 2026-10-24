@@ -516,10 +516,11 @@
         {@render unreachable()}
       {/await}
     {/key}
-  {:else if tab?.kind === 'pages'}
+  {:else if tab?.kind === 'pages' || tab?.kind === 'pdf'}
     <!-- Pages of paper, in the note's place. Keyed like the canvas beside it: a page
          note is a document of its own and nothing about it is swapped into an
-         editor. -->
+         editor. A PDF read as itself, in a space shared to be read, is drawn by the
+         same surface out of the pages held for it in memory. -->
     {#key tab.id}
       {#await pagesSurface() then Pages}
         <Pages {tab} focused={workspace.panes.focusedId === pane.id} />
