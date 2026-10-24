@@ -275,6 +275,25 @@ describe('a device moving to v2', () => {
     expect(await liveNames()).toEqual(['Plan.md'])
   })
 
+  /** A canvas another program cut short, or left with conflict markers, after v1 last
+   *  agreed on it is no edit of it: read as a plane, it has nothing on it, and taken it
+   *  would empty the account's canvas and every device's. The account's stands, as v1's
+   *  own merge has it, and the file is kept as a version before it is written. */
+  test('a canvas that no longer reads is not taken for an empty one', async () => {
+    const good = JSON.stringify({
+      nodes: [{ id: 'a', type: 'text', text: 'keep me', x: 0, y: 0, width: 100, height: 50 }],
+      edges: [],
+    })
+    const note = await v1Note('Board.canvas', good)
+    const { file } = await migrated(
+      { 'Board.canvas': good.slice(0, -12) },
+      { 'Board.canvas': { ...note, hash: await sha256(good) } },
+    )
+
+    expect(await textOnAccount(note.id)).toContain('keep me')
+    expect(file('Board.canvas')).toContain('keep me')
+  })
+
   test('a file the account has never seen is made there', async () => {
     const note = await v1Note('Plan.md', 'Plan.\n')
     const { file } = await migrated(
