@@ -193,6 +193,35 @@ describe('a file made beside one the list does not show', () => {
     expect(files().get('/home/.gitignore')).toBe('secrets/\n')
     expect(files().get('/home/.gitignore 2')).toBe('node_modules/\n')
   })
+
+  test('a page note made in a dot folder steps past a PDF there it would take for its paper', async () => {
+    // A page note holds `<name>.pdf` beside it as its paper. Landing beside the
+    // person's own `Untitled.pages.pdf` hid that PDF in the note, and deleting the
+    // note deleted it too.
+    files().set('/home/.dir/Untitled.pages.pdf', '%PDF-1.7\n')
+    await workspace.loadTree()
+
+    await workspace.createPages('/home/.dir', 'Untitled.pages')
+    await workspace.writesSettled()
+
+    expect(files().has('/home/.dir/Untitled.pages')).toBe(false)
+    expect(files().has('/home/.dir/Untitled 2.pages')).toBe(true)
+  })
+
+  test('a paper dropped into a dot folder steps past the page note there it would belong to', async () => {
+    files().set('/home/.dir/Lecture.pages', '{}\n')
+    await workspace.loadTree()
+
+    const bytes = new TextEncoder().encode('%PDF-1.7\n')
+    const picked = {
+      name: 'Lecture.pages.pdf',
+      webkitRelativePath: '',
+      arrayBuffer: async () => bytes.buffer,
+    }
+    await workspace.bringIn([picked], '/home/.dir')
+
+    expect(files().has('/home/.dir/Lecture.pages.pdf')).toBe(false)
+  })
 })
 
 describe('a delete undone after a note took its name', () => {
