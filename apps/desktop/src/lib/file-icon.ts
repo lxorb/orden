@@ -21,6 +21,7 @@
  *  See tag-edits.ts, which is the same shape of change. */
 
 import { frontMatterEdits } from '@nib/markdown/front-matter'
+import { scalar } from '@nib/markdown/yaml'
 import { isCanvasTarget, isChatTarget, isPagesTarget } from '@nib/markdown/links'
 import { oneEdit, type TextEdit } from '@nib/markdown/edits'
 import { isFolderNote } from './folder-notes'
@@ -71,12 +72,16 @@ export async function setFileIcon(
   // whole of JSON Canvas, and this one line was the last thing holding it in front of
   // the first paint. Asked for here, where somebody has chosen an icon for a plane, and
   // never for a note; see scan-canvas.ts, which is fetched the same way.
+  //
+  // A note's icon goes in as a scalar, because the block edit writes what it is
+  // handed as it stands: the keycap `#` emoji written bare is a comment, and `*` an
+  // alias.
   const edit = isChatTarget(path)
     ? await chatIconEdit(before, value, colour)
     : isCanvasTarget(path) || isPagesTarget(path)
       ? (await import('@nib/markdown/canvas')).canvasIconEdit(before, value, colour)
       : frontMatterEdits(before, [
-          [ICON_KEY, value],
+          [ICON_KEY, value === null ? null : scalar(value)],
           [ICON_COLOUR_KEY, colour],
         ])
   if (!edit) return
