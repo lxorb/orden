@@ -241,7 +241,18 @@ pub fn markdown(body: &Body, parts: &mut dyn Parts) -> String {
             out.push_str(&prefix(run, line.soft, counted));
             // Not the line breaks: those are an attachment that is a block of its own,
             // a table or a scan, asking for the blank line a block needs above it.
-            out.push_str(words.trim_start_matches(|one: char| one.is_whitespace() && one != '\n'));
+            let said = words.trim_start_matches(|one: char| one.is_whitespace() && one != '\n');
+            // An attachment's own markdown starts the line as what it is, a list of
+            // pictures as much as a picture; only a note's words are escaped.
+            let first = line.pieces.iter().find(|(run, said)| {
+                run.attachment.is_some() || !said.replace(OBJECT, "").trim().is_empty()
+            });
+            let worded = first.is_some_and(|(run, _)| run.attachment.is_none());
+            out.push_str(&if worded {
+                opened(said)
+            } else {
+                said.to_string()
+            });
         }
 
         out.push('\n');
@@ -502,26 +513,91 @@ fn wrapped(run: &Run, said: &str) -> String {
     format!("{before}{marked}{after}")
 }
 
-/// The two characters a note's own words would otherwise become a link with, and
-/// the `<` that would otherwise open a tag: a note that says `<script>` or `<b>`
-/// says those words, and read as HTML they would vanish or turn into markup.
-/// Everything else is left as it was: a note that says `5 * 3` says that.
+/// A note's own words, escaped where nib's markdown would read them as markup: they
+/// are plain words in Notes, and `a==b or c==d` is not a highlight, `_x_` not italics,
+/// `<b>` not a tag and `$x$` not math. The rules are packages/markdown's `escapeText`
+/// (escapes.ts), which every other conversion goes through, without its keeping of
+/// `**bold**` a page wrote as markdown: here a star is a star somebody typed. Where an
+/// escape changes nothing a reader sees it is left out, as there: `snake_case`, `2 * 3`.
+///
+/// A run is escaped on its own, so what is next to its ends is unknown and treated as
+/// something a marker could lean on. See `opened` for what the start of a line needs.
 fn escaped(words: &str) -> String {
+    let chars: Vec<char> = words.chars().collect();
     let mut out = String::with_capacity(words.len());
-    let mut chars = words.chars().peekable();
+    // Whether anything has been written before this character in the run, which is
+    // what a star needs to know: one with words before it cannot begin a list.
+    let mut mid = false;
 
-    while let Some(one) = chars.next() {
-        let opens_tag = one == '<'
-            && chars
-                .peek()
-                .is_some_and(|next| next.is_ascii_alphabetic() || matches!(next, '/' | '!' | '?'));
-        if one == '[' || one == ']' || opens_tag {
+    for (at, &one) in chars.iter().enumerate() {
+        let before = at.checked_sub(1).and_then(|back| chars.get(back)).copied();
+        let after = chars.get(at + 1).copied();
+        let word = |side: Option<char>| side.is_some_and(char::is_alphanumeric);
+        let blank = |side: Option<char>| side.is_some_and(char::is_whitespace);
+
+        let escape = match one {
+            // An escape of the punctuation after it, or a backslash.
+            '\\' => after.is_none_or(|next| next.is_ascii_punctuation()),
+            // Never emphasis inside a word, where a file name keeps its underscores.
+            '_' => !(word(before) && word(after)),
+            // A star with a blank on each side can neither open emphasis nor close it.
+            '*' => !(mid && blank(before) && blank(after)),
+            // Doubled, a highlight (`==`) or a comment (`%%`).
+            '=' | '%' => before == Some(one) || after == Some(one),
+            // A tag opened, where the words say `<b>` or `<script>`.
+            '<' => after
+                .is_some_and(|next| next.is_ascii_alphabetic() || matches!(next, '/' | '!' | '?')),
+            // An entity, which would show as the character it names.
+            '&' => after.is_some_and(|next| next.is_ascii_alphanumeric() || next == '#'),
+            // A link or a wikilink, code, math, a strike, a lowered and a raised run.
+            '[' | ']' | '`' | '$' | '~' | '^' => true,
+            _ => false,
+        };
+
+        if escape {
             out.push('\\');
         }
         out.push(one);
+        mid |= !one.is_whitespace();
     }
 
     out
+}
+
+/// A line's words with what would open a block at its start escaped, where Notes had a
+/// paragraph: a heading of `# not a heading`, a quote of `> q`, a list of `1986. A great
+/// year` or `- not a bullet`. A star there is a bullet as well, which `escaped` has
+/// seen to already, and so are `~~~` and `===`. `-5 degrees` is a temperature.
+fn opened(words: &str) -> String {
+    let blank_or_end = |rest: &str| rest.chars().next().is_none_or(char::is_whitespace);
+
+    let hashes = words.len() - words.trim_start_matches('#').len();
+    if (1..=6).contains(&hashes) && blank_or_end(&words[hashes..]) {
+        return format!("\\{words}");
+    }
+
+    let digits = words.len()
+        - words
+            .trim_start_matches(|one: char| one.is_ascii_digit())
+            .len();
+    if digits > 0 {
+        let rest = &words[digits..];
+        if let Some(after) = rest.strip_prefix(['.', ')']) {
+            if blank_or_end(after) {
+                return format!("{}\\{rest}", &words[..digits]);
+            }
+        }
+        return words.to_string();
+    }
+
+    let block = words.starts_with('>')
+        || (words.starts_with('-') && (blank_or_end(&words[1..]) || words[1..].starts_with('-')))
+        || (words.starts_with('+') && blank_or_end(&words[1..]));
+    if block {
+        return format!("\\{words}");
+    }
+
+    words.to_string()
 }
 
 /// Where a link goes, as markdown writes it: in angle brackets where it holds a space
