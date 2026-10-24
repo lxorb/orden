@@ -831,9 +831,13 @@ function holds(tail: string): boolean {
  *  stands over the caption rather than pushing the file list down under the pointer
  *  (`is-floating` in Bookmarks.svelte). Measured 3,280,466.
  *
- *  Raised 2026-10-24, to 3,282,000, for #900: a block is named only in a note, keeping
- *  its line ending, and nothing names one in a space shared to be read (`nameBlock` and
- *  `searchBlocks` in link-index.svelte.ts). Measured 3,281,306. */
+ *  Raised 2026-10-24, to 3,285,000, for #811: the file list's gestures refuse a space
+ *  shared to be read, in the workspace's own calls (`writableAt`) and in the row menu,
+ *  the tree's keys and the palette. Measured 3,283,904.
+ *
+ *  Raised 2026-10-24, to 3,291,000, for #903: a note open from another space resolves
+ *  its links, bare embeds and attachments in its own space (`otherIndex` in
+ *  link-index.svelte.ts), after #878, #889 and #894 before it. Measured 3,290,175. */
 const BUDGET = 3_300_000 // combined branch only
 const MOST_FILES = 382
 

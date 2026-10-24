@@ -340,6 +340,21 @@ describe('where the reader is', () => {
     })
   })
 
+  /** Tabs are shared across spaces, so a note of another space can be open. Its path
+   *  relative to the active space is the whole local path, which names this machine's
+   *  folders and nothing an agent can reach by it (B385). */
+  test("a tab of another space gives no path, rather than this machine's whole one", async () => {
+    const outside = workspace.outside
+    workspace.outside = (path: string) => !/^\/s\/(Work|Home)\//.test(path)
+    tabs.push(tab('h1', 'note', '/s/Home/Todo.md', { shown: 'Todo' }))
+    try {
+      const said = (await call('get_context', {})) as { result: { tabs: { id: string }[] } }
+      expect(said.result.tabs.find((one) => one.id === 'h1')).not.toHaveProperty('path')
+    } finally {
+      workspace.outside = outside
+    }
+  })
+
   test('the selection is the selected tab kind', async () => {
     workspace.activeTabId = 'c1'
     expect(await call('get_context', {})).toMatchObject({
