@@ -54,7 +54,8 @@ export async function saveAsNote(
   if (!entry?.path) return
   const folder = folderOf(entry.path)
   const name = noteNameOf(message.body, entry.name ?? t('Chat'))
-  const path = joinPath(folder, workspace.freeName(folder, `${name}.md`))
+  // The chat can be a tab from a space that is not on screen, so the disk is asked.
+  const path = joinPath(folder, await workspace.freeNameOnDisk(folder, `${name}.md`))
 
   const replies = message.replies
     ? await store().history(page.id, { parent: message.id, limit: 200 })

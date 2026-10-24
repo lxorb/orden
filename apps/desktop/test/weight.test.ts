@@ -845,7 +845,11 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-24, to 3,282,000, for #758: a block named from a link in a note
  *  open in another tab is named in that tab's document too, or its next save drops
- *  the name (`nameBlock` in link-index.svelte.ts). Measured 3,281,488. */
+ *  the name (`nameBlock` in link-index.svelte.ts). Measured 3,281,488.
+ *
+ *  Raised 2026-10-24, to 3,282,000, for #737: a note made in a folder taken from a
+ *  tab asks the disk for its name, since the tab can be from a space not on screen
+ *  (`freeNameOnDisk` in workspace.svelte.ts). Measured 3,281,445. */
 const BUDGET = 3_282_000
 const MOST_FILES = 382
 

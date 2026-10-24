@@ -88,6 +88,42 @@ describe('a draft saved into a space that is not on screen', () => {
   })
 })
 
+describe('a note made beside a tab from a space that is not on screen', () => {
+  beforeEach(async () => {
+    files().set('/home/Ideas.md', 'my ideas\n')
+    files().set('/home/Plan.md', '# Plan\n')
+    files().set('/away/Other.md', '# Other\n')
+    workspace.spaces = [
+      { id: 'away', name: 'Away', root: '/away' },
+      { id: 'home', name: 'Home', root: '/home' },
+    ]
+    workspace.activeSpaceId = 'home'
+    await workspace.loadTree()
+    await workspace.open('/home/Plan.md')
+    // Tabs are kept across spaces, so Plan.md stays in front while the listing is
+    // the other space's, which has no Ideas.md in it.
+    await workspace.selectSpace('away')
+  })
+
+  test('extracted, steps past a note of the same name there', async () => {
+    const tab = workspace.active
+    if (tab?.path !== '/home/Plan.md') throw new Error('Plan.md is not in front')
+    const text = '# Plan\n\n# Ideas\n\nnew\n'
+    tab.note.replace(text, false)
+    await workspace.extractSelection(text.indexOf('# Ideas'), text.length)
+
+    expect(files().get('/home/Ideas.md')).toBe('my ideas\n')
+    expect(files().get('/home/Ideas 2.md')).toContain('new')
+  })
+
+  test('out of a canvas card, steps past a note of the same name there', async () => {
+    const landed = await workspace.noteFrom('# Ideas\ncard\n', '/home')
+
+    expect(landed).toBe('/home/Ideas 2.md')
+    expect(files().get('/home/Ideas.md')).toBe('my ideas\n')
+  })
+})
+
 describe('a delete undone after a note took its name', () => {
   beforeEach(async () => {
     files().set('/space/Plan.md', '# Plan\nthe old words\n')

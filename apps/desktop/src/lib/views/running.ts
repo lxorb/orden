@@ -4,6 +4,7 @@
 
 import { readBase, readAutomations, repeatDue, type Row } from '@nib/bases'
 import { withProperties } from '@nib/bases/agent'
+import { insideOnly } from '../automation/inside'
 import { show } from '../reminders/platform'
 import { rows } from '../rows/rows.svelte'
 import { insideSpace, within } from '../space-paths'
@@ -81,7 +82,13 @@ async function run(space: string, path: string, removed: readonly Row[]) {
   const root = workspace.spaces.find((one) => one.name === space)?.root
   for (const move of plan.moves) {
     if (root === undefined) continue
-    const folder = joinPath(root, move.folder.replace(/^\/+|\/+$/g, ''))
+    // The folder is the base's words, which anybody who can write the space can write;
+    // joined as written, `../Private` moved the note out into another space. Read the
+    // way a link's path is, and a folder that leaves the space moves nothing.
+    const said = move.folder.replace(/^\/+|\/+$/g, '')
+    const inside = said ? insideOnly(said) : ''
+    if (inside === null) continue
+    const folder = inside ? insideSpace(root, inside) : root
     await invoke('create_folder', { path: folder }).catch(() => undefined)
     await workspace.move(insideSpace(root, move.row.path), folder).catch(() => undefined)
   }
@@ -135,10 +142,14 @@ export async function repeatTemplates() {
     const due = repeatDue(row.note, today)
     if (!due) continue
 
-    const to =
-      typeof row.note.folder === 'string' && row.note.folder.trim()
-        ? joinPath(space.root, row.note.folder.trim())
-        : space.root
+    // The template's `folder:` is words anybody who can write the space can write, and
+    // joined as written `../Private` made the note in another space, over what was
+    // there. Read the way a link's path is; one that leaves the space makes nothing.
+    const said =
+      typeof row.note.folder === 'string' ? row.note.folder.trim().replace(/^\/+|\/+$/g, '') : ''
+    const inside = said ? insideOnly(said) : ''
+    if (inside === null) continue
+    const to = inside ? insideSpace(space.root, inside) : space.root
     await invoke('create_folder', { path: to }).catch(() => undefined)
     const title = `${row.file.basename} ${due.day}`
     const name = workspace.freeName(to, `${title}.md`)
