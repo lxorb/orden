@@ -2043,14 +2043,17 @@ mod tests {
             here.join("Report.pages 2.pdf")
         );
 
-        // A PDF moved in beside its note in its own folder is how a PDF becomes a page
-        // note's paper (pages/from-pdf.ts), and that one is let through.
-        let lecture = here.join("Lecture.pdf");
-        std::fs::write(&lecture, b"%PDF lecture").expect("a PDF");
-        std::fs::write(here.join("Lecture.pages"), "{}").expect("its note");
+        // And from the note's own folder too: `slides.pdf` renamed `Lecture.pages.pdf`
+        // by a name typed into its row would be taken for the blank note's paper. The
+        // one move that means it - a PDF turned into a page note - says so to
+        // `rename_note`, which is not this judge.
+        let lecture = here.join("Lecture.pages");
+        std::fs::write(&lecture, "{}").expect("a page note of blank sheets");
+        let slides = here.join("slides.pdf");
+        std::fs::write(&slides, b"%PDF slides").expect("a PDF");
         assert_eq!(
-            super::paper_in_the_way(&lecture, &here.join("Lecture.pages.pdf"), never),
-            None
+            super::paper_in_the_way(&slides, &here.join("Lecture.pages.pdf"), never),
+            Some(lecture)
         );
     }
 
