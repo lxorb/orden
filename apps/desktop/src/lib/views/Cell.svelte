@@ -256,6 +256,7 @@
   <button
     type="button"
     class="nib-chip press"
+    disabled={!kit.writes(row)}
     onclick={(event) => {
       event.stopPropagation()
       kit.press(row, property)

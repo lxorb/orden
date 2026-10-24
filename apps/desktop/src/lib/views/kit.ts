@@ -137,7 +137,7 @@ export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, comp
       if (writes(row)) void writeRow(row, change)
     },
     press(row, column) {
-      if (live.base) void pressButton(live.base, column.slice(BUTTON.length), row)
+      if (live.base && writes(row)) void pressButton(live.base, column.slice(BUTTON.length), row)
     },
     drop(row, key, property) {
       const by = property ?? live.view?.groupBy?.property

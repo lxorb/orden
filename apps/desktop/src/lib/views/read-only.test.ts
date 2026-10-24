@@ -1,4 +1,4 @@
-import { readBase, type Row } from '@nib/bases'
+import { answer, readBase, type Row } from '@nib/bases'
 import { render } from 'svelte/server'
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
@@ -22,8 +22,15 @@ vi.mock('../sharing.svelte', () => ({
   canWriteAt: (path: string) => ![...readOnly].some((root) => insideOf(root, path)),
 }))
 
+/** Every address a press opened. */
+const opened: string[] = []
+
 vi.mock('../tauri', async (original) => ({
   ...(await original<typeof import('../tauri')>()),
+  openExternal: (address: string) => {
+    opened.push(address)
+    return Promise.resolve()
+  },
   invoke: (command: string, args?: Record<string, unknown>) => {
     const path = typeof args?.path === 'string' ? args.path : ''
     if (command === 'read_note' || command === 'read_tree') {
@@ -106,6 +113,7 @@ vi.mock('../rows/rows.svelte', () => ({
   },
 }))
 
+vi.mock('../rooms.svelte', () => ({ rooms: { present: {}, following: null } }))
 vi.mock('../surfaces.svelte', () => ({ showQuickAdd: () => undefined }))
 vi.mock('../reminders/platform', () => ({ show: () => undefined }))
 
@@ -123,7 +131,9 @@ const { offersPlaces, placeEntries } = await import('./project-actions')
 const { addNote } = await import('./add')
 const { heard, readHeld, repeatTemplates } = await import('./running')
 const { contextFor } = await import('./context')
+const { columnsOf } = await import('./columns')
 const Cell = (await import('./Cell.svelte')).default
+const BoardLayout = (await import('./BoardLayout.svelte')).default
 
 const PLAN = 'Plan.md'
 const TASK = '- [ ] water the plants'
@@ -154,6 +164,7 @@ beforeEach(() => {
   disk.clear()
   written.length = 0
   folders.length = 0
+  opened.length = 0
   readOnly.clear()
   readOnly.add(THEIRS.root)
   disk.set(`${THEIRS.root}/${PLAN}`, `---\nstatus: open\n---\n${TASK}\n`)
@@ -222,6 +233,95 @@ describe('a view over a space shared to be read', () => {
       false,
     )
     expect(written).toEqual([])
+  })
+})
+
+/** A board of a base file, grouped by status, over this space's notes, drawn as
+ *  LiveView would hold it. */
+function boardOver(file: string) {
+  const base = readBase(`views:
+  - type: kanban
+    name: Board
+    groupBy: { property: note.status, direction: ASC }
+`)
+  const rows = [theirNote()]
+  const context = contextFor({ rows, today: '2026-10-24', now: '2026-10-24T12:00' })
+  const live = {
+    base,
+    at: 0,
+    view: base.views[0],
+    rows,
+    context,
+    today: '2026-10-24',
+    answer: answer(base, 0, rows, context),
+    columns: columnsOf(base, 0, rows),
+    writtenAt: file,
+    locked: false,
+    refused: 0,
+    colourOf: () => null,
+    change: () => Promise.resolve(),
+  }
+  const kit = kitFor(live as unknown as Parameters<typeof kitFor>[0], {}, file, false)
+  return render(BoardLayout, { props: { kit } }).body
+}
+
+describe('a board of a base in a space shared to be read', () => {
+  test('offers no new page, in a column or at its head', () => {
+    const html = boardOver(`${THEIRS.root}/Bugs.base`)
+    expect(html).toContain('open')
+    expect(html).not.toContain('data-new-page')
+    expect(html).not.toContain('aria-label="New page"')
+  })
+
+  test("while a board of the reader's own still does", () => {
+    const html = boardOver(`${MINE.root}/Bugs.base`)
+    expect(html).toContain('data-new-page')
+    expect(html).toContain('aria-label="New page"')
+  })
+})
+
+/** A base whose button sets a row's status and opens an address. */
+const SHIP = readBase(`nib:
+  buttons:
+    Ship:
+      set: { status: done }
+      open: https://example.com
+views:
+  - type: table
+    order: [file.name, button.Ship]
+`)
+
+describe('a button of a row in a space shared to be read', () => {
+  test('is not pressable', () => {
+    const { kit } = viewOver(null)
+    const props = { row: theirNote(), property: 'button.Ship', editor: 'button', kit }
+    const html = render(Cell, { props: props as never }).body
+    expect(html).toMatch(/<button[^>]*class="nib-chip press[^>]*disabled/)
+  })
+
+  test('and a press of it does nothing', async () => {
+    const { kit, live } = viewOver(null)
+    ;(live as { base: unknown }).base = SHIP
+    kit.press(theirNote(), 'button.Ship')
+    await new Promise((done) => setTimeout(done, 10))
+    expect(written).toEqual([])
+    expect(opened).toEqual([])
+  })
+
+  test("while the reader's own still presses", async () => {
+    const { kit, live } = viewOver(null)
+    ;(live as { base: unknown }).base = SHIP
+    kit.press(noteRow(PLAN, { status: 'open' }, {}, 'Mine'), 'button.Ship')
+    await vi.waitFor(() => expect(opened).toEqual(['https://example.com']))
+    const html = render(Cell, {
+      props: {
+        row: noteRow(PLAN, { status: 'open' }, {}, 'Mine'),
+        property: 'button.Ship',
+        editor: 'button',
+        kit,
+      } as never,
+    }).body
+    expect(html).not.toMatch(/<button[^>]*class="nib-chip press[^>]*disabled/)
   })
 })
 
