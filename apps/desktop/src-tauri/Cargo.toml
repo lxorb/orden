@@ -156,6 +156,11 @@ icu_properties = "2"
 # app installs its own updates, and files are chosen and saved in a dialog. A
 # phone has none of the three.
 [target.'cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))'.dependencies]
+# The font families installed on this machine, for Settings' font pickers (#772): one
+# reader of the font folders the platform keeps - fontconfig's on Linux, NixOS's included,
+# the system's and the user's on Windows and the Mac - and of each file's name table,
+# rather than three platform APIs behind three `cfg`s. Pure Rust, with ttf-parser under it.
+fontdb = "0.24"
 # An agent's picture of a page with every filled secret field painted over, so a
 # password's bullets and a card's digits never reach it; see agents/page.rs. Every
 # desktop that has agents' pages. Already in the lock file, at
