@@ -17,23 +17,38 @@ import { account } from '../account.svelte'
 import { roleOf } from '../sharing.svelte'
 import { samePath, within } from '../space-paths'
 import { sync } from '../sync.svelte'
+import { invoke } from '../tauri'
 import { type Entry, workspace } from '../workspace.svelte'
 
-/** The pointers a move of this path carries: the file itself, or every one in the
- *  folder. */
-export function pointersIn(path: string): string[] {
-  const found: string[] = []
-  const walk = (entry: Entry) => {
-    if (!entry.is_dir) {
-      if (isChatTarget(entry.path)) found.push(entry.path)
-      return
-    }
-    for (const child of entry.children) walk(child)
+/** Every pointer at or under this entry. */
+function pointersUnder(entry: Entry, found: string[] = []): string[] {
+  if (!entry.is_dir) {
+    if (isChatTarget(entry.path)) found.push(entry.path)
+    return found
   }
-  const entry = workspace.entryAt(path)
-  if (entry) walk(entry)
-  else if (isChatTarget(path)) found.push(path)
+  for (const child of entry.children) pointersUnder(child, found)
   return found
+}
+
+/** The pointers a move of this path carries: the file itself, or every one in the
+ *  folder, as the open space's tree has them. */
+export function pointersIn(path: string): string[] {
+  const entry = workspace.entryAt(path)
+  if (entry) return pointersUnder(entry)
+  return isChatTarget(path) ? [path] : []
+}
+
+/** The same, for the move itself, which may be of a folder in a space that is not the
+ *  one open: an undo from the space a folder left, or an agent's move elsewhere. The
+ *  tree knows only the open space, and a folder it does not hold would carry nothing,
+ *  so its pointers would move and their chats stay behind (B246). The disk is asked
+ *  for what the tree does not have. */
+export async function pointersMoving(path: string): Promise<string[]> {
+  const entry = workspace.entryAt(path)
+  if (entry) return pointersUnder(entry)
+  if (isChatTarget(path)) return [path]
+  const listed = await invoke<Entry>('read_tree', { root: path }).catch(() => null)
+  return listed ? pointersUnder(listed) : []
 }
 
 export function spaceHolding(path: string) {
@@ -53,10 +68,11 @@ function ownerOf(root: string): string | null {
 /** Whether what is at `path` may be moved into the space at `root` as far as the chats
  *  it carries go. Anything that carries no pointer may, and so may anything moved by the
  *  owner of the space it leaves; a writer moves a chat only into another space of the
- *  same owner, and where the owners are not known it is not offered. */
-export function mayCarry(path: string, root: string): boolean {
+ *  same owner, and where the owners are not known it is not offered. The pointers are
+ *  the tree's unless the move has asked the disk for them. */
+export function mayCarry(path: string, root: string, pointers = pointersIn(path)): boolean {
   const from = spaceHolding(path)
-  if (!from || samePath(from.root, root) || !pointersIn(path).length) return true
+  if (!from || samePath(from.root, root) || !pointers.length) return true
   if (roleOf(from.root) === 'owner') return true
   const owner = ownerOf(from.root)
   return owner !== null && owner === ownerOf(root)
