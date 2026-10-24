@@ -293,10 +293,20 @@ function runsOf(text: string): Map<string, number> {
   return counts
 }
 
+/** `runsOf` each line of a text, added up: a run that reads across a line break is
+ *  the end of one line and the start of the next, which no one said. */
+function runsByLine(text: string): Map<string, number> {
+  const counts = new Map<string, number>()
+  for (const line of text.split('\n')) {
+    for (const [run, count] of runsOf(line)) counts.set(run, (counts.get(run) ?? 0) + count)
+  }
+  return counts
+}
+
 /** Whether a merge says something twice that none of `references` says that often. */
 function repeats(references: readonly string[], merge: string): boolean {
-  const known = references.map(runsOf)
-  for (const [run, count] of runsOf(merge)) {
+  const known = references.map(runsByLine)
+  for (const [run, count] of runsByLine(merge)) {
     if (count < 2) continue
     if (known.every((one) => count > (one.get(run) ?? 0))) return true
   }
@@ -307,9 +317,9 @@ function repeats(references: readonly string[], merge: string): boolean {
  *  of `RUN` characters it holds more than once, the copies past the most any reference
  *  holds. A run it holds once is two words set side by side, not a repeat. */
 function excess(references: readonly string[], merge: string): number {
-  const known = references.map(runsOf)
+  const known = references.map(runsByLine)
   let over = 0
-  for (const [run, count] of runsOf(merge)) {
+  for (const [run, count] of runsByLine(merge)) {
     if (count < 2) continue
     over += Math.max(0, count - Math.max(...known.map((one) => one.get(run) ?? 0)))
   }
@@ -575,7 +585,17 @@ function divergeOnce(
       const both = resolved(base, analysis, () => 'both', merged)
       if (excess([local, remote], both) < excess([local, remote], merged)) kept = [both]
     }
-    if (checked.some((text) => repeats([local, remote, ...kept], text))) {
+    // And only where keeping both writes no more lines that none of the three texts
+    // has: kept both, a line one side took out and the other wrote in leaves the
+    // other's words run into the next line, and the newer side's version, though it
+    // may say something twice, at least says it in lines someone wrote.
+    const lines = new Set([base, local, remote].flatMap((text) => text.split('\n')))
+    const novel = (texts: readonly string[]) =>
+      Math.max(...texts.map((text) => text.split('\n').filter((line) => !lines.has(line)).length))
+    if (
+      checked.some((text) => repeats([local, remote, ...kept], text)) &&
+      novel(kept) <= novel(checked)
+    ) {
       checked = kept
       settled = 'both'
     }
