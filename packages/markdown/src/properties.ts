@@ -252,7 +252,7 @@ export function readProperties(source: string): Property[] | null {
  *  spelling where the note has it, else the first in another case, so a base's
  *  `tags` column is the `Tags:` a note writes. Where the note has both they are two
  *  keys, as they are to YAML. */
-export function propertyNamed(rows: readonly Property[], key: string): Property | undefined {
+export function keyCalled(rows: readonly Property[], key: string): Property | undefined {
   const wanted = key.toLowerCase()
   return rows.find((one) => one.key === key) ?? rows.find((one) => one.key.toLowerCase() === wanted)
 }
