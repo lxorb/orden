@@ -37,7 +37,7 @@ import type { Core } from './core'
 import { kindOfName, made, moved } from './create'
 import { MINE } from './docs'
 import { readFeed } from './pass'
-import { fileOfUpdates, judge, seedOf, shapeOf, turn, unixLines } from './kinds'
+import { fileOfUpdates, judge, readable, seedOf, shapeOf, turn, unixLines } from './kinds'
 import type { SpaceState } from './places'
 import { againstBytes } from './records'
 import { keepLosers } from './rejoin'
@@ -357,6 +357,10 @@ async function reconcile(
   const remoteDigest = await core.world.digest(remote)
   if (local === remote) {
     // Nothing to do: the two agree.
+  } else if (!readable(shape, local)) {
+    // A plane another program cut short or left with conflict markers is no edit of it:
+    // the account's stands, as v1's own merge has it, and the file is kept as a version
+    // before it is written (`project`).
   } else if (one.tracked?.hash === remoteDigest) {
     // The account did not move: the file's words are this device's edits on it.
     take(local)

@@ -823,3 +823,47 @@ describe('another sync tool’s copy', () => {
     expect(here.engine.core.spaces.get(SPACE)?.entries.get(PLAN)?.local_path).toBe('Plan.md')
   })
 })
+
+/** Another program's copy of a plane that does not parse - cut short mid-write, or left
+ *  with a merge's conflict markers - is not a plane with nothing on it: folded in, every
+ *  node would go out as deleted, to every device. It is left for its program to finish,
+ *  and the document keeps what it held (as v1's merge counts an unreadable side for
+ *  nothing, and `openCanvas` refuses to open one). */
+describe('another program’s unreadable canvas', () => {
+  test('is not folded in as an empty plane', async () => {
+    const one = await device()
+    const path = `${ROOT}/Board.canvas`
+    const good = JSON.stringify({
+      nodes: [{ id: 'a', type: 'text', text: 'keep me', x: 0, y: 0, width: 100, height: 50 }],
+      edges: [],
+    })
+    await one.disk.write(path, good)
+    await one.engine.created(path, false, good)
+    const id = one.engine.entryAt(path)?.id ?? ''
+    expect((await one.engine.core.doc(id))?.text()).toContain('keep me')
+
+    await one.disk.write(path, good.slice(0, -12))
+    await one.engine.foreign(path)
+
+    expect((await one.engine.core.doc(id))?.text()).toContain('keep me')
+  })
+
+  /** A program that saves by emptying the file before it writes it leaves it with
+   *  nothing in it for a moment, and a watcher can hear that moment. */
+  test('nor is one emptied for a moment by a save', async () => {
+    const one = await device()
+    const path = `${ROOT}/Board.canvas`
+    const good = JSON.stringify({
+      nodes: [{ id: 'a', type: 'text', text: 'keep me', x: 0, y: 0, width: 100, height: 50 }],
+      edges: [],
+    })
+    await one.disk.write(path, good)
+    await one.engine.created(path, false, good)
+    const id = one.engine.entryAt(path)?.id ?? ''
+
+    await one.disk.write(path, '')
+    await one.engine.foreign(path)
+
+    expect((await one.engine.core.doc(id))?.text()).toContain('keep me')
+  })
+})
