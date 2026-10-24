@@ -29,6 +29,9 @@ describe('plain text, as a note may hold it', () => {
   })
 })
 
+/** A page's prose, where the renderer autolinks a bare address. */
+const PROSE = { addresses: true }
+
 describe('a page’s text, as a note may hold it', () => {
   test('prose is prose', () => {
     expect(escapeText('Schauen Sie sich das Cheatsheet an.')).toBe(
@@ -173,42 +176,53 @@ describe('a page’s text, as a note may hold it', () => {
   /** The renderer links a bare address as it is written, backslashes and all, so an
    *  escape inside one is a broken link rather than a safer one. */
   test('a bare web address is kept as it was written', () => {
-    expect(escapeText('see https://www.cs.cmu.edu/~bob/ now')).toBe(
+    expect(escapeText('see https://www.cs.cmu.edu/~bob/ now', PROSE)).toBe(
       'see https://www.cs.cmu.edu/~bob/ now',
     )
-    expect(escapeText('https://ex.com/page#:~:text=hello')).toBe(
+    expect(escapeText('https://ex.com/page#:~:text=hello', PROSE)).toBe(
       'https://ex.com/page#:~:text=hello',
     )
     // But for its brackets and backticks, which could close or open something
     // around it where the address is a link's text. The renderer reads past those.
-    expect(escapeText('at www.example.com/_next/x and https://ex.com/a?b=[1]&c=`d`.')).toBe(
+    expect(escapeText('at www.example.com/_next/x and https://ex.com/a?b=[1]&c=`d`.', PROSE)).toBe(
       'at www.example.com/_next/x and https://ex.com/a?b=\\[1\\]&c=\\`d\\`.',
     )
-    expect(escapeText('a <https://ex.com/x>')).toBe('a \\<https://ex.com/x>')
+    expect(escapeText('a <https://ex.com/x>', PROSE)).toBe('a \\<https://ex.com/x>')
     // What the renderer leaves off the end of an address is words again.
-    expect(escapeText('(https://ex.com/a_b) and *ftp://ex.com/x*')).toBe(
+    expect(escapeText('(https://ex.com/a_b) and *ftp://ex.com/x*', PROSE)).toBe(
       '(https://ex.com/a_b) and \\*ftp://ex.com/x\\*',
     )
     // Not an address: nothing after the scheme, or no scheme the renderer links.
-    expect(escapeText('https:// and mailto:a_b [x]')).toBe('https:// and mailto:a_b \\[x\\]')
+    expect(escapeText('https:// and mailto:a_b [x]', PROSE)).toBe('https:// and mailto:a_b \\[x\\]')
     // Nor one that holds a comment's two percent signs, which no writing keeps.
-    expect(escapeText('https://ex.com/a%%b')).toBe('https://ex.com/a%\\%b')
+    expect(escapeText('https://ex.com/a%%b', PROSE)).toBe('https://ex.com/a%\\%b')
   })
 
   /** Inline maths opens on a dollar with something other than a blank after it
    *  and closes on the next one with something other than a blank before it, so
    *  two prices in a sentence would draw the words between as a formula. */
   test('a dollar that would open or close maths is escaped', () => {
-    expect(escapeText('Tickets cost $5-$10 each')).toBe('Tickets cost \\$5-\\$10 each')
-    expect(escapeText('5$ or 10$')).toBe('5\\$ or 10\\$')
-    expect(escapeText('$$')).toBe('\\$\\$')
-    expect(escapeText('a $ b')).toBe('a $ b')
+    expect(escapeText('Tickets cost $5-$10 each', PROSE)).toBe('Tickets cost \\$5-\\$10 each')
+    expect(escapeText('5$ or 10$', PROSE)).toBe('5\\$ or 10\\$')
+    expect(escapeText('$$', PROSE)).toBe('\\$\\$')
+    expect(escapeText('a $ b', PROSE)).toBe('a $ b')
   })
 
   /** A kept run is written as it is, so a dollar inside one would be a dollar the
    *  rule above never saw: `**$5** and **$6**` would be maths from one to the other. */
   test('a doubled marker around a dollar is escaped rather than kept', () => {
-    expect(escapeText('**$5** and **$6**')).toBe('\\*\\*\\$5\\*\\* and \\*\\*\\$6\\*\\*')
+    expect(escapeText('**$5** and **$6**', PROSE)).toBe('\\*\\*\\$5\\*\\* and \\*\\*\\$6\\*\\*')
+  })
+
+  /** Only a caller that knows its words are prose asks for addresses to be kept. A
+   *  link's text written by hand around the result - a media link's name, a card's
+   *  title - is inside brackets, where nothing autolinks. */
+  test('an address is words unless the words are said to be prose', () => {
+    const name = escapeText('https://player.test/v/__ab__/')
+    expect(name).toBe('https://player.test/v/\\_\\_ab\\_\\_/')
+    expect(renderMarkdown(`[${name}](https://player.test/v/__ab__/)`)).toBe(
+      '<p><a class="url" href="https://player.test/v/__ab__/">https://player.test/v/__ab__/</a></p>\n',
+    )
   })
 
   test('nothing in, nothing out', () => {
