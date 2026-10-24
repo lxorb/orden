@@ -52,7 +52,7 @@ import { chooseFiles, PICTURES } from '../choose-files'
 import { t, key } from '../i18n.svelte'
 import { DIVIDER, type MenuEntry } from '../menu.svelte'
 import { prompt } from '../prompt.svelte'
-import { folderOf, insideSpace, relativeTo } from '../space-paths'
+import { folderOf, insideSpace, relativeTo, withinSpace } from '../space-paths'
 import { spaceRelative } from '../recorder/paths'
 import { openHref } from '../open-link'
 import { workspace } from '../workspace.svelte'
@@ -269,18 +269,22 @@ export const run = {
    *  under the other, which is where a hand dropping a folder's worth would put
    *  them anyway. */
   dropPaths(store: CanvasStore, paths: readonly string[], at: Point) {
-    const root = workspace.activeSpace?.root
+    const root = canvasRoot(store)
     if (!root) return
 
     let next = store.canvas
     const ids: string[] = []
 
-    for (const [index, path] of paths.entries()) {
+    // Only what the canvas's own space holds: a card can name nothing else but by its
+    // whole local path, which is a file nowhere on any other device.
+    const inside = paths.flatMap((path) => withinSpace(root, path) ?? [])
+    for (const [index, file] of inside.entries()) {
       const id = freshId()
       const box = placedAt({ x: at.x, y: at.y + index * GRID * 10 }, DEFAULT_WIDTH, GRID * 9)
-      next = withNode(next, { ...box, id, type: 'file', file: relativeTo(root, path) })
+      next = withNode(next, { ...box, id, type: 'file', file })
       ids.push(id)
     }
+    if (!ids.length) return
 
     store.edit(next)
     store.pickAll(ids)
@@ -292,7 +296,7 @@ export const run = {
     const stored = await storeImage(file, notePath).catch(() => null)
     if (!stored) return
 
-    const root = workspace.activeSpace?.root
+    const root = canvasRoot(store)
     // Kept by the account, the card names its whole address: the web app's API is its
     // own origin and answers `/i/…`, which read as a path in the space was a file
     // nowhere, and every picture pasted by somebody signed in was "Nothing here" (#364).
@@ -348,7 +352,7 @@ export const run = {
       pages = Array.from({ length: doc.numPages }, (_, index) => index + 1)
     }
 
-    const root = workspace.activeSpace?.root
+    const root = canvasRoot(store)
     if (!root) {
       await task.destroy().catch(() => undefined)
       return
@@ -438,7 +442,7 @@ export const run = {
         openHref(node.url)
         break
       case 'file': {
-        const root = workspace.activeSpace?.root
+        const root = canvasRoot(store)
         if (root) await workspace.openEntry(insideSpace(root, node.file))
         break
       }
@@ -461,7 +465,7 @@ export const run = {
     const node = store.canvas.nodes.find((one) => one.id === id)
     if (node?.type !== 'text' || !node.text.trim()) return
 
-    const root = workspace.activeSpace?.root
+    const root = canvasRoot(store)
     const folder = canvasPath === null ? root : folderOf(canvasPath)
     const path = await workspace.noteFrom(node.text, folder ?? undefined)
     if (!path || !root) return
@@ -718,6 +722,12 @@ export interface Putting {
   path: string | null
 }
 
+/** The root the canvas's cards are relative to: that of the space the canvas is in,
+ *  which is not always the active one, since tabs are shared across spaces. */
+function canvasRoot(store: CanvasStore): string | null {
+  return workspace.rootHolding(store.path)
+}
+
 /** What a tool puts on the plane where it was pressed, at its own size. */
 export async function place(store: CanvasStore, tool: PutTool, at: Point, putting: Putting) {
   const size = ownSize(tool)
@@ -792,15 +802,16 @@ async function putDown(
       return
     }
     case 'file': {
-      const root = workspace.activeSpace?.root
+      const root = canvasRoot(store)
       if (!root) return
 
+      // The file list is the active space's, which need not be the canvas's.
       const chosen = await prompt.find({
         title: t('Which note'),
         placeholder: t('Search'),
-        options: workspace.files.map((one) => {
-          const relative = relativeTo(root, one.path)
-          return { id: relative, label: relative }
+        options: workspace.files.flatMap((one) => {
+          const relative = withinSpace(root, one.path)
+          return relative ? [{ id: relative, label: relative }] : []
         }),
       })
 
@@ -974,7 +985,7 @@ async function exportAs(store: CanvasStore, view: MenuView, how: 'png' | 'svg' |
     canvas: store.canvas,
     palette: view.palette,
     path: view.path,
-    root: workspace.activeSpace?.root ?? null,
+    root: canvasRoot(store),
     name: view.name,
     trusted: view.trusted,
   }

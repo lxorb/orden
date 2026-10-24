@@ -284,7 +284,7 @@
   // is open does not tear the paper down under it.
   $effect(() => {
     const note = tab.note.path
-    const root = workspace.activeSpace?.root ?? null
+    const root = workspace.rootHolding(note)
 
     return () => {
       for (const file of new Set(pages.map((page) => page.file).filter(Boolean))) {
@@ -1203,7 +1203,7 @@
         number={at + 1}
         {unit}
         notePath={tab.note.path}
-        root={workspace.activeSpace?.root ?? null}
+        root={workspace.rootHolding(tab.note.path)}
         shared={tab.note.shared}
       />
     {/each}
@@ -1219,7 +1219,7 @@
         {node}
         canvasPath={tab.note.path}
         {trusted}
-        root={workspace.activeSpace?.root ?? null}
+        root={workspace.rootHolding(tab.note.path)}
         picked={store.isPicked(node.id)}
         editing={store.editing === node.id}
         offset={store.isPicked(node.id) ? dragging : { x: 0, y: 0 }}

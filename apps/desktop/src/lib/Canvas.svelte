@@ -1937,7 +1937,7 @@
           {node}
           canvasPath={tab.path}
           trusted={trustsHtmlIn(tab.note)}
-          root={workspace.activeSpace?.root ?? null}
+          root={workspace.rootHolding(tab.path)}
           picked={picked.has(node.id)}
           dimmed={narrowed && !picked.has(node.id)}
           editing={store.editing === node.id}
