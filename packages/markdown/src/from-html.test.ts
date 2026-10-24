@@ -142,6 +142,18 @@ describe('a page as markdown', () => {
     )
   })
 
+  /** The name is somebody else's words: an export can call a file anything, and
+   *  `%3C` and `%0A` decode to a tag and a line break the note would read as its own. */
+  test('and the name such a link shows opens no markup and breaks no line', () => {
+    const html =
+      '<video src="media/%3Cstyle%3E*%7Bdisplay:none%7D%3C%2Fstyle%3E%0A%0A%23 x.mp4"></video>'
+    const written = htmlToMarkdown(html, { mediaLinks: true })
+
+    expect(written).not.toMatch(/(?<!\\)<(?=[A-Za-z/])/)
+    expect(written).not.toContain('\n')
+    expect(written).toMatch(/^\[.*\]\(media\/.*\)$/)
+  })
+
   test('while that caller still gets no target a note could never follow', () => {
     expect(htmlToMarkdown('<a href="javascript:alert(1)">x</a>', { fileTargets: true })).toBe('x')
     expect(
