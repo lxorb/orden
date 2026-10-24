@@ -88,6 +88,11 @@ const MOST_CANDIDATES = 1000
 const FLUSH_EVERY = 1000
 const POKE_EVERY = 2000
 
+/** A scheduled post that could not be placed is tried again this long after, twice as
+ *  long each time it fails again, and never longer apart than an hour. */
+const RETRY_FIRST = 30_000
+const RETRY_MOST = 3_600_000
+
 /** How long the list of who the chat reaches is believed. */
 const REACHERS_FOR = 60_000
 
@@ -481,6 +486,13 @@ export class ChatLog implements DurableObject {
     const sql = this.sql
     this.ctx.storage.transactionSync(() => {
       sql.exec(
+        `delete from scheduled_tries where id in (
+           select id from scheduled where message = ? and author = ?
+         )`,
+        event.post.message,
+        person.who,
+      )
+      sql.exec(
         'delete from scheduled where message = ? and author = ?',
         event.post.message,
         person.who,
@@ -508,7 +520,10 @@ export class ChatLog implements DurableObject {
         who,
       )
       .toArray()[0]
-    if (row) this.sql.exec('delete from scheduled where id = ?', row.id)
+    if (row) {
+      this.sql.exec('delete from scheduled where id = ?', row.id)
+      this.sql.exec('delete from scheduled_tries where id = ?', row.id)
+    }
     return row !== undefined
   }
 
@@ -529,47 +544,80 @@ export class ChatLog implements DurableObject {
 
   /** Every post whose time has come, placed as its author - who is asked about again,
    *  because their role may have changed since. One that is refused stays, marked with
-   *  why, for its author to see. */
+   *  why, for its author to see. One that throws - the database a moment away, or a row
+   *  that always will - is tried again later rather than at once, and the others due
+   *  with it still go. */
   private async placeDue(now: number): Promise<void> {
     const chat = this.chatId()
     if (!chat) return
     const due = this.sql
       .exec<{ id: string; author: string; device: string | null; post: string }>(
-        `select id, author, device, post from scheduled
-          where send_at <= ? and refused is null order by send_at limit 50`,
+        `select s.id, s.author, s.device, s.post from scheduled s
+          left join scheduled_tries t on t.id = s.id
+          where s.send_at <= ? and s.refused is null and coalesce(t.next_at, 0) <= ?
+          order by s.send_at limit 50`,
+        now,
         now,
       )
       .toArray()
 
     for (const one of due) {
-      const who = one.author as Who
-      const id = hubIdOf(who)
-      const guest = who.startsWith('guest:')
-      const reached = await reachAs(this.env, { id, guest }, chat)
-      const post = JSON.parse(one.post) as Post
-      const answer = reached
-        ? await this.take(
-            { who, id, guest, role: reached.role, ...(one.device ? { device: one.device } : {}) },
-            post,
-            null,
-          )
-        : ({ t: 'refused', id: post.id, error: ROLE } as const)
-      // Only once it has gone or been refused: a take that threw - the database a
-      // moment away - leaves it for the next alarm, which places it once.
-      this.sql.exec('delete from scheduled where id = ?', one.id)
-      if (answer.t === 'refused') {
+      try {
+        await this.placeOne(chat, one, now)
+      } catch (error) {
+        note(`chat ${chat} scheduled`, error, null)
+        // Placing it again is safe however far the take got (`placedEvent`), so all a
+        // failure costs is the wait, which doubles so a row that always throws does
+        // not keep the object awake.
+        const tries =
+          (this.sql
+            .exec<{ tries: number }>('select tries from scheduled_tries where id = ?', one.id)
+            .toArray()[0]?.tries ?? 0) + 1
         this.sql.exec(
-          `insert into scheduled (id, message, author, device, send_at, post, refused)
-           values (?, ?, ?, ?, ?, ?, ?)`,
+          `insert into scheduled_tries (id, tries, next_at) values (?, ?, ?)
+           on conflict (id) do update set tries = excluded.tries, next_at = excluded.next_at`,
           one.id,
-          post.message,
-          who,
-          one.device,
-          now,
-          one.post,
-          answer.error,
+          tries,
+          now + Math.min(RETRY_FIRST * 2 ** (tries - 1), RETRY_MOST),
         )
       }
+    }
+  }
+
+  /** One post whose time has come, placed or refused; see `placeDue`. */
+  private async placeOne(
+    chat: string,
+    one: { id: string; author: string; device: string | null; post: string },
+    now: number,
+  ): Promise<void> {
+    const who = one.author as Who
+    const id = hubIdOf(who)
+    const guest = who.startsWith('guest:')
+    const reached = await reachAs(this.env, { id, guest }, chat)
+    const post = JSON.parse(one.post) as Post
+    const answer = reached
+      ? await this.take(
+          { who, id, guest, role: reached.role, ...(one.device ? { device: one.device } : {}) },
+          post,
+          null,
+        )
+      : ({ t: 'refused', id: post.id, error: ROLE } as const)
+    // Only once it has gone or been refused: a take that threw - the database a
+    // moment away - leaves it for the next alarm, which places it once.
+    this.sql.exec('delete from scheduled where id = ?', one.id)
+    this.sql.exec('delete from scheduled_tries where id = ?', one.id)
+    if (answer.t === 'refused') {
+      this.sql.exec(
+        `insert into scheduled (id, message, author, device, send_at, post, refused)
+         values (?, ?, ?, ?, ?, ?, ?)`,
+        one.id,
+        post.message,
+        who,
+        one.device,
+        now,
+        one.post,
+        answer.error,
+      )
     }
   }
 
@@ -984,7 +1032,11 @@ export class ChatLog implements DurableObject {
       .exec<{ at: number | null }>('select min(sent_at) as at from pokes where seq is not null')
       .one().at
     const scheduled = sql
-      .exec<{ at: number | null }>('select min(send_at) as at from scheduled where refused is null')
+      .exec<{ at: number | null }>(
+        `select min(max(s.send_at, coalesce(t.next_at, 0))) as at from scheduled s
+          left join scheduled_tries t on t.id = s.id
+          where s.refused is null`,
+      )
       .one().at
     const times = [
       flushAt === null ? null : Number(flushAt),
