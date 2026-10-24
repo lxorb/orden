@@ -97,6 +97,7 @@ vi.mock('../rows/rows.svelte', () => ({
     ready: true,
     of: (space?: string) => shown.filter((row) => space === undefined || row.space === space),
     at: () => [],
+    watch: () => () => undefined,
     inbox: () => Promise.resolve(null),
     write: async (row: Row, change: import('../rows/write').RowChange) => {
       const { writeRow } = await import('../rows/write')
@@ -126,6 +127,7 @@ const { contextFor } = await import('./context')
 const { columnsOf } = await import('./columns')
 const Cell = (await import('./Cell.svelte')).default
 const BoardLayout = (await import('./BoardLayout.svelte')).default
+const TaskSheet = (await import('./task-view/TaskSheet.svelte')).default
 
 const PLAN = 'Plan.md'
 const TASK = '- [ ] water the plants'
@@ -385,5 +387,33 @@ describe('the runner, in a space shared to be read', () => {
     await settle('Bug 2.md')
     await vi.waitFor(() => expect(folders).toEqual([`${THEIRS.root}/Done`]))
     expect(written).toContain(`${THEIRS.root}/Bug 2.md`)
+  })
+})
+
+/** A task's own view, of a task of the space shared to be read and of the reader's. */
+function sheetOf(space: 'Theirs' | 'Mine') {
+  const row = taskRow(PLAN, TASK, 3, { space })
+  shown = [row]
+  const { kit } = viewOver(null)
+  const ref = { space, path: PLAN, line: 3, hash: row.anchor?.hash ?? '' }
+  return render(TaskSheet, { props: { shown: { ref, list: [ref], kit } } }).body
+}
+
+describe("a task's view, in a space shared to be read", () => {
+  test('takes no words, no comment and no sub-task', () => {
+    const html = sheetOf('Theirs')
+    expect(html).toContain('water the plants')
+    expect(html).toMatch(/<input[^>]*class="title[^>]*readonly/)
+    expect(html).not.toContain('aria-label="Comment"')
+    expect(html).not.toContain('Add sub-task')
+    expect(html).not.toContain('add-tag')
+  })
+
+  test("while the reader's own still does", () => {
+    const html = sheetOf('Mine')
+    expect(html).not.toMatch(/<input[^>]*class="title[^>]*readonly/)
+    expect(html).toContain('aria-label="Comment"')
+    expect(html).toContain('Add sub-task')
+    expect(html).toContain('add-tag')
   })
 })
