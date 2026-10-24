@@ -3,8 +3,9 @@
  *  naming it, and a deleted account must not hand its bytes to whoever did; see
  *  src/pictures.ts and src/erase.ts. */
 
-import { describe, expect, test } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { picturesOf } from '../src/pictures'
+import { call, mail, signIn, type TestEnv, testEnv } from './harness'
 
 const HASH = 'ab'.repeat(32)
 const URL = `https://nibeditor.com/i/${HASH}.png`
@@ -88,5 +89,59 @@ describe('the pictures a body shows', () => {
     ['a canvas text card', JSON.stringify({ nodes: [{ id: 'a', type: 'text', text: URL }] })],
   ])('and not a hash named in %s', (_, body) => {
     expect([...picturesOf(body)]).toEqual([])
+  })
+})
+
+/** In a note whose HTML is live - a space nobody else is in, where the renderer draws
+ *  raw HTML as markup - every address anywhere in that HTML counts, however a browser
+ *  would come to load it: over-counting there keeps the owner's own bytes and nothing
+ *  else. Anywhere else, and in prose, the strict reading above stands. */
+describe('the pictures of a note whose HTML is live', () => {
+  const split = `https://nibeditor.com/i/${HASH.slice(0, 32)}`
+  test.each([
+    ['an image in an svg', `<svg><image href="${URL}" width="10" height="10"/></svg>`],
+    ['a style element', `<style>.x{background:url(${URL})}</style><div class="x">a</div>`],
+    ['a table background', `<table background="${URL}"><tr><td>a</td></tr></table>`],
+    ['an image set in a style', `<div style='background-image:image-set("${URL}" 1x)'>a</div>`],
+    ['a line break inside an address', `<img src="${split}\n${HASH.slice(32)}.png">`],
+    ['a tab written as a reference', `<img src="${split}&Tab;${HASH.slice(32)}.png">`],
+  ])('count %s, and only there', (_, body) => {
+    expect([...picturesOf(body, true)]).toEqual([HASH])
+    expect([...picturesOf(body)]).toEqual([])
+  })
+
+  test('and still not a hash in its prose or its code', () => {
+    expect([...picturesOf(`see ${URL} and \`${URL}\``, true)]).toEqual([])
+  })
+})
+
+describe('what a saved note writes down', () => {
+  let env: TestEnv
+  let token: string
+  let space: string
+  const body = `<svg><image href="${URL}"/></svg>`
+  const kept = () => env.db.prepare('select hash from note_pictures').all()
+
+  beforeEach(async () => {
+    env = testEnv()
+    token = await signIn(env, 'a@b.dev')
+    space = (await call(env, '/v1/spaces', { token, body: { name: 'Mine' } })).json.space.id
+  })
+  afterEach(() => env.close())
+
+  test('reads live HTML in a space nobody else is in', async () => {
+    await call(env, `/v1/spaces/${space}/notes`, { token, body: { path: 'A.md', content: body } })
+    expect(kept()).toEqual([{ hash: HASH }])
+  })
+
+  test('and HTML as words in a space somebody else is in', async () => {
+    await mail(() =>
+      call(env, `/v1/spaces/${space}/share/invite`, {
+        token,
+        body: { email: 'other@b.dev', role: 'write' },
+      }),
+    )
+    await call(env, `/v1/spaces/${space}/notes`, { token, body: { path: 'A.md', content: body } })
+    expect(kept()).toEqual([])
   })
 })
