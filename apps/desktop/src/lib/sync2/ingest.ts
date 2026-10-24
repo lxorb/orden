@@ -17,7 +17,7 @@
 
 import type { Core, Holding } from './core'
 import { MINE } from './docs'
-import { judge, turn, unixLines } from './kinds'
+import { judge, readable, turn, unixLines } from './kinds'
 import { project, wrote } from './project'
 import { againstBytes } from './records'
 import { keepLosers } from './rejoin'
@@ -45,6 +45,9 @@ export async function foldIn(core: Core, space: SpaceState, entry: EntryRow): Pr
   const ancestor = (await writtenOf(core, entry.id)) ?? ours
   if (file === ancestor) return []
   if (file === ours) return await wrote(core, entry, file)
+  // A plane another program left unreadable - cut short mid-write, or holding a merge's
+  // conflict markers - is left for that program to finish, not taken for an empty one.
+  if (!readable(doc.shape, file)) return []
 
   if (ours === ancestor) {
     doc.write((live) => turn(doc.shape, live, ours, file, MINE))

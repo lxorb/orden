@@ -14,7 +14,7 @@
  *
  *  Everything else in the engine speaks files - text in, text out - and asks here. */
 
-import { readCanvas, writeCanvas } from '@nib/markdown/canvas'
+import { canvasIn, readCanvas, writeCanvas } from '@nib/markdown/canvas'
 import { TEXT } from '@nib/rooms'
 import { pushPlane, readPlane } from '@nib/rooms/plane'
 import { diverge, type Times, type Verdict } from '@nib/sync-core/diverge'
@@ -72,6 +72,13 @@ export function fileOfUpdates(shape: Shape, ...updates: readonly Uint8Array[]): 
 /** The seed of an epoch from a file: the same bytes on every device (section 5.3). */
 export function seedOf(shape: Shape, id: string, epoch: number, text: string): Uint8Array {
   return shape === 'plane' ? seedPlane(id, epoch, readCanvas(text)) : seedUpdate(id, epoch, text)
+}
+
+/** Whether text read off the disk says what a document of this shape can hold. Only a
+ *  plane can fail: `readCanvas` reads text that is not a canvas as one with nothing on
+ *  it, and a document turned to that deletes every node there was, on every device. */
+export function readable(shape: Shape, text: string): boolean {
+  return shape !== 'plane' || canvasIn(text) !== null
 }
 
 /** Turns a document that reads `from` into one that reads `to`, as the few operations the
