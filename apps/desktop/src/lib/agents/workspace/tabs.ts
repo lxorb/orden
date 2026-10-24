@@ -38,7 +38,15 @@ import { notes } from '../docs'
 import { asked } from './asks'
 import { type Call, done, flag, maybe, need, needScope, text, writerOf } from './call'
 import { Refused } from './problem'
-import { judged, judgedForWriting, onDisk, type Place, placeFor, sharedSource } from './spaces'
+import {
+  judged,
+  judgedForWriting,
+  onDisk,
+  type Place,
+  placeFor,
+  sharedSource,
+  writableAt,
+} from './spaces'
 import { tabWithId } from './tab-target'
 import { entryIn, moveFile } from './tree'
 
@@ -415,6 +423,7 @@ async function saveTab(call: Call): Promise<AgentAnswer> {
   const relative = judgedForWriting(need(call, 'path'))
   const folder = folderOf(relative)
   const file = fileNamed(nameOf(relative), tab.kind)
+  writableAt(place, onDisk(place, relative))
 
   const question = await asked(call, null, `Save ${tab.shown} as ${relative}`)
   if (question) return question

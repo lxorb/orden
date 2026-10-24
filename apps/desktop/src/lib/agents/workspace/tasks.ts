@@ -49,7 +49,7 @@ import { asked } from './asks'
 import { type Call, done, flag, maybe, need, writerOf } from './call'
 import { at, made, noteOf } from './notes'
 import { Refused } from './problem'
-import { judgedForWriting, onDisk, type Place, placeFor, reachable } from './spaces'
+import { judgedForWriting, onDisk, type Place, placeFor, reachable, writableAt } from './spaces'
 
 /** The rows store, fetched with the first of these verbs: importing it starts it. */
 async function rowsStore() {
@@ -378,6 +378,7 @@ export async function addRow(call: Call): Promise<AgentAnswer> {
   const template = await templateOf(place, base, rows.of(place.space.name))
   const name = noteName(maybe(call, 'title') ?? 'Untitled')
   const path = await freePath(place, folder === '.' ? '' : folder, name)
+  writableAt(place, onDisk(place, path))
 
   const question = await asked(call, null, `Make ${path} in ${place.space.name}`)
   if (question) return question
@@ -429,6 +430,8 @@ export async function editRows(call: Call): Promise<AgentAnswer> {
 
 export async function editBase(call: Call): Promise<AgentAnswer> {
   const { place, relative, text, base } = await baseAt(call)
+  // `baseAt` serves the verbs that only read a base too, so the write is checked here.
+  writableAt(place, onDisk(place, relative))
   const next = (() => {
     try {
       return editedBase(base, call.args.ops)

@@ -16,7 +16,7 @@ import { asked } from './asks'
 import { type Call, done, maybe, need, writerOf } from './call'
 import { made } from './notes'
 import { Refused } from './problem'
-import { judgedForWriting, onDisk, placeFor } from './spaces'
+import { judgedForWriting, onDisk, placeFor, writableAt } from './spaces'
 
 /** One line of the log, as far as a note needs it. */
 interface Line {
@@ -82,6 +82,8 @@ export async function attachAgentLog(call: Call): Promise<AgentAnswer> {
   const place = placeFor(call, maybe(call, 'space'))
   const named = judgedForWriting(need(call, 'note'))
   const relative = named.includes('.') ? named : `${named}.md`
+  // A new note or a section on an old one, neither goes into a space shared to be read.
+  writableAt(place, onDisk(place, relative))
 
   const read: unknown[] = await invoke<unknown[]>('agents_log', { day }).catch(() => [])
   const lines = read.filter(isLine).filter((one) => one.agent === agent)

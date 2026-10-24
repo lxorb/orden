@@ -13,7 +13,6 @@
 import { frontMatterEdit } from '@nib/markdown/front-matter'
 import { taskAt } from '@nib/markdown/tasks'
 import type { AgentAnswer } from '../../automation/caller'
-import { canWriteAt } from '../../sharing.svelte'
 import { isMarkdownPath, nameOf } from '../../space-paths'
 import { writeFile } from '../../workspace/write-file'
 import { type Tab, workspace } from '../../workspace.svelte'
@@ -27,7 +26,15 @@ import { heldIndex, indexOf } from './links'
 import { Refused } from './problem'
 import { createFile, fileKindOf } from './new-files'
 import { namedTab } from './tab-target'
-import { judged, judgedForWriting, onDisk, type Place, placeFor, sharedSource } from './spaces'
+import {
+  judged,
+  judgedForWriting,
+  onDisk,
+  type Place,
+  placeFor,
+  sharedSource,
+  writableAt,
+} from './spaces'
 
 /** The note a call names, in a space it may reach: its place, and its path as the
  *  space speaks of it, with `.md` where the name has no ending - or `tab`, any note tab
@@ -64,9 +71,7 @@ export function noteOf(
     throw new Refused('bad_arguments', `${relative} is not a markdown note`)
   }
 
-  if (writing && !canWriteAt(onDisk(place, relative))) {
-    throw new Refused('read_only', `${place.space.name} is shared with you to read`)
-  }
+  if (writing) writableAt(place, onDisk(place, relative))
 
   return { place, relative }
 }
@@ -251,9 +256,12 @@ export async function createNote(call: Call): Promise<AgentAnswer> {
 }
 
 /** A new note, written where it goes. Opened behind the tab in front when asked, and
- *  only in the space the reader is in: opening one in another would move them. */
+ *  only in the space the reader is in: opening one in another would move them. Refused
+ *  in a space shared to be read: the verbs that come here ask first, but this is the
+ *  one place every new note passes, so it does not rely on them. */
 export async function made(place: Place, relative: string, words: string, open: boolean) {
   const path = onDisk(place, relative)
+  writableAt(place, path)
   await writeFile(path, words)
 
   if (place.open) {
