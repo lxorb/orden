@@ -267,3 +267,28 @@ test("a note in a space keeps the rows the scratchpad's switch leaves out", asyn
   }
   expect(rows).not.toContain('Move to space')
 })
+
+/** A scratchpad that is there and will not read - another encoding, a lock - read as
+ *  an empty card, and the first keystroke into it saved over everything the file held.
+ *  So it opens nothing, the card goes, and the reader is told, as any note that will
+ *  not read is; see unread.svelte.ts. */
+test('a scratchpad that will not read is never opened empty', async () => {
+  disk.current?.files.set(PAD, 'a year of notes\n')
+  disk.current?.unreadable.add(PAD)
+  const { unread } = await import('../../src/lib/unread.svelte')
+
+  shown.show()
+  const column = document.createElement('div')
+  column.dataset.scratchpad = ''
+  target.append(column)
+  const made = mount(ScratchpadCard, { target: column })
+  undo.push(() => void unmount(made, { outro: false }))
+
+  await vi.waitFor(() => expect(unread.shown).toBe(true))
+  flushSync()
+  expect(shown.on).toBe(false)
+  expect(scratchpad.live).toBe(null)
+  expect(column.querySelector('.cm-content')).toBe(null)
+  expect(disk.current?.files.get(PAD)).toBe('a year of notes\n')
+  unread.dismiss()
+})

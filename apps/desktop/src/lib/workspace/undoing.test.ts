@@ -178,6 +178,54 @@ describe('an entry that cannot go back', () => {
   })
 })
 
+describe('a replacement put back', () => {
+  const NOTE = {
+    content: 'alpha beta',
+    after: 'gamma beta',
+    edits: [{ from: 0, to: 5, insert: 'alpha' }],
+  }
+
+  test('puts the old words back in every note', async () => {
+    disk.set('/s/a.md', NOTE.after)
+    disk.set('/s/b.md', NOTE.after)
+    const ws = store({
+      kind: 'replace',
+      notes: [
+        { path: '/s/a.md', ...NOTE },
+        { path: '/s/b.md', ...NOTE },
+      ],
+    })
+    await undoLastFileAction(ws)
+
+    expect(sent.filter((one) => one.command === 'write_note')).toEqual([
+      { command: 'write_note', path: '/s/a.md', content: NOTE.content },
+      { command: 'write_note', path: '/s/b.md', content: NOTE.content },
+    ])
+    expect(ws.undone.stack).toEqual([])
+  })
+
+  /** A note another program has since rewritten in an encoding that is not UTF-8,
+   *  or deleted, will not read. That used to be taken for a note nobody had touched,
+   *  and the old words went over the file, or brought a deleted note back. A read
+   *  that fails cannot say a note is unchanged, so the whole replacement stays where
+   *  it is: none of its notes is written, and it can be asked for again. */
+  test('and leaves it alone where a note will not read', async () => {
+    disk.set('/s/a.md', NOTE.after)
+    refused.add('read_note /s/b.md')
+    const ws = store({
+      kind: 'replace',
+      notes: [
+        { path: '/s/a.md', ...NOTE },
+        { path: '/s/b.md', ...NOTE },
+      ],
+    })
+    await undoLastFileAction(ws)
+
+    expect(sent.filter((one) => one.command === 'write_note')).toEqual([])
+    expect(ws.undone.last?.kind).toBe('replace')
+  })
+})
+
 describe('an import taken back', () => {
   const hashOf = async (words: string) => (await import('../bytes')).sha256(words)
 

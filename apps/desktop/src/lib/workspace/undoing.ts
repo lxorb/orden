@@ -319,6 +319,19 @@ async function unarchive(
  *  takes them carried past the one span its file has changed by since, an edit
  *  that falls inside that span being the reader's writing and left alone. */
 async function putWordsBack(ws: PutsBack, action: Extract<FileAction, { kind: 'replace' }>) {
+  // Every closed note read before any is written. A read that fails - a file another
+  // program rewrote in an encoding that is not UTF-8, or deleted - cannot say the
+  // note is unchanged, and taking it for one wrote the old words over that file or
+  // brought a deleted note back. So it leaves the whole replacement where it is, on
+  // the stack, rather than half of it put back.
+  const read = new Map<string, string>()
+  for (const note of action.notes) {
+    if (ws.documentAt(note.path)) continue
+    const now = await invoke<string>('read_note', { path: note.path }).catch(() => null)
+    if (now === null) throw new Error(`${note.path} will not read, so nothing is written over it`)
+    read.set(note.path, now)
+  }
+
   for (const note of action.notes) {
     const open = ws.documentAt(note.path)
     if (open) {
@@ -330,7 +343,7 @@ async function putWordsBack(ws: PutsBack, action: Extract<FileAction, { kind: 'r
       continue
     }
 
-    const now = await invoke<string>('read_note', { path: note.path }).catch(() => note.after)
+    const now = read.get(note.path) ?? note.after
     await writeFile(note.path, now === note.after ? note.content : carriedPast(note, now))
   }
 }

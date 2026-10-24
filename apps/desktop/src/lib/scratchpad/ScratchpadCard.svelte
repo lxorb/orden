@@ -54,10 +54,20 @@
   onMount(() => {
     const going = new AbortController()
     void (async () => {
-      path = await scratchpad.where()
+      const at = await scratchpad.where()
+      path = at
       // Read as it comes rather than kept: another window may have written it since.
-      const text = await scratchpad.text()
+      // A file that is there and will not read opens nothing: the card goes and the
+      // reader is told, as for any note that will not read (unread.svelte.ts), since
+      // a card opened empty on it saved over the file at the first keystroke.
+      const text = await scratchpad.editable().catch(() => null)
       if (going.signal.aborted) return
+      if (text === null) {
+        path = null
+        shown.hide()
+        void import('../unread.svelte').then((one) => one.unread.there(at))
+        return
+      }
 
       const made = createEditor({
         parent: host,

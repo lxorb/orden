@@ -13,6 +13,8 @@ const fake = vi.hoisted(() => ({
   documents: [] as NoteDoc[],
   removed: [] as string[],
   opened: [] as string[],
+  /** Files that are there and will not read: another encoding, or a lock. */
+  unreadable: new Set<string>(),
 }))
 
 vi.mock('../../workspace.svelte', () => ({
@@ -21,7 +23,8 @@ vi.mock('../../workspace.svelte', () => ({
       return fake.documents
     },
     spaces: [{ id: 's1', name: 'Space', root: '/space' }],
-    noteText: (path: string) => fake.desk.desk.noteText(path),
+    noteText: (path: string) =>
+      fake.unreadable.has(path) ? Promise.resolve(null) : fake.desk.desk.noteText(path),
     remove: (path: string) => {
       fake.removed.push(path)
       fake.desk.disk.delete(path)
@@ -57,6 +60,10 @@ vi.mock('../../agents/docs', async () => {
       edit.putBackAt(fake.desk.desk, agent, at(path), token),
   }
 })
+
+vi.mock('../../on-disk', () => ({
+  onDisk: (path: string) => Promise.resolve(fake.desk.disk.has(path)),
+}))
 
 vi.mock('../chat/sends', () => ({
   answeringAt: (provider: string) => (provider.startsWith('p') ? `t-${provider}` : null),
@@ -223,6 +230,41 @@ describe('a rewind', () => {
 
     await review.putBack(thread, null)
     expect(fake.desk.fileOf('Made.md')).toBe('new words')
+  })
+
+  /** Something can arrive at the name between the rewind and the redo, and a file
+   *  there that will not read is not a gap to fill: writing the thread's words into it
+   *  wrote over whatever it holds. */
+  test('and puts it back only where nothing is at its name', async () => {
+    fake.desk = deskWith({ 'Made.md': 'new words' })
+    fake.documents = []
+    fake.removed = []
+    const thread = aThread()
+    await message(
+      thread,
+      'make',
+      [],
+      [
+        {
+          kind: 'tool',
+          id: 'c1',
+          verb: 'create_note',
+          args: { path: 'Made' },
+          state: 'ok',
+          result: { text: '{"path":"Made.md","created":true}', images: [], error: false },
+        },
+      ],
+    )
+    await review.rewind(thread, 'make', 'notes', null)
+
+    fake.desk.disk.set('/space/Made.md', 'latin-1 bytes')
+    fake.unreadable.add('/space/Made.md')
+    try {
+      await review.putBack(thread, null)
+    } finally {
+      fake.unreadable.clear()
+    }
+    expect(fake.desk.fileOf('Made.md')).toBe('latin-1 bytes')
   })
 })
 
