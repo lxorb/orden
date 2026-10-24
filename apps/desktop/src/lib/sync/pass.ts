@@ -32,6 +32,7 @@ import { syncMark } from '../surfaces.svelte'
 import { invoke, joinPath } from '../tauri'
 import { settleShortcuts } from '../web-tab/settle'
 import { isUntouchedWelcome } from '../welcome'
+import { syncDeletes } from './deletes'
 import { baseOf, behind, unixLines } from './ancestry'
 import { type Clash, type ConflictRule, DEFAULT_RULE } from './conflicts'
 import { fileStamp, type Mirror, type Tracked, type TrackedFile, within } from './mirror'
@@ -536,7 +537,11 @@ async function deletedThere(
   }
 
   await invoke('snapshot_note', { path: target, content: local }).catch(() => undefined)
-  await invoke('trash_item', { path: target, kind: 'note' }).catch((error: unknown) => {
+  // The account holds it in its own Recently deleted; see sync/deletes.ts (#765).
+  const how = syncDeletes(target, 'file')
+    ? invoke('delete_note', { path: target })
+    : invoke('trash_item', { path: target, kind: 'note' })
+  await how.catch((error: unknown) => {
     log(
       'warn',
       `sync: ${target} was deleted elsewhere and stays, the trash refused it - ${String(error)}`,
