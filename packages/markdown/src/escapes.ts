@@ -219,8 +219,17 @@ function escapeAt(text: string, at: number, midLine: boolean): string {
   }
 }
 
-/** A page's words, as a note may hold them. */
-export function escapeText(text: string): string {
+/** A page's words, as a note may hold them.
+ *
+ *  `addresses` says whether a bare web address is kept as written, which is only
+ *  right where the renderer will autolink it. Inside a link's brackets nothing
+ *  does - marked and the editor both read a link's text as markdown - so there an
+ *  address is words like any other, and `pkg/__init__.py` unescaped would be
+ *  `init` in bold. */
+export function escapeText(
+  text: string,
+  { addresses = true }: { addresses?: boolean } = {},
+): string {
   const out: string[] = []
   const numbered = A_NUMBER.exec(text)
   const block = numbered ? null : A_BLOCK.exec(text)
@@ -233,6 +242,17 @@ export function escapeText(text: string): string {
 
   while (at < text.length) {
     const address = addressAt(text, at)
+
+    // In a link's text an address is words, every character of it escaped as words
+    // are: not kept, and not a place a kept run may start either, which would make
+    // the `__init__` of `pkg/__init__.py` bold.
+    if (address && !addresses) {
+      for (const end = at + address.length; at < end; at++) {
+        escaped += escapeAt(text, at, midLine)
+      }
+      midLine = true
+      continue
+    }
 
     if (address) {
       // Written as it is but for its brackets and backticks. The same words can be a
