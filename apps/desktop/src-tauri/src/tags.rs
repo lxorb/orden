@@ -193,7 +193,7 @@ fn read_inline(body: &str, front: usize, found: &mut Vec<String>) {
 }
 
 /// Where the code spans in a line start and end, in bytes, cut the way
-/// `codeAndWords` in escapes.ts cuts them: a run of backticks opens a span that
+/// `codeAndWords` in tags.ts cuts them: a run of backticks opens a span that
 /// the next run of the same length closes, one with no such run after it is
 /// backticks, and a backtick behind a backslash opens nothing. Every mark this
 /// looks for is ASCII, so reading bytes never lands inside a character.

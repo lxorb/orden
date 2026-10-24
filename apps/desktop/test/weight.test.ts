@@ -838,8 +838,13 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-24, to 3,350,000, for the second bug burn-down landed together
  *  (#681 to #948): each fix raised this for itself, and these are what they come to
- *  in one build. Measured 3,349,056. */
-const BUDGET = 3_350_000
+ *  in one build. Measured 3,349,056.
+ *
+ *  Raised 2026-10-24, to 3,352,500, for B449 and B450: a `#` in inline code is no tag,
+ *  in the search index as in a task line, so the index's tag reader cuts a line into
+ *  its code spans (`codeAndWords`, moved from escapes.ts to tags.ts so no module is
+ *  added). Measured 3,351,829. */
+const BUDGET = 3_352_500
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
