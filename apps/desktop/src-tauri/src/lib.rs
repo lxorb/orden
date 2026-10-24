@@ -271,6 +271,9 @@ mod page_scheme;
 // The dictionaries nib's own Chromium checks spelling against; see spelling.rs.
 #[cfg(desktop)]
 mod spelling;
+// The font families installed here, for Settings' font pickers; see fonts.rs.
+#[cfg(desktop)]
+mod fonts;
 // What every browser's import reads profiles and their files with; see
 // browser_profiles.rs.
 #[cfg(desktop)]
@@ -458,6 +461,7 @@ macro_rules! desktop_commands {
             page_scale::page_scale_seen,
             page_scheme::page_scheme_seen,
             spelling::spell_languages,
+            fonts::font_families,
             window_drag::window_frame,
             full_screen::window_is_fullscreen,
             zen_profiles::zen_profiles,
