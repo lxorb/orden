@@ -2457,4 +2457,206 @@ export const fil: Dictionary = {
   Large: 'Malaki',
   Both: 'Pareho',
   'Shown on cards': 'Ipinapakita sa mga card',
+  // What each setting does, behind the ? beside it (#768)
+  'Syncs this browser’s AI keys with your other devices through the vault.':
+    'Sini-sync ang mga AI key ng browser na ito sa iba mong device sa pamamagitan ng vault.',
+  'Which of your AI accounts this feature asks.':
+    'Kung alin sa iyong mga AI account ang tinatanong ng feature na ito.',
+  'Whether a task done with AI asks before each change or makes them on its own.':
+    'Kung magtatanong ang gawaing ginagawa ng AI bago ang bawat pagbabago o kusa na nitong gagawin ang mga ito.',
+  'Makes Orden the browser that links from other programs open in.':
+    'Ginagawang Orden ang browser na pinagbubuksan ng mga link mula sa ibang program.',
+  'Where words typed into a web tab’s address bar are searched.':
+    'Kung saan hinahanap ang mga salitang tina-type sa address bar ng web tab.',
+  'The search address, with %s where the words go.':
+    'Ang address ng paghahanap, na may %s kung saan ilalagay ang mga salita.',
+  'Words the spelling check never marks as wrong.':
+    'Mga salitang hindi kailanman mamarkahang mali ng spell check.',
+  'Which app’s keys Orden follows; any key below can still be changed.':
+    'Kung aling app ang sinusundan ng mga key ng Orden; mababago pa rin ang alinmang key sa ibaba.',
+  'Moves and edits in notes with Vim’s keys.':
+    'Gumalaw at mag-edit sa mga tala gamit ang mga key ng Vim.',
+  'What pulling a note down past its top does on a phone.':
+    'Kung ano ang nangyayari kapag hinila pababa ang isang tala lampas sa itaas nito sa telepono.',
+  'The OpenAI key the glasses ask their questions with.':
+    'Ang OpenAI key na ginagamit ng salamin sa pagtatanong.',
+  'The model that answers what you ask on the glasses.':
+    'Ang modelong sumasagot sa itinatanong mo sa salamin.',
+  'How long the model thinks before it answers; longer is slower.':
+    'Gaano katagal mag-isip ang modelo bago sumagot; mas matagal, mas mabagal.',
+  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
+    'Nagdaragdag ng Markdown na dokumento sa New menu na lumalabas kapag nag-right-click ka sa File Explorer.',
+  'What happens when one note was changed on two devices before they synced.':
+    'Kung ano ang nangyayari kapag binago ang isang tala sa dalawang device bago sila nag-sync.',
+  'How far back the account keeps earlier versions of your notes.':
+    'Gaano kalayo pabalik iniingatan ng account ang mga naunang bersyon ng iyong mga tala.',
+  'The colour of buttons, links and the selection.': 'Ang kulay ng mga button, link at ng pinili.',
+  'Adds Orden to the AI agent programs on this computer, so they reach your notes with nothing to set up.':
+    'Idinaragdag ang Orden sa mga AI agent na program sa computer na ito, para maabot nila ang iyong mga tala nang walang kailangang i-set up.',
+  'Words that notify you whenever someone writes them in a chat, separated by commas.':
+    'Mga salitang nag-aabiso sa iyo tuwing may sumulat nito sa chat, pinaghihiwalay ng kuwit.',
+  'When chats may notify you; outside these hours they stay quiet.':
+    'Kung kailan ka maaaring abisuhan ng mga chat; sa labas ng mga oras na ito, tahimik sila.',
+  'When the hours chats may notify you begin.':
+    'Kung kailan nagsisimula ang mga oras na maaari kang abisuhan ng mga chat.',
+  'When the hours chats may notify you end.':
+    'Kung kailan natatapos ang mga oras na maaari kang abisuhan ng mga chat.',
+  'Notifications show the message itself; off shows only who wrote.':
+    'Ipinapakita ng mga abiso ang mensahe mismo; kapag naka-off, kung sino lang ang sumulat ang ipinapakita.',
+  'Notifications make a sound.': 'May tunog ang mga abiso.',
+  'Which headings start a new page on the glasses.':
+    'Aling mga heading ang nagsisimula ng bagong pahina sa salamin.',
+  'Shows line numbers on the glasses.': 'Ipinapakita ang mga numero ng linya sa salamin.',
+  'How many blank lines the glasses keep between blocks.':
+    'Ilang blangkong linya ang iniiwan ng salamin sa pagitan ng mga block.',
+  'Shows this markdown mark on the glasses rather than hiding it.':
+    'Ipinapakita ang markdown mark na ito sa salamin sa halip na itago.',
+  'Lets you run commands on the glasses by speaking.':
+    'Hinahayaan kang magpatakbo ng mga utos sa salamin sa pagsasalita.',
+  'What you say to run this command; left empty, the phrase shown is used.':
+    'Ang sasabihin mo para patakbuhin ang utos na ito; kung blangko, ang ipinapakitang parirala ang gagamitin.',
+  'What Windows draws behind the window: Mica, Acrylic, or no blur.':
+    'Ang iginuguhit ng Windows sa likod ng bintana: Mica, Acrylic, o walang labo.',
+  'How much of the window’s own colour lies over what is behind it.':
+    'Gaano karami ng sariling kulay ng bintana ang nakapatong sa nasa likod nito.',
+  'The frame takes its colour from what is open.':
+    'Kinukuha ng kuwadro ang kulay nito mula sa nakabukas.',
+  'How strongly the frame is coloured.': 'Gaano katindi ang kulay ng kuwadro.',
+  'The colours the frame takes where nothing open has a colour of its own.':
+    'Ang mga kulay na kinukuha ng kuwadro kapag walang nakabukas na may sariling kulay.',
+  'A web tab takes the colour of its page.': 'Kinukuha ng web tab ang kulay ng pahina nito.',
+  'When your status is taken away again.': 'Kung kailan aalisin muli ang iyong katayuan.',
+  'Silences chat notifications and shows the others you are busy.':
+    'Pinatatahimik ang mga abiso ng chat at ipinapakita sa iba na abala ka.',
+  'The colour the others see beside your name.':
+    'Ang kulay na nakikita ng iba sa tabi ng iyong pangalan.',
+  'The others see you as offline even while you are here.':
+    'Nakikita ka ng iba na offline kahit naririto ka.',
+  'The picture behind the window, one for light and one for dark; drag it to move its centre.':
+    'Ang larawan sa likod ng bintana, isa para sa maliwanag at isa para sa madilim; i-drag ito para ilipat ang gitna nito.',
+  'The theme Orden is drawn in.': 'Ang temang ginagamit sa pagguhit ng Orden.',
+  'Light, dark, or whichever the system is in.':
+    'Maliwanag, madilim, o kung alin ang gamit ng sistema.',
+  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
+    'Kung tile o listahan ang anyo ng mga bookmark sa itaas ng listahan ng file.',
+  'Shows a pointing hand over buttons, as web pages do.':
+    'Nagpapakita ng nakaturong kamay sa ibabaw ng mga button, gaya ng sa mga web page.',
+  'Orden’s own title bar, or the window frame of your system.':
+    'Ang sariling title bar ng Orden, o ang kuwadro ng bintana ng iyong sistema.',
+  'How large the text of notes is.': 'Gaano kalaki ang teksto ng mga tala.',
+  'The space between the lines of a note.': 'Ang espasyo sa pagitan ng mga linya ng tala.',
+  'How wide a line of a note grows before it wraps.':
+    'Gaano kalapad ang linya ng tala bago ito bumaba sa susunod na linya.',
+  'Typing an opening bracket or quote adds the closing one too.':
+    'Kapag nag-type ng pambukas na bracket o panipi, idinaragdag din ang pansara.',
+  'Keeps the line you are writing in the middle of the screen.':
+    'Pinananatili sa gitna ng screen ang linyang isinusulat mo.',
+  'Dims everything but the paragraph you are writing in.':
+    'Pinadidilim ang lahat maliban sa talatang isinusulat mo.',
+  'Joins pairs such as -> or != into one sign, in code only or everywhere.':
+    'Pinagsasama ang mga pares gaya ng -> o != sa iisang simbolo, sa code lang o saanman.',
+  'Where a picture or file you paste or drop into a note is saved.':
+    'Kung saan sine-save ang larawan o file na idinidikit o inihuhulog mo sa isang tala.',
+  'Turning two fingers on a touchpad or screen rotates the canvas.':
+    'Pinaiikot ang canvas kapag pinaikot ang dalawang daliri sa touchpad o screen.',
+  'A rotation that ends near a right angle settles on it.':
+    'Ang pag-ikot na natatapos malapit sa tamang anggulo ay tumitigil doon.',
+  'The paper size a new page note starts with.':
+    'Ang laki ng papel na sinisimulan ng bagong talang may pahina.',
+  'How the name of a new unique note is made from the date and time.':
+    'Kung paano binubuo mula sa petsa at oras ang pangalan ng bagong natatanging tala.',
+  'The colours code in a note is highlighted in.':
+    'Ang mga kulay ng pag-highlight ng code sa isang tala.',
+  'Numbers the lines of code blocks.': 'Binibilang ang mga linya ng mga code block.',
+  'The paper size of a PDF or a print.': 'Ang laki ng papel ng PDF o ng print.',
+  'Whether pages are upright or on their side.': 'Kung patayo o pahiga ang mga pahina.',
+  'The space around the edge of each page, such as 20mm or 1in.':
+    'Ang espasyo sa paligid ng gilid ng bawat pahina, gaya ng 20mm o 1in.',
+  'Text at the top of every page; ${title}, ${date} and ${year} are filled in.':
+    'Teksto sa itaas ng bawat pahina; pinupunan ang ${title}, ${date} at ${year}.',
+  'Text at the bottom of every page; ${title}, ${date} and ${year} are filled in.':
+    'Teksto sa ibaba ng bawat pahina; pinupunan ang ${title}, ${date} at ${year}.',
+  'Whether an export is light, dark, or as the app is now.':
+    'Kung maliwanag, madilim, o gaya ng app ngayon ang export.',
+  'Whether this key goes to Orden or to the program in the terminal, or asks each time.':
+    'Kung sa Orden o sa program sa terminal mapupunta ang key na ito, o magtatanong ito tuwina.',
+  'The shell a new terminal starts.': 'Ang shell na sinisimulan ng bagong terminal.',
+  'How large the text in terminals is.': 'Gaano kalaki ang teksto sa mga terminal.',
+  'Brings back what each terminal showed after Orden restarts; off forgets it on quit.':
+    'Ibinabalik ang ipinakita ng bawat terminal pagkatapos mag-restart ang Orden; kapag naka-off, nalilimutan ito sa pag-quit.',
+  'Asks before Orden quits with terminals open: always, or only while something runs in one.':
+    'Nagtatanong bago mag-quit ang Orden habang may bukas na terminal: palagi, o kapag may tumatakbo lang sa isa.',
+  'Draws the app on the graphics card; turn it off if the window flickers or stays blank.':
+    'Iginuguhit ang app sa graphics card; i-off ito kung kumikislap o nananatiling blangko ang bintana.',
+  'How long before a task’s time it reminds you, unless the task says otherwise.':
+    'Gaano katagal bago ang oras ng gawain ka nito paaalalahanan, maliban kung iba ang sinasabi ng gawain.',
+  'Keeps Orden running in the tray after its window closes, so reminders still ring.':
+    'Pinananatiling tumatakbo ang Orden sa tray pagkasara ng bintana nito, para tumunog pa rin ang mga paalala.',
+  'Lets reminders ring at the exact minute rather than when the phone gets round to it.':
+    'Hinahayaang tumunog ang mga paalala sa eksaktong minuto sa halip na kung kailan maasikaso ng telepono.',
+  'How often a note you are editing is saved as a version you can go back to in History.':
+    'Gaano kadalas sine-save ang talang ine-edit mo bilang bersyong mababalikan mo sa History.',
+  'How long those versions are kept before they are deleted.':
+    'Gaano katagal iniingatan ang mga bersyong iyon bago burahin.',
+  'Ctrl+Tab goes to the tab used last, as in VS Code; off goes through the tabs in the order they sit.':
+    'Pumupunta ang Ctrl+Tab sa huling ginamit na tab, gaya sa VS Code; kapag naka-off, sinusunod nito ang pagkakasunod ng mga tab.',
+  'Two fingers sideways on the touchpad go back and forward.':
+    'Ang dalawang daliring patagilid sa touchpad ay pabalik at pasulong.',
+  'What the web pages of another space do while it is out of sight: keep running, pause, or ask the first time.':
+    'Ang ginagawa ng mga web page ng ibang espasyo habang hindi nakikita: patuloy na tumatakbo, nagpa-pause, o nagtatanong sa unang beses.',
+  'Unloads web pages that have been out of sight for a while to free memory; they load again when you return.':
+    'Inaalis sa memory ang mga web page na matagal nang hindi nakikita para lumuwag ito; muling naglo-load ang mga ito pagbalik mo.',
+  'Reads dates, times and fields out of what you type into Add task, such as “tomorrow 9am”.':
+    'Binabasa ang petsa, oras at mga field mula sa tina-type mo sa Magdagdag ng gawain, gaya ng “tomorrow 9am”.',
+  'The folder of this space whose folders the Tasks panel lists as projects.':
+    'Ang folder ng espasyong ito na ang mga folder ay inililista ng panel na Mga gawain bilang mga proyekto.',
+  'Today also lists the tasks that have no start date; off shows only those dated today or earlier.':
+    'Inililista rin ng Ngayong Araw ang mga gawaing walang petsa ng simula; kapag naka-off, ang may petsang ngayon o mas maaga lang ang ipinapakita.',
+  'The Add task shortcut works even while another app is in front.':
+    'Gumagana ang shortcut ng Magdagdag ng gawain kahit may ibang app sa harap.',
+  'Shows terminals and the other tools for writing code.':
+    'Ipinapakita ang mga terminal at ang iba pang kasangkapan sa pagsusulat ng code.',
+  'Hides the tips Orden shows while you get to know it.':
+    'Itinatago ang mga tip na ipinapakita ng Orden habang kinikilala mo ito.',
+  'The language Orden’s menus and settings are in.': 'Ang wika ng mga menu at setting ng Orden.',
+  'Offers this type when you make something new; off only takes it out of that list.':
+    'Inaalok ang uring ito kapag gumagawa ka ng bago; kapag naka-off, inaalis lang ito sa listahang iyon.',
+  'Shows a mark such as ** or # while the cursor is in it; off keeps every mark out of sight.':
+    'Ipinapakita ang marka gaya ng ** o # habang nasa loob nito ang cursor; kapag naka-off, nakatago ang lahat ng marka.',
+  'Notes open as plain markdown text rather than formatted.':
+    'Binubuksan ang mga tala bilang simpleng markdown na teksto sa halip na naka-format.',
+  'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
+    'Isinusulat ang mga tala mula kanan pakaliwa, para sa Arabic, Hebrew at iba pang ganoong sulat.',
+  'Underlines misspelled words as you write.':
+    'Sinasalungguhitan ang mga maling baybay na salita habang sumusulat ka.',
+  'The dictionary spelling is checked against; Match the system uses your system’s language.':
+    'Ang diksiyonaryong pinagbabatayan ng spell check; ginagamit ng Sundin ang sistema ang wika ng iyong sistema.',
+  'The version of Orden that is running; press to copy it.':
+    'Ang bersyon ng Orden na tumatakbo; pindutin para kopyahin ito.',
+  'One of this theme’s own settings, offered by its author.':
+    'Isa sa sariling setting ng temang ito, mula sa gumawa nito.',
+  'How much of what is behind the window shows under notes and terminals; the words always stay readable.':
+    'Gaano karami ng nasa likod ng bintana ang lumilitaw sa ilalim ng mga tala at terminal; laging nababasa ang mga salita.',
+  'The colour laid over the picture.': 'Ang kulay na ipinapatong sa larawan.',
+  'How much the picture is blurred.': 'Gaano kalabo ang larawan.',
+  'How much the picture is darkened.': 'Gaano kadilim ang larawan.',
+  'How vivid the colours of the picture are.': 'Gaano katingkad ang mga kulay ng larawan.',
+  'How strongly the tint colour lies over the picture.':
+    'Gaano katindi ang pagpatong ng kulay ng tinta sa larawan.',
+  'Adds a film grain over the picture.': 'Nagdaragdag ng film grain sa ibabaw ng larawan.',
+  'How the picture fills the window.': 'Kung paano pinupuno ng larawan ang bintana.',
+  'An empty pane shows the picture rather than paper.':
+    'Ipinapakita ng walang lamang pane ang larawan sa halip na papel.',
+  'The name the others see on what you share and in chats.':
+    'Ang pangalang nakikita ng iba sa mga ibinabahagi mo at sa mga chat.',
+  'How far back Go back takes this space; it says first what would change.':
+    'Kung gaano kalayo pabalik dinadala ng Bumalik ang espasyong ito; sinasabi muna nito kung ano ang magbabago.',
+  'The picture the others see beside your name.':
+    'Ang larawang nakikita ng iba sa tabi ng iyong pangalan.',
+  'Shown to the others beside your name, such as she/her.':
+    'Ipinapakita sa iba sa tabi ng iyong pangalan, gaya ng siya/kanya.',
+  'A few words about you that the others see on your profile.':
+    'Ilang salita tungkol sa iyo na nakikita ng iba sa iyong profile.',
+  'What you are up to, shown to the others beside your name until it clears.':
+    'Ang ginagawa mo ngayon, ipinapakita sa iba sa tabi ng iyong pangalan hanggang sa maalis ito.',
 }

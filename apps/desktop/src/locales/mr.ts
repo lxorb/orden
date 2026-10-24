@@ -2417,4 +2417,194 @@ export const mr: Dictionary = {
   Large: 'मोठा',
   Both: 'दोन्ही',
   'Shown on cards': 'कार्डवर दाखवलेले',
+  // What each setting does, behind the ? beside it (#768)
+  'Syncs this browser’s AI keys with your other devices through the vault.':
+    'या ब्राउझरच्या AI की व्हॉल्टमार्फत तुमच्या इतर डिव्हाइसेसशी सिंक करते.',
+  'Which of your AI accounts this feature asks.':
+    'हे वैशिष्ट्य तुमच्या कोणत्या AI खात्याला विचारते.',
+  'Whether a task done with AI asks before each change or makes them on its own.':
+    'AI ने केलेले कार्य प्रत्येक बदलापूर्वी विचारते की स्वतःहून बदल करते.',
+  'Makes Orden the browser that links from other programs open in.':
+    'इतर प्रोग्राममधील दुवे ज्या ब्राउझरमध्ये उघडतात तो Orden ला बनवते.',
+  'Where words typed into a web tab’s address bar are searched.':
+    'वेब टॅबच्या पत्ता पट्टीत टाइप केलेले शब्द कुठे शोधले जातात.',
+  'The search address, with %s where the words go.':
+    'शोधाचा पत्ता, ज्यात शब्द जिथे येतात तिथे %s असते.',
+  'Words the spelling check never marks as wrong.':
+    'शुद्धलेखन तपासणी कधीही चूक म्हणून न दाखवणारे शब्द.',
+  'Which app’s keys Orden follows; any key below can still be changed.':
+    'Orden कोणत्या ॲपच्या कळा पाळते; खालील कोणतीही कळ तरीही बदलता येते.',
+  'Moves and edits in notes with Vim’s keys.': 'Vim च्या कळांनी नोंदींमध्ये फिरा आणि संपादन करा.',
+  'What pulling a note down past its top does on a phone.':
+    'फोनवर नोंद तिच्या वरच्या टोकापलीकडे खाली ओढल्यावर काय होते.',
+  'The OpenAI key the glasses ask their questions with.':
+    'चष्मा ज्या OpenAI कीने प्रश्न विचारतो ती की.',
+  'The model that answers what you ask on the glasses.':
+    'चष्म्यावर तुम्ही विचारलेल्याला उत्तर देणारे मॉडेल.',
+  'How long the model thinks before it answers; longer is slower.':
+    'उत्तर देण्यापूर्वी मॉडेल किती वेळ विचार करते; जास्त वेळ म्हणजे हळू.',
+  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
+    'File Explorer मध्ये उजवे क्लिक केल्यावर मिळणाऱ्या नवीन मेनूमध्ये Markdown दस्तऐवज जोडते.',
+  'What happens when one note was changed on two devices before they synced.':
+    'सिंक होण्यापूर्वी एकच नोंद दोन डिव्हाइसवर बदलली गेल्यास काय होते.',
+  'How far back the account keeps earlier versions of your notes.':
+    'खाते तुमच्या नोंदींच्या जुन्या आवृत्त्या किती काळ मागे ठेवते.',
+  'The colour of buttons, links and the selection.': 'बटणे, दुवे आणि निवडीचा रंग.',
+  'Adds Orden to the AI agent programs on this computer, so they reach your notes with nothing to set up.':
+    'Orden ला या संगणकावरील AI एजंट प्रोग्राममध्ये जोडते, म्हणजे ते काहीही सेट न करता तुमच्या नोंदींपर्यंत पोहोचतात.',
+  'Words that notify you whenever someone writes them in a chat, separated by commas.':
+    'कोणी चॅटमध्ये लिहिल्यावर तुम्हाला सूचना देणारे शब्द, स्वल्पविरामांनी वेगळे केलेले.',
+  'When chats may notify you; outside these hours they stay quiet.':
+    'चॅट तुम्हाला कधी सूचना देऊ शकतात; या वेळेबाहेर ते शांत राहतात.',
+  'When the hours chats may notify you begin.':
+    'चॅट तुम्हाला सूचना देऊ शकतात ते तास कधी सुरू होतात.',
+  'When the hours chats may notify you end.': 'चॅट तुम्हाला सूचना देऊ शकतात ते तास कधी संपतात.',
+  'Notifications show the message itself; off shows only who wrote.':
+    'सूचनांमध्ये संदेश स्वतः दिसतो; बंद असल्यास फक्त कोणी लिहिले ते दिसते.',
+  'Notifications make a sound.': 'सूचनांसोबत आवाज होतो.',
+  'Which headings start a new page on the glasses.': 'कोणती शीर्षके चष्म्यावर नवीन पान सुरू करतात.',
+  'Shows line numbers on the glasses.': 'चष्म्यावर ओळ क्रमांक दाखवते.',
+  'How many blank lines the glasses keep between blocks.':
+    'चष्मा ब्लॉकमध्ये किती रिकाम्या ओळी ठेवतो.',
+  'Shows this markdown mark on the glasses rather than hiding it.':
+    'हे markdown चिन्ह लपवण्याऐवजी चष्म्यावर दाखवते.',
+  'Lets you run commands on the glasses by speaking.': 'चष्म्यावर बोलून आदेश चालवू देते.',
+  'What you say to run this command; left empty, the phrase shown is used.':
+    'हा आदेश चालवण्यासाठी तुम्ही काय म्हणता; रिकामे ठेवल्यास दाखवलेला वाक्यांश वापरला जातो.',
+  'What Windows draws behind the window: Mica, Acrylic, or no blur.':
+    'Windows खिडकीमागे काय काढते: Mica, Acrylic किंवा धूसरपणा नाही.',
+  'How much of the window’s own colour lies over what is behind it.':
+    'खिडकीचा स्वतःचा रंग तिच्यामागच्या गोष्टींवर किती पडतो.',
+  'The frame takes its colour from what is open.': 'फ्रेम जे उघडे आहे त्याचा रंग घेते.',
+  'How strongly the frame is coloured.': 'फ्रेम किती गडद रंगवली जाते.',
+  'The colours the frame takes where nothing open has a colour of its own.':
+    'उघड्या गोष्टींना स्वतःचा रंग नसताना फ्रेम घेते ते रंग.',
+  'A web tab takes the colour of its page.': 'वेब टॅब त्याच्या पानाचा रंग घेतो.',
+  'When your status is taken away again.': 'तुमची स्थिती पुन्हा कधी काढली जाते.',
+  'Silences chat notifications and shows the others you are busy.':
+    'चॅट सूचना शांत करते आणि इतरांना तुम्ही व्यस्त असल्याचे दाखवते.',
+  'The colour the others see beside your name.': 'इतरांना तुमच्या नावाशेजारी दिसणारा रंग.',
+  'The others see you as offline even while you are here.':
+    'तुम्ही इथे असतानाही इतरांना तुम्ही ऑफलाइन दिसता.',
+  'The picture behind the window, one for light and one for dark; drag it to move its centre.':
+    'खिडकीमागचे चित्र, एक फिकट आणि एक गडदसाठी; त्याचे मध्य हलवण्यासाठी ते ओढा.',
+  'The theme Orden is drawn in.': 'Orden ज्या थीममध्ये दिसते ती थीम.',
+  'Light, dark, or whichever the system is in.': 'फिकट, गडद किंवा सिस्टम ज्यात आहे ते.',
+  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
+    'फाइल यादीच्या वरचे बुकमार्क टाइल म्हणून दिसतात की यादी म्हणून.',
+  'Shows a pointing hand over buttons, as web pages do.':
+    'वेब पानांप्रमाणे बटणांवर बोट दाखवणारा हात दाखवते.',
+  'Orden’s own title bar, or the window frame of your system.':
+    'Orden ची स्वतःची शीर्षक पट्टी किंवा तुमच्या सिस्टमची खिडकी फ्रेम.',
+  'How large the text of notes is.': 'नोंदींचा मजकूर किती मोठा आहे.',
+  'The space between the lines of a note.': 'नोंदीच्या ओळींमधील अंतर.',
+  'How wide a line of a note grows before it wraps.': 'नोंदीची ओळ गुंडाळण्यापूर्वी किती रुंद होते.',
+  'Typing an opening bracket or quote adds the closing one too.':
+    'उघडणारा कंस किंवा अवतरण चिन्ह टाइप केल्यावर बंद करणारेही जोडले जाते.',
+  'Keeps the line you are writing in the middle of the screen.':
+    'तुम्ही लिहीत असलेली ओळ स्क्रीनच्या मध्यभागी ठेवते.',
+  'Dims everything but the paragraph you are writing in.':
+    'तुम्ही लिहीत असलेल्या परिच्छेदाशिवाय सर्व काही फिकट करते.',
+  'Joins pairs such as -> or != into one sign, in code only or everywhere.':
+    '-> किंवा != सारख्या जोड्या एकाच चिन्हात जोडते, फक्त कोडमध्ये किंवा सर्वत्र.',
+  'Where a picture or file you paste or drop into a note is saved.':
+    'नोंदीत पेस्ट केलेले किंवा टाकलेले चित्र किंवा फाइल कुठे जतन होते.',
+  'Turning two fingers on a touchpad or screen rotates the canvas.':
+    'टचपॅड किंवा स्क्रीनवर दोन बोटे फिरवल्यास कॅनव्हास फिरतो.',
+  'A rotation that ends near a right angle settles on it.':
+    'काटकोनाजवळ संपणारे फिरणे त्या काटकोनावर स्थिरावते.',
+  'The paper size a new page note starts with.':
+    'नवीन पानांची नोंद ज्या कागद आकाराने सुरू होते तो आकार.',
+  'How the name of a new unique note is made from the date and time.':
+    'नवीन अद्वितीय नोंदीचे नाव तारीख आणि वेळेवरून कसे बनते.',
+  'The colours code in a note is highlighted in.': 'नोंदीतील कोड ज्या रंगांत हायलाइट होतो ते रंग.',
+  'Numbers the lines of code blocks.': 'कोड ब्लॉकच्या ओळींना क्रमांक देते.',
+  'The paper size of a PDF or a print.': 'PDF किंवा प्रिंटचा कागद आकार.',
+  'Whether pages are upright or on their side.': 'पाने उभी आहेत की आडवी.',
+  'The space around the edge of each page, such as 20mm or 1in.':
+    'प्रत्येक पानाच्या कडेभोवतीची जागा, जसे 20mm किंवा 1in.',
+  'Text at the top of every page; ${title}, ${date} and ${year} are filled in.':
+    'प्रत्येक पानाच्या वरचा मजकूर; ${title}, ${date} आणि ${year} भरले जातात.',
+  'Text at the bottom of every page; ${title}, ${date} and ${year} are filled in.':
+    'प्रत्येक पानाच्या तळाचा मजकूर; ${title}, ${date} आणि ${year} भरले जातात.',
+  'Whether an export is light, dark, or as the app is now.':
+    'निर्यात फिकट, गडद किंवा ॲप आत्ता आहे तसा असतो.',
+  'Whether this key goes to Orden or to the program in the terminal, or asks each time.':
+    'ही कळ Orden ला जाते की टर्मिनलमधील प्रोग्रामला, की प्रत्येक वेळी विचारते.',
+  'The shell a new terminal starts.': 'नवीन टर्मिनल सुरू करतो तो शेल.',
+  'How large the text in terminals is.': 'टर्मिनलमधील मजकूर किती मोठा आहे.',
+  'Brings back what each terminal showed after Orden restarts; off forgets it on quit.':
+    'Orden पुन्हा सुरू झाल्यावर प्रत्येक टर्मिनलने दाखवलेले परत आणते; बंद असल्यास बाहेर पडताना ते विसरते.',
+  'Asks before Orden quits with terminals open: always, or only while something runs in one.':
+    'टर्मिनल उघडे असताना Orden बंद होण्यापूर्वी विचारते: नेहमी किंवा फक्त एखाद्यात काही चालू असताना.',
+  'Draws the app on the graphics card; turn it off if the window flickers or stays blank.':
+    'ॲप ग्राफिक्स कार्डवर काढते; खिडकी लुकलुकल्यास किंवा कोरी राहिल्यास हे बंद करा.',
+  'How long before a task’s time it reminds you, unless the task says otherwise.':
+    'कार्याने वेगळे सांगितले नसल्यास, कार्याच्या वेळेच्या किती आधी ते तुम्हाला आठवण करून देते.',
+  'Keeps Orden running in the tray after its window closes, so reminders still ring.':
+    'खिडकी बंद झाल्यावरही Orden ट्रेमध्ये चालू ठेवते, म्हणजे स्मरणपत्रे तरीही वाजतात.',
+  'Lets reminders ring at the exact minute rather than when the phone gets round to it.':
+    'फोनला जमेल तेव्हा नव्हे, तर अचूक मिनिटाला स्मरणपत्रे वाजू देते.',
+  'How often a note you are editing is saved as a version you can go back to in History.':
+    'तुम्ही संपादित करत असलेली नोंद इतिहासमध्ये परत जाता येईल अशा आवृत्तीत किती वेळा जतन होते.',
+  'How long those versions are kept before they are deleted.':
+    'त्या आवृत्त्या हटवण्यापूर्वी किती काळ ठेवल्या जातात.',
+  'Ctrl+Tab goes to the tab used last, as in VS Code; off goes through the tabs in the order they sit.':
+    'Ctrl+Tab, VS Code प्रमाणे, शेवटी वापरलेल्या टॅबवर जाते; बंद असल्यास टॅब ज्या क्रमाने आहेत त्या क्रमाने जाते.',
+  'Two fingers sideways on the touchpad go back and forward.':
+    'टचपॅडवर दोन बोटे आडवी सरकवल्यास मागे आणि पुढे जाता येते.',
+  'What the web pages of another space do while it is out of sight: keep running, pause, or ask the first time.':
+    'दुसऱ्या स्पेसची वेब पाने नजरेआड असताना काय करतात: चालू राहतात, थांबतात किंवा पहिल्यांदा विचारतात.',
+  'Unloads web pages that have been out of sight for a while to free memory; they load again when you return.':
+    'काही काळ नजरेआड असलेली वेब पाने मेमरी मोकळी करण्यासाठी उतरवते; तुम्ही परत आल्यावर ती पुन्हा लोड होतात.',
+  'Reads dates, times and fields out of what you type into Add task, such as “tomorrow 9am”.':
+    'कार्य जोडा मध्ये टाइप केलेल्यातून तारखा, वेळा आणि फील्ड वाचते, जसे “tomorrow 9am”.',
+  'The folder of this space whose folders the Tasks panel lists as projects.':
+    'या स्पेसचे ते फोल्डर ज्याचे फोल्डर कामे पॅनेल प्रकल्प म्हणून दाखवते.',
+  'Today also lists the tasks that have no start date; off shows only those dated today or earlier.':
+    'आज मध्ये सुरुवातीची तारीख नसलेली कार्येही दिसतात; बंद असल्यास फक्त आजची किंवा आधीची कार्ये दिसतात.',
+  'The Add task shortcut works even while another app is in front.':
+    'दुसरे ॲप समोर असतानाही कार्य जोडा शॉर्टकट चालतो.',
+  'Shows terminals and the other tools for writing code.':
+    'टर्मिनल आणि कोड लिहिण्याची इतर साधने दाखवते.',
+  'Hides the tips Orden shows while you get to know it.':
+    'Orden ओळख करून देताना दाखवत असलेल्या टिपा लपवते.',
+  'The language Orden’s menus and settings are in.':
+    'Orden चे मेनू आणि सेटिंग्ज ज्या भाषेत आहेत ती भाषा.',
+  'Offers this type when you make something new; off only takes it out of that list.':
+    'तुम्ही काही नवीन बनवताना हा प्रकार सुचवते; बंद असल्यास फक्त त्या यादीतून काढते.',
+  'Shows a mark such as ** or # while the cursor is in it; off keeps every mark out of sight.':
+    'कर्सर ** किंवा # सारख्या चिन्हात असताना ते दाखवते; बंद असल्यास प्रत्येक चिन्ह लपलेले राहते.',
+  'Notes open as plain markdown text rather than formatted.':
+    'नोंदी स्वरूपित न होता साध्या markdown मजकुराच्या रूपात उघडतात.',
+  'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
+    'अरबी, हिब्रू आणि अशा इतर लिपींसाठी नोंदी उजवीकडून डावीकडे लिहिते.',
+  'Underlines misspelled words as you write.': 'तुम्ही लिहिताना चुकीच्या शब्दांना अधोरेखित करते.',
+  'The dictionary spelling is checked against; Match the system uses your system’s language.':
+    'शुद्धलेखन ज्या शब्दकोशाशी तपासले जाते; सिस्टमप्रमाणे तुमच्या सिस्टमची भाषा वापरते.',
+  'The version of Orden that is running; press to copy it.':
+    'चालू असलेली Orden ची आवृत्ती; कॉपी करण्यासाठी दाबा.',
+  'One of this theme’s own settings, offered by its author.':
+    'या थीमच्या स्वतःच्या सेटिंग्जपैकी एक, तिच्या लेखकाने दिलेली.',
+  'How much of what is behind the window shows under notes and terminals; the words always stay readable.':
+    'नोंदी आणि टर्मिनलखाली खिडकीमागचे किती दिसते; शब्द नेहमी वाचता येतात.',
+  'The colour laid over the picture.': 'चित्रावर पसरलेला रंग.',
+  'How much the picture is blurred.': 'चित्र किती धूसर केले जाते.',
+  'How much the picture is darkened.': 'चित्र किती गडद केले जाते.',
+  'How vivid the colours of the picture are.': 'चित्राचे रंग किती ठळक आहेत.',
+  'How strongly the tint colour lies over the picture.': 'छटेचा रंग चित्रावर किती गडद पडतो.',
+  'Adds a film grain over the picture.': 'चित्रावर फिल्मसारखे दाणे जोडते.',
+  'How the picture fills the window.': 'चित्र खिडकी कशी भरते.',
+  'An empty pane shows the picture rather than paper.': 'रिकाम्या पेनमध्ये कागदाऐवजी चित्र दिसते.',
+  'The name the others see on what you share and in chats.':
+    'तुम्ही शेअर करता त्यावर आणि चॅटमध्ये इतरांना दिसणारे नाव.',
+  'How far back Go back takes this space; it says first what would change.':
+    'मागे जा हा स्पेस किती मागे नेतो; काय बदलेल ते आधी सांगतो.',
+  'The picture the others see beside your name.': 'इतरांना तुमच्या नावाशेजारी दिसणारे चित्र.',
+  'Shown to the others beside your name, such as she/her.':
+    'इतरांना तुमच्या नावाशेजारी दिसते, जसे ती/तिचे.',
+  'A few words about you that the others see on your profile.':
+    'तुमच्याबद्दलचे काही शब्द जे इतरांना तुमच्या प्रोफाइलवर दिसतात.',
+  'What you are up to, shown to the others beside your name until it clears.':
+    'तुम्ही सध्या काय करत आहात, ते हटेपर्यंत इतरांना तुमच्या नावाशेजारी दिसते.',
 }

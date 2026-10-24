@@ -2352,4 +2352,174 @@ export const yue: Dictionary = {
   Large: '大',
   Both: '兩樣都要',
   'Shown on cards': '喺卡片上面顯示',
+  // What each setting does, behind the ? beside it (#768)
+  'Syncs this browser’s AI keys with your other devices through the vault.':
+    '經保險庫將呢個瀏覽器嘅 AI 密鑰同你其他裝置同步。',
+  'Which of your AI accounts this feature asks.': '呢個功能會問你邊個 AI 帳戶。',
+  'Whether a task done with AI asks before each change or makes them on its own.':
+    '用 AI 做嘅任務係每次改動前問你，定係自己直接改。',
+  'Makes Orden the browser that links from other programs open in.':
+    '將 Orden 設為其他程式開連結時用嘅瀏覽器。',
+  'Where words typed into a web tab’s address bar are searched.':
+    '喺網頁標籤頁網址列打嘅字會用邊度搜尋。',
+  'The search address, with %s where the words go.': '搜尋網址，%s 嗰度會換成你打嘅字。',
+  'Words the spelling check never marks as wrong.': '拼字檢查永遠唔會當係錯嘅字。',
+  'Which app’s keys Orden follows; any key below can still be changed.':
+    'Orden 跟邊個 app 嘅按鍵；下面每個鍵都仲可以改。',
+  'Moves and edits in notes with Vim’s keys.': '用 Vim 嘅按鍵喺筆記入面移動同編輯。',
+  'What pulling a note down past its top does on a phone.': '喺手機上將筆記拉過頂之後會做咩。',
+  'The OpenAI key the glasses ask their questions with.': '眼鏡問問題用嘅 OpenAI 密鑰。',
+  'The model that answers what you ask on the glasses.': '喺眼鏡上面答你問題嘅模型。',
+  'How long the model thinks before it answers; longer is slower.':
+    '模型答之前諗幾耐；諗得耐啲就慢啲。',
+  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
+    '喺檔案總管右鍵嘅「新增」菜單加入 Markdown 文件。',
+  'What happens when one note was changed on two devices before they synced.':
+    '同一份筆記喺兩部裝置同步之前都改咗，會點處理。',
+  'How far back the account keeps earlier versions of your notes.':
+    '帳戶會保留你筆記嘅舊版本幾耐。',
+  'The colour of buttons, links and the selection.': '按鈕、連結同選取範圍嘅顏色。',
+  'Adds Orden to the AI agent programs on this computer, so they reach your notes with nothing to set up.':
+    '將 Orden 加入呢部電腦上嘅 AI 代理程式，佢哋唔使設定就搵到你嘅筆記。',
+  'Words that notify you whenever someone writes them in a chat, separated by commas.':
+    '有人喺聊天度寫到就會通知你嘅字，用逗號分隔。',
+  'When chats may notify you; outside these hours they stay quiet.':
+    '聊天幾時可以通知你；呢段時間以外佢哋唔會出聲。',
+  'When the hours chats may notify you begin.': '聊天可以通知你嘅時段幾時開始。',
+  'When the hours chats may notify you end.': '聊天可以通知你嘅時段幾時結束。',
+  'Notifications show the message itself; off shows only who wrote.':
+    '通知會顯示訊息內容；關咗就只顯示係邊個寫。',
+  'Notifications make a sound.': '通知會有聲。',
+  'Which headings start a new page on the glasses.': '眼鏡上面邊啲標題會開新一頁。',
+  'Shows line numbers on the glasses.': '喺眼鏡上面顯示行號。',
+  'How many blank lines the glasses keep between blocks.': '眼鏡喺區塊之間留幾多行空行。',
+  'Shows this markdown mark on the glasses rather than hiding it.':
+    '喺眼鏡上面顯示呢個 Markdown 符號，唔收埋佢。',
+  'Lets you run commands on the glasses by speaking.': '喺眼鏡上面講嘢就可以執行指令。',
+  'What you say to run this command; left empty, the phrase shown is used.':
+    '講咩就執行呢個指令；留空就用顯示嘅句子。',
+  'What Windows draws behind the window: Mica, Acrylic, or no blur.':
+    'Windows 喺視窗後面畫咩：Mica、Acrylic 或者唔模糊。',
+  'How much of the window’s own colour lies over what is behind it.':
+    '視窗本身嘅顏色蓋住後面啲嘢有幾多。',
+  'The frame takes its colour from what is open.': '框架跟住打開咗嘅嘢變色。',
+  'How strongly the frame is coloured.': '框架嘅顏色有幾濃。',
+  'The colours the frame takes where nothing open has a colour of its own.':
+    '打開咗嘅嘢冇自己顏色時，框架用嘅顏色。',
+  'A web tab takes the colour of its page.': '網頁標籤頁會用佢頁面嘅顏色。',
+  'When your status is taken away again.': '你嘅狀態幾時會自動清除。',
+  'Silences chat notifications and shows the others you are busy.':
+    '靜音聊天通知，等其他人見到你好忙。',
+  'The colour the others see beside your name.': '其他人喺你名旁邊見到嘅顏色。',
+  'The others see you as offline even while you are here.': '就算你喺度，其他人都會見到你離線。',
+  'The picture behind the window, one for light and one for dark; drag it to move its centre.':
+    '視窗後面嘅圖片，淺色同深色各一張；拖佢就可以移動中心。',
+  'The theme Orden is drawn in.': 'Orden 用嘅主題。',
+  'Light, dark, or whichever the system is in.': '淺色、深色，或者跟系統而定。',
+  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
+    '檔案列表頂部嘅 Essentials 用圖塊定列表顯示。',
+  'Shows a pointing hand over buttons, as web pages do.': '好似網頁咁，喺按鈕上面顯示手指游標。',
+  'Orden’s own title bar, or the window frame of your system.':
+    '用 Orden 自己嘅標題列，定係你系統嘅視窗框。',
+  'How large the text of notes is.': '筆記文字有幾大。',
+  'The space between the lines of a note.': '筆記行同行之間嘅空間。',
+  'How wide a line of a note grows before it wraps.': '筆記一行可以去到幾闊先換行。',
+  'Typing an opening bracket or quote adds the closing one too.':
+    '打開括號或者引號時，會自動加埋閉合嗰個。',
+  'Keeps the line you are writing in the middle of the screen.': '將你寫緊嗰行保持喺螢幕中間。',
+  'Dims everything but the paragraph you are writing in.': '除咗你寫緊嗰段，其他全部調暗。',
+  'Joins pairs such as -> or != into one sign, in code only or everywhere.':
+    '將 -> 或 != 呢類組合合成一個符號，只限程式碼或者全部地方。',
+  'Where a picture or file you paste or drop into a note is saved.':
+    '貼上或者拖入筆記嘅圖片或檔案會存喺邊度。',
+  'Turning two fingers on a touchpad or screen rotates the canvas.':
+    '喺觸控板或者螢幕上用兩隻手指轉，就會旋轉畫布。',
+  'A rotation that ends near a right angle settles on it.': '旋轉停喺接近直角嗰陣會對正直角。',
+  'The paper size a new page note starts with.': '新分頁筆記一開始用嘅紙張大小。',
+  'How the name of a new unique note is made from the date and time.':
+    '新唯一筆記嘅名稱點樣用日期同時間組成。',
+  'The colours code in a note is highlighted in.': '筆記入面程式碼用嚟標示嘅顏色。',
+  'Numbers the lines of code blocks.': '為程式碼區塊加行號。',
+  'The paper size of a PDF or a print.': 'PDF 或者列印嘅紙張大小。',
+  'Whether pages are upright or on their side.': '頁面係直放定橫放。',
+  'The space around the edge of each page, such as 20mm or 1in.':
+    '每頁邊緣嘅留白，例如 20mm 或 1in。',
+  'Text at the top of every page; ${title}, ${date} and ${year} are filled in.':
+    '每頁頂部嘅文字；${title}、${date} 同 ${year} 會自動填入。',
+  'Text at the bottom of every page; ${title}, ${date} and ${year} are filled in.':
+    '每頁底部嘅文字；${title}、${date} 同 ${year} 會自動填入。',
+  'Whether an export is light, dark, or as the app is now.':
+    '匯出係淺色、深色，定係同而家個 app 一樣。',
+  'Whether this key goes to Orden or to the program in the terminal, or asks each time.':
+    '呢個鍵係畀 Orden 定畀終端機入面嘅程式，定係每次都問。',
+  'The shell a new terminal starts.': '新終端機開嘅 Shell。',
+  'How large the text in terminals is.': '終端機入面文字有幾大。',
+  'Brings back what each terminal showed after Orden restarts; off forgets it on quit.':
+    'Orden 重開之後還原每個終端機顯示過嘅嘢；關咗就喺退出時唔記得。',
+  'Asks before Orden quits with terminals open: always, or only while something runs in one.':
+    '有終端機開住時，退出 Orden 前先問：每次都問，或者只喺有嘢運行緊先問。',
+  'Draws the app on the graphics card; turn it off if the window flickers or stays blank.':
+    '用顯示卡畫個 app；如果視窗閃或者一片空白，就關咗佢。',
+  'How long before a task’s time it reminds you, unless the task says otherwise.':
+    '任務時間之前幾耐提醒你，除非個任務另有設定。',
+  'Keeps Orden running in the tray after its window closes, so reminders still ring.':
+    '關咗視窗之後 Orden 繼續喺系統匣運行，等提醒照響。',
+  'Lets reminders ring at the exact minute rather than when the phone gets round to it.':
+    '等提醒喺準確嗰分鐘響，而唔係等手機得閒先響。',
+  'How often a note you are editing is saved as a version you can go back to in History.':
+    '你編輯緊嘅筆記幾耐存一次版本，等你可以喺「記錄」返去。',
+  'How long those versions are kept before they are deleted.': '呢啲版本保留幾耐先刪除。',
+  'Ctrl+Tab goes to the tab used last, as in VS Code; off goes through the tabs in the order they sit.':
+    'Ctrl+Tab 去返上次用嘅標籤頁，好似 VS Code 咁；關咗就按標籤頁排列次序逐個去。',
+  'Two fingers sideways on the touchpad go back and forward.':
+    '喺觸控板上兩隻手指向側掃，就可以後退同前進。',
+  'What the web pages of another space do while it is out of sight: keep running, pause, or ask the first time.':
+    '其他空間嘅網頁睇唔到時會點：繼續運行、暫停，或者第一次先問你。',
+  'Unloads web pages that have been out of sight for a while to free memory; they load again when you return.':
+    '卸載一段時間睇唔到嘅網頁嚟慳記憶體；你返去時會重新載入。',
+  'Reads dates, times and fields out of what you type into Add task, such as “tomorrow 9am”.':
+    '從你喺「加任務」打嘅字讀出日期、時間同欄位，例如「tomorrow 9am」。',
+  'The folder of this space whose folders the Tasks panel lists as projects.':
+    '呢個空間入面嘅一個資料夾，「任務」面板會將佢入面嘅資料夾列做項目。',
+  'Today also lists the tasks that have no start date; off shows only those dated today or earlier.':
+    '「今日」都會列出冇開始日期嘅任務；關咗就只顯示今日或者之前嘅。',
+  'The Add task shortcut works even while another app is in front.':
+    '就算其他 app 喺前面，「加任務」快捷鍵都照用得。',
+  'Shows terminals and the other tools for writing code.': '顯示終端機同其他寫程式嘅工具。',
+  'Hides the tips Orden shows while you get to know it.': '收埋 Orden 喺你熟悉佢期間顯示嘅提示。',
+  'The language Orden’s menus and settings are in.': 'Orden 菜單同設定用嘅語言。',
+  'Offers this type when you make something new; off only takes it out of that list.':
+    '新建嘢時提供呢個類型；關咗只係喺嗰個列表拎走佢。',
+  'Shows a mark such as ** or # while the cursor is in it; off keeps every mark out of sight.':
+    '游標喺 ** 或 # 呢類符號入面時顯示佢；關咗就收埋所有符號。',
+  'Notes open as plain markdown text rather than formatted.':
+    '筆記以純 Markdown 文字打開，唔會格式化。',
+  'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
+    '由右向左寫筆記，啱阿拉伯文、希伯來文等文字用。',
+  'Underlines misspelled words as you write.': '寫嘢時喺串錯嘅字下面劃線。',
+  'The dictionary spelling is checked against; Match the system uses your system’s language.':
+    '拼字檢查用嘅詞典；「跟隨系統」會用你系統嘅語言。',
+  'The version of Orden that is running; press to copy it.': '運行緊嘅 Orden 版本；㩒一下就複製。',
+  'One of this theme’s own settings, offered by its author.':
+    '呢個主題自己嘅設定之一，由作者提供。',
+  'How much of what is behind the window shows under notes and terminals; the words always stay readable.':
+    '筆記同終端機下面透出幾多視窗後面嘅嘢；文字永遠都睇得清楚。',
+  'The colour laid over the picture.': '蓋喺圖片上面嘅顏色。',
+  'How much the picture is blurred.': '圖片模糊幾多。',
+  'How much the picture is darkened.': '圖片調暗幾多。',
+  'How vivid the colours of the picture are.': '圖片顏色有幾鮮豔。',
+  'How strongly the tint colour lies over the picture.': '色調顏色蓋喺圖片上面有幾濃。',
+  'Adds a film grain over the picture.': '喺圖片上面加菲林顆粒。',
+  'How the picture fills the window.': '圖片點樣填滿視窗。',
+  'An empty pane shows the picture rather than paper.': '空白窗格顯示圖片，而唔係紙張。',
+  'The name the others see on what you share and in chats.':
+    '其他人喺你分享嘅嘢同傾偈入面見到嘅名。',
+  'How far back Go back takes this space; it says first what would change.':
+    '回到過去可以將呢個空間帶返幾耐之前；佢會先講清楚有咩會變。',
+  'The picture the others see beside your name.': '其他人喺你名旁邊見到嘅圖片。',
+  'Shown to the others beside your name, such as she/her.': '喺你名旁邊俾其他人睇，例如佢／佢嘅。',
+  'A few words about you that the others see on your profile.':
+    '其他人喺你個人檔案見到、關於你嘅幾句說話。',
+  'What you are up to, shown to the others beside your name until it clears.':
+    '你而家做緊咩，喺你名旁邊俾其他人睇，直至清除為止。',
 }

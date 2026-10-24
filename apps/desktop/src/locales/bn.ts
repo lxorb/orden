@@ -2414,4 +2414,192 @@ export const bn: Dictionary = {
   Large: 'বড়',
   Both: 'দুটোই',
   'Shown on cards': 'কার্ডে দেখানো',
+  // What each setting does, behind the ? beside it (#768)
+  'Syncs this browser’s AI keys with your other devices through the vault.':
+    'ভল্টের মাধ্যমে এই ব্রাউজারের AI কী আপনার অন্য ডিভাইসগুলোর সাথে সিংক করে।',
+  'Which of your AI accounts this feature asks.':
+    'এই ফিচারটি আপনার কোন AI অ্যাকাউন্টকে জিজ্ঞাসা করে।',
+  'Whether a task done with AI asks before each change or makes them on its own.':
+    'AI দিয়ে করা কোনো কাজ প্রতিটি পরিবর্তনের আগে জিজ্ঞাসা করবে নাকি নিজেই সেগুলো করবে।',
+  'Makes Orden the browser that links from other programs open in.':
+    'অন্য প্রোগ্রামের লিংক যেন Orden-এ খোলে, সেজন্য Orden-কে ডিফল্ট ব্রাউজার করে।',
+  'Where words typed into a web tab’s address bar are searched.':
+    'ওয়েব ট্যাবের ঠিকানা বারে লেখা শব্দ কোথায় খোঁজা হবে।',
+  'The search address, with %s where the words go.':
+    'খোঁজার ঠিকানা, যেখানে শব্দগুলো বসবে সেখানে %s থাকে।',
+  'Words the spelling check never marks as wrong.':
+    'যে শব্দগুলোকে বানান পরীক্ষা কখনো ভুল হিসেবে চিহ্নিত করে না।',
+  'Which app’s keys Orden follows; any key below can still be changed.':
+    'Orden কোন অ্যাপের কী অনুসরণ করে; নিচের যেকোনো কী তবুও বদলানো যায়।',
+  'Moves and edits in notes with Vim’s keys.': 'Vim-এর কী দিয়ে নোটে চলাফেরা ও সম্পাদনা করে।',
+  'What pulling a note down past its top does on a phone.':
+    'ফোনে নোটকে তার শীর্ষ ছাড়িয়ে নিচে টানলে কী হয়।',
+  'The OpenAI key the glasses ask their questions with.': 'যে OpenAI কী দিয়ে চশমা তার প্রশ্ন করে।',
+  'The model that answers what you ask on the glasses.':
+    'চশমায় আপনি যা জিজ্ঞাসা করেন, তার উত্তর দেয় যে মডেল।',
+  'How long the model thinks before it answers; longer is slower.':
+    'উত্তর দেওয়ার আগে মডেল কতক্ষণ ভাবে; বেশি ভাবলে ধীর হয়।',
+  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
+    'File Explorer-এ রাইট-ক্লিক করলে যে নতুন মেনু আসে, তাতে একটি Markdown ডকুমেন্ট যোগ করে।',
+  'What happens when one note was changed on two devices before they synced.':
+    'সিংক হওয়ার আগে একটি নোট দুটি ডিভাইসে বদলালে কী হয়।',
+  'How far back the account keeps earlier versions of your notes.':
+    'অ্যাকাউন্ট আপনার নোটের আগের ভার্সন কত পুরোনো পর্যন্ত রাখে।',
+  'The colour of buttons, links and the selection.': 'বোতাম, লিংক ও নির্বাচনের রং।',
+  'Adds Orden to the AI agent programs on this computer, so they reach your notes with nothing to set up.':
+    'এই কম্পিউটারের AI এজেন্ট প্রোগ্রামগুলোতে Orden যোগ করে, যাতে কিছু সেট আপ না করেই সেগুলো আপনার নোটে পৌঁছায়।',
+  'Words that notify you whenever someone writes them in a chat, separated by commas.':
+    'কমা দিয়ে আলাদা করা শব্দ, যা কেউ চ্যাটে লিখলেই আপনি বিজ্ঞপ্তি পান।',
+  'When chats may notify you; outside these hours they stay quiet.':
+    'কখন চ্যাট আপনাকে বিজ্ঞপ্তি দিতে পারে; এই সময়ের বাইরে সেগুলো চুপ থাকে।',
+  'When the hours chats may notify you begin.':
+    'চ্যাট যে সময়ে বিজ্ঞপ্তি দিতে পারে, তা কখন শুরু হয়।',
+  'When the hours chats may notify you end.': 'চ্যাট যে সময়ে বিজ্ঞপ্তি দিতে পারে, তা কখন শেষ হয়।',
+  'Notifications show the message itself; off shows only who wrote.':
+    'বিজ্ঞপ্তিতে বার্তাটি নিজেই দেখায়; বন্ধ থাকলে শুধু কে লিখেছে তা দেখায়।',
+  'Notifications make a sound.': 'বিজ্ঞপ্তিতে শব্দ হয়।',
+  'Which headings start a new page on the glasses.': 'চশমায় কোন শিরোনাম থেকে নতুন পাতা শুরু হয়।',
+  'Shows line numbers on the glasses.': 'চশমায় লাইন নম্বর দেখায়।',
+  'How many blank lines the glasses keep between blocks.':
+    'চশমা ব্লকের মাঝে কতগুলো ফাঁকা লাইন রাখে।',
+  'Shows this markdown mark on the glasses rather than hiding it.':
+    'এই markdown চিহ্নটি লুকানোর বদলে চশমায় দেখায়।',
+  'Lets you run commands on the glasses by speaking.': 'কথা বলে চশমায় কমান্ড চালাতে দেয়।',
+  'What you say to run this command; left empty, the phrase shown is used.':
+    'এই কমান্ড চালাতে আপনি যা বলেন; ফাঁকা রাখলে দেখানো বাক্যটি ব্যবহার হয়।',
+  'What Windows draws behind the window: Mica, Acrylic, or no blur.':
+    'Windows উইন্ডোর পেছনে কী আঁকে: Mica, Acrylic, নাকি কোনো ঝাপসা নয়।',
+  'How much of the window’s own colour lies over what is behind it.':
+    'উইন্ডোর নিজের রং পেছনের জিনিসের ওপর কতটা পড়ে।',
+  'The frame takes its colour from what is open.': 'যা খোলা আছে, তা থেকে ফ্রেম তার রং নেয়।',
+  'How strongly the frame is coloured.': 'ফ্রেম কতটা গাঢ়ভাবে রঙিন হয়।',
+  'The colours the frame takes where nothing open has a colour of its own.':
+    'খোলা কোনো কিছুর নিজের রং না থাকলে ফ্রেম যে রং নেয়।',
+  'A web tab takes the colour of its page.': 'ওয়েব ট্যাব তার পাতার রং নেয়।',
+  'When your status is taken away again.': 'আপনার অবস্থা কখন আবার মুছে যায়।',
+  'Silences chat notifications and shows the others you are busy.':
+    'চ্যাটের বিজ্ঞপ্তি চুপ করায় এবং অন্যদের দেখায় যে আপনি ব্যস্ত।',
+  'The colour the others see beside your name.': 'আপনার নামের পাশে অন্যরা যে রং দেখে।',
+  'The others see you as offline even while you are here.':
+    'আপনি এখানে থাকলেও অন্যরা আপনাকে অফলাইন দেখে।',
+  'The picture behind the window, one for light and one for dark; drag it to move its centre.':
+    'উইন্ডোর পেছনের ছবি, লাইটের জন্য একটি ও ডার্কের জন্য একটি; কেন্দ্র সরাতে টেনে নিন।',
+  'The theme Orden is drawn in.': 'যে থিমে Orden আঁকা হয়।',
+  'Light, dark, or whichever the system is in.': 'লাইট, ডার্ক, অথবা সিস্টেম যেটিতে আছে।',
+  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
+    'ফাইল তালিকার ওপরের বুকমার্ক টাইল হিসেবে দেখাবে নাকি তালিকা হিসেবে।',
+  'Shows a pointing hand over buttons, as web pages do.':
+    'ওয়েব পাতার মতোই বোতামের ওপর একটি নির্দেশক হাত দেখায়।',
+  'Orden’s own title bar, or the window frame of your system.':
+    'Orden-এর নিজের টাইটেল বার, অথবা আপনার সিস্টেমের উইন্ডো ফ্রেম।',
+  'How large the text of notes is.': 'নোটের লেখা কত বড়।',
+  'The space between the lines of a note.': 'নোটের লাইনগুলোর মাঝের ফাঁক।',
+  'How wide a line of a note grows before it wraps.':
+    'পরের লাইনে যাওয়ার আগে নোটের একটি লাইন কতটা চওড়া হয়।',
+  'Typing an opening bracket or quote adds the closing one too.':
+    'খোলার বন্ধনী বা উদ্ধৃতিচিহ্ন লিখলে বন্ধেরটিও যোগ হয়।',
+  'Keeps the line you are writing in the middle of the screen.':
+    'আপনি যে লাইনে লিখছেন, সেটি স্ক্রিনের মাঝখানে রাখে।',
+  'Dims everything but the paragraph you are writing in.':
+    'আপনি যে অনুচ্ছেদে লিখছেন, সেটি ছাড়া সবকিছু আবছা করে।',
+  'Joins pairs such as -> or != into one sign, in code only or everywhere.':
+    '-> বা != এর মতো জোড়কে একটি চিহ্নে জোড়ে, শুধু কোডে অথবা সব জায়গায়।',
+  'Where a picture or file you paste or drop into a note is saved.':
+    'নোটে পেস্ট করা বা ছেড়ে দেওয়া ছবি বা ফাইল কোথায় সেভ হয়।',
+  'Turning two fingers on a touchpad or screen rotates the canvas.':
+    'টাচপ্যাড বা স্ক্রিনে দুই আঙুল ঘোরালে ক্যানভাস ঘোরে।',
+  'A rotation that ends near a right angle settles on it.':
+    'সমকোণের কাছে শেষ হওয়া ঘোরানো সেই সমকোণেই থামে।',
+  'The paper size a new page note starts with.': 'নতুন পাতার নোট যে কাগজের মাপে শুরু হয়।',
+  'How the name of a new unique note is made from the date and time.':
+    'তারিখ ও সময় থেকে নতুন অনন্য নোটের নাম কীভাবে তৈরি হয়।',
+  'The colours code in a note is highlighted in.': 'নোটের কোড যে রঙে হাইলাইট হয়।',
+  'Numbers the lines of code blocks.': 'কোড ব্লকের লাইনে নম্বর দেয়।',
+  'The paper size of a PDF or a print.': 'PDF বা প্রিন্টের কাগজের মাপ।',
+  'Whether pages are upright or on their side.': 'পাতা খাড়া থাকবে নাকি পাশ ফেরানো।',
+  'The space around the edge of each page, such as 20mm or 1in.':
+    'প্রতিটি পাতার কিনারার চারপাশের ফাঁক, যেমন 20mm বা 1in।',
+  'Text at the top of every page; ${title}, ${date} and ${year} are filled in.':
+    'প্রতিটি পাতার ওপরের লেখা; ${title}, ${date} ও ${year} বসিয়ে দেওয়া হয়।',
+  'Text at the bottom of every page; ${title}, ${date} and ${year} are filled in.':
+    'প্রতিটি পাতার নিচের লেখা; ${title}, ${date} ও ${year} বসিয়ে দেওয়া হয়।',
+  'Whether an export is light, dark, or as the app is now.':
+    'এক্সপোর্ট লাইট, ডার্ক, নাকি অ্যাপ এখন যেমন আছে তেমন হবে।',
+  'Whether this key goes to Orden or to the program in the terminal, or asks each time.':
+    'এই কী Orden-এ যাবে নাকি টার্মিনালের প্রোগ্রামে, নাকি প্রতিবার জিজ্ঞাসা করবে।',
+  'The shell a new terminal starts.': 'নতুন টার্মিনাল যে শেল চালু করে।',
+  'How large the text in terminals is.': 'টার্মিনালের লেখা কত বড়।',
+  'Brings back what each terminal showed after Orden restarts; off forgets it on quit.':
+    'Orden আবার চালু হলে প্রতিটি টার্মিনাল যা দেখাচ্ছিল তা ফিরিয়ে আনে; বন্ধ থাকলে বের হওয়ার সময় ভুলে যায়।',
+  'Asks before Orden quits with terminals open: always, or only while something runs in one.':
+    'টার্মিনাল খোলা রেখে Orden বন্ধ হওয়ার আগে জিজ্ঞাসা করে: সবসময়, অথবা শুধু কোনোটিতে কিছু চলার সময়।',
+  'Draws the app on the graphics card; turn it off if the window flickers or stays blank.':
+    'গ্রাফিক্স কার্ডে অ্যাপটি আঁকে; উইন্ডো কাঁপলে বা ফাঁকা থাকলে এটি বন্ধ করুন।',
+  'How long before a task’s time it reminds you, unless the task says otherwise.':
+    'কাজে অন্য কিছু বলা না থাকলে, কাজের সময়ের কত আগে মনে করিয়ে দেয়।',
+  'Keeps Orden running in the tray after its window closes, so reminders still ring.':
+    'উইন্ডো বন্ধ হওয়ার পরেও Orden-কে ট্রেতে চালু রাখে, যাতে রিমাইন্ডার তখনও বাজে।',
+  'Lets reminders ring at the exact minute rather than when the phone gets round to it.':
+    'ফোন যখন সময় পায় তখন নয়, ঠিক নির্দিষ্ট মিনিটে রিমাইন্ডার বাজতে দেয়।',
+  'How often a note you are editing is saved as a version you can go back to in History.':
+    'আপনি যে নোট সম্পাদনা করছেন, তা কত ঘন ঘন একটি ভার্সন হিসেবে সেভ হয়, যেটিতে ইতিহাস থেকে ফিরে যেতে পারেন।',
+  'How long those versions are kept before they are deleted.':
+    'মুছে ফেলার আগে সেই ভার্সনগুলো কতদিন রাখা হয়।',
+  'Ctrl+Tab goes to the tab used last, as in VS Code; off goes through the tabs in the order they sit.':
+    'VS Code-এর মতো Ctrl+Tab সর্বশেষ ব্যবহৃত ট্যাবে যায়; বন্ধ থাকলে ট্যাবগুলো যে ক্রমে আছে সেই ক্রমে যায়।',
+  'Two fingers sideways on the touchpad go back and forward.':
+    'টাচপ্যাডে দুই আঙুল পাশে সরালে পেছনে ও সামনে যায়।',
+  'What the web pages of another space do while it is out of sight: keep running, pause, or ask the first time.':
+    'অন্য স্পেস চোখের আড়ালে থাকলে তার ওয়েব পাতাগুলো কী করে: চালু থাকে, থেমে থাকে, নাকি প্রথমবার জিজ্ঞাসা করে।',
+  'Unloads web pages that have been out of sight for a while to free memory; they load again when you return.':
+    'মেমরি খালি করতে কিছুক্ষণ চোখের আড়ালে থাকা ওয়েব পাতা আনলোড করে; আপনি ফিরলে সেগুলো আবার লোড হয়।',
+  'Reads dates, times and fields out of what you type into Add task, such as “tomorrow 9am”.':
+    '“কাজ যোগ করুন”-এ আপনি যা লেখেন, যেমন “tomorrow 9am”, তা থেকে তারিখ, সময় ও ঘর পড়ে নেয়।',
+  'The folder of this space whose folders the Tasks panel lists as projects.':
+    'এই স্পেসের সেই ফোল্ডার, যার ভেতরের ফোল্ডারগুলোকে কাজ প্যানেল প্রকল্প হিসেবে দেখায়।',
+  'Today also lists the tasks that have no start date; off shows only those dated today or earlier.':
+    'আজ-এ শুরুর তারিখহীন কাজও দেখায়; বন্ধ থাকলে শুধু আজকের বা আগের তারিখের কাজ দেখায়।',
+  'The Add task shortcut works even while another app is in front.':
+    'অন্য অ্যাপ সামনে থাকলেও “কাজ যোগ করুন”-এর শর্টকাট কাজ করে।',
+  'Shows terminals and the other tools for writing code.':
+    'টার্মিনাল ও কোড লেখার অন্যান্য টুল দেখায়।',
+  'Hides the tips Orden shows while you get to know it.':
+    'আপনি Orden চিনে নেওয়ার সময় এটি যে টিপস দেখায়, সেগুলো লুকায়।',
+  'The language Orden’s menus and settings are in.': 'Orden-এর মেনু ও সেটিংস যে ভাষায় থাকে।',
+  'Offers this type when you make something new; off only takes it out of that list.':
+    'নতুন কিছু তৈরির সময় এই ধরনটি দেখায়; বন্ধ করলে শুধু সেই তালিকা থেকে সরে যায়।',
+  'Shows a mark such as ** or # while the cursor is in it; off keeps every mark out of sight.':
+    'কার্সর ভেতরে থাকলে ** বা # এর মতো চিহ্ন দেখায়; বন্ধ থাকলে সব চিহ্ন লুকানো থাকে।',
+  'Notes open as plain markdown text rather than formatted.':
+    'নোট ফরম্যাট করা রূপে নয়, সাধারণ markdown লেখা হিসেবে খোলে।',
+  'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
+    'আরবি, হিব্রু ও এমন অন্যান্য লিপির জন্য নোট ডান থেকে বাঁয়ে লেখে।',
+  'Underlines misspelled words as you write.': 'লেখার সময় ভুল বানানের শব্দের নিচে দাগ দেয়।',
+  'The dictionary spelling is checked against; Match the system uses your system’s language.':
+    'যে অভিধানে বানান মেলানো হয়; সিস্টেম অনুযায়ী আপনার সিস্টেমের ভাষা ব্যবহার করে।',
+  'The version of Orden that is running; press to copy it.':
+    'চালু থাকা Orden-এর ভার্সন; কপি করতে চাপুন।',
+  'One of this theme’s own settings, offered by its author.':
+    'এই থিমের নিজস্ব একটি সেটিং, যা এর নির্মাতা দিয়েছেন।',
+  'How much of what is behind the window shows under notes and terminals; the words always stay readable.':
+    'নোট ও টার্মিনালের নিচে উইন্ডোর পেছনের কতটা দেখা যায়; লেখা সবসময় পড়া যায়।',
+  'The colour laid over the picture.': 'ছবির ওপর বসানো রং।',
+  'How much the picture is blurred.': 'ছবি কতটা ঝাপসা হয়।',
+  'How much the picture is darkened.': 'ছবি কতটা অন্ধকার করা হয়।',
+  'How vivid the colours of the picture are.': 'ছবির রং কতটা উজ্জ্বল।',
+  'How strongly the tint colour lies over the picture.': 'আভার রং ছবির ওপর কতটা গাঢ়ভাবে পড়ে।',
+  'Adds a film grain over the picture.': 'ছবির ওপর ফিল্মের দানা যোগ করে।',
+  'How the picture fills the window.': 'ছবি উইন্ডো কীভাবে ভরায়।',
+  'An empty pane shows the picture rather than paper.': 'খালি প্যান কাগজের বদলে ছবি দেখায়।',
+  'The name the others see on what you share and in chats.':
+    'আপনি যা শেয়ার করেন তাতে এবং চ্যাটে অন্যরা যে নাম দেখে।',
+  'How far back Go back takes this space; it says first what would change.':
+    '“আগের অবস্থায়” এই স্পেসকে কতটা পিছনে নিয়ে যায়; কী বদলাবে তা আগে জানায়।',
+  'The picture the others see beside your name.': 'আপনার নামের পাশে অন্যরা যে ছবি দেখে।',
+  'Shown to the others beside your name, such as she/her.':
+    'আপনার নামের পাশে অন্যদের দেখানো হয়, যেমন তিনি/তাঁর।',
+  'A few words about you that the others see on your profile.':
+    'আপনার সম্পর্কে কয়েকটি কথা, যা অন্যরা আপনার প্রোফাইলে দেখে।',
+  'What you are up to, shown to the others beside your name until it clears.':
+    'আপনি এখন কী করছেন, মুছে না যাওয়া পর্যন্ত আপনার নামের পাশে অন্যদের দেখানো হয়।',
 }

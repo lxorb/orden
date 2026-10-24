@@ -2535,4 +2535,188 @@ export const ar: Dictionary = {
   Large: 'كبير',
   Both: 'كلاهما',
   'Shown on cards': 'معروضة على البطاقات',
+  // What each setting does, behind the ? beside it (#768)
+  'Syncs this browser’s AI keys with your other devices through the vault.':
+    'يزامن مفاتيح الذكاء الاصطناعي في هذا المتصفح مع أجهزتك الأخرى عبر الخزنة.',
+  'Which of your AI accounts this feature asks.':
+    'أيّ حساب من حسابات الذكاء الاصطناعي لديك تسأله هذه الميزة.',
+  'Whether a task done with AI asks before each change or makes them on its own.':
+    'هل تسأل المهمة المنجزة بالذكاء الاصطناعي قبل كل تغيير أم تُجري التغييرات من تلقاء نفسها.',
+  'Makes Orden the browser that links from other programs open in.':
+    'يجعل Orden المتصفح الذي تُفتح فيه الروابط القادمة من البرامج الأخرى.',
+  'Where words typed into a web tab’s address bar are searched.':
+    'أين يُبحث عن الكلمات المكتوبة في شريط العنوان في تبويب الويب.',
+  'The search address, with %s where the words go.': 'عنوان البحث، مع %s في موضع الكلمات.',
+  'Words the spelling check never marks as wrong.': 'كلمات لا يعدّها التدقيق الإملائي خاطئة أبدًا.',
+  'Which app’s keys Orden follows; any key below can still be changed.':
+    'أيّ تطبيق يتبع Orden اختصاراته؛ ويبقى بالإمكان تغيير أي اختصار أدناه.',
+  'Moves and edits in notes with Vim’s keys.': 'يتيح التنقل والتحرير في الملاحظات باختصارات Vim.',
+  'What pulling a note down past its top does on a phone.':
+    'ما يحدث عند سحب ملاحظة إلى الأسفل إلى ما بعد أعلاها على الهاتف.',
+  'The OpenAI key the glasses ask their questions with.':
+    'مفتاح OpenAI الذي تطرح به النظارات أسئلتها.',
+  'The model that answers what you ask on the glasses.':
+    'النموذج الذي يجيب عمّا تسأله على النظارات.',
+  'How long the model thinks before it answers; longer is slower.':
+    'مدة تفكير النموذج قبل أن يجيب؛ والأطول أبطأ.',
+  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
+    'يضيف مستند Markdown إلى قائمة “جديد” التي تظهر بالنقر بزر الماوس الأيمن في مستكشف الملفات.',
+  'What happens when one note was changed on two devices before they synced.':
+    'ما يحدث عندما تتغير ملاحظة واحدة على جهازين قبل أن يتزامنا.',
+  'How far back the account keeps earlier versions of your notes.':
+    'المدة التي يحتفظ فيها الحساب بالنسخ السابقة من ملاحظاتك.',
+  'The colour of buttons, links and the selection.': 'لون الأزرار والروابط والتحديد.',
+  'Adds Orden to the AI agent programs on this computer, so they reach your notes with nothing to set up.':
+    'يضيف Orden إلى برامج وكلاء الذكاء الاصطناعي على هذا الحاسوب، لتصل إلى ملاحظاتك دون أي إعداد.',
+  'Words that notify you whenever someone writes them in a chat, separated by commas.':
+    'كلمات تُنبّهك كلما كتبها أحد في محادثة، مفصولة بفواصل.',
+  'When chats may notify you; outside these hours they stay quiet.':
+    'متى يمكن للمحادثات أن تُنبّهك؛ وخارج هذه الساعات تبقى صامتة.',
+  'When the hours chats may notify you begin.':
+    'متى تبدأ الساعات التي يمكن للمحادثات أن تُنبّهك فيها.',
+  'When the hours chats may notify you end.':
+    'متى تنتهي الساعات التي يمكن للمحادثات أن تُنبّهك فيها.',
+  'Notifications show the message itself; off shows only who wrote.':
+    'تعرض الإشعارات نص الرسالة نفسه؛ وعند الإيقاف تعرض من كتبها فقط.',
+  'Notifications make a sound.': 'تُصدر الإشعارات صوتًا.',
+  'Which headings start a new page on the glasses.': 'العناوين التي تبدأ صفحة جديدة على النظارات.',
+  'Shows line numbers on the glasses.': 'يعرض أرقام الأسطر على النظارات.',
+  'How many blank lines the glasses keep between blocks.':
+    'عدد الأسطر الفارغة التي تتركها النظارات بين الكتل.',
+  'Shows this markdown mark on the glasses rather than hiding it.':
+    'يعرض علامة Markdown هذه على النظارات بدل إخفائها.',
+  'Lets you run commands on the glasses by speaking.': 'يتيح تشغيل الأوامر على النظارات بالكلام.',
+  'What you say to run this command; left empty, the phrase shown is used.':
+    'ما تقوله لتشغيل هذا الأمر؛ وإن تُرك فارغًا تُستخدم العبارة المعروضة.',
+  'What Windows draws behind the window: Mica, Acrylic, or no blur.':
+    'ما يرسمه Windows خلف النافذة: Mica أو Acrylic أو بلا تمويه.',
+  'How much of the window’s own colour lies over what is behind it.':
+    'مقدار ما يغطيه لون النافذة نفسها مما خلفها.',
+  'The frame takes its colour from what is open.': 'يأخذ الإطار لونه مما هو مفتوح.',
+  'How strongly the frame is coloured.': 'شدة تلوين الإطار.',
+  'The colours the frame takes where nothing open has a colour of its own.':
+    'الألوان التي يأخذها الإطار حين لا يكون لما هو مفتوح لون خاص به.',
+  'A web tab takes the colour of its page.': 'يأخذ تبويب الويب لون صفحته.',
+  'When your status is taken away again.': 'متى تُزال حالتك مجددًا.',
+  'Silences chat notifications and shows the others you are busy.':
+    'يكتم إشعارات المحادثات ويُظهر للآخرين أنك مشغول.',
+  'The colour the others see beside your name.': 'اللون الذي يراه الآخرون بجانب اسمك.',
+  'The others see you as offline even while you are here.': 'يراك الآخرون غير متصل حتى وأنت هنا.',
+  'The picture behind the window, one for light and one for dark; drag it to move its centre.':
+    'الصورة خلف النافذة، واحدة للوضع الفاتح وأخرى للداكن؛ اسحبها لتحريك مركزها.',
+  'The theme Orden is drawn in.': 'السمة التي يُرسم بها Orden.',
+  'Light, dark, or whichever the system is in.': 'فاتح أو داكن أو بحسب وضع النظام.',
+  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
+    'هل تظهر الأساسيات أعلى قائمة الملفات كبلاطات أم كقائمة.',
+  'Shows a pointing hand over buttons, as web pages do.':
+    'يعرض يدًا مشيرة فوق الأزرار، كما تفعل صفحات الويب.',
+  'Orden’s own title bar, or the window frame of your system.':
+    'شريط عنوان Orden الخاص، أو إطار النافذة في نظامك.',
+  'How large the text of notes is.': 'حجم نص الملاحظات.',
+  'The space between the lines of a note.': 'المسافة بين أسطر الملاحظة.',
+  'How wide a line of a note grows before it wraps.': 'أقصى عرض لسطر الملاحظة قبل أن يلتف.',
+  'Typing an opening bracket or quote adds the closing one too.':
+    'كتابة قوس أو علامة اقتباس افتتاحية تضيف الإغلاقية أيضًا.',
+  'Keeps the line you are writing in the middle of the screen.':
+    'يُبقي السطر الذي تكتبه في وسط الشاشة.',
+  'Dims everything but the paragraph you are writing in.':
+    'يعتّم كل شيء عدا الفقرة التي تكتب فيها.',
+  'Joins pairs such as -> or != into one sign, in code only or everywhere.':
+    'يدمج أزواجًا مثل -> أو != في رمز واحد، في الكود فقط أو في كل مكان.',
+  'Where a picture or file you paste or drop into a note is saved.':
+    'مكان حفظ الصورة أو الملف الذي تلصقه أو تُفلته في ملاحظة.',
+  'Turning two fingers on a touchpad or screen rotates the canvas.':
+    'تدوير إصبعين على لوحة اللمس أو الشاشة يُدير اللوحة.',
+  'A rotation that ends near a right angle settles on it.':
+    'الدوران الذي ينتهي قرب زاوية قائمة يستقر عليها.',
+  'The paper size a new page note starts with.': 'حجم الورق الذي تبدأ به ملاحظة الصفحات الجديدة.',
+  'How the name of a new unique note is made from the date and time.':
+    'كيف يُكوَّن اسم الملاحظة الفريدة الجديدة من التاريخ والوقت.',
+  'The colours code in a note is highlighted in.': 'الألوان التي يُلوَّن بها الكود في الملاحظة.',
+  'Numbers the lines of code blocks.': 'يرقّم أسطر كتل الكود.',
+  'The paper size of a PDF or a print.': 'حجم الورق لملف PDF أو للطباعة.',
+  'Whether pages are upright or on their side.': 'هل تكون الصفحات عمودية أم أفقية.',
+  'The space around the edge of each page, such as 20mm or 1in.':
+    'المسافة حول حافة كل صفحة، مثل 20mm أو 1in.',
+  'Text at the top of every page; ${title}, ${date} and ${year} are filled in.':
+    'نص أعلى كل صفحة؛ تُملأ ${title} و ${date} و ${year} تلقائيًا.',
+  'Text at the bottom of every page; ${title}, ${date} and ${year} are filled in.':
+    'نص أسفل كل صفحة؛ تُملأ ${title} و ${date} و ${year} تلقائيًا.',
+  'Whether an export is light, dark, or as the app is now.':
+    'هل يكون التصدير فاتحًا أم داكنًا أم كما هو التطبيق الآن.',
+  'Whether this key goes to Orden or to the program in the terminal, or asks each time.':
+    'هل يذهب هذا المفتاح إلى Orden أم إلى البرنامج في الطرفية، أم يسأل في كل مرة.',
+  'The shell a new terminal starts.': 'الصدفة التي تبدأ بها الطرفية الجديدة.',
+  'How large the text in terminals is.': 'حجم النص في الطرفيات.',
+  'Brings back what each terminal showed after Orden restarts; off forgets it on quit.':
+    'يعيد ما عرضته كل طرفية بعد إعادة تشغيل Orden؛ وعند الإيقاف يُنسى ذلك عند الخروج.',
+  'Asks before Orden quits with terminals open: always, or only while something runs in one.':
+    'يسأل قبل إغلاق Orden وفيه طرفيات مفتوحة: دائمًا، أو فقط حين يعمل شيء في إحداها.',
+  'Draws the app on the graphics card; turn it off if the window flickers or stays blank.':
+    'يرسم التطبيق على بطاقة الرسومات؛ أوقفه إذا ومضت النافذة أو بقيت فارغة.',
+  'How long before a task’s time it reminds you, unless the task says otherwise.':
+    'كم من الوقت قبل موعد المهمة يذكّرك، ما لم تحدد المهمة غير ذلك.',
+  'Keeps Orden running in the tray after its window closes, so reminders still ring.':
+    'يُبقي Orden يعمل في شريط النظام بعد إغلاق نافذته، لتظل التذكيرات ترنّ.',
+  'Lets reminders ring at the exact minute rather than when the phone gets round to it.':
+    'يتيح للتذكيرات أن ترنّ في الدقيقة المحددة بدلًا من حين يتفرغ لها الهاتف.',
+  'How often a note you are editing is saved as a version you can go back to in History.':
+    'كم مرة تُحفظ الملاحظة التي تحررها كنسخة يمكنك الرجوع إليها في السجل.',
+  'How long those versions are kept before they are deleted.': 'مدة الاحتفاظ بتلك النسخ قبل حذفها.',
+  'Ctrl+Tab goes to the tab used last, as in VS Code; off goes through the tabs in the order they sit.':
+    'ينتقل Ctrl+Tab إلى آخر تبويب استُخدم، كما في VS Code؛ وعند الإيقاف يمر على التبويبات بترتيبها.',
+  'Two fingers sideways on the touchpad go back and forward.':
+    'إصبعان جانبيًا على لوحة اللمس للرجوع والتقدم.',
+  'What the web pages of another space do while it is out of sight: keep running, pause, or ask the first time.':
+    'ما تفعله صفحات الويب في مساحة أخرى وهي غير ظاهرة: تستمر أو تتوقف مؤقتًا أو تسأل في المرة الأولى.',
+  'Unloads web pages that have been out of sight for a while to free memory; they load again when you return.':
+    'يُفرغ صفحات الويب التي بقيت غير ظاهرة مدة لتحرير الذاكرة؛ وتُحمَّل مجددًا عند عودتك.',
+  'Reads dates, times and fields out of what you type into Add task, such as “tomorrow 9am”.':
+    'يقرأ التواريخ والأوقات والحقول مما تكتبه في “إضافة مهمة”، مثل “tomorrow 9am”.',
+  'The folder of this space whose folders the Tasks panel lists as projects.':
+    'مجلد هذه المساحة الذي تعرض لوحة “المهام” مجلداته كمشاريع.',
+  'Today also lists the tasks that have no start date; off shows only those dated today or earlier.':
+    'يعرض “اليوم” أيضًا المهام التي لا تاريخ بدء لها؛ وعند الإيقاف يعرض فقط ما تاريخه اليوم أو قبله.',
+  'The Add task shortcut works even while another app is in front.':
+    'يعمل اختصار “إضافة مهمة” حتى عندما يكون تطبيق آخر في المقدمة.',
+  'Shows terminals and the other tools for writing code.':
+    'يعرض الطرفيات والأدوات الأخرى لكتابة الكود.',
+  'Hides the tips Orden shows while you get to know it.':
+    'يخفي النصائح التي يعرضها Orden ريثما تتعرف عليه.',
+  'The language Orden’s menus and settings are in.': 'اللغة التي تظهر بها قوائم Orden وإعداداته.',
+  'Offers this type when you make something new; off only takes it out of that list.':
+    'يعرض هذا النوع عند إنشاء شيء جديد؛ وإيقافه يُخرجه من تلك القائمة فقط.',
+  'Shows a mark such as ** or # while the cursor is in it; off keeps every mark out of sight.':
+    'يُظهر علامة مثل ** أو # حين يكون المؤشر داخلها؛ وعند الإيقاف تبقى كل العلامات مخفية.',
+  'Notes open as plain markdown text rather than formatted.':
+    'تُفتح الملاحظات كنص Markdown عادي بدل أن تكون منسّقة.',
+  'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
+    'يكتب الملاحظات من اليمين إلى اليسار، للعربية والعبرية وغيرهما من الكتابات المماثلة.',
+  'Underlines misspelled words as you write.': 'يضع خطًا تحت الكلمات المكتوبة خطأً أثناء الكتابة.',
+  'The dictionary spelling is checked against; Match the system uses your system’s language.':
+    'القاموس الذي يُدقَّق الإملاء وفقه؛ “مطابقة النظام” يستخدم لغة نظامك.',
+  'The version of Orden that is running; press to copy it.':
+    'إصدار Orden الذي يعمل الآن؛ اضغط لنسخه.',
+  'One of this theme’s own settings, offered by its author.':
+    'أحد إعدادات هذه السمة الخاصة، يقدّمه مؤلفها.',
+  'How much of what is behind the window shows under notes and terminals; the words always stay readable.':
+    'مقدار ما يظهر مما خلف النافذة تحت الملاحظات والطرفيات؛ وتبقى الكلمات مقروءة دائمًا.',
+  'The colour laid over the picture.': 'اللون الموضوع فوق الصورة.',
+  'How much the picture is blurred.': 'مقدار تمويه الصورة.',
+  'How much the picture is darkened.': 'مقدار تعتيم الصورة.',
+  'How vivid the colours of the picture are.': 'مدى حيوية ألوان الصورة.',
+  'How strongly the tint colour lies over the picture.': 'شدة لون الصبغة فوق الصورة.',
+  'Adds a film grain over the picture.': 'يضيف حبيبات فيلم فوق الصورة.',
+  'How the picture fills the window.': 'كيف تملأ الصورة النافذة.',
+  'An empty pane shows the picture rather than paper.': 'يعرض الجزء الفارغ الصورة بدل الورق.',
+  'The name the others see on what you share and in chats.':
+    'الاسم الذي يراه الآخرون على ما تشاركه وفي المحادثات.',
+  'How far back Go back takes this space; it says first what would change.':
+    'إلى أي مدى يعيد “الرجوع” هذه المساحة؛ ويخبرك أولًا بما سيتغير.',
+  'The picture the others see beside your name.': 'الصورة التي يراها الآخرون بجانب اسمك.',
+  'Shown to the others beside your name, such as she/her.': 'تظهر للآخرين بجانب اسمك، مثل هي/لها.',
+  'A few words about you that the others see on your profile.':
+    'كلمات قليلة عنك يراها الآخرون في ملفك الشخصي.',
+  'What you are up to, shown to the others beside your name until it clears.':
+    'ما تفعله الآن، يظهر للآخرين بجانب اسمك حتى يُزال.',
 }

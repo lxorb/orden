@@ -2481,4 +2481,205 @@ export const it: Dictionary = {
   Large: 'Grande',
   Both: 'Entrambi',
   'Shown on cards': 'Mostrato sulle schede',
+  // What each setting does, behind the ? beside it (#768)
+  'Syncs this browser’s AI keys with your other devices through the vault.':
+    'Sincronizza le chiavi IA di questo browser con gli altri tuoi dispositivi tramite la cassaforte.',
+  'Which of your AI accounts this feature asks.':
+    'Quale dei tuoi account IA interroga questa funzione.',
+  'Whether a task done with AI asks before each change or makes them on its own.':
+    'Se un’attività svolta con l’IA chiede prima di ogni modifica o le fa da sola.',
+  'Makes Orden the browser that links from other programs open in.':
+    'Rende Orden il browser in cui si aprono i link degli altri programmi.',
+  'Where words typed into a web tab’s address bar are searched.':
+    'Dove vengono cercate le parole digitate nella barra degli indirizzi di una scheda web.',
+  'The search address, with %s where the words go.':
+    'L’indirizzo di ricerca, con %s al posto delle parole.',
+  'Words the spelling check never marks as wrong.':
+    'Parole che il controllo ortografico non segna mai come errate.',
+  'Which app’s keys Orden follows; any key below can still be changed.':
+    'L’app di cui Orden segue i tasti; ogni tasto qui sotto resta comunque modificabile.',
+  'Moves and edits in notes with Vim’s keys.':
+    'Spostarsi e modificare nelle note con i tasti di Vim.',
+  'What pulling a note down past its top does on a phone.':
+    'Cosa fa su un telefono trascinare una nota verso il basso oltre il suo inizio.',
+  'The OpenAI key the glasses ask their questions with.':
+    'La chiave OpenAI con cui gli occhiali fanno le loro domande.',
+  'The model that answers what you ask on the glasses.':
+    'Il modello che risponde a ciò che chiedi sugli occhiali.',
+  'How long the model thinks before it answers; longer is slower.':
+    'Quanto pensa il modello prima di rispondere; più a lungo è più lento.',
+  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
+    'Aggiunge un documento Markdown al menu Nuovo che si apre col clic destro in Explorer.',
+  'What happens when one note was changed on two devices before they synced.':
+    'Cosa succede quando una nota è stata modificata su due dispositivi prima che si sincronizzassero.',
+  'How far back the account keeps earlier versions of your notes.':
+    'Fino a quando l’account conserva le versioni precedenti delle tue note.',
+  'The colour of buttons, links and the selection.': 'Il colore di pulsanti, link e selezione.',
+  'Adds Orden to the AI agent programs on this computer, so they reach your notes with nothing to set up.':
+    'Aggiunge Orden ai programmi di agenti IA su questo computer, così raggiungono le tue note senza configurare nulla.',
+  'Words that notify you whenever someone writes them in a chat, separated by commas.':
+    'Parole che ti avvisano ogni volta che qualcuno le scrive in una chat, separate da virgole.',
+  'When chats may notify you; outside these hours they stay quiet.':
+    'Quando le chat possono avvisarti; fuori da queste ore restano in silenzio.',
+  'When the hours chats may notify you begin.':
+    'Quando iniziano le ore in cui le chat possono avvisarti.',
+  'When the hours chats may notify you end.':
+    'Quando finiscono le ore in cui le chat possono avvisarti.',
+  'Notifications show the message itself; off shows only who wrote.':
+    'Le notifiche mostrano il messaggio stesso; disattivo, mostrano solo chi ha scritto.',
+  'Notifications make a sound.': 'Le notifiche emettono un suono.',
+  'Which headings start a new page on the glasses.':
+    'Quali titoli iniziano una nuova pagina sugli occhiali.',
+  'Shows line numbers on the glasses.': 'Mostra i numeri di riga sugli occhiali.',
+  'How many blank lines the glasses keep between blocks.':
+    'Quante righe vuote gli occhiali lasciano tra i blocchi.',
+  'Shows this markdown mark on the glasses rather than hiding it.':
+    'Mostra questo segno Markdown sugli occhiali invece di nasconderlo.',
+  'Lets you run commands on the glasses by speaking.':
+    'Ti fa eseguire comandi sugli occhiali con la voce.',
+  'What you say to run this command; left empty, the phrase shown is used.':
+    'Cosa dici per eseguire questo comando; se vuoto, vale la frase mostrata.',
+  'What Windows draws behind the window: Mica, Acrylic, or no blur.':
+    'Cosa disegna Windows dietro la finestra: Mica, Acrilico o nessuna sfocatura.',
+  'How much of the window’s own colour lies over what is behind it.':
+    'Quanto del colore proprio della finestra si stende su ciò che c’è dietro.',
+  'The frame takes its colour from what is open.':
+    'La cornice prende il colore di ciò che è aperto.',
+  'How strongly the frame is coloured.': 'Quanto è colorata la cornice.',
+  'The colours the frame takes where nothing open has a colour of its own.':
+    'I colori della cornice dove nulla di aperto ha un colore proprio.',
+  'A web tab takes the colour of its page.': 'Una scheda web prende il colore della sua pagina.',
+  'When your status is taken away again.': 'Quando il tuo stato viene tolto.',
+  'Silences chat notifications and shows the others you are busy.':
+    'Silenzia le notifiche delle chat e mostra agli altri che sei occupato.',
+  'The colour the others see beside your name.':
+    'Il colore che gli altri vedono accanto al tuo nome.',
+  'The others see you as offline even while you are here.':
+    'Gli altri ti vedono offline anche mentre ci sei.',
+  'The picture behind the window, one for light and one for dark; drag it to move its centre.':
+    'L’immagine dietro la finestra, una per il chiaro e una per lo scuro; trascinala per spostarne il centro.',
+  'The theme Orden is drawn in.': 'Il tema con cui viene disegnato Orden.',
+  'Light, dark, or whichever the system is in.': 'Chiaro, scuro o come è impostato il sistema.',
+  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
+    'Se i segnalibri in cima all’elenco dei file appaiono come riquadri o come elenco.',
+  'Shows a pointing hand over buttons, as web pages do.':
+    'Mostra una mano che indica sopra i pulsanti, come fanno le pagine web.',
+  'Orden’s own title bar, or the window frame of your system.':
+    'La barra del titolo di Orden o la cornice delle finestre del tuo sistema.',
+  'How large the text of notes is.': 'Quanto è grande il testo delle note.',
+  'The space between the lines of a note.': 'Lo spazio tra le righe di una nota.',
+  'How wide a line of a note grows before it wraps.':
+    'Quanto si allarga una riga di una nota prima di andare a capo.',
+  'Typing an opening bracket or quote adds the closing one too.':
+    'Digitare una parentesi o una virgoletta di apertura aggiunge anche quella di chiusura.',
+  'Keeps the line you are writing in the middle of the screen.':
+    'Tiene la riga in cui scrivi al centro dello schermo.',
+  'Dims everything but the paragraph you are writing in.':
+    'Attenua tutto tranne il paragrafo in cui scrivi.',
+  'Joins pairs such as -> or != into one sign, in code only or everywhere.':
+    'Unisce coppie come -> o != in un solo segno, solo nel codice o ovunque.',
+  'Where a picture or file you paste or drop into a note is saved.':
+    'Dove viene salvata un’immagine o un file che incolli o trascini in una nota.',
+  'Turning two fingers on a touchpad or screen rotates the canvas.':
+    'Ruotare due dita su touchpad o schermo fa ruotare la tela.',
+  'A rotation that ends near a right angle settles on it.':
+    'Una rotazione che finisce vicino a un angolo retto vi si aggancia.',
+  'The paper size a new page note starts with.':
+    'Il formato carta con cui inizia una nuova nota a pagine.',
+  'How the name of a new unique note is made from the date and time.':
+    'Come il nome di una nuova nota univoca viene formato da data e ora.',
+  'The colours code in a note is highlighted in.':
+    'I colori con cui viene evidenziato il codice in una nota.',
+  'Numbers the lines of code blocks.': 'Numera le righe dei blocchi di codice.',
+  'The paper size of a PDF or a print.': 'Il formato carta di un PDF o di una stampa.',
+  'Whether pages are upright or on their side.': 'Se le pagine sono in verticale o in orizzontale.',
+  'The space around the edge of each page, such as 20mm or 1in.':
+    'Lo spazio attorno al bordo di ogni pagina, per esempio 20mm o 1in.',
+  'Text at the top of every page; ${title}, ${date} and ${year} are filled in.':
+    'Testo in cima a ogni pagina; ${title}, ${date} e ${year} vengono compilati.',
+  'Text at the bottom of every page; ${title}, ${date} and ${year} are filled in.':
+    'Testo in fondo a ogni pagina; ${title}, ${date} e ${year} vengono compilati.',
+  'Whether an export is light, dark, or as the app is now.':
+    'Se un’esportazione è chiara, scura o come l’app in questo momento.',
+  'Whether this key goes to Orden or to the program in the terminal, or asks each time.':
+    'Se questo tasto va a Orden o al programma nel terminale, oppure se chiedere ogni volta.',
+  'The shell a new terminal starts.': 'La shell che avvia un nuovo terminale.',
+  'How large the text in terminals is.': 'Quanto è grande il testo nei terminali.',
+  'Brings back what each terminal showed after Orden restarts; off forgets it on quit.':
+    'Ripristina ciò che mostrava ogni terminale dopo il riavvio di Orden; disattivo, lo dimentica alla chiusura.',
+  'Asks before Orden quits with terminals open: always, or only while something runs in one.':
+    'Chiede prima che Orden si chiuda con terminali aperti: sempre, o solo mentre in uno è in esecuzione qualcosa.',
+  'Draws the app on the graphics card; turn it off if the window flickers or stays blank.':
+    'Disegna l’app con la scheda grafica; disattivalo se la finestra sfarfalla o resta vuota.',
+  'How long before a task’s time it reminds you, unless the task says otherwise.':
+    'Quanto tempo prima dell’orario di un’attività arriva il promemoria, salvo che l’attività dica altrimenti.',
+  'Keeps Orden running in the tray after its window closes, so reminders still ring.':
+    'Tiene Orden attivo nell’area di notifica dopo la chiusura della finestra, così i promemoria suonano ancora.',
+  'Lets reminders ring at the exact minute rather than when the phone gets round to it.':
+    'Fa suonare i promemoria al minuto esatto invece di quando il telefono ci arriva.',
+  'How often a note you are editing is saved as a version you can go back to in History.':
+    'Ogni quanto una nota che stai modificando viene salvata come versione a cui tornare in Cronologia.',
+  'How long those versions are kept before they are deleted.':
+    'Per quanto tempo queste versioni vengono conservate prima di essere eliminate.',
+  'Ctrl+Tab goes to the tab used last, as in VS Code; off goes through the tabs in the order they sit.':
+    'Ctrl+Tab va alla scheda usata per ultima, come in VS Code; disattivo, scorre le schede nel loro ordine.',
+  'Two fingers sideways on the touchpad go back and forward.':
+    'Due dita di lato sul touchpad vanno indietro e avanti.',
+  'What the web pages of another space do while it is out of sight: keep running, pause, or ask the first time.':
+    'Cosa fanno le pagine web di un altro spazio mentre non è visibile: continuano, si mettono in pausa o chiedono la prima volta.',
+  'Unloads web pages that have been out of sight for a while to free memory; they load again when you return.':
+    'Scarica le pagine web non visibili da un po’ per liberare memoria; si ricaricano quando torni.',
+  'Reads dates, times and fields out of what you type into Add task, such as “tomorrow 9am”.':
+    'Legge date, orari e campi da ciò che digiti in Aggiungi attività, come “tomorrow 9am”.',
+  'The folder of this space whose folders the Tasks panel lists as projects.':
+    'La cartella di questo spazio le cui cartelle il pannello Attività elenca come progetti.',
+  'Today also lists the tasks that have no start date; off shows only those dated today or earlier.':
+    'Oggi elenca anche le attività senza data di inizio; disattivo, mostra solo quelle datate oggi o prima.',
+  'The Add task shortcut works even while another app is in front.':
+    'La scorciatoia di Aggiungi attività funziona anche mentre un’altra app è in primo piano.',
+  'Shows terminals and the other tools for writing code.':
+    'Mostra i terminali e gli altri strumenti per scrivere codice.',
+  'Hides the tips Orden shows while you get to know it.':
+    'Nasconde i suggerimenti che Orden mostra mentre impari a conoscerlo.',
+  'The language Orden’s menus and settings are in.':
+    'La lingua dei menu e delle impostazioni di Orden.',
+  'Offers this type when you make something new; off only takes it out of that list.':
+    'Propone questo tipo quando crei qualcosa di nuovo; disattivo, lo toglie solo da quell’elenco.',
+  'Shows a mark such as ** or # while the cursor is in it; off keeps every mark out of sight.':
+    'Mostra un segno come ** o # mentre il cursore è al suo interno; disattivo, tiene nascosto ogni segno.',
+  'Notes open as plain markdown text rather than formatted.':
+    'Le note si aprono come testo Markdown semplice invece che formattate.',
+  'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
+    'Scrive le note da destra a sinistra, per l’arabo, l’ebraico e altre scritture simili.',
+  'Underlines misspelled words as you write.': 'Sottolinea le parole scritte male mentre scrivi.',
+  'The dictionary spelling is checked against; Match the system uses your system’s language.':
+    'Il dizionario usato per il controllo ortografico; “Come il sistema” usa la lingua del tuo sistema.',
+  'The version of Orden that is running; press to copy it.':
+    'La versione di Orden in esecuzione; premi per copiarla.',
+  'One of this theme’s own settings, offered by its author.':
+    'Un’impostazione propria di questo tema, offerta dal suo autore.',
+  'How much of what is behind the window shows under notes and terminals; the words always stay readable.':
+    'Quanto di ciò che sta dietro la finestra si vede sotto note e terminali; il testo resta sempre leggibile.',
+  'The colour laid over the picture.': 'Il colore steso sopra l’immagine.',
+  'How much the picture is blurred.': 'Quanto è sfocata l’immagine.',
+  'How much the picture is darkened.': 'Quanto è scurita l’immagine.',
+  'How vivid the colours of the picture are.': 'Quanto sono vivaci i colori dell’immagine.',
+  'How strongly the tint colour lies over the picture.':
+    'Quanto è forte la tinta stesa sopra l’immagine.',
+  'Adds a film grain over the picture.': 'Aggiunge una grana da pellicola sopra l’immagine.',
+  'How the picture fills the window.': 'Come l’immagine riempie la finestra.',
+  'An empty pane shows the picture rather than paper.':
+    'Un riquadro vuoto mostra l’immagine invece della carta.',
+  'The name the others see on what you share and in chats.':
+    'Il nome che gli altri vedono su ciò che condividi e nelle chat.',
+  'How far back Go back takes this space; it says first what would change.':
+    'Fino a dove Torna indietro riporta questo spazio; prima dice cosa cambierebbe.',
+  'The picture the others see beside your name.':
+    'L’immagine che gli altri vedono accanto al tuo nome.',
+  'Shown to the others beside your name, such as she/her.':
+    'Mostrati agli altri accanto al tuo nome, come lei/la.',
+  'A few words about you that the others see on your profile.':
+    'Qualche parola su di te che gli altri vedono sul tuo profilo.',
+  'What you are up to, shown to the others beside your name until it clears.':
+    'Quello che stai facendo, mostrato agli altri accanto al tuo nome finché non viene tolto.',
 }

@@ -2379,4 +2379,192 @@ export const ko: Dictionary = {
   Large: '크게',
   Both: '둘 다',
   'Shown on cards': '카드에 표시',
+  // What each setting does, behind the ? beside it (#768)
+  'Syncs this browser’s AI keys with your other devices through the vault.':
+    '이 브라우저의 AI 키를 보관함을 통해 다른 기기와 동기화합니다.',
+  'Which of your AI accounts this feature asks.': '이 기능이 질문을 보내는 AI 계정입니다.',
+  'Whether a task done with AI asks before each change or makes them on its own.':
+    'AI로 하는 작업이 변경마다 먼저 묻는지, 스스로 바꾸는지 정합니다.',
+  'Makes Orden the browser that links from other programs open in.':
+    '다른 프로그램의 링크가 Orden에서 열리게 합니다.',
+  'Where words typed into a web tab’s address bar are searched.':
+    '웹 탭의 주소창에 입력한 단어를 검색하는 곳입니다.',
+  'The search address, with %s where the words go.':
+    '검색 주소이며, 단어가 들어갈 자리에 %s를 넣습니다.',
+  'Words the spelling check never marks as wrong.':
+    '철자 검사가 틀렸다고 표시하지 않는 단어입니다.',
+  'Which app’s keys Orden follows; any key below can still be changed.':
+    'Orden이 따르는 앱의 키 배치이며, 아래의 키는 언제든 바꿀 수 있습니다.',
+  'Moves and edits in notes with Vim’s keys.': 'Vim의 키로 노트에서 이동하고 편집합니다.',
+  'What pulling a note down past its top does on a phone.':
+    '휴대폰에서 노트를 맨 위보다 더 아래로 당겼을 때의 동작입니다.',
+  'The OpenAI key the glasses ask their questions with.':
+    '글래스가 질문할 때 쓰는 OpenAI 키입니다.',
+  'The model that answers what you ask on the glasses.': '글래스에서 묻는 것에 답하는 모델입니다.',
+  'How long the model thinks before it answers; longer is slower.':
+    '모델이 답하기 전에 생각하는 시간이며, 길수록 느립니다.',
+  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
+    '파일 탐색기에서 마우스 오른쪽 버튼을 누르면 나오는 ‘새로 만들기’ 메뉴에 Markdown 문서를 추가합니다.',
+  'What happens when one note was changed on two devices before they synced.':
+    '동기화 전에 한 노트가 두 기기에서 바뀌었을 때 어떻게 할지 정합니다.',
+  'How far back the account keeps earlier versions of your notes.':
+    '계정이 노트의 이전 버전을 보관하는 기간입니다.',
+  'The colour of buttons, links and the selection.': '버튼, 링크, 선택 영역의 색입니다.',
+  'Adds Orden to the AI agent programs on this computer, so they reach your notes with nothing to set up.':
+    '이 컴퓨터의 AI 에이전트 프로그램에 Orden을 추가해 따로 설정하지 않아도 노트에 접근하게 합니다.',
+  'Words that notify you whenever someone writes them in a chat, separated by commas.':
+    '누군가 채팅에 쓰면 알림을 받는 단어이며, 쉼표로 구분합니다.',
+  'When chats may notify you; outside these hours they stay quiet.':
+    '채팅 알림을 받을 수 있는 시간이며, 그 밖의 시간에는 조용합니다.',
+  'When the hours chats may notify you begin.':
+    '채팅 알림을 받을 수 있는 시간이 시작되는 때입니다.',
+  'When the hours chats may notify you end.': '채팅 알림을 받을 수 있는 시간이 끝나는 때입니다.',
+  'Notifications show the message itself; off shows only who wrote.':
+    '알림에 메시지 내용을 보여 주며, 끄면 보낸 사람만 보여 줍니다.',
+  'Notifications make a sound.': '알림에 소리를 냅니다.',
+  'Which headings start a new page on the glasses.': '글래스에서 새 페이지를 시작하는 제목입니다.',
+  'Shows line numbers on the glasses.': '글래스에 줄 번호를 표시합니다.',
+  'How many blank lines the glasses keep between blocks.':
+    '글래스에서 블록 사이에 두는 빈 줄 수입니다.',
+  'Shows this markdown mark on the glasses rather than hiding it.':
+    '이 마크다운 기호를 숨기지 않고 글래스에 표시합니다.',
+  'Lets you run commands on the glasses by speaking.': '말로 글래스의 명령을 실행합니다.',
+  'What you say to run this command; left empty, the phrase shown is used.':
+    '이 명령을 실행하려고 하는 말이며, 비우면 표시된 문구를 씁니다.',
+  'What Windows draws behind the window: Mica, Acrylic, or no blur.':
+    'Windows가 창 뒤에 그리는 효과로, Mica, Acrylic, 흐림 없음 중에서 고릅니다.',
+  'How much of the window’s own colour lies over what is behind it.':
+    '창 자체의 색이 뒤에 있는 것 위에 얼마나 덮이는지입니다.',
+  'The frame takes its colour from what is open.': '프레임이 열려 있는 것의 색을 따릅니다.',
+  'How strongly the frame is coloured.': '프레임에 색이 얼마나 진하게 입혀지는지입니다.',
+  'The colours the frame takes where nothing open has a colour of its own.':
+    '열려 있는 것에 고유한 색이 없을 때 프레임이 띠는 색입니다.',
+  'A web tab takes the colour of its page.': '웹 탭이 그 페이지의 색을 따릅니다.',
+  'When your status is taken away again.': '상태가 다시 해제되는 때입니다.',
+  'Silences chat notifications and shows the others you are busy.':
+    '채팅 알림을 끄고 다른 사람에게 바쁘다고 보여 줍니다.',
+  'The colour the others see beside your name.': '다른 사람에게 이름 옆에 보이는 색입니다.',
+  'The others see you as offline even while you are here.':
+    '여기 있는 동안에도 다른 사람에게 오프라인으로 보입니다.',
+  'The picture behind the window, one for light and one for dark; drag it to move its centre.':
+    '창 뒤의 그림으로, 밝은 모드용과 어두운 모드용이 있고 끌어서 중심을 옮길 수 있습니다.',
+  'The theme Orden is drawn in.': 'Orden을 그리는 테마입니다.',
+  'Light, dark, or whichever the system is in.': '밝게, 어둡게, 또는 시스템을 따릅니다.',
+  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
+    '파일 목록 맨 위의 북마크를 타일로 보일지 목록으로 보일지 정합니다.',
+  'Shows a pointing hand over buttons, as web pages do.':
+    '웹 페이지처럼 버튼 위에서 손가락 포인터를 보여 줍니다.',
+  'Orden’s own title bar, or the window frame of your system.':
+    'Orden 자체의 제목 표시줄이나 시스템의 창 프레임 중에서 고릅니다.',
+  'How large the text of notes is.': '노트 글자의 크기입니다.',
+  'The space between the lines of a note.': '노트의 줄과 줄 사이 간격입니다.',
+  'How wide a line of a note grows before it wraps.':
+    '노트의 한 줄이 줄바꿈되기 전까지의 너비입니다.',
+  'Typing an opening bracket or quote adds the closing one too.':
+    '여는 괄호나 따옴표를 입력하면 닫는 것도 함께 넣습니다.',
+  'Keeps the line you are writing in the middle of the screen.':
+    '쓰고 있는 줄을 화면 가운데에 둡니다.',
+  'Dims everything but the paragraph you are writing in.':
+    '쓰고 있는 문단 말고는 모두 흐리게 합니다.',
+  'Joins pairs such as -> or != into one sign, in code only or everywhere.':
+    '-> 나 != 같은 쌍을 하나의 기호로 합치며, 코드에서만 또는 어디서나 적용합니다.',
+  'Where a picture or file you paste or drop into a note is saved.':
+    '노트에 붙여 넣거나 끌어다 놓은 그림이나 파일이 저장되는 곳입니다.',
+  'Turning two fingers on a touchpad or screen rotates the canvas.':
+    '터치패드나 화면에서 두 손가락을 돌리면 캔버스가 회전합니다.',
+  'A rotation that ends near a right angle settles on it.':
+    '직각 가까이에서 끝난 회전은 직각에 맞춰집니다.',
+  'The paper size a new page note starts with.': '새 페이지 노트가 시작하는 용지 크기입니다.',
+  'How the name of a new unique note is made from the date and time.':
+    '새 고유 노트의 이름을 날짜와 시간으로 만드는 방식입니다.',
+  'The colours code in a note is highlighted in.': '노트 속 코드를 강조하는 색입니다.',
+  'Numbers the lines of code blocks.': '코드 블록의 줄에 번호를 붙입니다.',
+  'The paper size of a PDF or a print.': 'PDF나 인쇄물의 용지 크기입니다.',
+  'Whether pages are upright or on their side.': '페이지를 세로로 둘지 가로로 둘지 정합니다.',
+  'The space around the edge of each page, such as 20mm or 1in.':
+    '각 페이지 가장자리의 여백이며, 20mm나 1in처럼 씁니다.',
+  'Text at the top of every page; ${title}, ${date} and ${year} are filled in.':
+    '모든 페이지 위쪽의 글이며, ${title}, ${date}, ${year}는 자동으로 채워집니다.',
+  'Text at the bottom of every page; ${title}, ${date} and ${year} are filled in.':
+    '모든 페이지 아래쪽의 글이며, ${title}, ${date}, ${year}는 자동으로 채워집니다.',
+  'Whether an export is light, dark, or as the app is now.':
+    '내보낸 파일을 밝게, 어둡게, 또는 지금 앱과 같게 할지 정합니다.',
+  'Whether this key goes to Orden or to the program in the terminal, or asks each time.':
+    '이 키를 Orden에 보낼지, 터미널의 프로그램에 보낼지, 매번 물을지 정합니다.',
+  'The shell a new terminal starts.': '새 터미널이 시작하는 셸입니다.',
+  'How large the text in terminals is.': '터미널 글자의 크기입니다.',
+  'Brings back what each terminal showed after Orden restarts; off forgets it on quit.':
+    'Orden을 다시 시작한 뒤 각 터미널의 내용을 되살리며, 끄면 종료할 때 지웁니다.',
+  'Asks before Orden quits with terminals open: always, or only while something runs in one.':
+    '터미널이 열린 채 Orden을 끌 때 항상, 또는 무언가 실행 중일 때만 묻습니다.',
+  'Draws the app on the graphics card; turn it off if the window flickers or stays blank.':
+    '그래픽 카드로 앱을 그리며, 창이 깜박이거나 비어 있으면 끄세요.',
+  'How long before a task’s time it reminds you, unless the task says otherwise.':
+    '할 일에 따로 정하지 않았다면 그 시각보다 얼마나 먼저 알릴지 정합니다.',
+  'Keeps Orden running in the tray after its window closes, so reminders still ring.':
+    '창을 닫아도 Orden이 트레이에서 계속 실행되어 알림이 울립니다.',
+  'Lets reminders ring at the exact minute rather than when the phone gets round to it.':
+    '휴대폰이 나중에 처리하지 않고 정확한 분에 알림이 울리게 합니다.',
+  'How often a note you are editing is saved as a version you can go back to in History.':
+    '편집 중인 노트를 ‘버전 기록’에서 되돌릴 수 있는 버전으로 저장하는 간격입니다.',
+  'How long those versions are kept before they are deleted.':
+    '그 버전을 삭제하기 전까지 보관하는 기간입니다.',
+  'Ctrl+Tab goes to the tab used last, as in VS Code; off goes through the tabs in the order they sit.':
+    'VS Code처럼 Ctrl+Tab으로 마지막에 쓴 탭으로 가며, 끄면 놓인 순서대로 탭을 넘깁니다.',
+  'Two fingers sideways on the touchpad go back and forward.':
+    '터치패드에서 두 손가락을 옆으로 밀면 뒤로 가거나 앞으로 갑니다.',
+  'What the web pages of another space do while it is out of sight: keep running, pause, or ask the first time.':
+    '다른 공간이 보이지 않는 동안 그 웹 페이지가 계속 실행할지, 일시정지할지, 처음에 물을지 정합니다.',
+  'Unloads web pages that have been out of sight for a while to free memory; they load again when you return.':
+    '한동안 보이지 않은 웹 페이지를 내려 메모리를 비우며, 돌아오면 다시 불러옵니다.',
+  'Reads dates, times and fields out of what you type into Add task, such as “tomorrow 9am”.':
+    '‘할 일 추가’에 입력한 내용에서 “tomorrow 9am” 같은 날짜, 시간, 항목을 읽어 냅니다.',
+  'The folder of this space whose folders the Tasks panel lists as projects.':
+    '‘할 일’ 패널이 그 안의 폴더를 프로젝트로 보여 주는 이 공간의 폴더입니다.',
+  'Today also lists the tasks that have no start date; off shows only those dated today or earlier.':
+    '‘오늘’에 시작일이 없는 할 일도 보여 주며, 끄면 오늘 이전 날짜의 것만 보여 줍니다.',
+  'The Add task shortcut works even while another app is in front.':
+    '다른 앱이 앞에 있어도 ‘할 일 추가’ 단축키가 작동합니다.',
+  'Shows terminals and the other tools for writing code.':
+    '터미널과 코드를 쓰기 위한 다른 도구를 보여 줍니다.',
+  'Hides the tips Orden shows while you get to know it.':
+    'Orden에 익숙해지는 동안 보여 주는 팁을 숨깁니다.',
+  'The language Orden’s menus and settings are in.': 'Orden의 메뉴와 설정에 쓰이는 언어입니다.',
+  'Offers this type when you make something new; off only takes it out of that list.':
+    '새로 만들 때 이 종류를 제안하며, 끄면 그 목록에서만 빠집니다.',
+  'Shows a mark such as ** or # while the cursor is in it; off keeps every mark out of sight.':
+    '커서가 있는 동안 ** 나 # 같은 기호를 보여 주며, 끄면 모든 기호를 숨깁니다.',
+  'Notes open as plain markdown text rather than formatted.':
+    '노트를 서식 없이 마크다운 텍스트 그대로 엽니다.',
+  'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
+    '아랍어, 히브리어 같은 문자를 위해 노트를 오른쪽에서 왼쪽으로 씁니다.',
+  'Underlines misspelled words as you write.': '쓰는 동안 철자가 틀린 단어에 밑줄을 긋습니다.',
+  'The dictionary spelling is checked against; Match the system uses your system’s language.':
+    '철자를 검사하는 사전이며, ‘시스템에 맞춤’은 시스템의 언어를 씁니다.',
+  'The version of Orden that is running; press to copy it.':
+    '실행 중인 Orden의 버전이며, 누르면 복사합니다.',
+  'One of this theme’s own settings, offered by its author.':
+    '이 테마의 작성자가 제공하는 테마 고유의 설정입니다.',
+  'How much of what is behind the window shows under notes and terminals; the words always stay readable.':
+    '노트와 터미널 아래로 창 뒤가 얼마나 비치는지이며, 글자는 항상 읽기 쉽게 유지됩니다.',
+  'The colour laid over the picture.': '그림 위에 덮는 색입니다.',
+  'How much the picture is blurred.': '그림을 흐리게 하는 정도입니다.',
+  'How much the picture is darkened.': '그림을 어둡게 하는 정도입니다.',
+  'How vivid the colours of the picture are.': '그림의 색이 얼마나 선명한지입니다.',
+  'How strongly the tint colour lies over the picture.':
+    '색조 색상이 그림 위에 얼마나 진하게 덮이는지입니다.',
+  'Adds a film grain over the picture.': '그림 위에 필름 입자를 더합니다.',
+  'How the picture fills the window.': '그림이 창을 채우는 방식입니다.',
+  'An empty pane shows the picture rather than paper.': '빈 패널에 종이 대신 그림을 보여 줍니다.',
+  'The name the others see on what you share and in chats.':
+    '공유한 항목과 채팅에서 다른 사람에게 보이는 이름입니다.',
+  'How far back Go back takes this space; it says first what would change.':
+    '‘되돌리기’가 이 공간을 얼마나 이전으로 되돌리는지입니다. 무엇이 바뀌는지 먼저 알려 줍니다.',
+  'The picture the others see beside your name.': '다른 사람에게 이름 옆에 보이는 그림입니다.',
+  'Shown to the others beside your name, such as she/her.':
+    '그녀/그녀의처럼 다른 사람에게 이름 옆에 보입니다.',
+  'A few words about you that the others see on your profile.':
+    '다른 사람이 프로필에서 보는 나에 대한 몇 마디입니다.',
+  'What you are up to, shown to the others beside your name until it clears.':
+    '지금 하고 있는 일로, 해제될 때까지 다른 사람에게 이름 옆에 보입니다.',
 }

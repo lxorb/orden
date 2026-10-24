@@ -2417,4 +2417,193 @@ export const ps: Dictionary = {
   Large: 'لوی',
   Both: 'دواړه',
   'Shown on cards': 'په کارتونو ښودل شوي',
+  // What each setting does, behind the ? beside it (#768)
+  'Syncs this browser’s AI keys with your other devices through the vault.':
+    'د دې براوزر د AI کلیدونه د خزانې له لارې ستاسو له نورو وسیلو سره همغږي کوي.',
+  'Which of your AI accounts this feature asks.': 'دا ځانګړنه ستاسو له کوم AI حساب څخه پوښتنه کوي.',
+  'Whether a task done with AI asks before each change or makes them on its own.':
+    'ایا هغه دنده چې په AI سره کېږي له هر بدلون مخکې پوښتنه وکړي که بدلونونه پخپله وکړي.',
+  'Makes Orden the browser that links from other programs open in.':
+    'Orden هغه براوزر کوي چې د نورو پروګرامونو لینکونه پکې پرانیستل کېږي.',
+  'Where words typed into a web tab’s address bar are searched.':
+    'د ویب ټب د پتې په پټه کې لیکل شوي ټکي چېرته ولټول شي.',
+  'The search address, with %s where the words go.': 'د لټون پته، چې د ټکو پر ځای %s لري.',
+  'Words the spelling check never marks as wrong.': 'هغه ټکي چې د املا کتنه یې هېڅکله غلط نه ګڼي.',
+  'Which app’s keys Orden follows; any key below can still be changed.':
+    'Orden د کوم اپ کلیدونه تعقیبوي؛ لاندې هره کلید بیا هم بدلېدای شي.',
+  'Moves and edits in notes with Vim’s keys.': 'په یادښتونو کې د Vim په کلیدونو خوځښت او سمون کوي.',
+  'What pulling a note down past its top does on a phone.':
+    'په تلیفون کې د یادښت له سر څخه تېر ښکته کشول څه کوي.',
+  'The OpenAI key the glasses ask their questions with.':
+    'د OpenAI هغه کلید چې عينکې پرې خپلې پوښتنې کوي.',
+  'The model that answers what you ask on the glasses.':
+    'هغه ماډل چې په عينکو کې ستاسو پوښتنو ته ځواب ورکوي.',
+  'How long the model thinks before it answers; longer is slower.':
+    'ماډل له ځواب مخکې څومره فکر وکړي؛ اوږد فکر ورو دی.',
+  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
+    'د File Explorer هغه New مېنو ته چې په ښي کلیک خلاصېږي یو Markdown سند ورزیاتوي.',
+  'What happens when one note was changed on two devices before they synced.':
+    'کله چې یو یادښت له همغږۍ مخکې په دوو وسیلو بدل شوی وي څه کېږي.',
+  'How far back the account keeps earlier versions of your notes.':
+    'حساب ستاسو د یادښتونو پخوانۍ نسخې تر کومه وخته ساتي.',
+  'The colour of buttons, links and the selection.': 'د تڼیو، لینکونو او ټاکنې رنګ.',
+  'Adds Orden to the AI agent programs on this computer, so they reach your notes with nothing to set up.':
+    'Orden د دې کمپیوټر د AI اجنټ پروګرامونو ته ورزیاتوي، ترڅو له هېڅ تنظیم پرته ستاسو یادښتونو ته ورسېږي.',
+  'Words that notify you whenever someone writes them in a chat, separated by commas.':
+    'هغه ټکي چې کله څوک یې په چټ کې ولیکي تاسو ته خبر درکوي، په کامو جلا شوي.',
+  'When chats may notify you; outside these hours they stay quiet.':
+    'چټونه کله تاسو ته خبر درکولی شي؛ له دې ساعتونو بهر چوپ پاتې کېږي.',
+  'When the hours chats may notify you begin.':
+    'هغه ساعتونه چې چټونه پکې خبر درکولی شي کله پیلېږي.',
+  'When the hours chats may notify you end.':
+    'هغه ساعتونه چې چټونه پکې خبر درکولی شي کله پای ته رسېږي.',
+  'Notifications show the message itself; off shows only who wrote.':
+    'خبرتیاوې پخپله پیغام ښيي؛ بند وي نو یوازې دا ښيي چې چا لیکلي.',
+  'Notifications make a sound.': 'خبرتیاوې غږ کوي.',
+  'Which headings start a new page on the glasses.': 'په عينکو کې کوم سرلیکونه نوې پاڼه پیلوي.',
+  'Shows line numbers on the glasses.': 'په عينکو کې د کرښو شمېرې ښيي.',
+  'How many blank lines the glasses keep between blocks.':
+    'عينکې د بلاکونو ترمنځ څو تشې کرښې ساتي.',
+  'Shows this markdown mark on the glasses rather than hiding it.':
+    'دا Markdown نښه په عينکو کې ښيي، نه یې پټوي.',
+  'Lets you run commands on the glasses by speaking.':
+    'اجازه درکوي چې په عينکو کې په خبرو امرونه وچلوئ.',
+  'What you say to run this command; left empty, the phrase shown is used.':
+    'د دې امر د چلولو لپاره څه وایئ؛ که تش پاتې شي، ښودل شوې جمله کارېږي.',
+  'What Windows draws behind the window: Mica, Acrylic, or no blur.':
+    'Windows د کړکۍ شاته څه انځوروي: Mica، Acrylic یا هېڅ تتوالی.',
+  'How much of the window’s own colour lies over what is behind it.':
+    'د کړکۍ خپل رنګ د هغه څه پر سر چې شاته یې دي څومره پروت دی.',
+  'The frame takes its colour from what is open.': 'چوکاټ خپل رنګ له پرانیستي شي اخلي.',
+  'How strongly the frame is coloured.': 'چوکاټ څومره تېز رنګ شي.',
+  'The colours the frame takes where nothing open has a colour of its own.':
+    'هغه رنګونه چې چوکاټ یې اخلي کله چې پرانیستی شی خپل رنګ ونه لري.',
+  'A web tab takes the colour of its page.': 'ویب ټب د خپلې پاڼې رنګ اخلي.',
+  'When your status is taken away again.': 'ستاسو حالت کله بېرته لرې کېږي.',
+  'Silences chat notifications and shows the others you are busy.':
+    'د چټ خبرتیاوې چوپوي او نورو ته ښيي چې تاسو بوخت یاست.',
+  'The colour the others see beside your name.': 'هغه رنګ چې نور یې ستاسو د نوم تر څنګ ویني.',
+  'The others see you as offline even while you are here.':
+    'نور تاسو آفلاین ویني، حتی کله چې تاسو دلته یاست.',
+  'The picture behind the window, one for light and one for dark; drag it to move its centre.':
+    'د کړکۍ شاته انځور، یو د رڼا او یو د تیارې لپاره؛ د مرکز د خوځولو لپاره یې کش کړئ.',
+  'The theme Orden is drawn in.': 'هغه بڼه چې Orden پکې انځورېږي.',
+  'Light, dark, or whichever the system is in.': 'رڼا، تیاره، یا هغه چې غونډال پکې وي.',
+  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
+    'ایا د فایلونو د لړ په سر کې اړین د ټایلونو په بڼه ښکاره شي که د لړ په بڼه.',
+  'Shows a pointing hand over buttons, as web pages do.': 'لکه ویب پاڼې، پر تڼیو د اشارې لاس ښيي.',
+  'Orden’s own title bar, or the window frame of your system.':
+    'د Orden خپله سرلیک پټه، یا ستاسو د غونډال د کړکۍ چوکاټ.',
+  'How large the text of notes is.': 'د یادښتونو متن څومره لوی وي.',
+  'The space between the lines of a note.': 'د یادښت د کرښو ترمنځ واټن.',
+  'How wide a line of a note grows before it wraps.':
+    'د یادښت یوه کرښه له ماتېدو مخکې څومره پلنه کېږي.',
+  'Typing an opening bracket or quote adds the closing one too.':
+    'د خلاصولو قوس یا نقل نښه لیکل د تړلو نښه هم ورزیاتوي.',
+  'Keeps the line you are writing in the middle of the screen.':
+    'هغه کرښه چې پکې لیکئ د پردې په منځ کې ساتي.',
+  'Dims everything but the paragraph you are writing in.':
+    'له هغه پاراګراف پرته چې پکې لیکئ نور ټول تیاره کوي.',
+  'Joins pairs such as -> or != into one sign, in code only or everywhere.':
+    'جوړې لکه -> یا != په یوه نښه کې یو ځای کوي، یوازې په کوډ کې یا هر ځای.',
+  'Where a picture or file you paste or drop into a note is saved.':
+    'هغه انځور یا فایل چې په یادښت کې یې پېسټ یا غورځوئ چېرته خوندي شي.',
+  'Turning two fingers on a touchpad or screen rotates the canvas.':
+    'په ټچ پیډ یا پرده دوه ګوتې تاوول تخته تاووي.',
+  'A rotation that ends near a right angle settles on it.':
+    'هغه تاوېدل چې قایمې زاویې ته نږدې پای ته ورسېږي پر هغې دریږي.',
+  'The paper size a new page note starts with.': 'د کاغذ هغه کچه چې نوی د مخونو یادښت پرې پیلېږي.',
+  'How the name of a new unique note is made from the date and time.':
+    'د نوي بېساري يادښت نوم له نېټې او وخت څخه څنګه جوړېږي.',
+  'The colours code in a note is highlighted in.': 'هغه رنګونه چې په یادښت کې کوډ پرې روښانه کېږي.',
+  'Numbers the lines of code blocks.': 'د کوډ بلاکونو کرښې شمېروي.',
+  'The paper size of a PDF or a print.': 'د PDF یا چاپ د کاغذ کچه.',
+  'Whether pages are upright or on their side.': 'ایا پاڼې ولاړې وي که پرتې.',
+  'The space around the edge of each page, such as 20mm or 1in.':
+    'د هرې پاڼې د څنډې شاوخوا واټن، لکه 20mm یا 1in.',
+  'Text at the top of every page; ${title}, ${date} and ${year} are filled in.':
+    'د هرې پاڼې په سر کې متن؛ ${title}، ${date} او ${year} ډکېږي.',
+  'Text at the bottom of every page; ${title}, ${date} and ${year} are filled in.':
+    'د هرې پاڼې په پای کې متن؛ ${title}، ${date} او ${year} ډکېږي.',
+  'Whether an export is light, dark, or as the app is now.':
+    'ایا صادرول رڼا وي، تیاره، یا لکه اوس چې اپ دی.',
+  'Whether this key goes to Orden or to the program in the terminal, or asks each time.':
+    'ایا دا کلید Orden ته ځي یا په ټرمینل کې پروګرام ته، یا هر ځل پوښتنه کوي.',
+  'The shell a new terminal starts.': 'هغه شیل چې نوی ټرمینل یې پیلوي.',
+  'How large the text in terminals is.': 'په ټرمینلونو کې متن څومره لوی وي.',
+  'Brings back what each terminal showed after Orden restarts; off forgets it on quit.':
+    'د Orden له بیا پیلېدو وروسته هغه څه راګرځوي چې هر ټرمینل ښودل؛ بند وي نو د وتلو پر مهال یې هېروي.',
+  'Asks before Orden quits with terminals open: always, or only while something runs in one.':
+    'مخکې له دې چې Orden د پرانیستو ټرمینلونو سره وتړل شي پوښتنه کوي: تل، یا یوازې کله چې په یوه کې څه روان وي.',
+  'Draws the app on the graphics card; turn it off if the window flickers or stays blank.':
+    'اپ د ګرافیک کارت پر مټ انځوروي؛ که کړکۍ ځلېږي یا تشه پاتې کېږي، بند یې کړئ.',
+  'How long before a task’s time it reminds you, unless the task says otherwise.':
+    'د دندې له وخت څومره مخکې یادونه کوي، مګر دا چې دنده پخپله بل څه ووایي.',
+  'Keeps Orden running in the tray after its window closes, so reminders still ring.':
+    'د کړکۍ له تړلو وروسته Orden په ټرې کې چلوي، ترڅو یادونې لا هم وږغېږي.',
+  'Lets reminders ring at the exact minute rather than when the phone gets round to it.':
+    'یادونو ته اجازه ورکوي چې په سمه دقیقه وږغېږي، نه کله چې تلیفون ورته وزګار شي.',
+  'How often a note you are editing is saved as a version you can go back to in History.':
+    'هغه یادښت چې سمون یې کوئ څو ځله د داسې نسخې په توګه خوندي شي چې په تاریخچه کې ورته بېرته ورشئ.',
+  'How long those versions are kept before they are deleted.':
+    'دا نسخې له ړنګېدو مخکې تر کومه وخته ساتل کېږي.',
+  'Ctrl+Tab goes to the tab used last, as in VS Code; off goes through the tabs in the order they sit.':
+    'Ctrl+Tab وروستي کارول شوي ټب ته ځي، لکه په VS Code کې؛ بند وي نو ټبونه د هغوی په ترتیب تېروي.',
+  'Two fingers sideways on the touchpad go back and forward.':
+    'په ټچ پیډ دوه ګوتې څنګ ته شا او مخ ته وړي.',
+  'What the web pages of another space do while it is out of sight: keep running, pause, or ask the first time.':
+    'د بل ځای ویب پاڼې کله چې نه ښکاري څه وکړي: روانې پاتې شي، ودرېږي، یا لومړی ځل پوښتنه وکړي.',
+  'Unloads web pages that have been out of sight for a while to free memory; they load again when you return.':
+    'هغه ویب پاڼې چې یو څه وخت نه دي لیدل شوې د حافظې د خلاصولو لپاره ایستل کېږي؛ کله چې بېرته راشئ بیا پورته کېږي.',
+  'Reads dates, times and fields out of what you type into Add task, such as “tomorrow 9am”.':
+    'له هغه څه چې په “دنده ورزيات کړئ” کې یې لیکئ نېټې، وختونه او برخې لولي، لکه “tomorrow 9am”.',
+  'The folder of this space whose folders the Tasks panel lists as projects.':
+    'د دې ځای هغه فولډر چې د “دندې” پینل یې فولډرونه د پروژو په توګه ښيي.',
+  'Today also lists the tasks that have no start date; off shows only those dated today or earlier.':
+    '“نن” هغه دندې هم ښيي چې د پیل نېټه نه لري؛ بند وي نو یوازې د نن یا تر هغې مخکې دندې ښيي.',
+  'The Add task shortcut works even while another app is in front.':
+    'د “دنده ورزيات کړئ” لنډلار هم هغه وخت کار کوي چې بل اپ مخې ته وي.',
+  'Shows terminals and the other tools for writing code.':
+    'ټرمینلونه او د کوډ لیکلو نورې وسیلې ښيي.',
+  'Hides the tips Orden shows while you get to know it.':
+    'هغه لارښوونې پټوي چې Orden یې ښيي تر څو تاسو ورسره بلد شئ.',
+  'The language Orden’s menus and settings are in.':
+    'هغه ژبه چې د Orden مېنوګانې او تنظیمات پکې دي.',
+  'Offers this type when you make something new; off only takes it out of that list.':
+    'کله چې یو نوی شی جوړوئ دا ډول وړاندې کوي؛ بندول یې یوازې له هغه لړ څخه وباسي.',
+  'Shows a mark such as ** or # while the cursor is in it; off keeps every mark out of sight.':
+    'کله چې کرسر د ** یا # په څېر نښه کې وي هغه ښيي؛ بند وي نو ټولې نښې پټې پاتې کېږي.',
+  'Notes open as plain markdown text rather than formatted.':
+    'یادښتونه د ساده Markdown متن په توګه پرانیستل کېږي، نه بڼه شوي.',
+  'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
+    'یادښتونه له ښي څخه کيڼ ته لیکي، د عربي، عبري او ورته لیکدودونو لپاره.',
+  'Underlines misspelled words as you write.':
+    'د لیکلو پر مهال د غلط لیکل شوو ټکو لاندې کرښه کاږي.',
+  'The dictionary spelling is checked against; Match the system uses your system’s language.':
+    'هغه قاموس چې املا ورسره کتل کېږي؛ “د غونډال سره” ستاسو د غونډال ژبه کاروي.',
+  'The version of Orden that is running; press to copy it.':
+    'د Orden روانه نسخه؛ د کاپي لپاره یې کېکاږئ.',
+  'One of this theme’s own settings, offered by its author.':
+    'د دې بڼې یو خپل تنظیم، چې لیکوال یې وړاندې کړی.',
+  'How much of what is behind the window shows under notes and terminals; the words always stay readable.':
+    'د یادښتونو او ټرمینلونو لاندې د کړکۍ شاته څومره ښکاري؛ ټکي تل د لوستلو وړ پاتې کېږي.',
+  'The colour laid over the picture.': 'هغه رنګ چې پر انځور پروت دی.',
+  'How much the picture is blurred.': 'انځور څومره تت شي.',
+  'How much the picture is darkened.': 'انځور څومره تیاره شي.',
+  'How vivid the colours of the picture are.': 'د انځور رنګونه څومره ځلانده وي.',
+  'How strongly the tint colour lies over the picture.': 'د رنګ ورکولو رنګ څومره پر انځور پروت دی.',
+  'Adds a film grain over the picture.': 'پر انځور د فلم دانې ورزیاتوي.',
+  'How the picture fills the window.': 'انځور کړکۍ څنګه ډکوي.',
+  'An empty pane shows the picture rather than paper.': 'تشه پینل د کاغذ پر ځای انځور ښيي.',
+  'The name the others see on what you share and in chats.':
+    'هغه نوم چې نور یې په هغه څه کې چې تاسو یې شريکوئ او په خبرو اترو کې ويني.',
+  'How far back Go back takes this space; it says first what would change.':
+    '“بېرته تګ” دا ځای څومره شاته وړي؛ لومړی وايي چې څه به بدل شي.',
+  'The picture the others see beside your name.': 'هغه انځور چې نور یې ستاسو د نوم تر څنګ ویني.',
+  'Shown to the others beside your name, such as she/her.':
+    'نورو ته ستاسو د نوم تر څنګ ښودل کېږي، لکه هغه/د هغې.',
+  'A few words about you that the others see on your profile.':
+    'ستاسو په اړه یو څو کلمې چې نور یې ستاسو په پېژندپاڼه کې ویني.',
+  'What you are up to, shown to the others beside your name until it clears.':
+    'هغه څه چې تاسو یې اوس کوئ، نورو ته ستاسو د نوم تر څنګ ښودل کېږي تر هغه چې لرې شي.',
 }

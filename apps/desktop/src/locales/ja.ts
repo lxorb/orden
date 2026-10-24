@@ -2397,4 +2397,186 @@ export const ja: Dictionary = {
   Large: '大',
   Both: '両方',
   'Shown on cards': 'カードに表示',
+  // What each setting does, behind the ? beside it (#768)
+  'Syncs this browser’s AI keys with your other devices through the vault.':
+    'このブラウザの AI キーを保管庫を通して他のデバイスと同期します。',
+  'Which of your AI accounts this feature asks.': 'この機能が問い合わせる AI アカウントです。',
+  'Whether a task done with AI asks before each change or makes them on its own.':
+    'AI に任せた作業が変更ごとに確認するか、自分で進めるかを決めます。',
+  'Makes Orden the browser that links from other programs open in.':
+    '他のプログラムのリンクを Orden で開くようにします。',
+  'Where words typed into a web tab’s address bar are searched.':
+    'ウェブタブのアドレスバーに入力した語を検索する場所です。',
+  'The search address, with %s where the words go.':
+    '検索のアドレスで、語が入る位置に %s を置きます。',
+  'Words the spelling check never marks as wrong.': 'スペルチェックが誤りとしない単語です。',
+  'Which app’s keys Orden follows; any key below can still be changed.':
+    'Orden が従うアプリのキー配置で、下のキーはどれも変更できます。',
+  'Moves and edits in notes with Vim’s keys.': 'Vim のキーでノートを移動・編集します。',
+  'What pulling a note down past its top does on a phone.':
+    'スマートフォンでノートを先頭より下に引いたときの動作です。',
+  'The OpenAI key the glasses ask their questions with.': 'グラスが質問に使う OpenAI キーです。',
+  'The model that answers what you ask on the glasses.': 'グラスでの質問に答えるモデルです。',
+  'How long the model thinks before it answers; longer is slower.':
+    'モデルが答える前に考える長さで、長いほど遅くなります。',
+  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
+    'エクスプローラーで右クリックしたときの「新規作成」メニューに Markdown ドキュメントを加えます。',
+  'What happens when one note was changed on two devices before they synced.':
+    '同期前に一つのノートが二つのデバイスで変更されたときの扱いです。',
+  'How far back the account keeps earlier versions of your notes.':
+    'アカウントがノートの以前のバージョンを保持する期間です。',
+  'The colour of buttons, links and the selection.': 'ボタン、リンク、選択範囲の色です。',
+  'Adds Orden to the AI agent programs on this computer, so they reach your notes with nothing to set up.':
+    'このコンピューターの AI エージェントに Orden を加え、設定なしでノートを使えるようにします。',
+  'Words that notify you whenever someone writes them in a chat, separated by commas.':
+    'チャットで誰かが書くと通知される語を、カンマで区切って指定します。',
+  'When chats may notify you; outside these hours they stay quiet.':
+    'チャットが通知してよい時間帯で、それ以外は静かにします。',
+  'When the hours chats may notify you begin.': 'チャットが通知してよい時間帯の始まりです。',
+  'When the hours chats may notify you end.': 'チャットが通知してよい時間帯の終わりです。',
+  'Notifications show the message itself; off shows only who wrote.':
+    '通知にメッセージ本文を表示し、オフでは送信者だけを表示します。',
+  'Notifications make a sound.': '通知で音を鳴らします。',
+  'Which headings start a new page on the glasses.': 'グラスで改ページする見出しです。',
+  'Shows line numbers on the glasses.': 'グラスに行番号を表示します。',
+  'How many blank lines the glasses keep between blocks.':
+    'グラスでブロック間に入れる空行の数です。',
+  'Shows this markdown mark on the glasses rather than hiding it.':
+    'この Markdown 記号を隠さずグラスに表示します。',
+  'Lets you run commands on the glasses by speaking.': '話してグラスのコマンドを実行します。',
+  'What you say to run this command; left empty, the phrase shown is used.':
+    'このコマンドを実行する言葉で、空なら表示中の言葉を使います。',
+  'What Windows draws behind the window: Mica, Acrylic, or no blur.':
+    'Windows がウィンドウの背後に描くもので、Mica、Acrylic、ぼかしなしから選びます。',
+  'How much of the window’s own colour lies over what is behind it.':
+    '背後のものにウィンドウ自身の色をどれだけ重ねるかです。',
+  'The frame takes its colour from what is open.': '枠が開いているものの色になります。',
+  'How strongly the frame is coloured.': '枠の色の濃さです。',
+  'The colours the frame takes where nothing open has a colour of its own.':
+    '開いているものに色がないときの枠の色です。',
+  'A web tab takes the colour of its page.': 'ウェブタブがそのページの色になります。',
+  'When your status is taken away again.': '状態が再び外れるまでの時間です。',
+  'Silences chat notifications and shows the others you are busy.':
+    'チャットの通知を止め、取り込み中であることを他の人に示します。',
+  'The colour the others see beside your name.': 'あなたの名前の横に他の人から見える色です。',
+  'The others see you as offline even while you are here.':
+    'ここにいてもオフラインとして他の人に表示されます。',
+  'The picture behind the window, one for light and one for dark; drag it to move its centre.':
+    'ウィンドウの背後の画像で、ライト用とダーク用があり、ドラッグで中心を動かせます。',
+  'The theme Orden is drawn in.': 'Orden を描くテーマです。',
+  'Light, dark, or whichever the system is in.': 'ライト、ダーク、またはシステムに合わせます。',
+  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
+    'ファイル一覧の上のブックマークをタイルで表示するか、リストで表示するかです。',
+  'Shows a pointing hand over buttons, as web pages do.':
+    'ウェブページのように、ボタンの上で指差しカーソルを表示します。',
+  'Orden’s own title bar, or the window frame of your system.':
+    'Orden 独自のタイトルバーか、システムのウィンドウ枠かを選びます。',
+  'How large the text of notes is.': 'ノートの文字の大きさです。',
+  'The space between the lines of a note.': 'ノートの行と行の間隔です。',
+  'How wide a line of a note grows before it wraps.': 'ノートの一行が折り返すまでの幅です。',
+  'Typing an opening bracket or quote adds the closing one too.':
+    '開き括弧や引用符を入力すると閉じる側も入ります。',
+  'Keeps the line you are writing in the middle of the screen.':
+    '書いている行を画面の中央に保ちます。',
+  'Dims everything but the paragraph you are writing in.': '書いている段落以外を暗くします。',
+  'Joins pairs such as -> or != into one sign, in code only or everywhere.':
+    '-> や == などの組を一つの記号にし、コードのみか全体かを選べます。',
+  'Where a picture or file you paste or drop into a note is saved.':
+    'ノートに貼り付けたりドロップしたりした画像やファイルの保存先です。',
+  'Turning two fingers on a touchpad or screen rotates the canvas.':
+    'タッチパッドや画面で二本指を回すとキャンバスが回転します。',
+  'A rotation that ends near a right angle settles on it.':
+    '直角の近くで終わった回転は直角に揃います。',
+  'The paper size a new page note starts with.': '新しいページノートの用紙サイズです。',
+  'How the name of a new unique note is made from the date and time.':
+    '新しい一意ノートの名前を日付と時刻から作る方法です。',
+  'The colours code in a note is highlighted in.': 'ノート内のコードを色分けする色です。',
+  'Numbers the lines of code blocks.': 'コードブロックに行番号を付けます。',
+  'The paper size of a PDF or a print.': 'PDF や印刷の用紙サイズです。',
+  'Whether pages are upright or on their side.': 'ページを縦向きにするか横向きにするかです。',
+  'The space around the edge of each page, such as 20mm or 1in.':
+    '各ページの端の余白で、20mm や 1in のように指定します。',
+  'Text at the top of every page; ${title}, ${date} and ${year} are filled in.':
+    '各ページの上に入る文字で、${title}、${date}、${year} は自動で埋まります。',
+  'Text at the bottom of every page; ${title}, ${date} and ${year} are filled in.':
+    '各ページの下に入る文字で、${title}、${date}、${year} は自動で埋まります。',
+  'Whether an export is light, dark, or as the app is now.':
+    'エクスポートをライト、ダーク、今のアプリと同じのどれにするかです。',
+  'Whether this key goes to Orden or to the program in the terminal, or asks each time.':
+    'このキーを Orden に送るか、ターミナルのプログラムに送るか、毎回確認するかです。',
+  'The shell a new terminal starts.': '新しいターミナルで起動するシェルです。',
+  'How large the text in terminals is.': 'ターミナルの文字の大きさです。',
+  'Brings back what each terminal showed after Orden restarts; off forgets it on quit.':
+    'Orden の再起動後に各ターミナルの表示を戻し、オフでは終了時に消します。',
+  'Asks before Orden quits with terminals open: always, or only while something runs in one.':
+    'ターミナルを開いたまま終了するときに、常に、または何か実行中のときだけ確認します。',
+  'Draws the app on the graphics card; turn it off if the window flickers or stays blank.':
+    'グラフィックカードでアプリを描画し、ウィンドウがちらつくか空白のままならオフにします。',
+  'How long before a task’s time it reminds you, unless the task says otherwise.':
+    'タスクで別に指定がなければ、その時刻のどれだけ前に知らせるかです。',
+  'Keeps Orden running in the tray after its window closes, so reminders still ring.':
+    'ウィンドウを閉じても Orden をトレイで動かし続け、リマインダーを鳴らします。',
+  'Lets reminders ring at the exact minute rather than when the phone gets round to it.':
+    'スマートフォンの都合を待たず、リマインダーを正確な分に鳴らします。',
+  'How often a note you are editing is saved as a version you can go back to in History.':
+    '編集中のノートを「変更履歴」から戻せるバージョンとして保存する間隔です。',
+  'How long those versions are kept before they are deleted.':
+    'それらのバージョンを削除するまで保持する期間です。',
+  'Ctrl+Tab goes to the tab used last, as in VS Code; off goes through the tabs in the order they sit.':
+    'VS Code のように Ctrl+Tab で最後に使ったタブへ移り、オフでは並び順にタブを巡ります。',
+  'Two fingers sideways on the touchpad go back and forward.':
+    'タッチパッドで二本指を横に動かすと戻る・進むができます。',
+  'What the web pages of another space do while it is out of sight: keep running, pause, or ask the first time.':
+    '見えていないスペースのウェブページを、実行し続けるか、一時停止するか、初回に確認するかです。',
+  'Unloads web pages that have been out of sight for a while to free memory; they load again when you return.':
+    'しばらく見えていないウェブページを閉じてメモリを空け、戻ると再び読み込みます。',
+  'Reads dates, times and fields out of what you type into Add task, such as “tomorrow 9am”.':
+    '「タスクを追加」に入力した内容から「tomorrow 9am」のような日付、時刻、項目を読み取ります。',
+  'The folder of this space whose folders the Tasks panel lists as projects.':
+    'このスペースで、中のフォルダを「タスク」パネルがプロジェクトとして並べるフォルダです。',
+  'Today also lists the tasks that have no start date; off shows only those dated today or earlier.':
+    '「今日」に開始日のないタスクも並べ、オフでは今日以前の日付のものだけを表示します。',
+  'The Add task shortcut works even while another app is in front.':
+    '他のアプリが前面にあっても「タスクを追加」のショートカットが使えます。',
+  'Shows terminals and the other tools for writing code.':
+    'ターミナルなど、コードを書くための道具を表示します。',
+  'Hides the tips Orden shows while you get to know it.': 'Orden に慣れるまでのヒントを隠します。',
+  'The language Orden’s menus and settings are in.': 'Orden のメニューと設定の言語です。',
+  'Offers this type when you make something new; off only takes it out of that list.':
+    '新しく作るときにこの種類を選択肢に出し、オフではその一覧から外すだけです。',
+  'Shows a mark such as ** or # while the cursor is in it; off keeps every mark out of sight.':
+    'カーソルがある間は ** や # などの記号を表示し、オフでは記号をすべて隠します。',
+  'Notes open as plain markdown text rather than formatted.':
+    'ノートを整形せず、Markdown のテキストのまま開きます。',
+  'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
+    'アラビア語やヘブライ語などのために、ノートを右から左へ書きます。',
+  'Underlines misspelled words as you write.': '入力中にスペルの誤りに下線を引きます。',
+  'The dictionary spelling is checked against; Match the system uses your system’s language.':
+    'スペルチェックに使う辞書で、「システムに合わせる」ではシステムの言語を使います。',
+  'The version of Orden that is running; press to copy it.':
+    '実行中の Orden のバージョンで、押すとコピーします。',
+  'One of this theme’s own settings, offered by its author.':
+    'このテーマ独自の設定で、作者が用意したものです。',
+  'How much of what is behind the window shows under notes and terminals; the words always stay readable.':
+    'ノートやターミナルの下に背後がどれだけ透けるかで、文字は常に読みやすく保たれます。',
+  'The colour laid over the picture.': '画像に重ねる色です。',
+  'How much the picture is blurred.': '画像のぼかしの強さです。',
+  'How much the picture is darkened.': '画像を暗くする度合いです。',
+  'How vivid the colours of the picture are.': '画像の色の鮮やかさです。',
+  'How strongly the tint colour lies over the picture.': '色合いの色を画像に重ねる強さです。',
+  'Adds a film grain over the picture.': '画像にフィルムの粒子を加えます。',
+  'How the picture fills the window.': '画像をウィンドウにどう収めるかです。',
+  'An empty pane shows the picture rather than paper.':
+    '空のペインに用紙ではなく画像を表示します。',
+  'The name the others see on what you share and in chats.':
+    '共有したものやチャットで他の人に見える名前です。',
+  'How far back Go back takes this space; it says first what would change.':
+    '「巻き戻す」でこのスペースをどこまで戻すかです。変わる内容を先に示します。',
+  'The picture the others see beside your name.': 'あなたの名前の横に他の人から見える画像です。',
+  'Shown to the others beside your name, such as she/her.':
+    '「彼女」など、あなたの名前の横に他の人に表示されます。',
+  'A few words about you that the others see on your profile.':
+    'プロフィールで他の人に見える、あなたについての短い言葉です。',
+  'What you are up to, shown to the others beside your name until it clears.':
+    '今していることです。消えるまであなたの名前の横に他の人に表示されます。',
 }

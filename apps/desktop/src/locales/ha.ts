@@ -2445,4 +2445,203 @@ export const ha: Dictionary = {
   Large: 'Babba',
   Both: 'Duka biyu',
   'Shown on cards': 'Ana nunawa a katuna',
+  // What each setting does, behind the ? beside it (#768)
+  'Syncs this browser’s AI keys with your other devices through the vault.':
+    "Yana daidaita maɓallan AI na wannan birawuza da sauran na'urorinka ta hanyar ma'ajin.",
+  'Which of your AI accounts this feature asks.':
+    'Wane asusun AI naka ne wannan fasalin yake tambaya.',
+  'Whether a task done with AI asks before each change or makes them on its own.':
+    'Ko aikin da aka yi da AI yana tambaya kafin kowane canji ko yana yin su da kansa.',
+  'Makes Orden the browser that links from other programs open in.':
+    'Yana mai da Orden birawuzan da hanyoyin haɗi daga wasu manhajoji ke buɗewa a ciki.',
+  'Where words typed into a web tab’s address bar are searched.':
+    'Inda ake neman kalmomin da aka rubuta a mashigin adireshi na shafin yanar gizo.',
+  'The search address, with %s where the words go.':
+    'Adireshin bincike, da %s a inda kalmomin za su shiga.',
+  'Words the spelling check never marks as wrong.':
+    'Kalmomin da duba rubutun kalma ba ya taɓa nuna su a matsayin kuskure.',
+  'Which app’s keys Orden follows; any key below can still be changed.':
+    'Maɓallan wace manhaja Orden ke bi; har yanzu ana iya canza kowane maɓalli a ƙasa.',
+  'Moves and edits in notes with Vim’s keys.':
+    'Yana motsawa da gyara a cikin bayanan kula da maɓallan Vim.',
+  'What pulling a note down past its top does on a phone.':
+    'Abin da jan bayanin kula ƙasa fiye da samansa ke yi a waya.',
+  'The OpenAI key the glasses ask their questions with.':
+    'Maɓallin OpenAI da tabarau ke yin tambayoyinsu da shi.',
+  'The model that answers what you ask on the glasses.':
+    'Samfurin da ke amsa abin da ka tambaya a tabarau.',
+  'How long the model thinks before it answers; longer is slower.':
+    'Tsawon lokacin da samfurin ke tunani kafin ya amsa; mafi tsawo ya fi jinkiri.',
+  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
+    'Yana ƙara takardar Markdown zuwa menu na New da kake samu ta danna dama a File Explorer.',
+  'What happens when one note was changed on two devices before they synced.':
+    "Abin da ke faruwa idan an canza bayanin kula ɗaya a na'urori biyu kafin su daidaita.",
+  'How far back the account keeps earlier versions of your notes.':
+    'Har zuwa yaushe asusun ke ajiye tsofaffin sigogin bayanan kulanka.',
+  'The colour of buttons, links and the selection.': 'Launin maɓallai, hanyoyin haɗi da zaɓi.',
+  'Adds Orden to the AI agent programs on this computer, so they reach your notes with nothing to set up.':
+    'Yana ƙara Orden zuwa shirye-shiryen wakilin AI a wannan kwamfuta, don su kai ga bayanan kulanka ba tare da wani saiti ba.',
+  'Words that notify you whenever someone writes them in a chat, separated by commas.':
+    'Kalmomin da ke sanar da kai a duk lokacin da wani ya rubuta su a hira, an raba su da waƙafi.',
+  'When chats may notify you; outside these hours they stay quiet.':
+    "Lokacin da hirarraki za su iya sanar da kai; a wajen waɗannan sa'o'i suna yin shiru.",
+  'When the hours chats may notify you begin.':
+    "Lokacin da sa'o'in da hirarraki za su iya sanar da kai ke farawa.",
+  'When the hours chats may notify you end.':
+    "Lokacin da sa'o'in da hirarraki za su iya sanar da kai ke ƙarewa.",
+  'Notifications show the message itself; off shows only who wrote.':
+    'Sanarwa suna nuna saƙon kansa; idan a kashe suna nuna wanda ya rubuta kawai.',
+  'Notifications make a sound.': 'Sanarwa suna yin sauti.',
+  'Which headings start a new page on the glasses.':
+    'Waɗanne kanun labarai ke fara sabon shafi a tabarau.',
+  'Shows line numbers on the glasses.': 'Yana nuna lambobin layi a tabarau.',
+  'How many blank lines the glasses keep between blocks.':
+    'Layukan fanko nawa tabarau ke barin tsakanin tubalai.',
+  'Shows this markdown mark on the glasses rather than hiding it.':
+    'Yana nuna wannan alamar markdown a tabarau maimakon ɓoye ta.',
+  'Lets you run commands on the glasses by speaking.':
+    'Yana baka damar gudanar da umarni a tabarau ta magana.',
+  'What you say to run this command; left empty, the phrase shown is used.':
+    'Abin da kake faɗa don gudanar da umarnin; idan fanko, ana amfani da jimlar da aka nuna.',
+  'What Windows draws behind the window: Mica, Acrylic, or no blur.':
+    'Abin da Windows ke zana a bayan taga: Mica, Acrylic, ko babu dushewa.',
+  'How much of the window’s own colour lies over what is behind it.':
+    'Yawan launin taga kanta da ke kwance a kan abin da ke bayanta.',
+  'The frame takes its colour from what is open.':
+    'Firam yana ɗaukar launinsa daga abin da ke buɗe.',
+  'How strongly the frame is coloured.': 'Ƙarfin launin firam.',
+  'The colours the frame takes where nothing open has a colour of its own.':
+    'Launukan da firam ke ɗauka inda babu abin da ke buɗe da launin kansa.',
+  'A web tab takes the colour of its page.': 'Shafin yanar gizo yana ɗaukar launin shafinsa.',
+  'When your status is taken away again.': 'Lokacin da za a sake cire matsayinka.',
+  'Silences chat notifications and shows the others you are busy.':
+    'Yana yin shiru da sanarwar hira kuma yana nuna wa sauran cewa kana da aiki.',
+  'The colour the others see beside your name.': 'Launin da sauran ke gani kusa da sunanka.',
+  'The others see you as offline even while you are here.':
+    'Sauran suna ganinka a matsayin babu haɗi ko da kana nan.',
+  'The picture behind the window, one for light and one for dark; drag it to move its centre.':
+    'Hoton da ke bayan taga, ɗaya don haske ɗaya kuma don duhu; ja shi don motsa tsakiyarsa.',
+  'The theme Orden is drawn in.': 'Kamannin da ake zana Orden da shi.',
+  'Light, dark, or whichever the system is in.': 'Haske, duhu, ko duk wanda tsarin ke ciki.',
+  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
+    'Ko Muhimmai a saman jerin fayiloli suna nuna a matsayin tayal ko a matsayin jeri.',
+  'Shows a pointing hand over buttons, as web pages do.':
+    'Yana nuna hannu mai nuni a kan maɓallai, kamar yadda shafukan yanar gizo ke yi.',
+  'Orden’s own title bar, or the window frame of your system.':
+    'Sandar take ta Orden kanta, ko firam ɗin taga na tsarinka.',
+  'How large the text of notes is.': 'Girman rubutun bayanan kula.',
+  'The space between the lines of a note.': 'Tazarar da ke tsakanin layukan bayanin kula.',
+  'How wide a line of a note grows before it wraps.':
+    'Faɗin da layin bayanin kula ke kaiwa kafin ya naɗe.',
+  'Typing an opening bracket or quote adds the closing one too.':
+    'Rubuta baka ko alamar zance ta buɗewa yana ƙara ta rufewa ma.',
+  'Keeps the line you are writing in the middle of the screen.':
+    'Yana ajiye layin da kake rubutawa a tsakiyar allo.',
+  'Dims everything but the paragraph you are writing in.':
+    'Yana dushe komai sai sakin layin da kake rubutawa a ciki.',
+  'Joins pairs such as -> or != into one sign, in code only or everywhere.':
+    "Yana haɗa nau'i-nau'i kamar -> ko != zuwa alama ɗaya, a cikin code kawai ko ko'ina.",
+  'Where a picture or file you paste or drop into a note is saved.':
+    'Inda ake ajiye hoto ko fayil da ka manna ko ka jefa cikin bayanin kula.',
+  'Turning two fingers on a touchpad or screen rotates the canvas.':
+    'Juya yatsu biyu a kan touchpad ko allo yana juya kanbas.',
+  'A rotation that ends near a right angle settles on it.':
+    'Juyawa da ta ƙare kusa da kusurwa madaidaiciya tana zauna a kanta.',
+  'The paper size a new page note starts with.':
+    'Girman takardar da sabon bayanin kula na shafuka ke farawa da shi.',
+  'How the name of a new unique note is made from the date and time.':
+    'Yadda ake yin sunan sabon bayanin kula na musamman daga kwanan wata da lokaci.',
+  'The colours code in a note is highlighted in.':
+    'Launukan da ake haskaka code a bayanin kula da su.',
+  'Numbers the lines of code blocks.': 'Yana sanya lambobi ga layukan sassan lamba.',
+  'The paper size of a PDF or a print.': 'Girman takardar PDF ko bugu.',
+  'Whether pages are upright or on their side.': 'Ko shafuka a tsaye suke ko a kwance.',
+  'The space around the edge of each page, such as 20mm or 1in.':
+    'Tazarar da ke kewaye da gefen kowane shafi, kamar 20mm ko 1in.',
+  'Text at the top of every page; ${title}, ${date} and ${year} are filled in.':
+    'Rubutu a saman kowane shafi; ana cike ${title}, ${date} da ${year}.',
+  'Text at the bottom of every page; ${title}, ${date} and ${year} are filled in.':
+    'Rubutu a ƙasan kowane shafi; ana cike ${title}, ${date} da ${year}.',
+  'Whether an export is light, dark, or as the app is now.':
+    'Ko fitarwa haske ce, duhu, ko kamar yadda manhajar take yanzu.',
+  'Whether this key goes to Orden or to the program in the terminal, or asks each time.':
+    'Ko wannan maɓalli yana zuwa Orden ko zuwa shirin da ke cikin tasha, ko yana tambaya kowane lokaci.',
+  'The shell a new terminal starts.': 'Harsashin da sabuwar tasha ke farawa.',
+  'How large the text in terminals is.': 'Girman rubutu a cikin tashoshi.',
+  'Brings back what each terminal showed after Orden restarts; off forgets it on quit.':
+    'Yana dawo da abin da kowace tasha ta nuna bayan Orden ya sake farawa; idan a kashe yana mantawa da shi lokacin rufewa.',
+  'Asks before Orden quits with terminals open: always, or only while something runs in one.':
+    'Yana tambaya kafin Orden ya rufe da tashoshi a buɗe: koyaushe, ko sai lokacin da wani abu ke gudana a ɗaya.',
+  'Draws the app on the graphics card; turn it off if the window flickers or stays blank.':
+    'Yana zana manhajar a katin zane; kashe shi idan taga na kyalli ko ya zauna fanko.',
+  'How long before a task’s time it reminds you, unless the task says otherwise.':
+    'Tsawon lokacin kafin lokacin aiki da yake tunatar da kai, sai dai idan aikin ya faɗi wani abu daban.',
+  'Keeps Orden running in the tray after its window closes, so reminders still ring.':
+    'Yana barin Orden yana aiki a tire bayan an rufe tagarsa, don tunatarwa su ci gaba da ƙara.',
+  'Lets reminders ring at the exact minute rather than when the phone gets round to it.':
+    'Yana barin tunatarwa su yi ƙara a daidai minti maimakon lokacin da waya ta samu dama.',
+  'How often a note you are editing is saved as a version you can go back to in History.':
+    'Sau nawa ake ajiye bayanin kula da kake gyarawa a matsayin siga da za ka iya komawa gare ta a Tarihi.',
+  'How long those versions are kept before they are deleted.':
+    'Tsawon lokacin da ake ajiye waɗannan sigogi kafin a goge su.',
+  'Ctrl+Tab goes to the tab used last, as in VS Code; off goes through the tabs in the order they sit.':
+    'Ctrl+Tab yana zuwa shafin da aka yi amfani da shi na ƙarshe, kamar a VS Code; idan a kashe yana bin shafuka a jerin da suke zaune.',
+  'Two fingers sideways on the touchpad go back and forward.':
+    'Yatsu biyu a gefe a kan touchpad suna komawa baya da gaba.',
+  'What the web pages of another space do while it is out of sight: keep running, pause, or ask the first time.':
+    'Abin da shafukan yanar gizo na wani wuri ke yi lokacin da ba a ganinsa: ci gaba da aiki, tsayawa, ko tambaya a karon farko.',
+  'Unloads web pages that have been out of sight for a while to free memory; they load again when you return.':
+    "Yana sauke shafukan yanar gizo da ba a gani ba na ɗan lokaci don 'yantar da ƙwaƙwalwa; suna sake lodawa idan ka dawo.",
+  'Reads dates, times and fields out of what you type into Add task, such as “tomorrow 9am”.':
+    'Yana karanta kwanan wata, lokuta da filaye daga abin da kake rubutawa a Ƙara aiki, kamar “tomorrow 9am”.',
+  'The folder of this space whose folders the Tasks panel lists as projects.':
+    'Fayil ɗin wannan wuri wanda fanon Ayyuka ke jera fayilolinsa a matsayin ayyuka.',
+  'Today also lists the tasks that have no start date; off shows only those dated today or earlier.':
+    'Yau yana kuma jera ayyukan da ba su da ranar farawa; idan a kashe yana nuna waɗanda aka sanya wa yau ko kafin haka kawai.',
+  'The Add task shortcut works even while another app is in front.':
+    'Gajeriyar hanyar Ƙara aiki tana aiki ko da wata manhaja tana gaba.',
+  'Shows terminals and the other tools for writing code.':
+    'Yana nuna tashoshi da sauran kayan aikin rubuta code.',
+  'Hides the tips Orden shows while you get to know it.':
+    'Yana ɓoye shawarwarin da Orden ke nunawa yayin da kake saninsa.',
+  'The language Orden’s menus and settings are in.': 'Harshen da menu da saitunan Orden ke ciki.',
+  'Offers this type when you make something new; off only takes it out of that list.':
+    "Yana ba da wannan nau'i idan ka yi sabon abu; idan a kashe yana cire shi daga wannan jeri kawai.",
+  'Shows a mark such as ** or # while the cursor is in it; off keeps every mark out of sight.':
+    'Yana nuna alama kamar ** ko # lokacin da siginan ke cikinta; idan a kashe yana ɓoye kowace alama.',
+  'Notes open as plain markdown text rather than formatted.':
+    'Bayanan kula suna buɗewa a matsayin rubutun markdown mara tsari maimakon wanda aka tsara.',
+  'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
+    'Yana rubuta bayanan kula daga dama zuwa hagu, don Larabci, Ibrananci da sauran irin waɗannan rubutu.',
+  'Underlines misspelled words as you write.':
+    'Yana ja layi a ƙarƙashin kalmomin da aka rubuta ba daidai ba yayin da kake rubutu.',
+  'The dictionary spelling is checked against; Match the system uses your system’s language.':
+    'Ƙamus ɗin da ake duba rubutun kalma da shi; Bi tsarin yana amfani da harshen tsarinka.',
+  'The version of Orden that is running; press to copy it.':
+    'Sigar Orden da ke gudana; danna don kwafa ta.',
+  'One of this theme’s own settings, offered by its author.':
+    'Ɗaya daga cikin saitunan wannan kamanni, wanda marubucinsa ya bayar.',
+  'How much of what is behind the window shows under notes and terminals; the words always stay readable.':
+    'Yawan abin da ke bayan taga da ke nunawa ƙarƙashin bayanan kula da tashoshi; kalmomin suna zama masu karantuwa koyaushe.',
+  'The colour laid over the picture.': 'Launin da aka shimfiɗa a kan hoton.',
+  'How much the picture is blurred.': 'Yawan dushewar hoton.',
+  'How much the picture is darkened.': 'Yawan duhun da aka yi wa hoton.',
+  'How vivid the colours of the picture are.': 'Yadda launukan hoton ke da ƙarfi.',
+  'How strongly the tint colour lies over the picture.':
+    'Ƙarfin da ɗan launi ke kwance a kan hoton.',
+  'Adds a film grain over the picture.': 'Yana ƙara ƙwayar fim a kan hoton.',
+  'How the picture fills the window.': 'Yadda hoton ke cika taga.',
+  'An empty pane shows the picture rather than paper.':
+    'Fanon da ba komai yana nuna hoton maimakon takarda.',
+  'The name the others see on what you share and in chats.':
+    'Sunan da sauran ke gani a kan abin da kake rabawa da kuma a hirarraki.',
+  'How far back Go back takes this space; it says first what would change.':
+    'Har zuwa yaushe Koma baya ke mayar da wannan wurin; yana fara faɗin abin da zai canza.',
+  'The picture the others see beside your name.': 'Hoton da sauran ke gani kusa da sunanka.',
+  'Shown to the others beside your name, such as she/her.':
+    'Ana nuna wa sauran kusa da sunanka, kamar ita/ta.',
+  'A few words about you that the others see on your profile.':
+    'Wasu kalmomi game da kai da sauran ke gani a bayanan martabarka.',
+  'What you are up to, shown to the others beside your name until it clears.':
+    'Abin da kake yi, ana nuna wa sauran kusa da sunanka har sai an cire shi.',
 }
