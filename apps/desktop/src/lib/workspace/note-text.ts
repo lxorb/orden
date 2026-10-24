@@ -19,7 +19,7 @@ import type { SpaceTag } from '@nib/editor'
 import { links } from '../link-index.svelte'
 import type { Change } from '../search/apply'
 import { lineStarts } from '../search/lines'
-import { samePath } from '../space-paths'
+import { isMarkdownPath, samePath } from '../space-paths'
 import { applied, changeOf, type Edit, reverse } from '../search/replace'
 import { invoke } from '../tauri'
 import type { Entry, Space } from '../workspace.svelte'
@@ -157,7 +157,8 @@ export async function writeNoteText(
   const edit = oneEdit(before, after)
   if (!edit) return
 
-  await replaceInNotes(ws, [changeOf(path, before, [edit])], keeping)
+  // The whole of the file, as the caller wrote it: a base's own source comes this way.
+  await replaceInNotes(ws, [changeOf(path, before, [edit])], { ...keeping, anyFile: true })
 }
 
 /** One note's share of a replacement, as it is put back later. */
@@ -174,6 +175,10 @@ export interface Keeping {
   /** Who it was kept for, written beside it and shown in the versions list. */
   source?: string
   undoable?: boolean
+  /** Whether a file that is not a note may be written. A word edit is a note's; a
+   *  caller that knows another file's shape - a canvas's icon, a base's source - says
+   *  so, and nothing else spoils a shortcut's or a canvas's lines as words. */
+  anyFile?: boolean
 }
 
 /** Keeps the version a write is about to replace, as `keeping` says. */
@@ -199,11 +204,13 @@ export async function replaceInNotes(
   changes: readonly Change[],
   keeping: Keeping = {},
 ): Promise<void> {
-  if (!changes.length) return
+  const writing =
+    keeping.anyFile === true ? changes : changes.filter((one) => isMarkdownPath(one.path))
+  if (!writing.length) return
 
   const done: Undone[] = []
 
-  for (const change of changes) {
+  for (const change of writing) {
     const open = ws.documentAt(change.path)
     const wrote = open
       ? await writeOpen(open, change, keeping)

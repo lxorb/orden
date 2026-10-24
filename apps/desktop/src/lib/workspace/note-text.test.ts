@@ -169,6 +169,27 @@ describe('a replacement across the space', () => {
     expect(ws.undone.stack).toHaveLength(1)
   })
 
+  /** A word edit is a note's. A file of another kind takes one only from a caller
+   *  that says it knows the file's shape: an icon on a canvas, a base's own source. */
+  test('writes no file that is not a note, unless the caller says it may', async () => {
+    const shortcut = '[InternetShortcut]\r\nNib-Icon=star\r\n'
+    const { ws } = space({ [`${SPACE}/Docs.url`]: shortcut })
+    const change = {
+      path: `${SPACE}/Docs.url`,
+      before: shortcut,
+      after: shortcut.replace('Nib', 'Orden'),
+      edits: [{ from: 20, to: 23, insert: 'Orden' }],
+      back: [{ from: 20, to: 25, insert: 'Nib' }],
+    }
+
+    await replaceInNotes(ws, [change])
+    expect(sent.filter((one) => one.command === 'write_note')).toEqual([])
+    expect(ws.undone.stack).toEqual([])
+
+    await replaceInNotes(ws, [change], { anyFile: true })
+    expect(sent.filter((one) => one.command === 'write_note')).toHaveLength(1)
+  })
+
   test('and nothing at all where there is nothing to change', async () => {
     const { ws } = space({ [`${SPACE}/a.md`]: 'x' })
     await replaceInNotes(ws, [])

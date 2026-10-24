@@ -82,7 +82,8 @@ export async function setFileIcon(
   if (!edit) return
 
   try {
-    await workspace.replaceInNotes([changeOf(path, before, [edit])])
+    // A canvas, a page note and a chat are JSON, and the edit above is made for it.
+    await workspace.replaceInNotes([changeOf(path, before, [edit])], { anyFile: true })
   } catch (error) {
     settings.error = message(error, key('That icon could not be written.'))
   }

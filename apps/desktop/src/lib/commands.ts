@@ -97,7 +97,7 @@ import { SCHEME_CHOICES, SCHEME_NAMES } from './schemes'
 import { theme } from './theme.svelte'
 import { viewport } from './viewport.svelte'
 import { workspace } from './workspace.svelte'
-import { samePath } from './space-paths'
+import { isMarkdownPath, samePath } from './space-paths'
 import { isUnsaved } from './workspace/drafts'
 import { askPlace } from './save-place/door'
 import { pages, type Step } from './web-tab/pages.svelte'
@@ -1086,6 +1086,13 @@ function sendToChatCommand(view?: EditorView): Command[] {
   return [{ id: 'send-to-chat', label: t('Send to chat'), run }]
 }
 
+/** Whether "Tidy up this note" may rewrite the document at `path` as markdown: a note,
+ *  or one nobody has saved yet. The editor opens a stylesheet, a snippet list or a text
+ *  file too, and tidying one of those as markdown spoils it. */
+export function tidies(path: string | null): boolean {
+  return path === null || isMarkdownPath(path)
+}
+
 export function appCommands(view?: EditorView): Command[] {
   const imported = importCommand()
 
@@ -1400,7 +1407,7 @@ export function appCommands(view?: EditorView): Command[] {
       id: 'reformat',
       label: t('Tidy up this note'),
       // Rewriting the whole note is an edit, whatever it is called.
-      disabled: !view || view.state.readOnly,
+      disabled: !view || view.state.readOnly || !tidies(workspace.active?.path ?? null),
       run: () =>
         view &&
         reformatDocument({

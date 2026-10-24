@@ -303,15 +303,19 @@ export async function writeFile(args: Said): Promise<unknown> {
     return { path: relative, written: content.length }
   }
 
-  await workspace.replaceInNotes([
-    {
-      path,
-      before,
-      after: content,
-      edits: [{ from: 0, to: before.length, insert: content }],
-      back: [{ from: 0, to: content.length, insert: before }],
-    },
-  ])
+  // Whatever kind of file the caller named: the words are the whole of it, as asked.
+  await workspace.replaceInNotes(
+    [
+      {
+        path,
+        before,
+        after: content,
+        edits: [{ from: 0, to: before.length, insert: content }],
+        back: [{ from: 0, to: content.length, insert: before }],
+      },
+    ],
+    { anyFile: true },
+  )
 
   return { path: relative, written: content.length }
 }
