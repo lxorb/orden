@@ -34,6 +34,8 @@ describe('the pictures a body shows', () => {
     ['an address without the host', `![](/i/${HASH}.png)`],
     ['an extension in capitals', `![](${URL.replace('.png', '.PNG')})`],
     ['a picture with a size', `![|300](${URL})`],
+    ['a picture by reference', `![a][r]\n\n[r]: ${URL}\n`],
+    ['a picture by a collapsed reference', `![Shot][]\n\n[shot]: <${URL}>\n`],
     ['a picture after a fence that held another mark', `~~~\n\`\`\`\n~~~\n![](${URL})`],
     [
       'a picture card on a canvas',
@@ -50,6 +52,7 @@ describe('the pictures a body shows', () => {
   test.each([
     ['prose', `see /i/${HASH} here`],
     ['a link that is not a picture', `[the file](${URL})`],
+    ['a reference only a link uses', `[a][r]\n\n[r]: ${URL}\n`],
     ['a code span', `see \`![](${URL})\``],
     ['a fence', `\`\`\`\n![](${URL})\n\`\`\`\n`],
     ['a comment', `%% ![](${URL}) %%`],
