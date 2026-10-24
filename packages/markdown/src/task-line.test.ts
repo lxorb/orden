@@ -346,6 +346,18 @@ describe('code in a task', () => {
     expect(task?.text).toBe('`[due:: 2026-01-01]` x')
   })
 
+  test('holds no tag at the end of the line', () => {
+    const task = readTask('- [ ] run `git tag #v2`')
+
+    expect(task?.tags).toEqual([])
+    expect(task?.text).toBe('run `git tag #v2`')
+  })
+
+  test('holds no tag among the words', () => {
+    expect(readTask('- [ ] run `a #foo` now')?.tags).toEqual([])
+    expect(readTask('- [ ] `#a` #b `#c` #d')?.tags).toEqual(['b', 'd'])
+  })
+
   test('while the words around it are still escaped', () => {
     expect(taskWords('`a` #b [due:: 2026-01-01]')).toBe('`a` \\#b [due:\\: 2026-01-01]')
   })

@@ -147,7 +147,8 @@ fn name_char(one: char) -> bool {
 /// Every `#tag` in the note's own words. The front matter is left out of this
 /// pass: a hash there is a YAML comment, and the tags it holds have been read
 /// already. Fenced code is left out too, where a `#` is a comment or a heading
-/// in some other language.
+/// in some other language, and so is inline code, which shows what is in it as
+/// written.
 fn read_inline(body: &str, front: usize, found: &mut Vec<String>) {
     let mut in_fence = false;
 
@@ -164,6 +165,7 @@ fn read_inline(body: &str, front: usize, found: &mut Vec<String>) {
         // Read through the line as it is written rather than as a list of
         // characters: this runs over every line of every note in a space, and an
         // array of one line's letters is an allocation a tag does not need.
+        let code = code_spans(line);
         let mut at = 0;
         while let Some(hash) = line[at..].find('#') {
             let start = at + hash;
@@ -172,7 +174,8 @@ fn read_inline(body: &str, front: usize, found: &mut Vec<String>) {
             let opens = line[..start]
                 .chars()
                 .next_back()
-                .is_none_or(|one| one.is_whitespace() || one == '(');
+                .is_none_or(|one| one.is_whitespace() || one == '(')
+                && !code.iter().any(|&(from, to)| (from..to).contains(&start));
 
             // The name is what a tag may hold, which rules out `#1`.
             let rest = &line[start + 1..];
@@ -187,6 +190,55 @@ fn read_inline(body: &str, front: usize, found: &mut Vec<String>) {
             at = start + 1 + name.len();
         }
     }
+}
+
+/// Where the code spans in a line start and end, in bytes, cut the way
+/// `codeAndWords` in tags.ts cuts them: a run of backticks opens a span that
+/// the next run of the same length closes, one with no such run after it is
+/// backticks, and a backtick behind a backslash opens nothing. Every mark this
+/// looks for is ASCII, so reading bytes never lands inside a character.
+fn code_spans(line: &str) -> Vec<(usize, usize)> {
+    let bytes = line.as_bytes();
+    let mut spans = Vec::new();
+    let mut at = 0;
+    while at < bytes.len() {
+        match bytes[at] {
+            b'\\' if bytes.get(at + 1).is_some_and(u8::is_ascii_punctuation) => at += 2,
+            b'`' => {
+                let run = backticks_at(bytes, at);
+                if let Some(close) = closing_run(bytes, at + run, run) {
+                    spans.push((at, close + run));
+                    at = close + run;
+                } else {
+                    at += run;
+                }
+            }
+            _ => at += 1,
+        }
+    }
+    spans
+}
+
+/// How many backticks stand in a row from `at`.
+fn backticks_at(bytes: &[u8], at: usize) -> usize {
+    bytes[at..].iter().take_while(|&&one| one == b'`').count()
+}
+
+/// Where the run of exactly `length` backticks closing a span starts, from `from`.
+fn closing_run(bytes: &[u8], from: usize, length: usize) -> Option<usize> {
+    let mut at = from;
+    while at < bytes.len() {
+        if bytes[at] == b'`' {
+            let run = backticks_at(bytes, at);
+            if run == length {
+                return Some(at);
+            }
+            at += run;
+        } else {
+            at += 1;
+        }
+    }
+    None
 }
 
 #[cfg(test)]
@@ -233,6 +285,19 @@ mod tests {
     #[test]
     fn ignores_anything_inside_a_fence() {
         assert_eq!(tags_in("```\n#notatag\n```\n#real"), vec!["#real"]);
+    }
+
+    #[test]
+    fn ignores_anything_inside_inline_code() {
+        assert_eq!(
+            tags_in("run `a #no` and #yes, `#not` ``x `#b` y`` #also"),
+            vec!["#yes", "#also"]
+        );
+    }
+
+    #[test]
+    fn reads_on_past_a_backtick_that_opens_no_code() {
+        assert_eq!(tags_in("\\` #yes ` #too"), vec!["#yes", "#too"]);
     }
 
     #[test]

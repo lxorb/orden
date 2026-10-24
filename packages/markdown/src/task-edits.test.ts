@@ -240,3 +240,17 @@ describe('unknown fields an object would answer from its prototype', () => {
     )
   })
 })
+
+describe('code in a task', () => {
+  test('keeps a hash at its end when the words change', () => {
+    const line = '- [ ] run `git tag #v2`'
+
+    expect(changedTask(line, { text: 'run `git tag #v2` extra' })).toBe(
+      '- [ ] run `git tag #v2` extra',
+    )
+  })
+
+  test('is not cut into when a tag is taken away', () => {
+    expect(changedTask('- [ ] run `a #foo` now #foo', { tags: [] })).toBe('- [ ] run `a #foo` now')
+  })
+})

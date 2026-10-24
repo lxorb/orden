@@ -19,7 +19,7 @@
  *  tree can go. */
 
 import { type FrontMatterBlock, frontMatterBlock } from '@nib/markdown/front-matter'
-import { TAG_NAME } from '@nib/markdown/tags'
+import { codeSpans, inCode, TAG_NAME } from '@nib/markdown/tags'
 
 /** Where one use of a tag sits: the offsets of its name, the hash not included,
  *  so a rename splices a new path in and leaves whatever hung off the old one. */
@@ -211,7 +211,8 @@ function readValues(from: number, text: string, out: TagUse[]) {
 /** Every `#tag` in the note's own words. The front matter is left out of this
  *  pass: a hash there is a YAML comment, and the tags it holds have been read
  *  already. Fenced code is left out too, where a `#` is a comment or a heading
- *  in some other language. */
+ *  in some other language, and so is inline code, which shows what is in it as
+ *  written. */
 function readInline(body: string, front: FrontMatterBlock | null, out: TagUse[]) {
   let at = front ? front.to : 0
   let fenced = false
@@ -223,9 +224,10 @@ function readInline(body: string, front: FrontMatterBlock | null, out: TagUse[])
 
     if (FENCE.test(line)) fenced = !fenced
     else if (!fenced) {
+      const code = codeSpans(line)
       for (const found of line.matchAll(TAG)) {
         const [, before = '', name] = found
-        if (name === undefined) continue
+        if (name === undefined || inCode(code, found.index + before.length)) continue
 
         // Past what opened the word and past the hash, so the span is the name.
         const start = at + found.index + before.length + 1
