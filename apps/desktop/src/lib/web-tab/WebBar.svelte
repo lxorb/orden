@@ -42,7 +42,7 @@
   import PrivateMark from './PrivateMark.svelte'
   import ExtensionButtons from './ExtensionButtons.svelte'
   import { barKey, stops, type ZoomStep } from './bar-keys'
-  import { isWebAddress, plainOrigin } from './address'
+  import { isWebAddress } from './address'
   import { downloads, progressOf } from './downloads.svelte'
   import { addressing } from './passed.svelte'
   import { invoke, isDesktop } from '../tauri'
@@ -129,17 +129,18 @@
 
   let field = $state<{ take(): void }>()
 
-  /** The site, plainly, and the page's own name after it. The name is the page's
-   *  while it has said one and the address's host until then, so the bar never reads
-   *  as empty. */
-  const resting = $derived.by(() => {
-    if (page.url === null) return ''
-    // nib's own page reads as its address, as `chrome://history` does; see own-pages.ts.
-    if (!isWebAddress(page.url)) return page.url
-
-    const site = plainOrigin(page.url)
-    return page.title ? `${site} - ${page.title}` : site
-  })
+  /** The address the page is on, whole, while nobody is typing in the field (#774).
+   *
+   *  It read as the site and the page's own name after it, `github.com - Issues`, and
+   *  the address itself only once the field was pressed: so where a link had taken the
+   *  tab - the path, the query, `https:` or not - was something to click for, and the
+   *  page's name was said twice, here and on its tab. A reader on a NixOS laptop:
+   *  *"Can I see proper link, instead the 'Nicified' version without clicking on it?"*,
+   *  and Emil: *"we want that in general for nib by default"*. So the field always says
+   *  where the tab is, as Chrome's does under Always show full URLs, and what a press
+   *  adds is only the selection to type over. nib's own pages read as their address,
+   *  as they did, as `chrome://history` does; see own-pages.ts. */
+  const resting = $derived(page.url ?? '')
 
   /** Whether this tab had nowhere to go when the bar was built, which is the one thing
    *  `onMount` needs to know and the one moment it cannot ask.

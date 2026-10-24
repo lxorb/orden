@@ -33,8 +33,8 @@
   /** The field an address is typed into, finishing it the way a browser does.
    *
    *  One control with two faces, and one with a list under it. While it does not have
-   *  the keyboard it reads `resting` - the site and the page's own name, whatever the
-   *  caller says, or what was half typed and left in it - and the moment it does it
+   *  the keyboard it reads `resting` - whatever the caller says, which for the bar is
+   *  the whole address (#774), or what was half typed and left in it - and the moment it does it
    *  holds the whole address, selected so
    *  typing replaces it. Then it is Chrome's omnibox, in both halves; see omnibox.ts
    *  for what is offered and why:
