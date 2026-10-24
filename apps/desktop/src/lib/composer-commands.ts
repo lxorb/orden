@@ -41,8 +41,9 @@ function hasRest(view?: EditorView): boolean {
   return view.state.doc.sliceString(at).trim().length > 0
 }
 
-/** Whether the note in front of the reader may be merged into another: one the
- *  open space holds and that may be written, in an editor that may be typed in.
+/** Whether the note in front of the reader may be merged into another: a
+ *  markdown note the open space holds and that may be written, in an editor that
+ *  may be typed in.
  *  The note it goes into is asked the same by the merge itself. */
 function canMerge(path: string | null, view?: EditorView): boolean {
   if (!path || workspace.notes.length < 2) return false
