@@ -157,6 +157,7 @@ interface Saved {
   alwaysOnTop: boolean
   frame: Frame
   hand: boolean
+  fonts: Record<FontPlace, string>
   closeBrackets: boolean
   ligatures: LigatureScope
   glassesBreak: GlassesBreak
@@ -213,6 +214,21 @@ function step<T extends number>(
   const at = steps.findIndex((one) => one === current)
   const from = at >= 0 ? at : steps.findIndex((one) => one === fallback)
   return steps[Math.min(steps.length - 1, Math.max(0, from + direction))] ?? fallback
+}
+
+/** Where a face the reader chose goes: the interface, the notes, the code. Each is the
+ *  front of one of the three stacks in tokens.css, as `--font-<place>-chosen` (#772). */
+export type FontPlace = 'ui' | 'content' | 'mono'
+
+export const FONT_PLACES: readonly FontPlace[] = ['ui', 'content', 'mono']
+
+/** A family's name as it may go into a stylesheet: letters, digits, spaces and the few
+ *  marks names carry, at most 64 of them, and nothing for anything else - a quote or a
+ *  semicolon would be a stylesheet's own syntax, not a name. */
+export function familyName(value: unknown): string {
+  if (!isString(value)) return ''
+  const name = value.trim().replace(/\s+/g, ' ')
+  return /^[\p{L}\p{N}][\p{L}\p{N} ._&+-]{0,63}$/u.test(name) ? name : ''
 }
 
 /** A stored string, when there is one worth having. */
@@ -277,6 +293,7 @@ export const DEFAULTS = {
   alwaysOnTop: false,
   frame: 'nib' as Frame,
   hand: false,
+  fonts: { ui: '', content: '', mono: '' } as Record<FontPlace, string>,
   closeBrackets: true,
   ligatures: 'off' as LigatureScope,
   glassesBreak: 2 as GlassesBreak,
@@ -398,6 +415,9 @@ class Modes {
    *  for a link. This machine's, for the same reason the frame is: it is about the
    *  pointer on this desk. Said on the root as `data-pointer`; see base.css. */
   hand = $state(DEFAULTS.hand)
+  /** The faces the reader chose to read in, where they chose one; nothing is the app's
+   *  own (#772). This machine's, since a face is something installed on one. */
+  fonts = $state<Record<FontPlace, string>>({ ...DEFAULTS.fonts })
   closeBrackets = $state(DEFAULTS.closeBrackets)
   /** `->` shown as an arrow, `<=` as a sign, and so on: nowhere, in the code of
    *  a note, or everywhere in it. Off until chosen; the choice follows the
@@ -629,6 +649,12 @@ class Modes {
       const tone = toneOf(saved.highlightTone)
       if (tone !== undefined) this.highlightTone = tone
       if (isLinkFormat(saved.linkFormat)) this.linkFormat = saved.linkFormat
+      const fonts = isRecord(saved.fonts) ? saved.fonts : {}
+      this.fonts = {
+        ui: familyName(fonts.ui),
+        content: familyName(fonts.content),
+        mono: familyName(fonts.mono),
+      }
       // Kept as `frontMatter` since hidden became the default. An older build wrote
       // `properties` down for everybody who changed any setting at all, so the rows
       // it says were the default rather than a choice; the source was always a
@@ -659,6 +685,7 @@ class Modes {
     // window that jumped.
     this.applyFrame()
     this.applyHand()
+    this.applyFonts()
     // And the dictionaries, to the engine that keeps a list of them. Fetched, since
     // only a Linux desktop's engine has one; see spell-languages.ts.
     if (isDesktop) {
@@ -856,6 +883,26 @@ class Modes {
     this.hand = !this.hand
     this.applyHand()
     this.persist()
+  }
+
+  /** A face for one place, or the app's own again with nothing. */
+  setFont(place: FontPlace, family: string) {
+    this.fonts = { ...this.fonts, [place]: familyName(family) }
+    this.applyFonts()
+    // A new face is new widths: every editor measures its lines again rather than put
+    // the caret where the old face's letters ended.
+    this.each(undefined, (one) => one.requestMeasure())
+    this.persist()
+  }
+
+  /** The chosen faces, put in front of the app's own stacks; see tokens.css. */
+  private applyFonts() {
+    const root = document.documentElement.style
+    // An empty value takes the property away, which is the app's own face again.
+    for (const place of FONT_PLACES) {
+      const family = this.fonts[place]
+      root.setProperty(`--font-${place}-chosen`, family ? `"${family}",` : '')
+    }
   }
 
   private applyHand() {
@@ -1623,6 +1670,7 @@ class Modes {
       pagesPaper: this.pagesPaper,
       frame: this.frame,
       hand: this.hand,
+      fonts: this.fonts,
       conflicts: this.conflicts,
       keepVersions: this.keepVersions,
       remindBefore: this.remindBefore,

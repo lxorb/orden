@@ -125,6 +125,7 @@ const AWAY = {
   pagesPaper: 'letter',
   frame: 'system',
   hand: true,
+  fonts: { ui: 'Inter', content: 'Literata', mono: 'JetBrains Mono' },
   conflicts: 'theirs',
   keepVersions: 365,
   remindBefore: 15,
