@@ -1406,6 +1406,40 @@ describe('a note renamed on another device', () => {
     expect(fake.disk.get(`${ROOT}/Two.md`)).toBe('# One\n')
   })
 
+  /** Notes that traded names there, while this device was away: each one's new name
+   *  is still another's here, so one waits aside while the other moves. */
+  async function trading(names: string[]) {
+    const ids = names.map((name) => fake.addRemote(name, `# ${name}\n`))
+    for (const name of names) fake.disk.set(`${ROOT}/${name}`, `# ${name}\n`)
+    const mirror = newMirror('s-one', ROOT)
+    await pull(mirror, 'token', NOBODY)
+    fake.calls.length = 0
+
+    // Each note takes the next one's name.
+    ids.forEach((id, at) => fake.renameRemote(id, names[(at + 1) % names.length]!))
+    await pull(mirror, 'token', NOBODY)
+    await push(mirror, 'token', NOBODY)
+    return { mirror, ids }
+  }
+
+  for (const names of [
+    ['A.md', 'B.md'],
+    ['A.md', 'B.md', 'C.md'],
+  ]) {
+    test(`keeps each note's words when ${names.length} notes trade names`, async () => {
+      const { mirror, ids } = await trading(names)
+
+      names.forEach((name, at) => {
+        const next = names[(at + 1) % names.length]!
+        expect(fake.disk.get(`${ROOT}/${next}`)).toBe(`# ${name}\n`)
+        expect(fake.remote.get(ids[at]!)).toMatchObject({ path: next, content: `# ${name}\n` })
+        expect(mirror.notes[next]?.id).toBe(ids[at])
+      })
+      expect([...fake.disk.keys()].sort()).toEqual(names.map((name) => `${ROOT}/${name}`))
+      expect(fake.calls.filter((one) => /^(writeNote|createNote|deleteNote)/.test(one))).toEqual([])
+    })
+  }
+
   test('leaves alone a file of its new name that is already here', async () => {
     const { mirror, id } = await paired('One.md', '# One\n')
     fake.disk.set(`${ROOT}/Two.md`, '# Another two\n')
