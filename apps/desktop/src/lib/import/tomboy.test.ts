@@ -107,6 +107,11 @@ describe("Tomboy's own markup", () => {
     expect(tomboyMarkdown('<monospace>&lt;div&gt;</monospace>')).toBe('`<div>`')
   })
 
+  test('a backslash of the words in front of a tag in monospace is shown once, as written', () => {
+    expect(tomboyMarkdown('<monospace>a\\&lt;b&gt;</monospace>')).toBe('`a\\<b>`')
+    expect(tomboyMarkdown('<monospace>a\\\\&lt;b&gt;</monospace>')).toBe('`a\\\\<b>`')
+  })
+
   test("a list as Tomboy writes it, each item's line ending inside it, is one tight list", () => {
     const content =
       'Before\n\n<list><list-item dir="ltr">one\n<list><list-item dir="ltr">under\n</list-item></list></list-item><list-item dir="ltr">two</list-item></list>\n\nAfter'

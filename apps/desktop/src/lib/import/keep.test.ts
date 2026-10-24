@@ -238,4 +238,27 @@ describe('what a real Takeout does', () => {
     expect(text).toContain('Fine \\<img src=https://t.example/p.gif>')
     expect(text).not.toMatch(/(?<!\\)<\/?(img|style)/)
   })
+
+  test("a backslash in a shared page's title is shown as it was written", async () => {
+    const card = (title: string, page: string) => ({
+      source: 'WEBLINK',
+      title,
+      url: `https://example.com/${page}`,
+    })
+    const plan = await readKeep([
+      file(
+        'Keep/Slashes.json',
+        keepNote({
+          title: 'Slashes',
+          textContent: 'x',
+          annotations: [card('a\\<b>', 'a'), card('end\\', 'b'), card('x\\[y]', 'c')],
+        }),
+      ),
+    ])
+
+    const text = noteAt(plan, 'Slashes.md')
+    expect(text).toContain('- [a\\\\\\<b>](<https://example.com/a>)')
+    expect(text).toContain('- [end\\\\](<https://example.com/b>)')
+    expect(text).toContain('- [x\\\\\\[y\\]](<https://example.com/c>)')
+  })
 })
