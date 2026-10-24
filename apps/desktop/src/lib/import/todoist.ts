@@ -19,7 +19,7 @@
 import { parseRule, ruleText } from '@nib/bases'
 import { taskLine } from '@nib/markdown/task-edits'
 import { NO_PRIORITY, type Priority, type Remind, type TaskFields } from '@nib/markdown/task-line'
-import { asWords } from '@nib/markdown/words'
+import { asWords, OPENS_MARKUP } from '@nib/markdown/words'
 import { key } from '../i18n.svelte'
 import { readCsv } from './csv'
 import { safeName } from './names'
@@ -360,8 +360,14 @@ function linkTo(file: Json): string {
   if (!url) return ''
   const name = text(file.file_name) || text(file.title) || url
   const target = /[\s()<>]/.test(url) ? `<${url.replace(/[<>]/g, encodeURIComponent)}>` : url
-  return `[${name.replace(/([[\]\\])/g, '\\$1')}](${target})`
+  return `[${name.replace(LITERAL, '\\$&')}](${target})`
 }
+
+/** What a link's name escapes itself: a bracket, which would end it, and a
+ *  backslash, which would escape what comes after it. Not the run of backslashes in
+ *  front of a tag, which `asWords` doubles on the name's way into the note, and
+ *  doubling it here as well would show two backslashes for the one it had. */
+const LITERAL = new RegExp(`\\\\(?!\\\\*${OPENS_MARKUP.source})|[[\\]]`, 'g')
 
 /** A person as the CSV names one, `Lucile (14781400)`, by their name. */
 const personOf = (said: string) => said.replace(/\s*\(\d+\)\s*$/, '').trim()
