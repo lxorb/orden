@@ -186,6 +186,36 @@ describe('a page as markdown', () => {
    *  picture of its own - and their text has been escaped on the way, backslash
    *  and brackets together. So they are written as they came, and a page cannot
    *  close the brackets early from inside them. */
+  /** Nothing autolinks inside a link's brackets, so an address there is words like
+   *  any other and is escaped like them. */
+  test("an address as a link's own text is drawn as its characters", () => {
+    const cases = [
+      'https://github.com/x/y/blob/main/pkg/__init__.py',
+      'https://a.test/~al/~bo',
+      'https://a.test/x/_y_/z',
+      'https://a.test/?a=$x$',
+    ]
+    for (const address of cases) {
+      const link = htmlToMarkdown(`<p><a href="${address}">${address}</a></p>`)
+      const shown = address.replace(/&/g, '&amp;')
+      expect(renderMarkdown(link)).toBe(`<p><a class="url" href="${shown}">${shown}</a></p>\n`)
+    }
+    expect(htmlToMarkdown('<a href="https://a.test/~al/~bo">https://a.test/~al/~bo</a>')).toBe(
+      '[https://a.test/\\~al/\\~bo](https://a.test/~al/~bo)',
+    )
+  })
+
+  test('a bare address beside a link is still kept as it was written', () => {
+    const page = htmlToMarkdown(
+      '<p>See <a href="https://x.test/">the site</a> or https://a.test/~al/_y_/ here</p>',
+    )
+    expect(page).toBe('See [the site](https://x.test/) or https://a.test/~al/_y_/ here')
+    expect(renderMarkdown(page)).toBe(
+      '<p>See <a href="https://x.test/">the site</a> or ' +
+        '<a class="url" href="https://a.test/~al/_y_/">https://a.test/~al/_y_/</a> here</p>\n',
+    )
+  })
+
   test('an address as a link text cannot close its brackets', () => {
     const link = htmlToMarkdown(
       '<a href="https://x.test/ok">https://a.test/](https://evil.test)[b</a>',

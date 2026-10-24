@@ -301,7 +301,9 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
         if (!href) return body
 
         // A bare address, or an autolink, stands for itself and says so.
-        const bare = !token.raw.startsWith('[') || token.text === token.href
+        // Its text read past escapes, which an address as a link's text is written with.
+        const bare =
+          !token.raw.startsWith('[') || token.text.replace(AN_ESCAPE, '$1') === token.href
         const attributes = [bare ? ' class="url"' : '', ` href="${href}"`]
         if (token.title) attributes.push(` title="${escape(token.title)}"`)
         return `<a${attributes.join('')}>${body}</a>`
