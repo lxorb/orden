@@ -168,9 +168,7 @@ export function reminderId(space: string, path: string, hash: string, wall: Wall
 export function plainWords(text: string): string {
   // The escapes are held while the marks are looked for, so `\*` is a star rather
   // than the start of emphasis, and given back as the characters they say.
-  const held = heldEscapes(text).replace(/`([^`]*)`/g, (_, inside: string) =>
-    released(inside, true),
-  )
+  const held = heldEscapes(text)
   return released(
     held
       .replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, '$2')

@@ -472,7 +472,17 @@ const HELD = 0xe000
  *  markdown parser, the view's `pieces`, which would otherwise read `\*a\*` as
  *  emphasis and show the backslashes. */
 export function heldEscapes(text: string): string {
-  return text.replace(AN_ESCAPE, (_, one: string) => String.fromCharCode(HELD + one.charCodeAt(0)))
+  // Not inside code, found first, where a backslash is a backslash: `C:\` before the
+  // closing backtick escapes nothing.
+  return codeAndWords(text)
+    .map((one) =>
+      one.code
+        ? one.text
+        : one.text.replace(AN_ESCAPE, (_, char: string) =>
+            String.fromCharCode(HELD + char.charCodeAt(0)),
+          ),
+    )
+    .join('')
 }
 
 /** Held escapes given back: as the characters they escaped, or as written, with the

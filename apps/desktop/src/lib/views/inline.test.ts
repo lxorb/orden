@@ -20,4 +20,12 @@ describe('a task line drawn in a view', () => {
       { text: 'a\\$b', code: true },
     ])
   })
+
+  test('a backslash at the end of code is code, not an escaped backtick', () => {
+    expect(pieces('open `C:\\` now')).toEqual([
+      { text: 'open ' },
+      { text: 'C:\\', code: true },
+      { text: ' now' },
+    ])
+  })
 })
