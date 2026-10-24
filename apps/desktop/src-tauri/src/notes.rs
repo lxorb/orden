@@ -982,4 +982,57 @@ mod tests {
         assert_eq!(names(dir.path()).len(), 1);
         assert_eq!(fs::read_to_string(&composed).expect("the note"), "overview");
     }
+
+    /// Sync moves every file on its own: a PDF's highlights and a page note's paper are
+    /// entries of their own in the account, moved by their own moves and in whichever
+    /// order those come. Highlights that came ahead of their PDF were cleared by the
+    /// PDF's move as leftovers, and the next scan sent that delete to every device.
+    #[test]
+    fn a_pdf_moved_alone_keeps_the_highlights_that_came_ahead_of_it() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let was = dir.path().join("A.pdf");
+        let now = dir.path().join("B.pdf");
+        fs::write(&was, "%PDF").expect("the PDF");
+        fs::write(dir.path().join("B.pdf.highlights.json"), "{}").expect("its highlights");
+
+        super::renamed(&was, &now, false, true).expect("the move");
+
+        assert!(now.exists());
+        assert_eq!(
+            fs::read_to_string(dir.path().join("B.pdf.highlights.json")).expect("highlights"),
+            "{}"
+        );
+    }
+
+    #[test]
+    fn a_file_moved_alone_takes_nothing_with_it() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let pdf = dir.path().join("A.pdf");
+        fs::write(&pdf, "%PDF").expect("the PDF");
+        fs::write(dir.path().join("A.pdf.highlights.json"), "{}").expect("its highlights");
+        let note = dir.path().join("Lecture.pages");
+        fs::write(&note, "{}").expect("the page note");
+        fs::write(dir.path().join("Lecture.pages.pdf"), "%PDF").expect("its paper");
+
+        super::renamed(&pdf, &dir.path().join("B.pdf"), false, true).expect("the PDF");
+        super::renamed(&note, &dir.path().join("Week.pages"), false, true).expect("the note");
+
+        assert!(dir.path().join("A.pdf.highlights.json").exists());
+        assert!(!dir.path().join("B.pdf.highlights.json").exists());
+        assert!(dir.path().join("Lecture.pages.pdf").exists());
+        assert!(!dir.path().join("Week.pages.pdf").exists());
+    }
+
+    #[test]
+    fn a_file_moved_by_hand_takes_what_it_holds() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let pdf = dir.path().join("A.pdf");
+        fs::write(&pdf, "%PDF").expect("the PDF");
+        fs::write(dir.path().join("A.pdf.highlights.json"), "{}").expect("its highlights");
+
+        super::renamed(&pdf, &dir.path().join("B.pdf"), false, false).expect("the move");
+
+        assert!(!dir.path().join("A.pdf.highlights.json").exists());
+        assert!(dir.path().join("B.pdf.highlights.json").exists());
+    }
 }
