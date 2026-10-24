@@ -188,4 +188,30 @@ describe('an Apple Journal export', () => {
     expect(note?.kind === 'note' && note.text).toContain('Words')
     expect(note?.kind === 'note' && note.text).not.toContain('date:')
   })
+  test("an entry's title opens no markup, since the heading is written from it", async () => {
+    const plan = await readJournal([
+      file(
+        'AppleJournalEntries/Entries/2026-01-05_A.html',
+        '<div class="pageHeader">x</div><div class="title"><span>Fine &lt;img src=https://t.example/p.gif&gt;' +
+          '&lt;style&gt;body{display:none}&lt;/style&gt;</span></div><div class="bodyText"><p>Hi</p></div>',
+      ),
+    ])
+    const note = plan.files.find((one) => one.kind === 'note')
+    const text = note?.kind === 'note' ? note.text : ''
+
+    expect(text).toContain('# Fine \\<img src=https://t.example/p.gif>\\<style>')
+    expect(text).not.toMatch(/(?<!\\)<(?=[A-Za-z/])/)
+  })
+
+  test("a clip's address cannot end its link early and open a picture of its own", async () => {
+    const plan = await readJournal([
+      file(
+        'AppleJournalEntries/Entries/2026-01-05_A.html',
+        '<div class="pageHeader">x</div><div class="bodyText"><p>Hi</p>' +
+          '<video><source src="../Resources/v.mov)![](https://t.example/p.gif"></video></div>',
+      ),
+    ])
+
+    expect(noteAt(plan, '2026-01-05.md')).not.toContain('](https://t.example')
+  })
 })

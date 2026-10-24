@@ -21,7 +21,8 @@
  *  the file list the way Logseq's and Roam's journals do, and the media land in
  *  `assets/` beside them, which is where a picture pasted into a note goes. */
 
-import { htmlToMarkdown } from '@nib/markdown/from-html'
+import { destination, htmlToMarkdown } from '@nib/markdown/from-html'
+import { asWords } from '@nib/markdown/words'
 
 import { key } from '../i18n.svelte'
 import { folderPlan, isJunk } from './folder'
@@ -98,7 +99,7 @@ export async function readJournal(sources: readonly Source[]): Promise<ImportPla
           to: names.free(`${nameFor(entry, source.path)}.md`),
           read: () => ({
             text: entry.body,
-            title: entry.title || null,
+            title: entry.title ? asWords(entry.title) : null,
             meta: { date: entry.date },
           }),
         }
@@ -264,7 +265,9 @@ function withMedia(markdown: string, html: string): string {
     missing.push(source)
   }
 
-  return [markdown, ...missing.map((source) => `![](${source})`)].filter(Boolean).join('\n\n')
+  return [markdown, ...missing.map((source) => `![](${destination(source)})`)]
+    .filter(Boolean)
+    .join('\n\n')
 }
 
 /** How many of an entry's cards are a picture Journal draws itself. A mood is a
