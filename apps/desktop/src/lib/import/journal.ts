@@ -22,7 +22,6 @@
  *  `assets/` beside them, which is where a picture pasted into a note goes. */
 
 import { destination, htmlToMarkdown } from '@nib/markdown/from-html'
-import { asWords } from '@nib/markdown/words'
 
 import { key } from '../i18n.svelte'
 import { folderPlan, isJunk } from './folder'
@@ -99,7 +98,8 @@ export async function readJournal(sources: readonly Source[]): Promise<ImportPla
           to: names.free(`${nameFor(entry, source.path)}.md`),
           read: () => ({
             text: entry.body,
-            title: entry.title ? asWords(entry.title) : null,
+            // Written as words by `noteText`, the one place a title is escaped.
+            title: entry.title || null,
             meta: { date: entry.date },
           }),
         }
