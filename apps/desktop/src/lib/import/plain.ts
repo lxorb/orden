@@ -22,8 +22,35 @@ import type { Source } from './sources'
 
 const HTML = /\.(html?|xhtml)$/i
 
-/** A text file, which is plain text rather than markdown; see `isNoteFile`. */
+/** A text file, which may be plain text or markdown; see `textWords`. */
 const TEXT = /\.txt$/i
+
+/** The exports whose text files are only ever plain text: Apple's own. */
+const PLAIN_TEXT: ReadonlySet<FormatId> = new Set(['apple-notes'])
+
+/** What only markdown writes, one line or one span at a time: a heading, a fence, a
+ *  quote, a link of either kind, a phrase in bold or in stars. A list and a line of
+ *  dashes are left out, since plain text writes those as well. */
+const MARKDOWN_SAYS = [
+  /^#{1,6}[ \t]+\S/m,
+  /^(`{3,}|~{3,})/m,
+  /^>[ \t]/m,
+  /\[[^\]\n]+\]\([^)\s]+\)/,
+  /\[\[[^\]\n]+\]\]/,
+  /(\*\*|__)\S[^\n]*?\S\1/,
+  /(^|\s)\*\S(?:[^*\n]*\S)?\*(?=[\s.,;:!?)]|$)/m,
+]
+
+/** A text file's words as a note may hold them. iA Writer, Ulysses, Simplenote, nvALT
+ *  and Drafts write markdown into a `.txt`, and that stays markdown; Tomboy, Keep and
+ *  Apple write plain text, which is written to read back as the characters it is, so
+ *  `$5-$10` is two prices rather than a formula and a tag is words. Which one a file
+ *  is, the export says where it knows, and the words say where it does not. */
+function textWords(text: string, format: FormatId | undefined): string {
+  const plain = format !== undefined && PLAIN_TEXT.has(format)
+  if (!plain && MARKDOWN_SAYS.some((pattern) => pattern.test(text))) return text
+  return plainWords(text)
+}
 
 /** Where a bundle's own text file sits, whichever of the two names it uses. */
 const BUNDLE_TEXT = /\.textbundle\/text\.(md|markdown|txt)$/i
@@ -105,11 +132,8 @@ export async function readPlain(
       return {
         to,
         read: (text, at) => {
-          // Plain text never meant markdown: Tomboy, Keep and Apple's exporters write
-          // it, so its words are written to read back as the characters they are.
-          // `$5-$10` is two prices rather than a formula, a tag is words, and a line
-          // of dashes under a line is not a heading. A vault keeps a `.txt` as a file.
-          const said = TEXT.test(at.path) ? plainWords(text) : text
+          // A vault keeps a `.txt` as a file, so this is never one of its notes.
+          const said = TEXT.test(at.path) ? textWords(text, options.format) : text
           return {
             text: options.words?.(said, at) ?? said,
             title: null,

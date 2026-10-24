@@ -130,6 +130,24 @@ describe('a folder of markdown', () => {
     expect(text).not.toMatch(/^---$/m)
   })
 
+  /** iA Writer, Ulysses, Simplenote, nvALT and Drafts all write markdown into a
+   *  `.txt`, so a text file that reads as markdown stays markdown. */
+  test('but a text file written in markdown keeps its markdown', async () => {
+    const draft =
+      '# Chapter one\n\nIt was *quiet*. See [notes](Notes.txt) and [[Notes]].\n\n> A quote\n'
+    const plan = await readPlain([file('Draft.txt', draft)])
+
+    expect(noteAt(plan, 'Draft.md')).toBe(draft)
+  })
+
+  test('and an export that only ever writes plain text has its words escaped', async () => {
+    const plan = await readPlain([file('Note.txt', '# not a heading\n\n*stars*\n')], {
+      format: 'apple-notes',
+    })
+
+    expect(noteAt(plan, 'Note.md')).toBe('\\# not a heading\n\n\\*stars\\*\n')
+  })
+
   test('while a markdown file keeps its markdown', async () => {
     const plan = await readPlain([file('Note.md', 'Costs $x$\n\n<u>under</u>\n')])
 
