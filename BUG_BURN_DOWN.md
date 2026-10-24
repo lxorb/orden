@@ -167,6 +167,7 @@ Same method and severity scale as round 1.
 | B112 | Low | A page whose permalink had no ASCII letters (`Привет`) answered on its path's slug before #460, and that address is still a 404 | Open, accepted | `legacyPathsOf` gives nothing for such a permalink and does not fall back to the path | - (rest of B73) | Reviewer's reading of #686 |
 | B115 | Low | A one-line paragraph that both sides split into several lines, keeping different words of it, can still merge clean with a word lost (4 to 8 of 20,000 fuzzed merges, the same on `main`) | Open, accepted | A paragraph split does not meet edits elsewhere in it | - (making it meet would make a split on one device conflict with a typo fixed on the other) | Fuzz after #694 |
 | B116 | Low | After #694, 19 of 5,000 prose merges that `main` settled silently now ask (13 minor, 6 kept as versions), mostly a blank line deleted on one side and written in on the other | Open, accepted | The new line rules are stricter at a line's edge | - (asks rather than loses) | Fuzz after #694 |
+| B117 | Low | On Linux, two notes differing only in case (`Plan.md`, `plan.md`) from before #476: whichever is opened first takes the shared history folder, and the other's versions show under it | Open, accepted | The history was already mixed before #476; `kept_folder_named` hands the whole folder to the first asker | - (no version is lost) | Second re-audit, read from the code |
 
 Skipped, counted with the insignificant Lows (cannot be fixed alone):
 
