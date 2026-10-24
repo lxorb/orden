@@ -288,14 +288,17 @@ describe('bases', () => {
       withProperties('Words', { status: 'done', pages: 3, read: true, tags: ['a', 'b'] }),
     ).toBe('---\nstatus: done\npages: 3\nread: true\ntags: [a, b]\n---\nWords')
     expect(withProperties('---\nstatus: done\n---\nWords', { status: null })).toBe('Words')
-    expect(() => withProperties('', { 'a:b': 1 })).toThrow(AgentError)
+    expect(() => withProperties('', { 'a: b': 1 })).toThrow(AgentError)
   })
 
-  test('a key is whatever front matter reads as one: letters of any script, dots', () => {
-    expect(withProperties('Words', { priorität: 'Hoch', 'a.b': 1, 日期: 'heute' })).toBe(
-      '---\npriorität: Hoch\na.b: 1\n日期: heute\n---\nWords',
+  test('a key is whatever front matter reads back as one, and a note. one is the bare key', () => {
+    expect(withProperties('Words', { priorität: 'Hoch', 'a.b': 1, 'Size (cm)': 2, '💰': 3 })).toBe(
+      '---\npriorität: Hoch\na.b: 1\nSize (cm): 2\n💰: 3\n---\nWords',
     )
-    for (const key of ['', ' a', '-a', '#a', 'a:b', 'a\nb', 'a '])
+    expect(withProperties('---\nstatus: open\n---\nWords', { 'note.status': 'done' })).toBe(
+      '---\nstatus: done\n---\nWords',
+    )
+    for (const key of ['', ' a', '-a', '#a', 'a: b', 'a\nb', 'a ', 'file.name', 'formula.cost'])
       expect(() => withProperties('', { [key]: 1 })).toThrow(AgentError)
   })
 

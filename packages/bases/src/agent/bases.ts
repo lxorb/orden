@@ -7,6 +7,7 @@
  *  folder `file.inFolder()` names, the tags `file.hasTag()` names and the values a
  *  `prop == "value"` names, so the row it makes is a row of the view it was made from. */
 
+import { isPropertyName } from '@nib/markdown/front-matter'
 import { writeList, writeProperty } from '@nib/markdown/property-edits'
 import { readFilter } from '../filter'
 import type { Base, Filter, Sort, View } from '../types'
@@ -17,20 +18,24 @@ type Args = Record<string, unknown>
 const isRecord = (value: unknown): value is Args =>
   value !== null && typeof value === 'object' && !Array.isArray(value)
 
-/** The front matter keys a value can be written under: letters, marks and digits of
- *  any script, so `priorität` and `日期` are keys the way front-matter.ts reads them,
- *  with blanks, dots and hyphens between. What it keeps out is a name the block would
- *  not read back as that key - a colon or a line break inside it, a `#` or `- ` in front
- *  that makes it a comment or a list item, a blank at either end that is trimmed away -
- *  since a key written that way is a new line every time rather than the key set. */
-const KEY = /^[\p{L}\p{M}\p{N}_](?:[\p{L}\p{M}\p{N}_ .-]*[\p{L}\p{M}\p{N}_.-])?$/u
+/** The key a property is written under: a base's `note.status` is the note's
+ *  `status`, so the prefix comes off rather than being written as a key of its own
+ *  beside it. Null for a name front matter would not read back as that key (see
+ *  `isPropertyName`), and for a file's or a formula's property, which no front matter
+ *  holds. */
+function keyOf(name: string): string | null {
+  const key = name.startsWith('note.') ? name.slice(5) : name
+  if (/^(?:file|formula)\./.test(key) || !isPropertyName(key)) return null
+  return key
+}
 
 /** The note's words with each property set, or taken away where it is null. A list is
  *  written as one, a number and a yes or no bare, everything else as words. */
 export function withProperties(text: string, properties: Args): string {
   let after = text
-  for (const [key, value] of Object.entries(properties)) {
-    if (!KEY.test(key)) throw new AgentError('bad_arguments', `${key} is not a property name`)
+  for (const [name, value] of Object.entries(properties)) {
+    const key = keyOf(name)
+    if (key === null) throw new AgentError('bad_arguments', `${name} is not a property name`)
     const edit = Array.isArray(value)
       ? writeList(
           after,

@@ -177,8 +177,16 @@ describe('a key renamed from the side panel', () => {
     expect(applied(NOTE, edit)).toBe(NOTE.replace('done:', 'finished:'))
   })
 
+  test('takes any name front matter reads back as a key', () => {
+    for (const name of ['priorität', 'due date', 'Size (cm)', '💰'])
+      expect(applied(NOTE, renameProperty(NOTE, 'done', name))).toBe(
+        NOTE.replace('done:', `${name}:`),
+      )
+  })
+
   test('refuses a name that is not a key, the same name, and one the block already has', () => {
-    expect(renameProperty(NOTE, 'done', 'two words')).toBeNull()
+    expect(renameProperty(NOTE, 'done', 'two: words')).toBeNull()
+    expect(renameProperty(NOTE, 'done', '#done')).toBeNull()
     expect(renameProperty(NOTE, 'done', '')).toBeNull()
     expect(renameProperty(NOTE, 'done', 'done')).toBeNull()
     expect(renameProperty(NOTE, 'done', 'Title')).toBeNull()

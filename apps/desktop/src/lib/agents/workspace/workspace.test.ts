@@ -890,6 +890,21 @@ describe('the notes, on the road', () => {
     )
   })
 
+  test('a property key is any name front matter reads back as one, and nothing else', async () => {
+    await call('set_property', { space: 'Home', path: 'Soup', key: 'priorität', value: 'Hoch' })
+    expect(docs.writeNote).toHaveBeenCalledWith(
+      { id: 'claude-code', name: 'Claude Code' },
+      { path: 'Soup.md', space: 'home' },
+      '---\npriorität: Hoch\n---\n# Soup\n\n- [ ] Buy milk\n',
+      'r1',
+    )
+    // Names front matter would read as a shorter key, a comment and a list item.
+    for (const key of ['a: b', '#tags', '- tags'])
+      expect(
+        await call('set_property', { space: 'Home', path: 'Soup', key, value: 'x' }),
+      ).toMatchObject({ code: 'bad_arguments' })
+  })
+
   test('a task is ticked on its own line', async () => {
     await call('set_task', { space: 'Home', path: 'Soup', at: { task: 'Buy milk' }, done: true })
     expect(docs.editNote).toHaveBeenCalledWith(
