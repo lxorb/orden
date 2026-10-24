@@ -1,3 +1,4 @@
+import { renderMarkdown } from '@nib/markdown'
 import { describe, expect, test } from 'vitest'
 
 import type { ImportPlan } from './plan'
@@ -191,6 +192,29 @@ describe('links between Tomboy notes', () => {
     expect(noteAt(plan, 'Index.md')).toContain(
       'See [ZugFerd / factur-x #4343](ZugFerd%20factur-x%20%234343.md)',
     )
+  })
+
+  test('keep a tag in the title as words where the link is a markdown one', async () => {
+    const plan = await readTomboy([
+      file(
+        'b.note',
+        note('Index', 'See <link:internal>&lt;img src=y onerror=alert(2)&gt;#</link:internal>'),
+      ),
+    ])
+
+    const text = noteAt(plan, 'Index.md')
+    expect(text).toContain('See [\\<img src=y onerror=alert(2)>#](')
+    expect(renderMarkdown(text)).not.toContain('<img')
+  })
+
+  test('keep a backslash in front of a tag in the title as one backslash', async () => {
+    const plan = await readTomboy([
+      file('b.note', note('Index', 'See <link:internal>a\\&lt;b&gt; [c]#</link:internal>')),
+    ])
+
+    const text = noteAt(plan, 'Index.md')
+    expect(text).toContain('See [a\\\\\\<b> \\[c\\]#](')
+    expect(renderMarkdown(text)).toContain('a\\&lt;b&gt; [c]#</a>')
   })
 
   test('name the file and show the title, when the two differ', async () => {

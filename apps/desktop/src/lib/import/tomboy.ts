@@ -346,9 +346,14 @@ function linkTo(to: string, from: string, title: string, shared: boolean): strin
     return `[[${name}${shown}]]`
   }
 
-  const words = title.replace(/[\\[\]]/g, (one) => `\\${one}`)
-  return `[${words}](${encoded(relative(to, from))})`
+  return `[${asWords(title.replace(LITERAL, (one) => `\\${one}`))}](${encoded(relative(to, from))})`
 }
+
+/** What a link's words escape themselves before `asWords`: a bracket, which would
+ *  end them, and a backslash, which would escape what comes after it. Not the run
+ *  of backslashes in front of a tag, which `asWords` doubles itself, and doubling
+ *  it twice would show two backslashes for the one the title had. */
+const LITERAL = new RegExp(`\\\\(?!\\\\*${OPENS_MARKUP.source})|[[\\]]`, 'g')
 
 /** Where `to` is from the folder of the note at `from`. */
 function relative(to: string, from: string): string {
