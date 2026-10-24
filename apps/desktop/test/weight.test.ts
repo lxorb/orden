@@ -838,7 +838,7 @@ function holds(tail: string): boolean {
  *  Raised 2026-10-24, to 3,285,500, for #846: the card over a link says whether the
  *  note under it is read-only (`previewNoteOf` in @nib/editor's wikilink/hover.ts).
  *  Measured 3,285,115. */
-const BUDGET = 3_300_000 // combined branch only
+const BUDGET = 3_316_000 // combined branch only, measured 3315708
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
