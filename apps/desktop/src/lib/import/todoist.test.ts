@@ -3,6 +3,7 @@
  *  examples: `{results, next_cursor}` pages, `due {date, string, is_recurring,
  *  timezone}`, `deadline {date}`, `duration {amount, unit}`, priority 4 as p1). */
 
+import { renderMarkdown } from '@nib/markdown'
 import { describe, expect, test } from 'vitest'
 import { sourceOf } from './sources'
 import {
@@ -496,6 +497,55 @@ describe('words that look like something else', () => {
         '',
       ].join('\n'),
     )
+  })
+
+  test('a tag in what a task, a comment, a section or an assignee says stays words, since Todoist shows it as text', () => {
+    const img = '<img src=https://t.example/p.gif>'
+    const plan = planOf({
+      projects: [{ id: 'p', name: 'Lists', inbox: false, about: [`About ${img}`] }],
+      sections: [
+        { id: 's', project: 'p', name: 'Room <style>body{}</style>', order: 1, about: [img] },
+      ],
+      tasks: [
+        {
+          id: 't',
+          project: 'p',
+          section: 's',
+          text: `Shop **now** ${img}`,
+          description: `- [ ] milk ${img}`,
+          priority: 4,
+          labels: [],
+          order: 1,
+          repeats: `every blue moon ${img}`,
+          assignee: 'Eve <iframe src=https://t.example/>',
+          remind: [],
+          comments: [
+            { text: `Seen ${img}\n<style>p{}</style>`, at: '2026-10-01' },
+            { text: `[a ${img}](<https://t.example/a b.pdf>)` },
+          ],
+        },
+      ],
+    })
+    const note = plan.files[0]
+    const text = note?.kind === 'note' ? note.text : ''
+    expect(text).not.toMatch(/(?<!\\)<\/?(img|style|iframe)/)
+    expect(text).toContain('Shop **now** \\<img src=https://t.example/p.gif>')
+    expect(text).toContain('## Room \\<style>')
+    expect(text).toContain('  - \\[ ] milk \\<img')
+    expect(text).toContain('[assignee:: Eve \\<iframe')
+    expect(text).toContain('  [a \\<img src=https://t.example/p.gif>](<https://t.example/a b.pdf>)')
+  })
+
+  test("a backslash in front of a tag in an attachment's name is still one backslash", () => {
+    const csv = [
+      'TYPE,CONTENT,DESCRIPTION,PRIORITY,INDENT,AUTHOR,RESPONSIBLE,DATE,DATE_LANG,TIMEZONE,DURATION,DURATION_UNIT,meta,DEADLINE,DEADLINE_LANG,IS_COLLAPSED',
+      'task,Move the piano,,4,1,,,,,,,,,,,',
+      'note,"[[file {""file_name"":""a\\\\<b> [c].pdf"",""file_url"":""https://files.todoist.com/a.pdf""}]]",,,,,,,,,,,,,,',
+    ].join('\r\n')
+    const note = planOf(csvProject('Moving', csv, 0)).files[0]
+    const text = note?.kind === 'note' ? note.text : ''
+    expect(text).toContain('  [a\\\\\\<b> \\[c\\].pdf](https://files.todoist.com/a.pdf)')
+    expect(renderMarkdown(text)).toContain('>a\\&lt;b&gt; [c].pdf</a>')
   })
 })
 
