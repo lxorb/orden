@@ -175,3 +175,28 @@ test('the account refusing the way back, the undo stays to be asked for again', 
   expect(there(POINTER)).toBe(false)
   expect(workspace.undone.last).not.toBeNull()
 })
+
+test('a folder’s move between spaces undone moves the chats in it back too', async () => {
+  // Undone from the space it left, so the folder is in a space whose tree is not the one
+  // loaded, and only the disk says what is in it (B246).
+  const { undoLastFileAction } = await import('./undoing')
+  disk.current?.folders.add(`${SHARED}/Proj`)
+  disk.current?.files.set(`${SHARED}/Proj/Plans.chat`, chatText({ v: 1, chat: CHAT }))
+  disk.current?.files.delete(POINTER)
+  await workspace.loadTree()
+  await workspace.moveMany([`${SHARED}/Proj`], OWNERS)
+  await undoLastFileAction(workspace)
+  expect(there(`${SHARED}/Proj/Plans.chat`)).toBe(true)
+  expect(asked.moves).toEqual([
+    [CHAT, 'r-lab'],
+    [CHAT, 'r-team'],
+  ])
+})
+
+test('a folder of a space not open moved into another, the chats in it go along', async () => {
+  disk.current?.folders.add(`${OWNERS}/Proj`)
+  disk.current?.files.set(`${OWNERS}/Proj/Plans.chat`, chatText({ v: 1, chat: CHAT }))
+  await workspace.move(`${OWNERS}/Proj`, SHARED)
+  expect(there(`${SHARED}/Proj/Plans.chat`)).toBe(true)
+  expect(asked.moves).toEqual([[CHAT, 'r-team']])
+})

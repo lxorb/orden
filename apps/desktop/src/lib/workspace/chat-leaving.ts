@@ -9,7 +9,7 @@ import { sync } from '../sync.svelte'
 import { joinPath } from '../tauri'
 import { failed } from '../views/failed.svelte'
 import { workspace } from '../workspace.svelte'
-import { mayCarry, pointersIn, spaceHolding } from './chat-carry'
+import { mayCarry, pointersMoving, spaceHolding } from './chat-carry'
 
 /** Before `path` moves into `folder`: the chats it carries into another space, moved
  *  there on the account first. Throws where the file may not move, with the toast saying
@@ -22,7 +22,7 @@ export async function chatsCarried(path: string, folder: string): Promise<() => 
   const from = spaceHolding(path)
   const to = spaceHolding(folder)
   if (!from || !to || samePath(from.root, to.root)) return none
-  const pointers = pointersIn(path)
+  const pointers = await pointersMoving(path)
   if (!pointers.length) return none
 
   const [{ moveChat }, { readPointer }] = await Promise.all([
@@ -44,7 +44,7 @@ export async function chatsCarried(path: string, folder: string): Promise<() => 
   if (await onDisk(joinPath(folder, nameOf(path)))) {
     await refuse(new Error('something already lives there'))
   }
-  if (!mayCarry(path, to.root)) await refuse(new Error('only the owner can do that'))
+  if (!mayCarry(path, to.root, pointers)) await refuse(new Error('only the owner can do that'))
   const space = sync.remoteIdFor(to.root)
   // A folder on no account has no chat to move there, and the pointer is a file like
   // any other in it.
