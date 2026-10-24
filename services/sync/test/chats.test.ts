@@ -925,6 +925,27 @@ describe('chats', () => {
       ])
     })
 
+    test('a link preview’s picture is fetched by the members, and goes with its message', async () => {
+      const chat = await chatOfOwner()
+      const picture = await upload(people.writer, new Uint8Array([7, 7, 7, 7]))
+      const post = postOf('see https://example.com', {
+        preview: { url: 'https://example.com', title: 'Example', picture },
+      })
+      expect((await send(people.writer, chat, post)).results[0]).toMatchObject({ seq: 1 })
+      const fetched = async (token: string) =>
+        (await call(env, `/v2/chats/${chat}/files/${picture}`, { token })).status
+      expect([await fetched(people.writer), await fetched(people.reader)]).toEqual([200, 200])
+      expect(await fetched(people.stranger)).toBe(404)
+      // A use of the blob as any file of a message is, which is what an erase hands on.
+      expect(env.db.prepare('select hash from chat_files where chat_id = ?').all(chat)).toEqual([
+        { hash: picture },
+      ])
+
+      await send(people.writer, chat, { kind: 'delete', id: id(), target: post.message })
+      expect(await fetched(people.reader)).toBe(404)
+      expect(env.db.prepare('select hash from chat_files where chat_id = ?').all(chat)).toEqual([])
+    })
+
     test('a file is let go though another message says its hash in words', async () => {
       const chat = await chatOfOwner()
       const hash = await upload(people.writer, new Uint8Array([1, 2, 3, 5]))
