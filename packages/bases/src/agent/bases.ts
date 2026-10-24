@@ -9,6 +9,7 @@
 
 import { isPropertyName } from '@nib/markdown/front-matter'
 import { writeList, writeProperty } from '@nib/markdown/property-edits'
+import { type ListItem, writeList, writeProperty } from '@nib/markdown/property-edits'
 import { readFilter } from '../filter'
 import type { Base, Filter, Sort, View } from '../types'
 import { AgentError } from './tasks'
@@ -37,11 +38,7 @@ export function withProperties(text: string, properties: Args): string {
     const key = keyOf(name)
     if (key === null) throw new AgentError('bad_arguments', `${name} is not a property name`)
     const edit = Array.isArray(value)
-      ? writeList(
-          after,
-          key,
-          value.map((one) => String(one)),
-        )
+      ? writeList(after, key, value.map(listItem))
       : value === null
         ? writeProperty(after, key, null)
         : typeof value === 'boolean'
@@ -59,6 +56,14 @@ export function withProperties(text: string, properties: Args): string {
     if (edit) after = after.slice(0, edit.from) + edit.insert + after.slice(edit.to)
   }
   return after
+}
+
+/** A list member the agent sent, as itself where a list can hold it bare: a number,
+ *  a yes or no, or nothing. Words are words, and anything else is written as the JSON
+ *  it came in as rather than as `[object Object]`. */
+function listItem(value: unknown): ListItem {
+  if (value === null || typeof value === 'number' || typeof value === 'boolean') return value
+  return typeof value === 'string' ? value : JSON.stringify(value)
 }
 
 /** The expressions every row of a view must satisfy: the base's and the view's, and

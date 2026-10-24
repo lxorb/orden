@@ -22,11 +22,42 @@ import { frontMatterBlock, frontMatterEdit, isPropertyName } from './front-matte
 import { type Property, type PropertyKind, readProperties } from './properties'
 import { flowItem, scalar } from './yaml'
 
+/** One item of a list as what it means: words, a number, a yes or no, or nothing.
+ *  A list is not only tags; `scores: [1, 2, 10]` holds numbers, and a list rewritten
+ *  as strings would have every base that reads it sort `10` before `2`. */
+export type ListItem = string | number | boolean | null
+
 /** A list as a note writes one: a flow sequence, which is what Obsidian writes and
  *  what `frontMatterList` reads back. `[]` for a list with nothing in it, because a
- *  key with an empty list is still a fact about the note. */
-export function writtenList(items: readonly string[]): string {
-  return `[${items.map((one) => flowItem(one)).join(', ')}]`
+ *  key with an empty list is still a fact about the note.
+ *
+ *  A number, a yes or no and nothing are written bare, which is what makes them
+ *  those things to YAML. Words go through `flowItem`, which quotes the ones YAML
+ *  would read as something else, so the word `true` comes back as the word. */
+export function writtenList(items: readonly ListItem[]): string {
+  return `[${items.map(writtenItem).join(', ')}]`
+}
+
+function writtenItem(item: ListItem): string {
+  if (item === null || typeof item === 'boolean') return String(item)
+  if (typeof item === 'number') return Number.isFinite(item) ? String(item) : flowItem(String(item))
+  return flowItem(item)
+}
+
+/** A list row's items as what they mean, read the way the bases read a value: a
+ *  quoted item is words whatever it says, and a plain one is a number, a yes or no,
+ *  or nothing where it says one. This is what a chip edit writes back, so taking
+ *  `2` off `[1, 2, 10]` leaves `[1, 10]` rather than `['1', '10']`. */
+export function listItems(property: Property): ListItem[] {
+  const quoted = property.quotedItems ?? []
+  return property.items.map((item, at) => (quoted[at] ? item : plainItem(item)))
+}
+
+function plainItem(item: string): ListItem {
+  if (item === '' || item === 'null' || item === '~') return null
+  if (/^(true|false)$/i.test(item)) return item.toLowerCase() === 'true'
+  if (/^-?\d+(?:\.\d+)?$/.test(item)) return Number(item)
+  return item
 }
 
 /** How a value is written for each kind of control.
@@ -66,7 +97,11 @@ export function writeProperty(
  *  the same span to replace.
  *
  *  A key the block does not hold yet is appended the way any other key is. */
-export function writeList(source: string, key: string, items: readonly string[]): TextEdit | null {
+export function writeList(
+  source: string,
+  key: string,
+  items: readonly ListItem[],
+): TextEdit | null {
   const found = readProperties(source)?.find((one) => one.key === key)
   if (!found) return frontMatterEdit(source, key, writtenList(items))
 
@@ -76,17 +111,30 @@ export function writeList(source: string, key: string, items: readonly string[])
 
 /** The same list with `item` on the end, or unchanged where it is already in it. A
  *  list is a set of names and the same name twice says nothing twice. */
-export function withItem(property: Property, item: string): string[] | null {
+export function withItem(property: Property, item: string): ListItem[] | null {
   const said = item.trim()
   if (!said || property.items.includes(said)) return null
-  return [...property.items, said]
+  return [...listItems(property), typedItem(said)]
+}
+
+/** A chip somebody typed, as what they would have meant typing it bare into the
+ *  note: `3` is the number and `true` the yes, so a chip added to `scores: [1, 10]`
+ *  sums with the others. Only where YAML reads the bare text back as that same
+ *  text, though - `007` would come back as 7, `1e3` as a thousand and `yes` or
+ *  `True` as a yes spelled differently - and those stay the words, which
+ *  `flowItem` quotes. */
+function typedItem(said: string): ListItem {
+  if (said === 'true' || said === 'false') return said === 'true'
+  if (/^-?\d+(?:\.\d+)?$/.test(said) && String(Number(said)) === said) return Number(said)
+  return said
 }
 
 /** The same list with `item` gone. Null where it was not in it, which is a chip
  *  pressed twice before the document caught up. */
-export function withoutItem(property: Property, item: string): string[] | null {
+export function withoutItem(property: Property, item: string): ListItem[] | null {
   if (!property.items.includes(item)) return null
-  return property.items.filter((one) => one !== item)
+  const items = listItems(property)
+  return items.filter((_, at) => property.items[at] !== item)
 }
 
 /** One edit that renames a key and touches nothing else: its value, its place and

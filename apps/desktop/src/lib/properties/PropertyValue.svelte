@@ -9,7 +9,7 @@
    *  note writes it (the panel into the open document, a view through the rows' one
    *  write path). */
   import type { Property } from '@nib/markdown/properties'
-  import { withItem, withoutItem } from '@nib/markdown/property-edits'
+  import { type ListItem, withItem, withoutItem } from '@nib/markdown/property-edits'
   import Cross from '../Cross.svelte'
   import { t } from '../i18n.svelte'
 
@@ -29,7 +29,7 @@
     /** A scalar written: the words as the file writes them, or null to empty it. */
     onwrite: (value: string | null) => void
     /** A list written whole. */
-    onitems: (items: string[]) => void
+    onitems: (items: ListItem[]) => void
     /** A tag pressed, which asks the space about it. */
     onsearch?: ((text: string) => void) | undefined
     autofocus?: boolean
