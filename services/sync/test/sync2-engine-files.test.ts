@@ -225,6 +225,31 @@ describe('a file that is not a note, under v2', () => {
     }
   })
 
+  test('one the disk refuses to write waits for the next pass, and the rest arrive', async () => {
+    // Refused, the write threw, and the pass stopped before anything after it came.
+    const laptop = await device('laptop', { 'a.png': picture(3), 'b.png': picture(5) })
+    const desktop = await device('desktop')
+    const real = desktop.disk.writeBytes.bind(desktop.disk)
+    let locked = true
+    desktop.disk.writeBytes = async (path, bytes) => {
+      if (locked && path.endsWith('/a.png')) throw new Error(`${path} is open in another program`)
+      await real(path, bytes)
+    }
+    await passed(laptop, desktop)
+
+    expect(bytesAt(desktop, 'a.png')).toBeUndefined()
+    expect(bytesAt(desktop, 'b.png')).toEqual(picture(5))
+
+    locked = false
+    await passed(laptop, desktop)
+    expect(bytesAt(desktop, 'a.png')).toEqual(picture(3))
+    expect(desktop.engine.held.notes).toHaveLength(0)
+    expect([...desktop.disk.bytes.keys()].sort()).toEqual([
+      `${desktop.root}/a.png`,
+      `${desktop.root}/b.png`,
+    ])
+  })
+
   test('deleted on one device, it is gone from the other', async () => {
     const laptop = await device('laptop', { 'photo.png': picture(3) })
     const phone = await device('phone')
