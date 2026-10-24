@@ -253,3 +253,15 @@ describe('an open note in a space shared to be read', () => {
     expect(files.get('/theirs/Plan.md')).toBe('# Plan for May')
   })
 })
+
+describe('a PDF opened with the app from outside', () => {
+  test('is not brought into a space shared to be read', async () => {
+    readOnly.add('/theirs')
+    const was = before()
+
+    expect(await workspace.bringInPdf('/elsewhere/paper.pdf', '/theirs')).toBeNull()
+
+    expect(before()).toEqual(was)
+    expect(writes()).toEqual([])
+  })
+})

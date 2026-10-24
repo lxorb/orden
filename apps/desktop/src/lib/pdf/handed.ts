@@ -9,6 +9,7 @@
  *  Fetched with the rest of the roads in, after the space has restored. */
 
 import { log } from '../log'
+import { canWriteAt } from '../sharing.svelte'
 import { invoke } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import { arrivalOf } from './arrival'
@@ -39,7 +40,7 @@ export async function showPdfs(said: unknown) {
 }
 
 async function showPdf(handed: string) {
-  const arrival = arrivalOf(handed, workspace.spaces, workspace.activeSpaceId)
+  const arrival = arrivalOf(handed, workspace.spaces, workspace.activeSpaceId, canWriteAt)
   if (!arrival) {
     log('warn', 'pdf: a file was handed over with no space to put it in')
     return
