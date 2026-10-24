@@ -98,6 +98,8 @@ pub fn window_frame(webview: tauri::Webview) -> Result<(), String> {
         }
         let scale = window.scale_factor().unwrap_or(1.0);
         let xid = x11::xid(&window)?;
+        // No white of the X server's own where a page is taken away; see page_hide.rs.
+        crate::page_hide::no_ground_in(xid);
         x11::frame(xid, scale)
     }
     #[cfg(not(feature = "cef"))]

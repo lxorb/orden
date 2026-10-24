@@ -1839,6 +1839,8 @@ pub fn web_place(
 
     if visible {
         let _doing = crate::stall::doing("web_place: shown");
+        // Nothing of the X server's own drawn as it comes back; see page_hide.rs.
+        crate::page_hide::no_ground(&view);
         view.show()
             .map_err(|error| format!("that page could not be shown: {error}"))?;
     }
