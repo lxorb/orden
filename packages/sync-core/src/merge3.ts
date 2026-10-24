@@ -490,13 +490,22 @@ export function written(base: string, analysis: Analysis, writing: Writing): str
     for (const edit of meeting[settled]) pieces.push({ ...edit, rank: rankOf(settled, edit.from) })
   }
 
-  // In order along the ancestor; at one point, whoever goes first. A replacement's
-  // words and an insertion at its start land at the same place, so they are ordered
-  // like two insertions, and the replaced text is skipped whichever comes first.
-  // Whole lines go ahead of words written into the line they land on, whoever goes
-  // first, since after it they would run into that line.
+  // In order along the ancestor; at one point, whoever goes first. Whole lines go
+  // ahead of words written into the line they land on, whoever goes first, since
+  // after it they would run into that line. And an insertion goes ahead of a
+  // replacement that starts where it was made: it was put in before the text the
+  // replacement takes out, so it goes before the words that stand for that text, and
+  // after them it would run into their last word (`breadfresh`).
   const inside = (piece: Piece) => (wholeLines(base, piece) ? 0 : 1)
-  pieces.sort((a, b) => a.from - b.from || inside(a) - inside(b) || a.rank - b.rank || a.to - b.to)
+  const replaces = (piece: Piece) => (piece.to > piece.from ? 1 : 0)
+  pieces.sort(
+    (a, b) =>
+      a.from - b.from ||
+      inside(a) - inside(b) ||
+      replaces(a) - replaces(b) ||
+      a.rank - b.rank ||
+      a.to - b.to,
+  )
 
   let out = ''
   let at = 0

@@ -414,6 +414,52 @@ describe('diverge', () => {
     }
   })
 
+  test.each([
+    [
+      'buy milk and eggs\n',
+      'buy milk and bread\n',
+      'buy milk and fresh eggs\n',
+      'buy milk and fresh bread\n',
+    ],
+    [
+      'Call Ann on Friday.\n',
+      'Call Ann on Monday.\n',
+      'Call Ann on next Friday.\n',
+      'Call Ann on next Monday.\n',
+    ],
+    [
+      '- [ ] Call Ann on Friday\n',
+      '- [ ] Call Ann on Monday\n',
+      '- [ ] Call Ann on next Friday\n',
+      '- [ ] Call Ann on next Monday\n',
+    ],
+    [
+      'The cat sat on the mat.\n',
+      'The cat sat under the mat.\n',
+      'The cat sat quietly on the mat.\n',
+      'The cat sat quietly under the mat.\n',
+    ],
+  ])(
+    'a word put in before a word the other side replaced goes before its replacement (%j)',
+    (base, local, remote, both) => {
+      // The replacement was written first and the words put in before it straight after,
+      // run into it: "breadfresh".
+      const merged = crdtMerge(base, local, remote)
+      for (const [one, other] of [
+        [local, remote],
+        [remote, local],
+      ] as const) {
+        for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
+          for (const crdt of [undefined, merged]) {
+            const result = diverge(base, one, other, times, crdt)
+            expect(result.verdict).toBe('clean')
+            expect(result.resolution).toBe(both)
+          }
+        }
+      }
+    },
+  )
+
   test('tasks each side added beside ones the other deleted stay tasks of their own', () => {
     // Two added tasks ran together into one line and an emptied box was left behind.
     const base = '- [ ] alpha\n- [ ] beta\n- [ ] new item\n- [ ] gamma\n'
