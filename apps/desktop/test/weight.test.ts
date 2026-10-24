@@ -835,7 +835,7 @@ function holds(tail: string): boolean {
  *  shared to be read, in the workspace's own calls (`writableAt`) and in the row menu,
  *  the tree's keys and the palette. Measured 3,283,904.
  *
- *  Raised 2026-10-24, to 3,286,000, for B327: Recently deleted reads where a device
+ *  Raised 2026-10-24, to 3,286,000, for #855: Recently deleted reads where a device
  *  row was from the notes folder before asking whether it may go back
  *  (`whereFrom` in trash.svelte.ts). Measured 3,285,287. */
 const BUDGET = 3_286_000
