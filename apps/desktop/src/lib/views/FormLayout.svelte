@@ -56,7 +56,9 @@
   }
 
   async function send() {
-    if (!base || sending) return
+    // Where the note would land in a space shared to be read, Send is not offered and
+    // a press that comes anyway (Enter in a field) sends nothing.
+    if (!base || sending || !kit.adds) return
     const properties: Record<string, Value> = {}
     for (const field of fields) {
       const value = valueOf(field, values[field] ?? '')
@@ -72,7 +74,10 @@
         properties,
         open: false,
       })
-      if (path !== null) sent = { path, name }
+      // Emptied only for a note that was made: one refused keeps what was typed, to
+      // send again or copy elsewhere.
+      if (path === null) return
+      sent = { path, name }
       title = ''
       values = {}
     } finally {
@@ -154,7 +159,7 @@
       >
     {/if}
     <span class="spring"></span>
-    <button type="submit" class="nib-button" disabled={sending}>{t('Send')}</button>
+    <button type="submit" class="nib-button" disabled={sending || !kit.adds}>{t('Send')}</button>
   </div>
 </form>
 
