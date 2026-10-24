@@ -283,6 +283,20 @@ describe('a list', () => {
     )
   })
 
+  test('a list in a note whose lines end in CRLF keeps its members and its line ends', () => {
+    for (const note of [
+      '---\r\nids: [007, "x"]\r\ntitle: t\r\n---\r\n',
+      '---\r\nids:\r\n  - 007\r\n  - "x"\r\ntitle: t\r\n---\r\n',
+    ]) {
+      const ids = readProperties(note)?.find((one) => one.key === 'ids')
+      expect(ids?.items, note).toEqual(['007', 'x'])
+      // Asserted on the line above.
+      expect(applied(note, writeList(note, 'ids', withItem(ids!, 'z') ?? [])), note).toBe(
+        '---\r\nids: [007, "x", z]\r\ntitle: t\r\n---\r\n',
+      )
+    }
+  })
+
   test('the last chip off leaves the key with an empty list rather than no key', () => {
     const written = applied(NOTE, writeList(NOTE, 'tags', []))
 
