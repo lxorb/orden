@@ -10,6 +10,7 @@
  *  way a bookmark follows. A space that never renamed its inbox keeps nothing here. */
 
 import { insideItsSpace, insideSpace, movedTo, pathKey, relativeTo, samePath } from '../space-paths'
+import { readIfThere } from '../read-if-there'
 import { without } from '../records'
 import { forget, isRecord, isString, keep, stored } from '../stored'
 import { invoke, isDesktop, platform } from '../tauri'
@@ -69,15 +70,17 @@ export function rememberInbox(root: string | null) {
   void invoke('remember_inbox', { path: insideSpace(root, inboxOf(root)) }).catch(() => undefined)
 }
 
-/** The space's inbox as a path on this disk, made empty where there is none yet. */
+/** The space's inbox as a path on this disk, made empty where there is none yet.
+ *  Throws `Unreadable` for an inbox that is there and would not read. */
 export async function ensureInbox(
   root: string,
   made: (path: string) => Promise<void>,
 ): Promise<string> {
   const path = insideSpace(root, inboxOf(root))
-  // Read rather than stamped: the browser's build answers no stamp for any file, and
-  // an inbox made over one that is there would be a note emptied.
-  const there = await invoke<string>('read_note', { path }).catch(() => null)
+  // Read, and the disk asked only where the read failed: an inbox that is there and
+  // would not read fails the read too, and one made over it would be a note emptied
+  // with the task landing in what is left.
+  const there = await readIfThere(path)
   if (there === null) await made(path)
   return path
 }

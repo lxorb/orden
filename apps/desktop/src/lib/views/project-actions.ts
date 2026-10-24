@@ -120,7 +120,7 @@ export function placeEntries(
     {
       label: t('Inbox'),
       checked: here(inboxNoteAt(root)),
-      run: () => void inboxNote(root).then(go),
+      run: () => void inboxNote(root).then(go, () => undefined),
     },
   ]
   const walk = (nodes: readonly ProjectNode[], above: string) => {

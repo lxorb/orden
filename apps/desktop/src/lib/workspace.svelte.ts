@@ -13,6 +13,7 @@ import {
 import { freePath } from '@nib/markdown/paths'
 import { openerFor, sharedKind } from './openers'
 import { links, type Retargeting } from './link-index.svelte'
+import { onDisk } from './on-disk'
 import { noteId } from './note-id'
 import { insideOnly } from './automation/inside'
 import {
@@ -4335,6 +4336,12 @@ class Workspace {
     if (safe === null) return null
 
     const path = insideSpace(root, safe)
+    // The index's miss is not the disk's: a dot folder is never scanned, and a note
+    // that is not UTF-8 or too big to read is skipped. So the disk is asked, and a
+    // note that is there is opened - or refused by the open, if it would not read -
+    // rather than written over with a heading.
+    if (await onDisk(path)) return path
+
     const content = `# ${noteName(relative)}\n\n`
     await writeFile(path, content)
     await this.loadTree()

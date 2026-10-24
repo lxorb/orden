@@ -21,6 +21,9 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 
 const disk = new Map<string, string>()
+/** Notes that are there and will not read: not UTF-8, over the size the crate reads,
+ *  or in a cloud that cannot fetch them offline. */
+const unreadable = new Set<string>()
 
 /** What the crate was told the inbox of the space in front is. */
 const told: string[] = []
@@ -33,6 +36,10 @@ vi.mock('../tauri', async (original) => ({
     if (command === 'remember_inbox') {
       told.push(args?.path ?? '')
       return Promise.resolve()
+    }
+    if (command === 'path_exists') {
+      const at = args?.path ?? ''
+      return Promise.resolve(disk.has(at) || unreadable.has(at))
     }
     const held = disk.get(args?.path ?? '')
     if (command === 'read_note' && held !== undefined) return Promise.resolve(held)
@@ -48,6 +55,7 @@ const ROOT = '/spaces/Work'
 beforeEach(() => {
   localStorage.clear()
   disk.clear()
+  unreadable.clear()
   told.length = 0
   rememberInbox(null)
 })
@@ -98,6 +106,18 @@ describe('the inbox of a space', () => {
     disk.set(`${ROOT}/Inbox.md`, '- [ ] already here\n')
     expect(await ensureInbox(ROOT, make)).toBe(`${ROOT}/Inbox.md`)
     expect(made).toEqual([`${ROOT}/Inbox.md`])
+  })
+
+  test('that is there and will not read is refused, never made again over itself', async () => {
+    unreadable.add(`${ROOT}/Inbox.md`)
+    const made: string[] = []
+    const make = (path: string) => {
+      made.push(path)
+      return Promise.resolve()
+    }
+
+    await expect(ensureInbox(ROOT, make)).rejects.toThrow(/would not read/)
+    expect(made).toEqual([])
   })
 })
 

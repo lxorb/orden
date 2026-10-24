@@ -11,6 +11,8 @@ import { insideOnly } from '../automation/inside'
 import { changeOf } from '../search/replace'
 import { insideSpace, isMarkdownPath, relativeTo, withoutExtension } from '../space-paths'
 import { links } from '../link-index.svelte'
+import { onDisk } from '../on-disk'
+import { readIfThere, toldIfUnreadable } from '../read-if-there'
 import { workspace } from '../workspace.svelte'
 import { noteText, replaceInNotes } from '../workspace/note-text'
 import { writeFile } from '../workspace/write-file'
@@ -59,6 +61,9 @@ async function targetOf(entry: Entry, root: string): Promise<string | null> {
   const relative = insideOnly(`${entry.note.replace(/\.md$/i, '')}.md`)
   if (relative === null) return null
   const path = insideSpace(root, relative)
+  // A note the file list does not hold may be there all the same - in a dot folder,
+  // which is never listed - and is written into rather than made again over itself.
+  if (await onDisk(path)) return path
   await writeFile(path, '')
   await workspace.loadTree()
   await workspace.fileCame(path, 'file')
@@ -76,7 +81,14 @@ export async function addTask(
   const path = await targetOf(entry, root)
   if (path === null) return null
 
-  const before = (await noteText(workspace, path)) ?? ''
+  // A note that would not read is not an empty one: the read is asked again of the
+  // disk, which throws for one that is there, and the reader is told it was kept.
+  let before: string
+  try {
+    before = (await noteText(workspace, path)) ?? (await readIfThere(path)) ?? ''
+  } catch (error) {
+    return toldIfUnreadable(error)
+  }
   const placed = placeIn(before, linesOf(entry), entry.heading)
   await replaceInNotes(workspace, [
     changeOf(path, before, [{ from: placed.at, to: placed.at, insert: placed.insert }]),
