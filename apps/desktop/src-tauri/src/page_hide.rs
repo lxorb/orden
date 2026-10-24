@@ -49,7 +49,10 @@ mod engine {
                 break;
             }
             let _ = x.change_window_attributes(one, &none);
-            if let Ok(Ok(tree)) = x.query_tree(one).map(|cookie| cookie.reply()) {
+            let Ok(asked) = x.query_tree(one) else {
+                continue;
+            };
+            if let Ok(tree) = asked.reply() {
                 todo.extend(tree.children);
             }
         }
