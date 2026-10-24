@@ -1,12 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import {
-  editedWords,
-  escapeText,
-  plainWords,
-  shownWords,
-  typedWords,
-  unescapedAt,
-} from './escapes'
+import { editedWords, escapeText, plainWords, shownWords, typedWords, unescapedAt } from './escapes'
 import { renderMarkdown } from './index'
 import { readTask } from './task-line'
 
