@@ -573,6 +573,24 @@ describe('diverge', () => {
     }
   })
 
+  test('a merge never says a word twice to keep to lines someone wrote (seed 7808)', () => {
+    // Both put words in front of the same word on one line. Kept both, the one side's
+    // second line ran into the other's (`mk28zmk5z after monday`); the newer side's
+    // version, chosen for being made of lines someone wrote, said `mk12z` twice. Neither
+    // is the note, so it is asked.
+    const base = 'mk12z\nreview mk23z\nmk33z review'
+    const local = 'mk13z\nmk28zmk12z\nreview mk23z\nmk33z review'
+    const remote = 'mk5z after mondaymk12z\nreview mk23z\nmk33z review'
+    const merged = 'mk13z\nmk28zmk5z after mondaymk12z\nreview mk23z\nmk33z review'
+    for (const times of [LOCAL_NEWER, REMOTE_NEWER, { local: 146, remote: 177 }]) {
+      const result = diverge(base, local, remote, times, merged)
+      if (result.resolution === null) continue
+      expect(result.resolution.match(/mk\d+z/g)?.filter((one) => one === 'mk12z')).toEqual([
+        'mk12z',
+      ])
+    }
+  })
+
   test('tasks each side added beside ones the other deleted stay tasks of their own', () => {
     // Two added tasks ran together into one line and an emptied box was left behind.
     const base = '- [ ] alpha\n- [ ] beta\n- [ ] new item\n- [ ] gamma\n'
