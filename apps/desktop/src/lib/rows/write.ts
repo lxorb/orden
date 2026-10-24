@@ -184,7 +184,7 @@ function asList(
       write: (items) => ({
         from: found.from,
         to: found.to,
-        insert: listLines(found.property.key, items),
+        insert: listLines(found.property.key, items, text),
       }),
     }
   }

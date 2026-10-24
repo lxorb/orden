@@ -84,11 +84,13 @@ export function listItems(property: Property): ListItem[] {
 const BLOCK_ONLY = /(?:^|\s)#|^-(?:\s|$)|^[?:](?:\s|$)|:(?:\s|$)|^[|>]/
 
 /** A key and its list as the lines a note writes them: a flow list on the key's line,
- *  or, where a member means itself only in a block list, a `- ` line for each. */
-export function listLines(key: string, items: readonly ListItem[]): string {
+ *  or, where a member means itself only in a block list, a `- ` line for each, ended
+ *  the way the note ends its lines (`source`), so a CRLF note keeps CRLF throughout. */
+export function listLines(key: string, items: readonly ListItem[], source = ''): string {
   const block = items.some((one) => one !== null && typeof one === 'object' && one.block)
   if (!block) return `${key}: ${writtenList(items)}`
-  return [`${key}:`, ...items.map((one) => `  - ${writtenItem(one)}`)].join('\n')
+  const ending = source.includes('\r\n') ? '\r\n' : '\n'
+  return [`${key}:`, ...items.map((one) => `  - ${writtenItem(one)}`)].join(ending)
 }
 
 /** How a value is written for each kind of control.
@@ -138,7 +140,7 @@ export function writeList(
   if (!found) return frontMatterEdit(source, key, writtenList(items))
 
   // In the note's own spelling of the key, which may be another case than asked.
-  const lines = listLines(found.key, items)
+  const lines = listLines(found.key, items, source)
   const after = `${source.slice(0, found.from)}${lines}${source.slice(found.to)}`
   return oneEdit(source, after)
 }
