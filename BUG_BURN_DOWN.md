@@ -387,6 +387,7 @@ Same method and severity scale as round 1.
 | B329 | Low | In the browser build, `rename_note` moves assets before checking the target, so it can replace a picture or PDF there or half-move a folder (older than this round; desktop refuses) | Open, accepted | `moveAssets` runs before `occupied` | - | Code reading |
 | B339 | Low | Fifteenth re-audit, desktop: "Tidy up this note" runs on any text file a tab can open (a `custom.css` comment's `__x__` becomes `**x**`; editor undo reverses it); the AI's "Save as note", "Export thread" and `/export` stay offered in a read space and do nothing when pressed (the answer stays in the thread) | Open, accepted | Per item | - | Scratch probe and code reading |
 | B340 | Low | Fifteenth re-audit leftovers: the form view still draws a single select for a list column with options when making a note; of B336: a bare URL in an editor table cell, and a `[label](target)` target in the editor, are shown and followed with their markdown escapes; `escapeText` keeps `ftp://` addresses unescaped though the renderer does not link them | Open, accepted | Per item | - | Code reading |
+| B343 | Low | Apple Notes import: body text `\[x\](url)` becomes `\\[x\\](url)`, a backslash and a live link (brackets were escaped the same way before; only `<` was fixed by B317) | Open, accepted | `escaped()` adds a backslash before brackets after `as_words`, without doubling one already there | - | Code reading |
 
 Skipped, counted with the insignificant Lows (cannot be fixed alone):
 
