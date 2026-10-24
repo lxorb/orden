@@ -850,8 +850,12 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-24, to 3,288,000, for #870: the automation's `properties.set` reads
  *  a typed list member by member (`typedItem` in automation/acts.ts), with #710 merged
- *  in. Measured 3,287,165. */
-const BUDGET = 3_319_000 // combined branch only, measured 3318820
+ *  in. Measured 3,287,165.
+ *
+ *  Raised 2026-10-24, to 3,289,000, for #880: a block list whose members are no flow
+ *  members (a comment, a list of its own) is written back as a block list (`listLines`
+ *  in packages/markdown/src/property-edits.ts). Measured 3,288,405. */
+const BUDGET = 3_300_000 // combined branch only
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

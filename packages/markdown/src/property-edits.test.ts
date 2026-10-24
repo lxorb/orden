@@ -261,6 +261,23 @@ describe('a list', () => {
     ])
   })
 
+  test('a block list whose members are not flow members is still written as YAML', () => {
+    const added = (note: string) => {
+      const ids = readProperties(note)?.find((one) => one.key === 'ids')
+      expect(ids).toBeDefined()
+      // Asserted on the line above.
+      return applied(note, writeList(note, 'ids', withItem(ids!, 'z') ?? []))
+    }
+    // An empty member is nothing, which a flow list says as `null`, not as `[, b]`.
+    expect(added('---\nids:\n  - a\n  -\n  - b\n---\n')).toBe('---\nids: [a, null, b, z]\n---\n')
+    // A comment would close a flow list early, and a list in a list would be words; a
+    // list holding either stays a block list, each member as it was.
+    expect(added('---\nids:\n  - a\n  - e # note\n---\n')).toBe(
+      '---\nids:\n  - a\n  - e # note\n  - z\n---\n',
+    )
+    expect(added('---\nids:\n- - x\n- b\n---\n')).toBe('---\nids:\n  - - x\n  - b\n  - z\n---\n')
+  })
+
   test('the last chip off leaves the key with an empty list rather than no key', () => {
     const written = applied(NOTE, writeList(NOTE, 'tags', []))
 

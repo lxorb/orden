@@ -22,10 +22,10 @@ import { type Property, readProperties } from '@nib/markdown/properties'
 import {
   type ListItem,
   listItems,
+  listLines,
   withItem,
   writeList,
   writeProperty,
-  writtenList,
 } from '@nib/markdown/property-edits'
 import { writeTask } from '@nib/markdown/task-edits'
 import { readTask } from '@nib/markdown/task-line'
@@ -184,7 +184,7 @@ function asList(
       write: (items) => ({
         from: found.from,
         to: found.to,
-        insert: `${key}: ${writtenList(items)}`,
+        insert: listLines(key, items),
       }),
     }
   }
