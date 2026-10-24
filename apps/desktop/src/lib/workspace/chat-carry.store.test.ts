@@ -128,3 +128,29 @@ test('a folder holding a pointer is a pointer carried', async () => {
   await workspace.moveMany([`${SHARED}/Projects`], MINE).catch(() => undefined)
   expect(there(`${SHARED}/Projects/Plans.chat`)).toBe(true)
 })
+
+test('a name already taken there, the account is not asked and nothing moves', async () => {
+  disk.current?.files.set(`${OWNERS}/Plans.chat`, chatText({ v: 1, chat: `c_${'2'.repeat(32)}` }))
+  await workspace.loadTree()
+  await workspace.moveMany([POINTER], OWNERS).catch(() => undefined)
+  expect(asked.moves).toEqual([])
+  expect(there(POINTER)).toBe(true)
+})
+
+test('the file refused after the chat moved, the chat is moved back', async () => {
+  // Taken in the moment between the look and the move, so only the move finds it.
+  const one = disk.current
+  if (!one) throw new Error('no disk')
+  const real = one.invoke.bind(one)
+  vi.spyOn(one, 'invoke').mockImplementation((command, args) => {
+    if (command === 'rename_note') throw new Error('something already lives there')
+    return real(command, args)
+  })
+  await workspace.moveMany([POINTER], OWNERS).catch(() => undefined)
+  vi.mocked(one.invoke).mockRestore()
+  expect(asked.moves).toEqual([
+    [CHAT, 'r-lab'],
+    [CHAT, 'r-team'],
+  ])
+  expect(there(POINTER)).toBe(true)
+})

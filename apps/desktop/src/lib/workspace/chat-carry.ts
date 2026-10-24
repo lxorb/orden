@@ -9,21 +9,19 @@
  *  refused after is the worst of both: the pointer in the owner's trash, the chat where it
  *  was with nothing pointing at it, and emptying the trash ends it (B193). So the same
  *  rule decides which spaces are offered, and the account is asked before the file
- *  moves: refused, nothing moves. The chats' own modules are fetched with the first such
- *  move, and the plugin, which has no chats, has a twin of this (`chat-carry.even.ts`). */
+ *  moves: refused, nothing moves. This is the rule; the asking is chat-leaving.ts, fetched
+ *  with the first such move, and the plugin, which has no chats, has a twin of that. */
 
 import { isChatTarget } from '@nib/markdown/links'
 import { account } from '../account.svelte'
-import { ApiError } from '../api'
 import { roleOf } from '../sharing.svelte'
 import { samePath, within } from '../space-paths'
 import { sync } from '../sync.svelte'
-import { failed } from '../views/failed.svelte'
 import { type Entry, workspace } from '../workspace.svelte'
 
 /** The pointers a move of this path carries: the file itself, or every one in the
  *  folder. */
-function pointersIn(path: string): string[] {
+export function pointersIn(path: string): string[] {
   const found: string[] = []
   const walk = (entry: Entry) => {
     if (!entry.is_dir) {
@@ -38,7 +36,7 @@ function pointersIn(path: string): string[] {
   return found
 }
 
-function spaceHolding(path: string) {
+export function spaceHolding(path: string) {
   return workspace.spaces.find((one) => within(one.root, path) !== null) ?? null
 }
 
@@ -62,47 +60,4 @@ export function mayCarry(path: string, root: string): boolean {
   if (roleOf(from.root) === 'owner') return true
   const owner = ownerOf(from.root)
   return owner !== null && owner === ownerOf(root)
-}
-
-/** Before `path` moves into `folder`: the chats it carries into another space, moved
- *  there on the account first. Throws where the file may not move, with the toast saying
- *  "Not moved" and the way to try again, so a menu's move stays put and an agent's move
- *  is answered with why; a chat already moved for a folder whose next one was refused is
- *  asked back, so nothing is half moved. */
-export async function chatsCarried(path: string, folder: string): Promise<void> {
-  const from = spaceHolding(path)
-  const to = spaceHolding(folder)
-  if (!from || !to || samePath(from.root, to.root)) return
-  const pointers = pointersIn(path)
-  if (!pointers.length) return
-
-  const [{ moveChat }, { readPointer }] = await Promise.all([
-    import('../chats/http'),
-    import('../chats/pointers'),
-  ])
-  const moved: string[] = []
-  const home = sync.remoteIdFor(from.root)
-  const refuse = async (error: Error): Promise<never> => {
-    if (home) for (const chat of moved) await moveChat(chat, home).catch(() => false)
-    failed.tell(() => void workspace.move(path, folder).catch(() => undefined))
-    throw error
-  }
-  if (!mayCarry(path, to.root)) await refuse(new Error('only the owner can do that'))
-  const space = sync.remoteIdFor(to.root)
-  // A folder on no account has no chat to move there, and the pointer is a file like
-  // any other in it.
-  if (!space || space === home) return
-
-  for (const pointer of pointers) {
-    const chat = await readPointer(pointer)
-    if (!chat) continue
-    // Not heard is not moved either: the file would be in the new space with its chat
-    // still in the old one, which is what this is here to never leave behind.
-    const answer = await moveChat(chat, space).catch((error: unknown) =>
-      error instanceof ApiError ? error : new Error(String(error)),
-    )
-    if (answer instanceof Error) await refuse(answer)
-    if (answer === false) await refuse(new Error('the account could not be reached'))
-    moved.push(chat)
-  }
 }
