@@ -11,6 +11,7 @@ import { isPlugin } from '../plugin'
 import { t } from '../i18n.svelte'
 import type { Section } from '../settings.svelte'
 import { isDesktop } from '../tauri'
+import { viewport } from '../viewport.svelte'
 
 export interface Item {
   id: Section
@@ -83,7 +84,13 @@ export function sectionGroups(): Item[][] {
       // every device rather than only where there is a thumb: it goes on the
       // account, and putting a bar together with a keyboard is easier than doing
       // it with the thumb it is for.
-      { id: 'mobile', label: t('Mobile') },
+      //
+      // But only once there is a thumb on the account (#769): a laptop whose reader
+      // has never opened Orden on a phone or a tablet was offered a pane about one.
+      // The same rule as Glasses below; see `mobileSeen` in modes.svelte.ts.
+      ...(viewport.touch || modes.mobileSeen
+        ? [{ id: 'mobile' as Section, label: t('Mobile') }]
+        : []),
       { id: 'spelling', label: t('Spelling') },
       { id: 'markdown', label: t('Markdown') },
       { id: 'appearance', label: t('Appearance') },
