@@ -5,7 +5,7 @@
 
 import type { TaskChange, TaskRow } from '@nib/bases'
 import type { Entry, Prefill } from '../quick-add/entry'
-import { shownWords, typedWords } from '@nib/markdown/escapes'
+import { shownWords, typedWords, unescapedAt } from '@nib/markdown/escapes'
 import { deadlineField, deadlineOf, startOf } from '@nib/markdown/task-dates'
 import { changeFor } from './schedule/schedule'
 
@@ -26,8 +26,15 @@ export function prefillFor(task: TaskRow, description: string | null): Prefill {
   // Set rather than spread in: a length here is minutes of work, not of motion.
   if (task.duration !== undefined) fields.duration = task.duration
   // The words a reader sees, `milk $3` where the line says `milk \$3`; `changeOf`
-  // writes them back with their escapes.
-  return { text: shownWords(task.text), ...(description ? { description } : {}), fields }
+  // writes them back with their escapes. What the line escaped stays words in the
+  // field, which reads its words again: `\#tips` was a word, never a label.
+  const escaped = unescapedAt(task.text).map((at) => ({ from: at, to: at + 1 }))
+  return {
+    text: shownWords(task.text),
+    ...(description ? { description } : {}),
+    fields,
+    ...(escaped.length ? { escaped } : {}),
+  }
 }
 
 /** What saving the field changes in the task: every field it holds, a field it no

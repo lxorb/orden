@@ -21,4 +21,7 @@ export interface Prefill {
   /** What a task already says, for the field that edits it (or the column a view's add
    *  row stands in: a priority). The words win over it, and the controls over both. */
   fields?: Partial<QuickFields>
+  /** Spans of `text` that stay words however they read: what a task's line escaped,
+   *  `#tips` where it says `\#tips`, so a Save that changed nothing keeps them words. */
+  escaped?: { from: number; to: number }[]
 }

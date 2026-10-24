@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { escapeText, plainWords, shownWords, typedWords } from './escapes'
+import { escapeText, plainWords, shownWords, typedWords, unescapedAt } from './escapes'
 import { renderMarkdown } from './index'
 
 /** One text node at a time, which is how turndown hands a page's words over.
@@ -273,5 +273,15 @@ describe('words shown and written back', () => {
     expect(renderMarkdown(written)).toBe(
       '<p>Prices $5-$10 ~5 min a==b <strong>due</strong> <a href="https://x.test/a">the page</a> <code>a$b</code></p>\n',
     )
+  })
+})
+
+describe('where the escapes taken off were', () => {
+  test('is where each character stands in the words shown, code passed over', () => {
+    const written = 'Tip \\#tips `a\\$b` \\@bob'
+    const shown = shownWords(written)
+    expect(shown).toBe('Tip #tips `a\\$b` @bob')
+    expect(unescapedAt(written).map((at) => shown[at])).toEqual(['#', '@'])
+    expect(unescapedAt('plain words')).toEqual([])
   })
 })

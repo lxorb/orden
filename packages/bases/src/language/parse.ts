@@ -64,6 +64,10 @@ export interface QuickAdd {
 export interface QuickAddOptions {
   /** Spans turned back into words: nothing overlapping one is read. */
   keep?: readonly { from: number; to: number }[]
+  /** Characters the line was written with escaped, `#` where a task says `\#tips`:
+   *  words, never read, and not a tag either the way a tag turned back is, since the
+   *  line keeps its escape. */
+  escaped?: readonly { from: number; to: number }[]
   /** The space's notes, by name or path without `.md`: a `>` name with spaces in it is
    *  the longest of these it matches. */
   notes?: readonly string[]
@@ -351,7 +355,8 @@ export function parseQuickAdd(
   const words = wordsOf(text)
   const grammars = grammarsFor(langs)
   const clock = clockOf(now)
-  const keep = options.keep ?? []
+  const escaped = options.escaped ?? []
+  const keep = [...(options.keep ?? []), ...escaped]
   const notes = options.notes ?? []
 
   const found: Found[] = []
@@ -392,12 +397,26 @@ export function parseQuickAdd(
   }))
   result.text = wordsLeft(text, result.chips)
 
-  // A tag turned back into words is still a tag: the note will read it as one.
+  // A tag turned back into words is still a tag: the note will read it as one. One
+  // the line escaped is not, as the note does not.
+  const notTags = new Set(escapedTags(text, escaped))
   for (const tag of tagsIn(result.text)) {
-    if (!result.fields.tags.includes(tag)) result.fields.tags.push(tag)
+    if (!notTags.has(tag) && !result.fields.tags.includes(tag)) result.fields.tags.push(tag)
   }
   return result
 }
+
+/** The names of the tags whose `#` the line escaped. */
+function escapedTags(text: string, escaped: readonly { from: number }[]): string[] {
+  const out: string[] = []
+  for (const { from } of escaped) {
+    const name = ESCAPED_TAG.exec(text.slice(from))?.[1]
+    if (name) out.push(name)
+  }
+  return out
+}
+
+const ESCAPED_TAG = new RegExp(String.raw`^#(${TAG_NAME})`, 'u')
 
 /** The line with every chip taken out, the blanks they leave closed up. */
 function wordsLeft(text: string, chips: readonly Chip[]): string {
