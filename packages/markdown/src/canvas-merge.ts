@@ -19,7 +19,7 @@
  *  which device gets there first. */
 
 import { type Canvas, noTimes, readCanvas, type Thing, timeIn, writeCanvas } from './canvas'
-import { type Extras, extrasOf, holdsExtras, mergedExtras, withExtras } from './canvas-extras'
+import { holdsExtras, mergedExtras } from './canvas-extras'
 
 /** How long a tombstone is kept, in milliseconds. Long enough that a tablet left
  *  in a drawer for a month cannot bring a deleted card back, short enough that a
@@ -267,6 +267,11 @@ export function merged(ours: Canvas, theirs: Canvas, now = Date.now()): Canvas {
     gone,
     icon: kept,
     iconColor: keptTint(ours, theirs, kept),
+    // What either side held that is not read, kept: another app's nodes, the edges
+    // ending at them, the fields and keys the spec does not name (#501, #780).
+    ...(holdsExtras(ours.extras) || holdsExtras(theirs.extras)
+      ? { extras: mergedExtras(ours.extras, theirs.extras) }
+      : {}),
   }
 }
 
@@ -311,21 +316,16 @@ export function mergeCanvasFiles(ours: string, theirs: string, now = Date.now())
 
   const mine = readCanvas(ours)
   const yours = readCanvas(theirs)
-  // What either file holds that Orden does not read - another app's nodes, the edges
-  // that end at them, fields and keys the spec does not name - put back into what is
-  // written, so a merge never drops it from somebody's vault (#501).
-  const myExtras = extrasOf(ours)
-  const yourExtras = extrasOf(theirs)
 
-  if (!weighs(mine, myExtras)) return theirs
-  if (!weighs(yours, yourExtras)) return ours
+  if (!weighs(mine)) return theirs
+  if (!weighs(yours)) return ours
 
-  return withExtras(writeCanvas(merged(mine, yours, now)), mergedExtras(myExtras, yourExtras))
+  return writeCanvas(merged(mine, yours, now))
 }
 
-function weighs(canvas: Canvas, extras: Extras): boolean {
+function weighs(canvas: Canvas): boolean {
   return (
-    holdsExtras(extras) ||
+    holdsExtras(canvas.extras) ||
     canvas.nodes.length > 0 ||
     canvas.ink.length > 0 ||
     Object.keys(canvas.gone).length > 0 ||

@@ -1025,3 +1025,55 @@ describe('something locked in place (#643)', () => {
     expect(JSON.parse(both).nib).not.toHaveProperty('locked')
   })
 })
+
+/** What a file holds that this module does not read rides on the canvas it reads, and
+ *  comes back out of every write of it, an edit's included (#780). */
+describe('a canvas holding another app’s things', () => {
+  const VAULT = JSON.stringify(
+    {
+      nodes: [
+        { id: 'x', type: 'excalidraw', x: 0, y: 0, width: 200, height: 100 },
+        {
+          id: 'a',
+          type: 'text',
+          text: 'a',
+          x: 300,
+          y: 0,
+          width: 200,
+          height: 60,
+          styleAttributes: { s: 1 },
+        },
+      ],
+      edges: [{ id: 'e', fromNode: 'x', toNode: 'a' }],
+      metadata: { version: '1.0-1.0' },
+    },
+    null,
+    '\t',
+  )
+
+  test('keeps them on what it reads, and writes them back', () => {
+    const canvas = readCanvas(VAULT)
+    expect(canvas.nodes.map((one) => one.id)).toEqual(['a'])
+    expect(canvas.extras?.nodes.has('x')).toBe(true)
+
+    const back = JSON.parse(writeCanvas(canvas)) as Record<string, unknown>
+    expect(back.metadata).toEqual({ version: '1.0-1.0' })
+    expect(JSON.stringify(back)).toContain('excalidraw')
+    expect(JSON.stringify(back)).toContain('styleAttributes')
+  })
+
+  test('writes the same file in runs as whole', () => {
+    const canvas = readCanvas(VAULT)
+    expect(
+      canvasRuns(canvas)
+        .map((run) => run.join(''))
+        .join(''),
+    ).toBe(writeCanvas(canvas))
+    expect(canvasRuns(canvas)).toHaveLength(CANVAS_RUNS)
+  })
+
+  test('holds nothing extra for a canvas of the spec’s own', () => {
+    expect(readCanvas(blankCanvas()).extras).toBeUndefined()
+    expect('extras' in readCanvas(writeCanvas(readCanvas(VAULT)))).toBe(true)
+  })
+})

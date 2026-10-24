@@ -28,6 +28,7 @@
  *  key and nothing else, and a merge of two copies puts back whatever either held that
  *  this module does not read (canvas-extras.ts, #501). */
 
+import { type Extras, extrasFrom, holdsExtras, withExtras } from './canvas-extras'
 import { oneEdit, type TextEdit } from './edits'
 import { isPaper, type Paper, PAPERS } from './papers'
 
@@ -300,6 +301,11 @@ export interface Canvas {
    *  app can read. Meaningless for an emoji or a coloured drawing, which have their
    *  own colours; see icons.ts in the app. */
   iconColor?: string | null
+  /** What the file held that this module does not read - another app's nodes and the
+   *  edges that end at them, fields and keys the spec does not name - carried with the
+   *  canvas so that whatever writes it back puts them back (#780); see
+   *  canvas-extras.ts. Absent for a canvas holding none, which is nearly all of them. */
+  extras?: Extras
 }
 
 export function emptyCanvas(): Canvas {
@@ -825,6 +831,7 @@ export function canvasIn(text: string): Canvas | null {
     }
   }
 
+  const extras = extrasFrom(parsed, ids, seen)
   return {
     nodes: inOrder(nodes, order),
     edges,
@@ -833,6 +840,7 @@ export function canvasIn(text: string): Canvas | null {
     gone: readTimes(nib.gone),
     icon: iconWritten(nib.icon),
     iconColor: iconWritten(nib.iconColor),
+    ...(holdsExtras(extras) ? { extras } : {}),
   }
 }
 
@@ -1035,6 +1043,16 @@ export const CANVAS_RUNS = 15
  *  writes line up and a writer can tell which few pieces an edit changed; see
  *  canvas/written.ts in the app. */
 export function canvasRuns(canvas: Canvas): string[][] {
+  const runs = ownRuns(canvas)
+  if (!holdsExtras(canvas.extras)) return runs
+  // What another app wrote into the file, put back where it was read from (#780). The
+  // whole file is one run then, so a writer that compares runs writes it whole: a
+  // canvas holding such things is somebody's vault's, and rare.
+  const text = withExtras(runs.map((run) => run.join('')).join(''), canvas.extras)
+  return [[text], ...Array.from({ length: CANVAS_RUNS - 1 }, () => [])]
+}
+
+function ownRuns(canvas: Canvas): string[][] {
   const shapes = canvas.nodes.filter((node): node is ShapeNode => node.type === 'shape')
   const pages = canvas.nodes.filter(isPage)
   // A page goes into `nodes` as the spec node it is - a PDF page, or a labelled

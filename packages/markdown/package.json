@@ -16,6 +16,7 @@
     "./code": "./src/code.ts",
     "./cover": "./src/cover.ts",
     "./canvas-merge": "./src/canvas-merge.ts",
+    "./canvas-extras": "./src/canvas-extras.ts",
     "./deck": "./src/deck.ts",
     "./diagrams": "./src/diagrams.ts",
     "./door": "./src/door.ts",

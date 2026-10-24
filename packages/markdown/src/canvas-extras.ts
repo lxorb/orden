@@ -1,5 +1,5 @@
 /** What a canvas file holds that Orden does not read, kept through what Orden writes
- *  back over it (#501).
+ *  back over it (#501, #780).
  *
  *  `readCanvas` reads what JSON Canvas and Orden's own `nib` key define and leaves the
  *  rest out (canvas.ts). Leaving it out of what a surface draws is right; leaving it out
@@ -7,14 +7,14 @@
  *  name - Obsidian's plugins add their own, `excalidraw` among them - and every edge
  *  that ends at one, a field the spec does not list on a node (Advanced Canvas's
  *  `styleAttributes`), a key beside `nodes` and `edges` (`metadata`), a key under `nib`
- *  a newer Orden wrote. A merge of two copies is the one road that reads both whole files
- *  and writes one back without anybody having asked for an edit, so it carries them:
- *  the union of both sides', each unknown thing by its id.
+ *  a newer Orden wrote. So `readCanvas` keeps them on the canvas it reads (`extras`),
+ *  every edit of a canvas carries them along as it carries everything it did not touch,
+ *  and `writeCanvas` puts them back: an edit on the plane, a merge of two copies, a
+ *  room's settle (`readPlane` in @nib/rooms keeps them in the room), an agent's edit.
+ *  A merge takes the union of both sides', each unknown thing by its id.
  *
  *  Symmetric, like the merge it rides along with: two copies put together either way
  *  round come out as the same file. */
-
-import { readCanvas } from './canvas'
 
 /** A node's fields that canvas.ts reads and writes, whichever kind it is. */
 const NODE_FIELDS = new Set([
@@ -100,21 +100,19 @@ function none(): Extras {
   return { top: {}, nib: {}, nodes: new Map(), edges: new Map(), fields: new Map() }
 }
 
-/** What the file `text` holds that `readCanvas` leaves out. Nothing for text that is not
- *  a canvas at all. */
-export function extrasOf(text: string): Extras {
-  let parsed: unknown
-  try {
-    parsed = JSON.parse(text)
-  } catch {
-    return none()
-  }
-  if (!isRecord(parsed)) return none()
+/** Nothing unread. */
+export function noExtras(): Extras {
+  return none()
+}
 
+/** What a file's parsed JSON holds that was not read, given the ids of the nodes and
+ *  edges that were: what `readCanvas` keeps on the canvas it reads. */
+export function extrasFrom(
+  parsed: Fields,
+  nodes: ReadonlySet<string>,
+  edges: ReadonlySet<string>,
+): Extras {
   const out = none()
-  const canvas = readCanvas(text)
-  const nodes = new Set(canvas.nodes.map((node) => node.id))
-  const edges = new Set(canvas.edges.map((edge) => edge.id))
 
   for (const [key, held] of Object.entries(parsed)) {
     if (!TOP_FIELDS.has(key)) out.top[key] = held
@@ -143,7 +141,8 @@ export function extrasOf(text: string): Extras {
 }
 
 /** Whether a file holds anything unread at all. */
-export function holdsExtras(extras: Extras): boolean {
+export function holdsExtras(extras: Extras | undefined): extras is Extras {
+  if (!extras) return false
   return (
     Object.keys(extras.top).length > 0 ||
     Object.keys(extras.nib).length > 0 ||
@@ -179,7 +178,7 @@ function unionBy(ours: Map<string, Fields>, theirs: Map<string, Fields>): Map<st
 }
 
 /** Two files' extras as one: everything either holds, by id. */
-export function mergedExtras(ours: Extras, theirs: Extras): Extras {
+export function mergedExtras(ours: Extras = none(), theirs: Extras = none()): Extras {
   const fields = new Map<string, Fields>()
   for (const id of new Set([...ours.fields.keys(), ...theirs.fields.keys()])) {
     fields.set(id, unionOf(ours.fields.get(id) ?? {}, theirs.fields.get(id) ?? {}))
@@ -201,7 +200,7 @@ export function mergedExtras(ours: Extras, theirs: Extras): Extras {
  *  that does not read is kept while it is not in the file as one that does, and an edge
  *  that does not read is kept while both its ends are in the file. Unread nodes and
  *  edges go after the ones that read, in the order they came. */
-export function withExtras(text: string, extras: Extras): string {
+export function withExtras(text: string, extras: Extras | undefined): string {
   if (!holdsExtras(extras)) return text
 
   const file = JSON.parse(text) as Fields
@@ -235,4 +234,46 @@ export function withExtras(text: string, extras: Extras): string {
   }
 
   return `${JSON.stringify(file, null, '\t')}\n`
+}
+
+/** The extras as one JSON string, the same for the same extras whatever order they were
+ *  gathered in: the unread things and the fields sorted by id. What a room keeps them as
+ *  (`EXTRAS` in @nib/rooms' plane.ts), compared before it is written so an edit that
+ *  left them alone writes nothing. */
+export function extrasText(extras: Extras): string {
+  const sorted = (map: Map<string, Fields>) =>
+    [...map].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
+  return JSON.stringify({
+    top: extras.top,
+    nib: extras.nib,
+    nodes: sorted(extras.nodes),
+    edges: sorted(extras.edges),
+    fields: sorted(extras.fields),
+  })
+}
+
+/** The extras `extrasText` wrote, or none for text that is not that. */
+export function extrasRead(text: unknown): Extras {
+  if (typeof text !== 'string') return none()
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(text)
+  } catch {
+    return none()
+  }
+  if (!isRecord(parsed)) return none()
+  const pairs = (value: unknown) =>
+    new Map(
+      (Array.isArray(value) ? value : []).filter(
+        (one): one is [string, Fields] =>
+          Array.isArray(one) && typeof one[0] === 'string' && isRecord(one[1]),
+      ),
+    )
+  return {
+    top: isRecord(parsed.top) ? parsed.top : {},
+    nib: isRecord(parsed.nib) ? parsed.nib : {},
+    nodes: pairs(parsed.nodes),
+    edges: pairs(parsed.edges),
+    fields: pairs(parsed.fields),
+  }
 }
