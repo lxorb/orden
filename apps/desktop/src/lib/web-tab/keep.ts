@@ -26,7 +26,7 @@ import { owes, writing } from '../parting'
 import { invoke } from '../tauri'
 import { afterQuiet, type Later } from '../timing'
 import { isWebAddress } from './address'
-import { readWebFile, writeShortcut } from './shortcut'
+import { aimWebloc, readWebFile, writeShortcut } from './shortcut'
 
 /** What one web note's file needs to be brought up to date. Named rather than
  *  positional because four strings in a row is four chances to swap two. */
@@ -121,19 +121,9 @@ export function keepNow(path: string) {
 
 async function writeFile(kept: Kept, home: string | null, icon: string | null): Promise<void> {
   const text = kept.text()
-  const said = readWebFile(kept.path, text)
-  const title = said?.title ?? ''
-  const added = said?.added
-  const when = added ? new Date(added) : new Date()
-
-  const content = writeShortcut(
-    kept.url,
-    title,
-    Number.isNaN(when.getTime()) ? new Date() : when,
-    home,
-    icon,
-    said?.own,
-  )
+  const content = /\.webloc$/i.test(kept.path.trim())
+    ? aimWebloc(text, kept.url)
+    : shortcutFor(kept, text, home, icon)
   if (content === text) return
 
   kept.wrote(content)
@@ -143,4 +133,22 @@ async function writeFile(kept: Kept, home: string | null, icon: string | null): 
   // globe until the next launch, however long ago the page said what its icon was.
   links.noteSaved(kept.path, content)
   await invoke('write_note', { path: kept.path, content }).catch(() => undefined)
+}
+
+/** What an internet shortcut says once it follows the reading. A `.webloc` never comes
+ *  here: it is a plist, and a `.url` written in a `.webloc`'s name was a file neither
+ *  nib nor Finder could open again. */
+function shortcutFor(kept: Kept, text: string, home: string | null, icon: string | null): string {
+  const said = readWebFile(kept.path, text)
+  const added = said?.added
+  const when = added ? new Date(added) : new Date()
+
+  return writeShortcut(
+    kept.url,
+    said?.title ?? '',
+    Number.isNaN(when.getTime()) ? new Date() : when,
+    home,
+    icon,
+    said?.own,
+  )
 }

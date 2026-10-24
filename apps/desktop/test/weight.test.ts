@@ -837,7 +837,11 @@ function holds(tail: string): boolean {
  *  3,281,217.
  *
  *  Raised 2026-10-24, to 3,282,000, for #720: a note's own front matter is kept as the
- *  one block on import (`frontMatterKeys`). Measured 3,281,007. */
+ *  one block on import (`frontMatterKeys`). Measured 3,281,007.
+ *
+ *  Raised 2026-10-24, to 3,282,000, for B223: a `.webloc` that follows the reading has
+ *  only its address changed (`aimWebloc` in shortcut.ts, which keep.ts now calls) rather
+ *  than an internet shortcut written into it. Measured 3,281,141. */
 const BUDGET = 3_282_000
 const MOST_FILES = 382
 

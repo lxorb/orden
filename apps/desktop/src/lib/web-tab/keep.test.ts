@@ -290,3 +290,45 @@ test('leaving the tab writes what is waiting for its note', () => {
 
   expect(said()).toContain('URL=https://svelte.dev/docs/cli')
 })
+
+/** A `.webloc` a Mac wrote stays a plist a Mac reads when the reading moves on: only
+ *  the address in it changes, every other key is kept, and no internet shortcut is
+ *  written into it. A redirect or a page saying its mark is enough to start a write. */
+test('a .webloc keeps its plist, with nothing in it changed but the address', async () => {
+  const path = '/Notes/Docs.webloc'
+  const plist = (url: string) =>
+    '<?xml version="1.0" encoding="UTF-8"?>\n<plist version="1.0">\n<dict>\n' +
+    `\t<key>Name</key>\n\t<string>Docs</string>\n\t<key>URL</key>\n\t<string>${url}</string>\n` +
+    '</dict>\n</plist>\n'
+  let text = plist('https://svelte.dev/')
+  keepPage({
+    path,
+    text: () => text,
+    url: 'https://svelte.dev/docs?a=1&b=2',
+    icon: 'https://svelte.dev/favicon.png',
+    wrote: (next) => (text = next),
+  })
+  keepNow(path)
+  await vi.advanceTimersByTimeAsync(0)
+
+  expect(said()).toBe(plist('https://svelte.dev/docs?a=1&amp;b=2'))
+  expect(text).toBe(said())
+})
+
+test('a .webloc is not written for a page that only said its mark', async () => {
+  const path = '/Notes/Docs.webloc'
+  const plist =
+    '<?xml version="1.0" encoding="UTF-8"?>\n<plist version="1.0">\n<dict>\n' +
+    '\t<key>URL</key>\n\t<string>https://svelte.dev/</string>\n</dict>\n</plist>\n'
+  keepPage({
+    path,
+    text: () => plist,
+    url: 'https://svelte.dev/',
+    icon: 'https://svelte.dev/favicon.png',
+    wrote: () => undefined,
+  })
+  keepNow(path)
+  await vi.advanceTimersByTimeAsync(0)
+
+  expect(written).toHaveLength(0)
+})
