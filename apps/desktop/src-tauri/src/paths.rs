@@ -196,7 +196,14 @@ fn paper_holder(pdf: &Path) -> Option<PathBuf> {
         return None;
     }
     let holder = pdf.with_extension("");
-    (is_pages(&holder) && holder.is_file()).then_some(holder)
+    holds_paper(&holder).then_some(holder)
+}
+
+/// Whether `path` is a page note, which holds a paper: a file called `<name>.pages`.
+/// A folder of that name - a macOS Pages document is one - holds none, so a PDF
+/// beside it is a PDF of its own and never follows it anywhere.
+fn holds_paper(path: &Path) -> bool {
+    is_pages(path) && path.is_file()
 }
 
 /// Whether a name is taken: by something there, or, for a page note, by a file where
@@ -226,6 +233,10 @@ pub fn paper_in_the_way(
     if !is_pages(to) {
         return paper_holder(to);
     }
+    // A folder holds no paper, so nothing is in its way.
+    if from.is_dir() {
+        return None;
+    }
     let there = paper_of(to);
     if !there.exists() {
         return None;
@@ -248,7 +259,11 @@ pub fn paper_in_the_way(
 /// lost file. Moved the way the file was, so one that went to the trash on another
 /// disk takes them with it.
 pub fn move_held(from: &Path, to: &Path) {
+    // Asked of `to`, since the file has moved there already.
     if is_pages(from) {
+        if !holds_paper(to) {
+            return;
+        }
         let paper = paper_of(from);
         let moved = paper_of(to);
         // Never over a file already there, which is somebody's own PDF (#538): the
@@ -276,6 +291,9 @@ pub fn move_held(from: &Path, to: &Path) {
 /// failure for the same reason as well.
 pub fn copy_held(from: &Path, to: &Path) {
     if is_pages(from) {
+        if !holds_paper(from) {
+            return;
+        }
         let paper = paper_of(from);
         let copied = paper_of(to);
         if paper.exists() && !copied.exists() && fs::copy(&paper, &copied).is_ok() {
@@ -293,7 +311,8 @@ pub fn copy_held(from: &Path, to: &Path) {
     }
 }
 
-/// And they go when it goes.
+/// And they go when it goes. Only ever after `file` was removed as a file, so a page
+/// note's: a folder is never removed through here.
 pub fn drop_held(file: &Path) {
     if is_pages(file) {
         let paper = paper_of(file);
