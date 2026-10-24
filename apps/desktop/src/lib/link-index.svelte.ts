@@ -1005,7 +1005,16 @@ class Links {
     return made
   }
 
-  private async readOther(root: string) {
+  /** The read of another space in the air, by root, for whoever has to wait for it. */
+  private readingOther = new Map<string, Promise<void>>()
+
+  private readOther(root: string): Promise<void> {
+    const reading = this.readOtherNow(root).finally(() => this.readingOther.delete(root))
+    this.readingOther.set(root, reading)
+    return reading
+  }
+
+  private async readOtherNow(root: string) {
     this.others.set(root, 'reading')
     const found = await invoke<SpaceLinks>('scan_links', { root }).catch(() => null)
     // The open space may have changed meanwhile, which forgets every other one.
@@ -1185,7 +1194,43 @@ class Links {
    *  `from` is an absolute path, the way a tab holds one, or null for a note with
    *  no home yet. */
   targetOf(from: string | null, link: { kind: LinkKind; target: string }): string | null {
+    // A note of another space still open resolves in that space, through the index
+    // the editor is handed for it, so every face of the note points where its editor
+    // does and where following the link goes.
+    const other = from === null ? null : this.otherHolding(from)
+    if (from !== null && other !== null) return this.otherTarget(other, from, link)
+
     return this.resolveFrom(from === null ? null : this.relative(from), link)
+  }
+
+  /** The same for a note of another space, once that space has been read: what a
+   *  link followed while it is still being read asks before a note is made under its
+   *  name, which would otherwise be made over the note that is there. Null for a note
+   *  of the active space, where the editor's own answer came from this index already. */
+  async targetWhenRead(
+    from: string | null,
+    link: { kind: LinkKind; target: string },
+  ): Promise<string | null> {
+    const other = from === null ? null : this.otherHolding(from)
+    if (from === null || other === null) return null
+    if (!this.others.has(other)) void this.readOther(other)
+    await this.readingOther.get(other)
+    return this.otherTarget(other, from, link)
+  }
+
+  private otherTarget(
+    root: string,
+    from: string,
+    link: { kind: LinkKind; target: string },
+  ): string | null {
+    if (!link.target) return null
+    const index = this.otherIndex(root, from)
+    if (isTabFile(link.target)) return resolveFile(index, link.target, link.kind)
+    const found =
+      link.kind === 'markdown'
+        ? resolveRelative(index, link.target)
+        : resolveNote(index, link.target)
+    return found?.path ?? null
   }
 
   /** How many notes the resolver has compared paths with, ever - a running total,

@@ -109,7 +109,10 @@
       // landed on is already in view and draws at once.
       undrawn?.()
       const papers = surface
-        ? inlineFiles(surface, untrack(() => workspace.activeSpace?.root) ?? null)
+        ? inlineFiles(
+            surface,
+            untrack(() => workspace.rootHolding(tab.path)),
+          )
         : undefined
       // And a base, fenced or embedded, as its view; see views/mount.ts.
       const bases = surface

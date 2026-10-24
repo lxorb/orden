@@ -4309,7 +4309,7 @@ class Workspace {
       return
     }
 
-    const path = jump.path ? insideSpace(root, jump.path) : await this.makeLinked(jump.target, root)
+    const path = jump.path ? insideSpace(root, jump.path) : await this.linkedOrMade(jump, root)
     if (!path) return
 
     // A website opens as the page it points at, which is what its row in the file
@@ -4335,7 +4335,7 @@ class Workspace {
       ? insideSpace(root, jump.path)
       : isTabFile(jump.target)
         ? null
-        : await this.makeLinked(jump.target, root)
+        : await this.linkedOrMade(jump, root)
     if (!path) return
 
     await this.openAside(path)
@@ -4359,6 +4359,18 @@ class Workspace {
   /** The note a link names but the space has not got. Made where a link would
    *  look for it: in the folder the link says, or beside the note that links to
    *  it when it says none. */
+  /** A link the index answered nothing for: the note it names once the space it was
+   *  written in has been read, else made. A note of another space still open is
+   *  resolved against an index read the first time it asks, and a press before that
+   *  lands would otherwise make a note over the one that is there. */
+  private async linkedOrMade(jump: NoteJump, root: string): Promise<string | null> {
+    const known = await links.targetWhenRead(this.active?.path ?? null, {
+      kind: 'wikilink',
+      target: jump.target,
+    })
+    return known === null ? this.makeLinked(jump.target, root) : insideSpace(root, known)
+  }
+
   private async makeLinked(target: string, root: string): Promise<string | null> {
     const clean = target.replace(/[\\]/g, '/').replace(/^\/+|\/+$/g, '')
     if (!clean) return null
