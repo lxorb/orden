@@ -3,6 +3,7 @@ import {
   frontMatter,
   frontMatterEdit,
   frontMatterEdits,
+  frontMatterKeys,
   frontMatterList,
   frontMatterValue,
   stripFrontMatter,
@@ -78,6 +79,17 @@ describe('reading the front matter', () => {
     expect(edit && source.slice(0, edit.from) + edit.insert + source.slice(edit.to)).toBe(
       '---\ntitle: b # note\n---\n',
     )
+  })
+})
+
+describe('the keys a block holds', () => {
+  test('are its top-level ones, as written, and none where there is no block', () => {
+    expect(
+      frontMatterKeys(
+        '---\ntitle: Trip\naliases:\n  - One\n# a note\nDue date: soon\n---\nWords: no\n',
+      ),
+    ).toEqual(['title', 'aliases', 'Due date'])
+    expect(frontMatterKeys('Words: no\n')).toEqual([])
   })
 })
 

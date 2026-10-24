@@ -12,7 +12,12 @@
  *  rather than a feature: nothing in the app reads it, and a note that never
  *  changed after it was written does not carry it. */
 
-import { type FrontMatterRow, writeFrontMatter } from '@nib/markdown/front-matter'
+import {
+  frontMatterBlock,
+  frontMatterKeys,
+  type FrontMatterRow,
+  writeFrontMatter,
+} from '@nib/markdown/front-matter'
 
 export interface Meta {
   /** The day it was made, `YYYY-MM-DD`. */
@@ -63,15 +68,40 @@ function said(value: Property): boolean {
  *  The heading is written because a new note in nib opens with one, so an
  *  imported note that did not carry a title would be the one note in the space
  *  with nothing at the top. A body that already opens with a heading keeps its
- *  own. */
+ *  own.
+ *
+ *  A body that already opens with properties of its own - a Bear note or a Logseq
+ *  page somebody gave a block - keeps that block as the one the note opens with,
+ *  and what the export knew goes into it, under the keys it does not say already:
+ *  a second block under the first would be words to every reader, the note's own
+ *  keys among them, and the heading goes below it rather than above it. */
 export function noteText(title: string | null, body: string, meta: Meta = {}): string {
   // Only the blank lines above the words go: the first line's own indent is what
   // makes a note that opens with an indented code block open with code.
-  const words = body.replace(/^(?:[ \t]*\r?\n)+/, '').replace(/\s+$/, '')
+  const all = body.replace(/^(?:[ \t]*\r?\n)+/, '').replace(/\s+$/, '')
+  const own = frontMatterBlock(all)
+  const words = own ? all.slice(own.to).replace(/^(?:[ \t]*\r?\n)+/, '') : all
   const heads = /^#{1,6}\s/.test(words)
   const head = title && !heads ? `# ${title}\n\n` : ''
+  const props = own ? `${withMeta(all, own.close, meta)}\n\n` : frontMatterFor(meta)
 
-  return `${frontMatterFor(meta)}${head}${words}${words ? '\n' : ''}`
+  return `${props}${head}${words}${words ? '\n' : ''}`
+}
+
+/** A note's own block with the rows of `meta` it does not say added in front of
+ *  its closing fence, and up to that fence: a key in another case is the same key,
+ *  since that is how the app reads one (see @nib/markdown/front-matter). */
+function withMeta(note: string, close: number, meta: Meta): string {
+  const says = new Set(frontMatterKeys(note).map((key) => key.toLowerCase()))
+  const nl = note.includes('\r\n') ? '\r\n' : '\n'
+  // Every row is written on one line, its key up to the first colon.
+  const added = frontMatterFor(meta)
+    .split('\n')
+    .slice(1)
+    .filter((line) => line.includes(': ') && !says.has(line.split(': ')[0]?.toLowerCase() ?? ''))
+
+  const fence = note.slice(close).split(/\r?\n/)[0] ?? '---'
+  return `${note.slice(0, close)}${added.map((line) => `${line}${nl}`).join('')}${fence}`
 }
 
 /** A note's words as the app that kept them wrote them, to the byte. The blank

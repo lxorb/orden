@@ -46,6 +46,20 @@ describe('a Logseq graph', () => {
     expect(text).toContain('- Words')
   })
 
+  test('a page with a block of its own keeps one block', async () => {
+    const plan = await readLogseq([
+      file('logseq/config.edn', '{}'),
+      file('pages/What%3F.md', '---\ntags: x\n---\n- words\n'),
+    ])
+    const text = plan.files.find((one) => one.kind === 'note')
+    const note = text?.kind === 'note' ? text.text : ''
+
+    expect(note.match(/^---$/gm)).toHaveLength(2)
+    expect(note.startsWith('---\ntags: x\n')).toBe(true)
+    expect(note).toMatch(/^aliases:/m)
+    expect(note).toContain('- words')
+  })
+
   test('a task marker is a task', async () => {
     const plan = await readLogseq([
       file(

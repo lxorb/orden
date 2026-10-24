@@ -63,6 +63,24 @@ describe('a whole note', () => {
     )
   })
 
+  test('a note that opens with its own properties keeps one block, its own keys first', () => {
+    expect(
+      noteText('Trip', '---\ntitle: Trip\nDate: 2020-01-01\nstatus: draft\n---\nWords.\n', {
+        date: '2024-01-02',
+        updated: '2024-02-03',
+        extra: [['Status', 'done']],
+      }),
+    ).toBe(
+      '---\ntitle: Trip\nDate: 2020-01-01\nstatus: draft\nupdated: 2024-02-03\n---\n\n# Trip\n\nWords.\n',
+    )
+  })
+
+  test('a note whose own block is all it says still opens with it', () => {
+    expect(noteText('Trip', '---\nstatus: draft\n---', {})).toBe(
+      '---\nstatus: draft\n---\n\n# Trip\n\n',
+    )
+  })
+
   test('a note with no words at all is its heading, the way a new note is', () => {
     expect(noteText('Empty', '   \n\n')).toBe('# Empty\n\n')
   })
