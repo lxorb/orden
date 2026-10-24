@@ -221,7 +221,7 @@ link. Settings > Appearance > Pointing hand on buttons puts the web's hand over
 everything that can be pressed, the way the Claude app offers it: `data-pointer` on
 the root, and one rule in `base.css` that outweighs a component's `cursor: default`.
 
-Where a mark has to stay small and still be aimed at - the `i` after a setting's
+Where a mark has to stay small and still be aimed at - the `?` after a setting's
 name - what is drawn and what can be hit are two sizes: the glyph grows to
 `--touch-icon` and an invisible `::after` grows the target to `--touch-target`.
 A 48px circle in the middle of a label would be the label's size.

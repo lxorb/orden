@@ -1,5 +1,5 @@
 <script lang="ts">
-  /** A small `i` after a label, and the sentence behind it.
+  /** A small `?` after a label, and the sentence behind it.
    *
    *  For the settings whose name only means something to somebody who already
    *  knows the word - Strict CommonMark, smart punctuation - where the honest
@@ -14,7 +14,7 @@
    *  The glyph's own name is the sentence, so a screen reader reads it on focus
    *  and the bubble is decoration by the time it appears. */
 
-  import Info from 'lucide/dist/esm/icons/info.mjs'
+  import Help from 'lucide/dist/esm/icons/circle-question-mark.mjs'
   import { fly } from 'svelte/transition'
   import { cubicOut } from 'svelte/easing'
   import { dur } from './motion'
@@ -55,10 +55,14 @@
         event.stopPropagation()
         open = false
       }
+      // The keys that press this button press only this button: a row that is a
+      // switch as a whole would otherwise hear them too and turn its setting over,
+      // as it would a click (#522).
+      if (event.key === 'Enter' || event.key === ' ') event.stopPropagation()
     }}
   >
     <svg viewBox="0 0 24 24" aria-hidden="true">
-      {#each Info as [tag, attrs], index (index)}
+      {#each Help as [tag, attrs], index (index)}
         <svelte:element this={tag} {...attrs} />
       {/each}
     </svg>
