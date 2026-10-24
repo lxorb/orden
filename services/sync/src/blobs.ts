@@ -6,7 +6,14 @@ import { readSite, SVG_POLICY } from './blog/site'
 import { now } from './crypto'
 import { readSpaceFiles } from './spaces/files'
 import { allows, reachedSpace } from './spaces/space'
-import { BYTES, hashOfBytes, held, holdsItsName, WRONG_BYTES } from './sync2/files'
+import {
+  BYTES,
+  hashOfBytes,
+  held,
+  holdsItsName,
+  spellsADiagramName,
+  WRONG_BYTES,
+} from './sync2/files'
 import { fits, fitsSql } from './storage'
 import type { Env, Space, Variables, Whoever } from './types'
 
@@ -86,8 +93,9 @@ blobs.put('/:hash', async (context) => {
   // sends what it hashed beside the drawing, so that name is checked too, and only
   // for a space this account may write in. An app from before that sends nothing
   // and is taken at its word, under a name no page prints, until it is too old to
-  // sign in (#518).
-  const verified = (await hashOfBytes(body)) === hash
+  // sign in (#518). And what such a name is the hash of is not bytes that are their
+  // name: it is the name, and would take the drawing's place.
+  const verified = (await hashOfBytes(body)) === hash && !spellsADiagramName(body)
   if (!verified && type !== 'image/svg+xml') return context.json({ error: WRONG_BYTES }, 400)
   const said = context.req.header('x-nib-diagram')
   if (

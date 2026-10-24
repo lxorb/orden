@@ -64,6 +64,11 @@ export type DiagramScheme = 'light' | 'dark'
 
 export const DIAGRAM_SCHEMES: readonly DiagramScheme[] = ['light', 'dark']
 
+/** What every string a diagram's name is hashed from starts with. Those strings are
+ *  names and never files: the store refuses bytes that start with it, which would
+ *  otherwise be the bytes a diagram's name is the hash of (services/sync/src/sync2/files.ts). */
+export const DIAGRAM_NAMED = 'nib/diagram/v1\n'
+
 /** How a diagram's blob is named.
  *
  *  The fence's own contents, the word it opened with and the scheme, hashed: an
@@ -85,7 +90,7 @@ export async function diagramKey(
   code: string,
   scheme: DiagramScheme,
 ): Promise<string> {
-  const said = `nib/diagram/v1\n${spaceId}\n${language.toLowerCase()}\n${scheme}\n${code}`
+  const said = `${DIAGRAM_NAMED}${spaceId}\n${language.toLowerCase()}\n${scheme}\n${code}`
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(said))
 
   return [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, '0')).join('')

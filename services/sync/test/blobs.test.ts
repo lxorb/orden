@@ -229,6 +229,63 @@ describe('bytes under a hash that is not theirs', () => {
 
     expect((await put(key, fence)).status).toBe(201)
   })
+
+  /** A diagram's name is the hash of a string anybody who reads the page can write,
+   *  so those bytes are a name, never a file: sent as one, they would hash to the
+   *  drawing's name and take its place. */
+  test('that spell out a diagram’s name are not the file that name holds', async () => {
+    const space = (env.db.prepare('select id from spaces limit 1').get() as { id: string }).id
+    const fence = { space, language: 'mermaid', scheme: 'light', code: 'graph TD\n  A --> B' }
+    const key = await diagramKey(space, fence.language, fence.code, 'light')
+    const drawing = new TextEncoder().encode('<svg xmlns="http://www.w3.org/2000/svg"/>')
+    const drawn = await call(env, `/v1/blobs/${key}`, {
+      method: 'PUT',
+      token,
+      raw: drawing,
+      headers: {
+        'content-type': 'image/svg+xml',
+        'x-nib-diagram': new URLSearchParams(fence).toString(),
+      },
+    })
+    expect(drawn.status).toBe(201)
+
+    const stranger = await signIn(env, 'c@d.dev')
+    const named = new TextEncoder().encode(
+      `nib/diagram/v1\n${space}\nmermaid\nlight\n${fence.code}`,
+    )
+    for (const [route, type] of [
+      ['/v1/blobs', 'text/javascript'],
+      ['/v2/blobs', 'text/javascript'],
+      ['/v1/blobs', 'image/svg+xml'],
+    ] as const) {
+      const sent = await call(env, `${route}/${key}`, {
+        method: 'PUT',
+        token: stranger,
+        raw: named,
+        headers: { 'content-type': type },
+      })
+      expect(sent.status).toBe(400)
+    }
+    const started = await call<{ upload: string }>(env, '/v2/blobs/parts', {
+      token: stranger,
+      body: { hash: key, size: named.length },
+    })
+    const part = await call<{ part: number; etag: string }>(
+      env,
+      `/v2/blobs/parts/${started.json.upload}/1`,
+      { method: 'PUT', token: stranger, raw: named },
+    )
+    const done = await call(env, `/v2/blobs/parts/${started.json.upload}`, {
+      token: stranger,
+      body: { parts: [part.json] },
+    })
+    expect(done.status).toBe(400)
+
+    const stored = await env.NOTES.get(`blobs/${key}`)
+    expect(new Uint8Array(await stored!.arrayBuffer())).toEqual(drawing)
+    expect(stored!.httpMetadata?.contentType).toBe('image/svg+xml')
+    expect(env.db.prepare('select user_id from blobs where hash = ?').all(key)).toHaveLength(1)
+  })
 })
 
 describe('serving an image', () => {

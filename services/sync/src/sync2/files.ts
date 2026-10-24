@@ -15,6 +15,7 @@
  *  through the space, to its members only: `/i/<hash>` serves what a published page
  *  points at and nothing else. */
 
+import { DIAGRAM_NAMED } from '@nib/markdown/diagrams'
 import { Hono } from 'hono'
 import { now } from '../crypto'
 import { laterOf, pokeSpace } from '../hub/poke'
@@ -85,6 +86,19 @@ export async function hashOfBytes(bytes: ArrayBuffer): Promise<string> {
   return hex(await crypto.subtle.digest('SHA-256', bytes))
 }
 
+const NAMED = new TextEncoder().encode(DIAGRAM_NAMED)
+
+/** Whether bytes are what a drawn diagram's name is the hash of, rather than a file.
+ *
+ *  That string is the fence, its space and its scheme, which a reader of the space can
+ *  write out, and its hash is the name the drawing is kept under: sent as a file, it
+ *  would be bytes that are their name and take the drawing's place for everybody. No
+ *  file anybody keeps starts like that, so none is refused that should not be. */
+export function spellsADiagramName(bytes: ArrayBuffer): boolean {
+  const start = new Uint8Array(bytes, 0, Math.min(bytes.byteLength, NAMED.length))
+  return start.length === NAMED.length && start.every((byte, at) => byte === NAMED[at])
+}
+
 /** A Worker's streaming hasher, which Node has no equivalent of. */
 type DigestStreaming = new (algorithm: string) => WritableStream & { digest: Promise<ArrayBuffer> }
 
@@ -99,6 +113,14 @@ async function hashOf(object: R2ObjectBody): Promise<string> {
     return hex(await stream.digest)
   }
   return hex(await crypto.subtle.digest('SHA-256', await object.arrayBuffer()))
+}
+
+/** `spellsADiagramName` of parts put together. A diagram's name is hashed from a few
+ *  lines of fence, so only what one request could have carried is read again. */
+async function stagedSpellsADiagramName(env: Env, upload: Upload): Promise<boolean> {
+  if (upload.size > ONE_REQUEST) return false
+  const staged = await env.NOTES.get(upload.staging)
+  return staged !== null && spellsADiagramName(await staged.arrayBuffer())
 }
 
 /** A Worker's stream that tells R2 how long it is, which Node has no equivalent of. */
@@ -239,7 +261,7 @@ v2Blobs.put('/:hash', async (context) => {
 
   const body = await context.req.arrayBuffer()
   if (body.byteLength > ONE_REQUEST) return context.json({ error: TOO_BIG }, 413)
-  if ((await hashOfBytes(body)) !== hash) {
+  if ((await hashOfBytes(body)) !== hash || spellsADiagramName(body)) {
     return context.json({ error: WRONG_BYTES }, 400)
   }
   if (!(await fits(context.env, user.id, body.byteLength))) {
@@ -381,7 +403,10 @@ v2Blobs.post('/parts/:upload', async (context) => {
 
   const staged = await context.env.NOTES.get(upload.staging)
   const right =
-    staged !== null && staged.size === upload.size && (await hashOf(staged)) === upload.hash
+    staged !== null &&
+    staged.size === upload.size &&
+    (await hashOf(staged)) === upload.hash &&
+    !(await stagedSpellsADiagramName(context.env, upload))
   if (!right) {
     await context.env.NOTES.delete(upload.staging)
     return context.json({ error: WRONG_BYTES }, 400)
