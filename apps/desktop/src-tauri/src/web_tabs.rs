@@ -1067,6 +1067,8 @@ fn page_built(
     )
     .map_err(|error| format!("that page could not be opened: {error}"))?;
     crate::page_style::worn(&view);
+    // In the app's scheme from the start, not the system's; see page_scheme.rs.
+    crate::page_scheme::wear(&view);
     // At the desktop's scale from the start, where that is not the engine's; see
     // page_scale.rs. A zoom the reader chose comes after, times it.
     let zoom = crate::page_scale::web(1.0);

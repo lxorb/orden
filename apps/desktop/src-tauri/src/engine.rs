@@ -424,7 +424,9 @@ pub(crate) fn ui_window<'a, M: tauri::Manager<crate::Engine>>(
         crate::gpu::accelerated(&settings);
     }
     #[cfg(all(windows, not(feature = "cef")))]
-    let building = building.additional_browser_args(&browser_args(manager.app_handle()));
+    let building = building
+        .additional_browser_args(&browser_args(manager.app_handle()))
+        .initialization_script(crate::page_scheme::SCRIPT);
     // On CEF, Alloy style: a page and nothing of Chrome's around it, as `WebView2` and
     // `WKWebView` are. A Chrome style browser keeps Chrome's whole accelerator table,
     // which takes Ctrl+Tab, Ctrl+W, Ctrl+T and Ctrl+N before the page is offered them -
@@ -456,7 +458,8 @@ pub(crate) fn own_window<M: tauri::Manager<crate::Engine>>(
         .initialization_script(crate::window_drag::SCRIPT)
         .initialization_script(crate::gpu::SCRIPT)
         .initialization_script(crate::page_scale::SCRIPT)
-        .initialization_script(crate::keyboard::PRESS_SCRIPT);
+        .initialization_script(crate::keyboard::PRESS_SCRIPT)
+        .initialization_script(crate::page_scheme::SCRIPT);
     match OWN_PROFILE.get() {
         Some(profile) => building.data_directory(profile.clone()),
         None => building,
