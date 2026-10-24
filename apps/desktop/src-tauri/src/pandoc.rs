@@ -135,8 +135,16 @@ pub fn has_pandoc() -> bool {
 /// option instead. `--lua-filter=…` names a script pandoc runs, which is the same
 /// road `is_format` below closes for a writer's name. `--` is where pandoc stops
 /// reading options, so everything after it is a file however it is spelled.
-fn reading(source: &str) -> [&str; 8] {
+///
+/// And `--sandbox`, because the document is somebody else's words. LaTeX's
+/// `\lstinputlisting`, RST's `include` and Org's `#+INCLUDE` name any file on this
+/// machine, and pandoc read it into the note, which then synced: `~/.ssh/id_rsa`
+/// sent to the account by opening a paper. In its sandbox pandoc reads the file it
+/// was given and nothing else; the pictures inside a Word file still come out
+/// beside it, since `--extract-media` writes after the reading is done.
+fn reading(source: &str) -> [&str; 9] {
     [
+        "--sandbox",
         "--to",
         READ_AS,
         "--wrap",
@@ -177,7 +185,18 @@ pub fn import_document(app: AppHandle, path: String) -> Result<String, String> {
             .map_err(|error| format!("pandoc returned something that is not text: {error}"));
     }
 
-    Err(complaint(&result.stderr, "pandoc could not read that file"))
+    Err(read_refusal(&result.stderr))
+}
+
+/// Why an import did not happen. A pandoc older than 2.15 has no sandbox and says
+/// it does not know the option; the import is refused rather than run without it,
+/// and the reader is told what would make it work.
+fn read_refusal(stderr: &[u8]) -> String {
+    let said = complaint(stderr, "pandoc could not read that file");
+    if said.contains("--sandbox") {
+        return "Importing needs pandoc 2.15 or newer, which reads a document without reaching the rest of this computer".to_string();
+    }
+    said
 }
 
 /// Whether a string is a format pandoc can be asked for by name.
@@ -264,7 +283,7 @@ fn complaint(stderr: &[u8], fallback: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{complaint, has_pandoc, is_format, pandoc, reading};
+    use super::{complaint, has_pandoc, is_format, pandoc, read_refusal, reading};
     use std::fs;
     use std::path::Path;
 
@@ -300,6 +319,16 @@ mod tests {
         let sandbox = args.iter().position(|one| *one == "--sandbox");
         let marker = args.iter().position(|one| *one == "--");
         assert!(sandbox.is_some_and(|at| marker.is_some_and(|end| at < end)));
+    }
+
+    /// What a pandoc without a sandbox says, which is a refusal and not a reason to
+    /// run it without one.
+    #[test]
+    fn an_old_pandoc_is_refused_and_says_why() {
+        let said =
+            read_refusal(b"Unknown option --sandbox.\nTry pandoc --help for more information.\n");
+        assert!(said.contains("2.15"), "{said}");
+        assert_eq!(read_refusal(b"no such file\n"), "no such file");
     }
 
     #[test]
