@@ -204,11 +204,16 @@ export function partOf(file: string, catalogue: boolean): Part {
 
 /** Bytes each part may weigh, as staged. Measured on 2026-10-07 at 5,297,926 for the
  *  code, 762,886 for the catalogues, 266,816 for the styles, 256,168 for the fonts and
- *  33,555 for the pages and the icon. The budgets add up to 7,040,000, so 1.29 MiB of
- *  the 8 MiB ceiling is out of every part's reach without a change to this table. */
+ *  33,555 for the pages and the icon. The budgets add up to 7,140,000, so 1.19 MiB of
+ *  the 8 MiB ceiling is out of every part's reach without a change to this table.
+ *
+ *  The catalogues' raised on 2026-10-24, from 850,000 to 950,000, for #768: every
+ *  setting the plugin's own Settings shows says what it does behind a `?`, and those
+ *  sentences are rows the plugin asks for, in each of the 24 catalogues it ships.
+ *  Measured 922,538, from 779,615 at 7a57b7518. */
 export const BUDGETS: Record<Part, number> = {
   code: 5_600_000,
-  catalogues: 850_000,
+  catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,
   pages: 40_000,
