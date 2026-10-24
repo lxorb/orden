@@ -28,7 +28,7 @@ export interface Composes {
   fileGone(path: string, kind: 'file'): Promise<void>
   retarget(from: string, to: string, how?: Retargeting): Promise<number>
   open(path: string): Promise<void>
-  freeName(dir: string, wanted: string): string
+  freeNameOnDisk(dir: string, wanted: string): Promise<string>
   loadTree(): Promise<void>
   persist(): void
 }
@@ -99,9 +99,10 @@ async function carve(
 ) {
   // Stepped aside the way every other new name in the app is, through the store's
   // own `freeName`: a copy of the numbering lived here, and it counted only the
-  // files, so a carved note could be handed the name of a folder.
+  // files, so a carved note could be handed the name of a folder. The disk is
+  // asked too, since the tab can be one from a space that is not on screen.
   const folder = folderOf(path)
-  const created = joinPath(folder, ws.freeName(folder, `${carved.name}.md`))
+  const created = joinPath(folder, await ws.freeNameOnDisk(folder, `${carved.name}.md`))
 
   await writeFile(created, carved.taken)
 
