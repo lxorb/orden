@@ -382,11 +382,12 @@ fn restore_target(base: &Path, entry: &TrashEntry) -> Result<PathBuf, String> {
 /// name a slot holds, since the slot is joined with it: on Windows `C:x` is a drive,
 /// and here it is one name, which only a disk that holds such names put there.
 fn names_one_entry(name: &str) -> bool {
-    let mut parts = Path::new(name).components();
     // And no `:` on Windows, which holds no such name and reads one as a stream.
-    !name.contains('\0')
-        && !(cfg!(windows) && name.contains(':'))
-        && matches!(parts.next(), Some(Component::Normal(one)) if one.to_str() == Some(name))
+    if name.contains('\0') || (cfg!(windows) && name.contains(':')) {
+        return false;
+    }
+    let mut parts = Path::new(name).components();
+    matches!(parts.next(), Some(Component::Normal(one)) if one.to_str() == Some(name))
         && parts.next().is_none()
 }
 
