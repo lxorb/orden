@@ -18,6 +18,7 @@ import { plural, t } from './i18n.svelte'
 import { converted } from './import/convert'
 import type { Change } from './search/apply'
 import { changeOf } from './search/replace'
+import { isMarkdownPath } from './space-paths'
 import { workspace } from './workspace.svelte'
 
 /** Every change the conversion would make. Pure, so the count the reader is shown
@@ -30,6 +31,9 @@ export function syntaxChanges(
   let rewrites = 0
 
   for (const note of notes) {
+    // A canvas, a chat, a base or a stylesheet holds words that are not markdown.
+    if (!isMarkdownPath(note.path)) continue
+
     const said = converted(note.text, names)
     if (!said.changes) continue
 
@@ -48,8 +52,9 @@ export async function convertSyntax() {
   const open = workspace.active
   const names = workspace.notes.map((one) => one.name)
 
+  // Only a note is one to convert in; any other tab in front is as good as none.
   const where =
-    open?.path === null || open?.path === undefined
+    !open?.path || !isMarkdownPath(open.path)
       ? 'space'
       : await prompt.choose({
           title: t('Convert syntax'),

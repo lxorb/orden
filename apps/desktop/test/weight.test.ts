@@ -831,13 +831,9 @@ function holds(tail: string): boolean {
  *  stands over the caption rather than pushing the file list down under the pointer
  *  (`is-floating` in Bookmarks.svelte). Measured 3,280,466.
  *
- *  Raised 2026-10-24, to 3,284,000, for #810: a PDF in a space shared to be read opens
- *  as itself rather than being turned into its page note (`mayTurn` and `openPaper` in
- *  workspace.svelte.ts). Measured 3,283,566 on top of #805.
- *
- *  Raised 2026-10-24, to 3,285,000, for #901: a PDF a page note already holds opens
- *  that note before anything asks whether it may be turned (`heldBy` in
- *  workspace.svelte.ts). Measured 3,284,600 on top of #810. */
+ *  Raised 2026-10-24, to 3,282,000, for #900: a block is named only in a note, keeping
+ *  its line ending, and nothing names one in a space shared to be read (`nameBlock` and
+ *  `searchBlocks` in link-index.svelte.ts). Measured 3,281,306. */
 const BUDGET = 3_300_000 // combined branch only
 const MOST_FILES = 382
 

@@ -712,6 +712,20 @@ describe('the blocks the whole space holds', () => {
     ])
   })
 
+  /** The desktop's search reads a website shortcut's words too, and a shortcut is
+   *  a file of `key=value` lines: a name written onto one of them is a title, a
+   *  date or an icon spoiled, and a link to it points nowhere. */
+  test('are only ever a note’s, never a website shortcut’s', async () => {
+    await space({
+      'Plan.md': '# Plan\n\nsvelte docs to read\n',
+      'Docs.url': '[InternetShortcut]\r\nURL=https://svelte.dev/docs\r\nTitle=Svelte docs\r\n',
+    })
+
+    expect((await links.searchBlocks('svelte docs', 10)).map((one) => one.path)).toEqual([
+      'Plan.md',
+    ])
+  })
+
   test('a word too short to search for finds nothing, and asks nothing', async () => {
     await space({ 'Plan.md': '# Plan\n\na line\n' })
 
@@ -935,6 +949,22 @@ describe('naming a block of another note', () => {
 
     const id = await links.nameBlock('Plan.md', 2, ROOT)
     expect(id).not.toBe('aaaaaa')
+  })
+
+  test('names nothing in a file that is not a note, and writes nothing there', async () => {
+    const shortcut = '[InternetShortcut]\r\nURL=https://svelte.dev/docs\r\nTitle=Svelte docs\r\n'
+    await space({ 'Docs.url': shortcut })
+
+    expect(await links.nameBlock('Docs.url', 2, ROOT)).toBeNull()
+    expect(written).toEqual([])
+    expect(notes['Docs.url']).toBe(shortcut)
+  })
+
+  test('keeps the line ending of a note written with CRLF', async () => {
+    await space({ 'Plan.md': '# Plan\r\n\r\nfirst line\r\nsecond line\r\n' })
+
+    const id = await links.nameBlock('Plan.md', 2, ROOT)
+    expect(notes['Plan.md']).toBe(`# Plan\r\n\r\nfirst line\r\nsecond line ^${id ?? ''}\r\n`)
   })
 
   /** A tab of another space is handed the open space's notes, so the root asked

@@ -36,7 +36,8 @@ export function headingsOf(root: string, said: string): readonly string[] {
   return links.held().find((one) => one.path === relative)?.headings ?? []
 }
 
-/** The note a `>` names: one whose path or name is the words, case aside.
+/** The note a `>` names: one whose path or name is the words, case aside. Only a
+ *  note: a task line written into a chat, a canvas or a shortcut spoils it.
  *
  *  And composed alike: a Mac keeps `Café` with the accent as a character of its
  *  own and a keyboard types it inside the letter, and compared as written the
@@ -44,9 +45,10 @@ export function headingsOf(root: string, said: string): readonly string[] {
 function named(root: string, said: string): string | null {
   const key = (words: string) => words.normalize('NFC').toLowerCase()
   const wanted = key(said.replace(/\.md$/i, ''))
+  const notes = workspace.notes.filter((one) => isMarkdownPath(one.path))
   const found =
-    workspace.notes.find((one) => key(withoutExtension(relativeTo(root, one.path))) === wanted) ??
-    workspace.notes.find((one) => key(withoutExtension(one.name)) === wanted.split('/').at(-1))
+    notes.find((one) => key(withoutExtension(relativeTo(root, one.path))) === wanted) ??
+    notes.find((one) => key(withoutExtension(one.name)) === wanted.split('/').at(-1))
   return found?.path ?? null
 }
 
