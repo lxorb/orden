@@ -317,5 +317,7 @@ describe('a title edited and written back', () => {
   test('what is typed new gets the escapes it needs, and an unchanged title is the line', () => {
     expect(editedWords('milk \\$3', 'milk $3')).toBe('milk \\$3')
     expect(editedWords('milk \\$3', 'milk $3 or ~5')).toBe('milk \\$3 or \\~5')
+    // The line's own markup is not what was typed, and stays as it was.
+    expect(editedWords('a ~~b~~ ==c== x^2^', 'a ~~b~~ ==c== x^2^ d')).toBe('a ~~b~~ ==c== x^2^ d')
   })
 })

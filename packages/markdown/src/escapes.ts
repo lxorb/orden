@@ -433,11 +433,11 @@ function shownChars(text: string): { shown: string; written: string }[] {
 
 /** A line of markdown after the words `shownWords` showed of it were edited into
  *  `edited`: the line itself where nothing changed, and otherwise the line with only
- *  the edited stretch written anew. Every escape the line had outside that stretch is
- *  kept, whatever it escaped - the `\#` that keeps a tag words, the `:\:` that keeps
- *  a field words, the brackets of a link nobody meant - and what was typed new gets
- *  what `typedWords` gives it, as does an unescaped character beside it that now
- *  needs one. So editing a word is never what turns the rest of the line into markup. */
+ *  the edited stretch written anew. Everything outside that stretch is the line's own
+ *  source, character for character - the `\\#` that keeps a tag words, the `:\\:`
+ *  that keeps a field words, and the line's own `~~struck~~`, `==marked==`, maths,
+ *  comments, HTML and `[[Note#^block]]` - and only what was typed new is escaped, by
+ *  `typedWords`, where it would read as markup. So editing a word changes that word. */
 export function editedWords(line: string, edited: string): string {
   const was = shownChars(line)
   const shown = was.map((one) => one.shown).join('')
@@ -451,13 +451,11 @@ export function editedWords(line: string, edited: string): string {
     tail++
 
   const typed = typedChars(edited)
-  const kept = (one: { shown: string; written: string } | undefined, at: number) =>
-    one && one.written !== one.shown ? one.written : (typed[at] ?? '')
   const out: string[] = []
   for (let at = 0; at < edited.length; at++) {
-    if (at < head) out.push(kept(was[at], at))
+    if (at < head) out.push(was[at]?.written ?? '')
     else if (at >= edited.length - tail)
-      out.push(kept(was[shown.length - (edited.length - at)], at))
+      out.push(was[shown.length - (edited.length - at)]?.written ?? '')
     else out.push(typed[at] ?? '')
   }
   return out.join('')

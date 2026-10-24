@@ -73,4 +73,12 @@ describe('a task in quick add’s field and back', () => {
     })
     expect(change.text).toBe('Reread \\[key:\\: value\\] later \\#tips')
   })
+
+  test("an edited title leaves the line's own markup as it was written", () => {
+    const one = task('- [ ] Read ~~old~~ ==key== $x$ %%note%% <b>b</b> [[Plan#^ab12cd]]')
+    const text = `${prefillFor(one, null).text} now`
+    expect(changeOf(one, { text, fields: { tags: [], remind: [] } }).text).toBe(
+      'Read ~~old~~ ==key== $x$ %%note%% <b>b</b> [[Plan#^ab12cd]] now',
+    )
+  })
 })
