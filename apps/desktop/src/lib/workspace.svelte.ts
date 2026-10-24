@@ -89,7 +89,7 @@ import { Saving } from './workspace/saving.svelte'
 import { draftFile, hasWords, isDraft, isUnsaved } from './workspace/drafts'
 import { TAB_KINDS } from './workspace/tab-kinds'
 import type { Picked } from './import/sources'
-import { FileActions, type Kept } from './workspace/undo.svelte'
+import { type Binning, FileActions, type Kept } from './workspace/undo.svelte'
 import { writeFile } from './workspace/write-file'
 import { isScratchpad, shown as pad } from './scratchpad/is.svelte'
 import { outermost, Selection } from './workspace/selection.svelte'
@@ -125,6 +125,8 @@ export interface Entry {
   children: Entry[]
   /** Taken off this Mac by iCloud; see icloud.svelte.ts. */
   evicted?: boolean
+  /** A folder the listing did not read into; see `walk` in tree.rs. */
+  unlisted?: boolean
 }
 
 /** What the listing itself is asked for. One field, because the order the rows are
@@ -4126,7 +4128,7 @@ class Workspace {
       // looking as though the delete had not registered.
       this.hideEntry(path)
 
-      const kept = await this.bin(path, isFolder, source)
+      const kept = await this.bin(path, isFolder, { source })
       if (kept) this.undone.record({ kind: 'delete', path, ...kept })
 
       await this.fileGone(path, isFolder ? 'folder' : 'file')
@@ -4136,8 +4138,9 @@ class Workspace {
     })
   }
 
-  /** Deletes, answering what puts it back; recorded by the caller. */
-  async bin(path: string, isFolder: boolean, source?: string): Promise<Kept | null> {
+  /** Deletes, answering what puts it back; recorded by the caller. See `Binning`. */
+  async bin(path: string, isFolder: boolean, how: Binning = {}): Promise<Kept | null> {
+    const { source, madeHere = false } = how
     // A deleted note keeps one last snapshot, so the delete is recoverable. A PDF
     // is bytes and not words: there is no snapshot of one, so the only thing that
     // can put it back is the trash.
@@ -4153,7 +4156,15 @@ class Workspace {
     const unread = words && content === null
     // Signed in, the account keeps a copy for 14 days; signed out, this
     // device does, in its own trash folder (see trash.svelte.ts).
-    const toAccount = account.signedIn && !unread && !(!isFolder && isPagesTarget(path))
+    // But only of what it was handed, which a space on no account, a file made
+    // offline or since the last push, or a dotfile is not. Those go to this device's
+    // trash: a folder's notes and a paper have no snapshot, and outright they were lost.
+    const toAccount =
+      account.signedIn &&
+      !madeHere &&
+      !unread &&
+      !(!isFolder && isPagesTarget(path)) &&
+      (await this.accountHolds(path, isFolder))
     const held =
       toAccount && isFolder ? await (await import('./workspace/undoing')).heldIn(path) : null
 
@@ -4175,6 +4186,27 @@ class Workspace {
       await this.loadTree()
       throw error
     }
+  }
+
+  /** Whether the account holds a copy of what a path is, so a delete can go to it.
+   *  The space being on the account is not enough: a file dropped in offline or
+   *  since the last push, and a dotfile, which sync never hands it, are on this
+   *  device alone, and so is what was written since. A folder counts only if
+   *  everything under it is held, and only a note goes: the account's Recently
+   *  deleted gives back nothing else, so a paper or a picture goes to the trash.
+   *  Nor from a space somebody else owns: theirs is the Recently deleted it lands in. */
+  private async accountHolds(path: string, isFolder: boolean): Promise<boolean> {
+    if (!isFolder && !isMarkdownPath(path)) return false
+    const root = this.rootHolding(path)
+    if (!root) return false
+    const { sync } = await import('./sync.svelte')
+    const id = sync.remoteIdFor(root)
+    // Asked of the listing rather than of `roleOf`, which takes a space it cannot
+    // find for this account's own: a space not listed yet is nobody's to leave to.
+    if (account.spaces.find((one) => one.id === id)?.role !== 'owner') return false
+    if (!isFolder) return sync.holds(path)
+    const { accountHoldsAll } = await import('./workspace/undoing')
+    return accountHoldsAll(path, (one, how) => sync.holds(one, how))
   }
 
   /** Puts the last file operation back; what each kind means going back is

@@ -102,6 +102,9 @@ describe('a note merged into another', () => {
       `read_note ${B}`,
       `snapshot_note ${B}`,
       `write_note ${B}`,
+      // What B says once the links are rewritten, which is what an undo checks it
+      // against.
+      `read_note ${B}`,
       `snapshot_note ${A}`,
       `delete_note ${A}`,
     ])
@@ -120,7 +123,15 @@ describe('a note merged into another', () => {
 
     expect(ws.undone.stack).toEqual([
       // Nothing linked to A here, so no note's links are to put back.
-      { kind: 'merge', from: A, fromContent: '# a\n', into: B, intoContent: '# b\n', relinked: [] },
+      {
+        kind: 'merge',
+        from: A,
+        fromContent: '# a\n',
+        into: B,
+        intoContent: '# b\n',
+        intoAfter: disk.get(B),
+        relinked: [],
+      },
     ])
   })
 

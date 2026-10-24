@@ -158,8 +158,10 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('./workspace.svelte')
 const { account } = await import('./account.svelte')
+type RemoteSpace = import('./api').RemoteSpace
 const { trash } = await import('./trash.svelte')
 const { prompt } = await import('./prompt.svelte')
+const { sync } = await import('./sync.svelte')
 
 beforeEach(() => {
   notes.clear()
@@ -331,6 +333,19 @@ describe('signed in', () => {
   beforeEach(() => {
     account.token = 'token'
     account.user = { id: 'u', email: 'a@b.dev', name: null }
+    // And the space on the account, which is what keeps a copy of what goes.
+    vi.spyOn(sync, 'remoteIdFor').mockReturnValue('remote')
+    // Owned by this account: a writer's delete in somebody else's space is not
+    // theirs to get back from the account.
+    account.spaces = [{ id: 'remote', role: 'owner' } as RemoteSpace]
+    // And every file in it held by the account as it is here, which a delete there
+    // leans on.
+    vi.spyOn(sync, 'holds').mockResolvedValue(true)
+  })
+
+  afterEach(() => {
+    account.spaces = []
+    vi.restoreAllMocks()
   })
 
   test('deleting removes the local copy; the account keeps it', async () => {

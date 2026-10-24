@@ -41,8 +41,9 @@ import { attach, attachPlane, type PlaneJoin } from './binding'
 import { carry, uncarry } from './carry'
 import { kindOfName } from './create'
 import { Engine } from './engine'
+import { type Holding, spend } from '../sync/holding'
 import type { Carried } from '../pages/carried'
-import { holdsDocument } from './kinds'
+import { holdsDocument, unixLines } from './kinds'
 import { hub } from './hub.svelte'
 import { firstPass, mirrorsFrom, type V1Listing, type V1Space } from './migrate'
 import { forgetSyncStore, get, openSyncStore, put } from './store'
@@ -677,6 +678,41 @@ class Runner {
       version: engine.core.numbers.get(entry.id)?.seq ?? 0,
       hash: entry.written_hash ?? '',
     }
+  }
+
+  /** Whether the account holds what is at a path on this disk now, so a delete can be
+   *  left to it; see `holds` in sync.svelte.ts.
+   *
+   *  An entry with a number has been handed over once, and that is all it says. A note
+   *  with words not acknowledged, or whose file another program wrote since nib did, is
+   *  ahead of the account. A file another program changed (`touched`), one whose bytes
+   *  the account names differently from the ones last on this disk, and one held in a
+   *  conflict - whose bytes here were never sent (`holdFile` in files.ts) - are too. Each
+   *  is read and hashed against what was last written, since the watcher's word on a
+   *  change can come a moment after the change. */
+  async holds(path: string, how: Holding = {}): Promise<boolean> {
+    const engine = this.engine
+    const entry = engine?.entryAt(path)
+    if (!engine || entry?.seq == null || entry.deleted || !entry.written_hash) {
+      return false
+    }
+    const core = engine.core
+    if (core.isHeld(entry.id)) return false
+
+    if (holdsDocument(entry.kind)) {
+      if (core.hasPending(entry.id)) return false
+      const words = await core.world.disk.read(path)
+      if (words === null || !spend(how, words.length)) return false
+      return (await core.world.digest(unixLines(words))) === entry.written_hash
+    }
+
+    if (core.touched.has(entry.id) || entry.file_key !== entry.written_hash) return false
+    const blobs = core.world.blobs
+    // What is larger than a folder check may still read is not read at all.
+    if (!blobs || (how.budget && (entry.size ?? Infinity) > how.budget.left)) return false
+    const bytes = await blobs.read(path)
+    if (!bytes || !spend(how, bytes.byteLength)) return false
+    return (await blobs.hash(bytes)) === entry.written_hash
   }
 
   /** A space deleted here: its rows go with it. */

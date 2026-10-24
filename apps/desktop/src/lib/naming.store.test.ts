@@ -158,6 +158,16 @@ vi.mock('./tauri', async (importOriginal) => ({
           if (one === path || one.startsWith(`${path}/`)) folders.delete(one)
         }
         return undefined
+      case 'trash_item': {
+        // Taken off the disk into this device's trash, a page note's paper with it,
+        // as an undone copy or a note made here goes; see `bin` in workspace.svelte.ts
+        // and trash.rs. What the trash holds is not asked about here.
+        const under = (one: string) => one === path || one.startsWith(`${path}/`)
+        for (const one of [...files.keys()]) if (under(one)) files.delete(one)
+        if (path.endsWith('.pages')) files.delete(`${path}.pdf`)
+        for (const one of [...folders]) if (under(one)) folders.delete(one)
+        return { id: `trash-${path}` }
+      }
       case 'bring_in_pdf': {
         // The crate's answer, from a disk outside the spaces; see handed_pdfs.rs.
         const words = outside.get(text(args?.from))
@@ -221,6 +231,8 @@ const { nameFault } = await import('./naming')
 const { workspace } = await import('./workspace.svelte')
 const { sync } = await import('./sync.svelte')
 const { unread } = await import('./unread.svelte')
+const { account } = await import('./account.svelte')
+type RemoteSpace = import('./api').RemoteSpace
 
 /** A file dropped from outside the app, at `path` inside what was dropped. */
 const dropped = (path: string, words: string) => ({
@@ -1084,5 +1096,120 @@ describe('a rename the disk refuses', () => {
 
     expect(rows()).toContain('/space/Beta.md')
     expect(files.get('/space/Work/Beta.md')).toBe('# another Beta')
+  })
+})
+
+/** Signed in, a delete goes to the account outright, since the account keeps a copy
+ *  for 14 days. That copy is only there for what the account was handed: a space on
+ *  no account, a copy made offline or before the next push, and the words typed into
+ *  it, were gone for good. */
+describe('signed in', () => {
+  beforeEach(() => {
+    Object.defineProperty(account, 'signedIn', { get: () => true, configurable: true })
+    // Owned by this account: a writer's delete in somebody else's space is not
+    // theirs to get back from the account.
+    account.spaces = [{ id: 'remote', role: 'owner' } as RemoteSpace]
+  })
+
+  afterEach(() => {
+    Reflect.deleteProperty(account, 'signedIn')
+    account.spaces = []
+    vi.restoreAllMocks()
+  })
+
+  test('a folder copy undone goes to the trash with what was typed in it', async () => {
+    vi.spyOn(sync, 'remoteIdFor').mockReturnValue('remote')
+    folders.add('/space/Trip')
+    files.set('/space/Trip/Plan.md', '# Plan')
+    await workspace.loadTree()
+    await workspace.duplicate('/space/Trip')
+    files.set('/space/Trip copy/Plan.md', '# Plan\ntyped into the copy')
+    sent.length = 0
+
+    await workspace.undoFileAction()
+
+    expect(sent).toContain('trash_item /space/Trip copy')
+    expect(sent).not.toContain('delete_folder /space/Trip copy')
+  })
+
+  test('and a picture dropped in and taken back goes there too', async () => {
+    vi.spyOn(sync, 'remoteIdFor').mockReturnValue('remote')
+    await workspace.bringIn([dropped('map.png', 'PNG')], '/space')
+    sent.length = 0
+
+    await workspace.undoFileAction()
+
+    expect(sent).toContain('trash_item /space/map.png')
+    expect(sent).not.toContain('delete_note /space/map.png')
+  })
+
+  test('and a paper an import wrote, highlighted since, goes there too', async () => {
+    vi.spyOn(sync, 'remoteIdFor').mockReturnValue('remote')
+    files.set('/space/paper.pdf', '%PDF highlighted')
+    workspace.undone.record({ kind: 'import', paths: ['/space/paper.pdf'], wrote: {} })
+
+    await workspace.undoFileAction()
+
+    expect(sent).toContain('trash_item /space/paper.pdf')
+    expect(sent).not.toContain('delete_note /space/paper.pdf')
+  })
+
+  test('a folder deleted in a space on no account goes to the trash', async () => {
+    await workspace.remove('/space/Work', true)
+
+    expect(sent).toContain('trash_item /space/Work')
+    expect(sent).not.toContain('delete_folder /space/Work')
+  })
+
+  test('but one in a space on the account goes to the account', async () => {
+    vi.spyOn(sync, 'remoteIdFor').mockReturnValue('remote')
+    vi.spyOn(sync, 'holds').mockResolvedValue(true)
+
+    await workspace.remove('/space/Work', true)
+
+    expect(sent).toContain('delete_folder /space/Work')
+  })
+
+  // The space being on the account is not the account holding everything in it.
+  // Sync never hands it a dotfile, and a file dropped in offline or since the last
+  // push it has not been handed yet: deleted outright, those were gone for good.
+  test('a folder holding a dotfile goes to the trash', async () => {
+    vi.spyOn(sync, 'remoteIdFor').mockReturnValue('remote')
+    vi.spyOn(sync, 'holds').mockResolvedValue(true)
+    folders.add('/space/Project')
+    files.set('/space/Project/a.md', '# a')
+    files.set('/space/Project/.hidden.md', '# hidden')
+    await workspace.loadTree()
+    sent.length = 0
+
+    await workspace.remove('/space/Project', true)
+
+    expect(sent).toContain('trash_item /space/Project')
+    expect(sent).not.toContain('delete_folder /space/Project')
+  })
+
+  test('a paper the account was never handed goes to the trash', async () => {
+    vi.spyOn(sync, 'remoteIdFor').mockReturnValue('remote')
+    files.set('/space/paper.pdf', '%PDF')
+    await workspace.loadTree()
+    sent.length = 0
+
+    await workspace.remove('/space/paper.pdf', false)
+
+    expect(sent).toContain('trash_item /space/paper.pdf')
+    expect(sent).not.toContain('delete_note /space/paper.pdf')
+  })
+
+  test('and so does a folder holding one', async () => {
+    vi.spyOn(sync, 'remoteIdFor').mockReturnValue('remote')
+    vi.spyOn(sync, 'holds').mockImplementation((path) => Promise.resolve(path.endsWith('.md')))
+    files.set('/space/Work/paper.pdf', '%PDF')
+    await workspace.loadTree()
+    sent.length = 0
+
+    await workspace.remove('/space/Work', true)
+
+    expect(sent).toContain('trash_item /space/Work')
+    expect(sent).not.toContain('delete_folder /space/Work')
   })
 })

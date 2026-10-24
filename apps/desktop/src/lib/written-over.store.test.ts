@@ -26,6 +26,8 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('./workspace.svelte')
 const { account } = await import('./account.svelte')
+type RemoteSpace = import('./api').RemoteSpace
+const { sync } = await import('./sync.svelte')
 
 /** The disk, which is there: it was made above. */
 function files(): Map<string, string> {
@@ -78,13 +80,20 @@ describe('a delete undone after a note took its name', () => {
     workspace.activeSpaceId = 's'
     await workspace.loadTree()
 
-    // Signed in, a delete is not this device's to keep: the note goes outright and
-    // the undo writes back the words read on the way out.
+    // Signed in, with the note on the account, a delete is not this device's to keep:
+    // the note goes outright and the undo writes back the words read on the way out.
     Object.defineProperty(account, 'signedIn', { get: () => true, configurable: true })
+    vi.spyOn(sync, 'remoteIdFor').mockReturnValue('remote')
+    vi.spyOn(sync, 'holds').mockResolvedValue(true)
+    // Owned by this account: a writer's delete in somebody else's space is not
+    // theirs to get back from the account.
+    account.spaces = [{ id: 'remote', role: 'owner' } as RemoteSpace]
   })
 
   afterEach(() => {
     Reflect.deleteProperty(account, 'signedIn')
+    account.spaces = []
+    vi.restoreAllMocks()
   })
 
   test('puts the old note back beside the new one, which keeps its words', async () => {
@@ -106,10 +115,17 @@ describe('a folder deleted signed in, undone after a note took a name in it', ()
     workspace.activeSpaceId = 's'
     await workspace.loadTree()
     Object.defineProperty(account, 'signedIn', { get: () => true, configurable: true })
+    vi.spyOn(sync, 'remoteIdFor').mockReturnValue('remote')
+    vi.spyOn(sync, 'holds').mockResolvedValue(true)
+    // Owned by this account: a writer's delete in somebody else's space is not
+    // theirs to get back from the account.
+    account.spaces = [{ id: 'remote', role: 'owner' } as RemoteSpace]
   })
 
   afterEach(() => {
     Reflect.deleteProperty(account, 'signedIn')
+    account.spaces = []
+    vi.restoreAllMocks()
   })
 
   test('with nothing made since, puts its notes back where they were', async () => {
@@ -123,16 +139,19 @@ describe('a folder deleted signed in, undone after a note took a name in it', ()
     expect(files().get('/space/Journal/2026-10-19.md')).toBe('# Today\nthe old words\n')
   })
 
-  test('holding a picture, is left to Recently deleted rather than put back without it', async () => {
+  test('holding a picture, goes to the trash, which keeps the picture with it', async () => {
     files().set('/space/Journal/shot.png', 'not words')
     disk.current?.unreadable.add('/space/Journal/shot.png')
     await workspace.loadTree()
 
     await workspace.remove('/space/Journal', true)
 
-    // The file list leaves the picture out, and an undo read from it put the note
-    // back and said nothing of the picture.
-    expect(workspace.undone.stack).toEqual([])
+    // An undo read from the file list put the note back and said nothing of the
+    // picture, and the account's Recently deleted gives back notes, never a picture.
+    // Only this device's trash keeps the folder whole.
+    expect(workspace.undone.stack).toEqual([
+      { kind: 'delete', path: '/space/Journal', content: '', folder: true, trashId: 'trash-1' },
+    ])
   })
 
   test("holding a Finder's .DS_Store and a desktop.ini, is still put back", async () => {
