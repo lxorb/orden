@@ -97,7 +97,7 @@
   let text = $state(untrack(() => prefill.text ?? ''))
   let description = $state<string | null>(untrack(() => prefill.description ?? null))
   /** Spans turned back into words. */
-  let keep = $state<Span[]>([])
+  let keep = $state<Span[]>(untrack(() => [...(prefill.keep ?? [])]))
   /** What the task's line escaped, which stays words as the words around it change. */
   let escaped = $state<Span[]>(untrack(() => [...(prefill.escaped ?? [])]))
   /** What the controls picked, over whatever the words say. `null` takes a field away. */
