@@ -60,6 +60,20 @@ export function setInbox(root: string, relative: string) {
 /** The space in front, whose inbox the crate was last told. */
 let front: string | null = null
 
+/** The space whose inbox a task from Shortcuts goes to: the one in front where it can
+ *  be written in, else the first that can, else none. The crate writes the task
+ *  straight onto the disk and knows nothing of who may write where, so a space shared
+ *  to be read is never named to it; and one is named even with nothing in front,
+ *  since what the crate falls back to is the first space on disk, whatever it is. */
+export function inboxSpace(
+  active: string | null,
+  roots: readonly string[],
+  writable: (root: string) => boolean,
+): string | null {
+  if (active !== null && writable(active)) return active
+  return roots.find(writable) ?? null
+}
+
 /** Tells the crate which note is the inbox of the space in front, which is where a task
  *  added from Shortcuts goes: the crate cannot read local storage, and the app may not
  *  even be open when one comes. Only a Mac has the action; see src-tauri/src/siri.rs. */
