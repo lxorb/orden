@@ -156,6 +156,17 @@ jobs:
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+      # #680: Settings > Editor > Text size dragged, and the note's text larger on the
+      # screen and after a load.
+      - name: The editor's text size changed from Settings, under sway
+        if: always()
+        env:
+          OUT: wayland-out/textsize
+          TEXTSIZE: '1'
+        run: |
+          pkill -f /usr/share/Orden/nib || true
+          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       # #762: tabs switched in the dark scheme, filmed: no frame of the pane white.
       - name: Tabs switched in the dark without a white frame, under sway
         if: always()
