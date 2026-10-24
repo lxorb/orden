@@ -334,6 +334,8 @@ describe('signed in', () => {
     account.user = { id: 'u', email: 'a@b.dev', name: null }
     // And the space on the account, which is what keeps a copy of what goes.
     vi.spyOn(sync, 'remoteIdFor').mockReturnValue('remote')
+    // And every file in it handed to the account, which a delete there leans on.
+    vi.spyOn(sync, 'tracked').mockReturnValue({ id: 'n', version: 1, hash: 'h' })
   })
 
   afterEach(() => {

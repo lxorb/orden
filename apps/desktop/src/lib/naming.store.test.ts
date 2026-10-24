@@ -1158,9 +1158,55 @@ describe('signed in', () => {
 
   test('but one in a space on the account goes to the account', async () => {
     vi.spyOn(sync, 'remoteIdFor').mockReturnValue('remote')
+    vi.spyOn(sync, 'tracked').mockReturnValue({ id: 'n', version: 1, hash: 'h' })
 
     await workspace.remove('/space/Work', true)
 
     expect(sent).toContain('delete_folder /space/Work')
+  })
+
+  // The space being on the account is not the account holding everything in it.
+  // Sync never hands it a dotfile, and a file dropped in offline or since the last
+  // push it has not been handed yet: deleted outright, those were gone for good.
+  test('a folder holding a dotfile goes to the trash', async () => {
+    vi.spyOn(sync, 'remoteIdFor').mockReturnValue('remote')
+    vi.spyOn(sync, 'tracked').mockReturnValue({ id: 'n', version: 1, hash: 'h' })
+    folders.add('/space/Project')
+    files.set('/space/Project/a.md', '# a')
+    files.set('/space/Project/.hidden.md', '# hidden')
+    await workspace.loadTree()
+    sent.length = 0
+
+    await workspace.remove('/space/Project', true)
+
+    expect(sent).toContain('trash_item /space/Project')
+    expect(sent).not.toContain('delete_folder /space/Project')
+  })
+
+  test('a paper the account was never handed goes to the trash', async () => {
+    vi.spyOn(sync, 'remoteIdFor').mockReturnValue('remote')
+    files.set('/space/paper.pdf', '%PDF')
+    await workspace.loadTree()
+    sent.length = 0
+
+    await workspace.remove('/space/paper.pdf', false)
+
+    expect(sent).toContain('trash_item /space/paper.pdf')
+    expect(sent).not.toContain('delete_note /space/paper.pdf')
+  })
+
+  test('and so does a folder holding one', async () => {
+    vi.spyOn(sync, 'remoteIdFor').mockReturnValue('remote')
+    vi.spyOn(sync, 'tracked').mockImplementation((path) =>
+      path.endsWith('.md') ? { id: 'n', version: 1, hash: 'h' } : null,
+    )
+    files.set('/space/Work/paper.pdf', '%PDF')
+    await workspace.loadTree()
+    sent.length = 0
+
+    await workspace.remove('/space/Work', true)
+
+    expect(sent).toContain('trash_item /space/Work')
+    expect(sent).not.toContain('delete_folder /space/Work')
   })
 })

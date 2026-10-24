@@ -295,6 +295,29 @@ export async function heldIn(path: string): Promise<Pick<Kept, 'notes' | 'folder
   return (await walk(listed)) ? { notes, folders } : null
 }
 
+/** Whether the account holds everything in a folder about to be deleted signed in,
+ *  so the account's copy can stand in for it. A dotfile anywhere under it says no:
+ *  sync never hands the account one, so `.obsidian/` or `.git/` deleted outright was
+ *  gone for good. So does a file sync has not pushed yet, a picture or a paper
+ *  dropped in offline or since the last pass. What sync leaves alone as clutter is
+ *  not worth keeping either way. */
+export async function accountHoldsAll(
+  path: string,
+  holds: (path: string) => boolean,
+): Promise<boolean> {
+  const options = { papers: true, every: true, showHidden: true }
+  const listed = await invoke<Entry>('read_tree', { root: path, options }).catch(() => null)
+  if (!listed) return false
+
+  const walk = (entry: Entry): boolean =>
+    entry.children.every((one) => {
+      if (one.name.startsWith('.')) return false
+      if (one.is_dir) return walk(one)
+      return CLUTTER.test(one.name) || holds(one.path)
+    })
+  return walk(listed)
+}
+
 /** What sync leaves alone besides dotfiles; see `ignored` in space_watch/walk.rs. */
 const CLUTTER = /^(~\$.*|thumbs\.db|desktop\.ini|Icon\r)$/i
 

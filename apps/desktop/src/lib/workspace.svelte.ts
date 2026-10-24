@@ -4120,15 +4120,15 @@ class Workspace {
     const unread = words && content === null
     // Signed in, the account keeps a copy for 14 days; signed out, this
     // device does, in its own trash folder (see trash.svelte.ts).
-    // But only of what it was handed, which a space on no account or a copy made
-    // offline or since the last push is not. Those go to this device's trash: a
-    // folder's notes and a paper have no snapshot, and outright they were lost.
+    // But only of what it was handed, which a space on no account, a file made
+    // offline or since the last push, or a dotfile is not. Those go to this device's
+    // trash: a folder's notes and a paper have no snapshot, and outright they were lost.
     const toAccount =
       account.signedIn &&
       !madeHere &&
       !unread &&
       !(!isFolder && isPagesTarget(path)) &&
-      (await this.onAccount(path))
+      (await this.accountHolds(path, isFolder))
     const held =
       toAccount && isFolder ? await (await import('./workspace/undoing')).heldIn(path) : null
 
@@ -4152,12 +4152,18 @@ class Workspace {
     }
   }
 
-  /** Whether the account mirrors the space a path is in. */
-  private async onAccount(path: string): Promise<boolean> {
+  /** Whether the account holds a copy of what a path is, so a delete can go to it.
+   *  The space being on the account is not enough: a file dropped in offline or
+   *  since the last push, and a dotfile, which sync never hands it, are on this
+   *  device alone. A folder counts only if everything under it is held. */
+  private async accountHolds(path: string, isFolder: boolean): Promise<boolean> {
     const root = this.rootHolding(path)
     if (!root) return false
     const { sync } = await import('./sync.svelte')
-    return sync.remoteIdFor(root) !== null
+    if (sync.remoteIdFor(root) === null) return false
+    if (!isFolder) return sync.holds(path)
+    const { accountHoldsAll } = await import('./workspace/undoing')
+    return accountHoldsAll(path, (one) => sync.holds(one))
   }
 
   /** Puts the last file operation back; what each kind means going back is

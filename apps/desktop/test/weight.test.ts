@@ -837,8 +837,12 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-24, to 3,283,000, for #778: signed in, a delete goes to the account
  *  only when its space is on the account, and an undone copy or import to this
- *  device's trash (`bin` in workspace.svelte.ts). Measured 3,282,517. */
-const BUDGET = 3_283_000
+ *  device's trash (`bin` in workspace.svelte.ts). Measured 3,282,517.
+ *
+ *  Raised 2026-10-24, to 3,284,000, for B253: a delete goes to the account only with
+ *  what the account holds, every file pushed and no dotfile (`holds` in
+ *  sync.svelte.ts, `accountHolds` in workspace.svelte.ts). Measured 3,283,653. */
+const BUDGET = 3_284_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
