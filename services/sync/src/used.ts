@@ -90,6 +90,39 @@ export async function usedElsewhere(
   return owed
 }
 
+/** What else of an account's own holds a blob, beside its spaces' notes, files and
+ *  chats (`usedElsewhere` with `own`): `used` for its face or the theme of one of its
+ *  sites, `unknown` for a picture while one of its own notes was written before its
+ *  pictures were and has not been read since, and null for neither. */
+export async function ownOtherwise(
+  env: Env,
+  userId: string,
+  hash: string,
+  picture: boolean,
+): Promise<'used' | 'unknown' | null> {
+  const held = await env.DB.prepare(
+    `select 1 as one from users where id = ?1 and instr(coalesce(avatar, ''), ?2) > 0
+     union all
+     select 1 from spaces sp
+      where user_id = ?1 and ${LIVE} and instr(coalesce(site, ''), ?2) > 0
+     limit 1`,
+  )
+    .bind(userId, hash)
+    .first()
+  if (held) return 'used'
+  if (!picture) return null
+
+  const unread = await env.DB.prepare(
+    `select 1 as one from notes n join spaces sp on sp.id = n.space_id
+      where sp.user_id = ?1 and ${LIVE} and n.size > 0 and n.kind != 'file'
+        and n.front_rev < ?2
+      limit 1`,
+  )
+    .bind(userId, FRONT_REV)
+    .first()
+  return unread ? 'unknown' : null
+}
+
 /** The statements that give each owner a row of their own for the hashes they are
  *  owed, copied from the row this account holds, so the bytes stay kept once it goes. */
 export function handedTo(

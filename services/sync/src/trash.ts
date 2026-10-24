@@ -9,8 +9,12 @@ import { deleteById } from './sync2/ops'
 import { presentSpace } from './spaces/space'
 import type { Env, Note, Space, Variables } from './types'
 import { forgetWords } from './blog/words'
-import { forgetPictures } from './pictures'
+import { forgetPictures, picturesOf } from './pictures'
 import { forgetVersions } from './versions'
+import { noteUnused, RIGHT_AFTER, NIGHTLY, sweepUnused } from './unused'
+import { readSpaceFiles } from './spaces/files'
+import { readSite } from './blog/site'
+import { FRONT_REV } from './blog/front'
 import { forgetEmptyGuest } from './guests'
 
 /** How long Recently deleted holds on to something. */
@@ -95,9 +99,39 @@ async function deletedNote(
   )
 }
 
+/** The hashes of the blobs a note uses: its file's bytes, its paper and the pictures
+ *  written down for its body - or read out of the body, for a note written before
+ *  they were (blog/fill.ts). */
+async function usedBy(env: Env, note: Pick<Note, 'id' | 'space_id'>): Promise<Set<string>> {
+  const row = await env.DB.prepare(
+    'select kind, hash, paper, front_rev, size from notes where id = ?',
+  )
+    .bind(note.id)
+    .first<{ kind: string; hash: string; paper: string | null; front_rev: number; size: number }>()
+  const used = new Set<string>()
+  if (!row) return used
+  if (row.kind === 'file' && row.hash) used.add(row.hash)
+  if (row.paper) used.add(row.paper)
+
+  const { results } = await env.DB.prepare('select hash from note_pictures where note_id = ?')
+    .bind(note.id)
+    .all<{ hash: string }>()
+  for (const one of results) used.add(one.hash)
+
+  if (row.kind !== 'file' && row.size > 0 && row.front_rev < FRONT_REV) {
+    const object = await env.NOTES.get(noteKey(note.space_id, note.id))
+    for (const hash of picturesOf(object ? await object.text() : '')) used.add(hash)
+  }
+  return used
+}
+
 /** Takes a note's content away for good. The row stays as the tombstone the
  *  change feed relies on, and stops being listed. */
 async function purgeNote(env: Env, note: Pick<Note, 'id' | 'space_id'>) {
+  // What the note used of the owner's blobs, read before the purge takes it away; see
+  // unused.ts. A note written before its pictures were has its body read for them.
+  const used = await usedBy(env, note)
+
   await env.NOTES.delete([noteKey(note.space_id, note.id), snapshotKey(note.id)])
   // And what the account remembered it saying before. A version of a note whose
   // words have gone for good is a version of nothing; the bodies go with the
@@ -120,6 +154,9 @@ async function purgeNote(env: Env, note: Pick<Note, 'id' | 'space_id'>) {
   // id is still this note's and nobody else may make anything under it.
   const at = now()
   await env.DB.batch([
+    // And the blobs it used, so the owner stops paying for whichever nothing else of
+    // theirs still shows (unused.ts).
+    noteUnused(env, note.space_id, used, at),
     env.DB.prepare('insert or ignore into leftovers (what, since) values (?, ?)').bind(
       `rooms/${note.id}`,
       at,
@@ -204,6 +241,24 @@ async function purgeSpace(env: Env, space: Pick<Space, 'id'>, budget = AT_ONCE):
   for (const chunk of chunks(results.map((note) => note.id))) {
     const list = places(chunk.length)
     await env.DB.batch([
+      // The blobs those notes used, written down for their owner before the rows that
+      // say so go: files of the tree, papers and the pictures written down for each
+      // body (unused.ts). A note written before its pictures were is not read for them
+      // here, because a batch of five hundred bodies is too much to read: its pictures
+      // stay counted, which costs the owner storage and loses nothing.
+      env.DB.prepare(
+        `insert or ignore into unused_blobs (user_id, hash, since)
+           select sp.user_id, used.hash, ?2 from (
+             select space_id, hash from notes
+              where id in (select value from json_each(?1)) and kind = 'file' and hash != ''
+             union
+             select space_id, paper from notes
+              where id in (select value from json_each(?1)) and paper is not null
+             union
+             select n.space_id, p.hash from note_pictures p join notes n on n.id = p.note_id
+              where p.note_id in (select value from json_each(?1))
+           ) used join spaces sp on sp.id = used.space_id`,
+      ).bind(JSON.stringify(chunk), at),
       env.DB.prepare(
         `insert or ignore into leftovers (what, since)
            select 'rooms/' || id, ? from notes where id in (${list})`,
@@ -228,7 +283,15 @@ async function purgeSpace(env: Env, space: Pick<Space, 'id'>, budget = AT_ONCE):
     // was in nothing else is nobody now, and its session goes with it. Its chats end
     // with it, and are erased a month later (chats/sweep.ts).
     const guests = await guestsOf(env, space.id, null)
+    // And the files it listed and its site's theme, written down for its owner before
+    // the marker stops naming them (unused.ts).
+    const marker = await env.DB.prepare('select files, site from spaces where id = ?')
+      .bind(space.id)
+      .first<{ files: string; site: string | null }>()
+    const listed = readSpaceFiles(marker?.files ?? '[]').map((one) => one.hash)
+    const theme = readSite(marker?.site ?? null).theme?.hash
     await env.DB.batch([
+      noteUnused(env, space.id, theme ? [...listed, theme] : listed, at),
       env.DB.prepare('delete from folders where space_id = ?').bind(space.id),
       env.DB.prepare('delete from tree_ops where space_id = ?').bind(space.id),
       env.DB.prepare('delete from space_entries where space_id = ?').bind(space.id),
@@ -286,6 +349,9 @@ export async function purgeExpired(
     budget -= await purgeSpace(env, space, budget)
     emptied++
   }
+
+  // And the blobs those purges may have left nobody using; see unused.ts.
+  await sweepUnused(env, NIGHTLY)
 
   return { notes: notes.results.length, spaces: emptied }
 }
@@ -414,6 +480,7 @@ trash.delete('/notes/:id', async (context) => {
   if (!note) return context.json({ error: 'nothing to delete' }, 404)
 
   await purgeNote(context.env, note)
+  await sweepUnused(context.env, RIGHT_AFTER)
   return context.json({ ok: true })
 })
 
@@ -423,6 +490,7 @@ trash.delete('/spaces/:id', async (context) => {
   if (!space) return context.json({ error: 'nothing to delete' }, 404)
 
   await purgeSpace(context.env, space)
+  await sweepUnused(context.env, RIGHT_AFTER)
   return context.json({ ok: true })
 })
 
@@ -441,6 +509,7 @@ trash.delete('/', async (context) => {
     if (budget <= 0) break
     budget -= await purgeSpace(env, space, budget)
   }
+  await sweepUnused(env, RIGHT_AFTER)
 
   return context.json({ ok: true })
 })

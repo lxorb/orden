@@ -127,6 +127,8 @@ export const ERASED: readonly (readonly [table: string, sql: string])[] = [
   // the ticket that is deleting it now.
   ['cached', "delete from cached where key = ?1 or value = ?1 or value like ?1 || ':%'"],
   ['spaces', 'delete from spaces where user_id = ?1'],
+  // What its purges left to ask about its own rows, which go here anyway.
+  ['unused_blobs', 'delete from unused_blobs where user_id = ?1'],
   ['blobs', 'delete from blobs where user_id = ?1'],
   ['sessions', 'delete from sessions where user_id = ?1'],
   ['feedback', 'delete from feedback where user_id = ?1'],

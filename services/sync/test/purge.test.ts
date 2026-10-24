@@ -5,6 +5,7 @@
  *  an id whose row went for good is not one anybody may make something under again
  *  while anything it named is still there. */
 
+import { createHash } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { type PullResponse, type PushResponse, seedUpdate } from '@nib/sync-core'
 import { TEXT } from '@nib/rooms'
@@ -271,5 +272,136 @@ describe('an id made by another space', () => {
 
     const again = await createUnder(other, 'mine-1', 'op-once')
     expect(again.json.results[0]).toEqual(first.json.results[0])
+  })
+})
+
+/** What is purged costs nothing (storage.ts): the bytes a purged note or space was the
+ *  only use of stop counting against its owner, and go from the bucket once nobody
+ *  holds them, while bytes something else of theirs still shows stay. */
+describe('what a purge stops paying for', () => {
+  const used = async () => (await call<{ used: number }>(env, '/v1/usage', { token })).json.used
+
+  async function upload(text: string, type: string): Promise<string> {
+    const bytes = new TextEncoder().encode(text)
+    const hash = createHash('sha256').update(bytes).digest('hex')
+    const up = await call(env, `/v1/blobs/${hash}`, {
+      method: 'PUT',
+      token,
+      raw: bytes,
+      headers: { 'content-type': type },
+    })
+    expect(up.status).toBeLessThan(300)
+    return hash
+  }
+
+  test('a file of a space purged for good', async () => {
+    await call(env, `/v2/spaces/${space}/prepare`, { token, method: 'POST' })
+    const before = await used()
+    const bytes = new TextEncoder().encode('x'.repeat(5000))
+    const hash = createHash('sha256').update(bytes).digest('hex')
+    await call(env, `/v2/blobs/${hash}`, {
+      method: 'PUT',
+      token,
+      raw: bytes,
+      headers: { 'content-type': 'application/octet-stream' },
+    })
+    await call(env, `/v2/spaces/${space}/ops`, {
+      token,
+      body: {
+        ops: [
+          {
+            op: 'f1',
+            t: 'create',
+            id: 'file_1',
+            kind: 'file',
+            parent: null,
+            name: 'a.bin',
+            hash,
+            size: 5000,
+            seen: 0,
+          },
+        ],
+      },
+    })
+    await call(env, `/v2/spaces/${space}/ops`, {
+      token,
+      body: { ops: [{ op: 'd1', t: 'delete', id: 'file_1', seen: 999 }] },
+    })
+    await call(env, `/v1/spaces/${space}`, { method: 'DELETE', token })
+    expect((await call(env, `/v1/trash/spaces/${space}`, { method: 'DELETE', token })).status).toBe(
+      200,
+    )
+
+    expect(await used()).toBe(before)
+    expect(env.keys()).not.toContain(`blobs/${hash}`)
+  })
+
+  test('a picture of a note purged for good, and not one another note still shows', async () => {
+    const gone = await upload('only in the purged note', 'image/png')
+    const kept = await upload('in both notes', 'image/png')
+    const id = (
+      await call(env, `/v1/spaces/${space}/notes`, {
+        token,
+        body: {
+          path: 'A.md',
+          content: `![](https://nibeditor.com/i/${gone}.png) ![](https://nibeditor.com/i/${kept}.png)`,
+        },
+      })
+    ).json.note.id
+    await call(env, `/v1/spaces/${space}/notes`, {
+      token,
+      body: { path: 'B.md', content: `![](https://nibeditor.com/i/${kept}.png)` },
+    })
+    await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })
+    expect((await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })).status).toBe(200)
+
+    expect((await call(env, `/i/${gone}.png`)).status).toBe(404)
+    expect((await call(env, `/i/${kept}.png`)).status).toBe(200)
+  })
+
+  /** Whether one of the owner's own notes written before its pictures were shows the
+   *  picture cannot be told until the nightly sweep reads it: the row stays, and so does
+   *  the question, for the next sweep. */
+  test('keeps a picture an unread note of its own might show, and asks again later', async () => {
+    const hash = await upload('maybe somewhere else', 'image/png')
+    const id = (
+      await call(env, `/v1/spaces/${space}/notes`, {
+        token,
+        body: { path: 'A.md', content: `![](https://nibeditor.com/i/${hash}.png)` },
+      })
+    ).json.note.id
+    const old = (
+      await call(env, `/v1/spaces/${space}/notes`, {
+        token,
+        body: { path: 'Old.md', content: 'x' },
+      })
+    ).json.note.id
+    env.db.prepare('update notes set front_rev = 1 where id = ?').run(old)
+    await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })
+    await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })
+
+    expect((await call(env, `/i/${hash}.png`)).status).toBe(200)
+    expect(env.db.prepare('select hash from unused_blobs').all()).toEqual([{ hash }])
+
+    env.db.prepare('update notes set front_rev = 2 where id = ?').run(old)
+    const { sweepUnused } = await import('../src/unused')
+    expect(await sweepUnused(env)).toBe(1)
+    expect((await call(env, `/i/${hash}.png`)).status).toBe(404)
+  })
+
+  test('a page note’s paper', async () => {
+    const before = await used()
+    const id = (
+      await call(env, `/v1/spaces/${space}/notes`, {
+        token,
+        body: { path: 'L.pages', content: '{}' },
+      })
+    ).json.note.id
+    const hash = await upload('%PDF-1.4\npurged\n%%EOF\n', 'application/pdf')
+    await call(env, `/v1/notes/${id}/paper`, { method: 'PUT', token, body: { hash } })
+    await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })
+    expect((await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })).status).toBe(200)
+
+    expect(await used()).toBe(before)
   })
 })

@@ -9,7 +9,7 @@ import { allows, reachedSpace } from './spaces/space'
 import { BYTES, hashOfBytes, held, holdsItsName, WRONG_BYTES } from './sync2/files'
 import { fits, fitsSql } from './storage'
 import type { Env, Space, Variables, Whoever } from './types'
-import { handedTo, unreadUses, usedElsewhere } from './used'
+import { handedTo, ownOtherwise, unreadUses, usedElsewhere } from './used'
 
 /** What may be stored, and how much of each.
  *
@@ -193,16 +193,27 @@ export async function letGo(env: Env, userId: string, hash: string, own = false)
   const owed = await usedElsewhere(env, userId, new Set([hash]), own)
   if (owed.has(userId)) return true
 
-  // And the notes written before their pictures were, read the way an erase reads
-  // them, if the bytes are a picture this account holds. Without guessing: a picture
-  // not found in the notes that could be read is kept rather than handed over on a
-  // chance, until the sweep has read the rest.
   const mine = await env.DB.prepare(
     'select u.email, b.type from blobs b join users u on u.id = b.user_id where b.hash = ? and b.user_id = ?',
   )
     .bind(hash, userId)
     .first<{ email: string; type: string }>()
-  if (mine?.type.startsWith('image/')) {
+  const picture = mine?.type.startsWith('image/') ?? false
+
+  // Counting its own uses, the two of its own that hold a blob without a note - its
+  // face and a site's theme - keep the row too, and a picture that one of its own notes
+  // written before their pictures were might show cannot be decided yet.
+  if (own) {
+    const otherwise = await ownOtherwise(env, userId, hash, picture)
+    if (otherwise === 'used') return true
+    if (otherwise === 'unknown') return false
+  }
+
+  // And the notes written before their pictures were, read the way an erase reads
+  // them, if the bytes are a picture this account holds. Without guessing: a picture
+  // not found in the notes that could be read is kept rather than handed over on a
+  // chance, until the sweep has read the rest.
+  if (mine && picture) {
     const user = { id: userId, email: mine.email }
     if (!(await unreadUses(env, user, new Set([hash]), owed, false))) return false
   }
