@@ -129,7 +129,7 @@ describe('a property written from a view', () => {
       '---\nrelated: ["[[Projects/Alpha]]", "[[Beta|B]]", "[[Gamma]]"]\ndue: [2026-10-24, 2026-11-02]\nflags: [true, false, 1234.5]\n---\n# N\n'
     const row = noteRow(text)
     expect(changed(text, row, { list: { related: { remove: 1 } } })).toBe(
-      "---\nrelated: ['[[Projects/Alpha]]', '[[Gamma]]']\ndue: [2026-10-24, 2026-11-02]\nflags: [true, false, 1234.5]\n---\n# N\n",
+      '---\nrelated: ["[[Projects/Alpha]]", "[[Gamma]]"]\ndue: [2026-10-24, 2026-11-02]\nflags: [true, false, 1234.5]\n---\n# N\n',
     )
     expect(changed(text, row, { list: { due: { remove: 1 } } })).toBe(
       '---\nrelated: ["[[Projects/Alpha]]", "[[Beta|B]]", "[[Gamma]]"]\ndue: [2026-10-24]\nflags: [true, false, 1234.5]\n---\n# N\n',
@@ -160,6 +160,23 @@ describe('a property written from a view', () => {
     // Nor does one put on a map, which is no list.
     const mapped = '---\nexport:\n  paper: A4\n---\n'
     expect(changed(mapped, row, { list: { export: { add: 'b' } } })).toBe(mapped)
+  })
+
+  test('rewrites a list with the members it did not change exactly as written', () => {
+    const text = '---\nids: [1234567890123456789, 5, 1.10, 2.0, 007, -0]\n---\n# N\n'
+    const row = noteRow(text)
+    const after = '---\nids: [1234567890123456789, 1.10, 2.0, 007, -0]\n---\n# N\n'
+    expect(changed(text, row, { list: { ids: { remove: 1 } } })).toBe(after)
+    // The same list as values, the way a rename of a choice writes it.
+    const ids = row.note.ids
+    expect(Array.isArray(ids)).toBe(true)
+    const kept = Array.isArray(ids) ? ids.filter((_, at) => at !== 1) : []
+    expect(changed(text, row, { note: { ids: kept } })).toBe(after)
+    expect(
+      changed('---\ntags: [1.10, a, "[[B]]"]\n---\n', row, {
+        note: { tags: [1.1, 'b', { kind: 'link', target: 'B' }] },
+      }),
+    ).toBe('---\ntags: [1.10, b, "[[B]]"]\n---\n')
   })
 
   test('opens a block in a note that has none', () => {

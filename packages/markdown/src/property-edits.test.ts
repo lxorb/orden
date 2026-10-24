@@ -136,7 +136,7 @@ describe('a list', () => {
     const tags = readProperties(NOTE)?.find((one) => one.key === 'tags')
     expect(tags).toBeDefined()
     // Asserted on the line above.
-    expect(withItem(tags!, 'three')).toEqual(['one', 'two', 'three'])
+    expect(writtenList(withItem(tags!, 'three') ?? [])).toBe('[one, two, three]')
     expect(withItem(tags!, 'one')).toBeNull()
     expect(withItem(tags!, '  ')).toBeNull()
   })
@@ -145,7 +145,7 @@ describe('a list', () => {
     const tags = readProperties(NOTE)?.find((one) => one.key === 'tags')
     expect(tags).toBeDefined()
     // Asserted on the line above.
-    expect(withoutItem(tags!, 'one')).toEqual(['two'])
+    expect(writtenList(withoutItem(tags!, 'one') ?? [])).toBe('[two]')
     expect(withoutItem(tags!, 'three')).toBeNull()
   })
 
@@ -158,7 +158,7 @@ describe('a list', () => {
 
     // Asserted on the line above.
     const written = applied(quoted, writeList(quoted, 'tags', withoutItem(tags!, 'c') ?? []))
-    expect(written).toBe("---\ntags: ['a, b']\n---\n\nWords.\n")
+    expect(written).toBe('---\ntags: ["a, b"]\n---\n\nWords.\n')
     expect(readProperties(written)?.find((one) => one.key === 'tags')?.items).toEqual(['a, b'])
 
     const again = applied(written, writeList(written, 'tags', ['a, b', "It's, here"]))
@@ -223,6 +223,40 @@ describe('a list', () => {
     expect(added('a: b')).toBe("---\nscores: [1, 10, 'a: b']\n---\n")
     expect(added('#x')).toBe("---\nscores: [1, 10, '#x']\n---\n")
     expect(added('more')).toBe('---\nscores: [1, 10, more]\n---\n')
+  })
+
+  test('a chip taken off leaves every other member exactly as it was written', () => {
+    const note = '---\nids: [1234567890123456789, 5, 1.10, 2.0, 007, -0]\n---\n'
+    const ids = readProperties(note)?.find((one) => one.key === 'ids')
+    expect(ids).toBeDefined()
+    // Asserted on the line above.
+    const written = applied(note, writeList(note, 'ids', withoutItem(ids!, '5') ?? []))
+    expect(written).toBe('---\nids: [1234567890123456789, 1.10, 2.0, 007, -0]\n---\n')
+
+    const quoted = `---\ntags: ["a", 'b', c, "it's"]\n---\n`
+    const tags = readProperties(quoted)?.find((one) => one.key === 'tags')
+    expect(tags).toBeDefined()
+    // Asserted on the line above.
+    expect(applied(quoted, writeList(quoted, 'tags', withoutItem(tags!, 'c') ?? []))).toBe(
+      `---\ntags: ["a", 'b', "it's"]\n---\n`,
+    )
+  })
+
+  test('a chip added to a block list keeps its members as written, in a flow list', () => {
+    const note = "---\nids:\n  - 007\n  - 1.10\n  - 'x'\n  - a, b\n---\n"
+    const ids = readProperties(note)?.find((one) => one.key === 'ids')
+    expect(ids).toBeDefined()
+    // Asserted on the line above. A plain member holding a comma is one member in a
+    // block list and two in a flow one, so that one alone is quoted.
+    const written = applied(note, writeList(note, 'ids', withItem(ids!, '3') ?? []))
+    expect(written).toBe("---\nids: [007, 1.10, 'x', 'a, b', 3]\n---\n")
+    expect(readProperties(written)?.find((one) => one.key === 'ids')?.items).toEqual([
+      '007',
+      '1.10',
+      'x',
+      'a, b',
+      '3',
+    ])
   })
 
   test('the last chip off leaves the key with an empty list rather than no key', () => {

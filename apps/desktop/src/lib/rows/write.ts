@@ -16,7 +16,7 @@
  *  and, where the words have moved, the nearest line with the same words is the one. */
 
 import type { DateValue, DurationValue, LinkValue, Row, TaskChange, Value } from '@nib/bases'
-import { taskHash, tick, todayOf } from '@nib/bases'
+import { noteValues, taskHash, tick, todayOf } from '@nib/bases'
 import { appliedEdits, oneEdit, type TextEdit } from '@nib/markdown/edits'
 import { type Property, readProperties } from '@nib/markdown/properties'
 import {
@@ -182,14 +182,20 @@ function propertyEdit(text: string, key: string, value: Value): TextEdit | null 
   if (value === null) return writeProperty(text, key, null)
   if (Array.isArray(value)) {
     // Each member as what it is: a number, a yes or no and nothing stay themselves,
-    // where turning them into words would write `[1, 10]` back as `['1', '10']`.
+    // where turning them into words would write `[1, 10]` back as `['1', '10']`. And
+    // a member the note already holds is put back as the note wrote it: the value a
+    // row holds for `1.10` or `1234567890123456789` is a number that writes itself
+    // as `1.1` or `1234567890123456800`.
+    const kept = keptMembers(text, key)
     return writeList(
       text,
       key,
-      value.map((one) =>
-        one === null || typeof one === 'number' || typeof one === 'boolean'
-          ? one
-          : (written(one) ?? ''),
+      value.map(
+        (one) =>
+          kept(one) ??
+          (one === null || typeof one === 'number' || typeof one === 'boolean'
+            ? one
+            : (written(one) ?? '')),
       ),
     )
   }
@@ -198,6 +204,24 @@ function propertyEdit(text: string, key: string, value: Value): TextEdit | null 
   const said = written(value)
   if (said === null) return undefined
   return writeProperty(text, key, said, hasKind(value, 'date') ? 'date' : 'text')
+}
+
+/** For a list the note holds under `key`, a lookup from a member's value to that
+ *  member as written, each written member handed out once, in order. Nothing for a
+ *  key that holds no list. */
+function keptMembers(text: string, key: string): (value: Value) => ListItem | null {
+  const list = asList(text, key)
+  const values = noteValues(text)[key]
+  if (!list || !Array.isArray(values) || values.length !== list.items.length) return () => null
+  const members = listItems(list)
+  const left = values.map((one, at) => ({ said: JSON.stringify(one), member: members[at] }))
+  return (value) => {
+    const said = JSON.stringify(value)
+    const at = left.findIndex((one) => one.said === said)
+    if (at === -1) return null
+    const [found] = left.splice(at, 1)
+    return found?.member ?? null
+  }
 }
 
 /** Whether a value is one of the shapes that say what they are by `kind`. */
