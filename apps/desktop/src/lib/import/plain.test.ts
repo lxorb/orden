@@ -147,6 +147,11 @@ describe('a folder of markdown', () => {
     ['a nested task', 'Todo\n  * [X] call #work\n'],
     ['struck words', 'Plans\n\nGo ~~Monday~~ Tuesday.\n'],
     ['words in underscores', 'It was _quiet_.\n'],
+    ['an empty task', 'Todo\n- [ ]\n'],
+    ['numbered tasks', 'Todo\n1. [ ] milk\n2) [x] eggs\n'],
+    ['a quoted task', '> - [ ] milk\n'],
+    ['underscores in quotes', 'It was "_quiet_", (_calm_) and _well_-kept.\n'],
+    ['a strike in brackets', 'Go (~~Monday~~) Tuesday.\n'],
   ])('and so does a text file with only %s for markdown', async (_, draft) => {
     const plan = await readPlain([file('Draft.txt', draft)], { format: 'markdown' })
 
@@ -157,6 +162,9 @@ describe('a folder of markdown', () => {
     ['snake case', 'Open file_name_here.txt for $5.\n'],
     ['a tilde', 'About ~5 min for $5, or ~~ 10.\n'],
     ['brackets', '- [a] first for $5\n- [ ]missing space\n'],
+    ['tildes inside words', 'a~~b~~c, ~~5~~10 for $5\n'],
+    ['a cheer', 'Done for $5 _o_ yay\n'],
+    ['snake case in quotes', 'Open "_init_x" or (some_var_) for $5\n'],
   ])('while one with only %s is still plain text', async (_, words) => {
     const plan = await readPlain([file('Note.txt', words)])
 
