@@ -223,6 +223,52 @@ describe('a note purged from Recently deleted', () => {
   })
 })
 
+describe('a v1 note deleted again', () => {
+  /** A note on the v1 tree, which has no `name_key`: its delete is the route's own. */
+  async function v1Note(): Promise<string> {
+    return (
+      await call(env, `/v1/spaces/${space}/notes`, {
+        token,
+        body: { path: 'Old.md', content: 'x' },
+      })
+    ).json.note.id
+  }
+  const row = (id: string) =>
+    env.db
+      .prepare('select deleted, deleted_at, version, name_key from notes where id = ?')
+      .get(id) as {
+      deleted: number
+      deleted_at: number | null
+      version: number
+      name_key: string | null
+    }
+
+  test('keeps the days it already had in Recently deleted', async () => {
+    const id = await v1Note()
+    expect(row(id).name_key).toBeNull()
+    await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })
+    env.db.prepare('update notes set deleted_at = 1 where id = ?').run(id)
+    const before = row(id)
+
+    expect((await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })).status).toBe(200)
+    expect(row(id)).toEqual(before)
+  })
+
+  test('once purged, stays a tombstone and never comes back to Recently deleted', async () => {
+    const id = await v1Note()
+    await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })
+    await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })
+    const before = row(id)
+    expect(before.deleted_at).toBeNull()
+
+    await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })
+    expect(row(id)).toEqual(before)
+    expect(
+      (await call(env, `/v1/trash/notes/${id}/restore`, { method: 'POST', token })).status,
+    ).toBe(404)
+  })
+})
+
 describe('an id made by another space', () => {
   test('is not made again in this one', async () => {
     const id = (
