@@ -127,6 +127,57 @@ pub fn has_pandoc() -> bool {
         .is_ok_and(|status| status.success())
 }
 
+/// Whether this machine's pandoc keeps `--extract-media` inside the folder it is
+/// given. Before 3.1.6 a picture whose name hides `../` in percent-encoding is
+/// written wherever it says (CVE-2023-35936, fixed in 3.1.4, and CVE-2023-38745,
+/// its double-encoded twin, fixed in 3.1.6), and `--sandbox` does not stop it: it
+/// fences in the readers and writers, not the copying of pictures. A document
+/// somebody sent, or a note from a shared space, could then put a `~/.bashrc` of
+/// its own on this machine.
+///
+/// Asked of pandoc itself rather than read off its version, because Debian and
+/// Ubuntu mended their 2.17 and 3.1.3 without changing the number. Both pictures
+/// the advisories describe are handed to it in a folder of our own, one level
+/// down, and it is trusted only when nothing comes out beside that folder. Asked
+/// on every call, like `program`, so a pandoc updated while the app is open
+/// counts at once.
+fn extracts_safely() -> bool {
+    let Ok(probe) = tempfile::tempdir() else {
+        return false;
+    };
+    let inside = probe.path().join("inside");
+    if std::fs::create_dir(&inside).is_err() {
+        return false;
+    }
+    let Ok(mut child) = pandoc()
+        .current_dir(&inside)
+        .args([
+            "--from",
+            "markdown",
+            "--to",
+            "markdown",
+            "--extract-media",
+            ".",
+        ])
+        .stdin(Stdio::piped())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+    else {
+        return false;
+    };
+    let sent = child
+        .stdin
+        .take()
+        .is_some_and(|mut sink| sink.write_all(CLIMBING.as_bytes()).is_ok());
+    let ran = child.wait().is_ok_and(|status| status.success());
+    sent && ran && std::fs::read_dir(probe.path()).is_ok_and(|found| found.count() == 1)
+}
+
+/// The two pictures of the advisories, each climbing two folders up from the
+/// media folder: once percent-encoded, and once encoded twice.
+const CLIMBING: &str = "![](data://image/png;base64,aGVsbG8=;.lua+%2f%2e%2e%2f%2e%2e%2fonce%2elua)\n\n![](data://image/png;base64,aGVsbG8=;.lua+%252f%252e%252e%252f%252e%252e%252ftwice%252elua)\n";
+
 /// What one import is run with: the options, then `--`, then the file.
 ///
 /// The marker is the whole point of the function. `chosen` judges a path, and lets
@@ -142,18 +193,18 @@ pub fn has_pandoc() -> bool {
 /// sent to the account by opening a paper. In its sandbox pandoc reads the file it
 /// was given and nothing else; the pictures inside a Word file still come out
 /// beside it, since `--extract-media` writes after the reading is done.
-fn reading(source: &str) -> [&str; 9] {
-    [
-        "--sandbox",
-        "--to",
-        READ_AS,
-        "--wrap",
-        "none",
-        "--extract-media",
-        ".",
-        "--",
-        source,
-    ]
+///
+/// Only when `media` is true, which is a pandoc that keeps those pictures inside
+/// the folder; see `extracts_safely`. On an older one the words still come in and
+/// the pictures stay behind, because the alternative lets the document write
+/// anywhere on this machine.
+fn reading(source: &str, media: bool) -> Vec<&str> {
+    let mut args = vec!["--sandbox", "--to", READ_AS, "--wrap", "none"];
+    if media {
+        args.extend(["--extract-media", "."]);
+    }
+    args.extend(["--", source]);
+    args
 }
 
 /// Converts a document into markdown with pandoc. The format comes from the
@@ -176,7 +227,7 @@ pub fn import_document(app: AppHandle, path: String) -> Result<String, String> {
 
     let result = pandoc()
         .current_dir(&beside)
-        .args(reading(&source))
+        .args(reading(&source, extracts_safely()))
         .output()
         .map_err(|error| format!("pandoc could not start: {error}. Is it installed?"))?;
 
@@ -260,7 +311,9 @@ pub fn run_pandoc(
 /// A deck links its pictures rather than holding them, so pointing at them where
 /// the note is breaks the moment it is opened anywhere else. Its pictures are
 /// copied beside it, into `Deck_files` for `Deck.html`, the way a browser saves a
-/// page, and the deck points there.
+/// page, and the deck points there. That copying is `--extract-media`, so a deck
+/// is refused on a pandoc that lets a picture's name lead it out of that folder;
+/// see `extracts_safely`.
 fn convert(
     source: &str,
     target: &Path,
@@ -273,6 +326,9 @@ fn convert(
         command.arg(joined("--resource-path=", folder.as_os_str()));
     }
     if format == "revealjs" {
+        if !extracts_safely() {
+            return Err(DECK_REFUSAL.to_string());
+        }
         let beside = target
             .parent()
             .ok_or_else(|| format!("{} is not in a folder", target.display()))?;
@@ -315,6 +371,9 @@ fn convert(
 
     Err(complaint(&result.stderr, "pandoc failed"))
 }
+
+/// Why a deck was not written on a pandoc that copies pictures unsafely.
+const DECK_REFUSAL: &str = "Exporting a deck needs pandoc 3.1.6 or newer: this pandoc can be made to write a deck's pictures outside the deck's folder";
 
 /// An option and its value as one argument, a path's bytes kept as they are.
 fn joined(option: &str, value: &std::ffi::OsStr) -> std::ffi::OsString {
@@ -369,7 +428,8 @@ fn complaint(stderr: &[u8], fallback: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::{
-        complaint, convert, has_pandoc, is_format, not_found, pandoc, read_refusal, reading,
+        complaint, convert, extracts_safely, has_pandoc, is_format, not_found, pandoc,
+        read_refusal, reading, DECK_REFUSAL,
     };
     use std::fs;
     use std::path::Path;
@@ -380,7 +440,7 @@ mod tests {
         let source = beside.join(name).to_string_lossy().to_string();
         let result = pandoc()
             .current_dir(beside)
-            .args(reading(&source))
+            .args(reading(&source, extracts_safely()))
             .output()
             .expect("pandoc runs");
         (
@@ -402,7 +462,7 @@ mod tests {
     /// not read a file of this machine into the note, which then syncs.
     #[test]
     fn an_import_runs_pandoc_in_its_sandbox() {
-        let args = reading("paper.tex");
+        let args = reading("paper.tex", true);
         let sandbox = args.iter().position(|one| *one == "--sandbox");
         let marker = args.iter().position(|one| *one == "--");
         assert!(sandbox.is_some_and(|at| marker.is_some_and(|end| at < end)));
@@ -459,7 +519,9 @@ mod tests {
         }
     }
 
-    /// The sandbox keeps the pictures inside a Word file, which come out beside it.
+    /// The sandbox keeps the pictures inside a Word file, which come out beside it
+    /// on a pandoc that copies them safely. On an older one the words come in and
+    /// no picture is written at all.
     #[test]
     fn a_picture_inside_a_document_still_comes_out_beside_it() {
         if !pandoc_here() {
@@ -496,6 +558,11 @@ mod tests {
         fs::remove_file(beside.join("dot.png")).expect("removed");
 
         let (markdown, said) = imported(beside, "with.docx");
+        assert!(markdown.contains("Text"), "{markdown}\n{said}");
+        if !extracts_safely() {
+            assert!(!beside.join("media").exists(), "{said}");
+            return;
+        }
         assert!(markdown.contains("media/"), "{markdown}\n{said}");
         let media = fs::read_dir(beside.join("media"))
             .expect("a media folder")
@@ -587,7 +654,8 @@ mod tests {
     }
 
     /// A deck links its pictures rather than holding them, so they go beside it,
-    /// in a folder of its own named after it, and it points there.
+    /// in a folder of its own named after it, and it points there. A pandoc that
+    /// cannot copy them safely is refused, and says which one would do.
     #[test]
     fn a_deck_saved_elsewhere_still_shows_its_pictures() {
         if !pandoc_here() {
@@ -596,8 +664,14 @@ mod tests {
         let (note, elsewhere) = note_and_elsewhere();
         let target = elsewhere.path().join("Deck.html");
 
-        let missing =
-            convert(WITH_PICTURE, &target, "revealjs", Some(note.path())).expect("converted");
+        let made = convert(WITH_PICTURE, &target, "revealjs", Some(note.path()));
+        if !extracts_safely() {
+            assert_eq!(made, Err(DECK_REFUSAL.to_string()));
+            assert!(DECK_REFUSAL.contains("3.1.6"));
+            assert!(!target.exists());
+            return;
+        }
+        let missing = made.expect("converted");
 
         assert!(missing.is_empty(), "{missing:?}");
         let html = fs::read_to_string(&target).expect("a deck");
@@ -641,10 +715,21 @@ mod tests {
         0x00, 0x49, 0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82,
     ];
 
+    /// An import on an older pandoc is run without `--extract-media`, so its words
+    /// still come in.
+    #[test]
+    fn an_import_copies_pictures_only_on_a_pandoc_that_does_it_safely() {
+        assert!(reading("paper.docx", true).contains(&"--extract-media"));
+        let without = reading("paper.docx", false);
+        assert!(!without.contains(&"--extract-media"));
+        assert!(without.contains(&"--sandbox"));
+        assert_eq!(without[without.len() - 2..], ["--", "paper.docx"]);
+    }
+
     /// A path is the reader's own, and pandoc reads a leading dash as an option.
     #[test]
     fn the_file_is_read_as_a_file_whatever_it_is_called() {
-        let args = reading("-lua-filter=evil.lua");
+        let args = reading("-lua-filter=evil.lua", true);
 
         assert_eq!(args.last(), Some(&"-lua-filter=evil.lua"));
         // The marker sits immediately in front of it, so nothing between the
