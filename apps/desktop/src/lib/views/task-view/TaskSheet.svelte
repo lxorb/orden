@@ -13,7 +13,7 @@
   import { parseQuickAdd } from '@nib/bases/language'
   import { linesOf } from '@nib/bases/tasks'
   import { dayWords } from '@nib/editor/task-days'
-  import { shownWords, typedWords } from '@nib/markdown/escapes'
+  import { editedWords, shownWords } from '@nib/markdown/escapes'
   import { deadlineOf, startOf } from '@nib/markdown/task-dates'
   import Bell from 'lucide/dist/esm/icons/bell.mjs'
   import Calendar from 'lucide/dist/esm/icons/calendar-days.mjs'
@@ -112,7 +112,7 @@
 
   /** The task's words while they are being changed, written on Enter or when the field
    *  is left. The field holds the words a reader sees, `milk $3` where the line says
-   *  `milk \$3`, and they go back with the escapes the line needs (`typedWords`):
+   *  `milk \$3`, and they go back with every escape the line had (`editedWords`):
    *  taking a backslash out by hand would turn the line into maths. */
   let title = $state('')
   let editing = $state(false)
@@ -125,7 +125,7 @@
     editing = false
     const words = title.trim()
     if (!row || !task || !words || words === shownWords(task.text)) return
-    const written = typedWords(words)
+    const written = editedWords(task.text, words)
     viewing.renamed(written, row.anchor?.line ?? shown.ref.line)
     void writeRow(row, { task: { text: written } })
   }

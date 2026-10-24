@@ -389,26 +389,78 @@ export function shownWords(text: string): string {
  *  escape for itself. What the writer typed as markup of their own - bold, a link,
  *  code - is left to be that, which is why this is narrower than `escapeText`. */
 export function typedWords(text: string): string {
-  return codeAndWords(text)
-    .map((one) => {
-      if (one.code) return one.text
-      let out = ''
-      const words = one.text
-      for (let at = 0; at < words.length; at++) {
-        const char = words.charAt(at)
-        const before = words[at - 1]
-        const after = words[at + 1]
-        const escaped =
-          (char === '\\' && after !== undefined && PUNCTUATION.test(after)) ||
-          (char === '$' && !(isBlank(before) && isBlank(after))) ||
-          ((char === '~' || char === '^') && !isBlank(after)) ||
-          ((char === '%' || char === '=') && before === char) ||
-          (char === '<' && /[A-Za-z/!?]/.test(after ?? ''))
-        out += escaped ? `\\${char}` : char
-      }
-      return out
-    })
-    .join('')
+  return typedChars(text).join('')
+}
+
+/** `typedWords` a character at a time: each character of the text as it is written. */
+function typedChars(text: string): string[] {
+  return codeAndWords(text).flatMap((one) => {
+    const words = one.text
+    if (one.code) return words.split('')
+    const out: string[] = []
+    for (let at = 0; at < words.length; at++) {
+      const char = words.charAt(at)
+      const before = words[at - 1]
+      const after = words[at + 1]
+      const escaped =
+        (char === '\\' && after !== undefined && PUNCTUATION.test(after)) ||
+        (char === '$' && !(isBlank(before) && isBlank(after))) ||
+        ((char === '~' || char === '^') && !isBlank(after)) ||
+        ((char === '%' || char === '=') && before === char) ||
+        (char === '<' && /[A-Za-z/!?]/.test(after ?? ''))
+      out.push(escaped ? `\\${char}` : char)
+    }
+    return out
+  })
+}
+
+/** Each character `shownWords` shows of a line, with how the line writes it: the
+ *  character, or its escape. */
+function shownChars(text: string): { shown: string; written: string }[] {
+  return codeAndWords(text).flatMap((one) => {
+    const out: { shown: string; written: string }[] = []
+    for (let at = 0; at < one.text.length; at++) {
+      const char = one.text.charAt(at)
+      const next = one.text.charAt(at + 1)
+      if (!one.code && char === '\\' && PUNCTUATION.test(next)) {
+        out.push({ shown: next, written: `\\${next}` })
+        at += 1
+      } else out.push({ shown: char, written: char })
+    }
+    return out
+  })
+}
+
+/** A line of markdown after the words `shownWords` showed of it were edited into
+ *  `edited`: the line itself where nothing changed, and otherwise the line with only
+ *  the edited stretch written anew. Every escape the line had outside that stretch is
+ *  kept, whatever it escaped - the `\#` that keeps a tag words, the `:\:` that keeps
+ *  a field words, the brackets of a link nobody meant - and what was typed new gets
+ *  what `typedWords` gives it, as does an unescaped character beside it that now
+ *  needs one. So editing a word is never what turns the rest of the line into markup. */
+export function editedWords(line: string, edited: string): string {
+  const was = shownChars(line)
+  const shown = was.map((one) => one.shown).join('')
+  if (edited === shown) return line
+
+  let head = 0
+  const most = Math.min(shown.length, edited.length)
+  while (head < most && shown[head] === edited[head]) head++
+  let tail = 0
+  while (tail < most - head && shown[shown.length - 1 - tail] === edited[edited.length - 1 - tail])
+    tail++
+
+  const typed = typedChars(edited)
+  const kept = (one: { shown: string; written: string } | undefined, at: number) =>
+    one && one.written !== one.shown ? one.written : (typed[at] ?? '')
+  const out: string[] = []
+  for (let at = 0; at < edited.length; at++) {
+    if (at < head) out.push(kept(was[at], at))
+    else if (at >= edited.length - tail)
+      out.push(kept(was[shown.length - (edited.length - at)], at))
+    else out.push(typed[at] ?? '')
+  }
+  return out.join('')
 }
 
 /** Where an escaped character is held while a reader looks for markup, so `\*` is

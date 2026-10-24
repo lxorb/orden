@@ -64,4 +64,13 @@ describe('a task in quick add’s field and back', () => {
     const changed = changeOf(one, { text: 'milk $4 or ~5 min', fields: { tags: [], remind: [] } })
     expect(changed.text).toBe('milk \\$4 or \\~5 min')
   })
+
+  test('an edited title keeps the escapes that keep a tag and a field words', () => {
+    const one = task('- [ ] Read \\[key:\\: value\\] later \\#tips')
+    const change = changeOf(one, {
+      text: 'Reread [key:: value] later #tips',
+      fields: { tags: [], remind: [] },
+    })
+    expect(change.text).toBe('Reread \\[key:\\: value\\] later \\#tips')
+  })
 })
