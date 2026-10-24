@@ -69,7 +69,14 @@ export function listItems(property: Property): ListItem[] {
   const quoted = property.quotedItems ?? []
   const written = property.writtenItems ?? []
   return property.items.map((item, at) => {
-    if (quoted[at]) return { asWritten: written[at] ?? flowItem(item) }
+    if (quoted[at]) {
+      const said = written[at]
+      if (said === undefined) return item
+      // A comment after the quotes, `"x" # see "y"`, reads as quoted from its two ends
+      // but would close a flow list early: like a plain member's comment, it keeps the
+      // list a block list.
+      return ONLY_QUOTED.test(said) ? { asWritten: said } : { asWritten: said, block: true }
+    }
     // `-` with nothing after it is a member that is nothing, which a flow list has to
     // say: `[, b]` is not YAML.
     if (item === '') return null
@@ -78,6 +85,9 @@ export function listItems(property: Property): ListItem[] {
     return { asWritten: item }
   })
 }
+
+/** A member that is one quoted scalar and nothing after it. */
+const ONLY_QUOTED = /^(?:"(?:[^"\\]|\\.)*"|'(?:[^']|'')*')$/
 
 /** A plain member that means what it says only as a line of a block list: a comment
  *  after it, a list of its own (`- - x`), a map (`- a: b`) or a block scalar. */
