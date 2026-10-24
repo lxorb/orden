@@ -38,7 +38,13 @@
  *  - which is the same promise from-html.ts makes about the rest of its markers:
  *  a page pasted into a note and the same page clipped come out as one file. */
 
-import { asWords } from './words'
+import { OPENS_MARKUP } from './words'
+
+/** A `<` that would open a tag, escaped. Not `asWords`, which doubles the backslashes
+ *  in front of one: here every backslash has been escaped already, by `escapeAt`. */
+function bracketsOf(text: string): string {
+  return text.replace(OPENS_MARKUP, '\\<')
+}
 
 /** What a backslash escapes, which is ASCII punctuation and nothing else: `\*`
  *  is a star, and `\U` is a backslash and a U. */
@@ -172,10 +178,10 @@ export function escapeText(text: string): string {
 
     if (kept) {
       // The words on either side of a kept run are escaped as the text they are,
-      // and `asWords` reads two characters at a time - so a run is a boundary for
+      // and `bracketsOf` reads two characters at a time - so a run is a boundary for
       // it as well. Nothing it looks for spans one: a `<` before a kept run is
       // followed by a marker, and a marker opens no tag.
-      out.push(asWords(escaped), kept)
+      out.push(bracketsOf(escaped), kept)
       escaped = ''
       at += kept.length
       midLine = true
@@ -187,6 +193,6 @@ export function escapeText(text: string): string {
     at += 1
   }
 
-  out.push(asWords(escaped))
+  out.push(bracketsOf(escaped))
   return out.join('')
 }

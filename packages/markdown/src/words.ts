@@ -23,5 +23,10 @@ export const OPENS_MARKUP = /<(?=[A-Za-z/!?])/g
  *  or a `#` in one is somebody's punctuation, and the worst it can do is lean the
  *  words it is next to. */
 export function asWords(text: string): string {
-  return text.replace(OPENS_MARKUP, '\\<')
+  // A backslash of the text's own in front of the bracket would escape the escape,
+  // leaving a literal backslash and then the tag; each is doubled, so it stays one.
+  return text.replace(OPENING, (_, before: string) => `${before.replace(/\\/g, '\\\\')}\\<`)
 }
+
+/** `OPENS_MARKUP` with the run of backslashes in front of it. */
+const OPENING = new RegExp(`(\\\\*)${OPENS_MARKUP.source}`, 'g')
