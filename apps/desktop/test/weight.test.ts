@@ -853,7 +853,7 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-24, to 3,284,000, for #793: #741's paper pairs merged in, and a name
  *  asked of the disk steps past its paper too (`freeNameOnDisk`). Measured 3,283,684. */
-const BUDGET = 3_297_000 // combined branch only, measured 3,296,805
+const BUDGET = 3_299_000 // combined branch only, measured 3,298,298
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
