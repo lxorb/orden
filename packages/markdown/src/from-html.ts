@@ -122,7 +122,9 @@ function mediaLink(node: Element, options: FromHtmlOptions): string {
     // Not an escape after all; the name is shown as it was written.
   }
 
-  const words = (shown || source).replace(/([\\[\]])/g, '\\$1')
+  // The name is the export's words, not the note's: it goes through what a page's
+  // prose does, so a `%3C` in it opens no tag and a `%0A` ends no paragraph.
+  const words = escapeText((shown || source).replace(/\s+/g, ' '))
   return `\n\n[${words}](${destination(source)})\n\n`
 }
 
