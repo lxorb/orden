@@ -543,6 +543,21 @@ mod tests {
         assert!(!dir.path().join("B/Report.pages.pdf").exists());
     }
 
+    /// And in the note's own folder too: `Old.pdf` copied to `Report.pages.pdf` beside
+    /// a blank `Report.pages` would become that note's paper, and go with it.
+    #[test]
+    fn a_pdf_copied_beside_a_page_note_of_its_name_is_refused() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let source = dir.path().join("Old.pdf");
+        fs::write(&source, b"%PDF old").expect("a PDF");
+        fs::write(dir.path().join("Report.pages"), "{}").expect("a page note");
+
+        let error = copied(&source, &dir.path().join("Report.pages.pdf"))
+            .expect_err("a PDF a page note would hold to be refused");
+        assert!(error.contains("already there"), "{error}");
+        assert!(!dir.path().join("Report.pages.pdf").exists());
+    }
+
     #[test]
     fn never_writes_over_anything() {
         let dir = tempfile::tempdir().expect("a temp folder");
