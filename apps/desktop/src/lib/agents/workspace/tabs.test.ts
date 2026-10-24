@@ -124,11 +124,16 @@ vi.mock('../../workspace.svelte', () => ({ workspace }))
 /** What `agents_ask` answers next. */
 let answer: Record<string, unknown> = { status: 'ok', result: {} }
 const asked: { command: string; args: Record<string, unknown> }[] = []
+/** Files on the disk that are no note, so `noteText` does not read them: a PDF of the
+ *  person's own, named the way a page note's paper is. */
+const others = new Set(['/s/Work/Report.pages.pdf'])
 
 vi.mock('../../tauri', async (original) => ({
   ...(await original<typeof import('../../tauri')>()),
   invoke: (command: string, args: Record<string, unknown> = {}) => {
     asked.push({ command, args })
+    // The browser has no stamps; its listing answers. See on-disk.ts.
+    if (command === 'path_exists') return Promise.resolve(others.has(String(args.path)))
     return Promise.resolve(command === 'agents_ask' ? answer : null)
   },
 }))
@@ -502,6 +507,15 @@ describe('a file of every kind', () => {
     })
     expect(await call('create_note', { path: 'x', kind: 'sheet' })).toMatchObject({
       code: 'bad_arguments',
+    })
+    expect(written()).toEqual({})
+  })
+
+  test('never a page note beside a PDF it would take for its paper', async () => {
+    // A blank `Report.pages` beside the person's `Report.pages.pdf` held that PDF as
+    // its paper: hidden from the file list, and gone with the note when it was deleted.
+    expect(await call('create_note', { path: 'Report', kind: 'pages' })).toMatchObject({
+      code: 'exists',
     })
     expect(written()).toEqual({})
   })

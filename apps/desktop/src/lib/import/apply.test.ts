@@ -228,6 +228,47 @@ describe('a name that is already taken', () => {
     )
   })
 
+  test('a folder note and its folder step aside together', () => {
+    const base = '```base\nfilters:\n  and:\n    - file.folder + ".md" == this.file.path\n```\n'
+    const stamped = restamped(
+      planOf([
+        note('Home.md', 'See [[Tasks]] and [[Buy milk]].'),
+        note('Tasks/Buy milk.md', '# Buy milk'),
+        note('Tasks.md', base),
+        note('Tasks/Sub.md', '# Sub'),
+        note('Tasks/Sub/Deep.md', '# Deep'),
+      ]),
+      new Set(['tasks.md', 'tasks/buy milk.md']),
+      '',
+    )
+
+    expect(stamped.files.map((one) => one.path)).toEqual([
+      'Home.md',
+      'Tasks 2/Buy milk.md',
+      'Tasks 2.md',
+      'Tasks 2/Sub.md',
+      'Tasks 2/Sub/Deep.md',
+    ])
+    expect(textAt(stamped.files, 'Home.md')).toBe('See [[Tasks 2]] and [[Buy milk]].')
+  })
+
+  test('a folder the space already fills moves its folder note aside with it', () => {
+    const stamped = restamped(
+      planOf([note('Tasks.md', '# Tasks'), note('Tasks/Buy milk.md', '# Buy milk')]),
+      new Set(['tasks/old.md']),
+      'In',
+    )
+
+    expect(stamped.files.map((one) => one.path)).toEqual(['In/Tasks.md', 'In/Tasks/Buy milk.md'])
+
+    const filled = restamped(
+      planOf([note('Tasks.md', '# Tasks'), note('Tasks/Buy milk.md', '# Buy milk')]),
+      new Set(['tasks/old.md']),
+      '',
+    )
+    expect(filled.files.map((one) => one.path)).toEqual(['Tasks 2.md', 'Tasks 2/Buy milk.md'])
+  })
+
   test('two of the import1s own notes cannot land on one name', () => {
     const taken = new Set(['a.md', 'a 2.md'])
     const stamped = restamped(planOf([note('A.md', 'one'), note('A.md', 'two')]), taken, '')
@@ -383,6 +424,61 @@ describe('an import into a space that already holds an earlier copy', () => {
     })
 
     expect(landed.paths).toEqual(['/Other/Brain/Home 3.md'])
+  })
+})
+
+describe('a page note and its paper', () => {
+  // A page note `X.pages` holds `X.pages.pdf` beside it as its paper: hidden from the
+  // file list, and trashed with the note. Either landing beside the other paired them.
+  test('a PDF named as a page note’s paper steps aside from the note already there', () => {
+    const stamped = restamped(planOf([file('Report.pages.pdf')]), new Set(['Report.pages']), '')
+
+    expect(stamped.files[0]?.path).toBe('Report.pages 2.pdf')
+    expect(stamped.stepped).toBe(1)
+  })
+
+  test('a page note steps aside from a PDF already there under its paper’s name', () => {
+    const stamped = restamped(planOf([file('Report.pages')]), new Set(['report.pages.pdf']), '')
+
+    expect(stamped.files[0]?.path).toBe('Report 2.pages')
+  })
+
+  test('a note and its paper that come together stay together', () => {
+    const stamped = restamped(
+      planOf([file('Report.pages.pdf'), file('Report.pages')]),
+      new Set(['Report.pages']),
+      '',
+    )
+
+    expect(stamped.files.map((one) => one.path)).toEqual(['Report 2.pages.pdf', 'Report 2.pages'])
+  })
+
+  test('a pair inside a folder note’s folder goes with the folder, and stays a pair', () => {
+    const stamped = restamped(
+      planOf([
+        file('Tasks/Report.pages.pdf'),
+        note('Tasks.md', '# Tasks'),
+        file('Tasks/Report.pages'),
+      ]),
+      new Set(['Tasks.md']),
+      '',
+    )
+
+    expect(stamped.files.map((one) => one.path)).toEqual([
+      'Tasks 2/Report.pages.pdf',
+      'Tasks 2.md',
+      'Tasks 2/Report.pages',
+    ])
+  })
+
+  test('a PDF steps aside from a page note the file list does not show', async () => {
+    onDisk.add('/Other/Report.pages')
+    const landed = await applyImport(planOf([file('Report.pages.pdf')]), {
+      root: '/Other',
+      folder: '',
+    })
+
+    expect(landed.paths).toEqual(['/Other/Report.pages 2.pdf'])
   })
 })
 
