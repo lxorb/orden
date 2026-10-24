@@ -21,6 +21,8 @@
 #     run on the web tab it came back to;
 #   - with IDLE=1, what the app costs the CPU while nothing happens, before anything
 #     else is done with it (scripts/idle-cpu.py);
+#   - with GROUND=1, a page written only for light standing on white in either of the
+#     app's schemes (#763, scripts/ground-drive.py);
 #   - with TEXTSIZE=1, Settings > Editor > Text size dragged with the compositor's
 #     pointer, and the note's text larger on the screen and after a load (#680,
 #     scripts/textsize-drive.py);
@@ -156,11 +158,13 @@ endpoint() {
   chmod 600 "$config/automation.json"
 }
 command=("$@")
-if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${SCHEME:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ]; then
+if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${SCHEME:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ] || [ "${GROUND:-0}" = 1 ]; then
   mkdir -p "$out/site"
   video=""
   [ "${MEDIA:-0}" = 1 ] && video='<video src="none.webm" autoplay muted></video>'
   printf '<!doctype html><title>one colour</title><style>html,body{margin:0;height:100%%;background:#ff00ff}</style>%s' "$video" > "$out/site/index.html"
+  # With GROUND=1, a page written only for light, with no ground of its own (#763).
+  [ "${GROUND:-0}" = 1 ] && printf '<!doctype html><title>light only</title><header style="background:#fff;padding:20px;border-bottom:1px solid #ddd">A white header</header><main style="padding:40px 20px;color:#202124;font:28px sans-serif"><h1>Store and share files online</h1><p>Words, dark, on whatever the page stands on.</p></main>' > "$out/site/index.html"
   # With FLASH=1, a dark page, which any white in it is not (#762).
   [ "${FLASH:-0}" = 1 ] && printf '<!doctype html><title>dark</title><meta name="color-scheme" content="dark"><style>html,body{margin:0;height:100%%;background:#1e1e1e}</style>' > "$out/site/index.html"
   # With SCHEME=1, a page whose colour says the scheme it is asked for (#427).
@@ -209,7 +213,7 @@ PAGE
 fi
 # With TEXTSIZE=1, the endpoint and no page: the launch opens on its note (#680).
 [ "${TEXTSIZE:-0}" = 1 ] && endpoint
-if [ "${DRIVE:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${SCHEME:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ] || [ "${TEXTSIZE:-0}" = 1 ]; then
+if [ "${DRIVE:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${SCHEME:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ] || [ "${TEXTSIZE:-0}" = 1 ] || [ "${GROUND:-0}" = 1 ]; then
   # And a keyboard with it, where xkbcommon's tools can say what its keys are.
   if command -v xkbcli > /dev/null; then
     xkbcli compile-keymap --layout us > "$out/keymap.txt"
@@ -282,6 +286,11 @@ fi
 
 if [ "$status" = 0 ] && [ "${DRIVE:-0}" = 1 ]; then
   python3 "$here/wayland-drive.py" "$out" "$app_pid" || status=1
+fi
+
+if [ "$status" = 0 ] && [ "${GROUND:-0}" = 1 ]; then
+  sleep 3
+  python3 "$here/ground-drive.py" sway "$out" "$app_pid" || status=1
 fi
 
 if [ "$status" = 0 ] && [ "${TEXTSIZE:-0}" = 1 ]; then
