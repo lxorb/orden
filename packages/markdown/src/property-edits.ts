@@ -118,7 +118,7 @@ export function propertyNamed(source: string, name: string): Property | null {
  *  that key to nothing, a list or a value lost to a name typed twice. */
 export function addProperty(source: string, name: string): TextEdit | null {
   const key = name.trim()
-  if (!key || propertyNamed(source, key)) return null
+  if (!isPropertyName(key) || propertyNamed(source, key)) return null
   return writeProperty(source, key, '')
 }
 
