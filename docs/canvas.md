@@ -6,6 +6,15 @@ Obsidian writes, with the ink and the shapes under a `nib` key that any other
 reader ignores. Several devices can be on one plane at once; see
 [collaboration.md](collaboration.md).
 
+What a file holds that Orden does not read is kept, whatever writes it back (#501, #780):
+a node of another app's type (Obsidian's Excalidraw), the edges that end at one, a field
+the spec does not name on a card (Advanced Canvas's `styleAttributes`), a key beside the
+lists (`metadata`) or under `nib`. `readCanvas` keeps them on the canvas it reads,
+every edit carries them as it carries what it did not touch, a room keeps them in a map
+of its own, and `writeCanvas` puts them back; a merge takes both sides'. A card taken
+away takes its own fields and its edges with it. See `canvas-extras.ts` in
+packages/markdown.
+
 This is the interface, and why it is the one it is. Two apps were read closely
 first, because between them they are what everybody arrives already knowing: a
 tablet with a pen behaves like Samsung Notes, and a board with cards on it

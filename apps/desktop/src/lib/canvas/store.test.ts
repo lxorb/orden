@@ -556,3 +556,61 @@ describe('something locked in place', () => {
     expect(store.canvas.nodes).toBe(before)
   })
 })
+
+/** Somebody's Obsidian vault: a node of a plugin's own type, the edge to it, a field
+ *  Advanced Canvas keeps on a card and a key beside the lists. An edit on the plane read
+ *  the file, left those four out of what it read and wrote the rest back, so a card
+ *  put down took them all away (#780). */
+describe('a plane with something on it this app does not read', () => {
+  const vault = () =>
+    `${JSON.stringify(
+      {
+        nodes: [
+          {
+            id: 'x',
+            type: 'excalidraw',
+            x: 0,
+            y: 0,
+            width: 200,
+            height: 100,
+            file: 'D.excalidraw',
+          },
+          { ...card('a', 300), styleAttributes: { shape: 'pill' } },
+        ],
+        edges: [{ id: 'e', fromNode: 'x', toNode: 'a' }],
+        metadata: { version: '1.0-1.0' },
+      },
+      null,
+      '\t',
+    )}\n`
+
+  const file = (note: { text: string }) =>
+    JSON.parse(note.text) as {
+      nodes: { id: string; styleAttributes?: unknown }[]
+      edges: { id: string }[]
+      metadata?: unknown
+    }
+
+  test('keeps it all through an edit, written back with the edit in it', () => {
+    const { store, note } = opened(vault())
+    store.edit({ ...store.canvas, nodes: [...store.canvas.nodes, card('b', 600)] })
+    store.part()
+
+    const written = file(note)
+    expect(written.nodes.map((one) => one.id).sort()).toEqual(['a', 'b', 'x'])
+    expect(written.nodes.find((one) => one.id === 'a')?.styleAttributes).toEqual({ shape: 'pill' })
+    expect(written.edges.map((one) => one.id)).toEqual(['e'])
+    expect(written.metadata).toEqual({ version: '1.0-1.0' })
+  })
+
+  test('and lets a card taken away take its own fields and its edges with it', () => {
+    const { store, note } = opened(vault())
+    store.edit({ ...store.canvas, nodes: [] })
+    store.part()
+
+    const written = file(note)
+    expect(written.nodes.map((one) => one.id)).toEqual(['x'])
+    expect(written.edges).toEqual([])
+    expect(written.metadata).toEqual({ version: '1.0-1.0' })
+  })
+})
