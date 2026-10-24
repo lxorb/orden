@@ -16,6 +16,7 @@
 import { key } from '../i18n.svelte'
 import { recordsOf } from './csv'
 import { type Base, writeBase } from '@nib/bases'
+import { asWords } from '@nib/markdown/words'
 import { dayOf, freeKey, noteText, type Meta, propertyName } from './meta'
 import { Names, safeName, withoutNotionId } from './names'
 import type { ImportPlan, Lost, Planned } from './plan'
@@ -106,9 +107,10 @@ export function tableOf(
 
 /** One cell, safe to put between two pipes: a pipe of its own is escaped, and the
  *  newlines in a paragraph somebody typed into a spreadsheet become spaces,
- *  because a markdown table has no way to hold a line break. */
+ *  because a markdown table has no way to hold a line break. A spreadsheet holds
+ *  plain text, so a `<b>` in it is words and opens no tag (`asWords`). */
 function cell(value: string): string {
-  return value
+  return asWords(value)
     .replace(/\s*\n\s*/g, ' ')
     .replace(/\|/g, '\\|')
     .trim()
@@ -149,7 +151,7 @@ export function rowNote(
     // Anything with a line in it is prose, and prose in front matter is a
     // property nobody can read.
     if (value.includes('\n')) {
-      words.push(`## ${column}\n\n${value}`)
+      words.push(`## ${asWords(column)}\n\n${asWords(value)}`)
       continue
     }
 
