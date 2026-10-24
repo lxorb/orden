@@ -41,9 +41,10 @@ const MARKDOWN_SAYS = [
   /\[\[[^\]\n]+\]\]/,
   /(\*\*|__)\S[^\n]*?\S\1/,
   /(^|\s)\*\S(?:[^*\n]*\S)?\*(?=[\s.,;:!?)]|$)/m,
-  /(^|\s)_\S(?:[^_\n]*\S)?_(?=[\s.,;:!?)]|$)/m,
-  /~~\S(?:[^~\n]*\S)?~~/,
-  /^[ \t]*[-*+][ \t]+\[[ xX]\][ \t]/m,
+  // Two characters at least between, since ` _o_ ` is someone cheering.
+  /(^|[\s("'])_\S[^_\n]*\S_(?=[\s.,;:!?)"'\]-]|$)/m,
+  /(^|[\s("'])~~\S(?:[^~\n]*\S)?~~(?=[\s.,;:!?)"'\]-]|$)/m,
+  /^[ \t]*(?:[-*+]|\d{1,9}[.)])[ \t]+\[[ xX]\](?=[ \t]|$)/m,
 ]
 
 /** A text file's words as a note may hold them. iA Writer, Ulysses, Simplenote, nvALT
