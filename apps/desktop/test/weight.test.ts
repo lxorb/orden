@@ -829,8 +829,12 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-20, to 3,281,000, for #417: the empty Essentials a drag is offered
  *  stands over the caption rather than pushing the file list down under the pointer
- *  (`is-floating` in Bookmarks.svelte). Measured 3,280,466. */
-const BUDGET = 3_281_000
+ *  (`is-floating` in Bookmarks.svelte). Measured 3,280,466.
+ *
+ *  Raised 2026-10-24, to 3,282,000, for #758: a block named from a link in a note
+ *  open in another tab is named in that tab's document too, or its next save drops
+ *  the name (`nameBlock` in link-index.svelte.ts). Measured 3,281,488. */
+const BUDGET = 3_282_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
