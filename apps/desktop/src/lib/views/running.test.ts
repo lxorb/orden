@@ -66,6 +66,8 @@ vi.mock('../workspace/write-file', () => ({
   writeFile: async (path: string, content: string) => void written.set(path, content),
 }))
 vi.mock('../reminders/platform', () => ({ show: () => undefined }))
+// Every space here may be written in; one that may not is read-only.test.ts's.
+vi.mock('../sharing.svelte', () => ({ canWriteAt: () => true }))
 
 const { heard, readHeld, repeatTemplates } = await import('./running')
 
