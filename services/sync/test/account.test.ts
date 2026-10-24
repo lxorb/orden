@@ -773,6 +773,46 @@ describe('what is left', () => {
     ])
   })
 
+  /** Naming a hash is not showing a picture, and a picture is not a paper: somebody who
+   *  shares nothing with this account and only knows the hash of its private PDF must
+   *  not be handed the bytes by writing the hash into a note of their own. */
+  test.each([
+    ['in a code span', (hash: string) => `see \`/i/${hash}\``],
+    ['in prose', (hash: string) => `see /i/${hash} there`],
+    ['as a picture', (hash: string) => `![](https://nibeditor.com/i/${hash}.png)`],
+  ])('a paper whose hash a stranger writes %s is not handed to them', async (_, body) => {
+    const stranger = await signIn(env, OTHER)
+    const mine = (await call<LeavingView>(env, '/v1/spaces', { token, body: { name: 'Mine' } }))
+      .json.space?.id
+    const pages = (
+      await call<LeavingView>(env, `/v1/spaces/${mine}/notes`, {
+        token,
+        body: { path: 'L.pages', content: '{}' },
+      })
+    ).json.note?.id
+    const bytes = new TextEncoder().encode('%PDF-1.4\nprivate\n%%EOF\n')
+    const hash = createHash('sha256').update(bytes).digest('hex')
+    await call(env, `/v1/blobs/${hash}`, {
+      method: 'PUT',
+      token,
+      raw: bytes,
+      headers: { 'content-type': 'application/pdf' },
+    })
+    await call(env, `/v1/notes/${pages}/paper`, { method: 'PUT', token, body: { hash } })
+
+    const theirs = (
+      await call<LeavingView>(env, '/v1/spaces', { token: stranger, body: { name: 'Theirs' } })
+    ).json.space?.id
+    await call(env, `/v1/spaces/${theirs}/notes`, {
+      token: stranger,
+      body: { path: 'n.md', content: body(hash) },
+    })
+
+    expect((await leave()).status).toBe(200)
+
+    expect(env.db.prepare('select user_id from blobs where hash = ?').all(hash)).toEqual([])
+  })
+
   /** A space too big to read hands over everything rather than guess, which is right
    *  only where this account could have put something: a reader who never wrote there
    *  keeps its own pictures to itself, and they go with it. */

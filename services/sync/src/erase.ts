@@ -261,14 +261,19 @@ const MOST_READ = 250
  *  longer in, which the sweep shrinks to nothing. */
 async function handedOn(env: Env, user: User, at: number): Promise<D1PreparedStatement[]> {
   const { results: alone } = await env.DB.prepare(
-    `select hash from blobs b where user_id = ?1
+    `select hash, type from blobs b where user_id = ?1
        and not exists (select 1 from blobs o where o.hash = b.hash and o.user_id <> ?1)`,
   )
     .bind(user.id)
-    .all<{ hash: string }>()
+    .all<{ hash: string; type: string }>()
   if (!alone.length) return []
 
   const mine = new Set(alone.map((one) => one.hash))
+  // What a note's body can show, which is a picture and nothing else: a paper or a
+  // file is named by its own column, never by a hash somebody wrote into a note.
+  const pictures = new Set(
+    alone.filter((one) => one.type.startsWith('image/')).map((one) => one.hash),
+  )
   const owed = await usedElsewhere(env, user.id, mine)
   const owe = (owner: string, hash: string) => {
     const found = owed.get(owner) ?? new Set<string>()
@@ -301,7 +306,7 @@ async function handedOn(env: Env, user: User, at: number): Promise<D1PreparedSta
     // may be: in one it only reads, it would hand the owner pictures that were never
     // there. That one is read as far as what is left goes.
     if (notes.length > budget && one.role === 'write') {
-      for (const hash of mine) owe(one.owner, hash)
+      for (const hash of pictures) owe(one.owner, hash)
       budget = 0
       continue
     }
@@ -309,7 +314,7 @@ async function handedOn(env: Env, user: User, at: number): Promise<D1PreparedSta
 
     budget -= notes.length
     for (const hash of await picturesIn(env, one.space, notes)) {
-      if (mine.has(hash)) owe(one.owner, hash)
+      if (pictures.has(hash)) owe(one.owner, hash)
     }
   }
 

@@ -11,7 +11,9 @@
  *  who left, or was taken out, wrote what they wrote. Every space is asked, through the
  *  rows that name a blob by its hash - a file of its tree, a page note's paper, the
  *  pictures written down for each note's body (pictures.ts), a file it records and a
- *  file posted in one of its chats. */
+ *  file posted in one of its chats. A note's body counts only for a blob this account
+ *  holds as a picture: a paper or a file is named by its own column, and a hash
+ *  somebody wrote into a note of their own does not make the bytes theirs. */
 
 import { readSpaceFiles } from './spaces/files'
 import type { Env } from './types'
@@ -46,6 +48,8 @@ export async function usedElsewhere(
      select sp.user_id as owner, p.hash as hash
        from note_pictures p join notes n on n.id = p.note_id join spaces sp on sp.id = n.space_id
       where p.hash in (select value from json_each(?2)) and sp.user_id <> ?1
+        and exists (select 1 from blobs b
+                     where b.hash = p.hash and b.user_id = ?1 and b.type like 'image/%')
      union
      select sp.user_id as owner, f.hash as hash
        from chat_files f join chats c on c.id = f.chat_id join spaces sp on sp.id = c.space_id
