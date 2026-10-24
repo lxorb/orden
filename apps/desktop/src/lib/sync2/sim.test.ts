@@ -227,8 +227,11 @@ describe('random walks, the engine as every device', () => {
    *  - 644000557: a note one device renamed, never having seen another move it into a
    *    folder, was taken with that folder when the first deleted it (#514).
    *  - 611000297, 622002257: a passage two devices each put back over a deletion, and a
-   *    word two sides each moved, were said twice (#530). */
-  const ONCE_FAILED = [207340730, 207384677, 644000557, 611000297, 622002257]
+   *    word two sides each moved, were said twice (#530).
+   *  - 1111002428: words one device typed in front of a word the other wrote around, put
+   *    behind that word, glued to it, and its neighbour said twice by the next merge
+   *    (#779). */
+  const ONCE_FAILED = [207340730, 207384677, 644000557, 611000297, 622002257, 1111002428]
 
   test.each(ONCE_FAILED)('seed %i, which once failed, holds every check', async (seed) => {
     expect(await walked(seed, 1)).toEqual([])
