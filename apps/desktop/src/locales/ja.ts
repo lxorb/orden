@@ -2589,4 +2589,6 @@ export const ja: Dictionary = {
     'メニュー、一覧、設定の書体で、このデバイスにインストールされた任意のフォントを名前で指定します。',
   'The face of code and terminals; any monospaced font installed here, by its name.':
     'コードとターミナルの書体で、このデバイスにインストールされた任意の等幅フォントを名前で指定します。',
+  'Not installed on this device, so the app’s own face is used.':
+    'このデバイスにインストールされていないため、アプリ独自のフォントを使用します。',
 }

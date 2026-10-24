@@ -2709,4 +2709,6 @@ export const ru: Dictionary = {
     'Шрифт меню, списков и настроек; любой шрифт, установленный на этом устройстве, по его названию.',
   'The face of code and terminals; any monospaced font installed here, by its name.':
     'Шрифт кода и терминалов; любой моноширинный шрифт, установленный на этом устройстве, по его названию.',
+  'Not installed on this device, so the app’s own face is used.':
+    'Не установлен на этом устройстве, поэтому используется собственный шрифт приложения.',
 }

@@ -2654,4 +2654,6 @@ export const ha: Dictionary = {
     "Fontin menu, jeri da saituna; kowane font da ke kan wannan na'ura, ta sunansa.",
   'The face of code and terminals; any monospaced font installed here, by its name.':
     "Fontin lamba da tashoshi; kowane font mai faɗi ɗaya da ke kan wannan na'ura, ta sunansa.",
+  'Not installed on this device, so the app’s own face is used.':
+    "Ba a saka shi a wannan na'ura ba, don haka ana amfani da fontin manhajar kanta.",
 }

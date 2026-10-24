@@ -2570,4 +2570,6 @@ export const am: Dictionary = {
     'የምናሌዎች፣ የዝርዝሮች እና የማስተካከያዎች ቅርጸ-ቁምፊ፤ በዚህ መሣሪያ ላይ የተጫነ ማንኛውም ቅርጸ-ቁምፊ በስሙ።',
   'The face of code and terminals; any monospaced font installed here, by its name.':
     'የኮድ እና የተርሚናሎች ቅርጸ-ቁምፊ፤ በዚህ መሣሪያ ላይ የተጫነ ማንኛውም እኩል ስፋት ያለው ቅርጸ-ቁምፊ በስሙ።',
+  'Not installed on this device, so the app’s own face is used.':
+    'በዚህ መሣሪያ ላይ አልተጫነም፤ ስለዚህ የመተግበሪያው የራሱ ቅርጸ-ቁምፊ ጥቅም ላይ ይውላል።',
 }

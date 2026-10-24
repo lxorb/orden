@@ -2697,4 +2697,6 @@ export const fr: Dictionary = {
     'La police des menus, des listes et des réglages ; toute police installée sur cet appareil, par son nom.',
   'The face of code and terminals; any monospaced font installed here, by its name.':
     'La police du code et des terminaux ; toute police à chasse fixe installée sur cet appareil, par son nom.',
+  'Not installed on this device, so the app’s own face is used.':
+    'Non installée sur cet appareil, la police propre à l’application est donc utilisée.',
 }

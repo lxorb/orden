@@ -2630,4 +2630,6 @@ export const tr: Dictionary = {
     'Menülerin, listelerin ve ayarların yazı tipi; bu cihazda yüklü herhangi bir yazı tipi, adıyla.',
   'The face of code and terminals; any monospaced font installed here, by its name.':
     'Kodun ve terminallerin yazı tipi; bu cihazda yüklü herhangi bir eş aralıklı yazı tipi, adıyla.',
+  'Not installed on this device, so the app’s own face is used.':
+    'Bu cihazda yüklü değil, bu yüzden uygulamanın kendi yazı tipi kullanılıyor.',
 }

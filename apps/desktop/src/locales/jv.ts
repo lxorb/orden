@@ -2598,4 +2598,6 @@ export const jv: Dictionary = {
     'Font kanggo menu, dhaptar lan setelan; font apa wae sing diinstal ing piranti iki, miturut jenenge.',
   'The face of code and terminals; any monospaced font installed here, by its name.':
     'Font kanggo kode lan terminal; font monospace apa wae sing diinstal ing piranti iki, miturut jenenge.',
+  'Not installed on this device, so the app’s own face is used.':
+    'Ora diinstal ing piranti iki, mula font gawane aplikasi sing digunakake.',
 }

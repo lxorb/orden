@@ -2636,4 +2636,6 @@ export const gsw: Dictionary = {
     'D Schrift vo Menüs, Lischte und Iistellige; jedi Schriftart, wo uf däm Grät installiert isch, mit ihrem Name.',
   'The face of code and terminals; any monospaced font installed here, by its name.':
     'D Schrift vo Code und Terminals; jedi Schriftart mit fixer Breiti, wo uf däm Grät installiert isch, mit ihrem Name.',
+  'Not installed on this device, so the app’s own face is used.':
+    'Uf däm Grät nöd installiert, drum wird d eigeti Schrift vo de App brucht.',
 }

@@ -2610,4 +2610,6 @@ export const ms: Dictionary = {
     'Fon untuk menu, senarai dan tetapan; mana-mana fon yang dipasang pada peranti ini, mengikut namanya.',
   'The face of code and terminals; any monospaced font installed here, by its name.':
     'Fon untuk kod dan terminal; mana-mana fon monospace yang dipasang pada peranti ini, mengikut namanya.',
+  'Not installed on this device, so the app’s own face is used.':
+    'Tidak dipasang pada peranti ini, jadi fon aplikasi itu sendiri digunakan.',
 }

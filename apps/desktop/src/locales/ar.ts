@@ -2729,4 +2729,6 @@ export const ar: Dictionary = {
     'خط القوائم واللوائح والإعدادات؛ أيّ خط مثبَّت على هذا الجهاز، باسمه.',
   'The face of code and terminals; any monospaced font installed here, by its name.':
     'خط الكود والطرفيات؛ أيّ خط ثابت العرض مثبَّت على هذا الجهاز، باسمه.',
+  'Not installed on this device, so the app’s own face is used.':
+    'غير مثبَّت على هذا الجهاز، لذا يُستخدم خط التطبيق نفسه.',
 }

@@ -2613,4 +2613,6 @@ export const hi: Dictionary = {
     'मेनू, सूचियों और सेटिंग्स का फ़ॉन्ट; इस डिवाइस पर इंस्टॉल कोई भी फ़ॉन्ट, उसके नाम से।',
   'The face of code and terminals; any monospaced font installed here, by its name.':
     'कोड और टर्मिनल का फ़ॉन्ट; इस डिवाइस पर इंस्टॉल कोई भी मोनोस्पेस फ़ॉन्ट, उसके नाम से।',
+  'Not installed on this device, so the app’s own face is used.':
+    'इस डिवाइस पर इंस्टॉल नहीं है, इसलिए ऐप का अपना फ़ॉन्ट इस्तेमाल होता है।',
 }

@@ -2645,4 +2645,6 @@ export const kn: Dictionary = {
     'ಮೆನುಗಳು, ಪಟ್ಟಿಗಳು ಮತ್ತು ಸೆಟ್ಟಿಂಗ್‌ಗಳ ಫಾಂಟ್; ಈ ಸಾಧನದಲ್ಲಿ ಇನ್‌ಸ್ಟಾಲ್ ಮಾಡಲಾದ ಯಾವುದೇ ಫಾಂಟ್, ಅದರ ಹೆಸರಿನಿಂದ.',
   'The face of code and terminals; any monospaced font installed here, by its name.':
     'ಕೋಡ್ ಮತ್ತು ಟರ್ಮಿನಲ್‌ಗಳ ಫಾಂಟ್; ಈ ಸಾಧನದಲ್ಲಿ ಇನ್‌ಸ್ಟಾಲ್ ಮಾಡಲಾದ ಯಾವುದೇ ಮೊನೊಸ್ಪೇಸ್ ಫಾಂಟ್, ಅದರ ಹೆಸರಿನಿಂದ.',
+  'Not installed on this device, so the app’s own face is used.':
+    'ಈ ಸಾಧನದಲ್ಲಿ ಇನ್‌ಸ್ಟಾಲ್ ಆಗಿಲ್ಲ, ಆದ್ದರಿಂದ ಆ್ಯಪ್‌ನ ಸ್ವಂತ ಫಾಂಟ್ ಬಳಸಲಾಗುತ್ತದೆ.',
 }

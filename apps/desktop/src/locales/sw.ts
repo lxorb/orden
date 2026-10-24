@@ -2655,4 +2655,6 @@ export const sw: Dictionary = {
     'Fonti ya menyu, orodha na mipangilio; fonti yoyote iliyosakinishwa kwenye kifaa hiki, kwa jina lake.',
   'The face of code and terminals; any monospaced font installed here, by its name.':
     'Fonti ya kodi na terminali; fonti yoyote yenye upana sawa iliyosakinishwa kwenye kifaa hiki, kwa jina lake.',
+  'Not installed on this device, so the app’s own face is used.':
+    'Haijasakinishwa kwenye kifaa hiki, kwa hivyo fonti ya programu yenyewe inatumika.',
 }

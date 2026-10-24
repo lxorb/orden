@@ -2612,4 +2612,6 @@ export const bn: Dictionary = {
     'মেনু, তালিকা ও সেটিংসের ফন্ট; এই ডিভাইসে ইনস্টল করা যেকোনো ফন্ট, তার নাম দিয়ে।',
   'The face of code and terminals; any monospaced font installed here, by its name.':
     'কোড ও টার্মিনালের ফন্ট; এই ডিভাইসে ইনস্টল করা যেকোনো মনোস্পেস ফন্ট, তার নাম দিয়ে।',
+  'Not installed on this device, so the app’s own face is used.':
+    'এই ডিভাইসে ইনস্টল করা নেই, তাই অ্যাপের নিজস্ব ফন্ট ব্যবহার করা হচ্ছে।',
 }

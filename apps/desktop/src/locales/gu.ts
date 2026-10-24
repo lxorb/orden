@@ -2602,4 +2602,6 @@ export const gu: Dictionary = {
     'મેનુ, યાદીઓ અને ગોઠવણનો ફૉન્ટ; આ ડિવાઇસમાં ઇન્સ્ટૉલ કરેલો કોઈ પણ ફૉન્ટ, તેના નામથી.',
   'The face of code and terminals; any monospaced font installed here, by its name.':
     'કોડ અને ટર્મિનલનો ફૉન્ટ; આ ડિવાઇસમાં ઇન્સ્ટૉલ કરેલો કોઈ પણ મોનોસ્પેસ ફૉન્ટ, તેના નામથી.',
+  'Not installed on this device, so the app’s own face is used.':
+    'આ ડિવાઇસમાં ઇન્સ્ટૉલ થયેલો નથી, તેથી ઍપનો પોતાનો ફૉન્ટ વપરાય છે.',
 }

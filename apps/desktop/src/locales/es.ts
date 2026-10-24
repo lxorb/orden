@@ -2684,4 +2684,6 @@ export const es: Dictionary = {
     'La fuente de los menús, las listas y los ajustes; cualquier fuente instalada en este dispositivo, por su nombre.',
   'The face of code and terminals; any monospaced font installed here, by its name.':
     'La fuente del código y los terminales; cualquier fuente monoespaciada instalada en este dispositivo, por su nombre.',
+  'Not installed on this device, so the app’s own face is used.':
+    'No está instalada en este dispositivo, así que se usa la fuente propia de la aplicación.',
 }

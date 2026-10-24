@@ -2616,4 +2616,6 @@ export const ps: Dictionary = {
     'د مېنوګانو، لړونو او امستنو فونټ؛ په دې وسیله کې نصب شوی هر فونټ، د هغه په نوم.',
   'The face of code and terminals; any monospaced font installed here, by its name.':
     'د کوډ او ټرمینلونو فونټ؛ په دې وسیله کې نصب شوی هر مونوسپیس فونټ، د هغه په نوم.',
+  'Not installed on this device, so the app’s own face is used.':
+    'په دې وسیله کې نصب نه دی، نو د اپ خپل فونټ کارول کېږي.',
 }

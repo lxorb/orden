@@ -2702,4 +2702,6 @@ export const uk: Dictionary = {
     'Шрифт меню, списків і налаштувань; будь-який шрифт, установлений на цьому пристрої, за його назвою.',
   'The face of code and terminals; any monospaced font installed here, by its name.':
     'Шрифт коду й терміналів; будь-який моноширинний шрифт, установлений на цьому пристрої, за його назвою.',
+  'Not installed on this device, so the app’s own face is used.':
+    'Не встановлений на цьому пристрої, тож використовується власний шрифт застосунку.',
 }

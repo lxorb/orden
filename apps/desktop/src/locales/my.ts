@@ -2600,4 +2600,6 @@ export const my: Dictionary = {
     'မီနူး၊ စာရင်းနှင့် ဆက်တင်များ၏ ဖောင့်၊ ဤစက်တွင် ထည့်သွင်းထားသော မည်သည့်ဖောင့်ကိုမဆို ၎င်း၏အမည်ဖြင့် သုံးနိုင်သည်။',
   'The face of code and terminals; any monospaced font installed here, by its name.':
     'ကုဒ်နှင့် တာမင်နယ်များ၏ ဖောင့်၊ ဤစက်တွင် ထည့်သွင်းထားသော မည်သည့် monospace ဖောင့်ကိုမဆို ၎င်း၏အမည်ဖြင့် သုံးနိုင်သည်။',
+  'Not installed on this device, so the app’s own face is used.':
+    'ဤစက်တွင် ထည့်သွင်းထားခြင်း မရှိသဖြင့် အက်ပ်၏ ကိုယ်ပိုင် ဖောင့်ကို သုံးပါသည်။',
 }

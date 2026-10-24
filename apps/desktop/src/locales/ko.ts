@@ -2577,4 +2577,6 @@ export const ko: Dictionary = {
     '메뉴, 목록, 설정의 글꼴이며, 이 기기에 설치된 어떤 글꼴이든 이름으로 지정합니다.',
   'The face of code and terminals; any monospaced font installed here, by its name.':
     '코드와 터미널의 글꼴이며, 이 기기에 설치된 어떤 고정폭 글꼴이든 이름으로 지정합니다.',
+  'Not installed on this device, so the app’s own face is used.':
+    '이 기기에 설치되어 있지 않아 앱 자체 글꼴을 사용합니다.',
 }

@@ -2623,4 +2623,6 @@ export const pa: Dictionary = {
     'ਮੀਨੂ, ਸੂਚੀਆਂ ਅਤੇ ਸੈਟਿੰਗਾਂ ਦਾ ਫ਼ੌਂਟ; ਇਸ ਡੀਵਾਈਸ ਉੱਤੇ ਸਥਾਪਤ ਕੋਈ ਵੀ ਫ਼ੌਂਟ, ਉਸ ਦੇ ਨਾਂ ਨਾਲ।',
   'The face of code and terminals; any monospaced font installed here, by its name.':
     'ਕੋਡ ਅਤੇ ਟਰਮੀਨਲਾਂ ਦਾ ਫ਼ੌਂਟ; ਇਸ ਡੀਵਾਈਸ ਉੱਤੇ ਸਥਾਪਤ ਕੋਈ ਵੀ ਮੋਨੋਸਪੇਸ ਫ਼ੌਂਟ, ਉਸ ਦੇ ਨਾਂ ਨਾਲ।',
+  'Not installed on this device, so the app’s own face is used.':
+    'ਇਸ ਡੀਵਾਈਸ ਉੱਤੇ ਸਥਾਪਤ ਨਹੀਂ ਹੈ, ਇਸ ਲਈ ਐਪ ਦਾ ਆਪਣਾ ਫ਼ੌਂਟ ਵਰਤਿਆ ਜਾਂਦਾ ਹੈ।',
 }

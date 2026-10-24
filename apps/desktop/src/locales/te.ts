@@ -2629,4 +2629,6 @@ export const te: Dictionary = {
     'మెనూలు, జాబితాలు, సెట్టింగ్‌ల ఫాంట్; ఈ పరికరంలో ఇన్‌స్టాల్ చేసిన ఏ ఫాంట్ అయినా, దాని పేరుతో.',
   'The face of code and terminals; any monospaced font installed here, by its name.':
     'కోడ్, టెర్మినల్‌ల ఫాంట్; ఈ పరికరంలో ఇన్‌స్టాల్ చేసిన ఏ మోనోస్పేస్ ఫాంట్ అయినా, దాని పేరుతో.',
+  'Not installed on this device, so the app’s own face is used.':
+    'ఈ పరికరంలో ఇన్‌స్టాల్ చేయలేదు, కాబట్టి యాప్ సొంత ఫాంట్ ఉపయోగించబడుతుంది.',
 }
