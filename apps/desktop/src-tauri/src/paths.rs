@@ -247,9 +247,13 @@ pub fn move_held(from: &Path, to: &Path) {
         return;
     }
 
+    // Highlights already at the new name were left by a PDF that went outside Orden, and
+    // are not this one's: replaced by its own, or cleared where it has none.
     let source = highlights_of(from);
     if source.exists() {
         let _ = crate::carry::move_whole(&source, &highlights_of(to), "move");
+    } else {
+        let _ = fs::remove_file(highlights_of(to));
     }
 }
 
@@ -271,6 +275,8 @@ pub fn copy_held(from: &Path, to: &Path) {
     let source = highlights_of(from);
     if source.exists() {
         let _ = fs::copy(&source, highlights_of(to));
+    } else {
+        let _ = fs::remove_file(highlights_of(to));
     }
 }
 
