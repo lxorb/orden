@@ -64,6 +64,17 @@ export interface Mirror {
    *  sharing must go, where one of the account's own that is merely missing is
    *  uploaded again. */
   shared: boolean
+  /** A rename a round of moves was about to make, written down before it: what lets
+   *  the next pass tell, after a quit, whether it was made. See `movedThere` in
+   *  pass.ts. Absent nearly always. */
+  moving?: Moving
+}
+
+/** One rename of a note's file, by the note's id and the paths in the space. */
+export interface Moving {
+  id: string
+  from: string
+  to: string
 }
 
 /** A folder just paired with a space, which knows nothing about it yet. One
@@ -157,6 +168,12 @@ export function readMirror(root: string, value: unknown): Mirror | null {
     // Written by every version since sharing; an older entry is the account's
     // own space, which is what every space was before there were shared ones.
     shared: value.shared === true,
+    ...(isRecord(value.moving) &&
+    isString(value.moving.id) &&
+    isString(value.moving.from) &&
+    isString(value.moving.to)
+      ? { moving: { id: value.moving.id, from: value.moving.from, to: value.moving.to } }
+      : {}),
   }
 }
 

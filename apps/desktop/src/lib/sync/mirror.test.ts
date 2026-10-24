@@ -47,6 +47,8 @@ const fake = vi.hoisted(() => {
   /** Files that are there and will not read: another encoding, or a lock. */
   const unreadable = new Set<string>()
   /** What the account answers a delete with, where it does not simply take it. */
+  /** Told after every rename, as the disk then stands: where a quit could fall. */
+  const renamed: { hook: (() => void) | null } = { hook: null }
   const refusing: { delete: Error | null; moving: Set<string> } = {
     delete: null,
     moving: new Set(),
@@ -121,6 +123,7 @@ const fake = vi.hoisted(() => {
 
       disk.delete(from)
       disk.set(to, held)
+      renamed.hook?.()
       const paper = disk.get(`${from}.pdf`)
       if (from.endsWith('.pages') && paper !== undefined) {
         disk.delete(`${from}.pdf`)
@@ -337,6 +340,7 @@ const fake = vi.hoisted(() => {
     blobsPut.length = 0
     refusing.delete = null
     refusing.moving.clear()
+    renamed.hook = null
     calls.length = 0
     fetched.length = 0
     seq = 0
@@ -358,6 +362,7 @@ const fake = vi.hoisted(() => {
     refusing,
     remote,
     renameRemote,
+    renamed,
     reset,
     trash,
     unreadable,
@@ -375,7 +380,7 @@ vi.mock('../api', async (importOriginal) => ({
 }))
 
 const { newMirror, within } = await import('./mirror')
-const { movedHere, pull, push } = await import('./pass')
+const { asidesBack, movedHere, pull, push } = await import('./pass')
 type Clash = import('./conflicts').Clash
 
 const ROOT = '/Notes'
@@ -1418,6 +1423,126 @@ describe('a note renamed on another device', () => {
 
     swapped(ids)
     expect(fake.calls.filter((one) => /^(writeNote|createNote|deleteNote)/.test(one))).toEqual([])
+  })
+
+  /** Every point a quit can cut a round short at: after each time the record was
+   *  written down, and after each rename before it was. The next pass, from the record
+   *  and the disk as they then stood, finishes the round with each note's words under
+   *  its own id. */
+  for (const names of [
+    ['A.md', 'B.md'],
+    ['A.md', 'B.md', 'C.md'],
+  ]) {
+    test(`finishes ${names.length} notes trading names wherever a quit cut it short`, async () => {
+      const ids = names.map((name) => fake.addRemote(name, `# ${name}\n`))
+      for (const name of names) fake.disk.set(`${ROOT}/${name}`, `# ${name}\n`)
+      const mirror = newMirror('s-one', ROOT)
+      await pull(mirror, 'token', NOBODY)
+      ids.forEach((id, at) => fake.renameRemote(id, names[(at + 1) % names.length]!))
+
+      const account = structuredClone([...fake.remote.entries()])
+      let kept = structuredClone(mirror)
+      const quits = [{ mirror: kept, disk: new Map(fake.disk) }]
+      fake.renamed.hook = () => quits.push({ mirror: kept, disk: new Map(fake.disk) })
+      await pull(mirror, 'token', NOBODY, {
+        save: () => {
+          kept = structuredClone(mirror)
+          quits.push({ mirror: kept, disk: new Map(fake.disk) })
+        },
+      })
+      fake.renamed.hook = null
+      expect(quits.length).toBeGreaterThan(names.length)
+
+      for (const quit of quits) {
+        fake.disk.clear()
+        for (const [path, words] of quit.disk) fake.disk.set(path, words)
+        fake.remote.clear()
+        for (const [id, note] of structuredClone(account)) fake.remote.set(id, note)
+        fake.calls.length = 0
+        const again = structuredClone(quit.mirror)
+
+        await pull(again, 'token', NOBODY)
+        await push(again, 'token', NOBODY)
+
+        names.forEach((name, at) => {
+          const next = names[(at + 1) % names.length]!
+          expect(fake.disk.get(`${ROOT}/${next}`)).toBe(`# ${name}\n`)
+          expect(fake.remote.get(ids[at]!)).toMatchObject({
+            path: next,
+            content: `# ${name}\n`,
+            deleted: false,
+          })
+        })
+        expect([...fake.disk.keys()].sort()).toEqual(names.map((name) => `${ROOT}/${name}`))
+        expect(fake.calls.filter((one) => /^(writeNote|createNote|deleteNote)/.test(one))).toEqual(
+          [],
+        )
+      }
+    })
+  }
+
+  test('finishes a swap with only the record from before it, one note aside and one moved', async () => {
+    const { mirror, ids } = await swapping()
+    // A went aside and B took its name; then the app quit, and storage kept nothing new.
+    fake.disk.set(`${ROOT}/.nib-moving-${ids[0]}-A.md`, '# A.md\n')
+    fake.disk.set(`${ROOT}/A.md`, '# B.md\n')
+    fake.disk.delete(`${ROOT}/B.md`)
+
+    await pull(mirror, 'token', NOBODY)
+    await push(mirror, 'token', NOBODY)
+
+    swapped(ids)
+    expect(fake.calls.filter((one) => /^(writeNote|createNote|deleteNote)/.test(one))).toEqual([])
+  })
+
+  test('keeps the words of a note waiting aside when another device deletes it', async () => {
+    const { mirror, ids } = await swapping()
+    const aside = `.nib-moving-${ids[0]}-A.md`
+    mirror.notes = { [aside]: mirror.notes['A.md']!, 'B.md': mirror.notes['B.md']! }
+    fake.disk.delete(`${ROOT}/A.md`)
+    fake.disk.set(`${ROOT}/${aside}`, '# A.md\n\nTyped while it waited.\n')
+    fake.deleteRemote(ids[0]!)
+
+    await pull(mirror, 'token', NOBODY)
+    await push(mirror, 'token', NOBODY)
+
+    const shown = [...fake.disk.entries()].filter(
+      ([path]) => !path.split('/').pop()!.startsWith('.'),
+    )
+    expect(shown.map(([, words]) => words)).toContain('# A.md\n\nTyped while it waited.\n')
+    expect([...fake.trash.values()].map((one) => one.content)).not.toContain(
+      '# A.md\n\nTyped while it waited.\n',
+    )
+  })
+
+  test('puts a note waiting aside back where sync v2 will read it', async () => {
+    const { mirror, ids } = await swapping()
+    const aside = `.nib-moving-${ids[0]}-A.md`
+    mirror.notes = { [aside]: mirror.notes['A.md']!, 'B.md': mirror.notes['B.md']! }
+    fake.disk.delete(`${ROOT}/A.md`)
+    fake.disk.set(`${ROOT}/${aside}`, '# A.md\n')
+
+    const notes = await asidesBack(ROOT, mirror.notes)
+
+    expect(notes['A.md']?.id).toBe(ids[0])
+    expect(fake.disk.get(`${ROOT}/A.md`)).toBe('# A.md\n')
+    expect(fake.disk.has(`${ROOT}/${aside}`)).toBe(false)
+  })
+
+  test('and beside it when another file has its name by now', async () => {
+    const { mirror, ids } = await swapping()
+    const aside = `.nib-moving-${ids[0]}-A.md`
+    mirror.notes = { [aside]: mirror.notes['A.md']!, 'A.md': mirror.notes['B.md']! }
+    fake.disk.set(`${ROOT}/A.md`, '# B.md\n')
+    fake.disk.delete(`${ROOT}/B.md`)
+    fake.disk.set(`${ROOT}/${aside}`, '# A.md\n')
+
+    const notes = await asidesBack(ROOT, mirror.notes)
+
+    const place = Object.keys(notes).find((path) => notes[path]?.id === ids[0])!
+    expect(place.startsWith('.')).toBe(false)
+    expect(fake.disk.get(`${ROOT}/${place}`)).toBe('# A.md\n')
+    expect(notes['A.md']?.id).toBe(ids[1])
   })
 
   test('never deletes a note whose words wait aside', async () => {

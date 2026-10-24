@@ -622,6 +622,8 @@ class Sync {
       // Everything kept by path hears of it as of a move made here: the open tab,
       // the links, the rows. The table is already re-keyed, so `moved` below finds
       // nothing to tell the account.
+      // Before and after each rename of a round of moves; see `movedThere`.
+      save: () => this.save(),
       moved: (from, to) => {
         void workspace.fileMoved(from, to, 'file')
         this.pulled += 1
