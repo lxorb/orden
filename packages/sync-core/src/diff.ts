@@ -101,16 +101,24 @@ function linesOf(text: string): string[] {
   return text.match(/[^\n]*\n|[^\n]+$/g) ?? []
 }
 
-/** How alike two lines read, from 0 to 1: how much of the longer one they share,
- *  their line breaks left out; blank lines not at all. */
-function alike(one: string, other: string): number {
-  const a = one.endsWith('\n') ? one.slice(0, -1) : one
-  const b = other.endsWith('\n') ? other.slice(0, -1) : other
+/** How alike two lines read, from 0 to 1: how much of the two they share, their
+ *  line breaks left out; blank lines not at all. `compare` is asked to count
+ *  what they share when their common front and back alone do not make them alike,
+ *  and says null where that would cost too much. */
+function alike(
+  one: string,
+  other: string,
+  compare: (a: string, b: string) => number | null,
+): number {
+  const a = one.replace(/\r?\n$/, '')
+  const b = other.replace(/\r?\n$/, '')
   // A blank line is like every other blank line, and anchors nothing: paired, it
   // would read a paragraph split as text moved across the blank line.
   if (!a.trim() || !b.trim()) return 0
-  const longest = Math.max(a.length, b.length)
   const shortest = Math.min(a.length, b.length)
+  const total = a.length + b.length
+  // They cannot share more than the shorter one.
+  if (2 * shortest < total * ONE_LINE) return 0
   let front = 0
   while (front < shortest && a.charCodeAt(front) === b.charCodeAt(front)) front++
   let back = 0
@@ -120,18 +128,21 @@ function alike(one: string, other: string): number {
   ) {
     back++
   }
-  const ends = (front + back) / longest
-  if (ends >= ONE_LINE || longest > MOST_LINE) return ends
+  const ends = (2 * (front + back)) / total
+  if (ends >= ONE_LINE) return ends
   // Words put in at both ends of a line leave it no common front or back.
-  const common = diffMain(a, b, UNCLOCKED, false).reduce(
-    (sum, [operation, text]) => sum + (operation === DIFF_EQUAL ? text.length : 0),
-    0,
-  )
-  return common / longest
+  const common = compare(a.slice(front, a.length - back), b.slice(front, b.length - back))
+  return common === null ? ends : (2 * (front + back + common)) / total
 }
 
-/** Past this length a line is compared only by its common front and back. */
-const MOST_LINE = 1_000
+/** How many characters of two lines' middles a run compares letter by letter, all
+ *  pairs together, before it settles for their common front and back: a few long
+ *  lines, or many short ones, at about the cost of one diff of the run. */
+const MOST_COMPARED = 4_000
+
+/** Past this many characters of two lines' middles together, they are not compared
+ *  letter by letter: two unrelated stretches cost the product of their lengths. */
+const MOST_LINE = 400
 
 /** At least this alike, two lines of a run are one line edited. */
 const ONE_LINE = 0.8
@@ -156,10 +167,24 @@ function paired(gone: string, come: string): Diff[] {
   if (!n || !m || (n === 1 && m === 1) || n * m > MOST_PAIRED) return tidied(gone, come)
 
   // The pairs that make the run most alike, in order: a longest common subsequence
-  // weighted by how alike each pair reads.
+  // weighted by how alike each pair reads, each pair read once.
+  let budget = MOST_COMPARED
+  const compare = (a: string, b: string): number | null => {
+    if (a.length + b.length > Math.min(budget, MOST_LINE)) return null
+    budget -= a.length + b.length
+    return diffMain(a, b, UNCLOCKED, false).reduce(
+      (sum, [operation, text]) => sum + (operation === DIFF_EQUAL ? text.length : 0),
+      0,
+    )
+  }
+  const scores = new Float64Array(n * m).fill(-1)
   const score = (i: number, j: number) => {
-    const how = alike(before[i] ?? '', after[j] ?? '')
-    return how >= ONE_LINE ? how : 0
+    const known = scores[i * m + j] ?? -1
+    if (known >= 0) return known
+    const how = alike(before[i] ?? '', after[j] ?? '', compare)
+    const pair = how >= ONE_LINE ? how : 0
+    scores[i * m + j] = pair
+    return pair
   }
   const best = Array.from({ length: n + 1 }, () => new Float64Array(m + 1))
   for (let i = n - 1; i >= 0; i--) {
