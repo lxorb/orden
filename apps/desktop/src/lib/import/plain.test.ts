@@ -140,6 +140,29 @@ describe('a folder of markdown', () => {
     expect(noteAt(plan, 'Draft.md')).toBe(draft)
   })
 
+  /** Simplenote, Drafts and nvALT checklists often have nothing else markdown in
+   *  them, and escaped boxes would be bullets that are no longer tasks. */
+  test.each([
+    ['a checklist', 'Groceries\n\n- [ ] milk\n- [x] eggs\n'],
+    ['a nested task', 'Todo\n  * [X] call #work\n'],
+    ['struck words', 'Plans\n\nGo ~~Monday~~ Tuesday.\n'],
+    ['words in underscores', 'It was _quiet_.\n'],
+  ])('and so does a text file with only %s for markdown', async (_, draft) => {
+    const plan = await readPlain([file('Draft.txt', draft)], { format: 'markdown' })
+
+    expect(noteAt(plan, 'Draft.md')).toBe(draft)
+  })
+
+  test.each([
+    ['snake case', 'Open file_name_here.txt for $5.\n'],
+    ['a tilde', 'About ~5 min for $5, or ~~ 10.\n'],
+    ['brackets', '- [a] first for $5\n- [ ]missing space\n'],
+  ])('while one with only %s is still plain text', async (_, words) => {
+    const plan = await readPlain([file('Note.txt', words)])
+
+    expect(noteAt(plan, 'Note.md')).toContain('\\$5')
+  })
+
   test('and an export that only ever writes plain text has its words escaped', async () => {
     const plan = await readPlain([file('Note.txt', '# not a heading\n\n*stars*\n')], {
       format: 'apple-notes',
