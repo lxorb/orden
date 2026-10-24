@@ -266,6 +266,35 @@ describe('a rewind', () => {
     }
     expect(fake.desk.fileOf('Made.md')).toBe('latin-1 bytes')
   })
+
+  /** A folder is not a note: rewinding past `create_folder` named the reader's own
+   *  note of the same name, `Projects.md`, and sent it to Recently deleted. */
+  test('leaves alone a note named like a folder the thread made', async () => {
+    fake.desk = deskWith({ 'Projects.md': 'my own words' })
+    fake.documents = []
+    fake.removed = []
+    const thread = aThread()
+    await message(
+      thread,
+      'make',
+      [],
+      [
+        {
+          kind: 'tool',
+          id: 'c1',
+          verb: 'mcp__nib__create_folder',
+          args: { path: 'Projects' },
+          state: 'ok',
+          result: { text: '{"path":"Projects","made":false}', images: [], error: false },
+        },
+      ],
+    )
+
+    expect(review.plan(thread, 'make')?.made).toEqual([])
+    await review.rewind(thread, 'make', 'both', null)
+    expect(fake.removed).toEqual([])
+    expect(fake.desk.fileOf('Projects.md')).toBe('my own words')
+  })
 })
 
 describe('a change', () => {
