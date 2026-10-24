@@ -648,7 +648,11 @@ notes.get('/notes/:id/paper', async (context) => {
  *  one of the owner's spaces would otherwise read a PDF the owner keeps for another. */
 notes.put('/notes/:id/paper', async (context) => {
   const found = await reachedNote(context.env, context.get('who'), context.req.param('id'))
-  if (!found) return context.json({ error: NO_SUCH_NOTE }, 404)
+  // A note in Recently deleted, or purged down to its tombstone, takes no paper. A
+  // device that read the note while it was live can still be carrying one, and a paper
+  // hung on a tombstone is bytes the purge let go of, held again for ever. The space
+  // reaches a deleted note too, so it is refused here and not by `reachedNote`.
+  if (!found || found.note.deleted) return context.json({ error: NO_SUCH_NOTE }, 404)
   if (found.only || !allows(found.space.role, 'write')) {
     return context.json({ error: refusal('write') }, 403)
   }

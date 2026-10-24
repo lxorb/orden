@@ -126,6 +126,20 @@ describe('the paper a page note holds', () => {
     expect((await call(env, `/v1/notes/${pages}/paper`, { token: owner })).text).toBe(one.text)
   })
 
+  test('cannot be hung on a note in Recently deleted, nor on one purged for good', async () => {
+    const one = paper()
+    await upload(one)
+    await call(env, `/v1/notes/${pages}`, { method: 'DELETE', token: owner })
+    expect((await hold(pages, one.hash)).status).toBe(404)
+
+    await call(env, `/v1/trash/notes/${pages}`, { method: 'DELETE', token: owner })
+    expect((await hold(pages, one.hash)).status).toBe(404)
+    const row = await env.DB.prepare('select paper from notes where id = ?')
+      .bind(pages)
+      .first<{ paper: string | null }>()
+    expect(row?.paper).toBeNull()
+  })
+
   test('cannot name bytes nobody here uploaded', async () => {
     expect((await hold(pages, paper('never sent').hash)).status).toBe(409)
   })
