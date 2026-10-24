@@ -242,10 +242,18 @@ function sameLine(
     return true
   }
   // Two sides' words put in where a line's words begin each start the line their own
-  // way. Further along a line they are words added beside words, as at its end.
+  // way. Further along a line they are words added beside words, as at its end, and
+  // so are lines added after a line's end, its own break first: those go after any
+  // words added to the line there (`written`). Any other break there, below.
   if (isInsertion(one) && isInsertion(other) && one.from === other.from) {
-    return !WORDY.test(base.slice(a.from, one.from))
+    if (!WORDY.test(base.slice(a.from, one.from))) return true
+    const after = (edit: Edit) => edit.insert.startsWith('\n')
+    const words = (edit: Edit) => !edit.insert.includes('\n')
+    if (after(one) && (after(other) || words(other))) return false
+    if (after(other) && words(one)) return false
   }
+  // An edit that breaks a line or joins it to the next, touching the other side's:
+  // whichever goes first, the other's words end up on a line they were not written on.
   if (breaks(base, one) || breaks(base, other)) {
     return one.from <= other.to && other.from <= one.to
   }
@@ -495,14 +503,17 @@ export function written(base: string, analysis: Analysis, writing: Writing): str
   // after it they would run into that line. And an insertion goes ahead of a
   // replacement that starts where it was made: it was put in before the text the
   // replacement takes out, so it goes before the words that stand for that text, and
-  // after them it would run into their last word (`breadfresh`).
+  // after them it would run into their last word (`breadfresh`). Lines added after a
+  // line's end, its own break first, go after words added to that line there.
   const inside = (piece: Piece) => (wholeLines(base, piece) ? 0 : 1)
   const replaces = (piece: Piece) => (piece.to > piece.from ? 1 : 0)
+  const opens = (piece: Piece) => (piece.insert.startsWith('\n') ? 1 : 0)
   pieces.sort(
     (a, b) =>
       a.from - b.from ||
       inside(a) - inside(b) ||
       replaces(a) - replaces(b) ||
+      opens(a) - opens(b) ||
       a.rank - b.rank ||
       a.to - b.to,
   )

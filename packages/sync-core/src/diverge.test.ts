@@ -460,6 +460,39 @@ describe('diverge', () => {
     },
   )
 
+  test.each([
+    [
+      '- [ ] Call Bob\n- [ ] Buy milk\n',
+      '- [ ] Call Bob at noon\n- [ ] Pay rent\n- [ ] Buy milk\n',
+      '- [ ] Call Bob today\n- [ ] Buy milk\n',
+    ],
+    ['- [ ] Call Bob\n', '- [ ] Call Bob\n- [ ] Pay rent\n', '- [ ] Call Bob today\n'],
+    ['- [ ] Call Bob', '- [ ] Call Bob\n- [ ] Pay rent', '- [ ] Call Bob today'],
+    ['- [ ] Call Bob\n', '- [ ] Call Bob!\n- [ ] Pay rent\n', '- [x] Call Bob today\n'],
+  ])(
+    'words added to a line the other side broke there stay on their own line (%j)',
+    (base, local, remote) => {
+      // Both sides wrote at the end of one line, one of them a new line after it: the
+      // other side's words went onto the end of the new line (Pay rent today).
+      const merged = crdtMerge(base, local, remote)
+      for (const [one, other] of [
+        [local, remote],
+        [remote, local],
+      ] as const) {
+        for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
+          for (const crdt of [undefined, merged]) {
+            const result = diverge(base, one, other, times, crdt)
+            if (result.verdict !== 'clean') continue
+            expect(cleanLinesAreWhole(base, one, other, result.resolution ?? '')).toEqual({
+              missing: [],
+              extra: [],
+            })
+          }
+        }
+      }
+    },
+  )
+
   test('tasks each side added beside ones the other deleted stay tasks of their own', () => {
     // Two added tasks ran together into one line and an emptied box was left behind.
     const base = '- [ ] alpha\n- [ ] beta\n- [ ] new item\n- [ ] gamma\n'
