@@ -35,10 +35,12 @@ function projectName(words: string): string | null {
 }
 
 /** A new, empty project in a folder, under the first free name its words make; answers
- *  its note on this disk, or null where the words make no name. */
+ *  its note on this disk, or null where the words make no name or the folder is in a
+ *  space shared to be read, which takes no new note. Asked here, as every way a project
+ *  is made comes through it. */
 async function made(folder: string, words: string, template?: string): Promise<string | null> {
   const name = projectName(words)
-  if (name === null) return null
+  if (name === null || !canWriteAt(folder)) return null
   const path = joinPath(folder, workspace.freeName(folder, `${name}.md`))
   const text = template === undefined ? '' : await templateWords(template, name)
   await writeFile(path, text)

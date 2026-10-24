@@ -7,6 +7,7 @@
  *  Pure, but for `saveFilter`, which writes the file. */
 
 import { answer, type Base, fromTodoist, type Row, type View, writeBase } from '@nib/bases'
+import { canWriteAt } from '../sharing.svelte'
 import { joinPath } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import { writeFile } from '../workspace/write-file'
@@ -91,7 +92,7 @@ export function counted(
 }
 
 /** A filter written: over the file it was read from, or new in the space's `Filters/`
- *  under its name. Answers the file. */
+ *  under its name. Answers the file, or null where it was not written. */
 export async function saveFilter(
   name: string,
   query: string,
@@ -107,6 +108,8 @@ export async function saveFilter(
   const yaml = writeBase(filterBase(words, query, reading))
   const folder = joinPath(root, FILTERS)
   const target = path ?? joinPath(folder, workspace.freeName(folder, `${words}.base`))
+  // Not into a space shared to be read: the copy here would stop being the space's.
+  if (!canWriteAt(target)) return null
   await writeFile(target, yaml)
   if (path === null) {
     await workspace.loadTree()

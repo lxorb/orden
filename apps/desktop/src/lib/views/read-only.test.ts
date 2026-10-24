@@ -318,3 +318,33 @@ describe('a move with one end in a space shared to be read', () => {
     expect(placeEntries(() => undefined)).toEqual([])
   })
 })
+
+/** The Tasks panel, over a space shared to be read: it makes no project and saves no
+ *  filter there, since each is a file written into the space (B292). */
+describe('the Tasks panel, in a space shared to be read', () => {
+  const reading = { lang: 'en', today: '2026-10-24' } as never
+
+  test('makes no project, at the top, inside another or beside one', async () => {
+    const { addProject, addProjectBeside, addSubproject } = await import('./project-actions')
+    const parent = { note: `${THEIRS.root}/Projects/Garden.md`, folder: null }
+    expect(await addProject(THEIRS.root, 'Secret')).toBeNull()
+    expect(await addSubproject(parent, 'Beds')).toBeNull()
+    expect(await addProjectBeside(parent, 'Shed', true)).toBeNull()
+    expect(written).toEqual([])
+  })
+
+  test("while one is still made in the reader's own", async () => {
+    const { addProject } = await import('./project-actions')
+    expect(await addProject(MINE.root, 'Mine')).not.toBeNull()
+    expect(written).toHaveLength(1)
+  })
+
+  test('saves no filter, new or over the one it was read from', async () => {
+    const { saveFilter } = await import('./filters')
+    expect(await saveFilter('Soon', 'today', reading, null)).toBeNull()
+    expect(await saveFilter('Soon', 'today', reading, `${THEIRS.root}/Filters/Soon.base`)).toBe(
+      null,
+    )
+    expect(written).toEqual([])
+  })
+})
