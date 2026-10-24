@@ -343,3 +343,82 @@ function columnsOf(indent: string): number {
   for (const one of indent) columns = one === '\t' ? columns + 4 - (columns % 4) : columns + 1
   return columns
 }
+
+/** A backslash escape: one in front of ASCII punctuation, which is all CommonMark
+ *  lets one escape. */
+const AN_ESCAPE = /\\([!-/:-@[-`{-~])/g
+
+/** A code span, as CommonMark closes one: a run of backticks and the next run of
+ *  the same length. What is inside is shown as written, backslashes and all. */
+const A_CODE = /(`+)(?:[^`]|[^`][\s\S]*?[^`])\1(?!`)/g
+
+/** The text cut into what is code and what is not, in order. */
+function codeAndWords(text: string): { code: boolean; text: string }[] {
+  const out: { code: boolean; text: string }[] = []
+  let at = 0
+  for (const found of text.matchAll(A_CODE)) {
+    if (found.index > at) out.push({ code: false, text: text.slice(at, found.index) })
+    out.push({ code: true, text: found[0] })
+    at = found.index + found[0].length
+  }
+  if (at < text.length) out.push({ code: false, text: text.slice(at) })
+  return out
+}
+
+/** Words as a field or a notification shows them: every escape taken off, so a
+ *  task written `milk \$3` reads `milk $3`. Not in code, which shows its
+ *  backslashes as they are written. The inverse is `typedWords`. */
+export function shownWords(text: string): string {
+  return codeAndWords(text)
+    .map((one) => (one.code ? one.text : one.text.replace(AN_ESCAPE, '$1')))
+    .join('')
+}
+
+/** Words typed into a field that edits a line of markdown, a task's title, written
+ *  back with the escapes `shownWords` took off: whatever would open maths, lowered or
+ *  raised text, a comment or a highlight, a tag, or would take the next character's
+ *  escape for itself. What the writer typed as markup of their own - bold, a link,
+ *  code - is left to be that, which is why this is narrower than `escapeText`. */
+export function typedWords(text: string): string {
+  return codeAndWords(text)
+    .map((one) => {
+      if (one.code) return one.text
+      let out = ''
+      const words = one.text
+      for (let at = 0; at < words.length; at++) {
+        const char = words.charAt(at)
+        const before = words[at - 1]
+        const after = words[at + 1]
+        const escaped =
+          (char === '\\' && after !== undefined && PUNCTUATION.test(after)) ||
+          (char === '$' && !(isBlank(before) && isBlank(after))) ||
+          ((char === '~' || char === '^') && !isBlank(after)) ||
+          ((char === '%' || char === '=') && before === char) ||
+          (char === '<' && /[A-Za-z/!?]/.test(after ?? ''))
+        out += escaped ? `\\${char}` : char
+      }
+      return out
+    })
+    .join('')
+}
+
+/** Where an escaped character is held while a reader looks for markup, so `\*` is
+ *  never the start of emphasis: the character, moved into the private use area. */
+const HELD = 0xe000
+
+/** The words with each escape held as one character no markup pattern matches;
+ *  `released` gives each back. For a reader of inline markup that is not a
+ *  markdown parser, the view's `pieces`, which would otherwise read `\*a\*` as
+ *  emphasis and show the backslashes. */
+export function heldEscapes(text: string): string {
+  return text.replace(AN_ESCAPE, (_, one: string) => String.fromCharCode(HELD + one.charCodeAt(0)))
+}
+
+/** Held escapes given back: as the characters they escaped, or as written, with the
+ *  backslash, for code, which shows them as they are. */
+export function released(text: string, asWritten = false): string {
+  return text.replace(/[-]/g, (one) => {
+    const char = String.fromCharCode(one.charCodeAt(0) - HELD)
+    return asWritten ? `\\${char}` : char
+  })
+}

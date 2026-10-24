@@ -103,3 +103,9 @@ test('plainWords says a task the way a person reads it', () => {
   )
   expect(plainWords('_Call_ mum')).toBe('Call mum')
 })
+
+test('plainWords takes the escapes off, so a reminder says the characters', () => {
+  expect(plainWords('Prices \\$5-\\$10 \\~5 min a=\\=b and \\*not em\\* `a\\$b`')).toBe(
+    'Prices $5-$10 ~5 min a==b and *not em* a\\$b',
+  )
+})

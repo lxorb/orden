@@ -55,4 +55,13 @@ describe('a task in quick add’s field and back', () => {
     expect(change.priority).toBe(5)
     expect(change.text).toBeUndefined()
   })
+
+  test('the field holds the words a reader sees, and saving puts the escapes back', () => {
+    const one = task('- [ ] milk \\$3 or \\~5 min')
+    expect(prefillFor(one, null).text).toBe('milk $3 or ~5 min')
+    const kept = changeOf(one, { text: 'milk $3 or ~5 min', fields: { tags: [], remind: [] } })
+    expect(kept.text).toBeUndefined()
+    const changed = changeOf(one, { text: 'milk $4 or ~5 min', fields: { tags: [], remind: [] } })
+    expect(changed.text).toBe('milk \\$4 or \\~5 min')
+  })
 })

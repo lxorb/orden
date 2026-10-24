@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { escapeText, plainWords } from './escapes'
+import { escapeText, plainWords, shownWords, typedWords } from './escapes'
 import { renderMarkdown } from './index'
 
 /** One text node at a time, which is how turndown hands a page's words over.
@@ -251,5 +251,27 @@ describe('a page’s text, as a note may hold it', () => {
 
   test('nothing in, nothing out', () => {
     expect(escapeText('')).toBe('')
+  })
+})
+
+/** A task's words in a field of their own: shown as the characters they say, and
+ *  written back with the escapes they need, so the round trip changes nothing. */
+describe('words shown and written back', () => {
+  test('the escapes come off, except in code', () => {
+    expect(shownWords('Prices \\$5-\\$10 \\~5 a=\\=b x\\\\y `a\\$b`')).toBe(
+      'Prices $5-$10 ~5 a==b x\\y `a\\$b`',
+    )
+  })
+
+  test('and go back on, leaving what the writer meant as markup alone', () => {
+    const shown = 'Prices $5-$10 ~5 min a==b **due** [the page](https://x.test/a) `a$b`'
+    const written = typedWords(shown)
+    expect(written).toBe(
+      'Prices \\$5-\\$10 \\~5 min a=\\=b **due** [the page](https://x.test/a) `a$b`',
+    )
+    expect(shownWords(written)).toBe(shown)
+    expect(renderMarkdown(written)).toBe(
+      '<p>Prices $5-$10 ~5 min a==b <strong>due</strong> <a href="https://x.test/a">the page</a> <code>a$b</code></p>\n',
+    )
   })
 })

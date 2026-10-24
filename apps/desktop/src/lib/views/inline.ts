@@ -4,7 +4,14 @@
  *  As pieces rather than as HTML, so a view never puts somebody's markup into the page
  *  (a task line can come from a shared space): each piece is text with how it looks,
  *  and the component draws text. One pass over one line; nothing here is per row more
- *  than once. */
+ *  than once.
+ *
+ *  A character the note escaped is the character: `milk \$3` is drawn `milk $3`, and
+ *  `\*a\*` is two stars around a word rather than emphasis. The escapes are held while
+ *  the forms are looked for and given back after (`heldEscapes`), as the characters, or
+ *  as written inside code, which shows its backslashes. */
+
+import { heldEscapes, released } from '@nib/markdown/escapes'
 
 export interface Piece {
   text: string
@@ -41,6 +48,13 @@ const FORMS: { pattern: RegExp; make: (found: RegExpExecArray) => Piece }[] = [
 
 /** The words as pieces. */
 export function pieces(words: string): Piece[] {
+  return heldPieces(heldEscapes(words)).map((one) => {
+    const text = released(one.text, one.code === true)
+    return one.link === undefined ? { ...one, text } : { ...one, text, link: released(one.link) }
+  })
+}
+
+function heldPieces(words: string): Piece[] {
   const out: Piece[] = []
   let rest = words
   while (rest) {
