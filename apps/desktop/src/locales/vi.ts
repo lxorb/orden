@@ -2587,4 +2587,6 @@ export const vi: Dictionary = {
     'Phông chữ của trình đơn, danh sách và cài đặt; bất kỳ phông chữ nào đã cài đặt trên thiết bị này, theo tên của nó.',
   'The face of code and terminals; any monospaced font installed here, by its name.':
     'Phông chữ của mã và terminal; bất kỳ phông chữ đơn cách nào đã cài đặt trên thiết bị này, theo tên của nó.',
+  'Not installed on this device, so the app’s own face is used.':
+    'Chưa được cài đặt trên thiết bị này, nên dùng phông chữ riêng của ứng dụng.',
 }

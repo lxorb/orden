@@ -2537,4 +2537,6 @@ export const zhHans: Dictionary = {
     '菜单、列表和设置所用的字体；可按名称使用此设备上已安装的任何字体。',
   'The face of code and terminals; any monospaced font installed here, by its name.':
     '代码和终端所用的字体；可按名称使用此设备上已安装的任何等宽字体。',
+  'Not installed on this device, so the app’s own face is used.':
+    '此设备上未安装该字体，因此使用应用自带的字体。',
 }

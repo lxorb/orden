@@ -2670,4 +2670,6 @@ export const fil: Dictionary = {
     'Ang font ng mga menu, listahan at setting; anumang font na naka-install sa device na ito, ayon sa pangalan nito.',
   'The face of code and terminals; any monospaced font installed here, by its name.':
     'Ang font ng code at mga terminal; anumang monospaced na font na naka-install sa device na ito, ayon sa pangalan nito.',
+  'Not installed on this device, so the app’s own face is used.':
+    'Hindi naka-install sa device na ito, kaya ang sariling font ng app ang ginagamit.',
 }

@@ -2611,4 +2611,6 @@ export const id: Dictionary = {
     'Font untuk menu, daftar, dan pengaturan; font apa pun yang diinstal di perangkat ini, menurut namanya.',
   'The face of code and terminals; any monospaced font installed here, by its name.':
     'Font untuk kode dan terminal; font monospace apa pun yang diinstal di perangkat ini, menurut namanya.',
+  'Not installed on this device, so the app’s own face is used.':
+    'Tidak diinstal di perangkat ini, jadi font milik aplikasi sendiri yang digunakan.',
 }

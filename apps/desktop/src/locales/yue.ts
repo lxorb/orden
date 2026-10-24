@@ -2533,4 +2533,6 @@ export const yue: Dictionary = {
     '選單、列表同設定用嘅字型；用名揀呢部裝置上裝咗嘅任何字型。',
   'The face of code and terminals; any monospaced font installed here, by its name.':
     '代碼同終端機用嘅字型；用名揀呢部裝置上裝咗嘅任何等寬字型。',
+  'Not installed on this device, so the app’s own face is used.':
+    '呢部裝置冇裝呢款字型，所以用應用程式自己嘅字型。',
 }

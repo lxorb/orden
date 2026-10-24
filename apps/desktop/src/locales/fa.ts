@@ -2622,4 +2622,6 @@ export const fa: Dictionary = {
     'قلم منوها، فهرست‌ها و تنظیم‌ها؛ هر قلم نصب‌شده در این دستگاه، با نامش.',
   'The face of code and terminals; any monospaced font installed here, by its name.':
     'قلم کد و ترمینال‌ها؛ هر قلم هم‌عرض نصب‌شده در این دستگاه، با نامش.',
+  'Not installed on this device, so the app’s own face is used.':
+    'روی این دستگاه نصب نیست، پس قلم خود برنامه به کار می‌رود.',
 }

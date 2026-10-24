@@ -2682,4 +2682,6 @@ export const ptPT: Dictionary = {
     'O tipo de letra dos menus, das listas e das definições; qualquer tipo de letra instalado neste dispositivo, pelo nome.',
   'The face of code and terminals; any monospaced font installed here, by its name.':
     'O tipo de letra do código e dos terminais; qualquer tipo de letra monoespaçado instalado neste dispositivo, pelo nome.',
+  'Not installed on this device, so the app’s own face is used.':
+    'Não está instalado neste dispositivo, pelo que é usado o tipo de letra da própria aplicação.',
 }

@@ -2710,4 +2710,6 @@ export const pl: Dictionary = {
     'Czcionka menu, list i ustawień; dowolna czcionka zainstalowana na tym urządzeniu, podana z nazwy.',
   'The face of code and terminals; any monospaced font installed here, by its name.':
     'Czcionka kodu i terminali; dowolna czcionka o stałej szerokości zainstalowana na tym urządzeniu, podana z nazwy.',
+  'Not installed on this device, so the app’s own face is used.':
+    'Nie jest zainstalowana na tym urządzeniu, więc używana jest czcionka samej aplikacji.',
 }

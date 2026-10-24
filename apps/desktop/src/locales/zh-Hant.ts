@@ -2539,4 +2539,6 @@ export const zhHant: Dictionary = {
     '選單、清單與設定所用的字型；可依名稱使用這部裝置上已安裝的任何字型。',
   'The face of code and terminals; any monospaced font installed here, by its name.':
     '程式碼與終端機所用的字型；可依名稱使用這部裝置上已安裝的任何等寬字型。',
+  'Not installed on this device, so the app’s own face is used.':
+    '這部裝置未安裝此字型，因此使用應用程式本身的字型。',
 }

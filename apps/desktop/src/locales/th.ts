@@ -2561,4 +2561,6 @@ export const th: Dictionary = {
     'แบบอักษรของเมนู รายการ และการตั้งค่า ใช้แบบอักษรใดก็ได้ที่ติดตั้งอยู่ในอุปกรณ์นี้ตามชื่อ',
   'The face of code and terminals; any monospaced font installed here, by its name.':
     'แบบอักษรของโค้ดและเทอร์มินัล ใช้แบบอักษรความกว้างคงที่ใดก็ได้ที่ติดตั้งอยู่ในอุปกรณ์นี้ตามชื่อ',
+  'Not installed on this device, so the app’s own face is used.':
+    'ไม่ได้ติดตั้งในอุปกรณ์นี้ จึงใช้แบบอักษรของแอปเอง',
 }

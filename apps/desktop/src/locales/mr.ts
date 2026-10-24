@@ -2618,4 +2618,6 @@ export const mr: Dictionary = {
     'मेनू, याद्या आणि सेटिंग्जचा फॉंट; या डिव्हाइसवर इंस्टॉल केलेला कोणताही फॉंट, त्याच्या नावाने.',
   'The face of code and terminals; any monospaced font installed here, by its name.':
     'कोड आणि टर्मिनलचा फॉंट; या डिव्हाइसवर इंस्टॉल केलेला कोणताही मोनोस्पेस फॉंट, त्याच्या नावाने.',
+  'Not installed on this device, so the app’s own face is used.':
+    'या डिव्हाइसवर इंस्टॉल केलेला नाही, म्हणून ॲपचा स्वतःचा फॉंट वापरला जातो.',
 }

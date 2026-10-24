@@ -2611,4 +2611,6 @@ export const ur: Dictionary = {
     'مینو، فہرستوں اور ترتیبات کا فونٹ؛ اس آلے پر انسٹال کردہ کوئی بھی فونٹ، اس کے نام سے۔',
   'The face of code and terminals; any monospaced font installed here, by its name.':
     'کوڈ اور ٹرمینلز کا فونٹ؛ اس آلے پر انسٹال کردہ کوئی بھی مونو اسپیس فونٹ، اس کے نام سے۔',
+  'Not installed on this device, so the app’s own face is used.':
+    'اس آلے پر انسٹال نہیں ہے، اس لیے ایپ کا اپنا فونٹ استعمال ہوتا ہے۔',
 }

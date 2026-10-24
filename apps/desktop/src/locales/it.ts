@@ -2693,4 +2693,6 @@ export const it: Dictionary = {
     'Il carattere di menu, elenchi e impostazioni; qualsiasi carattere installato su questo dispositivo, con il suo nome.',
   'The face of code and terminals; any monospaced font installed here, by its name.':
     'Il carattere del codice e dei terminali; qualsiasi carattere a spaziatura fissa installato su questo dispositivo, con il suo nome.',
+  'Not installed on this device, so the app’s own face is used.':
+    'Non installato su questo dispositivo, quindi viene usato il carattere proprio dell’app.',
 }
