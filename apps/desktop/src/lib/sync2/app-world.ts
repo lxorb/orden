@@ -66,7 +66,11 @@ function diskOf(telling: Telling): Disk {
       // put where a page note takes it for its paper unless it is held there on
       // purpose, and this move only completes a pairing the account already has.
       const hold = kind === 'file' && holderOf(to) !== null
-      await invoke('rename_note', { from, to, ...(hold ? { hold } : {}) })
+      // The one file and nothing it holds: a PDF's highlights and a page note's paper
+      // are entries of their own, moved by moves of their own in whichever order those
+      // come. Taking them along, a PDF moved after its highlights found none and cleared
+      // the ones that had just arrived, and the next scan deleted them everywhere.
+      await invoke('rename_note', { from, to, alone: true, ...(hold ? { hold } : {}) })
       await telling.moved(from, to, kind)
     },
     async remove(path, kind) {

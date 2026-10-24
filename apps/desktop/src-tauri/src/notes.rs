@@ -201,31 +201,44 @@ pub fn delete_note(app: AppHandle, path: String) -> Result<(), String> {
 /// `hold` is a PDF being turned into its page note (pages/from-pdf.ts): moved, in its
 /// own folder, to the paper of the note just made for it or made for it before. Only
 /// that move may put a PDF where a page note takes it for its paper.
+///
+/// `alone` is sync's move (sync2/app-world.ts), which moves the one file and nothing it
+/// holds: a PDF's highlights and a page note's paper are entries of their own in the
+/// account, moved by moves of their own, in whichever order those come. Highlights that
+/// came ahead of their PDF were otherwise cleared as left by another (#733).
 #[tauri::command(async)]
 pub fn rename_note(
     app: AppHandle,
     from: String,
     to: String,
     hold: Option<bool>,
+    alone: Option<bool>,
 ) -> Result<(), String> {
     let source = in_spaces(&app, &from)?;
     let target = in_spaces(&app, &to)?;
-    let respelling = respelled(&source, &target, same_entry);
+    renamed(&source, &target, hold == Some(true), alone == Some(true))
+}
+
+/// `rename_note` past its gate, which wants an app around it.
+fn renamed(source: &Path, target: &Path, hold: bool, alone: bool) -> Result<(), String> {
+    let respelling = respelled(source, target, same_entry);
 
     // A page note brings its paper, `<name>.pages.pdf`, and a file of that name already
     // there is somebody's own: it was moved over, or hidden as held (#538). And a PDF
     // put where a page note takes it for its paper is somebody's own as well, unless
     // it is being turned into that note.
-    let holding = hold == Some(true) && is_pdf(&target) && source.parent() == target.parent();
-    if let Some(there) = paper_in_the_way(&source, &target, same_entry).filter(|_| !holding) {
+    let holding = hold && is_pdf(target) && source.parent() == target.parent();
+    if let Some(there) = paper_in_the_way(source, target, same_entry).filter(|_| !holding) {
         return Err(format!("{} is already there", there.display()));
     }
 
-    move_entry(&source, &target, respelling)?;
+    move_entry(source, target, respelling)?;
 
     // A PDF's highlights follow it, and a page note's paper follows the note, so a
     // rename or a move keeps them.
-    move_held(&source, &target);
+    if !alone {
+        move_held(source, target);
+    }
     Ok(())
 }
 
