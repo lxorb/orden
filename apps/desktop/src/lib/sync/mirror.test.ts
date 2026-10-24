@@ -265,8 +265,10 @@ const fake = vi.hoisted(() => {
         })
       }
 
+      // Named for its path, unless a note that has since moved on already is.
+      const named = `n-${path}`
       const note: Remote = {
-        id: `n-${path}`,
+        id: remote.has(named) ? `${named}-${seq + 1}` : named,
         path,
         content,
         version: 1,
@@ -379,7 +381,7 @@ vi.mock('../api', async (importOriginal) => ({
   api: fake.api,
 }))
 
-const { newMirror, within } = await import('./mirror')
+const { newMirror, readMirror, within } = await import('./mirror')
 const { asidesBack, movedHere, pull, push } = await import('./pass')
 type Clash = import('./conflicts').Clash
 
@@ -613,9 +615,11 @@ describe('a note renamed on this machine', () => {
     fake.refusing.delete = null
     const reading = fake.api.readNote
     fake.api.readNote = () => Promise.reject(new TypeError('Failed to fetch'))
+    // Written down, to be told again: see `untold` in mirror.ts.
     expect(
       await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Two.md`, new Set([id])),
-    ).toBe(false)
+    ).toBe(true)
+    expect(mirror.notes['One.md']?.id).toBe(id)
     fake.api.readNote = reading
     fake.calls.length = 0
 
@@ -641,7 +645,11 @@ describe('a note renamed on this machine', () => {
     await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Two.md`, new Set([id]))
     await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Two.md`, new Set())
     fake.api.readNote = reading
-    fake.api.writeNote = writing
+    // Back, and the account refuses a write on a version it has moved past.
+    fake.api.writeNote = async (token, noteId, path, content, base) => {
+      if (base !== fake.remote.get(noteId)?.version) throw new ApiError(409, 'a version behind', {})
+      return writing(token, noteId, path, content, base)
+    }
     // The other device writes again meanwhile.
     fake.editRemote(id, `${HERE}there\nand more there\n`)
     fake.calls.length = 0
@@ -668,6 +676,7 @@ describe('a note renamed on this machine', () => {
       }),
     ])
     expect(fake.disk.get(`${ROOT}/Two.md`)).toBe(`${HERE}here\n`)
+    fake.api.writeNote = writing
   })
 
   test('and a new note at the name one waiting to be settled left is a note of its own', async () => {
@@ -695,6 +704,30 @@ describe('a note renamed on this machine', () => {
     ])
     expect(clashes.map((one) => one.path)).toEqual([`${ROOT}/Two.md`])
     expect(mirror.notes['One.md']?.id).not.toBe(id)
+  })
+
+  test('and one renamed twice while the account was away is told where it is now', async () => {
+    const { mirror, id } = await paired('One.md', HERE)
+    fake.disk.set(`${ROOT}/One.md`, `${HERE}here\n`)
+    fake.editRemote(id, `${HERE}there\n`)
+    await pull(mirror, 'token', NOBODY, { rule: 'ask', clashed: () => undefined })
+    const reading = fake.api.readNote
+    fake.api.readNote = () => Promise.reject(new TypeError('Failed to fetch'))
+    renameOnDisk('One.md', 'Two.md')
+    await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Two.md`, new Set([id]))
+    renameOnDisk('Two.md', 'Three.md')
+    await movedHere(mirror, 'token', `${ROOT}/Two.md`, `${ROOT}/Three.md`, new Set([id]))
+    fake.api.readNote = reading
+    // Written down and read back, as a launch in between would.
+    const back = readMirror(ROOT, JSON.parse(JSON.stringify(mirror)))!
+
+    const clashes: Clash[] = []
+    await pull(back, 'token', NOBODY, { rule: 'ask', clashed: (one) => clashes.push(one) })
+
+    expect(fake.remote.get(id)).toMatchObject({ path: 'Three.md', content: `${HERE}there\n` })
+    expect(back.notes['Three.md']).toMatchObject({ id, hash: '' })
+    expect(back.untold).toBeUndefined()
+    expect(clashes.map((one) => one.path)).toEqual([`${ROOT}/Three.md`])
   })
 
   test('and a folder carries every note under it', async () => {
