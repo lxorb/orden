@@ -388,6 +388,27 @@ export function shownWords(text: string): string {
     .join('')
 }
 
+/** Where in `shownWords` of the text each character stands whose escape it took off:
+ *  what the line said was a word and not markup, which a field that reads its words
+ *  again must leave a word (`\#tips` is not a tag). */
+export function unescapedAt(text: string): number[] {
+  const out: number[] = []
+  let at = 0
+  for (const one of codeAndWords(text)) {
+    if (one.code) {
+      at += one.text.length
+      continue
+    }
+    let taken = 0
+    for (const found of one.text.matchAll(AN_ESCAPE)) {
+      out.push(at + found.index - taken)
+      taken++
+    }
+    at += one.text.length - taken
+  }
+  return out
+}
+
 /** Words typed into a field that edits a line of markdown, a task's title, written
  *  back with the escapes `shownWords` took off: whatever would open maths, lowered or
  *  raised text, a comment or a highlight, a tag, or would take the next character's

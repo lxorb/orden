@@ -98,6 +98,8 @@
   let description = $state<string | null>(untrack(() => prefill.description ?? null))
   /** Spans turned back into words. */
   let keep = $state<Span[]>([])
+  /** What the task's line escaped, which stays words as the words around it change. */
+  let escaped = $state<Span[]>(untrack(() => [...(prefill.escaped ?? [])]))
   /** What the controls picked, over whatever the words say. `null` takes a field away. */
   let picked = $state<{
     due?: string | null
@@ -118,12 +120,12 @@
   let pasted = $state<string[] | null>(null)
 
   /** The line as last seen, so the spans turned back follow an edit. */
-  let seen = ''
+  let seen = untrack(() => prefill.text ?? '')
 
   const today = $derived(todayOf())
   const read = $derived(
     smart
-      ? parseQuickAdd(text, langs, new Date(), { keep, notes })
+      ? parseQuickAdd(text, langs, new Date(), { keep, escaped, notes })
       : { text: text.trim(), fields: { tags: [], remind: [] }, chips: [] },
   )
   const pieces = $derived(piecesOf(text, read.chips))
@@ -169,6 +171,7 @@
     const now = text
     if (now === seen) return
     keep = carried(keep, seen, now)
+    escaped = carried(escaped, seen, now)
     seen = now
   })
 
@@ -383,6 +386,7 @@
     text = ''
     seen = ''
     keep = []
+    escaped = []
     picked = {}
     description = null
     input?.focus()

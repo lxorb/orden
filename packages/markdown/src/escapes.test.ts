@@ -1,5 +1,12 @@
 import { describe, expect, test } from 'vitest'
-import { editedWords, escapeText, plainWords, shownWords, typedWords } from './escapes'
+import {
+  editedWords,
+  escapeText,
+  plainWords,
+  shownWords,
+  typedWords,
+  unescapedAt,
+} from './escapes'
 import { renderMarkdown } from './index'
 import { readTask } from './task-line'
 
@@ -325,5 +332,15 @@ describe('a title edited and written back', () => {
     expect(editedWords('milk \\$3', 'milk $3 or ~5')).toBe('milk \\$3 or \\~5')
     // The line's own markup is not what was typed, and stays as it was.
     expect(editedWords('a ~~b~~ ==c== x^2^', 'a ~~b~~ ==c== x^2^ d')).toBe('a ~~b~~ ==c== x^2^ d')
+  })
+})
+
+describe('where the escapes taken off were', () => {
+  test('is where each character stands in the words shown, code passed over', () => {
+    const written = 'Tip \\#tips `a\\$b` \\@bob'
+    const shown = shownWords(written)
+    expect(shown).toBe('Tip #tips `a\\$b` @bob')
+    expect(unescapedAt(written).map((at) => shown[at])).toEqual(['#', '@'])
+    expect(unescapedAt('plain words')).toEqual([])
   })
 })
