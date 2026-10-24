@@ -29,6 +29,7 @@
  *  worth testing, and the Kotlin side is in Shared.kt. */
 
 import { escapeText, plainWords } from '@nib/markdown/escapes'
+import { taskWords } from '@nib/markdown/task-line'
 import { asWords, OPENS_MARKUP } from '@nib/markdown/words'
 
 import { dayOf, noteText } from '../import/meta'
@@ -182,8 +183,12 @@ export function sharedTask(arrived: Arrived): string {
   const address = ADDRESS.exec(words)?.[0]
   const title = sharedTitle(arrived).replace(/[[\]]/g, '').replace(/\s+/g, ' ').trim()
   // Somebody else's words, written to read back as themselves (`plainWords`); inside
-  // the link's brackets nothing autolinks, so an address there is words as well.
-  return address ? `[${escapeText(title, { addresses: false })}](${address})` : plainWords(title)
+  // the link's brackets nothing autolinks, so an address there is words as well. And
+  // none of it a field of the task: a `#tips` or a `📅 2026-11-01` in what was shared
+  // is part of the sentence (`taskWords`).
+  return address
+    ? `[${taskWords(escapeText(title, { addresses: false }))}](${address})`
+    : taskWords(plainWords(title))
 }
 
 /** The host of an address, for a share that is nothing but a link. */

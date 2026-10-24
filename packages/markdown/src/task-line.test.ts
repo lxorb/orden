@@ -1,5 +1,12 @@
 import { describe, expect, test } from 'vitest'
-import { readDuration, readRemind, readTask, readTime, type TaskFields } from './task-line'
+import {
+  readDuration,
+  readRemind,
+  readTask,
+  readTime,
+  taskWords,
+  type TaskFields,
+} from './task-line'
 
 /** The Tasks plugin's own documented lines (docs/Reference/Task Formats/Tasks Emoji
  *  Format.md and Dataview Format.md), and what each one says. */
@@ -292,5 +299,17 @@ describe('a line built to make the reader backtrack', () => {
     expect(quick('- [ ] x ⛔ a , b,c  ')?.dependsOn).toEqual(['a', 'b', 'c'])
     expect(quick(`- [ ] x [a::${' '.repeat(10_000)}y  ]`)?.fields).toEqual({ a: 'y' })
     expect(quick('- [ ] x [a:: [b] (c:: d [e:: f]')?.fields).toEqual({ a: '[b', e: 'f' })
+  })
+})
+
+describe('words written as a task that no field is read from', () => {
+  test('read back as the words', () => {
+    const said = 'Plan #tips [due:: 2026-11-01] (priority:: high) 📅 2026-11-01 ⏫ 🔁 every month'
+    const task = readTask(`- [ ] ${taskWords(said)}`)
+    expect(task?.tags).toEqual([])
+    expect(task?.due).toBeUndefined()
+    expect(task?.recurrence).toBeUndefined()
+    expect(task?.fields).toEqual({})
+    expect(task?.text.replace(/\u2060/g, '').replace(/\\(.)/g, '$1')).toBe(said)
   })
 })
