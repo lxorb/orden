@@ -51,6 +51,7 @@
   import Select from './Select.svelte'
   import { invoke, isDesktop } from './tauri'
   import { viewport } from './viewport.svelte'
+  import Hint from './Hint.svelte'
 
   /** Which providers have a key on this device, by id. Asked once per provider and
    *  again whenever one is typed: the store itself never holds a key, so "set" is a
@@ -234,7 +235,13 @@
         void keepBrowserInVault(!browserVault.on)
       }}
     >
-      <span class="name">{t('Keep this browser’s keys in the vault')}</span>
+      <span class="name"
+        ><span class="nib-named"
+          >{t('Keep this browser’s keys in the vault')}<Hint
+            text={t('Syncs this browser’s AI keys with your other devices through the vault.')}
+          /></span
+        ></span
+      >
       <span class="nib-switch" class:on={browserVault.on} aria-hidden="true"></span>
     </div>
   </div>
@@ -473,7 +480,13 @@
   <div class="card" transition:slide={{ duration: dur(160) }}>
     {#each FEATURES as feature (feature.id)}
       <div class="nib-setting setting">
-        <span class="name">{t(feature.label)}</span>
+        <span class="name"
+          ><span class="nib-named"
+            >{t(feature.label)}<Hint
+              text={t('Which of your AI accounts this feature asks.')}
+            /></span
+          ></span
+        >
         <div class="pick">
           <Select
             value={ai.uses[feature.id] ?? ''}
@@ -495,7 +508,15 @@
 {#if !__EVEN_PLUGIN__}
   <div class="card">
     <div class="nib-setting setting">
-      <span class="name">{t('Do with AI')}</span>
+      <span class="name"
+        ><span class="nib-named"
+          >{t('Do with AI')}<Hint
+            text={t(
+              'Whether a task done with AI asks before each change or makes them on its own.',
+            )}
+          /></span
+        ></span
+      >
       <div class="pick">
         <Select
           value={tasked}

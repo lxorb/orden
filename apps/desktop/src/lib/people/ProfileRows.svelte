@@ -21,6 +21,7 @@
   import type { Status } from './face'
   import { changeProfile, removeFace } from './mine'
   import { CLEARS, type Clears, clearsAt, stands } from './status'
+  import Hint from '../Hint.svelte'
 
   const user = $derived(account.user)
   const status = $derived(user && stands(user.status, Date.now()) ? (user.status ?? null) : null)
@@ -115,7 +116,11 @@
         }}
         size={32}
       />
-      <span class="name">{t('Picture')}</span>
+      <span class="name"
+        ><span class="nib-named"
+          >{t('Picture')}<Hint text={t('The picture the others see beside your name.')} /></span
+        ></span
+      >
       <span class="ends">
         <button class="nib-chip" onclick={() => void choose()}>{t('Change')}</button>
         {#if camera}
@@ -139,7 +144,13 @@
     </div>
 
     <label class="nib-setting setting">
-      <span class="name">{t('Pronouns')}</span>
+      <span class="name"
+        ><span class="nib-named"
+          >{t('Pronouns')}<Hint
+            text={t('Shown to the others beside your name, such as she/her.')}
+          /></span
+        ></span
+      >
       <input
         class="inline"
         class:empty={!user.pronouns}
@@ -152,7 +163,13 @@
     </label>
 
     <label class="nib-setting setting tall">
-      <span class="name">{t('Bio')}</span>
+      <span class="name"
+        ><span class="nib-named"
+          >{t('Bio')}<Hint
+            text={t('A few words about you that the others see on your profile.')}
+          /></span
+        ></span
+      >
       <textarea
         class="inline"
         class:empty={!user.bio}
@@ -164,7 +181,13 @@
     </label>
 
     <div class="nib-setting setting">
-      <span class="name">{t('Status')}</span>
+      <span class="name"
+        ><span class="nib-named"
+          >{t('Status')}<Hint
+            text={t('What you are up to, shown to the others beside your name until it clears.')}
+          /></span
+        ></span
+      >
       <!-- The two halves of one status, kept together: where the row has no room for
            both beside the name, they go under it as a pair. -->
       <span class="ends said">
@@ -188,7 +211,11 @@
     </div>
 
     <div class="nib-setting setting">
-      <span class="name">{t('Clear after')}</span>
+      <span class="name"
+        ><span class="nib-named"
+          >{t('Clear after')}<Hint text={t('When your status is taken away again.')} /></span
+        ></span
+      >
       <div class="pick">
         <Select
           value={clears}
@@ -215,12 +242,22 @@
         withStatus({ quiet: !(status?.quiet ?? false) })
       }}
     >
-      <span class="name">{t('Do not disturb')}</span>
+      <span class="name"
+        ><span class="nib-named"
+          >{t('Do not disturb')}<Hint
+            text={t('Silences chat notifications and shows the others you are busy.')}
+          /></span
+        ></span
+      >
       <span class="nib-switch" class:on={status?.quiet ?? false} aria-hidden="true"></span>
     </div>
 
     <div class="nib-setting setting">
-      <span class="name">{t('Accent')}</span>
+      <span class="name"
+        ><span class="nib-named"
+          >{t('Accent')}<Hint text={t('The colour the others see beside your name.')} /></span
+        ></span
+      >
       <Swatches
         options={accents}
         label={t('Accent')}
@@ -241,7 +278,13 @@
         void kept(() => changeProfile({ hidden: !(user.hidden ?? false) }))
       }}
     >
-      <span class="name">{t('Appear offline')}</span>
+      <span class="name"
+        ><span class="nib-named"
+          >{t('Appear offline')}<Hint
+            text={t('The others see you as offline even while you are here.')}
+          /></span
+        ></span
+      >
       <span class="nib-switch" class:on={user.hidden ?? false} aria-hidden="true"></span>
     </div>
   </div>

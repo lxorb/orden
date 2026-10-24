@@ -32,6 +32,7 @@
   import AccountSteps from './AccountSteps.svelte'
   import { type Choice, choices, shownFirst, viaAccount } from './choices'
   import LocalSteps from './LocalSteps.svelte'
+  import Hint from '../Hint.svelte'
 
   /** Told whether an agent's grant is open, which the page shows instead of its accounts. */
   const { ondetail }: { ondetail?: (open: boolean) => void } = $props()
@@ -236,7 +237,15 @@
               onclick={enroll}
               onkeydown={pressed}
             >
-              <span class="name">{t('Agents on this computer connect on their own')}</span>
+              <span class="name"
+                ><span class="nib-named"
+                  >{t('Agents on this computer connect on their own')}<Hint
+                    text={t(
+                      'Adds Orden to the AI agent programs on this computer, so they reach your notes with nothing to set up.',
+                    )}
+                  /></span
+                ></span
+              >
               <span class="nib-switch" class:on={enrolled} aria-hidden="true"></span>
             </div>
           </div>

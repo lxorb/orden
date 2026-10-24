@@ -4,7 +4,7 @@ import { describe, expect, test } from 'vitest'
 import { render } from 'svelte/server'
 import Hint from './Hint.svelte'
 
-/** The `i` after a label, and the sentence behind it.
+/** The `?` after a label, and the sentence behind it (#768).
  *
  *  Rendered rather than described: the glyph has to be there, the sentence has to
  *  be the glyph's own name so a screen reader reads it, and neither may be a
@@ -17,9 +17,10 @@ const body = render(Hint, { props: { text: SENTENCE } }).body
 describe('a hint', () => {
   test('draws the glyph', () => {
     expect(body).toContain('<svg')
-    // Lucide's `info`: a circle, the stem, and the dot over it.
+    // Lucide's `circle-question-mark`: a circle, the hook of the mark, and its dot.
+    // A question is what the reader has, so the mark is one (#768).
     expect(body).toContain('<circle')
-    expect(body).toContain('d="M12 16v-4"')
+    expect(body).toContain('d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"')
   })
 
   test('carries its sentence, as the name of the thing that shows it', () => {
@@ -36,16 +37,21 @@ describe('a hint', () => {
   })
 })
 
-/** The settings panel draws the glyph for a setting that has a sentence and for
- *  no other, which is what keeps a row without one exactly where it was. */
+/** The settings panel draws the glyph after every declared row's name, in one slot, and
+ *  after each row it writes out itself, each with a sentence of its own (#768). */
 describe('where the panel draws it', () => {
   const panel = readFileSync(fileURLToPath(new URL('./SettingsPanel.svelte', import.meta.url)), {
     encoding: 'utf8',
   })
 
-  test('only behind a hint, and only in the one slot every row shares', () => {
-    expect([...panel.matchAll(/<Hint\b/g)]).toHaveLength(1)
+  test('in the one slot every declared row shares, and with a sentence on every other', () => {
+    const drawn = [...panel.matchAll(/<Hint\b[^>]*\/>/g)].map((one) => one[0].replace(/\s+/g, ' '))
+    expect(drawn.filter((one) => one === '<Hint text={field.hint} />')).toHaveLength(1)
     expect(panel).toContain('{#if field.hint}<Hint text={field.hint} />{/if}')
+
+    const written = drawn.filter((one) => one !== '<Hint text={field.hint} />')
+    expect(written.length).toBeGreaterThan(5)
+    for (const one of written) expect(one).toMatch(/^<Hint text=\{t\('[^']+\.'\)\} \/>$/)
   })
 
   test('through the snippet every kind of row renders its name with', () => {
