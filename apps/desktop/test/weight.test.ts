@@ -843,7 +843,7 @@ function holds(tail: string): boolean {
  *  what the account holds, every file pushed and no dotfile (`holds` in
  *  sync.svelte.ts, `accountHolds` in workspace.svelte.ts). Measured 3,283,653.
  *
- *  Raised 2026-10-24, to 3,285,000, for #PR: a paper or a picture goes to this
+ *  Raised 2026-10-24, to 3,285,000, for #809: a paper or a picture goes to this
  *  device's trash, signed in or not, since the account's Recently deleted gives back
  *  notes alone (`accountHolds` in workspace.svelte.ts), and a paper that would not
  *  read is not recorded as sent (`pushFiles` in sync/pass.ts). Measured 3,284,087. */
