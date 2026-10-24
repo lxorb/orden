@@ -2528,4 +2528,13 @@ export const zhHans: Dictionary = {
     '会用此词典及其他所有已开启的词典检查词语。',
   'Words are checked in the languages your system or browser is set to.':
     '会用你的系统或浏览器所设置的语言检查词语。',
+  'Note font': '笔记字体',
+  'Interface font': '界面字体',
+  'Code font': '代码字体',
+  'The face notes are written in; any font installed here, by its name.':
+    '书写笔记所用的字体；可按名称使用此设备上已安装的任何字体。',
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    '菜单、列表和设置所用的字体；可按名称使用此设备上已安装的任何字体。',
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    '代码和终端所用的字体；可按名称使用此设备上已安装的任何等宽字体。',
 }

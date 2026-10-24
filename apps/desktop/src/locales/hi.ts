@@ -2605,4 +2605,13 @@ export const hi: Dictionary = {
     'शब्द इस शब्दकोश से और चालू हर दूसरे शब्दकोश से जाँचे जाते हैं।',
   'Words are checked in the languages your system or browser is set to.':
     'शब्द उन भाषाओं में जाँचे जाते हैं जो आपके सिस्टम या ब्राउज़र में सेट हैं।',
+  'Note font': 'नोट का फ़ॉन्ट',
+  'Interface font': 'इंटरफ़ेस का फ़ॉन्ट',
+  'Code font': 'कोड का फ़ॉन्ट',
+  'The face notes are written in; any font installed here, by its name.':
+    'वह फ़ॉन्ट जिसमें नोट लिखे जाते हैं; इस डिवाइस पर इंस्टॉल कोई भी फ़ॉन्ट, उसके नाम से।',
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    'मेनू, सूचियों और सेटिंग्स का फ़ॉन्ट; इस डिवाइस पर इंस्टॉल कोई भी फ़ॉन्ट, उसके नाम से।',
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    'कोड और टर्मिनल का फ़ॉन्ट; इस डिवाइस पर इंस्टॉल कोई भी मोनोस्पेस फ़ॉन्ट, उसके नाम से।',
 }

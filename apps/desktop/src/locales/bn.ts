@@ -2604,4 +2604,13 @@ export const bn: Dictionary = {
     'শব্দগুলো এই অভিধানের সঙ্গে এবং চালু থাকা অন্য সব অভিধানের সঙ্গে মেলানো হয়।',
   'Words are checked in the languages your system or browser is set to.':
     'আপনার সিস্টেম বা ব্রাউজারে যে ভাষাগুলো সেট করা আছে, সেগুলোতে শব্দ মেলানো হয়।',
+  'Note font': 'নোটের ফন্ট',
+  'Interface font': 'ইন্টারফেসের ফন্ট',
+  'Code font': 'কোডের ফন্ট',
+  'The face notes are written in; any font installed here, by its name.':
+    'যে ফন্টে নোট লেখা হয়; এই ডিভাইসে ইনস্টল করা যেকোনো ফন্ট, তার নাম দিয়ে।',
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    'মেনু, তালিকা ও সেটিংসের ফন্ট; এই ডিভাইসে ইনস্টল করা যেকোনো ফন্ট, তার নাম দিয়ে।',
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    'কোড ও টার্মিনালের ফন্ট; এই ডিভাইসে ইনস্টল করা যেকোনো মনোস্পেস ফন্ট, তার নাম দিয়ে।',
 }

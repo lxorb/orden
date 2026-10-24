@@ -2613,4 +2613,13 @@ export const fa: Dictionary = {
     'واژه‌ها با این واژه‌نامه و هر واژه‌نامهٔ روشن دیگری سنجیده می‌شوند.',
   'Words are checked in the languages your system or browser is set to.':
     'واژه‌ها به زبان‌هایی سنجیده می‌شوند که سامانه یا مرورگر شما روی آن‌ها تنظیم شده است.',
+  'Note font': 'قلم یادداشت‌ها',
+  'Interface font': 'قلم رابط کاربری',
+  'Code font': 'قلم کد',
+  'The face notes are written in; any font installed here, by its name.':
+    'قلمی که یادداشت‌ها با آن نوشته می‌شوند؛ هر قلم نصب‌شده در این دستگاه، با نامش.',
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    'قلم منوها، فهرست‌ها و تنظیم‌ها؛ هر قلم نصب‌شده در این دستگاه، با نامش.',
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    'قلم کد و ترمینال‌ها؛ هر قلم هم‌عرض نصب‌شده در این دستگاه، با نامش.',
 }

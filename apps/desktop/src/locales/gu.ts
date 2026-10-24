@@ -2594,4 +2594,13 @@ export const gu: Dictionary = {
     'શબ્દો આ શબ્દકોશ અને ચાલુ હોય તેવા બીજા દરેક શબ્દકોશ સામે તપાસાય છે.',
   'Words are checked in the languages your system or browser is set to.':
     'તમારી સિસ્ટમ કે બ્રાઉઝરમાં જે ભાષાઓ ગોઠવેલી છે તેમાં શબ્દો તપાસાય છે.',
+  'Note font': 'નોંધનો ફૉન્ટ',
+  'Interface font': 'ઇન્ટરફેસનો ફૉન્ટ',
+  'Code font': 'કોડનો ફૉન્ટ',
+  'The face notes are written in; any font installed here, by its name.':
+    'જે ફૉન્ટમાં નોંધો લખાય છે; આ ડિવાઇસમાં ઇન્સ્ટૉલ કરેલો કોઈ પણ ફૉન્ટ, તેના નામથી.',
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    'મેનુ, યાદીઓ અને ગોઠવણનો ફૉન્ટ; આ ડિવાઇસમાં ઇન્સ્ટૉલ કરેલો કોઈ પણ ફૉન્ટ, તેના નામથી.',
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    'કોડ અને ટર્મિનલનો ફૉન્ટ; આ ડિવાઇસમાં ઇન્સ્ટૉલ કરેલો કોઈ પણ મોનોસ્પેસ ફૉન્ટ, તેના નામથી.',
 }

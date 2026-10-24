@@ -2647,4 +2647,13 @@ export const sw: Dictionary = {
     'Maneno hukaguliwa kwa kamusi hii pamoja na kila kamusi nyingine iliyowashwa.',
   'Words are checked in the languages your system or browser is set to.':
     'Maneno hukaguliwa kwa lugha zilizowekwa kwenye mfumo au kivinjari chako.',
+  'Note font': 'Fonti ya madokezo',
+  'Interface font': 'Fonti ya kiolesura',
+  'Code font': 'Fonti ya kodi',
+  'The face notes are written in; any font installed here, by its name.':
+    'Fonti ambayo madokezo huandikwa kwayo; fonti yoyote iliyosakinishwa kwenye kifaa hiki, kwa jina lake.',
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    'Fonti ya menyu, orodha na mipangilio; fonti yoyote iliyosakinishwa kwenye kifaa hiki, kwa jina lake.',
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    'Fonti ya kodi na terminali; fonti yoyote yenye upana sawa iliyosakinishwa kwenye kifaa hiki, kwa jina lake.',
 }

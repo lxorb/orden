@@ -2530,4 +2530,13 @@ export const zhHant: Dictionary = {
     '會以這個字典及其他所有已開啟的字典檢查字詞。',
   'Words are checked in the languages your system or browser is set to.':
     '會以你的系統或瀏覽器所設定的語言檢查字詞。',
+  'Note font': '筆記字型',
+  'Interface font': '介面字型',
+  'Code font': '程式碼字型',
+  'The face notes are written in; any font installed here, by its name.':
+    '撰寫筆記所用的字型；可依名稱使用這部裝置上已安裝的任何字型。',
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    '選單、清單與設定所用的字型；可依名稱使用這部裝置上已安裝的任何字型。',
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    '程式碼與終端機所用的字型；可依名稱使用這部裝置上已安裝的任何等寬字型。',
 }

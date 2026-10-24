@@ -2673,4 +2673,13 @@ export const ptPT: Dictionary = {
     'As palavras são verificadas com este dicionário e com todos os outros que estiverem ligados.',
   'Words are checked in the languages your system or browser is set to.':
     'As palavras são verificadas nos idiomas definidos no seu sistema ou navegador.',
+  'Note font': 'Tipo de letra das notas',
+  'Interface font': 'Tipo de letra da interface',
+  'Code font': 'Tipo de letra do código',
+  'The face notes are written in; any font installed here, by its name.':
+    'O tipo de letra em que as notas são escritas; qualquer tipo de letra instalado neste dispositivo, pelo nome.',
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    'O tipo de letra dos menus, das listas e das definições; qualquer tipo de letra instalado neste dispositivo, pelo nome.',
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    'O tipo de letra do código e dos terminais; qualquer tipo de letra monoespaçado instalado neste dispositivo, pelo nome.',
 }

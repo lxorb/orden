@@ -2637,4 +2637,13 @@ export const kn: Dictionary = {
     'ಪದಗಳನ್ನು ಈ ನಿಘಂಟು ಮತ್ತು ಆನ್ ಆಗಿರುವ ಇತರ ಎಲ್ಲಾ ನಿಘಂಟುಗಳೊಂದಿಗೆ ಪರಿಶೀಲಿಸಲಾಗುತ್ತದೆ.',
   'Words are checked in the languages your system or browser is set to.':
     'ನಿಮ್ಮ ಸಿಸ್ಟಂ ಅಥವಾ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ಹೊಂದಿಸಿರುವ ಭಾಷೆಗಳಲ್ಲಿ ಪದಗಳನ್ನು ಪರಿಶೀಲಿಸಲಾಗುತ್ತದೆ.',
+  'Note font': 'ಟಿಪ್ಪಣಿ ಫಾಂಟ್',
+  'Interface font': 'ಇಂಟರ್‌ಫೇಸ್ ಫಾಂಟ್',
+  'Code font': 'ಕೋಡ್ ಫಾಂಟ್',
+  'The face notes are written in; any font installed here, by its name.':
+    'ಟಿಪ್ಪಣಿಗಳನ್ನು ಬರೆಯುವ ಫಾಂಟ್; ಈ ಸಾಧನದಲ್ಲಿ ಇನ್‌ಸ್ಟಾಲ್ ಮಾಡಲಾದ ಯಾವುದೇ ಫಾಂಟ್, ಅದರ ಹೆಸರಿನಿಂದ.',
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    'ಮೆನುಗಳು, ಪಟ್ಟಿಗಳು ಮತ್ತು ಸೆಟ್ಟಿಂಗ್‌ಗಳ ಫಾಂಟ್; ಈ ಸಾಧನದಲ್ಲಿ ಇನ್‌ಸ್ಟಾಲ್ ಮಾಡಲಾದ ಯಾವುದೇ ಫಾಂಟ್, ಅದರ ಹೆಸರಿನಿಂದ.',
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    'ಕೋಡ್ ಮತ್ತು ಟರ್ಮಿನಲ್‌ಗಳ ಫಾಂಟ್; ಈ ಸಾಧನದಲ್ಲಿ ಇನ್‌ಸ್ಟಾಲ್ ಮಾಡಲಾದ ಯಾವುದೇ ಮೊನೊಸ್ಪೇಸ್ ಫಾಂಟ್, ಅದರ ಹೆಸರಿನಿಂದ.',
 }

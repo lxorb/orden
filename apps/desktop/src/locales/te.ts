@@ -2621,4 +2621,13 @@ export const te: Dictionary = {
     'పదాలను ఈ నిఘంటువుతో పాటు ఆన్‌లో ఉన్న ప్రతి ఇతర నిఘంటువుతో తనిఖీ చేస్తారు.',
   'Words are checked in the languages your system or browser is set to.':
     'మీ సిస్టమ్ లేదా బ్రౌజర్‌లో సెట్ చేసిన భాషలలో పదాలను తనిఖీ చేస్తారు.',
+  'Note font': 'నోట్ ఫాంట్',
+  'Interface font': 'ఇంటర్‌ఫేస్ ఫాంట్',
+  'Code font': 'కోడ్ ఫాంట్',
+  'The face notes are written in; any font installed here, by its name.':
+    'నోట్‌లు రాసే ఫాంట్; ఈ పరికరంలో ఇన్‌స్టాల్ చేసిన ఏ ఫాంట్ అయినా, దాని పేరుతో.',
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    'మెనూలు, జాబితాలు, సెట్టింగ్‌ల ఫాంట్; ఈ పరికరంలో ఇన్‌స్టాల్ చేసిన ఏ ఫాంట్ అయినా, దాని పేరుతో.',
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    'కోడ్, టెర్మినల్‌ల ఫాంట్; ఈ పరికరంలో ఇన్‌స్టాల్ చేసిన ఏ మోనోస్పేస్ ఫాంట్ అయినా, దాని పేరుతో.',
 }

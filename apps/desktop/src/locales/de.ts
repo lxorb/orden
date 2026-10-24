@@ -2664,4 +2664,13 @@ export const de: Dictionary = {
     'Wörter werden mit diesem Wörterbuch und mit jedem anderen eingeschalteten geprüft.',
   'Words are checked in the languages your system or browser is set to.':
     'Wörter werden in den Sprachen geprüft, auf die dein System oder Browser eingestellt ist.',
+  'Note font': 'Notizschrift',
+  'Interface font': 'Oberflächenschrift',
+  'Code font': 'Codeschrift',
+  'The face notes are written in; any font installed here, by its name.':
+    'Die Schrift, in der Notizen geschrieben werden; jede auf diesem Gerät installierte Schriftart, anhand ihres Namens.',
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    'Die Schrift von Menüs, Listen und Einstellungen; jede auf diesem Gerät installierte Schriftart, anhand ihres Namens.',
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    'Die Schrift von Code und Terminals; jede auf diesem Gerät installierte Festbreitenschrift, anhand ihres Namens.',
 }

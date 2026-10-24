@@ -2592,4 +2592,13 @@ export const my: Dictionary = {
     'စကားလုံးများကို ဤအဘိဓာန်နှင့် ဖွင့်ထားသော အခြားအဘိဓာန်တိုင်းဖြင့် စစ်ဆေးသည်။',
   'Words are checked in the languages your system or browser is set to.':
     'သင့်စနစ် သို့မဟုတ် ဘရောက်ဇာတွင် သတ်မှတ်ထားသော ဘာသာစကားများဖြင့် စကားလုံးများကို စစ်ဆေးသည်။',
+  'Note font': 'မှတ်စု ဖောင့်',
+  'Interface font': 'အင်တာဖေ့စ် ဖောင့်',
+  'Code font': 'ကုဒ် ဖောင့်',
+  'The face notes are written in; any font installed here, by its name.':
+    'မှတ်စုများ ရေးသားသည့် ဖောင့်၊ ဤစက်တွင် ထည့်သွင်းထားသော မည်သည့်ဖောင့်ကိုမဆို ၎င်း၏အမည်ဖြင့် သုံးနိုင်သည်။',
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    'မီနူး၊ စာရင်းနှင့် ဆက်တင်များ၏ ဖောင့်၊ ဤစက်တွင် ထည့်သွင်းထားသော မည်သည့်ဖောင့်ကိုမဆို ၎င်း၏အမည်ဖြင့် သုံးနိုင်သည်။',
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    'ကုဒ်နှင့် တာမင်နယ်များ၏ ဖောင့်၊ ဤစက်တွင် ထည့်သွင်းထားသော မည်သည့် monospace ဖောင့်ကိုမဆို ၎င်း၏အမည်ဖြင့် သုံးနိုင်သည်။',
 }

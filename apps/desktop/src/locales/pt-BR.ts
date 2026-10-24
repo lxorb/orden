@@ -2659,4 +2659,13 @@ export const ptBR: Dictionary = {
     'As palavras são verificadas com este dicionário e com todos os outros que estiverem ativados.',
   'Words are checked in the languages your system or browser is set to.':
     'As palavras são verificadas nos idiomas definidos no seu sistema ou navegador.',
+  'Note font': 'Fonte das notas',
+  'Interface font': 'Fonte da interface',
+  'Code font': 'Fonte do código',
+  'The face notes are written in; any font installed here, by its name.':
+    'A fonte em que as notas são escritas; qualquer fonte instalada neste dispositivo, pelo nome.',
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    'A fonte dos menus, das listas e das configurações; qualquer fonte instalada neste dispositivo, pelo nome.',
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    'A fonte do código e dos terminais; qualquer fonte monoespaçada instalada neste dispositivo, pelo nome.',
 }

@@ -2524,4 +2524,13 @@ export const yue: Dictionary = {
     '會用呢本詞典同其他開咗嘅詞典一齊檢查啲字。',
   'Words are checked in the languages your system or browser is set to.':
     '會用你系統或者瀏覽器設定咗嘅語言檢查啲字。',
+  'Note font': '筆記字型',
+  'Interface font': '介面字型',
+  'Code font': '代碼字型',
+  'The face notes are written in; any font installed here, by its name.':
+    '寫筆記用嘅字型；用名揀呢部裝置上裝咗嘅任何字型。',
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    '選單、列表同設定用嘅字型；用名揀呢部裝置上裝咗嘅任何字型。',
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    '代碼同終端機用嘅字型；用名揀呢部裝置上裝咗嘅任何等寬字型。',
 }
