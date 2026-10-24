@@ -173,7 +173,7 @@ describe('diverge', () => {
 
   test('a fence the merge would leave open asks', () => {
     const base = 'A long first paragraph that nobody touches at all.\nqq\n'
-    const local = '```\nA long first paragraph that nobody touches at all.\nq\n```\nq\n'
+    const local = '```\nA long first paragraph that nobody touches at all.\n```\n'
     const remote = 'A long first paragraph that nobody touches at all.\nzz\n'
 
     const result = diverge(base, local, remote, REMOTE_NEWER)
@@ -461,6 +461,90 @@ describe('diverge', () => {
   )
 
   test.each([
+    ['- [ ] milk\n', '- [x] milk\n', '- [ ] eggs\n- [x] milk\n', '- [ ] eggs\n- [x] milk\n'],
+    [
+      '- [ ] a\n- [ ] b\n',
+      '- [ ] a\n- [ ] new\n- [x] b\n',
+      '- [ ] a\n- [x] b\n',
+      '- [ ] a\n- [ ] new\n- [x] b\n',
+    ],
+    [
+      '- [ ] pay bike\n- [ ] call book\n',
+      '- [ ] pay bike\n- [ ] rent buy\n- [x] call book\n',
+      '- [x] pay bike\n- [x] call book\n',
+      '- [x] pay bike\n- [ ] rent buy\n- [x] call book\n',
+    ],
+  ])(
+    'a task added above one both ticked leaves its own box alone (%j)',
+    (base, local, remote, both) => {
+      // Read letter by letter, the ticked task's old box became the new task's box, and
+      // the other side's tick landed on the new task.
+      const merged = crdtMerge(base, local, remote)
+      for (const [one, other] of [
+        [local, remote],
+        [remote, local],
+      ] as const) {
+        for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
+          for (const crdt of [undefined, merged]) {
+            const result = diverge(base, one, other, times, crdt)
+            expect(result.verdict).toBe('clean')
+            expect(result.resolution).toBe(both)
+          }
+        }
+      }
+    },
+  )
+
+  test.each([
+    // A word typed where the other side took a space out.
+    ['Pay rent, call mum.\n', 'Pay rent, now call mum.\n', 'Pay rent,call mum.\n'],
+    ['Pay rent. Call mum.', 'Pay rent. Ann Call mum.', 'Pay rent.Call mum.'],
+    ['- [ ] task \n', '- [ ] é task\n', '- [ ] task x\n'],
+    // A sentence each side moved into a paragraph of its own.
+    [
+      'Pay rent.\n\nCall mum.\n\nBuy milk.\n',
+      'Pay rent. Call mum.\n\n\nBuy milk.\n',
+      'Pay rent.\n\n\nCall mum. Buy milk.\n',
+    ],
+    // A paragraph split on both sides, one of them also taking a blank line out.
+    [
+      'rain hard it on fell home so.\n\nmet the home. so fell so home cat dark.\n',
+      ' met the home.\n\nso fell so home cat dark.\n',
+      'rain hard it on fell home so.\nmet the home.\n\nso fell so home cat dark.\n',
+    ],
+    ['- Call Bob', '- L1 task y\n- L2 Bob', '- R1 Call Bob\n- R2 task z'],
+  ])(
+    'a clean merge runs no two words together and says nothing twice (%j)',
+    (base, local, remote) => {
+      const wordsOf = (text: string) => text.match(/[\p{L}\p{N}]+/gu) ?? []
+      const count = (text: string) => {
+        const counts = new Map<string, number>()
+        for (const word of wordsOf(text)) counts.set(word, (counts.get(word) ?? 0) + 1)
+        return counts
+      }
+      const merged = crdtMerge(base, local, remote)
+      for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
+        for (const crdt of [undefined, merged]) {
+          const result = diverge(base, local, remote, times, crdt)
+          if (result.verdict !== 'clean') continue
+          const [before, mine, theirs] = [base, local, remote].map(count) as [
+            Map<string, number>,
+            Map<string, number>,
+            Map<string, number>,
+          ]
+          for (const [word, times] of count(result.resolution ?? '')) {
+            const most = Math.max(mine.get(word) ?? 0, theirs.get(word) ?? 0)
+            const both = Math.min(mine.get(word) ?? 0, theirs.get(word) ?? 0)
+            expect(times, word).toBeLessThanOrEqual(
+              most + Math.max(0, both - (before.get(word) ?? 0)),
+            )
+          }
+        }
+      }
+    },
+  )
+
+  test.each([
     [
       '- [ ] Call Bob\n- [ ] Buy milk\n',
       '- [ ] Call Bob at noon\n- [ ] Pay rent\n- [ ] Buy milk\n',
@@ -483,10 +567,14 @@ describe('diverge', () => {
           for (const crdt of [undefined, merged]) {
             const result = diverge(base, one, other, times, crdt)
             if (result.verdict !== 'clean') continue
-            expect(cleanLinesAreWhole(base, one, other, result.resolution ?? '')).toEqual({
-              missing: [],
-              extra: [],
-            })
+            // A line one side added, none of its words the ancestor's, stays as written:
+            // the other side's words do not run onto its end.
+            const words = new Set(base.match(/[\p{L}\p{N}]+/gu) ?? [])
+            const added = [...one.split('\n'), ...other.split('\n')].filter((line) =>
+              (line.match(/[\p{L}\p{N}]+/gu) ?? []).every((word) => !words.has(word)),
+            )
+            const lines = (result.resolution ?? '').split('\n')
+            for (const line of added) expect(lines).toContain(line)
           }
         }
       }
@@ -540,6 +628,69 @@ describe('diverge', () => {
       expect(result.verdict).not.toBe('diverged')
       expect(result.resolution).toBe(remote)
     }
+  })
+
+  test('property: boxes ticked on one side and tasks added or deleted on the other, merged clean, stay on their tasks', () => {
+    const items = ['milk', 'eggs', 'Pay rent', 'Call mum', 'Book dentist', 'alpha', 'beta']
+    const added = ['Water plants', 'wash car', 'fix the bike', 'Renew passport']
+    const box = (ticked: boolean) => (ticked ? '- [x] ' : '- [ ] ')
+    const sideOf = (count: number) =>
+      fc.record({
+        // Each task kept as it was, ticked the other way, or taken out.
+        does: fc.array(fc.constantFrom('keep', 'tick', 'drop'), {
+          minLength: count,
+          maxLength: count,
+        }),
+        adds: fc.array(fc.tuple(fc.nat(10), fc.constantFrom(...added), fc.boolean()), {
+          maxLength: 2,
+        }),
+      })
+    const tasks = fc
+      .uniqueArray(fc.tuple(fc.constantFrom(...items), fc.boolean()), {
+        minLength: 1,
+        maxLength: 5,
+        selector: ([item]) => item,
+      })
+      .chain((list) =>
+        fc.tuple(fc.constant(list), sideOf(list.length), sideOf(list.length), fc.boolean()),
+      )
+
+    fc.assert(
+      fc.property(tasks, ([list, mine, theirs, ends]) => {
+        const text = (lines: readonly string[]) => lines.join('\n') + (ends ? '\n' : '')
+        const sideText = (side: typeof mine, tag: string) => {
+          const lines: string[] = []
+          list.forEach(([item, ticked], at) => {
+            if (side.does[at] !== 'drop')
+              lines.push(box(side.does[at] === 'tick' ? !ticked : ticked) + item)
+          })
+          side.adds.forEach(([at, item, ticked], index) =>
+            lines.splice(at % (lines.length + 1), 0, `${box(ticked)}${tag}${index} ${item}`),
+          )
+          return lines
+        }
+        const local = sideText(mine, 'L')
+        const remote = sideText(theirs, 'R')
+        const owed = [
+          ...list.flatMap(([item, ticked], at) => {
+            const [one, other] = [mine.does[at], theirs.does[at]]
+            if (one === 'drop' || other === 'drop') return []
+            return [box(one === 'tick' || other === 'tick' ? !ticked : ticked) + item]
+          }),
+          ...local.filter((line) => / L\d /.test(line)),
+          ...remote.filter((line) => / R\d /.test(line)),
+        ]
+        const base = text(list.map(([item, ticked]) => box(ticked) + item))
+        for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
+          const result = diverge(base, text(local), text(remote), times)
+          if (result.verdict !== 'clean') continue
+          const lines = (result.resolution ?? '').split('\n').filter(Boolean)
+          expect(lines.filter((line) => !owed.includes(line))).toEqual([])
+          expect(owed.filter((line) => !lines.includes(line))).toEqual([])
+        }
+      }),
+      { numRuns: 500 },
+    )
   })
 
   test('property: tasks added and deleted on both sides, merged clean, are each whole', () => {

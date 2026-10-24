@@ -207,6 +207,25 @@ function rewrittenLines(base: string, side: readonly Edit[]): boolean[] {
   return out
 }
 
+/** Whether an insertion at an edge of the other side's replacement, written beside
+ *  it, runs a word of its own into a word the other side's text ends or starts with
+ *  there: one side took out the space between two words and the other typed a word
+ *  against it (`task x` and `task`, merged `taskx`). */
+function glued(base: string, one: Edit, other: Edit): boolean {
+  const [insertion, span] = isInsertion(one) ? [one, other] : [other, one]
+  if (!isInsertion(insertion) || isInsertion(span)) return false
+  const word = (char: string) => /^[\p{L}\p{N}]/u.test(char)
+  if (insertion.from === span.to) {
+    const left = span.insert ? span.insert.slice(-1) : base.charAt(span.from - 1)
+    return word(left) && word(insertion.insert.charAt(0))
+  }
+  if (insertion.from === span.from) {
+    const right = span.insert ? span.insert.charAt(0) : base.charAt(span.to)
+    return word(insertion.insert.slice(-1)) && word(right)
+  }
+  return false
+}
+
 /** Whether two sides' edits are written into one line in a way that keeping both
  *  would make a line neither side wrote: whole lines taken out or put in where the
  *  other side wrote inside one of those lines; a line one side rewrote, or the two
@@ -236,6 +255,7 @@ function sameLine(
     return a.from < b.to && b.from < a.to
   }
   if (oneWhole || otherWhole) return reached()
+  if (glued(base, one, other)) return true
   if (lines.rewritten[0] || lines.rewritten[1]) return reached()
   // Between them the two sides took every word out of the line.
   if (reached() && lines.bare({ from: Math.min(a.from, b.from), to: Math.max(a.to, b.to) })) {
@@ -255,7 +275,12 @@ function sameLine(
   // An edit that breaks a line or joins it to the next, touching the other side's:
   // whichever goes first, the other's words end up on a line they were not written on.
   if (breaks(base, one) || breaks(base, other)) {
-    return one.from <= other.to && other.from <= one.to
+    // Touching, or with nothing but spaces and marks between them: no word of the
+    // ancestor stands between the two to say whose line the other's words are on.
+    if (one.from <= other.to && other.from <= one.to) return true
+    const between =
+      one.to <= other.from ? base.slice(one.to, other.from) : base.slice(other.to, one.from)
+    return reached() && !WORDY.test(between)
   }
   return false
 }
