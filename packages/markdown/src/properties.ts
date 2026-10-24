@@ -19,7 +19,7 @@
 
 import { frontMatterBlock, isPropertyName } from './front-matter'
 import { escape } from './html'
-import { flowItems, listItem, uncommented, unquoted } from './yaml'
+import { isQuoted, uncommented, unquoted, writtenFlowItems, writtenListItem } from './yaml'
 
 /** What a surface does with a note's front matter. Three answers, and every
  *  surface that shows a whole note reads the same one, so a reader who asked for
@@ -55,6 +55,14 @@ export interface Property {
   value: string
   /** A list's items. Empty for everything else. */
   items: string[]
+  /** Set where the value was written in quotes. YAML reads `zip: '007'` as the
+   *  characters and `zip: 007` as the number seven, and with the quotes off `value`
+   *  no longer says which, so a reader that turns values into numbers and booleans
+   *  asks this first. */
+  quoted?: true
+  /** The same for each of a list's items, or each pair's value in a map, in the
+   *  order of `items`. Set only where at least one of them was quoted. */
+  quotedItems?: boolean[]
   /** Where the key's own line sits in the note, so a click can put the caret on
    *  it rather than somewhere near it. */
   from: number
@@ -94,8 +102,12 @@ const DATE = /^\d{4}-\d{2}-\d{2}(?:[T ]\d{2}:\d{2}(?::\d{2})?)?$/
  *  thousand lines between two fences is left as the source it is. */
 const MOST_KEYS = 64
 
-/** What a value on the line is. */
-function kindOf(value: string): PropertyKind {
+/** What a value on the line is. A quoted value is a string to YAML, so it is never
+ *  a checkbox or a number however it reads: `zip: '007'` drawn as a number field
+ *  would write back `7`. A date stays a date, because YAML reads a written date as
+ *  a string either way and the quotes change nothing about what it means. */
+function kindOf(value: string, quoted: boolean): PropertyKind {
+  if (quoted) return DATE.test(value) ? 'date' : 'text'
   if (YES_NO.test(value)) return 'checkbox'
   if (NUMBER.test(value)) return 'number'
   if (DATE.test(value)) return 'date'
@@ -154,16 +166,33 @@ export function readProperties(source: string): Property[] | null {
     const written = (found[2] ?? '').trim()
     // Nor is one after a value, which a row would show as part of it.
     if (uncommented(written) !== written) return null
-    const listed = flowItems(written)
+    const listed = writtenFlowItems(written)
 
     if (listed !== null) {
-      out.push({ key, kind: 'list', value: '', items: listed, from: line.from, to: line.to })
+      out.push({
+        key,
+        kind: 'list',
+        value: '',
+        items: listed.map(unquoted),
+        ...quotes(listed),
+        from: line.from,
+        to: line.to,
+      })
       continue
     }
 
     if (written) {
       const value = unquoted(written)
-      out.push({ key, kind: kindOf(value), value, items: [], from: line.from, to: line.to })
+      const quoted = isQuoted(written)
+      out.push({
+        key,
+        kind: kindOf(value, quoted),
+        value,
+        items: [],
+        ...(quoted ? { quoted } : {}),
+        from: line.from,
+        to: line.to,
+      })
       continue
     }
 
@@ -173,6 +202,8 @@ export function readProperties(source: string): Property[] | null {
     // get rows. Anything else indented is a shape nobody here can name, and the
     // block goes back to being source.
     const items: string[] = []
+    // Each item's value as written, quotes on, so the row can say which were quoted.
+    const writtenItems: string[] = []
     let mapped = false
     let last = line.to
 
@@ -181,7 +212,7 @@ export function readProperties(source: string): Property[] | null {
       if (!next) break
       if (next.text.trim() === '') break
 
-      const item = listItem(next.text)
+      const item = writtenListItem(next.text)
       // What belongs to the key above is indented under it - except a list,
       // which YAML lets sit at the key's own margin. Read by the same helper
       // `frontMatterList` uses, so the rows and the values agree about that.
@@ -195,10 +226,13 @@ export function readProperties(source: string): Property[] | null {
       if (item !== null && mapped) return null
       if (pair && items.length && !mapped) return null
 
-      if (item !== null) items.push(item)
-      else {
+      if (item !== null) {
+        items.push(unquoted(item))
+        writtenItems.push(item)
+      } else {
         mapped = true
         items.push(`${pair?.[1] ?? ''}: ${unquoted(pair?.[2] ?? '')}`.trim())
+        writtenItems.push(pair?.[2] ?? '')
       }
 
       last = next.to
@@ -210,12 +244,19 @@ export function readProperties(source: string): Property[] | null {
       kind: mapped ? 'map' : items.length ? 'list' : 'text',
       value: '',
       items,
+      ...quotes(writtenItems),
       from: line.from,
       to: last,
     })
   }
 
   return out
+}
+
+/** `quotedItems` for items as written, or nothing where none of them is quoted. */
+function quotes(written: readonly string[]): { quotedItems?: boolean[] } {
+  const quoted = written.map(isQuoted)
+  return quoted.includes(true) ? { quotedItems: quoted } : {}
 }
 
 /** The rows as markup, for the editor's block and for the reading view, so the
