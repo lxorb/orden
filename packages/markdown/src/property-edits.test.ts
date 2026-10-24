@@ -299,6 +299,16 @@ describe('a list', () => {
     }
   })
 
+  test('a block list written into a CRLF note ends its lines the way the note does', () => {
+    const note = '---\r\nids:\r\n  - a\r\n  - e # note\r\ntitle: t\r\n---\r\n'
+    const ids = readProperties(note)?.find((one) => one.key === 'ids')
+    expect(ids).toBeDefined()
+    // Asserted on the line above.
+    expect(applied(note, writeList(note, 'ids', withItem(ids!, 'z') ?? []))).toBe(
+      '---\r\nids:\r\n  - a\r\n  - e # note\r\n  - z\r\ntitle: t\r\n---\r\n',
+    )
+  })
+
   test('the last chip off leaves the key with an empty list rather than no key', () => {
     const written = applied(NOTE, writeList(NOTE, 'tags', []))
 
