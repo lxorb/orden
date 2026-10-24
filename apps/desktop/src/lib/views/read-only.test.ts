@@ -564,4 +564,3 @@ describe('copy to a base, in a space shared to be read', () => {
     expect(written).toEqual([])
   })
 })
-
