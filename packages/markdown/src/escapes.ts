@@ -362,21 +362,54 @@ function columnsOf(indent: string): number {
  *  lets one escape. */
 const AN_ESCAPE = /\\([!-/:-@[-`{-~])/g
 
-/** A code span, as CommonMark closes one: a run of backticks and the next run of
- *  the same length. What is inside is shown as written, backslashes and all. */
-const A_CODE = /(`+)(?:[^`]|[^`][\s\S]*?[^`])\1(?!`)/g
-
-/** The text cut into what is code and what is not, in order. */
+/** The text cut into what is code and what is not, in order, the way CommonMark
+ *  cuts it: a run of backticks opens a code span that the next run of the same
+ *  length closes, and one with no such run after it is backticks. A backtick with an
+ *  escape in front of it - an odd run of backslashes - is the character and opens
+ *  nothing, outside code; inside code a backslash is a backslash and escapes
+ *  nothing, so `` `C:\\` `` closes on its second backtick. */
 function codeAndWords(text: string): { code: boolean; text: string }[] {
   const out: { code: boolean; text: string }[] = []
+  let words = ''
   let at = 0
-  for (const found of text.matchAll(A_CODE)) {
-    if (found.index > at) out.push({ code: false, text: text.slice(at, found.index) })
-    out.push({ code: true, text: found[0] })
-    at = found.index + found[0].length
+  while (at < text.length) {
+    const char = text.charAt(at)
+    if (char === '\\' && PUNCTUATION.test(text.charAt(at + 1))) {
+      words += text.slice(at, at + 2)
+      at += 2
+      continue
+    }
+    if (char !== '`') {
+      words += char
+      at += 1
+      continue
+    }
+
+    const run = /^`+/.exec(text.slice(at))?.[0] ?? '`'
+    const close = closingRun(text, at + run.length, run.length)
+    if (close === -1) {
+      words += run
+      at += run.length
+      continue
+    }
+    if (words) out.push({ code: false, text: words })
+    words = ''
+    out.push({ code: true, text: text.slice(at, close + run.length) })
+    at = close + run.length
   }
-  if (at < text.length) out.push({ code: false, text: text.slice(at) })
+  if (words) out.push({ code: false, text: words })
   return out
+}
+
+/** Where the run of exactly `length` backticks closing a code span starts, from
+ *  `from` on, or -1. */
+function closingRun(text: string, from: number, length: number): number {
+  for (let at = text.indexOf('`', from); at !== -1;) {
+    const run = /^`+/.exec(text.slice(at))?.[0].length ?? 1
+    if (run === length) return at
+    at = text.indexOf('`', at + run)
+  }
+  return -1
 }
 
 /** Words as a field or a notification shows them: every escape taken off, so a
@@ -477,14 +510,30 @@ export function editedWords(line: string, edited: string): string {
     tail++
 
   const typed = typedChars(edited)
-  const out: string[] = []
-  for (let at = 0; at < edited.length; at++) {
-    if (at < head) out.push(was[at]?.written ?? '')
-    else if (at >= edited.length - tail)
-      out.push(was[shown.length - (edited.length - at)]?.written ?? '')
-    else out.push(typed[at] ?? '')
+  const written = (keepHead: number, keepTail: number) => {
+    const out: string[] = []
+    for (let at = 0; at < edited.length; at++) {
+      if (at < keepHead) out.push(was[at]?.written ?? '')
+      else if (at >= edited.length - keepTail)
+        out.push(was[shown.length - (edited.length - at)]?.written ?? '')
+      else out.push(typed[at] ?? '')
+    }
+    return out.join('')
   }
-  return out.join('')
+
+  // A kept stretch means what it meant only where the edit did not change what it
+  // stands in: taking out the backtick that opened a code span leaves the words that
+  // were code as words, where a backslash in them is an escape. So each kept side is
+  // asked whether it still reads back as the edited words, and written anew where not.
+  for (const [keepHead, keepTail] of [
+    [head, tail],
+    [head, 0],
+    [0, tail],
+  ] as const) {
+    const out = written(keepHead, keepTail)
+    if (shownWords(out) === edited) return out
+  }
+  return typedWords(edited)
 }
 
 /** Where an escaped character is held while a reader looks for markup, so `\*` is

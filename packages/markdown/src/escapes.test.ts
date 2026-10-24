@@ -1,5 +1,14 @@
 import { describe, expect, test } from 'vitest'
-import { editedWords, escapeText, plainWords, shownWords, typedWords, unescapedAt } from './escapes'
+import {
+  editedWords,
+  escapeText,
+  heldEscapes,
+  plainWords,
+  released,
+  shownWords,
+  typedWords,
+  unescapedAt,
+} from './escapes'
 import { renderMarkdown } from './index'
 import { readTask } from './task-line'
 
@@ -336,4 +345,39 @@ describe('where the escapes taken off were', () => {
     expect(unescapedAt(written).map((at) => shown[at])).toEqual(['#', '@'])
     expect(unescapedAt('plain words')).toEqual([])
   })
+})
+
+/** A backtick with a backslash in front of it is the character, as the renderer
+ *  reads it, and opens no code span for any reader here either. */
+describe('an escaped backtick', () => {
+  test('opens no code', () => {
+    expect(shownWords('1 \\` 2 \\` 3')).toBe('1 ` 2 ` 3')
+    expect(released(heldEscapes('1 \\` 2 \\` 3'))).toBe('1 ` 2 ` 3')
+    expect(shownWords('a \\\\`b` c')).toBe('a \\`b` c')
+  })
+
+  test('and an edit beside one keeps the line as it was', () => {
+    const line = 'w b=`^\\`< z'
+    const edited = 'w b=\\`< z'
+    expect(shownWords(editedWords(line, edited))).toBe(edited)
+  })
+})
+
+/** Lines with backticks, backslashes and markers, each shown, edited at one place and
+ *  written back: the line read again says the edited words, whatever the edit did to
+ *  the code spans and escapes around it. A seeded run, so a failure is the same again. */
+test('an edit anywhere in a line with backticks reads back as the edit', () => {
+  const ALPHABET = ['a', ' ', '\\', '`', '$', '~', '^', '=', '%', '<', '#']
+  let seed = 11
+  const next = () => (seed = (seed * 1103515245 + 12345) % 2147483648)
+  const pick = (length: number) =>
+    Array.from({ length }, () => ALPHABET[next() % ALPHABET.length]).join('')
+  for (let run = 0; run < 3000; run++) {
+    const line = pick(3 + (next() % 10))
+    const shown = shownWords(line)
+    const from = next() % (shown.length + 1)
+    const to = Math.min(shown.length, from + (next() % 3))
+    const edited = shown.slice(0, from) + pick(next() % 3) + shown.slice(to)
+    expect([line, edited, shownWords(editedWords(line, edited))]).toEqual([line, edited, edited])
+  }
 })
