@@ -528,6 +528,28 @@ mod tests {
         assert!(restore_target(&base, &entry("1-0", "../../Idea.md", "Idea.md")).is_err());
     }
 
+    /// What went into the trash comes back out. A name the trash took is one this disk
+    /// held, however little Windows would like it - a Finder `/` is stored as `:`, and a
+    /// note may arrive by sync or from another program as `aux.md` - and refusing to
+    /// put it back left it in the trash until it was purged.
+    #[test]
+    fn a_restore_takes_back_any_name_the_trash_took() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let base = dir.path();
+
+        let mut names = vec!["aux.md", "con.md", " Lead.md"];
+        if cfg!(unix) {
+            names.extend(["Q3:Q4 plan.md", r"back\slash.md", "Trail.", "Trail "]);
+        }
+        for name in names {
+            assert_eq!(
+                restore_target(base, &entry("1-0", name, name)),
+                Ok(base.join(name)),
+                "{name}"
+            );
+        }
+    }
+
     #[test]
     fn a_restore_numbers_a_name_whose_place_is_taken() {
         let dir = tempfile::tempdir().expect("a temp folder");

@@ -1996,6 +1996,27 @@ mod tests {
         );
     }
 
+    /// Highlights a PDF deleted outside Orden left behind are not the highlights of a
+    /// PDF renamed or copied to its name: the one arriving shows its own, or none.
+    #[test]
+    fn a_pdf_arriving_never_shows_highlights_left_behind() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let here = dir.path();
+        let plain = here.join("A.pdf");
+        std::fs::write(&plain, b"%PDF a").expect("a PDF with no highlights");
+        let gone = here.join("B.pdf");
+        std::fs::write(highlights_of(&gone), "[\"old\"]").expect("leftovers");
+        let copy = here.join("C.pdf");
+        std::fs::write(highlights_of(&copy), "[\"old\"]").expect("leftovers");
+
+        copy_held(&plain, &copy);
+        assert!(!highlights_of(&copy).exists());
+
+        std::fs::rename(&plain, &gone).expect("the PDF's own move");
+        move_held(&plain, &gone);
+        assert!(!highlights_of(&gone).exists());
+    }
+
     #[test]
     fn a_note_has_no_sidecar_to_move() {
         let dir = tempfile::tempdir().expect("a temp folder");
