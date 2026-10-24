@@ -3,11 +3,12 @@
 A reader on a NixOS laptop: *"There is scrollbar even though there is nothing to scroll
 through"*, over the palette as Ctrl+O opens it. Its list is capped at 46vh, and a window
 whose cap fell a few pixels short of the list - its own padding, a pixel of a row - wore
-the platform's bar the whole length of the list, over nothing left to scroll.
+the platform's bar the whole length of the list, over nothing left to scroll. The list is
+cut between two rows now, so what is out of sight is a row or nothing.
 
-The window is sized here so that the list runs past its cap by its padding and a pixel,
-then by more than a row: the first has no bar on a hover, the second has one, and the
-platform's is never there at all.
+The window is stepped through every height at which the list is cut, two pixels at a
+time: what is out of sight is never a sliver, the bar is there over a row or more and
+not over nothing, and the platform's is never there at all.
 
 Run it from the repository root:
 
@@ -58,14 +59,15 @@ def drive(browser: Browser) -> None:
     page.keyboard.press("Escape")
     say(f"the list as Ctrl+O opens it: {tall}px, {full}")
 
-    for height in range(1120, 1150):
+    for height in range(560, 800, 2):
         state = opened(page, "Control+o", height)
         page.keyboard.press("Escape")
         page.wait_for_timeout(150)
         if not state["own"]:
             wrong(f"{height}px: the list wears the platform's bar")
-        if 0 < state["over"] <= 5 and state["needed"]:
-            wrong(f"{height}px: a bar over {state['over']}px of padding, nothing to scroll to")
+        # Cut between two rows, so what is out of sight is a row or nothing at all.
+        if 0 < state["over"] < 20:
+            wrong(f"{height}px: the list runs {state['over']}px past its room, a sliver of a row")
             DRIVE.shot(page, f"sliver-{height}")
         if state["over"] > 28 and not state["needed"]:
             wrong(f"{height}px: no bar over {state['over']}px to scroll")
