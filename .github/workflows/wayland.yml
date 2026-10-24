@@ -156,6 +156,17 @@ jobs:
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+      # #427: a web tab's page drawn in the app's scheme, light or dark, as the app's
+      # scheme is switched, not in the system's.
+      - name: A web tab's page in the app's scheme, under sway
+        if: always()
+        env:
+          OUT: wayland-out/scheme
+          SCHEME: '1'
+        run: |
+          pkill -f /usr/share/Orden/nib || true
+          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       # #661: a press in a popup over a web tab's page chooses what it is on, and the
       # popup is not closed as though the press had been outside it; and the same on a
       # desktop scaled for X11 applications.
