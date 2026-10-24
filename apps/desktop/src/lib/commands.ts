@@ -1263,6 +1263,8 @@ export function appCommands(view?: EditorView): Command[] {
     {
       id: 'convert-syntax',
       label: t('Convert syntax'),
+      // Rewrites notes of the space in front, which one shared to be read refuses.
+      disabled: readOnly,
       run: () => void import('./convert-syntax').then((m) => m.convertSyntax()),
     },
     ...(canPrint

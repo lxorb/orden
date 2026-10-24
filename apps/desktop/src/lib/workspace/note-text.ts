@@ -83,10 +83,10 @@ export async function retagNotes(ws: HoldsNotes, from: string, to: string | null
     (path) => noteText(ws, path),
   )
 
-  await replaceInNotes(ws, changes)
+  const written = await replaceInNotes(ws, changes)
   // The tree the tags are drawn as is now a tree of the tags that were.
   await loadTags(ws)
-  return changes.length
+  return written
 }
 
 /** A note's words as they stand: what is on screen when it is open, and what
@@ -131,8 +131,8 @@ export async function toggleTaskAt(ws: HoldsNotes, path: string, line: number): 
   const edits = tick(before, line, todayOf())
   if (!edits.length) return false
 
-  await replaceInNotes(ws, [changeOf(path, before, edits)])
-  return true
+  // No, too, in a space shared to be read, which the replacement passes over.
+  return (await replaceInNotes(ws, [changeOf(path, before, edits)])) > 0
 }
 
 /** Writes the whole of one note, from words somebody typed somewhere other than a
@@ -187,7 +187,14 @@ async function keep(path: string, content: string, keeping: Keeping) {
 /** Writes a replacement across the space. Every note keeps a snapshot of
  *  what it said before it is written, a note open in a pane takes the change
  *  as the words that changed so no caret moves, and however many notes were
- *  touched it is one thing to undo.
+ *  touched it is one thing to undo. Answers how many notes were written.
+ *
+ *  A note in a space shared with this account to be read is passed over and not
+ *  counted: the copy here would stop being the space's, and the sync refuses it on
+ *  every pass. Asked here rather than of each caller, because every write of words
+ *  into a note nobody has open comes through here - a search's Replace all, a tag
+ *  renamed, a task ticked from Today or a query, an icon or a cover chosen.
+ *  Fetched, as sharing.svelte.ts reads the workspace this belongs to.
  *
  *  Each change was worked out against the words as they were read, and the reader
  *  may have typed since: between the read and this call, and inside the writes of
@@ -198,12 +205,16 @@ export async function replaceInNotes(
   ws: HoldsNotes,
   changes: readonly Change[],
   keeping: Keeping = {},
-): Promise<void> {
-  if (!changes.length) return
+): Promise<number> {
+  if (!changes.length) return 0
+
+  const { canWriteAt } = await import('../sharing.svelte')
+  const writable = changes.filter((change) => canWriteAt(change.path))
+  if (!writable.length) return 0
 
   const done: Undone[] = []
 
-  for (const change of changes) {
+  for (const change of writable) {
     const open = ws.documentAt(change.path)
     const wrote = open
       ? await writeOpen(open, change, keeping)
@@ -219,6 +230,7 @@ export async function replaceInNotes(
   // the two would import each other. Same as the writing beside it.
   const { sync } = await import('../sync.svelte')
   sync.nudge()
+  return done.length
 }
 
 /** A note that is open: the edits carried onto the words it holds now and applied in
