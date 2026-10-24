@@ -735,7 +735,7 @@ mod tests {
         dir
     }
 
-    fn trash(dir: &Path, name: &str, alone: bool) {
+    fn trash(dir: &Path, name: &str, alone: bool) -> String {
         super::trashed(
             &dir.join(".trash"),
             &dir.join(name),
@@ -744,7 +744,12 @@ mod tests {
             "note".into(),
             alone,
         )
-        .expect("deleted");
+        .expect("deleted")
+        .id
+    }
+
+    fn restore(dir: &Path, id: &str) -> String {
+        super::restored(dir, &dir.join(".trash"), id).expect("restored")
     }
 
     /// Sync's delete leaves what sync carries as an entry of its own, a PDF's
@@ -785,5 +790,52 @@ mod tests {
         ] {
             assert!(!dir.path().join(name).exists(), "{name}");
         }
+    }
+
+    /// Sync deletes a page note and its paper's highlights apart, each an entry of its
+    /// own, and each is restored on its own, in either order. Highlights first, the
+    /// note's restore found its paper without highlights in the slot and cleared the
+    /// ones already back as left by another PDF, for good.
+    #[test]
+    fn a_page_note_restored_after_its_papers_highlights_keeps_them() {
+        let dir = a_space();
+        let note = trash(dir.path(), "L.pages", true);
+        let highlights = trash(dir.path(), "L.pages.pdf.highlights.json", true);
+
+        restore(dir.path(), &highlights);
+        restore(dir.path(), &note);
+
+        for name in ["L.pages", "L.pages.pdf", "L.pages.pdf.highlights.json"] {
+            assert!(dir.path().join(name).exists(), "{name}");
+        }
+    }
+
+    /// And a PDF restored after its highlights rejoins them, where it stepped aside to
+    /// `X 2.pdf` as from a name another PDF's highlights took, and left them on their own.
+    #[test]
+    fn a_pdf_restored_after_its_highlights_rejoins_them() {
+        let dir = a_space();
+        let pdf = trash(dir.path(), "X.pdf", true);
+        let highlights = trash(dir.path(), "X.pdf.highlights.json", true);
+
+        restore(dir.path(), &highlights);
+        let back = restore(dir.path(), &pdf);
+
+        assert_eq!(Path::new(&back), dir.path().join("X.pdf"));
+        assert!(dir.path().join("X.pdf.highlights.json").exists());
+    }
+
+    /// Whichever comes back first.
+    #[test]
+    fn a_pdf_restored_before_its_highlights_is_joined_by_them() {
+        let dir = a_space();
+        let pdf = trash(dir.path(), "X.pdf", true);
+        let highlights = trash(dir.path(), "X.pdf.highlights.json", true);
+
+        restore(dir.path(), &pdf);
+        restore(dir.path(), &highlights);
+
+        assert!(dir.path().join("X.pdf").exists());
+        assert!(dir.path().join("X.pdf.highlights.json").exists());
     }
 }

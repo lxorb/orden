@@ -778,6 +778,28 @@ describe("a PDF's highlights", () => {
     expect(disk.files.get(sidecar)?.content).toBe('{"version":1}')
   })
 
+  test('are rejoined by their PDF when sync deleted the two apart and they came back first', async () => {
+    // Each is an entry of its own to sync, deleted and restored on its own. The PDF
+    // stepped aside from highlights at its name as another PDF's, and left them alone.
+    disk.assets.set(pdf, { path: pdf, type: 'application/pdf', data: '', modified: 1 })
+    await webInvoke('write_highlights', { path: pdf, content: '{"version":1}' })
+    const paper = await webInvoke<{ id: string }>('trash_item', {
+      path: pdf,
+      kind: 'note',
+      alone: true,
+    })
+    const marks = await webInvoke<{ id: string }>('trash_item', {
+      path: sidecar,
+      kind: 'note',
+      alone: true,
+    })
+
+    await webInvoke('restore_trash', { id: marks.id })
+    expect(await webInvoke<string>('restore_trash', { id: paper.id })).toBe(pdf)
+
+    expect(disk.files.get(sidecar)?.content).toBe('{"version":1}')
+  })
+
   test('go when the PDF goes', async () => {
     disk.assets.set(pdf, { path: pdf, type: 'application/pdf', data: '', modified: 1 })
     await webInvoke('write_highlights', { path: pdf, content: '{"version":1}' })
