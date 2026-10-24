@@ -190,6 +190,22 @@ describe('a change', () => {
     expect(changedTask('- [ ] a #x b #x c', { tags: [] })).toBe('- [ ] a b c')
   })
 
+  test('of new words keeps a tag the words held and the change still holds', () => {
+    // The task edit field reads `#milk` out of the words and hands it back as a tag.
+    expect(changedTask('- [ ] Buy #milk now', { text: 'Buy now', tags: ['milk'] })).toBe(
+      '- [ ] Buy now #milk',
+    )
+    expect(
+      readTask(changedTask('- [ ] Buy #milk now', { text: 'Buy now', tags: ['milk'] })),
+    ).toMatchObject({ text: 'Buy now', tags: ['milk'] })
+    // Written once: not again where the new words or the fields at the end hold it.
+    expect(
+      changedTask('- [ ] Buy #milk now #shop', { text: 'Get #milk', tags: ['milk', 'shop'] }),
+    ).toBe('- [ ] Get #milk #shop')
+    // One the change takes away stays away.
+    expect(changedTask('- [ ] Buy #milk now', { text: 'Buy now', tags: [] })).toBe('- [ ] Buy now')
+  })
+
   test('is nothing for a line that is not a task', () => {
     expect(writeTask('- a', { due: '2026-10-06' })).toEqual([])
   })
