@@ -28,6 +28,8 @@
  *  line is a pure answer to "what would this share become", which is the part
  *  worth testing, and the Kotlin side is in Shared.kt. */
 
+import { asWords } from '@nib/markdown/words'
+
 import { dayOf, noteText } from '../import/meta'
 import { safeName, titleFrom } from '../import/names'
 import { isPicturePath } from '../space-paths'
@@ -230,7 +232,9 @@ export function sharedPlan(
     embeds.push(embedFor(item, path))
   })
 
-  const body = [words, ...embeds].filter(Boolean).join('\n\n')
+  // Shared words are somebody's text, from a page or a message, and not markup of
+  // the note's own.
+  const body = [asWords(words), ...embeds].filter(Boolean).join('\n\n')
   if (body) {
     const title = sharedTitle(arrived)
     about.push({
