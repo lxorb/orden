@@ -36,6 +36,7 @@ import {
   parseTask,
   RECURRENCE_EMOJI,
   TASKS_FIELDS,
+  tagsIn,
   type TaskFields,
   WORD_BY_PRIORITY,
   writeDuration,
@@ -236,12 +237,15 @@ export function writeTask(line: string, change: TaskChange): TextEdit[] {
     edits.push({ from: parsed.box + 1, to: parsed.box + 1 + fields.status.length, insert: status })
 
   const textChanges = change.text != null && change.text !== fields.text
+  /** The new words, the tokens among the old ones that stay included. */
+  let newWords = ''
   if (textChanges) {
     const inline = tokens.filter((token) => token.inline)
     const kept = inline
       .filter((token) => !touches(change, token))
       .map((token) => line.slice(token.from, token.to))
     const words = [change.text, ...kept].filter((part) => part !== '').join(' ')
+    newWords = words
     // Words where there were none stand between the box and a field, a blank apart
     // from each.
     const open = words !== '' && /\S/.test(line.charAt(parsed.wordsFrom - 1)) ? ' ' : ''
@@ -271,6 +275,23 @@ export function writeTask(line: string, change: TaskChange): TextEdit[] {
     taking.push(...spans)
     for (const tag of next.filter((one) => !fields.tags.includes(one))) {
       arriving.push({ rank: RANK.tag, text: `#${tag}` })
+    }
+  }
+
+  // A tag written among the old words goes with them, so one the change still holds
+  // is put back at the end where the new words and the fields there do not hold it:
+  // the task edit field reads `Buy #milk now` as `Buy now` and the tag `milk`.
+  if (textChanges && change.tags != null) {
+    const onLine = new Set([
+      ...tagsIn(newWords),
+      ...tokens
+        .filter((token) => token.field === 'tag' && !token.inline && !gone.has(token))
+        .map((token) => line.slice(token.from + 1, token.to)),
+    ])
+    for (const tag of change.tags) {
+      if (fields.tags.includes(tag) && !onLine.has(tag)) {
+        arriving.push({ rank: RANK.tag, text: `#${tag}` })
+      }
     }
   }
 
