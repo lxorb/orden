@@ -682,4 +682,73 @@ mod tests {
         assert!(read_manifest(dir.path()).is_empty());
         assert!(dir.path().join("manifest.json.unreadable").exists());
     }
+
+    /// A space with a PDF and its highlights, and a page note with its paper and the
+    /// paper's highlights, and a trash beside it.
+    fn a_space() -> tempfile::TempDir {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        for (name, words) in [
+            ("X.pdf", "%PDF"),
+            ("X.pdf.highlights.json", "{}"),
+            ("L.pages", "{}"),
+            ("L.pages.pdf", "%PDF"),
+            ("L.pages.pdf.highlights.json", "{}"),
+        ] {
+            std::fs::write(dir.path().join(name), words).expect("a file");
+        }
+        std::fs::create_dir(dir.path().join(".trash")).expect("the trash");
+        dir
+    }
+
+    fn trash(dir: &Path, name: &str, alone: bool) {
+        super::trashed(
+            &dir.join(".trash"),
+            &dir.join(name),
+            name.into(),
+            name.into(),
+            "note".into(),
+            alone,
+        )
+        .expect("deleted");
+    }
+
+    /// Sync's delete leaves what sync carries as an entry of its own, a PDF's
+    /// highlights. A PDF turned into its page note elsewhere comes here as a delete of
+    /// the PDF and a move of its highlights to the paper's: the delete took them into
+    /// the trash, the move found nothing, and the next scan deleted them everywhere.
+    #[test]
+    fn a_pdf_deleted_alone_leaves_its_highlights() {
+        let dir = a_space();
+        trash(dir.path(), "X.pdf", true);
+
+        assert!(!dir.path().join("X.pdf").exists());
+        assert!(dir.path().join("X.pdf.highlights.json").exists());
+    }
+
+    /// And takes what sync does not carry: a page note's paper, which goes with the
+    /// note (#551), though not the paper's highlights, which are an entry.
+    #[test]
+    fn a_page_note_deleted_alone_takes_its_paper() {
+        let dir = a_space();
+        trash(dir.path(), "L.pages", true);
+
+        assert!(!dir.path().join("L.pages").exists());
+        assert!(!dir.path().join("L.pages.pdf").exists());
+        assert!(dir.path().join("L.pages.pdf.highlights.json").exists());
+    }
+
+    #[test]
+    fn a_file_deleted_by_hand_takes_what_it_holds() {
+        let dir = a_space();
+        trash(dir.path(), "X.pdf", false);
+        trash(dir.path(), "L.pages", false);
+
+        for name in [
+            "X.pdf.highlights.json",
+            "L.pages.pdf",
+            "L.pages.pdf.highlights.json",
+        ] {
+            assert!(!dir.path().join(name).exists(), "{name}");
+        }
+    }
 }

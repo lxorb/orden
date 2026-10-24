@@ -676,6 +676,16 @@ describe("a page note's paper", () => {
     expect(disk.assets.get(paper)?.data).toBe('JVBERg==')
   })
 
+  test('goes to the trash with the note when sync deletes it, without its highlights', async () => {
+    await webInvoke('write_highlights', { path: paper, content: '{"version":1}' })
+
+    await webInvoke('trash_item', { path: note, kind: 'note', alone: true })
+
+    expect(disk.files.has(note)).toBe(false)
+    expect(disk.assets.has(paper)).toBe(false)
+    expect(disk.files.has('/Notes/Lecture.pages.pdf.highlights.json')).toBe(true)
+  })
+
   test('is copied with it, and goes when it goes', async () => {
     await webInvoke('copy_path', { from: note, to: '/Notes/Lecture copy.pages' })
     expect(disk.assets.has('/Notes/Lecture copy.pages.pdf')).toBe(true)
@@ -755,6 +765,17 @@ describe("a PDF's highlights", () => {
     expect(disk.assets.has('/Notes/moved.pdf')).toBe(true)
     expect(disk.files.get(sidecar)?.content).toBe('{"version":1}')
     expect(disk.files.get('/Notes/moved.pdf.highlights.json')?.content).toBe('{"version":2}')
+  })
+
+  test('stay where they are when sync deletes the PDF', async () => {
+    // Sync carries the highlights as an entry of their own, which its delete leaves.
+    disk.assets.set(pdf, { path: pdf, type: 'application/pdf', data: '', modified: 1 })
+    await webInvoke('write_highlights', { path: pdf, content: '{"version":1}' })
+
+    await webInvoke('trash_item', { path: pdf, kind: 'note', alone: true })
+
+    expect(disk.assets.has(pdf)).toBe(false)
+    expect(disk.files.get(sidecar)?.content).toBe('{"version":1}')
   })
 
   test('go when the PDF goes', async () => {
