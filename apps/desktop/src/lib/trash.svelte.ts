@@ -12,7 +12,7 @@ import { message, plural, t } from './i18n.svelte'
 import { prompt } from './prompt.svelte'
 import { canWriteAt } from './sharing.svelte'
 import { sync } from './sync.svelte'
-import { folderOf } from './space-paths'
+import { folderOf, insideSpace, samePath, within } from './space-paths'
 import { invoke } from './tauri'
 import { workspace } from './workspace.svelte'
 
@@ -118,7 +118,9 @@ class Trash {
    *  in the trash, and writing it back would be a change the sync refuses on every
    *  pass. Deleting it for good stays, since that only takes away this device's copy. */
   restorable(item: TrashItem): boolean {
-    return item.from === undefined || canWriteAt(item.from)
+    if (item.from === undefined) return true
+    const at = whereFrom(item.from)
+    return at === null || canWriteAt(at)
   }
 
   /** Puts one thing back. From the account, the next sync pass brings it down;
@@ -225,3 +227,15 @@ class Trash {
 }
 
 export const trash = new Trash()
+
+/** Where a device row was, as a path on this disk. The crate says it from the notes
+ *  folder, the folder every space is in (`manifest_place` in trash.rs); the browser
+ *  build keeps the whole path. Null where it names no space here. */
+function whereFrom(from: string): string | null {
+  if (from.startsWith('/') || /^[A-Za-z]:[\\/]/.test(from)) return from
+  for (const space of workspace.spaces) {
+    const path = insideSpace(folderOf(space.root), from)
+    if (samePath(path, space.root) || within(space.root, path) !== null) return path
+  }
+  return null
+}
