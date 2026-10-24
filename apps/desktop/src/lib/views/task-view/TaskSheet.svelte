@@ -74,6 +74,12 @@
   })
 
   const row = $derived(rowFor(shown.ref, all))
+  /** Which task is shown, by where it is written: what its description and its comment
+   *  field are made again for. Its space too, as Today and Upcoming walk the tasks of
+   *  every space and two spaces each have an `Inbox.md` with a task on its first line:
+   *  a step from one to the other kept the first one's words, and wrote them into the
+   *  other's note (B461). */
+  const shownAt = $derived(taskKey(shown.ref.space, shown.ref.path, shown.ref.line))
   const task = $derived(row?.task)
   /** Its start date and its deadline, as its space reads a `📅` (#371). */
   const starts = $derived(task ? (startOf(task, task.dueReads) ?? task.scheduled) : undefined)
@@ -410,7 +416,7 @@
         </div>
 
         {#if path}
-          {#key `${shown.ref.path}\n${shown.ref.line}`}
+          {#key shownAt}
             <div class="words"><Description {path} anchor={anchorNow} writable={writes} /></div>
           {/key}
         {/if}
@@ -479,8 +485,7 @@
         </div>
 
         {#if path && row}
-          {#key `${shown.ref.path}
-${shown.ref.line}`}
+          {#key shownAt}
             <Comments bind:this={comments} {row} {path} writable={writes} />
           {/key}
         {/if}
