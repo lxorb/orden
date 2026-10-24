@@ -551,6 +551,17 @@ class Sync {
     return this.mirrors[root]?.spaceId ?? null
   }
 
+  /** The role this device kept for the space a folder mirrors, for the seconds
+   *  before the account's listing comes back and for a session that never hears
+   *  it. v2 keeps the role on the space's row. v1 keeps only whether the space is
+   *  somebody else's, which says the account's own spaces are its own and leaves
+   *  a shared one unknown. Null when nothing was kept. */
+  roleKept(root: string): string | null {
+    if (V2 && this.v2) return this.v2.roleKept(root)
+    const mirror = this.mirrors[root]
+    return mirror && !mirror.shared ? 'owner' : null
+  }
+
   /** Whether the account shared this space to be read and not written in. */
   private reads(spaceId: string): boolean {
     return account.spaces.find((one) => one.id === spaceId)?.role === 'read'

@@ -656,6 +656,15 @@ class Runner {
     return null
   }
 
+  /** The role the sync store kept for the space a folder is, as the account last
+   *  said it: what may be done there before the account is asked again. */
+  roleKept(root: string): string | null {
+    for (const space of this.engine?.core.spaces.values() ?? []) {
+      if (space.row.root === root) return space.row.role
+    }
+    return null
+  }
+
   /** The file on this disk an entry of the account is, by its id: null for one that is
    *  not on this disk, or in no space this device syncs. */
   fileOf(id: string): string | null {

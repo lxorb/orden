@@ -39,6 +39,11 @@ class Session {
    *  everything account-wide asks for `user` rather than for a session. */
   guest = $state<Guest | null>(null)
   spaces = $state<RemoteSpace[]>([])
+  /** Whether `spaces` is the account's answer yet. Empty before the listing has
+   *  come back says nothing about what the account holds, and a space shared to
+   *  read must not be taken for one of the reader's own in that time; see
+   *  `roleOf` in sharing.svelte.ts. */
+  listed = $state(false)
   /** Ids the account says were deleted, so a machine that was away can tell
    *  that apart from a space it has simply not uploaded yet. */
   deletedSpaces = $state<string[]>([])
@@ -344,6 +349,7 @@ class Session {
     const listed = await api.listSpaces(this.token)
     this.spaces = listed.spaces
     this.deletedSpaces = listed.deleted
+    this.listed = true
 
     // And the files other people shared on their own, which belong to no space
     // and so are not in that listing. On the same beat, because it is the same
@@ -352,7 +358,8 @@ class Session {
     //
     // Imported here rather than at the top: the sharing store reads the account,
     // and the two would import each other. See docs/sharing.md.
-    const { sharedWithYou } = await import('./sharing.svelte')
+    const { rememberRoles, sharedWithYou } = await import('./sharing.svelte')
+    rememberRoles()
     await sharedWithYou.load()
 
     // And which of them are put away, which a listing is the moment to hear of; see
@@ -389,6 +396,7 @@ class Session {
     this.settling = false
     this.spaces = []
     this.deletedSpaces = []
+    this.listed = false
     for (const clear of this.alsoForget) clear()
   }
 
