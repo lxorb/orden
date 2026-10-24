@@ -186,7 +186,7 @@ vi.mock('./tauri', () => ({
 
 vi.mock('./insets', () => ({ tintSystemBars: () => undefined }))
 
-const { theme } = await import('./theme.svelte')
+const { chosenFirst, theme } = await import('./theme.svelte')
 const { stamped } = await import('./themes/stamp')
 // What the store fetches as a theme is worn, fetched before any test rather than by the
 // first that wears one: `settled` below counts turns, and compiling a module cold on a
@@ -1432,5 +1432,40 @@ describe('translucency, which was a switch before it was glass', () => {
     theme.adoptTranslucency()
 
     expect(theme.id).toBe('default')
+  })
+})
+
+/** The reader's face beats a theme's (#772): a theme that states a stack of its own still
+ *  has the reader's face at the head of it. */
+describe('a theme’s own faces', () => {
+  test('keep the reader’s in front of a stack the theme states', () => {
+    expect(chosenFirst(':root {\n  --font-content: Georgia, serif;\n}')).toBe(
+      ':root {\n  --font-content: var(--font-content-chosen,) Georgia, serif;\n}',
+    )
+    expect(chosenFirst(':root { --font-ui: Inter; --font-mono: Iosevka; }')).toBe(
+      ':root { --font-ui: var(--font-ui-chosen,) Inter; --font-mono: var(--font-mono-chosen,) Iosevka; }',
+    )
+  })
+
+  test('and of a face the theme gives the prose, the code’s for code', () => {
+    const css =
+      '#write p {\n  font-family: Palatino;\n}\n#write pre code {\n  font-family: Menlo;\n}'
+    expect(chosenFirst(css)).toBe(
+      '#write p {\n  font-family: var(--font-content-chosen,) Palatino;\n}\n' +
+        '#write pre code {\n  font-family: var(--font-mono-chosen,) Menlo;\n}',
+    )
+  })
+
+  test('leave a stack that already starts with a token alone, so twice is once', () => {
+    const once = chosenFirst(':root { --font-content: Georgia; }')
+    expect(chosenFirst(once)).toBe(once)
+    expect(chosenFirst(':root { --font-content: var(--font-ui); }')).toBe(
+      ':root { --font-content: var(--font-ui); }',
+    )
+  })
+
+  test('and touch nothing else a theme says', () => {
+    const css = ':root { --bg: #fff; --text: #111; }\n#write h1 { color: red; }'
+    expect(chosenFirst(css)).toBe(css)
   })
 })
