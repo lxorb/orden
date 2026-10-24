@@ -217,11 +217,21 @@ pub fn run_pandoc(
         return Err(format!("{format} is not a format pandoc writes"));
     }
     let target = chosen(&app, &output)?;
+    convert(&source, &target, &format, None).map(|_| ())
+}
 
+/// The conversion itself, apart from the app: `source` written to `target` as
+/// `format`, for the note in `_folder`. Answers the pictures pandoc could not find.
+fn convert(
+    source: &str,
+    target: &Path,
+    format: &str,
+    _folder: Option<&Path>,
+) -> Result<Vec<String>, String> {
     let mut child = pandoc()
-        .args(["--from", WRITE_FROM, "--to", &format, "--standalone"])
+        .args(["--from", WRITE_FROM, "--to", format, "--standalone"])
         .arg("--output")
-        .arg(&target)
+        .arg(target)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -233,6 +243,7 @@ pub fn run_pandoc(
     // On its own thread, because pandoc writes as it reads: a long note plus a
     // pandoc with plenty to say would otherwise be two programs each waiting for
     // the other to take what it has written.
+    let source = source.to_string();
     let writer = std::thread::spawn(move || sink.write_all(source.as_bytes()));
 
     let result = child
@@ -245,7 +256,9 @@ pub fn run_pandoc(
     if result.status.success() {
         // Pandoc is happy, so it read what it needed; a write that failed at the
         // very end is still worth saying out loud.
-        return written.map_err(|error| format!("could not send the note to pandoc: {error}"));
+        return written
+            .map(|()| Vec::new())
+            .map_err(|error| format!("could not send the note to pandoc: {error}"));
     }
 
     Err(complaint(&result.stderr, "pandoc failed"))
@@ -264,7 +277,99 @@ fn complaint(stderr: &[u8], fallback: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{complaint, is_format, reading};
+    use super::{complaint, convert, has_pandoc, is_format, reading};
+    use std::fs;
+    use std::path::Path;
+
+    /// Whether these tests can run pandoc; the CI's Linux row installs it.
+    fn pandoc_here() -> bool {
+        let here = has_pandoc();
+        if !here {
+            eprintln!("pandoc is not installed here, so this test checks nothing");
+        }
+        here
+    }
+
+    /// A note in a folder of its own, with its picture beside it, and a folder
+    /// somewhere else to save the export in, as the dialog lets the reader.
+    fn note_and_elsewhere() -> (tempfile::TempDir, tempfile::TempDir) {
+        let note = tempfile::tempdir().expect("a folder");
+        fs::write(note.path().join("dot.png"), DOT).expect("written");
+        (note, tempfile::tempdir().expect("a folder"))
+    }
+
+    const WITH_PICTURE: &str = "Text\n\n![a dot](dot.png)\n";
+
+    /// The names inside an ODT, which is a zip.
+    fn inside(odt: &Path) -> Vec<String> {
+        let file = fs::File::open(odt).expect("an odt");
+        let archive = zip::ZipArchive::new(file).expect("a zip");
+        archive.file_names().map(str::to_string).collect()
+    }
+
+    /// The note is piped in, so pandoc has no folder to find `dot.png` in unless it
+    /// is told the note's; without it the picture became its alt text.
+    #[test]
+    fn an_odt_carries_the_pictures_beside_the_note() {
+        if !pandoc_here() {
+            return;
+        }
+        let (note, elsewhere) = note_and_elsewhere();
+        let target = elsewhere.path().join("Out.odt");
+
+        let missing = convert(WITH_PICTURE, &target, "odt", Some(note.path())).expect("converted");
+
+        assert!(missing.is_empty(), "{missing:?}");
+        let names = inside(&target);
+        assert!(
+            names.iter().any(|one| one.starts_with("Pictures/")),
+            "{names:?}"
+        );
+    }
+
+    /// A deck links its pictures rather than holding them, so they go beside it,
+    /// in a folder of its own named after it, and it points there.
+    #[test]
+    fn a_deck_saved_elsewhere_still_shows_its_pictures() {
+        if !pandoc_here() {
+            return;
+        }
+        let (note, elsewhere) = note_and_elsewhere();
+        let target = elsewhere.path().join("Deck.html");
+
+        let missing =
+            convert(WITH_PICTURE, &target, "revealjs", Some(note.path())).expect("converted");
+
+        assert!(missing.is_empty(), "{missing:?}");
+        let html = fs::read_to_string(&target).expect("a deck");
+        assert!(html.contains("Deck_files/dot.png"), "{html}");
+        assert!(elsewhere.path().join("Deck_files/dot.png").is_file());
+    }
+
+    /// A picture that is not there is said, rather than swapped for its alt text
+    /// with pandoc reporting success.
+    #[test]
+    fn a_picture_that_is_not_there_is_said() {
+        if !pandoc_here() {
+            return;
+        }
+        let (note, elsewhere) = note_and_elsewhere();
+        let target = elsewhere.path().join("Out.odt");
+
+        let missing =
+            convert("![gone](gone.png)\n", &target, "odt", Some(note.path())).expect("converted");
+
+        assert_eq!(missing, vec!["gone.png".to_string()]);
+    }
+
+    /// A one-pixel PNG.
+    const DOT: &[u8] = &[
+        0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44,
+        0x52, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x08, 0x06, 0x00, 0x00, 0x00, 0x1f,
+        0x15, 0xc4, 0x89, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x44, 0x41, 0x54, 0x78, 0x9c, 0x63, 0xf8,
+        0xff, 0xff, 0x3f, 0x00, 0x05, 0xfe, 0x02, 0xfe, 0xa7, 0x35, 0x81, 0x84, 0x00, 0x00, 0x00,
+        0x00, 0x49, 0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82,
+    ];
 
     /// A path is the reader's own, and pandoc reads a leading dash as an option.
     #[test]
