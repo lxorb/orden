@@ -346,6 +346,13 @@ fn copied(source: &Path, target: &Path) -> Result<(), String> {
         return Err(format!("{} cannot be copied into itself", source.display()));
     }
 
+    // A page note's copy brings its paper, and a PDF's copy beside a page note of its
+    // name would be taken for that note's paper: either way the file in the way is
+    // somebody's own (#538).
+    if let Some(there) = paper_in_the_way(source, target, same_entry) {
+        return Err(format!("{} is already there", there.display()));
+    }
+
     if let Some(parent) = target.parent() {
         made(parent)?;
     }

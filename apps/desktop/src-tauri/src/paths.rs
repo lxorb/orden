@@ -182,30 +182,49 @@ pub fn held_paper(pdf: &Path) -> bool {
     // The note's paper is the one `paper_of` names, so a paper hidden is one that goes
     // with the note: `Lecture.pages.PDF` is that paper on a disk that ignores case,
     // and somebody's own PDF on one that does not.
+    paper_holder(pdf).is_some_and(|holder| {
+        let paper = paper_of(&holder);
+        paper == pdf || crate::notes::same_entry(&paper, pdf)
+    })
+}
+
+/// The page note a PDF at `pdf` would be the paper of: `Lecture.pages` for
+/// `Lecture.pages.pdf`, where that note is there. A PDF put at such a name is held by
+/// the note, whoever put it there.
+fn paper_holder(pdf: &Path) -> Option<PathBuf> {
+    if !is_pdf(pdf) {
+        return None;
+    }
     let holder = pdf.with_extension("");
-    let paper = paper_of(&holder);
-    is_pages(&holder) && holder.is_file() && (paper == pdf || crate::notes::same_entry(&paper, pdf))
+    (is_pages(&holder) && holder.is_file()).then_some(holder)
 }
 
 /// Whether a name is taken: by something there, or, for a page note, by a file where
 /// its paper would go. A PDF called `Report.pages.pdf` is somebody's - macOS Pages names
 /// every PDF it saves that way - and a page note given `Report.pages` would take it for
-/// its paper: moved over it, or hidden from the list as held (#538).
+/// its paper: moved over it, or hidden from the list as held (#538). And the other way
+/// round: such a PDF put beside a page note `Report.pages` with no paper yet is taken
+/// by that note for its paper, so for a PDF the name is taken where the note is.
 fn taken(path: &Path) -> bool {
-    path.exists() || (is_pages(path) && paper_of(path).exists())
+    path.exists() || (is_pages(path) && paper_of(path).exists()) || paper_holder(path).is_some()
 }
 
 /// Whether a page note may be called `to`, coming from `from`: not over a file where its
 /// paper would go, unless that file is `from`'s own paper under another spelling of its
 /// name (`same` says whether two paths are one entry; see `respelled` in notes.rs).
 /// Answers the file in the way, to be named in the refusal.
+///
+/// And whether a PDF may be called `to`: not where a page note would take it for its
+/// paper, which is the note in the way. Unless it comes from that note's own folder:
+/// a PDF moved in beside its note is how a PDF becomes one's paper (pages/from-pdf.ts),
+/// and a respelling of a paper is that paper still.
 pub fn paper_in_the_way(
     from: &Path,
     to: &Path,
     same: impl Fn(&Path, &Path) -> bool,
 ) -> Option<PathBuf> {
     if !is_pages(to) {
-        return None;
+        return paper_holder(to).filter(|_| from.parent() != to.parent());
     }
     let there = paper_of(to);
     if !there.exists() {
