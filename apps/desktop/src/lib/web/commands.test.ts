@@ -661,6 +661,18 @@ describe("a page note's paper", () => {
     expect(disk.assets.has('/Notes/Lecture copy.pages.pdf')).toBe(false)
     expect(disk.assets.has(paper)).toBe(true)
   })
+
+  test('is where a PDF beside the note goes when sync holds it there', async () => {
+    // Another device turned the PDF into this note; sync carries the move with `hold`,
+    // and the browser takes it as the crate does.
+    disk.assets.delete(paper)
+    disk.assets.set('/Notes/Lecture.pdf', held('/Notes/Lecture.pdf'))
+
+    await webInvoke('rename_note', { from: '/Notes/Lecture.pdf', to: paper, hold: true })
+
+    expect(disk.assets.has(paper)).toBe(true)
+    expect(disk.assets.has('/Notes/Lecture.pdf')).toBe(false)
+  })
 })
 
 describe("a PDF's highlights", () => {

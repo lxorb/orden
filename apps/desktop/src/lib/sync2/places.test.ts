@@ -104,3 +104,38 @@ describe('a folder moved into a new folder that took its old name', () => {
     expect([...disk.folders].filter((one) => one.includes('.nib-moving'))).toEqual([])
   })
 })
+
+describe('a move the disk refuses', () => {
+  // A PDF going to the paper of a page note was refused by the crate, the settle
+  // threw, and the pass stopped before anything else came or went, on every pass.
+  test('leaves that file where it is and settles the rest', async () => {
+    const disk = new MemoryDisk()
+    disk.folders.add('/r')
+    disk.files.set('/r/X.pdf', 'p')
+    disk.files.set('/r/a.md', 'a')
+    const real = disk.move.bind(disk)
+    disk.move = (from: string, to: string) => {
+      if (from === '/r/X.pdf') throw new Error('/r/X.pages is already there')
+      return real(from, to)
+    }
+    const pdf = row('P', 'file', null, 'X.pages.pdf', 'X.pdf')
+    const note = row('N', 'note', null, 'b.md', 'a.md')
+    const space = new SpaceState(
+      { space_id: 's', root: '/r', cursor: 9, role: 'owner', store: null },
+      [pdf, note],
+      [],
+      'd',
+      { platform: 'linux', foldsCase: true } as never,
+    )
+
+    await settle(space, {
+      disk,
+      join: (a: string, b: string) => `${a}/${b}`,
+      keeps: () => false,
+      forget: () => undefined,
+    })
+
+    expect([pdf.local_path, note.local_path]).toEqual(['X.pdf', 'b.md'])
+    expect([...disk.files.keys()].sort()).toEqual(['/r/X.pdf', '/r/b.md'])
+  })
+})
