@@ -22,6 +22,9 @@ const FRONT_PICTURES = ['image'] as const
  *  app writes after it, and nothing else on the end of the path. */
 const PICTURE = /\/i\/([a-f0-9]{64})(?:\.[a-z0-9]+)?(?:[?#].*)?$/i
 
+/** The same address anywhere in a run of markup, for HTML that is live. */
+const ANYWHERE = /\/i\/([a-f0-9]{64})(?![a-f0-9])/gi
+
 /** Every picture the service holds that this body shows: in its prose, as its cover,
  *  or - for a canvas, which is JSON - on one of its cards.
  *
@@ -31,13 +34,30 @@ const PICTURE = /\/i\/([a-f0-9]{64})(?:\.[a-z0-9]+)?(?:[?#].*)?$/i
  *  an embed of the address in double brackets, and the source of an HTML image tag.
  *  Nothing else: a hash in prose, in a link, in code, escaped or in a comment is
  *  somebody naming the bytes, not a note showing them, and anybody who once saw a hash
- *  could otherwise claim the bytes behind it by writing it down. */
-export function picturesOf(source: string): Set<string> {
+ *  could otherwise claim the bytes behind it by writing it down.
+ *
+ *  With `liveHtml` - a note in a space nobody else is in, where the renderer draws raw
+ *  HTML as markup rather than characters (the app's `trustsHtml`) - raw HTML is not
+ *  enumerated: a browser loads a picture from more corners of markup than any list
+ *  holds, so every address anywhere in it counts, tags, attributes and style sheets
+ *  alike, with its character references decoded and any whitespace inside it taken
+ *  out. That over-counts only the owner's own note, which keeps bytes and earns nobody
+ *  anything; prose is read strictly either way. */
+export function picturesOf(source: string, liveHtml = false): Set<string> {
   const found = new Set<string>()
   const add = (address: string | null | undefined) => {
     const hash = address ? PICTURE.exec(address.trim())?.[1] : undefined
     if (hash) found.add(hash.toLowerCase())
   }
+  const html = liveHtml
+    ? (markup: string) => {
+        const plain = decoded(markup).replace(/[\t\n\f\r ]+/g, '')
+        for (const match of plain.matchAll(ANYWHERE))
+          if (match[1]) found.add(match[1].toLowerCase())
+      }
+    : (markup: string) => {
+        for (const address of drawnByHtml(markup)) add(address)
+      }
 
   const canvas = cardsOf(source)
   if (canvas) {
@@ -46,7 +66,9 @@ export function picturesOf(source: string): Set<string> {
     for (const card of canvas) {
       if (card.type === 'file') add(card.file)
       add(card.background)
-      if (typeof card.text === 'string') for (const hash of picturesOf(card.text)) found.add(hash)
+      if (typeof card.text === 'string') {
+        for (const hash of picturesOf(card.text, liveHtml)) found.add(hash)
+      }
     }
     return found
   }
@@ -57,16 +79,20 @@ export function picturesOf(source: string): Set<string> {
   // What `renderMarkdown` parses: the body without its front matter, its block names
   // and its comments.
   const tokens = lexMarkdown(withoutComments(withoutBlockIds(stripFrontMatter(source))))
-  visit(tokens, add)
+  visit(tokens, add, html)
   return found
 }
 
 /** Every picture a run of tokens draws, handed to `add`, at any depth: a list's items,
  *  a table's cells, a quote's paragraphs and a link's words all hold tokens of their
  *  own. Code holds none, so it is never looked inside. */
-function visit(value: unknown, add: (address: string | undefined) => void): void {
+function visit(
+  value: unknown,
+  add: (address: string | undefined) => void,
+  html: (markup: string) => void,
+): void {
   if (Array.isArray(value)) {
-    for (const one of value) visit(one, add)
+    for (const one of value) visit(one, add, html)
     return
   }
   if (!value || typeof value !== 'object') return
@@ -75,7 +101,7 @@ function visit(value: unknown, add: (address: string | undefined) => void): void
   if (token.type === 'code' || token.type === 'codespan') return
   if (token.type === 'image' && typeof token.href === 'string') add(token.href)
   if (token.type === 'html' && typeof token.text === 'string') {
-    for (const address of drawnByHtml(token.text)) add(address)
+    html(token.text)
   }
   // `![[…]]`, as a block of its own or inside a line.
   if (token.type === 'embed' || token.type === 'wikilink') {
@@ -84,7 +110,7 @@ function visit(value: unknown, add: (address: string | undefined) => void): void
   }
 
   for (const inner of Object.values(token)) {
-    if (inner && typeof inner === 'object') visit(inner, add)
+    if (inner && typeof inner === 'object') visit(inner, add, html)
   }
 }
 
@@ -123,16 +149,17 @@ function cardsOf(source: string): Card[] | null {
  *  Answers whether they were written, for the sweep, which writes the mark itself. */
 export async function keepPictures(
   env: Env,
-  note: { id: string },
+  note: { id: string; space_id: string },
   content: string,
 ): Promise<boolean> {
   try {
+    const live = await htmlIsLive(env, note.space_id)
     await env.DB.batch([
       env.DB.prepare('delete from note_pictures where note_id = ?').bind(note.id),
       env.DB.prepare(
         `insert or ignore into note_pictures (note_id, hash)
            select ?1, value from json_each(?2)`,
-      ).bind(note.id, JSON.stringify([...picturesOf(content)])),
+      ).bind(note.id, JSON.stringify([...picturesOf(content, live)])),
     ])
     return true
   } catch {
@@ -142,6 +169,22 @@ export async function keepPictures(
       .catch(() => undefined)
     return false
   }
+}
+
+/** Whether a space's raw HTML is markup, as the app decides it (`trustsHtml`): only in
+ *  a space nobody else is in - no member, invited or not, no link and no guest. Asked
+ *  as a note is written; a space shared later keeps what was written down until each
+ *  note is written again, which only keeps the owner's bytes. */
+export async function htmlIsLive(env: Env, spaceId: string): Promise<boolean> {
+  const shared = await env.DB.prepare(
+    `select 1 as one from space_members where space_id = ?1
+     union all select 1 from space_links where space_id = ?1
+     union all select 1 from guest_members where space_id = ?1
+     limit 1`,
+  )
+    .bind(spaceId)
+    .first()
+  return !shared
 }
 
 /** And takes them away again, for a note whose words have gone for good. */
@@ -207,6 +250,9 @@ const NAMED: Record<string, string> = {
   gt: '>',
   lpar: '(',
   rpar: ')',
+  tab: '\t',
+  newline: '\n',
+  nbsp: '\u00a0',
 }
 
 function decoded(value: string): string {
