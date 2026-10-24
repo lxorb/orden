@@ -38,7 +38,7 @@ function projectName(words: string): string | null {
 async function made(folder: string, words: string, template?: string): Promise<string | null> {
   const name = projectName(words)
   if (name === null) return null
-  const path = joinPath(folder, workspace.freeName(folder, `${name}.md`))
+  const path = joinPath(folder, await workspace.freeNameOnDisk(folder, `${name}.md`))
   const text = template === undefined ? '' : await templateWords(template, name)
   await writeFile(path, text)
   await workspace.loadTree()

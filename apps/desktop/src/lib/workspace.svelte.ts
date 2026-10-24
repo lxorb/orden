@@ -14,6 +14,7 @@ import { freePath } from '@nib/markdown/paths'
 import { openerFor, sharedKind } from './openers'
 import { links, type Retargeting } from './link-index.svelte'
 import { noteId } from './note-id'
+import { onDisk } from './on-disk'
 import { insideOnly } from './automation/inside'
 import {
   askCase,
@@ -2303,7 +2304,7 @@ class Workspace {
     // the sync pass in workspace/note-text.ts.
     const { modes } = await import('./modes.svelte')
 
-    const path = joinPath(dir, this.freeName(dir, named ?? PLACEHOLDER.pages))
+    const path = joinPath(dir, await this.freeNameOnDisk(dir, named ?? PLACEHOLDER.pages))
     const content = blankPages(modes.pagesPaper)
 
     this.showEntry(this.freshEntry(path, false))
@@ -3710,8 +3711,9 @@ class Workspace {
     if (named === undefined && this.startNaming('note', dir)) return
 
     // Opens with its own name as the title, so there is something to write
-    // under rather than an empty page.
-    const name = this.freeName(dir, named ?? PLACEHOLDER.note)
+    // under rather than an empty page. The one wait is a stamp of the name: the
+    // listing is not the disk; see `freeNameOnDisk`.
+    const name = await this.freeNameOnDisk(dir, named ?? PLACEHOLDER.note)
     const path = joinPath(dir, name)
     const content = `# ${shownName(name)}\n\n`
 
@@ -3751,7 +3753,8 @@ class Workspace {
     if (!dir) return null
 
     const stem = nameFromContent(text) ?? UNTITLED
-    const path = joinPath(dir, this.freeName(dir, `${stem}.md`))
+    // A card's folder can be one in a space that is not on screen.
+    const path = joinPath(dir, await this.freeNameOnDisk(dir, `${stem}.md`))
     this.showEntry(this.freshEntry(path, false))
 
     await writeFile(path, text)
@@ -3776,7 +3779,7 @@ class Workspace {
     // and the index reads a plane through scan-canvas.ts, which is fetched the same way.
     const { blankCanvas } = await import('./canvas/format')
 
-    const path = joinPath(dir, this.freeName(dir, named ?? PLACEHOLDER.canvas))
+    const path = joinPath(dir, await this.freeNameOnDisk(dir, named ?? PLACEHOLDER.canvas))
     const content = blankCanvas()
 
     this.showEntry(this.freshEntry(path, false))
@@ -3841,6 +3844,24 @@ class Workspace {
     const taken = pathKeys(this.everyPath(), dir)
     if (except !== undefined) taken.delete(pathKey(except, dir))
     return freePath(wanted, (candidate) => taken.has(pathKey(joinPath(dir, candidate), dir)))
+  }
+
+  /** `freeName`, with the disk asked too: the name every gesture that writes a new
+   *  file takes. `freeName` knows only the listing on screen, and that is not the
+   *  disk. Tabs outlive a space switch, so `Ideas.md` in the other space came back
+   *  free and was written over; and the listing leaves out what is named with a dot
+   *  unless hidden files are shown, so `.notes/Plan.md` did too. Stepped like a
+   *  draft's place; see `claim` in saving.svelte.ts. */
+  async freeNameOnDisk(dir: string, wanted: string): Promise<string> {
+    const found: string[] = []
+    for (;;) {
+      const name = freePath(
+        wanted,
+        (candidate) => found.includes(candidate) || this.freeName(dir, candidate) !== candidate,
+      )
+      if (await onDisk(joinPath(dir, name))) found.push(name)
+      else if (this.freeName(dir, name) === name) return name
+    }
   }
 
   /** Every path in the open space. `notes` holds only files; this counts the
@@ -4370,7 +4391,7 @@ class Workspace {
     // it steps aside the way every other name in the app does - `Name 2.md`,
     // through `freePath`. Its own numbering said `Name-2.md`, a spelling nothing
     // else in the app writes.
-    const name = this.freeName(dir, `${noteId(format)}.md`)
+    const name = await this.freeNameOnDisk(dir, `${noteId(format)}.md`)
 
     // Opens with an empty heading and the caret in it: the name is settled, so
     // the only thing left to do is say what the note is about.

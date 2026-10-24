@@ -77,6 +77,10 @@ export class Disk {
       case 'write_note':
         this.files.set(this.spelled(path) ?? path, text(args.content))
         return undefined
+      // Bytes kept as the words they decode to: what a test drops is words.
+      case 'write_bytes':
+        this.files.set(this.spelled(path) ?? path, atob(text(args.base64)))
+        return undefined
       case 'rename_note': {
         const from = this.spelled(text(args.from))
         const to = text(args.to)
@@ -156,10 +160,19 @@ export class Disk {
       return made
     }
 
-    for (const path of [...this.folders].sort()) if (path.startsWith(`${root}/`)) folderFor(path)
+    // As the crate does, a name with a dot in front is left out with everything under
+    // it, a folder as well as a file, unless hidden files are shown.
+    const shown = (path: string) =>
+      hidden ||
+      !path
+        .slice(root.length + 1)
+        .split('/')
+        .some((step) => step.startsWith('.'))
+    for (const path of [...this.folders].sort())
+      if (path.startsWith(`${root}/`) && shown(path)) folderFor(path)
     for (const path of [...this.files.keys()].sort()) {
       if (!path.startsWith(`${root}/`)) continue
-      if (!hidden && path.slice(path.lastIndexOf('/') + 1).startsWith('.')) continue
+      if (!shown(path)) continue
       folderFor(path.slice(0, path.lastIndexOf('/'))).children.push(entry(path, false))
     }
 

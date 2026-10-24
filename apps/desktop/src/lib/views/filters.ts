@@ -106,7 +106,7 @@ export async function saveFilter(
   if (root === undefined || !words) return null
   const yaml = writeBase(filterBase(words, query, reading))
   const folder = joinPath(root, FILTERS)
-  const target = path ?? joinPath(folder, workspace.freeName(folder, `${words}.base`))
+  const target = path ?? joinPath(folder, await workspace.freeNameOnDisk(folder, `${words}.base`))
   await writeFile(target, yaml)
   if (path === null) {
     await workspace.loadTree()

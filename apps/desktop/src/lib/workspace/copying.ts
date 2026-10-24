@@ -42,7 +42,7 @@ export interface Copies {
   entryAt(path: string): Entry | null
   showEntry(entry: Entry): void
   freshEntry(path: string, isFolder: boolean): Entry
-  freeName(dir: string, wanted: string): string
+  freeNameOnDisk(dir: string, wanted: string): Promise<string>
   fileMoved(from: string, to: string, kind: 'file'): Promise<void>
   fileCame(path: string, kind: 'file' | 'folder'): Promise<void>
   /** A PDF that has just landed, as the page note it becomes; see pages/from-pdf.ts. */
@@ -58,9 +58,14 @@ export interface Copying {
 /** The name a copy of `name` lands under in `dir`: its own where nothing there
  *  answers to it, `Plan copy.md` where something does, and `Plan copy 2.md` past
  *  a copy already made. A folder has no ending to keep the word in front of. */
-function copyNameIn(ws: Pick<Copies, 'freeName'>, dir: string, name: string, folder: boolean) {
-  if (ws.freeName(dir, name) === name) return name
-  return ws.freeName(dir, folder ? `${name} copy` : copyName(name))
+async function copyNameIn(
+  ws: Pick<Copies, 'freeNameOnDisk'>,
+  dir: string,
+  name: string,
+  folder: boolean,
+): Promise<string> {
+  if ((await ws.freeNameOnDisk(dir, name)) === name) return name
+  return ws.freeNameOnDisk(dir, folder ? `${name} copy` : copyName(name))
 }
 
 /** The note a copied folder is drawn as, renamed after the copy: `Trip/Trip.md`
@@ -115,7 +120,7 @@ export async function copyRows(ws: Copies, rows: readonly Copying[]): Promise<st
     const entry = ws.entryAt(from)
     if (!entry || !copiesInto([from], into)) continue
 
-    const path = joinPath(into, copyNameIn(ws, into, entry.name, entry.is_dir))
+    const path = joinPath(into, await copyNameIn(ws, into, entry.name, entry.is_dir))
     if (await copyEntry(ws, entry, path)) made.push({ path, folder: entry.is_dir, from })
   }
 
@@ -192,7 +197,9 @@ export async function bringIn(
       let at = landed.get(top)
       if (!at) {
         const folder = rest.length > 0
-        at = { path: joinPath(into, ws.freeName(into, top)), folder }
+        // Asked of the disk, not the listing: a dropped `.gitignore` is a name the
+        // list leaves out, and the space's own was written over.
+        at = { path: joinPath(into, await ws.freeNameOnDisk(into, top)), folder }
         landed.set(top, at)
         ws.showEntry(ws.freshEntry(at.path, folder))
       }

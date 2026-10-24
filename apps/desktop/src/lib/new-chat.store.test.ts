@@ -59,8 +59,14 @@ vi.mock('./tauri', async (importOriginal) => ({
       case 'write_note':
         files.set(path, text(args?.content))
         return Promise.resolve()
-      case 'read_tree':
-        return Promise.resolve(listing(text(args?.root)))
+      case 'read_tree': {
+        // A folder that is not there will not list, which is how a name is asked of
+        // the disk (`onDisk`): answering every path as a folder made every name taken.
+        const root = text(args?.root)
+        return root === '/space' || folders.has(root)
+          ? Promise.resolve(listing(root))
+          : Promise.reject(new Error(`no ${root}`))
+      }
       case 'file_stamp':
         return Promise.resolve(files.has(path) ? { modified: 1, len: 1 } : null)
       default:
