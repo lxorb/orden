@@ -33,6 +33,8 @@ vi.mock('../workspace/note-text', () => ({
 }))
 vi.mock('../on-disk', () => ({ onDisk: async (path: string) => disk.has(path) }))
 vi.mock('../link-index.svelte', () => ({ links: { held: () => [] } }))
+// Every space here may be written in; which may not is write-read-only.test.ts's.
+vi.mock('../sharing.svelte', () => ({ canWriteAt: () => true }))
 
 const { addTask } = await import('./write')
 
