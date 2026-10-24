@@ -3373,8 +3373,15 @@ class Workspace {
     this.saving.replace(text, target)
   }
 
-  /** A version put back from the history, which a canvas takes whole (#533). */
-  restoreVersion(text: string, target?: Tab) {
+  /** A version put back from the history, which a canvas takes whole (#533).
+   *
+   *  Refused for a note in a space shared to be read: putting a version back is an
+   *  edit, and the autosave would write it into the owner's space. The write itself
+   *  cannot refuse it, because the owner's own changes reach an open note there and
+   *  are written by that same autosave; see read-only-files.test.ts. */
+  async restoreVersion(text: string, target?: Tab) {
+    const path = (target ?? this.active)?.path
+    if (path && !(await this.writableAt(path))) return
     this.saving.restoreVersion(text, target)
   }
 

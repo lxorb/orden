@@ -271,3 +271,44 @@ describe('a link to a note the space has not got', () => {
     expect(workspace.tabs).toEqual([])
   })
 })
+
+describe('an open note in a space shared to be read', () => {
+  /** What the autosave owes, written: it waits a pause after the last change. */
+  async function settle() {
+    await vi.advanceTimersByTimeAsync(3000)
+    await workspace.writesSettled()
+  }
+
+  beforeEach(async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    await workspace.open('/theirs/Plan.md')
+    readOnly.add('/theirs')
+    asked.length = 0
+    return () => vi.useRealTimers()
+  })
+
+  test('takes no version put back from its history', async () => {
+    const tab = workspace.active
+    if (!tab) throw new Error('Plan.md did not open')
+
+    await workspace.restoreVersion('# An old plan', tab)
+    await settle()
+
+    expect(files.get('/theirs/Plan.md')).toBe('# Plan')
+    expect(tab.note.text).toBe('# Plan')
+    expect(writes()).toEqual([])
+  })
+
+  // The owner's words reach a reader's open note through the document, as a room
+  // and sync v2 bring them, and the autosave is what puts them on the disk. So the
+  // write itself cannot refuse a space shared to be read; only the gestures can.
+  test('still writes what the owner changed to its file', async () => {
+    const tab = workspace.active
+    if (!tab) throw new Error('Plan.md did not open')
+
+    tab.note.live.arrived([{ from: 6, to: 6, insert: ' for May' }])
+    await settle()
+
+    expect(files.get('/theirs/Plan.md')).toBe('# Plan for May')
+  })
+})
