@@ -79,4 +79,25 @@ describe('a board following its cards', () => {
     expect(notes.get('/s/Renamed/Plans/Plans.md')).toContain('- Renamed/Plans/Ship.md')
     expect(notes.get('/s/Renamed/Old/Deep/Deep.md')).toContain('- Renamed/Old/Deep/Ship.md')
   })
+
+  /** The app hands the follower its tree with the move already drawn in it. */
+  test('and the same where the tree already shows the folder moved', async () => {
+    const fenced = (dir: string) => `\`\`\`base\n${BASE.replaceAll('Plans/', `${dir}/`)}\`\`\`\n`
+    const tree = folder(
+      '/s',
+      folder(
+        '/s/Renamed',
+        folder(
+          '/s/Renamed/Plans',
+          note('/s/Renamed/Plans/Plans.md'),
+          note('/s/Renamed/Plans/Ship.md'),
+        ),
+      ),
+    )
+    notes.set('/s/Renamed/Plans/Plans.md', fenced('Work/Plans'))
+
+    await orderMoved(tree, '/s', '/s/Work', '/s/Renamed')
+
+    expect(notes.get('/s/Renamed/Plans/Plans.md')).toContain('- Renamed/Plans/Ship.md')
+  })
 })

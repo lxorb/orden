@@ -66,7 +66,9 @@ function foldersNotes(root: string, path: string): string[] {
  *  moved: the folder's own, and each folder's under it, at any depth. Every one of them
  *  names its cards by the old path. */
 function movedFoldersNotes(tree: Entry, from: string, to: string): string[] {
-  const moved = entryAt(tree, from)
+  // The tree the app hands over has the move in it already (`showMove` draws it
+  // first), and one read before the move does not: either way it is the same folder.
+  const moved = entryAt(tree, to) ?? entryAt(tree, from)
   if (!moved?.is_dir) return [folderNotePath(to), `${to}.md`]
   const found: string[] = []
   const walk = (dir: Entry) => {
@@ -111,8 +113,8 @@ export function movedWords(text: string, fenced: boolean, was: string, now: stri
   return changed ? after : null
 }
 
-/** A move told to the bases of the space it happened in (`tree`, that space's, as it
- *  stood before the move): every `.base` file, where it is now, and the notes a
+/** A move told to the bases of the space it happened in (`tree`, that space's, with
+ *  the move drawn in it or not yet): every `.base` file, where it is now, and the notes a
  *  database's fence could be in. Read and written the way every note is, so an open
  *  board and an open note take the change. */
 export async function orderMoved(
