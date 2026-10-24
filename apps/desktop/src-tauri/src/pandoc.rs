@@ -503,6 +503,52 @@ mod tests {
         assert_eq!(media, 1, "{said}");
     }
 
+    /// A picture whose name, once pandoc undoes its percent-encoding, climbs out
+    /// of the media folder: CVE-2023-35936 and CVE-2023-38745, which `--sandbox`
+    /// does not cover. `levels` is how many folders up it climbs.
+    fn climbing(levels: usize) -> String {
+        format!(
+            "Text\n\n![](data://image/png;base64,aGVsbG8=;.lua+{}escaped%2elua)\n",
+            "%2f%2e%2e".repeat(levels) + "%2f"
+        )
+    }
+
+    /// A document somebody sent writes nothing outside the folder it is read in.
+    #[test]
+    fn an_import_writes_no_picture_outside_its_folder() {
+        if !pandoc_here() {
+            return;
+        }
+        let documents = tempfile::tempdir().expect("a folder");
+        let beside = documents.path().join("inner");
+        fs::create_dir(&beside).expect("a folder");
+        fs::write(beside.join("paper.md"), climbing(2)).expect("written");
+
+        let (markdown, said) = imported(&beside, "paper.md");
+
+        assert!(markdown.contains("Text"), "{markdown}\n{said}");
+        assert!(
+            !documents.path().join("escaped.lua").exists(),
+            "{markdown}\n{said}"
+        );
+    }
+
+    /// A deck made from a note that came from somebody else writes nothing outside
+    /// its own folder.
+    #[test]
+    fn a_deck_writes_no_picture_outside_its_folder() {
+        if !pandoc_here() {
+            return;
+        }
+        let elsewhere = tempfile::tempdir().expect("a folder");
+        let inner = elsewhere.path().join("inner");
+        fs::create_dir(&inner).expect("a folder");
+
+        let _ = convert(&climbing(3), &inner.join("Deck.html"), "revealjs", None);
+
+        assert!(!elsewhere.path().join("escaped.lua").exists());
+    }
+
     /// A note in a folder of its own, with its picture beside it, and a folder
     /// somewhere else to save the export in, as the dialog lets the reader.
     fn note_and_elsewhere() -> (tempfile::TempDir, tempfile::TempDir) {
