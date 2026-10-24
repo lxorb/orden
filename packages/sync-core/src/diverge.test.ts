@@ -28,6 +28,27 @@ function crdtMerge(base: string, local: string, remote: string): string {
   return one.getText(TEXT).toJSON()
 }
 
+/** What a clean merge of whole lines owes: every line both sides kept and every line
+ *  either side added, and no other line. */
+function cleanLinesAreWhole(base: string, local: string, remote: string, merge: string) {
+  const linesOf = (text: string) => text.split('\n').filter(Boolean)
+  const [before, mine, theirs, out] = [base, local, remote, merge].map(linesOf) as [
+    string[],
+    string[],
+    string[],
+    string[],
+  ]
+  const owed = [
+    ...mine.filter((line) => !before.includes(line)),
+    ...theirs.filter((line) => !before.includes(line)),
+    ...before.filter((line) => mine.includes(line) && theirs.includes(line)),
+  ]
+  return {
+    missing: owed.filter((line) => !out.includes(line)),
+    extra: out.filter((line) => !owed.includes(line)),
+  }
+}
+
 describe('diverge', () => {
   test('edits in different paragraphs are clean, and the resolution holds both', () => {
     const base = 'First paragraph here.\n\nSecond paragraph there.\n'
@@ -152,7 +173,7 @@ describe('diverge', () => {
 
   test('a fence the merge would leave open asks', () => {
     const base = 'A long first paragraph that nobody touches at all.\nqq\n'
-    const local = '```\nA long first paragraph that nobody touches at all.\nq\n```\nq\n'
+    const local = '```\nA long first paragraph that nobody touches at all.\n```\n'
     const remote = 'A long first paragraph that nobody touches at all.\nzz\n'
 
     const result = diverge(base, local, remote, REMOTE_NEWER)
@@ -357,6 +378,395 @@ describe('diverge', () => {
     )
   })
 
+  test('a task each side added, either side of one both deleted, leaves the rest alone', () => {
+    // One device added a task at the top and the other at the bottom, and both deleted
+    // the same one. Read letter by letter, the line added at the top shifts every task
+    // below it down by one, so both sides seemed to rewrite the deleted line.
+    const base = '- [ ] alpha\n- [ ] gone item\n- [ ] beta\n- [ ] gamma\n'
+    const local = '- [ ] call Ann\n- [ ] alpha\n- [ ] beta\n- [ ] gamma\n'
+    const remote = '- [ ] alpha\n- [ ] beta\n- [ ] gamma\n- [ ] call Eve\n'
+    const merged = crdtMerge(base, local, remote)
+
+    for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
+      for (const crdt of [undefined, merged]) {
+        const result = diverge(base, local, remote, times, crdt)
+        expect(result.verdict).toBe('clean')
+        for (const task of ['alpha', 'beta', 'gamma']) {
+          expect(result.resolution).toContain(`- [ ] ${task}\n`)
+        }
+        expect(result.resolution).toMatch(/^(- \[ \] )?call Ann\n.*call Eve\n$/s)
+        expect(result.resolution).not.toContain('gone item')
+      }
+    }
+  })
+
+  test('a task one side added above the one the other side ticked leaves the tick where it was', () => {
+    // Read letter by letter, the added task's box lined up with the ticked one's, and
+    // the tick landed on the new task.
+    const base = '- [ ] Call Ann\n- [ ] Pay rent\n'
+    const local = '- [ ] Call Bob\n- [ ] Call Ann\n- [ ] Pay rent\n'
+    const remote = '- [x] Call Ann\n- [ ] Pay rent\n'
+
+    for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
+      const result = diverge(base, local, remote, times)
+      expect(result.verdict).toBe('clean')
+      expect(result.resolution).toBe('- [ ] Call Bob\n- [x] Call Ann\n- [ ] Pay rent\n')
+    }
+  })
+
+  test.each([
+    [
+      'buy milk and eggs\n',
+      'buy milk and bread\n',
+      'buy milk and fresh eggs\n',
+      'buy milk and fresh bread\n',
+    ],
+    [
+      'Call Ann on Friday.\n',
+      'Call Ann on Monday.\n',
+      'Call Ann on next Friday.\n',
+      'Call Ann on next Monday.\n',
+    ],
+    [
+      '- [ ] Call Ann on Friday\n',
+      '- [ ] Call Ann on Monday\n',
+      '- [ ] Call Ann on next Friday\n',
+      '- [ ] Call Ann on next Monday\n',
+    ],
+    [
+      'The cat sat on the mat.\n',
+      'The cat sat under the mat.\n',
+      'The cat sat quietly on the mat.\n',
+      'The cat sat quietly under the mat.\n',
+    ],
+  ])(
+    'a word put in before a word the other side replaced goes before its replacement (%j)',
+    (base, local, remote, both) => {
+      // The replacement was written first and the words put in before it straight after,
+      // run into it: "breadfresh".
+      const merged = crdtMerge(base, local, remote)
+      for (const [one, other] of [
+        [local, remote],
+        [remote, local],
+      ] as const) {
+        for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
+          for (const crdt of [undefined, merged]) {
+            const result = diverge(base, one, other, times, crdt)
+            expect(result.verdict).toBe('clean')
+            expect(result.resolution).toBe(both)
+          }
+        }
+      }
+    },
+  )
+
+  test.each([
+    ['- [ ] milk\n', '- [x] milk\n', '- [ ] eggs\n- [x] milk\n', '- [ ] eggs\n- [x] milk\n'],
+    [
+      '- [ ] a\n- [ ] b\n',
+      '- [ ] a\n- [ ] new\n- [x] b\n',
+      '- [ ] a\n- [x] b\n',
+      '- [ ] a\n- [ ] new\n- [x] b\n',
+    ],
+    [
+      '- [ ] pay bike\n- [ ] call book\n',
+      '- [ ] pay bike\n- [ ] rent buy\n- [x] call book\n',
+      '- [x] pay bike\n- [x] call book\n',
+      '- [x] pay bike\n- [ ] rent buy\n- [x] call book\n',
+    ],
+  ])(
+    'a task added above one both ticked leaves its own box alone (%j)',
+    (base, local, remote, both) => {
+      // Read letter by letter, the ticked task's old box became the new task's box, and
+      // the other side's tick landed on the new task.
+      const merged = crdtMerge(base, local, remote)
+      for (const [one, other] of [
+        [local, remote],
+        [remote, local],
+      ] as const) {
+        for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
+          for (const crdt of [undefined, merged]) {
+            const result = diverge(base, one, other, times, crdt)
+            expect(result.verdict).toBe('clean')
+            expect(result.resolution).toBe(both)
+          }
+        }
+      }
+    },
+  )
+
+  test.each([
+    // A word typed where the other side took a space out.
+    ['Pay rent, call mum.\n', 'Pay rent, now call mum.\n', 'Pay rent,call mum.\n'],
+    ['Pay rent. Call mum.', 'Pay rent. Ann Call mum.', 'Pay rent.Call mum.'],
+    ['- [ ] task \n', '- [ ] é task\n', '- [ ] task x\n'],
+    // A sentence each side moved into a paragraph of its own.
+    [
+      'Pay rent.\n\nCall mum.\n\nBuy milk.\n',
+      'Pay rent. Call mum.\n\n\nBuy milk.\n',
+      'Pay rent.\n\n\nCall mum. Buy milk.\n',
+    ],
+    // A paragraph split on both sides, one of them also taking a blank line out.
+    [
+      'rain hard it on fell home so.\n\nmet the home. so fell so home cat dark.\n',
+      ' met the home.\n\nso fell so home cat dark.\n',
+      'rain hard it on fell home so.\nmet the home.\n\nso fell so home cat dark.\n',
+    ],
+    ['- Call Bob', '- L1 task y\n- L2 Bob', '- R1 Call Bob\n- R2 task z'],
+  ])(
+    'a clean merge runs no two words together and says nothing twice (%j)',
+    (base, local, remote) => {
+      const wordsOf = (text: string) => text.match(/[\p{L}\p{N}]+/gu) ?? []
+      const count = (text: string) => {
+        const counts = new Map<string, number>()
+        for (const word of wordsOf(text)) counts.set(word, (counts.get(word) ?? 0) + 1)
+        return counts
+      }
+      const merged = crdtMerge(base, local, remote)
+      for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
+        for (const crdt of [undefined, merged]) {
+          const result = diverge(base, local, remote, times, crdt)
+          if (result.verdict !== 'clean') continue
+          const [before, mine, theirs] = [base, local, remote].map(count) as [
+            Map<string, number>,
+            Map<string, number>,
+            Map<string, number>,
+          ]
+          for (const [word, times] of count(result.resolution ?? '')) {
+            const most = Math.max(mine.get(word) ?? 0, theirs.get(word) ?? 0)
+            const both = Math.min(mine.get(word) ?? 0, theirs.get(word) ?? 0)
+            expect(times, word).toBeLessThanOrEqual(
+              most + Math.max(0, both - (before.get(word) ?? 0)),
+            )
+          }
+        }
+      }
+    },
+  )
+
+  test.each([
+    // A line one side took out and the other added to, beside a line the other added.
+    [
+      '- cafe\n- now tag uber Z\n',
+      '- cafe\n- now tag uber Z Z\neggs\n',
+      'noon cafe now a R eggs eggs resume noon call call brown and cafe\n- cafe\n',
+    ],
+    [
+      'top\n- cafe\n- now tag uber Z\n',
+      'top\n- cafe\n- now tag uber Z Z\neggs\n',
+      'top\nsome long new line written here ending in cafe\n- cafe\n',
+    ],
+    // A box ticked on one side where the other wrote over its bracket.
+    [
+      '- [ ] R\n- [x] rent noon\n- [x] to naïve note milk\n',
+      '- [ 😀 R\n- [x] rent noon\n- [x] to naïve note milk\n',
+      '- [x] R\n- [x] to naïve note milk\n',
+    ],
+  ])('a merge that keeps a version writes only lines someone wrote (%j)', (base, local, remote) => {
+    // Kept both, the one side's words ran into the line after the one the other took
+    // out (` Zeggs`), or two replacements ran into one token (`[x😀`).
+    const lines = new Set([base, local, remote].flatMap((text) => text.split('\n')))
+    for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
+      const result = diverge(base, local, remote, times)
+      if (result.resolution === null) continue
+      expect(result.resolution.split('\n').filter((line) => !lines.has(line))).toEqual([])
+    }
+  })
+
+  test.each([
+    [
+      '- [ ] Call Bob\n- [ ] Buy milk\n',
+      '- [ ] Call Bob at noon\n- [ ] Pay rent\n- [ ] Buy milk\n',
+      '- [ ] Call Bob today\n- [ ] Buy milk\n',
+    ],
+    ['- [ ] Call Bob\n', '- [ ] Call Bob\n- [ ] Pay rent\n', '- [ ] Call Bob today\n'],
+    ['- [ ] Call Bob', '- [ ] Call Bob\n- [ ] Pay rent', '- [ ] Call Bob today'],
+    ['- [ ] Call Bob\n', '- [ ] Call Bob!\n- [ ] Pay rent\n', '- [x] Call Bob today\n'],
+  ])(
+    'words added to a line the other side broke there stay on their own line (%j)',
+    (base, local, remote) => {
+      // Both sides wrote at the end of one line, one of them a new line after it: the
+      // other side's words went onto the end of the new line (Pay rent today).
+      const merged = crdtMerge(base, local, remote)
+      for (const [one, other] of [
+        [local, remote],
+        [remote, local],
+      ] as const) {
+        for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
+          for (const crdt of [undefined, merged]) {
+            const result = diverge(base, one, other, times, crdt)
+            if (result.verdict !== 'clean') continue
+            // A line one side added, none of its words the ancestor's, stays as written:
+            // the other side's words do not run onto its end.
+            const words = new Set(base.match(/[\p{L}\p{N}]+/gu) ?? [])
+            const added = [...one.split('\n'), ...other.split('\n')].filter((line) =>
+              (line.match(/[\p{L}\p{N}]+/gu) ?? []).every((word) => !words.has(word)),
+            )
+            const lines = (result.resolution ?? '').split('\n')
+            for (const line of added) expect(lines).toContain(line)
+          }
+        }
+      }
+    },
+  )
+
+  test('tasks each side added beside ones the other deleted stay tasks of their own', () => {
+    // Two added tasks ran together into one line and an emptied box was left behind.
+    const base = '- [ ] alpha\n- [ ] beta\n- [ ] new item\n- [ ] gamma\n'
+    const local = '- [ ] new item\n- [ ] read a book\n'
+    const remote = '- [ ] alpha\n- [ ] beta\n- [ ] new item\n- [ ] fix gamma\n- [ ] gamma\n'
+
+    for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
+      const result = diverge(base, local, remote, times)
+      expect(result.verdict).toBe('clean')
+      expect(result.resolution).toMatch(
+        /^- \[ \] new item\n(- \[ \] fix gamma\n- \[ \] read a book|- \[ \] read a book\n- \[ \] fix gamma)\n$/,
+      )
+    }
+  })
+
+  test.each([
+    // A line added above a line the other side rewrote.
+    ['- call Ann\n', '- L call Ann z\n- call Ann\n', '- R call Ann x\n'],
+    // A line rewritten on one side, lines added either side of it on the other.
+    ['alpha\n', 'L Book dentist z\n', 'R beta y\nalpha\nR Pay rent z\n'],
+    // A line emptied on one side, rewritten and added to on the other.
+    ['Renew passport\n', '\n', 'R Renew passport z\nR alpha z\n'],
+  ])(
+    'lines added or rewritten on both sides around one line come out whole (%j)',
+    (base, local, remote) => {
+      for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
+        const result = diverge(base, local, remote, times)
+        if (result.verdict !== 'clean') continue
+        expect(cleanLinesAreWhole(base, local, remote, result.resolution ?? '')).toEqual({
+          missing: [],
+          extra: [],
+        })
+      }
+    },
+  )
+
+  test('a blank line one side took out and the other wrote in is settled as written', () => {
+    const base = 'Intro.\n\nOutro.\n'
+    const local = 'Intro.\nOutro.\n'
+    const remote =
+      'Intro.\nA line written into the blank one, long enough to be a sentence.\nOutro.\n'
+
+    for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
+      const result = diverge(base, local, remote, times)
+      expect(result.verdict).not.toBe('diverged')
+      expect(result.resolution).toBe(remote)
+    }
+  })
+
+  test('property: boxes ticked on one side and tasks added or deleted on the other, merged clean, stay on their tasks', () => {
+    const items = ['milk', 'eggs', 'Pay rent', 'Call mum', 'Book dentist', 'alpha', 'beta']
+    const added = ['Water plants', 'wash car', 'fix the bike', 'Renew passport']
+    const box = (ticked: boolean) => (ticked ? '- [x] ' : '- [ ] ')
+    const sideOf = (count: number) =>
+      fc.record({
+        // Each task kept as it was, ticked the other way, or taken out.
+        does: fc.array(fc.constantFrom('keep', 'tick', 'drop'), {
+          minLength: count,
+          maxLength: count,
+        }),
+        adds: fc.array(fc.tuple(fc.nat(10), fc.constantFrom(...added), fc.boolean()), {
+          maxLength: 2,
+        }),
+      })
+    const tasks = fc
+      .uniqueArray(fc.tuple(fc.constantFrom(...items), fc.boolean()), {
+        minLength: 1,
+        maxLength: 5,
+        selector: ([item]) => item,
+      })
+      .chain((list) =>
+        fc.tuple(fc.constant(list), sideOf(list.length), sideOf(list.length), fc.boolean()),
+      )
+
+    fc.assert(
+      fc.property(tasks, ([list, mine, theirs, ends]) => {
+        const text = (lines: readonly string[]) => lines.join('\n') + (ends ? '\n' : '')
+        const sideText = (side: typeof mine, tag: string) => {
+          const lines: string[] = []
+          list.forEach(([item, ticked], at) => {
+            if (side.does[at] !== 'drop')
+              lines.push(box(side.does[at] === 'tick' ? !ticked : ticked) + item)
+          })
+          side.adds.forEach(([at, item, ticked], index) =>
+            lines.splice(at % (lines.length + 1), 0, `${box(ticked)}${tag}${index} ${item}`),
+          )
+          return lines
+        }
+        const local = sideText(mine, 'L')
+        const remote = sideText(theirs, 'R')
+        const owed = [
+          ...list.flatMap(([item, ticked], at) => {
+            const [one, other] = [mine.does[at], theirs.does[at]]
+            if (one === 'drop' || other === 'drop') return []
+            return [box(one === 'tick' || other === 'tick' ? !ticked : ticked) + item]
+          }),
+          ...local.filter((line) => / L\d /.test(line)),
+          ...remote.filter((line) => / R\d /.test(line)),
+        ]
+        const base = text(list.map(([item, ticked]) => box(ticked) + item))
+        for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
+          const result = diverge(base, text(local), text(remote), times)
+          if (result.verdict !== 'clean') continue
+          const lines = (result.resolution ?? '').split('\n').filter(Boolean)
+          expect(lines.filter((line) => !owed.includes(line))).toEqual([])
+          expect(owed.filter((line) => !lines.includes(line))).toEqual([])
+        }
+      }),
+      { numRuns: 500 },
+    )
+  })
+
+  test('property: tasks added and deleted on both sides, merged clean, are each whole', () => {
+    // Every line both sides kept, every line either side added, and nothing else: no
+    // line deleted on either side, and none run together or left half written.
+    const items = ['Buy milk', 'Pay rent', 'Call mum', 'Book dentist', 'alpha', 'beta', 'gamma']
+    const pool = [...items, 'new task', 'new item', 'call Ann', 'call Eve', 'read a book']
+    const sideOf = (lines: readonly string[]) =>
+      fc
+        .tuple(
+          fc.array(fc.boolean(), { minLength: lines.length, maxLength: lines.length }),
+          fc.array(fc.tuple(fc.nat(10), fc.constantFrom(...pool), fc.constantFrom('x', 'y', 'z')), {
+            maxLength: 2,
+          }),
+        )
+        .map(([keep, added]) => {
+          const out: (string | [string, string])[] = lines.filter((_, at) => keep[at])
+          for (const [at, item, tag] of added) out.splice(at % (out.length + 1), 0, [item, tag])
+          return out
+        })
+    const tasks = fc
+      .uniqueArray(fc.constantFrom(...pool), { minLength: 1, maxLength: 6 })
+      .chain((lines) => fc.tuple(fc.constant(lines), sideOf(lines), sideOf(lines)))
+
+    fc.assert(
+      fc.property(fc.constantFrom('- [ ] ', '- ', ''), tasks, (mark, [lines, mine, theirs]) => {
+        const text = (list: readonly (string | [string, string])[], side: string) =>
+          list
+            .map((one) => (typeof one === 'string' ? one : `${side} ${one[0]} ${one[1]}`))
+            .map((one) => `${mark}${one}\n`)
+            .join('')
+        const base = text(lines, '')
+        const local = text(mine, 'L')
+        const remote = text(theirs, 'R')
+        for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
+          const result = diverge(base, local, remote, times)
+          if (result.verdict !== 'clean') continue
+          expect(cleanLinesAreWhole(base, local, remote, result.resolution ?? '')).toEqual({
+            missing: [],
+            extra: [],
+          })
+        }
+      }),
+      { numRuns: 1000 },
+    )
+  })
+
   test('a task each side added, after one both deleted, keeps its box', () => {
     // Both devices ticked off the same task and each added one of its own at the end.
     // The task boxes the two new lines share are not a word moved twice, and the older
@@ -372,6 +782,24 @@ describe('diverge', () => {
         expect(result.verdict).toBe('clean')
         expect(result.resolution).toContain('- [ ] Water plants\n')
         expect(result.resolution).toContain('- [ ] Renew passport\n')
+      }
+    }
+  })
+
+  test('two new tasks that start with the same word are not one passage said twice', () => {
+    // Each side wrote a task of its own starting "- [ ] new", which read to the repeat
+    // check as one passage written twice, and the CRDT's text it fell back to had the
+    // two sides' letters woven into a word neither of them wrote.
+    const base = '- [ ] a task\n- [ ] gone task\n'
+    const local = '- [ ] a task\n- [ ] new task\n'
+    const remote = '- [ ] new item\n- [ ] a task\n'
+    const words = new Set(`${local} ${remote}`.split(/\s+/))
+
+    for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
+      const result = diverge(base, local, remote, times, crdtMerge(base, local, remote))
+      expect(result.verdict).toBe('minor')
+      for (const word of result.resolution?.split(/\s+/) ?? []) {
+        expect(words.has(word), word).toBe(true)
       }
     }
   })
@@ -447,6 +875,27 @@ describe('diverge', () => {
     )
     // The CRDT's own order is kept wherever it is only a matter of order.
     expect(same).toBeGreaterThan(clean * 0.9)
+  })
+
+  test('a line replaced by a paste of long lines on each side is read in about the time of one diff', () => {
+    // Each pasted line was compared letter by letter with the line it replaced, two
+    // unrelated stretches at a time: 25 seconds for this one.
+    const words = ['the', 'cat', 'sat', 'on', 'mat', 'we', 'met', 'at', 'noon', 'it', 'was', 'late']
+    let seed = 1
+    const next = () => (seed = (seed * 1103515245 + 12345) % 2147483648) / 2147483648
+    const line = () => {
+      let text = ''
+      while (text.length < 990) text += `${words[Math.floor(next() * words.length)]} `
+      return text.slice(0, 990)
+    }
+    const paste = () => `${Array.from({ length: 400 }, line).join('\n')}\n`
+    const base = `${line()}\n`
+    const local = paste()
+    const remote = paste()
+
+    const started = performance.now()
+    diverge(base, local, remote, LOCAL_NEWER)
+    expect(performance.now() - started).toBeLessThan(2_500)
   })
 
   test('a word changed at each end of a hundred kilobytes is clean', () => {
