@@ -422,7 +422,7 @@ const MOST_IN_A_SPACE = 400
 export async function spaceEnded(env: Env, spaceId: string): Promise<void> {
   const { results } = await env.DB.prepare(
     `with terms as (
-       select 1 from term_sessions t join notes n on n.id = t.term
+       select 1 from term_sessions t join notes n on n.id = t.term and t.term <> t.session
         where n.space_id = ?1 and t.ended_at is null limit 1
      )
      select who from room_sockets where space_id = ?1

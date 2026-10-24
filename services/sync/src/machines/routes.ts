@@ -238,12 +238,14 @@ online.post('/terms', async (context) => {
 
 /** Whether `session` is somebody else's live session that its owner could still adopt,
  *  `adopt`'s rule from their side: keyed by no live file, so a file naming it is theirs.
- *  A copy beside a file still there is not, and gets a session of the asker's own. */
+ *  A copy beside a file still there is not, and gets a session of the asker's own. A
+ *  session keyed by its own id is keyed by no file, whatever note a stranger gives that id. */
 async function adoptable(env: Env, userId: string, session: string): Promise<boolean> {
   const row = await env.DB.prepare(
     `select 1 as one from term_sessions t
       where t.session = ?1 and t.user_id != ?2 and t.ended_at is null
-        and not exists (select 1 from notes n where n.id = t.term and n.deleted = 0)`,
+        and not exists (select 1 from notes n
+                         where n.id = t.term and t.term <> t.session and n.deleted = 0)`,
   )
     .bind(session, userId)
     .first<{ one: number }>()
@@ -265,7 +267,9 @@ async function adopt(env: Env, userId: string, term: string, session: string) {
     `update term_sessions set term = ?1
       where session = ?2 and user_id = ?3 and ended_at is null and term != ?1
         and not exists (
-          select 1 from notes n where n.id = term_sessions.term and n.deleted = 0
+          select 1 from notes n
+           where n.id = term_sessions.term and term_sessions.term <> term_sessions.session
+             and n.deleted = 0
         )
         and not exists (select 1 from term_sessions t where t.term = ?1)
      returning machine, session`,
@@ -325,7 +329,7 @@ online.get('/terms', async (context) => {
   const { results } = await context.env.DB.prepare(
     `select t.term as term, t.session as session, t.typing as typing,
             t.created_at as created_at, n.space_id as space, n.path as path, n.deleted as deleted
-       from term_sessions t left join notes n on n.id = t.term
+       from term_sessions t left join notes n on n.id = t.term and t.term <> t.session
       where t.user_id = ? and t.ended_at is null order by t.created_at`,
   )
     .bind(user.id)
