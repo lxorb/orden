@@ -547,8 +547,14 @@ fn escaped(words: &str) -> String {
             // A tag opened, where the words say `<b>` or `<script>`.
             '<' => after
                 .is_some_and(|next| next.is_ascii_alphabetic() || matches!(next, '/' | '!' | '?')),
-            // An entity, which would show as the character it names.
-            '&' => after.is_some_and(|next| next.is_ascii_alphanumeric() || next == '#'),
+            // An entity, which would show as the character it names; `R&D` is none.
+            '&' => {
+                let named = chars[at + 1..]
+                    .iter()
+                    .take_while(|next| next.is_ascii_alphanumeric() || **next == '#')
+                    .count();
+                named > 0 && chars.get(at + 1 + named) == Some(&';')
+            }
             // A link or a wikilink, code, math, a strike, a lowered and a raised run.
             '[' | ']' | '`' | '$' | '~' | '^' => true,
             _ => false,
