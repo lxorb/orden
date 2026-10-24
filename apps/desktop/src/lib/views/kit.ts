@@ -39,6 +39,10 @@ export interface Kit {
   /** Whether the view itself may be changed and added to: false for a base file or a
    *  fence in a space shared to be read, whose words that space keeps. */
   readonly writable: boolean
+  /** Whether a task or a note added here has somewhere to land: not where it would go
+   *  into a space shared to be read, as a task typed into Today goes into the open
+   *  space's inbox though the view has no file of its own. */
+  readonly adds: boolean
   /** Ticks a task; answers whether its note was written, so a box drawn ticked at the
    *  press goes back where nothing was. */
   tick(row: Row): Promise<boolean>
@@ -98,6 +102,13 @@ export function kitFor(live: LiveView, spec: ViewSpec, file: string | null, comp
     get writable() {
       const at = live.writtenAt
       return at === null || canWriteAt(at)
+    },
+    get adds() {
+      if (!kit.writable) return false
+      const root = workspace.activeSpace?.root
+      const notes = (live.view?.nib.rows ?? 'notes') === 'notes'
+      const to = notes ? (file ?? root) : (prefillOf(spec, live.today).path ?? root)
+      return to === undefined || canWriteAt(to)
     },
     open(row, how = 'aside') {
       const path = notePath(row)

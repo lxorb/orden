@@ -226,7 +226,8 @@
     const said = words
     if (!said.trim()) return
     words = ''
-    await addTyped(said, {})
+    // Kept in the field where it was not written, unless more were typed meanwhile.
+    if (!(await addTyped(said, {})) && !words) words = said
   }
 
   /** The row a project's name is being typed into: a new one at the top of the
@@ -540,7 +541,7 @@
         }}
       />
     </div>
-  {:else}
+  {:else if writes}
     <button type="button" class="nib-row adder" onclick={add}>
       <span class="nib-row-mark"
         ><svg viewBox="0 0 13 13" aria-hidden="true"><path d={ADD_MARK} /></svg></span

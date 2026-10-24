@@ -108,7 +108,7 @@
 
   function add() {
     // The key as the plus: nothing to add to a view of a space shared to be read.
-    if (!kit.writable) return
+    if (!kit.adds) return
     if (layout === 'kanban' && (live.view?.nib.rows ?? 'notes') === 'notes') {
       boardAdding++
       return

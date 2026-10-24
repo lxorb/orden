@@ -125,7 +125,7 @@
         folded,
         shut,
         hidden: view?.nib.hidden ?? [],
-        adding: true,
+        adding: kit.adds,
         parentOf: (row) => parentOf(row, live.context),
       },
     ),
