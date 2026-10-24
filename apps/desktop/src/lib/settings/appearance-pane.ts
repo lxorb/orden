@@ -1,5 +1,5 @@
-import { t } from '../i18n.svelte'
-import { DEFAULTS, modes } from '../modes.svelte'
+import { key, t } from '../i18n.svelte'
+import { DEFAULTS, type FontPlace, modes } from '../modes.svelte'
 import { isDesktop } from '../tauri'
 import { SCHEME_CHOICES, SCHEME_NAMES } from '../schemes'
 import { type SchemeChoice, theme } from '../theme.svelte'
@@ -8,6 +8,38 @@ import { WALLPAPER_THEME } from '../wallpaper/held'
 import { wallpaper } from '../wallpaper/wallpaper.svelte'
 import { workspace } from '../workspace.svelte'
 import type { PictureSide, PairField, Field, Group, Pane } from './fields'
+
+/** The three places a face can be chosen for, each with the app's own face as what its
+ *  field shows while it is empty. */
+const FONT_FIELDS: readonly {
+  place: FontPlace
+  label: string
+  hint: string
+  own: string
+  words: string[]
+}[] = [
+  {
+    place: 'content',
+    label: key('Note font'),
+    hint: key('The face notes are written in; any font installed here, by its name.'),
+    own: 'iA Writer Quattro',
+    words: ['writing', 'text', 'serif'],
+  },
+  {
+    place: 'ui',
+    label: key('Interface font'),
+    hint: key('The face of menus, lists and settings; any font installed here, by its name.'),
+    own: 'Geist',
+    words: ['ui', 'menus', 'sidebar'],
+  },
+  {
+    place: 'mono',
+    label: key('Code font'),
+    hint: key('The face of code and terminals; any monospaced font installed here, by its name.'),
+    own: 'iA Writer Mono S',
+    words: ['monospace', 'code', 'terminal'],
+  },
+]
 
 /** A control hands its value back as a string, because that is what a control
  *  holds. Following the system is what anything else reads as. */
@@ -207,6 +239,22 @@ export function appearancePane(): Pane {
 
       // The Essentials as Zen's grid of tiles, or as the list of names they were;
       // found by the word they went by before, in English and in the reader's own.
+      // The faces to read in (#772): any installed on this machine, by its name, in
+      // front of the app's own, which still draws what the chosen one has not got.
+      {
+        title: t('Fonts'),
+        fields: FONT_FIELDS.map((one): Field => ({
+          kind: 'text',
+          label: t(one.label),
+          words: ['font', 'typeface', 'family', 'custom font', ...one.words],
+          hint: t(one.hint),
+          placeholder: one.own,
+          initial: '',
+          get: () => modes.fonts[one.place],
+          set: (value) => modes.setFont(one.place, value),
+        })),
+      },
+
       {
         title: t('File list'),
         fields: [
