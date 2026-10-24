@@ -14,7 +14,7 @@
  *  the rows engine all ask it about the same line. `taskAt` (tasks.ts) still answers
  *  the narrower question of where the box is. */
 
-import { plainWords } from './escapes'
+import { codeAndWords, plainWords } from './escapes'
 import { taskAt } from './tasks'
 import { TAG_NAME, opensTag } from './tags'
 
@@ -327,6 +327,17 @@ function fieldAt(text: string, at: number, last: number): Found | null {
   return { index: at, 0: text.slice(at, end + 1), 1: found[1], 2: text.slice(from, to) }
 }
 
+/** Where the code spans in `text` start and end, so a field inside one is not read. */
+function codeSpans(text: string): [number, number][] {
+  const out: [number, number][] = []
+  let at = 0
+  for (const one of codeAndWords(text)) {
+    if (one.code) out.push([at, at + one.text.length])
+    at += one.text.length
+  }
+  return out
+}
+
 /** Whether the character at `at` stands behind an odd run of backslashes. */
 function escaped(text: string, at: number): boolean {
   let before = at
@@ -347,7 +358,9 @@ function fieldAtEnd(head: string): Found | null {
   const end = head.length - 1
   const open = shut === ']' ? '[' : '('
   let at = head.indexOf(open, head.lastIndexOf(shut, end - 1) + 1)
+  const code = codeSpans(head)
   for (; at !== -1 && at < end; at = head.indexOf(open, at + 1)) {
+    if (code.some(([from, to]) => at >= from && at < to)) continue
     const found = fieldAt(head, at, end)
     if (found) return found
   }
@@ -672,9 +685,16 @@ function inlineTokens(
   const words = line.slice(from, to)
 
   const last = { '[': words.lastIndexOf(']'), '(': words.lastIndexOf(')') }
+  const code = codeSpans(words)
 
   for (OPENS.lastIndex = 0; OPENS.exec(words);) {
     const at = OPENS.lastIndex - 1
+    // Code holds no field: it is shown as written. Read on after it.
+    const inside = code.find(([from, to]) => at >= from && at < to)
+    if (inside) {
+      OPENS.lastIndex = inside[1]
+      continue
+    }
     const found = fieldAt(words, at, words[at] === '[' ? last['['] : last['('])
     if (!found) continue
     OPENS.lastIndex = at + found[0].length
@@ -766,15 +786,41 @@ const FIELD_EMOJI = /(🔺|⏫|🔼|🔽|⏬|✅|❌|📅|📆|🗓|⏳|⌛|🛫
  *  is followed by a word joiner, which draws nothing and leaves the emoji, the date
  *  or the words after it read as none of the patterns at the end of a line. */
 export function taskWords(words: string): string {
+  // Code shows what is in it as written and the reader takes nothing out of it, so it
+  // is passed over: an escape there would be drawn as a backslash.
+  let before = ''
+  return codeAndWords(words)
+    .map((one) => {
+      const written = one.code ? one.text : taskWordsAfter(one.text, before)
+      before = one.text.at(-1) ?? before
+      return written
+    })
+    .join('')
+}
+
+/** `taskWords` for words that are not code, `before` the character in front of them. */
+function taskWordsAfter(words: string, before: string): string {
   let out = ''
   for (let at = 0; at < words.length; at++) {
     const char = words.charAt(at)
-    if (char === '#' && opensTag(words.charAt(at - 1)) && words.charAt(at - 1) !== '\\')
-      out += '\\#'
-    else if (char === ':' && words.charAt(at - 1) === ':') out += '\\:'
+    const prior = at > 0 ? words.charAt(at - 1) : before
+    if (char === '#' && opensTag(prior) && prior !== '\\') out += '\\#'
+    else if (char === ':' && prior === ':' && endsKey(words, at - 1)) out += '\\:'
     else out += char
   }
   return out.replace(FIELD_EMOJI, '$&\u2060')
+}
+
+/** Whether the colon at `colon` closes a field's key: a bracket that opens one before
+ *  it, not escaped, and a key between with no colon or bracket in it. An address's
+ *  `https://a/x::y` has a colon of its own in the way, so it is left as written. */
+function endsKey(words: string, colon: number): boolean {
+  for (let back = colon - 1; back >= 0; back--) {
+    const char = words.charAt(back)
+    if (char === '[' || char === '(') return back < colon - 1 && !escaped(words, back)
+    if (char === ']' || char === ')' || char === ':') return false
+  }
+  return false
 }
 
 /** Plain words typed in another app, as a task line's text that reads back as them:

@@ -367,7 +367,7 @@ const AN_ESCAPE = /\\([!-/:-@[-`{-~])/g
 const A_CODE = /(`+)(?:[^`]|[^`][\s\S]*?[^`])\1(?!`)/g
 
 /** The text cut into what is code and what is not, in order. */
-function codeAndWords(text: string): { code: boolean; text: string }[] {
+export function codeAndWords(text: string): { code: boolean; text: string }[] {
   const out: { code: boolean; text: string }[] = []
   let at = 0
   for (const found of text.matchAll(A_CODE)) {

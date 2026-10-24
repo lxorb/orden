@@ -334,3 +334,17 @@ describe('a Keep list item', () => {
     expect(task?.fields).toEqual({})
   })
 })
+
+test('a Keep list item keeps its code as it was written', async () => {
+  const plan = await readKeep([
+    file(
+      'Keep/List.json',
+      keepNote({
+        title: 'Code',
+        listContent: [{ text: 'use `std::vector` now', isChecked: false }],
+      }),
+    ),
+  ])
+
+  expect(noteAt(plan, 'Code.md')).toContain('- [ ] use `std::vector` now')
+})
