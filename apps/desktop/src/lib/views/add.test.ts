@@ -27,6 +27,13 @@ vi.mock('../workspace.svelte', async () => {
         const keys = new Set([...taken].map((one) => pathKey(one, dir)))
         return freePath(wanted, (candidate) => keys.has(pathKey(`${dir}/${candidate}`, dir)))
       },
+      // The same numbering here, where nothing is on a disk the store has not listed.
+      freeNameOnDisk: (dir: string, wanted: string) => {
+        const keys = new Set([...taken].map((one) => pathKey(one, dir)))
+        return Promise.resolve(
+          freePath(wanted, (candidate) => keys.has(pathKey(`${dir}/${candidate}`, dir))),
+        )
+      },
       loadTree: async () => undefined,
       fileCame: async () => undefined,
       open: async () => undefined,
