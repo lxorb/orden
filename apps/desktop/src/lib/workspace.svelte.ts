@@ -4453,7 +4453,9 @@ class Workspace {
    *  Answers how many notes were touched, so a caller can record whether there is
    *  anything to put back. */
   async retarget(from: string, to: string, how: Retargeting = {}): Promise<number> {
-    const root = this.activeSpace?.root
+    // The space the note is in, which an undo or a redo done after switching spaces,
+    // or a rename from a tab of another space, is not the active one.
+    const root = this.rootHolding(from)
     if (!root) return 0
 
     const touched = await links.retarget(from, to, root, (path) => this.documentAt(path), how)
