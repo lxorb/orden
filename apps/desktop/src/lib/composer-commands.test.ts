@@ -188,9 +188,9 @@ describe.each(['split-at-caret', 'extract-selection'])('%s', (id) => {
     }
   })
 
-  test('is not offered for a note of a space that is not the open one', () => {
+  test('is offered for a note of a space that is not the open one, which it carves beside', () => {
     openAt('/other/a.md')
-    expect(offered(id, typing)).toBe(false)
+    expect(offered(id, typing)).toBe(true)
   })
 
   test('is not offered in a space shared to be read', () => {

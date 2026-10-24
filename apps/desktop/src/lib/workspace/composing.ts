@@ -63,6 +63,14 @@ export function mergeable(
   return root !== null && isMarkdownPath(path) && withinSpace(root, path) !== null && writable(path)
 }
 
+/** Whether a note may be split or have a passage lifted out: a markdown note that
+ *  may be written. Not `mergeable`, which also wants the open space because a merge's
+ *  picker lists only its notes: a carve writes its new note beside the one it came
+ *  from, so a tab of a space not on screen carves into that space (B206). */
+export function carvable(path: string, writable: (path: string) => boolean): boolean {
+  return isMarkdownPath(path) && writable(path)
+}
+
 /** Appends this note into another, deletes it, and points every link that came
  *  here at the note it went into. */
 export async function mergeInto(ws: Composes, from: string, into: string): Promise<void> {
@@ -145,13 +153,12 @@ async function carve(
   cut: (named?: string) => Split | null,
   kind: 'split' | 'extract',
 ) {
-  // Only a markdown note of the open space that may be written takes a `[[link]]`
-  // and a `.md` beside it; in `snippets.json` the link breaks the file. The menus
-  // offer neither gesture anywhere else, and it is asked again where the files are
-  // written, as a merge does, so nothing that calls this can carve what they would
-  // not. See `mergeable`.
+  // Only a markdown note that may be written takes a `[[link]]` and a `.md` beside
+  // it; in `snippets.json` the link breaks the file. The menus offer neither gesture
+  // anywhere else, and it is asked again where the files are written, as a merge
+  // does, so nothing that calls this can carve what they would not. See `carvable`.
   const { canWriteAt } = await import('../sharing.svelte')
-  if (!mergeable(ws.activeSpace?.root ?? null, path, canWriteAt)) return
+  if (!carvable(path, canWriteAt)) return
 
   const wanted = cut()
   if (!wanted) return

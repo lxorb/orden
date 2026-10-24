@@ -349,12 +349,16 @@ describe('a file that is not a note of the open space', () => {
     expect(disk.get(JSON_FILE)).toBe(DOC)
   })
 
-  test('nor is a note of another space', async () => {
+  /** A tab can outlive a space switch, and its note is carved in its own space,
+   *  beside it (B206), so a note of another space is still a note. */
+  test('while a note of another space is still split, beside it', async () => {
     const note = `${OTHER}/plan.md`
     const ws = space({ [note]: '# Plan\n\nfirst\n\n## Later\n\nsecond\n' }, note)
     await splitAtCaret(ws, 10)
 
-    expect(sent).toEqual([])
+    expect([...disk.keys()].some((path) => path.startsWith(`${OTHER}/`) && path !== note)).toBe(
+      true,
+    )
   })
 
   test('nor a note of a space shared to be read', async () => {

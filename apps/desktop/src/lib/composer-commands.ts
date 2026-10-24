@@ -13,7 +13,7 @@ import type { MenuEntry } from './menu.svelte'
 import { shownName } from './note-name'
 import { canWriteAt, canWriteIn } from './sharing.svelte'
 import { isMarkdownPath } from './space-paths'
-import { mergeable } from './workspace/composing'
+import { carvable, mergeable } from './workspace/composing'
 import { workspace } from './workspace.svelte'
 
 /** The notes the one at `exclude` may be merged into: the other markdown notes.
@@ -57,18 +57,23 @@ function hasRest(view?: EditorView): boolean {
  *  may be typed in.
  *  The note it goes into is asked the same by the merge itself. */
 function canMerge(path: string | null, view?: EditorView): boolean {
-  if (!path || !mergeTargets(path).length) return false
-  return canWrite(path, view)
+  if (!path || !mergeTargets(path).length || !typable(view)) return false
+  return mergeable(workspace.activeSpace?.root ?? null, path, canWriteAt)
 }
 
-/** Whether the file in front of the reader is a markdown note of the open space
- *  that may be written, in an editor that may be typed in. A split and an
- *  extraction ask it as much as a merge: each writes a `.md` beside the file and a
- *  `[[link]]` into it, which in `snippets.json`, `custom.css` or a code file breaks
- *  the file and leaves a stray note beside it. */
+/** Whether the file in front of the reader is a markdown note that may be written,
+ *  in an editor that may be typed in. A split and an extraction each write a `.md`
+ *  beside the file and a `[[link]]` into it, which in `snippets.json`, `custom.css`
+ *  or a code file breaks the file and leaves a stray note beside it. A note of a
+ *  space not on screen is fine: the new note goes beside it, in its own space. */
 function canWrite(path: string | null, view?: EditorView): path is string {
-  if (!path || view?.state.readOnly || !canWriteIn(workspace.active?.note)) return false
-  return mergeable(workspace.activeSpace?.root ?? null, path, canWriteAt)
+  if (!path || !typable(view)) return false
+  return carvable(path, canWriteAt)
+}
+
+/** An editor that may be typed in, showing a note that may be written. */
+function typable(view?: EditorView): boolean {
+  return !view?.state.readOnly && canWriteIn(workspace.active?.note)
 }
 
 export function composerCommands(view?: EditorView): Command[] {
