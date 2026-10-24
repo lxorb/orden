@@ -20,17 +20,21 @@ vi.mock('../tauri', () => ({
       // The crate's guard: a PDF going to a page note's paper name is refused unless
       // it is held there on purpose; see `rename_note` in notes.rs.
       renames.push({ ...args })
+      // So is a page note going where a PDF of its paper's name is. Neither holds for
+      // sync's move of the one file, whose companions are moves of their own.
       const holder = args?.to?.replace(/\.pdf$/i, '')
       const held = (args as { hold?: boolean }).hold === true
-      if (args?.to?.endsWith('.pages.pdf') && holder && notes.has(holder) && !held)
+      const sync = (args as { alone?: boolean }).alone === true
+      if (args?.to?.endsWith('.pages.pdf') && holder && notes.has(holder) && !held && !sync)
         return Promise.reject(new Error(`${holder} is already there`))
+      if (args?.to?.endsWith('.pages') && notes.has(`${args.to}.pdf`) && !sync)
+        return Promise.reject(new Error(`${args.to}.pdf is already there`))
       // And `move_held`: a PDF's highlights go with it, and highlights already at the
       // new name are cleared where it has none, unless the move is the file alone.
       const { from = '', to = '' } = args ?? {}
       if (notes.has(from)) notes.set(to, notes.get(from)!)
       notes.delete(from)
-      const alone = (args as { alone?: boolean }).alone === true
-      if (from.endsWith('.pdf') && !alone) {
+      if (from.endsWith('.pdf') && !sync) {
         const sidecar = notes.get(`${from}.highlights.json`)
         notes.delete(`${from}.highlights.json`)
         if (sidecar === undefined) notes.delete(`${to}.highlights.json`)
@@ -116,5 +120,27 @@ describe('a PDF another device renamed, with its highlights', () => {
 
     expect(notes.get('/s/B.pdf.highlights.json')).toBe('{"version":1}')
     expect(renames.at(-1)).toEqual({ from: '/s/A.pdf', to: '/s/B.pdf', alone: true })
+  })
+})
+
+describe('a page note another device renamed, with its paper', () => {
+  // The note and its paper come as two moves, in either order. Paper first, the note's
+  // move found a PDF where its paper goes, was refused as somebody's own, and the note
+  // stayed at its old name on every pass.
+  test('settles both when the paper comes first', async () => {
+    notes.set('/s/X.pages', '{}')
+    notes.set('/s/X.pages.pdf', '%PDF')
+    const telling = {
+      touching: () => undefined,
+      moved: () => Promise.resolve(),
+    } as unknown as Parameters<typeof appWorld>[1]
+    const { disk } = appWorld(() => null, telling)
+
+    await disk.move('/s/X.pages.pdf', '/s/Y.pages.pdf', 'file')
+    await disk.move('/s/X.pages', '/s/Y.pages', 'file')
+
+    expect(notes.has('/s/Y.pages')).toBe(true)
+    expect(notes.get('/s/Y.pages.pdf')).toBe('%PDF')
+    expect(notes.has('/s/X.pages')).toBe(false)
   })
 })

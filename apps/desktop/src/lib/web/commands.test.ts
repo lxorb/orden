@@ -653,6 +653,40 @@ describe("a page note's paper", () => {
     expect(disk.assets.has('/Notes/Week 1.pages.pdf')).toBe(false)
   })
 
+  test('and the note settle in either order when sync moves them', async () => {
+    // Renamed on another device, the note and its paper come as two moves. Paper first,
+    // the note's move found a PDF where its paper goes and was refused on every pass.
+    await webInvoke('rename_note', { from: paper, to: '/Notes/Week.pages.pdf', alone: true })
+    await webInvoke('rename_note', { from: note, to: '/Notes/Week.pages', alone: true })
+
+    expect(disk.files.has('/Notes/Week.pages')).toBe(true)
+    expect(disk.assets.has('/Notes/Week.pages.pdf')).toBe(true)
+
+    // Note first, into another folder, where the note takes the paper's new name.
+    await webInvoke('rename_note', {
+      from: '/Notes/Week.pages',
+      to: '/Term/Week.pages',
+      alone: true,
+    })
+    await webInvoke('rename_note', {
+      from: '/Notes/Week.pages.pdf',
+      to: '/Term/Week.pages.pdf',
+      hold: true,
+      alone: true,
+    })
+
+    expect(disk.files.has('/Term/Week.pages')).toBe(true)
+    expect(disk.assets.has('/Term/Week.pages.pdf')).toBe(true)
+  })
+
+  test('is still not taken over by a note renamed by hand', async () => {
+    // A PDF of a page note's paper name is somebody's own, unless sync says otherwise.
+    disk.assets.set('/Notes/Report.pages.pdf', held('/Notes/Report.pages.pdf'))
+    await expect(
+      webInvoke('rename_note', { from: note, to: '/Notes/Report.pages' }),
+    ).rejects.toThrow('already there')
+  })
+
   test('goes to the trash and comes back with it', async () => {
     const entry = await webInvoke<{ id: string }>('trash_item', { path: note, kind: 'note' })
     expect(disk.assets.has(paper)).toBe(false)

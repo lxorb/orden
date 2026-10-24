@@ -1048,4 +1048,50 @@ mod tests {
         assert!(!dir.path().join("A.pdf.highlights.json").exists());
         assert!(dir.path().join("B.pdf.highlights.json").exists());
     }
+
+    /// A page note renamed on another device comes as two moves, the note's and its
+    /// paper's, in either order. Paper first, the note's move found a PDF where its paper
+    /// goes, refused it as somebody's own, and the note stayed behind on every pass.
+    #[test]
+    fn a_page_note_moved_alone_joins_the_paper_that_came_ahead_of_it() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let was = dir.path().join("X.pages");
+        fs::write(&was, "{}").expect("the page note");
+        fs::write(dir.path().join("Y.pages.pdf"), "%PDF").expect("its paper, moved");
+
+        super::renamed(&was, &dir.path().join("Y.pages"), false, true).expect("the move");
+
+        assert!(dir.path().join("Y.pages").exists());
+        assert_eq!(
+            fs::read_to_string(dir.path().join("Y.pages.pdf")).expect("the paper"),
+            "%PDF"
+        );
+    }
+
+    /// And note first, into another folder: the paper's move goes where the note now
+    /// takes it for its paper, which only a PDF turned into its note may do by hand.
+    #[test]
+    fn a_paper_moved_alone_joins_the_page_note_that_came_ahead_of_it() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        fs::create_dir_all(dir.path().join("A")).expect("a folder");
+        fs::create_dir_all(dir.path().join("B")).expect("another");
+        fs::write(dir.path().join("B/Y.pages"), "{}").expect("the page note, moved");
+        let paper = dir.path().join("A/X.pages.pdf");
+        fs::write(&paper, "%PDF").expect("its paper");
+
+        super::renamed(&paper, &dir.path().join("B/Y.pages.pdf"), true, true).expect("the move");
+
+        assert!(dir.path().join("B/Y.pages.pdf").exists());
+    }
+
+    #[test]
+    fn a_page_note_moved_by_hand_is_still_refused_over_a_pdf_of_its_paper_name() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let was = dir.path().join("X.pages");
+        fs::write(&was, "{}").expect("the page note");
+        fs::write(dir.path().join("Y.pages.pdf"), "%PDF").expect("somebody's own PDF");
+
+        assert!(super::renamed(&was, &dir.path().join("Y.pages"), false, false).is_err());
+        assert!(was.exists());
+    }
 }
