@@ -68,12 +68,8 @@ export interface Mirror {
    *  the next pass tell, after a quit, whether it was made. See `movedThere` in
    *  pass.ts. Absent nearly always. */
   moving?: Moving
-  /** Renames made here of notes waiting on a question, which the account could not be
-   *  told of, by the note's id. The entry stays at the old name until the account has
-   *  taken the new one, and this is what says the file there is not the note: let go
-   *  with the question, the push sent a new note under the new name and deleted the
-   *  note itself, the other device's newer words with it. See `movedOne` in pass.ts.
-   *  Absent nearly always. */
+  /** Renames of notes waiting on a question that the account missed, by id; see
+   *  `movedOne` in pass.ts. Absent nearly always. */
   untold?: Record<string, Untold>
 }
 
@@ -84,8 +80,7 @@ export interface Moving {
   to: string
 }
 
-/** A rename the account is still to hear of, by the paths in the space, and whether
- *  the question was still waiting when it was last told. */
+/** Paths in the space, and whether the question still waited when last told. */
 export interface Untold {
   from: string
   to: string
