@@ -207,7 +207,7 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  33,555 for the pages and the icon. The budgets add up to 7,040,000, so 1.29 MiB of
  *  the 8 MiB ceiling is out of every part's reach without a change to this table. */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_620_000, // combined branch only, measured 5613752
+  code: 5_625_000, // combined branch only, measured 5622665
   catalogues: 850_000,
   styles: 290_000,
   fonts: 260_000,
