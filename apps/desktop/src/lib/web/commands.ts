@@ -238,10 +238,16 @@ async function writeNote(path: string, content: string) {
 
 /** Everything under `from` moves, so renaming a folder takes its notes along -
  *  and the files beside them, which is how a PDF's own highlights follow it. */
-async function renameNote(from: string, to: string) {
+async function renameNote(from: string, to: string, hold = false) {
   const source = normalise(from)
   const target = normalise(to)
   if (source === target) return
+
+  // Before anything moves; see `paperInTheWay`. `hold` is the window turning a PDF into
+  // its page note, the one move that may put a PDF where a page note takes it.
+  const turning = hold && isPdf(target) && parent(source) === parent(target)
+  const there = await paperInTheWay(source, target)
+  if (there && !turning) throw new Error(`${there} is already there`)
 
   const pictures = await moveAssets(source, target)
 
@@ -272,6 +278,20 @@ async function renameNote(from: string, to: string) {
 
   // A page note's paper follows the note, as `move_held` has it on a desktop.
   if (isPages(source)) await renamePaper(paperOf(source), paperOf(target))
+}
+
+/** The file a rename or a copy of `source` to `target` would put a page note and its
+ *  paper together with, or null: for a page note, a PDF already where its paper would
+ *  go, which is somebody's own; for a PDF, the page note that would take it for its
+ *  paper (#538). See `paper_in_the_way` in paths.rs. */
+async function paperInTheWay(source: string, target: string): Promise<string | null> {
+  if (isPages(target)) {
+    const paper = paperOf(target)
+    const own = paperOf(source) === paper
+    return (await files.get(source)) && !own && (await assets.get(paper)) ? paper : null
+  }
+  const holder = holderOf(target)
+  return holder && (await files.get(holder)) ? holder : null
 }
 
 /** A page note's paper, and the paper's own highlights, under the note's new name.
@@ -306,6 +326,8 @@ async function copyPath(from: string, to: string) {
   if ((await occupied(target)) || (await assets.get(target))) {
     throw new Error('something already lives there')
   }
+  const there = await paperInTheWay(source, target)
+  if (there) throw new Error(`${there} is already there`)
 
   const under = (one: string) => one === source || one.startsWith(`${source}/`)
   const copied = (one: string) => target + one.slice(source.length)
@@ -894,7 +916,7 @@ export async function webInvoke<T>(
       return undefined as T
 
     case 'rename_note':
-      await renameNote(args.from as string, args.to as string)
+      await renameNote(args.from as string, args.to as string, args.hold === true)
       return undefined as T
 
     case 'copy_path':
@@ -991,7 +1013,8 @@ export async function webInvoke<T>(
 
     case 'save_asset': {
       const bytes = args.bytes as number[]
-      const given = (args.name as string) || `pasted-${now()}.png`
+      // A name and never a path: `a/b.png` would be a folder `a`. See `safe_name`.
+      const given = ((args.name as string) || `pasted-${now()}.png`).replace(/[/\\]/g, '-')
       // `CON.png` is a device on Windows; see `safe_name` in assets.rs.
       const name = isReserved(given) ? `_${given}` : given
       const notePath = args.notePath as string
