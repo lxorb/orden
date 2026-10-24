@@ -21,6 +21,9 @@
 #     run on the web tab it came back to;
 #   - with IDLE=1, what the app costs the CPU while nothing happens, before anything
 #     else is done with it (scripts/idle-cpu.py);
+#   - with TEXTSIZE=1, Settings > Editor > Text size dragged with the compositor's
+#     pointer, and the note's text larger on the screen and after a load (#680,
+#     scripts/textsize-drive.py);
 #   - with FLASH=1, the strip's note tab and web tab chosen in turn in the dark scheme,
 #     filmed, and no frame of the pane white (#762, scripts/flash-drive.py);
 #   - with SCHEME=1, a web tab's page drawn in the app's scheme as the app's scheme is
@@ -204,7 +207,9 @@ PAGE
   endpoint
   set -- "$@" http://127.0.0.1:8765/
 fi
-if [ "${DRIVE:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${SCHEME:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ]; then
+# With TEXTSIZE=1, the endpoint and no page: the launch opens on its note (#680).
+[ "${TEXTSIZE:-0}" = 1 ] && endpoint
+if [ "${DRIVE:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${SCHEME:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ] || [ "${TEXTSIZE:-0}" = 1 ]; then
   # And a keyboard with it, where xkbcommon's tools can say what its keys are.
   if command -v xkbcli > /dev/null; then
     xkbcli compile-keymap --layout us > "$out/keymap.txt"
@@ -277,6 +282,11 @@ fi
 
 if [ "$status" = 0 ] && [ "${DRIVE:-0}" = 1 ]; then
   python3 "$here/wayland-drive.py" "$out" "$app_pid" || status=1
+fi
+
+if [ "$status" = 0 ] && [ "${TEXTSIZE:-0}" = 1 ]; then
+  sleep 3
+  python3 "$here/textsize-drive.py" sway "$out" "$app_pid" || status=1
 fi
 
 if [ "$status" = 0 ] && [ "${FLASH:-0}" = 1 ]; then
