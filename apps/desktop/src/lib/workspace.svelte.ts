@@ -4501,8 +4501,13 @@ class Workspace {
     this.sides = panels.showing(this.sides, next)
   }
 
-  /** Shows a panel, or shuts it where it is already the one showing: the press on
-   *  a panel's own tab, and the button for a side.
+  /** Shows a panel, or shuts it where it is already the one showing: a side's own
+   *  button and key, which are about the side.
+   *
+   *  Not a panel's tab. The tabs are in the side they switch, so pressing the one in
+   *  front shut the side it was in - the whole bar gone from under the pointer, on a
+   *  press that meant "this one" (#770). A tab selects, as every tab does; the side is
+   *  shut by its button, its key or its edge.
    *
    *  A switch belongs to a control somebody is looking at, which knows what it is
    *  showing. The rule itself is `showing` in workspace/panels.ts, which answers

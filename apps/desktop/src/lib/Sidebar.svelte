@@ -250,7 +250,7 @@
       strip.behind.map((item) => ({
         label: item.label,
         hint: shortcuts.hint(commandOf(item.id)),
-        run: () => workspace.togglePanel(item.id),
+        run: () => workspace.showPanel(item.id),
       })),
       { title: t('More') },
     )
@@ -662,7 +662,7 @@
             title={shortcuts.tooltip(item.label, commandOf(item.id))}
             aria-label={item.label}
             aria-selected={showing === item.id}
-            onclick={() => workspace.togglePanel(item.id)}
+            onclick={() => workspace.showPanel(item.id)}
             oncontextmenu={(event) => showTabMenu(event, item.id, item.label)}
             use:longPress={(event) => showTabMenu(event, item.id, item.label)}
           >

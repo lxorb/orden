@@ -1054,7 +1054,11 @@ Two rows of chrome, in the order identity, view:
    `--space-1` either side, and past that the last tabs go behind a More segment at
    the pill's end that lists them with their keys; the tab showing always keeps a
    place. VS Code's activity bar does the same. See `tabsShown` in `workspace/panels.ts`, and
-   `test/e2e/panel-tabs.py`, which measures it at three widths in both schemes.
+   `test/e2e/panel-tabs.py`, which measures it at three widths in both schemes. A tab
+   selects and nothing more: pressing the one in front leaves it in front, since the
+   tabs sit inside the side they switch, and shutting the side from one took the bar
+   away from under the pointer (#770). The side shuts by its own button and key
+   (`test/e2e/panel-tab-press.py`).
 
 There is no search field over the list: the owner asked for the one that stood
 under the tabs to go (issue #230). The palette finds a note by its name and hands
