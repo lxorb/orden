@@ -217,6 +217,14 @@ describe('a key added from the side panel', () => {
     expect(propertyNamed(held, ' STATUS ')?.key).toBe('Status')
     expect(propertyNamed(held, 'due')).toBeNull()
   })
+
+  /** A name the block cannot read back as a key: `a: b` wrote `a: b: ''`, which no
+   *  reader takes as YAML, and the rest left a line that sent the panel to source. */
+  test('refuses a name no reader could take back as a key', () => {
+    for (const name of ['a: b', '- x', '#x', '[x]', 'k #c']) {
+      expect(addProperty(NOTE, name), name).toBeNull()
+    }
+  })
 })
 
 describe('a key taken away from the side panel', () => {
