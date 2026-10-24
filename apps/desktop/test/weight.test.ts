@@ -834,8 +834,16 @@ function holds(tail: string): boolean {
  *  Raised 2026-10-24, to 3,282,000, for #710: the values an automation, an agent, an
  *  icon and a cover write are quoted as YAML (`scalar`, `flowItem`, the no-change check
  *  in `frontMatterEdit`, which reads a quoted and a bare value apart). Measured
- *  3,281,217. */
-const BUDGET = 3_282_000
+ *  3,281,217.
+ *
+ *  Raised 2026-10-24, to 3,283,000, for #830: a quoted front-matter value keeps
+ *  being words, so the property readers carry whether it was quoted
+ *  (`quoted` in packages/markdown/src/properties.ts). Measured 3,282,986.
+ *
+ *  Raised 2026-10-24, to 3,286,000, for #847: a list keeps its members' types and
+ *  the way each was written when one is added or taken out (`listItems`, `typedItem`
+ *  in packages/markdown/src/property-edits.ts). Measured 3,285,282. */
+const BUDGET = 3_286_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
