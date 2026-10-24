@@ -925,6 +925,19 @@ describe('chats', () => {
       ])
     })
 
+    test('a file is let go though another message says its hash in words', async () => {
+      const chat = await chatOfOwner()
+      const hash = await upload(people.writer, new Uint8Array([1, 2, 3, 5]))
+      const post = postOf('private', { files: [file(hash)] })
+      await send(people.writer, chat, post)
+      await send(people.owner, chat, postOf(`keep ${hash}`))
+
+      await send(people.writer, chat, { kind: 'delete', id: id(), target: post.message })
+      const after = await call(env, `/v2/chats/${chat}/files/${hash}`, { token: people.owner })
+      expect(after.status).toBe(404)
+      expect(env.db.prepare('select hash from chat_files where chat_id = ?').all(chat)).toEqual([])
+    })
+
     test('a guest holds no blobs, so attaches none', async () => {
       const chat = await chatOfOwner()
       const hash = await upload(people.owner, new Uint8Array([9]))
