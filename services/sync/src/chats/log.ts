@@ -93,6 +93,18 @@ const POKE_EVERY = 2000
 const RETRY_FIRST = 30_000
 const RETRY_MOST = 3_600_000
 
+/** Whether a live message still names a file (`?1` its hash): as one of its files, the
+ *  small picture of one, or its link preview's picture. Read from where a message keeps
+ *  them and nowhere else, since words that only say a hash name nothing, and a member
+ *  who wrote one down would otherwise keep somebody's deleted file served. */
+const NAMES_FILE = `select 1 from messages m
+  where m.deleted = 0
+    and (json_extract(m.json, '$.preview.picture') = ?1
+         or exists (select 1 from json_each(m.json, '$.files') f
+                     where json_extract(f.value, '$.hash') = ?1
+                        or json_extract(f.value, '$.preview') = ?1))
+  limit 1`
+
 /** How long the list of who the chat reaches is believed. */
 const REACHERS_FOR = 60_000
 
@@ -888,19 +900,15 @@ export class ChatLog implements DurableObject {
     )
   }
 
-  /** The files a deleted message named, let go of where no message still names them. */
+  /** The files a deleted or edited message named, let go of where no message still names
+   *  them. */
   private async freeFiles(effects: Effects): Promise<void> {
     const chat = this.chatId()
     if (!chat || !effects.freed.length) return
     const hashes = effects.freed.flatMap((file) =>
       file.preview ? [file.hash, file.preview] : [file.hash],
     )
-    const loose = hashes.filter(
-      (hash) =>
-        !this.sql
-          .exec('select 1 from messages where deleted = 0 and json like ? limit 1', `%${hash}%`)
-          .toArray().length,
-    )
+    const loose = hashes.filter((hash) => !this.sql.exec(NAMES_FILE, hash).toArray().length)
     if (!loose.length) return
     await this.env.DB.prepare(
       `delete from chat_files where chat_id = ? and hash in (${places(loose.length)})`,
