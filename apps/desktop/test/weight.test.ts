@@ -833,8 +833,12 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-24, to 3,284,000, for #810: a PDF in a space shared to be read opens
  *  as itself rather than being turned into its page note (`mayTurn` and `openPaper` in
- *  workspace.svelte.ts). Measured 3,283,566 on top of #805. */
-const BUDGET = 3_284_000
+ *  workspace.svelte.ts). Measured 3,283,566 on top of #805.
+ *
+ *  Raised 2026-10-24, to 3,285,000, for #901: a PDF a page note already holds opens
+ *  that note before anything asks whether it may be turned (`heldBy` in
+ *  workspace.svelte.ts). Measured 3,284,600 on top of #810. */
+const BUDGET = 3_285_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
