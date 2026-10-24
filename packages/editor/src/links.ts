@@ -42,6 +42,21 @@ export function hrefOf(target: string): string | null {
   return null
 }
 
+/** A backslash in front of ASCII punctuation, which is what markdown lets one
+ *  escape. */
+const AN_ESCAPE = /\\([!-/:-@[-`{-~])/g
+
+/** Where a bare address in the text goes: the address without the backslashes
+ *  escaping its punctuation. A conversion writes a page's `[`, `]` and backtick
+ *  escaped wherever they are, because the same words can be a link's text, and
+ *  the reading view takes the escapes back off when it links the address (see
+ *  `bareAddress` in @nib/markdown). Followed as written, `?b=\[1\]` would be a
+ *  page nobody linked to. Between the `<` `>` of an autolink nothing is an escape,
+ *  so that address is followed as it is. */
+export function bareTarget(written: string): string {
+  return written.replace(AN_ESCAPE, '$1')
+}
+
 /** Read from the user agent string rather than `navigator.platform`, which is
  *  deprecated, and from the string rather than `userAgentData`, which only
  *  Chromium has. All this decides is whether the modifier is Cmd or Ctrl. */
