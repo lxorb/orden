@@ -619,6 +619,13 @@ class Sync {
         void this.refresh(path, joined)
         this.pulled += 1
       },
+      // Everything kept by path hears of it as of a move made here: the open tab,
+      // the links, the rows. The table is already re-keyed, so `moved` below finds
+      // nothing to tell the account.
+      moved: (from, to) => {
+        void workspace.fileMoved(from, to, 'file')
+        this.pulled += 1
+      },
       wanted: open,
       // The reader's answer to "what if the same note was written twice", and
       // the notes still waiting for one. See sync/conflicts.ts.
