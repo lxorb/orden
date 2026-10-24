@@ -1,4 +1,5 @@
 import { taskHash } from '@nib/bases'
+import { taskRowsOfText } from '@nib/bases/tasks'
 import { describe, expect, test } from 'vitest'
 import {
   commentsOf,
@@ -100,6 +101,34 @@ describe('what is written under a task', () => {
     }
   })
 
+  test('a code block is written as typed, its lists no list items of the task', () => {
+    const task = at(0, 'Fix config')
+    const typed =
+      'Change it to:\n\n```yaml\nhosts:\n- alpha\n```\n\n~~~diff\n- old\n+ new\n1. [ ] x\n~~~'
+    const note = withDescription('- [ ] Fix config\n- [ ] Next\n', task, typed) ?? ''
+    expect(note.split('\n').slice(4, 12)).toEqual([
+      '  hosts:',
+      '  - alpha',
+      '  ```',
+      '',
+      '  ~~~diff',
+      '  - old',
+      '  + new',
+      '  1. [ ] x',
+    ])
+    expect(descriptionOf(note, task)?.text).toBe(typed)
+    expect(withDescription(note, task, typed)).toBeNull()
+    expect(commentsOf(note, task)).toEqual([])
+    expect(taskRowsOfText('S', 'n.md', note).map((row) => row.task?.text)).toEqual([
+      'Fix config',
+      'Next',
+    ])
+    // A fence left open is no code block yet: what follows it stays escaped.
+    const open = withDescription('- [ ] Fix config\n', task, '```\n- a') ?? ''
+    expect(open).toBe('- [ ] Fix config\n  ```\n  \\- a\n')
+    expect(descriptionOf(open, task)?.text).toBe('```\n- a')
+  })
+
   test('a sub-task goes at the end of what the task holds', () => {
     const after = withSubtask(NOTE, at(1, 'Call the bank'), '- [ ] Call again')
     expect(after?.split('\n').slice(5, 9)).toEqual([
@@ -148,9 +177,103 @@ describe('a task’s comments', () => {
     expect(commentsOf(one, bank).at(-1)?.text).toBe('[ ] not a task')
   })
 
+  test('with a checklist on a later line stay one comment and add no task', () => {
+    const plan = at(0, 'Plan trip')
+    const note = '- [ ] Plan trip\n  - [ ] Book hotel\n'
+    const typed = 'Options we discussed:\n- [ ] train\n* [x] car\n1. [ ] bus\n\\- [ ] typed escape'
+    const one = withComment(note, plan, typed, '2026-10-24T10:00') ?? ''
+    expect(one.split('\n').slice(3, 7)).toEqual([
+      '    - \\[ ] train',
+      '    * \\[x] car',
+      '    1. \\[ ] bus',
+      '    \\- [ ] typed escape',
+    ])
+    expect(taskRowsOfText('S', 'n.md', one).map((row) => row.task?.text)).toEqual([
+      'Plan trip',
+      'Book hotel',
+    ])
+    expect(commentsOf(one, plan).map((comment) => comment.text)).toEqual([typed])
+  })
+
   test('are deleted with their further lines', () => {
     const one = withComment(NOTE, bank, 'Called again.\nNo answer.', '2026-10-13T09:30') ?? ''
     expect(withoutComment(one, bank, 7)).toBe(NOTE)
     expect(withoutComment(NOTE, bank, 5)).toBeNull()
+  })
+})
+
+describe('what is written under a task, fuzzed', () => {
+  let seed = 7
+  const random = (n: number) => {
+    seed = (seed * 1103515245 + 12345) & 0x7fffffff
+    return seed % n
+  }
+  const pick = <T>(from: readonly T[]): T => from[random(from.length)] as T
+  const STARTS = ['- ', '\\- ', '1. ', '1\\. ', '* ', '+ ', '  ', '\t', '[ ] ', '\\[ ] ', '', '-']
+  const MORE = ['x ', '> ', '# ', '    - ', '- [ ] ', '* [x] ', '1. [ ] ', '\\- [ ] ', '- \\[ ] ']
+  const WORDS = ['a', 'b c', ' ', '', '- d', '\\', '[x]', '[ ] e']
+  const line = () => pick([...STARTS, ...MORE]) + pick(WORDS)
+  /** Words as they are typed: lines, and code blocks that are closed. */
+  function typed(): string {
+    const out: string[] = []
+    for (let n = 1 + random(5); n > 0; n--) {
+      if (random(4) > 0) out.push(line())
+      else {
+        const fence = pick(['```', '~~~', '```yaml'])
+        out.push(fence)
+        for (let inner = random(4); inner > 0; inner--) out.push(line())
+        out.push(fence.slice(0, 3))
+      }
+    }
+    return out.join('\n')
+  }
+  /** The note's tasks, each with the task it is under. */
+  const tasksOf = (note: string) => {
+    const rows = taskRowsOfText('S', 'n.md', note)
+    const at = new Map(rows.map((row) => [row.anchor?.line, row.task?.text]))
+    return rows.map((row) => [row.task?.text, at.get(row.task?.parent)])
+  }
+  const NOTES = [
+    ['- [ ] Task', '  - [ ] Sub', '  - c1 [at:: 2026-01-01T00:00]', '- [ ] Next'].join('\n'),
+    ['# H', '1. [ ] Task', '   said', '- [ ] Next'].join('\n'),
+    ['\t- [ ] Task', '\t  old', '- [ ] Next'].join('\r\n'),
+    ['- [ ] Top', '  - [ ] Task', '    - [ ] Sub', '- [ ] Next'].join('\n'),
+    ['10. [ ] Task', '- [ ] Next'].join('\n'),
+  ]
+
+  test('any description and any comment read back as typed and change no task', () => {
+    for (let round = 0; round < 4000; round++) {
+      const note = NOTES[round % NOTES.length] ?? ''
+      const task = at(
+        note.split('\n').findIndex((one) => one.includes('Task')),
+        'Task',
+      )
+      const words = typed()
+      const before = tasksOf(note)
+
+      const described = withDescription(note, task, words)
+      if (described !== null) {
+        expect(descriptionOf(described, task)?.text.trimEnd(), words).toBe(words.trimEnd())
+        expect(withDescription(described, task, words), words).toBeNull()
+        expect(tasksOf(described), words).toEqual(before)
+        expect(commentsOf(described, task), words).toEqual(
+          commentsOf(note, task).map((one) => ({
+            ...one,
+            line: one.line + described.split('\n').length - note.split('\n').length,
+          })),
+        )
+      }
+
+      const commented = withComment(note, task, words, '2026-10-24T10:00')
+      if (commented === null) continue
+      const want = words
+        .split('\n')
+        .map((one) => one.trim())
+        .filter(Boolean)
+        .join('\n')
+      expect(commentsOf(commented, task).at(-1)?.text, words).toBe(want)
+      expect(tasksOf(commented), words).toEqual(before)
+      expect(descriptionOf(commented, task)?.text, words).toBe(descriptionOf(note, task)?.text)
+    }
   })
 })
