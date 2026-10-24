@@ -427,6 +427,7 @@ export function diverge(
   const again = divergeOnce(base, fixed.local, fixed.remote, times, merged)
   if (again.resolution === null) return first
   if (cutsLines(base, [local, remote], first.resolution, again.resolution)) return first
+  if (losesWords(base, [local, remote], first.resolution, again.resolution)) return first
   if (excess([local, remote], again.resolution) >= excess([local, remote], first.resolution)) {
     return first
   }
@@ -440,17 +441,64 @@ function linesIn(text: string): Map<string, number> {
   return counts
 }
 
+/** Whether a repair took out a word that only a side wrote, not one of the
+ *  ancestor's: what it takes out is a word moved, which the ancestor had. */
+function losesWords(
+  base: string,
+  sides: readonly string[],
+  before: string,
+  after: string,
+): boolean {
+  const old = wordsOf(base)
+  const held = wordsOf(before)
+  const kept = wordsOf(after)
+  return sides.some((side) =>
+    [...wordsOf(side)].some(
+      ([word, count]) =>
+        !old.has(word) && (kept.get(word) ?? 0) < Math.min(count, held.get(word) ?? 0),
+    ),
+  )
+}
+
+/** The lines of a side's text whose words are all words the side wrote: a line
+ *  it added, not one it added words to. */
+function linesWritten(base: string, side: string): Map<string, number> {
+  const wrote = new Uint8Array(side.length)
+  let shift = 0
+  for (const edit of edits(base, side, 'semantic')) {
+    const at = edit.from + shift
+    wrote.fill(1, at, at + edit.insert.length)
+    shift += edit.insert.length - (edit.to - edit.from)
+  }
+  const counts = new Map<string, number>()
+  let start = 0
+  for (const line of side.split('\n')) {
+    let words = 0
+    let theirs = true
+    for (let at = 0; at < line.length; at++) {
+      if (!/[\p{L}\p{N}]/u.test(line.charAt(at))) continue
+      words += 1
+      if (!wrote[start + at]) theirs = false
+    }
+    if (words && theirs) counts.set(line, (counts.get(line) ?? 0) + 1)
+    start += line.length + 1
+  }
+  return counts
+}
+
 /** Whether a repair took apart a line that a side added whole and the merge held:
- *  a word one side moved is said again in words, never in a line of its own, so a
- *  line either side wrote stays as it was written (two sides that each took a task
- *  out and each added one of the same name have moved nothing). */
+ *  a word one side moved is said again in words, not in a line of its own, so a line
+ *  either side wrote stays as it was written (two sides that each took a task out and
+ *  each added one of the same name have moved nothing). A line a side only added
+ *  words to, or one the ancestor has too, is the words' new place, and the repair
+ *  may take them out of it. */
 function cutsLines(base: string, sides: readonly string[], before: string, after: string): boolean {
   const old = linesIn(base)
   const held = linesIn(before)
   const kept = linesIn(after)
   return sides.some((side) =>
-    [...linesIn(side)].some(([line, count]) => {
-      if (line === '' || old.has(line)) return false
+    [...linesWritten(base, side)].some(([line, count]) => {
+      if (old.has(line)) return false
       return (kept.get(line) ?? 0) < Math.min(count, held.get(line) ?? 0)
     }),
   )

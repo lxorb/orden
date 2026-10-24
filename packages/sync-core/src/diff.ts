@@ -78,6 +78,143 @@ function characters(old: string, now: string): Diff[] {
   return out
 }
 
+/** Two stretches compared character by character and read for a person, the
+ *  semantic cleanup kept to what lies between their common ends. Run over the ends
+ *  too, its sideways pass slides an edit out across text the two share - `now ` typed
+ *  after a space becomes ` now` typed before it - onto a place the other side may
+ *  have changed, and the two run together (`nowcall`). */
+function tidied(old: string, now: string): Diff[] {
+  const middle = fold(old, now)
+  if (!middle) return old ? [[DIFF_EQUAL, old]] : []
+  const inner = characters(old.slice(middle.from, middle.to), middle.insert)
+  diffCleanupMerge(inner)
+  diffCleanupSemantic(inner)
+  const out: Diff[] = []
+  if (middle.from) out.push([DIFF_EQUAL, old.slice(0, middle.from)])
+  out.push(...inner)
+  if (middle.to < old.length) out.push([DIFF_EQUAL, old.slice(middle.to)])
+  return out
+}
+
+/** The text's lines, each with its line break. */
+function linesOf(text: string): string[] {
+  return text.match(/[^\n]*\n|[^\n]+$/g) ?? []
+}
+
+/** How alike two lines read, from 0 to 1: how much of the longer one they share,
+ *  their line breaks left out; blank lines not at all. */
+function alike(one: string, other: string): number {
+  const a = one.endsWith('\n') ? one.slice(0, -1) : one
+  const b = other.endsWith('\n') ? other.slice(0, -1) : other
+  // A blank line is like every other blank line, and anchors nothing: paired, it
+  // would read a paragraph split as text moved across the blank line.
+  if (!a.trim() || !b.trim()) return 0
+  const longest = Math.max(a.length, b.length)
+  const shortest = Math.min(a.length, b.length)
+  let front = 0
+  while (front < shortest && a.charCodeAt(front) === b.charCodeAt(front)) front++
+  let back = 0
+  while (
+    back < shortest - front &&
+    a.charCodeAt(a.length - 1 - back) === b.charCodeAt(b.length - 1 - back)
+  ) {
+    back++
+  }
+  const ends = (front + back) / longest
+  if (ends >= ONE_LINE || longest > MOST_LINE) return ends
+  // Words put in at both ends of a line leave it no common front or back.
+  const common = diffMain(a, b, UNCLOCKED, false).reduce(
+    (sum, [operation, text]) => sum + (operation === DIFF_EQUAL ? text.length : 0),
+    0,
+  )
+  return common / longest
+}
+
+/** Past this length a line is compared only by its common front and back. */
+const MOST_LINE = 1_000
+
+/** At least this alike, two lines of a run are one line edited. */
+const ONE_LINE = 0.8
+
+/** Past this many pairs of lines, a run is read as one stretch, unpaired. */
+const MOST_PAIRED = 400
+
+/** A run of changed lines, the lines on one side that are the other's lines edited
+ *  paired up in order and read letter by letter one pair at a time, and the rest
+ *  read as lines added or taken out - or, where both sides have lines between two
+ *  pairs, as those lines rewritten.
+ *
+ *  Read letter by letter as one stretch, a task added above a task ticked takes the
+ *  ticked one's box: `- [ ] milk` against `- [ ] eggs` and `- [x] milk` reads as
+ *  ` eggs\n- [x]` put in after the first box, and a tick the other side gave milk
+ *  lands on eggs. */
+function paired(gone: string, come: string): Diff[] {
+  const before = linesOf(gone)
+  const after = linesOf(come)
+  const n = before.length
+  const m = after.length
+  if (!n || !m || (n === 1 && m === 1) || n * m > MOST_PAIRED) return tidied(gone, come)
+
+  // The pairs that make the run most alike, in order: a longest common subsequence
+  // weighted by how alike each pair reads.
+  const score = (i: number, j: number) => {
+    const how = alike(before[i] ?? '', after[j] ?? '')
+    return how >= ONE_LINE ? how : 0
+  }
+  const best = Array.from({ length: n + 1 }, () => new Float64Array(m + 1))
+  for (let i = n - 1; i >= 0; i--) {
+    const row = best[i] as Float64Array
+    const below = best[i + 1] as Float64Array
+    for (let j = m - 1; j >= 0; j--) {
+      const pair = score(i, j)
+      row[j] = Math.max(below[j] ?? 0, row[j + 1] ?? 0, pair ? pair + (below[j + 1] ?? 0) : 0)
+    }
+  }
+
+  const out: Diff[] = []
+  let gap = { gone: '', come: '' }
+  const close = () => {
+    if (gap.gone && gap.come) out.push(...tidied(gap.gone, gap.come))
+    else if (gap.gone) out.push([DIFF_DELETE, gap.gone])
+    else if (gap.come) out.push([DIFF_INSERT, gap.come])
+    gap = { gone: '', come: '' }
+  }
+  let i = 0
+  let j = 0
+  while (i < n || j < m) {
+    const here = best[i]?.[j] ?? 0
+    const pair = i < n && j < m ? score(i, j) : 0
+    if (pair && Math.abs(here - (pair + (best[i + 1]?.[j + 1] ?? 0))) < 1e-9) {
+      close()
+      out.push(...tidied(before[i] ?? '', after[j] ?? ''))
+      i++
+      j++
+    } else if (i < n && (j >= m || Math.abs(here - (best[i + 1]?.[j] ?? 0)) < 1e-9)) {
+      gap.gone += before[i] ?? ''
+      i++
+    } else {
+      gap.come += after[j] ?? ''
+      j++
+    }
+  }
+  close()
+  // A line split in two, or two joined, pairs with one of its halves and reads as the
+  // rest of it taken out and typed again on a line of its own. Read as one stretch it
+  // is the break put in or taken out, and it writes far less: where the run differs
+  // only in white space, or that reading writes a third less, it is the one.
+  const plain = tidied(gone, come)
+  const spaces = plain.every(([operation, text]) => operation === DIFF_EQUAL || !text.trim())
+  return spaces || cost(plain) * 3 <= cost(out) * 2 ? plain : out
+}
+
+/** How many characters a diff takes out and puts in. */
+function cost(diffs: readonly Diff[]): number {
+  return diffs.reduce(
+    (sum, [operation, text]) => sum + (operation === DIFF_EQUAL ? 0 : text.length),
+    0,
+  )
+}
+
 /** Two long stretches compared line by line, and each run of lines that differs then
  *  character by character. The library's own line mode, with the bound above on the
  *  second step in place of its clock. */
@@ -175,6 +312,50 @@ function whole(old: string, edits: readonly Edit[]): Edit[] {
   return out
 }
 
+/** Every insertion read at one place among the places it could be read at: words
+ *  put in between two others read the same before the space or after it (` now` or
+ *  `now `), and so does a word put in before another that starts with its last
+ *  letter (` R` after the `R` of `Renew`, or `R ` before it). Two sides that put
+ *  words in at one place must be read putting them in at one offset, or neither is
+ *  seen to meet the other. Of the places within the line, up to the edits either
+ *  side, the furthest on that cuts into no word, as `fold` reads it; else the
+ *  furthest on. Lines put in between two lines stay where they are. */
+function slid(old: string, list: readonly Edit[]): Edit[] {
+  const cuts = (from: number, insert: string) =>
+    (isWordChar(charBefore(old, from)) && isWordChar(charAt(insert, 0))) ||
+    (isWordChar(charBefore(insert, insert.length)) && isWordChar(charAt(old, from)))
+  return list.map((edit, index) => {
+    if (edit.from !== edit.to) return edit
+    const lineStart = edit.from === 0 || old.charAt(edit.from - 1) === '\n'
+    if (lineStart && edit.insert.endsWith('\n')) return edit
+    // Never onto the edits either side: touching, they would read as one.
+    const before = list[index - 1]
+    const after = list[index + 1]
+    const floor = before ? before.to + 1 : 0
+    const limit = after ? after.from - 1 : old.length
+    let { from, insert } = edit
+    // Back to the first place it could be read at.
+    for (let char = charBefore(old, from); char && char !== '\n'; char = charBefore(old, from)) {
+      if (from - char.length < floor || !insert.endsWith(char)) break
+      insert = char + insert.slice(0, -char.length)
+      from -= char.length
+    }
+    // Then on through every other, keeping the last that cuts no word.
+    let best = { from, insert }
+    let clean = !cuts(from, insert)
+    for (let char = charAt(old, from); char && char !== '\n'; char = charAt(old, from)) {
+      if (from + char.length > limit || !insert.startsWith(char)) break
+      insert = insert.slice(char.length) + char
+      from += char.length
+      if (!cuts(from, insert) || !clean) {
+        best = { from, insert }
+        clean = !cuts(from, insert)
+      }
+    }
+    return { from: best.from, to: best.from, insert: best.insert }
+  })
+}
+
 /** Two ways to tidy the library's raw answer, for two readers.
  *
  *  `semantic` is for reading: the coincidental agreements inside a rewritten
@@ -253,7 +434,7 @@ export function edits(old: string, now: string, tidy: Tidy): Edit[] {
   const middle = fold(old, now)
   if (!middle) return []
 
-  if (tidy === 'semantic') return worded(old, now, whole(old, read(old, now, middle)))
+  if (tidy === 'semantic') return worded(old, now, slid(old, whole(old, read(old, now, middle))))
 
   const before = old.slice(middle.from, middle.to)
   if (!before || !middle.insert) return [middle]
@@ -311,10 +492,7 @@ function read(old: string, now: string, middle: Edit): Edit[] {
   const open = { gone: '', come: '' }
   const flush = () => {
     if (!open.gone && !open.come) return
-    const part = characters(open.gone, open.come)
-    diffCleanupMerge(part)
-    diffCleanupSemantic(part)
-    diffs.push(...part)
+    diffs.push(...paired(open.gone, open.come))
     open.gone = ''
     open.come = ''
   }
@@ -322,11 +500,16 @@ function read(old: string, now: string, middle: Edit): Edit[] {
     open.gone += gone
     open.come += come
     const next = runs[index + 1]
+    // Blank lines kept between two changes are joined into them too: kept, a blank
+    // line anchors a paragraph split or joined, and the text either side reads as
+    // moved across it.
+    const changes = (one: { gone: string; come: string }) => one.gone !== '' || one.come !== ''
     if (
       next &&
-      rewrites(open) &&
-      rewrites(next) &&
-      kept.length <= Math.min(longest(open), longest(next))
+      ((rewrites(open) &&
+        rewrites(next) &&
+        kept.length <= Math.min(longest(open), longest(next))) ||
+        (changes(open) && changes(next) && !kept.trim()))
     ) {
       open.gone += kept
       open.come += kept
