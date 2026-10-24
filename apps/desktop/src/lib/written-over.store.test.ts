@@ -26,6 +26,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('./workspace.svelte')
 const { account } = await import('./account.svelte')
+const { links } = await import('./link-index.svelte')
 
 /** The disk, which is there: it was made above. */
 function files(): Map<string, string> {
@@ -158,5 +159,35 @@ describe('a folder deleted signed in, undone after a note took a name in it', ()
 
     expect(files().get('/space/Journal/2026-10-19.md')).toBe('# Today\nwritten since\n')
     expect(files().get('/space/Journal/2026-10-19 2.md')).toBe('# Today\nthe old words\n')
+  })
+})
+
+describe('a block of a note open in another tab, named from a link', () => {
+  beforeEach(async () => {
+    files().set('/home/A.md', '# A\n')
+    files().set('/home/B.md', '# B\n\nfirst para\n\nsecond\n')
+    workspace.spaces = [{ id: 'home', name: 'Home', root: '/home' }]
+    workspace.activeSpaceId = 'home'
+    await workspace.loadTree()
+  })
+
+  test('keeps its name through the next save of that tab', async () => {
+    await workspace.open('/home/B.md')
+    const b = workspace.active
+    if (!b) throw new Error('no tab')
+    await workspace.open('/home/A.md')
+
+    // `[[B#^` typed in A, and the first paragraph of B picked.
+    const id = await links.nameBlock('B.md', 2, '/home')
+    expect(files().get('/home/B.md')).toContain(`first para ^${id ?? ''}`)
+
+    // Back in B, the reader types on.
+    workspace.activate(b.id)
+    b.note.live.replace(`${b.note.text}\nmore\n`, true)
+    await workspace.save(b)
+    await workspace.writesSettled()
+
+    expect(files().get('/home/B.md')).toContain(`first para ^${id ?? ''}`)
+    expect(files().get('/home/B.md')).toContain('more')
   })
 })

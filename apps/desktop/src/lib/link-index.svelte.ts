@@ -1426,6 +1426,14 @@ class Links {
     )
   }
 
+  /** The document a file is open as; see `documentAt` in workspace.svelte.ts.
+   *  Imported when asked rather than at the top, like `leftOut` below: the
+   *  workspace imports this index, not the other way round. */
+  private async openDocument(): Promise<(path: string) => NoteDoc | null> {
+    const { workspace } = await import('./workspace.svelte')
+    return (path) => workspace.documentAt(path)
+  }
+
   /** What the space's own searches skip; see `leftOutOf` in workspace.svelte.ts. */
   private async leftOut(root: string): Promise<string[]> {
     const { workspace } = await import('./workspace.svelte')
@@ -1434,10 +1442,17 @@ class Links {
 
   /** Gives a block of another note a name, so a link can point at the block.
    *  Called by the editor's `[[…#^` completion, which has nowhere else to get
-   *  one: the block is in a note that is not open. */
+   *  one: the block is in another note than the one being typed in.
+   *
+   *  That note may still be open in another tab, and then its words are the
+   *  document's: the name is written there as well as to the file, the way
+   *  `retarget` rewrites an open note. Written to the file alone, the next save
+   *  of the tab wrote the document's words back without it, and the link just
+   *  made pointed at nothing. */
   async nameBlock(relative: string, line: number, root: string): Promise<string | null> {
     const absolute = insideSpace(root, relative)
-    const before = await invoke<string>('read_note', { path: absolute }).catch(() => null)
+    const open = await this.openDocument()
+    const before = await this.wordsOf(absolute, absolute, open)
     if (before === null) return null
 
     const lines = before.split('\n')
@@ -1454,6 +1469,12 @@ class Links {
 
     lines[end] = `${(lines[end] ?? '').trimEnd()} ^${id}`
     const after = lines.join('\n')
+
+    // Taken by the document in the same breath as its words were read, for the
+    // reason `retarget` gives.
+    const doc = open(absolute)
+    const edit = oneEdit(before, after)
+    if (doc && edit) doc.edited([edit], after)
 
     await invoke('snapshot_note', { path: absolute, content: before }).catch(() => undefined)
     await invoke('write_note', { path: absolute, content: after })

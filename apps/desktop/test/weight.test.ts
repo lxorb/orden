@@ -841,7 +841,11 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-24, to 3,282,000, for B223: a `.webloc` that follows the reading has
  *  only its address changed (`aimWebloc` in shortcut.ts, which keep.ts now calls) rather
- *  than an internet shortcut written into it. Measured 3,281,141. */
+ *  than an internet shortcut written into it. Measured 3,281,141.
+ *
+ *  Raised 2026-10-24, to 3,282,000, for #758: a block named from a link in a note
+ *  open in another tab is named in that tab's document too, or its next save drops
+ *  the name (`nameBlock` in link-index.svelte.ts). Measured 3,281,488. */
 const BUDGET = 3_282_000
 const MOST_FILES = 382
 
