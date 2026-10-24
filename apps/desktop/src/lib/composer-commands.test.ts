@@ -80,4 +80,18 @@ describe('merge into another note', () => {
     openAt('/other/a.md')
     expect(mergeOffered()).toBe(false)
   })
+
+  test('is not offered for a page note, whose paper merging would delete', () => {
+    // A page note is JSON beside the PDF it annotates, and deleting it takes the
+    // PDF with it: a merge is for notes of words only.
+    openAt(`${SPACE}/Lecture.pages`)
+    expect(mergeOffered()).toBe(false)
+  })
+
+  test('is not offered for a canvas, a web tab or a base', () => {
+    for (const file of ['Board.canvas', 'Site.url', 'Books.base']) {
+      openAt(`${SPACE}/${file}`)
+      expect(mergeOffered()).toBe(false)
+    }
+  })
 })

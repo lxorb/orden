@@ -12,7 +12,7 @@
 
 import { extracted, merged, splitAt } from '../composer'
 import type { Retargeting } from '../link-index.svelte'
-import { folderOf, samePath, withinSpace } from '../space-paths'
+import { folderOf, isMarkdownPath, samePath, withinSpace } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
 import { type Tab, UNTITLED } from './documents.svelte'
 import type { FileActions } from './undo.svelte'
@@ -45,6 +45,13 @@ export interface Composes {
  *  only within the open space: a note of another one would be deleted from under
  *  every link to it, and its words would land in a space it was never in.
  *
+ *  And it has to be a markdown note. A merge appends words and deletes the note
+ *  they came from, and the other files a space holds are neither words nor safe to
+ *  delete: a page note, a canvas, a web tab or a base is JSON or the like that
+ *  text appended to it breaks, and deleting a page note deletes the PDF it
+ *  annotates, which may be the only copy. The palette asks this with no editor at
+ *  hand, so nothing else stops it there.
+ *
  *  Who may write where is sharing.svelte.ts's, handed in rather than imported: it
  *  reaches the workspace through sync, and this file is loaded while the workspace
  *  itself is being made. */
@@ -53,7 +60,7 @@ export function mergeable(
   path: string,
   writable: (path: string) => boolean,
 ): boolean {
-  return root !== null && withinSpace(root, path) !== null && writable(path)
+  return root !== null && isMarkdownPath(path) && withinSpace(root, path) !== null && writable(path)
 }
 
 /** Appends this note into another, deletes it, and points every link that came

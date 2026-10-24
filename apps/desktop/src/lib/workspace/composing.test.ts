@@ -185,6 +185,29 @@ describe('a merge that may not be made', () => {
     expect(sent).toEqual([])
     expect(disk.has(A)).toBe(true)
   })
+
+  test('leaves a page note and its paper alone', async () => {
+    // Deleting a page note deletes the PDF it annotates, which may be the only
+    // copy; and its JSON appended to a note is no note at all.
+    const page = `${SPACE}/Lecture.pages`
+    const ws = space({ [page]: '{"pages":[]}', [B]: '# b\n' })
+    await mergeInto(ws, page, B)
+
+    expect(sent).toEqual([])
+    expect(disk.get(page)).toBe('{"pages":[]}')
+    expect(disk.get(B)).toBe('# b\n')
+    expect(ws.undone.stack).toEqual([])
+  })
+
+  test('and does not write words into a canvas either', async () => {
+    const board = `${SPACE}/Board.canvas`
+    const ws = space({ [A]: '# a\n', [board]: '{"nodes":[]}' })
+    await mergeInto(ws, A, board)
+
+    expect(sent).toEqual([])
+    expect(disk.get(board)).toBe('{"nodes":[]}')
+    expect(disk.has(A)).toBe(true)
+  })
 })
 
 describe('a note split at the caret', () => {
