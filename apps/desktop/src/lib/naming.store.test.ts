@@ -237,6 +237,7 @@ const { nameFault } = await import('./naming')
 const { workspace } = await import('./workspace.svelte')
 const { sync } = await import('./sync.svelte')
 const { unread } = await import('./unread.svelte')
+const { account } = await import('./account.svelte')
 
 /** A file dropped from outside the app, at `path` inside what was dropped. */
 const dropped = (path: string, words: string) => ({
@@ -1115,5 +1116,72 @@ describe('a rename the disk refuses', () => {
 
     expect(rows()).toContain('/space/Beta.md')
     expect(files.get('/space/Work/Beta.md')).toBe('# another Beta')
+  })
+})
+
+/** Signed in, a delete goes to the account outright, since the account keeps a copy
+ *  for 14 days. That copy is only there for what the account was handed: a space on
+ *  no account, a copy made offline or before the next push, and the words typed into
+ *  it, were gone for good. */
+describe('signed in', () => {
+  beforeEach(() => {
+    Object.defineProperty(account, 'signedIn', { get: () => true, configurable: true })
+  })
+
+  afterEach(() => {
+    Reflect.deleteProperty(account, 'signedIn')
+    vi.restoreAllMocks()
+  })
+
+  test('a folder copy undone goes to the trash with what was typed in it', async () => {
+    vi.spyOn(sync, 'remoteIdFor').mockReturnValue('remote')
+    folders.add('/space/Trip')
+    files.set('/space/Trip/Plan.md', '# Plan')
+    await workspace.loadTree()
+    await workspace.duplicate('/space/Trip')
+    files.set('/space/Trip copy/Plan.md', '# Plan\ntyped into the copy')
+    sent.length = 0
+
+    await workspace.undoFileAction()
+
+    expect(sent).toContain('trash_item /space/Trip copy')
+    expect(sent).not.toContain('delete_folder /space/Trip copy')
+  })
+
+  test('and a picture dropped in and taken back goes there too', async () => {
+    vi.spyOn(sync, 'remoteIdFor').mockReturnValue('remote')
+    await workspace.bringIn([dropped('map.png', 'PNG')], '/space')
+    sent.length = 0
+
+    await workspace.undoFileAction()
+
+    expect(sent).toContain('trash_item /space/map.png')
+    expect(sent).not.toContain('delete_note /space/map.png')
+  })
+
+  test('and a paper an import wrote, highlighted since, goes there too', async () => {
+    vi.spyOn(sync, 'remoteIdFor').mockReturnValue('remote')
+    files.set('/space/paper.pdf', '%PDF highlighted')
+    workspace.undone.record({ kind: 'import', paths: ['/space/paper.pdf'], wrote: {} })
+
+    await workspace.undoFileAction()
+
+    expect(sent).toContain('trash_item /space/paper.pdf')
+    expect(sent).not.toContain('delete_note /space/paper.pdf')
+  })
+
+  test('a folder deleted in a space on no account goes to the trash', async () => {
+    await workspace.remove('/space/Work', true)
+
+    expect(sent).toContain('trash_item /space/Work')
+    expect(sent).not.toContain('delete_folder /space/Work')
+  })
+
+  test('but one in a space on the account goes to the account', async () => {
+    vi.spyOn(sync, 'remoteIdFor').mockReturnValue('remote')
+
+    await workspace.remove('/space/Work', true)
+
+    expect(sent).toContain('delete_folder /space/Work')
   })
 })

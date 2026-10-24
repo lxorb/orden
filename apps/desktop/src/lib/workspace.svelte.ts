@@ -90,7 +90,7 @@ import { Saving } from './workspace/saving.svelte'
 import { draftFile, hasWords, isDraft, isUnsaved } from './workspace/drafts'
 import { TAB_KINDS } from './workspace/tab-kinds'
 import type { Picked } from './import/sources'
-import { FileActions, type Kept } from './workspace/undo.svelte'
+import { type Binning, FileActions, type Kept } from './workspace/undo.svelte'
 import { writeFile } from './workspace/write-file'
 import { isScratchpad, shown as pad } from './scratchpad/is.svelte'
 import { outermost, Selection } from './workspace/selection.svelte'
@@ -4146,7 +4146,7 @@ class Workspace {
       // looking as though the delete had not registered.
       this.hideEntry(path)
 
-      const kept = await this.bin(path, isFolder, source)
+      const kept = await this.bin(path, isFolder, { source })
       if (kept) this.undone.record({ kind: 'delete', path, ...kept })
 
       await this.fileGone(path, isFolder ? 'folder' : 'file')
@@ -4156,8 +4156,9 @@ class Workspace {
     })
   }
 
-  /** Deletes, answering what puts it back; recorded by the caller. */
-  async bin(path: string, isFolder: boolean, source?: string): Promise<Kept | null> {
+  /** Deletes, answering what puts it back; recorded by the caller. See `Binning`. */
+  async bin(path: string, isFolder: boolean, how: Binning = {}): Promise<Kept | null> {
+    const { source, madeHere = false } = how
     // A deleted note keeps one last snapshot, so the delete is recoverable. A PDF
     // is bytes and not words: there is no snapshot of one, so the only thing that
     // can put it back is the trash.
@@ -4173,7 +4174,15 @@ class Workspace {
     const unread = words && content === null
     // Signed in, the account keeps a copy for 14 days; signed out, this
     // device does, in its own trash folder (see trash.svelte.ts).
-    const toAccount = account.signedIn && !unread && !(!isFolder && isPagesTarget(path))
+    // But only of what it was handed, which a space on no account or a copy made
+    // offline or since the last push is not. Those go to this device's trash: a
+    // folder's notes and a paper have no snapshot, and outright they were lost.
+    const toAccount =
+      account.signedIn &&
+      !madeHere &&
+      !unread &&
+      !(!isFolder && isPagesTarget(path)) &&
+      (await this.onAccount(path))
     const held =
       toAccount && isFolder ? await (await import('./workspace/undoing')).heldIn(path) : null
 
@@ -4195,6 +4204,14 @@ class Workspace {
       await this.loadTree()
       throw error
     }
+  }
+
+  /** Whether the account mirrors the space a path is in. */
+  private async onAccount(path: string): Promise<boolean> {
+    const root = this.rootHolding(path)
+    if (!root) return false
+    const { sync } = await import('./sync.svelte')
+    return sync.remoteIdFor(root) !== null
   }
 
   /** Puts the last file operation back; what each kind means going back is

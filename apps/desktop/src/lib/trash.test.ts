@@ -160,6 +160,7 @@ const { workspace } = await import('./workspace.svelte')
 const { account } = await import('./account.svelte')
 const { trash } = await import('./trash.svelte')
 const { prompt } = await import('./prompt.svelte')
+const { sync } = await import('./sync.svelte')
 
 beforeEach(() => {
   notes.clear()
@@ -331,6 +332,12 @@ describe('signed in', () => {
   beforeEach(() => {
     account.token = 'token'
     account.user = { id: 'u', email: 'a@b.dev', name: null }
+    // And the space on the account, which is what keeps a copy of what goes.
+    vi.spyOn(sync, 'remoteIdFor').mockReturnValue('remote')
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   test('deleting removes the local copy; the account keeps it', async () => {

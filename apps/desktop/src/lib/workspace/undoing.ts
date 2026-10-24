@@ -23,7 +23,7 @@ import type { Entry } from '../workspace.svelte'
 import type { Archive } from './archive.svelte'
 import type { NoteDoc } from './documents.svelte'
 import type { Kind } from './file-ops'
-import type { FileAction, FileActions, Kept } from './undo.svelte'
+import type { Binning, FileAction, FileActions, Kept } from './undo.svelte'
 import type { Bookmark } from './bookmarks.svelte'
 import { writeFile } from './write-file'
 
@@ -50,7 +50,7 @@ export interface PutsBack {
   persist(): void
   readonly bookmarks: { put(root: string, list: Bookmark[]): void }
   /** A file deleted without a step to undo it; see `bin` in workspace.svelte.ts. */
-  bin(path: string, isFolder: boolean): Promise<Kept | null>
+  bin(path: string, isFolder: boolean, how?: Binning): Promise<Kept | null>
 }
 
 /** Puts the last file operation back. */
@@ -147,7 +147,8 @@ async function undoOne(ws: PutsBack, action: FileAction): Promise<boolean> {
  *  A note written in since is somebody's writing, and taking it away outright lost
  *  it for good, so it stays where it is. What has no hash to compare - a paper, a
  *  picture, a page note - goes to Recently deleted the way a note made here does
- *  when that is undone, since nothing can say it has not changed.
+ *  when that is undone, since nothing can say it has not changed. This device's
+ *  Recently deleted even signed in: the account may never have been handed it.
  *
  *  A file that will not go is stepped over rather than stopping the undo: the
  *  rest of the import still goes, and what is left is what somebody has since
@@ -157,7 +158,7 @@ async function unimport(ws: PutsBack, action: Extract<FileAction, { kind: 'impor
     const wrote = action.wrote[path]
     if (wrote === undefined) {
       const gone = await ws
-        .bin(path, false)
+        .bin(path, false, { madeHere: true })
         .then(() => true)
         .catch(() => false)
       if (gone) await ws.fileGone(path, 'file')
@@ -177,10 +178,12 @@ async function unimport(ws: PutsBack, action: Extract<FileAction, { kind: 'impor
 /** A copy taken back: what it made, gone again, into Recently deleted the way a note
  *  made here goes when that is undone. A copy is a note somebody can go on writing in
  *  before asking for it back, and taken off the disk outright that writing was gone
- *  for good. A tab open on anything in it closes as it goes. */
+ *  for good. This device's Recently deleted even signed in, since a copy made offline
+ *  or before the next push is on no account; see `bin` in workspace.svelte.ts. A tab
+ *  open on anything in it closes as it goes. */
 async function uncopy(ws: PutsBack, action: Extract<FileAction, { kind: 'copy' }>) {
   for (const { path, folder } of action.made) {
-    await ws.bin(path, folder)
+    await ws.bin(path, folder, { madeHere: true })
     await ws.fileGone(path, folder ? 'folder' : 'file')
   }
 }
