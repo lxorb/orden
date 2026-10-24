@@ -102,12 +102,22 @@ async function sameNoteAt(
  *  deleted: a note under the name it offers, as though deleted from the root of its
  *  space, which is where Restore puts it. The entry goes on the tab's own place on the
  *  closed stack, so reopening the tab takes it back out; see `untrash`. See
- *  `trash_words` in trash.rs. */
+ *  `trash_words` in trash.rs.
+ *
+ *  A space shared with this account to be read takes nothing back, so Restore is not
+ *  offered for what came from one: the words go under a space that may be written in,
+ *  and under their own only where there is none, kept all the same. The sharing store
+ *  is fetched here rather than imported, since it reaches the workspace. */
 export async function trashWords(ws: Places, note: NoteDoc): Promise<void> {
-  const root = (ws.spaces.find((one) => one.id === note.home) ?? ws.activeSpace)?.root
-  if (root === undefined) return
+  const own = ws.spaces.find((one) => one.id === note.home) ?? ws.activeSpace
+  if (!own) return
 
-  const path = joinPath(root, draftFile(note))
+  const { canWriteAt } = await import('../sharing.svelte')
+  const file = draftFile(note)
+  const roots = [own, ws.activeSpace, ...ws.spaces].flatMap((one) => (one ? [one.root] : []))
+  const root = roots.find((one) => canWriteAt(joinPath(one, file))) ?? own.root
+
+  const path = joinPath(root, file)
   const entry = await invoke<{ id: string }>('trash_words', { path, content: note.text })
   ws.closed.stack = ws.closed.stack.map((one) =>
     one.draft.share === note.key && one.trashed === undefined ? { ...one, trashed: entry.id } : one,
