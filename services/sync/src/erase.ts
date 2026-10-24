@@ -253,10 +253,10 @@ const PICTURE = /\/i\/([a-f0-9]{64})/g
  *  the writer would otherwise take the picture out of a space that stays. Whatever
  *  another account already holds is left alone - its row keeps the bytes. For the
  *  rest, every space this account is a member of is read for them: its files, and the
- *  pictures in its notes. Whatever its role now, because a writer made a reader
- *  wrote what they wrote, and only what the space itself uses is handed over. A space bigger than what is left to read hands over
- *  everything unread rather than guessing, because a picture somebody pays for is
- *  better than a hole in their note.
+ *  pictures in its notes. Whatever its role now, because a writer made a reader wrote
+ *  what they wrote, and only what the space itself uses is handed over. A space bigger
+ *  than what is left to read hands over everything unread rather than guessing,
+ *  because a picture somebody pays for is better than a hole in their note.
  *
  *  What cannot be found this way is a picture put into a space this account has
  *  since been taken out of; nothing records who wrote what once they have gone. */
