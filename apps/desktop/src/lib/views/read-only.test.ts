@@ -283,6 +283,55 @@ describe('a board of a base in a space shared to be read', () => {
   })
 })
 
+/** A board of tasks shown in a view of no file, as Today can be, while the open space is
+ *  shared to be read: the view may be changed, but a task added lands in that space's
+ *  inbox, where nothing is kept (B293). */
+function taskBoard() {
+  const base = readBase(`views:
+  - type: kanban
+    name: Board
+    groupBy: { property: task.status, direction: ASC }
+    nib: { rows: tasks }
+`)
+  const rows = [taskRow(PLAN, TASK, 3, { space: 'Mine' })]
+  const context = contextFor({ rows, today: '2026-10-24', now: '2026-10-24T12:00' })
+  const live = {
+    base,
+    at: 0,
+    view: base.views[0],
+    rows,
+    context,
+    today: '2026-10-24',
+    answer: answer(base, 0, rows, context),
+    columns: columnsOf(base, 0, rows),
+    writtenAt: null,
+    locked: false,
+    refused: 0,
+    colourOf: () => null,
+    change: () => Promise.resolve(),
+  }
+  return kitFor(live as unknown as Parameters<typeof kitFor>[0], {}, null, false)
+}
+
+describe('a board of tasks whose adds would land in a space shared to be read', () => {
+  test('offers no add at a column head or under it', async () => {
+    const html = render(BoardLayout, { props: { kit: taskBoard() } }).body
+    expect(html).toContain('To do')
+    expect(html).not.toContain('aria-label="New page"')
+    expect(html).not.toMatch(/class="add[ "]/)
+
+    const workspace = (await import('../workspace.svelte')).workspace as { activeSpace: unknown }
+    workspace.activeSpace = MINE
+    try {
+      const mine = render(BoardLayout, { props: { kit: taskBoard() } }).body
+      expect(mine).toContain('aria-label="New page"')
+      expect(mine).toMatch(/class="add[ "]/)
+    } finally {
+      workspace.activeSpace = THEIRS
+    }
+  })
+})
+
 /** A base whose button sets a row's status and opens an address. */
 const SHIP = readBase(`nib:
   buttons:
