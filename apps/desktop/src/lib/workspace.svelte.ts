@@ -2579,6 +2579,15 @@ class Workspace {
 
     if (samePath(target, from) || within(from, intoFolder) !== null) return
 
+    // Into another space, a chat's pointer takes its chat along, and the account is asked
+    // for that before the file goes anywhere: a pointer moved and its chat refused is a
+    // chat with nothing pointing at it. See workspace/chat-carry.ts.
+    const leaving = this.spaces.find((one) => within(one.root, from) !== null)
+    if (leaving && within(leaving.root, intoFolder) === null) {
+      const { chatsCarried } = await import('./workspace/chat-carry')
+      await chatsCarried(from, intoFolder)
+    }
+
     // The row is in its new folder as soon as the drop lands.
     const kind = this.kindAt(from)
     this.showMove(from, target)
