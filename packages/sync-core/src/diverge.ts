@@ -426,10 +426,34 @@ export function diverge(
   if (!fixed) return first
   const again = divergeOnce(base, fixed.local, fixed.remote, times, merged)
   if (again.resolution === null) return first
+  if (cutsLines(base, [local, remote], first.resolution, again.resolution)) return first
   if (excess([local, remote], again.resolution) >= excess([local, remote], first.resolution)) {
     return first
   }
   return { ...first, resolution: again.resolution, settled: again.settled }
+}
+
+/** How often each line is in a text. */
+function linesIn(text: string): Map<string, number> {
+  const counts = new Map<string, number>()
+  for (const line of text.split('\n')) counts.set(line, (counts.get(line) ?? 0) + 1)
+  return counts
+}
+
+/** Whether a repair took apart a line that a side added whole and the merge held:
+ *  a word one side moved is said again in words, never in a line of its own, so a
+ *  line either side wrote stays as it was written (two sides that each took a task
+ *  out and each added one of the same name have moved nothing). */
+function cutsLines(base: string, sides: readonly string[], before: string, after: string): boolean {
+  const old = linesIn(base)
+  const held = linesIn(before)
+  const kept = linesIn(after)
+  return sides.some((side) =>
+    [...linesIn(side)].some(([line, count]) => {
+      if (line === '' || old.has(line)) return false
+      return (kept.get(line) ?? 0) < Math.min(count, held.get(line) ?? 0)
+    }),
+  )
 }
 
 function divergeOnce(
@@ -443,7 +467,7 @@ function divergeOnce(
   const analysis = analyse(base, local, remote)
 
   const overlaps: Overlap[] = analysis.meetings.map((meeting: Meeting) => {
-    const full = fuller(meeting)
+    const full = fuller(base, meeting)
     return {
       base: meeting.base,
       local: spanIn(meeting.base, analysis.local),
@@ -483,7 +507,7 @@ function divergeOnce(
           written(base, analysis, { settle, first: () => 'remote' }),
         ]
       : [resolved(base, analysis, settle, merged)]
-  let checked = write((meeting) => fuller(meeting) ?? newer)
+  let checked = write((meeting) => fuller(base, meeting) ?? newer)
   // A passage one side moved is, to a diff, a deletion and a retyping, and a side's
   // version of an overlap can still hold what the other side moved out of it: the
   // newer side standing would then say that passage twice, and so can a text merge
@@ -528,7 +552,14 @@ function divergeOnce(
  *  the other wrote too and went on from, or the same words put back over a deletion
  *  with more after them. That side is the note whichever is newer, and nothing is
  *  asked, since nothing the other side wrote is missing from it. */
-function fuller(meeting: Meeting): Whose | null {
+function fuller(base: string, meeting: Meeting): Whose | null {
+  // A side that only took out a blank line, or the marks of one, where the other
+  // wrote: the writing holds everything, since nothing of the line was a word.
+  const blank = (list: readonly Edit[]) =>
+    list.every((edit) => !edit.insert && !/[\p{L}\p{N}]/u.test(base.slice(edit.from, edit.to)))
+  const wrote = (list: readonly Edit[]) => list.some((edit) => edit.insert.trim())
+  if (blank(meeting.local) && wrote(meeting.remote)) return 'remote'
+  if (blank(meeting.remote) && wrote(meeting.local)) return 'local'
   const [mine] = meeting.local
   const [theirs] = meeting.remote
   if (meeting.local.length !== 1 || meeting.remote.length !== 1 || !mine || !theirs) return null

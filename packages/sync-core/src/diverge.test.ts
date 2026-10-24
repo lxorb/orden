@@ -28,6 +28,27 @@ function crdtMerge(base: string, local: string, remote: string): string {
   return one.getText(TEXT).toJSON()
 }
 
+/** What a clean merge of whole lines owes: every line both sides kept and every line
+ *  either side added, and no other line. */
+function cleanLinesAreWhole(base: string, local: string, remote: string, merge: string) {
+  const linesOf = (text: string) => text.split('\n').filter(Boolean)
+  const [before, mine, theirs, out] = [base, local, remote, merge].map(linesOf) as [
+    string[],
+    string[],
+    string[],
+    string[],
+  ]
+  const owed = [
+    ...mine.filter((line) => !before.includes(line)),
+    ...theirs.filter((line) => !before.includes(line)),
+    ...before.filter((line) => mine.includes(line) && theirs.includes(line)),
+  ]
+  return {
+    missing: owed.filter((line) => !out.includes(line)),
+    extra: out.filter((line) => !owed.includes(line)),
+  }
+}
+
 describe('diverge', () => {
   test('edits in different paragraphs are clean, and the resolution holds both', () => {
     const base = 'First paragraph here.\n\nSecond paragraph there.\n'
@@ -377,6 +398,114 @@ describe('diverge', () => {
         expect(result.resolution).not.toContain('gone item')
       }
     }
+  })
+
+  test('a task one side added above the one the other side ticked leaves the tick where it was', () => {
+    // Read letter by letter, the added task's box lined up with the ticked one's, and
+    // the tick landed on the new task.
+    const base = '- [ ] Call Ann\n- [ ] Pay rent\n'
+    const local = '- [ ] Call Bob\n- [ ] Call Ann\n- [ ] Pay rent\n'
+    const remote = '- [x] Call Ann\n- [ ] Pay rent\n'
+
+    for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
+      const result = diverge(base, local, remote, times)
+      expect(result.verdict).toBe('clean')
+      expect(result.resolution).toBe('- [ ] Call Bob\n- [x] Call Ann\n- [ ] Pay rent\n')
+    }
+  })
+
+  test('tasks each side added beside ones the other deleted stay tasks of their own', () => {
+    // Two added tasks ran together into one line and an emptied box was left behind.
+    const base = '- [ ] alpha\n- [ ] beta\n- [ ] new item\n- [ ] gamma\n'
+    const local = '- [ ] new item\n- [ ] read a book\n'
+    const remote = '- [ ] alpha\n- [ ] beta\n- [ ] new item\n- [ ] fix gamma\n- [ ] gamma\n'
+
+    for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
+      const result = diverge(base, local, remote, times)
+      expect(result.verdict).toBe('clean')
+      expect(result.resolution).toMatch(
+        /^- \[ \] new item\n(- \[ \] fix gamma\n- \[ \] read a book|- \[ \] read a book\n- \[ \] fix gamma)\n$/,
+      )
+    }
+  })
+
+  test.each([
+    // A line added above a line the other side rewrote.
+    ['- call Ann\n', '- L call Ann z\n- call Ann\n', '- R call Ann x\n'],
+    // A line rewritten on one side, lines added either side of it on the other.
+    ['alpha\n', 'L Book dentist z\n', 'R beta y\nalpha\nR Pay rent z\n'],
+    // A line emptied on one side, rewritten and added to on the other.
+    ['Renew passport\n', '\n', 'R Renew passport z\nR alpha z\n'],
+  ])(
+    'lines added or rewritten on both sides around one line come out whole (%j)',
+    (base, local, remote) => {
+      for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
+        const result = diverge(base, local, remote, times)
+        if (result.verdict !== 'clean') continue
+        expect(cleanLinesAreWhole(base, local, remote, result.resolution ?? '')).toEqual({
+          missing: [],
+          extra: [],
+        })
+      }
+    },
+  )
+
+  test('a blank line one side took out and the other wrote in is settled as written', () => {
+    const base = 'Intro.\n\nOutro.\n'
+    const local = 'Intro.\nOutro.\n'
+    const remote =
+      'Intro.\nA line written into the blank one, long enough to be a sentence.\nOutro.\n'
+
+    for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
+      const result = diverge(base, local, remote, times)
+      expect(result.verdict).not.toBe('diverged')
+      expect(result.resolution).toBe(remote)
+    }
+  })
+
+  test('property: tasks added and deleted on both sides, merged clean, are each whole', () => {
+    // Every line both sides kept, every line either side added, and nothing else: no
+    // line deleted on either side, and none run together or left half written.
+    const items = ['Buy milk', 'Pay rent', 'Call mum', 'Book dentist', 'alpha', 'beta', 'gamma']
+    const pool = [...items, 'new task', 'new item', 'call Ann', 'call Eve', 'read a book']
+    const sideOf = (lines: readonly string[]) =>
+      fc
+        .tuple(
+          fc.array(fc.boolean(), { minLength: lines.length, maxLength: lines.length }),
+          fc.array(fc.tuple(fc.nat(10), fc.constantFrom(...pool), fc.constantFrom('x', 'y', 'z')), {
+            maxLength: 2,
+          }),
+        )
+        .map(([keep, added]) => {
+          const out: (string | [string, string])[] = lines.filter((_, at) => keep[at])
+          for (const [at, item, tag] of added) out.splice(at % (out.length + 1), 0, [item, tag])
+          return out
+        })
+    const tasks = fc
+      .uniqueArray(fc.constantFrom(...pool), { minLength: 1, maxLength: 6 })
+      .chain((lines) => fc.tuple(fc.constant(lines), sideOf(lines), sideOf(lines)))
+
+    fc.assert(
+      fc.property(fc.constantFrom('- [ ] ', '- ', ''), tasks, (mark, [lines, mine, theirs]) => {
+        const text = (list: readonly (string | [string, string])[], side: string) =>
+          list
+            .map((one) => (typeof one === 'string' ? one : `${side} ${one[0]} ${one[1]}`))
+            .map((one) => `${mark}${one}\n`)
+            .join('')
+        const base = text(lines, '')
+        const local = text(mine, 'L')
+        const remote = text(theirs, 'R')
+        for (const times of [LOCAL_NEWER, REMOTE_NEWER]) {
+          const result = diverge(base, local, remote, times)
+          if (result.verdict !== 'clean') continue
+          expect(cleanLinesAreWhole(base, local, remote, result.resolution ?? '')).toEqual({
+            missing: [],
+            extra: [],
+          })
+        }
+      }),
+      { numRuns: 1000 },
+    )
   })
 
   test('words each side wrote anew in a place of its own are both kept, the same or not', () => {

@@ -253,12 +253,10 @@ export function edits(old: string, now: string, tidy: Tidy): Edit[] {
   const middle = fold(old, now)
   if (!middle) return []
 
-  const before = old.slice(middle.from, middle.to)
-  if (!before || !middle.insert) {
-    return tidy === 'semantic' ? worded(old, now, [middle]) : [middle]
-  }
-
   if (tidy === 'semantic') return worded(old, now, whole(old, read(old, now, middle)))
+
+  const before = old.slice(middle.from, middle.to)
+  if (!before || !middle.insert) return [middle]
 
   const long = before.length > MOST_DIFFED || middle.insert.length > MOST_DIFFED
   const diffs = long ? lines(before, middle.insert) : characters(before, middle.insert)
