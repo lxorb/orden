@@ -135,6 +135,17 @@ describe('a page’s text, as a note may hold it', () => {
     expect(escapeText('a < b')).toBe('a < b')
   })
 
+  /** Obsidian's comment opens on two percent signs and closes on the next two, so
+   *  a page quoting `printf("%%d")` twice would lose every word between them. */
+  test('a percent sign that would open or close a comment is escaped', () => {
+    expect(escapeText('printf("%%d") and then printf("%%s") again')).toBe(
+      'printf("%\\%d") and then printf("%\\%s") again',
+    )
+    expect(escapeText('%%%')).toBe('%\\%\\%')
+    expect(escapeText('**a %% b** and %%')).toBe('\\*\\*a %\\% b\\*\\* and %\\%')
+    expect(escapeText('100% sure, 50 % off')).toBe('100% sure, 50 % off')
+  })
+
   test('nothing in, nothing out', () => {
     expect(escapeText('')).toBe('')
   })

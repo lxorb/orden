@@ -81,9 +81,9 @@ const A_CODE_SPAN = /(`{1,3})([^`]+)\1(?!`)/y
 
 /** A doubled emphasis marker around plain words. The words may hold nothing the
  *  escaping was protecting the note from - no marker, no bracket, no backslash,
- *  no `<` - so what a page gets to keep is a phrase in bold, and never markup of
- *  its own in somebody's note. */
-const A_STRONG = /(\*\*|__)([^`*_[\]\\<]+)\1/y
+ *  no `<`, no `%` that could open a comment - so what a page gets to keep is a
+ *  phrase in bold, and never markup of its own in somebody's note. */
+const A_STRONG = /(\*\*|__)([^`*_[\]\\<%]+)\1/y
 
 /** Whether a run markdown would read may stay as it was written: nothing blank
  *  against the markers, which is where markdown stops reading one, and no more of
@@ -160,6 +160,12 @@ function escapeAt(text: string, at: number, midLine: boolean): string {
     case '~':
     case '^':
       return isBlank(after) ? one : `\\${one}`
+    // Two percent signs open a comment and the next two close it, which takes the
+    // words between out of the page: `printf("%%d")` quoted twice would lose a
+    // sentence. One sign is a percentage and never anything else, so only the
+    // second of a pair is escaped, and `%\%` reads as the two signs it says.
+    case '%':
+      return before === '%' ? '\\%' : '%'
     case '`':
     case '[':
     case ']':

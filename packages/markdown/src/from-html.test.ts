@@ -382,6 +382,14 @@ describe('a page as markdown', () => {
     expect(htmlToMarkdown('<p>x<sup>2</sup> and H<sub>2</sub>O</p>')).toBe('x^2^ and H~2~O')
   })
 
+  test('two percent signs in words hide nothing as a comment', () => {
+    const code = htmlToMarkdown('<p>printf("%%d") and then printf("%%s") again</p>')
+    expect(code).toBe('printf("%\\%d") and then printf("%\\%s") again')
+    expect(renderMarkdown(code)).toBe(
+      '<p>printf(&quot;%%d&quot;) and then printf(&quot;%%s&quot;) again</p>\n',
+    )
+  })
+
   test('a tilde or a caret in words opens no lowered or raised text', () => {
     const about = htmlToMarkdown('<p>It takes ~5 min or ~10 min.</p>')
     expect(about).toBe('It takes \\~5 min or \\~10 min.')
