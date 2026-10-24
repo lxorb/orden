@@ -28,7 +28,7 @@
  *  line is a pure answer to "what would this share become", which is the part
  *  worth testing, and the Kotlin side is in Shared.kt. */
 
-import { plainWords } from '@nib/markdown/escapes'
+import { escapeText, plainWords } from '@nib/markdown/escapes'
 import { asWords, OPENS_MARKUP } from '@nib/markdown/words'
 
 import { dayOf, noteText } from '../import/meta'
@@ -181,7 +181,9 @@ export function sharedTask(arrived: Arrived): string {
   const words = sharedWords(arrived)
   const address = ADDRESS.exec(words)?.[0]
   const title = sharedTitle(arrived).replace(/[[\]]/g, '').replace(/\s+/g, ' ').trim()
-  return address ? `[${title}](${address})` : title
+  // Somebody else's words, written to read back as themselves (`plainWords`); inside
+  // the link's brackets nothing autolinks, so an address there is words as well.
+  return address ? `[${escapeText(title, { addresses: false })}](${address})` : plainWords(title)
 }
 
 /** The host of an address, for a share that is nothing but a link. */

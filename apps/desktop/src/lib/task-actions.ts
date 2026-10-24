@@ -21,13 +21,23 @@ import { replaceInNotes } from './workspace/note-text'
 /** Adds a line of words as a task, read the way quick add reads them (`tomorrow 4pm
  *  p1 >Note /Heading`) in the reader's language, and written the way quick add writes
  *  one: to the note the words name, else the space's inbox, made the first time
- *  (quick-add/write.ts). Answers where it went, or null where it went nowhere. */
+ *  (quick-add/write.ts). Answers where it went, or null where it went nowhere.
+ *
+ *  `typed: false` is for words the reader did not type, a share from another app:
+ *  those are the task's words as they are, and `p1`, `#tips` or `tomorrow` in a
+ *  shared sentence is part of the sentence rather than a priority, a tag or a day. */
 export async function addTask(
   text: string,
-  options: { root?: string } = {},
+  options: { root?: string; typed?: boolean } = {},
 ): Promise<{ path: string; line: number } | null> {
   const said = text.trim()
   if (!said) return null
+  if (options.typed === false) {
+    const root = options.root ?? workspace.activeSpace?.root
+    if (root === undefined) return null
+    const write = await import('./quick-add/write')
+    return write.addTask({ text: said, fields: { tags: [], remind: [] } }, { root })
+  }
   const [{ parseQuickAdd }, { i18n }, write] = await Promise.all([
     import('@nib/bases/language'),
     import('./i18n.svelte'),
