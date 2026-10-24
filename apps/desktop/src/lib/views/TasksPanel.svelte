@@ -78,6 +78,9 @@
 
   const space = $derived(workspace.activeSpace)
   const root = $derived(space?.root ?? null)
+  /** Whether the open space takes new projects and filters: not one shared to be read,
+   *  where the panel only opens what is there. */
+  const writes = $derived(root !== null && canWriteAt(root))
 
   /** Open tasks per note of the open space, by its path in the space. */
   const openIn = $derived(openByPath(counts.notes, space?.name))
@@ -241,7 +244,7 @@
     const said = name.trim()
     naming = null
     name = ''
-    if (!asked || !said || root === null || !space) return
+    if (!asked || !said || root === null || !space || !writes) return
     if (asked.kind === 'rename') {
       await renameProject(asked.node, said)
       return
@@ -296,17 +299,21 @@
       { label: t('Open as board'), run: () => openProject(space.name, relative, 'kanban') },
       { label: t('Open as calendar'), run: () => openProject(space.name, relative, 'calendar') },
       DIVIDER,
-      {
-        label: t('Add project above'),
-        run: () => startNaming({ kind: 'beside', node, after: false }),
-      },
-      {
-        label: t('Add project below'),
-        run: () => startNaming({ kind: 'beside', node, after: true }),
-      },
-      { label: t('Add sub-project'), run: () => startNaming({ kind: 'inside', node }) },
-      { label: t('Rename'), run: () => startNaming({ kind: 'rename', node }, node.name) },
-      { label: t('Duplicate'), run: () => void workspace.duplicate(folder ?? node.note) },
+      ...(writes
+        ? [
+            {
+              label: t('Add project above'),
+              run: () => startNaming({ kind: 'beside', node, after: false }),
+            },
+            {
+              label: t('Add project below'),
+              run: () => startNaming({ kind: 'beside', node, after: true }),
+            },
+            { label: t('Add sub-project'), run: () => startNaming({ kind: 'inside', node }) },
+            { label: t('Rename'), run: () => startNaming({ kind: 'rename', node }, node.name) },
+            { label: t('Duplicate'), run: () => void workspace.duplicate(folder ?? node.note) },
+          ]
+        : []),
       {
         label: t('Save as CSV'),
         run: () =>
@@ -316,11 +323,15 @@
       ...bookmarkEntry({ kind: 'note', path: relative, text: '' }),
       DIVIDER,
       ...archiveEntry(folder ?? node.note),
-      {
-        label: t('Delete'),
-        danger: true,
-        run: () => void workspace.remove(folder ?? node.note, folder !== null),
-      },
+      ...(writes
+        ? [
+            {
+              label: t('Delete'),
+              danger: true,
+              run: () => void workspace.remove(folder ?? node.note, folder !== null),
+            },
+          ]
+        : []),
     ])
   }
 
@@ -346,7 +357,7 @@
     const query = base ? queryOf(base) : null
     menu.show(event, [
       { label: t('Open'), run: () => openBaseFile(one.path) },
-      ...(query === null
+      ...(query === null || !writes
         ? []
         : [
             {
@@ -359,8 +370,16 @@
             },
           ]),
       ...bookmarkEntry({ kind: 'note', path: one.relative, text: '' }),
-      DIVIDER,
-      { label: t('Delete'), danger: true, run: () => void workspace.remove(one.path, false) },
+      ...(writes
+        ? [
+            DIVIDER,
+            {
+              label: t('Delete'),
+              danger: true,
+              run: () => void workspace.remove(one.path, false),
+            },
+          ]
+        : []),
     ])
   }
 
@@ -577,14 +596,16 @@
 
     <div class="head">
       <p class="nib-section">{t('Filters')}</p>
-      <button
-        type="button"
-        class="nib-glyph plus"
-        aria-label={t('Add filter')}
-        title={t('Add filter')}
-        onclick={addFilter}
-        ><svg viewBox="0 0 13 13" aria-hidden="true"><path d={ADD_MARK} /></svg></button
-      >
+      {#if writes}
+        <button
+          type="button"
+          class="nib-glyph plus"
+          aria-label={t('Add filter')}
+          title={t('Add filter')}
+          onclick={addFilter}
+          ><svg viewBox="0 0 13 13" aria-hidden="true"><path d={ADD_MARK} /></svg></button
+        >
+      {/if}
     </div>
     {#each bases as one (one.path)}
       {@render row(
@@ -600,15 +621,17 @@
 
     <div class="head">
       <p class="nib-section">{t('Projects')}</p>
-      <button
-        type="button"
-        class="nib-glyph plus"
-        aria-label={t('Add project')}
-        title={t('Add project')}
-        onclick={() => startNaming({ kind: 'new' })}
-        oncontextmenu={templateMenu}
-        ><svg viewBox="0 0 13 13" aria-hidden="true"><path d={ADD_MARK} /></svg></button
-      >
+      {#if writes}
+        <button
+          type="button"
+          class="nib-glyph plus"
+          aria-label={t('Add project')}
+          title={t('Add project')}
+          onclick={() => startNaming({ kind: 'new' })}
+          oncontextmenu={templateMenu}
+          ><svg viewBox="0 0 13 13" aria-hidden="true"><path d={ADD_MARK} /></svg></button
+        >
+      {/if}
     </div>
     {#if naming?.kind === 'new'}
       {@render field(t('Add project'), 0)}
