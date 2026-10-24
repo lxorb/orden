@@ -848,10 +848,15 @@ function holds(tail: string): boolean {
  *  notes alone (`accountHolds` in workspace.svelte.ts), and a paper that would not
  *  read is not recorded as sent (`pushFiles` in sync/pass.ts). Measured 3,284,087.
  *
- *  Raised 2026-10-24, to 3,286,000, for #811: the file list's gestures refuse a space
+ *  Raised 2026-10-24, to 3,285,000, for #811: the file list's gestures refuse a space
  *  shared to be read, in the workspace's own calls (`writableAt`) and in the row menu,
- *  the tree's keys and the palette. Measured 3,283,904. */
-const BUDGET = 3_285_000
+ *  the tree's keys and the palette. Measured 3,283,904.
+ *
+ *  Raised 2026-10-24, to 3,290,000, for #832: #811 and #820 together measured
+ *  3,287,847, and a website in a space shared to be read browses without writing its
+ *  file (`canWriteAt` in web-tab/keep.ts and aimed.ts, `browseOldWebsite` in
+ *  workspace.svelte.ts). Measured 3,289,263. */
+const BUDGET = 3_290_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
