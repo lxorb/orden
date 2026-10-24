@@ -21,6 +21,8 @@
 #     run on the web tab it came back to;
 #   - with IDLE=1, what the app costs the CPU while nothing happens, before anything
 #     else is done with it (scripts/idle-cpu.py);
+#   - with FLASH=1, the strip's note tab and web tab chosen in turn in the dark scheme,
+#     filmed, and no frame of the pane white (#762, scripts/flash-drive.py);
 #   - with SCHEME=1, a web tab's page drawn in the app's scheme as the app's scheme is
 #     switched, light and dark (#427, scripts/scheme-drive.py);
 #   - with POPUP=1, the space switcher, the web tab's menu and a canvas's pens' panel
@@ -151,11 +153,13 @@ endpoint() {
   chmod 600 "$config/automation.json"
 }
 command=("$@")
-if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${SCHEME:-0}" = 1 ]; then
+if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${SCHEME:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ]; then
   mkdir -p "$out/site"
   video=""
   [ "${MEDIA:-0}" = 1 ] && video='<video src="none.webm" autoplay muted></video>'
   printf '<!doctype html><title>one colour</title><style>html,body{margin:0;height:100%%;background:#ff00ff}</style>%s' "$video" > "$out/site/index.html"
+  # With FLASH=1, a dark page, which any white in it is not (#762).
+  [ "${FLASH:-0}" = 1 ] && printf '<!doctype html><title>dark</title><meta name="color-scheme" content="dark"><style>html,body{margin:0;height:100%%;background:#1e1e1e}</style>' > "$out/site/index.html"
   # With SCHEME=1, a page whose colour says the scheme it is asked for (#427).
   [ "${SCHEME:-0}" = 1 ] && printf '<!doctype html><title>scheme</title><style>html,body{margin:0;height:100%%;background:#0000ff}@media (prefers-color-scheme: dark){html,body{background:#00ff00}}</style>' > "$out/site/index.html"
   if [ "${CHECK:-0}" = 1 ]; then
@@ -200,7 +204,7 @@ PAGE
   endpoint
   set -- "$@" http://127.0.0.1:8765/
 fi
-if [ "${DRIVE:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${SCHEME:-0}" = 1 ]; then
+if [ "${DRIVE:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${SCHEME:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ]; then
   # And a keyboard with it, where xkbcommon's tools can say what its keys are.
   if command -v xkbcli > /dev/null; then
     xkbcli compile-keymap --layout us > "$out/keymap.txt"
@@ -273,6 +277,11 @@ fi
 
 if [ "$status" = 0 ] && [ "${DRIVE:-0}" = 1 ]; then
   python3 "$here/wayland-drive.py" "$out" "$app_pid" || status=1
+fi
+
+if [ "$status" = 0 ] && [ "${FLASH:-0}" = 1 ]; then
+  sleep 3
+  python3 "$here/flash-drive.py" sway "$out" "$app_pid" || status=1
 fi
 
 if [ "$status" = 0 ] && [ "${SCHEME:-0}" = 1 ]; then

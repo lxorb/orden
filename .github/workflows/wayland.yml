@@ -127,7 +127,7 @@ jobs:
       - name: The .deb, sway, Mesa and a session bus
         run: |
           sudo apt-get update
-          sudo apt-get install -y ./packages/deb/*.deb sway xwayland grim dbus python3-gi python3-pil gir1.2-glib-2.0 libgl1-mesa-dri libegl-mesa0 libxkbcommon-tools ffmpeg xsettingsd
+          sudo apt-get install -y ./packages/deb/*.deb sway xwayland grim dbus python3-gi python3-pil gir1.2-glib-2.0 libgl1-mesa-dri libegl-mesa0 libxkbcommon-tools ffmpeg xsettingsd wf-recorder
       - name: Under Wayland, the portal's key reaching quick add
         env:
           OUT: wayland-out/portal
@@ -155,6 +155,16 @@ jobs:
         run: |
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib"
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+      # #762: tabs switched in the dark scheme, filmed: no frame of the pane white.
+      - name: Tabs switched in the dark without a white frame, under sway
+        if: always()
+        env:
+          OUT: wayland-out/flash
+          FLASH: '1'
+        run: |
+          pkill -f /usr/share/Orden/nib || true
+          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       # #427: a web tab's page drawn in the app's scheme, light or dark, as the app's
       # scheme is switched, not in the system's.
@@ -230,7 +240,7 @@ jobs:
       contents: read
     steps:
       - name: KWin, Xvfb and xdotool, as Fedora 44 has them
-        run: dnf install -y kwin-x11 xorg-x11-server-Xvfb xdpyinfo xwininfo xprop xdotool ImageMagick dbus-daemon dbus-tools python3 procps-ng nss nss-softokn mesa-dri-drivers git
+        run: dnf install -y kwin-x11 xorg-x11-server-Xvfb xdpyinfo xwininfo xprop xdotool ImageMagick dbus-daemon dbus-tools python3 procps-ng nss nss-softokn mesa-dri-drivers git ffmpeg-free python3-pillow
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with:
@@ -243,13 +253,23 @@ jobs:
           ./*.AppImage --appimage-extract > /dev/null
           [ -d squashfs-root ] || mv AppDir squashfs-root
       # As root in a container, where Chromium will not start sandboxed.
+      - name: Tabs switched in the dark without a white frame, under KWin
+        env:
+          OUT: kwin-out/flash
+          KWIN: '1'
+          FLASH: '1'
+          NIB_CEF_SANDBOX: disabled
+        run: dbus-run-session -- bash scripts/x11-launch.sh "$GITHUB_WORKSPACE/packages/appimage/squashfs-root/AppRun"
       - name: Popups chosen from over a web tab's page, under KWin
+        if: always()
         env:
           OUT: kwin-out/popups
           KWIN: '1'
           POPUP: '1'
           NIB_CEF_SANDBOX: disabled
-        run: dbus-run-session -- bash scripts/x11-launch.sh "$GITHUB_WORKSPACE/packages/appimage/squashfs-root/AppRun"
+        run: |
+          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          dbus-run-session -- bash scripts/x11-launch.sh "$GITHUB_WORKSPACE/packages/appimage/squashfs-root/AppRun"
       - name: Moved, resized and maximised under KWin
         if: always()
         env:

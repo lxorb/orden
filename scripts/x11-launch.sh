@@ -49,14 +49,16 @@ if [ "${KWIN:-0}" = 1 ]; then
 fi
 # With POPUP=1, a page of one colour served, for a web tab the popups open over.
 site=""
-if [ "${POPUP:-0}" = 1 ]; then
+if [ "${POPUP:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ]; then
   mkdir -p "$out/site"
   printf '<!doctype html><title>one colour</title><style>html,body{margin:0;height:100%%;background:#ff00ff}</style>' > "$out/site/index.html"
+  # With FLASH=1, a dark page, which any white in it is not (#762).
+  [ "${FLASH:-0}" = 1 ] && printf '<!doctype html><title>dark</title><meta name="color-scheme" content="dark"><style>html,body{margin:0;height:100%%;background:#1e1e1e}</style>' > "$out/site/index.html"
   python3 -m http.server 8765 --bind 127.0.0.1 --directory "$out/site" > "$out/site.log" 2>&1 &
   site=$!
   set -- "$@" http://127.0.0.1:8765/
 fi
-if [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ]; then
+if [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ]; then
   # The app's endpoint open to `eval`, for where its tab strip is.
   config="${XDG_CONFIG_HOME:-$HOME/.config}/ch.emilvinu.nib"
   mkdir -p "$config"
@@ -98,6 +100,9 @@ if [ "$status" = 0 ] && [ "${IDLE:-0}" = 1 ]; then
   find "$HOME" -path '*ch.emilvinu.nib*' -name nib.log -exec grep -hE ' (pump|gpu): ' {} + 2>/dev/null | tee -a "$out/idle.txt" || true
 fi
 
+if [ "$status" = 0 ] && [ "${FLASH:-0}" = 1 ]; then
+  python3 "$here/flash-drive.py" x11 "$out" "$app" || status=1
+fi
 if [ "$status" = 0 ] && [ "${POPUP:-0}" = 1 ]; then
   python3 "$here/popup-drive.py" x11 "$out" "$app" || status=1
 fi
