@@ -13,6 +13,7 @@
 import type { TaskOut } from '@nib/bases/tasks'
 import { modes } from './modes.svelte'
 import { changeOf } from './search/replace'
+import { canWriteAt } from './sharing.svelte'
 import { insideSpace } from './space-paths'
 import { workspace } from './workspace.svelte'
 import { replaceInNotes } from './workspace/note-text'
@@ -59,6 +60,9 @@ export async function tickTask(at: string, space: string, done: boolean): Promis
   ])
   const anchor = readAt(at)
   const path = insideSpace(root, anchor.path)
+  // Today lists the tasks of every space, and one shared with this account to be read
+  // takes no tick: the sync would refuse the note on every pass.
+  if (!canWriteAt(path)) return false
   const before = await workspace.noteText(path)
   if (before === null) return false
 
@@ -70,8 +74,8 @@ export async function tickTask(at: string, space: string, done: boolean): Promis
     return false
   }
   const edit = oneEdit(before, after)
-  if (edit) await replaceInNotes(workspace, [changeOf(path, before, [edit])])
-  return true
+  if (!edit) return true
+  return (await replaceInNotes(workspace, [changeOf(path, before, [edit])])) > 0
 }
 
 /** Today, open tasks for today and overdue, in every space, as the Today view orders
