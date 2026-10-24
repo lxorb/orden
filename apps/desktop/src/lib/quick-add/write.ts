@@ -33,14 +33,16 @@ export function headingsOf(root: string, said: string): readonly string[] {
   return links.held().find((one) => one.path === relative)?.headings ?? []
 }
 
-/** The note a `>` names: one whose path or name is the words, case aside. */
+/** The note a `>` names: one whose path or name is the words, case aside. Only a
+ *  note: a task line written into a chat, a canvas or a shortcut spoils it. */
 function named(root: string, said: string): string | null {
   const wanted = said.replace(/\.md$/i, '').toLowerCase()
+  const notes = workspace.notes.filter((one) => isMarkdownPath(one.path))
   const found =
-    workspace.notes.find(
+    notes.find(
       (one) => withoutExtension(relativeTo(root, one.path)).toLowerCase() === wanted,
     ) ??
-    workspace.notes.find(
+    notes.find(
       (one) => withoutExtension(one.name).toLowerCase() === wanted.split('/').at(-1),
     )
   return found?.path ?? null

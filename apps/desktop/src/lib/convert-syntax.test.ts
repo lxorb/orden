@@ -80,4 +80,17 @@ describe('what Convert syntax would rewrite', () => {
   test('and a rewrite that changes no character is not a change', () => {
     expect(syntaxChanges([note('One.md', '')], []).changes).toEqual([])
   })
+
+  /** The open tab and the space's list both hold files that are not notes: a
+   *  canvas, a chat, a base, a stylesheet. Their words are not markdown, and a
+   *  rewrite of them is a file spoiled. */
+  test('and a file that is not a note is never one to rewrite', () => {
+    const said = syntaxChanges(
+      [note('Board.canvas', '{"text":"#two words# here"}'), note('Team.chat', '#two words#')],
+      [],
+    )
+
+    expect(said.changes).toEqual([])
+    expect(said.rewrites).toBe(0)
+  })
 })

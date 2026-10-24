@@ -1412,8 +1412,8 @@ class Links {
 
     return (
       found
-        // A paper has pages rather than blocks and nothing to write a name into.
-        .filter((hit) => hit.page === undefined)
+        // Only a note has blocks to name: a paper has pages, a shortcut `key=value` lines.
+        .filter((hit) => hit.page === undefined && isMarkdownPath(hit.path))
         .slice(0, most)
         .map((hit) => ({
           path: this.relative(hit.path) ?? hit.path,
@@ -1442,6 +1442,9 @@ class Links {
    *  asked about whatever space the tab is in. Imported here rather than at the top,
    *  because the sharing store reaches the workspace, which reaches this file. */
   async nameBlock(relative: string, line: number, root: string): Promise<string | null> {
+    // A block is a note's; a name written into any other file spoils it.
+    if (!isMarkdownPath(relative)) return null
+
     const absolute = insideSpace(root, relative)
     const { canWriteAt } = await import('./sharing.svelte')
     if (!canWriteAt(absolute)) return null
@@ -1461,7 +1464,10 @@ class Links {
     const taken = new Set(blockIds(before).map((one) => one.id))
     const id = freeBlockId(taken)
 
-    lines[end] = `${(lines[end] ?? '').trimEnd()} ^${id}`
+    // A CRLF note's `\r` stays on the line named, as on every other.
+    const named = lines[end] ?? ''
+    const ending = named.endsWith('\r') ? '\r' : ''
+    lines[end] = `${named.trimEnd()} ^${id}${ending}`
     const after = lines.join('\n')
 
     await invoke('snapshot_note', { path: absolute, content: before }).catch(() => undefined)
