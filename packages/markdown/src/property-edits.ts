@@ -133,7 +133,7 @@ export function withItem(property: Property, item: string): ListItem[] | null {
  *  text, though - `007` would come back as 7, `1e3` as a thousand and `yes` or
  *  `True` as a yes spelled differently - and those stay the words, which
  *  `flowItem` quotes. */
-function typedItem(said: string): ListItem {
+export function typedItem(said: string): ListItem {
   if (said === 'true' || said === 'false') return said === 'true'
   if (/^-?\d+(?:\.\d+)?$/.test(said) && String(Number(said)) === said) return Number(said)
   return said

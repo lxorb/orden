@@ -367,6 +367,12 @@ describe('a property an automation sets', () => {
       ['3', 'status: 3'],
       ['-1.5', 'status: -1.5'],
       ['[work, home]', 'status: [work, home]'],
+      // Each member typed the way a chip typed into the list is: bare where YAML reads
+      // it back as what was said, words where it was quoted or would read as other.
+      ['[1, true, x]', 'status: [1, true, x]'],
+      ['[-2.5, false, 10]', 'status: [-2.5, false, 10]'],
+      [`['1', "true", x]`, "status: ['1', 'true', x]"],
+      ['[007, 1e3, null, True]', "status: ['007', '1e3', 'null', 'True']"],
       ['[]', 'status: []'],
       ["['a, b', yes]", "status: ['a, b', 'yes']"],
       // A link is not a list of one, and links said with commas are a list of links.

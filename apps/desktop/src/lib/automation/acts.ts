@@ -13,8 +13,8 @@
  *  being asked twice. `confirms` in verbs.ts is what asks. */
 
 import type { TextEdit } from '@nib/markdown/edits'
-import { writeList, writeProperty } from '@nib/markdown/property-edits'
-import { flowItems } from '@nib/markdown/yaml'
+import { typedItem, writeList, writeProperty } from '@nib/markdown/property-edits'
+import { isQuoted, unquoted, writtenFlowItems } from '@nib/markdown/yaml'
 import { appCommands } from '../commands'
 import { links } from '../link-index.svelte'
 import { extensionOf, nameToWrite } from '../naming'
@@ -417,8 +417,16 @@ function propertyEdit(text: string, key: string, value: string | null): TextEdit
     return links.length > 1 ? writeList(text, key, links) : writeProperty(text, key, value)
   }
 
-  const items = flowItems(value)
-  if (items) return writeList(text, key, items)
+  // Each member of a list as a chip typed into it: `[1, true, x]` is a number, a yes
+  // and a word, where handed on as words they came out as `['1', 'true', x]`. A
+  // member said in quotes is the words, as it is in a note.
+  const items = writtenFlowItems(value)
+  if (items)
+    return writeList(
+      text,
+      key,
+      items.map((one) => (isQuoted(one) ? unquoted(one) : typedItem(one))),
+    )
   if (/^(true|false)$/i.test(value)) return writeProperty(text, key, value, 'checkbox')
   if (BARE_NUMBER.test(value)) return writeProperty(text, key, value, 'number')
   return writeProperty(text, key, value)
