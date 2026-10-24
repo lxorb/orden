@@ -69,6 +69,22 @@ describe('a draft saved into a space that is not on screen', () => {
     expect(files().get('/home/Plan.md')).toBe('# Plan\nwords that were here first\n')
     expect(files().get('/home/Plan 2.md')).toBe('# Plan\nthe draft\n')
   })
+
+  test('steps past a PDF there that a page note of its name would take for its paper', async () => {
+    // A page note holds `<name>.pdf` beside it as its paper, so landing beside the
+    // person's own `Report.pages.pdf` hid that PDF in the note and trashed it with it.
+    files().set('/home/Report.pages.pdf', '%PDF-1.7\n')
+    workspace.openBlank()
+    const tab = workspace.active
+    if (!tab) throw new Error('no tab')
+    await workspace.selectSpace('away')
+
+    const landed = await workspace.save(tab, '/home', 'Report.pages')
+    await workspace.writesSettled()
+
+    expect(landed).toBe('/home/Report 2.pages')
+    expect(files().has('/home/Report.pages')).toBe(false)
+  })
 })
 
 describe('a note made beside a tab from a space that is not on screen', () => {
