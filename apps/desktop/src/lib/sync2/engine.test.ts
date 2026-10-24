@@ -278,6 +278,35 @@ describe('an open note', () => {
       [{ from: SEEDED[0]?.text.length, to: SEEDED[0]?.text.length, insert: 'From there.' }],
     ])
   })
+
+  test('meeting a document that moved too, the side a small overlap loses is kept as a version', async () => {
+    // The note and the document each changed the same word: the rule settles it without
+    // asking, one side's word stands, and the other's was in no version at all.
+    const one = await device()
+    one.online = false
+    const seeded = SEEDED[0]?.text ?? ''
+    const theirs = seeded.replace('Monday', 'Friday')
+    const doc = await one.engine.hold(PLAN)
+    const live = doc?.live
+    live?.transact(() => {
+      const text = live.getText(TEXT)
+      text.delete(0, text.length)
+      text.insert(0, theirs)
+    }, HERE)
+    await one.engine.letGo(PLAN)
+
+    const mine = seeded.replace('Monday', 'Tuesday')
+    const note = new SharedDoc(mine)
+    const part = await attach(one.engine, PLAN, { live: note, latest: mine }, () => true)
+    expect(one.engine.core.isHeld(PLAN)).toBe(false)
+    expect(note.text.toString()).toBe(mine)
+
+    const kept = (one.engine.core.spaces.get(SPACE)?.outbox ?? []).flatMap(({ record }) =>
+      record.t === 'keep' ? [record.keep.text] : [],
+    )
+    expect(kept).toEqual([theirs])
+    part?.()
+  })
 })
 
 describe('an open note held apart from its document (#543)', () => {
