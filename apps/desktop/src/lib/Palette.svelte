@@ -63,6 +63,7 @@
   import { webData } from './web-tab/web-data.svelte'
   import { workspace } from './workspace.svelte'
   import { LAYER } from './motion'
+  import { scrollbar } from './scrollbar'
 
   /* eslint-disable prefer-const -- `open` is bindable, and a $props() pattern cannot be split */
   let {
@@ -645,8 +646,12 @@
     </div>
 
     {#if results.length}
+      <!-- The app's own bar rather than the platform's (#775): the list's cap is 46vh,
+           and a list that only just runs past it - by its own padding, or a pixel of a
+           row - wore a full-length platform bar over nothing left to scroll. -->
       <ul
         bind:this={list}
+        use:scrollbar
         id="nib-palette-list"
         role="listbox"
         aria-label={t('Search notes and commands')}
