@@ -31,6 +31,23 @@ describe('plain text, as a note may hold it', () => {
     )
   })
 
+  /** Up to three spaces in front change nothing about what a line opens, and four
+   *  make it code, where an escape is shown as a backslash. */
+  test('an indented line keeps its meaning', () => {
+    const NBSP = '\u00a0'
+    expect(plainWords('   # x\n  > x\nfoo\n   ---')).toBe('   \\# x\n  \\> x\nfoo\n   \\---')
+    expect(renderMarkdown(plainWords('   # x\n\n  > x\n\nfoo\n   ---'))).toBe(
+      '<p>   # x</p>\n<p>  &gt; x</p>\n<p>foo\n   ---</p>\n',
+    )
+    const indented = plainWords('Sum:\n\n    total $5 or ~10\n\n\tand a tab')
+    expect(indented).toBe(
+      `Sum:\n\n${NBSP.repeat(4)}total \\$5 or \\~10\n\n${NBSP.repeat(4)}and a tab`,
+    )
+    expect(renderMarkdown(indented)).toBe(
+      `<p>Sum:</p>\n<p>${NBSP.repeat(4)}total $5 or ~10</p>\n<p>${NBSP.repeat(4)}and a tab</p>\n`,
+    )
+  })
+
   test('a bare address still links', () => {
     expect(plainWords('see https://a.test/~al/_x_/ now')).toBe('see https://a.test/~al/_x_/ now')
   })
