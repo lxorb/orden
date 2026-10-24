@@ -829,8 +829,12 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-20, to 3,281,000, for #417: the empty Essentials a drag is offered
  *  stands over the caption rather than pushing the file list down under the pointer
- *  (`is-floating` in Bookmarks.svelte). Measured 3,280,466. */
-const BUDGET = 3_281_000
+ *  (`is-floating` in Bookmarks.svelte). Measured 3,280,466.
+ *
+ *  Raised 2026-10-24, to 3,285,000, for #811: the file list's gestures refuse a space
+ *  shared to be read, in the workspace's own calls (`writableAt`) and in the row menu,
+ *  the tree's keys and the palette. Measured 3,283,904. */
+const BUDGET = 3_285_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
