@@ -205,7 +205,9 @@ pub fn delete_note(app: AppHandle, path: String) -> Result<(), String> {
 /// `alone` is sync's move (sync2/app-world.ts), which moves the one file and nothing it
 /// holds: a PDF's highlights and a page note's paper are entries of their own in the
 /// account, moved by moves of their own, in whichever order those come. Highlights that
-/// came ahead of their PDF were otherwise cleared as left by another (#733).
+/// came ahead of their PDF were otherwise cleared as left by another (#733). Nor is a
+/// paper where a page note goes in the way of sync's move: the account holds the two as
+/// a pair, and whichever of their moves comes second finds the other already there.
 #[tauri::command(async)]
 pub fn rename_note(
     app: AppHandle,
@@ -226,9 +228,15 @@ fn renamed(source: &Path, target: &Path, hold: bool, alone: bool) -> Result<(), 
     // A page note brings its paper, `<name>.pages.pdf`, and a file of that name already
     // there is somebody's own: it was moved over, or hidden as held (#538). And a PDF
     // put where a page note takes it for its paper is somebody's own as well, unless
-    // it is being turned into that note.
+    // it is being turned into that note. Sync's move of the one file is neither: what
+    // is there came by a move of its own (see `rename_note`).
     let holding = hold && is_pdf(target) && source.parent() == target.parent();
-    if let Some(there) = paper_in_the_way(source, target, same_entry).filter(|_| !holding) {
+    let way = if alone {
+        None
+    } else {
+        paper_in_the_way(source, target, same_entry)
+    };
+    if let Some(there) = way.filter(|_| !holding) {
         return Err(format!("{} is already there", there.display()));
     }
 
@@ -1099,5 +1107,51 @@ mod tests {
 
         assert!(!dir.path().join("A.pdf.highlights.json").exists());
         assert!(dir.path().join("B.pdf.highlights.json").exists());
+    }
+
+    /// A page note renamed on another device comes as two moves, the note's and its
+    /// paper's, in either order. Paper first, the note's move found a PDF where its paper
+    /// goes, refused it as somebody's own, and the note stayed behind on every pass.
+    #[test]
+    fn a_page_note_moved_alone_joins_the_paper_that_came_ahead_of_it() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let was = dir.path().join("X.pages");
+        fs::write(&was, "{}").expect("the page note");
+        fs::write(dir.path().join("Y.pages.pdf"), "%PDF").expect("its paper, moved");
+
+        super::renamed(&was, &dir.path().join("Y.pages"), false, true).expect("the move");
+
+        assert!(dir.path().join("Y.pages").exists());
+        assert_eq!(
+            fs::read_to_string(dir.path().join("Y.pages.pdf")).expect("the paper"),
+            "%PDF"
+        );
+    }
+
+    /// And note first, into another folder: the paper's move goes where the note now
+    /// takes it for its paper, which only a PDF turned into its note may do by hand.
+    #[test]
+    fn a_paper_moved_alone_joins_the_page_note_that_came_ahead_of_it() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        fs::create_dir_all(dir.path().join("A")).expect("a folder");
+        fs::create_dir_all(dir.path().join("B")).expect("another");
+        fs::write(dir.path().join("B/Y.pages"), "{}").expect("the page note, moved");
+        let paper = dir.path().join("A/X.pages.pdf");
+        fs::write(&paper, "%PDF").expect("its paper");
+
+        super::renamed(&paper, &dir.path().join("B/Y.pages.pdf"), true, true).expect("the move");
+
+        assert!(dir.path().join("B/Y.pages.pdf").exists());
+    }
+
+    #[test]
+    fn a_page_note_moved_by_hand_is_still_refused_over_a_pdf_of_its_paper_name() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let was = dir.path().join("X.pages");
+        fs::write(&was, "{}").expect("the page note");
+        fs::write(dir.path().join("Y.pages.pdf"), "%PDF").expect("somebody's own PDF");
+
+        assert!(super::renamed(&was, &dir.path().join("Y.pages"), false, false).is_err());
+        assert!(was.exists());
     }
 }
