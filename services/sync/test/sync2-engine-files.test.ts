@@ -267,6 +267,32 @@ describe('a file in a space this account may only read', () => {
     expect(here.disk.files.get(`${here.root}/a.md`)).toBe('one\ntwo\n')
   })
 
+  test('changed by another program and locked, waits for the next pass and the pass goes on', async () => {
+    const owner = await device('laptop', { 'photo.png': picture(3), 'a.md': 'one\n' })
+    const here = await reader()
+    await passed(owner, here)
+
+    await owner.disk.write(`${owner.root}/a.md`, 'one\ntwo\n')
+    await owner.engine.foreign(`${owner.root}/a.md`)
+    await owner.engine.pass(space)
+    await rooms.settle()
+
+    const remove = here.disk.remove.bind(here.disk)
+    here.disk.remove = () => Promise.reject(new Error('the file is being used by another process'))
+    await here.disk.writeBytes(`${here.root}/photo.png`, picture(10))
+    await here.engine.foreign(`${here.root}/photo.png`)
+    expect((await here.engine.pass(space))?.finished).toBe(true)
+    await rooms.settle()
+    expect(here.disk.files.get(`${here.root}/a.md`)).toBe('one\ntwo\n')
+    expect(bytesAt(here, 'photo.png')).toEqual(picture(10))
+
+    // Let go of, it goes the way an unlocked one does.
+    here.disk.remove = remove
+    await here.engine.pass(space)
+    await rooms.settle()
+    expect(bytesAt(here, 'photo.png')).toEqual(picture(3))
+  })
+
   test('made by another program, stays on this disk as it is and is not asked about again', async () => {
     const owner = await device('laptop', { 'a.md': 'one\n' })
     const here = await reader()
