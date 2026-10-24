@@ -139,3 +139,74 @@ describe('a move the disk refuses', () => {
     expect([...disk.files.keys()].sort()).toEqual(['/r/X.pdf', '/r/b.md'])
   })
 })
+
+describe('a delete or a new folder the disk refuses', () => {
+  // A PDF held open by another program and deleted on the phone: the trash refused it,
+  // the settle threw, and nothing else in the space came or went, on every pass.
+  test('leaves that file where it is and settles the rest', async () => {
+    const disk = new MemoryDisk()
+    disk.folders.add('/r')
+    disk.files.set('/r/X.pdf', 'p')
+    disk.files.set('/r/a.md', 'a')
+    const real = disk.remove.bind(disk)
+    disk.remove = (path: string) => {
+      if (path === '/r/X.pdf') throw new Error('/r/X.pdf is open in another program')
+      return real(path)
+    }
+    const pdf = { ...row('P', 'file', null, 'X.pdf', 'X.pdf'), deleted: true }
+    const note = row('N', 'note', null, 'b.md', 'a.md')
+    const forgotten: string[] = []
+    const space = new SpaceState(
+      { space_id: 's', root: '/r', cursor: 9, role: 'owner', store: null },
+      [pdf, note],
+      [],
+      'd',
+      { platform: 'linux', foldsCase: true } as never,
+    )
+
+    await settle(space, {
+      disk,
+      join: (a: string, b: string) => `${a}/${b}`,
+      keeps: () => false,
+      forget: (id) => forgotten.push(id),
+    })
+
+    // Still known where it is, so the next pass tries again rather than reading it
+    // as a file made here.
+    expect([pdf.local_path, note.local_path]).toEqual(['X.pdf', 'b.md'])
+    expect(forgotten).toEqual([])
+    expect([...disk.files.keys()].sort()).toEqual(['/r/X.pdf', '/r/b.md'])
+  })
+
+  test('a folder it cannot make waits, with what goes in it, and the rest settles', async () => {
+    const disk = new MemoryDisk()
+    disk.folders.add('/r')
+    disk.files.set('/r/a.md', 'a')
+    disk.files.set('/r/c.md', 'c')
+    const real = disk.mkdir.bind(disk)
+    disk.mkdir = (path: string) => {
+      if (path === '/r/F') throw new Error('/r/F may not be made')
+      return real(path)
+    }
+    const folder = row('F', 'folder', null, 'F', '')
+    const into = row('A', 'note', 'F', 'a.md', 'a.md')
+    const other = row('C', 'note', null, 'd.md', 'c.md')
+    const space = new SpaceState(
+      { space_id: 's', root: '/r', cursor: 9, role: 'owner', store: null },
+      [folder, into, other],
+      [],
+      'd',
+      { platform: 'linux', foldsCase: true } as never,
+    )
+
+    await settle(space, {
+      disk,
+      join: (a: string, b: string) => `${a}/${b}`,
+      keeps: () => false,
+      forget: () => undefined,
+    })
+
+    expect([folder.local_path, into.local_path, other.local_path]).toEqual(['', 'a.md', 'd.md'])
+    expect([...disk.files.keys()].sort()).toEqual(['/r/a.md', '/r/d.md'])
+  })
+})
