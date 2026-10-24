@@ -276,6 +276,10 @@ describe('a list', () => {
       '---\nids:\n  - a\n  - e # note\n  - z\n---\n',
     )
     expect(added('---\nids:\n- - x\n- b\n---\n')).toBe('---\nids:\n  - - x\n  - b\n  - z\n---\n')
+    // A quoted member is no flow member either where a comment follows its quotes.
+    expect(added('---\nids:\n  - "x" # see "y"\n  - b\n---\n')).toBe(
+      '---\nids:\n  - "x" # see "y"\n  - b\n  - z\n---\n',
+    )
   })
 
   test('a list is written over the key the note spells in another case', () => {
