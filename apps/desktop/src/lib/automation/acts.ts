@@ -19,7 +19,7 @@ import { appCommands } from '../commands'
 import { links } from '../link-index.svelte'
 import { extensionOf, nameToWrite } from '../naming'
 import { search } from '../search.svelte'
-import { folderOf, insideSpace, nameOf, relativeTo } from '../space-paths'
+import { folderOf, insideSpace, isMarkdownPath, nameOf, relativeTo } from '../space-paths'
 import { views } from '../views.svelte'
 import { workspace } from '../workspace.svelte'
 import { type Road, said, type Said, words, yes } from './args'
@@ -431,6 +431,9 @@ function propertyEdit(text: string, key: string, value: string | null): TextEdit
  *  caret in the words below the block does not move. */
 export async function setProperty(args: Said): Promise<unknown> {
   const note = await noteFor(args, 'path', true)
+  // Front matter is Markdown's: a block of YAML on top of a canvas, a board or any
+  // other file is that file broken. The agents' twin refuses the same way.
+  if (!isMarkdownPath(note.path)) throw new Error(`${note.relative} is not a markdown note`)
   const key = said(args, 'key')
   if (!key) throw new Error('say which key')
 

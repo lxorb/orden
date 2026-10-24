@@ -20,6 +20,7 @@ import type { EditorView } from '@nib/editor'
 import { embedKind, parseWikilink } from '@nib/markdown/links'
 import { t } from '../i18n.svelte'
 import { canWriteAt } from '../sharing.svelte'
+import { isMarkdownPath } from '../space-paths'
 import { workspace } from '../workspace.svelte'
 import { canRecordHere } from './container'
 
@@ -54,7 +55,10 @@ export function canRecord(view?: EditorView): boolean {
   if (!canRecordHere() || !space || view?.state.readOnly === true) return false
 
   const open = workspace.active
-  return canWriteAt(open?.kind === 'note' && open.path ? open.path : space.root)
+  // Asked of where the recording will go: a file that is not Markdown gets a new note
+  // in the space; see noteToRecordInto.
+  const into = open?.kind === 'note' && open.path && isMarkdownPath(open.path) ? open.path : null
+  return canWriteAt(into ?? space.root)
 }
 
 /** What the row says, which is the other half of one command doing two things. */

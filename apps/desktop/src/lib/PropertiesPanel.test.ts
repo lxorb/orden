@@ -13,11 +13,13 @@ const { workspace } = await import('./workspace.svelte')
 const { modes } = await import('./modes.svelte')
 const PropertiesPanel = (await import('./PropertiesPanel.svelte')).default
 
-function drawn(text: string): string {
+function drawn(text: string, path: string | null = null): string {
   workspace.tabs = []
   workspace.spaces = [{ id: 's', name: 'Space', root: '/space' }]
   workspace.activeSpaceId = 's'
   workspace.openBlank('Card', text)
+  const tab = workspace.tabs.at(-1)
+  if (tab && path !== null) tab.path = path
   return render(PropertiesPanel, { props: {} }).body
 }
 
@@ -64,6 +66,20 @@ describe('a block nib cannot read', () => {
     expect(html).toContain('# a comment')
     expect(html).not.toContain('data-key=')
     expect(html).not.toContain('Add a property')
+  })
+})
+
+/** A tab of a kind nothing else opens is a note tab too: `.json`, `.css`, `.txt` and
+ *  code all open as one. Front matter is Markdown's, and a block of YAML put on top of
+ *  any of those is a file that no longer parses as what it is. */
+describe('a file that is not Markdown', () => {
+  test('is offered no way to add a property', () => {
+    expect(drawn('{ "a": 1 }\n', '/space/data.json')).not.toContain('Add a property')
+    expect(drawn('Plain words.\n', '/space/notes.txt')).not.toContain('Add a property')
+  })
+
+  test('while a Markdown note is', () => {
+    expect(drawn('Words.\n', '/space/Note.md')).toContain('Add a property')
   })
 })
 

@@ -41,6 +41,7 @@
   import { dur } from './motion'
   import { PROPERTY_CHOICES } from './property-choices'
   import { canWriteIn } from './sharing.svelte'
+  import { isMarkdownPath } from './space-paths'
   import { views } from './views.svelte'
   import { workspace } from './workspace.svelte'
   import PropertyValue from './properties/PropertyValue.svelte'
@@ -59,7 +60,10 @@
   /** The rows, or null for a note with no block or one nib cannot read without
    *  guessing; `block` tells those two apart. */
   const rows = $derived(doc === null ? null : readProperties(doc))
-  const writable = $derived(!!tab && !modes.readOnly && canWriteIn(tab.note))
+  /** Front matter is Markdown's, and an unknown file opens as a note tab too; a draft
+   *  with no path yet is a Markdown note. */
+  const markdown = $derived(!tab?.path || isMarkdownPath(tab.path))
+  const writable = $derived(!!tab && markdown && !modes.readOnly && canWriteIn(tab.note))
 
   /** Which key is being renamed, and whether a new key is being named. */
   let renaming = $state<string | null>(null)

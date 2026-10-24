@@ -12,6 +12,7 @@
 
 import type { EditorView } from '@nib/editor'
 import { canWriteAt } from '../sharing.svelte'
+import { isMarkdownPath } from '../space-paths'
 import { views } from '../views.svelte'
 import { workspace } from '../workspace.svelte'
 import { recordingNoteName } from './transcript'
@@ -81,7 +82,11 @@ export function mayRecordInto(path: string): boolean {
  *  recording has to be written beside something - so that case makes a note too. */
 export async function noteToRecordInto(): Promise<string | null> {
   const open = workspace.active
-  if (open?.kind === 'note' && open.path) return mayRecordInto(open.path) ? open.path : null
+  // A `.txt` or a `.json` is a note tab too, but an embed is Markdown, so a recording
+  // over one goes into a new note as it would over none.
+  if (open?.kind === 'note' && open.path && isMarkdownPath(open.path)) {
+    return mayRecordInto(open.path) ? open.path : null
+  }
 
   if (!workspace.activeSpace || !canWriteAt(workspace.activeSpace.root)) return null
 

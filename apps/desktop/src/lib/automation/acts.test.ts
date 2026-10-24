@@ -413,6 +413,22 @@ describe('a property an automation sets', () => {
  *  copy here would stop being the space's, and the sync would refuse the change on
  *  every pass. A link and the command line can only do what somebody at the keyboard
  *  could, and they could not write there either. */
+/** Front matter is Markdown's. `properties.set` over a canvas, a board, a chat or
+ *  any other file put a block of YAML on top of its JSON and broke it. */
+describe('properties.set over a file that is not Markdown', () => {
+  test('is refused, and writes nothing', async () => {
+    held.clear()
+    written.length = 0
+    for (const name of ['Board.canvas', 'Pages.pages', 'Base.base', 'Talk.chat', 'Link.url']) {
+      held.set(`/Work/${name}`, '{}')
+      await expect(setProperty({ path: name, key: 'status', value: 'done' })).rejects.toThrow(
+        /not a markdown note/,
+      )
+    }
+    expect(written).toEqual([])
+  })
+})
+
 describe('a space shared to be read', () => {
   test('takes no write from a verb, and says why', async () => {
     held.clear()
