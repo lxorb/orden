@@ -35,6 +35,7 @@ vi.mock('../workspace.svelte', () => ({
     activeSpace: { id: 'shared', name: 'Shared', root: '/s/Shared' },
     documentAt: () => null,
     freeName: (_dir: string, wanted: string) => wanted,
+    freeNameOnDisk: (_dir: string, wanted: string) => Promise.resolve(wanted),
     fileCame: async () => undefined,
     noteText: async () => '---\nrepeat: daily\n---\n',
     loadTree: async () => undefined,
