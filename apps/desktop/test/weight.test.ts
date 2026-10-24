@@ -838,8 +838,13 @@ function holds(tail: string): boolean {
  *  Raised 2026-10-24, to 3,283,000, for #769: Settings lists Mobile only on a phone or a
  *  tablet, or once the account has been on one (`mobileSeen` and `tellOfMobile` in
  *  modes.svelte.ts, read by settings/sections.ts). Measured 3,282,950, from 3,281,144 at
- *  56bca6203. */
-const BUDGET = 3_283_000
+ *  56bca6203.
+ *
+ *  Raised 2026-10-24, to 3,284,000, for #775 and #769 landed together - unstable at
+ *  e92c1240e measured 3,283,521, over the 3,283,000 each was raised to alone - and for
+ *  the bars that follow: overlay scrollbars on Linux, said to the stylesheet before
+ *  anything is mounted (`data-engine-bars` in main.ts). Measured 3,283,984. */
+const BUDGET = 3_284_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
