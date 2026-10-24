@@ -626,6 +626,77 @@ describe('a note renamed on this machine', () => {
     expect(fake.remote.get(id)).toMatchObject({ deleted: false, content: `${HERE}there\n` })
   })
 
+  test('and one renamed and answered while the account was away keeps its note', async () => {
+    const { mirror, id } = await paired('One.md', HERE)
+    fake.disk.set(`${ROOT}/One.md`, `${HERE}here\n`)
+    fake.editRemote(id, `${HERE}there\n`)
+    await pull(mirror, 'token', NOBODY, { rule: 'ask', clashed: () => undefined })
+    renameOnDisk('One.md', 'Two.md')
+    const reading = fake.api.readNote
+    const writing = fake.api.writeNote
+    fake.api.readNote = () => Promise.reject(new TypeError('Failed to fetch'))
+    fake.api.writeNote = () => Promise.reject(new TypeError('Failed to fetch'))
+    // The rename, while away, told with the note held. Then the answer, still away:
+    // the question is let go of and the move told again with nothing held.
+    await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Two.md`, new Set([id]))
+    await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Two.md`, new Set())
+    fake.api.readNote = reading
+    fake.api.writeNote = writing
+    // The other device writes again meanwhile.
+    fake.editRemote(id, `${HERE}there\nand more there\n`)
+    fake.calls.length = 0
+
+    const clashes: Clash[] = []
+    await pull(mirror, 'token', NOBODY, { rule: 'ask', clashed: (one) => clashes.push(one) })
+    await push(mirror, 'token', NOBODY, {
+      held: new Set(clashes.map((one) => one.path)),
+      asked: new Set(clashes.map((one) => one.id)),
+    })
+
+    expect(fake.calls.filter((one) => /^(deleteNote|createNote)/.test(one))).toEqual([])
+    expect(fake.remote.get(id)).toMatchObject({
+      deleted: false,
+      path: 'Two.md',
+      content: `${HERE}there\nand more there\n`,
+    })
+    // The newer words are asked about again, at the note's new name.
+    expect(clashes).toEqual([
+      expect.objectContaining({
+        path: `${ROOT}/Two.md`,
+        id,
+        theirs: `${HERE}there\nand more there\n`,
+      }),
+    ])
+    expect(fake.disk.get(`${ROOT}/Two.md`)).toBe(`${HERE}here\n`)
+  })
+
+  test('and a new note at the name one waiting to be settled left is a note of its own', async () => {
+    const { mirror, id } = await paired('One.md', HERE)
+    fake.disk.set(`${ROOT}/One.md`, `${HERE}here\n`)
+    fake.editRemote(id, `${HERE}there\n`)
+    await pull(mirror, 'token', NOBODY, { rule: 'ask', clashed: () => undefined })
+    renameOnDisk('One.md', 'Two.md')
+    const reading = fake.api.readNote
+    fake.api.readNote = () => Promise.reject(new TypeError('Failed to fetch'))
+    await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Two.md`, new Set([id]))
+    fake.api.readNote = reading
+    // A new, unrelated note under the freed name.
+    fake.disk.set(`${ROOT}/One.md`, '# Shopping\nmilk\n')
+    fake.calls.length = 0
+
+    const clashes: Clash[] = []
+    await pull(mirror, 'token', NOBODY, { rule: 'ask', clashed: (one) => clashes.push(one) })
+    await push(mirror, 'token', NOBODY, { held: new Set([`${ROOT}/Two.md`]), asked: new Set([id]) })
+
+    expect(fake.remote.get(id)).toMatchObject({ path: 'Two.md', content: `${HERE}there\n` })
+    expect(fake.calls.filter((one) => /^(deleteNote|createNote|writeNote)/.test(one))).toEqual([
+      'writeNote Two.md',
+      'createNote One.md',
+    ])
+    expect(clashes.map((one) => one.path)).toEqual([`${ROOT}/Two.md`])
+    expect(mirror.notes['One.md']?.id).not.toBe(id)
+  })
+
   test('and a folder carries every note under it', async () => {
     const { mirror } = await paired('Kept/One.md', HERE)
     fake.addRemote('Keptish.md', '# elsewhere' + String.fromCharCode(10))
