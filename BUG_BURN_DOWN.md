@@ -210,6 +210,7 @@ Same method and severity scale as round 1.
 | B157 | Low | Until the nightly sweep has read an older note again (200 a night after `FRONT_REV` 2), a picture in it is found only for spaces the leaver is still in (rest of B138) | Open, accepted | `note_pictures` is filled on save and by the sweep | - (closes as the sweep goes round) | - |
 | B158 | Low | A filter on a non-ASCII property (`priorität == "Hoch"`) does not fill new rows, and renaming such a property is refused (rest of B142) | Open, accepted | `rowPlace`'s pinned-value pattern and `renameProperty`'s `KEY_NAME` are ASCII only | - (the row is made, without the value) | Read from the code |
 | B159 | Low | A PDF renamed within its own folder to `X.pages.pdf` beside `X.pages` is let through by the crate (rest of B139) | Open, accepted | Turning a PDF into a page note is that same rename (`asPageNote`, `adoptBeside`), so the crate allows it in one folder; the window's own name check stands in front of it | - | Read from the code |
+| B160 | Low | The CI test "a fork bomb is held at the process limit, and ending the session ends all of it" (`services/machine/test/linux.test.ts`) times out now and then on PRs that do not touch it (#699, #712) | Open, accepted | A wait in the test that the runner's load can outlast | - (test only; a rerun passes) | CI logs |
 
 Skipped, counted with the insignificant Lows (cannot be fixed alone):
 
