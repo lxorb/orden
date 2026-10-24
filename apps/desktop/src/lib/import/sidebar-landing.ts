@@ -26,7 +26,10 @@ export async function landSpaces(
 ): Promise<Space> {
   // One after the other: each is the open space while it is written.
   const landed: Space[] = []
-  for (const plan of spaces) landed.push(await landSpace(plan))
+  for (const plan of spaces) {
+    const space = await landSpace(plan)
+    if (space) landed.push(space)
+  }
   const [first] = landed
   if (!first) throw new Error(none)
 
@@ -34,10 +37,16 @@ export async function landSpaces(
   return first
 }
 
-async function landSpace(plan: SpacePlan): Promise<Space> {
+/** One planned space, landed; null where the space of its name is one shared with
+ *  this account to be read. That one is somebody else's, which an import before could
+ *  not have made: nothing lands in it, and it is not opened, arranged or bookmarked.
+ *  Fetched, as sharing.svelte.ts reads the workspace. */
+async function landSpace(plan: SpacePlan): Promise<Space | null> {
   const held = workspace.spaces.find(
     (one) => nameKey(asFolder(one.name)) === nameKey(asFolder(plan.name)),
   )
+  const { canWriteAt } = await import('../sharing.svelte')
+  if (held && !canWriteAt(held.root)) return null
   const space = held ?? (await workspace.addSpace(plan.name))
   if (!space) throw new Error(t('That import could not be written.'))
   // What follows is the open space's: the file list, its order, its bookmarks.

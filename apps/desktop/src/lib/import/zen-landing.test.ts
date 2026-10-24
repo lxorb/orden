@@ -49,6 +49,13 @@ vi.mock('./apply', () => ({
   },
 }))
 
+/** The roots of the spaces shared with this account to be read. */
+const readOnly = new Set<string>()
+vi.mock('../sharing.svelte', () => ({
+  canWriteAt: (path: string) =>
+    ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
+}))
+
 vi.mock('../busy.svelte', () => ({
   busy: { failed: (said: string) => void done.push(`said ${said}`) },
 }))
@@ -105,6 +112,7 @@ beforeEach(() => {
   spaces.length = 0
   done.length = 0
   marks.length = 0
+  readOnly.clear()
 })
 
 describe('Zen brought into nib', () => {
@@ -178,5 +186,21 @@ describe('Zen brought into nib', () => {
       'Zen’s tabs could not be read.',
     )
     expect(spaces).toEqual([])
+  })
+})
+
+/** A space of the same name that somebody shared with this account to be read is
+ *  theirs, not the one an import made before: nothing lands in it, and it is not
+ *  opened, arranged or bookmarked as one would be (B280). */
+describe('a space of the same name shared to be read', () => {
+  test('is passed over, while the rest still land', async () => {
+    spaces.push({ id: 'Work', name: 'Work', root: '/spaces/Work' })
+    readOnly.add('/spaces/Work')
+
+    const first = await landZen(PROFILE)
+
+    expect(first.name).toBe('Home')
+    expect(written.map((one) => one.root)).toEqual(['/spaces/Home'])
+    expect(done.filter((one) => one.includes('/spaces/Work') || one.includes('Work '))).toEqual([])
   })
 })

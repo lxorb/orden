@@ -191,7 +191,7 @@
         return
       case 'e':
         event.preventDefault()
-        kit.tick(row)
+        void kit.tick(row)
         return
       case 'c':
         event.preventDefault()
@@ -354,7 +354,12 @@
     <div class="body">
       <section class="main">
         <div class="title-line">
-          <TaskBox {task} label={task.text} ontick={() => kit.tick(row)} />
+          <TaskBox
+            {task}
+            label={task.text}
+            ontick={() => kit.tick(row)}
+            disabled={!kit.writes(row)}
+          />
           <input
             class="title"
             class:finished={task.done || task.cancelled}

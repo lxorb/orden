@@ -1,0 +1,289 @@
+import { readBase, type Row } from '@nib/bases'
+import { render } from 'svelte/server'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
+
+/** A view over a space shared with this account to be read (B280). Today, Upcoming and
+ *  a base across every space draw that space's rows beside the reader's own, and its
+ *  base files and repeating templates are read here like any other. Nothing a view
+ *  does may write there: the copy here would stop being the space's, and the sync
+ *  refuses it on every pass. So a tick, a cell, a drop, an add and a change of the view
+ *  write nothing and say so, and the runner makes no note and runs no automation. */
+
+const disk = new Map<string, string>()
+/** Every whole file written, by path, and every folder made. */
+const written: string[] = []
+const folders: string[] = []
+
+/** The roots of the spaces shared with this account to be read. */
+const readOnly = new Set<string>()
+const insideOf = (root: string, path: string) => path === root || path.startsWith(`${root}/`)
+
+vi.mock('../sharing.svelte', () => ({
+  canWriteAt: (path: string) => ![...readOnly].some((root) => insideOf(root, path)),
+}))
+
+vi.mock('../tauri', async (original) => ({
+  ...(await original<typeof import('../tauri')>()),
+  invoke: (command: string, args?: Record<string, unknown>) => {
+    const path = typeof args?.path === 'string' ? args.path : ''
+    if (command === 'read_note' || command === 'read_tree') {
+      const held = disk.get(path)
+      return held === undefined ? Promise.reject(new Error('no such file')) : Promise.resolve(held)
+    }
+    if (command === 'create_folder') folders.push(path)
+    return Promise.resolve('')
+  },
+}))
+
+vi.mock('../workspace/write-file', () => ({
+  writeFile: (path: string, content: string) => {
+    written.push(path)
+    disk.set(path, content)
+    return Promise.resolve()
+  },
+}))
+
+// As the real one: a note in a space shared to be read is passed over, and the answer
+// is how many were written (workspace/note-text.ts).
+vi.mock('../workspace/note-text', () => ({
+  noteText: (_ws: unknown, path: string) => Promise.resolve(disk.get(path) ?? null),
+  writeNoteText: () => Promise.resolve(),
+  replaceInNotes: (_ws: unknown, changes: { path: string; after: string }[]) => {
+    let done = 0
+    for (const one of changes) {
+      if ([...readOnly].some((root) => insideOf(root, one.path))) continue
+      written.push(one.path)
+      disk.set(one.path, one.after)
+      done++
+    }
+    return Promise.resolve(done)
+  },
+}))
+
+const THEIRS = { id: 'theirs', name: 'Theirs', root: '/theirs' }
+const MINE = { id: 'mine', name: 'Mine', root: '/mine' }
+
+vi.mock('../workspace.svelte', () => ({
+  workspace: {
+    spaces: [THEIRS, MINE],
+    activeSpace: THEIRS,
+    notes: [],
+    freeName: (_dir: string, name: string) => name,
+    loadTree: () => Promise.resolve(),
+    fileCame: () => Promise.resolve(),
+    open: () => Promise.resolve(),
+    move: (from: string) => {
+      written.push(`moved ${from}`)
+      return Promise.resolve()
+    },
+    documentAt: () => null,
+    noteText: (path: string) => Promise.resolve(disk.get(path) ?? null),
+    undone: { last: null, stack: [] },
+  },
+}))
+
+/** The rows every shown space holds, the read one's among them. */
+let shown: Row[] = []
+
+vi.mock('../rows/rows.svelte', () => ({
+  rows: {
+    ready: true,
+    of: (space?: string) => shown.filter((row) => space === undefined || row.space === space),
+    at: () => [],
+    inbox: () => Promise.resolve(null),
+    write: async (row: Row, change: import('../rows/write').RowChange) => {
+      const { writeRow } = await import('../rows/write')
+      const root = row.space === 'Theirs' ? THEIRS.root : MINE.root
+      return writeRow({} as never, `${root}/${row.path}`, row, change)
+    },
+  },
+}))
+
+vi.mock('../surfaces.svelte', () => ({ showQuickAdd: () => undefined }))
+vi.mock('../reminders/platform', () => ({ show: () => undefined }))
+
+/** What the automations of a base would do once a note settles: write its rows and
+ *  move its note, both into the space the base is in. */
+const planning = vi.hoisted((): { plan: unknown } => ({
+  plan: { writes: [], moves: [], notices: [] },
+}))
+vi.mock('./automate', () => ({ planned: () => planning.plan }))
+
+const { noteRow, taskRow } = await import('./fixture')
+const { kitFor } = await import('./kit')
+const { tickRow, writeEach } = await import('./act')
+const { addNote } = await import('./add')
+const { heard, readHeld, repeatTemplates } = await import('./running')
+const { contextFor } = await import('./context')
+const Cell = (await import('./Cell.svelte')).default
+
+const PLAN = 'Plan.md'
+const TASK = '- [ ] water the plants'
+
+/** A view over every space, as Today is, of a view of notes grouped by status. */
+function viewOver(file: string | null) {
+  const base = readBase('views:\n  - type: table\n    name: All\n')
+  const changes: unknown[] = []
+  const live = {
+    base,
+    at: 0,
+    today: '2026-10-24',
+    context: contextFor({ rows: [], today: '2026-10-24', now: '2026-10-24T12:00' }),
+    view: { type: 'table', groupBy: { property: 'note.status' }, nib: { rows: 'notes' } },
+    writtenAt: file,
+    locked: false,
+    refused: 0,
+    change: (next: unknown) => {
+      changes.push(next)
+      return Promise.resolve()
+    },
+  }
+  const kit = kitFor(live as unknown as Parameters<typeof kitFor>[0], {}, file, false)
+  return { kit, live, changes }
+}
+
+beforeEach(() => {
+  disk.clear()
+  written.length = 0
+  folders.length = 0
+  readOnly.clear()
+  readOnly.add(THEIRS.root)
+  disk.set(`${THEIRS.root}/${PLAN}`, `---\nstatus: open\n---\n${TASK}\n`)
+  disk.set(`${MINE.root}/${PLAN}`, `---\nstatus: open\n---\n${TASK}\n`)
+  shown = []
+  planning.plan = { writes: [], moves: [], notices: [] }
+})
+
+const theirTask = () => taskRow(PLAN, TASK, 3, { space: 'Theirs' })
+const theirNote = () => noteRow(PLAN, { status: 'open' }, {}, 'Theirs')
+
+describe('a view over a space shared to be read', () => {
+  test('offers no write of its rows, and still offers the reader their own', () => {
+    const { kit } = viewOver(null)
+    expect(kit.writes(theirTask())).toBe(false)
+    expect(kit.writes(taskRow(PLAN, TASK, 3, { space: 'Mine' }))).toBe(true)
+  })
+
+  test('ticks no task, and answers that it did not', async () => {
+    const { kit } = viewOver(null)
+    expect(await kit.tick(theirTask())).toBe(false)
+    expect(written).toEqual([])
+  })
+
+  test('and a tick that was turned away is not one done', async () => {
+    expect(await tickRow(theirTask(), '2026-10-24')).toBe(false)
+    expect(await tickRow(taskRow(PLAN, TASK, 3, { space: 'Mine' }), '2026-10-24')).toBe(true)
+    expect(written).toEqual([`${MINE.root}/${PLAN}`])
+  })
+
+  test('writes no cell and drops no card', async () => {
+    const { kit } = viewOver(null)
+    kit.write(theirNote(), { note: { status: 'done' } })
+    kit.drop(theirNote(), 'done')
+    await new Promise((done) => setTimeout(done, 10))
+    expect(written).toEqual([])
+    expect(disk.get(`${THEIRS.root}/${PLAN}`)).toContain('status: open')
+  })
+
+  test('adds no note to the view of a base in it', async () => {
+    const { kit } = viewOver(`${THEIRS.root}/Bugs.base`)
+    expect(kit.writable).toBe(false)
+    expect(kit.add()).toBeNull()
+    await new Promise((done) => setTimeout(done, 10))
+    expect(written).toEqual([])
+    expect(await addNote(readBase('views:\n  - type: table\n'), 0, null)).toBeNull()
+    expect(written).toEqual([])
+  })
+
+  test('changes no base file of it', async () => {
+    const { kit, changes } = viewOver(`${THEIRS.root}/Bugs.base`)
+    kit.change((base) => base)
+    expect(await kit.changed((base) => base)).toBe(false)
+    expect(changes).toEqual([])
+  })
+
+  test("while a view of the reader's own base still changes", async () => {
+    const { kit, changes } = viewOver(`${MINE.root}/Bugs.base`)
+    expect(kit.writable).toBe(true)
+    expect(await kit.changed((base) => base)).toBe(true)
+    expect(changes).toHaveLength(1)
+  })
+
+  test('writes no row of many as one', async () => {
+    expect(await writeEach([{ row: theirNote(), change: { note: { status: 'done' } } }])).toBe(
+      false,
+    )
+    expect(written).toEqual([])
+  })
+})
+
+/** A cell of a row, being edited as a table edits the one the keyboard is on. */
+function cellOf(row: Row, property: string, editor: string) {
+  const { kit } = viewOver(null)
+  const props = { row, property, editor, kit, editing: true }
+  return render(Cell, { props: props as never }).body
+}
+
+describe('the cells of a row in a space shared to be read', () => {
+  test('take no words and tick no box', () => {
+    const theirs = cellOf(theirTask(), 'task.text', 'text')
+    expect(theirs).not.toMatch(/class="edit[ "]/)
+    expect(theirs).toMatch(/<button[^>]*class="box[^>]*disabled/)
+  })
+
+  test("while the reader's own still do", () => {
+    const mine = cellOf(taskRow(PLAN, TASK, 3, { space: 'Mine' }), 'task.text', 'text')
+    expect(mine).toMatch(/class="edit[ "]/)
+    expect(mine).not.toMatch(/<button[^>]*class="box[^>]*disabled/)
+  })
+})
+
+describe('the runner, in a space shared to be read', () => {
+  test('makes no note of a repeating template', async () => {
+    const template = noteRow('Templates/Daily.md', { repeat: 'every day' }, {}, 'Theirs')
+    disk.set(`${THEIRS.root}/Templates/Daily.md`, '---\nrepeat: every day\n---\nToday\n')
+    shown = [template]
+
+    await repeatTemplates()
+    expect(written).toEqual([])
+    expect(folders).toEqual([])
+  })
+
+  /** A base's automations, run once a note of the space settles. Each test settles a
+   *  note of its own, since the runner hears its own write of one as its own. */
+  async function settle(name: string) {
+    const row = noteRow(name, { status: 'open' }, {}, 'Theirs')
+    disk.set(`${THEIRS.root}/${name}`, '---\nstatus: open\n---\n')
+    vi.useFakeTimers()
+    try {
+      const base = `${THEIRS.root}/Bugs.base`
+      disk.set(base, 'nib:\n  id:\n    property: id\nviews:\n  - type: table\n')
+      await readHeld(base)
+      planning.plan = {
+        writes: [{ row, change: { note: { status: 'done' } } }],
+        moves: [{ row, folder: 'Done' }],
+        notices: [],
+      }
+
+      heard('Theirs', name, [])
+      await vi.advanceTimersByTimeAsync(200)
+    } finally {
+      vi.useRealTimers()
+    }
+    // The run's own writes, which are awaited one after the other past the timer.
+    await new Promise((done) => setTimeout(done, 20))
+  }
+
+  test("runs none of a base's automations", async () => {
+    await settle('Bug 1.md')
+    expect(written).toEqual([])
+    expect(folders).toEqual([])
+  })
+
+  test("which run where the space is the reader's own", async () => {
+    readOnly.clear()
+    await settle('Bug 2.md')
+    await vi.waitFor(() => expect(folders).toEqual([`${THEIRS.root}/Done`]))
+    expect(written).toContain(`${THEIRS.root}/Bug 2.md`)
+  })
+})
