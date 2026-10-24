@@ -1,3 +1,4 @@
+import { renderMarkdown } from '@nib/markdown'
 import { describe, expect, test } from 'vitest'
 
 import type { ImportPlan } from './plan'
@@ -156,6 +157,12 @@ describe('a Roam export, block by block', () => {
     expect(roamText('Type `{{[[TODO]]}} __x__` to make one')).toBe(
       'Type `{{[[TODO]]}} __x__` to make one',
     )
+  })
+
+  test('an escaped backtick opens no code, so a tag after it stays words', () => {
+    const text = roamText('\\`<img src=x> and `<b>`')
+    expect(text).toBe('\\`\\<img src=x> and `<b>`')
+    expect(renderMarkdown(text)).not.toContain('<img')
   })
 
   test('a tag in a block stays words, since Roam shows it as text, and its own markup still converts', () => {
