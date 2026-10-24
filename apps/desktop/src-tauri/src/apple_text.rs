@@ -1493,6 +1493,25 @@ mod tests {
         assert_eq!(said, "\\<script src=x> and 1 < 2");
     }
 
+    /// A backslash somebody typed in front of a tag would otherwise take the escape
+    /// for itself: `\<img>` is a backslash and then a live tag.
+    #[test]
+    fn a_backslash_in_front_of_html_does_not_let_it_through() {
+        let said = as_markdown("\\<img src=x onerror=alert(1)>", &[run(29, &[])]);
+        assert_eq!(said, "\\\\\\<img src=x onerror=alert(1)>");
+    }
+
+    /// Where a link goes comes from outside the note, and nothing in it may end the
+    /// link early and leave the rest of it as markup on the line.
+    #[test]
+    fn where_a_link_goes_cannot_end_the_link() {
+        assert_eq!(
+            super::destination("https://x.test/a) <img src=x onerror=alert(1)>"),
+            "<https://x.test/a) %3Cimg src=x onerror=alert(1)%3E>"
+        );
+        assert_eq!(super::destination("https://x.test/a"), "https://x.test/a");
+    }
+
     /// A link with a space or a bracket in where it goes is still one link.
     #[test]
     fn a_link_with_a_space_in_it_is_still_a_link() {
