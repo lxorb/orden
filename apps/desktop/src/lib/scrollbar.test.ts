@@ -16,6 +16,15 @@ describe('the thumb', () => {
     expect(thumbFor(track({ content: 401 }))).toBeNull()
   })
 
+  /** A palette whose rows all show and whose own padding runs past its cap: four
+   *  pixels the browser counts as content, and nothing a reader can scroll to (#775). */
+  test('has nothing to say when only the scroller’s own padding runs past', () => {
+    expect(thumbFor(track({ content: 404, slack: 4 }))).toBeNull()
+    expect(thumbFor(track({ content: 405, slack: 4 }))).toBeNull()
+    // A row's worth past the padding is something to scroll to.
+    expect(thumbFor(track({ content: 432, slack: 4 }))).not.toBeNull()
+  })
+
   test('starts at the top and ends flush with the bottom', () => {
     expect(thumbFor(track())?.offset).toBe(0)
     expect(thumbFor(track({ at: 1200 }))?.offset).toBe(300)
