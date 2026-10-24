@@ -12,7 +12,7 @@
 
 import { extracted, merged, type Split, splitAt } from '../composer'
 import type { Retargeting } from '../link-index.svelte'
-import { folderOf, samePath } from '../space-paths'
+import { folderOf, samePath, withinSpace } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
 import { type Tab, UNTITLED } from './documents.svelte'
 import type { FileActions } from './undo.svelte'
@@ -20,6 +20,7 @@ import { writeFile } from './write-file'
 
 /** What composing needs of the store the notes are open in. */
 export interface Composes {
+  readonly activeSpace: { root: string } | null
   readonly active: Tab | null
   readonly undone: FileActions
   flush(): void
@@ -33,10 +34,36 @@ export interface Composes {
   persist(): void
 }
 
+/** Whether a note may take part in a merge, asked of both notes: once before the
+ *  palette offers a merge, and again by the merge itself, which can be reached
+ *  other ways than the palette.
+ *
+ *  It has to be writable, since one note is written and the other deleted; that
+ *  is what split and extract ask too. And it has to be one of the open space's.
+ *  A tab outlives a switch of space while the notes offered to merge into are the
+ *  open space's, and the links that are pointed at the note left behind are found
+ *  only within the open space: a note of another one would be deleted from under
+ *  every link to it, and its words would land in a space it was never in.
+ *
+ *  Who may write where is sharing.svelte.ts's, handed in rather than imported: it
+ *  reaches the workspace through sync, and this file is loaded while the workspace
+ *  itself is being made. */
+export function mergeable(
+  root: string | null,
+  path: string,
+  writable: (path: string) => boolean,
+): boolean {
+  return root !== null && withinSpace(root, path) !== null && writable(path)
+}
+
 /** Appends this note into another, deletes it, and points every link that came
  *  here at the note it went into. */
 export async function mergeInto(ws: Composes, from: string, into: string): Promise<void> {
   if (samePath(from, into)) return
+
+  const root = ws.activeSpace?.root ?? null
+  const { canWriteAt } = await import('../sharing.svelte')
+  if (!mergeable(root, from, canWriteAt) || !mergeable(root, into, canWriteAt)) return
 
   const [fromContent, intoContent] = await Promise.all([
     invoke<string>('read_note', { path: from }).catch(() => null),
