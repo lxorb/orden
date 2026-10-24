@@ -144,6 +144,18 @@ describe('what another app may share with nib', () => {
   })
 })
 
+describe('the press that started the app', () => {
+  /** Read once. An activity made again (after the process died) or opened from
+   *  Recents is handed the intent it started with, and reading it again started the
+   *  recording again, or brought a share back as a second note. */
+  test('is not read again when the activity comes back', () => {
+    const created = /override fun onCreate\([\s\S]*?\n {2}\}/.exec(activity)?.[0] ?? ''
+    expect(created).toMatch(/savedInstanceState == null/)
+    expect(created).toContain('FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY')
+    expect(created).toContain('if (fresh) read(intent)')
+  })
+})
+
 describe('the quick settings tiles', () => {
   const declared = [
     ...manifest.matchAll(/<service\s+android:name="\.(\w+Tile)"([\s\S]*?)<\/service>/g),
