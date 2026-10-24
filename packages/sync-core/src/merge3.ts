@@ -210,8 +210,18 @@ function rewrittenLines(base: string, side: readonly Edit[]): boolean[] {
 /** Whether an insertion at an edge of the other side's replacement, written beside
  *  it, runs a word of its own into a word the other side's text ends or starts with
  *  there: one side took out the space between two words and the other typed a word
- *  against it (`task x` and `task`, merged `taskx`). */
+ *  against it (`task x` and `task`, merged `taskx`); or two replacements that meet
+ *  end to end with no space at the seam. */
 function glued(base: string, one: Edit, other: Edit): boolean {
+  if (!isInsertion(one) && !isInsertion(other)) {
+    // Two replacements end to end make one stretch of the merge, and where neither
+    // leaves a space at the seam they make one token neither side wrote (`[x😀`).
+    const [first, then] = one.to === other.from ? [one, other] : [other, one]
+    if (first.to !== then.from) return false
+    const left = first.insert ? first.insert.slice(-1) : base.charAt(first.from - 1)
+    const right = then.insert ? then.insert.charAt(0) : base.charAt(then.to)
+    return /\S/.test(left) && /\S/.test(right)
+  }
   const [insertion, span] = isInsertion(one) ? [one, other] : [other, one]
   if (!isInsertion(insertion) || isInsertion(span)) return false
   const word = (char: string) => /^[\p{L}\p{N}]/u.test(char)
