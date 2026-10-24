@@ -171,7 +171,15 @@ fn appended(note: &str, line: &str) -> String {
     let Some(last) = lines.iter().rposition(|one| !one.trim().is_empty()) else {
         return format!("{line}{eol}");
     };
-    let kept: usize = lines[..=last].iter().map(|one| one.len()).sum::<usize>() + last * eol.len();
+    // Where the last words end, counted on the note as it is: a note edited on two
+    // systems ends some lines with `\r\n` and some with `\n`, so `eol` is not what
+    // every line before them ends with.
+    let kept = note
+        .split('\n')
+        .take(last)
+        .map(|one| one.len() + 1)
+        .sum::<usize>()
+        + lines[last].len();
     let gap = if ends_in_list(&lines[..=last]) {
         eol.to_owned()
     } else {
@@ -221,6 +229,24 @@ mod tests {
             "1. a\n  more\n- [ ] b\n\n"
         );
         assert_eq!(appended("- [ ] a\r\n", "- [ ] b"), "- [ ] a\r\n- [ ] b\r\n");
+    }
+
+    /// A note edited on two systems has both line endings, and the place after its last
+    /// words is where they end, whatever ends the lines before them.
+    #[test]
+    fn a_task_lands_after_the_last_words_of_a_note_of_mixed_endings() {
+        assert_eq!(
+            appended("a\nb\nc\nd\r\n", "- [ ] x"),
+            "a\nb\nc\nd\r\n\r\n- [ ] x\r\n"
+        );
+        assert_eq!(
+            appended("Einkauf\nÄpfel\nBirnen\nÄ\r\n", "- [ ] x"),
+            "Einkauf\nÄpfel\nBirnen\nÄ\r\n\r\n- [ ] x\r\n"
+        );
+        assert_eq!(
+            appended("- a\n- b\r\n", "- [ ] x"),
+            "- a\n- b\r\n- [ ] x\r\n"
+        );
     }
 
     #[test]
