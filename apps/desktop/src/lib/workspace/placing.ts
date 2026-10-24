@@ -21,6 +21,7 @@ export interface Places {
   readonly activeSpace: Space | null
   readonly closed: ClosedTabs
   freeName(dir: string, wanted: string): string
+  freeNameOnDisk(dir: string, wanted: string): Promise<string>
   showEntry(entry: Entry): void
   freshEntry(path: string, isFolder: boolean): Entry
   loadTree(): Promise<void>
@@ -57,7 +58,14 @@ export async function keepWeb(
   const page = pages.of(tab.id)
   const url = page.url ?? tab.address ?? ''
   const over = await sameNoteAt(ws, joinPath(dir, named), url)
-  const target = over?.path ?? joinPath(dir, ws.freeName(dir, named))
+  // The listing is not the disk, so the disk is asked for the name; and asking takes a
+  // round trip, in which a tab kept beside this one can claim it. So the listing is
+  // asked again once the answer is back, and the claim made in the same breath.
+  let target = over?.path ?? null
+  while (target === null) {
+    const name = await ws.freeNameOnDisk(dir, named)
+    if (ws.freeName(dir, name) === name) target = joinPath(dir, name)
+  }
 
   const kept = await claim(target, async () => {
     const own = over ? (readWebFile(target, over.text)?.own ?? null) : null

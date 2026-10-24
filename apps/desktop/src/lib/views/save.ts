@@ -20,7 +20,7 @@ function baseFileName(name: string): string {
 export async function copyToBase(yaml: string, name: string): Promise<string | null> {
   const root = workspace.activeSpace?.root
   if (root === undefined) return null
-  const path = joinPath(root, workspace.freeName(root, baseFileName(name)))
+  const path = joinPath(root, await workspace.freeNameOnDisk(root, baseFileName(name)))
   await writeFile(path, yaml)
   await workspace.loadTree()
   await workspace.fileCame(path, 'file')

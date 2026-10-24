@@ -45,7 +45,7 @@ export async function openOnline(beside = false): Promise<Tab | null> {
 
   // The file first, empty: sync gives it its id, the account names its session by that id,
   // and the terminal writes the session into it as it starts. See source.ts.
-  const path = joinPath(root, workspace.freeName(root, `${MADE_NAME}.term`))
+  const path = joinPath(root, await workspace.freeNameOnDisk(root, `${MADE_NAME}.term`))
   await writeFile(path, '')
   await workspace.fileCame(path, 'file')
   const tab = openTerm(path, { beside })

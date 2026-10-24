@@ -13,7 +13,7 @@ const { linkWords, siteDropped } = await import('./dropped-site')
 const sites = {
   activeSpace: null,
   device: { expand: () => undefined },
-  freeName: (_dir: string, wanted: string) => wanted,
+  freeNameOnDisk: async (_dir: string, wanted: string) => wanted,
   showEntry: () => undefined,
   freshEntry: (path: string) => ({ path, name: path, is_dir: false }) as never,
 }

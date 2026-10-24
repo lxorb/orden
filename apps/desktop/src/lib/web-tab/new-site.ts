@@ -26,7 +26,7 @@ import { writeShortcut } from './shortcut'
 export interface Sites {
   readonly activeSpace: Space | null
   readonly device: { expand(folder: string): void }
-  freeName(dir: string, wanted: string): string
+  freeNameOnDisk(dir: string, wanted: string): Promise<string>
   showEntry(entry: Entry): void
   freshEntry(path: string, isFolder: boolean): Entry
 }
@@ -35,7 +35,10 @@ export interface Sites {
  *  where it points, for a link dropped on the list; nothing for one named first. */
 export async function newSite(ws: Sites, dir: string, named?: string, url = ''): Promise<string> {
   const title = named === undefined ? UNTITLED : shownName(named)
-  const path = joinPath(dir, ws.freeName(dir, `${nameFromTitle(title) ?? UNTITLED}.url`))
+  const path = joinPath(
+    dir,
+    await ws.freeNameOnDisk(dir, `${nameFromTitle(title) ?? UNTITLED}.url`),
+  )
 
   ws.showEntry(ws.freshEntry(path, false))
   if (!samePath(dir, ws.activeSpace?.root)) ws.device.expand(dir)
