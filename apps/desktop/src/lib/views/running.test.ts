@@ -1,23 +1,37 @@
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-/** The notes a repeating template makes, and where it makes them.
+/** Where a base's automations and a repeating template put a note.
  *
- *  The template says where in its `folder:` property, words anybody who can write
- *  the space can write. Joined to the root as written, `../Private` made the day's
- *  note in another space, over whatever was there. */
+ *  Both are told the folder by words anybody who can write the space can write: a
+ *  base's `move` effect, and the template's `folder:` property. Joined to the root as
+ *  written, `../Private` moved a note into another space, or made the day's note
+ *  there over whatever was there. */
 
-const { written, template } = vi.hoisted(() => ({
+const { written, template, moved, plan } = vi.hoisted(() => ({
   written: new Map<string, string>(),
   template: { folder: '' },
+  moved: [] as string[],
+  plan: { folder: '' },
 }))
 
 vi.mock('@nib/bases', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@nib/bases')>()),
   repeatDue: () => ({ day: '2026-10-24', missed: [] }),
+  // Every base is one worth running.
+  readBase: () => ({ nib: { id: 'tasks' } }),
+  readAutomations: () => [],
+}))
+vi.mock('./automate', () => ({
+  planned: () => ({
+    writes: [],
+    moves: [{ row: { space: 'Shared', path: 'Inbox/a.md' }, folder: plan.folder }],
+    notices: [],
+  }),
 }))
 vi.mock('../workspace.svelte', () => ({
   workspace: {
-    spaces: [],
+    spaces: [{ id: 'shared', name: 'Shared', root: '/s/Shared' }],
+    move: async (from: string, to: string) => void moved.push(`${from} -> ${to}`),
     activeSpace: { id: 'shared', name: 'Shared', root: '/s/Shared' },
     documentAt: () => null,
     freeName: (_dir: string, wanted: string) => wanted,
@@ -52,10 +66,34 @@ vi.mock('../workspace/write-file', () => ({
 }))
 vi.mock('../reminders/platform', () => ({ show: () => undefined }))
 
-const { repeatTemplates } = await import('./running')
+const { heard, readHeld, repeatTemplates } = await import('./running')
 
 beforeEach(() => {
   written.clear()
+  moved.length = 0
+})
+
+describe("a base's automation that moves a note", () => {
+  /** A change to the note heard, and the moment it is left to settle waited out. */
+  async function changed() {
+    await readHeld('/s/Shared/Tasks.base')
+    heard('Shared', 'Inbox/a.md', [])
+    await new Promise((done) => setTimeout(done, 150))
+  }
+
+  test('moves it into the folder the base names', async () => {
+    plan.folder = 'Done'
+    await changed()
+
+    expect(moved).toEqual(['/s/Shared/Inbox/a.md -> /s/Shared/Done'])
+  })
+
+  test('moves nothing where that folder climbs out of the space', async () => {
+    plan.folder = '../Private'
+    await changed()
+
+    expect(moved).toEqual([])
+  })
 })
 
 describe("a repeating template's note", () => {
