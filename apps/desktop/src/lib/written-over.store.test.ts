@@ -26,6 +26,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('./workspace.svelte')
 const { account } = await import('./account.svelte')
+const { sync } = await import('./sync.svelte')
 
 /** The disk, which is there: it was made above. */
 function files(): Map<string, string> {
@@ -78,13 +79,15 @@ describe('a delete undone after a note took its name', () => {
     workspace.activeSpaceId = 's'
     await workspace.loadTree()
 
-    // Signed in, a delete is not this device's to keep: the note goes outright and
-    // the undo writes back the words read on the way out.
+    // Signed in, in a space on the account, a delete is not this device's to keep:
+    // the note goes outright and the undo writes back the words read on the way out.
     Object.defineProperty(account, 'signedIn', { get: () => true, configurable: true })
+    vi.spyOn(sync, 'remoteIdFor').mockReturnValue('remote')
   })
 
   afterEach(() => {
     Reflect.deleteProperty(account, 'signedIn')
+    vi.restoreAllMocks()
   })
 
   test('puts the old note back beside the new one, which keeps its words', async () => {
@@ -106,10 +109,12 @@ describe('a folder deleted signed in, undone after a note took a name in it', ()
     workspace.activeSpaceId = 's'
     await workspace.loadTree()
     Object.defineProperty(account, 'signedIn', { get: () => true, configurable: true })
+    vi.spyOn(sync, 'remoteIdFor').mockReturnValue('remote')
   })
 
   afterEach(() => {
     Reflect.deleteProperty(account, 'signedIn')
+    vi.restoreAllMocks()
   })
 
   test('with nothing made since, puts its notes back where they were', async () => {

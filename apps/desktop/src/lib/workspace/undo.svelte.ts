@@ -96,6 +96,14 @@ export type FileAction =
 
 export type Kept = Omit<Extract<FileAction, { kind: 'delete' }>, 'kind' | 'path'>
 
+/** How a file is deleted; see `bin` in workspace.svelte.ts. `source`: an agent the
+ *  last version is kept for. `madeHere`: something this device made being taken back,
+ *  which goes to its own trash whoever is signed in. */
+export interface Binning {
+  source?: string | undefined
+  madeHere?: boolean
+}
+
 export interface Copied {
   path: string
   folder: boolean
