@@ -113,6 +113,12 @@ vi.mock('./tauri', async (importOriginal) => ({
             one.toLowerCase() === to.toLowerCase() && one.toLowerCase() !== from.toLowerCase(),
         )
         if (held) throw new Error('something already lives there')
+        // Nor a PDF where a page note would take it for its paper, unless the move is the
+        // one that means it: a PDF turned into its page note; see `paper_in_the_way`.
+        const holder = to.replace(/\.pdf$/i, '')
+        if (/\.pages\.pdf$/i.test(to) && files.has(holder) && args?.hold !== true) {
+          throw new Error(`${holder} is already there`)
+        }
         const was = files.get(from)
         if (was !== undefined) {
           files.delete(from)

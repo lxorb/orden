@@ -11,7 +11,7 @@
 
 use serde::{Deserialize, Serialize};
 use std::fs;
-use std::path::{Path, PathBuf, MAIN_SEPARATOR_STR};
+use std::path::{Component, Path, PathBuf, MAIN_SEPARATOR_STR};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Mutex, MutexGuard, PoisonError};
 use tauri::AppHandle;
@@ -20,7 +20,7 @@ use crate::carry::move_whole;
 use crate::clock;
 use crate::paths::{
     folded, free_spot, in_spaces, inside, is_reserved, made, move_held, spaces_dir,
-    write_atomically, TRASH,
+    write_atomically, HIGHLIGHTS, TRASH,
 };
 
 /// The record of what is in the trash, written beside the folders it describes.
@@ -149,21 +149,33 @@ pub fn trash_words(app: AppHandle, path: String, content: String) -> Result<Tras
 fn placed(app: &AppHandle, path: &str) -> Result<(PathBuf, String, String), String> {
     let base = spaces_dir(app)?;
     let source = in_spaces(app, path)?;
+    let (from, name) = manifest_place(&base, &source)?;
+    Ok((source, from, name))
+}
 
+/// Where `source` is inside the notes folder `base`, with `/` between parts, and its
+/// name: what the manifest writes down.
+fn manifest_place(base: &Path, source: &Path) -> Result<(String, String), String> {
     let relative = source
-        .strip_prefix(&base)
-        .map_err(|_| format!("{path} is not in the notes folder"))?;
+        .strip_prefix(base)
+        .map_err(|_| format!("{} is not in the notes folder", source.display()))?;
     if relative.as_os_str().is_empty() {
         return Err("that cannot be deleted".into());
     }
-    let from = relative.to_string_lossy().replace('\\', "/");
+    // Part by part rather than by replacing `\\`, which is a letter in a name on a Mac
+    // or Linux and only Windows's separator.
+    let from = relative
+        .components()
+        .map(|part| part.as_os_str().to_string_lossy())
+        .collect::<Vec<_>>()
+        .join("/");
 
     let name = source
         .file_name()
         .map(|name| name.to_string_lossy().to_string())
         .ok_or("that has no name")?;
 
-    Ok((source, from, name))
+    Ok((from, name))
 }
 
 /// One more entry in the manifest. One that cannot be written down is something
@@ -231,11 +243,41 @@ pub fn restore_trash(app: AppHandle, id: String) -> Result<String, String> {
     // paper under its page note's, which is not the old one when something has
     // taken its place in the meantime.
     move_held(&held, &target);
-    let _ = fs::remove_dir_all(&slot);
 
-    entries.remove(position);
+    // A paper or highlights that could not follow are still in the slot, and stay in
+    // the trash as the file they are rather than going with the slot or staying in
+    // one nobody can see.
+    match left_in(&slot) {
+        None => {
+            let _ = fs::remove_dir(&slot);
+            entries.remove(position);
+        }
+        Some(left) => {
+            let folder = entry.from.rsplit_once('/').map_or("", |(folder, _)| folder);
+            entries[position].from = if folder.is_empty() {
+                left.clone()
+            } else {
+                format!("{folder}/{left}")
+            };
+            entries[position].name = left;
+            entries[position].kind = "note".into();
+        }
+    }
     write_manifest(&dir, &entries)?;
     Ok(target.to_string_lossy().to_string())
+}
+
+/// What is still in a slot once its file has gone back: a paper or highlights that
+/// could not follow it, named by the one to put back first - a paper brings its own
+/// highlights with it.
+fn left_in(slot: &Path) -> Option<String> {
+    let mut left: Vec<String> = fs::read_dir(slot)
+        .ok()?
+        .flatten()
+        .map(|one| one.file_name().to_string_lossy().into_owned())
+        .collect();
+    left.sort_by_key(|name| name.ends_with(HIGHLIGHTS));
+    left.into_iter().next()
 }
 
 /// Takes one thing away for good.
@@ -360,8 +402,12 @@ fn purge(dir: &Path, entries: &mut Vec<TrashEntry>, id: &str) {
 /// read the way anything from outside is: `from` has to land back inside the
 /// notes folder and outside the trash, and the name it was stored under has to be
 /// a name rather than a path.
+///
+/// Any name this platform reads as one entry, not only one `is_name` would make: the
+/// trash took the file under the name it had, and a `Q3:Q4 plan.md` a Mac's Finder
+/// wrote or an `aux.md` that came by sync has to come back out as surely as it went in.
 fn restore_target(base: &Path, entry: &TrashEntry) -> Result<PathBuf, String> {
-    if !is_name(&entry.name) {
+    if !names_one_entry(&entry.name) {
         return Err("that is not a name Orden stored".into());
     }
 
@@ -373,8 +419,23 @@ fn restore_target(base: &Path, entry: &TrashEntry) -> Result<PathBuf, String> {
     Ok(free_spot(&wanted, entry.kind == "note"))
 }
 
-/// Whether a string names one file or folder rather than a path to one. What the
-/// trash stores something under is its own name, so nothing else is one.
+/// Whether `name` is one entry of a folder as this platform reads a path, and nothing
+/// else: no folder, drive, `.` or `..` in it, and no NUL. What a restore asks of the
+/// name a slot holds, since the slot is joined with it: on Windows `C:x` is a drive,
+/// and here it is one name, which only a disk that holds such names put there.
+fn names_one_entry(name: &str) -> bool {
+    // And no `:` on Windows, which holds no such name and reads one as a stream.
+    if name.contains('\0') || (cfg!(windows) && name.contains(':')) {
+        return false;
+    }
+    let mut parts = Path::new(name).components();
+    matches!(parts.next(), Some(Component::Normal(one)) if one.to_str() == Some(name))
+        && parts.next().is_none()
+}
+
+/// Whether a string names one file or folder rather than a path to one, and one every
+/// platform can hold: what the trash makes a name for itself, for words that never had
+/// a file, so nothing else is one.
 ///
 /// Judged by its letters rather than by this platform's path parser, and to the
 /// same rule everywhere. `Path` reads `C:` as a drive on Windows and as an
@@ -402,8 +463,8 @@ fn is_name(name: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::{
-        is_name, is_slot, purge, read_manifest, recorded, restore_target, write_manifest,
-        TrashEntry, MANIFEST,
+        is_name, is_slot, manifest_place, purge, read_manifest, recorded, restore_target,
+        write_manifest, TrashEntry, MANIFEST,
     };
     use std::path::{Path, PathBuf};
 
@@ -528,6 +589,79 @@ mod tests {
         assert!(restore_target(&base, &entry("1-0", "../../Idea.md", "Idea.md")).is_err());
     }
 
+    /// What went into the trash comes back out. A name the trash took is one this disk
+    /// held, however little Windows would like it - a Finder `/` is stored as `:`, and a
+    /// note may arrive by sync or from another program as `aux.md` - and refusing to
+    /// put it back left it in the trash until it was purged.
+    #[test]
+    fn a_restore_takes_back_any_name_the_trash_took() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let base = dir.path();
+
+        // Only where the disk could have held them: Windows reads a device name as a
+        // device wherever it is, and drops a trailing dot or space.
+        let mut names = vec![" Lead.md"];
+        if cfg!(unix) {
+            names.extend([
+                "aux.md",
+                "con.md",
+                "Q3:Q4 plan.md",
+                r"back\slash.md",
+                "Trail.",
+                "Trail ",
+            ]);
+        }
+        for name in names {
+            assert_eq!(
+                restore_target(base, &entry("1-0", name, name)),
+                Ok(base.join(name)),
+                "{name}"
+            );
+        }
+    }
+
+    /// A `\\` in a name is a letter on a Mac or Linux, where Finder allows one: written
+    /// down as a `/` it came back as a folder `back` with `slash.md` in it, its name
+    /// lost and every link to it broken. Only Windows writes its paths with `\\`.
+    #[cfg(unix)]
+    #[test]
+    fn a_name_with_a_backslash_comes_back_under_it() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let base = dir.path();
+        let source = base.join(r"Q\4").join(r"back\slash.md");
+
+        let (from, name) = manifest_place(base, &source).expect("placed");
+        assert_eq!(from, r"Q\4/back\slash.md");
+        assert_eq!(name, r"back\slash.md");
+        assert_eq!(
+            restore_target(base, &entry("1-0", &name, &from)),
+            Ok(base.join(r"Q\4").join(r"back\slash.md"))
+        );
+    }
+
+    #[test]
+    fn a_place_is_written_with_slashes() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let base = dir.path();
+        let (from, name) =
+            manifest_place(base, &base.join("Work").join("Idea.md")).expect("placed");
+        assert_eq!((from.as_str(), name.as_str()), ("Work/Idea.md", "Idea.md"));
+        assert!(manifest_place(base, base).is_err());
+    }
+
+    /// A folder called `Report.pages` - a macOS Pages document is one - holds no paper,
+    /// so a `Report.pages.pdf` beside it does not take its name.
+    #[test]
+    fn a_folder_of_a_page_notes_name_restores_beside_a_pdf_of_its_papers_name() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let base = dir.path();
+        std::fs::write(base.join("Report.pages.pdf"), b"%PDF mine").expect("a PDF");
+        let mut folder = entry("1-0", "Report.pages", "Report.pages");
+        folder.kind = "folder".into();
+
+        assert_eq!(restore_target(base, &folder), Ok(base.join("Report.pages")));
+    }
+
     #[test]
     fn a_restore_numbers_a_name_whose_place_is_taken() {
         let dir = tempfile::tempdir().expect("a temp folder");
@@ -550,6 +684,19 @@ mod tests {
         let target =
             restore_target(base, &entry("1-0", "Report.pages", "Report.pages")).expect("a place");
         assert_eq!(target, base.join("Report 2.pages"));
+    }
+
+    /// And a PDF of a page note's paper's name comes back beside the note under a name
+    /// of its own: under that one the note would take it for its paper.
+    #[test]
+    fn a_pdf_restores_beside_a_page_note_of_its_name() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let base = dir.path();
+        std::fs::write(base.join("Report.pages"), "{}").expect("a page note");
+
+        let target = restore_target(base, &entry("1-0", "Report.pages.pdf", "Report.pages.pdf"))
+            .expect("a place");
+        assert_eq!(target, base.join("Report.pages 2.pdf"));
     }
 
     /// An entry goes on the end of what the manifest already holds, and nothing is

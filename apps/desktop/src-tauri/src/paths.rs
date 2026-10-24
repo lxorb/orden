@@ -182,29 +182,67 @@ pub fn held_paper(pdf: &Path) -> bool {
     // The note's paper is the one `paper_of` names, so a paper hidden is one that goes
     // with the note: `Lecture.pages.PDF` is that paper on a disk that ignores case,
     // and somebody's own PDF on one that does not.
+    paper_holder(pdf).is_some_and(|holder| {
+        let paper = paper_of(&holder);
+        paper == pdf || crate::notes::same_entry(&paper, pdf)
+    })
+}
+
+/// The page note a PDF at `pdf` would be the paper of: `Lecture.pages` for
+/// `Lecture.pages.pdf`, where that note is there. A PDF put at such a name is held by
+/// the note, whoever put it there.
+fn paper_holder(pdf: &Path) -> Option<PathBuf> {
+    if !is_pdf(pdf) {
+        return None;
+    }
     let holder = pdf.with_extension("");
-    let paper = paper_of(&holder);
-    is_pages(&holder) && holder.is_file() && (paper == pdf || crate::notes::same_entry(&paper, pdf))
+    holds_paper(&holder).then_some(holder)
+}
+
+/// Whether `path` is a page note, which holds a paper: a file called `<name>.pages`.
+/// A folder of that name - a macOS Pages document is one - holds none, so a PDF
+/// beside it is a PDF of its own and never follows it anywhere.
+fn holds_paper(path: &Path) -> bool {
+    is_pages(path) && path.is_file()
 }
 
 /// Whether a name is taken: by something there, or, for a page note, by a file where
 /// its paper would go. A PDF called `Report.pages.pdf` is somebody's - macOS Pages names
 /// every PDF it saves that way - and a page note given `Report.pages` would take it for
-/// its paper: moved over it, or hidden from the list as held (#538).
-fn taken(path: &Path) -> bool {
-    path.exists() || (is_pages(path) && paper_of(path).exists())
+/// its paper: moved over it, or hidden from the list as held (#538). And the other way
+/// round: such a PDF put beside a page note `Report.pages` with no paper yet is taken
+/// by that note for its paper, so for a PDF the name is taken where the note is. And
+/// where highlights a gone PDF left behind are, which a new one would show as its own.
+///
+/// Only for a file: a folder called `Report.pages`, which a macOS Pages document is,
+/// holds no paper and is no paper.
+pub fn taken(path: &Path, is_file: bool) -> bool {
+    path.exists()
+        || (is_file
+            && ((is_pages(path) && paper_of(path).exists())
+                || paper_holder(path).is_some()
+                || (is_pdf(path) && highlights_of(path).exists())))
 }
 
 /// Whether a page note may be called `to`, coming from `from`: not over a file where its
 /// paper would go, unless that file is `from`'s own paper under another spelling of its
 /// name (`same` says whether two paths are one entry; see `respelled` in notes.rs).
 /// Answers the file in the way, to be named in the refusal.
+///
+/// And whether a PDF may be called `to`: not where a page note would take it for its
+/// paper, which is the note in the way. From anywhere, the note's own folder too: a
+/// name typed into a PDF's row there is how it happens. The one move that means it,
+/// a PDF turned into its page note (pages/from-pdf.ts), says so to `rename_note`.
 pub fn paper_in_the_way(
     from: &Path,
     to: &Path,
     same: impl Fn(&Path, &Path) -> bool,
 ) -> Option<PathBuf> {
     if !is_pages(to) {
+        return paper_holder(to);
+    }
+    // A folder holds no paper, so nothing is in its way.
+    if from.is_dir() {
         return None;
     }
     let there = paper_of(to);
@@ -229,7 +267,11 @@ pub fn paper_in_the_way(
 /// lost file. Moved the way the file was, so one that went to the trash on another
 /// disk takes them with it.
 pub fn move_held(from: &Path, to: &Path) {
+    // Asked of `to`, since the file has moved there already.
     if is_pages(from) {
+        if !holds_paper(to) {
+            return;
+        }
         let paper = paper_of(from);
         let moved = paper_of(to);
         // Never over a file already there, which is somebody's own PDF (#538): the
@@ -247,9 +289,13 @@ pub fn move_held(from: &Path, to: &Path) {
         return;
     }
 
+    // Highlights already at the new name were left by a PDF that went outside Orden, and
+    // are not this one's: replaced by its own, or cleared where it has none.
     let source = highlights_of(from);
     if source.exists() {
         let _ = crate::carry::move_whole(&source, &highlights_of(to), "move");
+    } else {
+        let _ = fs::remove_file(highlights_of(to));
     }
 }
 
@@ -257,6 +303,9 @@ pub fn move_held(from: &Path, to: &Path) {
 /// failure for the same reason as well.
 pub fn copy_held(from: &Path, to: &Path) {
     if is_pages(from) {
+        if !holds_paper(from) {
+            return;
+        }
         let paper = paper_of(from);
         let copied = paper_of(to);
         if paper.exists() && !copied.exists() && fs::copy(&paper, &copied).is_ok() {
@@ -271,10 +320,13 @@ pub fn copy_held(from: &Path, to: &Path) {
     let source = highlights_of(from);
     if source.exists() {
         let _ = fs::copy(&source, highlights_of(to));
+    } else {
+        let _ = fs::remove_file(highlights_of(to));
     }
 }
 
-/// And they go when it goes.
+/// And they go when it goes. Only ever after `file` was removed as a file, so a page
+/// note's: a folder is never removed through here.
 pub fn drop_held(file: &Path) {
     if is_pages(file) {
         let paper = paper_of(file);
@@ -1198,7 +1250,14 @@ fn spill(temp: &Path, bytes: &[u8], private: bool) -> Result<(), String> {
 /// `path` if nothing is there, else the first free `name 2`, `name 3`... - the
 /// number before the extension for a file, after the name for a folder.
 pub fn free_spot(path: &Path, is_file: bool) -> PathBuf {
-    if !taken(path) {
+    first_spot(path, is_file, |one| !taken(one, is_file))
+}
+
+/// The first of `path`, `name 2`, `name 3`... that `fits`, numbered as `free_spot`
+/// numbers them. `fits` is told only of names; whether one is free is `taken`'s to say,
+/// which a caller that may also land on its own copy asks itself.
+pub fn first_spot(path: &Path, is_file: bool, fits: impl Fn(&Path) -> bool) -> PathBuf {
+    if fits(path) {
         return path.to_path_buf();
     }
 
@@ -1217,7 +1276,7 @@ pub fn free_spot(path: &Path, is_file: bool) -> PathBuf {
     let mut counter = 2;
     loop {
         let candidate = parent.join(format!("{stem} {counter}{extension}"));
-        if !taken(&candidate) {
+        if fits(&candidate) {
             return candidate;
         }
         counter += 1;
@@ -1993,6 +2052,119 @@ mod tests {
         assert_eq!(
             super::paper_in_the_way(&here.join("Idea.md"), &here.join("Note.md"), same),
             None
+        );
+    }
+
+    /// Highlights a PDF deleted outside Orden left behind are not the highlights of a
+    /// PDF renamed or copied to its name: the one arriving shows its own, or none.
+    #[test]
+    fn a_pdf_arriving_never_shows_highlights_left_behind() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let here = dir.path();
+        let plain = here.join("A.pdf");
+        std::fs::write(&plain, b"%PDF a").expect("a PDF with no highlights");
+        let gone = here.join("B.pdf");
+        std::fs::write(highlights_of(&gone), "[\"old\"]").expect("leftovers");
+        let copy = here.join("C.pdf");
+        std::fs::write(highlights_of(&copy), "[\"old\"]").expect("leftovers");
+
+        copy_held(&plain, &copy);
+        assert!(!highlights_of(&copy).exists());
+
+        std::fs::rename(&plain, &gone).expect("the PDF's own move");
+        move_held(&plain, &gone);
+        assert!(!highlights_of(&gone).exists());
+    }
+
+    /// The other way round: a PDF called `Report.pages.pdf` - macOS Pages names every
+    /// PDF it saves that way - brought beside a page note `Report.pages` that has no
+    /// paper yet would be taken for its paper, hidden from the list, drawn over, and
+    /// deleted with the note.
+    #[test]
+    fn a_pdf_never_lands_where_a_page_note_would_take_it_for_its_paper() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let mine = dir.path().join("A");
+        let here = dir.path().join("B");
+        std::fs::create_dir_all(&mine).expect("A");
+        std::fs::create_dir_all(&here).expect("B");
+        let note = here.join("Report.pages");
+        std::fs::write(&note, "{}").expect("a page note of blank sheets");
+        let pdf = mine.join("Report.pages.pdf");
+        std::fs::write(&pdf, b"%PDF mine").expect("somebody's own PDF");
+        let never = |_: &Path, _: &Path| false;
+
+        // Refused by name before anything moves...
+        assert_eq!(
+            super::paper_in_the_way(&pdf, &here.join("Report.pages.pdf"), never),
+            Some(note.clone())
+        );
+        // ...and a new place for it steps past the name.
+        assert_eq!(
+            free_spot(&here.join("Report.pages.pdf"), true),
+            here.join("Report.pages 2.pdf")
+        );
+
+        // And from the note's own folder too: `slides.pdf` renamed `Lecture.pages.pdf`
+        // by a name typed into its row would be taken for the blank note's paper. The
+        // one move that means it - a PDF turned into a page note - says so to
+        // `rename_note`, which is not this judge.
+        let lecture = here.join("Lecture.pages");
+        std::fs::write(&lecture, "{}").expect("a page note of blank sheets");
+        let slides = here.join("slides.pdf");
+        std::fs::write(&slides, b"%PDF slides").expect("a PDF");
+        assert_eq!(
+            super::paper_in_the_way(&slides, &here.join("Lecture.pages.pdf"), never),
+            Some(lecture)
+        );
+    }
+
+    /// A folder called `Report.pages` - a macOS Pages document is one - is no page
+    /// note and holds no paper, so a `Report.pages.pdf` beside it is a PDF of its own:
+    /// it stays where it is when the folder moves, and a copy of the folder has none.
+    #[test]
+    fn a_folder_of_a_page_notes_name_holds_no_paper() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let here = dir.path();
+        let package = here.join("Report.pages");
+        std::fs::create_dir_all(&package).expect("a Pages document");
+        std::fs::write(paper_of(&package), b"%PDF mine").expect("a PDF beside it");
+        let never = |_: &Path, _: &Path| false;
+
+        // Copied, the copy has no paper...
+        let copy = here.join("Copy.pages");
+        std::fs::create_dir_all(&copy).expect("the copy");
+        copy_held(&package, &copy);
+        assert!(!paper_of(&copy).exists());
+
+        // ...moved, the PDF stays...
+        let moved = here.join("Final.pages");
+        std::fs::rename(&package, &moved).expect("the folder's own move");
+        move_held(&package, &moved);
+        assert_eq!(
+            std::fs::read(paper_of(&package)).expect("still there"),
+            b"%PDF mine"
+        );
+        assert!(!paper_of(&moved).exists());
+
+        // ...and a PDF where the folder's paper would be is not in its way.
+        std::fs::write(here.join("Other.pages.pdf"), b"%PDF other").expect("another PDF");
+        assert_eq!(
+            super::paper_in_the_way(&moved, &here.join("Other.pages"), never),
+            None
+        );
+    }
+
+    /// Highlights left behind by a PDF that has gone are still a PDF's highlights: a
+    /// new PDF under that name would show them as its own, so the name is taken.
+    #[test]
+    fn a_pdfs_name_is_taken_by_highlights_left_behind() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let here = dir.path();
+        std::fs::write(highlights_of(&here.join("Paper.pdf")), "[]").expect("leftovers");
+
+        assert_eq!(
+            free_spot(&here.join("Paper.pdf"), true),
+            here.join("Paper 2.pdf")
         );
     }
 

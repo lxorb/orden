@@ -849,7 +849,11 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-24, to 3,282,000, for #737: a note made in a folder taken from a
  *  tab asks the disk for its name, since the tab can be from a space not on screen
- *  (`freeNameOnDisk` in workspace.svelte.ts). Measured 3,281,445. */
+ *  (`freeNameOnDisk` in workspace.svelte.ts). Measured 3,281,445.
+ *
+ *  Raised 2026-10-24, to 3,282,000, for B139 and B159: a PDF never lands where a page
+ *  note would take it for its paper, by a name stepped or typed (`freeName`,
+ *  `nameFault`) or by a move the crate is told is a PDF being turned. Measured 3,281,268. */
 const BUDGET = 3_282_000
 const MOST_FILES = 382
 
