@@ -112,7 +112,12 @@ class MainActivity : TauriActivity() {
 
     // Read before the page exists, which is the usual case: a share is what
     // started the app. The page asks for it as it comes up; see mobile/handed.ts.
-    read(intent)
+    // Only on a fresh start: an activity made again after the process died, or
+    // opened from Recents, is handed the intent it first started with, and reading
+    // it again started the recording again or brought a share back twice.
+    val fresh = savedInstanceState == null &&
+      ((intent?.flags ?: 0) and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY) == 0
+    if (fresh) read(intent)
   }
 
   /** An intent for an app that is already open. `singleTask` means every share
@@ -312,9 +317,15 @@ class MainActivity : TauriActivity() {
     }
 
     /** A tile or a widget row, once. Cleared as it is read, so the same press
-     *  cannot be answered twice. */
+     *  cannot be answered twice.
+     *
+     *  This and everything below that reads what came in or writes what the home
+     *  screen draws want the word: a framed page could otherwise read every byte
+     *  shared in, drop a share, swallow a reminder's Done or plant a widget row that
+     *  runs any command. Only how the window looks is left open; see `frame`. */
     @JavascriptInterface
-    fun handed(): String {
+    fun handed(said: String): String {
+      if (said != frame) return ""
       val json = JSONObject()
       json.put("command", command)
       json.put("open", opening)
@@ -328,22 +339,25 @@ class MainActivity : TauriActivity() {
     }
 
     /** What another app shared, without the bytes; see Shared.kt. */
-    @JavascriptInterface fun shared(): String = if (Shared.waiting) Shared.json() else ""
+    @JavascriptInterface
+    fun shared(said: String): String =
+      if (said == frame && Shared.waiting) Shared.json() else ""
 
     /** One slice of one shared file, as base64. */
     @JavascriptInterface
-    fun sharedBytes(at: Int, offset: Int, length: Int): String = Shared.bytes(at, offset, length)
+    fun sharedBytes(said: String, at: Int, offset: Int, length: Int): String =
+      if (said == frame) Shared.bytes(at, offset, length) else ""
 
     /** The page has written what it was given, and the copies can go. */
     @JavascriptInterface
-    fun sharedDone() {
-      Shared.clear(this@MainActivity)
+    fun sharedDone(said: String) {
+      if (said == frame) Shared.clear(this@MainActivity)
     }
 
     /** The rows the home screen draws, as JSON; see mobile/widgets.ts. */
     @JavascriptInterface
-    fun widgets(json: String) {
-      WidgetNotes.write(this@MainActivity, json)
+    fun widgets(said: String, json: String) {
+      if (said == frame) WidgetNotes.write(this@MainActivity, json)
     }
 
     /** Whether this phone has a speech recogniser to dictate into. */
@@ -362,7 +376,9 @@ class MainActivity : TauriActivity() {
     }
 
     /** Done and presses on a reminder since the page last asked, once. */
-    @JavascriptInterface fun remindersTaken(): String = Reminders.taken(this@MainActivity)
+    @JavascriptInterface
+    fun remindersTaken(said: String): String =
+      if (said == frame) Reminders.taken(this@MainActivity) else "[]"
 
     /** Whether an alarm rings at its minute. */
     @JavascriptInterface fun exactAlarms(): Boolean = Reminders.exact(this@MainActivity)

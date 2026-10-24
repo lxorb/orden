@@ -3,6 +3,7 @@ import {
   frontMatter,
   frontMatterEdit,
   frontMatterEdits,
+  frontMatterKeys,
   frontMatterList,
   frontMatterValue,
   stripFrontMatter,
@@ -81,6 +82,17 @@ describe('reading the front matter', () => {
   })
 })
 
+describe('the keys a block holds', () => {
+  test('are its top-level ones, as written, and none where there is no block', () => {
+    expect(
+      frontMatterKeys(
+        '---\ntitle: Trip\naliases:\n  - One\n# a note\nDue date: soon\n---\nWords: no\n',
+      ),
+    ).toEqual(['title', 'aliases', 'Due date'])
+    expect(frontMatterKeys('Words: no\n')).toEqual([])
+  })
+})
+
 /** The shapes a note may write a list in. Obsidian writes `aliases` all three
  *  ways depending on how it was typed, so all three are read. */
 describe('reading a key as a list', () => {
@@ -155,6 +167,15 @@ describe('setting a key', () => {
   test('a key already saying it is not written again', () => {
     expect(frontMatterEdit('---\nicon: rocket\n---\n', 'icon', 'rocket')).toBeNull()
     expect(frontMatterEdit('---\nicon: "rocket"\n---\n', 'icon', 'rocket')).toBeNull()
+    // A value handed already quoted as a scalar, the way a property row writes one.
+    expect(frontMatterEdit("---\nstatus: 'yes'\n---\n", 'status', "'yes'")).toBeNull()
+    // In the other quotes it is still the same words, and no write either.
+    expect(frontMatterEdit('---\nstatus: "yes"\n---\n', 'status', "'yes'")).toBeNull()
+    // Bare it was a boolean, so the quoted words are a change.
+    expect(frontMatterEdit('---\nstatus: yes\n---\n', 'status', "'yes'")).not.toBeNull()
+    // And quoted it was the word, so the bare boolean or number is a change too.
+    expect(frontMatterEdit('---\ndone: "true"\n---\n', 'done', 'true')).not.toBeNull()
+    expect(frontMatterEdit("---\ncount: '3'\n---\n", 'count', '3')).not.toBeNull()
   })
 
   test('keeps the line endings the file was written with', () => {
@@ -225,6 +246,24 @@ describe('taking a key away', () => {
     )
     expect(applied('---\ntags:\n- x\n- y\ntitle: a\n---\nbody\n', 'tags')).toBe(
       '---\ntitle: a\n---\nbody\n',
+    )
+  })
+
+  /** A blank line inside a `|` or `>` value is part of it: what is indented after it is
+   *  still the value, and left behind it would be read as more of the key above. */
+  test('takes a value of paragraphs whole, blank lines and all', () => {
+    const source = '---\nsummary: short\nnotes: |\n  first\n\n  second\nstatus: done\n---\nbody'
+    expect(applied(source, 'notes')).toBe('---\nsummary: short\nstatus: done\n---\nbody')
+
+    const edit = frontMatterEdit(source, 'notes', 'x')
+    expect(edit && source.slice(0, edit.from) + edit.insert + source.slice(edit.to)).toBe(
+      '---\nsummary: short\nnotes: x\nstatus: done\n---\nbody',
+    )
+  })
+
+  test('and stops at a blank line the next key follows', () => {
+    expect(applied('---\nnotes: |\n  first\n\nstatus: done\n---\nbody', 'notes')).toBe(
+      '---\n\nstatus: done\n---\nbody',
     )
   })
 })

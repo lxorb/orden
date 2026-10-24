@@ -21,6 +21,9 @@ function memoryStorage(): Storage {
 vi.stubGlobal('localStorage', memoryStorage())
 
 const disk = new Map<string, string>()
+/** Notes that are there and will not read: not UTF-8, over the size the crate reads,
+ *  or in a cloud that cannot fetch them offline. */
+const unreadable = new Set<string>()
 
 /** What the crate was told the inbox of the space in front is. */
 const told: string[] = []
@@ -34,13 +37,17 @@ vi.mock('../tauri', async (original) => ({
       told.push(args?.path ?? '')
       return Promise.resolve()
     }
+    if (command === 'path_exists') {
+      const at = args?.path ?? ''
+      return Promise.resolve(disk.has(at) || unreadable.has(at))
+    }
     const held = disk.get(args?.path ?? '')
     if (command === 'read_note' && held !== undefined) return Promise.resolve(held)
     return Promise.reject(new Error('no such note'))
   },
 }))
 
-const { ensureInbox, INBOX, inboxes, inboxOf, rememberInbox, setInbox, STORAGE_KEY } =
+const { ensureInbox, INBOX, inboxes, inboxOf, inboxSpace, rememberInbox, setInbox, STORAGE_KEY } =
   await import('./inbox')
 
 const ROOT = '/spaces/Work'
@@ -48,6 +55,7 @@ const ROOT = '/spaces/Work'
 beforeEach(() => {
   localStorage.clear()
   disk.clear()
+  unreadable.clear()
   told.length = 0
   rememberInbox(null)
 })
@@ -99,6 +107,18 @@ describe('the inbox of a space', () => {
     expect(await ensureInbox(ROOT, make)).toBe(`${ROOT}/Inbox.md`)
     expect(made).toEqual([`${ROOT}/Inbox.md`])
   })
+
+  test('that is there and will not read is refused, never made again over itself', async () => {
+    unreadable.add(`${ROOT}/Inbox.md`)
+    const made: string[] = []
+    const make = (path: string) => {
+      made.push(path)
+      return Promise.resolve()
+    }
+
+    await expect(ensureInbox(ROOT, make)).rejects.toThrow(/would not read/)
+    expect(made).toEqual([])
+  })
 })
 
 describe('the inbox a task from Shortcuts goes to', () => {
@@ -118,5 +138,30 @@ describe('the inbox a task from Shortcuts goes to', () => {
     rememberInbox(null)
     setInbox(ROOT, 'Lists/Todo.md')
     expect(told).toEqual([])
+  })
+})
+
+describe('the space whose inbox Shortcuts is told', () => {
+  const HOME = '/spaces/Home'
+  const READ = '/spaces/Read'
+  const writable = (root: string) => root !== READ
+
+  test('is the space in front where it can be written in', () => {
+    expect(inboxSpace(ROOT, [READ, HOME, ROOT], writable)).toBe(ROOT)
+  })
+
+  test('is the first space that can be written in where the one in front is shared to read', () => {
+    expect(inboxSpace(READ, [READ, HOME, ROOT], writable)).toBe(HOME)
+  })
+
+  // Where nothing is in front the crate would fall back to the first space on disk,
+  // which may be one shared to read; a space that can be written in is named instead.
+  test('is the first space that can be written in where none is in front', () => {
+    expect(inboxSpace(null, [READ, ROOT], writable)).toBe(ROOT)
+  })
+
+  test('is none where no space can be written in', () => {
+    expect(inboxSpace(READ, [READ], writable)).toBeNull()
+    expect(inboxSpace(null, [], writable)).toBeNull()
   })
 })

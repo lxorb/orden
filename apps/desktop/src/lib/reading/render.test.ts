@@ -20,6 +20,7 @@ const asked: { embeds: string[]; from: (string | null)[] } = { embeds: [], from:
  *  tested in link-index.test.ts. */
 vi.mock('../link-index.svelte', () => ({
   links: {
+    spaceOf: () => null,
     targetOf: (from: string | null, link: { target: string }) => {
       asked.from.push(from)
       const wanted = link.target.toLowerCase().replace(/\.md$/, '')

@@ -18,17 +18,24 @@ interface Space {
 export type Arrival =
   { kind: 'open'; spaceId: string; path: string } | { kind: 'bring'; spaceId: string; root: string }
 
-/** Where the PDF at `path` goes, or null where there is no space to put it in. */
+/** Where the PDF at `path` goes, or null where there is no space to put it in.
+ *
+ *  `writable` says which spaces a copy may go into: not one shared with this account
+ *  to be read, which is the owner's to write in. The open space when it may, else the
+ *  first that may, else none - a PDF from outside is then not opened at all, because
+ *  the viewer only reads a file of a space. */
 export function arrivalOf(
   path: string,
   spaces: readonly Space[],
   activeId: string | null,
+  writable: (root: string) => boolean = () => true,
 ): Arrival | null {
   for (const space of spaces) {
     const inside = withinSpace(space.root, path)
     if (inside) return { kind: 'open', spaceId: space.id, path: insideSpace(space.root, inside) }
   }
 
-  const into = spaces.find((one) => one.id === activeId) ?? spaces[0]
+  const open = spaces.filter((one) => writable(one.root))
+  const into = open.find((one) => one.id === activeId) ?? open[0]
   return into ? { kind: 'bring', spaceId: into.id, root: into.root } : null
 }

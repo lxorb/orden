@@ -1,0 +1,114 @@
+[
+  {
+    "words": "Schauen Sie sich das an.",
+    "markdown": "Schauen Sie sich das an."
+  },
+  {
+    "words": "a==b or c==d",
+    "markdown": "a\\=\\=b or c\\=\\=d"
+  },
+  {
+    "words": "_x_",
+    "markdown": "\\_x\\_"
+  },
+  {
+    "words": "**x**",
+    "markdown": "\\*\\*x\\*\\*"
+  },
+  {
+    "words": "~~gone~~",
+    "markdown": "\\~\\~gone\\~\\~"
+  },
+  {
+    "words": "H~2~O and x^2^",
+    "markdown": "H\\~2\\~O and x\\^2\\^"
+  },
+  {
+    "words": "run `npm test` now",
+    "markdown": "run \\`npm test\\` now"
+  },
+  {
+    "words": "see [1] and <b>this</b>",
+    "markdown": "see \\[1\\] and \\<b>this\\</b>"
+  },
+  {
+    "words": "snake_case_name and 2 * 3 = 6",
+    "markdown": "snake_case_name and 2 * 3 = 6"
+  },
+  {
+    "words": "C:\\Users and a\\*b",
+    "markdown": "C:\\Users and a\\\\\\*b"
+  },
+  {
+    "words": "# not a heading",
+    "markdown": "\\# not a heading"
+  },
+  {
+    "words": "### nor this",
+    "markdown": "\\### nor this"
+  },
+  {
+    "words": "> not a quote",
+    "markdown": "\\> not a quote"
+  },
+  {
+    "words": "1986. A great year",
+    "markdown": "1986\\. A great year"
+  },
+  {
+    "words": "2) second",
+    "markdown": "2\\) second"
+  },
+  {
+    "words": "- not a bullet",
+    "markdown": "\\- not a bullet"
+  },
+  {
+    "words": "+ nor this",
+    "markdown": "\\+ nor this"
+  },
+  {
+    "words": "* nor this",
+    "markdown": "\\* nor this"
+  },
+  {
+    "words": "---",
+    "markdown": "\\---"
+  },
+  {
+    "words": "===",
+    "markdown": "\\=\\=\\="
+  },
+  {
+    "words": "-5 degrees and a < b",
+    "markdown": "-5 degrees and a < b"
+  },
+  {
+    "words": "$x$ math and cost $5",
+    "markdown": "\\$x\\$ math and cost \\$5"
+  },
+  {
+    "words": "%%not a comment%%",
+    "markdown": "%\\%not a comment%\\%"
+  },
+  {
+    "words": "&lt;b&gt; and R&D",
+    "markdown": "\\&lt;b\\&gt; and R&D"
+  },
+  {
+    "words": "[[Page]]",
+    "markdown": "\\[\\[Page\\]\\]"
+  },
+  {
+    "words": "1986.",
+    "markdown": "1986\\."
+  },
+  {
+    "words": "#  two",
+    "markdown": "\\#  two"
+  },
+  {
+    "words": "Tickets $5-$10, ~5 or ~10, a $ b ~ c",
+    "markdown": "Tickets \\$5-\\$10, \\~5 or \\~10, a $ b ~ c"
+  }
+]

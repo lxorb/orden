@@ -51,6 +51,7 @@
   import { relativeTo } from './space-paths'
   import TabMark from './TabMark.svelte'
   import { theme } from './theme.svelte'
+  import { canWriteAt } from './sharing.svelte'
   import { joinPath } from './tauri'
   import { trap } from './trap'
   import { isDesktop } from './tauri'
@@ -194,9 +195,12 @@
 
   /** The note Shift+Enter would make out of what was typed, whatever else answers:
    *  only where the words read as a name, and not one the space already has. */
-  // Not where Settings turned notes off; see kind-choice.ts.
+  // Not where Settings turned notes off; see kind-choice.ts. Nor in a space shared to
+  // be read, which takes no new note.
   const makes = $derived(
-    mode === 'everything' && root && hiddenKinds.offers('note') ? makeable(term, taken) : null,
+    mode === 'everything' && root && hiddenKinds.offers('note') && canWriteAt(root)
+      ? makeable(term, taken)
+      : null,
   )
 
   /** An address typed, where it is one. */

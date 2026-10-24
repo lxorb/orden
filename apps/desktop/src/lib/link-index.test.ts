@@ -93,6 +93,14 @@ vi.mock('./tauri', async (importOriginal) => ({
   },
 }))
 
+/** The spaces shared with this account to be read, by root. What may be written
+ *  where is sharing.svelte.ts's, which wants an account a unit test has none of. */
+const readOnly = new Set<string>()
+vi.mock('./sharing.svelte', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./sharing.svelte')>()),
+  canWriteAt: (path: string) => ![...readOnly].some((root) => path.startsWith(`${root}/`)),
+}))
+
 /** The space search, stood in for. The index asks it for the mentions of a note,
  *  and the real one is either behind the Rust crate or inside a worker; neither is
  *  here. What matters is the shape of the question and the answer, so the matcher
@@ -704,6 +712,20 @@ describe('the blocks the whole space holds', () => {
     ])
   })
 
+  /** The desktop's search reads a website shortcut's words too, and a shortcut is
+   *  a file of `key=value` lines: a name written onto one of them is a title, a
+   *  date or an icon spoiled, and a link to it points nowhere. */
+  test('are only ever a note’s, never a website shortcut’s', async () => {
+    await space({
+      'Plan.md': '# Plan\n\nsvelte docs to read\n',
+      'Docs.url': '[InternetShortcut]\r\nURL=https://svelte.dev/docs\r\nTitle=Svelte docs\r\n',
+    })
+
+    expect((await links.searchBlocks('svelte docs', 10)).map((one) => one.path)).toEqual([
+      'Plan.md',
+    ])
+  })
+
   test('a word too short to search for finds nothing, and asks nothing', async () => {
     await space({ 'Plan.md': '# Plan\n\na line\n' })
 
@@ -732,6 +754,35 @@ describe('the blocks the whole space holds', () => {
 })
 
 describe('renaming a note rewrites the links to it', () => {
+  /** A canvas is JSON: its file cards name a note by path, and a text card's words
+   *  sit inside a string. Rewritten as text, the cards kept the old path and a name
+   *  with a quote in it ended the string early, which is a plane that no longer opens. */
+  test('on a canvas, its file cards and its text cards alike, as JSON', async () => {
+    const card = { x: 0, y: 0, width: 10, height: 10 }
+    const board = JSON.stringify({
+      nodes: [
+        { id: 'a', type: 'file', file: 'Plan.md', ...card },
+        { id: 'b', type: 'text', text: 'see [[Plan]]', ...card },
+      ],
+      edges: [],
+    })
+    await import('./scan-canvas')
+    await space({ 'Plan.md': '# Plan' }, ['Board.canvas'])
+    notes['Board.canvas'] = board
+    links.canvasRead(at('Board.canvas'), board)
+    await vi.waitFor(() =>
+      expect(links.backlinks(at('Plan.md')).map((one) => one.path)).toContain('Board.canvas'),
+    )
+
+    expect(await links.retarget(at('Plan.md'), at('Road "x".md'), ROOT)).toBe(1)
+
+    const after = JSON.parse(notes['Board.canvas'] ?? '') as { nodes: Record<string, string>[] }
+    expect(after.nodes.map((one) => one.file ?? one.text)).toEqual([
+      'Road "x".md',
+      'see [[Road "x"]]',
+    ])
+  })
+
   test('every note that pointed at it, and no others', async () => {
     await space({
       'Plan.md': '# Plan',
@@ -907,7 +958,7 @@ describe('naming a block of another note', () => {
   test('writes the name at the end of the block and answers with it', async () => {
     await space({ 'Plan.md': '# Plan\n\nfirst line\nsecond line\n\nanother block\n' })
 
-    const id = await links.nameBlock('Plan.md', 2, ROOT)
+    const id = await links.nameBlock('Plan.md', 2, `${ROOT}/Note.md`)
     expect(id).toMatch(/^[a-z0-9]{6}$/)
     expect(notes['Plan.md']).toBe(
       `# Plan\n\nfirst line\nsecond line ^${id ?? ''}\n\nanother block\n`,
@@ -918,15 +969,47 @@ describe('naming a block of another note', () => {
   test('a block that already has a name keeps it', async () => {
     await space({ 'Plan.md': '# Plan\n\na line ^kept\n' })
 
-    expect(await links.nameBlock('Plan.md', 2, ROOT)).toBe('kept')
+    expect(await links.nameBlock('Plan.md', 2, `${ROOT}/Note.md`)).toBe('kept')
     expect(written).toEqual([])
   })
 
   test('the name it gives is one the note has not used', async () => {
     await space({ 'Plan.md': 'one ^aaaaaa\n\ntwo\n' })
 
-    const id = await links.nameBlock('Plan.md', 2, ROOT)
+    const id = await links.nameBlock('Plan.md', 2, `${ROOT}/Note.md`)
     expect(id).not.toBe('aaaaaa')
+  })
+
+  test('names nothing in a file that is not a note, and writes nothing there', async () => {
+    const shortcut = '[InternetShortcut]\r\nURL=https://svelte.dev/docs\r\nTitle=Svelte docs\r\n'
+    await space({ 'Docs.url': shortcut })
+
+    expect(await links.nameBlock('Docs.url', 2, ROOT)).toBeNull()
+    expect(written).toEqual([])
+    expect(notes['Docs.url']).toBe(shortcut)
+  })
+
+  test('keeps the line ending of a note written with CRLF', async () => {
+    await space({ 'Plan.md': '# Plan\r\n\r\nfirst line\r\nsecond line\r\n' })
+
+    const id = await links.nameBlock('Plan.md', 2, ROOT)
+    expect(notes['Plan.md']).toBe(`# Plan\r\n\r\nfirst line\r\nsecond line ^${id ?? ''}\r\n`)
+  })
+
+  /** A tab of another space is handed the open space's notes, so the root asked
+   *  about may be one shared to be read: its copy here would stop being the space's,
+   *  and the sync would refuse the change on every pass. */
+  test('names nothing in a space shared to be read, and writes nothing there', async () => {
+    await space({ 'Plan.md': '# Plan\n\na line\n' })
+    readOnly.add(ROOT)
+
+    try {
+      expect(await links.nameBlock('Plan.md', 2, ROOT)).toBeNull()
+      expect(written).toEqual([])
+      expect(snapshots).toEqual([])
+    } finally {
+      readOnly.clear()
+    }
   })
 })
 

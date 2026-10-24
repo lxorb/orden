@@ -791,8 +791,62 @@ describe('chats', () => {
       await fire(logs.of(chat))
       expect((await events(people.owner, chat)).events).toEqual([])
 
+      at(260_000 + 30_000)
       await fire(logs.of(chat))
       expect((await events(people.owner, chat)).events).toMatchObject([{ id: later.id }])
+    })
+
+    test('one that keeps throwing is tried again later, and the others still go', async () => {
+      const chat = await chatOfOwner()
+      const hash = 'a'.repeat(64)
+      env.db
+        .prepare(
+          "insert into blobs (hash, user_id, size, type, created_at) values (?, ?, 4, 'image/png', 1)",
+        )
+        .run(hash, ids.writer)
+      const stuck = postOf('the figure', {
+        files: [{ hash, name: 'figure.png', size: 4, type: 'image/png' }],
+      })
+      const fine = postOf('good morning')
+      await send(people.writer, chat, {
+        kind: 'schedule',
+        id: id(),
+        sendAt: T0 + 260_000,
+        post: stuck,
+      })
+      await send(people.owner, chat, {
+        kind: 'schedule',
+        id: id(),
+        sendAt: T0 + 261_000,
+        post: fine,
+      })
+
+      let down = true
+      const failing = () =>
+        env.justBefore(/select distinct hash from blobs/, () => {
+          if (!down) return
+          failing()
+          throw new Error('D1 is not answering')
+        })
+      failing()
+
+      at(262_000)
+      await fire(logs.of(chat))
+      expect((await events(people.owner, chat)).events).toMatchObject([{ id: fine.id }])
+      // The head is told to D1 at once, and then nothing until the stuck one is tried
+      // again: not straight away, which is an alarm going off as fast as it is set.
+      expect(await fire(logs.of(chat))).toBe(true)
+      expect(logs.of(chat).state.alarm).toBeGreaterThan(Date.now())
+      expect(await fire(logs.of(chat))).toBe(false)
+
+      down = false
+      at(262_000 + 3_600_000)
+      await fire(logs.of(chat))
+      expect((await events(people.owner, chat)).events).toMatchObject([
+        { id: fine.id },
+        { id: stuck.id },
+      ])
+      expect(logs.of(chat).state.db.prepare('select * from scheduled_tries').all()).toEqual([])
     })
   })
 
@@ -893,6 +947,70 @@ describe('chats', () => {
       await send(people.writer, chat, { kind: 'delete', id: id(), target: post.message })
       const gone = await call(env, `/v2/chats/${chat}/files/${hash}`, { token: people.owner })
       expect(gone.status).toBe(404)
+    })
+
+    test('an edit that takes a file off lets it go, unless another message names it', async () => {
+      const chat = await chatOfOwner()
+      const a = await upload(people.writer, new Uint8Array([1, 2, 3, 4]))
+      const b = await upload(people.writer, new Uint8Array([5, 6, 7, 8]))
+      const c = await upload(people.writer, new Uint8Array([9, 9, 9, 9]))
+      const fetched = async (hash: string) =>
+        (await call(env, `/v2/chats/${chat}/files/${hash}`, { token: people.reader })).status
+      const post = postOf('look', { files: [file(a), file(c)] })
+      await send(people.writer, chat, post, postOf('this one too', { files: [file(c)] }))
+
+      const edit = (files?: unknown[]) => ({
+        kind: 'edit',
+        id: id(),
+        target: post.message,
+        body: 'look again',
+        ...(files ? { files } : {}),
+      })
+      await send(people.writer, chat, edit([file(b)]))
+      expect([await fetched(a), await fetched(b), await fetched(c)]).toEqual([404, 200, 200])
+      // An edit that names no files keeps the ones the message has.
+      await send(people.writer, chat, edit())
+      expect(await fetched(b)).toBe(200)
+
+      await send(people.writer, chat, { kind: 'delete', id: id(), target: post.message })
+      expect([await fetched(b), await fetched(c)]).toEqual([404, 200])
+      expect(env.db.prepare('select hash from chat_files where chat_id = ?').all(chat)).toEqual([
+        { hash: c },
+      ])
+    })
+
+    test('a link preview’s picture is fetched by the members, and goes with its message', async () => {
+      const chat = await chatOfOwner()
+      const picture = await upload(people.writer, new Uint8Array([7, 7, 7, 7]))
+      const post = postOf('see https://example.com', {
+        preview: { url: 'https://example.com', title: 'Example', picture },
+      })
+      expect((await send(people.writer, chat, post)).results[0]).toMatchObject({ seq: 1 })
+      const fetched = async (token: string) =>
+        (await call(env, `/v2/chats/${chat}/files/${picture}`, { token })).status
+      expect([await fetched(people.writer), await fetched(people.reader)]).toEqual([200, 200])
+      expect(await fetched(people.stranger)).toBe(404)
+      // A use of the blob as any file of a message is, which is what an erase hands on.
+      expect(env.db.prepare('select hash from chat_files where chat_id = ?').all(chat)).toEqual([
+        { hash: picture },
+      ])
+
+      await send(people.writer, chat, { kind: 'delete', id: id(), target: post.message })
+      expect(await fetched(people.reader)).toBe(404)
+      expect(env.db.prepare('select hash from chat_files where chat_id = ?').all(chat)).toEqual([])
+    })
+
+    test('a file is let go though another message says its hash in words', async () => {
+      const chat = await chatOfOwner()
+      const hash = await upload(people.writer, new Uint8Array([1, 2, 3, 5]))
+      const post = postOf('private', { files: [file(hash)] })
+      await send(people.writer, chat, post)
+      await send(people.owner, chat, postOf(`keep ${hash}`))
+
+      await send(people.writer, chat, { kind: 'delete', id: id(), target: post.message })
+      const after = await call(env, `/v2/chats/${chat}/files/${hash}`, { token: people.owner })
+      expect(after.status).toBe(404)
+      expect(env.db.prepare('select hash from chat_files where chat_id = ?').all(chat)).toEqual([])
     })
 
     test('a guest holds no blobs, so attaches none', async () => {
@@ -1040,6 +1158,58 @@ describe('chats', () => {
       )
       expect((await events(people.owner, chat)).events).toHaveLength(1)
       expect((await list(people.owner)).map((one) => one.space)).toEqual([elsewhere])
+    })
+
+    test('somebody handed only the pointer cannot take the chat into their own space', async () => {
+      const chat = await chatOfOwner()
+      const file = await chatFile('Private.chat', chatText({ v: 1, chat }))
+      await call(env, `/v1/spaces/${spaceId}/share/invite?item=${file}`, {
+        token: people.owner,
+        body: { email: 'stranger@example.com', role: 'write' },
+      })
+      await send(people.owner, chat, postOf('between us'))
+      const theirs = (
+        await call(env, '/v1/spaces', { token: people.stranger, body: { name: 'Mine' } })
+      ).json.space.id
+
+      const moved = await call(env, `/v2/chats/${chat}`, {
+        method: 'PATCH',
+        token: people.stranger,
+        body: { space: theirs },
+      })
+      expect(moved.status).toBe(403)
+      expect(env.db.prepare('select space_id from chats where id = ?').get(chat)).toEqual({
+        space_id: spaceId,
+      })
+      expect((await events(people.owner, chat)).events).toHaveLength(1)
+    })
+
+    test('a writer moves it between the owner’s spaces, never out of them', async () => {
+      const chat = await chatOfOwner()
+      const theirs = (
+        await call(env, '/v1/spaces', { token: people.writer, body: { name: 'Mine' } })
+      ).json.space.id
+      const refused = await call(env, `/v2/chats/${chat}`, {
+        method: 'PATCH',
+        token: people.writer,
+        body: { space: theirs },
+      })
+      expect(refused.status).toBe(403)
+      expect((await list(people.owner)).map((one) => one.space)).toEqual([spaceId])
+
+      const next = (await call(env, '/v1/spaces', { token: people.owner, body: { name: 'Next' } }))
+        .json.space.id
+      await call(env, `/v1/spaces/${next}/share/invite`, {
+        token: people.owner,
+        body: { email: 'writer@example.com', role: 'write' },
+      })
+      const moved = await call(env, `/v2/chats/${chat}`, {
+        method: 'PATCH',
+        token: people.writer,
+        body: { space: next },
+      })
+      expect(moved.status).toBe(200)
+      expect((await list(people.owner)).map((one) => one.space)).toEqual([next])
     })
   })
 

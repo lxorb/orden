@@ -36,6 +36,9 @@ export interface Source {
   /** Keeps a changed base; `shown` is where the reader is with it, for a host that
    *  keeps that. */
   save(next: Base, shown?: Shown): Promise<void>
+  /** The file the base is kept in, on this disk: a base file, or the note a fence is
+   *  in. None for a tab's own view, whose words are the tab's. */
+  path?: string | null
   /** Bases' `this`: the note embedding the view. */
   self?: () => Row | undefined
   /** Which view of the base to show first, by name. */
@@ -87,6 +90,11 @@ export class LiveView {
    *  and a read after that keeps whichever the reader moved to. */
   private once = false
   private readonly quiet = afterQuiet(() => (this.searched = this.typed.trim()), SEARCH_QUIET)
+
+  /** Where the base is written; see `Source.path`. */
+  get writtenAt(): string | null {
+    return this.source.path ?? null
+  }
 
   constructor(private readonly source: Source) {
     const shown = source.shown?.()

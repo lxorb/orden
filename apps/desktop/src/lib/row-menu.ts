@@ -33,6 +33,7 @@ import {
 import { moveTargets, type MoveTarget, movesInto } from './move-targets'
 import { howFor } from './new-tab'
 import { rowName } from './note-name'
+import { canWriteAt } from './sharing.svelte'
 import { shortcuts } from './shortcuts.svelte'
 import { folderOf, isMarkdownPath, isPicturePath, relativeTo } from './space-paths'
 import { isDesktop, joinPath, platform } from './tauri'
@@ -44,6 +45,9 @@ import { workspace } from './workspace.svelte'
 /** A `.url` web note's web data, shared or its own (#239); see web-tab/own-data.ts. */
 export function webDataEntry(entry: { path: string; is_dir: boolean }): MenuEntry[] {
   if (!isDesktop || entry.is_dir || !/\.url$/i.test(entry.path)) return []
+  // Either choice writes the note's file, so a space shared to be read is not offered
+  // it (B288): its pages use the web data every page shares.
+  if (!canWriteAt(entry.path)) return []
   const path = entry.path
   return [
     {
@@ -71,6 +75,10 @@ export function rowMenu(entry: Entry): MenuEntry[] {
   // something that exists.
   const marked = own ?? entry
   const inside = entry.is_dir && nestedIn(entry).length > 0
+  // In a space shared with this account to be read the row is there to be opened and
+  // read: anything that writes would make the copy here stop being the space's, and
+  // the sync refuses it on every pass. The workspace refuses each of them as well.
+  if (!canWriteAt(entry.path)) return readOnlyMenu(entry, own, marked)
 
   return [
     { label: t('Open'), run: () => void workspace.openRow(entry.path) },
@@ -121,6 +129,22 @@ export function rowMenu(entry: Entry): MenuEntry[] {
   ]
 }
 
+/** A row of a space shared to be read: what opens it, looks at it or takes a copy of
+ *  it out of the space, and nothing that changes it. */
+function readOnlyMenu(entry: Entry, own: Entry | null, marked: Entry): MenuEntry[] {
+  return [
+    { label: t('Open'), run: () => void workspace.openRow(entry.path) },
+    ...openElsewhere(entry, own),
+    ...compareEntry(entry),
+    DIVIDER,
+    ...wallpaperEntry(entry),
+    ...webDataEntry(entry),
+    ...searchAgainEntry(entry.path),
+    ...shareEntry(marked.path),
+    ...revealEntry(entry),
+  ]
+}
+
 /** A picture in a space as the wallpaper, copied into the app; see lib/wallpaper. */
 function wallpaperEntry(entry: Entry): MenuEntry[] {
   if (__EVEN_PLUGIN__ || entry.is_dir || !isPicturePath(entry.name)) return []
@@ -141,6 +165,10 @@ function wallpaperEntry(entry: Entry): MenuEntry[] {
 function selectionMenu(entry: Entry): MenuEntry[] | null {
   if (!workspace.isSelected(entry.path) || workspace.selection.length < 2) return null
   const paths = [...workspace.selection]
+  // Opening is all a selection in a space shared to be read is offered; see `rowMenu`.
+  if (!paths.every((path) => canWriteAt(path))) {
+    return [{ label: t('Open all'), run: () => void openAll(paths) }]
+  }
   // The rows that can actually go: a count that took in a folder holding something
   // archived would be a menu promising to delete what it is going to leave.
   const count = workspace.deletable(paths).length
@@ -256,12 +284,13 @@ function archiveAll(paths: readonly string[]): MenuEntry[] {
  *  was long, and Move was the row in it a drag already does. */
 function moveEntry(entry: Entry): MenuEntry[] {
   if (!viewport.touch) return []
+  // Never into a space shared to be read, which takes nothing.
   const targets = moveTargets({
     moving: entry.path,
     tree: workspace.tree,
     spaces: workspace.spaces,
     here: workspace.activeSpace?.root ?? null,
-  })
+  }).filter((target) => canWriteAt(target.id))
   if (!targets.length) return []
 
   return [{ label: t('Move'), run: () => void moveTo(entry, targets) }]
@@ -281,6 +310,7 @@ async function moveAllTo(paths: readonly string[]) {
   const each = paths.map((path) => new Set(asked(path).map((target) => target.id)))
   const targets = asked(null).filter(
     (target) =>
+      canWriteAt(target.id) &&
       movesInto(paths, target.id) &&
       paths.every((path, at) => each[at]?.has(target.id) === true || folderOf(path) === target.id),
   )
@@ -378,6 +408,10 @@ const MAKERS: Partial<Record<KindName, (folder?: string) => unknown>> = {
 }
 
 export function newFileRows(inside?: string): MenuEntry[] {
+  // Nothing to make where nothing may be written; see `rowMenu`.
+  const into = inside ?? workspace.activeSpace?.root
+  if (into !== undefined && !canWriteAt(into)) return []
+
   return [
     ...hiddenKinds.shown.flatMap((kind) => {
       const make = MAKERS[kind]

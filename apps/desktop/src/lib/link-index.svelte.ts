@@ -172,6 +172,32 @@ export interface Retargeting {
   touched?: string[]
 }
 
+/** What another space holds, for a link written in one of its notes. */
+interface OtherSpace {
+  refs: NoteRef[]
+  files: readonly string[]
+}
+
+/** A link resolved against one space's notes as an index holds them. */
+function resolvedIn(index: NoteIndex, link: { kind: LinkKind; target: string }): string | null {
+  if (!link.target) return null
+  if (isTabFile(link.target)) return resolveFile(index, link.target, link.kind)
+  const found =
+    link.kind === 'markdown' ? resolveRelative(index, link.target) : resolveNote(index, link.target)
+  return found?.path ?? null
+}
+
+/** A scanned note as a link resolves against it. */
+function refOf(note: ScannedNote): NoteRef {
+  return {
+    path: note.path,
+    name: note.name,
+    headings: note.headings,
+    blocks: note.blocks,
+    aliases: note.aliases,
+  }
+}
+
 class Links {
   /** Every note of the open space as the last scan read it.
    *
@@ -201,6 +227,16 @@ class Links {
 
   /** What a space has archived; handed in at the foot of workspace.svelte.ts. */
   archivedIn: (root: string) => ReadonlySet<string> = () => NOTHING
+
+  /** The root of the space holding a path; handed in at the foot of workspace.svelte.ts. */
+  spaceOf: (path: string) => string | null = () => null
+
+  /** The notes of the other spaces a tab is still open from, by root, read the first
+   *  time one of their notes asks. Tabs are shared across spaces, so a note of A stays
+   *  open after switching to B, and its links are A's: resolved against B, `[[Plan]]`
+   *  opened B's note of that name. Only the names and places a link resolves against,
+   *  kept until another space opens, and a note saved there is read again into it. */
+  private others = new Map<string, OtherSpace | 'reading'>()
 
   private get archived(): ReadonlySet<string> {
     return this.root === null ? NOTHING : this.archivedIn(this.root)
@@ -338,6 +374,7 @@ class Links {
     // What the files outside the open space wear was read against the space open
     // before this one; see marks-elsewhere.svelte.ts.
     elsewhere.clear()
+    this.others.clear()
     this.scanning = true
     this.notes = []
     this.files = []
@@ -621,6 +658,7 @@ class Links {
     // air would land its rows in a window that no longer has a space open.
     this.scans++
     this.root = null
+    this.others.clear()
     this.scanning = false
     this.notes = []
     this.files = []
@@ -645,6 +683,7 @@ class Links {
     // A file of another space, which this index is not of: what it wears is kept
     // beside it, for its tab and its row; see chosen-icon.ts.
     if (!relative) {
+      this.otherSaved(path, content)
       elsewhere.saved(path, content)
       return
     }
@@ -849,6 +888,9 @@ class Links {
    *  listed, which is what `loadTree` asks for a root this index is not of. */
   follow(op: FileOp): Promise<void> | undefined {
     elsewhere.forget(op.op === 'moved' ? op.from : op.path)
+    // Another space's notes are read again the next time one of them asks.
+    const other = this.otherHolding(op.op === 'moved' ? op.from : op.path)
+    if (other !== null && this.others.delete(other)) this.changed()
     if (op.kind === 'space') return undefined
     if (op.op === 'moved') this.notesMoved(op.from, op.to)
     else if (op.op === 'removed') this.noteGone(op.path)
@@ -861,6 +903,9 @@ class Links {
    *  one. A fresh object each time the index changes and the same one otherwise,
    *  which is what decides whether every link on screen is redrawn. */
   index(openPath: string | null): NoteIndex {
+    const other = openPath === null ? null : this.otherHolding(openPath)
+    if (openPath !== null && other !== null) return this.otherIndex(other, openPath)
+
     const path = openPath === null ? null : this.relative(openPath)
 
     // One object per open note rather than one in all. A pane going back to a
@@ -928,6 +973,81 @@ class Links {
     return made
   }
 
+  /** The root of the space other than the open one that holds `path`, or null. */
+  private otherHolding(path: string): string | null {
+    if (this.relative(path) !== null) return null
+    const root = this.spaceOf(path)
+    if (root === null || within(root, path) === null) return null
+    return this.root !== null && samePath(root, this.root) ? null : root
+  }
+
+  /** What the editor is handed for a note of another space: that space's notes and
+   *  that space's reads, so its links resolve and open where they were written. Its
+   *  notes are read the first time one asks; until they land, a link is drawn as one
+   *  to nothing rather than as one into the active space. The rest of what the open
+   *  space hands over - its tags, its query fences, its drawings - is that space's, and
+   *  is left out rather than answered from the wrong one. */
+  private otherIndex(root: string, openPath: string): NoteIndex {
+    if (this.handedAt !== this.version) {
+      this.handedAt = this.version
+      this.handed.clear()
+    }
+
+    const path = within(root, openPath)
+    const key = `${root}\n${path ?? ''}`
+    const known = this.handed.get(key)
+    if (known) return known
+
+    const held = this.others.get(root)
+    if (held === undefined) void this.readOther(root)
+    const space = typeof held === 'object' ? held : { refs: [], files: [] }
+
+    const made: NoteIndex = {
+      notes: space.refs,
+      files: space.files,
+      path,
+      read: (wanted) => invoke<string>('read_note', { path: insideSpace(root, wanted) }),
+      searchBlocks: (text, most) => this.searchBlocks(text, most, root),
+      render: (source, from) => this.shownHtml(source, from, root),
+    }
+    this.handed.set(key, made)
+    return made
+  }
+
+  /** The read of another space in the air, by root, for whoever has to wait for it. */
+  private readingOther = new Map<string, Promise<void>>()
+
+  private readOther(root: string): Promise<void> {
+    const reading = this.readOtherNow(root).finally(() => this.readingOther.delete(root))
+    this.readingOther.set(root, reading)
+    return reading
+  }
+
+  private async readOtherNow(root: string) {
+    this.others.set(root, 'reading')
+    const found = await invoke<SpaceLinks>('scan_links', { root }).catch(() => null)
+    // The open space may have changed meanwhile, which forgets every other one.
+    if (this.others.get(root) !== 'reading') return
+    this.others.set(root, {
+      refs: (found?.notes ?? []).map(refOf),
+      files: found?.files ?? [],
+    })
+    this.changed()
+  }
+
+  /** A note of another space saved, read again into what that space holds here. */
+  private otherSaved(path: string, content: string) {
+    const root = this.otherHolding(path)
+    const space = root === null ? undefined : this.others.get(root)
+    const relative = root === null ? null : within(root, path)
+    if (root === null || typeof space !== 'object' || !relative || !isMarkdownPath(relative)) return
+
+    const ref = refOf(scanNote(relative, content))
+    const rest = space.refs.filter((one) => !samePath(one.path, relative))
+    this.others.set(root, { ...space, refs: [...rest, ref] })
+    this.changed()
+  }
+
   private mountedBase(
     host: HTMLElement,
     ask: { code: string } | { target: string; view: string | null },
@@ -985,14 +1105,13 @@ class Links {
    *  The reading view's render reaches back into this index for the notes an embed
    *  names and for what a query fence answers, and the sharing store reaches the
    *  workspace, which reaches this file: either written statically is a cycle. */
-  private async shownHtml(source: string, from: string | null): Promise<string> {
+  private async shownHtml(source: string, from: string | null, root = this.root): Promise<string> {
     const [{ readingHtml }, { theme }, { trustsHtmlAt }] = await Promise.all([
       import('./reading/render'),
       import('./theme.svelte'),
       import('./sharing.svelte'),
     ])
 
-    const root = this.root
     const path = from === null || root === null ? null : insideSpace(root, from)
 
     return readingHtml({ text: source, path }, theme.current, trustsHtmlAt(path))
@@ -1084,7 +1203,48 @@ class Links {
    *  `from` is an absolute path, the way a tab holds one, or null for a note with
    *  no home yet. */
   targetOf(from: string | null, link: { kind: LinkKind; target: string }): string | null {
+    // A note of another space still open resolves in that space, through the index
+    // the editor is handed for it, so every face of the note points where its editor
+    // does and where following the link goes.
+    const other = from === null ? null : this.otherHolding(from)
+    if (from !== null && other !== null) return this.otherTarget(other, from, link)
+
     return this.resolveFrom(from === null ? null : this.relative(from), link)
+  }
+
+  /** The same for a note of another space, once that space has been read: what a
+   *  link followed while it is still being read asks before a note is made under its
+   *  name, which would otherwise be made over the note that is there. Null for a note
+   *  of the active space, where the editor's own answer came from this index already. */
+  async targetWhenRead(
+    from: string | null,
+    link: { kind: LinkKind; target: string },
+  ): Promise<string | null> {
+    const other = from === null ? null : this.otherHolding(from)
+    if (from === null || other === null) return null
+    await this.otherRead(other)
+    return this.otherTarget(other, from, link)
+  }
+
+  /** Resolves once the space holding `path` can answer for it here: at once for the
+   *  open space, and once its notes have been read for another one. What a surface
+   *  that resolves links synchronously, an export, waits for first. */
+  async spaceRead(path: string | null): Promise<void> {
+    const other = path === null ? null : this.otherHolding(path)
+    if (other !== null) await this.otherRead(other)
+  }
+
+  private async otherRead(root: string): Promise<void> {
+    if (!this.others.has(root)) void this.readOther(root)
+    await this.readingOther.get(root)
+  }
+
+  private otherTarget(
+    root: string,
+    from: string,
+    link: { kind: LinkKind; target: string },
+  ): string | null {
+    return resolvedIn(this.otherIndex(root, from), link)
   }
 
   /** How many notes the resolver has compared paths with, ever - a running total,
@@ -1300,10 +1460,69 @@ class Links {
     open: (path: string) => NoteDoc | null = () => null,
     how: Retargeting = {},
   ): Promise<number> {
-    const { moved = false, only, touched: told } = how
-    const was = this.relative(from)
-    const now = this.relative(to)
+    const was = within(root, from)
+    const now = within(root, to)
     if (!was || !now || was === now) return 0
+
+    if (this.root !== null && samePath(root, this.root)) {
+      const touched = await this.retargetIn(
+        this.notes,
+        (source, link) => this.resolveFrom(source, link),
+        (note, after) => {
+          this.notes = this.notes.map((one) => (one.path === note ? scanNote(note, after) : one))
+        },
+        { was, now, root, open, how },
+      )
+      if (touched) this.changed()
+      return touched
+    }
+
+    // A space other than the open one, which this index does not hold: a rename in it
+    // undone or done again from here, or a note of it renamed from its tab. Read as it
+    // is on the disk, with what moved put back under the name it had - the file has
+    // already gone, and the links being rewritten are the ones still naming it, which
+    // is the listing the open space's own index still has at this point.
+    const found = await invoke<SpaceLinks>('scan_links', { root }).catch(() => null)
+    if (!found) return 0
+    const back = (path: string) =>
+      path === now ? was : path.startsWith(`${now}/`) ? `${was}${path.slice(now.length)}` : path
+    const notes = found.notes.map((note) => {
+      const path = back(note.path)
+      return path === note.path ? note : { ...note, path, name: noteName(path) }
+    })
+    const index: NoteIndex = {
+      notes: notes.map(refOf),
+      files: found.files.map(back),
+      path: null,
+      read: nothing,
+    }
+    const touched = await this.retargetIn(
+      notes,
+      (source, link) => resolvedIn({ ...index, path: source }, link),
+      () => undefined,
+      { was, now, root, open, how },
+    )
+    // What this window holds of that space is read again the next time it is asked.
+    if (touched && this.others.delete(root)) this.changed()
+    return touched
+  }
+
+  /** The rewrite itself, over one space's notes and the resolver that answers for
+   *  them; see `retarget`. */
+  private async retargetIn(
+    notes: readonly ScannedNote[],
+    resolve: (source: string, link: { kind: LinkKind; target: string }) => string | null,
+    rewritten: (note: string, after: string) => void,
+    asked: {
+      was: string
+      now: string
+      root: string
+      open: (path: string) => NoteDoc | null
+      how: Retargeting
+    },
+  ): Promise<number> {
+    const { was, now, root, open, how } = asked
+    const { moved = false, only, touched: told } = how
 
     // The file's own name and nothing else. A rename rewrites the links that
     // spelled out the name that changed; a link written with an alias still says
@@ -1313,12 +1532,12 @@ class Links {
     const move = { from: was, to: now }
     let touched = 0
 
-    for (const note of [...this.notes]) {
+    for (const note of [...notes]) {
       if (only && !only.some((path) => samePath(path, insideSpace(root, note.path)))) continue
       // Whether this note is worth reading at all, decided from the index.
       const candidates = note.links.filter((link) => this.couldName(link, byFile))
       if (!candidates.length) continue
-      if (!candidates.some((link) => this.resolveFrom(note.path, link) === was)) continue
+      if (!candidates.some((link) => resolve(note.path, link) === was)) continue
 
       // The note that moved is still listed, and still open, under the name it
       // had: its words are found there, but its file is where it went, and it
@@ -1329,8 +1548,11 @@ class Links {
       const before = await this.wordsOf(absolute, target, open)
       if (before === null) continue
 
-      const points = (link: FoundLink) => this.resolveFrom(note.path, link) === was
-      const after = rewriteLinks(before, self ? now : note.path, move, points)
+      const points = (link: FoundLink) => resolve(note.path, link) === was
+      // A plane is JSON, and is rewritten as JSON; see canvas-rewrite.ts.
+      const plane = isCanvasTarget(note.path) || isPagesTarget(note.path)
+      const rewrite = plane ? (await import('./canvas-rewrite')).rewriteCanvasLinks : rewriteLinks
+      const after = rewrite(before, self ? now : note.path, move, points)
       if (after === null || after === before) continue
 
       // Taken by the document in the same breath as its words were read, so no
@@ -1356,13 +1578,10 @@ class Links {
       for (const hear of this.hearing) hear(target, after)
       told?.push(target)
 
-      this.notes = this.notes.map((one) =>
-        one.path === note.path ? scanNote(note.path, after) : one,
-      )
+      rewritten(note.path, after)
       touched++
     }
 
-    if (touched) this.changed()
     return touched
   }
 
@@ -1394,8 +1613,7 @@ class Links {
    *  Quoted, so a phrase of two words is one phrase; the notes the space leaves
    *  out are left out of this too, the way they are left out of the search and the
    *  graph. */
-  async searchBlocks(text: string, most: number): Promise<SpaceBlock[]> {
-    const root = this.root
+  async searchBlocks(text: string, most: number, root = this.root): Promise<SpaceBlock[]> {
     const needle = text.trim()
     if (!root || needle.length < 2) return []
 
@@ -1412,11 +1630,11 @@ class Links {
 
     return (
       found
-        // A paper has pages rather than blocks and nothing to write a name into.
-        .filter((hit) => hit.page === undefined)
+        // Only a note has blocks to name: a paper has pages, a shortcut `key=value` lines.
+        .filter((hit) => hit.page === undefined && isMarkdownPath(hit.path))
         .slice(0, most)
         .map((hit) => ({
-          path: this.relative(hit.path) ?? hit.path,
+          path: within(root, hit.path) ?? hit.path,
           line: hit.line,
           // The name a block already carries is a marker and not a word of the
           // row; the link writes it, and nothing that shows a note shows it.
@@ -1424,6 +1642,14 @@ class Links {
           id: blockIdOf(hit.text),
         }))
     )
+  }
+
+  /** The document a file is open as; see `documentAt` in workspace.svelte.ts.
+   *  Imported when asked rather than at the top, like `leftOut` below: the
+   *  workspace imports this index, not the other way round. */
+  private async openDocument(): Promise<(path: string) => NoteDoc | null> {
+    const { workspace } = await import('./workspace.svelte')
+    return (path) => workspace.documentAt(path)
   }
 
   /** What the space's own searches skip; see `leftOutOf` in workspace.svelte.ts. */
@@ -1434,10 +1660,33 @@ class Links {
 
   /** Gives a block of another note a name, so a link can point at the block.
    *  Called by the editor's `[[…#^` completion, which has nowhere else to get
-   *  one: the block is in a note that is not open. */
-  async nameBlock(relative: string, line: number, root: string): Promise<string | null> {
+   *  one: the block is in another note than the one being typed in. `relative` is
+   *  relative to the space of `from`, the note the link is being written in, which is
+   *  the index the completion read the block's lines out of; that is not always the
+   *  active space, since tabs are shared across spaces.
+   *
+   *  That note may still be open in another tab, and then its words are the
+   *  document's: the name is written there as well as to the file, the way
+   *  `retarget` rewrites an open note. Written to the file alone, the next save
+   *  of the tab wrote the document's words back without it, and the link just
+   *  made pointed at nothing.
+   *
+   *  Nothing is named in a space shared with this account to be read: the copy here
+   *  would stop being the space's, and the sync refuses the change on every pass.
+   *  Imported here rather than at the top, because the sharing store reaches the
+   *  workspace, which reaches this file. */
+  async nameBlock(relative: string, line: number, from: string | null): Promise<string | null> {
+    // A block is a note's; a name written into any other file spoils it.
+    if (!isMarkdownPath(relative)) return null
+    const root = (from === null ? null : this.spaceOf(from)) ?? this.root
+    if (root === null) return null
+
     const absolute = insideSpace(root, relative)
-    const before = await invoke<string>('read_note', { path: absolute }).catch(() => null)
+    const { canWriteAt } = await import('./sharing.svelte')
+    if (!canWriteAt(absolute)) return null
+
+    const open = await this.openDocument()
+    const before = await this.wordsOf(absolute, absolute, open)
     if (before === null) return null
 
     const lines = before.split('\n')
@@ -1452,8 +1701,17 @@ class Links {
     const taken = new Set(blockIds(before).map((one) => one.id))
     const id = freeBlockId(taken)
 
-    lines[end] = `${(lines[end] ?? '').trimEnd()} ^${id}`
+    // A CRLF note's `\r` stays on the line named, as on every other.
+    const named = lines[end] ?? ''
+    const ending = named.endsWith('\r') ? '\r' : ''
+    lines[end] = `${named.trimEnd()} ^${id}${ending}`
     const after = lines.join('\n')
+
+    // Taken by the document in the same breath as its words were read, for the
+    // reason `retarget` gives.
+    const doc = open(absolute)
+    const edit = oneEdit(before, after)
+    if (doc && edit) doc.edited([edit], after)
 
     await invoke('snapshot_note', { path: absolute, content: before }).catch(() => undefined)
     await invoke('write_note', { path: absolute, content: after })
@@ -1464,7 +1722,24 @@ class Links {
 
   /** The note an embed names, for an export: the renderer cannot wait on a disk,
    *  so the notes a document embeds are read before it is rendered. */
-  async embedSource(target: string, from: string | null): Promise<string | null> {
+  async embedSource(
+    target: string,
+    from: string | null,
+    inSpaceOf: string | null = from,
+  ): Promise<string | null> {
+    // A note of another space embeds that space's notes, read once its notes are.
+    // `inSpaceOf` names the space when `from` cannot: a canvas card is resolved from
+    // the top of the canvas's space rather than from beside it.
+    const other = inSpaceOf === null ? null : this.otherHolding(inSpaceOf)
+    if (inSpaceOf !== null && other !== null) {
+      await this.otherRead(other)
+      const index = this.otherIndex(other, inSpaceOf)
+      const at = from === null ? '' : (within(other, from) ?? '')
+      const found = resolvedIn({ ...index, path: at }, { kind: 'wikilink', target })
+      if (found === null) return null
+      return invoke<string>('read_note', { path: insideSpace(other, found) }).catch(() => null)
+    }
+
     const source = from === null ? null : this.relative(from)
     const found = this.resolveFrom(source ?? '', { kind: 'wikilink', target })
 
@@ -1479,13 +1754,19 @@ class Links {
    *  the link showed. The same resolution the editor's own links get, so the
    *  export points where the app does.
    *
-   *  `from` is the note's path as the app holds it; a note outside the open space
-   *  has no place in the index and resolves to nothing. */
+   *  `from` is the note's path as the app holds it; a note in no space this window
+   *  knows resolves to nothing. */
   relativeTarget(link: FoundLink, from: string | null): string | null {
-    const source = from === null ? null : this.relative(from)
+    // A note of another space, in its own space; see `spaceRead`, which an export
+    // waits for so that these are there to answer.
+    const other = from === null ? null : this.otherHolding(from)
+    const source = from === null ? null : other !== null ? within(other, from) : this.relative(from)
     if (source === null) return null
 
-    const found = this.resolveFrom(source, link)
+    const found =
+      from !== null && other !== null
+        ? this.otherTarget(other, from, link)
+        : this.resolveFrom(source, link)
     return found === null ? null : relativePath(folderOf(source), found)
   }
 
@@ -1497,6 +1778,34 @@ class Links {
    *  of the two named it. */
   fileNamed(name: string): string | null {
     return resolveFile(this.spaceFiles(null), name, 'wikilink')
+  }
+
+  /** A file named bare, `![[photo.png]]`, as a whole path, looked for in the space of
+   *  the note naming it rather than the active one: a note of another space still open
+   *  names that space's files. Null where its space has no such file, or where the
+   *  note is in no space. */
+  fileFor(name: string, notePath: string | null): string | null {
+    const other = notePath === null ? null : this.otherHolding(notePath)
+    const root = other ?? this.root
+    if (root === null) return null
+    const found =
+      other !== null && notePath !== null
+        ? resolveFile(this.otherIndex(other, notePath), name, 'wikilink')
+        : this.fileNamed(name)
+    return found === null ? null : insideSpace(root, found)
+  }
+
+  /** A file just written into a space, told to whichever index holds that space; see
+   *  `fileAdded`. */
+  fileWritten(root: string, relative: string) {
+    if (this.root !== null && samePath(root, this.root)) {
+      this.fileAdded(relative)
+      return
+    }
+    const space = this.others.get(root)
+    if (typeof space !== 'object' || space.files.includes(relative)) return
+    this.others.set(root, { ...space, files: [...space.files, relative].sort() })
+    this.changed()
   }
 
   /** A file that was not there when the space was read: a recording the app has just

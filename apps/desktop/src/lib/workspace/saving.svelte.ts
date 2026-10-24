@@ -340,6 +340,10 @@ export class Saving {
    *  `freeName` in workspace.svelte.ts. */
   async place(note: NoteDoc, folder: string, file: string): Promise<string | null> {
     if (note.path !== null) return null
+    // Nor into a space shared to be read, which keeps its own files. Fetched, as
+    // sharing.svelte.ts reads the workspace this belongs to.
+    const { canWriteAt } = await import('../sharing.svelte')
+    if (!canWriteAt(folder)) return null
 
     const path = await this.claim(note, folder, file)
     if (path === null) return null
@@ -370,6 +374,9 @@ export class Saving {
    *  The listing is read again after each round trip and the name claimed in the
    *  same breath: a draft saved beside this one may have claimed it meanwhile. */
   private async claim(note: NoteDoc, folder: string, file: string): Promise<string | null> {
+    // Fetched here rather than imported at the top: saving is in the first paint, and a
+    // draft given a place is not.
+    const { pairOf } = await import('../pages/held')
     const found: string[] = []
     for (;;) {
       const name = freePath(
@@ -378,7 +385,12 @@ export class Saving {
           found.includes(candidate) || this.ws.freeName(folder, candidate) !== candidate,
       )
       const path = joinPath(folder, name)
-      const taken = await onDisk(path)
+      // The other half of a page note's pair as well: a page note landing beside a PDF
+      // named as its paper takes that PDF for its own, and the listing that would have
+      // said so is not this space's either.
+      const other = pairOf(name)
+      const taken =
+        (await onDisk(path)) || (other !== null && (await onDisk(joinPath(folder, other))))
       if (note.path !== null) return null
       if (taken) found.push(name)
       else if (this.ws.freeName(folder, name) === name) {

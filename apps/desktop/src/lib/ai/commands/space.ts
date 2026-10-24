@@ -34,8 +34,10 @@ export async function memory(host: Host, thread: Thread | null, args: string): P
   const root = rootOf(thread)
   if (!root) return
   const path = `${root}/${AGENTS}`
+  // A space shared to be read makes no note, and opening the name it would have
+  // had would show an empty page that is in no space at all.
   if ((await workspace.noteText(path).catch(() => null)) === null) {
-    await workspace.noteFrom('# AGENTS\n\n## Memory\n', root)
+    if ((await workspace.noteFrom('# AGENTS\n\n## Memory\n', root)) === null) return
   }
   await workspace.open(path)
 }

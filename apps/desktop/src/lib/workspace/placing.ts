@@ -21,6 +21,7 @@ export interface Places {
   readonly activeSpace: Space | null
   readonly closed: ClosedTabs
   freeName(dir: string, wanted: string): string
+  freeNameOnDisk(dir: string, wanted: string): Promise<string>
   showEntry(entry: Entry): void
   freshEntry(path: string, isFolder: boolean): Entry
   loadTree(): Promise<void>
@@ -37,7 +38,8 @@ type Claim = (path: string, run: () => Promise<NoteDoc | null>) => Promise<NoteD
 /** A website kept as a web note in `dir`: the shortcut for a tab that has none, with
  *  the address the tab is on, the name given or the page's title, and the mark the
  *  page reported. Browsing writes nothing, and keeping a page is something somebody
- *  does, the way a bookmark is. Answers the path, or null where it was not kept.
+ *  does, the way a bookmark is. Answers the path, or null where it was not kept, which
+ *  is the answer in a space shared to be read.
  *
  *  The one gesture that gives a file to a document that exists and is not a draft,
  *  and so the one that could put a second document on a file: two tabs kept in the
@@ -52,12 +54,27 @@ export async function keepWeb(
   dir: string,
   file?: string,
 ): Promise<string | null> {
+  // Not into a space shared to be read: the copy here would stop being the space's.
+  // Fetched, as sharing.svelte.ts reads the workspace this belongs to.
+  const { canWriteAt } = await import('../sharing.svelte')
+  if (!canWriteAt(dir)) return null
   const title = file ? shownName(file) : (pages.of(tab.id).title || tab.name || UNTITLED).trim()
   const named = file ?? `${nameFromTitle(title) ?? UNTITLED}.url`
   const page = pages.of(tab.id)
   const url = page.url ?? tab.address ?? ''
   const over = await sameNoteAt(ws, joinPath(dir, named), url)
-  const target = over?.path ?? joinPath(dir, ws.freeName(dir, named))
+  // A new note's name is asked of the disk as well as the listing: a tab keeps the
+  // space it was opened in, so Save after a switch keeps it into a folder the listing
+  // on screen has never read, and `Example.url` there came back free while it held a
+  // note on another site - which the write then replaced, with no version kept. The
+  // listing is asked again once the disk has answered, in the same breath as the
+  // claim below, because a page kept beside this one may have claimed the name
+  // meanwhile. See `claim` in saving.svelte.ts, which a draft's save does the same way.
+  let target = over?.path
+  while (target === undefined) {
+    const name = await ws.freeNameOnDisk(dir, named)
+    if (ws.freeName(dir, name) === name) target = joinPath(dir, name)
+  }
 
   const kept = await claim(target, async () => {
     const own = over ? (readWebFile(target, over.text)?.own ?? null) : null
@@ -102,12 +119,22 @@ async function sameNoteAt(
  *  deleted: a note under the name it offers, as though deleted from the root of its
  *  space, which is where Restore puts it. The entry goes on the tab's own place on the
  *  closed stack, so reopening the tab takes it back out; see `untrash`. See
- *  `trash_words` in trash.rs. */
+ *  `trash_words` in trash.rs.
+ *
+ *  A space shared with this account to be read takes nothing back, so Restore is not
+ *  offered for what came from one: the words go under a space that may be written in,
+ *  and under their own only where there is none, kept all the same. The sharing store
+ *  is fetched here rather than imported, since it reaches the workspace. */
 export async function trashWords(ws: Places, note: NoteDoc): Promise<void> {
-  const root = (ws.spaces.find((one) => one.id === note.home) ?? ws.activeSpace)?.root
-  if (root === undefined) return
+  const own = ws.spaces.find((one) => one.id === note.home) ?? ws.activeSpace
+  if (!own) return
 
-  const path = joinPath(root, draftFile(note))
+  const { canWriteAt } = await import('../sharing.svelte')
+  const file = draftFile(note)
+  const roots = [own, ws.activeSpace, ...ws.spaces].flatMap((one) => (one ? [one.root] : []))
+  const root = roots.find((one) => canWriteAt(joinPath(one, file))) ?? own.root
+
+  const path = joinPath(root, file)
   const entry = await invoke<{ id: string }>('trash_words', { path, content: note.text })
   ws.closed.stack = ws.closed.stack.map((one) =>
     one.draft.share === note.key && one.trashed === undefined ? { ...one, trashed: entry.id } : one,

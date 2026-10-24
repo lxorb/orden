@@ -4,7 +4,8 @@
  *
  *  The window asks what it needs to read a line (`hello`): the space's notes for `>`,
  *  the app's language and whether dates are read at all. It hands over a task to write
- *  (`task`). Everything arriving is checked here, once: a message is a value crossing a
+ *  (`task`), and waits to hear whether it went in (`added`), so a task the app could put
+ *  nowhere stays in the window's field. Everything arriving is checked here, once: a message is a value crossing a
  *  boundary. */
 
 import type { Remind } from '@nib/markdown/task-line'
@@ -19,7 +20,8 @@ export const ANSWERING = 'nib-quick-add-answering'
 export type Said =
   | { kind: 'hello' }
   | { kind: 'world'; notes: string[]; lang: string; smart: boolean }
-  | { kind: 'task'; entry: Entry; open: boolean }
+  | { kind: 'task'; id: number; entry: Entry; open: boolean }
+  | { kind: 'added'; id: number; ok: boolean }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -66,8 +68,16 @@ export function heard(value: unknown): Said | null {
   ) {
     return { kind: 'world', notes: value.notes, lang: value.lang, smart: value.smart }
   }
-  if (value.kind === 'task' && isEntry(value.entry) && typeof value.open === 'boolean') {
-    return { kind: 'task', entry: value.entry, open: value.open }
+  if (
+    value.kind === 'task' &&
+    typeof value.id === 'number' &&
+    isEntry(value.entry) &&
+    typeof value.open === 'boolean'
+  ) {
+    return { kind: 'task', id: value.id, entry: value.entry, open: value.open }
+  }
+  if (value.kind === 'added' && typeof value.id === 'number' && typeof value.ok === 'boolean') {
+    return { kind: 'added', id: value.id, ok: value.ok }
   }
   return null
 }

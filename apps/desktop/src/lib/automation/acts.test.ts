@@ -7,6 +7,7 @@
  *  hands a name and a caller that hands a path cannot come to different ends. */
 
 import { describe, expect, test, vi } from 'vitest'
+import { frontMatterValue } from '@nib/markdown/front-matter'
 
 function memoryStorage(): Storage {
   const store = new Map<string, string>()
@@ -123,7 +124,16 @@ vi.mock('../views.svelte', () => ({ views: { of: () => undefined } }))
 // note another device made; nothing here is about syncing.
 vi.mock('../sync.svelte', () => ({ sync: { mergeable: () => undefined } }))
 
-const { appendNote, openNote, runCommand } = await import('./acts')
+/** The spaces shared with this account to be read, by root. What may be written where
+ *  is sharing.svelte.ts's, which wants an account a unit test has none of. */
+const readOnly = new Set<string>()
+vi.mock('../sharing.svelte', () => ({
+  canWriteAt: (path: string) =>
+    ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
+}))
+
+const { appendNote, deleteFile, moveFile, newNote, openNote, runCommand, setProperty, writeFile } =
+  await import('./acts')
 
 describe('a note named rather than pathed', () => {
   test('is opened at the path the index holds it under', async () => {
@@ -312,5 +322,139 @@ describe('words appended to a note', () => {
     // note gets the end of it, which is what the action is called.
     await appendNote({ path: 'Daily.md', content: 'Added.', prepend: true })
     expect(written[0]?.after).toBe('Already here.\n\nAdded.\n')
+  })
+})
+
+describe('a property an automation sets', () => {
+  test('lands as the words it was given, whatever YAML would read them as bare', async () => {
+    // Each of these, written bare after the colon, is a mapping, a comment, a list, a
+    // boolean, a number or a reserved indicator to YAML rather than the words.
+    const values = ['Meeting: notes', '#tag', '- item', 'yes', '@home', '012', 'a #b', '1e3']
+
+    for (const value of values) {
+      held.set('/Work/Plan.md', '---\ntitle: Plan\n---\n# Plan\n')
+      written.length = 0
+
+      await setProperty({ path: 'Plan.md', key: 'status', value })
+      const after = written[0]?.after ?? ''
+      expect(after, value).toMatch(/^---\ntitle: Plan\nstatus: '.*'\n---\n# Plan\n$/)
+      expect(frontMatterValue(after, 'status'), value).toBe(value)
+    }
+  })
+
+  test('is one line however many the value had', async () => {
+    held.set('/Work/Plan.md', '# Plan\n')
+    written.length = 0
+
+    await setProperty({ path: 'Plan.md', key: 'status', value: 'one\n---\ntwo' })
+    expect(written[0]?.after).toBe('---\nstatus: one --- two\n---\n# Plan\n')
+  })
+
+  test('that the note already says is no change, quoted or not', async () => {
+    held.set('/Work/Plan.md', "---\nstatus: 'yes'\n---\n# Plan\n")
+    written.length = 0
+
+    expect(await setProperty({ path: 'Plan.md', key: 'status', value: 'yes' })).toMatchObject({
+      changed: false,
+    })
+    expect(written).toEqual([])
+  })
+
+  test('that is a checkbox, a number or a list keeps that type', async () => {
+    const typed: [string, string][] = [
+      ['true', 'status: true'],
+      ['False', 'status: false'],
+      ['3', 'status: 3'],
+      ['-1.5', 'status: -1.5'],
+      ['[work, home]', 'status: [work, home]'],
+      // Each member typed the way a chip typed into the list is: bare where YAML reads
+      // it back as what was said, words where it was quoted or would read as other.
+      ['[1, true, x]', 'status: [1, true, x]'],
+      ['[-2.5, false, 10]', 'status: [-2.5, false, 10]'],
+      [`['1', "true", x]`, "status: ['1', 'true', x]"],
+      ['[007, 1e3, null, True]', "status: ['007', '1e3', 'null', 'True']"],
+      ['[]', 'status: []'],
+      ["['a, b', yes]", "status: ['a, b', 'yes']"],
+      // A link is not a list of one, and links said with commas are a list of links.
+      ['[[Project X]]', "status: '[[Project X]]'"],
+      ['[[A]], [[B]]', "status: ['[[A]]', '[[B]]']"],
+      ['[[[A]], [[B]]]', "status: ['[[A]]', '[[B]]']"],
+    ]
+
+    for (const [value, line] of typed) {
+      held.set('/Work/Plan.md', '# Plan\n')
+      written.length = 0
+
+      await setProperty({ path: 'Plan.md', key: 'status', value })
+      expect(written[0]?.after, value).toBe(`---\n${line}\n---\n# Plan\n`)
+    }
+  })
+
+  test('over the same words in quotes is a change of type, not no change', async () => {
+    for (const [line, value, after] of [
+      ['done: "true"', 'true', 'done: true'],
+      ["count: '3'", '3', 'count: 3'],
+    ] as const) {
+      held.set('/Work/Plan.md', `---\n${line}\n---\n# Plan\n`)
+      written.length = 0
+
+      const key = line.slice(0, line.indexOf(':'))
+      expect(await setProperty({ path: 'Plan.md', key, value }), line).toMatchObject({
+        changed: true,
+      })
+      expect(written[0]?.after, line).toBe(`---\n${after}\n---\n# Plan\n`)
+    }
+  })
+
+  test('that YAML reads as itself stays bare', async () => {
+    held.set('/Work/Plan.md', '# Plan\n')
+    written.length = 0
+
+    await setProperty({ path: 'Plan.md', key: 'status', value: 'In progress' })
+    expect(written[0]?.after).toBe('---\nstatus: In progress\n---\n# Plan\n')
+  })
+})
+
+/** A space shared with this account to be read is one nothing may be written in: the
+ *  copy here would stop being the space's, and the sync would refuse the change on
+ *  every pass. A link and the command line can only do what somebody at the keyboard
+ *  could, and they could not write there either. */
+/** Front matter is Markdown's. `properties.set` over a canvas, a board, a chat or
+ *  any other file put a block of YAML on top of its JSON and broke it. */
+describe('properties.set over a file that is not Markdown', () => {
+  test('is refused, and writes nothing', async () => {
+    held.clear()
+    written.length = 0
+    for (const name of ['Board.canvas', 'Pages.pages', 'Base.base', 'Talk.chat', 'Link.url']) {
+      held.set(`/Work/${name}`, '{}')
+      await expect(setProperty({ path: name, key: 'status', value: 'done' })).rejects.toThrow(
+        /not a markdown note/,
+      )
+    }
+    expect(written).toEqual([])
+  })
+})
+
+describe('a space shared to be read', () => {
+  test('takes no write from a verb, and says why', async () => {
+    held.clear()
+    held.set('/Work/Plan.md', '# Plan')
+    written.length = 0
+    made.length = 0
+    readOnly.add('/Work')
+
+    const asked = [
+      () => setProperty({ path: 'Plan.md', key: 'status', value: 'done' }),
+      () => appendNote({ path: 'Daily.md', content: 'A line.' }),
+      () => newNote({ path: 'Fresh.md' }),
+      () => writeFile({ path: 'Plan.md', content: 'Gone.' }),
+      () => moveFile({ path: 'Plan.md', to: 'Later.md' }),
+      () => deleteFile({ path: 'Plan.md' }),
+    ]
+    for (const one of asked) await expect(one()).rejects.toThrow(/shared with you to read/)
+
+    expect(written).toEqual([])
+    expect(made).toEqual([])
+    readOnly.clear()
   })
 })

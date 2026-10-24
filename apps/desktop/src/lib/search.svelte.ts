@@ -13,6 +13,7 @@ import type { Hit } from './search/match'
 import { isEmpty, parseQuery } from './search/query'
 import { selectedWords } from './search/seed'
 import { searchSpace } from './search/space'
+import { isMarkdownPath } from './space-paths'
 import { isBoolean, isRecord, keep, stored } from './stored'
 import { afterQuiet } from './timing'
 import { workspace } from './workspace.svelte'
@@ -155,13 +156,18 @@ class Search {
     })
   }
 
-  /** What a replacement would be put into: the exact hits that are still ticked.
-   *  A loose hit is never one of them. There is nothing in its line for the query
+  /** What a replacement would be put into: the exact hits of notes that are still
+   *  ticked, never a website shortcut's, which the search finds too. A loose hit is
+   *  never one of them. There is nothing in its line for the query
    *  to replace, and guessing at what somebody meant is not a thing to do to
    *  their notes. */
   readonly chosen = $derived(
     this.found.filter(
-      (hit) => hit.tab === undefined && !isScratchpad(hit.path) && !this.skipped.has(keyOf(hit)),
+      (hit) =>
+        hit.tab === undefined &&
+        isMarkdownPath(hit.path) &&
+        !isScratchpad(hit.path) &&
+        !this.skipped.has(keyOf(hit)),
     ),
   )
 

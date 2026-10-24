@@ -14,6 +14,7 @@ import { t } from '../i18n.svelte'
 import type { MenuEntry } from '../menu.svelte'
 import { inboxOf } from '../rows/inbox'
 import { inboxNote } from '../rows/inbox-note'
+import { canWriteAt } from '../sharing.svelte'
 import { folderOf, insideSpace, nameOf, samePath, within } from '../space-paths'
 import { joinPath } from '../tauri'
 import { entryAt } from '../tree-edits'
@@ -34,11 +35,13 @@ function projectName(words: string): string | null {
 }
 
 /** A new, empty project in a folder, under the first free name its words make; answers
- *  its note on this disk, or null where the words make no name. */
+ *  its note on this disk, or null where the words make no name or the folder is in a
+ *  space shared to be read, which takes no new note. Asked here, as every way a project
+ *  is made comes through it. */
 async function made(folder: string, words: string, template?: string): Promise<string | null> {
   const name = projectName(words)
-  if (name === null) return null
-  const path = joinPath(folder, workspace.freeName(folder, `${name}.md`))
+  if (name === null || !canWriteAt(folder)) return null
+  const path = joinPath(folder, await workspace.freeNameOnDisk(folder, `${name}.md`))
   const text = template === undefined ? '' : await templateWords(template, name)
   await writeFile(path, text)
   await workspace.loadTree()
@@ -96,31 +99,46 @@ export function spaceProjects(root: string, count: (note: string) => number): Pr
 }
 
 /** A project's note written empty where it is not there yet: a folder's namesake, which
- *  the panel shows before anything is in it. */
-async function ensureProject(note: string): Promise<void> {
-  if (workspace.notes.some((one) => samePath(one.path, note))) return
+ *  the panel shows before anything is in it. Answers whether it is there now: not where
+ *  it would be made in a space shared to be read. */
+async function ensureProject(note: string): Promise<boolean> {
+  if (workspace.notes.some((one) => samePath(one.path, note))) return true
+  if (!canWriteAt(note)) return false
   await writeFile(note, '')
   await workspace.loadTree()
   await workspace.fileCame(note, 'file')
+  return true
 }
 
 /** The inbox of a space, on this disk, whether it is there yet or not. */
 const inboxNoteAt = (root: string) => insideSpace(root, inboxOf(root))
 
+/** Whether there is anywhere in the open space to take a task or a section to: not in
+ *  one shared to be read, where Move to is not offered. */
+export function offersPlaces(): boolean {
+  const root = workspace.activeSpace?.root
+  return root !== undefined && canWriteAt(root)
+}
+
 /** The places a task or a section can be taken to, as menu rows: the Inbox and every
  *  project of the open space, a sub-project under its parent's name. `go` is handed the
- *  note on this disk, made first where it is not there yet; `here` ticks a row. */
+ *  note on this disk, made first where it is not there yet; `here` ticks a row. None
+ *  where the open space is shared to be read: nothing can arrive there. */
 export function placeEntries(
   go: (note: string) => void,
   here: (note: string) => boolean = () => false,
 ): MenuEntry[] {
   const root = workspace.activeSpace?.root
-  if (root === undefined) return []
+  if (root === undefined || !offersPlaces()) return []
   const out: MenuEntry[] = [
     {
       label: t('Inbox'),
       checked: here(inboxNoteAt(root)),
-      run: () => void inboxNote(root).then(go),
+      run: () =>
+        void inboxNote(root).then(
+          (note) => (note === null ? undefined : go(note)),
+          () => undefined,
+        ),
     },
   ]
   const walk = (nodes: readonly ProjectNode[], above: string) => {
@@ -129,7 +147,8 @@ export function placeEntries(
       out.push({
         label: name,
         checked: here(node.note),
-        run: () => void ensureProject(node.note).then(() => go(node.note)),
+        run: () =>
+          void ensureProject(node.note).then((there) => (there ? go(node.note) : undefined)),
       })
       walk(node.children, name)
     }

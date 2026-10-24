@@ -10,9 +10,11 @@ const found: Record<string, string> = {
   'deep.png': 'notes/pictures/deep.png',
 }
 
-vi.mock('./workspace.svelte', () => ({ workspace: { activeSpace: { root: '/Work' } } }))
 vi.mock('./link-index.svelte', () => ({
-  links: { fileNamed: (name: string) => found[name] ?? null },
+  links: {
+    fileFor: (name: string, notePath: string | null) =>
+      notePath !== null && found[name] ? `/Work/${found[name]}` : null,
+  },
 }))
 
 const { notePicture } = await import('./note-images')

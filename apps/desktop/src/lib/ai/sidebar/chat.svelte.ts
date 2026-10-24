@@ -189,6 +189,15 @@ class Chat implements Panel {
     return this.open
   }
 
+  /** The folder of the space the open thread works in, which its sources and its
+   *  changes are paths in: a thread stays in the space it was started in when the
+   *  reader moves to another. The space in front where it names none this device has. */
+  get root(): string | null {
+    return this.open
+      ? (spaceOfThread(this.open)?.root ?? null)
+      : (workspace.activeSpace?.root ?? null)
+  }
+
   /** A thread this run has held, by id: what a helper is started under. */
   threadOf(id: string): Thread | null {
     return this.live.get(id) ?? (this.open?.id === id ? this.open : null)
@@ -574,7 +583,14 @@ class Chat implements Panel {
     })
     let ended: Ended
     try {
-      const draft: Draft = await draftOf(text, chips, thread.mode, around.front, around.selection)
+      const draft: Draft = await draftOf(
+        text,
+        chips,
+        thread.mode,
+        around.front,
+        around.selection,
+        spaceOfThread(thread),
+      )
       ended = await this.sendDraft(thread, provider, draft, stopper)
     } catch (error) {
       const words = message(error, t('The model did not answer.'))
@@ -1000,3 +1016,9 @@ class Chat implements Panel {
 }
 
 export const chat = new Chat()
+
+/** The space a thread works in: its own, and the one in front where it names none this
+ *  device has. What its message is gathered in and its sources are paths in. */
+function spaceOfThread(thread: Thread): { id: string; root: string } | null {
+  return workspace.spaces.find((one) => one.id === thread.space) ?? workspace.activeSpace ?? null
+}

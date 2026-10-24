@@ -13,6 +13,7 @@
   import { parseQuickAdd } from '@nib/bases/language'
   import { linesOf } from '@nib/bases/tasks'
   import { dayWords } from '@nib/editor/task-days'
+  import { editedWords, shownWords } from '@nib/markdown/escapes'
   import { deadlineOf, startOf } from '@nib/markdown/task-dates'
   import Bell from 'lucide/dist/esm/icons/bell.mjs'
   import Calendar from 'lucide/dist/esm/icons/calendar-days.mjs'
@@ -40,6 +41,7 @@
   import { rows } from '../../rows/rows.svelte'
   import { viewport } from '../../viewport.svelte'
   import { addSubtask, writeRow } from '../act'
+  import { plain } from '../inline'
   import { notePath } from '../kit'
   import { hasMeta, lineCount, subtaskCounts, taskKey } from '../task-meta'
   import {
@@ -77,6 +79,11 @@
   const starts = $derived(task ? (startOf(task, task.dueReads) ?? task.scheduled) : undefined)
   const deadline = $derived(task ? deadlineOf(task, task.dueReads) : undefined)
   const path = $derived(row ? notePath(row) : null)
+  /** Whether its note may be written. A task of a space shared with this account to be
+   *  read is shown whole and offers no change at all: the store turns every write there
+   *  away, so a field, a key or a menu that seemed to work would lose what was typed
+   *  with nothing said (B285). */
+  const writes = $derived(row ? kit.writes(row) : false)
   const phone = $derived(viewport.device === 'phone')
   const today = $derived(kit.live.today)
 
@@ -109,20 +116,27 @@
   const subKit = $derived({ ...kit, openTask: (one: Row) => viewing.open(one) })
 
   /** The task's words while they are being changed, written on Enter or when the field
-   *  is left. */
+   *  is left. The field holds the words a reader sees, `milk $3` where the line says
+   *  `milk \$3`, and they go back with every escape the line had (`editedWords`):
+   *  taking a backslash out by hand would turn the line into maths. */
   let title = $state('')
   let editing = $state(false)
   $effect(() => {
-    const words = task?.text ?? ''
+    const words = shownWords(task?.text ?? '')
     if (!editing) untrack(() => (title = words))
   })
 
-  function rename() {
+  /** The view follows the task to its new words only once they are written: told
+   *  first, it would look for a task that never came, and the words would be lost. */
+  async function rename() {
     editing = false
     const words = title.trim()
-    if (!row || !task || !words || words === task.text) return
-    viewing.renamed(words, row.anchor?.line ?? shown.ref.line)
-    void writeRow(row, { task: { text: words } })
+    if (!row || !task || !words || words === shownWords(task.text) || !writes) return
+    const written = editedWords(task.text, words)
+    const line = row.anchor?.line ?? shown.ref.line
+    if (await writeRow(row, { task: { text: written } })) viewing.renamed(written, line)
+    // Turned away: the words go back in the field the old ones were put in again.
+    else title = words
   }
 
   let adding = $state(false)
@@ -137,13 +151,23 @@
     if (shown.comment && field) untrack(() => void tick().then(() => field.focus()))
   })
 
+  /** A sub-task on its way: its words stay in the field until it is written, and a
+   *  second Enter in that time would write it again. */
+  let writingSubtask = false
+
   async function writeSubtask() {
     const words = subtask.trim()
-    if (!words || !row) return
-    subtask = ''
+    if (!words || !row || !writes || writingSubtask) return
     const read = parseQuickAdd(words, [i18n.language], new Date())
     const [line] = linesOf({ text: read.text || words, fields: read.fields })
-    if (line) await addSubtask(row, line)
+    if (!line) return
+    writingSubtask = true
+    try {
+      // Cleared once written, so a sub-task turned away is still in the field.
+      if ((await addSubtask(row, line)) && subtask.trim() === words) subtask = ''
+    } finally {
+      writingSubtask = false
+    }
   }
 
   const anchorNow = () => row?.anchor ?? null
@@ -177,6 +201,8 @@
       return
     }
     if (event.ctrlKey || event.metaKey || event.altKey || !row || !task) return
+    // Only the keys that walk the list, where nothing may be written.
+    if (!writes && !['ArrowUp', 'ArrowDown', 'k', 'j'].includes(event.key)) return
     const box = layer?.querySelector('.when')
     switch (event.key) {
       case 'ArrowUp':
@@ -191,7 +217,7 @@
         return
       case 'e':
         event.preventDefault()
-        kit.tick(row)
+        void kit.tick(row)
         return
       case 'c':
         event.preventDefault()
@@ -213,7 +239,7 @@
   const PRIORITY_KEYS: Partial<Record<string, Priority>> = { 1: 1, 2: 2, 3: 3, 4: 4 }
 
   function priorityMenu(event: MouseEvent) {
-    if (!row || !task) return
+    if (!row || !task || !writes) return
     const current = row
     menu.show(
       event,
@@ -223,7 +249,7 @@
 
   /** The labels a task can be given: every tag the space's tasks carry, its own ticked. */
   function labelMenu(event: MouseEvent) {
-    if (!row) return
+    if (!row || !writes) return
     const tags = labelEntries([row])
     if (!tags.length) {
       labelling = true
@@ -257,7 +283,7 @@
   }
 
   function remindMenu(event: MouseEvent) {
-    if (!row || !task) return
+    if (!row || !task || !writes) return
     const current = row
     // A reminder rings on the day it starts (#371).
     const day = starts
@@ -298,7 +324,7 @@
   class:page={phone}
   role="dialog"
   aria-modal="true"
-  aria-label={task?.text ?? ''}
+  aria-label={plain(task?.text ?? '')}
   tabindex="-1"
   {onkeydown}
   transition:fly={{ y: phone ? 24 : 8, duration: LAYER.rise, easing: cubicOut }}
@@ -322,7 +348,7 @@
       {#if parent?.task}
         <span class="sep" aria-hidden="true">›</span>
         <button type="button" class="crumbs" onclick={() => viewing.open(parent)}>
-          <span class="crumb">{parent.task.text}</span>
+          <span class="crumb">{plain(parent.task.text)}</span>
         </button>
       {/if}
       <span class="gap"></span>
@@ -354,14 +380,20 @@
     <div class="body">
       <section class="main">
         <div class="title-line">
-          <TaskBox {task} label={task.text} ontick={() => kit.tick(row)} />
+          <TaskBox
+            {task}
+            label={plain(task.text)}
+            ontick={() => kit.tick(row)}
+            disabled={!kit.writes(row)}
+          />
           <input
             class="title"
             class:finished={task.done || task.cancelled}
             bind:value={title}
             aria-label={t('Task')}
-            onfocus={() => (editing = true)}
-            onblur={rename}
+            readonly={!writes}
+            onfocus={() => (editing = writes)}
+            onblur={() => void rename()}
             onkeydown={(event) => {
               if (event.key === 'Enter' && !event.isComposing) {
                 event.preventDefault()
@@ -369,7 +401,7 @@
               } else if (event.key === 'Escape') {
                 event.preventDefault()
                 event.stopPropagation()
-                title = task.text
+                title = shownWords(task.text)
                 editing = false
                 event.currentTarget.blur()
               }
@@ -379,7 +411,7 @@
 
         {#if path}
           {#key `${shown.ref.path}\n${shown.ref.line}`}
-            <div class="words"><Description {path} anchor={anchorNow} /></div>
+            <div class="words"><Description {path} anchor={anchorNow} writable={writes} /></div>
           {/key}
         {/if}
 
@@ -401,7 +433,9 @@
               subtasks={countsOf(child)}
             />
           {/each}
-          {#if adding}
+          {#if !writes}
+            <!-- Nothing to add to a task that may not be written. -->
+          {:else if adding}
             <div class="nib-row adding">
               <Glyph icon={Plus} />
               <!-- svelte-ignore a11y_autofocus -->
@@ -447,7 +481,7 @@
         {#if path && row}
           {#key `${shown.ref.path}
 ${shown.ref.line}`}
-            <Comments bind:this={comments} {row} {path} />
+            <Comments bind:this={comments} {row} {path} writable={writes} />
           {/key}
         {/if}
       </section>
@@ -471,6 +505,7 @@ ${shown.ref.line}`}
         <button
           type="button"
           class="nib-row is-short when"
+          disabled={!writes}
           onclick={(event) => scheduleRows([row], event.currentTarget, kit)}
         >
           <span class="nib-row-mark"><Glyph icon={task.recurrence ? Repeat : Calendar} /></span>
@@ -485,6 +520,7 @@ ${shown.ref.line}`}
         <button
           type="button"
           class="nib-row is-short"
+          disabled={!writes}
           onclick={(event) => scheduleDeadline(row, event.currentTarget, kit)}
         >
           <span class="nib-row-mark"><Glyph icon={Target} /></span>
@@ -494,7 +530,7 @@ ${shown.ref.line}`}
         </button>
 
         <p class="nib-section">{t('Priority')}</p>
-        <button type="button" class="nib-row is-short" onclick={priorityMenu}>
+        <button type="button" class="nib-row is-short" disabled={!writes} onclick={priorityMenu}>
           <span class="nib-row-mark" style:color={priorityTone(task.priority)}
             ><Glyph icon={Flag} /></span
           >
@@ -505,18 +541,20 @@ ${shown.ref.line}`}
         <div class="tags">
           {#each task.tags as tag (tag)}
             <span class="nib-chip tag"
-              >#{tag}<button
-                type="button"
-                class="untag"
-                aria-label={t('Remove')}
-                onclick={() =>
-                  void writeRow(row, {
-                    task: { tags: task.tags.filter((one) => one !== tag) },
-                  })}><Cross small /></button
-              ></span
+              >#{tag}{#if writes}<button
+                  type="button"
+                  class="untag"
+                  aria-label={t('Remove')}
+                  onclick={() =>
+                    void writeRow(row, {
+                      task: { tags: task.tags.filter((one) => one !== tag) },
+                    })}><Cross small /></button
+                >{/if}</span
             >
           {/each}
-          {#if labelling}
+          {#if !writes}
+            <!-- No label to give a task that may not be written. -->
+          {:else if labelling}
             <input
               bind:this={labelField}
               bind:value={label}
@@ -547,7 +585,7 @@ ${shown.ref.line}`}
         </div>
 
         <p class="nib-section">{t('Reminders')}</p>
-        <button type="button" class="nib-row is-short" onclick={remindMenu}>
+        <button type="button" class="nib-row is-short" disabled={!writes} onclick={remindMenu}>
           <span class="nib-row-mark"><Glyph icon={Bell} /></span>
           <span class="nib-row-label"
             >{task.remind.length

@@ -35,12 +35,20 @@ vi.mock('../link-index.svelte', () => ({
   },
 }))
 
+/** The spaces shared with this account to be read, by root. What may be written
+ *  where is sharing.svelte.ts's, which wants an account a unit test has none of. */
+const readOnly = new Set<string>()
+vi.mock('../sharing.svelte', () => ({
+  canWriteAt: (path: string) => ![...readOnly].some((root) => path.startsWith(`${root}/`)),
+}))
+
 const { freePath } = await import('@nib/markdown/paths')
 const { extractSelection, mergeInto, splitAtCaret } = await import('./composing')
 const { FileActions } = await import('./undo.svelte')
 type Composes = import('./composing').Composes
 
 const SPACE = '/space'
+const OTHER = '/other'
 
 /** A store with the given notes on its disk, and the first of them open. */
 function space(notes: Record<string, string>, openAt?: string) {
@@ -50,6 +58,7 @@ function space(notes: Record<string, string>, openAt?: string) {
   const tab = openAt ? { id: 't1', path: openAt, doc: notes[openAt] ?? '' } : null
 
   const ws = {
+    activeSpace: { id: 's1', name: 'space', root: SPACE },
     active: tab,
     tabs: tab ? [tab] : [],
     undone: new FileActions(),
@@ -70,9 +79,9 @@ function space(notes: Record<string, string>, openAt?: string) {
       return Promise.resolve()
     },
     // The store's own numbering, which is `freePath` over everything the space
-    // holds; see `freeName` in workspace.svelte.ts.
-    freeName: (dir: string, wanted: string) =>
-      freePath(wanted, (candidate) => disk.has(`${dir}/${candidate}`)),
+    // holds and the disk; see `freeNameOnDisk` in workspace.svelte.ts.
+    freeNameOnDisk: (dir: string, wanted: string) =>
+      Promise.resolve(freePath(wanted, (candidate) => disk.has(`${dir}/${candidate}`))),
     loadTree: () => Promise.resolve(),
     persist: () => undefined,
   }
@@ -83,6 +92,7 @@ function space(notes: Record<string, string>, openAt?: string) {
 beforeEach(() => {
   sent.length = 0
   told.length = 0
+  readOnly.clear()
 })
 
 describe('a note merged into another', () => {
@@ -102,6 +112,9 @@ describe('a note merged into another', () => {
       `read_note ${B}`,
       `snapshot_note ${B}`,
       `write_note ${B}`,
+      // What B says once the links are rewritten, which is what an undo checks it
+      // against.
+      `read_note ${B}`,
       `snapshot_note ${A}`,
       `delete_note ${A}`,
     ])
@@ -120,7 +133,15 @@ describe('a note merged into another', () => {
 
     expect(ws.undone.stack).toEqual([
       // Nothing linked to A here, so no note's links are to put back.
-      { kind: 'merge', from: A, fromContent: '# a\n', into: B, intoContent: '# b\n', relinked: [] },
+      {
+        kind: 'merge',
+        from: A,
+        fromContent: '# a\n',
+        into: B,
+        intoContent: '# b\n',
+        intoAfter: disk.get(B),
+        relinked: [],
+      },
     ])
   })
 
@@ -136,6 +157,77 @@ describe('a note merged into another', () => {
     const ws = space({ [A]: '# a\n' })
     await mergeInto(ws, A, `${SPACE}/gone.md`)
 
+    expect(disk.get(A)).toBe('# a\n')
+    expect(ws.undone.stack).toEqual([])
+  })
+})
+
+describe('a merge that may not be made', () => {
+  const A = `${SPACE}/a.md`
+  const B = `${SPACE}/b.md`
+
+  test('leaves both notes alone in a space shared to be read', async () => {
+    readOnly.add(SPACE)
+    const ws = space({ [A]: '# a\n', [B]: '# b\n' })
+    await mergeInto(ws, A, B)
+
+    expect(sent).toEqual([])
+    expect(disk.get(A)).toBe('# a\n')
+    expect(ws.undone.stack).toEqual([])
+  })
+
+  test('leaves a note of another space where it is', async () => {
+    // A tab outlives a switch of space, so the note in front of the reader can be
+    // one the open space does not hold, while the notes on offer are the open one's.
+    const away = `${OTHER}/a.md`
+    const ws = space({ [away]: '# a\n', [B]: '# b\n' })
+    await mergeInto(ws, away, B)
+
+    expect(sent).toEqual([])
+    expect(disk.get(away)).toBe('# a\n')
+    expect(disk.get(B)).toBe('# b\n')
+  })
+
+  test('and does not reach into another space either', async () => {
+    const away = `${OTHER}/b.md`
+    const ws = space({ [A]: '# a\n', [away]: '# b\n' })
+    await mergeInto(ws, A, away)
+
+    expect(sent).toEqual([])
+    expect(disk.has(A)).toBe(true)
+  })
+
+  test('leaves a page note and its paper alone', async () => {
+    // Deleting a page note deletes the PDF it annotates, which may be the only
+    // copy; and its JSON appended to a note is no note at all.
+    const page = `${SPACE}/Lecture.pages`
+    const ws = space({ [page]: '{"pages":[]}', [B]: '# b\n' })
+    await mergeInto(ws, page, B)
+
+    expect(sent).toEqual([])
+    expect(disk.get(page)).toBe('{"pages":[]}')
+    expect(disk.get(B)).toBe('# b\n')
+    expect(ws.undone.stack).toEqual([])
+  })
+
+  test('and does not write words into a canvas either', async () => {
+    const board = `${SPACE}/Board.canvas`
+    const ws = space({ [A]: '# a\n', [board]: '{"nodes":[]}' })
+    await mergeInto(ws, A, board)
+
+    expect(sent).toEqual([])
+    expect(disk.get(board)).toBe('{"nodes":[]}')
+    expect(disk.has(A)).toBe(true)
+  })
+
+  test('nor into a chat, whose pointer would no longer say where the chat is', async () => {
+    const chat = `${SPACE}/Team.chat`
+    const pointer = '{"chat":"c1"}'
+    const ws = space({ [A]: '# a\n', [chat]: pointer })
+    await mergeInto(ws, A, chat)
+
+    expect(sent).toEqual([])
+    expect(disk.get(chat)).toBe(pointer)
     expect(disk.get(A)).toBe('# a\n')
     expect(ws.undone.stack).toEqual([])
   })
@@ -174,6 +266,16 @@ describe('a note split at the caret', () => {
     expect(disk.get(`${SPACE}/Later.md`)).toBe('# taken')
   })
 
+  test('and the link left behind names the stepped-aside note, not the one it stepped from', async () => {
+    // The link was written from the name the split reached for, so the note was
+    // left pointing at an unrelated `Later` and nothing pointed at `Later 2`.
+    const ws = space({ [NOTE]: DOC, [`${SPACE}/Later.md`]: '# taken' }, NOTE)
+    await splitAtCaret(ws, DOC.indexOf('## Later'))
+
+    expect(disk.get(NOTE)).toContain('[[Later 2]]')
+    expect(disk.get(NOTE)).not.toContain('[[Later]]')
+  })
+
   test('and nothing happens where there is nothing after the caret', async () => {
     const ws = space({ [NOTE]: DOC }, NOTE)
     await splitAtCaret(ws, DOC.length)
@@ -204,9 +306,66 @@ describe('a selection made into a note of its own', () => {
     expect(ws.undone.stack[0]).toMatchObject({ kind: 'extract', from: NOTE })
   })
 
+  test('and links to the note by the name it was stepped aside to', async () => {
+    // The passage is the name, so the link would be left plain; once the name is
+    // taken the passage stays as the link's words and the target is the new note.
+    const doc = '# Plan\n\nkeep this\n\nLater\n'
+    const ws = space({ [NOTE]: doc, [`${SPACE}/Later.md`]: '# taken' }, NOTE)
+    const from = doc.indexOf('Later')
+    await extractSelection(ws, from, from + 'Later'.length)
+
+    expect(disk.has(`${SPACE}/Later 2.md`)).toBe(true)
+    expect(disk.get(NOTE)).toContain('[[Later 2|Later]]')
+  })
+
   test('and nothing happens where nothing is selected', async () => {
     const ws = space({ [NOTE]: DOC }, NOTE)
     await extractSelection(ws, 4, 4)
+
+    expect(sent).toEqual([])
+  })
+})
+
+// Asked again here, since a split or an extraction can be reached without the
+// palette's say: only a markdown note of the open space that may be written is carved.
+describe('a file that is not a note of the open space', () => {
+  const JSON_FILE = `${SPACE}/snippets.json`
+  const DOC = '{\n  "a": 1\n}\n'
+
+  test('is not split', async () => {
+    const ws = space({ [JSON_FILE]: DOC }, JSON_FILE)
+    await splitAtCaret(ws, 1)
+
+    expect(sent).toEqual([])
+    expect([...disk.keys()]).toEqual([JSON_FILE])
+    expect(disk.get(JSON_FILE)).toBe(DOC)
+  })
+
+  test('nor has a selection extracted', async () => {
+    const ws = space({ [JSON_FILE]: DOC }, JSON_FILE)
+    await extractSelection(ws, 0, 1)
+
+    expect(sent).toEqual([])
+    expect(disk.get(JSON_FILE)).toBe(DOC)
+  })
+
+  /** A tab can outlive a space switch, and its note is carved in its own space,
+   *  beside it (B206), so a note of another space is still a note. */
+  test('while a note of another space is still split, beside it', async () => {
+    const note = `${OTHER}/plan.md`
+    const ws = space({ [note]: '# Plan\n\nfirst\n\n## Later\n\nsecond\n' }, note)
+    await splitAtCaret(ws, 10)
+
+    expect([...disk.keys()].some((path) => path.startsWith(`${OTHER}/`) && path !== note)).toBe(
+      true,
+    )
+  })
+
+  test('nor a note of a space shared to be read', async () => {
+    readOnly.add(SPACE)
+    const note = `${SPACE}/plan.md`
+    const ws = space({ [note]: '# Plan\n\nfirst\n\n## Later\n\nsecond\n' }, note)
+    await splitAtCaret(ws, 10)
 
     expect(sent).toEqual([])
   })

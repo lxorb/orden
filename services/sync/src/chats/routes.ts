@@ -192,9 +192,10 @@ chats.post('/', async (context) => {
 })
 
 /** A chat's settings, or its space (Move to space): `{space}` by a writer of both
- *  spaces, which takes its history along and changes its audience; `{topic}`,
- *  `{posting}` and `{slowmode}` as a `meta` event the object places for the asker, by
- *  the same table every event is held to. */
+ *  spaces, between spaces of one owner unless it is that owner who asks, which takes
+ *  its history along and changes its audience; `{topic}`, `{posting}` and `{slowmode}`
+ *  as a `meta` event the object places for the asker, by the same table every event is
+ *  held to. */
 chats.patch('/:chat', async (context) => {
   const env = context.env
   const reached = await reachChat(env, context.get('who'), context.req.param('chat'))
@@ -203,10 +204,23 @@ chats.patch('/:chat', async (context) => {
   if (!sent) return context.json({ error: NOT_THAT }, 400)
 
   if (typeof sent.space === 'string') {
-    if (reached.role === 'read') return context.json({ error: refusal('write') }, 403)
+    // The space the chat leaves is asked on its own, since the role a chat is reached
+    // at counts a share of its pointer alone, and somebody handed one file is not the
+    // one to take it out of the space it was shared from (DELETE /v1/notes/:id says
+    // the same).
+    const source = await reachedSpace(env, context.get('who'), reached.space)
+    if (!source || !allows(source.role, 'write')) {
+      return context.json({ error: 'this chat was shared with you, not its space' }, 403)
+    }
     const target = await reachedSpace(env, context.get('who'), sent.space)
     if (!target) return context.json({ error: NO_SUCH_SPACE }, 404)
     if (!allows(target.role, 'write')) return context.json({ error: refusal('write') }, 403)
+    // A move leaves nothing behind in Recently deleted, so a writer who is not the
+    // owner moves the chat only between spaces of that same owner: into a space of
+    // their own it would be the owner's chat taken away from them.
+    if (source.role !== 'owner' && target.user_id !== source.user_id) {
+      return context.json({ error: refusal('owner') }, 403)
+    }
     await chatsMoved(env, reached.chat, target.id)
     return context.json({ space: target.id })
   }

@@ -31,7 +31,12 @@
     {#each group.rows as row (`${row.space}:${rowId(row)}`)}
       {@const title = row.task ? plain(row.task.text) : row.file.basename}
       <div class="row">
-        {#if row.task}<TaskBox task={row.task} label={title} ontick={() => kit.tick(row)} />{/if}
+        {#if row.task}<TaskBox
+            task={row.task}
+            label={title}
+            ontick={() => kit.tick(row)}
+            disabled={!kit.writes(row)}
+          />{/if}
         <button type="button" class="body" onclick={() => kit.choose(row, !row.task)}>
           <span class="title">{title}</span>
           {#each shown as one (one)}

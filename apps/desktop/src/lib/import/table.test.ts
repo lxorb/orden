@@ -1,4 +1,5 @@
 import { readBase } from '@nib/bases'
+import { renderMarkdown } from '@nib/markdown'
 import { describe, expect, test } from 'vitest'
 
 import type { ImportPlan } from './plan'
@@ -42,10 +43,30 @@ describe('a CSV as one table', () => {
     expect(noteAt(plan, 'Books.md')).toContain('| Ubik |')
   })
 
+  test("a cell's dollars, tildes and percent signs are its words", () => {
+    const table = tableOf(['Price ~ish'], [{ 'Price ~ish': '$5-$10 | %%d' }])
+
+    expect(table.split('\n')[2]).toBe('| \\$5-\\$10 \\| %\\%d |')
+    expect(renderMarkdown(table)).toContain('<td>$5-$10 | %%d</td>')
+    expect(renderMarkdown(table)).toContain('<th>Price ~ish</th>')
+  })
+
   test('a pipe inside a cell does not become a column', () => {
     const table = tableOf(['A'], [{ A: 'one | two' }])
 
     expect(table.split('\n')[2]).toBe('| one \\| two |')
+  })
+
+  /** A spreadsheet's text is plain text: a `<b>` somebody typed into a cell is the
+   *  words they typed, never a tag the note would render. */
+  test('a tag typed into a cell or a column name opens no markup', () => {
+    const table = tableOf(
+      ['<b>Name</b>'],
+      [{ '<b>Name</b>': '<img src="https://x.example/p.png">' }],
+    )
+
+    expect(table).not.toMatch(/(?<!\\)<(?=[A-Za-z/])/)
+    expect(table).toContain('\\<b>Name\\</b>')
   })
 })
 
@@ -90,6 +111,23 @@ describe('a CSV as one note per row', () => {
 
     expect(note.text).toContain('## Notes')
     expect(note.text).toContain('One line\nAnother line')
+  })
+
+  test("a paragraph's dollars, tildes and percent signs are its words", () => {
+    const note = rowNote(['Name', 'Notes'], { Name: 'Dune', Notes: 'Costs $5-$10\nformat is %%d' })
+
+    expect(note.text).toContain('Costs \\$5-\\$10\nformat is %\\%d')
+    expect(renderMarkdown(note.text)).toContain('Costs $5-$10\nformat is %%d')
+  })
+
+  test('and neither the name of that column nor its words open markup', () => {
+    const note = rowNote(['Name', '<i>Notes</i>'], {
+      Name: 'Dune',
+      '<i>Notes</i>': 'One <style>*{display:none}</style>\nAnother line',
+    })
+
+    expect(note.text).not.toMatch(/(?<!\\)<(?=[A-Za-z/])/)
+    expect(note.text).toContain('One \\<style>')
   })
 
   test('a row with no name is still a note', () => {
@@ -167,5 +205,15 @@ describe('what a spreadsheet holds that a database does not', () => {
     const plan = await readTable([file('Books.tsv', 'Name\tPages\nDune\t412\n')])
 
     expect(noteAt(plan, 'Books.md')).toContain('| Dune | 412 |')
+  })
+})
+
+/** The row's title is a cell somebody typed: written as the heading, it reads back as
+ *  the words it was, with no maths, highlight or subscript in it. */
+describe('a row note with words of its own', () => {
+  test.each(['Tickets $5-$10', 'a==b and c==d', 'H~2~O'])('is headed by %s as words', (title) => {
+    const note = rowNote(['Name', 'Notes'], { Name: title, Notes: 'One line\nAnother line' })
+
+    expect(renderMarkdown(note.text)).toContain(`<h1>${title}</h1>`)
   })
 })

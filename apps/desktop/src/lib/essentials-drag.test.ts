@@ -30,6 +30,14 @@ function memoryStorage(): Storage {
 }
 vi.stubGlobal('localStorage', memoryStorage())
 
+/** The roots of the spaces shared with this account to be read. */
+const readOnly = vi.hoisted(() => new Set<string>())
+vi.mock('./sharing.svelte', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./sharing.svelte')>()),
+  canWriteAt: (path: string) =>
+    ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
+}))
+
 const { workspace } = await import('./workspace.svelte')
 const { place, unkeepInto } = await import('./essentials.svelte')
 type Entry = import('./workspace.svelte').Entry
@@ -53,6 +61,7 @@ const kept = () =>
 
 beforeEach(() => {
   sent.length = 0
+  readOnly.clear()
   workspace.spaces = [{ id: 's', name: 'Space', root: '/space' }]
   workspace.activeSpaceId = 's'
   workspace.tree = folder('/space', [
@@ -115,6 +124,16 @@ describe('a tile dragged into the list', () => {
     expect(kept()).toEqual([])
     expect(sent.some((one) => one.command === 'rename_note')).toBe(false)
     expect(workspace.undone.last?.kind).toBe('keep')
+  })
+
+  test('in a space shared to be read, stays a tile rather than going nowhere', async () => {
+    workspace.bookmarks.put('/space', [{ kind: 'note', path: 'a.md', text: '' }])
+    readOnly.add('/space')
+    await unkeepInto(0, '/space/Work')
+
+    expect(kept()).toEqual(['a.md'])
+    expect(sent.some((one) => one.command === 'rename_note')).toBe(false)
+    expect(workspace.undone.stack).toEqual([])
   })
 
   test('takes nothing that is not a file', async () => {

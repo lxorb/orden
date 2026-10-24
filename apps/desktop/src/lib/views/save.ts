@@ -3,6 +3,7 @@
  *  space under the view's name, a number after it where the name is taken, and opened
  *  in place of nothing: the tab it was copied from stays what it was. */
 
+import { canWriteAt } from '../sharing.svelte'
 import { joinPath } from '../tauri'
 import { workspace } from '../workspace.svelte'
 import { writeFile } from '../workspace/write-file'
@@ -17,10 +18,17 @@ function baseFileName(name: string): string {
   return `${cleaned || 'View'}.base`
 }
 
+/** Whether the open space takes the copy: not one shared to be read, where the copy
+ *  here would stop being the space's and the sync refuses it on every pass. */
+export function copiesToBase(): boolean {
+  const root = workspace.activeSpace?.root
+  return root !== undefined && canWriteAt(root)
+}
+
 export async function copyToBase(yaml: string, name: string): Promise<string | null> {
   const root = workspace.activeSpace?.root
-  if (root === undefined) return null
-  const path = joinPath(root, workspace.freeName(root, baseFileName(name)))
+  if (root === undefined || !copiesToBase()) return null
+  const path = joinPath(root, await workspace.freeNameOnDisk(root, baseFileName(name)))
   await writeFile(path, yaml)
   await workspace.loadTree()
   await workspace.fileCame(path, 'file')

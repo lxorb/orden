@@ -89,7 +89,7 @@
     <span class="spacer" aria-hidden="true"></span>
   {/if}
   {#if task}
-    <TaskBox {task} {label} ontick={() => kit.tick(row)} />
+    <TaskBox {task} {label} ontick={() => kit.tick(row)} disabled={!kit.writes(row)} />
   {/if}
   <button type="button" class="words" onclick={open} tabindex="-1">
     {#if task}<Words words={task.text} />{:else}{row.file.basename}{/if}

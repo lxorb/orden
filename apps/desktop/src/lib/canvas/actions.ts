@@ -52,7 +52,7 @@ import { chooseFiles, PICTURES } from '../choose-files'
 import { t, key } from '../i18n.svelte'
 import { DIVIDER, type MenuEntry } from '../menu.svelte'
 import { prompt } from '../prompt.svelte'
-import { folderOf, insideSpace, relativeTo } from '../space-paths'
+import { folderOf, insideSpace, relativeTo, withinSpace } from '../space-paths'
 import { spaceRelative } from '../recorder/paths'
 import { openHref } from '../open-link'
 import { workspace } from '../workspace.svelte'
@@ -269,18 +269,22 @@ export const run = {
    *  under the other, which is where a hand dropping a folder's worth would put
    *  them anyway. */
   dropPaths(store: CanvasStore, paths: readonly string[], at: Point) {
-    const root = workspace.activeSpace?.root
+    const root = canvasRoot(store)
     if (!root) return
 
     let next = store.canvas
     const ids: string[] = []
 
-    for (const [index, path] of paths.entries()) {
+    // Only what the canvas's own space holds: a card can name nothing else but by its
+    // whole local path, which is a file nowhere on any other device.
+    const inside = paths.flatMap((path) => withinSpace(root, path) ?? [])
+    for (const [index, file] of inside.entries()) {
       const id = freshId()
       const box = placedAt({ x: at.x, y: at.y + index * GRID * 10 }, DEFAULT_WIDTH, GRID * 9)
-      next = withNode(next, { ...box, id, type: 'file', file: relativeTo(root, path) })
+      next = withNode(next, { ...box, id, type: 'file', file })
       ids.push(id)
     }
+    if (!ids.length) return
 
     store.edit(next)
     store.pickAll(ids)
@@ -289,10 +293,13 @@ export const run = {
   /** A picture pasted or dropped: stored where every other pasted picture goes,
    *  and put on the plane as a card of its own. */
   async dropImage(store: CanvasStore, file: File, where: Point | Box, notePath: string | null) {
+    // Before the picture is stored: a plane that may not be written in would refuse
+    // the card, and the file would be left behind with nothing pointing at it.
+    if (store.readOnly) return
     const stored = await storeImage(file, notePath).catch(() => null)
     if (!stored) return
 
-    const root = workspace.activeSpace?.root
+    const root = canvasRoot(store)
     // Kept by the account, the card names its whole address: the web app's API is its
     // own origin and answers `/i/…`, which read as a path in the space was a file
     // nowhere, and every picture pasted by somebody signed in was "Nothing here" (#364).
@@ -311,7 +318,8 @@ export const run = {
    *  Each imported sheet becomes a picture, so it can be moved and resized like
    *  any other image on the canvas. */
   async dropPdf(store: CanvasStore, file: File, at: Point, notePath: string | null) {
-    if (!notePath) return
+    // Before the question and before every page is rendered and stored; see dropImage.
+    if (!notePath || store.readOnly) return
     const mode = await prompt.choose({
       title: t('Import PDF'),
       detail: t('Choose how to add the pages to the canvas.'),
@@ -348,7 +356,7 @@ export const run = {
       pages = Array.from({ length: doc.numPages }, (_, index) => index + 1)
     }
 
-    const root = workspace.activeSpace?.root
+    const root = canvasRoot(store)
     if (!root) {
       await task.destroy().catch(() => undefined)
       return
@@ -423,8 +431,11 @@ export const run = {
       return
     }
 
+    // On a plane that may not be written in, a double click only follows what a card
+    // points at: a card opened to type in would take words the store then drops.
     switch (node.type) {
       case 'text':
+        if (store.readOnly) break
         store.pick(node.id)
         store.editing = node.id
         break
@@ -438,12 +449,13 @@ export const run = {
         openHref(node.url)
         break
       case 'file': {
-        const root = workspace.activeSpace?.root
+        const root = canvasRoot(store)
         if (root) await workspace.openEntry(insideSpace(root, node.file))
         break
       }
       // A shape holds words the way a card does, so opening one opens the words.
       case 'shape':
+        if (store.readOnly) break
         store.pick(node.id)
         store.editing = node.id
         break
@@ -461,7 +473,7 @@ export const run = {
     const node = store.canvas.nodes.find((one) => one.id === id)
     if (node?.type !== 'text' || !node.text.trim()) return
 
-    const root = workspace.activeSpace?.root
+    const root = canvasRoot(store)
     const folder = canvasPath === null ? root : folderOf(canvasPath)
     const path = await workspace.noteFrom(node.text, folder ?? undefined)
     if (!path || !root) return
@@ -645,6 +657,7 @@ export interface KeyView {
 }
 
 function putText(store: CanvasStore, text: string, box: Box, writing = false) {
+  if (store.readOnly) return
   const id = freshId()
   store.edit(withNode(store.canvas, { ...box, id, type: 'text', text }))
   store.pick(id)
@@ -657,6 +670,7 @@ function putText(store: CanvasStore, text: string, box: Box, writing = false) {
  *  PDF viewer's do. Left empty, it goes again, as an empty card does. The arrow is in
  *  hand after it, so the next press picks rather than starting another. */
 export function putWords(store: CanvasStore, box: Box) {
+  if (store.readOnly) return
   const id = freshId()
   store.edit(withNode(store.canvas, { ...box, id, type: 'text', text: '', bare: true }))
   store.pick(id)
@@ -677,6 +691,7 @@ function putFile(store: CanvasStore, file: string, box: Box) {
 }
 
 async function askLabel(store: CanvasStore, id: string) {
+  if (store.readOnly) return
   const node = store.canvas.nodes.find((one) => one.id === id)
   const was =
     node?.type === 'group'
@@ -716,6 +731,12 @@ function ownSize(tool: PutTool): { width: number; height: number } {
 export interface Putting {
   colour: string
   path: string | null
+}
+
+/** The root the canvas's cards are relative to: that of the space the canvas is in,
+ *  which is not always the active one, since tabs are shared across spaces. */
+function canvasRoot(store: CanvasStore): string | null {
+  return workspace.rootHolding(store.path)
 }
 
 /** What a tool puts on the plane where it was pressed, at its own size. */
@@ -762,6 +783,9 @@ async function putDown(
   from?: Point,
   to?: Point,
 ) {
+  // Every tool puts something on the plane, which one that may not be written in
+  // refuses; the questions some of them ask first would be answered for nothing.
+  if (store.readOnly) return
   if (isShape(tool)) {
     const corner = from ?? { x: box.x, y: box.y }
     const other = to ?? { x: box.x + box.width, y: box.y + box.height }
@@ -792,15 +816,16 @@ async function putDown(
       return
     }
     case 'file': {
-      const root = workspace.activeSpace?.root
+      const root = canvasRoot(store)
       if (!root) return
 
+      // The file list is the active space's, which need not be the canvas's.
       const chosen = await prompt.find({
         title: t('Which note'),
         placeholder: t('Search'),
-        options: workspace.files.map((one) => {
-          const relative = relativeTo(root, one.path)
-          return { id: relative, label: relative }
+        options: workspace.files.flatMap((one) => {
+          const relative = withinSpace(root, one.path)
+          return relative ? [{ id: relative, label: relative }] : []
         }),
       })
 
@@ -974,7 +999,7 @@ async function exportAs(store: CanvasStore, view: MenuView, how: 'png' | 'svg' |
     canvas: store.canvas,
     palette: view.palette,
     path: view.path,
-    root: workspace.activeSpace?.root ?? null,
+    root: canvasRoot(store),
     name: view.name,
     trusted: view.trusted,
   }

@@ -24,7 +24,7 @@ export async function machinesRevoked(
 
   const { results } = await env.DB.prepare(
     `select t.machine as machine, t.user_id as owner, group_concat(t.term) as terms
-       from term_sessions t join notes n on n.id = t.term
+       from term_sessions t join notes n on n.id = t.term and t.term <> t.session
       where n.space_id = ?1 and t.ended_at is null and (?2 = '' or t.term = ?2)
         and t.user_id <> ?3
       group by t.machine, t.user_id limit ?4`,
@@ -66,7 +66,7 @@ export async function machinesSignedOut(
 
   const { results } = await env.DB.prepare(
     `select distinct t.machine as machine
-       from term_sessions t left join notes n on n.id = t.term
+       from term_sessions t left join notes n on n.id = t.term and t.term <> t.session
       where t.ended_at is null
         and (t.user_id = ?1
              or n.space_id in (select id from spaces where user_id = ?1

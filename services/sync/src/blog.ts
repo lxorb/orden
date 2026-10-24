@@ -28,7 +28,7 @@ import { escape, type Head, headOf } from './blog/head'
 import { MATH_CSS, MATH_CSS_PATH, MATH_FONTS } from './blog/math'
 import { answers, asked as readQuery, hasWords, matching } from './blog/find'
 import { linkedFrom, type Listed } from './blog/nav'
-import { pageOf, pathsOf, rememberedNote } from './blog/paths'
+import { legacyPathsOf, pageOf, pathsOf, rememberedNote } from './blog/paths'
 import { SITE_JS, SITE_JS_PATH, THEME_JS, THEME_JS_HASH } from './blog/script'
 import { type Around, aside, bar, contents, counter, ownFiles, underneath } from './blog/shell'
 import { PAGE_CSS, PAGE_CSS_PATH, SLIDES_CSS, SLIDES_CSS_PATH } from './blog/style'
@@ -1507,6 +1507,14 @@ async function served(
     const was = await rememberedNote(env, space.id, decodedSlug)
     const moved = was ? pageList.find((one) => one.note.id === was) : null
     if (moved) return Response.redirect(new URL(`/${moved.slug}`, url).toString(), 301)
+
+    // A path this site answered on before it kept letters outside ASCII, which no
+    // rename wrote down; see `legacyPathsOf`. Only once nothing else has it, so a
+    // page that answers on it now keeps it.
+    const before = pageList.find((one) =>
+      legacyPathsOf(one.note.path, one.front).includes(decodedSlug),
+    )
+    if (before) return Response.redirect(new URL(`/${before.slug}`, url).toString(), 301)
 
     return missing()
   }

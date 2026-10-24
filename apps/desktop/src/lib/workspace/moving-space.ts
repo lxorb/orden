@@ -15,6 +15,7 @@ import { moveHistory } from '../terminal/history'
 import { readSpec } from '../terminal/spec'
 import type { Tab } from '../workspace.svelte'
 import { workspace } from '../workspace.svelte'
+import { mayCarry } from './chat-carry'
 import { ownerOf } from './sets'
 import { carried, movingOf, spacesFor } from './space-move'
 import { ownTabs, tabSets } from './spaces'
@@ -26,7 +27,8 @@ export async function moveToSpace(ids: readonly string[], space: string): Promis
   const target = ws.spaces.find((one) => one.id === space)
   if (!target) return
   const tabs = ids.flatMap((id) => ws.tabs.find((one) => one.id === id) ?? [])
-  if (!spacesFor(tabs.map(movingOf), ws, canWriteAt).some((one) => one.id === space)) return
+  const offered = spacesFor(tabs.map(movingOf), ws, canWriteAt, mayCarry)
+  if (!offered.some((one) => one.id === space)) return
 
   const moved: Tab[] = []
   const files = new Map<string, boolean>()

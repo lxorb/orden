@@ -38,7 +38,7 @@ import { asked } from './asks'
 import { type Call, done, flag, maybe, need, needScope, writerOf } from './call'
 import { made } from './notes'
 import { Refused } from './problem'
-import { judgedForWriting, onDisk, type Place, placeFor } from './spaces'
+import { judgedForWriting, onDisk, type Place, placeFor, writableAt } from './spaces'
 import { treeOf } from './tree'
 
 const SHAPES = [...CAPTURE_AS, 'link'] as const
@@ -225,10 +225,14 @@ export async function captureToNote(call: Call): Promise<AgentAnswer> {
         ? target
         : `${target}.md`
 
+  // Before the question and before any picture is kept beside the note: a space shared
+  // to be read takes neither a new note nor a section added to one there.
+  const path = onDisk(place, relative)
+  writableAt(place, path)
+
   const question = await asked(call, null, `Capture ${page.url} into ${relative}`)
   if (question) return question
 
-  const path = onDisk(place, relative)
   const embed = page.file ? await attachment(place, path, page.file) : null
   const words = await wordsFor(page, shape, embed)
 
@@ -252,6 +256,7 @@ export async function captureToNote(call: Call): Promise<AgentAnswer> {
  *  reader's Attachments setting says, under a name of its own. Answers what the note
  *  embeds. */
 async function attachment(place: Place, notePath: string, file: Kept): Promise<string> {
+  writableAt(place, notePath)
   const bytes = Uint8Array.from(atob(file.base64), (character) => character.charCodeAt(0))
   const saved = await invoke<string>('save_asset', {
     notePath,

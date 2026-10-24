@@ -11,6 +11,7 @@
 import { account } from '../account.svelte'
 import { t } from '../i18n.svelte'
 import type { OpenHow } from '../new-tab'
+import { canWriteAt } from '../sharing.svelte'
 import { nameOf, samePath } from '../space-paths'
 import { joinPath } from '../tauri'
 import type { Tab } from '../workspace/documents.svelte'
@@ -30,7 +31,8 @@ export async function openOnline(beside = false): Promise<Tab | null> {
     return null
   }
   const root = workspace.activeSpace?.root
-  if (!root) return null
+  // The terminal is a file written into the space, which one shared to be read refuses.
+  if (!root || !canWriteAt(root)) return null
 
   // Not on the list yet, or the service off: said before any file is made. Asked again
   // every time, but waited for only when this window has not heard yes already: the
@@ -45,7 +47,7 @@ export async function openOnline(beside = false): Promise<Tab | null> {
 
   // The file first, empty: sync gives it its id, the account names its session by that id,
   // and the terminal writes the session into it as it starts. See source.ts.
-  const path = joinPath(root, workspace.freeName(root, `${MADE_NAME}.term`))
+  const path = joinPath(root, await workspace.freeNameOnDisk(root, `${MADE_NAME}.term`))
   await writeFile(path, '')
   await workspace.fileCame(path, 'file')
   const tab = openTerm(path, { beside })

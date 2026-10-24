@@ -3873,17 +3873,27 @@ describe('following a link to a note the space has not got', () => {
     workspace.spaces = [{ id: 'one', name: 'One', root: '/space' }]
     workspace.activeSpaceId = 'one'
     workspace.tabs = []
-    notes['/space/Plan.md'] = '# Plan\n\n'
     sent.length = 0
   })
 
   afterEach(() => {
-    delete notes['/space/Plan.md']
+    delete notes['/space/.github/CONTRIBUTING.md']
   })
 
   test('makes it where the link would look for it', async () => {
     await workspace.followLink(asked('Plan'))
     expect(sent.find((one) => one.command === 'write_note')?.path).toBe('/space/Plan.md')
+  })
+
+  /** The index misses notes that are there: a dot folder is never scanned, and a note
+   *  that is not UTF-8 or too big to read is skipped. A miss is not an absence, and a
+   *  note made over one of those would be the end of what it held. */
+  test('opens a note the index never read, and writes nothing over it', async () => {
+    notes['/space/.github/CONTRIBUTING.md'] = '# How to contribute\n\nWhat the team wrote.\n'
+    await workspace.followLink(asked('.github/CONTRIBUTING'))
+
+    expect(sent.filter((one) => one.command === 'write_note')).toEqual([])
+    expect(workspace.tabs.map((tab) => tab.path)).toEqual(['/space/.github/CONTRIBUTING.md'])
   })
 
   /** What a link says is somebody's prose: a note out of a shared space, a room, a

@@ -13,10 +13,11 @@
  *  table again, so what came in as a database is one (docs/tasks.md 4, "import CSV
  *  as a base"). */
 
+import { plainWords } from '@nib/markdown/escapes'
 import { key } from '../i18n.svelte'
 import { recordsOf } from './csv'
 import { type Base, writeBase } from '@nib/bases'
-import { dayOf, noteText, type Meta, propertyName } from './meta'
+import { dayOf, freeKey, noteText, type Meta, propertyName, titleHeading } from './meta'
 import { Names, safeName, withoutNotionId } from './names'
 import type { ImportPlan, Lost, Planned } from './plan'
 import type { Source } from './sources'
@@ -106,12 +107,12 @@ export function tableOf(
 
 /** One cell, safe to put between two pipes: a pipe of its own is escaped, and the
  *  newlines in a paragraph somebody typed into a spreadsheet become spaces,
- *  because a markdown table has no way to hold a line break. */
+ *  because a markdown table has no way to hold a line break. A spreadsheet holds
+ *  plain text, so a `<b>` in it is words and opens no tag (`plainWords`). */
 function cell(value: string): string {
-  return value
-    .replace(/\s*\n\s*/g, ' ')
-    .replace(/\|/g, '\\|')
-    .trim()
+  // Escaped as the plain text a spreadsheet holds before the pipes are, so a pipe's
+  // backslash is not read as one of the cell's own.
+  return plainWords(value.replace(/\s*\n\s*/g, ' ').trim()).replace(/\|/g, '\\|')
 }
 
 /** One row as a note: its columns are its properties, and the column it is named
@@ -149,7 +150,7 @@ export function rowNote(
     // Anything with a line in it is prose, and prose in front matter is a
     // property nobody can read.
     if (value.includes('\n')) {
-      words.push(`## ${column}\n\n${value}`)
+      words.push(`## ${plainWords(column)}\n\n${plainWords(value)}`)
       continue
     }
 
@@ -160,7 +161,7 @@ export function rowNote(
 
   // The title is written here rather than left to `noteText`, which would take the
   // `## Notes` of a first column of prose for the note's own heading and give it none.
-  return { name, text: noteText(null, [`# ${name}`, ...words].join('\n\n'), meta) }
+  return { name, text: noteText(null, [titleHeading(name), ...words].join('\n\n'), meta) }
 }
 
 /** The column a row is named after: the one that says so, or the first. */
@@ -184,12 +185,7 @@ function renamed(title: string, name: string): boolean {
 function keysOf(columns: readonly string[]): Map<string, string> {
   const keys = new Map<string, string>()
   const taken = new Set<string>()
-  const take = (column: string, wanted: string) => {
-    let key = wanted
-    for (let step = 2; taken.has(key); step += 1) key = `${wanted}-${step}`
-    taken.add(key)
-    keys.set(column, key)
-  }
+  const take = (column: string, wanted: string) => keys.set(column, freeKey(wanted, taken))
 
   for (const column of columns) {
     if (DATES.test(column)) take(column, /created|^date$/i.test(column) ? 'date' : 'updated')

@@ -325,6 +325,47 @@ describe('a row that is part of a selection of several', () => {
   })
 })
 
+/** A space shared with this account to be read is one nothing may be written in: the
+ *  copy here would stop being the space's, and the sync refuses it on every pass. So a
+ *  row there opens and is looked at, and offers nothing that writes (B273). */
+describe('a space shared to be read', () => {
+  const WRITING = [
+    'New note inside',
+    'Rename',
+    'Move',
+    'Choose an icon',
+    'Remove icon',
+    'Set cover',
+    'Change cover',
+    'Remove cover',
+    'Archive',
+    'Duplicate',
+    'Delete',
+  ]
+
+  test('a row offers to open it and nothing that writes', () => {
+    writable.yes = false
+    viewport.device = 'phone'
+    try {
+      for (const entry of [nested, plain, loose, paper]) {
+        const said = labels(entry)
+        expect(said[0], entry.path).toBe('Open')
+        for (const label of WRITING) expect(said, entry.path).not.toContain(label)
+      }
+    } finally {
+      viewport.device = 'desktop'
+    }
+  })
+
+  test('nor does a selection of several', () => {
+    writable.yes = false
+    workspace.select('/s/loose.md')
+    workspace.toggleSelect('/s/paper.pdf')
+
+    expect(labels(loose)).toEqual(['Open all'])
+  })
+})
+
 describe('the archive', () => {
   test('is offered on every row, and not in a space shared to be read', () => {
     for (const entry of [nested, plain, loose, paper]) expect(labels(entry)).toContain('Archive')

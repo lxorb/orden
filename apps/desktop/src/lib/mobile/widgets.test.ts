@@ -89,4 +89,9 @@ describe('today', () => {
     // A space this phone does not have opens nothing.
     expect(rows[0]?.path).toBe('')
   })
+
+  test("a task's escapes are not on the home screen", () => {
+    const rows = todayRows([{ text: 'milk \\$3 \\~5', at: 'A.md#0:a', space: 'Notes' }], () => '/N')
+    expect(rows[0]?.text).toBe('milk $3 ~5')
+  })
 })

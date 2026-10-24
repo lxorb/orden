@@ -108,6 +108,22 @@ describe('the icon a note is given', () => {
     expect(written('/space/plain.md')).toBe('---\nicon: rocket\n---\n# Plain\n\nwords\n')
   })
 
+  test('an emoji YAML would read as something else is quoted', async () => {
+    fresh()
+    // The keycap `#` bare after the colon would be a comment, and the icon nothing.
+    await setFileIcon('/space/plain.md', '#\uFE0F\u20E3')
+
+    expect(written('/space/plain.md')).toBe("---\nicon: '#\uFE0F\u20E3'\n---\n# Plain\n\nwords\n")
+  })
+
+  test('an emoji the note already wears in other quotes writes nothing at all', async () => {
+    fresh()
+    notes['/space/plain.md'] = '---\nicon: "#\uFE0F\u20E3"\n---\n# Plain\n'
+    await setFileIcon('/space/plain.md', '#\uFE0F\u20E3')
+
+    expect(sent.filter((one) => one.command === 'write_note')).toEqual([])
+  })
+
   test('joins the keys a note already had', async () => {
     fresh()
     await setFileIcon('/space/titled.md', 'file-text')

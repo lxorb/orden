@@ -24,7 +24,7 @@ import { nameOf } from '../space-paths'
 import { workspace } from '../workspace.svelte'
 import { canRecordHere, recordingName } from './container'
 import { MOST_BYTES, record, type Recording } from './microphone'
-import { appendTo, noteToRecordInto, viewFor, writeAtCaret } from './note'
+import { appendTo, mayRecordInto, noteToRecordInto, viewFor, writeAtCaret } from './note'
 import { spaceRelative } from './paths'
 import { recordingPill } from '../surfaces.svelte'
 import { embedFor } from './transcript'
@@ -172,15 +172,20 @@ class Recorder {
     if (bytes.byteLength > MOST_BYTES) {
       throw new Error(key('That is as much as one recording may hold.'))
     }
+    // Asked again here and not only at the start: the space may have been shared to be
+    // read, or Read-only turned on, while the microphone was open. The embed would be
+    // refused then, and the sound stored beside it would be a file nothing names.
+    if (!mayRecordInto(path)) throw new Error(key('That recording could not be saved.'))
 
     const written = await storeBeside(bytes, path, recordingName(this.started, extension))
     if (!written) throw new Error(key('That recording could not be saved.'))
 
     // Before the embed is written, not after: the index is what makes a bare name
     // resolve, and a player is drawn the moment the words are in the note.
-    const root = workspace.activeSpace?.root
+    // The note's own space, which a note still open from another one is not the active.
+    const root = workspace.rootHolding(path)
     const relative = root ? spaceRelative(root, path, written) : null
-    if (relative) links.fileAdded(relative)
+    if (root && relative) links.fileWritten(root, relative)
 
     const embed = embedFor(nameOf(written))
     const view = viewFor(path)

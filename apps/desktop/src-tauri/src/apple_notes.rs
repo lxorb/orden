@@ -641,9 +641,11 @@ mod mac {
         }
 
         /// A tag or a mention, which Notes stores as an attachment holding the
-        /// words it draws.
+        /// words it draws. Those are whatever the row says, and a store somebody
+        /// was handed can say a tag, so they come over as words and never as markup.
         fn words(&self, id: &str) -> Option<String> {
             self.column(id, "zalttext")
+                .map(|words| apple_text::as_words(&words))
         }
 
         /// A link to another note, which becomes a link to wherever that note
@@ -951,13 +953,26 @@ mod mac {
     }
 
     /// A note's title as the words of a link: a bracket of its own would end them,
-    /// and a line break would leave the link behind on the line above.
+    /// and a line break would leave the link behind on the line above. A card's
+    /// title is whatever the linked page called itself, so a `<` that would open a
+    /// tag is escaped as well. Every backslash is already doubled by then, so one
+    /// more in front is enough.
     fn label(words: &str) -> String {
-        words
+        let said = words
             .replace('\\', "\\\\")
             .replace('[', "\\[")
             .replace(']', "\\]")
-            .replace(['\n', '\r'], " ")
+            .replace(['\n', '\r'], " ");
+
+        let mut out = String::with_capacity(said.len());
+        let mut chars = said.chars().peekable();
+        while let Some(one) = chars.next() {
+            if one == '<' && apple_text::opens_tag(chars.peek().copied()) {
+                out.push('\\');
+            }
+            out.push(one);
+        }
+        out
     }
 
     /// Where a link goes, with what a title may hold and a link may not encoded: a
@@ -1085,6 +1100,76 @@ mod mac {
                 "Work/Re%3A%20lunch%20%28draft%29%20%232%20100%25"
             );
             assert_eq!(super::label("[Draft] plan ]"), "\\[Draft\\] plan \\]");
+            assert_eq!(super::label("a < b <i>"), "a < b \\<i>");
+        }
+
+        /// A store with one attachment row in it, holding what `columns` says.
+        fn store(columns: &[(&str, &str)]) -> rusqlite::Connection {
+            let db = rusqlite::Connection::open_in_memory().expect("a database");
+            db.execute_batch(
+                "CREATE TABLE ziccloudsyncingobject \
+                 (zidentifier TEXT, zalttext TEXT, zurlstring TEXT, ztitle TEXT)",
+            )
+            .expect("a table");
+            db.execute(
+                "INSERT INTO ziccloudsyncingobject (zidentifier) VALUES ('A')",
+                [],
+            )
+            .expect("a row");
+            for (name, value) in columns {
+                db.execute(
+                    &format!("UPDATE ziccloudsyncingobject SET {name} = ?1"),
+                    [value],
+                )
+                .expect("a column");
+            }
+            db
+        }
+
+        fn attachment(db: &rusqlite::Connection, uti: &str) -> Option<String> {
+            use crate::apple_text::Parts;
+
+            let known = ["zidentifier", "zalttext", "zurlstring", "ztitle"]
+                .into_iter()
+                .map(String::from)
+                .collect();
+            let mut found =
+                super::Found::new(db, Vec::new(), std::collections::HashMap::new(), known);
+            found.attachment("A", uti)
+        }
+
+        /// A card's title is whatever the linked page called itself, and a page can
+        /// call itself a tag. In the reader's own note that tag would be markup.
+        #[test]
+        fn a_cards_title_is_words_and_not_markup() {
+            let db = store(&[
+                ("zurlstring", "https://x.test/a"),
+                ("ztitle", "Fine <img src=x onerror=alert(1)>"),
+            ]);
+            assert_eq!(
+                attachment(&db, super::CARD).as_deref(),
+                Some("[Fine \\<img src=x onerror=alert(1)>](https://x.test/a)")
+            );
+
+            let db = store(&[
+                ("zurlstring", "https://x.test/a) <b>"),
+                ("ztitle", "\\<img src=x>"),
+            ]);
+            assert_eq!(
+                attachment(&db, super::CARD).as_deref(),
+                Some("[\\\\\\<img src=x>](<https://x.test/a) %3Cb%3E>)")
+            );
+        }
+
+        /// A tag, a mention and the answer to a sum are the words Notes keeps on
+        /// their row, which a store somebody was handed can fill with a tag.
+        #[test]
+        fn words_kept_on_an_attachment_are_not_markup() {
+            let db = store(&[("zalttext", "#plans <img src=x onerror=alert(1)> \\</b>")]);
+            assert_eq!(
+                attachment(&db, "com.apple.notes.inlinetextattachment.hashtag").as_deref(),
+                Some("#plans \\<img src=x onerror=alert(1)> \\\\\\</b>")
+            );
         }
 
         /// The database under `tests/apple-notes`, which is Notes' own schema with

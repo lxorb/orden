@@ -9,6 +9,7 @@
   import { amount, t } from '../../i18n.svelte'
   import { workspace } from '../../workspace.svelte'
   import { hiddenKinds } from '../../settings.svelte'
+  import { canWriteAt } from '../../sharing.svelte'
   import type { ChatEntry, Hit } from '../api'
   import ChatMark from './ChatMark.svelte'
   import Glyph from './Glyph.svelte'
@@ -89,7 +90,7 @@
 
     <div class="section">
       <p class="nib-section">{t('Chats')}</p>
-      {#if workspace.activeSpace && hiddenKinds.offers('chat')}
+      {#if workspace.activeSpace && hiddenKinds.offers('chat') && canWriteAt(workspace.activeSpace.root)}
         <button
           type="button"
           class="nib-glyph add"

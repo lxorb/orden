@@ -55,14 +55,19 @@
 
   const head = $derived(chat.head)
   const busy = $derived(chat.busy)
-  const space = $derived(workspace.activeSpace)
+  /** The folder of the space the thread works in, which is not the one in front once a
+   *  thread with turns is carried to another (`root` in chat.svelte.ts): what goes with
+   *  a message is that space's, so its citations open there. */
+  const root = $derived(chat.root)
+  /** Whether the space in front is the thread's, which is the space the `@` list's
+   *  notes, folders and tags are read from. */
+  const home = $derived(root !== null && root === workspace.activeSpace?.root)
 
   // ── What goes along on its own ─────────────────────────
 
   /** The note in front, while it is a note of this space. */
   const front = $derived.by((): (Front & { key: string }) | null => {
     const tab = workspace.panelTab
-    const root = space?.root
     if (tab?.kind !== 'note' || !tab.path || !root) return null
     const path = withinSpace(root, tab.path)
     if (path === null) return null
@@ -137,9 +142,11 @@
     }
     out.push({ kind: 'web', id: 'web', label: t('Web search'), word: 'web' })
     out.push({ kind: 'scratchpad', id: 'scratchpad', label: t('Scratchpad'), word: 'scratchpad' })
-    for (const note of workspace.notes) out.push(mentionOf(note))
-    for (const folder of folders()) out.push(mentionOf(folder))
-    for (const { tag } of links.spaceTags) out.push({ kind: 'tag', id: tag, label: `#${tag}` })
+    if (home) {
+      for (const note of workspace.notes) out.push(mentionOf(note))
+      for (const folder of folders()) out.push(mentionOf(folder))
+      for (const { tag } of links.spaceTags) out.push({ kind: 'tag', id: tag, label: `#${tag}` })
+    }
     for (const one of chat.heads) {
       if (one.id !== head?.id && one.title)
         out.push({ kind: 'thread', id: one.id, label: one.title })
@@ -195,7 +202,6 @@
 
   /** A note's folder inside the space, or nothing for one at its root. */
   function folderIn(path: string): string {
-    const root = space?.root
     const inside = root ? withinSpace(root, path) : null
     const at = inside?.lastIndexOf('/') ?? -1
     return inside && at > 0 ? inside.slice(0, at) : ''

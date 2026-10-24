@@ -308,9 +308,10 @@ export function titleFrom(path: string, source: string): string {
  *  Note that a null front and an empty one are the same answer to every reader:
  *  see `readFront`. */
 /** Which reading of a note's head `writeFront` is, written beside it as `front_rev`:
- *  1 since comments were taken out first (#453). A row below it is read again by the
- *  nightly sweep; see blog/fill.ts. */
-export const FRONT_REV = 1
+ *  1 since comments were taken out first (#453), 2 since its pictures are written down
+ *  with it (0059, pictures.ts). A row below it is read again by the nightly sweep; see
+ *  blog/fill.ts. */
+export const FRONT_REV = 2
 
 export function writeFront(source: string): string {
   return JSON.stringify(frontOf(source) ?? {})

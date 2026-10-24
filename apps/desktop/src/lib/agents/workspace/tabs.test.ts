@@ -124,16 +124,23 @@ vi.mock('../../workspace.svelte', () => ({ workspace }))
 /** What `agents_ask` answers next. */
 let answer: Record<string, unknown> = { status: 'ok', result: {} }
 const asked: { command: string; args: Record<string, unknown> }[] = []
+/** Files on the disk that are no note, so `noteText` does not read them: a PDF of the
+ *  person's own, named the way a page note's paper is. */
+const others = new Set(['/s/Work/Report.pages.pdf'])
 
 vi.mock('../../tauri', async (original) => ({
   ...(await original<typeof import('../../tauri')>()),
   invoke: (command: string, args: Record<string, unknown> = {}) => {
     asked.push({ command, args })
+    // The browser has no stamps; its listing answers. See on-disk.ts.
+    if (command === 'path_exists') return Promise.resolve(others.has(String(args.path)))
     return Promise.resolve(command === 'agents_ask' ? answer : null)
   },
 }))
 
-vi.mock('../../sharing.svelte', () => ({ isShared: () => false, canWriteAt: () => true }))
+/** Whether the open space is shared with this account only to read, set by a test. */
+let readOnly = false
+vi.mock('../../sharing.svelte', () => ({ isShared: () => false, canWriteAt: () => !readOnly }))
 vi.mock('../../web-tab/pages.svelte', () => ({ pages: { addressOf: () => null } }))
 vi.mock('../../views.svelte', () => ({ views: { of: () => null } }))
 vi.mock('../../sync.svelte', () => ({ sync: { nudge: () => undefined } }))
@@ -172,6 +179,7 @@ const trash = {
   ],
   load: vi.fn(() => Promise.resolve()),
   restore: vi.fn((_item: unknown) => Promise.resolve()),
+  restorable: vi.fn((_item: unknown) => true),
 }
 vi.mock('../../trash.svelte', () => ({ trash }))
 
@@ -332,6 +340,21 @@ describe('where the reader is', () => {
     })
   })
 
+  /** Tabs are shared across spaces, so a note of another space can be open. Its path
+   *  relative to the active space is the whole local path, which names this machine's
+   *  folders and nothing an agent can reach by it (B385). */
+  test("a tab of another space gives no path, rather than this machine's whole one", async () => {
+    const outside = workspace.outside
+    workspace.outside = (path: string) => !/^\/s\/(Work|Home)\//.test(path)
+    tabs.push(tab('h1', 'note', '/s/Home/Todo.md', { shown: 'Todo' }))
+    try {
+      const said = (await call('get_context', {})) as { result: { tabs: { id: string }[] } }
+      expect(said.result.tabs.find((one) => one.id === 'h1')).not.toHaveProperty('path')
+    } finally {
+      workspace.outside = outside
+    }
+  })
+
   test('the selection is the selected tab kind', async () => {
     workspace.activeTabId = 'c1'
     expect(await call('get_context', {})).toMatchObject({
@@ -467,6 +490,18 @@ describe('naming and saving', () => {
       code: 'exists',
     })
   })
+
+  test('an unsaved tab is not saved into a space shared to be read', async () => {
+    readOnly = true
+    try {
+      expect(
+        await call('workspace_tabs', { op: 'save', tab: 'c1', path: 'boards/Map' }),
+      ).toMatchObject({ code: 'read_only' })
+      expect(workspace.save).not.toHaveBeenCalled()
+    } finally {
+      readOnly = false
+    }
+  })
 })
 
 describe('a file of every kind', () => {
@@ -502,6 +537,15 @@ describe('a file of every kind', () => {
     })
     expect(await call('create_note', { path: 'x', kind: 'sheet' })).toMatchObject({
       code: 'bad_arguments',
+    })
+    expect(written()).toEqual({})
+  })
+
+  test('never a page note beside a PDF it would take for its paper', async () => {
+    // A blank `Report.pages` beside the person's `Report.pages.pdf` held that PDF as
+    // its paper: hidden from the file list, and gone with the note when it was deleted.
+    expect(await call('create_note', { path: 'Report', kind: 'pages' })).toMatchObject({
+      code: 'exists',
     })
     expect(written()).toEqual({})
   })
@@ -599,6 +643,17 @@ describe('a PDF, Settings and Recently deleted', () => {
       result: { restored: true, from: 'Work/archive' },
     })
     expect(trash.restore).toHaveBeenCalledWith(trash.items[0])
+  })
+
+  test('nothing is put back into a space shared to be read', async () => {
+    trash.restorable.mockReturnValueOnce(false)
+    trash.restore.mockClear()
+
+    const only = agent(EVERY, { spaces: ['Work'] })
+    expect(await call('recently_deleted', { op: 'restore', id: 'device:1' }, only)).toMatchObject({
+      code: 'read_only',
+    })
+    expect(trash.restore).not.toHaveBeenCalled()
   })
 })
 

@@ -16,7 +16,7 @@ import { notes } from '../docs'
 import { asked } from './asks'
 import { type Call, done, maybe, need, writerOf } from './call'
 import { Refused } from './problem'
-import { judged, onDisk, type Place, placeFor, sharedSource } from './spaces'
+import { judged, onDisk, type Place, placeFor, sharedSource, writableAt } from './spaces'
 import { nameOf } from '../../space-paths'
 
 /** A version's name as an agent hands it back: where it is kept and when. */
@@ -48,6 +48,10 @@ export async function listVersions(call: Call): Promise<AgentAnswer> {
 
 export async function restoreVersion(call: Call): Promise<AgentAnswer> {
   const { place, relative, path } = noteOf(call)
+  // Its own `noteOf` serves `list_versions` too, which only reads, so the write is
+  // checked here: in a space shared to be read the words would be dropped unsaved on a
+  // closed note, and saved anyway on an open one.
+  writableAt(place, path)
   const wanted = need(call, 'version')
   const version = (await versionsOf(path)).find((one) => idOf(one) === wanted)
   if (!version) {

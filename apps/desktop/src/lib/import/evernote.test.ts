@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
+import { readTask } from '@nib/markdown/task-line'
 import { readEvernote } from './evernote'
 import { md5 } from './md5'
 import type { ImportPlan } from './plan'
@@ -223,6 +224,18 @@ describe('an Evernote export that is not quite what the format says', () => {
     expect(plan.lost.map((one) => one.values)).toEqual([{ count: 1 }])
   })
 
+  test('an attachment named with a hash or a percent sign is still what its link reaches', async () => {
+    const named = bodied(
+      'Named',
+      `<en-media type="image/png" hash="${HASH}"/>`,
+      picture(BASE64, '100% done #3.png'),
+    )
+    const plan = await readEvernote([file('A.enex', enex(named))])
+
+    expect(plan.files.some((one) => one.path === 'assets/100% done #3.png')).toBe(true)
+    expect(noteAt(plan, 'Named.md')).toContain('![](assets/100%25%20done%20%233.png)')
+  })
+
   test('a hash in single quotes still finds its picture', async () => {
     const plan = await readEvernote([
       file(
@@ -374,5 +387,26 @@ describe('the markup of an Evernote note', () => {
     expect(await body('<div>Before <en-crypt cipher="AES">abc</en-crypt> after</div>')).toBe(
       'Before … after',
     )
+  })
+})
+
+/** A checkbox's words are somebody's words: an emoji and a date after it, a `#`, are
+ *  what the task reader takes apart, and Evernote meant none of it. */
+describe('an Evernote checkbox', () => {
+  test('reads none of its words as a field of the task', async () => {
+    const list = `  <note>
+    <title>Chores</title>
+    <content><![CDATA[<en-note><div><en-todo/>task 📅 2026-11-01 ⏫ 🔁 every week #tag</div></en-note>]]></content>
+  </note>`
+
+    const line = noteAt(await readEvernote([file('A.enex', enex(list))]), 'Chores.md')
+      .split('\n')
+      .find((one) => one.startsWith('- [ ]'))
+    const task = readTask(line ?? '')
+
+    expect(task).toMatchObject({ tags: [] })
+    expect(task?.due).toBeUndefined()
+    expect(task?.recurrence).toBeUndefined()
+    expect(task?.priority).toBe(readTask('- [ ] task')?.priority)
   })
 })

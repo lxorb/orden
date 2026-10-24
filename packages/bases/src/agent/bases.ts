@@ -7,7 +7,8 @@
  *  folder `file.inFolder()` names, the tags `file.hasTag()` names and the values a
  *  `prop == "value"` names, so the row it makes is a row of the view it was made from. */
 
-import { writeList, writeProperty } from '@nib/markdown/property-edits'
+import { isPropertyName } from '@nib/markdown/front-matter'
+import { type ListItem, writeList, writeProperty } from '@nib/markdown/property-edits'
 import { readFilter } from '../filter'
 import type { Base, Filter, Sort, View } from '../types'
 import { AgentError } from './tasks'
@@ -17,21 +18,26 @@ type Args = Record<string, unknown>
 const isRecord = (value: unknown): value is Args =>
   value !== null && typeof value === 'object' && !Array.isArray(value)
 
-/** The front matter keys a value can be written under. */
-const KEY = /^[\w-][\w -]*$/
+/** The key a property is written under: a base's `note.status` is the note's
+ *  `status`, so the prefix comes off rather than being written as a key of its own
+ *  beside it. Null for a name front matter would not read back as that key (see
+ *  `isPropertyName`), and for a file's or a formula's property, which no front matter
+ *  holds. */
+function keyOf(name: string): string | null {
+  const key = name.startsWith('note.') ? name.slice(5) : name
+  if (/^(?:file|formula)\./.test(key) || !isPropertyName(key)) return null
+  return key
+}
 
 /** The note's words with each property set, or taken away where it is null. A list is
  *  written as one, a number and a yes or no bare, everything else as words. */
 export function withProperties(text: string, properties: Args): string {
   let after = text
-  for (const [key, value] of Object.entries(properties)) {
-    if (!KEY.test(key)) throw new AgentError('bad_arguments', `${key} is not a property name`)
+  for (const [name, value] of Object.entries(properties)) {
+    const key = keyOf(name)
+    if (key === null) throw new AgentError('bad_arguments', `${name} is not a property name`)
     const edit = Array.isArray(value)
-      ? writeList(
-          after,
-          key,
-          value.map((one) => String(one)),
-        )
+      ? writeList(after, key, value.map(listItem))
       : value === null
         ? writeProperty(after, key, null)
         : typeof value === 'boolean'
@@ -49,6 +55,14 @@ export function withProperties(text: string, properties: Args): string {
     if (edit) after = after.slice(0, edit.from) + edit.insert + after.slice(edit.to)
   }
   return after
+}
+
+/** A list member the agent sent, as itself where a list can hold it bare: a number,
+ *  a yes or no, or nothing. Words are words, and anything else is written as the JSON
+ *  it came in as rather than as `[object Object]`. */
+function listItem(value: unknown): ListItem {
+  if (value === null || typeof value === 'number' || typeof value === 'boolean') return value
+  return typeof value === 'string' ? value : JSON.stringify(value)
 }
 
 /** The expressions every row of a view must satisfy: the base's and the view's, and

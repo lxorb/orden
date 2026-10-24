@@ -21,6 +21,16 @@ import { escapeText } from './escapes'
 import { HIGHLIGHT_COLOURS, writeHighlight } from './highlights'
 import { appHref, safeHref, safeSrc } from './html'
 import { tagNameAt } from './tags'
+import { taskWords } from './task-line'
+
+/** A field the escaping wrote as two brackets, `\\[due:: 2026-10-01\\]`, and nothing
+ *  after it that would make it a link's words. */
+const ESCAPED_FIELD = /\\\[([^[\]\\]*?::[^[\]\\]*?)\\\](?!\()/g
+
+/** A pasted to-do's words with its fields as fields again. */
+function withFields(words: string): string {
+  return words.replace(ESCAPED_FIELD, '[$1]')
+}
 
 /** What a note never contains.
  *
@@ -80,6 +90,61 @@ export interface FromHtmlOptions {
    *  what the schemes are held to: the ones that run code or serve a document of the
    *  author's own are refused whoever is asking. */
   appTargets?: boolean
+
+  /** Whether a video, a recording or an embedded file is written as a link to it.
+   *
+   *  Off by default, which is what a clip and a paste want: a page's player is
+   *  chrome, and the file behind it stays on the page's own server.
+   *
+   *  On for the imports, where that file arrives beside the note and the element is
+   *  the one place that says the note held it. A note is markdown and markdown has
+   *  no player, so it becomes a link, held to the same rule as any other; see
+   *  `mayPointAt`. */
+  mediaLinks?: boolean
+
+  /** Whether a to-do's words are plain text that meant nothing to the task reader.
+   *
+   *  Off by default, which is what a paste wants: a task list drawn by this app or
+   *  by Obsidian says its tags, dates and fields as itself, and pasted back they are
+   *  that task's again. On for the imports, where a Notion or Evernote checkbox is
+   *  somebody's sentence and a `#` or an emoji and a date in it is no field
+   *  (`taskWords`). */
+  plainTasks?: boolean
+}
+
+/** The elements of `NEVER` that point at a file, and the attribute each says it in.
+ *  A video or a recording may name it in a `<source>` inside instead. */
+const MEDIA: Record<string, string> = {
+  video: 'src',
+  audio: 'src',
+  embed: 'src',
+  iframe: 'src',
+  object: 'data',
+}
+
+/** A video, a recording or an embedded file as a link to the file, named by the
+ *  file's own name; nothing where it names no file a note may point at. */
+function mediaLink(node: Element, options: FromHtmlOptions): string {
+  const attribute = MEDIA[node.nodeName.toLowerCase()] ?? 'src'
+  const source = (
+    node.getAttribute(attribute) ??
+    node.querySelector('source[src]')?.getAttribute('src') ??
+    ''
+  ).trim()
+  if (!source || !mayPointAt(source, options)) return ''
+
+  const name = source.split(/[?#]/)[0]?.split('/').pop() ?? ''
+  let shown = name
+  try {
+    shown = decodeURIComponent(name)
+  } catch {
+    // Not an escape after all; the name is shown as it was written.
+  }
+
+  // The name is the export's words, not the note's: it goes through what a page's
+  // prose does, so a `%3C` in it opens no tag and a `%0A` ends no paragraph.
+  const words = escapeText((shown || source).replace(/\s+/g, ' '))
+  return `\n\n[${words}](${destination(source)})\n\n`
 }
 
 /** The TeX a formula carries about itself.
@@ -489,6 +554,13 @@ function converter(options: FromHtmlOptions): TurndownService {
     emDelimiter: '*',
     strongDelimiter: '**',
     linkStyle: 'inlined',
+    // Turndown hands an element with no words in it here rather than to a rule, and
+    // an `<object>` holds none; see `mediaLinks`. Anything else is what turndown's
+    // own does with it, from the `isBlock` turndown marks every node it walks with.
+    blankReplacement: (_content, node) => {
+      if (options.mediaLinks === true && node.nodeName === 'OBJECT') return mediaLink(node, options)
+      return (node as { isBlock?: boolean }).isBlock ? '\n\n' : ''
+    },
   })
 
   service.use(gfm)
@@ -498,13 +570,28 @@ function converter(options: FromHtmlOptions): TurndownService {
   // left alone where a run of the page's words already is markdown. Hung on the
   // instance because that is where turndown looks it up - and it looks it up only
   // for text that is not inside code, which is what keeps a fence's brackets.
-  service.escape = escapeText
+  //
+  // Except that an address is kept as written only outside a link: inside one the
+  // renderer autolinks nothing and the address is words; see `escapeText`. turndown
+  // hands `escape` the text alone, so the link rule says when it is inside one: its
+  // filter is asked once for an element, just before that element's words are
+  // converted, and its replacement once they have been.
+  let insideLinks = 0
+  service.escape = (text) => escapeText(text, { addresses: insideLinks === 0 })
 
   // A filter rather than the list itself, because `svg` is not an HTML tag and
   // the list is one. For a clip this is a second line of defence behind the
   // extractor's own DOM cleaning; for a paste it is the only one, since a clipboard's HTML
   // arrives as a whole document with a head on it.
   service.remove((node) => NEVER.includes(node.nodeName.toLowerCase()))
+
+  // Turndown asks its rules before what it removes, so the elements of the list
+  // that point at a file are links instead for the caller that keeps the files.
+  if (options.mediaLinks === true)
+    service.addRule('media', {
+      filter: (node) => node.nodeName.toLowerCase() in MEDIA,
+      replacement: (_content, node) => mediaLink(node, options),
+    })
 
   // A formula's drawing, which the formula beside it already says; see
   // `drawnBeside`. The note keeps the maths rather than the letters it was drawn
@@ -537,6 +624,15 @@ function converter(options: FromHtmlOptions): TurndownService {
         // A ticked item brings its box and the space the page had after it; one
         // space between the box and the words is what markdown wants.
         .replace(/^(\[[ x]\])\s*/, '$1 ')
+        // A to-do's first line: words an importer knows are plain are written as none
+        // of the task's fields (`taskWords`, see `plainTasks`); a pasted task list
+        // keeps the `[key:: value]` fields it drew as itself, which the escaping took
+        // for brackets - but never one a link's address follows.
+        .replace(
+          /^(\[[ x]\] )([^\n]*)/,
+          (_, box: string, words: string) =>
+            box + (options.plainTasks === true ? taskWords(words) : withFields(words)),
+        )
 
       const ends = node.nextSibling && !body.endsWith('\n') ? '\n' : ''
       return `${marker} ${body}${ends}`
@@ -679,9 +775,17 @@ function converter(options: FromHtmlOptions): TurndownService {
   // and its text nodes have been through `escape` above, which is where a
   // backslash and the brackets are already dealt with.
   service.addRule('link', {
-    filter: (node) => node.nodeName === 'A' && !!node.getAttribute('href'),
+    filter: (node) => {
+      const href = node.nodeName === 'A' ? node.getAttribute('href') : null
+      if (!href) return false
+      // Words that stay words, where the target may not be written down, are prose
+      // and keep their addresses.
+      if (mayPointAt(href, options)) insideLinks += 1
+      return true
+    },
     replacement: (content, node) => {
       const href = node.getAttribute('href') ?? ''
+      if (mayPointAt(href, options)) insideLinks -= 1
       // The words stay where the target may not be written down, which is what an
       // unresolvable link is anywhere; see `mayPointAt`.
       if (!mayPointAt(href, options)) return content

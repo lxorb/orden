@@ -13,7 +13,8 @@ import {
   platformLabel,
   type Report,
 } from '../src/feedback-issues'
-import { call, signIn, type TestEnv, testEnv } from './harness'
+import { sweepLeftovers } from '../src/leftovers'
+import { call, mail, signIn, type TestEnv, testEnv } from './harness'
 
 const REPO = 'lxorb/orden-feedback'
 
@@ -29,6 +30,7 @@ interface Opened {
   title: string
   body: string
   labels: string[]
+  state?: string
 }
 
 /** GitHub's issues of the one repository, and what each request asked. */
@@ -38,6 +40,8 @@ class Github {
   /** What the next requests to open an issue do instead of answering: fail outright,
    *  or open it and lose the answer on its way back. */
   failing: ('refuse' | 'lose')[] = []
+  /** Run while an issue is being opened, before it is: what else happens meanwhile. */
+  meanwhile: (() => void) | null = null
 
   readonly fetch = async (input: string | URL | Request, init?: RequestInit) => {
     const url = new URL(typeof input === 'string' || input instanceof URL ? input : input.url)
@@ -46,6 +50,13 @@ class Github {
     const headers = new Headers(init?.headers)
     if (headers.get('authorization') !== 'Bearer minion-token') {
       return new Response('{}', { status: 401 })
+    }
+    const edited = new RegExp(`^/repos/${REPO}/issues/(\\d+)$`).exec(url.pathname)
+    if (edited && method === 'PATCH') {
+      const issue = this.issues.find((one) => one.number === Number(edited[1]))
+      if (!issue) return new Response('{}', { status: 404 })
+      Object.assign(issue, JSON.parse(typeof init?.body === 'string' ? init.body : '{}'))
+      return Response.json({ number: issue.number })
     }
     if (url.pathname !== `/repos/${REPO}/issues`) return new Response('{}', { status: 404 })
 
@@ -61,6 +72,7 @@ class Github {
       )
     }
 
+    this.meanwhile?.()
     const failure = this.failing.shift()
     if (failure === 'refuse') return new Response('{}', { status: 502 })
     const sent = JSON.parse(typeof init?.body === 'string' ? init.body : '{}') as Omit<
@@ -205,6 +217,77 @@ describe('a report GitHub did not take', () => {
     await openWaitingIssues(env, at + 60_000)
     expect(hub.issues).toHaveLength(1)
     expect(opens()).toBe(2)
+  })
+})
+
+/** An account deleted through the routes, all three steps. */
+async function leave(token: string): Promise<void> {
+  const mailed = await mail(() => call(env, '/v1/account/delete/code', { token, body: {} }))
+  const found = /(\d{3}) (\d{3})/.exec(mailed)
+  const verified = await call<{ ticket: string }>(env, '/v1/account/delete/verify', {
+    token,
+    body: { code: `${found?.[1] ?? ''}${found?.[2] ?? ''}` },
+  })
+  const gone = await call(env, '/v1/account', {
+    method: 'DELETE',
+    token,
+    body: { ticket: verified.json.ticket },
+  })
+  expect(gone.status).toBe(200)
+}
+
+describe('a report whose account is deleted', () => {
+  test('leaves nothing of it in the issue it became', async () => {
+    const token = await signIn(env, 'reader@example.com')
+    await call(env, '/v1/feedback', { token, body: REPORT })
+    expect(hub.issues[0]?.body).toContain('reader@example.com')
+
+    await leave(token)
+
+    const [issue] = hub.issues
+    expect(issue?.state).toBe('closed')
+    expect(JSON.stringify(issue)).not.toContain('reader@example.com')
+    expect(JSON.stringify(issue)).not.toContain('tab strip')
+    expect(JSON.stringify(issue)).not.toContain('another line')
+    expect(env.db.prepare("select what from leftovers where what like 'issues/%'").all()).toEqual(
+      [],
+    )
+  })
+
+  test('and is redacted the next night where GitHub did not answer the first time', async () => {
+    const token = await signIn(env, 'reader@example.com')
+    await call(env, '/v1/feedback', { token, body: REPORT })
+    const working = hub.fetch
+    vi.stubGlobal('fetch', async (input: string | URL | Request, init?: RequestInit) =>
+      init?.method === 'PATCH' ? new Response('{}', { status: 502 }) : working(input, init),
+    )
+
+    await leave(token)
+    expect(hub.issues[0]?.body).toContain('reader@example.com')
+
+    vi.stubGlobal('fetch', working)
+    await sweepLeftovers(env)
+    expect(hub.issues[0]?.body).not.toContain('reader@example.com')
+    expect(hub.issues[0]?.state).toBe('closed')
+  })
+
+  test('while its issue is being opened leaves nothing of it there either', async () => {
+    const token = await signIn(env, 'reader@example.com')
+    hub.failing = ['refuse']
+    await call(env, '/v1/feedback', { token, body: REPORT })
+    const at = ((await rows())[0]?.issue_next_at ?? 0) + 1
+
+    // The account goes between the run taking the report on and GitHub opening it.
+    hub.meanwhile = () => {
+      hub.meanwhile = null
+      env.db.prepare('delete from feedback').run()
+    }
+    await openWaitingIssues(env, at)
+
+    expect(hub.issues).toHaveLength(1)
+    expect(hub.issues[0]?.state).toBe('closed')
+    expect(JSON.stringify(hub.issues[0])).not.toContain('reader@example.com')
+    expect(JSON.stringify(hub.issues[0])).not.toContain('tab strip')
   })
 })
 

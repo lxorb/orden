@@ -29,7 +29,10 @@ const LARGEST = 64 * 1024 * 1024
 
 /** What the account answered a replacement. */
 export type Replaced =
-  { ok: true; seq: number } | { moved: { hash: string; size: number; at: number } } | { gone: true }
+  | { ok: true; seq: number }
+  | { moved: { hash: string; size: number; at: number } }
+  | { gone: true }
+  | { refused: 'role' }
 
 /** The world's road for bytes. Each request answers null when the account cannot be
  *  reached, as `Account.ask` does. */
@@ -155,15 +158,47 @@ export async function settleFiles(
         entry.file_key = answer.moved.hash
         await core.commit(holdFile(core, entry, here.hash, answer.moved.at))
       }
-      continue
+      if (!('refused' in answer)) continue
+      // A space this account may only read: the bytes another program wrote here will
+      // never go up, and kept they would stand for good against every replacement the
+      // owner makes. They go to this device's trash, which is where Keep theirs puts a
+      // replacement too, and the owner's are fetched in their place. With no file and no
+      // path the entry is fetched next pass, should this one stop before the bytes come.
+      try {
+        await core.world.disk.remove(core.world.join(space.row.root, entry.local_path), 'file')
+      } catch {
+        // Locked by the program still writing it, or the trash would not take it: thrown,
+        // it stopped the whole pass, every pass. It stays as it is and is tried again
+        // next pass, and the rest of the space settles meanwhile.
+        core.touched.add(entry.id)
+        continue
+      }
+      entry.local_path = ''
+      await core.commit([put('entries', { ...entry })])
     }
     if (changedThere || !entry.local_path) {
+      const full = core.world.join(space.row.root, path)
+      if (!entry.local_path) {
+        // Another entry's file is still where this one is going: it moves on first.
+        const holder = space.at(path)
+        if (holder && holder !== entry) continue
+        // A file nobody here has named yet is in the way, dropped here while the app
+        // was closed or a page note's paper: it becomes an entry of its own (ingest),
+        // and nothing is written over it, as with a document (`project`).
+        if (await core.world.disk.exists(full)) continue
+      }
       const bytes = await blobs.down(space.id, entry.id)
       if (!alive() || bytes === null) return false
       if (bytes === 'gone') continue
-      const full = core.world.join(space.row.root, path)
-      await core.world.disk.mkdir(core.world.join(space.row.root, folderPath(path)))
-      await blobs.write(full, bytes)
+      try {
+        await core.world.disk.mkdir(core.world.join(space.row.root, folderPath(path)))
+        await blobs.write(full, bytes)
+      } catch {
+        // Refused, a file another program holds open: this one waits for the next pass,
+        // its entry as it was, and the rest of the space settles. Thrown, it stopped
+        // every pass before anything after it came or went.
+        continue
+      }
       entry.local_path = path
       entry.file_key = await blobs.hash(bytes)
       await written(core, entry, entry.file_key, bytes)

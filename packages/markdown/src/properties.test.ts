@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { renderMarkdown } from './index'
+import { isPropertyName } from './front-matter'
 import { PROPERTIES_MODES, propertiesMode, propertiesTable, readProperties } from './properties'
 
 const said = (source: string) =>
@@ -11,6 +12,20 @@ const said = (source: string) =>
   }))
 
 describe('a note read as rows', () => {
+  test('a quoted value is text, whatever it says', () => {
+    const rows = readProperties(
+      "---\nzip: '007'\nflag: \"true\"\nnothing: 'null'\nids: ['01', x]\nwhen: '2025-09-08'\n---\n",
+    )
+    expect(rows?.map((one) => [one.key, one.kind, one.value, one.quoted ?? false])).toEqual([
+      ['zip', 'text', '007', true],
+      ['flag', 'text', 'true', true],
+      ['nothing', 'text', 'null', true],
+      ['ids', 'list', '', false],
+      ['when', 'date', '2025-09-08', true],
+    ])
+    expect(rows?.[3]?.quotedItems).toEqual([true, false])
+  })
+
   test('the shapes a note actually holds', () => {
     expect(
       said(
@@ -85,6 +100,61 @@ describe('a note read as rows', () => {
     expect(said('---\naliases:\n- One\n- Two\n---\n\nWords.\n')).toEqual([
       { key: 'aliases', kind: 'list', value: '', items: ['One', 'Two'] },
     ])
+  })
+})
+
+describe('a key', () => {
+  /** The writers take these, so the rows have to read them: a key they could not read
+   *  turned the whole block into source and every row went. */
+  const NAMES = [
+    'priorität',
+    'a.b',
+    'due date',
+    '日期',
+    'Done?',
+    'Size (cm)',
+    'Owner/Team',
+    'R&D',
+    "Kunde's",
+    'x+y',
+    '💰',
+    '👍🏽 votes',
+  ]
+
+  test('is any name front matter reads back as itself', () => {
+    const block = ['---', ...NAMES.map((name) => `${name}: v`), '---', ''].join('\n')
+
+    expect(readProperties(block)?.map((one) => one.key)).toEqual(NAMES)
+    expect(readProperties('---\nexport:\n  größe: A4\n---\n')?.[0]?.items).toEqual(['größe: A4'])
+    for (const name of NAMES) expect(isPropertyName(name), name).toBe(true)
+  })
+
+  test('is not one it would read as something else, or not at all', () => {
+    for (const name of [
+      '',
+      ' a',
+      'a ',
+      '-a',
+      '#a',
+      'a: b',
+      'a:',
+      'a #b',
+      'a\nb',
+      '[a]',
+      '{a}',
+      '&a',
+      '*a',
+      '!a',
+      '|a',
+      '>a',
+      "'a'",
+      '"a"',
+      '%a',
+      '@a',
+      '`a',
+      '? a',
+    ])
+      expect(isPropertyName(name), name).toBe(false)
   })
 })
 

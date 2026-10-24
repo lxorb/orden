@@ -1,3 +1,4 @@
+import { account } from './account.svelte'
 import { iconChoice } from './icon-choice.svelte'
 import { key, t } from './i18n.svelte'
 import { DIVIDER, type MenuEntry, trim } from './menu.svelte'
@@ -198,7 +199,14 @@ export async function publishSpace(space: Space) {
  *  gesture and a different sentence: a space that is not yours is not yours to
  *  delete, and leaving it takes its notes off this machine and nowhere else. */
 async function deleteSpace(space: Space) {
-  const theirs = roleOf(space.root) !== 'owner'
+  // One answer for the dialog and for `forget`. Not known yet, the account is asked
+  // once; still unknown, it is a leave, and nothing is deleted from the account.
+  let role = roleOf(space.root)
+  if (role === null) {
+    await account.loadSpaces().catch(() => undefined)
+    role = roleOf(space.root)
+  }
+  const theirs = role !== 'owner'
 
   const sure = await prompt.confirm({
     title: theirs
@@ -219,5 +227,5 @@ async function deleteSpace(space: Space) {
   // Deleted here means deleted from the account. Anything less and the next
   // pass downloads it straight back, here and on every other machine.
   const { sync } = await import('./sync.svelte')
-  await sync.forget(root)
+  await sync.forget(root, role)
 }

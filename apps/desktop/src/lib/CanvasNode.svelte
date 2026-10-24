@@ -15,7 +15,9 @@
     createEditor,
     type EditorView,
     embedClicks,
-    type NoteOpener,
+    type LinkPress,
+    type NoteJump,
+    setReadOnlyMode,
     type Text,
   } from '@nib/editor'
   import type { CanvasNode } from './canvas/format'
@@ -39,6 +41,7 @@
     picked,
     dimmed = false,
     editing,
+    readOnly = false,
     offset,
     ontext,
     onleave,
@@ -59,11 +62,14 @@
     dimmed?: boolean
     /** Whether this card is the one being written in. */
     editing: boolean
+    /** Whether the plane may not be written in, so the card's editor is for reading. */
+    readOnly?: boolean
     /** How far a drag has carried it since the pointer went down. */
     offset: { x: number; y: number }
     ontext?: (text: string) => void
     onleave?: () => void
-    onfollow?: NoteOpener
+    /** Follows a link in a card, given the canvas so it is followed in its space. */
+    onfollow?: (jump: NoteJump, press: LinkPress | undefined, from: string | null) => void
   } = $props()
 
   /** The card's own colour, as a border and a wash. Null for one with none,
@@ -79,7 +85,7 @@
 
     const wanted = node.file
     let mine = true
-    void fileSource(wanted).then((text) => {
+    void fileSource(wanted, canvasPath).then((text) => {
       if (mine) source = text
     })
 
@@ -210,10 +216,15 @@
       // The plane's own answer about its HTML, which is the surface's; see
       // trust.ts.
       trustedMarkup: trusted,
-      ...(onfollow ? { openNote: onfollow } : {}),
+      ...(onfollow
+        ? { openNote: (jump: NoteJump, press?: LinkPress) => onfollow(jump, press, canvasPath) }
+        : {}),
       openLink: followHref,
       shortcuts: shortcuts.forEditor,
     })
+    // The surface opens no card for typing on a plane that may not be written in;
+    // should one open anyway, it is for reading, since the store drops what is typed.
+    if (readOnly) setReadOnlyMode(editor, true)
     editor.focus()
     cardWriting(hand)
 

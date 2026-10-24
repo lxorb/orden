@@ -83,6 +83,15 @@ describe('the cover a note is given', () => {
     expect(written('/space/plain.md')).toBe('---\ncover: assets/wide.jpg\n---\n# Plain\n\nwords\n')
   })
 
+  test('a picture whose name YAML would read as more than a name is quoted', async () => {
+    fresh()
+    await setCover('/space/plain.md', 'assets/Meeting: notes.jpg')
+
+    expect(written('/space/plain.md')).toBe(
+      "---\ncover: 'assets/Meeting: notes.jpg'\n---\n# Plain\n\nwords\n",
+    )
+  })
+
   test('joins the keys a note already had', async () => {
     fresh()
     await setCover('/space/titled.md', 'assets/wide.jpg')

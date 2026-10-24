@@ -17,7 +17,17 @@
   import Glyph from '../../quick-add/Glyph.svelte'
   import Message from 'lucide/dist/esm/icons/message-square.mjs'
 
-  const { row, path }: { row: Row; path: string } = $props()
+  const {
+    row,
+    path,
+    writable = true,
+  }: {
+    row: Row
+    path: string
+    /** Whether the note may be written: a task of a space shared with this account to
+     *  be read shows its comments and offers no way to add or take one away (B285). */
+    writable?: boolean
+  } = $props()
 
   let comments = $state.raw<Comment[]>([])
   let words = $state('')
@@ -44,11 +54,18 @@
     return i18n.when(date, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
   }
 
-  function send() {
+  /** The words stay in the field until the comment is written: one the store turns
+   *  away is still there to keep or copy, rather than gone with nothing said. */
+  let sending = false
+  async function send() {
     const said = words.trim()
-    if (!said) return
-    words = ''
-    void addComment(row, said)
+    if (!said || sending) return
+    sending = true
+    try {
+      if ((await addComment(row, said)) && words.trim() === said) words = ''
+    } finally {
+      sending = false
+    }
   }
 
   /** The field, for the `c` key of the task's view. */
@@ -65,37 +82,39 @@
     <div class="comment">
       <div class="said"><Words words={one.text} /></div>
       {#if one.at}<span class="at">{when(one.at)}</span>{/if}
-      <button
-        type="button"
-        class="nib-glyph gone"
-        aria-label={t('Delete')}
-        title={t('Delete')}
-        onclick={() => void deleteComment(row, one.line)}><Cross /></button
-      >
+      {#if writable}<button
+          type="button"
+          class="nib-glyph gone"
+          aria-label={t('Delete')}
+          title={t('Delete')}
+          onclick={() => void deleteComment(row, one.line)}><Cross /></button
+        >{/if}
     </div>
   {/each}
-  <!-- A quiet row like Add sub-task above it, its mark the one a task's row comments
-       with, and the words on the row's line rather than at the top of a box (#667). -->
-  <label class="nib-row composer-row">
-    <span class="nib-row-mark"><Glyph icon={Message} /></span>
-    <textarea
-      bind:this={field}
-      bind:value={words}
-      use:grow={words}
-      class="composer"
-      rows="1"
-      aria-label={t('Comment')}
-      placeholder={t('Comment')}
-      onkeydown={(event) => {
-        if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
-          event.preventDefault()
-          send()
-        } else if (event.key === 'Escape' && words) {
-          event.stopPropagation()
-          words = ''
-        }
-      }}></textarea>
-  </label>
+  {#if writable}
+    <!-- A quiet row like Add sub-task above it, its mark the one a task's row comments
+         with, and the words on the row's line rather than at the top of a box (#667). -->
+    <label class="nib-row composer-row">
+      <span class="nib-row-mark"><Glyph icon={Message} /></span>
+      <textarea
+        bind:this={field}
+        bind:value={words}
+        use:grow={words}
+        class="composer"
+        rows="1"
+        aria-label={t('Comment')}
+        placeholder={t('Comment')}
+        onkeydown={(event) => {
+          if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
+            event.preventDefault()
+            void send()
+          } else if (event.key === 'Escape' && words) {
+            event.stopPropagation()
+            words = ''
+          }
+        }}></textarea>
+    </label>
+  {/if}
 </div>
 
 <style>

@@ -11,7 +11,7 @@
  *  and every lookup of it fails exactly as a name nobody has would (9.6). */
 
 import { insideOnly } from '../../automation/inside'
-import { isShared } from '../../sharing.svelte'
+import { canWriteAt, isShared } from '../../sharing.svelte'
 import { insideSpace } from '../../space-paths'
 import { type Space, workspace } from '../../workspace.svelte'
 import type { Call } from './call'
@@ -87,4 +87,14 @@ export function sharedSource(place: Place): string | null {
 /** Where a path of a place is on this disk. */
 export function onDisk(place: Place, relative: string): string {
   return insideSpace(place.space.root, relative)
+}
+
+/** Refuses a write in a space shared with this account to read, so the agent is told
+ *  why rather than the write landing, or being dropped without a word. Every verb that
+ *  writes asks this before it asks the reader, and the primitives that write (`made`,
+ *  an attachment kept) ask it again, so a verb that forgets is still refused. */
+export function writableAt(place: Place, path: string): void {
+  if (!canWriteAt(path)) {
+    throw new Refused('read_only', `${place.space.name} is shared with you to read`)
+  }
 }

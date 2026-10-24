@@ -12,7 +12,14 @@
  *  rather than a feature: nothing in the app reads it, and a note that never
  *  changed after it was written does not carry it. */
 
-import { type FrontMatterRow, writeFrontMatter } from '@nib/markdown/front-matter'
+import { plainWords } from '@nib/markdown/escapes'
+import {
+  frontMatterBlock,
+  frontMatterKeys,
+  type FrontMatterRow,
+  writeFrontMatter,
+} from '@nib/markdown/front-matter'
+import { TAG_NAME } from '@nib/markdown/tags'
 
 export interface Meta {
   /** The day it was made, `YYYY-MM-DD`. */
@@ -39,12 +46,18 @@ export function frontMatterFor(meta: Meta): string {
   if (meta.date) rows.push(['date', meta.date])
   if (meta.updated && meta.updated !== meta.date) rows.push(['updated', meta.updated])
 
-  const tags = tagList(meta.tags ?? [])
+  const { tags, words } = tagList(meta.tags ?? [])
   if (tags.length) rows.push(['tags', tags])
+  if (words.length) rows.push(['labels', words])
 
-  for (const [key, value] of meta.extra ?? []) {
-    const name = propertyName(key)
-    if (name && said(value)) rows.push([name, value])
+  // Two properties that come out as one key - `Status` and `status`, or a `Date`
+  // beside the note's own date - would be one key written twice, which is front
+  // matter no reader takes at all, so the second steps aside under a name of its
+  // own. A name with nothing in it to keep, a `⭐`, is called after its place
+  // rather than left out with its value.
+  const taken = new Set(rows.map(([key]) => key))
+  for (const [at, [key, value]] of (meta.extra ?? []).entries()) {
+    if (said(value)) rows.push([freeKey(propertyName(key) || `property-${at + 1}`, taken), value])
   }
 
   const written = writeFrontMatter(rows)
@@ -63,15 +76,80 @@ function said(value: Property): boolean {
  *  The heading is written because a new note in nib opens with one, so an
  *  imported note that did not carry a title would be the one note in the space
  *  with nothing at the top. A body that already opens with a heading keeps its
- *  own. */
-export function noteText(title: string | null, body: string, meta: Meta = {}): string {
+ *  own.
+ *
+ *  A body that already opens with properties of its own - a Bear note or a Logseq
+ *  page somebody gave a block - keeps that block as the one the note opens with,
+ *  and what the export knew goes into it, under the keys it does not say already:
+ *  a second block under the first would be words to every reader, the note's own
+ *  keys among them, and the heading goes below it rather than above it.
+ *
+ *  Only `own` words are asked, the Markdown a person wrote in a format that can
+ *  carry a block. Words an import made itself, out of a web page, a note in XML or
+ *  a JSON, never open with one: a `---` there is a rule (an `<hr>`), and a rule, a
+ *  `Note: a draft` and another rule are words. */
+export function noteText(title: string | null, body: string, meta: Meta = {}, own = false): string {
   // Only the blank lines above the words go: the first line's own indent is what
   // makes a note that opens with an indented code block open with code.
-  const words = body.replace(/^(?:[ \t]*\r?\n)+/, '').replace(/\s+$/, '')
+  const all = body.replace(/^(?:[ \t]*\r?\n)+/, '').replace(/\s+$/, '')
+  const block = own ? ownBlock(all) : null
+  const words = block ? all.slice(block.to).replace(/^(?:[ \t]*\r?\n)+/, '') : all
   const heads = /^#{1,6}\s/.test(words)
-  const head = title && !heads ? `# ${title}\n\n` : ''
+  const head = title && !heads ? `${titleHeading(title)}\n\n` : ''
+  const props = block ? `${withMeta(all, block.close, meta)}\n\n` : frontMatterFor(meta)
 
-  return `${frontMatterFor(meta)}${head}${words}${words ? '\n' : ''}`
+  return `${props}${head}${words}${words ? '\n' : ''}`
+}
+
+/** A key's line, as @nib/markdown/front-matter reads one: an unindented line up to
+ *  its first colon with a blank or nothing after it. */
+const KEY_LINE = /^[^\s#-].*?[ \t]*:(?:\s|$)/
+
+/** A key's line, a line under one, a list's item or a comment: what a block of
+ *  properties is made of. */
+const BLOCK_LINE = new RegExp(`${KEY_LINE.source}|^(?:[ \\t]|-(?:\\s|$)|#)`)
+
+/** The block of properties a body opens with, or null where it opens with anything
+ *  else. Two `---` lines are not enough: a note may open with a rule, a paragraph
+ *  and another rule. A block is the fence with a key on the line right under it,
+ *  as every app writes one, and nothing between the fences but lines a block is
+ *  made of; a rule is followed by a blank line or by words. */
+function ownBlock(body: string): ReturnType<typeof frontMatterBlock> {
+  const block = frontMatterBlock(body)
+  if (!block) return null
+
+  const lines = body.slice(block.body.from, block.body.to).split(/\r?\n/)
+  if (!KEY_LINE.test(lines[0] ?? '')) return null
+  return lines.every((line) => !line.trim() || BLOCK_LINE.test(line)) ? block : null
+}
+
+/** A note's own block with the rows of `meta` it does not say added in front of
+ *  its closing fence, and up to that fence: a key in another case is the same key,
+ *  since that is how the app reads one (see @nib/markdown/front-matter). */
+function withMeta(note: string, close: number, meta: Meta): string {
+  const says = new Set(frontMatterKeys(note).map((key) => key.toLowerCase()))
+  const nl = note.includes('\r\n') ? '\r\n' : '\n'
+  // Every row is written on one line, its key up to the first colon.
+  const added = frontMatterFor(meta)
+    .split('\n')
+    .slice(1)
+    .filter((line) => line.includes(': ') && !says.has(line.split(': ')[0]?.toLowerCase() ?? ''))
+
+  const fence = note.slice(close).split(/\r?\n/)[0] ?? '---'
+  return `${note.slice(0, close)}${added.map((line) => `${line}${nl}`).join('')}${fence}`
+}
+
+/** A title another app kept, as the heading a note opens with. The title is words
+ *  somebody typed where nothing read markdown, and a heading reads it: `$5-$10` would
+ *  be maths, `==` a highlight, `#work` a tag, `[[Other]]` a link. So it is written as
+ *  words (`plainWords`), on one line, with a tag's hash escaped wherever one could
+ *  open, and a `#` run at its end, which a heading would take for its own closing
+ *  mark and drop, escaped too. */
+export function titleHeading(title: string): string {
+  const words = plainWords(title.replace(/\s+/g, ' ').trim())
+    // A hash where a tag could open, which `plainWords` leaves to the line's start.
+    .replace(/(^|[\s(])#(?=[^\s#])/g, '$1\\#')
+  return `# ${words.replace(/(^|\s)(#+)$/, '$1\\$2')}`
 }
 
 /** A note's words as the app that kept them wrote them, to the byte. The blank
@@ -95,29 +173,60 @@ export function propertyName(key: string): string {
     .toLowerCase()
 }
 
+/** The key wanted, or the first of `key-2`, `key-3` and on that is not taken yet,
+ *  and taken from then on. */
+export function freeKey(wanted: string, taken: Set<string>): string {
+  let key = wanted
+  for (let step = 2; taken.has(key); step += 1) key = `${wanted}-${step}`
+  taken.add(key)
+  return key
+}
+
+/** What a tag's name may hold: the grammar the app reads a tag with, a letter, a
+ *  mark, a digit or an emoji, then those and `-`, `_` and `/`, and never only
+ *  digits. */
+const TAG = new RegExp(`^${TAG_NAME}$`, 'u')
+
 /** What another app called a label, as a tag nib can hold: no spaces, no hash in
- *  front, and the slashes kept, because a nested tag is a nested tag in both. */
+ *  front, and the slashes kept, because a nested tag is a nested tag in both. A
+ *  character the app's tags cannot hold is a hyphen; one they can, an accent
+ *  written as a mark or a `🔥`, stays. */
 export function tagName(label: string): string {
-  const one = label
+  return tidied(label.replace(/[^\p{L}\p{M}\p{N}\p{Extended_Pictographic}\s/_-]+/gu, '-'))
+}
+
+/** A label with its blanks as hyphens and its hash off, and nothing else changed. */
+function tidied(label: string): string {
+  return label
     .trim()
     .replace(/^#+/, '')
-    .replace(/[^\p{L}\p{N}/_-]+/gu, '-')
+    .replace(/\s+/g, '-')
     .replace(/-{2,}/g, '-')
     .replace(/^-+|-+$/g, '')
     .replace(/\/{2,}/g, '/')
-
-  return one
 }
 
-function tagList(tags: readonly string[]): string[] {
-  const out: string[] = []
+/** A note's labels as tags, and the words of the ones that cannot be one.
+ *
+ *  Only blanks and a hash in front are what a label loses on its way to a tag.
+ *  One that would lose more - `C++` and `C#`, which would both be `C`, or `2026`,
+ *  which is no tag at all - is not made into a tag it never was, nor left out:
+ *  its words are kept under `labels`, as it was written. */
+function tagList(labels: readonly string[]): { tags: string[]; words: string[] } {
+  const tags: string[] = []
+  const words: string[] = []
 
-  for (const tag of tags) {
-    const name = tagName(tag)
-    if (name && !out.includes(name)) out.push(name)
+  for (const label of labels) {
+    const name = tagName(label)
+    const said = label.trim()
+    if (name && name === tidied(label) && TAG.test(name)) {
+      if (!tags.includes(name)) tags.push(name)
+    } else if (said && !words.includes(said)) {
+      words.push(said)
+    }
   }
 
-  return out
+  return { tags, words }
 }
 
 /** The day a date lands on, `YYYY-MM-DD`, out of whichever shape the export

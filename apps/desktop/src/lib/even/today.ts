@@ -7,6 +7,7 @@
  *  put up. The rows are read and written through the app's own task actions
  *  (task-actions.ts), handed in, so the whole of this is a test. */
 
+import { shownWords } from '@nib/markdown/escapes'
 import type { Row } from './shell'
 
 /** One task as the list holds it. */
@@ -39,7 +40,8 @@ export class Today {
 
   rows(): Row[] {
     return this.held.map((one) => ({
-      label: `${one.done ? DONE : OPEN}${one.text}`,
+      // The words, not the line: `milk \$3` is read as `milk $3`.
+      label: `${one.done ? DONE : OPEN}${shownWords(one.text)}`,
       depth: 0,
       folder: false,
       open: false,

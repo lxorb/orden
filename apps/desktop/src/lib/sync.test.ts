@@ -56,7 +56,11 @@ const fake = vi.hoisted(() => {
   const spaces = () => [...new Set([...disk.keys()].map((path) => `/${path.split('/')[1]}`))].sort()
 
   function tree(root: string): Entry {
-    if (!spaces().includes(root)) throw new Error('root is not a directory')
+    // A folder exists while something is in it, a space or one inside it; asking
+    // after anything else is refused, as the crate refuses a root that is not a folder.
+    if (![...disk.keys()].some((one) => one.startsWith(`${root}/`))) {
+      throw new Error('root is not a directory')
+    }
 
     const node = (path: string): Entry => ({
       name: basename(path),
@@ -114,11 +118,14 @@ const fake = vi.hoisted(() => {
       }
       case 'delete_space':
       case 'trash_item':
-        // Which of the two a folder went through is the difference between
+      case 'delete_note':
+      case 'delete_folder':
+        // Which of these a file or a folder went through is the difference between
         // gone and recoverable, so the fake writes it down.
         remote.local.push(`${command} ${path}`)
+        disk.delete(path)
         for (const key of [...disk.keys()]) if (key.startsWith(`${path}/`)) disk.delete(key)
-        return undefined as T
+        return { id: `trash-${path}` } as T
       case 'read_tree':
         return tree(text(args.root)) as T
       case 'read_note': {
@@ -129,9 +136,22 @@ const fake = vi.hoisted(() => {
       case 'write_note':
         disk.set(path, text(args.content))
         return undefined as T
-      case 'delete_note':
-        disk.delete(path)
+      case 'rename_note': {
+        const from = text(args.from)
+        const to = text(args.to)
+        const held = disk.get(from)
+        if (held === undefined) throw new Error(`no such file: ${from}`)
+        if (disk.has(to)) throw new Error(`${to} is already there`)
+        disk.delete(from)
+        disk.set(to, held)
         return undefined as T
+      }
+      case 'read_file': {
+        // A paper's bytes, which here are words: what is hashed is the same either way.
+        const bytes = disk.get(path)
+        if (bytes === undefined) throw new Error(`no such file: ${path}`)
+        return new TextEncoder().encode(bytes).buffer as T
+      }
       default:
         return undefined as T
     }
@@ -318,6 +338,16 @@ const fake = vi.hoisted(() => {
     now?.()
   }
 
+  /** Another device's rename: the same row under a new path, version and cursor on. */
+  function renameRemoteNote(spaceId: string, path: string, to: string) {
+    const found = remote.notes.find((one) => one.spaceId === spaceId && one.path === path)
+    if (!found) throw new Error(`no note at ${path}`)
+
+    found.path = to
+    found.version += 1
+    found.seq = ++remote.seq
+  }
+
   function reset() {
     disk.clear()
     remote.spaces = []
@@ -337,6 +367,7 @@ const fake = vi.hoisted(() => {
     api,
     addRemoteNote,
     writeRemoteNote,
+    renameRemoteNote,
     meanwhile: (then: () => void) => (inTheMiddle = then),
     reset,
     rooms,
@@ -643,6 +674,38 @@ describe('what arrives from the account', () => {
   })
 })
 
+describe('notes that traded names on another device', () => {
+  for (const names of [
+    ['A.md', 'B.md'],
+    ['A.md', 'B.md', 'C.md'],
+  ]) {
+    test(`leave each open tab on its own note, and tell the account nothing (${names.length})`, async () => {
+      fake.remote.spaces.push({ id: 's-Account', name: 'Account' })
+      for (const name of names) fake.addRemoteNote('s-Account', name, `# ${name}`)
+      await signIn()
+      account.settled()
+      await sync.pass()
+      for (const name of names) await workspace.open(`/Account/${name}`)
+
+      // Each note takes the next one's name, the round done through a spare name.
+      fake.renameRemoteNote('s-Account', names[0]!, '.spare')
+      for (let at = names.length - 1; at > 0; at -= 1) {
+        fake.renameRemoteNote('s-Account', names[at]!, names[(at + 1) % names.length]!)
+      }
+      fake.renameRemoteNote('s-Account', '.spare', names[1]!)
+      fake.remote.calls = []
+      await sync.pass()
+
+      for (const name of names) {
+        const tab = workspace.openNotes.find((one) => one.note.text === `# ${name}`)
+        expect(tab?.path).toBe(`/Account/${names[(names.indexOf(name) + 1) % names.length]}`)
+        expect(fake.disk.get(tab!.path)).toBe(`# ${name}`)
+      }
+      expect(fake.remote.calls.filter((one) => one.startsWith('writeNote'))).toEqual([])
+    })
+  }
+})
+
 describe('a note that is open in its room while a pass runs', () => {
   /** One device, one note, and the two ways its words travel: the room, which carries
    *  every keystroke into the account as it is typed, and the pass, which carries the
@@ -886,7 +949,7 @@ describe('a space somebody shared', () => {
     fake.remote.calls = []
 
     const [space] = workspace.spaces
-    if (space) await sync.forget(space.root)
+    if (space) await sync.forget(space.root, 'write')
 
     expect(fake.remote.calls).toEqual(['leaveSpace s-Theirs'])
   })
@@ -1724,6 +1787,58 @@ describe('a pass that fails partway through', () => {
   })
 })
 
+describe('a v2 space whose role is not known yet', () => {
+  /** A paired space under v2 the account has not listed yet and the sync store kept no
+   *  role for: the first seconds of a launch, or a session with no network. */
+  async function unknown() {
+    await signIn()
+    const forgotten: string[] = []
+    const runner = {
+      remoteIdFor: (root: string) => (root === '/Plan' ? 's-Plan' : null),
+      roleKept: () => null,
+      forget: (root: string) => {
+        forgotten.push(root)
+        return Promise.resolve()
+      },
+    }
+    ;(sync as unknown as { v2: typeof runner }).v2 = runner
+    account.spaces = []
+    account.listed = false
+    fake.remote.calls = []
+    return { forgotten, done: () => ((sync as unknown as { v2: null }).v2 = null) }
+  }
+
+  test('is never deleted from the account when it is let go of', async () => {
+    const { roleOf } = await import('./sharing.svelte')
+    const { forgotten, done } = await unknown()
+    try {
+      const role = roleOf('/Plan')
+      expect(role).toBeNull()
+      await sync.forget('/Plan', role)
+
+      expect(forgotten).toEqual(['/Plan'])
+      expect(fake.remote.calls).not.toContain('deleteSpace s-Plan')
+    } finally {
+      done()
+    }
+  })
+
+  test('is deleted from the account once the listing says it is this account’s', async () => {
+    const { roleOf } = await import('./sharing.svelte')
+    const { done } = await unknown()
+    try {
+      account.listed = true
+      const role = roleOf('/Plan')
+      expect(role).toBe('owner')
+      await sync.forget('/Plan', role)
+
+      expect(fake.remote.calls).toContain('deleteSpace s-Plan')
+    } finally {
+      done()
+    }
+  })
+})
+
 describe('an account gone back to v1 on a device that kept its spaces under v2', () => {
   /** The runner, stood in for: its way back answers when the test says. */
   function wayBack() {
@@ -1836,5 +1951,174 @@ describe('an account gone back to v1 on a device that kept its spaces under v2',
       vi.doUnmock('./sync2/runner.svelte')
       vi.unstubAllGlobals()
     }
+  })
+})
+
+/** Signed in, a delete in a space on the account goes to the account outright, which
+ *  keeps a copy for 14 days. That copy is whatever the last push handed it: a paper
+ *  highlighted or replaced offline since, deleted outright, came back as the bytes from
+ *  before, and a folder's notes edited since came back without the edit. */
+describe('what the account holds of a file', () => {
+  /** A space this machine mirrors, as the last pass left it: each paper and note by
+   *  the words it pushed. The disk here says every file was written at time 0, so a
+   *  paper pushed at another time has been written since. */
+  async function mirrored(
+    files: Record<string, string>,
+    notes: Record<string, string>,
+    pushedAt = 0,
+    role: 'owner' | 'write' = 'owner',
+  ) {
+    fake.remote.spaces.push({ id: 's-Notes', name: 'Notes', role })
+    const { sha256 } = await import('./bytes')
+    const tracked: Record<string, { hash: string; modified: number }> = {}
+    for (const [path, words] of Object.entries(files)) {
+      tracked[path] = { hash: await sha256(words), modified: pushedAt }
+    }
+    const held: Record<string, { id: string; version: number; hash: string }> = {}
+    for (const [path, words] of Object.entries(notes)) {
+      held[path] = { id: `n-${path}`, version: 1, hash: await sha256(words) }
+    }
+    localStorage.setItem(
+      'nib:mirrors',
+      JSON.stringify({
+        account: 'u1',
+        mirrors: { '/Notes': { spaceId: 's-Notes', root: '/Notes', files: tracked, notes: held } },
+      }),
+    )
+    standInForTheWindow()
+    vi.useFakeTimers()
+    await signIn()
+    account.settled()
+    sync.start()
+    workspace.spaces = [{ id: 'local', name: 'Notes', root: '/Notes' }]
+    workspace.activeSpaceId = 'local'
+    await workspace.loadTree()
+  }
+
+  afterEach(() => {
+    sync.stop()
+    vi.useRealTimers()
+    vi.unstubAllGlobals()
+    vi.stubGlobal('localStorage', memoryStorage())
+  })
+
+  test('a note as it was pushed is held, and goes to the account', async () => {
+    fake.disk.set('/Notes/a.md', '# a')
+    await mirrored({}, { 'a.md': '# a' })
+
+    await workspace.remove('/Notes/a.md', false)
+    expect(fake.remote.local).toContain('delete_note /Notes/a.md')
+  })
+
+  // The account's Recently deleted lists notes, never a paper: a paper deleted
+  // outright there is gone for good, however well the account held its bytes.
+  test('a paper as it was pushed is held, and still goes to the trash', async () => {
+    fake.disk.set('/Notes/paper.pdf', '%PDF')
+    await mirrored({ 'paper.pdf': '%PDF' }, {})
+
+    expect(await sync.holds('/Notes/paper.pdf')).toBe(true)
+    await workspace.remove('/Notes/paper.pdf', false)
+    expect(fake.remote.local).toContain('trash_item /Notes/paper.pdf')
+    expect(fake.remote.local).not.toContain('delete_note /Notes/paper.pdf')
+  })
+
+  test('a paper highlighted since the last push goes to the trash', async () => {
+    fake.disk.set('/Notes/paper.pdf', '%PDF highlighted offline')
+    await mirrored({ 'paper.pdf': '%PDF' }, {}, 1)
+
+    expect(await sync.holds('/Notes/paper.pdf')).toBe(false)
+    await workspace.remove('/Notes/paper.pdf', false)
+    expect(fake.remote.local).toContain('trash_item /Notes/paper.pdf')
+    expect(fake.remote.local).not.toContain('delete_note /Notes/paper.pdf')
+  })
+
+  test('and so does a folder whose note was typed into offline', async () => {
+    fake.disk.set('/Notes/Work/a.md', '# a\nwritten offline')
+    await mirrored({}, { 'Work/a.md': '# a' })
+
+    await workspace.remove('/Notes/Work', true)
+
+    expect(fake.remote.local).toContain('trash_item /Notes/Work')
+    expect(fake.remote.local).not.toContain('delete_folder /Notes/Work')
+  })
+
+  test('a note edited since the last push is not held', async () => {
+    fake.disk.set('/Notes/a.md', '# a\nwritten offline')
+    await mirrored({}, { 'a.md': '# a' })
+
+    expect(await sync.holds('/Notes/a.md')).toBe(false)
+  })
+
+  test('a note as it was pushed is held, whichever line endings the file keeps', async () => {
+    fake.disk.set('/Notes/a.md', '# a\r\nb')
+    await mirrored({}, { 'a.md': '# a\nb' })
+
+    expect(await sync.holds('/Notes/a.md')).toBe(true)
+  })
+
+  test('a folder whose paper was replaced since the last push goes to the trash', async () => {
+    fake.disk.set('/Notes/Work/a.md', '# a')
+    fake.disk.set('/Notes/Work/paper.pdf', '%PDF replaced')
+    await mirrored({ 'Work/paper.pdf': '%PDF' }, { 'Work/a.md': '# a' }, 1)
+
+    await workspace.remove('/Notes/Work', true)
+
+    expect(fake.remote.local).toContain('trash_item /Notes/Work')
+    expect(fake.remote.local).not.toContain('delete_folder /Notes/Work')
+  })
+
+  test('a folder holding a paper the account holds goes to the trash', async () => {
+    fake.disk.set('/Notes/Work/a.md', '# a')
+    fake.disk.set('/Notes/Work/paper.pdf', '%PDF')
+    await mirrored({ 'Work/paper.pdf': '%PDF' }, { 'Work/a.md': '# a' })
+
+    await workspace.remove('/Notes/Work', true)
+
+    expect(fake.remote.local).toContain('trash_item /Notes/Work')
+    expect(fake.remote.local).not.toContain('delete_folder /Notes/Work')
+  })
+
+  test('and so does one holding a picture', async () => {
+    fake.disk.set('/Notes/Work/a.md', '# a')
+    fake.disk.set('/Notes/Work/Pictures/cat.png', 'png')
+    await mirrored({}, { 'Work/a.md': '# a' })
+
+    await workspace.remove('/Notes/Work', true)
+
+    expect(fake.remote.local).toContain('trash_item /Notes/Work')
+    expect(fake.remote.local).not.toContain('delete_folder /Notes/Work')
+  })
+
+  // The account's Recently deleted lists what was deleted in the spaces this account
+  // owns, so what a writer deletes in somebody else's space is not theirs to get back
+  // from it: only this device's trash gives it back to them.
+  test("a note held in somebody else's space goes to the trash", async () => {
+    fake.disk.set('/Notes/a.md', '# a')
+    await mirrored({}, { 'a.md': '# a' }, 0, 'write')
+
+    expect(await sync.holds('/Notes/a.md')).toBe(true)
+    await workspace.remove('/Notes/a.md', false)
+    expect(fake.remote.local).toContain('trash_item /Notes/a.md')
+    expect(fake.remote.local).not.toContain('delete_note /Notes/a.md')
+  })
+
+  test("and so does a folder of notes held in somebody else's space", async () => {
+    fake.disk.set('/Notes/Work/a.md', '# a')
+    await mirrored({}, { 'Work/a.md': '# a' }, 0, 'write')
+
+    await workspace.remove('/Notes/Work', true)
+
+    expect(fake.remote.local).toContain('trash_item /Notes/Work')
+    expect(fake.remote.local).not.toContain('delete_folder /Notes/Work')
+  })
+
+  test('a folder of notes the account holds all of goes to the account', async () => {
+    fake.disk.set('/Notes/Work/a.md', '# a')
+    fake.disk.set('/Notes/Work/Deeper/b.md', '# b')
+    await mirrored({}, { 'Work/a.md': '# a', 'Work/Deeper/b.md': '# b' })
+
+    await workspace.remove('/Notes/Work', true)
+
+    expect(fake.remote.local).toContain('delete_folder /Notes/Work')
   })
 })

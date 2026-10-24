@@ -33,6 +33,14 @@ vi.mock('../link-index.svelte', () => ({
   },
 }))
 
+/** The notes in a space shared with this account to be read, which nothing may be
+ *  written in (B288). Empty for every test but the one about them. */
+const readOnly = new Set<string>()
+
+vi.mock('../sharing.svelte', () => ({
+  canWriteAt: (path: string) => !readOnly.has(path),
+}))
+
 const { keepPage, keepNow } = await import('./keep')
 const { SAVE_AT_MOST, SAVE_DELAY } = await import('../backoff')
 const { settleUp, written: landed } = await import('../parting')
@@ -51,6 +59,7 @@ beforeEach(() => {
   keepNow(PATH)
   written.length = 0
   told.length = 0
+  readOnly.clear()
   vi.useFakeTimers()
 })
 
@@ -289,4 +298,67 @@ test('leaving the tab writes what is waiting for its note', () => {
   keepNow(PATH)
 
   expect(said()).toContain('URL=https://svelte.dev/docs/cli')
+})
+
+/** A `.webloc` a Mac wrote stays a plist a Mac reads when the reading moves on: only
+ *  the address in it changes, every other key is kept, and no internet shortcut is
+ *  written into it. A redirect or a page saying its mark is enough to start a write. */
+test('a .webloc keeps its plist, with nothing in it changed but the address', async () => {
+  const path = '/Notes/Docs.webloc'
+  const plist = (url: string) =>
+    '<?xml version="1.0" encoding="UTF-8"?>\n<plist version="1.0">\n<dict>\n' +
+    `\t<key>Name</key>\n\t<string>Docs</string>\n\t<key>URL</key>\n\t<string>${url}</string>\n` +
+    '</dict>\n</plist>\n'
+  let text = plist('https://svelte.dev/')
+  keepPage({
+    path,
+    text: () => text,
+    url: 'https://svelte.dev/docs?a=1&b=2',
+    icon: 'https://svelte.dev/favicon.png',
+    wrote: (next) => (text = next),
+  })
+  keepNow(path)
+  await vi.advanceTimersByTimeAsync(0)
+
+  expect(said()).toBe(plist('https://svelte.dev/docs?a=1&amp;b=2'))
+  expect(text).toBe(said())
+})
+
+test('a .webloc is not written for a page that only said its mark', async () => {
+  const path = '/Notes/Docs.webloc'
+  const plist =
+    '<?xml version="1.0" encoding="UTF-8"?>\n<plist version="1.0">\n<dict>\n' +
+    '\t<key>URL</key>\n\t<string>https://svelte.dev/</string>\n</dict>\n</plist>\n'
+  keepPage({
+    path,
+    text: () => plist,
+    url: 'https://svelte.dev/',
+    icon: 'https://svelte.dev/favicon.png',
+    wrote: () => undefined,
+  })
+  keepNow(path)
+  await vi.advanceTimersByTimeAsync(0)
+
+  expect(written).toHaveLength(0)
+})
+
+/** A web note in a space shared to be read browses like any other, and the file is
+ *  never told: the copy here would stop being the space's, and the sync refuses it on
+ *  every pass (B288). Where the reading got to is the session's; see `webWalked`. */
+test('a note in a space shared to be read is never written, nor its copy changed', async () => {
+  readOnly.add(PATH)
+  let text = FILE
+  const kept = (url: string, icon: string | null) =>
+    keepPage({ path: PATH, text: () => text, url, icon, wrote: (next) => (text = next) })
+
+  kept('https://svelte.dev/docs/kit', null)
+  kept('https://svelte.dev/docs/kit', 'https://svelte.dev/favicon.png')
+  await vi.advanceTimersByTimeAsync(SAVE_AT_MOST * 2)
+  keepNow(PATH)
+  settleUp()
+  await landed()
+
+  expect(written).toEqual([])
+  expect(told).toEqual([])
+  expect(text).toBe(FILE)
 })

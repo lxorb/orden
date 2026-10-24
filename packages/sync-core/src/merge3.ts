@@ -17,7 +17,11 @@
  *    passage put back or written twice, and meets like an overlap;
  *  - **edits that overlap** - spans that intersect, or an insertion strictly inside a
  *    span the other side replaced - form a meeting, joined transitively, whose size is
- *    what both sides wrote there plus the ancestor text they cover.
+ *    what both sides wrote there plus the ancestor text they cover;
+ *  - **edits in one line** that would together make a line neither side wrote - whole
+ *    lines taken out or put in where the other side wrote inside one, a line rewritten
+ *    on one side and written in on the other - meet the same way (`sameLine`). Words
+ *    beside words in one line are still both kept.
  *
  *  The text this assembles is the pure merge: everything that meets nothing applied,
  *  identical edits once, and each meeting as the caller decides. The classifier uses
@@ -129,6 +133,168 @@ function meets(one: Edit, other: Edit): boolean {
   return one.from < other.to && other.from < one.to
 }
 
+/** Where a line of `base` that holds `at` begins. */
+function lineStart(base: string, at: number): number {
+  return at === 0 ? 0 : base.lastIndexOf('\n', at - 1) + 1
+}
+
+/** Where a line of `base` that holds `at` ends, its newline included. */
+function lineEnd(base: string, at: number): number {
+  const newline = base.indexOf('\n', at)
+  return newline === -1 ? base.length : newline + 1
+}
+
+/** Whether an edit is made of whole lines: it starts where a line does, takes out
+ *  whole lines if anything, and puts in whole lines if anything. Such an edit sits
+ *  between the lines around it; any other is inside a line. */
+function wholeLines(base: string, edit: Edit): boolean {
+  const ends = edit.to === edit.from || edit.to === base.length || base.charAt(edit.to - 1) === '\n'
+  return (
+    lineStart(base, edit.from) === edit.from &&
+    ends &&
+    (edit.insert === '' || edit.insert.endsWith('\n'))
+  )
+}
+
+/** The lines an edit is written into: its own span when it is whole lines, else every
+ *  line it touches, the next one too when it takes a line's newline away and puts none
+ *  back, joining the two. */
+function reach(base: string, edit: Edit): Span {
+  if (wholeLines(base, edit)) return { from: edit.from, to: edit.to }
+  const keepsEnd =
+    edit.to > edit.from && base.charAt(edit.to - 1) === '\n' && edit.insert.endsWith('\n')
+  return {
+    from: lineStart(base, edit.from),
+    to: lineEnd(base, keepsEnd ? edit.to - 1 : edit.to),
+  }
+}
+
+/** Whether an edit takes a line break out or puts one in. */
+function breaks(base: string, edit: Edit): boolean {
+  return edit.insert.includes('\n') || base.slice(edit.from, edit.to).includes('\n')
+}
+
+const WORDY = /[\p{L}\p{N}]/u
+
+/** For each of a side's edits, whether its line is rewritten: the side's edits
+ *  inside that line leave none of the line's words, or the line had none yet. */
+function rewrittenLines(base: string, side: readonly Edit[]): boolean[] {
+  const out = side.map(() => false)
+  let first = 0
+  while (first < side.length) {
+    const edit = side[first]
+    if (!edit) break
+    // The side's edits that start inside the lines this one reaches, and inside the
+    // lines those reach in turn.
+    const lines = reach(base, edit)
+    let last = first
+    for (let next = side[last + 1]; next && next.from < lines.to; next = side[last + 1]) {
+      last += 1
+      lines.to = Math.max(lines.to, reach(base, next).to)
+    }
+    const mine = side.slice(first, last + 1)
+    let at = lines.from
+    let wordy = false
+    for (const one of mine) {
+      if (WORDY.test(base.slice(at, one.from))) wordy = true
+      at = Math.max(at, one.to)
+    }
+    if (WORDY.test(base.slice(at, lines.to))) wordy = true
+    for (const [offset, one] of mine.entries())
+      out[first + offset] = !wordy && !wholeLines(base, one)
+    first = last + 1
+  }
+  return out
+}
+
+/** Whether an insertion at an edge of the other side's replacement, written beside
+ *  it, runs a word of its own into a word the other side's text ends or starts with
+ *  there: one side took out the space between two words and the other typed a word
+ *  against it (`task x` and `task`, merged `taskx`); or two replacements that meet
+ *  end to end with no space at the seam. */
+function glued(base: string, one: Edit, other: Edit): boolean {
+  if (!isInsertion(one) && !isInsertion(other)) {
+    // Two replacements end to end make one stretch of the merge, and where neither
+    // leaves a space at the seam they make one token neither side wrote (`[x😀`).
+    const [first, then] = one.to === other.from ? [one, other] : [other, one]
+    if (first.to !== then.from) return false
+    const left = first.insert ? first.insert.slice(-1) : base.charAt(first.from - 1)
+    const right = then.insert ? then.insert.charAt(0) : base.charAt(then.to)
+    return /\S/.test(left) && /\S/.test(right)
+  }
+  const [insertion, span] = isInsertion(one) ? [one, other] : [other, one]
+  if (!isInsertion(insertion) || isInsertion(span)) return false
+  const word = (char: string) => /^[\p{L}\p{N}]/u.test(char)
+  if (insertion.from === span.to) {
+    const left = span.insert ? span.insert.slice(-1) : base.charAt(span.from - 1)
+    return word(left) && word(insertion.insert.charAt(0))
+  }
+  if (insertion.from === span.from) {
+    const right = span.insert ? span.insert.charAt(0) : base.charAt(span.to)
+    return word(insertion.insert.slice(-1)) && word(right)
+  }
+  return false
+}
+
+/** Whether two sides' edits are written into one line in a way that keeping both
+ *  would make a line neither side wrote: whole lines taken out or put in where the
+ *  other side wrote inside one of those lines; a line one side rewrote, or the two
+ *  together left no word of, and the other wrote in; two sides' words put in where
+ *  one line's words begin; or an edit that breaks a line or joins it to the next,
+ *  touching the other side's. Other edits inside one line are words beside words,
+ *  and are both kept (`meets`), and two sides' whole lines meet only as `meets` says.
+ *
+ *  `edits` reads lines as lines first, so a line added or taken out is whole lines
+ *  and only a line rewritten is read inside; without this, a line rewritten on one
+ *  side and one written in on the other would still be read as words beside words
+ *  and run together. */
+function sameLine(
+  base: string,
+  one: Edit,
+  other: Edit,
+  lines: { rewritten: readonly [boolean, boolean]; bare: (span: Span) => boolean },
+): boolean {
+  const oneWhole = wholeLines(base, one)
+  const otherWhole = wholeLines(base, other)
+  if (oneWhole && otherWhole) return false
+  const a = reach(base, one)
+  const b = reach(base, other)
+  const reached = (): boolean => {
+    if (a.from === a.to) return b.from < a.from && a.from < b.to
+    if (b.from === b.to) return a.from < b.from && b.from < a.to
+    return a.from < b.to && b.from < a.to
+  }
+  if (oneWhole || otherWhole) return reached()
+  if (glued(base, one, other)) return true
+  if (lines.rewritten[0] || lines.rewritten[1]) return reached()
+  // Between them the two sides took every word out of the line.
+  if (reached() && lines.bare({ from: Math.min(a.from, b.from), to: Math.max(a.to, b.to) })) {
+    return true
+  }
+  // Two sides' words put in where a line's words begin each start the line their own
+  // way. Further along a line they are words added beside words, as at its end, and
+  // so are lines added after a line's end, its own break first: those go after any
+  // words added to the line there (`written`). Any other break there, below.
+  if (isInsertion(one) && isInsertion(other) && one.from === other.from) {
+    if (!WORDY.test(base.slice(a.from, one.from))) return true
+    const after = (edit: Edit) => edit.insert.startsWith('\n')
+    const words = (edit: Edit) => !edit.insert.includes('\n')
+    if (after(one) && (after(other) || words(other))) return false
+    if (after(other) && words(one)) return false
+  }
+  // An edit that breaks a line or joins it to the next, touching the other side's:
+  // whichever goes first, the other's words end up on a line they were not written on.
+  if (breaks(base, one) || breaks(base, other)) {
+    // Touching, or with nothing but spaces and marks between them: no word of the
+    // ancestor stands between the two to say whose line the other's words are on.
+    if (one.from <= other.to && other.from <= one.to) return true
+    const between =
+      one.to <= other.from ? base.slice(one.to, other.from) : base.slice(other.to, one.from)
+    return reached() && !WORDY.test(between)
+  }
+  return false
+}
+
 /** The edits both sides made alike, and what is left of each side without them.
  *  Both lists are in order and no two edits of one side touch, so one walk finds
  *  every pair. */
@@ -165,7 +331,7 @@ function paired(mine: readonly Edit[], theirs: readonly Edit[]) {
 /** The edits that meet, grouped: a union of every local edit with every remote edit
  *  it overlaps. Both lists are in order, so the remote edits a local one could meet
  *  are a window that only ever moves forward. */
-function grouped(local: readonly Edit[], remote: readonly Edit[]): Meeting[] {
+function grouped(base: string, local: readonly Edit[], remote: readonly Edit[]): Meeting[] {
   const parent = new Map<number, number>()
   // Local edits are 0..n-1, remote ones n..n+m-1, in one forest.
   const root = (at: number): number => {
@@ -181,15 +347,55 @@ function grouped(local: readonly Edit[], remote: readonly Edit[]): Meeting[] {
     if (a !== b) parent.set(Math.max(a, b), Math.min(a, b))
   }
 
+  // Each edit's reach holds its own span, so two edits whose reaches stay apart
+  // cannot meet either way. Reaches start in order along a side, but need not end in
+  // order, so a remote edit is passed over only once every one before it ends first.
+  const reaches = remote.map((edit) => reach(base, edit))
+  const mineRewritten = rewrittenLines(base, local)
+  const theirsRewritten = rewrittenLines(base, remote)
+  const reachedBy: number[] = []
+  for (const span of reaches) reachedBy.push(Math.max(reachedBy.at(-1) ?? 0, span.to))
+
+  // What the two sides took out between them, joined, and whether a stretch of the
+  // ancestor keeps any word outside it, asked once per stretch.
+  const taken: Span[] = []
+  for (const edit of [...local, ...remote].sort((a, b) => a.from - b.from)) {
+    if (edit.from === edit.to) continue
+    const last = taken.at(-1)
+    if (last && last.to >= edit.from) last.to = Math.max(last.to, edit.to)
+    else taken.push({ from: edit.from, to: edit.to })
+  }
+  const asked = new Map<string, boolean>()
+  const bare = (span: Span): boolean => {
+    const key = `${span.from}:${span.to}`
+    const known = asked.get(key)
+    if (known !== undefined) return known
+    let at = span.from
+    let words = false
+    for (const one of taken) {
+      if (one.to <= at) continue
+      if (one.from >= span.to) break
+      if (WORDY.test(base.slice(at, one.from))) words = true
+      at = Math.max(at, one.to)
+      if (words || at >= span.to) break
+    }
+    if (!words && at < span.to && WORDY.test(base.slice(at, span.to))) words = true
+    asked.set(key, !words)
+    return !words
+  }
+
   const touched = new Set<number>()
   let window = 0
   for (const [index, edit] of local.entries()) {
-    while (window < remote.length && (remote[window]?.to ?? 0) < edit.from) window++
+    const mine = reach(base, edit)
+    while (window < remote.length && (reachedBy[window] ?? 0) < mine.from) window++
 
     for (let at = window; at < remote.length; at++) {
       const other = remote[at]
-      if (!other || other.from > edit.to) break
-      if (!meets(edit, other)) continue
+      const theirs = reaches[at]
+      if (!other || !theirs || theirs.from > mine.to) break
+      const rewritten = [!!mineRewritten[index], !!theirsRewritten[at]] as const
+      if (!meets(edit, other) && !sameLine(base, edit, other, { rewritten, bare })) continue
 
       touched.add(index)
       touched.add(local.length + at)
@@ -227,7 +433,7 @@ export function analyse(base: string, local: string, remote: string): Analysis {
   const mine = edits(base, local, 'semantic')
   const theirs = edits(base, remote, 'semantic')
   const { identical, local: onlyMine, remote: onlyTheirs } = paired(mine, theirs)
-  const meetings = grouped(onlyMine, onlyTheirs)
+  const meetings = grouped(base, onlyMine, onlyTheirs)
 
   const met = new Set<Edit>(meetings.flatMap((meeting) => [...meeting.local, ...meeting.remote]))
   return {
@@ -327,10 +533,25 @@ export function written(base: string, analysis: Analysis, writing: Writing): str
     for (const edit of meeting[settled]) pieces.push({ ...edit, rank: rankOf(settled, edit.from) })
   }
 
-  // In order along the ancestor; at one point, whoever goes first. A replacement's
-  // words and an insertion at its start land at the same place, so they are ordered
-  // like two insertions, and the replaced text is skipped whichever comes first.
-  pieces.sort((a, b) => a.from - b.from || a.rank - b.rank || a.to - b.to)
+  // In order along the ancestor; at one point, whoever goes first. Whole lines go
+  // ahead of words written into the line they land on, whoever goes first, since
+  // after it they would run into that line. And an insertion goes ahead of a
+  // replacement that starts where it was made: it was put in before the text the
+  // replacement takes out, so it goes before the words that stand for that text, and
+  // after them it would run into their last word (`breadfresh`). Lines added after a
+  // line's end, its own break first, go after words added to that line there.
+  const inside = (piece: Piece) => (wholeLines(base, piece) ? 0 : 1)
+  const replaces = (piece: Piece) => (piece.to > piece.from ? 1 : 0)
+  const opens = (piece: Piece) => (piece.insert.startsWith('\n') ? 1 : 0)
+  pieces.sort(
+    (a, b) =>
+      a.from - b.from ||
+      inside(a) - inside(b) ||
+      replaces(a) - replaces(b) ||
+      opens(a) - opens(b) ||
+      a.rank - b.rank ||
+      a.to - b.to,
+  )
 
   let out = ''
   let at = 0

@@ -241,7 +241,18 @@ pub fn markdown(body: &Body, parts: &mut dyn Parts) -> String {
             out.push_str(&prefix(run, line.soft, counted));
             // Not the line breaks: those are an attachment that is a block of its own,
             // a table or a scan, asking for the blank line a block needs above it.
-            out.push_str(words.trim_start_matches(|one: char| one.is_whitespace() && one != '\n'));
+            let said = words.trim_start_matches(|one: char| one.is_whitespace() && one != '\n');
+            // An attachment's own markdown starts the line as what it is, a list of
+            // pictures as much as a picture; only a note's words are escaped.
+            let first = line.pieces.iter().find(|(run, said)| {
+                run.attachment.is_some() || !said.replace(OBJECT, "").trim().is_empty()
+            });
+            let worded = first.is_some_and(|(run, _)| run.attachment.is_none());
+            out.push_str(&if worded {
+                opened(said)
+            } else {
+                said.to_string()
+            });
         }
 
         out.push('\n');
@@ -502,25 +513,138 @@ fn wrapped(run: &Run, said: &str) -> String {
     format!("{before}{marked}{after}")
 }
 
-/// The two characters a note's own words would otherwise become a link with, and
-/// the `<` that would otherwise open a tag: a note that says `<script>` or `<b>`
-/// says those words, and read as HTML they would vanish or turn into markup.
-/// Everything else is left as it was: a note that says `5 * 3` says that.
+/// A note's own words, escaped where nib's markdown would read them as markup: they
+/// are plain words in Notes, and `a==b or c==d` is not a highlight, `_x_` not italics,
+/// `<b>` not a tag and `$x$` not math. The rules are packages/markdown's `escapeText`
+/// (escapes.ts), which every other conversion goes through, without its keeping of
+/// `**bold**` a page wrote as markdown: here a star is a star somebody typed. Where an
+/// escape changes nothing a reader sees it is left out, as there: `snake_case`, `2 * 3`.
+///
+/// A run is escaped on its own, so what is next to its ends is unknown and treated as
+/// something a marker could lean on. See `opened` for what the start of a line needs.
 fn escaped(words: &str) -> String {
+    let chars: Vec<char> = words.chars().collect();
     let mut out = String::with_capacity(words.len());
-    let mut chars = words.chars().peekable();
+    // Whether anything has been written before this character in the run, which is
+    // what a star needs to know: one with words before it cannot begin a list.
+    let mut mid = false;
 
-    while let Some(one) = chars.next() {
-        let opens_tag = one == '<'
-            && chars
-                .peek()
-                .is_some_and(|next| next.is_ascii_alphabetic() || matches!(next, '/' | '!' | '?'));
-        if one == '[' || one == ']' || opens_tag {
+    for (at, &one) in chars.iter().enumerate() {
+        let before = at.checked_sub(1).and_then(|back| chars.get(back)).copied();
+        let after = chars.get(at + 1).copied();
+        let word = |side: Option<char>| side.is_some_and(char::is_alphanumeric);
+        let blank = |side: Option<char>| side.is_some_and(char::is_whitespace);
+
+        let escape = match one {
+            // An escape of the punctuation after it, or a backslash.
+            '\\' => after.is_none_or(|next| next.is_ascii_punctuation()),
+            // Never emphasis inside a word, where a file name keeps its underscores.
+            '_' => !(word(before) && word(after)),
+            // A star with a blank on each side can neither open emphasis nor close it.
+            '*' => !(mid && blank(before) && blank(after)),
+            // Doubled, a highlight (`==`).
+            '=' => before == Some(one) || after == Some(one),
+            // The second of two, which would open a comment and hide the rest.
+            '%' => before == Some(one),
+            // Maths, unless it stands alone: `$5-$10` is two prices, `a $ b` a dollar.
+            '$' => !(blank(before) && blank(after)),
+            // Lowered or raised text, or a strike, unless nothing follows to lower.
+            '~' | '^' => !blank(after),
+            // A tag opened, where the words say `<b>` or `<script>`.
+            '<' => opens_tag(after),
+            // An entity, which would show as the character it names; `R&D` is none.
+            '&' => {
+                let named = chars[at + 1..]
+                    .iter()
+                    .take_while(|next| next.is_ascii_alphanumeric() || **next == '#')
+                    .count();
+                named > 0 && chars.get(at + 1 + named) == Some(&';')
+            }
+            // A link or a wikilink, and code.
+            '[' | ']' | '`' => true,
+            _ => false,
+        };
+
+        if escape {
             out.push('\\');
         }
         out.push(one);
+        mid |= !one.is_whitespace();
     }
 
+    out
+}
+
+/// A line's words with what would open a block at its start escaped, where Notes had a
+/// paragraph: a heading of `# not a heading`, a quote of `> q`, a list of `1986. A great
+/// year` or `- not a bullet`. A star there is a bullet as well, which `escaped` has
+/// seen to already, and so are `~~~` and `===`. `-5 degrees` is a temperature.
+fn opened(words: &str) -> String {
+    let blank_or_end = |rest: &str| rest.chars().next().is_none_or(char::is_whitespace);
+
+    let hashes = words.len() - words.trim_start_matches('#').len();
+    if (1..=6).contains(&hashes) && blank_or_end(&words[hashes..]) {
+        return format!("\\{words}");
+    }
+
+    let digits = words.len()
+        - words
+            .trim_start_matches(|one: char| one.is_ascii_digit())
+            .len();
+    if digits > 0 {
+        let rest = &words[digits..];
+        if let Some(after) = rest.strip_prefix(['.', ')']) {
+            if blank_or_end(after) {
+                return format!("{}\\{rest}", &words[..digits]);
+            }
+        }
+        return words.to_string();
+    }
+
+    let block = words.starts_with('>')
+        || (words.starts_with('-') && (blank_or_end(&words[1..]) || words[1..].starts_with('-')))
+        || (words.starts_with('+') && blank_or_end(&words[1..]));
+    if block {
+        return format!("\\{words}");
+    }
+
+    words.to_string()
+}
+
+/// Whether a `<` followed by this reads as the start of a tag, a closing tag, a
+/// comment or a processing instruction: the four things markdown lets raw HTML
+/// begin with. `a < b` is not one of them and keeps its bracket. The same rule as
+/// `OPENS_MARKUP` in `packages/markdown/src/words.ts`.
+pub fn opens_tag(next: Option<char>) -> bool {
+    next.is_some_and(|next| next.is_ascii_alphabetic() || matches!(next, '/' | '!' | '?'))
+}
+
+/// Words from outside a note, with nothing in them that can open a tag. A note's
+/// own markup is markup, and the app renders the HTML in it, so a page that calls
+/// itself `Fine <img src=x onerror=...>` would otherwise write a tag into the note.
+///
+/// A backslash already in front of the `<` would take the escape for itself and
+/// leave the tag live, so those are doubled too. Everything else is left alone: a
+/// `#` in a tag is the tag.
+pub fn as_words(words: &str) -> String {
+    let mut out = String::with_capacity(words.len());
+    let mut slashes = 0_usize;
+    let mut chars = words.chars().peekable();
+
+    while let Some(one) = chars.next() {
+        if one == '\\' {
+            slashes += 1;
+            continue;
+        }
+
+        let opens = one == '<' && opens_tag(chars.peek().copied());
+        let kept = if opens { slashes * 2 + 1 } else { slashes };
+        out.extend(std::iter::repeat_n('\\', kept));
+        slashes = 0;
+        out.push(one);
+    }
+
+    out.extend(std::iter::repeat_n('\\', slashes));
     out
 }
 
@@ -1216,6 +1340,32 @@ mod tests {
         markdown(&body, &mut Named)
     }
 
+    /// Lines of somebody's plain words and the markdown they are written as, shared with
+    /// packages/markdown, whose test renders each and finds the words and nothing else:
+    /// no highlight of `a==b or c==d`, no italics of `_x_`, no heading of `# not a
+    /// heading`, no list that starts at 1986.
+    const PLAIN_LINES: &str =
+        include_str!("../../../../packages/markdown/src/fixtures/plain-lines.json");
+
+    #[test]
+    fn plain_words_come_over_as_the_words_and_nothing_else() {
+        let lines: Vec<serde_json::Value> = serde_json::from_str(PLAIN_LINES).expect("the lines");
+        assert!(!lines.is_empty());
+
+        for line in lines {
+            let words = line["words"].as_str().expect("words");
+            let written = line["markdown"].as_str().expect("markdown");
+            let text = format!("Note\n{words}\n");
+            let rest = u64::try_from(words.encode_utf16().count() + 1).expect("a length");
+            let said = as_markdown(
+                &text,
+                &[run(5, &[bytes(2, &style(0, 0, None))]), run(rest, &[])],
+            );
+
+            assert_eq!(said, format!("# Note\n{written}"), "{words}");
+        }
+    }
+
     #[test]
     fn a_title_and_a_paragraph() {
         let text = "Groceries\nMilk and eggs\n";
@@ -1491,6 +1641,37 @@ mod tests {
     fn words_that_look_like_html_are_words() {
         let said = as_markdown("<script src=x> and 1 < 2", &[run(24, &[])]);
         assert_eq!(said, "\\<script src=x> and 1 < 2");
+    }
+
+    /// A note that says `$5-$10` says two prices, and `~5 or ~10` and `%%d` say those
+    /// characters, rather than a formula, lowered words or a comment hiding the rest.
+    #[test]
+    fn dollars_tildes_carets_and_percent_signs_are_words() {
+        let words = "Tickets $5-$10, ~5 or ~10, %%d, x^2, a $ b ~ c";
+        let said = as_markdown(words, &[run(words.len() as u64, &[])]);
+        assert_eq!(
+            said,
+            "Tickets \\$5-\\$10, \\~5 or \\~10, %\\%d, x\\^2, a $ b ~ c"
+        );
+    }
+
+    /// A backslash somebody typed in front of a tag would otherwise take the escape
+    /// for itself: `\<img>` is a backslash and then a live tag.
+    #[test]
+    fn a_backslash_in_front_of_html_does_not_let_it_through() {
+        let said = as_markdown("\\<img src=x onerror=alert(1)>", &[run(29, &[])]);
+        assert_eq!(said, "\\\\\\<img src=x onerror=alert(1)>");
+    }
+
+    /// Where a link goes comes from outside the note, and nothing in it may end the
+    /// link early and leave the rest of it as markup on the line.
+    #[test]
+    fn where_a_link_goes_cannot_end_the_link() {
+        assert_eq!(
+            super::destination("https://x.test/a) <img src=x onerror=alert(1)>"),
+            "<https://x.test/a) %3Cimg src=x onerror=alert(1)%3E>"
+        );
+        assert_eq!(super::destination("https://x.test/a"), "https://x.test/a");
     }
 
     /// A link with a space or a bracket in where it goes is still one link.

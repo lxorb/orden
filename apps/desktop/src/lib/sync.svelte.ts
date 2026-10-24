@@ -3,7 +3,7 @@
  *
  *  Moving the notes of one space is next door, in sync/pass.ts. */
 
-import { api, ApiError } from './api'
+import { api, ApiError, type SpaceRole } from './api'
 import { arriving } from './arriving.svelte'
 import { without } from './records'
 import { log } from './log'
@@ -25,6 +25,7 @@ import {
   type Tracked,
   within,
 } from './sync/mirror'
+import type { Holding } from './sync/holding'
 import type { Joined, Waiting } from './sync/pass'
 import { record } from './sync/record.svelte'
 import type { Folded } from './sync/web-copies'
@@ -267,6 +268,10 @@ class Sync {
     return waiting
   }
 
+  /** Moves a pull is making on this disk because the account already has them, by
+   *  `from` and `to`, while everything kept by path is hearing of them. */
+  private readonly pulling = new Set<string>()
+
   /** A file operation, heard the way everything kept by path hears one; see
    *  workspace/file-ops.ts. A space's folder moving re-keys the table in the same
    *  moment as its notes' paths change, so no note is ever at a path the account
@@ -274,6 +279,7 @@ class Sync {
   follow(op: FileOp): Promise<void> | undefined {
     if (V2 && this.v2) return this.v2.follow(op)
     if (op.op !== 'moved') return undefined
+    if (this.pulling.has(`${op.from}\n${op.to}`)) return undefined
     if (op.kind !== 'space') return this.moved(op.from, op.to)
 
     const name = workspace.spaces.find((one) => samePath(one.root, op.to))?.name
@@ -307,11 +313,14 @@ class Sync {
 
     const moving = this.movingFrom(from, to)
     if (moving.length) this.moving = [...this.moving, ...moving]
+    // The notes waiting on a question, by id, so the order the stores hear this move
+    // in does not matter. See `movedOne` in sync/pass.ts.
+    const held = new Set(record.clashes.map((one) => one.id))
 
     try {
       const { movedHere } = await import('./sync/pass')
       for (const mirror of Object.values(this.mirrors)) {
-        if (await movedHere(mirror, token, from, to)) this.save()
+        if (await movedHere(mirror, token, from, to, held, (one) => record.clash(one))) this.save()
       }
     } finally {
       if (moving.length) this.moving = this.moving.filter((one) => !moving.includes(one))
@@ -342,13 +351,19 @@ class Sync {
    *
    *  A space somebody shared is not this account's to delete, so the same
    *  gesture lets go of it instead: the membership ends, and the space carries
-   *  on being everybody else's. */
-  async forget(root: string) {
+   *  on being everybody else's.
+   *
+   *  Which of the two is `role`, the one the dialog asked about (`roleOf`), so what
+   *  is done is what was said. Unknown, the account's copy is left alone: deleting
+   *  a space after saying "Leave" is the one mistake here nobody can take back. */
+  async forget(root: string, role: SpaceRole | null) {
     const spaceId = this.remoteIdFor(root)
     if (spaceId === null) return
-    const role = account.spaces.find((one) => one.id === spaceId)?.role
-    const theirs =
-      V2 && this.v2 ? role !== undefined && role !== 'owner' : !!this.mirrors[root]?.shared
+    // v1 keeps its own word that the space is somebody else's, which no role
+    // overrides: a space it never owned is never deleted.
+    const shared = !(V2 && this.v2) && !!this.mirrors[root]?.shared
+    const theirs = shared || (role !== null && role !== 'owner')
+    const mine = !shared && role === 'owner'
 
     if (V2 && this.v2) {
       await this.v2.forget(root)
@@ -358,7 +373,7 @@ class Sync {
     }
 
     const token = account.token
-    if (!token) return
+    if (!token || (!theirs && !mine)) return
 
     const letting = theirs ? api.leaveSpace(token, spaceId) : api.deleteSpace(token, spaceId)
 
@@ -551,6 +566,17 @@ class Sync {
     return this.mirrors[root]?.spaceId ?? null
   }
 
+  /** The role this device kept for the space a folder mirrors, for the seconds
+   *  before the account's listing comes back and for a session that never hears
+   *  it. v2 keeps the role on the space's row. v1 keeps only whether the space is
+   *  somebody else's, which says the account's own spaces are its own and leaves
+   *  a shared one unknown. Null when nothing was kept. */
+  roleKept(root: string): string | null {
+    if (V2 && this.v2) return this.v2.roleKept(root)
+    const mirror = this.mirrors[root]
+    return mirror && !mirror.shared ? 'owner' : null
+  }
+
   /** Whether the account shared this space to be read and not written in. */
   private reads(spaceId: string): boolean {
     return account.spaces.find((one) => one.id === spaceId)?.role === 'read'
@@ -562,6 +588,17 @@ class Sync {
    *  Null for a note in no space, and for one the account has never been handed -
    *  a note with no id has no room, and a note whose hash nobody knows has nothing
    *  to be compared against. See rooms.svelte.ts, which asks. */
+  /** Where a note v1 tracks is on this disk, by its id, or null. */
+  pathOf(id: string): string | null {
+    if (V2 && this.v2) return null
+    for (const mirror of Object.values(this.mirrors)) {
+      for (const [path, held] of Object.entries(mirror.notes)) {
+        if (held.id === id) return joinPath(mirror.root, path)
+      }
+    }
+    return null
+  }
+
   tracked(path: string): { id: string; version: number; hash: string } | null {
     if (V2 && this.v2) return this.v2.tracked(path)
     for (const mirror of Object.values(this.mirrors)) {
@@ -572,6 +609,21 @@ class Sync {
 
     const moving = this.moving.find((one) => samePath(one.path, path))?.tracked
     return moving ? { id: moving.id, version: moving.version, hash: moving.hash } : null
+  }
+
+  /** Whether the account holds this file as it is on disk now, so a delete can be left
+   *  to it rather than to this device's trash. See sync/holding.ts, and `holds` in
+   *  sync2/runner.svelte.ts. */
+  async holds(path: string, how: Holding = {}): Promise<boolean> {
+    if (V2 && this.v2) return this.v2.holds(path, how)
+    for (const mirror of Object.values(this.mirrors)) {
+      const relative = within(mirror.root, path)
+      if (relative === null) continue
+      const { mirrorHolds } = await import('./sync/holding')
+      return mirrorHolds(mirror, relative, path, how)
+    }
+    // A note in the middle of a move is recorded under neither path for a moment.
+    return false
   }
 
   /** What a pull over this space tells whoever is waiting on it, and what it
@@ -602,6 +654,21 @@ class Sync {
         void workspace.arrived(path)
         void this.refresh(path, joined)
         this.pulled += 1
+      },
+      // Before and after each rename of a round of moves; see `movedThere`.
+      save: () => this.save(),
+      // Each rename a pull makes, a step aside too, heard by everything kept by path
+      // as a move made here: the open tab, the links, the rows. Waited on, so each
+      // hears the steps in the order they were made. The account made the move, so it
+      // is not told it back: `follow` leaves out what is in `pulling`.
+      moved: async (from, to) => {
+        const key = `${from}\n${to}`
+        this.pulling.add(key)
+        try {
+          await workspace.fileMoved(from, to, 'file')
+        } finally {
+          this.pulling.delete(key)
+        }
       },
       wanted: open,
       // The reader's answer to "what if the same note was written twice", and
@@ -721,6 +788,7 @@ class Sync {
 
         const sending = {
           held: record.held,
+          asked: new Set(record.clashes.map((one) => one.id)),
           sent: () => (this.pushed += 1),
           // An old copy of a web note folded into it: the note open in a tab takes
           // what it now says, the copy leaves the list. See sync/web-copies.ts.
@@ -987,3 +1055,11 @@ function known(): Promise<void> {
 export const sync = new Sync()
 
 workspace.fileOps.follow((op) => sync.follow(op))
+// The notes waiting on a question follow their files, and are found by id when one is
+// answered; see sync/record.svelte.ts.
+workspace.fileOps.follow((op) => record.follow(op))
+record.notes = {
+  at: (id) => sync.pathOf(id),
+  of: (path) => sync.tracked(path)?.id ?? null,
+  moved: (from, to) => sync.moved(from, to),
+}

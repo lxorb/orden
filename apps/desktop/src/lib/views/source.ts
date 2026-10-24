@@ -84,6 +84,7 @@ export function fileSource(path: string, view?: string, self?: () => Row | undef
   let before = ''
   return {
     scope: spaceOf(path)?.name ?? null,
+    path,
     view,
     ...(self ? { self } : {}),
     async load() {
@@ -166,6 +167,7 @@ export function fenceSource(code: string, path: string | null): Source {
   const space = path === null ? workspace.activeSpace : spaceOf(path)
   return {
     scope: space?.name ?? null,
+    path,
     self: () => rowAt(path),
     shown: () => shown,
     keep(now) {

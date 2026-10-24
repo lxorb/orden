@@ -10,7 +10,8 @@
  *  5. every document the feed said moved, pulled 200 at a time and written to its file;
  *  6. a day's note the account merged into one that was already there;
  *  7. every document with pending edits, pushed 50 at a time: `ok` confirms them,
- *     `moved` is classified (rejoin.ts), `refused` waits, longer each time (`Refusal`).
+ *     `moved` is classified (rejoin.ts), `refused` waits, longer each time (`Refusal`),
+ *     except in a space this account may only read, where the edit goes (`readOnly`).
  *
  *  A pass stops quietly the moment a request goes unanswered - offline, or lost - and
  *  the next one starts where the store says this one got to. A document a live room's
@@ -37,7 +38,7 @@ import { Core, type Holding } from './core'
 import type { Doc } from './docs'
 import { MINE } from './docs'
 import { foldIn } from './ingest'
-import { fileOfUpdates, judge, shapeOf, turn } from './kinds'
+import { fileOfUpdates, judge, shapeOf, turn, unixLines } from './kinds'
 import { type Outboxed, settle, type SpaceState } from './places'
 import { project } from './project'
 import { againstBytes, type Merging, type Outgoing, outgoingBytes } from './records'
@@ -237,6 +238,14 @@ function refused(core: Core, space: SpaceState, op: Op, why: string): Change[] {
     if (entry)
       core.events.resurrected?.({ id: op.id, name: entry.name, device: core.by.get(op.id) ?? '' })
     return []
+  }
+  // A file, a note or a folder another program made in a space this account may only
+  // read. Shown as the account has it, the tree would take the file off this disk: it
+  // stays where it is instead, as v1 leaves it, and this device forgets it ever made it,
+  // so it is not asked about again every pass.
+  if ((op.t === 'create' || op.t === 'mkdir') && why === 'role') {
+    space.entries.delete(op.id)
+    return [remove('entries', op.id), ...core.forgetChanges(op.id)]
   }
   // A note made here whose folder the account no longer has: made again at the top of
   // the space, rather than its words waiting on a folder that is not coming back.
@@ -527,12 +536,13 @@ function pushable(core: Core, entry: EntryRow): boolean {
   return core.hasPending(entry.id)
 }
 
-/** A document whose pushes the account keeps refusing: a space this device may only
- *  read, an update past the ceiling, a note it does not have. Asking again every two
- *  seconds changes none of that, so it waits longer each time (`AGAIN`, up to `LONGEST`)
- *  and the log says so once a streak. `gone` is said only after `GONE_SAID` in a row,
- *  since a room that did not answer reads as `gone` too. Any other answer ends it. The
- *  words stay here, pending, the whole time. Memory only: a launch asks again. */
+/** A document whose pushes the account keeps refusing: an update past the ceiling, a
+ *  note it does not have (a space this device may only read is `readOnly`'s). Asking
+ *  again every two seconds changes none of that, so it waits longer each time (`AGAIN`,
+ *  up to `LONGEST`) and the log says so once a streak. `gone` is said only after
+ *  `GONE_SAID` in a row, since a room that did not answer reads as `gone` too. Any other
+ *  answer ends it. The words stay here, pending, the whole time. Memory only: a launch
+ *  asks again. */
 interface Refusal {
   why: DocRefusal
   times: number
@@ -644,6 +654,13 @@ async function pushDocs(
       const entry = space.entries.get(one.id)
       // Deleted here while the push was in the air: nothing of it goes on.
       if (!doc || !entry || !core.current(doc)) continue
+      if ('refused' in one && one.refused === 'role') {
+        doc.land()
+        refusals.get(core)?.delete(one.id)
+        said.add(one.refused)
+        changes.push(...(await readOnly(core, space, entry, doc)))
+        continue
+      }
       if ('refused' in one) {
         // What it holds stays here, pending, and waits; see `Refusal`.
         doc.land()
@@ -673,6 +690,34 @@ async function pushDocs(
     if (!alive()) return null
   }
   return pushed
+}
+
+/** A push refused because this account may only read the space: another program
+ *  changed the file (an editor, a `git pull`), or the role was lowered while this device
+ *  was offline with an edit. Waiting changes nothing, and kept pending the edit would
+ *  stand between this device and every word the owner writes after, since a pull never
+ *  lands on pending edits. So the edit goes and the owner's words are written back, with
+ *  this device's kept as a version on this device first: the account will take nothing
+ *  from a reader, not even a version, so this disk is the one place it can go.
+ *
+ *  Only on the account's refusal, never on the role this device remembers: that can be
+ *  out of date, and a writer whose edit was dropped on an old `read` would lose it. */
+async function readOnly(
+  core: Core,
+  space: SpaceState,
+  entry: EntryRow,
+  doc: Doc,
+): Promise<Change[]> {
+  const local = doc.text()
+  if (entry.local_path && local.trim()) {
+    const full = core.world.join(space.row.root, entry.local_path)
+    const was = await core.world.disk.read(full)
+    // What the file says is kept by `project` as it writes over it; words typed here
+    // that never reached the file are kept now.
+    if (was === null || unixLines(was) !== local) await core.world.disk.keep(full, local)
+  }
+  doc.letPendingGo(core.freshClient())
+  return [...core.docChanges(doc), ...(await project(core, space, entry, doc))]
 }
 
 /** The account started the document again at a new epoch while this device held pending

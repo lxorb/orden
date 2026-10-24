@@ -61,6 +61,17 @@ function stripLine(line: string, inside: string | null): { text: string; inside:
       continue
     }
 
+    // A backslash makes the character after it words, so `\<!--` is how a page's
+    // own `<!--` is written into a note, by a conversion or by hand, and opens
+    // nothing. It is taken with the character it escapes, which also keeps an
+    // escaped backtick from starting code and a doubled backslash from escaping
+    // the comment after it.
+    if (line[at] === '\\') {
+      out += line.slice(at, at + 2)
+      at += 2
+      continue
+    }
+
     // A backtick run is inline code up to the next run of the same length, and
     // whatever is between them is shown rather than read. An unclosed run is not
     // code at all, so the scan carries on past it.
@@ -79,9 +90,9 @@ function stripLine(line: string, inside: string | null): { text: string; inside:
       break
     }
 
-    // Only up to the comment, and then round again: the backtick check above has
-    // to see the characters between two comments as well.
-    const next = line.slice(at, found.from).indexOf('`')
+    // Only up to the comment, and then round again: the backslash and backtick
+    // checks above have to see the characters before it as well.
+    const next = line.slice(at, found.from).search(/[\\`]/)
     if (next !== -1) {
       out += line.slice(at, at + next)
       at += next

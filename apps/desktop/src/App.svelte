@@ -71,7 +71,7 @@
     menuBarDoor,
     undoToastNotice,
   } from './lib/surfaces.svelte'
-  import { canWriteIn, share, sharedWithYou } from './lib/sharing.svelte'
+  import { canWriteAt, canWriteIn, share, sharedWithYou } from './lib/sharing.svelte'
   import { start } from './lib/start'
   import { startup } from './lib/startup.svelte'
   import { sync } from './lib/sync.svelte'
@@ -304,13 +304,17 @@
   // down to one pane with one document in it. See `workspace.oneDocument`.
   $effect(() => workspace.oneDocument())
 
-  // Where a task added from Shortcuts lands: the inbox of the space in front. Only a
+  // Where a task added from Shortcuts lands: the inbox of the space in front, or of
+  // the first one that can be written in where that one is shared to be read. Only a
   // Mac has the action, and the module is fetched rather than in the first paint.
   $effect(() => {
-    const root = workspace.activeSpace?.root ?? null
+    const active = workspace.activeSpace?.root ?? null
+    const roots = workspace.spaces.map((one) => one.root)
+    // Read here, inside the effect, so a role that changes says the inbox again.
+    const writable = new Set(roots.filter(canWriteAt))
     if (!isDesktop || platform() !== 'macos') return
     void import('./lib/rows/inbox').then(
-      (one) => one.rememberInbox(root),
+      (one) => one.rememberInbox(one.inboxSpace(active, roots, (root) => writable.has(root))),
       () => undefined,
     )
   })

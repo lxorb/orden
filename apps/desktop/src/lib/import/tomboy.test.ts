@@ -1,3 +1,4 @@
+import { renderMarkdown } from '@nib/markdown'
 import { describe, expect, test } from 'vitest'
 
 import type { ImportPlan } from './plan'
@@ -54,6 +55,19 @@ describe('a Tomboy note', () => {
     expect(noteAt(plan, 'Work/Plan.md')).toContain('tags: [urgent]')
   })
 
+  test("a note's dollars, tildes and percent signs are its words, its code is code", () => {
+    const markdown = tomboyMarkdown(
+      'Tickets $5-$10, wait ~5 min or ~10, <bold>format is %%d</bold> and <monospace>$x ~y %%z</monospace>\nrest',
+      (title) => `[[${title}]]`,
+    )
+    expect(markdown).toBe(
+      'Tickets \\$5-\\$10, wait \\~5 min or \\~10, **format is %\\%d** and `$x ~y %%z`\nrest',
+    )
+    expect(renderMarkdown(markdown)).toBe(
+      '<p>Tickets $5-$10, wait ~5 min or ~10, <strong>format is %%d</strong> and <code>$x ~y %%z</code>\nrest</p>\n',
+    )
+  })
+
   test('a link to another note is a wikilink', async () => {
     const plan = await readTomboy([
       file('abc.note', note('A', 'See <link:internal>The other note</link:internal> for more')),
@@ -91,8 +105,43 @@ describe("Tomboy's own markup", () => {
     expect(tomboyMarkdown('a <size:large>big</size:large> word')).toBe('a big word')
   })
 
+  /** A size is dropped and its words kept, so the words on either side of it are one
+   *  run of text and are escaped as one: escaped a run at a time, two halves that are
+   *  harmless apart met as a tag, a comment or an autolink. */
+  test('words a dropped size joins are escaped as the one run they become', () => {
+    const tag = tomboyMarkdown('a &lt;<size:large>img src=x onerror=alert(1)&gt;</size:large> b')
+    expect(tag).not.toMatch(/(?<!\\)<img/)
+
+    const percent = tomboyMarkdown(
+      '50%<size:large>%d</size:large> kept 50%<size:large>%</size:large> end',
+    )
+    expect(percent).not.toMatch(/(?<!\\)%%/)
+    expect(percent).toContain('kept')
+
+    // The address in its brackets, as the same words written in one run say it.
+    const address = tomboyMarkdown('&lt;<link:url>https://x.com/a</link:url>&gt;')
+    expect(address).toBe(tomboyMarkdown('&lt;https://x.com/a&gt;'))
+  })
+
   test('entities are the characters they stand for', () => {
     expect(tomboyMarkdown('a &lt; b &amp; c')).toBe('a < b & c')
+  })
+
+  test('a tag written in the words is words, since Tomboy keeps plain text', () => {
+    const said = tomboyMarkdown(
+      '&lt;img src=https://t.example/p.gif&gt; <bold>&lt;style&gt;x&lt;/style&gt;</bold> after',
+    )
+    expect(said).toBe('\\<img src=https://t.example/p.gif> **\\<style>x\\</style>** after')
+    expect(said).not.toMatch(/(?<!\\)<(?=[A-Za-z/])/)
+  })
+
+  test('a tag in monospace is shown as it was, since code reads no markup', () => {
+    expect(tomboyMarkdown('<monospace>&lt;div&gt;</monospace>')).toBe('`<div>`')
+  })
+
+  test('a backslash of the words in front of a tag in monospace is shown once, as written', () => {
+    expect(tomboyMarkdown('<monospace>a\\&lt;b&gt;</monospace>')).toBe('`a\\<b>`')
+    expect(tomboyMarkdown('<monospace>a\\\\&lt;b&gt;</monospace>')).toBe('`a\\\\<b>`')
   })
 
   test("a list as Tomboy writes it, each item's line ending inside it, is one tight list", () => {
@@ -174,6 +223,29 @@ describe('links between Tomboy notes', () => {
     expect(noteAt(plan, 'Index.md')).toContain(
       'See [ZugFerd / factur-x #4343](ZugFerd%20factur-x%20%234343.md)',
     )
+  })
+
+  test('keep a tag in the title as words where the link is a markdown one', async () => {
+    const plan = await readTomboy([
+      file(
+        'b.note',
+        note('Index', 'See <link:internal>&lt;img src=y onerror=alert(2)&gt;#</link:internal>'),
+      ),
+    ])
+
+    const text = noteAt(plan, 'Index.md')
+    expect(text).toContain('See [\\<img src=y onerror=alert(2)>#](')
+    expect(renderMarkdown(text)).not.toContain('<img')
+  })
+
+  test('keep a backslash in front of a tag in the title as one backslash', async () => {
+    const plan = await readTomboy([
+      file('b.note', note('Index', 'See <link:internal>a\\&lt;b&gt; [c]#</link:internal>')),
+    ])
+
+    const text = noteAt(plan, 'Index.md')
+    expect(text).toContain('See [a\\\\\\<b> \\[c\\]#](')
+    expect(renderMarkdown(text)).toContain('a\\&lt;b&gt; [c]#</a>')
   })
 
   test('name the file and show the title, when the two differ', async () => {

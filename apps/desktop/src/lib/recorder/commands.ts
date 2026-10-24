@@ -19,6 +19,8 @@
 import type { EditorView } from '@nib/editor'
 import { embedKind, parseWikilink } from '@nib/markdown/links'
 import { t } from '../i18n.svelte'
+import { canWriteAt } from '../sharing.svelte'
+import { isMarkdownPath } from '../space-paths'
 import { workspace } from '../workspace.svelte'
 import { canRecordHere } from './container'
 
@@ -43,9 +45,20 @@ async function wake(): Promise<Recorder> {
 /** Whether the row is worth offering: a microphone, and a space to write into.
  *
  *  Not "a note open": a recording makes one where there is none, which is the whole
- *  point of a command somebody presses in a hurry. */
-export function canRecord(): boolean {
-  return canRecordHere() && !!workspace.activeSpace
+ *  point of a command somebody presses in a hurry. But where something is in front it
+ *  has to take the recording: an editor in Read-only mode refuses the embed, and a
+ *  space shared to be read refuses the sound stored beside the note, or the note a
+ *  recording would make. This stands in for the block rows' own read-only check, so it
+ *  asks the same question of the view. */
+export function canRecord(view?: EditorView): boolean {
+  const space = workspace.activeSpace
+  if (!canRecordHere() || !space || view?.state.readOnly === true) return false
+
+  const open = workspace.active
+  // Asked of where the recording will go: a file that is not Markdown gets a new note
+  // in the space; see noteToRecordInto.
+  const into = open?.kind === 'note' && open.path && isMarkdownPath(open.path) ? open.path : null
+  return canWriteAt(into ?? space.root)
 }
 
 /** What the row says, which is the other half of one command doing two things. */

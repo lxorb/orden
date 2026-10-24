@@ -33,6 +33,10 @@ vi.mock('../link-index.svelte', () => ({
 
 vi.mock('../sync.svelte', () => ({ sync: { nudge: () => undefined } }))
 
+/** Whether the space is one shared with this account to be read. */
+const share = vi.hoisted(() => ({ readOnly: false }))
+vi.mock('../sharing.svelte', () => ({ canWriteAt: () => !share.readOnly }))
+
 const { changed, taskLine, writeRow } = await import('./write')
 const { FileActions } = await import('../workspace/undo.svelte')
 const { NoteDoc } = await import('../workspace/documents.svelte')
@@ -89,6 +93,7 @@ function holding(text: string, open?: string) {
 
 beforeEach(() => {
   sent.length = 0
+  share.readOnly = false
   // Ticking writes today's date, so today is held still.
   vi.useFakeTimers({ toFake: ['Date'] })
   vi.setSystemTime(new Date(2026, 9, 7, 10, 0))
@@ -115,6 +120,162 @@ describe('a property written from a view', () => {
         note: { tags: ['a', 'b'], project: { kind: 'link', target: 'Thesis' } },
       }),
     ).toBe("---\nstatus: open\ntags: [a, b]\nproject: '[[Thesis]]'\n---\n# Plan\n")
+  })
+
+  test('writes a list of numbers, yeses and nothing bare, and words that read as one quoted', () => {
+    const text = '---\nstatus: open\n---\n# Plan\n'
+    expect(changed(text, note, { note: { scores: [1, 10, true, null, '2'] } })).toBe(
+      "---\nstatus: open\nscores: [1, 10, true, null, '2']\n---\n# Plan\n",
+    )
+  })
+
+  test('takes a chip off a list and writes the other members as the note has them', () => {
+    const text =
+      '---\nrelated: ["[[Projects/Alpha]]", "[[Beta|B]]", "[[Gamma]]"]\ndue: [2026-10-24, 2026-11-02]\nflags: [true, false, 1234.5]\n---\n# N\n'
+    const row = noteRow(text)
+    expect(changed(text, row, { list: { related: { remove: 1 } } })).toBe(
+      '---\nrelated: ["[[Projects/Alpha]]", "[[Gamma]]"]\ndue: [2026-10-24, 2026-11-02]\nflags: [true, false, 1234.5]\n---\n# N\n',
+    )
+    expect(changed(text, row, { list: { due: { remove: 1 } } })).toBe(
+      '---\nrelated: ["[[Projects/Alpha]]", "[[Beta|B]]", "[[Gamma]]"]\ndue: [2026-10-24]\nflags: [true, false, 1234.5]\n---\n# N\n',
+    )
+    expect(changed(text, row, { list: { flags: { remove: 0 } } })).toBe(
+      '---\nrelated: ["[[Projects/Alpha]]", "[[Beta|B]]", "[[Gamma]]"]\ndue: [2026-10-24, 2026-11-02]\nflags: [false, 1234.5]\n---\n# N\n',
+    )
+  })
+
+  test('puts a chip on a list with the other members as the note has them', () => {
+    const text = '---\ndue: [2026-10-24, 2026-11-02]\nflags: [true, false, 1234.5]\n---\n# N\n'
+    const row = noteRow(text)
+    expect(changed(text, row, { list: { due: { add: '2026-12-01' } } })).toBe(
+      '---\ndue: [2026-10-24, 2026-11-02, 2026-12-01]\nflags: [true, false, 1234.5]\n---\n# N\n',
+    )
+    expect(changed(text, row, { list: { flags: { add: '3' } } })).toBe(
+      '---\ndue: [2026-10-24, 2026-11-02]\nflags: [true, false, 1234.5, 3]\n---\n# N\n',
+    )
+    // A list the note does not hold yet, and one written as a single value.
+    expect(changed('---\ntags: a\n---\n', row, { list: { tags: { add: 'b' } } })).toBe(
+      '---\ntags: [a, b]\n---\n',
+    )
+    expect(changed('---\ntags: a\n---\n', row, { list: { links: { add: 'b' } } })).toBe(
+      '---\ntags: a\nlinks: [b]\n---\n',
+    )
+    // A chip the list already has writes nothing.
+    expect(changed(text, row, { list: { flags: { add: '1234.5' } } })).toBe(text)
+    // A map is no list: a chip put on one is refused rather than written over it.
+    const mapped = '---\nexport:\n  paper: A4\n---\n'
+    expect(changed(mapped, row, { list: { export: { add: 'b' } } })).toBeNull()
+  })
+
+  test('puts a chip on or takes one off a list in a block the rows cannot draw', () => {
+    // A comment line and a block scalar each make the rows' reader give up; the list
+    // is still the one the cell showed, read by YAML, and the rest stays as it was.
+    const commented = '---\n# kept\ntags: [a, "b"]\n---\n# N\n'
+    const row = noteRow(commented)
+    expect(changed(commented, row, { list: { tags: { add: 'z' } } })).toBe(
+      '---\n# kept\ntags: [a, "b", z]\n---\n# N\n',
+    )
+    expect(changed(commented, row, { list: { tags: { remove: 0 } } })).toBe(
+      '---\n# kept\ntags: ["b"]\n---\n# N\n',
+    )
+
+    const scalar =
+      '---\nsummary: |\n  Line one.\n  Line two.\ntags:\n  - a\n  - 007\nafter: x\n---\n'
+    expect(changed(scalar, row, { list: { tags: { add: 'z' } } })).toBe(
+      '---\nsummary: |\n  Line one.\n  Line two.\ntags: [a, 007, z]\nafter: x\n---\n',
+    )
+    expect(changed(scalar, row, { list: { tags: { remove: 1 } } })).toBe(
+      '---\nsummary: |\n  Line one.\n  Line two.\ntags: [a]\nafter: x\n---\n',
+    )
+
+    // A key such a block does not hold yet is added beside the others.
+    expect(changed('---\n# kept\ntitle: x\n---\n', row, { list: { tags: { add: 'z' } } })).toBe(
+      '---\n# kept\ntitle: x\ntags: [z]\n---\n',
+    )
+  })
+
+  test('puts a chip on the list a note writes in another case, in its own spelling', () => {
+    const row = noteRow('---\ntags: [a]\n---\n')
+    const flow = '---\nTags: [x, y]\n---\nbody\n'
+    expect(changed(flow, row, { list: { tags: { add: 'z' } } })).toBe(
+      '---\nTags: [x, y, z]\n---\nbody\n',
+    )
+    expect(changed(flow, row, { list: { tags: { remove: 0 } } })).toBe(
+      '---\nTags: [y]\n---\nbody\n',
+    )
+    const block = '---\nTags:\n  - x\n  - y\ntitle: a\n---\nbody\n'
+    expect(changed(block, row, { list: { tags: { add: 'z' } } })).toBe(
+      '---\nTags: [x, y, z]\ntitle: a\n---\nbody\n',
+    )
+    // In a block the rows cannot draw, too.
+    const commented = '---\n# kept\nTags:\n  - x\n  - 007\n---\nbody\n'
+    expect(changed(commented, row, { list: { tags: { add: 'z' } } })).toBe(
+      '---\n# kept\nTags: [x, 007, z]\n---\nbody\n',
+    )
+    // A whole list keeps the members it did not change as the note wrote them.
+    expect(changed('---\nTags: [007, x]\n---\n', row, { note: { tags: [7, 'x', 'z'] } })).toBe(
+      '---\nTags: [007, x, z]\n---\n',
+    )
+    // Where the note has both spellings, they are two keys, and `tags` is its own.
+    expect(changed('---\nTags: [x]\ntags: [y]\n---\n', row, { list: { tags: { add: 'z' } } })).toBe(
+      '---\nTags: [x]\ntags: [y, z]\n---\n',
+    )
+  })
+
+  test('edits a list in a note whose lines end in CRLF', () => {
+    const row = noteRow('---\ntags: [a]\n---\n')
+    const crlf = (text: string) => text.replace(/\n/g, '\r\n')
+    for (const lead of ['', '# kept\n']) {
+      const flow = crlf(`---\n${lead}ids: [007, 1.10, "x", a]\ntitle: t\n---\nbody\n`)
+      expect(changed(flow, row, { list: { ids: { add: 'z' } } }), lead).toBe(
+        crlf(`---\n${lead}ids: [007, 1.10, "x", a, z]\ntitle: t\n---\nbody\n`),
+      )
+      expect(changed(flow, row, { list: { ids: { remove: 3 } } }), lead).toBe(
+        crlf(`---\n${lead}ids: [007, 1.10, "x"]\ntitle: t\n---\nbody\n`),
+      )
+      // A whole list keeps the members it did not change as written.
+      expect(changed(flow, row, { note: { ids: [7, 1.1, 'x', 'b'] } }), lead).toBe(
+        crlf(`---\n${lead}ids: [007, 1.10, "x", b]\ntitle: t\n---\nbody\n`),
+      )
+      const block = crlf(`---\n${lead}ids:\n  - 007\n  - "x"\ntitle: t\n---\nbody\n`)
+      expect(changed(block, row, { list: { ids: { add: 'z' } } }), lead).toBe(
+        crlf(`---\n${lead}ids: [007, "x", z]\ntitle: t\n---\nbody\n`),
+      )
+    }
+  })
+
+  test('refuses a chip it cannot write without losing what the block says', () => {
+    const row = noteRow('---\ntags: [a]\n---\n')
+    for (const text of [
+      // A comment inside the list itself, which a rewrite would drop.
+      '---\n# kept\ntags:\n  - a # why\n  - b\n---\n',
+      // A block that is not YAML at all.
+      '---\n# kept\ntags: [a\n---\n',
+      // A list of lists.
+      '---\n# kept\ntags:\n  - - a\n---\n',
+      // The same key twice.
+      '---\n# kept\ntags: [a]\ntags: [b]\n---\n',
+    ]) {
+      expect(changed(text, row, { list: { tags: { add: 'z' } } }), text).toBeNull()
+      expect(changed(text, row, { list: { tags: { remove: 0 } } }), text).toBeNull()
+    }
+  })
+
+  test('rewrites a list with the members it did not change exactly as written', () => {
+    const text = '---\nids: [1234567890123456789, 5, 1.10, 2.0, 007, -0]\n---\n# N\n'
+    const row = noteRow(text)
+    const after = '---\nids: [1234567890123456789, 1.10, 2.0, 007, -0]\n---\n# N\n'
+    expect(changed(text, row, { list: { ids: { remove: 1 } } })).toBe(after)
+    // The same list as values, the way a rename of a choice writes it.
+    const ids = row.note.ids
+    expect(Array.isArray(ids)).toBe(true)
+    const kept = Array.isArray(ids) ? ids.filter((_, at) => at !== 1) : []
+    expect(changed(text, row, { note: { ids: kept } })).toBe(after)
+    expect(
+      changed('---\ntags: [1.10, a, "[[B]]"]\n---\n', row, {
+        note: { tags: [1.1, 'b', { kind: 'link', target: 'B' }] },
+      }),
+    ).toBe('---\ntags: [1.10, b, "[[B]]"]\n---\n')
   })
 
   test('opens a block in a note that has none', () => {
@@ -196,6 +357,18 @@ describe('the write itself', () => {
     )
     expect(note?.text).toBe('- [x] Go ✅ 2026-10-07\nwords typed since\n')
     expect(disk.get(PATH)).toBe('- [x] Go ✅ 2026-10-07\nwords typed since\n')
+  })
+
+  // A row of a space shared to be read: Today and a base across every space draw them,
+  // and the replacement passes their note over (B280). Nothing written is not done.
+  test('a note in a space shared to be read is not written, and answers so', async () => {
+    const text = '- [ ] Go\n'
+    const { ws, undone } = holding(text)
+    share.readOnly = true
+
+    expect(await writeRow(ws, PATH, taskRow(text, 'Go'), { task: { done: true } })).toBe(false)
+    expect(disk.get(PATH)).toBe(text)
+    expect(undone.last).toBeUndefined()
   })
 
   test('a change the note already says writes nothing', async () => {

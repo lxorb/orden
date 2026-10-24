@@ -1,7 +1,7 @@
 import { answer, groupName, readBase } from '@nib/bases'
 import { describe, expect, test } from 'vitest'
 import { noteRow } from './fixture'
-import { databaseNote } from './new-database'
+import { databaseName, databaseNote } from './new-database'
 
 describe('a new database', () => {
   const words = databaseNote()
@@ -44,5 +44,19 @@ describe('a new database', () => {
       '5',
       '4',
     ])
+  })
+})
+
+describe('a new database’s name', () => {
+  test('is the one typed, without the ending the name field adds', () => {
+    expect(databaseName('Plans.md')).toBe('Plans')
+    expect(databaseName('a/b')).toBe('a-b')
+  })
+
+  test('is never a folder above or the folder itself', () => {
+    expect(databaseName('...md')).toBe('Board')
+    expect(databaseName('..')).toBe('Board')
+    expect(databaseName('.')).toBe('Board')
+    expect(databaseName('  ')).toBe('Board')
   })
 })

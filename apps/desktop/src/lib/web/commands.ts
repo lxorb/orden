@@ -24,7 +24,8 @@ import {
 } from './paths'
 import { isBaseTarget, isChatTarget, isWebTarget } from '@nib/markdown/links'
 import { assetType } from './asset-route'
-import { assets, files, KEEP, meta, snapshots, stats } from './store'
+import { isReserved } from '../naming'
+import { assets, type FileRow, files, KEEP, meta, snapshots, stats } from './store'
 import { markSeeded, wasSeeded } from '../seeded'
 import { breathe } from '../breathe'
 import { WELCOME, WELCOME_PATH } from '../welcome'
@@ -223,6 +224,69 @@ async function tree(root: string, options: TreeOptions = {}): Promise<Entry> {
   return top
 }
 
+/** Whether the app reads the file at a path as words (`read_note`, `read_highlights`):
+ *  a document of any kind, a base, a PDF's highlights. On the desktop that is one
+ *  disk; here words live in `files` and pictures in `assets`, and sync carries some
+ *  of these as bytes (`kindOfName` in sync-core makes a base and a sidecar a file).
+ *  Whatever arrives as bytes for one of them goes to `files`, so there is one place
+ *  each path's words are, whoever wrote them. */
+function readsAsText(path: string): boolean {
+  return (
+    isMarkdown(path) ||
+    isCanvas(path) ||
+    isPages(path) ||
+    path.endsWith(SIDECAR) ||
+    /\.(base|url|webloc|term|chat)$/i.test(path)
+  )
+}
+
+/** Words written as base64, the way `write_bytes` and `save_asset` are handed them. */
+function wordsOf(base64: string): string {
+  const binary = atob(base64)
+  const bytes = new Uint8Array(binary.length)
+  for (let at = 0; at < binary.length; at += 1) bytes[at] = binary.charCodeAt(at)
+  return new TextDecoder().decode(bytes)
+}
+
+function base64Of(words: string): string {
+  let binary = ''
+  for (const byte of new TextEncoder().encode(words)) binary += String.fromCharCode(byte)
+  return btoa(binary)
+}
+
+/** Bytes for a path: words into `files` for a path the app reads as words, a picture
+ *  into `assets` for any other. A row an earlier build left in the other store goes,
+ *  so nothing reads the old one back. */
+async function writeBytes(path: string, base64: string, type: string) {
+  const at = normalise(path)
+  if (!readsAsText(at)) {
+    await assets.put({ path: at, type, data: base64, modified: now() })
+    return
+  }
+  // Before the words, since dropping an asset drops the listing of its path too.
+  if (await assets.get(at)) await assets.remove(at)
+  await writeNote(at, wordsOf(base64))
+}
+
+/** The words at a path the app reads as words, moving them over from `assets` where
+ *  an earlier build put them: the newer of the two stands, and the asset goes. */
+async function textRow(path: string): Promise<FileRow | undefined> {
+  const at = normalise(path)
+  const file = await files.get(at)
+  if (!readsAsText(at)) return file
+  const asset = await assets.get(at)
+  if (!asset) return file
+
+  await assets.remove(at)
+  if (file && file.modified >= asset.modified) {
+    // The listing went with the asset; the file's own row puts it back.
+    await files.put(file)
+    return file
+  }
+  await writeNote(at, wordsOf(asset.data))
+  return await files.get(at)
+}
+
 async function writeNote(path: string, content: string) {
   // A plane's marks go into its listing with it, so the scan of the space never has
   // to read the plane for them; see `scanLinks`. Read to its icon and no further,
@@ -237,10 +301,16 @@ async function writeNote(path: string, content: string) {
 
 /** Everything under `from` moves, so renaming a folder takes its notes along -
  *  and the files beside them, which is how a PDF's own highlights follow it. */
-async function renameNote(from: string, to: string) {
+async function renameNote(from: string, to: string, hold = false, alone = false) {
   const source = normalise(from)
   const target = normalise(to)
   if (source === target) return
+
+  // Before anything moves; see `paperInTheWay`. `hold` is the window turning a PDF into
+  // its page note, the one move that may put a PDF where a page note takes it.
+  const turning = hold && isPdf(target) && parent(source) === parent(target)
+  const there = await paperInTheWay(source, target)
+  if (there && !turning) throw new Error(`${there} is already there`)
 
   const pictures = await moveAssets(source, target)
 
@@ -254,9 +324,10 @@ async function renameNote(from: string, to: string) {
   )
 
   // A PDF on its own is a row of the asset store alone, and has moved already; its
-  // highlights follow it, as they do on a desktop.
+  // highlights follow it, as they do on a desktop, unless sync is moving the one file
+  // (see `alone` on `rename_note` in notes.rs).
   if (!rows.length && pictures) {
-    if (isPdf(source)) await moveHighlights(source, target)
+    if (isPdf(source) && !alone) await moveHighlights(source, target)
     return
   }
   if (!rows.length) throw new Error('nothing to rename')
@@ -269,20 +340,36 @@ async function renameNote(from: string, to: string) {
     rows.map((row) => row.path),
   )
 
-  // A page note's paper follows the note, as `move_held` has it on a desktop.
-  if (isPages(source)) await renamePaper(paperOf(source), paperOf(target))
+  // A page note's paper follows the note, as `move_held` has it on a desktop, sync's move
+  // too: sync carries the paper with the note and never as an entry of its own (#551).
+  // Its highlights are one, which sync moves by a move of their own.
+  if (isPages(source)) await renamePaper(paperOf(source), paperOf(target), !alone)
+}
+
+/** The file a rename or a copy of `source` to `target` would put a page note and its
+ *  paper together with, or null: for a page note, a PDF already where its paper would
+ *  go, which is somebody's own; for a PDF, the page note that would take it for its
+ *  paper (#538). See `paper_in_the_way` in paths.rs. */
+async function paperInTheWay(source: string, target: string): Promise<string | null> {
+  if (isPages(target)) {
+    const paper = paperOf(target)
+    const own = paperOf(source) === paper
+    return (await files.get(source)) && !own && (await assets.get(paper)) ? paper : null
+  }
+  const holder = holderOf(target)
+  return holder && (await files.get(holder)) ? holder : null
 }
 
 /** A page note's paper, and the paper's own highlights, under the note's new name.
  *  Quiet where there is none, and where the name is taken: the note has moved, and a
  *  paper that could not follow is listed as the PDF it is rather than lost. */
-async function renamePaper(source: string, target: string) {
+async function renamePaper(source: string, target: string, highlights = true) {
   const paper = await assets.get(source)
   if (!paper || (await assets.get(target))) return
 
   await assets.put({ ...paper, path: target, modified: now() })
   await assets.remove(source)
-  await moveHighlights(source, target)
+  if (highlights) await moveHighlights(source, target)
 }
 
 /** A PDF's highlights, under the name the PDF has now. */
@@ -305,6 +392,8 @@ async function copyPath(from: string, to: string) {
   if ((await occupied(target)) || (await assets.get(target))) {
     throw new Error('something already lives there')
   }
+  const there = await paperInTheWay(source, target)
+  if (there) throw new Error(`${there} is already there`)
 
   const under = (one: string) => one === source || one.startsWith(`${source}/`)
   const copied = (one: string) => target + one.slice(source.length)
@@ -384,6 +473,8 @@ interface TrashEntry {
   name: string
   from: string
   trashedAt: number
+  /** Deleted by sync, which leaves a PDF's highlights out of the slot; see trash.rs. */
+  apart?: boolean
 }
 
 let trashCounter = 0
@@ -399,11 +490,11 @@ let trashCounter = 0
 function entryOf(value: unknown): TrashEntry | null {
   if (!isRecord(value)) return null
 
-  const { id, kind, name, from, trashedAt } = value
+  const { id, kind, name, from, trashedAt, apart } = value
   if (!isString(id) || !isString(kind) || !isString(name)) return null
   if (!isString(from) || !isNumber(trashedAt)) return null
 
-  return { id, kind, name, from, trashedAt }
+  return { id, kind, name, from, trashedAt, ...(apart === true ? { apart } : {}) }
 }
 
 async function trashEntries(): Promise<TrashEntry[]> {
@@ -435,7 +526,17 @@ async function holds(path: string): Promise<boolean> {
 /** `path` if nothing is there, else `name 2`, `name 3`... - before the
  *  extension for a note, after the name for a folder or a space. */
 async function freeSpot(path: string, isFile: boolean): Promise<string> {
-  if (!(await holds(path))) return path
+  return firstSpot(path, isFile, async (one) => !(await taken(one)))
+}
+
+/** The first of `path`, `name 2`, `name 3`... that `fits`; see `first_spot` in
+ *  paths.rs. */
+async function firstSpot(
+  path: string,
+  isFile: boolean,
+  fits: (one: string) => Promise<boolean>,
+): Promise<string> {
+  if (await fits(path)) return path
 
   const folder = parent(path)
   const file = basename(path)
@@ -445,20 +546,42 @@ async function freeSpot(path: string, isFile: boolean): Promise<string> {
 
   for (let counter = 2; ; counter++) {
     const candidate = join(folder, `${stem} ${counter}${extension}`)
-    if (!(await holds(candidate))) return candidate
+    if (await fits(candidate)) return candidate
   }
 }
 
-async function trashItem(path: string, kind: string): Promise<TrashEntry> {
+/** Whether a name is taken: by something there, by a page note and its paper,
+ *  `X.pages` and `X.pages.pdf`, which take each other's name, or by highlights a gone
+ *  PDF left; see `taken` in paths.rs. */
+async function taken(path: string): Promise<boolean> {
+  if ((await holds(path)) || (await pairedTaken(path))) return true
+  return isPdf(path) && !!(await files.get(sidecarOf(path)))
+}
+
+async function pairedTaken(path: string): Promise<boolean> {
+  if (/\.pages\.pdf$/i.test(path)) return holds(path.slice(0, -'.pdf'.length))
+  if (/\.pages$/i.test(path)) return holds(`${path}.pdf`)
+  return false
+}
+
+/** `alone` is sync's delete, which leaves a PDF's highlights; see `trash_item`. */
+async function trashItem(path: string, kind: string, alone = false): Promise<TrashEntry> {
   const source = normalise(path)
   if (source === '/' || source.startsWith(TRASH)) throw new Error('that cannot be deleted')
   if (!(await holds(source))) throw new Error('nothing is there')
 
   const id = `${now()}-${trashCounter++}`
   const name = basename(source)
-  await renameNote(source, `${TRASH}/${id}/${name}`)
+  await renameNote(source, `${TRASH}/${id}/${name}`, false, alone)
 
-  const entry = { id, kind, name, from: source, trashedAt: now() }
+  const entry = {
+    id,
+    kind,
+    name,
+    from: source,
+    trashedAt: now(),
+    ...(alone ? { apart: true } : {}),
+  }
   await saveTrash([...(await trashEntries()), entry])
   return entry
 }
@@ -490,10 +613,22 @@ async function restoreTrash(id: string): Promise<string> {
     throw new Error('it is already gone')
   }
 
-  const target = await freeSpot(entry.from, entry.kind === 'note')
+  // A PDF sync deleted apart from its highlights rejoins them where they came back ahead
+  // of it, rather than step aside from them as another PDF's; see `restore_target`.
+  const target =
+    entry.apart && (await rejoinsHighlights(entry.from))
+      ? entry.from
+      : await freeSpot(entry.from, entry.kind === 'note')
   await renameNote(held, target)
   await saveTrash(rest)
   return target
+}
+
+/** Whether only highlights are at `pdf`, nothing else and no page note taking it for its
+ *  paper; see `rejoins_highlights` in paths.rs. */
+async function rejoinsHighlights(pdf: string): Promise<boolean> {
+  if (!isPdf(pdf) || (await holds(pdf)) || (await pairedTaken(pdf))) return false
+  return !!(await files.get(sidecarOf(pdf)))
 }
 
 async function purgeTrash(id: string) {
@@ -833,7 +968,7 @@ export async function webInvoke<T>(
 
   switch (command) {
     case 'read_note': {
-      const row = await files.get(normalise(path))
+      const row = await textRow(path)
       if (!row) throw new Error('no such note')
       if (tooLarge(row.content)) throw new Error(TOO_LARGE)
       return row.content as T
@@ -848,12 +983,7 @@ export async function webInvoke<T>(
       // and papers are. `save_asset` below is the same write with the app's own
       // naming rule in front of it, for a picture that was pasted rather than
       // brought along.
-      await assets.put({
-        path: normalise(path),
-        type: assetType(path),
-        data: args.base64 as string,
-        modified: now(),
-      })
+      await writeBytes(path, args.base64 as string, assetType(path))
       return undefined as T
 
     case 'delete_note':
@@ -869,7 +999,12 @@ export async function webInvoke<T>(
       return undefined as T
 
     case 'rename_note':
-      await renameNote(args.from as string, args.to as string)
+      await renameNote(
+        args.from as string,
+        args.to as string,
+        args.hold === true,
+        args.alone === true,
+      )
       return undefined as T
 
     case 'copy_path':
@@ -942,7 +1077,7 @@ export async function webInvoke<T>(
       return undefined as T
 
     case 'trash_item':
-      return (await trashItem(path, args.kind as string)) as T
+      return (await trashItem(path, args.kind as string, args.alone === true)) as T
 
     case 'trash_words':
       return (await trashWords(path, args.content as string)) as T
@@ -966,7 +1101,10 @@ export async function webInvoke<T>(
 
     case 'save_asset': {
       const bytes = args.bytes as number[]
-      const name = (args.name as string) || `pasted-${now()}.png`
+      // A name and never a path: `a/b.png` would be a folder `a`. See `safe_name`.
+      const given = ((args.name as string) || `pasted-${now()}.png`).replace(/[/\\]/g, '-')
+      // `CON.png` is a device on Windows; see `safe_name` in assets.rs.
+      const name = isReserved(given) ? `_${given}` : given
       const notePath = args.notePath as string
       // Relative to the note's own folder, as the desktop command takes it; see
       // attachments.ts for which of the three it is.
@@ -983,22 +1121,31 @@ export async function webInvoke<T>(
       let binary = ''
       for (const byte of bytes) binary += String.fromCharCode(byte)
 
-      await assets.put({
-        path: join(folder, name),
-        // What the name says it is rather than the extension with `image/` in
-        // front: `image/svg` draws nothing, and the asset worker hands this row
-        // straight to an `<img>`. See asset-route.ts.
-        type: assetType(name),
-        data: btoa(binary),
-        modified: now(),
-      })
+      // The same picture again is the one copy, at whichever name it stepped aside to,
+      // unless it is a page note's paper; anything else steps aside. See `stored` in
+      // assets.rs.
+      const data = btoa(binary)
+      const same = async (one: string) =>
+        (await assets.get(one))?.data === data && !(isPdf(one) && (await pairedTaken(one)))
+      const target = await firstSpot(
+        join(folder, name),
+        true,
+        async (one) => !(await taken(one)) || (await same(one)),
+      )
+      const file = basename(target)
+      if (await same(target)) return (relative ? `${relative}/${file}` : file) as T
 
-      return (relative ? `${relative}/${name}` : name) as T
+      // What the name says it is rather than the extension with `image/` in front:
+      // `image/svg` draws nothing, and the asset worker hands this row straight to an
+      // `<img>`. See asset-route.ts. A text kind goes where it is read (`writeBytes`).
+      await writeBytes(target, data, assetType(file))
+
+      return (relative ? `${relative}/${file}` : file) as T
     }
 
     case 'read_highlights': {
       if (!isPdf(path)) throw new Error(`${path} is not a PDF`)
-      return ((await files.get(sidecarOf(path)))?.content ?? '') as T
+      return ((await textRow(sidecarOf(path)))?.content ?? '') as T
     }
 
     case 'write_highlights': {
@@ -1021,6 +1168,9 @@ export async function webInvoke<T>(
       return (await paperRecords()).map(({ path: at, size }) => ({ path: at, size })) as T
 
     case 'read_asset': {
+      // Words read as bytes, which is how sync sends a base or a PDF's highlights.
+      const words = readsAsText(path) ? await textRow(path) : undefined
+      if (words) return `data:${assetType(path)};base64,${base64Of(words.content)}` as T
       const row = await assets.get(normalise(path))
       if (!row) throw new Error('no such image')
       // The name first, the row second: a row written before the name was asked

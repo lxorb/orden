@@ -23,18 +23,25 @@
   import { frontMatterBlock } from '@nib/markdown/front-matter'
   import { type Property, readProperties } from '@nib/markdown/properties'
   import {
+    addProperty,
+    propertyNamed,
+    type ListItem,
     removeProperty,
     renameProperty,
     writeList,
     writeProperty,
   } from '@nib/markdown/property-edits'
   import { tick } from 'svelte'
+  import { cubicOut } from 'svelte/easing'
+  import { fly } from 'svelte/transition'
   import { t } from './i18n.svelte'
   import { longPress } from './longpress'
   import { menu, type MenuEntry } from './menu.svelte'
   import { modes } from './modes.svelte'
+  import { dur } from './motion'
   import { PROPERTY_CHOICES } from './property-choices'
   import { canWriteIn } from './sharing.svelte'
+  import { isMarkdownPath } from './space-paths'
   import { views } from './views.svelte'
   import { workspace } from './workspace.svelte'
   import PropertyValue from './properties/PropertyValue.svelte'
@@ -53,11 +60,19 @@
   /** The rows, or null for a note with no block or one nib cannot read without
    *  guessing; `block` tells those two apart. */
   const rows = $derived(doc === null ? null : readProperties(doc))
-  const writable = $derived(!!tab && !modes.readOnly && canWriteIn(tab.note))
+  /** Front matter is Markdown's, and an unknown file opens as a note tab too; a draft
+   *  with no path yet is a Markdown note. */
+  const markdown = $derived(!tab?.path || isMarkdownPath(tab.path))
+  const writable = $derived(!!tab && markdown && !modes.readOnly && canWriteIn(tab.note))
 
   /** Which key is being renamed, and whether a new key is being named. */
   let renaming = $state<string | null>(null)
   let adding = $state(false)
+  /** What has been typed as the new key's name, and the row the note already has under
+   *  that name: said while it is typed, as a name field says a taken name, since the
+   *  commit writes nothing for it. */
+  let naming = $state('')
+  const held = $derived(adding && doc !== null ? propertyNamed(doc, naming) : null)
   let list = $state<HTMLElement>()
 
   /** Puts one edit into the note, and the panel's own words forward at once rather
@@ -81,7 +96,7 @@
     apply(writeProperty(source(), property.key, value, property.kind))
   }
 
-  function writeItems(key: string, items: string[]) {
+  function writeItems(key: string, items: ListItem[]) {
     apply(writeList(source(), key, items))
   }
 
@@ -105,12 +120,17 @@
     apply(renameProperty(source(), key, field.value))
   }
 
-  /** A new key, written with nothing after it, and the keyboard put in its value. */
+  /** A new key, written with nothing after it, and the keyboard put in its value. A name
+   *  the note already has writes nothing, since writing it would empty that key, and the
+   *  keyboard goes to that key's value instead, which is what typing it was after. */
   async function finishAdding(field: HTMLInputElement) {
     if (!adding) return
     adding = false
-    const name = field.value.trim()
-    if (!name || !apply(writeProperty(source(), name, ''))) return
+    naming = ''
+    const typed = field.value.trim()
+    const existing = propertyNamed(source(), typed)
+    if (!existing && !apply(addProperty(source(), typed))) return
+    const name = existing?.key ?? typed
 
     await tick()
     list
@@ -203,24 +223,40 @@
             {writable}
             choices={PROPERTY_CHOICES[property.key] ?? null}
             onwrite={(value: string | null) => write(property, value)}
-            onitems={(items: string[]) => writeItems(property.key, items)}
+            onitems={(items: ListItem[]) => writeItems(property.key, items)}
             {onsearch}
           />
         </div>
       {/each}
 
       {#if adding}
-        <!-- svelte-ignore a11y_autofocus -->
-        <input
-          class="field new"
-          aria-label={t('Add a property')}
-          autofocus
-          onkeydown={(event) => {
-            commitOnEnter(event)
-            cancelOnEscape(event, () => (adding = false))
-          }}
-          onblur={(event) => void finishAdding(event.currentTarget)}
-        />
+        <span class="adding">
+          <!-- svelte-ignore a11y_autofocus -->
+          <input
+            class="field new"
+            class:is-wrong={held !== null}
+            bind:value={naming}
+            aria-label={t('Add a property')}
+            aria-invalid={held !== null}
+            autofocus
+            onkeydown={(event) => {
+              commitOnEnter(event)
+              cancelOnEscape(event, () => {
+                adding = false
+                naming = ''
+              })
+            }}
+            onblur={(event) => void finishAdding(event.currentTarget)}
+          />
+          {#if held}
+            <span
+              class="nib-bubble reason"
+              aria-live="polite"
+              transition:fly={{ y: -4, duration: dur(120), easing: cubicOut }}
+              >{t('That name is taken')}</span
+            >
+          {/if}
+        </span>
       {:else if writable}
         <button class="nib-row is-short adder" onclick={() => (adding = true)}>
           <span class="nib-row-label">{t('Add a property')}</span>
@@ -289,6 +325,21 @@
   .field.new {
     width: auto;
     margin: 2px var(--row-pad) 0;
+  }
+
+  /* The new key's field and the sentence under it, which is placed against it the way
+     NameField.svelte places its own. */
+  .adding {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .reason {
+    position: absolute;
+    top: calc(100% + 4px);
+    inset-inline-start: var(--row-pad);
+    z-index: var(--z-popover);
   }
 
   .adder {

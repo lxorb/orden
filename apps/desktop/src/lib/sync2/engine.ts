@@ -29,7 +29,7 @@ import { foldIn } from './ingest'
 import { settle, type SpaceState } from './places'
 import { pass, type Passed, resting } from './pass'
 import { project, wrote } from './project'
-import { rejoin } from './rejoin'
+import { keepLosers, rejoin } from './rejoin'
 import { againstBytes } from './records'
 import { put, type Change, type EntryRow, type LogRow, type SyncStore } from './store'
 import type { World } from './world'
@@ -340,6 +340,22 @@ export class Engine implements AskedEngine {
     // One that is not - a canvas, a note before its document arrived - takes the file's
     // words the way it takes another program's, three ways against nib's last write.
     await this.core.commit(await foldIn(this.core, placed.space, entry))
+  }
+
+  /** The side a small overlap between an open note and its document lost, kept as a
+   *  version the way a pass keeps one (rejoin.ts): the rule settled it without asking,
+   *  and the words it did not keep are in the history, never gone (binding.ts). */
+  keepLost(
+    id: string,
+    lost: { local: boolean; remote: boolean },
+    local: string,
+    remote: string,
+  ): Promise<void> {
+    return this.core.use(async () => {
+      const space = this.core.spaceOf(id)
+      if (!space) return
+      await this.core.commit(keepLosers(this.core, space, id, lost, local, remote))
+    })
   }
 
   /** A note whose words in a tab and in its document both moved past what nib last

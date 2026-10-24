@@ -111,9 +111,12 @@ export async function deleteSpace(ws: HoldsSpaces, id: string, keep = false) {
 
   {
     // The account keeps a deleted space for 14 days; signed out, this device
-    // keeps it in its trash folder instead (see trash.svelte.ts).
+    // keeps it in its trash folder instead (see trash.svelte.ts). Signed in, the
+    // account's copy stands in for the folder only when it is all there; see
+    // `accountHoldsSpace`.
+    const toAccount = account.signedIn && !keep && (await accountHoldsSpace(space.root))
     const gone = await (
-      account.signedIn && !keep
+      toAccount
         ? invoke('delete_space', { path: space.root })
         : invoke('trash_item', { path: space.root, kind: 'space' })
     )
@@ -136,4 +139,20 @@ export async function deleteSpace(ws: HoldsSpaces, id: string, keep = false) {
   ws.tree = null
   if (ws.activeSpaceId) await selectSpace(ws, ws.activeSpaceId)
   else ws.persist()
+}
+
+/** Whether the account's Recently deleted would give back everything in a space, so
+ *  its folder can go outright. It keeps only what sync handed it: a space made
+ *  offline and never pushed has no id there at all, a note written since the last
+ *  pass has its newest words on this disk alone, and a dotfile like `.git/` or
+ *  `.obsidian/` is never handed over. Nor a space somebody else owns: a deleted one
+ *  lands in its owner's Recently deleted, not in this account's. What counts as held
+ *  is what a folder delete asks; see `accountHoldsAll` in workspace/undoing.ts. */
+async function accountHoldsSpace(root: string): Promise<boolean> {
+  const { sync } = await import('../sync.svelte')
+  const id = sync.remoteIdFor(root)
+  if (id === null) return false
+  if (account.spaces.find((one) => one.id === id)?.role !== 'owner') return false
+  const { accountHoldsAll } = await import('./undoing')
+  return accountHoldsAll(root, (one, how) => sync.holds(one, how))
 }

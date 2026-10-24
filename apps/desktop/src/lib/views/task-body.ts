@@ -66,10 +66,34 @@ export function descriptionOf(text: string, anchor: Anchor): Description | null 
   const to = last + 1
   const said = lines
     .slice(from, to)
-    .map((line) => dedent(line, indent))
+    .map((line) => unescaped(dedent(line, indent)))
     .join('\n')
   return { from, to: Math.max(from, to), text: said }
 }
+
+/** A bullet or a number at the start of a line, and the backslashes already before its
+ *  mark: `- a`, `\\- a`, `1. a`, `1\\. a`. */
+const BULLET = /^([ \t]*)(\\*)([-*+](?:[ \t]|$))/
+const NUMBER = /^([ \t]*\d{1,9})(\\*)([.)](?:[ \t]|$))/
+
+/** A description's line as the note writes it: one that would start a list item gets a
+ *  backslash before its mark, which is the same words to markdown. The description ends
+ *  at the first list item, so `- a` written bare would be a list item of the task (or,
+ *  as `- [ ] x`, a sub-task), outside the lines the next write replaces, and every save
+ *  of the task view wrote it again. A line that had a backslash there already gets one
+ *  more, so reading takes exactly one off and every description reads back as typed. */
+function escaped(line: string): string {
+  return line.replace(BULLET, '$1\\$2$3').replace(NUMBER, '$1\\$2$3')
+}
+
+/** A description's line as it was typed: `escaped` undone. */
+function unescaped(line: string): string {
+  return line.replace(ESCAPED_BULLET, '$1$2').replace(ESCAPED_NUMBER, '$1$2')
+}
+
+/** The same two with a backslash before the mark, the first of which `unescaped` takes off. */
+const ESCAPED_BULLET = /^([ \t]*)\\(\\*[-*+](?:[ \t]|$))/
+const ESCAPED_NUMBER = /^([ \t]*\d{1,9})\\(\\*[.)](?:[ \t]|$))/
 
 /** A line with up to `columns` of its indent taken off. */
 function dedent(line: string, columns: number): string {
@@ -99,7 +123,7 @@ export function withDescription(text: string, anchor: Anchor, words: string): st
   const indent = contentIndent((lines[at] ?? '').replace(/\r$/, ''))
   const ending = (lines[at] ?? '').endsWith('\r') ? '\r' : ''
   const written = said
-    ? said.split('\n').map((line) => (line.trim() === '' ? '' : indent + line) + ending)
+    ? said.split('\n').map((line) => (line.trim() === '' ? '' : indent + escaped(line)) + ending)
     : []
   lines.splice(now.from, now.to - now.from, ...written)
   return lines.join('\n')
@@ -139,6 +163,11 @@ export interface Comment {
 
 const TASK_ITEM = /^[ \t]*(?:[-*+]|\d{1,9}[.)])[ \t]+\[.\]/
 const STAMP = /[ \t]*\[at::[ \t]*([^\]]*?)[ \t]*\]/
+/** A box at the start of a comment's words, and the backslashes before it: a comment
+ *  that opens `[ ] ` is written `\\[ ] `, or its line would be a sub-task. One more
+ *  backslash than it was typed with, as a description's list marks (`escaped`). */
+const BOXED = /^(\\+)(\[.\])/
+const BOX = /^(\\*)(\[.\])/
 
 /** The comments of the task an anchor names, in the order they are written. */
 export function commentsOf(text: string, anchor: Anchor): Comment[] {
@@ -157,7 +186,9 @@ export function commentsOf(text: string, anchor: Anchor): Comment[] {
     if (LIST_ITEM.test(line) && depth <= child) {
       open = null
       if (TASK_ITEM.test(line)) continue
-      const words = line.replace(MARKER, '')
+      const words = line
+        .replace(MARKER, '')
+        .replace(BOXED, (_, slashes: string, box: string) => slashes.slice(1) + box)
       const stamp = STAMP.exec(words)?.[1]
       open = { line: next, text: words.replace(STAMP, '').trim(), ...(stamp ? { at: stamp } : {}) }
       out.push(open)
@@ -194,7 +225,7 @@ export function withComment(
   }
   const [first = '', ...rest] = said.split('\n')
   const written = [
-    `${indent}- ${first.trim()} [at:: ${stamp}]${ending}`,
+    `${indent}- ${first.trim().replace(BOX, '\\$1$2')} [at:: ${stamp}]${ending}`,
     ...rest.filter((one) => one.trim()).map((one) => `${indent}  ${one.trim()}${ending}`),
   ]
   lines.splice(last + 1, 0, ...written)

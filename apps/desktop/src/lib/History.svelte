@@ -5,6 +5,7 @@
   import { KEEP_YEAR, modes } from './modes.svelte'
   import { recovery } from './recovery.svelte'
   import { scrollbar } from './scrollbar'
+  import { canWriteIn } from './sharing.svelte'
   import { readableSize } from './usage.svelte'
   import { t } from './i18n.svelte'
   import { when } from './when'
@@ -137,10 +138,10 @@
     // The tab the version on show was read for, not whichever is active now: the
     // two are the same until somebody switches notes with the sheet open.
     const tab = previewOf
-    if (!preview || !tab?.path) return
+    if (!preview || !tab?.path || !canWriteIn(tab.note)) return
 
     await recovery.keep(tab.path, tab.note.text)
-    workspace.restoreVersion(preview, tab)
+    await workspace.restoreVersion(preview, tab)
     open = false
   }
 
@@ -228,9 +229,13 @@
           <div class="diff same"><p class="empty">{t('No changes')}</p></div>
         {/if}
 
-        <button class="nib-button" onclick={() => void restore()}>
-          {t('Restore this version')}
-        </button>
+        <!-- A note in a space shared to be read is the owner's to change: its
+             versions are there to read, not to put back. -->
+        {#if canWriteIn(previewOf?.note)}
+          <button class="nib-button" onclick={() => void restore()}>
+            {t('Restore this version')}
+          </button>
+        {/if}
       </div>
     {/if}
   </div>

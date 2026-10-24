@@ -17,6 +17,8 @@
  *  and Keep would have thrown them away within the week; importing them would be
  *  the one act of this whole feature that nobody asked for. The count is said. */
 
+import { escapeText, plainWords } from '@nib/markdown/escapes'
+import { plainTaskWords } from '@nib/markdown/task-line'
 import { key } from '../i18n.svelte'
 
 import { dayOf, noteText, type Meta } from './meta'
@@ -82,7 +84,9 @@ export async function readKeep(sources: readonly Source[]): Promise<ImportPlan> 
 
     const text =
       typeof note.textContent === 'string' ? note.textContent.replace(/\r\n?/g, '\n').trim() : ''
-    if (text) words.push(text)
+    // Keep is plain text, so its words are written to read back as themselves:
+    // `$5-$10` is two prices rather than a formula; see `plainWords`.
+    if (text) words.push(plainWords(text))
 
     const items = listItems(note.listContent)
     if (items.length) words.push(items.map(taskLine).join('\n'))
@@ -208,8 +212,10 @@ interface Item {
   text: string
 }
 
+/** An item's words are text in Keep, as a note's are, and none of them a field of
+ *  the task (`plainTaskWords`). */
 function taskLine(item: Item): string {
-  return `- [${item.checked ? 'x' : ' '}] ${item.text}`
+  return `- [${item.checked ? 'x' : ' '}] ${plainTaskWords(item.text)}`
 }
 
 /** The pages Keep shows under a note as cards. A card for an address the words
@@ -226,7 +232,8 @@ function linksOf(said: unknown, text: string): string[] {
     if (!/^[a-z][a-z0-9+.-]*:[^\s<>]+$/i.test(url) || text.includes(url)) continue
 
     const title = typeof card.title === 'string' ? card.title.replace(/\s+/g, ' ').trim() : ''
-    const shown = title.replace(/[\\[\]]/g, (one) => `\\${one}`)
+    // A link's text, where nothing autolinks: words escaped as words.
+    const shown = escapeText(title, { addresses: false })
     links.push(shown ? `- [${shown}](<${url}>)` : `- <${url}>`)
   }
 

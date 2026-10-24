@@ -128,18 +128,23 @@ ACTIVITY = """
     // page has: the activity runs this line in the main frame.
     askForTheFrame: () => window.__nibFrame?.(held.word),
     bars: () => undefined,
-    handed: () => {
+    handed: (said) => {
+      if (said !== held.word) return ''
       const answer = held.handed
       held.handed = '{"command":"","open":""}'
       return answer
     },
-    shared: () => held.shared,
-    sharedBytes: (at, offset, length) => slice(held.bytes[at] ?? '', offset, length),
-    sharedDone: () => {
+    shared: (said) => (said === held.word ? held.shared : ''),
+    sharedBytes: (said, at, offset, length) =>
+      said === held.word ? slice(held.bytes[at] ?? '', offset, length) : '',
+    sharedDone: (said) => {
+      if (said !== held.word) return
       held.shared = ''
       held.said.done++
     },
-    widgets: (json) => held.said.widgets.push(json),
+    widgets: (said, json) => {
+      if (said === held.word) held.said.widgets.push(json)
+    },
     dictates: () => held.dictates,
     listen: (said, on) => {
       if (said !== held.word) return false

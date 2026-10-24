@@ -37,9 +37,17 @@ export function listen(): () => void {
         smart: quickAdd.smart,
       } satisfies Said)
     } else if (said.kind === 'task') {
-      void addTask(said.entry, { open: said.open }).catch((error: unknown) => {
-        log('error', `quick add: ${error instanceof Error ? error.message : String(error)}`)
-      })
+      // The window waits for this before it goes, so a task that went nowhere stays
+      // in its field.
+      const tell = (ok: boolean) =>
+        channel?.postMessage({ kind: 'added', id: said.id, ok } satisfies Said)
+      void addTask(said.entry, { open: said.open }).then(
+        (where) => tell(where !== null),
+        (error: unknown) => {
+          log('error', `quick add: ${error instanceof Error ? error.message : String(error)}`)
+          tell(false)
+        },
+      )
     }
   }
 

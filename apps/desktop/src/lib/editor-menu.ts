@@ -51,7 +51,7 @@ import { webHref } from './open-link'
 import { recordingAt, transcribeEmbed } from './recorder/commands'
 import { openExternal } from './tauri'
 import { shortcuts } from './shortcuts.svelte'
-import { noteName, relativeTo } from './space-paths'
+import { isMarkdownPath, noteName, relativeTo } from './space-paths'
 import { workspace } from './workspace.svelte'
 import { viewport } from './viewport.svelte'
 
@@ -106,6 +106,14 @@ function blockName(kind: BlockKind): string {
   }
 }
 
+/** The note a link to a block points into, or null where the block cannot have one:
+ *  in a note nobody has saved, which has no path, or in a file that is not a note.
+ *  Copying the link names the block first, ` ^id` on its last line, and in a
+ *  stylesheet, a snippet list or a text file that is a line spoiled. */
+export function blockLinkName(path: string | null | undefined): string | null {
+  return path && isMarkdownPath(path) ? noteName(path) : null
+}
+
 /** The rows about the block a press landed in: what it is, and what can be done
  *  to it.
  *
@@ -136,7 +144,7 @@ function blockEntries(
   const words = countText(
     spans.map((span) => view.state.doc.sliceString(span.from, span.to)).join('\n'),
   ).words
-  const name = path ? noteName(path) : null
+  const name = blockLinkName(path)
   const first = spans[0]
 
   return [
@@ -183,9 +191,9 @@ function blockEntries(
         // to markdown links gets one here too; see composer.ts. The block's own
         // path and the note it is written from are both this note, which is what
         // makes a relative link to it the bare file name.
-        const root = workspace.activeSpace?.root
-        const relative =
-          root !== undefined && path?.startsWith(root) ? relativeTo(root, path) : null
+        // The note's own space, which a note still open from another one is not.
+        const root = path ? workspace.rootHolding(path) : null
+        const relative = root !== null && path?.startsWith(root) ? relativeTo(root, path) : null
         void copyText(
           targets
             .map((target) =>
@@ -547,7 +555,11 @@ function recordingEntries(view: EditorView | undefined, at: number | null): Menu
  *  read off the decoration under the pointer rather than out of the document, because
  *  that decoration is what the press landed on; the document says where the link is
  *  written, which is what the two edits change. See link-edit.ts in @nib/editor. */
-function linkEntries(view: EditorView | undefined, event: MouseEvent): MenuEntry[] {
+function linkEntries(
+  view: EditorView | undefined,
+  event: MouseEvent,
+  path: string | null | undefined,
+): MenuEntry[] {
   const target = event.target
   const link = target instanceof Element ? target.closest('.nib-link') : null
   if (!link) return []
@@ -558,7 +570,7 @@ function linkEntries(view: EditorView | undefined, event: MouseEvent): MenuEntry
   const jump = view && at !== null && link.hasAttribute('data-note') ? jumpAt(view.state, at) : null
 
   return [
-    ...(jump ? noteEntries(jump) : []),
+    ...(jump ? noteEntries(jump, path ?? null) : []),
     ...(href && webHref(href) !== null
       ? [{ label: t('Open in the browser'), run: () => void openExternal(href) }]
       : []),
@@ -580,12 +592,17 @@ function linkEntries(view: EditorView | undefined, event: MouseEvent): MenuEntry
  *  right, which is Ctrl+Alt+click's. Not on a phone, which has no pane to put beside
  *  another. And the link itself, written the way the space writes links and from
  *  nowhere in particular, so it reads the same wherever it is pasted; see `linkTo`. */
-function noteEntries(jump: NoteJump): MenuEntry[] {
+function noteEntries(jump: NoteJump, from: string | null): MenuEntry[] {
   return [
-    { label: t('Open in new tab'), run: () => void workspace.followLink(jump, 'behind') },
+    { label: t('Open in new tab'), run: () => void workspace.followLink(jump, 'behind', from) },
     ...(viewport.touch
       ? []
-      : [{ label: t('Open to the side'), run: () => void workspace.followLink(jump, 'aside') }]),
+      : [
+          {
+            label: t('Open to the side'),
+            run: () => void workspace.followLink(jump, 'aside', from),
+          },
+        ]),
     { label: t('Copy link'), run: () => void copyText(linkOf(jump)) },
   ]
 }
@@ -651,7 +668,7 @@ export function showEditorMenu(
     event,
     [
       ...pictureEntries(view, event),
-      ...linkEntries(view, event),
+      ...linkEntries(view, event, path),
       ...editorMenu(view, blockEntries(view, at, path)),
       ...recordingEntries(view, at),
       ...spellingEntries(view, event),

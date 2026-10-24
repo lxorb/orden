@@ -21,7 +21,7 @@
  *  the file list the way Logseq's and Roam's journals do, and the media land in
  *  `assets/` beside them, which is where a picture pasted into a note goes. */
 
-import { htmlToMarkdown } from '@nib/markdown/from-html'
+import { destination, htmlToMarkdown } from '@nib/markdown/from-html'
 
 import { key } from '../i18n.svelte'
 import { folderPlan, isJunk } from './folder'
@@ -98,6 +98,7 @@ export async function readJournal(sources: readonly Source[]): Promise<ImportPla
           to: names.free(`${nameFor(entry, source.path)}.md`),
           read: () => ({
             text: entry.body,
+            // Written as words by `noteText`, the one place a title is escaped.
             title: entry.title || null,
             meta: { date: entry.date },
           }),
@@ -192,7 +193,10 @@ function entryOf(html: string, path: string): Entry {
   return {
     date,
     title: words(title?.inner ?? ''),
-    body: withMedia(htmlToMarkdown(rest, { fileTargets: true, appTargets: true }), html),
+    body: withMedia(
+      htmlToMarkdown(rest, { fileTargets: true, appTargets: true, plainTasks: true }),
+      html,
+    ),
     drawn: drawnCards(html),
   }
 }
@@ -264,7 +268,9 @@ function withMedia(markdown: string, html: string): string {
     missing.push(source)
   }
 
-  return [markdown, ...missing.map((source) => `![](${source})`)].filter(Boolean).join('\n\n')
+  return [markdown, ...missing.map((source) => `![](${destination(source)})`)]
+    .filter(Boolean)
+    .join('\n\n')
 }
 
 /** How many of an entry's cards are a picture Journal draws itself. A mood is a

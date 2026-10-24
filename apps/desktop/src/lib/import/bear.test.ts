@@ -86,6 +86,18 @@ describe('a Bear backup', () => {
     )
   })
 
+  test('a note with properties of its own keeps them in the one block', async () => {
+    const plan = await readBear(
+      bundle('Trip', '---\ntitle: Trip\nstatus: draft\n---\n# Trip\nwords\n', {
+        creationDate: '2024-01-02T00:00:00Z',
+      }),
+    )
+
+    expect(textOf(plan, 'Trip.md')).toBe(
+      '---\ntitle: Trip\nstatus: draft\ndate: 2024-01-02\n---\n\n# Trip\nwords\n',
+    )
+  })
+
   test('leaves the bin and the locked notes behind and says so, and archives the archived', async () => {
     const plan = await readBear([
       ...bundle('Kept', '# Kept\n', {}),

@@ -41,7 +41,7 @@
   import RollupBuilder from './RollupBuilder.svelte'
   import { templates } from './templates'
   import Popover from './Popover.svelte'
-  import { copyToBase } from './save'
+  import { copiesToBase, copyToBase } from './save'
   import { focusSoon } from './focus-soon'
   import { copyText } from '../clipboard'
   import { displayName } from './columns'
@@ -204,7 +204,7 @@
             },
           ]
         : []),
-      ...(kit.file === null
+      ...(kit.file === null && copiesToBase()
         ? [
             DIVIDER,
             {
@@ -509,16 +509,20 @@
   </div>
 {/snippet}
 {#snippet plusButton()}
-  <button
-    type="button"
-    class="nib-glyph"
-    title={notes ? t('New note') : t('Add task')}
-    aria-label={notes ? t('New note') : t('Add task')}
-    onclick={onadd}
-    oncontextmenu={plusMenu}
-  >
-    <svg viewBox="0 0 13 13"><path d={ADD_MARK} /></svg>
-  </button>
+  <!-- None on a base or a fence in a space shared to be read, which takes no new row,
+       nor where what is added would land in one, as Today's task in its inbox. -->
+  {#if kit.adds}
+    <button
+      type="button"
+      class="nib-glyph"
+      title={notes ? t('New note') : t('Add task')}
+      aria-label={notes ? t('New note') : t('Add task')}
+      onclick={onadd}
+      oncontextmenu={plusMenu}
+    >
+      <svg viewBox="0 0 13 13"><path d={ADD_MARK} /></svg>
+    </button>
+  {/if}
 {/snippet}
 
 {#snippet chip(which: 'chip-filter' | 'chip-sort', label: string, tool: Tool)}

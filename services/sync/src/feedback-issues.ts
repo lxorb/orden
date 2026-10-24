@@ -12,7 +12,13 @@
  *  reach, or no token set yet - so no report is lost. And none becomes two issues: a
  *  run takes a report on by writing its claim first, and one that finds a report tried
  *  before looks for the issue an earlier try may have opened without hearing back, by
- *  the report's id in its body, before it opens another. */
+ *  the report's id in its body, before it opens another.
+ *
+ *  Deleting the account a report came from deletes the report (erase.ts), and the issue
+ *  goes with it as far as this token can take it: closed, and its title and body
+ *  written over with nothing of the report, from the list of what an account leaves
+ *  behind (src/leftovers.ts). Deleting the issue itself takes an admin of the
+ *  repository, which the minion is not. */
 
 import { now } from './crypto'
 import { oneLine } from './email'
@@ -241,11 +247,24 @@ export async function openIssue(env: Env, id: string, at = now()): Promise<boole
   try {
     const issue =
       (row.issue_tries > 0 ? await openedBefore(to, report) : null) ?? (await opened(to, report))
-    await env.DB.prepare(
+    const written = await env.DB.prepare(
       'update feedback set issue_number = ?2, issue_url = ?3, issue_claim = null where id = ?1',
     )
       .bind(id, issue.number, issue.html_url)
       .run()
+    // The report went while GitHub was opening it: its account was deleted, and the
+    // erase found no issue to withdraw yet. So this run withdraws the one it opened,
+    // written down first, so one GitHub does not take now is withdrawn the next night.
+    if (!written.meta.changes) {
+      const what = `${ISSUES}${String(issue.number)}`
+      await env.DB.prepare('insert or ignore into leftovers (what, since) values (?1, ?2)')
+        .bind(what, at)
+        .run()
+      if ((await withdrawIssues(env, [issue.number])).length) {
+        await env.DB.prepare('delete from leftovers where what = ?1').bind(what).run()
+      }
+      return false
+    }
     return true
   } catch (error) {
     const tries = row.issue_tries + 1
@@ -272,4 +291,39 @@ export async function openWaitingIssues(env: Env, at = now()): Promise<void> {
     .bind(at, at - CLAIM, AT_ONCE)
     .all<{ id: string }>()
   for (const { id } of waiting.results) await openIssue(env, id, at)
+}
+
+/** How an issue is named on the list of what a deleted account leaves behind (0038):
+ *  `issues/<number>`. */
+export const ISSUES = 'issues/'
+
+/** What a withdrawn issue says instead of the report. */
+const WITHDRAWN = {
+  title: 'Feedback: withdrawn',
+  body: 'The account this report came from was deleted, and the report with it.',
+  state: 'closed',
+  state_reason: 'not_planned',
+}
+
+/** The issues of reports whose account was deleted, closed and written over, by
+ *  number. Answers the ones GitHub took; one it did not, or every one where no token is
+ *  set, waits for the next try. One that is not there any more is as good as withdrawn. */
+export async function withdrawIssues(env: Env, numbers: readonly number[]): Promise<number[]> {
+  const to = github(env)
+  if (!to) return []
+
+  const done: number[] = []
+  for (const number of numbers) {
+    try {
+      const response = await asked(to, `/repos/${to.repo}/issues/${String(number)}`, {
+        method: 'PATCH',
+        body: JSON.stringify(WITHDRAWN),
+      })
+      if (response.ok || response.status === 404 || response.status === 410) done.push(number)
+      else console.warn(`issue ${String(number)}: not withdrawn yet (${String(response.status)})`)
+    } catch (error) {
+      console.warn(`issue ${String(number)}: not withdrawn yet (${String(error)})`)
+    }
+  }
+  return done
 }

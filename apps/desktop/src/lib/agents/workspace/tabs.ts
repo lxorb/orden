@@ -18,7 +18,7 @@
 
 import { documentOf } from '@nib/editor'
 import type { AgentAnswer } from '../../automation/caller'
-import { folderOf, nameOf, relativeTo } from '../../space-paths'
+import { folderOf, nameOf, relativeTo, within } from '../../space-paths'
 import { type Section, settings } from '../../settings.svelte'
 import { ptyOf } from '../../terminal/running'
 import { views } from '../../views.svelte'
@@ -38,7 +38,15 @@ import { notes } from '../docs'
 import { asked } from './asks'
 import { type Call, done, flag, maybe, need, needScope, text, writerOf } from './call'
 import { Refused } from './problem'
-import { judged, judgedForWriting, onDisk, type Place, placeFor, sharedSource } from './spaces'
+import {
+  judged,
+  judgedForWriting,
+  onDisk,
+  type Place,
+  placeFor,
+  sharedSource,
+  writableAt,
+} from './spaces'
 import { tabWithId } from './tab-target'
 import { entryIn, moveFile } from './tree'
 
@@ -70,7 +78,11 @@ function tabOf(tab: Tab) {
     id: tab.id,
     kind: tab.kind,
     title: tab.shown,
-    ...(tab.path !== null && root && !outside ? { path: relativeTo(root, tab.path) } : {}),
+    // Relative to the active space, which a tab of another space is not in: its path
+    // from here would be this machine's whole one.
+    ...(tab.path !== null && root && !outside && within(root, tab.path) !== null
+      ? { path: relativeTo(root, tab.path) }
+      : {}),
     ...(url ? { url } : {}),
     pane: tab.paneId,
     front: front(tab),
@@ -415,6 +427,7 @@ async function saveTab(call: Call): Promise<AgentAnswer> {
   const relative = judgedForWriting(need(call, 'path'))
   const folder = folderOf(relative)
   const file = fileNamed(nameOf(relative), tab.kind)
+  writableAt(place, onDisk(place, relative))
 
   const question = await asked(call, null, `Save ${tab.shown} as ${relative}`)
   if (question) return question

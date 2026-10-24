@@ -1,3 +1,4 @@
+import { renderMarkdown } from '@nib/markdown'
 import { describe, expect, test } from 'vitest'
 
 import type { ImportPlan } from './plan'
@@ -156,6 +157,42 @@ describe('a Roam export, block by block', () => {
     expect(roamText('Type `{{[[TODO]]}} __x__` to make one')).toBe(
       'Type `{{[[TODO]]}} __x__` to make one',
     )
+  })
+
+  test('an escaped backtick opens no code, so a tag after it stays words', () => {
+    const text = roamText('\\`<img src=x> and `<b>`')
+    expect(text).toBe('\\`\\<img src=x> and `<b>`')
+    expect(renderMarkdown(text)).not.toContain('<img')
+  })
+
+  test('a tag in a block stays words, since Roam shows it as text, and its own markup still converts', () => {
+    const known = new Map([['abc', 'Embedded <iframe src=https://t.example/>']])
+    expect(
+      roamText(
+        '{{[[TODO]]}} ^^Look^^ <img src=https://t.example/p.gif> [[Page]] ((abc)) `<b>`',
+        known,
+      ),
+    ).toBe(
+      '[ ] ==Look== \\<img src=https://t.example/p.gif> [[Page]] Embedded \\<iframe src=https://t.example/> `<b>`',
+    )
+  })
+
+  test('a tag in a page stays words wherever the block is written', async () => {
+    const plan = await readRoam([
+      file(
+        'graph.json',
+        JSON.stringify([
+          {
+            title: 'Tagged',
+            children: [
+              { string: 'Hi <style>body{display:none}</style>', uid: 'a1', heading: 2 },
+              { string: 'Line\n<img src=https://t.example/p.gif>', uid: 'a2' },
+            ],
+          },
+        ]),
+      ),
+    ])
+    expect(noteAt(plan, 'Tagged.md')).not.toMatch(/(?<!\\)<\/?(img|style|iframe)/)
   })
 
   test('a link to a daily page says the date it is now', () => {

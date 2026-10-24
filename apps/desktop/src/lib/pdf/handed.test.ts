@@ -13,6 +13,8 @@ interface World {
   active: string | null
   /** Where `bringInPdf` says a paper landed; null for one that would not come in. */
   landed: string | null
+  /** The roots of spaces shared with this account to be read. */
+  readOnly: string[]
 }
 
 const world = vi.hoisted((): World => ({
@@ -22,6 +24,7 @@ const world = vi.hoisted((): World => ({
   done: [],
   active: 'work',
   landed: 'C:\\Nib\\Work\\a.pdf',
+  readOnly: [],
 }))
 
 vi.mock('../workspace.svelte', () => ({
@@ -58,6 +61,10 @@ vi.mock('../tauri', async (actual) => ({
 
 vi.mock('../log', () => ({ log: () => undefined }))
 
+vi.mock('../sharing.svelte', () => ({
+  canWriteAt: (path: string) => !world.readOnly.some((root) => path.startsWith(root)),
+}))
+
 vi.mock('@tauri-apps/api/window', () => ({
   getCurrentWindow: () => ({
     listen: (event: string, handler: (event: { payload: unknown }) => void) => {
@@ -77,6 +84,7 @@ beforeEach(() => {
   world.done = []
   world.active = 'work'
   world.landed = 'C:\\Nib\\Work\\a.pdf'
+  world.readOnly = []
 })
 
 test('listens before it asks, so no PDF falls between the two', async () => {
@@ -109,4 +117,23 @@ test('a paper that would not come in opens nothing, and nothing but paths is rea
   await showPdfs('C:\\not-a-list.pdf')
 
   expect(world.done).toEqual(['bring C:\\Users\\me\\Downloads\\big.pdf into C:\\Nib\\Work'])
+})
+
+test('a PDF from outside goes past a space shared to be read, into one that is not', async () => {
+  world.readOnly = ['C:\\Nib\\Work']
+  world.landed = 'C:\\Nib\\Home\\a.pdf'
+  await showPdfs(['C:\\Users\\me\\Downloads\\a.pdf'])
+
+  expect(world.done).toEqual([
+    'space home',
+    'bring C:\\Users\\me\\Downloads\\a.pdf into C:\\Nib\\Home',
+    'open C:\\Nib\\Home\\a.pdf',
+  ])
+})
+
+test('with every space shared to be read, nothing is brought in or opened', async () => {
+  world.readOnly = ['C:\\Nib\\Work', 'C:\\Nib\\Home']
+  await showPdfs(['C:\\Users\\me\\Downloads\\a.pdf'])
+
+  expect(world.done).toEqual([])
 })

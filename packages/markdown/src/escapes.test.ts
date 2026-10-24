@@ -1,10 +1,89 @@
 import { describe, expect, test } from 'vitest'
-import { escapeText } from './escapes'
+import {
+  editedWords,
+  escapeText,
+  heldEscapes,
+  plainWords,
+  released,
+  shownWords,
+  typedWords,
+  unescapedAt,
+} from './escapes'
+import { renderMarkdown } from './index'
+import { readTask } from './task-line'
 
 /** One text node at a time, which is how turndown hands a page's words over.
  *  from-html.test.ts is the same rule seen through a conversion; what is here is
  *  the rule itself, including the edges a page rarely reaches and an adversarial
  *  one aims for. */
+/** Words typed in another app that never meant markdown, a line at a time: they
+ *  read back as themselves, but a line that is a list item stays one. */
+describe('plain text, as a note may hold it', () => {
+  test('a dollar, a tilde, a caret and two percent signs are the characters', () => {
+    expect(plainWords('Tickets $5-$10\nwait ~5 min or ~10 min\nx^2 and format is %%d')).toBe(
+      'Tickets \\$5-\\$10\nwait \\~5 min or \\~10 min\nx\\^2 and format is %\\%d',
+    )
+    expect(renderMarkdown(plainWords('Tickets $5-$10, format is %%d\nrest'))).toBe(
+      '<p>Tickets $5-$10, format is %%d\nrest</p>\n',
+    )
+  })
+
+  test('two equals signs are the characters, not a highlight', () => {
+    expect(plainWords('if a==b or c==d then\nx === y')).toBe(
+      'if a=\\=b or c=\\=d then\nx =\\=\\= y',
+    )
+    expect(renderMarkdown(plainWords('if a==b or c==d then'))).toBe('<p>if a==b or c==d then</p>\n')
+  })
+
+  test('a list item stays a list item, and a heading-like line is words', () => {
+    expect(plainWords('- milk at ~2\n  * eggs $3\n1. one\n# not a heading')).toBe(
+      '- milk at \\~2\n  * eggs \\$3\n1. one\n\\# not a heading',
+    )
+  })
+
+  /** Up to three spaces in front change nothing about what a line opens, and four
+   *  make it code, where an escape is shown as a backslash. */
+  test('an indented line keeps its meaning', () => {
+    const NBSP = '\u00a0'
+    expect(plainWords('   # x\n  > x\nfoo\n   ---')).toBe('   \\# x\n  \\> x\nfoo\n   \\---')
+    expect(renderMarkdown(plainWords('   # x\n\n  > x\n\nfoo\n   ---'))).toBe(
+      '<p>   # x</p>\n<p>  &gt; x</p>\n<p>foo\n   ---</p>\n',
+    )
+    const indented = plainWords('Sum:\n\n    total $5 or ~10\n\n\tand a tab')
+    expect(indented).toBe(
+      `Sum:\n\n${NBSP.repeat(4)}total \\$5 or \\~10\n\n${NBSP.repeat(4)}and a tab`,
+    )
+    expect(renderMarkdown(indented)).toBe(
+      `<p>Sum:</p>\n<p>${NBSP.repeat(4)}total $5 or ~10</p>\n<p>${NBSP.repeat(4)}and a tab</p>\n`,
+    )
+  })
+
+  test('an indented bullet that no list is open for is words, and a nested one nests', () => {
+    const NBSP = '\u00a0'
+    const alone = plainWords('Steps\n\n\t* one [x]\n    - two')
+    expect(alone).toBe(`Steps\n\n${NBSP.repeat(4)}\\* one \\[x\\]\n${NBSP.repeat(4)}\\- two`)
+    expect(renderMarkdown(alone)).toBe(
+      `<p>Steps</p>\n<p>${NBSP.repeat(4)}* one [x]\n${NBSP.repeat(4)}- two</p>\n`,
+    )
+    const nested = plainWords('- a\n    - b [x]\n\n    - c')
+    expect(nested).toBe('- a\n    - b \\[x\\]\n\n    - c')
+    expect(renderMarkdown(nested)).toContain('<li>a<ul>\n<li><p>b [x]</p>')
+  })
+
+  test('a bullet under an item that runs on to a second line still nests', () => {
+    const nested = plainWords('- a\n  more words\n    - b [x]')
+    expect(nested).toBe('- a\n  more words\n    - b \\[x\\]')
+    expect(renderMarkdown(nested)).toContain('<li>a\nmore words<ul>\n<li>b [x]</li>')
+  })
+
+  test('a bare address still links', () => {
+    expect(plainWords('see https://a.test/~al/_x_/ now')).toBe('see https://a.test/~al/_x_/ now')
+  })
+})
+
+/** A page's prose, where the renderer autolinks a bare address. */
+const PROSE = { addresses: true }
+
 describe('a page’s text, as a note may hold it', () => {
   test('prose is prose', () => {
     expect(escapeText('Schauen Sie sich das Cheatsheet an.')).toBe(
@@ -135,7 +214,170 @@ describe('a page’s text, as a note may hold it', () => {
     expect(escapeText('a < b')).toBe('a < b')
   })
 
+  /** Obsidian's comment opens on two percent signs and closes on the next two, so
+   *  a page quoting `printf("%%d")` twice would lose every word between them. */
+  test('a percent sign that would open or close a comment is escaped', () => {
+    expect(escapeText('printf("%%d") and then printf("%%s") again')).toBe(
+      'printf("%\\%d") and then printf("%\\%s") again',
+    )
+    expect(escapeText('%%%')).toBe('%\\%\\%')
+    expect(escapeText('**a %% b** and %%')).toBe('\\*\\*a %\\% b\\*\\* and %\\%')
+    expect(escapeText('100% sure, 50 % off')).toBe('100% sure, 50 % off')
+  })
+
+  /** The renderer links a bare address as it is written, backslashes and all, so an
+   *  escape inside one is a broken link rather than a safer one. */
+  test('a bare web address is kept as it was written', () => {
+    expect(escapeText('see https://www.cs.cmu.edu/~bob/ now', PROSE)).toBe(
+      'see https://www.cs.cmu.edu/~bob/ now',
+    )
+    expect(escapeText('https://ex.com/page#:~:text=hello', PROSE)).toBe(
+      'https://ex.com/page#:~:text=hello',
+    )
+    // But for its brackets and backticks, which could close or open something
+    // around it where the address is a link's text. The renderer reads past those.
+    expect(escapeText('at www.example.com/_next/x and https://ex.com/a?b=[1]&c=`d`.', PROSE)).toBe(
+      'at www.example.com/_next/x and https://ex.com/a?b=\\[1\\]&c=\\`d\\`.',
+    )
+    expect(escapeText('a <https://ex.com/x>', PROSE)).toBe('a \\<https://ex.com/x>')
+    // What the renderer leaves off the end of an address is words again.
+    expect(escapeText('(https://ex.com/a_b) and *ftp://ex.com/x*', PROSE)).toBe(
+      '(https://ex.com/a_b) and \\*ftp://ex.com/x\\*',
+    )
+    // Not an address: nothing after the scheme, or no scheme the renderer links.
+    expect(escapeText('https:// and mailto:a_b [x]', PROSE)).toBe('https:// and mailto:a_b \\[x\\]')
+    // Nor one that holds a comment's two percent signs, which no writing keeps.
+    expect(escapeText('https://ex.com/a%%b', PROSE)).toBe('https://ex.com/a%\\%b')
+  })
+
+  /** Inline maths opens on a dollar with something other than a blank after it
+   *  and closes on the next one with something other than a blank before it, so
+   *  two prices in a sentence would draw the words between as a formula. */
+  test('a dollar that would open or close maths is escaped', () => {
+    expect(escapeText('Tickets cost $5-$10 each', PROSE)).toBe('Tickets cost \\$5-\\$10 each')
+    expect(escapeText('5$ or 10$', PROSE)).toBe('5\\$ or 10\\$')
+    expect(escapeText('$$', PROSE)).toBe('\\$\\$')
+    expect(escapeText('a $ b', PROSE)).toBe('a $ b')
+  })
+
+  /** A kept run is written as it is, so a dollar inside one would be a dollar the
+   *  rule above never saw: `**$5** and **$6**` would be maths from one to the other. */
+  test('a doubled marker around a dollar is escaped rather than kept', () => {
+    expect(escapeText('**$5** and **$6**', PROSE)).toBe('\\*\\*\\$5\\*\\* and \\*\\*\\$6\\*\\*')
+  })
+
+  /** Only a caller that knows its words are prose asks for addresses to be kept. A
+   *  link's text written by hand around the result - a media link's name, a card's
+   *  title - is inside brackets, where nothing autolinks. */
+  test('an address is words unless the words are said to be prose', () => {
+    const name = escapeText('https://player.test/v/__ab__/')
+    expect(name).toBe('https://player.test/v/\\_\\_ab\\_\\_/')
+    expect(renderMarkdown(`[${name}](https://player.test/v/__ab__/)`)).toBe(
+      '<p><a class="url" href="https://player.test/v/__ab__/">https://player.test/v/__ab__/</a></p>\n',
+    )
+  })
+
   test('nothing in, nothing out', () => {
     expect(escapeText('')).toBe('')
   })
+})
+
+/** A task's words in a field of their own: shown as the characters they say, and
+ *  written back with the escapes they need, so the round trip changes nothing. */
+describe('words shown and written back', () => {
+  test('the escapes come off, except in code', () => {
+    expect(shownWords('Prices \\$5-\\$10 \\~5 a=\\=b x\\\\y `a\\$b`')).toBe(
+      'Prices $5-$10 ~5 a==b x\\y `a\\$b`',
+    )
+  })
+
+  test('and go back on, leaving what the writer meant as markup alone', () => {
+    const shown = 'Prices $5-$10 ~5 min a==b **due** [the page](https://x.test/a) `a$b`'
+    const written = typedWords(shown)
+    expect(written).toBe(
+      'Prices \\$5-\\$10 \\~5 min a=\\=b **due** [the page](https://x.test/a) `a$b`',
+    )
+    expect(shownWords(written)).toBe(shown)
+    expect(renderMarkdown(written)).toBe(
+      '<p>Prices $5-$10 ~5 min a==b <strong>due</strong> <a href="https://x.test/a">the page</a> <code>a$b</code></p>\n',
+    )
+  })
+})
+
+/** A task's title edited in its field: the words the reader sees, changed, written
+ *  back. Every escape the line had stays where the words around it were not touched,
+ *  so an edit is never what turns the words into a field, a tag, a link or emphasis. */
+describe('a title edited and written back', () => {
+  const cases = [
+    ['read \\[key:\\: value\\] later', 'read', 'reread'],
+    ['Read later \\#tips', 'Read', 'Look'],
+    ['see \\[\\[y\\]\\] soon', 'soon', 'today'],
+    ['a \\*b\\* c', 'c', 'd'],
+    ['Prices \\$5-\\$10 \\~5 a=\\=b', 'Prices', 'Costs'],
+  ] as const
+
+  for (const [line, from, to] of cases) {
+    test(line, () => {
+      const before = readTask(`- [ ] ${line}`)
+      const edited = shownWords(line).replace(from, to)
+      const written = editedWords(line, edited)
+      const after = readTask(`- [ ] ${written}`)
+      expect(shownWords(after?.text ?? '')).toBe(edited)
+      expect(after?.tags).toEqual(before?.tags)
+      expect(after?.fields).toEqual(before?.fields)
+      expect(renderMarkdown(written)).toBe(renderMarkdown(line).replace(from, to))
+    })
+  }
+
+  test('what is typed new gets the escapes it needs, and an unchanged title is the line', () => {
+    expect(editedWords('milk \\$3', 'milk $3')).toBe('milk \\$3')
+    expect(editedWords('milk \\$3', 'milk $3 or ~5')).toBe('milk \\$3 or \\~5')
+    // The line's own markup is not what was typed, and stays as it was.
+    expect(editedWords('a ~~b~~ ==c== x^2^', 'a ~~b~~ ==c== x^2^ d')).toBe('a ~~b~~ ==c== x^2^ d')
+  })
+})
+
+describe('where the escapes taken off were', () => {
+  test('is where each character stands in the words shown, code passed over', () => {
+    const written = 'Tip \\#tips `a\\$b` \\@bob'
+    const shown = shownWords(written)
+    expect(shown).toBe('Tip #tips `a\\$b` @bob')
+    expect(unescapedAt(written).map((at) => shown[at])).toEqual(['#', '@'])
+    expect(unescapedAt('plain words')).toEqual([])
+  })
+})
+
+/** A backtick with a backslash in front of it is the character, as the renderer
+ *  reads it, and opens no code span for any reader here either. */
+describe('an escaped backtick', () => {
+  test('opens no code', () => {
+    expect(shownWords('1 \\` 2 \\` 3')).toBe('1 ` 2 ` 3')
+    expect(released(heldEscapes('1 \\` 2 \\` 3'))).toBe('1 ` 2 ` 3')
+    expect(shownWords('a \\\\`b` c')).toBe('a \\`b` c')
+  })
+
+  test('and an edit beside one keeps the line as it was', () => {
+    const line = 'w b=`^\\`< z'
+    const edited = 'w b=\\`< z'
+    expect(shownWords(editedWords(line, edited))).toBe(edited)
+  })
+})
+
+/** Lines with backticks, backslashes and markers, each shown, edited at one place and
+ *  written back: the line read again says the edited words, whatever the edit did to
+ *  the code spans and escapes around it. A seeded run, so a failure is the same again. */
+test('an edit anywhere in a line with backticks reads back as the edit', () => {
+  const ALPHABET = ['a', ' ', '\\', '`', '$', '~', '^', '=', '%', '<', '#']
+  let seed = 11
+  const next = () => (seed = (seed * 1103515245 + 12345) % 2147483648)
+  const pick = (length: number) =>
+    Array.from({ length }, () => ALPHABET[next() % ALPHABET.length]).join('')
+  for (let run = 0; run < 3000; run++) {
+    const line = pick(3 + (next() % 10))
+    const shown = shownWords(line)
+    const from = next() % (shown.length + 1)
+    const to = Math.min(shown.length, from + (next() % 3))
+    const edited = shown.slice(0, from) + pick(next() % 3) + shown.slice(to)
+    expect([line, edited, shownWords(editedWords(line, edited))]).toEqual([line, edited, edited])
+  }
 })

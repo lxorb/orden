@@ -10,6 +10,7 @@
  *  way a bookmark follows. A space that never renamed its inbox keeps nothing here. */
 
 import { insideItsSpace, insideSpace, movedTo, pathKey, relativeTo, samePath } from '../space-paths'
+import { readIfThere } from '../read-if-there'
 import { without } from '../records'
 import { forget, isRecord, isString, keep, stored } from '../stored'
 import { invoke, isDesktop, platform } from '../tauri'
@@ -60,6 +61,20 @@ export function setInbox(root: string, relative: string) {
 /** The space in front, whose inbox the crate was last told. */
 let front: string | null = null
 
+/** The space whose inbox a task from Shortcuts goes to: the one in front where it can
+ *  be written in, else the first that can, else none. The crate writes the task
+ *  straight onto the disk and knows nothing of who may write where, so a space shared
+ *  to be read is never named to it; and one is named even with nothing in front,
+ *  since what the crate falls back to is the first space on disk, whatever it is. */
+export function inboxSpace(
+  active: string | null,
+  roots: readonly string[],
+  writable: (root: string) => boolean,
+): string | null {
+  if (active !== null && writable(active)) return active
+  return roots.find(writable) ?? null
+}
+
 /** Tells the crate which note is the inbox of the space in front, which is where a task
  *  added from Shortcuts goes: the crate cannot read local storage, and the app may not
  *  even be open when one comes. Only a Mac has the action; see src-tauri/src/siri.rs. */
@@ -69,15 +84,17 @@ export function rememberInbox(root: string | null) {
   void invoke('remember_inbox', { path: insideSpace(root, inboxOf(root)) }).catch(() => undefined)
 }
 
-/** The space's inbox as a path on this disk, made empty where there is none yet. */
+/** The space's inbox as a path on this disk, made empty where there is none yet.
+ *  Throws `Unreadable` for an inbox that is there and would not read. */
 export async function ensureInbox(
   root: string,
   made: (path: string) => Promise<void>,
 ): Promise<string> {
   const path = insideSpace(root, inboxOf(root))
-  // Read rather than stamped: the browser's build answers no stamp for any file, and
-  // an inbox made over one that is there would be a note emptied.
-  const there = await invoke<string>('read_note', { path }).catch(() => null)
+  // Read, and the disk asked only where the read failed: an inbox that is there and
+  // would not read fails the read too, and one made over it would be a note emptied
+  // with the task landing in what is left.
+  const there = await readIfThere(path)
   if (there === null) await made(path)
   return path
 }

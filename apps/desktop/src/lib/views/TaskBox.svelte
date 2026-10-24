@@ -3,7 +3,9 @@
    *  filled while it is being done, filled and ticked once it is. Pressing it ticks the
    *  task through the engine's tick (act.ts), which is the editor's tick: a recurring
    *  task writes its next occurrence in the same edit. The fill answers the press at
-   *  once and the row follows when the note is written. */
+   *  once and the row follows when the note is written; and goes back where nothing
+   *  was, a note in a space shared to be read, so a task is never drawn done that is
+   *  not. */
   import type { TaskRow } from '@nib/bases'
   import { priorityTone } from '../quick-add/labels'
 
@@ -15,7 +17,8 @@
   }: {
     task: TaskRow
     label: string
-    ontick: () => void
+    /** Answers false where the tick was not written. */
+    ontick: () => unknown
     disabled?: boolean
   } = $props()
 
@@ -42,7 +45,9 @@
   onclick={(event) => {
     event.stopPropagation()
     if (!task.done) pressed = task
-    ontick()
+    void Promise.resolve(ontick()).then((ticked) => {
+      if (ticked === false && pressed === task) pressed = null
+    })
   }}
 >
   <svg viewBox="0 0 16 16" aria-hidden="true">

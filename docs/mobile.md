@@ -170,7 +170,10 @@ sandboxed exactly so the app is out of their reach. The bridge went round the
 sandbox, so an embedded page could have read every AI key on the phone or turned the
 microphone on.
 
-So `secretRead`, `secretWrite`, `secretForget` and `listen` take a word first: a
+So every method but the few that only say how the window looks (`insets`,
+`askForTheFrame`, `bars`, `dictates`, `exactAlarms`, `askExactAlarms`) takes a word
+first, since a framed page could otherwise also read or drop what was shared in,
+swallow a reminder's Done, or plant a widget row that runs any command. The word is a
 UUID the activity makes up at launch, which it will say only by running a line in
 the page - and `evaluateJavascript` runs in the main frame. A framed page may call
 `askForTheFrame` all it likes; the answer lands where it cannot read it. See
@@ -234,9 +237,9 @@ rather than whether it is allowed in.
 grant that lasts as long as the activity does. The page cannot read one: it has no
 file system of its own, and the crate refuses every path outside a space. So
 `Shared.kt` copies what arrived into the app's own cache while the grant is good,
-and hands it to the page in slices through the bridge - `shared()` for what it is,
-`sharedBytes(at, offset, length)` for a quarter of a megabyte at a time, and
-`sharedDone()` when the page has written it, which is when the copies go. Nothing
+and hands it to the page in slices through the bridge - `shared(said)` for what it is,
+`sharedBytes(said, at, offset, length)` for a quarter of a megabyte at a time, and
+`sharedDone(said)` when the page has written it, which is when the copies go. Nothing
 is decided in Kotlin beyond what the intent itself says.
 
 **What it becomes**, in `src/lib/mobile/shared.ts`, which is one answer for every

@@ -41,8 +41,9 @@ import { attach, attachPlane, type PlaneJoin } from './binding'
 import { carry, uncarry } from './carry'
 import { kindOfName } from './create'
 import { Engine } from './engine'
+import { type Holding, spend } from '../sync/holding'
 import type { Carried } from '../pages/carried'
-import { holdsDocument } from './kinds'
+import { holdsDocument, unixLines } from './kinds'
 import { hub } from './hub.svelte'
 import { firstPass, mirrorsFrom, type V1Listing, type V1Space } from './migrate'
 import { forgetSyncStore, get, openSyncStore, put } from './store'
@@ -80,9 +81,25 @@ function v1Spaces(accountId: string): Map<string, V1Space> {
   const held = isRecord(saved.mirrors) ? saved.mirrors : saved
   for (const [root, one] of Object.entries(held)) {
     const mirror: Mirror | null = readMirror(root, one)
-    if (mirror) out.set(mirror.spaceId, { cursor: mirror.cursor, notes: mirror.notes })
+    if (mirror) {
+      out.set(mirror.spaceId, {
+        cursor: mirror.cursor,
+        notes: mirror.notes,
+        ...(mirror.moving ? { moving: mirror.moving } : {}),
+      })
+    }
   }
   return out
+}
+
+/** v1's record of a space with what a pass of its left half done settled first: a
+ *  note waiting aside from a swap, which the first pass would read as deleted here.
+ *  v1's pass is fetched only for a record that has one; see `asidesBack`. */
+async function wholeV1(root: string, v1: V1Space | null): Promise<V1Space | null> {
+  const waiting = (path: string) => (path.split('/').pop() ?? '').startsWith('.nib-moving-')
+  if (!v1 || (!v1.moving && !Object.keys(v1.notes).some(waiting))) return v1
+  const { asidesBack } = await import('../sync/pass')
+  return { cursor: v1.cursor, notes: await asidesBack(root, v1.notes, v1.moving) }
 }
 
 class Runner {
@@ -435,7 +452,10 @@ class Runner {
         const space = engine.core.spaces.get(id)
         if (!space) continue
         if (!(await this.firstDone(engine, id))) {
-          const v1 = this.accountId ? (v1Spaces(this.accountId).get(id) ?? null) : null
+          const v1 = await wholeV1(
+            space.row.root,
+            this.accountId ? (v1Spaces(this.accountId).get(id) ?? null) : null,
+          )
           if (!(await firstPass(engine.core, space, v1))) {
             offline = true
             await engine.core.commit([
@@ -656,6 +676,15 @@ class Runner {
     return null
   }
 
+  /** The role the sync store kept for the space a folder is, as the account last
+   *  said it: what may be done there before the account is asked again. */
+  roleKept(root: string): string | null {
+    for (const space of this.engine?.core.spaces.values() ?? []) {
+      if (space.row.root === root) return space.row.role
+    }
+    return null
+  }
+
   /** The file on this disk an entry of the account is, by its id: null for one that is
    *  not on this disk, or in no space this device syncs. */
   fileOf(id: string): string | null {
@@ -677,6 +706,41 @@ class Runner {
       version: engine.core.numbers.get(entry.id)?.seq ?? 0,
       hash: entry.written_hash ?? '',
     }
+  }
+
+  /** Whether the account holds what is at a path on this disk now, so a delete can be
+   *  left to it; see `holds` in sync.svelte.ts.
+   *
+   *  An entry with a number has been handed over once, and that is all it says. A note
+   *  with words not acknowledged, or whose file another program wrote since nib did, is
+   *  ahead of the account. A file another program changed (`touched`), one whose bytes
+   *  the account names differently from the ones last on this disk, and one held in a
+   *  conflict - whose bytes here were never sent (`holdFile` in files.ts) - are too. Each
+   *  is read and hashed against what was last written, since the watcher's word on a
+   *  change can come a moment after the change. */
+  async holds(path: string, how: Holding = {}): Promise<boolean> {
+    const engine = this.engine
+    const entry = engine?.entryAt(path)
+    if (!engine || entry?.seq == null || entry.deleted || !entry.written_hash) {
+      return false
+    }
+    const core = engine.core
+    if (core.isHeld(entry.id)) return false
+
+    if (holdsDocument(entry.kind)) {
+      if (core.hasPending(entry.id)) return false
+      const words = await core.world.disk.read(path)
+      if (words === null || !spend(how, words.length)) return false
+      return (await core.world.digest(unixLines(words))) === entry.written_hash
+    }
+
+    if (core.touched.has(entry.id) || entry.file_key !== entry.written_hash) return false
+    const blobs = core.world.blobs
+    // What is larger than a folder check may still read is not read at all.
+    if (!blobs || (how.budget && (entry.size ?? Infinity) > how.budget.left)) return false
+    const bytes = await blobs.read(path)
+    if (!bytes || !spend(how, bytes.byteLength)) return false
+    return (await blobs.hash(bytes)) === entry.written_hash
   }
 
   /** A space deleted here: its rows go with it. */

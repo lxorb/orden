@@ -116,6 +116,43 @@ describe('a folder of markdown', () => {
 
     expect(plan.files[0]?.path).toBe('Note.md')
   })
+
+  /** Plain text never meant markdown: Tomboy, Keep and Apple's own exporters write
+   *  it, and its words have to read back as the characters they are. */
+  test("and a text file's words read back as themselves, not as markdown", async () => {
+    const plan = await readPlain([
+      file('Note.txt', 'Costs $5-$10\nFine <img src=x onerror=alert(1)>\nTitle\n---\n'),
+    ])
+
+    const text = noteAt(plan, 'Note.md')
+    expect(text).toContain('\\$5-\\$10')
+    expect(text).not.toMatch(/(?<!\\)<img/)
+    expect(text).not.toMatch(/^---$/m)
+  })
+
+  /** iA Writer, Ulysses, Simplenote, nvALT and Drafts all write markdown into a
+   *  `.txt`, so a text file that reads as markdown stays markdown. */
+  test('but a text file written in markdown keeps its markdown', async () => {
+    const draft =
+      '# Chapter one\n\nIt was *quiet*. See [notes](Notes.txt) and [[Notes]].\n\n> A quote\n'
+    const plan = await readPlain([file('Draft.txt', draft)])
+
+    expect(noteAt(plan, 'Draft.md')).toBe(draft)
+  })
+
+  test('and an export that only ever writes plain text has its words escaped', async () => {
+    const plan = await readPlain([file('Note.txt', '# not a heading\n\n*stars*\n')], {
+      format: 'apple-notes',
+    })
+
+    expect(noteAt(plan, 'Note.md')).toBe('\\# not a heading\n\n\\*stars\\*\n')
+  })
+
+  test('while a markdown file keeps its markdown', async () => {
+    const plan = await readPlain([file('Note.md', 'Costs $x$\n\n<u>under</u>\n')])
+
+    expect(noteAt(plan, 'Note.md')).toBe('Costs $x$\n\n<u>under</u>\n')
+  })
 })
 
 describe('a TextBundle', () => {
@@ -152,5 +189,14 @@ describe('a folder of HTML', () => {
     ])
 
     expect(noteAt(plan, 'A.md')).toContain('[[B|to B]]')
+  })
+
+  test('a video in a page is a link to the file that arrived beside it', async () => {
+    const plan = await readPlain([
+      file('Page.html', '<h1>Page</h1><video src="media/clip.mp4" controls></video>'),
+      file('media/clip.mp4', 'MP4'),
+    ])
+
+    expect(noteAt(plan, 'Page.md')).toContain('[clip.mp4](media/clip.mp4)')
   })
 })

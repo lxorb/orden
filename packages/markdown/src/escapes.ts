@@ -38,7 +38,13 @@
  *  - which is the same promise from-html.ts makes about the rest of its markers:
  *  a page pasted into a note and the same page clipped come out as one file. */
 
-import { asWords } from './words'
+import { OPENS_MARKUP } from './words'
+
+/** A `<` that would open a tag, escaped. Not `asWords`, which doubles the backslashes
+ *  in front of one: here every backslash has been escaped already, by `escapeAt`. */
+function bracketsOf(text: string): string {
+  return text.replace(OPENS_MARKUP, '\\<')
+}
 
 /** What a backslash escapes, which is ASCII punctuation and nothing else: `\*`
  *  is a star, and `\U` is a backslash and a U. */
@@ -75,9 +81,46 @@ const A_CODE_SPAN = /(`{1,3})([^`]+)\1(?!`)/y
 
 /** A doubled emphasis marker around plain words. The words may hold nothing the
  *  escaping was protecting the note from - no marker, no bracket, no backslash,
- *  no `<` - so what a page gets to keep is a phrase in bold, and never markup of
- *  its own in somebody's note. */
-const A_STRONG = /(\*\*|__)([^`*_[\]\\<]+)\1/y
+ *  no `<`, no `%` that could open a comment, no `$` that could open maths, no `=`
+ *  that could open a highlight - so what a page gets to keep is a phrase in bold,
+ *  and never markup of its own in somebody's note. */
+const A_STRONG = /(\*\*|__)([^`*_[\]\\<%$=]+)\1/y
+
+/** A bare web address, the way the renderer's autolink reads one: marked's GFM
+ *  `url` rule, a scheme it links or `www.` and then everything up to a blank or a
+ *  `<`. What it then trims off the end is `TRAILING`'s to say.
+ *
+ *  Kept as it was written because the renderer links the address character for
+ *  character, backslashes included: `https://www.cs.cmu.edu/\~bob/` is drawn as a
+ *  link to `/%5C~bob/`, a page that does not exist. And nothing inside one needs an
+ *  escape, because once the autolink has the address nothing else reads it. */
+const A_URL = /(?:(?:[hH][tT][tT][pP][sS]?|[fF][tT][pP]):\/\/|www\.)(?:[a-zA-Z0-9-]+\.?)+[^\s<]*/y
+
+/** marked's `_backpedal`: the punctuation an address does not end in, so the full
+ *  stop after one is the sentence's and a bracket is the one around it. Run until
+ *  it changes nothing, as marked runs it. */
+const TRAILING = /(?:[^?!.,:;*_'"~()&]+|\([^)]*\)|&(?![a-zA-Z0-9]+;$)|[?!.,:;*_'"~)]+(?!$))+/
+
+/** The letters an address can start with, asked before the pattern is run: a
+ *  conversion walks every character of a page and almost all of them are letters
+ *  that start nothing. */
+const AN_ADDRESS = /[hHfFw]/
+
+/** The address that starts here, as the renderer would link it, or nothing. Not one
+ *  holding two percent signs: those open a comment, which takes the address out of
+ *  the page whatever is done to it, so it is escaped as the words it is. */
+function addressAt(text: string, at: number): string | null {
+  if (!AN_ADDRESS.test(text[at] ?? '')) return null
+  A_URL.lastIndex = at
+  let address = A_URL.exec(text)?.[0]
+  if (!address) return null
+
+  for (let before = ''; before !== address;) {
+    before = address
+    address = TRAILING.exec(address)?.[0] ?? ''
+  }
+  return address && !address.includes('%%') ? address : null
+}
 
 /** Whether a run markdown would read may stay as it was written: nothing blank
  *  against the markers, which is where markdown stops reading one, and no more of
@@ -146,6 +189,32 @@ function escapeAt(text: string, at: number, midLine: boolean): string {
     // is a bullet instead.
     case '*':
       return midLine && isBlank(before) && isBlank(after) ? '*' : '\\*'
+    // Lowered and raised text, `H~2~O` and `x^2^`, open on a mark with something
+    // other than a blank after it and close on the next one, so `~5 min or ~10`
+    // would lower the words between. Two tildes are a line through. A mark with a
+    // blank after it opens neither, and with every one that could escaped there is
+    // nothing for it to close.
+    case '~':
+    case '^':
+      return isBlank(after) ? one : `\\${one}`
+    // Two percent signs open a comment and the next two close it, which takes the
+    // words between out of the page: `printf("%%d")` quoted twice would lose a
+    // sentence. One sign is a percentage and never anything else, so only the
+    // second of a pair is escaped, and `%\%` reads as the two signs it says.
+    case '%':
+      return before === '%' ? '\\%' : '%'
+    // Two equals signs open a highlight and the next two close it, so `a==b or
+    // c==d` would mark the words between. The same answer as for `%`: the second
+    // of a pair is escaped, and `=\=` reads as the two signs it says.
+    case '=':
+      return before === '=' ? '\\=' : '='
+    // Inline maths opens on a dollar with something other than a blank after it
+    // and closes on one with something other than a blank before it, so in
+    // `$5-$10` the two prices would be a formula of `5-`. A dollar with a blank on
+    // each side can do neither, and with every other one escaped there is nothing
+    // for a later dollar to pair with.
+    case '$':
+      return isBlank(before) && isBlank(after) ? '$' : '\\$'
     case '`':
     case '[':
     case ']':
@@ -155,8 +224,19 @@ function escapeAt(text: string, at: number, midLine: boolean): string {
   }
 }
 
-/** A page's words, as a note may hold them. */
-export function escapeText(text: string): string {
+/** A page's words, as a note may hold them.
+ *
+ *  `addresses` says whether a bare web address is kept as written, which is only
+ *  right where the renderer will autolink it. Inside a link's brackets nothing
+ *  does - marked and the editor both read a link's text as markdown - so there an
+ *  address is words like any other, and `pkg/__init__.py` unescaped would be
+ *  `init` in bold. Off unless asked for, because the caller that forgets is one
+ *  writing a link's text of its own, a media link's name or a card's title, and an
+ *  address escaped as words costs a backslash where one kept in brackets is markup. */
+export function escapeText(
+  text: string,
+  { addresses = false }: { addresses?: boolean } = {},
+): string {
   const out: string[] = []
   const numbered = A_NUMBER.exec(text)
   const block = numbered ? null : A_BLOCK.exec(text)
@@ -168,14 +248,42 @@ export function escapeText(text: string): string {
   let midLine = at > 0
 
   while (at < text.length) {
+    const address = addressAt(text, at)
+
+    // In a link's text an address is words, every character of it escaped as words
+    // are: not kept, and not a place a kept run may start either, which would make
+    // the `__init__` of `pkg/__init__.py` bold.
+    if (address && !addresses) {
+      for (const end = at + address.length; at < end; at++) {
+        escaped += escapeAt(text, at, midLine)
+      }
+      midLine = true
+      continue
+    }
+
+    if (address) {
+      // Written as it is but for its brackets and backticks. The same words can be a
+      // link's text, where nothing autolinks and a bare `]` would close the brackets
+      // around it - `[https://a.test/](https://evil.test)` - and a backtick would open
+      // code that runs past them. Escaped, they are the characters a link's text shows,
+      // and the renderer's autolink takes the escapes back off; see `bareAddress`
+      // in index.ts. A `<` just before is asked about with the address after it.
+      out.push(bracketsOf(escaped + address).slice(0, -address.length))
+      out.push(address.replace(/[[\]`]/g, '\\$&'))
+      escaped = ''
+      at += address.length
+      midLine = true
+      continue
+    }
+
     const kept = keptAt(text, at)
 
     if (kept) {
       // The words on either side of a kept run are escaped as the text they are,
-      // and `asWords` reads two characters at a time - so a run is a boundary for
+      // and `bracketsOf` reads two characters at a time - so a run is a boundary for
       // it as well. Nothing it looks for spans one: a `<` before a kept run is
       // followed by a marker, and a marker opens no tag.
-      out.push(asWords(escaped), kept)
+      out.push(bracketsOf(escaped), kept)
       escaped = ''
       at += kept.length
       midLine = true
@@ -187,6 +295,274 @@ export function escapeText(text: string): string {
     at += 1
   }
 
-  out.push(asWords(escaped))
+  out.push(bracketsOf(escaped))
   return out.join('')
+}
+
+/** The marker a line of plain text opens a list item with: a bullet or a number,
+ *  indented or not. Plain text typed in another app writes a list that way and
+ *  every reader of it, markdown or not, sees one. */
+const A_LIST_ITEM = /^[ \t]*(?:[-*+]|\d{1,9}[.)])[ \t]+/
+
+/** Words typed in another app that never meant markdown - a Keep note, a Tomboy
+ *  note's text, a spreadsheet's cell - as a note may hold them: written so they
+ *  read back as the characters they are.
+ *
+ *  `escapeText` already knows what each character would do in a note, and the
+ *  same escapes are wanted here: a tag opener, the dollars of `$5-$10`, the
+ *  tildes of `~5 or ~10`, the second of two percent signs. It is asked a line
+ *  at a time, because plain text keeps its line breaks and each line starts where
+ *  a block could. A line that opens a list item keeps its marker, since that is a
+ *  list in the app it came from as well; its words are escaped as words.
+ *
+ *  And it is asked past the line's indentation, which markdown reads through: up to
+ *  three spaces in front, `   # x` is still a heading and `  > x` a quote. Four make
+ *  the line code, where every escape would be shown as a backslash, so an indent that
+ *  deep is written in no-break spaces, which hold the line where it was and open
+ *  nothing. */
+export function plainWords(text: string): string {
+  // Whether a list is open, which an indented item can nest in: since the last list
+  // item, blank lines and the item's own words running on, on the next line or
+  // indented under it. Anywhere else four columns in front of a bullet make it code,
+  // as they would words.
+  let listOpen = false
+  let blankBefore = true
+  return text
+    .split('\n')
+    .map((line) => {
+      const indent = /^[ \t]*/.exec(line)?.[0] ?? ''
+      const deep = columnsOf(indent) >= 4
+      const blank = !line.trim()
+      const marker = A_LIST_ITEM.exec(line)?.[0]
+      const wasBlank = blankBefore
+      blankBefore = blank
+      if (marker && (!deep || listOpen)) {
+        listOpen = true
+        return marker + escapeText(line.slice(marker.length), { addresses: true })
+      }
+
+      if (!blank) listOpen &&= !wasBlank || indent.length > 0
+      const words = escapeText(line.slice(indent.length), { addresses: true })
+      return (deep && !listOpen ? NO_BREAK.repeat(columnsOf(indent)) : indent) + words
+    })
+    .join('\n')
+}
+
+const NO_BREAK = '\u00a0'
+
+/** How far in an indent reaches, a tab going on to the next stop of four, as
+ *  markdown counts it. */
+function columnsOf(indent: string): number {
+  let columns = 0
+  for (const one of indent) columns = one === '\t' ? columns + 4 - (columns % 4) : columns + 1
+  return columns
+}
+
+/** A backslash escape: one in front of ASCII punctuation, which is all CommonMark
+ *  lets one escape. */
+const AN_ESCAPE = /\\([!-/:-@[-`{-~])/g
+
+/** The text cut into what is code and what is not, in order, the way CommonMark
+ *  cuts it: a run of backticks opens a code span that the next run of the same
+ *  length closes, and one with no such run after it is backticks. A backtick with an
+ *  escape in front of it - an odd run of backslashes - is the character and opens
+ *  nothing, outside code; inside code a backslash is a backslash and escapes
+ *  nothing, so `` `C:\\` `` closes on its second backtick. */
+export function codeAndWords(text: string): { code: boolean; text: string }[] {
+  const out: { code: boolean; text: string }[] = []
+  let words = ''
+  let at = 0
+  while (at < text.length) {
+    const char = text.charAt(at)
+    if (char === '\\' && PUNCTUATION.test(text.charAt(at + 1))) {
+      words += text.slice(at, at + 2)
+      at += 2
+      continue
+    }
+    if (char !== '`') {
+      words += char
+      at += 1
+      continue
+    }
+
+    const run = /^`+/.exec(text.slice(at))?.[0] ?? '`'
+    const close = closingRun(text, at + run.length, run.length)
+    if (close === -1) {
+      words += run
+      at += run.length
+      continue
+    }
+    if (words) out.push({ code: false, text: words })
+    words = ''
+    out.push({ code: true, text: text.slice(at, close + run.length) })
+    at = close + run.length
+  }
+  if (words) out.push({ code: false, text: words })
+  return out
+}
+
+/** Where the run of exactly `length` backticks closing a code span starts, from
+ *  `from` on, or -1. */
+function closingRun(text: string, from: number, length: number): number {
+  for (let at = text.indexOf('`', from); at !== -1;) {
+    const run = /^`+/.exec(text.slice(at))?.[0].length ?? 1
+    if (run === length) return at
+    at = text.indexOf('`', at + run)
+  }
+  return -1
+}
+
+/** Words as a field or a notification shows them: every escape taken off, so a
+ *  task written `milk \$3` reads `milk $3`. Not in code, which shows its
+ *  backslashes as they are written. The inverse is `typedWords`. */
+export function shownWords(text: string): string {
+  return codeAndWords(text)
+    .map((one) => (one.code ? one.text : one.text.replace(AN_ESCAPE, '$1')))
+    .join('')
+}
+
+/** Where in `shownWords` of the text each character stands whose escape it took off:
+ *  what the line said was a word and not markup, which a field that reads its words
+ *  again must leave a word (`\#tips` is not a tag). */
+export function unescapedAt(text: string): number[] {
+  const out: number[] = []
+  let at = 0
+  for (const one of codeAndWords(text)) {
+    if (one.code) {
+      at += one.text.length
+      continue
+    }
+    let taken = 0
+    for (const found of one.text.matchAll(AN_ESCAPE)) {
+      out.push(at + found.index - taken)
+      taken++
+    }
+    at += one.text.length - taken
+  }
+  return out
+}
+
+/** Words typed into a field that edits a line of markdown, a task's title, written
+ *  back with the escapes `shownWords` took off: whatever would open maths, lowered or
+ *  raised text, a comment or a highlight, a tag, or would take the next character's
+ *  escape for itself. What the writer typed as markup of their own - bold, a link,
+ *  code - is left to be that, which is why this is narrower than `escapeText`. */
+export function typedWords(text: string): string {
+  return typedChars(text).join('')
+}
+
+/** `typedWords` a character at a time: each character of the text as it is written. */
+function typedChars(text: string): string[] {
+  return codeAndWords(text).flatMap((one) => {
+    const words = one.text
+    if (one.code) return words.split('')
+    const out: string[] = []
+    for (let at = 0; at < words.length; at++) {
+      const char = words.charAt(at)
+      const before = words[at - 1]
+      const after = words[at + 1]
+      const escaped =
+        (char === '\\' && after !== undefined && PUNCTUATION.test(after)) ||
+        (char === '$' && !(isBlank(before) && isBlank(after))) ||
+        ((char === '~' || char === '^') && !isBlank(after)) ||
+        ((char === '%' || char === '=') && before === char) ||
+        (char === '<' && /[A-Za-z/!?]/.test(after ?? ''))
+      out.push(escaped ? `\\${char}` : char)
+    }
+    return out
+  })
+}
+
+/** Each character `shownWords` shows of a line, with how the line writes it: the
+ *  character, or its escape. */
+function shownChars(text: string): { shown: string; written: string }[] {
+  return codeAndWords(text).flatMap((one) => {
+    const out: { shown: string; written: string }[] = []
+    for (let at = 0; at < one.text.length; at++) {
+      const char = one.text.charAt(at)
+      const next = one.text.charAt(at + 1)
+      if (!one.code && char === '\\' && PUNCTUATION.test(next)) {
+        out.push({ shown: next, written: `\\${next}` })
+        at += 1
+      } else out.push({ shown: char, written: char })
+    }
+    return out
+  })
+}
+
+/** A line of markdown after the words `shownWords` showed of it were edited into
+ *  `edited`: the line itself where nothing changed, and otherwise the line with only
+ *  the edited stretch written anew. Everything outside that stretch is the line's own
+ *  source, character for character - the `\\#` that keeps a tag words, the `:\\:`
+ *  that keeps a field words, and the line's own `~~struck~~`, `==marked==`, maths,
+ *  comments, HTML and `[[Note#^block]]` - and only what was typed new is escaped, by
+ *  `typedWords`, where it would read as markup. So editing a word changes that word. */
+export function editedWords(line: string, edited: string): string {
+  const was = shownChars(line)
+  const shown = was.map((one) => one.shown).join('')
+  if (edited === shown) return line
+
+  let head = 0
+  const most = Math.min(shown.length, edited.length)
+  while (head < most && shown[head] === edited[head]) head++
+  let tail = 0
+  while (tail < most - head && shown[shown.length - 1 - tail] === edited[edited.length - 1 - tail])
+    tail++
+
+  const typed = typedChars(edited)
+  const written = (keepHead: number, keepTail: number) => {
+    const out: string[] = []
+    for (let at = 0; at < edited.length; at++) {
+      if (at < keepHead) out.push(was[at]?.written ?? '')
+      else if (at >= edited.length - keepTail)
+        out.push(was[shown.length - (edited.length - at)]?.written ?? '')
+      else out.push(typed[at] ?? '')
+    }
+    return out.join('')
+  }
+
+  // A kept stretch means what it meant only where the edit did not change what it
+  // stands in: taking out the backtick that opened a code span leaves the words that
+  // were code as words, where a backslash in them is an escape. So each kept side is
+  // asked whether it still reads back as the edited words, and written anew where not.
+  for (const [keepHead, keepTail] of [
+    [head, tail],
+    [head, 0],
+    [0, tail],
+  ] as const) {
+    const out = written(keepHead, keepTail)
+    if (shownWords(out) === edited) return out
+  }
+  return typedWords(edited)
+}
+
+/** Where an escaped character is held while a reader looks for markup, so `\*` is
+ *  never the start of emphasis: the character, moved into the private use area. */
+const HELD = 0xe000
+
+/** The words with each escape held as one character no markup pattern matches;
+ *  `released` gives each back. For a reader of inline markup that is not a
+ *  markdown parser, the view's `pieces`, which would otherwise read `\*a\*` as
+ *  emphasis and show the backslashes. */
+export function heldEscapes(text: string): string {
+  // Not inside code, found first, where a backslash is a backslash: `C:\` before the
+  // closing backtick escapes nothing.
+  return codeAndWords(text)
+    .map((one) =>
+      one.code
+        ? one.text
+        : one.text.replace(AN_ESCAPE, (_, char: string) =>
+            String.fromCharCode(HELD + char.charCodeAt(0)),
+          ),
+    )
+    .join('')
+}
+
+/** Held escapes given back: as the characters they escaped, or as written, with the
+ *  backslash, for code, which shows them as they are. */
+export function released(text: string, asWritten = false): string {
+  return text.replace(/[-]/g, (one) => {
+    const char = String.fromCharCode(one.charCodeAt(0) - HELD)
+    return asWritten ? `\\${char}` : char
+  })
 }

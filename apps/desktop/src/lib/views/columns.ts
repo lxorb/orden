@@ -119,6 +119,11 @@ function noteKind(key: string, rows: readonly Row[]): Editor {
   return 'text'
 }
 
+/** Whether a note property's column holds lists, read off the first row that has it. */
+export function holdsLists(property: string, rows: readonly Row[]): boolean {
+  return noteKind(bare(property), rows) === 'list'
+}
+
 /** What a cell of this column is edited with. */
 export function editorOf(base: Base, property: string, rows: readonly Row[]): Editor {
   if (property.startsWith('task.')) return TASK_EDITORS[property.slice(5)] ?? 'none'

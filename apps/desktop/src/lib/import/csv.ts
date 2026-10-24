@@ -157,8 +157,10 @@ function rows(
 }
 
 /** The rows as records under the header's own names, which is what a database
- *  row is: a note's worth of properties. An empty header column is dropped, so a
- *  trailing comma in the header does not become a property called nothing. */
+ *  row is: a note's worth of properties. A column with no name and nothing in it
+ *  is dropped, so a trailing comma in the header does not become a property called
+ *  nothing; one with no name and something in it is `Column 2` after where it
+ *  stands, since what somebody typed under it is theirs whatever the header says. */
 export function recordsOf(text: string): { columns: string[]; rows: Record<string, string>[] } {
   const { rows: read, delimiter } = parsed(text)
   // The header is the first row with anything in it: a spreadsheet saved with an
@@ -175,14 +177,18 @@ export function recordsOf(text: string): { columns: string[]; rows: Record<strin
   // Two columns of one name would be one property, and the second would write over
   // the first in every row: the second is `Notes 2`, the way a note's name steps aside.
   const seen = new Set<string>()
-  const columns = head.map((one) => {
-    const name = one.trim()
-    if (!name) return name
-    let free = name
-    for (let step = 2; seen.has(free.toLowerCase()); step += 1) free = `${name} ${step}`
-    seen.add(free.toLowerCase())
-    return free
-  })
+  const free = (name: string) => {
+    let one = name
+    for (let step = 2; seen.has(one.toLowerCase()); step += 1) one = `${name} ${step}`
+    seen.add(one.toLowerCase())
+    return one
+  }
+  const named = head.map((one) => (one.trim() ? free(one.trim()) : ''))
+  // The columns the header left blank are named only once every name it gave is
+  // taken, so a `Column 2` of its own keeps its name.
+  const columns = named.map((name, at) =>
+    name || !table.slice(1).some((line) => line[at]?.trim()) ? name : free(`Column ${at + 1}`),
+  )
   const found: Record<string, string>[] = []
 
   for (const line of table.slice(1)) {

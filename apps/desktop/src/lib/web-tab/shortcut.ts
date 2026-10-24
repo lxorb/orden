@@ -60,7 +60,7 @@ const DATA_KEY = 'nib-data'
 const OWN = /^[0-9a-f]{16}$/
 
 /** A `.webloc`'s `URL` string, as written. */
-export const WEBLOC_URL = /(?<=<key>\s*URL\s*<\/key>\s*<string>)[\s\S]*?(?=<\/string>)/i
+const WEBLOC_URL = /(?<=<key>\s*URL\s*<\/key>\s*<string>)[\s\S]*?(?=<\/string>)/i
 
 /** What a shortcut file says. */
 export interface Shortcut {
@@ -236,6 +236,19 @@ export function readWebloc(text: string | null | undefined): string | null {
   const found = WEBLOC_URL.exec(text)
   const url = entities((found?.[0] ?? '').trim())
   return isWebAddress(url) ? url : null
+}
+
+/** A `.webloc` pointed somewhere else: the plist it already is, with only the string
+ *  after its `URL` key changed. A webloc has no key for a title, a home or a mark, so
+ *  every other key in it is the Mac's and is kept exactly as it was - and an internet
+ *  shortcut is never written into one, which neither nib nor Finder could open again. */
+export function aimWebloc(text: string, url: string): string {
+  return text.replace(WEBLOC_URL, () => escaped(url))
+}
+
+/** An address as a plist's string: the three marks XML text cannot hold bare. */
+function escaped(url: string): string {
+  return url.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
 /** The five entities XML can hold, which is all a plist writer escapes. */

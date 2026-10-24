@@ -308,6 +308,18 @@ describe('the whole line', () => {
     })
   })
 
+  test('what the line escaped stays words, and is no tag', () => {
+    const text = 'Tip the waiter #tips @bob #money'
+    const escaped = [text.indexOf('#tips'), text.indexOf('@bob')].map((from) => ({
+      from,
+      to: from + 1,
+    }))
+    expect(said(en(text, { escaped }))).toEqual({
+      text: 'Tip the waiter #tips @bob',
+      tags: ['money'],
+    })
+  })
+
   test('the last of two days is the day, the first stays words', () => {
     expect(said(en('Plan friday party tomorrow'))).toEqual({
       text: 'Plan friday party',

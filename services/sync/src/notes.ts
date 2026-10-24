@@ -8,6 +8,7 @@ import { FRONT_REV, readFront, titleFrom, writeFront } from './blog/front'
 import { rememberOldPaths } from './blog/paths'
 import { keepWords } from './blog/words'
 import { linkPointer } from './chats/pointer'
+import { keepPictures } from './pictures'
 import { keepReminders } from './push/reminders'
 import { fits } from './storage'
 import { byteLength, newId, now, sha256 } from './crypto'
@@ -215,6 +216,9 @@ export async function addNote(
   // same reason: the note is stored, and an index is rebuildable. See
   // blog/words.ts.
   await keepWords(env, note, content, titleFrom(note.path, content)).catch(() => undefined)
+  // And its pictures, so a deleted account knows which spaces still show the ones it
+  // held; see pictures.ts.
+  await keepPictures(env, note, content)
   // And its reminders, for a phone that has not opened nib since; see push/reminders.ts.
   await keepReminders(env, note, content).catch(() => undefined)
   // And, for a chat's pointer, the chat it names; see chats/pointer.ts.
@@ -255,6 +259,7 @@ async function placeNote(
   await env.NOTES.put(noteKey(spaceId, note.id), content)
   await keepVersion(env, note, content, by).catch(() => undefined)
   await keepWords(env, note, content, titleFrom(note.path, content)).catch(() => undefined)
+  await keepPictures(env, note, content)
   await keepReminders(env, note, content).catch(() => undefined)
   await linkPointer(env, note, content).catch(() => undefined)
   return note
@@ -431,6 +436,7 @@ export async function saveNote(
   // still lands on it. Best effort for the same reason. See blog/paths.ts.
   await rememberOldPaths(env, note, path, readFront(updated.front)).catch(() => undefined)
   await keepWords(env, updated, content, titleFrom(path, content)).catch(() => undefined)
+  await keepPictures(env, updated, content)
   await keepReminders(env, updated, content).catch(() => undefined)
   await linkPointer(env, updated, content).catch(() => undefined)
 
@@ -635,11 +641,18 @@ notes.get('/notes/:id/paper', async (context) => {
 /** The paper a page note holds, named by the hash of bytes already uploaded to
  *  `/v1/blobs`. Somebody who can write in the space only: what a note is made of is
  *  the space's to say, and somebody handed the one note writes on its pages, not under
- *  them. The bytes have to be the asker's or the space owner's already, so nobody can
- *  hang a paper they could not upload onto a note. */
+ *  them. The bytes have to be the asker's own already, so nobody can hang a paper they
+ *  could not upload onto a note - or the space owner's and already in this space, as a
+ *  paper or a file of it, which is bytes everybody here can read anyway. Not every blob
+ *  the owner keeps: a hash can be learned without the file, and somebody who writes in
+ *  one of the owner's spaces would otherwise read a PDF the owner keeps for another. */
 notes.put('/notes/:id/paper', async (context) => {
   const found = await reachedNote(context.env, context.get('who'), context.req.param('id'))
-  if (!found) return context.json({ error: NO_SUCH_NOTE }, 404)
+  // A note in Recently deleted, or purged down to its tombstone, takes no paper. A
+  // device that read the note while it was live can still be carrying one, and a paper
+  // hung on a tombstone is bytes the purge let go of, held again for ever. The space
+  // reaches a deleted note too, so it is refused here and not by `reachedNote`.
+  if (!found || found.note.deleted) return context.json({ error: NO_SUCH_NOTE }, 404)
   if (found.only || !allows(found.space.role, 'write')) {
     return context.json({ error: refusal('write') }, 403)
   }
@@ -654,9 +667,17 @@ notes.put('/notes/:id/paper', async (context) => {
 
   const who = context.get('who')
   const kept = await context.env.DB.prepare(
-    'select 1 as one from blobs where hash = ?1 and user_id in (?2, ?3) limit 1',
+    `select 1 as one from blobs
+      where hash = ?1
+        and (user_id = ?2
+             or (user_id = ?3
+                 and (exists (select 1 from notes where space_id = ?4
+                                and (paper = ?1 or (kind = 'file' and hash = ?1)))
+                      or exists (select 1 from spaces s, json_each(s.files) f
+                                  where s.id = ?4 and json_extract(f.value, '$.hash') = ?1))))
+      limit 1`,
   )
-    .bind(hash, who.kind === 'user' ? who.user.id : '', space.user_id)
+    .bind(hash, who.kind === 'user' ? who.user.id : '', space.user_id, space.id)
     .first<{ one: number }>()
   if (!kept) return context.json({ error: NO_PAPER }, 409)
 
@@ -946,6 +967,11 @@ notes.delete('/notes/:id', async (context) => {
     await pokeSpace(context.env, laterOf(context), note.space_id, note.seq, device)
     return context.json({ ok: true })
   }
+
+  // Deleted already, as the tree answers too: a second delete would start the 14 days
+  // of Recently deleted again, and on a purged tombstone it would put an empty note
+  // back there for somebody to restore.
+  if (note.deleted) return context.json({ ok: true })
 
   const at = now()
   await atNextSeq(

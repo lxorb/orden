@@ -28,6 +28,9 @@ interface Written {
   /** The words are a file an app kept for itself rather than an export it wrote,
    *  so nothing goes above them and nothing around them is tidied. */
   kept?: boolean
+  /** The words are Markdown somebody wrote in an app whose notes can open with a
+   *  block of properties, so a block they open with is the note's own. */
+  own?: boolean
 }
 
 interface Placement {
@@ -85,7 +88,9 @@ export async function folderPlan(
     written.push({
       kind: 'note',
       path: one.to,
-      text: said.kept ? keptText(body) : noteText(said.title ?? null, body, said.meta ?? {}),
+      text: said.kept
+        ? keptText(body)
+        : noteText(said.title ?? null, body, said.meta ?? {}, said.own),
     })
   }
 

@@ -205,6 +205,12 @@ interface Due {
   line: number
 }
 
+/** And takes them away again, for a note whose words have gone for good: a reminder
+ *  holds the words of its task, and nothing would send it now, so nothing keeps it. */
+export async function forgetReminders(env: Env, noteId: string): Promise<void> {
+  await env.DB.prepare('delete from push_reminders where note_id = ?').bind(noteId).run()
+}
+
 /** Every reminder due by now, pushed once to every device of its account. Answers how
  *  many were sent. */
 export async function sendDue(

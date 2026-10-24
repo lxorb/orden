@@ -62,6 +62,44 @@ describe('what is written under a task', () => {
     ).toBeNull()
   })
 
+  test('a description written at every pause is the one description, read back as typed', () => {
+    // The task view writes its whole text a moment after each pause in the typing.
+    const task = at(0, 'task')
+    let note = '- [ ] task\n'
+    for (const typed of ['hello\n- a', 'hello\n- ab', 'hello\n- abc']) {
+      note = withDescription(note, task, typed) ?? note
+      expect(descriptionOf(note, task)?.text).toBe(typed)
+    }
+    expect(note).toBe('- [ ] task\n  hello\n  \\- abc\n')
+    // A task typed into it is words of the description, never a sub-task.
+    const sub = withDescription(note, task, '- [ ] x') ?? note
+    expect(descriptionOf(sub, task)?.text).toBe('- [ ] x')
+    expect(withDescription(sub, task, '- [ ] xy')?.split('\n')).toEqual([
+      '- [ ] task',
+      '  \\- [ ] xy',
+      '',
+    ])
+  })
+
+  test('any description reads back as it was written', () => {
+    const task = at(0, 'task')
+    for (const words of [
+      '- a',
+      '* b\n+ c',
+      '1. one\n2) two',
+      '\\- an escape typed',
+      '1\\. so is this',
+      '  - indented',
+      '-not a list',
+      'words\n\n- after a gap',
+      '-',
+    ]) {
+      const note = withDescription('- [ ] task\n- [ ] next\n', task, words) ?? ''
+      expect(descriptionOf(note, task)?.text, words).toBe(words)
+      expect(note.split('\n').at(-2), words).toBe('- [ ] next')
+    }
+  })
+
   test('a sub-task goes at the end of what the task holds', () => {
     const after = withSubtask(NOTE, at(1, 'Call the bank'), '- [ ] Call again')
     expect(after?.split('\n').slice(5, 9)).toEqual([
@@ -102,6 +140,12 @@ describe('a task’s comments', () => {
       at: '2026-10-13T09:30',
     })
     expect(withComment(NOTE, bank, '   ', '2026-10-13T09:30')).toBeNull()
+  })
+
+  test('that open with a box stay comments, read back as written', () => {
+    const one = withComment(NOTE, bank, '[ ] not a task', '2026-10-13T09:30') ?? ''
+    expect(one.split('\n')[7]).toBe('  - \\[ ] not a task [at:: 2026-10-13T09:30]')
+    expect(commentsOf(one, bank).at(-1)?.text).toBe('[ ] not a task')
   })
 
   test('are deleted with their further lines', () => {

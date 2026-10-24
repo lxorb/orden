@@ -25,6 +25,7 @@ import { onTracks, putBackIn, trackedAgents, tracksOf, undoSomeIn } from '../../
 import { plural } from '../../i18n.svelte'
 import { insideSpace, nameOf, withinSpace } from '../../space-paths'
 import { dur } from '../../motion'
+import { onDisk } from '../../on-disk'
 import { onceAFrame } from '../../timing'
 import { workspace } from '../../workspace.svelte'
 import type { NoteDoc } from '../../workspace/documents.svelte'
@@ -422,7 +423,10 @@ class Review {
     for (const { agent, path } of redo.notes)
       await putBackIn({ id: agent, name: agent }, path, redo.token)
     for (const { path, words } of redo.made) {
-      if ((await workspace.noteText(path).catch(() => null)) === null) await writeFile(path, words)
+      // Only where nothing is at the name. A file there that will not read - another
+      // encoding, a lock - reads as null too, and writing into it wrote over it.
+      if ((await workspace.noteText(path).catch(() => null)) !== null) continue
+      if (!(await onDisk(path))) await writeFile(path, words)
     }
     if (redo.made.length) await workspace.loadTree()
     for (const one of redo.files) {

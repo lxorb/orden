@@ -11,6 +11,7 @@ import { chorded } from './keys'
 import { reading } from './direction'
 import type { OpenHow } from './new-tab'
 import { moving } from './list-landing.svelte'
+import { canWriteAt } from './sharing.svelte'
 import { folderOf, insideSpace, samePath } from './space-paths'
 import { type Bookmark, MOST_BOOKMARKS, sameBookmark } from './workspace/bookmarks.svelte'
 import { workspace, type Entry } from './workspace.svelte'
@@ -155,12 +156,16 @@ export async function unkeepInto(at: number, folder: string) {
   if (root === undefined || mark?.kind !== 'note') return
 
   const path = insideSpace(root, mark.path)
+  const moves = !samePath(folderOf(path), folder)
+  // Refused before the tile goes: the move would be, and the note then had neither its
+  // tile nor its new folder.
+  if (moves && !(canWriteAt(path) && canWriteAt(folder))) return
   await workspace.undone.batch(async () => {
     keepAs(
       root,
       held.filter((_, index) => index !== at),
     )
-    if (!samePath(folderOf(path), folder)) await workspace.move(path, folder)
+    if (moves) await workspace.move(path, folder)
   })
   if (!samePath(folder, root)) workspace.device.expand(folder)
 }

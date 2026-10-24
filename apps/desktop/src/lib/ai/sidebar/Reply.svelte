@@ -78,7 +78,12 @@
       source,
       (link) => {
         const found = link.target
-          ? links.targetOf(workspace.panelNote, { kind: 'wikilink', target: link.target })
+          ? // The panel's note as the path a tab holds, which is what `targetOf` reads:
+            // a note of another space resolves in its own space, where following goes.
+            links.targetOf(workspace.panelTab?.path ?? null, {
+              kind: 'wikilink',
+              target: link.target,
+            })
           : null
         return found === null ? null : { href: found }
       },
@@ -97,7 +102,8 @@
   })
 
   async function openAt(source: Source, press: MouseEvent) {
-    const root = workspace.activeSpace?.root
+    // A source is a path in the thread's own space; see `root` in chat.svelte.ts.
+    const root = chat.root
     if (!root) return
     const ask = tabAsk(press)
     if (viewport.drawer) workspace.closePanel('right')
@@ -123,7 +129,12 @@
       return
     }
     if (event.button === MIDDLE && !anchor.classList.contains('wikilink')) return
-    followNote({ path: href, target: href, heading: null, block: null, page: null }, event)
+    // In the panel note's space, where `drawn` resolved it.
+    followNote(
+      { path: href, target: href, heading: null, block: null, page: null },
+      event,
+      workspace.panelTab?.path ?? null,
+    )
   }
 
   const asNote = $derived(linkedAnswer(words, sources))

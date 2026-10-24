@@ -16,6 +16,7 @@
   import { DIVIDER, menu, type MenuEntry } from './menu.svelte'
   import { longPress } from './longpress'
   import { search } from './search.svelte'
+  import { canWriteAt } from './sharing.svelte'
   import { renameTag, removeTag } from './tag-actions'
   import type { TagNode } from './tag-tree'
   import { workspace } from './workspace.svelte'
@@ -27,10 +28,17 @@
 
   function menuFor(node: TagNode): MenuEntry[] {
     const label = workspace.undoLabel
+    // A tag is renamed or taken away in the notes of the space, and one shared to be
+    // read takes neither; see `replaceInNotes` in workspace/note-text.ts.
+    const writes = canWriteAt(workspace.activeSpace?.root ?? '')
 
     return [
-      { label: t('Rename tag'), run: () => void renameTag(node) },
-      { label: t('Delete tag'), danger: true, run: () => void removeTag(node) },
+      ...(writes
+        ? [
+            { label: t('Rename tag'), run: () => void renameTag(node) },
+            { label: t('Delete tag'), danger: true, run: () => void removeTag(node) },
+          ]
+        : []),
       ...(label ? [DIVIDER, { label, run: () => void workspace.undoFileAction() }] : []),
     ]
   }
