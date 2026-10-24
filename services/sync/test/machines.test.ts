@@ -684,16 +684,75 @@ describe('a session made on sync v1, asked for by its file under v2', () => {
     expect(keyOf(old.session)).toBe('term-1')
   })
 
-  test('is never somebody else’s to adopt', async () => {
-    const { writer, v1: old } = await v1()
+  /** Re-audit B202: a writer who opened the owner's file first had a session made on
+   *  their own machine and wrote it into the file, and the owner's own was refused as
+   *  `gone`, the shell in it cut off from its file. */
+  test('is never somebody else’s to adopt, nor taken over by opening the file first', async () => {
+    const { owner, writer, v1: old } = await v1()
     allow(WRITER)
     const theirs = await call<Term>(env, '/v2/online/terms', {
       token: writer,
       body: { term: 'term-1', session: old.session },
     })
-    expect(theirs.status).toBe(200)
-    expect(theirs.json.session).not.toBe(old.session)
+    expect(theirs.status).toBe(409)
+    expect(theirs.json).toEqual({ error: 'gone' })
     expect(keyOf(old.session)).toBe(old.session)
+    expect(live()).toHaveLength(1)
+
+    // The owner's own, after, is the session as it was; the writer joins it by the file.
+    const mine = await call<Term>(env, '/v2/online/terms', {
+      token: owner,
+      body: { term: 'term-1', session: old.session },
+    })
+    expect(mine.json).toEqual(old)
+    expect(keyOf(old.session)).toBe('term-1')
+  })
+
+  test('nor a moved file’s, whose words name the owner’s session', async () => {
+    const { owner, writer } = await world()
+    serviceOn()
+    allow(OWNER)
+    allow(WRITER)
+    const made = await call<Term>(env, '/v2/online/terms', {
+      token: owner,
+      body: { term: 'term-1' },
+    })
+    env.db
+      .prepare(
+        `insert into notes (id, space_id, path, seq, updated_at, size, hash)
+         values ('moved-1', 'space-1', 'Elsewhere/Build.term', 3, 1, 0, 'h')`,
+      )
+      .run()
+    env.db.prepare(`update notes set deleted = 1 where id = 'term-1'`).run()
+
+    const theirs = await call<Term>(env, '/v2/online/terms', {
+      token: writer,
+      body: { term: 'moved-1', session: made.json.session },
+    })
+    expect(theirs.status).toBe(409)
+    const mine = await call<Term>(env, '/v2/online/terms', {
+      token: owner,
+      body: { term: 'moved-1', session: made.json.session },
+    })
+    expect(mine.json).toEqual(made.json)
+  })
+
+  test('a copy of somebody’s file, theirs still there, is a session of the copier’s own', async () => {
+    const { owner, writer } = await world()
+    serviceOn()
+    allow(OWNER)
+    allow(WRITER)
+    const made = await call<Term>(env, '/v2/online/terms', {
+      token: owner,
+      body: { term: 'term-1' },
+    })
+    const copy = await call<Term>(env, '/v2/online/terms', {
+      token: writer,
+      body: { term: 'copy-1', session: made.json.session },
+    })
+    expect(copy.status).toBe(200)
+    expect(copy.json.session).not.toBe(made.json.session)
+    expect(keyOf(made.json.session)).toBe('term-1')
   })
 
   test('one ended, or never made, is a new session as before', async () => {
