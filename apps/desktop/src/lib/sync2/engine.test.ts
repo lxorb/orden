@@ -13,7 +13,7 @@ import { MemoryStore } from './memory-store'
 import { put, scan, StoreError, type Change } from './store'
 import { numbersRow, wantedRow } from './records'
 import { seedUpdate } from '@nib/sync-core/seed'
-import type { World } from './world'
+import type { Disk, World } from './world'
 import type { SpaceNews } from '../space-watch'
 import * as Y from 'yjs'
 
@@ -144,6 +144,16 @@ const PLAN = 'n1'
 /** Long enough for what an answer sets going to have landed. */
 function settled(): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, 20))
+}
+
+/** Every text the disk keeps as a version on this device, from now on. */
+function keptOn(disk: Disk): string[] {
+  const kept: string[] = []
+  disk.keep = (_path, text) => {
+    kept.push(text)
+    return Promise.resolve()
+  }
+  return kept
 }
 
 async function textOn(account: ReferenceAccount, id: string): Promise<string> {
@@ -477,11 +487,11 @@ describe('a push the account refuses', () => {
   }
 
   test('waits longer each time instead of asking every pass, and says so once', async () => {
-    const { one, pushes, logged, later } = await refusing('role')
+    const { one, pushes, logged, later } = await refusing('large')
     await one.engine.pass(SPACE)
     expect(pushes()).toBe(1)
     expect(one.engine.waiting(SPACE)).toBe(false)
-    expect(await logged()).toEqual(['you can only read this space'])
+    expect(await logged()).toEqual(['that note is too large'])
 
     await one.engine.pass(SPACE)
     expect(pushes()).toBe(1)
@@ -498,6 +508,53 @@ describe('a push the account refuses', () => {
     expect(await logged()).toHaveLength(1)
     // The words never left.
     expect((await one.engine.core.doc(PLAN))?.text().startsWith('kept ')).toBe(true)
+  })
+
+  test('in a space this device may only read lets the edit go, kept as a version, and takes the owner’s words again', async () => {
+    // Another program changed a reader's file. The account refuses it with `role` for as
+    // long as the space is read only, and a pull never lands on pending edits, so kept
+    // pending it would have stood between this device and every later word of the owner's.
+    const account = new ReferenceAccount(new Clock(), SEEDED)
+    const reader = await device(account, 'd0')
+    const owner = await device(account, 'd1')
+    const world = reader.engine.core.world
+    const ask = world.account.ask.bind(world.account)
+    world.account.ask = async (route, body, space) => {
+      if (route !== 'push') return await ask(route, body, space)
+      return { docs: (body as PushRequest).docs.map((doc) => ({ id: doc.id, refused: 'role' })) }
+    }
+    const kept = keptOn(reader.disk)
+
+    const file = `${ROOT}/Plan.md`
+    reader.disk.files.set(file, 'Changed in another editor.\n')
+    await reader.engine.foreign(file)
+    await reader.engine.pass(SPACE)
+    expect(kept).toContain('Changed in another editor.\n')
+    expect(reader.engine.core.hasPending(PLAN)).toBe(false)
+
+    const doc = await owner.engine.hold(PLAN)
+    doc?.live?.transact(() => doc.live?.getText(TEXT).insert(0, 'From the owner. '), HERE)
+    await owner.engine.saved(`${ROOT}/Plan.md`, doc?.text() ?? '')
+    await owner.engine.pass(SPACE)
+
+    await reader.engine.pass(SPACE)
+    expect(reader.disk.files.get(file)).toBe(await textOn(account, PLAN))
+    expect(reader.disk.files.get(file)?.startsWith('From the owner. ')).toBe(true)
+  })
+
+  test('lowered to reading while offline with an edit, keeps the edit as a version and the owner’s words', async () => {
+    const { one, pushes, logged } = await refusing('role')
+    const kept = keptOn(one.disk)
+    await one.engine.pass(SPACE)
+    expect(pushes()).toBe(1)
+    expect(kept.some((text) => text.startsWith('kept '))).toBe(true)
+    expect(one.disk.files.get(`${ROOT}/Plan.md`)).toBe(await textOn(one.account, PLAN))
+    expect(await logged()).toEqual(['you can only read this space'])
+
+    // Nothing is left to push, so nothing waits.
+    await one.engine.pass(SPACE)
+    expect(pushes()).toBe(1)
+    expect(one.engine.waiting(SPACE)).toBe(false)
   })
 
   test('goes up once the account takes it, and the wait is over', async () => {
