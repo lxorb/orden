@@ -330,3 +330,29 @@ describe('an escaped bracket in a task', () => {
     expect(readTask('- [ ] a [due:: 2026-01-01]')?.due).toBe('2026-01-01')
   })
 })
+
+/** Code in a task shows what is in it as written, backslashes and all, and reads as
+ *  no field and no tag. So nothing in it needs an escape, and none is written. */
+describe('code in a task', () => {
+  test('is left as it is by taskWords', () => {
+    expect(taskWords('use `std::move` on `x #b` now')).toBe('use `std::move` on `x #b` now')
+  })
+
+  test('holds no field', () => {
+    const task = readTask('- [ ] `[due:: 2026-01-01]` x')
+
+    expect(task?.due).toBeUndefined()
+    expect(task?.fields).toEqual({})
+    expect(task?.text).toBe('`[due:: 2026-01-01]` x')
+  })
+
+  test('while the words around it are still escaped', () => {
+    expect(taskWords('`a` #b [due:: 2026-01-01]')).toBe('`a` \\#b [due:\\: 2026-01-01]')
+  })
+})
+
+/** Two colons that open no field: an address's, after a colon of its own. Escaping
+ *  one there kept a backslash in the address the note links to. */
+test('an address with two colons in it is left as it is by taskWords', () => {
+  expect(taskWords('see https://example.com/a::b')).toBe('see https://example.com/a::b')
+})

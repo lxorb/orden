@@ -346,3 +346,17 @@ describe('a Keep title', () => {
     expect(renderMarkdown(note.text)).toContain('<h1>Tickets $5-$10 #work</h1>')
   })
 })
+
+test('a Keep list item keeps its code as it was written', async () => {
+  const plan = await readKeep([
+    file(
+      'Keep/List.json',
+      keepNote({
+        title: 'Code',
+        listContent: [{ text: 'use `std::vector` now', isChecked: false }],
+      }),
+    ),
+  ])
+
+  expect(noteAt(plan, 'Code.md')).toContain('- [ ] use `std::vector` now')
+})

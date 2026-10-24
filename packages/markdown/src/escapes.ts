@@ -368,7 +368,7 @@ const AN_ESCAPE = /\\([!-/:-@[-`{-~])/g
  *  escape in front of it - an odd run of backslashes - is the character and opens
  *  nothing, outside code; inside code a backslash is a backslash and escapes
  *  nothing, so `` `C:\\` `` closes on its second backtick. */
-function codeAndWords(text: string): { code: boolean; text: string }[] {
+export function codeAndWords(text: string): { code: boolean; text: string }[] {
   const out: { code: boolean; text: string }[] = []
   let words = ''
   let at = 0

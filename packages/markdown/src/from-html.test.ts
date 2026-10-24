@@ -1006,3 +1006,10 @@ describe('a checked list item', () => {
     expect(task?.fields).toEqual({})
   })
 })
+
+test('a to-do keeps its code as it was written', () => {
+  const html =
+    '<ul><li><input type="checkbox"> use <code>std::move</code> on <code>x #b</code></li></ul>'
+
+  expect(htmlToMarkdown(html).trim()).toBe('- [ ] use `std::move` on `x #b`')
+})
