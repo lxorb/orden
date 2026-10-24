@@ -95,9 +95,13 @@ export function onTheActivity(): boolean {
  *  One promise, shared: two features asking at the same moment are one question. */
 let word: Promise<string> | undefined
 
-/** How long the activity has to answer before the page gives up on it. An answer is
- *  one line run in the page and is there within a frame; a wait with no end would be
- *  a key field that never settles on an older build of the app. */
+/** How long the page waits for an answer before it asks again. An answer is one
+ *  line run in the page and is usually there within a frame, but it goes through
+ *  the UI thread, which on a cold start can be busy for longer than that. Asked
+ *  again rather than given up on: where `askForTheFrame` exists the activity always
+ *  answers, and a word given up on would be no word for the rest of the launch -
+ *  every call that wants one then does nothing at all, the share that started the
+ *  app among them (B456). */
 const PATIENCE = 2000
 
 export function frameWord(): Promise<string> {
@@ -107,12 +111,16 @@ export function frameWord(): Promise<string> {
   if (!ask) return Promise.resolve('')
 
   word = new Promise<string>((said) => {
-    const timer = setTimeout(() => said(''), PATIENCE)
+    let timer: ReturnType<typeof setTimeout> | undefined
     answer('__nibFrame', (text: string) => {
       clearTimeout(timer)
       said(text)
     })
-    ask()
+    const again = (): void => {
+      ask()
+      timer = setTimeout(again, PATIENCE)
+    }
+    again()
   })
 
   return word
