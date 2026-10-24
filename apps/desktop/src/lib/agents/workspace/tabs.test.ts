@@ -138,7 +138,9 @@ vi.mock('../../tauri', async (original) => ({
   },
 }))
 
-vi.mock('../../sharing.svelte', () => ({ isShared: () => false, canWriteAt: () => true }))
+/** Whether the open space is shared with this account only to read, set by a test. */
+let readOnly = false
+vi.mock('../../sharing.svelte', () => ({ isShared: () => false, canWriteAt: () => !readOnly }))
 vi.mock('../../web-tab/pages.svelte', () => ({ pages: { addressOf: () => null } }))
 vi.mock('../../views.svelte', () => ({ views: { of: () => null } }))
 vi.mock('../../sync.svelte', () => ({ sync: { nudge: () => undefined } }))
@@ -471,6 +473,18 @@ describe('naming and saving', () => {
     expect(await call('workspace_tabs', { op: 'save', tab: 'n1', path: 'x' })).toMatchObject({
       code: 'exists',
     })
+  })
+
+  test('an unsaved tab is not saved into a space shared to be read', async () => {
+    readOnly = true
+    try {
+      expect(
+        await call('workspace_tabs', { op: 'save', tab: 'c1', path: 'boards/Map' }),
+      ).toMatchObject({ code: 'read_only' })
+      expect(workspace.save).not.toHaveBeenCalled()
+    } finally {
+      readOnly = false
+    }
   })
 })
 

@@ -230,8 +230,11 @@ vi.mock('../../tauri', async (original) => ({
 
 vi.mock('../../sharing.svelte', () => ({
   isShared: (root: string) => root === '/s/Home',
-  canWriteAt: () => true,
+  canWriteAt: (path: string) => ![...readOnly].some((root) => path.startsWith(`${root}/`)),
 }))
+
+/** The roots of the spaces shared with this account to read, set by a test. */
+const readOnly = new Set<string>()
 
 /** What each space's index was asked, by root. */
 const indexed: { root: string; asked: string; args: unknown[] }[] = []
@@ -442,6 +445,7 @@ beforeEach(() => {
   files.clear()
   folders.clear()
   unreadable.clear()
+  readOnly.clear()
   files.set('/s/Work/Plan.md', '# Plan\n')
   files.set('/s/Work/Pinned.md', '# Pinned\n')
   files.set('/s/Home/Recipes.md', '# Recipes\n\nSee [[Soup]] tonight.\n')
@@ -1365,5 +1369,94 @@ describe('to-dos and bases', () => {
       code: 'not_granted',
     })
     expect(await dispatch('list_tasks', {}, [], 'here', reader)).toMatchObject({ status: 'ok' })
+  })
+})
+
+describe('a space shared to be read', () => {
+  /** The files as they are, to say afterwards that none of them changed. */
+  const before = () => new Map(files)
+  const writes = () =>
+    asked.filter((one) => ['write_note', 'save_asset', 'snapshot_note'].includes(one.command))
+
+  beforeEach(() => readOnly.add('/s/Home'))
+
+  test('edit_base refuses, and the base keeps its views', async () => {
+    files.set('/s/Home/Books.base', 'views:\n  - type: table\n    name: All\n')
+    const was = before()
+    expect(
+      await call('edit_base', {
+        space: 'Home',
+        path: 'Books.base',
+        ops: [{ op: 'add_view', name: 'Board', type: 'kanban' }],
+      }),
+    ).toMatchObject({ code: 'read_only' })
+    expect(files).toEqual(was)
+    expect(writes()).toEqual([])
+  })
+
+  test('add_row refuses, and no row note is made', async () => {
+    files.set(
+      '/s/Home/Books.base',
+      'filters: file.inFolder("Books")\nviews:\n  - type: table\n    name: All\n',
+    )
+    const was = before()
+    expect(
+      await call('add_row', { space: 'Home', base: 'Books.base', title: 'Emma' }),
+    ).toMatchObject({ code: 'read_only' })
+    expect(files).toEqual(was)
+    expect(writes()).toEqual([])
+  })
+
+  test('capture_to_note refuses before the picture is kept, new note or old', async () => {
+    reads({ html: undefined, png: btoa('PNG bytes') })
+    const was = before()
+    expect(
+      await call('capture_to_note', { space: 'Home', tab: 'a1', as: 'screenshot' }),
+    ).toMatchObject({ code: 'read_only' })
+    expect(
+      await call('capture_to_note', { space: 'Home', tab: 'a1', as: 'clip', note: 'Soup' }),
+    ).toMatchObject({ code: 'read_only' })
+    expect(files).toEqual(was)
+    expect(writes()).toEqual([])
+    expect(docs.editNote).not.toHaveBeenCalled()
+  })
+
+  test('attach_agent_log refuses, new note or old', async () => {
+    log = [
+      {
+        at: Date.parse('2026-09-30T09:00:01Z'),
+        agent: 'claude-code',
+        verb: 'read_note',
+        args: { path: 'Soup.md' },
+        status: 'ok',
+      },
+    ]
+    const was = before()
+    for (const note of ['Session', 'Soup']) {
+      expect(
+        await call('attach_agent_log', { space: 'Home', note, session: '2026-09-30' }),
+        note,
+      ).toMatchObject({ code: 'read_only' })
+    }
+    expect(files).toEqual(was)
+    expect(writes()).toEqual([])
+    expect(docs.editNote).not.toHaveBeenCalled()
+  })
+
+  test('restore_version refuses, closed note or open', async () => {
+    readOnly.add('/s/Work')
+    const was = before()
+    for (const [space, path] of [
+      ['Home', 'Soup'],
+      ['Work', 'Plan'],
+    ]) {
+      expect(
+        await call('restore_version', { space, path, version: 'device:1000' }),
+        path,
+      ).toMatchObject({ code: 'read_only' })
+    }
+    expect(files).toEqual(was)
+    expect(writes()).toEqual([])
+    expect(docs.writeNote).not.toHaveBeenCalled()
   })
 })
