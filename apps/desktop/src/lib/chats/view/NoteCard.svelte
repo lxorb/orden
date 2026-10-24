@@ -12,10 +12,11 @@
   import { workspace } from '../../workspace.svelte'
   import { cardLines } from './note-card'
 
-  const { target }: { target: string } = $props()
+  /** `from`: the chat's pointer, whose space the link is read in. */
+  const { target, from = null }: { target: string; from?: string | null } = $props()
 
-  const relative = $derived(links.targetOf(null, { kind: 'wikilink', target }))
-  const root = $derived(workspace.activeSpace?.root ?? null)
+  const relative = $derived(links.targetOf(from, { kind: 'wikilink', target }))
+  const root = $derived(workspace.rootHolding(from))
   const path = $derived(relative && root ? insideSpace(root, relative) : null)
   const name = $derived(path ? withoutExtension(nameOf(path)) : '')
   const folder = $derived(relative ? folderOf(relative) : '')

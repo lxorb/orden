@@ -15,16 +15,27 @@ import { links } from '../../link-index.svelte'
 const MOST_KEPT = 2000
 
 const kept = new Map<string, string>()
+/** Which version of the link index the kept HTML was drawn from. */
+let keptAt = -1
 
-export function bodyHtml(body: string): string {
-  const known = kept.get(body)
+/** `from` is the chat's pointer, so its links resolve in the chat's own space, which a
+ *  chat still open from another space is not the active one. Kept by the words and by
+ *  where they are, and drawn again once the index has changed: a chat of another space
+ *  is drawn before that space's notes have been read. */
+export function bodyHtml(body: string, from: string | null = null): string {
+  if (keptAt !== links.version) {
+    kept.clear()
+    keptAt = links.version
+  }
+  const key = `${from ?? ''}\0${body}`
+  const known = kept.get(key)
   if (known !== undefined) return known
   const html = renderMarkdown(body, {
     escapeHtml: true,
     breaks: true,
     resolveLink: (link) => {
       if (!link.target) return null
-      const found = links.targetOf(null, { kind: 'wikilink', target: link.target })
+      const found = links.targetOf(from, { kind: 'wikilink', target: link.target })
       return found === null ? null : { href: found }
     },
   })
@@ -32,7 +43,7 @@ export function bodyHtml(body: string): string {
     const oldest = kept.keys().next().value
     if (oldest !== undefined) kept.delete(oldest)
   }
-  kept.set(body, html)
+  kept.set(key, html)
   return html
 }
 
