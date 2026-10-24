@@ -18,6 +18,7 @@
   import { followHref } from '../../open-link'
   import Avatar from '../../people/Avatar.svelte'
   import { showProfile } from '../../people/card.svelte'
+  import { links } from '../../link-index.svelte'
   import { workspace } from '../../workspace.svelte'
   import { bodyHtml, firstLine, onlyEmoji } from './body'
   import type { ChatPage } from './chat.svelte'
@@ -92,13 +93,21 @@
   /** The note the message is about, drawn as a live card under its words. */
   const linked = $derived(message.deleted ? null : cardTarget(message.body))
 
-  /** The words, drawn, with the names they call marked. Run again when they change. */
-  function words(node: HTMLElement, said: { body: string; edited: boolean }) {
+  /** The chat's pointer, which the links in its messages are read from: its own space,
+   *  which a chat still open from another space is not the active one. */
+  const home = $derived(page.entry?.path ?? null)
+
+  /** The words, drawn, with the names they call marked. Run again when they change,
+   *  and when the index does, which is when another space's links come to resolve. */
+  function words(
+    node: HTMLElement,
+    said: { body: string; edited: boolean; from: string | null; version: number },
+  ) {
     let untip: { destroy: () => void } | null = null
-    const draw = (next: { body: string; edited: boolean }) => {
+    const draw = (next: { body: string; edited: boolean; from: string | null }) => {
       untip?.destroy()
       untip = null
-      node.innerHTML = bodyHtml(next.body)
+      node.innerHTML = bodyHtml(next.body, next.from)
       markMentions(node, callable)
       if (!next.edited) return
       // "Edited" after the last words where they end in a paragraph, under them
@@ -128,7 +137,7 @@
       return
     }
     if (/^[a-z][a-z\d+.-]*:/i.test(href) || href.startsWith('//')) followHref(href, event)
-    else workspace.openRelative(decodeURIComponent(href.split('#')[0] ?? href), {})
+    else workspace.openRelative(decodeURIComponent(href.split('#')[0] ?? href), {}, home)
   }
 
   function profile(event: MouseEvent) {
@@ -218,13 +227,18 @@
         <div
           class="body nib-rendered"
           class:big
-          use:words={{ body: message.body, edited: message.editedAt !== undefined }}
+          use:words={{
+            body: message.body,
+            edited: message.editedAt !== undefined,
+            from: home,
+            version: links.version,
+          }}
           onclick={follow}
         ></div>
       {/if}
 
       {#if linked}
-        <NoteCard target={linked} />
+        <NoteCard target={linked} from={home} />
       {/if}
 
       {#if files.seen.length}

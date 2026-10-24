@@ -26,7 +26,8 @@
   const follows = (_value: unknown) => undefined
 
   $effect(() => {
-    const root = workspace.activeSpace?.root
+    // The note's own space, which a note still open from another one is not the active.
+    const root = workspace.rootHolding(path)
     const names = [withoutExtension(fileName(path))]
     if (root) names.push(withoutExtension(relativeTo(root, path)))
     follows(heard)

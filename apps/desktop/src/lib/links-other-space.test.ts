@@ -209,3 +209,16 @@ test('a card on a canvas of another space shows the note of that space', async (
   const { fileSource } = await import('./canvas/render')
   await expect(fileSource('Plan.md', '/home/me/A/Board.canvas')).resolves.toBe('# Plan of A\n')
 })
+
+test("a message in a chat of another space links that space's notes", async () => {
+  const { bodyHtml } = await import('./chats/view/body')
+  await links.spaceRead('/home/me/A/Team.chat')
+
+  expect(bodyHtml('[[Only A]]', '/home/me/A/Team.chat')).toContain('href="Only%20A.md"')
+  expect(bodyHtml('[[Only A]]', '/home/me/B/Team.chat')).not.toContain('href="Only%20A.md"')
+})
+
+test('a note a message of another space links opens in that space', async () => {
+  workspace.openRelative('Plan.md', {}, '/home/me/A/Team.chat')
+  await vi.waitFor(() => expect(workspace.active?.path).toBe('/home/me/A/Plan.md'))
+})

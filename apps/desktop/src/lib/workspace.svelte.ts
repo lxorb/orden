@@ -2812,8 +2812,10 @@ class Workspace {
   /** A note named the way the space speaks of it, which is how the link index and
    *  the graph name them, opened the way a row in the file list opens: a look on
    *  one click, a tab of its own on two or with a modifier. */
-  openRelative(relative: string, how: OpenHow) {
-    const root = this.activeSpace?.root
+  openRelative(relative: string, how: OpenHow, from: string | null = null) {
+    // Relative to the space of `from` where one is given: a link in a chat of another
+    // space names that space's note.
+    const root = this.rootHolding(from)
     if (!root) return
 
     void this.openEntry(insideSpace(root, relative), how)
