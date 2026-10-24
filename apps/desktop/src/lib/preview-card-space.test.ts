@@ -51,7 +51,7 @@ function card() {
   document.body.append(host)
   const release = mountPreview(
     host,
-    { path: 'Plan.md', text: '# Plan of A\n', at: 0 },
+    { path: 'Plan.md', text: '# Plan of A\n', at: 0, readOnly: false },
     '/home/me/A/Note.md',
   )
   const view = EditorView.findFromDOM(host.querySelector<HTMLElement>('.cm-editor') ?? host)

@@ -48,6 +48,14 @@ vi.mock('../link-index.svelte', () => ({
 
 vi.mock('../sync.svelte', () => ({ sync: { nudge: () => void told.push('nudged') } }))
 
+/** The roots of the spaces shared with this account to be read, which take no write. */
+const readOnly = new Set<string>()
+
+vi.mock('../sharing.svelte', () => ({
+  canWriteAt: (path: string) =>
+    ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
+}))
+
 const { loadTags, noteText, replaceInNotes, retagNotes, toggleTaskAt, writeNoteText } =
   await import('./note-text')
 const { FileActions } = await import('./undo.svelte')
@@ -97,6 +105,7 @@ beforeEach(() => {
   sent.length = 0
   told.length = 0
   holding = null
+  readOnly.clear()
 })
 
 describe('a replacement across the space', () => {
@@ -175,6 +184,65 @@ describe('a replacement across the space', () => {
 
     expect(sent).toEqual([])
     expect(ws.undone.stack).toEqual([])
+  })
+})
+
+/** A space shared with this account to be read is one nothing may be written in: the
+ *  copy here would stop being the space's, and the sync refuses it on every pass. So a
+ *  replacement, a tick and a tag renamed all pass over its notes, and say so (B274). */
+describe('a space shared to be read', () => {
+  const change = (path: string) => ({
+    path,
+    before: 'before',
+    after: 'after',
+    edits: [{ from: 0, to: 6, insert: 'after' }],
+    back: [{ from: 0, to: 5, insert: 'before' }],
+  })
+
+  test('takes no replacement, and none is counted as done', async () => {
+    const { ws } = space({ [`${SPACE}/a.md`]: 'before' })
+    readOnly.add(SPACE)
+
+    expect(await replaceInNotes(ws, [change(`${SPACE}/a.md`)])).toBe(0)
+    expect(sent).toEqual([])
+    expect(disk.get(`${SPACE}/a.md`)).toBe('before')
+    expect(ws.undone.stack).toHaveLength(0)
+  })
+
+  test('while the notes of a space that may be written in still take theirs', async () => {
+    const { ws } = space({ [`${SPACE}/a.md`]: 'before', '/theirs/b.md': 'before' })
+    disk.set('/theirs/b.md', 'before')
+    readOnly.add('/theirs')
+
+    expect(await replaceInNotes(ws, [change('/theirs/b.md'), change(`${SPACE}/a.md`)])).toBe(1)
+    expect(disk.get(`${SPACE}/a.md`)).toBe('after')
+    expect(disk.get('/theirs/b.md')).toBe('before')
+    expect(sent.some((one) => one.path === '/theirs/b.md')).toBe(false)
+  })
+
+  test('ticks no task', async () => {
+    const { ws } = space({ [`${SPACE}/todo.md`]: '- [ ] wash up\n' })
+    readOnly.add(SPACE)
+
+    expect(await toggleTaskAt(ws, `${SPACE}/todo.md`, 0)).toBe(false)
+    expect(disk.get(`${SPACE}/todo.md`)).toBe('- [ ] wash up\n')
+    expect(sent.filter((one) => one.command !== 'read_note')).toEqual([])
+  })
+
+  test('renames no tag, and counts no note as renamed', async () => {
+    const { ws } = space({ [`${SPACE}/a.md`]: 'Plan #work\n' })
+    readOnly.add(SPACE)
+
+    expect(await retagNotes(ws, 'work', 'job')).toBe(0)
+    expect(disk.get(`${SPACE}/a.md`)).toBe('Plan #work\n')
+  })
+
+  test('nor is a note written from a hover card', async () => {
+    const { ws } = space({ [`${SPACE}/a.md`]: 'before' })
+    readOnly.add(SPACE)
+
+    await writeNoteText(ws, `${SPACE}/a.md`, 'before', 'after')
+    expect(disk.get(`${SPACE}/a.md`)).toBe('before')
   })
 })
 
