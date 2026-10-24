@@ -401,6 +401,23 @@ export function codeAndWords(text: string): { code: boolean; text: string }[] {
   return out
 }
 
+/** Where the code spans in `text` start and end, so nothing inside one is read as
+ *  a field or a tag: code is shown as it is written. */
+export function codeSpans(text: string): [number, number][] {
+  const out: [number, number][] = []
+  let at = 0
+  for (const one of codeAndWords(text)) {
+    if (one.code) out.push([at, at + one.text.length])
+    at += one.text.length
+  }
+  return out
+}
+
+/** Whether `at` falls inside one of the code spans `codeSpans` answered. */
+export function inCode(code: [number, number][], at: number): boolean {
+  return code.some(([from, to]) => at >= from && at < to)
+}
+
 /** Where the run of exactly `length` backticks closing a code span starts, from
  *  `from` on, or -1. */
 function closingRun(text: string, from: number, length: number): number {
