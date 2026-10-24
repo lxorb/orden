@@ -13,10 +13,10 @@
  *  table again, so what came in as a database is one (docs/tasks.md 4, "import CSV
  *  as a base"). */
 
+import { plainWords } from '@nib/markdown/escapes'
 import { key } from '../i18n.svelte'
 import { recordsOf } from './csv'
 import { type Base, writeBase } from '@nib/bases'
-import { asWords } from '@nib/markdown/words'
 import { dayOf, freeKey, noteText, type Meta, propertyName } from './meta'
 import { Names, safeName, withoutNotionId } from './names'
 import type { ImportPlan, Lost, Planned } from './plan'
@@ -108,12 +108,11 @@ export function tableOf(
 /** One cell, safe to put between two pipes: a pipe of its own is escaped, and the
  *  newlines in a paragraph somebody typed into a spreadsheet become spaces,
  *  because a markdown table has no way to hold a line break. A spreadsheet holds
- *  plain text, so a `<b>` in it is words and opens no tag (`asWords`). */
+ *  plain text, so a `<b>` in it is words and opens no tag (`plainWords`). */
 function cell(value: string): string {
-  return asWords(value)
-    .replace(/\s*\n\s*/g, ' ')
-    .replace(/\|/g, '\\|')
-    .trim()
+  // Escaped as the plain text a spreadsheet holds before the pipes are, so a pipe's
+  // backslash is not read as one of the cell's own.
+  return plainWords(value.replace(/\s*\n\s*/g, ' ').trim()).replace(/\|/g, '\\|')
 }
 
 /** One row as a note: its columns are its properties, and the column it is named
@@ -151,7 +150,7 @@ export function rowNote(
     // Anything with a line in it is prose, and prose in front matter is a
     // property nobody can read.
     if (value.includes('\n')) {
-      words.push(`## ${asWords(column)}\n\n${asWords(value)}`)
+      words.push(`## ${plainWords(column)}\n\n${plainWords(value)}`)
       continue
     }
 

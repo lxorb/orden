@@ -28,6 +28,7 @@
  *  line is a pure answer to "what would this share become", which is the part
  *  worth testing, and the Kotlin side is in Shared.kt. */
 
+import { plainWords } from '@nib/markdown/escapes'
 import { asWords, OPENS_MARKUP } from '@nib/markdown/words'
 
 import { dayOf, noteText } from '../import/meta'
@@ -126,6 +127,23 @@ export function sharedWords(arrived: Arrived): string {
   return arrived.items
     .map((one) => one.text)
     .filter((one): one is string => one !== null)
+    .join('\n\n')
+    .trim()
+}
+
+function saysMarkdown(item: SharedItem): boolean {
+  return item.mime.includes('markdown') || /\.(md|markdown|mdown|mkd)$/i.test(item.name)
+}
+
+/** The words that came over as a note's markdown. Words shared out of another app
+ *  are plain text, written so they read back as themselves - `$5-$10` is two
+ *  prices rather than a formula; see `plainWords` - and only text that says it is
+ *  markdown is taken as markdown. */
+export function sharedMarkdown(arrived: Arrived): string {
+  return arrived.items
+    .flatMap((one) =>
+      one.text === null ? [] : [saysMarkdown(one) ? one.text : plainWords(one.text)],
+    )
     .join('\n\n')
     .trim()
 }
@@ -239,9 +257,7 @@ export function sharedPlan(
     embeds.push(embedFor(item, path))
   })
 
-  // Shared words are somebody's text, from a page or a message, and not markup of
-  // the note's own.
-  const body = [asWords(words), ...embeds].filter(Boolean).join('\n\n')
+  const body = [sharedMarkdown(arrived), ...embeds].filter(Boolean).join('\n\n')
   if (body) {
     const title = sharedTitle(arrived)
     about.push({

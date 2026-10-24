@@ -10,6 +10,7 @@ import {
   sharedPlan,
   sharedTask,
   sharedTitle,
+  sharedMarkdown,
   sharedWords,
 } from './shared'
 
@@ -205,6 +206,29 @@ describe('what a share becomes', () => {
     expect(note?.path).toBe('A page.md')
     expect(note?.kind === 'note' && note.text).toBe(
       '---\ndate: 2026-09-12\nsource: https://x.test/a\n---\n\n# A page\n\nRead this: https://x.test/a\n',
+    )
+  })
+
+  test('shared words read back as themselves, and shared markdown stays markdown', () => {
+    const plan = sharedPlan(
+      arrived({
+        subject: 'Prices',
+        items: [
+          item({ mime: 'text/plain', text: 'Tickets $5-$10, format is %%d\nrest' }),
+          item({ mime: 'text/markdown', text: 'Some **bold** and $x^2$' }),
+        ],
+      }),
+      new Map(),
+      day,
+      'assets',
+    )
+
+    const note = plan.files[0]
+    expect(note?.kind === 'note' && note.text).toContain(
+      'Tickets \\$5-\\$10, format is %\\%d\nrest\n\nSome **bold** and $x^2$',
+    )
+    expect(sharedMarkdown(arrived({ items: [item({ text: 'wait ~5 or ~10' })] }))).toBe(
+      'wait \\~5 or \\~10',
     )
   })
 

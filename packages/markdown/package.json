@@ -21,6 +21,7 @@
     "./door": "./src/door.ts",
     "./eager": "./src/eager.ts",
     "./engines": "./src/engines.ts",
+    "./escapes": "./src/escapes.ts",
     "./edits": "./src/edits.ts",
     "./fences": "./src/fences.ts",
     "./front-matter": "./src/front-matter.ts",

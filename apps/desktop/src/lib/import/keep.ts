@@ -17,8 +17,7 @@
  *  and Keep would have thrown them away within the week; importing them would be
  *  the one act of this whole feature that nobody asked for. The count is said. */
 
-import { asWords, OPENS_MARKUP } from '@nib/markdown/words'
-
+import { escapeText, plainWords } from '@nib/markdown/escapes'
 import { key } from '../i18n.svelte'
 
 import { dayOf, noteText, type Meta } from './meta'
@@ -84,9 +83,9 @@ export async function readKeep(sources: readonly Source[]): Promise<ImportPlan> 
 
     const text =
       typeof note.textContent === 'string' ? note.textContent.replace(/\r\n?/g, '\n').trim() : ''
-    // Keep shows a note's words as text, so a tag somebody typed or pasted into
-    // one is words here too, rather than markup the note would render.
-    if (text) words.push(asWords(text))
+    // Keep is plain text, so its words are written to read back as themselves:
+    // `$5-$10` is two prices rather than a formula; see `plainWords`.
+    if (text) words.push(plainWords(text))
 
     const items = listItems(note.listContent)
     if (items.length) words.push(items.map(taskLine).join('\n'))
@@ -214,7 +213,7 @@ interface Item {
 
 /** An item's words are text in Keep, as a note's are. */
 function taskLine(item: Item): string {
-  return `- [${item.checked ? 'x' : ' '}] ${asWords(item.text)}`
+  return `- [${item.checked ? 'x' : ' '}] ${plainWords(item.text)}`
 }
 
 /** The pages Keep shows under a note as cards. A card for an address the words
@@ -231,21 +230,13 @@ function linksOf(said: unknown, text: string): string[] {
     if (!/^[a-z][a-z0-9+.-]*:[^\s<>]+$/i.test(url) || text.includes(url)) continue
 
     const title = typeof card.title === 'string' ? card.title.replace(/\s+/g, ' ').trim() : ''
-    // A bracket and a backslash are escaped so the title stays the link's words,
-    // except a run of backslashes in front of a tag, which `asWords` doubles itself
-    // and which would otherwise be doubled twice.
-    const shown = asWords(
-      title.replace(LINK_WORDS, (_, run: string | undefined, one: string) => run ?? `\\${one}`),
-    )
+    // A link's text, where nothing autolinks: words escaped as words.
+    const shown = escapeText(title, { addresses: false })
     links.push(shown ? `- [${shown}](<${url}>)` : `- <${url}>`)
   }
 
   return links
 }
-
-/** What a link's words escape: a backslash or a bracket, or a run of backslashes in
- *  front of a tag, which is left for `asWords`. */
-const LINK_WORDS = new RegExp(`(\\\\+(?=${OPENS_MARKUP.source}))|([\\\\[\\]])`, 'g')
 
 /** A file's path as a link's target: the characters a target cannot hold as
  *  themselves encoded, the way the import's own link rewriting writes them. */

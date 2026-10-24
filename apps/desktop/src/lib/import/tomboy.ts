@@ -13,6 +13,7 @@
  *  A notebook is a tag of the form `system:notebook:Work`, which becomes a folder,
  *  because that is what a notebook is. Every other tag is a tag. */
 
+import { plainWords } from '@nib/markdown/escapes'
 import { asWords, OPENS_MARKUP } from '@nib/markdown/words'
 
 import { key } from '../i18n.svelte'
@@ -179,21 +180,25 @@ export function tomboyMarkdown(
     }
   }
 
+  // Tomboy is plain text, so its words are written to read back as themselves:
+  // `$5-$10` is two prices rather than a formula; see `plainWords`. Monospace takes
+  // its escapes back off as it becomes code; see `unescaped`.
+
   const words = (text: string) => {
     if (!item) {
-      write(text)
+      write(plainWords(text))
       return
     }
 
     const said = text.replace(/^[ \t]+/, '')
     if (said) item = false
-    write(said)
+    write(plainWords(said))
   }
 
   for (const tag of tagsIn(content)) {
     if (tag.from < at) continue
 
-    words(asWords(unescapeXml(content.slice(at, tag.from))))
+    words(unescapeXml(content.slice(at, tag.from)))
     at = tag.to
 
     const name = tag.name.toLowerCase()
@@ -267,7 +272,7 @@ export function tomboyMarkdown(
     // heading, and a heading in the middle of a note would be a change of shape.
   }
 
-  write(asWords(unescapeXml(content.slice(at))))
+  write(plainWords(unescapeXml(content.slice(at))))
 
   return out
     .join('')
@@ -291,18 +296,13 @@ function marked(text: string, mark: string): string {
     .join('\n')
 }
 
-/** Words as they were before `asWords`, for inside code, which reads no markup
- *  and would show the backslash. `asWords` writes a bracket's own backslash in
- *  front of it and doubles the run of the words' backslashes before that, so the
- *  run in front of a bracket it escaped is always odd, and halving what is left
- *  once its own is taken off gives back what the words had. */
+/** Words as they were before `plainWords`, for inside code, which reads no markup
+ *  and would show the backslash. Every escape `plainWords` writes is a backslash in
+ *  front of a punctuation mark, the words' own backslash included, so taking each
+ *  pair back to its mark, left to right, gives back what the words had. */
 function unescaped(words: string): string {
-  return words.replace(ESCAPED_OPENING, (_, run: string) => `${run.slice(run.length / 2)}<`)
+  return words.replace(/\\([!-/:-@[-`{-~])/g, '$1')
 }
-
-/** A bracket `asWords` escaped, with the doubled backslashes in front of it: the
- *  whole run, never the end of one. */
-const ESCAPED_OPENING = new RegExp(`(?<!\\\\)((?:\\\\\\\\)*)\\\\${OPENS_MARKUP.source}`, 'g')
 
 /** Words as inline code, fenced with more backticks than they hold in a row. */
 function code(words: string): string {

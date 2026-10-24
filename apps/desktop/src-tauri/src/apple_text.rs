@@ -502,21 +502,48 @@ fn wrapped(run: &Run, said: &str) -> String {
     format!("{before}{marked}{after}")
 }
 
-/// The two characters a note's own words would otherwise become a link with, and
-/// the `<` that would otherwise open a tag: a note that says `<script>` or `<b>`
-/// says those words, and read as HTML they would vanish or turn into markup.
-/// Everything else is left as it was: a note that says `5 * 3` says that.
+/// A note's own words, written so they read back as themselves, with the escapes
+/// `escapeText` in @nib/markdown writes for the same characters: the two brackets a
+/// link is made with, the `<` that would open a tag, a dollar that could open maths
+/// (`$5-$10` is two prices), a tilde or a caret that could open lowered or raised
+/// text (`~5 or ~10`), and the second of two percent signs, which would open a
+/// comment and hide the rest of the note. Everything else is left as it was: a note
+/// that says `5 * 3` says that.
+///
+/// A run of backslashes in front of an escaped character is doubled, as `as_words`
+/// doubles one in front of a tag: it would otherwise take the escape for itself and
+/// leave the character live.
 fn escaped(words: &str) -> String {
-    let words = as_words(words);
+    let chars: Vec<char> = words.chars().collect();
     let mut out = String::with_capacity(words.len());
+    let mut slashes = 0_usize;
+    let mut before: Option<char> = None;
 
-    for one in words.chars() {
-        if one == '[' || one == ']' {
-            out.push('\\');
+    for (at, &one) in chars.iter().enumerate() {
+        if one == '\\' {
+            slashes += 1;
+            before = Some(one);
+            continue;
         }
+
+        let next = chars.get(at + 1).copied();
+        let blank_after = next.is_some_and(char::is_whitespace);
+        let escape = match one {
+            '[' | ']' => true,
+            '<' => opens_tag(next),
+            '$' => !(before.is_some_and(char::is_whitespace) && blank_after),
+            '~' | '^' => !blank_after,
+            '%' => before == Some('%'),
+            _ => false,
+        };
+        let kept = if escape { slashes * 2 + 1 } else { slashes };
+        out.extend(std::iter::repeat_n('\\', kept));
+        slashes = 0;
         out.push(one);
+        before = Some(one);
     }
 
+    out.extend(std::iter::repeat_n('\\', slashes));
     out
 }
 
@@ -1524,6 +1551,18 @@ mod tests {
     fn words_that_look_like_html_are_words() {
         let said = as_markdown("<script src=x> and 1 < 2", &[run(24, &[])]);
         assert_eq!(said, "\\<script src=x> and 1 < 2");
+    }
+
+    /// A note that says `$5-$10` says two prices, and `~5 or ~10` and `%%d` say those
+    /// characters, rather than a formula, lowered words or a comment hiding the rest.
+    #[test]
+    fn dollars_tildes_carets_and_percent_signs_are_words() {
+        let words = "Tickets $5-$10, ~5 or ~10, %%d, x^2, a $ b ~ c";
+        let said = as_markdown(words, &[run(words.len() as u64, &[])]);
+        assert_eq!(
+            said,
+            "Tickets \\$5-\\$10, \\~5 or \\~10, %\\%d, x\\^2, a $ b ~ c"
+        );
     }
 
     /// A backslash somebody typed in front of a tag would otherwise take the escape

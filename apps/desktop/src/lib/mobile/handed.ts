@@ -13,7 +13,6 @@
  *
  *  What a share becomes is next door, in shared.ts. */
 
-import { asWords } from '@nib/markdown/words'
 import { attachmentFolder } from '../attachments'
 import { busy } from '../busy.svelte'
 import { fromBase64 } from '../bytes'
@@ -37,6 +36,7 @@ import {
   sharedPlan,
   sharedTask,
   sharedTitle,
+  sharedMarkdown,
   sharedWords,
   type SharedItem,
 } from './shared'
@@ -309,10 +309,8 @@ async function intoTheOpenNote(arrived: Arrived, bytes: ReadonlyMap<number, Uint
   const view = views.of(workspace.panes.focusedId)
   if (!view) return
 
-  // Somebody else's words, as a new note's body takes them (shared.ts): a tag in a
-  // shared sentence is words, not markup the note would render.
-  const words = sharedWords(arrived)
-  if (words) writeAtCaret(view, asWords(words))
+  const words = sharedMarkdown(arrived)
+  if (words) writeAtCaret(view, words)
 
   for (const [at, item] of arrived.items.entries()) {
     const held = bytes.get(at)
