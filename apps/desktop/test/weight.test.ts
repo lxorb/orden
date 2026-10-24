@@ -843,8 +843,13 @@ function holds(tail: string): boolean {
  *  Raised 2026-10-24, to 3,284,000, for #775 and #769 landed together - unstable at
  *  e92c1240e measured 3,283,521, over the 3,283,000 each was raised to alone - and for
  *  the bars that follow: overlay scrollbars on Linux, said to the stylesheet before
- *  anything is mounted (`data-engine-bars` in main.ts). Measured 3,283,984. */
-const BUDGET = 3_284_000
+ *  anything is mounted (`data-engine-bars` in main.ts). Measured 3,283,984.
+ *
+ *  Raised 2026-10-24, to 3,285,000, for #771: the dictionaries spelling is checked in are
+ *  a list now, several at once (`spellLanguages` in modes.svelte.ts), told to nib's own
+ *  Chromium from a module fetched at the launch rather than carried in front of it
+ *  (spell-languages.ts). Measured 3,284,888, from 3,283,984 at 65b6bd1a9. */
+const BUDGET = 3_285_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
