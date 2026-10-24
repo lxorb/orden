@@ -18,6 +18,13 @@ describe('plain text, as a note may hold it', () => {
     )
   })
 
+  test('two equals signs are the characters, not a highlight', () => {
+    expect(plainWords('if a==b or c==d then\nx === y')).toBe(
+      'if a=\\=b or c=\\=d then\nx =\\=\\= y',
+    )
+    expect(renderMarkdown(plainWords('if a==b or c==d then'))).toBe('<p>if a==b or c==d then</p>\n')
+  })
+
   test('a list item stays a list item, and a heading-like line is words', () => {
     expect(plainWords('- milk at ~2\n  * eggs $3\n1. one\n# not a heading')).toBe(
       '- milk at \\~2\n  * eggs \\$3\n1. one\n\\# not a heading',

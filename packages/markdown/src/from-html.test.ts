@@ -448,6 +448,15 @@ describe('a page as markdown', () => {
     )
   })
 
+  test('two equals signs in words mark nothing', () => {
+    const code = htmlToMarkdown('<p>if a==b or c==d then, and **x==y** too</p>')
+    expect(code).toBe('if a=\\=b or c=\\=d then, and \\*\\*x=\\=y\\*\\* too')
+    expect(renderMarkdown(code)).toBe('<p>if a==b or c==d then, and **x==y** too</p>\n')
+    // A line through still needs both of its tildes, and neither is left to it.
+    const struck = htmlToMarkdown('<p>a ~~b~~ c</p>')
+    expect(renderMarkdown(struck)).toBe('<p>a ~~b~~ c</p>\n')
+  })
+
   test('two percent signs in words hide nothing as a comment', () => {
     const code = htmlToMarkdown('<p>printf("%%d") and then printf("%%s") again</p>')
     expect(code).toBe('printf("%\\%d") and then printf("%\\%s") again')
