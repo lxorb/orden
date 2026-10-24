@@ -168,7 +168,7 @@
       use:draggable={{ row, label }}
       use:swipeRow={{
         on: viewport.touch && !editing,
-        right: () => kit.tick(row),
+        right: () => void kit.tick(row),
         left: (box) => scheduleRows([row], box, kit),
       }}
       onfocus={() => onselect?.()}
@@ -193,7 +193,7 @@
         {:else if depth}
           <span class="twist" aria-hidden="true"></span>
         {/if}
-        <TaskBox {task} {label} ontick={() => kit.tick(row)} />
+        <TaskBox {task} {label} ontick={() => kit.tick(row)} disabled={!kit.writes(row)} />
         <button type="button" class="words" onclick={view} tabindex="-1">
           <Words words={task.text} />
         </button>

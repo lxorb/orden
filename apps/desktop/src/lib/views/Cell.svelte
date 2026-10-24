@@ -63,10 +63,13 @@
       return { words, colour: toneColour(toneOf(base, property, words)) }
     })
   })
+  // Not a row of a space shared to be read either, which Today and a base across every
+  // space show beside the reader's own: its cells are read, never edited.
   const writable = $derived(
     editor !== 'none' &&
       editor !== 'button' &&
-      (row.kind === 'task' || !property.startsWith('task.')),
+      (row.kind === 'task' || !property.startsWith('task.')) &&
+      kit.writes(row),
   )
 
   function write(next: Value | null) {
@@ -133,8 +136,13 @@
 
 {#if property === 'task.text' && row.task}
   <span class="task">
-    <TaskBox task={row.task} label={plain(row.task.text)} ontick={() => kit.tick(row)} />
-    {#if editing}
+    <TaskBox
+      task={row.task}
+      label={plain(row.task.text)}
+      ontick={() => kit.tick(row)}
+      disabled={!kit.writes(row)}
+    />
+    {#if editing && writable}
       <input
         class="edit"
         value={row.task.text}
@@ -240,7 +248,7 @@
     disabled={!writable}
     aria-label={bare(property)}
     onchange={(event) => {
-      if (property === 'task.done') kit.tick(row)
+      if (property === 'task.done') void kit.tick(row)
       else write(event.currentTarget.checked)
     }}
   />

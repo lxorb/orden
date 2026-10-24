@@ -250,10 +250,15 @@ function summary(arrived: Arrived): string {
     .join(', ')
 }
 
-/** A note of its own, written the way an import is written. */
+/** A note of its own, written the way an import is written. None in a space shared
+ *  with this account to be read, which the import itself refuses too: asked before
+ *  the share is turned into files, so nothing is made of it there. Fetched, as
+ *  sharing.svelte.ts reads the workspace. */
 async function intoANewNote(arrived: Arrived, bytes: ReadonlyMap<number, Uint8Array>) {
   const space = workspace.activeSpace
   if (!space) return
+  const { canWriteAt } = await import('../sharing.svelte')
+  if (!canWriteAt(space.root)) return
 
   // Where the pictures and the files go, which is the reader's own Attachments
   // setting, worked out for the note this is about to write.
