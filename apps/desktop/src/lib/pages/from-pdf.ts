@@ -75,6 +75,16 @@ export async function asPageNote(pdf: string, how: Turning): Promise<string> {
   return note
 }
 
+/** The page note a PDF would be, as words held in memory and never written: what a
+ *  PDF in a space shared to be read opens as, where it may not be turned. Its pages
+ *  name the paper by its own name, which from the PDF's own path is the PDF itself. */
+export async function asItself(
+  pdf: string,
+  sizes: (path: string) => Promise<{ width: number; height: number }[]>,
+): Promise<string> {
+  return writeCanvas(pagesFromPdf(nameOf(pdf), await sizes(pdf)))
+}
+
 /** A page note an older build made beside its PDF, given the PDF to hold: what
  *  opening one does, so the pair the file list showed becomes the one note it is.
  *  Answers whether `note` was one. */

@@ -831,9 +831,9 @@ function holds(tail: string): boolean {
  *  stands over the caption rather than pushing the file list down under the pointer
  *  (`is-floating` in Bookmarks.svelte). Measured 3,280,466.
  *
- *  Raised 2026-10-24, to 3,285,000, for #811: the file list's gestures refuse a space
- *  shared to be read, in the workspace's own calls (`writableAt`) and in the row menu,
- *  the tree's keys and the palette. Measured 3,283,904. */
+ *  Raised 2026-10-24, to 3,284,000, for #810: a PDF in a space shared to be read opens
+ *  as itself rather than being turned into its page note (`mayTurn` and `openPaper` in
+ *  workspace.svelte.ts). Measured 3,283,566 on top of #805. */
 const BUDGET = 3_300_000 // combined branch only
 const MOST_FILES = 382
 

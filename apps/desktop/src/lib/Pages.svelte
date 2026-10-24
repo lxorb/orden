@@ -258,8 +258,9 @@
 
   // A space somebody shared to read holds notes to look at, and the surface refuses
   // the edit rather than the gesture, which is one rule for every gesture there is.
+  // A PDF read as itself has no note to write in at all, whatever its space allows.
   $effect(() => {
-    store.readOnly = !canWriteIn(tab.note)
+    store.readOnly = !canWriteIn(tab.note) || tab.kind === 'pdf'
   })
 
   // Several devices may be writing on these pages, so the surface offers itself to

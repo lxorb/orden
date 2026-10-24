@@ -941,12 +941,17 @@ class Workspace {
             made.push(null)
             continue
           }
-          const path = await this.pageNoteForPdf(draft.path)
-          if (!path) {
+          // In a space shared to be read the paper comes back as itself, as it opens.
+          const turned = await this.mayTurn(draft.path)
+          const path = turned ? await this.pageNoteForPdf(draft.path) : draft.path
+          const doc = turned ? '' : await this.paperText(draft.path)
+          if (!path || doc === null) {
             made.push(null)
             continue
           }
-          draft = { ...draft, kind: 'pages', path, name: nameOf(path), dirty: false, doc: '' }
+          draft = turned
+            ? { ...draft, kind: 'pages', path, name: nameOf(path), dirty: false, doc }
+            : { ...draft, dirty: false, doc }
         }
 
         // Never a tab: an older nib's goes, its unwritten words written first.
@@ -1753,6 +1758,12 @@ class Workspace {
     if (__EVEN_PLUGIN__) return
 
     const path = this.spelled(asked)
+    // A space shared to be read may not have the page note written into it, nor the
+    // paper renamed under one: the paper opens as itself instead, in memory.
+    if (!isPagesTarget(path) && !(await this.mayTurn(path))) {
+      await this.openPaper(path, page, how)
+      return
+    }
     const pageNote = isPagesTarget(path) ? path : await this.pageNoteForPdf(path)
     // A paper pdf.js will not read, broken or behind a password: no tab, and the reader told.
     if (!pageNote) {
@@ -1760,6 +1771,48 @@ class Workspace {
       return
     }
     await this.openPages(pageNote, page, how)
+  }
+
+  /** Whether a PDF may be turned into its page note where it lies, which writes a note
+   *  and renames the paper. Fetched rather than imported: sharing.svelte.ts reaches
+   *  this module through the sync. */
+  private async mayTurn(path: string): Promise<boolean> {
+    const { canWriteAt } = await import('./sharing.svelte')
+    return canWriteAt(path)
+  }
+
+  /** A PDF read as itself, in a space it may not be turned in: a tab of kind `pdf`
+   *  holding the pages its note would have, which the pages surface draws. That kind
+   *  holds no words of a file's, so it is never saved and joins no room. */
+  private async openPaper(path: string, page: number | null, how: OpenHow) {
+    const tab = this.showTab(
+      await this.opened.opening(path, async () => {
+        const text = await this.paperText(path)
+        if (text === null) return unread(path).then(() => null)
+
+        const file = this.document({ kind: 'pdf', path, name: nameOf(path), text, dirty: false })
+        const tab = new Tab(file, this.panes.focusedId)
+        if (page !== null) tab.page = page
+        this.arrive(tab, how)
+        this.remember(path)
+        this.persist()
+        return file
+      }),
+      how,
+    )
+    if (tab && page !== null && tab.page !== page) this.gotoPage = { path, page }
+  }
+
+  /** The pages a PDF read as itself shows, or null where pdf.js could not read it. */
+  private async paperText(path: string): Promise<string | null> {
+    const [{ asItself }, { pageSizes }] = await Promise.all([
+      import('./pages/from-pdf'),
+      import('./pdf/document'),
+    ])
+    return asItself(path, pageSizes).catch((error: unknown) => {
+      log('error', `open PDF as itself: ${path} - ${String(error)}`)
+      return null
+    })
   }
 
   /** The page note a PDF is, or null where it could not be read. One at a time per
@@ -1783,6 +1836,9 @@ class Workspace {
   /** pages/from-pdf.ts, and this space for it to turn a PDF in: moved through
    *  `renameFile`, so what is kept by path follows the paper. */
   private async turning(path: string) {
+    // Every road that turns a PDF comes through here, so a space shared to be read is
+    // refused once for all of them rather than at each door.
+    if (!(await this.mayTurn(path))) throw new Error(`${path} is in a space shared to be read`)
     const [from, { turningIn }] = await Promise.all([
       import('./pages/from-pdf'),
       import('./pages/turning'),
@@ -2259,6 +2315,8 @@ class Workspace {
   private async holdPaperBeside(path: string) {
     const pdf = path.replace(/\.pages$/i, '.pdf')
     if (this.opened.at(path) || !this.files.some((one) => samePath(one.path, pdf))) return
+    // Taking the PDF in renames it, which a space shared to be read may not have.
+    if (!(await this.mayTurn(path))) return
 
     await this.turning(path)
       .then(({ from, how }) => from.adoptBeside(path, how))
