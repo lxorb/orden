@@ -59,7 +59,8 @@
   /** An edit's row opens the note it changed instead: the change is in the note. */
   async function press() {
     const change = part.kind === 'tool' ? part.change : undefined
-    const root = workspace.activeSpace?.root
+    // A change is a path in the thread's own space; see `root` in chat.svelte.ts.
+    const root = chat.root
     if (change && root) {
       await workspace.open(insideSpace(root, change.path))
       return

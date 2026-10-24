@@ -4283,14 +4283,16 @@ class Workspace {
    *  `ask` is what the press held down: with a modifier the file opens in a tab
    *  beside this one, behind it or in front, and with Alt as well in a pane to the
    *  right; see new-tab.ts. */
-  async followLink(jump: NoteJump, ask: LinkAsk = 'plain') {
-    // A link is followed from the note in front, and its path is relative to that
-    // note's own space, which is not always the active one: tabs are shared across
-    // spaces. The same note `makeLinked` reads its folder from.
-    const root = this.rootHolding(this.active?.path ?? null)
+  async followLink(jump: NoteJump, ask: LinkAsk = 'plain', from?: string | null) {
+    // The note the link sits in, which its path is relative to the space of. Not
+    // always the tab in front - a scratchpad, a task's description in the task view, a
+    // chat - and not always in the active space, since tabs are shared across spaces.
+    // The front tab only where a caller cannot say.
+    const source = from === undefined ? (this.active?.path ?? null) : from
+    const root = this.rootHolding(source)
     if (!root) return
     if (ask === 'aside') {
-      await this.followAside(jump, root)
+      await this.followAside(jump, root, source)
       return
     }
     const how = howFor(ask)
@@ -4314,7 +4316,9 @@ class Workspace {
       return
     }
 
-    const path = jump.path ? insideSpace(root, jump.path) : await this.linkedOrMade(jump, root)
+    const path = jump.path
+      ? insideSpace(root, jump.path)
+      : await this.linkedOrMade(jump, root, source)
     if (!path) return
 
     // A website opens as the page it points at, which is what its row in the file
@@ -4335,12 +4339,12 @@ class Workspace {
    *  the link's own menu offers: the same note, made where the link would make it,
    *  and the same heading, through `openAside`. A PDF opens there at its first page,
    *  which is where a file carried into a pane opens. */
-  private async followAside(jump: NoteJump, root: string) {
+  private async followAside(jump: NoteJump, root: string, source: string | null) {
     const path = jump.path
       ? insideSpace(root, jump.path)
       : isTabFile(jump.target)
         ? null
-        : await this.linkedOrMade(jump, root)
+        : await this.linkedOrMade(jump, root, source)
     if (!path) return
 
     await this.openAside(path)
@@ -4368,19 +4372,26 @@ class Workspace {
    *  written in has been read, else made. A note of another space still open is
    *  resolved against an index read the first time it asks, and a press before that
    *  lands would otherwise make a note over the one that is there. */
-  private async linkedOrMade(jump: NoteJump, root: string): Promise<string | null> {
-    const known = await links.targetWhenRead(this.active?.path ?? null, {
-      kind: 'wikilink',
-      target: jump.target,
-    })
-    return known === null ? this.makeLinked(jump.target, root) : insideSpace(root, known)
+  private async linkedOrMade(
+    jump: NoteJump,
+    root: string,
+    source: string | null,
+  ): Promise<string | null> {
+    const known = await links.targetWhenRead(source, { kind: 'wikilink', target: jump.target })
+    return known === null ? this.makeLinked(jump.target, root, source) : insideSpace(root, known)
   }
 
-  private async makeLinked(target: string, root: string): Promise<string | null> {
+  /** A note made for a link to nothing, beside `source`, the note the link is in. */
+  private async makeLinked(
+    target: string,
+    root: string,
+    source: string | null,
+  ): Promise<string | null> {
     const clean = target.replace(/[\\]/g, '/').replace(/^\/+|\/+$/g, '')
     if (!clean) return null
 
-    const here = this.active?.path ? folderOf(relativeTo(root, this.active.path)) : ''
+    const inside = source === null ? null : withinSpace(root, source)
+    const here = inside === null ? '' : folderOf(inside)
     const relative = clean.includes('/') || !here ? clean : `${here}/${clean}`
 
     // What a link says is somebody's prose. A note out of a shared space, a room,

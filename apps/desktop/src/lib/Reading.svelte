@@ -404,6 +404,7 @@
           page: pageFragment(fragment ? decodeFragment(fragment) : null),
         },
         ask,
+        tab.path,
       )
       return
     }
@@ -422,6 +423,7 @@
         page: null,
       },
       ask,
+      tab.path,
     )
   }
 

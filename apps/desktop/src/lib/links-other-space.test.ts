@@ -222,3 +222,29 @@ test('a note a message of another space links opens in that space', async () => 
   workspace.openRelative('Plan.md', {}, '/home/me/A/Team.chat')
   await vi.waitFor(() => expect(workspace.active?.path).toBe('/home/me/A/Plan.md'))
 })
+
+/** A link is followed in the space of the note it sits in, which is not always the tab
+ *  in front (B408): a scratchpad resolves its links in the active space whatever tab is
+ *  in front, and a task's description in the task view is read in the task's space. */
+test("a link from the scratchpad opens the active space's note, whatever tab is in front", async () => {
+  await workspace.open('/home/me/A/Note.md')
+
+  await workspace.followLink(jump('Plan.md', 'Plan'), 'plain', '/app/data/scratchpad.md')
+
+  expect(workspace.active?.path).toBe('/home/me/B/Plan.md')
+})
+
+test("a link in a task's description opens in the task's space with no tab of it in front", async () => {
+  await workspace.followLink(jump('Only A.md', 'Only A'), 'plain', '/home/me/A/Note.md')
+
+  expect(workspace.active?.path).toBe('/home/me/A/Only A.md')
+})
+
+test('a note a link names that is not there yet is made beside the note the link is in', async () => {
+  disk.set('/home/me/A/sub/Deep.md', '# Deep\n[[Fresh]]\n')
+  await workspace.open('/home/me/B/Plan.md')
+
+  await workspace.followLink(jump(null, 'Fresh'), 'plain', '/home/me/A/sub/Deep.md')
+
+  expect(sent.find((one) => one.command === 'write_note')?.path).toBe('/home/me/A/sub/Fresh.md')
+})

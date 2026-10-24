@@ -15,7 +15,8 @@
     createEditor,
     type EditorView,
     embedClicks,
-    type NoteOpener,
+    type LinkPress,
+    type NoteJump,
     setReadOnlyMode,
     type Text,
   } from '@nib/editor'
@@ -67,7 +68,8 @@
     offset: { x: number; y: number }
     ontext?: (text: string) => void
     onleave?: () => void
-    onfollow?: NoteOpener
+    /** Follows a link in a card, given the canvas so it is followed in its space. */
+    onfollow?: (jump: NoteJump, press: LinkPress | undefined, from: string | null) => void
   } = $props()
 
   /** The card's own colour, as a border and a wash. Null for one with none,
@@ -214,7 +216,9 @@
       // The plane's own answer about its HTML, which is the surface's; see
       // trust.ts.
       trustedMarkup: trusted,
-      ...(onfollow ? { openNote: onfollow } : {}),
+      ...(onfollow
+        ? { openNote: (jump: NoteJump, press?: LinkPress) => onfollow(jump, press, canvasPath) }
+        : {}),
       openLink: followHref,
       shortcuts: shortcuts.forEditor,
     })

@@ -102,7 +102,8 @@
   })
 
   async function openAt(source: Source, press: MouseEvent) {
-    const root = workspace.activeSpace?.root
+    // A source is a path in the thread's own space; see `root` in chat.svelte.ts.
+    const root = chat.root
     if (!root) return
     const ask = tabAsk(press)
     if (viewport.drawer) workspace.closePanel('right')
@@ -128,7 +129,12 @@
       return
     }
     if (event.button === MIDDLE && !anchor.classList.contains('wikilink')) return
-    followNote({ path: href, target: href, heading: null, block: null, page: null }, event)
+    // In the panel note's space, where `drawn` resolved it.
+    followNote(
+      { path: href, target: href, heading: null, block: null, page: null },
+      event,
+      workspace.panelTab?.path ?? null,
+    )
   }
 
   const asNote = $derived(linkedAnswer(words, sources))
