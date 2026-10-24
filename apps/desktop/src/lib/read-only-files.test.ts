@@ -250,3 +250,24 @@ describe('a tab saved into a space shared to be read', () => {
     expect(await workspace.save(tab, '/mine', 'Board.canvas')).toBe('/mine/Board.canvas')
   })
 })
+
+describe('a link to a note the space has not got', () => {
+  const unresolved = { path: null, target: 'Missing', heading: null, block: null, page: null }
+
+  test('makes the note in a space that may be written in', async () => {
+    await workspace.followLink(unresolved)
+    expect(files.has('/theirs/Missing.md')).toBe(true)
+  })
+
+  test('makes nothing in a space shared to be read, followed or aside', async () => {
+    readOnly.add('/theirs')
+    const was = before()
+
+    await workspace.followLink(unresolved)
+    await workspace.followLink(unresolved, 'aside')
+
+    expect(before()).toEqual(was)
+    expect(writes()).toEqual([])
+    expect(workspace.tabs).toEqual([])
+  })
+})
