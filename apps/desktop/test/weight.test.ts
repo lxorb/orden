@@ -857,7 +857,7 @@ function holds(tail: string): boolean {
  *  in packages/markdown/src/property-edits.ts). Measured 3,288,405.
  *
  *  Raised 2026-10-24, to 3,290,000, for #885: a list's key is found in another case
- *  the way `frontMatterEdit` finds it (`propertyNamed` in
+ *  the way `frontMatterEdit` finds it (`keyCalled` in
  *  packages/markdown/src/properties.ts). Measured 3,289,059. */
 const BUDGET = 3_400_000 // combined branch only
 const MOST_FILES = 382

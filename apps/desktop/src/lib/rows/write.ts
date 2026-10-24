@@ -18,7 +18,7 @@
 import type { DateValue, DurationValue, LinkValue, Row, TaskChange, Value } from '@nib/bases'
 import { listAsWritten, noteValues, taskHash, tick, todayOf } from '@nib/bases'
 import { appliedEdits, oneEdit, type TextEdit } from '@nib/markdown/edits'
-import { type Property, propertyNamed, readProperties } from '@nib/markdown/properties'
+import { type Property, keyCalled, readProperties } from '@nib/markdown/properties'
 import {
   type ListItem,
   listItems,
@@ -190,7 +190,7 @@ function asList(
   }
   // The key in the note's own spelling where it is in another case, as `writeList`
   // and `frontMatterEdit` find it: taken as missing, a chip wrote a list of one over it.
-  const found = propertyNamed(rows, key)
+  const found = keyCalled(rows, key)
   if (found?.kind === 'map') return null
   if (!found) return whole(empty)
   if (found.kind === 'list') return whole(found)
