@@ -322,23 +322,28 @@ const A_LIST_ITEM = /^[ \t]*(?:[-*+]|\d{1,9}[.)])[ \t]+/
  *  nothing. */
 export function plainWords(text: string): string {
   // Whether a list is open, which an indented item can nest in: since the last list
-  // item, nothing but blank lines. Anywhere else four columns in front of a bullet
-  // make it code, as they would words.
+  // item, blank lines and the item's own words running on, on the next line or
+  // indented under it. Anywhere else four columns in front of a bullet make it code,
+  // as they would words.
   let listOpen = false
+  let blankBefore = true
   return text
     .split('\n')
     .map((line) => {
       const indent = /^[ \t]*/.exec(line)?.[0] ?? ''
       const deep = columnsOf(indent) >= 4
+      const blank = !line.trim()
       const marker = A_LIST_ITEM.exec(line)?.[0]
+      const wasBlank = blankBefore
+      blankBefore = blank
       if (marker && (!deep || listOpen)) {
         listOpen = true
         return marker + escapeText(line.slice(marker.length), { addresses: true })
       }
 
-      if (line.trim()) listOpen = false
+      if (!blank) listOpen &&= !wasBlank || indent.length > 0
       const words = escapeText(line.slice(indent.length), { addresses: true })
-      return (deep ? NO_BREAK.repeat(columnsOf(indent)) : indent) + words
+      return (deep && !listOpen ? NO_BREAK.repeat(columnsOf(indent)) : indent) + words
     })
     .join('\n')
 }
@@ -470,7 +475,17 @@ const HELD = 0xe000
  *  markdown parser, the view's `pieces`, which would otherwise read `\*a\*` as
  *  emphasis and show the backslashes. */
 export function heldEscapes(text: string): string {
-  return text.replace(AN_ESCAPE, (_, one: string) => String.fromCharCode(HELD + one.charCodeAt(0)))
+  // Not inside code, found first, where a backslash is a backslash: `C:\` before the
+  // closing backtick escapes nothing.
+  return codeAndWords(text)
+    .map((one) =>
+      one.code
+        ? one.text
+        : one.text.replace(AN_ESCAPE, (_, char: string) =>
+            String.fromCharCode(HELD + char.charCodeAt(0)),
+          ),
+    )
+    .join('')
 }
 
 /** Held escapes given back: as the characters they escaped, or as written, with the
