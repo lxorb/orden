@@ -194,6 +194,15 @@ describe('the form', () => {
     expect(html).toContain('type="date"')
     expect(html).toContain('Send')
   })
+
+  test('offers no Send where the note would land in a space shared to be read', () => {
+    const base = readBase('views:\n  - type: form\n')
+    const kit = Object.create(kitOf(base, NOTES), { adds: { value: false } }) as ReturnType<
+      typeof kitOf
+    >
+    const html = render(FormLayout, { props: { kit } }).body
+    expect(html).toMatch(/<button type="submit"[^>]*disabled/)
+  })
 })
 
 describe('the cards', () => {
