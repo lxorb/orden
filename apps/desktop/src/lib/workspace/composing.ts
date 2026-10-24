@@ -10,7 +10,7 @@
  *  own. What is here is the writing, the links and the undo - which is why it takes
  *  a store rather than a string. */
 
-import { extracted, merged, splitAt } from '../composer'
+import { extracted, merged, type Split, splitAt } from '../composer'
 import type { Retargeting } from '../link-index.svelte'
 import { folderOf, samePath } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
@@ -83,10 +83,8 @@ export async function splitAtCaret(ws: Composes, at: number): Promise<void> {
   if (!tab?.path) return
   ws.flush()
 
-  const carved = splitAt(tab.doc, at, UNTITLED)
-  if (!carved) return
-
-  await carve(ws, tab.path, tab.doc, carved, 'split')
+  const doc = tab.doc
+  await carve(ws, tab.path, doc, (named) => splitAt(doc, at, UNTITLED, named), 'split')
 }
 
 /** The selection becomes a note of its own, with a link in its place. */
@@ -95,27 +93,35 @@ export async function extractSelection(ws: Composes, from: number, to: number): 
   if (!tab?.path) return
   ws.flush()
 
-  const carved = extracted(tab.doc, from, to, UNTITLED)
-  if (!carved) return
-
-  await carve(ws, tab.path, tab.doc, carved, 'extract')
+  const doc = tab.doc
+  await carve(ws, tab.path, doc, (named) => extracted(doc, from, to, UNTITLED, named), 'extract')
 }
 
 /** What a split and an extraction both do: write the new note, write what is
- *  left of this one, and remember enough to undo both. */
+ *  left of this one, and remember enough to undo both.
+ *
+ *  `cut` is asked twice: once for the name the new note reaches for, and again
+ *  with the name it was given. The link left behind is written in the second,
+ *  because a link built before the name was free would point at the note that
+ *  already had it, and nothing would point at the one just made. */
 async function carve(
   ws: Composes,
   path: string,
   before: string,
-  carved: { kept: string; taken: string; name: string },
+  cut: (named?: string) => Split | null,
   kind: 'split' | 'extract',
 ) {
+  const wanted = cut()
+  if (!wanted) return
+
   // Stepped aside the way every other new name in the app is, through the store's
   // own `freeName`: a copy of the numbering lived here, and it counted only the
   // files, so a carved note could be handed the name of a folder. The disk is
   // asked too, since the tab can be one from a space that is not on screen.
   const folder = folderOf(path)
-  const created = joinPath(folder, await ws.freeNameOnDisk(folder, `${carved.name}.md`))
+  const file = await ws.freeNameOnDisk(folder, `${wanted.name}.md`)
+  const created = joinPath(folder, file)
+  const carved = cut(file.replace(/\.md$/, '')) ?? wanted
 
   await writeFile(created, carved.taken)
 
