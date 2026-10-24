@@ -83,8 +83,8 @@ function store(action: FileAction): PutsBack & { loaded: number; wrote: number }
     // Nothing is open, so a move holds nothing and runs straight away.
     holdingUnder: (_path: string, run: () => Promise<void>) => run(),
     // A creation undone goes to Recently deleted, which keeps it under an id.
-    bin: (path: string) => {
-      told.push(`binned ${path}`)
+    bin: (path: string, folder: boolean) => {
+      told.push(folder ? `binned folder ${path}` : `binned ${path}`)
       return Promise.resolve({ content: '# new', trashId: `t-${path}` })
     },
     retarget: (from: string, to: string) => {
@@ -179,20 +179,67 @@ describe('an entry that cannot go back', () => {
 })
 
 describe('an import taken back', () => {
+  const hashOf = async (words: string) => (await import('../bytes')).sha256(words)
+
   test('steps over the one file that will not go and removes the rest', async () => {
-    refused.add('/s/b.md')
-    const ws = store({ kind: 'import', paths: ['/s/a.md', '/s/b.md', '/s/c.md'] })
+    refused.add('delete_note /s/b.md')
+    for (const path of ['/s/a.md', '/s/b.md', '/s/c.md']) disk.set(path, '# imported')
+    const wrote = await hashOf('# imported')
+    const ws = store({
+      kind: 'import',
+      paths: ['/s/a.md', '/s/b.md', '/s/c.md'],
+      wrote: { '/s/a.md': wrote, '/s/b.md': wrote, '/s/c.md': wrote },
+    })
     await undoLastFileAction(ws)
 
-    expect(sent.map((one) => one.path)).toEqual(['/s/a.md', '/s/b.md', '/s/c.md'])
+    expect(sent.filter((one) => one.command === 'delete_note').map((one) => one.path)).toEqual([
+      '/s/a.md',
+      '/s/b.md',
+      '/s/c.md',
+    ])
     // Only the two that went are gone as far as the index is concerned.
     expect(told).toEqual(['gone /s/a.md', 'gone /s/c.md'])
     expect(ws.undone.stack).toEqual([])
   })
+
+  /** An import is undone minutes or days after it landed, and a note it wrote can
+   *  have been written in since. Taken away outright, that writing was gone for good:
+   *  no version kept, nothing in Recently deleted. So that note stays where it is. */
+  test('and keeps a note that has been written in since', async () => {
+    disk.set('/s/a.md', '# imported')
+    disk.set('/s/b.md', '# imported\n\na week of notes')
+    const wrote = await hashOf('# imported')
+    const ws = store({
+      kind: 'import',
+      paths: ['/s/a.md', '/s/b.md'],
+      wrote: { '/s/a.md': wrote, '/s/b.md': wrote },
+    })
+    await undoLastFileAction(ws)
+
+    expect(sent.filter((one) => one.command === 'delete_note').map((one) => one.path)).toEqual([
+      '/s/a.md',
+    ])
+    expect(told).toEqual(['gone /s/a.md'])
+    expect(ws.undone.stack).toEqual([])
+  })
+
+  /** A paper, or anything else that is not words, has no hash to tell whether it has
+   *  changed, so it goes the way a note made here does: to Recently deleted. */
+  test('and sends what it cannot compare to the trash', async () => {
+    const ws = store({ kind: 'import', paths: ['/s/paper.pdf'], wrote: {} })
+    await undoLastFileAction(ws)
+
+    expect(sent.filter((one) => one.command === 'delete_note')).toEqual([])
+    expect(told).toEqual(['binned /s/paper.pdf', 'gone /s/paper.pdf'])
+  })
 })
 
 describe('a copy taken back', () => {
-  test('takes away what it made, a folder as a folder, and tells the index', async () => {
+  /** A copy is a note made here, and somebody can have gone on writing in it before
+   *  asking for the copy back. So what it made goes the way a note made here does when
+   *  that is undone: to Recently deleted, with a version kept, rather than off the
+   *  disk for good. */
+  test('sends what it made to the trash, a folder as a folder, and tells the index', async () => {
     const ws = store({
       kind: 'copy',
       made: [
@@ -202,11 +249,13 @@ describe('a copy taken back', () => {
     })
     await undoLastFileAction(ws)
 
-    expect(sent.map((one) => `${one.command} ${one.path}`)).toEqual([
-      'delete_note /s/a copy.md',
-      'delete_folder /s/Trip copy',
+    expect(sent.filter((one) => one.command.startsWith('delete'))).toEqual([])
+    expect(told).toEqual([
+      'binned /s/a copy.md',
+      'gone /s/a copy.md',
+      'binned folder /s/Trip copy',
+      'gone /s/Trip copy',
     ])
-    expect(told).toEqual(['gone /s/a copy.md', 'gone /s/Trip copy'])
     expect(ws.undone.next?.kind).toBe('copy')
   })
 

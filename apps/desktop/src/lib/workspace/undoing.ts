@@ -13,6 +13,7 @@
 
 import { oneEdit } from '@nib/markdown/edits'
 import { freePath } from '@nib/markdown/paths'
+import { sha256 } from '../bytes'
 import { applied, type Edit } from '../search/replace'
 import type { Retargeting } from '../link-index.svelte'
 import { onDisk } from '../on-disk'
@@ -138,16 +139,34 @@ async function undoOne(ws: PutsBack, action: FileAction): Promise<boolean> {
 
 /** An import taken back: the files it wrote, gone again.
  *
- *  Outright rather than into the trash. What an import wrote was never a note
- *  anybody kept, and putting three thousand rows into Recently deleted would
- *  bury whatever is actually in there. A tab that is open on one of them is
- *  closed, the way a deleted note's is.
+ *  Outright rather than into the trash, for a note that still says what the import
+ *  wrote. That was never a note anybody kept, and putting three thousand rows into
+ *  Recently deleted would bury whatever is actually in there. A tab that is open on
+ *  one of them is closed, the way a deleted note's is.
+ *
+ *  A note written in since is somebody's writing, and taking it away outright lost
+ *  it for good, so it stays where it is. What has no hash to compare - a paper, a
+ *  picture, a page note - goes to Recently deleted the way a note made here does
+ *  when that is undone, since nothing can say it has not changed.
  *
  *  A file that will not go is stepped over rather than stopping the undo: the
  *  rest of the import still goes, and what is left is what somebody has since
  *  taken an interest in. */
 async function unimport(ws: PutsBack, action: Extract<FileAction, { kind: 'import' }>) {
   for (const path of action.paths) {
+    const wrote = action.wrote[path]
+    if (wrote === undefined) {
+      const gone = await ws
+        .bin(path, false)
+        .then(() => true)
+        .catch(() => false)
+      if (gone) await ws.fileGone(path, 'file')
+      continue
+    }
+
+    const now = await invoke<string>('read_note', { path }).catch(() => null)
+    if (now === null || (await sha256(now)) !== wrote) continue
+
     const gone = await invoke('delete_note', { path })
       .then(() => true)
       .catch(() => false)
@@ -155,12 +174,13 @@ async function unimport(ws: PutsBack, action: Extract<FileAction, { kind: 'impor
   }
 }
 
-/** A copy taken back: what it made, gone again. Outright, like an import's: the
- *  original is still where it was, so there is nothing in the copy the trash would
- *  be keeping safe. A tab open on anything in it closes as it goes. */
+/** A copy taken back: what it made, gone again, into Recently deleted the way a note
+ *  made here goes when that is undone. A copy is a note somebody can go on writing in
+ *  before asking for it back, and taken off the disk outright that writing was gone
+ *  for good. A tab open on anything in it closes as it goes. */
 async function uncopy(ws: PutsBack, action: Extract<FileAction, { kind: 'copy' }>) {
   for (const { path, folder } of action.made) {
-    await invoke(folder ? 'delete_folder' : 'delete_note', { path })
+    await ws.bin(path, folder)
     await ws.fileGone(path, folder ? 'folder' : 'file')
   }
 }

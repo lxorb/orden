@@ -71,6 +71,7 @@ vi.mock('../link-index.svelte', () => ({
 vi.mock('../sync.svelte', () => ({ sync: { nudge: () => undefined } }))
 
 const { applyImport, restamped } = await import('./apply')
+const { sha256 } = await import('../bytes')
 
 beforeEach(() => {
   wrote.length = 0
@@ -457,6 +458,12 @@ describe('an import that fails partway', () => {
       }),
     ).rejects.toThrow('the disk is full')
 
-    expect(recorded).toEqual([{ kind: 'import', paths: ['/Space/A.md', '/Space/B.md'] }])
+    expect(recorded).toEqual([
+      {
+        kind: 'import',
+        paths: ['/Space/A.md', '/Space/B.md'],
+        wrote: { '/Space/A.md': await sha256('a'), '/Space/B.md': await sha256('b') },
+      },
+    ])
   })
 })
