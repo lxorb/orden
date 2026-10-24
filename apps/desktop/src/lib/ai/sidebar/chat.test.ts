@@ -42,6 +42,10 @@ const place = vi.hoisted(() => ({
     { id: 'home', name: 'Home', root: '/notes/Home' },
   ],
   activeSpaceId: 'work',
+  // A message is gathered in its thread's space (gather.ts), which holds no notes here.
+  notes: [],
+  leftOutOf: () => [],
+  noteText: () => Promise.resolve(null),
 }))
 
 vi.mock('../../workspace.svelte', () => ({ workspace: place }))
