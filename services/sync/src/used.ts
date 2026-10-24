@@ -114,14 +114,21 @@ const MOST_READ = 250
  *  a hole in their note; in one it only reads, that would hand the owner pictures that
  *  were never there, so it is read as far as what is left goes. What this cannot reach
  *  is an unread note of a space this account is no longer in, which the sweep shrinks
- *  to nothing. */
+ *  to nothing.
+ *
+ *  Without `guess`, a space with more unread notes than is left to read hands nothing
+ *  over on the chance it shows a picture, and the answer is false: not everything that
+ *  might use the pictures was read. That is for giving a file back, where the person
+ *  is asking to stop paying for it and handing it to somebody else blindly would make
+ *  them pay instead; an erase guesses, because keeping is better than losing there. */
 export async function unreadUses(
   env: Env,
   user: { id: string; email: string },
   pictures: ReadonlySet<string>,
   owed: Map<string, Set<string>>,
-): Promise<void> {
-  if (!pictures.size) return
+  guess = true,
+): Promise<boolean> {
+  if (!pictures.size) return true
   const owe = (owner: string, hash: string) => {
     const found = owed.get(owner) ?? new Set<string>()
     owed.set(owner, found)
@@ -137,6 +144,7 @@ export async function unreadUses(
     .all<{ space: string; owner: string; item: string; role: string }>()
 
   let budget = MOST_READ
+  let read = true
 
   for (const one of written) {
     const { results: notes } = await env.DB.prepare(
@@ -149,18 +157,23 @@ export async function unreadUses(
       .bind(one.space, one.item || budget + 1, FRONT_REV)
       .all<{ id: string }>()
 
-    if (notes.length > budget && one.role === 'write') {
+    if (notes.length > budget && one.role === 'write' && guess) {
       for (const hash of pictures) owe(one.owner, hash)
       budget = 0
       continue
     }
-    if (notes.length > budget) notes.length = budget
+    if (notes.length > budget) {
+      notes.length = budget
+      read = false
+    }
 
     budget -= notes.length
     for (const hash of await picturesIn(env, one.space, notes)) {
       if (pictures.has(hash)) owe(one.owner, hash)
     }
   }
+
+  return read
 }
 
 /** Every picture the service holds that these notes show, read a handful at a time. */

@@ -43,6 +43,9 @@ const DOCUMENTS = new Set(['application/pdf'])
 
 const HASH = /^[a-f0-9]{64}$/
 
+/** A give-back that cannot be answered yet; see `letGo`. */
+const STILL_READING = 'that file may still be in a note - try again tomorrow'
+
 /** The type a request declares, with any parameters after it left off:
  *  `application/pdf; charset=binary` is a PDF. */
 function typeOf(header: string): string {
@@ -162,7 +165,9 @@ blobs.delete('/:hash', async (context) => {
   // stored cannot become a delete against the bucket.
   if (!HASH.test(hash)) return context.json({ error: NOT_A_HASH }, 400)
 
-  await letGo(context.env, user.id, hash)
+  if (!(await letGo(context.env, user.id, hash))) {
+    return context.json({ error: STILL_READING }, 409)
+  }
   return context.json({ ok: true })
 })
 
@@ -174,8 +179,13 @@ blobs.delete('/:hash', async (context) => {
  *  file - which the uploader's row was the only thing keeping: then that space's owner
  *  is handed a row of their own first, as they would be if this account were deleted
  *  (see used.ts), and the asker's row goes and stops counting against them. Giving a
- *  file back is not a way to take it out of a note in a space that is not yours. */
-export async function letGo(env: Env, userId: string, hash: string): Promise<void> {
+ *  file back is not a way to take it out of a note in a space that is not yours.
+ *
+ *  Answers false, and keeps the row, while a space this account is in has more notes
+ *  written before their pictures were than one request reads: whether one of them
+ *  shows the picture cannot be told yet, and neither deleting it nor handing it over
+ *  on a guess is right. The nightly sweep reads them (blog/fill.ts). */
+export async function letGo(env: Env, userId: string, hash: string): Promise<boolean> {
   const others = await env.DB.prepare('select 1 from blobs where hash = ? and user_id <> ? limit 1')
     .bind(hash, userId)
     .first()
@@ -191,8 +201,11 @@ export async function letGo(env: Env, userId: string, hash: string): Promise<voi
     )
       .bind(hash, userId)
       .first<{ email: string; type: string }>()
-    if (mine?.type.startsWith('image/')) {
-      await unreadUses(env, { id: userId, email: mine.email }, new Set([hash]), owed)
+    // Without guessing: a picture not found in the notes that could be read is kept
+    // rather than handed over on a chance, until the sweep has read the rest.
+    const user = mine ? { id: userId, email: mine.email } : null
+    if (user && mine?.type.startsWith('image/')) {
+      if (!(await unreadUses(env, user, new Set([hash]), owed, false))) return false
     }
   }
 
@@ -202,6 +215,7 @@ export async function letGo(env: Env, userId: string, hash: string): Promise<voi
   ])
 
   if (!others && !owed.size) await env.NOTES.delete(key(hash))
+  return true
 }
 
 /** Serving, which carries no session: a note is read by whoever it was shared
