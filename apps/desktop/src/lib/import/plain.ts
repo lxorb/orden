@@ -105,6 +105,7 @@ export async function readPlain(
           title: null,
           meta: options.meta?.(at) ?? {},
           kept: options.asTheyAre === true,
+          own: true,
         }),
       }
     },

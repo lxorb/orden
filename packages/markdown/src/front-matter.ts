@@ -224,6 +224,20 @@ export function frontMatterValue(source: string, key: string): string | null {
   return unquoted(value) || null
 }
 
+/** Every top-level key the block holds, as written and in its order, or none
+ *  where the note has no block. What a writer adding keys to a note's own block
+ *  asks first, so that it adds none the note already says. */
+export function frontMatterKeys(source: string): string[] {
+  const block = frontMatterBlock(source)
+  if (!block) return []
+
+  return source
+    .slice(block.body.from, block.body.to)
+    .split('\n')
+    .map((line) => KEY.exec(line.replace(/\r$/, ''))?.[1])
+    .filter((key): key is string => key !== undefined)
+}
+
 /** The line a key is written on, or null when the block has no such key. The
  *  first one wins, the way YAML reads a duplicated key. A key in another case is
  *  read where the note has none in this one; where it has both they are two keys,

@@ -834,7 +834,10 @@ function holds(tail: string): boolean {
  *  Raised 2026-10-24, to 3,282,000, for #710: the values an automation, an agent, an
  *  icon and a cover write are quoted as YAML (`scalar`, `flowItem`, the no-change check
  *  in `frontMatterEdit`, which reads a quoted and a bare value apart). Measured
- *  3,281,217. */
+ *  3,281,217.
+ *
+ *  Raised 2026-10-24, to 3,282,000, for #720: a note's own front matter is kept as the
+ *  one block on import (`frontMatterKeys`). Measured 3,281,007. */
 const BUDGET = 3_282_000
 const MOST_FILES = 382
 

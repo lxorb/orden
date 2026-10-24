@@ -12,7 +12,12 @@
  *  rather than a feature: nothing in the app reads it, and a note that never
  *  changed after it was written does not carry it. */
 
-import { type FrontMatterRow, writeFrontMatter } from '@nib/markdown/front-matter'
+import {
+  frontMatterBlock,
+  frontMatterKeys,
+  type FrontMatterRow,
+  writeFrontMatter,
+} from '@nib/markdown/front-matter'
 
 export interface Meta {
   /** The day it was made, `YYYY-MM-DD`. */
@@ -63,15 +68,67 @@ function said(value: Property): boolean {
  *  The heading is written because a new note in nib opens with one, so an
  *  imported note that did not carry a title would be the one note in the space
  *  with nothing at the top. A body that already opens with a heading keeps its
- *  own. */
-export function noteText(title: string | null, body: string, meta: Meta = {}): string {
+ *  own.
+ *
+ *  A body that already opens with properties of its own - a Bear note or a Logseq
+ *  page somebody gave a block - keeps that block as the one the note opens with,
+ *  and what the export knew goes into it, under the keys it does not say already:
+ *  a second block under the first would be words to every reader, the note's own
+ *  keys among them, and the heading goes below it rather than above it.
+ *
+ *  Only `own` words are asked, the Markdown a person wrote in a format that can
+ *  carry a block. Words an import made itself, out of a web page, a note in XML or
+ *  a JSON, never open with one: a `---` there is a rule (an `<hr>`), and a rule, a
+ *  `Note: a draft` and another rule are words. */
+export function noteText(title: string | null, body: string, meta: Meta = {}, own = false): string {
   // Only the blank lines above the words go: the first line's own indent is what
   // makes a note that opens with an indented code block open with code.
-  const words = body.replace(/^(?:[ \t]*\r?\n)+/, '').replace(/\s+$/, '')
+  const all = body.replace(/^(?:[ \t]*\r?\n)+/, '').replace(/\s+$/, '')
+  const block = own ? ownBlock(all) : null
+  const words = block ? all.slice(block.to).replace(/^(?:[ \t]*\r?\n)+/, '') : all
   const heads = /^#{1,6}\s/.test(words)
   const head = title && !heads ? `# ${title}\n\n` : ''
+  const props = block ? `${withMeta(all, block.close, meta)}\n\n` : frontMatterFor(meta)
 
-  return `${frontMatterFor(meta)}${head}${words}${words ? '\n' : ''}`
+  return `${props}${head}${words}${words ? '\n' : ''}`
+}
+
+/** A key's line, as @nib/markdown/front-matter reads one: an unindented line up to
+ *  its first colon with a blank or nothing after it. */
+const KEY_LINE = /^[^\s#-].*?[ \t]*:(?:\s|$)/
+
+/** A key's line, a line under one, a list's item or a comment: what a block of
+ *  properties is made of. */
+const BLOCK_LINE = new RegExp(`${KEY_LINE.source}|^(?:[ \\t]|-(?:\\s|$)|#)`)
+
+/** The block of properties a body opens with, or null where it opens with anything
+ *  else. Two `---` lines are not enough: a note may open with a rule, a paragraph
+ *  and another rule. A block is the fence with a key on the line right under it,
+ *  as every app writes one, and nothing between the fences but lines a block is
+ *  made of; a rule is followed by a blank line or by words. */
+function ownBlock(body: string): ReturnType<typeof frontMatterBlock> {
+  const block = frontMatterBlock(body)
+  if (!block) return null
+
+  const lines = body.slice(block.body.from, block.body.to).split(/\r?\n/)
+  if (!KEY_LINE.test(lines[0] ?? '')) return null
+  return lines.every((line) => !line.trim() || BLOCK_LINE.test(line)) ? block : null
+}
+
+/** A note's own block with the rows of `meta` it does not say added in front of
+ *  its closing fence, and up to that fence: a key in another case is the same key,
+ *  since that is how the app reads one (see @nib/markdown/front-matter). */
+function withMeta(note: string, close: number, meta: Meta): string {
+  const says = new Set(frontMatterKeys(note).map((key) => key.toLowerCase()))
+  const nl = note.includes('\r\n') ? '\r\n' : '\n'
+  // Every row is written on one line, its key up to the first colon.
+  const added = frontMatterFor(meta)
+    .split('\n')
+    .slice(1)
+    .filter((line) => line.includes(': ') && !says.has(line.split(': ')[0]?.toLowerCase() ?? ''))
+
+  const fence = note.slice(close).split(/\r?\n/)[0] ?? '---'
+  return `${note.slice(0, close)}${added.map((line) => `${line}${nl}`).join('')}${fence}`
 }
 
 /** A note's words as the app that kept them wrote them, to the byte. The blank

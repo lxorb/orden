@@ -180,7 +180,7 @@ export async function readLogseq(sources: readonly Source[]): Promise<ImportPlan
             ...said.meta,
             extra: [...(extra ?? []), ...(aliases.length ? [['aliases', aliases] as const] : [])],
           }
-          return { text: said.body, title: null, meta }
+          return { text: said.body, title: null, meta, own: true }
         },
       }
     },
