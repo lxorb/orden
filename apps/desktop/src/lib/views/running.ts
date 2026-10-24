@@ -152,7 +152,7 @@ export async function repeatTemplates() {
     const to = inside ? insideSpace(space.root, inside) : space.root
     await invoke('create_folder', { path: to }).catch(() => undefined)
     const title = `${row.file.basename} ${due.day}`
-    const name = workspace.freeName(to, `${title}.md`)
+    const name = await workspace.freeNameOnDisk(to, `${title}.md`)
     const words = await templateWords(path, name.replace(/\.md$/i, ''))
     const made = joinPath(to, name)
     await writeFile(made, due.missed.length ? withProperties(words, { missed: due.missed }) : words)

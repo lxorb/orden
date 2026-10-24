@@ -157,6 +157,43 @@ describe('a note made beside a tab from a space that is not on screen', () => {
   })
 })
 
+describe('a file made beside one the list does not show', () => {
+  // The list leaves out what is named with a dot unless hidden files are shown, so
+  // a name it calls free can be a file that is there.
+  beforeEach(() => {
+    workspace.spaces = [{ id: 'home', name: 'Home', root: '/home' }]
+    workspace.activeSpaceId = 'home'
+  })
+
+  test('a note made in a dot folder steps past the hidden note there', async () => {
+    files().set('/home/.notes/Plan.md', 'precious\n')
+    await workspace.loadTree()
+
+    // What the palette makes for `.notes/Plan`.
+    await workspace.createNote('/home/.notes', 'Plan.md')
+    await workspace.writesSettled()
+
+    expect(files().get('/home/.notes/Plan.md')).toBe('precious\n')
+    expect(files().has('/home/.notes/Plan 2.md')).toBe(true)
+  })
+
+  test('a dotfile dropped from outside steps past the hidden one there', async () => {
+    files().set('/home/.gitignore', 'secrets/\n')
+    await workspace.loadTree()
+
+    const words = new TextEncoder().encode('node_modules/\n')
+    const picked = {
+      name: '.gitignore',
+      webkitRelativePath: '',
+      arrayBuffer: async () => words.buffer,
+    }
+    await workspace.bringIn([picked], '/home')
+
+    expect(files().get('/home/.gitignore')).toBe('secrets/\n')
+    expect(files().get('/home/.gitignore 2')).toBe('node_modules/\n')
+  })
+})
+
 describe('a delete undone after a note took its name', () => {
   beforeEach(async () => {
     files().set('/space/Plan.md', '# Plan\nthe old words\n')

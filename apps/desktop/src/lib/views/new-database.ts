@@ -65,11 +65,11 @@ export function databaseNote(): string {
 /** A name for the database's folder free twice over: no folder of that name, and no
  *  note either, which the list would draw as a second row of the same name beside
  *  it. */
-function freeFolder(dir: string, wanted: string): string {
+async function freeFolder(dir: string, wanted: string): Promise<string> {
   let name = wanted
   for (;;) {
-    const folder = workspace.freeName(dir, name)
-    const note = workspace.freeName(dir, `${folder}.md`)
+    const folder = await workspace.freeNameOnDisk(dir, name)
+    const note = await workspace.freeNameOnDisk(dir, `${folder}.md`)
     if (note === `${folder}.md`) return folder
     name = note.slice(0, -'.md'.length)
   }
@@ -91,7 +91,7 @@ export async function createDatabase(folder?: string, named?: string): Promise<v
   if (!dir) return
   if (named === undefined && workspace.startNaming('database', dir)) return
 
-  const path = folderNotePath(joinPath(dir, freeFolder(dir, databaseName(named))))
+  const path = folderNotePath(joinPath(dir, await freeFolder(dir, databaseName(named))))
   await writeFile(path, databaseNote())
   workspace.undone.record({ kind: 'create', path })
   await workspace.loadTree()
