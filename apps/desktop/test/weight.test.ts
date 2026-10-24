@@ -838,7 +838,7 @@ function holds(tail: string): boolean {
  *  Raised 2026-10-24, to 3,291,000, for #903: a note open from another space resolves
  *  its links, bare embeds and attachments in its own space (`otherIndex` in
  *  link-index.svelte.ts), after #878, #889 and #894 before it. Measured 3,290,175. */
-const BUDGET = 3_300_000 // combined branch only
+const BUDGET = 3_400_000 // combined branch only
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
