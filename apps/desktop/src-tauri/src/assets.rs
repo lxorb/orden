@@ -11,7 +11,8 @@ use std::path::{Component, Path, PathBuf};
 use tauri::AppHandle;
 
 use crate::paths::{
-    at_most, cannot, folded, free_spot, in_spaces, inside, made, space_root, spaces_dir,
+    at_most, cannot, folded, free_spot, in_spaces, inside, is_reserved, made, space_root,
+    spaces_dir,
 };
 
 /// Bigger than any picture belongs in a document, and small enough that turning
@@ -129,7 +130,13 @@ fn stored(dir: &Path, safe: &str, bytes: &[u8]) -> Result<PathBuf, String> {
             target = free_spot(&target, true);
             fs::write(&target, bytes).map_err(|error| cannot("write", &target, &error))?;
         }
-        Err(_) => fs::write(&target, bytes).map_err(|error| cannot("write", &target, &error))?,
+        // Nothing there, but the name may still be taken: a page note beside it would take
+        // `Report.pages.pdf` for its paper, and `Report.pages` would take the PDF beside
+        // it for its own (#538). Such a name steps aside, as a restore's does.
+        Err(_) => {
+            target = free_spot(&target, true);
+            fs::write(&target, bytes).map_err(|error| cannot("write", &target, &error))?;
+        }
     }
 
     Ok(target)
@@ -202,7 +209,13 @@ fn safe_name(name: &str) -> Option<String> {
         return None;
     }
 
-    Some(safe)
+    // `CON.png` is a device on Windows, and a file of that name one nobody can open,
+    // move or delete there; see `is_reserved`.
+    Some(if is_reserved(&safe) {
+        format!("_{safe}")
+    } else {
+        safe
+    })
 }
 
 /// What kind of file this is, going by the extension, which is all a `data:` URI

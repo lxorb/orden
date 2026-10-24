@@ -754,6 +754,21 @@ describe('a pasted picture', () => {
     expect([...disk.assets.keys()]).toEqual([])
   })
 
+  /** A page note's paper is `<name>.pages.pdf` beside it: a PDF of that name dropped
+   *  beside a page note with no paper yet would become its paper, and be deleted with it. */
+  test('steps aside from a name a page note would take for its paper', async () => {
+    await webInvoke('write_note', { path: '/Notes/Report.pages', content: '{}' })
+    const written = await webInvoke<string>('save_asset', {
+      notePath: '/Notes/Read me.md',
+      folder: '',
+      name: 'Report.pages.pdf',
+      bytes: [1],
+    })
+
+    expect(written).toBe('Report.pages 2.pdf')
+    expect([...disk.assets.keys()]).toEqual(['/Notes/Report.pages 2.pdf'])
+  })
+
   test('keeps the folder an older build wrote when none is sent', async () => {
     const written = await webInvoke<string>('save_asset', {
       notePath: '/Notes/Read me.md',

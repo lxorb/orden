@@ -435,7 +435,7 @@ async function holds(path: string): Promise<boolean> {
 /** `path` if nothing is there, else `name 2`, `name 3`... - before the
  *  extension for a note, after the name for a folder or a space. */
 async function freeSpot(path: string, isFile: boolean): Promise<string> {
-  if (!(await holds(path))) return path
+  if (!(await taken(path))) return path
 
   const folder = parent(path)
   const file = basename(path)
@@ -445,8 +445,20 @@ async function freeSpot(path: string, isFile: boolean): Promise<string> {
 
   for (let counter = 2; ; counter++) {
     const candidate = join(folder, `${stem} ${counter}${extension}`)
-    if (!(await holds(candidate))) return candidate
+    if (!(await taken(candidate))) return candidate
   }
+}
+
+/** Whether a name is taken: by something there, or by a page note and its paper,
+ *  `X.pages` and `X.pages.pdf`, which take each other's name; see `taken` in paths.rs. */
+async function taken(path: string): Promise<boolean> {
+  return (await holds(path)) || (await pairedTaken(path))
+}
+
+async function pairedTaken(path: string): Promise<boolean> {
+  if (/\.pages\.pdf$/i.test(path)) return holds(path.slice(0, -'.pdf'.length))
+  if (/\.pages$/i.test(path)) return holds(`${path}.pdf`)
+  return false
 }
 
 async function trashItem(path: string, kind: string): Promise<TrashEntry> {
@@ -983,17 +995,23 @@ export async function webInvoke<T>(
       let binary = ''
       for (const byte of bytes) binary += String.fromCharCode(byte)
 
+      // A name a page note and its paper would share steps aside; any other is the same
+      // picture again, as the desktop's hashed names are.
+      const at = join(folder, name)
+      const target = (await pairedTaken(at)) ? await freeSpot(at, true) : at
+      const file = basename(target)
+
       await assets.put({
-        path: join(folder, name),
+        path: target,
         // What the name says it is rather than the extension with `image/` in
         // front: `image/svg` draws nothing, and the asset worker hands this row
         // straight to an `<img>`. See asset-route.ts.
-        type: assetType(name),
+        type: assetType(file),
         data: btoa(binary),
         modified: now(),
       })
 
-      return (relative ? `${relative}/${name}` : name) as T
+      return (relative ? `${relative}/${file}` : file) as T
     }
 
     case 'read_highlights': {

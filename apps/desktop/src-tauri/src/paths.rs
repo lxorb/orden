@@ -211,9 +211,13 @@ fn holds_paper(path: &Path) -> bool {
 /// every PDF it saves that way - and a page note given `Report.pages` would take it for
 /// its paper: moved over it, or hidden from the list as held (#538). And the other way
 /// round: such a PDF put beside a page note `Report.pages` with no paper yet is taken
-/// by that note for its paper, so for a PDF the name is taken where the note is.
+/// by that note for its paper, so for a PDF the name is taken where the note is. And
+/// where highlights a gone PDF left behind are, which a new one would show as its own.
 fn taken(path: &Path) -> bool {
-    path.exists() || (is_pages(path) && paper_of(path).exists()) || paper_holder(path).is_some()
+    path.exists()
+        || (is_pages(path) && paper_of(path).exists())
+        || paper_holder(path).is_some()
+        || (is_pdf(path) && highlights_of(path).exists())
 }
 
 /// Whether a page note may be called `to`, coming from `from`: not over a file where its
