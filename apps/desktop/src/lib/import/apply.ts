@@ -205,10 +205,52 @@ export function restamped(
   const held = new Set([...taken].map(nameKey))
   const moved = new Map<string, string>()
   const placed: { file: Planned; was: string; now: string }[] = []
+  const inside = (path: string) => (under ? `${under}/${path}` : path)
+
+  // A folder note and its folder are one thing: a database's note shows the notes
+  // in the folder of its name, and a page's subpages are in the folder of its name.
+  // So where either name is taken the two step aside together, `Tasks 2.md` with
+  // `Tasks 2/`, rather than the note alone, which would leave a new database showing
+  // nothing and its pages among the ones already there. They are named first, the
+  // outermost first, so every file in the folder lands in the folder they were
+  // given, wherever it stands in the plan.
+  const filled = new Set<string>()
+  for (const file of plan.files) {
+    const parts = file.path.split('/').slice(0, -1)
+    parts.forEach((_, at) => filled.add(nameKey(parts.slice(0, at + 1).join('/'))))
+  }
+  const holds = (folder: string) => {
+    const key = `${nameKey(folder)}/`
+    return [...held].some((one) => one.startsWith(key))
+  }
+  const folders = new Map<string, string>()
+  const into = (path: string) => {
+    const parts = path.split('/')
+    for (let at = parts.length - 1; at > 0; at -= 1) {
+      const folder = folders.get(nameKey(parts.slice(0, at).join('/')))
+      if (folder !== undefined) return [folder, ...parts.slice(at)].join('/')
+    }
+    return path
+  }
+  const notes = new Map<Planned, string>()
+  const folderNotes = plan.files
+    .filter((file) => file.kind === 'note' && filled.has(nameKey(file.path.replace(/\.md$/i, ''))))
+    .sort((one, two) => one.path.split('/').length - two.path.split('/').length)
+  for (const file of folderNotes) {
+    const wanted = into(inside(file.path))
+    const free = freePath(
+      wanted,
+      (candidate) => held.has(nameKey(candidate)) || holds(candidate.replace(/\.md$/i, '')),
+    )
+    held.add(nameKey(free))
+    notes.set(file, free)
+    folders.set(nameKey(inside(file.path).replace(/\.md$/i, '')), free.replace(/\.md$/i, ''))
+  }
 
   for (const file of plan.files) {
-    const wanted = under ? `${under}/${file.path}` : file.path
-    const free = freePath(wanted, (candidate) => held.has(nameKey(candidate)))
+    const wanted = inside(file.path)
+    const free =
+      notes.get(file) ?? freePath(into(wanted), (candidate) => held.has(nameKey(candidate)))
     held.add(nameKey(free))
 
     if (free !== wanted) moved.set(file.path, under ? free.slice(under.length + 1) : free)

@@ -228,6 +228,47 @@ describe('a name that is already taken', () => {
     )
   })
 
+  test('a folder note and its folder step aside together', () => {
+    const base = '```base\nfilters:\n  and:\n    - file.folder + ".md" == this.file.path\n```\n'
+    const stamped = restamped(
+      planOf([
+        note('Home.md', 'See [[Tasks]] and [[Buy milk]].'),
+        note('Tasks/Buy milk.md', '# Buy milk'),
+        note('Tasks.md', base),
+        note('Tasks/Sub.md', '# Sub'),
+        note('Tasks/Sub/Deep.md', '# Deep'),
+      ]),
+      new Set(['tasks.md', 'tasks/buy milk.md']),
+      '',
+    )
+
+    expect(stamped.files.map((one) => one.path)).toEqual([
+      'Home.md',
+      'Tasks 2/Buy milk.md',
+      'Tasks 2.md',
+      'Tasks 2/Sub.md',
+      'Tasks 2/Sub/Deep.md',
+    ])
+    expect(textAt(stamped.files, 'Home.md')).toBe('See [[Tasks 2]] and [[Buy milk]].')
+  })
+
+  test('a folder the space already fills moves its folder note aside with it', () => {
+    const stamped = restamped(
+      planOf([note('Tasks.md', '# Tasks'), note('Tasks/Buy milk.md', '# Buy milk')]),
+      new Set(['tasks/old.md']),
+      'In',
+    )
+
+    expect(stamped.files.map((one) => one.path)).toEqual(['In/Tasks.md', 'In/Tasks/Buy milk.md'])
+
+    const filled = restamped(
+      planOf([note('Tasks.md', '# Tasks'), note('Tasks/Buy milk.md', '# Buy milk')]),
+      new Set(['tasks/old.md']),
+      '',
+    )
+    expect(filled.files.map((one) => one.path)).toEqual(['Tasks 2.md', 'Tasks 2/Buy milk.md'])
+  })
+
   test('two of the import1s own notes cannot land on one name', () => {
     const taken = new Set(['a.md', 'a 2.md'])
     const stamped = restamped(planOf([note('A.md', 'one'), note('A.md', 'two')]), taken, '')
