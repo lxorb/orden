@@ -219,6 +219,18 @@ describe('a merge that may not be made', () => {
     expect(disk.get(board)).toBe('{"nodes":[]}')
     expect(disk.has(A)).toBe(true)
   })
+
+  test('nor into a chat, whose pointer would no longer say where the chat is', async () => {
+    const chat = `${SPACE}/Team.chat`
+    const pointer = '{"chat":"c1"}'
+    const ws = space({ [A]: '# a\n', [chat]: pointer })
+    await mergeInto(ws, A, chat)
+
+    expect(sent).toEqual([])
+    expect(disk.get(chat)).toBe(pointer)
+    expect(disk.get(A)).toBe('# a\n')
+    expect(ws.undone.stack).toEqual([])
+  })
 })
 
 describe('a note split at the caret', () => {
