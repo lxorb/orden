@@ -170,3 +170,26 @@ test("the blocks a note of another space is offered are that space's", async () 
   expect(searched).toEqual(['/home/me/A'])
   expect(found).toMatchObject([{ path: 'Plan.md', line: 0 }])
 })
+
+test('a link drawn in the reading view of another space resolves in that space', async () => {
+  disk.set('/home/me/B/Sub/Thing.md', '# Thing of B\n')
+  await links.build('/home/me/B')
+  const link = (target: string) =>
+    links.targetOf('/home/me/A/Note.md', { kind: 'wikilink', target })
+
+  links.index('/home/me/A/Note.md')
+  await vi.waitFor(() => expect(link('Only A')).toBe('Only A.md'))
+  expect(link('Plan')).toBe('Plan.md')
+  expect(link('Thing')).toBeNull()
+})
+
+test('a link followed before that space is read opens its note rather than making one', async () => {
+  await workspace.open('/home/me/A/Note.md')
+  sent.length = 0
+
+  await workspace.followLink(jump(null, 'Plan'))
+
+  expect(sent.some((one) => one.command === 'write_note')).toBe(false)
+  expect(disk.get('/home/me/A/Plan.md')).toBe('# Plan of A\n')
+  expect(workspace.active?.path).toBe('/home/me/A/Plan.md')
+})

@@ -183,9 +183,9 @@ function blockEntries(
         // to markdown links gets one here too; see composer.ts. The block's own
         // path and the note it is written from are both this note, which is what
         // makes a relative link to it the bare file name.
-        const root = workspace.activeSpace?.root
-        const relative =
-          root !== undefined && path?.startsWith(root) ? relativeTo(root, path) : null
+        // The note's own space, which a note still open from another one is not.
+        const root = path ? workspace.rootHolding(path) : null
+        const relative = root !== null && path?.startsWith(root) ? relativeTo(root, path) : null
         void copyText(
           targets
             .map((target) =>

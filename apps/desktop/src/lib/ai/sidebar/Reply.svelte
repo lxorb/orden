@@ -78,7 +78,12 @@
       source,
       (link) => {
         const found = link.target
-          ? links.targetOf(workspace.panelNote, { kind: 'wikilink', target: link.target })
+          ? // The panel's note as the path a tab holds, which is what `targetOf` reads:
+            // a note of another space resolves in its own space, where following goes.
+            links.targetOf(workspace.panelTab?.path ?? null, {
+              kind: 'wikilink',
+              target: link.target,
+            })
           : null
         return found === null ? null : { href: found }
       },

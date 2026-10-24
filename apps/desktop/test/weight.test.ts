@@ -835,15 +835,13 @@ function holds(tail: string): boolean {
  *  shared to be read, in the workspace's own calls (`writableAt`) and in the row menu,
  *  the tree's keys and the palette. Measured 3,283,904.
  *
- *  Raised 2026-10-24, to 3,290,000, for #832: #811 and #820 together measured
- *  3,287,847, and a website in a space shared to be read browses without writing its
- *  file (`canWriteAt` in web-tab/keep.ts and aimed.ts, `browseOldWebsite` in
- *  workspace.svelte.ts). Measured 3,289,263.
+ *  Raised 2026-10-24, to 3,291,000, for #903: a note open from another space resolves
+ *  its links, bare embeds and attachments in its own space (`otherIndex` in
+ *  link-index.svelte.ts), after #878, #889 and #894 before it. Measured 3,290,175.
  *
- *  Raised 2026-10-24, to 3,292,000, for #906: sync v1 writes its record down around
- *  each rename of a round of moves (`save` in sync.svelte.ts, `moving` in
- *  sync/mirror.ts), and sync v2 puts a note v1 left aside back before its first pass
- *  (`wholeV1` in sync2/runner.svelte.ts). Measured 3,290,300. */
+ *  Raised 2026-10-24, to 3,294,000, for #904, #905 and #907: the hover card, block
+ *  names, block search, the reading view and a link followed early all keep to the
+ *  note's own space (`targetWhenRead` in link-index.svelte.ts). Measured 3,293,189. */
 const BUDGET = 3_300_000 // combined branch only
 const MOST_FILES = 382
 

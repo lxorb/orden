@@ -97,7 +97,8 @@
 
   function linkedNote(words: string): string | null {
     const target = /\[\[([^\]|#^]+)/.exec(words)?.[1]?.trim()
-    const root = workspace.activeSpace?.root
+    // Resolved in the chat's own space, which `targetOf` answers for too.
+    const root = workspace.rootHolding(path)
     const found = target ? links.targetOf(path, { kind: 'wikilink', target }) : null
     return found && root ? insideSpace(root, found) : null
   }
