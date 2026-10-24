@@ -97,12 +97,6 @@ describe('the note in front', () => {
  *  refuses (B274). */
 describe('converting syntax', () => {
   const offers = () => {
-/** Converting a space's old website notes writes a shortcut beside each and puts the
- *  note in the trash, so a space shared to be read is not offered it (B288). */
-describe('converting website notes', () => {
-  async function offers(): Promise<boolean> {
-    const { links } = await import('./link-index.svelte')
-    vi.spyOn(links, 'websiteNotes', 'get').mockReturnValue(true)
     vi.spyOn(workspace, 'activeSpace', 'get').mockReturnValue({
       id: 'theirs',
       name: 'Theirs',
@@ -118,6 +112,17 @@ describe('converting website notes', () => {
   })
 })
 
+/** Converting a space's old website notes writes a shortcut beside each and puts the
+ *  note in the trash, so a space shared to be read is not offered it (B288). */
+describe('converting website notes', () => {
+  async function offers(): Promise<boolean> {
+    const { links } = await import('./link-index.svelte')
+    vi.spyOn(links, 'websiteNotes', 'get').mockReturnValue(true)
+    vi.spyOn(workspace, 'activeSpace', 'get').mockReturnValue({
+      id: 'theirs',
+      name: 'Theirs',
+      root: SPACE,
+    })
     return appCommands().some((one) => one.id === 'convert-website-notes' && one.disabled !== true)
   }
 
