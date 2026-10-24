@@ -238,7 +238,7 @@ type Work = Arc<Mutex<Option<Box<dyn FnOnce() + Send>>>>;
 
 /// Runs `job` on CEF's UI thread, the only one a browser may be spoken to on. Whether it
 /// was posted.
-fn on_ui(job: impl FnOnce() + Send + 'static) -> bool {
+pub(crate) fn on_ui(job: impl FnOnce() + Send + 'static) -> bool {
     let job: Work = Arc::new(Mutex::new(Some(Box::new(job))));
     let mut task = Job::new(job);
     post_task(ThreadId::UI, Some(&mut task)) != 0

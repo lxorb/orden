@@ -268,6 +268,9 @@ mod page_hide;
 // A web tab's page drawn in the app's scheme rather than the system's; see page_scheme.rs.
 #[cfg(desktop)]
 mod page_scheme;
+// The dictionaries nib's own Chromium checks spelling against; see spelling.rs.
+#[cfg(desktop)]
+mod spelling;
 // What every browser's import reads profiles and their files with; see
 // browser_profiles.rs.
 #[cfg(desktop)]
@@ -454,6 +457,7 @@ macro_rules! desktop_commands {
             gpu::gpu_line,
             page_scale::page_scale_seen,
             page_scheme::page_scheme_seen,
+            spelling::spell_languages,
             window_drag::window_frame,
             full_screen::window_is_fullscreen,
             zen_profiles::zen_profiles,
