@@ -83,7 +83,7 @@
 
     const wanted = node.file
     let mine = true
-    void fileSource(wanted).then((text) => {
+    void fileSource(wanted, canvasPath).then((text) => {
       if (mine) source = text
     })
 

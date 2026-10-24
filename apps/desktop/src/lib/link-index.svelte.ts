@@ -178,6 +178,15 @@ interface OtherSpace {
   files: readonly string[]
 }
 
+/** A link resolved against one space's notes as an index holds them. */
+function resolvedIn(index: NoteIndex, link: { kind: LinkKind; target: string }): string | null {
+  if (!link.target) return null
+  if (isTabFile(link.target)) return resolveFile(index, link.target, link.kind)
+  const found =
+    link.kind === 'markdown' ? resolveRelative(index, link.target) : resolveNote(index, link.target)
+  return found?.path ?? null
+}
+
 /** A scanned note as a link resolves against it. */
 function refOf(note: ScannedNote): NoteRef {
   return {
@@ -1213,9 +1222,21 @@ class Links {
   ): Promise<string | null> {
     const other = from === null ? null : this.otherHolding(from)
     if (from === null || other === null) return null
-    if (!this.others.has(other)) void this.readOther(other)
-    await this.readingOther.get(other)
+    await this.otherRead(other)
     return this.otherTarget(other, from, link)
+  }
+
+  /** Resolves once the space holding `path` can answer for it here: at once for the
+   *  open space, and once its notes have been read for another one. What a surface
+   *  that resolves links synchronously, an export, waits for first. */
+  async spaceRead(path: string | null): Promise<void> {
+    const other = path === null ? null : this.otherHolding(path)
+    if (other !== null) await this.otherRead(other)
+  }
+
+  private async otherRead(root: string): Promise<void> {
+    if (!this.others.has(root)) void this.readOther(root)
+    await this.readingOther.get(root)
   }
 
   private otherTarget(
@@ -1223,14 +1244,7 @@ class Links {
     from: string,
     link: { kind: LinkKind; target: string },
   ): string | null {
-    if (!link.target) return null
-    const index = this.otherIndex(root, from)
-    if (isTabFile(link.target)) return resolveFile(index, link.target, link.kind)
-    const found =
-      link.kind === 'markdown'
-        ? resolveRelative(index, link.target)
-        : resolveNote(index, link.target)
-    return found?.path ?? null
+    return resolvedIn(this.otherIndex(root, from), link)
   }
 
   /** How many notes the resolver has compared paths with, ever - a running total,
@@ -1484,16 +1498,7 @@ class Links {
     }
     const touched = await this.retargetIn(
       notes,
-      (source, link) => {
-        if (!link.target) return null
-        const from = { ...index, path: source }
-        if (isTabFile(link.target)) return resolveFile(from, link.target, link.kind)
-        const hit =
-          link.kind === 'markdown'
-            ? resolveRelative(from, link.target)
-            : resolveNote(from, link.target)
-        return hit?.path ?? null
-      },
+      (source, link) => resolvedIn({ ...index, path: source }, link),
       () => undefined,
       { was, now, root, open, how },
     )
@@ -1678,7 +1683,24 @@ class Links {
 
   /** The note an embed names, for an export: the renderer cannot wait on a disk,
    *  so the notes a document embeds are read before it is rendered. */
-  async embedSource(target: string, from: string | null): Promise<string | null> {
+  async embedSource(
+    target: string,
+    from: string | null,
+    inSpaceOf: string | null = from,
+  ): Promise<string | null> {
+    // A note of another space embeds that space's notes, read once its notes are.
+    // `inSpaceOf` names the space when `from` cannot: a canvas card is resolved from
+    // the top of the canvas's space rather than from beside it.
+    const other = inSpaceOf === null ? null : this.otherHolding(inSpaceOf)
+    if (inSpaceOf !== null && other !== null) {
+      await this.otherRead(other)
+      const index = this.otherIndex(other, inSpaceOf)
+      const at = from === null ? '' : (within(other, from) ?? '')
+      const found = resolvedIn({ ...index, path: at }, { kind: 'wikilink', target })
+      if (found === null) return null
+      return invoke<string>('read_note', { path: insideSpace(other, found) }).catch(() => null)
+    }
+
     const source = from === null ? null : this.relative(from)
     const found = this.resolveFrom(source ?? '', { kind: 'wikilink', target })
 
@@ -1693,13 +1715,19 @@ class Links {
    *  the link showed. The same resolution the editor's own links get, so the
    *  export points where the app does.
    *
-   *  `from` is the note's path as the app holds it; a note outside the open space
-   *  has no place in the index and resolves to nothing. */
+   *  `from` is the note's path as the app holds it; a note in no space this window
+   *  knows resolves to nothing. */
   relativeTarget(link: FoundLink, from: string | null): string | null {
-    const source = from === null ? null : this.relative(from)
+    // A note of another space, in its own space; see `spaceRead`, which an export
+    // waits for so that these are there to answer.
+    const other = from === null ? null : this.otherHolding(from)
+    const source = from === null ? null : other !== null ? within(other, from) : this.relative(from)
     if (source === null) return null
 
-    const found = this.resolveFrom(source, link)
+    const found =
+      from !== null && other !== null
+        ? this.otherTarget(other, from, link)
+        : this.resolveFrom(source, link)
     return found === null ? null : relativePath(folderOf(source), found)
   }
 

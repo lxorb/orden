@@ -90,7 +90,8 @@ export function keptByAccount(file: string, signedIn: boolean): string | null {
 
 /** The markdown of the note a file node names, or null when the space holds
  *  none. Read through the index, which keeps the last handful in hand so a
- *  screenful of cards on the same note costs one read. */
-export function fileSource(file: string): Promise<string | null> {
-  return links.embedSource(file, null)
+ *  screenful of cards on the same note costs one read. The space is the canvas's,
+ *  which a canvas still open from another space is not the active one. */
+export function fileSource(file: string, canvasPath: string | null = null): Promise<string | null> {
+  return links.embedSource(file, null, canvasPath)
 }
