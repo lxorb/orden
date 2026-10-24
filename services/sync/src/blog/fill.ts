@@ -36,17 +36,19 @@ export async function fillFronts(env: Env, spaceId: string | null): Promise<numb
   // And every note whose head was read before a comment was taken out of it first
   // (`front_rev`, 0053): what it says about itself may hold something its writer
   // commented out. Notes of published spaces first, because nothing of anybody
-  // else's is read by a stranger.
+  // else's is read by a stranger. And a note in Recently deleted, which can come back
+  // with its pictures (pictures.ts); a tombstone emptied for good has nothing to read.
   const asking = spaceId
     ? env.DB.prepare(
         `select id, space_id, path from notes
-          where (front is null or front_rev < ?) and deleted = 0 and kind != 'file'
-            and space_id = ?
+          where (front is null or front_rev < ?) and (deleted = 0 or size > 0)
+            and kind != 'file' and space_id = ?
           limit ?`,
       ).bind(FRONT_REV, spaceId, AT_ONCE)
     : env.DB.prepare(
         `select n.id, n.space_id, n.path from notes n join spaces s on s.id = n.space_id
-          where (n.front is null or n.front_rev < ?) and n.deleted = 0 and n.kind != 'file'
+          where (n.front is null or n.front_rev < ?) and (n.deleted = 0 or n.size > 0)
+            and n.kind != 'file'
           order by n.front is null desc, s.blog_enabled desc
           limit ?`,
       ).bind(FRONT_REV, AT_ONCE)
@@ -62,12 +64,14 @@ export async function fillFronts(env: Env, spaceId: string | null): Promise<numb
       // The words as well as the front matter: the body is in hand, and the two
       // are read from it together everywhere else. See blog/words.ts.
       await keepWords(env, row, source, titleFrom(row.path, source)).catch(() => undefined)
-      // And its pictures, which a deleted account asks about; see pictures.ts.
-      await keepPictures(env, row, source)
+      // And its pictures, which a deleted account asks about; see pictures.ts. A note
+      // whose pictures could not be written stays below the mark, so the next sweep
+      // reads it again.
+      const kept = await keepPictures(env, row, source)
 
       return env.DB.prepare('update notes set front = ?, front_rev = ? where id = ?').bind(
         writeFront(source),
-        FRONT_REV,
+        kept ? FRONT_REV : 0,
         row.id,
       )
     }),
