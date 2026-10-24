@@ -16,6 +16,7 @@
  *  done or cancelled rings nothing. A relative reminder needs a time to count back from,
  *  and a time of day needs a day, so a task without either has none of those. */
 
+import { heldEscapes, released } from './escapes'
 import { type DueReads, startOf } from './task-dates'
 import type { TaskFields } from './task-line'
 
@@ -165,12 +166,19 @@ export function reminderId(space: string, path: string, hash: string, wall: Wall
 /** A task's words as a notification says them: a link as its text, a wikilink as its
  *  name or the words it shows, and the marks of emphasis and code gone. */
 export function plainWords(text: string): string {
-  return text
-    .replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, '$2')
-    .replace(/\[\[([^\]]+)\]\]/g, (_, target: string) => target.replace(/#.*$/, ''))
-    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
-    .replace(/(\*\*|__|~~|==|`)/g, '')
-    .replace(/(^|\s)[*_](\S[^*_]*\S|\S)[*_](?=\s|$)/g, '$1$2')
-    .replace(/\s+/g, ' ')
-    .trim()
+  // The escapes are held while the marks are looked for, so `\*` is a star rather
+  // than the start of emphasis, and given back as the characters they say.
+  const held = heldEscapes(text).replace(/`([^`]*)`/g, (_, inside: string) =>
+    released(inside, true),
+  )
+  return released(
+    held
+      .replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, '$2')
+      .replace(/\[\[([^\]]+)\]\]/g, (_, target: string) => target.replace(/#.*$/, ''))
+      .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+      .replace(/(\*\*|__|~~|==|`)/g, '')
+      .replace(/(^|\s)[*_](\S[^*_]*\S|\S)[*_](?=\s|$)/g, '$1$2')
+      .replace(/\s+/g, ' ')
+      .trim(),
+  )
 }

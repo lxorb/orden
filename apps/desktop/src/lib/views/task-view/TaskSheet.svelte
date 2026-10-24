@@ -13,6 +13,7 @@
   import { parseQuickAdd } from '@nib/bases/language'
   import { linesOf } from '@nib/bases/tasks'
   import { dayWords } from '@nib/editor/task-days'
+  import { shownWords, typedWords } from '@nib/markdown/escapes'
   import { deadlineOf, startOf } from '@nib/markdown/task-dates'
   import Bell from 'lucide/dist/esm/icons/bell.mjs'
   import Calendar from 'lucide/dist/esm/icons/calendar-days.mjs'
@@ -40,6 +41,7 @@
   import { rows } from '../../rows/rows.svelte'
   import { viewport } from '../../viewport.svelte'
   import { addSubtask, writeRow } from '../act'
+  import { plain } from '../inline'
   import { notePath } from '../kit'
   import { hasMeta, lineCount, subtaskCounts, taskKey } from '../task-meta'
   import {
@@ -109,20 +111,23 @@
   const subKit = $derived({ ...kit, openTask: (one: Row) => viewing.open(one) })
 
   /** The task's words while they are being changed, written on Enter or when the field
-   *  is left. */
+   *  is left. The field holds the words a reader sees, `milk $3` where the line says
+   *  `milk \$3`, and they go back with the escapes the line needs (`typedWords`):
+   *  taking a backslash out by hand would turn the line into maths. */
   let title = $state('')
   let editing = $state(false)
   $effect(() => {
-    const words = task?.text ?? ''
+    const words = shownWords(task?.text ?? '')
     if (!editing) untrack(() => (title = words))
   })
 
   function rename() {
     editing = false
     const words = title.trim()
-    if (!row || !task || !words || words === task.text) return
-    viewing.renamed(words, row.anchor?.line ?? shown.ref.line)
-    void writeRow(row, { task: { text: words } })
+    if (!row || !task || !words || words === shownWords(task.text)) return
+    const written = typedWords(words)
+    viewing.renamed(written, row.anchor?.line ?? shown.ref.line)
+    void writeRow(row, { task: { text: written } })
   }
 
   let adding = $state(false)
@@ -298,7 +303,7 @@
   class:page={phone}
   role="dialog"
   aria-modal="true"
-  aria-label={task?.text ?? ''}
+  aria-label={plain(task?.text ?? '')}
   tabindex="-1"
   {onkeydown}
   transition:fly={{ y: phone ? 24 : 8, duration: LAYER.rise, easing: cubicOut }}
@@ -322,7 +327,7 @@
       {#if parent?.task}
         <span class="sep" aria-hidden="true">›</span>
         <button type="button" class="crumbs" onclick={() => viewing.open(parent)}>
-          <span class="crumb">{parent.task.text}</span>
+          <span class="crumb">{plain(parent.task.text)}</span>
         </button>
       {/if}
       <span class="gap"></span>
@@ -356,7 +361,7 @@
         <div class="title-line">
           <TaskBox
             {task}
-            label={task.text}
+            label={plain(task.text)}
             ontick={() => kit.tick(row)}
             disabled={!kit.writes(row)}
           />
@@ -374,7 +379,7 @@
               } else if (event.key === 'Escape') {
                 event.preventDefault()
                 event.stopPropagation()
-                title = task.text
+                title = shownWords(task.text)
                 editing = false
                 event.currentTarget.blur()
               }

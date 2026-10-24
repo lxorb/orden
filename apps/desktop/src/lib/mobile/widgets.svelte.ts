@@ -16,6 +16,7 @@
  *  resources cannot reach the page's dictionaries. See res/values/strings.xml for
  *  what stands there before the app has ever run. */
 
+import { shownWords } from '@nib/markdown/escapes'
 import { t } from '../i18n.svelte'
 import { shownName } from '../note-name'
 import { insideSpace } from '../space-paths'
@@ -60,7 +61,8 @@ export function todayRows(
     const root = rootOf(one.space)
     const relative = one.at.replace(/#\d+:[0-9a-z]+$/, '')
     return {
-      text: one.text,
+      // The words, not the line: `milk \$3` says `milk $3` on the home screen.
+      text: shownWords(one.text),
       at: one.at,
       space: one.space,
       path: root ? insideSpace(root, relative) : '',

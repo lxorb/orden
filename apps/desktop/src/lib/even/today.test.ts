@@ -9,6 +9,7 @@ function host(found = true) {
       Promise.resolve([
         { at: 'Inbox.md#0:a1', space: 'Home', text: 'Call Mum' },
         { at: 'Work.md#3:b2', space: 'Work', text: 'Send the slides' },
+        { at: 'Shop.md#1:c3', space: 'Home', text: 'milk \\$3' },
       ]),
     tick: (at, space, done) => {
       ticked.push([at, space, done])
@@ -29,7 +30,11 @@ describe('today on the glasses', () => {
     const today = new Today(answer)
     today.fresh()
     await settled()
-    expect(today.rows().map((one) => one.label)).toEqual(['□ Call Mum', '□ Send the slides'])
+    expect(today.rows().map((one) => one.label)).toEqual([
+      '□ Call Mum',
+      '□ Send the slides',
+      '□ milk $3',
+    ])
     expect(drawn()).toBe(1)
   })
 

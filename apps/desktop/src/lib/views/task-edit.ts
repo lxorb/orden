@@ -5,6 +5,7 @@
 
 import type { TaskChange, TaskRow } from '@nib/bases'
 import type { Entry, Prefill } from '../quick-add/entry'
+import { shownWords, typedWords } from '@nib/markdown/escapes'
 import { deadlineField, deadlineOf, startOf } from '@nib/markdown/task-dates'
 import { changeFor } from './schedule/schedule'
 
@@ -24,7 +25,9 @@ export function prefillFor(task: TaskRow, description: string | null): Prefill {
   }
   // Set rather than spread in: a length here is minutes of work, not of motion.
   if (task.duration !== undefined) fields.duration = task.duration
-  return { text: task.text, ...(description ? { description } : {}), fields }
+  // The words a reader sees, `milk $3` where the line says `milk \$3`; `changeOf`
+  // writes them back with their escapes.
+  return { text: shownWords(task.text), ...(description ? { description } : {}), fields }
 }
 
 /** What saving the field changes in the task: every field it holds, a field it no
@@ -34,7 +37,7 @@ export function changeOf(task: TaskRow, entry: Entry): TaskChange {
   const fields = entry.fields
   const keptLow = task.priority > 4 && (fields.priority ?? 4) === 4
   const change: TaskChange = {
-    ...(entry.text === task.text ? {} : { text: entry.text }),
+    ...(entry.text === shownWords(task.text) ? {} : { text: typedWords(entry.text) }),
     ...changeFor(task, {
       due: fields.due ?? null,
       time: fields.time ?? null,
