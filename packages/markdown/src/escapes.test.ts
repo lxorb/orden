@@ -171,6 +171,22 @@ describe('a page’s text, as a note may hold it', () => {
     expect(escapeText('https://ex.com/a%%b')).toBe('https://ex.com/a%\\%b')
   })
 
+  /** Inline maths opens on a dollar with something other than a blank after it
+   *  and closes on the next one with something other than a blank before it, so
+   *  two prices in a sentence would draw the words between as a formula. */
+  test('a dollar that would open or close maths is escaped', () => {
+    expect(escapeText('Tickets cost $5-$10 each')).toBe('Tickets cost \\$5-\\$10 each')
+    expect(escapeText('5$ or 10$')).toBe('5\\$ or 10\\$')
+    expect(escapeText('$$')).toBe('\\$\\$')
+    expect(escapeText('a $ b')).toBe('a $ b')
+  })
+
+  /** A kept run is written as it is, so a dollar inside one would be a dollar the
+   *  rule above never saw: `**$5** and **$6**` would be maths from one to the other. */
+  test('a doubled marker around a dollar is escaped rather than kept', () => {
+    expect(escapeText('**$5** and **$6**')).toBe('\\*\\*\\$5\\*\\* and \\*\\*\\$6\\*\\*')
+  })
+
   test('nothing in, nothing out', () => {
     expect(escapeText('')).toBe('')
   })
