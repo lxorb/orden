@@ -484,6 +484,21 @@ describe('opening a canvas whose file is not JSON', () => {
   })
 })
 
+describe('opening a page note whose file is not JSON', () => {
+  // A page note is a canvas with pages in it, and read the same way: a blank plane
+  // drawn over one that will not read would take its pages, its ink and its paper.
+  test('opens nothing, says so, and leaves the file as it was', async () => {
+    const words =
+      '{"nodes":[{"id":"p","type":"file","file":"Lecture.pages.pdf","x":0,"y":0,"width":10,"height":10}],"edges":[],}'
+    files.set('/space/Lecture.pages', words)
+
+    await workspace.openPages('/space/Lecture.pages')
+    expect(workspace.tabs).toEqual([])
+    expect(unread.shown).toBe(true)
+    expect(files.get('/space/Lecture.pages')).toBe(words)
+  })
+})
+
 describe('renaming a row that exists', () => {
   test('moves the file and closes the field', async () => {
     workspace.startRenaming('/space/Beta.md')
