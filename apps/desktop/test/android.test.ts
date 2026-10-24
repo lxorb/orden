@@ -293,6 +293,28 @@ describe('the bridge the page talks over', () => {
   const kotlin = [...activity.matchAll(/@JavascriptInterface\s+fun\s+(\w+)/g)].map((one) => one[1])
   const typed = [...bridge.matchAll(/^ {2}(\w+)\(/gm)].map((one) => one[1])
 
+  /** Every method but the few that only say how the window looks or open one of the
+   *  system's own screens: the rest read what was shared or handed in, or write what
+   *  the home screen draws, and a framed page may do none of it. */
+  const HARMLESS = ['insets', 'askForTheFrame', 'bars', 'dictates', 'exactAlarms', 'askExactAlarms']
+  const GUARDED = kotlin.filter((name) => name !== undefined && !HARMLESS.includes(name))
+
+  test('wants the word for everything but how the window looks', () => {
+    expect(GUARDED).toEqual(
+      expect.arrayContaining(['handed', 'shared', 'sharedBytes', 'sharedDone', 'widgets']),
+    )
+    expect(GUARDED).toContain('remindersTaken')
+    for (const name of GUARDED) {
+      expect(bridge, `${name} is typed with the word first`).toMatch(
+        new RegExp(`^ {2}${name}\\(said: string`, 'm'),
+      )
+      // A call that carries nothing is a call the activity refuses.
+      expect(page, `${name} is never called without the word`).not.toMatch(
+        new RegExp(`method\\('${name}'\\)\\?\\.\\(\\)`),
+      )
+    }
+  })
+
   test('is the same list on both sides', () => {
     expect(kotlin.length).toBeGreaterThan(5)
     expect([...kotlin].sort()).toEqual([...typed].sort())
@@ -311,7 +333,7 @@ describe('the bridge the page talks over', () => {
     expect(activity).toContain('fun askForTheFrame()')
     expect(activity).toContain('window.__nibFrame?.(')
 
-    for (const name of ['secretRead', 'secretWrite', 'secretForget', 'listen']) {
+    for (const name of GUARDED) {
       const found = new RegExp(`fun ${name}\\(\\s*said: String`).test(activity)
       expect(found, `${name} takes the word first`).toBe(true)
       expect(activity, `${name} checks the word`).toMatch(
