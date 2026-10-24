@@ -48,6 +48,10 @@ export function descriptionOf(text: string, anchor: Anchor): Description | null 
   const lines = text.split('\n').map((one) => one.replace(/\r$/, ''))
   const own = indentOf(lines[at] ?? '')
   const indent = widthOf(contentIndent(lines[at] ?? ''))
+  // The lines the task holds, before the first indented no further than it.
+  const held = lines.slice(at + 1)
+  const out = held.findIndex((line) => line.trim() !== '' && indentOf(line) <= own)
+  const code = inCode(out === -1 ? held : held.slice(0, out))
 
   let end = at + 1
   let last = at
@@ -57,7 +61,7 @@ export function descriptionOf(text: string, anchor: Anchor): Description | null 
       end++
       continue
     }
-    if (indentOf(line) <= own || LIST_ITEM.test(line)) break
+    if (indentOf(line) <= own || (LIST_ITEM.test(line) && !code[end - at - 1])) break
     last = end
     end++
   }
@@ -66,9 +70,33 @@ export function descriptionOf(text: string, anchor: Anchor): Description | null 
   const to = last + 1
   const said = lines
     .slice(from, to)
-    .map((line) => unescaped(dedent(line, indent)))
+    .map((line, index) => (code[index] ? dedent(line, indent) : unescaped(dedent(line, indent))))
     .join('\n')
   return { from, to: Math.max(from, to), text: said }
+}
+
+/** Whether a line opens or closes a fenced code block: `isFence` in scan.ts. */
+function isFence(line: string): boolean {
+  const trimmed = line.trimStart()
+  return (
+    line.length - trimmed.length <= 3 && (trimmed.startsWith('```') || trimmed.startsWith('~~~'))
+  )
+}
+
+/** Which of these lines are in a code block, from a fence to the next one, as scan.ts
+ *  reads them. In one a list mark is code, so it is written as typed and ends nothing;
+ *  a backslash there would be a character of the code. A fence not closed in these
+ *  lines opens no block, so typing one does not make the task's sub-tasks its words. */
+function inCode(lines: readonly string[]): boolean[] {
+  const code = lines.map(() => false)
+  for (let open = 0; open < lines.length; open++) {
+    if (!isFence(lines[open] ?? '')) continue
+    const close = lines.findIndex((line, at) => at > open && isFence(line))
+    if (close === -1) break
+    code.fill(true, open, close + 1)
+    open = close
+  }
+  return code
 }
 
 /** A bullet or a number at the start of a line, and the backslashes already before its
@@ -122,9 +150,13 @@ export function withDescription(text: string, anchor: Anchor, words: string): st
   const at = now.from - 1
   const indent = contentIndent((lines[at] ?? '').replace(/\r$/, ''))
   const ending = (lines[at] ?? '').endsWith('\r') ? '\r' : ''
-  const written = said
-    ? said.split('\n').map((line) => (line.trim() === '' ? '' : indent + escaped(line)) + ending)
-    : []
+  const typed = said ? said.split('\n') : []
+  // Whether a line is code is judged as the note will hold it, at the task's indent.
+  const code = inCode(typed.map((line) => indent + line))
+  const written = typed.map(
+    (line, index) =>
+      (line.trim() === '' ? '' : indent + (code[index] ? line : escaped(line))) + ending,
+  )
   lines.splice(now.from, now.to - now.from, ...written)
   return lines.join('\n')
 }
@@ -168,6 +200,11 @@ const STAMP = /[ \t]*\[at::[ \t]*([^\]]*?)[ \t]*\]/
  *  backslash than it was typed with, as a description's list marks (`escaped`). */
 const BOXED = /^(\\+)(\[.\])/
 const BOX = /^(\\*)(\[.\])/
+/** The same after a list mark, on a comment's further lines: `- [ ] x` there is written
+ *  `- \\[ ] x`, or it would be a task under the comment's task, which the comment's
+ *  words held as well and whose cross deleted it. */
+const LISTED_BOX = /^((?:[-*+]|\d{1,9}[.)])[ \t]+)(\\*)(\[.\])/
+const LISTED_BOXED = /^((?:[-*+]|\d{1,9}[.)])[ \t]+)\\(\\*\[.\])/
 
 /** The comments of the task an anchor names, in the order they are written. */
 export function commentsOf(text: string, anchor: Anchor): Comment[] {
@@ -178,7 +215,9 @@ export function commentsOf(text: string, anchor: Anchor): Comment[] {
   const child = widthOf(contentIndent(lines[at] ?? ''))
   const out: Comment[] = []
   let open: Comment | null = null
-  for (let next = at + 1; next < lines.length; next++) {
+  // A code block in the description may hold list items; they are none of its comments.
+  const from = descriptionOf(text, anchor)?.to ?? at + 1
+  for (let next = from; next < lines.length; next++) {
     const line = lines[next] ?? ''
     if (line.trim() === '') continue
     const depth = indentOf(line)
@@ -193,7 +232,7 @@ export function commentsOf(text: string, anchor: Anchor): Comment[] {
       open = { line: next, text: words.replace(STAMP, '').trim(), ...(stamp ? { at: stamp } : {}) }
       out.push(open)
     } else if (open && depth > child) {
-      open.text = `${open.text}\n${line.trim()}`
+      open.text = `${open.text}\n${line.trim().replace(LISTED_BOXED, '$1$2')}`
     } else open = null
   }
   return out
@@ -226,7 +265,9 @@ export function withComment(
   const [first = '', ...rest] = said.split('\n')
   const written = [
     `${indent}- ${first.trim().replace(BOX, '\\$1$2')} [at:: ${stamp}]${ending}`,
-    ...rest.filter((one) => one.trim()).map((one) => `${indent}  ${one.trim()}${ending}`),
+    ...rest
+      .filter((one) => one.trim())
+      .map((one) => `${indent}  ${one.trim().replace(LISTED_BOX, '$1\\$2$3')}${ending}`),
   ]
   lines.splice(last + 1, 0, ...written)
   return lines.join('\n')
