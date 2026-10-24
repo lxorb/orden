@@ -837,8 +837,12 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-24, to 3,291,000, for #903: a note open from another space resolves
  *  its links, bare embeds and attachments in its own space (`otherIndex` in
- *  link-index.svelte.ts), after #878, #889 and #894 before it. Measured 3,290,175. */
-const BUDGET = 3_291_000
+ *  link-index.svelte.ts), after #878, #889 and #894 before it. Measured 3,290,175.
+ *
+ *  Raised 2026-10-24, to 3,294,000, for #904, #905 and #907: the hover card, block
+ *  names, block search, the reading view and a link followed early all keep to the
+ *  note's own space (`targetWhenRead` in link-index.svelte.ts). Measured 3,293,189. */
+const BUDGET = 3_294_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
