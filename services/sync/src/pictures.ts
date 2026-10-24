@@ -26,6 +26,18 @@ const EMBEDS = [
   /<img\b[^>]*?\ssrc\s*=\s*["']?([^"'\s>]+)/gi,
 ]
 
+/** A markdown image by reference: its words, and the label in its second brackets,
+ *  empty for `![label][]`. */
+const BY_REFERENCE = /!\[((?:[^[\]\n]|\[[^\]\n]*\])*)\]\[([^\]\n]*)\]/g
+
+/** A reference's definition, on a line of its own: `[label]: address`. */
+const DEFINITION = /^ {0,3}\[([^\]\n]+)\]:[ \t]*<?([^\s>]+)>?/gm
+
+/** A label as markdown matches one: without case, and with its spaces run together. */
+function label(said: string): string {
+  return said.trim().replace(/\s+/g, ' ').toLowerCase()
+}
+
 /** The keys of a note's front matter beside its cover that hold a picture the app
  *  shows: the image its published page is shared with. */
 const FRONT_PICTURES = ['image'] as const
@@ -65,6 +77,20 @@ export function picturesOf(source: string): Set<string> {
     prose.push(row.code ? '' : withoutCode(row.text))
   const text = prose.join('\n')
   for (const embed of EMBEDS) for (const match of text.matchAll(embed)) add(match[1])
+
+  // And a markdown image by reference, `![words][label]` or `![label][]`, whose address
+  // is the definition of that label elsewhere in the note. Only a label an image uses:
+  // a definition only a link reads is a link.
+  const defined = new Map<string, string>()
+  for (const match of text.matchAll(DEFINITION)) {
+    if (match[1] && match[2]) defined.set(label(match[1]), match[2])
+  }
+  if (defined.size) {
+    for (const match of text.matchAll(BY_REFERENCE)) {
+      // An empty second pair is `![label][]`, which names its label in the first.
+      add(defined.get(label(match[2]?.trim() === '' ? (match[1] ?? '') : (match[2] ?? ''))))
+    }
+  }
 
   return found
 }
