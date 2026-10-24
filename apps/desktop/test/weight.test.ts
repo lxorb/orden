@@ -829,8 +829,13 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-20, to 3,281,000, for #417: the empty Essentials a drag is offered
  *  stands over the caption rather than pushing the file list down under the pointer
- *  (`is-floating` in Bookmarks.svelte). Measured 3,280,466. */
-const BUDGET = 3_281_000
+ *  (`is-floating` in Bookmarks.svelte). Measured 3,280,466.
+ *
+ *  Raised 2026-10-24, to 3,286,000, for #881: a paired space is not written in until
+ *  its role is known, read before the listing from the sync store or from the roles
+ *  the last listing left by folder (`roleOf` and `rememberRoles` in sharing.svelte.ts,
+ *  `roleKept` on the sync). Measured 3,284,960. */
+const BUDGET = 3_286_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
