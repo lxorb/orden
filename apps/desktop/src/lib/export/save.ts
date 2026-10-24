@@ -14,10 +14,11 @@
 
 import { toBase64 } from '../bytes'
 import { keep, storedText } from '../stored'
-import { folderOf } from '../space-paths'
+import { folderOf, nameOf } from '../space-paths'
 import { invoke, isDesktop, isMobile, isNative, joinPath } from '../tauri'
 import { writeBytes, writeFile as writeText } from '../workspace/write-file'
-import { fileNameFor, freeName } from './naming'
+import { numbered } from '@nib/markdown/paths'
+import { fileNameFor, freeName, stemOf } from './naming'
 
 /** What a converter produced. Text where the format is text, so a note that is
  *  written out as markdown is byte for byte what the editor holds. */
@@ -26,8 +27,18 @@ export type Payload =
   | { bytes: Uint8Array; mime: string }
   /** Several files at once. `folder` says what the chosen target is: the folder
    *  they all go inside, which is what a `.textbundle` is, or the first file
-   *  itself, with the rest landing beside it - a note and its `assets`. */
-  | { files: readonly { path: string; body: string | Uint8Array }[]; folder: boolean }
+   *  itself, with the rest landing beside it - a note and its `assets`.
+   *
+   *  The rest are the export's own additions to a folder the reader did not
+   *  empty for them, so one whose name is taken steps aside rather than writing
+   *  over what is there. `relink` is how the first file is told where they
+   *  landed: handed each moved path's new spelling, it answers the first file's
+   *  body again, pointing at them. */
+  | {
+      files: readonly { path: string; body: string | Uint8Array }[]
+      folder: boolean
+      relink?: (landed: ReadonlyMap<string, string>) => string | Uint8Array
+    }
 
 /** Where the last export was written, remembered so the next one starts there. */
 const FOLDER_KEY = 'nib:export-folder'
@@ -103,15 +114,69 @@ export function insideFolder(path: string): boolean {
   return !path.split(/[\\/]/).includes('..')
 }
 
+/** Whether anything is at a path already. Asked of the crate, because the folder
+ *  an export is saved into is usually outside every space and nothing else may
+ *  look there. */
+async function taken(path: string): Promise<boolean> {
+  return invoke<boolean>('path_taken', { path })
+}
+
+/** The first spelling of `path` under `folder` that neither the disk nor this
+ *  export has yet. Compared without case, since two names differing only in case
+ *  are one name on Windows and on a Mac. */
+async function freeBeside(folder: string, path: string, claimed: Set<string>): Promise<string> {
+  for (let counter = 1; ; counter += 1) {
+    const candidate = numbered(path, counter)
+    const full = joinPath(folder, candidate)
+    if (claimed.has(full.toLowerCase()) || (await taken(full))) continue
+
+    claimed.add(full.toLowerCase())
+    return candidate
+  }
+}
+
+/** The first file at the target the dialog was given, and the rest beside it.
+ *
+ *  The dialog asked about the target and nothing else, so only the target may be
+ *  written over. The rest are named after it - pages two and three of `Trip.png`
+ *  saved as `Holiday.png` are `Holiday 2.png` and `Holiday 3.png` - and each one
+ *  whose name is taken steps aside, by the rule every copy in the app is numbered
+ *  by (`numbered` in @nib/markdown/paths). They are written before the first file, so it
+ *  can be told where they landed. One after another rather than all at once, since
+ *  they share a folder and two writes racing to create it is a race for nothing. */
+async function writeBeside(
+  target: string,
+  payload: Extract<Payload, { files: unknown }>,
+): Promise<void> {
+  const [first, ...rest] = payload.files
+  if (!first) return
+
+  const folder = folderOf(target)
+  const from = `${stemOf(first.path)} `
+  const to = `${stemOf(nameOf(target))} `
+  const claimed = new Set([target.toLowerCase()])
+  const landed = new Map<string, string>()
+
+  for (const file of rest) {
+    if (!insideFolder(file.path)) continue
+
+    const wanted = file.path.startsWith(from) ? to + file.path.slice(from.length) : file.path
+    const path = await freeBeside(folder, wanted, claimed)
+    if (path !== file.path) landed.set(file.path, path)
+    await writeFile(joinPath(folder, path), file.body)
+  }
+
+  await writeFile(target, payload.relink && landed.size > 0 ? payload.relink(landed) : first.body)
+}
+
 async function writePayload(target: string, payload: Payload): Promise<void> {
   if ('files' in payload) {
-    // Where they go: inside the target when it names a folder, beside it when it
-    // names the first of them. One after another rather than all at once, since
-    // they share a folder and two writes racing to create it is a race for
-    // nothing.
-    const root = payload.folder ? target : folderOf(target)
+    if (!payload.folder) return writeBeside(target, payload)
+
+    // Inside the target, which the dialog was asked about whole. One after
+    // another, for the reason above.
     for (const file of payload.files) {
-      if (insideFolder(file.path)) await writeFile(joinPath(root, file.path), file.body)
+      if (insideFolder(file.path)) await writeFile(joinPath(target, file.path), file.body)
     }
     return
   }
