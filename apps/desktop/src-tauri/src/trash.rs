@@ -686,6 +686,19 @@ mod tests {
         assert_eq!(target, base.join("Report 2.pages"));
     }
 
+    /// And a PDF of a page note's paper's name comes back beside the note under a name
+    /// of its own: under that one the note would take it for its paper.
+    #[test]
+    fn a_pdf_restores_beside_a_page_note_of_its_name() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let base = dir.path();
+        std::fs::write(base.join("Report.pages"), "{}").expect("a page note");
+
+        let target = restore_target(base, &entry("1-0", "Report.pages.pdf", "Report.pages.pdf"))
+            .expect("a place");
+        assert_eq!(target, base.join("Report.pages 2.pdf"));
+    }
+
     /// An entry goes on the end of what the manifest already holds, and nothing is
     /// undone when it was written down.
     #[test]

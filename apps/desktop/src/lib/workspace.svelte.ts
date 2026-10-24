@@ -1777,7 +1777,9 @@ class Workspace {
       import('./pages/from-pdf'),
       import('./pages/turning'),
     ])
-    const how = turningIn(this.rootHolding(path), (one, to) => this.renameFile(one, to, false))
+    const how = turningIn(this.rootHolding(path), (one, to) =>
+      this.renameFile(one, to, false, true),
+    )
     return { from, how }
   }
 
@@ -3840,7 +3842,17 @@ class Workspace {
     // the one is taken by the other, and writing it would be writing over it.
     const taken = pathKeys(this.everyPath(), dir)
     if (except !== undefined) taken.delete(pathKey(except, dir))
-    return freePath(wanted, (candidate) => taken.has(pathKey(joinPath(dir, candidate), dir)))
+    const has = (name: string) => taken.has(pathKey(joinPath(dir, name), dir))
+    // A page note's paper lands beside it as `<name>.pdf`, and a PDF already there is
+    // somebody's own (#538), so that name is taken too. And the other way round: a PDF
+    // `<name>.pages.pdf` beside a page note `<name>.pages` is taken for its paper.
+    return freePath(
+      wanted,
+      (candidate) =>
+        has(candidate) ||
+        (/\.pages$/i.test(candidate) && has(`${candidate}.pdf`)) ||
+        (/\.pages\.pdf$/i.test(candidate) && has(candidate.slice(0, -'.pdf'.length))),
+    )
   }
 
   /** Every path in the open space. `notes` holds only files; this counts the
@@ -3990,8 +4002,9 @@ class Workspace {
   /** One file under another name in the same folder, and everything that owes: the
    *  row, the links to it, and what everything kept by path hears; see `fileMoved`.
    *  `undoable` is whether somebody did it - a row renamed - or the note's own words
-   *  did; only the first is a step to undo and a heading to rewrite. */
-  private async renameFile(path: string, target: string, undoable: boolean) {
+   *  did; only the first is a step to undo and a heading to rewrite. `hold`: a PDF
+   *  turned into its page note; see `rename_note`. */
+  private async renameFile(path: string, target: string, undoable: boolean, hold = false) {
     const kind = this.kindAt(path)
 
     // The new name is on the row before the rename has happened; the listing
@@ -4005,7 +4018,7 @@ class Workspace {
     // which is the same file to Windows and to a Mac - and the row wore a name
     // nothing answered to until the next listing. See `move` and `remove`.
     try {
-      await invoke('rename_note', { from: path, to: target })
+      await invoke('rename_note', { from: path, to: target, ...(hold ? { hold } : {}) })
     } catch (error) {
       await this.loadTree()
       throw error

@@ -18,8 +18,8 @@ pub mod icloud;
 use crate::carry::{copy_whole, move_whole};
 use crate::clock;
 use crate::paths::{
-    at_most, at_most_stamped, cannot, chosen, copy_held, drop_held, in_spaces, made, move_held,
-    openable, paper_in_the_way, write_in_place,
+    at_most, at_most_stamped, cannot, chosen, copy_held, drop_held, in_spaces, is_pdf, made,
+    move_held, openable, paper_in_the_way, write_in_place,
 };
 
 /// The most a note may be for nib to read it: 64 MiB.
@@ -197,15 +197,27 @@ pub fn delete_note(app: AppHandle, path: String) -> Result<(), String> {
 
 /// Renames a note, which is also how it is moved: the new path can name a folder
 /// that does not exist yet. A folder is renamed and moved the same way.
+///
+/// `hold` is a PDF being turned into its page note (pages/from-pdf.ts): moved, in its
+/// own folder, to the paper of the note just made for it or made for it before. Only
+/// that move may put a PDF where a page note takes it for its paper.
 #[tauri::command(async)]
-pub fn rename_note(app: AppHandle, from: String, to: String) -> Result<(), String> {
+pub fn rename_note(
+    app: AppHandle,
+    from: String,
+    to: String,
+    hold: Option<bool>,
+) -> Result<(), String> {
     let source = in_spaces(&app, &from)?;
     let target = in_spaces(&app, &to)?;
     let respelling = respelled(&source, &target, same_entry);
 
     // A page note brings its paper, `<name>.pages.pdf`, and a file of that name already
-    // there is somebody's own: it was moved over, or hidden as held (#538).
-    if let Some(there) = paper_in_the_way(&source, &target, same_entry) {
+    // there is somebody's own: it was moved over, or hidden as held (#538). And a PDF
+    // put where a page note takes it for its paper is somebody's own as well, unless
+    // it is being turned into that note.
+    let holding = hold == Some(true) && is_pdf(&target) && source.parent() == target.parent();
+    if let Some(there) = paper_in_the_way(&source, &target, same_entry).filter(|_| !holding) {
         return Err(format!("{} is already there", there.display()));
     }
 
@@ -344,6 +356,13 @@ fn copied(source: &Path, target: &Path) -> Result<(), String> {
     // A folder copied into itself would go on finding the copy it is making.
     if target.starts_with(source) {
         return Err(format!("{} cannot be copied into itself", source.display()));
+    }
+
+    // A page note's copy brings its paper, and a PDF's copy beside a page note of its
+    // name would be taken for that note's paper: either way the file in the way is
+    // somebody's own (#538).
+    if let Some(there) = paper_in_the_way(source, target, same_entry) {
+        return Err(format!("{} is already there", there.display()));
     }
 
     if let Some(parent) = target.parent() {
@@ -516,6 +535,39 @@ mod tests {
 
         copied(&source, &dir.path().join("paper copy.pdf")).expect("the copy");
         assert!(dir.path().join("paper copy.pdf.highlights.json").exists());
+    }
+
+    /// `Report.pages.pdf` is what macOS Pages names a PDF it saves, and one copied in
+    /// beside a page note `Report.pages` with no paper yet would become its paper, and
+    /// go with the note when it is deleted.
+    #[test]
+    fn a_pdf_copied_never_becomes_a_page_notes_paper() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        fs::create_dir_all(dir.path().join("A")).expect("A");
+        fs::create_dir_all(dir.path().join("B")).expect("B");
+        let source = dir.path().join("A/Report.pages.pdf");
+        fs::write(&source, b"%PDF mine").expect("somebody's PDF");
+        fs::write(dir.path().join("B/Report.pages"), "{}").expect("a page note");
+
+        let error = copied(&source, &dir.path().join("B/Report.pages.pdf"))
+            .expect_err("a PDF a page note would hold to be refused");
+        assert!(error.contains("already there"), "{error}");
+        assert!(!dir.path().join("B/Report.pages.pdf").exists());
+    }
+
+    /// And in the note's own folder too: `Old.pdf` copied to `Report.pages.pdf` beside
+    /// a blank `Report.pages` would become that note's paper, and go with it.
+    #[test]
+    fn a_pdf_copied_beside_a_page_note_of_its_name_is_refused() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let source = dir.path().join("Old.pdf");
+        fs::write(&source, b"%PDF old").expect("a PDF");
+        fs::write(dir.path().join("Report.pages"), "{}").expect("a page note");
+
+        let error = copied(&source, &dir.path().join("Report.pages.pdf"))
+            .expect_err("a PDF a page note would hold to be refused");
+        assert!(error.contains("already there"), "{error}");
+        assert!(!dir.path().join("Report.pages.pdf").exists());
     }
 
     #[test]
