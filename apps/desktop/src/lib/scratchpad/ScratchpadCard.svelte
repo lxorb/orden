@@ -14,7 +14,7 @@
    *  and gone with it, the way the hover card's is (preview-card.ts). Written a pause
    *  after the typing stops, and at once as the card goes or the window does - no dot,
    *  nothing to save. Its edge widens it; Escape puts it away. See pad.ts. */
-  import { createEditor, EditorView } from '@nib/editor'
+  import { createEditor, EditorView, setNoteIndex } from '@nib/editor'
   import { onMount } from 'svelte'
   import { SAVE_DELAY } from '../backoff'
   import { pickedLink } from '../composer'
@@ -106,6 +106,15 @@
       if (view) modes.forget(view)
       view?.destroy()
     }
+  })
+
+  // The space's links, kept up to date the way a pane's are (Editor.svelte): a fresh
+  // index whenever the space in front or anything in it changed. Handed once as the
+  // card came, a note made since, or the notes of a space switched to, were never in
+  // it, and following `[[Plan]]` made an empty `Plan.md` beside the real one.
+  $effect(() => {
+    const index = links.index(path)
+    if (view) setNoteIndex(view, index)
   })
 
   // Asked for by a person: the keyboard in, remembering where it was for the way back.
