@@ -410,6 +410,8 @@ interface TrashEntry {
   name: string
   from: string
   trashedAt: number
+  /** Deleted by sync, which leaves a PDF's highlights out of the slot; see trash.rs. */
+  apart?: boolean
 }
 
 let trashCounter = 0
@@ -425,11 +427,11 @@ let trashCounter = 0
 function entryOf(value: unknown): TrashEntry | null {
   if (!isRecord(value)) return null
 
-  const { id, kind, name, from, trashedAt } = value
+  const { id, kind, name, from, trashedAt, apart } = value
   if (!isString(id) || !isString(kind) || !isString(name)) return null
   if (!isString(from) || !isNumber(trashedAt)) return null
 
-  return { id, kind, name, from, trashedAt }
+  return { id, kind, name, from, trashedAt, ...(apart === true ? { apart } : {}) }
 }
 
 async function trashEntries(): Promise<TrashEntry[]> {
@@ -509,7 +511,14 @@ async function trashItem(path: string, kind: string, alone = false): Promise<Tra
   const name = basename(source)
   await renameNote(source, `${TRASH}/${id}/${name}`, false, alone)
 
-  const entry = { id, kind, name, from: source, trashedAt: now() }
+  const entry = {
+    id,
+    kind,
+    name,
+    from: source,
+    trashedAt: now(),
+    ...(alone ? { apart: true } : {}),
+  }
   await saveTrash([...(await trashEntries()), entry])
   return entry
 }
@@ -541,10 +550,22 @@ async function restoreTrash(id: string): Promise<string> {
     throw new Error('it is already gone')
   }
 
-  const target = await freeSpot(entry.from, entry.kind === 'note')
+  // A PDF sync deleted apart from its highlights rejoins them where they came back ahead
+  // of it, rather than step aside from them as another PDF's; see `restore_target`.
+  const target =
+    entry.apart && (await rejoinsHighlights(entry.from))
+      ? entry.from
+      : await freeSpot(entry.from, entry.kind === 'note')
   await renameNote(held, target)
   await saveTrash(rest)
   return target
+}
+
+/** Whether only highlights are at `pdf`, nothing else and no page note taking it for its
+ *  paper; see `rejoins_highlights` in paths.rs. */
+async function rejoinsHighlights(pdf: string): Promise<boolean> {
+  if (!isPdf(pdf) || (await holds(pdf)) || (await pairedTaken(pdf))) return false
+  return !!(await files.get(sidecarOf(pdf)))
 }
 
 async function purgeTrash(id: string) {

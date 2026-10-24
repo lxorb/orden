@@ -19,8 +19,8 @@ use tauri::AppHandle;
 use crate::carry::move_whole;
 use crate::clock;
 use crate::paths::{
-    folded, free_spot, in_spaces, inside, is_reserved, made, move_held, move_paper, spaces_dir,
-    write_atomically, TRASH,
+    folded, free_spot, in_spaces, inside, is_reserved, made, move_held, move_paper,
+    rejoins_highlights, restore_held, spaces_dir, write_atomically, TRASH,
 };
 
 /// The record of what is in the trash, written beside the folders it describes.
@@ -54,6 +54,10 @@ pub struct TrashEntry {
     pub from: String,
     /// When it was deleted, in milliseconds since the epoch.
     pub trashed_at: u64,
+    /// Whether sync deleted it, which leaves what the account holds as an entry of its
+    /// own (a PDF's highlights) out of the slot, to be deleted and restored on its own.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub apart: bool,
 }
 
 /// Moves a note, folder or space into the trash and says what it became.
@@ -109,14 +113,11 @@ fn trashed(
 
     // A deleted PDF takes its highlights into the same folder, and a page note its
     // paper, so putting it back puts them back with it. Sync's takes only the paper.
-    let carry = |from: &Path, to: &Path| {
-        if alone {
-            move_paper(from, to);
-        } else {
-            move_held(from, to);
-        }
-    };
-    carry(source, &held);
+    if alone {
+        move_paper(source, &held);
+    } else {
+        move_held(source, &held);
+    }
 
     let entry = TrashEntry {
         id,
@@ -124,6 +125,7 @@ fn trashed(
         name,
         from,
         trashed_at: clock::now(),
+        apart: alone,
     };
 
     // An entry that cannot be written down is a note nobody could find again, so
@@ -132,7 +134,8 @@ fn trashed(
     // where one taken away with the slot would not be.
     recorded(dir, entry, || {
         if move_whole(&held, source, "restore").is_ok() {
-            carry(&held, source);
+            // Sync's delete left the highlights where they were, for the restore to find.
+            restore_held(&held, source);
             let _ = fs::remove_dir(&slot);
         }
     })
@@ -167,6 +170,7 @@ pub fn trash_words(app: AppHandle, path: String, content: String) -> Result<Tras
         name,
         from,
         trashed_at: clock::now(),
+        apart: false,
     };
     recorded(&dir, entry, || {
         let _ = fs::remove_dir_all(&slot);
@@ -247,10 +251,9 @@ fn restored(base: &Path, dir: &Path, id: &str) -> Result<String, String> {
     if !is_slot(&entry.id) {
         return Err("that is not something in the trash".into());
     }
-    let target = restore_target(base, &entry)?;
-
     let slot = dir.join(&entry.id);
     let held = slot.join(&entry.name);
+    let target = restore_target(base, &entry)?;
     if !held.exists() {
         entries.remove(position);
         write_manifest(dir, &entries)?;
@@ -265,7 +268,7 @@ fn restored(base: &Path, dir: &Path, id: &str) -> Result<String, String> {
     // The highlights come back under whatever name the PDF landed under, and a
     // paper under its page note's, which is not the old one when something has
     // taken its place in the meantime.
-    move_held(&held, &target);
+    restore_held(&held, &target);
     // Only once it is empty: a paper or highlights that could not follow are still in
     // the slot, and taking the slot with them would be deleting them for good.
     let _ = fs::remove_dir(&slot);
@@ -401,6 +404,10 @@ fn purge(dir: &Path, entries: &mut Vec<TrashEntry>, id: &str) {
 /// Any name this platform reads as one entry, not only one `is_name` would make: the
 /// trash took the file under the name it had, and a `Q3:Q4 plan.md` a Mac's Finder
 /// wrote or an `aux.md` that came by sync has to come back out as surely as it went in.
+///
+/// A PDF sync deleted apart from its highlights (`apart`) finds them back at its old
+/// name when they were restored ahead of it, and rejoins them there rather than step
+/// aside from them as another PDF's.
 fn restore_target(base: &Path, entry: &TrashEntry) -> Result<PathBuf, String> {
     if !names_one_entry(&entry.name) {
         return Err("that is not a name Orden stored".into());
@@ -411,6 +418,9 @@ fn restore_target(base: &Path, entry: &TrashEntry) -> Result<PathBuf, String> {
         return Err("that did not come from the notes folder".into());
     }
 
+    if entry.apart && rejoins_highlights(&wanted) {
+        return Ok(wanted);
+    }
     Ok(free_spot(&wanted, entry.kind == "note"))
 }
 
@@ -470,6 +480,7 @@ mod tests {
             name: name.into(),
             from: from.into(),
             trashed_at: 1_700_000_000_000,
+            apart: false,
         }
     }
 

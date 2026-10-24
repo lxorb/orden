@@ -263,9 +263,21 @@ pub fn paper_in_the_way(
 /// lost file. Moved the way the file was, so one that went to the trash on another
 /// disk takes them with it.
 pub fn move_held(from: &Path, to: &Path) {
+    held_moved(from, to, true);
+}
+
+/// `move_held` out of the trash, which leaves highlights already at the new name: a
+/// restore lands only where no other PDF's highlights are (`taken`), unless they are
+/// this one's own, back ahead of it (`rejoins_highlights`). Sync deletes a PDF and its
+/// highlights apart, each an entry of its own, and each comes back on its own.
+pub fn restore_held(from: &Path, to: &Path) {
+    held_moved(from, to, false);
+}
+
+fn held_moved(from: &Path, to: &Path, clear: bool) {
     if is_pages(from) {
         if move_paper(from, to) {
-            move_held(&paper_of(from), &paper_of(to));
+            held_moved(&paper_of(from), &paper_of(to), clear);
         }
         return;
     }
@@ -278,9 +290,16 @@ pub fn move_held(from: &Path, to: &Path) {
     let source = highlights_of(from);
     if source.exists() {
         let _ = crate::carry::move_whole(&source, &highlights_of(to), "move");
-    } else {
+    } else if clear {
         let _ = fs::remove_file(highlights_of(to));
     }
+}
+
+/// Whether a PDF coming back from the trash at `pdf` without highlights of its own
+/// finds only highlights there, which are its own, restored ahead of it: nothing else
+/// at the name, and no page note taking it for its paper.
+pub fn rejoins_highlights(pdf: &Path) -> bool {
+    is_pdf(pdf) && !pdf.exists() && paper_holder(pdf).is_none() && highlights_of(pdf).exists()
 }
 
 /// A page note's paper, after the note, and nothing of the paper's own: sync's move,
