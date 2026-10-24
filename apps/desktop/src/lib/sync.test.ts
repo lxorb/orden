@@ -136,6 +136,16 @@ const fake = vi.hoisted(() => {
       case 'write_note':
         disk.set(path, text(args.content))
         return undefined as T
+      case 'rename_note': {
+        const from = text(args.from)
+        const to = text(args.to)
+        const held = disk.get(from)
+        if (held === undefined) throw new Error(`no such file: ${from}`)
+        if (disk.has(to)) throw new Error(`${to} is already there`)
+        disk.delete(from)
+        disk.set(to, held)
+        return undefined as T
+      }
       case 'read_file': {
         // A paper's bytes, which here are words: what is hashed is the same either way.
         const bytes = disk.get(path)
@@ -328,6 +338,16 @@ const fake = vi.hoisted(() => {
     now?.()
   }
 
+  /** Another device's rename: the same row under a new path, version and cursor on. */
+  function renameRemoteNote(spaceId: string, path: string, to: string) {
+    const found = remote.notes.find((one) => one.spaceId === spaceId && one.path === path)
+    if (!found) throw new Error(`no note at ${path}`)
+
+    found.path = to
+    found.version += 1
+    found.seq = ++remote.seq
+  }
+
   function reset() {
     disk.clear()
     remote.spaces = []
@@ -347,6 +367,7 @@ const fake = vi.hoisted(() => {
     api,
     addRemoteNote,
     writeRemoteNote,
+    renameRemoteNote,
     meanwhile: (then: () => void) => (inTheMiddle = then),
     reset,
     rooms,
@@ -651,6 +672,38 @@ describe('what arrives from the account', () => {
 
     expect(workspace.active?.doc).toBe('# Hello, and something I am still typing')
   })
+})
+
+describe('notes that traded names on another device', () => {
+  for (const names of [
+    ['A.md', 'B.md'],
+    ['A.md', 'B.md', 'C.md'],
+  ]) {
+    test(`leave each open tab on its own note, and tell the account nothing (${names.length})`, async () => {
+      fake.remote.spaces.push({ id: 's-Account', name: 'Account' })
+      for (const name of names) fake.addRemoteNote('s-Account', name, `# ${name}`)
+      await signIn()
+      account.settled()
+      await sync.pass()
+      for (const name of names) await workspace.open(`/Account/${name}`)
+
+      // Each note takes the next one's name, the round done through a spare name.
+      fake.renameRemoteNote('s-Account', names[0]!, '.spare')
+      for (let at = names.length - 1; at > 0; at -= 1) {
+        fake.renameRemoteNote('s-Account', names[at]!, names[(at + 1) % names.length]!)
+      }
+      fake.renameRemoteNote('s-Account', '.spare', names[1]!)
+      fake.remote.calls = []
+      await sync.pass()
+
+      for (const name of names) {
+        const tab = workspace.openNotes.find((one) => one.note.text === `# ${name}`)
+        expect(tab?.path).toBe(`/Account/${names[(names.indexOf(name) + 1) % names.length]}`)
+        expect(fake.disk.get(tab!.path)).toBe(`# ${name}`)
+      }
+      expect(fake.remote.calls.filter((one) => one.startsWith('writeNote'))).toEqual([])
+    })
+  }
 })
 
 describe('a note that is open in its room while a pass runs', () => {

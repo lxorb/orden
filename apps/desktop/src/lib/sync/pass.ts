@@ -191,7 +191,7 @@ export interface Waiting {
   save?: () => void
   /** One note moved here because another device renamed or moved it, by the paths
    *  it had and has. */
-  moved?: (from: string, to: string) => void
+  moved?: (from: string, to: string) => void | Promise<void>
   /** Notes to fetch first, by their path in the space: the one somebody is looking
    *  at, and the one they were looking at last. A page is a few hundred notes and
    *  a slow connection is a body a second, so which end of it the open note is at
@@ -255,7 +255,8 @@ export async function pull(
       if (!remote.deleted || !carried(remote)) continue
       const target = joinPath(root, remote.path)
       const here = known.get(remote.id) ?? remote.path
-      await deletedThere(mirror, remote, here, joined, waiting?.kept?.(target) === true, named)
+      const kept = waiting?.kept?.(target) === true
+      await deletedThere(mirror, remote, here, joined, kept, named, waiting)
     }
 
     const places = new Map(Object.entries(mirror.notes).map(([path, one]) => [one.id, path]))
@@ -271,7 +272,7 @@ export async function pull(
     // back in sight rather than kept hidden for good.
     for (const [path, one] of Object.entries(mirror.notes)) {
       if (isAside(path) && !waits.has(one.id) && (await present(joinPath(root, path)))) {
-        await shownAgain(mirror, path, one.id, named)
+        await shownAgain(mirror, path, one.id, named, waiting)
       }
     }
 
@@ -586,6 +587,11 @@ async function movedThere(
     }
     delete mirror.moving
     waiting?.save?.()
+    // Told as made, from where the file really was: a step aside too. What follows a
+    // file by its path hears each step in turn, so told only from the old name to the
+    // new, in a swap the second note's open document went to its new name and then on
+    // with the first note's file, and saved its words over that one.
+    if (done) await waiting?.moved?.(full(from), full(to))
     return done
   }
 
@@ -608,7 +614,6 @@ async function movedThere(
       }
       left.delete(one)
       progress = true
-      if (one.at !== null) waiting?.moved?.(full(one.was), full(one.now))
     }
     if (progress) continue
 
@@ -644,7 +649,7 @@ async function movedThere(
 
     // Anything else stays as a file of its own, in sight, and is no longer this note.
     const at = where(one)
-    if (isAside(at)) await shownAgain(mirror, at, one.id, new Set())
+    if (isAside(at)) await shownAgain(mirror, at, one.id, new Set(), waiting)
     const now = Object.keys(mirror.notes).find((path) => mirror.notes[path]?.id === one.id)
     if (now !== undefined) {
       mirror.notes = without(mirror.notes, now)
@@ -695,6 +700,7 @@ async function shownAgain(
   aside: string,
   id: string,
   avoid: ReadonlySet<string>,
+  waiting?: Waiting,
 ): Promise<string> {
   const full = (path: string) => joinPath(mirror.root, path)
   const prefix = `${ASIDE}${id}-`
@@ -716,6 +722,7 @@ async function shownAgain(
     )
     if (!done) break
     if (mirror.notes[aside]) rekey(mirror as Mirror, aside, path)
+    await waiting?.moved?.(full(aside), full(path))
     return path
   }
   log('warn', `sync: ${full(aside)} could not be put back in sight`)
@@ -818,6 +825,7 @@ async function deletedThere(
   joined: Joined,
   kept: boolean,
   named: ReadonlySet<string>,
+  waiting?: Waiting,
 ) {
   const tracked = mirror.notes[here]
   if (tracked && tracked.id !== remote.id) return
@@ -829,7 +837,7 @@ async function deletedThere(
 
   // Waiting aside from a swap a pass did not finish: put back in sight first, so what
   // is kept or trashed below is a file somebody can find.
-  const path = isAside(here) ? await shownAgain(mirror, here, remote.id, named) : here
+  const path = isAside(here) ? await shownAgain(mirror, here, remote.id, named, waiting) : here
   mirror.offered = without(mirror.offered, path)
   mirror.notes = without(mirror.notes, path)
   const target = joinPath(mirror.root, path)

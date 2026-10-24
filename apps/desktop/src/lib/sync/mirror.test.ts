@@ -1544,6 +1544,30 @@ describe('a note renamed on another device', () => {
     })
   }
 
+  for (const names of [
+    ['A.md', 'B.md'],
+    ['A.md', 'B.md', 'C.md'],
+  ]) {
+    test(`tells each rename as it is made when ${names.length} notes trade names`, async () => {
+      const ids = names.map((name) => fake.addRemote(name, `# ${name}\n`))
+      for (const name of names) fake.disk.set(`${ROOT}/${name}`, `# ${name}\n`)
+      const mirror = newMirror('s-one', ROOT)
+      await pull(mirror, 'token', NOBODY)
+      ids.forEach((id, at) => fake.renameRemote(id, names[(at + 1) % names.length]!))
+
+      // An open document of each note, following what it is told the way the
+      // workspace's open documents do, one move after the other.
+      const open = names.map((name) => ({ words: `# ${name}\n`, path: `${ROOT}/${name}` }))
+      await pull(mirror, 'token', NOBODY, {
+        moved: (from, to) => {
+          for (const one of open) if (one.path === from) one.path = to
+        },
+      })
+
+      for (const one of open) expect(fake.disk.get(one.path)).toBe(one.words)
+    })
+  }
+
   test('finishes a swap with only the record from before it, one note aside and one moved', async () => {
     const { mirror, ids } = await swapping()
     // A went aside and B took its name; then the app quit, and storage kept nothing new.
