@@ -296,10 +296,20 @@ function runsOf(text: string): Map<string, number> {
   return counts
 }
 
+/** `runsOf` each line of a text, added up: a run that reads across a line break is
+ *  the end of one line and the start of the next, which no one said. */
+function runsByLine(text: string): Map<string, number> {
+  const counts = new Map<string, number>()
+  for (const line of text.split('\n')) {
+    for (const [run, count] of runsOf(line)) counts.set(run, (counts.get(run) ?? 0) + count)
+  }
+  return counts
+}
+
 /** Whether a merge says something twice that none of `references` says that often. */
 function repeats(references: readonly string[], merge: string): boolean {
-  const known = references.map(runsOf)
-  for (const [run, count] of runsOf(merge)) {
+  const known = references.map(runsByLine)
+  for (const [run, count] of runsByLine(merge)) {
     if (count < 2) continue
     if (known.every((one) => count > (one.get(run) ?? 0))) return true
   }
@@ -310,9 +320,9 @@ function repeats(references: readonly string[], merge: string): boolean {
  *  of `RUN` characters it holds more than once, the copies past the most any reference
  *  holds. A run it holds once is two words set side by side, not a repeat. */
 function excess(references: readonly string[], merge: string): number {
-  const known = references.map(runsOf)
+  const known = references.map(runsByLine)
   let over = 0
-  for (const [run, count] of runsOf(merge)) {
+  for (const [run, count] of runsByLine(merge)) {
     if (count < 2) continue
     over += Math.max(0, count - Math.max(...known.map((one) => one.get(run) ?? 0)))
   }
@@ -434,10 +444,82 @@ export function diverge(
   if (!fixed) return first
   const again = divergeOnce(base, fixed.local, fixed.remote, times, merged)
   if (again.resolution === null) return first
+  if (cutsLines(base, [local, remote], first.resolution, again.resolution)) return first
+  if (losesWords(base, [local, remote], first.resolution, again.resolution)) return first
   if (excess([local, remote], again.resolution) >= excess([local, remote], first.resolution)) {
     return first
   }
   return { ...first, resolution: again.resolution, settled: again.settled }
+}
+
+/** How often each line is in a text. */
+function linesIn(text: string): Map<string, number> {
+  const counts = new Map<string, number>()
+  for (const line of text.split('\n')) counts.set(line, (counts.get(line) ?? 0) + 1)
+  return counts
+}
+
+/** Whether a repair took out a word that only a side wrote, not one of the
+ *  ancestor's: what it takes out is a word moved, which the ancestor had. */
+function losesWords(
+  base: string,
+  sides: readonly string[],
+  before: string,
+  after: string,
+): boolean {
+  const old = wordsOf(base)
+  const held = wordsOf(before)
+  const kept = wordsOf(after)
+  return sides.some((side) =>
+    [...wordsOf(side)].some(
+      ([word, count]) =>
+        !old.has(word) && (kept.get(word) ?? 0) < Math.min(count, held.get(word) ?? 0),
+    ),
+  )
+}
+
+/** The lines of a side's text whose words are all words the side wrote: a line
+ *  it added, not one it added words to. */
+function linesWritten(base: string, side: string): Map<string, number> {
+  const wrote = new Uint8Array(side.length)
+  let shift = 0
+  for (const edit of edits(base, side, 'semantic')) {
+    const at = edit.from + shift
+    wrote.fill(1, at, at + edit.insert.length)
+    shift += edit.insert.length - (edit.to - edit.from)
+  }
+  const counts = new Map<string, number>()
+  let start = 0
+  for (const line of side.split('\n')) {
+    let words = 0
+    let theirs = true
+    for (let at = 0; at < line.length; at++) {
+      if (!/[\p{L}\p{N}]/u.test(line.charAt(at))) continue
+      words += 1
+      if (!wrote[start + at]) theirs = false
+    }
+    if (words && theirs) counts.set(line, (counts.get(line) ?? 0) + 1)
+    start += line.length + 1
+  }
+  return counts
+}
+
+/** Whether a repair took apart a line that a side added whole and the merge held:
+ *  a word one side moved is said again in words, not in a line of its own, so a line
+ *  either side wrote stays as it was written (two sides that each took a task out and
+ *  each added one of the same name have moved nothing). A line a side only added
+ *  words to, or one the ancestor has too, is the words' new place, and the repair
+ *  may take them out of it. */
+function cutsLines(base: string, sides: readonly string[], before: string, after: string): boolean {
+  const old = linesIn(base)
+  const held = linesIn(before)
+  const kept = linesIn(after)
+  return sides.some((side) =>
+    [...linesWritten(base, side)].some(([line, count]) => {
+      if (old.has(line)) return false
+      return (kept.get(line) ?? 0) < Math.min(count, held.get(line) ?? 0)
+    }),
+  )
 }
 
 function divergeOnce(
@@ -451,7 +533,7 @@ function divergeOnce(
   const analysis = analyse(base, local, remote)
 
   const overlaps: Overlap[] = analysis.meetings.map((meeting: Meeting) => {
-    const full = fuller(meeting)
+    const full = fuller(base, meeting)
     return {
       base: meeting.base,
       local: spanIn(meeting.base, analysis.local),
@@ -491,7 +573,7 @@ function divergeOnce(
           written(base, analysis, { settle, first: () => 'remote' }),
         ]
       : [resolved(base, analysis, settle, merged)]
-  let checked = write((meeting) => fuller(meeting) ?? newer)
+  let checked = write((meeting) => fuller(base, meeting) ?? newer)
   // A passage one side moved is, to a diff, a deletion and a retyping, and a side's
   // version of an overlap can still hold what the other side moved out of it: the
   // newer side standing would then say that passage twice, and so can a text merge
@@ -511,7 +593,17 @@ function divergeOnce(
       const both = resolved(base, analysis, () => 'both', merged)
       if (excess([local, remote], both) < excess([local, remote], merged)) kept = [both]
     }
-    if (checked.some((text) => repeats([local, remote, ...kept], text))) {
+    // And only where keeping both writes no more lines that none of the three texts
+    // has: kept both, a line one side took out and the other wrote in leaves the
+    // other's words run into the next line, and the newer side's version, though it
+    // may say something twice, at least says it in lines someone wrote.
+    const lines = new Set([base, local, remote].flatMap((text) => text.split('\n')))
+    const novel = (texts: readonly string[]) =>
+      Math.max(...texts.map((text) => text.split('\n').filter((line) => !lines.has(line)).length))
+    if (
+      checked.some((text) => repeats([local, remote, ...kept], text)) &&
+      novel(kept) <= novel(checked)
+    ) {
       checked = kept
       settled = 'both'
     }
@@ -536,7 +628,14 @@ function divergeOnce(
  *  the other wrote too and went on from, or the same words put back over a deletion
  *  with more after them. That side is the note whichever is newer, and nothing is
  *  asked, since nothing the other side wrote is missing from it. */
-function fuller(meeting: Meeting): Whose | null {
+function fuller(base: string, meeting: Meeting): Whose | null {
+  // A side that only took out a blank line, or the marks of one, where the other
+  // wrote: the writing holds everything, since nothing of the line was a word.
+  const blank = (list: readonly Edit[]) =>
+    list.every((edit) => !edit.insert && !/[\p{L}\p{N}]/u.test(base.slice(edit.from, edit.to)))
+  const wrote = (list: readonly Edit[]) => list.some((edit) => edit.insert.trim())
+  if (blank(meeting.local) && wrote(meeting.remote)) return 'remote'
+  if (blank(meeting.remote) && wrote(meeting.local)) return 'local'
   const [mine] = meeting.local
   const [theirs] = meeting.remote
   if (meeting.local.length !== 1 || meeting.remote.length !== 1 || !mine || !theirs) return null
