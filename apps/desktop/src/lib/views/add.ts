@@ -158,16 +158,8 @@ export async function addNote(
     place.folder !== undefined && place.folder !== '' ? insideOnly(place.folder) : undefined
   if (folder === null) return null
   const dir =
-<<<<<<< HEAD
     folder !== undefined ? insideSpace(space.root, folder) : file ? folderOf(file) : space.root
-=======
-    place.folder !== undefined && place.folder !== ''
-      ? joinPath(space.root, place.folder)
-      : file
-        ? folderOf(file)
-        : space.root
   if (!canWriteAt(dir)) return null
->>>>>>> origin/claude/inspiring-feynman-tip6ma-b280
 
   const props: Record<string, unknown> = { ...place.properties }
   // The column the plus was pressed in: the value its property has there.

@@ -85,7 +85,6 @@ async function run(space: string, path: string, removed: readonly Row[]) {
   if (plan.writes.length) await writeEach(plan.writes, true)
 
   for (const move of plan.moves) {
-<<<<<<< HEAD
     if (root === undefined) continue
     // The folder is the base's words, which anybody who can write the space can write;
     // joined as written, `../Private` moved the note out into another space. Read the
@@ -94,9 +93,6 @@ async function run(space: string, path: string, removed: readonly Row[]) {
     const inside = said ? insideOnly(said) : ''
     if (inside === null) continue
     const folder = inside ? insideSpace(root, inside) : root
-=======
-    const folder = joinPath(root, move.folder.replace(/^\/+|\/+$/g, ''))
->>>>>>> origin/claude/inspiring-feynman-tip6ma-b280
     await invoke('create_folder', { path: folder }).catch(() => undefined)
     await workspace.move(insideSpace(root, move.row.path), folder).catch(() => undefined)
   }
