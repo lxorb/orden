@@ -20,7 +20,7 @@ interface LeavingView {
   space?: { id: string }
   spaces?: { id: string; name: string }[]
   deleted?: string[]
-  note?: { id: string }
+  note?: { id: string; version?: number }
   notes?: { id: string; path: string }[]
   members?: { email: string | null }[]
 }
@@ -531,6 +531,243 @@ describe('what is left', () => {
     expect((await leave()).status).toBe(200)
 
     expect((await call(env, `/i/${picture.hash}.png`)).status).toBe(200)
+    expect(env.db.prepare('select user_id from blobs where hash = ?').all(picture.hash)).toEqual([
+      { user_id: (await me(other)).json.user?.id },
+    ])
+  })
+
+  /** Taken out of the space, or gone of its own accord: either way nothing says it is in
+   *  the space any more, and the picture it put there is still in the owner's note. */
+  test.each([
+    ['been taken out of', 'members'],
+    ['left', 'me'],
+  ])('a picture it put into a space it has since %s is handed over too', async (_, how) => {
+    const other = await signIn(env, OTHER)
+    const theirs = (
+      await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
+    ).json.space?.id
+
+    const sent = await mail(() =>
+      call(env, `/v1/spaces/${theirs}/share/invite`, {
+        token: other,
+        body: { email: ME, role: 'write' },
+      }),
+    )
+    await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
+      method: 'POST',
+      token,
+    })
+
+    const picture = file(3, 10)
+    await call(env, `/v1/blobs/${picture.hash}`, {
+      method: 'PUT',
+      token,
+      raw: picture.bytes,
+      headers: { 'content-type': 'image/png' },
+    })
+    await call(env, `/v1/spaces/${theirs}/notes`, {
+      token,
+      body: {
+        path: 'with a picture.md',
+        content: `![](https://nibeditor.com/i/${picture.hash}.png)`,
+      },
+    })
+    const out =
+      how === 'me'
+        ? await call(env, `/v1/spaces/${theirs}/share/me`, { method: 'DELETE', token })
+        : await call(env, `/v1/spaces/${theirs}/share/members/${encodeURIComponent(ME)}`, {
+            method: 'DELETE',
+            token: other,
+          })
+    expect(out.status).toBe(200)
+
+    expect((await leave()).status).toBe(200)
+
+    expect((await call(env, `/i/${picture.hash}.png`)).status).toBe(200)
+    expect(env.db.prepare('select user_id from blobs where hash = ?').all(picture.hash)).toEqual([
+      { user_id: (await me(other)).json.user?.id },
+    ])
+  })
+
+  /** Somebody who never shared anything with the owner kept the picture alive for a
+   *  while, by holding the same bytes; when they go, it is the owner's note it is in. */
+  test('a picture a stranger held too is handed over when the stranger goes', async () => {
+    const other = await signIn(env, OTHER)
+    const stranger = await signIn(env, 'stranger@example.com')
+    const theirs = (
+      await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
+    ).json.space?.id
+
+    const sent = await mail(() =>
+      call(env, `/v1/spaces/${theirs}/share/invite`, {
+        token: other,
+        body: { email: ME, role: 'write' },
+      }),
+    )
+    await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
+      method: 'POST',
+      token,
+    })
+
+    const picture = file(3, 11)
+    for (const as of [token, stranger]) {
+      await call(env, `/v1/blobs/${picture.hash}`, {
+        method: 'PUT',
+        token: as,
+        raw: picture.bytes,
+        headers: { 'content-type': 'image/png' },
+      })
+    }
+    await call(env, `/v1/spaces/${theirs}/notes`, {
+      token,
+      body: {
+        path: 'with a picture.md',
+        content: `![](https://nibeditor.com/i/${picture.hash}.png)`,
+      },
+    })
+
+    expect((await leave()).status).toBe(200)
+    expect((await leave(stranger)).status).toBe(200)
+
+    expect((await call(env, `/i/${picture.hash}.png`)).status).toBe(200)
+    expect(env.db.prepare('select user_id from blobs where hash = ?').all(picture.hash)).toEqual([
+      { user_id: (await me(other)).json.user?.id },
+    ])
+  })
+
+  /** What a note showed once and no longer does is not the space's: the owner is handed
+   *  what its notes show now. */
+  test('a picture taken out of the owner’s note again is not handed over', async () => {
+    const other = await signIn(env, OTHER)
+    const theirs = (
+      await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
+    ).json.space?.id
+
+    const sent = await mail(() =>
+      call(env, `/v1/spaces/${theirs}/share/invite`, {
+        token: other,
+        body: { email: ME, role: 'write' },
+      }),
+    )
+    await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
+      method: 'POST',
+      token,
+    })
+
+    const picture = file(3, 12)
+    await call(env, `/v1/blobs/${picture.hash}`, {
+      method: 'PUT',
+      token,
+      raw: picture.bytes,
+      headers: { 'content-type': 'image/png' },
+    })
+    const note = (
+      await call<LeavingView>(env, `/v1/spaces/${theirs}/notes`, {
+        token,
+        body: {
+          path: 'with a picture.md',
+          content: `![](https://nibeditor.com/i/${picture.hash}.png)`,
+        },
+      })
+    ).json.note
+    const edited = await call(env, `/v1/notes/${note?.id}`, {
+      method: 'PUT',
+      token,
+      body: { content: 'no picture now', baseVersion: note?.version },
+    })
+    expect(edited.status).toBe(200)
+    await call(env, `/v1/spaces/${theirs}/share/me`, { method: 'DELETE', token })
+
+    expect((await leave()).status).toBe(200)
+
+    expect(env.db.prepare('select user_id from blobs where hash = ?').all(picture.hash)).toEqual([])
+    expect((await call(env, `/i/${picture.hash}.png`)).status).toBe(404)
+  })
+
+  /** And a paper, which a row names: whoever hung it there, and whether or not they are
+   *  still in the space. */
+  test('a paper it hung in a space it has since left is handed over too', async () => {
+    const other = await signIn(env, OTHER)
+    const theirs = (
+      await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
+    ).json.space?.id
+
+    const sent = await mail(() =>
+      call(env, `/v1/spaces/${theirs}/share/invite`, {
+        token: other,
+        body: { email: ME, role: 'write' },
+      }),
+    )
+    await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
+      method: 'POST',
+      token,
+    })
+
+    const pages = (
+      await call<LeavingView>(env, `/v1/spaces/${theirs}/notes`, {
+        token,
+        body: { path: 'Lecture.pages', content: '{}' },
+      })
+    ).json.note?.id
+    const bytes = new TextEncoder().encode('%PDF-1.4\nanother lecture\n%%EOF\n')
+    const hash = createHash('sha256').update(bytes).digest('hex')
+    await call(env, `/v1/blobs/${hash}`, {
+      method: 'PUT',
+      token,
+      raw: bytes,
+      headers: { 'content-type': 'application/pdf' },
+    })
+    await call(env, `/v1/notes/${pages}/paper`, { method: 'PUT', token, body: { hash } })
+    await call(env, `/v1/spaces/${theirs}/share/me`, { method: 'DELETE', token })
+
+    expect((await leave()).status).toBe(200)
+
+    expect((await call(env, `/v1/notes/${pages}/paper`, { token: other })).status).toBe(200)
+    expect(env.db.prepare('select user_id from blobs where hash = ?').all(hash)).toEqual([
+      { user_id: (await me(other)).json.user?.id },
+    ])
+  })
+
+  /** A note written before its pictures were written down has none yet, until the
+   *  nightly sweep reads it: in a space this account is still in, its body is read. */
+  test('a picture in a note not yet read by the sweep is found in its body', async () => {
+    const other = await signIn(env, OTHER)
+    const theirs = (
+      await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
+    ).json.space?.id
+
+    const sent = await mail(() =>
+      call(env, `/v1/spaces/${theirs}/share/invite`, {
+        token: other,
+        body: { email: ME, role: 'write' },
+      }),
+    )
+    await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
+      method: 'POST',
+      token,
+    })
+
+    const picture = file(3, 13)
+    await call(env, `/v1/blobs/${picture.hash}`, {
+      method: 'PUT',
+      token,
+      raw: picture.bytes,
+      headers: { 'content-type': 'image/png' },
+    })
+    const note = (
+      await call<LeavingView>(env, `/v1/spaces/${theirs}/notes`, {
+        token,
+        body: {
+          path: 'with a picture.md',
+          content: `![](https://nibeditor.com/i/${picture.hash}.png)`,
+        },
+      })
+    ).json.note?.id
+    env.db.prepare('delete from note_pictures where note_id = ?').run(note ?? '')
+    env.db.prepare('update notes set front_rev = 1 where id = ?').run(note ?? '')
+
+    expect((await leave()).status).toBe(200)
+
     expect(env.db.prepare('select user_id from blobs where hash = ?').all(picture.hash)).toEqual([
       { user_id: (await me(other)).json.user?.id },
     ])

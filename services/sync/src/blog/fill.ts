@@ -11,6 +11,7 @@
  *  that reads a hundred objects. */
 
 import { noteKey } from '../notes'
+import { keepPictures } from '../pictures'
 import type { Env } from '../types'
 import { FRONT_REV, titleFrom, writeFront } from './front'
 import { keepWords } from './words'
@@ -61,6 +62,8 @@ export async function fillFronts(env: Env, spaceId: string | null): Promise<numb
       // The words as well as the front matter: the body is in hand, and the two
       // are read from it together everywhere else. See blog/words.ts.
       await keepWords(env, row, source, titleFrom(row.path, source)).catch(() => undefined)
+      // And its pictures, which a deleted account asks about; see pictures.ts.
+      await keepPictures(env, row, source)
 
       return env.DB.prepare('update notes set front = ?, front_rev = ? where id = ?').bind(
         writeFront(source),

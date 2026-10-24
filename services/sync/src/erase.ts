@@ -21,7 +21,9 @@ import { goneMessage, mailer } from './email'
 import { note } from './failed'
 import { releaseDomain } from './hostnames'
 import { sweepLeftovers } from './leftovers'
+import { FRONT_REV } from './blog/front'
 import { noteKey } from './notes'
+import { picturesOf } from './pictures'
 import { closeChats } from './chats/ask'
 import { closeRooms } from './rooms'
 import { readSpaceFiles } from './spaces/files'
@@ -90,6 +92,7 @@ const NOTED: readonly string[] = [
 export const ERASED: readonly (readonly [table: string, sql: string])[] = [
   ['note_versions', `delete from note_versions where note_id in (${OWNED_NOTES})`],
   ['note_search', `delete from note_search where space_id in (${OWNED})`],
+  ['note_pictures', `delete from note_pictures where note_id in (${OWNED_NOTES})`],
   ['blog_paths', `delete from blog_paths where space_id in (${OWNED})`],
   ['form_answers', `delete from form_answers where space_id in (${OWNED})`],
   ['room_sockets', `delete from room_sockets where space_id in (${OWNED}) or who = ?1`],
@@ -242,9 +245,6 @@ function bound(env: Env, sql: string, values: readonly unknown[]): D1PreparedSta
  *  after it asks. */
 const MOST_READ = 250
 
-/** A picture in a note, as the app writes it: the service's `/i/` and the hash. */
-const PICTURE = /\/i\/([a-f0-9]{64})/g
-
 /** The pictures, files and papers this account put into somebody else's space,
  *  handed to that space's owner.
  *
@@ -252,15 +252,22 @@ const PICTURE = /\/i\/([a-f0-9]{64})/g
  *  their own: so the picture in the owner's note is the writer's row, and deleting
  *  the writer would otherwise take the picture out of a space that stays. Whatever
  *  another account already holds is left alone - its row keeps the bytes. For the
- *  rest, every space this account is a member of is read for them: its files, the
- *  papers of its page notes and the pictures in its notes. Whatever its role now,
- *  because a writer made a reader wrote what they wrote, and only what the space
- *  itself uses is handed over. A space bigger than what is left to read hands over
- *  everything unread rather than guessing, because a picture somebody pays for is
- *  better than a hole in their note.
+ *  rest, what decides is which spaces of other people use them now, not who is a
+ *  member where: a writer who left, or was taken out, wrote what they wrote, and a
+ *  picture a stranger kept alive by holding the same bytes is still in the owner's
+ *  note once the writer and then the stranger have gone. So every space is asked,
+ *  through the rows that name a blob by its hash - a file of its tree, a page note's
+ *  paper, a file it records, and the pictures written down for each note's body (see
+ *  pictures.ts) - and only what a space uses is handed to its owner.
  *
- *  What cannot be found this way is a picture put into a space this account has
- *  since been taken out of; nothing records who wrote what once they have gone. */
+ *  A note written before its pictures were written down has none yet, until the
+ *  nightly sweep reads it (blog/fill.ts). Those are read here the old way, in the
+ *  spaces this account is still a member of, whatever its role, because a writer
+ *  made a reader wrote what they wrote. A space with more of them than is left to
+ *  read hands over everything unread where this account may write, rather than
+ *  guessing, because a picture somebody pays for is better than a hole in their
+ *  note. What that cannot reach is an unread note of a space this account is no
+ *  longer in, which the sweep shrinks to nothing. */
 async function handedOn(env: Env, user: User, at: number): Promise<D1PreparedStatement[]> {
   const { results: alone } = await env.DB.prepare(
     `select hash from blobs b where user_id = ?1
@@ -270,53 +277,73 @@ async function handedOn(env: Env, user: User, at: number): Promise<D1PreparedSta
     .all<{ hash: string }>()
   if (!alone.length) return []
 
+  const mine = new Set(alone.map((one) => one.hash))
+  const held = JSON.stringify([...mine])
+  const owed = new Map<string, Set<string>>()
+  const owe = (owner: string, hash: string) => {
+    const found = owed.get(owner) ?? new Set<string>()
+    owed.set(owner, found)
+    found.add(hash)
+  }
+
+  // Every row that names one of them by its hash, in a space of somebody else's.
+  const { results: used } = await env.DB.prepare(
+    `select sp.user_id as owner, n.hash as hash
+       from notes n join spaces sp on sp.id = n.space_id
+      where n.kind = 'file' and n.hash in (select value from json_each(?2)) and sp.user_id <> ?1
+     union
+     select sp.user_id as owner, n.paper as hash
+       from notes n join spaces sp on sp.id = n.space_id
+      where n.paper is not null and n.paper in (select value from json_each(?2))
+        and sp.user_id <> ?1
+     union
+     select sp.user_id as owner, p.hash as hash
+       from note_pictures p join notes n on n.id = p.note_id join spaces sp on sp.id = n.space_id
+      where p.hash in (select value from json_each(?2)) and sp.user_id <> ?1`,
+  )
+    .bind(user.id, held)
+    .all<{ owner: string; hash: string }>()
+  for (const one of used) owe(one.owner, one.hash)
+
+  // And the files a space records, which are a list in one column: only the spaces
+  // whose list has one of the hashes in it at all are read, and then read properly.
+  const { results: listing } = await env.DB.prepare(
+    `select user_id as owner, files from spaces sp
+      where user_id <> ?1
+        and exists (select 1 from json_each(?2) m where instr(lower(sp.files), m.value) > 0)`,
+  )
+    .bind(user.id, held)
+    .all<{ owner: string; files: string }>()
+  for (const one of listing) {
+    for (const file of readSpaceFiles(one.files)) if (mine.has(file.hash)) owe(one.owner, file.hash)
+  }
+
   const { results: written } = await env.DB.prepare(
-    `select sp.id as space, sp.user_id as owner, sp.files as files, m.item as item,
-            m.role as role
+    `select sp.id as space, sp.user_id as owner, m.item as item, m.role as role
        from space_members m join spaces sp on sp.id = m.space_id
       where m.email = ?1 and sp.user_id <> ?2`,
   )
     .bind(user.email, user.id)
-    .all<{ space: string; owner: string; files: string; item: string; role: string }>()
-  if (!written.length) return []
+    .all<{ space: string; owner: string; item: string; role: string }>()
 
-  const mine = new Set(alone.map((one) => one.hash))
-  const owed = new Map<string, Set<string>>()
   let budget = MOST_READ
 
   for (const one of written) {
-    const found = owed.get(one.owner) ?? new Set<string>()
-    owed.set(one.owner, found)
-
-    for (const file of readSpaceFiles(one.files)) if (mine.has(file.hash)) found.add(file.hash)
-
-    // And the files of the space's tree (sync v2), whose bytes are these blobs by
-    // their hash; see sync2/files.ts. A page note's paper is a blob the same way,
-    // uploaded by whoever made the page note, so it is handed over beside them.
-    const { results: files } = await env.DB.prepare(
-      `select hash from notes where space_id = ?1 and kind = 'file'
-          and hash in (select value from json_each(?2))
-       union
-       select paper as hash from notes where space_id = ?1
-          and paper in (select value from json_each(?2))`,
-    )
-      .bind(one.space, JSON.stringify([...mine]))
-      .all<{ hash: string }>()
-    for (const file of files) found.add(file.hash)
-
     const { results: notes } = await env.DB.prepare(
       one.item
-        ? "select id from notes where space_id = ?1 and id = ?2 and size > 0 and kind != 'file'"
-        : "select id from notes where space_id = ?1 and size > 0 and kind != 'file' limit ?2",
+        ? `select id from notes where space_id = ?1 and id = ?2 and size > 0 and kind != 'file'
+              and front_rev < ?3`
+        : `select id from notes where space_id = ?1 and size > 0 and kind != 'file'
+              and front_rev < ?3 limit ?2`,
     )
-      .bind(one.space, one.item || budget + 1)
+      .bind(one.space, one.item || budget + 1, FRONT_REV)
       .all<{ id: string }>()
 
     // The guess is for a space this account may write in, where anything of its own
     // may be: in one it only reads, it would hand the owner pictures that were never
     // there. That one is read as far as what is left goes.
     if (notes.length > budget && one.role === 'write') {
-      for (const hash of mine) found.add(hash)
+      for (const hash of mine) owe(one.owner, hash)
       budget = 0
       continue
     }
@@ -324,7 +351,7 @@ async function handedOn(env: Env, user: User, at: number): Promise<D1PreparedSta
 
     budget -= notes.length
     for (const hash of await picturesIn(env, one.space, notes)) {
-      if (mine.has(hash)) found.add(hash)
+      if (mine.has(hash)) owe(one.owner, hash)
     }
   }
 
@@ -356,9 +383,7 @@ async function picturesIn(
       }),
     )
 
-    for (const body of bodies) {
-      for (const match of body.matchAll(PICTURE)) if (match[1]) found.add(match[1])
-    }
+    for (const body of bodies) for (const hash of picturesOf(body)) found.add(hash)
   }
 
   return found

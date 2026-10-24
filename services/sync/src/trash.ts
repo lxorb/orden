@@ -9,6 +9,7 @@ import { deleteById } from './sync2/ops'
 import { presentSpace } from './spaces/space'
 import type { Env, Note, Space, Variables } from './types'
 import { forgetWords } from './blog/words'
+import { forgetPictures } from './pictures'
 import { forgetVersions } from './versions'
 import { forgetEmptyGuest } from './guests'
 
@@ -103,6 +104,7 @@ async function purgeNote(env: Env, note: Pick<Note, 'id' | 'space_id'>) {
   // rows, each only once the last row naming it has gone. See versions.ts.
   await forgetVersions(env, note.id)
   await forgetWords(env, note.id).catch(() => undefined)
+  await forgetPictures(env, note.id).catch(() => undefined)
   await env.DB.prepare("update notes set size = 0, hash = '', deleted_at = null where id = ?")
     .bind(note.id)
     .run()
