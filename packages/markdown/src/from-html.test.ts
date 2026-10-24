@@ -148,6 +148,16 @@ describe('a page as markdown', () => {
    *  picture of its own - and their text has been escaped on the way, backslash
    *  and brackets together. So they are written as they came, and a page cannot
    *  close the brackets early from inside them. */
+  test('an address as a link text cannot close its brackets', () => {
+    const link = htmlToMarkdown(
+      '<a href="https://x.test/ok">https://a.test/](https://evil.test)[b</a>',
+    )
+    expect(link).toBe('[https://a.test/\\](https://evil.test)\\[b](https://x.test/ok)')
+    expect(renderMarkdown(link)).toBe(
+      '<p><a href="https://x.test/ok">https://a.test/](https://evil.test)[b</a></p>\n',
+    )
+  })
+
   test('a backslash in a link text cannot close its brackets', () => {
     expect(htmlToMarkdown('<a href="https://x.test/ok">a\\](https://evil.test)[b</a>')).toBe(
       '[a\\\\\\](https://evil.test)\\[b](https://x.test/ok)',
@@ -380,6 +390,20 @@ describe('a page as markdown', () => {
    *  from the one the page stated. */
   test('raised and lowered text keep their markers', () => {
     expect(htmlToMarkdown('<p>x<sup>2</sup> and H<sub>2</sub>O</p>')).toBe('x^2^ and H~2~O')
+  })
+
+  test('a bare web address stays a link to where it says', () => {
+    const page = htmlToMarkdown(
+      '<p>See https://www.cs.cmu.edu/~bob/ and https://ex.com/page#:~:text=hi or https://ex.com/_next/x?b=[1].</p>',
+    )
+    expect(page).toBe(
+      'See https://www.cs.cmu.edu/~bob/ and https://ex.com/page#:~:text=hi or https://ex.com/_next/x?b=\\[1\\].',
+    )
+    expect(renderMarkdown(page)).toBe(
+      '<p>See <a class="url" href="https://www.cs.cmu.edu/~bob/">https://www.cs.cmu.edu/~bob/</a>' +
+        ' and <a class="url" href="https://ex.com/page#:~:text=hi">https://ex.com/page#:~:text=hi</a>' +
+        ' or <a class="url" href="https://ex.com/_next/x?b=%5B1%5D">https://ex.com/_next/x?b=[1]</a>.</p>\n',
+    )
   })
 
   test('two percent signs in words hide nothing as a comment', () => {

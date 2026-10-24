@@ -1,4 +1,4 @@
-import { Marked, Renderer } from 'marked'
+import { Marked, Renderer, Tokenizer } from 'marked'
 import { hardBreaks } from './breaks'
 import type { Token, Tokens } from 'marked'
 import { chartFigure } from './chart'
@@ -208,6 +208,29 @@ function noteLink(href: string): { target: string; fragment: string } | null {
  *  this is a question about a path rather than about a target. */
 const NOTE_LINK = /\.(md|markdown|mdown|mkd|canvas|pages|pdf)$/i
 
+/** A backslash escape: one in front of ASCII punctuation, which is what markdown
+ *  lets one escape. */
+const AN_ESCAPE = /\\([!-/:-@[-`{-~])/g
+
+/** GFM's bare address, with any markdown escape inside it read as the character it
+ *  escapes. marked links a bare address character for character, so the `\[` a
+ *  page's `?b=[1]` is written with - it has to be, where the same words are a
+ *  link's text; see `escapeText` - would be a backslash in the address and a link
+ *  to a page that is not there. An address typed by hand with a backslash in it
+ *  is not one anybody meant either. */
+function bareAddress(this: Tokenizer, src: string): Tokens.Link | undefined {
+  const token = Tokenizer.prototype.url.call(this, src)
+  if (!token) return undefined
+
+  const text = token.text.replace(AN_ESCAPE, '$1')
+  return {
+    ...token,
+    text,
+    href: token.href.replace(AN_ESCAPE, '$1'),
+    tokens: [{ type: 'text', raw: text, text }],
+  }
+}
+
 /** One renderer, shared by export and the published blog, so a note looks the
  *  same wherever it is read. The headings list is filled in while rendering,
  *  which is why a renderer that numbers them is built per document. */
@@ -224,6 +247,7 @@ function renderer(options: RenderOptions, headings: Heading[], embeds: Embeds) {
     }),
   )
   marked.use(hashtags(options.tagHref))
+  marked.use({ tokenizer: { url: bareAddress } })
 
   const taken = new Map<string, number>()
 
