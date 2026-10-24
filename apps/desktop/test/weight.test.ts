@@ -846,8 +846,12 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-24, to 3,287,000, for #868: an untouched list member is written
  *  back exactly as the note had it (`KeptItem` in packages/markdown/src/property-edits.ts).
- *  Measured 3,286,180. */
-const BUDGET = 3_287_000
+ *  Measured 3,286,180.
+ *
+ *  Raised 2026-10-24, to 3,288,000, for #870: the automation's `properties.set` reads
+ *  a typed list member by member (`typedItem` in automation/acts.ts), with #710 merged
+ *  in. Measured 3,287,165. */
+const BUDGET = 3_288_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
