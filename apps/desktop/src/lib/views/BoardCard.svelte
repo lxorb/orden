@@ -143,7 +143,12 @@
     {onfocus}
   >
     <div class="title">
-      {#if row.task}<TaskBox task={row.task} label={title} ontick={() => kit.tick(row)} />{/if}
+      {#if row.task}<TaskBox
+          task={row.task}
+          label={title}
+          ontick={() => kit.tick(row)}
+          disabled={!kit.writes(row)}
+        />{/if}
       <span class="name">{title || t('Untitled')}</span>
     </div>
     {#if row.task}

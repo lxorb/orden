@@ -509,16 +509,19 @@
   </div>
 {/snippet}
 {#snippet plusButton()}
-  <button
-    type="button"
-    class="nib-glyph"
-    title={notes ? t('New note') : t('Add task')}
-    aria-label={notes ? t('New note') : t('Add task')}
-    onclick={onadd}
-    oncontextmenu={plusMenu}
-  >
-    <svg viewBox="0 0 13 13"><path d={ADD_MARK} /></svg>
-  </button>
+  <!-- None on a base or a fence in a space shared to be read, which takes no new row. -->
+  {#if kit.writable}
+    <button
+      type="button"
+      class="nib-glyph"
+      title={notes ? t('New note') : t('Add task')}
+      aria-label={notes ? t('New note') : t('Add task')}
+      onclick={onadd}
+      oncontextmenu={plusMenu}
+    >
+      <svg viewBox="0 0 13 13"><path d={ADD_MARK} /></svg>
+    </button>
+  {/if}
 {/snippet}
 
 {#snippet chip(which: 'chip-filter' | 'chip-sort', label: string, tool: Tool)}

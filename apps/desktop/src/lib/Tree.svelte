@@ -51,7 +51,7 @@
   import { rowName } from './note-name'
   import { roving } from './roving'
   import SharedMark from './SharedMark.svelte'
-  import { isSharedItem, othersIn } from './sharing.svelte'
+  import { canWriteAt, isSharedItem, othersIn } from './sharing.svelte'
   import { shortcuts } from './shortcuts.svelte'
   import { syncMark } from './surfaces.svelte'
   import { carried, carriedNothing, carry, isBookmarkDrag, landing } from './drag-paths'
@@ -342,6 +342,8 @@
       shortcuts.pressed('tree.delete', event) || shortcuts.pressed('tree.delete.alt', event)
     if (deleting && workspace.selection.length) {
       event.preventDefault()
+      // Nothing in a space shared to be read, as no other key that writes; see `fileKey`.
+      if (!workspace.selection.every((path) => canWriteAt(path))) return
       // What holds something archived stays, and says why.
       const kept = workspace.selection.filter((path) => workspace.keepsArchived(path))
       void workspace.removeMany(workspace.selection)
@@ -369,7 +371,7 @@
       return
     }
 
-    if (shortcuts.pressed('tree.rename', event)) {
+    if (shortcuts.pressed('tree.rename', event) && canWriteAt(here)) {
       event.preventDefault()
       workspace.startRenaming(here)
       return
@@ -402,15 +404,20 @@
   /** The keys a file manager has, read off the ids the rest of the app keeps them
    *  under - Ctrl+Z is Undo's, Ctrl+N is New note's - so one rebind moves both. They
    *  act on the selection, or on the row the keyboard is on, and what they make goes
-   *  into the folder that row is, or sits in. */
-  const FILE_KEYS: [string[], (rows: string[], into: string) => unknown][] = [
-    [['fixed.copy'], (rows) => fileClipboard.hold(rows, false)],
-    [['fixed.cut'], (rows) => fileClipboard.hold(rows, true)],
-    [['fixed.paste'], (_, into) => fileClipboard.paste(into)],
-    [['edit.undo'], () => workspace.undoFileAction()],
-    [['edit.redo', 'edit.redo.alt'], () => workspace.redoFileAction()],
-    [['tree.duplicate'], (rows) => workspace.duplicateMany(rows)],
-    [['app.new'], (_, into) => (hiddenKinds.offers('note') ? workspace.createNote(into) : null)],
+   *  into the folder that row is, or sits in. The last of each says whether it writes
+   *  where it acts, which a space shared to be read refuses; see `fileKey`. */
+  const FILE_KEYS: [string[], (rows: string[], into: string) => unknown, boolean][] = [
+    [['fixed.copy'], (rows) => fileClipboard.hold(rows, false), false],
+    [['fixed.cut'], (rows) => fileClipboard.hold(rows, true), true],
+    [['fixed.paste'], (_, into) => fileClipboard.paste(into), true],
+    [['edit.undo'], () => workspace.undoFileAction(), false],
+    [['edit.redo', 'edit.redo.alt'], () => workspace.redoFileAction(), false],
+    [['tree.duplicate'], (rows) => workspace.duplicateMany(rows), true],
+    [
+      ['app.new'],
+      (_, into) => (hiddenKinds.offers('note') ? workspace.createNote(into) : null),
+      true,
+    ],
   ]
 
   /** True when the press was one of those, and spent. */
@@ -422,8 +429,15 @@
     if (!found || into === undefined) return false
 
     event.preventDefault()
+    // In a space shared to be read a key that writes is spent and does nothing: the
+    // copy here would stop being the space's, and the sync refuses it on every pass.
+    // Every row the keys act on is in the one space the list shows. Copying rows out
+    // is reading them, and Undo is about whatever was done last, wherever.
+    const [, run, writes] = found
+    if (writes && !canWriteAt(into)) return true
+
     const rows = workspace.selection.length ? workspace.selection : here === null ? [] : [here]
-    void found[1](rows, into)
+    void run(rows, into)
     return true
   }
 

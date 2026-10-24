@@ -6,6 +6,7 @@ import { readBase, readAutomations, repeatDue, type Row } from '@nib/bases'
 import { withProperties } from '@nib/bases/agent'
 import { show } from '../reminders/platform'
 import { rows } from '../rows/rows.svelte'
+import { canWriteAt } from '../sharing.svelte'
 import { insideSpace, within } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
 import { workspace } from '../workspace.svelte'
@@ -67,9 +68,13 @@ function rowsOf(space: string, path: string): readonly Row[] {
   return rows.of(space).filter((row) => row.path === path)
 }
 
+/** A base's automations, run on a note of its space that changed. Not in a space
+ *  shared with this account to be read: what they write and move would be refused by
+ *  the sync on every pass, and the space's own people run them where they write. */
 async function run(space: string, path: string, removed: readonly Row[]) {
   const bases = [...held.values()].filter((one) => one.space === space)
-  if (!bases.length) return
+  const root = workspace.spaces.find((one) => one.name === space)?.root
+  if (!bases.length || root === undefined || !canWriteAt(root)) return
   const all = rows.of(space)
   const today = todayHere()
   const context = contextFor({ rows: all, today, now: nowHere() })
@@ -78,9 +83,7 @@ async function run(space: string, path: string, removed: readonly Row[]) {
   for (const write of plan.writes) ours.add(keyOf(write.row.space, write.row.path))
   if (plan.writes.length) await writeEach(plan.writes, true)
 
-  const root = workspace.spaces.find((one) => one.name === space)?.root
   for (const move of plan.moves) {
-    if (root === undefined) continue
     const folder = joinPath(root, move.folder.replace(/^\/+|\/+$/g, ''))
     await invoke('create_folder', { path: folder }).catch(() => undefined)
     await workspace.move(insideSpace(root, move.row.path), folder).catch(() => undefined)
@@ -98,7 +101,7 @@ async function run(space: string, path: string, removed: readonly Row[]) {
         at: Date.now(),
       },
       () => {
-        if (root !== undefined) void workspace.open(insideSpace(root, notice.row.path))
+        void workspace.open(insideSpace(root, notice.row.path))
       },
     )
   }
@@ -122,10 +125,12 @@ export function heard(space: string, path: string, removed: readonly Row[]) {
 
 // ---- repeating templates ------------------------------------------------------------
 
-/** Makes the note every repeating template of the open space owes today. */
+/** Makes the note every repeating template of the open space owes today. None in a
+ *  space shared with this account to be read: every reader's device would make it
+ *  there each day, and the sync would refuse each one. Its own people make them. */
 export async function repeatTemplates() {
   const space = workspace.activeSpace
-  if (!space || !rows.ready) return
+  if (!space || !rows.ready || !canWriteAt(space.root)) return
   const folder = joinPath(space.root, await templatesFolder(space.root))
   const today = todayHere()
   for (const row of rows.of(space.name)) {

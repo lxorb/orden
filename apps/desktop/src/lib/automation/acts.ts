@@ -23,7 +23,7 @@ import { workspace } from '../workspace.svelte'
 import { type Road, said, type Said, words, yes } from './args'
 import { publishStatus } from './answers'
 import { waited } from '../timing'
-import { insidePath, noteFor, relativeIn, spaceFor } from './space'
+import { insidePath, noteFor, relativeIn, spaceFor, spaceToWrite } from './space'
 
 /** What a note's name may end in for the app to treat it as one. */
 const MARKDOWN = /\.(md|markdown|mdown|mkd)$/i
@@ -110,7 +110,7 @@ async function named(asked: string): Promise<string | null> {
  *  overwritten. A link that could replace a note is a link nobody should be able
  *  to send somebody. */
 export async function newNote(args: Said): Promise<unknown> {
-  const space = await spaceFor(args)
+  const space = await spaceToWrite(args)
   const content = words(args, 'content') ?? ''
   const silent = yes(args, 'silent')
   const append = yes(args, 'append')
@@ -290,7 +290,7 @@ export function runCommand(args: Said, road: Road = 'here'): unknown {
 /** Writes a note, words and all. The one verb that replaces what a note said, so
  *  it is behind a confirmation and out of reach of a link. */
 export async function writeFile(args: Said): Promise<unknown> {
-  const space = await spaceFor(args)
+  const space = await spaceToWrite(args)
   const relative = relativeIn(args)
   const path = insideSpace(space.root, relative)
   const content = words(args, 'content')
@@ -320,7 +320,7 @@ export async function writeFile(args: Said): Promise<unknown> {
  *  it is. Every link to it is rewritten, because that is what the workspace's own
  *  rename does. */
 export async function moveFile(args: Said): Promise<unknown> {
-  const space = await spaceFor(args)
+  const space = await spaceToWrite(args)
   const from = relativeIn(args, 'path')
   const to = relativeIn(args, 'to')
 
@@ -373,7 +373,7 @@ export function movedPath(from: string, to: string, folder = false): string {
 /** Takes a file away. It goes to Recently deleted, which is where every other
  *  delete in the app puts one, so a mistake is one row away from being undone. */
 export async function deleteFile(args: Said): Promise<unknown> {
-  const space = await spaceFor(args)
+  const space = await spaceToWrite(args)
   const relative = relativeIn(args)
   const path = insideSpace(space.root, relative)
 
@@ -394,7 +394,7 @@ export async function deleteFile(args: Said): Promise<unknown> {
  *  rather than rebuilt: every other key keeps its place and its spelling, and a
  *  caret in the words below the block does not move. */
 export async function setProperty(args: Said): Promise<unknown> {
-  const note = await noteFor(args)
+  const note = await noteFor(args, 'path', true)
   const key = said(args, 'key')
   if (!key) throw new Error('say which key')
 

@@ -57,6 +57,7 @@
   import { builtinBase } from './source'
   import { queryOf } from './filters'
   import { prompt } from '../prompt.svelte'
+  import { canWriteAt } from '../sharing.svelte'
   import { type Builtin, readSpec } from './spec'
   import { builtinName } from './words'
 
@@ -366,6 +367,12 @@
   /** A label's menu: named again, or taken off every task, in every note of the space,
    *  as one undo (`retagNotes`). */
   function labelMenu(event: MouseEvent, tag: string) {
+    // Opened only, in a space shared to be read: renaming or taking a label away writes
+    // its notes, which that space refuses (`replaceInNotes` in workspace/note-text.ts).
+    if (root !== null && !canWriteAt(root)) {
+      menu.show(event, [{ label: t('Open'), run: () => openLabel(tag) }])
+      return
+    }
     menu.show(event, [
       { label: t('Open'), run: () => openLabel(tag) },
       {

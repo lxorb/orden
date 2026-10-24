@@ -38,7 +38,7 @@ import { workspace, type Tab } from '../workspace.svelte'
 import { closeAfterLabel } from '../workspace/closing-around'
 import { isUnsaved } from '../workspace/drafts'
 import { askPlace } from '../save-place/door'
-import { duplicateTab, moveToOtherPane, renameFromTab } from './ops'
+import { duplicateTab, moveToOtherPane, renameFromTab, renamesFromTab } from './ops'
 import { spaceEntry } from './to-space'
 import { chosen, duplicateMany, moveManyToOtherPane, pinMany } from './picking.svelte'
 
@@ -199,7 +199,7 @@ function shellEntries(tab: Tab): MenuEntry[] {
  *  one to a pane. */
 function tabEntries(tab: Tab): MenuEntry[] {
   return [
-    ...(workspace.canRenameFromTab(tab)
+    ...(renamesFromTab(tab)
       ? [
           {
             label: t('Rename'),

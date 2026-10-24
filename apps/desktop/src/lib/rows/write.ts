@@ -32,8 +32,9 @@ export interface RowChange {
 }
 
 /** Writes one change to the note a row is in. Answers whether anything was written:
- *  false for a task whose line is no longer in the note, and for a change the note
- *  already says. */
+ *  false for a task whose line is no longer in the note, for a change the note
+ *  already says, and for a note in a space shared to be read, which the replacement
+ *  passes over (note-text.ts) - so a view never draws as done what nothing wrote. */
 export async function writeRow(
   ws: HoldsNotes,
   path: string,
@@ -49,8 +50,7 @@ export async function writeRow(
   const edit = oneEdit(before, after)
   if (!edit) return false
 
-  await replaceInNotes(ws, [changeOf(path, before, [edit])])
-  return true
+  return (await replaceInNotes(ws, [changeOf(path, before, [edit])])) > 0
 }
 
 /** The note's words with the change made, or null where the change cannot be made. */
