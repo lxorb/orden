@@ -1216,6 +1216,32 @@ mod tests {
         markdown(&body, &mut Named)
     }
 
+    /// Lines of somebody's plain words and the markdown they are written as, shared with
+    /// packages/markdown, whose test renders each and finds the words and nothing else:
+    /// no highlight of `a==b or c==d`, no italics of `_x_`, no heading of `# not a
+    /// heading`, no list that starts at 1986.
+    const PLAIN_LINES: &str =
+        include_str!("../../../../packages/markdown/src/fixtures/plain-lines.json");
+
+    #[test]
+    fn plain_words_come_over_as_the_words_and_nothing_else() {
+        let lines: Vec<serde_json::Value> = serde_json::from_str(PLAIN_LINES).expect("the lines");
+        assert!(!lines.is_empty());
+
+        for line in lines {
+            let words = line["words"].as_str().expect("words");
+            let written = line["markdown"].as_str().expect("markdown");
+            let text = format!("Note\n{words}\n");
+            let rest = u64::try_from(words.encode_utf16().count() + 1).expect("a length");
+            let said = as_markdown(
+                &text,
+                &[run(5, &[bytes(2, &style(0, 0, None))]), run(rest, &[])],
+            );
+
+            assert_eq!(said, format!("# Note\n{written}"), "{words}");
+        }
+    }
+
     #[test]
     fn a_title_and_a_paragraph() {
         let text = "Groceries\nMilk and eggs\n";
