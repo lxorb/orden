@@ -178,9 +178,10 @@ class Recorder {
 
     // Before the embed is written, not after: the index is what makes a bare name
     // resolve, and a player is drawn the moment the words are in the note.
-    const root = workspace.activeSpace?.root
+    // The note's own space, which a note still open from another one is not the active.
+    const root = workspace.rootHolding(path)
     const relative = root ? spaceRelative(root, path, written) : null
-    if (relative) links.fileAdded(relative)
+    if (root && relative) links.fileWritten(root, relative)
 
     const embed = embedFor(nameOf(written))
     const view = viewFor(path)

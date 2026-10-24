@@ -27,9 +27,9 @@ import { languageName, transcriptCallout } from './transcript'
  *  a bare name is looked for anywhere in the space, anything else is a path beside the
  *  note. See note-images.ts. */
 async function bytesOf(target: string, notePath: string | null): Promise<ArrayBuffer | null> {
-  const root = workspace.activeSpace?.root
-  const found = root && !target.includes('/') ? links.fileNamed(target) : null
-  const path = found && root ? joinPath(root, found) : beside(notePath, target)
+  // In the note's own space; see note-images.ts.
+  const found = !target.includes('/') ? links.fileFor(target, notePath) : null
+  const path = found ?? beside(notePath, target)
   if (!path) return null
 
   const response = await fetch(assetUrl(path)).catch(() => null)

@@ -4279,7 +4279,10 @@ class Workspace {
    *  beside this one, behind it or in front, and with Alt as well in a pane to the
    *  right; see new-tab.ts. */
   async followLink(jump: NoteJump, ask: LinkAsk = 'plain') {
-    const root = this.activeSpace?.root
+    // A link is followed from the note in front, and its path is relative to that
+    // note's own space, which is not always the active one: tabs are shared across
+    // spaces. The same note `makeLinked` reads its folder from.
+    const root = this.rootHolding(this.active?.path ?? null)
     if (!root) return
     if (ask === 'aside') {
       await this.followAside(jump, root)
@@ -4836,3 +4839,4 @@ export const workspace = new Workspace()
 
 // Handed over rather than imported: the index and the workspace read each other.
 links.archivedIn = (root) => workspace.archive.keysOf(root)
+links.spaceOf = (path) => workspace.rootHolding(path)
