@@ -95,6 +95,18 @@ describe("Tomboy's own markup", () => {
     expect(tomboyMarkdown('a &lt; b &amp; c')).toBe('a < b & c')
   })
 
+  test('a tag written in the words is words, since Tomboy keeps plain text', () => {
+    const said = tomboyMarkdown(
+      '&lt;img src=https://t.example/p.gif&gt; <bold>&lt;style&gt;x&lt;/style&gt;</bold> after',
+    )
+    expect(said).toBe('\\<img src=https://t.example/p.gif> **\\<style>x\\</style>** after')
+    expect(said).not.toMatch(/(?<!\\)<(?=[A-Za-z/])/)
+  })
+
+  test('a tag in monospace is shown as it was, since code reads no markup', () => {
+    expect(tomboyMarkdown('<monospace>&lt;div&gt;</monospace>')).toBe('`<div>`')
+  })
+
   test("a list as Tomboy writes it, each item's line ending inside it, is one tight list", () => {
     const content =
       'Before\n\n<list><list-item dir="ltr">one\n<list><list-item dir="ltr">under\n</list-item></list></list-item><list-item dir="ltr">two</list-item></list>\n\nAfter'

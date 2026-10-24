@@ -216,4 +216,26 @@ describe('what a real Takeout does', () => {
     expect(text).toContain('- [Cloudflare \\[CDN\\]](<https://www.cloudflare.com/>)')
     expect(text.match(/example\.com\/a/g)).toHaveLength(1)
   })
+  test("a shared page's title opens no markup, since Keep took it from the page", async () => {
+    const plan = await readKeep([
+      file(
+        'Keep/Card.json',
+        keepNote({
+          title: 'Card',
+          textContent: 'x',
+          annotations: [
+            {
+              source: 'WEBLINK',
+              title: 'Fine <img src=https://t.example/p.gif><style>body{display:none}</style>',
+              url: 'https://example.com/',
+            },
+          ],
+        }),
+      ),
+    ])
+
+    const text = noteAt(plan, 'Card.md')
+    expect(text).toContain('Fine \\<img src=https://t.example/p.gif>')
+    expect(text).not.toMatch(/(?<!\\)<\/?(img|style)/)
+  })
 })

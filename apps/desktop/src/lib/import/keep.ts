@@ -17,6 +17,8 @@
  *  and Keep would have thrown them away within the week; importing them would be
  *  the one act of this whole feature that nobody asked for. The count is said. */
 
+import { asWords } from '@nib/markdown/words'
+
 import { key } from '../i18n.svelte'
 
 import { dayOf, noteText, type Meta } from './meta'
@@ -226,7 +228,7 @@ function linksOf(said: unknown, text: string): string[] {
     if (!/^[a-z][a-z0-9+.-]*:[^\s<>]+$/i.test(url) || text.includes(url)) continue
 
     const title = typeof card.title === 'string' ? card.title.replace(/\s+/g, ' ').trim() : ''
-    const shown = title.replace(/[\\[\]]/g, (one) => `\\${one}`)
+    const shown = asWords(title.replace(/[\\[\]]/g, (one) => `\\${one}`))
     links.push(shown ? `- [${shown}](<${url}>)` : `- <${url}>`)
   }
 
