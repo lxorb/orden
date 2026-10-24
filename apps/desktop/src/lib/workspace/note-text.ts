@@ -19,7 +19,7 @@ import type { SpaceTag } from '@nib/editor'
 import { links } from '../link-index.svelte'
 import type { Change } from '../search/apply'
 import { lineStarts } from '../search/lines'
-import { samePath } from '../space-paths'
+import { isMarkdownPath, samePath } from '../space-paths'
 import { applied, changeOf, type Edit, reverse } from '../search/replace'
 import { invoke } from '../tauri'
 import type { Entry, Space } from '../workspace.svelte'
@@ -157,7 +157,8 @@ export async function writeNoteText(
   const edit = oneEdit(before, after)
   if (!edit) return
 
-  await replaceInNotes(ws, [changeOf(path, before, [edit])], keeping)
+  // The whole of the file, as the caller wrote it: a base's own source comes this way.
+  await replaceInNotes(ws, [changeOf(path, before, [edit])], { ...keeping, anyFile: true })
 }
 
 /** One note's share of a replacement, as it is put back later. */
@@ -178,6 +179,10 @@ export interface Keeping {
    *  the arrival in another, and a cut written without its arrival loses what it cut.
    *  So where any of them is in a space shared to be read, none is written. */
   together?: boolean
+  /** Whether a file that is not a note may be written. A word edit is a note's; a
+   *  caller that knows another file's shape - a canvas's icon, a base's source - says
+   *  so, and nothing else spoils a shortcut's or a canvas's lines as words. */
+  anyFile?: boolean
 }
 
 /** Keeps the version a write is about to replace, as `keeping` says. */
@@ -210,11 +215,13 @@ export async function replaceInNotes(
   changes: readonly Change[],
   keeping: Keeping = {},
 ): Promise<number> {
-  if (!changes.length) return 0
+  const notes =
+    keeping.anyFile === true ? changes : changes.filter((one) => isMarkdownPath(one.path))
+  if (!notes.length) return 0
 
   const { canWriteAt } = await import('../sharing.svelte')
-  const writable = changes.filter((change) => canWriteAt(change.path))
-  if (!writable.length || (keeping.together && writable.length < changes.length)) return 0
+  const writable = notes.filter((change) => canWriteAt(change.path))
+  if (!writable.length || (keeping.together && writable.length < notes.length)) return 0
 
   const done: Undone[] = []
 

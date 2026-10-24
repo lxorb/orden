@@ -9,6 +9,7 @@ const NOTES: Record<string, string> = {
   '/space/Work/One.md': 'alpha here\nbeta there\nalpha again\n',
   '/space/Two.md': 'alpha only\n',
   '/space/Three.md': 'Doe, John\nRoe, Jane\n',
+  '/space/Docs.url': '[InternetShortcut]\r\nURL=https://svelte.dev\r\nNib-Icon=star\r\n',
 }
 
 const textOf = (path: string) => Promise.resolve(NOTES[path] ?? null)
@@ -25,6 +26,15 @@ const changes = (query: string, hits: Hit[], replacement: string) =>
   changesFor(parseQuery(query), hits, replacement, ROOT, textOf)
 
 describe('what a replacement would do', () => {
+  /** The desktop's search reads a website shortcut's words too, and a shortcut is a
+   *  file of `key=value` lines: replacing in one renames its keys or breaks its
+   *  address, and the home, the icon and the page's data are lost on every device. */
+  test('never touches a file that is not a note', async () => {
+    const made = await changes('nib', [hit('/space/Docs.url', 2)], 'orden')
+
+    expect(made).toEqual([])
+  })
+
   test('reads each note once, however many of its lines were ticked', async () => {
     const made = await changes(
       'alpha',

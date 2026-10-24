@@ -51,7 +51,7 @@ import { webHref } from './open-link'
 import { recordingAt, transcribeEmbed } from './recorder/commands'
 import { openExternal } from './tauri'
 import { shortcuts } from './shortcuts.svelte'
-import { noteName, relativeTo } from './space-paths'
+import { isMarkdownPath, noteName, relativeTo } from './space-paths'
 import { workspace } from './workspace.svelte'
 import { viewport } from './viewport.svelte'
 
@@ -106,6 +106,14 @@ function blockName(kind: BlockKind): string {
   }
 }
 
+/** The note a link to a block points into, or null where the block cannot have one:
+ *  in a note nobody has saved, which has no path, or in a file that is not a note.
+ *  Copying the link names the block first, ` ^id` on its last line, and in a
+ *  stylesheet, a snippet list or a text file that is a line spoiled. */
+export function blockLinkName(path: string | null | undefined): string | null {
+  return path && isMarkdownPath(path) ? noteName(path) : null
+}
+
 /** The rows about the block a press landed in: what it is, and what can be done
  *  to it.
  *
@@ -136,7 +144,7 @@ function blockEntries(
   const words = countText(
     spans.map((span) => view.state.doc.sliceString(span.from, span.to)).join('\n'),
   ).words
-  const name = path ? noteName(path) : null
+  const name = blockLinkName(path)
   const first = spans[0]
 
   return [
