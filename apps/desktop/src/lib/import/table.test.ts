@@ -207,3 +207,13 @@ describe('what a spreadsheet holds that a database does not', () => {
     expect(noteAt(plan, 'Books.md')).toContain('| Dune | 412 |')
   })
 })
+
+/** The row's title is a cell somebody typed: written as the heading, it reads back as
+ *  the words it was, with no maths, highlight or subscript in it. */
+describe('a row note with words of its own', () => {
+  test.each(['Tickets $5-$10', 'a==b and c==d', 'H~2~O'])('is headed by %s as words', (title) => {
+    const note = rowNote(['Name', 'Notes'], { Name: title, Notes: 'One line\nAnother line' })
+
+    expect(renderMarkdown(note.text)).toContain(`<h1>${title}</h1>`)
+  })
+})

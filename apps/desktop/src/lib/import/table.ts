@@ -17,7 +17,7 @@ import { plainWords } from '@nib/markdown/escapes'
 import { key } from '../i18n.svelte'
 import { recordsOf } from './csv'
 import { type Base, writeBase } from '@nib/bases'
-import { dayOf, freeKey, noteText, type Meta, propertyName } from './meta'
+import { dayOf, freeKey, noteText, type Meta, propertyName, titleHeading } from './meta'
 import { Names, safeName, withoutNotionId } from './names'
 import type { ImportPlan, Lost, Planned } from './plan'
 import type { Source } from './sources'
@@ -161,7 +161,7 @@ export function rowNote(
 
   // The title is written here rather than left to `noteText`, which would take the
   // `## Notes` of a first column of prose for the note's own heading and give it none.
-  return { name, text: noteText(null, [`# ${name}`, ...words].join('\n\n'), meta) }
+  return { name, text: noteText(null, [titleHeading(name), ...words].join('\n\n'), meta) }
 }
 
 /** The column a row is named after: the one that says so, or the first. */

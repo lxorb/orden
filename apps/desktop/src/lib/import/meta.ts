@@ -12,6 +12,7 @@
  *  rather than a feature: nothing in the app reads it, and a note that never
  *  changed after it was written does not carry it. */
 
+import { plainWords } from '@nib/markdown/escapes'
 import {
   frontMatterBlock,
   frontMatterKeys,
@@ -94,7 +95,7 @@ export function noteText(title: string | null, body: string, meta: Meta = {}, ow
   const block = own ? ownBlock(all) : null
   const words = block ? all.slice(block.to).replace(/^(?:[ \t]*\r?\n)+/, '') : all
   const heads = /^#{1,6}\s/.test(words)
-  const head = title && !heads ? `# ${title}\n\n` : ''
+  const head = title && !heads ? `${titleHeading(title)}\n\n` : ''
   const props = block ? `${withMeta(all, block.close, meta)}\n\n` : frontMatterFor(meta)
 
   return `${props}${head}${words}${words ? '\n' : ''}`
@@ -136,6 +137,19 @@ function withMeta(note: string, close: number, meta: Meta): string {
 
   const fence = note.slice(close).split(/\r?\n/)[0] ?? '---'
   return `${note.slice(0, close)}${added.map((line) => `${line}${nl}`).join('')}${fence}`
+}
+
+/** A title another app kept, as the heading a note opens with. The title is words
+ *  somebody typed where nothing read markdown, and a heading reads it: `$5-$10` would
+ *  be maths, `==` a highlight, `#work` a tag, `[[Other]]` a link. So it is written as
+ *  words (`plainWords`), on one line, with a tag's hash escaped wherever one could
+ *  open, and a `#` run at its end, which a heading would take for its own closing
+ *  mark and drop, escaped too. */
+export function titleHeading(title: string): string {
+  const words = plainWords(title.replace(/\s+/g, ' ').trim())
+    // A hash where a tag could open, which `plainWords` leaves to the line's start.
+    .replace(/(^|[\s(])#(?=[^\s#])/g, '$1\\#')
+  return `# ${words.replace(/(^|\s)(#+)$/, '$1\\$2')}`
 }
 
 /** A note's words as the app that kept them wrote them, to the byte. The blank

@@ -334,3 +334,15 @@ describe('a Keep list item', () => {
     expect(task?.fields).toEqual({})
   })
 })
+
+describe('a Keep title', () => {
+  test('is its words in the heading, maths, tags and links aside', async () => {
+    const plan = await readKeep([
+      file('Keep/A.json', keepNote({ title: 'Tickets $5-$10 #work', textContent: 'Words' })),
+    ])
+    const [note] = plan.files.filter((one) => one.kind === 'note')
+    if (note?.kind !== 'note') throw new Error('no note')
+
+    expect(renderMarkdown(note.text)).toContain('<h1>Tickets $5-$10 #work</h1>')
+  })
+})
