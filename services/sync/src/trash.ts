@@ -9,7 +9,7 @@ import { deleteById } from './sync2/ops'
 import { presentSpace } from './spaces/space'
 import type { Env, Note, Space, Variables } from './types'
 import { forgetWords } from './blog/words'
-import { forgetPictures, picturesOf } from './pictures'
+import { forgetPictures, htmlIsLive, picturesOf } from './pictures'
 import { forgetVersions } from './versions'
 import { noteUnused, RIGHT_AFTER, NIGHTLY, sweepUnused } from './unused'
 import { readSpaceFiles } from './spaces/files'
@@ -120,7 +120,9 @@ async function usedBy(env: Env, note: Pick<Note, 'id' | 'space_id'>): Promise<Se
 
   if (row.kind !== 'file' && row.size > 0 && row.front_rev < FRONT_REV) {
     const object = await env.NOTES.get(noteKey(note.space_id, note.id))
-    for (const hash of picturesOf(object ? await object.text() : '')) used.add(hash)
+    // Read as the save would have written them down, live HTML and all (pictures.ts).
+    const live = await htmlIsLive(env, note.space_id)
+    for (const hash of picturesOf(object ? await object.text() : '', live)) used.add(hash)
   }
   return used
 }
