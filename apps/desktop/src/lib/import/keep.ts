@@ -18,6 +18,7 @@
  *  the one act of this whole feature that nobody asked for. The count is said. */
 
 import { escapeText, plainWords } from '@nib/markdown/escapes'
+import { plainTaskWords } from '@nib/markdown/task-line'
 import { key } from '../i18n.svelte'
 
 import { dayOf, noteText, type Meta } from './meta'
@@ -211,9 +212,10 @@ interface Item {
   text: string
 }
 
-/** An item's words are text in Keep, as a note's are. */
+/** An item's words are text in Keep, as a note's are, and none of them a field of
+ *  the task (`plainTaskWords`). */
 function taskLine(item: Item): string {
-  return `- [${item.checked ? 'x' : ' '}] ${plainWords(item.text)}`
+  return `- [${item.checked ? 'x' : ' '}] ${plainTaskWords(item.text)}`
 }
 
 /** The pages Keep shows under a note as cards. A card for an address the words

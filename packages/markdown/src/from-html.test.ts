@@ -987,3 +987,22 @@ describe('a page as markdown', () => {
     expect(htmlToMarkdown('<p>line one<br>line two</p>')).toBe('line one  \nline two')
   })
 })
+
+/** A to-do from another app - a Notion page's, an Evernote note's - is somebody's
+ *  words, and the task reader takes more apart than a note does: an emoji and a
+ *  date after it are a field, a `#` a tag. Its words come in as words. */
+describe('a checked list item', () => {
+  test('reads none of its words as a field of the task', async () => {
+    const { readTask } = await import('./task-line')
+    const html =
+      '<ul><li><input type="checkbox">task 📅 2026-11-01 ⏫ 🔁 every week #tag [due:: 2026-01-01]</li></ul>'
+    const line = htmlToMarkdown(html).trim()
+    const task = readTask(line)
+
+    expect(task).toMatchObject({ tags: [] })
+    expect(task?.due).toBeUndefined()
+    expect(task?.recurrence).toBeUndefined()
+    expect(task?.priority).toBe(readTask('- [ ] task')?.priority)
+    expect(task?.fields).toEqual({})
+  })
+})

@@ -21,6 +21,7 @@ import { escapeText } from './escapes'
 import { HIGHLIGHT_COLOURS, writeHighlight } from './highlights'
 import { appHref, safeHref, safeSrc } from './html'
 import { tagNameAt } from './tags'
+import { taskWords } from './task-line'
 
 /** What a note never contains.
  *
@@ -605,6 +606,10 @@ function converter(options: FromHtmlOptions): TurndownService {
         // A ticked item brings its box and the space the page had after it; one
         // space between the box and the words is what markdown wants.
         .replace(/^(\[[ x]\])\s*/, '$1 ')
+        // A to-do's words are somebody's words, already escaped as a note's; the task
+        // reader takes more apart, an emoji and a date or a `#`, so its first line is
+        // written as none of that (`taskWords`).
+        .replace(/^(\[[ x]\] )([^\n]*)/, (_, box: string, words: string) => box + taskWords(words))
 
       const ends = node.nextSibling && !body.endsWith('\n') ? '\n' : ''
       return `${marker} ${body}${ends}`
