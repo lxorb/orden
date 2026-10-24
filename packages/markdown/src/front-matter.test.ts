@@ -227,6 +227,24 @@ describe('taking a key away', () => {
       '---\ntitle: a\n---\nbody\n',
     )
   })
+
+  /** A blank line inside a `|` or `>` value is part of it: what is indented after it is
+   *  still the value, and left behind it would be read as more of the key above. */
+  test('takes a value of paragraphs whole, blank lines and all', () => {
+    const source = '---\nsummary: short\nnotes: |\n  first\n\n  second\nstatus: done\n---\nbody'
+    expect(applied(source, 'notes')).toBe('---\nsummary: short\nstatus: done\n---\nbody')
+
+    const edit = frontMatterEdit(source, 'notes', 'x')
+    expect(edit && source.slice(0, edit.from) + edit.insert + source.slice(edit.to)).toBe(
+      '---\nsummary: short\nnotes: x\nstatus: done\n---\nbody',
+    )
+  })
+
+  test('and stops at a blank line the next key follows', () => {
+    expect(applied('---\nnotes: |\n  first\n\nstatus: done\n---\nbody', 'notes')).toBe(
+      '---\n\nstatus: done\n---\nbody',
+    )
+  })
 })
 
 /** Several keys in one write. What it is for: an icon and the colour it is drawn in

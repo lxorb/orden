@@ -320,16 +320,20 @@ export function frontMatterEdit(
 }
 
 /** A key's line through what is written under it: the indented lines and the
- *  `- item` lines after it, up to a blank line or the next key. They are the key's
- *  value as much as its own line is, so a value written over it replaces them and
- *  taking it away takes them, rather than leaving them hanging under the key above. */
+ *  `- item` lines after it, up to the next key. They are the key's value as much as
+ *  its own line is, so a value written over it replaces them and taking it away takes
+ *  them, rather than leaving them hanging under the key above. A blank line is part of
+ *  it only where more of it follows: inside a `|` or `>` value it is one of the value's
+ *  own lines, and what is indented after it is still the value. */
 function withUnder(source: string, block: FrontMatterBlock, line: KeyLine): KeyLine {
   let to = line.to
-  while (to + 1 < block.body.to) {
-    const stop = source.indexOf('\n', to + 1)
-    const text = source.slice(to + 1, stop).trimEnd()
-    if (!text || (!/^[ \t]/.test(text) && listItem(text) === null)) break
-    to = stop
+  let at = line.to
+  while (at + 1 < block.body.to) {
+    const stop = source.indexOf('\n', at + 1)
+    const text = source.slice(at + 1, stop).trimEnd()
+    if (text && !/^[ \t]/.test(text) && listItem(text) === null) break
+    at = stop
+    if (text) to = stop
   }
   return to === line.to ? line : { ...line, to, value: { ...line.value, to } }
 }
