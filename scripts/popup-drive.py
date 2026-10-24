@@ -198,6 +198,22 @@ def over_the_page():
     return isinstance(pane, dict)
 
 
+def answer():
+    """The app's question about hidden tabs, asked the first time a switch of space
+    hides a page, answered as a reader would: Keep running, which is then the setting."""
+    for _ in range(3):
+        button = run(
+            "(() => { const one = [...document.querySelectorAll('button')]"
+            ".find((b) => b.textContent.trim() === 'Keep running' && b.getBoundingClientRect().width > 0);"
+            " if (!one) return null; const r = one.getBoundingClientRect();"
+            " return { x: r.x, y: r.y, width: r.width, height: r.height } })()"
+        )
+        if not isinstance(button, dict):
+            return
+        press(button)
+        time.sleep(1)
+
+
 ACTIVE = "nib.workspace.activeSpace && nib.workspace.activeSpace.name"
 SWITCHER = '[data-space-drop="switcher"]'
 SPACES = "[data-spaces-open]"
@@ -205,6 +221,7 @@ SPACES = "[data-spaces-open]"
 
 def choose_space(name, round_):
     """The space called `name` chosen from the switcher, as a hand would."""
+    answer()
     button = box(SWITCHER)
     if not isinstance(button, dict):
         fail(f"round {round_}: no space switcher to open", f"{round_}-switcher")
@@ -238,6 +255,8 @@ def choose_space(name, round_):
         " return (one.getAttribute('class') || one.tagName) + ': ' + one.textContent.trim().slice(0, 60) })()"
     )
     press(row)
+    time.sleep(0.5)
+    answer()
     if until(f"({ACTIVE}) === {json.dumps(name)}"):
         done.append(f"round {round_}: {name} chosen from the space switcher")
         until(f"!document.querySelector('{SPACES}')", 2)
@@ -255,6 +274,7 @@ MENU = '[role="menu"]'
 
 def zoom_in_the_menu(round_):
     """The web tab's menu: Zoom in and 100% pressed, the pointer over the page between."""
+    answer()
     button = box('.webbar button[aria-haspopup="menu"]')
     if not isinstance(button, dict):
         fail(f"round {round_}: no button for the web tab's menu", f"{round_}-menu")
@@ -308,6 +328,7 @@ PANEL = ".cluster .panel"
 
 def pens(round_):
     """The canvas's pens' panel opened from the pen in hand, and another kind pressed in it."""
+    answer()
     pen = box(".cluster button.pen")
     if not isinstance(pen, dict):
         fail(f"round {round_}: no pen on the canvas's bar", f"{round_}-pens")
