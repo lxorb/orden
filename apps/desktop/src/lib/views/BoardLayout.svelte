@@ -115,10 +115,13 @@
   const hidden = $derived(view?.nib.hidden ?? [])
   const kinds = $derived(view?.nib.rows ?? 'notes')
   const notes = $derived(kinds === 'notes')
-  /** A board in a note's fence has no room for adding: the base's own tab has. */
-  const adds = $derived(!kit.compact)
-  /** Pages are added in every board, a block's too; a new group only where there is room. */
-  const pages = true
+  /** Pages are added in every board, a block's too, unless the base is in a space shared
+   *  with this account to be read: nothing added there would be kept (B284), so no column
+   *  offers it, as the view's own New does not (ViewHead.svelte). */
+  const pages = $derived(kit.writable)
+  /** A board in a note's fence has no room for a new group or section: the base's own
+   *  tab has, where the base may be written. */
+  const adds = $derived(!kit.compact && pages)
   const sorted = $derived((view?.sort.length ?? 0) > 0)
   /** Whether a card can be carried to another column at all. */
   const carries = $derived(droppableBy(property, kinds))
@@ -724,6 +727,7 @@
       // The board's own add, which the view's Q would otherwise make a second of.
       event.preventDefault()
       event.stopPropagation()
+      if (!pages) return
       if (notes) askNew(name, laneName)
       else kit.add(property ? { property, key: group.key } : undefined)
       return
