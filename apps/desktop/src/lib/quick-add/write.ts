@@ -39,12 +39,8 @@ function named(root: string, said: string): string | null {
   const wanted = said.replace(/\.md$/i, '').toLowerCase()
   const notes = workspace.notes.filter((one) => isMarkdownPath(one.path))
   const found =
-    notes.find(
-      (one) => withoutExtension(relativeTo(root, one.path)).toLowerCase() === wanted,
-    ) ??
-    notes.find(
-      (one) => withoutExtension(one.name).toLowerCase() === wanted.split('/').at(-1),
-    )
+    notes.find((one) => withoutExtension(relativeTo(root, one.path)).toLowerCase() === wanted) ??
+    notes.find((one) => withoutExtension(one.name).toLowerCase() === wanted.split('/').at(-1))
   return found?.path ?? null
 }
 
