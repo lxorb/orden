@@ -321,15 +321,24 @@ const A_LIST_ITEM = /^[ \t]*(?:[-*+]|\d{1,9}[.)])[ \t]+/
  *  deep is written in no-break spaces, which hold the line where it was and open
  *  nothing. */
 export function plainWords(text: string): string {
+  // Whether a list is open, which an indented item can nest in: since the last list
+  // item, nothing but blank lines. Anywhere else four columns in front of a bullet
+  // make it code, as they would words.
+  let listOpen = false
   return text
     .split('\n')
     .map((line) => {
-      const marker = A_LIST_ITEM.exec(line)?.[0]
-      if (marker) return marker + escapeText(line.slice(marker.length), { addresses: true })
-
       const indent = /^[ \t]*/.exec(line)?.[0] ?? ''
+      const deep = columnsOf(indent) >= 4
+      const marker = A_LIST_ITEM.exec(line)?.[0]
+      if (marker && (!deep || listOpen)) {
+        listOpen = true
+        return marker + escapeText(line.slice(marker.length), { addresses: true })
+      }
+
+      if (line.trim()) listOpen = false
       const words = escapeText(line.slice(indent.length), { addresses: true })
-      return (columnsOf(indent) < 4 ? indent : NO_BREAK.repeat(columnsOf(indent))) + words
+      return (deep ? NO_BREAK.repeat(columnsOf(indent)) : indent) + words
     })
     .join('\n')
 }
