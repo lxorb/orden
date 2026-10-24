@@ -11,14 +11,14 @@ see docs/automation.md).
 
 One identity across every build, from `src-tauri/tauri.conf.json`.
 
-|                   |                                                                                                                                                                                                          |
-| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Bundle identifier | `ch.emilvinu.nib`, which is also the Android package name                                                                                                                                                |
-| Name              | Orden                                                                                                                                                                                                    |
-| Publisher         | Emil Vinu                                                                                                                                                                                                |
-| Icons             | `src-tauri/icons/android` and `src-tauri/icons/ios`, from `tauri icon`                                                                                                                                   |
-| Minimum Android   | API 24, and API 36 is what it is compiled against                                                                                                                                                        |
-| Minimum iOS       | 16.4 (`bundle.iOS.minimumSystemVersion`): the page is built for `esnext` and not lowered, and its regular expressions look behind, which WebKit parses from 16.4 - an older phone would open a blank app |
+| | |
+| --- | --- |
+| Bundle identifier | `ch.emilvinu.nib`, which is also the Android package name |
+| Name | Orden |
+| Publisher | Emil Vinu |
+| Icons | `src-tauri/icons/android` and `src-tauri/icons/ios`, from `tauri icon` |
+| Minimum Android | API 24, and API 36 is what it is compiled against |
+| Minimum iOS | 16.4 (`bundle.iOS.minimumSystemVersion`): the page is built for `esnext` and not lowered, and its regular expressions look behind, which WebKit parses from 16.4 - an older phone would open a blank app |
 
 The launch screen on Android is the window's own background, set in
 `res/values/themes.xml` to the page's `--bg` in light and dark, so a cold start
@@ -105,7 +105,6 @@ Nothing else changes.
   by hand does not work either: the project's Rust build phase asks the Tauri
   CLI that started it for its options over a local socket, so only the CLI can
   drive that build.
-
 - TestFlight or the App Store then needs an App Store Connect API key
   (`APPLE_API_ISSUER`, `APPLE_API_KEY`, `APPLE_API_KEY_PATH`) and an upload step.
 
@@ -186,13 +185,13 @@ test in `test/android.test.ts` that holds the two sides to each other.
 Five permissions; the second is only for dictation and the last three only for
 reminders:
 
-|                          |                                                                              |
-| ------------------------ | ---------------------------------------------------------------------------- |
-| `INTERNET`               | sync, and the account                                                        |
-| `RECORD_AUDIO`           | the speech recogniser, asked for the first time somebody turns dictation on  |
-| `POST_NOTIFICATIONS`     | a reminder that rang, asked the first time a reminder is set (Android 13 on) |
-| `SCHEDULE_EXACT_ALARM`   | a reminder at its minute; see _Alarms_ below                                 |
-| `RECEIVE_BOOT_COMPLETED` | the alarms set again after a reboot                                          |
+| | |
+| --- | --- |
+| `INTERNET` | sync, and the account |
+| `RECORD_AUDIO` | the speech recogniser, asked for the first time somebody turns dictation on |
+| `POST_NOTIFICATIONS` | a reminder that rang, asked the first time a reminder is set (Android 13 on) |
+| `SCHEDULE_EXACT_ALARM` | a reminder at its minute; see *Alarms* below |
+| `RECEIVE_BOOT_COMPLETED` | the alarms set again after a reboot |
 
 Never `USE_EXACT_ALARM`: it is granted without asking, and for that reason the Play
 Store keeps it to alarm clocks and calendars.
@@ -201,7 +200,7 @@ Store keeps it to alarm clocks and calendars.
 Taking a photograph into a note is `ACTION_IMAGE_CAPTURE`, which the camera app
 serves and which needs no permission of ours. The webview decides whether to
 offer the camera for an `<input capture>` by asking whether the app has the
-CAMERA permission _or_ has not declared it at all (`isMediaCaptureSupported` in
+CAMERA permission *or* has not declared it at all (`isMediaCaptureSupported` in
 wry's `RustWebChromeClient`), so declaring it and not holding it is the one state
 where the camera row silently opens a file picker instead. See
 `src/lib/insert-picture.ts`.
@@ -318,7 +317,7 @@ which is in the repository:
 
 1. **VAPID keys** for Web Push: `npx web-push generate-vapid-keys`. The public key goes in
    `wrangler.jsonc` as the var `VAPID_PUBLIC_KEY`, the private one is `wrangler secret put
-VAPID_PRIVATE_KEY`, and optionally `VAPID_SUBJECT` (a `mailto:`; `MAIL_FROM`'s address
+   VAPID_PRIVATE_KEY`, and optionally `VAPID_SUBJECT` (a `mailto:`; `MAIL_FROM`'s address
    otherwise).
 2. **A Firebase project** with Cloud Messaging on, the Android app added under
    `ch.emilvinu.nib`, and a service account key (Project settings > Service accounts >
@@ -492,17 +491,17 @@ A phone is not a narrow desktop. Everything a thumb lands on is sized from one
 scale in `packages/themes/src/tokens.css`, and only rules under `[data-touch]`
 read it, so a desktop keeps the sizes it has always had.
 
-|                  |      |                                                                 |
-| ---------------- | ---- | --------------------------------------------------------------- |
-| `--touch-row`    | 56px | a row in a list, and the app bar                                |
+| | | |
+| --- | --- | --- |
+| `--touch-row` | 56px | a row in a list, and the app bar |
 | `--touch-target` | 48px | a square that is only a button, and a row read more than tapped |
-| `--touch-text`   | 17px | the words in a row                                              |
-| `--touch-icon`   | 24px | an icon that is a button of its own                             |
-| `--touch-mark`   | 20px | the slot a mark beside a row's words is drawn in                |
-| `--touch-gap`    | 12px | between a mark and the words                                    |
-| `--touch-pad`    | 14px | a row's own side padding                                        |
-| `--touch-indent` | 18px | one level of a tree                                             |
-| `--touch-bottom` |      | what a sheet leaves under its last row, over the gesture bar    |
+| `--touch-text` | 17px | the words in a row |
+| `--touch-icon` | 24px | an icon that is a button of its own |
+| `--touch-mark` | 20px | the slot a mark beside a row's words is drawn in |
+| `--touch-gap` | 12px | between a mark and the words |
+| `--touch-pad` | 14px | a row's own side padding |
+| `--touch-indent` | 18px | one level of a tree |
+| `--touch-bottom` | | what a sheet leaves under its last row, over the gesture bar |
 
 `apps/desktop/test/touch-scale.test.ts` holds every component to it: a touch rule
 that writes a finger-sized number of its own fails.
@@ -519,19 +518,19 @@ it, and it reads four things - the build, `navigator.userAgentData.mobile`, the
 user agent, and whether the primary pointer is a finger
 (`(hover: none) and (pointer: coarse)`).
 
-A browser has to say it is a handheld _and_ have the glass under a finger. Both
+A browser has to say it is a handheld *and* have the glass under a finger. Both
 halves are needed: the user agent alone is what a developer's device toolbar
 fakes, and a coarse pointer alone is a desktop with a touch screen.
 
-| What is running it                         | Says it is mobile                                               | Finger    | Device                                                |
-| ------------------------------------------ | --------------------------------------------------------------- | --------- | ----------------------------------------------------- |
-| The Android or iOS build                   | not asked                                                       | not asked | `phone` under 500pt on its narrow side, else `tablet` |
-| Chrome or Safari on a phone                | `Mobile` in the user agent, `mobile: true`                      | yes       | `phone`                                               |
-| Chrome on an Android tablet                | only `Android`; `mobile: false`                                 | yes       | `tablet`                                              |
-| Safari on an iPad                          | only `Macintosh`, since iPadOS 13                               | yes       | `tablet`                                              |
-| A phone browser with "Desktop site" ticked | nothing: the tick rewrites the string into a desktop platform's | yes       | `desktop`                                             |
-| A desktop browser, window dragged narrow   | nothing                                                         | no        | `desktop`                                             |
-| A desktop with a touch screen              | nothing                                                         | either    | `desktop`                                             |
+| What is running it | Says it is mobile | Finger | Device |
+| --- | --- | --- | --- |
+| The Android or iOS build | not asked | not asked | `phone` under 500pt on its narrow side, else `tablet` |
+| Chrome or Safari on a phone | `Mobile` in the user agent, `mobile: true` | yes | `phone` |
+| Chrome on an Android tablet | only `Android`; `mobile: false` | yes | `tablet` |
+| Safari on an iPad | only `Macintosh`, since iPadOS 13 | yes | `tablet` |
+| A phone browser with "Desktop site" ticked | nothing: the tick rewrites the string into a desktop platform's | yes | `desktop` |
+| A desktop browser, window dragged narrow | nothing | no | `desktop` |
+| A desktop with a touch screen | nothing | either | `desktop` |
 
 Where the two halves disagree - a `mobile` hint left behind by a tick that
 rewrote the string, or a device toolbar faking one and not the other - the string
@@ -542,7 +541,7 @@ and the half every browser has.
 Two of those rows are worth saying out loud. `Macintosh` counts as a handheld
 because an iPad calls itself one and no Mac ever answers the pointer query with a
 finger - a Mac has a trackpad, which hovers. And because iOS says `Macintosh`
-either way, a _phone_ on iOS asked for the desktop site lands on the tablet
+either way, a *phone* on iOS asked for the desktop site lands on the tablet
 layout rather than the desktop one: Safari there leaves nothing behind to tell an
 iPhone from an iPad. On Android, which is where the tick is worth having, it
 works exactly as the checkbox suggests.
@@ -559,11 +558,11 @@ halves of the pair on their own.
 
 Three things, in the order a thumb reaches them.
 
-|        |                                                                                                                                                                                     |
-| ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Left   | The button that opens and shuts the file list - `SidebarToggle.svelte`, the same one the desktop title bar has, with the panel's edge sliding out of the window as the list arrives |
-| Middle | The document's name, with the mark its kind wears in every list that shows it                                                                                                       |
-| Right  | Three dots, which open the menu the desktop's menu bar holds: the same groups, the same rows, the same submenus, as one sheet - `AppMenu.svelte` with `dots`                        |
+| | |
+| --- | --- |
+| Left | The button that opens and shuts the file list - `SidebarToggle.svelte`, the same one the desktop title bar has, with the panel's edge sliding out of the window as the list arrives |
+| Middle | The document's name, with the mark its kind wears in every list that shows it |
+| Right | Three dots, which open the menu the desktop's menu bar holds: the same groups, the same rows, the same submenus, as one sheet - `AppMenu.svelte` with `dots` |
 
 There is no hamburger on a phone or a tablet: the bars are the desktop's, at the
 left of its title bar, and a touch screen reaches the same menu through the dots
@@ -596,11 +595,11 @@ the other kinds are the file list's own menu, a held finger on the Files tab. Se
 Three rows above the list, in the order identity, view, action - the shape
 Discord's channel list has, at the touch scale:
 
-|            |                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| The head   | The sidebar button, then the space - its own mark in its badge, then the name at `--text-head`, then a chevron beside the word - and nothing after them. The mark and the name are what say where you are, and together they are the switcher: pressing them drops the other spaces out of the header as rows inside the panel, each with the same mark in the same badge, and making one is a row at the foot of that list |
-| The tabs   | Files, outline, search and links, as the segmented control the settings sheet uses, so the tab you are on is filled the way the note you have open is, and the fill slides between them rather than blinking                                                                                                                                                                                                                |
-| The search | A pill, and the door to the Search panel. Inside that panel the panel's own field stands in the same place, at the same height, in the same `.nib-field` box: one control that becomes editable rather than two that look alike                                                                                                                                                                                             |
+| | |
+| --- | --- |
+| The head | The sidebar button, then the space - its own mark in its badge, then the name at `--text-head`, then a chevron beside the word - and nothing after them. The mark and the name are what say where you are, and together they are the switcher: pressing them drops the other spaces out of the header as rows inside the panel, each with the same mark in the same badge, and making one is a row at the foot of that list |
+| The tabs | Files, outline, search and links, as the segmented control the settings sheet uses, so the tab you are on is filled the way the note you have open is, and the fill slides between them rather than blinking |
+| The search | A pill, and the door to the Search panel. Inside that panel the panel's own field stands in the same place, at the same height, in the same `.nib-field` box: one control that becomes editable rather than two that look alike |
 
 Then the list, with a word in capitals over each group and the note you have
 open filled - `.nib-row.is-on`, the same fill its tab wears on a desktop.
@@ -743,7 +742,7 @@ all leave everything where it was; see `test/e2e/phone-bar.py`.
 A phone is the device a recording is actually made on, so the recorder is the same
 code on all three builds and the phone is where its two concessions are.
 
-**The permission.** `getUserMedia` inside a WebView asks the _app_ for
+**The permission.** `getUserMedia` inside a WebView asks the *app* for
 `android.permission.RECORD_AUDIO`, and an app that never declared it is refused
 before the reader is ever asked - so the manifest declares it, and that is the whole
 of what is declared: no camera, no storage. Nothing opens the microphone until
@@ -811,7 +810,7 @@ Three more are left out on purpose.
 
 - **Sharing a note out to another app.** Tauri has no share sheet plugin, so this
   would be a plugin of our own on both platforms. Publishing a note through the
-  sync service already gets it out of the app. Sharing _into_ nib is built; see
+  sync service already gets it out of the app. Sharing *into* nib is built; see
   above.
 - **A share target in the browser build.** The PWA could be one too, through
   `share_target` in the manifest, and the whole of what it would do afterwards is
