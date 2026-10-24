@@ -162,7 +162,9 @@ export async function addNote(
   Object.assign(props, idFor(base))
 
   const title = noteName(made.title ?? 'Untitled')
-  const name = workspace.freeName(dir, `${title}.md`)
+  // The base file can be a tab from a space that is not on screen, whose folder no
+  // listing here has read, so the disk is asked about the name as well.
+  const name = await workspace.freeNameOnDisk(dir, `${title}.md`)
   const link =
     made.template === undefined ? (view?.nib.template ?? base.nib.template) : made.template
   const template = link ? templatePath(link) : null
