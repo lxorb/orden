@@ -30,6 +30,14 @@ describe('the tags in a note', () => {
   test('and code fences hold none', () => {
     expect(tagsIn('#yes\n```\n#no\n```\n#also')).toEqual(['#yes', '#also'])
   })
+
+  test('and nor does inline code', () => {
+    expect(tagsIn('run `a #no` and #yes, `#not` ``x `#b` y`` #also')).toEqual(['#yes', '#also'])
+  })
+
+  test('though a backtick that opens no code is just a backtick', () => {
+    expect(tagsIn('a ` #yes and \\`#no` #too')).toEqual(['#yes', '#too'])
+  })
 })
 
 describe('the tags in the front matter', () => {
