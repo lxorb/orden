@@ -37,7 +37,9 @@ const OWNED_CHATS = `select id from chats where space_id in (${OWNED})`
 
 /** The live online terminal sessions of other accounts whose `.term` files are in
  *  those spaces, and what their machines are told of them. */
-const THEIR_TERMS = `ended_at is null and user_id <> ?1 and term in (${OWNED_NOTES})`
+// Only sessions keyed by a file: one kept under its own id is no file's, whatever note a
+// stranger made under that id (see machines/reach.ts).
+const THEIR_TERMS = `ended_at is null and user_id <> ?1 and term <> session and term in (${OWNED_NOTES})`
 const THEIR_TERMS_LIVE = `select machine, session, user_id from term_sessions where ${THEIR_TERMS}`
 
 /** What the rows are the only record of, written down before they go. */

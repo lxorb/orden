@@ -831,6 +831,65 @@ describe('emptying the trash of a .term file', () => {
   })
 })
 
+/** A session made with no file is kept under its own id, and a note's id is the
+ *  device's to choose: a stranger who learns the id (it is in an old `.term` file's
+ *  words) and makes a note of that id in a space of their own reaches nobody's session
+ *  through it, and ends nobody's by emptying that note out of the trash. */
+describe('a note made under a session’s own id', () => {
+  async function stranded() {
+    const people = await world()
+    serviceOn()
+    allow(OWNER)
+    const made = await call<{ session: string }>(env, '/v2/online/terms', {
+      token: people.owner,
+      body: {},
+    })
+    expect(made.status).toBe(200)
+    const stranger = await session('stranger@example.com')
+    const theirs = (
+      await call<{ space: { id: string } }>(env, '/v1/spaces', {
+        token: stranger,
+        body: { name: 'Mine' },
+      })
+    ).json.space.id
+    await call(env, `/v2/spaces/${theirs}/prepare`, { token: stranger, method: 'POST' })
+    await call(env, `/v2/spaces/${theirs}/ops`, {
+      token: stranger,
+      body: {
+        ops: [
+          {
+            op: 'o1',
+            t: 'create',
+            id: made.json.session,
+            kind: 'note',
+            parent: null,
+            name: 'x.term',
+            seen: 0,
+          },
+        ],
+      },
+    })
+    return { ...people, stranger, theirs, id: made.json.session }
+  }
+
+  test('lets nobody but the session’s own account through the door', async () => {
+    const { stranger, id } = await stranded()
+    expect(refusal(await knock(id, stranger))).toBe('gone')
+  })
+
+  test('ends nobody’s session when it is emptied out of the trash', async () => {
+    const { stranger, theirs, id } = await stranded()
+    await call(env, `/v2/spaces/${theirs}/ops`, {
+      token: stranger,
+      body: { ops: [{ op: 'o2', t: 'delete', id, seen: 1 }] },
+    })
+    await call(env, `/v1/trash/notes/${id}`, { token: stranger, method: 'DELETE' })
+    expect(env.db.prepare('select ended_at from term_sessions where session = ?').get(id)).toEqual({
+      ended_at: null,
+    })
+  })
+})
+
 describe('a machine', () => {
   const ID = 'm_test'
   let user: string

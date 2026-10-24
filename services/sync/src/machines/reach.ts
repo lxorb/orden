@@ -37,7 +37,12 @@ export interface Reached {
 }
 
 /** The statement, around a `pairs (who, term, guest)` it is handed, and the parameter
- *  that names a machine id to narrow to, or empty. */
+ *  that names a machine id to narrow to, or empty.
+ *
+ *  A session made with no file is kept under its own id (`term = session`), and a note's
+ *  id is the device's to choose: matched by file, such a session would be reached through
+ *  any note a stranger made under that id, as the owner of the space they made it in.
+ *  So it is reached by its session alone, and only by its own account. */
 const reach = (pairs: string, machine: string) => `with ${pairs}
 select p.who as who, p.term as term, p.guest as guest,
        case when sp.user_id = p.who and p.guest = 0 then 'owner'
@@ -51,9 +56,10 @@ select p.who as who, p.term as term, p.guest as guest,
        (select online from users where id = t.user_id) as listed,
        (select held from machines where id = t.machine) as held
   from pairs p
-  join term_sessions t on (t.term = p.term or (t.session = p.term and t.user_id = p.who and p.guest = 0)) and t.ended_at is null
-                      and (${machine} = '' or t.machine = ${machine})
-  left join notes n on n.id = t.term
+  join term_sessions t on (t.term = p.term and t.term <> t.session
+                           or (t.session = p.term and t.user_id = p.who and p.guest = 0))
+                      and t.ended_at is null and (${machine} = '' or t.machine = ${machine})
+  left join notes n on n.id = t.term and t.term <> t.session
   left join spaces sp on sp.id = n.space_id and sp.deleted = 0
   left join users u on u.id = p.who and p.guest = 0
   left join space_members ms on ms.space_id = sp.id and ms.email = u.email and ms.item = ''

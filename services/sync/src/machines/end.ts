@@ -23,7 +23,8 @@ export interface Ended {
 
 /** Ends the live sessions of these files: the rows first, then each machine and each
  *  owner's devices told, as `DELETE /v2/online/terms/:term` does. `who` is whoever emptied
- *  the trash, for the audit; null for the nightly job. */
+ *  the trash, for the audit; null for the nightly job. Only sessions keyed by a file: one
+ *  kept under its own id is no file's, whatever note was made under that id. */
 export async function endTerms(
   env: Env,
   terms: readonly string[],
@@ -34,7 +35,7 @@ export async function endTerms(
   for (const chunk of chunks(terms)) {
     const { results } = await env.DB.prepare(
       `update term_sessions set ended_at = ?
-        where ended_at is null and term in (${places(chunk.length)})
+        where ended_at is null and term <> session and term in (${places(chunk.length)})
        returning machine, session, user_id`,
     )
       .bind(at, ...chunk)
