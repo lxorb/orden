@@ -11,6 +11,7 @@
 import { account } from '../account.svelte'
 import { t } from '../i18n.svelte'
 import type { OpenHow } from '../new-tab'
+import { canWriteAt } from '../sharing.svelte'
 import { nameOf, samePath } from '../space-paths'
 import { joinPath } from '../tauri'
 import type { Tab } from '../workspace/documents.svelte'
@@ -30,7 +31,8 @@ export async function openOnline(beside = false): Promise<Tab | null> {
     return null
   }
   const root = workspace.activeSpace?.root
-  if (!root) return null
+  // The terminal is a file written into the space, which one shared to be read refuses.
+  if (!root || !canWriteAt(root)) return null
 
   // Not on the list yet, or the service off: said before any file is made. Asked again
   // every time, but waited for only when this window has not heard yes already: the
