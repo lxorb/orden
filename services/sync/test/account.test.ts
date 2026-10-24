@@ -877,6 +877,51 @@ describe('what is left', () => {
     },
   )
 
+  /** Somebody else holding the same bytes, as something that is no picture, is no reason
+   *  to skip the owner: they may give the bytes back the moment this account has gone. */
+  test('a picture a stranger holds as a PDF is handed over all the same', async () => {
+    const other = await signIn(env, OTHER)
+    const stranger = await signIn(env, 'stranger@example.com')
+    const theirs = (
+      await call<LeavingView>(env, '/v1/spaces', { token: other, body: { name: 'Theirs' } })
+    ).json.space?.id
+    const sent = await mail(() =>
+      call(env, `/v1/spaces/${theirs}/share/invite`, {
+        token: other,
+        body: { email: ME, role: 'write' },
+      }),
+    )
+    await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
+      method: 'POST',
+      token,
+    })
+
+    const picture = file(3, 14)
+    for (const [as, type] of [
+      [token, 'image/png'],
+      [stranger, 'application/pdf'],
+    ] as const) {
+      await call(env, `/v1/blobs/${picture.hash}`, {
+        method: 'PUT',
+        token: as,
+        raw: picture.bytes,
+        headers: { 'content-type': type },
+      })
+    }
+    await call(env, `/v1/spaces/${theirs}/notes`, {
+      token,
+      body: {
+        path: 'with a picture.md',
+        content: `![](https://nibeditor.com/i/${picture.hash}.png)`,
+      },
+    })
+
+    expect((await leave()).status).toBe(200)
+    await call(env, `/v1/blobs/${picture.hash}`, { method: 'DELETE', token: stranger })
+
+    expect((await call(env, `/i/${picture.hash}.png`)).status).toBe(200)
+  })
+
   /** A space too big to read hands over everything rather than guess, which is right
    *  only where this account could have put something: a reader who never wrote there
    *  keeps its own pictures to itself, and they go with it. */

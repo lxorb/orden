@@ -203,7 +203,9 @@ async function giveBack(
 ): Promise<void> {
   if (!old) return
   for (const hash of new Set([old.s, old.l])) {
-    if (!keeping.includes(hash)) await letGo(env, userId, hash)
+    // A face's bytes may be a picture in one of the account's own notes too, which
+    // nothing about the face says; see `letGo`.
+    if (!keeping.includes(hash)) await letGo(env, userId, hash, true)
   }
 }
 

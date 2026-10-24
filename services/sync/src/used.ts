@@ -24,11 +24,13 @@ import type { Env } from './types'
 const LIVE = '(sp.deleted = 0 or sp.deleted_at is not null)'
 
 /** The owners other than this account of the spaces that use any of these hashes, and
- *  which of the hashes each one's spaces use. */
+ *  which of the hashes each one's spaces use. With `own`, this account's own spaces
+ *  are asked too, under its own id: a face given back may be a picture in its notes. */
 export async function usedElsewhere(
   env: Env,
   userId: string,
   hashes: ReadonlySet<string>,
+  own = false,
 ): Promise<Map<string, Set<string>>> {
   const owed = new Map<string, Set<string>>()
   if (!hashes.size) return owed
@@ -44,24 +46,26 @@ export async function usedElsewhere(
     `select sp.user_id as owner, n.hash as hash
        from notes n join spaces sp on sp.id = n.space_id
       where n.kind = 'file' and n.hash in (select value from json_each(?2))
-        and sp.user_id <> ?1 and ${LIVE}
+        and (?3 or sp.user_id <> ?1) and ${LIVE}
      union
      select sp.user_id as owner, n.paper as hash
        from notes n join spaces sp on sp.id = n.space_id
       where n.paper is not null and n.paper in (select value from json_each(?2))
-        and sp.user_id <> ?1 and ${LIVE}
+        and (?3 or sp.user_id <> ?1) and ${LIVE}
      union
      select sp.user_id as owner, p.hash as hash
        from note_pictures p join notes n on n.id = p.note_id join spaces sp on sp.id = n.space_id
-      where p.hash in (select value from json_each(?2)) and sp.user_id <> ?1 and ${LIVE}
+      where p.hash in (select value from json_each(?2))
+        and (?3 or sp.user_id <> ?1) and ${LIVE}
         and exists (select 1 from blobs b
                      where b.hash = p.hash and b.user_id = ?1 and b.type like 'image/%')
      union
      select sp.user_id as owner, f.hash as hash
        from chat_files f join chats c on c.id = f.chat_id join spaces sp on sp.id = c.space_id
-      where f.hash in (select value from json_each(?2)) and sp.user_id <> ?1 and ${LIVE}`,
+      where f.hash in (select value from json_each(?2))
+        and (?3 or sp.user_id <> ?1) and ${LIVE}`,
   )
-    .bind(userId, held)
+    .bind(userId, held, own ? 1 : 0)
     .all<{ owner: string; hash: string }>()
   for (const one of used) owe(one.owner, one.hash)
 
@@ -69,10 +73,10 @@ export async function usedElsewhere(
   // whose list has one of the hashes in it at all are read, and then read properly.
   const { results: listing } = await env.DB.prepare(
     `select user_id as owner, files from spaces sp
-      where user_id <> ?1 and ${LIVE}
+      where (?3 or user_id <> ?1) and ${LIVE}
         and exists (select 1 from json_each(?2) m where instr(lower(sp.files), m.value) > 0)`,
   )
-    .bind(userId, held)
+    .bind(userId, held, own ? 1 : 0)
     .all<{ owner: string; files: string }>()
   for (const one of listing) {
     for (const file of readSpaceFiles(one.files)) {
@@ -92,7 +96,7 @@ export function handedTo(
   at: number,
 ): D1PreparedStatement[] {
   return [...owed]
-    .filter(([, hashes]) => hashes.size)
+    .filter(([owner, hashes]) => owner !== userId && hashes.size)
     .map(([owner, hashes]) =>
       env.DB.prepare(
         `insert into blobs (hash, user_id, size, type, created_at)

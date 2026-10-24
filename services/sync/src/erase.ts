@@ -242,9 +242,9 @@ const MOST_READ = 250
  *
  *  A picture is held by whoever uploaded it, and a writer in a shared space uploads
  *  their own: so the picture in the owner's note is the writer's row, and deleting
- *  the writer would otherwise take the picture out of a space that stays. Whatever
- *  another account already holds is left alone - its row keeps the bytes. For the
- *  rest, what decides is which spaces of other people use them now, not who is a
+ *  the writer would otherwise take the picture out of a space that stays. Another
+ *  account holding the same bytes does not change that: it can give them back in turn.
+ *  What decides is which spaces of other people use them now, not who is a
  *  member where: a writer who left, or was taken out, wrote what they wrote, and a
  *  picture a stranger kept alive by holding the same bytes is still in the owner's
  *  note once the writer and then the stranger have gone. So every space is asked,
@@ -260,19 +260,25 @@ const MOST_READ = 250
  *  note. What that cannot reach is an unread note of a space this account is no
  *  longer in, which the sweep shrinks to nothing. */
 async function handedOn(env: Env, user: User, at: number): Promise<D1PreparedStatement[]> {
-  const { results: alone } = await env.DB.prepare(
-    `select hash, type from blobs b where user_id = ?1
-       and not exists (select 1 from blobs o where o.hash = b.hash and o.user_id <> ?1)`,
+  // Everything it holds, and not only what nobody else does: another account holding
+  // the same bytes, perhaps as something that is no picture at all, may give them back
+  // the moment this one has gone, and the owner's note would show a hole then instead.
+  const { results: held } = await env.DB.prepare(
+    `select hash, type,
+            not exists (select 1 from blobs o where o.hash = b.hash and o.user_id <> ?1) as alone
+       from blobs b where user_id = ?1`,
   )
     .bind(user.id)
-    .all<{ hash: string; type: string }>()
-  if (!alone.length) return []
+    .all<{ hash: string; type: string; alone: number }>()
+  if (!held.length) return []
 
-  const mine = new Set(alone.map((one) => one.hash))
+  const mine = new Set(held.map((one) => one.hash))
   // What a note's body can show, which is a picture and nothing else: a paper or a
-  // file is named by its own column, never by a hash somebody wrote into a note.
+  // file is named by its own column, never by a hash somebody wrote into a note. The
+  // reading below is a fallback for notes the sweep has not reached, and what another
+  // account still keeps is not worth a guess.
   const pictures = new Set(
-    alone.filter((one) => one.type.startsWith('image/')).map((one) => one.hash),
+    held.filter((one) => one.alone && one.type.startsWith('image/')).map((one) => one.hash),
   )
   const owed = await usedElsewhere(env, user.id, mine)
   const owe = (owner: string, hash: string) => {

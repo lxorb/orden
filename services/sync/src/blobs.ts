@@ -171,22 +171,27 @@ blobs.delete('/:hash', async (context) => {
  *  through as well; see people/routes.ts.
  *
  *  Unless somebody else's space still uses the bytes - a picture in a note, a paper, a
- *  file - which the uploader's row was the only thing keeping: then that space's owner
- *  is handed a row of their own first, as they would be if this account were deleted
- *  (see used.ts), and the asker's row goes and stops counting against them. Giving a
- *  file back is not a way to take it out of a note in a space that is not yours. */
-export async function letGo(env: Env, userId: string, hash: string): Promise<void> {
-  const others = await env.DB.prepare('select 1 from blobs where hash = ? and user_id <> ? limit 1')
-    .bind(hash, userId)
-    .first()
-  const owed = others ? new Map() : await usedElsewhere(env, userId, new Set([hash]))
+ *  file: then that space's owner is handed a row of their own first, as they would be
+ *  if this account were deleted (see used.ts), and the asker's row goes and stops
+ *  counting against them. Whether or not another account holds the same bytes too,
+ *  because that one may hold them as something else and give them back in turn. Giving
+ *  a file back is not a way to take it out of a note in a space that is not yours.
+ *
+ *  With `own`, a use in this account's own spaces keeps its row: a face is let go of
+ *  without anybody asking about the notes, and its bytes may be a picture in them. */
+export async function letGo(env: Env, userId: string, hash: string, own = false): Promise<void> {
+  const owed = await usedElsewhere(env, userId, new Set([hash]), own)
+  if (owed.has(userId)) return
 
   await env.DB.batch([
     ...handedTo(env, userId, owed, now()),
     env.DB.prepare('delete from blobs where hash = ? and user_id = ?').bind(hash, userId),
   ])
 
-  if (!others && !owed.size) await env.NOTES.delete(key(hash))
+  const others = await env.DB.prepare('select 1 from blobs where hash = ? limit 1')
+    .bind(hash)
+    .first()
+  if (!others) await env.NOTES.delete(key(hash))
 }
 
 /** Serving, which carries no session: a note is read by whoever it was shared

@@ -392,6 +392,42 @@ describe('giving an image back', () => {
     expect((await call(env, '/v1/usage', { token })).json.used).toBe(start)
   })
 
+  /** Another account holding the same bytes is no reason to skip the owner: it may
+   *  hold them as something that is no picture, and give them back in turn. */
+  test('hands it over even while a stranger holds the same bytes as something else', async () => {
+    const owner = await signIn(env, 'owner@b.dev')
+    const stranger = await signIn(env, 'stranger@b.dev')
+    const theirs = (
+      await call<{ space: { id: string } }>(env, '/v1/spaces', {
+        token: owner,
+        body: { name: 'Theirs' },
+      })
+    ).json.space.id
+    const sent = await mail(() =>
+      call(env, `/v1/spaces/${theirs}/share/invite`, {
+        token: owner,
+        body: { email: 'a@b.dev', role: 'write' },
+      }),
+    )
+    await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
+      method: 'POST',
+      token,
+    })
+
+    const picture = sized(2048)
+    await upload(picture)
+    await call(env, `/v1/spaces/${theirs}/notes`, {
+      token,
+      body: { path: 'N.md', content: `![](https://nibeditor.com/i/${picture.hash}.png)` },
+    })
+    expect((await upload(picture, { token: stranger, type: 'application/pdf' })).status).toBe(201)
+
+    await call(env, `/v1/blobs/${picture.hash}`, { method: 'DELETE', token })
+    await call(env, `/v1/blobs/${picture.hash}`, { method: 'DELETE', token: stranger })
+
+    expect((await call(env, `/i/${picture.hash}.png`)).status).toBe(200)
+  })
+
   test('and deletes it when only its own notes show it', async () => {
     const own = (
       await call<{ space: { id: string } }>(env, '/v1/spaces', { token, body: { name: 'Mine' } })

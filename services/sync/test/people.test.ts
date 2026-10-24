@@ -262,6 +262,25 @@ describe('the routes', () => {
     expect(env.db.prepare('select count(*) as n from blobs').get()).toEqual({ n: 0 })
   })
 
+  /** A face whose bytes are also a picture in one of the account's own notes is still
+   *  that picture when the face changes. */
+  test('a face given back stays where the account’s own note shows it', async () => {
+    const small = await upload(owner, 'small face')
+    const large = await upload(owner, 'large face')
+    await call(env, '/v2/me/avatar', { method: 'PUT', token: owner, body: { s: small, l: large } })
+    await call(env, `/v1/spaces/${space}/notes`, {
+      token: owner,
+      body: { path: 'me.md', content: `![](https://nibeditor.com/i/${small}.webp)` },
+    })
+
+    await call(env, '/v2/me/avatar', { method: 'DELETE', token: owner })
+
+    expect((await call(env, `/i/${small}.webp`)).status).toBe(200)
+    expect(env.db.prepare('select count(*) as n from blobs where hash = ?').get(small)).toEqual({
+      n: 1,
+    })
+  })
+
   test('a face that is not WebP or JPEG, or not this account’s, is refused', async () => {
     const png = await upload(member, 'png bytes', 'image/png')
     const webp = await upload(member, 'webp bytes')
