@@ -277,8 +277,10 @@ async function renameNote(from: string, to: string, hold = false, alone = false)
     rows.map((row) => row.path),
   )
 
-  // A page note's paper follows the note, as `move_held` has it on a desktop.
-  if (isPages(source) && !alone) await renamePaper(paperOf(source), paperOf(target))
+  // A page note's paper follows the note, as `move_held` has it on a desktop, sync's move
+  // too: sync carries the paper with the note and never as an entry of its own (#551).
+  // Its highlights are one, which sync moves by a move of their own.
+  if (isPages(source)) await renamePaper(paperOf(source), paperOf(target), !alone)
 }
 
 /** The file a rename or a copy of `source` to `target` would put a page note and its
@@ -298,13 +300,13 @@ async function paperInTheWay(source: string, target: string): Promise<string | n
 /** A page note's paper, and the paper's own highlights, under the note's new name.
  *  Quiet where there is none, and where the name is taken: the note has moved, and a
  *  paper that could not follow is listed as the PDF it is rather than lost. */
-async function renamePaper(source: string, target: string) {
+async function renamePaper(source: string, target: string, highlights = true) {
   const paper = await assets.get(source)
   if (!paper || (await assets.get(target))) return
 
   await assets.put({ ...paper, path: target, modified: now() })
   await assets.remove(source)
-  await moveHighlights(source, target)
+  if (highlights) await moveHighlights(source, target)
 }
 
 /** A PDF's highlights, under the name the PDF has now. */

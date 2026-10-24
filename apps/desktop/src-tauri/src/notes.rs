@@ -19,7 +19,7 @@ use crate::carry::{copy_whole, move_whole};
 use crate::clock;
 use crate::paths::{
     at_most, at_most_stamped, cannot, chosen, copy_held, drop_held, in_spaces, is_pdf, made,
-    move_held, openable, paper_in_the_way, write_in_place,
+    move_held, move_paper, openable, paper_in_the_way, write_in_place,
 };
 
 /// The most a note may be for nib to read it: 64 MiB.
@@ -202,10 +202,11 @@ pub fn delete_note(app: AppHandle, path: String) -> Result<(), String> {
 /// own folder, to the paper of the note just made for it or made for it before. Only
 /// that move may put a PDF where a page note takes it for its paper.
 ///
-/// `alone` is sync's move (sync2/app-world.ts), which moves the one file and nothing it
-/// holds: a PDF's highlights and a page note's paper are entries of their own in the
-/// account, moved by moves of their own, in whichever order those come. Highlights that
-/// came ahead of their PDF were otherwise cleared as left by another (#733).
+/// `alone` is sync's move (sync2/app-world.ts), which leaves what the account holds as
+/// an entry of its own: a PDF's highlights, moved by a move of their own, in whichever
+/// order the two come. Highlights that came ahead of their PDF were otherwise cleared
+/// as left by another (#733). A page note's paper is no entry (#551) and still goes
+/// with the note, though not the paper's highlights, which are one.
 #[tauri::command(async)]
 pub fn rename_note(
     app: AppHandle,
@@ -236,7 +237,9 @@ fn renamed(source: &Path, target: &Path, hold: bool, alone: bool) -> Result<(), 
 
     // A PDF's highlights follow it, and a page note's paper follows the note, so a
     // rename or a move keeps them.
-    if !alone {
+    if alone {
+        move_paper(source, target);
+    } else {
         move_held(source, target);
     }
     Ok(())
