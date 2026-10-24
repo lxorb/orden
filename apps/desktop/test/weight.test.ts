@@ -831,9 +831,14 @@ function holds(tail: string): boolean {
  *  stands over the caption rather than pushing the file list down under the pointer
  *  (`is-floating` in Bookmarks.svelte). Measured 3,280,466.
  *
- *  Raised 2026-10-24, to 3,285,000, for #811: the file list's gestures refuse a space
- *  shared to be read, in the workspace's own calls (`writableAt`) and in the row menu,
- *  the tree's keys and the palette. Measured 3,283,904.
+ *  Raised 2026-10-24, to 3,282,000, for #710: the values an automation, an agent, an
+ *  icon and a cover write are quoted as YAML (`scalar`, `flowItem`, the no-change check
+ *  in `frontMatterEdit`, which reads a quoted and a bare value apart). Measured
+ *  3,281,217.
+ *
+ *  Raised 2026-10-24, to 3,283,000, for #830: a quoted front-matter value keeps
+ *  being words, so the property readers carry whether it was quoted
+ *  (`quoted` in packages/markdown/src/properties.ts). Measured 3,282,986.
  *
  *  Raised 2026-10-24, to 3,286,000, for #847: a list keeps its members' types and
  *  the way each was written when one is added or taken out (`listItems`, `typedItem`
@@ -841,7 +846,11 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-24, to 3,287,000, for #868: an untouched list member is written
  *  back exactly as the note had it (`KeptItem` in packages/markdown/src/property-edits.ts).
- *  Measured 3,286,180. */
+ *  Measured 3,286,180.
+ *
+ *  Raised 2026-10-24, to 3,288,000, for #870: the automation's `properties.set` reads
+ *  a typed list member by member (`typedItem` in automation/acts.ts), with #710 merged
+ *  in. Measured 3,287,165. */
 const BUDGET = 3_300_000 // combined branch only
 const MOST_FILES = 382
 
