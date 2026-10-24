@@ -132,6 +132,14 @@ async function carve(
   cut: (named?: string) => Split | null,
   kind: 'split' | 'extract',
 ) {
+  // Only a markdown note of the open space that may be written takes a `[[link]]`
+  // and a `.md` beside it; in `snippets.json` the link breaks the file. The menus
+  // offer neither gesture anywhere else, and it is asked again where the files are
+  // written, as a merge does, so nothing that calls this can carve what they would
+  // not. See `mergeable`.
+  const { canWriteAt } = await import('../sharing.svelte')
+  if (!mergeable(ws.activeSpace?.root ?? null, path, canWriteAt)) return
+
   const wanted = cut()
   if (!wanted) return
 

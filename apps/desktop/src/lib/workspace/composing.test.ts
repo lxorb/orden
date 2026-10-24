@@ -314,3 +314,44 @@ describe('a selection made into a note of its own', () => {
     expect(sent).toEqual([])
   })
 })
+
+// Asked again here, since a split or an extraction can be reached without the
+// palette's say: only a markdown note of the open space that may be written is carved.
+describe('a file that is not a note of the open space', () => {
+  const JSON_FILE = `${SPACE}/snippets.json`
+  const DOC = '{\n  "a": 1\n}\n'
+
+  test('is not split', async () => {
+    const ws = space({ [JSON_FILE]: DOC }, JSON_FILE)
+    await splitAtCaret(ws, 1)
+
+    expect(sent).toEqual([])
+    expect([...disk.keys()]).toEqual([JSON_FILE])
+    expect(disk.get(JSON_FILE)).toBe(DOC)
+  })
+
+  test('nor has a selection extracted', async () => {
+    const ws = space({ [JSON_FILE]: DOC }, JSON_FILE)
+    await extractSelection(ws, 0, 1)
+
+    expect(sent).toEqual([])
+    expect(disk.get(JSON_FILE)).toBe(DOC)
+  })
+
+  test('nor is a note of another space', async () => {
+    const note = `${OTHER}/plan.md`
+    const ws = space({ [note]: '# Plan\n\nfirst\n\n## Later\n\nsecond\n' }, note)
+    await splitAtCaret(ws, 10)
+
+    expect(sent).toEqual([])
+  })
+
+  test('nor a note of a space shared to be read', async () => {
+    readOnly.add(SPACE)
+    const note = `${SPACE}/plan.md`
+    const ws = space({ [note]: '# Plan\n\nfirst\n\n## Later\n\nsecond\n' }, note)
+    await splitAtCaret(ws, 10)
+
+    expect(sent).toEqual([])
+  })
+})
