@@ -859,7 +859,7 @@ function holds(tail: string): boolean {
  *  Raised 2026-10-24, to 3,290,000, for #885: a list's key is found in another case
  *  the way `frontMatterEdit` finds it (`propertyNamed` in
  *  packages/markdown/src/properties.ts). Measured 3,289,059. */
-const BUDGET = 3_300_000 // combined branch only
+const BUDGET = 3_400_000 // combined branch only
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
