@@ -34,7 +34,7 @@ import { log } from '../log'
 import { onDisk } from '../on-disk'
 import { holderOf, pairOf, paperOf } from '../pages/held'
 import { joinPath } from '../tauri'
-import { toBase64 } from '../bytes'
+import { sha256, toBase64 } from '../bytes'
 import { workspace } from '../workspace.svelte'
 import { writeBytes, writeFile } from '../workspace/write-file'
 
@@ -75,14 +75,19 @@ export async function applyImport(
 ): Promise<Landed> {
   const { files, stepped } = await restampedOnDisk(plan, target)
   const paths: string[] = []
+  // What each note was written with, by its hash: what undoing the import checks a
+  // note against before it takes it away.
+  const wrote: Record<string, string> = {}
   let done = 0
 
   try {
     for (const file of files) {
       const path = joinPath(target.root, file.path)
 
-      if (file.kind === 'note') await writeFile(path, file.text)
-      else await writeBytes(path, toBase64(file.bytes))
+      if (file.kind === 'note') {
+        await writeFile(path, file.text)
+        wrote[path] = await sha256(file.text)
+      } else await writeBytes(path, toBase64(file.bytes))
 
       paths.push(...(file.kind === 'file' && file.pages ? await asPages(path) : [path]))
       done += 1
@@ -93,7 +98,7 @@ export async function applyImport(
     // write partway through failed. The failure still reaches the sheet, which says
     // so; before, the half that had landed was on the disk with no undo that could
     // take it back, and trying again put a `Plan 2.md` beside every one of them.
-    if (paths.length) await landed(paths)
+    if (paths.length) await landed(paths, wrote)
   }
 
   return { paths, stepped }
@@ -108,8 +113,8 @@ async function asPages(path: string): Promise<string[]> {
 }
 
 /** What an import that wrote something owes the rest of the app. */
-async function landed(paths: string[]) {
-  workspace.undone.record({ kind: 'import', paths })
+async function landed(paths: string[], wrote: Record<string, string>) {
+  workspace.undone.record({ kind: 'import', paths, wrote })
   // Each file made, said once like any other (workspace/file-ops.ts), so sync v2 has an
   // entry for it where no watcher reads the folder - the browser, a phone - and an
   // imported paper's page note reaches the account at all (#551). Said where a watcher

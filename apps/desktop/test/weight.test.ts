@@ -853,7 +853,11 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-24, to 3,282,000, for B139 and B159: a PDF never lands where a page
  *  note would take it for its paper, by a name stepped or typed (`freeName`,
- *  `nameFault`) or by a move the crate is told is a PDF being turned. Measured 3,281,268. */
+ *  `nameFault`) or by a move the crate is told is a PDF being turned. Measured 3,281,268.
+ *
+ *  Raised 2026-10-24, to 3,282,000, for #752: a merge records what the note it went
+ *  into says once its links are rewritten, so undoing it checks against those words
+ *  (`mergeInto` in workspace/composing.ts). Measured 3,281,333. */
 const BUDGET = 3_282_000
 const MOST_FILES = 382
 

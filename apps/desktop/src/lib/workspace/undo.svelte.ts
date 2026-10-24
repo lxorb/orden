@@ -47,10 +47,22 @@ export type FileAction =
       fromContent: string
       into: string
       intoContent: string
+      /** What the merge left `into` saying, so an undo can tell whether it has been
+       *  written in since. */
+      intoAfter: string
       /** The notes whose links to `from` were pointed at `into`. */
       relinked?: string[]
     }
-  | { kind: 'split' | 'extract'; from: string; fromContent: string; created: string }
+  | {
+      kind: 'split' | 'extract'
+      from: string
+      fromContent: string
+      /** What the carve left in `from` and wrote to `created`, so an undo can tell
+       *  whether either has been written in since. */
+      fromAfter: string
+      created: string
+      createdContent: string
+    }
   /** A replacement run across the space. However many notes it touched, it is
    *  one thing somebody did and so one thing to take back. Each note keeps the
    *  words it had, the edits that put them back and the words those edits are
@@ -64,8 +76,10 @@ export type FileAction =
   /** An import. However many files it wrote, what somebody did was import once,
    *  so it is one thing to take back. The paths alone: undoing is removing files
    *  that were not there a minute ago, and a file nobody has touched yet needs no
-   *  snapshot kept of it. */
-  | { kind: 'import'; paths: string[] }
+   *  snapshot kept of it. And the hash of the words each note was written with, so
+   *  an undo can tell a note nobody has touched from one written in since; see
+   *  `unimport` in undoing.ts. */
+  | { kind: 'import'; paths: string[]; wrote: Record<string, string> }
   /** A paste, a Ctrl-drag, a duplicate or files dropped in: one thing to take
    *  back however many it made. Where each landed, and what it was copied from so
    *  it can be made again - which a file from outside the app has not got. */

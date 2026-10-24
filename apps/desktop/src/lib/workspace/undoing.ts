@@ -13,6 +13,7 @@
 
 import { oneEdit } from '@nib/markdown/edits'
 import { freePath } from '@nib/markdown/paths'
+import { sha256 } from '../bytes'
 import { applied, type Edit } from '../search/replace'
 import type { Retargeting } from '../link-index.svelte'
 import { onDisk } from '../on-disk'
@@ -138,16 +139,34 @@ async function undoOne(ws: PutsBack, action: FileAction): Promise<boolean> {
 
 /** An import taken back: the files it wrote, gone again.
  *
- *  Outright rather than into the trash. What an import wrote was never a note
- *  anybody kept, and putting three thousand rows into Recently deleted would
- *  bury whatever is actually in there. A tab that is open on one of them is
- *  closed, the way a deleted note's is.
+ *  Outright rather than into the trash, for a note that still says what the import
+ *  wrote. That was never a note anybody kept, and putting three thousand rows into
+ *  Recently deleted would bury whatever is actually in there. A tab that is open on
+ *  one of them is closed, the way a deleted note's is.
+ *
+ *  A note written in since is somebody's writing, and taking it away outright lost
+ *  it for good, so it stays where it is. What has no hash to compare - a paper, a
+ *  picture, a page note - goes to Recently deleted the way a note made here does
+ *  when that is undone, since nothing can say it has not changed.
  *
  *  A file that will not go is stepped over rather than stopping the undo: the
  *  rest of the import still goes, and what is left is what somebody has since
  *  taken an interest in. */
 async function unimport(ws: PutsBack, action: Extract<FileAction, { kind: 'import' }>) {
   for (const path of action.paths) {
+    const wrote = action.wrote[path]
+    if (wrote === undefined) {
+      const gone = await ws
+        .bin(path, false)
+        .then(() => true)
+        .catch(() => false)
+      if (gone) await ws.fileGone(path, 'file')
+      continue
+    }
+
+    const now = await invoke<string>('read_note', { path }).catch(() => null)
+    if (now === null || (await sha256(now)) !== wrote) continue
+
     const gone = await invoke('delete_note', { path })
       .then(() => true)
       .catch(() => false)
@@ -155,12 +174,13 @@ async function unimport(ws: PutsBack, action: Extract<FileAction, { kind: 'impor
   }
 }
 
-/** A copy taken back: what it made, gone again. Outright, like an import's: the
- *  original is still where it was, so there is nothing in the copy the trash would
- *  be keeping safe. A tab open on anything in it closes as it goes. */
+/** A copy taken back: what it made, gone again, into Recently deleted the way a note
+ *  made here goes when that is undone. A copy is a note somebody can go on writing in
+ *  before asking for it back, and taken off the disk outright that writing was gone
+ *  for good. A tab open on anything in it closes as it goes. */
 async function uncopy(ws: PutsBack, action: Extract<FileAction, { kind: 'copy' }>) {
   for (const { path, folder } of action.made) {
-    await invoke(folder ? 'delete_folder' : 'delete_note', { path })
+    await ws.bin(path, folder)
     await ws.fileGone(path, folder ? 'folder' : 'file')
   }
 }
@@ -209,15 +229,32 @@ export async function putBack(action: Extract<FileAction, { kind: 'delete' }>): 
  *  no version of them kept, since nothing had been asked to keep one. So the disk is
  *  asked first, and a name with a file at it steps aside as a new note's does. */
 async function writeBeside(path: string, content: string): Promise<string> {
+  const at = await freeBeside(path)
+  await invoke('write_note', { path: at, content })
+  return at
+}
+
+/** `path`, or the first spelling beside it with nothing on the disk at it. */
+async function freeBeside(path: string): Promise<string> {
   const found: string[] = []
   for (;;) {
     const at = freePath(path, (candidate) => found.includes(candidate))
-    if (!(await onDisk(at))) {
-      await invoke('write_note', { path: at, content })
-      return at
-    }
+    if (!(await onDisk(at))) return at
     found.push(at)
   }
+}
+
+/** Whether a note still says what an operation left it saying: the document open on
+ *  it where there is one, since what is typed there may not have reached the file
+ *  yet, and the file otherwise. Either line ending, because a file that had Windows
+ *  ones keeps them whenever the app writes it; see `as_written` in notes.rs. A file
+ *  that will not read cannot say it is unchanged. */
+async function stillSays(ws: PutsBack, path: string, words: string): Promise<boolean> {
+  const open = ws.documentAt(path)
+  if (open) open.flush()
+  const now = open?.text ?? (await invoke<string>('read_note', { path }).catch(() => null))
+  if (now === null) return false
+  return now.replace(/\r\n/g, '\n') === words.replace(/\r\n/g, '\n')
 }
 
 /** What a folder about to be deleted signed in holds: the folders under it and the
@@ -349,10 +386,23 @@ async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' 
 }
 
 /** Puts a merge back: both notes as they were, and the note that was folded
- *  in written again where it was. */
+ *  in written again where it was.
+ *
+ *  Only while the note it went into still says what the merge left. The merge opens
+ *  that note and the reader goes on typing in it, and writing its old words back over
+ *  that took the typing with no version of it kept; so a note written in since leaves
+ *  the merge where it is, on the stack, the way any undo something is in the way of
+ *  does. And the folded note's name was free once it went: a note made there since,
+ *  synced in or written by an agent, stays, and the old words step aside beside it as
+ *  a deleted note's do when it comes back; see `writeBeside`. */
 async function unmerge(ws: PutsBack, action: Extract<FileAction, { kind: 'merge' }>) {
+  if (!(await stillSays(ws, action.into, action.intoAfter))) {
+    throw new Error(`${action.into} has been written in since the merge`)
+  }
+
   await writeFile(action.into, action.intoContent)
-  await writeFile(action.from, action.fromContent)
+  const from = await freeBeside(action.from)
+  await writeFile(from, action.fromContent)
   ws.reload(action.into, action.intoContent)
 
   // Links to the note that went away were pointed at the note it went into: put
@@ -360,17 +410,33 @@ async function unmerge(ws: PutsBack, action: Extract<FileAction, { kind: 'merge'
   // named the note it went into still means that note. The two notes themselves
   // were just written back whole. A merge recorded before this was kept has no
   // list, and is put back across the space as it used to be.
+  //
+  // They point at wherever the folded note landed, which is its old name unless
+  // something has arrived there since.
   const only = action.relinked?.filter(
     (path) => !samePath(path, action.into) && !samePath(path, action.from),
   )
-  if (!only || only.length) await ws.retarget(action.into, action.from, only ? { only } : {})
+  if (!only || only.length) await ws.retarget(action.into, from, only ? { only } : {})
 }
 
 /** Puts a split or an extraction back: the note whole again, and the note that
- *  was carved out of it gone. */
+ *  was carved out of it gone.
+ *
+ *  Guarded the way a merge is, and for the same reason. A note written in since the
+ *  carve leaves the carve where it is rather than losing the typing under the words
+ *  it had before. A carved note written in since stays: what was typed into it is in
+ *  no other file, and the note whole again already holds everything it was carved
+ *  with. */
 async function uncarve(ws: PutsBack, action: Extract<FileAction, { kind: 'split' | 'extract' }>) {
+  if (!(await stillSays(ws, action.from, action.fromAfter))) {
+    throw new Error(`${action.from} has been written in since it was carved`)
+  }
+  const untouched = await stillSays(ws, action.created, action.createdContent)
+
   await writeFile(action.from, action.fromContent)
-  await invoke('delete_note', { path: action.created }).catch(() => undefined)
-  await ws.fileGone(action.created, 'file')
+  if (untouched) {
+    await invoke('delete_note', { path: action.created }).catch(() => undefined)
+    await ws.fileGone(action.created, 'file')
+  }
   ws.reload(action.from, action.fromContent)
 }

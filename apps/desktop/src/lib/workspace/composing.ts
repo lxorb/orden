@@ -53,12 +53,25 @@ export async function mergeInto(ws: Composes, from: string, into: string): Promi
   // Before the note goes, so the links that pointed at it can still be found.
   const relinked: string[] = []
   await ws.retarget(from, into, { touched: relinked })
+  // What the undo checks `into` against, read after the rewrite: a link in `into`
+  // that named the folded note was just pointed at `into` itself, so the joined words
+  // are no longer what it says, and comparing against them took the merge's own
+  // rewrite for typing and refused the undo.
+  const intoAfter = await invoke<string>('read_note', { path: into }).catch(() => joined)
 
   await invoke('snapshot_note', { path: from, content: fromContent }).catch(() => undefined)
   await invoke('delete_note', { path: from })
   await ws.fileGone(from, 'file')
 
-  ws.undone.record({ kind: 'merge', from, fromContent, into, intoContent, relinked })
+  ws.undone.record({
+    kind: 'merge',
+    from,
+    fromContent,
+    into,
+    intoContent,
+    intoAfter,
+    relinked,
+  })
   await ws.loadTree()
   await ws.open(into)
 }
@@ -110,7 +123,14 @@ async function carve(
   await writeFile(path, carved.kept)
   ws.reload(path, carved.kept)
 
-  ws.undone.record({ kind, from: path, fromContent: before, created })
+  ws.undone.record({
+    kind,
+    from: path,
+    fromContent: before,
+    fromAfter: carved.kept,
+    created,
+    createdContent: carved.taken,
+  })
   await ws.loadTree()
   ws.persist()
 }
