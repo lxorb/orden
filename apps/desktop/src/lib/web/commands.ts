@@ -24,6 +24,7 @@ import {
 } from './paths'
 import { isBaseTarget, isChatTarget, isWebTarget } from '@nib/markdown/links'
 import { assetType } from './asset-route'
+import { isReserved } from '../naming'
 import { assets, files, KEEP, meta, snapshots, stats } from './store'
 import { markSeeded, wasSeeded } from '../seeded'
 import { breathe } from '../breathe'
@@ -237,10 +238,16 @@ async function writeNote(path: string, content: string) {
 
 /** Everything under `from` moves, so renaming a folder takes its notes along -
  *  and the files beside them, which is how a PDF's own highlights follow it. */
-async function renameNote(from: string, to: string) {
+async function renameNote(from: string, to: string, hold = false) {
   const source = normalise(from)
   const target = normalise(to)
   if (source === target) return
+
+  // Before anything moves; see `paperInTheWay`. `hold` is the window turning a PDF into
+  // its page note, the one move that may put a PDF where a page note takes it.
+  const turning = hold && isPdf(target) && parent(source) === parent(target)
+  const there = await paperInTheWay(source, target)
+  if (there && !turning) throw new Error(`${there} is already there`)
 
   const pictures = await moveAssets(source, target)
 
@@ -271,6 +278,20 @@ async function renameNote(from: string, to: string) {
 
   // A page note's paper follows the note, as `move_held` has it on a desktop.
   if (isPages(source)) await renamePaper(paperOf(source), paperOf(target))
+}
+
+/** The file a rename or a copy of `source` to `target` would put a page note and its
+ *  paper together with, or null: for a page note, a PDF already where its paper would
+ *  go, which is somebody's own; for a PDF, the page note that would take it for its
+ *  paper (#538). See `paper_in_the_way` in paths.rs. */
+async function paperInTheWay(source: string, target: string): Promise<string | null> {
+  if (isPages(target)) {
+    const paper = paperOf(target)
+    const own = paperOf(source) === paper
+    return (await files.get(source)) && !own && (await assets.get(paper)) ? paper : null
+  }
+  const holder = holderOf(target)
+  return holder && (await files.get(holder)) ? holder : null
 }
 
 /** A page note's paper, and the paper's own highlights, under the note's new name.
@@ -305,6 +326,8 @@ async function copyPath(from: string, to: string) {
   if ((await occupied(target)) || (await assets.get(target))) {
     throw new Error('something already lives there')
   }
+  const there = await paperInTheWay(source, target)
+  if (there) throw new Error(`${there} is already there`)
 
   const under = (one: string) => one === source || one.startsWith(`${source}/`)
   const copied = (one: string) => target + one.slice(source.length)
@@ -435,7 +458,17 @@ async function holds(path: string): Promise<boolean> {
 /** `path` if nothing is there, else `name 2`, `name 3`... - before the
  *  extension for a note, after the name for a folder or a space. */
 async function freeSpot(path: string, isFile: boolean): Promise<string> {
-  if (!(await holds(path))) return path
+  return firstSpot(path, isFile, async (one) => !(await taken(one)))
+}
+
+/** The first of `path`, `name 2`, `name 3`... that `fits`; see `first_spot` in
+ *  paths.rs. */
+async function firstSpot(
+  path: string,
+  isFile: boolean,
+  fits: (one: string) => Promise<boolean>,
+): Promise<string> {
+  if (await fits(path)) return path
 
   const folder = parent(path)
   const file = basename(path)
@@ -445,8 +478,22 @@ async function freeSpot(path: string, isFile: boolean): Promise<string> {
 
   for (let counter = 2; ; counter++) {
     const candidate = join(folder, `${stem} ${counter}${extension}`)
-    if (!(await holds(candidate))) return candidate
+    if (await fits(candidate)) return candidate
   }
+}
+
+/** Whether a name is taken: by something there, by a page note and its paper,
+ *  `X.pages` and `X.pages.pdf`, which take each other's name, or by highlights a gone
+ *  PDF left; see `taken` in paths.rs. */
+async function taken(path: string): Promise<boolean> {
+  if ((await holds(path)) || (await pairedTaken(path))) return true
+  return isPdf(path) && !!(await files.get(sidecarOf(path)))
+}
+
+async function pairedTaken(path: string): Promise<boolean> {
+  if (/\.pages\.pdf$/i.test(path)) return holds(path.slice(0, -'.pdf'.length))
+  if (/\.pages$/i.test(path)) return holds(`${path}.pdf`)
+  return false
 }
 
 async function trashItem(path: string, kind: string): Promise<TrashEntry> {
@@ -869,7 +916,7 @@ export async function webInvoke<T>(
       return undefined as T
 
     case 'rename_note':
-      await renameNote(args.from as string, args.to as string)
+      await renameNote(args.from as string, args.to as string, args.hold === true)
       return undefined as T
 
     case 'copy_path':
@@ -966,7 +1013,10 @@ export async function webInvoke<T>(
 
     case 'save_asset': {
       const bytes = args.bytes as number[]
-      const name = (args.name as string) || `pasted-${now()}.png`
+      // A name and never a path: `a/b.png` would be a folder `a`. See `safe_name`.
+      const given = ((args.name as string) || `pasted-${now()}.png`).replace(/[/\\]/g, '-')
+      // `CON.png` is a device on Windows; see `safe_name` in assets.rs.
+      const name = isReserved(given) ? `_${given}` : given
       const notePath = args.notePath as string
       // Relative to the note's own folder, as the desktop command takes it; see
       // attachments.ts for which of the three it is.
@@ -983,17 +1033,31 @@ export async function webInvoke<T>(
       let binary = ''
       for (const byte of bytes) binary += String.fromCharCode(byte)
 
+      // The same picture again is the one copy, at whichever name it stepped aside to,
+      // unless it is a page note's paper; anything else steps aside. See `stored` in
+      // assets.rs.
+      const data = btoa(binary)
+      const same = async (one: string) =>
+        (await assets.get(one))?.data === data && !(isPdf(one) && (await pairedTaken(one)))
+      const target = await firstSpot(
+        join(folder, name),
+        true,
+        async (one) => !(await taken(one)) || (await same(one)),
+      )
+      const file = basename(target)
+      if (await same(target)) return (relative ? `${relative}/${file}` : file) as T
+
       await assets.put({
-        path: join(folder, name),
+        path: target,
         // What the name says it is rather than the extension with `image/` in
         // front: `image/svg` draws nothing, and the asset worker hands this row
         // straight to an `<img>`. See asset-route.ts.
-        type: assetType(name),
-        data: btoa(binary),
+        type: assetType(file),
+        data,
         modified: now(),
       })
 
-      return (relative ? `${relative}/${name}` : name) as T
+      return (relative ? `${relative}/${file}` : file) as T
     }
 
     case 'read_highlights': {

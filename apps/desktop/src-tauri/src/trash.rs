@@ -11,7 +11,7 @@
 
 use serde::{Deserialize, Serialize};
 use std::fs;
-use std::path::{Path, PathBuf, MAIN_SEPARATOR_STR};
+use std::path::{Component, Path, PathBuf, MAIN_SEPARATOR_STR};
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Mutex, MutexGuard, PoisonError};
 use tauri::AppHandle;
@@ -231,7 +231,9 @@ pub fn restore_trash(app: AppHandle, id: String) -> Result<String, String> {
     // paper under its page note's, which is not the old one when something has
     // taken its place in the meantime.
     move_held(&held, &target);
-    let _ = fs::remove_dir_all(&slot);
+    // Only once it is empty: a paper or highlights that could not follow are still in
+    // the slot, and taking the slot with them would be deleting them for good.
+    let _ = fs::remove_dir(&slot);
 
     entries.remove(position);
     write_manifest(&dir, &entries)?;
@@ -360,8 +362,12 @@ fn purge(dir: &Path, entries: &mut Vec<TrashEntry>, id: &str) {
 /// read the way anything from outside is: `from` has to land back inside the
 /// notes folder and outside the trash, and the name it was stored under has to be
 /// a name rather than a path.
+///
+/// Any name this platform reads as one entry, not only one `is_name` would make: the
+/// trash took the file under the name it had, and a `Q3:Q4 plan.md` a Mac's Finder
+/// wrote or an `aux.md` that came by sync has to come back out as surely as it went in.
 fn restore_target(base: &Path, entry: &TrashEntry) -> Result<PathBuf, String> {
-    if !is_name(&entry.name) {
+    if !names_one_entry(&entry.name) {
         return Err("that is not a name Orden stored".into());
     }
 
@@ -373,8 +379,23 @@ fn restore_target(base: &Path, entry: &TrashEntry) -> Result<PathBuf, String> {
     Ok(free_spot(&wanted, entry.kind == "note"))
 }
 
-/// Whether a string names one file or folder rather than a path to one. What the
-/// trash stores something under is its own name, so nothing else is one.
+/// Whether `name` is one entry of a folder as this platform reads a path, and nothing
+/// else: no folder, drive, `.` or `..` in it, and no NUL. What a restore asks of the
+/// name a slot holds, since the slot is joined with it: on Windows `C:x` is a drive,
+/// and here it is one name, which only a disk that holds such names put there.
+fn names_one_entry(name: &str) -> bool {
+    // And no `:` on Windows, which holds no such name and reads one as a stream.
+    if name.contains('\0') || (cfg!(windows) && name.contains(':')) {
+        return false;
+    }
+    let mut parts = Path::new(name).components();
+    matches!(parts.next(), Some(Component::Normal(one)) if one.to_str() == Some(name))
+        && parts.next().is_none()
+}
+
+/// Whether a string names one file or folder rather than a path to one, and one every
+/// platform can hold: what the trash makes a name for itself, for words that never had
+/// a file, so nothing else is one.
 ///
 /// Judged by its letters rather than by this platform's path parser, and to the
 /// same rule everywhere. `Path` reads `C:` as a drive on Windows and as an
@@ -526,6 +547,37 @@ mod tests {
         assert!(restore_target(&base, &entry("1-0", "Idea.md", "")).is_err());
         // And a name that is a path cannot pick a file out of another folder.
         assert!(restore_target(&base, &entry("1-0", "../../Idea.md", "Idea.md")).is_err());
+    }
+
+    /// What went into the trash comes back out. A name the trash took is one this disk
+    /// held, however little Windows would like it - a Finder `/` is stored as `:`, and a
+    /// note may arrive by sync or from another program as `aux.md` - and refusing to
+    /// put it back left it in the trash until it was purged.
+    #[test]
+    fn a_restore_takes_back_any_name_the_trash_took() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let base = dir.path();
+
+        // Only where the disk could have held them: Windows reads a device name as a
+        // device wherever it is, and drops a trailing dot or space.
+        let mut names = vec![" Lead.md"];
+        if cfg!(unix) {
+            names.extend([
+                "aux.md",
+                "con.md",
+                "Q3:Q4 plan.md",
+                r"back\slash.md",
+                "Trail.",
+                "Trail ",
+            ]);
+        }
+        for name in names {
+            assert_eq!(
+                restore_target(base, &entry("1-0", name, name)),
+                Ok(base.join(name)),
+                "{name}"
+            );
+        }
     }
 
     #[test]

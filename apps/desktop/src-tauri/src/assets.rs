@@ -11,7 +11,8 @@ use std::path::{Component, Path, PathBuf};
 use tauri::AppHandle;
 
 use crate::paths::{
-    at_most, cannot, folded, free_spot, in_spaces, inside, made, space_root, spaces_dir,
+    at_most, cannot, first_spot, folded, held_paper, in_spaces, inside, is_reserved, made,
+    space_root, spaces_dir, taken,
 };
 
 /// Bigger than any picture belongs in a document, and small enough that turning
@@ -96,21 +97,7 @@ pub fn save_asset(
     made(&dir)?;
 
     let safe = safe_name(&name).ok_or("that picture has no name that can be written")?;
-    let mut target = dir.join(&safe);
-
-    match fs::read(&target) {
-        // The caller names the file after a hash of its contents, so a name that
-        // is already taken usually holds this very picture. Pasting the same one
-        // twice should cost nothing.
-        Ok(held) if held == bytes => {}
-        // The same name over a different picture would take the first one away,
-        // so both are kept.
-        Ok(_) => {
-            target = free_spot(&target, true);
-            fs::write(&target, &bytes).map_err(|error| cannot("write", &target, &error))?;
-        }
-        Err(_) => fs::write(&target, &bytes).map_err(|error| cannot("write", &target, &error))?,
-    }
+    let target = stored(&dir, &safe, &bytes)?;
 
     let file = target
         .file_name()
@@ -125,6 +112,25 @@ pub fn save_asset(
     } else {
         format!("{relative}/{file}")
     })
+}
+
+/// The picture written into `dir` under `safe`, or the copy of it already there, and
+/// where that is.
+fn stored(dir: &Path, safe: &str, bytes: &[u8]) -> Result<PathBuf, String> {
+    // The caller names the file after a hash of its contents, so a name that is
+    // already taken usually holds this very picture, and pasting the same one twice
+    // should cost nothing - at whichever name it stepped aside to before. Unless it is
+    // a page note's paper, which goes when the note does.
+    let ours = |one: &Path| !held_paper(one) && fs::read(one).is_ok_and(|held| held == bytes);
+    // Anything else steps aside: a different picture of the name would be taken away,
+    // and a name that is free may still be taken, as `Report.pages.pdf` is beside a page
+    // note `Report.pages`, which would take it for its paper (#538).
+    let target = first_spot(&dir.join(safe), true, |one| !taken(one) || ours(one));
+
+    if !ours(&target) {
+        fs::write(&target, bytes).map_err(|error| cannot("write", &target, &error))?;
+    }
+    Ok(target)
 }
 
 /// The folder as the markdown will spell it: no leading or trailing slashes, and
@@ -194,7 +200,13 @@ fn safe_name(name: &str) -> Option<String> {
         return None;
     }
 
-    Some(safe)
+    // `CON.png` is a device on Windows, and a file of that name one nobody can open,
+    // move or delete there; see `is_reserved`.
+    Some(if is_reserved(&safe) {
+        format!("_{safe}")
+    } else {
+        safe
+    })
 }
 
 /// What kind of file this is, going by the extension, which is all a `data:` URI
@@ -246,13 +258,75 @@ fn encode(bytes: &[u8]) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{asset_dir, encode, mime_of, safe_name, trimmed, MAX_NAME};
+    use super::{asset_dir, encode, mime_of, safe_name, stored, trimmed, MAX_NAME};
     use std::path::{Path, PathBuf};
 
     /// Written the way the platform writes them, so the assertions read the same
     /// on a runner as they do on a laptop.
     fn path(parts: &[&str]) -> PathBuf {
         parts.iter().collect()
+    }
+
+    /// A page note's paper is `<name>.pages.pdf` beside it, so an attachment of that
+    /// name dropped beside a page note with no paper yet would become its paper -
+    /// hidden, drawn over, and deleted with the note - and a flat `Report.pages`
+    /// dropped beside a `Report.pages.pdf` would take that PDF. Each steps aside.
+    #[test]
+    fn an_attachment_never_pairs_with_a_page_note_or_its_paper() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let here = dir.path();
+        std::fs::write(here.join("Report.pages"), "{}").expect("a blank page note");
+        std::fs::write(here.join("Lecture.pages.pdf"), b"%PDF mine").expect("a PDF");
+
+        assert_eq!(
+            stored(here, "Report.pages.pdf", b"%PDF dropped"),
+            Ok(here.join("Report.pages 2.pdf"))
+        );
+        assert_eq!(
+            stored(here, "Lecture.pages", b"iwork"),
+            Ok(here.join("Lecture 2.pages"))
+        );
+        assert_eq!(
+            std::fs::read(here.join("Lecture.pages.pdf")).expect("still there"),
+            b"%PDF mine"
+        );
+        // And the same picture twice is still the one copy.
+        assert_eq!(stored(here, "a.png", b"png"), Ok(here.join("a.png")));
+        assert_eq!(stored(here, "a.png", b"png"), Ok(here.join("a.png")));
+    }
+
+    /// Dropped twice, the same file is the one copy, wherever it stepped aside to; and a
+    /// file whose bytes are a page note's paper is a copy of its own, not the paper,
+    /// which goes when the note does.
+    #[test]
+    fn an_attachment_stepped_aside_is_still_the_one_copy() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let here = dir.path();
+        std::fs::write(here.join("Report.pages"), "{}").expect("a blank page note");
+        std::fs::write(here.join("X.pdf.highlights.json"), "[]").expect("leftovers");
+        std::fs::write(here.join("Lecture.pages"), "{}").expect("a page note");
+        std::fs::write(here.join("Lecture.pages.pdf"), b"%PDF paper").expect("its paper");
+
+        for _ in 0..2 {
+            assert_eq!(
+                stored(here, "Report.pages.pdf", b"%PDF dropped"),
+                Ok(here.join("Report.pages 2.pdf"))
+            );
+            assert_eq!(stored(here, "X.pdf", b"%PDF x"), Ok(here.join("X 2.pdf")));
+        }
+        assert_eq!(
+            stored(here, "Lecture.pages.pdf", b"%PDF paper"),
+            Ok(here.join("Lecture.pages 2.pdf"))
+        );
+    }
+
+    /// `CON.png` is a name Windows gives to a device, and a file saved under it is one
+    /// nobody can open, move or delete there; see `is_reserved` in paths.rs.
+    #[test]
+    fn an_attachment_never_takes_a_device_name() {
+        assert_eq!(safe_name("CON.png").as_deref(), Some("_CON.png"));
+        assert_eq!(safe_name("nul.pdf").as_deref(), Some("_nul.pdf"));
+        assert_eq!(safe_name("Console.png").as_deref(), Some("Console.png"));
     }
 
     #[test]
