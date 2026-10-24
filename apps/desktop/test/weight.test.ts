@@ -831,13 +831,13 @@ function holds(tail: string): boolean {
  *  stands over the caption rather than pushing the file list down under the pointer
  *  (`is-floating` in Bookmarks.svelte). Measured 3,280,466.
  *
- *  Raised 2026-10-24, to 3,283,000, for #830: a quoted front-matter value keeps
- *  being words, so the property readers carry whether it was quoted
- *  (`quoted` in packages/markdown/src/properties.ts). Measured 3,282,986.
+ *  Raised 2026-10-24, to 3,285,000, for #811: the file list's gestures refuse a space
+ *  shared to be read, in the workspace's own calls (`writableAt`) and in the row menu,
+ *  the tree's keys and the palette. Measured 3,283,904.
  *
- *  Raised 2026-10-24, to 3,286,000, for #847: a list keeps its members' types and
- *  the way each was written when one is added or taken out (`listItems`, `typedItem`
- *  in packages/markdown/src/property-edits.ts). Measured 3,285,282. */
+ *  Raised 2026-10-24, to 3,286,000, for #855: Recently deleted reads where a device
+ *  row was from the notes folder before asking whether it may go back
+ *  (`whereFrom` in trash.svelte.ts). Measured 3,285,287. */
 const BUDGET = 3_300_000 // combined branch only
 const MOST_FILES = 382
 

@@ -353,6 +353,26 @@ describe('signed out', () => {
     asked.mockRestore()
   })
 
+  /** The crate writes where a thing was from the notes folder, the folder every space
+   *  is in (`manifest_place` in trash.rs), not as a path on this disk. */
+  test('even said the way the crate says it, from the notes folder', async () => {
+    await workspace.loadSpaces()
+    readOnly.add('/space')
+    const row = {
+      id: 'device:t9',
+      ref: 't9',
+      kind: 'note' as const,
+      name: 'Idea.md',
+      detail: 'space',
+      from: 'space/Idea.md',
+      deletedAt: Date.now(),
+      purgeAt: null,
+      source: 'device' as const,
+    }
+
+    expect(trash.restorable(row as never)).toBe(false)
+  })
+
   test('and one of a space that may be written is', async () => {
     await workspace.remove('/space/Idea.md', false)
     await trash.load()
