@@ -2652,4 +2652,13 @@ export const ta: Dictionary = {
     'சொற்கள் இந்த அகராதியுடனும் ஆன் செய்யப்பட்ட மற்ற எல்லா அகராதிகளுடனும் சரிபார்க்கப்படுகின்றன.',
   'Words are checked in the languages your system or browser is set to.':
     'உங்கள் கணினி அல்லது உலாவியில் அமைக்கப்பட்ட மொழிகளில் சொற்கள் சரிபார்க்கப்படுகின்றன.',
+  'Note font': 'குறிப்பு எழுத்துரு',
+  'Interface font': 'இடைமுக எழுத்துரு',
+  'Code font': 'குறியீட்டு எழுத்துரு',
+  'The face notes are written in; any font installed here, by its name.':
+    'குறிப்புகள் எழுதப்படும் எழுத்துரு; இந்தச் சாதனத்தில் நிறுவப்பட்டுள்ள எந்த எழுத்துருவும், அதன் பெயரால்.',
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    'மெனுக்கள், பட்டியல்கள், அமைப்புகளின் எழுத்துரு; இந்தச் சாதனத்தில் நிறுவப்பட்டுள்ள எந்த எழுத்துருவும், அதன் பெயரால்.',
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    'குறியீடு மற்றும் முனையங்களின் எழுத்துரு; இந்தச் சாதனத்தில் நிறுவப்பட்டுள்ள எந்த நிலையகல எழுத்துருவும், அதன் பெயரால்.',
 }

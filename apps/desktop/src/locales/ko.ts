@@ -2568,4 +2568,13 @@ export const ko: Dictionary = {
     '이 사전과 켜져 있는 다른 모든 사전으로 단어를 검사합니다.',
   'Words are checked in the languages your system or browser is set to.':
     '시스템이나 브라우저에 설정된 언어로 단어를 검사합니다.',
+  'Note font': '노트 글꼴',
+  'Interface font': '인터페이스 글꼴',
+  'Code font': '코드 글꼴',
+  'The face notes are written in; any font installed here, by its name.':
+    '노트를 쓰는 글꼴이며, 이 기기에 설치된 어떤 글꼴이든 이름으로 지정합니다.',
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    '메뉴, 목록, 설정의 글꼴이며, 이 기기에 설치된 어떤 글꼴이든 이름으로 지정합니다.',
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    '코드와 터미널의 글꼴이며, 이 기기에 설치된 어떤 고정폭 글꼴이든 이름으로 지정합니다.',
 }

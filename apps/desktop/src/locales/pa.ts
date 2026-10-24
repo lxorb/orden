@@ -2614,4 +2614,13 @@ export const pa: Dictionary = {
     'ਸ਼ਬਦ ਇਸ ਸ਼ਬਦਕੋਸ਼ ਅਤੇ ਚਾਲੂ ਹਰ ਹੋਰ ਸ਼ਬਦਕੋਸ਼ ਨਾਲ ਜਾਂਚੇ ਜਾਂਦੇ ਹਨ।',
   'Words are checked in the languages your system or browser is set to.':
     'ਸ਼ਬਦ ਉਹਨਾਂ ਭਾਸ਼ਾਵਾਂ ਵਿੱਚ ਜਾਂਚੇ ਜਾਂਦੇ ਹਨ ਜੋ ਤੁਹਾਡੇ ਸਿਸਟਮ ਜਾਂ ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ ਸੈੱਟ ਹਨ।',
+  'Note font': 'ਨੋਟ ਦਾ ਫ਼ੌਂਟ',
+  'Interface font': 'ਇੰਟਰਫ਼ੇਸ ਦਾ ਫ਼ੌਂਟ',
+  'Code font': 'ਕੋਡ ਦਾ ਫ਼ੌਂਟ',
+  'The face notes are written in; any font installed here, by its name.':
+    'ਉਹ ਫ਼ੌਂਟ ਜਿਸ ਵਿੱਚ ਨੋਟ ਲਿਖੇ ਜਾਂਦੇ ਹਨ; ਇਸ ਡੀਵਾਈਸ ਉੱਤੇ ਸਥਾਪਤ ਕੋਈ ਵੀ ਫ਼ੌਂਟ, ਉਸ ਦੇ ਨਾਂ ਨਾਲ।',
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    'ਮੀਨੂ, ਸੂਚੀਆਂ ਅਤੇ ਸੈਟਿੰਗਾਂ ਦਾ ਫ਼ੌਂਟ; ਇਸ ਡੀਵਾਈਸ ਉੱਤੇ ਸਥਾਪਤ ਕੋਈ ਵੀ ਫ਼ੌਂਟ, ਉਸ ਦੇ ਨਾਂ ਨਾਲ।',
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    'ਕੋਡ ਅਤੇ ਟਰਮੀਨਲਾਂ ਦਾ ਫ਼ੌਂਟ; ਇਸ ਡੀਵਾਈਸ ਉੱਤੇ ਸਥਾਪਤ ਕੋਈ ਵੀ ਮੋਨੋਸਪੇਸ ਫ਼ੌਂਟ, ਉਸ ਦੇ ਨਾਂ ਨਾਲ।',
 }

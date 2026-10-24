@@ -2645,4 +2645,13 @@ export const ha: Dictionary = {
     'Ana duba kalmomi da wannan ƙamus da kuma kowane ƙamus da ke a kunne.',
   'Words are checked in the languages your system or browser is set to.':
     'Ana duba kalmomi a harsunan da aka saita tsarinka ko birawuzarka a kai.',
+  'Note font': 'Fontin bayanan kula',
+  'Interface font': 'Fontin fuskar manhaja',
+  'Code font': 'Fontin lamba',
+  'The face notes are written in; any font installed here, by its name.':
+    "Fontin da ake rubuta bayanan kula da shi; kowane font da ke kan wannan na'ura, ta sunansa.",
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    "Fontin menu, jeri da saituna; kowane font da ke kan wannan na'ura, ta sunansa.",
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    "Fontin lamba da tashoshi; kowane font mai faɗi ɗaya da ke kan wannan na'ura, ta sunansa.",
 }

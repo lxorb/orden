@@ -2720,4 +2720,13 @@ export const ar: Dictionary = {
     'تُدقَّق الكلمات وفق هذا القاموس وكل قاموس آخر مُشغَّل.',
   'Words are checked in the languages your system or browser is set to.':
     'تُدقَّق الكلمات باللغات التي ضُبط عليها نظامك أو متصفحك.',
+  'Note font': 'خط الملاحظات',
+  'Interface font': 'خط الواجهة',
+  'Code font': 'خط الكود',
+  'The face notes are written in; any font installed here, by its name.':
+    'الخط الذي تُكتب به الملاحظات؛ أيّ خط مثبَّت على هذا الجهاز، باسمه.',
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    'خط القوائم واللوائح والإعدادات؛ أيّ خط مثبَّت على هذا الجهاز، باسمه.',
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    'خط الكود والطرفيات؛ أيّ خط ثابت العرض مثبَّت على هذا الجهاز، باسمه.',
 }

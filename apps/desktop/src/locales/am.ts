@@ -2561,4 +2561,13 @@ export const am: Dictionary = {
     'ቃላት በዚህ መዝገበ ቃላትና በሌሎቹ የበሩ መዝገበ ቃላት ሁሉ ይፈተሻሉ።',
   'Words are checked in the languages your system or browser is set to.':
     'ቃላት ሥርዓትዎ ወይም አሳሽዎ በተቀናበረባቸው ቋንቋዎች ይፈተሻሉ።',
+  'Note font': 'የማስታወሻ ቅርጸ-ቁምፊ',
+  'Interface font': 'የበይነገጽ ቅርጸ-ቁምፊ',
+  'Code font': 'የኮድ ቅርጸ-ቁምፊ',
+  'The face notes are written in; any font installed here, by its name.':
+    'ማስታወሻዎች የሚጻፉበት ቅርጸ-ቁምፊ፤ በዚህ መሣሪያ ላይ የተጫነ ማንኛውም ቅርጸ-ቁምፊ በስሙ።',
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    'የምናሌዎች፣ የዝርዝሮች እና የማስተካከያዎች ቅርጸ-ቁምፊ፤ በዚህ መሣሪያ ላይ የተጫነ ማንኛውም ቅርጸ-ቁምፊ በስሙ።',
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    'የኮድ እና የተርሚናሎች ቅርጸ-ቁምፊ፤ በዚህ መሣሪያ ላይ የተጫነ ማንኛውም እኩል ስፋት ያለው ቅርጸ-ቁምፊ በስሙ።',
 }

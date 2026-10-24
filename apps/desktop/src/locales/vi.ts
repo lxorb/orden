@@ -2577,4 +2577,13 @@ export const vi: Dictionary = {
     'Từ được kiểm tra theo từ điển này và mọi từ điển khác đang bật.',
   'Words are checked in the languages your system or browser is set to.':
     'Từ được kiểm tra theo các ngôn ngữ mà hệ thống hoặc trình duyệt của bạn đang đặt.',
+  'Note font': 'Phông chữ ghi chú',
+  'Interface font': 'Phông chữ giao diện',
+  'Code font': 'Phông chữ mã',
+  'The face notes are written in; any font installed here, by its name.':
+    'Phông chữ dùng để viết ghi chú; bất kỳ phông chữ nào đã cài đặt trên thiết bị này, theo tên của nó.',
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    'Phông chữ của trình đơn, danh sách và cài đặt; bất kỳ phông chữ nào đã cài đặt trên thiết bị này, theo tên của nó.',
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    'Phông chữ của mã và terminal; bất kỳ phông chữ đơn cách nào đã cài đặt trên thiết bị này, theo tên của nó.',
 }

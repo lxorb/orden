@@ -2580,4 +2580,13 @@ export const ja: Dictionary = {
     'この辞書と、オンにしているほかのすべての辞書で単語をチェックします。',
   'Words are checked in the languages your system or browser is set to.':
     'システムまたはブラウザに設定されている言語で単語をチェックします。',
+  'Note font': 'ノートのフォント',
+  'Interface font': 'インターフェイスのフォント',
+  'Code font': 'コードのフォント',
+  'The face notes are written in; any font installed here, by its name.':
+    'ノートを書く書体で、このデバイスにインストールされた任意のフォントを名前で指定します。',
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    'メニュー、一覧、設定の書体で、このデバイスにインストールされた任意のフォントを名前で指定します。',
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    'コードとターミナルの書体で、このデバイスにインストールされた任意の等幅フォントを名前で指定します。',
 }

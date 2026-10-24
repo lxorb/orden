@@ -2601,4 +2601,13 @@ export const ur: Dictionary = {
     'الفاظ اس لغت اور ہر دوسری آن لغت سے جانچے جاتے ہیں۔',
   'Words are checked in the languages your system or browser is set to.':
     'الفاظ ان زبانوں میں جانچے جاتے ہیں جن پر آپ کا سسٹم یا براؤزر سیٹ ہے۔',
+  'Note font': 'نوٹ کا فونٹ',
+  'Interface font': 'انٹرفیس کا فونٹ',
+  'Code font': 'کوڈ کا فونٹ',
+  'The face notes are written in; any font installed here, by its name.':
+    'وہ فونٹ جس میں نوٹس لکھے جاتے ہیں؛ اس آلے پر انسٹال کردہ کوئی بھی فونٹ، اس کے نام سے۔',
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    'مینو، فہرستوں اور ترتیبات کا فونٹ؛ اس آلے پر انسٹال کردہ کوئی بھی فونٹ، اس کے نام سے۔',
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    'کوڈ اور ٹرمینلز کا فونٹ؛ اس آلے پر انسٹال کردہ کوئی بھی مونو اسپیس فونٹ، اس کے نام سے۔',
 }

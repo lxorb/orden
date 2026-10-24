@@ -2621,4 +2621,13 @@ export const tr: Dictionary = {
     'Sözcükler bu sözlükle ve açık olan diğer tüm sözlüklerle denetlenir.',
   'Words are checked in the languages your system or browser is set to.':
     'Sözcükler, sisteminizin veya tarayıcınızın ayarlı olduğu dillerde denetlenir.',
+  'Note font': 'Not yazı tipi',
+  'Interface font': 'Arayüz yazı tipi',
+  'Code font': 'Kod yazı tipi',
+  'The face notes are written in; any font installed here, by its name.':
+    'Notların yazıldığı yazı tipi; bu cihazda yüklü herhangi bir yazı tipi, adıyla.',
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    'Menülerin, listelerin ve ayarların yazı tipi; bu cihazda yüklü herhangi bir yazı tipi, adıyla.',
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    'Kodun ve terminallerin yazı tipi; bu cihazda yüklü herhangi bir eş aralıklı yazı tipi, adıyla.',
 }

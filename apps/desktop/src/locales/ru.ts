@@ -2700,4 +2700,13 @@ export const ru: Dictionary = {
     'Слова проверяются по этому словарю и по всем остальным включённым.',
   'Words are checked in the languages your system or browser is set to.':
     'Слова проверяются на языках, заданных в вашей системе или браузере.',
+  'Note font': 'Шрифт заметок',
+  'Interface font': 'Шрифт интерфейса',
+  'Code font': 'Шрифт кода',
+  'The face notes are written in; any font installed here, by its name.':
+    'Шрифт, которым пишутся заметки; любой шрифт, установленный на этом устройстве, по его названию.',
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    'Шрифт меню, списков и настроек; любой шрифт, установленный на этом устройстве, по его названию.',
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    'Шрифт кода и терминалов; любой моноширинный шрифт, установленный на этом устройстве, по его названию.',
 }

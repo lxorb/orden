@@ -2683,4 +2683,13 @@ export const it: Dictionary = {
     'Le parole vengono controllate con questo dizionario e con ogni altro attivo.',
   'Words are checked in the languages your system or browser is set to.':
     'Le parole vengono controllate nelle lingue impostate nel tuo sistema o browser.',
+  'Note font': 'Carattere delle note',
+  'Interface font': 'Carattere dell’interfaccia',
+  'Code font': 'Carattere del codice',
+  'The face notes are written in; any font installed here, by its name.':
+    'Il carattere in cui sono scritte le note; qualsiasi carattere installato su questo dispositivo, con il suo nome.',
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    'Il carattere di menu, elenchi e impostazioni; qualsiasi carattere installato su questo dispositivo, con il suo nome.',
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    'Il carattere del codice e dei terminali; qualsiasi carattere a spaziatura fissa installato su questo dispositivo, con il suo nome.',
 }

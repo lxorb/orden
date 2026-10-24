@@ -2589,4 +2589,13 @@ export const jv: Dictionary = {
     'Tembung dipriksa nganggo bausastra iki lan saben bausastra liya sing urip.',
   'Words are checked in the languages your system or browser is set to.':
     'Tembung dipriksa nganggo basa sing disetel ing sistem utawa panjelajah sampeyan.',
+  'Note font': 'Font cathetan',
+  'Interface font': 'Font antarmuka',
+  'Code font': 'Font kode',
+  'The face notes are written in; any font installed here, by its name.':
+    'Font kanggo nulis cathetan; font apa wae sing diinstal ing piranti iki, miturut jenenge.',
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    'Font kanggo menu, dhaptar lan setelan; font apa wae sing diinstal ing piranti iki, miturut jenenge.',
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    'Font kanggo kode lan terminal; font monospace apa wae sing diinstal ing piranti iki, miturut jenenge.',
 }

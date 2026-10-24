@@ -2688,4 +2688,13 @@ export const fr: Dictionary = {
     'Les mots sont vérifiés avec ce dictionnaire ainsi qu’avec tous les autres qui sont activés.',
   'Words are checked in the languages your system or browser is set to.':
     'Les mots sont vérifiés dans les langues définies dans votre système ou votre navigateur.',
+  'Note font': 'Police des notes',
+  'Interface font': 'Police de l’interface',
+  'Code font': 'Police du code',
+  'The face notes are written in; any font installed here, by its name.':
+    'La police dans laquelle les notes sont écrites ; toute police installée sur cet appareil, par son nom.',
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    'La police des menus, des listes et des réglages ; toute police installée sur cet appareil, par son nom.',
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    'La police du code et des terminaux ; toute police à chasse fixe installée sur cet appareil, par son nom.',
 }

@@ -2693,4 +2693,13 @@ export const uk: Dictionary = {
     'Слова перевіряються за цим словником і за всіма іншими увімкненими.',
   'Words are checked in the languages your system or browser is set to.':
     'Слова перевіряються мовами, заданими у вашій системі або браузері.',
+  'Note font': 'Шрифт нотаток',
+  'Interface font': 'Шрифт інтерфейсу',
+  'Code font': 'Шрифт коду',
+  'The face notes are written in; any font installed here, by its name.':
+    'Шрифт, яким пишуться нотатки; будь-який шрифт, установлений на цьому пристрої, за його назвою.',
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    'Шрифт меню, списків і налаштувань; будь-який шрифт, установлений на цьому пристрої, за його назвою.',
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    'Шрифт коду й терміналів; будь-який моноширинний шрифт, установлений на цьому пристрої, за його назвою.',
 }

@@ -2660,4 +2660,13 @@ export const fil: Dictionary = {
     'Sinusuri ang mga salita gamit ang diksyunaryong ito at ang bawat iba pang nakabukas.',
   'Words are checked in the languages your system or browser is set to.':
     'Sinusuri ang mga salita sa mga wikang nakatakda sa iyong sistema o browser.',
+  'Note font': 'Font ng tala',
+  'Interface font': 'Font ng interface',
+  'Code font': 'Font ng code',
+  'The face notes are written in; any font installed here, by its name.':
+    'Ang font na ginagamit sa pagsulat ng mga tala; anumang font na naka-install sa device na ito, ayon sa pangalan nito.',
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    'Ang font ng mga menu, listahan at setting; anumang font na naka-install sa device na ito, ayon sa pangalan nito.',
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    'Ang font ng code at mga terminal; anumang monospaced na font na naka-install sa device na ito, ayon sa pangalan nito.',
 }

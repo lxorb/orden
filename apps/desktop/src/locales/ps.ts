@@ -2607,4 +2607,13 @@ export const ps: Dictionary = {
     'ټکي له دې قاموس او هر بل ولاړ قاموس سره کتل کېږي.',
   'Words are checked in the languages your system or browser is set to.':
     'ټکي په هغو ژبو کتل کېږي چې ستاسو غونډال یا کوټګر پرې ټاکل شوی دی.',
+  'Note font': 'د يادښتونو فونټ',
+  'Interface font': 'د انټرفېس فونټ',
+  'Code font': 'د کوډ فونټ',
+  'The face notes are written in; any font installed here, by its name.':
+    'هغه فونټ چې يادښتونه پرې ليکل کېږي؛ په دې وسیله کې نصب شوی هر فونټ، د هغه په نوم.',
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    'د مېنوګانو، لړونو او امستنو فونټ؛ په دې وسیله کې نصب شوی هر فونټ، د هغه په نوم.',
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    'د کوډ او ټرمینلونو فونټ؛ په دې وسیله کې نصب شوی هر مونوسپیس فونټ، د هغه په نوم.',
 }

@@ -2608,4 +2608,13 @@ export const mr: Dictionary = {
     'शब्द या शब्दकोशाशी आणि चालू असलेल्या इतर प्रत्येक शब्दकोशाशी तपासले जातात.',
   'Words are checked in the languages your system or browser is set to.':
     'तुमच्या सिस्टम किंवा ब्राउझरमध्ये सेट केलेल्या भाषांमध्ये शब्द तपासले जातात.',
+  'Note font': 'नोंदीचा फॉंट',
+  'Interface font': 'इंटरफेसचा फॉंट',
+  'Code font': 'कोडचा फॉंट',
+  'The face notes are written in; any font installed here, by its name.':
+    'ज्या फॉंटमध्ये नोंदी लिहिल्या जातात तो; या डिव्हाइसवर इंस्टॉल केलेला कोणताही फॉंट, त्याच्या नावाने.',
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    'मेनू, याद्या आणि सेटिंग्जचा फॉंट; या डिव्हाइसवर इंस्टॉल केलेला कोणताही फॉंट, त्याच्या नावाने.',
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    'कोड आणि टर्मिनलचा फॉंट; या डिव्हाइसवर इंस्टॉल केलेला कोणताही मोनोस्पेस फॉंट, त्याच्या नावाने.',
 }

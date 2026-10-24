@@ -2675,4 +2675,13 @@ export const es: Dictionary = {
     'Las palabras se revisan con este diccionario y con todos los demás que estén activados.',
   'Words are checked in the languages your system or browser is set to.':
     'Las palabras se revisan en los idiomas que tiene configurados tu sistema o navegador.',
+  'Note font': 'Fuente de las notas',
+  'Interface font': 'Fuente de la interfaz',
+  'Code font': 'Fuente del código',
+  'The face notes are written in; any font installed here, by its name.':
+    'La fuente en que se escriben las notas; cualquier fuente instalada en este dispositivo, por su nombre.',
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    'La fuente de los menús, las listas y los ajustes; cualquier fuente instalada en este dispositivo, por su nombre.',
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    'La fuente del código y los terminales; cualquier fuente monoespaciada instalada en este dispositivo, por su nombre.',
 }

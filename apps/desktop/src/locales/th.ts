@@ -2551,4 +2551,13 @@ export const th: Dictionary = {
     'คำจะถูกตรวจกับพจนานุกรมนี้และพจนานุกรมอื่นทุกเล่มที่เปิดอยู่',
   'Words are checked in the languages your system or browser is set to.':
     'คำจะถูกตรวจในภาษาที่ตั้งไว้ในระบบหรือเบราว์เซอร์ของคุณ',
+  'Note font': 'แบบอักษรของโน้ต',
+  'Interface font': 'แบบอักษรของอินเทอร์เฟซ',
+  'Code font': 'แบบอักษรของโค้ด',
+  'The face notes are written in; any font installed here, by its name.':
+    'แบบอักษรที่ใช้เขียนโน้ต ใช้แบบอักษรใดก็ได้ที่ติดตั้งอยู่ในอุปกรณ์นี้ตามชื่อ',
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    'แบบอักษรของเมนู รายการ และการตั้งค่า ใช้แบบอักษรใดก็ได้ที่ติดตั้งอยู่ในอุปกรณ์นี้ตามชื่อ',
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    'แบบอักษรของโค้ดและเทอร์มินัล ใช้แบบอักษรความกว้างคงที่ใดก็ได้ที่ติดตั้งอยู่ในอุปกรณ์นี้ตามชื่อ',
 }

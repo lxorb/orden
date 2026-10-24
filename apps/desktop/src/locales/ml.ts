@@ -2643,4 +2643,13 @@ export const ml: Dictionary = {
     'ഈ നിഘണ്ടുവും ഓൺ ആയ മറ്റെല്ലാ നിഘണ്ടുക്കളും ഉപയോഗിച്ച് വാക്കുകൾ പരിശോധിക്കുന്നു.',
   'Words are checked in the languages your system or browser is set to.':
     'നിങ്ങളുടെ സിസ്റ്റത്തിലോ ബ്രൗസറിലോ സജ്ജമാക്കിയ ഭാഷകളിൽ വാക്കുകൾ പരിശോധിക്കുന്നു.',
+  'Note font': 'കുറിപ്പിന്റെ ഫോണ്ട്',
+  'Interface font': 'ഇന്റർഫേസ് ഫോണ്ട്',
+  'Code font': 'കോഡ് ഫോണ്ട്',
+  'The face notes are written in; any font installed here, by its name.':
+    'കുറിപ്പുകൾ എഴുതുന്ന ഫോണ്ട്; ഈ ഉപകരണത്തിൽ ഇൻസ്റ്റാൾ ചെയ്ത ഏത് ഫോണ്ടും, അതിന്റെ പേരിൽ.',
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    'മെനുകൾ, ലിസ്റ്റുകൾ, സെറ്റിംഗ്സ് എന്നിവയുടെ ഫോണ്ട്; ഈ ഉപകരണത്തിൽ ഇൻസ്റ്റാൾ ചെയ്ത ഏത് ഫോണ്ടും, അതിന്റെ പേരിൽ.',
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    'കോഡിന്റെയും ടെർമിനലുകളുടെയും ഫോണ്ട്; ഈ ഉപകരണത്തിൽ ഇൻസ്റ്റാൾ ചെയ്ത ഏത് മോണോസ്പേസ് ഫോണ്ടും, അതിന്റെ പേരിൽ.',
 }

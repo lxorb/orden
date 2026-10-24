@@ -2627,4 +2627,13 @@ export const gsw: Dictionary = {
     'Wörter werded mit dem Wörterbuech und mit jedem andere iigschaltete prüeft.',
   'Words are checked in the languages your system or browser is set to.':
     'Wörter werded i de Sprache prüeft, uf die dis System oder din Browser iigstellt isch.',
+  'Note font': 'Notizschrift',
+  'Interface font': 'Oberflächeschrift',
+  'Code font': 'Codeschrift',
+  'The face notes are written in; any font installed here, by its name.':
+    'D Schrift, wo d Notize drin gschribe werdet; jedi Schriftart, wo uf däm Grät installiert isch, mit ihrem Name.',
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    'D Schrift vo Menüs, Lischte und Iistellige; jedi Schriftart, wo uf däm Grät installiert isch, mit ihrem Name.',
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    'D Schrift vo Code und Terminals; jedi Schriftart mit fixer Breiti, wo uf däm Grät installiert isch, mit ihrem Name.',
 }

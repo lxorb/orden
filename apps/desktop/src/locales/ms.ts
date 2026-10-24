@@ -2601,4 +2601,13 @@ export const ms: Dictionary = {
     'Perkataan disemak dengan kamus ini dan setiap kamus lain yang hidup.',
   'Words are checked in the languages your system or browser is set to.':
     'Perkataan disemak dalam bahasa yang ditetapkan pada sistem atau pelayar anda.',
+  'Note font': 'Fon nota',
+  'Interface font': 'Fon antara muka',
+  'Code font': 'Fon kod',
+  'The face notes are written in; any font installed here, by its name.':
+    'Fon yang digunakan untuk menulis nota; mana-mana fon yang dipasang pada peranti ini, mengikut namanya.',
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    'Fon untuk menu, senarai dan tetapan; mana-mana fon yang dipasang pada peranti ini, mengikut namanya.',
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    'Fon untuk kod dan terminal; mana-mana fon monospace yang dipasang pada peranti ini, mengikut namanya.',
 }

@@ -2700,4 +2700,13 @@ export const pl: Dictionary = {
     'Słowa są sprawdzane według tego słownika i każdego innego włączonego.',
   'Words are checked in the languages your system or browser is set to.':
     'Słowa są sprawdzane w językach ustawionych w Twoim systemie lub przeglądarce.',
+  'Note font': 'Czcionka notatek',
+  'Interface font': 'Czcionka interfejsu',
+  'Code font': 'Czcionka kodu',
+  'The face notes are written in; any font installed here, by its name.':
+    'Czcionka, którą pisane są notatki; dowolna czcionka zainstalowana na tym urządzeniu, podana z nazwy.',
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    'Czcionka menu, list i ustawień; dowolna czcionka zainstalowana na tym urządzeniu, podana z nazwy.',
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    'Czcionka kodu i terminali; dowolna czcionka o stałej szerokości zainstalowana na tym urządzeniu, podana z nazwy.',
 }

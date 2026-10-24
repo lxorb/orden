@@ -2601,4 +2601,13 @@ export const id: Dictionary = {
     'Kata diperiksa dengan kamus ini dan setiap kamus lain yang menyala.',
   'Words are checked in the languages your system or browser is set to.':
     'Kata diperiksa dalam bahasa yang diatur di sistem atau peramban Anda.',
+  'Note font': 'Font catatan',
+  'Interface font': 'Font antarmuka',
+  'Code font': 'Font kode',
+  'The face notes are written in; any font installed here, by its name.':
+    'Font yang dipakai untuk menulis catatan; font apa pun yang diinstal di perangkat ini, menurut namanya.',
+  'The face of menus, lists and settings; any font installed here, by its name.':
+    'Font untuk menu, daftar, dan pengaturan; font apa pun yang diinstal di perangkat ini, menurut namanya.',
+  'The face of code and terminals; any monospaced font installed here, by its name.':
+    'Font untuk kode dan terminal; font monospace apa pun yang diinstal di perangkat ini, menurut namanya.',
 }
