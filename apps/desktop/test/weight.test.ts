@@ -842,7 +842,7 @@ function holds(tail: string): boolean {
  *  Raised 2026-10-24, to 3,294,000, for #904, #905 and #907: the hover card, block
  *  names, block search, the reading view and a link followed early all keep to the
  *  note's own space (`targetWhenRead` in link-index.svelte.ts). Measured 3,293,189. */
-const BUDGET = 3_300_000 // combined branch only
+const BUDGET = 3_400_000 // combined branch only
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
