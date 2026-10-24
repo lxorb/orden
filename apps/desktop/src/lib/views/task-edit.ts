@@ -26,13 +26,22 @@ export function prefillFor(task: TaskRow, description: string | null): Prefill {
   // Set rather than spread in: a length here is minutes of work, not of motion.
   if (task.duration !== undefined) fields.duration = task.duration
   // The words a reader sees, `milk $3` where the line says `milk \$3`; `changeOf`
-  // writes them back with their escapes. What the line escaped stays words in the
-  // field, which reads its words again: `\#tips` was a word, never a label.
+  // writes them back with their escapes. The field reads what is typed into it, and
+  // the task's own words are words, not something typed: `Monday` in `Prep Monday
+  // notes` is no start date, `p1` no priority. So each is kept as a word, one span a
+  // word so an edit in one lets only that one be read. What the line escaped is no
+  // tag either: `\#tips` was a word, never a label.
+  const text = shownWords(task.text)
+  const keep = [...text.matchAll(/\S+/gu)].map((one) => ({
+    from: one.index,
+    to: one.index + one[0].length,
+  }))
   const escaped = unescapedAt(task.text).map((at) => ({ from: at, to: at + 1 }))
   return {
-    text: shownWords(task.text),
+    text,
     ...(description ? { description } : {}),
     fields,
+    ...(keep.length ? { keep } : {}),
     ...(escaped.length ? { escaped } : {}),
   }
 }
@@ -42,9 +51,12 @@ export function prefillFor(task: TaskRow, description: string | null): Prefill {
  *  🔽 and ⏬) is kept unless another was picked. */
 export function changeOf(task: TaskRow, entry: Entry): TaskChange {
   const fields = entry.fields
+  // Against the words as the field gives them back, its blanks closed up, so words
+  // left as they were write nothing, not even a double blank closed.
+  const unchanged = entry.text === shownWords(task.text).replace(/\s+/gu, ' ').trim()
   const keptLow = task.priority > 4 && (fields.priority ?? 4) === 4
   const change: TaskChange = {
-    ...(entry.text === shownWords(task.text) ? {} : { text: typedWords(entry.text) }),
+    ...(unchanged ? {} : { text: typedWords(entry.text) }),
     ...changeFor(task, {
       due: fields.due ?? null,
       time: fields.time ?? null,

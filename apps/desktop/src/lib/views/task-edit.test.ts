@@ -22,7 +22,16 @@ describe('a task in quick add’s field and back', () => {
         tags: ['admin'],
         remind: [],
       },
+      keep: [{ from: 0, to: 4 }],
     })
+  })
+
+  test('the words a task already says are words, each its own span', () => {
+    expect(prefillFor(task('- [ ] Fix  p1 bug'), null).keep).toEqual([
+      { from: 0, to: 3 },
+      { from: 5, to: 7 },
+      { from: 8, to: 11 },
+    ])
   })
 
   test('saving changes the words and every field, and takes away what is gone', () => {
