@@ -452,6 +452,24 @@ describe('a page as markdown', () => {
     )
   })
 
+  test('dollars in words draw no maths', () => {
+    const prices = htmlToMarkdown('<p>Tickets cost $5-$10 each</p>')
+    expect(prices).toBe('Tickets cost \\$5-\\$10 each')
+    expect(renderMarkdown(prices)).toBe('<p>Tickets cost $5-$10 each</p>\n')
+  })
+
+  /** The converter's own formula is written as `$…$` and is not the page's words,
+   *  so it stays maths with the page's dollars escaped on either side of it. */
+  test('a formula between dollars in words stays a formula', () => {
+    const both = htmlToMarkdown('<p>$5 for <math alttext="x^2"><mi>x</mi></math> or $10</p>')
+    expect(both).toBe('\\$5 for $x^2$ or \\$10')
+    const drawn = renderMarkdown(both)
+    expect(drawn).toContain('<span class="math-inline" data-tex="x^2">')
+    expect(drawn.match(/math-inline/g)).toHaveLength(1)
+    expect(drawn).toMatch(/^<p>\$5 for <span/)
+    expect(drawn).toMatch(/<\/span> or \$10<\/p>\n$/)
+  })
+
   test('a tilde or a caret in words opens no lowered or raised text', () => {
     const about = htmlToMarkdown('<p>It takes ~5 min or ~10 min.</p>')
     expect(about).toBe('It takes \\~5 min or \\~10 min.')

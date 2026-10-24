@@ -81,9 +81,10 @@ const A_CODE_SPAN = /(`{1,3})([^`]+)\1(?!`)/y
 
 /** A doubled emphasis marker around plain words. The words may hold nothing the
  *  escaping was protecting the note from - no marker, no bracket, no backslash,
- *  no `<`, no `%` that could open a comment - so what a page gets to keep is a
- *  phrase in bold, and never markup of its own in somebody's note. */
-const A_STRONG = /(\*\*|__)([^`*_[\]\\<%]+)\1/y
+ *  no `<`, no `%` that could open a comment, no `$` that could open maths - so
+ *  what a page gets to keep is a phrase in bold, and never markup of its own in
+ *  somebody's note. */
+const A_STRONG = /(\*\*|__)([^`*_[\]\\<%$]+)\1/y
 
 /** A bare web address, the way the renderer's autolink reads one: marked's GFM
  *  `url` rule, a scheme it links or `www.` and then everything up to a blank or a
@@ -202,6 +203,13 @@ function escapeAt(text: string, at: number, midLine: boolean): string {
     // second of a pair is escaped, and `%\%` reads as the two signs it says.
     case '%':
       return before === '%' ? '\\%' : '%'
+    // Inline maths opens on a dollar with something other than a blank after it
+    // and closes on one with something other than a blank before it, so in
+    // `$5-$10` the two prices would be a formula of `5-`. A dollar with a blank on
+    // each side can do neither, and with every other one escaped there is nothing
+    // for a later dollar to pair with.
+    case '$':
+      return isBlank(before) && isBlank(after) ? '$' : '\\$'
     case '`':
     case '[':
     case ']':
