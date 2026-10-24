@@ -31,7 +31,7 @@ export interface Asker {
 
 /** What a placed event set going that is not the log's: the people a post calls (and
  *  the author of the message a reply answers), the files it brought, and the files a
- *  delete let go of. */
+ *  delete or an edit let go of. */
 export interface Effects {
   called: Mention[]
   answered: Who | null
@@ -266,9 +266,17 @@ export function place(
       called: event.kind === 'post' ? (event.mentions ?? []) : [],
       answered: answered === asker.who ? null : answered,
       files: event.kind === 'post' || event.kind === 'edit' ? (event.files ?? []) : [],
-      freed: event.kind === 'delete' && before && !before.deleted ? before.files : [],
+      freed: before && !before.deleted && frees(event) ? before.files : [],
     },
   }
+}
+
+/** Whether an event can take files off the message it names: a delete, and an edit
+ *  that names files of its own, since the history an edit keeps is words alone and the
+ *  files it replaced are shown in no version of the message any more. Which of them no
+ *  message names now is the object's to ask (`freeFiles`), after the message is kept. */
+function frees(event: Event): boolean {
+  return event.kind === 'delete' || (event.kind === 'edit' && event.files !== undefined)
 }
 
 /** These messages as the reducer makes them from every event about them. */

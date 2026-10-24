@@ -840,7 +840,8 @@ export class ChatLog implements DurableObject {
     )
   }
 
-  /** The files a deleted message named, let go of where no message still names them. */
+  /** The files a deleted or edited message named, let go of where no message still names
+   *  them. */
   private async freeFiles(effects: Effects): Promise<void> {
     const chat = this.chatId()
     if (!chat || !effects.freed.length) return

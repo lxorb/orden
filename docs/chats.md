@@ -1065,7 +1065,8 @@ says so and the lane picks the next free one.
   and nowhere else; no GIF service; no analytics on messages; pictures without metadata.
 - **Deleting a message** removes it from the object, its file rows when no other message
   names the hash, and every device's store at its next catch-up; the blob
-  goes with the other unreferenced blobs.
+  goes with the other unreferenced blobs. An edit that replaces a message's files lets go of
+  the ones it took off the same way, since the history an edit keeps is words alone.
 - **Deleting your account** deletes the chats of your own spaces with them; your messages in
   other people's spaces stay, shown as "Deleted account" without an avatar (Discord's way,
   decision 7.8). `erase.ts` and its test cover every new table.

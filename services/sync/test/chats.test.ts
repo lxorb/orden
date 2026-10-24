@@ -895,6 +895,36 @@ describe('chats', () => {
       expect(gone.status).toBe(404)
     })
 
+    test('an edit that takes a file off lets it go, unless another message names it', async () => {
+      const chat = await chatOfOwner()
+      const a = await upload(people.writer, new Uint8Array([1, 2, 3, 4]))
+      const b = await upload(people.writer, new Uint8Array([5, 6, 7, 8]))
+      const c = await upload(people.writer, new Uint8Array([9, 9, 9, 9]))
+      const fetched = async (hash: string) =>
+        (await call(env, `/v2/chats/${chat}/files/${hash}`, { token: people.reader })).status
+      const post = postOf('look', { files: [file(a), file(c)] })
+      await send(people.writer, chat, post, postOf('this one too', { files: [file(c)] }))
+
+      const edit = (files?: unknown[]) => ({
+        kind: 'edit',
+        id: id(),
+        target: post.message,
+        body: 'look again',
+        ...(files ? { files } : {}),
+      })
+      await send(people.writer, chat, edit([file(b)]))
+      expect([await fetched(a), await fetched(b), await fetched(c)]).toEqual([404, 200, 200])
+      // An edit that names no files keeps the ones the message has.
+      await send(people.writer, chat, edit())
+      expect(await fetched(b)).toBe(200)
+
+      await send(people.writer, chat, { kind: 'delete', id: id(), target: post.message })
+      expect([await fetched(b), await fetched(c)]).toEqual([404, 200])
+      expect(env.db.prepare('select hash from chat_files where chat_id = ?').all(chat)).toEqual([
+        { hash: c },
+      ])
+    })
+
     test('a guest holds no blobs, so attaches none', async () => {
       const chat = await chatOfOwner()
       const hash = await upload(people.owner, new Uint8Array([9]))
