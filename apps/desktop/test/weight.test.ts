@@ -852,8 +852,12 @@ function holds(tail: string): boolean {
  *  note's own space (`targetWhenRead` in link-index.svelte.ts). Measured 3,293,189.
  *
  *  Raised 2026-10-24, to 3,295,000, for #907 with #846 merged in under it. Measured
- *  3,294,400. */
-const BUDGET = 3_295_000
+ *  3,294,400.
+ *
+ *  Raised 2026-10-24, to 3,298,000, for #914: link rewrites after a rename, move or
+ *  merge read the space the note is in when it is not the open one (`retargetIn` in
+ *  link-index.svelte.ts). Measured 3,297,008. */
+const BUDGET = 3_298_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
