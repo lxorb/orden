@@ -9,6 +9,7 @@ import { deleteById } from './sync2/ops'
 import { presentSpace } from './spaces/space'
 import type { Env, Note, Space, Variables } from './types'
 import { forgetWords } from './blog/words'
+import { forgetReminders } from './push/reminders'
 import { forgetVersions } from './versions'
 import { forgetEmptyGuest } from './guests'
 
@@ -103,6 +104,8 @@ async function purgeNote(env: Env, note: Pick<Note, 'id' | 'space_id'>) {
   // rows, each only once the last row naming it has gone. See versions.ts.
   await forgetVersions(env, note.id)
   await forgetWords(env, note.id).catch(() => undefined)
+  // And its reminders, which hold the words of its tasks; see push/reminders.ts.
+  await forgetReminders(env, note.id).catch(() => undefined)
   await env.DB.prepare("update notes set size = 0, hash = '', deleted_at = null where id = ?")
     .bind(note.id)
     .run()
@@ -212,6 +215,9 @@ async function purgeSpace(env: Env, space: Pick<Space, 'id'>, budget = AT_ONCE):
            select id, ? from notes where id in (${list})`,
       ).bind(at, ...chunk),
       env.DB.prepare(`delete from note_search where note_id in (${list})`).bind(...chunk),
+      // And the reminders kept from them, which hold the words of their tasks and have
+      // no row of their own to go with; see push/reminders.ts.
+      env.DB.prepare(`delete from push_reminders where note_id in (${list})`).bind(...chunk),
       env.DB.prepare(`delete from notes where id in (${list})`).bind(...chunk),
     ])
   }

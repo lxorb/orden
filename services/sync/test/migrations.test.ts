@@ -264,3 +264,31 @@ describe('0042, the answers a form took before they were measured', () => {
     database.close()
   })
 })
+
+describe('0061, the reminders of notes emptied for good', () => {
+  test('go, and those of live notes and of notes in Recently deleted stay', () => {
+    const database = upTo('0058_feedback_issue.sql')
+    seed(database)
+    database.exec(
+      `insert into notes (id, space_id, path, seq, updated_at, deleted, deleted_at, size, hash)
+       values ('purged', 'sp', 'P.md', 1, 1, 1, null, 0, ''),
+              ('trashed', 'sp', 'T.md', 2, 1, 1, 5, 2, 'abc'),
+              ('live', 'sp', 'L.md', 3, 1, 0, null, 2, 'abc')`,
+    )
+    for (const note of ['purged', 'trashed', 'live', 'gone']) {
+      database.exec(
+        `insert into push_reminders (note_id, id, user_id, space_id, at, title, body, path, hash,
+                                     line)
+         values ('${note}', 'r', 'u', 'sp', 1, 'Call the bank', 'Plan', 'Plan.md', 'h', 0)`,
+      )
+    }
+
+    database.exec(sql('0061_purged_reminders.sql'))
+
+    expect(database.prepare('select note_id from push_reminders order by note_id').all()).toEqual([
+      { note_id: 'live' },
+      { note_id: 'trashed' },
+    ])
+    database.close()
+  })
+})

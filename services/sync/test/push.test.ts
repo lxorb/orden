@@ -157,6 +157,32 @@ describe('reminders kept from the notes', () => {
     expect(kept()).toEqual([])
   })
 
+  /** A reminder holds the words of its task, so it goes when the note's words do: a
+   *  note or a space emptied from Recently deleted takes its reminders with it. */
+  test('go with a note emptied for good', async () => {
+    await register({ kind: 'fcm', token: 'phone-token', zone: ZONE })
+    const id = (await save('Plan.md', TASK)).json.note.id
+    await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })
+    expect(kept().length).toBe(1)
+
+    expect((await call(env, `/v1/trash/notes/${id}`, { method: 'DELETE', token })).status).toBe(200)
+
+    expect(kept()).toEqual([])
+  })
+
+  test('and with a space emptied for good', async () => {
+    await register({ kind: 'fcm', token: 'phone-token', zone: ZONE })
+    await save('Plan.md', TASK)
+    await call(env, `/v1/spaces/${space}`, { method: 'DELETE', token })
+    expect(kept().length).toBe(1)
+
+    expect((await call(env, `/v1/trash/spaces/${space}`, { method: 'DELETE', token })).status).toBe(
+      200,
+    )
+
+    expect(kept()).toEqual([])
+  })
+
   test('read the way the app reads them: no code, no front matter, the same id', () => {
     const content = ['---', 'title: Plan', '---', '```', TASK.trim(), '```', TASK.trim()].join('\n')
     const found = remindersIn(content, 'Work', 'Plan.md', ZONE, null, 0)
