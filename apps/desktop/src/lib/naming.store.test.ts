@@ -158,6 +158,16 @@ vi.mock('./tauri', async (importOriginal) => ({
           if (one === path || one.startsWith(`${path}/`)) folders.delete(one)
         }
         return undefined
+      case 'trash_item': {
+        // Taken off the disk into this device's trash, a page note's paper with it,
+        // as an undone copy or a note made here goes; see `bin` in workspace.svelte.ts
+        // and trash.rs. What the trash holds is not asked about here.
+        const under = (one: string) => one === path || one.startsWith(`${path}/`)
+        for (const one of [...files.keys()]) if (under(one)) files.delete(one)
+        if (path.endsWith('.pages')) files.delete(`${path}.pdf`)
+        for (const one of [...folders]) if (under(one)) folders.delete(one)
+        return { id: `trash-${path}` }
+      }
       case 'bring_in_pdf': {
         // The crate's answer, from a disk outside the spaces; see handed_pdfs.rs.
         const words = outside.get(text(args?.from))
