@@ -70,6 +70,14 @@ describe("the reader's own task actions", () => {
     expect(await addTask('  ')).toBeNull()
   })
 
+  test('words nobody typed are the task, with no marks read out of them', async () => {
+    expect(await addTask('Why p1 matters !! tomorrow >Plan', { typed: false })).toEqual({
+      path: '/s/Home/Inbox.md',
+      line: 0,
+    })
+    expect(files.get('/s/Home/Inbox.md')).toBe('- [ ] Why p1 matters !! tomorrow >Plan\n')
+  })
+
   test('a recurring task ticked writes its next line above, in one edit', async () => {
     const { tasks } = await listed()
     expect(tasks.map((one) => one.text)).toEqual(['Water the plants'])

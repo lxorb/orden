@@ -143,6 +143,17 @@ describe('a share as a task', () => {
     ).toBe('Call the plumber')
   })
 
+  test('its words are words, in the link and out of it', () => {
+    expect(sharedTask(arrived({ items: [item({ text: 'Prices $5-$10 ~5 min' })] }))).toBe(
+      'Prices \\$5-\\$10 \\~5 min',
+    )
+    expect(
+      sharedTask(arrived({ subject: 'Cost $5-$10', items: [item({ text: 'https://x.test/a' })] })),
+    ).toBe('[Cost \\$5-\\$10](https://x.test/a)')
+    const line = `- [ ] ${sharedTask(arrived({ items: [item({ text: 'Prices $5-$10 ~5 min' })] }))}`
+    expect(renderMarkdown(line)).toContain('Prices $5-$10 ~5 min</li>')
+  })
+
   test('a tag in what was shared is not a tag in the task', () => {
     const task = sharedTask(
       arrived({ items: [item({ text: '<img src=https://t.example/p.gif> https://x.test/a' })] }),

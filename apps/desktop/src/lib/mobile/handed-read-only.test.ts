@@ -18,7 +18,7 @@ const world = vi.hoisted(() => ({
   /** The note open to write in, if any. */
   open: false,
   typed: [] as string[],
-  tasks: [] as { root?: string }[],
+  tasks: [] as { root?: string; typed?: boolean }[],
 }))
 
 vi.mock('../sharing.svelte', () => ({
@@ -64,7 +64,7 @@ vi.mock('../prompt.svelte', () => ({
   },
 }))
 vi.mock('../task-actions', () => ({
-  addTask: (_text: string, options: { root?: string } = {}) => {
+  addTask: (_text: string, options: { root?: string; typed?: boolean } = {}) => {
     world.tasks.push(options)
     return Promise.resolve({ path: `${options.root}/Inbox.md`, line: 0 })
   },
@@ -120,7 +120,8 @@ describe('a share while the open space is shared to be read', () => {
   test('makes its task in that space too', async () => {
     world.answer = 'task'
     await share()
-    await vi.waitFor(() => expect(world.tasks).toEqual([{ root: '/mine' }]))
+    // Shared words are the task's words, never read as quick add's grammar.
+    await vi.waitFor(() => expect(world.tasks).toEqual([{ root: '/mine', typed: false }]))
   })
 
   test("in the reader's own space, stays there", async () => {

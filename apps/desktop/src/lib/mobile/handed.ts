@@ -261,7 +261,7 @@ async function ask(
  *  came from. */
 async function asATask(arrived: Arrived, root: string) {
   const { addTask } = await import('../task-actions')
-  await addTask(sharedTask(arrived), { root })
+  await addTask(sharedTask(arrived), { root, typed: false })
 }
 
 /** What arrived, in one line, so the question is about something the reader can
