@@ -85,7 +85,6 @@ async function run(space: string, path: string, removed: readonly Row[]) {
   if (plan.writes.length) await writeEach(plan.writes, true)
 
   for (const move of plan.moves) {
-    if (root === undefined) continue
     // The folder is the base's words, which anybody who can write the space can write;
     // joined as written, `../Private` moved the note out into another space. Read the
     // way a link's path is, and a folder that leaves the space moves nothing.

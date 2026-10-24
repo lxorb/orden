@@ -501,6 +501,8 @@ mod tests {
             .expect("a media folder")
             .count();
         assert_eq!(media, 1, "{said}");
+    }
+
     /// A note in a folder of its own, with its picture beside it, and a folder
     /// somewhere else to save the export in, as the dialog lets the reader.
     fn note_and_elsewhere() -> (tempfile::TempDir, tempfile::TempDir) {
