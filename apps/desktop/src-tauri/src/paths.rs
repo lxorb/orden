@@ -267,21 +267,9 @@ pub fn paper_in_the_way(
 /// lost file. Moved the way the file was, so one that went to the trash on another
 /// disk takes them with it.
 pub fn move_held(from: &Path, to: &Path) {
-    // Asked of `to`, since the file has moved there already.
     if is_pages(from) {
-        if !holds_paper(to) {
-            return;
-        }
-        let paper = paper_of(from);
-        let moved = paper_of(to);
-        // Never over a file already there, which is somebody's own PDF (#538): the
-        // commands that move a page note refuse such a name first, and this is the
-        // last word on it.
-        if paper.exists()
-            && paper_in_the_way(from, to, crate::notes::same_entry).is_none()
-            && crate::carry::move_whole(&paper, &moved, "move").is_ok()
-        {
-            move_held(&paper, &moved);
+        if move_paper(from, to) {
+            move_held(&paper_of(from), &paper_of(to));
         }
         return;
     }
@@ -297,6 +285,24 @@ pub fn move_held(from: &Path, to: &Path) {
     } else {
         let _ = fs::remove_file(highlights_of(to));
     }
+}
+
+/// A page note's paper, after the note, and nothing of the paper's own: sync's move,
+/// which carries the paper with the note and never as an entry of its own (#551,
+/// pages/carried.ts), and the paper's highlights as one of their own. Answers whether
+/// the paper moved. Quiet about failure for the reason `move_held` is.
+pub fn move_paper(from: &Path, to: &Path) -> bool {
+    // Asked of `to`, since the note has moved there already.
+    if !is_pages(from) || !holds_paper(to) {
+        return false;
+    }
+    let paper = paper_of(from);
+    // Never over a file already there, which is somebody's own PDF (#538): the
+    // commands that move a page note refuse such a name first, and this is the
+    // last word on it.
+    paper.exists()
+        && paper_in_the_way(from, to, crate::notes::same_entry).is_none()
+        && crate::carry::move_whole(&paper, &paper_of(to), "move").is_ok()
 }
 
 /// And a copy of it has them too, for the reason they follow a move. Quiet about
