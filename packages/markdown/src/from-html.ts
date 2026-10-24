@@ -23,6 +23,15 @@ import { appHref, safeHref, safeSrc } from './html'
 import { tagNameAt } from './tags'
 import { taskWords } from './task-line'
 
+/** A field the escaping wrote as two brackets, `\\[due:: 2026-10-01\\]`, and nothing
+ *  after it that would make it a link's words. */
+const ESCAPED_FIELD = /\\\[([^[\]\\]*?::[^[\]\\]*?)\\\](?!\()/g
+
+/** A pasted to-do's words with its fields as fields again. */
+function withFields(words: string): string {
+  return words.replace(ESCAPED_FIELD, '[$1]')
+}
+
 /** What a note never contains.
  *
  *  Chrome, layout and interaction, none of which survives the trip into
@@ -81,6 +90,15 @@ export interface FromHtmlOptions {
    *  what the schemes are held to: the ones that run code or serve a document of the
    *  author's own are refused whoever is asking. */
   appTargets?: boolean
+
+  /** Whether a to-do's words are plain text that meant nothing to the task reader.
+   *
+   *  Off by default, which is what a paste wants: a task list drawn by this app or
+   *  by Obsidian says its tags, dates and fields as itself, and pasted back they are
+   *  that task's again. On for the imports, where a Notion or Evernote checkbox is
+   *  somebody's sentence and a `#` or an emoji and a date in it is no field
+   *  (`taskWords`). */
+  plainTasks?: boolean
 }
 
 /** The TeX a formula carries about itself.
@@ -545,10 +563,15 @@ function converter(options: FromHtmlOptions): TurndownService {
         // A ticked item brings its box and the space the page had after it; one
         // space between the box and the words is what markdown wants.
         .replace(/^(\[[ x]\])\s*/, '$1 ')
-        // A to-do's words are somebody's words, already escaped as a note's; the task
-        // reader takes more apart, an emoji and a date or a `#`, so its first line is
-        // written as none of that (`taskWords`).
-        .replace(/^(\[[ x]\] )([^\n]*)/, (_, box: string, words: string) => box + taskWords(words))
+        // A to-do's first line: words an importer knows are plain are written as none
+        // of the task's fields (`taskWords`, see `plainTasks`); a pasted task list
+        // keeps the `[key:: value]` fields it drew as itself, which the escaping took
+        // for brackets - but never one a link's address follows.
+        .replace(
+          /^(\[[ x]\] )([^\n]*)/,
+          (_, box: string, words: string) =>
+            box + (options.plainTasks === true ? taskWords(words) : withFields(words)),
+        )
 
       const ends = node.nextSibling && !body.endsWith('\n') ? '\n' : ''
       return `${marker} ${body}${ends}`

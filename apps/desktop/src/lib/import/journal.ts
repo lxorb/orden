@@ -192,7 +192,10 @@ function entryOf(html: string, path: string): Entry {
   return {
     date,
     title: words(title?.inner ?? ''),
-    body: withMedia(htmlToMarkdown(rest, { fileTargets: true, appTargets: true }), html),
+    body: withMedia(
+      htmlToMarkdown(rest, { fileTargets: true, appTargets: true, plainTasks: true }),
+      html,
+    ),
     drawn: drawnCards(html),
   }
 }

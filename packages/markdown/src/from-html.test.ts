@@ -952,13 +952,15 @@ describe('a page as markdown', () => {
 
 /** A to-do from another app - a Notion page's, an Evernote note's - is somebody's
  *  words, and the task reader takes more apart than a note does: an emoji and a
- *  date after it are a field, a `#` a tag. Its words come in as words. */
+ *  date after it are a field, a `#` a tag. An importer that knows its words are plain
+ *  says so, and they come in as words. A rendered task list pasted back is the
+ *  opposite case: what it draws as a tag or a field is one. */
 describe('a checked list item', () => {
   test('reads none of its words as a field of the task', async () => {
     const { readTask } = await import('./task-line')
     const html =
       '<ul><li><input type="checkbox">task 📅 2026-11-01 ⏫ 🔁 every week #tag [due:: 2026-01-01]</li></ul>'
-    const line = htmlToMarkdown(html).trim()
+    const line = htmlToMarkdown(html, { plainTasks: true }).trim()
     const task = readTask(line)
 
     expect(task).toMatchObject({ tags: [] })
@@ -966,5 +968,28 @@ describe('a checked list item', () => {
     expect(task?.recurrence).toBeUndefined()
     expect(task?.priority).toBe(readTask('- [ ] task')?.priority)
     expect(task?.fields).toEqual({})
+  })
+})
+
+describe('a rendered task list pasted back', () => {
+  test('keeps its tags, dates, priority and fields', async () => {
+    const { readTask } = await import('./task-line')
+    const source = [
+      '- [ ] Pay rent #home 📅 2026-11-01',
+      '- [x] Call [due:: 2026-10-01] ⏫',
+      '- [ ] Keep \\[a:: b\\](see) words',
+    ]
+    const html = renderMarkdown(source.join('\n'), { tagHref: (tag) => `#${tag}` })
+    const lines = htmlToMarkdown(html).split('\n')
+    for (const [at, line] of source.entries()) {
+      const before = readTask(line)
+      const after = readTask(lines[at] ?? '')
+      expect(after?.tags).toEqual(before?.tags)
+      expect(after?.due).toBe(before?.due)
+      expect(after?.priority).toBe(before?.priority)
+      expect(after?.fields).toEqual(before?.fields)
+    }
+    // An escaped bracket that a link would follow stays escaped.
+    expect(lines[2]).toContain('\\[a:: b\\](see)')
   })
 })
