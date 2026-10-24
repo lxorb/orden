@@ -377,7 +377,9 @@ describe('a note made of a thread', () => {
     await chat.noteFrom('# Answer\n')
 
     expect(place.noteFrom).toHaveBeenCalledTimes(1)
-    await vi.waitFor(() => expect(said(chat)).toEqual(['Save as a note · you can only read this space']))
+    await vi.waitFor(() =>
+      expect(said(chat)).toEqual(['Save as a note · you can only read this space']),
+    )
   })
 
   test('is refused, and says so, where the thread’s space is not on this device', async () => {
