@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest'
-import { askedFrom, openable } from './handed'
+import { askedFrom, HANDED, openable } from './handed'
 
 /** What a quick settings tile or a widget row asked for.
  *
@@ -29,6 +29,15 @@ describe('what the press asked for', () => {
       tick: 'Inbox.md#0:abc',
       tickSpace: 'Home',
     })
+  })
+
+  /** The activity is exported and opens on a `nib://` link, so a web page can send
+   *  any id. Only what a tile or a widget sends is run; the rest of the registry,
+   *  dictation and signing out among it, is never reached this way. */
+  test('only a command a tile or a widget sends', () => {
+    for (const id of HANDED) expect(askedFrom(`{"command":"${id}"}`).command).toBe(id)
+    for (const id of ['dictate', 'signout', 'record-audio', 'quit'])
+      expect(askedFrom(`{"command":"${id}"}`).command).toBe('')
   })
 
   test('nothing, in every shape nothing arrives in', () => {
