@@ -41,7 +41,7 @@
   import RollupBuilder from './RollupBuilder.svelte'
   import { templates } from './templates'
   import Popover from './Popover.svelte'
-  import { copyToBase } from './save'
+  import { copiesToBase, copyToBase } from './save'
   import { focusSoon } from './focus-soon'
   import { copyText } from '../clipboard'
   import { displayName } from './columns'
@@ -204,7 +204,7 @@
             },
           ]
         : []),
-      ...(kit.file === null
+      ...(kit.file === null && copiesToBase()
         ? [
             DIVIDER,
             {
