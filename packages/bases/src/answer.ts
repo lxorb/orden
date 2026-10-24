@@ -245,11 +245,11 @@ export function compileView(base: Base, which?: string | number): CompiledView {
       inner?: (members: { row: Row; facts: RowFacts }[]) => Group[],
       top = false,
     ): Group[] => {
-      /** A group's members in its manual order, cut to the limit at the top level. */
-      const cutGroup = (inGroup: { row: Row; facts: RowFacts }[], name: string) => {
-        const sorted = ordered(inGroup, name)
-        return top ? cut(sorted) : sorted
-      }
+      /** A group's members in its manual order, cut to the limit, at the top level. A
+       *  sub-group's members come already in their group's order, where the board
+       *  writes a lane's: an order under the lane's own name is a column's. */
+      const cutGroup = (inGroup: { row: Row; facts: RowFacts }[], name: string) =>
+        top ? cut(ordered(inGroup, name)) : inGroup
       if (!by) {
         const only = cutGroup(members, '')
         return [{ key: null, rows: only.map((one) => one.row), summaries: summaries(only) }]
