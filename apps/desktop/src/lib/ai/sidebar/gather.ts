@@ -134,15 +134,17 @@ async function attachmentOf(
   }
 }
 
-/** The message, with everything its chips name read. */
+/** The message, with everything its chips name read, in `space`: the thread's own,
+ *  which is not the one in front once the reader has moved on. Its sources are paths
+ *  in that space, which is where a citation opens them (`root` in chat.svelte.ts). */
 export async function draftOf(
   text: string,
   chips: readonly Mention[],
   mode: Mode,
   front: Front | null,
   selection: string,
+  space: { id: string; root: string } | null,
 ): Promise<Draft> {
-  const space = workspace.activeSpace
   const attachments: Attachment[] = []
   if (space) {
     if (mode === 'approve') {
