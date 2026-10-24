@@ -268,6 +268,10 @@ class Sync {
     return waiting
   }
 
+  /** Moves a pull is making on this disk because the account already has them, by
+   *  `from` and `to`, while everything kept by path is hearing of them. */
+  private readonly pulling = new Set<string>()
+
   /** A file operation, heard the way everything kept by path hears one; see
    *  workspace/file-ops.ts. A space's folder moving re-keys the table in the same
    *  moment as its notes' paths change, so no note is ever at a path the account
@@ -275,6 +279,7 @@ class Sync {
   follow(op: FileOp): Promise<void> | undefined {
     if (V2 && this.v2) return this.v2.follow(op)
     if (op.op !== 'moved') return undefined
+    if (this.pulling.has(`${op.from}\n${op.to}`)) return undefined
     if (op.kind !== 'space') return this.moved(op.from, op.to)
 
     const name = workspace.spaces.find((one) => samePath(one.root, op.to))?.name
@@ -619,14 +624,20 @@ class Sync {
         void this.refresh(path, joined)
         this.pulled += 1
       },
-      // Everything kept by path hears of it as of a move made here: the open tab,
-      // the links, the rows. The table is already re-keyed, so `moved` below finds
-      // nothing to tell the account.
       // Before and after each rename of a round of moves; see `movedThere`.
       save: () => this.save(),
-      moved: (from, to) => {
-        void workspace.fileMoved(from, to, 'file')
-        this.pulled += 1
+      // Each rename a pull makes, a step aside too, heard by everything kept by path
+      // as a move made here: the open tab, the links, the rows. Waited on, so each
+      // hears the steps in the order they were made. The account made the move, so it
+      // is not told it back: `follow` leaves out what is in `pulling`.
+      moved: async (from, to) => {
+        const key = `${from}\n${to}`
+        this.pulling.add(key)
+        try {
+          await workspace.fileMoved(from, to, 'file')
+        } finally {
+          this.pulling.delete(key)
+        }
       },
       wanted: open,
       // The reader's answer to "what if the same note was written twice", and
