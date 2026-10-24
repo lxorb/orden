@@ -854,8 +854,12 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-24, to 3,289,000, for #880: a block list whose members are no flow
  *  members (a comment, a list of its own) is written back as a block list (`listLines`
- *  in packages/markdown/src/property-edits.ts). Measured 3,288,405. */
-const BUDGET = 3_289_000
+ *  in packages/markdown/src/property-edits.ts). Measured 3,288,405.
+ *
+ *  Raised 2026-10-24, to 3,290,000, for #885: a list's key is found in another case
+ *  the way `frontMatterEdit` finds it (`propertyNamed` in
+ *  packages/markdown/src/properties.ts). Measured 3,289,059. */
+const BUDGET = 3_290_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
