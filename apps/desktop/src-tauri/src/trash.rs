@@ -20,7 +20,7 @@ use crate::carry::move_whole;
 use crate::clock;
 use crate::paths::{
     folded, free_spot, in_spaces, inside, is_reserved, made, move_held, spaces_dir,
-    write_atomically, TRASH,
+    write_atomically, HIGHLIGHTS, TRASH,
 };
 
 /// The record of what is in the trash, written beside the folders it describes.
@@ -162,7 +162,13 @@ fn manifest_place(base: &Path, source: &Path) -> Result<(String, String), String
     if relative.as_os_str().is_empty() {
         return Err("that cannot be deleted".into());
     }
-    let from = relative.to_string_lossy().replace('\\', "/");
+    // Part by part rather than by replacing `\\`, which is a letter in a name on a Mac
+    // or Linux and only Windows's separator.
+    let from = relative
+        .components()
+        .map(|part| part.as_os_str().to_string_lossy())
+        .collect::<Vec<_>>()
+        .join("/");
 
     let name = source
         .file_name()
@@ -237,11 +243,41 @@ pub fn restore_trash(app: AppHandle, id: String) -> Result<String, String> {
     // paper under its page note's, which is not the old one when something has
     // taken its place in the meantime.
     move_held(&held, &target);
-    let _ = fs::remove_dir_all(&slot);
 
-    entries.remove(position);
+    // A paper or highlights that could not follow are still in the slot, and stay in
+    // the trash as the file they are rather than going with the slot or staying in
+    // one nobody can see.
+    match left_in(&slot) {
+        None => {
+            let _ = fs::remove_dir(&slot);
+            entries.remove(position);
+        }
+        Some(left) => {
+            let folder = entry.from.rsplit_once('/').map_or("", |(folder, _)| folder);
+            entries[position].from = if folder.is_empty() {
+                left.clone()
+            } else {
+                format!("{folder}/{left}")
+            };
+            entries[position].name = left;
+            entries[position].kind = "note".into();
+        }
+    }
     write_manifest(&dir, &entries)?;
     Ok(target.to_string_lossy().to_string())
+}
+
+/// What is still in a slot once its file has gone back: a paper or highlights that
+/// could not follow it, named by the one to put back first - a paper brings its own
+/// highlights with it.
+fn left_in(slot: &Path) -> Option<String> {
+    let mut left: Vec<String> = fs::read_dir(slot)
+        .ok()?
+        .flatten()
+        .map(|one| one.file_name().to_string_lossy().into_owned())
+        .collect();
+    left.sort_by_key(|name| name.ends_with(HIGHLIGHTS));
+    left.into_iter().next()
 }
 
 /// Takes one thing away for good.

@@ -191,8 +191,11 @@ pub fn held_paper(pdf: &Path) -> bool {
 /// its paper would go. A PDF called `Report.pages.pdf` is somebody's - macOS Pages names
 /// every PDF it saves that way - and a page note given `Report.pages` would take it for
 /// its paper: moved over it, or hidden from the list as held (#538).
-fn taken(path: &Path) -> bool {
-    path.exists() || (is_pages(path) && paper_of(path).exists())
+///
+/// Only for a file: a folder called `Report.pages`, which a macOS Pages document is,
+/// holds no paper.
+fn taken(path: &Path, is_file: bool) -> bool {
+    path.exists() || (is_file && is_pages(path) && paper_of(path).exists())
 }
 
 /// Whether a page note may be called `to`, coming from `from`: not over a file where its
@@ -1204,7 +1207,7 @@ fn spill(temp: &Path, bytes: &[u8], private: bool) -> Result<(), String> {
 /// `path` if nothing is there, else the first free `name 2`, `name 3`... - the
 /// number before the extension for a file, after the name for a folder.
 pub fn free_spot(path: &Path, is_file: bool) -> PathBuf {
-    if !taken(path) {
+    if !taken(path, is_file) {
         return path.to_path_buf();
     }
 
@@ -1223,7 +1226,7 @@ pub fn free_spot(path: &Path, is_file: bool) -> PathBuf {
     let mut counter = 2;
     loop {
         let candidate = parent.join(format!("{stem} {counter}{extension}"));
-        if !taken(&candidate) {
+        if !taken(&candidate, is_file) {
             return candidate;
         }
         counter += 1;
