@@ -264,6 +264,9 @@ mod gpu;
 // page_scale.rs.
 #[cfg(desktop)]
 mod page_scale;
+// A web tab's page taken out of sight without a frame of it white; see page_hide.rs.
+#[cfg(desktop)]
+mod page_hide;
 // A web tab's page drawn in the app's scheme rather than the system's; see page_scheme.rs.
 #[cfg(desktop)]
 mod page_scheme;
