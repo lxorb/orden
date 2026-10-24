@@ -1777,7 +1777,9 @@ class Workspace {
       import('./pages/from-pdf'),
       import('./pages/turning'),
     ])
-    const how = turningIn(this.rootHolding(path), (one, to) => this.renameFile(one, to, false))
+    const how = turningIn(this.rootHolding(path), (one, to) =>
+      this.renameFile(one, to, false, true),
+    )
     return { from, how }
   }
 
@@ -4000,8 +4002,9 @@ class Workspace {
   /** One file under another name in the same folder, and everything that owes: the
    *  row, the links to it, and what everything kept by path hears; see `fileMoved`.
    *  `undoable` is whether somebody did it - a row renamed - or the note's own words
-   *  did; only the first is a step to undo and a heading to rewrite. */
-  private async renameFile(path: string, target: string, undoable: boolean) {
+   *  did; only the first is a step to undo and a heading to rewrite. `hold`: a PDF
+   *  turned into its page note; see `rename_note`. */
+  private async renameFile(path: string, target: string, undoable: boolean, hold = false) {
     const kind = this.kindAt(path)
 
     // The new name is on the row before the rename has happened; the listing
@@ -4015,7 +4018,7 @@ class Workspace {
     // which is the same file to Windows and to a Mac - and the row wore a name
     // nothing answered to until the next listing. See `move` and `remove`.
     try {
-      await invoke('rename_note', { from: path, to: target })
+      await invoke('rename_note', { from: path, to: target, ...(hold ? { hold } : {}) })
     } catch (error) {
       await this.loadTree()
       throw error

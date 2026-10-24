@@ -215,16 +215,16 @@ fn taken(path: &Path) -> bool {
 /// Answers the file in the way, to be named in the refusal.
 ///
 /// And whether a PDF may be called `to`: not where a page note would take it for its
-/// paper, which is the note in the way. Unless it comes from that note's own folder:
-/// a PDF moved in beside its note is how a PDF becomes one's paper (pages/from-pdf.ts),
-/// and a respelling of a paper is that paper still.
+/// paper, which is the note in the way. From anywhere, the note's own folder too: a
+/// name typed into a PDF's row there is how it happens. The one move that means it,
+/// a PDF turned into its page note (pages/from-pdf.ts), says so to `rename_note`.
 pub fn paper_in_the_way(
     from: &Path,
     to: &Path,
     same: impl Fn(&Path, &Path) -> bool,
 ) -> Option<PathBuf> {
     if !is_pages(to) {
-        return paper_holder(to).filter(|_| from.parent() != to.parent());
+        return paper_holder(to);
     }
     let there = paper_of(to);
     if !there.exists() {
