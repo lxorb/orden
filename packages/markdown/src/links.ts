@@ -340,8 +340,10 @@ function isBlank(character: string | undefined): boolean {
 }
 
 /** The same text with every code span blanked out, character for character, so
- *  offsets still line up while `[[Note]]` inside backticks is left alone. */
-function withoutCode(line: string): string {
+ *  offsets still line up while `[[Note]]` inside backticks is left alone. Exported
+ *  beside `lines` for the server's reading of which pictures a note shows, which has
+ *  to step over the same code; see services/sync/src/pictures.ts. */
+export function withoutCode(line: string): string {
   let out = ''
   let at = 0
 

@@ -8,6 +8,7 @@ import { FRONT_REV, readFront, titleFrom, writeFront } from './blog/front'
 import { rememberOldPaths } from './blog/paths'
 import { keepWords } from './blog/words'
 import { linkPointer } from './chats/pointer'
+import { keepPictures } from './pictures'
 import { keepReminders } from './push/reminders'
 import { fits } from './storage'
 import { byteLength, newId, now, sha256 } from './crypto'
@@ -215,6 +216,9 @@ export async function addNote(
   // same reason: the note is stored, and an index is rebuildable. See
   // blog/words.ts.
   await keepWords(env, note, content, titleFrom(note.path, content)).catch(() => undefined)
+  // And its pictures, so a deleted account knows which spaces still show the ones it
+  // held; see pictures.ts.
+  await keepPictures(env, note, content)
   // And its reminders, for a phone that has not opened nib since; see push/reminders.ts.
   await keepReminders(env, note, content).catch(() => undefined)
   // And, for a chat's pointer, the chat it names; see chats/pointer.ts.
@@ -255,6 +259,7 @@ async function placeNote(
   await env.NOTES.put(noteKey(spaceId, note.id), content)
   await keepVersion(env, note, content, by).catch(() => undefined)
   await keepWords(env, note, content, titleFrom(note.path, content)).catch(() => undefined)
+  await keepPictures(env, note, content)
   await keepReminders(env, note, content).catch(() => undefined)
   await linkPointer(env, note, content).catch(() => undefined)
   return note
@@ -431,6 +436,7 @@ export async function saveNote(
   // still lands on it. Best effort for the same reason. See blog/paths.ts.
   await rememberOldPaths(env, note, path, readFront(updated.front)).catch(() => undefined)
   await keepWords(env, updated, content, titleFrom(path, content)).catch(() => undefined)
+  await keepPictures(env, updated, content)
   await keepReminders(env, updated, content).catch(() => undefined)
   await linkPointer(env, updated, content).catch(() => undefined)
 

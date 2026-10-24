@@ -1,6 +1,7 @@
 import { diagramKey } from '@nib/markdown/diagrams'
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import { call, file, signIn, testEnv, type TestEnv } from './harness'
+import { createHash } from 'node:crypto'
+import { call, file, mail, signIn, testEnv, type TestEnv } from './harness'
 import { QUOTA } from '../src/storage'
 
 let env: TestEnv
@@ -387,6 +388,197 @@ describe('giving an image back', () => {
     await call(env, `/v1/blobs/${sized(2048).hash}`, { method: 'DELETE', token })
 
     expect((await call(env, `/i/${sized(2048).hash}.png`)).status).toBe(200)
+  })
+  /** Somebody else's space shows it, and the bytes are that space's as much as they
+   *  are the uploader's: giving them back hands the row to the space's owner, as
+   *  deleting the account would (erase.ts), rather than leaving a hole in the note. */
+  test('hands it to the owner of a space that still uses it, rather than deleting it', async () => {
+    const owner = await signIn(env, 'owner@b.dev')
+    const theirs = (
+      await call<{ space: { id: string } }>(env, '/v1/spaces', {
+        token: owner,
+        body: { name: 'Theirs' },
+      })
+    ).json.space.id
+    const sent = await mail(() =>
+      call(env, `/v1/spaces/${theirs}/share/invite`, {
+        token: owner,
+        body: { email: 'a@b.dev', role: 'write' },
+      }),
+    )
+    await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
+      method: 'POST',
+      token,
+    })
+
+    const picture = sized(2048)
+    await upload(picture)
+    await call(env, `/v1/spaces/${theirs}/notes`, {
+      token,
+      body: { path: 'N.md', content: `![](https://nibeditor.com/i/${picture.hash}.png)` },
+    })
+    const pages = (
+      await call<{ note: { id: string } }>(env, `/v1/spaces/${theirs}/notes`, {
+        token,
+        body: { path: 'L.pages', content: '{}' },
+      })
+    ).json.note.id
+    const pdf = new TextEncoder().encode('%PDF-1.4\ngiven back\n%%EOF\n')
+    const paper = createHash('sha256').update(pdf).digest('hex')
+    await upload({ bytes: pdf, hash: paper }, { type: 'application/pdf' })
+    await call(env, `/v1/notes/${pages}/paper`, { method: 'PUT', token, body: { hash: paper } })
+    await call(env, `/v1/spaces/${theirs}/share/members/a%40b.dev`, {
+      method: 'DELETE',
+      token: owner,
+    })
+
+    for (const hash of [picture.hash, paper]) {
+      expect((await call(env, `/v1/blobs/${hash}`, { method: 'DELETE', token })).status).toBe(200)
+    }
+
+    expect((await call(env, `/i/${picture.hash}.png`)).status).toBe(200)
+    expect((await call(env, `/v1/notes/${pages}/paper`, { token: owner })).status).toBe(200)
+    const ownerId = env.db.prepare("select id from users where email = 'owner@b.dev'").get() as {
+      id: string
+    }
+    for (const hash of [picture.hash, paper]) {
+      expect(env.db.prepare('select user_id from blobs where hash = ?').all(hash)).toEqual([
+        { user_id: ownerId.id },
+      ])
+    }
+    expect((await call(env, '/v1/usage', { token })).json.used).toBe(start)
+  })
+
+  /** Another account holding the same bytes is no reason to skip the owner: it may
+   *  hold them as something that is no picture, and give them back in turn. */
+  test('hands it over even while a stranger holds the same bytes as something else', async () => {
+    const owner = await signIn(env, 'owner@b.dev')
+    const stranger = await signIn(env, 'stranger@b.dev')
+    const theirs = (
+      await call<{ space: { id: string } }>(env, '/v1/spaces', {
+        token: owner,
+        body: { name: 'Theirs' },
+      })
+    ).json.space.id
+    const sent = await mail(() =>
+      call(env, `/v1/spaces/${theirs}/share/invite`, {
+        token: owner,
+        body: { email: 'a@b.dev', role: 'write' },
+      }),
+    )
+    await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
+      method: 'POST',
+      token,
+    })
+
+    const picture = sized(2048)
+    await upload(picture)
+    await call(env, `/v1/spaces/${theirs}/notes`, {
+      token,
+      body: { path: 'N.md', content: `![](https://nibeditor.com/i/${picture.hash}.png)` },
+    })
+    expect((await upload(picture, { token: stranger, type: 'application/pdf' })).status).toBe(201)
+
+    await call(env, `/v1/blobs/${picture.hash}`, { method: 'DELETE', token })
+    await call(env, `/v1/blobs/${picture.hash}`, { method: 'DELETE', token: stranger })
+
+    expect((await call(env, `/i/${picture.hash}.png`)).status).toBe(200)
+  })
+
+  /** A note written before its pictures were written down has none yet, until the
+   *  nightly sweep reads it: in a space the asker is in, its body is read instead. */
+  test('hands it over from a note the sweep has not read yet', async () => {
+    const owner = await signIn(env, 'owner@b.dev')
+    const theirs = (
+      await call<{ space: { id: string } }>(env, '/v1/spaces', {
+        token: owner,
+        body: { name: 'Theirs' },
+      })
+    ).json.space.id
+    const sent = await mail(() =>
+      call(env, `/v1/spaces/${theirs}/share/invite`, {
+        token: owner,
+        body: { email: 'a@b.dev', role: 'write' },
+      }),
+    )
+    await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
+      method: 'POST',
+      token,
+    })
+
+    const picture = sized(2048)
+    await upload(picture)
+    const note = (
+      await call<{ note: { id: string } }>(env, `/v1/spaces/${theirs}/notes`, {
+        token,
+        body: { path: 'N.md', content: `![](https://nibeditor.com/i/${picture.hash}.png)` },
+      })
+    ).json.note.id
+    env.db.prepare('delete from note_pictures where note_id = ?').run(note)
+    env.db.prepare('update notes set front_rev = 1 where id = ?').run(note)
+
+    await call(env, `/v1/blobs/${picture.hash}`, { method: 'DELETE', token })
+
+    expect((await call(env, `/i/${picture.hash}.png`)).status).toBe(200)
+    expect((await call(env, '/v1/usage', { token })).json.used).toBe(start)
+  })
+
+  /** Giving a file back is asking to stop paying for it, so nothing is guessed: a space
+   *  with more unread notes than one request reads is not handed the picture on the
+   *  chance it shows it. The asker keeps it until the sweep has read those notes. */
+  test('keeps it rather than guessing while a space it writes in is unread', async () => {
+    const owner = await signIn(env, 'owner@b.dev')
+    const theirs = (
+      await call<{ space: { id: string } }>(env, '/v1/spaces', {
+        token: owner,
+        body: { name: 'Theirs' },
+      })
+    ).json.space.id
+    const sent = await mail(() =>
+      call(env, `/v1/spaces/${theirs}/share/invite`, {
+        token: owner,
+        body: { email: 'a@b.dev', role: 'write' },
+      }),
+    )
+    await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
+      method: 'POST',
+      token,
+    })
+    for (let at = 0; at < 260; at++) {
+      env.db
+        .prepare(
+          `insert into notes (id, space_id, path, seq, updated_at, size, hash, front_rev)
+           values (?, ?, ?, ?, ?, 5, 'h', 1)`,
+        )
+        .run(`old${String(at)}`, theirs, `old${String(at)}.md`, 1000 + at, 1)
+    }
+    const ownerBefore = (await call(env, '/v1/usage', { token: owner })).json.used
+
+    const picture = sized(4096)
+    await upload(picture)
+    const given = await call(env, `/v1/blobs/${picture.hash}`, { method: 'DELETE', token })
+
+    expect(given.status).toBe(409)
+    expect((await call(env, '/v1/usage', { token: owner })).json.used).toBe(ownerBefore)
+    expect(
+      env.db.prepare('select count(*) as n from blobs where hash = ?').get(picture.hash),
+    ).toEqual({ n: 1 })
+  })
+
+  test('and deletes it when only its own notes show it', async () => {
+    const own = (
+      await call<{ space: { id: string } }>(env, '/v1/spaces', { token, body: { name: 'Mine' } })
+    ).json.space.id
+    const picture = sized(2048)
+    await upload(picture)
+    await call(env, `/v1/spaces/${own}/notes`, {
+      token,
+      body: { path: 'N.md', content: `![](https://nibeditor.com/i/${picture.hash}.png)` },
+    })
+
+    await call(env, `/v1/blobs/${picture.hash}`, { method: 'DELETE', token })
+
+    expect(env.keys()).not.toContain(`blobs/${picture.hash}`)
   })
 })
 

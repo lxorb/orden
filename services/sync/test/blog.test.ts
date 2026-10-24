@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import { asIsland, slugFor } from '../src/blog'
+import { FRONT_REV } from '../src/blog/front'
 import { call, file, signIn, testEnv, type TestEnv } from './harness'
 
 let env: TestEnv
@@ -1375,12 +1376,49 @@ describe('what a writer commented out', () => {
     await fillFronts(env, null)
 
     expect(env.db.prepare("select front_rev from notes where path = 'Post.md'").get()).toEqual({
-      front_rev: 1,
+      front_rev: FRONT_REV,
     })
     const found = await call(env, '/search?q=quokka', { host: 'field.nibeditor.com' })
     expect(found.text).toContain('Nothing matches.')
     const tagged = await call(env, '/search?q=%23secret-tag', { host: 'field.nibeditor.com' })
     expect(tagged.text).toContain('Nothing matches.')
+  })
+
+  /** The pictures of a note written before they were written down, which a deleted
+   *  account asks about (src/pictures.ts), are picked up by the same sweep. */
+  test('writes down the pictures of a note read before they were', async () => {
+    const hash = 'ab'.repeat(32)
+    await addNote('Post.md', `![](https://nibeditor.com/i/${hash}.png)`)
+    env.db.exec("delete from note_pictures; update notes set front_rev = 1 where path = 'Post.md'")
+
+    const { fillFronts } = await import('../src/blog/fill')
+    await fillFronts(env, null)
+
+    expect(env.db.prepare('select hash from note_pictures').all()).toEqual([{ hash }])
+  })
+
+  test('and of a note in Recently deleted, which can still come back', async () => {
+    const hash = 'ab'.repeat(32)
+    const id = (await addNote('Post.md', `![](https://nibeditor.com/i/${hash}.png)`)).json.note.id
+    await call(env, `/v1/notes/${id}`, { method: 'DELETE', token })
+    env.db.exec("delete from note_pictures; update notes set front_rev = 1 where path = 'Post.md'")
+
+    const { fillFronts } = await import('../src/blog/fill')
+    await fillFronts(env, null)
+
+    expect(env.db.prepare('select hash from note_pictures').all()).toEqual([{ hash }])
+  })
+
+  test('and reads a note again whose pictures it could not write down', async () => {
+    await addNote('Post.md', POST)
+    env.db.exec("update notes set front_rev = 1 where path = 'Post.md'; drop table note_pictures")
+
+    const { fillFronts } = await import('../src/blog/fill')
+    await fillFronts(env, null)
+
+    expect(env.db.prepare("select front_rev from notes where path = 'Post.md'").get()).toEqual({
+      front_rev: 0,
+    })
   })
 })
 

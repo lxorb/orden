@@ -185,3 +185,20 @@ describe('the paper a page note holds', () => {
     expect((await hold(pages, one.hash, guest)).status).toBe(403)
   })
 })
+
+describe('a page note emptied from Recently deleted for good', () => {
+  test('holds no paper any more', async () => {
+    const one = paper()
+    await upload(one)
+    await hold(pages, one.hash)
+    await call(env, `/v1/notes/${pages}`, { method: 'DELETE', token: owner })
+    expect(
+      (await call(env, `/v1/trash/notes/${pages}`, { method: 'DELETE', token: owner })).status,
+    ).toBe(200)
+
+    expect((await call(env, `/v1/notes/${pages}/paper`, { token: owner })).status).toBe(404)
+    expect(env.db.prepare('select paper from notes where id = ?').get(pages)).toEqual({
+      paper: null,
+    })
+  })
+})
