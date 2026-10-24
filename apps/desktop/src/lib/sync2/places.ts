@@ -19,7 +19,7 @@ import { applyOp, nameKey, type TreeEntry, type TreeState, treeState } from '@ni
 import { isReserved } from '../naming'
 import type { Outgoing } from './records'
 import type { EntryRow, OutboxRow, SpaceRow } from './store'
-import type { Disk, World } from './world'
+import type { Disk, FileKind, World } from './world'
 
 /** One row of the outbox, read. */
 export interface Outboxed {
@@ -256,6 +256,20 @@ export async function settle(space: SpaceState, how: Settling): Promise<EntryRow
   const moved = new Set<EntryRow>()
   const root = space.row.root
   const full = (path: string) => how.join(root, path)
+  // A move the disk refuses leaves that one entry where it is, the way a file in the
+  // way does, and the rest of the pass goes on; it is tried again next pass. Thrown,
+  // it stopped every pass before anything else came or went. Only while the file is
+  // still where it was: one that left without being told is not known to be anywhere,
+  // and a pass that went on would read it as deleted here.
+  const moves = async (from: string, to: string, kind: FileKind) => {
+    try {
+      await how.disk.move(full(from), full(to), kind)
+      return true
+    } catch (error) {
+      if (await how.disk.exists(full(from))) return false
+      throw error
+    }
+  }
 
   for (const entry of space.entries.values()) {
     if (!entry.local_path || wanted.has(entry.id)) continue
@@ -306,7 +320,7 @@ export async function settle(space: SpaceState, how: Settling): Promise<EntryRow
         // Wanted inside where it is now: a new folder took its old name. No disk moves
         // a folder into itself, so it steps aside and goes on in the next round.
         const out = aside(entry.local_path, entry.id)
-        await how.disk.move(full(entry.local_path), full(out), kind)
+        if (!(await moves(entry.local_path, out, kind))) continue
         carry(space, entry, out, moved)
         progress += 1
         continue
@@ -316,7 +330,7 @@ export async function settle(space: SpaceState, how: Settling): Promise<EntryRow
         // Somebody else is still there: it waits aside, and moves on in its own turn.
         const out = aside(holder.local_path, holder.id)
         const holding = holder.kind === 'folder' ? 'folder' : 'file'
-        await how.disk.move(full(holder.local_path), full(out), holding)
+        if (!(await moves(holder.local_path, out, holding))) continue
         carry(space, holder, out, moved)
       } else if (!holder && (await how.disk.exists(full(want)))) {
         // A file this tree does not know about is in the way. Left where it is; the
@@ -324,7 +338,7 @@ export async function settle(space: SpaceState, how: Settling): Promise<EntryRow
         continue
       }
       await how.disk.mkdir(full(folderOf(want)))
-      await how.disk.move(full(entry.local_path), full(want), kind)
+      if (!(await moves(entry.local_path, want, kind))) continue
       carry(space, entry, want, moved)
       progress += 1
       if (entry.kind === 'folder') arriving.delete(space.key(want))

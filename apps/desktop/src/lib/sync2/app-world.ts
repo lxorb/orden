@@ -12,6 +12,7 @@ import { fileBytes, sha256, toBase64 } from '../bytes'
 import { deviceName } from '../device'
 import { links } from '../link-index.svelte'
 import { onDisk } from '../on-disk'
+import { holderOf } from '../pages/held'
 import { scanSpace } from '../space-watch'
 import { invoke, isDesktop, joinPath, platform } from '../tauri'
 import { classifier } from './classify'
@@ -60,7 +61,12 @@ function diskOf(telling: Telling): Disk {
       telling.touching(from)
       telling.touching(to)
       await invoke('create_folder', { path: parentOf(to) }).catch(() => undefined)
-      await invoke('rename_note', { from, to })
+      // A file the account holds as a page note's paper, `X.pages.pdf` beside
+      // `X.pages`: a PDF another device turned into that note. The crate refuses a PDF
+      // put where a page note takes it for its paper unless it is held there on
+      // purpose, and this move only completes a pairing the account already has.
+      const hold = kind === 'file' && holderOf(to) !== null
+      await invoke('rename_note', { from, to, ...(hold ? { hold } : {}) })
       await telling.moved(from, to, kind)
     },
     async remove(path, kind) {

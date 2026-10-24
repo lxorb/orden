@@ -6,14 +6,26 @@ import { describe, expect, test, vi } from 'vitest'
  *  never deleted in the browser. */
 
 const notes = new Map([['/s/Plan.md', '# Plan\n']])
+const renames: Record<string, unknown>[] = []
 
 vi.mock('../tauri', () => ({
   isNative: false,
   isDesktop: false,
   platform: () => 'web',
   joinPath: (dir: string, name: string) => `${dir}/${name}`,
-  invoke: (command: string, args?: { path?: string }) => {
+  invoke: (command: string, args?: { path?: string; from?: string; to?: string }) => {
     const path = args?.path ?? ''
+    if (command === 'create_folder') return Promise.resolve()
+    if (command === 'rename_note') {
+      // The crate's guard: a PDF going to a page note's paper name is refused unless
+      // it is held there on purpose; see `rename_note` in notes.rs.
+      renames.push({ ...args })
+      const holder = args?.to?.replace(/\.pdf$/i, '')
+      const held = (args as { hold?: boolean }).hold === true
+      if (args?.to?.endsWith('.pages.pdf') && holder && notes.has(holder) && !held)
+        return Promise.reject(new Error(`${holder} is already there`))
+      return Promise.resolve()
+    }
     if (command === 'file_stamp') return Promise.resolve(null)
     if (command === 'path_exists') return Promise.resolve(notes.has(path))
     if (command === 'read_note' && notes.has(path)) return Promise.resolve(notes.get(path))
@@ -34,5 +46,35 @@ describe("the browser's disk, as the v2 engine sees it", () => {
 
     expect(await disk.exists('/s/Plan.md')).toBe(true)
     expect(await disk.exists('/s/Gone.md')).toBe(false)
+  })
+})
+
+describe('a PDF another device turned into its page note', () => {
+  // On the other device the PDF beside `X.pages` went to `X.pages.pdf`, the paper
+  // that note holds. The move came here without saying so, the crate refused it as a
+  // PDF put where a page note takes it for its paper, and every pass stopped there.
+  test('moves to the paper of the page note beside it', async () => {
+    notes.set('/s/X.pages', '{}')
+    const telling = {
+      touching: () => undefined,
+      moved: () => Promise.resolve(),
+    } as unknown as Parameters<typeof appWorld>[1]
+    const { disk } = appWorld(() => null, telling)
+
+    await disk.move('/s/X.pdf', '/s/X.pages.pdf', 'file')
+
+    expect(renames.at(-1)).toEqual({ from: '/s/X.pdf', to: '/s/X.pages.pdf', hold: true })
+  })
+
+  test('holds nothing for any other move', async () => {
+    const telling = {
+      touching: () => undefined,
+      moved: () => Promise.resolve(),
+    } as unknown as Parameters<typeof appWorld>[1]
+    const { disk } = appWorld(() => null, telling)
+
+    await disk.move('/s/Plan.md', '/s/Done.md', 'file')
+
+    expect(renames.at(-1)).toEqual({ from: '/s/Plan.md', to: '/s/Done.md' })
   })
 })
