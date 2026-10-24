@@ -32,6 +32,7 @@ import { insideOnly } from '../automation/inside'
 import { key } from '../i18n.svelte'
 import { log } from '../log'
 import { onDisk } from '../on-disk'
+import { holderOf, pairOf, paperOf } from '../pages/held'
 import { joinPath } from '../tauri'
 import { toBase64 } from '../bytes'
 import { workspace } from '../workspace.svelte'
@@ -159,11 +160,26 @@ async function restampedOnDisk(
     const stamped = restamped(plan, taken, target.folder)
     const files = judged(stamped.files)
 
-    const asking = [...new Set(files.map((file) => file.path))].filter((path) => !there.has(path))
+    // The other half of a page note's pair too: a PDF landing beside a page note there
+    // becomes its paper, and a page note beside a PDF takes it for its own. One that
+    // comes with the import is not asked about, since that pair is meant.
+    const coming = new Set(files.map((file) => nameKey(file.path)))
+    const partner = (path: string) => {
+      const other = pairOf(path)
+      return other !== null && !coming.has(nameKey(other)) ? other : null
+    }
+    const asked = files.flatMap((file) => {
+      const other = partner(file.path)
+      return other === null ? [file.path] : [file.path, other]
+    })
+    const asking = [...new Set(asked)].filter((path) => !there.has(path))
     const answers = await Promise.all(asking.map((path) => onDisk(joinPath(target.root, path))))
     asking.forEach((path, at) => there.set(path, answers[at] === true))
 
-    const held = files.filter((file) => there.get(file.path))
+    const held = files.filter((file) => {
+      const other = partner(file.path)
+      return there.get(file.path) === true || (other !== null && there.get(other) === true)
+    })
     if (!held.length) return { files, stepped: stamped.stepped }
     for (const file of held) taken.add(nameKey(file.path))
   }
@@ -202,21 +218,47 @@ export function restamped(
   // Keyed on the way in, because two names that differ only in case are one name on
   // Windows and on a Mac, and two that differ only in how an accent is composed are
   // one name on a Mac.
-  const held = new Set([...taken].map(nameKey))
+  const there = new Set([...taken].map(nameKey))
+  const held = new Set(there)
   const moved = new Map<string, string>()
-  const placed: { file: Planned; was: string; now: string }[] = []
+  const placed = new Map<Planned, string>()
 
-  for (const file of plan.files) {
-    const wanted = under ? `${under}/${file.path}` : file.path
-    const free = freePath(wanted, (candidate) => held.has(nameKey(candidate)))
+  // A page note `X.pages` holds `X.pages.pdf` beside it as its paper, so a name whose
+  // other half is already there is taken as well: landed, the PDF was hidden in that
+  // note and trashed with it, or the note took the PDF for its own. Only what was
+  // there counts, since a note and its paper that come with the import are a pair.
+  const clashes = (candidate: string) => {
+    const other = pairOf(candidate)
+    return held.has(nameKey(candidate)) || (other !== null && there.has(nameKey(other)))
+  }
+  // And that pair keeps together: a paper whose note comes with it is placed after the
+  // note, under its name, wherever the note stepped.
+  const coming = new Set(plan.files.map((file) => nameKey(file.path)))
+  const following = (file: Planned) => {
+    const holder = holderOf(file.path)
+    return holder !== null && coming.has(nameKey(holder))
+  }
+  const landedAt = new Map<string, string>()
+
+  for (const file of [
+    ...plan.files.filter((one) => !following(one)),
+    ...plan.files.filter(following),
+  ]) {
+    const asked = under ? `${under}/${file.path}` : file.path
+    const holder = holderOf(file.path)
+    const note = holder === null ? undefined : landedAt.get(nameKey(holder))
+    const free = freePath(note === undefined ? asked : paperOf(note), clashes)
     held.add(nameKey(free))
+    landedAt.set(nameKey(file.path), free)
 
-    if (free !== wanted) moved.set(file.path, under ? free.slice(under.length + 1) : free)
-    placed.push({ file, was: file.path, now: free })
+    if (free !== asked) moved.set(file.path, under ? free.slice(under.length + 1) : free)
+    placed.set(file, free)
   }
 
   const paths = plan.files.map((file) => file.path)
-  const files = placed.map(({ file, was, now }) => {
+  const files = plan.files.map((file) => {
+    const was = file.path
+    const now = placed.get(file) ?? was
     if (file.kind === 'file') {
       // A canvas's cards follow the same way, since they name the import's files too.
       const bytes = moved.size && isCanvas(was) ? canvasFollowed(file.bytes, moved) : file.bytes

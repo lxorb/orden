@@ -386,6 +386,43 @@ describe('an import into a space that already holds an earlier copy', () => {
   })
 })
 
+describe('a page note and its paper', () => {
+  // A page note `X.pages` holds `X.pages.pdf` beside it as its paper: hidden from the
+  // file list, and trashed with the note. Either landing beside the other paired them.
+  test('a PDF named as a page note’s paper steps aside from the note already there', () => {
+    const stamped = restamped(planOf([file('Report.pages.pdf')]), new Set(['Report.pages']), '')
+
+    expect(stamped.files[0]?.path).toBe('Report.pages 2.pdf')
+    expect(stamped.stepped).toBe(1)
+  })
+
+  test('a page note steps aside from a PDF already there under its paper’s name', () => {
+    const stamped = restamped(planOf([file('Report.pages')]), new Set(['report.pages.pdf']), '')
+
+    expect(stamped.files[0]?.path).toBe('Report 2.pages')
+  })
+
+  test('a note and its paper that come together stay together', () => {
+    const stamped = restamped(
+      planOf([file('Report.pages.pdf'), file('Report.pages')]),
+      new Set(['Report.pages']),
+      '',
+    )
+
+    expect(stamped.files.map((one) => one.path)).toEqual(['Report 2.pages.pdf', 'Report 2.pages'])
+  })
+
+  test('a PDF steps aside from a page note the file list does not show', async () => {
+    onDisk.add('/Other/Report.pages')
+    const landed = await applyImport(planOf([file('Report.pages.pdf')]), {
+      root: '/Other',
+      folder: '',
+    })
+
+    expect(landed.paths).toEqual(['/Other/Report.pages 2.pdf'])
+  })
+})
+
 /** The write site judges what it is about to write, whatever the reader handed
  *  it. Every format reader puts each part of a name through `safeName`, so a path
  *  that climbs out of the space means a reader forwarded a zip entry's own name -

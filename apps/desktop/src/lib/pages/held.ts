@@ -26,6 +26,14 @@ export function holderOf(path: string): string | null {
   return /\.pages\.pdf$/i.test(path) ? path.slice(0, -'.pdf'.length) : null
 }
 
+/** The other half of the pair a path would make: the paper of a page note, or the page
+ *  note of a paper, or null for a path that is neither. A file landing where its other
+ *  half already is pairs with it, and the one that was there is hidden in the note or
+ *  trashed with it, so whatever makes a file asks after this name as well as its own. */
+export function pairOf(path: string): string | null {
+  return holderOf(path) ?? (/\.pages$/i.test(path) ? paperOf(path) : null)
+}
+
 /** Where the paper a page names may be, in the order to try them.
  *
  *  The note's own paper first. A page note made from a PDF names that paper on
