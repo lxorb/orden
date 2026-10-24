@@ -84,7 +84,8 @@ done
 [ "$status" = 0 ] && [ -z "$mapped" ] && { echo "::error::no window mapped under X11 in 60 s"; status=1; }
 if [ "$status" = 0 ]; then
   echo "the window mapped under X11:"
-  xwininfo -root -tree | grep -iE 'orden|nib|read me' | head
+  # Said, not checked: a window that goes while the tree is walked ends the walk.
+  xwininfo -root -tree 2>/dev/null | grep -iE 'orden|nib|read me' | head || true
   # Up for a while, and still up after it.
   sleep 10
   kill -0 "$app" 2>/dev/null || { echo "::error::Orden ended after its window mapped"; status=1; }
