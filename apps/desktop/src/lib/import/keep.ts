@@ -17,7 +17,7 @@
  *  and Keep would have thrown them away within the week; importing them would be
  *  the one act of this whole feature that nobody asked for. The count is said. */
 
-import { asWords } from '@nib/markdown/words'
+import { asWords, OPENS_MARKUP } from '@nib/markdown/words'
 
 import { key } from '../i18n.svelte'
 
@@ -231,12 +231,21 @@ function linksOf(said: unknown, text: string): string[] {
     if (!/^[a-z][a-z0-9+.-]*:[^\s<>]+$/i.test(url) || text.includes(url)) continue
 
     const title = typeof card.title === 'string' ? card.title.replace(/\s+/g, ' ').trim() : ''
-    const shown = asWords(title.replace(/[\\[\]]/g, (one) => `\\${one}`))
+    // A bracket and a backslash are escaped so the title stays the link's words,
+    // except a run of backslashes in front of a tag, which `asWords` doubles itself
+    // and which would otherwise be doubled twice.
+    const shown = asWords(
+      title.replace(LINK_WORDS, (_, run: string | undefined, one: string) => run ?? `\\${one}`),
+    )
     links.push(shown ? `- [${shown}](<${url}>)` : `- <${url}>`)
   }
 
   return links
 }
+
+/** What a link's words escape: a backslash or a bracket, or a run of backslashes in
+ *  front of a tag, which is left for `asWords`. */
+const LINK_WORDS = new RegExp(`(\\\\+(?=${OPENS_MARKUP.source}))|([\\\\[\\]])`, 'g')
 
 /** A file's path as a link's target: the characters a target cannot hold as
  *  themselves encoded, the way the import's own link rewriting writes them. */

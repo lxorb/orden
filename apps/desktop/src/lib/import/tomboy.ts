@@ -292,10 +292,17 @@ function marked(text: string, mark: string): string {
 }
 
 /** Words as they were before `asWords`, for inside code, which reads no markup
- *  and would show the backslash. One is taken off each bracket it escaped. */
+ *  and would show the backslash. `asWords` writes a bracket's own backslash in
+ *  front of it and doubles the run of the words' backslashes before that, so the
+ *  run in front of a bracket it escaped is always odd, and halving what is left
+ *  once its own is taken off gives back what the words had. */
 function unescaped(words: string): string {
-  return words.replace(new RegExp(`\\\\${OPENS_MARKUP.source}`, 'g'), '<')
+  return words.replace(ESCAPED_OPENING, (_, run: string) => `${run.slice(run.length / 2)}<`)
 }
+
+/** A bracket `asWords` escaped, with the doubled backslashes in front of it: the
+ *  whole run, never the end of one. */
+const ESCAPED_OPENING = new RegExp(`(?<!\\\\)((?:\\\\\\\\)*)\\\\${OPENS_MARKUP.source}`, 'g')
 
 /** Words as inline code, fenced with more backticks than they hold in a row. */
 function code(words: string): string {
