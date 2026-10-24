@@ -18,7 +18,7 @@ import { MathWidget, RENDERED_LANGUAGES } from './render'
 import { emojiFor } from '../emoji'
 import { HEADING_LEVEL } from '../headings'
 import { fenceCaption, fenceCode, fenceLanguage } from '../fence'
-import { hrefOf, linkTitle } from '../links'
+import { bareTarget, hrefOf, linkTitle } from '../links'
 import { enclosingNamed } from '../nodes'
 import { tagTitle } from '../tag-press'
 import { calloutOf } from '@nib/markdown/callouts'
@@ -239,8 +239,13 @@ class Decorator {
       case 'URL':
         if (concealable(node)) this.conceal(node.from, node.to, revealed(this.state, node))
         // A bare address, or one between the `<` `>` of an autolink: shown as
-        // itself, and it is the link.
-        else this.linkText(node.from, node.to, this.state.doc.sliceString(node.from, node.to))
+        // itself, and it is the link. A bare one is followed without its escapes,
+        // as the reading view follows it; see `bareTarget` in links.ts.
+        else {
+          const written = this.state.doc.sliceString(node.from, node.to)
+          const bare = node.parent?.name !== 'Autolink'
+          this.linkText(node.from, node.to, bare ? bareTarget(written) : written)
+        }
         return true
       case 'Highlight':
         this.highlight(node)
