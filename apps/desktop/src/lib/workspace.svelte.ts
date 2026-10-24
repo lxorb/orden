@@ -15,7 +15,6 @@ import { openerFor, sharedKind } from './openers'
 import { links, type Retargeting } from './link-index.svelte'
 import { onDisk } from './on-disk'
 import { noteId } from './note-id'
-import { onDisk } from './on-disk'
 import { insideOnly } from './automation/inside'
 import {
   askCase,
