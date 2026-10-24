@@ -33,6 +33,9 @@ vi.mock('../workspace.svelte', () => ({
   },
 }))
 
+// Nothing here writes; what a space shared to be read refuses is acts.test.ts's.
+vi.mock('../sharing.svelte', () => ({ canWriteAt: () => true }))
+
 const { noteFor, relativeIn } = await import('./space')
 
 /** The error a verb refused with, so its words can be read. */

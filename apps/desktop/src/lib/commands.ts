@@ -79,7 +79,7 @@ import { spacePicker } from './space-picker.svelte'
 import { askQuickly } from './ai/quick-door'
 import { switchableAccounts, switchAccount } from './ai/switching'
 import { toggleScratchpad } from './scratchpad/is.svelte'
-import { canPublish, canShare, canShareItem, shareThisFile } from './sharing.svelte'
+import { canPublish, canShare, canShareItem, canWriteAt, shareThisFile } from './sharing.svelte'
 import { archiveEntry, DIVIDER } from './menu.svelte'
 import { updates } from './updates.svelte'
 import { modes } from './modes.svelte'
@@ -1090,6 +1090,11 @@ export function appCommands(view?: EditorView): Command[] {
   const imported = importCommand()
 
   const unsaved = workspace.active && isUnsaved(workspace.active.note) ? workspace.active : null
+  // The rows below that make a file make it in the space in front, and one shared with
+  // this account to be read takes none: the copy here would stop being the space's, and
+  // the sync refuses it on every pass. The file list's menu offers nothing there either.
+  const space = workspace.activeSpace
+  const readOnly = space ? !canWriteAt(space.root) : false
 
   return without([
     // Only for a tab with no file, which is the one thing Save still means: where it
@@ -1126,18 +1131,31 @@ export function appCommands(view?: EditorView): Command[] {
     {
       id: 'new-unique',
       label: t('New unique note'),
+      disabled: readOnly,
       run: () => void workspace.createUniqueNote(settings.noteIdFormat),
     },
-    { id: 'new-canvas', label: t('New canvas'), run: () => void workspace.createCanvas() },
-    { id: 'new-pages', label: t('New page note'), run: () => void workspace.createPages() },
+    {
+      id: 'new-canvas',
+      label: t('New canvas'),
+      disabled: readOnly,
+      run: () => void workspace.createCanvas(),
+    },
+    {
+      id: 'new-pages',
+      label: t('New page note'),
+      disabled: readOnly,
+      run: () => void workspace.createPages(),
+    },
     {
       id: 'new-database',
       label: t('New database'),
+      disabled: readOnly,
       run: () => void import('./views/new-database').then((one) => one.createDatabase()),
     },
     {
       id: 'new-from-template',
       label: t('New note from template'),
+      disabled: readOnly,
       run: () => void import('./views/templates').then((one) => one.pickTemplate()),
     },
     ...(viewport.touch
@@ -1150,6 +1168,7 @@ export function appCommands(view?: EditorView): Command[] {
             // web-tab/shortcut.ts and docs/web-tabs.md.
             id: 'new-web-note',
             label: t('New web note'),
+            disabled: readOnly,
             run: () => void workspace.createWebsite(),
           },
           {

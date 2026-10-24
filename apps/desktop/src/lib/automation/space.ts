@@ -5,6 +5,7 @@
  *  place for both roads in. See inside.ts, which is the half that judges the path
  *  without knowing anything about spaces. */
 
+import { canWriteAt } from '../sharing.svelte'
 import { insideSpace, withinSpace } from '../space-paths'
 import type { Space } from '../workspace.svelte'
 import { workspace } from '../workspace.svelte'
@@ -47,6 +48,18 @@ export async function spaceFor(args: Said): Promise<Space> {
   return found
 }
 
+/** The space a verb is about, for a verb that writes in it: refused where the space
+ *  is shared with this account to be read. The copy here would stop being the
+ *  space's, and the sync refuses the change on every pass; somebody at the keyboard
+ *  is offered nothing that writes there, and a link and the command line can do no
+ *  more than they could. */
+export async function spaceToWrite(args: Said): Promise<Space> {
+  const space = await spaceFor(args)
+  if (!canWriteAt(space.root)) throw new Error(`${space.name} is shared with you to read`)
+
+  return space
+}
+
 /** A path the caller named, as the space speaks of it. Throws for a path that is
  *  not inside the space, which is the one thing a caller may not ask for. */
 export function relativeIn(args: Said, name = 'path'): string {
@@ -73,9 +86,10 @@ export function insidePath(asked: string): string {
  *  words` and `nib outline` answer about the thing in front of the reader.
  *
  *  Throws when the note is not there, because every caller of this is about to
- *  read or count its words and there is nothing honest to answer with. */
-export async function noteFor(args: Said, name = 'path'): Promise<Note> {
-  const space = await spaceFor(args)
+ *  read or count its words and there is nothing honest to answer with. `writing`
+ *  is for a caller about to change it, which a space shared to be read refuses. */
+export async function noteFor(args: Said, name = 'path', writing = false): Promise<Note> {
+  const space = await (writing ? spaceToWrite : spaceFor)(args)
 
   if (said(args, name) === null) {
     const open = workspace.active
