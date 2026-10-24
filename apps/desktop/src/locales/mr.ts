@@ -2579,8 +2579,6 @@ export const mr: Dictionary = {
   'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
     'अरबी, हिब्रू आणि अशा इतर लिपींसाठी नोंदी उजवीकडून डावीकडे लिहिते.',
   'Underlines misspelled words as you write.': 'तुम्ही लिहिताना चुकीच्या शब्दांना अधोरेखित करते.',
-  'The dictionary spelling is checked against; Match the system uses your system’s language.':
-    'शुद्धलेखन ज्या शब्दकोशाशी तपासले जाते; सिस्टमप्रमाणे तुमच्या सिस्टमची भाषा वापरते.',
   'The version of Orden that is running; press to copy it.':
     'चालू असलेली Orden ची आवृत्ती; कॉपी करण्यासाठी दाबा.',
   'One of this theme’s own settings, offered by its author.':
@@ -2606,4 +2604,8 @@ export const mr: Dictionary = {
     'तुमच्याबद्दलचे काही शब्द जे इतरांना तुमच्या प्रोफाइलवर दिसतात.',
   'What you are up to, shown to the others beside your name until it clears.':
     'तुम्ही सध्या काय करत आहात, ते हटेपर्यंत इतरांना तुमच्या नावाशेजारी दिसते.',
+  'Words are checked against this dictionary as well as every other one that is on.':
+    'शब्द या शब्दकोशाशी आणि चालू असलेल्या इतर प्रत्येक शब्दकोशाशी तपासले जातात.',
+  'Words are checked in the languages your system or browser is set to.':
+    'तुमच्या सिस्टम किंवा ब्राउझरमध्ये सेट केलेल्या भाषांमध्ये शब्द तपासले जातात.',
 }

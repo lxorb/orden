@@ -2578,8 +2578,6 @@ export const ps: Dictionary = {
     'یادښتونه له ښي څخه کيڼ ته لیکي، د عربي، عبري او ورته لیکدودونو لپاره.',
   'Underlines misspelled words as you write.':
     'د لیکلو پر مهال د غلط لیکل شوو ټکو لاندې کرښه کاږي.',
-  'The dictionary spelling is checked against; Match the system uses your system’s language.':
-    'هغه قاموس چې املا ورسره کتل کېږي؛ “د غونډال سره” ستاسو د غونډال ژبه کاروي.',
   'The version of Orden that is running; press to copy it.':
     'د Orden روانه نسخه؛ د کاپي لپاره یې کېکاږئ.',
   'One of this theme’s own settings, offered by its author.':
@@ -2605,4 +2603,8 @@ export const ps: Dictionary = {
     'ستاسو په اړه یو څو کلمې چې نور یې ستاسو په پېژندپاڼه کې ویني.',
   'What you are up to, shown to the others beside your name until it clears.':
     'هغه څه چې تاسو یې اوس کوئ، نورو ته ستاسو د نوم تر څنګ ښودل کېږي تر هغه چې لرې شي.',
+  'Words are checked against this dictionary as well as every other one that is on.':
+    'ټکي له دې قاموس او هر بل ولاړ قاموس سره کتل کېږي.',
+  'Words are checked in the languages your system or browser is set to.':
+    'ټکي په هغو ژبو کتل کېږي چې ستاسو غونډال یا کوټګر پرې ټاکل شوی دی.',
 }

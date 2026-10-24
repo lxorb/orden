@@ -2561,8 +2561,6 @@ export const my: Dictionary = {
     'အာရဗီ၊ ဟီဘရူးနှင့် ထိုကဲ့သို့ စာများအတွက် မှတ်စုများကို ညာမှ ဘယ်သို့ ရေးသည်။',
   'Underlines misspelled words as you write.':
     'သင်ရေးနေစဉ် စာလုံးပေါင်းမှားသော စကားလုံးများကို မျဉ်းသားသည်။',
-  'The dictionary spelling is checked against; Match the system uses your system’s language.':
-    'စာလုံးပေါင်းကို စစ်ဆေးမည့် အဘိဓာန်ဖြစ်ပြီး စနစ်အတိုင်း က သင့်စနစ်၏ ဘာသာစကားကို သုံးသည်။',
   'The version of Orden that is running; press to copy it.':
     'လက်ရှိ အလုပ်လုပ်နေသော Orden ဗားရှင်းဖြစ်ပြီး ကူးယူရန် နှိပ်ပါ။',
   'One of this theme’s own settings, offered by its author.':
@@ -2589,4 +2587,8 @@ export const my: Dictionary = {
     'အခြားသူများက သင့်ပရိုဖိုင်တွင် မြင်ရသော သင့်အကြောင်း စကားအနည်းငယ်။',
   'What you are up to, shown to the others beside your name until it clears.':
     'သင် လုပ်နေသည့်အရာ၊ ၎င်းကို ဖယ်ရှားသည်အထိ သင့်အမည်ဘေးတွင် အခြားသူများအား ပြသည်။',
+  'Words are checked against this dictionary as well as every other one that is on.':
+    'စကားလုံးများကို ဤအဘိဓာန်နှင့် ဖွင့်ထားသော အခြားအဘိဓာန်တိုင်းဖြင့် စစ်ဆေးသည်။',
+  'Words are checked in the languages your system or browser is set to.':
+    'သင့်စနစ် သို့မဟုတ် ဘရောက်ဇာတွင် သတ်မှတ်ထားသော ဘာသာစကားများဖြင့် စကားလုံးများကို စစ်ဆေးသည်။',
 }

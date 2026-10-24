@@ -2574,8 +2574,6 @@ export const bn: Dictionary = {
   'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
     'আরবি, হিব্রু ও এমন অন্যান্য লিপির জন্য নোট ডান থেকে বাঁয়ে লেখে।',
   'Underlines misspelled words as you write.': 'লেখার সময় ভুল বানানের শব্দের নিচে দাগ দেয়।',
-  'The dictionary spelling is checked against; Match the system uses your system’s language.':
-    'যে অভিধানে বানান মেলানো হয়; সিস্টেম অনুযায়ী আপনার সিস্টেমের ভাষা ব্যবহার করে।',
   'The version of Orden that is running; press to copy it.':
     'চালু থাকা Orden-এর ভার্সন; কপি করতে চাপুন।',
   'One of this theme’s own settings, offered by its author.':
@@ -2601,4 +2599,8 @@ export const bn: Dictionary = {
     'আপনার সম্পর্কে কয়েকটি কথা, যা অন্যরা আপনার প্রোফাইলে দেখে।',
   'What you are up to, shown to the others beside your name until it clears.':
     'আপনি এখন কী করছেন, মুছে না যাওয়া পর্যন্ত আপনার নামের পাশে অন্যদের দেখানো হয়।',
+  'Words are checked against this dictionary as well as every other one that is on.':
+    'শব্দগুলো এই অভিধানের সঙ্গে এবং চালু থাকা অন্য সব অভিধানের সঙ্গে মেলানো হয়।',
+  'Words are checked in the languages your system or browser is set to.':
+    'আপনার সিস্টেম বা ব্রাউজারে যে ভাষাগুলো সেট করা আছে, সেগুলোতে শব্দ মেলানো হয়।',
 }

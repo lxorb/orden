@@ -2668,8 +2668,6 @@ export const ru: Dictionary = {
   'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
     'Пишет заметки справа налево, для арабского, иврита и других подобных письменностей.',
   'Underlines misspelled words as you write.': 'Подчёркивает слова с ошибками, пока вы пишете.',
-  'The dictionary spelling is checked against; Match the system uses your system’s language.':
-    'Словарь для проверки орфографии; Как в системе использует язык вашей системы.',
   'The version of Orden that is running; press to copy it.':
     'Запущенная версия Orden; нажмите, чтобы скопировать.',
   'One of this theme’s own settings, offered by its author.':
@@ -2698,4 +2696,8 @@ export const ru: Dictionary = {
     'Несколько слов о вас, которые другие видят в вашем профиле.',
   'What you are up to, shown to the others beside your name until it clears.':
     'То, чем вы сейчас заняты; видно другим рядом с вашим именем, пока не снимется.',
+  'Words are checked against this dictionary as well as every other one that is on.':
+    'Слова проверяются по этому словарю и по всем остальным включённым.',
+  'Words are checked in the languages your system or browser is set to.':
+    'Слова проверяются на языках, заданных в вашей системе или браузере.',
 }

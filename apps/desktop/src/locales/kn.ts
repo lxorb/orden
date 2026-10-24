@@ -2605,8 +2605,6 @@ export const kn: Dictionary = {
     'ಅರೇಬಿಕ್, ಹೀಬ್ರೂ ಮತ್ತು ಇತರ ಅಂತಹ ಲಿಪಿಗಳಿಗಾಗಿ ಟಿಪ್ಪಣಿಗಳನ್ನು ಬಲದಿಂದ ಎಡಕ್ಕೆ ಬರೆಯುತ್ತದೆ.',
   'Underlines misspelled words as you write.':
     'ನೀವು ಬರೆಯುತ್ತಿರುವಾಗ ತಪ್ಪು ಕಾಗುಣಿತದ ಪದಗಳ ಕೆಳಗೆ ಗೆರೆ ಎಳೆಯುತ್ತದೆ.',
-  'The dictionary spelling is checked against; Match the system uses your system’s language.':
-    'ಕಾಗುಣಿತವನ್ನು ಪರಿಶೀಲಿಸುವ ನಿಘಂಟು; ಸಿಸ್ಟಂ ಪ್ರಕಾರ ನಿಮ್ಮ ಸಿಸ್ಟಂನ ಭಾಷೆಯನ್ನು ಬಳಸುತ್ತದೆ.',
   'The version of Orden that is running; press to copy it.':
     'ಚಾಲನೆಯಲ್ಲಿರುವ Orden ಆವೃತ್ತಿ; ನಕಲಿಸಲು ಒತ್ತಿ.',
   'One of this theme’s own settings, offered by its author.':
@@ -2634,4 +2632,8 @@ export const kn: Dictionary = {
     'ನಿಮ್ಮ ಪ್ರೊಫೈಲ್‌ನಲ್ಲಿ ಇತರರು ನೋಡುವ ನಿಮ್ಮ ಬಗ್ಗೆ ಕೆಲವು ಪದಗಳು.',
   'What you are up to, shown to the others beside your name until it clears.':
     'ನೀವು ಏನು ಮಾಡುತ್ತಿದ್ದೀರಿ ಎಂಬುದು, ಅದು ತೆರವಾಗುವವರೆಗೆ ನಿಮ್ಮ ಹೆಸರಿನ ಪಕ್ಕದಲ್ಲಿ ಇತರರಿಗೆ ತೋರಿಸಲಾಗುತ್ತದೆ.',
+  'Words are checked against this dictionary as well as every other one that is on.':
+    'ಪದಗಳನ್ನು ಈ ನಿಘಂಟು ಮತ್ತು ಆನ್ ಆಗಿರುವ ಇತರ ಎಲ್ಲಾ ನಿಘಂಟುಗಳೊಂದಿಗೆ ಪರಿಶೀಲಿಸಲಾಗುತ್ತದೆ.',
+  'Words are checked in the languages your system or browser is set to.':
+    'ನಿಮ್ಮ ಸಿಸ್ಟಂ ಅಥವಾ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ಹೊಂದಿಸಿರುವ ಭಾಷೆಗಳಲ್ಲಿ ಪದಗಳನ್ನು ಪರಿಶೀಲಿಸಲಾಗುತ್ತದೆ.',
 }

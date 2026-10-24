@@ -2584,8 +2584,6 @@ export const pa: Dictionary = {
     'ਅਰਬੀ, ਹਿਬਰੂ ਅਤੇ ਹੋਰ ਅਜਿਹੀਆਂ ਲਿਪੀਆਂ ਲਈ ਨੋਟਾਂ ਸੱਜੇ ਤੋਂ ਖੱਬੇ ਲਿਖਦਾ ਹੈ।',
   'Underlines misspelled words as you write.':
     'ਲਿਖਦੇ ਸਮੇਂ ਗਲਤ ਸ਼ਬਦ-ਜੋੜ ਵਾਲੇ ਸ਼ਬਦਾਂ ਹੇਠ ਲਕੀਰ ਲਾਉਂਦਾ ਹੈ।',
-  'The dictionary spelling is checked against; Match the system uses your system’s language.':
-    'ਉਹ ਸ਼ਬਦਕੋਸ਼ ਜਿਸ ਨਾਲ ਸ਼ਬਦ-ਜੋੜ ਜਾਂਚੇ ਜਾਂਦੇ ਹਨ, ਸਿਸਟਮ ਮੁਤਾਬਕ ਤੁਹਾਡੇ ਸਿਸਟਮ ਦੀ ਭਾਸ਼ਾ ਵਰਤਦਾ ਹੈ।',
   'The version of Orden that is running; press to copy it.':
     'ਚੱਲ ਰਿਹਾ Orden ਦਾ ਵਰਜਨ, ਕਾਪੀ ਕਰਨ ਲਈ ਦਬਾਓ।',
   'One of this theme’s own settings, offered by its author.':
@@ -2612,4 +2610,8 @@ export const pa: Dictionary = {
     'ਤੁਹਾਡੇ ਬਾਰੇ ਕੁਝ ਸ਼ਬਦ ਜੋ ਦੂਜੇ ਤੁਹਾਡੀ ਪ੍ਰੋਫਾਈਲ ਉੱਤੇ ਵੇਖਦੇ ਹਨ।',
   'What you are up to, shown to the others beside your name until it clears.':
     'ਤੁਸੀਂ ਕੀ ਕਰ ਰਹੇ ਹੋ, ਜੋ ਹਟਣ ਤੱਕ ਦੂਜਿਆਂ ਨੂੰ ਤੁਹਾਡੇ ਨਾਂ ਦੇ ਕੋਲ ਦਿਖਦਾ ਹੈ।',
+  'Words are checked against this dictionary as well as every other one that is on.':
+    'ਸ਼ਬਦ ਇਸ ਸ਼ਬਦਕੋਸ਼ ਅਤੇ ਚਾਲੂ ਹਰ ਹੋਰ ਸ਼ਬਦਕੋਸ਼ ਨਾਲ ਜਾਂਚੇ ਜਾਂਦੇ ਹਨ।',
+  'Words are checked in the languages your system or browser is set to.':
+    'ਸ਼ਬਦ ਉਹਨਾਂ ਭਾਸ਼ਾਵਾਂ ਵਿੱਚ ਜਾਂਚੇ ਜਾਂਦੇ ਹਨ ਜੋ ਤੁਹਾਡੇ ਸਿਸਟਮ ਜਾਂ ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ ਸੈੱਟ ਹਨ।',
 }

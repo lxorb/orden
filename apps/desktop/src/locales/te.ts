@@ -2589,8 +2589,6 @@ export const te: Dictionary = {
     'అరబిక్, హీబ్రూ వంటి లిపుల కోసం నోట్‌లను కుడి నుండి ఎడమకు రాస్తుంది.',
   'Underlines misspelled words as you write.':
     'మీరు రాస్తుండగా తప్పు స్పెల్లింగ్ పదాల కింద గీత గీస్తుంది.',
-  'The dictionary spelling is checked against; Match the system uses your system’s language.':
-    'స్పెల్లింగ్ తనిఖీ చేయబడే నిఘంటువు; సిస్టమ్ ప్రకారం మీ సిస్టమ్ భాషను వాడుతుంది.',
   'The version of Orden that is running; press to copy it.':
     'నడుస్తున్న Orden వెర్షన్; కాపీ చేయడానికి నొక్కండి.',
   'One of this theme’s own settings, offered by its author.':
@@ -2618,4 +2616,8 @@ export const te: Dictionary = {
     'మీ ప్రొఫైల్‌లో ఇతరులు చూసే మీ గురించి కొన్ని మాటలు.',
   'What you are up to, shown to the others beside your name until it clears.':
     'మీరు ఏం చేస్తున్నారో, అది తొలగిపోయే వరకు మీ పేరు పక్కన ఇతరులకు చూపబడుతుంది.',
+  'Words are checked against this dictionary as well as every other one that is on.':
+    'పదాలను ఈ నిఘంటువుతో పాటు ఆన్‌లో ఉన్న ప్రతి ఇతర నిఘంటువుతో తనిఖీ చేస్తారు.',
+  'Words are checked in the languages your system or browser is set to.':
+    'మీ సిస్టమ్ లేదా బ్రౌజర్‌లో సెట్ చేసిన భాషలలో పదాలను తనిఖీ చేస్తారు.',
 }

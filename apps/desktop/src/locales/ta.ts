@@ -2619,8 +2619,6 @@ export const ta: Dictionary = {
     'அரபு, எபிரேயம் போன்ற எழுத்துமுறைகளுக்காக, குறிப்புகளை வலமிருந்து இடமாக எழுதுகிறது.',
   'Underlines misspelled words as you write.':
     'நீங்கள் எழுதும்போது பிழையான சொற்களை அடிக்கோடிடுகிறது.',
-  'The dictionary spelling is checked against; Match the system uses your system’s language.':
-    'எழுத்துப்பிழை சரிபார்க்கப்படும் அகராதி; கணினியின்படி என்பது உங்கள் கணினியின் மொழியைப் பயன்படுத்தும்.',
   'The version of Orden that is running; press to copy it.':
     'இயங்கிக்கொண்டிருக்கும் Orden-இன் பதிப்பு; நகலெடுக்க அழுத்தவும்.',
   'One of this theme’s own settings, offered by its author.':
@@ -2650,4 +2648,8 @@ export const ta: Dictionary = {
     'உங்கள் சுயவிவரத்தில் மற்றவர்கள் காணும், உங்களைப் பற்றிய சில வார்த்தைகள்.',
   'What you are up to, shown to the others beside your name until it clears.':
     'நீங்கள் இப்போது என்ன செய்கிறீர்கள் என்பது; அது நீங்கும் வரை உங்கள் பெயருக்கு அருகில் மற்றவர்களுக்குக் காட்டப்படும்.',
+  'Words are checked against this dictionary as well as every other one that is on.':
+    'சொற்கள் இந்த அகராதியுடனும் ஆன் செய்யப்பட்ட மற்ற எல்லா அகராதிகளுடனும் சரிபார்க்கப்படுகின்றன.',
+  'Words are checked in the languages your system or browser is set to.':
+    'உங்கள் கணினி அல்லது உலாவியில் அமைக்கப்பட்ட மொழிகளில் சொற்கள் சரிபார்க்கப்படுகின்றன.',
 }

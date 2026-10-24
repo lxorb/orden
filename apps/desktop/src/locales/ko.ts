@@ -2538,8 +2538,6 @@ export const ko: Dictionary = {
   'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
     '아랍어, 히브리어 같은 문자를 위해 노트를 오른쪽에서 왼쪽으로 씁니다.',
   'Underlines misspelled words as you write.': '쓰는 동안 철자가 틀린 단어에 밑줄을 긋습니다.',
-  'The dictionary spelling is checked against; Match the system uses your system’s language.':
-    '철자를 검사하는 사전이며, ‘시스템에 맞춤’은 시스템의 언어를 씁니다.',
   'The version of Orden that is running; press to copy it.':
     '실행 중인 Orden의 버전이며, 누르면 복사합니다.',
   'One of this theme’s own settings, offered by its author.':
@@ -2566,4 +2564,8 @@ export const ko: Dictionary = {
     '다른 사람이 프로필에서 보는 나에 대한 몇 마디입니다.',
   'What you are up to, shown to the others beside your name until it clears.':
     '지금 하고 있는 일로, 해제될 때까지 다른 사람에게 이름 옆에 보입니다.',
+  'Words are checked against this dictionary as well as every other one that is on.':
+    '이 사전과 켜져 있는 다른 모든 사전으로 단어를 검사합니다.',
+  'Words are checked in the languages your system or browser is set to.':
+    '시스템이나 브라우저에 설정된 언어로 단어를 검사합니다.',
 }

@@ -2558,8 +2558,6 @@ export const jv: Dictionary = {
     'Nulis cathetan saka tengen ngiwa, kanggo aksara Arab, Ibrani lan sapanunggalane.',
   'Underlines misspelled words as you write.':
     'Menehi garis ngisor tembung sing salah eja nalika sampeyan nulis.',
-  'The dictionary spelling is checked against; Match the system uses your system’s language.':
-    'Kamus kanggo mriksa ejaan; Manut sistem nganggo basa sistem sampeyan.',
   'The version of Orden that is running; press to copy it.':
     'Versi Orden sing lagi mlaku; pencet kanggo nyalin.',
   'One of this theme’s own settings, offered by its author.':
@@ -2587,4 +2585,8 @@ export const jv: Dictionary = {
     'Sawetara tembung babagan sampeyan sing dideleng liyane ing profil sampeyan.',
   'What you are up to, shown to the others beside your name until it clears.':
     'Apa sing lagi sampeyan lakoni, ditampilake marang liyane ing sandhinge jeneng sampeyan nganti ilang.',
+  'Words are checked against this dictionary as well as every other one that is on.':
+    'Tembung dipriksa nganggo bausastra iki lan saben bausastra liya sing urip.',
+  'Words are checked in the languages your system or browser is set to.':
+    'Tembung dipriksa nganggo basa sing disetel ing sistem utawa panjelajah sampeyan.',
 }

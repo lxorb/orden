@@ -2574,8 +2574,6 @@ export const hi: Dictionary = {
     'अरबी, हिब्रू और ऐसी दूसरी लिपियों के लिए नोट दाएँ से बाएँ लिखता है।',
   'Underlines misspelled words as you write.':
     'लिखते समय गलत वर्तनी वाले शब्दों को रेखांकित करता है।',
-  'The dictionary spelling is checked against; Match the system uses your system’s language.':
-    'वह शब्दकोश जिससे वर्तनी जाँची जाती है; सिस्टम के अनुसार आपके सिस्टम की भाषा लेता है।',
   'The version of Orden that is running; press to copy it.':
     'चल रहा Orden संस्करण; कॉपी करने के लिए दबाएँ।',
   'One of this theme’s own settings, offered by its author.':
@@ -2602,4 +2600,8 @@ export const hi: Dictionary = {
     'आपके बारे में कुछ शब्द जो दूसरे आपकी प्रोफ़ाइल पर देखते हैं।',
   'What you are up to, shown to the others beside your name until it clears.':
     'आप क्या कर रहे हैं, जो हटने तक दूसरों को आपके नाम के पास दिखता है।',
+  'Words are checked against this dictionary as well as every other one that is on.':
+    'शब्द इस शब्दकोश से और चालू हर दूसरे शब्दकोश से जाँचे जाते हैं।',
+  'Words are checked in the languages your system or browser is set to.':
+    'शब्द उन भाषाओं में जाँचे जाते हैं जो आपके सिस्टम या ब्राउज़र में सेट हैं।',
 }

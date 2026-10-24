@@ -2569,8 +2569,6 @@ export const id: Dictionary = {
     'Menulis catatan dari kanan ke kiri, untuk aksara Arab, Ibrani, dan sejenisnya.',
   'Underlines misspelled words as you write.':
     'Menggarisbawahi kata yang salah eja saat Anda menulis.',
-  'The dictionary spelling is checked against; Match the system uses your system’s language.':
-    'Kamus untuk memeriksa ejaan; Ikuti sistem memakai bahasa sistem Anda.',
   'The version of Orden that is running; press to copy it.':
     'Versi Orden yang sedang berjalan; tekan untuk menyalinnya.',
   'One of this theme’s own settings, offered by its author.':
@@ -2599,4 +2597,8 @@ export const id: Dictionary = {
     'Beberapa kata tentang Anda yang dilihat orang lain di profil Anda.',
   'What you are up to, shown to the others beside your name until it clears.':
     'Apa yang sedang Anda lakukan, ditampilkan kepada orang lain di samping nama Anda hingga dihapus.',
+  'Words are checked against this dictionary as well as every other one that is on.':
+    'Kata diperiksa dengan kamus ini dan setiap kamus lain yang menyala.',
+  'Words are checked in the languages your system or browser is set to.':
+    'Kata diperiksa dalam bahasa yang diatur di sistem atau peramban Anda.',
 }

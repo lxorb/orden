@@ -2614,8 +2614,6 @@ export const sw: Dictionary = {
     'Huandika madokezo kutoka kulia kwenda kushoto, kwa Kiarabu, Kiebrania na hati nyingine kama hizo.',
   'Underlines misspelled words as you write.':
     'Hupigia mstari maneno yaliyokosewa herufi unapoandika.',
-  'The dictionary spelling is checked against; Match the system uses your system’s language.':
-    'Kamusi ambayo herufi zinakaguliwa nayo; Fuata mfumo hutumia lugha ya mfumo wako.',
   'The version of Orden that is running; press to copy it.':
     'Toleo la Orden linaloendeshwa; bonyeza kulinakili.',
   'One of this theme’s own settings, offered by its author.':
@@ -2644,4 +2642,8 @@ export const sw: Dictionary = {
     'Maneno machache kukuhusu ambayo wengine wanaona kwenye wasifu wako.',
   'What you are up to, shown to the others beside your name until it clears.':
     'Unachofanya sasa, kinachoonyeshwa kwa wengine kando ya jina lako hadi kiondolewe.',
+  'Words are checked against this dictionary as well as every other one that is on.':
+    'Maneno hukaguliwa kwa kamusi hii pamoja na kila kamusi nyingine iliyowashwa.',
+  'Words are checked in the languages your system or browser is set to.':
+    'Maneno hukaguliwa kwa lugha zilizowekwa kwenye mfumo au kivinjari chako.',
 }

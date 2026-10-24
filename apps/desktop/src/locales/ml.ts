@@ -2612,8 +2612,6 @@ export const ml: Dictionary = {
     'അറബി, ഹീബ്രു പോലുള്ള ലിപികൾക്കായി കുറിപ്പുകൾ വലത്തുനിന്ന് ഇടത്തോട്ട് എഴുതുന്നു.',
   'Underlines misspelled words as you write.':
     'നിങ്ങൾ എഴുതുമ്പോൾ തെറ്റായ സ്പെല്ലിംഗുള്ള വാക്കുകൾക്ക് അടിവരയിടുന്നു.',
-  'The dictionary spelling is checked against; Match the system uses your system’s language.':
-    'സ്പെല്ലിംഗ് പരിശോധിക്കുന്ന നിഘണ്ടു; സിസ്റ്റം അനുസരിച്ച് നിങ്ങളുടെ സിസ്റ്റത്തിന്റെ ഭാഷ ഉപയോഗിക്കുന്നു.',
   'The version of Orden that is running; press to copy it.':
     'പ്രവർത്തിക്കുന്ന Orden-ന്റെ പതിപ്പ്; പകർത്താൻ അമർത്തുക.',
   'One of this theme’s own settings, offered by its author.':
@@ -2641,4 +2639,8 @@ export const ml: Dictionary = {
     'നിങ്ങളുടെ പ്രൊഫൈലിൽ മറ്റുള്ളവർ കാണുന്ന, നിങ്ങളെക്കുറിച്ചുള്ള കുറച്ച് വാക്കുകൾ.',
   'What you are up to, shown to the others beside your name until it clears.':
     'നിങ്ങൾ ഇപ്പോൾ ചെയ്യുന്നത്, മാഞ്ഞുപോകുന്നതുവരെ നിങ്ങളുടെ പേരിനരികിൽ മറ്റുള്ളവർക്ക് കാണിക്കുന്നു.',
+  'Words are checked against this dictionary as well as every other one that is on.':
+    'ഈ നിഘണ്ടുവും ഓൺ ആയ മറ്റെല്ലാ നിഘണ്ടുക്കളും ഉപയോഗിച്ച് വാക്കുകൾ പരിശോധിക്കുന്നു.',
+  'Words are checked in the languages your system or browser is set to.':
+    'നിങ്ങളുടെ സിസ്റ്റത്തിലോ ബ്രൗസറിലോ സജ്ജമാക്കിയ ഭാഷകളിൽ വാക്കുകൾ പരിശോധിക്കുന്നു.',
 }

@@ -2631,8 +2631,6 @@ export const de: Dictionary = {
     'Schreibt Notizen von rechts nach links, für Arabisch, Hebräisch und ähnliche Schriften.',
   'Underlines misspelled words as you write.':
     'Unterstreicht falsch geschriebene Wörter beim Schreiben.',
-  'The dictionary spelling is checked against; Match the system uses your system’s language.':
-    'Das Wörterbuch für die Rechtschreibprüfung; „Wie das System“ nimmt die Sprache deines Systems.',
   'The version of Orden that is running; press to copy it.':
     'Die Version von Orden, die gerade läuft; drück darauf, um sie zu kopieren.',
   'One of this theme’s own settings, offered by its author.':
@@ -2661,4 +2659,8 @@ export const de: Dictionary = {
     'Ein paar Worte über dich, die die anderen auf deinem Profil sehen.',
   'What you are up to, shown to the others beside your name until it clears.':
     'Was du gerade machst, den anderen neben deinem Namen angezeigt, bis es entfernt wird.',
+  'Words are checked against this dictionary as well as every other one that is on.':
+    'Wörter werden mit diesem Wörterbuch und mit jedem anderen eingeschalteten geprüft.',
+  'Words are checked in the languages your system or browser is set to.':
+    'Wörter werden in den Sprachen geprüft, auf die dein System oder Browser eingestellt ist.',
 }

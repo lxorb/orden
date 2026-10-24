@@ -2597,8 +2597,6 @@ export const gsw: Dictionary = {
     'Schriibt Notize vo rächts nach links, für Arabisch, Hebräisch und ähnlichi Schrifte.',
   'Underlines misspelled words as you write.':
     'Understricht falsch gschribeni Wörter bim Schriibe.',
-  'The dictionary spelling is checked against; Match the system uses your system’s language.':
-    'S Wörterbuech für d Rächtschriibprüefig; „Wie s System“ nimmt d Sprach vo dim System.',
   'The version of Orden that is running; press to copy it.':
     'D Version vo Orden, wo grad lauft; druck druf, zum si kopiere.',
   'One of this theme’s own settings, offered by its author.':
@@ -2625,4 +2623,8 @@ export const gsw: Dictionary = {
     'Es paar Wörter über dich, wo di andere uf dim Profil gsehnd.',
   'What you are up to, shown to the others beside your name until it clears.':
     'Was du grad machsch, de andere näbe dim Name zeigt, bis es wäggnah wird.',
+  'Words are checked against this dictionary as well as every other one that is on.':
+    'Wörter werded mit dem Wörterbuech und mit jedem andere iigschaltete prüeft.',
+  'Words are checked in the languages your system or browser is set to.':
+    'Wörter werded i de Sprache prüeft, uf die dis System oder din Browser iigstellt isch.',
 }

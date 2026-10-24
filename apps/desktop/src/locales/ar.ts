@@ -2692,8 +2692,6 @@ export const ar: Dictionary = {
   'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
     'يكتب الملاحظات من اليمين إلى اليسار، للعربية والعبرية وغيرهما من الكتابات المماثلة.',
   'Underlines misspelled words as you write.': 'يضع خطًا تحت الكلمات المكتوبة خطأً أثناء الكتابة.',
-  'The dictionary spelling is checked against; Match the system uses your system’s language.':
-    'القاموس الذي يُدقَّق الإملاء وفقه؛ “مطابقة النظام” يستخدم لغة نظامك.',
   'The version of Orden that is running; press to copy it.':
     'إصدار Orden الذي يعمل الآن؛ اضغط لنسخه.',
   'One of this theme’s own settings, offered by its author.':
@@ -2718,4 +2716,8 @@ export const ar: Dictionary = {
     'كلمات قليلة عنك يراها الآخرون في ملفك الشخصي.',
   'What you are up to, shown to the others beside your name until it clears.':
     'ما تفعله الآن، يظهر للآخرين بجانب اسمك حتى يُزال.',
+  'Words are checked against this dictionary as well as every other one that is on.':
+    'تُدقَّق الكلمات وفق هذا القاموس وكل قاموس آخر مُشغَّل.',
+  'Words are checked in the languages your system or browser is set to.':
+    'تُدقَّق الكلمات باللغات التي ضُبط عليها نظامك أو متصفحك.',
 }
