@@ -573,6 +573,9 @@ function divergeOnce(
   // and one insertion there, and the deletion lands on the one copy there is - so it
   // is the note. Without it in hand, both sides' edits are kept.
   let settled: Divergence['settled'] = 'newer'
+  // Neither text merge is the note: the one says something twice, the other writes a
+  // line nobody wrote. Then it is asked rather than either taken.
+  let torn = false
   if (overlaps.length) {
     let kept = merged === undefined ? write(() => 'both') : [merged]
     // Unless the CRDT says it twice as well: two devices that each settled a meeting by
@@ -587,23 +590,24 @@ function divergeOnce(
     }
     // And only where keeping both writes no more lines that none of the three texts
     // has: kept both, a line one side took out and the other wrote in leaves the
-    // other's words run into the next line, and the newer side's version, though it
-    // may say something twice, at least says it in lines someone wrote.
+    // other's words run into the next line. The newer side's version says something
+    // twice, though, which is no better: words said twice are words nobody can tell
+    // from a merge gone wrong (seed 7808 said a word twice this way). So neither is
+    // taken, and the person is asked.
     const lines = new Set([base, local, remote].flatMap((text) => text.split('\n')))
     const novel = (texts: readonly string[]) =>
       Math.max(...texts.map((text) => text.split('\n').filter((line) => !lines.has(line)).length))
-    if (
-      checked.some((text) => repeats([local, remote, ...kept], text)) &&
-      novel(kept) <= novel(checked)
-    ) {
-      checked = kept
-      settled = 'both'
+    if (checked.some((text) => repeats([local, remote, ...kept], text))) {
+      if (novel(kept) <= novel(checked)) {
+        checked = kept
+        settled = 'both'
+      } else torn = true
     }
   }
   const resolution = checked[0] ?? ''
   const broken = brokenBy(local, remote, checked)
 
-  const asks = broken !== null || overlaps.some((overlap) => overlap.asks !== null)
+  const asks = torn || broken !== null || overlaps.some((overlap) => overlap.asks !== null)
   const verdict: Verdict = asks ? 'diverged' : overlaps.length ? 'minor' : 'clean'
 
   return {
