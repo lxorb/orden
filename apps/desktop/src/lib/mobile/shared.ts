@@ -28,7 +28,7 @@
  *  line is a pure answer to "what would this share become", which is the part
  *  worth testing, and the Kotlin side is in Shared.kt. */
 
-import { asWords } from '@nib/markdown/words'
+import { asWords, OPENS_MARKUP } from '@nib/markdown/words'
 
 import { dayOf, noteText } from '../import/meta'
 import { safeName, titleFrom } from '../import/names'
@@ -178,8 +178,15 @@ export function embedFor(item: SharedItem, src: string): string {
   const at = encodeURI(src)
   if (isPicture(item)) return `![](${at})`
 
-  return `[${item.name.replace(/[[\]]/g, '')}](${at})`
+  // A name is whatever the other app called the file, so a tag in it is words, and
+  // a bracket in it is one too rather than the end of the link.
+  return `[${asWords(item.name.replace(LITERAL, (one) => `\\${one}`))}](${at})`
 }
+
+/** What a link's words escape themselves before `asWords`: a bracket, which would
+ *  end them, and a backslash, which would escape what comes after it. Not the run
+ *  of backslashes in front of a tag, which `asWords` doubles itself. */
+const LITERAL = new RegExp(`\\\\(?!\\\\*${OPENS_MARKUP.source})|[[\\]]`, 'g')
 
 /** The whole share as an import: the note it becomes, the notes that arrived as
  *  notes, and the files that go beside them.

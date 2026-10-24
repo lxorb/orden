@@ -1,3 +1,4 @@
+import { renderMarkdown } from '@nib/markdown'
 import { describe, expect, test } from 'vitest'
 import {
   type Arrived,
@@ -157,6 +158,14 @@ describe('the markdown for one thing', () => {
     expect(
       embedFor(item({ name: 'report.pdf', mime: 'application/pdf' }), 'assets/report.pdf'),
     ).toBe('[report.pdf](assets/report.pdf)')
+  })
+
+  test("a file's name is words, its tags and brackets as well", () => {
+    const linked = embedFor(item({ name: '<img src=x>[1].zip' }), 'assets/a.zip')
+    expect(linked).toBe('[\\<img src=x>\\[1\\].zip](assets/a.zip)')
+    expect(renderMarkdown(linked)).toBe(
+      '<p><a href="assets/a.zip">&lt;img src=x&gt;[1].zip</a></p>\n',
+    )
   })
 })
 
