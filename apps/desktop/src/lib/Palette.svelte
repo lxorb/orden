@@ -65,6 +65,7 @@
   import { workspace } from './workspace.svelte'
   import { LAYER } from './motion'
   import { scrollbar } from './scrollbar'
+  import { wholeRows } from './whole-rows'
 
   /* eslint-disable prefer-const -- `open` is bindable, and a $props() pattern cannot be split */
   let {
@@ -656,6 +657,7 @@
       <ul
         bind:this={list}
         use:scrollbar
+        use:wholeRows={results}
         id="nib-palette-list"
         role="listbox"
         aria-label={t('Search notes and commands')}
@@ -819,12 +821,16 @@
     color: var(--muted);
   }
 
+  /* As tall as the layer leaves it, under the one cap `.nib-screen` puts on every
+     layer of its kind, and cut between two rows where it has to be (#775); see
+     whole-rows.ts. It had a cap of its own as well, 46vh, from before there was one
+     rule, and the two of them fell a few pixels apart from the rows. */
   ul {
+    box-sizing: border-box;
     min-height: 0;
     list-style: none;
     margin: 0;
     padding: var(--space-1);
-    max-height: 46vh;
     overflow-y: auto;
   }
 
