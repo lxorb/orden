@@ -37,6 +37,10 @@ export interface Track {
   track: number
   /** The shortest the thumb may be. */
   least: number
+  /** The scroller's own padding at the end, which counts as content to the browser
+   *  and is none to a reader: a list whose rows all show but whose padding runs past
+   *  its cap has nothing left to scroll to (#775). */
+  slack?: number
 }
 
 export interface Thumb {
@@ -49,7 +53,7 @@ export interface Thumb {
  *  the scroller briefly past either end. */
 export function thumbFor(track: Track): Thumb | null {
   const scrolled = track.content - track.visible
-  if (scrolled <= 1 || track.track <= 0) return null
+  if (scrolled - (track.slack ?? 0) <= 1 || track.track <= 0) return null
 
   const size = Math.min(
     track.track,
@@ -123,6 +127,7 @@ export function overlayScrollbar(scroller: HTMLElement, host: HTMLElement): Over
       at: scroller.scrollTop,
       track: visible,
       least: LEAST,
+      slack: parseFloat(getComputedStyle(scroller).paddingBottom) || 0,
     })
 
     if (box.top !== top || box.height !== visible || box.end !== end) {
@@ -154,7 +159,11 @@ export function overlayScrollbar(scroller: HTMLElement, host: HTMLElement): Over
     () => dur(SETTLING),
   )
 
+  // Measured again whenever it comes in: what is under it may have changed without
+  // the scroller changing size - a list filtered under a cap it stays at - and a
+  // bar that lights up has to describe what is there now.
   const light = () => {
+    soon()
     bar.classList.add('is-lit')
     dimming.cancel()
     if (!held) dimming()
