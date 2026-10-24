@@ -1239,12 +1239,14 @@ export function appCommands(view?: EditorView): Command[] {
         ]),
     // Only where there is something to convert, which is a space that was written in
     // an older nib: a row that did nothing would be a row that read as broken. See
-    // workspace.convertWebsites.
+    // workspace.convertWebsites. Greyed in a space shared to be read, which a shortcut
+    // written beside each note would change (B288).
     ...(links.websiteNotes
       ? [
           {
             id: 'convert-website-notes',
             label: t('Convert website notes'),
+            disabled: readOnly,
             run: () => void workspace.convertWebsites(),
           },
         ]

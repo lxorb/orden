@@ -33,6 +33,14 @@ vi.mock('../link-index.svelte', () => ({
   },
 }))
 
+/** The notes in a space shared with this account to be read, which nothing may be
+ *  written in (B288). Empty for every test but the one about them. */
+const readOnly = new Set<string>()
+
+vi.mock('../sharing.svelte', () => ({
+  canWriteAt: (path: string) => !readOnly.has(path),
+}))
+
 const { keepPage, keepNow } = await import('./keep')
 const { SAVE_AT_MOST, SAVE_DELAY } = await import('../backoff')
 const { settleUp, written: landed } = await import('../parting')
@@ -51,6 +59,7 @@ beforeEach(() => {
   keepNow(PATH)
   written.length = 0
   told.length = 0
+  readOnly.clear()
   vi.useFakeTimers()
 })
 
@@ -331,4 +340,25 @@ test('a .webloc is not written for a page that only said its mark', async () => 
   await vi.advanceTimersByTimeAsync(0)
 
   expect(written).toHaveLength(0)
+})
+
+/** A web note in a space shared to be read browses like any other, and the file is
+ *  never told: the copy here would stop being the space's, and the sync refuses it on
+ *  every pass (B288). Where the reading got to is the session's; see `webWalked`. */
+test('a note in a space shared to be read is never written, nor its copy changed', async () => {
+  readOnly.add(PATH)
+  let text = FILE
+  const kept = (url: string, icon: string | null) =>
+    keepPage({ path: PATH, text: () => text, url, icon, wrote: (next) => (text = next) })
+
+  kept('https://svelte.dev/docs/kit', null)
+  kept('https://svelte.dev/docs/kit', 'https://svelte.dev/favicon.png')
+  await vi.advanceTimersByTimeAsync(SAVE_AT_MOST * 2)
+  keepNow(PATH)
+  settleUp()
+  await landed()
+
+  expect(written).toEqual([])
+  expect(told).toEqual([])
+  expect(text).toBe(FILE)
 })

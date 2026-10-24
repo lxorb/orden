@@ -8,6 +8,13 @@ vi.mock('../workspace/write-file', () => ({
   },
 }))
 
+/** A folder in a space shared with this account to be read, which nothing may be
+ *  written in (B288). */
+const READ = '/Theirs'
+vi.mock('../sharing.svelte', () => ({
+  canWriteAt: (path: string) => path !== READ && !path.startsWith(`${READ}/`),
+}))
+
 const { linkWords, siteDropped } = await import('./dropped-site')
 
 const sites = {
@@ -43,4 +50,10 @@ test('a link dropped on the list is a web note there, named by its words or its 
 test('nothing for a link no web tab may open', async () => {
   expect(await siteDropped(sites, '/Space', 'javascript:alert(1)', '')).toBeNull()
   expect(await siteDropped(sites, '/Space', 'file:///C:/a.md', '')).toBeNull()
+})
+
+test('nothing for a link dropped in a space shared to be read', async () => {
+  written.length = 0
+  expect(await siteDropped(sites, `${READ}/Links`, 'https://svelte.dev/docs', '')).toBeNull()
+  expect(written).toEqual([])
 })
