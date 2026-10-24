@@ -35,11 +35,15 @@
   let view: EditorView | null = null
   let empty = $state(true)
   let focused = $state(false)
+  /** Whether anything has been typed since the last write: a focus moving on or the view
+   *  closing writes only what is owed. */
+  let owed = false
 
   function flush() {
     save.cancel()
     const at = anchor()
-    if (!view || !at) return
+    if (!view || !at || !owed) return
+    owed = false
     void describe(path, at, view.state.doc.toString())
   }
   const save = afterQuiet(flush, 400)
@@ -57,6 +61,7 @@
         doc: words,
         onChange: (doc) => {
           empty = doc.length === 0
+          owed = true
           save()
         },
         notes: links.index(path),
