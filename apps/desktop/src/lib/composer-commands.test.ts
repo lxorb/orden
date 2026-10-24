@@ -22,9 +22,26 @@ const workspace = vi.hoisted(() => ({
   activeSpace: null as { id: string; name: string; root: string } | null,
   active: null as { path: string | null; note: { path: string | null; shared: null } } | null,
   notes: [] as { path: string; name: string }[],
+  merged: [] as string[],
+  mergeInto(from: string, into: string) {
+    this.merged.push(`${from} -> ${into}`)
+    return Promise.resolve()
+  },
 }))
 
 vi.mock('./workspace.svelte', () => ({ workspace }))
+
+/** The prompt sheet, which answers with whatever is put in `answer` and keeps the
+ *  ids of the notes it was asked to offer. */
+const asked = vi.hoisted(() => ({ offered: [] as string[], answer: null as string | null }))
+vi.mock('./prompt.svelte', () => ({
+  prompt: {
+    find: (question: { options: { id: string }[] }) => {
+      asked.offered = question.options.map((option) => option.id)
+      return Promise.resolve(asked.answer)
+    },
+  },
+}))
 
 const { composerCommands } = await import('./composer-commands')
 
@@ -57,6 +74,9 @@ function mergeOffered(view?: EditorView): boolean {
 
 beforeEach(() => {
   readOnly.clear()
+  workspace.merged = []
+  asked.offered = []
+  asked.answer = null
 })
 
 describe('merge into another note', () => {
@@ -93,5 +113,47 @@ describe('merge into another note', () => {
       openAt(`${SPACE}/${file}`)
       expect(mergeOffered()).toBe(false)
     }
+  })
+})
+
+describe('the notes offered to merge into', () => {
+  /** A chat's pointer is JSON the chat is found by; words appended to it would
+   *  leave the chat unreachable, and sync would carry the broken pointer. */
+  const CHAT = `${SPACE}/Team.chat`
+
+  function withChat() {
+    openAt(`${SPACE}/a.md`)
+    workspace.notes.push({ path: CHAT, name: 'Team.chat' })
+  }
+
+  async function runMerge() {
+    composerCommands()
+      .find((command) => command.id === 'merge-into')
+      ?.run()
+    // The sheet is imported, then asked, then answered.
+    await vi.waitFor(() => expect(asked.offered.length).toBeGreaterThan(0))
+    await new Promise((settle) => setTimeout(settle, 0))
+  }
+
+  test('are the other markdown notes, and never a chat', async () => {
+    withChat()
+    await runMerge()
+    expect(asked.offered).toEqual([`${SPACE}/b.md`])
+  })
+
+  test('so merge is not offered when a chat is the only other one', () => {
+    openAt(`${SPACE}/a.md`)
+    workspace.notes = [
+      { path: `${SPACE}/a.md`, name: 'a.md' },
+      { path: CHAT, name: 'Team.chat' },
+    ]
+    expect(mergeOffered()).toBe(false)
+  })
+
+  test('and a markdown note picked is merged into', async () => {
+    withChat()
+    asked.answer = `${SPACE}/b.md`
+    await runMerge()
+    expect(workspace.merged).toEqual([`${SPACE}/a.md -> ${SPACE}/b.md`])
   })
 })

@@ -12,17 +12,28 @@ import { t } from './i18n.svelte'
 import type { MenuEntry } from './menu.svelte'
 import { shownName } from './note-name'
 import { canWriteAt, canWriteIn } from './sharing.svelte'
+import { isMarkdownPath } from './space-paths'
 import { mergeable } from './workspace/composing'
 import { workspace } from './workspace.svelte'
+
+/** The notes the one at `exclude` may be merged into: the other markdown notes.
+ *  `workspace.notes` leaves out the files a tab of their own opens, but not a
+ *  chat's pointer, and not a picture either; words appended to a chat's pointer
+ *  would leave the chat unreachable. The merge refuses those itself, so this is
+ *  only so the sheet offers nothing it would refuse. */
+function mergeTargets(exclude: string) {
+  return workspace.notes.filter((note) => note.path !== exclude && isMarkdownPath(note.path))
+}
 
 /** The note to merge into, found by typing its name in the prompt sheet - which
  *  is the same sheet every other question uses, and the only shape that works
  *  for a space holding thousands of answers. */
 async function askForNote(exclude: string): Promise<string | null> {
   const { prompt } = await import('./prompt.svelte')
-  const options = workspace.notes
-    .filter((note) => note.path !== exclude)
-    .map((note) => ({ id: note.path, label: shownName(note.name) }))
+  const options = mergeTargets(exclude).map((note) => ({
+    id: note.path,
+    label: shownName(note.name),
+  }))
 
   if (!options.length) return null
 
@@ -46,7 +57,7 @@ function hasRest(view?: EditorView): boolean {
  *  may be typed in.
  *  The note it goes into is asked the same by the merge itself. */
 function canMerge(path: string | null, view?: EditorView): boolean {
-  if (!path || workspace.notes.length < 2) return false
+  if (!path || !mergeTargets(path).length) return false
   if (view?.state.readOnly || !canWriteIn(workspace.active?.note)) return false
 
   return mergeable(workspace.activeSpace?.root ?? null, path, canWriteAt)
