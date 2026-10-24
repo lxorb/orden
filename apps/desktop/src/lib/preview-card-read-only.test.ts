@@ -18,6 +18,7 @@ vi.mock('./workspace.svelte', () => ({
   workspace: {
     spaces: [home],
     activeSpace: home,
+    rootHolding: () => home.root,
     noteText: () => Promise.resolve('# Linked\n'),
     writeNoteText: (_path: string, _before: string, after: string) => {
       written.push(after)
@@ -43,7 +44,11 @@ const { mountPreview } = await import('./preview-card')
 function card(readOnly = false) {
   const host = document.createElement('div')
   document.body.append(host)
-  const release = mountPreview(host, { path: 'Linked.md', text: '# Linked\n', at: 0, readOnly })
+  const release = mountPreview(
+    host,
+    { path: 'Linked.md', text: '# Linked\n', at: 0, readOnly },
+    '/s/Home/Note.md',
+  )
   const editor = host.querySelector('.cm-editor')
   const view = editor instanceof HTMLElement ? EditorView.findFromDOM(editor) : null
   if (!release || !view) throw new Error('no card')

@@ -17,13 +17,7 @@
  *  canvas card's is: five hundred links must not be five hundred editors, and the one
  *  that exists is the size of the card it is in. */
 
-import {
-  createEditor,
-  EditorView,
-  modeEffects,
-  type PreviewNote,
-  setReadOnlyMode,
-} from '@nib/editor'
+import { createEditor, EditorView, modeEffects, type PreviewNote } from '@nib/editor'
 import { frontMatterBlock } from '@nib/markdown/front-matter'
 import { pickedLink } from './composer'
 import { links } from './link-index.svelte'
