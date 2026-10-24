@@ -76,13 +76,23 @@ vi.mock('./tauri', async (importOriginal) => ({
 }))
 
 /** The account: every chat it is asked for is the one id. */
-const asked = vi.hoisted(() => ({ spaces: [] as string[] }))
+const asked = vi.hoisted(() => ({ spaces: [] as string[], refused: false }))
 vi.mock('./chats/http', async (importOriginal) => ({
   ...(await importOriginal<typeof import('./chats/http')>()),
   makeChat: (space: string) => {
     asked.spaces.push(space)
+    // As `POST /v2/chats` answers a space this account may only read: a 403, thrown.
+    if (asked.refused) return Promise.reject(new Error('403'))
     return Promise.resolve({ v: 1, chat: `c_${'0'.repeat(32)}` })
   },
+}))
+
+/** The roots of the spaces shared with this account to be read. */
+const readOnly = vi.hoisted(() => new Set<string>())
+vi.mock('./sharing.svelte', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('./sharing.svelte')>()),
+  canWriteAt: (path: string) =>
+    ![...readOnly].some((root) => path === root || path.startsWith(`${root}/`)),
 }))
 
 /** The chats' store, making through the real pointer code and nothing else. */
@@ -114,7 +124,8 @@ vi.stubGlobal('localStorage', memoryStorage())
 const { workspace } = await import('./workspace.svelte')
 const { sync } = await import('./sync.svelte')
 const { account } = await import('./account.svelte')
-const { newKinds } = await import('./new-kinds')
+const { newKinds, offeredKinds } = await import('./new-kinds')
+const { busy } = await import('./busy.svelte')
 const { makeChat } = await import('./chats/view/open')
 
 /** Each tab opened, with whether its pointer was on the disk as it opened. */
@@ -127,6 +138,8 @@ beforeEach(async () => {
   folders.add('/space/Work')
   files.set('/space/Work/Plan.md', '# Plan')
   asked.spaces = []
+  asked.refused = false
+  readOnly.clear()
   opened = []
 
   Object.defineProperty(account, 'accountToken', { get: () => 'token', configurable: true })
@@ -239,6 +252,26 @@ describe('a new chat', () => {
     await named('Nowhere')
 
     expect(files.has('/space/Nowhere.chat')).toBe(false)
+    expect(opened).toEqual([])
+  })
+
+  test('in a space shared to be read is not offered, and asks for no name', async () => {
+    readOnly.add('/space')
+    expect(offeredKinds().map((one) => one.kind)).not.toContain('chat')
+
+    await makeChat()
+    expect(workspace.naming).toBeNull()
+    expect(asked.spaces).toEqual([])
+    expect(workspace.tabs).toHaveLength(0)
+  })
+
+  test('refused by the account, says so rather than going quietly', async () => {
+    asked.refused = true
+    const failed = vi.spyOn(busy, 'failed')
+    await makeChat()
+    await named('Refused')
+
+    expect(failed).toHaveBeenCalled()
     expect(opened).toEqual([])
   })
 })
