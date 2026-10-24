@@ -225,6 +225,28 @@ describe('keeping both', () => {
   })
 })
 
+describe('a note asked about again', () => {
+  /** The other device wrote again while the question waited. Kept as first asked, the
+   *  answer wrote the older words, or this device's, over the newer ones unseen. */
+  test('holds the newest of the other copy', () => {
+    record.clash(aClash('/Work/Plan.md'))
+    record.clash({ ...aClash('/Work/Plan.md'), version: 3, theirs: 'and more', at: 2 })
+
+    expect(record.clashes).toEqual([
+      { ...aClash('/Work/Plan.md'), version: 3, theirs: 'and more', at: 2 },
+    ])
+  })
+
+  test('and is the same question under another name', () => {
+    record.clash(aClash('/Work/Plan.md'))
+    record.clash({ ...aClash('/Work/Goals.md'), version: 3, theirs: 'and more' })
+
+    expect(record.clashes.map((one) => [one.path, one.theirs])).toEqual([
+      ['/Work/Goals.md', 'and more'],
+    ])
+  })
+})
+
 describe('signing out', () => {
   test('takes the other device’s words off this one', () => {
     // A clash is kept whole, because it is the copy the pass had in its hand. It

@@ -96,12 +96,14 @@ class Record {
     this.persist()
   }
 
-  /** A note whose copies disagree, waiting for an answer. One per path: a
-   *  second pass finding the same disagreement is the same disagreement. */
+  /** A note whose copies disagree, waiting for an answer. One per note: a second
+   *  pass finding it is the same question, with the newest of the other copy. Kept as
+   *  first asked, the answer wrote older words, or this device's, over the newer. */
   clash(clash: Clash) {
-    if (this.clashes.some((one) => one.path === clash.path)) return
-
-    this.clashes = [...this.clashes, clash]
+    const same = (one: Clash) => one.id === clash.id || one.path === clash.path
+    this.clashes = this.clashes.some(same)
+      ? this.clashes.map((one) => (same(one) ? clash : one))
+      : [...this.clashes, clash]
     this.persist()
   }
 

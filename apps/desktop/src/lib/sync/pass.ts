@@ -577,6 +577,7 @@ export async function movedHere(
   from: string,
   to: string,
   held: ReadonlySet<string> = new Set(),
+  clashed?: (clash: Clash) => void,
 ): Promise<boolean> {
   const was = within(mirror.root, from)
   const now = within(mirror.root, to)
@@ -589,7 +590,8 @@ export async function movedHere(
 
   let done = false
   for (const path of moving) {
-    if (await movedOne(mirror, token, path, now + path.slice(was.length), held)) done = true
+    const to = now + path.slice(was.length)
+    if (await movedOne(mirror, token, path, to, held, clashed)) done = true
   }
 
   return done
@@ -601,6 +603,7 @@ async function movedOne(
   was: string,
   now: string,
   held: ReadonlySet<string>,
+  clashed?: (clash: Clash) => void,
 ): Promise<boolean> {
   const tracked = mirror.notes[was]
   // A note the account has never been handed has no identity to keep. It goes up
@@ -622,7 +625,16 @@ async function movedOne(
   if (held.has(tracked.id)) {
     const moved = await heldMovedUpThere(token, tracked, now)
     if (!moved) return false
-    mirror.notes = { ...without(mirror.notes, was), [now]: moved }
+    // The question is asked again of what was read: the account may hold newer words
+    // than it was first asked about, and its version moved with the rename.
+    clashed?.({
+      path: joinPath(mirror.root, now),
+      id: tracked.id,
+      version: moved.tracked.version,
+      theirs: moved.words,
+      at: Date.now(),
+    })
+    mirror.notes = { ...without(mirror.notes, was), [now]: moved.tracked }
     mirror.offered = without(mirror.offered, was)
     return true
   }
@@ -647,11 +659,14 @@ async function heldMovedUpThere(
   token: string,
   tracked: Tracked,
   path: string,
-): Promise<Tracked | null> {
+): Promise<{ tracked: Tracked; words: string } | null> {
   try {
     const there = await api.readNote(token, tracked.id)
     const { note } = await api.writeNote(token, tracked.id, path, there.content, there.note.version)
-    return { id: note.id, version: note.version, hash: tracked.hash }
+    return {
+      tracked: { id: note.id, version: note.version, hash: tracked.hash },
+      words: there.content,
+    }
   } catch {
     return null
   }
