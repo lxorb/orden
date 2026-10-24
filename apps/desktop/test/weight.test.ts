@@ -853,8 +853,12 @@ function holds(tail: string): boolean {
  *  Raised 2026-10-24, to 3,288,000, for #772: a face of the reader's own in front of each
  *  of the three font stacks (`--font-*-chosen` in tokens.css), kept and put on the root
  *  before the first paint (`fonts` and `applyFonts` in modes.svelte.ts). Measured
- *  3,287,068, from 3,284,888 at 043158a14. */
-const BUDGET = 3_288_000
+ *  3,287,068, from 3,284,888 at 043158a14.
+ *
+ *  Raised 2026-10-24, to 3,289,000, for #772 again: the reader's face stays at the head of
+ *  a theme's own font stacks, put back as a theme is worn (`chosenFirst` in
+ *  theme.svelte.ts). Measured 3,288,531, from 3,287,068 at c8c06ba2e. */
+const BUDGET = 3_289_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
