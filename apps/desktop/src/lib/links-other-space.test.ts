@@ -193,3 +193,19 @@ test('a link followed before that space is read opens its note rather than makin
   expect(disk.get('/home/me/A/Plan.md')).toBe('# Plan of A\n')
   expect(workspace.active?.path).toBe('/home/me/A/Plan.md')
 })
+
+test("an embed in a note of another space shows that space's note", async () => {
+  await expect(links.embedSource('Plan', '/home/me/A/Note.md')).resolves.toBe('# Plan of A\n')
+  await expect(links.embedSource('Only A', '/home/me/A/Note.md')).resolves.toBe('# Only A\n')
+})
+
+test("an export of a note of another space writes its links to that space's notes", async () => {
+  await links.spaceRead('/home/me/A/Note.md')
+  const link = { kind: 'wikilink', target: 'Only A' } as Parameters<typeof links.relativeTarget>[0]
+  expect(links.relativeTarget(link, '/home/me/A/Note.md')).toBe('Only A.md')
+})
+
+test('a card on a canvas of another space shows the note of that space', async () => {
+  const { fileSource } = await import('./canvas/render')
+  await expect(fileSource('Plan.md', '/home/me/A/Board.canvas')).resolves.toBe('# Plan of A\n')
+})

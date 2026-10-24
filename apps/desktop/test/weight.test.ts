@@ -856,7 +856,11 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-24, to 3,298,000, for #914: link rewrites after a rename, move or
  *  merge read the space the note is in when it is not the open one (`retargetIn` in
- *  link-index.svelte.ts). Measured 3,297,008. */
+ *  link-index.svelte.ts). Measured 3,297,008.
+ *
+ *  Raised 2026-10-24, to 3,299,000, for #916: embeds, canvas cards and exports of a
+ *  note of another space read that space (`spaceRead` in link-index.svelte.ts).
+ *  Measured 3,298,480. */
 const BUDGET = 3_300_000 // combined branch only
 const MOST_FILES = 382
 
