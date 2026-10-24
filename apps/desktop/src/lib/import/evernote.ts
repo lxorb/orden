@@ -127,6 +127,7 @@ export async function readEvernote(sources: readonly Source[]): Promise<ImportPl
         fileTargets: true,
         appTargets: true,
         mediaLinks: true,
+        plainTasks: true,
       })
       const said = textOf(note.inner, 'title')?.trim()
       const title = (said ? safeName(said) : titleFrom(words)) ?? 'Untitled'

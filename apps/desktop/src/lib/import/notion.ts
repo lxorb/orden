@@ -553,6 +553,7 @@ async function readNotionHtml(sources: readonly Source[]): Promise<ImportPlan> {
               fileTargets: true,
               appTargets: true,
               mediaLinks: true,
+              plainTasks: true,
             }),
             title: null,
             meta: said.meta,
