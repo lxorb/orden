@@ -497,6 +497,43 @@ describe('words that look like something else', () => {
       ].join('\n'),
     )
   })
+
+  test('a tag in what a task, a comment, a section or an assignee says stays words, since Todoist shows it as text', () => {
+    const img = '<img src=https://t.example/p.gif>'
+    const plan = planOf({
+      projects: [{ id: 'p', name: 'Lists', inbox: false, about: [`About ${img}`] }],
+      sections: [
+        { id: 's', project: 'p', name: 'Room <style>body{}</style>', order: 1, about: [img] },
+      ],
+      tasks: [
+        {
+          id: 't',
+          project: 'p',
+          section: 's',
+          text: `Shop **now** ${img}`,
+          description: `- [ ] milk ${img}`,
+          priority: 4,
+          labels: [],
+          order: 1,
+          repeats: `every blue moon ${img}`,
+          assignee: 'Eve <iframe src=https://t.example/>',
+          remind: [],
+          comments: [
+            { text: `Seen ${img}\n<style>p{}</style>`, at: '2026-10-01' },
+            { text: `[a ${img}](<https://t.example/a b.pdf>)` },
+          ],
+        },
+      ],
+    })
+    const note = plan.files[0]
+    const text = note?.kind === 'note' ? note.text : ''
+    expect(text).not.toMatch(/(?<!\\)<\/?(img|style|iframe)/)
+    expect(text).toContain('Shop **now** \\<img src=https://t.example/p.gif>')
+    expect(text).toContain('## Room \\<style>')
+    expect(text).toContain('  - \\[ ] milk \\<img')
+    expect(text).toContain('[assignee:: Eve \\<iframe')
+    expect(text).toContain('  [a \\<img src=https://t.example/p.gif>](<https://t.example/a b.pdf>)')
+  })
 })
 
 describe('the words', () => {
