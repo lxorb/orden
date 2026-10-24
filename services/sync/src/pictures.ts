@@ -14,10 +14,6 @@ import { frontMatterValue, stripFrontMatter } from '@nib/markdown/front-matter'
 import { withoutBlockIds } from '@nib/markdown/links'
 import type { Env } from './types'
 
-/** An HTML image tag's source, as a browser reads it: the attribute named `src` and no
- *  other, which may sit on a line of its own inside the tag. */
-const IMG_SRC = /<img\b[^>]*?\ssrc\s*=\s*["']?([^"'\s>]+)/gi
-
 /** The keys of a note's front matter beside its cover that hold a picture the app
  *  shows: the image its published page is shared with. */
 const FRONT_PICTURES = ['image'] as const
@@ -79,7 +75,7 @@ function visit(value: unknown, add: (address: string | undefined) => void): void
   if (token.type === 'code' || token.type === 'codespan') return
   if (token.type === 'image' && typeof token.href === 'string') add(token.href)
   if (token.type === 'html' && typeof token.text === 'string') {
-    for (const match of token.text.matchAll(IMG_SRC)) add(match[1])
+    for (const address of drawnByHtml(token.text)) add(address)
   }
   // `![[…]]`, as a block of its own or inside a line.
   if (token.type === 'embed' || token.type === 'wikilink') {
@@ -151,4 +147,79 @@ export async function keepPictures(
 /** And takes them away again, for a note whose words have gone for good. */
 export async function forgetPictures(env: Env, noteId: string): Promise<void> {
   await env.DB.prepare('delete from note_pictures where note_id = ?').bind(noteId).run()
+}
+
+/** The attributes of an HTML tag that a browser draws a picture from: an image's or a
+ *  source's `src` and `srcset`, a film's `poster`, and a `url(…)` in a `style`. Not its
+ *  words (`alt`, `title`), a link's `href` or a script's `data-` attribute, which name
+ *  an address without drawing it. */
+const DRAWN = new Set(['src', 'srcset', 'poster', 'style'])
+
+/** Every address raw HTML draws a picture from, read the way a browser reads a tag: an
+ *  attribute's value whole, quotes and all - so a `>` inside one does not end the tag -
+ *  with its character references decoded, and only inside tags, never between them. */
+export function drawnByHtml(html: string): string[] {
+  const found: string[] = []
+  let at = 0
+  while ((at = html.indexOf('<', at)) !== -1) {
+    const name = /^<([a-zA-Z][\w:-]*)/.exec(html.slice(at, at + 64))
+    if (!name) {
+      at += 1
+      continue
+    }
+    at += name[0].length
+
+    // The attributes, up to the `>` that is not inside a quoted value.
+    while (at < html.length && html[at] !== '>') {
+      const attribute = /^[\s/]*([^\s"'>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s>]*)))?/.exec(
+        html.slice(at),
+      )
+      if (!attribute?.[0]) {
+        at += 1
+        continue
+      }
+      at += attribute[0].length
+      const key = attribute[1]?.toLowerCase() ?? ''
+      const value = decoded(attribute[2] ?? attribute[3] ?? attribute[4] ?? '')
+      if (!DRAWN.has(key)) continue
+      if (key === 'src' || key === 'poster') found.push(value)
+      if (key === 'srcset') {
+        for (const candidate of value.split(',')) found.push(candidate.trim().split(/\s+/)[0] ?? '')
+      }
+      if (key === 'style') {
+        for (const match of value.matchAll(/url\(\s*["']?([^"')]+)/gi)) found.push(match[1] ?? '')
+      }
+    }
+  }
+  return found
+}
+
+/** The character references a browser decodes in an attribute's value: by number, and
+ *  the few names an address is written with. */
+const NAMED: Record<string, string> = {
+  amp: '&',
+  sol: '/',
+  colon: ':',
+  period: '.',
+  quot: '"',
+  apos: "'",
+  lt: '<',
+  gt: '>',
+  lpar: '(',
+  rpar: ')',
+}
+
+function decoded(value: string): string {
+  return value.replace(/&(#x[0-9a-f]+|#[0-9]+|[a-z]+);?/gi, (whole, said: string) => {
+    if (said.startsWith('#')) {
+      const code =
+        said[1] === 'x' || said[1] === 'X'
+          ? parseInt(said.slice(2), 16)
+          : parseInt(said.slice(1), 10)
+      return Number.isFinite(code) && code > 0 && code <= 0x10ffff
+        ? String.fromCodePoint(code)
+        : whole
+    }
+    return NAMED[said.toLowerCase()] ?? whole
+  })
 }
