@@ -754,6 +754,35 @@ describe('the blocks the whole space holds', () => {
 })
 
 describe('renaming a note rewrites the links to it', () => {
+  /** A canvas is JSON: its file cards name a note by path, and a text card's words
+   *  sit inside a string. Rewritten as text, the cards kept the old path and a name
+   *  with a quote in it ended the string early, which is a plane that no longer opens. */
+  test('on a canvas, its file cards and its text cards alike, as JSON', async () => {
+    const card = { x: 0, y: 0, width: 10, height: 10 }
+    const board = JSON.stringify({
+      nodes: [
+        { id: 'a', type: 'file', file: 'Plan.md', ...card },
+        { id: 'b', type: 'text', text: 'see [[Plan]]', ...card },
+      ],
+      edges: [],
+    })
+    await import('./scan-canvas')
+    await space({ 'Plan.md': '# Plan' }, ['Board.canvas'])
+    notes['Board.canvas'] = board
+    links.canvasRead(at('Board.canvas'), board)
+    await vi.waitFor(() =>
+      expect(links.backlinks(at('Plan.md')).map((one) => one.path)).toContain('Board.canvas'),
+    )
+
+    expect(await links.retarget(at('Plan.md'), at('Road "x".md'), ROOT)).toBe(1)
+
+    const after = JSON.parse(notes['Board.canvas'] ?? '') as { nodes: Record<string, string>[] }
+    expect(after.nodes.map((one) => one.file ?? one.text)).toEqual([
+      'Road "x".md',
+      'see [[Road "x"]]',
+    ])
+  })
+
   test('every note that pointed at it, and no others', async () => {
     await space({
       'Plan.md': '# Plan',
