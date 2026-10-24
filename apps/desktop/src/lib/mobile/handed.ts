@@ -60,6 +60,12 @@ interface Asked {
   tickSpace: string
 }
 
+/** The commands a tile or a widget row sends (Tiles.kt, Widgets.kt, TodayWidget.kt),
+ *  and the only ones a press runs. The activity is exported and opens on a `nib://`
+ *  link, so a web page could name any id in the registry: one tap started dictation
+ *  or signed the reader out. test/android.test.ts holds the senders to this list. */
+export const HANDED: ReadonlySet<string> = new Set(['new', 'search-space', 'record', 'quick-add'])
+
 /** Reads what the activity said about the press that started this. */
 export function askedFrom(json: string): Asked {
   const nothing: Asked = { command: '', open: '', tick: '', tickSpace: '' }
@@ -77,7 +83,7 @@ export function askedFrom(json: string): Asked {
 
   const words = (value: unknown) => (typeof value === 'string' ? value : '')
   return {
-    command: words(held.command),
+    command: HANDED.has(words(held.command)) ? words(held.command) : '',
     open: words(held.open),
     tick: words(held.tick),
     tickSpace: words(held.tickSpace),

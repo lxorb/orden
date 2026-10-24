@@ -181,6 +181,19 @@ describe('the quick settings tiles', () => {
     }
   })
 
+  /** And the page runs from a press only the ids a tile or a widget sends, so every
+   *  one they send is on that list (`HANDED` in mobile/handed.ts). */
+  test('send only ids the page will run from a press', () => {
+    const today = read(ANDROID, 'java', 'ch', 'emilvinu', 'nib', 'TodayWidget.kt')
+    const sent = [
+      ...[...tiles.matchAll(/override val command = "([\w.-]+)"/g)].map((one) => one[1]),
+      ...[...`${widgets}${today}`.matchAll(/command\(context, "([\w.-]+)"/g)].map((one) => one[1]),
+    ]
+    const handed = read(SOURCE, 'lib', 'mobile', 'handed.ts')
+    const list = /HANDED[^[]*\[([^\]]*)\]/.exec(handed)?.[1] ?? ''
+    expect(new Set(sent)).toEqual(new Set([...list.matchAll(/'([\w.-]+)'/g)].map((one) => one[1])))
+  })
+
   /** And nothing beside them says otherwise. The comment in the manifest, and the
    *  paragraph in docs/mobile.md, both went on describing the recorder's tile as
    *  `android:enabled="false"` for as long as the switch had been gone - and a
