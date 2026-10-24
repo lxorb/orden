@@ -92,3 +92,22 @@ describe('the note in front', () => {
     expect(rows()).toEqual({ renames: false, moves: false })
   })
 })
+
+/** Convert syntax rewrites notes of the space in front, which one shared to be read
+ *  refuses (B274). */
+describe('converting syntax', () => {
+  const offers = () => {
+    vi.spyOn(workspace, 'activeSpace', 'get').mockReturnValue({
+      id: 'theirs',
+      name: 'Theirs',
+      root: SPACE,
+    })
+    return appCommands().some((one) => one.id === 'convert-syntax' && one.disabled !== true)
+  }
+
+  test('is offered in a space that may be written in, and not in one shared to be read', () => {
+    expect(offers()).toBe(true)
+    readOnly.add(SPACE)
+    expect(offers()).toBe(false)
+  })
+})
