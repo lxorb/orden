@@ -4231,13 +4231,17 @@ class Workspace {
    *  since the last push, and a dotfile, which sync never hands it, are on this
    *  device alone, and so is what was written since. A folder counts only if
    *  everything under it is held, and only a note goes: the account's Recently
-   *  deleted gives back nothing else, so a paper or a picture goes to the trash. */
+   *  deleted gives back nothing else, so a paper or a picture goes to the trash.
+   *  Nor from a space somebody else owns: theirs is the Recently deleted it lands in. */
   private async accountHolds(path: string, isFolder: boolean): Promise<boolean> {
     if (!isFolder && !isMarkdownPath(path)) return false
     const root = this.rootHolding(path)
     if (!root) return false
     const { sync } = await import('./sync.svelte')
-    if (sync.remoteIdFor(root) === null) return false
+    const id = sync.remoteIdFor(root)
+    // Asked of the listing rather than of `roleOf`, which takes a space it cannot
+    // find for this account's own: a space not listed yet is nobody's to leave to.
+    if (account.spaces.find((one) => one.id === id)?.role !== 'owner') return false
     if (!isFolder) return sync.holds(path)
     const { accountHoldsAll } = await import('./workspace/undoing')
     return accountHoldsAll(path, (one, how) => sync.holds(one, how))

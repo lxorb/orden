@@ -1861,7 +1861,9 @@ describe('what the account holds of a file', () => {
     files: Record<string, string>,
     notes: Record<string, string>,
     pushedAt = 0,
+    role: 'owner' | 'write' = 'owner',
   ) {
+    fake.remote.spaces.push({ id: 's-Notes', name: 'Notes', role })
     const { sha256 } = await import('./bytes')
     const tracked: Record<string, { hash: string; modified: number }> = {}
     for (const [path, words] of Object.entries(files)) {
@@ -1975,6 +1977,29 @@ describe('what the account holds of a file', () => {
     fake.disk.set('/Notes/Work/a.md', '# a')
     fake.disk.set('/Notes/Work/Pictures/cat.png', 'png')
     await mirrored({}, { 'Work/a.md': '# a' })
+
+    await workspace.remove('/Notes/Work', true)
+
+    expect(fake.remote.local).toContain('trash_item /Notes/Work')
+    expect(fake.remote.local).not.toContain('delete_folder /Notes/Work')
+  })
+
+  // The account's Recently deleted lists what was deleted in the spaces this account
+  // owns, so what a writer deletes in somebody else's space is not theirs to get back
+  // from it: only this device's trash gives it back to them.
+  test("a note held in somebody else's space goes to the trash", async () => {
+    fake.disk.set('/Notes/a.md', '# a')
+    await mirrored({}, { 'a.md': '# a' }, 0, 'write')
+
+    expect(await sync.holds('/Notes/a.md')).toBe(true)
+    await workspace.remove('/Notes/a.md', false)
+    expect(fake.remote.local).toContain('trash_item /Notes/a.md')
+    expect(fake.remote.local).not.toContain('delete_note /Notes/a.md')
+  })
+
+  test("and so does a folder of notes held in somebody else's space", async () => {
+    fake.disk.set('/Notes/Work/a.md', '# a')
+    await mirrored({}, { 'Work/a.md': '# a' }, 0, 'write')
 
     await workspace.remove('/Notes/Work', true)
 

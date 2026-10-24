@@ -238,6 +238,7 @@ const { workspace } = await import('./workspace.svelte')
 const { sync } = await import('./sync.svelte')
 const { unread } = await import('./unread.svelte')
 const { account } = await import('./account.svelte')
+type RemoteSpace = import('./api').RemoteSpace
 
 /** A file dropped from outside the app, at `path` inside what was dropped. */
 const dropped = (path: string, words: string) => ({
@@ -1126,10 +1127,14 @@ describe('a rename the disk refuses', () => {
 describe('signed in', () => {
   beforeEach(() => {
     Object.defineProperty(account, 'signedIn', { get: () => true, configurable: true })
+    // Owned by this account: a writer's delete in somebody else's space is not
+    // theirs to get back from the account.
+    account.spaces = [{ id: 'remote', role: 'owner' } as RemoteSpace]
   })
 
   afterEach(() => {
     Reflect.deleteProperty(account, 'signedIn')
+    account.spaces = []
     vi.restoreAllMocks()
   })
 
