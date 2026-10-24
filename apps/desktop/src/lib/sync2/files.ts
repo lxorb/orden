@@ -164,7 +164,15 @@ export async function settleFiles(
       // owner makes. They go to this device's trash, which is where Keep theirs puts a
       // replacement too, and the owner's are fetched in their place. With no file and no
       // path the entry is fetched next pass, should this one stop before the bytes come.
-      await core.world.disk.remove(core.world.join(space.row.root, entry.local_path), 'file')
+      try {
+        await core.world.disk.remove(core.world.join(space.row.root, entry.local_path), 'file')
+      } catch {
+        // Locked by the program still writing it, or the trash would not take it: thrown,
+        // it stopped the whole pass, every pass. It stays as it is and is tried again
+        // next pass, and the rest of the space settles meanwhile.
+        core.touched.add(entry.id)
+        continue
+      }
       entry.local_path = ''
       await core.commit([put('entries', { ...entry })])
     }
