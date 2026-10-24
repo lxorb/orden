@@ -33,6 +33,7 @@ vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x6
 const { preferences, resettable } = await import('./preferences')
 const { LANGUAGES } = await import('./i18n.svelte')
 const { theme } = await import('./theme.svelte')
+const { DICTIONARIES } = await import('./spell-languages')
 
 const panes = preferences()
 const pane = (id: string) => {
@@ -421,25 +422,21 @@ describe('the language picker', () => {
   })
 })
 
-describe('the spelling dictionary', () => {
-  /** The same order the app's language list keeps: the default, the Latin
-   *  names A to Z, Japanese at the foot. */
-  test('is offered in the order every language list keeps', () => {
-    const one = field('spelling', 'Language')
-    if (one.kind !== 'select') throw new Error('the dictionary is a dropdown')
+describe('the spelling dictionaries', () => {
+  /** The same order the app's language list keeps: the Latin names A to Z, then the
+   *  Cyrillic ones. */
+  test('are offered in the order every language list keeps', () => {
+    expect([...DICTIONARIES]).toEqual(inLanguageOrder(DICTIONARIES))
+  })
 
-    const shown = one.options.map((option) => ({ id: option.value, name: option.label }))
-    expect(shown).toEqual(inLanguageOrder(shown))
-    expect(one.options.map((option) => option.value)).toEqual([
-      'system',
-      'de',
-      'en',
-      'es',
-      'fr',
-      'it',
-      'nl',
-      'pt',
-      'ja',
+  /** Only nib's own Chromium has a list of them to write (#771); this build is a browser,
+   *  whose checker reads its own languages, and the pane says so rather than offering
+   *  switches that turn nothing. */
+  test('are the platform’s where nib cannot choose them, and the pane says so', () => {
+    const spelling = pane('spelling')
+    expect(spelling.groups.flatMap((group) => group.fields).map((one) => one.label)).toEqual([
+      'Check spelling',
     ])
+    expect(spelling.groups[0]?.caption?.text).toMatch(/system or browser/)
   })
 })

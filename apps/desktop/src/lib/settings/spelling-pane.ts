@@ -1,23 +1,48 @@
 import type { EditorView } from '@nib/editor'
-import { t } from '../i18n.svelte'
+import { i18n, t } from '../i18n.svelte'
 import { DEFAULTS, modes } from '../modes.svelte'
-import type { Pane } from './fields'
+import {
+  choosable,
+  DICTIONARIES,
+  dictionaryFor,
+  inForceNow,
+  machineLanguages,
+  tellEngine,
+  toggled,
+} from '../spell-languages'
+import type { Field, Group, Pane } from './fields'
 
-/** Dictionaries the browser's checker can be pointed at, named the way their
- *  speakers name them, so they read the same whatever the app's language.
- *  `system` leaves the choice to the browser. Written in the order every language
- *  list keeps (language-order.ts), which the test holds it to. */
-const DICTIONARIES = [
-  { id: 'system', name: 'Match the system' },
-  { id: 'de', name: 'Deutsch' },
-  { id: 'en', name: 'English' },
-  { id: 'es', name: 'Español' },
-  { id: 'fr', name: 'Français' },
-  { id: 'it', name: 'Italiano' },
-  { id: 'nl', name: 'Nederlands' },
-  { id: 'pt', name: 'Português' },
-  { id: 'ja', name: '日本語' },
-] as const
+/** The dictionaries, a switch apiece, where the engine has a list to give them to; and
+ *  where it has not, a line saying whose languages it checks in (#771). See
+ *  spell-languages.ts. */
+function dictionaryGroups(view: EditorView | undefined): Group[] {
+  if (!choosable) return []
+
+  const first = dictionaryFor(i18n.language, machineLanguages())
+  return [
+    {
+      title: t('Dictionary'),
+      fields: DICTIONARIES.map((one): Field => ({
+        kind: 'switch',
+        label: one.name,
+        words: ['dictionary', 'language', 'spellcheck', one.id],
+        hint: t('Words are checked against this dictionary as well as every other one that is on.'),
+        initial: one.id === first,
+        locked: () => {
+          const now = inForceNow(modes.spellLanguages)
+          return now.length === 1 && now.includes(one.id)
+        },
+        get: () => inForceNow(modes.spellLanguages).includes(one.id),
+        set: (on) => {
+          const next = toggled(modes.spellLanguages, one.id, on)
+          if (!next) return
+          modes.setSpellLanguages(next, view)
+          tellEngine(next)
+        },
+      })),
+    },
+  ]
+}
 
 /** Settings › Spelling; see `preferences` in ../preferences.ts. */
 export function spellingPane(view: EditorView | undefined): Pane {
@@ -27,37 +52,26 @@ export function spellingPane(view: EditorView | undefined): Pane {
     groups: [
       {
         title: t('Checking'),
+        ...(choosable
+          ? {}
+          : {
+              caption: {
+                text: t('Words are checked in the languages your system or browser is set to.'),
+              },
+            }),
         fields: [
           {
             kind: 'switch',
             label: t('Check spelling'),
-            hint: t('Underlines misspelled words as you write.'),
             words: ['spellcheck', 'spell check', 'typos'],
+            hint: t('Underlines misspelled words as you write.'),
             initial: DEFAULTS.spellcheck,
             get: () => modes.spellcheck,
             set: () => modes.toggleSpellcheck(view),
           },
         ],
       },
-      {
-        // The browser checks against the dictionary the surface's language
-        // names, so this is the one setting that decides whose words are
-        // wrong.
-        title: t('Dictionary'),
-        fields: [
-          {
-            kind: 'select',
-            label: t('Language'),
-            hint: t(
-              'The dictionary spelling is checked against; Match the system uses your system’s language.',
-            ),
-            options: DICTIONARIES.map((one) => ({ value: one.id, label: t(one.name) })),
-            initial: DEFAULTS.spellLanguage,
-            get: () => modes.spellLanguage,
-            set: (value) => modes.setSpellLanguage(value, view),
-          },
-        ],
-      },
+      ...dictionaryGroups(view),
     ],
   }
 }

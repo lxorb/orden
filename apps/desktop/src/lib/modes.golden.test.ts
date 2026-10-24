@@ -96,7 +96,7 @@ const AWAY = {
   width: 60,
   lineHeight: 2,
   spellcheck: false,
-  spellLanguage: 'de',
+  spellLanguages: ['de-DE', 'fr-FR'],
   spellWords: ['Orden', 'Tauri'],
   alwaysOnTop: true,
   closeBrackets: false,
