@@ -834,8 +834,12 @@ function holds(tail: string): boolean {
  *  Raised 2026-10-24, to 3,285,000, for #921: a clash waiting for an answer follows
  *  its note's renames and deletes and is answered where its note is by id
  *  (`follow` and `notes` in sync/record.svelte.ts, `pathOf` in sync.svelte.ts).
- *  Measured 3,283,700. */
-const BUDGET = 3_350_000 // combined branch only, measured 3348864
+ *  Measured 3,283,700.
+ *
+ *  Raised 2026-10-24, to 3,350,000, for the second bug burn-down landed together
+ *  (#681 to #948): each fix raised this for itself, and these are what they come to
+ *  in one build. Measured 3,349,056. */
+const BUDGET = 3_350_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
