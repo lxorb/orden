@@ -29,7 +29,7 @@
  *  worth testing, and the Kotlin side is in Shared.kt. */
 
 import { escapeText, plainWords } from '@nib/markdown/escapes'
-import { taskWords } from '@nib/markdown/task-line'
+import { plainTaskWords, taskWords } from '@nib/markdown/task-line'
 import { asWords, OPENS_MARKUP } from '@nib/markdown/words'
 
 import { dayOf, noteText } from '../import/meta'
@@ -188,7 +188,7 @@ export function sharedTask(arrived: Arrived): string {
   // is part of the sentence (`taskWords`).
   return address
     ? `[${taskWords(escapeText(title, { addresses: false }))}](${address})`
-    : taskWords(plainWords(title))
+    : plainTaskWords(title)
 }
 
 /** The host of an address, for a share that is nothing but a link. */

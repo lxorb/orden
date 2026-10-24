@@ -14,6 +14,7 @@
  *  the rows engine all ask it about the same line. `taskAt` (tasks.ts) still answers
  *  the narrower question of where the box is. */
 
+import { plainWords } from './escapes'
 import { taskAt } from './tasks'
 import { TAG_NAME, opensTag } from './tags'
 
@@ -308,6 +309,9 @@ interface Found {
  *  the last closing mark of its kind stands, so such an opening is turned away
  *  without a scan at all. */
 function fieldAt(text: string, at: number, last: number): Found | null {
+  // A bracket behind a backslash is a bracket, which is how `escapeText` and every
+  // importer write somebody's `[due:: 2026-01-01]` that was never a field.
+  if (escaped(text, at)) return null
   const open = text[at] === '[' ? '[' : '('
   const key = FIELD_KEY[open]
   key.lastIndex = at
@@ -321,6 +325,13 @@ function fieldAt(text: string, at: number, last: number): Found | null {
   while (to > from && isBlank(text[to - 1])) to--
 
   return { index: at, 0: text.slice(at, end + 1), 1: found[1], 2: text.slice(from, to) }
+}
+
+/** Whether the character at `at` stands behind an odd run of backslashes. */
+function escaped(text: string, at: number): boolean {
+  let before = at
+  while (before > 0 && text[before - 1] === '\\') before--
+  return (at - before) % 2 === 1
 }
 
 function isBlank(character: string | undefined): boolean {
@@ -764,4 +775,12 @@ export function taskWords(words: string): string {
     else out += char
   }
   return out.replace(FIELD_EMOJI, '$&\u2060')
+}
+
+/** Plain words typed in another app, as a task line's text that reads back as them:
+ *  `plainWords` for what a note would read in them, then `taskWords` for what only
+ *  the task reader would. The one way in for every importer's checklist item and a
+ *  task shared from another app, so none of them can miss half of it. */
+export function plainTaskWords(words: string): string {
+  return taskWords(plainWords(words))
 }

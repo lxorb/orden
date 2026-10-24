@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
 
 import { renderMarkdown } from '@nib/markdown'
+import { readTask } from '@nib/markdown/task-line'
 
 import { readKeep } from './keep'
 import type { ImportPlan } from './plan'
@@ -299,5 +300,37 @@ describe('what a real Takeout does', () => {
     expect(text).toContain('- [a\\\\\\<b>](<https://example.com/a>)')
     expect(text).toContain('- [end\\\\](<https://example.com/b>)')
     expect(text).toContain('- [x\\\\\\[y\\]](<https://example.com/c>)')
+  })
+})
+
+/** An item is words typed into Keep, and the task reader takes more apart than a note
+ *  does: an emoji and a date after it are a field, a `#` a tag. None of it was. */
+describe('a Keep list item', () => {
+  test('reads none of its words as a field of the task', async () => {
+    const plan = await readKeep([
+      file(
+        'Keep/List.json',
+        keepNote({
+          title: 'Chores',
+          listContent: [
+            {
+              text: 'task 📅 2026-11-01 ⏫ 🔁 every week #tag [due:: 2026-01-01]',
+              isChecked: false,
+            },
+          ],
+        }),
+      ),
+    ])
+
+    const line = noteAt(plan, 'Chores.md')
+      .split('\n')
+      .find((one) => one.startsWith('- [ ]'))
+    const task = readTask(line ?? '')
+
+    expect(task).toMatchObject({ tags: [] })
+    expect(task?.due).toBeUndefined()
+    expect(task?.recurrence).toBeUndefined()
+    expect(task?.priority).toBe(readTask('- [ ] task')?.priority)
+    expect(task?.fields).toEqual({})
   })
 })

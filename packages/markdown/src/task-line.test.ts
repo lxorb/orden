@@ -313,3 +313,20 @@ describe('words written as a task that no field is read from', () => {
     expect(task?.text.replace(/\u2060/g, '').replace(/\\(.)/g, '$1')).toBe(said)
   })
 })
+
+/** `\[due:: 2026-01-01\]` is what an importer and `escapeText` write for somebody's
+ *  words that look like a field: brackets meant as brackets. Read as a field, the
+ *  task got a due date its writer never set and its text a stray backslash. */
+describe('an escaped bracket in a task', () => {
+  test('opens no field', () => {
+    const task = readTask('- [ ] a \\[due:: 2026-01-01\\]')
+
+    expect(task?.due).toBeUndefined()
+    expect(task?.fields).toEqual({})
+    expect(task?.text).toBe('a \\[due:: 2026-01-01\\]')
+  })
+
+  test('while one that is not escaped still does', () => {
+    expect(readTask('- [ ] a [due:: 2026-01-01]')?.due).toBe('2026-01-01')
+  })
+})
