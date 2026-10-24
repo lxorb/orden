@@ -1446,10 +1446,78 @@ class Links {
     open: (path: string) => NoteDoc | null = () => null,
     how: Retargeting = {},
   ): Promise<number> {
-    const { moved = false, only, touched: told } = how
-    const was = this.relative(from)
-    const now = this.relative(to)
+    const was = within(root, from)
+    const now = within(root, to)
     if (!was || !now || was === now) return 0
+
+    if (this.root !== null && samePath(root, this.root)) {
+      const touched = await this.retargetIn(
+        this.notes,
+        (source, link) => this.resolveFrom(source, link),
+        (note, after) => {
+          this.notes = this.notes.map((one) => (one.path === note ? scanNote(note, after) : one))
+        },
+        { was, now, root, open, how },
+      )
+      if (touched) this.changed()
+      return touched
+    }
+
+    // A space other than the open one, which this index does not hold: a rename in it
+    // undone or done again from here, or a note of it renamed from its tab. Read as it
+    // is on the disk, with what moved put back under the name it had - the file has
+    // already gone, and the links being rewritten are the ones still naming it, which
+    // is the listing the open space's own index still has at this point.
+    const found = await invoke<SpaceLinks>('scan_links', { root }).catch(() => null)
+    if (!found) return 0
+    const back = (path: string) =>
+      path === now ? was : path.startsWith(`${now}/`) ? `${was}${path.slice(now.length)}` : path
+    const notes = found.notes.map((note) => {
+      const path = back(note.path)
+      return path === note.path ? note : { ...note, path, name: noteName(path) }
+    })
+    const index: NoteIndex = {
+      notes: notes.map(refOf),
+      files: found.files.map(back),
+      path: null,
+      read: nothing,
+    }
+    const touched = await this.retargetIn(
+      notes,
+      (source, link) => {
+        if (!link.target) return null
+        const from = { ...index, path: source }
+        if (isTabFile(link.target)) return resolveFile(from, link.target, link.kind)
+        const hit =
+          link.kind === 'markdown'
+            ? resolveRelative(from, link.target)
+            : resolveNote(from, link.target)
+        return hit?.path ?? null
+      },
+      () => undefined,
+      { was, now, root, open, how },
+    )
+    // What this window holds of that space is read again the next time it is asked.
+    if (touched && this.others.delete(root)) this.changed()
+    return touched
+  }
+
+  /** The rewrite itself, over one space's notes and the resolver that answers for
+   *  them; see `retarget`. */
+  private async retargetIn(
+    notes: readonly ScannedNote[],
+    resolve: (source: string, link: { kind: LinkKind; target: string }) => string | null,
+    rewritten: (note: string, after: string) => void,
+    asked: {
+      was: string
+      now: string
+      root: string
+      open: (path: string) => NoteDoc | null
+      how: Retargeting
+    },
+  ): Promise<number> {
+    const { was, now, root, open, how } = asked
+    const { moved = false, only, touched: told } = how
 
     // The file's own name and nothing else. A rename rewrites the links that
     // spelled out the name that changed; a link written with an alias still says
@@ -1459,12 +1527,12 @@ class Links {
     const move = { from: was, to: now }
     let touched = 0
 
-    for (const note of [...this.notes]) {
+    for (const note of [...notes]) {
       if (only && !only.some((path) => samePath(path, insideSpace(root, note.path)))) continue
       // Whether this note is worth reading at all, decided from the index.
       const candidates = note.links.filter((link) => this.couldName(link, byFile))
       if (!candidates.length) continue
-      if (!candidates.some((link) => this.resolveFrom(note.path, link) === was)) continue
+      if (!candidates.some((link) => resolve(note.path, link) === was)) continue
 
       // The note that moved is still listed, and still open, under the name it
       // had: its words are found there, but its file is where it went, and it
@@ -1475,7 +1543,7 @@ class Links {
       const before = await this.wordsOf(absolute, target, open)
       if (before === null) continue
 
-      const points = (link: FoundLink) => this.resolveFrom(note.path, link) === was
+      const points = (link: FoundLink) => resolve(note.path, link) === was
       const after = rewriteLinks(before, self ? now : note.path, move, points)
       if (after === null || after === before) continue
 
@@ -1502,13 +1570,10 @@ class Links {
       for (const hear of this.hearing) hear(target, after)
       told?.push(target)
 
-      this.notes = this.notes.map((one) =>
-        one.path === note.path ? scanNote(note.path, after) : one,
-      )
+      rewritten(note.path, after)
       touched++
     }
 
-    if (touched) this.changed()
     return touched
   }
 
