@@ -463,8 +463,10 @@ class Chat implements Panel {
     const text = this.text.trim()
     const chips = this.chips
     if (!text && !chips.length) return
-    this.text = ''
-    this.chips = []
+    // What the field held before an edit took it, back in it now the edit is sent.
+    this.text = this.aside?.text ?? ''
+    this.chips = this.aside?.chips ?? []
+    this.aside = null
     const edited = this.editing
     const thread = this.open
     if (edited && thread) {
@@ -480,6 +482,15 @@ class Chat implements Panel {
   /** The reader's message being changed in the field, by its id (Up, or its pencil). */
   editing = $state<string | null>(null)
 
+  /** What the field held when an earlier or a queued message was put in it to change:
+   *  given back once that message is sent, or the edit is let go (Escape). */
+  private aside: { text: string; chips: Mention[] } | null = null
+
+  /** The field's words and chips set aside, the first time an edit takes the field. */
+  private setAside(): void {
+    this.aside ??= { text: this.text, chips: this.chips }
+  }
+
   /** A message into the field to change and send again: the one named, else the last
    *  (Up on an empty field). */
   startEdit(turn?: string): void {
@@ -487,14 +498,18 @@ class Chat implements Panel {
     if (!thread || this.running.includes(thread.id)) return
     const message = turn ? thread.turns.find((one) => one.id === turn) : lastMessage(thread)
     if (!message?.draft) return
+    this.setAside()
     this.editing = message.id
     this.text = message.draft.text
+    this.chips = []
     this.focus()
   }
 
   cancelEdit(): void {
     this.editing = null
-    this.text = ''
+    this.text = this.aside?.text ?? ''
+    this.chips = this.aside?.chips ?? []
+    this.aside = null
   }
 
   /** The rewind sheet (Esc Esc on an empty field, or a message's clock). */
@@ -734,6 +749,7 @@ class Chat implements Panel {
     const one = this.queue.find((each) => each.id === id)
     if (!one) return
     this.unqueue(id)
+    this.setAside()
     this.text = one.text
     this.chips = one.chips
     this.focus()
@@ -975,8 +991,25 @@ class Chat implements Panel {
   async exportThread(): Promise<void> {
     const thread = this.open
     if (!thread?.turns.length) return
-    const path = await workspace.noteFrom(threadMarkdown(thread, t('Untitled')))
-    if (path) await workspace.open(path)
+    await this.noteFrom(threadMarkdown(thread, t('Untitled')))
+  }
+
+  /** A note made of the open thread's words (Save as a note), opened: in the thread's
+   *  own space, whose notes its citations name, and never in the space in front. Where
+   *  that space is not on this device or may only be read, no note, and a line in the
+   *  thread that says why. */
+  async noteFrom(text: string): Promise<void> {
+    const thread = this.open
+    if (!thread) return
+    const root = workspace.spaces.find((one) => one.id === thread.space)?.root
+    const path = root ? await workspace.noteFrom(text, root) : null
+    if (path) {
+      await workspace.open(path)
+      return
+    }
+    const why = root ? t('you can only read this space') : t('no such space')
+    const { hostOf } = await import('../commands/host')
+    hostOf(this).line(thread, `${t('Save as a note')} · ${why}`)
   }
 
   archive(id = this.open?.id): void {

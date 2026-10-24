@@ -2,6 +2,7 @@
  *  of the panel's controls: `/recap`, `/copy`, `/export`, `/autocompact` and `/jobs`. */
 
 import { copyText } from '../../clipboard'
+import { t } from '../../i18n.svelte'
 import { workspace } from '../../workspace.svelte'
 import type { AutoCompact, Thread, Turn } from '../chat/types'
 import { compactsAt } from '../chat/usage'
@@ -60,17 +61,19 @@ export function markdownOf(thread: Pick<Thread, 'title' | 'turns'>, title = thre
   return [title ? `# ${title}` : '', ...body].filter(Boolean).join('\n\n') + '\n'
 }
 
-/** `/export [note]`: a note in the space with the name given, else the clipboard. */
-export async function exportThread(thread: Thread, name: string): Promise<void> {
+/** `/export [note]`: a note in the thread's space with the name given, else the
+ *  clipboard. Never in the space in front: where the thread's is not on this device or
+ *  may only be read, a line that says why instead. */
+export async function exportThread(host: Host, thread: Thread, name: string): Promise<void> {
   const named = name.trim()
   if (!named) {
     await copyText(markdownOf(thread))
     return
   }
-  const root =
-    workspace.spaces.find((one) => one.id === thread.space)?.root ?? workspace.activeSpace?.root
+  const root = workspace.spaces.find((one) => one.id === thread.space)?.root
   const path = root ? await workspace.noteFrom(markdownOf(thread, named), root) : null
   if (path) await workspace.open(path)
+  else host.line(thread, root ? t('you can only read this space') : t('no such space'))
 }
 
 /** What follows `/autocompact`: `auto`, `off`, or a count such as `500k`; null for

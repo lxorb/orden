@@ -110,8 +110,8 @@ const RUNS: Record<string, Run> = {
   copy: async ({ args, thread }) => {
     if (thread) await copy(thread, args)
   },
-  export: async ({ args, thread, panel }) => {
-    if (thread) await exportThread(thread, args)
+  export: async ({ args, thread, panel }, host) => {
+    if (thread) await exportThread(host, thread, args)
     else await panel.exportThread()
   },
   archive: ({ panel }) => panel.archive(),
