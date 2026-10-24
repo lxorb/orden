@@ -26,6 +26,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('./workspace.svelte')
 const { account } = await import('./account.svelte')
+type RemoteSpace = import('./api').RemoteSpace
 const { sync } = await import('./sync.svelte')
 
 /** The disk, which is there: it was made above. */
@@ -84,10 +85,14 @@ describe('a delete undone after a note took its name', () => {
     Object.defineProperty(account, 'signedIn', { get: () => true, configurable: true })
     vi.spyOn(sync, 'remoteIdFor').mockReturnValue('remote')
     vi.spyOn(sync, 'holds').mockResolvedValue(true)
+    // Owned by this account: a writer's delete in somebody else's space is not
+    // theirs to get back from the account.
+    account.spaces = [{ id: 'remote', role: 'owner' } as RemoteSpace]
   })
 
   afterEach(() => {
     Reflect.deleteProperty(account, 'signedIn')
+    account.spaces = []
     vi.restoreAllMocks()
   })
 
@@ -112,10 +117,14 @@ describe('a folder deleted signed in, undone after a note took a name in it', ()
     Object.defineProperty(account, 'signedIn', { get: () => true, configurable: true })
     vi.spyOn(sync, 'remoteIdFor').mockReturnValue('remote')
     vi.spyOn(sync, 'holds').mockResolvedValue(true)
+    // Owned by this account: a writer's delete in somebody else's space is not
+    // theirs to get back from the account.
+    account.spaces = [{ id: 'remote', role: 'owner' } as RemoteSpace]
   })
 
   afterEach(() => {
     Reflect.deleteProperty(account, 'signedIn')
+    account.spaces = []
     vi.restoreAllMocks()
   })
 
