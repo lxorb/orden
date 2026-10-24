@@ -3,6 +3,7 @@
  *  examples: `{results, next_cursor}` pages, `due {date, string, is_recurring,
  *  timezone}`, `deadline {date}`, `duration {amount, unit}`, priority 4 as p1). */
 
+import { renderMarkdown } from '@nib/markdown'
 import { describe, expect, test } from 'vitest'
 import { sourceOf } from './sources'
 import {
@@ -533,6 +534,18 @@ describe('words that look like something else', () => {
     expect(text).toContain('  - \\[ ] milk \\<img')
     expect(text).toContain('[assignee:: Eve \\<iframe')
     expect(text).toContain('  [a \\<img src=https://t.example/p.gif>](<https://t.example/a b.pdf>)')
+  })
+
+  test("a backslash in front of a tag in an attachment's name is still one backslash", () => {
+    const csv = [
+      'TYPE,CONTENT,DESCRIPTION,PRIORITY,INDENT,AUTHOR,RESPONSIBLE,DATE,DATE_LANG,TIMEZONE,DURATION,DURATION_UNIT,meta,DEADLINE,DEADLINE_LANG,IS_COLLAPSED',
+      'task,Move the piano,,4,1,,,,,,,,,,,',
+      'note,"[[file {""file_name"":""a\\\\<b> [c].pdf"",""file_url"":""https://files.todoist.com/a.pdf""}]]",,,,,,,,,,,,,,',
+    ].join('\r\n')
+    const note = planOf(csvProject('Moving', csv, 0)).files[0]
+    const text = note?.kind === 'note' ? note.text : ''
+    expect(text).toContain('  [a\\\\\\<b> \\[c\\].pdf](https://files.todoist.com/a.pdf)')
+    expect(renderMarkdown(text)).toContain('>a\\&lt;b&gt; [c].pdf</a>')
   })
 })
 
