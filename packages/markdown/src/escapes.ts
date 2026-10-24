@@ -225,10 +225,12 @@ function escapeAt(text: string, at: number, midLine: boolean): string {
  *  right where the renderer will autolink it. Inside a link's brackets nothing
  *  does - marked and the editor both read a link's text as markdown - so there an
  *  address is words like any other, and `pkg/__init__.py` unescaped would be
- *  `init` in bold. */
+ *  `init` in bold. Off unless asked for, because the caller that forgets is one
+ *  writing a link's text of its own, a media link's name or a card's title, and an
+ *  address escaped as words costs a backslash where one kept in brackets is markup. */
 export function escapeText(
   text: string,
-  { addresses = true }: { addresses?: boolean } = {},
+  { addresses = false }: { addresses?: boolean } = {},
 ): string {
   const out: string[] = []
   const numbered = A_NUMBER.exec(text)
@@ -312,7 +314,7 @@ export function plainWords(text: string): string {
     .split('\n')
     .map((line) => {
       const marker = A_LIST_ITEM.exec(line)?.[0] ?? ''
-      return marker + escapeText(line.slice(marker.length))
+      return marker + escapeText(line.slice(marker.length), { addresses: true })
     })
     .join('\n')
 }
