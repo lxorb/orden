@@ -2417,4 +2417,197 @@ export const fa: Dictionary = {
   Large: 'بزرگ',
   Both: 'هر دو',
   'Shown on cards': 'نمایش روی کارت‌ها',
+  // What each setting does, behind the ? beside it (#768)
+  'Syncs this browser’s AI keys with your other devices through the vault.':
+    'کلیدهای هوش مصنوعی این مرورگر را از راه گاوصندوق با دستگاه‌های دیگر شما همگام می‌کند.',
+  'Which of your AI accounts this feature asks.': 'این ویژگی از کدام حساب هوش مصنوعی شما می‌پرسد.',
+  'Whether a task done with AI asks before each change or makes them on its own.':
+    'اینکه کاری که با هوش مصنوعی انجام می‌شود پیش از هر تغییر بپرسد یا خودش تغییرها را بدهد.',
+  'Makes Orden the browser that links from other programs open in.':
+    'Orden را مرورگری می‌کند که پیوندهای برنامه‌های دیگر در آن باز می‌شوند.',
+  'Where words typed into a web tab’s address bar are searched.':
+    'واژه‌هایی که در نوار نشانی زبانهٔ وب نوشته می‌شوند کجا جست‌وجو شوند.',
+  'The search address, with %s where the words go.': 'نشانی جست‌وجو، با %s در جای واژه‌ها.',
+  'Words the spelling check never marks as wrong.':
+    'واژه‌هایی که بررسی املا هرگز نادرست نمی‌شمارد.',
+  'Which app’s keys Orden follows; any key below can still be changed.':
+    'Orden از کلیدهای کدام برنامه پیروی می‌کند؛ هر کلید زیر همچنان تغییرپذیر است.',
+  'Moves and edits in notes with Vim’s keys.': 'جابه‌جایی و ویرایش در یادداشت‌ها با کلیدهای Vim.',
+  'What pulling a note down past its top does on a phone.':
+    'کشیدن یادداشت به پایین فراتر از بالای آن در گوشی چه می‌کند.',
+  'The OpenAI key the glasses ask their questions with.':
+    'کلید OpenAI که عینک پرسش‌هایش را با آن می‌پرسد.',
+  'The model that answers what you ask on the glasses.':
+    'مدلی که به پرسش‌های شما روی عینک پاسخ می‌دهد.',
+  'How long the model thinks before it answers; longer is slower.':
+    'مدل پیش از پاسخ چه اندازه فکر کند؛ بیشتر یعنی کندتر.',
+  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
+    'سند Markdown را به فهرست New می‌افزاید که با کلیک راست در کاوشگر فایل باز می‌شود.',
+  'What happens when one note was changed on two devices before they synced.':
+    'وقتی یک یادداشت پیش از همگام‌سازی روی دو دستگاه تغییر کرده باشد چه می‌شود.',
+  'How far back the account keeps earlier versions of your notes.':
+    'حساب نسخه‌های پیشین یادداشت‌های شما را تا چه مدت نگه می‌دارد.',
+  'The colour of buttons, links and the selection.': 'رنگ دکمه‌ها، پیوندها و گزینش.',
+  'Adds Orden to the AI agent programs on this computer, so they reach your notes with nothing to set up.':
+    'Orden را به برنامه‌های عامل هوش مصنوعی این رایانه می‌افزاید تا بی هیچ تنظیمی به یادداشت‌های شما برسند.',
+  'Words that notify you whenever someone writes them in a chat, separated by commas.':
+    'واژه‌هایی که هرگاه کسی در گفت‌وگو بنویسدشان به شما خبر می‌دهند، جداشده با ویرگول.',
+  'When chats may notify you; outside these hours they stay quiet.':
+    'گفت‌وگوها کی می‌توانند به شما خبر دهند؛ بیرون از این ساعت‌ها خاموش می‌مانند.',
+  'When the hours chats may notify you begin.':
+    'ساعت‌هایی که گفت‌وگوها می‌توانند به شما خبر دهند کی آغاز می‌شود.',
+  'When the hours chats may notify you end.':
+    'ساعت‌هایی که گفت‌وگوها می‌توانند به شما خبر دهند کی پایان می‌یابد.',
+  'Notifications show the message itself; off shows only who wrote.':
+    'اعلان‌ها خود پیام را نشان می‌دهند؛ خاموش، تنها نویسنده را نشان می‌دهد.',
+  'Notifications make a sound.': 'اعلان‌ها صدا دارند.',
+  'Which headings start a new page on the glasses.':
+    'کدام سرفصل‌ها روی عینک صفحهٔ تازه آغاز می‌کنند.',
+  'Shows line numbers on the glasses.': 'شمارهٔ خط‌ها را روی عینک نشان می‌دهد.',
+  'How many blank lines the glasses keep between blocks.':
+    'عینک میان بلوک‌ها چند خط خالی نگه می‌دارد.',
+  'Shows this markdown mark on the glasses rather than hiding it.':
+    'این نشانهٔ Markdown را روی عینک نشان می‌دهد و پنهان نمی‌کند.',
+  'Lets you run commands on the glasses by speaking.':
+    'می‌گذارد فرمان‌ها را روی عینک با گفتن اجرا کنید.',
+  'What you say to run this command; left empty, the phrase shown is used.':
+    'آنچه برای اجرای این فرمان می‌گویید؛ اگر خالی بماند، عبارت نشان‌داده‌شده به کار می‌رود.',
+  'What Windows draws behind the window: Mica, Acrylic, or no blur.':
+    'آنچه Windows پشت پنجره می‌کشد: Mica، Acrylic یا بی‌محوشدگی.',
+  'How much of the window’s own colour lies over what is behind it.':
+    'رنگ خود پنجره تا چه اندازه روی آنچه پشت آن است می‌نشیند.',
+  'The frame takes its colour from what is open.': 'قاب رنگش را از آنچه باز است می‌گیرد.',
+  'How strongly the frame is coloured.': 'قاب با چه شدتی رنگ بگیرد.',
+  'The colours the frame takes where nothing open has a colour of its own.':
+    'رنگ‌هایی که قاب می‌گیرد وقتی آنچه باز است رنگی از خود ندارد.',
+  'A web tab takes the colour of its page.': 'زبانهٔ وب رنگ صفحه‌اش را می‌گیرد.',
+  'When your status is taken away again.': 'وضعیت شما کی دوباره برداشته می‌شود.',
+  'Silences chat notifications and shows the others you are busy.':
+    'اعلان‌های گفت‌وگو را بی‌صدا می‌کند و به دیگران نشان می‌دهد که مشغول هستید.',
+  'The colour the others see beside your name.': 'رنگی که دیگران کنار نام شما می‌بینند.',
+  'The others see you as offline even while you are here.':
+    'دیگران شما را آفلاین می‌بینند، حتی وقتی اینجا هستید.',
+  'The picture behind the window, one for light and one for dark; drag it to move its centre.':
+    'تصویر پشت پنجره، یکی برای روشن و یکی برای تیره؛ برای جابه‌جایی مرکزش آن را بکشید.',
+  'The theme Orden is drawn in.': 'پوسته‌ای که Orden با آن کشیده می‌شود.',
+  'Light, dark, or whichever the system is in.': 'روشن، تیره، یا هر کدام که سامانه در آن است.',
+  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
+    'اینکه ضروری‌ها در بالای فهرست فایل‌ها کاشی‌وار نشان داده شوند یا فهرست‌وار.',
+  'Shows a pointing hand over buttons, as web pages do.':
+    'مانند صفحه‌های وب، روی دکمه‌ها دست اشاره نشان می‌دهد.',
+  'Orden’s own title bar, or the window frame of your system.':
+    'نوار عنوان خود Orden، یا قاب پنجرهٔ سامانهٔ شما.',
+  'How large the text of notes is.': 'اندازهٔ متن یادداشت‌ها.',
+  'The space between the lines of a note.': 'فاصلهٔ میان خط‌های یک یادداشت.',
+  'How wide a line of a note grows before it wraps.':
+    'یک خط یادداشت پیش از شکستن تا چه پهنایی پیش می‌رود.',
+  'Typing an opening bracket or quote adds the closing one too.':
+    'نوشتن کمانک یا گیومهٔ باز، بسته‌اش را هم می‌افزاید.',
+  'Keeps the line you are writing in the middle of the screen.':
+    'خطی را که در آن می‌نویسید در میانهٔ صفحه نگه می‌دارد.',
+  'Dims everything but the paragraph you are writing in.':
+    'همه چیز جز بندی را که در آن می‌نویسید کم‌نور می‌کند.',
+  'Joins pairs such as -> or != into one sign, in code only or everywhere.':
+    'جفت‌هایی مانند -> یا != را یک نشانه می‌کند، تنها در کد یا همه‌جا.',
+  'Where a picture or file you paste or drop into a note is saved.':
+    'تصویر یا فایلی که در یادداشت می‌چسبانید یا رها می‌کنید کجا ذخیره شود.',
+  'Turning two fingers on a touchpad or screen rotates the canvas.':
+    'چرخاندن دو انگشت روی صفحهٔ لمسی یا صفحه‌نمایش، بوم را می‌چرخاند.',
+  'A rotation that ends near a right angle settles on it.':
+    'چرخشی که نزدیک زاویهٔ راست پایان یابد روی آن می‌نشیند.',
+  'The paper size a new page note starts with.':
+    'اندازهٔ کاغذی که یادداشت صفحه‌ای تازه با آن آغاز می‌شود.',
+  'How the name of a new unique note is made from the date and time.':
+    'نام یادداشت یکتای تازه چگونه از تاریخ و زمان ساخته می‌شود.',
+  'The colours code in a note is highlighted in.':
+    'رنگ‌هایی که کد در یادداشت با آن‌ها برجسته می‌شود.',
+  'Numbers the lines of code blocks.': 'خط‌های بلوک‌های کد را شماره می‌زند.',
+  'The paper size of a PDF or a print.': 'اندازهٔ کاغذ PDF یا چاپ.',
+  'Whether pages are upright or on their side.': 'اینکه صفحه‌ها ایستاده باشند یا خوابیده.',
+  'The space around the edge of each page, such as 20mm or 1in.':
+    'فاصلهٔ گرداگرد لبهٔ هر صفحه، مانند 20mm یا 1in.',
+  'Text at the top of every page; ${title}, ${date} and ${year} are filled in.':
+    'متن بالای هر صفحه؛ ${title}، ${date} و ${year} پر می‌شوند.',
+  'Text at the bottom of every page; ${title}, ${date} and ${year} are filled in.':
+    'متن پایین هر صفحه؛ ${title}، ${date} و ${year} پر می‌شوند.',
+  'Whether an export is light, dark, or as the app is now.':
+    'اینکه برون‌بری روشن باشد، تیره، یا همانند حالت کنونی برنامه.',
+  'Whether this key goes to Orden or to the program in the terminal, or asks each time.':
+    'اینکه این کلید به Orden برود یا به برنامهٔ درون ترمینال، یا هر بار بپرسد.',
+  'The shell a new terminal starts.': 'پوسته‌ای که ترمینال تازه اجرا می‌کند.',
+  'How large the text in terminals is.': 'اندازهٔ متن در ترمینال‌ها.',
+  'Brings back what each terminal showed after Orden restarts; off forgets it on quit.':
+    'پس از بازآغاز Orden آنچه هر ترمینال نشان می‌داد را برمی‌گرداند؛ خاموش، هنگام بستن فراموشش می‌کند.',
+  'Asks before Orden quits with terminals open: always, or only while something runs in one.':
+    'پیش از بسته شدن Orden با ترمینال‌های باز می‌پرسد: همیشه، یا تنها وقتی چیزی در یکی از آن‌ها در حال اجراست.',
+  'Draws the app on the graphics card; turn it off if the window flickers or stays blank.':
+    'برنامه را با کارت گرافیک می‌کشد؛ اگر پنجره سوسو زد یا خالی ماند خاموشش کنید.',
+  'How long before a task’s time it reminds you, unless the task says otherwise.':
+    'چه مدت پیش از زمان کار یادآوری می‌کند، مگر آنکه خود کار چیز دیگری بگوید.',
+  'Keeps Orden running in the tray after its window closes, so reminders still ring.':
+    'پس از بستن پنجره، Orden را در سینی سامانه روشن نگه می‌دارد تا یادآورها همچنان زنگ بزنند.',
+  'Lets reminders ring at the exact minute rather than when the phone gets round to it.':
+    'می‌گذارد یادآورها درست در همان دقیقه زنگ بزنند، نه هر وقت گوشی به آن برسد.',
+  'How often a note you are editing is saved as a version you can go back to in History.':
+    'یادداشتی که ویرایش می‌کنید هر چند وقت یک‌بار به‌صورت نسخه‌ای ذخیره شود که بتوانید در سابقه به آن برگردید.',
+  'How long those versions are kept before they are deleted.':
+    'آن نسخه‌ها تا چه مدت پیش از پاک شدن نگه داشته می‌شوند.',
+  'Ctrl+Tab goes to the tab used last, as in VS Code; off goes through the tabs in the order they sit.':
+    'Ctrl+Tab مانند VS Code به زبانه‌ای می‌رود که آخر بار به کار رفت؛ خاموش، زبانه‌ها را به ترتیب جایشان می‌پیماید.',
+  'Two fingers sideways on the touchpad go back and forward.':
+    'دو انگشت به پهلو روی صفحهٔ لمسی، به عقب و جلو می‌برد.',
+  'What the web pages of another space do while it is out of sight: keep running, pause, or ask the first time.':
+    'صفحه‌های وب فضای دیگر وقتی دیده نمی‌شوند چه کنند: کار کنند، بایستند، یا بار نخست بپرسند.',
+  'Unloads web pages that have been out of sight for a while to free memory; they load again when you return.':
+    'صفحه‌های وبی را که مدتی دیده نشده‌اند برای آزاد کردن حافظه خالی می‌کند؛ با بازگشت شما دوباره بار می‌شوند.',
+  'Reads dates, times and fields out of what you type into Add task, such as “tomorrow 9am”.':
+    'تاریخ، زمان و فیلدها را از آنچه در «افزودن کار» می‌نویسید می‌خواند، مانند «tomorrow 9am».',
+  'The folder of this space whose folders the Tasks panel lists as projects.':
+    'پوشه‌ای از این فضا که پنل «کارها» پوشه‌هایش را به‌عنوان پروژه فهرست می‌کند.',
+  'Today also lists the tasks that have no start date; off shows only those dated today or earlier.':
+    '«امروز» کارهای بی‌تاریخ آغاز را هم فهرست می‌کند؛ خاموش، تنها کارهای امروز یا پیش از آن را نشان می‌دهد.',
+  'The Add task shortcut works even while another app is in front.':
+    'میان‌بر «افزودن کار» حتی وقتی برنامهٔ دیگری جلوست کار می‌کند.',
+  'Shows terminals and the other tools for writing code.':
+    'ترمینال‌ها و ابزارهای دیگر کدنویسی را نشان می‌دهد.',
+  'Hides the tips Orden shows while you get to know it.':
+    'نکته‌هایی را که Orden هنگام آشنایی شما با آن نشان می‌دهد پنهان می‌کند.',
+  'The language Orden’s menus and settings are in.': 'زبان منوها و تنظیمات Orden.',
+  'Offers this type when you make something new; off only takes it out of that list.':
+    'هنگام ساختن چیزی تازه این گونه را پیشنهاد می‌کند؛ خاموش، تنها آن را از آن فهرست برمی‌دارد.',
+  'Shows a mark such as ** or # while the cursor is in it; off keeps every mark out of sight.':
+    'نشانه‌ای مانند ** یا # را وقتی نشانگر درون آن است نشان می‌دهد؛ خاموش، همهٔ نشانه‌ها پنهان می‌مانند.',
+  'Notes open as plain markdown text rather than formatted.':
+    'یادداشت‌ها به‌صورت متن خام Markdown باز می‌شوند، نه قالب‌بندی‌شده.',
+  'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
+    'یادداشت‌ها را از راست به چپ می‌نویسد، برای عربی، عبری و خط‌های همانند.',
+  'Underlines misspelled words as you write.': 'هنگام نوشتن زیر واژه‌های غلط خط می‌کشد.',
+  'The dictionary spelling is checked against; Match the system uses your system’s language.':
+    'واژه‌نامه‌ای که املا با آن سنجیده می‌شود؛ «پیروی از سامانه» زبان سامانهٔ شما را به کار می‌برد.',
+  'The version of Orden that is running; press to copy it.':
+    'نسخهٔ Orden که در حال اجراست؛ برای رونوشت آن را بزنید.',
+  'One of this theme’s own settings, offered by its author.':
+    'یکی از تنظیمات خود این پوسته، پیشنهاد سازنده‌اش.',
+  'How much of what is behind the window shows under notes and terminals; the words always stay readable.':
+    'چه اندازه از پشت پنجره زیر یادداشت‌ها و ترمینال‌ها پیداست؛ واژه‌ها همیشه خوانا می‌مانند.',
+  'The colour laid over the picture.': 'رنگی که روی تصویر می‌نشیند.',
+  'How much the picture is blurred.': 'تصویر چه اندازه محو شود.',
+  'How much the picture is darkened.': 'تصویر چه اندازه تیره شود.',
+  'How vivid the colours of the picture are.': 'رنگ‌های تصویر چه اندازه زنده باشند.',
+  'How strongly the tint colour lies over the picture.': 'ته‌رنگ با چه شدتی روی تصویر می‌نشیند.',
+  'Adds a film grain over the picture.': 'دانهٔ فیلم روی تصویر می‌افزاید.',
+  'How the picture fills the window.': 'تصویر چگونه پنجره را پر می‌کند.',
+  'An empty pane shows the picture rather than paper.':
+    'پنل خالی به جای کاغذ تصویر را نشان می‌دهد.',
+  'The name the others see on what you share and in chats.':
+    'نامی که دیگران روی آنچه به اشتراک می‌گذارید و در گفتگوها می‌بینند.',
+  'How far back Go back takes this space; it says first what would change.':
+    '«بازگشت به گذشته» این فضا را تا کجا به عقب می‌برد؛ اول می‌گوید چه چیزی تغییر می‌کند.',
+  'The picture the others see beside your name.': 'تصویری که دیگران کنار نام شما می‌بینند.',
+  'Shown to the others beside your name, such as she/her.':
+    'کنار نام شما به دیگران نشان داده می‌شود، مانند او/ایشان.',
+  'A few words about you that the others see on your profile.':
+    'چند کلمه درباره شما که دیگران در نمایه‌تان می‌بینند.',
+  'What you are up to, shown to the others beside your name until it clears.':
+    'کاری که اکنون می‌کنید، کنار نام شما به دیگران نشان داده می‌شود تا وقتی برداشته شود.',
 }

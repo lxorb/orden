@@ -2424,4 +2424,199 @@ export const tr: Dictionary = {
   Large: 'Büyük',
   Both: 'İkisi de',
   'Shown on cards': 'Kartlarda gösterilen',
+  // What each setting does, behind the ? beside it (#768)
+  'Syncs this browser’s AI keys with your other devices through the vault.':
+    'Bu tarayıcının yapay zekâ anahtarlarını kasa üzerinden diğer cihazlarınızla eşitler.',
+  'Which of your AI accounts this feature asks.':
+    'Bu özelliğin yapay zekâ hesaplarınızdan hangisine sorduğu.',
+  'Whether a task done with AI asks before each change or makes them on its own.':
+    'Yapay zekâyla yapılan bir görevin her değişiklikten önce mi soracağı, yoksa değişiklikleri kendisi mi yapacağı.',
+  'Makes Orden the browser that links from other programs open in.':
+    'Diğer programlardaki bağlantıların açıldığı tarayıcıyı Orden yapar.',
+  'Where words typed into a web tab’s address bar are searched.':
+    'Bir web sekmesinin adres çubuğuna yazılan sözcüklerin nerede aranacağı.',
+  'The search address, with %s where the words go.':
+    'Sözcüklerin geleceği yerde %s bulunan arama adresi.',
+  'Words the spelling check never marks as wrong.':
+    'Yazım denetiminin asla yanlış olarak işaretlemediği sözcükler.',
+  'Which app’s keys Orden follows; any key below can still be changed.':
+    'Orden’in hangi uygulamanın tuşlarını izlediği; aşağıdaki her tuş yine de değiştirilebilir.',
+  'Moves and edits in notes with Vim’s keys.':
+    'Notlarda Vim tuşlarıyla gezinmenizi ve düzenleme yapmanızı sağlar.',
+  'What pulling a note down past its top does on a phone.':
+    'Telefonda bir notu en üstünden aşağı çekmenin ne yaptığı.',
+  'The OpenAI key the glasses ask their questions with.':
+    'Gözlüğün sorularını sorarken kullandığı OpenAI anahtarı.',
+  'The model that answers what you ask on the glasses.':
+    'Gözlükte sorduklarınızı yanıtlayan model.',
+  'How long the model thinks before it answers; longer is slower.':
+    'Modelin yanıtlamadan önce ne kadar düşündüğü; daha uzunu daha yavaştır.',
+  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
+    'Dosya Gezgini’nde sağ tıklayınca açılan Yeni menüsüne bir Markdown belgesi ekler.',
+  'What happens when one note was changed on two devices before they synced.':
+    'Bir not eşitlenmeden önce iki cihazda değiştirildiğinde ne olacağı.',
+  'How far back the account keeps earlier versions of your notes.':
+    'Hesabın notlarınızın eski sürümlerini ne kadar geriye kadar sakladığı.',
+  'The colour of buttons, links and the selection.': 'Düğmelerin, bağlantıların ve seçimin rengi.',
+  'Adds Orden to the AI agent programs on this computer, so they reach your notes with nothing to set up.':
+    'Orden’i bu bilgisayardaki yapay zekâ ajanı programlarına ekler, böylece hiçbir ayar yapmadan notlarınıza ulaşırlar.',
+  'Words that notify you whenever someone writes them in a chat, separated by commas.':
+    'Biri sohbette yazdığında size bildirim gönderen, virgülle ayrılmış sözcükler.',
+  'When chats may notify you; outside these hours they stay quiet.':
+    'Sohbetlerin size ne zaman bildirim gönderebileceği; bu saatlerin dışında sessiz kalırlar.',
+  'When the hours chats may notify you begin.':
+    'Sohbetlerin size bildirim gönderebileceği saatlerin ne zaman başladığı.',
+  'When the hours chats may notify you end.':
+    'Sohbetlerin size bildirim gönderebileceği saatlerin ne zaman bittiği.',
+  'Notifications show the message itself; off shows only who wrote.':
+    'Bildirimler mesajın kendisini gösterir; kapalıyken yalnızca kimin yazdığı görünür.',
+  'Notifications make a sound.': 'Bildirimler ses çıkarır.',
+  'Which headings start a new page on the glasses.':
+    'Gözlükte hangi başlıkların yeni sayfa başlattığı.',
+  'Shows line numbers on the glasses.': 'Gözlükte satır numaralarını gösterir.',
+  'How many blank lines the glasses keep between blocks.':
+    'Gözlüğün bloklar arasında kaç boş satır bıraktığı.',
+  'Shows this markdown mark on the glasses rather than hiding it.':
+    'Bu markdown işaretini gözlükte gizlemek yerine gösterir.',
+  'Lets you run commands on the glasses by speaking.':
+    'Gözlükte komutları konuşarak çalıştırmanızı sağlar.',
+  'What you say to run this command; left empty, the phrase shown is used.':
+    'Bu komutu çalıştırmak için söylediğiniz söz; boş bırakılırsa gösterilen ifade kullanılır.',
+  'What Windows draws behind the window: Mica, Acrylic, or no blur.':
+    'Windows’un pencerenin arkasına ne çizdiği: Mica, Acrylic ya da bulanıklık yok.',
+  'How much of the window’s own colour lies over what is behind it.':
+    'Pencerenin kendi renginin arkasındakinin üzerine ne kadar bindiği.',
+  'The frame takes its colour from what is open.': 'Çerçeve rengini açık olandan alır.',
+  'How strongly the frame is coloured.': 'Çerçevenin ne kadar güçlü renklendirileceği.',
+  'The colours the frame takes where nothing open has a colour of its own.':
+    'Açık olan hiçbir şeyin kendi rengi olmadığında çerçevenin aldığı renkler.',
+  'A web tab takes the colour of its page.': 'Bir web sekmesi sayfasının rengini alır.',
+  'When your status is taken away again.': 'Durumunuzun ne zaman yeniden kaldırılacağı.',
+  'Silences chat notifications and shows the others you are busy.':
+    'Sohbet bildirimlerini susturur ve diğerlerine meşgul olduğunuzu gösterir.',
+  'The colour the others see beside your name.': 'Diğerlerinin adınızın yanında gördüğü renk.',
+  'The others see you as offline even while you are here.':
+    'Buradayken bile diğerleri sizi çevrimdışı görür.',
+  'The picture behind the window, one for light and one for dark; drag it to move its centre.':
+    'Pencerenin arkasındaki resim, biri açık biri koyu tema için; ortasını taşımak için sürükleyin.',
+  'The theme Orden is drawn in.': 'Orden’in görünümünü belirleyen tema.',
+  'Light, dark, or whichever the system is in.': 'Açık, koyu ya da sistem hangisindeyse o.',
+  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
+    'Dosya listesinin üstündeki yer imlerinin kutucuk olarak mı yoksa liste olarak mı gösterileceği.',
+  'Shows a pointing hand over buttons, as web pages do.':
+    'Web sayfalarında olduğu gibi düğmelerin üzerinde işaret eden bir el gösterir.',
+  'Orden’s own title bar, or the window frame of your system.':
+    'Orden’in kendi başlık çubuğu ya da sisteminizin pencere çerçevesi.',
+  'How large the text of notes is.': 'Notların yazısının ne kadar büyük olduğu.',
+  'The space between the lines of a note.': 'Bir notun satırları arasındaki boşluk.',
+  'How wide a line of a note grows before it wraps.':
+    'Bir not satırının alt satıra geçmeden önce ne kadar genişleyebileceği.',
+  'Typing an opening bracket or quote adds the closing one too.':
+    'Açılış ayracı ya da tırnağı yazınca kapanışını da ekler.',
+  'Keeps the line you are writing in the middle of the screen.':
+    'Yazdığınız satırı ekranın ortasında tutar.',
+  'Dims everything but the paragraph you are writing in.':
+    'Yazdığınız paragraf dışında her şeyi soluklaştırır.',
+  'Joins pairs such as -> or != into one sign, in code only or everywhere.':
+    '-> ya da != gibi çiftleri yalnızca kodda ya da her yerde tek bir işarete birleştirir.',
+  'Where a picture or file you paste or drop into a note is saved.':
+    'Bir nota yapıştırdığınız ya da bıraktığınız resim veya dosyanın kaydedildiği yer.',
+  'Turning two fingers on a touchpad or screen rotates the canvas.':
+    'Dokunmatik yüzeyde ya da ekranda iki parmağı çevirmek tuvali döndürür.',
+  'A rotation that ends near a right angle settles on it.':
+    'Dik açıya yakın biten bir döndürme o açıya oturur.',
+  'The paper size a new page note starts with.': 'Yeni bir sayfalı notun başladığı kâğıt boyutu.',
+  'How the name of a new unique note is made from the date and time.':
+    'Yeni bir benzersiz notun adının tarih ve saatten nasıl oluşturulduğu.',
+  'The colours code in a note is highlighted in.': 'Nottaki kodun vurgulandığı renkler.',
+  'Numbers the lines of code blocks.': 'Kod bloklarının satırlarını numaralandırır.',
+  'The paper size of a PDF or a print.': 'Bir PDF ya da baskı için kâğıt boyutu.',
+  'Whether pages are upright or on their side.': 'Sayfaların dik mi yoksa yan mı durduğu.',
+  'The space around the edge of each page, such as 20mm or 1in.':
+    'Her sayfanın kenarındaki boşluk, örneğin 20mm ya da 1in.',
+  'Text at the top of every page; ${title}, ${date} and ${year} are filled in.':
+    'Her sayfanın üstündeki metin; ${title}, ${date} ve ${year} doldurulur.',
+  'Text at the bottom of every page; ${title}, ${date} and ${year} are filled in.':
+    'Her sayfanın altındaki metin; ${title}, ${date} ve ${year} doldurulur.',
+  'Whether an export is light, dark, or as the app is now.':
+    'Dışa aktarımın açık mı, koyu mu, yoksa uygulamanın şu anki hâli gibi mi olacağı.',
+  'Whether this key goes to Orden or to the program in the terminal, or asks each time.':
+    'Bu tuşun Orden’e mi, terminaldeki programa mı gideceği, yoksa her seferinde mi sorulacağı.',
+  'The shell a new terminal starts.': 'Yeni bir terminalin başlattığı kabuk.',
+  'How large the text in terminals is.': 'Terminallerdeki yazının ne kadar büyük olduğu.',
+  'Brings back what each terminal showed after Orden restarts; off forgets it on quit.':
+    'Orden yeniden başladıktan sonra her terminalin gösterdiğini geri getirir; kapalıyken çıkışta unutur.',
+  'Asks before Orden quits with terminals open: always, or only while something runs in one.':
+    'Terminaller açıkken Orden kapanmadan önce sorar: her zaman ya da yalnızca birinde bir şey çalışırken.',
+  'Draws the app on the graphics card; turn it off if the window flickers or stays blank.':
+    'Uygulamayı ekran kartıyla çizer; pencere titriyor ya da boş kalıyorsa kapatın.',
+  'How long before a task’s time it reminds you, unless the task says otherwise.':
+    'Görev aksini belirtmedikçe görevin saatinden ne kadar önce hatırlatılacağı.',
+  'Keeps Orden running in the tray after its window closes, so reminders still ring.':
+    'Penceresi kapandıktan sonra Orden’i sistem tepsisinde çalışır tutar, böylece hatırlatıcılar yine çalar.',
+  'Lets reminders ring at the exact minute rather than when the phone gets round to it.':
+    'Hatırlatıcıların, telefonun sırası geldiğinde değil tam dakikasında çalmasını sağlar.',
+  'How often a note you are editing is saved as a version you can go back to in History.':
+    'Düzenlediğiniz bir notun, Geçmiş’te geri dönebileceğiniz bir sürüm olarak ne sıklıkla kaydedildiği.',
+  'How long those versions are kept before they are deleted.':
+    'Bu sürümlerin silinmeden önce ne kadar tutulduğu.',
+  'Ctrl+Tab goes to the tab used last, as in VS Code; off goes through the tabs in the order they sit.':
+    'Ctrl+Tab, VS Code’daki gibi en son kullanılan sekmeye gider; kapalıyken sekmeleri sıralarına göre dolaşır.',
+  'Two fingers sideways on the touchpad go back and forward.':
+    'Dokunmatik yüzeyde iki parmakla yana kaydırmak geri ve ileri gider.',
+  'What the web pages of another space do while it is out of sight: keep running, pause, or ask the first time.':
+    'Başka bir alanın web sayfalarının görünmezken ne yaptığı: çalışmaya devam eder, duraklar ya da ilk seferde sorar.',
+  'Unloads web pages that have been out of sight for a while to free memory; they load again when you return.':
+    'Bellek boşaltmak için bir süredir görünmeyen web sayfalarını kaldırır; geri döndüğünüzde yeniden yüklenirler.',
+  'Reads dates, times and fields out of what you type into Add task, such as “tomorrow 9am”.':
+    'Görev ekle’ye yazdıklarınızdan tarih, saat ve alanları okur, örneğin “tomorrow 9am”.',
+  'The folder of this space whose folders the Tasks panel lists as projects.':
+    'Bu alanda, içindeki klasörleri Görevler panelinin proje olarak listelediği klasör.',
+  'Today also lists the tasks that have no start date; off shows only those dated today or earlier.':
+    'Bugün, başlangıç tarihi olmayan görevleri de listeler; kapalıyken yalnızca bugün ya da daha önceye tarihli olanları gösterir.',
+  'The Add task shortcut works even while another app is in front.':
+    'Görev ekle kısayolu başka bir uygulama öndeyken de çalışır.',
+  'Shows terminals and the other tools for writing code.':
+    'Terminalleri ve kod yazmaya yönelik diğer araçları gösterir.',
+  'Hides the tips Orden shows while you get to know it.':
+    'Orden’i tanırken gösterdiği ipuçlarını gizler.',
+  'The language Orden’s menus and settings are in.': 'Orden’in menülerinin ve ayarlarının dili.',
+  'Offers this type when you make something new; off only takes it out of that list.':
+    'Yeni bir şey oluşturduğunuzda bu türü sunar; kapalıyken yalnızca o listeden çıkarır.',
+  'Shows a mark such as ** or # while the cursor is in it; off keeps every mark out of sight.':
+    'İmleç içindeyken ** ya da # gibi bir işareti gösterir; kapalıyken tüm işaretler gizli kalır.',
+  'Notes open as plain markdown text rather than formatted.':
+    'Notlar biçimlendirilmiş değil, düz markdown metni olarak açılır.',
+  'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
+    'Notları Arapça, İbranice ve benzeri yazılar için sağdan sola yazar.',
+  'Underlines misspelled words as you write.': 'Yazarken yanlış yazılmış sözcüklerin altını çizer.',
+  'The dictionary spelling is checked against; Match the system uses your system’s language.':
+    'Yazımın denetlendiği sözlük; Sistemle aynı, sisteminizin dilini kullanır.',
+  'The version of Orden that is running; press to copy it.':
+    'Çalışan Orden sürümü; kopyalamak için basın.',
+  'One of this theme’s own settings, offered by its author.':
+    'Bu temanın, yazarının sunduğu kendi ayarlarından biri.',
+  'How much of what is behind the window shows under notes and terminals; the words always stay readable.':
+    'Pencerenin arkasındakinin notların ve terminallerin altında ne kadar göründüğü; yazılar her zaman okunur kalır.',
+  'The colour laid over the picture.': 'Resmin üzerine serilen renk.',
+  'How much the picture is blurred.': 'Resmin ne kadar bulanıklaştırıldığı.',
+  'How much the picture is darkened.': 'Resmin ne kadar karartıldığı.',
+  'How vivid the colours of the picture are.': 'Resmin renklerinin ne kadar canlı olduğu.',
+  'How strongly the tint colour lies over the picture.':
+    'Ton renginin resmin üzerine ne kadar güçlü bindiği.',
+  'Adds a film grain over the picture.': 'Resmin üzerine film greni ekler.',
+  'How the picture fills the window.': 'Resmin pencereyi nasıl doldurduğu.',
+  'An empty pane shows the picture rather than paper.':
+    'Boş bir bölme kâğıt yerine resmi gösterir.',
+  'The name the others see on what you share and in chats.':
+    'Paylaştıklarınızda ve sohbetlerde diğerlerinin gördüğü ad.',
+  'How far back Go back takes this space; it says first what would change.':
+    'Geri dön’ün bu alanı ne kadar geriye götürdüğü; önce neyin değişeceğini söyler.',
+  'The picture the others see beside your name.': 'Diğerlerinin adınızın yanında gördüğü resim.',
+  'Shown to the others beside your name, such as she/her.':
+    'Diğerlerine adınızın yanında gösterilir, örneğin she/her.',
+  'A few words about you that the others see on your profile.':
+    'Diğerlerinin profilinizde gördüğü, sizinle ilgili birkaç söz.',
+  'What you are up to, shown to the others beside your name until it clears.':
+    'Ne yaptığınız; temizlenene kadar diğerlerine adınızın yanında gösterilir.',
 }

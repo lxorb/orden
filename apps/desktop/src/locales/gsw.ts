@@ -2426,4 +2426,203 @@ export const gsw: Dictionary = {
   Large: 'Gross',
   Both: 'Beides',
   'Shown on cards': 'Uf de Charte zeigt',
+  // What each setting does, behind the ? beside it (#768)
+  'Syncs this browser’s AI keys with your other devices through the vault.':
+    'Glicht d KI-Schlüssel vo däm Browser über de Tresor mit dine andere Gräät ab.',
+  'Which of your AI accounts this feature asks.': 'Weles vo dine KI-Konti die Funktion fragt.',
+  'Whether a task done with AI asks before each change or makes them on its own.':
+    'Öb e Ufgaab mit KI vor jeder Änderig fragt oder d Änderige sälber macht.',
+  'Makes Orden the browser that links from other programs open in.':
+    'Macht Orden zum Browser, i däm sich Links us andere Programm öffned.',
+  'Where words typed into a web tab’s address bar are searched.':
+    'Wo Wörter gsuecht wärded, wo du i d Adrässliischte vom ene Web-Tab tippsch.',
+  'The search address, with %s where the words go.':
+    'D Suechadrässe, mit %s det, wo d Wörter here chömed.',
+  'Words the spelling check never marks as wrong.':
+    'Wörter, wo d Rächtschriibprüefig nie als falsch markiert.',
+  'Which app’s keys Orden follows; any key below can still be changed.':
+    'Nach welere App sich d Taschte vo Orden richted; jedi Taschte une chasch trotzdem ändere.',
+  'Moves and edits in notes with Vim’s keys.':
+    'Bewege und Bearbeite i Notize mit de Taschte vo Vim.',
+  'What pulling a note down past its top does on a phone.':
+    'Was s Abezieh vonere Notiz über ihre Aafang use ufem Handy macht.',
+  'The OpenAI key the glasses ask their questions with.':
+    'De OpenAI-Schlüssel, mit däm d Brülle ihri Frage stellt.',
+  'The model that answers what you ask on the glasses.':
+    'S Modell, wo beantwortet, was du uf de Brülle fragsch.',
+  'How long the model thinks before it answers; longer is slower.':
+    'Wie lang s Modell vor de Antwort nachedänkt; länger isch langsamer.',
+  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
+    'Füegt im „Nöi“-Menü, wo en Rächtsklick im Explorer uftuet, es Markdown-Dokumänt dezue.',
+  'What happens when one note was changed on two devices before they synced.':
+    'Was passiert, wänn e Notiz uf zwei Gräät gänderet worde isch, bevor si sich abgliche händ.',
+  'How far back the account keeps earlier versions of your notes.':
+    'Wie wiit zrugg s Konto früeneri Versione vo dine Notize ufbewahrt.',
+  'The colour of buttons, links and the selection.': 'D Farb vo Chnöpf, Links und de Uswahl.',
+  'Adds Orden to the AI agent programs on this computer, so they reach your notes with nothing to set up.':
+    'Füegt Orden zu de KI-Agent-Programm uf däm Computer dezue, damit si ohni Iirichte a dini Notize chömed.',
+  'Words that notify you whenever someone writes them in a chat, separated by commas.':
+    'Wörter, bi dene du e Mitteilig überchunnsch, sobald öpper si imene Chat schriibt, mit Komma trennt.',
+  'When chats may notify you; outside these hours they stay quiet.':
+    'Wänn Chats dir Mitteilige schicke dörfed; usserhalb vo dene Ziite bliibed si still.',
+  'When the hours chats may notify you begin.':
+    'Wänn d Ziit aafangt, i dere Chats dir Mitteilige schicke dörfed.',
+  'When the hours chats may notify you end.':
+    'Wänn d Ziit ufhört, i dere Chats dir Mitteilige schicke dörfed.',
+  'Notifications show the message itself; off shows only who wrote.':
+    'Mitteilige zeiged d Nachricht sälber; usgschaltet zeiged si nur, wer gschribe hät.',
+  'Notifications make a sound.': 'Mitteilige spiled en Ton ab.',
+  'Which headings start a new page on the glasses.':
+    'Weli Überschrifte uf de Brülle e nöii Siite aafanged.',
+  'Shows line numbers on the glasses.': 'Zeigt Ziilenummere uf de Brülle.',
+  'How many blank lines the glasses keep between blocks.':
+    'Wie vill leeri Ziile d Brülle zwüsche Blöck laht.',
+  'Shows this markdown mark on the glasses rather than hiding it.':
+    'Zeigt das Markdown-Zeiche uf de Brülle, statt s uszblände.',
+  'Lets you run commands on the glasses by speaking.':
+    'Laht dich Befähl uf de Brülle per Schtimm usfüehre.',
+  'What you say to run this command; left empty, the phrase shown is used.':
+    'Was du seisch, zum dä Befähl usfüehre; leer gilt de zeigti Satz.',
+  'What Windows draws behind the window: Mica, Acrylic, or no blur.':
+    'Was Windows hinter s Fänschter zeichnet: Mica, Acryl oder kei Unschärfi.',
+  'How much of the window’s own colour lies over what is behind it.':
+    'Wie vill vo de eigete Farb vom Fänschter über däm liit, was dehinder isch.',
+  'The frame takes its colour from what is open.':
+    'De Rahme nimmt d Farb vo däm aa, was offe isch.',
+  'How strongly the frame is coloured.': 'Wie starch de Rahme gfärbt isch.',
+  'The colours the frame takes where nothing open has a colour of its own.':
+    'D Farbe vom Rahme, wo nüt Offnigs en eigeti Farb hät.',
+  'A web tab takes the colour of its page.': 'En Web-Tab nimmt d Farb vo sinere Siite aa.',
+  'When your status is taken away again.': 'Wänn din Status wieder wäggnah wird.',
+  'Silences chat notifications and shows the others you are busy.':
+    'Schaltet Chat-Mitteilige stumm und zeigt de andere, dass du beschäftigt bisch.',
+  'The colour the others see beside your name.': 'D Farb, wo di andere näbe dim Name gsehnd.',
+  'The others see you as offline even while you are here.':
+    'Di andere gsehnd dich als offline, au wänn du da bisch.',
+  'The picture behind the window, one for light and one for dark; drag it to move its centre.':
+    'S Bild hinter em Fänschter, eis für hell und eis für dunkel; zieh s, zum sini Mitti verschiebe.',
+  'The theme Orden is drawn in.': 'S Design, i däm Orden erschiint.',
+  'Light, dark, or whichever the system is in.':
+    'Hell, dunkel oder so, wie s System grad iigstellt isch.',
+  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
+    'Öb d Lesezeiche obe i de Dateiliste als Chachle oder als Liste erschiined.',
+  'Shows a pointing hand over buttons, as web pages do.':
+    'Zeigt über Chnöpf e zeigendi Hand, wie s Websiite mached.',
+  'Orden’s own title bar, or the window frame of your system.':
+    'Di eiget Titelliischte vo Orden oder de Fänschterrahme vo dim System.',
+  'How large the text of notes is.': 'Wie gross de Text vo Notize isch.',
+  'The space between the lines of a note.': 'De Abstand zwüsche de Ziile vonere Notiz.',
+  'How wide a line of a note grows before it wraps.':
+    'Wie breit e Ziile vonere Notiz wird, bevor si umbricht.',
+  'Typing an opening bracket or quote adds the closing one too.':
+    'Tippsch e öffnendi Chlammere oder es öffnends Aafüehrigszeiche, chunnt s schliessende grad mit.',
+  'Keeps the line you are writing in the middle of the screen.':
+    'Haltet d Ziile, i dere du schriibsch, i de Mitti vom Bildschirm.',
+  'Dims everything but the paragraph you are writing in.':
+    'Dimmt alles usser em Abschnitt, i däm du schriibsch.',
+  'Joins pairs such as -> or != into one sign, in code only or everywhere.':
+    'Verbindet Paar wie -> oder != zu eim Zeiche, nur im Code oder überall.',
+  'Where a picture or file you paste or drop into a note is saved.':
+    'Wo es Bild oder e Datei gspeicheret wird, wo du in e Notiz iifüegsch oder ziehsch.',
+  'Turning two fingers on a touchpad or screen rotates the canvas.':
+    'E Drehig mit zwei Finger ufem Touchpad oder Bildschirm draiht d Liinwand.',
+  'A rotation that ends near a right angle settles on it.':
+    'E Drehig, wo nöch amene rächte Winkel ufhört, rastet det ii.',
+  'The paper size a new page note starts with.':
+    'S Papierformat, mit däm e nöii Siitenotiz aafangt.',
+  'How the name of a new unique note is made from the date and time.':
+    'Wie de Name vonere nöie eindütige Notiz us Datum und Ziit gmacht wird.',
+  'The colours code in a note is highlighted in.':
+    'D Farbe, i dene Code inere Notiz hervorghobe wird.',
+  'Numbers the lines of code blocks.': 'Nummeriert d Ziile vo Codeblöck.',
+  'The paper size of a PDF or a print.': 'S Papierformat vomene PDF oder vomene Usdruck.',
+  'Whether pages are upright or on their side.': 'Öb Siite hochkant oder quer ligged.',
+  'The space around the edge of each page, such as 20mm or 1in.':
+    'De Abstand um de Rand vo jeder Siite, zum Bispiil 20mm oder 1in.',
+  'Text at the top of every page; ${title}, ${date} and ${year} are filled in.':
+    'Text obe uf jeder Siite; ${title}, ${date} und ${year} wärded usgfüllt.',
+  'Text at the bottom of every page; ${title}, ${date} and ${year} are filled in.':
+    'Text une uf jeder Siite; ${title}, ${date} und ${year} wärded usgfüllt.',
+  'Whether an export is light, dark, or as the app is now.':
+    'Öb en Export hell, dunkel oder so wie d App grad isch.',
+  'Whether this key goes to Orden or to the program in the terminal, or asks each time.':
+    'Öb die Taschte a Orden oder as Programm im Terminal gaht oder öb jedes Mal gfragt wird.',
+  'The shell a new terminal starts.': 'D Shell, wo es nöis Terminal startet.',
+  'How large the text in terminals is.': 'Wie gross de Text i Terminals isch.',
+  'Brings back what each terminal showed after Orden restarts; off forgets it on quit.':
+    'Holt nach emene Neustart vo Orden zrugg, was jedes Terminal zeigt hät; usgschaltet wird s bim Beände vergässe.',
+  'Asks before Orden quits with terminals open: always, or only while something runs in one.':
+    'Fragt, bevor Orden mit offene Terminals beändet wird: immer oder nur, wänn in eim öppis lauft.',
+  'Draws the app on the graphics card; turn it off if the window flickers or stays blank.':
+    'Zeichnet d App über d Grafikcharte; schalt s us, wänn s Fänschter flackeret oder leer bliibt.',
+  'How long before a task’s time it reminds you, unless the task says otherwise.':
+    'Wie lang vor de Ziit vonere Ufgaab du erinneret wirsch, usser d Ufgaab leit öppis anders fescht.',
+  'Keeps Orden running in the tray after its window closes, so reminders still ring.':
+    'Laht Orden nach em Zuemache vom Fänschter im Infobereich wiiterlaufe, damit Erinnerige trotzdem lüüted.',
+  'Lets reminders ring at the exact minute rather than when the phone gets round to it.':
+    'Laht Erinnerige uf d Minute gnau lüüte statt erscht, wänn s Handy dezue chunnt.',
+  'How often a note you are editing is saved as a version you can go back to in History.':
+    'Wie mängisch e Notiz, wo du bearbeitisch, als Version gspeicheret wird, zu dere du im Verlauf zrugg chasch.',
+  'How long those versions are kept before they are deleted.':
+    'Wie lang die Versione ufbewahrt wärded, bevor si glöscht wärded.',
+  'Ctrl+Tab goes to the tab used last, as in VS Code; off goes through the tabs in the order they sit.':
+    'Ctrl+Tab gaht wie i VS Code zum zletscht bruuchte Tab; usgschaltet gaht s d Tabs i ihrere Reihefolg dure.',
+  'Two fingers sideways on the touchpad go back and forward.':
+    'Zwei Finger siitwärts ufem Touchpad bläätered zrugg und vorwärts.',
+  'What the web pages of another space do while it is out of sight: keep running, pause, or ask the first time.':
+    'Was d Websiite vonere andere Ablag mached, solang si nöd sichtbar isch: wiiterlaufe, pausiere oder bim erschte Mal fräge.',
+  'Unloads web pages that have been out of sight for a while to free memory; they load again when you return.':
+    'Nimmt Websiite, wo e Wiil nöd sichtbar gsi sind, us em Spiicher, zum Platz mache; si laded neu, wänn du zrugg chunnsch.',
+  'Reads dates, times and fields out of what you type into Add task, such as “tomorrow 9am”.':
+    'Liest Datum, Ziit und Fälder us däm, was du i „Ufgaab hinzuefüege“ tippsch, zum Bispiil „morgen 9 Uhr“.',
+  'The folder of this space whose folders the Tasks panel lists as projects.':
+    'De Ordner vo dere Ablag, dere Ordner under Ufgabe als Projekt ufglischtet wärded.',
+  'Today also lists the tasks that have no start date; off shows only those dated today or earlier.':
+    'Heute lischtet au d Ufgabe ohni Aafangsdatum; usgschaltet zeigt s nur die, wo bis hüt datiert sind.',
+  'The Add task shortcut works even while another app is in front.':
+    'S Tastekürzel für „Ufgaab hinzuefüege“ gaht au, wänn en anderi App im Vordergrund isch.',
+  'Shows terminals and the other tools for writing code.':
+    'Zeigt Terminals und di andere Wärchzüüg zum Programmiere.',
+  'Hides the tips Orden shows while you get to know it.':
+    'Blendet d Tipps us, wo Orden zeigt, während du s känne lehrsch.',
+  'The language Orden’s menus and settings are in.':
+    'D Sprach, i dere d Menüs und Iistellige vo Orden erschiined.',
+  'Offers this type when you make something new; off only takes it out of that list.':
+    'Bietet dä Typ aa, wänn du öppis Nöis machsch; usgschaltet wird er nur us dere Liste gnah.',
+  'Shows a mark such as ** or # while the cursor is in it; off keeps every mark out of sight.':
+    'Zeigt es Zeiche wie ** oder #, solang de Cursor drin staht; usgschaltet bliibt jedes Zeiche versteckt.',
+  'Notes open as plain markdown text rather than formatted.':
+    'Notize gönd als reine Markdown-Text uf statt formatiert.',
+  'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
+    'Schriibt Notize vo rächts nach links, für Arabisch, Hebräisch und ähnlichi Schrifte.',
+  'Underlines misspelled words as you write.':
+    'Understricht falsch gschribeni Wörter bim Schriibe.',
+  'The dictionary spelling is checked against; Match the system uses your system’s language.':
+    'S Wörterbuech für d Rächtschriibprüefig; „Wie s System“ nimmt d Sprach vo dim System.',
+  'The version of Orden that is running; press to copy it.':
+    'D Version vo Orden, wo grad lauft; druck druf, zum si kopiere.',
+  'One of this theme’s own settings, offered by its author.':
+    'En eigeti Iistellig vo däm Design, aabote vo sim Autor.',
+  'How much of what is behind the window shows under notes and terminals; the words always stay readable.':
+    'Wie vill vo däm, was hinter em Fänschter liit, under Notize und Terminals dureschiint; de Text bliibt immer läsbar.',
+  'The colour laid over the picture.': 'D Farb, wo über s Bild gleit wird.',
+  'How much the picture is blurred.': 'Wie starch s Bild verschwumme wird.',
+  'How much the picture is darkened.': 'Wie starch s Bild abdunklet wird.',
+  'How vivid the colours of the picture are.': 'Wie chräftig d Farbe vom Bild sind.',
+  'How strongly the tint colour lies over the picture.': 'Wie starch d Tönig über em Bild liit.',
+  'Adds a film grain over the picture.': 'Leit e Filmkörnig über s Bild.',
+  'How the picture fills the window.': 'Wie s Bild s Fänschter füllt.',
+  'An empty pane shows the picture rather than paper.':
+    'En leere Beriich zeigt s Bild statt Papier.',
+  'The name the others see on what you share and in chats.':
+    'De Name, wo di andere uf däm gsehnd, wo du teilsch, und i de Chats.',
+  'How far back Go back takes this space; it says first what would change.':
+    'Wie wiit „Zrugggah“ dä Bereich zruggsetzt; es seit zersch, was sich würd ändere.',
+  'The picture the others see beside your name.': 'S Bild, wo di andere näbe dim Name gsehnd.',
+  'Shown to the others beside your name, such as she/her.':
+    'Wird de andere näbe dim Name zeigt, zum Bispiil sie/ihre.',
+  'A few words about you that the others see on your profile.':
+    'Es paar Wörter über dich, wo di andere uf dim Profil gsehnd.',
+  'What you are up to, shown to the others beside your name until it clears.':
+    'Was du grad machsch, de andere näbe dim Name zeigt, bis es wäggnah wird.',
 }

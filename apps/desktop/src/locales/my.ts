@@ -2392,4 +2392,201 @@ export const my: Dictionary = {
   Large: 'ကြီး',
   Both: 'နှစ်ခုလုံး',
   'Shown on cards': 'ကတ်များပေါ်တွင် ပြသ',
+  // What each setting does, behind the ? beside it (#768)
+  'Syncs this browser’s AI keys with your other devices through the vault.':
+    'ဤဘရောက်ဇာ၏ AI ကီးများကို သေတ္တာမှတစ်ဆင့် သင်၏ အခြားစက်များနှင့် ချိန်ကိုက်သည်။',
+  'Which of your AI accounts this feature asks.':
+    'ဤလုပ်ဆောင်ချက်က သင်၏ မည်သည့် AI အကောင့်ကို မေးမည်နည်း။',
+  'Whether a task done with AI asks before each change or makes them on its own.':
+    'AI ဖြင့် လုပ်သော လုပ်ငန်းသည် ပြောင်းလဲမှုတိုင်းမတိုင်မီ မေးမည် သို့မဟုတ် ကိုယ်တိုင် ပြုလုပ်မည်။',
+  'Makes Orden the browser that links from other programs open in.':
+    'အခြားပရိုဂရမ်များမှ လင့်ခ်များ ဖွင့်မည့် ဘရောက်ဇာအဖြစ် Orden ကို သတ်မှတ်သည်။',
+  'Where words typed into a web tab’s address bar are searched.':
+    'ဝဘ်တဘ်၏ လိပ်စာဘားတွင် ရိုက်ထည့်သော စကားလုံးများကို ရှာဖွေမည့်နေရာ။',
+  'The search address, with %s where the words go.':
+    'စကားလုံးများ ဝင်မည့်နေရာတွင် %s ပါသော ရှာဖွေရေးလိပ်စာ။',
+  'Words the spelling check never marks as wrong.':
+    'စာလုံးပေါင်းစစ်က မည်သည့်အခါမျှ မှားသည်ဟု မမှတ်သော စကားလုံးများ။',
+  'Which app’s keys Orden follows; any key below can still be changed.':
+    'Orden လိုက်နာသော အက်ပ်၏ ကီးများဖြစ်ပြီး အောက်ပါ ကီးမည်သည်ကိုမဆို ပြောင်းနိုင်သေးသည်။',
+  'Moves and edits in notes with Vim’s keys.':
+    'Vim ၏ ကီးများဖြင့် မှတ်စုများထဲတွင် ရွှေ့ပြီး ပြင်ဆင်သည်။',
+  'What pulling a note down past its top does on a phone.':
+    'ဖုန်းပေါ်တွင် မှတ်စုကို ထိပ်ကျော်၍ အောက်သို့ ဆွဲချလျှင် ဖြစ်မည့်အရာ။',
+  'The OpenAI key the glasses ask their questions with.':
+    'မျက်မှန်က မေးခွန်းများ မေးရာတွင် သုံးသော OpenAI ကီး။',
+  'The model that answers what you ask on the glasses.':
+    'မျက်မှန်ပေါ်တွင် သင်မေးသည်ကို ဖြေပေးသော မော်ဒယ်။',
+  'How long the model thinks before it answers; longer is slower.':
+    'မော်ဒယ်က မဖြေမီ စဉ်းစားသည့်ကြာချိန်ဖြစ်ပြီး ကြာလေ နှေးလေ ဖြစ်သည်။',
+  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
+    'File Explorer တွင် ညာကလစ်နှိပ်၍ ရသော အသစ် မီနူးသို့ Markdown စာရွက်စာတမ်းကို ထည့်သည်။',
+  'What happens when one note was changed on two devices before they synced.':
+    'မှတ်စုတစ်ခုကို စက်နှစ်ခုပေါ်တွင် ချိန်ကိုက်မီ ပြင်ထားလျှင် ဖြစ်မည့်အရာ။',
+  'How far back the account keeps earlier versions of your notes.':
+    'အကောင့်က သင်၏ မှတ်စုများ၏ ယခင်ဗားရှင်းများကို မည်မျှ နောက်ကြောင်းအထိ သိမ်းထားမည်နည်း။',
+  'The colour of buttons, links and the selection.':
+    'ခလုတ်များ၊ လင့်ခ်များနှင့် ရွေးချယ်မှု၏ အရောင်။',
+  'Adds Orden to the AI agent programs on this computer, so they reach your notes with nothing to set up.':
+    'ဤကွန်ပျူတာရှိ AI agent ပရိုဂရမ်များသို့ Orden ကို ထည့်သဖြင့် ၎င်းတို့သည် ဘာမျှ မသတ်မှတ်ဘဲ သင်၏ မှတ်စုများသို့ ရောက်နိုင်သည်။',
+  'Words that notify you whenever someone writes them in a chat, separated by commas.':
+    'ချတ်တွင် တစ်စုံတစ်ယောက် ရေးတိုင်း သင့်ကို အသိပေးမည့် စကားလုံးများဖြစ်ပြီး ကော်မာဖြင့် ခွဲပါ။',
+  'When chats may notify you; outside these hours they stay quiet.':
+    'ချတ်များက သင့်ကို အသိပေးနိုင်သည့်အချိန်ဖြစ်ပြီး ဤနာရီများ ပြင်ပတွင် တိတ်ဆိတ်နေသည်။',
+  'When the hours chats may notify you begin.': 'ချတ်များ အသိပေးနိုင်သည့် နာရီများ စတင်ချိန်။',
+  'When the hours chats may notify you end.': 'ချတ်များ အသိပေးနိုင်သည့် နာရီများ ပြီးဆုံးချိန်။',
+  'Notifications show the message itself; off shows only who wrote.':
+    'အသိပေးချက်များတွင် စာကိုယ်တိုင် ပြသည်၊ ပိတ်ထားလျှင် ရေးသူကိုသာ ပြသည်။',
+  'Notifications make a sound.': 'အသိပေးချက်များ အသံမြည်သည်။',
+  'Which headings start a new page on the glasses.':
+    'မျက်မှန်တွင် စာမျက်နှာသစ်စမည့် ခေါင်းစဉ်များ။',
+  'Shows line numbers on the glasses.': 'မျက်မှန်ပေါ်တွင် လိုင်းနံပါတ်များ ပြသည်။',
+  'How many blank lines the glasses keep between blocks.':
+    'မျက်မှန်တွင် ဘလောက်ကြား ထားမည့် လွတ်လိုင်းအရေအတွက်။',
+  'Shows this markdown mark on the glasses rather than hiding it.':
+    'ဤ markdown အမှတ်အသားကို မဝှက်ဘဲ မျက်မှန်ပေါ်တွင် ပြသည်။',
+  'Lets you run commands on the glasses by speaking.':
+    'မျက်မှန်ပေါ်တွင် စကားပြော၍ အမိန့်များ ပေးနိုင်သည်။',
+  'What you say to run this command; left empty, the phrase shown is used.':
+    'ဤအမိန့်အတွက် ပြောရမည့်စကား၊ အလွတ်ဆိုလျှင် ပြထားသည့်စကားကို သုံးသည်။',
+  'What Windows draws behind the window: Mica, Acrylic, or no blur.':
+    'Windows က ဝင်းဒိုးနောက်တွင် ဆွဲသည့်အရာဖြစ်ပြီး Mica၊ အက်ခရီလစ် သို့မဟုတ် ဝါးခြင်းမရှိ ဖြစ်သည်။',
+  'How much of the window’s own colour lies over what is behind it.':
+    'ဝင်းဒိုး၏ ကိုယ်ပိုင်အရောင်က ၎င်းနောက်ရှိအရာကို မည်မျှ ဖုံးထားမည်နည်း။',
+  'The frame takes its colour from what is open.': 'ဘောင်သည် ဖွင့်ထားသည့်အရာမှ အရောင်ကို ယူသည်။',
+  'How strongly the frame is coloured.': 'ဘောင်ကို မည်မျှ ပြင်းပြင်း အရောင်ခြယ်မည်နည်း။',
+  'The colours the frame takes where nothing open has a colour of its own.':
+    'ဖွင့်ထားသည့်အရာတွင် ကိုယ်ပိုင်အရောင် မရှိသည့်နေရာ၌ ဘောင်ယူမည့် အရောင်များ။',
+  'A web tab takes the colour of its page.': 'ဝဘ်တဘ်သည် ၎င်း၏ စာမျက်နှာ၏ အရောင်ကို ယူသည်။',
+  'When your status is taken away again.': 'သင်၏ အခြေအနေကို ပြန်ဖယ်ရှားမည့်အချိန်။',
+  'Silences chat notifications and shows the others you are busy.':
+    'ချတ်အသိပေးချက်များကို တိတ်စေပြီး သင် အလုပ်များနေကြောင်း အခြားသူများကို ပြသည်။',
+  'The colour the others see beside your name.': 'အခြားသူများက သင့်အမည်ဘေးတွင် မြင်ရသော အရောင်။',
+  'The others see you as offline even while you are here.':
+    'သင် ဤနေရာတွင် ရှိနေစဉ်ပင် အခြားသူများက သင့်ကို အော့ဖ်လိုင်းဟု မြင်သည်။',
+  'The picture behind the window, one for light and one for dark; drag it to move its centre.':
+    'ဝင်းဒိုးနောက်ရှိ ပုံဖြစ်ပြီး အလင်းအတွက် တစ်ပုံ၊ အမှောင်အတွက် တစ်ပုံ ထားကာ အလယ်ကို ရွှေ့ရန် ဆွဲပါ။',
+  'The theme Orden is drawn in.': 'Orden ကို ဆွဲထားသော အပြင်အဆင်။',
+  'Light, dark, or whichever the system is in.':
+    'အလင်း၊ အမှောင် သို့မဟုတ် စနစ်လက်ရှိ အသုံးပြုနေသည့်အတိုင်း။',
+  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
+    'ဖိုင်စာရင်း ထိပ်ရှိ စာမှတ်များကို အကွက်များအဖြစ် သို့မဟုတ် စာရင်းအဖြစ် ပြမည်။',
+  'Shows a pointing hand over buttons, as web pages do.':
+    'ဝဘ်စာမျက်နှာများကဲ့သို့ ခလုတ်များပေါ်တွင် လက်ညှိုးထိုးလက်ကို ပြသည်။',
+  'Orden’s own title bar, or the window frame of your system.':
+    'Orden ၏ ကိုယ်ပိုင် ခေါင်းစဉ်ဘား သို့မဟုတ် သင့်စနစ်၏ ဝင်းဒိုးဘောင်။',
+  'How large the text of notes is.': 'မှတ်စုများ၏ စာလုံးအရွယ် မည်မျှကြီးမည်နည်း။',
+  'The space between the lines of a note.': 'မှတ်စုတစ်ခု၏ လိုင်းများကြား အကွာအဝေး။',
+  'How wide a line of a note grows before it wraps.':
+    'မှတ်စု၏ လိုင်းတစ်ကြောင်း ခေါက်မသွားမီ မည်မျှ ကျယ်မည်နည်း။',
+  'Typing an opening bracket or quote adds the closing one too.':
+    'ဖွင့်ကွင်း သို့မဟုတ် ကိုးကားအမှတ် ရိုက်လျှင် ပိတ်သည့်အမှတ်ကိုပါ ထည့်ပေးသည်။',
+  'Keeps the line you are writing in the middle of the screen.':
+    'သင်ရေးနေသော လိုင်းကို မျက်နှာပြင်အလယ်တွင် ထားသည်။',
+  'Dims everything but the paragraph you are writing in.':
+    'သင်ရေးနေသော စာပိုဒ်မှလွဲ၍ ကျန်အားလုံးကို မှိန်စေသည်။',
+  'Joins pairs such as -> or != into one sign, in code only or everywhere.':
+    '-> သို့မဟုတ် != ကဲ့သို့ အတွဲများကို ကုဒ်တွင်သာ သို့မဟုတ် နေရာတိုင်းတွင် သင်္ကေတတစ်ခုအဖြစ် ပေါင်းသည်။',
+  'Where a picture or file you paste or drop into a note is saved.':
+    'မှတ်စုထဲသို့ ကူးထည့် သို့မဟုတ် ဆွဲချသော ပုံ သို့မဟုတ် ဖိုင်ကို သိမ်းမည့်နေရာ။',
+  'Turning two fingers on a touchpad or screen rotates the canvas.':
+    'တာ့ချ်ပက် သို့မဟုတ် မျက်နှာပြင်ပေါ်တွင် လက်ချောင်းနှစ်ချောင်း လှည့်လျှင် ကန်ဗတ်ကို လှည့်သည်။',
+  'A rotation that ends near a right angle settles on it.':
+    'ထောင့်မှန်အနီးတွင် ဆုံးသော လှည့်ခြင်းသည် ထောင့်မှန်ပေါ်တွင် ကျသွားသည်။',
+  'The paper size a new page note starts with.': 'စာမျက်နှာမှတ်စုအသစ် စတင်သည့် စာရွက်အရွယ်။',
+  'How the name of a new unique note is made from the date and time.':
+    'မတူညီသော မှတ်စုအသစ်၏ အမည်ကို ရက်စွဲနှင့် အချိန်မှ မည်သို့ ပြုလုပ်မည်နည်း။',
+  'The colours code in a note is highlighted in.': 'မှတ်စုထဲရှိ ကုဒ်ကို အရောင်ခြယ်မည့် အရောင်များ။',
+  'Numbers the lines of code blocks.': 'ကုဒ်ဘလောက်များ၏ လိုင်းများကို နံပါတ်တပ်သည်။',
+  'The paper size of a PDF or a print.': 'PDF သို့မဟုတ် ပုံနှိပ်ခြင်း၏ စာရွက်အရွယ်။',
+  'Whether pages are upright or on their side.':
+    'စာမျက်နှာများ ဒေါင်လိုက် သို့မဟုတ် အလျားလိုက် ဖြစ်မည်။',
+  'The space around the edge of each page, such as 20mm or 1in.':
+    'စာမျက်နှာတိုင်း၏ အနားပတ်လည်ရှိ နေရာဖြစ်ပြီး 20mm သို့မဟုတ် 1in ကဲ့သို့ ဖြစ်သည်။',
+  'Text at the top of every page; ${title}, ${date} and ${year} are filled in.':
+    'စာမျက်နှာတိုင်း၏ ထိပ်ရှိ စာဖြစ်ပြီး ${title}၊ ${date} နှင့် ${year} ကို ဖြည့်ပေးသည်။',
+  'Text at the bottom of every page; ${title}, ${date} and ${year} are filled in.':
+    'စာမျက်နှာတိုင်း၏ အောက်ခြေရှိ စာဖြစ်ပြီး ${title}၊ ${date} နှင့် ${year} ကို ဖြည့်ပေးသည်။',
+  'Whether an export is light, dark, or as the app is now.':
+    'ထုတ်ယူမှုသည် အလင်း၊ အမှောင် သို့မဟုတ် အက်ပ်လက်ရှိအတိုင်း ဖြစ်မည်။',
+  'Whether this key goes to Orden or to the program in the terminal, or asks each time.':
+    'ဤကီးသည် Orden သို့ သွားမည်၊ တာမင်နယ်ထဲရှိ ပရိုဂရမ်သို့ သွားမည် သို့မဟုတ် အကြိမ်တိုင်း မေးမည်။',
+  'The shell a new terminal starts.': 'တာမင်နယ်အသစ် စတင်ဖွင့်မည့် Shell။',
+  'How large the text in terminals is.': 'တာမင်နယ်များထဲရှိ စာလုံးအရွယ် မည်မျှကြီးမည်နည်း။',
+  'Brings back what each terminal showed after Orden restarts; off forgets it on quit.':
+    'Orden ပြန်စပြီးနောက် တာမင်နယ်တစ်ခုစီ ပြခဲ့သည်ကို ပြန်ယူပေးပြီး ပိတ်ထားလျှင် ထွက်ချိန်တွင် မေ့သည်။',
+  'Asks before Orden quits with terminals open: always, or only while something runs in one.':
+    'တာမင်နယ်များ ဖွင့်ထားစဉ် Orden မထွက်မီ အမြဲ သို့မဟုတ် တစ်ခုခု အလုပ်လုပ်နေစဉ်သာ မေးသည်။',
+  'Draws the app on the graphics card; turn it off if the window flickers or stays blank.':
+    'အက်ပ်ကို ဂရပ်ဖစ်ကတ်ပေါ်တွင် ဆွဲပြီး ဝင်းဒိုး တဖျတ်ဖျတ်ဖြစ်လျှင် သို့မဟုတ် ဗလာဖြစ်နေလျှင် ပိတ်ပါ။',
+  'How long before a task’s time it reminds you, unless the task says otherwise.':
+    'လုပ်ငန်းက အခြားနည်း မဆိုလျှင် လုပ်ငန်း၏ အချိန်မတိုင်မီ မည်မျှစော၍ သတိပေးမည်နည်း။',
+  'Keeps Orden running in the tray after its window closes, so reminders still ring.':
+    'ဝင်းဒိုးပိတ်ပြီးနောက် Orden ကို ထရေးတွင် ဆက်ဖွင့်ထားသဖြင့် သတိပေးချက်များ ဆက်မြည်သည်။',
+  'Lets reminders ring at the exact minute rather than when the phone gets round to it.':
+    'ဖုန်းအဆင်ပြေသည့်အချိန်မဟုတ်ဘဲ တိကျသော မိနစ်တွင် သတိပေးချက်များ မြည်စေသည်။',
+  'How often a note you are editing is saved as a version you can go back to in History.':
+    'သင်ပြင်နေသော မှတ်စုကို မှတ်တမ်း တွင် ပြန်သွားနိုင်သော ဗားရှင်းအဖြစ် မည်မျှမကြာခဏ သိမ်းမည်နည်း။',
+  'How long those versions are kept before they are deleted.':
+    'ထိုဗားရှင်းများကို မဖျက်မီ မည်မျှကြာ သိမ်းထားမည်နည်း။',
+  'Ctrl+Tab goes to the tab used last, as in VS Code; off goes through the tabs in the order they sit.':
+    'Ctrl+Tab သည် VS Code ကဲ့သို့ နောက်ဆုံးသုံးခဲ့သော တဘ်သို့ သွားပြီး ပိတ်ထားလျှင် တဘ်များကို စီထားသည့်အစဉ်အတိုင်း သွားသည်။',
+  'Two fingers sideways on the touchpad go back and forward.':
+    'တာ့ချ်ပက်ပေါ်တွင် လက်ချောင်းနှစ်ချောင်း ဘေးတိုက်ပွတ်လျှင် နောက်သို့နှင့် ရှေ့သို့ သွားသည်။',
+  'What the web pages of another space do while it is out of sight: keep running, pause, or ask the first time.':
+    'အခြားအလုပ်ခွင်၏ ဝဘ်စာမျက်နှာများ မမြင်ရစဉ် ဆက်လည်ပတ်မည်၊ ခေတ္တရပ်မည် သို့မဟုတ် ပထမအကြိမ် မေးမည်။',
+  'Unloads web pages that have been out of sight for a while to free memory; they load again when you return.':
+    'အချိန်အတန်ကြာ မမြင်ရသော ဝဘ်စာမျက်နှာများကို မှတ်ဉာဏ်လွတ်စေရန် ဖြုတ်ပြီး သင်ပြန်လာလျှင် ပြန်ဖွင့်သည်။',
+  'Reads dates, times and fields out of what you type into Add task, such as “tomorrow 9am”.':
+    'လုပ်ငန်း ထည့်ရန် တွင် ရိုက်သည့် “tomorrow 9am” ကဲ့သို့ စာမှ ရက်စွဲ၊ အချိန်နှင့် အကွက်များကို ဖတ်ယူသည်။',
+  'The folder of this space whose folders the Tasks panel lists as projects.':
+    'လုပ်ငန်းများ ဘောင်က ပရောဂျက်များအဖြစ် ၎င်း၏ ဖိုင်တွဲများကို စာရင်းပြုမည့် ဤအလုပ်ခွင်၏ ဖိုင်တွဲ။',
+  'Today also lists the tasks that have no start date; off shows only those dated today or earlier.':
+    'ယနေ့ တွင် စတင်ရက် မရှိသော လုပ်ငန်းများကိုပါ ပြပြီး ပိတ်ထားလျှင် ယနေ့ သို့မဟုတ် ယခင်ရက်စွဲပါသည်များကိုသာ ပြသည်။',
+  'The Add task shortcut works even while another app is in front.':
+    'အခြားအက်ပ်တစ်ခု ရှေ့တွင်ရှိနေစဉ်ပင် လုပ်ငန်း ထည့်ရန် ဖြတ်လမ်းကီး အလုပ်လုပ်သည်။',
+  'Shows terminals and the other tools for writing code.':
+    'တာမင်နယ်များနှင့် ကုဒ်ရေးရန် အခြားကိရိယာများကို ပြသည်။',
+  'Hides the tips Orden shows while you get to know it.':
+    'Orden ကို သင် ရင်းနှီးလာစဉ် ပြသော အကြံပြုချက်များကို ဝှက်သည်။',
+  'The language Orden’s menus and settings are in.':
+    'Orden ၏ မီနူးများနှင့် ဆက်တင်များ ပြသည့် ဘာသာစကား။',
+  'Offers this type when you make something new; off only takes it out of that list.':
+    'အရာအသစ် ပြုလုပ်သည့်အခါ ဤအမျိုးအစားကို ပေးပြီး ပိတ်ထားလျှင် ထိုစာရင်းမှသာ ဖယ်ထုတ်သည်။',
+  'Shows a mark such as ** or # while the cursor is in it; off keeps every mark out of sight.':
+    'ကာဆာ အထဲရှိနေစဉ် ** သို့မဟုတ် # ကဲ့သို့ အမှတ်အသားကို ပြပြီး ပိတ်ထားလျှင် အမှတ်အသားအားလုံးကို ဝှက်ထားသည်။',
+  'Notes open as plain markdown text rather than formatted.':
+    'မှတ်စုများကို ပုံစံချထားခြင်းမဟုတ်ဘဲ ရိုးရိုး markdown စာသားအဖြစ် ဖွင့်သည်။',
+  'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
+    'အာရဗီ၊ ဟီဘရူးနှင့် ထိုကဲ့သို့ စာများအတွက် မှတ်စုများကို ညာမှ ဘယ်သို့ ရေးသည်။',
+  'Underlines misspelled words as you write.':
+    'သင်ရေးနေစဉ် စာလုံးပေါင်းမှားသော စကားလုံးများကို မျဉ်းသားသည်။',
+  'The dictionary spelling is checked against; Match the system uses your system’s language.':
+    'စာလုံးပေါင်းကို စစ်ဆေးမည့် အဘိဓာန်ဖြစ်ပြီး စနစ်အတိုင်း က သင့်စနစ်၏ ဘာသာစကားကို သုံးသည်။',
+  'The version of Orden that is running; press to copy it.':
+    'လက်ရှိ အလုပ်လုပ်နေသော Orden ဗားရှင်းဖြစ်ပြီး ကူးယူရန် နှိပ်ပါ။',
+  'One of this theme’s own settings, offered by its author.':
+    'ဤအပြင်အဆင်၏ ကိုယ်ပိုင်ဆက်တင်တစ်ခုဖြစ်ပြီး ၎င်း၏ ဖန်တီးသူက ပေးထားသည်။',
+  'How much of what is behind the window shows under notes and terminals; the words always stay readable.':
+    'မှတ်စုများနှင့် တာမင်နယ်များအောက်တွင် ဝင်းဒိုးနောက်ရှိအရာ မည်မျှပေါ်မည်နည်း၊ စာလုံးများကို အမြဲဖတ်နိုင်သည်။',
+  'The colour laid over the picture.': 'ပုံပေါ်တွင် ဖုံးထားသော အရောင်။',
+  'How much the picture is blurred.': 'ပုံကို မည်မျှ ဝါးစေမည်နည်း။',
+  'How much the picture is darkened.': 'ပုံကို မည်မျှ မှိန်စေမည်နည်း။',
+  'How vivid the colours of the picture are.': 'ပုံ၏ အရောင်များ မည်မျှ တောက်ပမည်နည်း။',
+  'How strongly the tint colour lies over the picture.':
+    'အရောင်ဟပ် အရောင်က ပုံပေါ်တွင် မည်မျှ ပြင်းပြင်း ဖုံးမည်နည်း။',
+  'Adds a film grain over the picture.': 'ပုံပေါ်တွင် ဖလင်အစေ့ကို ထည့်သည်။',
+  'How the picture fills the window.': 'ပုံက ဝင်းဒိုးကို မည်သို့ ဖြည့်မည်နည်း။',
+  'An empty pane shows the picture rather than paper.': 'ဗလာဘောင်တွင် စာရွက်မဟုတ်ဘဲ ပုံကို ပြသည်။',
+  'The name the others see on what you share and in chats.':
+    'သင် မျှဝေသည့်အရာများနှင့် ချတ်များတွင် အခြားသူများ မြင်ရသော အမည်။',
+  'How far back Go back takes this space; it says first what would change.':
+    'ပြန်သွားပါ က ဤနေရာကို မည်မျှ နောက်ပြန်ယူသွားသည်၊ မည်သည်တို့ ပြောင်းလဲမည်ကို ဦးစွာ ပြောပြသည်။',
+  'The picture the others see beside your name.': 'အခြားသူများက သင့်အမည်ဘေးတွင် မြင်ရသော ပုံ။',
+  'Shown to the others beside your name, such as she/her.':
+    'အခြားသူများအား သင့်အမည်ဘေးတွင် ပြသည်၊ ဥပမာ သူမ/သူမ၏။',
+  'A few words about you that the others see on your profile.':
+    'အခြားသူများက သင့်ပရိုဖိုင်တွင် မြင်ရသော သင့်အကြောင်း စကားအနည်းငယ်။',
+  'What you are up to, shown to the others beside your name until it clears.':
+    'သင် လုပ်နေသည့်အရာ၊ ၎င်းကို ဖယ်ရှားသည်အထိ သင့်အမည်ဘေးတွင် အခြားသူများအား ပြသည်။',
 }

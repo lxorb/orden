@@ -2444,4 +2444,204 @@ export const sw: Dictionary = {
   Large: 'Kubwa',
   Both: 'Zote mbili',
   'Shown on cards': 'Inaonyeshwa kwenye kadi',
+  // What each setting does, behind the ? beside it (#768)
+  'Syncs this browser’s AI keys with your other devices through the vault.':
+    'Husawazisha funguo za AI za kivinjari hiki na vifaa vyako vingine kupitia hifadhi salama.',
+  'Which of your AI accounts this feature asks.':
+    'Akaunti ipi kati ya akaunti zako za AI kipengele hiki kinauliza.',
+  'Whether a task done with AI asks before each change or makes them on its own.':
+    'Kama kazi inayofanywa na AI inauliza kabla ya kila badiliko au inayafanya yenyewe.',
+  'Makes Orden the browser that links from other programs open in.':
+    'Hufanya Orden kuwa kivinjari kinachofungua viungo kutoka programu nyingine.',
+  'Where words typed into a web tab’s address bar are searched.':
+    'Mahali maneno yanayoandikwa kwenye upau wa anwani wa kichupo cha wavuti yanatafutwa.',
+  'The search address, with %s where the words go.':
+    'Anwani ya utafutaji, yenye %s mahali maneno yanapowekwa.',
+  'Words the spelling check never marks as wrong.':
+    'Maneno ambayo ukaguzi wa herufi hauyawekei alama ya kosa kamwe.',
+  'Which app’s keys Orden follows; any key below can still be changed.':
+    'Funguo za programu ipi Orden inafuata; ufunguo wowote hapa chini bado unaweza kubadilishwa.',
+  'Moves and edits in notes with Vim’s keys.':
+    'Husogea na kuhariri ndani ya madokezo kwa funguo za Vim.',
+  'What pulling a note down past its top does on a phone.':
+    'Kile ambacho kuvuta dokezo chini kupita juu yake kunafanya kwenye simu.',
+  'The OpenAI key the glasses ask their questions with.':
+    'Ufunguo wa OpenAI ambao miwani hutumia kuuliza maswali yake.',
+  'The model that answers what you ask on the glasses.':
+    'Modeli inayojibu unachouliza kwenye miwani.',
+  'How long the model thinks before it answers; longer is slower.':
+    'Muda ambao modeli inafikiri kabla ya kujibu; muda mrefu zaidi ni polepole zaidi.',
+  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
+    'Huongeza hati ya Markdown kwenye menyu ya Mpya unayoipata kwa kubofya kulia katika File Explorer.',
+  'What happens when one note was changed on two devices before they synced.':
+    'Kinachotokea dokezo moja lilipobadilishwa kwenye vifaa viwili kabla havijasawazishwa.',
+  'How far back the account keeps earlier versions of your notes.':
+    'Akaunti inahifadhi matoleo ya awali ya madokezo yako kwa muda gani nyuma.',
+  'The colour of buttons, links and the selection.': 'Rangi ya vitufe, viungo na uteuzi.',
+  'Adds Orden to the AI agent programs on this computer, so they reach your notes with nothing to set up.':
+    'Huongeza Orden kwenye programu za mawakala wa AI kwenye kompyuta hii, ili zifikie madokezo yako bila kusanidi chochote.',
+  'Words that notify you whenever someone writes them in a chat, separated by commas.':
+    'Maneno yanayokuarifu kila mtu anapoyaandika kwenye gumzo, yakitenganishwa kwa koma.',
+  'When chats may notify you; outside these hours they stay quiet.':
+    'Wakati gumzo zinaweza kukuarifu; nje ya saa hizi zinakaa kimya.',
+  'When the hours chats may notify you begin.':
+    'Wakati saa ambazo gumzo zinaweza kukuarifu zinaanza.',
+  'When the hours chats may notify you end.':
+    'Wakati saa ambazo gumzo zinaweza kukuarifu zinaisha.',
+  'Notifications show the message itself; off shows only who wrote.':
+    'Arifa zinaonyesha ujumbe wenyewe; ikizimwa zinaonyesha tu aliyeandika.',
+  'Notifications make a sound.': 'Arifa zinatoa sauti.',
+  'Which headings start a new page on the glasses.':
+    'Vichwa vipi vinaanzisha ukurasa mpya kwenye miwani.',
+  'Shows line numbers on the glasses.': 'Huonyesha namba za mistari kwenye miwani.',
+  'How many blank lines the glasses keep between blocks.':
+    'Mistari mingapi tupu miwani inaacha kati ya vipande.',
+  'Shows this markdown mark on the glasses rather than hiding it.':
+    'Huonyesha alama hii ya Markdown kwenye miwani badala ya kuificha.',
+  'Lets you run commands on the glasses by speaking.':
+    'Hukuruhusu kuendesha amri kwenye miwani kwa kuongea.',
+  'What you say to run this command; left empty, the phrase shown is used.':
+    'Unachosema kuendesha amri hii; ikiachwa tupu, kifungu kinachoonyeshwa kinatumika.',
+  'What Windows draws behind the window: Mica, Acrylic, or no blur.':
+    'Kile Windows inachochora nyuma ya dirisha: Mica, Acrylic, au bila ukungu.',
+  'How much of the window’s own colour lies over what is behind it.':
+    'Kiasi cha rangi ya dirisha lenyewe kinachokaa juu ya kilicho nyuma yake.',
+  'The frame takes its colour from what is open.':
+    'Fremu inachukua rangi yake kutoka kwa kilichofunguliwa.',
+  'How strongly the frame is coloured.': 'Fremu inapakwa rangi kwa nguvu kiasi gani.',
+  'The colours the frame takes where nothing open has a colour of its own.':
+    'Rangi ambazo fremu inachukua mahali ambapo hakuna kilichofunguliwa chenye rangi yake.',
+  'A web tab takes the colour of its page.': 'Kichupo cha wavuti kinachukua rangi ya ukurasa wake.',
+  'When your status is taken away again.': 'Wakati hali yako inaondolewa tena.',
+  'Silences chat notifications and shows the others you are busy.':
+    'Hunyamazisha arifa za gumzo na kuwaonyesha wengine kuwa una shughuli.',
+  'The colour the others see beside your name.': 'Rangi ambayo wengine wanaona kando ya jina lako.',
+  'The others see you as offline even while you are here.':
+    'Wengine wanakuona uko nje ya mtandao hata ukiwa hapa.',
+  'The picture behind the window, one for light and one for dark; drag it to move its centre.':
+    'Picha iliyo nyuma ya dirisha, moja kwa mwangaza na moja kwa giza; iburute kusogeza kitovu chake.',
+  'The theme Orden is drawn in.': 'Mandhari ambayo Orden inachorwa nayo.',
+  'Light, dark, or whichever the system is in.': 'Mwangaza, giza, au lolote ambalo mfumo uko nalo.',
+  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
+    'Kama alamisho zilizo juu ya orodha ya faili zinaonekana kama vigae au kama orodha.',
+  'Shows a pointing hand over buttons, as web pages do.':
+    'Huonyesha mkono unaoelekeza juu ya vitufe, kama kurasa za wavuti zinavyofanya.',
+  'Orden’s own title bar, or the window frame of your system.':
+    'Upau wa kichwa wa Orden wenyewe, au fremu ya dirisha ya mfumo wako.',
+  'How large the text of notes is.': 'Ukubwa wa maandishi ya madokezo.',
+  'The space between the lines of a note.': 'Nafasi kati ya mistari ya dokezo.',
+  'How wide a line of a note grows before it wraps.':
+    'Mstari wa dokezo unapanuka kwa upana gani kabla ya kukatika.',
+  'Typing an opening bracket or quote adds the closing one too.':
+    'Kuandika mabano au alama ya nukuu ya kufungua huongeza pia ya kufunga.',
+  'Keeps the line you are writing in the middle of the screen.':
+    'Huweka mstari unaoandika katikati ya skrini.',
+  'Dims everything but the paragraph you are writing in.':
+    'Hufifisha kila kitu isipokuwa aya unayoandika.',
+  'Joins pairs such as -> or != into one sign, in code only or everywhere.':
+    'Huunganisha jozi kama -> au != kuwa alama moja, kwenye msimbo pekee au kila mahali.',
+  'Where a picture or file you paste or drop into a note is saved.':
+    'Mahali picha au faili unayobandika au kudondosha kwenye dokezo inahifadhiwa.',
+  'Turning two fingers on a touchpad or screen rotates the canvas.':
+    'Kuzungusha vidole viwili kwenye padi ya kugusa au skrini huzungusha turubai.',
+  'A rotation that ends near a right angle settles on it.':
+    'Mzunguko unaoishia karibu na pembe mraba hutua juu yake.',
+  'The paper size a new page note starts with.':
+    'Ukubwa wa karatasi ambao dokezo jipya la ukurasa linaanza nao.',
+  'How the name of a new unique note is made from the date and time.':
+    'Jinsi jina la dokezo jipya la kipekee linavyoundwa kutoka tarehe na saa.',
+  'The colours code in a note is highlighted in.':
+    'Rangi ambazo msimbo kwenye dokezo unaangaziwa nazo.',
+  'Numbers the lines of code blocks.': 'Huweka namba kwenye mistari ya vipande vya msimbo.',
+  'The paper size of a PDF or a print.': 'Ukubwa wa karatasi wa PDF au chapisho.',
+  'Whether pages are upright or on their side.': 'Kama kurasa zimesimama wima au zimelala ubavu.',
+  'The space around the edge of each page, such as 20mm or 1in.':
+    'Nafasi kuzunguka ukingo wa kila ukurasa, kama 20mm au 1in.',
+  'Text at the top of every page; ${title}, ${date} and ${year} are filled in.':
+    'Maandishi juu ya kila ukurasa; ${title}, ${date} na ${year} hujazwa.',
+  'Text at the bottom of every page; ${title}, ${date} and ${year} are filled in.':
+    'Maandishi chini ya kila ukurasa; ${title}, ${date} na ${year} hujazwa.',
+  'Whether an export is light, dark, or as the app is now.':
+    'Kama faili iliyohamishwa ni ya mwangaza, giza, au kama programu ilivyo sasa.',
+  'Whether this key goes to Orden or to the program in the terminal, or asks each time.':
+    'Kama ufunguo huu unaenda kwa Orden au kwa programu iliyo kwenye terminali, au unauliza kila mara.',
+  'The shell a new terminal starts.': 'Shell ambayo terminali mpya inaanzisha.',
+  'How large the text in terminals is.': 'Ukubwa wa maandishi kwenye terminali.',
+  'Brings back what each terminal showed after Orden restarts; off forgets it on quit.':
+    'Hurejesha kile kila terminali ilichoonyesha baada ya Orden kuanza upya; ikizimwa inakisahau unapofunga.',
+  'Asks before Orden quits with terminals open: always, or only while something runs in one.':
+    'Huuliza kabla Orden haijafungwa terminali zikiwa wazi: kila mara, au tu kitu kikiendelea ndani ya moja.',
+  'Draws the app on the graphics card; turn it off if the window flickers or stays blank.':
+    'Huchora programu kwa kadi ya michoro; izime ikiwa dirisha linapepesa au linabaki tupu.',
+  'How long before a task’s time it reminds you, unless the task says otherwise.':
+    'Muda gani kabla ya wakati wa kazi inakukumbusha, isipokuwa kazi inaseme vinginevyo.',
+  'Keeps Orden running in the tray after its window closes, so reminders still ring.':
+    'Huweka Orden ikiendelea kwenye trei baada ya dirisha lake kufungwa, ili vikumbusho bado vilie.',
+  'Lets reminders ring at the exact minute rather than when the phone gets round to it.':
+    'Huruhusu vikumbusho kulia dakika kamili badala ya simu inapopata nafasi.',
+  'How often a note you are editing is saved as a version you can go back to in History.':
+    'Mara ngapi dokezo unalohariri linahifadhiwa kama toleo unaloweza kurudia katika Historia.',
+  'How long those versions are kept before they are deleted.':
+    'Matoleo hayo yanahifadhiwa kwa muda gani kabla ya kufutwa.',
+  'Ctrl+Tab goes to the tab used last, as in VS Code; off goes through the tabs in the order they sit.':
+    'Ctrl+Tab inaenda kwenye kichupo kilichotumika mwisho, kama katika VS Code; ikizimwa inapitia vichupo kwa mpangilio vilivyokaa.',
+  'Two fingers sideways on the touchpad go back and forward.':
+    'Vidole viwili kando kwenye padi ya kugusa vinarudi nyuma na kwenda mbele.',
+  'What the web pages of another space do while it is out of sight: keep running, pause, or ask the first time.':
+    'Kurasa za wavuti za nafasi nyingine zinafanya nini zikiwa hazionekani: kuendelea, kusimama, au kuuliza mara ya kwanza.',
+  'Unloads web pages that have been out of sight for a while to free memory; they load again when you return.':
+    'Huondoa kurasa za wavuti ambazo hazijaonekana kwa muda ili kuweka huru kumbukumbu; zinapakia tena unaporudi.',
+  'Reads dates, times and fields out of what you type into Add task, such as “tomorrow 9am”.':
+    'Husoma tarehe, saa na sehemu kutoka unachoandika katika Ongeza kazi, kama “tomorrow 9am”.',
+  'The folder of this space whose folders the Tasks panel lists as projects.':
+    'Folda ya nafasi hii ambayo folda zake paneli ya Kazi inaorodhesha kama miradi.',
+  'Today also lists the tasks that have no start date; off shows only those dated today or earlier.':
+    'Leo inaorodhesha pia kazi zisizo na tarehe ya kuanza; ikizimwa inaonyesha tu zile za leo au kabla.',
+  'The Add task shortcut works even while another app is in front.':
+    'Njia ya mkato ya Ongeza kazi inafanya kazi hata programu nyingine ikiwa mbele.',
+  'Shows terminals and the other tools for writing code.':
+    'Huonyesha terminali na zana nyingine za kuandika msimbo.',
+  'Hides the tips Orden shows while you get to know it.':
+    'Huficha vidokezo ambavyo Orden inaonyesha unapoifahamu.',
+  'The language Orden’s menus and settings are in.': 'Lugha ya menyu na mipangilio ya Orden.',
+  'Offers this type when you make something new; off only takes it out of that list.':
+    'Hutoa aina hii unapounda kitu kipya; ikizimwa inaiondoa tu kwenye orodha hiyo.',
+  'Shows a mark such as ** or # while the cursor is in it; off keeps every mark out of sight.':
+    'Huonyesha alama kama ** au # kielekezi kikiwa ndani yake; ikizimwa huficha kila alama.',
+  'Notes open as plain markdown text rather than formatted.':
+    'Madokezo yanafunguka kama maandishi matupu ya Markdown badala ya yaliyopangwa.',
+  'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
+    'Huandika madokezo kutoka kulia kwenda kushoto, kwa Kiarabu, Kiebrania na hati nyingine kama hizo.',
+  'Underlines misspelled words as you write.':
+    'Hupigia mstari maneno yaliyokosewa herufi unapoandika.',
+  'The dictionary spelling is checked against; Match the system uses your system’s language.':
+    'Kamusi ambayo herufi zinakaguliwa nayo; Fuata mfumo hutumia lugha ya mfumo wako.',
+  'The version of Orden that is running; press to copy it.':
+    'Toleo la Orden linaloendeshwa; bonyeza kulinakili.',
+  'One of this theme’s own settings, offered by its author.':
+    'Mojawapo ya mipangilio ya mandhari hii yenyewe, inayotolewa na mwandishi wake.',
+  'How much of what is behind the window shows under notes and terminals; the words always stay readable.':
+    'Kiasi cha kilicho nyuma ya dirisha kinachoonekana chini ya madokezo na terminali; maneno daima yanabaki kusomeka.',
+  'The colour laid over the picture.': 'Rangi inayowekwa juu ya picha.',
+  'How much the picture is blurred.': 'Picha inatiwa ukungu kiasi gani.',
+  'How much the picture is darkened.': 'Picha inatiwa giza kiasi gani.',
+  'How vivid the colours of the picture are.': 'Rangi za picha zinang’aa kiasi gani.',
+  'How strongly the tint colour lies over the picture.':
+    'Rangi hafifu inakaa juu ya picha kwa nguvu kiasi gani.',
+  'Adds a film grain over the picture.': 'Huongeza chembe za filamu juu ya picha.',
+  'How the picture fills the window.': 'Jinsi picha inavyojaza dirisha.',
+  'An empty pane shows the picture rather than paper.':
+    'Kidirisha kitupu kinaonyesha picha badala ya karatasi.',
+  'The name the others see on what you share and in chats.':
+    'Jina ambalo wengine wanaona kwenye unachoshiriki na katika gumzo.',
+  'How far back Go back takes this space; it says first what would change.':
+    'Kiasi gani Rudi nyuma inarudisha nafasi hii nyuma; kwanza inasema kitakachobadilika.',
+  'The picture the others see beside your name.':
+    'Picha ambayo wengine wanaona kando ya jina lako.',
+  'Shown to the others beside your name, such as she/her.':
+    'Huonyeshwa kwa wengine kando ya jina lako, kama yeye/wake.',
+  'A few words about you that the others see on your profile.':
+    'Maneno machache kukuhusu ambayo wengine wanaona kwenye wasifu wako.',
+  'What you are up to, shown to the others beside your name until it clears.':
+    'Unachofanya sasa, kinachoonyeshwa kwa wengine kando ya jina lako hadi kiondolewe.',
 }

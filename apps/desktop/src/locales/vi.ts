@@ -2386,4 +2386,193 @@ export const vi: Dictionary = {
   Large: 'Lớn',
   Both: 'Cả hai',
   'Shown on cards': 'Hiển thị trên thẻ',
+  // What each setting does, behind the ? beside it (#768)
+  'Syncs this browser’s AI keys with your other devices through the vault.':
+    'Đồng bộ khoá AI của trình duyệt này với các thiết bị khác của bạn qua kho.',
+  'Which of your AI accounts this feature asks.':
+    'Tài khoản AI nào của bạn được tính năng này hỏi.',
+  'Whether a task done with AI asks before each change or makes them on its own.':
+    'Việc làm bằng AI hỏi trước mỗi thay đổi hay tự thực hiện chúng.',
+  'Makes Orden the browser that links from other programs open in.':
+    'Đặt Orden làm trình duyệt mở các liên kết từ chương trình khác.',
+  'Where words typed into a web tab’s address bar are searched.':
+    'Nơi tìm kiếm những từ gõ vào thanh địa chỉ của thẻ web.',
+  'The search address, with %s where the words go.': 'Địa chỉ tìm kiếm, với %s ở chỗ đặt các từ.',
+  'Words the spelling check never marks as wrong.':
+    'Những từ mà kiểm tra chính tả không bao giờ đánh dấu là sai.',
+  'Which app’s keys Orden follows; any key below can still be changed.':
+    'Orden theo phím của ứng dụng nào; mọi phím bên dưới vẫn đổi được.',
+  'Moves and edits in notes with Vim’s keys.': 'Di chuyển và sửa trong ghi chú bằng phím của Vim.',
+  'What pulling a note down past its top does on a phone.':
+    'Kéo một ghi chú xuống quá đầu trang sẽ làm gì trên điện thoại.',
+  'The OpenAI key the glasses ask their questions with.':
+    'Khoá OpenAI mà kính dùng để đặt câu hỏi.',
+  'The model that answers what you ask on the glasses.':
+    'Mô hình trả lời những gì bạn hỏi trên kính.',
+  'How long the model thinks before it answers; longer is slower.':
+    'Mô hình suy nghĩ bao lâu trước khi trả lời; càng lâu càng chậm.',
+  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
+    'Thêm tài liệu Markdown vào menu Mới khi bạn nhấp chuột phải trong File Explorer.',
+  'What happens when one note was changed on two devices before they synced.':
+    'Điều xảy ra khi một ghi chú bị sửa trên hai thiết bị trước khi chúng đồng bộ.',
+  'How far back the account keeps earlier versions of your notes.':
+    'Tài khoản giữ các phiên bản cũ của ghi chú trong bao lâu.',
+  'The colour of buttons, links and the selection.': 'Màu của nút, liên kết và vùng chọn.',
+  'Adds Orden to the AI agent programs on this computer, so they reach your notes with nothing to set up.':
+    'Thêm Orden vào các chương trình tác tử AI trên máy này để chúng truy cập ghi chú của bạn mà không cần cài đặt gì.',
+  'Words that notify you whenever someone writes them in a chat, separated by commas.':
+    'Những từ báo cho bạn mỗi khi ai đó viết chúng trong cuộc trò chuyện, cách nhau bằng dấu phẩy.',
+  'When chats may notify you; outside these hours they stay quiet.':
+    'Khi nào cuộc trò chuyện được báo cho bạn; ngoài các giờ này chúng im lặng.',
+  'When the hours chats may notify you begin.':
+    'Khi nào bắt đầu các giờ mà cuộc trò chuyện được báo cho bạn.',
+  'When the hours chats may notify you end.':
+    'Khi nào kết thúc các giờ mà cuộc trò chuyện được báo cho bạn.',
+  'Notifications show the message itself; off shows only who wrote.':
+    'Thông báo hiện chính tin nhắn; khi tắt chỉ hiện người viết.',
+  'Notifications make a sound.': 'Thông báo phát âm thanh.',
+  'Which headings start a new page on the glasses.': 'Tiêu đề nào bắt đầu một trang mới trên kính.',
+  'Shows line numbers on the glasses.': 'Hiện số dòng trên kính.',
+  'How many blank lines the glasses keep between blocks.':
+    'Kính giữ bao nhiêu dòng trống giữa các khối.',
+  'Shows this markdown mark on the glasses rather than hiding it.':
+    'Hiện dấu Markdown này trên kính thay vì ẩn nó.',
+  'Lets you run commands on the glasses by speaking.':
+    'Cho phép bạn chạy lệnh trên kính bằng giọng nói.',
+  'What you say to run this command; left empty, the phrase shown is used.':
+    'Câu bạn nói để chạy lệnh này; để trống thì dùng câu đang hiện.',
+  'What Windows draws behind the window: Mica, Acrylic, or no blur.':
+    'Windows vẽ gì phía sau cửa sổ: Mica, Acrylic hoặc không làm mờ.',
+  'How much of the window’s own colour lies over what is behind it.':
+    'Màu riêng của cửa sổ phủ lên phần phía sau nhiều đến đâu.',
+  'The frame takes its colour from what is open.': 'Khung lấy màu từ thứ đang mở.',
+  'How strongly the frame is coloured.': 'Khung được tô màu đậm đến đâu.',
+  'The colours the frame takes where nothing open has a colour of its own.':
+    'Màu khung dùng khi không thứ gì đang mở có màu riêng.',
+  'A web tab takes the colour of its page.': 'Thẻ web lấy màu của trang.',
+  'When your status is taken away again.': 'Khi nào trạng thái của bạn được gỡ bỏ.',
+  'Silences chat notifications and shows the others you are busy.':
+    'Tắt thông báo trò chuyện và cho người khác thấy bạn đang bận.',
+  'The colour the others see beside your name.': 'Màu người khác thấy bên cạnh tên bạn.',
+  'The others see you as offline even while you are here.':
+    'Người khác thấy bạn ngoại tuyến ngay cả khi bạn đang ở đây.',
+  'The picture behind the window, one for light and one for dark; drag it to move its centre.':
+    'Ảnh phía sau cửa sổ, một cho chế độ sáng và một cho chế độ tối; kéo để dời tâm ảnh.',
+  'The theme Orden is drawn in.': 'Chủ đề dùng để vẽ Orden.',
+  'Light, dark, or whichever the system is in.': 'Sáng, tối hoặc theo chế độ của hệ thống.',
+  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
+    'Dấu trang ở đầu danh sách tệp hiện dạng ô hay dạng danh sách.',
+  'Shows a pointing hand over buttons, as web pages do.':
+    'Hiện bàn tay chỉ trên nút, như các trang web.',
+  'Orden’s own title bar, or the window frame of your system.':
+    'Thanh tiêu đề riêng của Orden hoặc khung cửa sổ của hệ thống.',
+  'How large the text of notes is.': 'Cỡ chữ của ghi chú.',
+  'The space between the lines of a note.': 'Khoảng cách giữa các dòng của ghi chú.',
+  'How wide a line of a note grows before it wraps.':
+    'Một dòng ghi chú rộng đến đâu trước khi xuống dòng.',
+  'Typing an opening bracket or quote adds the closing one too.':
+    'Gõ ngoặc hoặc dấu nháy mở sẽ thêm cả dấu đóng.',
+  'Keeps the line you are writing in the middle of the screen.':
+    'Giữ dòng bạn đang viết ở giữa màn hình.',
+  'Dims everything but the paragraph you are writing in.': 'Làm mờ mọi thứ trừ đoạn bạn đang viết.',
+  'Joins pairs such as -> or != into one sign, in code only or everywhere.':
+    'Ghép các cặp như -> hoặc != thành một ký hiệu, chỉ trong code hoặc ở mọi nơi.',
+  'Where a picture or file you paste or drop into a note is saved.':
+    'Nơi lưu ảnh hoặc tệp bạn dán hay thả vào ghi chú.',
+  'Turning two fingers on a touchpad or screen rotates the canvas.':
+    'Xoay hai ngón tay trên touchpad hoặc màn hình sẽ xoay canvas.',
+  'A rotation that ends near a right angle settles on it.':
+    'Góc xoay kết thúc gần góc vuông sẽ khớp vào góc vuông.',
+  'The paper size a new page note starts with.': 'Khổ giấy của ghi chú trang mới.',
+  'How the name of a new unique note is made from the date and time.':
+    'Cách đặt tên ghi chú duy nhất mới từ ngày và giờ.',
+  'The colours code in a note is highlighted in.': 'Bảng màu tô sáng code trong ghi chú.',
+  'Numbers the lines of code blocks.': 'Đánh số dòng của khối code.',
+  'The paper size of a PDF or a print.': 'Khổ giấy của PDF hoặc bản in.',
+  'Whether pages are upright or on their side.': 'Trang đứng hay nằm ngang.',
+  'The space around the edge of each page, such as 20mm or 1in.':
+    'Khoảng trống quanh mép mỗi trang, như 20mm hoặc 1in.',
+  'Text at the top of every page; ${title}, ${date} and ${year} are filled in.':
+    'Chữ ở đầu mỗi trang; ${title}, ${date} và ${year} được điền vào.',
+  'Text at the bottom of every page; ${title}, ${date} and ${year} are filled in.':
+    'Chữ ở cuối mỗi trang; ${title}, ${date} và ${year} được điền vào.',
+  'Whether an export is light, dark, or as the app is now.':
+    'Bản xuất sáng, tối hay giống ứng dụng hiện tại.',
+  'Whether this key goes to Orden or to the program in the terminal, or asks each time.':
+    'Phím này gửi tới Orden hay tới chương trình trong terminal, hoặc hỏi mỗi lần.',
+  'The shell a new terminal starts.': 'Shell mà terminal mới khởi động.',
+  'How large the text in terminals is.': 'Cỡ chữ trong terminal.',
+  'Brings back what each terminal showed after Orden restarts; off forgets it on quit.':
+    'Khôi phục nội dung mỗi terminal đã hiện sau khi Orden khởi động lại; khi tắt sẽ quên khi thoát.',
+  'Asks before Orden quits with terminals open: always, or only while something runs in one.':
+    'Hỏi trước khi Orden thoát lúc còn terminal mở: luôn luôn, hoặc chỉ khi có gì đang chạy.',
+  'Draws the app on the graphics card; turn it off if the window flickers or stays blank.':
+    'Vẽ ứng dụng bằng card đồ hoạ; hãy tắt nếu cửa sổ nhấp nháy hoặc trống trơn.',
+  'How long before a task’s time it reminds you, unless the task says otherwise.':
+    'Nhắc bạn trước giờ của việc bao lâu, trừ khi việc đó đặt khác.',
+  'Keeps Orden running in the tray after its window closes, so reminders still ring.':
+    'Giữ Orden chạy trong khay sau khi đóng cửa sổ để lời nhắc vẫn reo.',
+  'Lets reminders ring at the exact minute rather than when the phone gets round to it.':
+    'Cho lời nhắc reo đúng phút thay vì lúc điện thoại rảnh tay.',
+  'How often a note you are editing is saved as a version you can go back to in History.':
+    'Ghi chú đang sửa được lưu thành phiên bản để quay lại trong Lịch sử thường xuyên đến đâu.',
+  'How long those versions are kept before they are deleted.':
+    'Các phiên bản đó được giữ bao lâu trước khi bị xoá.',
+  'Ctrl+Tab goes to the tab used last, as in VS Code; off goes through the tabs in the order they sit.':
+    'Ctrl+Tab chuyển tới thẻ dùng gần nhất, như trong VS Code; khi tắt sẽ đi qua các thẻ theo thứ tự sắp xếp.',
+  'Two fingers sideways on the touchpad go back and forward.':
+    'Hai ngón tay vuốt ngang trên touchpad để lùi và tiến.',
+  'What the web pages of another space do while it is out of sight: keep running, pause, or ask the first time.':
+    'Trang web của không gian khác làm gì khi bị khuất: tiếp tục chạy, tạm dừng hoặc hỏi lần đầu.',
+  'Unloads web pages that have been out of sight for a while to free memory; they load again when you return.':
+    'Gỡ các trang web đã khuất một lúc để giải phóng bộ nhớ; chúng tải lại khi bạn quay lại.',
+  'Reads dates, times and fields out of what you type into Add task, such as “tomorrow 9am”.':
+    'Đọc ngày, giờ và trường từ những gì bạn gõ vào Thêm việc, như “tomorrow 9am”.',
+  'The folder of this space whose folders the Tasks panel lists as projects.':
+    'Thư mục của không gian này mà bảng Công việc liệt kê các thư mục con làm dự án.',
+  'Today also lists the tasks that have no start date; off shows only those dated today or earlier.':
+    'Hôm nay cũng liệt kê việc không có ngày bắt đầu; khi tắt chỉ hiện việc có ngày từ hôm nay trở về trước.',
+  'The Add task shortcut works even while another app is in front.':
+    'Phím tắt Thêm việc hoạt động cả khi ứng dụng khác đang ở phía trước.',
+  'Shows terminals and the other tools for writing code.':
+    'Hiện terminal và các công cụ khác để viết code.',
+  'Hides the tips Orden shows while you get to know it.':
+    'Ẩn các mẹo Orden hiện trong lúc bạn làm quen.',
+  'The language Orden’s menus and settings are in.': 'Ngôn ngữ của menu và cài đặt trong Orden.',
+  'Offers this type when you make something new; off only takes it out of that list.':
+    'Gợi ý loại này khi bạn tạo thứ mới; khi tắt chỉ bỏ nó khỏi danh sách đó.',
+  'Shows a mark such as ** or # while the cursor is in it; off keeps every mark out of sight.':
+    'Hiện dấu như ** hoặc # khi con trỏ nằm trong nó; khi tắt mọi dấu đều ẩn.',
+  'Notes open as plain markdown text rather than formatted.':
+    'Ghi chú mở dưới dạng văn bản Markdown thuần thay vì đã định dạng.',
+  'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
+    'Viết ghi chú từ phải sang trái, cho tiếng Ả Rập, Do Thái và các chữ viết tương tự.',
+  'Underlines misspelled words as you write.': 'Gạch dưới từ sai chính tả khi bạn viết.',
+  'The dictionary spelling is checked against; Match the system uses your system’s language.':
+    'Từ điển dùng để kiểm tra chính tả; Theo hệ thống dùng ngôn ngữ của hệ thống.',
+  'The version of Orden that is running; press to copy it.':
+    'Phiên bản Orden đang chạy; nhấn để sao chép.',
+  'One of this theme’s own settings, offered by its author.':
+    'Một cài đặt riêng của chủ đề này, do tác giả cung cấp.',
+  'How much of what is behind the window shows under notes and terminals; the words always stay readable.':
+    'Phần phía sau cửa sổ hiện dưới ghi chú và terminal nhiều đến đâu; chữ luôn dễ đọc.',
+  'The colour laid over the picture.': 'Màu phủ lên ảnh.',
+  'How much the picture is blurred.': 'Ảnh bị làm mờ nhiều đến đâu.',
+  'How much the picture is darkened.': 'Ảnh bị làm tối nhiều đến đâu.',
+  'How vivid the colours of the picture are.': 'Màu của ảnh rực rỡ đến đâu.',
+  'How strongly the tint colour lies over the picture.': 'Màu sắc phủ lên ảnh đậm đến đâu.',
+  'Adds a film grain over the picture.': 'Thêm hạt phim lên ảnh.',
+  'How the picture fills the window.': 'Ảnh lấp đầy cửa sổ thế nào.',
+  'An empty pane shows the picture rather than paper.': 'Ô trống hiện ảnh thay vì giấy.',
+  'The name the others see on what you share and in chats.':
+    'Tên người khác thấy trên những gì bạn chia sẻ và trong cuộc trò chuyện.',
+  'How far back Go back takes this space; it says first what would change.':
+    'Trở về đưa không gian này lùi lại bao xa; nó cho biết trước những gì sẽ thay đổi.',
+  'The picture the others see beside your name.': 'Ảnh người khác thấy bên cạnh tên bạn.',
+  'Shown to the others beside your name, such as she/her.':
+    'Hiển thị cho người khác bên cạnh tên bạn, chẳng hạn cô ấy.',
+  'A few words about you that the others see on your profile.':
+    'Vài lời về bạn mà người khác thấy trên hồ sơ của bạn.',
+  'What you are up to, shown to the others beside your name until it clears.':
+    'Bạn đang làm gì, hiển thị cho người khác bên cạnh tên bạn cho đến khi được xóa.',
 }

@@ -2387,4 +2387,176 @@ export const am: Dictionary = {
   Large: 'ትልቅ',
   Both: 'ሁለቱም',
   'Shown on cards': 'በካርዶች ላይ የሚታዩ',
+  // What each setting does, behind the ? beside it (#768)
+  'Syncs this browser’s AI keys with your other devices through the vault.':
+    'የዚህን አሳሽ የAI ቁልፎች በካዝናው በኩል ከሌሎች መሣሪያዎችዎ ጋር ያመሳስላል።',
+  'Which of your AI accounts this feature asks.': 'ይህ ባህሪ ከAI መለያዎችዎ የትኛውን እንደሚጠይቅ።',
+  'Whether a task done with AI asks before each change or makes them on its own.':
+    'በAI የሚሠራ ተግባር ከእያንዳንዱ ለውጥ በፊት እንደሚጠይቅ ወይም ለውጦቹን በራሱ እንደሚያደርግ።',
+  'Makes Orden the browser that links from other programs open in.':
+    'ከሌሎች ፕሮግራሞች የሚመጡ አገናኞች የሚከፈቱበት አሳሽ Ordenን ያደርገዋል።',
+  'Where words typed into a web tab’s address bar are searched.':
+    'በድር ትር የአድራሻ አሞሌ ውስጥ የተተየቡ ቃላት የሚፈለጉበት ቦታ።',
+  'The search address, with %s where the words go.': 'የፍለጋ አድራሻው፣ ቃላቱ በሚገቡበት ቦታ %s ያለበት።',
+  'Words the spelling check never marks as wrong.': 'የፊደል ፍተሻው በጭራሽ ስህተት ብሎ የማያመለክታቸው ቃላት።',
+  'Which app’s keys Orden follows; any key below can still be changed.':
+    'Orden የትኛውን መተግበሪያ ቁልፎች እንደሚከተል፤ ከታች ያለ ማንኛውም ቁልፍ አሁንም ሊቀየር ይችላል።',
+  'Moves and edits in notes with Vim’s keys.': 'በVim ቁልፎች በማስታወሻዎች ውስጥ ያንቀሳቅሳል እና ያርማል።',
+  'What pulling a note down past its top does on a phone.':
+    'በስልክ ላይ ማስታወሻን ከላይኛው ጫፉ አልፎ ወደ ታች መጎተት የሚያደርገው።',
+  'The OpenAI key the glasses ask their questions with.': 'መነጽሩ ጥያቄዎቹን የሚጠይቅበት የOpenAI ቁልፍ።',
+  'The model that answers what you ask on the glasses.': 'በመነጽሩ ላይ ለሚጠይቁት መልስ የሚሰጠው ሞዴል።',
+  'How long the model thinks before it answers; longer is slower.':
+    'ሞዴሉ ከመመለሱ በፊት ምን ያህል እንደሚያስብ፤ ረዘም ያለው ቀርፋፋ ነው።',
+  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
+    'በFile Explorer ውስጥ በቀኝ ጠቅ ሲያደርጉ ወደሚመጣው አዲስ ምናሌ የMarkdown ሰነድ ያክላል።',
+  'What happens when one note was changed on two devices before they synced.':
+    'አንድ ማስታወሻ ከመመሳሰሉ በፊት በሁለት መሣሪያዎች ላይ ሲቀየር የሚሆነው።',
+  'How far back the account keeps earlier versions of your notes.':
+    'መለያው የማስታወሻዎችዎን የቀድሞ ቅጂዎች ምን ያህል ወደ ኋላ እንደሚያቆይ።',
+  'The colour of buttons, links and the selection.': 'የአዝራሮች፣ የአገናኞች እና የምርጫው ቀለም።',
+  'Adds Orden to the AI agent programs on this computer, so they reach your notes with nothing to set up.':
+    'Ordenን በዚህ ኮምፒውተር ላይ ባሉ የAI ወኪል ፕሮግራሞች ላይ ያክላል፣ ስለዚህ ምንም ሳያዋቅሩ ማስታወሻዎችዎን ይደርሳሉ።',
+  'Words that notify you whenever someone writes them in a chat, separated by commas.':
+    'ማንም በውይይት ውስጥ በጻፋቸው ቁጥር የሚያሳውቁዎት ቃላት፣ በኮማ የተለዩ።',
+  'When chats may notify you; outside these hours they stay quiet.':
+    'ውይይቶች ሊያሳውቁዎት የሚችሉበት ጊዜ፤ ከእነዚህ ሰዓታት ውጭ ጸጥ ይላሉ።',
+  'When the hours chats may notify you begin.': 'ውይይቶች ሊያሳውቁዎት የሚችሉባቸው ሰዓታት የሚጀምሩበት ጊዜ።',
+  'When the hours chats may notify you end.': 'ውይይቶች ሊያሳውቁዎት የሚችሉባቸው ሰዓታት የሚያበቁበት ጊዜ።',
+  'Notifications show the message itself; off shows only who wrote.':
+    'ማሳወቂያዎች መልእክቱን ራሱ ያሳያሉ፤ ሲጠፋ የጻፈውን ብቻ ያሳያሉ።',
+  'Notifications make a sound.': 'ማሳወቂያዎች ድምፅ ያሰማሉ።',
+  'Which headings start a new page on the glasses.': 'በመነጽሩ ላይ አዲስ ገጽ የሚጀምሩት የትኞቹ ርዕሶች እንደሆኑ።',
+  'Shows line numbers on the glasses.': 'በመነጽሩ ላይ የመስመር ቁጥሮችን ያሳያል።',
+  'How many blank lines the glasses keep between blocks.': 'መነጽሩ በብሎኮች መካከል ስንት ባዶ መስመሮች እንደሚተው።',
+  'Shows this markdown mark on the glasses rather than hiding it.':
+    'ይህን የmarkdown ምልክት ከመደበቅ ይልቅ በመነጽሩ ላይ ያሳያል።',
+  'Lets you run commands on the glasses by speaking.': 'በመናገር በመነጽሩ ላይ ትዕዛዞችን እንዲያሄዱ ያስችላል።',
+  'What you say to run this command; left empty, the phrase shown is used.':
+    'ይህን ትዕዛዝ ለማሄድ የሚሉት፤ ባዶ ከሆነ የሚታየው ሐረግ ይውላል።',
+  'What Windows draws behind the window: Mica, Acrylic, or no blur.':
+    'Windows ከመስኮቱ ጀርባ የሚስለው፦ Mica፣ Acrylic ወይም ብዥታ የለም።',
+  'How much of the window’s own colour lies over what is behind it.':
+    'የመስኮቱ የራሱ ቀለም ከጀርባው ባለው ላይ ምን ያህል እንደሚያርፍ።',
+  'The frame takes its colour from what is open.': 'ክፈፉ ቀለሙን ከተከፈተው ይወስዳል።',
+  'How strongly the frame is coloured.': 'ክፈፉ ምን ያህል በብርቱ እንደሚቀለም።',
+  'The colours the frame takes where nothing open has a colour of its own.':
+    'ከተከፈቱት አንዳቸውም የራሳቸው ቀለም በሌላቸው ጊዜ ክፈፉ የሚወስዳቸው ቀለሞች።',
+  'A web tab takes the colour of its page.': 'የድር ትር የገጹን ቀለም ይወስዳል።',
+  'When your status is taken away again.': 'ሁኔታዎ እንደገና የሚወገድበት ጊዜ።',
+  'Silences chat notifications and shows the others you are busy.':
+    'የውይይት ማሳወቂያዎችን ጸጥ ያደርጋል እና ሥራ እንደበዛብዎት ለሌሎች ያሳያል።',
+  'The colour the others see beside your name.': 'ሌሎች ከስምዎ አጠገብ የሚያዩት ቀለም።',
+  'The others see you as offline even while you are here.': 'እዚህ እያሉም ሌሎች ከመስመር ውጭ እንደሆኑ ያዩዎታል።',
+  'The picture behind the window, one for light and one for dark; drag it to move its centre.':
+    'ከመስኮቱ ጀርባ ያለው ምስል፣ አንዱ ለብርሃን አንዱ ለጨለማ፤ መሃሉን ለማንቀሳቀስ ይጎትቱት።',
+  'The theme Orden is drawn in.': 'Orden የሚሳልበት ገጽታ።',
+  'Light, dark, or whichever the system is in.': 'ብርሃን፣ ጨለማ፣ ወይም ሥርዓቱ ያለበት።',
+  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
+    'በፋይል ዝርዝሩ አናት ያሉት ምልክቶች እንደ ሰቆች ወይም እንደ ዝርዝር እንደሚታዩ።',
+  'Shows a pointing hand over buttons, as web pages do.': 'እንደ ድረ ገጾች፣ በአዝራሮች ላይ የሚጠቁም እጅ ያሳያል።',
+  'Orden’s own title bar, or the window frame of your system.':
+    'የOrden የራሱ የርዕስ አሞሌ፣ ወይም የሥርዓትዎ የመስኮት ክፈፍ።',
+  'How large the text of notes is.': 'የማስታወሻዎች ጽሑፍ ምን ያህል ትልቅ እንደሆነ።',
+  'The space between the lines of a note.': 'በማስታወሻ መስመሮች መካከል ያለው ክፍተት።',
+  'How wide a line of a note grows before it wraps.':
+    'የማስታወሻ መስመር ወደሚቀጥለው መስመር ከመጠቅለሉ በፊት ምን ያህል እንደሚሰፋ።',
+  'Typing an opening bracket or quote adds the closing one too.':
+    'የመክፈቻ ቅንፍ ወይም ትዕምርተ ጥቅስ ሲተይቡ የመዝጊያውንም ያክላል።',
+  'Keeps the line you are writing in the middle of the screen.': 'የሚጽፉበትን መስመር በማያ ገጹ መሃል ያቆያል።',
+  'Dims everything but the paragraph you are writing in.': 'ከሚጽፉበት አንቀጽ በስተቀር ሁሉንም ያደበዝዛል።',
+  'Joins pairs such as -> or != into one sign, in code only or everywhere.':
+    'እንደ -> ወይም != ያሉ ጥንዶችን በኮድ ውስጥ ብቻ ወይም በሁሉም ቦታ ወደ አንድ ምልክት ያጣምራል።',
+  'Where a picture or file you paste or drop into a note is saved.':
+    'ወደ ማስታወሻ የሚለጥፉት ወይም የሚጥሉት ምስል ወይም ፋይል የሚቀመጥበት ቦታ።',
+  'Turning two fingers on a touchpad or screen rotates the canvas.':
+    'በመዳሰሻ ሰሌዳ ወይም በማያ ገጽ ላይ ሁለት ጣቶችን ማዞር ሸራውን ያዞራል።',
+  'A rotation that ends near a right angle settles on it.': 'ቀኝ ማዕዘን አጠገብ የሚያበቃ ማዞር በእሱ ላይ ይረጋል።',
+  'The paper size a new page note starts with.': 'አዲስ የገጾች ማስታወሻ የሚጀምርበት የወረቀት መጠን።',
+  'How the name of a new unique note is made from the date and time.':
+    'የአዲስ ልዩ ማስታወሻ ስም ከቀኑ እና ከሰዓቱ እንዴት እንደሚሠራ።',
+  'The colours code in a note is highlighted in.': 'በማስታወሻ ውስጥ ያለ ኮድ የሚደምቅባቸው ቀለሞች።',
+  'Numbers the lines of code blocks.': 'ለኮድ ብሎኮች መስመሮች ቁጥር ይሰጣል።',
+  'The paper size of a PDF or a print.': 'የPDF ወይም የሕትመት የወረቀት መጠን።',
+  'Whether pages are upright or on their side.': 'ገጾቹ ቀጥ ብለው ወይም በጎናቸው እንደሆኑ።',
+  'The space around the edge of each page, such as 20mm or 1in.':
+    'በእያንዳንዱ ገጽ ጠርዝ ዙሪያ ያለው ቦታ፣ ለምሳሌ 20mm ወይም 1in።',
+  'Text at the top of every page; ${title}, ${date} and ${year} are filled in.':
+    'በእያንዳንዱ ገጽ አናት ያለው ጽሑፍ፤ ${title}፣ ${date} እና ${year} ይሞላሉ።',
+  'Text at the bottom of every page; ${title}, ${date} and ${year} are filled in.':
+    'በእያንዳንዱ ገጽ ግርጌ ያለው ጽሑፍ፤ ${title}፣ ${date} እና ${year} ይሞላሉ።',
+  'Whether an export is light, dark, or as the app is now.':
+    'ወደ ውጭ የሚላከው ብርሃን፣ ጨለማ፣ ወይም መተግበሪያው አሁን እንዳለው እንደሚሆን።',
+  'Whether this key goes to Orden or to the program in the terminal, or asks each time.':
+    'ይህ ቁልፍ ወደ Orden ወይም በተርሚናሉ ውስጥ ወዳለው ፕሮግራም እንደሚሄድ፣ ወይም በየጊዜው እንደሚጠይቅ።',
+  'The shell a new terminal starts.': 'አዲስ ተርሚናል የሚያስጀምረው ሼል።',
+  'How large the text in terminals is.': 'በተርሚናሎች ውስጥ ያለው ጽሑፍ ምን ያህል ትልቅ እንደሆነ።',
+  'Brings back what each terminal showed after Orden restarts; off forgets it on quit.':
+    'Orden እንደገና ከጀመረ በኋላ እያንዳንዱ ተርሚናል ያሳየውን ይመልሳል፤ ሲጠፋ በመዝጋት ጊዜ ይረሳዋል።',
+  'Asks before Orden quits with terminals open: always, or only while something runs in one.':
+    'ተርሚናሎች ተከፍተው ሳሉ Orden ከመዝጋቱ በፊት ይጠይቃል፦ ሁልጊዜ፣ ወይም በአንዱ ውስጥ የሆነ ነገር ሲሮጥ ብቻ።',
+  'Draws the app on the graphics card; turn it off if the window flickers or stays blank.':
+    'መተግበሪያውን በግራፊክስ ካርዱ ላይ ይስላል፤ መስኮቱ ብልጭ ድርግም ካለ ወይም ባዶ ከቀረ ያጥፉት።',
+  'How long before a task’s time it reminds you, unless the task says otherwise.':
+    'ተግባሩ ሌላ ካላለ በስተቀር፣ ከተግባሩ ሰዓት ምን ያህል ቀደም ብሎ እንደሚያስታውስዎ።',
+  'Keeps Orden running in the tray after its window closes, so reminders still ring.':
+    'መስኮቱ ከተዘጋ በኋላም Orden በትሪው ውስጥ እንዲሮጥ ያደርጋል፣ ስለዚህ አስታዋሾች አሁንም ይደውላሉ።',
+  'Lets reminders ring at the exact minute rather than when the phone gets round to it.':
+    'ስልኩ ሲመቸው ሳይሆን አስታዋሾች በትክክለኛው ደቂቃ እንዲደውሉ ያስችላል።',
+  'How often a note you are editing is saved as a version you can go back to in History.':
+    'የሚያርሙት ማስታወሻ በቅጂ ታሪክ ውስጥ ሊመለሱበት የሚችሉ ቅጂ ሆኖ ምን ያህል በተደጋጋሚ እንደሚቀመጥ።',
+  'How long those versions are kept before they are deleted.':
+    'እነዚያ ቅጂዎች ከመሰረዛቸው በፊት ምን ያህል ጊዜ እንደሚቆዩ።',
+  'Ctrl+Tab goes to the tab used last, as in VS Code; off goes through the tabs in the order they sit.':
+    'Ctrl+Tab፣ እንደ VS Code፣ መጨረሻ ወደተጠቀሙበት ትር ይሄዳል፤ ሲጠፋ ትሮቹ ባሉበት ቅደም ተከተል ይሄዳል።',
+  'Two fingers sideways on the touchpad go back and forward.':
+    'በመዳሰሻ ሰሌዳው ላይ ሁለት ጣቶችን ወደ ጎን ማንሸራተት ወደ ኋላ እና ወደ ፊት ይወስዳል።',
+  'What the web pages of another space do while it is out of sight: keep running, pause, or ask the first time.':
+    'የሌላ ቦታ ድረ ገጾች ከእይታ ውጭ ሳሉ የሚያደርጉት፦ መሮጡን ቀጥል፣ አቁም፣ ወይም መጀመሪያ ጠይቅ።',
+  'Unloads web pages that have been out of sight for a while to free memory; they load again when you return.':
+    'ለተወሰነ ጊዜ ከእይታ ውጭ የቆዩ ድረ ገጾችን ማህደረ ትውስታ ለማስለቀቅ ይዘጋቸዋል፤ ሲመለሱ እንደገና ይጫናሉ።',
+  'Reads dates, times and fields out of what you type into Add task, such as “tomorrow 9am”.':
+    'በተግባር አክል ውስጥ ከሚተይቡት፣ ለምሳሌ “tomorrow 9am”፣ ቀኖችን፣ ሰዓቶችን እና መስኮችን ያነባል።',
+  'The folder of this space whose folders the Tasks panel lists as projects.':
+    'የተግባራት ፓነል አቃፊዎቹን እንደ ፕሮጀክቶች የሚዘረዝርበት የዚህ ቦታ አቃፊ።',
+  'Today also lists the tasks that have no start date; off shows only those dated today or earlier.':
+    'ዛሬ የመጀመሪያ ቀን የሌላቸውን ተግባራትም ይዘረዝራል፤ ሲጠፋ ዛሬ ወይም ከዚያ በፊት ቀን ያላቸውን ብቻ ያሳያል።',
+  'The Add task shortcut works even while another app is in front.':
+    'ሌላ መተግበሪያ ፊት ለፊት ሳለም የተግባር አክል አቋራጭ ይሠራል።',
+  'Shows terminals and the other tools for writing code.': 'ተርሚናሎችን እና ሌሎች ኮድ መጻፊያ መሣሪያዎችን ያሳያል።',
+  'Hides the tips Orden shows while you get to know it.': 'Ordenን ሲተዋወቁ የሚያሳያቸውን ጠቃሚ ምክሮች ይደብቃል።',
+  'The language Orden’s menus and settings are in.': 'የOrden ምናሌዎች እና ቅንብሮች ያሉበት ቋንቋ።',
+  'Offers this type when you make something new; off only takes it out of that list.':
+    'አዲስ ነገር ሲሠሩ ይህን ዓይነት ያቀርባል፤ ሲጠፋ ከዚያ ዝርዝር ብቻ ያወጣዋል።',
+  'Shows a mark such as ** or # while the cursor is in it; off keeps every mark out of sight.':
+    'ጠቋሚው በውስጡ ሳለ እንደ ** ወይም # ያለ ምልክት ያሳያል፤ ሲጠፋ ሁሉም ምልክቶች ተደብቀው ይቆያሉ።',
+  'Notes open as plain markdown text rather than formatted.':
+    'ማስታወሻዎች ከመቀረጽ ይልቅ እንደ ተራ የmarkdown ጽሑፍ ይከፈታሉ።',
+  'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
+    'ለዓረብኛ፣ ለዕብራይስጥ እና ለሌሎች እንደነሱ ላሉ ፊደላት ማስታወሻዎችን ከቀኝ ወደ ግራ ይጽፋል።',
+  'Underlines misspelled words as you write.': 'ሲጽፉ በስህተት የተጻፉ ቃላትን ያሰምራል።',
+  'The dictionary spelling is checked against; Match the system uses your system’s language.':
+    'ፊደል አጻጻፍ የሚፈተሽበት መዝገበ ቃላት፤ ሥርዓቱን ተከተል የሥርዓትዎን ቋንቋ ይጠቀማል።',
+  'The version of Orden that is running; press to copy it.': 'እየሠራ ያለው የOrden ስሪት፤ ለመቅዳት ይጫኑ።',
+  'One of this theme’s own settings, offered by its author.': 'ከዚህ ገጽታ የራሱ ቅንብሮች አንዱ፣ በደራሲው የቀረበ።',
+  'How much of what is behind the window shows under notes and terminals; the words always stay readable.':
+    'ከመስኮቱ ጀርባ ያለው ምን ያህል ከማስታወሻዎች እና ከተርሚናሎች ስር እንደሚታይ፤ ቃላቱ ሁልጊዜ ይነበባሉ።',
+  'The colour laid over the picture.': 'በምስሉ ላይ የሚነጠፈው ቀለም።',
+  'How much the picture is blurred.': 'ምስሉ ምን ያህል እንደሚደበዝዝ።',
+  'How much the picture is darkened.': 'ምስሉ ምን ያህል እንደሚጨልም።',
+  'How vivid the colours of the picture are.': 'የምስሉ ቀለሞች ምን ያህል ደማቅ እንደሆኑ።',
+  'How strongly the tint colour lies over the picture.': 'የቅልሙ ቀለም በምስሉ ላይ ምን ያህል በብርቱ እንደሚያርፍ።',
+  'Adds a film grain over the picture.': 'በምስሉ ላይ የፊልም ጥራጥሬ ያክላል።',
+  'How the picture fills the window.': 'ምስሉ መስኮቱን እንዴት እንደሚሞላ።',
+  'An empty pane shows the picture rather than paper.': 'ባዶ ፓነል ከወረቀት ይልቅ ምስሉን ያሳያል።',
+  'The name the others see on what you share and in chats.':
+    'በሚያጋሩት ነገር እና በውይይቶች ውስጥ ሌሎች የሚያዩት ስም።',
+  'How far back Go back takes this space; it says first what would change.':
+    'ተመለስ ይህን ቦታ ምን ያህል ወደኋላ እንደሚወስደው፤ መጀመሪያ ምን እንደሚለወጥ ይናገራል።',
+  'The picture the others see beside your name.': 'ሌሎች ከስምዎ አጠገብ የሚያዩት ምስል።',
+  'Shown to the others beside your name, such as she/her.': 'ከስምዎ አጠገብ ለሌሎች ይታያል፣ ለምሳሌ እሷ/እሷን።',
+  'A few words about you that the others see on your profile.':
+    'ሌሎች በመገለጫዎ ላይ የሚያዩት ስለ እርስዎ ጥቂት ቃላት።',
+  'What you are up to, shown to the others beside your name until it clears.':
+    'አሁን የሚያደርጉት ነገር፣ እስኪጠፋ ድረስ ከስምዎ አጠገብ ለሌሎች ይታያል።',
 }

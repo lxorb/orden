@@ -2400,4 +2400,203 @@ export const id: Dictionary = {
   Large: 'Besar',
   Both: 'Keduanya',
   'Shown on cards': 'Ditampilkan di kartu',
+  // What each setting does, behind the ? beside it (#768)
+  'Syncs this browser’s AI keys with your other devices through the vault.':
+    'Menyinkronkan kunci AI browser ini dengan perangkat Anda yang lain melalui brankas.',
+  'Which of your AI accounts this feature asks.': 'Akun AI Anda mana yang ditanya oleh fitur ini.',
+  'Whether a task done with AI asks before each change or makes them on its own.':
+    'Apakah tugas yang dikerjakan dengan AI bertanya sebelum setiap perubahan atau membuatnya sendiri.',
+  'Makes Orden the browser that links from other programs open in.':
+    'Menjadikan Orden browser tempat tautan dari program lain dibuka.',
+  'Where words typed into a web tab’s address bar are searched.':
+    'Tempat kata yang diketik di bilah alamat tab web dicari.',
+  'The search address, with %s where the words go.':
+    'Alamat penelusuran, dengan %s di tempat kata-kata diletakkan.',
+  'Words the spelling check never marks as wrong.':
+    'Kata yang tidak pernah ditandai salah oleh pemeriksa ejaan.',
+  'Which app’s keys Orden follows; any key below can still be changed.':
+    'Tombol aplikasi mana yang diikuti Orden; tombol mana pun di bawah tetap bisa diubah.',
+  'Moves and edits in notes with Vim’s keys.':
+    'Berpindah dan mengedit dalam catatan dengan tombol Vim.',
+  'What pulling a note down past its top does on a phone.':
+    'Apa yang terjadi saat catatan ditarik ke bawah melewati bagian atasnya di telepon.',
+  'The OpenAI key the glasses ask their questions with.':
+    'Kunci OpenAI yang dipakai kacamata untuk mengajukan pertanyaannya.',
+  'The model that answers what you ask on the glasses.':
+    'Model yang menjawab pertanyaan Anda di kacamata.',
+  'How long the model thinks before it answers; longer is slower.':
+    'Berapa lama model berpikir sebelum menjawab; makin lama makin lambat.',
+  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
+    'Menambahkan dokumen Markdown ke menu New yang muncul saat Anda mengeklik kanan di File Explorer.',
+  'What happens when one note was changed on two devices before they synced.':
+    'Apa yang terjadi bila satu catatan diubah di dua perangkat sebelum keduanya tersinkron.',
+  'How far back the account keeps earlier versions of your notes.':
+    'Seberapa jauh ke belakang akun menyimpan versi lama catatan Anda.',
+  'The colour of buttons, links and the selection.': 'Warna tombol, tautan, dan pilihan.',
+  'Adds Orden to the AI agent programs on this computer, so they reach your notes with nothing to set up.':
+    'Menambahkan Orden ke program agen AI di komputer ini, sehingga agen menjangkau catatan Anda tanpa perlu diatur.',
+  'Words that notify you whenever someone writes them in a chat, separated by commas.':
+    'Kata yang memberi Anda notifikasi setiap kali seseorang menulisnya di obrolan, dipisahkan koma.',
+  'When chats may notify you; outside these hours they stay quiet.':
+    'Kapan obrolan boleh memberi Anda notifikasi; di luar jam ini obrolan tetap senyap.',
+  'When the hours chats may notify you begin.':
+    'Kapan jam obrolan boleh memberi Anda notifikasi dimulai.',
+  'When the hours chats may notify you end.':
+    'Kapan jam obrolan boleh memberi Anda notifikasi berakhir.',
+  'Notifications show the message itself; off shows only who wrote.':
+    'Notifikasi menampilkan isi pesan; jika mati, hanya menampilkan siapa yang menulis.',
+  'Notifications make a sound.': 'Notifikasi mengeluarkan suara.',
+  'Which headings start a new page on the glasses.':
+    'Judul mana yang memulai halaman baru di kacamata.',
+  'Shows line numbers on the glasses.': 'Menampilkan nomor baris di kacamata.',
+  'How many blank lines the glasses keep between blocks.':
+    'Berapa baris kosong yang disisakan kacamata di antara blok.',
+  'Shows this markdown mark on the glasses rather than hiding it.':
+    'Menampilkan tanda markdown ini di kacamata alih-alih menyembunyikannya.',
+  'Lets you run commands on the glasses by speaking.':
+    'Memungkinkan Anda menjalankan perintah di kacamata dengan berbicara.',
+  'What you say to run this command; left empty, the phrase shown is used.':
+    'Yang Anda ucapkan untuk menjalankan perintah ini; jika kosong, frasa yang ditampilkan dipakai.',
+  'What Windows draws behind the window: Mica, Acrylic, or no blur.':
+    'Yang digambar Windows di belakang jendela: Mica, Acrylic, atau tanpa buram.',
+  'How much of the window’s own colour lies over what is behind it.':
+    'Seberapa banyak warna jendela sendiri menutupi apa yang ada di belakangnya.',
+  'The frame takes its colour from what is open.':
+    'Bingkai mengambil warnanya dari apa yang terbuka.',
+  'How strongly the frame is coloured.': 'Seberapa kuat bingkai diwarnai.',
+  'The colours the frame takes where nothing open has a colour of its own.':
+    'Warna yang diambil bingkai bila tidak ada yang terbuka yang punya warna sendiri.',
+  'A web tab takes the colour of its page.': 'Tab web mengambil warna halamannya.',
+  'When your status is taken away again.': 'Kapan status Anda dihapus lagi.',
+  'Silences chat notifications and shows the others you are busy.':
+    'Membisukan notifikasi obrolan dan menunjukkan kepada orang lain bahwa Anda sibuk.',
+  'The colour the others see beside your name.':
+    'Warna yang dilihat orang lain di samping nama Anda.',
+  'The others see you as offline even while you are here.':
+    'Orang lain melihat Anda luring meski Anda sedang ada.',
+  'The picture behind the window, one for light and one for dark; drag it to move its centre.':
+    'Gambar di belakang jendela, satu untuk terang dan satu untuk gelap; seret untuk memindahkan titik tengahnya.',
+  'The theme Orden is drawn in.': 'Tema yang dipakai untuk menggambar Orden.',
+  'Light, dark, or whichever the system is in.':
+    'Terang, gelap, atau mana pun yang sedang dipakai sistem.',
+  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
+    'Apakah markah di atas daftar berkas tampil sebagai ubin atau sebagai daftar.',
+  'Shows a pointing hand over buttons, as web pages do.':
+    'Menampilkan tangan penunjuk di atas tombol, seperti di halaman web.',
+  'Orden’s own title bar, or the window frame of your system.':
+    'Bilah judul milik Orden, atau bingkai jendela sistem Anda.',
+  'How large the text of notes is.': 'Seberapa besar teks catatan.',
+  'The space between the lines of a note.': 'Jarak antarbaris dalam catatan.',
+  'How wide a line of a note grows before it wraps.':
+    'Seberapa lebar baris catatan sebelum terlipat ke baris berikutnya.',
+  'Typing an opening bracket or quote adds the closing one too.':
+    'Mengetik kurung atau kutip pembuka juga menambahkan penutupnya.',
+  'Keeps the line you are writing in the middle of the screen.':
+    'Menjaga baris yang sedang Anda tulis tetap di tengah layar.',
+  'Dims everything but the paragraph you are writing in.':
+    'Meredupkan semuanya kecuali paragraf yang sedang Anda tulis.',
+  'Joins pairs such as -> or != into one sign, in code only or everywhere.':
+    'Menggabungkan pasangan seperti -> atau != menjadi satu tanda, hanya di kode atau di mana saja.',
+  'Where a picture or file you paste or drop into a note is saved.':
+    'Tempat gambar atau berkas yang Anda tempel atau jatuhkan ke catatan disimpan.',
+  'Turning two fingers on a touchpad or screen rotates the canvas.':
+    'Memutar dua jari di touchpad atau layar akan memutar kanvas.',
+  'A rotation that ends near a right angle settles on it.':
+    'Putaran yang berakhir dekat sudut siku-siku akan terkunci di sudut itu.',
+  'The paper size a new page note starts with.': 'Ukuran kertas awal untuk catatan halaman baru.',
+  'How the name of a new unique note is made from the date and time.':
+    'Cara nama catatan unik baru dibentuk dari tanggal dan waktu.',
+  'The colours code in a note is highlighted in.': 'Warna penyorotan kode dalam catatan.',
+  'Numbers the lines of code blocks.': 'Menomori baris blok kode.',
+  'The paper size of a PDF or a print.': 'Ukuran kertas PDF atau cetakan.',
+  'Whether pages are upright or on their side.': 'Apakah halaman tegak atau mendatar.',
+  'The space around the edge of each page, such as 20mm or 1in.':
+    'Ruang di sekitar tepi setiap halaman, misalnya 20mm atau 1in.',
+  'Text at the top of every page; ${title}, ${date} and ${year} are filled in.':
+    'Teks di bagian atas setiap halaman; ${title}, ${date}, dan ${year} akan diisi.',
+  'Text at the bottom of every page; ${title}, ${date} and ${year} are filled in.':
+    'Teks di bagian bawah setiap halaman; ${title}, ${date}, dan ${year} akan diisi.',
+  'Whether an export is light, dark, or as the app is now.':
+    'Apakah ekspor terang, gelap, atau seperti aplikasi saat ini.',
+  'Whether this key goes to Orden or to the program in the terminal, or asks each time.':
+    'Apakah tombol ini diteruskan ke Orden atau ke program di terminal, atau ditanyakan setiap kali.',
+  'The shell a new terminal starts.': 'Shell yang dijalankan terminal baru.',
+  'How large the text in terminals is.': 'Seberapa besar teks di terminal.',
+  'Brings back what each terminal showed after Orden restarts; off forgets it on quit.':
+    'Mengembalikan isi tiap terminal setelah Orden dimulai ulang; jika mati, isinya dilupakan saat keluar.',
+  'Asks before Orden quits with terminals open: always, or only while something runs in one.':
+    'Bertanya sebelum Orden keluar saat terminal terbuka: selalu, atau hanya saat ada yang berjalan di salah satunya.',
+  'Draws the app on the graphics card; turn it off if the window flickers or stays blank.':
+    'Menggambar aplikasi dengan kartu grafis; matikan jika jendela berkedip atau tetap kosong.',
+  'How long before a task’s time it reminds you, unless the task says otherwise.':
+    'Berapa lama sebelum waktu tugas Anda diingatkan, kecuali tugas itu menentukan lain.',
+  'Keeps Orden running in the tray after its window closes, so reminders still ring.':
+    'Menjaga Orden tetap berjalan di baki sistem setelah jendelanya ditutup, sehingga pengingat tetap berbunyi.',
+  'Lets reminders ring at the exact minute rather than when the phone gets round to it.':
+    'Membuat pengingat berbunyi tepat pada menitnya, bukan kapan pun telepon sempat.',
+  'How often a note you are editing is saved as a version you can go back to in History.':
+    'Seberapa sering catatan yang sedang Anda edit disimpan sebagai versi yang bisa Anda buka lagi di Histori.',
+  'How long those versions are kept before they are deleted.':
+    'Berapa lama versi tersebut disimpan sebelum dihapus.',
+  'Ctrl+Tab goes to the tab used last, as in VS Code; off goes through the tabs in the order they sit.':
+    'Ctrl+Tab berpindah ke tab yang terakhir dipakai, seperti di VS Code; jika mati, berpindah menurut urutan tab.',
+  'Two fingers sideways on the touchpad go back and forward.':
+    'Dua jari ke samping di touchpad untuk kembali dan maju.',
+  'What the web pages of another space do while it is out of sight: keep running, pause, or ask the first time.':
+    'Apa yang dilakukan halaman web ruang lain saat tidak terlihat: tetap berjalan, jeda, atau bertanya pertama kali.',
+  'Unloads web pages that have been out of sight for a while to free memory; they load again when you return.':
+    'Melepas halaman web yang sudah lama tidak terlihat untuk mengosongkan memori; halaman dimuat lagi saat Anda kembali.',
+  'Reads dates, times and fields out of what you type into Add task, such as “tomorrow 9am”.':
+    'Membaca tanggal, waktu, dan kolom dari yang Anda ketik di Tambah tugas, misalnya “tomorrow 9am”.',
+  'The folder of this space whose folders the Tasks panel lists as projects.':
+    'Folder ruang ini yang subfoldernya ditampilkan panel Tugas sebagai proyek.',
+  'Today also lists the tasks that have no start date; off shows only those dated today or earlier.':
+    'Hari ini juga mencantumkan tugas tanpa tanggal mulai; jika mati, hanya menampilkan yang bertanggal hari ini atau sebelumnya.',
+  'The Add task shortcut works even while another app is in front.':
+    'Pintasan Tambah tugas tetap berfungsi meski aplikasi lain sedang di depan.',
+  'Shows terminals and the other tools for writing code.':
+    'Menampilkan terminal dan alat lain untuk menulis kode.',
+  'Hides the tips Orden shows while you get to know it.':
+    'Menyembunyikan tips yang ditampilkan Orden selagi Anda mengenalnya.',
+  'The language Orden’s menus and settings are in.': 'Bahasa menu dan pengaturan Orden.',
+  'Offers this type when you make something new; off only takes it out of that list.':
+    'Menawarkan jenis ini saat Anda membuat sesuatu yang baru; jika mati, jenis ini hanya dikeluarkan dari daftar itu.',
+  'Shows a mark such as ** or # while the cursor is in it; off keeps every mark out of sight.':
+    'Menampilkan tanda seperti ** atau # saat kursor berada di dalamnya; jika mati, semua tanda tetap tersembunyi.',
+  'Notes open as plain markdown text rather than formatted.':
+    'Catatan dibuka sebagai teks markdown biasa, bukan terformat.',
+  'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
+    'Menulis catatan dari kanan ke kiri, untuk aksara Arab, Ibrani, dan sejenisnya.',
+  'Underlines misspelled words as you write.':
+    'Menggarisbawahi kata yang salah eja saat Anda menulis.',
+  'The dictionary spelling is checked against; Match the system uses your system’s language.':
+    'Kamus untuk memeriksa ejaan; Ikuti sistem memakai bahasa sistem Anda.',
+  'The version of Orden that is running; press to copy it.':
+    'Versi Orden yang sedang berjalan; tekan untuk menyalinnya.',
+  'One of this theme’s own settings, offered by its author.':
+    'Salah satu pengaturan khusus tema ini, disediakan oleh pembuatnya.',
+  'How much of what is behind the window shows under notes and terminals; the words always stay readable.':
+    'Seberapa banyak apa yang ada di belakang jendela terlihat di bawah catatan dan terminal; tulisan selalu tetap terbaca.',
+  'The colour laid over the picture.': 'Warna yang dilapiskan di atas gambar.',
+  'How much the picture is blurred.': 'Seberapa buram gambar.',
+  'How much the picture is darkened.': 'Seberapa gelap gambar dibuat.',
+  'How vivid the colours of the picture are.': 'Seberapa cerah warna gambar.',
+  'How strongly the tint colour lies over the picture.':
+    'Seberapa kuat warna rona menutupi gambar.',
+  'Adds a film grain over the picture.': 'Menambahkan butiran film di atas gambar.',
+  'How the picture fills the window.': 'Cara gambar mengisi jendela.',
+  'An empty pane shows the picture rather than paper.':
+    'Panel kosong menampilkan gambar, bukan kertas.',
+  'The name the others see on what you share and in chats.':
+    'Nama yang dilihat orang lain pada yang Anda bagikan dan di obrolan.',
+  'How far back Go back takes this space; it says first what would change.':
+    'Seberapa jauh Kembali membawa ruang ini ke belakang; lebih dulu disebutkan apa yang akan berubah.',
+  'The picture the others see beside your name.':
+    'Gambar yang dilihat orang lain di samping nama Anda.',
+  'Shown to the others beside your name, such as she/her.':
+    'Ditampilkan kepada orang lain di samping nama Anda, misalnya dia/nya.',
+  'A few words about you that the others see on your profile.':
+    'Beberapa kata tentang Anda yang dilihat orang lain di profil Anda.',
+  'What you are up to, shown to the others beside your name until it clears.':
+    'Apa yang sedang Anda lakukan, ditampilkan kepada orang lain di samping nama Anda hingga dihapus.',
 }

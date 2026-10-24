@@ -2368,4 +2368,185 @@ export const th: Dictionary = {
   Large: 'ใหญ่',
   Both: 'ทั้งสองแบบ',
   'Shown on cards': 'แสดงบนการ์ด',
+  // What each setting does, behind the ? beside it (#768)
+  'Syncs this browser’s AI keys with your other devices through the vault.':
+    'ซิงก์คีย์ AI ของเบราว์เซอร์นี้กับอุปกรณ์อื่นของคุณผ่านห้องนิรภัย',
+  'Which of your AI accounts this feature asks.': 'บัญชี AI ของคุณที่ฟีเจอร์นี้ใช้ถาม',
+  'Whether a task done with AI asks before each change or makes them on its own.':
+    'งานที่ทำด้วย AI จะถามก่อนแก้ไขแต่ละครั้งหรือแก้ไขเองเลย',
+  'Makes Orden the browser that links from other programs open in.':
+    'ตั้ง Orden เป็นเบราว์เซอร์ที่ใช้เปิดลิงก์จากโปรแกรมอื่น',
+  'Where words typed into a web tab’s address bar are searched.':
+    'ที่ที่ใช้ค้นหาคำที่พิมพ์ลงในแถบที่อยู่ของแท็บเว็บ',
+  'The search address, with %s where the words go.':
+    'ที่อยู่สำหรับค้นหา โดยใส่ %s ตรงที่คำค้นจะไปอยู่',
+  'Words the spelling check never marks as wrong.': 'คำที่การตรวจตัวสะกดจะไม่ทำเครื่องหมายว่าผิด',
+  'Which app’s keys Orden follows; any key below can still be changed.':
+    'แอปที่ Orden ใช้ปุ่มลัดตาม โดยยังเปลี่ยนปุ่มใดด้านล่างได้',
+  'Moves and edits in notes with Vim’s keys.': 'เลื่อนและแก้ไขในโน้ตด้วยปุ่มแบบ Vim',
+  'What pulling a note down past its top does on a phone.':
+    'สิ่งที่เกิดขึ้นเมื่อดึงโน้ตลงเลยด้านบนสุดบนโทรศัพท์',
+  'The OpenAI key the glasses ask their questions with.': 'คีย์ OpenAI ที่แว่นใช้ถามคำถาม',
+  'The model that answers what you ask on the glasses.': 'โมเดลที่ตอบสิ่งที่คุณถามบนแว่น',
+  'How long the model thinks before it answers; longer is slower.':
+    'เวลาที่โมเดลคิดก่อนตอบ ยิ่งนานยิ่งช้า',
+  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
+    'เพิ่มเอกสาร Markdown ลงในเมนูสร้างใหม่ที่ได้จากการคลิกขวาใน File Explorer',
+  'What happens when one note was changed on two devices before they synced.':
+    'สิ่งที่เกิดขึ้นเมื่อโน้ตหนึ่งถูกแก้ไขบนสองอุปกรณ์ก่อนที่จะซิงก์กัน',
+  'How far back the account keeps earlier versions of your notes.':
+    'ระยะเวลาย้อนหลังที่บัญชีเก็บเวอร์ชันก่อนหน้าของโน้ตไว้',
+  'The colour of buttons, links and the selection.': 'สีของปุ่ม ลิงก์ และส่วนที่เลือก',
+  'Adds Orden to the AI agent programs on this computer, so they reach your notes with nothing to set up.':
+    'เพิ่ม Orden ให้โปรแกรมเอเจนต์ AI ในคอมพิวเตอร์นี้ เพื่อให้เข้าถึงโน้ตของคุณได้โดยไม่ต้องตั้งค่าอะไร',
+  'Words that notify you whenever someone writes them in a chat, separated by commas.':
+    'คำที่จะแจ้งเตือนคุณทุกครั้งที่มีคนเขียนในแชต คั่นด้วยจุลภาค',
+  'When chats may notify you; outside these hours they stay quiet.':
+    'ช่วงเวลาที่แชตแจ้งเตือนคุณได้ นอกช่วงนี้จะเงียบ',
+  'When the hours chats may notify you begin.': 'เวลาเริ่มของช่วงที่แชตแจ้งเตือนคุณได้',
+  'When the hours chats may notify you end.': 'เวลาสิ้นสุดของช่วงที่แชตแจ้งเตือนคุณได้',
+  'Notifications show the message itself; off shows only who wrote.':
+    'การแจ้งเตือนแสดงตัวข้อความ หากปิดจะแสดงเพียงว่าใครเขียน',
+  'Notifications make a sound.': 'การแจ้งเตือนมีเสียง',
+  'Which headings start a new page on the glasses.': 'หัวข้อระดับใดที่ขึ้นหน้าใหม่บนแว่น',
+  'Shows line numbers on the glasses.': 'แสดงเลขบรรทัดบนแว่น',
+  'How many blank lines the glasses keep between blocks.': 'จำนวนบรรทัดว่างที่แว่นเว้นระหว่างบล็อก',
+  'Shows this markdown mark on the glasses rather than hiding it.':
+    'แสดงเครื่องหมาย Markdown นี้บนแว่นแทนการซ่อน',
+  'Lets you run commands on the glasses by speaking.': 'ให้คุณสั่งงานบนแว่นด้วยเสียงพูด',
+  'What you say to run this command; left empty, the phrase shown is used.':
+    'คำที่พูดเพื่อสั่งคำสั่งนี้ ถ้าเว้นว่างจะใช้วลีที่แสดง',
+  'What Windows draws behind the window: Mica, Acrylic, or no blur.':
+    'สิ่งที่ Windows วาดไว้หลังหน้าต่าง: Mica, อะคริลิก หรือไม่เบลอ',
+  'How much of the window’s own colour lies over what is behind it.':
+    'ปริมาณสีของหน้าต่างเองที่ทับสิ่งที่อยู่ด้านหลัง',
+  'The frame takes its colour from what is open.': 'กรอบใช้สีตามสิ่งที่เปิดอยู่',
+  'How strongly the frame is coloured.': 'ความเข้มของสีกรอบ',
+  'The colours the frame takes where nothing open has a colour of its own.':
+    'สีที่กรอบใช้เมื่อสิ่งที่เปิดอยู่ไม่มีสีของตัวเอง',
+  'A web tab takes the colour of its page.': 'แท็บเว็บใช้สีตามหน้าเว็บของมัน',
+  'When your status is taken away again.': 'เวลาที่สถานะของคุณจะถูกลบออก',
+  'Silences chat notifications and shows the others you are busy.':
+    'ปิดเสียงการแจ้งเตือนแชตและแสดงให้คนอื่นเห็นว่าคุณไม่ว่าง',
+  'The colour the others see beside your name.': 'สีที่คนอื่นเห็นข้างชื่อของคุณ',
+  'The others see you as offline even while you are here.':
+    'คนอื่นจะเห็นว่าคุณออฟไลน์แม้ขณะที่คุณอยู่',
+  'The picture behind the window, one for light and one for dark; drag it to move its centre.':
+    'รูปด้านหลังหน้าต่าง แยกสำหรับโหมดสว่างและมืด ลากเพื่อย้ายจุดกึ่งกลาง',
+  'The theme Orden is drawn in.': 'ธีมที่ใช้แสดง Orden',
+  'Light, dark, or whichever the system is in.': 'สว่าง มืด หรือตามที่ระบบใช้อยู่',
+  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
+    'บุ๊กมาร์กด้านบนรายการไฟล์จะแสดงเป็นไทล์หรือเป็นรายการ',
+  'Shows a pointing hand over buttons, as web pages do.':
+    'แสดงรูปมือชี้เมื่ออยู่เหนือปุ่ม เหมือนหน้าเว็บ',
+  'Orden’s own title bar, or the window frame of your system.':
+    'แถบชื่อของ Orden เอง หรือกรอบหน้าต่างของระบบคุณ',
+  'How large the text of notes is.': 'ขนาดตัวอักษรของโน้ต',
+  'The space between the lines of a note.': 'ระยะห่างระหว่างบรรทัดของโน้ต',
+  'How wide a line of a note grows before it wraps.': 'ความกว้างของบรรทัดโน้ตก่อนจะขึ้นบรรทัดใหม่',
+  'Typing an opening bracket or quote adds the closing one too.':
+    'พิมพ์วงเล็บหรือเครื่องหมายคำพูดเปิดแล้วจะเพิ่มตัวปิดให้ด้วย',
+  'Keeps the line you are writing in the middle of the screen.':
+    'ให้บรรทัดที่กำลังเขียนอยู่กลางหน้าจอเสมอ',
+  'Dims everything but the paragraph you are writing in.': 'หรี่ทุกอย่างยกเว้นย่อหน้าที่กำลังเขียน',
+  'Joins pairs such as -> or != into one sign, in code only or everywhere.':
+    'รวมคู่อักขระอย่าง -> หรือ != เป็นสัญลักษณ์เดียว เฉพาะในโค้ดหรือทุกที่',
+  'Where a picture or file you paste or drop into a note is saved.':
+    'ที่บันทึกรูปหรือไฟล์ที่คุณวางหรือลากลงในโน้ต',
+  'Turning two fingers on a touchpad or screen rotates the canvas.':
+    'หมุนสองนิ้วบนทัชแพดหรือหน้าจอเพื่อหมุนแคนวาส',
+  'A rotation that ends near a right angle settles on it.':
+    'การหมุนที่จบใกล้มุมฉากจะถูกปรับให้ตรงมุมฉาก',
+  'The paper size a new page note starts with.': 'ขนาดกระดาษเริ่มต้นของโน้ตแบบหน้าใหม่',
+  'How the name of a new unique note is made from the date and time.':
+    'วิธีตั้งชื่อโน้ตเฉพาะใหม่จากวันที่และเวลา',
+  'The colours code in a note is highlighted in.': 'ชุดสีที่ใช้เน้นโค้ดในโน้ต',
+  'Numbers the lines of code blocks.': 'ใส่เลขบรรทัดให้บล็อกโค้ด',
+  'The paper size of a PDF or a print.': 'ขนาดกระดาษของ PDF หรืองานพิมพ์',
+  'Whether pages are upright or on their side.': 'หน้ากระดาษเป็นแนวตั้งหรือแนวนอน',
+  'The space around the edge of each page, such as 20mm or 1in.':
+    'ระยะขอบรอบแต่ละหน้า เช่น 20mm หรือ 1in',
+  'Text at the top of every page; ${title}, ${date} and ${year} are filled in.':
+    'ข้อความด้านบนของทุกหน้า โดยจะเติม ${title}, ${date} และ ${year} ให้',
+  'Text at the bottom of every page; ${title}, ${date} and ${year} are filled in.':
+    'ข้อความด้านล่างของทุกหน้า โดยจะเติม ${title}, ${date} และ ${year} ให้',
+  'Whether an export is light, dark, or as the app is now.':
+    'ไฟล์ส่งออกเป็นแบบสว่าง มืด หรือตามที่แอปเป็นอยู่',
+  'Whether this key goes to Orden or to the program in the terminal, or asks each time.':
+    'ปุ่มนี้ส่งไปยัง Orden หรือโปรแกรมในเทอร์มินัล หรือถามทุกครั้ง',
+  'The shell a new terminal starts.': 'เชลล์ที่เทอร์มินัลใหม่เริ่มใช้',
+  'How large the text in terminals is.': 'ขนาดตัวอักษรในเทอร์มินัล',
+  'Brings back what each terminal showed after Orden restarts; off forgets it on quit.':
+    'นำสิ่งที่แต่ละเทอร์มินัลแสดงกลับมาหลัง Orden เริ่มใหม่ หากปิดจะลืมเมื่อออก',
+  'Asks before Orden quits with terminals open: always, or only while something runs in one.':
+    'ถามก่อน Orden ออกขณะมีเทอร์มินัลเปิดอยู่ ทุกครั้งหรือเฉพาะเมื่อมีบางอย่างทำงานอยู่',
+  'Draws the app on the graphics card; turn it off if the window flickers or stays blank.':
+    'วาดแอปด้วยการ์ดจอ ปิดได้หากหน้าต่างกะพริบหรือว่างเปล่า',
+  'How long before a task’s time it reminds you, unless the task says otherwise.':
+    'ระยะเวลาก่อนถึงเวลาของงานที่จะเตือนคุณ เว้นแต่งานนั้นกำหนดไว้เอง',
+  'Keeps Orden running in the tray after its window closes, so reminders still ring.':
+    'ให้ Orden ทำงานในถาดระบบหลังปิดหน้าต่าง เพื่อให้การเตือนยังดังอยู่',
+  'Lets reminders ring at the exact minute rather than when the phone gets round to it.':
+    'ให้การเตือนดังตรงนาทีพอดี แทนที่จะรอให้โทรศัพท์ว่าง',
+  'How often a note you are editing is saved as a version you can go back to in History.':
+    'ความถี่ที่โน้ตที่กำลังแก้ไขถูกบันทึกเป็นเวอร์ชันที่ย้อนกลับได้ในประวัติ',
+  'How long those versions are kept before they are deleted.':
+    'ระยะเวลาที่เก็บเวอร์ชันเหล่านั้นไว้ก่อนลบ',
+  'Ctrl+Tab goes to the tab used last, as in VS Code; off goes through the tabs in the order they sit.':
+    'Ctrl+Tab ไปยังแท็บที่ใช้ล่าสุดเหมือนใน VS Code หากปิดจะไล่ตามลำดับแท็บ',
+  'Two fingers sideways on the touchpad go back and forward.':
+    'ปัดสองนิ้วไปด้านข้างบนทัชแพดเพื่อย้อนกลับและไปข้างหน้า',
+  'What the web pages of another space do while it is out of sight: keep running, pause, or ask the first time.':
+    'สิ่งที่หน้าเว็บของพื้นที่อื่นทำขณะมองไม่เห็น: ทำงานต่อ หยุดชั่วคราว หรือถามในครั้งแรก',
+  'Unloads web pages that have been out of sight for a while to free memory; they load again when you return.':
+    'ยกเลิกการโหลดหน้าเว็บที่มองไม่เห็นมาสักพักเพื่อคืนหน่วยความจำ แล้วโหลดใหม่เมื่อคุณกลับมา',
+  'Reads dates, times and fields out of what you type into Add task, such as “tomorrow 9am”.':
+    'อ่านวันที่ เวลา และช่องข้อมูลจากสิ่งที่พิมพ์ใน เพิ่มงาน เช่น “tomorrow 9am”',
+  'The folder of this space whose folders the Tasks panel lists as projects.':
+    'โฟลเดอร์ของพื้นที่นี้ที่แผงงานแสดงโฟลเดอร์ย่อยเป็นโปรเจกต์',
+  'Today also lists the tasks that have no start date; off shows only those dated today or earlier.':
+    'วันนี้แสดงงานที่ไม่มีวันเริ่มด้วย หากปิดจะแสดงเฉพาะงานที่กำหนดวันนี้หรือก่อนหน้า',
+  'The Add task shortcut works even while another app is in front.':
+    'ปุ่มลัดเพิ่มงานใช้ได้แม้มีแอปอื่นอยู่ด้านหน้า',
+  'Shows terminals and the other tools for writing code.':
+    'แสดงเทอร์มินัลและเครื่องมืออื่นสำหรับเขียนโค้ด',
+  'Hides the tips Orden shows while you get to know it.':
+    'ซ่อนคำแนะนำที่ Orden แสดงระหว่างที่คุณเริ่มทำความรู้จัก',
+  'The language Orden’s menus and settings are in.': 'ภาษาของเมนูและการตั้งค่าของ Orden',
+  'Offers this type when you make something new; off only takes it out of that list.':
+    'เสนอประเภทนี้เมื่อคุณสร้างสิ่งใหม่ หากปิดจะเพียงนำออกจากรายการนั้น',
+  'Shows a mark such as ** or # while the cursor is in it; off keeps every mark out of sight.':
+    'แสดงเครื่องหมายอย่าง ** หรือ # ขณะเคอร์เซอร์อยู่ในนั้น หากปิดจะซ่อนเครื่องหมายทั้งหมด',
+  'Notes open as plain markdown text rather than formatted.':
+    'เปิดโน้ตเป็นข้อความ Markdown ล้วนแทนแบบจัดรูปแบบ',
+  'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
+    'เขียนโน้ตจากขวาไปซ้าย สำหรับอักษรอาหรับ ฮีบรู และอักษรอื่นแบบเดียวกัน',
+  'Underlines misspelled words as you write.': 'ขีดเส้นใต้คำที่สะกดผิดขณะเขียน',
+  'The dictionary spelling is checked against; Match the system uses your system’s language.':
+    'พจนานุกรมที่ใช้ตรวจตัวสะกด ตามระบบ จะใช้ภาษาของระบบคุณ',
+  'The version of Orden that is running; press to copy it.':
+    'เวอร์ชันของ Orden ที่กำลังทำงาน กดเพื่อคัดลอก',
+  'One of this theme’s own settings, offered by its author.':
+    'การตั้งค่าเฉพาะของธีมนี้ที่ผู้สร้างธีมเสนอไว้',
+  'How much of what is behind the window shows under notes and terminals; the words always stay readable.':
+    'ปริมาณสิ่งที่อยู่หลังหน้าต่างที่มองเห็นใต้โน้ตและเทอร์มินัล โดยตัวอักษรยังอ่านได้เสมอ',
+  'The colour laid over the picture.': 'สีที่ทับบนรูป',
+  'How much the picture is blurred.': 'ระดับความเบลอของรูป',
+  'How much the picture is darkened.': 'ระดับความมืดของรูป',
+  'How vivid the colours of the picture are.': 'ความสดของสีในรูป',
+  'How strongly the tint colour lies over the picture.': 'ความเข้มของโทนสีที่ทับบนรูป',
+  'Adds a film grain over the picture.': 'เพิ่มเกรนแบบฟิล์มบนรูป',
+  'How the picture fills the window.': 'วิธีที่รูปเติมเต็มหน้าต่าง',
+  'An empty pane shows the picture rather than paper.': 'บานหน้าต่างว่างแสดงรูปแทนกระดาษ',
+  'The name the others see on what you share and in chats.':
+    'ชื่อที่คนอื่นเห็นบนสิ่งที่คุณแชร์และในแชต',
+  'How far back Go back takes this space; it says first what would change.':
+    'ย้อนกลับ พาพื้นที่นี้ย้อนไปได้ไกลแค่ไหน โดยจะบอกก่อนว่าอะไรจะเปลี่ยน',
+  'The picture the others see beside your name.': 'รูปที่คนอื่นเห็นข้างชื่อของคุณ',
+  'Shown to the others beside your name, such as she/her.':
+    'แสดงให้คนอื่นเห็นข้างชื่อของคุณ เช่น เธอ',
+  'A few words about you that the others see on your profile.':
+    'ข้อความสั้น ๆ เกี่ยวกับคุณที่คนอื่นเห็นในโปรไฟล์ของคุณ',
+  'What you are up to, shown to the others beside your name until it clears.':
+    'สิ่งที่คุณกำลังทำอยู่ แสดงให้คนอื่นเห็นข้างชื่อของคุณจนกว่าจะถูกล้าง',
 }

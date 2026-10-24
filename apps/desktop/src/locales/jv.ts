@@ -2392,4 +2392,199 @@ export const jv: Dictionary = {
   Large: 'Gedhe',
   Both: 'Loro-lorone',
   'Shown on cards': 'Ditampilake ing kertu',
+  // What each setting does, behind the ? beside it (#768)
+  'Syncs this browser’s AI keys with your other devices through the vault.':
+    'Nyelarasake kunci AI browser iki karo piranti sampeyan liyane liwat brankas.',
+  'Which of your AI accounts this feature asks.':
+    'Akun AI sampeyan sing endi sing ditakoni fitur iki.',
+  'Whether a task done with AI asks before each change or makes them on its own.':
+    'Apa tugas sing digarap nganggo AI takon dhisik sadurunge saben owah-owahan utawa nindakake dhewe.',
+  'Makes Orden the browser that links from other programs open in.':
+    'Ndadekake Orden browser kanggo mbukak pranala saka program liya.',
+  'Where words typed into a web tab’s address bar are searched.':
+    'Panggonan nggoleki tembung sing diketik ing bar alamat tab web.',
+  'The search address, with %s where the words go.':
+    'Alamat panelusuran, karo %s ing panggonan tembung-tembunge.',
+  'Words the spelling check never marks as wrong.':
+    'Tembung sing ora tau ditandhani salah dening pamriksa ejaan.',
+  'Which app’s keys Orden follows; any key below can still be changed.':
+    'Tombol aplikasi endi sing dituruti Orden; saben tombol ing ngisor isih bisa diganti.',
+  'Moves and edits in notes with Vim’s keys.': 'Obah lan nyunting ing cathetan nganggo tombol Vim.',
+  'What pulling a note down past its top does on a phone.':
+    'Apa sing kedadeyan yen cathetan ditarik mudhun ngliwati pucuke ing telpon.',
+  'The OpenAI key the glasses ask their questions with.':
+    'Kunci OpenAI sing dienggo tesmak kanggo takon.',
+  'The model that answers what you ask on the glasses.':
+    'Model sing mangsuli pitakon sampeyan ing tesmak.',
+  'How long the model thinks before it answers; longer is slower.':
+    'Suwene model mikir sadurunge mangsuli; luwih suwe luwih alon.',
+  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
+    'Nambahake dokumen Markdown menyang menu New sing metu yen sampeyan klik tengen ing File Explorer.',
+  'What happens when one note was changed on two devices before they synced.':
+    'Apa sing kedadeyan yen siji cathetan diowahi ing rong piranti sadurunge diselarasake.',
+  'How far back the account keeps earlier versions of your notes.':
+    'Suwene akun nyimpen versi lawas cathetan sampeyan.',
+  'The colour of buttons, links and the selection.': 'Warna tombol, pranala lan pilihan.',
+  'Adds Orden to the AI agent programs on this computer, so they reach your notes with nothing to set up.':
+    'Nambahake Orden menyang program agen AI ing komputer iki, supaya agen bisa nggayuh cathetan sampeyan tanpa kudu disetel.',
+  'Words that notify you whenever someone writes them in a chat, separated by commas.':
+    'Tembung sing menehi notifikasi marang sampeyan saben ana wong nulis ing obrolan, dipisah nganggo koma.',
+  'When chats may notify you; outside these hours they stay quiet.':
+    'Kapan obrolan oleh menehi notifikasi marang sampeyan; ing njaba jam iki obrolan tetep meneng.',
+  'When the hours chats may notify you begin.':
+    'Kapan jam obrolan oleh menehi notifikasi diwiwiti.',
+  'When the hours chats may notify you end.': 'Kapan jam obrolan oleh menehi notifikasi rampung.',
+  'Notifications show the message itself; off shows only who wrote.':
+    'Notifikasi nuduhake isi pesene; yen dipateni mung nuduhake sapa sing nulis.',
+  'Notifications make a sound.': 'Notifikasi muni.',
+  'Which headings start a new page on the glasses.':
+    'Irah-irahan endi sing miwiti kaca anyar ing tesmak.',
+  'Shows line numbers on the glasses.': 'Nuduhake nomer baris ing tesmak.',
+  'How many blank lines the glasses keep between blocks.':
+    'Pira baris kosong sing ditinggal tesmak ing antarane blok.',
+  'Shows this markdown mark on the glasses rather than hiding it.':
+    'Nuduhake tandha markdown iki ing tesmak tinimbang ndhelikake.',
+  'Lets you run commands on the glasses by speaking.':
+    'Sampeyan bisa nglakokake prentah ing tesmak kanthi omong.',
+  'What you say to run this command; left empty, the phrase shown is used.':
+    'Sing sampeyan ucapake kanggo nglakokake prentah iki; yen kosong, frasa sing katon sing dienggo.',
+  'What Windows draws behind the window: Mica, Acrylic, or no blur.':
+    'Sing digambar Windows ing mburine jendhela: Mica, Acrylic, utawa tanpa burem.',
+  'How much of the window’s own colour lies over what is behind it.':
+    'Sepira warna jendhela dhewe nutupi apa sing ana ing mburine.',
+  'The frame takes its colour from what is open.': 'Kerangka njupuk warna saka apa sing kabukak.',
+  'How strongly the frame is coloured.': 'Sepira kuwat kerangka diwarnani.',
+  'The colours the frame takes where nothing open has a colour of its own.':
+    'Warna sing dijupuk kerangka yen ora ana sing kabukak duwe warna dhewe.',
+  'A web tab takes the colour of its page.': 'Tab web njupuk warna kacane.',
+  'When your status is taken away again.': 'Kapan status sampeyan dibusak maneh.',
+  'Silences chat notifications and shows the others you are busy.':
+    'Mateni swara notifikasi obrolan lan nuduhake marang liyane yen sampeyan lagi sibuk.',
+  'The colour the others see beside your name.':
+    'Warna sing dideleng liyane ing sandhinge jeneng sampeyan.',
+  'The others see you as offline even while you are here.':
+    'Liyane ndeleng sampeyan offline sanajan sampeyan ana kene.',
+  'The picture behind the window, one for light and one for dark; drag it to move its centre.':
+    'Gambar ing mburine jendhela, siji kanggo padhang lan siji kanggo peteng; seret kanggo mindhah tengahe.',
+  'The theme Orden is drawn in.': 'Tema sing dienggo nggambar Orden.',
+  'Light, dark, or whichever the system is in.': 'Padhang, peteng, utawa manut sistem.',
+  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
+    'Apa tandha buku ing ndhuwur dhaptar berkas katon minangka ubin utawa dhaptar.',
+  'Shows a pointing hand over buttons, as web pages do.':
+    'Nuduhake tangan nuding ing ndhuwur tombol, kaya ing kaca web.',
+  'Orden’s own title bar, or the window frame of your system.':
+    'Bar judhul Orden dhewe, utawa kerangka jendhela sistem sampeyan.',
+  'How large the text of notes is.': 'Sepira gedhene teks cathetan.',
+  'The space between the lines of a note.': 'Jarak antarane baris ing cathetan.',
+  'How wide a line of a note grows before it wraps.':
+    'Sepira ambane baris cathetan sadurunge mlebu baris anyar.',
+  'Typing an opening bracket or quote adds the closing one too.':
+    'Ngetik kurung utawa petik pambuka uga nambahake panutupe.',
+  'Keeps the line you are writing in the middle of the screen.':
+    'Njaga baris sing lagi sampeyan tulis ana ing tengah layar.',
+  'Dims everything but the paragraph you are writing in.':
+    'Nyuremake kabeh kajaba paragraf sing lagi sampeyan tulis.',
+  'Joins pairs such as -> or != into one sign, in code only or everywhere.':
+    'Nggabungake pasangan kaya -> utawa != dadi siji tandha, mung ing kode utawa ing ngendi wae.',
+  'Where a picture or file you paste or drop into a note is saved.':
+    'Panggonan nyimpen gambar utawa berkas sing sampeyan tempel utawa selehake ing cathetan.',
+  'Turning two fingers on a touchpad or screen rotates the canvas.':
+    'Muter rong driji ing touchpad utawa layar bakal muter kanvas.',
+  'A rotation that ends near a right angle settles on it.':
+    'Puteran sing mandheg cedhak sudut siku-siku bakal pas ing sudut kuwi.',
+  'The paper size a new page note starts with.': 'Ukuran kertas wiwitan cathetan kaca anyar.',
+  'How the name of a new unique note is made from the date and time.':
+    'Carane jeneng cathetan unik anyar digawe saka tanggal lan wektu.',
+  'The colours code in a note is highlighted in.': 'Warna kanggo nyorot kode ing cathetan.',
+  'Numbers the lines of code blocks.': 'Menehi nomer baris ing blok kode.',
+  'The paper size of a PDF or a print.': 'Ukuran kertas PDF utawa cetakan.',
+  'Whether pages are upright or on their side.': 'Apa kaca jejeg utawa malang.',
+  'The space around the edge of each page, such as 20mm or 1in.':
+    'Jarak ing sakubenge pinggir saben kaca, kayata 20mm utawa 1in.',
+  'Text at the top of every page; ${title}, ${date} and ${year} are filled in.':
+    'Teks ing ndhuwur saben kaca; ${title}, ${date} lan ${year} bakal diisi.',
+  'Text at the bottom of every page; ${title}, ${date} and ${year} are filled in.':
+    'Teks ing ngisor saben kaca; ${title}, ${date} lan ${year} bakal diisi.',
+  'Whether an export is light, dark, or as the app is now.':
+    'Apa ekspor padhang, peteng, utawa kaya aplikasi saiki.',
+  'Whether this key goes to Orden or to the program in the terminal, or asks each time.':
+    'Apa tombol iki menyang Orden utawa menyang program ing terminal, utawa takon saben wektu.',
+  'The shell a new terminal starts.': 'Shell sing diwiwiti terminal anyar.',
+  'How large the text in terminals is.': 'Sepira gedhene teks ing terminal.',
+  'Brings back what each terminal showed after Orden restarts; off forgets it on quit.':
+    'Mbalekake apa sing dituduhake saben terminal sawise Orden diwiwiti maneh; yen dipateni, dilalekake nalika metu.',
+  'Asks before Orden quits with terminals open: always, or only while something runs in one.':
+    'Takon sadurunge Orden metu nalika ana terminal kabukak: tansah, utawa mung nalika ana sing mlaku ing salah sijine.',
+  'Draws the app on the graphics card; turn it off if the window flickers or stays blank.':
+    'Nggambar aplikasi nganggo kertu grafis; pateni yen jendhela kedhip-kedhip utawa tetep kosong.',
+  'How long before a task’s time it reminds you, unless the task says otherwise.':
+    'Suwene sadurunge wektu tugas sampeyan dielingake, kajaba tugas kuwi nemtokake liya.',
+  'Keeps Orden running in the tray after its window closes, so reminders still ring.':
+    'Njaga Orden tetep mlaku ing baki sawise jendhelane ditutup, supaya pangeling tetep muni.',
+  'Lets reminders ring at the exact minute rather than when the phone gets round to it.':
+    'Nggawe pangeling muni pas ing menite, ora mung yen telpon sempat.',
+  'How often a note you are editing is saved as a version you can go back to in History.':
+    'Sepira kerepe cathetan sing lagi sampeyan sunting disimpen minangka versi sing bisa dibalekake ing Riwayat.',
+  'How long those versions are kept before they are deleted.':
+    'Suwene versi kasebut disimpen sadurunge dibusak.',
+  'Ctrl+Tab goes to the tab used last, as in VS Code; off goes through the tabs in the order they sit.':
+    'Ctrl+Tab pindhah menyang tab sing pungkasan dienggo, kaya ing VS Code; yen dipateni, pindhah urut miturut tab.',
+  'Two fingers sideways on the touchpad go back and forward.':
+    'Rong driji ngiwa nengen ing touchpad kanggo mundur lan maju.',
+  'What the web pages of another space do while it is out of sight: keep running, pause, or ask the first time.':
+    'Apa sing ditindakake kaca web papan liya nalika ora katon: tetep mlaku, ngaso, utawa takon pisanan.',
+  'Unloads web pages that have been out of sight for a while to free memory; they load again when you return.':
+    'Ngetokake kaca web sing wis suwe ora katon kanggo ngosongake memori; kaca dimuat maneh yen sampeyan bali.',
+  'Reads dates, times and fields out of what you type into Add task, such as “tomorrow 9am”.':
+    'Maca tanggal, wektu lan kolom saka sing sampeyan ketik ing Tambah tugas, kayata “tomorrow 9am”.',
+  'The folder of this space whose folders the Tasks panel lists as projects.':
+    'Folder papan iki sing folder-folder ing jerone didhaptar panel Tugas minangka proyek.',
+  'Today also lists the tasks that have no start date; off shows only those dated today or earlier.':
+    'Dina iki uga ndhaptar tugas sing ora duwe tanggal wiwitan; yen dipateni mung nuduhake sing tanggale dina iki utawa sadurunge.',
+  'The Add task shortcut works even while another app is in front.':
+    'Dalan cekak Tambah tugas tetep mlaku sanajan aplikasi liya ana ing ngarep.',
+  'Shows terminals and the other tools for writing code.':
+    'Nuduhake terminal lan alat liyane kanggo nulis kode.',
+  'Hides the tips Orden shows while you get to know it.':
+    'Ndhelikake tips sing dituduhake Orden nalika sampeyan lagi kenalan.',
+  'The language Orden’s menus and settings are in.': 'Basa menu lan setelan Orden.',
+  'Offers this type when you make something new; off only takes it out of that list.':
+    'Nawakake jinis iki yen sampeyan nggawe sing anyar; yen dipateni mung dibusak saka dhaptar kuwi.',
+  'Shows a mark such as ** or # while the cursor is in it; off keeps every mark out of sight.':
+    'Nuduhake tandha kayata ** utawa # nalika kursor ana ing jerone; yen dipateni kabeh tandha tetep didhelikake.',
+  'Notes open as plain markdown text rather than formatted.':
+    'Cathetan dibukak minangka teks markdown polos tinimbang diformat.',
+  'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
+    'Nulis cathetan saka tengen ngiwa, kanggo aksara Arab, Ibrani lan sapanunggalane.',
+  'Underlines misspelled words as you write.':
+    'Menehi garis ngisor tembung sing salah eja nalika sampeyan nulis.',
+  'The dictionary spelling is checked against; Match the system uses your system’s language.':
+    'Kamus kanggo mriksa ejaan; Manut sistem nganggo basa sistem sampeyan.',
+  'The version of Orden that is running; press to copy it.':
+    'Versi Orden sing lagi mlaku; pencet kanggo nyalin.',
+  'One of this theme’s own settings, offered by its author.':
+    'Salah siji setelan tema iki dhewe, sing diwenehake panggawene.',
+  'How much of what is behind the window shows under notes and terminals; the words always stay readable.':
+    'Sepira katon apa sing ana ing mburine jendhela ing ngisor cathetan lan terminal; tulisane tansah bisa diwaca.',
+  'The colour laid over the picture.': 'Warna sing dilapisake ing ndhuwur gambar.',
+  'How much the picture is blurred.': 'Sepira burem gambare.',
+  'How much the picture is darkened.': 'Sepira peteng gambare.',
+  'How vivid the colours of the picture are.': 'Sepira cerah warna gambare.',
+  'How strongly the tint colour lies over the picture.': 'Sepira kuwat warna semu nutupi gambar.',
+  'Adds a film grain over the picture.': 'Nambahake wiji film ing ndhuwur gambar.',
+  'How the picture fills the window.': 'Carane gambar ngebaki jendhela.',
+  'An empty pane shows the picture rather than paper.':
+    'Panel kosong nuduhake gambar tinimbang kertas.',
+  'The name the others see on what you share and in chats.':
+    'Jeneng sing dideleng liyane ing apa sing sampeyan bagekake lan ing obrolan.',
+  'How far back Go back takes this space; it says first what would change.':
+    'Sepira adohe Bali nggawa papan iki mundur; luwih dhisik ngandhani apa sing bakal owah.',
+  'The picture the others see beside your name.':
+    'Gambar sing dideleng liyane ing sandhinge jeneng sampeyan.',
+  'Shown to the others beside your name, such as she/her.':
+    'Ditampilake marang liyane ing sandhinge jeneng sampeyan, kayata dheweke/-e.',
+  'A few words about you that the others see on your profile.':
+    'Sawetara tembung babagan sampeyan sing dideleng liyane ing profil sampeyan.',
+  'What you are up to, shown to the others beside your name until it clears.':
+    'Apa sing lagi sampeyan lakoni, ditampilake marang liyane ing sandhinge jeneng sampeyan nganti ilang.',
 }

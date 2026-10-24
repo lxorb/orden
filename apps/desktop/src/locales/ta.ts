@@ -2446,4 +2446,208 @@ export const ta: Dictionary = {
   Large: 'பெரியது',
   Both: 'இரண்டும்',
   'Shown on cards': 'அட்டைகளில் காட்டப்படுபவை',
+  // What each setting does, behind the ? beside it (#768)
+  'Syncs this browser’s AI keys with your other devices through the vault.':
+    'இந்த உலாவியின் AI சாவிகளை பெட்டகத்தின் வழியாக உங்கள் பிற சாதனங்களுடன் ஒத்திசைக்கிறது.',
+  'Which of your AI accounts this feature asks.':
+    'இந்த அம்சம் உங்கள் எந்த AI கணக்கிடம் கேட்கிறது என்பது.',
+  'Whether a task done with AI asks before each change or makes them on its own.':
+    'AI மூலம் செய்யப்படும் பணி ஒவ்வொரு மாற்றத்திற்கும் முன் கேட்குமா அல்லது தானாகவே செய்யுமா என்பது.',
+  'Makes Orden the browser that links from other programs open in.':
+    'பிற நிரல்களிலிருந்து வரும் இணைப்புகள் திறக்கும் உலாவியாக Orden-ஐ ஆக்குகிறது.',
+  'Where words typed into a web tab’s address bar are searched.':
+    'இணையத் தாவலின் முகவரிப் பட்டியில் தட்டச்சு செய்யும் சொற்கள் எங்கே தேடப்படுகின்றன என்பது.',
+  'The search address, with %s where the words go.':
+    'தேடல் முகவரி, சொற்கள் வரும் இடத்தில் %s உடன்.',
+  'Words the spelling check never marks as wrong.':
+    'எழுத்துப்பிழைச் சரிபார்ப்பு ஒருபோதும் தவறு எனக் குறிக்காத சொற்கள்.',
+  'Which app’s keys Orden follows; any key below can still be changed.':
+    'Orden எந்த ஆப்பின் விசைகளைப் பின்பற்றுகிறது என்பது; கீழுள்ள எந்த விசையையும் இன்னும் மாற்றலாம்.',
+  'Moves and edits in notes with Vim’s keys.':
+    'Vim விசைகளைக் கொண்டு குறிப்புகளில் நகர்ந்து திருத்துகிறது.',
+  'What pulling a note down past its top does on a phone.':
+    'தொலைபேசியில் குறிப்பை அதன் மேற்பகுதிக்கு அப்பால் கீழே இழுத்தால் என்ன நடக்கும் என்பது.',
+  'The OpenAI key the glasses ask their questions with.':
+    'கண்ணாடி தன் கேள்விகளைக் கேட்கப் பயன்படுத்தும் OpenAI சாவி.',
+  'The model that answers what you ask on the glasses.':
+    'கண்ணாடியில் நீங்கள் கேட்பதற்குப் பதிலளிக்கும் மாதிரி.',
+  'How long the model thinks before it answers; longer is slower.':
+    'மாதிரி பதிலளிக்கும் முன் எவ்வளவு நேரம் சிந்திக்கிறது என்பது; நீண்டால் மெதுவாகும்.',
+  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
+    'File Explorer-இல் வலது கிளிக் செய்யும்போது வரும் புதிய மெனுவில் ஒரு Markdown ஆவணத்தைச் சேர்க்கிறது.',
+  'What happens when one note was changed on two devices before they synced.':
+    'ஒத்திசைவுக்கு முன் ஒரு குறிப்பு இரண்டு சாதனங்களில் மாற்றப்பட்டால் என்ன நடக்கும் என்பது.',
+  'How far back the account keeps earlier versions of your notes.':
+    'உங்கள் குறிப்புகளின் முந்தைய பதிப்புகளைக் கணக்கு எவ்வளவு காலம் வைத்திருக்கும் என்பது.',
+  'The colour of buttons, links and the selection.':
+    'பொத்தான்கள், இணைப்புகள் மற்றும் தேர்வின் நிறம்.',
+  'Adds Orden to the AI agent programs on this computer, so they reach your notes with nothing to set up.':
+    'இந்தக் கணினியில் உள்ள AI முகவர் நிரல்களில் Orden-ஐச் சேர்க்கிறது, அதனால் எதையும் அமைக்காமலே அவை உங்கள் குறிப்புகளை அடையும்.',
+  'Words that notify you whenever someone writes them in a chat, separated by commas.':
+    'அரட்டையில் யாராவது எழுதும்போதெல்லாம் உங்களுக்கு அறிவிக்கும் சொற்கள், காற்புள்ளிகளால் பிரிக்கப்பட்டவை.',
+  'When chats may notify you; outside these hours they stay quiet.':
+    'அரட்டைகள் உங்களுக்கு அறிவிக்கக்கூடிய நேரம்; இந்த மணிநேரங்களுக்கு வெளியே அவை அமைதியாக இருக்கும்.',
+  'When the hours chats may notify you begin.':
+    'அரட்டைகள் அறிவிக்கக்கூடிய மணிநேரங்கள் தொடங்கும் நேரம்.',
+  'When the hours chats may notify you end.':
+    'அரட்டைகள் அறிவிக்கக்கூடிய மணிநேரங்கள் முடியும் நேரம்.',
+  'Notifications show the message itself; off shows only who wrote.':
+    'அறிவிப்புகள் செய்தியையே காட்டும்; அணைத்தால் எழுதியவர் யார் என்பது மட்டும் தெரியும்.',
+  'Notifications make a sound.': 'அறிவிப்புகள் ஒலி எழுப்பும்.',
+  'Which headings start a new page on the glasses.':
+    'கண்ணாடியில் எந்தத் தலைப்புகள் புதிய பக்கத்தைத் தொடங்கும் என்பது.',
+  'Shows line numbers on the glasses.': 'கண்ணாடியில் வரி எண்களைக் காட்டுகிறது.',
+  'How many blank lines the glasses keep between blocks.':
+    'கண்ணாடி தொகுதிகளுக்கு இடையே எத்தனை வெற்று வரிகளை விடும் என்பது.',
+  'Shows this markdown mark on the glasses rather than hiding it.':
+    'இந்த markdown குறியை மறைக்காமல் கண்ணாடியில் காட்டுகிறது.',
+  'Lets you run commands on the glasses by speaking.':
+    'பேசுவதன் மூலம் கண்ணாடியில் கட்டளைகளை இயக்க உதவுகிறது.',
+  'What you say to run this command; left empty, the phrase shown is used.':
+    'இந்தக் கட்டளையை இயக்க நீங்கள் சொல்வது; காலியாக விட்டால் காட்டப்படும் சொற்றொடர் பயன்படும்.',
+  'What Windows draws behind the window: Mica, Acrylic, or no blur.':
+    'சாளரத்தின் பின்னால் Windows வரைவது: Mica, Acrylic அல்லது மங்கல் இல்லை.',
+  'How much of the window’s own colour lies over what is behind it.':
+    'சாளரத்தின் சொந்த நிறம் அதன் பின்னால் உள்ளதன் மேல் எவ்வளவு படிகிறது என்பது.',
+  'The frame takes its colour from what is open.':
+    'திறந்திருப்பதிலிருந்து சட்டகம் தன் நிறத்தைப் பெறுகிறது.',
+  'How strongly the frame is coloured.': 'சட்டகம் எவ்வளவு அழுத்தமாக நிறம் பெறுகிறது என்பது.',
+  'The colours the frame takes where nothing open has a colour of its own.':
+    'திறந்திருப்பவற்றில் எதற்கும் சொந்த நிறம் இல்லாதபோது சட்டகம் பெறும் நிறங்கள்.',
+  'A web tab takes the colour of its page.': 'இணையத் தாவல் அதன் பக்கத்தின் நிறத்தைப் பெறுகிறது.',
+  'When your status is taken away again.': 'உங்கள் நிலை மீண்டும் எப்போது நீக்கப்படும் என்பது.',
+  'Silences chat notifications and shows the others you are busy.':
+    'அரட்டை அறிவிப்புகளை அமைதிப்படுத்தி, நீங்கள் வேலையாக இருப்பதை மற்றவர்களுக்குக் காட்டுகிறது.',
+  'The colour the others see beside your name.':
+    'உங்கள் பெயருக்கு அருகில் மற்றவர்கள் காணும் நிறம்.',
+  'The others see you as offline even while you are here.':
+    'நீங்கள் இங்கே இருக்கும்போதும் மற்றவர்கள் உங்களை ஆஃப்லைனாகக் காண்பார்கள்.',
+  'The picture behind the window, one for light and one for dark; drag it to move its centre.':
+    'சாளரத்தின் பின்னால் உள்ள படம், வெளிர் பயன்முறைக்கு ஒன்றும் இருள் பயன்முறைக்கு ஒன்றும்; அதன் மையத்தை நகர்த்த இழுக்கவும்.',
+  'The theme Orden is drawn in.': 'Orden வரையப்படும் தீம்.',
+  'Light, dark, or whichever the system is in.':
+    'வெளிர், இருள், அல்லது கணினி எதில் இருக்கிறதோ அது.',
+  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
+    'கோப்புப் பட்டியலின் மேலுள்ள புத்தகக்குறிகள் ஓடுகளாகவா பட்டியலாகவா காட்டப்படும் என்பது.',
+  'Shows a pointing hand over buttons, as web pages do.':
+    'இணையப் பக்கங்களைப் போல, பொத்தான்களின் மேல் சுட்டும் கையைக் காட்டுகிறது.',
+  'Orden’s own title bar, or the window frame of your system.':
+    'Orden-இன் சொந்தத் தலைப்புப் பட்டை, அல்லது உங்கள் கணினியின் சாளரச் சட்டகம்.',
+  'How large the text of notes is.': 'குறிப்புகளின் உரை எவ்வளவு பெரியது என்பது.',
+  'The space between the lines of a note.': 'ஒரு குறிப்பின் வரிகளுக்கு இடையேயான இடைவெளி.',
+  'How wide a line of a note grows before it wraps.':
+    'ஒரு குறிப்பின் வரி மடங்குவதற்கு முன் எவ்வளவு அகலமாக வளரும் என்பது.',
+  'Typing an opening bracket or quote adds the closing one too.':
+    'திறக்கும் அடைப்புக்குறி அல்லது மேற்கோள் குறியைத் தட்டச்சு செய்தால் மூடுவதும் சேர்க்கப்படும்.',
+  'Keeps the line you are writing in the middle of the screen.':
+    'நீங்கள் எழுதும் வரியைத் திரையின் நடுவில் வைத்திருக்கிறது.',
+  'Dims everything but the paragraph you are writing in.':
+    'நீங்கள் எழுதும் பத்தியைத் தவிர மற்ற அனைத்தையும் மங்கச் செய்கிறது.',
+  'Joins pairs such as -> or != into one sign, in code only or everywhere.':
+    '-> அல்லது != போன்ற இணைகளைக் குறியீட்டில் மட்டும் அல்லது எங்கும் ஒரே குறியாக இணைக்கிறது.',
+  'Where a picture or file you paste or drop into a note is saved.':
+    'குறிப்பில் நீங்கள் ஒட்டும் அல்லது இழுத்துவிடும் படம் அல்லது கோப்பு சேமிக்கப்படும் இடம்.',
+  'Turning two fingers on a touchpad or screen rotates the canvas.':
+    'டச்பேடில் அல்லது திரையில் இரண்டு விரல்களைச் சுழற்றினால் கேன்வாஸ் சுழலும்.',
+  'A rotation that ends near a right angle settles on it.':
+    'செங்கோணத்திற்கு அருகில் முடியும் சுழற்சி அதிலேயே நிலைபெறும்.',
+  'The paper size a new page note starts with.': 'புதிய பக்கக் குறிப்பு தொடங்கும் காகித அளவு.',
+  'How the name of a new unique note is made from the date and time.':
+    'தேதியிலிருந்தும் நேரத்திலிருந்தும் புதிய தனிப்பெயர் குறிப்பின் பெயர் எவ்வாறு உருவாக்கப்படுகிறது என்பது.',
+  'The colours code in a note is highlighted in.':
+    'குறிப்பிலுள்ள குறியீடு முன்னிலைப்படுத்தப்படும் நிறங்கள்.',
+  'Numbers the lines of code blocks.': 'குறியீட்டுத் தொகுதிகளின் வரிகளுக்கு எண்ணிடுகிறது.',
+  'The paper size of a PDF or a print.': 'PDF அல்லது அச்சின் காகித அளவு.',
+  'Whether pages are upright or on their side.': 'பக்கங்கள் நேராகவா பக்கவாட்டிலா என்பது.',
+  'The space around the edge of each page, such as 20mm or 1in.':
+    'ஒவ்வொரு பக்கத்தின் ஓரத்தைச் சுற்றியுள்ள இடம், உதாரணமாக 20mm அல்லது 1in.',
+  'Text at the top of every page; ${title}, ${date} and ${year} are filled in.':
+    'ஒவ்வொரு பக்கத்தின் மேலுள்ள உரை; ${title}, ${date}, ${year} நிரப்பப்படும்.',
+  'Text at the bottom of every page; ${title}, ${date} and ${year} are filled in.':
+    'ஒவ்வொரு பக்கத்தின் கீழுள்ள உரை; ${title}, ${date}, ${year} நிரப்பப்படும்.',
+  'Whether an export is light, dark, or as the app is now.':
+    'ஏற்றுமதி வெளிராகவா, இருளாகவா, அல்லது ஆப் இப்போது இருப்பது போலவா என்பது.',
+  'Whether this key goes to Orden or to the program in the terminal, or asks each time.':
+    'இந்த விசை Orden-க்குச் செல்கிறதா, முனையத்திலுள்ள நிரலுக்குச் செல்கிறதா, அல்லது ஒவ்வொரு முறையும் கேட்கிறதா என்பது.',
+  'The shell a new terminal starts.': 'புதிய முனையம் தொடங்கும் ஷெல்.',
+  'How large the text in terminals is.': 'முனையங்களில் உரை எவ்வளவு பெரியது என்பது.',
+  'Brings back what each terminal showed after Orden restarts; off forgets it on quit.':
+    'Orden மறுதொடக்கம் ஆனதும் ஒவ்வொரு முனையமும் காட்டியதைத் திரும்பக் கொண்டுவருகிறது; அணைத்தால் வெளியேறும்போது மறந்துவிடும்.',
+  'Asks before Orden quits with terminals open: always, or only while something runs in one.':
+    'முனையங்கள் திறந்திருக்கும்போது Orden வெளியேறும் முன் கேட்கிறது: எப்போதும், அல்லது ஒன்றில் ஏதாவது இயங்கும்போது மட்டும்.',
+  'Draws the app on the graphics card; turn it off if the window flickers or stays blank.':
+    'ஆப்பை கிராபிக்ஸ் அட்டையில் வரைகிறது; சாளரம் மினுங்கினால் அல்லது வெறுமையாகவே இருந்தால் இதை அணைக்கவும்.',
+  'How long before a task’s time it reminds you, unless the task says otherwise.':
+    'பணி வேறுவிதமாகச் சொல்லாவிட்டால், பணியின் நேரத்திற்கு எவ்வளவு முன் நினைவூட்டுகிறது என்பது.',
+  'Keeps Orden running in the tray after its window closes, so reminders still ring.':
+    'சாளரம் மூடிய பின்னும் Orden-ஐத் தட்டில் இயங்க வைக்கிறது, அதனால் நினைவூட்டல்கள் ஒலிக்கும்.',
+  'Lets reminders ring at the exact minute rather than when the phone gets round to it.':
+    'தொலைபேசிக்கு வசதியானபோது அல்லாமல், சரியான நிமிடத்தில் நினைவூட்டல்கள் ஒலிக்க அனுமதிக்கிறது.',
+  'How often a note you are editing is saved as a version you can go back to in History.':
+    'நீங்கள் திருத்தும் குறிப்பு, பதிப்பு வரலாற்றில் திரும்பிச் செல்லக்கூடிய பதிப்பாக எவ்வளவு அடிக்கடி சேமிக்கப்படுகிறது என்பது.',
+  'How long those versions are kept before they are deleted.':
+    'அந்தப் பதிப்புகள் நீக்கப்படும் முன் எவ்வளவு காலம் வைக்கப்படும் என்பது.',
+  'Ctrl+Tab goes to the tab used last, as in VS Code; off goes through the tabs in the order they sit.':
+    'Ctrl+Tab, VS Code-இல் உள்ளது போல, கடைசியாகப் பயன்படுத்திய தாவலுக்குச் செல்கிறது; அணைத்தால் தாவல்கள் இருக்கும் வரிசையில் செல்லும்.',
+  'Two fingers sideways on the touchpad go back and forward.':
+    'டச்பேடில் இரண்டு விரல்களைப் பக்கவாட்டில் நகர்த்தினால் பின்னும் முன்னும் செல்லும்.',
+  'What the web pages of another space do while it is out of sight: keep running, pause, or ask the first time.':
+    'மற்றொரு இடத்தின் இணையப் பக்கங்கள் கண்ணுக்குத் தெரியாதபோது என்ன செய்யும் என்பது: இயங்கட்டும், இடைநிறுத்து, அல்லது முதல் முறை கேள்.',
+  'Unloads web pages that have been out of sight for a while to free memory; they load again when you return.':
+    'சிறிது நேரம் கண்ணுக்குத் தெரியாத இணையப் பக்கங்களை நினைவகத்தை விடுவிக்க இறக்குகிறது; நீங்கள் திரும்பும்போது அவை மீண்டும் ஏறும்.',
+  'Reads dates, times and fields out of what you type into Add task, such as “tomorrow 9am”.':
+    '“tomorrow 9am” போல, பணியைச் சேர் பெட்டியில் நீங்கள் தட்டச்சு செய்வதிலிருந்து தேதிகள், நேரங்கள், புலங்களைப் படிக்கிறது.',
+  'The folder of this space whose folders the Tasks panel lists as projects.':
+    'பணிகள் பலகம் திட்டங்களாகப் பட்டியலிடும் கோப்புறைகளைக் கொண்ட, இந்த இடத்தின் கோப்புறை.',
+  'Today also lists the tasks that have no start date; off shows only those dated today or earlier.':
+    'இன்று பட்டியலில் தொடக்கத் தேதி இல்லாத பணிகளும் காட்டப்படும்; அணைத்தால் இன்று அல்லது அதற்கு முன் தேதியிட்டவை மட்டும் காட்டப்படும்.',
+  'The Add task shortcut works even while another app is in front.':
+    'மற்றொரு ஆப் முன்னால் இருக்கும்போதும் பணியைச் சேர் குறுக்குவழி வேலை செய்யும்.',
+  'Shows terminals and the other tools for writing code.':
+    'முனையங்களையும் குறியீடு எழுதுவதற்கான பிற கருவிகளையும் காட்டுகிறது.',
+  'Hides the tips Orden shows while you get to know it.':
+    'Orden-ஐ நீங்கள் அறிந்துகொள்ளும்போது அது காட்டும் குறிப்புரைகளை மறைக்கிறது.',
+  'The language Orden’s menus and settings are in.':
+    'Orden-இன் மெனுக்களும் அமைப்புகளும் உள்ள மொழி.',
+  'Offers this type when you make something new; off only takes it out of that list.':
+    'புதிதாக ஒன்றை உருவாக்கும்போது இந்த வகையை வழங்குகிறது; அணைத்தால் அந்தப் பட்டியலிலிருந்து மட்டுமே நீக்கப்படும்.',
+  'Shows a mark such as ** or # while the cursor is in it; off keeps every mark out of sight.':
+    'கர்சர் ** அல்லது # போன்ற குறியினுள் இருக்கும்போது அதைக் காட்டுகிறது; அணைத்தால் எல்லாக் குறிகளும் மறைந்தே இருக்கும்.',
+  'Notes open as plain markdown text rather than formatted.':
+    'குறிப்புகள் வடிவமைக்கப்படாமல் வெறும் markdown உரையாகத் திறக்கும்.',
+  'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
+    'அரபு, எபிரேயம் போன்ற எழுத்துமுறைகளுக்காக, குறிப்புகளை வலமிருந்து இடமாக எழுதுகிறது.',
+  'Underlines misspelled words as you write.':
+    'நீங்கள் எழுதும்போது பிழையான சொற்களை அடிக்கோடிடுகிறது.',
+  'The dictionary spelling is checked against; Match the system uses your system’s language.':
+    'எழுத்துப்பிழை சரிபார்க்கப்படும் அகராதி; கணினியின்படி என்பது உங்கள் கணினியின் மொழியைப் பயன்படுத்தும்.',
+  'The version of Orden that is running; press to copy it.':
+    'இயங்கிக்கொண்டிருக்கும் Orden-இன் பதிப்பு; நகலெடுக்க அழுத்தவும்.',
+  'One of this theme’s own settings, offered by its author.':
+    'இந்தத் தீமின் சொந்த அமைப்புகளில் ஒன்று, அதன் ஆசிரியர் வழங்கியது.',
+  'How much of what is behind the window shows under notes and terminals; the words always stay readable.':
+    'சாளரத்தின் பின்னால் உள்ளது குறிப்புகள் மற்றும் முனையங்களின் கீழ் எவ்வளவு தெரியும் என்பது; சொற்கள் எப்போதும் படிக்கக்கூடியவையாக இருக்கும்.',
+  'The colour laid over the picture.': 'படத்தின் மேல் இடப்படும் நிறம்.',
+  'How much the picture is blurred.': 'படம் எவ்வளவு மங்கலாக்கப்படுகிறது என்பது.',
+  'How much the picture is darkened.': 'படம் எவ்வளவு இருட்டாக்கப்படுகிறது என்பது.',
+  'How vivid the colours of the picture are.':
+    'படத்தின் நிறங்கள் எவ்வளவு பளிச்சென்று இருக்கும் என்பது.',
+  'How strongly the tint colour lies over the picture.':
+    'சாயல் நிறம் படத்தின் மேல் எவ்வளவு அழுத்தமாகப் படிகிறது என்பது.',
+  'Adds a film grain over the picture.': 'படத்தின் மேல் ஃபிலிம் தானிய விளைவைச் சேர்க்கிறது.',
+  'How the picture fills the window.': 'படம் சாளரத்தை எவ்வாறு நிரப்புகிறது என்பது.',
+  'An empty pane shows the picture rather than paper.':
+    'வெற்றுப் பலகம் காகிதத்திற்குப் பதிலாகப் படத்தைக் காட்டுகிறது.',
+  'The name the others see on what you share and in chats.':
+    'நீங்கள் பகிர்வதிலும் அரட்டைகளிலும் மற்றவர்கள் காணும் பெயர்.',
+  'How far back Go back takes this space; it says first what would change.':
+    'பின் செல் இந்த இடத்தை எவ்வளவு பின்னோக்கிக் கொண்டு செல்லும் என்பது; என்ன மாறும் என்பதை முதலில் சொல்லும்.',
+  'The picture the others see beside your name.':
+    'உங்கள் பெயருக்கு அருகில் மற்றவர்கள் காணும் படம்.',
+  'Shown to the others beside your name, such as she/her.':
+    'உங்கள் பெயருக்கு அருகில் மற்றவர்களுக்குக் காட்டப்படும், எடுத்துக்காட்டாக அவள்/அவளுடைய.',
+  'A few words about you that the others see on your profile.':
+    'உங்கள் சுயவிவரத்தில் மற்றவர்கள் காணும், உங்களைப் பற்றிய சில வார்த்தைகள்.',
+  'What you are up to, shown to the others beside your name until it clears.':
+    'நீங்கள் இப்போது என்ன செய்கிறீர்கள் என்பது; அது நீங்கும் வரை உங்கள் பெயருக்கு அருகில் மற்றவர்களுக்குக் காட்டப்படும்.',
 }

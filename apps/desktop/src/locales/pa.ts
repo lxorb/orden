@@ -2418,4 +2418,198 @@ export const pa: Dictionary = {
   Large: 'ਵੱਡਾ',
   Both: 'ਦੋਵੇਂ',
   'Shown on cards': 'ਕਾਰਡਾਂ ਉੱਤੇ ਦਿਖਾਇਆ',
+  // What each setting does, behind the ? beside it (#768)
+  'Syncs this browser’s AI keys with your other devices through the vault.':
+    'ਇਸ ਬ੍ਰਾਊਜ਼ਰ ਦੀਆਂ AI ਕੁੰਜੀਆਂ ਨੂੰ ਵਾਲਟ ਰਾਹੀਂ ਤੁਹਾਡੇ ਹੋਰ ਡਿਵਾਈਸਾਂ ਨਾਲ ਸਮਕਾਲ ਕਰਦਾ ਹੈ।',
+  'Which of your AI accounts this feature asks.': 'ਇਹ ਸਹੂਲਤ ਤੁਹਾਡੇ ਕਿਹੜੇ AI ਖਾਤੇ ਤੋਂ ਪੁੱਛਦੀ ਹੈ।',
+  'Whether a task done with AI asks before each change or makes them on its own.':
+    'AI ਨਾਲ ਕੀਤਾ ਕੰਮ ਹਰ ਬਦਲਾਅ ਤੋਂ ਪਹਿਲਾਂ ਪੁੱਛਦਾ ਹੈ ਜਾਂ ਆਪੇ ਬਦਲਾਅ ਕਰਦਾ ਹੈ।',
+  'Makes Orden the browser that links from other programs open in.':
+    'Orden ਨੂੰ ਉਹ ਬ੍ਰਾਊਜ਼ਰ ਬਣਾਉਂਦਾ ਹੈ ਜਿਸ ਵਿੱਚ ਹੋਰ ਪ੍ਰੋਗਰਾਮਾਂ ਦੇ ਲਿੰਕ ਖੁੱਲ੍ਹਦੇ ਹਨ।',
+  'Where words typed into a web tab’s address bar are searched.':
+    'ਵੈੱਬ ਟੈਬ ਦੀ ਪਤਾ ਪੱਟੀ ਵਿੱਚ ਲਿਖੇ ਸ਼ਬਦ ਕਿੱਥੇ ਖੋਜੇ ਜਾਂਦੇ ਹਨ।',
+  'The search address, with %s where the words go.': 'ਖੋਜ ਦਾ ਪਤਾ, ਜਿਸ ਵਿੱਚ ਸ਼ਬਦਾਂ ਦੀ ਥਾਂ %s ਹੈ।',
+  'Words the spelling check never marks as wrong.':
+    'ਉਹ ਸ਼ਬਦ ਜਿਨ੍ਹਾਂ ਨੂੰ ਸ਼ਬਦ-ਜੋੜ ਜਾਂਚ ਕਦੇ ਗਲਤ ਨਹੀਂ ਦੱਸਦੀ।',
+  'Which app’s keys Orden follows; any key below can still be changed.':
+    'Orden ਕਿਸ ਐਪ ਦੀਆਂ ਕੁੰਜੀਆਂ ਮੰਨਦਾ ਹੈ, ਹੇਠਾਂ ਦੀ ਕੋਈ ਵੀ ਕੁੰਜੀ ਫਿਰ ਵੀ ਬਦਲੀ ਜਾ ਸਕਦੀ ਹੈ।',
+  'Moves and edits in notes with Vim’s keys.':
+    'Vim ਦੀਆਂ ਕੁੰਜੀਆਂ ਨਾਲ ਨੋਟਾਂ ਵਿੱਚ ਚੱਲਦਾ ਅਤੇ ਸੋਧਦਾ ਹੈ।',
+  'What pulling a note down past its top does on a phone.':
+    'ਫ਼ੋਨ ਉੱਤੇ ਨੋਟ ਨੂੰ ਉਸਦੇ ਸਿਖਰ ਤੋਂ ਪਰੇ ਹੇਠਾਂ ਖਿੱਚਣ ਨਾਲ ਕੀ ਹੁੰਦਾ ਹੈ।',
+  'The OpenAI key the glasses ask their questions with.':
+    'ਉਹ OpenAI ਕੁੰਜੀ ਜਿਸ ਨਾਲ ਐਨਕਾਂ ਆਪਣੇ ਸਵਾਲ ਪੁੱਛਦੀਆਂ ਹਨ।',
+  'The model that answers what you ask on the glasses.':
+    'ਉਹ ਮਾਡਲ ਜੋ ਐਨਕਾਂ ਉੱਤੇ ਤੁਹਾਡੇ ਸਵਾਲਾਂ ਦਾ ਜਵਾਬ ਦਿੰਦਾ ਹੈ।',
+  'How long the model thinks before it answers; longer is slower.':
+    'ਮਾਡਲ ਜਵਾਬ ਦੇਣ ਤੋਂ ਪਹਿਲਾਂ ਕਿੰਨੀ ਦੇਰ ਸੋਚਦਾ ਹੈ, ਜਿੰਨਾ ਲੰਮਾ ਓਨਾ ਹੌਲੀ।',
+  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
+    'File Explorer ਵਿੱਚ ਸੱਜਾ-ਕਲਿੱਕ ਕਰਨ ਨਾਲ ਮਿਲਣ ਵਾਲੇ ਨਵਾਂ ਮੀਨੂ ਵਿੱਚ ਇੱਕ Markdown ਦਸਤਾਵੇਜ਼ ਜੋੜਦਾ ਹੈ।',
+  'What happens when one note was changed on two devices before they synced.':
+    'ਜਦੋਂ ਇੱਕ ਨੋਟ ਦੋ ਡਿਵਾਈਸਾਂ ਉੱਤੇ ਸਮਕਾਲ ਹੋਣ ਤੋਂ ਪਹਿਲਾਂ ਬਦਲਿਆ ਗਿਆ ਹੋਵੇ ਤਾਂ ਕੀ ਹੁੰਦਾ ਹੈ।',
+  'How far back the account keeps earlier versions of your notes.':
+    'ਖਾਤਾ ਤੁਹਾਡੀਆਂ ਨੋਟਾਂ ਦੇ ਪਿਛਲੇ ਵਰਜਨ ਕਿੰਨੇ ਪਿੱਛੇ ਤੱਕ ਰੱਖਦਾ ਹੈ।',
+  'The colour of buttons, links and the selection.': 'ਬਟਨਾਂ, ਲਿੰਕਾਂ ਅਤੇ ਚੋਣ ਦਾ ਰੰਗ।',
+  'Adds Orden to the AI agent programs on this computer, so they reach your notes with nothing to set up.':
+    'ਇਸ ਕੰਪਿਊਟਰ ਦੇ AI ਏਜੰਟ ਪ੍ਰੋਗਰਾਮਾਂ ਵਿੱਚ Orden ਜੋੜਦਾ ਹੈ, ਤਾਂ ਜੋ ਉਹ ਬਿਨਾਂ ਕਿਸੇ ਸੈੱਟਅੱਪ ਦੇ ਤੁਹਾਡੀਆਂ ਨੋਟਾਂ ਤੱਕ ਪਹੁੰਚਣ।',
+  'Words that notify you whenever someone writes them in a chat, separated by commas.':
+    'ਕੌਮਿਆਂ ਨਾਲ ਵੱਖ ਕੀਤੇ ਸ਼ਬਦ, ਜਿਨ੍ਹਾਂ ਨੂੰ ਕੋਈ ਚੈਟ ਵਿੱਚ ਲਿਖੇ ਤਾਂ ਤੁਹਾਨੂੰ ਸੂਚਨਾ ਮਿਲਦੀ ਹੈ।',
+  'When chats may notify you; outside these hours they stay quiet.':
+    'ਚੈਟਾਂ ਤੁਹਾਨੂੰ ਕਦੋਂ ਸੂਚਨਾ ਦੇ ਸਕਦੀਆਂ ਹਨ, ਇਨ੍ਹਾਂ ਘੰਟਿਆਂ ਤੋਂ ਬਾਹਰ ਉਹ ਚੁੱਪ ਰਹਿੰਦੀਆਂ ਹਨ।',
+  'When the hours chats may notify you begin.':
+    'ਚੈਟਾਂ ਵੱਲੋਂ ਸੂਚਨਾ ਦੇਣ ਦੇ ਘੰਟੇ ਕਦੋਂ ਸ਼ੁਰੂ ਹੁੰਦੇ ਹਨ।',
+  'When the hours chats may notify you end.': 'ਚੈਟਾਂ ਵੱਲੋਂ ਸੂਚਨਾ ਦੇਣ ਦੇ ਘੰਟੇ ਕਦੋਂ ਖ਼ਤਮ ਹੁੰਦੇ ਹਨ।',
+  'Notifications show the message itself; off shows only who wrote.':
+    'ਸੂਚਨਾਵਾਂ ਸੁਨੇਹਾ ਆਪ ਦਿਖਾਉਂਦੀਆਂ ਹਨ, ਬੰਦ ਹੋਣ ਉੱਤੇ ਸਿਰਫ਼ ਲਿਖਣ ਵਾਲਾ ਦਿਖਦਾ ਹੈ।',
+  'Notifications make a sound.': 'ਸੂਚਨਾਵਾਂ ਆਵਾਜ਼ ਕਰਦੀਆਂ ਹਨ।',
+  'Which headings start a new page on the glasses.':
+    'ਐਨਕਾਂ ਉੱਤੇ ਕਿਹੜੇ ਸਿਰਲੇਖ ਨਵਾਂ ਸਫ਼ਾ ਸ਼ੁਰੂ ਕਰਦੇ ਹਨ।',
+  'Shows line numbers on the glasses.': 'ਐਨਕਾਂ ਉੱਤੇ ਲਾਈਨ ਨੰਬਰ ਦਿਖਾਉਂਦਾ ਹੈ।',
+  'How many blank lines the glasses keep between blocks.':
+    'ਐਨਕਾਂ ਬਲਾਕਾਂ ਵਿਚਕਾਰ ਕਿੰਨੀਆਂ ਖਾਲੀ ਲਾਈਨਾਂ ਰੱਖਦੀਆਂ ਹਨ।',
+  'Shows this markdown mark on the glasses rather than hiding it.':
+    'ਇਹ markdown ਨਿਸ਼ਾਨ ਲੁਕਾਉਣ ਦੀ ਬਜਾਏ ਐਨਕਾਂ ਉੱਤੇ ਦਿਖਾਉਂਦਾ ਹੈ।',
+  'Lets you run commands on the glasses by speaking.': 'ਬੋਲ ਕੇ ਐਨਕਾਂ ਉੱਤੇ ਕਮਾਂਡਾਂ ਚਲਾਉਣ ਦਿੰਦਾ ਹੈ।',
+  'What you say to run this command; left empty, the phrase shown is used.':
+    'ਇਹ ਕਮਾਂਡ ਚਲਾਉਣ ਲਈ ਕੀ ਬੋਲਣਾ ਹੈ, ਖਾਲੀ ਹੋਵੇ ਤਾਂ ਦਿਖਾਇਆ ਵਾਕ ਵਰਤਿਆ ਜਾਂਦਾ ਹੈ।',
+  'What Windows draws behind the window: Mica, Acrylic, or no blur.':
+    'Windows ਵਿੰਡੋ ਦੇ ਪਿੱਛੇ ਕੀ ਬਣਾਉਂਦਾ ਹੈ: Mica, Acrylic, ਜਾਂ ਕੋਈ ਧੁੰਦਲਾਪਣ ਨਹੀਂ।',
+  'How much of the window’s own colour lies over what is behind it.':
+    'ਵਿੰਡੋ ਦਾ ਆਪਣਾ ਰੰਗ ਉਸਦੇ ਪਿੱਛੇ ਵਾਲੀ ਚੀਜ਼ ਉੱਤੇ ਕਿੰਨਾ ਪੈਂਦਾ ਹੈ।',
+  'The frame takes its colour from what is open.': 'ਚੌਖਟਾ ਖੁੱਲ੍ਹੀ ਚੀਜ਼ ਤੋਂ ਆਪਣਾ ਰੰਗ ਲੈਂਦਾ ਹੈ।',
+  'How strongly the frame is coloured.': 'ਚੌਖਟਾ ਕਿੰਨਾ ਗੂੜ੍ਹਾ ਰੰਗਿਆ ਜਾਂਦਾ ਹੈ।',
+  'The colours the frame takes where nothing open has a colour of its own.':
+    'ਜਦੋਂ ਕਿਸੇ ਖੁੱਲ੍ਹੀ ਚੀਜ਼ ਦਾ ਆਪਣਾ ਰੰਗ ਨਾ ਹੋਵੇ ਤਾਂ ਚੌਖਟਾ ਜੋ ਰੰਗ ਲੈਂਦਾ ਹੈ।',
+  'A web tab takes the colour of its page.': 'ਵੈੱਬ ਟੈਬ ਆਪਣੇ ਪੰਨੇ ਦਾ ਰੰਗ ਲੈਂਦੀ ਹੈ।',
+  'When your status is taken away again.': 'ਤੁਹਾਡੀ ਸਥਿਤੀ ਕਦੋਂ ਆਪੇ ਹਟ ਜਾਂਦੀ ਹੈ।',
+  'Silences chat notifications and shows the others you are busy.':
+    'ਚੈਟ ਸੂਚਨਾਵਾਂ ਚੁੱਪ ਕਰਦਾ ਹੈ ਅਤੇ ਦੂਜਿਆਂ ਨੂੰ ਦਿਖਾਉਂਦਾ ਹੈ ਕਿ ਤੁਸੀਂ ਰੁੱਝੇ ਹੋ।',
+  'The colour the others see beside your name.': 'ਦੂਜਿਆਂ ਨੂੰ ਤੁਹਾਡੇ ਨਾਮ ਦੇ ਕੋਲ ਦਿਖਣ ਵਾਲਾ ਰੰਗ।',
+  'The others see you as offline even while you are here.':
+    'ਤੁਸੀਂ ਇੱਥੇ ਹੋਵੋ ਤਾਂ ਵੀ ਦੂਜੇ ਤੁਹਾਨੂੰ ਔਫਲਾਈਨ ਦੇਖਦੇ ਹਨ।',
+  'The picture behind the window, one for light and one for dark; drag it to move its centre.':
+    'ਵਿੰਡੋ ਦੇ ਪਿੱਛੇ ਦੀ ਤਸਵੀਰ, ਇੱਕ ਚਾਨਣ ਲਈ ਅਤੇ ਇੱਕ ਗੂੜ੍ਹੇ ਲਈ, ਉਸਦਾ ਕੇਂਦਰ ਹਿਲਾਉਣ ਲਈ ਖਿੱਚੋ।',
+  'The theme Orden is drawn in.': 'ਉਹ ਥੀਮ ਜਿਸ ਵਿੱਚ Orden ਬਣਾਇਆ ਜਾਂਦਾ ਹੈ।',
+  'Light, dark, or whichever the system is in.': 'ਚਾਨਣ, ਗੂੜ੍ਹਾ, ਜਾਂ ਜੋ ਵੀ ਸਿਸਟਮ ਵਿੱਚ ਹੋਵੇ।',
+  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
+    'ਫ਼ਾਈਲ ਸੂਚੀ ਦੇ ਉੱਪਰ ਦੀਆਂ ਨਿਸ਼ਾਨੀਆਂ ਟਾਈਲਾਂ ਵਜੋਂ ਦਿਖਦੀਆਂ ਹਨ ਜਾਂ ਸੂਚੀ ਵਜੋਂ।',
+  'Shows a pointing hand over buttons, as web pages do.':
+    'ਵੈੱਬ ਪੰਨਿਆਂ ਵਾਂਗ ਬਟਨਾਂ ਉੱਤੇ ਇਸ਼ਾਰਾ ਕਰਦਾ ਹੱਥ ਦਿਖਾਉਂਦਾ ਹੈ।',
+  'Orden’s own title bar, or the window frame of your system.':
+    'Orden ਦੀ ਆਪਣੀ ਸਿਰਲੇਖ ਪੱਟੀ, ਜਾਂ ਤੁਹਾਡੇ ਸਿਸਟਮ ਦਾ ਵਿੰਡੋ ਚੌਖਟਾ।',
+  'How large the text of notes is.': 'ਨੋਟਾਂ ਦਾ ਲਿਖਤ ਕਿੰਨਾ ਵੱਡਾ ਹੈ।',
+  'The space between the lines of a note.': 'ਨੋਟ ਦੀਆਂ ਲਾਈਨਾਂ ਵਿਚਕਾਰ ਦੀ ਥਾਂ।',
+  'How wide a line of a note grows before it wraps.':
+    'ਨੋਟ ਦੀ ਲਾਈਨ ਮੁੜਨ ਤੋਂ ਪਹਿਲਾਂ ਕਿੰਨੀ ਚੌੜੀ ਹੁੰਦੀ ਹੈ।',
+  'Typing an opening bracket or quote adds the closing one too.':
+    'ਖੁੱਲ੍ਹਣ ਵਾਲੀ ਬਰੈਕਟ ਜਾਂ ਕੋਟ ਲਿਖਣ ਨਾਲ ਬੰਦ ਕਰਨ ਵਾਲੀ ਵੀ ਜੁੜ ਜਾਂਦੀ ਹੈ।',
+  'Keeps the line you are writing in the middle of the screen.':
+    'ਜਿਹੜੀ ਲਾਈਨ ਤੁਸੀਂ ਲਿਖ ਰਹੇ ਹੋ ਉਸਨੂੰ ਸਕ੍ਰੀਨ ਦੇ ਵਿਚਕਾਰ ਰੱਖਦਾ ਹੈ।',
+  'Dims everything but the paragraph you are writing in.':
+    'ਜਿਸ ਪੈਰੇ ਵਿੱਚ ਤੁਸੀਂ ਲਿਖ ਰਹੇ ਹੋ ਉਸ ਤੋਂ ਬਿਨਾਂ ਸਭ ਕੁਝ ਮੱਧਮ ਕਰਦਾ ਹੈ।',
+  'Joins pairs such as -> or != into one sign, in code only or everywhere.':
+    '-> ਜਾਂ != ਵਰਗੇ ਜੋੜਿਆਂ ਨੂੰ ਇੱਕ ਚਿੰਨ੍ਹ ਵਿੱਚ ਜੋੜਦਾ ਹੈ, ਸਿਰਫ਼ ਕੋਡ ਵਿੱਚ ਜਾਂ ਹਰ ਥਾਂ।',
+  'Where a picture or file you paste or drop into a note is saved.':
+    'ਨੋਟ ਵਿੱਚ ਚਿਪਕਾਈ ਜਾਂ ਸੁੱਟੀ ਤਸਵੀਰ ਜਾਂ ਫ਼ਾਈਲ ਕਿੱਥੇ ਸੰਭਾਲੀ ਜਾਂਦੀ ਹੈ।',
+  'Turning two fingers on a touchpad or screen rotates the canvas.':
+    'ਟੱਚਪੈਡ ਜਾਂ ਸਕ੍ਰੀਨ ਉੱਤੇ ਦੋ ਉਂਗਲਾਂ ਘੁਮਾਉਣ ਨਾਲ ਕੈਨਵਸ ਘੁੰਮਦਾ ਹੈ।',
+  'A rotation that ends near a right angle settles on it.':
+    'ਸਮਕੋਣ ਦੇ ਨੇੜੇ ਮੁੱਕਣ ਵਾਲਾ ਘੁਮਾਅ ਉਸੇ ਉੱਤੇ ਟਿਕ ਜਾਂਦਾ ਹੈ।',
+  'The paper size a new page note starts with.':
+    'ਨਵੀਂ ਸਫ਼ਿਆਂ ਵਾਲੀ ਨੋਟ ਜਿਸ ਕਾਗਜ਼ ਦੇ ਆਕਾਰ ਨਾਲ ਸ਼ੁਰੂ ਹੁੰਦੀ ਹੈ।',
+  'How the name of a new unique note is made from the date and time.':
+    'ਨਵੀਂ ਵਿਲੱਖਣ ਨੋਟ ਦਾ ਨਾਮ ਤਾਰੀਖ ਅਤੇ ਸਮੇਂ ਤੋਂ ਕਿਵੇਂ ਬਣਦਾ ਹੈ।',
+  'The colours code in a note is highlighted in.':
+    'ਨੋਟ ਵਿਚਲਾ ਕੋਡ ਜਿਨ੍ਹਾਂ ਰੰਗਾਂ ਵਿੱਚ ਉਭਾਰਿਆ ਜਾਂਦਾ ਹੈ।',
+  'Numbers the lines of code blocks.': 'ਕੋਡ ਬਲਾਕਾਂ ਦੀਆਂ ਲਾਈਨਾਂ ਨੂੰ ਨੰਬਰ ਦਿੰਦਾ ਹੈ।',
+  'The paper size of a PDF or a print.': 'PDF ਜਾਂ ਪ੍ਰਿੰਟ ਦੇ ਕਾਗਜ਼ ਦਾ ਆਕਾਰ।',
+  'Whether pages are upright or on their side.': 'ਸਫ਼ੇ ਸਿੱਧੇ ਖੜ੍ਹੇ ਹਨ ਜਾਂ ਪਾਸੇ ਲੇਟੇ।',
+  'The space around the edge of each page, such as 20mm or 1in.':
+    'ਹਰ ਸਫ਼ੇ ਦੇ ਕਿਨਾਰੇ ਦੁਆਲੇ ਦੀ ਥਾਂ, ਜਿਵੇਂ 20mm ਜਾਂ 1in।',
+  'Text at the top of every page; ${title}, ${date} and ${year} are filled in.':
+    'ਹਰ ਸਫ਼ੇ ਦੇ ਉੱਪਰ ਦਾ ਲਿਖਤ, ਜਿਸ ਵਿੱਚ ${title}, ${date} ਅਤੇ ${year} ਭਰੇ ਜਾਂਦੇ ਹਨ।',
+  'Text at the bottom of every page; ${title}, ${date} and ${year} are filled in.':
+    'ਹਰ ਸਫ਼ੇ ਦੇ ਹੇਠਾਂ ਦਾ ਲਿਖਤ, ਜਿਸ ਵਿੱਚ ${title}, ${date} ਅਤੇ ${year} ਭਰੇ ਜਾਂਦੇ ਹਨ।',
+  'Whether an export is light, dark, or as the app is now.':
+    'ਨਿਰਯਾਤ ਚਾਨਣ ਹੋਵੇ, ਗੂੜ੍ਹਾ ਹੋਵੇ, ਜਾਂ ਜਿਵੇਂ ਹੁਣ ਐਪ ਹੈ।',
+  'Whether this key goes to Orden or to the program in the terminal, or asks each time.':
+    'ਇਹ ਕੁੰਜੀ Orden ਨੂੰ ਜਾਂਦੀ ਹੈ ਜਾਂ ਟਰਮੀਨਲ ਵਿਚਲੇ ਪ੍ਰੋਗਰਾਮ ਨੂੰ, ਜਾਂ ਹਰ ਵਾਰ ਪੁੱਛਦੀ ਹੈ।',
+  'The shell a new terminal starts.': 'ਨਵਾਂ ਟਰਮੀਨਲ ਜੋ ਸ਼ੈੱਲ ਸ਼ੁਰੂ ਕਰਦਾ ਹੈ।',
+  'How large the text in terminals is.': 'ਟਰਮੀਨਲਾਂ ਵਿੱਚ ਲਿਖਤ ਕਿੰਨਾ ਵੱਡਾ ਹੈ।',
+  'Brings back what each terminal showed after Orden restarts; off forgets it on quit.':
+    'Orden ਮੁੜ ਸ਼ੁਰੂ ਹੋਣ ਤੋਂ ਬਾਅਦ ਹਰ ਟਰਮੀਨਲ ਦਾ ਦਿਖਾਇਆ ਵਾਪਸ ਲਿਆਉਂਦਾ ਹੈ, ਬੰਦ ਹੋਵੇ ਤਾਂ Orden ਛੱਡਣ ਵੇਲੇ ਇਸਨੂੰ ਭੁੱਲ ਜਾਂਦਾ ਹੈ।',
+  'Asks before Orden quits with terminals open: always, or only while something runs in one.':
+    'ਟਰਮੀਨਲ ਖੁੱਲ੍ਹੇ ਹੋਣ ਉੱਤੇ Orden ਬੰਦ ਹੋਣ ਤੋਂ ਪਹਿਲਾਂ ਪੁੱਛਦਾ ਹੈ: ਹਮੇਸ਼ਾ, ਜਾਂ ਸਿਰਫ਼ ਜਦੋਂ ਕਿਸੇ ਵਿੱਚ ਕੁਝ ਚੱਲ ਰਿਹਾ ਹੋਵੇ।',
+  'Draws the app on the graphics card; turn it off if the window flickers or stays blank.':
+    'ਐਪ ਨੂੰ ਗ੍ਰਾਫ਼ਿਕਸ ਕਾਰਡ ਉੱਤੇ ਬਣਾਉਂਦਾ ਹੈ, ਜੇ ਵਿੰਡੋ ਝਪਕੇ ਜਾਂ ਖਾਲੀ ਰਹੇ ਤਾਂ ਇਸਨੂੰ ਬੰਦ ਕਰੋ।',
+  'How long before a task’s time it reminds you, unless the task says otherwise.':
+    'ਕੰਮ ਦੇ ਸਮੇਂ ਤੋਂ ਕਿੰਨਾ ਪਹਿਲਾਂ ਇਹ ਯਾਦ ਕਰਵਾਉਂਦਾ ਹੈ, ਜਦੋਂ ਤੱਕ ਕੰਮ ਕੁਝ ਹੋਰ ਨਾ ਕਹੇ।',
+  'Keeps Orden running in the tray after its window closes, so reminders still ring.':
+    'ਵਿੰਡੋ ਬੰਦ ਹੋਣ ਤੋਂ ਬਾਅਦ Orden ਨੂੰ ਟ੍ਰੇ ਵਿੱਚ ਚੱਲਦਾ ਰੱਖਦਾ ਹੈ, ਤਾਂ ਜੋ ਰੀਮਾਈਂਡਰ ਫਿਰ ਵੀ ਵੱਜਣ।',
+  'Lets reminders ring at the exact minute rather than when the phone gets round to it.':
+    'ਰੀਮਾਈਂਡਰਾਂ ਨੂੰ ਫ਼ੋਨ ਦੀ ਮਰਜ਼ੀ ਦੀ ਬਜਾਏ ਠੀਕ ਮਿੰਟ ਉੱਤੇ ਵੱਜਣ ਦਿੰਦਾ ਹੈ।',
+  'How often a note you are editing is saved as a version you can go back to in History.':
+    'ਤੁਹਾਡੀ ਸੋਧੀ ਜਾ ਰਹੀ ਨੋਟ ਕਿੰਨੀ ਵਾਰ ਅਜਿਹੇ ਵਰਜਨ ਵਜੋਂ ਸੰਭਾਲੀ ਜਾਂਦੀ ਹੈ ਜਿਸ ਉੱਤੇ ਤੁਸੀਂ ਇਤਿਹਾਸ ਵਿੱਚ ਵਾਪਸ ਜਾ ਸਕੋ।',
+  'How long those versions are kept before they are deleted.':
+    'ਉਹ ਵਰਜਨ ਮਿਟਾਏ ਜਾਣ ਤੋਂ ਪਹਿਲਾਂ ਕਿੰਨੀ ਦੇਰ ਰੱਖੇ ਜਾਂਦੇ ਹਨ।',
+  'Ctrl+Tab goes to the tab used last, as in VS Code; off goes through the tabs in the order they sit.':
+    'Ctrl+Tab VS Code ਵਾਂਗ ਪਿਛਲੀ ਵਰਤੀ ਟੈਬ ਉੱਤੇ ਜਾਂਦਾ ਹੈ, ਬੰਦ ਹੋਣ ਉੱਤੇ ਟੈਬਾਂ ਵਿੱਚੋਂ ਉਨ੍ਹਾਂ ਦੇ ਕ੍ਰਮ ਵਿੱਚ ਲੰਘਦਾ ਹੈ।',
+  'Two fingers sideways on the touchpad go back and forward.':
+    'ਟੱਚਪੈਡ ਉੱਤੇ ਦੋ ਉਂਗਲਾਂ ਪਾਸੇ ਵੱਲ ਪਿੱਛੇ ਅਤੇ ਅੱਗੇ ਜਾਂਦੀਆਂ ਹਨ।',
+  'What the web pages of another space do while it is out of sight: keep running, pause, or ask the first time.':
+    'ਕਿਸੇ ਹੋਰ ਥਾਂ ਦੇ ਵੈੱਬ ਪੰਨੇ ਨਜ਼ਰ ਤੋਂ ਬਾਹਰ ਹੋਣ ਉੱਤੇ ਕੀ ਕਰਦੇ ਹਨ: ਚੱਲਦੇ ਰਹਿੰਦੇ ਹਨ, ਰੁਕਦੇ ਹਨ, ਜਾਂ ਪਹਿਲੀ ਵਾਰ ਪੁੱਛਦੇ ਹਨ।',
+  'Unloads web pages that have been out of sight for a while to free memory; they load again when you return.':
+    'ਕੁਝ ਦੇਰ ਤੋਂ ਨਜ਼ਰ ਤੋਂ ਬਾਹਰ ਵੈੱਬ ਪੰਨਿਆਂ ਨੂੰ ਮੈਮਰੀ ਖਾਲੀ ਕਰਨ ਲਈ ਉਤਾਰਦਾ ਹੈ, ਤੁਹਾਡੇ ਵਾਪਸ ਆਉਣ ਉੱਤੇ ਉਹ ਫਿਰ ਲੋਡ ਹੁੰਦੇ ਹਨ।',
+  'Reads dates, times and fields out of what you type into Add task, such as “tomorrow 9am”.':
+    'ਕੰਮ ਜੋੜੋ ਵਿੱਚ ਲਿਖੀ ਗੱਲ ਵਿੱਚੋਂ ਤਾਰੀਖਾਂ, ਸਮੇਂ ਅਤੇ ਖੇਤਰ ਪੜ੍ਹਦਾ ਹੈ, ਜਿਵੇਂ “tomorrow 9am”।',
+  'The folder of this space whose folders the Tasks panel lists as projects.':
+    'ਇਸ ਥਾਂ ਦਾ ਉਹ ਫ਼ੋਲਡਰ ਜਿਸਦੇ ਫ਼ੋਲਡਰਾਂ ਨੂੰ ਕੰਮ ਪੈਨਲ ਪ੍ਰੋਜੈਕਟਾਂ ਵਜੋਂ ਦਿਖਾਉਂਦਾ ਹੈ।',
+  'Today also lists the tasks that have no start date; off shows only those dated today or earlier.':
+    'ਅੱਜ ਵਿੱਚ ਬਿਨਾਂ ਸ਼ੁਰੂਆਤੀ ਤਾਰੀਖ ਵਾਲੇ ਕੰਮ ਵੀ ਆਉਂਦੇ ਹਨ, ਬੰਦ ਹੋਣ ਉੱਤੇ ਸਿਰਫ਼ ਅੱਜ ਜਾਂ ਪਹਿਲਾਂ ਦੀ ਤਾਰੀਖ ਵਾਲੇ ਦਿਖਦੇ ਹਨ।',
+  'The Add task shortcut works even while another app is in front.':
+    'ਕੰਮ ਜੋੜੋ ਦਾ ਸ਼ਾਰਟਕੱਟ ਉਦੋਂ ਵੀ ਚੱਲਦਾ ਹੈ ਜਦੋਂ ਕੋਈ ਹੋਰ ਐਪ ਸਾਹਮਣੇ ਹੋਵੇ।',
+  'Shows terminals and the other tools for writing code.':
+    'ਟਰਮੀਨਲ ਅਤੇ ਕੋਡ ਲਿਖਣ ਦੇ ਹੋਰ ਸੰਦ ਦਿਖਾਉਂਦਾ ਹੈ।',
+  'Hides the tips Orden shows while you get to know it.':
+    'Orden ਨੂੰ ਜਾਣਦੇ ਸਮੇਂ ਦਿਖਣ ਵਾਲੇ ਸੁਝਾਅ ਲੁਕਾਉਂਦਾ ਹੈ।',
+  'The language Orden’s menus and settings are in.':
+    'ਉਹ ਭਾਸ਼ਾ ਜਿਸ ਵਿੱਚ Orden ਦੇ ਮੀਨੂ ਅਤੇ ਸੈਟਿੰਗਾਂ ਹਨ।',
+  'Offers this type when you make something new; off only takes it out of that list.':
+    'ਕੁਝ ਨਵਾਂ ਬਣਾਉਣ ਵੇਲੇ ਇਹ ਕਿਸਮ ਪੇਸ਼ ਕਰਦਾ ਹੈ, ਬੰਦ ਹੋਣ ਉੱਤੇ ਇਹ ਸਿਰਫ਼ ਉਸ ਸੂਚੀ ਵਿੱਚੋਂ ਹਟਦੀ ਹੈ।',
+  'Shows a mark such as ** or # while the cursor is in it; off keeps every mark out of sight.':
+    'ਕਰਸਰ ਅੰਦਰ ਹੋਵੇ ਤਾਂ ** ਜਾਂ # ਵਰਗਾ ਨਿਸ਼ਾਨ ਦਿਖਾਉਂਦਾ ਹੈ, ਬੰਦ ਹੋਣ ਉੱਤੇ ਹਰ ਨਿਸ਼ਾਨ ਲੁਕਿਆ ਰਹਿੰਦਾ ਹੈ।',
+  'Notes open as plain markdown text rather than formatted.':
+    'ਨੋਟਾਂ ਸਜੀਆਂ ਹੋਣ ਦੀ ਬਜਾਏ ਸਾਦੇ markdown ਲਿਖਤ ਵਜੋਂ ਖੁੱਲ੍ਹਦੀਆਂ ਹਨ।',
+  'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
+    'ਅਰਬੀ, ਹਿਬਰੂ ਅਤੇ ਹੋਰ ਅਜਿਹੀਆਂ ਲਿਪੀਆਂ ਲਈ ਨੋਟਾਂ ਸੱਜੇ ਤੋਂ ਖੱਬੇ ਲਿਖਦਾ ਹੈ।',
+  'Underlines misspelled words as you write.':
+    'ਲਿਖਦੇ ਸਮੇਂ ਗਲਤ ਸ਼ਬਦ-ਜੋੜ ਵਾਲੇ ਸ਼ਬਦਾਂ ਹੇਠ ਲਕੀਰ ਲਾਉਂਦਾ ਹੈ।',
+  'The dictionary spelling is checked against; Match the system uses your system’s language.':
+    'ਉਹ ਸ਼ਬਦਕੋਸ਼ ਜਿਸ ਨਾਲ ਸ਼ਬਦ-ਜੋੜ ਜਾਂਚੇ ਜਾਂਦੇ ਹਨ, ਸਿਸਟਮ ਮੁਤਾਬਕ ਤੁਹਾਡੇ ਸਿਸਟਮ ਦੀ ਭਾਸ਼ਾ ਵਰਤਦਾ ਹੈ।',
+  'The version of Orden that is running; press to copy it.':
+    'ਚੱਲ ਰਿਹਾ Orden ਦਾ ਵਰਜਨ, ਕਾਪੀ ਕਰਨ ਲਈ ਦਬਾਓ।',
+  'One of this theme’s own settings, offered by its author.':
+    'ਇਸ ਥੀਮ ਦੀ ਆਪਣੀ ਇੱਕ ਸੈਟਿੰਗ, ਇਸਦੇ ਲੇਖਕ ਵੱਲੋਂ ਦਿੱਤੀ ਗਈ।',
+  'How much of what is behind the window shows under notes and terminals; the words always stay readable.':
+    'ਨੋਟਾਂ ਅਤੇ ਟਰਮੀਨਲਾਂ ਹੇਠ ਵਿੰਡੋ ਦੇ ਪਿੱਛੇ ਦਾ ਕਿੰਨਾ ਦਿਖਦਾ ਹੈ, ਸ਼ਬਦ ਹਮੇਸ਼ਾ ਪੜ੍ਹਨਯੋਗ ਰਹਿੰਦੇ ਹਨ।',
+  'The colour laid over the picture.': 'ਤਸਵੀਰ ਉੱਤੇ ਪਾਇਆ ਰੰਗ।',
+  'How much the picture is blurred.': 'ਤਸਵੀਰ ਕਿੰਨੀ ਧੁੰਦਲੀ ਕੀਤੀ ਜਾਂਦੀ ਹੈ।',
+  'How much the picture is darkened.': 'ਤਸਵੀਰ ਕਿੰਨੀ ਗੂੜ੍ਹੀ ਕੀਤੀ ਜਾਂਦੀ ਹੈ।',
+  'How vivid the colours of the picture are.': 'ਤਸਵੀਰ ਦੇ ਰੰਗ ਕਿੰਨੇ ਚਟਕੀਲੇ ਹਨ।',
+  'How strongly the tint colour lies over the picture.':
+    'ਭਾਅ ਦਾ ਰੰਗ ਤਸਵੀਰ ਉੱਤੇ ਕਿੰਨਾ ਗੂੜ੍ਹਾ ਪੈਂਦਾ ਹੈ।',
+  'Adds a film grain over the picture.': 'ਤਸਵੀਰ ਉੱਤੇ ਫ਼ਿਲਮ ਵਰਗਾ ਦਾਣਾ ਪਾਉਂਦਾ ਹੈ।',
+  'How the picture fills the window.': 'ਤਸਵੀਰ ਵਿੰਡੋ ਨੂੰ ਕਿਵੇਂ ਭਰਦੀ ਹੈ।',
+  'An empty pane shows the picture rather than paper.': 'ਖਾਲੀ ਪੈਨ ਕਾਗਜ਼ ਦੀ ਬਜਾਏ ਤਸਵੀਰ ਦਿਖਾਉਂਦਾ ਹੈ।',
+  'The name the others see on what you share and in chats.':
+    'ਉਹ ਨਾਂ ਜੋ ਦੂਜੇ ਤੁਹਾਡੀਆਂ ਸਾਂਝੀਆਂ ਕੀਤੀਆਂ ਚੀਜ਼ਾਂ ਅਤੇ ਚੈਟਾਂ ਵਿੱਚ ਵੇਖਦੇ ਹਨ।',
+  'How far back Go back takes this space; it says first what would change.':
+    'ਪਿੱਛੇ ਜਾਓ ਇਸ ਥਾਂ ਨੂੰ ਕਿੰਨਾ ਪਿੱਛੇ ਲੈ ਜਾਂਦਾ ਹੈ; ਇਹ ਪਹਿਲਾਂ ਦੱਸਦਾ ਹੈ ਕਿ ਕੀ ਬਦਲੇਗਾ।',
+  'The picture the others see beside your name.': 'ਉਹ ਤਸਵੀਰ ਜੋ ਦੂਜੇ ਤੁਹਾਡੇ ਨਾਂ ਦੇ ਕੋਲ ਵੇਖਦੇ ਹਨ।',
+  'Shown to the others beside your name, such as she/her.':
+    'ਦੂਜਿਆਂ ਨੂੰ ਤੁਹਾਡੇ ਨਾਂ ਦੇ ਕੋਲ ਦਿਖਾਏ ਜਾਂਦੇ ਹਨ, ਜਿਵੇਂ ਉਹ/ਉਸਦੀ।',
+  'A few words about you that the others see on your profile.':
+    'ਤੁਹਾਡੇ ਬਾਰੇ ਕੁਝ ਸ਼ਬਦ ਜੋ ਦੂਜੇ ਤੁਹਾਡੀ ਪ੍ਰੋਫਾਈਲ ਉੱਤੇ ਵੇਖਦੇ ਹਨ।',
+  'What you are up to, shown to the others beside your name until it clears.':
+    'ਤੁਸੀਂ ਕੀ ਕਰ ਰਹੇ ਹੋ, ਜੋ ਹਟਣ ਤੱਕ ਦੂਜਿਆਂ ਨੂੰ ਤੁਹਾਡੇ ਨਾਂ ਦੇ ਕੋਲ ਦਿਖਦਾ ਹੈ।',
 }

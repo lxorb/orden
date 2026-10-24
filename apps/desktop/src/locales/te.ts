@@ -2424,4 +2424,198 @@ export const te: Dictionary = {
   Large: 'పెద్దది',
   Both: 'రెండూ',
   'Shown on cards': 'కార్డులపై చూపబడేవి',
+  // What each setting does, behind the ? beside it (#768)
+  'Syncs this browser’s AI keys with your other devices through the vault.':
+    'ఈ బ్రౌజర్ AI కీలను వాల్ట్ ద్వారా మీ ఇతర పరికరాలతో సింక్ చేస్తుంది.',
+  'Which of your AI accounts this feature asks.': 'ఈ ఫీచర్ మీ ఏ AI ఖాతాను అడుగుతుందో అది.',
+  'Whether a task done with AI asks before each change or makes them on its own.':
+    'AI తో చేసే పని ప్రతి మార్పుకు ముందు అడుగుతుందా లేక తనంతట తానే చేస్తుందా అనేది.',
+  'Makes Orden the browser that links from other programs open in.':
+    'ఇతర ప్రోగ్రామ్‌ల నుండి లింక్‌లు తెరుచుకునే బ్రౌజర్‌గా Orden ను చేస్తుంది.',
+  'Where words typed into a web tab’s address bar are searched.':
+    'వెబ్ ట్యాబ్ అడ్రస్ బార్‌లో టైప్ చేసిన పదాలు ఎక్కడ వెతకబడతాయో అది.',
+  'The search address, with %s where the words go.': 'శోధన చిరునామా, పదాలు వచ్చే చోట %s తో.',
+  'Words the spelling check never marks as wrong.':
+    'స్పెల్లింగ్ తనిఖీ ఎప్పుడూ తప్పుగా గుర్తించని పదాలు.',
+  'Which app’s keys Orden follows; any key below can still be changed.':
+    'Orden ఏ యాప్ కీలను అనుసరిస్తుందో అది; కింద ఉన్న ఏ కీనైనా ఇంకా మార్చవచ్చు.',
+  'Moves and edits in notes with Vim’s keys.': 'Vim కీలతో నోట్‌లలో కదులుతుంది, సవరిస్తుంది.',
+  'What pulling a note down past its top does on a phone.':
+    'ఫోన్‌లో నోట్‌ను దాని పైభాగం దాటి కిందకు లాగితే ఏమి జరుగుతుందో అది.',
+  'The OpenAI key the glasses ask their questions with.':
+    'అద్దాలు తమ ప్రశ్నలు అడగడానికి వాడే OpenAI కీ.',
+  'The model that answers what you ask on the glasses.':
+    'అద్దాలపై మీరు అడిగిన దానికి జవాబిచ్చే మోడల్.',
+  'How long the model thinks before it answers; longer is slower.':
+    'మోడల్ జవాబిచ్చే ముందు ఎంతసేపు ఆలోచిస్తుందో అది; ఎక్కువైతే నెమ్మది.',
+  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
+    'File Explorer లో కుడి-క్లిక్ చేస్తే వచ్చే కొత్త మెనూకు Markdown పత్రాన్ని జోడిస్తుంది.',
+  'What happens when one note was changed on two devices before they synced.':
+    'సింక్ అయ్యే ముందు ఒక నోట్ రెండు పరికరాల్లో మారితే ఏమి జరుగుతుందో అది.',
+  'How far back the account keeps earlier versions of your notes.':
+    'మీ నోట్‌ల పాత వెర్షన్‌లను ఖాతా ఎంత కాలం వెనక్కి ఉంచుతుందో అది.',
+  'The colour of buttons, links and the selection.': 'బటన్‌లు, లింక్‌లు, ఎంపిక యొక్క రంగు.',
+  'Adds Orden to the AI agent programs on this computer, so they reach your notes with nothing to set up.':
+    'ఈ కంప్యూటర్‌లోని AI ఏజెంట్ ప్రోగ్రామ్‌లకు Orden ను జోడిస్తుంది, కాబట్టి ఏమీ సెటప్ చేయకుండానే అవి మీ నోట్‌లను చేరుకుంటాయి.',
+  'Words that notify you whenever someone writes them in a chat, separated by commas.':
+    'చాట్‌లో ఎవరైనా రాసినప్పుడల్లా మీకు తెలియజేసే పదాలు, కామాలతో వేరు చేసినవి.',
+  'When chats may notify you; outside these hours they stay quiet.':
+    'చాట్‌లు మీకు ఎప్పుడు తెలియజేయవచ్చో అది; ఈ గంటల బయట అవి నిశ్శబ్దంగా ఉంటాయి.',
+  'When the hours chats may notify you begin.':
+    'చాట్‌లు మీకు తెలియజేయగల గంటలు ఎప్పుడు మొదలవుతాయో అది.',
+  'When the hours chats may notify you end.':
+    'చాట్‌లు మీకు తెలియజేయగల గంటలు ఎప్పుడు ముగుస్తాయో అది.',
+  'Notifications show the message itself; off shows only who wrote.':
+    'నోటిఫికేషన్‌లు సందేశాన్నే చూపిస్తాయి; ఆఫ్ చేస్తే ఎవరు రాశారో మాత్రమే చూపిస్తాయి.',
+  'Notifications make a sound.': 'నోటిఫికేషన్‌లు శబ్దం చేస్తాయి.',
+  'Which headings start a new page on the glasses.':
+    'అద్దాలపై ఏ శీర్షికలు కొత్త పేజీ మొదలుపెడతాయో అది.',
+  'Shows line numbers on the glasses.': 'అద్దాలపై లైన్ నంబర్‌లను చూపిస్తుంది.',
+  'How many blank lines the glasses keep between blocks.':
+    'బ్లాక్‌ల మధ్య అద్దాలు ఎన్ని ఖాళీ లైన్‌లు ఉంచుతాయో అది.',
+  'Shows this markdown mark on the glasses rather than hiding it.':
+    'ఈ markdown గుర్తును దాచకుండా అద్దాలపై చూపిస్తుంది.',
+  'Lets you run commands on the glasses by speaking.':
+    'మాట్లాడి అద్దాలపై కమాండ్‌లు నడపడానికి వీలు కల్పిస్తుంది.',
+  'What you say to run this command; left empty, the phrase shown is used.':
+    'ఈ కమాండ్ నడపడానికి మీరు చెప్పేది; ఖాళీగా వదిలితే చూపిన పదబంధం వాడబడుతుంది.',
+  'What Windows draws behind the window: Mica, Acrylic, or no blur.':
+    'విండో వెనుక Windows గీసేది: Mica, Acrylic, లేదా బ్లర్ లేదు.',
+  'How much of the window’s own colour lies over what is behind it.':
+    'విండో సొంత రంగు దాని వెనుక ఉన్నదానిపై ఎంత పడుతుందో అది.',
+  'The frame takes its colour from what is open.':
+    'తెరిచి ఉన్నదాని నుండి ఫ్రేమ్ తన రంగును తీసుకుంటుంది.',
+  'How strongly the frame is coloured.': 'ఫ్రేమ్‌కు ఎంత గాఢంగా రంగు వస్తుందో అది.',
+  'The colours the frame takes where nothing open has a colour of its own.':
+    'తెరిచి ఉన్న వాటిలో దేనికీ సొంత రంగు లేనప్పుడు ఫ్రేమ్ తీసుకునే రంగులు.',
+  'A web tab takes the colour of its page.': 'వెబ్ ట్యాబ్ దాని పేజీ రంగును తీసుకుంటుంది.',
+  'When your status is taken away again.': 'మీ స్థితి మళ్లీ ఎప్పుడు తీసివేయబడుతుందో అది.',
+  'Silences chat notifications and shows the others you are busy.':
+    'చాట్ నోటిఫికేషన్‌లను నిశ్శబ్దం చేసి, మీరు బిజీగా ఉన్నారని ఇతరులకు చూపిస్తుంది.',
+  'The colour the others see beside your name.': 'మీ పేరు పక్కన ఇతరులు చూసే రంగు.',
+  'The others see you as offline even while you are here.':
+    'మీరు ఇక్కడ ఉన్నప్పుడు కూడా ఇతరులు మిమ్మల్ని ఆఫ్‌లైన్‌గా చూస్తారు.',
+  'The picture behind the window, one for light and one for dark; drag it to move its centre.':
+    'విండో వెనుక ఉన్న చిత్రం, లైట్‌కు ఒకటి, డార్క్‌కు ఒకటి; దాని మధ్యను కదపడానికి లాగండి.',
+  'The theme Orden is drawn in.': 'Orden గీయబడే థీమ్.',
+  'Light, dark, or whichever the system is in.': 'లైట్, డార్క్, లేదా సిస్టమ్ ఏది వాడుతుందో అది.',
+  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
+    'ఫైల్ జాబితా పైన ఉన్న బుక్‌మార్క్‌లు టైల్స్‌గా చూపాలా లేక జాబితాగా చూపాలా అనేది.',
+  'Shows a pointing hand over buttons, as web pages do.':
+    'వెబ్ పేజీల లాగే, బటన్‌లపై చూపుడు చేతిని చూపిస్తుంది.',
+  'Orden’s own title bar, or the window frame of your system.':
+    'Orden సొంత టైటిల్ బార్, లేదా మీ సిస్టమ్ విండో ఫ్రేమ్.',
+  'How large the text of notes is.': 'నోట్‌ల టెక్స్ట్ ఎంత పెద్దదో అది.',
+  'The space between the lines of a note.': 'నోట్ లైన్‌ల మధ్య ఖాళీ.',
+  'How wide a line of a note grows before it wraps.':
+    'నోట్ లైన్ చుట్టుకునే ముందు ఎంత వెడల్పు పెరుగుతుందో అది.',
+  'Typing an opening bracket or quote adds the closing one too.':
+    'తెరిచే బ్రాకెట్ లేదా కోట్ టైప్ చేస్తే మూసేది కూడా జోడించబడుతుంది.',
+  'Keeps the line you are writing in the middle of the screen.':
+    'మీరు రాస్తున్న లైన్‌ను స్క్రీన్ మధ్యలో ఉంచుతుంది.',
+  'Dims everything but the paragraph you are writing in.':
+    'మీరు రాస్తున్న పేరా తప్ప మిగతావన్నీ మసకబారుస్తుంది.',
+  'Joins pairs such as -> or != into one sign, in code only or everywhere.':
+    '-> లేదా != వంటి జంటలను కోడ్‌లో మాత్రమే లేదా అన్నిచోట్లా ఒకే గుర్తుగా కలుపుతుంది.',
+  'Where a picture or file you paste or drop into a note is saved.':
+    'నోట్‌లో మీరు పేస్ట్ చేసిన లేదా వదిలిన చిత్రం లేదా ఫైల్ సేవ్ అయ్యే చోటు.',
+  'Turning two fingers on a touchpad or screen rotates the canvas.':
+    'టచ్‌ప్యాడ్ లేదా స్క్రీన్‌పై రెండు వేళ్లను తిప్పితే క్యాన్వాస్ తిరుగుతుంది.',
+  'A rotation that ends near a right angle settles on it.':
+    'లంబకోణానికి దగ్గరగా ముగిసే భ్రమణం దానిపైనే స్థిరపడుతుంది.',
+  'The paper size a new page note starts with.': 'కొత్త పేజీ నోట్ మొదలయ్యే పేపర్ పరిమాణం.',
+  'How the name of a new unique note is made from the date and time.':
+    'కొత్త ప్రత్యేక నోట్ పేరు తేదీ, సమయం నుండి ఎలా తయారవుతుందో అది.',
+  'The colours code in a note is highlighted in.': 'నోట్‌లోని కోడ్ హైలైట్ చేయబడే రంగులు.',
+  'Numbers the lines of code blocks.': 'కోడ్ బ్లాక్‌ల లైన్‌లకు నంబర్‌లు ఇస్తుంది.',
+  'The paper size of a PDF or a print.': 'PDF లేదా ప్రింట్ పేపర్ పరిమాణం.',
+  'Whether pages are upright or on their side.': 'పేజీలు నిలువుగా ఉంటాయా లేక అడ్డంగా ఉంటాయా అనేది.',
+  'The space around the edge of each page, such as 20mm or 1in.':
+    'ప్రతి పేజీ అంచు చుట్టూ ఉండే ఖాళీ, ఉదాహరణకు 20mm లేదా 1in.',
+  'Text at the top of every page; ${title}, ${date} and ${year} are filled in.':
+    'ప్రతి పేజీ పైన ఉండే టెక్స్ట్; ${title}, ${date}, ${year} నింపబడతాయి.',
+  'Text at the bottom of every page; ${title}, ${date} and ${year} are filled in.':
+    'ప్రతి పేజీ కింద ఉండే టెక్స్ట్; ${title}, ${date}, ${year} నింపబడతాయి.',
+  'Whether an export is light, dark, or as the app is now.':
+    'ఎక్స్‌పోర్ట్ లైట్‌గా, డార్క్‌గా, లేదా యాప్ ఇప్పుడు ఉన్నట్లుగా ఉండాలా అనేది.',
+  'Whether this key goes to Orden or to the program in the terminal, or asks each time.':
+    'ఈ కీ Orden కు వెళ్తుందా, టెర్మినల్‌లోని ప్రోగ్రామ్‌కు వెళ్తుందా, లేక ప్రతిసారీ అడుగుతుందా అనేది.',
+  'The shell a new terminal starts.': 'కొత్త టెర్మినల్ ప్రారంభించే షెల్.',
+  'How large the text in terminals is.': 'టెర్మినల్‌లలో టెక్స్ట్ ఎంత పెద్దదో అది.',
+  'Brings back what each terminal showed after Orden restarts; off forgets it on quit.':
+    'Orden మళ్లీ ప్రారంభమైన తర్వాత ప్రతి టెర్మినల్ చూపిన దాన్ని తిరిగి తెస్తుంది; ఆఫ్ చేస్తే మూసేటప్పుడు మరచిపోతుంది.',
+  'Asks before Orden quits with terminals open: always, or only while something runs in one.':
+    'టెర్మినల్‌లు తెరిచి ఉన్నప్పుడు Orden మూసే ముందు అడుగుతుంది: ఎల్లప్పుడూ, లేదా ఏదైనా ఒకదానిలో ఏదో నడుస్తున్నప్పుడు మాత్రమే.',
+  'Draws the app on the graphics card; turn it off if the window flickers or stays blank.':
+    'యాప్‌ను గ్రాఫిక్స్ కార్డ్‌పై గీస్తుంది; విండో మినుకుమినుకుమంటే లేదా ఖాళీగా ఉండిపోతే దీన్ని ఆఫ్ చేయండి.',
+  'How long before a task’s time it reminds you, unless the task says otherwise.':
+    'పని వేరేగా చెప్పకపోతే, పని సమయానికి ఎంత ముందు గుర్తు చేస్తుందో అది.',
+  'Keeps Orden running in the tray after its window closes, so reminders still ring.':
+    'విండో మూసిన తర్వాత కూడా Orden ను ట్రేలో నడుస్తూ ఉంచుతుంది, కాబట్టి రిమైండర్‌లు మోగుతూనే ఉంటాయి.',
+  'Lets reminders ring at the exact minute rather than when the phone gets round to it.':
+    'ఫోన్ వీలు చూసుకున్నప్పుడు కాకుండా, సరిగ్గా ఆ నిమిషానికే రిమైండర్‌లు మోగేలా చేస్తుంది.',
+  'How often a note you are editing is saved as a version you can go back to in History.':
+    'మీరు సవరిస్తున్న నోట్ వెర్షన్ చరిత్రలో తిరిగి వెళ్లగలిగే వెర్షన్‌గా ఎంత తరచుగా సేవ్ అవుతుందో అది.',
+  'How long those versions are kept before they are deleted.':
+    'ఆ వెర్షన్‌లు తొలగించబడే ముందు ఎంత కాలం ఉంచబడతాయో అది.',
+  'Ctrl+Tab goes to the tab used last, as in VS Code; off goes through the tabs in the order they sit.':
+    'Ctrl+Tab, VS Code లో లాగే, చివరిగా వాడిన ట్యాబ్‌కు వెళ్తుంది; ఆఫ్ చేస్తే ట్యాబ్‌లు ఉన్న క్రమంలో వెళ్తుంది.',
+  'Two fingers sideways on the touchpad go back and forward.':
+    'టచ్‌ప్యాడ్‌పై రెండు వేళ్లు పక్కకు జరిపితే వెనక్కి, ముందుకు వెళ్తుంది.',
+  'What the web pages of another space do while it is out of sight: keep running, pause, or ask the first time.':
+    'మరో స్పేస్ వెబ్ పేజీలు కనిపించనప్పుడు ఏమి చేస్తాయో అది: నడుస్తూనే ఉంచు, పాజ్ చేయి, లేదా మొదటిసారి అడుగు.',
+  'Unloads web pages that have been out of sight for a while to free memory; they load again when you return.':
+    'కొంతసేపు కనిపించని వెబ్ పేజీలను మెమరీ విడుదల చేయడానికి అన్‌లోడ్ చేస్తుంది; మీరు తిరిగి వచ్చినప్పుడు అవి మళ్లీ లోడ్ అవుతాయి.',
+  'Reads dates, times and fields out of what you type into Add task, such as “tomorrow 9am”.':
+    'పని జోడించు లో మీరు టైప్ చేసే “tomorrow 9am” వంటి వాటి నుండి తేదీలు, సమయాలు, ఫీల్డ్‌లను చదువుతుంది.',
+  'The folder of this space whose folders the Tasks panel lists as projects.':
+    'పనులు ప్యానెల్ ప్రాజెక్ట్‌లుగా జాబితా చేసే ఫోల్డర్‌లు ఉన్న, ఈ స్పేస్‌లోని ఫోల్డర్.',
+  'Today also lists the tasks that have no start date; off shows only those dated today or earlier.':
+    'ఈ రోజు ప్రారంభ తేదీ లేని పనులను కూడా చూపిస్తుంది; ఆఫ్ చేస్తే ఈ రోజు లేదా అంతకు ముందు తేదీ ఉన్నవి మాత్రమే చూపిస్తుంది.',
+  'The Add task shortcut works even while another app is in front.':
+    'మరో యాప్ ముందు ఉన్నప్పుడు కూడా పని జోడించు షార్ట్‌కట్ పని చేస్తుంది.',
+  'Shows terminals and the other tools for writing code.':
+    'టెర్మినల్‌లను, కోడ్ రాయడానికి ఉన్న ఇతర సాధనాలను చూపిస్తుంది.',
+  'Hides the tips Orden shows while you get to know it.':
+    'మీరు Orden ను పరిచయం చేసుకుంటున్నప్పుడు అది చూపించే చిట్కాలను దాచిపెడుతుంది.',
+  'The language Orden’s menus and settings are in.': 'Orden మెనూలు, సెట్టింగ్‌లు ఉండే భాష.',
+  'Offers this type when you make something new; off only takes it out of that list.':
+    'మీరు కొత్తది తయారు చేసినప్పుడు ఈ రకాన్ని అందిస్తుంది; ఆఫ్ చేస్తే ఆ జాబితా నుండి మాత్రమే తీసివేస్తుంది.',
+  'Shows a mark such as ** or # while the cursor is in it; off keeps every mark out of sight.':
+    'కర్సర్ ** లేదా # వంటి గుర్తులో ఉన్నప్పుడు దాన్ని చూపిస్తుంది; ఆఫ్ చేస్తే అన్ని గుర్తులూ కనిపించకుండా ఉంటాయి.',
+  'Notes open as plain markdown text rather than formatted.':
+    'నోట్‌లు ఫార్మాట్ కాకుండా సాదా markdown టెక్స్ట్‌గా తెరుచుకుంటాయి.',
+  'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
+    'అరబిక్, హీబ్రూ వంటి లిపుల కోసం నోట్‌లను కుడి నుండి ఎడమకు రాస్తుంది.',
+  'Underlines misspelled words as you write.':
+    'మీరు రాస్తుండగా తప్పు స్పెల్లింగ్ పదాల కింద గీత గీస్తుంది.',
+  'The dictionary spelling is checked against; Match the system uses your system’s language.':
+    'స్పెల్లింగ్ తనిఖీ చేయబడే నిఘంటువు; సిస్టమ్ ప్రకారం మీ సిస్టమ్ భాషను వాడుతుంది.',
+  'The version of Orden that is running; press to copy it.':
+    'నడుస్తున్న Orden వెర్షన్; కాపీ చేయడానికి నొక్కండి.',
+  'One of this theme’s own settings, offered by its author.':
+    'ఈ థీమ్ సొంత సెట్టింగ్‌లలో ఒకటి, దాని రచయిత అందించినది.',
+  'How much of what is behind the window shows under notes and terminals; the words always stay readable.':
+    'నోట్‌లు, టెర్మినల్‌ల కింద విండో వెనుక ఉన్నది ఎంత కనిపిస్తుందో అది; పదాలు ఎప్పుడూ చదవగలిగేలా ఉంటాయి.',
+  'The colour laid over the picture.': 'చిత్రంపై వేసే రంగు.',
+  'How much the picture is blurred.': 'చిత్రం ఎంత బ్లర్ అవుతుందో అది.',
+  'How much the picture is darkened.': 'చిత్రం ఎంత చీకటిగా చేయబడుతుందో అది.',
+  'How vivid the colours of the picture are.': 'చిత్రం రంగులు ఎంత ప్రకాశవంతంగా ఉంటాయో అది.',
+  'How strongly the tint colour lies over the picture.':
+    'ఛాయ రంగు చిత్రంపై ఎంత గాఢంగా పడుతుందో అది.',
+  'Adds a film grain over the picture.': 'చిత్రంపై ఫిల్మ్ గ్రెయిన్‌ను జోడిస్తుంది.',
+  'How the picture fills the window.': 'చిత్రం విండోను ఎలా నింపుతుందో అది.',
+  'An empty pane shows the picture rather than paper.':
+    'ఖాళీ ప్యానెల్ పేపర్‌కు బదులుగా చిత్రాన్ని చూపిస్తుంది.',
+  'The name the others see on what you share and in chats.':
+    'మీరు పంచుకునే వాటిపై మరియు చాట్‌లలో ఇతరులు చూసే పేరు.',
+  'How far back Go back takes this space; it says first what would change.':
+    'వెనక్కి వెళ్లు ఈ స్పేస్‌ను ఎంత వెనక్కి తీసుకెళ్తుందో; ముందుగా ఏమి మారుతుందో అది చెబుతుంది.',
+  'The picture the others see beside your name.': 'మీ పేరు పక్కన ఇతరులు చూసే చిత్రం.',
+  'Shown to the others beside your name, such as she/her.':
+    'మీ పేరు పక్కన ఇతరులకు చూపబడుతుంది, ఉదాహరణకు ఆమె/ఆమెను.',
+  'A few words about you that the others see on your profile.':
+    'మీ ప్రొఫైల్‌లో ఇతరులు చూసే మీ గురించి కొన్ని మాటలు.',
+  'What you are up to, shown to the others beside your name until it clears.':
+    'మీరు ఏం చేస్తున్నారో, అది తొలగిపోయే వరకు మీ పేరు పక్కన ఇతరులకు చూపబడుతుంది.',
 }

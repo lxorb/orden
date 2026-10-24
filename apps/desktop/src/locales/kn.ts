@@ -2435,4 +2435,203 @@ export const kn: Dictionary = {
   Large: 'ದೊಡ್ಡ',
   Both: 'ಎರಡೂ',
   'Shown on cards': 'ಕಾರ್ಡ್‌ಗಳಲ್ಲಿ ತೋರಿಸಲಾಗಿದೆ',
+  // What each setting does, behind the ? beside it (#768)
+  'Syncs this browser’s AI keys with your other devices through the vault.':
+    'ಈ ಬ್ರೌಸರ್‌ನ AI ಕೀಗಳನ್ನು ವಾಲ್ಟ್ ಮೂಲಕ ನಿಮ್ಮ ಇತರ ಸಾಧನಗಳೊಂದಿಗೆ ಸಿಂಕ್ ಮಾಡುತ್ತದೆ.',
+  'Which of your AI accounts this feature asks.':
+    'ಈ ವೈಶಿಷ್ಟ್ಯವು ನಿಮ್ಮ ಯಾವ AI ಖಾತೆಯನ್ನು ಕೇಳುತ್ತದೆ ಎಂಬುದು.',
+  'Whether a task done with AI asks before each change or makes them on its own.':
+    'AI ಮೂಲಕ ಮಾಡುವ ಕಾರ್ಯವು ಪ್ರತಿ ಬದಲಾವಣೆಗೆ ಮುನ್ನ ಕೇಳುತ್ತದೆಯೇ ಅಥವಾ ತಾನಾಗಿಯೇ ಮಾಡುತ್ತದೆಯೇ ಎಂಬುದು.',
+  'Makes Orden the browser that links from other programs open in.':
+    'ಇತರ ಪ್ರೋಗ್ರಾಂಗಳಿಂದ ಬರುವ ಲಿಂಕ್‌ಗಳು ತೆರೆಯುವ ಬ್ರೌಸರ್ ಆಗಿ Orden ಅನ್ನು ಮಾಡುತ್ತದೆ.',
+  'Where words typed into a web tab’s address bar are searched.':
+    'ವೆಬ್ ಟ್ಯಾಬ್‌ನ ವಿಳಾಸ ಪಟ್ಟಿಯಲ್ಲಿ ಟೈಪ್ ಮಾಡಿದ ಪದಗಳನ್ನು ಎಲ್ಲಿ ಹುಡುಕಲಾಗುತ್ತದೆ ಎಂಬುದು.',
+  'The search address, with %s where the words go.':
+    'ಹುಡುಕಾಟ ವಿಳಾಸ, ಪದಗಳು ಬರುವ ಸ್ಥಳದಲ್ಲಿ %s ಇರುವಂತೆ.',
+  'Words the spelling check never marks as wrong.':
+    'ಕಾಗುಣಿತ ಪರಿಶೀಲನೆ ಎಂದಿಗೂ ತಪ್ಪೆಂದು ಗುರುತಿಸದ ಪದಗಳು.',
+  'Which app’s keys Orden follows; any key below can still be changed.':
+    'Orden ಯಾವ ಆ್ಯಪ್‌ನ ಕೀಗಳನ್ನು ಅನುಸರಿಸುತ್ತದೆ ಎಂಬುದು; ಕೆಳಗಿನ ಯಾವುದೇ ಕೀಯನ್ನು ಇನ್ನೂ ಬದಲಾಯಿಸಬಹುದು.',
+  'Moves and edits in notes with Vim’s keys.':
+    'Vim ಕೀಗಳಿಂದ ಟಿಪ್ಪಣಿಗಳಲ್ಲಿ ಚಲಿಸುತ್ತದೆ ಮತ್ತು ಸಂಪಾದಿಸುತ್ತದೆ.',
+  'What pulling a note down past its top does on a phone.':
+    'ಫೋನ್‌ನಲ್ಲಿ ಟಿಪ್ಪಣಿಯನ್ನು ಅದರ ಮೇಲ್ಭಾಗ ದಾಟಿ ಕೆಳಗೆ ಎಳೆದರೆ ಏನಾಗುತ್ತದೆ ಎಂಬುದು.',
+  'The OpenAI key the glasses ask their questions with.':
+    'ಕನ್ನಡಕವು ತನ್ನ ಪ್ರಶ್ನೆಗಳನ್ನು ಕೇಳಲು ಬಳಸುವ OpenAI ಕೀ.',
+  'The model that answers what you ask on the glasses.':
+    'ಕನ್ನಡಕದಲ್ಲಿ ನೀವು ಕೇಳಿದ್ದಕ್ಕೆ ಉತ್ತರಿಸುವ ಮಾದರಿ.',
+  'How long the model thinks before it answers; longer is slower.':
+    'ಮಾದರಿ ಉತ್ತರಿಸುವ ಮುನ್ನ ಎಷ್ಟು ಹೊತ್ತು ಯೋಚಿಸುತ್ತದೆ ಎಂಬುದು; ಹೆಚ್ಚಾದಷ್ಟು ನಿಧಾನ.',
+  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
+    'File Explorer ನಲ್ಲಿ ಬಲ-ಕ್ಲಿಕ್ ಮಾಡಿದಾಗ ಬರುವ ಹೊಸ ಮೆನುವಿಗೆ Markdown ದಾಖಲೆಯನ್ನು ಸೇರಿಸುತ್ತದೆ.',
+  'What happens when one note was changed on two devices before they synced.':
+    'ಸಿಂಕ್ ಆಗುವ ಮುನ್ನ ಒಂದು ಟಿಪ್ಪಣಿ ಎರಡು ಸಾಧನಗಳಲ್ಲಿ ಬದಲಾದರೆ ಏನಾಗುತ್ತದೆ ಎಂಬುದು.',
+  'How far back the account keeps earlier versions of your notes.':
+    'ಖಾತೆಯು ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳ ಹಿಂದಿನ ಆವೃತ್ತಿಗಳನ್ನು ಎಷ್ಟು ಕಾಲ ಹಿಂದಿನವರೆಗೆ ಇಡುತ್ತದೆ ಎಂಬುದು.',
+  'The colour of buttons, links and the selection.': 'ಬಟನ್‌ಗಳು, ಲಿಂಕ್‌ಗಳು ಮತ್ತು ಆಯ್ಕೆಯ ಬಣ್ಣ.',
+  'Adds Orden to the AI agent programs on this computer, so they reach your notes with nothing to set up.':
+    'ಈ ಕಂಪ್ಯೂಟರ್‌ನಲ್ಲಿರುವ AI ಏಜೆಂಟ್ ಪ್ರೋಗ್ರಾಂಗಳಿಗೆ Orden ಅನ್ನು ಸೇರಿಸುತ್ತದೆ, ಆದ್ದರಿಂದ ಏನನ್ನೂ ಹೊಂದಿಸದೆಯೇ ಅವು ನಿಮ್ಮ ಟಿಪ್ಪಣಿಗಳನ್ನು ತಲುಪುತ್ತವೆ.',
+  'Words that notify you whenever someone writes them in a chat, separated by commas.':
+    'ಚಾಟ್‌ನಲ್ಲಿ ಯಾರಾದರೂ ಬರೆದಾಗಲೆಲ್ಲಾ ನಿಮಗೆ ಸೂಚಿಸುವ ಪದಗಳು, ಅಲ್ಪವಿರಾಮಗಳಿಂದ ಬೇರ್ಪಡಿಸಿದವು.',
+  'When chats may notify you; outside these hours they stay quiet.':
+    'ಚಾಟ್‌ಗಳು ನಿಮಗೆ ಯಾವಾಗ ಸೂಚಿಸಬಹುದು ಎಂಬುದು; ಈ ಗಂಟೆಗಳ ಹೊರಗೆ ಅವು ಮೌನವಾಗಿರುತ್ತವೆ.',
+  'When the hours chats may notify you begin.':
+    'ಚಾಟ್‌ಗಳು ಸೂಚಿಸಬಹುದಾದ ಗಂಟೆಗಳು ಯಾವಾಗ ಆರಂಭವಾಗುತ್ತವೆ ಎಂಬುದು.',
+  'When the hours chats may notify you end.':
+    'ಚಾಟ್‌ಗಳು ಸೂಚಿಸಬಹುದಾದ ಗಂಟೆಗಳು ಯಾವಾಗ ಕೊನೆಗೊಳ್ಳುತ್ತವೆ ಎಂಬುದು.',
+  'Notifications show the message itself; off shows only who wrote.':
+    'ಅಧಿಸೂಚನೆಗಳು ಸಂದೇಶವನ್ನೇ ತೋರಿಸುತ್ತವೆ; ಆಫ್ ಮಾಡಿದರೆ ಯಾರು ಬರೆದರು ಎಂಬುದನ್ನು ಮಾತ್ರ ತೋರಿಸುತ್ತವೆ.',
+  'Notifications make a sound.': 'ಅಧಿಸೂಚನೆಗಳು ಶಬ್ದ ಮಾಡುತ್ತವೆ.',
+  'Which headings start a new page on the glasses.':
+    'ಕನ್ನಡಕದಲ್ಲಿ ಯಾವ ಶೀರ್ಷಿಕೆಗಳು ಹೊಸ ಪುಟ ಆರಂಭಿಸುತ್ತವೆ ಎಂಬುದು.',
+  'Shows line numbers on the glasses.': 'ಕನ್ನಡಕದಲ್ಲಿ ಸಾಲು ಸಂಖ್ಯೆಗಳನ್ನು ತೋರಿಸುತ್ತದೆ.',
+  'How many blank lines the glasses keep between blocks.':
+    'ಕನ್ನಡಕವು ಬ್ಲಾಕ್‌ಗಳ ನಡುವೆ ಎಷ್ಟು ಖಾಲಿ ಸಾಲುಗಳನ್ನು ಇಡುತ್ತದೆ ಎಂಬುದು.',
+  'Shows this markdown mark on the glasses rather than hiding it.':
+    'ಈ markdown ಗುರುತನ್ನು ಮರೆಮಾಡದೆ ಕನ್ನಡಕದಲ್ಲಿ ತೋರಿಸುತ್ತದೆ.',
+  'Lets you run commands on the glasses by speaking.':
+    'ಮಾತನಾಡಿ ಕನ್ನಡಕದಲ್ಲಿ ಆಜ್ಞೆಗಳನ್ನು ಚಲಾಯಿಸಲು ಬಿಡುತ್ತದೆ.',
+  'What you say to run this command; left empty, the phrase shown is used.':
+    'ಈ ಆಜ್ಞೆಯನ್ನು ಚಲಾಯಿಸಲು ನೀವು ಹೇಳುವುದು; ಖಾಲಿ ಬಿಟ್ಟರೆ ತೋರಿಸಿದ ವಾಕ್ಯಾಂಶ ಬಳಕೆಯಾಗುತ್ತದೆ.',
+  'What Windows draws behind the window: Mica, Acrylic, or no blur.':
+    'ವಿಂಡೋದ ಹಿಂದೆ Windows ಚಿತ್ರಿಸುವುದು: Mica, Acrylic, ಅಥವಾ ಮಸುಕು ಇಲ್ಲ.',
+  'How much of the window’s own colour lies over what is behind it.':
+    'ವಿಂಡೋದ ಸ್ವಂತ ಬಣ್ಣ ಅದರ ಹಿಂದಿರುವುದರ ಮೇಲೆ ಎಷ್ಟು ಹರಡುತ್ತದೆ ಎಂಬುದು.',
+  'The frame takes its colour from what is open.':
+    'ತೆರೆದಿರುವುದರಿಂದ ಚೌಕಟ್ಟು ತನ್ನ ಬಣ್ಣವನ್ನು ಪಡೆಯುತ್ತದೆ.',
+  'How strongly the frame is coloured.': 'ಚೌಕಟ್ಟಿಗೆ ಎಷ್ಟು ಗಾಢವಾಗಿ ಬಣ್ಣ ಬರುತ್ತದೆ ಎಂಬುದು.',
+  'The colours the frame takes where nothing open has a colour of its own.':
+    'ತೆರೆದಿರುವ ಯಾವುದಕ್ಕೂ ಸ್ವಂತ ಬಣ್ಣ ಇಲ್ಲದಿದ್ದಾಗ ಚೌಕಟ್ಟು ಪಡೆಯುವ ಬಣ್ಣಗಳು.',
+  'A web tab takes the colour of its page.': 'ವೆಬ್ ಟ್ಯಾಬ್ ತನ್ನ ಪುಟದ ಬಣ್ಣವನ್ನು ಪಡೆಯುತ್ತದೆ.',
+  'When your status is taken away again.':
+    'ನಿಮ್ಮ ಸ್ಥಿತಿಯನ್ನು ಮತ್ತೆ ಯಾವಾಗ ತೆಗೆದುಹಾಕಲಾಗುತ್ತದೆ ಎಂಬುದು.',
+  'Silences chat notifications and shows the others you are busy.':
+    'ಚಾಟ್ ಅಧಿಸೂಚನೆಗಳನ್ನು ಮೌನಗೊಳಿಸಿ, ನೀವು ಕಾರ್ಯನಿರತರಾಗಿದ್ದೀರಿ ಎಂದು ಇತರರಿಗೆ ತೋರಿಸುತ್ತದೆ.',
+  'The colour the others see beside your name.': 'ನಿಮ್ಮ ಹೆಸರಿನ ಪಕ್ಕದಲ್ಲಿ ಇತರರು ನೋಡುವ ಬಣ್ಣ.',
+  'The others see you as offline even while you are here.':
+    'ನೀವು ಇಲ್ಲಿರುವಾಗಲೂ ಇತರರು ನಿಮ್ಮನ್ನು ಆಫ್‌ಲೈನ್ ಎಂದು ನೋಡುತ್ತಾರೆ.',
+  'The picture behind the window, one for light and one for dark; drag it to move its centre.':
+    'ವಿಂಡೋದ ಹಿಂದಿನ ಚಿತ್ರ, ಲೈಟ್‌ಗೆ ಒಂದು ಮತ್ತು ಡಾರ್ಕ್‌ಗೆ ಒಂದು; ಅದರ ಮಧ್ಯಭಾಗವನ್ನು ಸರಿಸಲು ಎಳೆಯಿರಿ.',
+  'The theme Orden is drawn in.': 'Orden ಅನ್ನು ಚಿತ್ರಿಸುವ ಥೀಮ್.',
+  'Light, dark, or whichever the system is in.': 'ಲೈಟ್, ಡಾರ್ಕ್, ಅಥವಾ ಸಿಸ್ಟಂ ಯಾವುದರಲ್ಲಿದೆಯೋ ಅದು.',
+  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
+    'ಫೈಲ್ ಪಟ್ಟಿಯ ಮೇಲಿನ ಬುಕ್‌ಮಾರ್ಕ್‌ಗಳು ಟೈಲ್‌ಗಳಾಗಿ ಕಾಣಬೇಕೇ ಅಥವಾ ಪಟ್ಟಿಯಾಗಿ ಕಾಣಬೇಕೇ ಎಂಬುದು.',
+  'Shows a pointing hand over buttons, as web pages do.':
+    'ವೆಬ್ ಪುಟಗಳಂತೆಯೇ, ಬಟನ್‌ಗಳ ಮೇಲೆ ತೋರುಬೆರಳಿನ ಕೈಯನ್ನು ತೋರಿಸುತ್ತದೆ.',
+  'Orden’s own title bar, or the window frame of your system.':
+    'Orden ನ ಸ್ವಂತ ಶೀರ್ಷಿಕೆ ಪಟ್ಟಿ, ಅಥವಾ ನಿಮ್ಮ ಸಿಸ್ಟಂನ ವಿಂಡೋ ಚೌಕಟ್ಟು.',
+  'How large the text of notes is.': 'ಟಿಪ್ಪಣಿಗಳ ಪಠ್ಯ ಎಷ್ಟು ದೊಡ್ಡದು ಎಂಬುದು.',
+  'The space between the lines of a note.': 'ಟಿಪ್ಪಣಿಯ ಸಾಲುಗಳ ನಡುವಿನ ಅಂತರ.',
+  'How wide a line of a note grows before it wraps.':
+    'ಟಿಪ್ಪಣಿಯ ಸಾಲು ಮುಂದಿನ ಸಾಲಿಗೆ ಹೋಗುವ ಮುನ್ನ ಎಷ್ಟು ಅಗಲ ಬೆಳೆಯುತ್ತದೆ ಎಂಬುದು.',
+  'Typing an opening bracket or quote adds the closing one too.':
+    'ತೆರೆಯುವ ಆವರಣ ಅಥವಾ ಉದ್ಧರಣ ಚಿಹ್ನೆ ಟೈಪ್ ಮಾಡಿದರೆ ಮುಚ್ಚುವುದೂ ಸೇರುತ್ತದೆ.',
+  'Keeps the line you are writing in the middle of the screen.':
+    'ನೀವು ಬರೆಯುತ್ತಿರುವ ಸಾಲನ್ನು ಪರದೆಯ ಮಧ್ಯದಲ್ಲಿ ಇಡುತ್ತದೆ.',
+  'Dims everything but the paragraph you are writing in.':
+    'ನೀವು ಬರೆಯುತ್ತಿರುವ ಪ್ಯಾರಾಗ್ರಾಫ್ ಬಿಟ್ಟು ಉಳಿದೆಲ್ಲವನ್ನೂ ಮಂದಗೊಳಿಸುತ್ತದೆ.',
+  'Joins pairs such as -> or != into one sign, in code only or everywhere.':
+    '-> ಅಥವಾ != ನಂತಹ ಜೋಡಿಗಳನ್ನು ಕೋಡ್‌ನಲ್ಲಿ ಮಾತ್ರ ಅಥವಾ ಎಲ್ಲೆಡೆ ಒಂದೇ ಚಿಹ್ನೆಯಾಗಿ ಸೇರಿಸುತ್ತದೆ.',
+  'Where a picture or file you paste or drop into a note is saved.':
+    'ಟಿಪ್ಪಣಿಗೆ ನೀವು ಅಂಟಿಸುವ ಅಥವಾ ಎಳೆದು ಬಿಡುವ ಚಿತ್ರ ಅಥವಾ ಫೈಲ್ ಉಳಿಯುವ ಸ್ಥಳ.',
+  'Turning two fingers on a touchpad or screen rotates the canvas.':
+    'ಟಚ್‌ಪ್ಯಾಡ್ ಅಥವಾ ಪರದೆಯ ಮೇಲೆ ಎರಡು ಬೆರಳುಗಳನ್ನು ತಿರುಗಿಸಿದರೆ ಕ್ಯಾನ್ವಾಸ್ ತಿರುಗುತ್ತದೆ.',
+  'A rotation that ends near a right angle settles on it.':
+    'ಲಂಬಕೋನದ ಹತ್ತಿರ ಕೊನೆಗೊಳ್ಳುವ ತಿರುಗುವಿಕೆ ಅದರ ಮೇಲೆಯೇ ನೆಲೆಗೊಳ್ಳುತ್ತದೆ.',
+  'The paper size a new page note starts with.': 'ಹೊಸ ಪುಟ ಟಿಪ್ಪಣಿ ಆರಂಭವಾಗುವ ಕಾಗದದ ಗಾತ್ರ.',
+  'How the name of a new unique note is made from the date and time.':
+    'ಹೊಸ ಅನನ್ಯ ಟಿಪ್ಪಣಿಯ ಹೆಸರು ದಿನಾಂಕ ಮತ್ತು ಸಮಯದಿಂದ ಹೇಗೆ ರೂಪುಗೊಳ್ಳುತ್ತದೆ ಎಂಬುದು.',
+  'The colours code in a note is highlighted in.': 'ಟಿಪ್ಪಣಿಯಲ್ಲಿನ ಕೋಡ್ ಹೈಲೈಟ್ ಆಗುವ ಬಣ್ಣಗಳು.',
+  'Numbers the lines of code blocks.': 'ಕೋಡ್ ಬ್ಲಾಕ್‌ಗಳ ಸಾಲುಗಳಿಗೆ ಸಂಖ್ಯೆ ನೀಡುತ್ತದೆ.',
+  'The paper size of a PDF or a print.': 'PDF ಅಥವಾ ಮುದ್ರಣದ ಕಾಗದದ ಗಾತ್ರ.',
+  'Whether pages are upright or on their side.': 'ಪುಟಗಳು ನೇರವಾಗಿವೆಯೇ ಅಥವಾ ಅಡ್ಡವಾಗಿವೆಯೇ ಎಂಬುದು.',
+  'The space around the edge of each page, such as 20mm or 1in.':
+    'ಪ್ರತಿ ಪುಟದ ಅಂಚಿನ ಸುತ್ತಲಿನ ಜಾಗ, ಉದಾಹರಣೆಗೆ 20mm ಅಥವಾ 1in.',
+  'Text at the top of every page; ${title}, ${date} and ${year} are filled in.':
+    'ಪ್ರತಿ ಪುಟದ ಮೇಲ್ಭಾಗದ ಪಠ್ಯ; ${title}, ${date} ಮತ್ತು ${year} ತುಂಬಲಾಗುತ್ತದೆ.',
+  'Text at the bottom of every page; ${title}, ${date} and ${year} are filled in.':
+    'ಪ್ರತಿ ಪುಟದ ಕೆಳಭಾಗದ ಪಠ್ಯ; ${title}, ${date} ಮತ್ತು ${year} ತುಂಬಲಾಗುತ್ತದೆ.',
+  'Whether an export is light, dark, or as the app is now.':
+    'ಎಕ್ಸ್‌ಪೋರ್ಟ್ ಲೈಟ್ ಆಗಿರಬೇಕೇ, ಡಾರ್ಕ್ ಆಗಿರಬೇಕೇ, ಅಥವಾ ಆ್ಯಪ್ ಈಗ ಇರುವಂತೆಯೇ ಇರಬೇಕೇ ಎಂಬುದು.',
+  'Whether this key goes to Orden or to the program in the terminal, or asks each time.':
+    'ಈ ಕೀ Orden ಗೆ ಹೋಗುತ್ತದೆಯೇ, ಟರ್ಮಿನಲ್‌ನಲ್ಲಿರುವ ಪ್ರೋಗ್ರಾಂಗೆ ಹೋಗುತ್ತದೆಯೇ, ಅಥವಾ ಪ್ರತಿ ಬಾರಿ ಕೇಳುತ್ತದೆಯೇ ಎಂಬುದು.',
+  'The shell a new terminal starts.': 'ಹೊಸ ಟರ್ಮಿನಲ್ ಆರಂಭಿಸುವ ಶೆಲ್.',
+  'How large the text in terminals is.': 'ಟರ್ಮಿನಲ್‌ಗಳಲ್ಲಿನ ಪಠ್ಯ ಎಷ್ಟು ದೊಡ್ಡದು ಎಂಬುದು.',
+  'Brings back what each terminal showed after Orden restarts; off forgets it on quit.':
+    'Orden ಮರುಪ್ರಾರಂಭವಾದ ನಂತರ ಪ್ರತಿ ಟರ್ಮಿನಲ್ ತೋರಿಸಿದ್ದನ್ನು ಮರಳಿ ತರುತ್ತದೆ; ಆಫ್ ಮಾಡಿದರೆ ಮುಚ್ಚುವಾಗ ಮರೆತುಬಿಡುತ್ತದೆ.',
+  'Asks before Orden quits with terminals open: always, or only while something runs in one.':
+    'ಟರ್ಮಿನಲ್‌ಗಳು ತೆರೆದಿರುವಾಗ Orden ಮುಚ್ಚುವ ಮುನ್ನ ಕೇಳುತ್ತದೆ: ಯಾವಾಗಲೂ, ಅಥವಾ ಒಂದರಲ್ಲಿ ಏನಾದರೂ ಚಲಿಸುತ್ತಿರುವಾಗ ಮಾತ್ರ.',
+  'Draws the app on the graphics card; turn it off if the window flickers or stays blank.':
+    'ಆ್ಯಪ್ ಅನ್ನು ಗ್ರಾಫಿಕ್ಸ್ ಕಾರ್ಡ್‌ನಲ್ಲಿ ಚಿತ್ರಿಸುತ್ತದೆ; ವಿಂಡೋ ಮಿನುಗಿದರೆ ಅಥವಾ ಖಾಲಿಯಾಗಿಯೇ ಉಳಿದರೆ ಇದನ್ನು ಆಫ್ ಮಾಡಿ.',
+  'How long before a task’s time it reminds you, unless the task says otherwise.':
+    'ಕಾರ್ಯವು ಬೇರೆ ಹೇಳದಿದ್ದರೆ, ಕಾರ್ಯದ ಸಮಯಕ್ಕೆ ಎಷ್ಟು ಮುನ್ನ ನೆನಪಿಸುತ್ತದೆ ಎಂಬುದು.',
+  'Keeps Orden running in the tray after its window closes, so reminders still ring.':
+    'ವಿಂಡೋ ಮುಚ್ಚಿದ ನಂತರವೂ Orden ಅನ್ನು ಟ್ರೇಯಲ್ಲಿ ಚಾಲನೆಯಲ್ಲಿಡುತ್ತದೆ, ಆದ್ದರಿಂದ ಜ್ಞಾಪನೆಗಳು ಇನ್ನೂ ಮೊಳಗುತ್ತವೆ.',
+  'Lets reminders ring at the exact minute rather than when the phone gets round to it.':
+    'ಫೋನ್ ತನಗೆ ಅನುಕೂಲವಾದಾಗ ಅಲ್ಲ, ಸರಿಯಾದ ನಿಮಿಷದಲ್ಲೇ ಜ್ಞಾಪನೆಗಳು ಮೊಳಗಲು ಬಿಡುತ್ತದೆ.',
+  'How often a note you are editing is saved as a version you can go back to in History.':
+    'ನೀವು ಸಂಪಾದಿಸುತ್ತಿರುವ ಟಿಪ್ಪಣಿಯನ್ನು ಆವೃತ್ತಿ ಇತಿಹಾಸದಲ್ಲಿ ಮರಳಿ ಹೋಗಬಹುದಾದ ಆವೃತ್ತಿಯಾಗಿ ಎಷ್ಟು ಬಾರಿ ಉಳಿಸಲಾಗುತ್ತದೆ ಎಂಬುದು.',
+  'How long those versions are kept before they are deleted.':
+    'ಆ ಆವೃತ್ತಿಗಳನ್ನು ಅಳಿಸುವ ಮುನ್ನ ಎಷ್ಟು ಕಾಲ ಇಡಲಾಗುತ್ತದೆ ಎಂಬುದು.',
+  'Ctrl+Tab goes to the tab used last, as in VS Code; off goes through the tabs in the order they sit.':
+    'Ctrl+Tab, VS Code ನಲ್ಲಿರುವಂತೆ, ಕೊನೆಯದಾಗಿ ಬಳಸಿದ ಟ್ಯಾಬ್‌ಗೆ ಹೋಗುತ್ತದೆ; ಆಫ್ ಮಾಡಿದರೆ ಟ್ಯಾಬ್‌ಗಳು ಇರುವ ಕ್ರಮದಲ್ಲಿ ಹೋಗುತ್ತದೆ.',
+  'Two fingers sideways on the touchpad go back and forward.':
+    'ಟಚ್‌ಪ್ಯಾಡ್‌ನಲ್ಲಿ ಎರಡು ಬೆರಳುಗಳನ್ನು ಪಕ್ಕಕ್ಕೆ ಸರಿಸಿದರೆ ಹಿಂದಕ್ಕೆ ಮತ್ತು ಮುಂದಕ್ಕೆ ಹೋಗುತ್ತದೆ.',
+  'What the web pages of another space do while it is out of sight: keep running, pause, or ask the first time.':
+    'ಮತ್ತೊಂದು ಸ್ಪೇಸ್‌ನ ವೆಬ್ ಪುಟಗಳು ಕಾಣದಿರುವಾಗ ಏನು ಮಾಡುತ್ತವೆ ಎಂಬುದು: ಚಾಲನೆಯಲ್ಲಿಡಿ, ವಿರಾಮ, ಅಥವಾ ಮೊದಲ ಬಾರಿ ಕೇಳಿ.',
+  'Unloads web pages that have been out of sight for a while to free memory; they load again when you return.':
+    'ಸ್ವಲ್ಪ ಸಮಯದಿಂದ ಕಾಣದಿರುವ ವೆಬ್ ಪುಟಗಳನ್ನು ಮೆಮೊರಿ ಬಿಡುಗಡೆಗಾಗಿ ಅನ್‌ಲೋಡ್ ಮಾಡುತ್ತದೆ; ನೀವು ಮರಳಿದಾಗ ಅವು ಮತ್ತೆ ಲೋಡ್ ಆಗುತ್ತವೆ.',
+  'Reads dates, times and fields out of what you type into Add task, such as “tomorrow 9am”.':
+    'ಕಾರ್ಯ ಸೇರಿಸಿ ಯಲ್ಲಿ ನೀವು ಟೈಪ್ ಮಾಡುವ “tomorrow 9am” ನಂತಹದರಿಂದ ದಿನಾಂಕ, ಸಮಯ ಮತ್ತು ಕ್ಷೇತ್ರಗಳನ್ನು ಓದುತ್ತದೆ.',
+  'The folder of this space whose folders the Tasks panel lists as projects.':
+    'ಕಾರ್ಯಗಳು ಫಲಕವು ಯೋಜನೆಗಳಾಗಿ ಪಟ್ಟಿ ಮಾಡುವ ಫೋಲ್ಡರ್‌ಗಳಿರುವ, ಈ ಸ್ಪೇಸ್‌ನ ಫೋಲ್ಡರ್.',
+  'Today also lists the tasks that have no start date; off shows only those dated today or earlier.':
+    'ಇಂದು ಪಟ್ಟಿಯು ಆರಂಭ ದಿನಾಂಕವಿಲ್ಲದ ಕಾರ್ಯಗಳನ್ನೂ ತೋರಿಸುತ್ತದೆ; ಆಫ್ ಮಾಡಿದರೆ ಇಂದು ಅಥವಾ ಅದಕ್ಕೂ ಮುನ್ನದ ದಿನಾಂಕದವುಗಳನ್ನು ಮಾತ್ರ ತೋರಿಸುತ್ತದೆ.',
+  'The Add task shortcut works even while another app is in front.':
+    'ಮತ್ತೊಂದು ಆ್ಯಪ್ ಮುಂದೆ ಇರುವಾಗಲೂ ಕಾರ್ಯ ಸೇರಿಸಿ ಶಾರ್ಟ್‌ಕಟ್ ಕೆಲಸ ಮಾಡುತ್ತದೆ.',
+  'Shows terminals and the other tools for writing code.':
+    'ಟರ್ಮಿನಲ್‌ಗಳು ಮತ್ತು ಕೋಡ್ ಬರೆಯಲು ಇತರ ಸಾಧನಗಳನ್ನು ತೋರಿಸುತ್ತದೆ.',
+  'Hides the tips Orden shows while you get to know it.':
+    'ನೀವು Orden ಅನ್ನು ಪರಿಚಯ ಮಾಡಿಕೊಳ್ಳುವಾಗ ಅದು ತೋರಿಸುವ ಸಲಹೆಗಳನ್ನು ಮರೆಮಾಡುತ್ತದೆ.',
+  'The language Orden’s menus and settings are in.':
+    'Orden ನ ಮೆನುಗಳು ಮತ್ತು ಸೆಟ್ಟಿಂಗ್‌ಗಳು ಇರುವ ಭಾಷೆ.',
+  'Offers this type when you make something new; off only takes it out of that list.':
+    'ನೀವು ಹೊಸದನ್ನು ರಚಿಸುವಾಗ ಈ ಪ್ರಕಾರವನ್ನು ನೀಡುತ್ತದೆ; ಆಫ್ ಮಾಡಿದರೆ ಅದನ್ನು ಆ ಪಟ್ಟಿಯಿಂದ ಮಾತ್ರ ತೆಗೆಯುತ್ತದೆ.',
+  'Shows a mark such as ** or # while the cursor is in it; off keeps every mark out of sight.':
+    'ಕರ್ಸರ್ ** ಅಥವಾ # ನಂತಹ ಗುರುತಿನೊಳಗಿರುವಾಗ ಅದನ್ನು ತೋರಿಸುತ್ತದೆ; ಆಫ್ ಮಾಡಿದರೆ ಎಲ್ಲಾ ಗುರುತುಗಳೂ ಮರೆಯಾಗಿರುತ್ತವೆ.',
+  'Notes open as plain markdown text rather than formatted.':
+    'ಟಿಪ್ಪಣಿಗಳು ಫಾರ್ಮ್ಯಾಟ್ ಆಗದೆ ಸಾದಾ markdown ಪಠ್ಯವಾಗಿ ತೆರೆಯುತ್ತವೆ.',
+  'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
+    'ಅರೇಬಿಕ್, ಹೀಬ್ರೂ ಮತ್ತು ಇತರ ಅಂತಹ ಲಿಪಿಗಳಿಗಾಗಿ ಟಿಪ್ಪಣಿಗಳನ್ನು ಬಲದಿಂದ ಎಡಕ್ಕೆ ಬರೆಯುತ್ತದೆ.',
+  'Underlines misspelled words as you write.':
+    'ನೀವು ಬರೆಯುತ್ತಿರುವಾಗ ತಪ್ಪು ಕಾಗುಣಿತದ ಪದಗಳ ಕೆಳಗೆ ಗೆರೆ ಎಳೆಯುತ್ತದೆ.',
+  'The dictionary spelling is checked against; Match the system uses your system’s language.':
+    'ಕಾಗುಣಿತವನ್ನು ಪರಿಶೀಲಿಸುವ ನಿಘಂಟು; ಸಿಸ್ಟಂ ಪ್ರಕಾರ ನಿಮ್ಮ ಸಿಸ್ಟಂನ ಭಾಷೆಯನ್ನು ಬಳಸುತ್ತದೆ.',
+  'The version of Orden that is running; press to copy it.':
+    'ಚಾಲನೆಯಲ್ಲಿರುವ Orden ಆವೃತ್ತಿ; ನಕಲಿಸಲು ಒತ್ತಿ.',
+  'One of this theme’s own settings, offered by its author.':
+    'ಈ ಥೀಮ್‌ನ ಸ್ವಂತ ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಒಂದು, ಅದರ ಲೇಖಕರು ನೀಡಿದ್ದು.',
+  'How much of what is behind the window shows under notes and terminals; the words always stay readable.':
+    'ಟಿಪ್ಪಣಿಗಳು ಮತ್ತು ಟರ್ಮಿನಲ್‌ಗಳ ಕೆಳಗೆ ವಿಂಡೋದ ಹಿಂದಿರುವುದು ಎಷ್ಟು ಕಾಣುತ್ತದೆ ಎಂಬುದು; ಪದಗಳು ಯಾವಾಗಲೂ ಓದುವಂತಿರುತ್ತವೆ.',
+  'The colour laid over the picture.': 'ಚಿತ್ರದ ಮೇಲೆ ಹಾಕುವ ಬಣ್ಣ.',
+  'How much the picture is blurred.': 'ಚಿತ್ರ ಎಷ್ಟು ಮಸುಕಾಗುತ್ತದೆ ಎಂಬುದು.',
+  'How much the picture is darkened.': 'ಚಿತ್ರ ಎಷ್ಟು ಕಪ್ಪಾಗುತ್ತದೆ ಎಂಬುದು.',
+  'How vivid the colours of the picture are.': 'ಚಿತ್ರದ ಬಣ್ಣಗಳು ಎಷ್ಟು ಉಜ್ವಲವಾಗಿವೆ ಎಂಬುದು.',
+  'How strongly the tint colour lies over the picture.':
+    'ಛಾಯೆ ಬಣ್ಣ ಚಿತ್ರದ ಮೇಲೆ ಎಷ್ಟು ಗಾಢವಾಗಿ ಹರಡುತ್ತದೆ ಎಂಬುದು.',
+  'Adds a film grain over the picture.': 'ಚಿತ್ರದ ಮೇಲೆ ಫಿಲ್ಮ್ ಗ್ರೇನ್ ಸೇರಿಸುತ್ತದೆ.',
+  'How the picture fills the window.': 'ಚಿತ್ರ ವಿಂಡೋವನ್ನು ಹೇಗೆ ತುಂಬುತ್ತದೆ ಎಂಬುದು.',
+  'An empty pane shows the picture rather than paper.':
+    'ಖಾಲಿ ಫಲಕವು ಕಾಗದದ ಬದಲು ಚಿತ್ರವನ್ನು ತೋರಿಸುತ್ತದೆ.',
+  'The name the others see on what you share and in chats.':
+    'ನೀವು ಹಂಚಿಕೊಳ್ಳುವುದರಲ್ಲಿ ಮತ್ತು ಚಾಟ್‌ಗಳಲ್ಲಿ ಇತರರು ನೋಡುವ ಹೆಸರು.',
+  'How far back Go back takes this space; it says first what would change.':
+    'ಹಿಂದೆ ಹೋಗಿ ಈ ಸ್ಪೇಸ್ ಅನ್ನು ಎಷ್ಟು ಹಿಂದಕ್ಕೆ ಕೊಂಡೊಯ್ಯುತ್ತದೆ ಎಂಬುದು; ಏನು ಬದಲಾಗುತ್ತದೆ ಎಂದು ಮೊದಲು ಹೇಳುತ್ತದೆ.',
+  'The picture the others see beside your name.': 'ನಿಮ್ಮ ಹೆಸರಿನ ಪಕ್ಕದಲ್ಲಿ ಇತರರು ನೋಡುವ ಚಿತ್ರ.',
+  'Shown to the others beside your name, such as she/her.':
+    'ನಿಮ್ಮ ಹೆಸರಿನ ಪಕ್ಕದಲ್ಲಿ ಇತರರಿಗೆ ತೋರಿಸಲಾಗುತ್ತದೆ, ಉದಾಹರಣೆಗೆ ಅವಳು/ಅವಳ.',
+  'A few words about you that the others see on your profile.':
+    'ನಿಮ್ಮ ಪ್ರೊಫೈಲ್‌ನಲ್ಲಿ ಇತರರು ನೋಡುವ ನಿಮ್ಮ ಬಗ್ಗೆ ಕೆಲವು ಪದಗಳು.',
+  'What you are up to, shown to the others beside your name until it clears.':
+    'ನೀವು ಏನು ಮಾಡುತ್ತಿದ್ದೀರಿ ಎಂಬುದು, ಅದು ತೆರವಾಗುವವರೆಗೆ ನಿಮ್ಮ ಹೆಸರಿನ ಪಕ್ಕದಲ್ಲಿ ಇತರರಿಗೆ ತೋರಿಸಲಾಗುತ್ತದೆ.',
 }

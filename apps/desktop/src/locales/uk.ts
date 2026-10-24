@@ -2496,4 +2496,199 @@ export const uk: Dictionary = {
   Large: 'Велике',
   Both: 'Обидва',
   'Shown on cards': 'Показано на картках',
+  // What each setting does, behind the ? beside it (#768)
+  'Syncs this browser’s AI keys with your other devices through the vault.':
+    'Синхронізує ключі ШІ цього браузера з іншими вашими пристроями через сховище.',
+  'Which of your AI accounts this feature asks.':
+    'Який із ваших облікових записів ШІ запитує ця функція.',
+  'Whether a task done with AI asks before each change or makes them on its own.':
+    'Чи завдання, виконуване з ШІ, питає перед кожною зміною, чи вносить їх саме.',
+  'Makes Orden the browser that links from other programs open in.':
+    'Робить Orden браузером, у якому відкриваються посилання з інших програм.',
+  'Where words typed into a web tab’s address bar are searched.':
+    'Де шукаються слова, введені в адресний рядок вебвкладки.',
+  'The search address, with %s where the words go.': 'Адреса пошуку, де %s стоїть на місці слів.',
+  'Words the spelling check never marks as wrong.':
+    'Слова, які перевірка правопису ніколи не позначає як помилкові.',
+  'Which app’s keys Orden follows; any key below can still be changed.':
+    'Сполучень клавіш якої програми дотримується Orden; будь-яке сполучення нижче все одно можна змінити.',
+  'Moves and edits in notes with Vim’s keys.':
+    'Переміщення й редагування в нотатках клавішами Vim.',
+  'What pulling a note down past its top does on a phone.':
+    'Що робить на телефоні потягування нотатки вниз далі її початку.',
+  'The OpenAI key the glasses ask their questions with.':
+    'Ключ OpenAI, з яким окуляри ставлять свої запитання.',
+  'The model that answers what you ask on the glasses.':
+    'Модель, яка відповідає на ваші запитання в окулярах.',
+  'How long the model thinks before it answers; longer is slower.':
+    'Як довго модель думає перед відповіддю; довше означає повільніше.',
+  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
+    'Додає документ Markdown до меню Створити, яке відкривається клацанням правою кнопкою в Провіднику.',
+  'What happens when one note was changed on two devices before they synced.':
+    'Що відбувається, якщо нотатку змінили на двох пристроях до їх синхронізації.',
+  'How far back the account keeps earlier versions of your notes.':
+    'Як довго обліковий запис зберігає попередні версії ваших нотаток.',
+  'The colour of buttons, links and the selection.': 'Колір кнопок, посилань і виділення.',
+  'Adds Orden to the AI agent programs on this computer, so they reach your notes with nothing to set up.':
+    'Додає Orden до програм ШІ-агентів на цьому комп’ютері, щоб вони мали доступ до ваших нотаток без жодного налаштування.',
+  'Words that notify you whenever someone writes them in a chat, separated by commas.':
+    'Слова, про які вам надходить сповіщення, коли хтось пише їх у чаті, через кому.',
+  'When chats may notify you; outside these hours they stay quiet.':
+    'Коли чати можуть надсилати вам сповіщення; в інші години вони мовчать.',
+  'When the hours chats may notify you begin.':
+    'Коли починаються години, у які чати можуть надсилати вам сповіщення.',
+  'When the hours chats may notify you end.':
+    'Коли закінчуються години, у які чати можуть надсилати вам сповіщення.',
+  'Notifications show the message itself; off shows only who wrote.':
+    'Сповіщення показують саме повідомлення; якщо вимкнено, лише автора.',
+  'Notifications make a sound.': 'Сповіщення відтворюють звук.',
+  'Which headings start a new page on the glasses.':
+    'Які заголовки починають нову сторінку в окулярах.',
+  'Shows line numbers on the glasses.': 'Показує номери рядків в окулярах.',
+  'How many blank lines the glasses keep between blocks.':
+    'Скільки порожніх рядків окуляри лишають між блоками.',
+  'Shows this markdown mark on the glasses rather than hiding it.':
+    'Показує цю розмітку markdown в окулярах, а не приховує її.',
+  'Lets you run commands on the glasses by speaking.':
+    'Дає змогу запускати команди в окулярах голосом.',
+  'What you say to run this command; left empty, the phrase shown is used.':
+    'Що ви кажете, щоб запустити цю команду; якщо порожньо, береться показана фраза.',
+  'What Windows draws behind the window: Mica, Acrylic, or no blur.':
+    'Що Windows малює за вікном: Mica, Акрил або без розмиття.',
+  'How much of the window’s own colour lies over what is behind it.':
+    'Скільки власного кольору вікна лежить поверх того, що за ним.',
+  'The frame takes its colour from what is open.': 'Рамка набуває кольору того, що відкрито.',
+  'How strongly the frame is coloured.': 'Наскільки сильно забарвлена рамка.',
+  'The colours the frame takes where nothing open has a colour of its own.':
+    'Кольори, яких набуває рамка, коли відкрите не має власного кольору.',
+  'A web tab takes the colour of its page.': 'Вебвкладка набуває кольору своєї сторінки.',
+  'When your status is taken away again.': 'Коли ваш статус знову знімається.',
+  'Silences chat notifications and shows the others you are busy.':
+    'Вимикає сповіщення чатів і показує іншим, що ви зайняті.',
+  'The colour the others see beside your name.': 'Колір, який інші бачать поруч із вашим ім’ям.',
+  'The others see you as offline even while you are here.':
+    'Інші бачать вас не в мережі, навіть коли ви тут.',
+  'The picture behind the window, one for light and one for dark; drag it to move its centre.':
+    'Зображення за вікном, одне для світлої теми й одне для темної; перетягніть його, щоб зсунути центр.',
+  'The theme Orden is drawn in.': 'Тема, у якій відмальовано Orden.',
+  'Light, dark, or whichever the system is in.': 'Світла, темна або та, що зараз у системі.',
+  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
+    'Чи показувати закладки вгорі списку файлів плитками, чи списком.',
+  'Shows a pointing hand over buttons, as web pages do.':
+    'Показує вказівну руку над кнопками, як на вебсторінках.',
+  'Orden’s own title bar, or the window frame of your system.':
+    'Власний рядок заголовка Orden або рамка вікна вашої системи.',
+  'How large the text of notes is.': 'Розмір тексту нотаток.',
+  'The space between the lines of a note.': 'Відстань між рядками нотатки.',
+  'How wide a line of a note grows before it wraps.':
+    'До якої ширини росте рядок нотатки, перш ніж перенестися.',
+  'Typing an opening bracket or quote adds the closing one too.':
+    'Введення відкривної дужки чи лапки додає й закривну.',
+  'Keeps the line you are writing in the middle of the screen.':
+    'Тримає рядок, у якому ви пишете, посередині екрана.',
+  'Dims everything but the paragraph you are writing in.':
+    'Затемнює все, крім абзацу, у якому ви пишете.',
+  'Joins pairs such as -> or != into one sign, in code only or everywhere.':
+    'Об’єднує пари на кшталт -> чи != в один знак, лише в коді або всюди.',
+  'Where a picture or file you paste or drop into a note is saved.':
+    'Куди зберігається зображення чи файл, вставлені або перетягнуті в нотатку.',
+  'Turning two fingers on a touchpad or screen rotates the canvas.':
+    'Поворот двома пальцями на тачпаді чи екрані обертає полотно.',
+  'A rotation that ends near a right angle settles on it.':
+    'Поворот, що закінчився біля прямого кута, доводиться до нього.',
+  'The paper size a new page note starts with.':
+    'Розмір паперу, з якого починається нова нотатка зі сторінками.',
+  'How the name of a new unique note is made from the date and time.':
+    'Як назва нової унікальної нотатки складається з дати й часу.',
+  'The colours code in a note is highlighted in.': 'Кольори, якими підсвічується код у нотатці.',
+  'Numbers the lines of code blocks.': 'Нумерує рядки блоків коду.',
+  'The paper size of a PDF or a print.': 'Розмір паперу для PDF або друку.',
+  'Whether pages are upright or on their side.': 'Книжкова чи альбомна орієнтація сторінок.',
+  'The space around the edge of each page, such as 20mm or 1in.':
+    'Відступ від краю кожної сторінки, наприклад 20mm або 1in.',
+  'Text at the top of every page; ${title}, ${date} and ${year} are filled in.':
+    'Текст угорі кожної сторінки; ${title}, ${date} і ${year} підставляються.',
+  'Text at the bottom of every page; ${title}, ${date} and ${year} are filled in.':
+    'Текст унизу кожної сторінки; ${title}, ${date} і ${year} підставляються.',
+  'Whether an export is light, dark, or as the app is now.':
+    'Чи буде експорт світлим, темним або таким, як програма зараз.',
+  'Whether this key goes to Orden or to the program in the terminal, or asks each time.':
+    'Чи йде ця клавіша до Orden, чи до програми в терміналі, чи питати щоразу.',
+  'The shell a new terminal starts.': 'Оболонка, яку запускає новий термінал.',
+  'How large the text in terminals is.': 'Розмір тексту в терміналах.',
+  'Brings back what each terminal showed after Orden restarts; off forgets it on quit.':
+    'Повертає те, що показував кожен термінал, після перезапуску Orden; якщо вимкнено, забуває це під час виходу.',
+  'Asks before Orden quits with terminals open: always, or only while something runs in one.':
+    'Питає перед виходом з Orden з відкритими терміналами: завжди або лише поки в одному з них щось виконується.',
+  'Draws the app on the graphics card; turn it off if the window flickers or stays blank.':
+    'Відмальовує програму на відеокарті; вимкніть, якщо вікно мерехтить або лишається порожнім.',
+  'How long before a task’s time it reminds you, unless the task says otherwise.':
+    'За скільки до часу завдання надходить нагадування, якщо в завданні не вказано інше.',
+  'Keeps Orden running in the tray after its window closes, so reminders still ring.':
+    'Лишає Orden працювати в треї після закриття вікна, щоб нагадування все одно звучали.',
+  'Lets reminders ring at the exact minute rather than when the phone gets round to it.':
+    'Нагадування звучать точно в потрібну хвилину, а не коли телефон до них дійде.',
+  'How often a note you are editing is saved as a version you can go back to in History.':
+    'Як часто нотатка, яку ви редагуєте, зберігається як версія, до якої можна повернутися в Історії.',
+  'How long those versions are kept before they are deleted.':
+    'Як довго ці версії зберігаються, перш ніж їх буде видалено.',
+  'Ctrl+Tab goes to the tab used last, as in VS Code; off goes through the tabs in the order they sit.':
+    'Ctrl+Tab переходить до останньої використаної вкладки, як у VS Code; якщо вимкнено, перебирає вкладки по черзі.',
+  'Two fingers sideways on the touchpad go back and forward.':
+    'Два пальці вбік на тачпаді переходять назад і вперед.',
+  'What the web pages of another space do while it is out of sight: keep running, pause, or ask the first time.':
+    'Що роблять вебсторінки іншого простору, поки його не видно: працюють далі, стають на паузу або питають першого разу.',
+  'Unloads web pages that have been out of sight for a while to free memory; they load again when you return.':
+    'Вивантажує вебсторінки, яких давно не видно, щоб звільнити пам’ять; вони завантажуються знову, коли ви повертаєтеся.',
+  'Reads dates, times and fields out of what you type into Add task, such as “tomorrow 9am”.':
+    'Розпізнає дати, час і поля в тому, що ви вводите в Додати завдання, наприклад «tomorrow 9am».',
+  'The folder of this space whose folders the Tasks panel lists as projects.':
+    'Папка цього простору, чиї папки панель Завдання показує як проєкти.',
+  'Today also lists the tasks that have no start date; off shows only those dated today or earlier.':
+    'Сьогодні показує й завдання без дати початку; якщо вимкнено, лише з датою сьогодні або раніше.',
+  'The Add task shortcut works even while another app is in front.':
+    'Сполучення Додати завдання працює, навіть коли попереду інша програма.',
+  'Shows terminals and the other tools for writing code.':
+    'Показує термінали та інші інструменти для написання коду.',
+  'Hides the tips Orden shows while you get to know it.':
+    'Приховує підказки, які Orden показує, поки ви з ним знайомитеся.',
+  'The language Orden’s menus and settings are in.': 'Мова меню й налаштувань Orden.',
+  'Offers this type when you make something new; off only takes it out of that list.':
+    'Пропонує цей тип, коли ви створюєте щось нове; якщо вимкнено, лише прибирає його з цього списку.',
+  'Shows a mark such as ** or # while the cursor is in it; off keeps every mark out of sight.':
+    'Показує розмітку на кшталт ** чи #, поки в ній курсор; якщо вимкнено, уся розмітка прихована.',
+  'Notes open as plain markdown text rather than formatted.':
+    'Нотатки відкриваються як звичайний текст markdown, а не форматованими.',
+  'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
+    'Пише нотатки справа наліво, для арабської, івриту та інших подібних писемностей.',
+  'Underlines misspelled words as you write.': 'Підкреслює слова з помилками, поки ви пишете.',
+  'The dictionary spelling is checked against; Match the system uses your system’s language.':
+    'Словник для перевірки правопису; Як у системі використовує мову вашої системи.',
+  'The version of Orden that is running; press to copy it.':
+    'Запущена версія Orden; натисніть, щоб скопіювати.',
+  'One of this theme’s own settings, offered by its author.':
+    'Одне з власних налаштувань цієї теми, запропоноване її автором.',
+  'How much of what is behind the window shows under notes and terminals; the words always stay readable.':
+    'Скільки того, що за вікном, видно під нотатками й терміналами; текст завжди лишається читабельним.',
+  'The colour laid over the picture.': 'Колір, накладений на зображення.',
+  'How much the picture is blurred.': 'Наскільки розмите зображення.',
+  'How much the picture is darkened.': 'Наскільки затемнене зображення.',
+  'How vivid the colours of the picture are.': 'Наскільки яскраві кольори зображення.',
+  'How strongly the tint colour lies over the picture.':
+    'Наскільки сильно колір відтінку лежить на зображенні.',
+  'Adds a film grain over the picture.': 'Додає плівкове зерно поверх зображення.',
+  'How the picture fills the window.': 'Як зображення заповнює вікно.',
+  'An empty pane shows the picture rather than paper.':
+    'Порожня панель показує зображення, а не папір.',
+  'The name the others see on what you share and in chats.':
+    'Ім’я, яке інші бачать на тому, чим ви ділитеся, і в чатах.',
+  'How far back Go back takes this space; it says first what would change.':
+    'Як далеко назад Повернути назад повертає цей простір; спершу показує, що зміниться.',
+  'The picture the others see beside your name.': 'Малюнок, який інші бачать поруч із вашим ім’ям.',
+  'Shown to the others beside your name, such as she/her.':
+    'Показується іншим поруч із вашим ім’ям, наприклад вона/її.',
+  'A few words about you that the others see on your profile.':
+    'Кілька слів про вас, які інші бачать у вашому профілі.',
+  'What you are up to, shown to the others beside your name until it clears.':
+    'Чим ви зараз зайняті; показується іншим поруч із вашим ім’ям, доки не зникне.',
 }

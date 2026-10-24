@@ -2440,4 +2440,205 @@ export const ml: Dictionary = {
   Large: 'വലുത്',
   Both: 'രണ്ടും',
   'Shown on cards': 'കാർഡുകളിൽ കാണിക്കുന്നവ',
+  // What each setting does, behind the ? beside it (#768)
+  'Syncs this browser’s AI keys with your other devices through the vault.':
+    'ഈ ബ്രൗസറിന്റെ AI കീകൾ വോൾട്ട് വഴി നിങ്ങളുടെ മറ്റ് ഉപകരണങ്ങളുമായി സിങ്ക് ചെയ്യുന്നു.',
+  'Which of your AI accounts this feature asks.':
+    'ഈ സവിശേഷത നിങ്ങളുടെ ഏത് AI അക്കൗണ്ടിനോടാണ് ചോദിക്കുന്നത് എന്നത്.',
+  'Whether a task done with AI asks before each change or makes them on its own.':
+    'AI ഉപയോഗിച്ച് ചെയ്യുന്ന ജോലി ഓരോ മാറ്റത്തിനും മുമ്പ് ചോദിക്കണോ അതോ സ്വയം ചെയ്യണോ എന്നത്.',
+  'Makes Orden the browser that links from other programs open in.':
+    'മറ്റ് പ്രോഗ്രാമുകളിൽ നിന്നുള്ള ലിങ്കുകൾ തുറക്കുന്ന ബ്രൗസറായി Orden-നെ മാറ്റുന്നു.',
+  'Where words typed into a web tab’s address bar are searched.':
+    'വെബ് ടാബിന്റെ വിലാസ ബാറിൽ ടൈപ്പ് ചെയ്യുന്ന വാക്കുകൾ എവിടെ തിരയുന്നു എന്നത്.',
+  'The search address, with %s where the words go.':
+    'തിരയൽ വിലാസം, വാക്കുകൾ വരുന്നിടത്ത് %s ഉള്ളത്.',
+  'Words the spelling check never marks as wrong.':
+    'സ്പെല്ലിംഗ് പരിശോധന ഒരിക്കലും തെറ്റായി അടയാളപ്പെടുത്താത്ത വാക്കുകൾ.',
+  'Which app’s keys Orden follows; any key below can still be changed.':
+    'Orden ഏത് ആപ്പിന്റെ കീകളാണ് പിന്തുടരുന്നത് എന്നത്; താഴെയുള്ള ഏത് കീയും ഇപ്പോഴും മാറ്റാം.',
+  'Moves and edits in notes with Vim’s keys.':
+    'Vim-ന്റെ കീകൾ ഉപയോഗിച്ച് കുറിപ്പുകളിൽ നീങ്ങുകയും തിരുത്തുകയും ചെയ്യുന്നു.',
+  'What pulling a note down past its top does on a phone.':
+    'ഫോണിൽ ഒരു കുറിപ്പ് അതിന്റെ മുകൾഭാഗം കടന്ന് താഴേക്ക് വലിച്ചാൽ എന്ത് സംഭവിക്കും എന്നത്.',
+  'The OpenAI key the glasses ask their questions with.':
+    'കണ്ണട അതിന്റെ ചോദ്യങ്ങൾ ചോദിക്കാൻ ഉപയോഗിക്കുന്ന OpenAI കീ.',
+  'The model that answers what you ask on the glasses.':
+    'കണ്ണടയിൽ നിങ്ങൾ ചോദിക്കുന്നതിന് ഉത്തരം നൽകുന്ന മോഡൽ.',
+  'How long the model thinks before it answers; longer is slower.':
+    'ഉത്തരം നൽകുന്നതിന് മുമ്പ് മോഡൽ എത്ര നേരം ചിന്തിക്കുന്നു എന്നത്; കൂടുതലായാൽ വേഗം കുറയും.',
+  'Adds a Markdown document to the New menu you get by right-clicking in File Explorer.':
+    'File Explorer-ൽ വലത്-ക്ലിക്ക് ചെയ്യുമ്പോൾ കിട്ടുന്ന പുതിയത് മെനുവിലേക്ക് ഒരു Markdown പ്രമാണം ചേർക്കുന്നു.',
+  'What happens when one note was changed on two devices before they synced.':
+    'സിങ്ക് ചെയ്യുന്നതിന് മുമ്പ് ഒരു കുറിപ്പ് രണ്ട് ഉപകരണങ്ങളിൽ മാറ്റിയാൽ എന്ത് സംഭവിക്കും എന്നത്.',
+  'How far back the account keeps earlier versions of your notes.':
+    'നിങ്ങളുടെ കുറിപ്പുകളുടെ മുൻ പതിപ്പുകൾ അക്കൗണ്ട് എത്ര കാലം പിന്നോട്ട് സൂക്ഷിക്കുന്നു എന്നത്.',
+  'The colour of buttons, links and the selection.':
+    'ബട്ടണുകൾ, ലിങ്കുകൾ, തിരഞ്ഞെടുപ്പ് എന്നിവയുടെ നിറം.',
+  'Adds Orden to the AI agent programs on this computer, so they reach your notes with nothing to set up.':
+    'ഈ കമ്പ്യൂട്ടറിലെ AI ഏജന്റ് പ്രോഗ്രാമുകളിലേക്ക് Orden ചേർക്കുന്നു, അതിനാൽ ഒന്നും സജ്ജീകരിക്കാതെ തന്നെ അവ നിങ്ങളുടെ കുറിപ്പുകളിലെത്തും.',
+  'Words that notify you whenever someone writes them in a chat, separated by commas.':
+    'ചാറ്റിൽ ആരെങ്കിലും എഴുതുമ്പോഴെല്ലാം നിങ്ങളെ അറിയിക്കുന്ന വാക്കുകൾ, കോമകൾ കൊണ്ട് വേർതിരിച്ചവ.',
+  'When chats may notify you; outside these hours they stay quiet.':
+    'ചാറ്റുകൾ നിങ്ങളെ എപ്പോൾ അറിയിക്കാം എന്നത്; ഈ സമയത്തിന് പുറത്ത് അവ നിശ്ശബ്ദമായിരിക്കും.',
+  'When the hours chats may notify you begin.':
+    'ചാറ്റുകൾ അറിയിക്കാവുന്ന സമയം എപ്പോൾ ആരംഭിക്കുന്നു എന്നത്.',
+  'When the hours chats may notify you end.':
+    'ചാറ്റുകൾ അറിയിക്കാവുന്ന സമയം എപ്പോൾ അവസാനിക്കുന്നു എന്നത്.',
+  'Notifications show the message itself; off shows only who wrote.':
+    'അറിയിപ്പുകൾ സന്ദേശം തന്നെ കാണിക്കും; ഓഫാക്കിയാൽ ആരാണ് എഴുതിയതെന്ന് മാത്രം കാണിക്കും.',
+  'Notifications make a sound.': 'അറിയിപ്പുകൾ ശബ്ദമുണ്ടാക്കും.',
+  'Which headings start a new page on the glasses.':
+    'കണ്ണടയിൽ ഏത് തലക്കെട്ടുകൾ പുതിയ പേജ് തുടങ്ങുന്നു എന്നത്.',
+  'Shows line numbers on the glasses.': 'കണ്ണടയിൽ വരി നമ്പറുകൾ കാണിക്കുന്നു.',
+  'How many blank lines the glasses keep between blocks.':
+    'ബ്ലോക്കുകൾക്കിടയിൽ കണ്ണട എത്ര ശൂന്യ വരികൾ വിടുന്നു എന്നത്.',
+  'Shows this markdown mark on the glasses rather than hiding it.':
+    'ഈ markdown അടയാളം മറയ്ക്കാതെ കണ്ണടയിൽ കാണിക്കുന്നു.',
+  'Lets you run commands on the glasses by speaking.':
+    'സംസാരിച്ച് കണ്ണടയിൽ കമാൻഡുകൾ പ്രവർത്തിപ്പിക്കാൻ അനുവദിക്കുന്നു.',
+  'What you say to run this command; left empty, the phrase shown is used.':
+    'ഈ കമാൻഡ് പ്രവർത്തിപ്പിക്കാൻ നിങ്ങൾ പറയുന്നത്; ശൂന്യമാക്കിയാൽ കാണിച്ച വാചകം ഉപയോഗിക്കും.',
+  'What Windows draws behind the window: Mica, Acrylic, or no blur.':
+    'വിൻഡോയ്ക്ക് പിന്നിൽ Windows വരയ്ക്കുന്നത്: Mica, Acrylic, അല്ലെങ്കിൽ മങ്ങലില്ല.',
+  'How much of the window’s own colour lies over what is behind it.':
+    'വിൻഡോയുടെ സ്വന്തം നിറം പിന്നിലുള്ളതിന് മേൽ എത്രത്തോളം പരക്കുന്നു എന്നത്.',
+  'The frame takes its colour from what is open.':
+    'തുറന്നിരിക്കുന്നതിൽ നിന്ന് ഫ്രെയിം അതിന്റെ നിറം എടുക്കുന്നു.',
+  'How strongly the frame is coloured.': 'ഫ്രെയിമിന് എത്ര കടുപ്പത്തിൽ നിറം വരുന്നു എന്നത്.',
+  'The colours the frame takes where nothing open has a colour of its own.':
+    'തുറന്നിരിക്കുന്ന ഒന്നിനും സ്വന്തം നിറമില്ലാത്തപ്പോൾ ഫ്രെയിം എടുക്കുന്ന നിറങ്ങൾ.',
+  'A web tab takes the colour of its page.': 'ഒരു വെബ് ടാബ് അതിന്റെ പേജിന്റെ നിറം എടുക്കുന്നു.',
+  'When your status is taken away again.':
+    'നിങ്ങളുടെ സ്ഥിതി വീണ്ടും എപ്പോൾ നീക്കം ചെയ്യപ്പെടും എന്നത്.',
+  'Silences chat notifications and shows the others you are busy.':
+    'ചാറ്റ് അറിയിപ്പുകൾ നിശ്ശബ്ദമാക്കുകയും നിങ്ങൾ തിരക്കിലാണെന്ന് മറ്റുള്ളവരെ കാണിക്കുകയും ചെയ്യുന്നു.',
+  'The colour the others see beside your name.': 'നിങ്ങളുടെ പേരിനരികിൽ മറ്റുള്ളവർ കാണുന്ന നിറം.',
+  'The others see you as offline even while you are here.':
+    'നിങ്ങൾ ഇവിടെയുള്ളപ്പോഴും മറ്റുള്ളവർ നിങ്ങളെ ഓഫ്‌ലൈനായി കാണും.',
+  'The picture behind the window, one for light and one for dark; drag it to move its centre.':
+    'വിൻഡോയ്ക്ക് പിന്നിലെ ചിത്രം, ലൈറ്റിന് ഒന്നും ഡാർക്കിന് ഒന്നും; അതിന്റെ മധ്യം നീക്കാൻ വലിക്കുക.',
+  'The theme Orden is drawn in.': 'Orden വരയ്ക്കുന്ന തീം.',
+  'Light, dark, or whichever the system is in.':
+    'ലൈറ്റ്, ഡാർക്ക്, അല്ലെങ്കിൽ സിസ്റ്റം ഏതിലാണോ അത്.',
+  'Whether the bookmarks at the top of the file list show as tiles or as a list.':
+    'ഫയൽ പട്ടികയുടെ മുകളിലുള്ള ബുക്ക്‌മാർക്കുകൾ ടൈലുകളായോ പട്ടികയായോ കാണിക്കണോ എന്നത്.',
+  'Shows a pointing hand over buttons, as web pages do.':
+    'വെബ് പേജുകളിലെ പോലെ, ബട്ടണുകൾക്ക് മുകളിൽ ചൂണ്ടുന്ന കൈ കാണിക്കുന്നു.',
+  'Orden’s own title bar, or the window frame of your system.':
+    'Orden-ന്റെ സ്വന്തം ടൈറ്റിൽ ബാർ, അല്ലെങ്കിൽ നിങ്ങളുടെ സിസ്റ്റത്തിന്റെ വിൻഡോ ഫ്രെയിം.',
+  'How large the text of notes is.': 'കുറിപ്പുകളിലെ എഴുത്ത് എത്ര വലുതാണ് എന്നത്.',
+  'The space between the lines of a note.': 'ഒരു കുറിപ്പിലെ വരികൾക്കിടയിലുള്ള അകലം.',
+  'How wide a line of a note grows before it wraps.':
+    'ഒരു കുറിപ്പിലെ വരി അടുത്ത വരിയിലേക്ക് മടങ്ങുന്നതിന് മുമ്പ് എത്ര വീതിയിൽ വളരുന്നു എന്നത്.',
+  'Typing an opening bracket or quote adds the closing one too.':
+    'തുറക്കുന്ന ബ്രാക്കറ്റോ ഉദ്ധരണിയോ ടൈപ്പ് ചെയ്താൽ അടയ്ക്കുന്നതും ചേർക്കും.',
+  'Keeps the line you are writing in the middle of the screen.':
+    'നിങ്ങൾ എഴുതുന്ന വരി സ്ക്രീനിന്റെ നടുവിൽ നിർത്തുന്നു.',
+  'Dims everything but the paragraph you are writing in.':
+    'നിങ്ങൾ എഴുതുന്ന ഖണ്ഡിക ഒഴികെ മറ്റെല്ലാം മങ്ങിക്കുന്നു.',
+  'Joins pairs such as -> or != into one sign, in code only or everywhere.':
+    '-> അല്ലെങ്കിൽ != പോലുള്ള ജോടികളെ കോഡിൽ മാത്രമോ എല്ലായിടത്തുമോ ഒറ്റ ചിഹ്നമായി ചേർക്കുന്നു.',
+  'Where a picture or file you paste or drop into a note is saved.':
+    'ഒരു കുറിപ്പിലേക്ക് നിങ്ങൾ ഒട്ടിക്കുന്നതോ വലിച്ചിടുന്നതോ ആയ ചിത്രമോ ഫയലോ സംരക്ഷിക്കുന്ന സ്ഥലം.',
+  'Turning two fingers on a touchpad or screen rotates the canvas.':
+    'ടച്ച്‌പാഡിലോ സ്ക്രീനിലോ രണ്ട് വിരലുകൾ തിരിച്ചാൽ ക്യാൻവാസ് തിരിയും.',
+  'A rotation that ends near a right angle settles on it.':
+    'ഒരു മട്ടകോണിനടുത്ത് അവസാനിക്കുന്ന തിരിക്കൽ അതിൽത്തന്നെ ഉറയ്ക്കും.',
+  'The paper size a new page note starts with.': 'പുതിയ താൾ കുറിപ്പ് തുടങ്ങുന്ന പേപ്പർ വലുപ്പം.',
+  'How the name of a new unique note is made from the date and time.':
+    'പുതിയ അനന്യ കുറിപ്പിന്റെ പേര് തീയതിയിൽ നിന്നും സമയത്തിൽ നിന്നും എങ്ങനെ ഉണ്ടാക്കുന്നു എന്നത്.',
+  'The colours code in a note is highlighted in.':
+    'ഒരു കുറിപ്പിലെ കോഡ് ഹൈലൈറ്റ് ചെയ്യുന്ന നിറങ്ങൾ.',
+  'Numbers the lines of code blocks.': 'കോഡ് ബ്ലോക്കുകളിലെ വരികൾക്ക് നമ്പറിടുന്നു.',
+  'The paper size of a PDF or a print.': 'ഒരു PDF-ന്റെയോ പ്രിന്റിന്റെയോ പേപ്പർ വലുപ്പം.',
+  'Whether pages are upright or on their side.': 'പേജുകൾ നിവർന്നാണോ വശംതിരിഞ്ഞാണോ എന്നത്.',
+  'The space around the edge of each page, such as 20mm or 1in.':
+    'ഓരോ പേജിന്റെയും അരികിനു ചുറ്റുമുള്ള ഇടം, ഉദാഹരണത്തിന് 20mm അല്ലെങ്കിൽ 1in.',
+  'Text at the top of every page; ${title}, ${date} and ${year} are filled in.':
+    'ഓരോ പേജിന്റെയും മുകളിലുള്ള എഴുത്ത്; ${title}, ${date}, ${year} എന്നിവ പൂരിപ്പിക്കും.',
+  'Text at the bottom of every page; ${title}, ${date} and ${year} are filled in.':
+    'ഓരോ പേജിന്റെയും താഴെയുള്ള എഴുത്ത്; ${title}, ${date}, ${year} എന്നിവ പൂരിപ്പിക്കും.',
+  'Whether an export is light, dark, or as the app is now.':
+    'ഒരു എക്സ്പോർട്ട് ലൈറ്റോ ഡാർക്കോ ആപ്പ് ഇപ്പോൾ ഉള്ളതുപോലെയോ എന്നത്.',
+  'Whether this key goes to Orden or to the program in the terminal, or asks each time.':
+    'ഈ കീ Orden-ലേക്ക് പോകണോ ടെർമിനലിലെ പ്രോഗ്രാമിലേക്ക് പോകണോ അതോ ഓരോ തവണയും ചോദിക്കണോ എന്നത്.',
+  'The shell a new terminal starts.': 'പുതിയ ടെർമിനൽ ആരംഭിക്കുന്ന ഷെൽ.',
+  'How large the text in terminals is.': 'ടെർമിനലുകളിലെ എഴുത്ത് എത്ര വലുതാണ് എന്നത്.',
+  'Brings back what each terminal showed after Orden restarts; off forgets it on quit.':
+    'Orden പുനരാരംഭിച്ച ശേഷം ഓരോ ടെർമിനലും കാണിച്ചത് തിരികെ കൊണ്ടുവരുന്നു; ഓഫാക്കിയാൽ പുറത്തുകടക്കുമ്പോൾ അത് മറക്കും.',
+  'Asks before Orden quits with terminals open: always, or only while something runs in one.':
+    'ടെർമിനലുകൾ തുറന്നിരിക്കെ Orden പുറത്തുകടക്കുന്നതിന് മുമ്പ് ചോദിക്കുന്നു: എപ്പോഴും, അല്ലെങ്കിൽ ഒന്നിൽ എന്തെങ്കിലും പ്രവർത്തിക്കുമ്പോൾ മാത്രം.',
+  'Draws the app on the graphics card; turn it off if the window flickers or stays blank.':
+    'ആപ്പിനെ ഗ്രാഫിക്സ് കാർഡിൽ വരയ്ക്കുന്നു; വിൻഡോ മിന്നുകയോ ശൂന്യമായി തുടരുകയോ ചെയ്താൽ ഇത് ഓഫാക്കുക.',
+  'How long before a task’s time it reminds you, unless the task says otherwise.':
+    'ജോലി മറ്റൊന്ന് പറയുന്നില്ലെങ്കിൽ, ജോലിയുടെ സമയത്തിന് എത്ര മുമ്പ് ഓർമ്മിപ്പിക്കുന്നു എന്നത്.',
+  'Keeps Orden running in the tray after its window closes, so reminders still ring.':
+    'വിൻഡോ അടച്ച ശേഷവും Orden-നെ ട്രേയിൽ പ്രവർത്തിപ്പിക്കുന്നു, അതിനാൽ ഓർമ്മപ്പെടുത്തലുകൾ മുഴങ്ങും.',
+  'Lets reminders ring at the exact minute rather than when the phone gets round to it.':
+    'ഫോണിന് സൗകര്യമുള്ളപ്പോഴല്ല, കൃത്യം ആ മിനിറ്റിൽ തന്നെ ഓർമ്മപ്പെടുത്തലുകൾ മുഴങ്ങാൻ അനുവദിക്കുന്നു.',
+  'How often a note you are editing is saved as a version you can go back to in History.':
+    'നിങ്ങൾ തിരുത്തുന്ന കുറിപ്പ്, പതിപ്പ് ചരിത്രത്തിൽ തിരികെ പോകാവുന്ന ഒരു പതിപ്പായി എത്ര ഇടവിട്ട് സംരക്ഷിക്കുന്നു എന്നത്.',
+  'How long those versions are kept before they are deleted.':
+    'ആ പതിപ്പുകൾ ഇല്ലാതാക്കുന്നതിന് മുമ്പ് എത്ര കാലം സൂക്ഷിക്കുന്നു എന്നത്.',
+  'Ctrl+Tab goes to the tab used last, as in VS Code; off goes through the tabs in the order they sit.':
+    'Ctrl+Tab, VS Code-ലെ പോലെ, അവസാനം ഉപയോഗിച്ച ടാബിലേക്ക് പോകുന്നു; ഓഫാക്കിയാൽ ടാബുകൾ ഇരിക്കുന്ന ക്രമത്തിൽ പോകും.',
+  'Two fingers sideways on the touchpad go back and forward.':
+    'ടച്ച്‌പാഡിൽ രണ്ട് വിരലുകൾ വശത്തേക്ക് നീക്കിയാൽ പിന്നോട്ടും മുന്നോട്ടും പോകും.',
+  'What the web pages of another space do while it is out of sight: keep running, pause, or ask the first time.':
+    'മറ്റൊരു സ്പേസിലെ വെബ് പേജുകൾ കാണാതിരിക്കുമ്പോൾ എന്ത് ചെയ്യുന്നു എന്നത്: പ്രവർത്തിക്കട്ടെ, നിർത്തിവയ്ക്കുക, അല്ലെങ്കിൽ ആദ്യ തവണ ചോദിക്കുക.',
+  'Unloads web pages that have been out of sight for a while to free memory; they load again when you return.':
+    'കുറച്ചുനേരമായി കാണാതിരിക്കുന്ന വെബ് പേജുകൾ മെമ്മറി ഒഴിവാക്കാൻ അൺലോഡ് ചെയ്യുന്നു; നിങ്ങൾ തിരികെ വരുമ്പോൾ അവ വീണ്ടും ലോഡാകും.',
+  'Reads dates, times and fields out of what you type into Add task, such as “tomorrow 9am”.':
+    'ടാസ്ക് ചേർക്കുക എന്നതിൽ നിങ്ങൾ ടൈപ്പ് ചെയ്യുന്ന “tomorrow 9am” പോലുള്ളവയിൽ നിന്ന് തീയതികളും സമയങ്ങളും ഫീൽഡുകളും വായിക്കുന്നു.',
+  'The folder of this space whose folders the Tasks panel lists as projects.':
+    'ജോലികൾ പാനൽ പ്രോജക്റ്റുകളായി പട്ടികപ്പെടുത്തുന്ന ഫോൾഡറുകളുള്ള, ഈ സ്പേസിലെ ഫോൾഡർ.',
+  'Today also lists the tasks that have no start date; off shows only those dated today or earlier.':
+    'ആരംഭ തീയതിയില്ലാത്ത ജോലികളും ഇന്ന് കാണിക്കുന്നു; ഓഫാക്കിയാൽ ഇന്നോ അതിനുമുമ്പോ തീയതിയുള്ളവ മാത്രം കാണിക്കും.',
+  'The Add task shortcut works even while another app is in front.':
+    'മറ്റൊരു ആപ്പ് മുന്നിലുള്ളപ്പോഴും ടാസ്ക് ചേർക്കുക കുറുക്കുവഴി പ്രവർത്തിക്കും.',
+  'Shows terminals and the other tools for writing code.':
+    'ടെർമിനലുകളും കോഡ് എഴുതാനുള്ള മറ്റ് ഉപകരണങ്ങളും കാണിക്കുന്നു.',
+  'Hides the tips Orden shows while you get to know it.':
+    'നിങ്ങൾ Orden പരിചയപ്പെടുമ്പോൾ അത് കാണിക്കുന്ന നുറുങ്ങുകൾ മറയ്ക്കുന്നു.',
+  'The language Orden’s menus and settings are in.': 'Orden-ന്റെ മെനുകളും ക്രമീകരണങ്ങളും ഉള്ള ഭാഷ.',
+  'Offers this type when you make something new; off only takes it out of that list.':
+    'നിങ്ങൾ പുതിയതെന്തെങ്കിലും ഉണ്ടാക്കുമ്പോൾ ഈ തരം നൽകുന്നു; ഓഫാക്കിയാൽ ആ പട്ടികയിൽ നിന്ന് മാത്രം നീക്കും.',
+  'Shows a mark such as ** or # while the cursor is in it; off keeps every mark out of sight.':
+    'കഴ്സർ ** അല്ലെങ്കിൽ # പോലുള്ള അടയാളത്തിനുള്ളിലായിരിക്കുമ്പോൾ അത് കാണിക്കുന്നു; ഓഫാക്കിയാൽ എല്ലാ അടയാളങ്ങളും മറഞ്ഞിരിക്കും.',
+  'Notes open as plain markdown text rather than formatted.':
+    'കുറിപ്പുകൾ ഫോർമാറ്റ് ചെയ്യാതെ വെറും markdown എഴുത്തായി തുറക്കും.',
+  'Writes notes from right to left, for Arabic, Hebrew and other such scripts.':
+    'അറബി, ഹീബ്രു പോലുള്ള ലിപികൾക്കായി കുറിപ്പുകൾ വലത്തുനിന്ന് ഇടത്തോട്ട് എഴുതുന്നു.',
+  'Underlines misspelled words as you write.':
+    'നിങ്ങൾ എഴുതുമ്പോൾ തെറ്റായ സ്പെല്ലിംഗുള്ള വാക്കുകൾക്ക് അടിവരയിടുന്നു.',
+  'The dictionary spelling is checked against; Match the system uses your system’s language.':
+    'സ്പെല്ലിംഗ് പരിശോധിക്കുന്ന നിഘണ്ടു; സിസ്റ്റം അനുസരിച്ച് നിങ്ങളുടെ സിസ്റ്റത്തിന്റെ ഭാഷ ഉപയോഗിക്കുന്നു.',
+  'The version of Orden that is running; press to copy it.':
+    'പ്രവർത്തിക്കുന്ന Orden-ന്റെ പതിപ്പ്; പകർത്താൻ അമർത്തുക.',
+  'One of this theme’s own settings, offered by its author.':
+    'ഈ തീമിന്റെ സ്വന്തം ക്രമീകരണങ്ങളിൽ ഒന്ന്, അതിന്റെ രചയിതാവ് നൽകിയത്.',
+  'How much of what is behind the window shows under notes and terminals; the words always stay readable.':
+    'കുറിപ്പുകൾക്കും ടെർമിനലുകൾക്കും കീഴിൽ വിൻഡോയ്ക്ക് പിന്നിലുള്ളത് എത്ര കാണാം എന്നത്; വാക്കുകൾ എപ്പോഴും വായിക്കാവുന്നതായിരിക്കും.',
+  'The colour laid over the picture.': 'ചിത്രത്തിന് മേൽ ഇടുന്ന നിറം.',
+  'How much the picture is blurred.': 'ചിത്രം എത്ര മങ്ങിക്കുന്നു എന്നത്.',
+  'How much the picture is darkened.': 'ചിത്രം എത്ര ഇരുണ്ടതാക്കുന്നു എന്നത്.',
+  'How vivid the colours of the picture are.': 'ചിത്രത്തിന്റെ നിറങ്ങൾ എത്ര തിളക്കമുള്ളതാണ് എന്നത്.',
+  'How strongly the tint colour lies over the picture.':
+    'നിറച്ഛായയുടെ നിറം ചിത്രത്തിന് മേൽ എത്ര ശക്തമായി പരക്കുന്നു എന്നത്.',
+  'Adds a film grain over the picture.': 'ചിത്രത്തിന് മേൽ ഫിലിം ഗ്രെയിൻ ചേർക്കുന്നു.',
+  'How the picture fills the window.': 'ചിത്രം വിൻഡോ എങ്ങനെ നിറയ്ക്കുന്നു എന്നത്.',
+  'An empty pane shows the picture rather than paper.':
+    'ശൂന്യമായ പാളി പേപ്പറിന് പകരം ചിത്രം കാണിക്കുന്നു.',
+  'The name the others see on what you share and in chats.':
+    'നിങ്ങൾ പങ്കിടുന്നവയിലും ചാറ്റുകളിലും മറ്റുള്ളവർ കാണുന്ന പേര്.',
+  'How far back Go back takes this space; it says first what would change.':
+    'പിന്നോട്ട് പോകുക ഈ സ്പേസിനെ എത്രത്തോളം പിന്നോട്ട് കൊണ്ടുപോകുന്നു എന്നത്; എന്താണ് മാറുക എന്ന് ആദ്യം പറയുന്നു.',
+  'The picture the others see beside your name.': 'നിങ്ങളുടെ പേരിനരികിൽ മറ്റുള്ളവർ കാണുന്ന ചിത്രം.',
+  'Shown to the others beside your name, such as she/her.':
+    'നിങ്ങളുടെ പേരിനരികിൽ മറ്റുള്ളവർക്ക് കാണിക്കുന്നു, ഉദാഹരണത്തിന് അവൾ/അവളുടെ.',
+  'A few words about you that the others see on your profile.':
+    'നിങ്ങളുടെ പ്രൊഫൈലിൽ മറ്റുള്ളവർ കാണുന്ന, നിങ്ങളെക്കുറിച്ചുള്ള കുറച്ച് വാക്കുകൾ.',
+  'What you are up to, shown to the others beside your name until it clears.':
+    'നിങ്ങൾ ഇപ്പോൾ ചെയ്യുന്നത്, മാഞ്ഞുപോകുന്നതുവരെ നിങ്ങളുടെ പേരിനരികിൽ മറ്റുള്ളവർക്ക് കാണിക്കുന്നു.',
 }
