@@ -1,6 +1,5 @@
-import { describe, expect, test } from 'vitest'
-
 import { renderMarkdown } from '@nib/markdown'
+import { describe, expect, test } from 'vitest'
 
 import type { ImportPlan } from './plan'
 import { detect } from './read'
@@ -110,6 +109,23 @@ describe("Tomboy's own markup", () => {
     expect(tomboyMarkdown('a &lt; b &amp; c')).toBe('a < b & c')
   })
 
+  test('a tag written in the words is words, since Tomboy keeps plain text', () => {
+    const said = tomboyMarkdown(
+      '&lt;img src=https://t.example/p.gif&gt; <bold>&lt;style&gt;x&lt;/style&gt;</bold> after',
+    )
+    expect(said).toBe('\\<img src=https://t.example/p.gif> **\\<style>x\\</style>** after')
+    expect(said).not.toMatch(/(?<!\\)<(?=[A-Za-z/])/)
+  })
+
+  test('a tag in monospace is shown as it was, since code reads no markup', () => {
+    expect(tomboyMarkdown('<monospace>&lt;div&gt;</monospace>')).toBe('`<div>`')
+  })
+
+  test('a backslash of the words in front of a tag in monospace is shown once, as written', () => {
+    expect(tomboyMarkdown('<monospace>a\\&lt;b&gt;</monospace>')).toBe('`a\\<b>`')
+    expect(tomboyMarkdown('<monospace>a\\\\&lt;b&gt;</monospace>')).toBe('`a\\\\<b>`')
+  })
+
   test("a list as Tomboy writes it, each item's line ending inside it, is one tight list", () => {
     const content =
       'Before\n\n<list><list-item dir="ltr">one\n<list><list-item dir="ltr">under\n</list-item></list></list-item><list-item dir="ltr">two</list-item></list>\n\nAfter'
@@ -189,6 +205,29 @@ describe('links between Tomboy notes', () => {
     expect(noteAt(plan, 'Index.md')).toContain(
       'See [ZugFerd / factur-x #4343](ZugFerd%20factur-x%20%234343.md)',
     )
+  })
+
+  test('keep a tag in the title as words where the link is a markdown one', async () => {
+    const plan = await readTomboy([
+      file(
+        'b.note',
+        note('Index', 'See <link:internal>&lt;img src=y onerror=alert(2)&gt;#</link:internal>'),
+      ),
+    ])
+
+    const text = noteAt(plan, 'Index.md')
+    expect(text).toContain('See [\\<img src=y onerror=alert(2)>#](')
+    expect(renderMarkdown(text)).not.toContain('<img')
+  })
+
+  test('keep a backslash in front of a tag in the title as one backslash', async () => {
+    const plan = await readTomboy([
+      file('b.note', note('Index', 'See <link:internal>a\\&lt;b&gt; [c]#</link:internal>')),
+    ])
+
+    const text = noteAt(plan, 'Index.md')
+    expect(text).toContain('See [a\\\\\\<b> \\[c\\]#](')
+    expect(renderMarkdown(text)).toContain('a\\&lt;b&gt; [c]#</a>')
   })
 
   test('name the file and show the title, when the two differ', async () => {

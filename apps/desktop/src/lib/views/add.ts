@@ -17,6 +17,7 @@ import { nowHere, todayHere } from './days'
 import { templatePath, templateWords } from './templates'
 import { showQuickAdd } from '../surfaces.svelte'
 import { rows } from '../rows/rows.svelte'
+import { canWriteAt } from '../sharing.svelte'
 import { workspace } from '../workspace.svelte'
 import { writeFile } from '../workspace/write-file'
 import { addTask } from './act'
@@ -129,7 +130,9 @@ function idFor(base: Base): Record<string, string> {
 /** A new note for a view of notes: in the folder its filter names, with the
  *  properties its filter pins and the group's value, from its template, with the base's
  *  next id; opened for its name unless `made.open` is false. `base` is the view's base,
- *  `file` the base file it is in (its folder), if any. Answers its path. */
+ *  `file` the base file it is in (its folder), if any. Answers its path; null, and
+ *  nothing written, where the folder is in a space shared with this account to be
+ *  read, which a view of a base there, a form or a plus is all a way into. */
 export async function addNote(
   base: Base,
   at: number,
@@ -147,6 +150,7 @@ export async function addNote(
       : file
         ? folderOf(file)
         : space.root
+  if (!canWriteAt(dir)) return null
 
   const props: Record<string, unknown> = { ...place.properties }
   // The column the plus was pressed in: the value its property has there.

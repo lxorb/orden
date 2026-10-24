@@ -109,6 +109,7 @@
                 task={row.task}
                 label={title}
                 ontick={() => kit.tick(row)}
+                disabled={!kit.writes(row)}
               />{/if}
             <span>{title}</span>
           </div>

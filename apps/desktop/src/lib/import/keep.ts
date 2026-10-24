@@ -211,6 +211,7 @@ interface Item {
   text: string
 }
 
+/** An item's words are text in Keep, as a note's are. */
 function taskLine(item: Item): string {
   return `- [${item.checked ? 'x' : ' '}] ${plainWords(item.text)}`
 }

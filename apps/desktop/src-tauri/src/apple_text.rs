@@ -509,30 +509,78 @@ fn wrapped(run: &Run, said: &str) -> String {
 /// text (`~5 or ~10`), and the second of two percent signs, which would open a
 /// comment and hide the rest of the note. Everything else is left as it was: a note
 /// that says `5 * 3` says that.
+///
+/// A run of backslashes in front of an escaped character is doubled, as `as_words`
+/// doubles one in front of a tag: it would otherwise take the escape for itself and
+/// leave the character live.
 fn escaped(words: &str) -> String {
+    let chars: Vec<char> = words.chars().collect();
     let mut out = String::with_capacity(words.len());
-    let mut chars = words.chars().peekable();
+    let mut slashes = 0_usize;
     let mut before: Option<char> = None;
 
-    while let Some(one) = chars.next() {
-        let next = chars.peek().copied();
+    for (at, &one) in chars.iter().enumerate() {
+        if one == '\\' {
+            slashes += 1;
+            before = Some(one);
+            continue;
+        }
+
+        let next = chars.get(at + 1).copied();
         let blank_after = next.is_some_and(char::is_whitespace);
         let escape = match one {
             '[' | ']' => true,
-            '<' => next
-                .is_some_and(|next| next.is_ascii_alphabetic() || matches!(next, '/' | '!' | '?')),
+            '<' => opens_tag(next),
             '$' => !(before.is_some_and(char::is_whitespace) && blank_after),
             '~' | '^' => !blank_after,
             '%' => before == Some('%'),
             _ => false,
         };
-        if escape {
-            out.push('\\');
-        }
+        let kept = if escape { slashes * 2 + 1 } else { slashes };
+        out.extend(std::iter::repeat_n('\\', kept));
+        slashes = 0;
         out.push(one);
         before = Some(one);
     }
 
+    out.extend(std::iter::repeat_n('\\', slashes));
+    out
+}
+
+/// Whether a `<` followed by this reads as the start of a tag, a closing tag, a
+/// comment or a processing instruction: the four things markdown lets raw HTML
+/// begin with. `a < b` is not one of them and keeps its bracket. The same rule as
+/// `OPENS_MARKUP` in `packages/markdown/src/words.ts`.
+pub fn opens_tag(next: Option<char>) -> bool {
+    next.is_some_and(|next| next.is_ascii_alphabetic() || matches!(next, '/' | '!' | '?'))
+}
+
+/// Words from outside a note, with nothing in them that can open a tag. A note's
+/// own markup is markup, and the app renders the HTML in it, so a page that calls
+/// itself `Fine <img src=x onerror=...>` would otherwise write a tag into the note.
+///
+/// A backslash already in front of the `<` would take the escape for itself and
+/// leave the tag live, so those are doubled too. Everything else is left alone: a
+/// `#` in a tag is the tag.
+pub fn as_words(words: &str) -> String {
+    let mut out = String::with_capacity(words.len());
+    let mut slashes = 0_usize;
+    let mut chars = words.chars().peekable();
+
+    while let Some(one) = chars.next() {
+        if one == '\\' {
+            slashes += 1;
+            continue;
+        }
+
+        let opens = one == '<' && opens_tag(chars.peek().copied());
+        let kept = if opens { slashes * 2 + 1 } else { slashes };
+        out.extend(std::iter::repeat_n('\\', kept));
+        slashes = 0;
+        out.push(one);
+    }
+
+    out.extend(std::iter::repeat_n('\\', slashes));
     out
 }
 
@@ -1515,6 +1563,25 @@ mod tests {
             said,
             "Tickets \\$5-\\$10, \\~5 or \\~10, %\\%d, x\\^2, a $ b ~ c"
         );
+    }
+
+    /// A backslash somebody typed in front of a tag would otherwise take the escape
+    /// for itself: `\<img>` is a backslash and then a live tag.
+    #[test]
+    fn a_backslash_in_front_of_html_does_not_let_it_through() {
+        let said = as_markdown("\\<img src=x onerror=alert(1)>", &[run(29, &[])]);
+        assert_eq!(said, "\\\\\\<img src=x onerror=alert(1)>");
+    }
+
+    /// Where a link goes comes from outside the note, and nothing in it may end the
+    /// link early and leave the rest of it as markup on the line.
+    #[test]
+    fn where_a_link_goes_cannot_end_the_link() {
+        assert_eq!(
+            super::destination("https://x.test/a) <img src=x onerror=alert(1)>"),
+            "<https://x.test/a) %3Cimg src=x onerror=alert(1)%3E>"
+        );
+        assert_eq!(super::destination("https://x.test/a"), "https://x.test/a");
     }
 
     /// A link with a space or a bracket in where it goes is still one link.

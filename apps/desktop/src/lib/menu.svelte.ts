@@ -170,7 +170,9 @@ export function archiveEntry(path: string | null | undefined): MenuEntry[] {
  *  `folder` rather than a second function, because the tree knows which its row is
  *  and nothing else about a row differs. */
 export function iconEntries(path: string | null | undefined, folder = false): MenuEntry[] {
-  if (!path) return []
+  // Not in a space shared to be read: the icon is written into the note, or into the
+  // space's own map for a folder, and either is a change the sync would refuse.
+  if (!path || !canWriteAt(path)) return []
   // Not a chat in the glasses' plugin, which carries none.
   const chat = !__EVEN_PLUGIN__ && isChatTarget(path)
   const kept = chat || [isMarkdownPath, isCanvasTarget, isPagesTarget].some((one) => one(path))
@@ -206,7 +208,8 @@ export function coverEntries(path: string | null | undefined): MenuEntry[] {
   // `canHaveCover` in note-cover.ts, said here without it: the writing is fetched by
   // the press on a row rather than carried with every menu, and it is warmed at the
   // launch's last turn, so the file chooser opens in the gesture that asked for it.
-  if (!path || !isMarkdownPath(path)) return []
+  // Nor in a space shared to be read, as the icon above.
+  if (!path || !isMarkdownPath(path) || !canWriteAt(path)) return []
 
   const there = links.coverOf(path) !== null
   const cover = () => import('./note-cover')
