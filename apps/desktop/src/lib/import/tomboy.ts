@@ -159,12 +159,29 @@ export function tomboyMarkdown(
   // would otherwise push them far enough in to read as code.
   let item = false
 
+  // Tomboy is plain text, so its words are written to read back as themselves:
+  // `$5-$10` is two prices rather than a formula; see `plainWords`. Monospace takes
+  // its escapes back off as it becomes code; see `unescaped`.
+  //
+  // Escaped a run at a time, two runs a dropped tag joined - a size, a link to a
+  // page - met unescaped: `&lt;` before a size and `img …&gt;` inside it were a
+  // live tag, `%` and `%d` a comment. So the words wait here until something of
+  // the note's own shape is written, and are escaped as the one run they are.
+  let words = ''
+
+  const flush = () => {
+    if (words) out.push(plainWords(words))
+    words = ''
+  }
+
   const write = (text: string) => {
+    flush()
     if (text) out.push(text)
   }
 
   /** The end of what is written, which is all a line ending is looked for in. */
   const tail = () => {
+    flush()
     let end = ''
     for (let at = out.length - 1; at >= 0 && end.length < 256; at -= 1) end = `${out[at]}${end}`
     return end
@@ -172,6 +189,7 @@ export function tomboyMarkdown(
 
   /** The last `count` characters taken off again. */
   const cut = (count: number) => {
+    flush()
     let left = count
     while (left > 0 && out.length) {
       const last = out.pop() ?? ''
@@ -180,29 +198,27 @@ export function tomboyMarkdown(
     }
   }
 
-  // Tomboy is plain text, so its words are written to read back as themselves:
-  // `$5-$10` is two prices rather than a formula; see `plainWords`. Monospace takes
-  // its escapes back off as it becomes code; see `unescaped`.
-
-  const words = (text: string) => {
+  const said = (text: string) => {
     if (!item) {
-      write(plainWords(text))
+      words += text
       return
     }
 
-    const said = text.replace(/^[ \t]+/, '')
-    if (said) item = false
-    write(plainWords(said))
+    const trimmed = text.replace(/^[ \t]+/, '')
+    if (trimmed) item = false
+    words += trimmed
   }
 
   for (const tag of tagsIn(content)) {
     if (tag.from < at) continue
 
-    words(unescapeXml(content.slice(at, tag.from)))
+    said(unescapeXml(content.slice(at, tag.from)))
     at = tag.to
 
     const name = tag.name.toLowerCase()
     const mark = AROUND[name]
+    // Everything below writes the note's shape, and the words before it end there.
+    if (mark || name === 'list' || name === 'list-item' || name === 'link:internal') flush()
 
     if (mark) {
       if (!tag.closing) {
@@ -272,7 +288,8 @@ export function tomboyMarkdown(
     // heading, and a heading in the middle of a note would be a change of shape.
   }
 
-  write(plainWords(unescapeXml(content.slice(at))))
+  said(unescapeXml(content.slice(at)))
+  flush()
 
   return out
     .join('')
