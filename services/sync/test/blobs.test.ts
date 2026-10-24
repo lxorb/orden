@@ -428,6 +428,44 @@ describe('giving an image back', () => {
     expect((await call(env, `/i/${picture.hash}.png`)).status).toBe(200)
   })
 
+  /** A note written before its pictures were written down has none yet, until the
+   *  nightly sweep reads it: in a space the asker is in, its body is read instead. */
+  test('hands it over from a note the sweep has not read yet', async () => {
+    const owner = await signIn(env, 'owner@b.dev')
+    const theirs = (
+      await call<{ space: { id: string } }>(env, '/v1/spaces', {
+        token: owner,
+        body: { name: 'Theirs' },
+      })
+    ).json.space.id
+    const sent = await mail(() =>
+      call(env, `/v1/spaces/${theirs}/share/invite`, {
+        token: owner,
+        body: { email: 'a@b.dev', role: 'write' },
+      }),
+    )
+    await call(env, `/v1/join/${/\/join\/([a-f0-9]+)/.exec(sent)?.[1]}`, {
+      method: 'POST',
+      token,
+    })
+
+    const picture = sized(2048)
+    await upload(picture)
+    const note = (
+      await call<{ note: { id: string } }>(env, `/v1/spaces/${theirs}/notes`, {
+        token,
+        body: { path: 'N.md', content: `![](https://nibeditor.com/i/${picture.hash}.png)` },
+      })
+    ).json.note.id
+    env.db.prepare('delete from note_pictures where note_id = ?').run(note)
+    env.db.prepare('update notes set front_rev = 1 where id = ?').run(note)
+
+    await call(env, `/v1/blobs/${picture.hash}`, { method: 'DELETE', token })
+
+    expect((await call(env, `/i/${picture.hash}.png`)).status).toBe(200)
+    expect((await call(env, '/v1/usage', { token })).json.used).toBe(start)
+  })
+
   test('and deletes it when only its own notes show it', async () => {
     const own = (
       await call<{ space: { id: string } }>(env, '/v1/spaces', { token, body: { name: 'Mine' } })
