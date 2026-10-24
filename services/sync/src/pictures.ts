@@ -9,33 +9,91 @@
  *  reads the notes written before there was anywhere to put them (blog/fill.ts). */
 
 import { withoutComments } from '@nib/markdown'
+import { coverOf } from '@nib/markdown/cover'
+import { frontMatterValue } from '@nib/markdown/front-matter'
 import { lines, withoutCode } from '@nib/markdown/links'
 import type { Env } from './types'
 
-/** A picture in a note, as the renderer draws one: a markdown image or an HTML image
- *  tag, and the address it names. Only these: a hash written in prose, in a link or in
- *  code is somebody naming the bytes, not a note showing them, and anybody who once
- *  saw a hash could otherwise claim the bytes behind it by writing it down. */
-const EMBEDS = [/!\[[^\]]*\]\(\s*<?([^\s)>]+)/g, /<img\b[^>]*?\ssrc\s*=\s*["']?([^"'\s>]+)/gi]
+/** A picture in a note's prose, as the renderer draws one, and the address it names: a
+ *  markdown image (whose words may hold a pair of brackets of their own), an embed of
+ *  the address in double brackets, and an HTML image tag, which may run over several
+ *  lines. Only these: a hash written in prose, in a link or in code is somebody naming
+ *  the bytes, not a note showing them, and anybody who once saw a hash could otherwise
+ *  claim the bytes behind it by writing it down. */
+const EMBEDS = [
+  /!\[(?:[^[\]\n]|\[[^\]\n]*\])*\]\(\s*<?([^\s)>]+)/g,
+  /!\[\[([^\]|#\n]+)/g,
+  /<img\b[^>]*?\ssrc\s*=\s*["']?([^"'\s>]+)/gi,
+]
+
+/** The keys of a note's front matter beside its cover that hold a picture the app
+ *  shows: the image its published page is shared with. */
+const FRONT_PICTURES = ['image'] as const
 
 /** The service's own address for a picture: its `/i/`, the hash and the extension the
  *  app writes after it, and nothing else on the end of the path. */
-const PICTURE = /\/i\/([a-f0-9]{64})(?:\.[a-z0-9]+)?(?:[?#].*)?$/
+const PICTURE = /\/i\/([a-f0-9]{64})(?:\.[a-z0-9]+)?(?:[?#].*)?$/i
 
-/** Every picture the service holds that this body shows, outside code and comments. */
+/** Every picture the service holds that this body shows: in its prose outside code and
+ *  comments, as its cover, or - for a canvas, which is JSON - on one of its cards. */
 export function picturesOf(source: string): Set<string> {
   const found = new Set<string>()
-  for (const row of lines(withoutComments(source))) {
-    if (row.code) continue
-    const text = withoutCode(row.text)
-    for (const embed of EMBEDS) {
-      for (const match of text.matchAll(embed)) {
-        const hash = PICTURE.exec(match[1] ?? '')?.[1]
-        if (hash) found.add(hash)
-      }
-    }
+  const add = (address: string | null | undefined) => {
+    const hash = address ? PICTURE.exec(address.trim())?.[1] : undefined
+    if (hash) found.add(hash.toLowerCase())
   }
+
+  const canvas = cardsOf(source)
+  if (canvas) {
+    // A picture card names its picture's address whole, as a group names the picture
+    // behind it; a text card is markdown like a note.
+    for (const card of canvas) {
+      if (card.type === 'file') add(card.file)
+      add(card.background)
+      if (typeof card.text === 'string') for (const hash of picturesOf(card.text)) found.add(hash)
+    }
+    return found
+  }
+
+  add(coverOf(source)?.src)
+  for (const key of FRONT_PICTURES) add(frontMatterValue(source, key))
+
+  // The prose, with every line of a fence and every code span blanked, read whole so an
+  // image tag can run over its lines.
+  const prose: string[] = []
+  for (const row of lines(withoutComments(source)))
+    prose.push(row.code ? '' : withoutCode(row.text))
+  const text = prose.join('\n')
+  for (const embed of EMBEDS) for (const match of text.matchAll(embed)) add(match[1])
+
   return found
+}
+
+/** What a canvas card says that can hold a picture. */
+interface Card {
+  type: unknown
+  file: string | undefined
+  background: string | undefined
+  text: unknown
+}
+
+/** The cards of a canvas, or null for a body that is not one. */
+function cardsOf(source: string): Card[] | null {
+  if (!source.trimStart().startsWith('{')) return null
+  try {
+    const parsed = JSON.parse(source) as { nodes?: unknown }
+    if (!Array.isArray(parsed.nodes)) return null
+    return parsed.nodes
+      .filter((node): node is Record<string, unknown> => !!node && typeof node === 'object')
+      .map((node) => ({
+        type: node.type,
+        file: typeof node.file === 'string' ? node.file : undefined,
+        background: typeof node.background === 'string' ? node.background : undefined,
+        text: node.text,
+      }))
+  } catch {
+    return null
+  }
 }
 
 /** Rewrites a note's pictures from its body, replacing whatever an earlier save wrote.
