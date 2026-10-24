@@ -10,6 +10,7 @@
  *  That is Bear's and Craft's usual answer, and a folder called `Trip.textbundle`
  *  sitting in a space would be a folder nothing opens. */
 
+import { plainWords } from '@nib/markdown/escapes'
 import { htmlToMarkdown } from '@nib/markdown/from-html'
 
 import { key } from '../i18n.svelte'
@@ -20,6 +21,9 @@ import type { FormatId, ImportPlan } from './plan'
 import type { Source } from './sources'
 
 const HTML = /\.(html?|xhtml)$/i
+
+/** A text file, which is plain text rather than markdown; see `isNoteFile`. */
+const TEXT = /\.txt$/i
 
 /** Where a bundle's own text file sits, whichever of the two names it uses. */
 const BUNDLE_TEXT = /\.textbundle\/text\.(md|markdown|txt)$/i
@@ -100,13 +104,20 @@ export async function readPlain(
 
       return {
         to,
-        read: (text, at) => ({
-          text: options.words?.(text, at) ?? text,
-          title: null,
-          meta: options.meta?.(at) ?? {},
-          kept: options.asTheyAre === true,
-          own: true,
-        }),
+        read: (text, at) => {
+          // Plain text never meant markdown: Tomboy, Keep and Apple's exporters write
+          // it, so its words are written to read back as the characters they are.
+          // `$5-$10` is two prices rather than a formula, a tag is words, and a line
+          // of dashes under a line is not a heading. A vault keeps a `.txt` as a file.
+          const said = TEXT.test(at.path) ? plainWords(text) : text
+          return {
+            text: options.words?.(said, at) ?? said,
+            title: null,
+            meta: options.meta?.(at) ?? {},
+            kept: options.asTheyAre === true,
+            own: true,
+          }
+        },
       }
     },
   })
