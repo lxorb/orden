@@ -12,7 +12,9 @@
  *  What is deliberately not here: anything that would delete or overwrite without
  *  being asked twice. `confirms` in verbs.ts is what asks. */
 
-import { writeProperty } from '@nib/markdown/property-edits'
+import type { TextEdit } from '@nib/markdown/edits'
+import { writeList, writeProperty } from '@nib/markdown/property-edits'
+import { flowItems } from '@nib/markdown/yaml'
 import { appCommands } from '../commands'
 import { links } from '../link-index.svelte'
 import { extensionOf, nameToWrite } from '../naming'
@@ -388,6 +390,29 @@ export async function deleteFile(args: Said): Promise<unknown> {
   return { path: relative, deleted: true }
 }
 
+/** A number as the property rows write one bare: no leading zero, because `012`
+ *  bare reads back as twelve and somebody's code is not a number. */
+const BARE_NUMBER = /^-?(?:0|[1-9]\d*)(?:\.\d+)?$/
+
+/** The edit that sets a key to words said in a link or on the command line.
+ *
+ *  Written the way a property row writes them, rather than handed to the block edit
+ *  as they stand: that edit puts whatever it is given after the colon, and
+ *  `Meeting: notes`, `#tag` or `yes` written bare would read back as a mapping, a
+ *  comment or a boolean, and a line break would end the block. Everything said is
+ *  words, so the type is read off them the way the rows read a value: `true` is a
+ *  checkbox, `3` a number and `[work, home]` a list, and those keep their type
+ *  rather than arriving in quotes as text. */
+function propertyEdit(text: string, key: string, value: string | null): TextEdit | null {
+  if (value === null) return writeProperty(text, key, null)
+
+  const items = flowItems(value)
+  if (items) return writeList(text, key, items)
+  if (/^(true|false)$/i.test(value)) return writeProperty(text, key, value, 'checkbox')
+  if (BARE_NUMBER.test(value)) return writeProperty(text, key, value, 'number')
+  return writeProperty(text, key, value)
+}
+
 /** Sets one front matter key, or takes it away when the caller says no value.
  *
  *  Through the same single edit the icon picker writes, so the block is edited
@@ -399,11 +424,7 @@ export async function setProperty(args: Said): Promise<unknown> {
   if (!key) throw new Error('say which key')
 
   const value = said(args, 'value')
-  // Written the way a property row writes typed words, rather than handed to the
-  // block edit as they stand: that edit puts whatever it is given after the colon,
-  // and `Meeting: notes`, `#tag` or `yes` written bare would read back as a mapping,
-  // a comment or a boolean, and a line break would end the block.
-  const edit = writeProperty(note.text, key, value)
+  const edit = propertyEdit(note.text, key, value)
   if (!edit) return { path: note.relative, key, value, changed: false }
 
   const after = note.text.slice(0, edit.from) + edit.insert + note.text.slice(edit.to)

@@ -320,7 +320,7 @@ describe('a property an automation sets', () => {
   test('lands as the words it was given, whatever YAML would read them as bare', async () => {
     // Each of these, written bare after the colon, is a mapping, a comment, a list, a
     // boolean, a number or a reserved indicator to YAML rather than the words.
-    const values = ['Meeting: notes', '#tag', '- item', '[x]', 'yes', '@home', '012', 'a #b']
+    const values = ['Meeting: notes', '#tag', '- item', 'yes', '@home', '012', 'a #b', '1e3']
 
     for (const value of values) {
       held.set('/Work/Plan.md', '---\ntitle: Plan\n---\n# Plan\n')
@@ -349,6 +349,26 @@ describe('a property an automation sets', () => {
       changed: false,
     })
     expect(written).toEqual([])
+  })
+
+  test('that is a checkbox, a number or a list keeps that type', async () => {
+    const typed: [string, string][] = [
+      ['true', 'status: true'],
+      ['False', 'status: false'],
+      ['3', 'status: 3'],
+      ['-1.5', 'status: -1.5'],
+      ['[work, home]', 'status: [work, home]'],
+      ['[]', 'status: []'],
+      ["['a, b', yes]", "status: ['a, b', 'yes']"],
+    ]
+
+    for (const [value, line] of typed) {
+      held.set('/Work/Plan.md', '# Plan\n')
+      written.length = 0
+
+      await setProperty({ path: 'Plan.md', key: 'status', value })
+      expect(written[0]?.after, value).toBe(`---\n${line}\n---\n# Plan\n`)
+    }
   })
 
   test('that YAML reads as itself stays bare', async () => {

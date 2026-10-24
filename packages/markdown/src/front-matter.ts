@@ -313,9 +313,12 @@ export function frontMatterEdit(
 
   if (line) {
     const said = source.slice(line.value.from, line.value.to).trim()
-    // The same spelling is no change either: a caller that quoted its value as a
-    // scalar hands `'yes'` itself, where the line read through its quotes says `yes`.
-    if (said === value || unquoted(said) === value) return null
+    // A quoted line and a quoted value are the same words whichever quotes each is
+    // in: a caller that quotes its value as a scalar hands `'yes'` itself, and a note
+    // that says `"yes"` already says that. A bare line is only the same as the value
+    // read the same way, because bare `yes` is a boolean and `'yes'` is the word.
+    const was = unquoted(said)
+    if (was === value || (was !== said && was === unquoted(value))) return null
 
     const to = source[line.value.to - 1] === '\r' ? line.value.to - 1 : line.value.to
     return { from: line.value.from, to, insert: ` ${value}` }
