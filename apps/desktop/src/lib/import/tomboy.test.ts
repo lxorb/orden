@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'vitest'
 
+import { renderMarkdown } from '@nib/markdown'
+
 import type { ImportPlan } from './plan'
 import { detect } from './read'
 import { sourceOf, type Source } from './sources'
@@ -52,6 +54,19 @@ describe('a Tomboy note', () => {
 
     expect(plan.files[0]?.path).toBe('Work/Plan.md')
     expect(noteAt(plan, 'Work/Plan.md')).toContain('tags: [urgent]')
+  })
+
+  test("a note's dollars, tildes and percent signs are its words, its code is code", () => {
+    const markdown = tomboyMarkdown(
+      'Tickets $5-$10, wait ~5 min or ~10, <bold>format is %%d</bold> and <monospace>$x ~y %%z</monospace>\nrest',
+      (title) => `[[${title}]]`,
+    )
+    expect(markdown).toBe(
+      'Tickets \\$5-\\$10, wait \\~5 min or \\~10, **format is %\\%d** and `$x ~y %%z`\nrest',
+    )
+    expect(renderMarkdown(markdown)).toBe(
+      '<p>Tickets $5-$10, wait ~5 min or ~10, <strong>format is %%d</strong> and <code>$x ~y %%z</code>\nrest</p>\n',
+    )
   })
 
   test('a link to another note is a wikilink', async () => {

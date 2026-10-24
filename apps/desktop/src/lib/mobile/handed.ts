@@ -36,6 +36,7 @@ import {
   sharedPlan,
   sharedTask,
   sharedTitle,
+  sharedMarkdown,
   sharedWords,
   type SharedItem,
 } from './shared'
@@ -282,7 +283,7 @@ async function intoTheOpenNote(arrived: Arrived, bytes: ReadonlyMap<number, Uint
   const view = views.of(workspace.panes.focusedId)
   if (!view) return
 
-  const words = sharedWords(arrived)
+  const words = sharedMarkdown(arrived)
   if (words) writeAtCaret(view, words)
 
   for (const [at, item] of arrived.items.entries()) {

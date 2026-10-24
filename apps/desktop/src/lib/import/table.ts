@@ -13,6 +13,7 @@
  *  table again, so what came in as a database is one (docs/tasks.md 4, "import CSV
  *  as a base"). */
 
+import { plainWords } from '@nib/markdown/escapes'
 import { key } from '../i18n.svelte'
 import { recordsOf } from './csv'
 import { type Base, writeBase } from '@nib/bases'
@@ -108,10 +109,9 @@ export function tableOf(
  *  newlines in a paragraph somebody typed into a spreadsheet become spaces,
  *  because a markdown table has no way to hold a line break. */
 function cell(value: string): string {
-  return value
-    .replace(/\s*\n\s*/g, ' ')
-    .replace(/\|/g, '\\|')
-    .trim()
+  // Escaped as the plain text a spreadsheet holds before the pipes are, so a pipe's
+  // backslash is not read as one of the cell's own.
+  return plainWords(value.replace(/\s*\n\s*/g, ' ').trim()).replace(/\|/g, '\\|')
 }
 
 /** One row as a note: its columns are its properties, and the column it is named
@@ -149,7 +149,7 @@ export function rowNote(
     // Anything with a line in it is prose, and prose in front matter is a
     // property nobody can read.
     if (value.includes('\n')) {
-      words.push(`## ${column}\n\n${value}`)
+      words.push(`## ${plainWords(column)}\n\n${plainWords(value)}`)
       continue
     }
 

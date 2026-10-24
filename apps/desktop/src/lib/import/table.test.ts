@@ -1,4 +1,5 @@
 import { readBase } from '@nib/bases'
+import { renderMarkdown } from '@nib/markdown'
 import { describe, expect, test } from 'vitest'
 
 import type { ImportPlan } from './plan'
@@ -40,6 +41,14 @@ describe('a CSV as one table', () => {
 
     expect(plan.files.map((one) => one.path)).toEqual(['Books.md'])
     expect(noteAt(plan, 'Books.md')).toContain('| Ubik |')
+  })
+
+  test("a cell's dollars, tildes and percent signs are its words", () => {
+    const table = tableOf(['Price ~ish'], [{ 'Price ~ish': '$5-$10 | %%d' }])
+
+    expect(table.split('\n')[2]).toBe('| \\$5-\\$10 \\| %\\%d |')
+    expect(renderMarkdown(table)).toContain('<td>$5-$10 | %%d</td>')
+    expect(renderMarkdown(table)).toContain('<th>Price ~ish</th>')
   })
 
   test('a pipe inside a cell does not become a column', () => {
@@ -90,6 +99,13 @@ describe('a CSV as one note per row', () => {
 
     expect(note.text).toContain('## Notes')
     expect(note.text).toContain('One line\nAnother line')
+  })
+
+  test("a paragraph's dollars, tildes and percent signs are its words", () => {
+    const note = rowNote(['Name', 'Notes'], { Name: 'Dune', Notes: 'Costs $5-$10\nformat is %%d' })
+
+    expect(note.text).toContain('Costs \\$5-\\$10\nformat is %\\%d')
+    expect(renderMarkdown(note.text)).toContain('Costs $5-$10\nformat is %%d')
   })
 
   test('a row with no name is still a note', () => {

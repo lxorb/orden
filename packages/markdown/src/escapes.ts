@@ -291,3 +291,28 @@ export function escapeText(
   out.push(bracketsOf(escaped))
   return out.join('')
 }
+
+/** The marker a line of plain text opens a list item with: a bullet or a number,
+ *  indented or not. Plain text typed in another app writes a list that way and
+ *  every reader of it, markdown or not, sees one. */
+const A_LIST_ITEM = /^[ \t]*(?:[-*+]|\d{1,9}[.)])[ \t]+/
+
+/** Words typed in another app that never meant markdown - a Keep note, a Tomboy
+ *  note's text, a spreadsheet's cell - as a note may hold them: written so they
+ *  read back as the characters they are.
+ *
+ *  `escapeText` already knows what each character would do in a note, and the
+ *  same escapes are wanted here: a tag opener, the dollars of `$5-$10`, the
+ *  tildes of `~5 min or ~10`, the second of two percent signs. It is asked a line
+ *  at a time, because plain text keeps its line breaks and each line starts where
+ *  a block could. A line that opens a list item keeps its marker, since that is a
+ *  list in the app it came from as well; its words are escaped as words. */
+export function plainWords(text: string): string {
+  return text
+    .split('\n')
+    .map((line) => {
+      const marker = A_LIST_ITEM.exec(line)?.[0] ?? ''
+      return marker + escapeText(line.slice(marker.length))
+    })
+    .join('\n')
+}

@@ -13,6 +13,7 @@
  *  A notebook is a tag of the form `system:notebook:Work`, which becomes a folder,
  *  because that is what a notebook is. Every other tag is a tag. */
 
+import { plainWords } from '@nib/markdown/escapes'
 import { key } from '../i18n.svelte'
 
 import { dayOf, noteText, type Meta } from './meta'
@@ -177,15 +178,21 @@ export function tomboyMarkdown(
     }
   }
 
+  // Tomboy is plain text, so its words are written to read back as themselves:
+  // `$5-$10` is two prices rather than a formula; see `plainWords`. Not inside
+  // monospace, which becomes a code span and shows its characters as they are.
+  const asWritten = (text: string) =>
+    open.some((one) => one.name === 'monospace') ? text : plainWords(text)
+
   const words = (text: string) => {
     if (!item) {
-      write(text)
+      write(asWritten(text))
       return
     }
 
     const said = text.replace(/^[ \t]+/, '')
     if (said) item = false
-    write(said)
+    write(asWritten(said))
   }
 
   for (const tag of tagsIn(content)) {
@@ -265,7 +272,7 @@ export function tomboyMarkdown(
     // heading, and a heading in the middle of a note would be a change of shape.
   }
 
-  write(unescapeXml(content.slice(at)))
+  write(asWritten(unescapeXml(content.slice(at))))
 
   return out
     .join('')

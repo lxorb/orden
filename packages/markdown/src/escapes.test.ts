@@ -1,10 +1,34 @@
 import { describe, expect, test } from 'vitest'
-import { escapeText } from './escapes'
+import { escapeText, plainWords } from './escapes'
+import { renderMarkdown } from './index'
 
 /** One text node at a time, which is how turndown hands a page's words over.
  *  from-html.test.ts is the same rule seen through a conversion; what is here is
  *  the rule itself, including the edges a page rarely reaches and an adversarial
  *  one aims for. */
+/** Words typed in another app that never meant markdown, a line at a time: they
+ *  read back as themselves, but a line that is a list item stays one. */
+describe('plain text, as a note may hold it', () => {
+  test('a dollar, a tilde, a caret and two percent signs are the characters', () => {
+    expect(plainWords('Tickets $5-$10\nwait ~5 min or ~10 min\nx^2 and format is %%d')).toBe(
+      'Tickets \\$5-\\$10\nwait \\~5 min or \\~10 min\nx\\^2 and format is %\\%d',
+    )
+    expect(renderMarkdown(plainWords('Tickets $5-$10, format is %%d\nrest'))).toBe(
+      '<p>Tickets $5-$10, format is %%d\nrest</p>\n',
+    )
+  })
+
+  test('a list item stays a list item, and a heading-like line is words', () => {
+    expect(plainWords('- milk at ~2\n  * eggs $3\n1. one\n# not a heading')).toBe(
+      '- milk at \\~2\n  * eggs \\$3\n1. one\n\\# not a heading',
+    )
+  })
+
+  test('a bare address still links', () => {
+    expect(plainWords('see https://a.test/~al/_x_/ now')).toBe('see https://a.test/~al/_x_/ now')
+  })
+})
+
 describe('a page’s text, as a note may hold it', () => {
   test('prose is prose', () => {
     expect(escapeText('Schauen Sie sich das Cheatsheet an.')).toBe(

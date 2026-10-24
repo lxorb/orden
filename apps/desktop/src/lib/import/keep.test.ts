@@ -1,5 +1,7 @@
 import { describe, expect, test } from 'vitest'
 
+import { renderMarkdown } from '@nib/markdown'
+
 import { readKeep } from './keep'
 import type { ImportPlan } from './plan'
 import { sourceOf, type Source } from './sources'
@@ -38,6 +40,25 @@ describe('a Google Keep export', () => {
     expect(text).toContain('date: 2026-01-02')
     expect(text).toContain('tags: [Home, to-do]')
     expect(text).toContain('Bread and milk')
+  })
+
+  test("a note's dollars, tildes and percent signs are its words", async () => {
+    const plan = await readKeep([
+      file(
+        'Keep/Prices.json',
+        keepNote({
+          title: 'Prices',
+          textContent: 'Tickets $5-$10\nwait ~5 min or ~10 min, format is %%d\nrest',
+          listContent: [{ text: 'Pay $5-$10', isChecked: false }],
+        }),
+      ),
+    ])
+
+    const html = renderMarkdown(noteAt(plan, 'Prices.md'))
+    expect(html).toContain('Tickets $5-$10\nwait ~5 min or ~10 min, format is %%d\nrest')
+    expect(html).toContain('Pay $5-$10')
+    expect(html).not.toContain('<sub>')
+    expect(html).not.toContain('math')
   })
 
   test('a list is a task list, in the state it was left in', async () => {
