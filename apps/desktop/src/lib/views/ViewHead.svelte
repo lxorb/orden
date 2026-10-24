@@ -509,8 +509,9 @@
   </div>
 {/snippet}
 {#snippet plusButton()}
-  <!-- None on a base or a fence in a space shared to be read, which takes no new row. -->
-  {#if kit.writable}
+  <!-- None on a base or a fence in a space shared to be read, which takes no new row,
+       nor where what is added would land in one, as Today's task in its inbox. -->
+  {#if kit.adds}
     <button
       type="button"
       class="nib-glyph"

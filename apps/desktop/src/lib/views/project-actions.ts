@@ -99,12 +99,15 @@ export function spaceProjects(root: string, count: (note: string) => number): Pr
 }
 
 /** A project's note written empty where it is not there yet: a folder's namesake, which
- *  the panel shows before anything is in it. */
-async function ensureProject(note: string): Promise<void> {
-  if (workspace.notes.some((one) => samePath(one.path, note))) return
+ *  the panel shows before anything is in it. Answers whether it is there now: not where
+ *  it would be made in a space shared to be read. */
+async function ensureProject(note: string): Promise<boolean> {
+  if (workspace.notes.some((one) => samePath(one.path, note))) return true
+  if (!canWriteAt(note)) return false
   await writeFile(note, '')
   await workspace.loadTree()
   await workspace.fileCame(note, 'file')
+  return true
 }
 
 /** The inbox of a space, on this disk, whether it is there yet or not. */
@@ -131,7 +134,11 @@ export function placeEntries(
     {
       label: t('Inbox'),
       checked: here(inboxNoteAt(root)),
-      run: () => void inboxNote(root).then(go, () => undefined),
+      run: () =>
+        void inboxNote(root).then(
+          (note) => (note === null ? undefined : go(note)),
+          () => undefined,
+        ),
     },
   ]
   const walk = (nodes: readonly ProjectNode[], above: string) => {
@@ -140,7 +147,8 @@ export function placeEntries(
       out.push({
         label: name,
         checked: here(node.note),
-        run: () => void ensureProject(node.note).then(() => go(node.note)),
+        run: () =>
+          void ensureProject(node.note).then((there) => (there ? go(node.note) : undefined)),
       })
       walk(node.children, name)
     }

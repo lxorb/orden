@@ -478,3 +478,28 @@ describe('the Tasks panel, in a space shared to be read', () => {
     expect(written).toEqual([])
   })
 })
+
+/** A task typed into Today, Upcoming or the panel lands in the open space's inbox, made
+ *  the first time; in a space shared to be read there is nowhere for it (B293). */
+describe('an add whose task would land in a space shared to be read', () => {
+  test('makes no inbox there', async () => {
+    const { inboxNote } = await import('../rows/inbox-note')
+    expect(await inboxNote(THEIRS.root)).toBeNull()
+    expect(written).toEqual([])
+  })
+
+  test('is not offered in a view over every space', async () => {
+    const workspace = (await import('../workspace.svelte')).workspace as { activeSpace: unknown }
+    const { kit } = viewOver(null)
+    expect(kit.adds).toBe(false)
+    const AddRow = (await import('./AddRow.svelte')).default
+    expect(render(AddRow, { props: { kit } }).body).not.toContain('Add task')
+
+    workspace.activeSpace = MINE
+    try {
+      expect(kit.adds).toBe(true)
+    } finally {
+      workspace.activeSpace = THEIRS
+    }
+  })
+})
