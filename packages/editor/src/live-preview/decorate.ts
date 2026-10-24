@@ -244,7 +244,8 @@ class Decorator {
         else {
           const written = this.state.doc.sliceString(node.from, node.to)
           const bare = node.parent?.name !== 'Autolink'
-          this.linkText(node.from, node.to, bare ? bareTarget(written) : written)
+          const after = this.state.doc.sliceString(node.to, node.to + 1)
+          this.linkText(node.from, node.to, bare ? bareTarget(written, after) : written)
         }
         return true
       case 'Highlight':

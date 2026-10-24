@@ -406,6 +406,18 @@ describe('a page as markdown', () => {
     )
   })
 
+  /** What the renderer leaves off the end of an address is words again, and an
+   *  underscore or a star there is escaped as words are: the escape is no part of
+   *  the address, so neither is its backslash. */
+  test('an escape right after a bare web address stays out of the link', () => {
+    const page = htmlToMarkdown('<p>(see https://a.test/a_b_) and *https://a.test/x*</p>')
+    expect(page).toBe('(see https://a.test/a_b\\_) and \\*https://a.test/x\\*')
+    expect(renderMarkdown(page)).toBe(
+      '<p>(see <a class="url" href="https://a.test/a_b">https://a.test/a_b</a>_) and ' +
+        '*<a class="url" href="https://a.test/x">https://a.test/x</a>*</p>\n',
+    )
+  })
+
   test('two percent signs in words hide nothing as a comment', () => {
     const code = htmlToMarkdown('<p>printf("%%d") and then printf("%%s") again</p>')
     expect(code).toBe('printf("%\\%d") and then printf("%\\%s") again')
