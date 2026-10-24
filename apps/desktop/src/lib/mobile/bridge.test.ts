@@ -1,9 +1,11 @@
 import { afterEach, beforeEach, expect, test, vi } from 'vitest'
 
-/** This launch's word, when the activity is slow to say it (B456). The answer goes
- *  through the UI thread, which on a cold start can be busy for seconds; a word given
- *  up on there was kept for the whole launch, and every call that wants it then did
- *  nothing: the share that started the app, the widget rows, a reminder's Done. */
+/** This launch's word, when the activity is slow to say it or never does (B456). The
+ *  answer goes through the UI thread, which on a cold start can be busy for seconds,
+ *  and it never comes while the activity has no page yet. A word given up on was kept
+ *  for the whole launch, and every call that wants it then did nothing: the share
+ *  that started the app, the widget rows, a reminder's Done. A wait with no end is no
+ *  better, since every one of those callers would then never go on. */
 
 let asked = 0
 const say = (word: string): void => {
@@ -28,28 +30,45 @@ afterEach(() => {
   vi.unstubAllGlobals()
 })
 
-test('a word the activity says late is still the word', async () => {
+test('a caller with no answer goes on with no word, within the wait', async () => {
   const { frameWord } = await import('./bridge')
-  const first = frameWord()
+  let got: string | undefined
+  void frameWord().then((word) => (got = word))
 
-  await vi.advanceTimersByTimeAsync(5000)
-  say('the word')
-
-  expect(await first).toBe('the word')
-  expect(await frameWord()).toBe('the word')
+  await vi.advanceTimersByTimeAsync(2000)
+  expect(got).toBe('')
 })
 
-test('the activity is asked again while it has not answered', async () => {
+test('no word is not kept: the next caller asks again', async () => {
   const { frameWord } = await import('./bridge')
   void frameWord()
+  await vi.advanceTimersByTimeAsync(2000)
 
+  void frameWord()
+  expect(asked).toBe(2)
+})
+
+test('a word said after the wait was given up on is the word from then on', async () => {
+  const { frameWord } = await import('./bridge')
+  const first = frameWord()
   await vi.advanceTimersByTimeAsync(5000)
-  expect(asked).toBeGreaterThan(1)
+  expect(await first).toBe('')
 
-  const before = asked
   say('the word')
-  await vi.advanceTimersByTimeAsync(5000)
-  expect(asked).toBe(before)
+
+  expect(await frameWord()).toBe('the word')
+  expect(asked).toBe(1)
+})
+
+test('two callers at once are one question', async () => {
+  const { frameWord } = await import('./bridge')
+  const one = frameWord()
+  const two = frameWord()
+  say('the word')
+
+  expect(await one).toBe('the word')
+  expect(await two).toBe('the word')
+  expect(asked).toBe(1)
 })
 
 test('nothing to ask is no word, at once', async () => {
