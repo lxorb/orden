@@ -165,6 +165,10 @@ export type Field = Common &
          *  answers to is the other way round - half a word is a phrase that matches
          *  nothing, so it waits. */
         live?: boolean
+        /** A face's name, picked from the families installed or typed (#772): drawn as
+         *  a combobox that lists them, the monospaced ones first for code; see
+         *  FontPicker.svelte. */
+        font?: { mono: boolean }
         initial?: string
         get(): string
         set(value: string): void

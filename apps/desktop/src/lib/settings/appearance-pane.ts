@@ -249,6 +249,7 @@ export function appearancePane(): Pane {
           words: ['font', 'typeface', 'family', 'custom font', ...one.words],
           hint: t(one.hint),
           placeholder: one.own,
+          font: { mono: one.place === 'mono' },
           initial: '',
           get: () => modes.fonts[one.place],
           set: (value) => modes.setFont(one.place, value),

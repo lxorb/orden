@@ -10,6 +10,7 @@
   import { arrive, segmented } from './slide'
   import CanvasIcon from './CanvasIcon.svelte'
   import DefaultBrowser from './settings/DefaultBrowser.svelte'
+  import FontPicker from './settings/FontPicker.svelte'
   import BrowserThemes from './settings/BrowserThemes.svelte'
   import ExtensionRows from './settings/ExtensionRows.svelte'
   import { enginesFor } from './web-tab/engines'
@@ -748,23 +749,37 @@
     <!-- A line somebody types. The placeholder is what the app answers to with
          nothing typed, so an empty field is the default put back and the reset is
          a field that is already there rather than a button beside it. -->
-    <label class="nib-setting setting">
-      {@render named(field, where)}
-      <!-- `live` writes as it is typed; see the kind in preferences.ts. The other
+    {#if field.font}
+      <!-- A face, from the families installed or by its name; see FontPicker.svelte. -->
+      <div class="nib-setting setting">
+        {@render named(field, where)}
+        <FontPicker
+          value={field.get()}
+          placeholder={field.placeholder}
+          mono={field.font.mono}
+          label={field.label}
+          onchange={(family: string) => field.set(family)}
+        />
+      </div>
+    {:else}
+      <label class="nib-setting setting">
+        {@render named(field, where)}
+        <!-- `live` writes as it is typed; see the kind in preferences.ts. The other
            kind waits for the field to be left, because half a word is a phrase
            that matches nothing. -->
-      <input
-        class="inline"
-        type="text"
-        value={field.get()}
-        placeholder={field.placeholder}
-        spellcheck="false"
-        autocapitalize="off"
-        autocomplete="off"
-        oninput={field.live ? (event) => field.set(event.currentTarget.value) : undefined}
-        onchange={field.live ? undefined : (event) => field.set(event.currentTarget.value)}
-      />
-    </label>
+        <input
+          class="inline"
+          type="text"
+          value={field.get()}
+          placeholder={field.placeholder}
+          spellcheck="false"
+          autocapitalize="off"
+          autocomplete="off"
+          oninput={field.live ? (event) => field.set(event.currentTarget.value) : undefined}
+          onchange={field.live ? undefined : (event) => field.set(event.currentTarget.value)}
+        />
+      </label>
+    {/if}
   {:else if field.kind === 'select'}
     <div class="nib-setting setting">
       {@render named(field, where)}

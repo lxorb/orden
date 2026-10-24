@@ -61,7 +61,9 @@ describe('where the panel draws it', () => {
     expect(new Set(kinds)).toEqual(
       new Set(['switch', 'slider', 'segmented', 'swatches', 'picture', 'value', 'text', 'select']),
     )
-    expect([...panel.matchAll(/\{@render named\(field, where\)\}/g)]).toHaveLength(8)
+    // Nine slots for eight kinds: a text row is drawn as a field, or as a font picker
+    // where it names a face (#772).
+    expect([...panel.matchAll(/\{@render named\(field, where\)\}/g)]).toHaveLength(9)
     expect(panel).toContain('{#snippet named(field: Field, where?: string)}')
   })
 })
