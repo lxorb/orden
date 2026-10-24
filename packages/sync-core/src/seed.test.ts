@@ -1,4 +1,4 @@
-import { emptyCanvas, type Canvas } from '@nib/markdown/canvas'
+import { emptyCanvas, readCanvas, writeCanvas, type Canvas } from '@nib/markdown/canvas'
 import { readPlane } from '@nib/rooms/plane'
 import { TEXT } from '@nib/rooms'
 import fc from 'fast-check'
@@ -101,5 +101,40 @@ describe('seed property', () => {
       }),
       { numRuns: 1000 },
     )
+  })
+})
+
+/** A canvas holding what the format does not read (#780): its seed is the seed a build
+ *  before this one makes, and one operation more under a client id of its own, so the
+ *  two builds' seeds are one document and two of this build's are the same bytes. */
+describe('the seed of a canvas with another app’s things in it', () => {
+  const VAULT = readCanvas(
+    JSON.stringify({
+      nodes: [
+        { id: 'x', type: 'excalidraw', x: 0, y: 0, width: 200, height: 100 },
+        { id: 'a', type: 'text', text: 'a', x: 300, y: 0, width: 200, height: 60 },
+      ],
+      edges: [{ id: 'e', fromNode: 'x', toNode: 'a' }],
+    }),
+  )
+  // The same canvas as a build before #780 reads it: nothing unread held.
+  const bare: Canvas = { ...VAULT }
+  delete bare.extras
+
+  test('is the same bytes on every device', () => {
+    expect(seedPlane('n1', 1, VAULT)).toEqual(seedPlane('n1', 1, readCanvas(writeCanvas(VAULT))))
+  })
+
+  test('holds the older seed whole, and adds only the extras', () => {
+    const older = seedPlane('n1', 1, bare)
+    const newer = seedPlane('n1', 1, VAULT)
+    // The older seed tells the newer document nothing it does not already have.
+    const doc = new Y.Doc()
+    Y.applyUpdateV2(doc, newer)
+    const before = Y.encodeStateVector(doc)
+    Y.applyUpdateV2(doc, older)
+    expect(Y.encodeStateVector(doc)).toEqual(before)
+    expect(readPlane(doc).extras?.nodes.has('x')).toBe(true)
+    expect(readPlane(doc).nodes.map((one) => one.id)).toEqual(['a'])
   })
 })

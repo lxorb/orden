@@ -22,7 +22,7 @@ import { readCanvas, writeCanvas } from '@nib/markdown/canvas'
 import { isCanvasTarget, isPagesTarget } from '@nib/markdown/links'
 import { TEXT } from '@nib/rooms'
 import { fold } from '@nib/rooms/fold'
-import { planeIsEmpty, pushPlane, readPlane, seedPlane } from '@nib/rooms/plane'
+import { planeIsEmpty, pushPlane, readPlane, seedExtras, seedPlane } from '@nib/rooms/plane'
 import type * as Y from 'yjs'
 
 /** The two shapes a room's document comes in. */
@@ -77,7 +77,11 @@ export function writesOf(value: unknown): boolean {
 /** The room's first content, out of the file as the store holds it. */
 export function fill(kind: RoomKind, doc: Y.Doc, stored: string) {
   if (kind === 'plane') {
-    seedPlane(doc, readCanvas(stored))
+    const canvas = readCanvas(stored)
+    seedPlane(doc, canvas)
+    // And what the file held that the format does not read, which the room writes back
+    // at every settle; see `EXTRAS` in @nib/rooms' plane.ts (#780).
+    seedExtras(doc, canvas)
     return
   }
 
