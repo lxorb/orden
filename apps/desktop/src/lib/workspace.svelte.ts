@@ -938,9 +938,13 @@ class Workspace {
             made.push(null)
             continue
           }
-          // In a space shared to be read the paper comes back as itself, as it opens.
-          const turned = await this.mayTurn(draft.path)
-          const path = turned ? await this.pageNoteForPdf(draft.path) : draft.path
+          // In a space shared to be read the paper comes back as it opens there: the
+          // note holding it if there is one, and the paper as itself where there is not.
+          // Elsewhere turning it answers the note holding it, and takes in one beside it.
+          const writable = await this.mayTurn(draft.path)
+          const held = writable ? null : await this.heldBy(draft.path)
+          const turned = writable || held !== null
+          const path = held ?? (writable ? await this.pageNoteForPdf(draft.path) : draft.path)
           const doc = turned ? '' : await this.paperText(draft.path)
           if (!path || doc === null) {
             made.push(null)
@@ -1748,19 +1752,39 @@ class Workspace {
     if (__EVEN_PLUGIN__) return
 
     const path = this.spelled(asked)
+    // A page note holding the paper already is the one to open, wherever it is: a
+    // search hit or a link names the paper, and the ink is on the note.
+    const held = isPagesTarget(path) ? path : await this.heldBy(path)
+    if (held) {
+      await this.openPages(held, page, how)
+      return
+    }
     // A space shared to be read may not have the page note written into it, nor the
     // paper renamed under one: the paper opens as itself instead, in memory.
-    if (!isPagesTarget(path) && !(await this.mayTurn(path))) {
+    if (!(await this.mayTurn(path))) {
       await this.openPaper(path, page, how)
       return
     }
-    const pageNote = isPagesTarget(path) ? path : await this.pageNoteForPdf(path)
+    const pageNote = await this.pageNoteForPdf(path)
     // A paper pdf.js will not read, broken or behind a password: no tab, and the reader told.
     if (!pageNote) {
       await unread(path)
       return
     }
     await this.openPages(pageNote, page, how)
+  }
+
+  /** The page note on disk holding a PDF, or null; see `noteHolding` in from-pdf.ts. */
+  private async heldBy(path: string): Promise<string | null> {
+    const [{ noteHolding }, { onDisk }] = await Promise.all([
+      import('./pages/from-pdf'),
+      import('./on-disk'),
+    ])
+    return noteHolding(path, {
+      root: this.rootHolding(path),
+      exists: onDisk,
+      read: (one) => invoke<string>('read_note', { path: one }).catch(() => null),
+    })
   }
 
   /** Whether a PDF may be turned into its page note where it lies, which writes a note
