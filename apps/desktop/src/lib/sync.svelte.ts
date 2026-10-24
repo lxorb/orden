@@ -25,6 +25,7 @@ import {
   type Tracked,
   within,
 } from './sync/mirror'
+import type { Holding } from './sync/holding'
 import type { Joined, Waiting } from './sync/pass'
 import { record } from './sync/record.svelte'
 import type { Folded } from './sync/web-copies'
@@ -574,17 +575,19 @@ class Sync {
     return moving ? { id: moving.id, version: moving.version, hash: moving.hash } : null
   }
 
-  /** Whether the account holds a copy of this file, so a delete can be left to it:
-   *  a note or paper it has been handed, and not one written since the last push.
-   *  The first sync keeps only notes in `tracked` and the PDFs beside them in the
-   *  mirror's `files`; the second keeps every file it has pushed under one entry. */
-  holds(path: string): boolean {
-    if (this.tracked(path)) return true
-    if (V2 && this.v2) return false
-    return Object.values(this.mirrors).some((mirror) => {
+  /** Whether the account holds this file as it is on disk now, so a delete can be left
+   *  to it rather than to this device's trash. See sync/holding.ts, and `holds` in
+   *  sync2/runner.svelte.ts. */
+  async holds(path: string, how: Holding = {}): Promise<boolean> {
+    if (V2 && this.v2) return this.v2.holds(path, how)
+    for (const mirror of Object.values(this.mirrors)) {
       const relative = within(mirror.root, path)
-      return relative !== null && mirror.files[relative] !== undefined
-    })
+      if (relative === null) continue
+      const { mirrorHolds } = await import('./sync/holding')
+      return mirrorHolds(mirror, relative, path, how)
+    }
+    // A note in the middle of a move is recorded under neither path for a moment.
+    return false
   }
 
   /** What a pull over this space tells whoever is waiting on it, and what it

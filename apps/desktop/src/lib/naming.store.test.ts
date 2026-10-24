@@ -1179,7 +1179,7 @@ describe('signed in', () => {
 
   test('but one in a space on the account goes to the account', async () => {
     vi.spyOn(sync, 'remoteIdFor').mockReturnValue('remote')
-    vi.spyOn(sync, 'tracked').mockReturnValue({ id: 'n', version: 1, hash: 'h' })
+    vi.spyOn(sync, 'holds').mockResolvedValue(true)
 
     await workspace.remove('/space/Work', true)
 
@@ -1191,7 +1191,7 @@ describe('signed in', () => {
   // push it has not been handed yet: deleted outright, those were gone for good.
   test('a folder holding a dotfile goes to the trash', async () => {
     vi.spyOn(sync, 'remoteIdFor').mockReturnValue('remote')
-    vi.spyOn(sync, 'tracked').mockReturnValue({ id: 'n', version: 1, hash: 'h' })
+    vi.spyOn(sync, 'holds').mockResolvedValue(true)
     folders.add('/space/Project')
     files.set('/space/Project/a.md', '# a')
     files.set('/space/Project/.hidden.md', '# hidden')
@@ -1218,9 +1218,7 @@ describe('signed in', () => {
 
   test('and so does a folder holding one', async () => {
     vi.spyOn(sync, 'remoteIdFor').mockReturnValue('remote')
-    vi.spyOn(sync, 'tracked').mockImplementation((path) =>
-      path.endsWith('.md') ? { id: 'n', version: 1, hash: 'h' } : null,
-    )
+    vi.spyOn(sync, 'holds').mockImplementation((path) => Promise.resolve(path.endsWith('.md')))
     files.set('/space/Work/paper.pdf', '%PDF')
     await workspace.loadTree()
     sent.length = 0

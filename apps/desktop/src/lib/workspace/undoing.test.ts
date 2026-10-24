@@ -19,6 +19,9 @@ const refused = new Set<string>()
  *  path with nothing here reads empty and has no stamp, so nothing is at it. */
 const disk = new Map<string, string>()
 
+/** The folders a listing can be had of, by root, as the crate lists them. */
+const trees = new Map<string, unknown>()
+
 vi.mock('../tauri', () => ({
   isNative: true,
   invoke: (command: string, args?: Record<string, unknown>) => {
@@ -27,8 +30,12 @@ vi.mock('../tauri', () => ({
     const id = typeof args?.id === 'string' ? args.id : ''
     sent.push({ command, path, content })
 
-    // The crate refuses a tree whose root is not a folder, and none is here.
-    if (command === 'read_tree') return Promise.reject(new Error('root is not a directory'))
+    // The crate refuses a tree whose root is not a folder.
+    if (command === 'read_tree') {
+      const root = typeof args?.root === 'string' ? args.root : ''
+      const tree = trees.get(root)
+      return tree ? Promise.resolve(tree) : Promise.reject(new Error('root is not a directory'))
+    }
     const named = path || id
     if (refused.has(named) || refused.has(`${command} ${named}`))
       return Promise.reject(new Error(`${named} will not budge`))
@@ -49,7 +56,7 @@ vi.mock('../link-index.svelte', () => ({
   },
 }))
 
-const { undoLastFileAction } = await import('./undoing')
+const { accountHoldsAll, undoLastFileAction } = await import('./undoing')
 const { redoLastFileAction } = await import('./redoing')
 const { FileActions } = await import('./undo.svelte')
 type PutsBack = import('./undoing').PutsBack
@@ -788,5 +795,57 @@ describe('a folder deleted', () => {
 
     expect(sent).toEqual([{ command: 'restore_trash', path: '', content: '' }])
     expect(told.at(-1)).toBe('back /s/A')
+  })
+})
+
+/** Whether the account holds all of a folder about to be deleted. A folder the listing
+ *  did not read into looks empty and is not: a link out of the space, or one nested
+ *  past the depth the listing stops at. Deleted outright, what was in it went. */
+describe('what the account holds of a folder', () => {
+  const at = (path: string, children: unknown[] = [], more: object = {}) => ({
+    name: path.split('/').pop(),
+    path,
+    is_dir: children.length > 0 || 'unlisted' in more,
+    modified: 0,
+    created: 0,
+    children,
+    ...more,
+  })
+  const holdsAll = () => Promise.resolve(true)
+
+  beforeEach(() => trees.clear())
+
+  test('one whose every file is held is held', async () => {
+    trees.set('/s/Work', at('/s/Work', [at('/s/Work/Inner', [at('/s/Work/Inner/a.md')])]))
+
+    expect(await accountHoldsAll('/s/Work', holdsAll)).toBe(true)
+  })
+
+  test('one holding a folder the listing did not read into is not', async () => {
+    trees.set('/s/Work', at('/s/Work', [at('/s/Work/linked', [], { unlisted: true })]))
+
+    expect(await accountHoldsAll('/s/Work', holdsAll)).toBe(false)
+  })
+
+  test('nor one the listing could not read into itself', async () => {
+    trees.set('/s/Work', at('/s/Work', [], { unlisted: true }))
+
+    expect(await accountHoldsAll('/s/Work', holdsAll)).toBe(false)
+  })
+
+  test('asks after each file with when it was written and one allowance for all', async () => {
+    trees.set('/s/Work', at('/s/Work', [at('/s/Work/a.md'), at('/s/Work/b.md')]))
+    const asked: { path: string; modified?: number; budget?: object }[] = []
+
+    await accountHoldsAll('/s/Work', (path, how) => {
+      asked.push({ path, ...how })
+      return Promise.resolve(true)
+    })
+
+    expect(asked.map((one) => [one.path, one.modified])).toEqual([
+      ['/s/Work/a.md', 0],
+      ['/s/Work/b.md', 0],
+    ])
+    expect(asked[0]?.budget).toBe(asked[1]?.budget)
   })
 })

@@ -126,6 +126,8 @@ export interface Entry {
   children: Entry[]
   /** Taken off this Mac by iCloud; see icloud.svelte.ts. */
   evicted?: boolean
+  /** A folder the listing did not read into; see `walk` in tree.rs. */
+  unlisted?: boolean
 }
 
 /** What the listing itself is asked for. One field, because the order the rows are
@@ -4222,7 +4224,8 @@ class Workspace {
   /** Whether the account holds a copy of what a path is, so a delete can go to it.
    *  The space being on the account is not enough: a file dropped in offline or
    *  since the last push, and a dotfile, which sync never hands it, are on this
-   *  device alone. A folder counts only if everything under it is held. */
+   *  device alone, and so is what was written since. A folder counts only if
+   *  everything under it is held. */
   private async accountHolds(path: string, isFolder: boolean): Promise<boolean> {
     const root = this.rootHolding(path)
     if (!root) return false
@@ -4230,7 +4233,7 @@ class Workspace {
     if (sync.remoteIdFor(root) === null) return false
     if (!isFolder) return sync.holds(path)
     const { accountHoldsAll } = await import('./workspace/undoing')
-    return accountHoldsAll(path, (one) => sync.holds(one))
+    return accountHoldsAll(path, (one, how) => sync.holds(one, how))
   }
 
   /** Puts the last file operation back; what each kind means going back is

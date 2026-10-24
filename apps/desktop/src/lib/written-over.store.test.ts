@@ -235,7 +235,7 @@ describe('a delete undone after a note took its name', () => {
     // the note goes outright and the undo writes back the words read on the way out.
     Object.defineProperty(account, 'signedIn', { get: () => true, configurable: true })
     vi.spyOn(sync, 'remoteIdFor').mockReturnValue('remote')
-    vi.spyOn(sync, 'tracked').mockReturnValue({ id: 'n', version: 1, hash: 'h' })
+    vi.spyOn(sync, 'holds').mockResolvedValue(true)
   })
 
   afterEach(() => {
@@ -263,7 +263,7 @@ describe('a folder deleted signed in, undone after a note took a name in it', ()
     await workspace.loadTree()
     Object.defineProperty(account, 'signedIn', { get: () => true, configurable: true })
     vi.spyOn(sync, 'remoteIdFor').mockReturnValue('remote')
-    vi.spyOn(sync, 'tracked').mockReturnValue({ id: 'n', version: 1, hash: 'h' })
+    vi.spyOn(sync, 'holds').mockResolvedValue(true)
   })
 
   afterEach(() => {
