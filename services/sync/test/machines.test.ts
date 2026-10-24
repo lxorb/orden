@@ -936,6 +936,18 @@ describe('a note made under a session’s own id', () => {
     expect(refusal(await knock(id, stranger))).toBe('gone')
   })
 
+  test('keeps nobody from adopting the session by the file that names it', async () => {
+    const { owner, id } = await stranded()
+    const adopted = await call<{ session: string }>(env, '/v2/online/terms', {
+      token: owner,
+      body: { term: 'term-1', session: id },
+    })
+    expect(adopted.json.session).toBe(id)
+    expect(
+      env.db.prepare('select count(*) as many from term_sessions where ended_at is null').get(),
+    ).toEqual({ many: 1 })
+  })
+
   test('ends nobody’s session when it is emptied out of the trash', async () => {
     const { stranger, theirs, id } = await stranded()
     await call(env, `/v2/spaces/${theirs}/ops`, {
