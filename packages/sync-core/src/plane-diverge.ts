@@ -17,6 +17,7 @@
  *  Pure and on `Canvas` values: the three planes as `readPlane` reads them, whatever
  *  a card's text is held as inside the document. */
 
+import { holdsExtras, mergedExtras } from '@nib/markdown/canvas-extras'
 import type { Canvas, Thing } from '@nib/markdown/canvas'
 import { diverge, REWRITTEN, type Times, type Verdict } from './diverge'
 import { edits } from './diff'
@@ -246,5 +247,10 @@ function resolvedPlane(
   const iconColor = iconSide('iconColor')
   if (icon !== undefined) out.icon = icon
   if (iconColor !== undefined) out.iconColor = iconColor
+  // What either side held that is not read, kept as a merge of two files keeps it: the
+  // union, by id (#780; canvas-extras.ts in @nib/markdown).
+  if (holdsExtras(local.extras) || holdsExtras(remote.extras)) {
+    out.extras = mergedExtras(local.extras, remote.extras)
+  }
   return out
 }

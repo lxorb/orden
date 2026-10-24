@@ -6,10 +6,20 @@ import {
   emptyCanvas,
   type InkPoint,
   type InkStroke,
+  readCanvas,
   writeCanvas,
 } from '@nib/markdown/canvas'
 import { merged, stamped } from '@nib/markdown/canvas-merge'
-import { buriedOf, planeIsEmpty, planeOf, pushPlane, readPlane, seedPlane } from './plane'
+import {
+  buriedOf,
+  EXTRAS,
+  planeIsEmpty,
+  planeOf,
+  pushPlane,
+  readPlane,
+  seedExtras,
+  seedPlane,
+} from './plane'
 
 /** Two devices on one plane, each with its own document, joined by hand: whatever
  *  one writes the other is given, which is the whole of what a room does without a
@@ -346,5 +356,85 @@ describe('the room and the file say the same thing', () => {
     expect(new Set(one.canvas.ink.map((held) => held.id))).toEqual(
       new Set(asFiles.ink.map((held) => held.id)),
     )
+  })
+})
+
+/** What a file held that the format does not read - another app's node, the edge to it,
+ *  a field on a card, a key beside the lists - kept by the room, so its settle writes the
+ *  file back with them in it (#780). */
+describe('a plane holding what this app does not read', () => {
+  const VAULT = JSON.stringify({
+    nodes: [
+      { id: 'x', type: 'excalidraw', x: 0, y: 0, width: 200, height: 100, file: 'D.excalidraw' },
+      {
+        id: 'a',
+        type: 'text',
+        text: 'a',
+        x: 300,
+        y: 0,
+        width: 200,
+        height: 60,
+        styleAttributes: { s: 1 },
+      },
+    ],
+    edges: [{ id: 'e', fromNode: 'x', toNode: 'a' }],
+    metadata: { version: '1.0-1.0' },
+  })
+
+  const seeded = () => {
+    const doc = new Y.Doc()
+    const canvas = readCanvas(VAULT)
+    seedPlane(doc, canvas)
+    seedExtras(doc, canvas)
+    return doc
+  }
+
+  const written = (doc: Y.Doc) =>
+    JSON.parse(writeCanvas(readPlane(doc))) as {
+      nodes: { id: string; styleAttributes?: unknown }[]
+      edges: { id: string }[]
+      metadata?: unknown
+    }
+
+  test('writes them back at the settle', () => {
+    const file = written(seeded())
+    expect(file.nodes.map((one) => one.id).sort()).toEqual(['a', 'x'])
+    expect(file.nodes.find((one) => one.id === 'a')?.styleAttributes).toEqual({ s: 1 })
+    expect(file.edges.map((one) => one.id)).toEqual(['e'])
+    expect(file.metadata).toEqual({ version: '1.0-1.0' })
+  })
+
+  test('keeps them through an edit that did not touch them, writing nothing for them', () => {
+    const doc = seeded()
+    const before = readPlane(doc)
+    const updates: Uint8Array[] = []
+    doc.on('updateV2', (update: Uint8Array) => updates.push(update))
+    const card = { id: 'b', type: 'text' as const, text: 'b', x: 0, y: 200, width: 100, height: 50 }
+    pushPlane(doc, before, { ...before, nodes: [...before.nodes, card] })
+
+    const other = new Y.Doc()
+    Y.applyUpdateV2(other, Y.encodeStateAsUpdateV2(doc))
+    expect(
+      written(other)
+        .nodes.map((one) => one.id)
+        .sort(),
+    ).toEqual(['a', 'b', 'x'])
+    // The one edit is the card: the extras' own map is not in it.
+    const touched = new Y.Doc()
+    Y.applyUpdateV2(touched, updates[0] ?? new Uint8Array())
+    expect(touched.getMap(EXTRAS).size).toBe(0)
+  })
+
+  test('reach another device in the room', () => {
+    const doc = seeded()
+    const there = new Y.Doc()
+    Y.applyUpdateV2(there, Y.encodeStateAsUpdateV2(doc))
+    expect(readPlane(there).extras?.nodes.has('x')).toBe(true)
+  })
+
+  test('hand the same extras back where nothing about them changed', () => {
+    const doc = seeded()
+    const first = readPlane(doc)
+    expect(readPlane(doc, first, new Set(['a'])).extras).toBe(first.extras)
   })
 })

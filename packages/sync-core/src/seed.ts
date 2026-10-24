@@ -18,7 +18,7 @@
  *  Nothing here knows about a disk or a socket; a caller persists or sends the bytes. */
 
 import type { Canvas } from '@nib/markdown/canvas'
-import { seedPlane as planted } from '@nib/rooms/plane'
+import { seedExtras, seedPlane as planted } from '@nib/rooms/plane'
 import { TEXT } from '@nib/rooms'
 import * as Y from 'yjs'
 
@@ -116,6 +116,17 @@ export function seedPlane(noteId: string, epoch: number, canvas: Canvas): Uint8A
   doc.transact(() => {
     planted(doc, content)
   })
+
+  // What the file held that the format does not read - another app's nodes and fields
+  // (#780) - under a client id of their own, as the same one operation on every device:
+  // the seed's own operations stay exactly the bytes a build before this one makes, so
+  // its seed and this one are one document, and two of this build's are the same bytes.
+  if (canvas.extras) {
+    doc.clientID = hash32(noteId, epoch, 'extras')
+    doc.transact(() => {
+      seedExtras(doc, canvas)
+    })
+  }
 
   const update = Y.encodeStateAsUpdateV2(doc)
   doc.destroy()

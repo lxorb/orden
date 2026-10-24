@@ -44,12 +44,21 @@ import {
   strokeOf,
   type Thing,
 } from '@nib/markdown/canvas'
+import { extrasRead, extrasText, holdsExtras } from '@nib/markdown/canvas-extras'
 import * as Y from 'yjs'
 import { fold } from './fold'
 
 /** The two shared maps, under names both ends ask for. */
 export const PLANE = 'canvas'
 export const BURIED = 'gone'
+/** And a third, for what the file held that the format's readers do not read: another
+ *  app's nodes, the edges ending at them, fields and keys the spec does not name (#780).
+ *  One value under `HELD`, the extras as `extrasText` writes them, so a room's settle
+ *  writes them back into the file as the canvas store does; see canvas-extras.ts in
+ *  @nib/markdown. Never part of an epoch's seed, whose bytes every device and every
+ *  build must agree on: put in by an update of its own (`seedExtras`). */
+export const EXTRAS = 'extras'
+const HELD = 'held'
 
 /** Which of a file's three lists an object belongs to. Kept on the object rather
  *  than worked out from its fields, so reading one back is a lookup and not a
@@ -76,7 +85,26 @@ export function buriedOf(doc: Y.Doc): Y.Map<number> {
  *  because one gesture may touch both: deleting a card takes it off the plane and
  *  puts a tombstone in its place, and that is one thing somebody did. */
 export function rootsOf(doc: Y.Doc): Y.Map<unknown>[] {
-  return [doc.getMap(PLANE), doc.getMap(BURIED)]
+  return [doc.getMap(PLANE), doc.getMap(BURIED), doc.getMap(EXTRAS)]
+}
+
+/** The extras a canvas holds into the room, where they differ from what it holds. */
+function putExtras(doc: Y.Doc, canvas: Canvas) {
+  const held = doc.getMap<string>(EXTRAS)
+  const text = holdsExtras(canvas.extras) ? extrasText(canvas.extras) : null
+  if (text === null) {
+    if (held.has(HELD)) held.delete(HELD)
+  } else if (held.get(HELD) !== text) {
+    held.set(HELD, text)
+  }
+}
+
+/** What the file a room was seeded from held that is not read, put into the room as an
+ *  update of its own after the seed: in a transaction under whatever client id the doc
+ *  has, never the seed's, so the seed stays the bytes every device makes. Nothing for a
+ *  canvas holding none. */
+export function seedExtras(doc: Y.Doc, canvas: Canvas) {
+  if (holdsExtras(canvas.extras)) putExtras(doc, canvas)
 }
 
 function isInk(thing: Thing): thing is InkStroke {
@@ -252,6 +280,14 @@ export function pushPlane(doc: Y.Doc, before: Canvas, after: Canvas) {
     if (!is.has(id) && buried.get(id) !== when) buried.set(id, when)
   }
 
+  // What another app wrote, where this edit changed it: an edit that left it alone
+  // hands back the very same extras, and writes nothing.
+  if (after.extras !== before.extras) {
+    const was = holdsExtras(before.extras) ? extrasText(before.extras) : null
+    const is = holdsExtras(after.extras) ? extrasText(after.extras) : null
+    if (was !== is) putExtras(doc, after)
+  }
+
   // And none at all for something that is on the plane again: putting a card back
   // is the newer word on the matter, and it is what lets an undo bring one back.
   // Walked over the tombstones rather than the objects, because there are few of
@@ -365,17 +401,25 @@ export function readPlane(doc: Y.Doc, previous?: Canvas, changed?: ReadonlySet<s
     if (typeof when === 'number') gone[id] = when
   }
 
+  // What another app wrote, the very same extras where they are what the reader had.
+  const text = doc.getMap<string>(EXTRAS).get(HELD)
+  const mine = previous?.extras
+  const extras =
+    text !== undefined && holdsExtras(mine) && extrasText(mine) === text ? mine : extrasRead(text)
+
   return {
     nodes: nodes.map((one) => one.thing),
     edges: edges.map((one) => one.thing),
     ink: ink.map((one) => one.thing),
     at,
     gone,
+    ...(holdsExtras(extras) ? { extras } : {}),
   }
 }
 
 /** Whether the room holds a plane at all. A room nobody has joined yet holds
  *  nothing, and is seeded from the stored file. */
 export function planeIsEmpty(doc: Y.Doc): boolean {
+  // The extras alone are no plane: they are put in after a seed, never in place of one.
   return planeOf(doc).size === 0 && buriedOf(doc).size === 0
 }
