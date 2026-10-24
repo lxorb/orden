@@ -373,7 +373,7 @@ mod tests {
     const WITH_PICTURE: &str = "Text\n\n![a dot](dot.png)\n";
 
     /// The names inside an ODT, which is a zip.
-    fn inside(odt: &Path) -> Vec<String> {
+    fn odt_entries(odt: &Path) -> Vec<String> {
         let file = fs::File::open(odt).expect("an odt");
         let archive = zip::ZipArchive::new(file).expect("a zip");
         archive.file_names().map(str::to_string).collect()
@@ -392,7 +392,7 @@ mod tests {
         let missing = convert(WITH_PICTURE, &target, "odt", Some(note.path())).expect("converted");
 
         assert!(missing.is_empty(), "{missing:?}");
-        let names = inside(&target);
+        let names = odt_entries(&target);
         assert!(
             names.iter().any(|one| one.starts_with("Pictures/")),
             "{names:?}"
