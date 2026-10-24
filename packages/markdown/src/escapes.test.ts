@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
-import { escapeText, plainWords, shownWords, typedWords } from './escapes'
+import { editedWords, escapeText, plainWords, shownWords, typedWords } from './escapes'
 import { renderMarkdown } from './index'
+import { readTask } from './task-line'
 
 /** One text node at a time, which is how turndown hands a page's words over.
  *  from-html.test.ts is the same rule seen through a conversion; what is here is
@@ -285,5 +286,38 @@ describe('words shown and written back', () => {
     expect(renderMarkdown(written)).toBe(
       '<p>Prices $5-$10 ~5 min a==b <strong>due</strong> <a href="https://x.test/a">the page</a> <code>a$b</code></p>\n',
     )
+  })
+})
+
+/** A task's title edited in its field: the words the reader sees, changed, written
+ *  back. Every escape the line had stays where the words around it were not touched,
+ *  so an edit is never what turns the words into a field, a tag, a link or emphasis. */
+describe('a title edited and written back', () => {
+  const cases = [
+    ['read \\[key:\\: value\\] later', 'read', 'reread'],
+    ['Read later \\#tips', 'Read', 'Look'],
+    ['see \\[\\[y\\]\\] soon', 'soon', 'today'],
+    ['a \\*b\\* c', 'c', 'd'],
+    ['Prices \\$5-\\$10 \\~5 a=\\=b', 'Prices', 'Costs'],
+  ] as const
+
+  for (const [line, from, to] of cases) {
+    test(line, () => {
+      const before = readTask(`- [ ] ${line}`)
+      const edited = shownWords(line).replace(from, to)
+      const written = editedWords(line, edited)
+      const after = readTask(`- [ ] ${written}`)
+      expect(shownWords(after?.text ?? '')).toBe(edited)
+      expect(after?.tags).toEqual(before?.tags)
+      expect(after?.fields).toEqual(before?.fields)
+      expect(renderMarkdown(written)).toBe(renderMarkdown(line).replace(from, to))
+    })
+  }
+
+  test('what is typed new gets the escapes it needs, and an unchanged title is the line', () => {
+    expect(editedWords('milk \\$3', 'milk $3')).toBe('milk \\$3')
+    expect(editedWords('milk \\$3', 'milk $3 or ~5')).toBe('milk \\$3 or \\~5')
+    // The line's own markup is not what was typed, and stays as it was.
+    expect(editedWords('a ~~b~~ ==c== x^2^', 'a ~~b~~ ==c== x^2^ d')).toBe('a ~~b~~ ==c== x^2^ d')
   })
 })

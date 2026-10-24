@@ -64,4 +64,21 @@ describe('a task in quick add’s field and back', () => {
     const changed = changeOf(one, { text: 'milk $4 or ~5 min', fields: { tags: [], remind: [] } })
     expect(changed.text).toBe('milk \\$4 or \\~5 min')
   })
+
+  test('an edited title keeps the escapes that keep a tag and a field words', () => {
+    const one = task('- [ ] Read \\[key:\\: value\\] later \\#tips')
+    const change = changeOf(one, {
+      text: 'Reread [key:: value] later #tips',
+      fields: { tags: [], remind: [] },
+    })
+    expect(change.text).toBe('Reread \\[key:\\: value\\] later \\#tips')
+  })
+
+  test("an edited title leaves the line's own markup as it was written", () => {
+    const one = task('- [ ] Read ~~old~~ ==key== $x$ %%note%% <b>b</b> [[Plan#^ab12cd]]')
+    const text = `${prefillFor(one, null).text} now`
+    expect(changeOf(one, { text, fields: { tags: [], remind: [] } }).text).toBe(
+      'Read ~~old~~ ==key== $x$ %%note%% <b>b</b> [[Plan#^ab12cd]] now',
+    )
+  })
 })
