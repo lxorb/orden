@@ -359,10 +359,10 @@
     return notePicture(src, from.path, from.doc)
   }
 
-  /** Names a block of another note, so a `[[…#^` link can point at it. */
-  function nameBlock(path: string, line: number): Promise<string | null> {
-    const root = workspace.activeSpace?.root
-    return root ? links.nameBlock(path, line, root) : Promise.resolve(null)
+  /** Names a block of another note, so a `[[…#^` link written in `from` can point at
+   *  it; the path is relative to that note's own space. */
+  function nameBlock(path: string, line: number, from: Tab): Promise<string | null> {
+    return links.nameBlock(path, line, from.path)
   }
 
   /** Which zone of this pane a drop would land in. The sides this pane cannot
@@ -631,7 +631,7 @@
               openlink={followHref}
               notes={(which: Tab) => links.index(which.path)}
               opennote={followNote}
-              nameblock={(path: string, line: number) => nameBlock(path, line)}
+              nameblock={nameBlock}
               onfind={(ask: FindAsk | null) => (ask ? openFinding(ask) : shutFinding())}
               onselection={(current: EditorView) => {
                 views.moved(current)
@@ -665,7 +665,7 @@
         openlink={followHref}
         notes={(one: Tab) => links.index(one.path)}
         opennote={followNote}
-        nameblock={(path: string, line: number) => nameBlock(path, line)}
+        nameblock={nameBlock}
         onfind={(ask: FindAsk | null) => (ask ? openFinding(ask) : shutFinding())}
         onselection={(current: EditorView) => {
           views.moved(current)

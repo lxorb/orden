@@ -907,7 +907,7 @@ describe('naming a block of another note', () => {
   test('writes the name at the end of the block and answers with it', async () => {
     await space({ 'Plan.md': '# Plan\n\nfirst line\nsecond line\n\nanother block\n' })
 
-    const id = await links.nameBlock('Plan.md', 2, ROOT)
+    const id = await links.nameBlock('Plan.md', 2, `${ROOT}/Note.md`)
     expect(id).toMatch(/^[a-z0-9]{6}$/)
     expect(notes['Plan.md']).toBe(
       `# Plan\n\nfirst line\nsecond line ^${id ?? ''}\n\nanother block\n`,
@@ -918,14 +918,14 @@ describe('naming a block of another note', () => {
   test('a block that already has a name keeps it', async () => {
     await space({ 'Plan.md': '# Plan\n\na line ^kept\n' })
 
-    expect(await links.nameBlock('Plan.md', 2, ROOT)).toBe('kept')
+    expect(await links.nameBlock('Plan.md', 2, `${ROOT}/Note.md`)).toBe('kept')
     expect(written).toEqual([])
   })
 
   test('the name it gives is one the note has not used', async () => {
     await space({ 'Plan.md': 'one ^aaaaaa\n\ntwo\n' })
 
-    const id = await links.nameBlock('Plan.md', 2, ROOT)
+    const id = await links.nameBlock('Plan.md', 2, `${ROOT}/Note.md`)
     expect(id).not.toBe('aaaaaa')
   })
 })
