@@ -179,6 +179,9 @@ export interface Waiting {
   listed?: (paths: string[]) => void
   /** One note written, by the path it landed at. */
   wrote?: (path: string) => void
+  /** One note moved here because another device renamed or moved it, by the paths
+   *  it had and has. */
+  moved?: (from: string, to: string) => void
   /** Notes to fetch first, by their path in the space: the one somebody is looking
    *  at, and the one they were looking at last. A page is a few hundred notes and
    *  a slow connection is a body a second, so which end of it the open note is at
@@ -227,6 +230,10 @@ export async function pull(
         .map((one) => joinPath(root, one.path)),
     )
 
+    // Where each note this machine knows lives here, by its id, as the page began. A
+    // page names each note once, so an entry it re-keys is never looked up again.
+    const places = new Map(Object.entries(mirror.notes).map(([path, one]) => [one.id, path]))
+
     for (const remote of ordered(page.notes, waiting?.wanted)) {
       // A name that would land outside the space is left where it is; see
       // `placeable`.
@@ -246,6 +253,11 @@ export async function pull(
       if (remote.deleted) {
         await deletedThere(mirror, remote, target, joined, waiting?.kept?.(target) === true)
         continue
+      }
+
+      const was = places.get(remote.id)
+      if (was !== undefined && was !== remote.path) {
+        await movedThere(mirror, remote, was, waiting)
       }
 
       const tracked = mirror.notes[remote.path]
@@ -451,6 +463,63 @@ export async function pull(
   }
 
   return moved
+}
+
+/** A note another device renamed or moved, moved here to match, so the pull below
+ *  settles it at its new name the way it settles any other note.
+ *
+ *  The account keeps one row per note and changes its path in place, so a rename
+ *  there arrives as the same id under a new name and nothing at all about the old
+ *  one. Looked up by path alone it was a note this machine had never seen: written
+ *  down beside the old file, with both names in the table under one id. The old name
+ *  then stayed on the disk for good, deleting it deleted the live note on every
+ *  device, and typing in it was refused and kept as a conflict copy.
+ *
+ *  What moves is the file, with whatever was typed in it since the last pass, and
+ *  the entry with it: the version and hash the two sides last agreed on. So below, a
+ *  file nobody wrote in takes the account's words, one written in here goes up under
+ *  the new name, and one written in on both sides is merged, kept twice or asked
+ *  about, as any note is. The rename goes through `rename_note`, which takes a page
+ *  note's paper along as a rename made here does.
+ *
+ *  A file already gone from the old name went away here, and the entry moves anyway,
+ *  so the push reads the gap as the delete it always has. Where the file cannot move
+ *  (the new name is taken here, or the rename is refused) the old file is kept and
+ *  its entry let go: it goes up as a note of its own rather than being the note, and
+ *  nothing here can delete the one that moved. */
+async function movedThere(mirror: Mirror, remote: RemoteNote, was: string, waiting?: Waiting) {
+  const tracked = mirror.notes[was]
+  if (tracked?.id !== remote.id) return
+
+  const from = joinPath(mirror.root, was)
+  const to = joinPath(mirror.root, remote.path)
+  const taken = mirror.notes[remote.path]
+  const here =
+    (await invoke<string>('read_note', { path: from }).then(
+      () => true,
+      () => false,
+    )) || (await fileStamp(from)) !== null
+
+  const moved =
+    here &&
+    !taken &&
+    (await invoke('rename_note', { from, to }).then(
+      () => true,
+      (error: unknown) => {
+        log('warn', `sync: ${from} was moved elsewhere to ${to} and stays - ${String(error)}`)
+        return false
+      },
+    ))
+
+  mirror.notes = without(mirror.notes, was)
+  const offered = mirror.offered[was]
+  mirror.offered = without(mirror.offered, was)
+
+  if (taken || (here && !moved)) return
+
+  mirror.notes[remote.path] = tracked
+  if (offered !== undefined) mirror.offered = { ...mirror.offered, [remote.path]: offered }
+  if (moved) waiting?.moved?.(from, to)
 }
 
 /** Whether a file with no entry is word for word something its note once said on the

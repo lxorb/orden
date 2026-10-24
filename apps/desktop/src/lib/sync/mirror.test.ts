@@ -104,6 +104,26 @@ const fake = vi.hoisted(() => {
     // to the real Worker.
     if (command === 'list_snapshots') return Promise.resolve([] as T)
 
+    // The crate's rename: refused onto a name that is taken, and a page note's paper
+    // goes with it; see `rename_note` and `move_held` in src-tauri/src/notes.rs.
+    if (command === 'rename_note') {
+      const from = text(args.from)
+      const to = text(args.to)
+      calls.push(`rename ${from} ${to}`)
+      const held = disk.get(from)
+      if (held === undefined) return Promise.reject(new Error(`no such file: ${from}`))
+      if (disk.has(to)) return Promise.reject(new Error(`${to} is already there`))
+
+      disk.delete(from)
+      disk.set(to, held)
+      const paper = disk.get(`${from}.pdf`)
+      if (from.endsWith('.pages') && paper !== undefined) {
+        disk.delete(`${from}.pdf`)
+        disk.set(`${to}.pdf`, paper)
+      }
+      return Promise.resolve(undefined as T)
+    }
+
     if (command === 'delete_note') {
       calls.push(`delete ${path}`)
       disk.delete(path)
@@ -285,6 +305,15 @@ const fake = vi.hoisted(() => {
     if (note) Object.assign(note, { deleted: true, version: note.version + 1, seq: ++seq })
   }
 
+  /** Another device's rename, as the account keeps it: the same row under a new
+   *  path, and no tombstone for the old one; see services/sync/src/notes.ts. */
+  function renameRemote(id: string, path: string, content?: string) {
+    const note = remote.get(id)
+    if (!note) return
+    Object.assign(note, { path, version: note.version + 1, seq: ++seq })
+    if (content !== undefined) note.content = content
+  }
+
   function editRemote(id: string, content: string, updatedAt = 0) {
     const note = remote.get(id)
     if (note) Object.assign(note, { content, version: note.version + 1, seq: ++seq, updatedAt })
@@ -321,6 +350,7 @@ const fake = vi.hoisted(() => {
     readsLeft,
     refusing,
     remote,
+    renameRemote,
     reset,
     trash,
     unreadable,
@@ -1239,6 +1269,104 @@ describe('a note deleted on another device', () => {
     expect(fake.disk.get(`${ROOT}/Plan.md`)).toBe('# Plan\n')
     expect(mirror.notes['Plan.md']?.id).toBe(id)
     expect(fake.calls).toEqual([])
+  })
+})
+
+/** The account keeps one row per note and changes its path in place, so a rename on
+ *  another device arrives as the same id under a new name, with nothing said about
+ *  the old one. Matched by path alone, it came down as a second file beside the
+ *  first; deleting the stale one then deleted the live note on every device. */
+describe('a note renamed on another device', () => {
+  test('is moved here rather than written beside the old name', async () => {
+    const { mirror, id } = await paired('One.md', '# One\n')
+    fake.renameRemote(id, 'Two.md')
+
+    await pull(mirror, 'token', NOBODY)
+    await push(mirror, 'token', NOBODY)
+
+    expect(fake.disk.get(`${ROOT}/Two.md`)).toBe('# One\n')
+    expect(fake.disk.has(`${ROOT}/One.md`)).toBe(false)
+    expect(Object.keys(mirror.notes)).toEqual(['Two.md'])
+    expect(fake.remote.get(id)?.deleted).toBe(false)
+    expect(fake.calls.filter((one) => /^(deleteNote|createNote)/.test(one))).toEqual([])
+  })
+
+  test('and comes down with the words it was given there', async () => {
+    const { mirror, id } = await paired('One.md', '# One\n')
+    fake.renameRemote(id, 'Notes/Two.md', '# Two\n')
+
+    await pull(mirror, 'token', NOBODY)
+
+    expect(fake.disk.get(`${ROOT}/Notes/Two.md`)).toBe('# Two\n')
+    expect(fake.disk.has(`${ROOT}/One.md`)).toBe(false)
+    expect(mirror.notes['Notes/Two.md']?.id).toBe(id)
+  })
+
+  test('carries what was typed here under the old name, up to the note', async () => {
+    const { mirror, id } = await paired('One.md', '# One\n')
+    fake.disk.set(`${ROOT}/One.md`, '# One\n\nTyped here.\n')
+    fake.renameRemote(id, 'Two.md')
+
+    await pull(mirror, 'token', NOBODY)
+    await push(mirror, 'token', NOBODY)
+
+    expect(fake.disk.get(`${ROOT}/Two.md`)).toBe('# One\n\nTyped here.\n')
+    expect(fake.disk.has(`${ROOT}/One.md`)).toBe(false)
+    expect(fake.remote.get(id)).toMatchObject({ path: 'Two.md', content: '# One\n\nTyped here.\n' })
+    expect(conflicts()).toEqual([])
+  })
+
+  test('keeps both copies when it was written in on both sides', async () => {
+    const { mirror, id } = await paired('One.md', '# One\n')
+    fake.disk.set(`${ROOT}/One.md`, '# Mine\n')
+    fake.renameRemote(id, 'Two.md', '# Theirs\n')
+
+    await pull(mirror, 'token', NOBODY)
+    await push(mirror, 'token', NOBODY)
+
+    const copies = conflicts()
+    expect(copies).toHaveLength(1)
+    expect(fake.disk.get(copies[0]!)).toBe('# Theirs\n')
+    expect(fake.disk.get(`${ROOT}/Two.md`)).toBe('# Mine\n')
+    expect(fake.remote.get(id)).toMatchObject({ deleted: false, content: '# Mine\n' })
+  })
+
+  test('is not deleted everywhere when this device deletes the old name', async () => {
+    const { mirror, id } = await paired('One.md', '# One\n')
+    fake.renameRemote(id, 'Two.md')
+
+    await pull(mirror, 'token', NOBODY)
+    fake.disk.delete(`${ROOT}/One.md`)
+    await push(mirror, 'token', NOBODY)
+
+    expect(fake.remote.get(id)?.deleted).toBe(false)
+    expect(fake.disk.get(`${ROOT}/Two.md`)).toBe('# One\n')
+  })
+
+  test('leaves alone a file of its new name that is already here', async () => {
+    const { mirror, id } = await paired('One.md', '# One\n')
+    fake.disk.set(`${ROOT}/Two.md`, '# Another two\n')
+    fake.renameRemote(id, 'Two.md')
+
+    await pull(mirror, 'token', NOBODY)
+    await push(mirror, 'token', NOBODY)
+
+    // Nothing written here is lost, and the live note is never deleted.
+    expect(fake.disk.get(`${ROOT}/One.md`)).toBe('# One\n')
+    expect(fake.disk.get(`${ROOT}/Two.md`)).toBe('# Another two\n')
+    expect(fake.remote.get(id)?.deleted).toBe(false)
+  })
+
+  test('takes a page note’s paper with it rather than leaving it behind', async () => {
+    const { mirror, id } = await paired('Journal.pages', '{}\n')
+    fake.disk.set(`${ROOT}/Journal.pages.pdf`, 'paper')
+    fake.renameRemote(id, 'Diary.pages')
+
+    await pull(mirror, 'token', NOBODY)
+
+    expect(fake.disk.get(`${ROOT}/Diary.pages.pdf`)).toBe('paper')
+    expect(fake.disk.has(`${ROOT}/Journal.pages`)).toBe(false)
+    expect(fake.disk.has(`${ROOT}/Journal.pages.pdf`)).toBe(false)
   })
 })
 
