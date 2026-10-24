@@ -7,6 +7,7 @@ import { may, type Message, type Role } from '@nib/chats'
 import { copyText } from '../../clipboard'
 import { t } from '../../i18n.svelte'
 import { DIVIDER, type MenuEntry } from '../../menu.svelte'
+import { canWriteAt } from '../../sharing.svelte'
 import type { ChatPage } from './chat.svelte'
 
 export interface MessageGestures {
@@ -24,6 +25,8 @@ export function messageMenu(
   const posting = page.view.meta.posting
   const mine = page.me !== null && message.author === page.me
   const canPost = may(role, 'post', posting)
+  // Save as note writes beside the chat, which a space shared to be read refuses.
+  const canKeep = !page.entry?.path || canWriteAt(page.entry.path)
   if (message.deleted) return []
   return [
     ...(canPost
@@ -40,7 +43,7 @@ export function messageMenu(
       : []),
     { label: t('Save'), checked: page.isSaved(message), run: () => page.save(message) },
     { label: t('Add as task'), run: () => page.addAsTask(message) },
-    { label: t('Save as note'), run: () => void page.saveAsNote(message) },
+    ...(canKeep ? [{ label: t('Save as note'), run: () => void page.saveAsNote(message) }] : []),
     { label: t('Mark unread'), run: () => page.markUnread(message) },
     DIVIDER,
     ...(mine && may(role, 'edit-own', posting) && !message.poll
