@@ -57,8 +57,19 @@ pub struct TrashEntry {
 }
 
 /// Moves a note, folder or space into the trash and says what it became.
+///
+/// `alone` is sync's delete (sync2/app-world.ts), which leaves what the account holds
+/// as an entry of its own, a PDF's highlights, for that entry's own delete or move: a
+/// PDF turned into its page note elsewhere is a delete of the PDF here and a move of its
+/// highlights, and the delete runs first. A page note's paper is no entry (#551) and
+/// still goes with the note, though not the paper's highlights. See `rename_note`.
 #[tauri::command(async)]
-pub fn trash_item(app: AppHandle, path: String, kind: String) -> Result<TrashEntry, String> {
+pub fn trash_item(
+    app: AppHandle,
+    path: String,
+    kind: String,
+    alone: Option<bool>,
+) -> Result<TrashEntry, String> {
     if !KINDS.contains(&kind.as_str()) {
         return Err(format!("{kind} is not something Orden can delete"));
     }
@@ -72,12 +83,24 @@ pub fn trash_item(app: AppHandle, path: String, kind: String) -> Result<TrashEnt
 
     let _guard = locked();
     let dir = trash_dir(&app)?;
+    trashed(&dir, &source, from, name, kind, alone == Some(true))
+}
+
+/// `trash_item` past its gate and its lock, into the trash at `dir`.
+fn trashed(
+    dir: &Path,
+    source: &Path,
+    from: String,
+    name: String,
+    kind: String,
+    alone: bool,
+) -> Result<TrashEntry, String> {
     let id = new_id();
     let slot = dir.join(&id);
     made(&slot)?;
 
     let held = slot.join(&name);
-    if let Err(error) = move_whole(&source, &held, "delete") {
+    if let Err(error) = move_whole(source, &held, "delete") {
         // The slot only if it is empty: a move that could not put back what it took
         // leaves its copy there, and that copy is the one whole one; see carry.rs.
         let _ = fs::remove_dir(&slot);
@@ -86,7 +109,9 @@ pub fn trash_item(app: AppHandle, path: String, kind: String) -> Result<TrashEnt
 
     // A deleted PDF takes its highlights into the same folder, and a page note its
     // paper, so putting it back puts them back with it.
-    move_held(&source, &held);
+    let _ = alone;
+    let carry = move_held;
+    carry(source, &held);
 
     let entry = TrashEntry {
         id,
@@ -100,9 +125,9 @@ pub fn trash_item(app: AppHandle, path: String, kind: String) -> Result<TrashEnt
     // it goes back where it came from instead. And stays in its slot if it cannot
     // go back: a note in the trash that the list does not show is still a note,
     // where one taken away with the slot would not be.
-    recorded(&dir, entry, || {
-        if move_whole(&held, &source, "restore").is_ok() {
-            move_held(&held, &source);
+    recorded(dir, entry, || {
+        if move_whole(&held, source, "restore").is_ok() {
+            carry(&held, source);
             let _ = fs::remove_dir(&slot);
         }
     })
