@@ -5,7 +5,9 @@
  *  it. A space nobody shared, and a space on a machine that is signed out, are
  *  both the reader's own, so the answer is `owner` until the account says
  *  otherwise; nothing in the app has to know that sharing exists in order to
- *  behave when it does.
+ *  behave when it does. A space the account has a copy of is different: until
+ *  the account's listing comes back it could be anybody's, so its role is what
+ *  this device kept of it, and nothing at all when nothing was kept.
  *
  *  The second is the Share sheet: the people, the link, and the requests waiting
  *  on the owner. Every change answers with the whole of who may reach the space,
@@ -25,6 +27,7 @@ import { account } from './account.svelte'
 import { message } from './i18n.svelte'
 import { rooms } from './rooms.svelte'
 import { samePath } from './space-paths'
+import { forget, keep, parsed, storedText } from './stored'
 import { within } from './sync/mirror'
 import { sync } from './sync.svelte'
 import { type Origin, originOf, trustsHtml } from './trust'
@@ -39,10 +42,79 @@ function remoteOf(root: string): RemoteSpace | null {
   return account.spaces.find((one) => one.id === id) ?? null
 }
 
-/** What this account may do in the space that folder mirrors. */
-export function roleOf(root: string): SpaceRole {
-  return remoteOf(root)?.role ?? 'owner'
+/** What this account may do in the space that folder mirrors, or null while
+ *  that is not known.
+ *
+ *  The account's listing answers it, but the listing lives in memory and comes
+ *  back seconds into every launch, or never in a session with no network. Until
+ *  then the answer is what this device kept: the sync store's role for a paired
+ *  folder, or else what the last listing said of that folder. The second is for a
+ *  launch where the account never says who this is, since the sync, and with it
+ *  the pairing, starts only once it has. A paired folder with no role kept anywhere
+ *  answers null, which nothing takes for leave to write.
+ *
+ *  Once the listing is in, a paired space it does not name is the reader's own, as
+ *  it always was: the account's own space can be missing from it for a moment
+ *  while it is being uploaded again. */
+export function roleOf(root: string): SpaceRole | null {
+  const id = sync.remoteIdFor(root)
+  const listed = id ? account.spaces.find((one) => one.id === id) : undefined
+  if (listed) return listed.role
+  if (id && account.listed) return 'owner'
+
+  const kept = (id ? roleIn(sync.roleKept(root)) : null) ?? remembered(root)
+  if (kept) return kept
+
+  return id ? null : 'owner'
 }
+
+/** Where the roles the last listing gave are kept, by folder. */
+const ROLES_KEY = 'nib:space-roles'
+
+/** The role the last listing gave the space at this folder, as an earlier launch
+ *  wrote it down. Parsed again only when the text changes, since this is asked for
+ *  every row of the tree. */
+function remembered(root: string): SpaceRole | null {
+  const text = storedText(ROLES_KEY)
+  if (text !== rolesText) {
+    rolesText = text
+    const value = parsed(text)
+    rolesRead = value && typeof value === 'object' ? (value as Record<string, unknown>) : {}
+  }
+
+  return roleIn(rolesRead[root])
+}
+
+let rolesText: string | null = null
+let rolesRead: Record<string, unknown> = {}
+
+function roleIn(value: unknown): SpaceRole | null {
+  return value === 'owner' || value === 'write' || value === 'read' ? value : null
+}
+
+/** Writes down the role of every paired folder, as the listing just gave it, for
+ *  a later launch that cannot ask. Called with every listing. Nothing is written
+ *  while no folder is paired yet, which is how a listing looks when it comes back
+ *  before the sync has started: writing then would wipe what the last launch knew. */
+export function rememberRoles(): void {
+  const roles: Record<string, SpaceRole> = {}
+  let paired = false
+  for (const space of workspace.spaces) {
+    const id = sync.remoteIdFor(space.root)
+    if (!id) continue
+    paired = true
+    const role = account.spaces.find((one) => one.id === id)?.role
+    if (role) roles[space.root] = role
+  }
+
+  if (paired) keep(ROLES_KEY, JSON.stringify(roles))
+}
+
+// What the account said of its spaces is the account's, and the next session
+// may be somebody else. Cleared here rather than asked about the session on every
+// read, because the session itself is read back from the vault a moment into the
+// launch, after the first tabs have already asked what they may do.
+account.forgetWithSession(() => forget(ROLES_KEY))
 
 /** Whether the space has anybody in it besides its owner, which is the mark on
  *  its row in the switcher and on the header over the file list. */
@@ -101,7 +173,8 @@ export function othersIn(path: string): boolean {
 /** Whether this space can be written in. Everything that offers to change a
  *  note asks this, so a reader is never shown a button that would be refused. */
 function canWrite(root: string): boolean {
-  return roleOf(root) !== 'read'
+  const role = roleOf(root)
+  return role === 'owner' || role === 'write'
 }
 
 /** What may be done where a note sits. A path in no space this machine knows
