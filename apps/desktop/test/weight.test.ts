@@ -831,7 +831,9 @@ function holds(tail: string): boolean {
  *  stands over the caption rather than pushing the file list down under the pointer
  *  (`is-floating` in Bookmarks.svelte). Measured 3,280,466.
  *
- *  Raised 2026-10-24, to 3,282,000, for #710: the values an automation, an agent, an icon and a cover write are quoted as YAML (`scalar`, `flowItem`, the no-change check in `frontMatterEdit`). Measured 3,281,025. */
+ *  Raised 2026-10-24, to 3,282,000, for #710: the values an automation, an agent, an
+ *  icon and a cover write are quoted as YAML (`scalar`, `flowItem`, the no-change check
+ *  in `frontMatterEdit`). Measured 3,281,025. */
 const BUDGET = 3_282_000
 const MOST_FILES = 382
 
