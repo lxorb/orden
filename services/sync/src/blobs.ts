@@ -9,6 +9,7 @@ import { allows, reachedSpace } from './spaces/space'
 import { BYTES, hashOfBytes, held, holdsItsName, WRONG_BYTES } from './sync2/files'
 import { fits, fitsSql } from './storage'
 import type { Env, Space, Variables, Whoever } from './types'
+import { handedTo, usedElsewhere } from './used'
 
 /** What may be stored, and how much of each.
  *
@@ -153,7 +154,7 @@ async function drawnFrom(env: Env, who: Whoever, hash: string, said: string): Pr
 }
 
 /** Gives a file back and stops keeping it. The object survives while any other
- *  account still references it. */
+ *  account still references it, or any other account's space still uses it. */
 blobs.delete('/:hash', async (context) => {
   const user = context.get('user')
   const hash = context.req.param('hash').toLowerCase()
@@ -167,15 +168,25 @@ blobs.delete('/:hash', async (context) => {
 
 /** One account stops keeping a file: its row goes, and the object with it once no
  *  other account keeps the same bytes. What a face that was replaced is given back
- *  through as well; see people/routes.ts. */
+ *  through as well; see people/routes.ts.
+ *
+ *  Unless somebody else's space still uses the bytes - a picture in a note, a paper, a
+ *  file - which the uploader's row was the only thing keeping: then that space's owner
+ *  is handed a row of their own first, as they would be if this account were deleted
+ *  (see used.ts), and the asker's row goes and stops counting against them. Giving a
+ *  file back is not a way to take it out of a note in a space that is not yours. */
 export async function letGo(env: Env, userId: string, hash: string): Promise<void> {
-  await env.DB.prepare('delete from blobs where hash = ? and user_id = ?').bind(hash, userId).run()
-
-  const others = await env.DB.prepare('select 1 from blobs where hash = ? limit 1')
-    .bind(hash)
+  const others = await env.DB.prepare('select 1 from blobs where hash = ? and user_id <> ? limit 1')
+    .bind(hash, userId)
     .first()
+  const owed = others ? new Map() : await usedElsewhere(env, userId, new Set([hash]))
 
-  if (!others) await env.NOTES.delete(key(hash))
+  await env.DB.batch([
+    ...handedTo(env, userId, owed, now()),
+    env.DB.prepare('delete from blobs where hash = ? and user_id = ?').bind(hash, userId),
+  ])
+
+  if (!others && !owed.size) await env.NOTES.delete(key(hash))
 }
 
 /** Serving, which carries no session: a note is read by whoever it was shared

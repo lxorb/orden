@@ -1,0 +1,94 @@
+/** Which spaces of other people use a blob, and handing it to their owners.
+ *
+ *  A blob is held by whoever uploaded it, and a writer in somebody else's space uploads
+ *  their own: the picture in the owner's note, the paper of a page note, a file of the
+ *  space and a file posted in its chat are all the writer's row. So when that row is
+ *  about to go - the account is deleted (erase.ts), or the writer gives the bytes back
+ *  (blobs.ts) - the bytes another account's space still uses are handed to that space's
+ *  owner instead, and only what nobody else's space uses goes from the bucket.
+ *
+ *  What decides is which spaces use the bytes now, not who is a member where: a writer
+ *  who left, or was taken out, wrote what they wrote. Every space is asked, through the
+ *  rows that name a blob by its hash - a file of its tree, a page note's paper, the
+ *  pictures written down for each note's body (pictures.ts), a file it records and a
+ *  file posted in one of its chats. */
+
+import { readSpaceFiles } from './spaces/files'
+import type { Env } from './types'
+
+/** The owners other than this account of the spaces that use any of these hashes, and
+ *  which of the hashes each one's spaces use. */
+export async function usedElsewhere(
+  env: Env,
+  userId: string,
+  hashes: ReadonlySet<string>,
+): Promise<Map<string, Set<string>>> {
+  const owed = new Map<string, Set<string>>()
+  if (!hashes.size) return owed
+  const owe = (owner: string, hash: string) => {
+    const found = owed.get(owner) ?? new Set<string>()
+    owed.set(owner, found)
+    found.add(hash)
+  }
+  const held = JSON.stringify([...hashes])
+
+  // Every row that names one of them by its hash, in a space of somebody else's.
+  const { results: used } = await env.DB.prepare(
+    `select sp.user_id as owner, n.hash as hash
+       from notes n join spaces sp on sp.id = n.space_id
+      where n.kind = 'file' and n.hash in (select value from json_each(?2)) and sp.user_id <> ?1
+     union
+     select sp.user_id as owner, n.paper as hash
+       from notes n join spaces sp on sp.id = n.space_id
+      where n.paper is not null and n.paper in (select value from json_each(?2))
+        and sp.user_id <> ?1
+     union
+     select sp.user_id as owner, p.hash as hash
+       from note_pictures p join notes n on n.id = p.note_id join spaces sp on sp.id = n.space_id
+      where p.hash in (select value from json_each(?2)) and sp.user_id <> ?1
+     union
+     select sp.user_id as owner, f.hash as hash
+       from chat_files f join chats c on c.id = f.chat_id join spaces sp on sp.id = c.space_id
+      where f.hash in (select value from json_each(?2)) and sp.user_id <> ?1`,
+  )
+    .bind(userId, held)
+    .all<{ owner: string; hash: string }>()
+  for (const one of used) owe(one.owner, one.hash)
+
+  // And the files a space records, which are a list in one column: only the spaces
+  // whose list has one of the hashes in it at all are read, and then read properly.
+  const { results: listing } = await env.DB.prepare(
+    `select user_id as owner, files from spaces sp
+      where user_id <> ?1
+        and exists (select 1 from json_each(?2) m where instr(lower(sp.files), m.value) > 0)`,
+  )
+    .bind(userId, held)
+    .all<{ owner: string; files: string }>()
+  for (const one of listing) {
+    for (const file of readSpaceFiles(one.files)) {
+      if (hashes.has(file.hash)) owe(one.owner, file.hash)
+    }
+  }
+
+  return owed
+}
+
+/** The statements that give each owner a row of their own for the hashes they are
+ *  owed, copied from the row this account holds, so the bytes stay kept once it goes. */
+export function handedTo(
+  env: Env,
+  userId: string,
+  owed: ReadonlyMap<string, ReadonlySet<string>>,
+  at: number,
+): D1PreparedStatement[] {
+  return [...owed]
+    .filter(([, hashes]) => hashes.size)
+    .map(([owner, hashes]) =>
+      env.DB.prepare(
+        `insert into blobs (hash, user_id, size, type, created_at)
+           select hash, ?2, size, type, ?3 from blobs
+            where user_id = ?1 and hash in (select value from json_each(?4))
+         on conflict(hash, user_id) do nothing`,
+      ).bind(userId, owner, at, JSON.stringify([...hashes])),
+    )
+}

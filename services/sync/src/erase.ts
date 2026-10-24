@@ -26,8 +26,8 @@ import { noteKey } from './notes'
 import { picturesOf } from './pictures'
 import { closeChats } from './chats/ask'
 import { closeRooms } from './rooms'
-import { readSpaceFiles } from './spaces/files'
 import type { Env, User } from './types'
+import { handedTo, usedElsewhere } from './used'
 
 /** Every statement here is written with three numbered parameters: `?1` the
  *  account's id, `?2` its address, `?3` the moment. */
@@ -70,14 +70,6 @@ const NOTED: readonly string[] = [
      select 'homes/' || backup_key, ?3 from machines where user_id = ?1 and backup_key is not null`,
   // The chats of its spaces, whose objects keep their logs in storage of their own.
   `insert or ignore into leftovers (what, since) select 'chats/' || id, ?3 from (${OWNED_CHATS})`,
-  // And the files it posted into chats of other people's spaces, handed to each space's
-  // owner as a picture in their note is (`handedOn`): the message stays, so the file does.
-  `insert into blobs (hash, user_id, size, type, created_at)
-     select b.hash, sp.user_id, b.size, b.type, ?3
-       from blobs b join chat_files f on f.hash = b.hash
-       join chats c on c.id = f.chat_id join spaces sp on sp.id = c.space_id
-      where b.user_id = ?1 and sp.user_id <> ?1
-   on conflict(hash, user_id) do nothing`,
   // Its messages in other people's chats stay, as a deleted account's (decision 7.8);
   // the line saying who wrote a chat's last one names nobody now.
   `update chats set last_by = null
@@ -256,9 +248,8 @@ const MOST_READ = 250
  *  member where: a writer who left, or was taken out, wrote what they wrote, and a
  *  picture a stranger kept alive by holding the same bytes is still in the owner's
  *  note once the writer and then the stranger have gone. So every space is asked,
- *  through the rows that name a blob by its hash - a file of its tree, a page note's
- *  paper, a file it records, and the pictures written down for each note's body (see
- *  pictures.ts) - and only what a space uses is handed to its owner.
+ *  through the rows that name a blob by its hash, and only what a space uses is handed
+ *  to its owner; see used.ts.
  *
  *  A note written before its pictures were written down has none yet, until the
  *  nightly sweep reads it (blog/fill.ts). Those are read here the old way, in the
@@ -278,44 +269,11 @@ async function handedOn(env: Env, user: User, at: number): Promise<D1PreparedSta
   if (!alone.length) return []
 
   const mine = new Set(alone.map((one) => one.hash))
-  const held = JSON.stringify([...mine])
-  const owed = new Map<string, Set<string>>()
+  const owed = await usedElsewhere(env, user.id, mine)
   const owe = (owner: string, hash: string) => {
     const found = owed.get(owner) ?? new Set<string>()
     owed.set(owner, found)
     found.add(hash)
-  }
-
-  // Every row that names one of them by its hash, in a space of somebody else's.
-  const { results: used } = await env.DB.prepare(
-    `select sp.user_id as owner, n.hash as hash
-       from notes n join spaces sp on sp.id = n.space_id
-      where n.kind = 'file' and n.hash in (select value from json_each(?2)) and sp.user_id <> ?1
-     union
-     select sp.user_id as owner, n.paper as hash
-       from notes n join spaces sp on sp.id = n.space_id
-      where n.paper is not null and n.paper in (select value from json_each(?2))
-        and sp.user_id <> ?1
-     union
-     select sp.user_id as owner, p.hash as hash
-       from note_pictures p join notes n on n.id = p.note_id join spaces sp on sp.id = n.space_id
-      where p.hash in (select value from json_each(?2)) and sp.user_id <> ?1`,
-  )
-    .bind(user.id, held)
-    .all<{ owner: string; hash: string }>()
-  for (const one of used) owe(one.owner, one.hash)
-
-  // And the files a space records, which are a list in one column: only the spaces
-  // whose list has one of the hashes in it at all are read, and then read properly.
-  const { results: listing } = await env.DB.prepare(
-    `select user_id as owner, files from spaces sp
-      where user_id <> ?1
-        and exists (select 1 from json_each(?2) m where instr(lower(sp.files), m.value) > 0)`,
-  )
-    .bind(user.id, held)
-    .all<{ owner: string; files: string }>()
-  for (const one of listing) {
-    for (const file of readSpaceFiles(one.files)) if (mine.has(file.hash)) owe(one.owner, file.hash)
   }
 
   const { results: written } = await env.DB.prepare(
@@ -355,16 +313,7 @@ async function handedOn(env: Env, user: User, at: number): Promise<D1PreparedSta
     }
   }
 
-  return [...owed]
-    .filter(([, hashes]) => hashes.size)
-    .map(([owner, hashes]) =>
-      env.DB.prepare(
-        `insert into blobs (hash, user_id, size, type, created_at)
-           select hash, ?2, size, type, ?3 from blobs
-            where user_id = ?1 and hash in (select value from json_each(?4))
-         on conflict(hash, user_id) do nothing`,
-      ).bind(user.id, owner, at, JSON.stringify([...hashes])),
-    )
+  return handedTo(env, user.id, owed, at)
 }
 
 /** Every picture the service holds that these notes show, read a handful at a time. */
