@@ -24,6 +24,7 @@ import { sweepLeftovers } from './leftovers'
 import { noteKey } from './notes'
 import { closeChats } from './chats/ask'
 import { closeRooms } from './rooms'
+import { type Ended, tellEnded } from './machines/end'
 import { readSpaceFiles } from './spaces/files'
 import type { Env, User } from './types'
 
@@ -33,6 +34,11 @@ const OWNED = 'select id from spaces where user_id = ?1'
 const OWNED_NOTES = `select id from notes where space_id in (${OWNED})`
 /** The chats of those spaces; see chats/. */
 const OWNED_CHATS = `select id from chats where space_id in (${OWNED})`
+
+/** The live online terminal sessions of other accounts whose `.term` files are in
+ *  those spaces, and what their machines are told of them. */
+const THEIR_TERMS = `ended_at is null and user_id <> ?1 and term in (${OWNED_NOTES})`
+const THEIR_TERMS_LIVE = `select machine, session, user_id from term_sessions where ${THEIR_TERMS}`
 
 /** What the rows are the only record of, written down before they go. */
 const NOTED: readonly string[] = [
@@ -202,11 +208,18 @@ export async function eraseAccount(env: Env, user: User): Promise<void> {
     .bind(user.id)
     .all<{ chat_id: string; who: string }>()
 
+  // And the online terminal sessions somebody else made in its spaces, on their own
+  // machine: the `.term` files naming them go with the spaces, so the sessions end with
+  // them, in the same transaction, as emptying the trash ends one (machines/end.ts). Its
+  // own go with its machine.
+  const { results: ending } = await bound(env, THEIR_TERMS_LIVE, values).all<Ended>()
+
   const handed = await handedOn(env, user, at)
 
   await env.DB.batch([
     ...NOTED.map((sql) => bound(env, sql, values)),
     ...handed,
+    bound(env, `update term_sessions set ended_at = ?3 where ${THEIR_TERMS}`, values),
     ...ERASED.map(([, sql]) => bound(env, sql, values)),
   ])
 
@@ -216,6 +229,7 @@ export async function eraseAccount(env: Env, user: User): Promise<void> {
   try {
     await closeRooms(env, open)
     await closeChats(env, chatting)
+    await tellEnded(env, ending, null)
     for (const { domain } of domains) await releaseDomain(env, domain)
     await sweepLeftovers(env)
   } catch (error) {
