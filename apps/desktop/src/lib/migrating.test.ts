@@ -98,6 +98,8 @@ vi.mock('./tauri', () => ({
   isDesktop: true,
 }))
 vi.mock('./workspace.svelte', () => ({ workspace: ws }))
+// The space a vault comes in as is this device's own, so it may be written in.
+vi.mock('./sharing.svelte', () => ({ canWriteAt: () => true }))
 vi.mock('./link-index.svelte', () => ({
   links: { noteSaved: () => undefined, cameBack: async () => undefined },
 }))
