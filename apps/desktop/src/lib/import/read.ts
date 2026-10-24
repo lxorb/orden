@@ -49,8 +49,13 @@ export async function detect(sources: readonly Source[]): Promise<FormatId | nul
   // vault itself.
   if (has(VAULT)) return 'obsidian'
 
-  if (has(/\.enex$/i)) return 'evernote'
-  if (await looksLikeTomboy(sources)) return 'tomboy'
+  // Evernote and Tomboy each read only their own files, so either is asked only
+  // where no note of another kind sits beside it: a `.enex` or a `.note` kept among
+  // somebody's markdown is an old export lying in the folder, and read as that it
+  // would bring none of the rest. Read as markdown, it is kept as the file it is.
+  const otherNotes = has(/\.(md|markdown|txt|html?)$/i)
+  if (!otherNotes && has(/\.enex$/i)) return 'evernote'
+  if (!otherNotes && (await looksLikeTomboy(sources))) return 'tomboy'
 
   // Papers and nothing else: somebody's own PDF, to be written on rather than
   // converted. Before everything below, because a `.pdf` is the one extension on this

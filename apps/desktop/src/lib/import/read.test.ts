@@ -49,6 +49,19 @@ describe('which app an export came out of', () => {
     ).resolves.toBe('notion')
   })
 
+  test('a folder of notes with an Evernote file or a Tomboy note kept in it is a folder of notes', async () => {
+    const enex = '<en-export><note><title>Old</title><content>x</content></note></en-export>'
+    const tomboy = '<note><title>Old</title><text><note-content>x</note-content></text></note>'
+
+    for (const stray of [file('Old/Travel.enex', enex), file('Old/abc.note', tomboy)]) {
+      const sources = [file('Home.md', '# Home\n'), file('Lists/Kit.md', '# Kit\n'), stray]
+      await expect(detect(sources)).resolves.toBe('markdown')
+
+      const plan = await readAs('markdown', sources)
+      expect(plan.files.map((one) => one.path)).toEqual(['Home.md', 'Lists/Kit.md', stray.path])
+    }
+  })
+
   test('a folder of notes with a folder called Keep is a folder of notes', async () => {
     const sources = [
       file('Home.md', '# Home\n\nSee [[Shopping]].\n'),
