@@ -149,6 +149,63 @@ describe('a path read back out of storage', () => {
   })
 })
 
+/** A clash is about a note, and a note can be renamed, moved or deleted while its
+ *  question waits. Held by its path alone, the answer was written to whatever file
+ *  had that name by then, which after a swap is another note. */
+describe('a note waiting to be settled', () => {
+  const moved = (from: string, to: string, kind: 'file' | 'folder' = 'file') =>
+    record.follow({ op: 'moved', from, to, kind, root: '/Work' })
+
+  test('is held under its new name once it is renamed', () => {
+    held([aClash('/Work/Plan.md')])
+
+    moved('/Work/Plan.md', '/Work/Goals.md')
+
+    expect(record.clashes.map((one) => one.path)).toEqual(['/Work/Goals.md'])
+    expect(record.held).toEqual(new Set(['/Work/Goals.md']))
+  })
+
+  test('and goes with the folder it is in', () => {
+    held([aClash('/Work/Old/Plan.md'), aClash('/Work/Oldish.md')])
+
+    moved('/Work/Old', '/Work/New', 'folder')
+
+    expect(record.clashes.map((one) => one.path)).toEqual(['/Work/New/Plan.md', '/Work/Oldish.md'])
+  })
+
+  test('and is let go of when its note is deleted here', () => {
+    held([aClash('/Work/Plan.md')])
+
+    record.follow({ op: 'removed', path: '/Work/Plan.md', kind: 'file', root: '/Work' })
+
+    expect(record.clashes).toEqual([])
+  })
+
+  test('is settled where its note is now, found by its id', async () => {
+    held([aClash('/Work/Plan.md')])
+    record.notes = { at: () => '/Work/Goals.md', of: () => 'another-id' }
+
+    await record.settle(record.clashes[0]!, 'theirs')
+    record.notes = null
+
+    expect(invoked.map((one) => one.path)).not.toContain('/Work/Plan.md')
+    expect(invoked).toContainEqual({ command: 'write_note', path: '/Work/Goals.md' })
+  })
+
+  test('never writes over another note that has its old name by now', async () => {
+    held([aClash('/Work/Plan.md')])
+    record.notes = { at: () => null, of: () => 'another-id' }
+
+    await record.settle(record.clashes[0]!, 'theirs')
+    record.notes = null
+
+    // The other copy is kept beside it rather than lost or written over the note.
+    expect(invoked).not.toContainEqual({ command: 'write_note', path: '/Work/Plan.md' })
+    expect(invoked).toContainEqual({ command: 'write_note', path: conflictPath('/Work/Plan.md') })
+    expect(record.clashes).toEqual([])
+  })
+})
+
 /** Keeping both writes the other copy under the name every second copy takes, and a
  *  second clash about the same note on the same day lands on that same name. What is
  *  already there is kept as a version first, as it is for every other write that

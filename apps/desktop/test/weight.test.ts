@@ -831,41 +831,11 @@ function holds(tail: string): boolean {
  *  stands over the caption rather than pushing the file list down under the pointer
  *  (`is-floating` in Bookmarks.svelte). Measured 3,280,466.
  *
- *  Raised 2026-10-24, to 3,285,000, for #811: the file list's gestures refuse a space
- *  shared to be read, in the workspace's own calls (`writableAt`) and in the row menu,
- *  the tree's keys and the palette. Measured 3,283,904.
- *
- *  Raised 2026-10-24, to 3,285,500, for #846: the card over a link says whether the
- *  note under it is read-only (`previewNoteOf` in @nib/editor's wikilink/hover.ts).
- *  Measured 3,285,115.
- *
- *  Raised 2026-10-24, to 3,291,000, for #903: a note open from another space resolves
- *  its links, bare embeds and attachments in its own space (`otherIndex` in
- *  link-index.svelte.ts), after #878, #889 and #894 before it. Measured 3,290,175.
- *
- *  Raised 2026-10-24, to 3,292,000, for #904 with #846 merged in: the hover card writes
- *  in the source note's own space, only after typing, and is locked where the note is
- *  read-only. Measured 3,291,479.
- *
- *  Raised 2026-10-24, to 3,294,000, for #904, #905 and #907: the hover card, block
- *  names, block search, the reading view and a link followed early all keep to the
- *  note's own space (`targetWhenRead` in link-index.svelte.ts). Measured 3,293,189.
- *
- *  Raised 2026-10-24, to 3,295,000, for #907 with #846 merged in under it. Measured
- *  3,294,400.
- *
- *  Raised 2026-10-24, to 3,298,000, for #914: link rewrites after a rename, move or
- *  merge read the space the note is in when it is not the open one (`retargetIn` in
- *  link-index.svelte.ts). Measured 3,297,008.
- *
- *  Raised 2026-10-24, to 3,299,000, for #916: embeds, canvas cards and exports of a
- *  note of another space read that space (`spaceRead` in link-index.svelte.ts).
- *  Measured 3,298,480.
- *
- *  Raised 2026-10-24, to 3,300,000, for #918 and #920: a chat of another space links in
- *  that space, and a link is followed in the space of the note it is in
- *  (`followNoteFrom` in open-link.ts). Measured 3,299,514. */
-const BUDGET = 3_344_000 // combined branch only, measured 3343743
+ *  Raised 2026-10-24, to 3,285,000, for #921: a clash waiting for an answer follows
+ *  its note's renames and deletes and is answered where its note is by id
+ *  (`follow` and `notes` in sync/record.svelte.ts, `pathOf` in sync.svelte.ts).
+ *  Measured 3,283,700. */
+const BUDGET = 3_300_000 // combined branch only
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

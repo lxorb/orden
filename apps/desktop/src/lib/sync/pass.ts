@@ -898,6 +898,7 @@ export async function movedHere(
   token: string,
   from: string,
   to: string,
+  held: ReadonlySet<string> = new Set(),
 ): Promise<boolean> {
   const was = within(mirror.root, from)
   const now = within(mirror.root, to)
@@ -910,13 +911,19 @@ export async function movedHere(
 
   let done = false
   for (const path of moving) {
-    if (await movedOne(mirror, token, path, now + path.slice(was.length))) done = true
+    if (await movedOne(mirror, token, path, now + path.slice(was.length), held)) done = true
   }
 
   return done
 }
 
-async function movedOne(mirror: Mirror, token: string, was: string, now: string): Promise<boolean> {
+async function movedOne(
+  mirror: Mirror,
+  token: string,
+  was: string,
+  now: string,
+  held: ReadonlySet<string>,
+): Promise<boolean> {
   const tracked = mirror.notes[was]
   // A note the account has never been handed has no identity to keep. It goes up
   // under its new name the first time a push meets it, which is right.
@@ -930,6 +937,18 @@ async function movedOne(mirror: Mirror, token: string, was: string, now: string)
   }).catch(() => null)
   if (content === null) return false
 
+  // A note whose two copies wait for an answer is moved up there with the words the
+  // account already holds, and stays waiting: the rename is not an answer. Sent with
+  // the file's words, the copy nobody had looked at yet was written over. See
+  // sync/record.svelte.ts.
+  if (held.has(tracked.id)) {
+    const moved = await heldMovedUpThere(token, tracked, now)
+    if (!moved) return false
+    mirror.notes = { ...without(mirror.notes, was), [now]: moved }
+    mirror.offered = without(mirror.offered, was)
+    return true
+  }
+
   const moved = await renamedUpThere(token, tracked, now, content)
   if (!moved) return false
 
@@ -938,6 +957,23 @@ async function movedOne(mirror: Mirror, token: string, was: string, now: string)
   mirror.offered = without(mirror.offered, was)
 
   return true
+}
+
+/** A note waiting on a question, at its new name on the account with the account's
+ *  own words, or null when that could not be said. The entry keeps its hash, which
+ *  says nothing is settled. */
+async function heldMovedUpThere(
+  token: string,
+  tracked: Tracked,
+  path: string,
+): Promise<Tracked | null> {
+  try {
+    const there = await api.readNote(token, tracked.id)
+    const { note } = await api.writeNote(token, tracked.id, path, there.content, there.note.version)
+    return { id: note.id, version: note.version, hash: tracked.hash }
+  } catch {
+    return null
+  }
 }
 
 /** The entry for the note at its new name, once the account has it there, or null

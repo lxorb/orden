@@ -313,11 +313,14 @@ class Sync {
 
     const moving = this.movingFrom(from, to)
     if (moving.length) this.moving = [...this.moving, ...moving]
+    // The notes waiting on a question, by id, so the order the stores hear this move
+    // in does not matter. See `movedOne` in sync/pass.ts.
+    const held = new Set(record.clashes.map((one) => one.id))
 
     try {
       const { movedHere } = await import('./sync/pass')
       for (const mirror of Object.values(this.mirrors)) {
-        if (await movedHere(mirror, token, from, to)) this.save()
+        if (await movedHere(mirror, token, from, to, held)) this.save()
       }
     } finally {
       if (moving.length) this.moving = this.moving.filter((one) => !moving.includes(one))
@@ -579,6 +582,17 @@ class Sync {
    *  Null for a note in no space, and for one the account has never been handed -
    *  a note with no id has no room, and a note whose hash nobody knows has nothing
    *  to be compared against. See rooms.svelte.ts, which asks. */
+  /** Where a note v1 tracks is on this disk, by its id, or null. */
+  pathOf(id: string): string | null {
+    if (V2 && this.v2) return null
+    for (const mirror of Object.values(this.mirrors)) {
+      for (const [path, held] of Object.entries(mirror.notes)) {
+        if (held.id === id) return joinPath(mirror.root, path)
+      }
+    }
+    return null
+  }
+
   tracked(path: string): { id: string; version: number; hash: string } | null {
     if (V2 && this.v2) return this.v2.tracked(path)
     for (const mirror of Object.values(this.mirrors)) {
@@ -1034,3 +1048,10 @@ function known(): Promise<void> {
 export const sync = new Sync()
 
 workspace.fileOps.follow((op) => sync.follow(op))
+// The notes waiting on a question follow their files, and are found by id when one is
+// answered; see sync/record.svelte.ts.
+workspace.fileOps.follow((op) => record.follow(op))
+record.notes = {
+  at: (id) => sync.pathOf(id),
+  of: (path) => sync.tracked(path)?.id ?? null,
+}
