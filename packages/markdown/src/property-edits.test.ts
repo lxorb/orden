@@ -1,6 +1,8 @@
 import { describe, expect, test } from 'vitest'
 import { readProperties } from './properties'
 import {
+  addProperty,
+  propertyNamed,
   removeProperty,
   renameProperty,
   withItem,
@@ -183,6 +185,29 @@ describe('a key renamed from the side panel', () => {
     expect(renameProperty(NOTE, 'done', 'done')).toBeNull()
     expect(renameProperty(NOTE, 'done', 'Title')).toBeNull()
     expect(renameProperty(NOTE, 'missing', 'other')).toBeNull()
+  })
+})
+
+describe('a key added from the side panel', () => {
+  test('is written with nothing after it, in a block or in a new one', () => {
+    expect(applied(NOTE, addProperty(NOTE, ' status '))).toBe(
+      NOTE.replace('---\n\n', "status: ''\n---\n\n"),
+    )
+    expect(applied('Words.\n', addProperty('Words.\n', 'status'))).toBe(
+      "---\nstatus: ''\n---\nWords.\n",
+    )
+  })
+
+  /** Writing it anyway was setting the key the note already had to nothing: its list,
+   *  or `Status: open` reached through the key in another case. */
+  test('refuses a name the block already has, in any case, and an empty one', () => {
+    const held = '---\ntags:\n  - a\n  - b\nStatus: open\n---\nWords.\n'
+
+    expect(addProperty(held, 'tags')).toBeNull()
+    expect(addProperty(held, 'status')).toBeNull()
+    expect(addProperty(held, '  ')).toBeNull()
+    expect(propertyNamed(held, ' STATUS ')?.key).toBe('Status')
+    expect(propertyNamed(held, 'due')).toBeNull()
   })
 })
 

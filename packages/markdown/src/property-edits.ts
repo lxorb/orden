@@ -108,6 +108,23 @@ export function renameProperty(source: string, key: string, next: string): TextE
   return { from: found.from, to: found.from + key.length, insert: name }
 }
 
+/** The row a new key of this name would land on, where the block already has one. In
+ *  any case, because `writeProperty` reaches `Status` through `status` where the note
+ *  has no `status` (`keyLine` in front-matter.ts). Null where the name is free. */
+export function propertyNamed(source: string, name: string): Property | null {
+  const wanted = name.trim().toLowerCase()
+  return readProperties(source)?.find((one) => one.key.toLowerCase() === wanted) ?? null
+}
+
+/** One edit that adds a key with nothing after it, for its value to be typed in next.
+ *  Null for an empty name or one the block already has: writing it anyway would set
+ *  that key to nothing, a list or a value lost to a name typed twice. */
+export function addProperty(source: string, name: string): TextEdit | null {
+  const key = name.trim()
+  if (!key || propertyNamed(source, key)) return null
+  return writeProperty(source, key, '')
+}
+
 /** One edit that takes a key away with everything written under it: a list's
  *  `- item` lines go with the key rather than being left behind as a shape nothing
  *  reads. A block left with nothing in it goes too, with the blank lines under it,
