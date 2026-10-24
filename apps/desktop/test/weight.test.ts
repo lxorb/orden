@@ -831,15 +831,14 @@ function holds(tail: string): boolean {
  *  stands over the caption rather than pushing the file list down under the pointer
  *  (`is-floating` in Bookmarks.svelte). Measured 3,280,466.
  *
- *  Raised 2026-10-24, to 3,282,000, for #737: a note made in a folder taken from a
- *  tab asks the disk for its name, since the tab can be from a space not on screen
- *  (`freeNameOnDisk` in workspace.svelte.ts). Measured 3,281,445.
+ *  Raised 2026-10-24, to 3,285,000, for #811: the file list's gestures refuse a space
+ *  shared to be read, in the workspace's own calls (`writableAt`) and in the row menu,
+ *  the tree's keys and the palette. Measured 3,283,904.
  *
- *  Raised 2026-10-24, to 3,286,000, for #835: the b247 branch it merges in,
- *  and Split at caret and Extract selection asking for a markdown note that may be
- *  written before they write a note beside it (`carvable` in workspace/composing.ts).
- *  Measured 3,285,176. */
-const BUDGET = 3_313_000 // combined branch only
+ *  Raised 2026-10-24, to 3,285,500, for #846: the card over a link says whether the
+ *  note under it is read-only (`previewNoteOf` in @nib/editor's wikilink/hover.ts).
+ *  Measured 3,285,115. */
+const BUDGET = 3_300_000 // combined branch only
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
