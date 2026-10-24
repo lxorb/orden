@@ -79,6 +79,8 @@ export default defineConfig({
           name: 'effects',
           include: ['src/**/*.effect.test.ts', 'test/**/*.effect.test.ts'],
           environment: 'jsdom',
+          // jsdom has no ResizeObserver; see the file.
+          setupFiles: ['test/effects/jsdom-layout.ts'],
           ...clocks,
         },
       },
