@@ -13,6 +13,8 @@
  *  A notebook is a tag of the form `system:notebook:Work`, which becomes a folder,
  *  because that is what a notebook is. Every other tag is a tag. */
 
+import { asWords, OPENS_MARKUP } from '@nib/markdown/words'
+
 import { key } from '../i18n.svelte'
 
 import { dayOf, noteText, type Meta } from './meta'
@@ -191,7 +193,7 @@ export function tomboyMarkdown(
   for (const tag of tagsIn(content)) {
     if (tag.from < at) continue
 
-    words(unescapeXml(content.slice(at, tag.from)))
+    words(asWords(unescapeXml(content.slice(at, tag.from))))
     at = tag.to
 
     const name = tag.name.toLowerCase()
@@ -265,7 +267,7 @@ export function tomboyMarkdown(
     // heading, and a heading in the middle of a note would be a change of shape.
   }
 
-  write(unescapeXml(content.slice(at)))
+  write(asWords(unescapeXml(content.slice(at))))
 
   return out
     .join('')
@@ -284,9 +286,15 @@ function marked(text: string, mark: string): string {
     .map((line) => {
       const [, lead = '', words = '', tail = ''] = /^(\s*(?:- )?\s*)(.*?)(\s*)$/.exec(line) ?? []
       if (!words) return line
-      return `${lead}${mark === '`' ? code(words) : `${mark}${words}${mark}`}${tail}`
+      return `${lead}${mark === '`' ? code(unescaped(words)) : `${mark}${words}${mark}`}${tail}`
     })
     .join('\n')
+}
+
+/** Words as they were before `asWords`, for inside code, which reads no markup
+ *  and would show the backslash. One is taken off each bracket it escaped. */
+function unescaped(words: string): string {
+  return words.replace(new RegExp(`\\\\${OPENS_MARKUP.source}`, 'g'), '<')
 }
 
 /** Words as inline code, fenced with more backticks than they hold in a row. */
