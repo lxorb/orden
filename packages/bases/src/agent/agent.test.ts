@@ -291,6 +291,14 @@ describe('bases', () => {
     expect(() => withProperties('', { 'a:b': 1 })).toThrow(AgentError)
   })
 
+  test('a key is whatever front matter reads as one: letters of any script, dots', () => {
+    expect(withProperties('Words', { priorität: 'Hoch', 'a.b': 1, 日期: 'heute' })).toBe(
+      '---\npriorität: Hoch\na.b: 1\n日期: heute\n---\nWords',
+    )
+    for (const key of ['', ' a', '-a', '#a', 'a:b', 'a\nb', 'a '])
+      expect(() => withProperties('', { [key]: 1 })).toThrow(AgentError)
+  })
+
   test('a base edited: a view added, a filter set, a formula, a view gone', () => {
     const base = readBase('views:\n  - type: table\n    name: All\n')
     const edited = editedBase(base, [

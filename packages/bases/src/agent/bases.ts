@@ -17,8 +17,13 @@ type Args = Record<string, unknown>
 const isRecord = (value: unknown): value is Args =>
   value !== null && typeof value === 'object' && !Array.isArray(value)
 
-/** The front matter keys a value can be written under. */
-const KEY = /^[\w-][\w -]*$/
+/** The front matter keys a value can be written under: letters, marks and digits of
+ *  any script, so `priorität` and `日期` are keys the way front-matter.ts reads them,
+ *  with blanks, dots and hyphens between. What it keeps out is a name the block would
+ *  not read back as that key - a colon or a line break inside it, a `#` or `- ` in front
+ *  that makes it a comment or a list item, a blank at either end that is trimmed away -
+ *  since a key written that way is a new line every time rather than the key set. */
+const KEY = /^[\p{L}\p{M}\p{N}_](?:[\p{L}\p{M}\p{N}_ .-]*[\p{L}\p{M}\p{N}_.-])?$/u
 
 /** The note's words with each property set, or taken away where it is null. A list is
  *  written as one, a number and a yes or no bare, everything else as words. */
