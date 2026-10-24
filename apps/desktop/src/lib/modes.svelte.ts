@@ -152,7 +152,7 @@ interface Saved {
   width: number
   lineHeight: number
   spellcheck: boolean
-  spellLanguage: string
+  spellLanguages: string[]
   spellWords: string[]
   alwaysOnTop: boolean
   frame: Frame
@@ -273,7 +273,7 @@ export const DEFAULTS = {
   width: 42,
   lineHeight: 1.72,
   spellcheck: true,
-  spellLanguage: 'system',
+  spellLanguages: [] as string[],
   alwaysOnTop: false,
   frame: 'nib' as Frame,
   hand: false,
@@ -364,9 +364,10 @@ class Modes {
    *  typo is worth knowing about and nobody goes looking through settings for
    *  the checker every other editor has running already. */
   spellcheck = $state(DEFAULTS.spellcheck)
-  /** The dictionary to check against; `system` leaves it to the browser, which
-   *  reads the language the machine is set to. */
-  spellLanguage = $state(DEFAULTS.spellLanguage)
+  /** The dictionaries a note is checked against, several at once (#771), as they were
+   *  chosen; none chosen is the reader's own language. Read and written through
+   *  spell-languages.ts, which only the spelling pane and nib's own Chromium need. */
+  spellLanguages = $state<string[]>([])
   /** The words the reader has said are words: names, terms, a project. The
    *  checker is turned off over each of them wherever it appears, which is what
    *  takes the wavy line away; see spelling.ts in the editor package for why
@@ -585,7 +586,14 @@ class Modes {
       this.zoom = measure(saved.zoom, DEFAULTS.zoom)
       this.width = measure(saved.width, DEFAULTS.width)
       this.lineHeight = measure(saved.lineHeight, DEFAULTS.lineHeight)
-      this.spellLanguage = text(saved.spellLanguage, DEFAULTS.spellLanguage)
+      // One dictionary was `spellLanguage`, a short tag or `system`, before there
+      // could be several; written back once under the new name.
+      this.spellLanguages =
+        stringList(saved.spellLanguages) ??
+        (isString(saved.spellLanguage) && saved.spellLanguage !== 'system'
+          ? [saved.spellLanguage]
+          : [])
+      stale ||= 'spellLanguage' in saved
       // A stored list with anything but words in it is dropped whole; `adopt` sifts the account's.
       this.spellWords = (stringList(saved.spellWords) ?? [])
         .filter(isSpellWord)
@@ -604,7 +612,7 @@ class Modes {
       // Machines that chose one have it written down, so it is dropped rather than
       // left in the entry for a later version to wonder about. Written back at the
       // end of this method, once everything else has been read.
-      stale = 'glassesScroll' in saved
+      stale ||= 'glassesScroll' in saved
       // An empty name reads as none here; `adopt` takes whatever string the account says.
       this.glassesModel = text(saved.glassesModel, DEFAULTS.glassesModel)
       this.glassesEffort = isEffort(saved.glassesEffort)
@@ -651,6 +659,12 @@ class Modes {
     // window that jumped.
     this.applyFrame()
     this.applyHand()
+    // And the dictionaries, to the engine that keeps a list of them. Fetched, since
+    // only a Linux desktop's engine has one; see spell-languages.ts.
+    if (isDesktop) {
+      const chosen = this.spellLanguages
+      void import('./spell-languages').then((one) => one.tellEngine(one.inForceNow(chosen)))
+    }
 
     // Written back without whatever this version has not got; see `stale` above.
     if (stale) this.persist()
@@ -887,10 +901,10 @@ class Modes {
     this.persist()
   }
 
-  /** What the checker reads against: a tag when one was chosen, nothing when
-   *  the browser is to pick. */
+  /** The writing surface's `lang`: the one language chosen, where only one is, and
+   *  nothing where the checker is to read several or the reader's own. */
   private get dictionary(): string | undefined {
-    return this.spellLanguage === 'system' ? undefined : this.spellLanguage
+    return this.spellLanguages.length === 1 ? this.spellLanguages[0] : undefined
   }
 
   /** Adds a word to the reader's own list, or takes it away when it is already
@@ -919,8 +933,9 @@ class Modes {
     return this.spellWords.includes(word.trim().toLowerCase())
   }
 
-  setSpellLanguage(value: string, view?: EditorView) {
-    this.spellLanguage = value
+  /** The dictionaries chosen, which spell-languages.ts works out; see `toggled` there. */
+  setSpellLanguages(chosen: string[], view?: EditorView) {
+    this.spellLanguages = chosen
     this.each(view, (one) => setSpellcheck(one, this.spellcheck, this.dictionary))
     this.persist()
   }
@@ -1588,7 +1603,7 @@ class Modes {
       width: this.width,
       lineHeight: this.lineHeight,
       spellcheck: this.spellcheck,
-      spellLanguage: this.spellLanguage,
+      spellLanguages: this.spellLanguages,
       spellWords: this.spellWords,
       alwaysOnTop: this.alwaysOnTop,
       closeBrackets: this.closeBrackets,
