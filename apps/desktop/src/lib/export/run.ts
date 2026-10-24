@@ -9,6 +9,7 @@
  *  Word writer and the zip are a good deal larger than the list of names. */
 
 import { loadFor } from '@nib/markdown/engines'
+import { numbered } from '@nib/markdown/paths'
 import type { FoundLink } from '@nib/markdown/links'
 import {
   buildBody,
@@ -22,11 +23,12 @@ import {
 import { t } from '../i18n.svelte'
 import { pageSetupFor, paperInches, type PaperTwips, paperTwips, runningDate } from '../page-setup'
 import { DEFAULT_PAGE_SETUP } from '../paper'
+import { nameOf } from '../space-paths'
 import { invoke, isDesktop, isNative } from '../tauri'
 import { documentOf, picturesIn } from './document'
 import { type Exportable, EXPORT_FORMATS, EXPORT_VARIANTS, extensionFor, TEXTPACK } from './formats'
 import { toMarkdown } from './markdown'
-import { fileNameFor, stemOf } from './naming'
+import { fileNameFor } from './naming'
 import { writtenPdf } from './print'
 import { type Picture, readPictures, sourcesIn } from './pictures'
 import { chooseTarget, deliver, type Payload } from './save'
@@ -139,10 +141,10 @@ async function exportPicture(
   if (pages.length === 1) return deliver(note.name, id, labelFor(id), { bytes: first, mime })
 
   // Several pictures cannot be one file, so the reader names the first and the
-  // rest land beside it, numbered.
-  const stem = stemOf(note.name)
+  // rest land beside it, numbered after it: `Trip.png`, `Trip 2.png`...
+  const file = fileNameFor(note.name, id)
   return deliver(note.name, id, labelFor(id), {
-    files: pages.map((bytes, at) => ({ path: `${stem} ${at + 1}.${id}`, body: bytes })),
+    files: pages.map((bytes, at) => ({ path: numbered(file, at + 1), body: bytes })),
     folder: false,
   })
 }
@@ -178,17 +180,34 @@ async function exportBundle(note: Note, options: RunOptions): Promise<string | n
  *  to it. A browser cannot be handed a folder, so there it is one zip. */
 async function exportMarkdownWithPictures(note: Note, options: RunOptions): Promise<string | null> {
   const pictures = await picturesFor(note, options, false)
-  const files = bundleFiles(note.source, pictures, options.link ? { link: options.link } : {})
-  // The bundle's own metadata is the wrapper's, not the note's, and the note
-  // keeps its own name rather than becoming `text.md`.
-  const beside = files
-    .filter((file) => file.path !== 'info.json')
-    .map((file) =>
-      file.path === 'text.md' ? { ...file, path: fileNameFor(note.name, 'md') } : file,
-    )
+  const besideOf = (named: readonly Picture[]) =>
+    bundleFiles(note.source, named, options.link ? { link: options.link } : {})
+      // The bundle's own metadata is the wrapper's, not the note's, and the note
+      // keeps its own name rather than becoming `text.md`.
+      .filter((file) => file.path !== 'info.json')
+      .map((file) =>
+        file.path === 'text.md' ? { ...file, path: fileNameFor(note.name, 'md') } : file,
+      )
+  const beside = besideOf(pictures)
 
   if (isNative) {
-    return deliver(note.name, 'md', labelFor('md-assets'), { files: beside, folder: false })
+    // A picture that stepped aside from one already in that `assets` folder is
+    // linked under the name it landed at, so the note is written again with
+    // those names rather than pointing at somebody else's picture.
+    const relink = (landed: ReadonlyMap<string, string>) => {
+      const moved = pictures.map((picture) => {
+        const path = landed.get(`assets/${picture.name}`)
+        return path ? { ...picture, name: nameOf(path) } : picture
+      })
+      const text = fileNameFor(note.name, 'md')
+      return besideOf(moved).find((file) => file.path === text)?.body ?? ''
+    }
+
+    return deliver(note.name, 'md', labelFor('md-assets'), {
+      files: beside,
+      folder: false,
+      relink,
+    })
   }
 
   const bytes = await zipOf(beside)

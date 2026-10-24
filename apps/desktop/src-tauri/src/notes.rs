@@ -1,9 +1,9 @@
-//! A note is a file. This module owns the ten things the window can ask of one:
+//! A note is a file. This module owns the eleven things the window can ask of one:
 //! read it, write it back as text, write it back as bytes, rename or move it,
-//! copy it, delete it, ask when it was last written and how long it is, make the folder it
-//! is going to live in, take that folder away, and take it away only if nothing
-//! whatever is left in it. Whether a path is allowed at all is decided by `paths`,
-//! not here.
+//! copy it, delete it, ask when it was last written and how long it is, ask whether
+//! anything is at its name at all, make the folder it is going to live in, take that
+//! folder away, and take it away only if nothing whatever is left in it. Whether a
+//! path is allowed at all is decided by `paths`, not here.
 
 use base64::engine::general_purpose::STANDARD as BASE64;
 use base64::Engine as _;
@@ -423,6 +423,27 @@ pub fn file_stamp(app: AppHandle, path: String) -> Result<Option<Stamp>, String>
     Ok(stamp_of(&openable(&app, &path)?))
 }
 
+/// Whether anything at all - a file, a folder, a link - is at a path the reader
+/// may write to. What an export asks before it writes a picture or a page beside
+/// the file the save dialog was given: the dialog asked about that one file, so
+/// a picture of the same name already in the folder is somebody else's, and the
+/// new one steps aside instead of writing over it; see `writeBeside` in
+/// export/save.ts.
+///
+/// Behind `chosen` rather than `openable`, because the folder an export goes to is
+/// usually outside every space, and a yes or no about a name there reads nothing.
+#[tauri::command(async)]
+pub fn path_taken(app: AppHandle, path: String) -> Result<bool, String> {
+    Ok(taken(&chosen(&app, &path)?))
+}
+
+/// The same once the path has been judged. `symlink_metadata`, so a link that
+/// points nowhere still counts: writing through it would make a file where the
+/// link points, which is not a free name either.
+fn taken(target: &Path) -> bool {
+    fs::symlink_metadata(target).is_ok()
+}
+
 /// The stamp of one file, for the crate's own use: the command above, and the
 /// search asking whether the note it is holding is still the note on disk.
 ///
@@ -471,6 +492,17 @@ mod tests {
 
     fn file_stamp(path: &str) -> Option<Stamp> {
         super::stamp_of(Path::new(path))
+    }
+
+    #[test]
+    fn a_name_is_taken_by_a_file_or_a_folder_and_free_otherwise() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        fs::write(dir.path().join("image.png"), PNG).expect("the picture");
+        fs::create_dir(dir.path().join("assets")).expect("the folder");
+
+        assert!(super::taken(&dir.path().join("image.png")));
+        assert!(super::taken(&dir.path().join("assets")));
+        assert!(!super::taken(&dir.path().join("image 2.png")));
     }
 
     #[test]
