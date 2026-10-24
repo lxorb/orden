@@ -22,12 +22,13 @@
  *  three by name, the way everything on this bridge is asked for. They are in the
  *  list because the list is what the activity publishes, not what this file uses.
  *
- *  Four of them take a word first. `addJavascriptInterface` injects the object into
+ *  All but the few that only say how the window looks take a word first. `addJavascriptInterface` injects the object into
  *  every frame of the webview - an embedded page, a block of a note's own HTML - and
  *  tells the activity nothing about which of them called. Those frames are sandboxed
  *  so the app is out of their reach, and the bridge was the way round it: a framed
- *  page could read every AI key or turn the microphone on. So the calls that matter
- *  want the word only the page can have; see `frameWord` and `frame` in
+ *  page could read every AI key, turn the microphone on, read or drop what was shared
+ *  in, or plant a widget row. So every call that reads or writes anything wants the
+ *  word only the page can have; see `frameWord` and `frame` in
  *  MainActivity.kt. */
 export interface NibSystem {
   /** The four edges the system bars keep, as JSON; see insets.ts. */
@@ -38,15 +39,15 @@ export interface NibSystem {
   /** Which way round the system bars' own icons go. */
   bars(dark: boolean): void
   /** What a tile or a widget row asked for, once, as JSON; see handed.ts. */
-  handed(): string
+  handed(said: string): string
   /** What another app shared, without the bytes, as JSON; see shared.ts. */
-  shared(): string
+  shared(said: string): string
   /** One slice of one shared file, as base64. */
-  sharedBytes(at: number, offset: number, length: number): string
+  sharedBytes(said: string, at: number, offset: number, length: number): string
   /** The page has written what it was given; the copies may go. */
-  sharedDone(): void
+  sharedDone(said: string): void
   /** The rows the home screen draws, as JSON; see widgets.ts. */
-  widgets(json: string): void
+  widgets(said: string, json: string): void
   /** Whether this phone has a speech recogniser at all. */
   dictates(): boolean
   /** Turns dictation on or off; answers whether it is listening. */
@@ -59,7 +60,7 @@ export interface NibSystem {
    *  see reminders/platform.ts and Reminders.kt. */
   reminders(said: string, json: string): void
   /** Done and presses on a reminder since the page last asked, as JSON, once. */
-  remindersTaken(): string
+  remindersTaken(said: string): string
   /** Whether the phone rings an alarm at its minute rather than within a few. */
   exactAlarms(): boolean
   /** The system's own switch for exact alarms, opened once. */

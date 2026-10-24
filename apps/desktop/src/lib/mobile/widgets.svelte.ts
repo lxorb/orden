@@ -22,7 +22,7 @@ import { shownName } from '../note-name'
 import { insideSpace } from '../space-paths'
 import { afterQuiet } from '../timing'
 import { type Entry, workspace } from '../workspace.svelte'
-import { method } from './bridge'
+import { frameWord, method } from './bridge'
 
 /** As many rows as the layout has; see res/layout/widget_notes.xml. */
 const MOST = 5
@@ -150,7 +150,9 @@ export function watchWidgets(): () => void {
       if (said === last) return
 
       last = said
-      push(said)
+      // With the word, since the bridge is in every frame; see `frameWord`. One
+      // promise for the launch, so the rows still arrive in the order they were drawn.
+      void frameWord().then((word) => push(word, said))
     })
   })
   return () => {

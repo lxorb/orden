@@ -28,7 +28,7 @@ import { joinPath } from '../tauri'
 import { waited } from '../timing'
 import { views } from '../views.svelte'
 import { workspace } from '../workspace.svelte'
-import { answer, method, onTheActivity } from './bridge'
+import { answer, frameWord, method, onTheActivity } from './bridge'
 import {
   type Arrived,
   arrivedFrom,
@@ -120,14 +120,16 @@ export function openable(said: string): string | null {
 /** Everything one intent was carrying, in the order it matters: the note a widget
  *  row named, then the command a tile asked for, then whatever was shared. */
 async function take(): Promise<void> {
-  const asked = askedFrom(method('handed')?.() ?? '')
+  // The word, because the bridge is in every frame; see `frameWord`.
+  const word = await frameWord()
+  const asked = askedFrom(method('handed')?.(word) ?? '')
 
   const open = asked.open ? openable(asked.open) : null
   if (open) await workspace.open(open).catch(() => undefined)
   if (asked.command) run(asked.command)
   if (asked.tick) await ticked(asked.tick, asked.tickSpace)
 
-  await taken()
+  await taken(word)
 }
 
 /** A box of the Today widget: the task ticked in its note, through the one write path.
@@ -142,13 +144,13 @@ async function ticked(at: string, space: string): Promise<void> {
 }
 
 /** The share, from what the activity holds to what the space holds. */
-async function taken(): Promise<void> {
-  const arrived = arrivedFrom(method('shared')?.() ?? '')
+async function taken(word: string): Promise<void> {
+  const arrived = arrivedFrom(method('shared')?.(word) ?? '')
   if (!arrived) return
 
   let answered = true
   try {
-    const bytes = await carried(arrived)
+    const bytes = await carried(arrived, word)
     const root = await landing()
     const where = await ask(arrived, root)
 
@@ -166,14 +168,14 @@ async function taken(): Promise<void> {
   } finally {
     // Either way the copies in the cache have been answered for. A share nobody
     // took is a share that was dismissed, which always means do nothing.
-    if (answered) method('sharedDone')?.()
+    if (answered) method('sharedDone')?.(word)
   }
 }
 
 /** The bytes of everything that came over as a file, by where it sat in the
  *  share. Asked for in slices, yielding between them, so a photograph does not
  *  hold the page still while it crosses. */
-async function carried(arrived: Arrived): Promise<Map<number, Uint8Array>> {
+async function carried(arrived: Arrived, word: string): Promise<Map<number, Uint8Array>> {
   const read = method('sharedBytes')
   const held = new Map<number, Uint8Array>()
   if (!read) return held
@@ -185,7 +187,7 @@ async function carried(arrived: Arrived): Promise<Map<number, Uint8Array>> {
     let got = 0
 
     while (got < item.size) {
-      const text = read(at, got, SLICE)
+      const text = read(word, at, got, SLICE)
       if (!text) break
 
       const bytes = fromBase64(text)

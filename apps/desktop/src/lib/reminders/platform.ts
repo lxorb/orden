@@ -63,7 +63,7 @@ export async function taken(): Promise<Pressed[]> {
   if (isDesktop) said = await invoke<unknown>('reminders_taken').catch(() => [])
   else {
     const take = method('remindersTaken')
-    if (take) said = parsed(take())
+    if (take) said = parsed(take(await frameWord()))
   }
   return Array.isArray(said) ? said.map(pressOf).filter((one) => one !== null) : []
 }
