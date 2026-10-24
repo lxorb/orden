@@ -191,3 +191,62 @@ describe('in a space shared to be read', () => {
     expect(writes()).toEqual([])
   })
 })
+
+/** The tab in front, read again after a call that changed it. */
+const front = () => workspace.active
+
+/** A tab with no file given one: a draft written, a web tab kept as a web note. Each
+ *  is a new file in the place it is saved to (B295). */
+describe('a tab saved into a space shared to be read', () => {
+  beforeEach(() => {
+    readOnly.add('/theirs')
+  })
+
+  test('writes no draft, where it was asked to or in its own space', async () => {
+    await workspace.newCanvas()
+    const tab = workspace.active
+    if (!tab) throw new Error('no draft')
+
+    expect(await workspace.save(tab, '/theirs', 'Board.canvas')).toBeNull()
+    expect(await workspace.save(tab)).toBeNull()
+    expect(tab.path).toBeNull()
+    expect(writes()).toEqual([])
+  })
+
+  test('keeps no web tab as a web note there', async () => {
+    workspace.openWebsite()
+    const tab = workspace.active
+    if (!tab) throw new Error('no web tab')
+    tab.address = 'https://example.com/'
+
+    expect(await workspace.save(tab, '/theirs')).toBeNull()
+    expect(tab.path).toBeNull()
+    expect(writes()).toEqual([])
+  })
+
+  test('nor do the two ways a tab is given a file, asked on their own', async () => {
+    const { keepWeb } = await import('./workspace/placing')
+    workspace.openWebsite()
+    const web = workspace.active
+    if (!web) throw new Error('no web tab')
+    web.address = 'https://example.com/'
+    expect(await keepWeb(workspace, (_path, run) => run(), web, '/theirs')).toBeNull()
+
+    await workspace.newCanvas()
+    const draft = front()
+    if (!draft) throw new Error('no draft')
+    const { saving } = workspace as unknown as {
+      saving: { place: (note: unknown, folder: string, file: string) => Promise<string | null> }
+    }
+    expect(await saving.place(draft.note, '/theirs', 'Board.canvas')).toBeNull()
+    expect(writes()).toEqual([])
+  })
+
+  test('while one saved into the reader’s own space is written', async () => {
+    await workspace.newCanvas()
+    const tab = workspace.active
+    if (!tab) throw new Error('no draft')
+
+    expect(await workspace.save(tab, '/mine', 'Board.canvas')).toBe('/mine/Board.canvas')
+  })
+})

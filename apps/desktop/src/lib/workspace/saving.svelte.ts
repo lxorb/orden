@@ -340,6 +340,10 @@ export class Saving {
    *  `freeName` in workspace.svelte.ts. */
   async place(note: NoteDoc, folder: string, file: string): Promise<string | null> {
     if (note.path !== null) return null
+    // Nor into a space shared to be read, which keeps its own files. Fetched, as
+    // sharing.svelte.ts reads the workspace this belongs to.
+    const { canWriteAt } = await import('../sharing.svelte')
+    if (!canWriteAt(folder)) return null
 
     const path = await this.claim(note, folder, file)
     if (path === null) return null

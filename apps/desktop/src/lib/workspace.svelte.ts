@@ -2296,7 +2296,7 @@ class Workspace {
     this.keeping.add(tab.id)
     try {
       const dir = folder ?? (await this.draftHome(tab.note.home))
-      if (dir === null) return null
+      if (dir === null || !(await this.writableAt(dir))) return null
       await this.nestFor(dir, [])
 
       const saved =
