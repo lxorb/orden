@@ -31,11 +31,30 @@ vi.mock('./tauri', async (importOriginal) => ({
       }
       case 'save_asset':
         return Promise.resolve('../assets/clip.pdf')
+      case 'write_note':
+        disk.set(path, text(args?.content))
+        return Promise.resolve(undefined)
       case 'file_stamp':
         return Promise.resolve(disk.has(path) ? { modified: 1, len: 1 } : null)
       default:
         return Promise.resolve(undefined)
     }
+  },
+}))
+
+/** The space search, as the `[[^^` popup asks it: which root, and one block found. */
+const searched: string[] = []
+vi.mock('./search/space', () => ({
+  searchSpace: (
+    root: string,
+    _query: unknown,
+    _terms: unknown,
+    _most: number,
+    onFound: (found: { hits: unknown[]; loose: unknown[] }) => void,
+  ) => {
+    searched.push(root)
+    onFound({ hits: [{ path: `${root}/Plan.md`, line: 0, text: '# Plan here' }], loose: [] })
+    return Promise.resolve()
   },
 }))
 
@@ -134,4 +153,20 @@ test("a file kept beside a note of another space goes in that space's assets fol
   modes.attachments = 'space'
   await storeBeside(new ArrayBuffer(1), '/home/me/A/sub/Note.md', 'clip.pdf')
   expect(sent.find((one) => one.command === 'save_asset')?.folder).toBe('../assets')
+})
+
+test("a block named for a link in a note of another space is named in that space's note", async () => {
+  const id = await links.nameBlock('Plan.md', 0, '/home/me/A/Note.md')
+
+  expect(id).not.toBeNull()
+  expect(disk.get('/home/me/A/Plan.md')).toBe(`# Plan of A ^${id ?? ''}\n`)
+  expect(disk.get('/home/me/B/Plan.md')).toBe('# Plan of B\n')
+})
+
+test("the blocks a note of another space is offered are that space's", async () => {
+  searched.length = 0
+  const found = await links.index('/home/me/A/Note.md').searchBlocks?.('Plan here', 5)
+
+  expect(searched).toEqual(['/home/me/A'])
+  expect(found).toMatchObject([{ path: 'Plan.md', line: 0 }])
 })

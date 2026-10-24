@@ -68,7 +68,7 @@
     /** The space around a note, so `[[links]]` can be drawn and completed. */
     notes?: (tab: Tab) => NoteIndex
     opennote?: NoteOpener
-    nameblock?: (path: string, line: number) => Promise<string | null>
+    nameblock?: (path: string, line: number, from: Tab) => Promise<string | null>
     /** Ctrl+F and Ctrl+H, which are keys in the editor and a bar in the pane;
      *  null when something in the editor closed it. See find.ts. */
     onfind?: (ask: FindAsk | null) => void
@@ -130,7 +130,9 @@
       ...(opennote ? { openNote: opennote } : {}),
       // A pressed `#tag` searches the space; see tag-search.ts.
       openTag: (tag: string) => void import('./tag-search').then(({ searchTag }) => searchTag(tag)),
-      ...(nameblock ? { nameBlock: nameblock } : {}),
+      ...(nameblock
+        ? { nameBlock: (path: string, line: number) => nameblock(path, line, one) }
+        : {}),
       // How a link the `[[` popup writes is spelled: the app's one writer, so the
       // Links setting reaches the popup the way it reaches the grip's Copy link.
       // See composer.ts.

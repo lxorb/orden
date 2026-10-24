@@ -998,6 +998,7 @@ class Links {
       files: space.files,
       path,
       read: (wanted) => invoke<string>('read_note', { path: insideSpace(root, wanted) }),
+      searchBlocks: (text, most) => this.searchBlocks(text, most, root),
       render: (source, from) => this.shownHtml(source, from, root),
     }
     this.handed.set(key, made)
@@ -1494,8 +1495,7 @@ class Links {
    *  Quoted, so a phrase of two words is one phrase; the notes the space leaves
    *  out are left out of this too, the way they are left out of the search and the
    *  graph. */
-  async searchBlocks(text: string, most: number): Promise<SpaceBlock[]> {
-    const root = this.root
+  async searchBlocks(text: string, most: number, root = this.root): Promise<SpaceBlock[]> {
     const needle = text.trim()
     if (!root || needle.length < 2) return []
 
@@ -1516,7 +1516,7 @@ class Links {
         .filter((hit) => hit.page === undefined && isMarkdownPath(hit.path))
         .slice(0, most)
         .map((hit) => ({
-          path: this.relative(hit.path) ?? hit.path,
+          path: within(root, hit.path) ?? hit.path,
           line: hit.line,
           // The name a block already carries is a marker and not a word of the
           // row; the link writes it, and nothing that shows a note shows it.
@@ -1542,7 +1542,10 @@ class Links {
 
   /** Gives a block of another note a name, so a link can point at the block.
    *  Called by the editor's `[[…#^` completion, which has nowhere else to get
-   *  one: the block is in another note than the one being typed in.
+   *  one: the block is in another note than the one being typed in. `relative` is
+   *  relative to the space of `from`, the note the link is being written in, which is
+   *  the index the completion read the block's lines out of; that is not always the
+   *  active space, since tabs are shared across spaces.
    *
    *  That note may still be open in another tab, and then its words are the
    *  document's: the name is written there as well as to the file, the way
@@ -1551,13 +1554,14 @@ class Links {
    *  made pointed at nothing.
    *
    *  Nothing is named in a space shared with this account to be read: the copy here
-   *  would stop being the space's, and the sync refuses the change on every pass. A
-   *  tab of another space is handed the open space's notes, so the open space is
-   *  asked about whatever space the tab is in. Imported here rather than at the top,
-   *  because the sharing store reaches the workspace, which reaches this file. */
-  async nameBlock(relative: string, line: number, root: string): Promise<string | null> {
+   *  would stop being the space's, and the sync refuses the change on every pass.
+   *  Imported here rather than at the top, because the sharing store reaches the
+   *  workspace, which reaches this file. */
+  async nameBlock(relative: string, line: number, from: string | null): Promise<string | null> {
     // A block is a note's; a name written into any other file spoils it.
     if (!isMarkdownPath(relative)) return null
+    const root = (from === null ? null : this.spaceOf(from)) ?? this.root
+    if (root === null) return null
 
     const absolute = insideSpace(root, relative)
     const { canWriteAt } = await import('./sharing.svelte')
