@@ -17,4 +17,4 @@ class NoLayout {
   }
 }
 
-globalThis.ResizeObserver ??= NoLayout
+globalThis.ResizeObserver = NoLayout
