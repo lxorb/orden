@@ -37,6 +37,7 @@
  *  Code, fenced or inline, is kept exactly as it was written. */
 
 import { foldName } from '@nib/markdown/links'
+import { asWords } from '@nib/markdown/words'
 
 import { key } from '../i18n.svelte'
 
@@ -279,8 +280,11 @@ export function roamText(
   // A daily page is named by its date now, so a link to it says that date.
   const page = (name: string) => dayName(name.trim()) ?? name
 
+  // Roam shows a tag in a block as text, so it is words here too rather than markup
+  // the note would render. Roam's own spellings below make none of their own, and an
+  // embedded block's words are made words on their own way through.
   return outsideCode(said, (text) =>
-    text
+    asWords(text)
       .replace(/\{\{(?:\[\[)?TODO(?:\]\])?\}\}\s*/g, '[ ] ')
       .replace(/\{\{(?:\[\[)?DONE(?:\]\])?\}\}\s*/g, '[x] ')
       .replace(/\^\^([^^]+)\^\^/g, '==$1==')

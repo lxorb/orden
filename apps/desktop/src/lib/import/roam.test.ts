@@ -158,6 +158,36 @@ describe('a Roam export, block by block', () => {
     )
   })
 
+  test('a tag in a block stays words, since Roam shows it as text, and its own markup still converts', () => {
+    const known = new Map([['abc', 'Embedded <iframe src=https://t.example/>']])
+    expect(
+      roamText(
+        '{{[[TODO]]}} ^^Look^^ <img src=https://t.example/p.gif> [[Page]] ((abc)) `<b>`',
+        known,
+      ),
+    ).toBe(
+      '[ ] ==Look== \\<img src=https://t.example/p.gif> [[Page]] Embedded \\<iframe src=https://t.example/> `<b>`',
+    )
+  })
+
+  test('a tag in a page stays words wherever the block is written', async () => {
+    const plan = await readRoam([
+      file(
+        'graph.json',
+        JSON.stringify([
+          {
+            title: 'Tagged',
+            children: [
+              { string: 'Hi <style>body{display:none}</style>', uid: 'a1', heading: 2 },
+              { string: 'Line\n<img src=https://t.example/p.gif>', uid: 'a2' },
+            ],
+          },
+        ]),
+      ),
+    ])
+    expect(noteAt(plan, 'Tagged.md')).not.toMatch(/(?<!\\)<\/?(img|style|iframe)/)
+  })
+
   test('a link to a daily page says the date it is now', () => {
     expect(roamText('On [[September 11th, 2026]] #[[September 11th, 2026]]')).toBe(
       'On [[2026-09-11]] #[[2026-09-11]]',
