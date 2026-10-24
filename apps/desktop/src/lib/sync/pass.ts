@@ -608,20 +608,18 @@ async function movedOne(mirror: Mirror, token: string, was: string, now: string)
   }).catch(() => null)
   if (content === null) return false
 
-  const note = await renamedUpThere(token, tracked, now, content)
-  if (!note) return false
+  const moved = await renamedUpThere(token, tracked, now, content)
+  if (!moved) return false
 
-  mirror.notes = {
-    ...without(mirror.notes, was),
-    [now]: { id: note.id, version: note.version, hash: note.hash },
-  }
+  mirror.notes = { ...without(mirror.notes, was), [now]: moved }
   // A write that was in the air about the old name says nothing about the new one.
   mirror.offered = without(mirror.offered, was)
 
   return true
 }
 
-/** The note at its new name on the account, or null when it could not be said.
+/** The entry for the note at its new name, once the account has it there, or null
+ *  when it could not be said.
  *
  *  A version the account has moved past is almost always this note's own room. The
  *  note somebody renames is the note they are reading, the note they are reading is
@@ -629,24 +627,35 @@ async function movedOne(mirror: Mirror, token: string, was: string, now: string)
  *  while the version the last pass wrote down stays where it was. The room names the
  *  note by its id and never says where it lives, so this is the only thing that can
  *  move it - and what it moves is what the room wrote, read back and put down again
- *  under the new name, rather than the file this machine happens to hold. */
+ *  under the new name, rather than the file this machine happens to hold.
+ *
+ *  Almost always, not always: another device can have written the note while this
+ *  one, still holding the older words, renamed it. So what the account moved to the
+ *  new name is not taken as something this machine agrees with. The entry keeps the
+ *  version and the hash the last pass left the two agreeing on, under the new name,
+ *  and the next pull settles the account's copy against the file the way it settles
+ *  any version it has not seen: brought down over a file nobody wrote in, and kept
+ *  both or asked about over one somebody did. Recording the account's hash instead
+ *  read that copy as agreed, and the push after it sent the older file over the
+ *  other device's words with nothing in the way. A room's copy comes down the same
+ *  way, since a note in a room is never a disagreement. */
 async function renamedUpThere(
   token: string,
   tracked: Tracked,
   path: string,
   content: string,
-): Promise<RemoteNote | null> {
+): Promise<Tracked | null> {
   try {
     const { note } = await api.writeNote(token, tracked.id, path, content, tracked.version)
-    return note
+    return { id: note.id, version: note.version, hash: note.hash }
   } catch (error) {
     if (!(error instanceof ApiError) || error.status !== 409) return null
   }
 
   try {
     const held = await api.readNote(token, tracked.id)
-    const { note } = await api.writeNote(token, tracked.id, path, held.content, held.note.version)
-    return note
+    await api.writeNote(token, tracked.id, path, held.content, held.note.version)
+    return tracked
   } catch {
     // Left for the pass, which reads a move off the folder the way it always has.
     return null

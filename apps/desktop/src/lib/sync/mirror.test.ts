@@ -439,6 +439,69 @@ describe('a note renamed on this machine', () => {
     expect(mirror.notes['Two.md']?.id).toBe(id)
   })
 
+  /** The version the rename lost to need not be a room: another device can have
+   *  written the note while this one, still holding the older words, renamed it. The
+   *  account's copy is moved to the new name all the same, but this machine has never
+   *  held those words, so they are not something the two agree on. Recorded as agreed,
+   *  the next push sent the older file over them with no 409 and nothing kept. */
+  describe('and another device wrote in it while the name changed', () => {
+    const THEIRS =
+      '# One' + String.fromCharCode(10) + 'typed on the other device' + String.fromCharCode(10)
+
+    async function racing(mine?: string) {
+      const pairing = await paired('One.md', HERE)
+      fake.editRemote(pairing.id, THEIRS)
+      if (mine !== undefined) fake.disk.set(`${ROOT}/One.md`, mine)
+      renameOnDisk('One.md', 'Two.md')
+
+      const stale = fake.api.writeNote
+      fake.api.writeNote = async (token, noteId, path, content, base) => {
+        if (base !== fake.remote.get(noteId)?.version) throw new ApiError(409, 'behind', {})
+        return stale(token, noteId, path, content, base)
+      }
+      try {
+        await movedHere(pairing.mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Two.md`)
+      } finally {
+        fake.api.writeNote = stale
+      }
+      return pairing
+    }
+
+    test('brings their words down where nothing was typed here', async () => {
+      const { mirror, id } = await racing()
+
+      await pull(mirror, 'token', NOBODY)
+      await push(mirror, 'token', NOBODY)
+
+      expect(fake.remote.get(id)?.content).toBe(THEIRS)
+      expect(fake.disk.get(`${ROOT}/Two.md`)).toBe(THEIRS)
+      expect(conflicts()).toEqual([])
+    })
+
+    test('and keeps both where something was', async () => {
+      const MINE = HERE + 'typed here' + String.fromCharCode(10)
+      const { mirror, id } = await racing(MINE)
+
+      await pull(mirror, 'token', NOBODY, { rule: 'both' })
+      await push(mirror, 'token', NOBODY)
+
+      const words = [fake.remote.get(id)?.content, ...conflicts().map((one) => fake.disk.get(one))]
+      expect(words).toContain(THEIRS)
+      expect(fake.disk.get(`${ROOT}/Two.md`)).toBe(MINE)
+    })
+
+    test('and asks, under the rule that asks', async () => {
+      const { mirror, id } = await racing(HERE + 'typed here' + String.fromCharCode(10))
+      const clashes: Clash[] = []
+
+      await pull(mirror, 'token', NOBODY, { rule: 'ask', clashed: (one) => clashes.push(one) })
+      await push(mirror, 'token', NOBODY, { held: new Set(clashes.map((one) => one.path)) })
+
+      expect(clashes.map((one) => one.theirs)).toEqual([THEIRS])
+      expect(fake.remote.get(id)?.content).toBe(THEIRS)
+    })
+  })
+
   /** A folder is the same move said once per note under it. */
   test('and a folder carries every note under it', async () => {
     const { mirror } = await paired('Kept/One.md', HERE)
