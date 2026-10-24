@@ -17,6 +17,8 @@
  *  note went, so the import's own rewriting turns it into a wikilink along with
  *  every other export's links. */
 
+import { asWords } from '@nib/markdown/words'
+
 import { fromBase64 } from '../bytes'
 import { key } from '../i18n.svelte'
 import { folderPlan } from './folder'
@@ -96,8 +98,9 @@ export async function planFor(read: AppleNotes): Promise<ImportPlan> {
 
       // The heading is `noteText`'s to add, and it only adds one where the note
       // does not open with its own: a note whose first line Notes styled as the
-      // title arrives with that line as a heading already.
-      return { to, read: (text) => ({ text, title: said.title, meta: said.meta }) }
+      // title arrives with that line as a heading already. The crate escapes the
+      // words but not the title it lists, so a `<` in that is escaped here.
+      return { to, read: (text) => ({ text, title: asWords(said.title), meta: said.meta }) }
     },
   })
 
