@@ -5,7 +5,7 @@ import { mount } from 'svelte'
 import App from './App.svelte'
 import { mark, markPainted, watchFirstInput } from './lib/trace'
 import { serveAssets } from './lib/web/asset-worker'
-import { isMobile } from './lib/tauri'
+import { isDesktop, isMobile, platform } from './lib/tauri'
 
 // Everything above this line is the webview evaluating the app's modules, which on
 // a slow machine is a real part of a launch and is not otherwise visible from
@@ -43,6 +43,12 @@ if (isMobile) {
 
 // index.html carries it, so a missing one means the page itself is wrong -
 // worth saying outright rather than mounting into nothing.
+// nib's own Chromium on Linux draws overlay scrollbars of its own, which a styled bar is
+// never drawn as; so the stylesheet leaves its bars alone there (#775). Before anything
+// is mounted, since the engine settles a scroller's bar as the scroller is made. See
+// `cef_runtime` in src-tauri/src/engine.rs and packages/themes/src/base.css.
+document.documentElement.toggleAttribute('data-engine-bars', isDesktop && platform() === 'linux')
+
 const target = document.getElementById('app')
 if (!target) throw new Error('index.html has no #app to mount into')
 
