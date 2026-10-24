@@ -95,14 +95,21 @@ function row(hit: Hit): string {
 /** What one fence answers with, or null where there is nothing to answer from:
  *  no space open, or a query that asks nothing.
  *
+ *  `root` is the space the fence's note is in, which a note still open from another
+ *  space is not the active one; the space in front where a caller cannot say.
+ *
  *  A row carries the note and the line it is, so whatever drew it can open it
  *  without knowing anything else about searching. */
-export async function queryRowsHtml(code: string, nothing: string): Promise<string | null> {
+export async function queryRowsHtml(
+  code: string,
+  nothing: string,
+  root: string | null = null,
+): Promise<string | null> {
   const said = queryIn(code)
   if (!said) return null
 
   const { workspace } = await import('./workspace.svelte')
-  const root = workspace.activeSpace?.root
+  root ??= workspace.activeSpace?.root ?? null
   if (!root) return null
 
   const query = parseQuery(said)

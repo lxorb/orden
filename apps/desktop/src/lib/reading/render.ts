@@ -90,6 +90,9 @@ export async function readingHtml(
   // its own half megabyte along - the print stylesheets among it, for a surface with
   // a stylesheet of its own. See before-render.ts.
   const { prepareEmbeds, prepareFences } = await import('../before-render')
+  // The space the note is in, which its fences ask about: a note still open from
+  // another space is not the active one's.
+  const root = note.path === null ? null : links.spaceOf(note.path)
 
   const [fence, embed] = await Promise.all([
     // A query fence is answered here, which is the one surface besides the editor
@@ -98,8 +101,8 @@ export async function readingHtml(
     prepareFences(note.text, scheme, {
       query: async (code, language) =>
         language === 'tasks' && !__EVEN_PLUGIN__
-          ? (await import('../tasks-block')).tasksRowsHtml(code, t('Nothing found'))
-          : queryRowsHtml(code, t('Nothing found')),
+          ? (await import('../tasks-block')).tasksRowsHtml(code, t('Nothing found'), root)
+          : queryRowsHtml(code, t('Nothing found'), root),
       // A base fence is a box the reading view draws the view into; see views/mount.ts.
       base: true,
     }),
