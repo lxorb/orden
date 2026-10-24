@@ -2262,6 +2262,11 @@ class Workspace {
     // Gone, or unreadable. A page note that cannot be read is not blank paper to
     // write on: saving one over it would take the file with it.
     if (text === null) return unread(path).then(() => null)
+    // Nor is one whose text is not a canvas, which it is with pages in it: a stray
+    // comma or a truncated save reads as no pages at all, and the first stroke would
+    // write that over its pages, its ink and its paper, as `openCanvas` says.
+    const { parseAhead } = await import('./canvas/format')
+    if (!parseAhead(text)) return unread(path).then(() => null)
 
     const file = this.document({
       kind: 'pages',
