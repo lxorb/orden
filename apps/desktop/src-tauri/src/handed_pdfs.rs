@@ -353,6 +353,21 @@ mod tests {
         );
     }
 
+    /// A PDF called `CON.pdf`, which a Mac or Linux allows, lands under a name Windows
+    /// can hold too: the space syncs to every machine the reader has.
+    #[cfg(not(windows))]
+    #[test]
+    fn a_pdf_handed_over_never_takes_a_device_name() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let space = dir.path().join("Space");
+        fs::create_dir_all(&space).expect("the space");
+        let from = dir.path().join("Downloads").join("CON.pdf");
+        file(&from, b"%PDF");
+
+        let put = landed(&from, &space).expect("brought in");
+        assert_eq!(Path::new(&put.path), space.join("_CON.pdf").as_path());
+    }
+
     #[test]
     fn a_pdf_is_copied_to_the_top_of_the_space_beside_one_of_its_name() {
         let dir = tempfile::tempdir().expect("a temp folder");

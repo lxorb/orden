@@ -2112,6 +2112,20 @@ mod tests {
         );
     }
 
+    /// Highlights left behind by a PDF that has gone are still a PDF's highlights: a
+    /// new PDF under that name would show them as its own, so the name is taken.
+    #[test]
+    fn a_pdfs_name_is_taken_by_highlights_left_behind() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let here = dir.path();
+        std::fs::write(highlights_of(&here.join("Paper.pdf")), "[]").expect("leftovers");
+
+        assert_eq!(
+            free_spot(&here.join("Paper.pdf"), true),
+            here.join("Paper 2.pdf")
+        );
+    }
+
     #[test]
     fn a_note_has_no_sidecar_to_move() {
         let dir = tempfile::tempdir().expect("a temp folder");
