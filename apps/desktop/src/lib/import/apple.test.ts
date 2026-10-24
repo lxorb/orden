@@ -85,6 +85,24 @@ describe("Apple Notes off the Mac's own database", () => {
     expect(note).toContain('![](../assets/photo.png)')
   })
 
+  test("a title from the note's row opens no markup, as the words the crate escaped do not", async () => {
+    const plan = await planFor({
+      ...read(),
+      notes: [
+        {
+          ...read().notes[0]!,
+          path: 'Fine.md',
+          title: 'Fine <img src=https://t.example/p.gif><style>body{display:none}</style>',
+          text: 'Just the words.\n',
+        },
+      ],
+    })
+
+    const note = noteAt(plan, 'Fine.md')
+    expect(note).toContain('# Fine \\<img src=https://t.example/p.gif>\\<style>')
+    expect(note).not.toMatch(/(?<!\\)<(?=[A-Za-z/])/)
+  })
+
   /** The crate encodes what a title may hold and a link may not, so `Re: lunch` is
    *  not read as an address in a scheme called `Re`. */
   test('a link to a note whose title has a colon in it still finds it', async () => {
