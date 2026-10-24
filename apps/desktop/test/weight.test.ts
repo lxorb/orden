@@ -833,8 +833,12 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-24, to 3,282,000, for #737: a note made in a folder taken from a
  *  tab asks the disk for its name, since the tab can be from a space not on screen
- *  (`freeNameOnDisk` in workspace.svelte.ts). Measured 3,281,445. */
-const BUDGET = 3_282_000
+ *  (`freeNameOnDisk` in workspace.svelte.ts). Measured 3,281,445.
+ *
+ *  Raised 2026-10-24, to 3,285,000, for #835: the b247 branch it merges in,
+ *  and Split at caret and Extract selection asking what a merge asks before they
+ *  write a note beside a file (`canWrite` in composer-commands.ts). Measured 3,284,761. */
+const BUDGET = 3_285_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
