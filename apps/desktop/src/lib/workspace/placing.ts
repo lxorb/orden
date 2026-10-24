@@ -21,6 +21,7 @@ export interface Places {
   readonly activeSpace: Space | null
   readonly closed: ClosedTabs
   freeName(dir: string, wanted: string): string
+  freeNameOnDisk(dir: string, wanted: string): Promise<string>
   showEntry(entry: Entry): void
   freshEntry(path: string, isFolder: boolean): Entry
   loadTree(): Promise<void>
@@ -57,7 +58,18 @@ export async function keepWeb(
   const page = pages.of(tab.id)
   const url = page.url ?? tab.address ?? ''
   const over = await sameNoteAt(ws, joinPath(dir, named), url)
-  const target = over?.path ?? joinPath(dir, ws.freeName(dir, named))
+  // A new note's name is asked of the disk as well as the listing: a tab keeps the
+  // space it was opened in, so Save after a switch keeps it into a folder the listing
+  // on screen has never read, and `Example.url` there came back free while it held a
+  // note on another site - which the write then replaced, with no version kept. The
+  // listing is asked again once the disk has answered, in the same breath as the
+  // claim below, because a page kept beside this one may have claimed the name
+  // meanwhile. See `claim` in saving.svelte.ts, which a draft's save does the same way.
+  let target = over?.path
+  while (target === undefined) {
+    const name = await ws.freeNameOnDisk(dir, named)
+    if (ws.freeName(dir, name) === name) target = joinPath(dir, name)
+  }
 
   const kept = await claim(target, async () => {
     const own = over ? (readWebFile(target, over.text)?.own ?? null) : null

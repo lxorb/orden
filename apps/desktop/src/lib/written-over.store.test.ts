@@ -26,6 +26,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 
 const { workspace } = await import('./workspace.svelte')
 const { account } = await import('./account.svelte')
+const { pages } = await import('./web-tab/pages.svelte')
 
 /** The disk, which is there: it was made above. */
 function files(): Map<string, string> {
@@ -68,6 +69,38 @@ describe('a draft saved into a space that is not on screen', () => {
     expect(landed).toBe('/home/Plan 2.md')
     expect(files().get('/home/Plan.md')).toBe('# Plan\nwords that were here first\n')
     expect(files().get('/home/Plan 2.md')).toBe('# Plan\nthe draft\n')
+  })
+})
+
+describe('a website kept into a space that is not on screen', () => {
+  beforeEach(async () => {
+    files().set('/home/Example.url', '[InternetShortcut]\r\nURL=https://other.org/mine\r\n')
+    files().set('/away/Other.md', '# Other\n')
+    workspace.spaces = [
+      { id: 'away', name: 'Away', root: '/away' },
+      { id: 'home', name: 'Home', root: '/home' },
+    ]
+    workspace.activeSpaceId = 'home'
+    await workspace.loadTree()
+  })
+
+  test('steps past a web note of the same name on another site there', async () => {
+    // The tab keeps the space it was opened in, so Save keeps it there; the listing
+    // that names it is the other space's, which has no Example.url in it.
+    workspace.openWebsite()
+    const tab = workspace.active
+    if (!tab) throw new Error('no tab')
+    tab.address = 'https://example.com/a'
+    pages.of(tab.id).title = 'Example'
+    await workspace.selectSpace('away')
+
+    const landed = await workspace.save(tab)
+    await workspace.writesSettled()
+
+    expect(landed).toBe('/home/Example 2.url')
+    expect(files().get('/home/Example.url')).toBe(
+      '[InternetShortcut]\r\nURL=https://other.org/mine\r\n',
+    )
   })
 })
 
