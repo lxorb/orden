@@ -123,6 +123,32 @@ const GLASS_THEME = 'glass'
  *  is now is the frame taking its colour from what is open, which needs no material;
  *  where there is one, the colour lies over it. This decides only who had the old
  *  Translucency switch. */
+/** A theme's own faces, with the reader's still in front of them (#772).
+ *
+ *  tokens.css puts `--font-*-chosen` at the head of each of the app's three stacks,
+ *  and a theme that states a stack of its own - `--font-content: Georgia, serif` - or a
+ *  face for the prose of a note writes over that head with it. So the head is put back
+ *  on what the theme says, as the theme is worn: the reader's face first, the theme's
+ *  after it for whatever that face has not got. A prose rule's `font-family` takes the
+ *  face for code where it is about code, and the face for notes otherwise. A stack that
+ *  already starts with the head is left as it is, so this is the same said twice. */
+export function chosenFirst(css: string): string {
+  const head = (place: string) => `var(--font-${place}-chosen,) `
+  const stacks = css.replace(
+    /(--font-(ui|content|mono)\s*:\s*)(?![\s]|var\(--font-)/g,
+    (_whole, said: string, place: string) => said + head(place),
+  )
+  return stacks.replace(/([^{}]*)\{([^{}]*)\}/g, (whole, selector: string, body: string) => {
+    if (!/font-family\s*:/.test(body)) return whole
+    const place = /\b(code|pre|kbd|samp)\b/.test(selector) ? 'mono' : 'content'
+    const fixed = body.replace(
+      /(font-family\s*:\s*)(?![\s]|var\(--font-)/g,
+      (_said, said: string) => said + head(place),
+    )
+    return `${selector}{${fixed}}`
+  })
+}
+
 function hasMaterial(): boolean {
   return isDesktop && platform() === 'windows'
 }
@@ -898,8 +924,9 @@ class Themes {
       // Before any custom.css block, which must stay last.
       document.head.insertBefore(style, document.getElementById(CUSTOM_ID))
     }
-    // A theme is written against Typora's one `#write`; see write.ts.
-    style.textContent = everySurface(css)
+    // A theme is written against Typora's one `#write`; see write.ts. Its faces keep
+    // the reader's in front of them; see `chosenFirst`.
+    style.textContent = everySurface(chosenFirst(css))
   }
 }
 
