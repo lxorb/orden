@@ -212,6 +212,9 @@ const NOTE_LINK = /\.(md|markdown|mdown|mkd|canvas|pages|pdf)$/i
  *  lets one escape. */
 const AN_ESCAPE = /\\([!-/:-@[-`{-~])/g
 
+/** The ASCII punctuation a backslash escapes. */
+const PUNCTUATION = /^[!-/:-@[-`{-~]$/
+
 /** GFM's bare address, with any markdown escape inside it read as the character it
  *  escapes. marked links a bare address character for character, so the `\[` a
  *  page's `?b=[1]` is written with - it has to be, where the same words are a
@@ -222,11 +225,19 @@ function bareAddress(this: Tokenizer, src: string): Tokens.Link | undefined {
   const token = Tokenizer.prototype.url.call(this, src)
   if (!token) return undefined
 
-  const text = token.text.replace(AN_ESCAPE, '$1')
+  // A backslash the address ends on, in front of punctuation, escapes the words
+  // after it: `(see https://a.test/a_b\_)` is an address and then `_)`, because
+  // what marked leaves off the end of an address is words again and `escapeText`
+  // escapes them as words. Kept, it would be a link to `a_b%5C`. So it is left for
+  // the words, where it is the escape it was written as.
+  const ends = token.raw.endsWith('\\') && PUNCTUATION.test(src[token.raw.length] ?? '') ? 1 : 0
+  const raw = token.raw.slice(0, token.raw.length - ends)
+  const text = token.text.slice(0, token.text.length - ends).replace(AN_ESCAPE, '$1')
   return {
     ...token,
+    raw,
     text,
-    href: token.href.replace(AN_ESCAPE, '$1'),
+    href: token.href.slice(0, token.href.length - ends).replace(AN_ESCAPE, '$1'),
     tokens: [{ type: 'text', raw: text, text }],
   }
 }

@@ -46,6 +46,9 @@ export function hrefOf(target: string): string | null {
  *  escape. */
 const AN_ESCAPE = /\\([!-/:-@[-`{-~])/g
 
+/** The ASCII punctuation a backslash escapes. */
+const PUNCTUATION = /^[!-/:-@[-`{-~]$/
+
 /** Where a bare address in the text goes: the address without the backslashes
  *  escaping its punctuation. A conversion writes a page's `[`, `]` and backtick
  *  escaped wherever they are, because the same words can be a link's text, and
@@ -53,8 +56,12 @@ const AN_ESCAPE = /\\([!-/:-@[-`{-~])/g
  *  `bareAddress` in @nib/markdown). Followed as written, `?b=\[1\]` would be a
  *  page nobody linked to. Between the `<` `>` of an autolink nothing is an escape,
  *  so that address is followed as it is. */
-export function bareTarget(written: string): string {
-  return written.replace(AN_ESCAPE, '$1')
+export function bareTarget(written: string, after: string): string {
+  // A backslash the address ends on escapes the punctuation after it, which is
+  // the words' and not the address's: `(see https://a.test/a_b\_)` goes to `a_b`.
+  // The reading view leaves it out of the link the same way.
+  const ends = written.endsWith('\\') && PUNCTUATION.test(after) ? 1 : 0
+  return written.slice(0, written.length - ends).replace(AN_ESCAPE, '$1')
 }
 
 /** Read from the user agent string rather than `navigator.platform`, which is

@@ -727,6 +727,13 @@ describe('links', () => {
     ])
   })
 
+  /** The escape after an address is the words' after it, not the address's. */
+  test('a bare address is followed without an escape that comes right after it', () => {
+    expect(linkMarks('(see https://a.test/a_b\\_) now')).toEqual([
+      { text: 'https://a.test/a_b\\', href: 'https://a.test/a_b' },
+    ])
+  })
+
   /** Between angle brackets nothing is an escape, in CommonMark and in the
    *  reading view alike: the address is every character written. */
   test('an autolink keeps its backslashes', () => {
