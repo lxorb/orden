@@ -17,7 +17,9 @@ beforeEach(() => {
   vi.stubGlobal('window', globalThis)
   vi.stubGlobal('__NIB_SYSTEM__', {
     insets: () => '{}',
-    askForTheFrame: () => void asked++,
+    askForTheFrame: () => {
+      asked++
+    },
   })
 })
 
