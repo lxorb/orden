@@ -15,7 +15,7 @@ use tauri::AppHandle;
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
 
-use crate::paths::chosen;
+use crate::paths::{chosen, in_spaces};
 
 /// What a document is read in as: plain markdown plus the few extensions the
 /// editor itself understands, so nothing comes back that cannot be shown.
@@ -205,31 +205,64 @@ fn is_format(format: &str) -> bool {
 /// in rather than written to a temp file, so nothing is left behind.
 ///
 /// The file it writes is wherever the reader chose to save it, so it is judged the
-/// way `write_bytes` judges the same choice; see `chosen`.
+/// way `write_bytes` judges the same choice; see `chosen`. `note` is the note the
+/// words are, judged as a path inside the spaces, whose folder its pictures are
+/// found in. Answers the pictures that were not there, which pandoc leaves out and
+/// still calls a success.
 #[tauri::command(async)]
 pub fn run_pandoc(
     app: AppHandle,
     source: String,
     output: String,
     format: String,
-) -> Result<(), String> {
+    note: Option<String>,
+) -> Result<Vec<String>, String> {
     if !is_format(&format) {
         return Err(format!("{format} is not a format pandoc writes"));
     }
     let target = chosen(&app, &output)?;
-    convert(&source, &target, &format, None).map(|_| ())
+    let folder = match note {
+        Some(note) => in_spaces(&app, &note)?.parent().map(Path::to_path_buf),
+        None => None,
+    };
+    convert(&source, &target, &format, folder.as_deref())
 }
 
 /// The conversion itself, apart from the app: `source` written to `target` as
-/// `format`, for the note in `_folder`. Answers the pictures pandoc could not find.
+/// `format`, for the note in `folder`. Answers the pictures pandoc could not find.
+///
+/// The words arrive on stdin, so pandoc has no file to find a picture beside and
+/// looks in the folder it was started in: an ODT came out with every picture
+/// swapped for its alt text, and pandoc said it had done fine. So it is told the
+/// note's folder. A folder whose name holds the path separator (`:`, `;` on
+/// Windows) is split by pandoc and finds nothing; that is said like any other
+/// picture that was not there.
+///
+/// A deck links its pictures rather than holding them, so pointing at them where
+/// the note is breaks the moment it is opened anywhere else. Its pictures are
+/// copied beside it, into `Deck_files` for `Deck.html`, the way a browser saves a
+/// page, and the deck points there.
 fn convert(
     source: &str,
     target: &Path,
     format: &str,
-    _folder: Option<&Path>,
+    folder: Option<&Path>,
 ) -> Result<Vec<String>, String> {
-    let mut child = pandoc()
-        .args(["--from", WRITE_FROM, "--to", format, "--standalone"])
+    let mut command = pandoc();
+    command.args(["--from", WRITE_FROM, "--to", format, "--standalone"]);
+    if let Some(folder) = folder {
+        command.arg(joined("--resource-path=", folder.as_os_str()));
+    }
+    if format == "revealjs" {
+        let beside = target
+            .parent()
+            .ok_or_else(|| format!("{} is not in a folder", target.display()))?;
+        let stem = target.file_stem().unwrap_or_default();
+        command.current_dir(beside);
+        command.arg(joined("--extract-media=", &joined_name(stem, "_files")));
+    }
+
+    let mut child = command
         .arg("--output")
         .arg(target)
         .stdin(Stdio::piped())
@@ -257,11 +290,50 @@ fn convert(
         // Pandoc is happy, so it read what it needed; a write that failed at the
         // very end is still worth saying out loud.
         return written
-            .map(|()| Vec::new())
+            .map(|()| not_found(&result.stderr))
             .map_err(|error| format!("could not send the note to pandoc: {error}"));
     }
 
     Err(complaint(&result.stderr, "pandoc failed"))
+}
+
+/// An option and its value as one argument, a path's bytes kept as they are.
+fn joined(option: &str, value: &std::ffi::OsStr) -> std::ffi::OsString {
+    let mut out = std::ffi::OsString::from(option);
+    out.push(value);
+    out
+}
+
+/// A file name with words on its end.
+fn joined_name(stem: &std::ffi::OsStr, end: &str) -> std::ffi::OsString {
+    let mut out = stem.to_os_string();
+    out.push(end);
+    out
+}
+
+/// The pictures pandoc said it could not fetch, in the order it said them, each
+/// once. `[WARNING] Could not fetch resource dot.png: PandocResourceNotFound
+/// "dot.png"`, with quotes around the first name before pandoc 3.
+fn not_found(stderr: &[u8]) -> Vec<String> {
+    const SAID: &str = "Could not fetch resource ";
+    let text = String::from_utf8_lossy(stderr);
+    let mut out: Vec<String> = Vec::new();
+    for line in text.lines() {
+        let Some(at) = line.find(SAID) else { continue };
+        let rest = &line[at + SAID.len()..];
+        let name = match rest.find("PandocResourceNotFound \"") {
+            Some(quoted) => {
+                let inner = &rest[quoted + "PandocResourceNotFound \"".len()..];
+                inner.split('"').next().unwrap_or(inner)
+            }
+            None => rest.rsplit_once(": ").map_or(rest, |(name, _)| name),
+        };
+        let name = name.trim().trim_matches('\'').to_string();
+        if !name.is_empty() && !out.contains(&name) {
+            out.push(name);
+        }
+    }
+    out
 }
 
 /// What pandoc said, or a sentence of our own when it said nothing.
@@ -277,7 +349,7 @@ fn complaint(stderr: &[u8], fallback: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{complaint, convert, has_pandoc, is_format, reading};
+    use super::{complaint, convert, has_pandoc, is_format, not_found, reading};
     use std::fs;
     use std::path::Path;
 
@@ -360,6 +432,17 @@ mod tests {
             convert("![gone](gone.png)\n", &target, "odt", Some(note.path())).expect("converted");
 
         assert_eq!(missing, vec!["gone.png".to_string()]);
+    }
+
+    #[test]
+    fn reads_the_names_pandoc_could_not_fetch() {
+        let said =
+            b"[WARNING] Could not fetch resource dot.png: PandocResourceNotFound \"dot.png\"\n\
+[WARNING] Could not fetch resource 'a b.png': PandocResourceNotFound \"a b.png\"\n\
+[WARNING] Could not fetch resource dot.png: PandocResourceNotFound \"dot.png\"\n\
+[WARNING] This document format requires a nonempty <title> element.\n";
+        assert_eq!(not_found(said), vec!["dot.png", "a b.png"]);
+        assert!(not_found(b"").is_empty());
     }
 
     /// A one-pixel PNG.

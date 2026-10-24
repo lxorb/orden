@@ -288,7 +288,7 @@ export function exportCommands(): Command[] {
       run: () =>
         busy.start(t('Exporting'), async () => {
           const m = await import('./export')
-          await m.exportPandoc(source(), name(), format.id)
+          await m.exportPandoc(source(), name(), format.id, note()?.path ?? null)
         }),
     })
   }

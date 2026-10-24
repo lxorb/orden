@@ -4,12 +4,14 @@ import { frontMatterValue, renderMarkdown, type Wikilink } from '@nib/markdown'
 import { sourcesOf } from '@nib/markdown/sources'
 import { exportCss, themeCss } from '@nib/themes/raw'
 import { accentTokens, DEFAULT_ACCENT } from './accents'
+import { busy } from './busy.svelte'
 import { type Fence, prepareEmbeds, prepareFences } from './before-render'
 import { titleOf } from './export/document'
 import { inlinePictures, type Picture, swapSources } from './export/pictures'
 import { chooseTarget } from './export/save'
 import { PANDOC_FORMATS, type PandocFormat } from './export-formats'
 import { paletteCss } from './highlight'
+import { plural } from './i18n.svelte'
 import { mathCss } from './math-fonts'
 import { type PaperInches, pageCss, pageSetupFor, runningDate, withRunningText } from './page-setup'
 import { DEFAULT_PAGE_SETUP, type PageSetup } from './paper'
@@ -337,8 +339,17 @@ export async function importDocument(): Promise<{ name: string; markdown: string
 
 /** The formats that are pandoc's rather than ours, for a machine that has it.
  *  Orden writes its own Word, RTF and ePub, so those are not here: two roads to
- *  one format would mean a note came out differently depending on the machine. */
-export async function exportPandoc(source: string, name: string, format: PandocFormat) {
+ *  one format would mean a note came out differently depending on the machine.
+ *
+ *  `note` is where the note is, whose folder its pictures are found in. A picture
+ *  pandoc could not find is left out of the file with pandoc still calling it done,
+ *  so the reader is told how many. */
+export async function exportPandoc(
+  source: string,
+  name: string,
+  format: PandocFormat,
+  note: string | null = null,
+) {
   if (!isDesktop) return
 
   const spec = PANDOC_FORMATS.find((entry) => entry.id === format)
@@ -347,6 +358,14 @@ export async function exportPandoc(source: string, name: string, format: PandocF
   const target = await chooseTarget(name, spec.extension, spec.label)
   if (!target) return
 
-  await invoke('run_pandoc', { source, output: target, format })
+  const missing = await invoke<string[]>('run_pandoc', { source, output: target, format, note })
+  if (missing.length) {
+    busy.failed(
+      plural(missing.length, {
+        one: '{count} attachment was missing from the export or could not be read',
+        other: '{count} attachments were missing from the export or could not be read',
+      }),
+    )
+  }
   return target
 }
