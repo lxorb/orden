@@ -2591,6 +2591,13 @@ class Workspace {
 
     if (samePath(target, from) || within(from, intoFolder) !== null) return
 
+    // Into another space, the chats a pointer names move first; see chat-leaving.ts.
+    const leaving = this.spaces.find((one) => within(one.root, from) !== null)
+    let back = () => Promise.resolve()
+    if (leaving && within(leaving.root, intoFolder) === null) {
+      back = await (await import('./workspace/chat-leaving')).chatsCarried(from, intoFolder)
+    }
+
     // The row is in its new folder as soon as the drop lands.
     const kind = this.kindAt(from)
     this.showMove(from, target)
@@ -2609,6 +2616,7 @@ class Workspace {
         try {
           await invoke('rename_note', { from, to: target })
         } catch (error) {
+          await back()
           await this.loadTree()
           throw error
         }

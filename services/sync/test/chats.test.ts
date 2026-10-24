@@ -1095,6 +1095,58 @@ describe('chats', () => {
       expect((await events(people.owner, chat)).events).toHaveLength(1)
       expect((await list(people.owner)).map((one) => one.space)).toEqual([elsewhere])
     })
+
+    test('somebody handed only the pointer cannot take the chat into their own space', async () => {
+      const chat = await chatOfOwner()
+      const file = await chatFile('Private.chat', chatText({ v: 1, chat }))
+      await call(env, `/v1/spaces/${spaceId}/share/invite?item=${file}`, {
+        token: people.owner,
+        body: { email: 'stranger@example.com', role: 'write' },
+      })
+      await send(people.owner, chat, postOf('between us'))
+      const theirs = (
+        await call(env, '/v1/spaces', { token: people.stranger, body: { name: 'Mine' } })
+      ).json.space.id
+
+      const moved = await call(env, `/v2/chats/${chat}`, {
+        method: 'PATCH',
+        token: people.stranger,
+        body: { space: theirs },
+      })
+      expect(moved.status).toBe(403)
+      expect(env.db.prepare('select space_id from chats where id = ?').get(chat)).toEqual({
+        space_id: spaceId,
+      })
+      expect((await events(people.owner, chat)).events).toHaveLength(1)
+    })
+
+    test('a writer moves it between the owner’s spaces, never out of them', async () => {
+      const chat = await chatOfOwner()
+      const theirs = (
+        await call(env, '/v1/spaces', { token: people.writer, body: { name: 'Mine' } })
+      ).json.space.id
+      const refused = await call(env, `/v2/chats/${chat}`, {
+        method: 'PATCH',
+        token: people.writer,
+        body: { space: theirs },
+      })
+      expect(refused.status).toBe(403)
+      expect((await list(people.owner)).map((one) => one.space)).toEqual([spaceId])
+
+      const next = (await call(env, '/v1/spaces', { token: people.owner, body: { name: 'Next' } }))
+        .json.space.id
+      await call(env, `/v1/spaces/${next}/share/invite`, {
+        token: people.owner,
+        body: { email: 'writer@example.com', role: 'write' },
+      })
+      const moved = await call(env, `/v2/chats/${chat}`, {
+        method: 'PATCH',
+        token: people.writer,
+        body: { space: next },
+      })
+      expect(moved.status).toBe(200)
+      expect((await list(people.owner)).map((one) => one.space)).toEqual([next])
+    })
   })
 
   describe('notifications', () => {

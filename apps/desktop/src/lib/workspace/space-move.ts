@@ -69,11 +69,14 @@ export function movingOf(tab: {
 /** The spaces these tabs can be moved to, in the switcher's order: every space but the
  *  one they are all in already, and none that may not be written in. Nothing where a
  *  file of theirs sits in a space it may not be taken out of, or with nowhere else to
- *  go. `writable` answers for a path, a space's root among them; see sharing.svelte.ts. */
+ *  go. `writable` answers for a path, a space's root among them; see sharing.svelte.ts.
+ *  `carries` answers whether a file of theirs may go into a space's root, which a chat's
+ *  pointer may not always; see chat-carry.ts. */
 export function spacesFor<Space extends Placed>(
   tabs: readonly Moving[],
   where: { spaces: readonly Space[]; activeSpaceId: string | null },
   writable: (path: string) => boolean,
+  carries: (path: string, root: string) => boolean = () => true,
 ): Space[] {
   const { spaces } = where
   if (!tabs.length || spaces.length < 2) return []
@@ -82,5 +85,10 @@ export function spacesFor<Space extends Placed>(
 
   const from = new Set(tabs.map((tab) => spaceOfTab(tab, spaces, where.activeSpaceId)))
   const already = from.size === 1 ? [...from][0] : undefined
-  return spaces.filter((one) => one.id !== already && writable(one.root))
+  return spaces.filter(
+    (one) =>
+      one.id !== already &&
+      writable(one.root) &&
+      files.every((tab) => tab.path === null || carries(tab.path, one.root)),
+  )
 }

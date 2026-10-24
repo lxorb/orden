@@ -319,11 +319,22 @@ function carriedPast(note: { after: string; edits: readonly Edit[] }, now: strin
  *  followed it pointed at the old name again. */
 async function putName(ws: PutsBack, action: Extract<FileAction, { kind: 'move' | 'rename' }>) {
   const kind = ws.entryAt(action.to)?.is_dir === true ? 'folder' : 'file'
+  // A move back into another space takes its chats back first, as the move did, and
+  // the account refusing keeps the step to be asked for again; see chat-leaving.ts.
+  const back =
+    action.kind === 'move'
+      ? await (await import('./chat-leaving')).chatsCarried(action.to, folderOf(action.from))
+      : null
 
   // A move like the one it undoes, so it waits for the writes of what is open in it
   // the same way; see `move` in workspace.svelte.ts.
   await ws.holdingUnder(action.to, async () => {
-    await invoke('rename_note', { from: action.to, to: action.from })
+    await invoke('rename_note', { from: action.to, to: action.from }).catch(
+      async (error: unknown) => {
+        await back?.()
+        throw error
+      },
+    )
 
     // The rename rewrote every link that pointed at the note; putting the name
     // back has to put those back too, which is the same rewrite the other way

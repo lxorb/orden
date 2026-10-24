@@ -7,6 +7,7 @@ import { t } from '../i18n.svelte'
 import type { MenuEntry } from '../menu-item'
 import { canWriteAt } from '../sharing.svelte'
 import { type Space, type Tab, workspace } from '../workspace.svelte'
+import { mayCarry } from '../workspace/chat-carry'
 import { movingOf, spacesFor } from '../workspace/space-move'
 
 const tabsOf = (ids: readonly string[]) => workspace.tabs.filter((one) => ids.includes(one.id))
@@ -14,7 +15,7 @@ const tabsOf = (ids: readonly string[]) => workspace.tabs.filter((one) => ids.in
 /** The spaces these tabs can be moved to. */
 export function spacesOf(tabs: readonly Tab[]): Space[] {
   // Never into a space put away; see workspace/archived-spaces.svelte.ts.
-  return spacesFor(tabs.map(movingOf), workspace, canWriteAt).filter(
+  return spacesFor(tabs.map(movingOf), workspace, canWriteAt, mayCarry).filter(
     (one) => !workspace.archivedSpaces.has(one.root),
   )
 }
@@ -23,7 +24,7 @@ export function spacesOf(tabs: readonly Tab[]): Space[] {
  *  their own, nor one that may not be written in or is put away. */
 export function spacesOfPaths(paths: readonly string[]): Space[] {
   const moving = paths.map((path) => ({ path, home: null, shared: null }))
-  return spacesFor(moving, workspace, canWriteAt).filter(
+  return spacesFor(moving, workspace, canWriteAt, mayCarry).filter(
     (one) => !workspace.archivedSpaces.has(one.root),
   )
 }
