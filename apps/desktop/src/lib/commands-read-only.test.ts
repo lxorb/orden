@@ -47,3 +47,48 @@ describe('making a file from the palette', () => {
     expect(offered()).toEqual([])
   })
 })
+
+/** The palette's rows about the note in front, in a space shared to be read: renaming
+ *  it and moving it both write there, so neither is offered (B273). */
+describe('the note in front', () => {
+  const NOTE = `${SPACE}/Plan.md`
+
+  function rows() {
+    vi.spyOn(workspace, 'activeSpace', 'get').mockReturnValue({
+      id: 'theirs',
+      name: 'Theirs',
+      root: SPACE,
+    })
+    vi.spyOn(workspace, 'active', 'get').mockReturnValue({
+      id: 'plan',
+      kind: 'note',
+      path: NOTE,
+      doc: '',
+      name: 'Plan.md',
+      note: { path: NOTE, kind: 'note', text: '', latest: '' },
+    } as never)
+    vi.spyOn(workspace, 'canRenameFromTab').mockReturnValue(true)
+    vi.spyOn(workspace, 'shownSpaces', 'get').mockReturnValue([
+      { id: 'theirs', name: 'Theirs', root: SPACE },
+      { id: 'mine', name: 'Mine', root: '/Mine' },
+    ])
+    workspace.spaces = [
+      { id: 'theirs', name: 'Theirs', root: SPACE },
+      { id: 'mine', name: 'Mine', root: '/Mine' },
+    ]
+    const commands = appCommands()
+    return {
+      renames: commands.some((one) => one.id === 'rename' && one.disabled !== true),
+      moves: commands.some((one) => one.id === 'move-note'),
+    }
+  }
+
+  test('is renamed and moved in a space that may be written in', () => {
+    expect(rows()).toEqual({ renames: true, moves: true })
+  })
+
+  test('is neither in a space shared to be read', () => {
+    readOnly.add(SPACE)
+    expect(rows()).toEqual({ renames: false, moves: false })
+  })
+})

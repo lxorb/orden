@@ -6,6 +6,7 @@
 
 import { folderNote } from '../folder-notes'
 import { t } from '../i18n.svelte'
+import { canWriteAt } from '../sharing.svelte'
 import { folderOf } from '../space-paths'
 import { pages } from '../web-tab/pages.svelte'
 import { workspace } from '../workspace.svelte'
@@ -67,6 +68,13 @@ export function moveToOtherPane(id: string) {
  *
  *  A terminal has no row and no file: its name is typed where it is written, in the
  *  strip, as Windows Terminal's is. See `nameInStrip`. */
+/** Whether a tab's name can be changed from the tab: a terminal's, or a file's with a
+ *  row in the file list, and never one in a space shared to be read, whose names are
+ *  the space's to keep. The rename itself refuses it as well. */
+export function renamesFromTab(tab: Tab): boolean {
+  return workspace.canRenameFromTab(tab) && (tab.path === null || canWriteAt(tab.path))
+}
+
 export function renameFromTab(id: string) {
   const tab = workspace.tabs.find((one) => one.id === id)
   if (tab?.kind === 'terminal') {
@@ -74,7 +82,7 @@ export function renameFromTab(id: string) {
     return
   }
   const path = tab?.path
-  if (!tab || !path || !workspace.canRenameFromTab(tab)) return
+  if (!tab || !path || !renamesFromTab(tab)) return
 
   const folder = workspace.entryAt(folderOf(path))
   const row = folder && folderNote(folder)?.path === path ? folder.path : path

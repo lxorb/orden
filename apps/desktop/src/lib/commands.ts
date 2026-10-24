@@ -501,7 +501,9 @@ function tabCommands(): Command[] {
       id: 'rename',
       label: t('Rename'),
       hint: shortcuts.hint('tabs.rename'),
-      disabled: !tab || !workspace.canRenameFromTab(tab),
+      // Not a file in a space shared to be read, whose name is the space's to keep.
+      disabled:
+        !tab || !workspace.canRenameFromTab(tab) || (tab.path !== null && !canWriteAt(tab.path)),
       run: () => void tabOps().then((ops) => ops.renameFromTab(id)),
     },
     // Left out with one space; see tab-strip/to-space.ts, fetched with the press.
@@ -990,14 +992,16 @@ function stepSlide(view: EditorView, direction: number) {
 function moveCommand(): Command | null {
   const note = workspace.active
   const path = note?.path
-  if (!path) return null
+  // A note in a space shared to be read stays where its owner put it, and nothing
+  // moves into one either: both are writes the sync would refuse.
+  if (!path || !canWriteAt(path)) return null
 
   const targets = moveTargets({
     moving: path,
     tree: workspace.tree,
     spaces: workspace.shownSpaces,
     here: workspace.activeSpace?.root ?? null,
-  })
+  }).filter((target) => canWriteAt(target.id))
   if (!targets.length) return null
 
   // Into another space the tab goes with the note, as Move to space takes it; see
@@ -1092,7 +1096,9 @@ export function appCommands(view?: EditorView): Command[] {
   const unsaved = workspace.active && isUnsaved(workspace.active.note) ? workspace.active : null
   // The rows below that make a file make it in the space in front, and one shared with
   // this account to be read takes none: the copy here would stop being the space's, and
-  // the sync refuses it on every pass. The file list's menu offers nothing there either.
+  // the sync refuses it on every pass. The file list's menus and keys offer nothing that
+  // writes there either, and the workspace's own calls refuse it for any caller that
+  // did not look; see `writableAt` in workspace.svelte.ts.
   const space = workspace.activeSpace
   const readOnly = space ? !canWriteAt(space.root) : false
 
