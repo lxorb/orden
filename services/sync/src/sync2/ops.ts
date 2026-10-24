@@ -18,30 +18,41 @@ import { type Changed, changeTree, type Content, kindOfName, type Tree } from '.
 /** A v1 op judges nothing against what its device had seen. */
 const SAW_EVERYTHING = Number.MAX_SAFE_INTEGER
 
-/** The size of each blob a batch of file creates names, by hash: a file's entry is
- *  only made for bytes the asker or the space's owner keeps. Not anybody's: an entry
- *  is a way to read its bytes back through the space, and a hash is something that
- *  can be learned without the file - so naming somebody else's would be reading it. */
-async function blobSizes(
+/** The size of each of these blobs a file's entry in this space may name, by hash:
+ *  bytes the asker keeps, so nobody makes an entry for bytes they could not upload - or
+ *  the space owner's and already in this space, as a file or a paper of it, which is
+ *  bytes everybody here can read anyway. Not every blob the owner keeps: an entry is a
+ *  way to read its bytes back through the space, a hash can be learned without the
+ *  file, and somebody who writes in one of the owner's spaces would otherwise read a
+ *  file the owner keeps for another. The same rule as a page note's paper (notes.ts). */
+export async function blobSizes(
   env: Env,
-  keepers: readonly string[],
-  ops: readonly Op[],
+  space: Pick<Reached, 'id' | 'user_id'>,
+  asker: string | null,
+  hashes: Iterable<string>,
 ): Promise<Map<string, number>> {
-  const hashes = new Set<string>()
-  for (const op of ops) {
-    if (op.t === 'create' && op.kind === 'file' && op.hash) hashes.add(op.hash.toLowerCase())
-  }
-  if (!hashes.size) return new Map()
+  const wanted = [...new Set([...hashes].map((hash) => hash.toLowerCase()))]
+  if (!wanted.length) return new Map()
 
   const { results } = await env.DB.prepare(
-    `select hash, max(size) as size from blobs
-      where hash in (select value from json_each(?1))
-        and user_id in (select value from json_each(?2))
-      group by hash`,
+    `select b.hash, max(b.size) as size from blobs b
+      where b.hash in (select value from json_each(?1))
+        and (b.user_id = ?2
+             or (b.user_id = ?3
+                 and (exists (select 1 from notes n where n.space_id = ?4
+                                and (n.paper = b.hash or (n.kind = 'file' and n.hash = b.hash)))
+                      or exists (select 1 from spaces s, json_each(s.files) f
+                                  where s.id = ?4 and json_extract(f.value, '$.hash') = b.hash))))
+      group by b.hash`,
   )
-    .bind(JSON.stringify([...hashes]), JSON.stringify(keepers))
+    .bind(JSON.stringify(wanted), asker ?? '', space.user_id, space.id)
     .all<{ hash: string; size: number }>()
   return new Map(results.map((row) => [row.hash, row.size]))
+}
+
+/** The hashes a batch of file creates names. */
+function createdHashes(ops: readonly Op[]): string[] {
+  return ops.flatMap((op) => (op.t === 'create' && op.kind === 'file' && op.hash ? [op.hash] : []))
 }
 
 /** The ids a batch of creates and mkdirs names that are not this space's to make: a
@@ -81,8 +92,7 @@ export async function applyOps(
   device: string,
   ops: readonly Op[],
 ): Promise<Changed<OpResult[]>> {
-  const keepers = asker ? [asker, space.user_id] : [space.user_id]
-  const sizes = await blobSizes(env, keepers, ops)
+  const sizes = await blobSizes(env, space, asker, createdHashes(ops))
   const taken = await takenIds(env, space.id, ops)
   const context: OpContext = { role: space.role, device }
 

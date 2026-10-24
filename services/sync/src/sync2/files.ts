@@ -25,7 +25,7 @@ import { atLeast, spaceOf } from '../spaces/space'
 import { fits, fitsSql } from '../storage'
 import type { Env, Note, Variables } from '../types'
 import { deviceOf } from './device'
-import { revive } from './ops'
+import { blobSizes, revive } from './ops'
 
 interface App {
   Bindings: Env
@@ -490,17 +490,13 @@ v2Files.put('/:space/:id', atLeast('write', 'space'), async (context) => {
     return context.json({ moved: { hash: file.hash, size: file.size, at: file.updated_at } })
   }
 
-  // Bytes the asker or the space's owner keeps, for the reason `blobSizes` in ops.ts
-  // gives.
+  // Bytes the asker keeps, or the owner's this space already holds, for the reason
+  // `blobSizes` in ops.ts gives.
   const who = context.get('who')
-  const asker = who.kind === 'user' ? who.user.id : space.user_id
-  const blob = await context.env.DB.prepare(
-    'select max(size) as size from blobs where hash = ? and user_id in (?, ?)',
-  )
-    .bind(hash, asker, space.user_id)
-    .first<{ size: number | null }>()
-  if (blob?.size === null || blob?.size === undefined)
-    return context.json({ error: NO_SUCH_FILE }, 404)
+  const size = (
+    await blobSizes(context.env, space, who.kind === 'user' ? who.user.id : null, [hash])
+  ).get(hash)
+  if (size === undefined) return context.json({ error: NO_SUCH_FILE }, 404)
 
   const device = await deviceOf(context)
   if (file.deleted) await revive(context.env, space.id, device, id)
@@ -513,7 +509,7 @@ v2Files.put('/:space/:id', atLeast('write', 'space'), async (context) => {
       `update notes set hash = ?2, size = ?3, seq = ${TAKEN_SEQ}, doc_seq = ${TAKEN_SEQ},
                         doc_by = ?4, updated_by = ?4, version = version + 1, updated_at = ?5
         where id = ?6 and hash = ?7`,
-    ).bind(space.id, hash, blob.size, device, now(), id, base),
+    ).bind(space.id, hash, size, device, now(), id, base),
   )
   if (!changes) {
     const current = await fileIn(context.env, space.id, id)
