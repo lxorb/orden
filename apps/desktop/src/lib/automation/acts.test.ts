@@ -360,6 +360,10 @@ describe('a property an automation sets', () => {
       ['[work, home]', 'status: [work, home]'],
       ['[]', 'status: []'],
       ["['a, b', yes]", "status: ['a, b', 'yes']"],
+      // A link is not a list of one, and links said with commas are a list of links.
+      ['[[Project X]]', "status: '[[Project X]]'"],
+      ['[[A]], [[B]]', "status: ['[[A]]', '[[B]]']"],
+      ['[[[A]], [[B]]]', "status: ['[[A]]', '[[B]]']"],
     ]
 
     for (const [value, line] of typed) {
@@ -368,6 +372,22 @@ describe('a property an automation sets', () => {
 
       await setProperty({ path: 'Plan.md', key: 'status', value })
       expect(written[0]?.after, value).toBe(`---\n${line}\n---\n# Plan\n`)
+    }
+  })
+
+  test('over the same words in quotes is a change of type, not no change', async () => {
+    for (const [line, value, after] of [
+      ['done: "true"', 'true', 'done: true'],
+      ["count: '3'", '3', 'count: 3'],
+    ] as const) {
+      held.set('/Work/Plan.md', `---\n${line}\n---\n# Plan\n`)
+      written.length = 0
+
+      const key = line.slice(0, line.indexOf(':'))
+      expect(await setProperty({ path: 'Plan.md', key, value }), line).toMatchObject({
+        changed: true,
+      })
+      expect(written[0]?.after, line).toBe(`---\n${after}\n---\n# Plan\n`)
     }
   })
 

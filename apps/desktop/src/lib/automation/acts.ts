@@ -394,6 +394,9 @@ export async function deleteFile(args: Said): Promise<unknown> {
  *  bare reads back as twelve and somebody's code is not a number. */
 const BARE_NUMBER = /^-?(?:0|[1-9]\d*)(?:\.\d+)?$/
 
+/** One wikilink, or several said with commas between them: `[[A]]`, `[[A]], [[B]]`. */
+const LINKS = /^\[\[[^[\]]+\]\](?:\s*,\s*\[\[[^[\]]+\]\])*$/
+
 /** The edit that sets a key to words said in a link or on the command line.
  *
  *  Written the way a property row writes them, rather than handed to the block edit
@@ -402,9 +405,17 @@ const BARE_NUMBER = /^-?(?:0|[1-9]\d*)(?:\.\d+)?$/
  *  comment or a boolean, and a line break would end the block. Everything said is
  *  words, so the type is read off them the way the rows read a value: `true` is a
  *  checkbox, `3` a number and `[work, home]` a list, and those keep their type
- *  rather than arriving in quotes as text. */
+ *  rather than arriving in quotes as text. `[[Plan]]` is a link, which is words. */
 function propertyEdit(text: string, key: string, value: string | null): TextEdit | null {
   if (value === null) return writeProperty(text, key, null)
+
+  // A link opens with the bracket a list does, and read as one it would come out as
+  // a list of `[Project X]`. One link is the words of a link, and several are a list
+  // of them, which is what a property row writes for each.
+  if (LINKS.test(value)) {
+    const links = value.split(/\s*,\s*/)
+    return links.length > 1 ? writeList(text, key, links) : writeProperty(text, key, value)
+  }
 
   const items = flowItems(value)
   if (items) return writeList(text, key, items)

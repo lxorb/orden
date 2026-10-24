@@ -313,18 +313,24 @@ export function frontMatterEdit(
 
   if (line) {
     const said = source.slice(line.value.from, line.value.to).trim()
-    // A quoted line and a quoted value are the same words whichever quotes each is
-    // in: a caller that quotes its value as a scalar hands `'yes'` itself, and a note
-    // that says `"yes"` already says that. A bare line is only the same as the value
-    // read the same way, because bare `yes` is a boolean and `'yes'` is the word.
-    const was = unquoted(said)
-    if (was === value || (was !== said && was === unquoted(value))) return null
+    if (readAs(said) === readAs(value)) return null
 
     const to = source[line.value.to - 1] === '\r' ? line.value.to - 1 : line.value.to
     return { from: line.value.from, to, insert: ` ${value}` }
   }
 
   return { from: block.close, to: block.close, insert: `${key}: ${value}${nl}` }
+}
+
+/** What a value on a line reads as, so two spellings of it can be compared: the
+ *  same words are no change whichever quotes each is in, and `"rocket"` is the
+ *  `rocket` written bare, while `yes` bare is a boolean and `3` bare a number.
+ *  Comparing the words alone would call `done: "true"` the checkbox `true` and
+ *  write nothing, leaving the note saying text where it was asked for a tick. */
+function readAs(value: string): string {
+  const said = value.trim()
+  const words = unquoted(said)
+  return words !== said || scalar(said) === said ? `words ${words}` : `bare ${said}`
 }
 
 /** A key's line through what is written under it: the indented lines and the
