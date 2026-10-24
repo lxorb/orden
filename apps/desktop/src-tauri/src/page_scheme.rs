@@ -8,6 +8,13 @@
 //! profile's colour scheme (`SetChromeColorScheme`), which is what a page's
 //! `prefers-color-scheme` answers there; on Windows through its `WebView2` profile's
 //! preferred colour scheme. Elsewhere the page follows the system, as it always did.
+//!
+//! On CEF a page that paints no ground of its own stands on its browser view's, not on
+//! the web's white: Chrome style keeps the page itself clear there, and a browser
+//! view's ground goes back to the theme's own each time its theme changes, which in a
+//! dark scheme is Chrome's dark grey. A page written only for light was then dark text
+//! on dark, with its white parts a frame round it (#763). So each time a page is given
+//! the scheme its browser view is given white again, as every browser stands a page on.
 
 use std::sync::Mutex;
 
@@ -63,17 +70,17 @@ pub fn wear(page: &Webview<crate::Engine>) {
 
 #[cfg(feature = "cef")]
 mod engine {
-    use cef::{ImplBrowser as _, ImplBrowserHost as _, ImplRequestContext as _};
+    use cef::{ImplBrowser as _, ImplBrowserHost as _, ImplRequestContext as _, ImplView as _};
 
     use super::Scheme;
 
     /// The page's profile told the scheme: every page in that profile is drawn in it.
     pub fn wear(platform: &tauri::webview::PlatformWebview, scheme: Scheme) {
-        let Some(context) = platform
-            .downcast_ref::<tauri_runtime_cef::Webview>()
-            .and_then(|view| view.browser().host())
-            .and_then(|host| host.request_context())
-        else {
+        let Some(view) = platform.downcast_ref::<tauri_runtime_cef::Webview>() else {
+            return;
+        };
+        let mut browser = view.browser();
+        let Some(context) = browser.host().and_then(|host| host.request_context()) else {
             return;
         };
         let variant = match scheme {
@@ -81,7 +88,16 @@ mod engine {
             Scheme::Dark => cef::sys::cef_color_variant_t::CEF_COLOR_VARIANT_DARK,
         };
         context.set_chrome_color_scheme(cef::ColorVariant::from(variant), 0);
+        // After the scheme, whose theme change has just put the view's ground back to
+        // the theme's; see the top of this file. A browser with no view of its own, as
+        // under Alloy style, has none to give.
+        if let Some(ground) = cef::browser_view_get_for_browser(Some(&mut browser)) {
+            ground.set_background_color(WHITE);
+        }
     }
+
+    /// The web's own ground, as ARGB.
+    const WHITE: u32 = 0xFFFF_FFFF;
 }
 
 #[cfg(all(windows, not(feature = "cef")))]
