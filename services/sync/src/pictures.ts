@@ -8,35 +8,15 @@
  *  from the same place as its words and its reminders (notes.ts), and the nightly sweep
  *  reads the notes written before there was anywhere to put them (blog/fill.ts). */
 
-import { withoutComments } from '@nib/markdown'
+import { lexMarkdown, withoutComments } from '@nib/markdown'
 import { coverOf } from '@nib/markdown/cover'
-import { frontMatterValue } from '@nib/markdown/front-matter'
-import { lines, withoutCode } from '@nib/markdown/links'
+import { frontMatterValue, stripFrontMatter } from '@nib/markdown/front-matter'
+import { withoutBlockIds } from '@nib/markdown/links'
 import type { Env } from './types'
 
-/** A picture in a note's prose, as the renderer draws one, and the address it names: a
- *  markdown image (whose words may hold a pair of brackets of their own), an embed of
- *  the address in double brackets, and an HTML image tag, which may run over several
- *  lines. Only these: a hash written in prose, in a link or in code is somebody naming
- *  the bytes, not a note showing them, and anybody who once saw a hash could otherwise
- *  claim the bytes behind it by writing it down. */
-const EMBEDS = [
-  /!\[(?:[^[\]\n]|\[[^\]\n]*\])*\]\(\s*<?([^\s)>]+)/g,
-  /!\[\[([^\]|#\n]+)/g,
-  /<img\b[^>]*?\ssrc\s*=\s*["']?([^"'\s>]+)/gi,
-]
-
-/** A markdown image by reference: its words, and the label in its second brackets,
- *  empty for `![label][]`. */
-const BY_REFERENCE = /!\[((?:[^[\]\n]|\[[^\]\n]*\])*)\]\[([^\]\n]*)\]/g
-
-/** A reference's definition, on a line of its own: `[label]: address`. */
-const DEFINITION = /^ {0,3}\[([^\]\n]+)\]:[ \t]*<?([^\s>]+)>?/gm
-
-/** A label as markdown matches one: without case, and with its spaces run together. */
-function label(said: string): string {
-  return said.trim().replace(/\s+/g, ' ').toLowerCase()
-}
+/** An HTML image tag's source, as a browser reads it: the attribute named `src` and no
+ *  other, which may sit on a line of its own inside the tag. */
+const IMG_SRC = /<img\b[^>]*?\ssrc\s*=\s*["']?([^"'\s>]+)/gi
 
 /** The keys of a note's front matter beside its cover that hold a picture the app
  *  shows: the image its published page is shared with. */
@@ -46,8 +26,16 @@ const FRONT_PICTURES = ['image'] as const
  *  app writes after it, and nothing else on the end of the path. */
 const PICTURE = /\/i\/([a-f0-9]{64})(?:\.[a-z0-9]+)?(?:[?#].*)?$/i
 
-/** Every picture the service holds that this body shows: in its prose outside code and
- *  comments, as its cover, or - for a canvas, which is JSON - on one of its cards. */
+/** Every picture the service holds that this body shows: in its prose, as its cover,
+ *  or - for a canvas, which is JSON - on one of its cards.
+ *
+ *  The prose is read through the same grammar that renders it (`lexMarkdown`, the
+ *  package's own tokens), so what counts here is exactly what a reader is drawn: a
+ *  markdown image however its address is given - inline, by reference, by shortcut -
+ *  an embed of the address in double brackets, and the source of an HTML image tag.
+ *  Nothing else: a hash in prose, in a link, in code, escaped or in a comment is
+ *  somebody naming the bytes, not a note showing them, and anybody who once saw a hash
+ *  could otherwise claim the bytes behind it by writing it down. */
 export function picturesOf(source: string): Set<string> {
   const found = new Set<string>()
   const add = (address: string | null | undefined) => {
@@ -70,29 +58,38 @@ export function picturesOf(source: string): Set<string> {
   add(coverOf(source)?.src)
   for (const key of FRONT_PICTURES) add(frontMatterValue(source, key))
 
-  // The prose, with every line of a fence and every code span blanked, read whole so an
-  // image tag can run over its lines.
-  const prose: string[] = []
-  for (const row of lines(withoutComments(source)))
-    prose.push(row.code ? '' : withoutCode(row.text))
-  const text = prose.join('\n')
-  for (const embed of EMBEDS) for (const match of text.matchAll(embed)) add(match[1])
-
-  // And a markdown image by reference, `![words][label]` or `![label][]`, whose address
-  // is the definition of that label elsewhere in the note. Only a label an image uses:
-  // a definition only a link reads is a link.
-  const defined = new Map<string, string>()
-  for (const match of text.matchAll(DEFINITION)) {
-    if (match[1] && match[2]) defined.set(label(match[1]), match[2])
-  }
-  if (defined.size) {
-    for (const match of text.matchAll(BY_REFERENCE)) {
-      // An empty second pair is `![label][]`, which names its label in the first.
-      add(defined.get(label(match[2]?.trim() === '' ? (match[1] ?? '') : (match[2] ?? ''))))
-    }
-  }
-
+  // What `renderMarkdown` parses: the body without its front matter, its block names
+  // and its comments.
+  const tokens = lexMarkdown(withoutComments(withoutBlockIds(stripFrontMatter(source))))
+  visit(tokens, add)
   return found
+}
+
+/** Every picture a run of tokens draws, handed to `add`, at any depth: a list's items,
+ *  a table's cells, a quote's paragraphs and a link's words all hold tokens of their
+ *  own. Code holds none, so it is never looked inside. */
+function visit(value: unknown, add: (address: string | undefined) => void): void {
+  if (Array.isArray(value)) {
+    for (const one of value) visit(one, add)
+    return
+  }
+  if (!value || typeof value !== 'object') return
+
+  const token = value as { type?: unknown; href?: unknown; text?: unknown; link?: unknown }
+  if (token.type === 'code' || token.type === 'codespan') return
+  if (token.type === 'image' && typeof token.href === 'string') add(token.href)
+  if (token.type === 'html' && typeof token.text === 'string') {
+    for (const match of token.text.matchAll(IMG_SRC)) add(match[1])
+  }
+  // `![[…]]`, as a block of its own or inside a line.
+  if (token.type === 'embed' || token.type === 'wikilink') {
+    const link = token.link as { embed?: boolean; target?: string } | undefined
+    if (link?.embed) add(link.target)
+  }
+
+  for (const inner of Object.values(token)) {
+    if (inner && typeof inner === 'object') visit(inner, add)
+  }
 }
 
 /** What a canvas card says that can hold a picture. */
