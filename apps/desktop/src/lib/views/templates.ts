@@ -8,7 +8,8 @@
 import { fillTemplate, withoutTemplateKeys } from '@nib/bases'
 import { t } from '../i18n.svelte'
 import { menu } from '../menu.svelte'
-import { folderOf, relativeTo, within } from '../space-paths'
+import { rows } from '../rows/rows.svelte'
+import { folderOf, insideSpace, relativeTo, samePath, within } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
 import { type Entry, workspace } from '../workspace.svelte'
 import { writeFile } from '../workspace/write-file'
@@ -47,10 +48,16 @@ export async function templates(): Promise<Entry[]> {
 }
 
 /** The template a link names (`[[Templates/Bug]]`, `Bug`), on this disk; null where the
- *  space has no such note. */
-export function templatePath(link: string): string | null {
-  const root = workspace.activeSpace?.root
-  if (root === undefined) return null
+ *  space has no such note.
+ *
+ *  Looked for in `space`, the space on screen unless said: a base kept in a tab across
+ *  a space switch names its template in its own space. Read from the listing on screen,
+ *  a board shared with others took the reader's private `Journal.md` into the note it
+ *  made in the shared space, which every member then had. A space not on screen has no
+ *  listing here, so its notes are the rows store's, which holds every space. */
+export function templatePath(link: string, space = workspace.activeSpace): string | null {
+  if (!space) return null
+  const root = space.root
   const wanted = link
     .replace(/^\[\[|\]\]$/g, '')
     .split('|')[0]
@@ -58,12 +65,16 @@ export function templatePath(link: string): string | null {
     .replace(/\.md$/i, '')
     .toLowerCase()
   if (!wanted) return null
-  const notes = workspace.notes
-  const byPath = notes.find(
-    (one) => relativeTo(root, one.path).replace(/\.md$/i, '').toLowerCase() === wanted,
-  )
+  const notes = samePath(root, workspace.activeSpace?.root)
+    ? workspace.notes.map((one) => ({ relative: relativeTo(root, one.path), name: one.name }))
+    : rows
+        .of(space.name)
+        .filter((row) => row.kind === 'note')
+        .map((row) => ({ relative: row.path, name: `${row.file.basename}.md` }))
+  const byPath = notes.find((one) => one.relative.replace(/\.md$/i, '').toLowerCase() === wanted)
   const byName = notes.find((one) => one.name.replace(/\.md$/i, '').toLowerCase() === wanted)
-  return (byPath ?? byName)?.path ?? null
+  const found = byPath ?? byName
+  return found ? insideSpace(root, found.relative) : null
 }
 
 /** A template's words, filled for a note called `title` made now; empty for a template

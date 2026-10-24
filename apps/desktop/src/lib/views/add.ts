@@ -176,7 +176,7 @@ export async function addNote(
   const name = await workspace.freeNameOnDisk(dir, `${title}.md`)
   const link =
     made.template === undefined ? (view?.nib.template ?? base.nib.template) : made.template
-  const template = link ? templatePath(link) : null
+  const template = link ? templatePath(link, space) : null
   const words = template === null ? '' : await templateWords(template, name.replace(/.md$/i, ''))
   const path = joinPath(dir, name)
   await writeFile(path, withProperties(words, props))
