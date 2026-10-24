@@ -19,12 +19,15 @@ export function fileFor(typed: string, note: NoteDoc, title?: string): string {
   return fileNamed(nameFromTitle(typed) ?? offeredName(note, title), note.kind)
 }
 
+/** The places, less those `writable` refuses: a space shared to be read takes no new
+ *  file, so it is not offered, as the Move sheet does not offer it either. */
 export function placesFor(
   tree: Entry | null,
   spaces: readonly Space[],
   here: string | null,
+  writable: (path: string) => boolean = () => true,
 ): MoveTarget[] {
-  return moveTargets({ moving: null, tree, spaces, here })
+  return moveTargets({ moving: null, tree, spaces, here }).filter((one) => writable(one.id))
 }
 
 /** The place Save starts on: `home`, the root of the tab's own space, where it is one

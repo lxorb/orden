@@ -14,6 +14,7 @@
   import { LAYER } from '../motion'
   import { overlays } from '../overlays'
   import { selectAll } from '../select-all'
+  import { canWriteAt } from '../sharing.svelte'
   import SpaceMark from '../SpaceMark.svelte'
   import { trap } from '../trap'
   import { pages } from '../web-tab/pages.svelte'
@@ -48,6 +49,7 @@
     workspace.tree,
     workspace.shownSpaces,
     workspace.activeSpace?.root ?? null,
+    canWriteAt,
   )
   const home = workspace.spaces.find((one) => one.id === workspace.spaceOf(tab.note))?.root
   let place = $state(startingPlace(places, home ?? null))

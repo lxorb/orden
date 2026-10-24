@@ -37,7 +37,8 @@ type Claim = (path: string, run: () => Promise<NoteDoc | null>) => Promise<NoteD
 /** A website kept as a web note in `dir`: the shortcut for a tab that has none, with
  *  the address the tab is on, the name given or the page's title, and the mark the
  *  page reported. Browsing writes nothing, and keeping a page is something somebody
- *  does, the way a bookmark is. Answers the path, or null where it was not kept.
+ *  does, the way a bookmark is. Answers the path, or null where it was not kept, which
+ *  is the answer in a space shared to be read.
  *
  *  The one gesture that gives a file to a document that exists and is not a draft,
  *  and so the one that could put a second document on a file: two tabs kept in the
@@ -52,6 +53,10 @@ export async function keepWeb(
   dir: string,
   file?: string,
 ): Promise<string | null> {
+  // Not into a space shared to be read: the copy here would stop being the space's.
+  // Fetched, as sharing.svelte.ts reads the workspace this belongs to.
+  const { canWriteAt } = await import('../sharing.svelte')
+  if (!canWriteAt(dir)) return null
   const title = file ? shownName(file) : (pages.of(tab.id).title || tab.name || UNTITLED).trim()
   const named = file ?? `${nameFromTitle(title) ?? UNTITLED}.url`
   const page = pages.of(tab.id)
