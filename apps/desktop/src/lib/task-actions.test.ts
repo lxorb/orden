@@ -19,15 +19,19 @@ vi.mock('./workspace.svelte', () => ({
   },
 }))
 
-// Every space here is the reader's own; what a space shared to be read refuses is
-// quick-add/write.test.ts's.
-vi.mock('./sharing.svelte', () => ({ canWriteAt: () => true }))
+// The reader's own space, unless a test shares it with them to be read. What adding a
+// task refuses there is quick-add/write.test.ts's; a tick is here.
+const share = vi.hoisted(() => ({ readOnly: false }))
+vi.mock('./sharing.svelte', () => ({ canWriteAt: () => !share.readOnly }))
 
 vi.mock('./workspace/note-text', () => ({
   noteText: (_ws: unknown, path: string) => Promise.resolve(files.get(path) ?? null),
+  // As the real one: a note in a space shared to be read is passed over, and the
+  // answer is how many were written.
   replaceInNotes: (_ws: unknown, changes: { path: string; after: string }[]) => {
+    if (share.readOnly) return Promise.resolve(0)
     for (const one of changes) files.set(one.path, one.after)
-    return Promise.resolve()
+    return Promise.resolve(changes.length)
   },
 }))
 
@@ -54,6 +58,7 @@ const { addTask, listed, tickTask } = await import('./task-actions')
 const today = todayOf()
 
 beforeEach(() => {
+  share.readOnly = false
   files.clear()
   files.set('/s/Home/Plan.md', `# Plan\n- [ ] Water the plants 🔁 every day 📅 ${today}\n`)
 })
@@ -72,6 +77,17 @@ describe("the reader's own task actions", () => {
     const lines = files.get('/s/Home/Plan.md')?.split('\n') ?? []
     expect(lines[1]).toMatch(/^- \[ \] Water the plants 🔁 every day 📅 \d{4}-\d{2}-\d{2}$/)
     expect(lines[2]).toBe(`- [x] Water the plants 🔁 every day 📅 ${today} ✅ ${today}`)
+  })
+
+  // Today lists the tasks of every space, a space shared to be read among them, and
+  // ticking one there would write a note the sync refuses on every pass (B274).
+  test('nothing ticked in a space shared to be read', async () => {
+    const { tasks } = await listed()
+    const was = files.get('/s/Home/Plan.md')
+    share.readOnly = true
+
+    expect(await tickTask(tasks[0]?.at ?? '', 'Home', true)).toBe(false)
+    expect(files.get('/s/Home/Plan.md')).toBe(was)
   })
 
   test('nothing ticked where the task or the space is not there', async () => {
