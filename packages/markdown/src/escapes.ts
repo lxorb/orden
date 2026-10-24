@@ -322,23 +322,28 @@ const A_LIST_ITEM = /^[ \t]*(?:[-*+]|\d{1,9}[.)])[ \t]+/
  *  nothing. */
 export function plainWords(text: string): string {
   // Whether a list is open, which an indented item can nest in: since the last list
-  // item, nothing but blank lines. Anywhere else four columns in front of a bullet
-  // make it code, as they would words.
+  // item, blank lines and the item's own words running on, on the next line or
+  // indented under it. Anywhere else four columns in front of a bullet make it code,
+  // as they would words.
   let listOpen = false
+  let blankBefore = true
   return text
     .split('\n')
     .map((line) => {
       const indent = /^[ \t]*/.exec(line)?.[0] ?? ''
       const deep = columnsOf(indent) >= 4
+      const blank = !line.trim()
       const marker = A_LIST_ITEM.exec(line)?.[0]
+      const wasBlank = blankBefore
+      blankBefore = blank
       if (marker && (!deep || listOpen)) {
         listOpen = true
         return marker + escapeText(line.slice(marker.length), { addresses: true })
       }
 
-      if (line.trim()) listOpen = false
+      if (!blank) listOpen &&= !wasBlank || indent.length > 0
       const words = escapeText(line.slice(indent.length), { addresses: true })
-      return (deep ? NO_BREAK.repeat(columnsOf(indent)) : indent) + words
+      return (deep && !listOpen ? NO_BREAK.repeat(columnsOf(indent)) : indent) + words
     })
     .join('\n')
 }

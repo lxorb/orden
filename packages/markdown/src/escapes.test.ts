@@ -61,6 +61,12 @@ describe('plain text, as a note may hold it', () => {
     expect(renderMarkdown(nested)).toContain('<li>a<ul>\n<li><p>b [x]</p>')
   })
 
+  test('a bullet under an item that runs on to a second line still nests', () => {
+    const nested = plainWords('- a\n  more words\n    - b [x]')
+    expect(nested).toBe('- a\n  more words\n    - b \\[x\\]')
+    expect(renderMarkdown(nested)).toContain('<li>a\nmore words<ul>\n<li>b [x]</li>')
+  })
+
   test('a bare address still links', () => {
     expect(plainWords('see https://a.test/~al/_x_/ now')).toBe('see https://a.test/~al/_x_/ now')
   })
