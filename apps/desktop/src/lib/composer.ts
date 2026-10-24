@@ -82,13 +82,17 @@ export interface Split {
  *
  *  The caret is moved to the start of its own line first, because a split is
  *  about where a thought ends and not about where a word does. Null when there
- *  is nothing on the far side worth a note of its own. */
-export function splitAt(text: string, at: number, fallback: string): Split | null {
+ *  is nothing on the far side worth a note of its own.
+ *
+ *  `named` is the name the note was finally given, when the one it reached for
+ *  was taken and it had to step aside: the link has to say that one, or it
+ *  points at whatever note already had the name. */
+export function splitAt(text: string, at: number, fallback: string, named?: string): Split | null {
   const start = lineStart(text, Math.max(0, Math.min(at, text.length)))
   const taken = text.slice(start).trim()
   if (!taken) return null
 
-  const name = nameFromContent(taken) ?? fallback
+  const name = named ?? nameFromContent(taken) ?? fallback
   const kept = `${text.slice(0, start).replace(/\s+$/, '')}\n\n${linkTo(name)}\n`
 
   return { kept, taken: `${taken}\n`, name }
@@ -96,12 +100,19 @@ export function splitAt(text: string, at: number, fallback: string): Split | nul
 
 /** A selection lifted into a note of its own, with a link in its place. The
  *  selected words become the link's text when they are not the new note's name,
- *  so the sentence the passage was lifted out of still reads. */
-export function extracted(text: string, from: number, to: number, fallback: string): Split | null {
+ *  so the sentence the passage was lifted out of still reads. `named` is the
+ *  name it stepped aside to, as for a split. */
+export function extracted(
+  text: string,
+  from: number,
+  to: number,
+  fallback: string,
+  named?: string,
+): Split | null {
   const taken = text.slice(from, to).trim()
   if (!taken) return null
 
-  const name = nameFromContent(taken) ?? fallback
+  const name = named ?? nameFromContent(taken) ?? fallback
   const shown = oneLine(taken)
   // A passage that is the note's name with a full stop after it says nothing
   // the name does not, so the link is left plain. Anything else the name had to

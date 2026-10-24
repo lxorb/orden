@@ -174,6 +174,16 @@ describe('a note split at the caret', () => {
     expect(disk.get(`${SPACE}/Later.md`)).toBe('# taken')
   })
 
+  test('and the link left behind names the stepped-aside note, not the one it stepped from', async () => {
+    // The link was written from the name the split reached for, so the note was
+    // left pointing at an unrelated `Later` and nothing pointed at `Later 2`.
+    const ws = space({ [NOTE]: DOC, [`${SPACE}/Later.md`]: '# taken' }, NOTE)
+    await splitAtCaret(ws, DOC.indexOf('## Later'))
+
+    expect(disk.get(NOTE)).toContain('[[Later 2]]')
+    expect(disk.get(NOTE)).not.toContain('[[Later]]')
+  })
+
   test('and nothing happens where there is nothing after the caret', async () => {
     const ws = space({ [NOTE]: DOC }, NOTE)
     await splitAtCaret(ws, DOC.length)
@@ -202,6 +212,18 @@ describe('a selection made into a note of its own', () => {
     expect(disk.get(NOTE)).toContain('keep this')
     expect(disk.get(NOTE)).toMatch(/\[\[.+]]/)
     expect(ws.undone.stack[0]).toMatchObject({ kind: 'extract', from: NOTE })
+  })
+
+  test('and links to the note by the name it was stepped aside to', async () => {
+    // The passage is the name, so the link would be left plain; once the name is
+    // taken the passage stays as the link's words and the target is the new note.
+    const doc = '# Plan\n\nkeep this\n\nLater\n'
+    const ws = space({ [NOTE]: doc, [`${SPACE}/Later.md`]: '# taken' }, NOTE)
+    const from = doc.indexOf('Later')
+    await extractSelection(ws, from, from + 'Later'.length)
+
+    expect(disk.has(`${SPACE}/Later 2.md`)).toBe(true)
+    expect(disk.get(NOTE)).toContain('[[Later 2|Later]]')
   })
 
   test('and nothing happens where nothing is selected', async () => {
