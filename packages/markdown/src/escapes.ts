@@ -38,6 +38,7 @@
  *  - which is the same promise from-html.ts makes about the rest of its markers:
  *  a page pasted into a note and the same page clipped come out as one file. */
 
+import { codeAndWords, PUNCTUATION } from './tags'
 import { OPENS_MARKUP } from './words'
 
 /** A `<` that would open a tag, escaped. Not `asWords`, which doubles the backslashes
@@ -45,10 +46,6 @@ import { OPENS_MARKUP } from './words'
 function bracketsOf(text: string): string {
   return text.replace(OPENS_MARKUP, '\\<')
 }
-
-/** What a backslash escapes, which is ASCII punctuation and nothing else: `\*`
- *  is a star, and `\U` is a backslash and a U. */
-const PUNCTUATION = /[!-/:-@[-`{-~]/
 
 /** A letter or a digit. What an underscore has to sit between for markdown to
  *  refuse to read it as emphasis: a delimiter inside a word is both-flanking and
@@ -361,73 +358,6 @@ function columnsOf(indent: string): number {
 /** A backslash escape: one in front of ASCII punctuation, which is all CommonMark
  *  lets one escape. */
 const AN_ESCAPE = /\\([!-/:-@[-`{-~])/g
-
-/** The text cut into what is code and what is not, in order, the way CommonMark
- *  cuts it: a run of backticks opens a code span that the next run of the same
- *  length closes, and one with no such run after it is backticks. A backtick with an
- *  escape in front of it - an odd run of backslashes - is the character and opens
- *  nothing, outside code; inside code a backslash is a backslash and escapes
- *  nothing, so `` `C:\\` `` closes on its second backtick. */
-export function codeAndWords(text: string): { code: boolean; text: string }[] {
-  const out: { code: boolean; text: string }[] = []
-  let words = ''
-  let at = 0
-  while (at < text.length) {
-    const char = text.charAt(at)
-    if (char === '\\' && PUNCTUATION.test(text.charAt(at + 1))) {
-      words += text.slice(at, at + 2)
-      at += 2
-      continue
-    }
-    if (char !== '`') {
-      words += char
-      at += 1
-      continue
-    }
-
-    const run = /^`+/.exec(text.slice(at))?.[0] ?? '`'
-    const close = closingRun(text, at + run.length, run.length)
-    if (close === -1) {
-      words += run
-      at += run.length
-      continue
-    }
-    if (words) out.push({ code: false, text: words })
-    words = ''
-    out.push({ code: true, text: text.slice(at, close + run.length) })
-    at = close + run.length
-  }
-  if (words) out.push({ code: false, text: words })
-  return out
-}
-
-/** Where the code spans in `text` start and end, so nothing inside one is read as
- *  a field or a tag: code is shown as it is written. */
-export function codeSpans(text: string): [number, number][] {
-  const out: [number, number][] = []
-  let at = 0
-  for (const one of codeAndWords(text)) {
-    if (one.code) out.push([at, at + one.text.length])
-    at += one.text.length
-  }
-  return out
-}
-
-/** Whether `at` falls inside one of the code spans `codeSpans` answered. */
-export function inCode(code: [number, number][], at: number): boolean {
-  return code.some(([from, to]) => at >= from && at < to)
-}
-
-/** Where the run of exactly `length` backticks closing a code span starts, from
- *  `from` on, or -1. */
-function closingRun(text: string, from: number, length: number): number {
-  for (let at = text.indexOf('`', from); at !== -1;) {
-    const run = /^`+/.exec(text.slice(at))?.[0].length ?? 1
-    if (run === length) return at
-    at = text.indexOf('`', at + run)
-  }
-  return -1
-}
 
 /** Words as a field or a notification shows them: every escape taken off, so a
  *  task written `milk \$3` reads `milk $3`. Not in code, which shows its

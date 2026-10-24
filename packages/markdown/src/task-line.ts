@@ -14,9 +14,9 @@
  *  the rows engine all ask it about the same line. `taskAt` (tasks.ts) still answers
  *  the narrower question of where the box is. */
 
-import { codeAndWords, codeSpans, inCode, plainWords } from './escapes'
+import { plainWords } from './escapes'
 import { taskAt } from './tasks'
-import { TAG_NAME, opensTag } from './tags'
+import { codeAndWords, codeSpans, inCode, opensTag, TAG_NAME } from './tags'
 
 /** p1 to p4 as Todoist numbers them, then the Tasks plugin's two low ones: sorting
  *  ascending puts the most urgent first and the low ones after the ones with none. */

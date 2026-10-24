@@ -18,9 +18,8 @@
  *  slashes, so the characters that may appear in one are what decides how deep a
  *  tree can go. */
 
-import { codeSpans, inCode } from '@nib/markdown/escapes'
 import { type FrontMatterBlock, frontMatterBlock } from '@nib/markdown/front-matter'
-import { TAG_NAME } from '@nib/markdown/tags'
+import { codeSpans, inCode, TAG_NAME } from '@nib/markdown/tags'
 
 /** Where one use of a tag sits: the offsets of its name, the hash not included,
  *  so a rename splices a new path in and leaves whatever hung off the old one. */

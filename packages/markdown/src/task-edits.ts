@@ -18,8 +18,7 @@
  *  format. See task-line.ts for the reading. */
 
 import { appliedEdits, type TextEdit } from './edits'
-import { codeSpans, inCode } from './escapes'
-import { tagNameAt } from './tags'
+import { codeSpans, inCode, tagNameAt } from './tags'
 import {
   DEPENDS_EMOJI,
   EMOJI_BY_DATE,
