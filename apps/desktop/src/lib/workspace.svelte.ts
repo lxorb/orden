@@ -4368,7 +4368,10 @@ class Workspace {
     const safe = insideOnly(isMarkdownPath(relative) ? relative : `${relative}.md`)
     if (safe === null) return null
 
+    // A link in a space shared to be read names a note only its owner may make, so
+    // following it there opens nothing rather than writing into their space.
     const path = insideSpace(root, safe)
+    if (!(await this.writableAt(path))) return null
     const content = `# ${noteName(relative)}\n\n`
     await writeFile(path, content)
     await this.loadTree()
