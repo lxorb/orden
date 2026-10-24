@@ -106,6 +106,7 @@ vi.mock('../rows/rows.svelte', () => ({
 }))
 
 vi.mock('../surfaces.svelte', () => ({ showQuickAdd: () => undefined }))
+vi.mock('./open', () => ({ openBaseFile: () => undefined }))
 vi.mock('../reminders/platform', () => ({ show: () => undefined }))
 
 /** What the automations of a base would do once a note settles: write its rows and
@@ -371,5 +372,15 @@ describe('an add whose task would land in a space shared to be read', () => {
     } finally {
       workspace.activeSpace = THEIRS
     }
+  })
+})
+
+/** Copy to a base writes the view as a file at the root of the open space (B294). */
+describe('copy to a base, in a space shared to be read', () => {
+  test('writes no base, and is not offered', async () => {
+    const { copiesToBase, copyToBase } = await import('./save')
+    expect(copiesToBase()).toBe(false)
+    expect(await copyToBase('views: []\n', 'Today')).toBeNull()
+    expect(written).toEqual([])
   })
 })
