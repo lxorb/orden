@@ -174,7 +174,9 @@ describe('the press that started the app', () => {
     }
     for (const [name, text] of Object.entries(senders)) {
       const made = text.match(/Intent\(\w+, MainActivity::class\.java\)/g) ?? []
-      const sealed = text.match(/MainActivity\.sealed\(\s*\w+,\s*Intent\(\w+, MainActivity::class\.java\)/g) ?? []
+      const sealed =
+        text.match(/MainActivity\.sealed\(\s*\w+,\s*Intent\(\w+, MainActivity::class\.java\)/g) ??
+        []
       expect(made.length, name).toBeGreaterThan(0)
       expect(sealed.length, name).toBe(made.length)
     }
