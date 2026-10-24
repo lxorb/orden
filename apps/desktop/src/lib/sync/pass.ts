@@ -841,6 +841,7 @@ async function pushFiles(
 
   // What the account could not keep is what it has no bytes for. Those go up
   // now, and the list is offered again so their rows land as well.
+  const unsent = new Set<string>()
   if (missing.length) {
     const wanted = new Set(missing)
 
@@ -851,12 +852,16 @@ async function pushFiles(
         path: joinPath(root, file.path),
       }).catch(() => null)
       if (bytes) await api.putBlob(token, file.hash, contentTypeOf(file.path), bytes)
+      // A file that would not read was never sent, so the mirror must not say it
+      // was: `holds` reads it to leave a delete to the account (sync/holding.ts),
+      // and the next pass offers it again.
+      else unsent.add(file.path)
     }
 
     await api.saveSpaceFiles(token, mirror.spaceId, manifest)
   }
 
-  mirror.files = held
+  mirror.files = Object.fromEntries(Object.entries(held).filter(([path]) => !unsent.has(path)))
   return true
 }
 

@@ -4158,8 +4158,10 @@ class Workspace {
    *  The space being on the account is not enough: a file dropped in offline or
    *  since the last push, and a dotfile, which sync never hands it, are on this
    *  device alone, and so is what was written since. A folder counts only if
-   *  everything under it is held. */
+   *  everything under it is held, and only a note goes: the account's Recently
+   *  deleted gives back nothing else, so a paper or a picture goes to the trash. */
   private async accountHolds(path: string, isFolder: boolean): Promise<boolean> {
+    if (!isFolder && !isMarkdownPath(path)) return false
     const root = this.rootHolding(path)
     if (!root) return false
     const { sync } = await import('./sync.svelte')
