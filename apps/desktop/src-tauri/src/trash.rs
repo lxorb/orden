@@ -229,7 +229,12 @@ pub fn restore_trash(app: AppHandle, id: String) -> Result<String, String> {
 
     let _guard = locked();
     let dir = trash_dir(&app)?;
-    let mut entries = read_manifest(&dir);
+    restored(&base, &dir, &id)
+}
+
+/// `restore_trash` past its lock, from the trash at `dir` into the notes folder `base`.
+fn restored(base: &Path, dir: &Path, id: &str) -> Result<String, String> {
+    let mut entries = read_manifest(dir);
 
     let position = entries
         .iter()
@@ -242,13 +247,13 @@ pub fn restore_trash(app: AppHandle, id: String) -> Result<String, String> {
     if !is_slot(&entry.id) {
         return Err("that is not something in the trash".into());
     }
-    let target = restore_target(&base, &entry)?;
+    let target = restore_target(base, &entry)?;
 
     let slot = dir.join(&entry.id);
     let held = slot.join(&entry.name);
     if !held.exists() {
         entries.remove(position);
-        write_manifest(&dir, &entries)?;
+        write_manifest(dir, &entries)?;
         return Err("it is already gone".into());
     }
 
@@ -266,7 +271,7 @@ pub fn restore_trash(app: AppHandle, id: String) -> Result<String, String> {
     let _ = fs::remove_dir(&slot);
 
     entries.remove(position);
-    write_manifest(&dir, &entries)?;
+    write_manifest(dir, &entries)?;
     Ok(target.to_string_lossy().to_string())
 }
 
