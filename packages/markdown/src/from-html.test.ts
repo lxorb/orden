@@ -382,9 +382,24 @@ describe('a page as markdown', () => {
     expect(htmlToMarkdown('<p>x<sup>2</sup> and H<sub>2</sub>O</p>')).toBe('x^2^ and H~2~O')
   })
 
+  test('a tilde or a caret in words opens no lowered or raised text', () => {
+    const about = htmlToMarkdown('<p>It takes ~5 min or ~10 min.</p>')
+    expect(about).toBe('It takes \\~5 min or \\~10 min.')
+    expect(renderMarkdown(about)).toBe('<p>It takes ~5 min or ~10 min.</p>\n')
+
+    const powers = htmlToMarkdown('<p>2^10 and 3^4</p>')
+    expect(powers).toBe('2\\^10 and 3\\^4')
+    expect(renderMarkdown(powers)).toBe('<p>2^10 and 3^4</p>\n')
+
+    // Nor a line through, which two of them would otherwise draw.
+    const doubled = htmlToMarkdown('<p>~~kept~~ and a ~ b</p>')
+    expect(doubled).toBe('\\~\\~kept\\~~ and a ~ b')
+    expect(renderMarkdown(doubled)).toBe('<p>~~kept~~ and a ~ b</p>\n')
+  })
+
   test('a body the marker cannot hold keeps the tag instead', () => {
-    expect(htmlToMarkdown('<p>a<sup>b^c</sup></p>')).toBe('a<sup>b^c</sup>')
-    expect(htmlToMarkdown('<p>a<sub>b~c</sub></p>')).toBe('a<sub>b~c</sub>')
+    expect(htmlToMarkdown('<p>a<sup>b^c</sup></p>')).toBe('a<sup>b\\^c</sup>')
+    expect(htmlToMarkdown('<p>a<sub>b~c</sub></p>')).toBe('a<sub>b\\~c</sub>')
   })
 
   test('a raised footnote mark keeps the link it wraps', () => {
