@@ -10,6 +10,7 @@ import { account } from './account.svelte'
 import { api } from './api'
 import { message, plural, t } from './i18n.svelte'
 import { prompt } from './prompt.svelte'
+import { canWriteAt } from './sharing.svelte'
 import { sync } from './sync.svelte'
 import { folderOf } from './space-paths'
 import { invoke } from './tauri'
@@ -29,6 +30,9 @@ export interface TrashItem {
   source: 'account' | 'device'
   /** The id the source knows it by. */
   ref: string
+  /** Where a thing in this device's trash goes back to. The account's own restore is
+   *  the server's to allow, so its rows have none. */
+  from?: string
 }
 
 /** What the device's trash commands return. */
@@ -71,6 +75,7 @@ class Trash {
       deletedAt: entry.trashedAt,
       purgeAt: entry.trashedAt + KEEP_FOR,
       source: 'device' as const,
+      from: entry.from,
     }))
   }
 
@@ -108,9 +113,18 @@ class Trash {
     return [...spaces, ...notes]
   }
 
+  /** Whether one thing may be put back where it was. Not into a space shared with this
+   *  account to be read: the owner deleting a note there is what put this device's copy
+   *  in the trash, and writing it back would be a change the sync refuses on every
+   *  pass. Deleting it for good stays, since that only takes away this device's copy. */
+  restorable(item: TrashItem): boolean {
+    return item.from === undefined || canWriteAt(item.from)
+  }
+
   /** Puts one thing back. From the account, the next sync pass brings it down;
    *  from the device, the tree is re-read at once. */
   async restore(item: TrashItem) {
+    if (!this.restorable(item)) return
     await this.act(async () => {
       if (item.source === 'device') {
         const at = await invoke<string>('restore_trash', { id: item.ref })

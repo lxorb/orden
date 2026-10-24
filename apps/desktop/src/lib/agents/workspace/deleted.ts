@@ -75,10 +75,15 @@ export async function recentlyDeleted(call: Call): Promise<AgentAnswer> {
   const found = rows.find((row) => row.id === id)
   if (!found) throw new Refused('not_found', `nothing called ${id} is in Recently deleted`)
 
+  // Refused before the reader is asked, as the panel greys its Restore there.
+  const { trash } = await import('../../trash.svelte')
+  if (!trash.restorable(found.item)) {
+    throw new Refused('read_only', `${found.from} is shared with you to read`)
+  }
+
   const question = await asked(call, null, `Put back ${found.name}`)
   if (question) return question
 
-  const { trash } = await import('../../trash.svelte')
   await trash.restore(found.item)
   if (trash.error) throw new Refused('failed', trash.error)
 

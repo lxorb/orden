@@ -172,6 +172,7 @@ const trash = {
   ],
   load: vi.fn(() => Promise.resolve()),
   restore: vi.fn((_item: unknown) => Promise.resolve()),
+  restorable: vi.fn((_item: unknown) => true),
 }
 vi.mock('../../trash.svelte', () => ({ trash }))
 
@@ -599,6 +600,17 @@ describe('a PDF, Settings and Recently deleted', () => {
       result: { restored: true, from: 'Work/archive' },
     })
     expect(trash.restore).toHaveBeenCalledWith(trash.items[0])
+  })
+
+  test('nothing is put back into a space shared to be read', async () => {
+    trash.restorable.mockReturnValueOnce(false)
+    trash.restore.mockClear()
+
+    const only = agent(EVERY, { spaces: ['Work'] })
+    expect(await call('recently_deleted', { op: 'restore', id: 'device:1' }, only)).toMatchObject({
+      code: 'read_only',
+    })
+    expect(trash.restore).not.toHaveBeenCalled()
   })
 })
 
