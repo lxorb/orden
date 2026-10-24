@@ -29,7 +29,10 @@ const LARGEST = 64 * 1024 * 1024
 
 /** What the account answered a replacement. */
 export type Replaced =
-  { ok: true; seq: number } | { moved: { hash: string; size: number; at: number } } | { gone: true }
+  | { ok: true; seq: number }
+  | { moved: { hash: string; size: number; at: number } }
+  | { gone: true }
+  | { refused: 'role' }
 
 /** The world's road for bytes. Each request answers null when the account cannot be
  *  reached, as `Account.ask` does. */
@@ -155,7 +158,15 @@ export async function settleFiles(
         entry.file_key = answer.moved.hash
         await core.commit(holdFile(core, entry, here.hash, answer.moved.at))
       }
-      continue
+      if (!('refused' in answer)) continue
+      // A space this account may only read: the bytes another program wrote here will
+      // never go up, and kept they would stand for good against every replacement the
+      // owner makes. They go to this device's trash, which is where Keep theirs puts a
+      // replacement too, and the owner's are fetched in their place. With no file and no
+      // path the entry is fetched next pass, should this one stop before the bytes come.
+      await core.world.disk.remove(core.world.join(space.row.root, entry.local_path), 'file')
+      entry.local_path = ''
+      await core.commit([put('entries', { ...entry })])
     }
     if (changedThere || !entry.local_path) {
       const full = core.world.join(space.row.root, path)
