@@ -86,6 +86,7 @@ function v1Spaces(accountId: string): Map<string, V1Space> {
         cursor: mirror.cursor,
         notes: mirror.notes,
         ...(mirror.moving ? { moving: mirror.moving } : {}),
+        ...(mirror.untold ? { untold: mirror.untold } : {}),
       })
     }
   }
@@ -99,7 +100,11 @@ async function wholeV1(root: string, v1: V1Space | null): Promise<V1Space | null
   const waiting = (path: string) => (path.split('/').pop() ?? '').startsWith('.nib-moving-')
   if (!v1 || (!v1.moving && !Object.keys(v1.notes).some(waiting))) return v1
   const { asidesBack } = await import('../sync/pass')
-  return { cursor: v1.cursor, notes: await asidesBack(root, v1.notes, v1.moving) }
+  return {
+    cursor: v1.cursor,
+    notes: await asidesBack(root, v1.notes, v1.moving),
+    ...(v1.untold ? { untold: v1.untold } : {}),
+  }
 }
 
 class Runner {

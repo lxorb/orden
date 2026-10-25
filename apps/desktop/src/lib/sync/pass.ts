@@ -40,7 +40,6 @@ import {
   type Moving,
   type Tracked,
   type TrackedFile,
-  type Untold,
   within,
 } from './mirror'
 import { type Folded, foldWebCopies } from './web-copies'
@@ -209,6 +208,8 @@ export interface Waiting {
    *  answer: pushing one is exactly what would write over the copy nobody has
    *  looked at yet. */
   held?: ReadonlySet<string>
+  /** The same notes by id; see `toldAgain`. */
+  asked?: ReadonlySet<string>
   /** Whether a file, by the path it has here, is one this space keeps whatever
    *  another device says: the archive, whose promise is that nothing in it is ever
    *  deleted. Handed in for the reason the rest is; see workspace/archive. */
@@ -228,7 +229,7 @@ export async function pull(
   const root = mirror.root
   let moved = false
   await journalled(mirror)
-  if (await toldAgain(mirror, token, waiting?.clashed)) moved = true
+  if (await toldAgain(mirror, token, waiting?.asked, waiting?.clashed)) moved = true
 
   for (;;) {
     const page = await api.changes(token, mirror.spaceId, mirror.cursor)
@@ -253,8 +254,12 @@ export async function pull(
     // Where each note this machine knows lives here, by its id.
     const known = new Map(Object.entries(mirror.notes).map(([path, one]) => [one.id, path]))
     const named = new Set(notes.filter((one) => !one.deleted).map((one) => one.path))
+    // A note whose rename here the account is still to hear of is left as it is, and
+    // the page read again once it has: its entry is at the name the file left. Moved
+    // or deleted by that entry, the file at its new name was a second note.
+    const untold = (one: RemoteNote) => mirror.untold?.[one.id] !== undefined
     for (const remote of notes) {
-      if (!remote.deleted || !carried(remote)) continue
+      if (!remote.deleted || !carried(remote) || untold(remote)) continue
       const target = joinPath(root, remote.path)
       const here = known.get(remote.id) ?? remote.path
       const kept = waiting?.kept?.(target) === true
@@ -264,11 +269,16 @@ export async function pull(
     const places = new Map(Object.entries(mirror.notes).map(([path, one]) => [one.id, path]))
     const moves = notes.flatMap((remote) => {
       const was = places.get(remote.id)
-      return !remote.deleted && carried(remote) && was !== undefined && was !== remote.path
+      return !remote.deleted &&
+        carried(remote) &&
+        !untold(remote) &&
+        was !== undefined &&
+        was !== remote.path
         ? [{ remote, was }]
         : []
     })
-    const waits = moves.length ? await movedThere(mirror, moves, waiting) : new Set<string>()
+    const waits = new Set(moves.length ? await movedThere(mirror, moves, waiting) : [])
+    for (const remote of notes) if (untold(remote)) waits.add(remote.id)
     unsettled.set(mirror, waits)
     // A note left aside that this page no longer moves, from a round long past, is put
     // back in sight rather than kept hidden for good.
@@ -890,11 +900,8 @@ async function deletedThere(
  *  has never heard of is worse than one that is merely behind, because the next pull
  *  reads the account's copy as a note this machine has never seen, does not find the
  *  file, and writes the old name back onto the disk. So a request that does not land
- *  leaves this machine exactly as it was and the pass does what it has always done -
- *  losing the identity, which is the thing this is for, and nothing else.
- *
- *  A note waiting on a question is the exception. Its rename is written down when it
- *  does not land, and told again by the next pull; see `untold` in mirror.ts.
+ *  leaves the entry where it was, and the rename is written down beside it to be told
+ *  again by the next pull; see `untold` in mirror.ts.
  *
  *  Answers whether the record changed, so the caller knows to write the mirrors
  *  down. */
@@ -935,26 +942,57 @@ export async function movedHere(
 }
 
 /** The renames the account could not be told of, told again; see `untold` in
- *  mirror.ts. One whose note or file has gone since is let go of, and the pass reads
- *  what happened off the folder the way it always has. Answers whether anything
- *  changed. */
+ *  mirror.ts. `asked` is the notes waiting on a question now, by id: a rename told
+ *  again after the answer carries the file's words, which are the answer.
+ *
+ *  One whose file has gone since is let go of, and the pass reads what happened off
+ *  the folder the way it always has. One another device renamed meanwhile takes the
+ *  name the account has: the entry moves to where the file is, and the pull below
+ *  moves the file on as it moves any note renamed there. Told from here instead, the
+ *  older of the two renames went over the newer, and an entry the pull had moved
+ *  without its file was a note gone here. Answers whether anything changed. */
 async function toldAgain(
   mirror: Mirror,
   token: string,
+  asked: ReadonlySet<string> = new Set(),
   clashed?: (clash: Clash) => void,
 ): Promise<boolean> {
   let done = false
   for (const [id, one] of Object.entries(mirror.untold ?? {})) {
     done = true
-    if (
-      mirror.notes[one.from]?.id !== id ||
-      mirror.notes[one.to] ||
-      !(await present(joinPath(mirror.root, one.to)))
-    ) {
+    if (mirror.notes[one.from]?.id !== id || !(await present(joinPath(mirror.root, one.to)))) {
       told(mirror, id)
       continue
     }
-    await movedOne(mirror, token, one.from, one.to, new Set(one.held ? [id] : []), clashed)
+    if (mirror.notes[one.to]) {
+      letGo(mirror, id, one.from, one.to, 'its new name is another note')
+      continue
+    }
+
+    const there = await api.readNote(token, id).catch((error: unknown) => error)
+    if (!isRecord(there) || !isRecord(there.note)) {
+      untoldBy(mirror, id, one.from, one.to, there)
+      continue
+    }
+    if (there.note.deleted === true) {
+      letGo(mirror, id, one.from, one.to, 'the account has deleted it')
+      continue
+    }
+    if (there.note.path !== one.from && there.note.path !== one.to) {
+      log('warn', `sync: ${one.to} was renamed on another device too, and takes that name`)
+      rekey(mirror, one.from, one.to)
+      told(mirror, id)
+      continue
+    }
+
+    await movedOne(
+      mirror,
+      token,
+      one.from,
+      one.to,
+      asked.has(id) ? new Set([id]) : new Set(),
+      clashed,
+    )
   }
   return done
 }
@@ -965,6 +1003,37 @@ function told(mirror: Mirror, id: string) {
   const left = without(mirror.untold, id)
   if (Object.keys(left).length) mirror.untold = left
   else delete mirror.untold
+}
+
+/** How often the account may refuse a rename before it is given up on. */
+const MOST_TRIES = 5
+
+/** A rename that did not land, written down to be told again - unless the account
+ *  has said it never will take it, or has refused it too often. */
+function untoldBy(mirror: Mirror, id: string, from: string, to: string, error: unknown) {
+  // Only an answer counts: a network that is down refuses nothing.
+  const tries = (mirror.untold?.[id]?.tries ?? 0) + (error instanceof ApiError ? 1 : 0)
+  const forGood =
+    error instanceof ApiError &&
+    error.status >= 400 &&
+    error.status < 500 &&
+    ![408, 409, 429].includes(error.status)
+  if (forGood || tries >= MOST_TRIES) {
+    letGo(mirror, id, from, to, `the account refused it - ${String(error)}`)
+    return
+  }
+  mirror.untold = { ...mirror.untold, [id]: { from, to, tries } }
+}
+
+/** A rename given up on. The entry goes with it rather than staying to be read as a
+ *  delete: the file goes up as a note of its own, the account's copy comes back down
+ *  under its old name, and nothing on either side is lost. */
+function letGo(mirror: Mirror, id: string, from: string, to: string, why: string) {
+  told(mirror, id)
+  if (mirror.notes[from]?.id !== id) return
+  log('warn', `sync: ${to} not renamed on the account, so it goes up as a new note: ${why}`)
+  mirror.notes = without(mirror.notes, from)
+  mirror.offered = without(mirror.offered, from)
 }
 
 async function movedOne(
@@ -988,46 +1057,38 @@ async function movedOne(
   }).catch(() => null)
   if (content === null) return false
 
-  // A note whose two copies wait for an answer is moved up there with the words the
-  // account already holds, and stays waiting: the rename is not an answer. Sent with
-  // the file's words, the copy nobody had looked at yet was written over. See
-  // sync/record.svelte.ts.
-  // Not told, the rename is written down: the entry stays at the old name, and let go
-  // with the question, the push sent the file as a new note and deleted this one, or
-  // sent a new file at the old name as this note. See `untold` in mirror.ts.
-  if (held.has(tracked.id)) {
-    const moved = await heldMovedUpThere(token, tracked, now)
-    if (!moved) {
-      const untold: Untold = { from: was, to: now, held: true }
-      mirror.untold = { ...mirror.untold, [tracked.id]: untold }
-      return true
+  // Not told, the rename is written down to be told again: the entry stays at the
+  // old name until the account has the new one. Left to the push, the file went up as
+  // a new note beside a delete of this one - with whatever another device had written
+  // in it since, and for a note waiting on a question even once it was answered - and
+  // a new file at the old name went up as this note. See `untold` in mirror.ts.
+  try {
+    // A note whose two copies wait for an answer is moved up there with the words the
+    // account already holds, and stays waiting: the rename is not an answer. Sent with
+    // the file's words, the copy nobody had looked at yet was written over. See
+    // sync/record.svelte.ts.
+    if (held.has(tracked.id)) {
+      const moved = await heldMovedUpThere(token, tracked, now)
+      // The question is asked again of what was read: the account may hold newer
+      // words than it was first asked about, and its version moved with the rename.
+      clashed?.({
+        path: joinPath(mirror.root, now),
+        id: tracked.id,
+        version: moved.tracked.version,
+        theirs: moved.words,
+        at: Date.now(),
+      })
+      mirror.notes = { ...without(mirror.notes, was), [now]: moved.tracked }
+    } else {
+      const moved = await renamedUpThere(token, tracked, now, content)
+      mirror.notes = { ...without(mirror.notes, was), [now]: moved }
     }
-    told(mirror, tracked.id)
-    // The question is asked again of what was read: the account may hold newer words
-    // than it was first asked about, and its version moved with the rename.
-    clashed?.({
-      path: joinPath(mirror.root, now),
-      id: tracked.id,
-      version: moved.tracked.version,
-      theirs: moved.words,
-      at: Date.now(),
-    })
-    mirror.notes = { ...without(mirror.notes, was), [now]: moved.tracked }
-    mirror.offered = without(mirror.offered, was)
-    return true
-  }
-
-  const moved = await renamedUpThere(token, tracked, now, content)
-  if (!moved) {
-    // Answered by now, so told again with the file's words, which are the answer.
-    const untold = mirror.untold?.[tracked.id]
-    if (!untold?.held) return false
-    mirror.untold = { ...mirror.untold, [tracked.id]: { ...untold, held: false } }
+  } catch (error) {
+    untoldBy(mirror, tracked.id, was, now, error)
     return true
   }
 
   told(mirror, tracked.id)
-  mirror.notes = { ...without(mirror.notes, was), [now]: moved }
   // A write that was in the air about the old name says nothing about the new one.
   mirror.offered = without(mirror.offered, was)
 
@@ -1035,27 +1096,23 @@ async function movedOne(
 }
 
 /** A note waiting on a question, at its new name on the account with the account's
- *  own words, or null when that could not be said. The entry keeps its hash, which
+ *  own words. Throws when that could not be said. The entry keeps its hash, which
  *  says nothing is settled. */
 async function heldMovedUpThere(
   token: string,
   tracked: Tracked,
   path: string,
-): Promise<{ tracked: Tracked; words: string } | null> {
-  try {
-    const there = await api.readNote(token, tracked.id)
-    const { note } = await api.writeNote(token, tracked.id, path, there.content, there.note.version)
-    return {
-      tracked: { id: note.id, version: note.version, hash: tracked.hash },
-      words: there.content,
-    }
-  } catch {
-    return null
+): Promise<{ tracked: Tracked; words: string }> {
+  const there = await api.readNote(token, tracked.id)
+  const { note } = await api.writeNote(token, tracked.id, path, there.content, there.note.version)
+  return {
+    tracked: { id: note.id, version: note.version, hash: tracked.hash },
+    words: there.content,
   }
 }
 
-/** The entry for the note at its new name, once the account has it there, or null
- *  when it could not be said.
+/** The entry for the note at its new name, once the account has it there. Throws
+ *  when that could not be said.
  *
  *  A version the account has moved past is almost always this note's own room. The
  *  note somebody renames is the note they are reading, the note they are reading is
@@ -1080,22 +1137,17 @@ async function renamedUpThere(
   tracked: Tracked,
   path: string,
   content: string,
-): Promise<Tracked | null> {
+): Promise<Tracked> {
   try {
     const { note } = await api.writeNote(token, tracked.id, path, content, tracked.version)
     return { id: note.id, version: note.version, hash: note.hash }
   } catch (error) {
-    if (!(error instanceof ApiError) || error.status !== 409) return null
+    if (!(error instanceof ApiError) || error.status !== 409) throw error
   }
 
-  try {
-    const held = await api.readNote(token, tracked.id)
-    await api.writeNote(token, tracked.id, path, held.content, held.note.version)
-    return tracked
-  } catch {
-    // Left for the pass, which reads a move off the folder the way it always has.
-    return null
-  }
+  const held = await api.readNote(token, tracked.id)
+  await api.writeNote(token, tracked.id, path, held.content, held.note.version)
+  return tracked
 }
 
 /** Offers what this machine has. Answers whether anything moved. */

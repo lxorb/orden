@@ -623,7 +623,12 @@ describe('a note renamed on this machine', () => {
     fake.api.readNote = reading
     fake.calls.length = 0
 
-    await pull(mirror, 'token', NOBODY, { rule: 'ask', clashed: () => undefined })
+    await pull(mirror, 'token', NOBODY, {
+      rule: 'ask',
+      clashed: () => undefined,
+      held: new Set([`${ROOT}/Two.md`]),
+      asked: new Set([id]),
+    })
     await push(mirror, 'token', NOBODY, { held: new Set([`${ROOT}/Two.md`]), asked: new Set([id]) })
 
     expect(fake.calls.filter((one) => /^(deleteNote|createNote)/.test(one))).toEqual([])
@@ -694,7 +699,12 @@ describe('a note renamed on this machine', () => {
     fake.calls.length = 0
 
     const clashes: Clash[] = []
-    await pull(mirror, 'token', NOBODY, { rule: 'ask', clashed: (one) => clashes.push(one) })
+    await pull(mirror, 'token', NOBODY, {
+      rule: 'ask',
+      clashed: (one) => clashes.push(one),
+      held: new Set([`${ROOT}/Two.md`]),
+      asked: new Set([id]),
+    })
     await push(mirror, 'token', NOBODY, { held: new Set([`${ROOT}/Two.md`]), asked: new Set([id]) })
 
     expect(fake.remote.get(id)).toMatchObject({ path: 'Two.md', content: `${HERE}there\n` })
@@ -722,12 +732,83 @@ describe('a note renamed on this machine', () => {
     const back = readMirror(ROOT, JSON.parse(JSON.stringify(mirror)))!
 
     const clashes: Clash[] = []
-    await pull(back, 'token', NOBODY, { rule: 'ask', clashed: (one) => clashes.push(one) })
+    await pull(back, 'token', NOBODY, {
+      rule: 'ask',
+      clashed: (one) => clashes.push(one),
+      held: new Set([`${ROOT}/Three.md`]),
+      asked: new Set([id]),
+    })
 
     expect(fake.remote.get(id)).toMatchObject({ path: 'Three.md', content: `${HERE}there\n` })
     expect(back.notes['Three.md']).toMatchObject({ id, hash: '' })
     expect(back.untold).toBeUndefined()
     expect(clashes.map((one) => one.path)).toEqual([`${ROOT}/Three.md`])
+  })
+
+  test('and one the account refused to rename is told again, never deleted', async () => {
+    const { mirror, id } = await paired('One.md', HERE)
+    renameOnDisk('One.md', 'Two.md')
+    const writing = fake.api.writeNote
+    fake.api.writeNote = () => Promise.reject(new ApiError(503, 'busy', {}))
+    await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Two.md`)
+    // A push before the next pull leaves both names alone.
+    await push(mirror, 'token', NOBODY)
+    fake.api.writeNote = writing
+
+    await pull(mirror, 'token', NOBODY)
+    await push(mirror, 'token', NOBODY)
+
+    expect(fake.calls.filter((one) => /^(deleteNote|createNote)/.test(one))).toEqual([])
+    expect(fake.remote.get(id)).toMatchObject({ path: 'Two.md', deleted: false })
+    expect(mirror.notes['Two.md']?.id).toBe(id)
+    expect(mirror.untold).toBeUndefined()
+  })
+
+  test.each([
+    ['for good', [400], 1],
+    ['too often', [503], 5],
+  ])('and one the account refuses %s is let go of without a delete', async (_, [status], times) => {
+    const { mirror, id } = await paired('One.md', HERE)
+    renameOnDisk('One.md', 'Two.md')
+    const writing = fake.api.writeNote
+    fake.api.writeNote = () => Promise.reject(new ApiError(status!, 'no', {}))
+    try {
+      await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Two.md`)
+      for (let one = 1; one < times; one++) {
+        expect(mirror.untold?.[id]).toBeDefined()
+        await pull(mirror, 'token', NOBODY)
+      }
+      expect(mirror.untold).toBeUndefined()
+
+      await pull(mirror, 'token', NOBODY)
+      await push(mirror, 'token', NOBODY)
+    } finally {
+      fake.api.writeNote = writing
+    }
+
+    expect(fake.calls.filter((one) => one.startsWith('deleteNote'))).toEqual([])
+    expect(fake.calls).toContain('createNote Two.md')
+    expect(fake.remote.get(id)).toMatchObject({ path: 'One.md', deleted: false })
+  })
+
+  test('and one renamed on another device too takes the name the account has', async () => {
+    const { mirror, id } = await paired('One.md', HERE)
+    renameOnDisk('One.md', 'Two.md')
+    const writing = fake.api.writeNote
+    fake.api.writeNote = () => Promise.reject(new TypeError('Failed to fetch'))
+    await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Two.md`)
+    fake.api.writeNote = writing
+    fake.renameRemote(id, 'Three.md')
+    fake.calls.length = 0
+
+    await pull(mirror, 'token', NOBODY)
+    await push(mirror, 'token', NOBODY)
+
+    expect(fake.calls.filter((one) => /^(deleteNote|createNote|writeNote)/.test(one))).toEqual([])
+    expect(fake.remote.get(id)).toMatchObject({ path: 'Three.md', deleted: false })
+    expect(mirror.notes['Three.md']?.id).toBe(id)
+    expect(fake.disk.get(`${ROOT}/Three.md`)).toBe(HERE)
+    expect(fake.disk.has(`${ROOT}/Two.md`)).toBe(false)
   })
 
   test('and a folder carries every note under it', async () => {

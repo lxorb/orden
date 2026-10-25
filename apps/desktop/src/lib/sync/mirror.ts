@@ -68,8 +68,8 @@ export interface Mirror {
    *  the next pass tell, after a quit, whether it was made. See `movedThere` in
    *  pass.ts. Absent nearly always. */
   moving?: Moving
-  /** Renames of notes waiting on a question that the account missed, by id; see
-   *  `movedOne` in pass.ts. Absent nearly always. */
+  /** Renames the account missed, by id; see `movedOne` in pass.ts. Absent nearly
+   *  always. */
   untold?: Record<string, Untold>
 }
 
@@ -80,11 +80,11 @@ export interface Moving {
   to: string
 }
 
-/** Paths in the space, and whether the question still waited when last told. */
+/** Paths in the space, and how often the account has refused it. */
 export interface Untold {
   from: string
   to: string
-  held: boolean
+  tries: number
 }
 
 /** A folder just paired with a space, which knows nothing about it yet. One
@@ -195,7 +195,7 @@ function readUntold(value: unknown): { untold?: Record<string, Untold> } {
   for (const [id, one] of Object.entries(value)) {
     if (!isRecord(one) || !isString(one.from) || !isString(one.to)) continue
 
-    out[id] = { from: one.from, to: one.to, held: one.held === true }
+    out[id] = { from: one.from, to: one.to, tries: isNumber(one.tries) ? one.tries : 0 }
   }
 
   return Object.keys(out).length ? { untold: out } : {}
