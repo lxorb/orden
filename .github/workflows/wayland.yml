@@ -188,6 +188,16 @@ jobs:
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+      # #776: the certificate a web tab's page came with, from the site's popover.
+      - name: A site's certificate from its popover, under sway
+        if: always()
+        env:
+          OUT: wayland-out/cert
+          CERT: '1'
+        run: |
+          pkill -f /usr/share/Orden/nib || true
+          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       # #427: a web tab's page drawn in the app's scheme, light or dark, as the app's
       # scheme is switched, not in the system's.
       - name: A web tab's page in the app's scheme, under sway
