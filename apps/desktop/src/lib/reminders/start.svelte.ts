@@ -7,7 +7,7 @@
  *  space has been read, and from then on only when the plan changed. */
 
 import { untrack } from 'svelte'
-import { answer } from '../mobile/bridge'
+import { answer, wordSaid } from '../mobile/bridge'
 import { modes } from '../modes.svelte'
 import { quickAdd } from '../quick-add/asked.svelte'
 import { rows } from '../rows/rows.svelte'
@@ -93,6 +93,12 @@ const scheduler = new Scheduler({
   later,
 })
 scheduler.start()
+// A phone that had not said its word yet took no plan and handed over no presses;
+// both again once it has.
+void wordSaid().then(() => {
+  scheduler.changed()
+  void answerAll()
+})
 
 // The automatic reminder, and whether nib stays in the tray, followed as they change.
 // Handed on untracked, so nothing the scheduler or the crate reads is this effect's.

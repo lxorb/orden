@@ -84,7 +84,8 @@ export function onTheActivity(): boolean {
   return !!method('insets')
 }
 
-/** This launch's word, asked for once and kept for as long as the page lives.
+/** This launch's word, asked for until the activity says it and kept for as long
+ *  as the page lives.
  *
  *  Asked for rather than pushed, because the page is what needs it and the page
  *  knows when. The activity answers by running a line in the main frame, so a frame
@@ -95,27 +96,55 @@ export function onTheActivity(): boolean {
  *  One promise, shared: two features asking at the same moment are one question. */
 let word: Promise<string> | undefined
 
-/** How long the activity has to answer before the page gives up on it. An answer is
- *  one line run in the page and is there within a frame; a wait with no end would be
- *  a key field that never settles on an older build of the app. */
+/** The word once said; an answer that lands after its caller gave up still counts. */
+let known: string | undefined
+let heard: (word: string) => void = () => undefined
+const spoken = new Promise<string>((said) => (heard = said))
+
+/** How long a caller waits before it goes on with no word, which is never kept: the
+ *  UI thread can be busy for longer on a cold start (B456). */
 const PATIENCE = 2000
 
 export function frameWord(): Promise<string> {
+  if (known) return Promise.resolve(known)
   if (word) return word
 
   const ask = method('askForTheFrame')
   if (!ask) return Promise.resolve('')
 
-  word = new Promise<string>((said) => {
+  const asking = new Promise<string>((said) => {
     const timer = setTimeout(() => said(''), PATIENCE)
+    // Left on the window, so a late answer is still heard.
     answer('__nibFrame', (text: string) => {
+      if (!text) return
+      known = text
+      heard(text)
       clearTimeout(timer)
       said(text)
     })
-    ask()
+    try {
+      ask()
+    } catch {
+      clearTimeout(timer)
+      said('')
+    }
   })
+  word = asking
+  void asking.then(() => {
+    if (word === asking) word = undefined
+  })
+  return asking
+}
 
-  return word
+/** The word, once said: a caller whose call went without it redoes it then. */
+export function wordSaid(): Promise<string> {
+  return spoken
+}
+
+/** Thrown where a call dropped without the word would look done. */
+export class NoWord extends Error {
+  override readonly name = 'NoWord'
+  override readonly message = 'the phone app is still starting; try again in a moment'
 }
 
 /** What the activity calls back on. Kotlin cannot hold a reference to a function,

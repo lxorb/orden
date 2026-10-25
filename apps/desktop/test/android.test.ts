@@ -394,12 +394,14 @@ describe('the bridge the page talks over', () => {
     }
 
     // And the page asks for it rather than guessing: every call from this side
-    // carries what `frameWord` answered.
+    // carries what `frameWord` answered, and none is made without it (B456).
     expect(page).toContain(`answer('__nibFrame'`)
     for (const call of [
-      'secretRead(await frameWord(), id)',
-      'secretWrite(await frameWord(), id, secret)',
-      'secretForget(await frameWord(), id)',
+      'const said = await frameWord()',
+      'if (!said) throw new NoWord()',
+      'secretRead(await word(), id)',
+      'secretWrite(await word(), id, secret)',
+      'secretForget(await word(), id)',
     ]) {
       expect(page, call).toContain(call)
     }

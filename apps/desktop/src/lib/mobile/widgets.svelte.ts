@@ -22,7 +22,7 @@ import { shownName } from '../note-name'
 import { insideSpace } from '../space-paths'
 import { afterQuiet } from '../timing'
 import { type Entry, workspace } from '../workspace.svelte'
-import { frameWord, method } from './bridge'
+import { frameWord, method, wordSaid } from './bridge'
 
 /** As many rows as the layout has; see res/layout/widget_notes.xml. */
 const MOST = 5
@@ -126,6 +126,7 @@ export function watchWidgets(): () => void {
   if (!push) return () => undefined
 
   let last = ''
+  let gone = false
   let today = $state<TodayRow[]>([])
 
   // Today read again when the rows change, once the typing has stopped: a widget
@@ -152,10 +153,23 @@ export function watchWidgets(): () => void {
       last = said
       // With the word, since the bridge is in every frame; see `frameWord`. One
       // promise for the launch, so the rows still arrive in the order they were drawn.
-      void frameWord().then((word) => push(word, said))
+      void frameWord().then((word) => {
+        if (word) {
+          push(word, said)
+          return
+        }
+        // Dropped, so not drawn: drawn once the word is said, unless newer rows were.
+        if (last === said) last = ''
+        void wordSaid().then((known) => {
+          if (gone || last) return
+          last = JSON.stringify(widgetState(today))
+          push(known, last)
+        })
+      })
     })
   })
   return () => {
+    gone = true
     reread.cancel()
     unwatch()
     stop()

@@ -9,6 +9,7 @@ import { request } from '../../api'
 import { deviceName } from '../../device'
 import { forget, keep, parsed, storedText } from '../../stored'
 import { hub } from '../../sync2/hub.svelte'
+import { NoWord, wordSaid } from '../../mobile/bridge'
 import { isNative } from '../../tauri'
 import { isLocal, type ProviderKind } from '../providers'
 import { forgetKey, keysMoved, readSecret, writeKey, writeSecret } from '../keys'
@@ -81,7 +82,12 @@ const world: VaultWorld = {
     const keys: Record<string, string> = {}
     for (const one of ai.accounts) {
       if (!keyed(one.kind)) continue
-      const key = await readSecret(one.id).catch(() => null)
+      // A key the phone would not read yet is not a key gone: carried on as one, the
+      // vault would take it off every other device.
+      const key = await readSecret(one.id).catch((error: unknown) => {
+        if (error instanceof NoWord) throw error
+        return null
+      })
       if (key) keys[one.id] = key
     }
     return { accounts: ai.state, keys, seen: await signIns() }
@@ -123,6 +129,8 @@ export function startVault(): void {
   // and a phone that has just signed in is answered before its hub is up.
   hub.opened(() => void vault.refresh())
   setInterval(() => void vault.refresh(), EVERY)
+  // A phone that would not say its word yet read no secret; read again once it has.
+  void wordSaid().then(() => vault.refresh())
   if (typeof window !== 'undefined') {
     window.addEventListener('focus', () => void vault.refresh())
   }
