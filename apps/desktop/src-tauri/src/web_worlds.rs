@@ -114,15 +114,24 @@ fn evaluating(expression: &str, context: i64) -> String {
 }
 
 /// What the protocol is asked to follow a page's frames with: every frame that runs in a
-/// process of its own - a site framed in another site's page - and no other kind of
-/// target, each held at its start until nib's scripts are in it.
+/// process of its own - a site framed in another site's page - each held at its start
+/// until nib's scripts are in it, and the page's workers, let go the moment they are
+/// attached (see `attached`).
 ///
 /// A frame from another site is a document the page's own registration never reaches:
 /// `WebView2` puts it in a renderer of its own, which the protocol treats as a target of
 /// its own. Measured on the probe: a same-site frame had nib's world, and one from
 /// another site did not until this. Its links and its keys are the page's all the same.
+///
+/// **The page's session holds its workers too.** On nib's own Chromium, a page's
+/// session asked to hold what it attaches at its start and to attach frames alone held
+/// every dedicated worker the page started all the same, without attaching it, as a
+/// frame's does on `WebView2` (see `IN_A_FRAME`): the worker never ran a line. Anubis
+/// works its check out in workers the page starts: it sat at *"Calculating... Speed:
+/// 0kH/s"* and never let the reader through (#777). Measured on the probe: the page's
+/// own worker never answered it, and the same page opened outside nib's session passed.
 #[cfg_attr(all(not(windows), not(feature = "cef")), allow(dead_code))]
-const IN_THE_PAGE: &[&str] = &["iframe"];
+const IN_THE_PAGE: &[&str] = &["iframe", "worker"];
 
 /// What such a frame's own session is asked to follow with: its frames, the same way,
 /// and its workers, which are let go the moment they are attached (see `attached`).
@@ -924,7 +933,10 @@ mod tests {
         assert_eq!(asked["autoAttach"], true);
         assert_eq!(asked["waitForDebuggerOnStart"], true);
         assert_eq!(asked["flatten"], true);
-        assert_eq!(asked["filter"], serde_json::json!([{ "type": "iframe" }]));
+        assert_eq!(
+            asked["filter"],
+            serde_json::json!([{ "type": "iframe" }, { "type": "worker" }])
+        );
 
         let frame = r#"{"sessionId":"S1","targetInfo":{"targetId":"T1","type":"iframe","url":"https://b.example/"},"waitingForDebugger":true}"#;
         assert_eq!(attached(frame), Some(Attached::Frame("S1".into())));
