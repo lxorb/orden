@@ -274,8 +274,10 @@ test('switching away from a web tab keeps the page and switching back does not b
   flushSync()
   await frames()
 
+  // Built once the window is listening for where its pages get to, which is a few
+  // imports behind the first page; see `listen` in pages.svelte.ts.
+  await vi.waitFor(() => expect(pages.of(made.id).live).toBe(true), { timeout: 10_000 })
   expect(asked.map((one) => one.command)).toContain('web_open')
-  expect(pages.of(made.id).live).toBe(true)
 
   // The tab strip switches to a note: the pane's web surface goes.
   asked.length = 0
