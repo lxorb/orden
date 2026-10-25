@@ -73,7 +73,10 @@ export async function exportThread(host: Host, thread: Thread, name: string): Pr
   const root = workspace.spaces.find((one) => one.id === thread.space)?.root
   const path = root ? await workspace.noteFrom(markdownOf(thread, named), root) : null
   if (path) await workspace.open(path)
-  else host.line(thread, root ? t('you can only read this space') : t('no such space'))
+  else {
+    const why = root ? t('you can only read this space') : t('no such space')
+    host.line(thread, `${t('Save as a note')} · ${why}`)
+  }
 }
 
 /** What follows `/autocompact`: `auto`, `off`, or a count such as `500k`; null for

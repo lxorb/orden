@@ -79,7 +79,13 @@ vi.mock('./setup', () => ({ engineOf: () => Promise.resolve(engine) }))
 // What a review of an agent's edits needs is a workspace of documents, which none of
 // this is about.
 vi.mock('../review', () => ({
-  editMessage: () => null,
+  // An edit sends its words, as the review does once the notes are back.
+  editMessage: (
+    _thread: unknown,
+    _turn: string,
+    text: string,
+    panel: { send(text: string): void },
+  ) => panel.send(text),
   lastMessage: () => null,
   openRewind: () => null,
 }))
@@ -335,6 +341,69 @@ describe('the field while a message is changed', () => {
 
     expect(chat.text).toBe('a long new draft')
     expect(chat.chips).toEqual([note])
+  })
+
+  test('lets a queued message being changed go back to its place on Escape', async () => {
+    const chat = await asked()
+    const id = String(chat.thread?.id)
+    const around = { front: null, selection: '' }
+    const queued = (n: string) => ({ id: n, text: `${n} words`, chips: [], around })
+    ;(chat as unknown as { queued: Record<string, unknown[]> }).queued = {
+      [id]: [queued('q1'), queued('q2'), queued('q3')],
+    }
+    chat.text = 'a long new draft'
+
+    chat.editQueued('q2')
+    expect(chat.changing).toBe(true)
+    chat.cancelEdit()
+
+    expect(chat.changing).toBe(false)
+    expect(chat.text).toBe('a long new draft')
+    expect(chat.queue.map((one) => one.id)).toEqual(['q1', 'q2', 'q3'])
+  })
+
+  test('lets the edit go when another thread comes to the front', async () => {
+    const chat = await asked()
+    chat.text = 'a long new draft'
+    chat.startEdit('u1')
+
+    chat.newThread()
+
+    expect(chat.changing).toBe(false)
+    expect(chat.text).toBe('a long new draft')
+  })
+
+  test('keeps an edited message that could not be sent, with the draft it gave back', async () => {
+    const chat = await asked()
+    engine.send.mockImplementationOnce(() => Promise.reject(new Error('down')))
+    chat.text = 'a long new draft'
+    chat.startEdit('u1')
+    chat.text = 'old question, fixed'
+
+    chat.submit({ front: null, selection: '' })
+
+    await vi.waitFor(() => expect(chat.trouble).toBe('down'))
+    expect(chat.text).toBe('old question, fixed\n\na long new draft')
+  })
+
+  test('keeps a queued message that could not be sent, whatever the field holds by then', async () => {
+    const chat = await asked()
+    let answer = () => {}
+    engine.send.mockImplementationOnce(() => new Promise<void>((resolve) => (answer = resolve)))
+    engine.send.mockImplementationOnce(() => Promise.reject(new Error('down')))
+    const around = { front: null, selection: '' }
+    chat.text = 'first'
+    engine.send.mockClear()
+    chat.submit(around)
+    await vi.waitFor(() => expect(engine.send).toHaveBeenCalledTimes(1))
+    chat.text = 'second'
+    chat.submit(around)
+    chat.text = 'typed since'
+
+    answer()
+
+    await vi.waitFor(() => expect(chat.trouble).toBe('down'))
+    expect(chat.text).toBe('second\n\ntyped since')
   })
 })
 
