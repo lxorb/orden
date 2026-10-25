@@ -735,10 +735,12 @@ mod tests {
             let mut bytes = Vec::new();
             entry.read_to_end(&mut bytes).expect("read");
             let mut name = entry.name().to_string();
+            // A picture's own bytes are left alone; the words around it name it.
+            let words = !name.starts_with("word/media/");
             for picture in &pictures {
                 let renamed = format!("media/{CLIMB}{picture}");
                 name = name.replace(&format!("media/{picture}"), &renamed);
-                if name.ends_with(".rels") || name.ends_with(".xml") {
+                if words {
                     bytes = String::from_utf8_lossy(&bytes)
                         .replace(&format!("media/{picture}"), &renamed)
                         .into_bytes();
