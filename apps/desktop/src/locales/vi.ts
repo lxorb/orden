@@ -2594,4 +2594,13 @@ export const vi: Dictionary = {
   'Valid from': 'Có hiệu lực từ',
   'Valid until': 'Có hiệu lực đến',
   'SHA-256 fingerprint': 'Vân tay SHA-256',
+  DNS: 'DNS',
+  'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
+    'Cách các trang web tra cứu địa chỉ của trang. Qua HTTPS, không ai ở giữa bạn và nhà cung cấp có thể đọc hay thay đổi các lần tra cứu.',
+  'The system’s, over HTTPS where it can': 'Của hệ thống, qua HTTPS khi có thể',
+  'Another provider': 'Nhà cung cấp khác',
+  'The address of a DNS over HTTPS server, starting with https://':
+    'Địa chỉ của một máy chủ DNS qua HTTPS, bắt đầu bằng https://',
+  'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
+    'Ở đây các trang web tra cứu địa chỉ theo cách của hệ thống; DNS được đặt trong phần cài đặt của chính hệ thống.',
 }

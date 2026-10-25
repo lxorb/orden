@@ -2620,4 +2620,13 @@ export const bn: Dictionary = {
   'Valid from': 'বৈধ শুরু',
   'Valid until': 'বৈধ শেষ',
   'SHA-256 fingerprint': 'SHA-256 ফিঙ্গারপ্রিন্ট',
+  DNS: 'DNS',
+  'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
+    'ওয়েব পেজ কীভাবে সাইটের ঠিকানা খোঁজে। HTTPS-এ আপনার আর প্রদানকারীর মাঝে কেউ খোঁজগুলো পড়তে বা বদলাতে পারে না।',
+  'The system’s, over HTTPS where it can': 'সিস্টেমের, যেখানে সম্ভব HTTPS-এ',
+  'Another provider': 'অন্য প্রদানকারী',
+  'The address of a DNS over HTTPS server, starting with https://':
+    'একটি DNS over HTTPS সার্ভারের ঠিকানা, https:// দিয়ে শুরু',
+  'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
+    'এখানে ওয়েব পেজ সিস্টেমের মতো করেই ঠিকানা খোঁজে; এর DNS সিস্টেমের নিজস্ব সেটিংসে ঠিক করা হয়।',
 }

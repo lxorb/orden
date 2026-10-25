@@ -2660,4 +2660,13 @@ export const ml: Dictionary = {
   'Valid from': 'സാധുത ആരംഭം',
   'Valid until': 'സാധുത അവസാനം',
   'SHA-256 fingerprint': 'SHA-256 ഫിംഗർപ്രിന്റ്',
+  DNS: 'DNS',
+  'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
+    'വെബ് പേജുകൾ സൈറ്റുകളുടെ വിലാസം എങ്ങനെ കണ്ടെത്തുന്നു. HTTPS വഴിയാകുമ്പോൾ നിങ്ങൾക്കും ദാതാവിനും ഇടയിലുള്ള ആർക്കും തിരച്ചിലുകൾ വായിക്കാനോ മാറ്റാനോ കഴിയില്ല.',
+  'The system’s, over HTTPS where it can': 'സിസ്റ്റത്തിന്റേത്, കഴിയുന്നിടത്ത് HTTPS വഴി',
+  'Another provider': 'മറ്റൊരു ദാതാവ്',
+  'The address of a DNS over HTTPS server, starting with https://':
+    'https:// എന്നു തുടങ്ങുന്ന DNS over HTTPS സെർവറിന്റെ വിലാസം',
+  'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
+    'ഇവിടെ വെബ് പേജുകൾ സിസ്റ്റം ചെയ്യുന്നതുപോലെ വിലാസങ്ങൾ കണ്ടെത്തുന്നു; അതിന്റെ DNS സിസ്റ്റത്തിന്റെ സ്വന്തം ക്രമീകരണങ്ങളിലാണ് മാറ്റുന്നത്.',
 }

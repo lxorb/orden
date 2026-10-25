@@ -2625,4 +2625,13 @@ export const mr: Dictionary = {
   'Valid from': 'पासून वैध',
   'Valid until': 'पर्यंत वैध',
   'SHA-256 fingerprint': 'SHA-256 फिंगरप्रिंट',
+  DNS: 'DNS',
+  'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
+    'वेब पेज साइटचे पत्ते कसे शोधतात. HTTPS वरून तुमच्या आणि प्रदात्याच्या मध्ये कोणीही शोध वाचू किंवा बदलू शकत नाही.',
+  'The system’s, over HTTPS where it can': 'सिस्टमचे, शक्य तिथे HTTPS वरून',
+  'Another provider': 'दुसरा प्रदाता',
+  'The address of a DNS over HTTPS server, starting with https://':
+    'https:// ने सुरू होणारा DNS over HTTPS सर्व्हरचा पत्ता',
+  'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
+    'येथे वेब पेज सिस्टमप्रमाणेच पत्ते शोधतात; त्याचा DNS सिस्टमच्या स्वतःच्या सेटिंग्जमध्ये ठरवला जातो.',
 }

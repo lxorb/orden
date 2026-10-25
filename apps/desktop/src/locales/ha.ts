@@ -2662,4 +2662,13 @@ export const ha: Dictionary = {
   'Valid from': 'Yana aiki daga',
   'Valid until': 'Yana aiki har zuwa',
   'SHA-256 fingerprint': 'Hoton yatsa na SHA-256',
+  DNS: 'DNS',
+  'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
+    'Yadda shafukan yanar gizo ke neman adiresoshin shafuka. Ta HTTPS, babu wanda ke tsakaninka da mai bayarwa da zai iya karanta ko canza binciken.',
+  'The system’s, over HTTPS where it can': 'Na tsarin, ta HTTPS inda zai yiwu',
+  'Another provider': 'Wani mai bayarwa',
+  'The address of a DNS over HTTPS server, starting with https://':
+    'Adireshin sabar DNS ta HTTPS, wanda ya fara da https://',
+  'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
+    'A nan, shafukan yanar gizo suna neman adireshi kamar yadda tsarin yake yi; ana saita DNS ɗinsa a cikin saitunan tsarin.',
 }

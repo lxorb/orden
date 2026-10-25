@@ -2737,4 +2737,13 @@ export const ar: Dictionary = {
   'Valid from': 'صالحة من',
   'Valid until': 'صالحة حتى',
   'SHA-256 fingerprint': 'بصمة SHA-256',
+  DNS: 'DNS',
+  'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
+    'كيف تبحث صفحات الويب عن عناوين المواقع. عبر HTTPS لا يستطيع أحد بينك وبين المزوّد قراءة عمليات البحث أو تغييرها.',
+  'The system’s, over HTTPS where it can': 'نظام التشغيل، عبر HTTPS حيث أمكن',
+  'Another provider': 'مزوّد آخر',
+  'The address of a DNS over HTTPS server, starting with https://':
+    'عنوان خادم DNS عبر HTTPS، يبدأ بـ https://',
+  'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
+    'تبحث صفحات الويب هنا عن العناوين كما يفعل النظام؛ ويُضبط DNS في إعدادات النظام نفسه.',
 }

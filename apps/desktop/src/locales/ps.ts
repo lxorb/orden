@@ -2624,4 +2624,13 @@ export const ps: Dictionary = {
   'Valid from': 'د اعتبار پیل',
   'Valid until': 'د اعتبار پای',
   'SHA-256 fingerprint': 'د SHA-256 د ګوتې نښه',
+  DNS: 'DNS',
+  'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
+    'ویب پاڼې د سایټونو پتې څنګه لټوي. د HTTPS له لارې ستاسو او برابروونکي ترمنځ هېڅوک لټونونه نشي لوستلی یا بدلولی.',
+  'The system’s, over HTTPS where it can': 'د سیسټم، چېرته چې شونې وي د HTTPS له لارې',
+  'Another provider': 'بل برابروونکی',
+  'The address of a DNS over HTTPS server, starting with https://':
+    'د DNS over HTTPS سرور پته چې په https:// پیلېږي',
+  'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
+    'دلته ویب پاڼې پتې هماغسې لټوي لکه سیسټم؛ د هغه DNS د سیسټم په خپلو امستنو کې ټاکل کېږي.',
 }

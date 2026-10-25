@@ -2677,4 +2677,13 @@ export const fil: Dictionary = {
   'Valid from': 'Bisa mula',
   'Valid until': 'Bisa hanggang',
   'SHA-256 fingerprint': 'SHA-256 na fingerprint',
+  DNS: 'DNS',
+  'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
+    'Kung paano hinahanap ng mga web page ang address ng mga site. Sa HTTPS, walang sinuman sa pagitan mo at ng provider ang makakabasa o makakapagbago ng mga paghahanap.',
+  'The system’s, over HTTPS where it can': 'Sa system, sa HTTPS kung kaya',
+  'Another provider': 'Ibang provider',
+  'The address of a DNS over HTTPS server, starting with https://':
+    'Ang address ng isang DNS over HTTPS server, na nagsisimula sa https://',
+  'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
+    'Dito, hinahanap ng mga web page ang mga address sa paraan ng system; ang DNS nito ay itinatakda sa sariling settings ng system.',
 }

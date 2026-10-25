@@ -2710,4 +2710,13 @@ export const uk: Dictionary = {
   'Valid from': 'Дійсний з',
   'Valid until': 'Дійсний до',
   'SHA-256 fingerprint': 'Відбиток SHA-256',
+  DNS: 'DNS',
+  'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
+    'Як вебсторінки шукають адреси сайтів. Через HTTPS ніхто між вами й провайдером не може прочитати чи змінити запити.',
+  'The system’s, over HTTPS where it can': 'Системний, через HTTPS, де можливо',
+  'Another provider': 'Інший провайдер',
+  'The address of a DNS over HTTPS server, starting with https://':
+    'Адреса сервера DNS over HTTPS, що починається з https://',
+  'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
+    'Тут вебсторінки шукають адреси так само, як система; її DNS задається в налаштуваннях самої системи.',
 }

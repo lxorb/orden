@@ -2544,4 +2544,13 @@ export const zhHans: Dictionary = {
   'Valid from': '有效期起始',
   'Valid until': '有效期截止',
   'SHA-256 fingerprint': 'SHA-256 指纹',
+  DNS: 'DNS',
+  'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
+    '网页查找网站地址的方式。通过 HTTPS，你与服务商之间的任何人都无法读取或篡改查询。',
+  'The system’s, over HTTPS where it can': '系统的，能用时通过 HTTPS',
+  'Another provider': '其他服务商',
+  'The address of a DNS over HTTPS server, starting with https://':
+    'DNS over HTTPS 服务器的地址，以 https:// 开头',
+  'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
+    '这里的网页按系统的方式查找地址；DNS 需在系统自己的设置中更改。',
 }

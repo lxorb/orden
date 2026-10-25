@@ -2638,4 +2638,13 @@ export const tr: Dictionary = {
   'Valid from': 'Geçerlilik başlangıcı',
   'Valid until': 'Geçerlilik bitişi',
   'SHA-256 fingerprint': 'SHA-256 parmak izi',
+  DNS: 'DNS',
+  'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
+    'Web sayfalarının sitelerin adreslerini nasıl bulduğu. HTTPS üzerinden, sizinle sağlayıcı arasındaki hiç kimse sorguları okuyamaz ya da değiştiremez.',
+  'The system’s, over HTTPS where it can': 'Sistemin, mümkünse HTTPS üzerinden',
+  'Another provider': 'Başka bir sağlayıcı',
+  'The address of a DNS over HTTPS server, starting with https://':
+    'https:// ile başlayan bir DNS over HTTPS sunucusunun adresi',
+  'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
+    'Burada web sayfaları adresleri sistemin yaptığı gibi bulur; DNS’i sistemin kendi ayarlarından değiştirilir.',
 }

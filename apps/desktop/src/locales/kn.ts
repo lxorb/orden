@@ -2653,4 +2653,13 @@ export const kn: Dictionary = {
   'Valid from': 'ಇಂದಿನಿಂದ ಮಾನ್ಯ',
   'Valid until': 'ಇಲ್ಲಿಯವರೆಗೆ ಮಾನ್ಯ',
   'SHA-256 fingerprint': 'SHA-256 ಫಿಂಗರ್‌ಪ್ರಿಂಟ್',
+  DNS: 'DNS',
+  'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
+    'ವೆಬ್ ಪುಟಗಳು ಸೈಟ್‌ಗಳ ವಿಳಾಸವನ್ನು ಹೇಗೆ ಹುಡುಕುತ್ತವೆ. HTTPS ಮೂಲಕ ನಿಮ್ಮ ಮತ್ತು ಪೂರೈಕೆದಾರರ ನಡುವೆ ಯಾರೂ ಹುಡುಕಾಟಗಳನ್ನು ಓದಲು ಅಥವಾ ಬದಲಿಸಲು ಸಾಧ್ಯವಿಲ್ಲ.',
+  'The system’s, over HTTPS where it can': 'ಸಿಸ್ಟಮ್‌ನದು, ಸಾಧ್ಯವಿದ್ದಲ್ಲಿ HTTPS ಮೂಲಕ',
+  'Another provider': 'ಬೇರೆ ಪೂರೈಕೆದಾರ',
+  'The address of a DNS over HTTPS server, starting with https://':
+    'https:// ನಿಂದ ಆರಂಭವಾಗುವ DNS over HTTPS ಸರ್ವರ್‌ನ ವಿಳಾಸ',
+  'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
+    'ಇಲ್ಲಿ ವೆಬ್ ಪುಟಗಳು ಸಿಸ್ಟಮ್‌ನಂತೆಯೇ ವಿಳಾಸಗಳನ್ನು ಹುಡುಕುತ್ತವೆ; ಅದರ DNS ಅನ್ನು ಸಿಸ್ಟಮ್‌ನ ಸ್ವಂತ ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಹೊಂದಿಸಲಾಗುತ್ತದೆ.',
 }

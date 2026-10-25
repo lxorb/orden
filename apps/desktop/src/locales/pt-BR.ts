@@ -2675,4 +2675,13 @@ export const ptBR: Dictionary = {
   'Valid from': 'Válido de',
   'Valid until': 'Válido até',
   'SHA-256 fingerprint': 'Impressão digital SHA-256',
+  DNS: 'DNS',
+  'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
+    'Como as páginas da web procuram os endereços dos sites. Por HTTPS, ninguém entre você e o provedor consegue ler ou alterar as consultas.',
+  'The system’s, over HTTPS where it can': 'O do sistema, por HTTPS quando possível',
+  'Another provider': 'Outro provedor',
+  'The address of a DNS over HTTPS server, starting with https://':
+    'O endereço de um servidor DNS por HTTPS, começando com https://',
+  'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
+    'Aqui as páginas da web procuram endereços como o sistema faz; o DNS dele é definido nos ajustes do próprio sistema.',
 }

@@ -2618,4 +2618,13 @@ export const id: Dictionary = {
   'Valid from': 'Berlaku sejak',
   'Valid until': 'Berlaku hingga',
   'SHA-256 fingerprint': 'Sidik jari SHA-256',
+  DNS: 'DNS',
+  'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
+    'Cara halaman web mencari alamat situs. Lewat HTTPS, tidak ada yang berada di antara Anda dan penyedia yang bisa membaca atau mengubah pencariannya.',
+  'The system’s, over HTTPS where it can': 'Milik sistem, lewat HTTPS bila bisa',
+  'Another provider': 'Penyedia lain',
+  'The address of a DNS over HTTPS server, starting with https://':
+    'Alamat server DNS over HTTPS, diawali dengan https://',
+  'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
+    'Di sini halaman web mencari alamat seperti sistem; DNS-nya diatur di pengaturan sistem itu sendiri.',
 }

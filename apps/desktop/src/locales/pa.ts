@@ -2631,4 +2631,13 @@ export const pa: Dictionary = {
   'Valid from': 'ਤੋਂ ਵੈਧ',
   'Valid until': 'ਤੱਕ ਵੈਧ',
   'SHA-256 fingerprint': 'SHA-256 ਫਿੰਗਰਪ੍ਰਿੰਟ',
+  DNS: 'DNS',
+  'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
+    'ਵੈੱਬ ਪੰਨੇ ਸਾਈਟਾਂ ਦੇ ਪਤੇ ਕਿਵੇਂ ਲੱਭਦੇ ਹਨ। HTTPS ਰਾਹੀਂ ਤੁਹਾਡੇ ਅਤੇ ਪ੍ਰਦਾਤਾ ਵਿਚਕਾਰ ਕੋਈ ਵੀ ਖੋਜਾਂ ਨੂੰ ਪੜ੍ਹ ਜਾਂ ਬਦਲ ਨਹੀਂ ਸਕਦਾ।',
+  'The system’s, over HTTPS where it can': 'ਸਿਸਟਮ ਦਾ, ਜਿੱਥੇ ਹੋ ਸਕੇ HTTPS ਰਾਹੀਂ',
+  'Another provider': 'ਕੋਈ ਹੋਰ ਪ੍ਰਦਾਤਾ',
+  'The address of a DNS over HTTPS server, starting with https://':
+    'https:// ਨਾਲ ਸ਼ੁਰੂ ਹੋਣ ਵਾਲਾ DNS over HTTPS ਸਰਵਰ ਦਾ ਪਤਾ',
+  'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
+    'ਇੱਥੇ ਵੈੱਬ ਪੰਨੇ ਸਿਸਟਮ ਵਾਂਗ ਹੀ ਪਤੇ ਲੱਭਦੇ ਹਨ; ਇਸ ਦਾ DNS ਸਿਸਟਮ ਦੀਆਂ ਆਪਣੀਆਂ ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਤੈਅ ਹੁੰਦਾ ਹੈ।',
 }
