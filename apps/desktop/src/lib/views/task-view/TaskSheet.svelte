@@ -74,6 +74,12 @@
   })
 
   const row = $derived(rowFor(shown.ref, all))
+  /** Which task is shown, by where it is written: what its description and its comment
+   *  field are made again for. Its space too, as Today and Upcoming walk the tasks of
+   *  every space and two spaces each have an `Inbox.md` with a task on its first line:
+   *  a step from one to the other kept the first one's words, and wrote them into the
+   *  other's note (B461). */
+  const shownAt = $derived(taskKey(shown.ref.space, shown.ref.path, shown.ref.line))
   const task = $derived(row?.task)
   /** Its start date and its deadline, as its space reads a `📅` (#371). */
   const starts = $derived(task ? (startOf(task, task.dueReads) ?? task.scheduled) : undefined)
@@ -142,6 +148,15 @@
   let adding = $state(false)
   let subtask = $state('')
   let subField = $state<HTMLInputElement>()
+  // A sub-task begun is the shown task's own: a step to another task puts it away, or
+  // Enter there would write it under that one (B461).
+  $effect(() => {
+    if (shownAt)
+      untrack(() => {
+        adding = false
+        subtask = ''
+      })
+  })
   /** The comments, whose field `c` gives the keyboard to. */
   let comments = $state<{ focus: () => void }>()
   /** Opened with `c` or the row's comment button: the field takes the keyboard once the
@@ -410,7 +425,7 @@
         </div>
 
         {#if path}
-          {#key `${shown.ref.path}\n${shown.ref.line}`}
+          {#key shownAt}
             <div class="words"><Description {path} anchor={anchorNow} writable={writes} /></div>
           {/key}
         {/if}
@@ -424,7 +439,7 @@
               >
             </p>
           {/if}
-          {#each children as child (child.anchor?.line)}
+          {#each children as child (taskKey(child.space, child.path, child.anchor?.line ?? -1))}
             <TaskRow
               row={child}
               kit={subKit}
@@ -479,8 +494,7 @@
         </div>
 
         {#if path && row}
-          {#key `${shown.ref.path}
-${shown.ref.line}`}
+          {#key shownAt}
             <Comments bind:this={comments} {row} {path} writable={writes} />
           {/key}
         {/if}
