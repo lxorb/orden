@@ -154,6 +154,33 @@ describe('the press that started the app', () => {
     expect(created).toContain('FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY')
     expect(created).toContain('if (fresh) read(intent)')
   })
+
+  /** The activity is exported and opens on a `nib://` link, so a web page or any
+   *  app could hand it `record` or a task to tick. What a tile, a widget or a
+   *  reminder carries is only taken with the seal the app put on it itself. */
+  test('is only acted on when the app sealed it', () => {
+    const reading = /private fun read\(intent: Intent\?\)[\s\S]*?\n {2}\}/.exec(activity)?.[0] ?? ''
+    const ours = reading.indexOf('sealedBy(this, intent)')
+    expect(ours).toBeGreaterThan(-1)
+    for (const extra of ['EXTRA_COMMAND', 'EXTRA_OPEN', 'EXTRA_TICK', 'Reminders.carried']) {
+      expect(reading.indexOf(extra), extra).toBeGreaterThan(ours)
+    }
+
+    const senders = {
+      tiles,
+      widgets,
+      today: read(ANDROID, 'java', 'ch', 'emilvinu', 'nib', 'TodayWidget.kt'),
+      reminders: read(ANDROID, 'java', 'ch', 'emilvinu', 'nib', 'Reminders.kt'),
+    }
+    for (const [name, text] of Object.entries(senders)) {
+      const made = text.match(/Intent\(\w+, MainActivity::class\.java\)/g) ?? []
+      const sealed =
+        text.match(/MainActivity\.sealed\(\s*\w+,\s*Intent\(\w+, MainActivity::class\.java\)/g) ??
+        []
+      expect(made.length, name).toBeGreaterThan(0)
+      expect(sealed.length, name).toBe(made.length)
+    }
+  })
 })
 
 describe('the quick settings tiles', () => {
