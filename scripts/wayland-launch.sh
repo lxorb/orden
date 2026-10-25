@@ -28,6 +28,9 @@
 #     scripts/textsize-drive.py);
 #   - with FLASH=1, the strip's note tab and web tab chosen in turn in the dark scheme,
 #     filmed, and no frame of the pane white (#762, scripts/flash-drive.py);
+#   - with WORKER=1, a web tab's page whose worker has to answer it, as it opens and
+#     after Orden is quit and started again with no address (#777,
+#     scripts/worker-drive.py);
 #   - with SCHEME=1, a web tab's page drawn in the app's scheme as the app's scheme is
 #     switched, light and dark (#427, scripts/scheme-drive.py);
 #   - with POPUP=1, the space switcher, the web tab's menu and a canvas's pens' panel
@@ -158,7 +161,7 @@ endpoint() {
   chmod 600 "$config/automation.json"
 }
 command=("$@")
-if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${SCHEME:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ] || [ "${GROUND:-0}" = 1 ]; then
+if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${SCHEME:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ] || [ "${GROUND:-0}" = 1 ] || [ "${WORKER:-0}" = 1 ]; then
   mkdir -p "$out/site"
   video=""
   [ "${MEDIA:-0}" = 1 ] && video='<video src="none.webm" autoplay muted></video>'
@@ -169,6 +172,20 @@ if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ 
   [ "${FLASH:-0}" = 1 ] && printf '<!doctype html><title>dark</title><meta name="color-scheme" content="dark"><style>html,body{margin:0;height:100%%;background:#1e1e1e}</style>' > "$out/site/index.html"
   # With SCHEME=1, a page whose colour says the scheme it is asked for (#427).
   [ "${SCHEME:-0}" = 1 ] && printf '<!doctype html><title>scheme</title><style>html,body{margin:0;height:100%%;background:#0000ff}@media (prefers-color-scheme: dark){html,body{background:#00ff00}}</style>' > "$out/site/index.html"
+  # With WORKER=1, a page that starts a worker from a blob, as Anubis does, and takes
+  # its answer into its title with the moment the page was loaded (#777).
+  if [ "${WORKER:-0}" = 1 ]; then
+    cat > "$out/site/index.html" <<'PAGE'
+<!doctype html><title>a worker waiting</title>
+<script>
+  const loaded = Math.round(performance.timeOrigin)
+  const code = new Blob(['onmessage = (event) => postMessage(event.data)'], { type: 'text/javascript' })
+  const worker = new Worker(URL.createObjectURL(code))
+  worker.onmessage = (event) => { document.title = 'a worker answered at ' + event.data }
+  worker.postMessage(loaded)
+</script>
+PAGE
+  fi
   if [ "${CHECK:-0}" = 1 ]; then
     clip=(-f lavfi -i testsrc2=size=320x240:rate=30 -f lavfi -i sine=frequency=440 -t 4)
     ffmpeg -loglevel error -y "${clip[@]}" -c:v libvpx-vp9 -b:v 300k -c:a libopus "$out/site/vp9.webm"
@@ -320,6 +337,33 @@ fi
 
 if [ "$status" = 0 ] && [ "${CHECK:-0}" = 1 ]; then
   APP_COMMAND="${command[0]}" python3 "$here/wayland-418.py" "$out" "$app_pid" || status=1
+fi
+
+# A page's worker answering it, and again on the web tab the app comes back to once it is
+# quit and started again with no address (#777).
+if [ "$status" = 0 ] && [ "${WORKER:-0}" = 1 ]; then
+  sleep 3
+  python3 "$here/worker-drive.py" "$out" opened || status=1
+  if [ "$status" = 0 ]; then
+    # The tabs are kept in the page's local storage, which Chromium writes to the disk
+    # a few seconds after it changes: a quit sooner than that is a run that kept none.
+    sleep 10
+    kill -TERM "$app_pid" 2>/dev/null || true
+    for _ in $(seq 50); do kill -0 "$app_pid" 2>/dev/null || break; sleep 0.2; done
+    kill -KILL "$app_pid" 2>/dev/null || true
+    wait "$app_pid" 2>/dev/null || true
+    since=$(date +%s%3N)
+    endpoint
+    "${command[@]}" > "$out/orden-again.log" 2>&1 &
+    app_pid=$!
+    if wait_for_views 1; then
+      sleep 3
+      python3 "$here/worker-drive.py" "$out" "started again" "$since" || status=1
+    else
+      echo "::error::no window mapped when started again"
+      status=1
+    fi
+  fi
 fi
 
 # Quit and started again, the way a reader comes back after a restart: no address, so the
