@@ -418,26 +418,33 @@ function linkTo(source: { path: string; name: string }): string {
 
 /** An answer as it goes into a note or onto the clipboard: every citation the
  *  wikilink to the note it cited, so what the answer was built from stays one press
- *  away there too, and the same link twice in a row once. */
+ *  away there too, and the same link twice in a row once. `cite` writes a citation
+ *  otherwise: as the note's name alone, for a note in another space, where a wikilink
+ *  would find that space's note of the name or none. */
 export function linkedAnswer(
   answer: string,
   sources: readonly { path: string; name: string }[],
+  cite: (source: { path: string; name: string }) => string = linkTo,
 ): string {
   return answer
     .split(CODE)
-    .map((part, at) =>
-      at % 2
-        ? part
-        : part
-            .replace(CITATION, (whole, numbers: string) => {
-              const notes = numbers
-                .split(',')
-                .map((one) => sources[Number(one.trim()) - 1])
-                .filter((one) => one !== undefined)
-                .map(linkTo)
-              return notes.length ? [...new Set(notes)].join(' ') : whole
-            })
-            .replace(/(\[\[[^\]]+\]\])(?:\s*\1)+/g, '$1'),
-    )
+    .map((part, at) => {
+      if (at % 2) return part
+      const written = new Set<string>()
+      let out = part.replace(CITATION, (whole, numbers: string) => {
+        const notes = numbers
+          .split(',')
+          .map((one) => sources[Number(one.trim()) - 1])
+          .filter((one) => one !== undefined)
+          .map(cite)
+        for (const one of notes) written.add(one)
+        return notes.length ? [...new Set(notes)].join(' ') : whole
+      })
+      for (const one of written) {
+        const said = one.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        out = out.replace(new RegExp(`(${said})(?:\\s*${said})+`, 'g'), '$1')
+      }
+      return out.replace(/(\[\[[^\]]+\]\])(?:\s*\1)+/g, '$1')
+    })
     .join('')
 }

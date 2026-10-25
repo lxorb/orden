@@ -27,7 +27,7 @@
   import { dur } from '../../motion'
   import { howFor, tabAsk } from '../../new-tab'
   import { followHref, followNote, MIDDLE, opensLink } from '../../open-link'
-  import { insideSpace } from '../../space-paths'
+  import { insideSpace, withinSpace } from '../../space-paths'
   import { viewport } from '../../viewport.svelte'
   import { views } from '../../views.svelte'
   import { when } from '../../when'
@@ -140,23 +140,32 @@
   const asNote = $derived(linkedAnswer(words, sources))
   const view = $derived<EditorView | undefined>(views.of(workspace.panes.focusedId))
 
+  /** What Insert writes in the focused note: `asNote`, whose wikilinks find the notes
+   *  cited, where that note is in the thread's own space; in another one they would
+   *  find its note of the same name or none, so there each citation is the name alone. */
+  function inserted(): string {
+    const root = chat.root
+    const into = workspace.active?.path ?? null
+    const here = root !== null && into !== null && withinSpace(root, into) !== null
+    return here ? asNote : linkedAnswer(words, sources, (one) => one.name)
+  }
+
   function insert() {
     const editor = view
     if (!editor || editor.state.readOnly) return
+    const text = inserted()
     const { from, to } = editor.state.selection.main
     editor.dispatch({
-      changes: { from, to, insert: asNote },
-      selection: { anchor: from + asNote.length },
+      changes: { from, to, insert: text },
+      selection: { anchor: from + text.length },
       scrollIntoView: true,
       userEvent: 'input.paste',
     })
     editor.focus()
   }
 
-  async function saveAsNote() {
-    const path = await workspace.noteFrom(asNote)
-    if (path) await workspace.open(path)
-  }
+  // In the thread's own space, where the sources `asNote` links to are.
+  const saveAsNote = () => chat.noteFrom(asNote)
 
   let copied = $state(false)
   let copying: ReturnType<typeof setTimeout> | undefined

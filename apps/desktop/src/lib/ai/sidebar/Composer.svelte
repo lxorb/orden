@@ -339,7 +339,7 @@
       return run(() => chat.startEdit())
     // Escape: out of an edit; on an empty field of a thread with messages, twice is the
     // rewind sheet, so the first is held for the second rather than leaving the panel.
-    if (event.key === 'Escape' && chat.editing) return run(() => chat.cancelEdit())
+    if (event.key === 'Escape' && chat.changing) return run(() => chat.cancelEdit())
     if (event.key === 'Escape' && empty && head?.kept) {
       const now = Date.now()
       if (now - escaped < 500) {
@@ -512,7 +512,7 @@
     <Rewinding {thread} panel={chat} />
   {/if}
 
-  {#if chat.editing}
+  {#if chat.changing}
     <div class="editing" transition:fly={{ y: 6, duration: dur(130), easing: cubicOut }}>
       <svg viewBox="0 0 13 13" aria-hidden="true"><path d="M8.7 2.3l2 2-6 6-2.6.6.6-2.6z" /></svg>
       <button

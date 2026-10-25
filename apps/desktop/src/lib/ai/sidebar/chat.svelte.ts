@@ -328,6 +328,9 @@ class Chat implements Panel {
   }
 
   private show(thread: Thread): void {
+    // An edit is the open thread's: another thread in front lets it go, and the field
+    // gets back what it held, so Enter there never sends one thread's change in another.
+    if (thread !== this.open && this.changing) this.cancelEdit()
     this.open = thread
     this.live.set(thread.id, thread)
     this.trouble = null
@@ -463,8 +466,11 @@ class Chat implements Panel {
     const text = this.text.trim()
     const chips = this.chips
     if (!text && !chips.length) return
-    this.text = ''
-    this.chips = []
+    // What the field held before an edit took it, back in it now the edit is sent.
+    this.text = this.aside?.text ?? ''
+    this.chips = this.aside?.chips ?? []
+    this.aside = null
+    this.requeue = null
     const edited = this.editing
     const thread = this.open
     if (edited && thread) {
@@ -480,6 +486,25 @@ class Chat implements Panel {
   /** The reader's message being changed in the field, by its id (Up, or its pencil). */
   editing = $state<string | null>(null)
 
+  /** What the field held when an earlier or a queued message was put in it to change:
+   *  given back once that message is sent, or the edit is let go (Escape). */
+  private aside: { text: string; chips: Mention[] } | null = null
+
+  /** A queued message taken into the field to change, and where it stood in the queue:
+   *  put back there if the change is let go. */
+  private requeue = $state.raw<{ one: Queued; at: number } | null>(null)
+
+  /** Whether the field holds a message being changed, an earlier one or a queued one:
+   *  what Escape and the pencil over the field let go. */
+  get changing(): boolean {
+    return this.editing !== null || this.requeue !== null
+  }
+
+  /** The field's words and chips set aside, the first time an edit takes the field. */
+  private setAside(): void {
+    this.aside ??= { text: this.text, chips: this.chips }
+  }
+
   /** A message into the field to change and send again: the one named, else the last
    *  (Up on an empty field). */
   startEdit(turn?: string): void {
@@ -487,14 +512,25 @@ class Chat implements Panel {
     if (!thread || this.running.includes(thread.id)) return
     const message = turn ? thread.turns.find((one) => one.id === turn) : lastMessage(thread)
     if (!message?.draft) return
+    this.setAside()
     this.editing = message.id
     this.text = message.draft.text
+    this.chips = []
     this.focus()
   }
 
   cancelEdit(): void {
     this.editing = null
-    this.text = ''
+    const requeue = this.requeue
+    this.requeue = null
+    if (requeue) {
+      const list = this.queue.slice()
+      list.splice(requeue.at, 0, requeue.one)
+      this.setQueue(list)
+    }
+    this.text = this.aside?.text ?? ''
+    this.chips = this.aside?.chips ?? []
+    this.aside = null
   }
 
   /** The rewind sheet (Esc Esc on an empty field, or a message's clock). */
@@ -565,7 +601,7 @@ class Chat implements Panel {
       const words = t('Add an AI provider in Settings first.')
       if (thread === this.open) {
         this.trouble = words
-        if (!send.settle) this.text ||= text
+        if (!send.settle) this.giveBack(text)
       }
       send.settle?.({ stop: 'error', error: words, turn: null, usage: null })
       return
@@ -597,7 +633,7 @@ class Chat implements Panel {
       ended = { stop: 'error', error: words, turn: null, usage: null }
       if (thread === this.open) {
         this.trouble = words
-        if (!send.settle && !this.text) this.text = text
+        if (!send.settle) this.giveBack(text)
       }
     } finally {
       once?.signal?.removeEventListener('abort', stop)
@@ -607,6 +643,14 @@ class Chat implements Panel {
     send.settle?.(ended)
     // A stop pauses the queue: what was waiting stays, to be sent or taken back.
     if (!stopper.signal.aborted) this.next(thread)
+  }
+
+  /** A message that could not be sent, back in the field: in front of what the field
+   *  holds now (a draft an edit set aside, words typed since), so neither is lost. */
+  private giveBack(text: string): void {
+    const now = this.text.trim()
+    if (now === text.trim()) return
+    this.text = now ? `${text}\n\n${this.text}` : text
   }
 
   /** A thread starts answering: its stop, its mark in the list, its message drawn. */
@@ -731,9 +775,15 @@ class Chat implements Panel {
 
   /** A queued message back in the field, to change before it goes. */
   editQueued(id: string): void {
-    const one = this.queue.find((each) => each.id === id)
+    const at = this.queue.findIndex((each) => each.id === id)
+    const one = this.queue[at]
     if (!one) return
     this.unqueue(id)
+    this.setAside()
+    // Back in the queue without what a command waited on: `unqueue` told it already.
+    const back: Queued = { ...one }
+    delete back.settle
+    this.requeue = { one: back, at }
     this.text = one.text
     this.chips = one.chips
     this.focus()
@@ -975,8 +1025,25 @@ class Chat implements Panel {
   async exportThread(): Promise<void> {
     const thread = this.open
     if (!thread?.turns.length) return
-    const path = await workspace.noteFrom(threadMarkdown(thread, t('Untitled')))
-    if (path) await workspace.open(path)
+    await this.noteFrom(threadMarkdown(thread, t('Untitled')))
+  }
+
+  /** A note made of the open thread's words (Save as a note), opened: in the thread's
+   *  own space, whose notes its citations name, and never in the space in front. Where
+   *  that space is not on this device or may only be read, no note, and a line in the
+   *  thread that says why. */
+  async noteFrom(text: string): Promise<void> {
+    const thread = this.open
+    if (!thread) return
+    const root = workspace.spaces.find((one) => one.id === thread.space)?.root
+    const path = root ? await workspace.noteFrom(text, root) : null
+    if (path) {
+      await workspace.open(path)
+      return
+    }
+    const why = root ? t('you can only read this space') : t('no such space')
+    const { hostOf } = await import('../commands/host')
+    hostOf(this).line(thread, `${t('Save as a note')} · ${why}`)
   }
 
   archive(id = this.open?.id): void {
