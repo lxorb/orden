@@ -24,6 +24,7 @@ interface Tracked {
 interface V1Space {
   cursor: number
   notes: Record<string, Tracked>
+  untold?: Record<string, { from: string; to: string; tries: number }>
 }
 
 interface Entry {
@@ -157,7 +158,12 @@ async function v1Cursor(): Promise<number> {
 
 /** The device, its first v2 pass with the mirror given, and one pass after it. `cursor`
  *  is where v1's last pass left it: the mirror's cursor. */
-async function migrated(files: Record<string, string>, notes: Record<string, Tracked>, cursor = 0) {
+async function migrated(
+  files: Record<string, string>,
+  notes: Record<string, Tracked>,
+  cursor = 0,
+  untold?: V1Space['untold'],
+) {
   const kit = await engine()
   const device = await kit.testDevice({
     fetch: async (request) => await app.fetch(request, env),
@@ -169,7 +175,7 @@ async function migrated(files: Record<string, string>, notes: Record<string, Tra
   const state = core.spaces.get(space)
   if (!state) throw new Error('the space was not added')
 
-  const first = await kit.firstPass(core, state, { cursor, notes })
+  const first = await kit.firstPass(core, state, { cursor, notes, ...(untold ? { untold } : {}) })
   expect(first).toBe(true)
   const asked = [...device.asked]
   await rooms.settle()
@@ -337,6 +343,27 @@ describe('a first pass over what v1 left unsaid', () => {
     expect(await liveNames()).toEqual(['Elsewhere/New name.md'])
     expect(idAt('Elsewhere/New name.md')).toBe(note.id)
     expect(file('Elsewhere/New name.md')).toBe('Words that moved.\n')
+  })
+
+  /** Waiting on a question, the note has no words v1 agreed on to be found by, and a
+   *  file at its old name is another note's. Read as gone, it was deleted on the
+   *  account, and the file at the old name was matched to it. */
+  test('a held note v1 renamed and could not tell is that note, moved', async () => {
+    const note = await v1Note('One.md', 'One.\n')
+    await v1Write(note.id, 'One.md', 'One, there.\n', note.version)
+    const { device, file } = await migrated(
+      { 'Two.md': 'One, here.\n', 'One.md': 'Shopping.\n' },
+      { 'One.md': { ...note, version: note.version + 1, hash: '' } },
+      await v1Cursor(),
+      { [note.id]: { from: 'One.md', to: 'Two.md', tries: 0 } },
+    )
+
+    expect(await liveNames()).toEqual(['One.md', 'Two.md'])
+    expect(idAt('Two.md')).toBe(note.id)
+    expect(idAt('One.md')).not.toBe(note.id)
+    expect(await textOnAccount(note.id)).toBe('One, there.\n')
+    expect(file('Two.md')).toBe('One, here.\n')
+    expect(device.engine.core.held.has(note.id)).toBe(true)
   })
 
   test('a folder v1 renamed offline takes its notes, and leaves no empty folder', async () => {

@@ -32,7 +32,7 @@
  *  holds (`mirrorsFrom`). */
 
 import { holderOf } from '../pages/held'
-import type { Mirror, Moving, Tracked } from '../sync/mirror'
+import type { Mirror, Moving, Tracked, Untold } from '../sync/mirror'
 import type { Core } from './core'
 import { kindOfName, made, moved } from './create'
 import { MINE } from './docs'
@@ -52,6 +52,8 @@ export interface V1Space {
   notes: Readonly<Record<string, Tracked>>
   /** A rename v1 was making when it last wrote itself down; see `Mirror`. */
   moving?: Moving
+  /** Renames v1 made here and could not tell the account of; see `Mirror`. */
+  untold?: Readonly<Record<string, Untold>>
 }
 
 const EMPTY_SV = Y.encodeStateVector(new Y.Doc())
@@ -94,9 +96,16 @@ export async function firstPass(
   const matched: Matched[] = []
   const claimed = new Set<string>()
 
+  // The names v1 renamed notes away from without telling the account: a file there now
+  // is another note's, and the note itself is at its new name; see `renamedHere`.
+  const untold = Object.entries(v1?.untold ?? {}).filter(
+    ([id, one]) => v1?.notes[one.from]?.id === id,
+  )
+  const left = new Set(untold.map(([, one]) => one.from))
+  const away = new Set(untold.map(([id]) => id))
   // Which entry v1 knew a path as, where the account still has it.
   const byTracked = (path: string): EntryRow | null => {
-    const tracked = v1?.notes[path]
+    const tracked = left.has(path) ? undefined : v1?.notes[path]
     const entry = tracked ? space.entries.get(tracked.id) : undefined
     return entry && !entry.deleted && !claimed.has(entry.id) ? entry : null
   }
@@ -105,7 +114,7 @@ export async function firstPass(
   // that follows takes the file to the trash. Written in since, the edit beats the delete
   // and the file is a new note.
   const deletedUnseen = async (path: string): Promise<EntryRow | null> => {
-    const tracked = v1?.notes[path]
+    const tracked = left.has(path) ? undefined : v1?.notes[path]
     const entry = tracked ? space.entries.get(tracked.id) : undefined
     if (!tracked || !entry?.deleted || claimed.has(entry.id)) return null
     const read = await world.disk.read(full(path))
@@ -115,7 +124,7 @@ export async function firstPass(
   const byPlace = (path: string, folder: boolean): EntryRow | null => {
     const key = space.key(path)
     for (const [id, at] of wanted) {
-      if (claimed.has(id) || space.key(at) !== key) continue
+      if (claimed.has(id) || away.has(id) || space.key(at) !== key) continue
       const entry = space.entries.get(id)
       if (entry && (entry.kind === 'folder') === folder) return entry
     }
@@ -290,8 +299,22 @@ async function renamedHere(
   }
 
   const out: Renamed[] = []
+  // Told by v1's own record first: a note waiting on a question has no words v1 agreed
+  // on to be found by, and read as gone it was deleted on the account.
+  for (const [id, untold] of Object.entries(v1?.untold ?? {})) {
+    const tracked = v1?.notes[untold.from]
+    const entry = space.entries.get(id)
+    const from = entry && space.paths().get(id)
+    const one = loose.find((stray) => space.key(stray.path) === space.key(untold.to))
+    if (tracked?.id !== id || !entry || entry.deleted || claimed.has(id) || !one) continue
+    if (from === undefined || !shapeOf(entry.kind)) continue
+    out.push({ entry, from, path: one.path, file: one.file, tracked })
+    loose.splice(loose.indexOf(one), 1)
+  }
   for (const one of loose) {
-    const known = [...new Set(one.hashes.flatMap((hash) => left.get(hash) ?? []))]
+    const known = [...new Set(one.hashes.flatMap((hash) => left.get(hash) ?? []))].filter(
+      (tracked) => !out.some((done) => done.entry.id === tracked.id),
+    )
     const twins = loose.filter((other) => other.hashes.some((hash) => one.hashes.includes(hash)))
     const tracked = known.length === 1 && twins.length === 1 ? known[0] : undefined
     const entry = tracked && space.entries.get(tracked.id)
