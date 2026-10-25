@@ -2700,4 +2700,10 @@ export const fr: Dictionary = {
     'La police du code et des terminaux ; toute police à chasse fixe installée sur cet appareil, par son nom.',
   'Not installed on this device, so the app’s own face is used.':
     'Non installée sur cet appareil, la police propre à l’application est donc utilisée.',
+  Certificate: 'Certificat',
+  'Issued to': 'Délivré à',
+  'Issued by': 'Délivré par',
+  'Valid from': 'Valide à partir du',
+  'Valid until': 'Valide jusqu’au',
+  'SHA-256 fingerprint': 'Empreinte SHA-256',
 }

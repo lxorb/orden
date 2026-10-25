@@ -2601,4 +2601,10 @@ export const jv: Dictionary = {
     'Font kanggo kode lan terminal; font monospace apa wae sing diinstal ing piranti iki, miturut jenenge.',
   'Not installed on this device, so the app’s own face is used.':
     'Ora diinstal ing piranti iki, mula font gawane aplikasi sing digunakake.',
+  Certificate: 'Sertifikat',
+  'Issued to': 'Diterbitake kanggo',
+  'Issued by': 'Diterbitake dening',
+  'Valid from': 'Laku wiwit',
+  'Valid until': 'Laku nganti',
+  'SHA-256 fingerprint': 'Sidik driji SHA-256',
 }

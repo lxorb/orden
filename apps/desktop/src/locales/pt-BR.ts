@@ -2670,4 +2670,10 @@ export const ptBR: Dictionary = {
     'A fonte do código e dos terminais; qualquer fonte monoespaçada instalada neste dispositivo, pelo nome.',
   'Not installed on this device, so the app’s own face is used.':
     'Não está instalada neste dispositivo, então é usada a fonte do próprio app.',
+  Certificate: 'Certificado',
+  'Issued to': 'Emitido para',
+  'Issued by': 'Emitido por',
+  'Valid from': 'Válido de',
+  'Valid until': 'Válido até',
+  'SHA-256 fingerprint': 'Impressão digital SHA-256',
 }

@@ -2541,4 +2541,10 @@ export const zhHant: Dictionary = {
     '程式碼與終端機所用的字型；可依名稱使用這部裝置上已安裝的任何等寬字型。',
   'Not installed on this device, so the app’s own face is used.':
     '這部裝置未安裝此字型，因此使用應用程式本身的字型。',
+  Certificate: '憑證',
+  'Issued to': '核發對象',
+  'Issued by': '核發者',
+  'Valid from': '有效期間起始',
+  'Valid until': '有效期間截止',
+  'SHA-256 fingerprint': 'SHA-256 指紋',
 }

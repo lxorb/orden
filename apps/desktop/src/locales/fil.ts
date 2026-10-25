@@ -2672,4 +2672,10 @@ export const fil: Dictionary = {
     'Ang font ng code at mga terminal; anumang monospaced na font na naka-install sa device na ito, ayon sa pangalan nito.',
   'Not installed on this device, so the app’s own face is used.':
     'Hindi naka-install sa device na ito, kaya ang sariling font ng app ang ginagamit.',
+  Certificate: 'Sertipiko',
+  'Issued to': 'Inisyu para kay',
+  'Issued by': 'Inisyu ni',
+  'Valid from': 'Bisa mula',
+  'Valid until': 'Bisa hanggang',
+  'SHA-256 fingerprint': 'SHA-256 na fingerprint',
 }

@@ -2540,4 +2540,10 @@ export const zhHantHK: Dictionary = {
     '代碼及終端機所用的字型；可按名稱選用此裝置上已安裝的任何等寬字型。',
   'Not installed on this device, so the app’s own face is used.':
     '此裝置未安裝此字型，因此使用應用程式本身的字型。',
+  Certificate: '憑證',
+  'Issued to': '發出對象',
+  'Issued by': '發出者',
+  'Valid from': '有效期由',
+  'Valid until': '有效期至',
+  'SHA-256 fingerprint': 'SHA-256 指紋',
 }

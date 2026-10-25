@@ -2675,4 +2675,10 @@ export const de: Dictionary = {
     'Die Schrift von Code und Terminals; jede auf diesem Gerät installierte Festbreitenschrift, anhand ihres Namens.',
   'Not installed on this device, so the app’s own face is used.':
     'Auf diesem Gerät nicht installiert, daher wird die eigene Schrift der App verwendet.',
+  Certificate: 'Zertifikat',
+  'Issued to': 'Ausgestellt für',
+  'Issued by': 'Ausgestellt von',
+  'Valid from': 'Gültig ab',
+  'Valid until': 'Gültig bis',
+  'SHA-256 fingerprint': 'SHA-256-Fingerabdruck',
 }

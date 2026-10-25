@@ -2605,4 +2605,10 @@ export const gu: Dictionary = {
     'કોડ અને ટર્મિનલનો ફૉન્ટ; આ ડિવાઇસમાં ઇન્સ્ટૉલ કરેલો કોઈ પણ મોનોસ્પેસ ફૉન્ટ, તેના નામથી.',
   'Not installed on this device, so the app’s own face is used.':
     'આ ડિવાઇસમાં ઇન્સ્ટૉલ થયેલો નથી, તેથી ઍપનો પોતાનો ફૉન્ટ વપરાય છે.',
+  Certificate: 'પ્રમાણપત્ર',
+  'Issued to': 'જેને જારી કરાયું',
+  'Issued by': 'જેણે જારી કર્યું',
+  'Valid from': 'માન્ય થી',
+  'Valid until': 'માન્ય સુધી',
+  'SHA-256 fingerprint': 'SHA-256 ફિંગરપ્રિન્ટ',
 }

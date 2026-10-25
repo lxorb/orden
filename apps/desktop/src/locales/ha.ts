@@ -2657,4 +2657,10 @@ export const ha: Dictionary = {
     "Fontin lamba da tashoshi; kowane font mai faɗi ɗaya da ke kan wannan na'ura, ta sunansa.",
   'Not installed on this device, so the app’s own face is used.':
     "Ba a saka shi a wannan na'ura ba, don haka ana amfani da fontin manhajar kanta.",
+  Certificate: 'Takardar shaida',
+  'Issued to': 'An bayar wa',
+  'Issued by': 'Wanda ya bayar',
+  'Valid from': 'Yana aiki daga',
+  'Valid until': 'Yana aiki har zuwa',
+  'SHA-256 fingerprint': 'Hoton yatsa na SHA-256',
 }

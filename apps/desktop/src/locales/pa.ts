@@ -2626,4 +2626,10 @@ export const pa: Dictionary = {
     'ਕੋਡ ਅਤੇ ਟਰਮੀਨਲਾਂ ਦਾ ਫ਼ੌਂਟ; ਇਸ ਡੀਵਾਈਸ ਉੱਤੇ ਸਥਾਪਤ ਕੋਈ ਵੀ ਮੋਨੋਸਪੇਸ ਫ਼ੌਂਟ, ਉਸ ਦੇ ਨਾਂ ਨਾਲ।',
   'Not installed on this device, so the app’s own face is used.':
     'ਇਸ ਡੀਵਾਈਸ ਉੱਤੇ ਸਥਾਪਤ ਨਹੀਂ ਹੈ, ਇਸ ਲਈ ਐਪ ਦਾ ਆਪਣਾ ਫ਼ੌਂਟ ਵਰਤਿਆ ਜਾਂਦਾ ਹੈ।',
+  Certificate: 'ਸਰਟੀਫਿਕੇਟ',
+  'Issued to': 'ਕਿਸ ਨੂੰ ਜਾਰੀ ਕੀਤਾ',
+  'Issued by': 'ਕਿਸ ਨੇ ਜਾਰੀ ਕੀਤਾ',
+  'Valid from': 'ਤੋਂ ਵੈਧ',
+  'Valid until': 'ਤੱਕ ਵੈਧ',
+  'SHA-256 fingerprint': 'SHA-256 ਫਿੰਗਰਪ੍ਰਿੰਟ',
 }

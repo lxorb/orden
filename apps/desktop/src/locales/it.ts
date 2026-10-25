@@ -2695,4 +2695,10 @@ export const it: Dictionary = {
     'Il carattere del codice e dei terminali; qualsiasi carattere a spaziatura fissa installato su questo dispositivo, con il suo nome.',
   'Not installed on this device, so the app’s own face is used.':
     'Non installato su questo dispositivo, quindi viene usato il carattere proprio dell’app.',
+  Certificate: 'Certificato',
+  'Issued to': 'Rilasciato a',
+  'Issued by': 'Rilasciato da',
+  'Valid from': 'Valido dal',
+  'Valid until': 'Valido fino al',
+  'SHA-256 fingerprint': 'Impronta SHA-256',
 }

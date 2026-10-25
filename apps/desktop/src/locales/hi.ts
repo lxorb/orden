@@ -2616,4 +2616,10 @@ export const hi: Dictionary = {
     'कोड और टर्मिनल का फ़ॉन्ट; इस डिवाइस पर इंस्टॉल कोई भी मोनोस्पेस फ़ॉन्ट, उसके नाम से।',
   'Not installed on this device, so the app’s own face is used.':
     'इस डिवाइस पर इंस्टॉल नहीं है, इसलिए ऐप का अपना फ़ॉन्ट इस्तेमाल होता है।',
+  Certificate: 'प्रमाणपत्र',
+  'Issued to': 'किसे जारी किया गया',
+  'Issued by': 'किसने जारी किया',
+  'Valid from': 'इस तारीख से मान्य',
+  'Valid until': 'इस तारीख तक मान्य',
+  'SHA-256 fingerprint': 'SHA-256 फ़िंगरप्रिंट',
 }

@@ -2619,4 +2619,10 @@ export const ps: Dictionary = {
     'د کوډ او ټرمینلونو فونټ؛ په دې وسیله کې نصب شوی هر مونوسپیس فونټ، د هغه په نوم.',
   'Not installed on this device, so the app’s own face is used.':
     'په دې وسیله کې نصب نه دی، نو د اپ خپل فونټ کارول کېږي.',
+  Certificate: 'سند',
+  'Issued to': 'چا ته ورکړل شوی',
+  'Issued by': 'چا ورکړی',
+  'Valid from': 'د اعتبار پیل',
+  'Valid until': 'د اعتبار پای',
+  'SHA-256 fingerprint': 'د SHA-256 د ګوتې نښه',
 }

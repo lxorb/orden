@@ -2633,4 +2633,10 @@ export const tr: Dictionary = {
     'Kodun ve terminallerin yazı tipi; bu cihazda yüklü herhangi bir eş aralıklı yazı tipi, adıyla.',
   'Not installed on this device, so the app’s own face is used.':
     'Bu cihazda yüklü değil, bu yüzden uygulamanın kendi yazı tipi kullanılıyor.',
+  Certificate: 'Sertifika',
+  'Issued to': 'Verildiği taraf',
+  'Issued by': 'Veren',
+  'Valid from': 'Geçerlilik başlangıcı',
+  'Valid until': 'Geçerlilik bitişi',
+  'SHA-256 fingerprint': 'SHA-256 parmak izi',
 }

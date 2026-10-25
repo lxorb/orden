@@ -2613,4 +2613,10 @@ export const ms: Dictionary = {
     'Fon untuk kod dan terminal; mana-mana fon monospace yang dipasang pada peranti ini, mengikut namanya.',
   'Not installed on this device, so the app’s own face is used.':
     'Tidak dipasang pada peranti ini, jadi fon aplikasi itu sendiri digunakan.',
+  Certificate: 'Sijil',
+  'Issued to': 'Dikeluarkan kepada',
+  'Issued by': 'Dikeluarkan oleh',
+  'Valid from': 'Sah dari',
+  'Valid until': 'Sah hingga',
+  'SHA-256 fingerprint': 'Cap jari SHA-256',
 }
