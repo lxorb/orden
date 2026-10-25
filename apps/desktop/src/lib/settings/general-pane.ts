@@ -25,6 +25,7 @@ import { isHiddenTabs } from '../workspace/sets'
 import { projectsOf, setProjects } from '../rows/projects'
 import { workspace } from '../workspace.svelte'
 import type { Field, Group, Pane } from './fields'
+import { dns, PROVIDER_NAMES } from './dns.svelte'
 import { gpu } from './gpu.svelte'
 import { versionField } from './version.svelte'
 
@@ -134,6 +135,65 @@ function gpuGroup(): Group {
       },
     ],
   }
+}
+
+/** Which DNS the web tabs' pages look names up with (#766, #767): Chrome's Secure DNS,
+ *  with Chrome's choices, and a field for one's own provider when that is the choice.
+ *  Nothing until the crate has said this engine can be told; see dns.svelte.ts. */
+function dnsGroups(): Group[] {
+  dns.ask()
+  if (!dns.answered) return []
+  // The system's own engine - WebView2, WKWebView - has nothing an app can set its DNS
+  // through, so the row says where it is set rather than offering a choice that does
+  // nothing.
+  if (!dns.offered) {
+    return [
+      {
+        title: t('DNS'),
+        caption: {
+          text: t(
+            'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.',
+          ),
+        },
+        fields: [],
+      },
+    ]
+  }
+
+  const fields: Field[] = [
+    {
+      kind: 'select',
+      label: t('DNS'),
+      hint: t(
+        'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.',
+      ),
+      words: ['dns', 'doh', 'dns over https', 'secure dns', 'resolver', 'server', 'privacy'],
+      options: [
+        { value: 'system', label: t('The system’s') },
+        { value: 'automatic', label: t('The system’s, over HTTPS where it can') },
+        { value: 'cloudflare', label: PROVIDER_NAMES.cloudflare },
+        { value: 'google', label: PROVIDER_NAMES.google },
+        { value: 'quad9', label: PROVIDER_NAMES.quad9 },
+        { value: 'custom', label: t('Another provider') },
+      ],
+      initial: 'automatic',
+      get: () => dns.choice,
+      set: (value) => void dns.choose(value),
+    },
+  ]
+  if (dns.choice === 'custom') {
+    fields.push({
+      kind: 'text',
+      label: t('Provider'),
+      hint: dns.refused ?? t('The address of a DNS over HTTPS server, starting with https://'),
+      words: ['dns', 'doh', 'template', 'server', 'custom'],
+      placeholder: 'https://dns.example/dns-query',
+      initial: '',
+      get: () => dns.custom,
+      set: (value) => void dns.provide(value),
+    })
+  }
+  return [{ title: t('DNS'), fields }]
 }
 
 /** When a task reminds of itself, and what keeps the reminders ringing: the tray on a
@@ -503,6 +563,10 @@ export function generalPane(): Pane {
       ...(!__EVEN_PLUGIN__ && isDesktop && ['linux', 'windows'].includes(platform())
         ? [gpuGroup()]
         : []),
+
+      // Which DNS the web tabs' pages look names up with (#766, #767): only where the
+      // engine is nib's own Chromium, which the crate says.
+      ...(!__EVEN_PLUGIN__ && isDesktop ? dnsGroups() : []),
 
       // Which version this is, on every build, and the channel it follows where it
       // follows one (#490): the desktop's release channel, chosen here, or the web app's

@@ -263,6 +263,9 @@ mod window_drag;
 // Whether Chromium draws on the graphics card or on the CPU, in the log; see gpu.rs.
 #[cfg(desktop)]
 mod gpu;
+// Which DNS the web tabs' pages look names up with (#766, #767); see secure_dns.rs.
+#[cfg(desktop)]
+mod secure_dns;
 // How large the app's pages are drawn, and where a web tab's page goes; see
 // page_scale.rs.
 #[cfg(desktop)]
@@ -463,6 +466,8 @@ macro_rules! desktop_commands {
             gpu::gpu_seen,
             gpu::gpu_chosen,
             gpu::gpu_choose,
+            secure_dns::dns_chosen,
+            secure_dns::dns_choose,
             gpu::gpu_line,
             page_scale::page_scale_seen,
             page_scheme::page_scheme_seen,
@@ -858,13 +863,17 @@ fn hearing(handle: &tauri::AppHandle) {
     touchpad::start(handle);
 }
 
-/// What CEF on Linux needs once it has started and before the window is made: the main
-/// thread asleep while nothing happens (`chromium_pump.rs`), and the desktop's scale read
-/// (`page_scale.rs`).
-#[cfg(all(target_os = "linux", feature = "cef"))]
+/// What CEF needs once it has started and before the window is made: on Linux the main
+/// thread asleep while nothing happens (`chromium_pump.rs`) and the desktop's scale read
+/// (`page_scale.rs`); and everywhere the DNS the pages look names up with, before any
+/// page does (`secure_dns.rs`).
+#[cfg(feature = "cef")]
 fn engine_started(handle: &tauri::AppHandle<Engine>) {
+    #[cfg(target_os = "linux")]
     chromium_pump::start(handle);
+    #[cfg(target_os = "linux")]
     page_scale::start(handle);
+    secure_dns::start(handle);
 }
 
 fn ready(
@@ -948,7 +957,7 @@ fn ready(
     // `hearing`.
     #[cfg(desktop)]
     hearing(handle);
-    #[cfg(all(target_os = "linux", feature = "cef"))]
+    #[cfg(feature = "cef")]
     engine_started(handle);
 
     // And the window on screen, which is the last thing this does and the first thing
