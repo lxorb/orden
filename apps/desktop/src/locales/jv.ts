@@ -2607,4 +2607,13 @@ export const jv: Dictionary = {
   'Valid from': 'Laku wiwit',
   'Valid until': 'Laku nganti',
   'SHA-256 fingerprint': 'Sidik driji SHA-256',
+  DNS: 'DNS',
+  'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
+    'Carane kaca web nggoleki alamat situs. Liwat HTTPS, ora ana sing ana ing antarane sampeyan lan panyedhiya sing bisa maca utawa ngowahi panelusuran.',
+  'The system’s, over HTTPS where it can': 'Saka sistem, liwat HTTPS yen bisa',
+  'Another provider': 'Panyedhiya liyane',
+  'The address of a DNS over HTTPS server, starting with https://':
+    'Alamat server DNS over HTTPS, diwiwiti karo https://',
+  'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
+    'Ing kene kaca web nggoleki alamat kaya sistem; DNS-e disetel ing setelan sistem dhewe.',
 }

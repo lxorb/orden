@@ -2693,4 +2693,13 @@ export const es: Dictionary = {
   'Valid from': 'Válido desde',
   'Valid until': 'Válido hasta',
   'SHA-256 fingerprint': 'Huella digital SHA-256',
+  DNS: 'DNS',
+  'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
+    'Cómo buscan las páginas web las direcciones de los sitios. Por HTTPS, nadie entre tú y el proveedor puede leer ni cambiar las consultas.',
+  'The system’s, over HTTPS where it can': 'El del sistema, por HTTPS cuando se pueda',
+  'Another provider': 'Otro proveedor',
+  'The address of a DNS over HTTPS server, starting with https://':
+    'La dirección de un servidor DNS sobre HTTPS, que empieza por https://',
+  'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
+    'Aquí las páginas web buscan las direcciones como lo hace el sistema; su DNS se configura en los ajustes del propio sistema.',
 }

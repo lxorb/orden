@@ -2586,4 +2586,13 @@ export const ko: Dictionary = {
   'Valid from': '유효 기간 시작',
   'Valid until': '유효 기간 종료',
   'SHA-256 fingerprint': 'SHA-256 지문',
+  DNS: 'DNS',
+  'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
+    '웹 페이지가 사이트 주소를 찾는 방법입니다. HTTPS를 쓰면 나와 제공업체 사이의 누구도 조회를 읽거나 바꿀 수 없습니다.',
+  'The system’s, over HTTPS where it can': '시스템 설정(가능하면 HTTPS 사용)',
+  'Another provider': '다른 제공업체',
+  'The address of a DNS over HTTPS server, starting with https://':
+    'https://로 시작하는 DNS over HTTPS 서버 주소',
+  'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
+    '여기서는 웹 페이지가 시스템과 같은 방식으로 주소를 찾습니다. DNS는 시스템 자체 설정에서 바꿉니다.',
 }

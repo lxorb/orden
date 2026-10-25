@@ -2619,4 +2619,13 @@ export const ms: Dictionary = {
   'Valid from': 'Sah dari',
   'Valid until': 'Sah hingga',
   'SHA-256 fingerprint': 'Cap jari SHA-256',
+  DNS: 'DNS',
+  'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
+    'Cara halaman web mencari alamat laman. Melalui HTTPS, tiada sesiapa di antara anda dan penyedia boleh membaca atau mengubah carian itu.',
+  'The system’s, over HTTPS where it can': 'Milik sistem, melalui HTTPS jika boleh',
+  'Another provider': 'Penyedia lain',
+  'The address of a DNS over HTTPS server, starting with https://':
+    'Alamat pelayan DNS over HTTPS, bermula dengan https://',
+  'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
+    'Di sini halaman web mencari alamat seperti sistem; DNS-nya ditetapkan dalam tetapan sistem sendiri.',
 }

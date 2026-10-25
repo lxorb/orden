@@ -2630,4 +2630,13 @@ export const fa: Dictionary = {
   'Valid from': 'معتبر از',
   'Valid until': 'معتبر تا',
   'SHA-256 fingerprint': 'اثر انگشت SHA-256',
+  DNS: 'DNS',
+  'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
+    'اینکه صفحه‌های وب نشانی سایت‌ها را چگونه پیدا می‌کنند. با HTTPS هیچ‌کس میان شما و ارائه‌دهنده نمی‌تواند جست‌وجوها را بخواند یا تغییر دهد.',
+  'The system’s, over HTTPS where it can': 'مال سیستم، با HTTPS هرجا که بشود',
+  'Another provider': 'ارائه‌دهندهٔ دیگر',
+  'The address of a DNS over HTTPS server, starting with https://':
+    'نشانی یک سرور DNS روی HTTPS که با https:// آغاز می‌شود',
+  'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
+    'صفحه‌های وب اینجا نشانی‌ها را همان‌طور پیدا می‌کنند که سیستم؛ DNS آن در تنظیمات خود سیستم تعیین می‌شود.',
 }

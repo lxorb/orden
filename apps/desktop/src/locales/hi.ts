@@ -2622,4 +2622,13 @@ export const hi: Dictionary = {
   'Valid from': 'इस तारीख से मान्य',
   'Valid until': 'इस तारीख तक मान्य',
   'SHA-256 fingerprint': 'SHA-256 फ़िंगरप्रिंट',
+  DNS: 'DNS',
+  'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
+    'वेब पेज साइटों के पते कैसे ढूँढते हैं। HTTPS पर आपके और प्रदाता के बीच कोई भी इन खोजों को पढ़ या बदल नहीं सकता।',
+  'The system’s, over HTTPS where it can': 'सिस्टम का, जहाँ हो सके HTTPS पर',
+  'Another provider': 'कोई और प्रदाता',
+  'The address of a DNS over HTTPS server, starting with https://':
+    'DNS over HTTPS सर्वर का पता, जो https:// से शुरू होता है',
+  'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
+    'यहाँ वेब पेज पते वैसे ही ढूँढते हैं जैसे सिस्टम; इसका DNS सिस्टम की अपनी सेटिंग्स में तय होता है।',
 }

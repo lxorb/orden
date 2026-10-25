@@ -2645,4 +2645,13 @@ export const gsw: Dictionary = {
   'Valid from': 'Gültig ab',
   'Valid until': 'Gültig bis',
   'SHA-256 fingerprint': 'SHA-256-Fingerabdruck',
+  DNS: 'DNS',
+  'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
+    'Wie Websiite d Adrässe vo Siite nachluegt. Über HTTPS cha niemer zwüsche dir und em Aabieter d Aafroge läse oder ändere.',
+  'The system’s, over HTTPS where it can': 'Vom System, über HTTPS, wos gaht',
+  'Another provider': 'Andere Aabieter',
+  'The address of a DNS over HTTPS server, starting with https://':
+    'D Adrässe vomene DNS-over-HTTPS-Server, wo mit https:// aafangt',
+  'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
+    'Websiite luege d Adrässe do so naa wie s System; sis DNS wird i de Iistellige vom System festgleit.',
 }

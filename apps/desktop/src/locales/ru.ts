@@ -2718,4 +2718,13 @@ export const ru: Dictionary = {
   'Valid from': 'Действителен с',
   'Valid until': 'Действителен до',
   'SHA-256 fingerprint': 'Отпечаток SHA-256',
+  DNS: 'DNS',
+  'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
+    'Как веб-страницы узнают адреса сайтов. Через HTTPS никто между вами и провайдером не может прочитать или изменить запросы.',
+  'The system’s, over HTTPS where it can': 'Системный, через HTTPS, где возможно',
+  'Another provider': 'Другой провайдер',
+  'The address of a DNS over HTTPS server, starting with https://':
+    'Адрес сервера DNS over HTTPS, начинающийся с https://',
+  'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
+    'Здесь веб-страницы ищут адреса так же, как система; её DNS задаётся в настройках самой системы.',
 }

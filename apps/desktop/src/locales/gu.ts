@@ -2611,4 +2611,13 @@ export const gu: Dictionary = {
   'Valid from': 'માન્ય થી',
   'Valid until': 'માન્ય સુધી',
   'SHA-256 fingerprint': 'SHA-256 ફિંગરપ્રિન્ટ',
+  DNS: 'DNS',
+  'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
+    'વેબ પેજ સાઇટના સરનામાં કેવી રીતે શોધે છે. HTTPS પર તમારી અને પ્રદાતા વચ્ચે કોઈ શોધ વાંચી કે બદલી શકતું નથી.',
+  'The system’s, over HTTPS where it can': 'સિસ્ટમનું, શક્ય હોય ત્યાં HTTPS પર',
+  'Another provider': 'અન્ય પ્રદાતા',
+  'The address of a DNS over HTTPS server, starting with https://':
+    'https:// થી શરૂ થતું DNS over HTTPS સર્વરનું સરનામું',
+  'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
+    'અહીં વેબ પેજ સિસ્ટમની જેમ જ સરનામાં શોધે છે; તેનું DNS સિસ્ટમના પોતાના સેટિંગ્સમાં નક્કી થાય છે.',
 }

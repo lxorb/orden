@@ -2664,4 +2664,13 @@ export const sw: Dictionary = {
   'Valid from': 'Halali kuanzia',
   'Valid until': 'Halali hadi',
   'SHA-256 fingerprint': 'Alama ya kidole ya SHA-256',
+  DNS: 'DNS',
+  'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
+    'Jinsi kurasa za wavuti zinavyotafuta anwani za tovuti. Kupitia HTTPS, hakuna aliye kati yako na mtoa huduma anayeweza kusoma au kubadilisha utafutaji.',
+  'The system’s, over HTTPS where it can': 'Ya mfumo, kupitia HTTPS inapowezekana',
+  'Another provider': 'Mtoa huduma mwingine',
+  'The address of a DNS over HTTPS server, starting with https://':
+    'Anwani ya seva ya DNS over HTTPS, inayoanza na https://',
+  'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
+    'Hapa kurasa za wavuti hutafuta anwani kama mfumo unavyofanya; DNS yake huwekwa katika mipangilio ya mfumo wenyewe.',
 }

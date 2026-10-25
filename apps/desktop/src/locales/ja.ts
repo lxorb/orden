@@ -2598,4 +2598,13 @@ export const ja: Dictionary = {
   'Valid from': '有効期間の開始',
   'Valid until': '有効期間の終了',
   'SHA-256 fingerprint': 'SHA-256 フィンガープリント',
+  DNS: 'DNS',
+  'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
+    'ウェブページがサイトのアドレスを調べる方法です。HTTPS 経由なら、あなたとプロバイダーの間にいる誰も問い合わせを読んだり書き換えたりできません。',
+  'The system’s, over HTTPS where it can': 'システムのもの（可能なら HTTPS 経由）',
+  'Another provider': '別のプロバイダー',
+  'The address of a DNS over HTTPS server, starting with https://':
+    'DNS over HTTPS サーバーのアドレス（https:// で始まる）',
+  'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
+    'ここではウェブページは システムと同じ方法でアドレスを調べます。DNS はシステム自体の設定で変更します。',
 }

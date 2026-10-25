@@ -2579,4 +2579,13 @@ export const am: Dictionary = {
   'Valid from': 'የሚሠራው ከ',
   'Valid until': 'የሚሠራው እስከ',
   'SHA-256 fingerprint': 'የSHA-256 አሻራ',
+  DNS: 'DNS',
+  'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
+    'ድረ-ገጾች የጣቢያዎችን አድራሻ እንዴት እንደሚፈልጉ። በHTTPS ሲሆን በእርስዎና በአቅራቢው መካከል ያለ ማንም ፍለጋዎቹን ማንበብም ሆነ መቀየር አይችልም።',
+  'The system’s, over HTTPS where it can': 'የሥርዓቱ፣ በሚቻልበት በHTTPS',
+  'Another provider': 'ሌላ አቅራቢ',
+  'The address of a DNS over HTTPS server, starting with https://':
+    'በhttps:// የሚጀምር የDNS over HTTPS አገልጋይ አድራሻ',
+  'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
+    'እዚህ ድረ-ገጾች አድራሻዎችን የሚፈልጉት ሥርዓቱ በሚፈልግበት መንገድ ነው፤ የDNS ቅንብሩ በሥርዓቱ ቅንብሮች ውስጥ ነው።',
 }

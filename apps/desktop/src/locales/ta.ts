@@ -2670,4 +2670,13 @@ export const ta: Dictionary = {
   'Valid from': 'செல்லுபடி தொடக்கம்',
   'Valid until': 'செல்லுபடி முடிவு',
   'SHA-256 fingerprint': 'SHA-256 கைரேகை',
+  DNS: 'DNS',
+  'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
+    'இணையப் பக்கங்கள் தளங்களின் முகவரியை எப்படித் தேடுகின்றன. HTTPS வழியாக உங்களுக்கும் வழங்குநருக்கும் இடையில் யாரும் தேடல்களைப் படிக்கவோ மாற்றவோ முடியாது.',
+  'The system’s, over HTTPS where it can': 'கணினியுடையது, முடிந்தால் HTTPS வழியாக',
+  'Another provider': 'வேறு வழங்குநர்',
+  'The address of a DNS over HTTPS server, starting with https://':
+    'https:// என்று தொடங்கும் DNS over HTTPS சேவையகத்தின் முகவரி',
+  'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
+    'இங்கு இணையப் பக்கங்கள் கணினியைப் போலவே முகவரிகளைத் தேடுகின்றன; அதன் DNS கணினியின் சொந்த அமைப்புகளில் அமைக்கப்படுகிறது.',
 }

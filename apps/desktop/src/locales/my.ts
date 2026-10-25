@@ -2609,4 +2609,13 @@ export const my: Dictionary = {
   'Valid from': 'စတင်အကျုံးဝင်သည့်နေ့',
   'Valid until': 'ကုန်ဆုံးသည့်နေ့',
   'SHA-256 fingerprint': 'SHA-256 လက်ဗွေ',
+  DNS: 'DNS',
+  'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
+    'ဝဘ်စာမျက်နှာများက ဆိုက်လိပ်စာများကို ရှာပုံ။ HTTPS ဖြင့်ဆိုလျှင် သင်နှင့် ပံ့ပိုးသူကြားရှိ မည်သူမျှ ရှာဖွေမှုများကို မဖတ်နိုင်၊ မပြောင်းနိုင်ပါ။',
+  'The system’s, over HTTPS where it can': 'စနစ်၏၊ ဖြစ်နိုင်လျှင် HTTPS ဖြင့်',
+  'Another provider': 'အခြားပံ့ပိုးသူ',
+  'The address of a DNS over HTTPS server, starting with https://':
+    'https:// ဖြင့်စသော DNS over HTTPS ဆာဗာလိပ်စာ',
+  'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
+    'ဤနေရာတွင် ဝဘ်စာမျက်နှာများသည် စနစ်ကဲ့သို့ပင် လိပ်စာများကို ရှာသည်။ ၎င်း၏ DNS ကို စနစ်၏ ဆက်တင်များတွင် သတ်မှတ်ရသည်။',
 }

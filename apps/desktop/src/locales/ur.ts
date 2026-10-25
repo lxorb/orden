@@ -2619,4 +2619,13 @@ export const ur: Dictionary = {
   'Valid from': 'سے درست',
   'Valid until': 'تک درست',
   'SHA-256 fingerprint': 'SHA-256 فنگر پرنٹ',
+  DNS: 'DNS',
+  'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
+    'ویب صفحات سائٹس کے پتے کیسے تلاش کرتے ہیں۔ HTTPS کے ذریعے آپ اور فراہم کنندہ کے درمیان کوئی بھی تلاش کو پڑھ یا بدل نہیں سکتا۔',
+  'The system’s, over HTTPS where it can': 'سسٹم کا، جہاں ممکن ہو HTTPS کے ذریعے',
+  'Another provider': 'کوئی اور فراہم کنندہ',
+  'The address of a DNS over HTTPS server, starting with https://':
+    'DNS over HTTPS سرور کا پتا، جو https:// سے شروع ہو',
+  'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
+    'یہاں ویب صفحات پتے ویسے ہی تلاش کرتے ہیں جیسے سسٹم؛ اس کا DNS سسٹم کی اپنی ترتیبات میں طے ہوتا ہے۔',
 }

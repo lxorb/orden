@@ -2547,4 +2547,13 @@ export const zhHant: Dictionary = {
   'Valid from': '有效期間起始',
   'Valid until': '有效期間截止',
   'SHA-256 fingerprint': 'SHA-256 指紋',
+  DNS: 'DNS',
+  'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
+    '網頁查詢網站位址的方式。透過 HTTPS，你與服務商之間的任何人都無法讀取或竄改查詢。',
+  'The system’s, over HTTPS where it can': '系統的，可行時透過 HTTPS',
+  'Another provider': '其他服務商',
+  'The address of a DNS over HTTPS server, starting with https://':
+    'DNS over HTTPS 伺服器的位址，以 https:// 開頭',
+  'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
+    '這裡的網頁依系統的方式查詢位址；DNS 需在系統本身的設定中變更。',
 }

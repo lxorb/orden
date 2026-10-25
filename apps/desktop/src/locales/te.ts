@@ -2638,4 +2638,13 @@ export const te: Dictionary = {
   'Valid from': 'నుండి చెల్లుతుంది',
   'Valid until': 'వరకు చెల్లుతుంది',
   'SHA-256 fingerprint': 'SHA-256 వేలిముద్ర',
+  DNS: 'DNS',
+  'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
+    'వెబ్ పేజీలు సైట్ల చిరునామాలను ఎలా వెతుకుతాయి. HTTPS ద్వారా మీకూ ప్రొవైడర్‌కూ మధ్య ఎవరూ శోధనలను చదవలేరు, మార్చలేరు.',
+  'The system’s, over HTTPS where it can': 'సిస్టమ్‌ది, వీలైన చోట HTTPS ద్వారా',
+  'Another provider': 'మరో ప్రొవైడర్',
+  'The address of a DNS over HTTPS server, starting with https://':
+    'https://తో మొదలయ్యే DNS over HTTPS సర్వర్ చిరునామా',
+  'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
+    'ఇక్కడ వెబ్ పేజీలు సిస్టమ్ లాగే చిరునామాలను వెతుకుతాయి; దాని DNS సిస్టమ్ సొంత సెట్టింగ్‌లలో సెట్ చేయబడుతుంది.',
 }

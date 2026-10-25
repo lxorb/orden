@@ -2569,4 +2569,13 @@ export const th: Dictionary = {
   'Valid from': 'ใช้ได้ตั้งแต่',
   'Valid until': 'ใช้ได้ถึง',
   'SHA-256 fingerprint': 'ลายนิ้วมือ SHA-256',
+  DNS: 'DNS',
+  'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.':
+    'วิธีที่หน้าเว็บค้นหาที่อยู่ของเว็บไซต์ ผ่าน HTTPS ไม่มีใครที่อยู่ระหว่างคุณกับผู้ให้บริการอ่านหรือเปลี่ยนการค้นหาได้',
+  'The system’s, over HTTPS where it can': 'ของระบบ ผ่าน HTTPS เมื่อทำได้',
+  'Another provider': 'ผู้ให้บริการอื่น',
+  'The address of a DNS over HTTPS server, starting with https://':
+    'ที่อยู่ของเซิร์ฟเวอร์ DNS over HTTPS ที่ขึ้นต้นด้วย https://',
+  'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
+    'ที่นี่หน้าเว็บค้นหาที่อยู่แบบเดียวกับระบบ DNS ของมันตั้งค่าในการตั้งค่าของระบบเอง',
 }
