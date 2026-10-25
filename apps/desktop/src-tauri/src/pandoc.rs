@@ -5,11 +5,11 @@
 //! Nothing here assumes pandoc is installed. `has_pandoc` is what the window asks
 //! before it offers any of it.
 
-#[cfg(target_os = "macos")]
 use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
+use std::process::{Child, Command, Stdio};
+use std::time::{Duration, Instant};
 use tauri::AppHandle;
 
 #[cfg(windows)]
@@ -85,7 +85,6 @@ fn from_login_shell() -> Option<PathBuf> {
 #[cfg(target_os = "macos")]
 fn ask_login_shell() -> Option<PathBuf> {
     use std::io::Read as _;
-    use std::time::{Duration, Instant};
 
     let shell = std::env::var_os("SHELL").unwrap_or_else(|| "/bin/zsh".into());
     let mut child = Command::new(shell)
@@ -127,7 +126,30 @@ pub fn has_pandoc() -> bool {
         .is_ok_and(|status| status.success())
 }
 
-/// Whether this machine's pandoc keeps `--extract-media` inside the folder it is
+/// What a try of this machine's pandoc found about `--extract-media`; see
+/// `copying`.
+#[derive(Debug, PartialEq)]
+enum Copying {
+    /// Both pictures of the advisories stayed in the folder they were copied to.
+    Safe,
+    /// One of them was written outside it.
+    Unsafe,
+    /// The try did not get that far, and why.
+    Unknown(String),
+}
+
+/// How long pandoc is given to copy the two pictures of the try, which takes it
+/// a fraction of a second; a pandoc that hangs costs this once per import or
+/// export and never holds either up for good.
+const PATIENCE: Duration = Duration::from_secs(10);
+
+/// What this machine's pandoc does with `--extract-media`. Asked on every call,
+/// like `program`, so a pandoc updated while the app is open counts at once.
+fn extracts_safely() -> Copying {
+    copying(pandoc(), PATIENCE)
+}
+
+/// Whether `command`, a pandoc, keeps `--extract-media` inside the folder it is
 /// given. Before 3.1.6 a picture whose name hides `../` in percent-encoding is
 /// written wherever it says (CVE-2023-35936, fixed in 3.1.4, and CVE-2023-38745,
 /// its double-encoded twin, fixed in 3.1.6), and `--sandbox` does not stop it: it
@@ -136,20 +158,32 @@ pub fn has_pandoc() -> bool {
 /// its own on this machine.
 ///
 /// Asked of pandoc itself rather than read off its version, because Debian and
-/// Ubuntu mended their 2.17 and 3.1.3 without changing the number. Both pictures
-/// the advisories describe are handed to it in a folder of our own, one level
-/// down, and it is trusted only when nothing comes out beside that folder. Asked
-/// on every call, like `program`, so a pandoc updated while the app is open
-/// counts at once.
-fn extracts_safely() -> bool {
-    let Ok(probe) = tempfile::tempdir() else {
-        return false;
+/// Ubuntu mended their 2.17 and 3.1.3 without changing the number. pandoc copies
+/// the two pictures the advisories describe, `CLIMBING`, from a folder four levels
+/// down in a temporary folder of our own; each climbs three levels, so wherever it
+/// lands it is still in that temporary folder, and anything but a folder found
+/// outside the media folder is a picture that got out. That tries these two names
+/// and nothing else: a pandoc with some other way out, or one that writes to an
+/// absolute path, is not caught here.
+///
+/// The try runs without `--sandbox` and reads markdown, unlike an import. In its
+/// sandbox pandoc fetches no `data:` picture, so a sandboxed try copies nothing and
+/// learns nothing. The names of the pictures inside a Word file or an ePub go
+/// through the same two functions of pandoc that the advisories mended; a docx
+/// whose picture is named this way got out of the sandboxed import on 3.1.3 and
+/// stayed in on 3.1.6 and on Ubuntu's 3.1.3, as these pictures do.
+fn copying(mut command: Command, patience: Duration) -> Copying {
+    let probe = match tempfile::tempdir() {
+        Ok(probe) => probe,
+        Err(error) => {
+            return Copying::Unknown(format!("there was no folder to try it in: {error}"))
+        }
     };
-    let inside = probe.path().join("inside");
-    if std::fs::create_dir(&inside).is_err() {
-        return false;
+    let inside = probe.path().join("a").join("b").join("c").join("inside");
+    if let Err(error) = fs::create_dir_all(&inside) {
+        return Copying::Unknown(format!("there was no folder to try it in: {error}"));
     }
-    let Ok(mut child) = pandoc()
+    let child = command
         .current_dir(&inside)
         .args([
             "--from",
@@ -162,21 +196,69 @@ fn extracts_safely() -> bool {
         .stdin(Stdio::piped())
         .stdout(Stdio::null())
         .stderr(Stdio::null())
-        .spawn()
-    else {
-        return false;
+        .spawn();
+    let mut child = match child {
+        Ok(child) => child,
+        Err(error) => return Copying::Unknown(format!("pandoc could not start: {error}")),
     };
-    let sent = child
-        .stdin
-        .take()
-        .is_some_and(|mut sink| sink.write_all(CLIMBING.as_bytes()).is_ok());
-    let ran = child.wait().is_ok_and(|status| status.success());
-    sent && ran && std::fs::read_dir(probe.path()).is_ok_and(|found| found.count() == 1)
+    // Two lines, well inside what a pipe holds, so this does not wait on pandoc. A
+    // pandoc that does not read them is caught by how it exits.
+    if let Some(mut sink) = child.stdin.take() {
+        let _ = sink.write_all(CLIMBING.as_bytes());
+    }
+    match waited(&mut child, patience) {
+        None => Copying::Unknown(format!(
+            "pandoc gave no answer within {} seconds",
+            patience.as_secs()
+        )),
+        Some(false) => Copying::Unknown("pandoc failed on the pictures it was given".to_string()),
+        Some(true) if wrote_outside(probe.path(), &inside) => Copying::Unsafe,
+        Some(true) => Copying::Safe,
+    }
 }
 
-/// The two pictures of the advisories, each climbing two folders up from the
-/// media folder: once percent-encoded, and once encoded twice.
-const CLIMBING: &str = "![](data://image/png;base64,aGVsbG8=;.lua+%2f%2e%2e%2f%2e%2e%2fonce%2elua)\n\n![](data://image/png;base64,aGVsbG8=;.lua+%252f%252e%252e%252f%252e%252e%252ftwice%252elua)\n";
+/// Whether `child` finished, and well, within `patience`. A child still running
+/// then is stopped, so nothing is left behind.
+fn waited(child: &mut Child, patience: Duration) -> Option<bool> {
+    let deadline = Instant::now() + patience;
+    loop {
+        match child.try_wait() {
+            Ok(Some(status)) => return Some(status.success()),
+            Ok(None) if Instant::now() < deadline => {
+                std::thread::sleep(Duration::from_millis(25));
+            }
+            _ => {
+                let _ = child.kill();
+                let _ = child.wait();
+                return None;
+            }
+        }
+    }
+}
+
+/// Whether anything but a folder is in `folder` outside `inside`, however deep. A
+/// link counts, since it is written as much as a file is; a folder that cannot be
+/// read counts too.
+fn wrote_outside(folder: &Path, inside: &Path) -> bool {
+    let Ok(found) = fs::read_dir(folder) else {
+        return true;
+    };
+    found.into_iter().any(|entry| {
+        let Ok(entry) = entry else { return true };
+        let path = entry.path();
+        if path == inside {
+            return false;
+        }
+        match entry.file_type() {
+            Ok(kind) if kind.is_dir() => wrote_outside(&path, inside),
+            _ => true,
+        }
+    })
+}
+
+/// The two pictures of the advisories, each climbing three folders up from where
+/// it is copied: once percent-encoded, and once encoded twice.
+const CLIMBING: &str = "![](data://image/png;base64,aGVsbG8=;.lua+%2f%2e%2e%2f%2e%2e%2f%2e%2e%2fonce%2elua)\n\n![](data://image/png;base64,aGVsbG8=;.lua+%252f%252e%252e%252f%252e%252e%252f%252e%252e%252ftwice%252elua)\n";
 
 /// What one import is run with: the options, then `--`, then the file.
 ///
@@ -195,9 +277,9 @@ const CLIMBING: &str = "![](data://image/png;base64,aGVsbG8=;.lua+%2f%2e%2e%2f%2
 /// beside it, since `--extract-media` writes after the reading is done.
 ///
 /// Only when `media` is true, which is a pandoc that keeps those pictures inside
-/// the folder; see `extracts_safely`. On an older one the words still come in and
-/// the pictures stay behind, because the alternative lets the document write
-/// anywhere on this machine.
+/// the folder; see `copying`. On any other the words still come in and the
+/// pictures stay behind, because the alternative lets the document write anywhere
+/// on this machine; see `left_out`.
 fn reading(source: &str, media: bool) -> Vec<&str> {
     let mut args = vec!["--sandbox", "--to", READ_AS, "--wrap", "none"];
     if media {
@@ -214,7 +296,7 @@ fn reading(source: &str, media: bool) -> Vec<&str> {
 /// whichever folder the app happens to have been started in, which for an app
 /// launched from its own shortcut is a folder nobody would think to look in.
 #[tauri::command(async)]
-pub fn import_document(app: AppHandle, path: String) -> Result<String, String> {
+pub fn import_document(app: AppHandle, path: String) -> Result<Imported, String> {
     // A file the reader picked in the dialog, judged as a path before pandoc is
     // handed it; see `chosen`.
     let source = chosen(&app, &path)?;
@@ -224,20 +306,51 @@ pub fn import_document(app: AppHandle, path: String) -> Result<String, String> {
         .map(Path::to_path_buf)
         .ok_or_else(|| format!("{path} is not in a folder Orden can write to"))?;
     let source = source.to_string_lossy().to_string();
+    let copying = extracts_safely();
 
     let result = pandoc()
         .current_dir(&beside)
-        .args(reading(&source, extracts_safely()))
+        .args(reading(&source, copying == Copying::Safe))
         .output()
         .map_err(|error| format!("pandoc could not start: {error}. Is it installed?"))?;
 
     if result.status.success() {
-        return String::from_utf8(result.stdout)
-            .map_err(|error| format!("pandoc returned something that is not text: {error}"));
+        let markdown = String::from_utf8(result.stdout)
+            .map_err(|error| format!("pandoc returned something that is not text: {error}"))?;
+        let left_out = left_out(&copying, &markdown);
+        return Ok(Imported { markdown, left_out });
     }
 
     Err(read_refusal(&result.stderr))
 }
+
+/// A document read in: its words, and why its pictures were left out when they
+/// were.
+#[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Imported {
+    markdown: String,
+    left_out: Option<String>,
+}
+
+/// Why the pictures of a document read in without `--extract-media` are not
+/// there, for a document that has any: pandoc still writes a link to each.
+fn left_out(copying: &Copying, markdown: &str) -> Option<String> {
+    if !markdown.contains("![") && !markdown.contains("<img") {
+        return None;
+    }
+    match copying {
+        Copying::Safe => None,
+        Copying::Unsafe => Some(PICTURES_LEFT_OUT.to_string()),
+        Copying::Unknown(why) => Some(format!(
+            "The pictures were left out, since it could not be checked that pandoc copies them safely: {why}"
+        )),
+    }
+}
+
+/// Why a document came in without its pictures on a pandoc that copies them
+/// unsafely.
+const PICTURES_LEFT_OUT: &str = "The pictures were left out: this pandoc can be made to write pictures outside their folder, and 3.1.6 or newer brings them in";
 
 /// Why an import did not happen. A pandoc older than 2.15 has no sandbox and says
 /// it does not know the option; the import is refused rather than run without it,
@@ -313,7 +426,7 @@ pub fn run_pandoc(
 /// copied beside it, into `Deck_files` for `Deck.html`, the way a browser saves a
 /// page, and the deck points there. That copying is `--extract-media`, so a deck
 /// is refused on a pandoc that lets a picture's name lead it out of that folder;
-/// see `extracts_safely`.
+/// see `copying`.
 fn convert(
     source: &str,
     target: &Path,
@@ -326,8 +439,14 @@ fn convert(
         command.arg(joined("--resource-path=", folder.as_os_str()));
     }
     if format == "revealjs" {
-        if !extracts_safely() {
-            return Err(DECK_REFUSAL.to_string());
+        match extracts_safely() {
+            Copying::Safe => {}
+            Copying::Unsafe => return Err(DECK_REFUSAL.to_string()),
+            Copying::Unknown(why) => {
+                return Err(format!(
+                    "The deck was not written, since it could not be checked that pandoc copies its pictures safely: {why}"
+                ))
+            }
         }
         let beside = target
             .parent()
@@ -428,10 +547,13 @@ fn complaint(stderr: &[u8], fallback: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::{
-        complaint, convert, extracts_safely, has_pandoc, is_format, not_found, pandoc,
-        read_refusal, reading, DECK_REFUSAL,
+        complaint, convert, extracts_safely, has_pandoc, is_format, left_out, not_found, pandoc,
+        read_refusal, reading, wrote_outside, Copying, DECK_REFUSAL, PICTURES_LEFT_OUT,
     };
+    #[cfg(unix)]
+    use super::{copying, PATIENCE};
     use std::fs;
+    use std::io::{Read as _, Write as _};
     use std::path::Path;
 
     /// An import, run the way `import_document` runs it, on a document in `beside`:
@@ -440,7 +562,7 @@ mod tests {
         let source = beside.join(name).to_string_lossy().to_string();
         let result = pandoc()
             .current_dir(beside)
-            .args(reading(&source, extracts_safely()))
+            .args(reading(&source, extracts_safely() == Copying::Safe))
             .output()
             .expect("pandoc runs");
         (
@@ -519,33 +641,18 @@ mod tests {
         }
     }
 
-    /// The sandbox keeps the pictures inside a Word file, which come out beside it
-    /// on a pandoc that copies them safely. On an older one the words come in and
-    /// no picture is written at all.
-    #[test]
-    fn a_picture_inside_a_document_still_comes_out_beside_it() {
-        if !pandoc_here() {
-            return;
-        }
-        let folder = tempfile::tempdir().expect("a folder");
-        let beside = folder.path();
+    /// A Word file called `name` in `beside`, made by pandoc from a note with one
+    /// picture in it.
+    fn docx_with_picture(beside: &Path, name: &str) {
         fs::write(beside.join("dot.png"), DOT).expect("written");
         let made = pandoc()
             .current_dir(beside)
-            .args([
-                "--from",
-                "markdown",
-                "--to",
-                "docx",
-                "--output",
-                "with.docx",
-            ])
+            .args(["--from", "markdown", "--to", "docx", "--output", name])
             .arg("--")
             .arg("-")
             .stdin(std::process::Stdio::piped())
             .spawn()
             .and_then(|mut child| {
-                use std::io::Write as _;
                 child
                     .stdin
                     .take()
@@ -556,13 +663,29 @@ mod tests {
             .expect("pandoc writes a docx");
         assert!(made.success());
         fs::remove_file(beside.join("dot.png")).expect("removed");
+    }
+
+    /// The sandbox keeps the pictures inside a Word file, which come out beside it
+    /// on a pandoc that copies them safely. On any other the words come in, no
+    /// picture is written at all, and the reader is told why.
+    #[test]
+    fn a_picture_inside_a_document_still_comes_out_beside_it() {
+        if !pandoc_here() {
+            return;
+        }
+        let folder = tempfile::tempdir().expect("a folder");
+        let beside = folder.path();
+        docx_with_picture(beside, "with.docx");
 
         let (markdown, said) = imported(beside, "with.docx");
         assert!(markdown.contains("Text"), "{markdown}\n{said}");
-        if !extracts_safely() {
+        let copying = extracts_safely();
+        if copying != Copying::Safe {
             assert!(!beside.join("media").exists(), "{said}");
+            assert!(left_out(&copying, &markdown).is_some(), "{markdown}");
             return;
         }
+        assert_eq!(left_out(&copying, &markdown), None);
         assert!(markdown.contains("media/"), "{markdown}\n{said}");
         let media = fs::read_dir(beside.join("media"))
             .expect("a media folder")
@@ -570,38 +693,67 @@ mod tests {
         assert_eq!(media, 1, "{said}");
     }
 
-    /// A picture whose name, once pandoc undoes its percent-encoding, climbs out
-    /// of the media folder: CVE-2023-35936 and CVE-2023-38745, which `--sandbox`
-    /// does not cover. `levels` is how many folders up it climbs.
-    fn climbing(levels: usize) -> String {
-        format!(
-            "Text\n\n![](data://image/png;base64,aGVsbG8=;.lua+{}escaped%2elua)\n",
-            "%2f%2e%2e".repeat(levels) + "%2f"
-        )
-    }
-
-    /// A document somebody sent writes nothing outside the folder it is read in.
+    /// A Word file somebody sent, whose picture is named to climb three folders
+    /// up once pandoc undoes its percent-encoding. On pandoc 3.1.3 this got out of
+    /// the sandboxed import; see `copying`.
     #[test]
     fn an_import_writes_no_picture_outside_its_folder() {
         if !pandoc_here() {
             return;
         }
         let documents = tempfile::tempdir().expect("a folder");
-        let beside = documents.path().join("inner");
-        fs::create_dir(&beside).expect("a folder");
-        fs::write(beside.join("paper.md"), climbing(2)).expect("written");
+        let inner = documents.path().join("inner");
+        fs::create_dir(&inner).expect("a folder");
+        docx_with_picture(&inner, "plain.docx");
+        climb_out(&inner.join("plain.docx"), &inner.join("paper.docx"));
+        fs::remove_file(inner.join("plain.docx")).expect("removed");
 
-        let (markdown, said) = imported(&beside, "paper.md");
+        let (markdown, said) = imported(&inner, "paper.docx");
 
         assert!(markdown.contains("Text"), "{markdown}\n{said}");
         assert!(
-            !documents.path().join("escaped.lua").exists(),
+            !wrote_outside(documents.path(), &inner),
             "{markdown}\n{said}"
         );
     }
 
+    /// `from`, a Word file, written to `to` with each picture renamed to climb
+    /// three folders up out of the media folder, and every mention of it with it.
+    fn climb_out(from: &Path, to: &Path) {
+        const CLIMB: &str = "x%2f%2e%2e%2f%2e%2e%2f%2e%2e%2fescaped.lua";
+        let mut archive =
+            zip::ZipArchive::new(fs::File::open(from).expect("a docx")).expect("a zip");
+        let pictures: Vec<String> = archive
+            .file_names()
+            .filter_map(|name| name.strip_prefix("word/media/"))
+            .map(str::to_string)
+            .collect();
+        assert!(!pictures.is_empty());
+        let mut out = zip::ZipWriter::new(fs::File::create(to).expect("a file"));
+        for at in 0..archive.len() {
+            let mut entry = archive.by_index(at).expect("an entry");
+            let mut bytes = Vec::new();
+            entry.read_to_end(&mut bytes).expect("read");
+            let mut name = entry.name().to_string();
+            for picture in &pictures {
+                let renamed = format!("media/{CLIMB}{picture}");
+                name = name.replace(&format!("media/{picture}"), &renamed);
+                if name.ends_with(".rels") || name.ends_with(".xml") {
+                    bytes = String::from_utf8_lossy(&bytes)
+                        .replace(&format!("media/{picture}"), &renamed)
+                        .into_bytes();
+                }
+            }
+            out.start_file(name, zip::write::SimpleFileOptions::default())
+                .expect("an entry");
+            out.write_all(&bytes).expect("written");
+        }
+        out.finish().expect("a docx");
+    }
+
     /// A deck made from a note that came from somebody else writes nothing outside
-    /// its own folder.
+    /// its own folder: on a pandoc that copies safely the deck is written, on any
+    /// other it is refused.
     #[test]
     fn a_deck_writes_no_picture_outside_its_folder() {
         if !pandoc_here() {
@@ -610,10 +762,120 @@ mod tests {
         let elsewhere = tempfile::tempdir().expect("a folder");
         let inner = elsewhere.path().join("inner");
         fs::create_dir(&inner).expect("a folder");
+        // From `inner/Deck_files/<sha1>.lua+`, three levels up is `elsewhere`.
+        let note = "Text\n\n![](data://image/png;base64,aGVsbG8=;.lua+%2f%2e%2e%2f%2e%2e%2f%2e%2e%2fescaped%2elua)\n";
 
-        let _ = convert(&climbing(3), &inner.join("Deck.html"), "revealjs", None);
+        let made = convert(note, &inner.join("Deck.html"), "revealjs", None);
 
-        assert!(!elsewhere.path().join("escaped.lua").exists());
+        match extracts_safely() {
+            Copying::Safe => assert!(made.is_ok(), "{made:?}"),
+            _ => assert!(made.is_err(), "{made:?}"),
+        }
+        assert!(!wrote_outside(elsewhere.path(), &inner), "{made:?}");
+    }
+
+    /// The try is judged by what it finds on the disk, which a stand-in for pandoc
+    /// shows without needing an old one: a program that writes outside the folder
+    /// it was started in is not trusted, however deep the write.
+    #[cfg(unix)]
+    #[test]
+    fn a_pandoc_that_writes_outside_its_folder_is_not_trusted() {
+        assert_eq!(
+            copying(stand_in("cat >/dev/null; echo x > ../out"), PATIENCE),
+            Copying::Unsafe
+        );
+        assert_eq!(
+            copying(stand_in("cat >/dev/null; echo x > ../../../out"), PATIENCE),
+            Copying::Unsafe
+        );
+        assert_eq!(
+            copying(
+                stand_in("cat >/dev/null; ln -s /etc/passwd ../../link"),
+                PATIENCE
+            ),
+            Copying::Unsafe
+        );
+    }
+
+    /// And one that writes only inside it, or makes only folders, is.
+    #[cfg(unix)]
+    #[test]
+    fn a_pandoc_that_writes_only_inside_its_folder_is_trusted() {
+        assert_eq!(
+            copying(
+                stand_in("cat >/dev/null; mkdir m; echo x > m/dot.png"),
+                PATIENCE
+            ),
+            Copying::Safe
+        );
+        assert_eq!(
+            copying(stand_in("cat >/dev/null; mkdir ../folder"), PATIENCE),
+            Copying::Safe
+        );
+    }
+
+    /// A try that could not be made is neither: it says why, so the reader is not
+    /// told to update a pandoc that is new enough.
+    #[cfg(unix)]
+    #[test]
+    fn a_try_that_could_not_be_made_says_why() {
+        let Copying::Unknown(why) = copying(stand_in("exit 3"), PATIENCE) else {
+            panic!("a failed try is not an answer");
+        };
+        assert!(why.contains("failed"), "{why}");
+
+        let Copying::Unknown(why) =
+            copying(std::process::Command::new("/no/such/pandoc"), PATIENCE)
+        else {
+            panic!("a missing pandoc is not an answer");
+        };
+        assert!(why.contains("could not start"), "{why}");
+
+        let started = std::time::Instant::now();
+        let Copying::Unknown(why) = copying(
+            stand_in("exec sleep 30"),
+            std::time::Duration::from_millis(300),
+        ) else {
+            panic!("a hung pandoc is not an answer");
+        };
+        assert!(why.contains("no answer"), "{why}");
+        assert!(started.elapsed() < std::time::Duration::from_secs(10));
+    }
+
+    /// A shell running `script` in place of pandoc, given pandoc's arguments.
+    #[cfg(unix)]
+    fn stand_in(script: &str) -> std::process::Command {
+        let mut command = std::process::Command::new("sh");
+        command.args(["-c", script, "pandoc"]);
+        command
+    }
+
+    /// The pandoc the tests run with gives an answer, rather than a try that fell
+    /// over; on the CI's Linux row it is Ubuntu's mended 3.1.3.
+    #[test]
+    fn the_try_runs_on_this_machine() {
+        if !pandoc_here() {
+            return;
+        }
+        let copying = extracts_safely();
+        assert!(!matches!(copying, Copying::Unknown(_)), "{copying:?}");
+    }
+
+    /// A document with pictures, read in without them, says why; one without says
+    /// nothing.
+    #[test]
+    fn pictures_left_out_are_said() {
+        let with = "Text\n\n![a dot](media/rId20.png)\n";
+        assert_eq!(left_out(&Copying::Safe, with), None);
+        assert_eq!(
+            left_out(&Copying::Unsafe, with),
+            Some(PICTURES_LEFT_OUT.to_string())
+        );
+        let unknown = left_out(&Copying::Unknown("pandoc failed".to_string()), with);
+        assert!(
+            unknown.is_some_and(|said| said.contains("pandoc failed") && !said.contains("3.1.6"))
+        );
+        assert_eq!(left_out(&Copying::Unsafe, "Text\n"), None);
     }
 
     /// A note in a folder of its own, with its picture beside it, and a folder
@@ -665,11 +927,18 @@ mod tests {
         let target = elsewhere.path().join("Deck.html");
 
         let made = convert(WITH_PICTURE, &target, "revealjs", Some(note.path()));
-        if !extracts_safely() {
-            assert_eq!(made, Err(DECK_REFUSAL.to_string()));
-            assert!(DECK_REFUSAL.contains("3.1.6"));
-            assert!(!target.exists());
-            return;
+        match extracts_safely() {
+            Copying::Safe => {}
+            Copying::Unsafe => {
+                assert_eq!(made, Err(DECK_REFUSAL.to_string()));
+                assert!(DECK_REFUSAL.contains("3.1.6"));
+                assert!(!target.exists());
+                return;
+            }
+            Copying::Unknown(why) => {
+                assert!(made.is_err_and(|said| said.contains(&why) && !said.contains("3.1.6")));
+                return;
+            }
         }
         let missing = made.expect("converted");
 

@@ -327,7 +327,13 @@ export async function importDocument(): Promise<{ name: string; markdown: string
 
   if (typeof picked !== 'string') return null
 
-  const markdown = await invoke<string>('import_document', { path: picked })
+  // `leftOut` says why the pictures stayed behind, on a pandoc that cannot be
+  // trusted to copy them; see `copying` in pandoc.rs.
+  const { markdown, leftOut } = await invoke<{ markdown: string; leftOut: string | null }>(
+    'import_document',
+    { path: picked },
+  )
+  if (leftOut) busy.failed(leftOut)
   const name =
     picked
       .split(/[\\/]/)
