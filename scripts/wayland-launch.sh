@@ -34,6 +34,10 @@
 #   - with CERT=1, a site served over https (CERT_HOST, example.com unless said) and
 #     the certificate its page came with shown from the site's popover (#776,
 #     scripts/cert-drive.py);
+#   - with DNS=1, a name only a DNS over HTTPS server of the run's own knows
+#     (scripts/doh-server.py, its authority trusted in the user's NSS store), the web
+#     tab sent to it, and Settings > General > DNS set to that server: reached at once
+#     and after Orden is started again (#766, #767, scripts/dns-drive.py);
 #   - with SCHEME=1, a web tab's page drawn in the app's scheme as the app's scheme is
 #     switched, light and dark (#427, scripts/scheme-drive.py);
 #   - with POPUP=1, the space switcher, the web tab's menu and a canvas's pens' panel
@@ -231,6 +235,35 @@ PAGE
   endpoint
   set -- "$@" http://127.0.0.1:8765/
 fi
+# With DNS=1, a DNS over HTTPS server of the run's own, its certificate from an authority
+# made here and trusted in the user's NSS store, which is where Chromium on Linux takes
+# an authority somebody added from; a page served by name only it knows; and the web
+# tab opened on that name (#766, #767).
+dns_name=probe.test
+dns_provider=https://127.0.0.1:8443/dns-query
+if [ "${DNS:-0}" = 1 ]; then
+  mkdir -p "$out/site" "$out/doh"
+  printf '<!doctype html><title>reached by name</title><p>reached by name</p>' > "$out/site/index.html"
+  python3 -m http.server 8765 --bind 127.0.0.1 --directory "$out/site" > "$out/site.log" 2>&1 &
+  site_pid=$!
+  (
+    cd "$out/doh"
+    openssl req -x509 -newkey rsa:2048 -nodes -days 2 -subj "/CN=Orden run authority" \
+      -addext "basicConstraints=critical,CA:TRUE" -addext "keyUsage=critical,keyCertSign" \
+      -keyout ca.key -out ca.pem 2> /dev/null
+    openssl req -newkey rsa:2048 -nodes -subj "/CN=127.0.0.1" -keyout doh.key -out doh.csr 2> /dev/null
+    printf 'subjectAltName=IP:127.0.0.1\nextendedKeyUsage=serverAuth\n' > doh.ext
+    openssl x509 -req -in doh.csr -CA ca.pem -CAkey ca.key -CAcreateserial -days 2 \
+      -extfile doh.ext -out doh.pem 2> /dev/null
+  )
+  mkdir -p "$HOME/.pki/nssdb"
+  certutil -d "sql:$HOME/.pki/nssdb" -N --empty-password 2> /dev/null || true
+  certutil -d "sql:$HOME/.pki/nssdb" -A -t "C,," -n "Orden run authority" -i "$out/doh/ca.pem"
+  python3 "$here/doh-server.py" 8443 "$out/doh/doh.pem" "$out/doh/doh.key" "$dns_name" "$out/doh/asked.txt" > "$out/doh/server.log" 2>&1 &
+  doh_pid=$!
+  endpoint
+  set -- "$@" "http://$dns_name:8765/"
+fi
 # With TEXTSIZE=1, the endpoint and no page: the launch opens on its note (#680).
 [ "${TEXTSIZE:-0}" = 1 ] && endpoint
 # With CERT=1, the endpoint and a site over https, a real one: its certificate is the
@@ -334,6 +367,32 @@ if [ "$status" = 0 ] && [ "${CERT:-0}" = 1 ]; then
   python3 "$here/cert-drive.py" "$out" "${CERT_HOST:-example.com}" || status=1
 fi
 
+# The pages' DNS chosen in Settings and the name reached at once, then again once Orden
+# is quit and started again with no address (#766, #767).
+if [ "$status" = 0 ] && [ "${DNS:-0}" = 1 ]; then
+  sleep 3
+  python3 "$here/dns-drive.py" "$out" choose "$dns_name" "$dns_provider" "$out/doh/asked.txt" || status=1
+  if [ "$status" = 0 ]; then
+    # The tabs are written to the disk a few seconds after they change; see WORKER=1.
+    sleep 10
+    kill -TERM "$app_pid" 2>/dev/null || true
+    for _ in $(seq 50); do kill -0 "$app_pid" 2>/dev/null || break; sleep 0.2; done
+    kill -KILL "$app_pid" 2>/dev/null || true
+    wait "$app_pid" 2>/dev/null || true
+    : > "$out/doh/asked.txt"
+    endpoint
+    "${command[@]}" > "$out/orden-again.log" 2>&1 &
+    app_pid=$!
+    if wait_for_views 1; then
+      sleep 3
+      python3 "$here/dns-drive.py" "$out" again "$dns_name" "$dns_provider" "$out/doh/asked.txt" || status=1
+    else
+      echo "::error::no window mapped when started again"
+      status=1
+    fi
+  fi
+fi
+
 if [ "$status" = 0 ] && [ "${SCHEME:-0}" = 1 ]; then
   sleep 3
   python3 "$here/scheme-drive.py" sway "$out" "$app_pid" || status=1
@@ -426,6 +485,7 @@ kill "$app_pid" 2>/dev/null || true
 wait "$app_pid" 2>/dev/null || true
 [ -n "$portal_pid" ] && kill "$portal_pid" 2>/dev/null || true
 [ -n "$site_pid" ] && kill "$site_pid" 2>/dev/null || true
+[ -n "${doh_pid:-}" ] && kill "$doh_pid" 2>/dev/null || true
 [ -n "$pointer_pid" ] && kill "$pointer_pid" 2>/dev/null || true
 kill "$sway_pid" 2>/dev/null || true
 
