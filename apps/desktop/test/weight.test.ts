@@ -840,12 +840,14 @@ function holds(tail: string): boolean {
  *  (#681 to #948): each fix raised this for itself, and these are what they come to
  *  in one build. Measured 3,349,056.
  *
- *  Raised 2026-10-25, to 3,354,000, for B449 and B450: a `#` in inline code is no tag,
- *  in the search index as in a task line, so the index's tag reader cuts the note into
- *  its blocks and each block into its code spans, which run on across a paragraph's
- *  lines (`blocksOf` in search/tags.ts; `codeAndWords`, moved from escapes.ts to
- *  tags.ts so no module is added). Measured 3,353,188. */
-const BUDGET = 3_354_000
+ *  Raised 2026-10-25, to 3,355,700, for the third bug burn-down's first fixes (#952 to
+ *  #960). Main with #955, #957, #958, #959 and #960 in it measured 3,350,728, already
+ *  over. On top of that, B449 and B450 (#956): a `#` in inline code is no tag, in the
+ *  search index as in a task line, so the index's tag reader cuts the note into its
+ *  blocks and each block into its code spans, which run on across a paragraph's lines
+ *  (`blocksOf` in search/tags.ts; `codeAndWords`, moved from escapes.ts to tags.ts so
+ *  no module is added). Measured 3,354,867 and 381 modules. */
+const BUDGET = 3_355_700
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
