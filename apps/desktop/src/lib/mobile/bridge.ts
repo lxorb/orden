@@ -96,24 +96,13 @@ export function onTheActivity(): boolean {
  *  One promise, shared: two features asking at the same moment are one question. */
 let word: Promise<string> | undefined
 
-/** The word once the activity has said it. Kept apart from the question, because an
- *  answer can land after the question was given up on, and from then on it is the
- *  word all the same. */
+/** The word once said; an answer that lands after its caller gave up still counts. */
 let known: string | undefined
-
-/** Settles with the word the first time the activity says it, however late. */
 let heard: (word: string) => void = () => undefined
-const spoken = new Promise<string>((said) => {
-  heard = said
-})
+const spoken = new Promise<string>((said) => (heard = said))
 
-/** How long a caller waits for the answer before it goes on with no word. An answer
- *  is one line run in the page and is usually there within a frame, but it goes
- *  through the UI thread, which on a cold start can be busy for longer than that -
- *  and it never comes while the activity has no page yet, or to a framed page that
- *  asks. So a caller is told nothing after this long, but nothing is not kept: the
- *  next caller asks again, and an answer that lands late is the word from then on
- *  (B456). A wait with no end would be a key field that never settles. */
+/** How long a caller waits before it goes on with no word, which is never kept: the
+ *  UI thread can be busy for longer on a cold start (B456). */
 const PATIENCE = 2000
 
 export function frameWord(): Promise<string> {
@@ -123,56 +112,39 @@ export function frameWord(): Promise<string> {
   const ask = method('askForTheFrame')
   if (!ask) return Promise.resolve('')
 
-  // An answer, or a throw, can come inside `ask` itself, before the question is kept.
-  const question = { settled: false }
   const asking = new Promise<string>((said) => {
-    const settle = (text: string): void => {
-      question.settled = true
-      said(text)
-    }
-    const timer = setTimeout(() => settle(''), PATIENCE)
-    // Left on the window after a wait is given up on, so a late answer is still
-    // heard; a second answer to a second question says the same word. An empty one
-    // is no answer, and waits out the question like silence.
+    const timer = setTimeout(() => said(''), PATIENCE)
+    // Left on the window, so a late answer is still heard.
     answer('__nibFrame', (text: string) => {
       if (!text) return
       known = text
       heard(text)
       clearTimeout(timer)
-      settle(text)
+      said(text)
     })
     try {
       ask()
     } catch {
       clearTimeout(timer)
-      settle('')
+      said('')
     }
   })
-  // Kept only while it waits, and let go of once it has settled, so no word is never
-  // what the next caller is handed.
-  if (!question.settled) word = asking
+  word = asking
   void asking.then(() => {
     if (word === asking) word = undefined
   })
   return asking
 }
 
-/** The word, once the activity has said it - never before, and never anywhere there
- *  is no activity. For a caller that went on with no word and had its call refused:
- *  the share that started the app, the plan handed to the alarms, a widget row. Each
- *  does again what was dropped, once, when this settles. */
+/** The word, once said: a caller whose call went without it redoes it then. */
 export function wordSaid(): Promise<string> {
   return spoken
 }
 
-/** A call that wants the word, made before the activity said it. What a caller throws
- *  where nothing it did would be visible otherwise - a key that looked saved, or
- *  looked missing, when the activity only refused to say. */
+/** Thrown where a call dropped without the word would look done. */
 export class NoWord extends Error {
-  constructor() {
-    super('the phone app is still starting; try again in a moment')
-    this.name = 'NoWord'
-  }
+  override readonly name = 'NoWord'
+  override readonly message = 'the phone app is still starting; try again in a moment'
 }
 
 /** What the activity calls back on. Kotlin cannot hold a reference to a function,

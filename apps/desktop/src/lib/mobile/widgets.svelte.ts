@@ -158,8 +158,7 @@ export function watchWidgets(): () => void {
           push(word, said)
           return
         }
-        // Dropped by the activity, so not drawn, and not what was last drawn either.
-        // Drawn once the word is said, unless something newer has been by then.
+        // Dropped, so not drawn: drawn once the word is said, unless newer rows were.
         if (last === said) last = ''
         void wordSaid().then((known) => {
           if (gone || last) return

@@ -123,8 +123,7 @@ export function openable(said: string): string | null {
   return found
 }
 
-/** Whether a take is already waiting for the word: one is enough, since it reads all
- *  the activity holds. */
+/** A take waits for the word; one is enough. */
 let retaking = false
 
 /** Everything one intent was carrying, in the order it matters: the note a widget
@@ -132,9 +131,8 @@ let retaking = false
 async function take(): Promise<void> {
   // The word, because the bridge is in every frame; see `frameWord`.
   const word = await frameWord()
-  // Every call below wants the word and does nothing without it, while the activity
-  // keeps what it was handed until it is asked with one: asked again once it is said,
-  // or the share that started the app is never read (B467).
+  // The activity keeps what it holds until asked with the word: asked again once it
+  // is said, or the share that started the app is never read (B467).
   if (!word) {
     if (!retaking) {
       retaking = true
