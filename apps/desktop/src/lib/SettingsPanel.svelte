@@ -2534,7 +2534,16 @@
     font-size: var(--touch-text);
   }
 
-  .sheet.phone .setting .name small {
+  /* Each step a child rather than any descendant, which is what the markup is: a row's
+     line under its name is that name's own child, and the name the row's. Said loosely,
+     four classes deep, this one rule took Svelte's style pruning 55 seconds to answer
+     (the CI test job's stalls): it walks every way a `small` could sit under a `.name` under a
+     `.setting` under the sheet, through every snippet this panel renders and every
+     component inside them, and the `?` in each written-out row (#768) multiplied the
+     ways. A cold test run compiled it inside the one process that hands every worker
+     its modules, which stopped answering for a minute, and the workers it was starting
+     timed out. See test/compile-time.test.ts. */
+  .sheet.phone .setting > .name > small {
     font-size: var(--text-base);
   }
 
