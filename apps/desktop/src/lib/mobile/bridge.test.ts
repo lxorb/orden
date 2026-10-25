@@ -77,3 +77,45 @@ test('nothing to ask is no word, at once', async () => {
 
   expect(await frameWord()).toBe('')
 })
+
+test('an ask that throws is no word, and is asked again next time', async () => {
+  let throwing = true
+  vi.stubGlobal('__NIB_SYSTEM__', {
+    insets: () => '{}',
+    askForTheFrame: () => {
+      asked++
+      if (throwing) throw new Error('gone')
+    },
+  })
+  const { frameWord } = await import('./bridge')
+
+  expect(await frameWord()).toBe('')
+  throwing = false
+  void frameWord()
+  expect(asked).toBe(2)
+})
+
+test('an empty answer is no answer: the question still waits for the word', async () => {
+  const { frameWord } = await import('./bridge')
+  const first = frameWord()
+  say('')
+  void frameWord()
+  expect(asked).toBe(1)
+
+  say('the word')
+  expect(await first).toBe('the word')
+})
+
+test('the word said late is heard by whoever waits for it', async () => {
+  const { frameWord, wordSaid } = await import('./bridge')
+  let heard: string | undefined
+  void wordSaid().then((word) => (heard = word))
+
+  void frameWord()
+  await vi.advanceTimersByTimeAsync(5000)
+  expect(heard).toBeUndefined()
+
+  say('the word')
+  await vi.advanceTimersByTimeAsync(0)
+  expect(heard).toBe('the word')
+})

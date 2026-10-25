@@ -7,7 +7,7 @@
  *  Worker's push, so the page rings while it is open. */
 
 import { t } from '../i18n.svelte'
-import { frameWord, method } from '../mobile/bridge'
+import { frameWord, method, NoWord } from '../mobile/bridge'
 import { notify } from '../notify'
 import { parsed } from '../stored'
 import { invoke, isDesktop } from '../tauri'
@@ -43,7 +43,12 @@ export async function hand(plan: readonly Reminder[]): Promise<boolean> {
 
   const alarms = method('reminders')
   if (alarms) {
-    alarms(await frameWord(), JSON.stringify({ reminders, words: words() }))
+    // With no word the activity drops the plan and says nothing; a plan taken for
+    // handed then would ring nothing this launch (B456). Thrown, so it is handed
+    // again; see start.svelte.ts.
+    const word = await frameWord()
+    if (!word) throw new NoWord()
+    alarms(word, JSON.stringify({ reminders, words: words() }))
     return true
   }
   return false

@@ -46,6 +46,7 @@
     reachable,
   } from './ai/providers'
   import { glassesKey } from './even/key.svelte'
+  import { NoWord, wordSaid } from './mobile/bridge'
   import { message, t } from './i18n.svelte'
   import { dur } from './motion'
   import Select from './Select.svelte'
@@ -112,8 +113,12 @@
   })
 
   async function look(id: string) {
-    const found = await hasKey(id).catch(() => false)
-    keyed = { ...keyed, [id]: found }
+    const found = await hasKey(id).catch((error: unknown) => {
+      // A phone that would not say its word yet: not "not set", but asked again.
+      if (error instanceof NoWord) void wordSaid().then(() => look(id))
+      return error instanceof NoWord ? undefined : false
+    })
+    if (found !== undefined) keyed = { ...keyed, [id]: found }
   }
 
   async function take(provider: Provider, typed: string) {

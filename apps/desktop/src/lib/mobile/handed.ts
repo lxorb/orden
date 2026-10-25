@@ -28,7 +28,7 @@ import { joinPath } from '../tauri'
 import { waited } from '../timing'
 import { views } from '../views.svelte'
 import { workspace } from '../workspace.svelte'
-import { answer, frameWord, method, onTheActivity } from './bridge'
+import { answer, frameWord, method, onTheActivity, wordSaid } from './bridge'
 import {
   type Arrived,
   arrivedFrom,
@@ -123,11 +123,25 @@ export function openable(said: string): string | null {
   return found
 }
 
+/** Whether a take is already waiting for the word: one is enough, since it reads all
+ *  the activity holds. */
+let retaking = false
+
 /** Everything one intent was carrying, in the order it matters: the note a widget
  *  row named, then the command a tile asked for, then whatever was shared. */
 async function take(): Promise<void> {
   // The word, because the bridge is in every frame; see `frameWord`.
   const word = await frameWord()
+  // Every call below wants the word and does nothing without it, while the activity
+  // keeps what it was handed until it is asked with one: asked again once it is said,
+  // or the share that started the app is never read (B467).
+  if (!word) {
+    if (!retaking) {
+      retaking = true
+      void wordSaid().then(() => take())
+    }
+    return
+  }
   const asked = askedFrom(method('handed')?.(word) ?? '')
 
   const open = asked.open ? openable(asked.open) : null

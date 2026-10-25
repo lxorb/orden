@@ -1,8 +1,8 @@
 import { afterEach, expect, test, vi } from 'vitest'
 
-/** A reminder's presses asked for while the activity does not say the word, as on a
- *  cold start before it has a page (B456). The ask goes on with no word rather than
- *  waiting for one that may never come, and a word said late is used next time. */
+/** The reminders and the phone's activity, while it does not say the word, as on a
+ *  cold start before it has a page (B456). Nothing waits for a word that may never
+ *  come, and nothing dropped for the lack of one is taken for done. */
 
 vi.mock('../tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../tauri')>()),
@@ -10,12 +10,14 @@ vi.mock('../tauri', async (importOriginal) => ({
 }))
 
 const taken = vi.fn((said: string) => (said === 'the word' ? '[]' : ''))
+const alarms = vi.fn()
 
 vi.stubGlobal('window', globalThis)
 vi.stubGlobal('__NIB_SYSTEM__', {
   insets: () => '{}',
   askForTheFrame: () => undefined,
   remindersTaken: taken,
+  reminders: alarms,
 })
 
 afterEach(() => {
@@ -35,4 +37,18 @@ test('a reminder’s presses are asked for without a word that never comes', asy
   ;(globalThis as unknown as { __nibFrame: (word: string) => void }).__nibFrame('the word')
   await take()
   expect(taken).toHaveBeenLastCalledWith('the word')
+})
+
+test('a plan the alarms could not take is not said to be handed', async () => {
+  vi.resetModules()
+  vi.useFakeTimers()
+  alarms.mockClear()
+  const { hand } = await import('./platform')
+  const { NoWord } = await import('../mobile/bridge')
+
+  const handing = hand([])
+  const failed = expect(handing).rejects.toBeInstanceOf(NoWord)
+  await vi.advanceTimersByTimeAsync(2000)
+  await failed
+  expect(alarms).not.toHaveBeenCalled()
 })

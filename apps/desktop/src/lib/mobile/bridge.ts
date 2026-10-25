@@ -101,6 +101,12 @@ let word: Promise<string> | undefined
  *  word all the same. */
 let known: string | undefined
 
+/** Settles with the word the first time the activity says it, however late. */
+let heard: (word: string) => void = () => undefined
+const spoken = new Promise<string>((said) => {
+  heard = said
+})
+
 /** How long a caller waits for the answer before it goes on with no word. An answer
  *  is one line run in the page and is usually there within a frame, but it goes
  *  through the UI thread, which on a cold start can be busy for longer than that -
@@ -117,23 +123,56 @@ export function frameWord(): Promise<string> {
   const ask = method('askForTheFrame')
   if (!ask) return Promise.resolve('')
 
-  word = new Promise<string>((said) => {
-    const timer = setTimeout(() => {
-      word = undefined
-      said('')
-    }, PATIENCE)
-    // Left on the window after a wait is given up on, so a late answer is still
-    // heard; a second answer to a second question says the same word.
-    answer('__nibFrame', (text: string) => {
-      if (text) known = text
-      clearTimeout(timer)
-      word = undefined
+  // An answer, or a throw, can come inside `ask` itself, before the question is kept.
+  const question = { settled: false }
+  const asking = new Promise<string>((said) => {
+    const settle = (text: string): void => {
+      question.settled = true
       said(text)
+    }
+    const timer = setTimeout(() => settle(''), PATIENCE)
+    // Left on the window after a wait is given up on, so a late answer is still
+    // heard; a second answer to a second question says the same word. An empty one
+    // is no answer, and waits out the question like silence.
+    answer('__nibFrame', (text: string) => {
+      if (!text) return
+      known = text
+      heard(text)
+      clearTimeout(timer)
+      settle(text)
     })
-    ask()
+    try {
+      ask()
+    } catch {
+      clearTimeout(timer)
+      settle('')
+    }
   })
+  // Kept only while it waits, and let go of once it has settled, so no word is never
+  // what the next caller is handed.
+  if (!question.settled) word = asking
+  void asking.then(() => {
+    if (word === asking) word = undefined
+  })
+  return asking
+}
 
-  return word
+/** The word, once the activity has said it - never before, and never anywhere there
+ *  is no activity. For a caller that went on with no word and had its call refused:
+ *  the share that started the app, the plan handed to the alarms, a widget row. Each
+ *  does again what was dropped, once, when this settles. */
+export function wordSaid(): Promise<string> {
+  return spoken
+}
+
+/** A call that wants the word, made before the activity said it. What a caller throws
+ *  where nothing it did would be visible otherwise - a key that looked saved, or
+ *  looked missing, when the activity only refused to say. */
+export class NoWord extends Error {
+  constructor() {
+    super('the phone app is still starting; try again in a moment')
+    this.name = 'NoWord'
+  }
 }
 
 /** What the activity calls back on. Kotlin cannot hold a reference to a function,

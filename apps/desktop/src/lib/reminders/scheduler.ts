@@ -34,7 +34,8 @@ export interface Host {
   auto(): number | null
   now(): number
   /** Hands the whole plan to whatever rings with nib closed. Answers whether anything
-   *  does: false is the page's to ring. */
+   *  does: false is the page's to ring. Throws where it could not be handed, which is
+   *  the page's to ring too, and to hand again on the next pass. */
   hand(plan: readonly Reminder[]): Promise<boolean>
   /** Rings a plan in the page, while it runs: what the system will not. */
   ring(plan: readonly Reminder[]): void
@@ -101,7 +102,11 @@ export class Scheduler {
     if (this.handed && samePlan(this.handed, wanted)) return
 
     this.handed = wanted
-    const system = await this.host.hand(wanted).catch(() => false)
+    // A plan that was not taken is not handed: the next pass hands it again.
+    const system = await this.host.hand(wanted).catch(() => {
+      if (this.handed === wanted) this.handed = null
+      return false
+    })
     this.host.ring(system ? [] : wanted)
   }
 
