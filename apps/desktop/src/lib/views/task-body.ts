@@ -103,25 +103,33 @@ function inCode(lines: readonly string[]): boolean[] {
  *  mark: `- a`, `\\- a`, `1. a`, `1\\. a`. */
 const BULLET = /^([ \t]*)(\\*)([-*+](?:[ \t]|$))/
 const NUMBER = /^([ \t]*\d{1,9})(\\*)([.)](?:[ \t]|$))/
+/** A fence's delimiter, and the backslashes already before it. */
+const FENCE = /^([ \t]*)(\\*)(```|~~~)/
 
 /** A description's line as the note writes it: one that would start a list item gets a
  *  backslash before its mark, which is the same words to markdown. The description ends
  *  at the first list item, so `- a` written bare would be a list item of the task (or,
  *  as `- [ ] x`, a sub-task), outside the lines the next write replaces, and every save
  *  of the task view wrote it again. A line that had a backslash there already gets one
- *  more, so reading takes exactly one off and every description reads back as typed. */
+ *  more, so reading takes exactly one off and every description reads back as typed.
+ *  Outside a code block a fence is one left open (`inCode`), which would hide every
+ *  later line of the note from the index; it is written `\\```` the same way. */
 function escaped(line: string): string {
-  return line.replace(BULLET, '$1\\$2$3').replace(NUMBER, '$1\\$2$3')
+  return line.replace(BULLET, '$1\\$2$3').replace(NUMBER, '$1\\$2$3').replace(FENCE, '$1\\$2$3')
 }
 
 /** A description's line as it was typed: `escaped` undone. */
 function unescaped(line: string): string {
-  return line.replace(ESCAPED_BULLET, '$1$2').replace(ESCAPED_NUMBER, '$1$2')
+  return line
+    .replace(ESCAPED_BULLET, '$1$2')
+    .replace(ESCAPED_NUMBER, '$1$2')
+    .replace(ESCAPED_FENCE, '$1$2')
 }
 
-/** The same two with a backslash before the mark, the first of which `unescaped` takes off. */
+/** The same with a backslash before the mark, the first of which `unescaped` takes off. */
 const ESCAPED_BULLET = /^([ \t]*)\\(\\*[-*+](?:[ \t]|$))/
 const ESCAPED_NUMBER = /^([ \t]*\d{1,9})\\(\\*[.)](?:[ \t]|$))/
+const ESCAPED_FENCE = /^([ \t]*)\\(\\*(?:```|~~~))/
 
 /** A line with up to `columns` of its indent taken off. */
 function dedent(line: string, columns: number): string {
