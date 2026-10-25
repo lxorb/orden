@@ -31,6 +31,9 @@
 #   - with WORKER=1, a web tab's page whose worker has to answer it, as it opens and
 #     after Orden is quit and started again with no address (#777,
 #     scripts/worker-drive.py);
+#   - with CERT=1, a site served over https (CERT_HOST, example.com unless said) and
+#     the certificate its page came with shown from the site's popover (#776,
+#     scripts/cert-drive.py);
 #   - with SCHEME=1, a web tab's page drawn in the app's scheme as the app's scheme is
 #     switched, light and dark (#427, scripts/scheme-drive.py);
 #   - with POPUP=1, the space switcher, the web tab's menu and a canvas's pens' panel
@@ -230,6 +233,12 @@ PAGE
 fi
 # With TEXTSIZE=1, the endpoint and no page: the launch opens on its note (#680).
 [ "${TEXTSIZE:-0}" = 1 ] && endpoint
+# With CERT=1, the endpoint and a site over https, a real one: its certificate is the
+# point (#776).
+if [ "${CERT:-0}" = 1 ]; then
+  endpoint
+  set -- "$@" "https://${CERT_HOST:-example.com}/"
+fi
 if [ "${DRIVE:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${SCHEME:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ] || [ "${TEXTSIZE:-0}" = 1 ] || [ "${GROUND:-0}" = 1 ]; then
   # And a keyboard with it, where xkbcommon's tools can say what its keys are.
   if command -v xkbcli > /dev/null; then
@@ -318,6 +327,11 @@ fi
 if [ "$status" = 0 ] && [ "${FLASH:-0}" = 1 ]; then
   sleep 3
   python3 "$here/flash-drive.py" sway "$out" "$app_pid" || status=1
+fi
+
+if [ "$status" = 0 ] && [ "${CERT:-0}" = 1 ]; then
+  sleep 3
+  python3 "$here/cert-drive.py" "$out" "${CERT_HOST:-example.com}" || status=1
 fi
 
 if [ "$status" = 0 ] && [ "${SCHEME:-0}" = 1 ]; then
