@@ -123,10 +123,34 @@ describe('what is written under a task', () => {
       'Fix config',
       'Next',
     ])
-    // A fence left open is no code block yet: what follows it stays escaped.
-    const open = withDescription('- [ ] Fix config\n', task, '```\n- a') ?? ''
-    expect(open).toBe('- [ ] Fix config\n  ```\n  \\- a\n')
+    // A fence left open is no code block yet: it is written escaped, or it would hide
+    // every later line of the note from the index, and what follows it stays escaped.
+    const open = withDescription('- [ ] Fix config\n- [ ] Next\n', task, '```\n- a') ?? ''
+    expect(open).toBe('- [ ] Fix config\n  \\```\n  \\- a\n- [ ] Next\n')
     expect(descriptionOf(open, task)?.text).toBe('```\n- a')
+    expect(taskRowsOfText('S', 'n.md', open).map((row) => row.task?.text)).toEqual([
+      'Fix config',
+      'Next',
+    ])
+    const typedEscape = withDescription('- [ ] Fix config\n', task, '\\```\n~~~') ?? ''
+    expect(typedEscape).toBe('- [ ] Fix config\n  \\\\```\n  \\~~~\n')
+    expect(descriptionOf(typedEscape, task)?.text).toBe('\\```\n~~~')
+  })
+
+  test('a code block under a tab-indented task in a CRLF note is written as typed', () => {
+    const task = at(1, 'Task')
+    const note = '# H\r\n\t- [ ] Task\r\n- [ ] Next\r\n'
+    const typed = '```\n- a\n```\n~~~'
+    const written = withDescription(note, task, typed) ?? ''
+    expect(written).toBe(
+      '# H\r\n\t- [ ] Task\r\n\t  ```\r\n\t  - a\r\n\t  ```\r\n\t  \\~~~\r\n- [ ] Next\r\n',
+    )
+    expect(descriptionOf(written, task)?.text).toBe(typed)
+    expect(withDescription(written, task, typed)).toBeNull()
+    expect(taskRowsOfText('S', 'n.md', written).map((row) => row.task?.text)).toEqual([
+      'Task',
+      'Next',
+    ])
   })
 
   test('a sub-task goes at the end of what the task holds', () => {
@@ -210,9 +234,10 @@ describe('what is written under a task, fuzzed', () => {
   }
   const pick = <T>(from: readonly T[]): T => from[random(from.length)] as T
   const STARTS = ['- ', '\\- ', '1. ', '1\\. ', '* ', '+ ', '  ', '\t', '[ ] ', '\\[ ] ', '', '-']
+  const FENCES = ['```', '~~~', '```js', '\\```', '\\\\~~~', '   ```', '    ```', '\t```']
   const MORE = ['x ', '> ', '# ', '    - ', '- [ ] ', '* [x] ', '1. [ ] ', '\\- [ ] ', '- \\[ ] ']
   const WORDS = ['a', 'b c', ' ', '', '- d', '\\', '[x]', '[ ] e']
-  const line = () => pick([...STARTS, ...MORE]) + pick(WORDS)
+  const line = () => (random(6) === 0 ? pick(FENCES) : pick([...STARTS, ...MORE]) + pick(WORDS))
   /** Words as they are typed: lines, and code blocks that are closed. */
   function typed(): string {
     const out: string[] = []
@@ -227,11 +252,11 @@ describe('what is written under a task, fuzzed', () => {
     }
     return out.join('\n')
   }
-  /** The note's tasks, each with the task it is under. */
+  /** The note's tasks, each with the task and the heading it is under. */
   const tasksOf = (note: string) => {
     const rows = taskRowsOfText('S', 'n.md', note)
     const at = new Map(rows.map((row) => [row.anchor?.line, row.task?.text]))
-    return rows.map((row) => [row.task?.text, at.get(row.task?.parent)])
+    return rows.map((row) => [row.task?.text, at.get(row.task?.parent), row.task?.section])
   }
   const NOTES = [
     ['- [ ] Task', '  - [ ] Sub', '  - c1 [at:: 2026-01-01T00:00]', '- [ ] Next'].join('\n'),
@@ -239,6 +264,7 @@ describe('what is written under a task, fuzzed', () => {
     ['\t- [ ] Task', '\t  old', '- [ ] Next'].join('\r\n'),
     ['- [ ] Top', '  - [ ] Task', '    - [ ] Sub', '- [ ] Next'].join('\n'),
     ['10. [ ] Task', '- [ ] Next'].join('\n'),
+    ['- [ ] Task', '## After', '- [ ] Next', '```', '- [ ] code', '```', '- [ ] Last'].join('\n'),
   ]
 
   test('any description and any comment read back as typed and change no task', () => {
