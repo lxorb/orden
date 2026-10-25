@@ -922,11 +922,14 @@
   {#if current}
     {#each current.groups as group, index (index)}
       <h3>{group.title}</h3>
-      <div class="card">
-        {#each group.fields as field, index (index)}
-          {@render row(field)}
-        {/each}
-      </div>
+      <!-- A group with nothing to set is its caption alone, not an empty card. -->
+      {#if group.fields.length}
+        <div class="card">
+          {#each group.fields as field, index (index)}
+            {@render row(field)}
+          {/each}
+        </div>
+      {/if}
 
       <!-- What no control on the card can say about itself. A link where the
            words lead somewhere outside the app, plain words where they do not. -->
