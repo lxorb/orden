@@ -882,7 +882,7 @@
     {:else if asking}
       <WebAsk {asking} icon={siteMark(page.icon, page.url)} />
     {:else if showingSite && page.url !== null}
-      <WebSite url={page.url} {site} onclose={() => (showingSite = false)} />
+      <WebSite url={page.url} {site} tab={tab.id} onclose={() => (showingSite = false)} />
     {:else if showingDownloads}
       <WebDownloads onclose={() => (showingDownloads = false)} />
     {:else if extensions.popped?.tab === tab.id}

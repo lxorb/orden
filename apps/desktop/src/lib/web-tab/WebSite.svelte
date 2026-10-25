@@ -2,8 +2,9 @@
   /** What this site is: the popover behind the mark at the left of the address field.
    *
    *  Chrome's site information bubble, kept to what nib can honestly say: whether the
-   *  connection is the secure kind, what the site has been allowed or refused, and one
-   *  row that forgets all of it. A site that has never asked for anything shows the first
+   *  connection is the secure kind, the certificate it was made with where the engine
+   *  says (#776), what the site has been allowed or refused, and one row that forgets
+   *  all of it. A site that has never asked for anything shows the first
    *  line and nothing else, which is the common case and reads as "there is nothing to
    *  know here".
    *
@@ -15,13 +16,36 @@
   import { cubicOut } from 'svelte/easing'
   import Lock from 'lucide/dist/esm/icons/lock.mjs'
   import TriangleAlert from 'lucide/dist/esm/icons/triangle-alert.mjs'
-  import { t } from '../i18n.svelte'
+  import { i18n, t } from '../i18n.svelte'
+  import { invoke } from '../tauri'
   import { dur } from '../motion'
   import { overlays } from '../overlays'
   import type { Ask } from './permissions.svelte'
   import { ASKS, grants } from './permissions.svelte'
 
-  const { url, site, onclose }: { url: string | null; site: string; onclose: () => void } = $props()
+  const {
+    url,
+    site,
+    tab,
+    onclose,
+  }: { url: string | null; site: string; tab: string; onclose: () => void } = $props()
+
+  /** Whom a certificate names; see web_certificate.rs. */
+  interface Party {
+    name: string
+    organization: string[]
+  }
+
+  /** The certificate the page came with, as web_certificate.rs reads it. */
+  interface Certificate {
+    secure: boolean
+    to: Party
+    by: Party
+    from: number
+    until: number
+    serial: string
+    sha256: string
+  }
 
   /** What each one is called on a row that says what a site may do. Chrome's words, so
    *  a reader who has turned one of these off in Chrome finds the same name here. */
@@ -38,7 +62,27 @@
     windows: () => t('Window management'),
   }
 
-  const secure = $derived(url?.startsWith('https:') === true)
+  /** Asked for as the popover opens, about the page as it is then. Null where the
+   *  engine does not say, and then the address is all there is to go on. */
+  let certificate = $state<Certificate | null>(null)
+  $effect(() => {
+    if (!url?.startsWith('https:')) return
+    let gone = false
+    void invoke<Certificate | null>('web_certificate', { tab })
+      .then((said) => {
+        if (!gone) certificate = said
+      })
+      .catch(() => undefined)
+    return () => (gone = true)
+  })
+  let showingCertificate = $state(false)
+
+  const secure = $derived(certificate ? certificate.secure : url?.startsWith('https:') === true)
+
+  /** A party as a browser names it: the name, then its organisation where it has one. */
+  const named = (party: Party) =>
+    [party.name, ...party.organization].filter((one) => one !== '').join(' · ')
+  const day = (at: number) => i18n.when(at, { dateStyle: 'long' })
   const said = $derived(grants.of(site))
   const decided = $derived(ASKS.filter((ask) => said[ask] !== undefined))
 
@@ -66,6 +110,30 @@
     </svg>
     {secure ? t('Connection is secure') : t('Connection is not secure')}
   </p>
+
+  {#if certificate}
+    <button
+      class="nib-button is-quiet certificate"
+      aria-expanded={showingCertificate}
+      onclick={() => (showingCertificate = !showingCertificate)}
+    >
+      {t('Certificate')}
+    </button>
+    {#if showingCertificate}
+      <dl class="details">
+        <dt>{t('Issued to')}</dt>
+        <dd>{named(certificate.to)}</dd>
+        <dt>{t('Issued by')}</dt>
+        <dd>{named(certificate.by)}</dd>
+        <dt>{t('Valid from')}</dt>
+        <dd>{day(certificate.from)}</dd>
+        <dt>{t('Valid until')}</dt>
+        <dd>{day(certificate.until)}</dd>
+        <dt>{t('SHA-256 fingerprint')}</dt>
+        <dd class="hex">{certificate.sha256}</dd>
+      </dl>
+    {/if}
+  {/if}
 
   {#if decided.length}
     <ul class="grants">
@@ -135,6 +203,34 @@
      the line says so in the colour a callout warns in. */
   .risky {
     color: var(--callout-warning);
+  }
+
+  .certificate {
+    align-self: flex-start;
+  }
+
+  /* What a browser's certificate viewer leads with, a label over each answer. */
+  .details {
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-family: var(--font-ui);
+    font-size: var(--text-sm);
+  }
+
+  .details > dt {
+    color: var(--text-muted);
+  }
+
+  .details > dd {
+    margin: 0 0 var(--space-1);
+    color: var(--text);
+    overflow-wrap: anywhere;
+  }
+
+  .details > .hex {
+    font-family: var(--font-mono);
   }
 
   .grants {
