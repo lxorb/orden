@@ -53,8 +53,6 @@ getrandom = "0.3"
 icu_properties = "2"
 
 [target.'cfg(any(target_os = "windows", target_os = "linux", target_os = "macos"))'.dependencies]
-# The font families installed here, for Settings' font pickers (#772); see the same
-# line in ../Cargo.toml.
 fontdb = "0.24"
 png = "0.18"
 tauri-runtime-cef = { version = "=3.0.0-alpha.6", features = ["devtools"] }
