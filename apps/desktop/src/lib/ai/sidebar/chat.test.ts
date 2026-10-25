@@ -388,7 +388,7 @@ describe('the field while a message is changed', () => {
 
   test('keeps a queued message that could not be sent, whatever the field holds by then', async () => {
     const chat = await asked()
-    let answer = () => {}
+    let answer: () => void = () => undefined
     engine.send.mockImplementationOnce(() => new Promise<void>((resolve) => (answer = resolve)))
     engine.send.mockImplementationOnce(() => Promise.reject(new Error('down')))
     const around = { front: null, selection: '' }
