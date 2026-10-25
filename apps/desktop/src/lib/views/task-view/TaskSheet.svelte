@@ -151,11 +151,11 @@
   // A sub-task begun is the shown task's own: a step to another task puts it away, or
   // Enter there would write it under that one (B461).
   $effect(() => {
-    void shownAt
-    untrack(() => {
-      adding = false
-      subtask = ''
-    })
+    if (shownAt)
+      untrack(() => {
+        adding = false
+        subtask = ''
+      })
   })
   /** The comments, whose field `c` gives the keyboard to. */
   let comments = $state<{ focus: () => void }>()

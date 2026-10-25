@@ -157,7 +157,7 @@ describe.each([
   test('nor a sub-task begun', async () => {
     await stepped(() => {
       const adder = [...document.querySelectorAll('button')].find((one) =>
-        one.textContent?.includes('Add sub-task'),
+        one.textContent.includes('Add sub-task'),
       )
       if (!adder) throw new Error('no sub-task to add')
       adder.click()
