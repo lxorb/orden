@@ -29,8 +29,10 @@ const TEXT = /\.txt$/i
 const PLAIN_TEXT: ReadonlySet<FormatId> = new Set(['apple-notes'])
 
 /** What only markdown writes, one line or one span at a time: a heading, a fence, a
- *  quote, a link of either kind, a phrase in bold or in stars. A list and a line of
- *  dashes are left out, since plain text writes those as well. */
+ *  quote, a link of either kind, a task, a phrase in bold, in stars, in underscores
+ *  or struck through. A list and a line of dashes are left out, since plain text
+ *  writes those as well, and so are inline code and a table, which plain text keeps
+ *  as they are anyway. */
 const MARKDOWN_SAYS = [
   /^#{1,6}[ \t]+\S/m,
   /^(`{3,}|~{3,})/m,
@@ -39,6 +41,10 @@ const MARKDOWN_SAYS = [
   /\[\[[^\]\n]+\]\]/,
   /(\*\*|__)\S[^\n]*?\S\1/,
   /(^|\s)\*\S(?:[^*\n]*\S)?\*(?=[\s.,;:!?)]|$)/m,
+  // Two characters at least between, since ` _o_ ` is someone cheering.
+  /(^|[\s("'])_\S[^_\n]*\S_(?=[\s.,;:!?)"'\]-]|$)/m,
+  /(^|[\s("'])~~\S(?:[^~\n]*\S)?~~(?=[\s.,;:!?)"'\]-]|$)/m,
+  /^[ \t]*(?:[-*+]|\d{1,9}[.)])[ \t]+\[[ xX]\](?=[ \t]|$)/m,
 ]
 
 /** A text file's words as a note may hold them. iA Writer, Ulysses, Simplenote, nvALT
