@@ -147,46 +147,160 @@ fn name_char(one: char) -> bool {
 /// Every `#tag` in the note's own words. The front matter is left out of this
 /// pass: a hash there is a YAML comment, and the tags it holds have been read
 /// already. Fenced code is left out too, where a `#` is a comment or a heading
-/// in some other language.
+/// in some other language, and so is inline code, which shows what is in it as
+/// written. A code span runs on across the lines of a paragraph, so the spans are
+/// cut a block at a time. Raw HTML and autolinks, which `CommonMark` reads before a
+/// backtick, are not looked for: a backtick in an attribute can hide a tag.
 fn read_inline(body: &str, front: usize, found: &mut Vec<String>) {
-    let mut in_fence = false;
-
-    for line in body[front..].lines() {
-        let trimmed = line.trim_start();
-        if trimmed.starts_with("```") || trimmed.starts_with("~~~") {
-            in_fence = !in_fence;
-            continue;
-        }
-        if in_fence {
-            continue;
-        }
-
-        // Read through the line as it is written rather than as a list of
+    for block in blocks(&body[front..]) {
+        // Read through the block as it is written rather than as a list of
         // characters: this runs over every line of every note in a space, and an
-        // array of one line's letters is an allocation a tag does not need.
+        // array of one block's letters is an allocation a tag does not need. Nor
+        // are its code spans, where it holds no hash.
+        if !block.contains('#') {
+            continue;
+        }
+        let code = code_spans(block);
         let mut at = 0;
-        while let Some(hash) = line[at..].find('#') {
+        while let Some(hash) = block[at..].find('#') {
             let start = at + hash;
 
             // A tag starts a word, so what comes before it must be a space.
-            let opens = line[..start]
+            let opens = block[..start]
                 .chars()
                 .next_back()
-                .is_none_or(|one| one.is_whitespace() || one == '(');
+                .is_none_or(|one| one.is_whitespace() || one == '(')
+                && !code.iter().any(|&(from, to)| (from..to).contains(&start));
 
             // The name is what a tag may hold, which rules out `#1`.
-            let rest = &line[start + 1..];
+            let rest = &block[start + 1..];
             let name = rest
                 .find(|one: char| !name_char(one))
                 .map_or(rest, |end| &rest[..end]);
 
             if opens && named(name) {
-                found.push(line[start..start + 1 + name.len()].to_string());
+                found.push(block[start..start + 1 + name.len()].to_string());
             }
 
             at = start + 1 + name.len();
         }
     }
+}
+
+/// The blocks of words in a note: a paragraph's lines, a list item's or a
+/// heading's, which no code span reaches out of. A blank line, a fence and a line
+/// that opens a block end one, and what is fenced is in none.
+fn blocks(words: &str) -> Vec<&str> {
+    let mut out = Vec::new();
+    let mut fenced = false;
+    let mut start: Option<usize> = None;
+    let mut at = 0;
+
+    for whole in words.split_inclusive('\n') {
+        let line = whole.trim_end_matches(['\n', '\r']);
+        let trimmed = line.trim_start();
+        let fence = trimmed.starts_with("```") || trimmed.starts_with("~~~");
+        let blank = trimmed.is_empty();
+
+        if fenced || fence || blank || opens_block(line) {
+            if let Some(from) = start.take() {
+                out.push(words[from..at].trim_end_matches(['\n', '\r']));
+            }
+        }
+        if fence {
+            fenced = !fenced;
+        } else if !fenced && !blank {
+            let from = *start.get_or_insert(at);
+            if heading(line) {
+                out.push(&words[from..at + line.len()]);
+                start = None;
+            }
+        }
+
+        at += whole.len();
+    }
+    if let Some(from) = start {
+        out.push(words[from..].trim_end_matches(['\n', '\r']));
+    }
+    out
+}
+
+/// Whether a line opens a block of its own: a list item, a quote or a heading.
+fn opens_block(line: &str) -> bool {
+    let rest = line.trim_start_matches(' ');
+    if line.len() - rest.len() > 3 {
+        return false;
+    }
+    let digits = rest.bytes().take_while(u8::is_ascii_digit).count();
+    let marker = if rest.starts_with(['-', '*', '+']) {
+        Some(&rest[1..])
+    } else if (1..=9).contains(&digits) && rest[digits..].starts_with(['.', ')']) {
+        Some(&rest[digits + 1..])
+    } else {
+        None
+    };
+    marker.is_some_and(ends_marker) || rest.starts_with('>') || heading(line)
+}
+
+/// Whether a line is a heading, which is one line long.
+fn heading(line: &str) -> bool {
+    let rest = line.trim_start_matches(' ');
+    let hashes = rest.bytes().take_while(|&one| one == b'#').count();
+    line.len() - rest.len() <= 3 && (1..=6).contains(&hashes) && ends_marker(&rest[hashes..])
+}
+
+/// Whether what follows a block's marker lets it open one: a blank or nothing.
+fn ends_marker(after: &str) -> bool {
+    after.is_empty() || after.starts_with([' ', '\t'])
+}
+
+/// Where the code spans in a line start and end, in bytes, cut the way
+/// `codeAndWords` in tags.ts cuts them: a run of backticks opens a span that
+/// the next run of the same length closes, one with no such run after it is
+/// backticks, and a backtick behind a backslash opens nothing. Every mark this
+/// looks for is ASCII, so reading bytes never lands inside a character.
+fn code_spans(line: &str) -> Vec<(usize, usize)> {
+    let bytes = line.as_bytes();
+    let mut spans = Vec::new();
+    let mut at = 0;
+    while at < bytes.len() {
+        match bytes[at] {
+            b'\\' if bytes.get(at + 1).is_some_and(u8::is_ascii_punctuation) => at += 2,
+            b'`' => {
+                let run = backticks_at(bytes, at);
+                if let Some(close) = closing_run(bytes, at + run, run) {
+                    spans.push((at, close + run));
+                    at = close + run;
+                } else {
+                    at += run;
+                }
+            }
+            _ => at += 1,
+        }
+    }
+    spans
+}
+
+/// How many backticks stand in a row from `at`.
+fn backticks_at(bytes: &[u8], at: usize) -> usize {
+    bytes[at..].iter().take_while(|&&one| one == b'`').count()
+}
+
+/// Where the run of exactly `length` backticks closing a span starts, from `from`.
+fn closing_run(bytes: &[u8], from: usize, length: usize) -> Option<usize> {
+    let mut at = from;
+    while at < bytes.len() {
+        if bytes[at] == b'`' {
+            let run = backticks_at(bytes, at);
+            if run == length {
+                return Some(at);
+            }
+            at += run;
+        } else {
+            at += 1;
+        }
+    }
+    None
 }
 
 #[cfg(test)]
@@ -233,6 +347,32 @@ mod tests {
     #[test]
     fn ignores_anything_inside_a_fence() {
         assert_eq!(tags_in("```\n#notatag\n```\n#real"), vec!["#real"]);
+    }
+
+    #[test]
+    fn ignores_anything_inside_inline_code() {
+        assert_eq!(
+            tags_in("run `a #no` and #yes, `#not` ``x `#b` y`` #also"),
+            vec!["#yes", "#also"]
+        );
+    }
+
+    #[test]
+    fn inline_code_runs_on_across_the_lines_of_a_paragraph() {
+        assert_eq!(tags_in("`a\nb` #x `c`"), vec!["#x"]);
+        assert_eq!(tags_in("`a\n#b\nc`"), Vec::<String>::new());
+    }
+
+    #[test]
+    fn but_not_past_the_end_of_a_block() {
+        assert_eq!(tags_in("a `b\n\nc` #t"), vec!["#t"]);
+        assert_eq!(tags_in("- a `x\n- b` #t"), vec!["#t"]);
+        assert_eq!(tags_in("# A `x\nb` #t"), vec!["#t"]);
+    }
+
+    #[test]
+    fn reads_on_past_a_backtick_that_opens_no_code() {
+        assert_eq!(tags_in("\\` #yes ` #too"), vec!["#yes", "#too"]);
     }
 
     #[test]

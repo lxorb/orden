@@ -90,4 +90,15 @@ describe('a task in quick add’s field and back', () => {
       'Read ~~old~~ ==key== $x$ %%note%% <b>b</b> [[Plan#^ab12cd]] now',
     )
   })
+
+  test('a hash in the code a task ends with is no label, and an edit keeps the code whole', () => {
+    const one = task('- [ ] run `git tag #v2`')
+    const prefill = prefillFor(one, null)
+    expect(prefill.text).toBe('run `git tag #v2`')
+    expect(prefill.fields?.tags).toEqual([])
+    const text = `${prefill.text} extra`
+    expect(changeOf(one, { text, fields: { tags: [], remind: [] } }).text).toBe(
+      'run `git tag #v2` extra',
+    )
+  })
 })
