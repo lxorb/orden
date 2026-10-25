@@ -127,7 +127,7 @@ jobs:
       - name: The .deb, sway, Mesa and a session bus
         run: |
           sudo apt-get update
-          sudo apt-get install -y ./packages/deb/*.deb sway xwayland grim dbus python3-gi python3-pil gir1.2-glib-2.0 libgl1-mesa-dri libegl-mesa0 libxkbcommon-tools ffmpeg xsettingsd wf-recorder
+          sudo apt-get install -y ./packages/deb/*.deb sway xwayland grim dbus python3-gi python3-pil gir1.2-glib-2.0 libgl1-mesa-dri libegl-mesa0 libxkbcommon-tools ffmpeg xsettingsd wf-recorder libnss3-tools
       - name: Under Wayland, the portal's key reaching quick add
         env:
           OUT: wayland-out/portal
@@ -194,6 +194,17 @@ jobs:
         env:
           OUT: wayland-out/cert
           CERT: '1'
+        run: |
+          pkill -f /usr/share/Orden/nib || true
+          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+      # #766, #767: the DNS the pages look names up with, chosen in Settings - another
+      # provider, over HTTPS - taking hold at once and after a restart.
+      - name: The pages' DNS chosen in Settings, over HTTPS, under sway
+        if: always()
+        env:
+          OUT: wayland-out/dns
+          DNS: '1'
         run: |
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
