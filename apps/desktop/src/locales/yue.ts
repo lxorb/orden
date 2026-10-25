@@ -2534,4 +2534,10 @@ export const yue: Dictionary = {
     '代碼同終端機用嘅字型；用名揀呢部裝置上裝咗嘅任何等寬字型。',
   'Not installed on this device, so the app’s own face is used.':
     '呢部裝置冇裝呢款字型，所以用應用程式自己嘅字型。',
+  Certificate: '憑證',
+  'Issued to': '發出對象',
+  'Issued by': '發出者',
+  'Valid from': '有效期由',
+  'Valid until': '有效期至',
+  'SHA-256 fingerprint': 'SHA-256 指紋',
 }

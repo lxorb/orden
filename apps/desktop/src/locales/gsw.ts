@@ -2638,4 +2638,10 @@ export const gsw: Dictionary = {
     'D Schrift vo Code und Terminals; jedi Schriftart mit fixer Breiti, wo uf däm Grät installiert isch, mit ihrem Name.',
   'Not installed on this device, so the app’s own face is used.':
     'Uf däm Grät nöd installiert, drum wird d eigeti Schrift vo de App brucht.',
+  Certificate: 'Zertifikat',
+  'Issued to': 'Usgstellt für',
+  'Issued by': 'Usgstellt vo',
+  'Valid from': 'Gültig ab',
+  'Valid until': 'Gültig bis',
+  'SHA-256 fingerprint': 'SHA-256-Fingerabdruck',
 }

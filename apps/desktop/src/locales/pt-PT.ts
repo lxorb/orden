@@ -2683,4 +2683,10 @@ export const ptPT: Dictionary = {
     'O tipo de letra do código e dos terminais; qualquer tipo de letra monoespaçado instalado neste dispositivo, pelo nome.',
   'Not installed on this device, so the app’s own face is used.':
     'Não está instalado neste dispositivo, pelo que é usado o tipo de letra da própria aplicação.',
+  Certificate: 'Certificado',
+  'Issued to': 'Emitido para',
+  'Issued by': 'Emitido por',
+  'Valid from': 'Válido desde',
+  'Valid until': 'Válido até',
+  'SHA-256 fingerprint': 'Impressão digital SHA-256',
 }

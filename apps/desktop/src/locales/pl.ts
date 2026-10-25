@@ -2711,4 +2711,10 @@ export const pl: Dictionary = {
     'Czcionka kodu i terminali; dowolna czcionka o stałej szerokości zainstalowana na tym urządzeniu, podana z nazwy.',
   'Not installed on this device, so the app’s own face is used.':
     'Nie jest zainstalowana na tym urządzeniu, więc używana jest czcionka samej aplikacji.',
+  Certificate: 'Certyfikat',
+  'Issued to': 'Wystawiony dla',
+  'Issued by': 'Wystawiony przez',
+  'Valid from': 'Ważny od',
+  'Valid until': 'Ważny do',
+  'SHA-256 fingerprint': 'Odcisk SHA-256',
 }

@@ -2614,4 +2614,10 @@ export const bn: Dictionary = {
     'কোড ও টার্মিনালের ফন্ট; এই ডিভাইসে ইনস্টল করা যেকোনো মনোস্পেস ফন্ট, তার নাম দিয়ে।',
   'Not installed on this device, so the app’s own face is used.':
     'এই ডিভাইসে ইনস্টল করা নেই, তাই অ্যাপের নিজস্ব ফন্ট ব্যবহার করা হচ্ছে।',
+  Certificate: 'সার্টিফিকেট',
+  'Issued to': 'যাকে ইস্যু করা হয়েছে',
+  'Issued by': 'যে ইস্যু করেছে',
+  'Valid from': 'বৈধ শুরু',
+  'Valid until': 'বৈধ শেষ',
+  'SHA-256 fingerprint': 'SHA-256 ফিঙ্গারপ্রিন্ট',
 }

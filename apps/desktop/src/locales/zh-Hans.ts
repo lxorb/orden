@@ -2538,4 +2538,10 @@ export const zhHans: Dictionary = {
     '代码和终端所用的字体；可按名称使用此设备上已安装的任何等宽字体。',
   'Not installed on this device, so the app’s own face is used.':
     '此设备上未安装该字体，因此使用应用自带的字体。',
+  Certificate: '证书',
+  'Issued to': '颁发给',
+  'Issued by': '颁发者',
+  'Valid from': '有效期起始',
+  'Valid until': '有效期截止',
+  'SHA-256 fingerprint': 'SHA-256 指纹',
 }

@@ -2572,4 +2572,10 @@ export const am: Dictionary = {
     'የኮድ እና የተርሚናሎች ቅርጸ-ቁምፊ፤ በዚህ መሣሪያ ላይ የተጫነ ማንኛውም እኩል ስፋት ያለው ቅርጸ-ቁምፊ በስሙ።',
   'Not installed on this device, so the app’s own face is used.':
     'በዚህ መሣሪያ ላይ አልተጫነም፤ ስለዚህ የመተግበሪያው የራሱ ቅርጸ-ቁምፊ ጥቅም ላይ ይውላል።',
+  Certificate: 'የምስክር ወረቀት',
+  'Issued to': 'የተሰጠው ለ',
+  'Issued by': 'የሰጠው',
+  'Valid from': 'የሚሠራው ከ',
+  'Valid until': 'የሚሠራው እስከ',
+  'SHA-256 fingerprint': 'የSHA-256 አሻራ',
 }

@@ -2591,4 +2591,10 @@ export const ja: Dictionary = {
     'コードとターミナルの書体で、このデバイスにインストールされた任意の等幅フォントを名前で指定します。',
   'Not installed on this device, so the app’s own face is used.':
     'このデバイスにインストールされていないため、アプリ独自のフォントを使用します。',
+  Certificate: '証明書',
+  'Issued to': '発行先',
+  'Issued by': '発行元',
+  'Valid from': '有効期間の開始',
+  'Valid until': '有効期間の終了',
+  'SHA-256 fingerprint': 'SHA-256 フィンガープリント',
 }

@@ -2731,4 +2731,10 @@ export const ar: Dictionary = {
     'خط الكود والطرفيات؛ أيّ خط ثابت العرض مثبَّت على هذا الجهاز، باسمه.',
   'Not installed on this device, so the app’s own face is used.':
     'غير مثبَّت على هذا الجهاز، لذا يُستخدم خط التطبيق نفسه.',
+  Certificate: 'الشهادة',
+  'Issued to': 'صادرة إلى',
+  'Issued by': 'صادرة عن',
+  'Valid from': 'صالحة من',
+  'Valid until': 'صالحة حتى',
+  'SHA-256 fingerprint': 'بصمة SHA-256',
 }

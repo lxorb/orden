@@ -2612,4 +2612,10 @@ export const ur: Dictionary = {
     'کوڈ اور ٹرمینلز کا فونٹ؛ اس آلے پر انسٹال کردہ کوئی بھی مونو اسپیس فونٹ، اس کے نام سے۔',
   'Not installed on this device, so the app’s own face is used.':
     'اس آلے پر انسٹال نہیں ہے، اس لیے ایپ کا اپنا فونٹ استعمال ہوتا ہے۔',
+  Certificate: 'سرٹیفکیٹ',
+  'Issued to': 'جسے جاری کیا گیا',
+  'Issued by': 'جاری کنندہ',
+  'Valid from': 'سے درست',
+  'Valid until': 'تک درست',
+  'SHA-256 fingerprint': 'SHA-256 فنگر پرنٹ',
 }

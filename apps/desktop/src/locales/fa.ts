@@ -2623,4 +2623,10 @@ export const fa: Dictionary = {
     'قلم کد و ترمینال‌ها؛ هر قلم هم‌عرض نصب‌شده در این دستگاه، با نامش.',
   'Not installed on this device, so the app’s own face is used.':
     'روی این دستگاه نصب نیست، پس قلم خود برنامه به کار می‌رود.',
+  Certificate: 'گواهی',
+  'Issued to': 'صادرشده برای',
+  'Issued by': 'صادرکننده',
+  'Valid from': 'معتبر از',
+  'Valid until': 'معتبر تا',
+  'SHA-256 fingerprint': 'اثر انگشت SHA-256',
 }

@@ -2588,4 +2588,10 @@ export const vi: Dictionary = {
     'Phông chữ của mã và terminal; bất kỳ phông chữ đơn cách nào đã cài đặt trên thiết bị này, theo tên của nó.',
   'Not installed on this device, so the app’s own face is used.':
     'Chưa được cài đặt trên thiết bị này, nên dùng phông chữ riêng của ứng dụng.',
+  Certificate: 'Chứng chỉ',
+  'Issued to': 'Cấp cho',
+  'Issued by': 'Cấp bởi',
+  'Valid from': 'Có hiệu lực từ',
+  'Valid until': 'Có hiệu lực đến',
+  'SHA-256 fingerprint': 'Vân tay SHA-256',
 }

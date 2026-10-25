@@ -2657,4 +2657,10 @@ export const sw: Dictionary = {
     'Fonti ya kodi na terminali; fonti yoyote yenye upana sawa iliyosakinishwa kwenye kifaa hiki, kwa jina lake.',
   'Not installed on this device, so the app’s own face is used.':
     'Haijasakinishwa kwenye kifaa hiki, kwa hivyo fonti ya programu yenyewe inatumika.',
+  Certificate: 'Cheti',
+  'Issued to': 'Kimetolewa kwa',
+  'Issued by': 'Kimetolewa na',
+  'Valid from': 'Halali kuanzia',
+  'Valid until': 'Halali hadi',
+  'SHA-256 fingerprint': 'Alama ya kidole ya SHA-256',
 }

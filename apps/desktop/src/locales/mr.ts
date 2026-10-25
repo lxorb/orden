@@ -2619,4 +2619,10 @@ export const mr: Dictionary = {
     'कोड आणि टर्मिनलचा फॉंट; या डिव्हाइसवर इंस्टॉल केलेला कोणताही मोनोस्पेस फॉंट, त्याच्या नावाने.',
   'Not installed on this device, so the app’s own face is used.':
     'या डिव्हाइसवर इंस्टॉल केलेला नाही, म्हणून ॲपचा स्वतःचा फॉंट वापरला जातो.',
+  Certificate: 'प्रमाणपत्र',
+  'Issued to': 'कोणाला जारी केले',
+  'Issued by': 'कोणी जारी केले',
+  'Valid from': 'पासून वैध',
+  'Valid until': 'पर्यंत वैध',
+  'SHA-256 fingerprint': 'SHA-256 फिंगरप्रिंट',
 }

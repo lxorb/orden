@@ -2704,4 +2704,10 @@ export const uk: Dictionary = {
     'Шрифт коду й терміналів; будь-який моноширинний шрифт, установлений на цьому пристрої, за його назвою.',
   'Not installed on this device, so the app’s own face is used.':
     'Не встановлений на цьому пристрої, тож використовується власний шрифт застосунку.',
+  Certificate: 'Сертифікат',
+  'Issued to': 'Кому видано',
+  'Issued by': 'Ким видано',
+  'Valid from': 'Дійсний з',
+  'Valid until': 'Дійсний до',
+  'SHA-256 fingerprint': 'Відбиток SHA-256',
 }

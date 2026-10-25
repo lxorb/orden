@@ -2562,4 +2562,10 @@ export const th: Dictionary = {
     'แบบอักษรของโค้ดและเทอร์มินัล ใช้แบบอักษรความกว้างคงที่ใดก็ได้ที่ติดตั้งอยู่ในอุปกรณ์นี้ตามชื่อ',
   'Not installed on this device, so the app’s own face is used.':
     'ไม่ได้ติดตั้งในอุปกรณ์นี้ จึงใช้แบบอักษรของแอปเอง',
+  Certificate: 'ใบรับรอง',
+  'Issued to': 'ออกให้แก่',
+  'Issued by': 'ออกโดย',
+  'Valid from': 'ใช้ได้ตั้งแต่',
+  'Valid until': 'ใช้ได้ถึง',
+  'SHA-256 fingerprint': 'ลายนิ้วมือ SHA-256',
 }
