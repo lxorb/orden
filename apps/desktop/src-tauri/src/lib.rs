@@ -210,6 +210,9 @@ mod uris;
 // web_answers.rs.
 #[cfg(desktop)]
 mod web_answers;
+// The certificate a web tab's page came with, for the site's popover (#776).
+#[cfg(desktop)]
+mod web_certificate;
 // Only where there is a cookie store to reach: the system's own engine on Windows and
 // on a Mac.
 #[cfg(desktop)]
@@ -554,6 +557,7 @@ macro_rules! desktop_commands {
             web_tabs::web_zoom,
             web_tabs::web_print,
             web_tabs::web_devtools,
+            web_certificate::web_certificate,
             web_page::web_mute,
             web_page::web_unfill,
             web_pause::web_pause,
