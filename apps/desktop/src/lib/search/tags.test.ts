@@ -35,6 +35,17 @@ describe('the tags in a note', () => {
     expect(tagsIn('run `a #no` and #yes, `#not` ``x `#b` y`` #also')).toEqual(['#yes', '#also'])
   })
 
+  test('and inline code runs on across the lines of a paragraph', () => {
+    expect(tagsIn('`a\nb` #x `c`')).toEqual(['#x'])
+    expect(tagsIn('`a\n#b\nc`')).toEqual([])
+  })
+
+  test('but not past the end of a block', () => {
+    expect(tagsIn('a `b\n\nc` #t')).toEqual(['#t'])
+    expect(tagsIn('- a `x\n- b` #t')).toEqual(['#t'])
+    expect(tagsIn('# A `x\nb` #t')).toEqual(['#t'])
+  })
+
   test('though a backtick that opens no code is just a backtick', () => {
     expect(tagsIn('\\` #yes ` #too')).toEqual(['#yes', '#too'])
   })

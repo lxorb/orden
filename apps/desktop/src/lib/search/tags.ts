@@ -212,30 +212,64 @@ function readValues(from: number, text: string, out: TagUse[]) {
  *  pass: a hash there is a YAML comment, and the tags it holds have been read
  *  already. Fenced code is left out too, where a `#` is a comment or a heading
  *  in some other language, and so is inline code, which shows what is in it as
- *  written. */
+ *  written. A code span runs on across the lines of a paragraph, so the spans are
+ *  cut a block at a time. Raw HTML and autolinks, which CommonMark reads before a
+ *  backtick, are not looked for: a backtick in an attribute can hide a tag. */
 function readInline(body: string, front: FrontMatterBlock | null, out: TagUse[]) {
-  let at = front ? front.to : 0
+  for (const [from, to] of blocksOf(body, front ? front.to : 0)) {
+    const block = body.slice(from, to)
+    if (!block.includes('#')) continue
+
+    const code = codeSpans(block)
+    for (const found of block.matchAll(TAG)) {
+      const [, before = '', name] = found
+      if (name === undefined || inCode(code, found.index + before.length)) continue
+
+      // Past what opened the word and past the hash, so the span is the name.
+      const start = from + found.index + before.length + 1
+      out.push({ tag: name, from: start, to: start + name.length })
+    }
+  }
+}
+
+/** A line that opens a block of its own, which no code span reaches into: a list
+ *  item, a quote or a heading. */
+const OPENS_BLOCK = /^ {0,3}(?:(?:[-*+]|\d{1,9}[.)])(?:[ \t]|$)|>|#{1,6}(?:[ \t]|$))/
+
+/** A heading, which is one line long. */
+const HEADING = /^ {0,3}#{1,6}(?:[ \t]|$)/
+
+/** Where each block of words from `at` on starts and ends: a paragraph's lines, a
+ *  list item's or a heading's. A blank line, a fence and a line that opens a block
+ *  end one, and what is fenced is in none. */
+function blocksOf(body: string, at: number): [number, number][] {
+  const out: [number, number][] = []
   let fenced = false
+  let start = -1
 
   while (at <= body.length) {
     const end = body.indexOf('\n', at)
     const stop = end === -1 ? body.length : end
     const line = body.slice(at, stop)
+    const fence = FENCE.test(line)
+    const blank = line.trim() === ''
 
-    if (FENCE.test(line)) fenced = !fenced
-    else if (!fenced) {
-      const code = codeSpans(line)
-      for (const found of line.matchAll(TAG)) {
-        const [, before = '', name] = found
-        if (name === undefined || inCode(code, found.index + before.length)) continue
-
-        // Past what opened the word and past the hash, so the span is the name.
-        const start = at + found.index + before.length + 1
-        out.push({ tag: name, from: start, to: start + name.length })
+    if (start !== -1 && (fenced || fence || blank || OPENS_BLOCK.test(line))) {
+      out.push([start, at - 1])
+      start = -1
+    }
+    if (fence) fenced = !fenced
+    else if (!fenced && !blank) {
+      if (start === -1) start = at
+      if (HEADING.test(line)) {
+        out.push([start, stop])
+        start = -1
       }
     }
 
     if (end === -1) break
     at = end + 1
   }
+  if (start !== -1) out.push([start, body.length])
+  return out
 }
