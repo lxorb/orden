@@ -500,8 +500,9 @@ class Pages {
   private readonly held = new Map<string, Page>()
 
   /** Started once, on the first web tab, and never taken down: the window hears
-   *  about every page in it through one listener. */
-  private listening = false
+   *  about every page in it through one listener. A promise, so a build waits
+   *  for it: a quick page spoke before a flag's listeners were in place (#777). */
+  private listening: Promise<void> | null = null
 
   /** Every tab's page, for whatever walks them all. */
   each(): [string, Page][] {
@@ -1375,142 +1376,143 @@ class Pages {
    *  where every page in the window has got to, what every site in it has asked for,
    *  which of them has asked for a window of its own, the browser's own keys pressed
    *  in one, and what they are downloading. */
-  private async listen(): Promise<void> {
+  private listen(): Promise<void> {
     // A window to listen on, because that is what the runtime's own `listen` needs and
     // this is now started with the first page in the window rather than with the first
     // placement: a test that says it is a desktop without putting a document under it
     // reaches here, where it never used to. The same guard tauri.ts puts on the line
     // that decides which platform this is, and for the same reason. The glasses'
     // plugin is never a desktop, and says so first so its package leaves all of it out.
-    if (__EVEN_PLUGIN__ || this.listening || !isDesktop || typeof window === 'undefined') return
-    this.listening = true
+    if (__EVEN_PLUGIN__ || !isDesktop || typeof window === 'undefined') return Promise.resolve()
+    this.listening ??= (async () => {
+      const { listen } = await import('@tauri-apps/api/event')
 
-    const { listen } = await import('@tauri-apps/api/event')
+      // A site has asked for the camera, the microphone, where you are, notifications or
+      // the clipboard to read. The request is held open in the engine until this is
+      // answered, which is what lets the reader be asked at the moment they pressed
+      // something rather than in a menu beforehand; see permissions.svelte.ts.
+      const { grants, readAsked } = await pagePermissions()
+      await listen('nib://web-ask', (event) => {
+        const said = readAsked(event.payload)
+        if (said && this.held.has(said.tab)) grants.heard(said)
+      })
 
-    // A site has asked for the camera, the microphone, where you are, notifications or
-    // the clipboard to read. The request is held open in the engine until this is
-    // answered, which is what lets the reader be asked at the moment they pressed
-    // something rather than in a menu beforehand; see permissions.svelte.ts.
-    const { grants, readAsked } = await pagePermissions()
-    await listen('nib://web-ask', (event) => {
-      const said = readAsked(event.payload)
-      if (said && this.held.has(said.tab)) grants.heard(said)
-    })
+      // A page has opened `alert`, `confirm` or `prompt`, or asks before it is left. Its
+      // script waits for the answer, which the card over the pane gives; see
+      // dialogs.svelte.ts and web_dialogs.rs.
+      const { dialogs, readDialog } = await pageDialogs()
+      await listen('nib://web-dialog', (event) => {
+        const said = readDialog(event.payload)
+        if (said && this.held.has(said.tab)) dialogs.heard(said)
+      })
 
-    // A page has opened `alert`, `confirm` or `prompt`, or asks before it is left. Its
-    // script waits for the answer, which the card over the pane gives; see
-    // dialogs.svelte.ts and web_dialogs.rs.
-    const { dialogs, readDialog } = await pageDialogs()
-    await listen('nib://web-dialog', (event) => {
-      const said = readDialog(event.payload)
-      if (said && this.held.has(said.tab)) dialogs.heard(said)
-    })
-
-    // A page has asked for a window of its own - `target="_blank"`, `window.open`, a
-    // Ctrl+click or the middle button on a link. Every browser answers that with a tab,
-    // so this one does: beside the page that asked, in its pane, and in front unless
-    // the reader asked for it behind. The crate refuses the engine its second webview
-    // and hands the address over; see `on_new_window` in web_tabs.rs.
-    //
-    // Opened through an import rather than a name at the top, because the workspace
-    // is what holds this store: asking for it by name here would be a circle.
-    await listen('nib://web-open', (event) => {
-      const said = readOpening(event.payload)
-      if (said && this.held.has(said.tab)) void this.openAsked(said)
-    })
-    // A key the browser keeps for itself, pressed while a page had the keyboard: played
-    // on the window as the key it was, so it means what it means everywhere else. See
-    // keys.ts and web_keys.rs. Fetched with the first page rather than carried, like
-    // the listening itself.
-    const { readPressed, replay } = await import('./keys')
-    await listen('nib://web-key', (event) => {
-      const one = readPressed(event.payload)
-      if (one) replay(one)
-    })
-    // A file one of the pages is saving has started, moved or ended; the crate saves it
-    // and this only keeps the list the bar draws. See downloads.svelte.ts. Fetched here
-    // rather than imported at the top, so the first paint does not carry it: nothing is
-    // downloaded before a page is open.
-    const { downloads, readDownload } = await import('./downloads.svelte')
-    await listen('nib://web-download', (event) => {
-      const said = readDownload(event.payload)
-      if (said && downloads.heard(said)) void this.downloaded(said.tab)
-    })
-    // A page's mark has changed, which the engine says for as long as the page is open,
-    // and it is the device's mark for that page from now on; see `favicons`. A page
-    // with none says nothing about the one it had: a page on its way says none too.
-    await listen('nib://web-icon', (event) => {
-      const said = readIconed(event.payload)
-      const page = said ? this.held.get(said.tab) : undefined
-      if (!said || !page) return
-
-      page.marked(said.icon)
-      const at = page.at ?? page.url
-      // Never a private page's: it writes nothing down; see private.ts.
-      if (said.icon && !page.inPrivate) {
-        void import('./favicons').then((one) => one.saw(at, said.icon))
-      }
-      // And under where the tab's file points, which its row asks once the tab has
-      // closed: a site that moved on within itself - another Slack channel - would leave
-      // the row the mark it had there. See `faviconFor` in chosen-icon.ts.
-      const path = page.path
-      if (said.icon && path) {
-        void Promise.all([import('./favicons'), import('../chosen-icon')]).then(([one, files]) =>
-          one.saw(files.addressOf(path), said.icon),
-        )
-      }
-    })
-    // Sound, full screen, zoom and find, and a page that did not arrive; see heard.ts.
-    await (
-      await import('./heard')
-    ).listening(
-      listen,
-      (tab) => this.held.get(tab),
-      (tab, url) => void this.go(tab, url),
-    )
-    await listen('nib://web-tab', (event) => {
-      const said = readMoved(event.payload)
-      if (!said) return
-
-      const page = this.held.get(said.tab)
-      if (!page) return
-
-      const was = page.loading
-      const moved = said.url !== '' && said.url !== page.at
-      page.loading = said.loading
-      // A load beginning is a page arriving, and the mark it settles on is the one the
-      // file keeps.
-      if (said.loading !== was) page.loaded(said.loading)
-      page.back = said.back
-      page.forward = said.forward
-      if (said.url) page.at = said.url
-      if (said.url && !page.typing) page.url = said.url
-      if (said.title) {
-        page.title = said.title
-        page.titled = true
-      }
-      // Where the tab has got to is a page it has been to, for the address field to
-      // offer; see visited.ts.
-      if (said.url) void this.saw(said.tab, said.url, said.title)
-
-      // The page has arrived, so the picture of the last one is no longer a picture of
-      // this page - and the new one is taken now rather than when something is waiting
-      // for it. Nothing is drawn from either while the webview is on top.
+      // A page has asked for a window of its own - `target="_blank"`, `window.open`, a
+      // Ctrl+click or the middle button on a link. Every browser answers that with a tab,
+      // so this one does: beside the page that asked, in its pane, and in front unless
+      // the reader asked for it behind. The crate refuses the engine its second webview
+      // and hands the address over; see `on_new_window` in web_tabs.rs.
       //
-      // On the moment it stops loading rather than on every report that it is not
-      // loading. The engine says where a page is again whenever its title arrives, and
-      // with the mark that was three reports in the eight milliseconds after a page lands,
-      // and each of them threw the picture away and asked for another: three engine
-      // captures at once, a fifth of a second each, on the window's own thread in the
-      // breath the reader is watching the page appear.
-      if (was && !said.loading) {
-        page.landed ??= page.url
-        page.shot = null
-        void this.shoot(said.tab)
-      }
-      // And what the page stands on, which glass's frame takes; see glass/chrome.svelte.ts.
-      if ((was || moved) && !said.loading) landed(said.tab)
-    })
+      // Opened through an import rather than a name at the top, because the workspace
+      // is what holds this store: asking for it by name here would be a circle.
+      await listen('nib://web-open', (event) => {
+        const said = readOpening(event.payload)
+        if (said && this.held.has(said.tab)) void this.openAsked(said)
+      })
+      // A key the browser keeps for itself, pressed while a page had the keyboard: played
+      // on the window as the key it was, so it means what it means everywhere else. See
+      // keys.ts and web_keys.rs. Fetched with the first page rather than carried, like
+      // the listening itself.
+      const { readPressed, replay } = await import('./keys')
+      await listen('nib://web-key', (event) => {
+        const one = readPressed(event.payload)
+        if (one) replay(one)
+      })
+      // A file one of the pages is saving has started, moved or ended; the crate saves it
+      // and this only keeps the list the bar draws. See downloads.svelte.ts. Fetched here
+      // rather than imported at the top, so the first paint does not carry it: nothing is
+      // downloaded before a page is open.
+      const { downloads, readDownload } = await import('./downloads.svelte')
+      await listen('nib://web-download', (event) => {
+        const said = readDownload(event.payload)
+        if (said && downloads.heard(said)) void this.downloaded(said.tab)
+      })
+      // A page's mark has changed, which the engine says for as long as the page is open,
+      // and it is the device's mark for that page from now on; see `favicons`. A page
+      // with none says nothing about the one it had: a page on its way says none too.
+      await listen('nib://web-icon', (event) => {
+        const said = readIconed(event.payload)
+        const page = said ? this.held.get(said.tab) : undefined
+        if (!said || !page) return
+
+        page.marked(said.icon)
+        const at = page.at ?? page.url
+        // Never a private page's: it writes nothing down; see private.ts.
+        if (said.icon && !page.inPrivate) {
+          void import('./favicons').then((one) => one.saw(at, said.icon))
+        }
+        // And under where the tab's file points, which its row asks once the tab has
+        // closed: a site that moved on within itself - another Slack channel - would leave
+        // the row the mark it had there. See `faviconFor` in chosen-icon.ts.
+        const path = page.path
+        if (said.icon && path) {
+          void Promise.all([import('./favicons'), import('../chosen-icon')]).then(([one, files]) =>
+            one.saw(files.addressOf(path), said.icon),
+          )
+        }
+      })
+      // Sound, full screen, zoom and find, and a page that did not arrive; see heard.ts.
+      await (
+        await import('./heard')
+      ).listening(
+        listen,
+        (tab) => this.held.get(tab),
+        (tab, url) => void this.go(tab, url),
+      )
+      await listen('nib://web-tab', (event) => {
+        const said = readMoved(event.payload)
+        if (!said) return
+
+        const page = this.held.get(said.tab)
+        if (!page) return
+
+        const was = page.loading
+        const moved = said.url !== '' && said.url !== page.at
+        page.loading = said.loading
+        // A load beginning is a page arriving, and the mark it settles on is the one the
+        // file keeps.
+        if (said.loading !== was) page.loaded(said.loading)
+        page.back = said.back
+        page.forward = said.forward
+        if (said.url) page.at = said.url
+        if (said.url && !page.typing) page.url = said.url
+        if (said.title) {
+          page.title = said.title
+          page.titled = true
+        }
+        // Where the tab has got to is a page it has been to, for the address field to
+        // offer; see visited.ts.
+        if (said.url) void this.saw(said.tab, said.url, said.title)
+
+        // The page has arrived, so the picture of the last one is no longer a picture of
+        // this page - and the new one is taken now rather than when something is waiting
+        // for it. Nothing is drawn from either while the webview is on top.
+        //
+        // On the moment it stops loading rather than on every report that it is not
+        // loading. The engine says where a page is again whenever its title arrives, and
+        // with the mark that was three reports in the eight milliseconds after a page lands,
+        // and each of them threw the picture away and asked for another: three engine
+        // captures at once, a fifth of a second each, on the window's own thread in the
+        // breath the reader is watching the page appear.
+        if (was && !said.loading) {
+          page.landed ??= page.url
+          page.shot = null
+          void this.shoot(said.tab)
+        }
+        // And what the page stands on, which glass's frame takes; see glass/chrome.svelte.ts.
+        if ((was || moved) && !said.loading) landed(said.tab)
+      })
+    })()
+    return this.listening
   }
 }
 
