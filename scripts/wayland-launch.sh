@@ -43,6 +43,10 @@
 #     file of its own (#788, scripts/download-drive.py);
 #   - with EXTENSIONS=1, a web tab's extensions seen in the web bar and in Settings, and
 #     the engine's list and its removal reached (#789, scripts/extensions-drive.py);
+#   - with WATCH=1, a space holding a folder nobody may read and four hundred more: a
+#     note written into it by another program has to be heard, at its top and deep in
+#     it, and again under a lowered limit of watched folders, which the watch has to say
+#     (#481, scripts/watch-drive.py);
 #   - with SCHEME=1, a web tab's page drawn in the app's scheme as the app's scheme is
 #     switched, light and dark (#427, scripts/scheme-drive.py);
 #   - with POPUP=1, the space switcher, the web tab's menu and a canvas's pens' panel
@@ -281,6 +285,14 @@ if [ "${DOWNLOAD:-0}" = 1 ]; then
   endpoint
   set -- "$@" http://127.0.0.1:8765/
 fi
+# With WATCH=1, a spaces folder of the run's own (#481).
+if [ "${WATCH:-0}" = 1 ]; then
+  mkdir -p "$out/spaces"
+  # Absolute, as the app takes only an absolute folder from it; see `folder_named`.
+  NIB_SPACES_DIR="$(cd "$out/spaces" && pwd)"
+  export NIB_SPACES_DIR
+  endpoint
+fi
 # With TEXTSIZE=1, the endpoint and no page: the launch opens on its note (#680).
 [ "${TEXTSIZE:-0}" = 1 ] && endpoint
 # With CERT=1, the endpoint and a site over https, a real one: its certificate is the
@@ -418,6 +430,47 @@ fi
 if [ "$status" = 0 ] && [ "${EXTENSIONS:-0}" = 1 ]; then
   sleep 3
   python3 "$here/extensions-drive.py" "$out" || status=1
+fi
+
+# The space made, then given a folder nobody may read and four hundred more, and the app
+# started again on it; then again under a limit of watched folders it is past (#481).
+again() {
+  kill -TERM "$app_pid" 2>/dev/null || true
+  for _ in $(seq 50); do kill -0 "$app_pid" 2>/dev/null || break; sleep 0.2; done
+  kill -KILL "$app_pid" 2>/dev/null || true
+  wait "$app_pid" 2>/dev/null || true
+  endpoint
+  "${command[@]}" >> "$out/orden-again.log" 2>&1 &
+  app_pid=$!
+  wait_for_views 1 || { echo "::error::no window mapped when started again"; return 1; }
+  sleep 3
+}
+if [ "$status" = 0 ] && [ "${WATCH:-0}" = 1 ]; then
+  sleep 5
+  space=$(find "$NIB_SPACES_DIR" -mindepth 1 -maxdepth 1 -type d ! -name '.*' | head -1)
+  if [ -z "$space" ]; then
+    echo "::error::the app made no space in $NIB_SPACES_DIR"
+    status=1
+  else
+    echo "the space: $space"
+    mkdir -p "$space/deep/inner" "$space/locked"
+    for n in $(seq 400); do mkdir -p "$space/many/$n"; done
+    chmod 000 "$space/locked"
+    again && python3 "$here/watch-drive.py" "$out" folders "$space" || status=1
+    if [ "$status" = 0 ]; then
+      kill -TERM "$app_pid" 2>/dev/null || true
+      for _ in $(seq 50); do kill -0 "$app_pid" 2>/dev/null || break; sleep 0.2; done
+      kill -KILL "$app_pid" 2>/dev/null || true
+      was=$(cat /proc/sys/fs/inotify/max_user_watches)
+      used=$(cat /proc/[0-9]*/fdinfo/* 2>/dev/null | grep -c '^inotify' || true)
+      echo "inotify: $used watches in use of $was; the limit lowered to $((used + 120))"
+      sudo sysctl -q fs.inotify.max_user_watches=$((used + 120))
+      again && python3 "$here/watch-drive.py" "$out" limit "$space" || status=1
+      grep -h "could not watch all of" "$out"/orden*.log | head -3 || true
+      sudo sysctl -q fs.inotify.max_user_watches="$was"
+    fi
+    chmod 755 "$space/locked"
+  fi
 fi
 
 if [ "$status" = 0 ] && [ "${SCHEME:-0}" = 1 ]; then

@@ -23,6 +23,8 @@ vi.mock('../space-watch', () => ({
   unwatchSpaces: () => Promise.resolve(),
   scanSpace: () => Promise.resolve([]),
 }))
+const told = vi.hoisted(() => vi.fn())
+vi.mock('../notify', () => ({ notify: told }))
 const { watchFolders } = await import('./watching')
 
 /** The engine's own promises, held to one device with an account in memory (the
@@ -808,6 +810,34 @@ describe('the folder watcher', () => {
     )
     expect(folders.map((folder) => folder.local_path)).toEqual(['Work'])
     expect(await here.disk.exists(`${ROOT}/Work/Plan.md`)).toBe(true)
+  })
+
+  /** #481: past the system's limit of watched folders, the watch says so with its scan,
+   *  and the reader is told once a run, however often it is said. */
+  test('tells the reader once when the limit of watched folders is reached', async () => {
+    const here = await device()
+    const heard: ((news: SpaceNews) => void)[] = []
+    watch.mockImplementation((_roots: readonly string[], hear: (news: SpaceNews) => void) => {
+      heard.push(hear)
+      return Promise.resolve()
+    })
+    told.mockReset()
+    const watched = watchFolders({
+      engine: here.engine,
+      own: () => false,
+      ready: () => true,
+      changed: () => undefined,
+    })
+    for (const hear of heard) hear({ root: ROOT, changes: [], scan: true, gone: false })
+    for (let once = 0; once < 2; once += 1) {
+      for (const hear of heard) {
+        hear({ root: ROOT, changes: [], scan: true, gone: false, unwatched: 'limit' })
+      }
+    }
+    await vi.waitFor(() => expect(told).toHaveBeenCalledTimes(1))
+    expect(told.mock.calls[0]?.[0]).toBe('Some changes may not be noticed')
+    expect(String(told.mock.calls[0]?.[1])).toContain('fs.inotify.max_user_watches')
+    watched.stop()
   })
 
   test('watches a space paired after it started, once', async () => {
