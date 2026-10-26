@@ -247,8 +247,9 @@ class Importing {
     // Where the note lands, which is where its pictures go: the space the sheet
     // would import into, and never one shared with this account to be read, where
     // the pictures would be stray files and the note would not be placed at all.
-    const root = this.root !== null && canWriteAt(this.root) ? this.root : landing()
+    const root = await this.pandocRoot()
     const home = workspace.spaces.find((one) => one.root === root)?.id ?? null
+    if (root === null && imported.pictures.length) busy.failed(t('That picture could not be read.'))
     const markdown =
       root === null
         ? imported.markdown
@@ -256,6 +257,22 @@ class Importing {
     workspace.openBlank(imported.name, markdown, home)
     this.open = false
     this.forget()
+  }
+
+  /** The space a document pandoc read lands in: the sheet's, while it is still a
+   *  space the reader may write in, else the one `landing` picks. With no space at
+   *  all yet, the one the note would be placed in, which `draftHome` makes. None
+   *  where every space is one shared to be read. */
+  private async pandocRoot(): Promise<string | null> {
+    const asked = this.root
+    const known = workspace.spaces.some((one) => one.root === asked)
+    if (asked !== null && known && canWriteAt(asked)) return asked
+
+    const found = landing()
+    if (found !== null || workspace.spaces.length) return found
+
+    const made = await workspace.draftHome(null).catch(() => null)
+    return made !== null && canWriteAt(made) ? made : null
   }
 
   /** The words of a document pandoc read, with its pictures written where a

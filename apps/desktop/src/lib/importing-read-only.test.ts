@@ -14,12 +14,25 @@ vi.mock('./sharing.svelte', () => ({
 const THEIRS = { id: 'theirs', name: 'Theirs', root: '/theirs' }
 const MINE = { id: 'mine', name: 'Mine', root: '/mine' }
 
-const held = vi.hoisted((): { active: unknown } => ({ active: null }))
+const held = vi.hoisted(
+  (): { active: unknown; spaces: { id: string; name: string; root: string }[] } => ({
+    active: null,
+    spaces: [],
+  }),
+)
+/** The space `draftHome` makes when there is none yet. */
+const NOTES = { id: 'notes', name: 'Notes', root: '/notes' }
 /** Each note the sheet opened: its name, its words, the space it is to land in. */
 const opened = vi.hoisted((): [string, string, string | null][] => [])
 vi.mock('./workspace.svelte', () => ({
   workspace: {
-    spaces: [THEIRS, MINE],
+    get spaces() {
+      return held.spaces
+    },
+    draftHome: () => {
+      if (!held.spaces.length) held.spaces.push(NOTES)
+      return Promise.resolve(held.spaces[0]!.root)
+    },
     openBlank: (name: string, doc: string, home: string | null) => {
       opened.push([name, doc, home])
     },
@@ -35,6 +48,10 @@ vi.mock('./workspace.svelte', () => ({
     },
   },
 }))
+
+/** What the sheet said went wrong. */
+const failed = vi.hoisted((): string[] => [])
+vi.mock('./busy.svelte', () => ({ busy: { failed: (said: string) => failed.push(said) } }))
 
 vi.mock('./surfaces.svelte', () => ({ importSheet: { ask: () => Promise.resolve() } }))
 
@@ -74,6 +91,8 @@ beforeEach(() => {
   readOnly.clear()
   readOnly.add(THEIRS.root)
   offered.length = 0
+  failed.length = 0
+  held.spaces = [THEIRS, MINE]
   opened.length = 0
   storedFor.length = 0
   held.active = THEIRS
@@ -124,5 +143,26 @@ describe('a document read by pandoc while a space shared to be read is open', ()
 
     expect(storedFor).toEqual([])
     expect(opened).toEqual([['Report.md', '![a dot](media/rId20.png)\n', null]])
+    // And says so, rather than dropping the picture without a word.
+    expect(failed).toHaveLength(1)
+  })
+
+  test('a place the sheet held that is no space any more is not written to', async () => {
+    held.active = MINE
+    importing.root = '/removed'
+    await importing.readWithPandoc()
+
+    expect(storedFor).toEqual([`${MINE.root}/Report.md`])
+    expect(opened[0]![2]).toBe(MINE.id)
+  })
+
+  test('with no space yet, the pictures go to the one the note is placed in', async () => {
+    held.spaces = []
+    held.active = null
+    await importing.readWithPandoc()
+
+    expect(storedFor).toEqual([`${NOTES.root}/Report.md`])
+    expect(opened[0]![2]).toBe(NOTES.id)
+    expect(failed).toEqual([])
   })
 })

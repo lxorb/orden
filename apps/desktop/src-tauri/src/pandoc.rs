@@ -708,13 +708,6 @@ fn vetted(
     vet(
         tree,
         &mut |link: &str| {
-            // A picture spelled out in the link itself names no file to fetch.
-            if link
-                .get(..5)
-                .is_some_and(|scheme| scheme.eq_ignore_ascii_case("data:"))
-            {
-                return Some(link.to_string());
-            }
             let real = place.and_then(|place| admitted(link, place))?;
             if let Some((_, name)) = copied.iter().find(|(from, _)| *from == real) {
                 return Some(name.clone());
@@ -811,8 +804,9 @@ fn loads(html: &str) -> bool {
 /// carry: a path relative to the note's folder, or an absolute one, that is a file
 /// inside the note's space once every link on the way is followed, and in no
 /// hidden folder of it. An address with a scheme (`http:`, `file:`, `data:`) or a
-/// host (`//`, `\\`) is no file of the space, however it is spelled; `vetted`
-/// lets a `data:` picture through on its own, since it names no file.
+/// host (`//`, `\\`) is no file of the space, however it is spelled. That holds
+/// for `data:` as well: a `data:` link pandoc cannot parse is read as a local
+/// file name instead, so `data:[/../../Windows/win.ini` would reach the disk.
 ///
 /// The link is read the way pandoc reads it, percent-encoding undone, and once
 /// more without a `?` or `#` on its end.
@@ -1481,18 +1475,25 @@ mod tests {
         assert!(names_in(nowhere.path()).is_empty());
     }
 
-    /// A picture spelled out in its link names no file, and is let through as it is.
+    /// A `data:` link is refused like any other address: one pandoc cannot parse
+    /// is read as a file name, relative to wherever pandoc looks.
     #[test]
-    fn a_picture_in_its_own_link_is_let_through() {
+    fn a_picture_in_its_own_link_is_refused() {
         let shared = shared();
         let into = tempfile::tempdir().expect("a folder");
-        let inline = "data:image/png;base64,aGVsbG8=";
-        let mut tree = tree_of(&[inline], "DATA:image/png;base64,aGVsbG8=");
+        let links = [
+            "data:image/png;base64,aGVsbG8=",
+            "DATA:image/png;base64,aGVsbG8=",
+            "data:[/../x.png",
+            "data:%zz/../x.png",
+            "data:[/../../../../../../../../Windows/win.ini",
+        ];
+        let mut tree = tree_of(&links[..4], links[4]);
 
         let refused = vetted(&mut tree, Some(&shared.place()), into.path(), false);
 
-        assert!(refused.is_empty(), "{refused:?}");
-        assert_eq!(targets(&tree), [inline, "DATA:image/png;base64,aGVsbG8="]);
+        assert_eq!(refused, links);
+        assert!(targets(&tree).is_empty());
         assert!(names_in(into.path()).is_empty());
     }
 
@@ -1646,7 +1647,9 @@ mod tests {
             let made = convert(WITH_PICTURE, &target, format, Some(&alone(note.path())));
             assert!(made.is_ok(), "{format}: {made:?}");
             let written = fs::read_to_string(&target).expect("written");
-            assert!(written.contains("Text"), "{format}: {written}");
+            // OPML keeps only the headings, so it says it is one instead.
+            let mark = if format == "opml" { "<opml" } else { "Text" };
+            assert!(written.contains(mark), "{format}: {written}");
         }
     }
 
