@@ -35,33 +35,47 @@ export function rewriteLinks(
   move: Move,
   points: (link: FoundLink) => boolean,
 ): string | null {
-  const found = findLinks(text).filter(points)
-  if (!found.length) return null
+  return retargetLinks(text, source, (link) => (points(link) ? move.to : null))
+}
 
+/** The same with a place of its own for each link: `to` answers where the thing a
+ *  link names is now, relative to the space, or null for a link to leave as it is.
+ *  What a folder that moved needs, since every note in it went somewhere else, and
+ *  a note that moved, whose own relative links now start from another folder. */
+export function retargetLinks(
+  text: string,
+  /** The note being rewritten, relative to the space, where it is now. */
+  source: string,
+  to: (link: FoundLink) => string | null,
+): string | null {
   let out = ''
   let at = 0
+  let any = false
 
-  for (const link of found) {
+  for (const link of findLinks(text)) {
+    const there = to(link)
+    if (there === null) continue
+    any = true
     out += text.slice(at, link.targetFrom)
-    out += targetFor(link, source, move)
+    out += targetFor(link, source, there)
     at = link.targetTo
   }
 
-  return out + text.slice(at)
+  return any ? out + text.slice(at) : null
 }
 
 /** What to write where the old target was. Only the target is replaced, so a
  *  `#heading`, an alias and a title all stay exactly as they were. */
-function targetFor(link: FoundLink, source: string, move: Move): string {
+function targetFor(link: FoundLink, source: string, to: string): string {
   if (link.kind === 'markdown') {
-    return encodeTarget(relativePath(folderOf(source), move.to))
+    return encodeTarget(relativePath(folderOf(source), to))
   }
 
   // A link written without the file's ending stays without one, whichever kind of
   // file it names: `[[Docs]]` to a website renamed `Handbook.url` is `[[Handbook]]`,
   // the way a note's is. `shownName` is the one reading of which endings a name
   // may leave off; a PDF's is not one of them, so a link to one keeps its ending.
-  const written = link.target.includes('/') ? move.to : nameOf(move.to)
+  const written = link.target.includes('/') ? to : nameOf(to)
   return shownName(link.target) === link.target ? shownName(written) : written
 }
 

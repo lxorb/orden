@@ -1248,9 +1248,7 @@ describe('a folder renamed', () => {
     })
 
     expect(touched).toBe(2)
-    expect(notes['One.md']).toBe(
-      'see [[Work/Plan]] and [p](Work/Plan.md) and ![](Work/shot.png)\n',
-    )
+    expect(notes['One.md']).toBe('see [[Work/Plan]] and [p](Work/Plan.md) and ![](Work/shot.png)\n')
     // A bare name still finds the note wherever its folder went.
     expect(notes['Bare.md']).toBe('see [[Plan]] and [p](Plan.md)\n')
     const after = JSON.parse(notes['Board.canvas'] ?? '') as { nodes: Record<string, string>[] }
@@ -1268,7 +1266,8 @@ describe('a folder renamed', () => {
     await links.retarget(at('Projects'), at('Area/Projects'), ROOT, () => null, { moved: true })
 
     expect(notes['Area/Projects/Plan.md']).toBe(
-      'see [o](../../Other.md), [s](Sub.md) and [[Area/Projects/Sub]]\n',
+      // The wikilink still names its note by the end of its path.
+      'see [o](../../Other.md), [s](Sub.md) and [[Projects/Sub]]\n',
     )
   })
 })
@@ -1306,10 +1305,9 @@ describe('a note moved to another folder', () => {
   })
 
   test('renamed in its own folder, its own links are left as they were', async () => {
-    await space(
-      { 'Plan.md': '![shot](assets/abc.png) [o](Other.md)\n', 'Other.md': '#' },
-      ['assets/abc.png'],
-    )
+    await space({ 'Plan.md': '![shot](assets/abc.png) [o](Other.md)\n', 'Other.md': '#' }, [
+      'assets/abc.png',
+    ])
     notes['Goal.md'] = notes['Plan.md'] ?? ''
 
     expect(

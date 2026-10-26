@@ -16,7 +16,7 @@
  *  Its own module, fetched by the rewrite that needs it. */
 
 import type { FoundLink } from '@nib/markdown/links'
-import { type Move, rewriteLinks } from './link-rewrite'
+import { type Move, retargetLinks } from './link-rewrite'
 
 /** The plane with every card that points at `move.from` pointing at `move.to`, or
  *  null where none does, or where the text is not a plane to write over. */
@@ -27,19 +27,38 @@ export function rewriteCanvasLinks(
   move: Move,
   points: (link: FoundLink) => boolean,
 ): string | null {
+  return retargetCanvas(
+    text,
+    source,
+    (file) => (file === move.from ? move.to : null),
+    (link) => (points(link) ? move.to : null),
+  )
+}
+
+/** The same with a place of its own for each card and link: `file` answers where
+ *  the file a card names is now, and `to` where a text card's link points now, each
+ *  relative to the space and null for one to leave alone; see `retargetLinks`. */
+export function retargetCanvas(
+  text: string,
+  /** The canvas, relative to the space, where it is now. */
+  source: string,
+  file: (path: string) => string | null,
+  to: (link: FoundLink) => string | null,
+): string | null {
   const nodes = nodeStrings(text)
   if (!nodes) return null
 
   const edits: { from: number; to: number; insert: string }[] = []
   for (const node of nodes) {
     const type = node.get('type')?.value
-    const file = node.get('file')
+    const card = node.get('file')
     const words = node.get('text')
+    const there = type === 'file' && card ? file(card.value) : null
 
-    if (type === 'file' && file?.value === move.from) {
-      edits.push({ from: file.from, to: file.to, insert: JSON.stringify(move.to) })
+    if (card && there !== null) {
+      edits.push({ from: card.from, to: card.to, insert: JSON.stringify(there) })
     } else if (type === 'text' && words) {
-      const after = rewriteLinks(words.value, source, move, points)
+      const after = retargetLinks(words.value, source, to)
       if (after !== null && after !== words.value) {
         edits.push({ from: words.from, to: words.to, insert: JSON.stringify(after) })
       }
