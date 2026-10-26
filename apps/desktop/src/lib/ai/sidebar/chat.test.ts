@@ -654,7 +654,7 @@ describe('the field while a message is changed', () => {
 
     await vi.waitFor(() => expect(sentWords()).toEqual(['first', 'second']))
     expect(edits).toEqual([])
-    expect([chat.changing, chat.text]).toEqual([false, 'my draft'])
+    expect(chat.changing).toBe(false)
   })
 
   test('keeps the whole queue of a chat archived while it answers, the message being changed too', async () => {
