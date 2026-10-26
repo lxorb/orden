@@ -104,7 +104,7 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
             // its own.
             kind: 'select',
             key: 'editor.ligatures',
-            store: { on: modes, name: 'ligatures' },
+            store: { on: modes, name: 'ligatures', shared: 'ligatures' },
             label: t('Ligatures'),
             hint: t('Joins pairs such as -> or != into one sign, in code only or everywhere.'),
             words: ['font'],
@@ -123,7 +123,7 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
             // nothing about notes already written.
             kind: 'select',
             key: 'editor.attachments',
-            store: { on: modes, name: 'attachments' },
+            store: { on: modes, name: 'attachments', shared: 'attachments' },
             label: t('Attachments'),
             hint: t('Where a picture or file you paste or drop into a note is saved.'),
             words: ['images', 'pictures', 'paste', 'assets'],
@@ -147,7 +147,7 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
           {
             kind: 'switch',
             key: 'editor.canvasRotation',
-            store: { on: modes, name: 'canvasTurns' },
+            store: { on: modes, name: 'canvasTurns', shared: 'canvasTurns' },
             label: t('Rotate a canvas with two fingers'),
             hint: t('Turning two fingers on a touchpad or screen rotates the canvas.'),
             words: ['canvas', 'rotate', 'turn', 'two fingers', 'pinch', 'concepts', 'trackpad'],
@@ -158,7 +158,7 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
           {
             kind: 'switch',
             key: 'editor.canvasRotationSnaps',
-            store: { on: modes, name: 'canvasTurnSnaps' },
+            store: { on: modes, name: 'canvasTurnSnaps', shared: 'canvasTurnSnaps' },
             label: t('Snap the rotation to right angles'),
             hint: t('A rotation that ends near a right angle settles on it.'),
             words: ['canvas', 'rotate', 'turn', 'snap', 'upright', 'right angle', 'straight'],
@@ -221,7 +221,7 @@ export function editorPane(view: EditorView | undefined, moment: Date): Pane {
           {
             kind: 'select',
             key: 'editor.newLinks',
-            store: { on: modes, name: 'linkFormat' },
+            store: { on: modes, name: 'linkFormat', shared: 'linkFormat' },
             label: t('New links'),
             hint: t(
               'Wikilinks name the note, so a link survives it being renamed; both spellings are read either way.',

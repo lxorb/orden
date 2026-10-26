@@ -143,6 +143,11 @@ function gpuGroup(): Group {
         initial: true,
         get: () => gpu.on,
         set: (on) => void gpu.set(on),
+        // The crate starts the engine on what the settings file says (gpu.rs), so a
+        // declared value is in force in this very run: nothing to keep, nothing to ask.
+        declare: (on: boolean) => {
+          gpu.on = on
+        },
       },
     ],
   }
@@ -240,7 +245,7 @@ function remindersGroup(): Group {
       {
         kind: 'select',
         key: 'general.remindBefore',
-        store: { on: modes, name: 'remindBefore' },
+        store: { on: modes, name: 'remindBefore', shared: 'remindBefore' },
         label: t('Automatic'),
         hint: t('How long before a task’s time it reminds you, unless the task says otherwise.'),
         words: ['reminder', 'notification', 'alarm', 'due', 'time', 'before'],
@@ -321,7 +326,7 @@ export function generalPane(): Pane {
           {
             kind: 'select',
             key: 'general.keepVersionEvery',
-            store: { on: recovery, name: 'every' },
+            store: { on: recovery, name: 'every', shared: 'recoveryEvery' },
             label: t('Keep a version every'),
             hint: t(
               'How often a note you are editing is saved as a version you can go back to in History.',
@@ -338,7 +343,7 @@ export function generalPane(): Pane {
           {
             kind: 'select',
             key: 'general.keepVersionsFor',
-            store: { on: recovery, name: 'days' },
+            store: { on: recovery, name: 'days', shared: 'recoveryDays' },
             label: t('Keep versions for'),
             hint: t('How long those versions are kept before they are deleted.'),
             options: KEEP_DAYS.map((days) => ({
@@ -482,7 +487,7 @@ export function generalPane(): Pane {
           {
             kind: 'switch',
             key: 'general.undatedInToday',
-            store: { on: modes, name: 'undatedInToday' },
+            store: { on: modes, name: 'undatedInToday', shared: 'undatedInToday' },
             label: t('Show tasks without a start date in Today'),
             hint: t(
               'Today also lists the tasks that have no start date; off shows only those dated today or earlier.',
@@ -521,7 +526,7 @@ export function generalPane(): Pane {
                 {
                   kind: 'switch' as const,
                   key: 'general.developerMode',
-                  store: { on: modes, name: 'developer' },
+                  store: { on: modes, name: 'developer', shared: 'developer' },
                   label: t('Developer mode'),
                   hint: t('Shows terminals and the other tools for writing code.'),
                   words: ['coder', 'coding', 'programmer', 'terminal', 'shell', 'ssh'],
@@ -542,7 +547,7 @@ export function generalPane(): Pane {
                 {
                   kind: 'switch' as const,
                   key: 'general.silentMode',
-                  store: { on: modes, name: 'silent' },
+                  store: { on: modes, name: 'silent', shared: 'silent' },
                   label: t('Silent mode'),
                   hint: t('Hides the tips Orden shows while you get to know it.'),
                   words: ['tips', 'hints', 'quiet', 'clean', 'onboarding'],

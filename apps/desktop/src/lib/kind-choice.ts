@@ -11,7 +11,6 @@ import { account } from './account.svelte'
 import { api, type AccountSettings } from './api'
 import { hiddenKinds, KINDS_KEY, type KindName, kindsHere, shownOf } from './settings.svelte'
 import { forget, isString, keep } from './stored'
-import { isDeclaring } from './settings/held'
 
 /** The account's own limits; see services/sync/src/settings.ts. */
 const MOST_KINDS = 32
@@ -78,7 +77,7 @@ function settle() {
 
 function share() {
   const token = account.accountToken
-  if (!token || isDeclaring()) return
+  if (!token) return
 
   // Null says "every kind", which has to travel: without it another machine could
   // never learn that this one turned the last of them back on.

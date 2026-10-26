@@ -10,8 +10,6 @@
  *  store's `take` and `put`. Nothing in a store has to know: a Svelte `$state` field is an
  *  accessor on its class, and an own accessor on the instance stands in front of it. */
 
-import { holds, setDeclaring } from './held'
-
 /** Where a setting's value is kept: a property of a store, or a part of one. */
 export interface Store {
   on: object
@@ -20,10 +18,17 @@ export interface Store {
   take?: (whole: unknown) => unknown
   /** The whole value with the part put back in it. */
   put?: (whole: unknown, part: unknown) => unknown
+  /** The account's name for the property, where the store sends it there: what goes up
+   *  in its place while it is held is the reader's own (see held.ts). */
+  shared?: string
 }
 
 interface Pin {
   put: (whole: unknown) => unknown
+  /** Told of a write beneath that says something else for the part. */
+  written?: (whole: unknown) => void
+  part: unknown
+  take?: (whole: unknown) => unknown
 }
 
 interface Held {
@@ -34,16 +39,20 @@ interface Held {
   read: () => unknown
 }
 
-/** Every property held, by store; kept in held.ts, which the stores read. */
-const stores = holds as Map<object, Map<string, Held>>
+/** Every property held, by store. */
+const stores = new Map<object, Map<string, Held>>()
 
-/** Runs `put` with the stores told not to pass it on; see `isDeclaring`. */
-export async function declaringWhile<T>(put: () => Promise<T>): Promise<T> {
-  setDeclaring(true)
+/** While true, a held property reads what is beneath it: see `bare`. */
+let bared = false
+
+/** What `read` says of the stores as they are beneath what is held: the reader's own,
+ *  which is what a hold that ends gives back (see file.ts). */
+export function bare<T>(read: () => T): T {
+  bared = true
   try {
-    return await put()
+    return read()
   } finally {
-    setDeclaring(false)
+    bared = false
   }
 }
 
@@ -56,12 +65,18 @@ function descriptorOf(on: object, name: string): PropertyDescriptor | undefined 
   return undefined
 }
 
-/** Holds the value `store` has now, from now on. */
-export function hold(store: Store): void {
+/** Holds the value `store` has now, from now on. `written` hears of every write beneath
+ *  that says something else for it: a key pressed, another device's value arriving. */
+export function hold(store: Store, written?: (whole: unknown) => void): void {
   const { on, name, take, put } = store
   const whole: unknown = Reflect.get(on, name)
   const part = frozen(take ? take(whole) : whole)
-  const pin: Pin = { put: put ? (current) => put(current, part) : () => part }
+  const pin: Pin = {
+    put: put ? (current) => put(current, part) : () => part,
+    part,
+    ...(take ? { take } : {}),
+    ...(written ? { written } : {}),
+  }
 
   let names = stores.get(on)
   if (!names) stores.set(on, (names = new Map<string, Held>()))
@@ -75,17 +90,26 @@ export function hold(store: Store): void {
   const found = descriptorOf(on, name)
   let inner: unknown = before && 'value' in before ? before.value : undefined
   const read = found?.get ? (): unknown => found.get?.call(on) : (): unknown => inner
-  const write = found?.set
+  const through = found?.set
     ? (value: unknown) => found.set?.call(on, value)
     : (value: unknown) => {
         inner = value
       }
   const pins = [pin]
+  // A write that only carries a held part through - the whole of `fonts` written again
+  // with one face changed, the held one as it was read - says nothing about that part.
+  const write = (value: unknown) => {
+    through(value)
+    for (const one of pins) {
+      const said = one.take ? one.take(value) : value
+      if (one.written && JSON.stringify(said) !== JSON.stringify(one.part)) one.written(value)
+    }
+  }
   names.set(name, { pins, before, read })
   Object.defineProperty(on, name, {
     configurable: true,
     enumerable: true,
-    get: () => pins.reduce<unknown>((current, one) => one.put(current), read()),
+    get: () => (bared ? read() : pins.reduce<unknown>((current, one) => one.put(current), read())),
     set: write,
   })
 }
@@ -127,9 +151,10 @@ export function among(on: object, name: string, value: string): Store {
   return {
     on,
     name,
-    take: (whole) => (whole as readonly string[]).includes(value),
+    take: (whole) => ((whole ?? []) as readonly string[]).includes(value),
     put: (whole, there) => {
-      const rest = (whole as readonly string[]).filter((one) => one !== value)
+      // Null where the account is told every kind is offered.
+      const rest = ((whole ?? []) as readonly string[]).filter((one) => one !== value)
       return there ? [...rest, value] : rest
     },
   }

@@ -12,6 +12,11 @@
  *  menu or another device's value arriving through the account writes beneath it, and
  *  the app goes on reading the file's.
  *
+ *  The reader's own value is remembered beside it (`OWN_KEY`): what the setting was when
+ *  the file first held it, and whatever is written beneath it since. That is what the
+ *  account is sent in the file's place (held.ts), and what the setting is given back
+ *  when the file stops naming it, at the next launch.
+ *
  *  The file is JSON, its settings by the keys declarations.ts gathers, either nested
  *  (`{ "editor": { "textSize": 1.1 } }`) or written out (`{ "editor.textSize": 1.1 }`);
  *  file-schema.ts says what each may be. A setting of another platform's is passed over
@@ -19,11 +24,13 @@
  *  JSON, or names a setting wrongly is said in a notice and at the top of Settings,
  *  with what is wrong and where - never by not starting. What is right still applies. */
 
+import { isRecord, keep, stored } from '../stored'
 import { invoke, platform } from '../tauri'
 import { declared } from './declared.svelte'
 import type { Field } from './fields'
 import { type Platform, refusal, type Schema, schemaOf } from './file-schema'
-import { declaringWhile, hold, releaseAll } from './hold'
+import { sendAsSaid, sendInstead } from './held'
+import { bare, hold, releaseAll } from './hold'
 
 /** What the crate reads: the file and where it is, or nothing where there is none. */
 interface SettingsFile {
@@ -32,6 +39,37 @@ interface SettingsFile {
 }
 
 type Value = boolean | number | string
+
+/** Where the reader's own value of each held setting is remembered: what it is as Settings
+ *  shows it (`value`, to give back), and as its store keeps it (`part`, to send). */
+const OWN_KEY = 'nib:declared-own'
+
+interface Own {
+  value: unknown
+  part?: unknown
+}
+
+/** The reader's own values, by `nameOf`. */
+let own: Record<string, Own> = {}
+
+function remembered(): Record<string, Own> {
+  const kept = stored(OWN_KEY)
+  return isRecord(kept)
+    ? (Object.fromEntries(Object.entries(kept).filter(([, one]) => isRecord(one))) as Record<
+        string,
+        Own
+      >)
+    : {}
+}
+
+function remember(): void {
+  keep(OWN_KEY, JSON.stringify(own))
+}
+
+/** A field's name among the remembered: its key, and a list's member after it. */
+function nameOf(field: Field): string {
+  return field.member === undefined ? (field.key ?? '') : `${field.key ?? ''}\u0000${field.member}`
+}
 
 /** How many times the fields are built while settings are put in force; see `load`. */
 const PASSES = 3
@@ -74,6 +112,63 @@ function put(field: Field, value: Value): void {
   if (one.get() !== value) one.set(value)
 }
 
+/** Puts `value` in force on `field` and holds it there, remembering the reader's own
+ *  first: the field as it was, unless a launch before this one already remembered it -
+ *  by now the store holds the file's value, which it was left with. */
+function declareOn(field: Field, value: Value): void {
+  const store = field.store
+  const name = nameOf(field)
+  if (!(name in own) && store) {
+    const whole: unknown = Reflect.get(store.on, store.name)
+    own[name] = {
+      value: field.kind === 'value' ? null : field.get(),
+      part: store.take ? store.take(whole) : whole,
+    }
+    remember()
+  }
+  if (store?.shared) {
+    const shared = store.shared
+    sendInstead(shared, (sent) => {
+      const mine = own[name]
+      if (!mine) return sent
+      return store.put ? store.put(sent, mine.part) : mine.part
+    })
+  }
+  if (field.declare) (field.declare as (value: Value) => void)(value)
+  else put(field, value)
+  if (!store) return
+  // Written beneath while held - its key pressed, another device's value come in - is
+  // the reader's own from then on.
+  hold(store, (whole) => {
+    own[name] = {
+      value: bare(() => (field.kind === 'value' ? null : field.get())),
+      part: store.take ? store.take(whole) : whole,
+    }
+    remember()
+  })
+}
+
+/** The settings the file no longer names, given back what the reader had: each one this
+ *  launch has a field for. The crate's own (Hardware acceleration) is the crate's to give
+ *  back, as it reads the file itself. */
+function givenBack(fields: Field[], named: ReadonlySet<string>): void {
+  let changed = false
+  // A list's members on before any goes off, as it was put in force: the last
+  // dictionary on cannot be turned off.
+  const back = Object.entries(own).sort(
+    ([, a], [, b]) => Number(b.value === true) - Number(a.value === true),
+  )
+  for (const [name, mine] of back) {
+    if (named.has(name)) continue
+    const field = fields.find((one) => nameOf(one) === name)
+    if (!field) continue
+    if (!field.declare) put(field, mine.value as Value)
+    Reflect.deleteProperty(own, name)
+    changed = true
+  }
+  if (changed) remember()
+}
+
 /** Why a field's own check refuses `value`, or null. */
 function checked(fields: Field[], value: unknown): string | null {
   for (const one of fields) {
@@ -113,14 +208,10 @@ function applied(
           (a, b) =>
             Number(listed.includes(b.member ?? '')) - Number(listed.includes(a.member ?? '')),
         )
-        for (const one of members) put(one, listed.includes(one.member ?? ''))
-        for (const one of members) if (one.store) hold(one.store)
+        for (const one of members) declareOn(one, listed.includes(one.member ?? ''))
       } else {
         const [one] = named
-        if (one) {
-          put(one, value as Value)
-          if (one.store) hold(one.store)
-        }
+        if (one) declareOn(one, value as Value)
       }
       held.add(key)
     } catch (error) {
@@ -134,6 +225,8 @@ function applied(
  *  No file is nothing to do. */
 export async function load(fields: () => Promise<Field[]>): Promise<void> {
   releaseAll()
+  sendAsSaid()
+  own = remembered()
   declared.path = null
   declared.held = new Set()
   declared.problems = []
@@ -144,11 +237,17 @@ export async function load(fields: () => Promise<Field[]>): Promise<void> {
     declared.said([error instanceof Error ? error.message : String(error)])
     return
   }
-  if (!file) return
+  if (!file) {
+    // No file at all: everything it held is the reader's again.
+    if (Object.keys(own).length) givenBack(await fields(), new Set())
+    return
+  }
   declared.path = file.path
 
   const settings = settingsIn(file.text)
   if (typeof settings === 'string') {
+    // Nothing held, and nothing given back either: a file being written is not a file
+    // that stopped saying anything.
     declared.said([`${file.path} is not valid JSON: ${settings}`])
     return
   }
@@ -158,13 +257,17 @@ export async function load(fields: () => Promise<Field[]>): Promise<void> {
   const held = new Set<string>()
   const problems: string[] = []
   let left = settings
-  await declaringWhile(async () => {
-    for (let pass = 0; pass < PASSES && left.length; pass++) {
-      const before = left.length
-      left = applied(left, await fields(), held, problems)
-      if (left.length === before) break
-    }
-  })
+  let built: Field[] = []
+  for (let pass = 0; pass < PASSES && left.length; pass++) {
+    const before = left.length
+    built = await fields()
+    left = applied(left, built, held, problems)
+    if (left.length === before) break
+  }
+  // What the file still names, member by member, keeps what is remembered of it.
+  const keys = new Set(settings.map(([key]) => key))
+  const still = new Set(Object.keys(own).filter((name) => keys.has(name.split('\u0000')[0] ?? '')))
+  if (Object.keys(own).length > still.size) givenBack(built.length ? built : await fields(), still)
   const here = platform() as Platform
   // Every setting there is, on every platform: fetched only where something is left.
   const everywhere = left.length

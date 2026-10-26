@@ -15,10 +15,16 @@ class Declared {
   /** What is wrong with the file, one line each, in the file's own terms. */
   problems = $state<string[]>([])
 
+  /** Whether the file holds the setting by `key`: what every row asks, a field's and a
+   *  row written by hand alike - a command's key, the search engine. */
+  holds(key: string | undefined): boolean {
+    return key !== undefined && this.path !== null && this.held.has(key)
+  }
+
   /** What the row for `field` is now: as it was, or held by the file, its control
    *  doing nothing. */
   lock(field: Field): Field {
-    if (!field.key || !this.held.has(field.key) || !this.path) return field
+    if (!this.holds(field.key) || !this.path) return field
     const declared = this.path
     switch (field.kind) {
       case 'switch':
@@ -57,3 +63,9 @@ class Declared {
 }
 
 export const declared = new Declared()
+
+/** The key a command's key is set by: its id with the dots as dashes, since a command
+ *  may be named after another and more (`pages.fit`, `pages.fit.page`). */
+export function shortcutKey(id: string): string {
+  return `shortcuts.${id.replaceAll('.', '-')}`
+}

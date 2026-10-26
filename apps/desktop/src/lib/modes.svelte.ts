@@ -54,7 +54,6 @@ import { isNumber, isRecord, isString, keep, stored, stringList } from './stored
 import { currentWindow, invoke, isDesktop } from './tauri'
 import { theme } from './theme.svelte'
 import { opening } from './workspace/documents.svelte'
-import { heldOn, isDeclaring } from './settings/held'
 
 const STORAGE_KEY = 'nib:modes'
 
@@ -1518,12 +1517,6 @@ class Modes {
   /** Tells the account, when there is one. A machine that is offline keeps
    *  its own choice, and carries it up the moment there is somewhere to carry it. */
   private share(patch: AccountSettings) {
-    // What a settings file declares is this machine's alone (#673): neither as it is put
-    // in force nor while it is held is it told to the account for another machine to take.
-    if (isDeclaring()) return
-    const held = heldOn(this)
-    patch = Object.fromEntries(Object.entries(patch).filter(([name]) => !held.has(name)))
-    if (!Object.keys(patch).length) return
     this.sent++
 
     const token = account.accountToken

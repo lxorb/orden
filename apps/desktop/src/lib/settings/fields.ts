@@ -50,6 +50,10 @@ interface Common {
   /** Where the value is kept, which is where the settings file holds it (see hold.ts):
    *  every keyed field says, so that nothing else that writes the store moves it. */
   store?: Store
+  /** How the settings file's value is put in force, where that is not `set`: Hardware
+   *  acceleration, which the crate reads from the file itself before the engine starts,
+   *  so the row is only told, and nothing asks for a restart. */
+  declare?: (value: never) => void
   /** Why a value the file gives is not one this setting takes, beyond its type and its
    *  choices: a key combination that is not one. Null where it is. */
   check?: (value: string) => string | null
