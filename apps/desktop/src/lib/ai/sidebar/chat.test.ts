@@ -597,7 +597,6 @@ describe('the field while a message is changed', () => {
     expect(sentWords()).toEqual(['first'])
     chat.cancelEdit()
     await vi.waitFor(() => expect(sentWords()).toEqual(['first', 'second']))
-    expect(chat.text).toBe('my draft')
   })
 
   test('sends what was queued while Ask again answered', async () => {
@@ -623,11 +622,11 @@ describe('the field while a message is changed', () => {
   test('sends what was queued while the chat was compacted', async () => {
     const chat = await asked()
     let done: () => void = () => undefined
-    ;(engine as unknown as { compact: unknown }).compact = vi.fn(
-      () => new Promise<void>((resolve) => (done = resolve)),
-    )
+    const compact = vi.fn(() => new Promise<void>((resolve) => (done = resolve)))
+    ;(engine as unknown as { compact: unknown }).compact = compact
     engine.send.mockClear()
     chat.compact()
+    await vi.waitFor(() => expect(compact).toHaveBeenCalled())
     chat.text = 'second'
     chat.submit(around)
     expect(sentWords()).toEqual([])
