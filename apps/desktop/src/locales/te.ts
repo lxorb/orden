@@ -2647,4 +2647,6 @@ export const te: Dictionary = {
     'https://తో మొదలయ్యే DNS over HTTPS సర్వర్ చిరునామా',
   'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
     'ఇక్కడ వెబ్ పేజీలు సిస్టమ్ లాగే చిరునామాలను వెతుకుతాయి; దాని DNS సిస్టమ్ సొంత సెట్టింగ్‌లలో సెట్ చేయబడుతుంది.',
+  'Set by the settings file': 'సెట్టింగ్‌ల ఫైల్ నిర్ణయించింది',
+  'The settings file has a problem': 'సెట్టింగ్‌ల ఫైల్‌లో సమస్య ఉంది',
 }

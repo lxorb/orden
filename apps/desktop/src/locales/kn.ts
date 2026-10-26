@@ -2663,4 +2663,6 @@ export const kn: Dictionary = {
     'https:// ನಿಂದ ಆರಂಭವಾಗುವ DNS over HTTPS ಸರ್ವರ್‌ನ ವಿಳಾಸ',
   'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
     'ಇಲ್ಲಿ ವೆಬ್ ಪುಟಗಳು ಸಿಸ್ಟಮ್‌ನಂತೆಯೇ ವಿಳಾಸಗಳನ್ನು ಹುಡುಕುತ್ತವೆ; ಅದರ DNS ಅನ್ನು ಸಿಸ್ಟಮ್‌ನ ಸ್ವಂತ ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಹೊಂದಿಸಲಾಗುತ್ತದೆ.',
+  'Set by the settings file': 'ಸೆಟ್ಟಿಂಗ್ಸ್ ಫೈಲ್‌ನಿಂದ ಹೊಂದಿಸಲಾಗಿದೆ',
+  'The settings file has a problem': 'ಸೆಟ್ಟಿಂಗ್ಸ್ ಫೈಲ್‌ನಲ್ಲಿ ಸಮಸ್ಯೆ ಇದೆ',
 }

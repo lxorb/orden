@@ -2604,4 +2604,6 @@ export const vi: Dictionary = {
     'Địa chỉ của một máy chủ DNS qua HTTPS, bắt đầu bằng https://',
   'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
     'Ở đây các trang web tra cứu địa chỉ theo cách của hệ thống; DNS được đặt trong phần cài đặt của chính hệ thống.',
+  'Set by the settings file': 'Do tệp cài đặt quy định',
+  'The settings file has a problem': 'Tệp cài đặt có vấn đề',
 }

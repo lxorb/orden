@@ -2620,4 +2620,6 @@ export const gu: Dictionary = {
     'https:// થી શરૂ થતું DNS over HTTPS સર્વરનું સરનામું',
   'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
     'અહીં વેબ પેજ સિસ્ટમની જેમ જ સરનામાં શોધે છે; તેનું DNS સિસ્ટમના પોતાના સેટિંગ્સમાં નક્કી થાય છે.',
+  'Set by the settings file': 'સેટિંગ્સ ફાઇલ દ્વારા નક્કી',
+  'The settings file has a problem': 'સેટિંગ્સ ફાઇલમાં સમસ્યા છે',
 }

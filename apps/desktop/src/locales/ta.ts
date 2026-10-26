@@ -2679,4 +2679,6 @@ export const ta: Dictionary = {
     'https:// என்று தொடங்கும் DNS over HTTPS சேவையகத்தின் முகவரி',
   'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
     'இங்கு இணையப் பக்கங்கள் கணினியைப் போலவே முகவரிகளைத் தேடுகின்றன; அதன் DNS கணினியின் சொந்த அமைப்புகளில் அமைக்கப்படுகிறது.',
+  'Set by the settings file': 'அமைப்புகள் கோப்பால் அமைக்கப்பட்டது',
+  'The settings file has a problem': 'அமைப்புகள் கோப்பில் சிக்கல் உள்ளது',
 }

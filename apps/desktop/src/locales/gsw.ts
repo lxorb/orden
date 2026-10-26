@@ -2654,4 +2654,6 @@ export const gsw: Dictionary = {
     'D Adrässe vomene DNS-over-HTTPS-Server, wo mit https:// aafangt',
   'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
     'Websiite luege d Adrässe do so naa wie s System; sis DNS wird i de Iistellige vom System festgleit.',
+  'Set by the settings file': 'Vo de Iistelligsdatei feschtgleit',
+  'The settings file has a problem': 'D Iistelligsdatei hät es Problem',
 }

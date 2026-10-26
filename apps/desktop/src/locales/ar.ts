@@ -2747,4 +2747,6 @@ export const ar: Dictionary = {
     'عنوان خادم DNS عبر HTTPS، يبدأ بـ https://',
   'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
     'تبحث صفحات الويب هنا عن العناوين كما يفعل النظام؛ ويُضبط DNS في إعدادات النظام نفسه.',
+  'Set by the settings file': 'محدد في ملف الإعدادات',
+  'The settings file has a problem': 'في ملف الإعدادات مشكلة',
 }

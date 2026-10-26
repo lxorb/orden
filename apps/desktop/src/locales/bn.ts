@@ -2630,4 +2630,6 @@ export const bn: Dictionary = {
     'একটি DNS over HTTPS সার্ভারের ঠিকানা, https:// দিয়ে শুরু',
   'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
     'এখানে ওয়েব পেজ সিস্টেমের মতো করেই ঠিকানা খোঁজে; এর DNS সিস্টেমের নিজস্ব সেটিংসে ঠিক করা হয়।',
+  'Set by the settings file': 'সেটিংস ফাইলে নির্ধারিত',
+  'The settings file has a problem': 'সেটিংস ফাইলে একটি সমস্যা আছে',
 }

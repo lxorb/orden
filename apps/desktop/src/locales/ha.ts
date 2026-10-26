@@ -2672,4 +2672,6 @@ export const ha: Dictionary = {
     'Adireshin sabar DNS ta HTTPS, wanda ya fara da https://',
   'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
     'A nan, shafukan yanar gizo suna neman adireshi kamar yadda tsarin yake yi; ana saita DNS ɗinsa a cikin saitunan tsarin.',
+  'Set by the settings file': 'Fayil ɗin saituna ne ya saita',
+  'The settings file has a problem': 'Fayil ɗin saituna yana da matsala',
 }

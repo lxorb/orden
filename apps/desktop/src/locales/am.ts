@@ -2588,4 +2588,6 @@ export const am: Dictionary = {
     'በhttps:// የሚጀምር የDNS over HTTPS አገልጋይ አድራሻ',
   'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
     'እዚህ ድረ-ገጾች አድራሻዎችን የሚፈልጉት ሥርዓቱ በሚፈልግበት መንገድ ነው፤ የDNS ቅንብሩ በሥርዓቱ ቅንብሮች ውስጥ ነው።',
+  'Set by the settings file': 'በቅንብሮች ፋይል የተቀመጠ',
+  'The settings file has a problem': 'የቅንብሮች ፋይሉ ችግር አለበት',
 }

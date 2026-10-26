@@ -2628,4 +2628,6 @@ export const ms: Dictionary = {
     'Alamat pelayan DNS over HTTPS, bermula dengan https://',
   'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
     'Di sini halaman web mencari alamat seperti sistem; DNS-nya ditetapkan dalam tetapan sistem sendiri.',
+  'Set by the settings file': 'Ditetapkan oleh fail tetapan',
+  'The settings file has a problem': 'Fail tetapan mempunyai masalah',
 }

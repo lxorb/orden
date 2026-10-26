@@ -2607,4 +2607,6 @@ export const ja: Dictionary = {
     'DNS over HTTPS サーバーのアドレス（https:// で始まる）',
   'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
     'ここではウェブページは システムと同じ方法でアドレスを調べます。DNS はシステム自体の設定で変更します。',
+  'Set by the settings file': '設定ファイルで指定済み',
+  'The settings file has a problem': '設定ファイルに問題があります',
 }

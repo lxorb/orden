@@ -2634,4 +2634,6 @@ export const ps: Dictionary = {
     'د DNS over HTTPS سرور پته چې په https:// پیلېږي',
   'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
     'دلته ویب پاڼې پتې هماغسې لټوي لکه سیسټم؛ د هغه DNS د سیسټم په خپلو امستنو کې ټاکل کېږي.',
+  'Set by the settings file': 'د امستنو فایل ټاکلی',
+  'The settings file has a problem': 'د امستنو فایل کې ستونزه ده',
 }

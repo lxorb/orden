@@ -2715,4 +2715,6 @@ export const fr: Dictionary = {
     'L’adresse d’un serveur DNS sur HTTPS, commençant par https://',
   'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
     'Ici, les pages web trouvent les adresses comme le fait le système ; son DNS se règle dans les réglages du système.',
+  'Set by the settings file': 'Défini par le fichier de réglages',
+  'The settings file has a problem': 'Le fichier de réglages a un problème',
 }

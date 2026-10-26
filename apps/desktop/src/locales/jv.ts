@@ -2616,4 +2616,6 @@ export const jv: Dictionary = {
     'Alamat server DNS over HTTPS, diwiwiti karo https://',
   'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
     'Ing kene kaca web nggoleki alamat kaya sistem; DNS-e disetel ing setelan sistem dhewe.',
+  'Set by the settings file': 'Disetel dening file setelan',
+  'The settings file has a problem': 'File setelan ana masalah',
 }

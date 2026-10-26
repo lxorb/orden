@@ -2639,4 +2639,6 @@ export const fa: Dictionary = {
     'نشانی یک سرور DNS روی HTTPS که با https:// آغاز می‌شود',
   'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
     'صفحه‌های وب اینجا نشانی‌ها را همان‌طور پیدا می‌کنند که سیستم؛ DNS آن در تنظیمات خود سیستم تعیین می‌شود.',
+  'Set by the settings file': 'تعیین‌شده در فایل تنظیمات',
+  'The settings file has a problem': 'فایل تنظیمات مشکلی دارد',
 }
