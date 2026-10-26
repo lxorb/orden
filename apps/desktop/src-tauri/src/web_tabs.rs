@@ -1513,6 +1513,9 @@ fn listening(app: &AppHandle, tab: &str, store: Option<String>, onward: Option<(
         );
         std::thread::spawn(move || {
             crate::web_worlds::asking(&clearing, &hearing, &named, &holder);
+            // How far each of its downloads has got, and the way to stop one; see
+            // `progress` in downloads.rs.
+            crate::downloads::follow(&clearing, &hearing, &holder);
             let cleared = crate::web_worlds::sent(&clearing, &address, &scripts);
             crate::trace::mark(&format!("web tab: {}", cleared.said()));
         });

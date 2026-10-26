@@ -26,7 +26,8 @@
 //! One mechanism on every desktop. `WebviewBuilder::on_download` is the same hook on
 //! `WebView2`, `WKWebView` and `WebKitGTK`; the one thing it does not say is how far
 //! along a file is, and `progress` adds that - and Cancel - where the engine's own
-//! download can be reached, which is `WebView2` and `WKWebView`. A phone has no web
+//! download can be reached, which is `WebView2`, `WKWebView` and nib's own Chromium,
+//! through the page's `DevTools` protocol. A phone has no web
 //! tabs - a site there opens in the system browser, whose downloads are its own.
 
 use std::collections::HashSet;
@@ -68,6 +69,14 @@ pub enum State {
     Cancelled,
 }
 
+impl Download {
+    /// Whether the engine may still be writing it: on its way, or stopped by the reader
+    /// and not yet let go of by the engine.
+    fn writing(&self) -> bool {
+        self.state == State::Going || (self.state == State::Cancelled && !self.ended)
+    }
+}
+
 /// One download, as the window is told about it.
 ///
 /// The path is not in it. The window only ever names a download by its id, and the
@@ -86,6 +95,11 @@ pub struct Download {
     total: Option<u64>,
     #[serde(skip)]
     path: PathBuf,
+    /// For one the reader stopped: whether the engine has said it ended. Until it has,
+    /// its name stays taken, since an engine that has not stopped yet is still writing
+    /// it (#788).
+    #[serde(skip)]
+    ended: bool,
 }
 
 /// Everything this run has downloaded, newest last.
@@ -121,7 +135,7 @@ impl Downloads {
             one.exists()
                 || held
                     .iter()
-                    .any(|other| other.state == State::Going && same_path(&other.path, one))
+                    .any(|other| other.writing() && same_path(&other.path, one))
         });
 
         let made = Download {
@@ -135,6 +149,7 @@ impl Downloads {
             received: 0,
             total: None,
             path,
+            ended: false,
         };
 
         held.push(made.clone());
@@ -147,12 +162,23 @@ impl Downloads {
     fn finish(&self, url: &str, path: Option<&Path>, success: bool) -> Option<Download> {
         let mut held = self.held.lock().ok()?;
         let one = held.iter_mut().find(|one| {
-            one.state == State::Going
+            one.writing()
                 && match path {
                     Some(path) => same_path(&one.path, path),
                     None => one.url == url,
                 }
         })?;
+
+        // One the reader stopped, which the engine has now let go of: it stays stopped,
+        // and a file the engine finished all the same is not left behind as though it
+        // had been wanted.
+        if one.state == State::Cancelled {
+            one.ended = true;
+            if success {
+                let _ = std::fs::remove_file(&one.path);
+            }
+            return None;
+        }
 
         one.state = if success { State::Done } else { State::Failed };
         if success {
@@ -163,10 +189,10 @@ impl Downloads {
 
     /// How far a download has got, by the path it is being written to.
     #[cfg_attr(
-        any(not(any(windows, target_os = "macos")), feature = "cef"),
+        all(not(any(windows, target_os = "macos")), not(feature = "cef")),
         allow(
             dead_code,
-            reason = "only WebView2 and WKWebView say how far a download has got"
+            reason = "WebKitGTK says nothing of how far a download has got"
         )
     )]
     fn moved(&self, path: &Path, received: u64, total: Option<u64>) -> Option<Download> {
@@ -185,10 +211,10 @@ impl Downloads {
     /// and not its file - is matched to the list: in the same order `finish` matches
     /// one that names no path, so the two agree on which is which.
     #[cfg_attr(
-        not(all(target_os = "macos", not(feature = "cef"))),
+        not(any(all(target_os = "macos", not(feature = "cef")), feature = "cef")),
         allow(
             dead_code,
-            reason = "only WKWebView's downloads are matched by address"
+            reason = "only WKWebView's and Chromium's downloads are matched by address"
         )
     )]
     fn going_from(&self, url: &str, taken: &[u64]) -> Option<(u64, PathBuf)> {
@@ -201,8 +227,11 @@ impl Downloads {
 
     /// Where a download is being written, while it is still on its way.
     #[cfg_attr(
-        not(all(target_os = "macos", not(feature = "cef"))),
-        allow(dead_code, reason = "only WKWebView's downloads are watched by id")
+        not(any(all(target_os = "macos", not(feature = "cef")), feature = "cef")),
+        allow(
+            dead_code,
+            reason = "only WKWebView's and Chromium's downloads are watched by id"
+        )
     )]
     fn going_to(&self, id: u64) -> Option<PathBuf> {
         self.held.lock().ok().and_then(|held| {
@@ -485,8 +514,8 @@ pub fn listen(platform: &tauri::webview::PlatformWebview, app: AppHandle, window
 }
 
 /// Everything this run has downloaded, for a window that was reloaded while a
-/// download was on its way, and for a probe. On the window's thread, like Cancel
-/// below: neither waits on anything but the list's own lock.
+/// download was on its way, and for a probe. On the window's thread: it waits on
+/// nothing but the list's own lock.
 #[tauri::command]
 pub fn web_downloads(app: AppHandle) -> Vec<Download> {
     held(&app)
@@ -517,9 +546,10 @@ pub fn web_download_show(app: AppHandle, id: u64) -> Result<(), String> {
         .map_err(|error| format!("that file could not be shown: {error}"))
 }
 
-/// Stops a download on its way. The engine's own operation is on the window's thread,
-/// which is the only one it may be touched from; see `progress`.
-#[tauri::command]
+/// Stops a download on its way. The engine's own operation is touched on the window's
+/// thread, the only one it may be touched from, where this sends it; see `progress`.
+/// Off that thread itself, since nib's own Chromium is told through the page's agent.
+#[tauri::command(async)]
 pub fn web_download_cancel(webview: tauri::Webview, id: u64) {
     let app = webview.app_handle();
     let Some(stopped) = held(app).cancelled(id) else {
@@ -1015,10 +1045,9 @@ mod progress {
     }
 }
 
-// Every build but the two system engines that can be watched: Linux, whose engine says
-// nothing about a download between its start and its end through what wry hands out,
-// and nib's own Chromium, whose erased webview has no controller to reach through.
-#[cfg(any(not(any(windows, target_os = "macos")), feature = "cef"))]
+// WebKitGTK, whose engine says nothing about a download between its start and its end
+// through what wry hands out.
+#[cfg(all(not(any(windows, target_os = "macos")), not(feature = "cef")))]
 mod progress {
     use tauri::webview::PlatformWebview;
     use tauri::AppHandle;
@@ -1026,8 +1055,179 @@ mod progress {
     pub fn listen(_webview: &PlatformWebview, _app: AppHandle, _window: String) {}
 
     /// Nothing is kept to stop. The list says it was cancelled, and the file arrives
-    /// anyway; see docs/web-tabs.md.
+    /// anyway; its name stays taken until it has (see `Download::writing`).
     pub fn cancel(_id: u64) {}
+}
+
+/// How far a download has got on nib's own Chromium, and Cancel, through the page's
+/// `DevTools` protocol: the runtime hands out a download's start and end and nothing
+/// between, and keeps the engine's own handle on it to itself.
+///
+/// The page's agent says each download as it begins (`Page.downloadWillBegin`, with the
+/// engine's own id for it) and as it moves (`Page.downloadProgress`), and stops one by
+/// that id (`Browser.cancelDownload`). Before this, Cancel only marked the list: the
+/// engine went on writing, and a second download of the same name was given the same
+/// file (#788). Measured on the probe: cancelled, the server saw the engine hang up a
+/// tenth of the way in, and no file was left.
+///
+/// An engine id is matched to the list's own by address, the oldest still going first -
+/// the order the list keeps its own - when it first moves or is cancelled, since the two
+/// can arrive in either order.
+#[cfg(feature = "cef")]
+mod progress {
+    use std::sync::{LazyLock, Mutex, OnceLock, PoisonError};
+
+    use serde_json::{json, Value};
+    use tauri::webview::PlatformWebview;
+    use tauri::{AppHandle, Emitter as _, Manager as _, Webview};
+
+    use super::{held, MOVED};
+
+    /// One download as the engine named it.
+    struct Begun {
+        /// The engine's own id for it.
+        guid: String,
+        url: String,
+        /// The webview whose page fetches it, which is the agent that can stop it.
+        view: String,
+        /// The list's own id, once matched.
+        id: Option<u64>,
+    }
+
+    static BEGUN: LazyLock<Mutex<Vec<Begun>>> = LazyLock::new(Mutex::default);
+    static APP: OnceLock<AppHandle> = OnceLock::new();
+
+    /// Nothing here: the page is followed through its agent instead; see `follow`.
+    pub fn listen(_webview: &PlatformWebview, _app: AppHandle, _window: String) {}
+
+    /// The list's id for an engine download, matching it now if it was not yet.
+    fn matched(begun: &mut [Begun], at: usize) -> Option<u64> {
+        if let Some(id) = begun[at].id {
+            return Some(id);
+        }
+        let app = APP.get()?;
+        let taken: Vec<u64> = begun.iter().filter_map(|one| one.id).collect();
+        let (id, _) = held(app).going_from(&begun[at].url, &taken)?;
+        begun[at].id = Some(id);
+        Some(id)
+    }
+
+    /// Follows the downloads of the page in `view`, and says how far each has got to
+    /// `window`.
+    pub fn follow(view: &Webview, app: &AppHandle, window: &str) {
+        let _ = APP.set(app.clone());
+        let (app, window, label) = (app.clone(), window.to_string(), view.label().to_string());
+        let _ = crate::engine::devtools::hear(view, move |method, session, params| {
+            if session.is_some() {
+                return;
+            }
+            match method {
+                "Page.downloadWillBegin" => {
+                    let (Some(guid), Some(url)) = (text(params, "guid"), text(params, "url"))
+                    else {
+                        return;
+                    };
+                    BEGUN
+                        .lock()
+                        .unwrap_or_else(PoisonError::into_inner)
+                        .push(Begun {
+                            guid,
+                            url,
+                            view: label.clone(),
+                            id: None,
+                        });
+                }
+                "Page.downloadProgress" => moved(&app, &window, params),
+                _ => {}
+            }
+        });
+    }
+
+    fn text(params: &Value, name: &str) -> Option<String> {
+        params.get(name)?.as_str().map(str::to_string)
+    }
+
+    #[allow(
+        clippy::cast_possible_truncation,
+        clippy::cast_sign_loss,
+        reason = "byte counts the engine says as whole numbers"
+    )]
+    fn bytes(params: &Value, name: &str) -> Option<u64> {
+        params
+            .get(name)?
+            .as_f64()
+            .filter(|one| *one >= 0.0)
+            .map(|one| one as u64)
+    }
+
+    fn moved(app: &AppHandle, window: &str, params: &Value) {
+        let Some(guid) = text(params, "guid") else {
+            return;
+        };
+        let mut begun = BEGUN.lock().unwrap_or_else(PoisonError::into_inner);
+        let Some(at) = begun.iter().position(|one| one.guid == guid) else {
+            return;
+        };
+        // An end is the runtime's to say; only the engine's record of it goes.
+        if text(params, "state").as_deref() != Some("inProgress") {
+            begun.retain(|one| one.guid != guid);
+            return;
+        }
+        let Some(id) = matched(&mut begun, at) else {
+            return;
+        };
+        drop(begun);
+        let downloads = held(app);
+        let Some(path) = downloads.going_to(id) else {
+            return;
+        };
+        let total = bytes(params, "totalBytes").filter(|one| *one > 0);
+        if let Some(one) =
+            downloads.moved(&path, bytes(params, "receivedBytes").unwrap_or(0), total)
+        {
+            let _ = app.emit_to(window, MOVED, one);
+        }
+    }
+
+    /// Stops a download in the engine, by the list's id. On the window's thread, where
+    /// `web_download_cancel` sends it; the stop itself is said to the page's agent.
+    pub fn cancel(id: u64) {
+        let Some(app) = APP.get() else {
+            return;
+        };
+        let mut begun = BEGUN.lock().unwrap_or_else(PoisonError::into_inner);
+        let found = (0..begun.len())
+            .find(|&at| begun[at].id == Some(id))
+            .or_else(|| {
+                // Not matched yet: the oldest one from its address, as the list matches it.
+                let url = held(app).held.lock().ok().and_then(|list| {
+                    list.iter()
+                        .find(|one| one.id == id)
+                        .map(|one| one.url.clone())
+                })?;
+                (0..begun.len()).find(|&at| begun[at].id.is_none() && begun[at].url == url)
+            });
+        let Some(at) = found else {
+            return;
+        };
+        let (guid, view) = (begun[at].guid.clone(), begun[at].view.clone());
+        begun.retain(|one| one.guid != guid);
+        drop(begun);
+        if let Some(view) = app.get_webview(&view) {
+            crate::engine::devtools::tell(
+                &view,
+                None,
+                vec![("Browser.cancelDownload", json!({ "guid": guid }))],
+            );
+        }
+    }
+}
+
+/// Follows how far each download of a web tab's page has got, on nib's own Chromium;
+/// see `progress`.
+#[cfg(feature = "cef")]
+pub fn follow(view: &tauri::Webview, app: &AppHandle, window: &str) {
+    progress::follow(view, app, window);
 }
 
 #[cfg(test)]
@@ -1254,5 +1454,36 @@ mod tests {
                 .map(|(id, _)| id),
             Some(two.id)
         );
+    }
+
+    /// #788: one the reader stopped keeps its name while the engine may still be writing
+    /// it, and the engine's end of it is not taken for the next one's.
+    #[test]
+    fn a_stopped_download_keeps_its_name_until_the_engine_lets_go() {
+        let downloads = Downloads::default();
+        let first = downloads
+            .start("a", "https://x.example/r", Path::new("report.pdf"), &tmp())
+            .expect("first");
+        downloads.cancelled(first.id).expect("stopped");
+        let second = downloads
+            .start("a", "https://x.example/r", Path::new("report.pdf"), &tmp())
+            .expect("second");
+        assert_eq!(second.name, "report (1).pdf");
+
+        // The first one's end: still stopped, and not the second's.
+        assert!(downloads
+            .finish("https://x.example/r", Some(&first.path), true)
+            .is_none());
+        let done = downloads
+            .finish("https://x.example/r", Some(&second.path), true)
+            .expect("the second ended");
+        assert_eq!(done.id, second.id);
+        assert_eq!(done.state, State::Done);
+
+        // Let go of, its name is free again.
+        let third = downloads
+            .start("a", "https://x.example/r", Path::new("report.pdf"), &tmp())
+            .expect("third");
+        assert_eq!(third.name, "report.pdf");
     }
 }
