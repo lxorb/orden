@@ -438,8 +438,12 @@ declared setting's row in Settings shows its value, says "Set by the settings fi
 and does not move, and nothing else moves it either: its key, the palette, a menu,
 another device's value arriving through the account. It is held where the app keeps
 it, so whatever writes it writes underneath, and a declared value is not sent to the
-account for other machines to take. One left out (null, the default) stays the
-reader's. Change the
+account for other machines to take: the account is sent what the reader had. One left
+out (null, the default) stays the reader's, and one the configuration stops declaring
+goes back, at the next start, to what it was before the configuration held it - or to
+what another device sent it meanwhile. Hardware acceleration is read by the app before
+its engine starts, so a declared value is in force from that very start and nothing
+asks for a restart. Change the
 configuration, switch, start Orden again, and it follows. The options are typed from
 `packaging/nix/settings-schema.json`, which the app's own test makes from the
 settings it declares, so a choice it does not offer or a size outside its range is
