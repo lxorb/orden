@@ -862,9 +862,17 @@ function holds(tail: string): boolean {
  *  Raised 2026-10-26, to 3,290,000, for #673: the launch fetches the settings file's
  *  module on a desktop, which puts what a configuration declares in force (start.ts; the
  *  rest is settings/file.svelte.ts, fetched). Measured 3,289,169, from 3,288,939 at
- *  14d4d5b6e. */
-const BUDGET = 3_290_000
-const MOST_FILES = 382
+ *  14d4d5b6e.
+ *
+ *  Raised 2026-10-26, to 3,292,000, for #673 again: a setting the settings file declares
+ *  is held where its store keeps it, so nothing that writes the store moves it, and the
+ *  stores that tell the account leave a declared value out (settings/held.ts, read by
+ *  modes, shortcuts, the kinds and recovery; `setFor` and `builtIns` in
+ *  theme.svelte.ts). Measured 3,291,407, from 3,289,169 at 6ac1ef69b. */
+const BUDGET = 3_292_000
+/** Raised 2026-10-26, to 383, for settings/held.ts (#673): measured 382, from 381 at
+ *  6ac1ef69b. */
+const MOST_FILES = 383
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
  *  chunk: 3,092 bytes as this is written, which is contrast.css and nothing else.
