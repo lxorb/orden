@@ -1460,3 +1460,32 @@ describe('a space shared to be read', () => {
     expect(docs.writeNote).not.toHaveBeenCalled()
   })
 })
+
+describe('a tab and a space named together', () => {
+  const verbs: [string, Record<string, unknown>][] = [
+    ['read_note', {}],
+    ['write_note', { content: '# Over\n' }],
+    ['edit_note', { edits: [{ at: { end: true }, insert_after: 'x' }] }],
+    ['append_note', { content: 'x' }],
+    ['set_property', { key: 'status', value: 'done' }],
+    ['set_task', { at: { task: 'Buy milk' }, done: true }],
+  ]
+
+  test.each(verbs)('%s refuses a space that is not the tab’s own', async (verb, args) => {
+    files.set('/s/Home/Plan.md', '# Home plan, kept\n')
+    expect(await call(verb, { ...args, space: 'Home', tab: 't1' })).toMatchObject({
+      code: 'bad_arguments',
+    })
+    expect(files.get('/s/Home/Plan.md')).toBe('# Home plan, kept\n')
+    expect(files.get('/s/Work/Plan.md')).toBe('# Plan\n')
+    for (const verb of [docs.readNote, docs.writeNote, docs.editNote]) {
+      expect(verb).not.toHaveBeenCalled()
+    }
+  })
+
+  test('the tab’s own space, named, is the tab’s note', async () => {
+    await call('write_note', { space: 'Work', tab: 't1', content: '# Over\n' })
+    expect(docs.writeNote.mock.calls.at(-1)?.[1]).toEqual({ path: 'Plan.md', space: 'work' })
+    expect(files.has('/s/Home/Plan.md')).toBe(false)
+  })
+})
