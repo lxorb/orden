@@ -521,6 +521,20 @@ describe('Typora extensions', () => {
     expect(html).not.toContain('callout')
   })
 
+  /** marked reads a marker line with `---` or `===` under it as a setext heading,
+   *  and that heading is still the line that opens the callout. */
+  test.each([
+    ['a rule under the title', '> [!note] Title\n> ---\n> body\n', 'Title'],
+    ['a heading under the marker', '> [!note]\n> Heading\n> ---\n> body\n', 'Note'],
+    ['a double rule under the title', '> [!note] Title\n> ===\n', 'Title'],
+  ])('a callout with %s is still a callout', (_, source, title) => {
+    const html = renderMarkdown(source)
+    expect(html).toContain('data-callout="note"')
+    expect(html).toContain(`<span>${title}</span>`)
+    expect(html).not.toContain('[!note]')
+    expect(html).not.toContain('<blockquote>')
+  })
+
   test('footnotes link both ways', () => {
     const html = renderMarkdown('Text[^1].\n\n[^1]: The note.\n', { footnotes: true })
     expect(html).toContain('id="fnref-1"')

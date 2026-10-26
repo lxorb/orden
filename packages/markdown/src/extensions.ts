@@ -1,6 +1,6 @@
 import type { MarkedExtension, Token, Tokens } from 'marked'
 import { blockMath, definitionList } from './blocks'
-import { calloutChevron, calloutIcon, calloutOf } from './callouts'
+import { calloutChevron, calloutIcon, calloutOf, opensCallout } from './callouts'
 import { emojiTable, loadEmoji, loadMaths, MOST_EMS, mathsEngine } from './engines'
 import { closesFence, fenceMark } from './fences'
 import { highlightTone, readHighlight } from './highlights'
@@ -249,11 +249,11 @@ function afterMarker(tokens: Token[], cut: number): Token[] {
 export const callouts: MarkedExtension = {
   renderer: {
     blockquote(token: Tokens.Blockquote) {
-      // Only an opening paragraph can be the marker line: code or a heading that
-      // starts with `[!note]` is that code or heading, and code has no inline
-      // tokens for the marker to be cut out of.
+      // Only an opening paragraph, or the setext heading one becomes over a rule,
+      // can be the marker line: code or a `#` heading that starts with `[!note]`
+      // is that code or heading, and code has no inline tokens to cut it out of.
       const first = token.tokens[0]
-      const opening = first?.type === 'paragraph' ? (first as Tokens.Paragraph) : null
+      const opening = first && opensCallout(first) ? (first as Tokens.Paragraph) : null
       const found = opening ? calloutOf(opening.text) : null
 
       if (!opening || !found) {
