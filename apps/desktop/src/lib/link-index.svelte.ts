@@ -190,8 +190,10 @@ function resolvedIn(index: NoteIndex, link: { kind: LinkKind; target: string }):
 /** Whether a link written in `source` already names `there` as it is spelled, so a
  *  rename has nothing to change in it: a bare `[[Plan]]` or a shortest `Plan.md`
  *  once the folder the note is in was renamed, or a relative path from a note that
- *  moved with what it links to. Spelled exactly, not folded, so a name that only
- *  changed its case is still written again in its new case.
+ *  moved with what it links to. Spelled exactly where the file's name changed, so a
+ *  name that only changed its case is written again in its new case; folded where
+ *  it did not (`folded`), so `[[plan]]` to a `Plan.md` whose folder moved stays as
+ *  it was written.
  *
  *  `loose` lets a markdown link name a note by the end of its path, the way
  *  `resolveRelative` reads one; not for a note that went to another folder, where
@@ -202,8 +204,12 @@ function stillReaches(
   link: { kind: LinkKind; target: string },
   there: string,
   loose: boolean,
+  folded: boolean,
 ): boolean {
-  const spelled = (path: string) => path.replace(/\\/g, '/').normalize('NFC')
+  const spelled = (path: string) => {
+    const plain = path.replace(/\\/g, '/').normalize('NFC')
+    return folded ? foldName(plain) : plain
+  }
   const ends = (path: string, written: string) => path === written || path.endsWith(`/${written}`)
   const at = spelled(there)
 
@@ -222,6 +228,35 @@ function stillReaches(
 
   const written = spelled(link.target)
   return ends(at, written) || ends(shownName(at), written)
+}
+
+/** The files beside the notes by the last part of their path, folded. A link to a
+ *  file ends in its name however it is spelled, so the handful that do are all
+ *  `resolveFile` needs to be asked about; asked about every file in the space per
+ *  link, a folder of a thousand notes renamed held the window for seconds. */
+function filesByName(files: readonly string[]): ReadonlyMap<string, readonly string[]> {
+  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built whole and never changed
+  const map = new Map<string, string[]>()
+  for (const path of files) {
+    const key = foldName(nameOf(path))
+    const held = map.get(key)
+    if (held) held.push(path)
+    else map.set(key, [path])
+  }
+  return map
+}
+
+/** The file a link names, from `source`, as `resolveFile` answers it over the whole
+ *  space; see `filesByName`. */
+function fileNamed(
+  byName: ReadonlyMap<string, readonly string[]>,
+  source: string,
+  link: { kind: LinkKind; target: string },
+): string | null {
+  const last = link.target.replace(/\\/g, '/').split('/').pop() ?? ''
+  const files = byName.get(foldName(last))
+  if (!files) return null
+  return resolveFile({ notes: [], files, path: source, read: nothing }, link.target, link.kind)
 }
 
 /** A scanned note as a link resolves against it. */
@@ -1203,6 +1238,9 @@ class Links {
    *  What that is worth: the graph of a space of two thousand notes resolves four
    *  thousand links, and walking every note for each of them took a second and a
    *  half. */
+  /** The files the same way; see `filesByName`. */
+  private readonly filesNamed = $derived.by(() => filesByName(this.files))
+
   private readonly byName = $derived.by(() => {
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and thrown away inside the derived
     const map = new Map<string, NoteRef[]>()
@@ -1505,8 +1543,7 @@ class Links {
       const touched = await this.retargetIn(
         this.notes,
         (source, link) =>
-          this.resolveFrom(source, link) ??
-          resolveFile(this.spaceFiles(source), link.target, link.kind),
+          this.resolveFrom(source, link) ?? fileNamed(this.filesNamed, source, link),
         (note, after) => {
           this.notes = this.notes.map((one) => (one.path === note ? scanNote(note, after) : one))
         },
@@ -1535,11 +1572,11 @@ class Links {
       path: null,
       read: nothing,
     }
+    const named = filesByName(index.files)
     const touched = await this.retargetIn(
       notes,
       (source, link) =>
-        resolvedIn({ ...index, path: source }, link) ??
-        resolveFile({ ...index, path: source }, link.target, link.kind),
+        resolvedIn({ ...index, path: source }, link) ?? fileNamed(named, source, link),
       () => undefined,
       { was, now, root, open, how },
     )
@@ -1568,7 +1605,8 @@ class Links {
     // The file's own name and nothing else. A rename rewrites the links that
     // spelled out the name that changed; a link written with an alias still says
     // what the note still answers to, so rewriting it would turn a name the
-    // writer chose into a filename they did not. For a folder this is the folder's
+    // writer chose into a filename they did not - which is why `to` passes over
+    // one, in a note read for another link. For a folder this is the folder's
     // name, which a link reaching into it from outside spells out somewhere along
     // its path.
     const name = comparable(nameOf(was))
@@ -1593,13 +1631,29 @@ class Links {
       const shifted = went !== null && folderOf(went) !== folderOf(note.path)
 
       // Where each link has to point now, or null for one that still reaches what
-      // it named: a bare `[[Plan]]` finds the note wherever its folder went.
+      // it named: a bare `[[Plan]]` finds the note wherever its folder went. Once
+      // per target: the same link is asked about to decide whether the note is read
+      // and again while it is rewritten.
+      // eslint-disable-next-line svelte/prefer-svelte-reactivity -- one note's answers, thrown away after it
+      const answered = new Map<string, string | null>()
       const to = (link: { kind: LinkKind; target: string }): string | null => {
+        const key = `${link.kind}\0${link.target}`
+        const held = answered.get(key)
+        if (held !== undefined) return held
+        const there = whereNow(link)
+        answered.set(key, there)
+        return there
+      }
+      const whereNow = (link: { kind: LinkKind; target: string }): string | null => {
         const found = resolve(note.path, link)
         if (found === null) return null
+        // An alias names the note as its writer chose to; see `name` above.
+        const last = link.target.replace(/\\/g, '/').split('/').pop() ?? ''
+        if (link.kind === 'wikilink' && comparable(last) !== comparable(nameOf(found))) return null
         const there = moving(found) ?? found
         if (there === found && !(shifted && link.kind === 'markdown')) return null
-        return stillReaches(source, link, there, !shifted) ? null : there
+        const kept = nameOf(there) === nameOf(found)
+        return stillReaches(source, link, there, !shifted, kept) ? null : there
       }
 
       // Whether this note is worth reading at all, decided from the index.
