@@ -18,6 +18,7 @@
  *  slashes, so the characters that may appear in one are what decides how deep a
  *  tree can go. */
 
+import { CodeBlocks, WORDS } from '@nib/markdown/fences'
 import { type FrontMatterBlock, frontMatterBlock } from '@nib/markdown/front-matter'
 import { codeSpans, inCode, TAG_NAME } from '@nib/markdown/tags'
 
@@ -34,8 +35,6 @@ export interface TagUse {
 const NAME = new RegExp(`^${TAG_NAME}$`, 'u')
 
 const TAG = new RegExp(String.raw`(^|[\s(])#(${TAG_NAME})`, 'gu')
-
-const FENCE = /^\s*(```|~~~)/
 
 /** `tags:` or `tag:` at the left margin of the front matter, and what follows
  *  it on the line. Both spellings, because Obsidian takes both. */
@@ -210,7 +209,7 @@ function readValues(from: number, text: string, out: TagUse[]) {
 
 /** Every `#tag` in the note's own words. The front matter is left out of this
  *  pass: a hash there is a YAML comment, and the tags it holds have been read
- *  already. Fenced code is left out too, where a `#` is a comment or a heading
+ *  already. Code is left out too, fenced or indented, where a `#` is a comment or a heading
  *  in some other language, and so is inline code, which shows what is in it as
  *  written. A code span runs on across the lines of a paragraph, so the spans are
  *  cut a block at a time. Raw HTML and autolinks, which CommonMark reads before a
@@ -240,26 +239,27 @@ const OPENS_BLOCK = /^ {0,3}(?:(?:[-*+]|\d{1,9}[.)])(?:[ \t]|$)|>|#{1,6}(?:[ \t]
 const HEADING = /^ {0,3}#{1,6}(?:[ \t]|$)/
 
 /** Where each block of words from `at` on starts and ends: a paragraph's lines, a
- *  list item's or a heading's. A blank line, a fence and a line that opens a block
- *  end one, and what is fenced is in none. */
+ *  list item's or a heading's. A blank line, a line of code and a line that opens
+ *  a block end one, and code is in none. What is code is judged as the renderer
+ *  judges it, fences in quotes and list items and indented code included; see
+ *  `CodeBlocks` in @nib/markdown's fences.ts. */
 function blocksOf(body: string, at: number): [number, number][] {
   const out: [number, number][] = []
-  let fenced = false
+  const code = new CodeBlocks()
   let start = -1
 
   while (at <= body.length) {
     const end = body.indexOf('\n', at)
     const stop = end === -1 ? body.length : end
     const line = body.slice(at, stop)
-    const fence = FENCE.test(line)
+    const words = code.line(line) === WORDS
     const blank = line.trim() === ''
 
-    if (start !== -1 && (fenced || fence || blank || OPENS_BLOCK.test(line))) {
+    if (start !== -1 && (!words || blank || OPENS_BLOCK.test(line))) {
       out.push([start, at - 1])
       start = -1
     }
-    if (fence) fenced = !fenced
-    else if (!fenced && !blank) {
+    if (words && !blank) {
       if (start === -1) start = at
       if (HEADING.test(line)) {
         out.push([start, stop])

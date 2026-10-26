@@ -27,7 +27,7 @@ import { type Call, done, flag, maybe, need, text, writerOf } from './call'
 import { heldIndex, indexOf } from './links'
 import { Refused } from './problem'
 import { createFile, fileKindOf } from './new-files'
-import { namedTab } from './tab-target'
+import { namedTab, tabsOwnSpace } from './tab-target'
 import {
   judged,
   judgedForWriting,
@@ -62,7 +62,9 @@ export function noteOf(
       return noteOf({ ...call, args: { ...call.args, tab: null, path: named.relative } }, writing)
     }
 
-    return { place: placeFor(call, spaceOfTab(named.tab)), relative: '', tab: named.tab.id }
+    const place = placeFor(call, spaceOfTab(named.tab))
+    tabsOwnSpace(call, named.tab, place)
+    return { place, relative: '', tab: named.tab.id }
   }
 
   const place = placeFor(call, maybe(call, 'space'))

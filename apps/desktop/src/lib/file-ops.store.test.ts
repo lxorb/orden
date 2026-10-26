@@ -387,6 +387,28 @@ describe('a note open on screen that links to itself, merged into another', () =
   })
 })
 
+describe('a move into another space', () => {
+  test('keeps what was archived archived, in the space it went to', async () => {
+    const HOME = '/home'
+    disk.current?.folders.add(HOME)
+    disk.current?.files.set(`${ROOT}/Work/Old.md`, '# Old\n')
+    workspace.spaces = [
+      { id: 's', name: 'Notes', root: ROOT },
+      { id: 'h', name: 'Home', root: HOME },
+    ]
+    await workspace.archive.change(ROOT, ['Work/Old.md', 'Idea.md'], [])
+
+    await workspace.move(`${ROOT}/Work`, HOME)
+    await workspace.move(`${ROOT}/Idea.md`, HOME)
+    await vi.dynamicImportSettled()
+
+    expect(disk.current?.files.has(`${HOME}/Work/Old.md`)).toBe(true)
+    expect(workspace.archive.holdsIn(HOME, `${HOME}/Work/Old.md`)).toBe(true)
+    expect(workspace.archive.holdsIn(HOME, `${HOME}/Idea.md`)).toBe(true)
+    expect(workspace.archive.keysOf(ROOT).size).toBe(0)
+  })
+})
+
 describe('the stores the app keeps by path', () => {
   /** Each follower, by the call it answers an operation with. */
   function counted() {

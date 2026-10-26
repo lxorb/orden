@@ -10,7 +10,7 @@ import type { Tab } from '../../workspace.svelte'
 import { workspace } from '../../workspace.svelte'
 import { within } from '../../space-paths'
 import type { TabKind } from '../../workspace/documents.svelte'
-import { type Call, need } from './call'
+import { type Call, maybe, need } from './call'
 import { Refused } from './problem'
 import { type Place, placeFor } from './spaces'
 
@@ -41,5 +41,19 @@ export function namedTab(call: Call, kinds: readonly TabKind[], what: string): N
 
   // The space's own folder is no file of it: a tab's path is never that.
   const relative = tab.path === null ? null : within(place.space.root, tab.path)
+  if (relative !== null && relative !== '') tabsOwnSpace(call, tab, place)
   return { tab, place, relative: relative === '' ? null : relative }
+}
+
+/** A tab's place stands: a `space` said beside the tab is refused unless it is the
+ *  tab's own. The tab's path is read inside its own space, so the same path in the
+ *  space said would be another note, never the tab's. */
+export function tabsOwnSpace(call: Call, tab: Tab, place: Place): void {
+  const said = maybe(call, 'space')
+  if (said === null || placeFor(call, said).space.id === place.space.id) return
+
+  throw new Refused(
+    'bad_arguments',
+    `tab ${tab.id} is in ${place.space.name}, not ${said}: name the tab alone`,
+  )
 }
