@@ -9,6 +9,7 @@ import { appearancePane } from './settings/appearance-pane'
 import { glassesPanes } from './settings/glasses-pane'
 import { exportPane } from './settings/export-pane'
 import type { Pane } from './settings/fields'
+import { declared } from './settings/file.svelte'
 
 export type {
   Caption,
@@ -21,8 +22,21 @@ export type {
   SwatchOption,
 } from './settings/fields'
 
-/** Built against a live view so a change lands in the editor on screen. */
+/** Built against a live view so a change lands in the editor on screen. A row the
+ *  settings file holds shows its value and does nothing; see settings/file.svelte.ts. */
 export function preferences(view?: EditorView): Pane[] {
+  return declaredPanes(view).map((pane) => ({
+    ...pane,
+    groups: pane.groups.map((group) => ({
+      ...group,
+      fields: group.fields.map((one) => declared.lock(one)),
+    })),
+  }))
+}
+
+/** The panes as they are declared, every row in somebody's hands: what the settings
+ *  file is applied through, and what its schema is made from. */
+export function declaredPanes(view?: EditorView): Pane[] {
   // One moment for every example on the pane, so the options read as one set of
   // spellings of the same time rather than as four different times.
   const moment = new Date()
