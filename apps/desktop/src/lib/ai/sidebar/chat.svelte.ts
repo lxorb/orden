@@ -546,7 +546,12 @@ class Chat implements Panel {
     const held = this.requeue
     if (!held) return
     this.requeue = null
-    const one = changed ? { ...held.one, text: this.text, chips: this.chips } : held.one
+    // A field emptied keeps the words it had: an empty message is never queued.
+    const words = this.text.trim()
+    const one =
+      changed && (words || this.chips.length)
+        ? { ...held.one, text: words, chips: this.chips }
+        : held.one
     const { thread } = held
     if (held.due && !this.running.includes(thread.id)) {
       void this.run(thread, one)
