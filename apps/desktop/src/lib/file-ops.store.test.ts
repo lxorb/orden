@@ -440,6 +440,19 @@ describe('a move into another space', () => {
     expect(workspace.excluded.of(HOME)).toEqual(['Work', 'Idea.md'])
   })
 
+  test('takes nothing it kept to a folder outside every space', async () => {
+    await twoSpaces()
+    disk.current?.folders.add('/elsewhere')
+    workspace.excluded.toggle(`${ROOT}/Idea.md`)
+    workspace.bookmarks.put(ROOT, [{ kind: 'note', path: 'Idea.md', text: '' }])
+
+    await workspace.move(`${ROOT}/Idea.md`, '/elsewhere')
+
+    expect(disk.current?.files.has('/elsewhere/Idea.md')).toBe(true)
+    expect(workspace.excluded.of(ROOT)).toEqual([])
+    expect(workspace.bookmarks.of(ROOT)).toEqual([])
+  })
+
   test('keeps the folder icons and the arranged order, in the space they went to', async () => {
     const HOME = await twoSpaces()
     workspace.folderIcons.set(`${ROOT}/Work`, 'star', 'red')

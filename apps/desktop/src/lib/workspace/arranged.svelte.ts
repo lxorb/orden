@@ -35,6 +35,7 @@ import { insideItsSpace, movedTo, nameOf, relativeTo, samePath, within } from '.
 import { isRecord, isString, keep, recordOf, stored } from '../stored'
 import { FIRST_MODE, isSortMode, renamedIn, type SortMode, withoutName } from '../tree-order'
 import { filledIn, type Folded, type Folding, meet, readSpaces, without } from '../records'
+import { carried, type Moving, moving } from './file-ops'
 
 export const STORAGE_KEY = 'nib:arranged'
 
@@ -277,15 +278,21 @@ export class Arranged {
    *  Two things to put right, and a rename is both at once: the folder it sits in
    *  knows it by name, and a folder that moved is the key of its own list and of
    *  every list under it. Heard from every file operation that moves one; see
-   *  workspace/file-ops.ts. */
-  moved(from: string, to: string, root = this.root()) {
+   *  workspace/file-ops.ts. Into another space, `into`, the lists of the folder that
+   *  moved go into that space's map, as that space speaks of the folders. */
+  moved(from: string, to: string, root = this.root(), into: string | null = root) {
     if (root === null || from === to) return
 
-    const was = relativeTo(root, from)
-    const now = relativeTo(root, to)
+    const move = moving(from, to, root, into)
+    const { was } = move
     if (!was) return
 
     const held = this.of(root)
+    if (move.across) {
+      this.carry(move)
+      return
+    }
+    const now = move.now ?? ''
     let next = held
 
     // The keys, for a folder that moved. Everything under it comes along, which is
@@ -314,6 +321,32 @@ export class Arranged {
     }
 
     if (next !== held) this.put(root, next)
+  }
+
+  /** The lists a move into another space took along, and the name it left in the
+   *  list of the folder it was in. */
+  private carry(move: Moving) {
+    const held = this.of(move.root)
+    const { left, went } = carried(
+      Object.entries(held),
+      move,
+      ([folder]) => folder,
+      ([, names], folder): [string, string[]] => [folder, names],
+    )
+    let next = Object.fromEntries(left)
+    const owner = folderKeyOf(move.was)
+    const listed = next[owner]
+    const under = listed && withoutName(listed, nameOf(move.was))
+    if (under) next = withList(next, owner, under)
+    if (left.length !== Object.keys(held).length || under) this.put(move.root, next)
+
+    if (!went.length) return
+    const there = { ...this.of(move.there) }
+    for (const [folder, names] of went) {
+      if (Object.keys(there).length >= MOST_ARRANGED && !(folder in there)) break
+      there[folder] = names
+    }
+    this.put(move.there, there)
   }
 
   /** A note or folder that has gone, with everything under it. */
