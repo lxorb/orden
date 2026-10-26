@@ -20,7 +20,7 @@ export function markdownPane(view: EditorView | undefined): Pane {
             // Obsidian's live preview, where a mark shows while the caret is in it.
             kind: 'switch',
             key: 'markdown.showMarkdown',
-            store: { on: modes, name: 'quietMarks' },
+            store: { on: modes, name: 'quietMarks', shared: 'quietMarks' },
             label: t('Show markdown while writing'),
             hint: t(
               'Shows a mark such as ** or # while the cursor is in it; off keeps every mark out of sight.',
@@ -70,7 +70,7 @@ export function markdownPane(view: EditorView | undefined): Pane {
             // switch is which.
             kind: 'switch',
             key: 'markdown.newlineBreaks',
-            store: { on: modes, name: 'hardBreaks' },
+            store: { on: modes, name: 'hardBreaks', shared: 'hardBreaks' },
             label: t('A single newline breaks the line'),
             hint: t(
               'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.',
@@ -86,7 +86,7 @@ export function markdownPane(view: EditorView | undefined): Pane {
             // cannot say one thing written and another read.
             kind: 'segmented',
             key: 'markdown.frontMatter',
-            store: { on: modes, name: 'properties' },
+            store: { on: modes, name: 'properties', shared: 'properties' },
             label: t('Front matter'),
             words: ['properties', 'yaml', 'metadata'],
             hint: t(

@@ -19,7 +19,7 @@ function kindGroups(): Group[] {
       kind: 'switch',
       key: `kinds.${one.kind}`,
       // Kept as the kinds hidden: what is held is whether this one is among them.
-      store: among(hiddenKinds, 'hidden', one.kind),
+      store: { ...among(hiddenKinds, 'hidden', one.kind), shared: 'hiddenKinds' },
       label: kindName(one.kind),
       hint: t('Offers this type when you make something new; off only takes it out of that list.'),
       // `new tab` and `ctrl+t`, because the new tab is where these are offered, and that is

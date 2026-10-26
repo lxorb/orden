@@ -8,6 +8,7 @@
  *  and ../api.ts says them again by name for everything that imports them. */
 
 import { ApiError, BASE, request } from '../api'
+import { shareable } from '../settings/held'
 import { isRecord, isString, parsed } from '../stored'
 import type { Bookmark } from '../workspace/bookmarks.svelte'
 import type { GraphSettings } from '../workspace/graph-settings.svelte'
@@ -649,8 +650,14 @@ export const routes = {
    *  that can be written and never read. */
   settings: (token: string) =>
     request<{ settings: AccountSettings; key: KeyState }>('/v1/settings', { token }),
+  /** What a settings file holds goes up as the reader's own, never the file's; see
+   *  settings/held.ts. */
   saveSettings: (token: string, patch: AccountSettings) =>
-    request<{ settings: AccountSettings }>('/v1/settings', { method: 'PATCH', token, body: patch }),
+    request<{ settings: AccountSettings }>('/v1/settings', {
+      method: 'PATCH',
+      token,
+      body: shareable(patch),
+    }),
 
   /* The glasses' question flow. All four run on the Worker, because the key does:
      the plugin holds no key and reaches no origin but this one. See docs/even.md. */

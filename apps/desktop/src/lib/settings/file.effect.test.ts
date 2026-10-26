@@ -22,12 +22,25 @@ vi.mock('../tauri', async (actual) => ({
   isNative: true,
   platform: () => 'linux',
   invoke: (command: string) => {
+    asked.push(command)
     if (command === 'read_settings_file')
       return file instanceof Error ? Promise.reject(file) : Promise.resolve(file)
     if (command === 'dns_chosen') return Promise.resolve({ choice: 'automatic', custom: '' })
     return new Promise(() => undefined)
   },
 }))
+/** Every command the window sent the crate. */
+const asked: string[] = []
+const confirms = vi.fn(() => Promise.resolve(false))
+vi.mock('../prompt.svelte', async (actual) => {
+  const real = await actual<typeof import('../prompt.svelte')>()
+  return {
+    ...real,
+    prompt: new Proxy(real.prompt, {
+      get: (on, name): unknown => (name === 'confirm' ? confirms : Reflect.get(on, name)),
+    }),
+  }
+})
 /** What the account says its settings are, when asked. */
 let account: Record<string, unknown> = {}
 vi.mock('../api', async (actual) => ({
@@ -55,6 +68,10 @@ const { dns } = await import('./dns.svelte')
 const { theme } = await import('../theme.svelte')
 const { shortcuts } = await import('../shortcuts.svelte')
 const { BY_ID } = await import('../shortcuts/registry')
+const { shareable } = await import('./held')
+const { shortcutKey } = await import('./declared.svelte')
+const { hiddenKinds } = await import('../settings.svelte')
+const { gpu } = await import('./gpu.svelte')
 
 const PATH = '/home/emil/.config/ch.emilvinu.nib/settings.json'
 
@@ -257,5 +274,116 @@ describe('what the settings file holds', () => {
     )
     expect(declared.problems).toHaveLength(1)
     expect(declared.problems[0]).toMatch(/^shortcuts\.app-focus /)
+  })
+})
+
+describe('what is the reader’s own while the file holds a setting', () => {
+  test('is what the account is sent, from every store, never the file’s', async () => {
+    held.clear()
+    modes.toggleHardBreaks()
+    const mine = modes.hardBreaks
+    const myKey = shortcuts.overrides['app.focus']
+    await launch(
+      JSON.stringify({
+        markdown: { newlineBreaks: !mine },
+        kinds: { terminal: false },
+        shortcuts: { 'app-focus': 'Mod-Alt-f' },
+        general: { keepVersionEvery: '15' },
+      }),
+    )
+    expect(declared.problems).toEqual([])
+    expect(modes.hardBreaks).toBe(!mine)
+    // What each store would send - the file's value, since that is what it reads - goes
+    // up as the reader's own.
+    expect(shareable({ hardBreaks: modes.hardBreaks, silent: modes.silent })).toEqual({
+      hardBreaks: mine,
+      silent: modes.silent,
+    })
+    expect(hiddenKinds.hidden).toContain('terminal')
+    expect(shareable({ hiddenKinds: [...hiddenKinds.hidden] }).hiddenKinds).not.toContain(
+      'terminal',
+    )
+    expect(shareable({ hiddenKinds: null }).hiddenKinds).toEqual([])
+    const sent = shareable({
+      shortcuts: { ...shortcuts.overrides, 'app.close': 'Mod-q' },
+    }).shortcuts as Record<string, unknown>
+    expect(sent['app.focus']).toBe(myKey)
+    expect(myKey).not.toBe('Mod-Alt-f')
+    expect(sent['app.close']).toBe('Mod-q')
+    expect(shareable({ recoveryEvery: 15 }).recoveryEvery).not.toBe(15)
+  })
+
+  test('is given back once the file stops naming it, as it was before the file', async () => {
+    held.clear()
+    const mine = modes.typewriter
+    await launch(JSON.stringify({ editor: { typewriterMode: !mine } }))
+    expect(modes.typewriter).toBe(!mine)
+    // The next launch: the store restored the file's value, and the file says nothing.
+    await launch(JSON.stringify({}))
+    expect(modes.typewriter).toBe(mine)
+    await launch(JSON.stringify({}))
+    expect(modes.typewriter).toBe(mine)
+  })
+
+  test('and kept across launches that go on holding it', async () => {
+    held.clear()
+    const mine = modes.typewriter
+    await launch(JSON.stringify({ editor: { typewriterMode: !mine } }))
+    await launch(JSON.stringify({ editor: { typewriterMode: !mine } }))
+    await launch(JSON.stringify({ editor: { typewriterMode: !mine } }))
+    await launch(null)
+    expect(modes.typewriter).toBe(mine)
+  })
+
+  test('is what was written beneath it while held: another device’s value', async () => {
+    held.clear()
+    modes.setProperties('properties')
+    await launch(JSON.stringify({ markdown: { frontMatter: 'source' } }))
+    account = { properties: 'hidden' }
+    await modes.adopt('token')
+    expect(modes.properties).toBe('source')
+    await launch(JSON.stringify({}))
+    expect(modes.properties).toBe('hidden')
+  })
+
+  test('a list given back member by member, and a font a part of its store', async () => {
+    held.clear()
+    modes.setSpellLanguages(['en-US'])
+    modes.setFont('mono', '')
+    await launch(
+      JSON.stringify({ spelling: { languages: ['de-DE'] }, appearance: { monoFont: 'Fira Code' } }),
+    )
+    expect([...modes.spellLanguages]).toEqual(['de-DE'])
+    await launch(JSON.stringify({}))
+    expect([...modes.spellLanguages]).toEqual(['en-US'])
+    expect(modes.fonts.mono).toBe('')
+  })
+})
+
+describe('Hardware acceleration, declared', () => {
+  test('is only told to the row: the crate starts on the file, and nothing asks for a restart', async () => {
+    held.clear()
+    asked.length = 0
+    confirms.mockClear()
+    await launch(JSON.stringify({ general: { hardwareAcceleration: !gpu.on } }))
+    expect(declared.problems).toEqual([])
+    expect(asked).not.toContain('gpu_choose')
+    expect(confirms).not.toHaveBeenCalled()
+    expect(declared.holds('general.hardwareAcceleration')).toBe(true)
+  })
+})
+
+describe('a row drawn by hand', () => {
+  test('asks the same state by its key', async () => {
+    await launch(
+      JSON.stringify({
+        shortcuts: { 'app-focus': 'Mod-Alt-f' },
+        general: { searchEngine: 'google' },
+      }),
+    )
+    expect(declared.holds(shortcutKey('app.focus'))).toBe(true)
+    expect(declared.holds(shortcutKey('app.close'))).toBe(false)
+    expect(declared.holds('general.searchEngine')).toBe(true)
+    expect(shortcutKey('pages.fit.page')).toBe('shortcuts.pages-fit-page')
   })
 })

@@ -12,6 +12,7 @@ import { shortcuts, SHORTCUTS } from '../shortcuts.svelte'
 import { enginesFor, isEngineAddress } from '../web-tab/engines'
 import { CUSTOM, searchEngine } from '../web-tab/search-engine.svelte'
 import { themeDeclarations } from './appearance-pane'
+import { shortcutKey } from './declared.svelte'
 import type { Field } from './fields'
 import { part } from './hold'
 
@@ -21,7 +22,7 @@ function shortcutFields(): Field[] {
     {
       kind: 'switch',
       key: 'shortcuts.vim',
-      store: { on: modes, name: 'vim' },
+      store: { on: modes, name: 'vim', shared: 'vim' },
       label: t('Vim keys'),
       hint: t('Moves and edits in notes with Vim’s keys.'),
       initial: false,
@@ -30,9 +31,8 @@ function shortcutFields(): Field[] {
     },
     ...SHORTCUTS.filter((one) => one.scope !== 'fixed' && !one.alias).map((one): Field => ({
       kind: 'text',
-      // One name, never nested: `pages.fit` and `pages.fit.page` are two commands.
-      key: `shortcuts.${one.id.replaceAll('.', '-')}`,
-      store: part(shortcuts, 'overrides', one.id),
+      key: shortcutKey(one.id),
+      store: { ...part(shortcuts, 'overrides', one.id), shared: 'shortcuts' },
       label: one.label(),
       hint: `The key that runs ${one.label()}, as the keys file writes it; empty for none.`,
       placeholder: '',
