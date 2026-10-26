@@ -576,7 +576,7 @@ describe('the field while a message is changed', () => {
     const chat = await asked()
     await heldAfterAnswer(chat)
     const { ai } = await import('../store.svelte')
-    const gone = vi.spyOn(ai, 'provider').mockReturnValue(undefined)
+    const gone = vi.spyOn(ai, 'provider').mockReturnValue(null)
 
     chat.cancelEdit()
 
