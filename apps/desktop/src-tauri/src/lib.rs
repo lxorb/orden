@@ -78,6 +78,8 @@ mod assets;
 mod bundle_name;
 mod carry;
 mod clock;
+// Which lines of a note are code, for the tag index; see code_blocks.rs.
+mod code_blocks;
 #[cfg(desktop)]
 mod default_browser;
 #[cfg(desktop)]

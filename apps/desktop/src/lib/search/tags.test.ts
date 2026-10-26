@@ -49,6 +49,42 @@ describe('the tags in a note', () => {
   test('though a backtick that opens no code is just a backtick', () => {
     expect(tagsIn('\\` #yes ` #too')).toEqual(['#yes', '#too'])
   })
+
+  test('nor does a fence inside a quote or a callout', () => {
+    const note = '> [!example] Button\n> ```css\n> .button { color: #fff; }\n> ```\n> #after\n'
+    expect(tagsIn(note)).toEqual(['#after'])
+    expect(tagsIn('> ```\n> #no\n\n#yes')).toEqual(['#yes'])
+    expect(tagsIn('- item\n\n  ```\n  #no\n  ```\n#yes')).toEqual(['#yes'])
+  })
+
+  test('nor does indented code', () => {
+    expect(tagsIn('Notes\n\n    #include <stdio.h>\n\n#yes')).toEqual(['#yes'])
+    expect(tagsIn('- item\n\n      #define X\n#yes')).toEqual(['#yes'])
+    expect(tagsIn('> words\n>\n>     #no')).toEqual([])
+  })
+
+  test('but a paragraph runs on over an indented line, which is no code', () => {
+    expect(tagsIn('words\n    #yes')).toEqual(['#yes'])
+  })
+
+  test('a fence closes only on the same mark, at least as long, with nothing after it', () => {
+    expect(tagsIn('````md\n```\n#todo\n```\n````\n#yes')).toEqual(['#yes'])
+    expect(tagsIn('```\n~~~\n#no\n```\n#yes')).toEqual(['#yes'])
+    expect(tagsIn('```\n``` ts\n#no\n```\n#yes')).toEqual(['#yes'])
+  })
+
+  test('a fence opens at three spaces of indent but not four', () => {
+    expect(tagsIn('   ```\n#no\n```\n#yes')).toEqual(['#yes'])
+    expect(tagsIn('words\n    ```\n#yes')).toEqual(['#yes'])
+  })
+
+  test('backticks with a backtick after them open no fence', () => {
+    expect(tagsIn('```a`a\n#yes')).toEqual(['#yes'])
+  })
+
+  test('a fence in a quote ends with the quote', () => {
+    expect(tagsIn('> ```\n> #no\n#yes')).toEqual(['#yes'])
+  })
 })
 
 describe('the tags in the front matter', () => {
@@ -160,6 +196,12 @@ describe('what taking a tag away has to cut', () => {
     expect(without('---\ntags:\n  - work\n  - other\n---\n', 'work')).toBe(
       '---\ntags:\n  - other\n---\n',
     )
+  })
+
+  test('but never cuts into code', () => {
+    const note = '> ```css\n> .button { color: #fff; }\n> ```\n'
+    expect(without(note, 'fff')).toBe(note)
+    expect(tagSpans('    #include <stdio.h>\n', 'include')).toEqual([])
   })
 
   test('while one of several on a line leaves the line', () => {

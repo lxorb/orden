@@ -17,10 +17,11 @@
  *  What it must not touch is code. A comment inside a fence, or inside
  *  backticks, is what the fence is showing - a snippet of HTML with a comment in
  *  it is a perfectly ordinary thing to write about - so this walks the source
- *  rather than running a pattern over it. What opens and closes a fence is read
- *  in fences.ts, which every walk in this package that steps over code shares. */
+ *  rather than running a pattern over it. Which lines are code is read by
+ *  `CodeBlocks` in fences.ts, as the renderer reads it: a fence in a quote or a callout, and
+ *  indented code, are code as much as a fence at the margin is. */
 
-import { closesFence, closingTicks, fenceMark } from './fences'
+import { CODE, CodeBlocks, closingTicks, OPENS } from './fences'
 
 /** The two ways a comment is written. `%%` opens and closes with the same
  *  characters, which the scan below does not care about: it looks for the
@@ -122,30 +123,45 @@ export function withoutComments(source: string): string {
 
   const lines = source.split('\n')
   const out: string[] = []
-  let fence: string | null = null
+  let code = new CodeBlocks()
   let inside: string | null = null
 
   for (const line of lines) {
-    if (fence !== null) {
-      out.push(line)
-      if (closesFence(line, fence)) fence = null
+    // Inside a comment, what is left of the line is what the renderer is handed,
+    // so that is what decides what the lines after it are.
+    if (inside) {
+      const stripped = stripLine(line, inside)
+      inside = stripped.inside
+      out.push(stripped.text)
+      code.line(stripped.text)
       continue
     }
 
-    if (!inside) {
-      const mark = fenceMark(line)
-      if (mark) {
-        // A comment in the info string would be the caption.
-        const opens = line.indexOf(mark) + mark.length
-        out.push(line.slice(0, opens) + stripLine(line.slice(opens), null).text)
-        fence = mark
-        continue
-      }
+    const before = code.copy()
+    const kind = code.line(line)
+    if (kind === CODE) {
+      out.push(line)
+      continue
+    }
+
+    if (kind === OPENS) {
+      // A comment in the info string would be the caption.
+      const mark = code.fence ?? ''
+      const opens = line.indexOf(mark) + mark.length
+      out.push(line.slice(0, opens) + stripLine(line.slice(opens), null).text)
+      continue
     }
 
     const stripped = stripLine(line, inside)
     inside = stripped.inside
     out.push(stripped.text)
+
+    // A line that was nothing but a comment is a blank line to the renderer, which
+    // ends a paragraph, so the line is read again as what is left of it.
+    if (stripped.text !== line) {
+      code = before
+      code.line(stripped.text)
+    }
   }
 
   return out.join('\n')
