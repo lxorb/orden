@@ -80,11 +80,13 @@ export interface Moving {
   to: string
 }
 
-/** Paths in the space, and how often the account has refused it. */
+/** Paths in the space, how often the account has refused it, and since when and
+ *  how often the account has failed to answer about it without refusing. */
 export interface Untold {
   from: string
   to: string
   tries: number
+  failing?: { since: number; times: number }
 }
 
 /** A folder just paired with a space, which knows nothing about it yet. One
@@ -195,7 +197,11 @@ function readUntold(value: unknown): { untold?: Record<string, Untold> } {
   for (const [id, one] of Object.entries(value)) {
     if (!isRecord(one) || !isString(one.from) || !isString(one.to)) continue
 
-    out[id] = { from: one.from, to: one.to, tries: isNumber(one.tries) ? one.tries : 0 }
+    const failing =
+      isRecord(one.failing) && isNumber(one.failing.since) && isNumber(one.failing.times)
+        ? { failing: { since: one.failing.since, times: one.failing.times } }
+        : {}
+    out[id] = { from: one.from, to: one.to, tries: isNumber(one.tries) ? one.tries : 0, ...failing }
   }
 
   return Object.keys(out).length ? { untold: out } : {}

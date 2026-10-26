@@ -231,8 +231,13 @@ export async function pull(
   await journalled(mirror)
   if (await toldAgain(mirror, token, waiting?.asked, waiting?.clashed)) moved = true
 
+  // Where the next page starts, and whether the cursor stays where it was: see
+  // `held` below.
+  let since = mirror.cursor
+  let holding = false
+  const unsettledHere = new Set<string>()
   for (;;) {
-    const page = await api.changes(token, mirror.spaceId, mirror.cursor)
+    const page = await api.changes(token, mirror.spaceId, since)
     if (page.notes.length) moved = true
 
     // The names, at once. One page of changes is the whole listing of a space the
@@ -277,9 +282,11 @@ export async function pull(
         ? [{ remote, was }]
         : []
     })
-    const waits = new Set(moves.length ? await movedThere(mirror, moves, waiting) : [])
-    for (const remote of notes) if (untold(remote)) waits.add(remote.id)
-    unsettled.set(mirror, waits)
+    const halfDone = new Set(moves.length ? await movedThere(mirror, moves, waiting) : [])
+    const held = notes.filter(untold).map((one) => one.id)
+    const waits = new Set([...halfDone, ...held])
+    for (const id of waits) unsettledHere.add(id)
+    unsettled.set(mirror, unsettledHere)
     // A note left aside that this page no longer moves, from a round long past, is put
     // back in sight rather than kept hidden for good.
     for (const [path, one] of Object.entries(mirror.notes)) {
@@ -506,10 +513,16 @@ export async function pull(
     // its next timer, and a first sync would never let anybody in.
     // A move left half done is asked about again: the next pass reads this page once
     // more, and everything else on it is already settled, so only the moves are new.
-    if (waits.size) break
+    if (halfDone.size) break
+    // A note whose rename is untold holds the cursor too, so the page is read again
+    // once it is told. But not the pages after it: a rename the account goes on
+    // failing about stopped the whole space there, every other device's notes with
+    // it. They are read on, and read again, already settled, next time.
+    if (held.length) holding = true
 
-    const asked = mirror.cursor
-    mirror.cursor = page.cursor
+    const asked = since
+    since = page.cursor
+    if (!holding) mirror.cursor = page.cursor
     if (!page.more || page.cursor === asked) break
   }
 
@@ -919,8 +932,19 @@ export async function movedHere(
 
   // The file itself, and - for a folder - every note under it. `Kept/` rather than
   // `Kept`, or a folder would carry `Keptish.md` along with it.
+  //
+  // Except an entry whose rename is still to be told: it stays at the name its file
+  // left, so whatever file is at that name now is another note, unless this is that
+  // very rename told again. Taken for the note, the next note made at the name and
+  // renamed was told as this note's rename, with its words and its id.
   const under = `${was}/`
-  const moving = Object.keys(mirror.notes).filter((path) => path === was || path.startsWith(under))
+  const moving = Object.entries(mirror.notes)
+    .filter(([path, one]) => {
+      if (path !== was && !path.startsWith(under)) return false
+      const untold = mirror.untold?.[one.id]
+      return !untold || untold.to === now + path.slice(was.length)
+    })
+    .map(([path]) => path)
 
   let done = false
   // A note whose rename is still to be told, moving on again before it was: told
@@ -1008,16 +1032,39 @@ function told(mirror: Mirror, id: string) {
 /** How often the account may refuse a rename before it is given up on. */
 const MOST_TRIES = 5
 
+/** How long the account may go on failing to answer about a rename, and how often
+ *  in that time, before it is given up on as well. */
+const FAILING_FOR = 60 * 60_000
+
 /** A rename that did not land, written down to be told again - unless the account
- *  has said it never will take it, or has refused it too often. */
+ *  has said it never will take it, has refused it too often, or has gone on failing
+ *  about it for too long. */
 function untoldBy(mirror: Mirror, id: string, from: string, to: string, error: unknown) {
-  // Only an answer counts: a network that is down refuses nothing.
-  const tries = (mirror.untold?.[id]?.tries ?? 0) + (error instanceof ApiError ? 1 : 0)
-  const forGood =
-    error instanceof ApiError &&
-    error.status >= 400 &&
-    error.status < 500 &&
-    ![408, 409, 429].includes(error.status)
+  const was = mirror.untold?.[id]
+  const status = error instanceof ApiError ? error.status : null
+  // A network that is down refuses nothing, and says nothing about the account.
+  if (status === null) {
+    mirror.untold = { ...mirror.untold, [id]: { ...was, from, to, tries: was?.tries ?? 0 } }
+    return
+  }
+  // A server failing, a room not answering, a request timed out or one too many is
+  // not the account judging the rename. Counted as refusals, a ten second outage let
+  // the rename go and made it two notes. Never let go, one that never clears - a
+  // room that will not take the note - held the note back for good, its edits never
+  // sent. So it is given up on only once it has failed for an hour and often: a
+  // launch after a night away is one failure, not a night of them.
+  if (status >= 500 || status === 408 || status === 429) {
+    const now = Date.now()
+    const failing = { since: was?.failing?.since ?? now, times: (was?.failing?.times ?? 0) + 1 }
+    if (now - failing.since >= FAILING_FOR && failing.times >= MOST_TRIES) {
+      letGo(mirror, id, from, to, `the account kept failing - ${String(error)}`)
+      return
+    }
+    mirror.untold = { ...mirror.untold, [id]: { from, to, tries: was?.tries ?? 0, failing } }
+    return
+  }
+  const tries = (was?.tries ?? 0) + 1
+  const forGood = status >= 400 && status !== 409
   if (forGood || tries >= MOST_TRIES) {
     letGo(mirror, id, from, to, `the account refused it - ${String(error)}`)
     return
