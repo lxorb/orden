@@ -192,3 +192,26 @@ describe('a comment after code that only looks like a fence', () => {
     expect(html).toContain('<figcaption>src/a.ts</figcaption>')
   })
 })
+
+describe('a comment marker in code a fence does not open', () => {
+  test('is left alone in a fence inside a quote or a callout', () => {
+    const source = '> [!note]\n> ```\n> %%timeit\n> ```\n\nafter'
+    expect(withoutComments(source)).toBe(source)
+    expect(renderMarkdown(source)).toContain('after')
+  })
+
+  test('is left alone in indented code', () => {
+    const source = '    %%timeit\n    <!-- x\n\nfoo'
+    expect(withoutComments(source)).toBe(source)
+    expect(renderMarkdown(source)).toContain('foo')
+  })
+
+  test('is left alone in a fence that a shorter one does not close', () => {
+    const source = '````\n```\n%%x\n````\n\nfoo'
+    expect(withoutComments(source)).toBe(source)
+  })
+
+  test('still opens one on an indented line that carries on a paragraph', () => {
+    expect(withoutComments('words\n    %%gone%% kept')).toBe('words\n     kept')
+  })
+})
