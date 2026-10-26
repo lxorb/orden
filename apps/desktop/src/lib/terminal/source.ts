@@ -46,6 +46,9 @@ export type Said =
   | { machine: Machine; reason?: DownReason }
   /** Whether the socket to the session is open; a drop comes back by itself. */
   | { connected: boolean }
+  /** For an online session: whether the way from the server to its awake machine is
+   *  up. Down, the session runs on and its screen stays; what is typed waits for it. */
+  | { link: boolean }
   /** Whether keys typed here reach the session. */
   | { typing: boolean }
   /** The source cannot go on, and why, in words to show under the screen. `gone` is an

@@ -230,6 +230,9 @@ export class OnlineSource implements Source {
           ...(frame.reason ? { reason: frame.reason } : {}),
         })
         return
+      case 'link':
+        said({ link: frame.up })
+        return
       case 'role':
         said({ typing: frame.type })
         return
