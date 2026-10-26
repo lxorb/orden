@@ -5,6 +5,7 @@ import { kindName } from '../kind-words'
 import { kindLines, newKinds } from '../new-kinds'
 import { hiddenKinds } from '../settings.svelte'
 import type { Field, Group, Pane } from './fields'
+import { among } from './hold'
 
 /** The kinds this device can make, one switch each, in their lines under the word each
  *  line already has elsewhere. On to begin with, so the pane's reset turns every one back
@@ -16,6 +17,9 @@ function kindGroups(): Group[] {
     title: titles[line[0]?.line ?? 'write'],
     fields: line.map((one): Field => ({
       kind: 'switch',
+      key: `kinds.${one.kind}`,
+      // Kept as the kinds hidden: what is held is whether this one is among them.
+      store: among(hiddenKinds, 'hidden', one.kind),
       label: kindName(one.kind),
       hint: t('Offers this type when you make something new; off only takes it out of that list.'),
       // `new tab` and `ctrl+t`, because the new tab is where these are offered, and that is

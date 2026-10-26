@@ -2,12 +2,13 @@ import { key, t } from '../i18n.svelte'
 import { DEFAULTS, type FontPlace, modes } from '../modes.svelte'
 import { isDesktop } from '../tauri'
 import { SCHEME_CHOICES, SCHEME_NAMES } from '../schemes'
-import { type SchemeChoice, theme } from '../theme.svelte'
-import type { ThemeSetting } from '../themes/settings'
+import { appSettings, builtIns, type SchemeChoice, theme } from '../theme.svelte'
+import { type ChosenSettings, SHARED, type ThemeSetting, type ThemeValue } from '../themes/settings'
 import { WALLPAPER_THEME } from '../wallpaper/held'
 import { wallpaper } from '../wallpaper/wallpaper.svelte'
 import { workspace } from '../workspace.svelte'
 import type { PictureSide, PairField, Field, Group, Pane } from './fields'
+import { part } from './hold'
 
 /** The three places a face can be chosen for, each with the app's own face as what its
  *  field shows while it is empty. */
@@ -59,10 +60,32 @@ function asChoice(value: string): SchemeChoice {
  *  The label goes through `t()` on its way in: a theme the app ships with declares
  *  words the catalogues carry, and a theme file declares its author's own, which
  *  `t()` hands back unchanged. */
-function themeField(setting: ThemeSetting): Field {
+function themeField(setting: ThemeSetting, owner = theme.id): Field {
   const label = t(setting.label)
-  const get = () => theme.values[setting.id]
-  const common = { label, hint: t(setting.hint), initial: setting.initial }
+  const worn = () => owner === theme.id
+  // A theme not worn is read and written in its drawer: what the settings file says
+  // for it (#673), and the row of the one worn is the same setting.
+  const drawer = setting.shared === true ? SHARED : owner
+  const get = () => (worn() ? theme.values[setting.id] : theme.keptFor(drawer, setting.id))
+  const put = (value: ThemeValue) =>
+    worn() ? theme.set(setting.id, value) : theme.setFor(drawer, setting.id, value)
+  const common = {
+    label,
+    hint: t(setting.hint),
+    initial: setting.initial,
+    // The app's own, which every theme shares, under Appearance; a theme's own under
+    // its name.
+    key: drawer === SHARED ? `appearance.${setting.id}` : `themes.${owner}.${setting.id}`,
+    store: {
+      on: theme,
+      name: 'chosen',
+      take: (whole: unknown) => (whole as ChosenSettings)[drawer]?.[setting.id],
+      put: (whole: unknown, value: unknown) => {
+        const chosen = whole as ChosenSettings
+        return { ...chosen, [drawer]: { ...chosen[drawer], [setting.id]: value as ThemeValue } }
+      },
+    },
+  }
 
   if (setting.kind === 'range') {
     return {
@@ -76,7 +99,7 @@ function themeField(setting: ThemeSetting): Field {
       ...(setting.least ? { least: setting.least } : {}),
       get: () => Number(get() ?? setting.initial),
       preview: (value) => theme.try(setting.id, value),
-      set: (value) => theme.set(setting.id, value),
+      set: put,
     }
   }
 
@@ -86,7 +109,7 @@ function themeField(setting: ThemeSetting): Field {
       kind: 'switch',
       initial: setting.initial,
       get: () => get() === true,
-      set: (on) => theme.set(setting.id, on),
+      set: put,
     }
   }
 
@@ -112,7 +135,7 @@ function themeField(setting: ThemeSetting): Field {
       })),
       initial: setting.initial,
       get: () => String(get() ?? setting.initial),
-      set: (value) => theme.set(setting.id, value),
+      set: put,
     }
   }
 
@@ -128,8 +151,21 @@ function themeField(setting: ThemeSetting): Field {
     options,
     initial: setting.initial,
     get: () => String(get() ?? setting.initial),
-    set: (value) => theme.set(setting.id, value),
+    set: put,
   }
+}
+
+/** Every setting of every theme the app ships with, worn or not, and the app's own
+ *  that every theme shares: what the settings file may say about any of them (#673),
+ *  which Appearance shows only for the theme worn. */
+export async function themeDeclarations(): Promise<Field[]> {
+  const fields = appSettings().map((one) => themeField(one, SHARED))
+  for (const one of builtIns()) {
+    if (!one.own) continue
+    const list = await one.own()
+    fields.push(...list().map((setting) => themeField(setting, one.id)))
+  }
+  return fields
 }
 
 /** The wallpaper's pictures, light first: the side the app is not in shows what it
@@ -163,7 +199,9 @@ function pictureField(): Field {
 
 /** A built-in theme's own rows that are there right now. */
 function ownFields(): Field[] {
-  return theme.settings.filter((one) => one.own === true && (one.when?.() ?? true)).map(themeField)
+  return theme.settings
+    .filter((one) => one.own === true && (one.when?.() ?? true))
+    .map((one) => themeField(one))
 }
 
 /** Settings › Appearance; see `preferences` in ../preferences.ts. */
@@ -187,6 +225,7 @@ export function appearancePane(): Pane {
             // below picks which side of it the app is showing.
             kind: 'select',
             key: 'appearance.style',
+            store: { on: theme, name: 'id' },
             open: true,
             label: t('Style'),
             hint: t('The theme Orden is drawn in.'),
@@ -206,6 +245,7 @@ export function appearancePane(): Pane {
             // could not reach it.
             kind: 'segmented',
             key: 'appearance.mode',
+            store: { on: theme, name: 'scheme' },
             label: t('Mode'),
             hint: t('Light, dark, or whichever the system is in.'),
             words: ['dark', 'light', 'night', 'theme'],
@@ -222,7 +262,7 @@ export function appearancePane(): Pane {
           // theme's, and where they sit is what says so. A theme with nothing
           // to offer adds nothing, so the group is the same two rows it has
           // always been. See themes/settings.ts.
-          ...theme.settings.filter((one) => one.own !== true).map(themeField),
+          ...theme.settings.filter((one) => one.own !== true).map((one) => themeField(one)),
         ],
       },
 
@@ -249,6 +289,7 @@ export function appearancePane(): Pane {
         fields: FONT_FIELDS.map((one): Field => ({
           kind: 'text',
           key: `appearance.${one.place}Font`,
+          store: part(modes, 'fonts', one.place),
           label: t(one.label),
           words: ['font', 'typeface', 'family', 'custom font', ...one.words],
           hint: t(one.hint),
@@ -266,6 +307,7 @@ export function appearancePane(): Pane {
           {
             kind: 'segmented',
             key: 'appearance.essentials',
+            store: { on: workspace.device, name: 'essentialTiles' },
             label: t('Essentials'),
             hint: t(
               'Whether the bookmarks at the top of the file list show as tiles or as a list.',
@@ -290,6 +332,7 @@ export function appearancePane(): Pane {
             // arrow stays the default; the Claude app offers the same switch.
             kind: 'switch',
             key: 'appearance.pointingHand',
+            store: { on: modes, name: 'hand' },
             label: t('Pointing hand on buttons'),
             hint: t('Shows a pointing hand over buttons, as web pages do.'),
             words: ['cursor', 'mouse', 'hand', 'click'],
@@ -318,6 +361,7 @@ export function appearancePane(): Pane {
                 {
                   kind: 'segmented',
                   key: 'appearance.frame',
+                  store: { on: modes, name: 'frame' },
                   label: t('Frame'),
                   hint: t('Orden’s own title bar, or the window frame of your system.'),
                   words: ['title bar', 'window'],
