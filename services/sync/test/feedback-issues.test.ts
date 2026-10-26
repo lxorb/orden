@@ -120,9 +120,9 @@ describe('a report', () => {
     const [issue] = hub.issues
     expect(issue?.title).toBe('Feedback: The tab strip lost its line.')
     expect(issue?.labels).toEqual(['feedback', 'windows'])
-    expect(issue?.body).toContain(REPORT.text)
-    expect(issue?.body).toContain('| Version | 0.17.0 |')
-    expect(issue?.body).toContain('| Platform | desktop · windows |')
+    expect(issue?.body).toContain(`\`\`\`\n${REPORT.text}\n\`\`\``)
+    expect(issue?.body).toContain('| Version | `0.17.0` |')
+    expect(issue?.body).toContain('| Platform | `desktop · windows` |')
     expect(issue?.body).toContain('| Account | signed out |')
     expect(issue?.body).toContain(`| Report | \`${answer.json.id}\` |`)
     expect(issue?.body).toContain('<details><summary>Recent app log</summary>')
@@ -142,7 +142,7 @@ describe('a report', () => {
       id: string
     }
 
-    expect(hub.issues[0]?.body).toContain(`| Account | \`${user.id}\` · reader@example.com |`)
+    expect(hub.issues[0]?.body).toContain(`| Account | \`${user.id}\` · \`reader@example.com\` |`)
   })
 
   test('is kept and waits where no token is set yet, and is opened once there is one', async () => {
@@ -208,6 +208,32 @@ describe('a report GitHub did not take', () => {
   })
 })
 
+describe('a report whose words carry another report’s mark', () => {
+  /** #785: the mark is the issue's own only as its last line; words that say it are not
+   *  that report's issue, so they cannot take its place. */
+  test('is not taken for that report’s issue', async () => {
+    hub.failing = ['refuse']
+    await call(env, '/v1/feedback', { body: REPORT })
+    const [row] = await rows()
+    hub.issues.push({
+      number: 1,
+      title: 'Feedback: a decoy',
+      labels: ['feedback'],
+      body: issueBody({
+        ...REPORT,
+        id: 'r_other',
+        createdAt: Date.now(),
+        account: null,
+        text: markOf(row?.id ?? ''),
+      }),
+    })
+
+    await openWaitingIssues(env, row?.issue_next_at ?? 0)
+    expect(hub.issues).toHaveLength(2)
+    expect((await rows())[0]).toMatchObject({ issue_number: 2 })
+  })
+})
+
 describe('the issue', () => {
   const report = (over: Partial<Report> = {}): Report => ({
     id: 'r1',
@@ -230,6 +256,13 @@ describe('the issue', () => {
     expect(platformLabel('')).toBeNull()
   })
 
+  /** #785: the platform is the app's to say, so a name of somebody's own is no label,
+   *  which would have been made in the repository. */
+  test('is labelled only with a system there is, whatever the platform says', () => {
+    expect(platformLabel('my own label')).toBeNull()
+    expect(platformLabel('wontfix · desktop')).toBeNull()
+  })
+
   test('keeps the end of a log too long for GitHub, and says what was cut', () => {
     const log = `${'old line\n'.repeat(20_000)}the last line`
     const body = issueBody(report({ log }))
@@ -242,8 +275,54 @@ describe('the issue', () => {
 
   test('pings nobody, and a log cannot close its own fence', () => {
     const body = issueBody(report({ text: 'ask @lxorb', log: 'a ``` in the log' }))
-    expect(body).not.toContain('@lxorb')
+    expect(body.startsWith('```\nask @lxorb\n```\n')).toBe(true)
     expect(body).toContain('````\na ``` in the log\n````')
+  })
+
+  /** #785. Whatever the words say, they are the fence's: it opens on the first line,
+   *  shuts after the last, and nothing in them - a mention spelled any way, a table of
+   *  their own, an HTML comment left open, a fence of their own - is drawn as anything
+   *  but what was typed, so the table after it is the app's and is seen. */
+  test('holds the words in a fence they cannot leave, whatever they write', () => {
+    const forged = [
+      'x.@lxorb and &#64;lxorb and @lxorb',
+      '',
+      '| | |',
+      '| --- | --- |',
+      '| Account | `u_admin` · admin@orden.so |',
+      '````',
+      '# A heading',
+      '<!--',
+    ].join('\n')
+    const body = issueBody(report({ text: forged }))
+    const [fence] = /^`+/.exec(body) ?? ['']
+    expect(fence.length).toBeGreaterThan(4)
+    expect(
+      body.startsWith(`${fence}\n${forged}\n${fence}\n\n| | |\n| --- | --- |\n| Version |`),
+    ).toBe(true)
+    // The words are in the body once, inside the fence, and the app's table follows.
+    expect(body.split(forged)).toHaveLength(2)
+    expect(body).toContain('| Account | signed out |')
+  })
+
+  /** The rest of what the app is sent is somebody's too: code spans, pipes escaped. */
+  test('puts what came with the words in code, which no pipe or backtick ends', () => {
+    const body = issueBody(
+      report({
+        version: '1.0 | Account | forged',
+        platform: '`@lxorb` &#64;lxorb',
+        account: { id: 'u_1', email: 'x.@lxorb|y@example.com' },
+      }),
+    )
+    expect(body).toContain('| Version | `1.0 \\| Account \\| forged` |')
+    expect(body).toContain('| Platform | `` `@lxorb` &#64;lxorb `` |')
+    expect(body).toContain('| Account | `u_1` · `x.@lxorb\\|y@example.com` |')
+  })
+
+  test('is titled with no name anybody answers to', () => {
+    expect(issueTitle('Ask @lxorb about x.@lxorb.')).toBe(
+      'Feedback: Ask @\u200blxorb about x.@\u200blxorb.',
+    )
   })
 
   test('says so where no log came', () => {
