@@ -38,6 +38,8 @@
 #     (scripts/doh-server.py, its authority trusted in the user's NSS store), the web
 #     tab sent to it, and Settings > General > DNS set to that server: reached at once
 #     and after Orden is started again (#766, #767, scripts/dns-drive.py);
+#   - with EXTENSIONS=1, a web tab's extensions seen in the web bar and in Settings, and
+#     the engine's list and its removal reached (#789, scripts/extensions-drive.py);
 #   - with SCHEME=1, a web tab's page drawn in the app's scheme as the app's scheme is
 #     switched, light and dark (#427, scripts/scheme-drive.py);
 #   - with POPUP=1, the space switcher, the web tab's menu and a canvas's pens' panel
@@ -168,7 +170,7 @@ endpoint() {
   chmod 600 "$config/automation.json"
 }
 command=("$@")
-if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${SCHEME:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ] || [ "${GROUND:-0}" = 1 ] || [ "${WORKER:-0}" = 1 ]; then
+if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${SCHEME:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ] || [ "${GROUND:-0}" = 1 ] || [ "${WORKER:-0}" = 1 ] || [ "${EXTENSIONS:-0}" = 1 ]; then
   mkdir -p "$out/site"
   video=""
   [ "${MEDIA:-0}" = 1 ] && video='<video src="none.webm" autoplay muted></video>'
@@ -391,6 +393,11 @@ if [ "$status" = 0 ] && [ "${DNS:-0}" = 1 ]; then
       status=1
     fi
   fi
+fi
+
+if [ "$status" = 0 ] && [ "${EXTENSIONS:-0}" = 1 ]; then
+  sleep 3
+  python3 "$here/extensions-drive.py" "$out" || status=1
 fi
 
 if [ "$status" = 0 ] && [ "${SCHEME:-0}" = 1 ]; then
