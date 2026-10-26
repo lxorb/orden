@@ -664,9 +664,13 @@
                 ./packaging/nix/settings-schema.json
             )
           );
+          # One value of a setting: a choice where it has a fixed set of them.
+          oneOf = setting: if setting ? enum then types.enum setting.enum else types.str;
           typeOf =
             setting:
-            if setting.type == "boolean" then
+            if setting.type == "list" then
+              types.listOf (oneOf setting)
+            else if setting.type == "boolean" then
               types.bool
             else if setting.type == "number" then
               (
@@ -675,11 +679,11 @@
                 else
                   types.number
               )
-            else if setting ? enum then
-              types.enum setting.enum
             else
-              types.str;
-          # Null, the default, leaves a setting to Settings; anything else is held.
+              oneOf setting;
+          # Null, the default, leaves a setting to Settings; anything else is held. A
+          # setting of some platforms only says which; on the others the app passes it
+          # over, so one configuration serves every machine.
           optionOf =
             setting:
             mkOption {
@@ -688,18 +692,25 @@
               description =
                 let
                   initial = " Orden's own default: ${builtins.toJSON setting.default}.";
+                  only = " Only on ${lib.concatStringsSep ", " (setting.platforms or [ ])}.";
                 in
-                setting.description + lib.optionalString (setting ? default) initial;
+                setting.description
+                + lib.optionalString (setting ? default) initial
+                + lib.optionalString (setting ? platforms) only;
             };
           settingsOptions = lib.foldl' lib.recursiveUpdate { } (
             lib.mapAttrsToList (
               key: setting: lib.setAttrByPath (lib.splitString "." key) (optionOf setting)
             ) schema
           );
-          # What the file says: the settings given, by pane, and nothing for none.
-          declared = lib.filterAttrs (_: pane: pane != { }) (
-            lib.mapAttrs (_: lib.filterAttrs (_: value: value != null)) cfg.settings
-          );
+          # What the file says: the settings given, nested as they are named, and nothing
+          # for none - a null, or a group with nothing given in it, is left out.
+          pruned =
+            attrs:
+            lib.filterAttrs (_: value: value != null && value != { }) (
+              lib.mapAttrs (_: value: if builtins.isAttrs value then pruned value else value) attrs
+            );
+          declared = pruned cfg.settings;
         in
         {
           options.programs.orden = {
@@ -808,13 +819,20 @@
                     editor.focusMode = true;
                     appearance.mode = "dark";
                     general.dns = "quad9";
+                    spelling.languages = [
+                      "de-DE"
+                      "en-US"
+                    ];
+                    themes.wallpaper.blur = 12;
+                    themes.glass.material = "mica";
+                    shortcuts.app-focus = "Mod-Alt-f";
                   };
                 };
               }
             ];
           };
           written = evaluated.config.xdg.configFile."ch.emilvinu.nib/settings.json".text;
-          expected = ''{"appearance":{"mode":"dark"},"editor":{"focusMode":true,"textSize":1.1},"general":{"dns":"quad9"}}'';
+          expected = ''{"appearance":{"mode":"dark"},"editor":{"focusMode":true,"textSize":1.1},"general":{"dns":"quad9"},"shortcuts":{"app-focus":"Mod-Alt-f"},"spelling":{"languages":["de-DE","en-US"]},"themes":{"glass":{"material":"mica"},"wallpaper":{"blur":12}}}'';
         in
         {
           settings-file =
