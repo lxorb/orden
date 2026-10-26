@@ -41,6 +41,8 @@
 #   - with DOWNLOAD=1, a download in a web tab stopped on its way and the same name
 #     downloaded again: the first has to stop and leave nothing, the second has to be a
 #     file of its own (#788, scripts/download-drive.py);
+#   - with EXTENSIONS=1, a web tab's extensions seen in the web bar and in Settings, and
+#     the engine's list and its removal reached (#789, scripts/extensions-drive.py);
 #   - with SCHEME=1, a web tab's page drawn in the app's scheme as the app's scheme is
 #     switched, light and dark (#427, scripts/scheme-drive.py);
 #   - with POPUP=1, the space switcher, the web tab's menu and a canvas's pens' panel
@@ -171,7 +173,7 @@ endpoint() {
   chmod 600 "$config/automation.json"
 }
 command=("$@")
-if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${SCHEME:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ] || [ "${GROUND:-0}" = 1 ] || [ "${WORKER:-0}" = 1 ]; then
+if [ "${DRIVE:-0}" = 1 ] || [ "${MEDIA:-0}" = 1 ] || [ "${CHECK:-0}" = 1 ] || [ "${DRAG:-0}" = 1 ] || [ "${POPUP:-0}" = 1 ] || [ "${SCHEME:-0}" = 1 ] || [ "${FLASH:-0}" = 1 ] || [ "${GROUND:-0}" = 1 ] || [ "${WORKER:-0}" = 1 ] || [ "${EXTENSIONS:-0}" = 1 ]; then
   mkdir -p "$out/site"
   video=""
   [ "${MEDIA:-0}" = 1 ] && video='<video src="none.webm" autoplay muted></video>'
@@ -411,6 +413,11 @@ fi
 if [ "$status" = 0 ] && [ "${DOWNLOAD:-0}" = 1 ]; then
   sleep 3
   python3 "$here/download-drive.py" "$out" "$NIB_DOWNLOADS_DIR" "$out/served.txt" || status=1
+fi
+
+if [ "$status" = 0 ] && [ "${EXTENSIONS:-0}" = 1 ]; then
+  sleep 3
+  python3 "$here/extensions-drive.py" "$out" || status=1
 fi
 
 if [ "$status" = 0 ] && [ "${SCHEME:-0}" = 1 ]; then
