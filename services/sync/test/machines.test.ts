@@ -1106,7 +1106,7 @@ describe('a machine', () => {
       .prepare('select kind, detail from machine_events where machine = ? order by id')
       .all(ID) as { kind: string; detail: string | null }[]
 
-  test('a link that goes quiet is made again, its sockets told starting and then awake', async () => {
+  test('a link that goes quiet is made again, its sockets told it dropped and came back', async () => {
     const running = await machine(env, ID, user)
     const owner = await join(running, { who: user, owns: true, role: 'owner' }, 'yes')
     await say(running, owner, { t: 'hello', cols: 80, rows: 24 })
@@ -1123,10 +1123,14 @@ describe('a machine', () => {
 
     expect(frozen?.closed).toBe(true)
     expect(running.host.calls).toEqual(['start machine', 'link', 'link'])
-    expect(owner.of('machine').slice(-2)).toEqual([
-      { t: 'machine', state: 'starting' },
-      { t: 'machine', state: 'awake' },
+    expect(owner.of('link')).toEqual([
+      { t: 'link', up: false },
+      { t: 'link', up: true },
     ])
+    // The machine never stopped being awake, so no terminal says it is starting (issue
+    // 962: every relink showed "Starting machine…" over every live screen).
+    const states = owner.of('machine').map((one) => one.state)
+    expect(states.slice(states.indexOf('awake') + 1)).toEqual([])
     expect(await running.machine.state()).toBe('awake')
     // Every session somebody is on is opened on the new link and sent its screen.
     expect(running.host.link_?.take()).toEqual(
@@ -1158,12 +1162,10 @@ describe('a machine', () => {
     expect(await running.machine.state()).toBe('awake')
     // Starting until it is back, and never asleep on the way.
     const states = owner.of('machine').map((one) => one.state)
-    expect(states.slice(states.indexOf('awake') + 1)).toEqual([
-      'starting',
-      'starting',
-      'starting',
-      'awake',
-    ])
+    expect(states.slice(states.indexOf('awake') + 1)).toEqual(['starting', 'starting', 'awake'])
+    // The relink that failed said only that the link dropped; the restart is what
+    // starts, and says so.
+    expect(owner.of('link')).toEqual([{ t: 'link', up: false }])
     expect(events()).toEqual(
       expect.arrayContaining([
         { kind: 'failed', detail: 'link: Error nibd answered 401' },
@@ -1211,9 +1213,11 @@ describe('a machine', () => {
     const owner = await join(again, { who: user, owns: true, role: 'owner' })
     await say(again, owner, { t: 'hello', cols: 80, rows: 24 })
     await vi.waitFor(() => {
-      expect(owner.of('machine').at(-1)).toEqual({ t: 'machine', state: 'awake' })
+      expect(owner.of('link').at(-1)).toEqual({ t: 'link', up: true })
     })
     expect(running.host.calls).toEqual(['start machine', 'link', 'link'])
+    // The link, not the machine: nothing said it was starting (issue 962).
+    expect(owner.of('machine')).toEqual([{ t: 'machine', state: 'awake' }])
   })
 
   test('a wake finds the instance a cut-short sleep left running and links to it as it is', async () => {
