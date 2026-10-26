@@ -405,6 +405,139 @@ describe('the field while a message is changed', () => {
     await vi.waitFor(() => expect(chat.trouble).toBe('down'))
     expect(chat.text).toBe('second\n\ntyped since')
   })
+
+  /** "first" answering until `answer`, or until stopped, and "second" queued behind it. */
+  async function queuedBehind(chat: Awaited<ReturnType<typeof asked>>) {
+    let answer: () => void = () => undefined
+    engine.send.mockImplementationOnce(
+      (_thread: Thread, _draft: Draft, _on: unknown, signal?: AbortSignal) =>
+        new Promise<void>((resolve) => {
+          answer = resolve
+          signal?.addEventListener('abort', () => resolve())
+        }),
+    )
+    engine.send.mockClear()
+    chat.text = 'first'
+    chat.submit(around)
+    await vi.waitFor(() => expect(engine.send).toHaveBeenCalledTimes(1))
+    chat.text = 'second'
+    chat.submit(around)
+    return () => answer()
+  }
+  const around = { front: null, selection: '' }
+  const sentWords = () =>
+    (engine.send.mock.calls as unknown as [unknown, Draft][]).map((call) => call[1].text)
+
+  test('sends a queued message let go after the answer before it ended', async () => {
+    const chat = await asked()
+    const answer = await queuedBehind(chat)
+    chat.editQueued(chat.queue[0]!.id)
+    answer()
+    await vi.waitFor(() => expect(chat.busy).toBe(false))
+
+    chat.cancelEdit()
+
+    await vi.waitFor(() => expect(sentWords()).toEqual(['first', 'second']))
+    expect(chat.queue).toEqual([])
+  })
+
+  test('sends a queued message let go by another thread coming to the front after the answer ended', async () => {
+    const chat = await asked()
+    const answer = await queuedBehind(chat)
+    chat.editQueued(chat.queue[0]!.id)
+    answer()
+    await vi.waitFor(() => expect(chat.busy).toBe(false))
+
+    chat.newThread()
+
+    await vi.waitFor(() => expect(sentWords()).toEqual(['first', 'second']))
+  })
+
+  test('keeps a queued message let go after a stop waiting in the queue', async () => {
+    const chat = await asked()
+    await queuedBehind(chat)
+    chat.editQueued(chat.queue[0]!.id)
+    chat.stop()
+    await vi.waitFor(() => expect(chat.busy).toBe(false))
+
+    chat.cancelEdit()
+
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    expect(sentWords()).toEqual(['first'])
+    expect(chat.queue.map((one) => one.text)).toEqual(['second'])
+  })
+
+  test('ends the change of a queued message steered into the running answer', async () => {
+    const chat = await asked()
+    const steer = vi.fn(() => Promise.resolve())
+    ;(engine as unknown as { steer: unknown }).steer = steer
+    const answer = await queuedBehind(chat)
+    chat.text = 'my draft'
+    chat.editQueued(chat.queue[0]!.id)
+    chat.text = 'second, changed'
+
+    chat.steer(around)
+
+    expect([chat.changing, chat.text]).toEqual([false, 'my draft'])
+    chat.cancelEdit()
+    answer()
+    await vi.waitFor(() => expect(chat.busy).toBe(false))
+    expect(steer).toHaveBeenCalledWith(expect.anything(), 'second, changed')
+    expect(sentWords()).toEqual(['first'])
+    expect(chat.queue).toEqual([])
+  })
+
+  test('ends the change of a queued message the field ran as a command', async () => {
+    const chat = await asked()
+    const answer = await queuedBehind(chat)
+    chat.text = 'my draft'
+    chat.editQueued(chat.queue[0]!.id)
+    chat.text = '/export'
+
+    chat.taken()
+
+    expect([chat.changing, chat.text]).toEqual([false, 'my draft'])
+    chat.cancelEdit()
+    answer()
+    await vi.waitFor(() => expect(chat.busy).toBe(false))
+    expect(sentWords()).toEqual(['first'])
+  })
+
+  test('puts a queued message being changed back, as changed, when another is taken to change', async () => {
+    const chat = await asked()
+    const id = String(chat.thread?.id)
+    const queued = (n: string) => ({ id: n, text: `${n} words`, chips: [], around })
+    ;(chat as unknown as { queued: Record<string, unknown[]> }).queued = {
+      [id]: [queued('q1'), queued('q2'), queued('q3')],
+    }
+    chat.text = 'my draft'
+    chat.editQueued('q1')
+    chat.text = 'q1 changed'
+
+    chat.editQueued('q2')
+    expect(chat.text).toBe('q2 words')
+    chat.cancelEdit()
+
+    expect(chat.text).toBe('my draft')
+    expect(chat.queue.map((one) => one.text)).toEqual(['q1 changed', 'q2 words', 'q3 words'])
+  })
+
+  test('puts a queued message being changed back when an earlier message is taken to change', async () => {
+    const chat = await asked()
+    const id = String(chat.thread?.id)
+    ;(chat as unknown as { queued: Record<string, unknown[]> }).queued = {
+      [id]: [{ id: 'q1', text: 'q1 words', chips: [], around }],
+    }
+    chat.text = 'my draft'
+    chat.editQueued('q1')
+
+    chat.startEdit('u1')
+    expect(chat.text).toBe('old question')
+    chat.submit(around)
+
+    expect(chat.text).toBe('my draft')
+    expect(chat.queue.map((one) => one.text)).toEqual(['q1 words'])
+  })
 })
 
 describe('a note made of a thread', () => {
