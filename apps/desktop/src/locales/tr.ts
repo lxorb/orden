@@ -2650,4 +2650,7 @@ export const tr: Dictionary = {
     'Burada web sayfaları adresleri sistemin yaptığı gibi bulur; DNS’i sistemin kendi ayarlarından değiştirilir.',
   'Set by the settings file': 'Ayarlar dosyasında belirlendi',
   'The settings file has a problem': 'Ayarlar dosyasında bir sorun var',
+  'Some changes may not be noticed': 'Bazı değişiklikler fark edilmeyebilir',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'Sistem izlenen klasör sınırına ulaştı, bu yüzden Orden diğer programların alanlarınızda yaptığı her değişikliği fark etmeyebilir. fs.inotify.max_user_watches değerini artırmak bunu düzeltir.',
 }

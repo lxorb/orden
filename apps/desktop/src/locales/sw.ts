@@ -2675,4 +2675,7 @@ export const sw: Dictionary = {
     'Hapa kurasa za wavuti hutafuta anwani kama mfumo unavyofanya; DNS yake huwekwa katika mipangilio ya mfumo wenyewe.',
   'Set by the settings file': 'Imewekwa na faili la mipangilio',
   'The settings file has a problem': 'Faili la mipangilio lina tatizo',
+  'Some changes may not be noticed': 'Baadhi ya mabadiliko huenda yasionekane',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'Mfumo umefikia kikomo chake cha folda zinazofuatiliwa, hivyo Orden huenda isione kila badiliko ambalo programu nyingine hufanya katika nafasi zako. Kuongeza fs.inotify.max_user_watches hurekebisha hili.',
 }

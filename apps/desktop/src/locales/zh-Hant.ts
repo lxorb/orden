@@ -2558,4 +2558,7 @@ export const zhHant: Dictionary = {
     '這裡的網頁依系統的方式查詢位址；DNS 需在系統本身的設定中變更。',
   'Set by the settings file': '由設定檔指定',
   'The settings file has a problem': '設定檔有問題',
+  'Some changes may not be noticed': '部分變更可能不會被察覺',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    '系統監看資料夾的數量已達上限，因此 Orden 可能無法察覺其他程式對你空間所做的每項變更。調高 fs.inotify.max_user_watches 即可解決。',
 }

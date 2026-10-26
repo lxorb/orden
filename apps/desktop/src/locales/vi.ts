@@ -2606,4 +2606,7 @@ export const vi: Dictionary = {
     'Ở đây các trang web tra cứu địa chỉ theo cách của hệ thống; DNS được đặt trong phần cài đặt của chính hệ thống.',
   'Set by the settings file': 'Do tệp cài đặt quy định',
   'The settings file has a problem': 'Tệp cài đặt có vấn đề',
+  'Some changes may not be noticed': 'Một số thay đổi có thể không được nhận ra',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'Hệ thống đã chạm giới hạn số thư mục được theo dõi, nên Orden có thể không thấy mọi thay đổi mà chương trình khác tạo trong không gian của bạn. Tăng fs.inotify.max_user_watches sẽ khắc phục.',
 }

@@ -2687,4 +2687,7 @@ export const ptBR: Dictionary = {
     'Aqui as páginas da web procuram endereços como o sistema faz; o DNS dele é definido nos ajustes do próprio sistema.',
   'Set by the settings file': 'Definido pelo arquivo de configurações',
   'The settings file has a problem': 'O arquivo de configurações tem um problema',
+  'Some changes may not be noticed': 'Algumas mudanças podem passar despercebidas',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'O sistema chegou ao limite de pastas observadas, então o Orden pode não perceber todas as mudanças que outros programas fazem nos seus espaços. Aumentar fs.inotify.max_user_watches resolve.',
 }

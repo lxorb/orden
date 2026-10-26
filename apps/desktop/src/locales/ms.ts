@@ -2630,4 +2630,7 @@ export const ms: Dictionary = {
     'Di sini halaman web mencari alamat seperti sistem; DNS-nya ditetapkan dalam tetapan sistem sendiri.',
   'Set by the settings file': 'Ditetapkan oleh fail tetapan',
   'The settings file has a problem': 'Fail tetapan mempunyai masalah',
+  'Some changes may not be noticed': 'Sesetengah perubahan mungkin tidak disedari',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'Sistem telah mencapai had folder yang dipantau, jadi Orden mungkin tidak menyedari setiap perubahan yang dibuat program lain dalam ruang anda. Menaikkan fs.inotify.max_user_watches membetulkannya.',
 }

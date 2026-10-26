@@ -2729,4 +2729,7 @@ export const ru: Dictionary = {
     'Здесь веб-страницы ищут адреса так же, как система; её DNS задаётся в настройках самой системы.',
   'Set by the settings file': 'Задано файлом настроек',
   'The settings file has a problem': 'В файле настроек есть ошибка',
+  'Some changes may not be noticed': 'Некоторые изменения могут остаться незамеченными',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'Система достигла предела отслеживаемых папок, поэтому Orden может не заметить всех изменений, которые другие программы вносят в ваши пространства. Увеличьте fs.inotify.max_user_watches, чтобы это исправить.',
 }

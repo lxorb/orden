@@ -2712,4 +2712,7 @@ export const it: Dictionary = {
     'Qui le pagine web cercano gli indirizzi come fa il sistema; il suo DNS si imposta nelle impostazioni del sistema.',
   'Set by the settings file': 'Impostato dal file delle impostazioni',
   'The settings file has a problem': 'Il file delle impostazioni ha un problema',
+  'Some changes may not be noticed': 'Alcune modifiche potrebbero sfuggire',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'Il sistema ha raggiunto il limite di cartelle osservate, quindi Orden potrebbe non accorgersi di ogni modifica che altri programmi fanno nei tuoi spazi. Aumentare fs.inotify.max_user_watches risolve.',
 }

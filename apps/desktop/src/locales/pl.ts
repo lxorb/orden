@@ -2729,4 +2729,7 @@ export const pl: Dictionary = {
     'Tutaj strony wyszukują adresy tak jak system; jego DNS ustawia się w ustawieniach systemu.',
   'Set by the settings file': 'Ustawione przez plik ustawień',
   'The settings file has a problem': 'Plik ustawień ma problem',
+  'Some changes may not be noticed': 'Niektóre zmiany mogą umknąć',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'System osiągnął limit obserwowanych folderów, więc Orden może nie zauważyć każdej zmiany, którą inne programy robią w twoich przestrzeniach. Zwiększenie fs.inotify.max_user_watches to naprawia.',
 }

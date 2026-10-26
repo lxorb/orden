@@ -2674,4 +2674,7 @@ export const ha: Dictionary = {
     'A nan, shafukan yanar gizo suna neman adireshi kamar yadda tsarin yake yi; ana saita DNS ɗinsa a cikin saitunan tsarin.',
   'Set by the settings file': 'Fayil ɗin saituna ne ya saita',
   'The settings file has a problem': 'Fayil ɗin saituna yana da matsala',
+  'Some changes may not be noticed': 'Wataƙila ba za a lura da wasu canje-canje ba',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'Tsarin ya kai iyakar fayilolin da yake kallo, don haka Orden ba zai iya lura da kowane canji da wasu shirye-shirye ke yi a wurarenka ba. Ƙara fs.inotify.max_user_watches yana gyara hakan.',
 }

@@ -2552,4 +2552,7 @@ export const yue: Dictionary = {
     '喺度網頁跟系統嘅方法搵地址；DNS 要喺系統自己嘅設定度改。',
   'Set by the settings file': '由設定檔指定',
   'The settings file has a problem': '設定檔有問題',
+  'Some changes may not be noticed': '有啲改動可能留意唔到',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    '系統監察資料夾嘅上限已經到咗，所以 Orden 可能留意唔到其他程式喺你啲空間入面做嘅每個改動。提高 fs.inotify.max_user_watches 就得。',
 }

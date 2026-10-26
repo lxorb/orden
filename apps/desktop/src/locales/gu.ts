@@ -2622,4 +2622,7 @@ export const gu: Dictionary = {
     'અહીં વેબ પેજ સિસ્ટમની જેમ જ સરનામાં શોધે છે; તેનું DNS સિસ્ટમના પોતાના સેટિંગ્સમાં નક્કી થાય છે.',
   'Set by the settings file': 'સેટિંગ્સ ફાઇલ દ્વારા નક્કી',
   'The settings file has a problem': 'સેટિંગ્સ ફાઇલમાં સમસ્યા છે',
+  'Some changes may not be noticed': 'કેટલાક ફેરફારો કદાચ ધ્યાનમાં ન આવે',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'સિસ્ટમની જોવાતા ફોલ્ડરોની મર્યાદા પૂરી થઈ ગઈ છે, તેથી બીજા પ્રોગ્રામ તમારી સ્પેસમાં કરે તે દરેક ફેરફાર Orden કદાચ ન જુએ. fs.inotify.max_user_watches વધારવાથી સુધરે છે.',
 }

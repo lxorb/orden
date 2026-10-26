@@ -2636,4 +2636,7 @@ export const ps: Dictionary = {
     'دلته ویب پاڼې پتې هماغسې لټوي لکه سیسټم؛ د هغه DNS د سیسټم په خپلو امستنو کې ټاکل کېږي.',
   'Set by the settings file': 'د امستنو فایل ټاکلی',
   'The settings file has a problem': 'د امستنو فایل کې ستونزه ده',
+  'Some changes may not be noticed': 'ښايي ځينې بدلونونه ونه لیدل شي',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'سیسټم د څارل شويو فولډرونو حد ته رسېدلی، نو ښايي Orden هغه ټول بدلونونه ونه ویني چې نور پروګرامونه ستاسو په ځایونو کې کوي. د fs.inotify.max_user_watches لوړول یې سموي.',
 }

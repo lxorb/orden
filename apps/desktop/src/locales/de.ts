@@ -2692,4 +2692,7 @@ export const de: Dictionary = {
     'Webseiten schlagen Adressen hier so nach wie das System; sein DNS wird in den Einstellungen des Systems festgelegt.',
   'Set by the settings file': 'Von der Einstellungsdatei festgelegt',
   'The settings file has a problem': 'Die Einstellungsdatei hat ein Problem',
+  'Some changes may not be noticed': 'Manche Änderungen werden vielleicht nicht bemerkt',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'Das System hat seine Grenze für überwachte Ordner erreicht, daher bemerkt Orden womöglich nicht jede Änderung, die andere Programme in deinen Bereichen vornehmen. fs.inotify.max_user_watches zu erhöhen behebt das.',
 }

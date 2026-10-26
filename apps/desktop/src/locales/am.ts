@@ -2590,4 +2590,7 @@ export const am: Dictionary = {
     'እዚህ ድረ-ገጾች አድራሻዎችን የሚፈልጉት ሥርዓቱ በሚፈልግበት መንገድ ነው፤ የDNS ቅንብሩ በሥርዓቱ ቅንብሮች ውስጥ ነው።',
   'Set by the settings file': 'በቅንብሮች ፋይል የተቀመጠ',
   'The settings file has a problem': 'የቅንብሮች ፋይሉ ችግር አለበት',
+  'Some changes may not be noticed': 'አንዳንድ ለውጦች ላይታዩ ይችላሉ',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'የሥርዓቱ የሚከታተሉ አቃፊዎች ገደብ ደርሷል፤ ስለዚህ Orden ሌሎች ፕሮግራሞች በቦታዎችዎ የሚያደርጉትን ሁሉ ለውጥ ላያስተውል ይችላል። fs.inotify.max_user_watchesን ማሳደግ ያስተካክለዋል።',
 }

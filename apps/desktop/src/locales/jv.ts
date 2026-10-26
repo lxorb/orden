@@ -2618,4 +2618,7 @@ export const jv: Dictionary = {
     'Ing kene kaca web nggoleki alamat kaya sistem; DNS-e disetel ing setelan sistem dhewe.',
   'Set by the settings file': 'Disetel dening file setelan',
   'The settings file has a problem': 'File setelan ana masalah',
+  'Some changes may not be noticed': 'Sawetara owah-owahan bisa uga ora katon',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'Sistem wis tekan wates folder sing dipantau, dadi Orden bisa uga ora weruh saben owah-owahan sing digawe program liya ing ruang sampeyan. Ngundhakake fs.inotify.max_user_watches ndandani iki.',
 }

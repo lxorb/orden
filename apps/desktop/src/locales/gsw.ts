@@ -2656,4 +2656,7 @@ export const gsw: Dictionary = {
     'Websiite luege d Adrässe do so naa wie s System; sis DNS wird i de Iistellige vom System festgleit.',
   'Set by the settings file': 'Vo de Iistelligsdatei feschtgleit',
   'The settings file has a problem': 'D Iistelligsdatei hät es Problem',
+  'Some changes may not be noticed': 'Gwüssi Änderige merkt mer villicht nöd',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'S System hät sini Gränze für überwachti Ordner erreicht, drum merkt Orden villicht nöd jedi Änderig, wo anderi Programm i dine Bereich mached. fs.inotify.max_user_watches uufehaa behebt das.',
 }

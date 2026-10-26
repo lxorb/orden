@@ -2641,4 +2641,7 @@ export const fa: Dictionary = {
     'صفحه‌های وب اینجا نشانی‌ها را همان‌طور پیدا می‌کنند که سیستم؛ DNS آن در تنظیمات خود سیستم تعیین می‌شود.',
   'Set by the settings file': 'تعیین‌شده در فایل تنظیمات',
   'The settings file has a problem': 'فایل تنظیمات مشکلی دارد',
+  'Some changes may not be noticed': 'شاید برخی تغییرها دیده نشوند',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'سیستم به سقف پوشه‌های زیر نظر رسیده است، پس شاید Orden همهٔ تغییرهایی را که برنامه‌های دیگر در فضاهای شما می‌دهند نبیند. افزایش fs.inotify.max_user_watches مشکل را حل می‌کند.',
 }

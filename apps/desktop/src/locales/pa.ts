@@ -2643,4 +2643,7 @@ export const pa: Dictionary = {
     'ਇੱਥੇ ਵੈੱਬ ਪੰਨੇ ਸਿਸਟਮ ਵਾਂਗ ਹੀ ਪਤੇ ਲੱਭਦੇ ਹਨ; ਇਸ ਦਾ DNS ਸਿਸਟਮ ਦੀਆਂ ਆਪਣੀਆਂ ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਤੈਅ ਹੁੰਦਾ ਹੈ।',
   'Set by the settings file': 'ਸੈਟਿੰਗਾਂ ਫ਼ਾਈਲ ਵੱਲੋਂ ਤੈਅ',
   'The settings file has a problem': 'ਸੈਟਿੰਗਾਂ ਫ਼ਾਈਲ ਵਿੱਚ ਸਮੱਸਿਆ ਹੈ',
+  'Some changes may not be noticed': 'ਕੁਝ ਬਦਲਾਅ ਸ਼ਾਇਦ ਨਜ਼ਰ ਨਾ ਆਉਣ',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'ਸਿਸਟਮ ਦੀ ਦੇਖੇ ਜਾਂਦੇ ਫੋਲਡਰਾਂ ਦੀ ਹੱਦ ਪੂਰੀ ਹੋ ਗਈ ਹੈ, ਇਸ ਲਈ ਹੋਰ ਪ੍ਰੋਗਰਾਮ ਤੁਹਾਡੀਆਂ ਸਪੇਸਾਂ ਵਿੱਚ ਜੋ ਬਦਲਾਅ ਕਰਦੇ ਹਨ, Orden ਸ਼ਾਇਦ ਸਾਰੇ ਨਾ ਵੇਖੇ। fs.inotify.max_user_watches ਵਧਾਉਣ ਨਾਲ ਠੀਕ ਹੁੰਦਾ ਹੈ।',
 }

@@ -2722,4 +2722,7 @@ export const uk: Dictionary = {
     'Тут вебсторінки шукають адреси так само, як система; її DNS задається в налаштуваннях самої системи.',
   'Set by the settings file': 'Задано файлом налаштувань',
   'The settings file has a problem': 'У файлі налаштувань є помилка',
+  'Some changes may not be noticed': 'Деякі зміни можуть залишитися непоміченими',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'Система досягла межі відстежуваних тек, тож Orden може не помітити всіх змін, які інші програми вносять у ваші простори. Збільште fs.inotify.max_user_watches, щоб це виправити.',
 }

@@ -2704,4 +2704,7 @@ export const es: Dictionary = {
     'Aquí las páginas web buscan las direcciones como lo hace el sistema; su DNS se configura en los ajustes del propio sistema.',
   'Set by the settings file': 'Fijado por el archivo de ajustes',
   'The settings file has a problem': 'El archivo de ajustes tiene un problema',
+  'Some changes may not be noticed': 'Puede que algunos cambios no se noten',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'El sistema llegó a su límite de carpetas vigiladas, así que Orden puede no notar todos los cambios que otros programas hacen en tus espacios. Aumentar fs.inotify.max_user_watches lo soluciona.',
 }

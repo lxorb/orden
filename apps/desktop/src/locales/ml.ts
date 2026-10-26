@@ -2672,4 +2672,7 @@ export const ml: Dictionary = {
     'ഇവിടെ വെബ് പേജുകൾ സിസ്റ്റം ചെയ്യുന്നതുപോലെ വിലാസങ്ങൾ കണ്ടെത്തുന്നു; അതിന്റെ DNS സിസ്റ്റത്തിന്റെ സ്വന്തം ക്രമീകരണങ്ങളിലാണ് മാറ്റുന്നത്.',
   'Set by the settings file': 'ക്രമീകരണ ഫയൽ നിശ്ചയിച്ചത്',
   'The settings file has a problem': 'ക്രമീകരണ ഫയലിൽ ഒരു പ്രശ്നമുണ്ട്',
+  'Some changes may not be noticed': 'ചില മാറ്റങ്ങൾ ശ്രദ്ധിക്കപ്പെടാതെ പോകാം',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'സിസ്റ്റം നിരീക്ഷിക്കുന്ന ഫോൾഡറുകളുടെ പരിധി എത്തി, അതിനാൽ മറ്റ് പ്രോഗ്രാമുകൾ നിങ്ങളുടെ സ്പേസുകളിൽ വരുത്തുന്ന എല്ലാ മാറ്റങ്ങളും Orden ശ്രദ്ധിച്ചേക്കില്ല. fs.inotify.max_user_watches കൂട്ടിയാൽ ശരിയാകും.',
 }

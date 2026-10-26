@@ -2632,4 +2632,7 @@ export const bn: Dictionary = {
     'এখানে ওয়েব পেজ সিস্টেমের মতো করেই ঠিকানা খোঁজে; এর DNS সিস্টেমের নিজস্ব সেটিংসে ঠিক করা হয়।',
   'Set by the settings file': 'সেটিংস ফাইলে নির্ধারিত',
   'The settings file has a problem': 'সেটিংস ফাইলে একটি সমস্যা আছে',
+  'Some changes may not be noticed': 'কিছু পরিবর্তন হয়তো ধরা পড়বে না',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'সিস্টেমে নজর রাখা ফোল্ডারের সীমা পূর্ণ, তাই অন্য প্রোগ্রাম আপনার স্পেসে যে পরিবর্তন করে তার সব Orden হয়তো ধরতে পারবে না। fs.inotify.max_user_watches বাড়ালে ঠিক হয়।',
 }

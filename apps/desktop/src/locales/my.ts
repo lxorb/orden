@@ -2620,4 +2620,7 @@ export const my: Dictionary = {
     'ဤနေရာတွင် ဝဘ်စာမျက်နှာများသည် စနစ်ကဲ့သို့ပင် လိပ်စာများကို ရှာသည်။ ၎င်း၏ DNS ကို စနစ်၏ ဆက်တင်များတွင် သတ်မှတ်ရသည်။',
   'Set by the settings file': 'ဆက်တင်ဖိုင်က သတ်မှတ်ထားသည်',
   'The settings file has a problem': 'ဆက်တင်ဖိုင်တွင် ပြဿနာရှိသည်',
+  'Some changes may not be noticed': 'ပြောင်းလဲမှုအချို့ကို မသိနိုင်ပါ',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'စနစ်၏ စောင့်ကြည့်ဖိုင်တွဲ ကန့်သတ်ချက် ပြည့်သွားသဖြင့် အခြားပရိုဂရမ်များ သင့်နေရာများတွင် ပြုလုပ်သော ပြောင်းလဲမှုတိုင်းကို Orden မသိနိုင်ပါ။ fs.inotify.max_user_watches ကို တိုးပါက ပြေလည်သည်။',
 }

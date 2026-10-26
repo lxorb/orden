@@ -2630,4 +2630,7 @@ export const ur: Dictionary = {
     'یہاں ویب صفحات پتے ویسے ہی تلاش کرتے ہیں جیسے سسٹم؛ اس کا DNS سسٹم کی اپنی ترتیبات میں طے ہوتا ہے۔',
   'Set by the settings file': 'سیٹنگز فائل سے طے شدہ',
   'The settings file has a problem': 'سیٹنگز فائل میں مسئلہ ہے',
+  'Some changes may not be noticed': 'کچھ تبدیلیاں شاید نظر نہ آئیں',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'سسٹم میں دیکھے جانے والے فولڈرز کی حد پوری ہو چکی ہے، اس لیے دوسرے پروگرام آپ کی اسپیسز میں جو تبدیلیاں کرتے ہیں Orden شاید سب کو نہ دیکھ سکے۔ fs.inotify.max_user_watches بڑھانے سے یہ ٹھیک ہوتا ہے۔',
 }

@@ -2649,4 +2649,7 @@ export const te: Dictionary = {
     'ఇక్కడ వెబ్ పేజీలు సిస్టమ్ లాగే చిరునామాలను వెతుకుతాయి; దాని DNS సిస్టమ్ సొంత సెట్టింగ్‌లలో సెట్ చేయబడుతుంది.',
   'Set by the settings file': 'సెట్టింగ్‌ల ఫైల్ నిర్ణయించింది',
   'The settings file has a problem': 'సెట్టింగ్‌ల ఫైల్‌లో సమస్య ఉంది',
+  'Some changes may not be noticed': 'కొన్ని మార్పులు గమనించబడకపోవచ్చు',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'సిస్టమ్ పర్యవేక్షించే ఫోల్డర్ల పరిమితి చేరింది, కాబట్టి ఇతర ప్రోగ్రామ్‌లు మీ స్పేస్‌లలో చేసే ప్రతి మార్పును Orden గమనించకపోవచ్చు. fs.inotify.max_user_watches పెంచితే సరిపోతుంది.',
 }

@@ -2633,4 +2633,7 @@ export const hi: Dictionary = {
     'यहाँ वेब पेज पते वैसे ही ढूँढते हैं जैसे सिस्टम; इसका DNS सिस्टम की अपनी सेटिंग्स में तय होता है।',
   'Set by the settings file': 'सेटिंग्स फ़ाइल द्वारा तय',
   'The settings file has a problem': 'सेटिंग्स फ़ाइल में समस्या है',
+  'Some changes may not be noticed': 'कुछ बदलाव शायद पकड़े न जाएँ',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'सिस्टम में देखे जा रहे फ़ोल्डरों की सीमा पूरी हो गई है, इसलिए दूसरे प्रोग्राम आपके स्पेस में जो बदलाव करते हैं, Orden शायद उन सब पर ध्यान न दे। fs.inotify.max_user_watches बढ़ाने से यह ठीक होता है।',
 }

@@ -2637,4 +2637,7 @@ export const mr: Dictionary = {
     'येथे वेब पेज सिस्टमप्रमाणेच पत्ते शोधतात; त्याचा DNS सिस्टमच्या स्वतःच्या सेटिंग्जमध्ये ठरवला जातो.',
   'Set by the settings file': 'सेटिंग्ज फाइलने ठरवलेले',
   'The settings file has a problem': 'सेटिंग्ज फाइलमध्ये समस्या आहे',
+  'Some changes may not be noticed': 'काही बदल कदाचित लक्षात येणार नाहीत',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'सिस्टमची पाहिल्या जाणाऱ्या फोल्डरची मर्यादा गाठली आहे, त्यामुळे इतर प्रोग्राम तुमच्या स्पेसमध्ये करतात ते प्रत्येक बदल Orden कदाचित पाहू शकणार नाही. fs.inotify.max_user_watches वाढवल्याने हे सुटते.',
 }

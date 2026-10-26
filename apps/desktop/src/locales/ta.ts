@@ -2681,4 +2681,7 @@ export const ta: Dictionary = {
     'இங்கு இணையப் பக்கங்கள் கணினியைப் போலவே முகவரிகளைத் தேடுகின்றன; அதன் DNS கணினியின் சொந்த அமைப்புகளில் அமைக்கப்படுகிறது.',
   'Set by the settings file': 'அமைப்புகள் கோப்பால் அமைக்கப்பட்டது',
   'The settings file has a problem': 'அமைப்புகள் கோப்பில் சிக்கல் உள்ளது',
+  'Some changes may not be noticed': 'சில மாற்றங்கள் கவனிக்கப்படாமல் போகலாம்',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'கணினி கண்காணிக்கும் கோப்புறைகளின் வரம்பை எட்டிவிட்டது, எனவே பிற நிரல்கள் உங்கள் இடங்களில் செய்யும் ஒவ்வொரு மாற்றத்தையும் Orden கவனிக்காமல் போகலாம். fs.inotify.max_user_watches ஐ உயர்த்தினால் சரியாகும்.',
 }

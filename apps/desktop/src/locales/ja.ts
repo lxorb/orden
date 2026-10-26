@@ -2609,4 +2609,7 @@ export const ja: Dictionary = {
     'ここではウェブページは システムと同じ方法でアドレスを調べます。DNS はシステム自体の設定で変更します。',
   'Set by the settings file': '設定ファイルで指定済み',
   'The settings file has a problem': '設定ファイルに問題があります',
+  'Some changes may not be noticed': '一部の変更に気づけないかもしれません',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'システムの監視フォルダー数が上限に達したため、ほかのプログラムがスペースに加えた変更を Orden がすべて検知できない可能性があります。fs.inotify.max_user_watches を増やすと解決します。',
 }

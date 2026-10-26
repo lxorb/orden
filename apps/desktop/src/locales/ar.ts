@@ -2749,4 +2749,7 @@ export const ar: Dictionary = {
     'تبحث صفحات الويب هنا عن العناوين كما يفعل النظام؛ ويُضبط DNS في إعدادات النظام نفسه.',
   'Set by the settings file': 'محدد في ملف الإعدادات',
   'The settings file has a problem': 'في ملف الإعدادات مشكلة',
+  'Some changes may not be noticed': 'قد لا تُلاحَظ بعض التغييرات',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'بلغ النظام حدّه من المجلدات المراقَبة، لذا قد لا يلاحظ Orden كل تغيير تجريه برامج أخرى في مساحاتك. رفع fs.inotify.max_user_watches يصلح ذلك.',
 }

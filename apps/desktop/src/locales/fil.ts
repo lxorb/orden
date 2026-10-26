@@ -2689,4 +2689,7 @@ export const fil: Dictionary = {
     'Dito, hinahanap ng mga web page ang mga address sa paraan ng system; ang DNS nito ay itinatakda sa sariling settings ng system.',
   'Set by the settings file': 'Itinakda ng settings file',
   'The settings file has a problem': 'May problema ang settings file',
+  'Some changes may not be noticed': 'Maaaring hindi mapansin ang ilang pagbabago',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'Naabot na ng system ang hangganan nito sa mga binabantayang folder, kaya maaaring hindi mapansin ng Orden ang bawat pagbabagong ginagawa ng ibang programa sa iyong mga space. Naaayos ito sa pagtaas ng fs.inotify.max_user_watches.',
 }

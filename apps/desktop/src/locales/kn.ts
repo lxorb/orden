@@ -2665,4 +2665,7 @@ export const kn: Dictionary = {
     'ಇಲ್ಲಿ ವೆಬ್ ಪುಟಗಳು ಸಿಸ್ಟಮ್‌ನಂತೆಯೇ ವಿಳಾಸಗಳನ್ನು ಹುಡುಕುತ್ತವೆ; ಅದರ DNS ಅನ್ನು ಸಿಸ್ಟಮ್‌ನ ಸ್ವಂತ ಸೆಟ್ಟಿಂಗ್‌ಗಳಲ್ಲಿ ಹೊಂದಿಸಲಾಗುತ್ತದೆ.',
   'Set by the settings file': 'ಸೆಟ್ಟಿಂಗ್ಸ್ ಫೈಲ್‌ನಿಂದ ಹೊಂದಿಸಲಾಗಿದೆ',
   'The settings file has a problem': 'ಸೆಟ್ಟಿಂಗ್ಸ್ ಫೈಲ್‌ನಲ್ಲಿ ಸಮಸ್ಯೆ ಇದೆ',
+  'Some changes may not be noticed': 'ಕೆಲವು ಬದಲಾವಣೆಗಳು ಗಮನಕ್ಕೆ ಬಾರದಿರಬಹುದು',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'ಸಿಸ್ಟಮ್ ವೀಕ್ಷಿಸುವ ಫೋಲ್ಡರ್‌ಗಳ ಮಿತಿ ತಲುಪಿದೆ, ಹಾಗಾಗಿ ಇತರ ಪ್ರೋಗ್ರಾಂಗಳು ನಿಮ್ಮ ಸ್ಪೇಸ್‌ಗಳಲ್ಲಿ ಮಾಡುವ ಎಲ್ಲ ಬದಲಾವಣೆಗಳನ್ನು Orden ಗಮನಿಸದಿರಬಹುದು. fs.inotify.max_user_watches ಹೆಚ್ಚಿಸಿದರೆ ಸರಿಯಾಗುತ್ತದೆ.',
 }

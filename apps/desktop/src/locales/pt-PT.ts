@@ -2701,4 +2701,7 @@ export const ptPT: Dictionary = {
     'Aqui as páginas web procuram endereços como o sistema faz; o DNS dele define-se nas definições do próprio sistema.',
   'Set by the settings file': 'Definido pelo ficheiro de definições',
   'The settings file has a problem': 'O ficheiro de definições tem um problema',
+  'Some changes may not be noticed': 'Algumas alterações podem passar despercebidas',
+  'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.':
+    'O sistema atingiu o limite de pastas observadas, por isso o Orden pode não reparar em todas as alterações que outros programas fazem nos seus espaços. Aumentar fs.inotify.max_user_watches resolve.',
 }
