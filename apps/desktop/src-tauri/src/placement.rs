@@ -178,6 +178,13 @@ pub fn restored(app: &AppHandle, config: &WindowConfig) -> WindowConfig {
         return config;
     }
     let Some(placed) = last_place(app) else {
+        if let Some(first) = first_place(app, config.width, config.height) {
+            config.x = Some(first.x);
+            config.y = Some(first.y);
+            config.width = first.width;
+            config.height = first.height;
+            config.center = false;
+        }
         return config;
     };
 
@@ -201,7 +208,12 @@ pub fn reopened<'a, R: tauri::Runtime, M: Manager<R>>(
     builder: tauri::WebviewWindowBuilder<'a, R, M>,
 ) -> tauri::WebviewWindowBuilder<'a, R, M> {
     let Some(placed) = last_place(app) else {
-        return builder;
+        return match first_place(app, DEFAULT_WIDTH, DEFAULT_HEIGHT) {
+            Some(first) => builder
+                .position(first.x, first.y)
+                .inner_size(first.width, first.height),
+            None => builder,
+        };
     };
     let builder = if positions() {
         builder.position(placed.x, placed.y)
@@ -211,6 +223,39 @@ pub fn reopened<'a, R: tauri::Runtime, M: Manager<R>>(
     builder
         .inner_size(placed.width, placed.height)
         .maximized(placed.maximized)
+}
+
+/// The size `tauri.conf.json` gives the main window, which a window built again after
+/// the last one closed is built at too (see `window_builder` in launch.rs).
+const DEFAULT_WIDTH: f64 = 1180.0;
+const DEFAULT_HEIGHT: f64 = 760.0;
+
+/// Where a window opens on a Mac with no place kept for it: across the middle of the
+/// main screen and straight under the menu bar, the way a Mac's own apps open a window.
+/// Left to itself `AppKit` centres it (`NSWindow.center`, which tao calls for a window
+/// with no position), and that puts it "somewhat above centre" - a strip of desktop
+/// over the window that nothing on a Mac leaves there (#679, #343). Elsewhere the
+/// platform's own first place stands.
+fn first_place(app: &AppHandle, width: f64, height: f64) -> Option<Placement> {
+    if !cfg!(target_os = "macos") {
+        return None;
+    }
+    areas(app)
+        .first()
+        .map(|screen| under_the_menu_bar(screen, width, height))
+}
+
+/// A window of this size at the top of `screen`, across its middle, made to fit it.
+fn under_the_menu_bar(screen: &Area, width: f64, height: f64) -> Placement {
+    let width = width.min(screen.width);
+    let height = height.min(screen.height);
+    Placement {
+        x: screen.x + (screen.width - width) / 2.0,
+        y: screen.y,
+        width,
+        height,
+        maximized: false,
+    }
 }
 
 /// Whether a window may be put where it was: everywhere, Linux included, whose windows
@@ -682,7 +727,8 @@ fn keep(window: &Window) {
 #[cfg(test)]
 mod tests {
     use super::{
-        named, names_its_place, onto, sane, sized_for_any, Area, Followed, Placement, OFF,
+        named, names_its_place, onto, sane, sized_for_any, under_the_menu_bar, Area, Followed,
+        Placement, OFF,
     };
     use tauri::utils::config::WindowConfig;
 
@@ -1047,6 +1093,32 @@ mod tests {
         assert!(
             found.is_empty(),
             "the keyboard or the front asked for past `raised` and `keyboard_to`: {found:?}"
+        );
+    }
+
+    #[test]
+    fn a_first_window_on_a_mac_opens_under_the_menu_bar_across_the_middle() {
+        // A 1440 by 900 screen with a 25 point menu bar and the Dock hidden.
+        let screen = Area {
+            x: 0.0,
+            y: 25.0,
+            width: 1440.0,
+            height: 875.0,
+        };
+        assert_eq!(
+            under_the_menu_bar(&screen, 1180.0, 760.0),
+            placed(130.0, 25.0, 1180.0, 760.0)
+        );
+        // A screen smaller than the window: it fits, from the top left of the area.
+        let small = Area {
+            x: 0.0,
+            y: 25.0,
+            width: 1024.0,
+            height: 640.0,
+        };
+        assert_eq!(
+            under_the_menu_bar(&small, 1180.0, 760.0),
+            placed(0.0, 25.0, 1024.0, 640.0)
         );
     }
 }
