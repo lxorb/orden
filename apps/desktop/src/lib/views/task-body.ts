@@ -7,6 +7,8 @@
  *  put on again: the list item's content column, the width of its marker. Pure; the
  *  task's line is found again by its anchor, as every other edit of a view finds it. */
 
+import type { Row, TaskChange } from '@nib/bases'
+import { changed } from '../rows/write'
 import { lineOfAnchor } from './lines'
 
 interface Anchor {
@@ -292,4 +294,25 @@ export function withoutComment(text: string, anchor: Anchor, line: number): stri
     end++
   lines.splice(line, end - line)
   return lines.join('\n')
+}
+
+/** The note with a task changed the way the field that edits it says: its line and,
+ *  where the field held a description, the words under it. Both are found by the
+ *  row's anchor while the line still says what the anchor hashed: the description is
+ *  written first, which leaves the line as it was, and the line after. The words a
+ *  change writes need not read back as typed (a label taken off from among them, a
+ *  trailing tag, an inline field), so the line is never looked for by them. Null, and
+ *  so nothing written, where the note no longer has the task: neither part is
+ *  written without the other. */
+export function editedTask(
+  text: string,
+  row: Row,
+  change: TaskChange,
+  description: string | null,
+): string | null {
+  const anchor = row.anchor
+  if (!anchor || !row.task || lineOfAnchor(text, anchor) === null) return null
+  const described =
+    description === null ? text : (withDescription(text, anchor, description) ?? text)
+  return changed(described, row, { task: change })
 }
