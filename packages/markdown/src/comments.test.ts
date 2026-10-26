@@ -211,6 +211,12 @@ describe('a comment marker in code a fence does not open', () => {
     expect(withoutComments(source)).toBe(source)
   })
 
+  test('is left alone in indented code after a line the comment took', () => {
+    const source = 'words\n<!-- c -->\n    %%x\n\nafter'
+    expect(withoutComments(source)).toBe('words\n\n    %%x\n\nafter')
+    expect(renderMarkdown(source)).toContain('after')
+  })
+
   test('still opens one on an indented line that carries on a paragraph', () => {
     expect(withoutComments('words\n    %%gone%% kept')).toBe('words\n     kept')
   })

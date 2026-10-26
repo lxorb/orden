@@ -19,6 +19,7 @@
 //! so does the tree the app draws, so the characters a tag may hold are what
 //! decides how deep that tree can go.
 
+use crate::code_blocks::{CodeBlocks, CodeLine};
 use crate::front_matter;
 use icu_properties::props::{ExtendedPictographic, GeneralCategory, GeneralCategoryGroup};
 use icu_properties::{CodePointMapData, CodePointSetData};
@@ -146,7 +147,7 @@ fn name_char(one: char) -> bool {
 
 /// Every `#tag` in the note's own words. The front matter is left out of this
 /// pass: a hash there is a YAML comment, and the tags it holds have been read
-/// already. Fenced code is left out too, where a `#` is a comment or a heading
+/// already. Code is left out too, fenced or indented, where a `#` is a comment or a heading
 /// in some other language, and so is inline code, which shows what is in it as
 /// written. A code span runs on across the lines of a paragraph, so the spans are
 /// cut a block at a time. Raw HTML and autolinks, which `CommonMark` reads before a
@@ -188,28 +189,27 @@ fn read_inline(body: &str, front: usize, found: &mut Vec<String>) {
 }
 
 /// The blocks of words in a note: a paragraph's lines, a list item's or a
-/// heading's, which no code span reaches out of. A blank line, a fence and a line
-/// that opens a block end one, and what is fenced is in none.
+/// heading's, which no code span reaches out of. A blank line, a line of code and
+/// a line that opens a block end one, and code is in none. What is code is
+/// judged as the renderer judges it, fences in quotes and list items and indented
+/// code included; see `code_blocks`.
 fn blocks(words: &str) -> Vec<&str> {
     let mut out = Vec::new();
-    let mut fenced = false;
+    let mut code = CodeBlocks::default();
     let mut start: Option<usize> = None;
     let mut at = 0;
 
     for whole in words.split_inclusive('\n') {
         let line = whole.trim_end_matches(['\n', '\r']);
-        let trimmed = line.trim_start();
-        let fence = trimmed.starts_with("```") || trimmed.starts_with("~~~");
-        let blank = trimmed.is_empty();
+        let words_line = code.line(line) == CodeLine::Words;
+        let blank = line.trim_start().is_empty();
 
-        if fenced || fence || blank || opens_block(line) {
+        if !words_line || blank || opens_block(line) {
             if let Some(from) = start.take() {
                 out.push(words[from..at].trim_end_matches(['\n', '\r']));
             }
         }
-        if fence {
-            fenced = !fenced;
-        } else if !fenced && !blank {
+        if words_line && !blank {
             let from = *start.get_or_insert(at);
             if heading(line) {
                 out.push(&words[from..at + line.len()]);
@@ -373,6 +373,54 @@ mod tests {
     #[test]
     fn reads_on_past_a_backtick_that_opens_no_code() {
         assert_eq!(tags_in("\\` #yes ` #too"), vec!["#yes", "#too"]);
+    }
+
+    #[test]
+    fn ignores_a_fence_inside_a_quote_or_a_callout() {
+        assert_eq!(
+            tags_in("> [!example] Button\n> ```css\n> .button { color: #fff; }\n> ```\n> #after\n"),
+            vec!["#after"]
+        );
+        assert_eq!(tags_in("> ```\n> #no\n\n#yes"), vec!["#yes"]);
+        assert_eq!(tags_in("- item\n\n  ```\n  #no\n  ```\n#yes"), vec!["#yes"]);
+    }
+
+    #[test]
+    fn ignores_indented_code() {
+        assert_eq!(
+            tags_in("Notes\n\n    #include <stdio.h>\n\n#yes"),
+            vec!["#yes"]
+        );
+        assert_eq!(tags_in("- item\n\n      #define X\n#yes"), vec!["#yes"]);
+        assert_eq!(tags_in("> words\n>\n>     #no"), Vec::<String>::new());
+    }
+
+    #[test]
+    fn but_reads_an_indented_line_that_carries_a_paragraph_on() {
+        assert_eq!(tags_in("words\n    #yes"), vec!["#yes"]);
+    }
+
+    #[test]
+    fn closes_a_fence_only_on_the_same_mark_at_least_as_long() {
+        assert_eq!(tags_in("````md\n```\n#todo\n```\n````\n#yes"), vec!["#yes"]);
+        assert_eq!(tags_in("```\n~~~\n#no\n```\n#yes"), vec!["#yes"]);
+        assert_eq!(tags_in("```\n``` ts\n#no\n```\n#yes"), vec!["#yes"]);
+    }
+
+    #[test]
+    fn opens_a_fence_at_three_spaces_of_indent_but_not_four() {
+        assert_eq!(tags_in("   ```\n#no\n```\n#yes"), vec!["#yes"]);
+        assert_eq!(tags_in("words\n    ```\n#yes"), vec!["#yes"]);
+    }
+
+    #[test]
+    fn opens_no_fence_on_backticks_with_a_backtick_after_them() {
+        assert_eq!(tags_in("```a`a\n#yes"), vec!["#yes"]);
+    }
+
+    #[test]
+    fn ends_a_quoted_fence_with_the_quote() {
+        assert_eq!(tags_in("> ```\n> #no\n#yes"), vec!["#yes"]);
     }
 
     #[test]

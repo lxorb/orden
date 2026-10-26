@@ -846,8 +846,13 @@ function holds(tail: string): boolean {
  *  search index as in a task line, so the index's tag reader cuts the note into its
  *  blocks and each block into its code spans, which run on across a paragraph's lines
  *  (`blocksOf` in search/tags.ts; `codeAndWords`, moved from escapes.ts to tags.ts so
- *  no module is added). Measured 3,354,867 and 381 modules. */
-const BUDGET = 3_355_700
+ *  no module is added). Measured 3,354,867 and 381 modules.
+ *
+ *  Raised 2026-10-26, to 3,362,800, for B482: code is never a tag, in a quote, a
+ *  callout, a list item or indented, as the renderer judges it, and a comment marker
+ *  there hides nothing (`CodeBlocks`, added to fences.ts in @nib/markdown so no
+ *  module is added, and read by search/tags.ts and comments.ts). Measured 3,362,016. */
+const BUDGET = 3_362_800
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
