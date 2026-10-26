@@ -48,7 +48,7 @@
   import ThemeStore from './ThemeStore.svelte'
   import { store } from './themes/store.svelte'
   import { type Field, type PictureSide, preferences, resetPane, resettable } from './preferences'
-  import { declared } from './settings/declared.svelte'
+  import { declared, shortcutKey } from './settings/declared.svelte'
   import { glassesKey } from './even/key.svelte'
   import { EFFORT_WORDS, Offered } from './even/offered.svelte'
   import { modes } from './modes.svelte'
@@ -589,14 +589,20 @@
     {#if where}<small>{where}</small>{/if}
     <!-- Held by the settings file (#673): the value stands, and the row says why it
          will not move; the file's path is a pointer away. -->
-    {#if field.declared}<small class="declared" title={field.declared}
-        >{t('Set by the settings file')}</small
-      >{/if}
+    {#if field.declared}{@render fileNote()}{/if}
   </span>
 {/snippet}
 
+<!-- What a row the settings file holds says under its name, whoever drew the row; the
+     file's path is a pointer away. -->
+{#snippet fileNote()}
+  <small class="declared" title={declared.path}>{t('Set by the settings file')}</small>
+{/snippet}
+
 <!-- One row per setting, whatever kind it is. -->
-{#snippet row(field: Field, where?: string)}
+{#snippet row(given: Field, where?: string)}
+  <!-- Every row as the settings file leaves it (#673): one it holds says so and stays. -->
+  {@const field = declared.lock(given)}
   {#if field.kind === 'switch'}
     <!-- What the setting says now, read once. `get` reaches into a store - the
          modes, the preferences, the theme - and this row asked it twice, the slider
@@ -830,13 +836,13 @@
     </div>
     <!-- Where a few words typed in the address field go: Chrome's list for the reader's
          region, and a custom one with `%s` where the words go. See web-tab/engines.ts. -->
-    <div class="nib-setting setting">
+    <div class="nib-setting setting" class:declared={declared.holds('general.searchEngine')}>
       <span class="name"
         ><span class="what"
           >{t('Search engine')}<Hint
             text={t('Where words typed into a web tab’s address bar are searched.')}
           /></span
-        ></span
+        >{#if declared.holds('general.searchEngine')}{@render fileNote()}{/if}</span
       >
       <div class="pick">
         <Select
@@ -855,13 +861,17 @@
       </div>
     </div>
     {#if customising || searchEngine.id === CUSTOM}
-      <label class="nib-setting setting" transition:slide={{ duration: dur(160) }}>
+      <label
+        class="nib-setting setting"
+        class:declared={declared.holds('general.searchEngineAddress')}
+        transition:slide={{ duration: dur(160) }}
+      >
         <span class="name"
           ><span class="what"
             >{t('Address')}<Hint
               text={t('The search address, with %s where the words go.')}
             /></span
-          ></span
+          >{#if declared.holds('general.searchEngineAddress')}{@render fileNote()}{/if}</span
         >
         <input
           class="inline"
@@ -1217,6 +1227,7 @@
       // editor: choosing the Vim preset turns it on, and this is how it is on
       // over the Obsidian or the Notion map instead.
       kind: 'switch',
+      key: 'shortcuts.vim',
       label: t('Vim keys'),
       hint: t('Moves and edits in notes with Vim’s keys.'),
       get: () => modes.vim,
@@ -1242,9 +1253,11 @@
         {@const key = shortcuts.keyFor(entry.id)}
         {@const warning = entry.scope === 'fixed' ? null : shortcuts.warning(key)}
         {@const reach = noteFor(globalKeys.keys, entry.id, shown(key))}
-        <div class="nib-setting setting shortcut">
+        {@const held = declared.holds(shortcutKey(entry.id))}
+        <div class="nib-setting setting shortcut" class:declared={held}>
           <span class="name">
             {entry.label()}
+            {#if held}{@render fileNote()}{/if}
             {#if entry.alias}<small>{t('Second key')}</small>{/if}
             {#if entry.why}<small>{entry.why()}</small>{/if}
             {#if warning}<small class="caution">{warning}</small>{/if}
