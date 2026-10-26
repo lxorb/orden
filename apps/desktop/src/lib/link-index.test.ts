@@ -1316,3 +1316,30 @@ describe('a note moved to another folder', () => {
     expect(notes['Goal.md']).toBe('![shot](assets/abc.png) [o](Other.md)\n')
   })
 })
+
+/** A note with one link to rewrite has every link in it read again, and the others
+ *  pointing into what moved were written over as well: an alias as the filename, a
+ *  name in another case in the case of the file. */
+describe('a folder renamed, in a note that also links into it by other names', () => {
+  test('rewrites the path and leaves an alias and another case as written', async () => {
+    await space({
+      'Projects/Plan.md': '---\naliases: [The Goal]\n---\n# Plan',
+      'One.md': '[[Projects/Plan]] [[The Goal]] [[plan]] [p](projects/plan.md)\n',
+    })
+
+    await links.retarget(at('Projects'), at('Work'), ROOT, () => null, { moved: true })
+
+    expect(notes['One.md']).toBe('[[Work/Plan]] [[The Goal]] [[plan]] [p](Work/Plan.md)\n')
+  })
+
+  test('and a note renamed leaves an alias to it as written', async () => {
+    await space({
+      'Plan.md': '---\naliases: [The Goal]\n---\n# Plan',
+      'One.md': '[[Plan]] [[The Goal]]\n',
+    })
+
+    await links.retarget(at('Plan.md'), at('Roadmap.md'), ROOT)
+
+    expect(notes['One.md']).toBe('[[Roadmap]] [[The Goal]]\n')
+  })
+})
