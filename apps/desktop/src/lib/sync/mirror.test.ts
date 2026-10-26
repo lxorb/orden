@@ -797,7 +797,9 @@ describe('a note renamed on this machine', () => {
     let now = Date.UTC(2026, 9, 26, 9)
     const spy = vi.spyOn(Date, 'now').mockImplementation(() => now)
     return {
-      on: (ms: number) => void (now += ms),
+      on: (ms: number) => {
+        now += ms
+      },
       [Symbol.dispose]: () => spy.mockRestore(),
     }
   }
@@ -850,7 +852,13 @@ describe('a note renamed on this machine', () => {
       // A launch after hours away is one failure, not hours of them.
       time.on(6 * 60 * 60_000)
       await pull(mirror, 'token', NOBODY)
-      expect(mirror.untold?.[id]).toBeDefined()
+      expect(mirror.untold?.[id]?.failing).toEqual({
+        since: Date.now() - 6 * 60 * 60_000,
+        times: 2,
+      })
+      // And kept across a launch.
+      const back = readMirror(ROOT, JSON.parse(JSON.stringify(mirror)))!
+      expect(back.untold).toEqual(mirror.untold)
       for (let one = 0; one < 30 && mirror.untold; one++) {
         time.on(5 * 60_000)
         await pull(mirror, 'token', NOBODY)
