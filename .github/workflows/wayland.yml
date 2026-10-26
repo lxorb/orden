@@ -209,6 +209,17 @@ jobs:
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+      # #481: changes other programs make are noticed though a folder cannot be watched,
+      # and the reader is told when the limit of watched folders is reached.
+      - name: A space watched past a folder nobody may read and past the limit, under sway
+        if: always()
+        env:
+          OUT: wayland-out/watch
+          WATCH: '1'
+        run: |
+          pkill -f /usr/share/Orden/nib || true
+          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       # #427: a web tab's page drawn in the app's scheme, light or dark, as the app's
       # scheme is switched, not in the system's.
       - name: A web tab's page in the app's scheme, under sway
