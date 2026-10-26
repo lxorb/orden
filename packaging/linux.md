@@ -422,6 +422,11 @@ programs.orden = {
     appearance.monoFont = "JetBrains Mono";
     markdown.strictCommonMark = true;
     general.dns = "quad9";
+    spelling.languages = [ "en-GB" "de-DE" ];
+    kinds.terminal = false;
+    themes.glass.tint = 40;
+    shortcuts.app-focus = "Mod-Alt-f";
+    shortcuts.vim = true;
   };
 };
 ```
@@ -430,15 +435,49 @@ programs.orden = {
 otherwise hold, declared (#673): the module writes the ones given to `settings.json`
 in Orden's settings folder, and the app puts them in force each time it starts. A
 declared setting's row in Settings shows its value, says "Set by the settings file"
-and does not move; one left out (null, the default) stays the reader's. Change the
+and does not move, and nothing else moves it either: its key, the palette, a menu,
+another device's value arriving through the account. It is held where the app keeps
+it, so whatever writes it writes underneath, and a declared value is not sent to the
+account for other machines to take. One left out (null, the default) stays the
+reader's. Change the
 configuration, switch, start Orden again, and it follows. The options are typed from
 `packaging/nix/settings-schema.json`, which the app's own test makes from the
 settings it declares, so a choice it does not offer or a size outside its range is
 an evaluation error rather than a setting that quietly does nothing; the schema
-names every one, by pane, with what it does and its default. A
+names every one, by pane, with what it does and its default.
+
+One schema serves every desktop. A setting that is only on some platforms - hardware
+acceleration on Linux and Windows, staying in the tray on macOS and Windows, glass's
+material on Windows, the spelling dictionaries where Orden's own Chromium checks
+spelling - says so in its description, and the app on another platform passes it
+over without a word, so one configuration can be shared between machines. A
 `settings.json` the app cannot use - not JSON, a setting it does not know, a value
-out of range - is said in a notification and at the top of Settings, line by line,
-and the rest of the file still applies.
+out of range, a key combination that is not one - is said in a notification and at
+the top of Settings, line by line, and the rest of the file still applies.
+
+What it covers: every setting in General, Editor, Spelling (including the list of
+dictionaries), Note types, Markdown, Appearance (the theme, the mode, the three
+fonts, the accent, and the settings of every built-in theme under
+`themes.<theme>`), and Export; DNS and its provider; the search engine and a custom
+search address; every command's key under `shortcuts.<command>` (dots in a
+command's id written as dashes, `""` for none) and Vim keys. What it leaves out, and
+why:
+
+- Account, sync, AI providers, LLM access and connectors: they are sign-ins and
+  secrets, which do not belong in a world-readable store path.
+- The wallpaper's pictures: they are images kept inside the app, not a value.
+- The settings a theme stylesheet of your own declares: they are not known until the
+  sheet is read, so they cannot be typed ahead; the theme itself can be chosen, and
+  its CSS written with `themes`.
+- A keyboard preset: it is a starting set of keys that rewrites the others; declare
+  the keys themselves.
+- Which key goes to the terminal and which to Orden, per key: each row exists only
+  once that key has been asked about.
+- The projects folder for tasks: it is per space, not per machine.
+- The release channel and the web version: an install from Nix is updated by Nix.
+- Remote hosts, browser extensions and the default browser: they are SSH's
+  configuration, installs, and the system's own choice, not settings of the app.
+- The glasses and the phone's toolbar and pull: they are not on a desktop.
 
 The other three are the files Orden
 leaves to the reader in its settings folder, `~/.config/ch.emilvinu.nib`, and the
