@@ -1242,6 +1242,7 @@ class Links {
   private readonly filesNamed = $derived.by(() => filesByName(this.files))
 
   private readonly byName = $derived.by(() => {
+    this.namesBuilt++
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and thrown away inside the derived
     const map = new Map<string, NoteRef[]>()
 
@@ -1331,6 +1332,11 @@ class Links {
    *  times the size of the space is the whole of the paragraph above, and it is
    *  asserted in link-index.test.ts. */
   examined = 0
+
+  /** How many times `byName` was built, ever: once per change to the notes, and a
+   *  pass that changed them per note it went through built it once per note. Read
+   *  as a difference, the way `examined` is; see link-index.perf.effect.test.ts. */
+  namesBuilt = 0
 
   private resolveFrom(
     source: string | null,

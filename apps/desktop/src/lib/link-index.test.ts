@@ -1343,3 +1343,25 @@ describe('a folder renamed, in a note that also links into it by other names', (
     expect(notes['One.md']).toBe('[[Roadmap]] [[The Goal]]\n')
   })
 })
+
+/** The resolver reads a target trimmed and a markdown path without its trailing
+ *  slash; the rewrite asked about the target as written, so it never found these. */
+describe('a link written with spaces inside its brackets or a slash at its end', () => {
+  test('is rewritten when the picture it names is renamed', async () => {
+    await space({ 'One.md': '![[ abc.png ]] ![](assets/abc.png/)\n' }, ['assets/abc.png'])
+
+    await links.retarget(at('assets/abc.png'), at('assets/def.png'), ROOT, () => null, {
+      moved: true,
+    })
+
+    expect(notes['One.md']).toBe('![[ def.png ]] ![](assets/def.png)\n')
+  })
+
+  test('is rewritten when the note it names is renamed', async () => {
+    await space({ 'Plan.md': '# Plan', 'One.md': 'see [[ Plan ]]\n' })
+
+    await links.retarget(at('Plan.md'), at('Goal.md'), ROOT)
+
+    expect(notes['One.md']).toBe('see [[ Goal ]]\n')
+  })
+})
