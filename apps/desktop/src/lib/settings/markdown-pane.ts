@@ -19,6 +19,7 @@ export function markdownPane(view: EditorView | undefined): Pane {
             // the marks never come back while writing. On, which is Typora's and
             // Obsidian's live preview, where a mark shows while the caret is in it.
             kind: 'switch',
+            key: 'markdown.showMarkdown',
             label: t('Show markdown while writing'),
             hint: t(
               'Shows a mark such as ** or # while the cursor is in it; off keeps every mark out of sight.',
@@ -31,6 +32,7 @@ export function markdownPane(view: EditorView | undefined): Pane {
           {
             // Obsidian's "Default editing mode"; #232.
             kind: 'switch',
+            key: 'markdown.openInSource',
             label: t('Open notes in source mode'),
             hint: t('Notes open as plain markdown text rather than formatted.'),
             words: ['source mode', 'raw', 'plain text', 'default editing mode'],
@@ -40,6 +42,7 @@ export function markdownPane(view: EditorView | undefined): Pane {
           },
           {
             kind: 'switch',
+            key: 'markdown.strictCommonMark',
             label: t('Strict CommonMark'),
             hint: t('Only the standard markdown rules, no tables, task lists or footnotes.'),
             initial: DEFAULTS.strict,
@@ -48,6 +51,7 @@ export function markdownPane(view: EditorView | undefined): Pane {
           },
           {
             kind: 'switch',
+            key: 'markdown.smartPunctuation',
             label: t('Smart punctuation'),
             hint: t('Turns straight quotes and dashes into typographic ones as you type.'),
             initial: DEFAULTS.punctuation,
@@ -61,6 +65,7 @@ export function markdownPane(view: EditorView | undefined): Pane {
             // hint says what Obsidian calls it so nobody has to guess which
             // switch is which.
             kind: 'switch',
+            key: 'markdown.newlineBreaks',
             label: t('A single newline breaks the line'),
             hint: t(
               'Off is standard markdown: two lines of one paragraph read as one; Obsidian calls it strict line breaks.',
@@ -75,6 +80,7 @@ export function markdownPane(view: EditorView | undefined): Pane {
             // asks with. Read by the editor and by the reading view, so a note
             // cannot say one thing written and another read.
             kind: 'segmented',
+            key: 'markdown.frontMatter',
             label: t('Front matter'),
             words: ['properties', 'yaml', 'metadata'],
             hint: t(
@@ -95,6 +101,7 @@ export function markdownPane(view: EditorView | undefined): Pane {
         fields: [
           {
             kind: 'switch',
+            key: 'markdown.numberHeadings',
             label: t('Number headings'),
             hint: t('Puts 1., 1.1, 1.2 in front of headings.'),
             initial: DEFAULTS.numbers,
@@ -103,6 +110,7 @@ export function markdownPane(view: EditorView | undefined): Pane {
           },
           {
             kind: 'switch',
+            key: 'markdown.numberEquations',
             label: t('Number equations'),
             hint: t('Numbers display equations so you can refer to them.'),
             initial: DEFAULTS.equationNumbers,
@@ -116,6 +124,7 @@ export function markdownPane(view: EditorView | undefined): Pane {
         fields: [
           {
             kind: 'switch',
+            key: 'markdown.rightToLeft',
             label: t('Right to left'),
             hint: t('Writes notes from right to left, for Arabic, Hebrew and other such scripts.'),
             initial: DEFAULTS.rtl,

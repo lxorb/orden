@@ -36,6 +36,16 @@ interface Common {
   /** A drawing before the name, for a row about a thing that has one: a kind of tab in
    *  Note types wears the mark its cards and its files wear. */
   icon?: IconNode
+  /** The name the settings file sets it by, `pane.setting` (#673): what a NixOS
+   *  configuration declares through Home Manager's `programs.orden.settings`. Only for
+   *  a setting that means the same on every machine a configuration is for; the file's
+   *  schema is made from these, see file-schema.ts. Never renamed once released: a
+   *  configuration out there names it. */
+  key?: string
+  /** Set by the settings file rather than here: that file's path. The row shows the
+   *  value and says where it comes from, and its control does nothing; see
+   *  file.svelte.ts. */
+  declared?: string
 }
 
 /** One colour among a row of them, drawn as the colour itself. The only control
@@ -104,6 +114,9 @@ export type Field = Common &
         /** `note` is one thing worth knowing about that choice before it is made,
          *  drawn as a footnote mark against the name; see Select.svelte. */
         options: { value: string; label: string; note?: string }[]
+        /** The options are what this machine has - its shells, the themes installed -
+         *  so a settings file may name one that is not among them yet. */
+        open?: boolean
         initial?: string
         get(): string
         set(value: string): void

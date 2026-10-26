@@ -21,6 +21,7 @@ export function exportPane(): Pane {
         fields: [
           {
             kind: 'select',
+            key: 'export.paper',
             label: t('Paper'),
             hint: t('The paper size of a PDF or a print.'),
             options: PAPER_SIZES.map((size) => ({ value: size, label: size })),
@@ -29,6 +30,7 @@ export function exportPane(): Pane {
           },
           {
             kind: 'select',
+            key: 'export.orientation',
             label: t('Orientation'),
             hint: t('Whether pages are upright or on their side.'),
             options: ORIENTATIONS.map((one) => ({ value: one, label: t(one) })),
@@ -37,6 +39,7 @@ export function exportPane(): Pane {
           },
           {
             kind: 'text',
+            key: 'export.margin',
             label: t('Margin'),
             hint: t('The space around the edge of each page, such as 20mm or 1in.'),
             placeholder: DEFAULT_PAGE_SETUP.margin,
@@ -48,6 +51,7 @@ export function exportPane(): Pane {
           // filled in; the placeholder shows the shape.
           {
             kind: 'text',
+            key: 'export.header',
             label: t('Header'),
             hint: t('Text at the top of every page; ${title}, ${date} and ${year} are filled in.'),
             placeholder: '${title}',
@@ -57,6 +61,7 @@ export function exportPane(): Pane {
           },
           {
             kind: 'text',
+            key: 'export.footer',
             label: t('Footer'),
             hint: t(
               'Text at the bottom of every page; ${title}, ${date} and ${year} are filled in.',
@@ -68,6 +73,7 @@ export function exportPane(): Pane {
           },
           {
             kind: 'select',
+            key: 'export.appearance',
             label: t('Appearance'),
             hint: t('Whether an export is light, dark, or as the app is now.'),
             options: [
