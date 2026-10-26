@@ -1392,6 +1392,29 @@ describe('a note saved while a folder rename is still rewriting the space', () =
 
     expect(links.backlinks(at('Foo.md')).map((one) => one.path)).toEqual(['T0.md'])
   })
+
+  test('and a note saved before the pass reached it is rewritten in the index too', async () => {
+    await space({
+      'Journal/A.md': '# A',
+      'T0.md': 'see [[Journal/A]]\n',
+      'T1.md': 'see [[Journal/A]]\n',
+    })
+    afterWrite = (relative) => {
+      if (relative !== 'T0.md') return
+      notes['T1.md'] = 'see [[Journal/A]] more\n'
+      links.noteSaved(at('T1.md'), 'see [[Journal/A]] more\n')
+    }
+
+    try {
+      await links.retarget(at('Journal'), at('Diary'), ROOT, () => null, { moved: true })
+    } finally {
+      afterWrite = null
+    }
+    links.notesMoved(at('Journal'), at('Diary'))
+
+    expect(notes['T1.md']).toBe('see [[Diary/A]] more\n')
+    expect(links.backlinks(at('Diary/A.md')).map((one) => one.path)).toEqual(['T0.md', 'T1.md'])
+  })
 })
 
 describe('a folder renamed, in a note inside it that is rewritten', () => {
