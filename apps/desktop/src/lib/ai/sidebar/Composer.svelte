@@ -244,7 +244,7 @@
         place(chat.text.length)
         return
       }
-      chat.text = ''
+      chat.taken()
       void command.run({ args: '', thread: chat.thread, panel: chat })
       return
     }
@@ -276,7 +276,7 @@
     if (!commands.length) commands = await commandsFor(chat)
     const named = rowNamed(commands, typed.name)
     if (named?.row.available(chat.provider?.kind ?? 'compatible') !== true) return false
-    chat.text = ''
+    chat.taken()
     void named.row.run({
       args: typed.args,
       thread: chat.thread,

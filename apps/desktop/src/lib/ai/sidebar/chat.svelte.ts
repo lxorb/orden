@@ -330,9 +330,11 @@ class Chat implements Panel {
   private show(thread: Thread): void {
     // An edit is the open thread's: another thread in front lets it go, and the field
     // gets back what it held, so Enter there never sends one thread's change in another.
-    if (thread !== this.open && this.changing) this.cancelEdit()
+    const left = thread !== this.open && this.changing ? this.letGo() : null
     this.open = thread
     this.live.set(thread.id, thread)
+    // Its queue goes on once the other thread is in front, so nothing of it lands here.
+    if (left) this.drain(left)
     this.trouble = null
     this.dropped = []
     this.everything = true
@@ -466,17 +468,13 @@ class Chat implements Panel {
     const text = this.text.trim()
     const chips = this.chips
     if (!text && !chips.length) return
-    // What the field held before an edit took it, back in it now the edit is sent.
-    this.text = this.aside?.text ?? ''
-    this.chips = this.aside?.chips ?? []
-    this.aside = null
-    this.requeue = null
     const edited = this.editing
+    this.chips = []
+    this.taken()
     const thread = this.open
     if (edited && thread) {
       // An old message changed: the notes and the conversation go back to before it,
       // what followed is kept as a branch, and the words are sent in its place.
-      this.editing = null
       void editMessage(thread, edited, text, this)
       return
     }
@@ -490,9 +488,14 @@ class Chat implements Panel {
    *  given back once that message is sent, or the edit is let go (Escape). */
   private aside: { text: string; chips: Mention[] } | null = null
 
-  /** A queued message taken into the field to change, and where it stood in the queue:
-   *  put back there if the change is let go. */
-  private requeue = $state.raw<{ one: Queued; at: number } | null>(null)
+  /** A queued message taken into the field to change, its thread, and where it stood in
+   *  the queue: put back there if the change is let go. */
+  private requeue = $state.raw<{ one: Queued; at: number; thread: Thread } | null>(null)
+
+  /** Threads that ended an answer with nothing to send next while their queued message
+   *  was in the field: what is put back in their queue is sent, since no answer ending
+   *  will send it. A stop is not among them; it pauses the queue. */
+  private owed = new Set<string>()
 
   /** Whether the field holds a message being changed, an earlier one or a queued one:
    *  what Escape and the pencil over the field let go. */
@@ -512,6 +515,9 @@ class Chat implements Panel {
     if (!thread || this.running.includes(thread.id)) return
     const message = turn ? thread.turns.find((one) => one.id === turn) : lastMessage(thread)
     if (!message?.draft) return
+    // A queued message in the field goes back first, as changed so far. It waits there
+    // for this change: sent or let go, the queue goes on after it.
+    this.putBack(this.requeue, true)
     this.setAside()
     this.editing = message.id
     this.text = message.draft.text
@@ -520,17 +526,65 @@ class Chat implements Panel {
   }
 
   cancelEdit(): void {
+    const thread = this.letGo()
+    if (thread) this.drain(thread)
+  }
+
+  /** The edit let go, a queued message back in its own words: the thread whose queue
+   *  may go on now. */
+  private letGo(): Thread | null {
+    const held = this.requeue
+    const thread = held?.thread ?? this.open
+    // The field first, so a message that cannot go out comes back in front of the draft.
+    this.taken()
+    this.putBack(held, false)
+    return thread
+  }
+
+  /** The field taken by the review (a rewind, its Redo): a queued message there goes
+   *  back as changed so far, to wait its turn, and an edit of an earlier one is over. */
+  release(): void {
+    this.putBack(this.requeue, true)
+    this.taken()
+  }
+
+  /** The field's words gone from it (sent, steered, run as a command): an edit they
+   *  were is over, and the field gets back what it held before the edit took it. */
+  taken(): void {
     this.editing = null
-    const requeue = this.requeue
     this.requeue = null
-    if (requeue) {
-      const list = this.queue.slice()
-      list.splice(requeue.at, 0, requeue.one)
-      this.setQueue(list)
-    }
     this.text = this.aside?.text ?? ''
-    this.chips = this.aside?.chips ?? []
+    if (this.aside) this.chips = this.aside.chips
     this.aside = null
+  }
+
+  /** A queued message being changed back where it stood, in the words it had (or, with
+   *  `changed`, the field's words now). */
+  private putBack(held: typeof this.requeue, changed: boolean): void {
+    if (!held) return
+    if (this.requeue === held) this.requeue = null
+    // A field emptied keeps the words it had: an empty message is never queued.
+    const words = this.text.trim()
+    const one =
+      changed && (words || this.chips.length)
+        ? { ...held.one, text: words, chips: this.chips }
+        : held.one
+    const { thread } = held
+    const list = (this.queued[thread.id] ?? []).slice()
+    list.splice(Math.min(held.at, list.length), 0, one)
+    this.queued = { ...this.queued, [thread.id]: list }
+  }
+
+  /** A queue no answer ending will send, sent now: in order, from its first. Not for a
+   *  chat deleted or archived meanwhile. */
+  private drain(thread: Thread): void {
+    if (!this.owed.has(thread.id) || this.running.includes(thread.id)) return
+    this.owed.delete(thread.id)
+    if (this.live.get(thread.id) !== thread || thread.archived) return
+    // Where nothing can answer, it waits in its own queue rather than coming back in
+    // the field of another chat.
+    if (thread !== this.open && !ai.provider(thread.provider)) return
+    this.next(thread)
   }
 
   /** The rewind sheet (Esc Esc on an empty field, or a message's clock). */
@@ -658,6 +712,8 @@ class Chat implements Panel {
     const stopper = new AbortController()
     // Whatever the thread does now takes the place of waiting for its plan to reset.
     this.unwait(thread.id)
+    // An answer that ends goes on to the queue itself.
+    this.owed.delete(thread.id)
     this.stoppers.set(thread.id, stopper)
     this.running = [...this.running, thread.id]
     if (text !== undefined) this.pending = { ...this.pending, [thread.id]: text }
@@ -676,6 +732,13 @@ class Chat implements Panel {
     await keepThread(thread).catch(() => undefined)
     if (thread === this.open) rememberOpen(thread.id)
     await this.refreshHeads()
+  }
+
+  /** An answer other than a send's (Ask again, a compaction) done: what was queued
+   *  meanwhile goes next, as after a send, unless it was stopped. */
+  private async ended(thread: Thread, stopper: AbortController): Promise<void> {
+    await this.finish(thread)
+    if (!stopper.signal.aborted) this.next(thread)
   }
 
   /** One send through the engine, and how it ended, in the commands' terms. */
@@ -715,7 +778,11 @@ class Chat implements Panel {
 
   private next(thread: Thread): void {
     const [first, ...rest] = this.queued[thread.id] ?? []
-    if (!first) return
+    if (!first) {
+      // Nothing left to send, while a queued message is out in the field.
+      if (this.requeue?.thread === thread) this.owed.add(thread.id)
+      return
+    }
     this.queued = { ...this.queued, [thread.id]: rest }
     void this.run(thread, first)
   }
@@ -730,7 +797,7 @@ class Chat implements Panel {
       this.submit(around)
       return
     }
-    this.text = ''
+    this.taken()
     this.steerWords(thread, text)
   }
 
@@ -775,6 +842,12 @@ class Chat implements Panel {
 
   /** A queued message back in the field, to change before it goes. */
   editQueued(id: string): void {
+    const thread = this.open
+    if (!thread || !this.queue.some((each) => each.id === id)) return
+    // One message being changed at a time: a queued one there goes back, as changed,
+    // and an earlier one is let go, so Enter never sends these words in its place.
+    this.putBack(this.requeue, true)
+    this.editing = null
     const at = this.queue.findIndex((each) => each.id === id)
     const one = this.queue[at]
     if (!one) return
@@ -783,7 +856,7 @@ class Chat implements Panel {
     // Back in the queue without what a command waited on: `unqueue` told it already.
     const back: Queued = { ...one }
     delete back.settle
-    this.requeue = { one: back, at }
+    this.requeue = { one: back, at, thread }
     this.text = one.text
     this.chips = one.chips
     this.focus()
@@ -828,7 +901,7 @@ class Chat implements Panel {
     const stopper = this.begin(thread, asked.draft.text)
     void this.sendDraft(thread, provider, asked.draft, stopper)
       .catch((error: unknown) => (this.trouble = message(error, t('The model did not answer.'))))
-      .finally(() => void this.finish(thread))
+      .finally(() => void this.ended(thread, stopper))
   }
 
   /** The open thread's last message again a little after its plan resets (the button
@@ -950,11 +1023,11 @@ class Chat implements Panel {
     const thread = this.open
     const provider = this.provider
     if (!thread?.turns.length || !provider || this.running.includes(thread.id)) return
-    this.begin(thread)
+    const stopper = this.begin(thread)
     void engineOf(provider.kind)
       .then((engine) => engine.compact(thread, focus))
       .catch((error: unknown) => (this.trouble = message(error, t('The model did not answer.'))))
-      .finally(() => void this.finish(thread))
+      .finally(() => void this.ended(thread, stopper))
   }
 
   openContext(): void {
@@ -1061,8 +1134,20 @@ class Chat implements Panel {
     if (archived) thread.archived = true
     else delete thread.archived
     await keepThread(thread).catch(() => undefined)
+    if (archived) this.forgetEdit(thread.id, true)
     if (archived && thread === this.open) this.newThread()
     await this.refreshHeads()
+  }
+
+  /** A chat gone from the list: nothing more of its queue is sent once it is done, and
+   *  the field gets back what it held. A queued message of it in the field is back in
+   *  its queue where the chat is `kept` (archived), with the rest, else dropped. */
+  private forgetEdit(id: string, kept = false): void {
+    this.owed.delete(id)
+    const held = this.requeue
+    if (held?.thread.id !== id) return
+    this.taken()
+    if (kept) this.putBack(held, false)
   }
 
   async remove(id = this.open?.id): Promise<void> {
@@ -1075,6 +1160,7 @@ class Chat implements Panel {
     if (!sure) return
     this.stoppers.get(id)?.abort()
     this.unwait(id)
+    this.forgetEdit(id)
     await deleteThread(this.spaceOf(id), id).catch(() => undefined)
     this.live.delete(id)
     if (this.open?.id === id) this.newThread()

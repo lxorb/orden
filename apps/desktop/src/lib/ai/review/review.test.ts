@@ -174,7 +174,7 @@ describe('a rewind', () => {
     ])
     fake.documents = Object.values(fake.desk.panes).map((pane) => pane.note)
     const thread = aThread()
-    const panel = { send: vi.fn(), text: '', touched: vi.fn() }
+    const panel = { send: vi.fn(), text: '', touched: vi.fn(), release: vi.fn() }
 
     await message(thread, 'first', [{ path: 'a.md', at: { quote: 'one' }, replace: 'ONE' }])
     await message(thread, 'second', [
@@ -196,8 +196,11 @@ describe('a rewind', () => {
     expect(thread.turns.map((one) => one.id)).toEqual(['first', 'first-answer'])
     expect(panel.text).toBe('second')
     expect(panel.touched).toHaveBeenCalledWith(thread)
+    // A change in the field is let go before the rewound words take it.
+    expect(panel.release).toHaveBeenCalledTimes(1)
 
     await review.putBack(thread, panel)
+    expect(panel.release).toHaveBeenCalledTimes(2)
     expect(fake.desk.panes['b.md']?.text).toBe('> TWO')
     expect(fake.desk.panes['c.md']?.text).toBe('THREE')
     expect(thread.turns).toHaveLength(4)

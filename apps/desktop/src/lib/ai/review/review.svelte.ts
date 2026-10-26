@@ -55,6 +55,8 @@ export interface ReviewPanel {
   send(text: string): void
   text?: string
   touched?(thread: Thread): void
+  /** A change in the field let go before the review writes the field. */
+  release?(): void
 }
 
 /** What a rewind took back, to put back with Redo until the next message. */
@@ -386,6 +388,7 @@ class Review {
     thread.updated = Date.now()
     void rewound(thread)
     if (panel) {
+      panel.release?.()
       panel.text = wordsOf(turn)
       panel.touched?.(thread)
     }
@@ -436,6 +439,7 @@ class Review {
     if (redo.turns) {
       thread.turns.push(...redo.turns)
       void rewound(thread)
+      panel?.release?.()
       if (panel) panel.text = ''
       panel?.touched?.(thread)
     }

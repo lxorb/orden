@@ -78,14 +78,19 @@ vi.mock('./setup', () => ({ engineOf: () => Promise.resolve(engine) }))
 
 // What a review of an agent's edits needs is a workspace of documents, which none of
 // this is about.
+/** The earlier messages changed, as `turn:words`. */
+const edits = vi.hoisted(() => [] as string[])
 vi.mock('../review', () => ({
   // An edit sends its words, as the review does once the notes are back.
   editMessage: (
     _thread: unknown,
-    _turn: string,
+    turn: string,
     text: string,
     panel: { send(text: string): void },
-  ) => panel.send(text),
+  ) => {
+    edits.push(`${turn}:${text}`)
+    panel.send(text)
+  },
   lastMessage: () => null,
   openRewind: () => null,
 }))
@@ -404,6 +409,296 @@ describe('the field while a message is changed', () => {
 
     await vi.waitFor(() => expect(chat.trouble).toBe('down'))
     expect(chat.text).toBe('second\n\ntyped since')
+  })
+
+  /** "first" answering until `answer`, or until stopped, and "second" queued behind it. */
+  async function queuedBehind(chat: Awaited<ReturnType<typeof asked>>) {
+    let answer: () => void = () => undefined
+    engine.send.mockImplementationOnce(
+      (_thread: Thread, _draft: Draft, _on: unknown, signal?: AbortSignal) =>
+        new Promise<void>((resolve) => {
+          answer = resolve
+          signal?.addEventListener('abort', () => resolve())
+        }),
+    )
+    engine.send.mockClear()
+    chat.text = 'first'
+    chat.submit(around)
+    await vi.waitFor(() => expect(engine.send).toHaveBeenCalledTimes(1))
+    chat.text = 'second'
+    chat.submit(around)
+    return () => answer()
+  }
+  const around = { front: null, selection: '' }
+  const sentWords = () =>
+    (engine.send.mock.calls as unknown as [unknown, Draft][]).map((call) => call[1].text)
+
+  test('sends a queued message let go after the answer before it ended', async () => {
+    const chat = await asked()
+    const answer = await queuedBehind(chat)
+    chat.editQueued(chat.queue[0]!.id)
+    answer()
+    await vi.waitFor(() => expect(chat.busy).toBe(false))
+
+    chat.cancelEdit()
+
+    await vi.waitFor(() => expect(sentWords()).toEqual(['first', 'second']))
+    expect(chat.queue).toEqual([])
+  })
+
+  test('sends a queued message let go by another thread coming to the front after the answer ended', async () => {
+    const chat = await asked()
+    const answer = await queuedBehind(chat)
+    chat.editQueued(chat.queue[0]!.id)
+    answer()
+    await vi.waitFor(() => expect(chat.busy).toBe(false))
+
+    chat.newThread()
+
+    await vi.waitFor(() => expect(sentWords()).toEqual(['first', 'second']))
+  })
+
+  test('keeps a queued message let go after a stop waiting in the queue', async () => {
+    const chat = await asked()
+    await queuedBehind(chat)
+    chat.editQueued(chat.queue[0]!.id)
+    chat.stop()
+    await vi.waitFor(() => expect(chat.busy).toBe(false))
+
+    chat.cancelEdit()
+
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    expect(sentWords()).toEqual(['first'])
+    expect(chat.queue.map((one) => one.text)).toEqual(['second'])
+  })
+
+  test('ends the change of a queued message steered into the running answer', async () => {
+    const chat = await asked()
+    const steer = vi.fn(() => Promise.resolve())
+    ;(engine as unknown as { steer: unknown }).steer = steer
+    const answer = await queuedBehind(chat)
+    chat.text = 'my draft'
+    chat.editQueued(chat.queue[0]!.id)
+    chat.text = 'second, changed'
+
+    chat.steer(around)
+
+    expect([chat.changing, chat.text]).toEqual([false, 'my draft'])
+    chat.cancelEdit()
+    answer()
+    await vi.waitFor(() => expect(chat.busy).toBe(false))
+    expect(steer).toHaveBeenCalledWith(expect.anything(), 'second, changed')
+    expect(sentWords()).toEqual(['first'])
+    expect(chat.queue).toEqual([])
+  })
+
+  test('ends the change of a queued message the field ran as a command', async () => {
+    const chat = await asked()
+    const answer = await queuedBehind(chat)
+    chat.text = 'my draft'
+    chat.editQueued(chat.queue[0]!.id)
+    chat.text = '/export'
+
+    chat.taken()
+
+    expect([chat.changing, chat.text]).toEqual([false, 'my draft'])
+    chat.cancelEdit()
+    answer()
+    await vi.waitFor(() => expect(chat.busy).toBe(false))
+    expect(sentWords()).toEqual(['first'])
+  })
+
+  test('puts a queued message being changed back, as changed, when another is taken to change', async () => {
+    const chat = await asked()
+    const id = String(chat.thread?.id)
+    const queued = (n: string) => ({ id: n, text: `${n} words`, chips: [], around })
+    ;(chat as unknown as { queued: Record<string, unknown[]> }).queued = {
+      [id]: [queued('q1'), queued('q2'), queued('q3')],
+    }
+    chat.text = 'my draft'
+    chat.editQueued('q1')
+    chat.text = 'q1 changed'
+
+    chat.editQueued('q2')
+    expect(chat.text).toBe('q2 words')
+    chat.cancelEdit()
+
+    expect(chat.text).toBe('my draft')
+    expect(chat.queue.map((one) => one.text)).toEqual(['q1 changed', 'q2 words', 'q3 words'])
+  })
+
+  test('puts a queued message being changed back when an earlier message is taken to change', async () => {
+    const chat = await asked()
+    const id = String(chat.thread?.id)
+    ;(chat as unknown as { queued: Record<string, unknown[]> }).queued = {
+      [id]: [{ id: 'q1', text: 'q1 words', chips: [], around }],
+    }
+    chat.text = 'my draft'
+    chat.editQueued('q1')
+
+    chat.startEdit('u1')
+    expect(chat.text).toBe('old question')
+    chat.submit(around)
+
+    expect(chat.text).toBe('my draft')
+    expect(chat.queue.map((one) => one.text)).toEqual(['q1 words'])
+  })
+  /** "first" answered, "second" taken into the field from the queue meanwhile. */
+  async function heldAfterAnswer(chat: Awaited<ReturnType<typeof asked>>) {
+    const answer = await queuedBehind(chat)
+    chat.text = 'my draft'
+    chat.editQueued(chat.queue[0]!.id)
+    answer()
+    await vi.waitFor(() => expect(chat.busy).toBe(false))
+  }
+  const settled = () => new Promise((resolve) => setTimeout(resolve, 20))
+
+  test('neither sends nor keeps again a deleted chat’s queued message being changed', async () => {
+    const chat = await asked()
+    const id = String(chat.thread?.id)
+    await heldAfterAnswer(chat)
+
+    await chat.remove(id)
+
+    await settled()
+    expect(sentWords()).toEqual(['first'])
+    expect(kept.get('work')?.has(id)).toBe(false)
+  })
+
+  test('does not send an archived chat’s queued message being changed', async () => {
+    const chat = await asked()
+    const id = String(chat.thread?.id)
+    await heldAfterAnswer(chat)
+
+    chat.archive(id)
+
+    await vi.waitFor(() => expect(chat.thread?.id).not.toBe(id))
+    await settled()
+    expect(sentWords()).toEqual(['first'])
+  })
+
+  test('gives a queued message let go back in the field where it cannot be sent', async () => {
+    const chat = await asked()
+    await heldAfterAnswer(chat)
+    const { ai } = await import('../store.svelte')
+    const gone = vi.spyOn(ai, 'provider').mockReturnValue(null)
+
+    chat.cancelEdit()
+
+    await settled()
+    gone.mockRestore()
+    expect(chat.text).toBe('second\n\nmy draft')
+  })
+
+  test('opens an earlier message to change while a queued one is in the field, and sends the queued one after', async () => {
+    const chat = await asked()
+    await heldAfterAnswer(chat)
+
+    chat.startEdit('u1')
+
+    expect([chat.changing, chat.text]).toEqual([true, 'old question'])
+    expect(chat.queue.map((one) => one.text)).toEqual(['second'])
+    await settled()
+    expect(sentWords()).toEqual(['first'])
+    chat.cancelEdit()
+    await vi.waitFor(() => expect(sentWords()).toEqual(['first', 'second']))
+  })
+
+  test('sends what was queued while Ask again answered', async () => {
+    const chat = await asked()
+    let answer: () => void = () => undefined
+    engine.send.mockImplementationOnce(() => new Promise<void>((resolve) => (answer = resolve)))
+    engine.send.mockClear()
+    chat.retry()
+    await vi.waitFor(() => expect(engine.send).toHaveBeenCalledTimes(1))
+    chat.text = 'second'
+    chat.submit(around)
+    chat.text = 'third'
+    chat.submit(around)
+    chat.editQueued(chat.queue[1]!.id)
+
+    answer()
+
+    await vi.waitFor(() => expect(sentWords()).toEqual(['old question', 'second']))
+    chat.cancelEdit()
+    await vi.waitFor(() => expect(sentWords()).toEqual(['old question', 'second', 'third']))
+  })
+
+  test('sends what was queued while the chat was compacted', async () => {
+    const chat = await asked()
+    let done: () => void = () => undefined
+    const compact = vi.fn(() => new Promise<void>((resolve) => (done = resolve)))
+    ;(engine as unknown as { compact: unknown }).compact = compact
+    engine.send.mockClear()
+    chat.compact()
+    await vi.waitFor(() => expect(compact).toHaveBeenCalled())
+    chat.text = 'second'
+    chat.submit(around)
+    expect(sentWords()).toEqual([])
+
+    done()
+
+    await vi.waitFor(() => expect(sentWords()).toEqual(['second']))
+  })
+  test('sends a queued message taken after an earlier one as itself, not as the earlier one changed', async () => {
+    const chat = await asked()
+    edits.length = 0
+    await queuedBehind(chat)
+    chat.stop()
+    await vi.waitFor(() => expect(chat.busy).toBe(false))
+    chat.text = 'my draft'
+    chat.startEdit('u1')
+
+    chat.editQueued(chat.queue[0]!.id)
+    chat.submit(around)
+
+    await vi.waitFor(() => expect(sentWords()).toEqual(['first', 'second']))
+    expect(edits).toEqual([])
+    expect(chat.changing).toBe(false)
+  })
+
+  test('keeps the whole queue of a chat archived while it answers, the message being changed too', async () => {
+    const chat = await asked()
+    const id = String(chat.thread?.id)
+    const answer = await queuedBehind(chat)
+    chat.text = 'third'
+    chat.submit(around)
+    chat.editQueued(chat.queue[0]!.id)
+
+    chat.archive(id)
+    await vi.waitFor(() => expect(chat.thread?.id).not.toBe(id))
+    answer()
+
+    await vi.waitFor(() => expect(sentWords()).toEqual(['first', 'second', 'third']))
+  })
+
+  test('keeps a queued message let go by another chat coming to the front in its own chat where it cannot be sent', async () => {
+    const chat = await asked()
+    const id = String(chat.thread?.id)
+    await heldAfterAnswer(chat)
+    const { ai } = await import('../store.svelte')
+    const gone = vi.spyOn(ai, 'provider').mockReturnValue(null)
+
+    chat.newThread()
+
+    await settled()
+    gone.mockRestore()
+    expect(chat.text).toBe('my draft')
+    const queued = (chat as unknown as { queued: Record<string, { text: string }[]> }).queued
+    expect(queued[id]?.map((one) => one.text)).toEqual(['second'])
+  })
+
+  test('puts a queued message being changed back, as changed, when a rewind takes the field', async () => {
+    const chat = await asked()
+    await heldAfterAnswer(chat)
+    chat.text = 'second, changed'
+
+    chat.release()
+
+    expect([chat.changing, chat.text]).toEqual([false, 'my draft'])
+    expect(chat.queue.map((one) => one.text)).toEqual(['second, changed'])
+    await settled()
+    expect(sentWords()).toEqual(['first'])
   })
 })
 

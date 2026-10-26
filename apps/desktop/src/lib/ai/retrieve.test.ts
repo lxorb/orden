@@ -234,6 +234,25 @@ describe('the citations in an answer', () => {
       linkedAnswer('Still [1][1]. Hovers [2] [2]. Both [1, 2]. Nothing [7].', sources, named),
     ).toBe('Still Herons. Hovers Kestrels. Both Herons Kestrels. Nothing [7].')
   })
+
+  test('leave the words alone where a short name cited is said in them', () => {
+    const sources = [{ path: 'an.md', name: 'an' }]
+    const named = (one: { name: string }) => one.name
+    expect(linkedAnswer('A banana, an an apple [1] [1].', sources, named)).toBe(
+      'A banana, an an apple an.',
+    )
+  })
+
+  test('fold a name cited right after the answer says it', () => {
+    const sources = [
+      { path: 'Birds/Herons.md', name: 'Herons' },
+      { path: 'Japan.md', name: 'an' },
+    ]
+    const named = (one: { name: string }) => one.name
+    expect(linkedAnswer('About Herons [1]. In Japan [2].', sources, named)).toBe(
+      'About Herons. In Japan an.',
+    )
+  })
 })
 
 describe('asking the space', () => {
