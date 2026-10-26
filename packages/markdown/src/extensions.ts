@@ -249,13 +249,17 @@ function afterMarker(tokens: Token[], cut: number): Token[] {
 export const callouts: MarkedExtension = {
   renderer: {
     blockquote(token: Tokens.Blockquote) {
+      // Only an opening paragraph can be the marker line: code or a heading that
+      // starts with `[!note]` is that code or heading, and code has no inline
+      // tokens for the marker to be cut out of.
       const first = token.tokens[0]
-      const raw = first && 'text' in first ? String(first.text) : ''
-      const found = calloutOf(raw)
+      const opening = first?.type === 'paragraph' ? (first as Tokens.Paragraph) : null
+      const found = opening ? calloutOf(opening.text) : null
 
-      if (!found) return `<blockquote>\n${this.parser.parse(token.tokens)}</blockquote>\n`
+      if (!opening || !found) {
+        return `<blockquote>\n${this.parser.parse(token.tokens)}</blockquote>\n`
+      }
 
-      const opening = first as Tokens.Paragraph
       const inside = afterMarker(opening.tokens, found.taken)
       const rest: Token[] = inside.length
         ? [{ ...opening, text: found.rest, tokens: inside }, ...token.tokens.slice(1)]

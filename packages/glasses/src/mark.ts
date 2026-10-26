@@ -834,8 +834,9 @@ function quote(token: Token, where: Locator, nest: Nest, sheet: Sheet): void {
   const from = where.peek(rawOf(token))
   const inside: Nest = { depth: nest.depth, quote: nest.quote + 1 }
 
+  // Only an opening paragraph is a marker line; code that starts with one is code.
   const first = kids[0]
-  const found = first ? calloutOf(textOf(first)) : null
+  const found = first?.type === 'paragraph' ? calloutOf(textOf(first)) : null
   if (found) {
     // A callout's kind is a heading of its own on a page. Without a title of its
     // own that is the kind in capitals, which is the only emphasis one font has;
