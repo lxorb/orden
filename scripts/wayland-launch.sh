@@ -38,6 +38,9 @@
 #     (scripts/doh-server.py, its authority trusted in the user's NSS store), the web
 #     tab sent to it, and Settings > General > DNS set to that server: reached at once
 #     and after Orden is started again (#766, #767, scripts/dns-drive.py);
+#   - with DOWNLOAD=1, a download in a web tab stopped on its way and the same name
+#     downloaded again: the first has to stop and leave nothing, the second has to be a
+#     file of its own (#788, scripts/download-drive.py);
 #   - with SCHEME=1, a web tab's page drawn in the app's scheme as the app's scheme is
 #     switched, light and dark (#427, scripts/scheme-drive.py);
 #   - with POPUP=1, the space switcher, the web tab's menu and a canvas's pens' panel
@@ -264,6 +267,18 @@ if [ "${DNS:-0}" = 1 ]; then
   endpoint
   set -- "$@" "http://$dns_name:8765/"
 fi
+# With DOWNLOAD=1, a page with a file to download, slowly or at once, and a downloads
+# folder of the run's own (#788).
+if [ "${DOWNLOAD:-0}" = 1 ]; then
+  mkdir -p "$out/downloads"
+  # Absolute, as the app takes only an absolute folder from it; see `folder_named`.
+  NIB_DOWNLOADS_DIR="$(cd "$out/downloads" && pwd)"
+  export NIB_DOWNLOADS_DIR
+  python3 "$here/download-server.py" 8765 "$out/served.txt" > "$out/site.log" 2>&1 &
+  site_pid=$!
+  endpoint
+  set -- "$@" http://127.0.0.1:8765/
+fi
 # With TEXTSIZE=1, the endpoint and no page: the launch opens on its note (#680).
 [ "${TEXTSIZE:-0}" = 1 ] && endpoint
 # With CERT=1, the endpoint and a site over https, a real one: its certificate is the
@@ -391,6 +406,11 @@ if [ "$status" = 0 ] && [ "${DNS:-0}" = 1 ]; then
       status=1
     fi
   fi
+fi
+
+if [ "$status" = 0 ] && [ "${DOWNLOAD:-0}" = 1 ]; then
+  sleep 3
+  python3 "$here/download-drive.py" "$out" "$NIB_DOWNLOADS_DIR" "$out/served.txt" || status=1
 fi
 
 if [ "$status" = 0 ] && [ "${SCHEME:-0}" = 1 ]; then
