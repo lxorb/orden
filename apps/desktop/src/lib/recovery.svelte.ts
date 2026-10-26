@@ -26,6 +26,7 @@ import {
 import { isRecord, keep, stored } from './stored'
 import { invoke } from './tauri'
 import { workspace } from './workspace.svelte'
+import { isDeclaring } from './settings/held'
 
 export const STORAGE_KEY = 'nib:recovery'
 const MINUTE = 60 * 1000
@@ -157,7 +158,9 @@ class Recovery {
 
   private share(patch: AccountSettings) {
     const token = account.accountToken
-    if (!token) return
+    // What a settings file declares is this machine's alone (#673): put in force, it is
+    // not told to the account for another machine to take.
+    if (!token || isDeclaring()) return
 
     void api.saveSettings(token, patch).catch(() => undefined)
   }

@@ -35,6 +35,7 @@ import { isRecord, keep, stored, storedText } from './stored'
 import { isNative } from './tauri'
 import { viewport } from './viewport.svelte'
 import { saveFront } from './save-place/door'
+import { isDeclaring } from './settings/held'
 
 export { CATEGORIES, type Category, SHORTCUTS, type Shortcut } from './shortcuts/registry'
 
@@ -273,7 +274,9 @@ class Shortcuts {
    *  keyboard this is, not only on what is in it. */
   private share() {
     const token = account.accountToken
-    if (!token) return
+    // What a settings file declares is this machine's alone (#673): put in force, it is
+    // not told to the account for another machine to take.
+    if (!token || isDeclaring()) return
 
     void api
       .saveSettings(token, { shortcuts: this.overrides, preset: this.preset })
