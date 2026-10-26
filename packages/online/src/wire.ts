@@ -175,6 +175,9 @@ export type ClientFrame =
  *  - `program`: the program in front, the title it set, and its mark by the local
  *    terminal's rules (`naming.ts`'s `TerminalMark`), each null when there is none;
  *  - `machine`: the machine's state, and why it is down;
+ *  - `link`: the way from here to an awake machine dropped (`up` false) and was made
+ *    again (`up` true): its sessions run on, and nothing about the machine changed, so
+ *    it is not a `machine` frame - a terminal keeps its screen and holds its keys;
  *  - `role`: whether this socket may type;
  *  - `ended`: the shell ended with this code (null for a signal);
  *  - `refused`: what was asked was refused, and why;
@@ -198,6 +201,7 @@ export type ServerFrame =
   | { t: 'typed'; who: string; seq: number }
   | { t: 'program'; name: string | null; title: string | null; mark: string | null }
   | { t: 'machine'; state: MachineState; reason?: DownReason }
+  | { t: 'link'; up: boolean }
   | { t: 'role'; type: boolean }
   | { t: 'ended'; code: number | null }
   | { t: 'refused'; error: Refusal }
@@ -525,6 +529,8 @@ export function serverFrameOf(raw: string): ServerFrame | null {
       if (reason === undefined) return { t: 'machine', state }
       return oneOf(DOWN_REASONS, reason) ? { t: 'machine', state, reason } : null
     }
+    case 'link':
+      return typeof value.up === 'boolean' ? { t: 'link', up: value.up } : null
     case 'role':
       return typeof value.type === 'boolean' ? { t: 'role', type: value.type } : null
     case 'ended':
