@@ -220,6 +220,17 @@ jobs:
           pkill -f /usr/share/Orden/nib || true
           rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
           dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
+      # #961: a setting and a draft from a second before the app was killed are there
+      # when it is started again.
+      - name: What the app took in survives a kill, under sway
+        if: always()
+        env:
+          OUT: wayland-out/kill
+          KILL: '1'
+        run: |
+          pkill -f /usr/share/Orden/nib || true
+          rm -rf "$HOME/.config/ch.emilvinu.nib" "$HOME/.local/share/ch.emilvinu.nib"
+          dbus-run-session -- bash scripts/wayland-launch.sh /usr/bin/nib
       # #777: a web tab's page has its workers run, as it opens and after a restart.
       - name: A web tab's page has its worker answer it, opened and after a restart, under sway
         if: always()

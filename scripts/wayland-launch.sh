@@ -28,6 +28,9 @@
 #     scripts/textsize-drive.py);
 #   - with FLASH=1, the strip's note tab and web tab chosen in turn in the dark scheme,
 #     filmed, and no frame of the pane white (#762, scripts/flash-drive.py);
+#   - with KILL=1, the app's scheme switched and words typed into a new note, the app
+#     killed outright a second later, and both there when it is started again (#961,
+#     scripts/kill-drive.py);
 #   - with WORKER=1, a web tab's page whose worker has to answer it, as it opens and
 #     after Orden is quit and started again with no address (#777,
 #     scripts/worker-drive.py);
@@ -266,6 +269,8 @@ if [ "${DNS:-0}" = 1 ]; then
 fi
 # With TEXTSIZE=1, the endpoint and no page: the launch opens on its note (#680).
 [ "${TEXTSIZE:-0}" = 1 ] && endpoint
+# With KILL=1, the endpoint and no page (#961).
+[ "${KILL:-0}" = 1 ] && endpoint
 # With CERT=1, the endpoint and a site over https, a real one: its certificate is the
 # point (#776).
 if [ "${CERT:-0}" = 1 ]; then
@@ -410,6 +415,34 @@ fi
 
 if [ "$status" = 0 ] && [ "${CHECK:-0}" = 1 ]; then
   APP_COMMAND="${command[0]}" python3 "$here/wayland-418.py" "$out" "$app_pid" || status=1
+fi
+
+# What the app took in a second before it was killed, there when it is started again
+# (#961). A second, for the session the app writes a moment after a change; a kill, not a
+# quit, so nothing is written on the way out.
+if [ "$status" = 0 ] && [ "${KILL:-0}" = 1 ]; then
+  sleep 3
+  if python3 "$here/kill-drive.py" "$out" write; then
+    sleep 1
+    # Every process of it at once, as `pkill` or the session ending does: the engine's
+    # storage runs in a process of its own, which puts what it holds on the disk the
+    # moment the app's own process is gone if it outlives it.
+    pkill -KILL -f /usr/share/Orden/ 2>/dev/null || true
+    wait "$app_pid" 2>/dev/null || true
+    sleep 1
+    endpoint
+    "${command[@]}" > "$out/orden-again.log" 2>&1 &
+    app_pid=$!
+    if wait_for_views 1; then
+      sleep 3
+      python3 "$here/kill-drive.py" "$out" read || status=1
+    else
+      echo "::error::no window mapped when started again"
+      status=1
+    fi
+  else
+    status=1
+  fi
 fi
 
 # A page's worker answering it, and again on the web tab the app comes back to once it is
