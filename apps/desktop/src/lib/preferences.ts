@@ -9,7 +9,7 @@ import { appearancePane } from './settings/appearance-pane'
 import { glassesPanes } from './settings/glasses-pane'
 import { exportPane } from './settings/export-pane'
 import type { Pane } from './settings/fields'
-import { declared } from './settings/file.svelte'
+import { declared } from './settings/declared.svelte'
 
 export type {
   Caption,
@@ -23,7 +23,7 @@ export type {
 } from './settings/fields'
 
 /** Built against a live view so a change lands in the editor on screen. A row the
- *  settings file holds shows its value and does nothing; see settings/file.svelte.ts. */
+ *  settings file holds shows its value and does nothing; see settings/file.ts. */
 export function preferences(view?: EditorView): Pane[] {
   return declaredPanes(view).map((pane) => ({
     ...pane,

@@ -28,23 +28,42 @@ vi.mock('../tauri', async (actual) => ({
     return new Promise(() => undefined)
   },
 }))
+/** What the account says its settings are, when asked. */
+let account: Record<string, unknown> = {}
+vi.mock('../api', async (actual) => ({
+  ...(await actual<typeof import('../api')>()),
+  api: new Proxy(
+    {},
+    {
+      get: (_api, route) =>
+        route === 'settings'
+          ? () => Promise.resolve({ settings: account, key: null })
+          : () => Promise.resolve({}),
+    },
+  ),
+}))
 vi.mock('../notify', () => ({
   notify: (title: string, body: string) => notices.push({ title, body }),
 }))
 
-const { declaredPanes, preferences } = await import('../preferences')
-const { declared } = await import('./file.svelte')
+const { preferences } = await import('../preferences')
+const { declarations } = await import('./declarations')
+const { declared } = await import('./declared.svelte')
+const { load } = await import('./file')
 const { modes } = await import('../modes.svelte')
 const { dns } = await import('./dns.svelte')
+const { theme } = await import('../theme.svelte')
+const { shortcuts } = await import('../shortcuts.svelte')
+const { BY_ID } = await import('../shortcuts/registry')
 
 const PATH = '/home/emil/.config/ch.emilvinu.nib/settings.json'
 
 async function launch(text: string | null) {
   file = text === null ? null : { path: PATH, text }
   notices.length = 0
-  await declared.load(async () => {
+  await load(async () => {
     await dns.ask()
-    return declaredPanes()
+    return declarations()
   })
   declared.tell(() => undefined)
 }
@@ -150,7 +169,7 @@ describe('a settings file', () => {
   test('that cannot be read says why, and none at all is nothing to say', async () => {
     file = new Error(`could not read ${PATH}: Permission denied`)
     notices.length = 0
-    await declared.load(() => Promise.resolve(declaredPanes()))
+    await load(() => declarations())
     expect(declared.problems).toEqual([`could not read ${PATH}: Permission denied`])
 
     await launch(null)
@@ -163,9 +182,80 @@ describe('a settings file', () => {
     // The terminal's rows are Developer mode's.
     modes.setDeveloper(false)
     await launch(JSON.stringify({ general: { terminalTextSize: 15 } }))
-    expect(declared.problems).toEqual(['general.terminalTextSize is not a setting Orden knows'])
+    expect(declared.problems).toEqual([
+      'general.terminalTextSize is not a setting here now: what it depends on is off',
+    ])
     await launch(JSON.stringify({ general: { terminalTextSize: 15, developerMode: true } }))
     expect(declared.problems).toEqual([])
     expect(declared.held.has('general.terminalTextSize')).toBe(true)
+  })
+})
+
+describe('what the settings file holds', () => {
+  test('stays as it says when its key is pressed, as when its row is', async () => {
+    await launch(JSON.stringify({ editor: { focusMode: true } }))
+    expect(modes.focus).toBe(true)
+    // F8: the command the keyboard, the palette and the View menu all run.
+    BY_ID.get('app.focus')?.run?.({ view: undefined } as never)
+    expect(modes.focus).toBe(true)
+    modes.toggleFocus()
+    expect(modes.focus).toBe(true)
+    // And a setting the file does not name is the keyboard's as ever.
+    const typewriter = modes.typewriter
+    BY_ID.get('app.typewriter')?.run?.({ view: undefined } as never)
+    expect(modes.typewriter).toBe(!typewriter)
+  })
+
+  test('stays as it says when another device says otherwise', async () => {
+    await launch(JSON.stringify({ markdown: { newlineBreaks: false, frontMatter: 'source' } }))
+    account = { hardBreaks: true, properties: 'table', canvasTurns: !modes.canvasTurns }
+    const turns = modes.canvasTurns
+    await modes.adopt('token')
+    expect(modes.hardBreaks).toBe(false)
+    expect(modes.properties).toBe('source')
+    // What the file does not name is the account's.
+    expect(modes.canvasTurns).toBe(!turns)
+  })
+
+  test('holds a part of what a store keeps, and leaves the rest to it', async () => {
+    await launch(JSON.stringify({ appearance: { monoFont: 'JetBrains Mono' } }))
+    expect(modes.fonts.mono).toBe('JetBrains Mono')
+    modes.setFont('mono', 'Fira Code')
+    modes.setFont('ui', 'Inter')
+    expect(modes.fonts.mono).toBe('JetBrains Mono')
+    expect(modes.fonts.ui).toBe('Inter')
+  })
+
+  test('sets a list whole: the languages spelling is checked in', async () => {
+    await launch(JSON.stringify({ spelling: { languages: ['de-DE', 'fr-FR'] } }))
+    expect(declared.problems).toEqual([])
+    expect([...modes.spellLanguages].sort()).toEqual(['de-DE', 'fr-FR'])
+    modes.setSpellLanguages(['en-US'])
+    expect([...modes.spellLanguages].sort()).toEqual(['de-DE', 'fr-FR'])
+    await launch(JSON.stringify({ spelling: { languages: ['xx-XX'] } }))
+    expect(declared.problems[0]).toContain('spelling.languages has "xx-XX"')
+  })
+
+  test('sets a theme it does not wear, and a command’s key', async () => {
+    await launch(
+      JSON.stringify({
+        themes: { wallpaper: { blur: 12 } },
+        shortcuts: { 'app-focus': 'Mod-Alt-f', vim: true },
+      }),
+    )
+    expect(declared.problems).toEqual([])
+    expect(theme.keptFor('wallpaper', 'blur')).toBe(12)
+    expect(shortcuts.keyFor('app.focus')).toBe('Mod-Alt-f')
+    shortcuts.set('app.focus', 'F9')
+    expect(shortcuts.keyFor('app.focus')).toBe('Mod-Alt-f')
+    expect(modes.vim).toBe(true)
+  })
+
+  test('passes over another platform’s setting without a word, and refuses a key that is none', async () => {
+    await launch(
+      JSON.stringify({ themes: { glass: { material: 'mica' } }, shortcuts: { 'app-focus': 'k' } }),
+    )
+    expect(declared.problems).toHaveLength(1)
+    expect(declared.problems[0]).toMatch(/^shortcuts\.app-focus /)
   })
 })
