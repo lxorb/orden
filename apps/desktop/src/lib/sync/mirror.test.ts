@@ -766,7 +766,7 @@ describe('a note renamed on this machine', () => {
 
   test.each([
     ['for good', [400], 1],
-    ['too often', [503], 5],
+    ['too often', [409], 5],
   ])('and one the account refuses %s is let go of without a delete', async (_, [status], times) => {
     const { mirror, id } = await paired('One.md', HERE)
     renameOnDisk('One.md', 'Two.md')

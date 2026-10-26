@@ -919,8 +919,19 @@ export async function movedHere(
 
   // The file itself, and - for a folder - every note under it. `Kept/` rather than
   // `Kept`, or a folder would carry `Keptish.md` along with it.
+  //
+  // Except an entry whose rename is still to be told: it stays at the name its file
+  // left, so whatever file is at that name now is another note, unless this is that
+  // very rename told again. Taken for the note, the next note made at the name and
+  // renamed was told as this note's rename, with its words and its id.
   const under = `${was}/`
-  const moving = Object.keys(mirror.notes).filter((path) => path === was || path.startsWith(under))
+  const moving = Object.entries(mirror.notes)
+    .filter(([path, one]) => {
+      if (path !== was && !path.startsWith(under)) return false
+      const untold = mirror.untold?.[one.id]
+      return !untold || untold.to === now + path.slice(was.length)
+    })
+    .map(([path]) => path)
 
   let done = false
   // A note whose rename is still to be told, moving on again before it was: told
@@ -1011,8 +1022,11 @@ const MOST_TRIES = 5
 /** A rename that did not land, written down to be told again - unless the account
  *  has said it never will take it, or has refused it too often. */
 function untoldBy(mirror: Mirror, id: string, from: string, to: string, error: unknown) {
-  // Only an answer counts: a network that is down refuses nothing.
-  const tries = (mirror.untold?.[id]?.tries ?? 0) + (error instanceof ApiError ? 1 : 0)
+  // Only the account judging the rename counts. A network that is down refuses
+  // nothing, and nor does a server that is failing: a 5xx is an outage or a room not
+  // answering, and counted, a short one let the rename go and made it two notes.
+  const judged = error instanceof ApiError && error.status < 500
+  const tries = (mirror.untold?.[id]?.tries ?? 0) + (judged ? 1 : 0)
   const forGood =
     error instanceof ApiError &&
     error.status >= 400 &&
