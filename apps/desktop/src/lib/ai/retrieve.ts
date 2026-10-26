@@ -445,8 +445,16 @@ export function linkedAnswer(
           .map(cite)
         return notes.length ? [...new Set(notes)].map(mark).join(' ') : whole
       })
-      return marked
-        .replace(/(\uE000(\d+)\uE001)(?:\s*\uE000\2\uE001)+/g, '$1')
+      const folded = marked.replace(/(\uE000(\d+)\uE001)(?:\s*\uE000\2\uE001)+/g, '$1')
+      // A citation right after the answer says its name, the name once: "about Herons".
+      return said
+        .reduce((out, words, at) => {
+          const name = words.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+          return out.replace(
+            new RegExp(`(?<![\\p{L}\\p{N}_])(${name})\\s*\uE000${at}\uE001`, 'gu'),
+            '$1',
+          )
+        }, folded)
         .replace(/\uE000(\d+)\uE001/g, (whole, at: string) => said[Number(at)] ?? whole)
         .replace(/(\[\[[^\]]+\]\])(?:\s*\1)+/g, '$1')
     })
