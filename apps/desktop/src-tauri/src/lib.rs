@@ -263,6 +263,9 @@ mod window_drag;
 // Whether Chromium draws on the graphics card or on the CPU, in the log; see gpu.rs.
 #[cfg(desktop)]
 mod gpu;
+// What the app's page keeps in its storage, kept on the disk at once (#961); see kept.rs.
+#[cfg(desktop)]
+mod kept;
 // Which DNS the web tabs' pages look names up with (#766, #767); see secure_dns.rs.
 #[cfg(desktop)]
 mod secure_dns;
@@ -467,6 +470,8 @@ macro_rules! desktop_commands {
             gpu::gpu_seen,
             gpu::gpu_chosen,
             gpu::gpu_choose,
+            kept::kept_write,
+            kept::kept_forget,
             secure_dns::dns_chosen,
             secure_dns::dns_choose,
             gpu::gpu_line,
@@ -1117,7 +1122,17 @@ mod tests {
     /// reader follows a call into a closure without knowing it runs on another
     /// thread. The other two reach Windows through the
     /// registry, and a key is opened and closed inside one call.
-    const EXCEPTED: [&str; 3] = ["write_log", "new_menu_registered", "set_new_menu"];
+    ///
+    /// And the page's storage kept on the disk (kept.rs): each write is handed to a
+    /// thread of its own over a channel, and on the window's thread so the writes keep
+    /// the order the page made them in.
+    const EXCEPTED: [&str; 5] = [
+        "write_log",
+        "new_menu_registered",
+        "set_new_menu",
+        "kept_write",
+        "kept_forget",
+    ];
 
     /// What a body that waits says itself, whichever module it is in: the
     /// filesystem, a subprocess, the machine's own keychain, and the system's shell,

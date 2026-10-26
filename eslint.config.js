@@ -136,7 +136,8 @@ export default tseslint.config(
     // says what draws the window's page, src-tauri/src/gpu.js, and the one that says its
     // pixel ratio, src-tauri/src/page_scale.js, and the one that says a press landed,
     // src-tauri/src/keyboard_press.js, and the one that says its scheme,
-    // src-tauri/src/page_scheme.js.
+    // src-tauri/src/page_scheme.js, and the one that keeps what it stores,
+    // src-tauri/src/kept.js.
     // And the frame script, a classic script every sandboxed frame carries inline; see
     // packages/editor/src/frame-script.js.
     files: [
@@ -149,6 +150,7 @@ export default tseslint.config(
       'apps/desktop/src-tauri/src/page_scale.js',
       'apps/desktop/src-tauri/src/keyboard_press.js',
       'apps/desktop/src-tauri/src/page_scheme.js',
+      'apps/desktop/src-tauri/src/kept.js',
       'packages/editor/src/frame-script.js',
     ],
     ...tseslint.configs.disableTypeChecked,

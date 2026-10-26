@@ -449,6 +449,8 @@ pub(crate) fn ui_window<'a, M: tauri::Manager<crate::Engine>>(
     #[cfg(feature = "cef")]
     let building = {
         let _ = OWN_PROFILE.set(app_profile(manager.app_handle())?);
+        // What the last run's page kept, for this first window to put back; see kept.rs.
+        crate::kept::read_kept(manager.app_handle());
         own_window(building)
     };
     Ok(building)
@@ -468,6 +470,9 @@ pub(crate) fn own_window<M: tauri::Manager<crate::Engine>>(
     use tauri_runtime_cef::{RuntimeStyle, WebviewWindowBuilderCefExt as _};
     let building = building
         .browser_runtime_style(RuntimeStyle::Alloy)
+        // First, so whatever the page writes to its storage is kept, and what a kill
+        // took is back before anything reads it; see kept.rs.
+        .initialization_script(crate::kept::kept_script())
         .initialization_script(crate::window_drag::SCRIPT)
         .initialization_script(crate::gpu::SCRIPT)
         .initialization_script(crate::page_scale::SCRIPT)
