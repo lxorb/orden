@@ -613,11 +613,21 @@
       #   imports = [ inputs.orden.homeManagerModules.default ];
       #   programs.orden.enable = true;
       #
-      # Beyond installing the package it writes only the three files Orden leaves to
-      # the reader in its settings folder, each of them optional: theme stylesheets,
-      # custom.css, and snippets.json. Everything else in that folder is the app's
-      # own state - window positions, history, what Settings saved - and is kept out
-      # of here on purpose, since the app rewrites it while running.
+      # Beyond installing the package it writes only the files Orden leaves to the
+      # reader in its settings folder, each of them optional: theme stylesheets,
+      # custom.css, snippets.json, and settings.json - the settings declared here,
+      # which the app puts in force at launch and holds there (#673):
+      #
+      #   programs.orden.settings = {
+      #     editor.textSize = 1.1;
+      #     editor.focusMode = true;
+      #     appearance.mode = "dark";
+      #     markdown.strictCommonMark = true;
+      #   };
+      #
+      # Everything else in that folder is the app's own state - window positions,
+      # history, what Settings saved - and is kept out of here on purpose, since the
+      # app rewrites it while running.
       homeManagerModules.default =
         {
           config,
@@ -640,6 +650,56 @@
           # a comment.
           stylesheet = types.either types.lines types.path;
           file = value: if builtins.isString value then { text = value; } else { source = value; };
+
+          # Every setting the file may set, as the app declares them: settings-schema.json
+          # is made from the panes by the app's own test (file-schema.test.ts), so an
+          # option here is exactly what the app takes, of its type and within its range
+          # or its choices. Beside this file; the repository's root flake.nix is a link to
+          # it, and is evaluated from the root.
+          schema = builtins.fromJSON (
+            builtins.readFile (
+              if builtins.pathExists ./settings-schema.json then
+                ./settings-schema.json
+              else
+                ./packaging/nix/settings-schema.json
+            )
+          );
+          typeOf =
+            setting:
+            if setting.type == "boolean" then
+              types.bool
+            else if setting.type == "number" then
+              (
+                if setting ? min && setting ? max then
+                  types.numbers.between setting.min setting.max
+                else
+                  types.number
+              )
+            else if setting ? enum then
+              types.enum setting.enum
+            else
+              types.str;
+          # Null, the default, leaves a setting to Settings; anything else is held.
+          optionOf =
+            setting:
+            mkOption {
+              type = types.nullOr (typeOf setting);
+              default = null;
+              description =
+                let
+                  initial = " Orden's own default: ${builtins.toJSON setting.default}.";
+                in
+                setting.description + lib.optionalString (setting ? default) initial;
+            };
+          settingsOptions = lib.foldl' lib.recursiveUpdate { } (
+            lib.mapAttrsToList (
+              key: setting: lib.setAttrByPath (lib.splitString "." key) (optionOf setting)
+            ) schema
+          );
+          # What the file says: the settings given, by pane, and nothing for none.
+          declared = lib.filterAttrs (_: pane: pane != { }) (
+            lib.mapAttrs (_: lib.filterAttrs (_: value: value != null)) cfg.settings
+          );
         in
         {
           options.programs.orden = {
@@ -677,6 +737,8 @@
               '';
             };
 
+            settings = settingsOptions;
+
             snippets = mkOption {
               type = types.nullOr (types.attrsOf types.str);
               default = null;
@@ -710,9 +772,56 @@
               // lib.optionalAttrs (cfg.customCss != null) { "${folder}/custom.css" = file cfg.customCss; }
               // lib.optionalAttrs (cfg.snippets != null) {
                 "${folder}/snippets.json".text = builtins.toJSON cfg.snippets;
+              }
+              // lib.optionalAttrs (declared != { }) {
+                "${folder}/settings.json".text = builtins.toJSON declared;
               };
           };
         };
+
+      # The module's settings, evaluated as Home Manager would and the file it writes
+      # compared with what the app reads (#673): an option the schema made, a value
+      # within its type, and the JSON nested by pane, the nulls left out. Without Home
+      # Manager as an input, the few options of its the module sets are stood in for.
+      checks = forEach (
+        pkgs:
+        let
+          inherit (pkgs) lib;
+          stand-ins = {
+            options = {
+              home.packages = lib.mkOption { type = lib.types.listOf lib.types.package; };
+              xdg.configFile = lib.mkOption { type = lib.types.attrsOf lib.types.attrs; };
+              assertions = lib.mkOption { type = lib.types.listOf lib.types.attrs; };
+            };
+          };
+          evaluated = lib.evalModules {
+            modules = [
+              self.homeManagerModules.default
+              stand-ins
+              {
+                _module.args.pkgs = pkgs;
+                programs.orden = {
+                  enable = true;
+                  package = pkgs.hello;
+                  settings = {
+                    editor.textSize = 1.1;
+                    editor.focusMode = true;
+                    appearance.mode = "dark";
+                    general.dns = "quad9";
+                  };
+                };
+              }
+            ];
+          };
+          written = evaluated.config.xdg.configFile."ch.emilvinu.nib/settings.json".text;
+          expected = ''{"appearance":{"mode":"dark"},"editor":{"focusMode":true,"textSize":1.1},"general":{"dns":"quad9"}}'';
+        in
+        {
+          settings-file =
+            assert lib.assertMsg (written == expected) "settings.json is ${written}";
+            pkgs.runCommand "orden-settings-file" { } "touch $out";
+        }
+      );
 
       apps = forEach (pkgs: {
         default = {

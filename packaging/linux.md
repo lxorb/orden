@@ -414,17 +414,40 @@ programs.orden = {
   themes.paper = ./paper.css;          # themes/paper.css, offered in Settings as "Paper"
   customCss = "body { font-size: 18px; }";
   snippets = { todo = "- [ ] "; };
+  settings = {
+    editor.textSize = 1.1;
+    editor.focusMode = true;
+    appearance.style = "paper";
+    appearance.mode = "dark";
+    appearance.monoFont = "JetBrains Mono";
+    markdown.strictCommonMark = true;
+    general.dns = "quad9";
+  };
 };
 ```
 
-`package` defaults to this flake's release. The other three are the files Orden
+`package` defaults to this flake's release. `settings` is what Settings would
+otherwise hold, declared (#673): the module writes the ones given to `settings.json`
+in Orden's settings folder, and the app puts them in force each time it starts. A
+declared setting's row in Settings shows its value, says "Set by the settings file"
+and does not move; one left out (null, the default) stays the reader's. Change the
+configuration, switch, start Orden again, and it follows. The options are typed from
+`packaging/nix/settings-schema.json`, which the app's own test makes from the
+settings it declares, so a choice it does not offer or a size outside its range is
+an evaluation error rather than a setting that quietly does nothing; the schema
+names every one, by pane, with what it does and its default. A
+`settings.json` the app cannot use - not JSON, a setting it does not know, a value
+out of range - is said in a notification and at the top of Settings, line by line,
+and the rest of the file still applies.
+
+The other three are the files Orden
 leaves to the reader in its settings folder, `~/.config/ch.emilvinu.nib`, and the
 module writes each only when it is set: a theme stylesheet per name (lower-case
 letters, digits and hyphens, what the app takes for a theme's id), `custom.css`,
 which applies over whichever theme is active, and `snippets.json`, the
 abbreviations the editor completes. A stylesheet is the CSS itself or a file
-holding it. Everything else in that folder - which theme is picked, the font,
-window sizes, history - is the app's own state, rewritten while it runs, and the
+holding it. Everything else in that folder - window sizes, history, what
+Settings saved - is the app's own state, rewritten while it runs, and the
 module leaves it alone; so does it leave themes installed from inside the app,
 which go into the same `themes/` folder beside the declared ones.
 
