@@ -14,11 +14,14 @@
  *  before looks for the issue an earlier try may have opened without hearing back, by
  *  the report's id in its body, before it opens another.
  *
- *  Deleting the account a report came from deletes the report (erase.ts), and the issue
- *  goes with it as far as this token can take it: closed, and its title and body
- *  written over with nothing of the report, from the list of what an account leaves
- *  behind (src/leftovers.ts). Deleting the issue itself takes an admin of the
- *  repository, which the minion is not. */
+ *  Everything in the issue that somebody typed - the words, and the version, the
+ *  platform and the address the app sends with them - goes in as code: the words in a
+ *  fence they cannot close, the rest in code spans (#785). Code is the one thing GitHub
+ *  draws exactly as written: no mention in it pings anybody however its at sign is
+ *  spelled (`x.@lxorb`, `&#64;lxorb`), no table or heading or comment in it is one, so
+ *  a report can neither reach a person through the repository nor dress itself as the
+ *  table the app adds or hide that table. The title, which GitHub draws as text, has
+ *  every at sign broken. */
 
 import { now } from './crypto'
 import { oneLine } from './email'
@@ -58,42 +61,47 @@ export interface Report {
   account: { id: string; email: string } | null
 }
 
-/** The issue's title: the report's first sentence. */
+/** The issue's title: the report's first sentence, every at sign in it followed by a
+ *  zero-width space, so no part of it is a name. */
 export function issueTitle(text: string): string {
   const line = oneLine(text)
   const sentence = /^(.+?[.!?])(?:\s|$)/.exec(line)?.[1] ?? line
   const said = sentence.length > 80 ? `${sentence.slice(0, 79)}…` : sentence
-  return `Feedback: ${said}`
+  return `Feedback: ${said.replace(/@/g, '@\u200b')}`
 }
+
+/** The labels a report may carry beside `feedback`: the systems the app runs on. The
+ *  platform is the app's to say, so anything else is no label - a label it named would
+ *  be made in the repository. */
+const SYSTEMS = ['macos', 'windows', 'linux', 'ios', 'android'] as const
 
 /** The platform as a label: the system where the app is native, `web` in a browser. */
 export function platformLabel(platform: string): string | null {
   const said = platform.toLowerCase()
-  if (!said.trim()) return null
   if (said.startsWith('web')) return 'web'
-  for (const system of ['macos', 'windows', 'linux', 'ios', 'android']) {
-    if (said.includes(system)) return system
-  }
-  const build = said.split('·')[0]?.trim().slice(0, 40) ?? ''
-  return build === '' ? null : build
+  return SYSTEMS.find((system) => said.includes(system)) ?? null
 }
 
-/** Somebody's words, kept from pinging anybody on GitHub: a report saying `@lxorb`
- *  notifies nobody. An address is no mention - its at sign follows a letter - and is
- *  left as it is. */
-function quiet(text: string): string {
-  return text.replace(/(^|[^\w.])@(?=[A-Za-z0-9-])/g, '$1@\u200b')
+/** The longest run of backticks in `text`. */
+function longestTicks(text: string): number {
+  return Math.max(0, ...[...text.matchAll(/`+/g)].map((run) => run[0].length))
 }
 
-/** A value for one cell of the table: one line, and no pipe to end the cell early. */
+/** A value for one cell of the table, as code: one line, in a span its own backticks
+ *  cannot end, and with its pipes escaped, which a table reads before the span. */
 function cell(text: string): string {
-  return quiet(oneLine(text)).replace(/\|/g, '\\|') || '-'
+  const line = oneLine(text)
+  if (!line) return '-'
+  const ticks = '`'.repeat(longestTicks(line) + 1)
+  // A space inside the span where the value starts or ends with a backtick, which
+  // CommonMark takes off again.
+  const pad = line.startsWith('`') || line.endsWith('`') ? ' ' : ''
+  return `${ticks}${pad}${line.replace(/\|/g, '\\|')}${pad}${ticks}`
 }
 
 /** A fence the text inside it cannot close: longer than any run of backticks in it. */
 function fenced(text: string): string {
-  const longest = Math.max(2, ...[...text.matchAll(/`+/g)].map((run) => run[0].length))
-  const fence = '`'.repeat(longest + 1)
+  const fence = '`'.repeat(Math.max(2, longestTicks(text)) + 1)
   return `${fence}\n${text}\n${fence}`
 }
 
@@ -101,15 +109,15 @@ function fenced(text: string): string {
  *  away, cut from its start where the whole would be past GitHub's limit. */
 export function issueBody(report: Report): string {
   const account = report.account
-    ? `\`${report.account.id}\` · ${report.account.email}`
+    ? `\`${report.account.id}\` · ${cell(report.account.email)}`
     : 'signed out'
-  const head = `${quiet(report.text)}
+  const head = `${fenced(report.text)}
 
 | | |
 | --- | --- |
 | Version | ${cell(report.version || 'unknown')} |
 | Platform | ${cell(report.platform || 'unknown')} |
-| Account | ${cell(account)} |
+| Account | ${account} |
 | Report | \`${report.id}\` |
 | Sent | ${new Date(report.createdAt).toISOString()} |
 
@@ -120,7 +128,7 @@ export function issueBody(report: Report): string {
   const open = '<details><summary>Recent app log</summary>\n\n'
   const close = '\n\n</details>'
   const room = MOST_BODY - SPARE - head.length - open.length - close.length - tail.length - 16
-  let log = quiet(report.log)
+  let log = report.log
   if (log.length > room) {
     const cut = log.length - room + 80
     log = `… ${String(cut)} characters cut from the start\n${log.slice(cut)}`
@@ -159,6 +167,13 @@ interface Issue {
   body?: string | null
 }
 
+/** Whether `body` is the issue of report `id`: its mark the body's last line, where the
+ *  app puts it. Anywhere else it is somebody's words saying it, which must not take
+ *  another report's place (#785). */
+function isMarked(body: string | null | undefined, id: string): boolean {
+  return body?.trimEnd().split('\n').at(-1)?.trim() === markOf(id)
+}
+
 /** An issue an earlier try opened for this report without hearing back: every issue
  *  touched since the report came is asked for, and its body read for the report's mark. */
 async function openedBefore(to: Github, report: Report): Promise<Issue | null> {
@@ -170,7 +185,7 @@ async function openedBefore(to: Github, report: Report): Promise<Issue | null> {
     )
     if (!response.ok) throw new Error(`GitHub answered ${String(response.status)}`)
     const issues = await response.json<Issue[]>()
-    const found = issues.find((one) => one.body?.includes(markOf(report.id)))
+    const found = issues.find((one) => isMarked(one.body, report.id))
     if (found) return found
     if (issues.length < 100) return null
   }
