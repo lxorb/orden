@@ -348,6 +348,7 @@ macro_rules! commands {
             themes::read_custom_css,
             themes::snippets_path,
             themes::read_snippets,
+            themes::read_settings_file,
             themes::scratchpad_path,
             history::snapshot_note,
             history::list_snapshots,

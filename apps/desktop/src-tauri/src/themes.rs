@@ -206,6 +206,39 @@ pub fn read_snippets(app: AppHandle) -> String {
         .unwrap_or_else(|| "{}".into())
 }
 
+/// What the settings file is called in the settings folder (#673): the settings a
+/// configuration declares - Home Manager's `programs.orden.settings`, or a hand - which
+/// the window applies at launch and keeps out of the reader's hands. Never written or
+/// made here: no file is no declared settings, and one Home Manager wrote is a link
+/// into the store that nothing could write anyway.
+const SETTINGS_FILE: &str = "settings.json";
+
+/// The settings file, as it is on disk.
+#[derive(Serialize)]
+pub struct SettingsFile {
+    path: String,
+    text: String,
+}
+
+/// The declared settings, or nothing where there is no file. A file that is there and
+/// cannot be read is an error, said with its path, so the window can say why the
+/// settings it declares are not in force rather than quietly ignoring them.
+#[tauri::command(async)]
+pub fn read_settings_file(app: AppHandle) -> Result<Option<SettingsFile>, String> {
+    declared(&config_dir(&app)?.join(SETTINGS_FILE))
+}
+
+fn declared(path: &Path) -> Result<Option<SettingsFile>, String> {
+    match fs::read_to_string(path) {
+        Ok(text) => Ok(Some(SettingsFile {
+            path: path.to_string_lossy().to_string(),
+            text,
+        })),
+        Err(error) if error.kind() == ErrorKind::NotFound => Ok(None),
+        Err(error) => Err(cannot("read", path, &error)),
+    }
+}
+
 /// Writes a starter file, unless it is already there. Asking the filesystem to
 /// create it rather than looking first and then writing: two windows starting at
 /// the same moment would both find it missing, and the second would write its
@@ -311,7 +344,9 @@ fn humanise(stem: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use super::{humanise, is_a_theme, is_css, is_id, seed, seeded, SCRATCHPAD, SNIPPETS};
+    use super::{
+        declared, humanise, is_a_theme, is_css, is_id, seed, seeded, SCRATCHPAD, SNIPPETS,
+    };
     use std::io::{self, Write as _};
     use std::path::{Path, PathBuf};
 
@@ -331,6 +366,26 @@ mod tests {
 
         seed(&path, SNIPPETS).expect("the starter");
         assert_eq!(std::fs::read_to_string(&path).expect("the file"), SNIPPETS);
+    }
+
+    /// No settings file is no declared settings; one that is there is read as it is,
+    /// and one that cannot be read says which file and why.
+    #[test]
+    fn the_settings_file_is_read_as_it_is_and_never_made() {
+        let dir = tempfile::tempdir().expect("a temp folder");
+        let path = dir.path().join("settings.json");
+
+        assert!(declared(&path).expect("no file is no error").is_none());
+        assert!(!path.exists(), "the file was made");
+
+        std::fs::write(&path, "{ not json").expect("the file");
+        let file = declared(&path).expect("read").expect("a file");
+        assert_eq!(file.text, "{ not json");
+        assert_eq!(file.path, path.to_string_lossy());
+
+        std::fs::create_dir(dir.path().join("folder.json")).expect("a folder");
+        let error = declared(&dir.path().join("folder.json")).err().expect("an error");
+        assert!(error.contains("folder.json"), "{error}");
     }
 
     /// What the reader wrote is theirs, however little it is.
