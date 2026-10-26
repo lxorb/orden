@@ -33,7 +33,7 @@
   import { startup } from '../startup.svelte'
   import { swiping } from '../back-swipe/shown.svelte'
   import { findBar } from '../surfaces.svelte'
-  import { invoke, isDesktop, openExternal, platform } from '../tauri'
+  import { invoke, isDesktop, openExternal } from '../tauri'
   import type { Tab } from '../workspace.svelte'
   import { workspace } from '../workspace.svelte'
   import { favicon, plainOrigin } from './address'
@@ -78,7 +78,7 @@
   import WebDownloads from './WebDownloads.svelte'
   import WebExtensionPopup from './WebExtensionPopup.svelte'
   import WebExtensions from './WebExtensions.svelte'
-  import { extensions, type Extension } from './extensions.svelte'
+  import { extensions, runsExtensions, type Extension } from './extensions.svelte'
   import WebSite from './WebSite.svelte'
   import NewHere from '../NewHere.svelte'
 
@@ -612,9 +612,8 @@
   /** Whether the list of downloads under the bar is open. */
   let showingDownloads = $state(false)
 
-  /** Whether this engine runs extensions: `WebView2`, Windows' alone; see
-   *  src-tauri/src/extensions.rs. */
-  const extending = isDesktop && platform() === 'windows'
+  /** Whether this engine runs extensions; see `runsExtensions`. */
+  const extending = runsExtensions
 
   /** Whether the list of extensions under the puzzle is open. */
   let showingExtensions = $state(false)
