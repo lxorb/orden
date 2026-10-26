@@ -7,6 +7,8 @@
  *  put on again: the list item's content column, the width of its marker. Pure; the
  *  task's line is found again by its anchor, as every other edit of a view finds it. */
 
+import { type Row, type TaskChange, taskHash } from '@nib/bases'
+import { changed } from '../rows/write'
 import { lineOfAnchor } from './lines'
 
 interface Anchor {
@@ -292,4 +294,20 @@ export function withoutComment(text: string, anchor: Anchor, line: number): stri
     end++
   lines.splice(line, end - line)
   return lines.join('\n')
+}
+
+/** The note with a task changed the way the field that edits it says: its line and,
+ *  where the field held a description, the words under it. */
+export function editedTask(
+  text: string,
+  row: Row,
+  change: TaskChange,
+  description: string | null,
+): string | null {
+  const anchor = row.anchor
+  if (!anchor || !row.task) return null
+  const words = change.text ?? row.task.text
+  const after = changed(text, row, { task: change }) ?? text
+  if (description === null) return after
+  return withDescription(after, { line: anchor.line, hash: taskHash(words) }, description) ?? after
 }

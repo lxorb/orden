@@ -9,7 +9,7 @@
  *  same edit, as the editor's box does. A move of whole lines is this lane's own, in
  *  lines.ts. */
 
-import { finish, skip, taskHash, tick } from '@nib/bases'
+import { finish, skip, tick } from '@nib/bases'
 import type { Row, TaskChange } from '@nib/bases'
 import { appliedEdits, oneEdit } from '@nib/markdown/edits'
 import { blockIds, freeBlockId } from '@nib/markdown/links'
@@ -39,7 +39,13 @@ import {
   withLines,
   withoutBlock,
 } from './lines'
-import { withComment, withDescription, withoutComment, withSubtask } from './task-body'
+import {
+  editedTask,
+  withComment,
+  withDescription,
+  withoutComment,
+  withSubtask,
+} from './task-body'
 
 /** Where a row's note is on this disk, or null for a space no longer here. */
 function pathOf(row: Row): string | null {
@@ -501,15 +507,7 @@ export async function editTask(
   change: TaskChange,
   description: string | null,
 ): Promise<boolean> {
-  const anchor = row.anchor
   const path = pathOf(row)
-  if (!anchor || path === null || !row.task) return false
-  const words = change.text ?? row.task.text
-  return rewrite(path, (before) => {
-    const after = changed(before, row, { task: change }) ?? before
-    if (description === null) return after
-    return (
-      withDescription(after, { line: anchor.line, hash: taskHash(words) }, description) ?? after
-    )
-  })
+  if (path === null) return false
+  return rewrite(path, (before) => editedTask(before, row, change, description))
 }

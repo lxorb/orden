@@ -4,11 +4,13 @@ import { describe, expect, test } from 'vitest'
 import {
   commentsOf,
   descriptionOf,
+  editedTask,
   withComment,
   withDescription,
   withoutComment,
   withSubtask,
 } from './task-body'
+import { changeOf } from './task-edit'
 
 const NOTE = [
   '# Errands',
@@ -301,5 +303,45 @@ describe('what is written under a task, fuzzed', () => {
       expect(tasksOf(commented), words).toEqual(before)
       expect(descriptionOf(commented, task)?.text, words).toBe(descriptionOf(note, task)?.text)
     }
+  })
+})
+
+describe('the task edit field writes its words and its description together', () => {
+  const edit = (note: string, text: string, tags: string[], description: string | null) => {
+    const row = taskRowsOfText('Notes', 'A.md', note)[0]
+    if (!row?.task) throw new Error('no task')
+    return editedTask(note, row, changeOf(row.task, { text, fields: { tags, remind: [] } }), description)
+  }
+
+  test('a label taken off from among the words keeps the new description', () => {
+    expect(edit('- [ ] Email #work Bob\n  Old words.\n', 'Email #work Bob', [], 'New words.')).toBe(
+      '- [ ] Email Bob\n  New words.\n',
+    )
+  })
+
+  test('words that end in a tag, or hold an inline field, keep the new description', () => {
+    expect(edit('- [ ] Email #work Bob\n  Old words.\n', 'Email #work', ['work'], 'New words.')).toBe(
+      '- [ ] Email #work\n  New words.\n',
+    )
+    expect(edit('- [ ] Email Bob\n  Old words.\n', 'Email [x:: y] Bob', [], 'New words.')).toBe(
+      '- [ ] Email [x:: y] Bob\n  New words.\n',
+    )
+  })
+
+  test('a description alone, or words alone, write only themselves', () => {
+    expect(edit('- [ ] Email Bob\n  Old words.\n', 'Email Bob', [], 'New words.')).toBe(
+      '- [ ] Email Bob\n  New words.\n',
+    )
+    expect(edit('- [ ] Email Bob\n  Old words.\n', 'Email Ann', [], 'Old words.')).toBe(
+      '- [ ] Email Ann\n  Old words.\n',
+    )
+    expect(edit('- [ ] Email Bob\n', 'Email Ann', [], null)).toBe('- [ ] Email Ann\n')
+  })
+
+  test('a task no longer in the note writes nothing at all, neither part', () => {
+    const row = taskRowsOfText('Notes', 'A.md', '- [ ] Email Bob\n')[0]
+    if (!row?.task) throw new Error('no task')
+    const change = changeOf(row.task, { text: 'Email Ann', fields: { tags: [], remind: [] } })
+    expect(editedTask('- [ ] Call Sam\n', row, change, 'New words.')).toBeNull()
   })
 })
