@@ -407,6 +407,87 @@ describe('a move into another space', () => {
     expect(workspace.archive.holdsIn(HOME, `${HOME}/Idea.md`)).toBe(true)
     expect(workspace.archive.keysOf(ROOT).size).toBe(0)
   })
+
+  /** Two spaces, `Work` in the first, every store kept by path holding something in it. */
+  async function twoSpaces() {
+    const HOME = '/home'
+    disk.current?.folders.add(HOME)
+    disk.current?.folders.add(`${ROOT}/Work/Deep`)
+    workspace.spaces = [
+      { id: 's', name: 'Notes', root: ROOT },
+      { id: 'h', name: 'Home', root: HOME },
+    ]
+    for (const root of [ROOT, HOME]) {
+      workspace.excluded.forget(root)
+      workspace.folderIcons.forget(root)
+      workspace.arranged.forget(root)
+      workspace.bookmarks.put(root, [])
+    }
+    await workspace.loadTree()
+    return HOME
+  }
+
+  test('leaves out what was left out, in the space it went to', async () => {
+    const HOME = await twoSpaces()
+    workspace.excluded.toggle(`${ROOT}/Work`)
+    workspace.excluded.toggle(`${ROOT}/Idea.md`)
+    workspace.excluded.toggle(`${ROOT}/Plan.md`)
+
+    await workspace.move(`${ROOT}/Work`, HOME)
+    await workspace.move(`${ROOT}/Idea.md`, HOME)
+
+    expect(workspace.excluded.of(ROOT)).toEqual(['Plan.md'])
+    expect(workspace.excluded.of(HOME)).toEqual(['Work', 'Idea.md'])
+  })
+
+  test('keeps the folder icons and the arranged order, in the space they went to', async () => {
+    const HOME = await twoSpaces()
+    workspace.folderIcons.set(`${ROOT}/Work`, 'star', 'red')
+    workspace.folderIcons.set(`${ROOT}/Work/Deep`, 'moon')
+    workspace.arranged.set(`${ROOT}/Work`, ['Notes.md', 'Deep'])
+    workspace.arranged.set(ROOT, ['Work', 'Plan.md'])
+
+    await workspace.move(`${ROOT}/Work`, HOME)
+
+    expect(workspace.folderIcons.of(ROOT)).toEqual({})
+    expect(workspace.folderIcons.of(HOME)).toEqual({ Work: 'star', 'Work/Deep': 'moon' })
+    expect(workspace.folderIcons.tintOf(`${HOME}/Work`, HOME)).toBe('red')
+    expect(workspace.arranged.of(ROOT)).toEqual({ '': ['Plan.md'] })
+    expect(workspace.arranged.of(HOME)).toEqual({ Work: ['Notes.md', 'Deep'] })
+  })
+
+  test('keeps an open project about its note, in the space it went to', async () => {
+    const HOME = await twoSpaces()
+    const { openProject } = await import('./views/open')
+    const { readSpec } = await import('./views/spec')
+    const tab = openProject('Notes', 'Work/Notes.md')
+
+    await workspace.move(`${ROOT}/Work`, HOME)
+
+    expect(readSpec(tab.doc)).toEqual({ builtin: 'project', space: 'Home', path: 'Work/Notes.md' })
+  })
+
+  test('keeps the bookmarks, in the space they went to', async () => {
+    const HOME = await twoSpaces()
+    workspace.bookmarks.put(ROOT, [
+      { kind: 'note', path: 'Work/Notes.md', text: '' },
+      { kind: 'group', path: 'Shelf', text: 'Shelf' },
+      { kind: 'heading', path: 'Idea.md', text: 'Why', parent: 'Shelf' },
+      { kind: 'note', path: 'Plan.md', text: '' },
+    ])
+
+    await workspace.move(`${ROOT}/Work`, HOME)
+    await workspace.move(`${ROOT}/Idea.md`, HOME)
+
+    expect(workspace.bookmarks.of(ROOT)).toEqual([
+      { kind: 'group', path: 'Shelf', text: 'Shelf' },
+      { kind: 'note', path: 'Plan.md', text: '' },
+    ])
+    expect(workspace.bookmarks.of(HOME)).toEqual([
+      { kind: 'note', path: 'Work/Notes.md', text: '' },
+      { kind: 'heading', path: 'Idea.md', text: 'Why' },
+    ])
+  })
 })
 
 describe('the stores the app keeps by path', () => {
