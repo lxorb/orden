@@ -14,10 +14,29 @@ vi.mock('./sharing.svelte', () => ({
 const THEIRS = { id: 'theirs', name: 'Theirs', root: '/theirs' }
 const MINE = { id: 'mine', name: 'Mine', root: '/mine' }
 
-const held = vi.hoisted((): { active: unknown } => ({ active: null }))
+const held = vi.hoisted(
+  (): { active: unknown; spaces: { id: string; name: string; root: string }[] } => ({
+    active: null,
+    spaces: [],
+  }),
+)
+/** The space `draftHome` makes when there is none yet. */
+const NOTES = { id: 'notes', name: 'Notes', root: '/notes' }
+/** Each note the sheet opened: its name, its words, the space it is to land in. */
+const opened = vi.hoisted((): [string, string, string | null][] => [])
 vi.mock('./workspace.svelte', () => ({
   workspace: {
-    spaces: [THEIRS, MINE],
+    get spaces() {
+      return held.spaces
+    },
+    draftHome: () => {
+      if (!held.spaces.length) held.spaces.push(NOTES)
+      return Promise.resolve(held.spaces[0]!.root)
+    },
+    openBlank: (name: string, doc: string, home: string | null) => {
+      opened.push([name, doc, home])
+    },
+    loadTree: () => Promise.resolve(),
     get activeSpace() {
       return held.active
     },
@@ -29,6 +48,10 @@ vi.mock('./workspace.svelte', () => ({
     },
   },
 }))
+
+/** What the sheet said went wrong. */
+const failed = vi.hoisted((): string[] => [])
+vi.mock('./busy.svelte', () => ({ busy: { failed: (said: string) => failed.push(said) } }))
 
 vi.mock('./surfaces.svelte', () => ({ importSheet: { ask: () => Promise.resolve() } }))
 
@@ -43,12 +66,35 @@ vi.mock('./prompt.svelte', () => ({
   },
 }))
 
+/** A Word file with one picture, as pandoc hands it back. */
+vi.mock('./export', () => ({
+  importDocument: () =>
+    Promise.resolve({
+      name: 'Report.md',
+      markdown: '![a dot](media/rId20.png)\n',
+      pictures: [{ link: 'media/rId20.png', data: 'AQID' }],
+    }),
+}))
+
+/** The note path each picture was stored for. */
+const storedFor = vi.hoisted((): string[] => [])
+vi.mock('./assets', () => ({
+  storeBeside: (_: ArrayBuffer, notePath: string, name: string) => {
+    storedFor.push(notePath)
+    return Promise.resolve(`assets/${name}`)
+  },
+}))
+
 const { importing } = await import('./importing.svelte')
 
 beforeEach(() => {
   readOnly.clear()
   readOnly.add(THEIRS.root)
   offered.length = 0
+  failed.length = 0
+  held.spaces = [THEIRS, MINE]
+  opened.length = 0
+  storedFor.length = 0
   held.active = THEIRS
   importing.root = null
   importing.forget()
@@ -77,5 +123,46 @@ describe('an import while a space shared to be read is open', () => {
     await importing.chooseTarget()
     expect(offered).not.toContain(THEIRS.root)
     expect(offered.some((id) => id.startsWith(`${THEIRS.root}/`))).toBe(false)
+  })
+})
+
+describe('a document read by pandoc while a space shared to be read is open', () => {
+  test("keeps its pictures with the note in the reader's own space", async () => {
+    await importing.readWithPandoc()
+
+    expect(storedFor).toEqual([`${MINE.root}/Report.md`])
+    expect(opened).toHaveLength(1)
+    const [name, doc, home] = opened[0]!
+    expect([name, home]).toEqual(['Report.md', MINE.id])
+    expect(doc).toMatch(/^!\[a dot\]\(assets\/[0-9a-f]{16}\.png\)\n$/)
+  })
+
+  test('writes no picture where every space is one shared to be read', async () => {
+    readOnly.add(MINE.root)
+    await importing.readWithPandoc()
+
+    expect(storedFor).toEqual([])
+    expect(opened).toEqual([['Report.md', '![a dot](media/rId20.png)\n', null]])
+    // And says so, rather than dropping the picture without a word.
+    expect(failed).toHaveLength(1)
+  })
+
+  test('a place the sheet held that is no space any more is not written to', async () => {
+    held.active = MINE
+    importing.root = '/removed'
+    await importing.readWithPandoc()
+
+    expect(storedFor).toEqual([`${MINE.root}/Report.md`])
+    expect(opened[0]![2]).toBe(MINE.id)
+  })
+
+  test('with no space yet, the pictures go to the one the note is placed in', async () => {
+    held.spaces = []
+    held.active = null
+    await importing.readWithPandoc()
+
+    expect(storedFor).toEqual([`${NOTES.root}/Report.md`])
+    expect(opened[0]![2]).toBe(NOTES.id)
+    expect(failed).toEqual([])
   })
 })

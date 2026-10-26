@@ -11,8 +11,10 @@
  *  zip of six thousand notes takes a moment, and a sheet that is closed and
  *  opened again should not read it twice. */
 
+import { busy } from './busy.svelte'
 import { message, t } from './i18n.svelte'
 import { applyImport } from './import/apply'
+import { keepPictures, type PandocPicture } from './import/pandoc-pictures'
 import { counts, type Counts, type FormatId, type ImportPlan } from './import/plan'
 import { detect, readAs } from './import/read'
 import {
@@ -29,7 +31,7 @@ import { moveTargets } from './move-targets'
 import { canWriteAt } from './sharing.svelte'
 import { insideSpace, relativeTo } from './space-paths'
 import { importSheet } from './surfaces.svelte'
-import { invoke, isDesktop, platform } from './tauri'
+import { invoke, isDesktop, joinPath, platform } from './tauri'
 import { workspace } from './workspace.svelte'
 
 /** What the sheet is doing, which is what it draws. */
@@ -242,9 +244,59 @@ class Importing {
     const imported = await importDocument()
     if (!imported) return
 
-    workspace.openBlank(imported.name, imported.markdown)
+    // Where the note lands, which is where its pictures go: the space the sheet
+    // would import into, and never one shared with this account to be read, where
+    // the pictures would be stray files and the note would not be placed at all.
+    const root = await this.pandocRoot()
+    const home = workspace.spaces.find((one) => one.root === root)?.id ?? null
+    if (root === null && imported.pictures.length) busy.failed(t('That picture could not be read.'))
+    const markdown =
+      root === null
+        ? imported.markdown
+        : await this.withPictures(imported, joinPath(root, imported.name))
+    workspace.openBlank(imported.name, markdown, home)
     this.open = false
     this.forget()
+  }
+
+  /** The space a document pandoc read lands in: the sheet's, while it is still a
+   *  space the reader may write in, else the one `landing` picks. With no space at
+   *  all yet, the one the note would be placed in, which `draftHome` makes. None
+   *  where every space is one shared to be read. */
+  private async pandocRoot(): Promise<string | null> {
+    const asked = this.root
+    const known = workspace.spaces.some((one) => one.root === asked)
+    if (asked !== null && known && canWriteAt(asked)) return asked
+
+    const found = landing()
+    if (found !== null || workspace.spaces.length) return found
+
+    const made = await workspace.draftHome(null).catch(() => null)
+    return made !== null && canWriteAt(made) ? made : null
+  }
+
+  /** The words of a document pandoc read, with its pictures written where a
+   *  pasted picture of the note at `notePath` would go and the links pointed there.
+   *
+   *  `openBlank` places the note at the top of its space under its name, so that
+   *  is the path the pictures are kept for; a name already taken there steps aside
+   *  in the same folder, where the links still resolve. */
+  private async withPictures(
+    imported: { markdown: string; pictures: PandocPicture[] },
+    notePath: string,
+  ): Promise<string> {
+    if (!imported.pictures.length) return imported.markdown
+    const { storeBeside } = await import('./assets')
+    const { markdown, lost } = await keepPictures(
+      imported.markdown,
+      imported.pictures,
+      (bytes, name) => storeBeside(bytes.slice().buffer, notePath, name),
+    )
+    void workspace.loadTree()
+    // Rare enough - the disk refused a write - that one sentence the app already
+    // says for a picture serves.
+    if (lost) busy.failed(t('That picture could not be read.'))
+    return markdown
   }
 
   setRows(rows: Rows) {

@@ -183,7 +183,7 @@ fn asset_dir(note_folder: &Path, folder: &str, limit: &Path) -> Result<PathBuf, 
 /// The name a picture may be written under: what the caller asked for, with
 /// anything that could name another folder replaced by a dash. A name that is
 /// nothing but dots is refused, because `.` and `..` are folders and not files.
-fn safe_name(name: &str) -> Option<String> {
+pub(crate) fn safe_name(name: &str) -> Option<String> {
     let safe: String = name
         .chars()
         .take(MAX_NAME)
