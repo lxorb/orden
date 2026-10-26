@@ -10,6 +10,7 @@ import { titleOf } from './export/document'
 import { inlinePictures, type Picture, swapSources } from './export/pictures'
 import { chooseTarget } from './export/save'
 import { PANDOC_FORMATS, type PandocFormat } from './export-formats'
+import type { PandocPicture } from './import/pandoc-pictures'
 import { paletteCss } from './highlight'
 import { plural } from './i18n.svelte'
 import { mathCss } from './math-fonts'
@@ -311,8 +312,14 @@ export async function pandocAvailable(): Promise<boolean> {
   return invoke<boolean>('has_pandoc').catch(() => false)
 }
 
-/** Reads a Word, ODT, EPUB, RST or similar file in as markdown. */
-export async function importDocument(): Promise<{ name: string; markdown: string } | null> {
+/** Reads a Word, ODT, EPUB, RST or similar file in as markdown, with the
+ *  pictures inside it for the caller to keep in the note's space; see
+ *  import/pandoc-pictures.ts. */
+export async function importDocument(): Promise<{
+  name: string
+  markdown: string
+  pictures: PandocPicture[]
+} | null> {
   if (!isDesktop) return null
 
   const { open } = await import('@tauri-apps/plugin-dialog')
@@ -329,10 +336,11 @@ export async function importDocument(): Promise<{ name: string; markdown: string
 
   // `leftOut` says why the pictures stayed behind, on a pandoc that cannot be
   // trusted to copy them; see `copying` in pandoc.rs.
-  const { markdown, leftOut } = await invoke<{ markdown: string; leftOut: string | null }>(
-    'import_document',
-    { path: picked },
-  )
+  const { markdown, leftOut, pictures } = await invoke<{
+    markdown: string
+    leftOut: string | null
+    pictures: PandocPicture[]
+  }>('import_document', { path: picked })
   if (leftOut) busy.failed(leftOut)
   const name =
     picked
@@ -340,7 +348,7 @@ export async function importDocument(): Promise<{ name: string; markdown: string
       .pop()
       ?.replace(/\.[^.]+$/, '') ?? 'Imported'
 
-  return { name: `${name}.md`, markdown }
+  return { name: `${name}.md`, markdown, pictures }
 }
 
 /** The formats that are pandoc's rather than ours, for a machine that has it.

@@ -11,8 +11,10 @@
  *  zip of six thousand notes takes a moment, and a sheet that is closed and
  *  opened again should not read it twice. */
 
+import { busy } from './busy.svelte'
 import { message, t } from './i18n.svelte'
 import { applyImport } from './import/apply'
+import { keepPictures, type PandocPicture } from './import/pandoc-pictures'
 import { counts, type Counts, type FormatId, type ImportPlan } from './import/plan'
 import { detect, readAs } from './import/read'
 import {
@@ -29,7 +31,7 @@ import { moveTargets } from './move-targets'
 import { canWriteAt } from './sharing.svelte'
 import { insideSpace, relativeTo } from './space-paths'
 import { importSheet } from './surfaces.svelte'
-import { invoke, isDesktop, platform } from './tauri'
+import { invoke, isDesktop, joinPath, platform } from './tauri'
 import { workspace } from './workspace.svelte'
 
 /** What the sheet is doing, which is what it draws. */
@@ -242,9 +244,41 @@ class Importing {
     const imported = await importDocument()
     if (!imported) return
 
-    workspace.openBlank(imported.name, imported.markdown)
+    const markdown = await this.withPictures(imported)
+    workspace.openBlank(imported.name, markdown)
     this.open = false
     this.forget()
+  }
+
+  /** The words of a document pandoc read, with its pictures written where a
+   *  pasted picture of the note would go and the links pointed there.
+   *
+   *  The note is placed in the space's draft home under its name (`openBlank`),
+   *  so that is the path the pictures are kept for; a name already taken there
+   *  steps aside in the same folder, where the links still resolve. With no space
+   *  to keep them in the links stay as pandoc wrote them, as the note does not
+   *  land either. */
+  private async withPictures(imported: {
+    name: string
+    markdown: string
+    pictures: PandocPicture[]
+  }): Promise<string> {
+    if (!imported.pictures.length) return imported.markdown
+    const home = await workspace.draftHome(workspace.activeSpaceId).catch(() => null)
+    if (home === null) return imported.markdown
+
+    const notePath = joinPath(home, imported.name)
+    const { storeBeside } = await import('./assets')
+    const { markdown, lost } = await keepPictures(
+      imported.markdown,
+      imported.pictures,
+      (bytes, name) => storeBeside(bytes.slice().buffer, notePath, name),
+    )
+    void workspace.loadTree()
+    // Rare enough - the disk refused a write - that one sentence the app already
+    // says for a picture serves.
+    if (lost) busy.failed(t('That picture could not be read.'))
+    return markdown
   }
 
   setRows(rows: Rows) {

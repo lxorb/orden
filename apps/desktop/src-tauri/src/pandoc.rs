@@ -15,7 +15,8 @@ use tauri::AppHandle;
 #[cfg(windows)]
 use std::os::windows::process::CommandExt;
 
-use crate::paths::{chosen, in_spaces};
+use crate::assets::safe_name;
+use crate::paths::{chosen, in_spaces, inside, space_root, spaces_dir};
 
 /// What a document is read in as: plain markdown plus the few extensions the
 /// editor itself understands, so nothing comes back that cannot be shown.
@@ -273,8 +274,9 @@ const CLIMBING: &str = "![](data://image/png;base64,aGVsbG8=;.lua+%2f%2e%2e%2f%2
 /// `\lstinputlisting`, RST's `include` and Org's `#+INCLUDE` name any file on this
 /// machine, and pandoc read it into the note, which then synced: `~/.ssh/id_rsa`
 /// sent to the account by opening a paper. In its sandbox pandoc reads the file it
-/// was given and nothing else; the pictures inside a Word file still come out
-/// beside it, since `--extract-media` writes after the reading is done.
+/// was given and nothing else; the pictures inside a Word file still come out,
+/// into the folder pandoc is started in, since `--extract-media` writes after the
+/// reading is done.
 ///
 /// Only when `media` is true, which is a pandoc that keeps those pictures inside
 /// the folder; see `copying`. On any other the words still come in and the
@@ -291,46 +293,122 @@ fn reading(source: &str, media: bool) -> Vec<&str> {
 
 /// Converts a document into markdown with pandoc. The format comes from the
 /// file's extension, which is what pandoc infers from anyway.
-///
-/// Pictures inside the document are written out beside it rather than into
-/// whichever folder the app happens to have been started in, which for an app
-/// launched from its own shortcut is a folder nobody would think to look in.
 #[tauri::command(async)]
 pub fn import_document(app: AppHandle, path: String) -> Result<Imported, String> {
     // A file the reader picked in the dialog, judged as a path before pandoc is
     // handed it; see `chosen`.
-    let source = chosen(&app, &path)?;
-    let beside = source
-        .parent()
-        .filter(|parent| parent.is_dir())
-        .map(Path::to_path_buf)
-        .ok_or_else(|| format!("{path} is not in a folder Orden can write to"))?;
-    let source = source.to_string_lossy().to_string();
+    import_from(&chosen(&app, &path)?)
+}
+
+/// The import itself, apart from the app.
+///
+/// Pictures inside the document are written into a temporary folder of this
+/// import's own and handed to the window with the words, which keeps them in the
+/// note's space with the note and points the links there. They used to be written
+/// beside the document, into a `media` folder outside every space: the note's
+/// links to them were dead, nothing showed or synced them, and a second import
+/// from that folder wrote over the first one's pictures of the same name.
+fn import_from(source: &Path) -> Result<Imported, String> {
     let copying = extracts_safely();
+    let media = tempfile::tempdir()
+        .map_err(|error| format!("there was no folder to read the pictures into: {error}"))?;
+    let source = source.to_string_lossy().to_string();
 
     let result = pandoc()
-        .current_dir(&beside)
+        .current_dir(media.path())
         .args(reading(&source, copying == Copying::Safe))
         .output()
         .map_err(|error| format!("pandoc could not start: {error}. Is it installed?"))?;
 
-    if result.status.success() {
-        let markdown = String::from_utf8(result.stdout)
-            .map_err(|error| format!("pandoc returned something that is not text: {error}"))?;
-        let left_out = left_out(&copying, &markdown);
-        return Ok(Imported { markdown, left_out });
+    if !result.status.success() {
+        return Err(read_refusal(&result.stderr));
     }
-
-    Err(read_refusal(&result.stderr))
+    let markdown = String::from_utf8(result.stdout)
+        .map_err(|error| format!("pandoc returned something that is not text: {error}"))?;
+    let mut left_out = left_out(&copying, &markdown);
+    let mut pictures = Vec::new();
+    if copying == Copying::Safe {
+        let mut too_large = false;
+        gathered(media.path(), media.path(), &mut pictures, &mut too_large);
+        if too_large {
+            left_out = Some(PICTURES_TOO_LARGE.to_string());
+        }
+    }
+    Ok(Imported {
+        markdown,
+        left_out,
+        pictures,
+    })
 }
 
-/// A document read in: its words, and why its pictures were left out when they
-/// were.
+/// A document read in: its words, why its pictures were left out when they were,
+/// and the pictures that came with it.
 #[derive(Debug, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Imported {
     markdown: String,
     left_out: Option<String>,
+    pictures: Vec<Picture>,
+}
+
+/// One picture of a document read in: the path the words link it by, relative
+/// and with forward slashes, and its bytes as base64.
+#[derive(Debug, serde::Serialize)]
+pub struct Picture {
+    link: String,
+    data: String,
+}
+
+/// What one picture of an import may weigh, which is what a file dropped into a
+/// note may; see `MOST_BYTES` in assets.ts. It crosses to the window as text.
+const MOST_PICTURE_BYTES: u64 = 24 * 1024 * 1024;
+
+/// Why a picture of a document did not come in.
+const PICTURES_TOO_LARGE: &str = "A picture was left out, since it is larger than a note can keep";
+
+/// Every file pandoc extracted into `folder`, however deep, named by its path from
+/// `top`. A link is skipped rather than followed, and so is a picture too large to
+/// keep, which `too_large` then says.
+fn gathered(top: &Path, folder: &Path, pictures: &mut Vec<Picture>, too_large: &mut bool) {
+    use base64::Engine as _;
+
+    let Ok(found) = fs::read_dir(folder) else {
+        return;
+    };
+    let mut entries: Vec<_> = found.flatten().collect();
+    entries.sort_by_key(fs::DirEntry::path);
+    for entry in entries {
+        let path = entry.path();
+        let Ok(kind) = entry.file_type() else {
+            continue;
+        };
+        if kind.is_dir() {
+            gathered(top, &path, pictures, too_large);
+            continue;
+        }
+        if !kind.is_file() {
+            continue;
+        }
+        if entry
+            .metadata()
+            .is_ok_and(|meta| meta.len() > MOST_PICTURE_BYTES)
+        {
+            *too_large = true;
+            continue;
+        }
+        let (Ok(relative), Ok(bytes)) = (path.strip_prefix(top), fs::read(&path)) else {
+            continue;
+        };
+        let link = relative
+            .components()
+            .map(|part| part.as_os_str().to_string_lossy())
+            .collect::<Vec<_>>()
+            .join("/");
+        pictures.push(Picture {
+            link,
+            data: base64::engine::general_purpose::STANDARD.encode(bytes),
+        });
+    }
 }
 
 /// Why the pictures of a document read in without `--extract-media` are not
@@ -404,22 +482,57 @@ pub fn run_pandoc(
         return Err(format!("{format} is not a format pandoc writes"));
     }
     let target = chosen(&app, &output)?;
-    let folder = match note {
-        Some(note) => in_spaces(&app, &note)?.parent().map(Path::to_path_buf),
+    let place = match note {
+        Some(note) => {
+            let note = in_spaces(&app, &note)?;
+            let space = space_root(&spaces_dir(&app)?, &note)
+                .ok_or_else(|| format!("{} is not in a space", note.display()))?;
+            let folder = note
+                .parent()
+                .map_or_else(|| space.clone(), Path::to_path_buf);
+            Some((folder, space))
+        }
         None => None,
     };
-    convert(&source, &target, &format, folder.as_deref())
+    let place = place
+        .as_ref()
+        .map(|(folder, space)| Place { folder, space });
+    convert(&source, &target, &format, place.as_ref())
+}
+
+/// Where a note's pictures may come from: the folder the note is in, which its
+/// relative links start from, and the space that holds it, which none of them
+/// may leave.
+struct Place<'a> {
+    folder: &'a Path,
+    space: &'a Path,
 }
 
 /// The conversion itself, apart from the app: `source` written to `target` as
-/// `format`, for the note in `folder`. Answers the pictures pandoc could not find.
+/// `format`, for the note at `place`. Answers the pictures that are not in the
+/// file: the ones pandoc could not find, and the ones it was not let near.
+///
+/// A note is somebody else's words as often as the reader's own: it came from a
+/// shared space, a sync, an import. pandoc fetches every picture a document names,
+/// from anywhere on the disk and from any address, and a writer that holds its
+/// pictures put them in the file: `![](/home/me/.ssh/id_rsa)` in a shared note
+/// went into the ODT, and into `Deck_files` beside a deck, for the reader to send
+/// on. `--sandbox` would stop that, and stops the ODT writer too on a pandoc that
+/// keeps its data files on the disk, as Debian's and Ubuntu's do.
+///
+/// So the formats that carry pictures (`carries_pictures`) go through pandoc
+/// twice. The words are read into pandoc's own tree in its sandbox, and every
+/// picture is judged there (`vetted`): one inside the note's space is copied into
+/// a temporary folder of this export's own and pointed at, and any other - outside
+/// the space, a hidden file, an address on the web, or no note at all - becomes
+/// its alt text and is said. pandoc then writes the tree with that folder as the
+/// only place to find pictures in. Every other format holds no pictures and is
+/// written in the sandbox in one go.
 ///
 /// The words arrive on stdin, so pandoc has no file to find a picture beside and
 /// looks in the folder it was started in: an ODT came out with every picture
-/// swapped for its alt text, and pandoc said it had done fine. So it is told the
-/// note's folder. A folder whose name holds the path separator (`:`, `;` on
-/// Windows) is split by pandoc and finds nothing; that is said like any other
-/// picture that was not there.
+/// swapped for its alt text, and pandoc said it had done fine. That is why the
+/// note's folder is where a relative link starts.
 ///
 /// A deck links its pictures rather than holding them, so pointing at them where
 /// the note is breaks the moment it is opened anywhere else. Its pictures are
@@ -431,14 +544,10 @@ fn convert(
     source: &str,
     target: &Path,
     format: &str,
-    folder: Option<&Path>,
+    place: Option<&Place>,
 ) -> Result<Vec<String>, String> {
-    let mut command = pandoc();
-    command.args(["--from", WRITE_FROM, "--to", format, "--standalone"]);
-    if let Some(folder) = folder {
-        command.arg(joined("--resource-path=", folder.as_os_str()));
-    }
-    if format == "revealjs" {
+    let deck = format == "revealjs";
+    if deck {
         match extracts_safely() {
             Copying::Safe => {}
             Copying::Unsafe => return Err(DECK_REFUSAL.to_string()),
@@ -448,6 +557,40 @@ fn convert(
                 ))
             }
         }
+    }
+
+    if !carries_pictures(format) {
+        let mut command = pandoc();
+        command
+            .args(["--sandbox", "--from", WRITE_FROM, "--to", format])
+            .args(["--standalone", "--output"])
+            .arg(target);
+        let result = piped(command, source.to_string())?;
+        if result.status.success() {
+            return Ok(not_found(&result.stderr));
+        }
+        return Err(complaint(&result.stderr, "pandoc failed"));
+    }
+
+    // The words as pandoc's tree, read in its sandbox: reading markdown needs no
+    // file at all.
+    let mut read = pandoc();
+    read.args(["--sandbox", "--from", WRITE_FROM, "--to", "json"]);
+    let tree = piped(read, source.to_string())?;
+    if !tree.status.success() {
+        return Err(complaint(&tree.stderr, "pandoc could not read the note"));
+    }
+    let mut tree: serde_json::Value = serde_json::from_slice(&tree.stdout)
+        .map_err(|error| format!("pandoc returned a tree that could not be read: {error}"))?;
+
+    let pictures = tempfile::tempdir()
+        .map_err(|error| format!("there was no folder to gather the pictures in: {error}"))?;
+    let mut missing = vetted(&mut tree, place, pictures.path(), deck);
+
+    let mut command = pandoc();
+    command.args(["--from", "json", "--to", format, "--standalone"]);
+    command.arg(joined("--resource-path=", pictures.path().as_os_str()));
+    if deck {
         let beside = target
             .parent()
             .ok_or_else(|| format!("{} is not in a folder", target.display()))?;
@@ -455,10 +598,56 @@ fn convert(
         command.current_dir(beside);
         command.arg(joined("--extract-media=", &joined_name(stem, "_files")));
     }
+    command.arg("--output").arg(target);
 
+    let result = piped(command, tree.to_string())?;
+    if result.status.success() {
+        for name in not_found(&result.stderr) {
+            if !missing.contains(&name) {
+                missing.push(name);
+            }
+        }
+        return Ok(missing);
+    }
+
+    Err(complaint(&result.stderr, "pandoc failed"))
+}
+
+/// Whether pandoc puts the pictures of a note into what `format` writes, or
+/// beside it: the formats that hold them, and the pages that a deck's
+/// `--extract-media` copies them for. Judged by the writer's name, without the
+/// extensions on it. Every other writer only names a picture, and runs in the
+/// sandbox.
+fn carries_pictures(format: &str) -> bool {
+    let name = format.split(['+', '-']).next().unwrap_or(format);
+    matches!(
+        name,
+        "odt"
+            | "docx"
+            | "pptx"
+            | "epub"
+            | "epub2"
+            | "epub3"
+            | "fb2"
+            | "icml"
+            | "html"
+            | "html4"
+            | "html5"
+            | "revealjs"
+            | "slidy"
+            | "slideous"
+            | "dzslides"
+            | "s5"
+    )
+}
+
+/// `command`, a pandoc, run with `input` on its stdin, and what it wrote back.
+///
+/// The input is written on its own thread, because pandoc writes as it reads: a
+/// long note plus a pandoc with plenty to say would otherwise be two programs each
+/// waiting for the other to take what it has written.
+fn piped(mut command: Command, input: String) -> Result<std::process::Output, String> {
     let mut child = command
-        .arg("--output")
-        .arg(target)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
@@ -466,12 +655,7 @@ fn convert(
         .map_err(|error| format!("pandoc could not start: {error}. Is it installed?"))?;
 
     let mut sink = child.stdin.take().ok_or("could not write to pandoc")?;
-
-    // On its own thread, because pandoc writes as it reads: a long note plus a
-    // pandoc with plenty to say would otherwise be two programs each waiting for
-    // the other to take what it has written.
-    let source = source.to_string();
-    let writer = std::thread::spawn(move || sink.write_all(source.as_bytes()));
+    let writer = std::thread::spawn(move || sink.write_all(input.as_bytes()));
 
     let result = child
         .wait_with_output()
@@ -480,15 +664,204 @@ fn convert(
         .join()
         .map_err(|_| "the thread feeding pandoc stopped".to_string())?;
 
-    if result.status.success() {
-        // Pandoc is happy, so it read what it needed; a write that failed at the
-        // very end is still worth saying out loud.
-        return written
-            .map(|()| not_found(&result.stderr))
-            .map_err(|error| format!("could not send the note to pandoc: {error}"));
+    // A pandoc that is happy read what it needed; a write that failed at the very
+    // end is still worth saying out loud.
+    match written {
+        Err(error) if result.status.success() => {
+            Err(format!("could not send the note to pandoc: {error}"))
+        }
+        _ => Ok(result),
     }
+}
 
-    Err(complaint(&result.stderr, "pandoc failed"))
+/// Every picture of `tree`, pandoc's tree of a note, judged before pandoc may
+/// fetch it. One inside the note's space (`admitted`) is copied into `into` under a
+/// plain name of its own and pointed at by that name; any other becomes its alt
+/// text, as pandoc makes a picture it could not find. Answers the links that were
+/// refused, in the order they came.
+///
+/// For a deck, and only there, raw HTML that names something to load (`src`,
+/// `poster`, `data=`) is emptied as well, since the deck's page is that HTML; the
+/// formats that hold their pictures drop raw HTML on their own.
+fn vetted(
+    tree: &mut serde_json::Value,
+    place: Option<&Place>,
+    into: &Path,
+    deck: bool,
+) -> Vec<String> {
+    let mut refused = Vec::new();
+    let mut copied: Vec<(PathBuf, String)> = Vec::new();
+    vet(
+        tree,
+        &mut |link: &str| {
+            let real = place.and_then(|place| admitted(link, place))?;
+            if let Some((_, name)) = copied.iter().find(|(from, _)| *from == real) {
+                return Some(name.clone());
+            }
+            let name = copied_in(&real, into)?;
+            copied.push((real, name.clone()));
+            Some(name)
+        },
+        &mut refused,
+        deck,
+    );
+    refused
+}
+
+/// The walk of `vetted`, through every array and object of the tree, which is
+/// where pandoc's pictures can sit: in paragraphs, figures, tables, notes and the
+/// metadata alike.
+fn vet(
+    node: &mut serde_json::Value,
+    judge: &mut dyn FnMut(&str) -> Option<String>,
+    refused: &mut Vec<String>,
+    deck: bool,
+) {
+    use serde_json::Value;
+
+    match node {
+        Value::Array(items) => {
+            for item in items {
+                vet(item, judge, refused, deck);
+            }
+        }
+        Value::Object(fields) => {
+            let kind = fields
+                .get("t")
+                .and_then(Value::as_str)
+                .unwrap_or_default()
+                .to_string();
+            let content = fields.get_mut("c");
+            match (kind.as_str(), content) {
+                // `{"t": "Image", "c": [attributes, alt text, [target, title]]}`
+                ("Image", Some(content)) => {
+                    let link = content
+                        .get(2)
+                        .and_then(|target| target.get(0))
+                        .and_then(Value::as_str)
+                        .unwrap_or_default()
+                        .to_string();
+                    if let Some(name) = judge(&link) {
+                        if let Some(target) = content.get_mut(2).and_then(|one| one.get_mut(0)) {
+                            *target = Value::String(name);
+                        }
+                    } else {
+                        refused.push(link);
+                        let alt = content
+                            .get(1)
+                            .cloned()
+                            .unwrap_or_else(|| Value::Array(Vec::new()));
+                        *node = serde_json::json!({ "t": "Span", "c": [["", [], []], alt] });
+                    }
+                }
+                // `{"t": "RawInline", "c": [format, text]}`, and the same for a block.
+                ("RawInline" | "RawBlock", Some(Value::Array(raw))) if deck => {
+                    let html = raw
+                        .first()
+                        .and_then(Value::as_str)
+                        .is_some_and(|format| format.starts_with("html") || format == "revealjs");
+                    let text = raw.get(1).and_then(Value::as_str).unwrap_or_default();
+                    if html && loads(text) {
+                        refused.push(text.trim().chars().take(80).collect());
+                        raw[1] = Value::String(String::new());
+                    }
+                }
+                _ => {}
+            }
+            if let Value::Object(fields) = node {
+                for value in fields.values_mut() {
+                    vet(value, judge, refused, deck);
+                }
+            }
+        }
+        _ => {}
+    }
+}
+
+/// Whether raw HTML names something a page would load, or pandoc copy.
+fn loads(html: &str) -> bool {
+    let html = html.to_ascii_lowercase();
+    ["src", "poster", "data="]
+        .iter()
+        .any(|one| html.contains(one))
+}
+
+/// The file a picture's link names, when it is one a note of this space may
+/// carry: a path relative to the note's folder, or an absolute one, that is a file
+/// inside the note's space once every link on the way is followed, and in no
+/// hidden folder of it. An address with a scheme (`http:`, `file:`, `data:`) or a
+/// host (`//`) is no file of the space, however it is spelled.
+///
+/// The link is read the way pandoc reads it, percent-encoding undone, and once
+/// more without a `?` or `#` on its end.
+fn admitted(link: &str, place: &Place) -> Option<PathBuf> {
+    if link.is_empty() || link.starts_with("//") || link.starts_with("\\\\") || has_scheme(link) {
+        return None;
+    }
+    let space = fs::canonicalize(place.space).ok()?;
+    let bare = link.split(['?', '#']).next().unwrap_or(link);
+    [link, bare].into_iter().find_map(|one| {
+        let path = place.folder.join(decoded(one)?);
+        let real = fs::canonicalize(path).ok()?;
+        let below = real.components().skip(space.components().count());
+        let hidden = below
+            .clone()
+            .any(|part| part.as_os_str().to_string_lossy().starts_with('.'));
+        (real.is_file() && inside(&space, &real) && !hidden).then_some(real)
+    })
+}
+
+/// Whether a link opens with a scheme, `name:`. A single letter is a Windows
+/// drive rather than a scheme, and the absolute path it starts is judged as one.
+fn has_scheme(link: &str) -> bool {
+    let Some((scheme, _)) = link.split_once(':') else {
+        return false;
+    };
+    scheme.len() > 1
+        && scheme.starts_with(|first: char| first.is_ascii_alphabetic())
+        && scheme
+            .chars()
+            .all(|one| one.is_ascii_alphanumeric() || one == '+' || one == '-' || one == '.')
+}
+
+/// A link with its percent-encoding undone, or None when what that leaves is not
+/// text.
+fn decoded(link: &str) -> Option<String> {
+    let bytes = link.as_bytes();
+    let mut out = Vec::with_capacity(bytes.len());
+    let mut at = 0;
+    while at < bytes.len() {
+        let hex = |one: u8| (one as char).to_digit(16);
+        match (bytes[at], bytes.get(at + 1), bytes.get(at + 2)) {
+            (b'%', Some(&high), Some(&low)) if hex(high).is_some() && hex(low).is_some() => {
+                out.push(u8::try_from(hex(high)? * 16 + hex(low)?).ok()?);
+                at += 3;
+            }
+            (one, _, _) => {
+                out.push(one);
+                at += 1;
+            }
+        }
+    }
+    String::from_utf8(out).ok()
+}
+
+/// `real`, a picture of the space, copied into `into` under its own name made
+/// plain, or a numbered one when another picture already has it. Answers the name.
+fn copied_in(real: &Path, into: &Path) -> Option<String> {
+    let name = safe_name(&real.file_name()?.to_string_lossy())?;
+    let (stem, extension) = match name.rfind('.') {
+        Some(dot) if dot > 0 => (&name[..dot], &name[dot..]),
+        _ => (name.as_str(), ""),
+    };
+    let free = (1..=10_000)
+        .map(|count| match count {
+            1 => name.clone(),
+            _ => format!("{stem}-{count}{extension}"),
+        })
+        .find(|one| !into.join(one).exists())?;
+    fs::copy(real, into.join(&free)).ok()?;
+    Some(free)
 }
 
 /// Why a deck was not written on a pandoc that copies pictures unsafely.
@@ -547,8 +920,9 @@ fn complaint(stderr: &[u8], fallback: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::{
-        complaint, convert, extracts_safely, has_pandoc, is_format, left_out, not_found, pandoc,
-        read_refusal, reading, wrote_outside, Copying, DECK_REFUSAL, PICTURES_LEFT_OUT,
+        admitted, carries_pictures, complaint, convert, extracts_safely, has_pandoc, import_from,
+        is_format, left_out, not_found, pandoc, read_refusal, reading, vetted, wrote_outside,
+        Copying, Imported, Place, DECK_REFUSAL, PICTURES_LEFT_OUT,
     };
     #[cfg(unix)]
     use super::{copying, PATIENCE};
@@ -556,19 +930,25 @@ mod tests {
     use std::io::{Read as _, Write as _};
     use std::path::Path;
 
-    /// An import, run the way `import_document` runs it, on a document in `beside`:
-    /// what pandoc printed, and what it said on the way.
-    fn imported(beside: &Path, name: &str) -> (String, String) {
-        let source = beside.join(name).to_string_lossy().to_string();
-        let result = pandoc()
-            .current_dir(beside)
-            .args(reading(&source, extracts_safely() == Copying::Safe))
-            .output()
-            .expect("pandoc runs");
-        (
-            String::from_utf8_lossy(&result.stdout).to_string(),
-            String::from_utf8_lossy(&result.stderr).to_string(),
-        )
+    /// An import, run the way `import_document` runs it, of a document in `beside`.
+    fn imported(beside: &Path, name: &str) -> Imported {
+        import_from(&beside.join(name)).expect("pandoc reads it")
+    }
+
+    /// The names in `folder`, sorted.
+    fn names_in(folder: &Path) -> Vec<String> {
+        let mut names: Vec<String> = fs::read_dir(folder)
+            .expect("a folder")
+            .map(|entry| {
+                entry
+                    .expect("an entry")
+                    .file_name()
+                    .to_string_lossy()
+                    .to_string()
+            })
+            .collect();
+        names.sort();
+        names
     }
 
     /// Whether these tests can run pandoc; the CI's Linux row installs it.
@@ -632,12 +1012,9 @@ mod tests {
         .expect("written");
 
         for name in ["paper.tex", "notes.rst", "plan.org"] {
-            let (markdown, said) = imported(beside, name);
-            assert!(
-                !markdown.contains("PRIVATE KEY"),
-                "{name}: {markdown}\n{said}"
-            );
-            assert!(markdown.contains("Hi"), "{name}: {markdown}\n{said}");
+            let read = imported(beside, name);
+            assert!(!read.markdown.contains("PRIVATE KEY"), "{name}: {read:?}");
+            assert!(read.markdown.contains("Hi"), "{name}: {read:?}");
         }
     }
 
@@ -665,11 +1042,17 @@ mod tests {
         fs::remove_file(beside.join("dot.png")).expect("removed");
     }
 
-    /// The sandbox keeps the pictures inside a Word file, which come out beside it
-    /// on a pandoc that copies them safely. On any other the words come in, no
-    /// picture is written at all, and the reader is told why.
+    /// The sandbox keeps the pictures inside a Word file, which on a pandoc that
+    /// copies them safely come back with the words, each under the link the words
+    /// name it by, for the window to keep in the note's space. Nothing is written
+    /// beside the document: a `media` folder there was outside every space, so
+    /// the note's links were dead, and a second import wrote over the first's. On
+    /// any other pandoc the words come in, no picture is written at all, and the
+    /// reader is told why.
     #[test]
-    fn a_picture_inside_a_document_still_comes_out_beside_it() {
+    fn a_picture_inside_a_document_comes_in_with_the_words() {
+        use base64::Engine as _;
+
         if !pandoc_here() {
             return;
         }
@@ -677,20 +1060,24 @@ mod tests {
         let beside = folder.path();
         docx_with_picture(beside, "with.docx");
 
-        let (markdown, said) = imported(beside, "with.docx");
-        assert!(markdown.contains("Text"), "{markdown}\n{said}");
+        let read = imported(beside, "with.docx");
+        assert!(read.markdown.contains("Text"), "{read:?}");
+        assert_eq!(names_in(beside), ["with.docx"], "{read:?}");
         let copying = extracts_safely();
         if copying != Copying::Safe {
-            assert!(!beside.join("media").exists(), "{said}");
-            assert!(left_out(&copying, &markdown).is_some(), "{markdown}");
+            assert!(read.pictures.is_empty(), "{read:?}");
+            assert!(read.left_out.is_some(), "{read:?}");
             return;
         }
-        assert_eq!(left_out(&copying, &markdown), None);
-        assert!(markdown.contains("media/"), "{markdown}\n{said}");
-        let media = fs::read_dir(beside.join("media"))
-            .expect("a media folder")
-            .count();
-        assert_eq!(media, 1, "{said}");
+        assert_eq!(read.left_out, None);
+        assert_eq!(read.pictures.len(), 1, "{read:?}");
+        let picture = &read.pictures[0];
+        assert!(read.markdown.contains(&picture.link), "{read:?}");
+        assert!(!picture.link.contains('\\'), "{}", picture.link);
+        let bytes = base64::engine::general_purpose::STANDARD
+            .decode(&picture.data)
+            .expect("base64");
+        assert!(bytes.starts_with(&DOT[..8]), "not a png");
     }
 
     /// A Word file somebody sent, whose picture is named to climb three folders
@@ -708,13 +1095,11 @@ mod tests {
         climb_out(&inner.join("plain.docx"), &inner.join("paper.docx"));
         fs::remove_file(inner.join("plain.docx")).expect("removed");
 
-        let (markdown, said) = imported(&inner, "paper.docx");
+        let read = imported(&inner, "paper.docx");
 
-        assert!(markdown.contains("Text"), "{markdown}\n{said}");
-        assert!(
-            !wrote_outside(documents.path(), &inner),
-            "{markdown}\n{said}"
-        );
+        assert!(read.markdown.contains("Text"), "{read:?}");
+        assert!(!wrote_outside(documents.path(), &inner), "{read:?}");
+        assert_eq!(names_in(&inner), ["paper.docx"], "{read:?}");
     }
 
     /// `from`, a Word file, written to `to` with each picture renamed to climb
@@ -888,6 +1273,336 @@ mod tests {
         (note, tempfile::tempdir().expect("a folder"))
     }
 
+    /// A note that is its space's only one, in `folder`.
+    fn alone(folder: &Path) -> Place<'_> {
+        Place {
+            folder,
+            space: folder,
+        }
+    }
+
+    /// A space whose note sits in a folder of it with a picture beside it, and a
+    /// key outside the space, as on the machine of whoever a note is shared with.
+    struct Shared {
+        top: tempfile::TempDir,
+        space: std::path::PathBuf,
+        folder: std::path::PathBuf,
+        key: std::path::PathBuf,
+    }
+
+    /// What the key outside the space holds.
+    const KEY: &[u8] = b"PRIVATE KEY 7f3a";
+
+    fn shared() -> Shared {
+        let top = tempfile::tempdir().expect("a folder");
+        let space = top.path().join("spaces").join("Mine");
+        let folder = space.join("notes");
+        fs::create_dir_all(&folder).expect("folders");
+        fs::write(folder.join("dot.png"), DOT).expect("written");
+        let key = top.path().join("id_rsa.png");
+        fs::write(&key, KEY).expect("written");
+        Shared {
+            top,
+            space,
+            folder,
+            key,
+        }
+    }
+
+    impl Shared {
+        fn place(&self) -> Place<'_> {
+            Place {
+                folder: &self.folder,
+                space: &self.space,
+            }
+        }
+
+        /// The key as a link from the note: absolute, and climbing out.
+        fn links(&self) -> [String; 2] {
+            [
+                self.key.to_string_lossy().replace('\\', "/"),
+                "../../../id_rsa.png".to_string(),
+            ]
+        }
+    }
+
+    /// A picture of the note's space is let in, from the note's folder or by its
+    /// absolute path; nothing outside it is, however the link is spelled.
+    #[test]
+    fn only_a_picture_inside_the_space_is_admitted() {
+        let shared = shared();
+        let place = shared.place();
+        let dot = fs::canonicalize(shared.folder.join("dot.png")).expect("there");
+        for inside in [
+            "dot.png",
+            "./dot.png",
+            "../notes/dot.png",
+            "d%6Ft.png",
+            "dot.png?v=2",
+        ] {
+            assert_eq!(admitted(inside, &place), Some(dot.clone()), "{inside}");
+        }
+        assert_eq!(
+            admitted(&shared.folder.join("dot.png").to_string_lossy(), &place),
+            Some(dot.clone()),
+            "absolute"
+        );
+        let [absolute, climbing] = shared.links();
+        let encoded = "..%2f..%2f..%2fid_rsa.png".to_string();
+        let file = format!("file://{absolute}");
+        for outside in [
+            absolute.as_str(),
+            climbing.as_str(),
+            encoded.as_str(),
+            file.as_str(),
+            "http://127.0.0.1:8080/secret.png",
+            "//host/share/x.png",
+            "data:image/png;base64,aGVsbG8=",
+            "gone.png",
+            "",
+            "../",
+        ] {
+            assert_eq!(admitted(outside, &place), None, "{outside}");
+        }
+        // A hidden folder of the space is not a picture's.
+        fs::create_dir(shared.space.join(".sync")).expect("a folder");
+        fs::write(shared.space.join(".sync").join("token.png"), KEY).expect("written");
+        assert_eq!(admitted("../.sync/token.png", &place), None);
+        assert!(shared.top.path().exists());
+    }
+
+    /// A link inside the space that leads out of it is judged by where it leads.
+    #[cfg(unix)]
+    #[test]
+    fn a_link_out_of_the_space_is_not_admitted() {
+        let shared = shared();
+        std::os::unix::fs::symlink(&shared.key, shared.folder.join("cat.png")).expect("a link");
+        assert_eq!(admitted("cat.png", &shared.place()), None);
+    }
+
+    /// One picture of pandoc's tree: `{"t": "Image", "c": [attr, alt, [target, title]]}`.
+    fn picture(target: &str) -> serde_json::Value {
+        serde_json::json!({
+            "t": "Image",
+            "c": [["", [], []], [{ "t": "Str", "c": "alt" }], [target, ""]]
+        })
+    }
+
+    /// The tree of a note with these pictures in one paragraph, and one more in a
+    /// figure, as pandoc 3 reads a picture on its own.
+    fn tree_of(targets: &[&str], figure: &str) -> serde_json::Value {
+        let pictures: Vec<_> = targets.iter().map(|one| picture(one)).collect();
+        serde_json::json!({
+            "pandoc-api-version": [1, 23],
+            "meta": {},
+            "blocks": [
+                { "t": "Para", "c": pictures },
+                { "t": "Figure", "c": [["", [], []], [null, []], [{ "t": "Plain", "c": [picture(figure)] }]] }
+            ]
+        })
+    }
+
+    /// The targets of every picture left in a tree.
+    fn targets(tree: &serde_json::Value) -> Vec<String> {
+        fn walk(node: &serde_json::Value, out: &mut Vec<String>) {
+            match node {
+                serde_json::Value::Array(items) => items.iter().for_each(|one| walk(one, out)),
+                serde_json::Value::Object(fields) => {
+                    if fields.get("t").and_then(|t| t.as_str()) == Some("Image") {
+                        out.push(node["c"][2][0].as_str().unwrap_or_default().to_string());
+                    }
+                    fields.values().for_each(|one| walk(one, out));
+                }
+                _ => {}
+            }
+        }
+        let mut out = Vec::new();
+        walk(tree, &mut out);
+        out
+    }
+
+    /// Before pandoc sees a note, its pictures from the space are copied into a
+    /// folder of the export's own and pointed at there; any other is its alt text,
+    /// and said.
+    #[test]
+    fn the_pictures_of_a_note_are_judged_before_pandoc_sees_them() {
+        let shared = shared();
+        let [absolute, climbing] = shared.links();
+        let into = tempfile::tempdir().expect("a folder");
+        let mut tree = tree_of(&["dot.png", absolute.as_str(), "./dot.png"], &climbing);
+
+        let refused = vetted(&mut tree, Some(&shared.place()), into.path(), false);
+
+        assert_eq!(refused, [absolute.clone(), climbing.clone()]);
+        assert_eq!(targets(&tree), ["dot.png", "dot.png"]);
+        assert_eq!(names_in(into.path()), ["dot.png"]);
+        assert_eq!(fs::read(into.path().join("dot.png")).expect("copied"), DOT);
+        let text = tree.to_string();
+        assert!(!text.contains("id_rsa"), "{text}");
+        // The refused one keeps its words.
+        assert!(text.contains("Span"), "{text}");
+
+        // A note that is in no space has no picture it may carry.
+        let mut tree = tree_of(&["dot.png"], "dot.png");
+        let nowhere = tempfile::tempdir().expect("a folder");
+        assert_eq!(vetted(&mut tree, None, nowhere.path(), false).len(), 2);
+        assert!(targets(&tree).is_empty());
+        assert!(names_in(nowhere.path()).is_empty());
+    }
+
+    /// Two pictures of one name from two folders of the space both arrive.
+    #[test]
+    fn two_pictures_of_one_name_are_both_kept() {
+        let shared = shared();
+        fs::create_dir(shared.folder.join("other")).expect("a folder");
+        fs::write(shared.folder.join("other").join("dot.png"), b"second").expect("written");
+        let into = tempfile::tempdir().expect("a folder");
+        let mut tree = tree_of(&["dot.png", "other/dot.png"], "dot.png");
+
+        let refused = vetted(&mut tree, Some(&shared.place()), into.path(), false);
+
+        assert!(refused.is_empty(), "{refused:?}");
+        assert_eq!(targets(&tree), ["dot.png", "dot-2.png", "dot.png"]);
+        assert_eq!(
+            fs::read(into.path().join("dot-2.png")).expect("copied"),
+            b"second"
+        );
+    }
+
+    /// A deck is HTML, so raw HTML that loads something is emptied for one, and
+    /// only for one.
+    #[test]
+    fn raw_html_that_loads_a_file_is_left_out_of_a_deck() {
+        let raw = |text: &str| {
+            serde_json::json!({
+                "pandoc-api-version": [1, 23],
+                "meta": {},
+                "blocks": [{ "t": "RawBlock", "c": ["html", text] }]
+            })
+        };
+        let into = tempfile::tempdir().expect("a folder");
+        let mut deck = raw("<img src=\"/home/me/.ssh/id_rsa\">");
+        assert_eq!(vetted(&mut deck, None, into.path(), true).len(), 1);
+        assert!(!deck.to_string().contains("id_rsa"));
+
+        let mut words = raw("<b>bold</b>");
+        assert!(vetted(&mut words, None, into.path(), true).is_empty());
+        assert!(words.to_string().contains("<b>bold</b>"));
+
+        let mut odt = raw("<img src=\"x.png\">");
+        assert!(vetted(&mut odt, None, into.path(), false).is_empty());
+    }
+
+    /// Only the writers that hold or copy pictures go the long way.
+    #[test]
+    fn knows_which_formats_carry_pictures() {
+        for format in [
+            "odt",
+            "revealjs",
+            "docx",
+            "html5",
+            "epub3",
+            "odt+native_numbering",
+        ] {
+            assert!(carries_pictures(format), "{format}");
+        }
+        for format in ["latex", "mediawiki", "rst", "textile", "opml", "markdown"] {
+            assert!(!carries_pictures(format), "{format}");
+        }
+    }
+
+    /// The names and bytes inside an ODT, which is a zip.
+    fn odt_contents(odt: &Path) -> Vec<(String, Vec<u8>)> {
+        let file = fs::File::open(odt).expect("an odt");
+        let mut archive = zip::ZipArchive::new(file).expect("a zip");
+        (0..archive.len())
+            .map(|at| {
+                let mut entry = archive.by_index(at).expect("an entry");
+                let mut bytes = Vec::new();
+                entry.read_to_end(&mut bytes).expect("read");
+                (entry.name().to_string(), bytes)
+            })
+            .collect()
+    }
+
+    /// Whether `needle` is anywhere in `haystack`.
+    fn holds(haystack: &[u8], needle: &[u8]) -> bool {
+        haystack.windows(needle.len()).any(|one| one == needle)
+    }
+
+    /// A shared note whose pictures name a key outside its space puts nothing of
+    /// it into the ODT, says both, and still carries its own picture.
+    #[test]
+    fn an_odt_carries_no_file_from_outside_the_space() {
+        if !pandoc_here() {
+            return;
+        }
+        let shared = shared();
+        let [absolute, climbing] = shared.links();
+        let elsewhere = tempfile::tempdir().expect("a folder");
+        let target = elsewhere.path().join("Out.odt");
+        let note = format!("Text\n\n![a dot](dot.png)\n\n![k]({absolute})\n\n![k]({climbing})\n");
+
+        let missing = convert(&note, &target, "odt", Some(&shared.place())).expect("converted");
+
+        assert_eq!(missing.len(), 2, "{missing:?}");
+        assert!(
+            missing.iter().all(|one| one.contains("id_rsa")),
+            "{missing:?}"
+        );
+        let contents = odt_contents(&target);
+        assert!(
+            contents.iter().all(|(_, bytes)| !holds(bytes, KEY)),
+            "the key is in the ODT"
+        );
+        let pictures = contents
+            .iter()
+            .filter(|(name, _)| name.starts_with("Pictures/") && !name.ends_with('/'))
+            .count();
+        assert_eq!(pictures, 1);
+    }
+
+    /// And a deck copies nothing of it beside itself.
+    #[test]
+    fn a_deck_copies_no_file_from_outside_the_space() {
+        if !pandoc_here() || extracts_safely() != Copying::Safe {
+            return;
+        }
+        let shared = shared();
+        let [absolute, climbing] = shared.links();
+        let elsewhere = tempfile::tempdir().expect("a folder");
+        let target = elsewhere.path().join("Deck.html");
+        let note = format!(
+            "# One\n\n![a dot](dot.png)\n\n![k]({absolute})\n\n![k]({climbing})\n\n<img src=\"{absolute}\">\n"
+        );
+
+        let missing =
+            convert(&note, &target, "revealjs", Some(&shared.place())).expect("converted");
+
+        assert_eq!(missing.len(), 3, "{missing:?}");
+        assert_eq!(names_in(&elsewhere.path().join("Deck_files")), ["dot.png"]);
+        let html = fs::read_to_string(&target).expect("a deck");
+        assert!(!html.contains("id_rsa"), "{html}");
+        assert!(html.contains("Deck_files/dot.png"), "{html}");
+    }
+
+    /// The formats that hold no pictures are written in pandoc's sandbox, and
+    /// still written.
+    #[test]
+    fn the_formats_without_pictures_are_still_written() {
+        if !pandoc_here() {
+            return;
+        }
+        let (note, elsewhere) = note_and_elsewhere();
+        for format in ["latex", "mediawiki", "rst", "textile", "opml"] {
+            let target = elsewhere.path().join(format!("Out.{format}"));
+            let made = convert(WITH_PICTURE, &target, format, Some(&alone(note.path())));
+            assert!(made.is_ok(), "{format}: {made:?}");
+            let written = fs::read_to_string(&target).expect("written");
+            assert!(written.contains("Text"), "{format}: {written}");
+        }
+    }
+
     const WITH_PICTURE: &str = "Text\n\n![a dot](dot.png)\n";
 
     /// The names inside an ODT, which is a zip.
@@ -907,7 +1622,8 @@ mod tests {
         let (note, elsewhere) = note_and_elsewhere();
         let target = elsewhere.path().join("Out.odt");
 
-        let missing = convert(WITH_PICTURE, &target, "odt", Some(note.path())).expect("converted");
+        let missing =
+            convert(WITH_PICTURE, &target, "odt", Some(&alone(note.path()))).expect("converted");
 
         assert!(missing.is_empty(), "{missing:?}");
         let names = odt_entries(&target);
@@ -928,7 +1644,7 @@ mod tests {
         let (note, elsewhere) = note_and_elsewhere();
         let target = elsewhere.path().join("Deck.html");
 
-        let made = convert(WITH_PICTURE, &target, "revealjs", Some(note.path()));
+        let made = convert(WITH_PICTURE, &target, "revealjs", Some(&alone(note.path())));
         match extracts_safely() {
             Copying::Safe => {}
             Copying::Unsafe => {
@@ -960,8 +1676,13 @@ mod tests {
         let (note, elsewhere) = note_and_elsewhere();
         let target = elsewhere.path().join("Out.odt");
 
-        let missing =
-            convert("![gone](gone.png)\n", &target, "odt", Some(note.path())).expect("converted");
+        let missing = convert(
+            "![gone](gone.png)\n",
+            &target,
+            "odt",
+            Some(&alone(note.path())),
+        )
+        .expect("converted");
 
         assert_eq!(missing, vec!["gone.png".to_string()]);
     }
