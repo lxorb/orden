@@ -21,6 +21,7 @@ import {
   watchSpaces,
 } from '../space-watch'
 import { inForeignCopy } from '@nib/sync-core/foreign'
+import { t } from '../i18n.svelte'
 import { syncMark } from '../surfaces.svelte'
 import type { Engine } from './engine'
 import { holdsDocument } from './kinds'
@@ -52,6 +53,26 @@ function foreign(path: string): boolean {
 function kept(engine: Engine, path: string, dir: boolean): boolean {
   if (hidden(path) || foreign(path)) return false
   return dir || holdsDocument(kindOfName(path)) || !!engine.core.world.blobs
+}
+
+/** Whether this run has said the system's limit of watched folders is reached. */
+let toldOfLimit = false
+
+/** Says once a run, as a notification, that changes other programs make may go unheard:
+ *  past the system's limit of watched folders, nothing past it is watched (#481). The
+ *  spaces are still read again at every scan, which the window asks for. */
+function limitReached(): void {
+  if (toldOfLimit) return
+  toldOfLimit = true
+  void import('../notify').then(({ notify }) =>
+    notify(
+      t('Some changes may not be noticed'),
+      t(
+        'The system’s limit on watched folders is reached, so Orden may not notice every change other programs make in your spaces. Raising fs.inotify.max_user_watches fixes it.',
+      ),
+      'watch-limit',
+    ),
+  )
 }
 
 export interface Watching {
@@ -95,6 +116,7 @@ export function watchFolders(how: Watching): Watched {
   }
 
   const heard = (news: SpaceNews) => {
+    if (news.unwatched === 'limit') limitReached()
     if (news.gone) return
     if (news.scan) queue.push(() => scanned(how, news.root))
     for (const change of news.changes) queue.push(() => changed(how, change))

@@ -95,6 +95,20 @@ pub struct Heard {
     pub scan: bool,
     /// The root is not there any more and is no longer watched.
     pub gone: bool,
+    /// Said with a root's scan where not all of it could be watched, and why: changes
+    /// made there by other programs may go unheard (#481).
+    pub unwatched: Option<Unwatched>,
+}
+
+/// Why part of a root is not watched.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub enum Unwatched {
+    /// A folder in it nobody may read: that folder alone is left out.
+    Folders,
+    /// The system's limit of watched folders is reached (`fs.inotify.max_user_watches`):
+    /// every folder past it is left out, in this root and in any other.
+    Limit,
 }
 
 /// Where each message goes. False when nobody is listening any more, which stops the
@@ -121,14 +135,13 @@ pub fn watch(roots: Vec<Root>, sink: Sink) -> Result<Watch, String> {
     let resolving = Arc::clone(&roots);
     let mut watcher = notify::recommended_watcher(move |event| heard.heard(&resolving, event))
         .map_err(|error| format!("could not watch the spaces: {error}"))?;
-    for root in roots.iter() {
-        arm(&mut watcher, root);
-    }
+    let unwatched: Vec<Option<Unwatched>> =
+        roots.iter().map(|root| arm(&mut watcher, root)).collect();
 
     let working = Arc::clone(&shared);
     std::thread::Builder::new()
         .name("nib space watch".into())
-        .spawn(move || work(&roots, &working, watcher, sink))
+        .spawn(move || work(&roots, &working, watcher, sink, unwatched))
         .map_err(|error| format!("could not start watching the spaces: {error}"))?;
 
     Ok(Watch { shared })
@@ -139,13 +152,17 @@ pub fn watch(roots: Vec<Root>, sink: Sink) -> Result<Watch, String> {
 /// at the first folder it cannot add: one nobody may read (a `lost+found` at the top of
 /// an external disk), or one past the system's limit of watches. A space that cannot be
 /// watched at all is still read at every batch, and every other space is watched.
-fn arm(watcher: &mut RecommendedWatcher, root: &Root) {
-    if let Err(error) = watch_tree(watcher, &root.real) {
-        eprintln!(
-            "nib: could not watch all of {}: {error}",
-            root.given.display()
-        );
-    }
+fn arm(watcher: &mut RecommendedWatcher, root: &Root) -> Option<Unwatched> {
+    let error = watch_tree(watcher, &root.real).err()?;
+    eprintln!(
+        "nib: could not watch all of {}: {error}",
+        root.given.display()
+    );
+    Some(if matches!(error.kind, ErrorKind::MaxFilesWatch) {
+        Unwatched::Limit
+    } else {
+        Unwatched::Folders
+    })
 }
 
 /// Watches `dir` whole, or, where a folder inside it cannot be watched, every folder
@@ -182,13 +199,23 @@ fn watch_tree(watcher: &mut RecommendedWatcher, dir: &Path) -> notify::Result<()
 
 /// The thread every answer is settled on: learns each space, says so, then settles each
 /// quiet moment until the watch is dropped or nobody listens.
-fn work(roots: &[Root], shared: &Shared, mut watcher: RecommendedWatcher, mut sink: Sink) {
+fn work(
+    roots: &[Root],
+    shared: &Shared,
+    mut watcher: RecommendedWatcher,
+    mut sink: Sink,
+    unwatched: Vec<Option<Unwatched>>,
+) {
     let mut spaces: Vec<Option<Space>> = Vec::with_capacity(roots.len());
     for (at, root) in roots.iter().enumerate() {
         // A space too large to know is still watched; what arrives in it is new to the
         // watcher, and the engine's own listing is what says it is too large.
         spaces.push(Some(Space::read(&root.real).unwrap_or_default()));
-        if shared.stopped() || !sink(Heard::scan(at)) {
+        let said = Heard {
+            unwatched: unwatched.get(at).copied().flatten(),
+            ..Heard::scan(at)
+        };
+        if shared.stopped() || !sink(said) {
             shared.stop();
             return;
         }
@@ -219,10 +246,13 @@ fn work(roots: &[Root], shared: &Shared, mut watcher: RecommendedWatcher, mut si
                 // Watched again before it is read again, so nothing that happens in
                 // between is missed: it is either in the reading or heard after it.
                 let _ = watcher.unwatch(&root.real);
-                arm(&mut watcher, root);
+                let unwatched = arm(&mut watcher, root);
                 *space = Space::read(&root.real).unwrap_or_default();
                 released[at].clear();
-                heard.push(Heard::scan(at));
+                heard.push(Heard {
+                    unwatched,
+                    ..Heard::scan(at)
+                });
             } else {
                 let (seen, held) = space.settle(&root.real, touched, batch.cut, &released[at]);
                 shared.touch_again(at, &held);
@@ -232,6 +262,7 @@ fn work(roots: &[Root], shared: &Shared, mut watcher: RecommendedWatcher, mut si
                     seen: some.to_vec(),
                     scan: false,
                     gone: false,
+                    unwatched: None,
                 }));
             }
 
@@ -254,6 +285,7 @@ impl Heard {
             seen: Vec::new(),
             scan: true,
             gone: false,
+            unwatched: None,
         }
     }
 
@@ -263,6 +295,7 @@ impl Heard {
             seen: Vec::new(),
             scan: false,
             gone: true,
+            unwatched: None,
         }
     }
 }

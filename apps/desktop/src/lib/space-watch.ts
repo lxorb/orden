@@ -39,6 +39,9 @@ export interface SpaceNews {
   /** The folder is not there any more and is no longer watched. Never a reason to
    *  delete anything: a space renamed in Explorer is gone from here too. */
   gone: boolean
+  /** Said with a scan where not all of the space could be watched: a folder nobody may
+   *  read, or the system's limit of watched folders reached (#481). */
+  unwatched?: 'folders' | 'limit'
 }
 
 /** Watches `roots` (spaces, by their folders) and hands every message to `heard`,
@@ -137,12 +140,14 @@ function changeOf(value: unknown): SpaceChange | null {
 /** A watcher message, checked, or null. */
 export function newsOf(value: unknown): SpaceNews | null {
   if (!record(value)) return null
-  const { root, changes, scan, gone } = value
+  const { root, changes, scan, gone, unwatched } = value
   if (typeof root !== 'string' || !Array.isArray(changes)) return null
   if (typeof scan !== 'boolean' || typeof gone !== 'boolean') return null
   const checked = changes.map(changeOf)
   if (checked.some((one) => one === null)) return null
-  return { root, changes: checked as SpaceChange[], scan, gone }
+  const news: SpaceNews = { root, changes: checked as SpaceChange[], scan, gone }
+  if (unwatched === 'folders' || unwatched === 'limit') news.unwatched = unwatched
+  return news
 }
 
 /** A chunk of a listing, checked, or null. */

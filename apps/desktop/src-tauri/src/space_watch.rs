@@ -104,6 +104,9 @@ pub struct News {
     /// The folder is not there any more (deleted, or renamed outside nib) and is no
     /// longer watched. Never a reason to delete anything.
     gone: bool,
+    /// Said with a scan where not all of the space could be watched, and why (#481).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    unwatched: Option<watching::Unwatched>,
 }
 
 /// One chunk of a listing. The last one says `done`.
@@ -157,6 +160,7 @@ fn news(roots: &[Root], heard: Heard) -> News {
             .collect(),
         scan: heard.scan,
         gone: heard.gone,
+        unwatched: heard.unwatched,
     }
 }
 
@@ -182,17 +186,21 @@ pub fn space_watch(app: AppHandle, roots: Vec<String>, news: Channel<News>) -> R
 
     let watching = app.state::<Watching>();
     let mut running = watching.lock();
-    // The old one stops before the new one starts, so no space is ever watched twice.
-    *running = None;
     if judged.is_empty() {
+        *running = None;
         return Ok(());
     }
 
+    // The new one made before the old one is let go, so a watch the system refuses -
+    // past its limit of watchers - leaves the spaces watched as they were rather than
+    // watched by nothing at all (#481). The old one stops the moment the new one is
+    // there, before the new one has said anything.
     let spelled = judged.clone();
-    *running = Some(watch(
+    let made = watch(
         judged,
         Box::new(move |heard| news.send(self::news(&spelled, heard)).is_ok()),
-    )?);
+    )?;
+    *running = Some(made);
     Ok(())
 }
 
