@@ -851,8 +851,12 @@ function holds(tail: string): boolean {
  *  Raised 2026-10-26, to 3,362,800, for B482: code is never a tag, in a quote, a
  *  callout, a list item or indented, as the renderer judges it, and a comment marker
  *  there hides nothing (`CodeBlocks`, added to fences.ts in @nib/markdown so no
- *  module is added, and read by search/tags.ts and comments.ts). Measured 3,362,016. */
-const BUDGET = 3_362_800
+ *  module is added, and read by search/tags.ts and comments.ts). Measured 3,362,016.
+ *
+ *  Raised 2026-10-26, to 3,364,000, for the round 4 fixes landed together: main with
+ *  #963, #964, #966, #967 and #970 in it measured 3,363,280, over by what #963 to #967
+ *  added beside #970. #965 (B472) adds nothing to the first paint. */
+const BUDGET = 3_364_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a
