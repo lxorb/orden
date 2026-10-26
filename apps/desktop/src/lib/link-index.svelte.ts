@@ -215,7 +215,9 @@ function stillReaches(
   const at = spelled(there)
 
   if (link.kind === 'markdown') {
-    const parts = folderOf(source).split('/').filter(Boolean)
+    // The note's folder spelled the way the target is, or `./B.md` in a folder with
+    // a capital never matched once folded.
+    const parts = spelled(folderOf(source)).split('/').filter(Boolean)
     for (const part of spelled(link.target).split('/')) {
       if (part === '' || part === '.') continue
       // Above the top of the space is nowhere a link should climb to, even where
@@ -1573,12 +1575,12 @@ class Links {
 
     if (this.root !== null && samePath(root, this.root)) {
       // eslint-disable-next-line svelte/prefer-svelte-reactivity -- one pass's notes, thrown away after it
-      const rescanned = new Map<string, string>()
+      const rescanned = new Map<string, { from: ScannedNote; after: string }>()
       const touched = await this.retargetIn(
         this.notes,
         (source, link) =>
           this.resolveFrom(source, link) ?? fileNamed(this.filesNamed, source, link),
-        (note, after) => rescanned.set(note, after),
+        (note, after) => rescanned.set(note.path, { from: note, after }),
         { was, now, root, open, how },
       )
       // Told to the index once, after the pass: each note told as it was rewritten
@@ -1586,10 +1588,13 @@ class Links {
       // whole space again, so a folder rewritten whole cost the folder times the
       // space. Nothing a rewrite changes is a name or an alias, so the pass resolves
       // every link against the space as it was before the move, which it is anyway.
+      // Only over the entry the pass read: a note saved after it was rewritten, by
+      // its writer or by sync, is newer news than the rewrite, and putting the
+      // rewrite back over it lost the links that save added.
       if (rescanned.size) {
         this.notes = this.notes.map((one) => {
-          const after = rescanned.get(one.path)
-          return after === undefined ? one : scanNote(one.path, after)
+          const held = rescanned.get(one.path)
+          return held?.from === one ? scanNote(one.path, held.after) : one
         })
       }
       if (touched) this.changed()
@@ -1633,7 +1638,7 @@ class Links {
   private async retargetIn(
     notes: readonly ScannedNote[],
     resolve: (source: string, link: { kind: LinkKind; target: string }) => string | null,
-    rewritten: (note: string, after: string) => void,
+    rewritten: (note: ScannedNote, after: string) => void,
     asked: {
       was: string
       now: string
@@ -1744,7 +1749,7 @@ class Links {
       for (const hear of this.hearing) hear(target, after)
       told?.push(target)
 
-      rewritten(note.path, after)
+      rewritten(note, after)
       touched++
     }
 
