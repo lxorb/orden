@@ -242,6 +242,17 @@ describe('the citations in an answer', () => {
       'A banana, an an apple an.',
     )
   })
+
+  test('fold a name cited right after the answer says it', () => {
+    const sources = [
+      { path: 'Birds/Herons.md', name: 'Herons' },
+      { path: 'Japan.md', name: 'an' },
+    ]
+    const named = (one: { name: string }) => one.name
+    expect(linkedAnswer('About Herons [1]. In Japan [2].', sources, named)).toBe(
+      'About Herons. In Japan an.',
+    )
+  })
 })
 
 describe('asking the space', () => {
