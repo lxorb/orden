@@ -47,6 +47,7 @@ import {
   type LinkKind,
   withoutBlockIds,
 } from '@nib/markdown/links'
+import { breathe } from './breathe'
 import { buildGraph, type NoteGraph } from './graph'
 import { retargetLinks } from './link-rewrite'
 import { t } from './i18n.svelte'
@@ -230,31 +231,56 @@ function stillReaches(
   return ends(at, written) || ends(shownName(at), written)
 }
 
-/** The files beside the notes by the last part of their path, folded. A link to a
- *  file ends in its name however it is spelled, so the handful that do are all
- *  `resolveFile` needs to be asked about; asked about every file in the space per
- *  link, a folder of a thousand notes renamed held the window for seconds. */
-function filesByName(files: readonly string[]): ReadonlyMap<string, readonly string[]> {
-  // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built whole and never changed
-  const map = new Map<string, string[]>()
-  for (const path of files) {
-    const key = foldName(nameOf(path))
+/** How many notes `retargetIn` goes through before it lets go of the thread. */
+const BREATHE_EVERY = 500
+
+/** The files beside the notes, folded, two ways: by their whole path, which is how
+ *  a markdown link names one (`resolveFile` matches it whole), and by the last part
+ *  of it, which is how a wikilink does. So a link is asked about only the files it
+ *  could mean; asked about every file in the space per link, or every `image.png`
+ *  in an export where each page has its own, a folder of a thousand notes renamed
+ *  held the window for seconds. */
+interface FilesNamed {
+  whole: ReadonlyMap<string, readonly string[]>
+  last: ReadonlyMap<string, readonly string[]>
+}
+
+function filesByName(files: readonly string[]): FilesNamed {
+  const whole = new Map<string, string[]>()
+  const last = new Map<string, string[]>()
+  const add = (map: Map<string, string[]>, key: string, path: string) => {
     const held = map.get(key)
     if (held) held.push(path)
     else map.set(key, [path])
   }
-  return map
+  for (const path of files) {
+    add(whole, foldName(path), path)
+    add(last, foldName(nameOf(path)), path)
+  }
+  return { whole, last }
 }
 
 /** The file a link names, from `source`, as `resolveFile` answers it over the whole
- *  space; see `filesByName`. */
+ *  space; see `filesByName`. A markdown target is folded from the note's folder the
+ *  way the resolver folds one, a trailing `/` and all. */
 function fileNamed(
-  byName: ReadonlyMap<string, readonly string[]>,
+  named: FilesNamed,
   source: string,
   link: { kind: LinkKind; target: string },
 ): string | null {
-  const last = link.target.replace(/\\/g, '/').split('/').pop() ?? ''
-  const files = byName.get(foldName(last))
+  let files: readonly string[] | undefined
+  if (link.kind === 'markdown') {
+    const parts = folderOf(source).split('/').filter(Boolean)
+    for (const part of link.target.replace(/\\/g, '/').split('/')) {
+      if (part === '' || part === '.') continue
+      if (part === '..') parts.pop()
+      else parts.push(part)
+    }
+    files = named.whole.get(foldName(parts.join('/')))
+  } else {
+    const last = link.target.trim().replace(/\\/g, '/').split('/').pop() ?? ''
+    files = named.last.get(foldName(last))
+  }
   if (!files) return null
   return resolveFile({ notes: [], files, path: source, read: nothing }, link.target, link.kind)
 }
@@ -1238,9 +1264,6 @@ class Links {
    *  What that is worth: the graph of a space of two thousand notes resolves four
    *  thousand links, and walking every note for each of them took a second and a
    *  half. */
-  /** The files the same way; see `filesByName`. */
-  private readonly filesNamed = $derived.by(() => filesByName(this.files))
-
   private readonly byName = $derived.by(() => {
     this.namesBuilt++
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- built and thrown away inside the derived
@@ -1258,6 +1281,9 @@ class Links {
 
     return map
   })
+
+  /** The files the same way, by whole path and by name; see `filesByName`. */
+  private readonly filesNamed = $derived.by(() => filesByName(this.files))
 
   /** Which note, which PDF or which canvas a link in `source` points at.
    *
@@ -1546,15 +1572,26 @@ class Links {
     if (!was || !now || was === now) return 0
 
     if (this.root !== null && samePath(root, this.root)) {
+      // eslint-disable-next-line svelte/prefer-svelte-reactivity -- one pass's notes, thrown away after it
+      const rescanned = new Map<string, string>()
       const touched = await this.retargetIn(
         this.notes,
         (source, link) =>
           this.resolveFrom(source, link) ?? fileNamed(this.filesNamed, source, link),
-        (note, after) => {
-          this.notes = this.notes.map((one) => (one.path === note ? scanNote(note, after) : one))
-        },
+        (note, after) => rescanned.set(note, after),
         { was, now, root, open, how },
       )
+      // Told to the index once, after the pass: each note told as it was rewritten
+      // threw away what the index had sorted by name, and the next link sorted the
+      // whole space again, so a folder rewritten whole cost the folder times the
+      // space. Nothing a rewrite changes is a name or an alias, so the pass resolves
+      // every link against the space as it was before the move, which it is anyway.
+      if (rescanned.size) {
+        this.notes = this.notes.map((one) => {
+          const after = rescanned.get(one.path)
+          return after === undefined ? one : scanNote(one.path, after)
+        })
+      }
       if (touched) this.changed()
       return touched
     }
@@ -1623,8 +1660,12 @@ class Links {
     const moving = (path: string) =>
       path === was ? now : path.startsWith(`${was}/`) ? `${now}${path.slice(was.length)}` : null
     let touched = 0
+    let walked = 0
 
     for (const note of [...notes]) {
+      // A pass over a large space that writes nothing never waits for anything, and
+      // would be one task for as long as it takes; the writes it holds stay held.
+      if (++walked % BREATHE_EVERY === 0) await breathe()
       if (only && !only.some((path) => samePath(path, insideSpace(root, note.path)))) continue
 
       // The note that moved, or a note inside the folder that did, is still listed

@@ -42,7 +42,7 @@ vi.mock('./tauri', async (importOriginal) => ({
       case 'read_note':
         return notes[path] ?? null
       case 'write_note':
-        notes[path] = String(args?.content ?? '')
+        notes[path] = typeof args?.content === 'string' ? args.content : ''
         return undefined
       default:
         return undefined
