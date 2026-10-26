@@ -78,14 +78,19 @@ vi.mock('./setup', () => ({ engineOf: () => Promise.resolve(engine) }))
 
 // What a review of an agent's edits needs is a workspace of documents, which none of
 // this is about.
+/** The earlier messages changed, as `turn:words`. */
+const edits = vi.hoisted(() => [] as string[])
 vi.mock('../review', () => ({
   // An edit sends its words, as the review does once the notes are back.
   editMessage: (
     _thread: unknown,
-    _turn: string,
+    turn: string,
     text: string,
     panel: { send(text: string): void },
-  ) => panel.send(text),
+  ) => {
+    edits.push(`${turn}:${text}`)
+    panel.send(text)
+  },
   lastMessage: () => null,
   openRewind: () => null,
 }))
@@ -634,6 +639,66 @@ describe('the field while a message is changed', () => {
     done()
 
     await vi.waitFor(() => expect(sentWords()).toEqual(['second']))
+  })
+  test('sends a queued message taken after an earlier one as itself, not as the earlier one changed', async () => {
+    const chat = await asked()
+    edits.length = 0
+    await queuedBehind(chat)
+    chat.stop()
+    await vi.waitFor(() => expect(chat.busy).toBe(false))
+    chat.text = 'my draft'
+    chat.startEdit('u1')
+
+    chat.editQueued(chat.queue[0]!.id)
+    chat.submit(around)
+
+    await vi.waitFor(() => expect(sentWords()).toEqual(['first', 'second']))
+    expect(edits).toEqual([])
+    expect([chat.changing, chat.text]).toEqual([false, 'my draft'])
+  })
+
+  test('keeps the whole queue of a chat archived while it answers, the message being changed too', async () => {
+    const chat = await asked()
+    const id = String(chat.thread?.id)
+    const answer = await queuedBehind(chat)
+    chat.text = 'third'
+    chat.submit(around)
+    chat.editQueued(chat.queue[0]!.id)
+
+    chat.archive(id)
+    await vi.waitFor(() => expect(chat.thread?.id).not.toBe(id))
+    answer()
+
+    await vi.waitFor(() => expect(sentWords()).toEqual(['first', 'second', 'third']))
+  })
+
+  test('keeps a queued message let go by another chat coming to the front in its own chat where it cannot be sent', async () => {
+    const chat = await asked()
+    const id = String(chat.thread?.id)
+    await heldAfterAnswer(chat)
+    const { ai } = await import('../store.svelte')
+    const gone = vi.spyOn(ai, 'provider').mockReturnValue(null)
+
+    chat.newThread()
+
+    await settled()
+    gone.mockRestore()
+    expect(chat.text).toBe('my draft')
+    const queued = (chat as unknown as { queued: Record<string, { text: string }[]> }).queued
+    expect(queued[id]?.map((one) => one.text)).toEqual(['second'])
+  })
+
+  test('puts a queued message being changed back, as changed, when a rewind takes the field', async () => {
+    const chat = await asked()
+    await heldAfterAnswer(chat)
+    chat.text = 'second, changed'
+
+    chat.release()
+
+    expect([chat.changing, chat.text]).toEqual([false, 'my draft'])
+    expect(chat.queue.map((one) => one.text)).toEqual(['second, changed'])
+    await settled()
+    expect(sentWords()).toEqual(['first'])
   })
 })
 
