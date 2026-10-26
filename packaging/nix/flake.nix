@@ -481,6 +481,16 @@
             buildAndTestSubdir = "apps/desktop/src-tauri";
             # The app's tests run in CI against the checkout; the package only builds.
             doCheck = false;
+            # Thin LTO in sixteen parts here, where the release build is one part under
+            # fat LTO. That pair puts the whole program through one optimiser thread at
+            # the end: measured on eight cores, the app's own crate ran alone on one of
+            # them for 315 s of a 510 s compile, which is what "multiple threads but not
+            # multiple cores" was (#672); in sixteen parts it took 154 s. This copy is
+            # compiled on the machine that runs it, every time it updates, so its
+            # compile is worth more than the 5 MB it adds to a 15 MB program beside a
+            # Chromium of its own; the release's profile is left as it is.
+            CARGO_PROFILE_RELEASE_LTO = "thin";
+            CARGO_PROFILE_RELEASE_CODEGEN_UNITS = "16";
             # Linux is built from a manifest of its own, on Tauri 3 and CEF, put in place
             # of the app's before anything reads it; see scripts/linux-cef.sh.
             cargoLock.lockFile = "${workspace}/apps/desktop/src-tauri/linux/Cargo.lock";
