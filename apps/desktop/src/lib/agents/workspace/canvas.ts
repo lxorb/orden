@@ -32,7 +32,7 @@ import { applied, readable } from './canvas-ops'
 import { type Call, done, maybe, need } from './call'
 import { readablePages } from './pages-ops'
 import { Refused } from './problem'
-import { namedTab } from './tab-target'
+import { namedTab, tabsOwnSpace } from './tab-target'
 import { kindsWhere } from '../../workspace/tab-kinds'
 import { judged, judgedForWriting, onDisk, type Place, placeFor, sharedSource } from './spaces'
 
@@ -80,6 +80,7 @@ function canvasInTab(call: Call, writing: boolean): Target {
   if (tab.note.shared !== null) {
     throw new Refused('by_hand', `tab ${tab.id} is a canvas somebody shared, kept by its room`)
   }
+  tabsOwnSpace(call, tab, place)
 
   return { place, relative: '', path: null, draft: tab.note }
 }
