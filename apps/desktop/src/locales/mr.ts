@@ -2634,4 +2634,6 @@ export const mr: Dictionary = {
     'https:// ने सुरू होणारा DNS over HTTPS सर्व्हरचा पत्ता',
   'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
     'येथे वेब पेज सिस्टमप्रमाणेच पत्ते शोधतात; त्याचा DNS सिस्टमच्या स्वतःच्या सेटिंग्जमध्ये ठरवला जातो.',
+  'Set by the settings file': 'सेटिंग्ज फाइलने ठरवलेले',
+  'The settings file has a problem': 'सेटिंग्ज फाइलमध्ये समस्या आहे',
 }

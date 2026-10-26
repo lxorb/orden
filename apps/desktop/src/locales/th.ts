@@ -2577,4 +2577,6 @@ export const th: Dictionary = {
     'ที่อยู่ของเซิร์ฟเวอร์ DNS over HTTPS ที่ขึ้นต้นด้วย https://',
   'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
     'ที่นี่หน้าเว็บค้นหาที่อยู่แบบเดียวกับระบบ DNS ของมันตั้งค่าในการตั้งค่าของระบบเอง',
+  'Set by the settings file': 'กำหนดโดยไฟล์การตั้งค่า',
+  'The settings file has a problem': 'ไฟล์การตั้งค่ามีปัญหา',
 }

@@ -2689,4 +2689,6 @@ export const de: Dictionary = {
     'Die Adresse eines DNS-over-HTTPS-Servers, beginnend mit https://',
   'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
     'Webseiten schlagen Adressen hier so nach wie das System; sein DNS wird in den Einstellungen des Systems festgelegt.',
+  'Set by the settings file': 'Von der Einstellungsdatei festgelegt',
+  'The settings file has a problem': 'Die Einstellungsdatei hat ein Problem',
 }

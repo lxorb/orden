@@ -2549,4 +2549,6 @@ export const yue: Dictionary = {
     'DNS over HTTPS 伺服器嘅地址，以 https:// 開頭',
   'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
     '喺度網頁跟系統嘅方法搵地址；DNS 要喺系統自己嘅設定度改。',
+  'Set by the settings file': '由設定檔指定',
+  'The settings file has a problem': '設定檔有問題',
 }

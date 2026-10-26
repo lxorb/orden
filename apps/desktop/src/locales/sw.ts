@@ -2672,4 +2672,6 @@ export const sw: Dictionary = {
     'Anwani ya seva ya DNS over HTTPS, inayoanza na https://',
   'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
     'Hapa kurasa za wavuti hutafuta anwani kama mfumo unavyofanya; DNS yake huwekwa katika mipangilio ya mfumo wenyewe.',
+  'Set by the settings file': 'Imewekwa na faili la mipangilio',
+  'The settings file has a problem': 'Faili la mipangilio lina tatizo',
 }

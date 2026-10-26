@@ -2719,4 +2719,6 @@ export const uk: Dictionary = {
     'Адреса сервера DNS over HTTPS, що починається з https://',
   'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
     'Тут вебсторінки шукають адреси так само, як система; її DNS задається в налаштуваннях самої системи.',
+  'Set by the settings file': 'Задано файлом налаштувань',
+  'The settings file has a problem': 'У файлі налаштувань є помилка',
 }

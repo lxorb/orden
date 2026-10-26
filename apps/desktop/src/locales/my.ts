@@ -2617,4 +2617,6 @@ export const my: Dictionary = {
     'https:// ဖြင့်စသော DNS over HTTPS ဆာဗာလိပ်စာ',
   'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
     'ဤနေရာတွင် ဝဘ်စာမျက်နှာများသည် စနစ်ကဲ့သို့ပင် လိပ်စာများကို ရှာသည်။ ၎င်း၏ DNS ကို စနစ်၏ ဆက်တင်များတွင် သတ်မှတ်ရသည်။',
+  'Set by the settings file': 'ဆက်တင်ဖိုင်က သတ်မှတ်ထားသည်',
+  'The settings file has a problem': 'ဆက်တင်ဖိုင်တွင် ပြဿနာရှိသည်',
 }

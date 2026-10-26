@@ -2640,4 +2640,6 @@ export const pa: Dictionary = {
     'https:// ਨਾਲ ਸ਼ੁਰੂ ਹੋਣ ਵਾਲਾ DNS over HTTPS ਸਰਵਰ ਦਾ ਪਤਾ',
   'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
     'ਇੱਥੇ ਵੈੱਬ ਪੰਨੇ ਸਿਸਟਮ ਵਾਂਗ ਹੀ ਪਤੇ ਲੱਭਦੇ ਹਨ; ਇਸ ਦਾ DNS ਸਿਸਟਮ ਦੀਆਂ ਆਪਣੀਆਂ ਸੈਟਿੰਗਾਂ ਵਿੱਚ ਤੈਅ ਹੁੰਦਾ ਹੈ।',
+  'Set by the settings file': 'ਸੈਟਿੰਗਾਂ ਫ਼ਾਈਲ ਵੱਲੋਂ ਤੈਅ',
+  'The settings file has a problem': 'ਸੈਟਿੰਗਾਂ ਫ਼ਾਈਲ ਵਿੱਚ ਸਮੱਸਿਆ ਹੈ',
 }

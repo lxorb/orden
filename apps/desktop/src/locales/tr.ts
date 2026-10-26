@@ -2647,4 +2647,6 @@ export const tr: Dictionary = {
     'https:// ile başlayan bir DNS over HTTPS sunucusunun adresi',
   'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
     'Burada web sayfaları adresleri sistemin yaptığı gibi bulur; DNS’i sistemin kendi ayarlarından değiştirilir.',
+  'Set by the settings file': 'Ayarlar dosyasında belirlendi',
+  'The settings file has a problem': 'Ayarlar dosyasında bir sorun var',
 }

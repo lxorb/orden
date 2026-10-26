@@ -2726,4 +2726,6 @@ export const ru: Dictionary = {
     'Адрес сервера DNS over HTTPS, начинающийся с https://',
   'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
     'Здесь веб-страницы ищут адреса так же, как система; её DNS задаётся в настройках самой системы.',
+  'Set by the settings file': 'Задано файлом настроек',
+  'The settings file has a problem': 'В файле настроек есть ошибка',
 }

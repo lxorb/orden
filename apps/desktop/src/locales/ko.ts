@@ -2594,4 +2594,6 @@ export const ko: Dictionary = {
     'https://로 시작하는 DNS over HTTPS 서버 주소',
   'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
     '여기서는 웹 페이지가 시스템과 같은 방식으로 주소를 찾습니다. DNS는 시스템 자체 설정에서 바꿉니다.',
+  'Set by the settings file': '설정 파일에서 지정됨',
+  'The settings file has a problem': '설정 파일에 문제가 있습니다',
 }

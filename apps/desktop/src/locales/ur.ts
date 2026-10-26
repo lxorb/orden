@@ -2627,4 +2627,6 @@ export const ur: Dictionary = {
     'DNS over HTTPS سرور کا پتا، جو https:// سے شروع ہو',
   'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
     'یہاں ویب صفحات پتے ویسے ہی تلاش کرتے ہیں جیسے سسٹم؛ اس کا DNS سسٹم کی اپنی ترتیبات میں طے ہوتا ہے۔',
+  'Set by the settings file': 'سیٹنگز فائل سے طے شدہ',
+  'The settings file has a problem': 'سیٹنگز فائل میں مسئلہ ہے',
 }

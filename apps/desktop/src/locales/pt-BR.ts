@@ -2684,4 +2684,6 @@ export const ptBR: Dictionary = {
     'O endereço de um servidor DNS por HTTPS, começando com https://',
   'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
     'Aqui as páginas da web procuram endereços como o sistema faz; o DNS dele é definido nos ajustes do próprio sistema.',
+  'Set by the settings file': 'Definido pelo arquivo de configurações',
+  'The settings file has a problem': 'O arquivo de configurações tem um problema',
 }

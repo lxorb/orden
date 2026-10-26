@@ -2627,4 +2627,6 @@ export const id: Dictionary = {
     'Alamat server DNS over HTTPS, diawali dengan https://',
   'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
     'Di sini halaman web mencari alamat seperti sistem; DNS-nya diatur di pengaturan sistem itu sendiri.',
+  'Set by the settings file': 'Diatur oleh file pengaturan',
+  'The settings file has a problem': 'File pengaturan bermasalah',
 }

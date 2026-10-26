@@ -2669,4 +2669,6 @@ export const ml: Dictionary = {
     'https:// എന്നു തുടങ്ങുന്ന DNS over HTTPS സെർവറിന്റെ വിലാസം',
   'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
     'ഇവിടെ വെബ് പേജുകൾ സിസ്റ്റം ചെയ്യുന്നതുപോലെ വിലാസങ്ങൾ കണ്ടെത്തുന്നു; അതിന്റെ DNS സിസ്റ്റത്തിന്റെ സ്വന്തം ക്രമീകരണങ്ങളിലാണ് മാറ്റുന്നത്.',
+  'Set by the settings file': 'ക്രമീകരണ ഫയൽ നിശ്ചയിച്ചത്',
+  'The settings file has a problem': 'ക്രമീകരണ ഫയലിൽ ഒരു പ്രശ്നമുണ്ട്',
 }

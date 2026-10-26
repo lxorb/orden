@@ -2553,4 +2553,6 @@ export const zhHans: Dictionary = {
     'DNS over HTTPS 服务器的地址，以 https:// 开头',
   'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
     '这里的网页按系统的方式查找地址；DNS 需在系统自己的设置中更改。',
+  'Set by the settings file': '由设置文件指定',
+  'The settings file has a problem': '设置文件有问题',
 }

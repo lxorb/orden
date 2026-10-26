@@ -2726,4 +2726,6 @@ export const pl: Dictionary = {
     'Adres serwera DNS przez HTTPS, zaczynający się od https://',
   'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
     'Tutaj strony wyszukują adresy tak jak system; jego DNS ustawia się w ustawieniach systemu.',
+  'Set by the settings file': 'Ustawione przez plik ustawień',
+  'The settings file has a problem': 'Plik ustawień ma problem',
 }

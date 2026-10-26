@@ -2698,4 +2698,6 @@ export const ptPT: Dictionary = {
     'O endereço de um servidor DNS por HTTPS, a começar por https://',
   'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
     'Aqui as páginas web procuram endereços como o sistema faz; o DNS dele define-se nas definições do próprio sistema.',
+  'Set by the settings file': 'Definido pelo ficheiro de definições',
+  'The settings file has a problem': 'O ficheiro de definições tem um problema',
 }

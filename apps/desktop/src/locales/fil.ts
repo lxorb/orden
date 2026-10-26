@@ -2686,4 +2686,6 @@ export const fil: Dictionary = {
     'Ang address ng isang DNS over HTTPS server, na nagsisimula sa https://',
   'Web pages here look up addresses the way the system does; its DNS is set in the system’s own settings.':
     'Dito, hinahanap ng mga web page ang mga address sa paraan ng system; ang DNS nito ay itinatakda sa sariling settings ng system.',
+  'Set by the settings file': 'Itinakda ng settings file',
+  'The settings file has a problem': 'May problema ang settings file',
 }
