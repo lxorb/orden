@@ -505,6 +505,22 @@ describe('Typora extensions', () => {
     expect(html).not.toContain('callout')
   })
 
+  /** Only an opening paragraph names a type: code that starts with the marker
+   *  is code, and has no inline tokens to cut the marker out of. It used to
+   *  throw, which took the whole note down with it. */
+  test.each([
+    ['indented code', '>     [!note] T\n'],
+    ['tab-indented code', '> \t[!note] T\n'],
+    ['a backtick fence', '> ```md\n> [!note] x\n> ```\n'],
+    ['a tilde fence', '> ~~~\n> [!note] x\n> ~~~\n'],
+    ['a heading', '> ## [!note] x\n'],
+  ])('a quote opening with %s that reads like a marker stays a quote', (_, source) => {
+    const html = renderMarkdown(source)
+    expect(html).toContain('<blockquote>')
+    expect(html).toContain('[!note]')
+    expect(html).not.toContain('callout')
+  })
+
   test('footnotes link both ways', () => {
     const html = renderMarkdown('Text[^1].\n\n[^1]: The note.\n', { footnotes: true })
     expect(html).toContain('id="fnref-1"')
