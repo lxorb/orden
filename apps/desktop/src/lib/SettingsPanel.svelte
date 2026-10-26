@@ -48,7 +48,7 @@
   import ThemeStore from './ThemeStore.svelte'
   import { store } from './themes/store.svelte'
   import { type Field, type PictureSide, preferences, resetPane, resettable } from './preferences'
-  import { declared } from './settings/file.svelte'
+  import { declared } from './settings/declared.svelte'
   import { glassesKey } from './even/key.svelte'
   import { EFFORT_WORDS, Offered } from './even/offered.svelte'
   import { modes } from './modes.svelte'
