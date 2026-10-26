@@ -22,7 +22,7 @@
   import { inlineFiles } from './reading/drawn'
   import { paint, placesIn, rangeOf, wordsOf, type Words } from './reading/find'
   import { headingOffsets, positionOf, type Section, sectionAt } from './reading/places'
-  import { readingHtml, tagAnchor } from './reading/render'
+  import { readingHtml, tagAnchor, unreadableHtml } from './reading/render'
   import { trustsHtmlIn } from './sharing.svelte'
   import { scrollbar } from './scrollbar'
   import { shortcuts } from './shortcuts.svelte'
@@ -92,7 +92,12 @@
   async function draw() {
     const mine = ++latest
     const source = note()
-    const next = await readingHtml(source, theme.current, trustsHtmlIn(tab.note), tagAnchor)
+    const next = await readingHtml(source, theme.current, trustsHtmlIn(tab.note), tagAnchor).catch(
+      (error: unknown) => {
+        console.error('the note could not be rendered', error)
+        return unreadableHtml(source.text)
+      },
+    )
     if (mine !== latest) return
 
     html = next

@@ -232,6 +232,24 @@ describe('a quote', () => {
   test('says the name of a kind it has never heard of', () => {
     expect(lines('> [!recipe]\n> Flour and water.\n')).toEqual(['│ RECIPE', '│ Flour and water.'])
   })
+
+  test('takes a marker line with a rule under it for the callout it opens', () => {
+    for (const source of [
+      '> [!note] Title\n> ---\n> body\n',
+      '> [!note]\n> Heading\n> ---\n> body\n',
+      '> [!note] Title\n> ===\n',
+    ]) {
+      expect(one(source)).not.toContain('[!')
+      expect(lines(source)[0]).toMatch(/^│ (Title|NOTE)$/)
+    }
+  })
+
+  test('reads code that starts with a marker as the code it is', () => {
+    for (const source of ['>     [!note] T\n', '> ```md\n> [!note] x\n> ```\n']) {
+      expect(lines(source).join('\n')).toContain('[!note]')
+      expect(lines(source)).not.toContain('│ NOTE')
+    }
+  })
 })
 
 /** A note to the writer is not read out to anybody, here either. Both spellings
