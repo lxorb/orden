@@ -211,7 +211,7 @@ pub fn read_snippets(app: AppHandle) -> String {
 /// the window applies at launch and keeps out of the reader's hands. Never written or
 /// made here: no file is no declared settings, and one Home Manager wrote is a link
 /// into the store that nothing could write anyway.
-const SETTINGS_FILE: &str = "settings.json";
+pub(crate) const SETTINGS_FILE: &str = "settings.json";
 
 /// The settings file, as it is on disk.
 #[derive(Serialize)]
