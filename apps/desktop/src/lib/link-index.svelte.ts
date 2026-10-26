@@ -1284,6 +1284,12 @@ class Links {
     return map
   })
 
+  /** Every note by its path, as the index lists it now; see `retarget`, which asks
+   *  for the entry a note has at the moment its words are read. */
+  private readonly notesByPath = $derived.by(
+    () => new Map(this.notes.map((one) => [one.path, one])),
+  )
+
   /** The files the same way, by whole path and by name; see `filesByName`. */
   private readonly filesNamed = $derived.by(() => filesByName(this.files))
 
@@ -1581,16 +1587,18 @@ class Links {
         (source, link) =>
           this.resolveFrom(source, link) ?? fileNamed(this.filesNamed, source, link),
         (note, after) => rescanned.set(note.path, { from: note, after }),
-        { was, now, root, open, how },
+        { was, now, root, open, how, listed: (path) => this.notesByPath.get(path) },
       )
       // Told to the index once, after the pass: each note told as it was rewritten
       // threw away what the index had sorted by name, and the next link sorted the
       // whole space again, so a folder rewritten whole cost the folder times the
       // space. Nothing a rewrite changes is a name or an alias, so the pass resolves
       // every link against the space as it was before the move, which it is anyway.
-      // Only over the entry the pass read: a note saved after it was rewritten, by
-      // its writer or by sync, is newer news than the rewrite, and putting the
-      // rewrite back over it lost the links that save added.
+      // Only over the entry the index had when the pass read the note's words: a
+      // note saved after it was rewritten, by its writer or by sync, is newer news
+      // than the rewrite, and putting the rewrite back over it lost the links that
+      // save added. One saved before the pass reached it is the words the pass read,
+      // which is why the entry is taken then rather than when the pass began.
       if (rescanned.size) {
         this.notes = this.notes.map((one) => {
           const held = rescanned.get(one.path)
@@ -1645,9 +1653,12 @@ class Links {
       root: string
       open: (path: string) => NoteDoc | null
       how: Retargeting
+      /** The entry the index has for a note now, which is what `rewritten` is
+       *  handed: the one in `notes` may have been saved over since the pass began. */
+      listed?: (path: string) => ScannedNote | undefined
     },
   ): Promise<number> {
-    const { was, now, root, open, how } = asked
+    const { was, now, root, open, how, listed } = asked
     const { moved = false, only, touched: told } = how
 
     // The file's own name and nothing else. A rename rewrites the links that
@@ -1718,6 +1729,8 @@ class Links {
       const target = went === null ? absolute : insideSpace(root, went)
       const before = await this.wordsOf(absolute, target, open)
       if (before === null) continue
+      // In the same tick as the words: the entry that describes them.
+      const read = listed?.(note.path) ?? note
 
       // A plane is JSON, and is rewritten as JSON; see canvas-rewrite.ts.
       const plane = isCanvasTarget(note.path) || isPagesTarget(note.path)
@@ -1749,7 +1762,7 @@ class Links {
       for (const hear of this.hearing) hear(target, after)
       told?.push(target)
 
-      rewritten(note, after)
+      rewritten(read, after)
       touched++
     }
 
