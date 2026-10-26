@@ -104,6 +104,12 @@ const NOTICE_EVERY = 4000
 /** How long an address the machine asked for stays on the bar; see `offered`. */
 const OFFERED_FOR = 60_000
 
+/** How long an online terminal whose way to its machine dropped keeps its screen before
+ *  it says so (issue 962). A relink is a second or two, and a screen that went to "Starting
+ *  machine…" and back for each one was the line Emil saw all the time; one that takes
+ *  longer than this is worth a word, which is why the screen still makes way for it. */
+const RELINK_GRACE = 5000
+
 /** Which Windows this is, for xterm.js's ConPTY allowances: the os plugin writes the
  *  version beside the platform, and the build is its third number. */
 function windowsPty(): { backend: 'conpty'; buildNumber: number } | undefined {
@@ -170,6 +176,11 @@ class Session {
   /** True while a size the session decided is put on the screen, which is not this
    *  screen's own to send back. */
   private applying = false
+  /** For an online terminal: whether the way from the server to its awake machine is
+   *  down, while what is typed waits rather than going nowhere; and the moment, after
+   *  `RELINK_GRACE`, the screen makes way for a line saying so. See `linkDown`. */
+  private relinking = false
+  private relinkSlow: ReturnType<typeof setTimeout> | undefined
 
   /** For an online terminal: whether what is drawn is the session as it is now, rather
    *  than the cached screen or one whose socket has dropped, which is drawn dimmed. */
@@ -670,6 +681,7 @@ class Session {
    *  leaves nothing of itself on the disk - and its last screen stays in memory, for the
    *  tab coming back through Reopen closed tab. */
   end() {
+    clearTimeout(this.relinkSlow)
     clearTimeout(this.resting)
     clearTimeout(this.waitingIdle)
     clearTimeout(this.asking)
@@ -830,15 +842,20 @@ class Session {
     } else if ('machine' in what) {
       this.machine = what.machine
       if (this.online) {
-        // Live, and its machine starting again because its link died: the screen is no
-        // longer the session's, so the card says so until the session's is back.
-        if (what.machine === 'starting' && this.live) {
-          this.live = false
-          this.arrival.lost()
+        // Live, and told its machine is starting: what a server before issue 962 said of
+        // a link it was making again under a machine that never stopped. Held as a relink
+        // is, so the screen stays through the second it takes, and said as a start only
+        // where it lasts - a real restart takes minutes.
+        if (what.machine === 'starting' && this.live) this.linkDown(true)
+        else {
+          if (what.machine !== 'starting') this.linkUp()
+          this.arrival.machine(what.machine, what.reason)
         }
-        this.arrival.machine(what.machine, what.reason)
       }
       this.named()
+    } else if ('link' in what) {
+      if (what.link) this.linkUp()
+      else this.linkDown(false)
     } else if ('connected' in what) {
       this.arrival.linkedNow(what.connected)
       if (what.connected && this.screened) this.landed()
@@ -858,8 +875,40 @@ class Session {
     }
   }
 
+  /** The way to an online terminal's machine dropped under a machine still awake (or, from
+   *  an older server, its machine said to be starting while the screen was live): the
+   *  screen stays as it is and what is typed waits. Only where that lasts `RELINK_GRACE`
+   *  does the screen make way for the card - Connecting, or Starting machine where the
+   *  machine said so. A terminal still waiting for its screen says Connecting at once. */
+  private linkDown(starting: boolean) {
+    this.relinking = true
+    if (!this.live) {
+      if (starting) this.arrival.machine('starting')
+      else this.arrival.relink(true)
+      return
+    }
+    clearTimeout(this.relinkSlow)
+    this.relinkSlow = setTimeout(() => {
+      if (!this.relinking || !this.live) return
+      this.live = false
+      this.arrival.lost()
+      if (starting) this.arrival.machine('starting')
+      else this.arrival.relink(true)
+    }, RELINK_GRACE)
+  }
+
+  /** The way is back, or the machine said where it stands: what was typed meanwhile goes. */
+  private linkUp() {
+    clearTimeout(this.relinkSlow)
+    this.arrival.relink(false)
+    if (!this.relinking) return
+    this.relinking = false
+    void this.send()
+  }
+
   /** An online terminal shows its session as it is now. */
   private landed() {
+    this.linkUp()
     this.screened = true
     this.live = true
     this.arrival.arrived()
@@ -1057,7 +1106,8 @@ class Session {
 
     await this.spawning.catch(() => undefined)
 
-    while (this.outgoing.length && this.pty !== null && this.source) {
+    // Held while an online terminal's way to its machine is down; see `linkUp`.
+    while (this.outgoing.length && this.pty !== null && this.source && !this.relinking) {
       const binary = this.outgoing[0]?.binary ?? false
       let data = ''
       while (this.outgoing[0]?.binary === binary) data += this.outgoing.shift()?.data ?? ''
@@ -1065,7 +1115,7 @@ class Session {
       await this.source.write(data, binary)
     }
 
-    this.outgoing = []
+    if (!this.relinking) this.outgoing = []
     this.sending = false
   }
 

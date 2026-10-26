@@ -74,6 +74,9 @@ export class Arrival {
   /** Whether the machine was seen starting since this wait began: a session still
    *  without its screen after that is being put back. */
   private booted = $state(false)
+  /** Whether the way from the server to the awake machine is down: Connecting, never
+   *  Starting machine, since the machine did not stop (issue 962). */
+  private relinking = $state(false)
   /** Whether the session's screen is drawn, after which there is nothing to wait on
    *  until the socket drops. */
   private here = false
@@ -84,6 +87,7 @@ export class Arrival {
   get status(): Status {
     if (this.failure !== null)
       return this.gone ? { failed: this.failure, gone: true } : { failed: this.failure }
+    if (this.relinking) return { waiting: 'connecting' }
     if (this.linked && this.state === 'starting') return { waiting: 'starting' }
     if (this.linked && this.booted) return { waiting: 'restoring' }
     return { waiting: 'connecting' }
@@ -96,8 +100,15 @@ export class Arrival {
     this.linked = false
     this.state = null
     this.booted = false
+    this.relinking = false
     this.here = false
     this.wait()
+  }
+
+  /** The way to the machine dropped (`down`) or came back. */
+  relink(down: boolean): void {
+    this.relinking = down
+    this.heard()
   }
 
   /** The socket opened or dropped. A drop after the screen was here waits again. */
