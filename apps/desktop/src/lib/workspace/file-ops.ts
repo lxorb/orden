@@ -22,7 +22,9 @@ export type Kind = 'file' | 'folder' | 'space'
 
 /** One file operation. `root` is the space the path was in, which an agent's move
  *  in a space the reader is not looking at shows is not always the open one; null
- *  for a path in no space. A space moving is itself: its old root and its new. A file
+ *  for a path in no space. A move's `into` is the space it landed in, which Move
+ *  offers to make another one; left out, the same as `root`. A space moving is
+ *  itself: its old root and its new. A file
  *  made for a document that was already open without one - a new tab given its place
  *  - names that document by its `key` (see documents.svelte.ts). */
 export type FileOp =
@@ -33,7 +35,14 @@ export type FileOp =
       root: string | null
       key?: string
     }
-  | { op: 'moved'; from: string; to: string; kind: Kind; root: string | null }
+  | {
+      op: 'moved'
+      from: string
+      to: string
+      kind: Kind
+      root: string | null
+      into?: string | null
+    }
   | { op: 'removed'; path: string; kind: Kind; root: string | null }
 
 /** Whatever keeps files by path. What it has left to do - telling the account - it
@@ -81,7 +90,7 @@ function failed(op: FileOp, error: unknown) {
 /** A store that keeps things by a path inside a space, under each space's root: the
  *  four sentences it takes, and the one place those are read off an operation. */
 export interface KeptByPath {
-  moved?(from: string, to: string, root: string | null): void
+  moved?(from: string, to: string, root: string | null, into?: string | null): void
   gone?(path: string, root: string | null): void
   spaceMoved?(from: string, to: string): void
   forget?(root: string): void
@@ -95,7 +104,7 @@ export function keeping(store: KeptByPath): Follower {
       else store.gone?.(op.path, op.root)
     } else if (op.op === 'moved') {
       if (op.kind === 'space') store.spaceMoved?.(op.from, op.to)
-      else store.moved?.(op.from, op.to, op.root)
+      else store.moved?.(op.from, op.to, op.root, op.into === undefined ? op.root : op.into)
     }
   }
 }

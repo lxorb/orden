@@ -4287,7 +4287,8 @@ class Workspace {
    *  own space, which an agent's may not be (8.6 in docs/agent-native.md). */
   async fileMoved(from: string, to: string, kind: Kind) {
     const root = kind === 'space' ? from : this.rootHolding(from)
-    await this.fileOps.tell({ op: 'moved', from, to, kind, root })
+    const into = kind === 'space' ? to : this.rootHolding(to)
+    await this.fileOps.tell({ op: 'moved', from, to, kind, root, into })
   }
 
   async fileGone(path: string, kind: Kind) {
