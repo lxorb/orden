@@ -944,8 +944,9 @@ export class Machine implements DurableObject {
 
   /** The link went quiet (`silent`) or closed under an awake machine, or an object that
    *  restarted (every deploy restarts it) has none: made again, and where that fails,
-   *  the machine restarted. Its sockets are told `starting` meanwhile, so a frozen
-   *  terminal never looks alive, and `awake` once it is back. Once, however many ask. */
+   *  the machine restarted. Its sockets are told the link is down meanwhile, so a frozen
+   *  terminal never takes keys it cannot send, and up once it is back; `starting` only
+   *  where the machine is restarted. Once, however many ask. */
   private recover(silent = false): Promise<void> {
     this.recovering ??= this.recoverNow(silent).finally(() => {
       this.recovering = null
@@ -967,13 +968,17 @@ export class Machine implements DurableObject {
     const me = await this.me()
     if (!me) return
 
-    this.everybody({ t: 'machine', state: 'starting' })
+    // The link, not the machine: it is awake and its sessions run on, so its terminals
+    // are told the way to it dropped rather than that it is starting (issue 962). They
+    // keep their screens and hold what is typed; a restart below, if the link cannot be
+    // made again, says `starting` itself.
+    this.everybody({ t: 'link', up: false })
     try {
       await this.attachLink()
       // Put to sleep meanwhile: the sleep has the machine now.
       if ((await this.state()) !== 'awake') return
       await audit(this.env, me.id, 'relink')
-      this.everybody({ t: 'machine', state: 'awake' })
+      this.everybody({ t: 'link', up: true })
       // Only a link that went quiet says anything about `nibd`: one that closed was the
       // way to it (the edge, the tunnel), and restarting `nibd` for that would redraw every
       // terminal on the machine for nothing (issue 208).
