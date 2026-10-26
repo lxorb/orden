@@ -791,6 +791,87 @@ describe('a note renamed on this machine', () => {
     expect(fake.remote.get(id)).toMatchObject({ path: 'One.md', deleted: false })
   })
 
+  test('and one renamed while the account is failing is told once it answers', async () => {
+    const { mirror, id } = await paired('One.md', HERE)
+    renameOnDisk('One.md', 'Two.md')
+    const writing = fake.api.writeNote
+    const reading = fake.api.readNote
+    const asking = fake.api.changes
+    const failing = () => Promise.reject(new ApiError(503, 'this room is not answering', {}))
+    fake.api.writeNote = failing
+    fake.api.readNote = failing
+    fake.api.changes = failing
+    try {
+      await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Two.md`)
+      // A pass every few seconds while the outage lasts, each one failing.
+      for (let one = 0; one < 8; one++) await pull(mirror, 'token', NOBODY).catch(() => false)
+      expect(mirror.untold?.[id]).toBeDefined()
+    } finally {
+      fake.api.writeNote = writing
+      fake.api.readNote = reading
+      fake.api.changes = asking
+    }
+    fake.calls.length = 0
+
+    await pull(mirror, 'token', NOBODY)
+    await push(mirror, 'token', NOBODY)
+
+    expect(fake.calls.filter((one) => /^(deleteNote|createNote|write )/.test(one))).toEqual([])
+    expect(fake.remote.get(id)).toMatchObject({ path: 'Two.md', deleted: false })
+    expect([...fake.disk.keys()]).toEqual([`${ROOT}/Two.md`])
+  })
+
+  test('and a new note at the name, renamed too before the account heard, is a note of its own', async () => {
+    const { mirror, id } = await paired('One.md', HERE)
+    const writing = fake.api.writeNote
+    fake.api.writeNote = () => Promise.reject(new TypeError('Failed to fetch'))
+    try {
+      renameOnDisk('One.md', 'Meeting.md')
+      await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Meeting.md`)
+      // The next new note takes the freed name, and is renamed in turn.
+      fake.disk.set(`${ROOT}/One.md`, '# Ideas\nnew\n')
+      renameOnDisk('One.md', 'Ideas.md')
+      await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Ideas.md`)
+      expect(mirror.untold?.[id]).toMatchObject({ from: 'One.md', to: 'Meeting.md' })
+    } finally {
+      fake.api.writeNote = writing
+    }
+    fake.calls.length = 0
+
+    await pull(mirror, 'token', NOBODY)
+    await push(mirror, 'token', NOBODY)
+
+    expect(fake.remote.get(id)).toMatchObject({ path: 'Meeting.md', content: HERE })
+    expect(fake.calls.filter((one) => /^(deleteNote|createNote|writeNote)/.test(one))).toEqual([
+      'writeNote Meeting.md',
+      'createNote Ideas.md',
+    ])
+    expect(mirror.notes['Meeting.md']?.id).toBe(id)
+    expect(mirror.notes['Ideas.md']?.id).not.toBe(id)
+  })
+
+  test('and a new note at the name, renamed online before the account heard, is not that note', async () => {
+    const { mirror, id } = await paired('One.md', HERE)
+    const writing = fake.api.writeNote
+    fake.api.writeNote = () => Promise.reject(new TypeError('Failed to fetch'))
+    renameOnDisk('One.md', 'Meeting.md')
+    await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Meeting.md`)
+    fake.api.writeNote = writing
+    fake.disk.set(`${ROOT}/One.md`, '# Ideas\nnew\n')
+    renameOnDisk('One.md', 'Ideas.md')
+    await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Ideas.md`)
+
+    await pull(mirror, 'token', NOBODY)
+    await push(mirror, 'token', NOBODY)
+
+    expect(fake.remote.get(id)).toMatchObject({ path: 'Meeting.md', content: HERE })
+    expect(mirror.notes['Meeting.md']?.id).toBe(id)
+    expect(fake.remote.get(mirror.notes['Ideas.md']!.id)).toMatchObject({
+      path: 'Ideas.md',
+      content: '# Ideas\nnew\n',
+    })
+  })
+
   test('and one renamed on another device too takes the name the account has', async () => {
     const { mirror, id } = await paired('One.md', HERE)
     renameOnDisk('One.md', 'Two.md')
