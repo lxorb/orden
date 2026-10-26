@@ -29,12 +29,11 @@ class Dns {
   /** Why the last address typed was not taken, or nothing. */
   refused = $state<string | null>(null)
 
-  private asked = false
+  private asked: Promise<void> | null = null
 
-  ask() {
-    if (this.asked) return
-    this.asked = true
-    void invoke<Said | null>('dns_chosen')
+  /** Asks the crate once; settled once it has answered. */
+  ask(): Promise<void> {
+    this.asked ??= invoke<Said | null>('dns_chosen')
       .then((said) => {
         this.answered = true
         if (!said) return
@@ -43,6 +42,7 @@ class Dns {
         this.offered = true
       })
       .catch(() => undefined)
+    return this.asked
   }
 
   async choose(choice: string) {

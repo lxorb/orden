@@ -62,6 +62,7 @@ export function spellingPane(view: EditorView | undefined): Pane {
         fields: [
           {
             kind: 'switch',
+            key: 'spelling.check',
             label: t('Check spelling'),
             words: ['spellcheck', 'spell check', 'typos'],
             hint: t('Underlines misspelled words as you write.'),

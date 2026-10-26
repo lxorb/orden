@@ -186,6 +186,8 @@ export function appearancePane(): Pane {
             // the look - the palette and the type a theme sets - and the one
             // below picks which side of it the app is showing.
             kind: 'select',
+            key: 'appearance.style',
+            open: true,
             label: t('Style'),
             hint: t('The theme Orden is drawn in.'),
             words: ['theme', 'look'],
@@ -203,6 +205,7 @@ export function appearancePane(): Pane {
             // away from, and the accent below is drawn by hand where a reset
             // could not reach it.
             kind: 'segmented',
+            key: 'appearance.mode',
             label: t('Mode'),
             hint: t('Light, dark, or whichever the system is in.'),
             words: ['dark', 'light', 'night', 'theme'],
@@ -245,6 +248,7 @@ export function appearancePane(): Pane {
         title: t('Fonts'),
         fields: FONT_FIELDS.map((one): Field => ({
           kind: 'text',
+          key: `appearance.${one.place}Font`,
           label: t(one.label),
           words: ['font', 'typeface', 'family', 'custom font', ...one.words],
           hint: t(one.hint),
@@ -261,6 +265,7 @@ export function appearancePane(): Pane {
         fields: [
           {
             kind: 'segmented',
+            key: 'appearance.essentials',
             label: t('Essentials'),
             hint: t(
               'Whether the bookmarks at the top of the file list show as tiles or as a list.',
@@ -284,6 +289,7 @@ export function appearancePane(): Pane {
             // A desktop app's arrow over its buttons, or a web page's hand. The
             // arrow stays the default; the Claude app offers the same switch.
             kind: 'switch',
+            key: 'appearance.pointingHand',
             label: t('Pointing hand on buttons'),
             hint: t('Shows a pointing hand over buttons, as web pages do.'),
             words: ['cursor', 'mouse', 'hand', 'click'],
@@ -311,6 +317,7 @@ export function appearancePane(): Pane {
               fields: [
                 {
                   kind: 'segmented',
+                  key: 'appearance.frame',
                   label: t('Frame'),
                   hint: t('Orden’s own title bar, or the window frame of your system.'),
                   words: ['title bar', 'window'],

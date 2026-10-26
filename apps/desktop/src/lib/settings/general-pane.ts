@@ -65,6 +65,8 @@ function terminalGroup(): Group {
     fields: [
       {
         kind: 'select',
+        key: 'general.shell',
+        open: true,
         label: t('Shell'),
         hint: t('The shell a new terminal starts.'),
         options: shells.list.map((one) => ({ value: one.id, label: shellName(one) })),
@@ -73,6 +75,7 @@ function terminalGroup(): Group {
       },
       {
         kind: 'slider',
+        key: 'general.terminalTextSize',
         label: t('Text size'),
         hint: t('How large the text in terminals is.'),
         min: SIZES.least,
@@ -85,6 +88,7 @@ function terminalGroup(): Group {
       },
       {
         kind: 'switch',
+        key: 'general.restoreTerminalHistory',
         label: t('Restore history'),
         hint: t(
           'Brings back what each terminal showed after Orden restarts; off forgets it on quit.',
@@ -96,6 +100,7 @@ function terminalGroup(): Group {
       },
       {
         kind: 'select',
+        key: 'general.warnBeforeQuitting',
         label: t('Warn before quitting'),
         hint: t(
           'Asks before Orden quits with terminals open: always, or only while something runs in one.',
@@ -124,6 +129,7 @@ function gpuGroup(): Group {
     fields: [
       {
         kind: 'switch',
+        key: 'general.hardwareAcceleration',
         label: t('Hardware acceleration'),
         hint: t(
           'Draws the app on the graphics card; turn it off if the window flickers or stays blank.',
@@ -141,7 +147,7 @@ function gpuGroup(): Group {
  *  with Chrome's choices, and a field for one's own provider when that is the choice.
  *  Nothing until the crate has said this engine can be told; see dns.svelte.ts. */
 function dnsGroups(): Group[] {
-  dns.ask()
+  void dns.ask()
   if (!dns.answered) return []
   // The system's own engine - WebView2, WKWebView - has nothing an app can set its DNS
   // through, so the row says where it is set rather than offering a choice that does
@@ -163,6 +169,7 @@ function dnsGroups(): Group[] {
   const fields: Field[] = [
     {
       kind: 'select',
+      key: 'general.dns',
       label: t('DNS'),
       hint: t(
         'How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups.',
@@ -224,6 +231,7 @@ function remindersGroup(): Group {
     fields: [
       {
         kind: 'select',
+        key: 'general.remindBefore',
         label: t('Automatic'),
         hint: t('How long before a task’s time it reminds you, unless the task says otherwise.'),
         words: ['reminder', 'notification', 'alarm', 'due', 'time', 'before'],
@@ -244,6 +252,7 @@ function remindersGroup(): Group {
         ? ([
             {
               kind: 'switch',
+              key: 'general.stayInTray',
               label: t('Stay in the tray'),
               hint: t(
                 'Keeps Orden running in the tray after its window closes, so reminders still ring.',
@@ -301,6 +310,7 @@ export function generalPane(): Pane {
         fields: [
           {
             kind: 'select',
+            key: 'general.keepVersionEvery',
             label: t('Keep a version every'),
             hint: t(
               'How often a note you are editing is saved as a version you can go back to in History.',
@@ -316,6 +326,7 @@ export function generalPane(): Pane {
           },
           {
             kind: 'select',
+            key: 'general.keepVersionsFor',
             label: t('Keep versions for'),
             hint: t('How long those versions are kept before they are deleted.'),
             options: KEEP_DAYS.map((days) => ({
@@ -336,6 +347,7 @@ export function generalPane(): Pane {
         fields: [
           {
             kind: 'switch',
+            key: 'general.ctrlTabByUse',
             label: t('Ctrl+Tab in order of use'),
             hint: t(
               'Ctrl+Tab goes to the tab used last, as in VS Code; off goes through the tabs in the order they sit.',
@@ -353,6 +365,7 @@ export function generalPane(): Pane {
             : ([
                 {
                   kind: 'switch',
+                  key: 'general.swipeBetweenPages',
                   label: t('Swipe between pages'),
                   hint: t('Two fingers sideways on the touchpad go back and forward.'),
                   words: ['swipe', 'gesture', 'touchpad', 'trackpad', 'back', 'forward', 'history'],
@@ -367,6 +380,7 @@ export function generalPane(): Pane {
             ? ([
                 {
                   kind: 'segmented',
+                  key: 'general.hiddenTabs',
                   label: t('Hidden tabs'),
                   hint: t(
                     'What the web pages of another space do while it is out of sight: keep running, pause, or ask the first time.',
@@ -385,6 +399,7 @@ export function generalPane(): Pane {
                 // sight it is frozen instead. See web-tab/resting.ts.
                 {
                   kind: 'select',
+                  key: 'general.memorySaver',
                   label: t('Memory saver'),
                   hint: t(
                     'Unloads web pages that have been out of sight for a while to free memory; they load again when you return.',
@@ -415,6 +430,7 @@ export function generalPane(): Pane {
         fields: [
           {
             kind: 'switch',
+            key: 'general.smartDates',
             label: t('Smart dates'),
             hint: t(
               'Reads dates, times and fields out of what you type into Add task, such as “tomorrow 9am”.',
@@ -448,6 +464,7 @@ export function generalPane(): Pane {
           // Todoist has it. On the account (modes.svelte.ts, docs/tasks.md 5.1.1).
           {
             kind: 'switch',
+            key: 'general.undatedInToday',
             label: t('Show tasks without a start date in Today'),
             hint: t(
               'Today also lists the tasks that have no start date; off shows only those dated today or earlier.',
@@ -461,6 +478,7 @@ export function generalPane(): Pane {
             ? ([
                 {
                   kind: 'switch',
+                  key: 'general.addTaskFromAnyApp',
                   label: t('From any app'),
                   hint: t('The Add task shortcut works even while another app is in front.'),
                   words: ['tasks', 'quick add', 'global', 'hotkey', 'shortcut', 'system'],
@@ -483,6 +501,7 @@ export function generalPane(): Pane {
               fields: [
                 {
                   kind: 'switch' as const,
+                  key: 'general.developerMode',
                   label: t('Developer mode'),
                   hint: t('Shows terminals and the other tools for writing code.'),
                   words: ['coder', 'coding', 'programmer', 'terminal', 'shell', 'ssh'],
@@ -502,6 +521,7 @@ export function generalPane(): Pane {
               fields: [
                 {
                   kind: 'switch' as const,
+                  key: 'general.silentMode',
                   label: t('Silent mode'),
                   hint: t('Hides the tips Orden shows while you get to know it.'),
                   words: ['tips', 'hints', 'quiet', 'clean', 'onboarding'],
@@ -531,6 +551,7 @@ export function generalPane(): Pane {
         fields: [
           {
             kind: 'select',
+            key: 'general.language',
             label: t('Language'),
             hint: t('The language Orden’s menus and settings are in.'),
             // Each row says for itself whether its catalogue was read through;
