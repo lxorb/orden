@@ -234,6 +234,14 @@ describe('the citations in an answer', () => {
       linkedAnswer('Still [1][1]. Hovers [2] [2]. Both [1, 2]. Nothing [7].', sources, named),
     ).toBe('Still Herons. Hovers Kestrels. Both Herons Kestrels. Nothing [7].')
   })
+
+  test('leave the words alone where a short name cited is said in them', () => {
+    const sources = [{ path: 'an.md', name: 'an' }]
+    const named = (one: { name: string }) => one.name
+    expect(linkedAnswer('A banana, an an apple [1] [1].', sources, named)).toBe(
+      'A banana, an an apple an.',
+    )
+  })
 })
 
 describe('asking the space', () => {
