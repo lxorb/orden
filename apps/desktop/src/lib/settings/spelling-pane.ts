@@ -11,6 +11,7 @@ import {
   toggled,
 } from '../spell-languages'
 import type { Field, Group, Pane } from './fields'
+import { among } from './hold'
 
 /** The dictionaries, a switch apiece, where the engine has a list to give them to; and
  *  where it has not, a line saying whose languages it checks in (#771). See
@@ -24,6 +25,10 @@ function dictionaryGroups(view: EditorView | undefined): Group[] {
       title: t('Dictionary'),
       fields: DICTIONARIES.map((one): Field => ({
         kind: 'switch',
+        // One member of the list the settings file gives (#673).
+        key: 'spelling.languages',
+        member: one.id,
+        store: among(modes, 'spellLanguages', one.id),
         label: one.name,
         words: ['dictionary', 'language', 'spellcheck', one.id],
         hint: t('Words are checked against this dictionary as well as every other one that is on.'),
@@ -63,6 +68,7 @@ export function spellingPane(view: EditorView | undefined): Pane {
           {
             kind: 'switch',
             key: 'spelling.check',
+            store: { on: modes, name: 'spellcheck' },
             label: t('Check spelling'),
             words: ['spellcheck', 'spell check', 'typos'],
             hint: t('Underlines misspelled words as you write.'),

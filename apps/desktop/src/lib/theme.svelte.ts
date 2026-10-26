@@ -184,7 +184,12 @@ const WALLPAPER: ThemeInfo = {
 /** Whether an id is one of the app's own themes. A store copy of one is that theme:
  *  not listed, offered no update, and whoever chose it is moved onto it. */
 export function isBuiltIn(id: string): boolean {
-  return [DEFAULT_THEME, CONTRAST, GLASS, WALLPAPER].some((one) => one.id === id)
+  return builtIns().some((one) => one.id === id)
+}
+
+/** The app's own themes. */
+export function builtIns(): ThemeInfo[] {
+  return [DEFAULT_THEME, CONTRAST, GLASS, WALLPAPER]
 }
 
 const LIGHT = '(prefers-color-scheme: light)'
@@ -194,7 +199,7 @@ const LIGHT = '(prefers-color-scheme: light)'
 const MORE = '(prefers-contrast: more)'
 
 /** The app's own settings, a function because their labels follow the language. */
-function appSettings(): ThemeSetting[] {
+export function appSettings(): ThemeSetting[] {
   return [accentSetting()]
 }
 
@@ -642,6 +647,20 @@ class Themes {
   /** A theme's own dial as last kept, worn or not: what a picker card draws. */
   keptFor(owner: string, id: string): ThemeValue | undefined {
     return this.chosen[owner]?.[id]
+  }
+
+  /** Keeps a dial of a theme that may not be the one worn, by its drawer: what the
+   *  settings file declares for every theme it names (#673). The one worn is painted. */
+  setFor(drawer: string, id: string, value: ThemeValue) {
+    if (drawer === this.id || drawer === SHARED) {
+      const setting = this.settings.find((one) => one.id === id)
+      if (setting && this.drawerOf(setting) === drawer) {
+        this.set(id, value)
+        return
+      }
+    }
+    this.chosen = { ...this.chosen, [drawer]: { ...this.chosen[drawer], [id]: value } }
+    keep(SETTINGS_KEY, JSON.stringify(this.chosen))
   }
 
   /** Turns one dial, and keeps it. */

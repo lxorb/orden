@@ -1,4 +1,5 @@
 import type { IconNode } from 'lucide'
+import type { Store } from './hold'
 
 /** One side's picture in the wallpaper's row; see the `picture` kind. */
 export interface PictureSide {
@@ -42,9 +43,19 @@ interface Common {
    *  schema is made from these, see file-schema.ts. Never renamed once released: a
    *  configuration out there names it. */
   key?: string
+  /** For a switch that is one member of a list the file sets whole - the languages
+   *  spelling is checked in - the value it stands for; the file's `key` is then a list,
+   *  and the switch is on where the list has it. */
+  member?: string
+  /** Where the value is kept, which is where the settings file holds it (see hold.ts):
+   *  every keyed field says, so that nothing else that writes the store moves it. */
+  store?: Store
+  /** Why a value the file gives is not one this setting takes, beyond its type and its
+   *  choices: a key combination that is not one. Null where it is. */
+  check?: (value: string) => string | null
   /** Set by the settings file rather than here: that file's path. The row shows the
    *  value and says where it comes from, and its control does nothing; see
-   *  file.svelte.ts. */
+   *  file.ts. */
   declared?: string
 }
 

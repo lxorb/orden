@@ -1,4 +1,20 @@
 {
+  "appearance.accent": {
+    "type": "string",
+    "enum": [
+      "violet",
+      "blue",
+      "teal",
+      "green",
+      "yellow",
+      "orange",
+      "red",
+      "pink",
+      "slate"
+    ],
+    "default": "violet",
+    "description": "The colour of buttons, links and the selection."
+  },
   "appearance.contentFont": {
     "type": "string",
     "default": "",
@@ -233,10 +249,19 @@
     "default": "automatic",
     "description": "How web pages look up the addresses of sites. Over HTTPS, nobody between you and the provider can read or change the lookups."
   },
+  "general.dnsProvider": {
+    "type": "string",
+    "default": "",
+    "description": "The address of a DNS over HTTPS server, starting with https://"
+  },
   "general.hardwareAcceleration": {
     "type": "boolean",
     "default": true,
-    "description": "Draws the app on the graphics card; turn it off if the window flickers or stays blank."
+    "description": "Draws the app on the graphics card; turn it off if the window flickers or stays blank.",
+    "platforms": [
+      "linux",
+      "windows"
+    ]
   },
   "general.hiddenTabs": {
     "type": "string",
@@ -346,6 +371,14 @@
     "default": true,
     "description": "Brings back what each terminal showed after Orden restarts; off forgets it on quit."
   },
+  "general.searchEngine": {
+    "type": "string",
+    "description": "Where words typed into a web tab’s address bar are searched."
+  },
+  "general.searchEngineAddress": {
+    "type": "string",
+    "description": "The search address, with %s where the words go."
+  },
   "general.shell": {
     "type": "string",
     "description": "The shell a new terminal starts."
@@ -359,6 +392,14 @@
     "type": "boolean",
     "default": true,
     "description": "Reads dates, times and fields out of what you type into Add task, such as “tomorrow 9am”."
+  },
+  "general.stayInTray": {
+    "type": "boolean",
+    "description": "Keeps Orden running in the tray after its window closes, so reminders still ring.",
+    "platforms": [
+      "macos",
+      "windows"
+    ]
   },
   "general.swipeBetweenPages": {
     "type": "boolean",
@@ -386,6 +427,46 @@
     ],
     "default": "running",
     "description": "Asks before Orden quits with terminals open: always, or only while something runs in one."
+  },
+  "kinds.canvas": {
+    "type": "boolean",
+    "default": true,
+    "description": "Offers this type when you make something new; off only takes it out of that list."
+  },
+  "kinds.note": {
+    "type": "boolean",
+    "default": true,
+    "description": "Offers this type when you make something new; off only takes it out of that list."
+  },
+  "kinds.online": {
+    "type": "boolean",
+    "default": true,
+    "description": "Offers this type when you make something new; off only takes it out of that list."
+  },
+  "kinds.pages": {
+    "type": "boolean",
+    "default": true,
+    "description": "Offers this type when you make something new; off only takes it out of that list."
+  },
+  "kinds.private": {
+    "type": "boolean",
+    "default": true,
+    "description": "Offers this type when you make something new; off only takes it out of that list."
+  },
+  "kinds.remote": {
+    "type": "boolean",
+    "default": true,
+    "description": "Offers this type when you make something new; off only takes it out of that list."
+  },
+  "kinds.terminal": {
+    "type": "boolean",
+    "default": true,
+    "description": "Offers this type when you make something new; off only takes it out of that list."
+  },
+  "kinds.web": {
+    "type": "boolean",
+    "default": true,
+    "description": "Offers this type when you make something new; off only takes it out of that list."
   },
   "markdown.frontMatter": {
     "type": "string",
@@ -437,9 +518,1183 @@
     "default": false,
     "description": "Only the standard markdown rules, no tables, task lists or footnotes."
   },
+  "shortcuts.agents-stop": {
+    "type": "string",
+    "description": "The key that runs Stop agents, as the keys file writes it; empty for none."
+  },
+  "shortcuts.ai-effort": {
+    "type": "string",
+    "description": "The key that runs Next effort, as the keys file writes it; empty for none."
+  },
+  "shortcuts.ai-mode": {
+    "type": "string",
+    "description": "The key that runs Next mode, as the keys file writes it; empty for none."
+  },
+  "shortcuts.ai-model": {
+    "type": "string",
+    "description": "The key that runs Model and effort, as the keys file writes it; empty for none."
+  },
+  "shortcuts.ai-new": {
+    "type": "string",
+    "description": "The key that runs New chat, as the keys file writes it; empty for none."
+  },
+  "shortcuts.ai-steer": {
+    "type": "string",
+    "description": "The key that runs Send into the running answer, as the keys file writes it; empty for none."
+  },
+  "shortcuts.ai-stop": {
+    "type": "string",
+    "description": "The key that runs Stop the answer, as the keys file writes it; empty for none."
+  },
+  "shortcuts.ai-unfold": {
+    "type": "string",
+    "description": "The key that runs Open every step, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-ask": {
+    "type": "string",
+    "description": "The key that runs Ask, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-ask-selection": {
+    "type": "string",
+    "description": "The key that runs Selection to the AI panel, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-back": {
+    "type": "string",
+    "description": "The key that runs Back, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-chats": {
+    "type": "string",
+    "description": "The key that runs Chats, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-close": {
+    "type": "string",
+    "description": "The key that runs Close note, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-close-all": {
+    "type": "string",
+    "description": "The key that runs Close all tabs, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-close-right": {
+    "type": "string",
+    "description": "The key that runs Close tabs to the right, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-close-window": {
+    "type": "string",
+    "description": "The key that runs Close window, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-commands": {
+    "type": "string",
+    "description": "The key that runs Commands, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-deselect-all": {
+    "type": "string",
+    "description": "The key that runs Deselect all tabs, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-deselect-tab": {
+    "type": "string",
+    "description": "The key that runs Deselect tab, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-duplicate-tab": {
+    "type": "string",
+    "description": "The key that runs Duplicate tab, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-files": {
+    "type": "string",
+    "description": "The key that runs Files, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-fill-tab": {
+    "type": "string",
+    "description": "The key that runs Full window, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-focus": {
+    "type": "string",
+    "description": "The key that runs Focus mode, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-fold-list": {
+    "type": "string",
+    "description": "The key that runs Collapse the file list, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-forward": {
+    "type": "string",
+    "description": "The key that runs Forward, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-fullscreen": {
+    "type": "string",
+    "description": "The key that runs Fullscreen, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-graph": {
+    "type": "string",
+    "description": "The key that runs Graph, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-keys": {
+    "type": "string",
+    "description": "The key that runs Keyboard shortcuts, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-links": {
+    "type": "string",
+    "description": "The key that runs Links, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-move-tab-left": {
+    "type": "string",
+    "description": "The key that runs Move tab left, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-move-tab-right": {
+    "type": "string",
+    "description": "The key that runs Move tab right, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-new": {
+    "type": "string",
+    "description": "The key that runs New note, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-new-kind": {
+    "type": "string",
+    "description": "The key that runs New tab, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-new-private": {
+    "type": "string",
+    "description": "The key that runs New private tab, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-new-window": {
+    "type": "string",
+    "description": "The key that runs New window, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-next-note": {
+    "type": "string",
+    "description": "The key that runs Next note, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-note-1": {
+    "type": "string",
+    "description": "The key that runs Note 1, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-note-2": {
+    "type": "string",
+    "description": "The key that runs Note 2, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-note-3": {
+    "type": "string",
+    "description": "The key that runs Note 3, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-note-4": {
+    "type": "string",
+    "description": "The key that runs Note 4, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-note-5": {
+    "type": "string",
+    "description": "The key that runs Note 5, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-note-6": {
+    "type": "string",
+    "description": "The key that runs Note 6, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-note-7": {
+    "type": "string",
+    "description": "The key that runs Note 7, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-note-8": {
+    "type": "string",
+    "description": "The key that runs Note 8, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-note-9": {
+    "type": "string",
+    "description": "The key that runs Last note, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-note-ninth": {
+    "type": "string",
+    "description": "The key that runs Note 9, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-outline": {
+    "type": "string",
+    "description": "The key that runs Outline, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-palette": {
+    "type": "string",
+    "description": "The key that runs Command palette, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-pin": {
+    "type": "string",
+    "description": "The key that runs Pin, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-present": {
+    "type": "string",
+    "description": "The key that runs Present, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-previous-note": {
+    "type": "string",
+    "description": "The key that runs Previous note, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-print": {
+    "type": "string",
+    "description": "The key that runs Print, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-properties": {
+    "type": "string",
+    "description": "The key that runs Properties, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-quick-add": {
+    "type": "string",
+    "description": "The key that runs Add task, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-quick-question": {
+    "type": "string",
+    "description": "The key that runs Quick question, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-random-note": {
+    "type": "string",
+    "description": "The key that runs Random note, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-read-only": {
+    "type": "string",
+    "description": "The key that runs Read-only, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-reading": {
+    "type": "string",
+    "description": "The key that runs Reading, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-region-next": {
+    "type": "string",
+    "description": "The key that runs Next section, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-region-previous": {
+    "type": "string",
+    "description": "The key that runs Previous section, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-reopen": {
+    "type": "string",
+    "description": "The key that runs Reopen closed tab, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-reveal": {
+    "type": "string",
+    "description": "The key that runs Show in the file list, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-right-sidebar": {
+    "type": "string",
+    "description": "The key that runs Right sidebar, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-scratchpad": {
+    "type": "string",
+    "description": "The key that runs Scratchpad, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-search": {
+    "type": "string",
+    "description": "The key that runs Search this space, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-settings": {
+    "type": "string",
+    "description": "The key that runs Settings, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-sidebar": {
+    "type": "string",
+    "description": "The key that runs Left sidebar, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-source": {
+    "type": "string",
+    "description": "The key that runs Source mode, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-tab-overview": {
+    "type": "string",
+    "description": "The key that runs Tabs, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-tasks": {
+    "type": "string",
+    "description": "The key that runs Tasks, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-typewriter": {
+    "type": "string",
+    "description": "The key that runs Typewriter mode, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-zoom-in": {
+    "type": "string",
+    "description": "The key that runs Zoom in, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-zoom-out": {
+    "type": "string",
+    "description": "The key that runs Zoom out, as the keys file writes it; empty for none."
+  },
+  "shortcuts.app-zoom-reset": {
+    "type": "string",
+    "description": "The key that runs Actual size, as the keys file writes it; empty for none."
+  },
+  "shortcuts.canvas-back": {
+    "type": "string",
+    "description": "The key that runs Send to back, as the keys file writes it; empty for none."
+  },
+  "shortcuts.canvas-backward": {
+    "type": "string",
+    "description": "The key that runs Send backward, as the keys file writes it; empty for none."
+  },
+  "shortcuts.canvas-delete": {
+    "type": "string",
+    "description": "The key that runs Delete what is picked, as the keys file writes it; empty for none."
+  },
+  "shortcuts.canvas-duplicate": {
+    "type": "string",
+    "description": "The key that runs Duplicate, as the keys file writes it; empty for none."
+  },
+  "shortcuts.canvas-find": {
+    "type": "string",
+    "description": "The key that runs Find on the canvas, as the keys file writes it; empty for none."
+  },
+  "shortcuts.canvas-fit": {
+    "type": "string",
+    "description": "The key that runs Fit the canvas, as the keys file writes it; empty for none."
+  },
+  "shortcuts.canvas-forward": {
+    "type": "string",
+    "description": "The key that runs Bring forward, as the keys file writes it; empty for none."
+  },
+  "shortcuts.canvas-frame": {
+    "type": "string",
+    "description": "The key that runs Zoom to what is picked, as the keys file writes it; empty for none."
+  },
+  "shortcuts.canvas-front": {
+    "type": "string",
+    "description": "The key that runs Bring to front, as the keys file writes it; empty for none."
+  },
+  "shortcuts.canvas-group": {
+    "type": "string",
+    "description": "The key that runs Group, as the keys file writes it; empty for none."
+  },
+  "shortcuts.canvas-nudge-down": {
+    "type": "string",
+    "description": "The key that runs Nudge down, as the keys file writes it; empty for none."
+  },
+  "shortcuts.canvas-nudge-left": {
+    "type": "string",
+    "description": "The key that runs Nudge left, as the keys file writes it; empty for none."
+  },
+  "shortcuts.canvas-nudge-right": {
+    "type": "string",
+    "description": "The key that runs Nudge right, as the keys file writes it; empty for none."
+  },
+  "shortcuts.canvas-nudge-up": {
+    "type": "string",
+    "description": "The key that runs Nudge up, as the keys file writes it; empty for none."
+  },
+  "shortcuts.canvas-tool-arrow": {
+    "type": "string",
+    "description": "The key that runs Arrow, as the keys file writes it; empty for none."
+  },
+  "shortcuts.canvas-tool-draw": {
+    "type": "string",
+    "description": "The key that runs Draw, as the keys file writes it; empty for none."
+  },
+  "shortcuts.canvas-tool-elbow": {
+    "type": "string",
+    "description": "The key that runs Elbow, as the keys file writes it; empty for none."
+  },
+  "shortcuts.canvas-tool-ellipse": {
+    "type": "string",
+    "description": "The key that runs Oval, as the keys file writes it; empty for none."
+  },
+  "shortcuts.canvas-tool-erase": {
+    "type": "string",
+    "description": "The key that runs Erase, as the keys file writes it; empty for none."
+  },
+  "shortcuts.canvas-tool-file": {
+    "type": "string",
+    "description": "The key that runs Note, as the keys file writes it; empty for none."
+  },
+  "shortcuts.canvas-tool-group": {
+    "type": "string",
+    "description": "The key that runs Frame, as the keys file writes it; empty for none."
+  },
+  "shortcuts.canvas-tool-hand": {
+    "type": "string",
+    "description": "The key that runs Pan, as the keys file writes it; empty for none."
+  },
+  "shortcuts.canvas-tool-lasso": {
+    "type": "string",
+    "description": "The key that runs Lasso, as the keys file writes it; empty for none."
+  },
+  "shortcuts.canvas-tool-line": {
+    "type": "string",
+    "description": "The key that runs Line, as the keys file writes it; empty for none."
+  },
+  "shortcuts.canvas-tool-link": {
+    "type": "string",
+    "description": "The key that runs Link, as the keys file writes it; empty for none."
+  },
+  "shortcuts.canvas-tool-picture": {
+    "type": "string",
+    "description": "The key that runs Picture, as the keys file writes it; empty for none."
+  },
+  "shortcuts.canvas-tool-rect": {
+    "type": "string",
+    "description": "The key that runs Rectangle, as the keys file writes it; empty for none."
+  },
+  "shortcuts.canvas-tool-rhombus": {
+    "type": "string",
+    "description": "The key that runs Diamond, as the keys file writes it; empty for none."
+  },
+  "shortcuts.canvas-tool-select": {
+    "type": "string",
+    "description": "The key that runs Select, as the keys file writes it; empty for none."
+  },
+  "shortcuts.canvas-tool-text": {
+    "type": "string",
+    "description": "The key that runs Card, as the keys file writes it; empty for none."
+  },
+  "shortcuts.canvas-tool-triangle": {
+    "type": "string",
+    "description": "The key that runs Triangle, as the keys file writes it; empty for none."
+  },
+  "shortcuts.canvas-tool-words": {
+    "type": "string",
+    "description": "The key that runs Text, as the keys file writes it; empty for none."
+  },
+  "shortcuts.canvas-ungroup": {
+    "type": "string",
+    "description": "The key that runs Ungroup, as the keys file writes it; empty for none."
+  },
+  "shortcuts.canvas-upright": {
+    "type": "string",
+    "description": "The key that runs Turn upright, as the keys file writes it; empty for none."
+  },
+  "shortcuts.canvas-write": {
+    "type": "string",
+    "description": "The key that runs Write in what is picked, as the keys file writes it; empty for none."
+  },
+  "shortcuts.canvas-zoom-actual": {
+    "type": "string",
+    "description": "The key that runs Actual size, as the keys file writes it; empty for none."
+  },
+  "shortcuts.canvas-zoom-in": {
+    "type": "string",
+    "description": "The key that runs Zoom in, as the keys file writes it; empty for none."
+  },
+  "shortcuts.canvas-zoom-out": {
+    "type": "string",
+    "description": "The key that runs Zoom out, as the keys file writes it; empty for none."
+  },
+  "shortcuts.chat-jump-new": {
+    "type": "string",
+    "description": "The key that runs New, as the keys file writes it; empty for none."
+  },
+  "shortcuts.chat-record": {
+    "type": "string",
+    "description": "The key that runs Voice message, as the keys file writes it; empty for none."
+  },
+  "shortcuts.chat-search": {
+    "type": "string",
+    "description": "The key that runs Search this chat, as the keys file writes it; empty for none."
+  },
+  "shortcuts.edit-copy-line-down": {
+    "type": "string",
+    "description": "The key that runs Copy the line down, as the keys file writes it; empty for none."
+  },
+  "shortcuts.edit-copy-line-up": {
+    "type": "string",
+    "description": "The key that runs Copy the line up, as the keys file writes it; empty for none."
+  },
+  "shortcuts.edit-copy-markdown": {
+    "type": "string",
+    "description": "The key that runs Copy as markdown, as the keys file writes it; empty for none."
+  },
+  "shortcuts.edit-cursor-above": {
+    "type": "string",
+    "description": "The key that runs Add a cursor above, as the keys file writes it; empty for none."
+  },
+  "shortcuts.edit-cursor-below": {
+    "type": "string",
+    "description": "The key that runs Add a cursor below, as the keys file writes it; empty for none."
+  },
+  "shortcuts.edit-delete-line": {
+    "type": "string",
+    "description": "The key that runs Delete the line, as the keys file writes it; empty for none."
+  },
+  "shortcuts.edit-duplicate-block": {
+    "type": "string",
+    "description": "The key that runs Duplicate the block, as the keys file writes it; empty for none."
+  },
+  "shortcuts.edit-expand-selection": {
+    "type": "string",
+    "description": "The key that runs Expand the selection, as the keys file writes it; empty for none."
+  },
+  "shortcuts.edit-find": {
+    "type": "string",
+    "description": "The key that runs Find, as the keys file writes it; empty for none."
+  },
+  "shortcuts.edit-find-next": {
+    "type": "string",
+    "description": "The key that runs Find next, as the keys file writes it; empty for none."
+  },
+  "shortcuts.edit-find-previous": {
+    "type": "string",
+    "description": "The key that runs Find previous, as the keys file writes it; empty for none."
+  },
+  "shortcuts.edit-follow-link": {
+    "type": "string",
+    "description": "The key that runs Follow the link, as the keys file writes it; empty for none."
+  },
+  "shortcuts.edit-goto-line": {
+    "type": "string",
+    "description": "The key that runs Go to line, as the keys file writes it; empty for none."
+  },
+  "shortcuts.edit-indent": {
+    "type": "string",
+    "description": "The key that runs Indent, as the keys file writes it; empty for none."
+  },
+  "shortcuts.edit-insert-line-above": {
+    "type": "string",
+    "description": "The key that runs Insert a line above, as the keys file writes it; empty for none."
+  },
+  "shortcuts.edit-join-lines": {
+    "type": "string",
+    "description": "The key that runs Join the lines, as the keys file writes it; empty for none."
+  },
+  "shortcuts.edit-lower-case": {
+    "type": "string",
+    "description": "The key that runs Lower case, as the keys file writes it; empty for none."
+  },
+  "shortcuts.edit-move-block-down": {
+    "type": "string",
+    "description": "The key that runs Move the block down, as the keys file writes it; empty for none."
+  },
+  "shortcuts.edit-move-block-up": {
+    "type": "string",
+    "description": "The key that runs Move the block up, as the keys file writes it; empty for none."
+  },
+  "shortcuts.edit-move-line-down": {
+    "type": "string",
+    "description": "The key that runs Move the line down, as the keys file writes it; empty for none."
+  },
+  "shortcuts.edit-move-line-up": {
+    "type": "string",
+    "description": "The key that runs Move the line up, as the keys file writes it; empty for none."
+  },
+  "shortcuts.edit-outdent": {
+    "type": "string",
+    "description": "The key that runs Outdent, as the keys file writes it; empty for none."
+  },
+  "shortcuts.edit-paste-plain": {
+    "type": "string",
+    "description": "The key that runs Paste as plain text, as the keys file writes it; empty for none."
+  },
+  "shortcuts.edit-redo": {
+    "type": "string",
+    "description": "The key that runs Redo, as the keys file writes it; empty for none."
+  },
+  "shortcuts.edit-replace": {
+    "type": "string",
+    "description": "The key that runs Replace, as the keys file writes it; empty for none."
+  },
+  "shortcuts.edit-reverse-lines": {
+    "type": "string",
+    "description": "The key that runs Reverse the lines, as the keys file writes it; empty for none."
+  },
+  "shortcuts.edit-run-fence": {
+    "type": "string",
+    "description": "The key that runs Run this code block, as the keys file writes it; empty for none."
+  },
+  "shortcuts.edit-select-all": {
+    "type": "string",
+    "description": "The key that runs Select all, as the keys file writes it; empty for none."
+  },
+  "shortcuts.edit-select-all-occurrences": {
+    "type": "string",
+    "description": "The key that runs Select every one like it, as the keys file writes it; empty for none."
+  },
+  "shortcuts.edit-select-line": {
+    "type": "string",
+    "description": "The key that runs Select the line, as the keys file writes it; empty for none."
+  },
+  "shortcuts.edit-select-word": {
+    "type": "string",
+    "description": "The key that runs Select the word, then the next, as the keys file writes it; empty for none."
+  },
+  "shortcuts.edit-shrink-selection": {
+    "type": "string",
+    "description": "The key that runs Shrink the selection, as the keys file writes it; empty for none."
+  },
+  "shortcuts.edit-sort-lines": {
+    "type": "string",
+    "description": "The key that runs Sort the lines, as the keys file writes it; empty for none."
+  },
+  "shortcuts.edit-title-case": {
+    "type": "string",
+    "description": "The key that runs Title case, as the keys file writes it; empty for none."
+  },
+  "shortcuts.edit-undo": {
+    "type": "string",
+    "description": "The key that runs Undo, as the keys file writes it; empty for none."
+  },
+  "shortcuts.edit-upper-case": {
+    "type": "string",
+    "description": "The key that runs Upper case, as the keys file writes it; empty for none."
+  },
+  "shortcuts.export-copy": {
+    "type": "string",
+    "description": "The key that runs Save a copy, as the keys file writes it; empty for none."
+  },
+  "shortcuts.export-docx": {
+    "type": "string",
+    "description": "The key that runs Export as Word, as the keys file writes it; empty for none."
+  },
+  "shortcuts.export-epub": {
+    "type": "string",
+    "description": "The key that runs Export as ePub, as the keys file writes it; empty for none."
+  },
+  "shortcuts.export-html": {
+    "type": "string",
+    "description": "The key that runs Export as HTML, as the keys file writes it; empty for none."
+  },
+  "shortcuts.export-jpg": {
+    "type": "string",
+    "description": "The key that runs Export as JPG, as the keys file writes it; empty for none."
+  },
+  "shortcuts.export-md": {
+    "type": "string",
+    "description": "The key that runs Export as Markdown, as the keys file writes it; empty for none."
+  },
+  "shortcuts.export-pdf": {
+    "type": "string",
+    "description": "The key that runs Export as PDF, as the keys file writes it; empty for none."
+  },
+  "shortcuts.export-png": {
+    "type": "string",
+    "description": "The key that runs Export as PNG, as the keys file writes it; empty for none."
+  },
+  "shortcuts.export-rtf": {
+    "type": "string",
+    "description": "The key that runs Export as RTF, as the keys file writes it; empty for none."
+  },
+  "shortcuts.export-slides-html": {
+    "type": "string",
+    "description": "The key that runs Export slides as HTML, as the keys file writes it; empty for none."
+  },
+  "shortcuts.export-slides-pdf": {
+    "type": "string",
+    "description": "The key that runs Export slides as PDF, as the keys file writes it; empty for none."
+  },
+  "shortcuts.export-svg": {
+    "type": "string",
+    "description": "The key that runs Export as SVG, as the keys file writes it; empty for none."
+  },
+  "shortcuts.export-textbundle": {
+    "type": "string",
+    "description": "The key that runs Export as TextBundle, as the keys file writes it; empty for none."
+  },
+  "shortcuts.export-txt": {
+    "type": "string",
+    "description": "The key that runs Export as Plain text, as the keys file writes it; empty for none."
+  },
+  "shortcuts.format-bold": {
+    "type": "string",
+    "description": "The key that runs Bold, as the keys file writes it; empty for none."
+  },
+  "shortcuts.format-clear": {
+    "type": "string",
+    "description": "The key that runs Clear formatting, as the keys file writes it; empty for none."
+  },
+  "shortcuts.format-code": {
+    "type": "string",
+    "description": "The key that runs Code, as the keys file writes it; empty for none."
+  },
+  "shortcuts.format-comment": {
+    "type": "string",
+    "description": "The key that runs Comment, as the keys file writes it; empty for none."
+  },
+  "shortcuts.format-highlight": {
+    "type": "string",
+    "description": "The key that runs Highlight, as the keys file writes it; empty for none."
+  },
+  "shortcuts.format-image": {
+    "type": "string",
+    "description": "The key that runs Image, as the keys file writes it; empty for none."
+  },
+  "shortcuts.format-italic": {
+    "type": "string",
+    "description": "The key that runs Italic, as the keys file writes it; empty for none."
+  },
+  "shortcuts.format-link": {
+    "type": "string",
+    "description": "The key that runs Link, as the keys file writes it; empty for none."
+  },
+  "shortcuts.format-strikethrough": {
+    "type": "string",
+    "description": "The key that runs Strikethrough, as the keys file writes it; empty for none."
+  },
+  "shortcuts.format-underline": {
+    "type": "string",
+    "description": "The key that runs Underline, as the keys file writes it; empty for none."
+  },
+  "shortcuts.image-edit": {
+    "type": "string",
+    "description": "The key that runs Edit the picture’s markdown, as the keys file writes it; empty for none."
+  },
+  "shortcuts.image-leave": {
+    "type": "string",
+    "description": "The key that runs Leave the selected picture, as the keys file writes it; empty for none."
+  },
+  "shortcuts.image-select-ahead": {
+    "type": "string",
+    "description": "The key that runs Select the picture ahead, as the keys file writes it; empty for none."
+  },
+  "shortcuts.image-select-behind": {
+    "type": "string",
+    "description": "The key that runs Select the picture behind, as the keys file writes it; empty for none."
+  },
+  "shortcuts.image-step-down": {
+    "type": "string",
+    "description": "The key that runs Step off the picture downwards, as the keys file writes it; empty for none."
+  },
+  "shortcuts.image-step-up": {
+    "type": "string",
+    "description": "The key that runs Step off the picture upwards, as the keys file writes it; empty for none."
+  },
+  "shortcuts.list-menu": {
+    "type": "string",
+    "description": "The key that runs Menu for this row, as the keys file writes it; empty for none."
+  },
+  "shortcuts.pages-add": {
+    "type": "string",
+    "description": "The key that runs Add a page, as the keys file writes it; empty for none."
+  },
+  "shortcuts.pages-fit": {
+    "type": "string",
+    "description": "The key that runs Fit width, as the keys file writes it; empty for none."
+  },
+  "shortcuts.pages-fit-page": {
+    "type": "string",
+    "description": "The key that runs Fit page, as the keys file writes it; empty for none."
+  },
+  "shortcuts.pages-zoom-in": {
+    "type": "string",
+    "description": "The key that runs Zoom in, as the keys file writes it; empty for none."
+  },
+  "shortcuts.pages-zoom-out": {
+    "type": "string",
+    "description": "The key that runs Zoom out, as the keys file writes it; empty for none."
+  },
+  "shortcuts.pane-focus-next": {
+    "type": "string",
+    "description": "The key that runs Other pane, as the keys file writes it; empty for none."
+  },
+  "shortcuts.pane-move-tab": {
+    "type": "string",
+    "description": "The key that runs Move to other pane, as the keys file writes it; empty for none."
+  },
+  "shortcuts.pane-split-down": {
+    "type": "string",
+    "description": "The key that runs Split down, as the keys file writes it; empty for none."
+  },
+  "shortcuts.pane-split-right": {
+    "type": "string",
+    "description": "The key that runs Split right, as the keys file writes it; empty for none."
+  },
+  "shortcuts.paragraph-body": {
+    "type": "string",
+    "description": "The key that runs Paragraph, as the keys file writes it; empty for none."
+  },
+  "shortcuts.paragraph-bullet-list": {
+    "type": "string",
+    "description": "The key that runs Bulleted list, as the keys file writes it; empty for none."
+  },
+  "shortcuts.paragraph-callout": {
+    "type": "string",
+    "description": "The key that runs Callout, as the keys file writes it; empty for none."
+  },
+  "shortcuts.paragraph-code-block": {
+    "type": "string",
+    "description": "The key that runs Code block, as the keys file writes it; empty for none."
+  },
+  "shortcuts.paragraph-footnote": {
+    "type": "string",
+    "description": "The key that runs Footnote, as the keys file writes it; empty for none."
+  },
+  "shortcuts.paragraph-front-matter": {
+    "type": "string",
+    "description": "The key that runs Front matter, as the keys file writes it; empty for none."
+  },
+  "shortcuts.paragraph-heading-1": {
+    "type": "string",
+    "description": "The key that runs Heading 1, as the keys file writes it; empty for none."
+  },
+  "shortcuts.paragraph-heading-2": {
+    "type": "string",
+    "description": "The key that runs Heading 2, as the keys file writes it; empty for none."
+  },
+  "shortcuts.paragraph-heading-3": {
+    "type": "string",
+    "description": "The key that runs Heading 3, as the keys file writes it; empty for none."
+  },
+  "shortcuts.paragraph-heading-4": {
+    "type": "string",
+    "description": "The key that runs Heading 4, as the keys file writes it; empty for none."
+  },
+  "shortcuts.paragraph-heading-5": {
+    "type": "string",
+    "description": "The key that runs Heading 5, as the keys file writes it; empty for none."
+  },
+  "shortcuts.paragraph-heading-6": {
+    "type": "string",
+    "description": "The key that runs Heading 6, as the keys file writes it; empty for none."
+  },
+  "shortcuts.paragraph-heading-down": {
+    "type": "string",
+    "description": "The key that runs One heading level down, as the keys file writes it; empty for none."
+  },
+  "shortcuts.paragraph-heading-up": {
+    "type": "string",
+    "description": "The key that runs One heading level up, as the keys file writes it; empty for none."
+  },
+  "shortcuts.paragraph-math-block": {
+    "type": "string",
+    "description": "The key that runs Math block, as the keys file writes it; empty for none."
+  },
+  "shortcuts.paragraph-ordered-list": {
+    "type": "string",
+    "description": "The key that runs Numbered list, as the keys file writes it; empty for none."
+  },
+  "shortcuts.paragraph-quote": {
+    "type": "string",
+    "description": "The key that runs Quote, as the keys file writes it; empty for none."
+  },
+  "shortcuts.paragraph-rule": {
+    "type": "string",
+    "description": "The key that runs Horizontal rule, as the keys file writes it; empty for none."
+  },
+  "shortcuts.paragraph-table": {
+    "type": "string",
+    "description": "The key that runs Table, as the keys file writes it; empty for none."
+  },
+  "shortcuts.paragraph-task": {
+    "type": "string",
+    "description": "The key that runs Tick the task, as the keys file writes it; empty for none."
+  },
+  "shortcuts.paragraph-task-list": {
+    "type": "string",
+    "description": "The key that runs Task list, as the keys file writes it; empty for none."
+  },
+  "shortcuts.paragraph-toc": {
+    "type": "string",
+    "description": "The key that runs Table of contents, as the keys file writes it; empty for none."
+  },
+  "shortcuts.space-next": {
+    "type": "string",
+    "description": "The key that runs Next space, as the keys file writes it; empty for none."
+  },
+  "shortcuts.space-previous": {
+    "type": "string",
+    "description": "The key that runs Previous space, as the keys file writes it; empty for none."
+  },
+  "shortcuts.space-switcher": {
+    "type": "string",
+    "description": "The key that runs Spaces, as the keys file writes it; empty for none."
+  },
+  "shortcuts.table-above": {
+    "type": "string",
+    "description": "The key that runs Into the table above, as the keys file writes it; empty for none."
+  },
+  "shortcuts.table-ahead": {
+    "type": "string",
+    "description": "The key that runs Forward into the table, as the keys file writes it; empty for none."
+  },
+  "shortcuts.table-backspace": {
+    "type": "string",
+    "description": "The key that runs Back into the table instead of deleting, as the keys file writes it; empty for none."
+  },
+  "shortcuts.table-behind": {
+    "type": "string",
+    "description": "The key that runs Back into the table, as the keys file writes it; empty for none."
+  },
+  "shortcuts.table-below": {
+    "type": "string",
+    "description": "The key that runs Into the table below, as the keys file writes it; empty for none."
+  },
+  "shortcuts.table-delete": {
+    "type": "string",
+    "description": "The key that runs Forward into the table instead of deleting, as the keys file writes it; empty for none."
+  },
+  "shortcuts.tabs-rename": {
+    "type": "string",
+    "description": "The key that runs Rename, as the keys file writes it; empty for none."
+  },
+  "shortcuts.tree-delete": {
+    "type": "string",
+    "description": "The key that runs Delete the selected files, as the keys file writes it; empty for none."
+  },
+  "shortcuts.tree-deselect": {
+    "type": "string",
+    "description": "The key that runs Clear the selection, as the keys file writes it; empty for none."
+  },
+  "shortcuts.tree-down": {
+    "type": "string",
+    "description": "The key that runs Next file, as the keys file writes it; empty for none."
+  },
+  "shortcuts.tree-duplicate": {
+    "type": "string",
+    "description": "The key that runs Duplicate, as the keys file writes it; empty for none."
+  },
+  "shortcuts.tree-extend-down": {
+    "type": "string",
+    "description": "The key that runs Select down, as the keys file writes it; empty for none."
+  },
+  "shortcuts.tree-extend-up": {
+    "type": "string",
+    "description": "The key that runs Select up, as the keys file writes it; empty for none."
+  },
+  "shortcuts.tree-into": {
+    "type": "string",
+    "description": "The key that runs Show what it holds, as the keys file writes it; empty for none."
+  },
+  "shortcuts.tree-move-down": {
+    "type": "string",
+    "description": "The key that runs Move down, as the keys file writes it; empty for none."
+  },
+  "shortcuts.tree-move-up": {
+    "type": "string",
+    "description": "The key that runs Move up, as the keys file writes it; empty for none."
+  },
+  "shortcuts.tree-open": {
+    "type": "string",
+    "description": "The key that runs Open, as the keys file writes it; empty for none."
+  },
+  "shortcuts.tree-out": {
+    "type": "string",
+    "description": "The key that runs Hide what it holds, as the keys file writes it; empty for none."
+  },
+  "shortcuts.tree-rename": {
+    "type": "string",
+    "description": "The key that runs Rename, as the keys file writes it; empty for none."
+  },
+  "shortcuts.tree-select-all": {
+    "type": "string",
+    "description": "The key that runs Select every file, as the keys file writes it; empty for none."
+  },
+  "shortcuts.tree-toggle": {
+    "type": "string",
+    "description": "The key that runs Select or deselect, as the keys file writes it; empty for none."
+  },
+  "shortcuts.tree-up": {
+    "type": "string",
+    "description": "The key that runs Previous file, as the keys file writes it; empty for none."
+  },
+  "shortcuts.view-fold": {
+    "type": "string",
+    "description": "The key that runs Fold, as the keys file writes it; empty for none."
+  },
+  "shortcuts.view-fold-all": {
+    "type": "string",
+    "description": "The key that runs Fold everything, as the keys file writes it; empty for none."
+  },
+  "shortcuts.view-fold-less": {
+    "type": "string",
+    "description": "The key that runs Fold less, as the keys file writes it; empty for none."
+  },
+  "shortcuts.view-fold-more": {
+    "type": "string",
+    "description": "The key that runs Fold more, as the keys file writes it; empty for none."
+  },
+  "shortcuts.view-unfold-all": {
+    "type": "string",
+    "description": "The key that runs Unfold everything, as the keys file writes it; empty for none."
+  },
+  "shortcuts.vim": {
+    "type": "boolean",
+    "default": false,
+    "description": "Moves and edits in notes with Vim’s keys."
+  },
+  "shortcuts.web-address": {
+    "type": "string",
+    "description": "The key that runs Address, as the keys file writes it; empty for none."
+  },
+  "shortcuts.web-clear-data": {
+    "type": "string",
+    "description": "The key that runs Delete browsing data, as the keys file writes it; empty for none."
+  },
+  "shortcuts.web-devtools": {
+    "type": "string",
+    "description": "The key that runs Developer tools, as the keys file writes it; empty for none."
+  },
+  "shortcuts.web-fresh": {
+    "type": "string",
+    "description": "The key that runs Hard reload, as the keys file writes it; empty for none."
+  },
+  "shortcuts.web-history": {
+    "type": "string",
+    "description": "The key that runs History, as the keys file writes it; empty for none."
+  },
+  "shortcuts.web-mute": {
+    "type": "string",
+    "description": "The key that runs Mute site, as the keys file writes it; empty for none."
+  },
+  "shortcuts.web-reload": {
+    "type": "string",
+    "description": "The key that runs Reload, as the keys file writes it; empty for none."
+  },
+  "shortcuts.web-stop": {
+    "type": "string",
+    "description": "The key that runs Stop, as the keys file writes it; empty for none."
+  },
   "spelling.check": {
     "type": "boolean",
     "default": true,
     "description": "Underlines misspelled words as you write."
+  },
+  "spelling.languages": {
+    "type": "list",
+    "enum": [
+      "da-DK",
+      "de-DE",
+      "en-GB",
+      "en-US",
+      "es-ES",
+      "fr-FR",
+      "it-IT",
+      "nl-NL",
+      "nb-NO",
+      "pl-PL",
+      "pt-BR",
+      "pt-PT",
+      "sv-SE",
+      "tr-TR",
+      "ru-RU",
+      "uk-UA"
+    ],
+    "description": "Words are checked against this dictionary as well as every other one that is on.",
+    "default": [
+      "en-US"
+    ],
+    "platforms": [
+      "linux"
+    ]
+  },
+  "themes.glass.content": {
+    "type": "string",
+    "enum": [
+      "opaque",
+      "tinted",
+      "clear"
+    ],
+    "default": "tinted",
+    "description": "How much of what is behind the window shows under notes and terminals; the words always stay readable.",
+    "platforms": [
+      "windows"
+    ]
+  },
+  "themes.glass.follow": {
+    "type": "boolean",
+    "default": true,
+    "description": "The frame takes its colour from what is open."
+  },
+  "themes.glass.material": {
+    "type": "string",
+    "enum": [
+      "mica-alt",
+      "mica",
+      "acrylic",
+      "clear"
+    ],
+    "default": "mica-alt",
+    "description": "What Windows draws behind the window: Mica, Acrylic, or no blur.",
+    "platforms": [
+      "windows"
+    ]
+  },
+  "themes.glass.opacity": {
+    "type": "number",
+    "min": 0,
+    "max": 100,
+    "default": 50,
+    "description": "How much of the window’s own colour lies over what is behind it.",
+    "platforms": [
+      "windows"
+    ]
+  },
+  "themes.glass.pair": {
+    "type": "string",
+    "default": "dawn",
+    "description": "The colours the frame takes where nothing open has a colour of its own."
+  },
+  "themes.glass.tab": {
+    "type": "boolean",
+    "default": true,
+    "description": "A web tab takes the colour of its page."
+  },
+  "themes.glass.tint": {
+    "type": "number",
+    "min": 0,
+    "max": 100,
+    "default": 100,
+    "description": "How strongly the frame is coloured."
+  },
+  "themes.wallpaper.blur": {
+    "type": "number",
+    "min": 0,
+    "max": 60,
+    "default": 28,
+    "description": "How much the picture is blurred."
+  },
+  "themes.wallpaper.content": {
+    "type": "string",
+    "enum": [
+      "opaque",
+      "tinted",
+      "clear"
+    ],
+    "default": "tinted",
+    "description": "How much of what is behind the window shows under notes and terminals; the words always stay readable."
+  },
+  "themes.wallpaper.dim": {
+    "type": "number",
+    "min": 0,
+    "max": 90,
+    "default": 10,
+    "description": "How much the picture is darkened."
+  },
+  "themes.wallpaper.empty": {
+    "type": "boolean",
+    "default": true,
+    "description": "An empty pane shows the picture rather than paper."
+  },
+  "themes.wallpaper.fit": {
+    "type": "string",
+    "enum": [
+      "fill",
+      "fit",
+      "tile",
+      "centre"
+    ],
+    "default": "fill",
+    "description": "How the picture fills the window."
+  },
+  "themes.wallpaper.grain": {
+    "type": "number",
+    "min": 0,
+    "max": 100,
+    "default": 0,
+    "description": "Adds a film grain over the picture."
+  },
+  "themes.wallpaper.saturation": {
+    "type": "number",
+    "min": 0,
+    "max": 200,
+    "default": 100,
+    "description": "How vivid the colours of the picture are."
+  },
+  "themes.wallpaper.tint": {
+    "type": "number",
+    "min": 0,
+    "max": 100,
+    "default": 0,
+    "description": "How strongly the tint colour lies over the picture."
+  },
+  "themes.wallpaper.tint-colour": {
+    "type": "string",
+    "enum": [
+      "accent",
+      "violet",
+      "blue",
+      "teal",
+      "green",
+      "yellow",
+      "orange",
+      "red",
+      "pink",
+      "slate"
+    ],
+    "default": "accent",
+    "description": "The colour laid over the picture."
   }
 }
