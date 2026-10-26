@@ -134,6 +134,20 @@ describe('a row that moves', () => {
     expect(archive.has(at('Jobs/Old/Plan.md'))).toBe(true)
   })
 
+  test("into another space, the archive goes into that space's map", async () => {
+    const HOME = '/home'
+    await changeAt(['Projects/Old.md', 'Plan.md'], [], 1000)
+    vi.setSystemTime(3000)
+    archive.moved(at('Projects'), `${HOME}/Projects`, ROOT, HOME)
+    archive.moved(at('Plan.md'), `${HOME}/Ideas/Plan.md`, ROOT, HOME)
+    await vi.dynamicImportSettled()
+
+    expect(archive.holdsIn(ROOT, at('Projects/Old.md'))).toBe(false)
+    expect(archive.holdsIn(ROOT, at('Plan.md'))).toBe(false)
+    expect(archive.of(HOME)).toEqual({ 'Projects/Old.md': 3000, 'Ideas/Plan.md': 3000 })
+    expect(archive.of(ROOT)).toEqual({ 'Projects/Old.md': -3000, 'Plan.md': -3000 })
+  })
+
   test('a space renamed takes its archive along', async () => {
     await changeAt(['Plan.md'], [], 1000)
     archive.spaceMoved(ROOT, '/renamed')

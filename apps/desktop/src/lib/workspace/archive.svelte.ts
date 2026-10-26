@@ -6,7 +6,7 @@
  *  archived. A folder stands for everything under it. See archive-map.ts for how two
  *  copies meet, and docs/archive.md. */
 
-import { insideItsSpace, movedTo, relativeTo, within } from '../space-paths'
+import { insideItsSpace, movedTo, relativeTo, samePath, within } from '../space-paths'
 import { isNumber, isRecord, keep } from '../stored'
 import { filledIn, type Folded, readSpaces, without } from '../records'
 
@@ -119,15 +119,25 @@ export class Archive {
     )
   }
 
-  /** A row renamed or moved: archived at the new path, taken back at the old. */
-  moved(from: string, to: string, root = this.root()) {
+  /** A row renamed or moved: archived at the new path, taken back at the old. Into
+   *  another space, `into`, the new path goes into that space's map, as that space
+   *  speaks of it; a key relative to the old root would be a path nothing holds. */
+  moved(from: string, to: string, root = this.root(), into = root) {
     if (root === null || from === to) return
 
     const was = relativeTo(root, from)
-    const now = relativeTo(root, to)
     const carried = [...this.keysOf(root)].filter((one) => under(one, was, root))
+    if (!carried.length) return
+
+    const there = into ?? root
+    const now = relativeTo(there, to)
     const landed = carried.map((one) => movedTo(one, was, now, root) ?? one)
-    if (carried.length) void this.change(root, landed, carried)
+    if (samePath(there, root)) {
+      void this.change(root, landed, carried)
+    } else {
+      void this.change(root, [], carried)
+      void this.change(there, landed, [])
+    }
   }
 
   /** Archives some paths and takes others back; see `changed` in archive-map.ts. */
