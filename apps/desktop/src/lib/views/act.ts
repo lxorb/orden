@@ -39,13 +39,7 @@ import {
   withLines,
   withoutBlock,
 } from './lines'
-import {
-  editedTask,
-  withComment,
-  withDescription,
-  withoutComment,
-  withSubtask,
-} from './task-body'
+import { editedTask, withComment, withDescription, withoutComment, withSubtask } from './task-body'
 
 /** Where a row's note is on this disk, or null for a space no longer here. */
 function pathOf(row: Row): string | null {

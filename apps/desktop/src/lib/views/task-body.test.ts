@@ -310,7 +310,12 @@ describe('the task edit field writes its words and its description together', ()
   const edit = (note: string, text: string, tags: string[], description: string | null) => {
     const row = taskRowsOfText('Notes', 'A.md', note)[0]
     if (!row?.task) throw new Error('no task')
-    return editedTask(note, row, changeOf(row.task, { text, fields: { tags, remind: [] } }), description)
+    return editedTask(
+      note,
+      row,
+      changeOf(row.task, { text, fields: { tags, remind: [] } }),
+      description,
+    )
   }
 
   test('a label taken off from among the words keeps the new description', () => {
@@ -320,9 +325,9 @@ describe('the task edit field writes its words and its description together', ()
   })
 
   test('words that end in a tag, or hold an inline field, keep the new description', () => {
-    expect(edit('- [ ] Email #work Bob\n  Old words.\n', 'Email #work', ['work'], 'New words.')).toBe(
-      '- [ ] Email #work\n  New words.\n',
-    )
+    expect(
+      edit('- [ ] Email #work Bob\n  Old words.\n', 'Email #work', ['work'], 'New words.'),
+    ).toBe('- [ ] Email #work\n  New words.\n')
     expect(edit('- [ ] Email Bob\n  Old words.\n', 'Email [x:: y] Bob', [], 'New words.')).toBe(
       '- [ ] Email [x:: y] Bob\n  New words.\n',
     )
