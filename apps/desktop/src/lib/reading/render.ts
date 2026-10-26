@@ -9,6 +9,7 @@
  *  load, rather than being carried inside the document. */
 
 import { renderMarkdown, type Wikilink } from '@nib/markdown'
+import { escapeAll } from '@nib/markdown/html'
 import { mapSources } from '@nib/markdown/sources'
 import type { TagHref } from '@nib/markdown/tags'
 import { t } from '../i18n.svelte'
@@ -134,4 +135,10 @@ export async function readingHtml(
   performance.measure(MEASURE, { start: at, detail: { bytes: note.text.length } })
 
   return html
+}
+
+/** What the page shows when the renderer throws on a note: its words, as they are
+ *  written, rather than a page left blank or still showing the note before. */
+export function unreadableHtml(text: string): string {
+  return `<pre class="unreadable">${escapeAll(text)}</pre>`
 }

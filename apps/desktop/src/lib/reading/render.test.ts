@@ -44,7 +44,7 @@ vi.mock('../note-images', () => ({
   notePicture: (src: string) => `asset://${src}`,
 }))
 
-const { readingHtml } = await import('./render')
+const { readingHtml, unreadableHtml } = await import('./render')
 
 /** The reading view asks for the exporter the first time it renders a note: the
  *  diagram drawers, the syntax parsers, KaTeX, most of what the app can load.
@@ -230,5 +230,13 @@ describe('the HTML in a note', () => {
 
     expect(html).not.toContain('<script>')
     expect(html).toContain('&lt;script&gt;')
+  })
+})
+
+describe('a note the renderer cannot read', () => {
+  test('is shown as the words it is, escaped, rather than a blank page', () => {
+    const html = unreadableHtml('> [!note] <b>x</b> & y\n')
+
+    expect(html).toBe('<pre class="unreadable">&gt; [!note] &lt;b&gt;x&lt;/b&gt; &amp; y\n</pre>')
   })
 })
