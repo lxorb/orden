@@ -18,6 +18,9 @@ let written: string[] = []
  *  index exists so that a surface drawn from the whole space does not read it again;
  *  a count says whether one did, where a clock says what the machine was doing. */
 let reads = 0
+/** Something that happens the moment a note is written: a save landing while a
+ *  rewrite is still going through the space. */
+let afterWrite: ((relative: string) => void) | null = null
 /** Every note a snapshot was taken of, so "one snapshot per touched note" is a
  *  thing the test can see rather than a thing the comment claims. */
 let snapshots: string[] = []
@@ -82,6 +85,7 @@ vi.mock('./tauri', async (importOriginal) => ({
         if (unwritable.has(relative)) throw new Error(`permission denied: ${path}`)
         notes[relative] = stringOf(args, 'content')
         written.push(relative)
+        afterWrite?.(relative)
         return undefined
       }
       case 'snapshot_note':
@@ -1363,5 +1367,40 @@ describe('a link written with spaces inside its brackets or a slash at its end',
     await links.retarget(at('Plan.md'), at('Goal.md'), ROOT)
 
     expect(notes['One.md']).toBe('see [[ Goal ]]\n')
+  })
+})
+
+/** A rewrite tells the index what it wrote once it has gone through the whole space,
+ *  and a note saved after it was rewritten and before the pass ended had its newer
+ *  words put back to what the pass wrote: its new links went missing from the index. */
+describe('a note saved while a folder rename is still rewriting the space', () => {
+  test('keeps what was saved in the index', async () => {
+    await space({
+      'Journal/A.md': '# A',
+      'Foo.md': '# Foo',
+      'T0.md': 'see [[Journal/A]]\n',
+    })
+    afterWrite = (relative) => {
+      if (relative === 'T0.md') links.noteSaved(at('T0.md'), 'see [[Diary/A]] [[Foo]]\n')
+    }
+
+    try {
+      await links.retarget(at('Journal'), at('Diary'), ROOT, () => null, { moved: true })
+    } finally {
+      afterWrite = null
+    }
+
+    expect(links.backlinks(at('Foo.md')).map((one) => one.path)).toEqual(['T0.md'])
+  })
+})
+
+describe('a folder renamed, in a note inside it that is rewritten', () => {
+  test('keeps a relative link that still reaches as it was written', async () => {
+    await space({ 'Journal/A.md': '[[Journal/B]] [b2](./B.md)\n', 'Journal/B.md': '# B' })
+    notes['Diary/A.md'] = notes['Journal/A.md'] ?? ''
+
+    await links.retarget(at('Journal'), at('Diary'), ROOT, () => null, { moved: true })
+
+    expect(notes['Diary/A.md']).toBe('[[Diary/B]] [b2](./B.md)\n')
   })
 })
