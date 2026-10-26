@@ -466,17 +466,13 @@ class Chat implements Panel {
     const text = this.text.trim()
     const chips = this.chips
     if (!text && !chips.length) return
-    // What the field held before an edit took it, back in it now the edit is sent.
-    this.text = this.aside?.text ?? ''
-    this.chips = this.aside?.chips ?? []
-    this.aside = null
-    this.requeue = null
     const edited = this.editing
+    this.chips = []
+    this.taken()
     const thread = this.open
     if (edited && thread) {
       // An old message changed: the notes and the conversation go back to before it,
       // what followed is kept as a branch, and the words are sent in its place.
-      this.editing = null
       void editMessage(thread, edited, text, this)
       return
     }
@@ -490,9 +486,12 @@ class Chat implements Panel {
    *  given back once that message is sent, or the edit is let go (Escape). */
   private aside: { text: string; chips: Mention[] } | null = null
 
-  /** A queued message taken into the field to change, and where it stood in the queue:
-   *  put back there if the change is let go. */
-  private requeue = $state.raw<{ one: Queued; at: number } | null>(null)
+  /** A queued message taken into the field to change, its thread, and where it stood in
+   *  the queue: put back there if the change is let go. `due` once its thread ended a
+   *  turn with nothing left to send, so nothing would send it from the queue now. */
+  private requeue = $state.raw<{ one: Queued; at: number; thread: Thread; due: boolean } | null>(
+    null,
+  )
 
   /** Whether the field holds a message being changed, an earlier one or a queued one:
    *  what Escape and the pencil over the field let go. */
@@ -512,6 +511,12 @@ class Chat implements Panel {
     if (!thread || this.running.includes(thread.id)) return
     const message = turn ? thread.turns.find((one) => one.id === turn) : lastMessage(thread)
     if (!message?.draft) return
+    // A queued message in the field goes back first, as changed so far.
+    this.putBack(true)
+    if (this.running.includes(thread.id)) {
+      this.taken()
+      return
+    }
     this.setAside()
     this.editing = message.id
     this.text = message.draft.text
@@ -520,17 +525,36 @@ class Chat implements Panel {
   }
 
   cancelEdit(): void {
+    this.putBack(false)
+    this.taken()
+  }
+
+  /** The field's words gone from it (sent, steered, run as a command): an edit they
+   *  were is over, and the field gets back what it held before the edit took it. */
+  taken(): void {
     this.editing = null
-    const requeue = this.requeue
     this.requeue = null
-    if (requeue) {
-      const list = this.queue.slice()
-      list.splice(requeue.at, 0, requeue.one)
-      this.setQueue(list)
-    }
     this.text = this.aside?.text ?? ''
-    this.chips = this.aside?.chips ?? []
+    if (this.aside) this.chips = this.aside.chips
     this.aside = null
+  }
+
+  /** A queued message being changed back where it stood, in the words it had (or, with
+   *  `changed`, the field's words now). Where its thread will send nothing more from the
+   *  queue, it is sent now, so it neither waits for good nor goes after later ones. */
+  private putBack(changed: boolean): void {
+    const held = this.requeue
+    if (!held) return
+    this.requeue = null
+    const one = changed ? { ...held.one, text: this.text, chips: this.chips } : held.one
+    const { thread } = held
+    if (held.due && !this.running.includes(thread.id)) {
+      void this.run(thread, one)
+      return
+    }
+    const list = (this.queued[thread.id] ?? []).slice()
+    list.splice(Math.min(held.at, list.length), 0, one)
+    this.queued = { ...this.queued, [thread.id]: list }
   }
 
   /** The rewind sheet (Esc Esc on an empty field, or a message's clock). */
@@ -715,6 +739,8 @@ class Chat implements Panel {
 
   private next(thread: Thread): void {
     const [first, ...rest] = this.queued[thread.id] ?? []
+    // A queued message in the field is due once its thread sends nothing else.
+    if (this.requeue?.thread === thread) this.requeue = { ...this.requeue, due: !first }
     if (!first) return
     this.queued = { ...this.queued, [thread.id]: rest }
     void this.run(thread, first)
@@ -730,7 +756,7 @@ class Chat implements Panel {
       this.submit(around)
       return
     }
-    this.text = ''
+    this.taken()
     this.steerWords(thread, text)
   }
 
@@ -775,6 +801,10 @@ class Chat implements Panel {
 
   /** A queued message back in the field, to change before it goes. */
   editQueued(id: string): void {
+    const thread = this.open
+    if (!thread || !this.queue.some((each) => each.id === id)) return
+    // One queued message in the field at a time: the one there goes back, as changed.
+    this.putBack(true)
     const at = this.queue.findIndex((each) => each.id === id)
     const one = this.queue[at]
     if (!one) return
@@ -783,7 +813,7 @@ class Chat implements Panel {
     // Back in the queue without what a command waited on: `unqueue` told it already.
     const back: Queued = { ...one }
     delete back.settle
-    this.requeue = { one: back, at }
+    this.requeue = { one: back, at, thread, due: false }
     this.text = one.text
     this.chips = one.chips
     this.focus()
