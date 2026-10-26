@@ -329,7 +329,13 @@ fn import_from(source: &Path) -> Result<Imported, String> {
     let mut pictures = Vec::new();
     if copying == Copying::Safe {
         let mut too_large = false;
-        gathered(media.path(), media.path(), &mut pictures, &mut too_large);
+        let mut total = 0;
+        gathered(
+            media.path(),
+            media.path(),
+            &mut pictures,
+            (&mut total, &mut too_large),
+        );
         if too_large {
             left_out = Some(PICTURES_TOO_LARGE.to_string());
         }
@@ -363,13 +369,24 @@ pub struct Picture {
 /// note may; see `MOST_BYTES` in assets.ts. It crosses to the window as text.
 const MOST_PICTURE_BYTES: u64 = 24 * 1024 * 1024;
 
+/// What all the pictures of one import may weigh together, since they cross to
+/// the window in one answer.
+const MOST_PICTURES_BYTES: u64 = 96 * 1024 * 1024;
+
 /// Why a picture of a document did not come in.
-const PICTURES_TOO_LARGE: &str = "A picture was left out, since it is larger than a note can keep";
+const PICTURES_TOO_LARGE: &str =
+    "Some pictures were left out, since they are larger than a note can keep";
 
 /// Every file pandoc extracted into `folder`, however deep, named by its path from
 /// `top`. A link is skipped rather than followed, and so is a picture too large to
-/// keep, which `too_large` then says.
-fn gathered(top: &Path, folder: &Path, pictures: &mut Vec<Picture>, too_large: &mut bool) {
+/// keep, or one past what all of them may weigh (`total` so far), which
+/// `too_large` then says.
+fn gathered(
+    top: &Path,
+    folder: &Path,
+    pictures: &mut Vec<Picture>,
+    (total, too_large): (&mut u64, &mut bool),
+) {
     use base64::Engine as _;
 
     let Ok(found) = fs::read_dir(folder) else {
@@ -383,19 +400,18 @@ fn gathered(top: &Path, folder: &Path, pictures: &mut Vec<Picture>, too_large: &
             continue;
         };
         if kind.is_dir() {
-            gathered(top, &path, pictures, too_large);
+            gathered(top, &path, pictures, (&mut *total, &mut *too_large));
             continue;
         }
         if !kind.is_file() {
             continue;
         }
-        if entry
-            .metadata()
-            .is_ok_and(|meta| meta.len() > MOST_PICTURE_BYTES)
-        {
+        let size = entry.metadata().map_or(u64::MAX, |meta| meta.len());
+        if size > MOST_PICTURE_BYTES || *total + size > MOST_PICTURES_BYTES {
             *too_large = true;
             continue;
         }
+        *total += size;
         let (Ok(relative), Ok(bytes)) = (path.strip_prefix(top), fs::read(&path)) else {
             continue;
         };
@@ -617,7 +633,9 @@ fn convert(
 /// beside it: the formats that hold them, and the pages that a deck's
 /// `--extract-media` copies them for. Judged by the writer's name, without the
 /// extensions on it. Every other writer only names a picture, and runs in the
-/// sandbox.
+/// sandbox. Not the ePub family: its writer also embeds the files its metadata
+/// names (`cover-image`, `css`), which `vetted` does not judge, so it is written
+/// in the sandbox as well.
 fn carries_pictures(format: &str) -> bool {
     let name = format.split(['+', '-']).next().unwrap_or(format);
     matches!(
@@ -625,10 +643,6 @@ fn carries_pictures(format: &str) -> bool {
         "odt"
             | "docx"
             | "pptx"
-            | "epub"
-            | "epub2"
-            | "epub3"
-            | "fb2"
             | "icml"
             | "html"
             | "html4"
@@ -694,6 +708,13 @@ fn vetted(
     vet(
         tree,
         &mut |link: &str| {
+            // A picture spelled out in the link itself names no file to fetch.
+            if link
+                .get(..5)
+                .is_some_and(|scheme| scheme.eq_ignore_ascii_case("data:"))
+            {
+                return Some(link.to_string());
+            }
             let real = place.and_then(|place| admitted(link, place))?;
             if let Some((_, name)) = copied.iter().find(|(from, _)| *from == real) {
                 return Some(name.clone());
@@ -790,18 +811,26 @@ fn loads(html: &str) -> bool {
 /// carry: a path relative to the note's folder, or an absolute one, that is a file
 /// inside the note's space once every link on the way is followed, and in no
 /// hidden folder of it. An address with a scheme (`http:`, `file:`, `data:`) or a
-/// host (`//`) is no file of the space, however it is spelled.
+/// host (`//`, `\\`) is no file of the space, however it is spelled; `vetted`
+/// lets a `data:` picture through on its own, since it names no file.
 ///
 /// The link is read the way pandoc reads it, percent-encoding undone, and once
 /// more without a `?` or `#` on its end.
 fn admitted(link: &str, place: &Place) -> Option<PathBuf> {
-    if link.is_empty() || link.starts_with("//") || link.starts_with("\\\\") || has_scheme(link) {
+    if link.is_empty() || has_scheme(link) {
         return None;
     }
     let space = fs::canonicalize(place.space).ok()?;
     let bare = link.split(['?', '#']).next().unwrap_or(link);
     [link, bare].into_iter().find_map(|one| {
-        let path = place.folder.join(decoded(one)?);
+        let name = decoded(one)?;
+        // A host, `//host/share` or `\\host\share`: judged before anything asks the
+        // file system, which on Windows would open a connection to it.
+        let mut start = name.chars().take(2);
+        if start.clone().count() == 2 && start.all(|one| one == '/' || one == '\\') {
+            return None;
+        }
+        let path = place.folder.join(name);
         let real = fs::canonicalize(path).ok()?;
         let below = real.components().skip(space.components().count());
         let hidden = below
@@ -1357,6 +1386,8 @@ mod tests {
             file.as_str(),
             "http://127.0.0.1:8080/secret.png",
             "//host/share/x.png",
+            "%2F%2Fhost/share/x.png",
+            "%5C%5Chost%5Cshare%5Cx.png",
             "data:image/png;base64,aGVsbG8=",
             "gone.png",
             "",
@@ -1450,6 +1481,21 @@ mod tests {
         assert!(names_in(nowhere.path()).is_empty());
     }
 
+    /// A picture spelled out in its link names no file, and is let through as it is.
+    #[test]
+    fn a_picture_in_its_own_link_is_let_through() {
+        let shared = shared();
+        let into = tempfile::tempdir().expect("a folder");
+        let inline = "data:image/png;base64,aGVsbG8=";
+        let mut tree = tree_of(&[inline], "DATA:image/png;base64,aGVsbG8=");
+
+        let refused = vetted(&mut tree, Some(&shared.place()), into.path(), false);
+
+        assert!(refused.is_empty(), "{refused:?}");
+        assert_eq!(targets(&tree), [inline, "DATA:image/png;base64,aGVsbG8="]);
+        assert!(names_in(into.path()).is_empty());
+    }
+
     /// Two pictures of one name from two folders of the space both arrive.
     #[test]
     fn two_pictures_of_one_name_are_both_kept() {
@@ -1496,17 +1542,18 @@ mod tests {
     /// Only the writers that hold or copy pictures go the long way.
     #[test]
     fn knows_which_formats_carry_pictures() {
-        for format in [
-            "odt",
-            "revealjs",
-            "docx",
-            "html5",
-            "epub3",
-            "odt+native_numbering",
-        ] {
+        for format in ["odt", "revealjs", "docx", "html5", "odt+native_numbering"] {
             assert!(carries_pictures(format), "{format}");
         }
-        for format in ["latex", "mediawiki", "rst", "textile", "opml", "markdown"] {
+        for format in [
+            "latex",
+            "mediawiki",
+            "rst",
+            "textile",
+            "opml",
+            "markdown",
+            "epub3",
+        ] {
             assert!(!carries_pictures(format), "{format}");
         }
     }

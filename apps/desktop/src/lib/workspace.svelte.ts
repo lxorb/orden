@@ -1376,15 +1376,15 @@ class Workspace {
   }
 
   /** A new note, a tab until it is given a place (workspace/drafts.ts); one arriving
-   *  with words and a name, an import, is a file from the start. */
-  openBlank(name = UNTITLED, doc = '') {
+   *  with words and a name, an import, is a file from the start, in the space `home`. */
+  openBlank(name = UNTITLED, doc = '', home: string | null = this.activeSpaceId) {
     const note = this.document({
       kind: 'note',
       path: null,
       name,
       text: doc,
       dirty: !!doc,
-      home: this.activeSpaceId,
+      home,
     })
     this.add(new Tab(note, this.panes.focusedId))
     this.showNote()

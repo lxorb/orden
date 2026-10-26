@@ -244,30 +244,31 @@ class Importing {
     const imported = await importDocument()
     if (!imported) return
 
-    const markdown = await this.withPictures(imported)
-    workspace.openBlank(imported.name, markdown)
+    // Where the note lands, which is where its pictures go: the space the sheet
+    // would import into, and never one shared with this account to be read, where
+    // the pictures would be stray files and the note would not be placed at all.
+    const root = this.root !== null && canWriteAt(this.root) ? this.root : landing()
+    const home = workspace.spaces.find((one) => one.root === root)?.id ?? null
+    const markdown =
+      root === null
+        ? imported.markdown
+        : await this.withPictures(imported, joinPath(root, imported.name))
+    workspace.openBlank(imported.name, markdown, home)
     this.open = false
     this.forget()
   }
 
   /** The words of a document pandoc read, with its pictures written where a
-   *  pasted picture of the note would go and the links pointed there.
+   *  pasted picture of the note at `notePath` would go and the links pointed there.
    *
-   *  The note is placed in the space's draft home under its name (`openBlank`),
-   *  so that is the path the pictures are kept for; a name already taken there
-   *  steps aside in the same folder, where the links still resolve. With no space
-   *  to keep them in the links stay as pandoc wrote them, as the note does not
-   *  land either. */
-  private async withPictures(imported: {
-    name: string
-    markdown: string
-    pictures: PandocPicture[]
-  }): Promise<string> {
+   *  `openBlank` places the note at the top of its space under its name, so that
+   *  is the path the pictures are kept for; a name already taken there steps aside
+   *  in the same folder, where the links still resolve. */
+  private async withPictures(
+    imported: { markdown: string; pictures: PandocPicture[] },
+    notePath: string,
+  ): Promise<string> {
     if (!imported.pictures.length) return imported.markdown
-    const home = await workspace.draftHome(workspace.activeSpaceId).catch(() => null)
-    if (home === null) return imported.markdown
-
-    const notePath = joinPath(home, imported.name)
     const { storeBeside } = await import('./assets')
     const { markdown, lost } = await keepPictures(
       imported.markdown,
