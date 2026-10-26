@@ -48,6 +48,7 @@
   import ThemeStore from './ThemeStore.svelte'
   import { store } from './themes/store.svelte'
   import { type Field, type PictureSide, preferences, resetPane, resettable } from './preferences'
+  import { declared } from './settings/file.svelte'
   import { glassesKey } from './even/key.svelte'
   import { EFFORT_WORDS, Offered } from './even/offered.svelte'
   import { modes } from './modes.svelte'
@@ -527,6 +528,13 @@
               {#if !viewport.touch}
                 <h2>{titleOf(settings.section)}</h2>
               {/if}
+              <!-- What is wrong with the settings file, where its rows are (#673). -->
+              {#if declared.problems.length}
+                <div class="hint bad declared-problems" role="alert">
+                  <strong>{t('The settings file has a problem')}</strong>
+                  {#each declared.problems as one, index (index)}<p>{one}</p>{/each}
+                </div>
+              {/if}
               {@render pane()}
             </div>
           {/key}
@@ -579,6 +587,11 @@
       >{field.label}{#if field.hint}<Hint text={field.hint} />{/if}</span
     >
     {#if where}<small>{where}</small>{/if}
+    <!-- Held by the settings file (#673): the value stands, and the row says why it
+         will not move; the file's path is a pointer away. -->
+    {#if field.declared}<small class="declared" title={field.declared}
+        >{t('Set by the settings file')}</small
+      >{/if}
   </span>
 {/snippet}
 
@@ -599,6 +612,7 @@
     <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
     <div
       class="nib-setting setting"
+      class:declared={!!field.declared}
       class:pressable={!locked}
       onclick={() => {
         if (!locked) field.set(!field.get())
@@ -624,7 +638,7 @@
   {:else if field.kind === 'slider'}
     {@const least = field.least?.() ?? field.min}
     {@const held = Math.max(field.get(), least)}
-    <div class="nib-setting setting sliding">
+    <div class="nib-setting setting sliding" class:declared={!!field.declared}>
       {@render named(field, where)}
       <span class="value">{held}{field.unit ?? ''}</span>
       <!-- Below its floor the track is grey and the knob stops at the edge of it: the
@@ -652,7 +666,7 @@
          cannot honour right now is disabled rather than left out, so the row does
          not change shape as themes are chosen. -->
     {@const held = field.get()}
-    <div class="nib-setting setting">
+    <div class="nib-setting setting" class:declared={!!field.declared}>
       {@render named(field, where)}
       <div class="nib-segmented" role="radiogroup" aria-label={field.label} use:segmented>
         {#each field.options as one (one.value)}
@@ -673,7 +687,7 @@
     <!-- The one control whose options are colours rather than words: nine names
          would say what nine dots already say. The same row of dots the theme
          picker has at its foot; see Swatches.svelte. -->
-    <div class="nib-setting setting swatched">
+    <div class="nib-setting setting swatched" class:declared={!!field.declared}>
       {@render named(field, where)}
       <Swatches
         options={field.options}
@@ -689,7 +703,7 @@
          the point the window keeps in view. The side the app is in wears the ring; the
          other shows what it would wear, which is the first picture until it is given one
          of its own. The cross takes a side's own picture away. -->
-    <div class="nib-setting setting">
+    <div class="nib-setting setting" class:declared={!!field.declared}>
       {@render named(field, where)}
       <span class="pictures">
         {#each field.sides as side, index (index)}
@@ -732,6 +746,7 @@
          says so for a moment in the value's place. -->
     <div
       class="nib-setting setting pressable"
+      class:declared={!!field.declared}
       role="button"
       tabindex="0"
       title={t('Copy')}
@@ -751,7 +766,7 @@
          a field that is already there rather than a button beside it. -->
     {#if field.font}
       <!-- A face, from the families installed or by its name; see FontPicker.svelte. -->
-      <div class="nib-setting setting">
+      <div class="nib-setting setting" class:declared={!!field.declared}>
         {@render named(field, where)}
         <FontPicker
           value={field.get()}
@@ -762,7 +777,7 @@
         />
       </div>
     {:else}
-      <label class="nib-setting setting">
+      <label class="nib-setting setting" class:declared={!!field.declared}>
         {@render named(field, where)}
         <!-- `live` writes as it is typed; see the kind in preferences.ts. The other
            kind waits for the field to be left, because half a word is a phrase
@@ -781,7 +796,7 @@
       </label>
     {/if}
   {:else if field.kind === 'select'}
-    <div class="nib-setting setting">
+    <div class="nib-setting setting" class:declared={!!field.declared}>
       {@render named(field, where)}
       <div class="pick">
         <Select
@@ -2032,6 +2047,19 @@
     font: inherit;
     color: var(--accent);
     cursor: default;
+  }
+
+  /* A row the settings file holds: its control shows the value and takes no hand. */
+  .setting.declared > :not(.name, .glyph) {
+    pointer-events: none;
+    opacity: 0.55;
+  }
+
+  .declared-problems p {
+    margin: 4px 0 0;
+    font-family: var(--font-mono, monospace);
+    font-size: var(--text-xs);
+    overflow-wrap: anywhere;
   }
 
   .setting .name small.caution {

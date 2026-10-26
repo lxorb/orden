@@ -59,6 +59,12 @@ export function start(): () => void {
   pull.restore()
   hiddenKinds.restore()
   settings.restore()
+  // What a configuration declares (#673); see settings/file.svelte.ts.
+  if (isDesktop && !__EVEN_PLUGIN__) {
+    void import('./settings/file.svelte').then((file) =>
+      file.declare(() => settings.show('general')),
+    )
+  }
   // The moment a hint may appear: long enough that the window has settled and the
   // reader has started on what they came for. The store is fetched then, not here,
   // since nothing a launch draws needs it; see hints.svelte.ts.
