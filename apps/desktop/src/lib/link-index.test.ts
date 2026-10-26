@@ -1212,3 +1212,109 @@ describe('resolving a page of links', () => {
     }
   })
 })
+
+/** A folder renamed or moved takes every note in it along, and a link that spelled
+ *  out a path through the folder used to be left on the old one: `retarget` only
+ *  asked which links named the folder itself, and no link does. */
+describe('a folder renamed', () => {
+  test('rewrites the links that spell out a path through it, and no others', async () => {
+    const card = { x: 0, y: 0, width: 10, height: 10 }
+    const board = JSON.stringify({
+      nodes: [
+        { id: 'a', type: 'file', file: 'Projects/Plan.md', ...card },
+        { id: 'b', type: 'file', file: 'Projects/shot.png', ...card },
+      ],
+      edges: [],
+    })
+    await import('./scan-canvas')
+    await space(
+      {
+        'Projects/Plan.md': '# Plan',
+        'One.md': 'see [[Projects/Plan]] and [p](Projects/Plan.md) and ![](Projects/shot.png)\n',
+        'Bare.md': 'see [[Plan]] and [p](Plan.md)\n',
+      },
+      ['Projects/shot.png', 'Board.canvas'],
+    )
+    notes['Board.canvas'] = board
+    links.canvasRead(at('Board.canvas'), board)
+    await vi.waitFor(() =>
+      expect(links.backlinks(at('Projects/Plan.md')).map((one) => one.path)).toContain(
+        'Board.canvas',
+      ),
+    )
+
+    const touched = await links.retarget(at('Projects'), at('Work'), ROOT, () => null, {
+      moved: true,
+    })
+
+    expect(touched).toBe(2)
+    expect(notes['One.md']).toBe(
+      'see [[Work/Plan]] and [p](Work/Plan.md) and ![](Work/shot.png)\n',
+    )
+    // A bare name still finds the note wherever its folder went.
+    expect(notes['Bare.md']).toBe('see [[Plan]] and [p](Plan.md)\n')
+    const after = JSON.parse(notes['Board.canvas'] ?? '') as { nodes: Record<string, string>[] }
+    expect(after.nodes.map((one) => one.file)).toEqual(['Work/Plan.md', 'Work/shot.png'])
+  })
+
+  test('moved deeper, its notes point out of it from where they now are', async () => {
+    await space({
+      'Projects/Plan.md': 'see [o](../Other.md), [s](Sub.md) and [[Projects/Sub]]\n',
+      'Projects/Sub.md': '# Sub',
+      'Other.md': '# Other',
+    })
+    notes['Area/Projects/Plan.md'] = notes['Projects/Plan.md'] ?? ''
+
+    await links.retarget(at('Projects'), at('Area/Projects'), ROOT, () => null, { moved: true })
+
+    expect(notes['Area/Projects/Plan.md']).toBe(
+      'see [o](../../Other.md), [s](Sub.md) and [[Area/Projects/Sub]]\n',
+    )
+  })
+})
+
+/** A note moved to another folder took its relative links with it unchanged, and
+ *  each then named a path beside its new folder that held nothing. */
+describe('a note moved to another folder', () => {
+  test('keeps its pictures and markdown links reaching their files', async () => {
+    await space(
+      {
+        'Plan.md': '# Plan\n\n![shot](assets/abc.png)\n\nsee [Other](Other.md) and [[Other]]\n',
+        'Other.md': '# Other',
+      },
+      ['assets/abc.png'],
+    )
+    notes['Projects/Plan.md'] = notes['Plan.md'] ?? ''
+
+    await links.retarget(at('Plan.md'), at('Projects/Plan.md'), ROOT, () => null, { moved: true })
+
+    expect(notes['Projects/Plan.md']).toBe(
+      '# Plan\n\n![shot](../assets/abc.png)\n\nsee [Other](../Other.md) and [[Other]]\n',
+    )
+  })
+
+  test('and moved back to the top, climbs no further than it has to', async () => {
+    await space(
+      { 'Projects/Plan.md': '![shot](../assets/abc.png) [o](../Other.md)\n', 'Other.md': '#' },
+      ['assets/abc.png'],
+    )
+    notes['Plan.md'] = notes['Projects/Plan.md'] ?? ''
+
+    await links.retarget(at('Projects/Plan.md'), at('Plan.md'), ROOT, () => null, { moved: true })
+
+    expect(notes['Plan.md']).toBe('![shot](assets/abc.png) [o](Other.md)\n')
+  })
+
+  test('renamed in its own folder, its own links are left as they were', async () => {
+    await space(
+      { 'Plan.md': '![shot](assets/abc.png) [o](Other.md)\n', 'Other.md': '#' },
+      ['assets/abc.png'],
+    )
+    notes['Goal.md'] = notes['Plan.md'] ?? ''
+
+    expect(
+      await links.retarget(at('Plan.md'), at('Goal.md'), ROOT, () => null, { moved: true }),
+    ).toBe(0)
+    expect(notes['Goal.md']).toBe('![shot](assets/abc.png) [o](Other.md)\n')
+  })
+})
