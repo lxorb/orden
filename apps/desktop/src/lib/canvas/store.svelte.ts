@@ -86,7 +86,19 @@ export class CanvasStore implements PlaneSurface {
 
   /** The text node being written in, while one is. One at a time: an editor is
    *  mounted only for this node, which is what keeps five hundred cards cheap. */
-  editing = $state<string | null>(null)
+  #editing = $state<string | null>(null)
+  get editing(): string | null {
+    return this.#editing
+  }
+
+  /** Leaving a card hands its words to the plane first, whoever leaves it. The card
+   *  hands them over itself as its editor goes, but a card that goes with it - drawn
+   *  only while it is written in, as from far away (CanvasFar.svelte, #535) - went
+   *  before it could, and took the words with it. See canvas/writing.ts. */
+  set editing(id: string | null) {
+    if (this.#editing !== null && id !== this.#editing) flushCardEdits()
+    this.#editing = id
+  }
 
   /** The room this plane is in, while it is in one. Raw: it is set once, when the
    *  room has said what it holds, and read for what it can do rather than for
