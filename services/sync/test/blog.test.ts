@@ -438,6 +438,26 @@ describe('links between notes on a published page', () => {
     expect(road.text).toContain('href="/b/x"')
   })
 
+  test('and the graph under the page draws it', async () => {
+    await addNote('Road.md', '# Road\n')
+    await addNote('B/Road.md', '# Other road\n')
+    await addNote('B/x.md', '# X\n\nsee [[/Road]]\n')
+    await publish({ subdomain: 'field' })
+
+    const response = await call(env, '/b/x', { host: 'field.nibeditor.com' })
+    const island = /<script type="application\/json">(.*?)<\/script>/s.exec(response.text)?.[1]
+    const graph = JSON.parse(island ?? '{}') as {
+      nodes: { id: string }[]
+      edges: { a: number; b: number }[]
+    }
+    const ids = graph.nodes.map((one) => one.id)
+    expect(ids).toContain('road')
+    expect(graph.edges.map((one) => [ids[one.a], ids[one.b]].sort())).toContainEqual([
+      'b/x',
+      'road',
+    ])
+  })
+
   /** The other half of the same question. A wikilink names a note; a markdown
    *  link names a path, written relative to the note it sits in - and that path
    *  is not where the site serves anything. It used to be published exactly as

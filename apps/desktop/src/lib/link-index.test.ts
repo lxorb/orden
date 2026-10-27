@@ -295,6 +295,24 @@ describe('backlinks', () => {
     expect(notes['B/x.md']).toBe('see [About](/about) and [i](/index.md)')
   })
 
+  /** A link that named the path exactly reaches by that path alone: read as the end
+   *  of a path, `../Road.md` left alone would open the `B/Road.md` beside it once the
+   *  `Road.md` it named had moved. */
+  test('a relative markdown link to a note that moves keeps reaching it', async () => {
+    await space({
+      'Road.md': '# Road',
+      'B/Road.md': '# Other road',
+      'B/x.md': 'see [r](../Road.md)',
+    })
+    expect(links.outgoing(at('B/x.md'))[0]?.to).toBe('Road.md')
+
+    await links.retarget(at('Road.md'), at('Z/Road.md'), ROOT, () => null, { moved: true })
+    links.notesMoved(at('Road.md'), at('Z/Road.md'))
+
+    expect(notes['B/x.md']).toBe('see [r](../Z/Road.md)')
+    expect(links.outgoing(at('B/x.md'))[0]?.to).toBe('Z/Road.md')
+  })
+
   test('a path-qualified link reaches past the nearer note', async () => {
     await space({
       'Plan.md': 'the one at the top',
