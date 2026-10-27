@@ -934,10 +934,16 @@ function holds(tail: string): boolean {
  *  Raised 2026-10-27, to 3,405,000, once for the fourth bug burn-down's pending fixes,
  *  so each of them need not raise it. Measured 3,390,605 with main as of this raise.
  *
+ *  Raised 2026-10-27, to 3,422,600, once more for the fourth bug burn-down's remaining
+ *  fixes, which outgrew the raise above. Measured 3,407,533 with main as of this raise.
+ *
  *  Raised 2026-10-27, to 3,431,000, for main's burn-down fixes merged into unstable: the
  *  two lists above, each raised without the other's fixes, measured 3,416,876 and 381
  *  modules together. The headroom is the 14,000 main kept for the fourth burn-down's
- *  pending fixes. */
+ *  pending fixes.
+ *
+ *  Kept at 3,431,000 on 2026-10-27 with #1017 merged in: its 3,422,600 was measured on
+ *  main, and the tree here with #986 measured 3,418,810 and 381 modules. */
 const BUDGET = 3_431_000
 /** Raised 2026-10-26, to 383, for settings/held.ts (#673): measured 382, from 381 at
  *  6ac1ef69b. Main's fixes merged into unstable measured 381 on 2026-10-27. */
