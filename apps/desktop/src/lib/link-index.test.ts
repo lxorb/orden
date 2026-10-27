@@ -281,6 +281,20 @@ describe('backlinks', () => {
     expect(links.backlinks(at('B/Road.md'))).toEqual([])
   })
 
+  test('a markdown link from the top names that path, not a note elsewhere ending so', async () => {
+    await space({
+      'C/about.md': '# About',
+      'posts/a/index.md': '# Index',
+      'B/x.md': 'see [About](/about) and [i](/index.md)',
+    })
+    expect(links.backlinks(at('C/about.md'))).toEqual([])
+    expect(links.backlinks(at('posts/a/index.md'))).toEqual([])
+
+    await links.retarget(at('C/about.md'), at('C/info.md'), ROOT)
+    await links.retarget(at('posts/a/index.md'), at('posts/a/_index.md'), ROOT)
+    expect(notes['B/x.md']).toBe('see [About](/about) and [i](/index.md)')
+  })
+
   test('a path-qualified link reaches past the nearer note', async () => {
     await space({
       'Plan.md': 'the one at the top',
@@ -992,6 +1006,16 @@ describe('renaming a note rewrites the links to it', () => {
 
     expect(notes['X/A/n.md']).toBe('see [[/A/Road]] and [[/A/Road]]')
     expect(links.outgoing(at('X/A/n.md')).map((one) => one.to)).toEqual(['A/Road.md', 'A/Road.md'])
+  })
+
+  test('a markdown link written from the top of the space stays written so', async () => {
+    await space({ 'Road.md': '# Road', 'B/x.md': 'see [x](/Road.md)' })
+
+    await links.retarget(at('Road.md'), at('Path.md'), ROOT)
+    links.notesMoved(at('Road.md'), at('Path.md'))
+
+    expect(notes['B/x.md']).toBe('see [x](/Path.md)')
+    expect(links.outgoing(at('B/x.md'))[0]?.to).toBe('Path.md')
   })
 
   test('a link written from the top of the space stays written so', async () => {

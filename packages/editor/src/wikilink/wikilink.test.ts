@@ -367,6 +367,21 @@ describe('which note a name means', () => {
     expect(resolveFile(here, '/pic.png', 'markdown')).toBe('pic.png')
     expect(resolveFile(here, 'pic.png', 'markdown')).toBe('B/pic.png')
   })
+
+  /** A slash names one path, and a note somewhere else whose path ends the same
+   *  is not it: `[About](/about)` from a website is no `C/about.md`. */
+  test('a path from the top names that path or nothing', () => {
+    const here = index([note('C/about.md'), note('X/notes/a.md')], 'B/x.md')
+    expect(resolveRelative(here, '/about')).toBeNull()
+    expect(resolveRelative(here, '/notes/a.md')).toBeNull()
+    expect(resolveRelative(here, '/C/about.md')?.path).toBe('C/about.md')
+  })
+
+  test('two slashes are no path from the top', () => {
+    const here = index([note('Road.md')], 'B/x.md', {}, ['paper.pdf'])
+    expect(resolveNote(here, '//Road')).toBeNull()
+    expect(resolveFile(here, '//paper.pdf', 'wikilink')).toBeNull()
+  })
 })
 
 /** A name a note gave itself in its own front matter. A file always wins: the
