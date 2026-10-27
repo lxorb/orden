@@ -26,7 +26,7 @@ import {
 import { MOST_FILES, UNSEND_WITHIN } from '@nib/chats/limits'
 import { chatPokeOf } from '@nib/chats/wire'
 import { account } from '../account.svelte'
-import { within } from '../space-paths'
+import { samePath, within } from '../space-paths'
 import { keep, storedText } from '../stored'
 import { sync } from '../sync.svelte'
 import { isNative } from '../tauri'
@@ -299,6 +299,16 @@ class ChatsStore implements Chats {
     }, this.lookWait)
   }
 
+  /** Which of a chat's pointers it is placed at, highest first: one in the chat's own
+   *  space on the account, then the one it is placed at already, so a copy, wherever it
+   *  lies and whatever it is called, never takes its place (B542). */
+  private rank(chat: string, place: Place): number {
+    const space = this.engine?.chats.get(chat)?.row?.space ?? null
+    const home = space !== null && this.remoteOf(place.root) === space ? 2 : 0
+    const held = this.places.get(chat)
+    return home + (held && samePath(held.path, place.path) ? 1 : 0)
+  }
+
   /** A space's id on the account: the same under either sync. */
   private remoteOf(root: string): string | null {
     return sync.remoteIdFor(root)
@@ -329,7 +339,7 @@ class ChatsStore implements Chats {
   }
 
   private async lookForPointers(): Promise<void> {
-    const found = await findPointers().catch(() => null)
+    const found = await findPointers((chat, place) => this.rank(chat, place)).catch(() => null)
     const engine = this.engine
     if (!found || !engine) return
     // A pointer that was here and is not: deleted by the sync, or with its folder; its
@@ -776,10 +786,17 @@ class ChatsStore implements Chats {
     return place.path
   }
 
-  /** The pointer this device lists the chat at, the first of any copies. Null when it
-   *  is not placed here yet. */
+  /** The pointer this device lists the chat at, of any copies the one `rank` puts first.
+   *  Null when it is not placed here yet. */
   placedAt(chat: string): string | null {
     return this.places.get(chat)?.path ?? null
+  }
+
+  /** The chat's space on the account, as listed here: null for a chat the account does
+   *  not list here, undefined while nobody is signed in to ask. */
+  spaceOf(chat: string): string | null | undefined {
+    if (!this.engine) return undefined
+    return this.engine.chats.get(chat)?.row?.space ?? null
   }
 
   chatAt(path: string): Promise<string | null> {
@@ -796,11 +813,15 @@ class ChatsStore implements Chats {
   }
 
   /** A pointer moved, came or went on this device (workspace/file-ops.ts): where its
-   *  chat is now. Its own pointer moved into another space moves the chat there on the
-   *  account; a second pointer to a chat already placed (a copy, a duplicate, an import,
-   *  or that copy moved on) is a file and nothing more, and the chat stays at the pointer
-   *  it had, as `findPointers` keeps the first. Access is the chat's space, never the
-   *  file (docs/chats.md 4.2), so a copy in another space reaches nothing there (B542).
+   *  chat is listed now. Nothing here moves a chat on the account: the one move that
+   *  does, its own pointer carried into another space, is asked of the account before
+   *  the file moves, under the rule chat-carry.ts holds it to (chat-leaving.ts). A pointer
+   *  that came from nowhere, or moved inside its space, is a file and nothing more.
+   *
+   *  A chat named by two pointers (a copy, a duplicate, an import) is listed at the one
+   *  in its own space on the account, else the one it had, as `findPointers` ranks them.
+   *  Access is the chat's space, never the file (docs/chats.md 4.2), so a copy in
+   *  another space reaches nothing there (B542).
    *
    *  One that went - deleted here, or its deletion brought by the sync - takes its chat
    *  off the list at once, rather than leaving the row the account still lists until it
@@ -815,19 +836,20 @@ class ChatsStore implements Chats {
     if (before) next.delete(before[0])
     if (before && !chat) this.gone.add(before[0])
     if (chat) this.gone.delete(chat)
-    const unlisted = chat !== null && !this.engine?.chats.get(chat)?.row
-    if ((before && !chat) || unlisted) void this.engine?.refresh().catch(() => false)
-    if (chat && to && !next.has(chat)) {
-      const root = workspace.spaces.find((one) => within(one.root, to) !== null)?.root ?? null
-      if (root) next.set(chat, { root, path: to })
-      const remoteSpace = root ? this.remoteOf(root) : null
-      const row = this.engine?.chats.get(chat)?.row
-      // Only a move of the pointer the chat was placed at; one that came from nowhere
-      // moves nothing on the account.
-      if (before?.[0] === chat && remoteSpace && row && row.space !== remoteSpace) {
-        await http.moveChat(chat, remoteSpace).catch(() => false)
-        await this.engine?.refresh()
-      }
+    const row = chat ? (this.engine?.chats.get(chat)?.row ?? null) : null
+    const root = to
+      ? (workspace.spaces.find((one) => within(one.root, to) !== null)?.root ?? null)
+      : null
+    // Listed where the account has it no longer, after a move chat-leaving.ts made: asked.
+    const moved =
+      before !== undefined && row !== null && root !== null && this.remoteOf(root) !== row.space
+    if ((before && !chat) || (chat !== null && !row) || moved) {
+      void this.engine?.refresh().catch(() => false)
+    }
+    if (chat && to && root) {
+      const place = { root, path: to }
+      const held = next.get(chat)
+      if (!held || this.rank(chat, place) > this.rank(chat, held)) next.set(chat, place)
     }
     this.places = next
     this.drawList()

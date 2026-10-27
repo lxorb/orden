@@ -54,8 +54,12 @@ export async function chatsCarried(path: string, folder: string): Promise<() => 
   for (const pointer of pointers) {
     const chat = await readPointer(pointer)
     if (!chat) continue
-    // A copy of a pointer whose chat is placed at another one carries nothing: the chat
-    // stays with the pointer it has, and a copy never moves it (B542).
+    // Only the chat's own pointer carries it: one in the space the chat lives in on the
+    // account, and the one it is listed at. A copy - in another space, or beside it -
+    // carries nothing, and neither does a pointer to a chat the account does not list
+    // here: the file moves and the chat stays where it lives (B542).
+    const lives = chats.spaceOf(chat)
+    if (lives !== undefined && lives !== home) continue
     const placed = chats.placedAt(chat)
     if (placed !== null && !pointers.some((one) => samePath(one, placed))) continue
     // Not heard is not moved either: the file would be in the new space with its chat

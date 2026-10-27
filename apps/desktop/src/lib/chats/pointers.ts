@@ -70,8 +70,13 @@ function pointerPaths(entry: Entry, out: string[]): string[] {
 }
 
 /** Every pointer in every space on this device, by the chat it names. A chat named by
- *  two pointers (a copy pasted beside it) keeps the first. */
-export async function findPointers(): Promise<Map<string, Place>> {
+ *  two pointers (a copy pasted beside it, or into another space) keeps the one `rank`
+ *  puts highest, and the first of those: the store ranks the pointer in the chat's own
+ *  space on the account first, so neither the order of the spaces nor a copy's name
+ *  decides where a chat is (B542). */
+export async function findPointers(
+  rank: (chat: string, place: Place) => number = () => 0,
+): Promise<Map<string, Place>> {
   const found = new Map<string, Place>()
   for (const space of workspace.spaces) {
     const tree = await invoke<Entry>('read_tree', {
@@ -81,7 +86,10 @@ export async function findPointers(): Promise<Map<string, Place>> {
     if (!tree) continue
     for (const path of pointerPaths(tree, [])) {
       const chat = await readPointer(path)
-      if (chat && !found.has(chat)) found.set(chat, { root: space.root, path })
+      if (!chat) continue
+      const place = { root: space.root, path }
+      const held = found.get(chat)
+      if (!held || rank(chat, place) > rank(chat, held)) found.set(chat, place)
     }
   }
   return found
