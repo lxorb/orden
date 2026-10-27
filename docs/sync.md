@@ -55,7 +55,7 @@ the device's own snapshots look like.
 
 **About one every five minutes, and the newest.** The same interval the device's
 own keeper defaults to. A save inside the five minutes is folded into the newest
-version rather than dropped, so the last save of a session is always a version:
+version, when the same device sent that one, rather than dropped, so the last save of a session is always a version:
 dropped, it was the one a rollback needed, and nowhere on the account once the
 rollback had written over it. A version kept by name (the words that lost a modal
 answer, the words a rollback writes over) is never folded away, and the thinning

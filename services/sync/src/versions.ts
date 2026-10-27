@@ -163,7 +163,8 @@ export function deviceIn(header: string | undefined): string {
  *  version slides along with the session, and stays where it is once it is five
  *  minutes clear of the last one kept. So one version every five minutes or so,
  *  and the newest is always what the note last said. A version kept by name
- *  (`held`) is never replaced. */
+ *  (`held`) is never replaced, and neither is one another device sent: folded,
+ *  somebody else's words in between two saves of this one's were on no version. */
 export async function keepVersion(
   env: Env,
   note: Pick<Note, 'id' | 'hash' | 'size'>,
@@ -180,10 +181,10 @@ export async function keepVersion(
   // behind the note.
   for (let tries = 0; tries < 3; tries++) {
     const { results: newest } = await env.DB.prepare(
-      'select at, hash, held from note_versions where note_id = ? order by at desc limit 2',
+      'select at, hash, held, by from note_versions where note_id = ? order by at desc limit 2',
     )
       .bind(note.id)
-      .all<{ at: number; hash: string; held: number }>()
+      .all<{ at: number; hash: string; held: number; by: string }>()
     const [last, before] = newest
 
     // Nothing new to say.
@@ -201,6 +202,7 @@ export async function keepVersion(
     const folds =
       last !== undefined &&
       !last.held &&
+      last.by === by &&
       at - last.at < VERSION_EVERY &&
       before !== undefined &&
       last.at - before.at < VERSION_EVERY
@@ -208,7 +210,7 @@ export async function keepVersion(
     if (folds) {
       const folded = await env.DB.prepare(
         `update note_versions set at = ?4, hash = ?5, size = ?6, by = ?7
-          where note_id = ?1 and at = ?2 and hash = ?3 and held = 0`,
+          where note_id = ?1 and at = ?2 and hash = ?3 and held = 0 and by = ?7`,
       )
         .bind(note.id, last.at, last.hash, Math.max(at, last.at), note.hash, note.size, by)
         .run()
