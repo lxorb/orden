@@ -1978,6 +1978,7 @@ export const id: Dictionary = {
   'This {device}': '{device} ini',
   '{name} is back: {device} was writing in it':
     '{name} kembali: {device} sedang menulis di dalamnya',
+  'Changes to {name} are not syncing': 'Perubahan pada {name} tidak disinkronkan',
   // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'Membuka',
   Pressing: 'Menekan',

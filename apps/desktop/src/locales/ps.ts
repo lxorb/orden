@@ -1988,6 +1988,7 @@ export const ps: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': 'دا {device}',
   '{name} is back: {device} was writing in it': '{name} بېرته راغی: {device} پکې لیکل',
+  'Changes to {name} are not syncing': 'په {name} کې بدلونونه نه همغږي کېږي',
   // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'پرانيستل',
   Pressing: 'کېکاږل',

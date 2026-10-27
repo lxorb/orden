@@ -1957,6 +1957,7 @@ export const ko: Dictionary = {
   'This {device}': '이 {device}',
   '{name} is back: {device} was writing in it':
     '{name}이(가) 돌아왔습니다: {device}에서 쓰고 있었습니다',
+  'Changes to {name} are not syncing': '{name}의 변경 사항이 동기화되지 않고 있습니다',
   // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: '열기',
   Pressing: '누르기',

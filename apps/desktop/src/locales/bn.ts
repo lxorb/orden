@@ -1985,6 +1985,7 @@ export const bn: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': 'এই {device}',
   '{name} is back: {device} was writing in it': '{name} ফিরে এসেছে: {device} এতে লিখছিল',
+  'Changes to {name} are not syncing': '{name}-এর পরিবর্তনগুলো সিঙ্ক হচ্ছে না',
   // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'খোলা',
   Pressing: 'চাপা',

@@ -2065,6 +2065,7 @@ export const uk: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': '{device} (цей пристрій)',
   '{name} is back: {device} was writing in it': '{name} повернулася: у ній писав {device}',
+  'Changes to {name} are not syncing': 'Зміни в {name} не синхронізуються',
   // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'Відкриття',
   Pressing: 'Натискання',

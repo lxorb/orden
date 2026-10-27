@@ -2102,6 +2102,7 @@ export const ar: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': 'هذا {device}',
   '{name} is back: {device} was writing in it': 'عادت {name}: كان {device} يكتب فيها',
+  'Changes to {name} are not syncing': 'التغييرات على {name} لا تتم مزامنتها',
   // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'الفتح',
   Pressing: 'النقر',

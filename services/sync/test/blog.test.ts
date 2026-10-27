@@ -1262,6 +1262,25 @@ describe('a drawing in a published space', () => {
       expect(listing.text, path).not.toContain('board')
     }
   })
+  test('is not a page under a name that says words, once a rename gave it one', async () => {
+    const made = await addNote('Board.canvas', DRAWING)
+    const id = made.json.note.id
+    await call(env, `/v2/spaces/${space}/prepare`, { token, method: 'POST' })
+    const renamed = await call(env, `/v2/spaces/${space}/ops`, {
+      token,
+      body: { ops: [{ op: 'r1', t: 'rename', id, name: 'Board.md', seen: 1e9 }] },
+    })
+    expect(renamed.status, renamed.text).toBe(200)
+    await publish({ subdomain: 'field' })
+
+    const response = await call(env, '/board', { host: 'field.nibeditor.com' })
+    expect(response.status).toBe(404)
+    expect(response.text).not.toContain('the private bit')
+    for (const path of ['/', '/feed.xml', '/sitemap.xml']) {
+      const listing = await call(env, path, { host: 'field.nibeditor.com' })
+      expect(listing.text, path).not.toContain('board')
+    }
+  })
 })
 
 /** A snippet is the note's own prose with the index's marks in it, and the words

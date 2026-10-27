@@ -31,7 +31,7 @@ import { sha256 } from '../crypto'
 import { noteKey } from '../notes'
 import { askRoom } from '../rooms'
 import { seedOf, seedsAnything, snapshotKey } from '../rooms/epoch'
-import { roomKind } from '../rooms/kind'
+import { noteKind } from '../rooms/kind'
 import { allows, reachedItem, reachedSpace, type Role } from '../spaces/space'
 import type { Env, Note, Whoever } from '../types'
 import { keepVersionNow } from '../versions'
@@ -121,7 +121,7 @@ export async function documentOf(
   const body = object ? await object.text() : ''
   if ((await sha256(body)) !== note.epoch_base) return null
 
-  const update = seedOf(roomKind(note.path), note.id, epoch, body)
+  const update = seedOf(noteKind(note), note.id, epoch, body)
   return { update, seq: seedsAnything(update) ? 1 : 0 }
 }
 

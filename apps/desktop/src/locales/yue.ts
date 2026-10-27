@@ -1934,6 +1934,7 @@ export const yue: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': '呢部{device}',
   '{name} is back: {device} was writing in it': '{name} 返嚟咗：{device} 啱啱喺入面寫緊嘢',
+  'Changes to {name} are not syncing': '{name} 嘅更改冇同步到',
   // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: '開緊',
   Pressing: '撳緊',

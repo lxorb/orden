@@ -1990,6 +1990,7 @@ export const pa: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': 'ਇਹ {device}',
   '{name} is back: {device} was writing in it': '{name} ਵਾਪਸ ਆ ਗਿਆ: {device} ਇਸ ਵਿੱਚ ਲਿਖ ਰਿਹਾ ਸੀ',
+  'Changes to {name} are not syncing': '{name} ਵਿੱਚ ਬਦਲਾਅ ਸਿੰਕ ਨਹੀਂ ਹੋ ਰਹੇ',
   // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'ਖੋਲ੍ਹਣਾ',
   Pressing: 'ਦਬਾਉਣਾ',

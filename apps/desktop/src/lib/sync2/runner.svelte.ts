@@ -36,14 +36,14 @@ import type { PlaneSurface } from '../canvas/shared'
 import type { Watched } from './watching'
 import { rooms } from '../rooms.svelte'
 import * as Y from 'yjs'
-import { asking, type Held, type HeldAnswer } from './asking.svelte'
+import { asking, type Held, type HeldAnswer, unsyncedToast } from './asking.svelte'
 import { attach, attachPlane, type PlaneJoin } from './binding'
 import { carry, uncarry } from './carry'
 import { kindOfName } from './create'
 import { Engine } from './engine'
 import { type Holding, spend } from '../sync/holding'
 import type { Carried } from '../pages/carried'
-import { holdsDocument, unixLines } from './kinds'
+import { holdsDocument, joinsAs, unixLines } from './kinds'
 import { hub } from './hub.svelte'
 import { firstPass, mirrorsFrom, type V1Listing, type V1Space } from './migrate'
 import { forgetSyncStore, get, openSyncStore, put } from './store'
@@ -816,8 +816,15 @@ class Runner {
       if (!one.path) continue
       const note = one.note
       const surface = rooms.planes.get(one.key)
-      const on: On | null = note.kind === 'note' ? { note } : surface ? { surface } : null
-      const entry = on && engine.entryAt(one.path)
+      const entry = engine.entryAt(one.path)
+      const joins = entry && joinsAs(note.kind, entry.kind)
+      // A tab whose name and entry disagree about the shape, after a rename across
+      // `.md` and `.canvas`, is left unjoined, and the reader is told once: what is
+      // typed there that the entry's kind cannot hold does not sync.
+      if (entry && engine.core.hasDoc(entry.id) && joins === null)
+        this.mismatched(one.key, one.path)
+      const on: On | null =
+        joins === 'views' ? { note } : joins === 'surface' && surface ? { surface } : null
       if (on && entry && engine.core.hasDoc(entry.id))
         wanted.set(one.key, { id: entry.id, on, arrivals: () => note.arrivals })
     }
@@ -858,6 +865,16 @@ class Runner {
       this.bound.set(key, { id: one.id, part, plane: typeof joined === 'function' ? null : joined })
       this.enter(engine, key, one.id, one.on)
     }
+  }
+
+  /** Tabs already told that their file syncs as another kind; see `bindNow`. */
+  private readonly told = new Set<string>()
+
+  private mismatched(key: string, path: string) {
+    if (this.told.has(key)) return
+    this.told.add(key)
+    log('warn', `sync2: ${path} is open as another kind than it syncs as`)
+    void unsyncedToast(path.split(/[\\/]/).pop() ?? path)
   }
 
   /** Open notes whose documents a room is carrying, by document key. */

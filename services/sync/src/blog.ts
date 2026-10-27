@@ -36,6 +36,7 @@ import { askInChunks, places } from './bound'
 import { blogRootOf, sameOriginPath } from './hosts'
 import { machineOf, mayGuess, maySendAnswer, mayTakeAnswer } from './limits'
 import { noteKey } from './notes'
+import { noteKind } from './rooms/kind'
 import { keepAnswer } from './spaces/answers'
 import { readSpaceFiles, type SpaceFile } from './spaces/files'
 import { publishes, readSite, type Site, type SitePassword, SVG_POLICY } from './blog/site'
@@ -699,7 +700,10 @@ async function sitePages(env: Env, space: Space, site: Site): Promise<Page[]> {
 
   const listed: Page[] = []
   for (const note of listing.results) {
+    // A drawing, by its name or by its kind: a canvas entry renamed to `.md` is still
+    // one (see `noteKind`), and its JSON published as a post would say every card.
     if (isCanvasTarget(note.path) || isPagesTarget(note.path)) continue
+    if (noteKind(note) === 'plane') continue
 
     const front = readFront(note.front)
     if (!publishes(site.rules, note.path, front)) continue

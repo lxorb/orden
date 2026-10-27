@@ -1997,6 +1997,7 @@ export const tr: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': 'Bu {device}',
   '{name} is back: {device} was writing in it': '{name} geri geldi: {device} içine yazıyordu',
+  'Changes to {name} are not syncing': '{name} üzerindeki değişiklikler eşitlenmiyor',
   // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'Açma',
   Pressing: 'Tıklama',

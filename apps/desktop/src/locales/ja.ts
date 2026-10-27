@@ -1974,6 +1974,7 @@ export const ja: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': 'この{device}',
   '{name} is back: {device} was writing in it': '{name} が戻りました: {device} で書き込み中でした',
+  'Changes to {name} are not syncing': '{name} の変更は同期されていません',
   // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: '開いています',
   Pressing: '押しています',

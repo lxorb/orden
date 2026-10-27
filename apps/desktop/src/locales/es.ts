@@ -2042,6 +2042,7 @@ export const es: Dictionary = {
   'This {device}': 'Este {device}',
   '{name} is back: {device} was writing in it':
     '{name} ha vuelto: {device} estaba escribiendo en ella',
+  'Changes to {name} are not syncing': 'Los cambios en {name} no se están sincronizando',
   // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: 'Apertura',
   Pressing: 'Pulsación',

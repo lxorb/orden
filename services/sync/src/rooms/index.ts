@@ -26,7 +26,7 @@ import type { Env, Note } from '../types'
 import { chatsRevoked } from '../chats/ask'
 import { machinesRevoked } from '../machines/revoke'
 import { SIGNED_IN_AS } from './access'
-import { isChatPointer, roomKind } from './kind'
+import { isChatPointer, noteKind } from './kind'
 import type { Ingested } from './room'
 
 /** All three halves of the question in one round trip: whether the session is
@@ -58,6 +58,7 @@ reached as (
   select n.space_id as space_id,
          n.path as path,
          n.epoch as epoch,
+         n.kind as kind,
          case when sp.user_id = me.user_id then 'owner'
               when 'write' in (coalesce(ms.role, ''), coalesce(mi.role, ''),
                                coalesce(gs.role, ''), coalesce(gi.role, '')) then 'write'
@@ -81,6 +82,7 @@ select (select coalesce(user_id, guest_id) from me) as who,
        (select space_id from reached) as space_id,
        (select path from reached) as path,
        (select epoch from reached) as epoch,
+       (select kind from reached) as kind,
        (select role from reached) as role`
 
 /** How long a client is told to wait before asking for the room again. A second:
@@ -164,6 +166,7 @@ rooms.get('/:noteId', async (context) => {
     space_id: string | null
     path: string | null
     epoch: number | null
+    kind: string | null
     role: string | null
   }>()
 
@@ -185,9 +188,13 @@ rooms.get('/:noteId', async (context) => {
       upgrade: 'websocket',
       'x-nib-note': noteId,
       'x-nib-space': allowed.space_id,
-      // Which shape the room's document is in, which is the file's name and
-      // nothing else. Said here because this is where the row was read.
-      'x-nib-kind': roomKind(allowed.path ?? ''),
+      // Which shape the room's document is in; see `noteKind`. Said here because
+      // this is where the row was read.
+      'x-nib-kind': noteKind({
+        path: allowed.path ?? '',
+        kind: allowed.kind,
+        epoch: allowed.epoch,
+      }),
       // The one thing the room is told about the person on the other end.
       // A reader is in the room and sees every keystroke; what the room does
       // with this is refuse the messages that would change the text.
@@ -255,7 +262,7 @@ export type RoomAsk = 'push' | 'pull' | 'ingest'
  *  an object not to answer is a deploy, and the second ask lands on its successor. */
 export async function askRoom(
   env: Env,
-  target: { id: string; space_id: string; path: string; epoch?: number },
+  target: { id: string; space_id: string; path: string; kind?: string; epoch?: number },
   ask: RoomAsk,
   body: Uint8Array,
 ): Promise<Response | null> {
@@ -272,7 +279,7 @@ export async function askRoom(
             'x-nib-doc': ask,
             'x-nib-note': target.id,
             'x-nib-space': target.space_id,
-            'x-nib-kind': roomKind(target.path),
+            'x-nib-kind': noteKind(target),
             'x-nib-epoch': String(target.epoch ?? 0),
           },
           body,

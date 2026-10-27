@@ -1,7 +1,7 @@
 import { type Context, Hono } from 'hono'
 import { NOT_A_PATH, NO_SUCH_NOTE, OUT_OF_SPACE, ROOM_AWAY } from './refused'
 import { mergeCanvasFiles } from '@nib/markdown/canvas-merge'
-import { isCanvasTarget, isPagesTarget } from '@nib/markdown/links'
+import { isPagesTarget } from '@nib/markdown/links'
 import { conflictPath, freePath, numbered } from '@nib/markdown/paths'
 import { objectBody, readBody } from './body'
 import { FRONT_REV, readFront, titleFrom, writeFront } from './blog/front'
@@ -23,6 +23,7 @@ import {
 } from './spaces/space'
 import { laterOf, pokeSpace } from './hub/poke'
 import { ingestInto } from './rooms'
+import { noteKind, readsAs } from './rooms/kind'
 import { deviceOf } from './sync2/device'
 import { createByPath, deleteById, moveByPath } from './sync2/ops'
 import { DOCUMENT_KINDS, kindOfName } from './sync2/tree'
@@ -787,6 +788,9 @@ notes.post('/spaces/:spaceId/rollback', atLeast('write', 'spaceId'), async (cont
   const device = await deviceOf(context)
 
   let written = 0
+  // Versions the note cannot take back: words, for a note that is a canvas now. Said
+  // apart from what was written, and not left for the sheet to ask about again.
+  let refused = 0
   for (const one of changed) {
     let note = await noteById(context.env, one.note_id)
     if (!note) continue
@@ -826,15 +830,16 @@ notes.post('/spaces/:spaceId/rollback', atLeast('write', 'spaceId'), async (cont
       name: asking,
       device,
     })
-    if (saved !== null && saved !== MOVED) written += 1
+    if (saved === UNREADABLE) refused += 1
+    else if (saved !== null && saved !== MOVED) written += 1
   }
 
   // What is left is what was not reached this time: the rows beyond the ceiling,
   // plus anything this pass could not write (a note somebody took away while it
   // ran). A client that asks again gets the next four hundred.
-  const left = Math.max(held - written, 0)
+  const left = Math.max(held - written - refused, 0)
 
-  return context.json({ notes: written, partial: left > 0, left })
+  return context.json({ notes: written, refused, partial: left > 0, left })
 })
 
 /** How many of the paths a rollback would touch it names. Enough to recognise
@@ -897,7 +902,16 @@ notes.put('/notes/:id', async (context) => {
   let base = baseVersion
 
   if (baseVersion !== undefined && baseVersion !== note.version) {
-    if (!isCanvasTarget(path)) return await conflict(context, note.id)
+    // Merged as a canvas only where the note is one, which on sync v2 is its entry's
+    // kind and not its name: words named `.canvas` read as an empty plane on both
+    // sides, and the merge kept the server's copy without a word about the save.
+    if (noteKind({ path, kind: note.kind, epoch: note.epoch }) !== 'plane') {
+      return await conflict(context, note.id)
+    }
+    // And never with a side that is not a canvas: read as an empty plane, the merge
+    // keeps the server's copy and the save is gone with a 200. Refused as a fresh
+    // save of the same text is; see `readsAs`.
+    if (!readsAs('plane', content)) return context.json({ error: NOT_A_CANVAS }, 422)
 
     const object = await context.env.NOTES.get(noteKey(note.space_id, note.id))
     content = mergeCanvasFiles(content, object ? await object.text() : '')
@@ -943,6 +957,7 @@ notes.put('/notes/:id', async (context) => {
   // that did not match gets, because it is the same thing to the client: what
   // it edited is not what is held, and here is what is.
   if (written === MOVED) return await conflict(context, note.id)
+  if (written === UNREADABLE) return context.json({ error: NOT_A_CANVAS }, 422)
 
   let saved = written
   if (placed && path !== note.path) {
@@ -1071,6 +1086,13 @@ export async function restoreNote(env: Env, note: Note, device: string | undefin
 /** What `writeWords` answers for a note that moved past the version the writer named. */
 export const MOVED = 'moved'
 
+/** A text the note's room cannot hold: prose written into a canvas entry, which a
+ *  rename gave a name that says words. See `readsAs` in rooms/kind.ts. */
+export const UNREADABLE = 'unreadable'
+
+/** What a v1 save of such a text is answered. */
+const NOT_A_CANVAS = 'this note is a canvas - write a canvas into it'
+
 /** Who is writing a whole text, and the version they read, where they read one. */
 export interface Writer {
   name: string
@@ -1084,7 +1106,8 @@ export interface Writer {
  *  section 5.3), so the text goes to the room, which takes it in as the operations it
  *  differs by and settles at once; see `ingest` in rooms/room.ts. Before, it is a save
  *  like it always was. Answers the note as it now stands, `MOVED` where the note moved
- *  past the version the writer read, and null where its room could not be reached.
+ *  past the version the writer read, `UNREADABLE` where the text is not the kind of
+ *  thing the note is, and null where its room could not be reached.
  *
  *  `path` is where a note without a tree goes; a note with one is moved by the tree,
  *  and its words never move it. */
@@ -1094,9 +1117,10 @@ export async function writeWords(
   text: string,
   path: string,
   writer: Writer,
-): Promise<Note | typeof MOVED | null> {
+): Promise<Note | typeof MOVED | typeof UNREADABLE | null> {
   if ((note.epoch ?? 0) >= 1) {
     const answer = await ingestInto(env, note, text, writer)
+    if (answer && 'refused' in answer && answer.refused === UNREADABLE) return UNREADABLE
     if (!answer || 'refused' in answer) return null
     return 'conflict' in answer ? MOVED : answer.note
   }

@@ -1936,6 +1936,7 @@ export const zhHant: Dictionary = {
   // that came back because another device was writing in it.
   'This {device}': '這台{device}',
   '{name} is back: {device} was writing in it': '{name} 已恢復：{device} 正在其中寫作',
+  'Changes to {name} are not syncing': '{name} 的變更未同步',
   // Agents: the activity panel, the mark on a tab, the stop and the tray
   Opening: '開啟',
   Pressing: '點按',

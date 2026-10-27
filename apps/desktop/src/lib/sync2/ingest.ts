@@ -30,6 +30,24 @@ export async function writtenOf(core: Core, id: string): Promise<string | null> 
   return row?.text ?? null
 }
 
+/** Words in a plane's file that are not a canvas: written by another program, or typed
+ *  into a canvas entry that a rename gave a name saying words. They cannot go into the
+ *  plane, and the next change from the account is written over the file, so they are
+ *  kept as a version on this device now, once for each text, and the reader is told
+ *  once that this file is not syncing. A file left blank is a save caught half way,
+ *  and has nothing to keep. */
+async function unsynced(core: Core, entry: EntryRow, full: string, read: string): Promise<void> {
+  if (!read.trim()) return
+  const kept = `${entry.id}:${await core.world.digest(read)}`
+  if (!core.unsyncedKept.has(kept)) {
+    core.unsyncedKept.add(kept)
+    await core.world.disk.keep(full, read)
+  }
+  if (core.unsyncedTold.has(entry.id)) return
+  core.unsyncedTold.add(entry.id)
+  core.events.unsynced?.({ id: entry.id, name: entry.name })
+}
+
 /** Folds another program's change to an entry's file into its document. Answers the
  *  changes to write; nothing when the file says what nib wrote. */
 export async function foldIn(core: Core, space: SpaceState, entry: EntryRow): Promise<Change[]> {
@@ -47,7 +65,10 @@ export async function foldIn(core: Core, space: SpaceState, entry: EntryRow): Pr
   if (file === ours) return await wrote(core, entry, file)
   // A plane another program left unreadable - cut short mid-write, or holding a merge's
   // conflict markers - is left for that program to finish, not taken for an empty one.
-  if (!readable(doc.shape, file)) return []
+  if (!readable(doc.shape, file)) {
+    await unsynced(core, entry, full, read)
+    return []
+  }
 
   if (ours === ancestor) {
     doc.write((live) => turn(doc.shape, live, ours, file, MINE))

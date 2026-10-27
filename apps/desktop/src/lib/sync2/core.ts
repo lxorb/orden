@@ -70,6 +70,9 @@ export interface Holding {
 export interface CoreEvents {
   resurrected: (event: { id: string; name: string; device: string }) => void
   held: () => void
+  /** A file whose words its entry's kind cannot hold, kept on this device; see
+   *  `unsynced` in ingest.ts. */
+  unsynced: (event: { id: string; name: string }) => void
 }
 
 export class Core {
@@ -103,6 +106,11 @@ export class Core {
    *  they wait a while before going again (files.ts). Memory only. */
   readonly refusedBytes = new Map<string, { at: number; hash: string; full: boolean }>()
   readonly events: Partial<CoreEvents> = {}
+  /** Which files' words were kept because their entry's kind cannot hold them, by id
+   *  and digest, and which entries the reader was told about; see `unsynced` in
+   *  ingest.ts. */
+  readonly unsyncedKept = new Set<string>()
+  readonly unsyncedTold = new Set<string>()
   /** Bumped when the engine stops, so work still in the air can tell it is too late. */
   life = 0
   private writing: Promise<unknown> = Promise.resolve()
