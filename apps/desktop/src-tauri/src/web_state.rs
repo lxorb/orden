@@ -102,20 +102,26 @@ pub async fn web_copy(
     origins: Vec<String>,
 ) -> Result<merge::Merged, String> {
     ours(&webview)?;
-    let (Some(from), Some(into)) = (
-        crate::web_stores::named(Some(&from))?,
-        crate::web_stores::named(Some(&into))?,
-    ) else {
-        return Err("a copy is from one note's store into another's".to_owned());
-    };
-    if !into.starts_with("note_") || from == into {
-        return Err("a store is not copied into itself".to_owned());
-    }
+    let (from, into) = copy_stores(&from, &into)?;
     let origins: Vec<String> = origins
         .into_iter()
         .filter(|one| one.starts_with("https://") || one.starts_with("http://"))
         .collect();
     merge::merge(&webview, from, Some(into), &origins, true).await
+}
+
+/// The two stores of a copy, checked: both named, `into` a note's own, and not the same.
+fn copy_stores<'a>(from: &'a str, into: &'a str) -> Result<(&'a str, &'a str), String> {
+    let (Some(from), Some(into)) = (
+        crate::web_stores::named(Some(from))?,
+        crate::web_stores::named(Some(into))?,
+    ) else {
+        return Err("a copy is from one note's store into another's".to_owned());
+    };
+    if !into.starts_with("note_") || from == into {
+        return Err("a copy is into another note's own store".to_owned());
+    }
+    Ok((from, into))
 }
 
 #[cfg(test)]

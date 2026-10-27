@@ -30,7 +30,7 @@ import { keepNow } from './keep'
 import { pages } from './pages.svelte'
 import { withOwn } from './own-file'
 import { readWebFile } from './shortcut'
-import { freshOwn, ownStore, webData } from './web-data.svelte'
+import { freshOwn, isCopying, ownStore, webData } from './web-data.svelte'
 
 /** The two places a web note's pages may keep what websites store. */
 type Where = 'global' | 'separate'
@@ -50,6 +50,8 @@ async function textOf(path: string): Promise<string | null> {
  *  kept with nothing said. Save never gives two notes one id (see `ownFor` in
  *  workspace/placing.ts), but a copied file does. */
 async function namedElsewhere(path: string, own: string): Promise<boolean> {
+  // A tab saved out of this note has its store copied out of this one right now.
+  if (isCopying(own)) return true
   const others = new Set<string>()
   for (const tab of workspace.tabs) {
     if (tab.kind === 'web' && tab.path !== null) others.add(tab.path)

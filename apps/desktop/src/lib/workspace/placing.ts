@@ -110,15 +110,18 @@ export async function keepWeb(
  *  note that is not saved. */
 async function ownFor(tab: Tab, url: string): Promise<string | null> {
   if (!tab.apart) return null
-  const { freshOwn, ownStore } = await import('../web-tab/web-data.svelte')
+  const { copyingOut, freshOwn, ownStore } = await import('../web-tab/web-data.svelte')
   const own = freshOwn()
+  const from = tab.apart
   if (isDesktop) {
     const origins = originOf(url)
-    await invoke('web_copy', {
-      from: ownStore(tab.apart),
-      into: ownStore(own),
-      origins: origins ? [origins] : [],
-    }).catch((error: unknown) => {
+    await copyingOut(from, () =>
+      invoke('web_copy', {
+        from: ownStore(from),
+        into: ownStore(own),
+        origins: origins ? [origins] : [],
+      }),
+    ).catch((error: unknown) => {
       console.warn('nib: a saved tab’s web data could not be copied', error)
     })
   }

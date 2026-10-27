@@ -153,9 +153,11 @@ pub(crate) fn last_used(folder: &Path) -> Option<SystemTime> {
     newest(folder, 5, &mut 0)
 }
 
-/// Folds the store `from` into `into` (the global one where that is none): its cookies,
-/// and the storage of each of `origins` `into` has none of. `from_used_last` is whether
-/// `from` was used more recently than `into`.
+/// Folds the store `from` into `into`: its cookies, and the storage of each of `origins`.
+/// Into the global store (`into` none) only an origin's storage it has none of; into a
+/// named store, which is one made for this copy (`web_copy`), every origin's, since what
+/// is there was put by nothing but the copy. `from_used_last` is whether `from` was used
+/// more recently than `into`.
 pub(crate) async fn merge(
     caller: &Webview,
     from: &str,
@@ -180,7 +182,7 @@ pub(crate) async fn merge(
 
     for origin in origins {
         // An origin that cannot be opened or read is left as it is, and the rest go on.
-        match copied(&mut old, &mut global, origin).await {
+        match copied(&mut old, &mut global, origin, into.is_some()).await {
             Ok(true) => merged.origins += 1,
             Ok(false) | Err(_) => merged.left += 1,
         }
@@ -188,9 +190,21 @@ pub(crate) async fn merge(
     Ok(merged)
 }
 
-/// One origin's storage out of `old` and into `global`, when `global` has none. Says
-/// whether it was copied.
-async fn copied(old: &mut Hidden, global: &mut Hidden, origin: &str) -> Result<bool, String> {
+/// Whether an origin's storage is copied, given whether the store it goes into already
+/// holds some for it: never over what the shared store has of its own, and always into a
+/// store made for the copy (`fresh`).
+pub(crate) fn takes_storage(into_has: bool, fresh: bool) -> bool {
+    fresh || !into_has
+}
+
+/// One origin's storage out of `old` and into `global`; see `takes_storage`. Says whether
+/// it was copied.
+async fn copied(
+    old: &mut Hidden,
+    global: &mut Hidden,
+    origin: &str,
+    fresh: bool,
+) -> Result<bool, String> {
     let listing = quoted(r#"{"session":false}"#)?;
     let list = format!("nibDump('list', {listing})");
 
@@ -202,7 +216,9 @@ async fn copied(old: &mut Hidden, global: &mut Hidden, origin: &str) -> Result<b
             there.origin
         ));
     }
-    if there.local.as_ref().is_some_and(|items| !items.is_empty()) || !there.databases.is_empty() {
+    let has =
+        there.local.as_ref().is_some_and(|items| !items.is_empty()) || !there.databases.is_empty();
+    if !takes_storage(has, fresh) {
         return Ok(false);
     }
 
