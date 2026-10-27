@@ -22,6 +22,7 @@ import { NO_PRIORITY, type Priority, type Remind, type TaskFields } from '@nib/m
 import { asWords, OPENS_MARKUP } from '@nib/markdown/words'
 import { key } from '../i18n.svelte'
 import { readCsv } from './csv'
+import { dayOf } from './meta'
 import { safeName } from './names'
 import type { ImportPlan, Lost, Planned } from './plan'
 import type { Source } from './sources'
@@ -575,7 +576,8 @@ function taskOf(
     ? Number(row.duration.amount) * (text(row.duration.unit) === 'day' ? 1440 : 1)
     : 0
   const assignee = people.get(id(row.responsible_uid))
-  const done = text(row.completed_at).slice(0, 10)
+  // Said in UTC, and done on the day it was where the reader is; see `dayOf`.
+  const done = dayOf(text(row.completed_at))
   return {
     id: id(row.id),
     project: id(row.project_id),
@@ -616,7 +618,7 @@ function remindOf(row: Json): Remind | null {
 function commentOf(row: Json): Comment {
   const file = isRecord(row.file_attachment) ? linkTo(row.file_attachment) : ''
   const link = file ? ` ${file}` : ''
-  const at = text(row.posted_at).slice(0, 10)
+  const at = dayOf(text(row.posted_at))
   return { text: `${text(row.content)}${link}`.trim(), ...(at ? { at } : {}) }
 }
 
