@@ -156,7 +156,15 @@ class ChatState {
   }
 
   waitUntil(work: Promise<unknown>) {
-    void work
+    this.pending.push(work)
+  }
+
+  private readonly pending: Promise<unknown>[] = []
+
+  /** Everything the object asked to finish after the request it was handling. The
+   *  runtime waits for these; a test has to say when. */
+  async idle(): Promise<void> {
+    while (this.pending.length) await Promise.all(this.pending.splice(0, this.pending.length))
   }
 
   blockConcurrencyWhile<T>(work: () => Promise<T>): Promise<T> {
@@ -214,6 +222,7 @@ export async function open(
   person: Person,
   where: { chat: string; space: string },
   since?: number,
+  login?: string,
 ): Promise<ChatSocket> {
   await held.log.fetch(
     new Request('https://chats.invalid/', {
@@ -221,7 +230,7 @@ export async function open(
     }),
   )
   const socket = new ChatSocket()
-  await held.log.enter(socket as unknown as WebSocket, person)
+  await held.log.enter(socket as unknown as WebSocket, person, login)
   await say(held, socket, since === undefined ? { t: 'hello' } : { t: 'hello', since })
   return socket
 }

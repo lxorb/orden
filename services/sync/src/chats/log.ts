@@ -45,7 +45,7 @@ import {
   setMeta,
 } from './placing'
 import { askChat } from './ask'
-import { hubIdOf, reachAs, reaching } from './reach'
+import { hubIdOf, reachAs, reachByToken, reaching } from './reach'
 import { SCHEMA } from './schema'
 
 /** What a route or the door asks the object, named by `x-nib-chat-ask`; see ask.ts. */
@@ -241,16 +241,35 @@ export class ChatLog implements DurableObject {
 
     this.ctx.acceptWebSocket(server, [person.who])
     attach(server, { ...person, ...(login ? { login } : {}), hello: false, typedAt: 0 })
+
+    // And written again now the socket is here: the close of another device of this
+    // person landing during the first write saw none of theirs left and took the row
+    // away. A socket that cannot be written down is not kept either.
+    try {
+      await this.writeSocketRow(person.id)
+    } catch (error) {
+      server.close(1011, 'try again')
+      throw error
+    }
+
+    // Rows nothing will take away are cleared after the join rather than before it:
+    // the join waits on none of the chats that asks, and fails for none of them.
+    this.ctx.waitUntil(
+      this.sweep().catch((error: unknown) => {
+        note(`chat ${this.chatId()} sweep`, error, null)
+      }),
+    )
     this.sayHere()
   }
 
   async webSocketMessage(socket: WebSocket, message: ArrayBuffer | string): Promise<void> {
     if (typeof message !== 'string') return
+    // Whatever this says is heard by every socket here, so none whose sign-in has
+    // ended - this one included - is left to say it or to hear it. And read after the
+    // asking, which may have made this socket a reader.
+    if ((await this.askSignIns()).has(socket)) return
     const me = attachedTo(socket)
     if (!me) return
-    // Whatever this says is heard by every socket here, so none whose sign-in has
-    // ended - this one included - is left to say it or to hear it.
-    if ((await this.askSignIns()).has(socket)) return
     const frame = clientFrameOf(message)
     if (!frame) {
       say(socket, { t: 'refused', id: null, error: INVALID })
@@ -1063,7 +1082,8 @@ export class ChatLog implements DurableObject {
   /* ── Access ending ────────────────────────────────────────────────────── */
 
   /** Every socket whose sign-in has ended - run out, most of all, which nothing else
-   *  announces - closed, at most once a minute (#520). Asked when something is about to
+   *  announces - closed, at most once a minute (#520); and, in the same minute, every
+   *  socket whose person is no longer in the space (`askAccess`). Asked when something is about to
    *  be said to the sockets here, which is the only time a socket that outlived its
    *  sign-in could hear or say anything: a chat nobody writes in is never woken for it.
    *  A socket let in before the door said which sign-in it came with is left as it is. */
@@ -1087,6 +1107,7 @@ export class ChatLog implements DurableObject {
       socket.close(SIGNED_OUT, 'signed out')
       closed.add(socket)
     }
+    await this.askAccess(sockets, closed)
     if (!closed.size) return closed
 
     // A close this side asked for brings no close handler with it, so the rows go from
@@ -1103,6 +1124,57 @@ export class ChatLog implements DurableObject {
       }
     }
     return closed
+  }
+
+  /** What each live sign-in here may still do, asked beside the sign-ins: the route
+   *  that takes somebody's access away tells the chats they have open, and this catches
+   *  a telling that missed, a minute late rather than never. A socket whose person is no
+   *  longer in the space is closed and added to `closed`, one who is a reader now is
+   *  made one. Nothing is done where the chat itself has ended or its space has gone,
+   *  which is not anybody's access ending; nor where nothing could be asked. */
+  private async askAccess(sockets: WebSocket[], closed: Set<WebSocket>): Promise<void> {
+    const chat = this.chatId()
+    if (!chat) return
+    const logins = [
+      ...new Set(sockets.flatMap((one) => (closed.has(one) ? [] : (attachedTo(one)?.login ?? [])))),
+    ]
+    if (!logins.length) return
+
+    const at = Date.now()
+    const asked = await Promise.all(
+      logins.map(async (login) => [login, await reachByToken(this.env, login, at, chat)] as const),
+    ).catch(() => null)
+    if (!asked) return
+    const reached = new Map(asked)
+
+    let chatLives: boolean | null = null
+    for (const socket of sockets) {
+      const them = attachedTo(socket)
+      if (!them?.login || closed.has(socket)) continue
+      const answer = reached.get(them.login)
+      if (!answer?.live) continue
+      if (answer.reached) {
+        if (answer.reached.role === 'read' && them.role !== 'read') {
+          attach(socket, { ...them, role: 'read' })
+        }
+        continue
+      }
+      chatLives ??= await this.lives(chat).catch(() => false)
+      if (!chatLives) continue
+      socket.close(1008, 'no longer in this space')
+      closed.add(socket)
+    }
+  }
+
+  /** Whether this chat is still open in a space that is still there. */
+  private async lives(chat: string): Promise<boolean> {
+    const row = await this.env.DB.prepare(
+      `select 1 as yes from chats ch join spaces sp on sp.id = ch.space_id
+        where ch.id = ? and ch.ended_at is null and sp.deleted = 0`,
+    )
+      .bind(chat)
+      .first<{ yes: number }>()
+    return row !== null
   }
 
   /** Whether everybody's sockets of this `who` are among those just closed. */
@@ -1142,14 +1214,6 @@ export class ChatLog implements DurableObject {
     const chat = this.chatId()
     const space = readMeta(this.sql, 'space')
     if (!chat || !space) return
-    // Rows a close never came for are cleared as new ones arrive, but only once the
-    // chat a row names says nobody of theirs is in it: a socket may simply have been
-    // open for days. See opened.ts.
-    await sweepOpened(this.env, { name: 'chat_sockets', key: 'chat_id' }, async (other, them) =>
-      other === chat
-        ? this.hasSocketOf(them)
-        : await openIn(await askChat(this.env, other, 'open', { [OPEN_HEADER]: them })),
-    )
     await this.env.DB.prepare(
       `insert into chat_sockets (chat_id, space_id, who, opened_at) values (?, ?, ?, ?)
        on conflict(chat_id, who) do update
@@ -1157,6 +1221,18 @@ export class ChatLog implements DurableObject {
     )
       .bind(chat, space, who, Date.now())
       .run()
+  }
+
+  /** Rows a close never came for, cleared as new ones arrive, but only once the chat a
+   *  row names says nobody of theirs is in it: a socket may simply have been open for
+   *  days. See opened.ts. */
+  private async sweep(): Promise<void> {
+    const chat = this.chatId()
+    await sweepOpened(this.env, { name: 'chat_sockets', key: 'chat_id' }, async (other, them) =>
+      other === chat
+        ? this.hasSocketOf(them)
+        : await openIn(await askChat(this.env, other, 'open', { [OPEN_HEADER]: them })),
+    )
   }
 
   /** Whether this person - an id, as the rows name them - has a socket here. */

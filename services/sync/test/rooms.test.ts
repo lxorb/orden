@@ -1575,10 +1575,127 @@ describe('somebody who stops being in the space while the file is open', () => {
     env.db
       .prepare('insert into room_sockets (note_id, space_id, who, opened_at) values (?, ?, ?, 1)')
       .run('gone-note', spaceId, writerId)
-    await aDayLater(ownerOpensAnother)
+    await aDayLater(async () => {
+      await ownerOpensAnother()
+      for (const { state } of live.all().values()) await state.idle()
+    })
     const rows = env.db.prepare('select note_id from room_sockets order by note_id').all()
     expect(rows).not.toContainEqual({ note_id: 'gone-note' })
     expect(rows).toHaveLength(1)
+  })
+
+  test('can join while clearing day-old rows fails', async () => {
+    env.db
+      .prepare('insert into room_sockets (note_id, space_id, who, opened_at) values (?, ?, ?, 1)')
+      .run('gone-note', spaceId, writerId)
+    const prepare = env.DB.prepare.bind(env.DB)
+    env.DB.prepare = (sql: string) => {
+      if (sql.includes('where opened_at <')) throw new Error('D1 is away')
+      return prepare(sql)
+    }
+    try {
+      const socket = await open(writerId)
+      await live.of(noteId).state.idle()
+      expect(socket.closed).toBe(false)
+      expect(env.db.prepare('select who from room_sockets where note_id = ?').all(noteId)).toEqual([
+        { who: writerId },
+      ])
+    } finally {
+      env.DB.prepare = prepare
+    }
+  })
+
+  test('keeps the row when another device of theirs closes while this one joins', async () => {
+    const laptop = await open(writerId)
+    const { room: made, state } = live.of(noteId)
+    // The laptop's close lands after the phone's row is written and before its socket
+    // is taken.
+    const prepare = env.DB.prepare.bind(env.DB)
+    let pending = true
+    env.DB.prepare = (sql: string) => {
+      const statement = prepare(sql)
+      if (!pending || !sql.trimStart().startsWith('insert into room_sockets')) return statement
+      pending = false
+      const bind = statement.bind.bind(statement)
+      statement.bind = (...values: unknown[]) => {
+        const bound = bind(...values)
+        const run = bound.run.bind(bound)
+        bound.run = (async () => {
+          const done = await run()
+          await made.webSocketClose(laptop as unknown as WebSocket)
+          state.drop(laptop)
+          return done
+        }) as typeof bound.run
+        return bound
+      }
+      return statement
+    }
+    const phone = await open(writerId)
+    env.DB.prepare = prepare
+    expect(phone.closed).toBe(false)
+    expect(env.db.prepare('select who from room_sockets where note_id = ?').all(noteId)).toEqual([
+      { who: writerId },
+    ])
+  })
+
+  /** A socket let in the way the door lets one in, with the sign-in it came with. */
+  async function signedIn(token: string, who: string): Promise<FakeSocket> {
+    const socket = new FakeSocket()
+    await live
+      .of(noteId)
+      .room.enter(
+        socket as unknown as WebSocket,
+        { noteId, spaceId, kind: 'words' },
+        { writes: true, who, login: await sha256(token) },
+      )
+    return socket
+  }
+
+  /** A minute and more from now, for as long as `work` runs. */
+  async function aMinuteLater(work: () => Promise<void>): Promise<void> {
+    const later = Date.now() + 61_000
+    const real = Date.now
+    Date.now = () => later
+    try {
+      await work()
+    } finally {
+      Date.now = real
+    }
+  }
+
+  /** A keystroke from `socket`, the way a device sends one. */
+  async function typeInto(socket: FakeSocket): Promise<void> {
+    const doc = new Y.Doc()
+    const mark = Y.encodeStateVector(doc)
+    doc.getText(TEXT).insert(0, 'more ')
+    const { room: made, state } = live.of(noteId)
+    await say(made, state, socket, syncUpdate(Y.encodeStateAsUpdate(doc, mark)))
+  }
+
+  test('has the socket closed within a minute where no revocation reached it', async () => {
+    const socket = await signedIn(writer, writerId)
+    // Gone from the space without the route that tells the room.
+    env.db
+      .prepare('delete from space_members where space_id = ? and email = ?')
+      .run(spaceId, WRITER)
+    await aMinuteLater(() => typeInto(socket))
+    expect(socket.closed).toBe(true)
+    expect(socket.closedWith?.code).toBe(1008)
+  })
+
+  test('has the socket made a reader within a minute where no revocation reached it', async () => {
+    const socket = await signedIn(writer, writerId)
+    env.db
+      .prepare("update space_members set role = 'read' where space_id = ? and email = ?")
+      .run(spaceId, WRITER)
+    await aMinuteLater(async () => {
+      await typeInto(socket)
+      await live.of(noteId).room.alarm()
+    })
+    expect(socket.closed).toBe(false)
+    expect((socket.deserializeAttachment() as { mayWrite: boolean }).mayWrite).toBe(false)
+    const read = await call(env, `/v1/notes/${noteId}`, { token: owner })
+    expect(read.json.content).toBe(OPENING)
   })
 
   test('has the socket closed when the owner takes them out', async () => {
