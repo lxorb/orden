@@ -13,7 +13,7 @@ import { workspace } from '../../workspace.svelte'
 import type { Effort, Mode, Thread } from '../chat/types'
 import { usable } from '../providers'
 import { ai } from '../store.svelte'
-import { type Helper, helpers } from './helpers.svelte'
+import { answerFor, type Helper, helpers } from './helpers.svelte'
 import type { Offered } from './route'
 
 /** The tools, by name. */
@@ -51,7 +51,7 @@ function said(helper: Helper): Answered {
     state: helper.state,
     provider: helper.provider,
     model: helper.model,
-    ...(helper.state === 'running' ? {} : { answer: helper.answer }),
+    ...(helper.state === 'running' ? {} : { answer: answerFor(helper) }),
     ...(helper.error ? { error: helper.error } : {}),
   }
 }

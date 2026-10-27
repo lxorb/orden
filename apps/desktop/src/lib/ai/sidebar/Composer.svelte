@@ -84,9 +84,13 @@
     const on = front && !chat.dropped.includes(front.key) ? front : null
     const picked = views.chosen > 0 ? views.selectedText() : ''
     const pickedOn = !!picked.trim() && !chat.dropped.includes(`selection:${picked.slice(0, 60)}`)
+    const holder = pickedOn
+      ? workspace.tabs.find((tab) => tab.note.live === views.selectedIn())
+      : null
     return {
       front: on ? { path: on.path, name: on.name, text: on.text } : null,
       selection: pickedOn ? picked : '',
+      picked: holder ? { path: holder.path, shared: holder.note.shared } : null,
     }
   }
   chat.around = around

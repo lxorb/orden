@@ -31,6 +31,9 @@ export interface Ended {
   usage: Usage | null
   /** Where the plan stood, if the provider said during the send. */
   limit?: Limit
+  /** The thread read words from outside (transcript.ts `readOutside`), so what its model
+   *  wrote may be somebody else's to steer. */
+  outside?: boolean
 }
 
 /** Words a send carries beside the message, under a label. */

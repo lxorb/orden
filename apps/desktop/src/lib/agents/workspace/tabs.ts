@@ -39,6 +39,7 @@ import { asked } from './asks'
 import { type Call, done, flag, maybe, need, needScope, text, writerOf } from './call'
 import { Refused } from './problem'
 import {
+  docSource,
   judged,
   judgedForWriting,
   onDisk,
@@ -184,7 +185,10 @@ export async function getContext(call: Call): Promise<AgentAnswer> {
   // writes in are not the reader's words.
   const outside =
     tab?.kind === 'terminal' ? 'tab titles and terminal output' : named ? 'tab titles' : null
-  return done(context, sharedSource(place) ?? sharedSource(front) ?? outside)
+  return done(
+    context,
+    (tab ? sourceOfTab(tab) : null) ?? sharedSource(place) ?? sharedSource(front) ?? outside,
+  )
 }
 
 /** Whether a tab's title is somebody else's words: a page's, or the program a terminal
@@ -206,7 +210,15 @@ function behind(call: Call): boolean {
 
 /** A tab made or opened, answered as its row; null where nothing came of it. */
 function answered(tab: Tab | null | undefined, place?: Place): AgentAnswer {
-  return done(tab ? tabOf(tab) : null, place ? sharedSource(place) : null)
+  return done(
+    tab ? tabOf(tab) : null,
+    (tab ? sourceOfTab(tab) : null) ?? (place ? sharedSource(place) : null),
+  )
+}
+
+/** Where a tab's words came from, by its own note rather than the space in front. */
+function sourceOfTab(tab: Tab): string | null {
+  return docSource({ path: tab.path, shared: tab.note.shared })
 }
 
 /** The site rule that denies an address to this agent, as the crate matches one: the

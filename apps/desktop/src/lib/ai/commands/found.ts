@@ -101,8 +101,23 @@ export function rootOfSpace(space: string): string | null {
  *  rule each time, so an answer from before the account listed its spaces is not
  *  kept. Fetched when asked, as the search is. */
 export async function fromOthers(path: string): Promise<boolean> {
-  const { reachedByOthers } = await import('../../sharing.svelte')
-  return reachedByOthers(path)
+  return (await sharing()).reachedByOthers(path)
+}
+
+/** The same for any note of the space at `root`. */
+export async function fromOthersIn(root: string): Promise<boolean> {
+  return (await sharing()).reachedByOthersIn(root)
+}
+
+/** The sharing module, fetched once however many notes of a message ask at once, and
+ *  asked again after a fetch that failed. */
+let fetched: Promise<typeof import('../../sharing.svelte')> | null = null
+function sharing(): Promise<typeof import('../../sharing.svelte')> {
+  fetched ??= import('../../sharing.svelte').catch((error: unknown) => {
+    fetched = null
+    throw error
+  })
+  return fetched
 }
 
 /** A note's body as the model is to get it: as is from a space only the reader is

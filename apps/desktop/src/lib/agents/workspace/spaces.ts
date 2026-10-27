@@ -12,8 +12,8 @@
 
 import { threadSpaceOf } from '../../automation/caller'
 import { insideOnly } from '../../automation/inside'
-import { canWriteAt, isShared } from '../../sharing.svelte'
-import { insideSpace } from '../../space-paths'
+import { canWriteAt, reachedAs, reachedByOthersIn } from '../../sharing.svelte'
+import { insideSpace, nameOf, relativeTo, within } from '../../space-paths'
 import { type Space, workspace } from '../../workspace.svelte'
 import { type Call, maybe } from './call'
 import { Refused } from './problem'
@@ -100,10 +100,27 @@ export function judgedForWriting(asked: string): string {
 }
 
 /** Where the words of a place came from when somebody else can write them too: a
- *  space shared with others, whose notes an agent reads as data and never as what to
- *  do (docs/agent-native.md 9.6). Null for the reader's own. */
-export function sharedSource(place: Place): string | null {
-  return isShared(place.space.root) ? `shared space ${place.space.name}` : null
+ *  space shared with others, or a note of it shared on its own, which an agent reads
+ *  as data and never as what to do (docs/agent-native.md 9.6). Asked of the one note a
+ *  verb read where it read one, else of the space as a whole, with the rule raw HTML
+ *  and AGENTS.md go by (`reachedByOthers`). Null for the reader's own. */
+export function sharedSource(place: Place, relative = ''): string | null {
+  if (relative) return docSource({ path: onDisk(place, relative), shared: null })
+  return reachedByOthersIn(place.space.root) ? `shared space ${place.space.name}` : null
+}
+
+/** The same for a document in a tab, by its own note: a tab outlives a switch to
+ *  another space, and one somebody shared with the reader has no path here, so its
+ *  share says it. */
+export function docSource(doc: { path: string | null; shared: string | null }): string | null {
+  if (doc.shared !== null) return 'note shared with you'
+  const path = doc.path
+  const how = reachedAs(path)
+  if (path === null || how === null) return null
+
+  const space = workspace.spaces.find((one) => within(one.root, path) !== null)
+  if (how === 'space' && space) return `shared space ${space.name}`
+  return `shared note ${space ? relativeTo(space.root, path) : nameOf(path)}`
 }
 
 /** Where a path of a place is on this disk. */

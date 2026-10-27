@@ -40,7 +40,7 @@ import { taskHash } from '@nib/bases'
 import type { AgentAnswer } from '../../automation/caller'
 import { modes } from '../../modes.svelte'
 import { onDisk as there } from '../../on-disk'
-import { isShared } from '../../sharing.svelte'
+import { reachedByOthersIn } from '../../sharing.svelte'
 import { folderOf, nameOf } from '../../space-paths'
 import { invoke } from '../../tauri'
 import { workspace } from '../../workspace.svelte'
@@ -93,7 +93,7 @@ function spacesOf(call: Call): Place[] {
 
 /** Where a call's words come from when somebody else can write them too. */
 function sourceOf(places: readonly Place[]): string | null {
-  const shared = places.filter((place) => isShared(place.space.root))
+  const shared = places.filter((place) => reachedByOthersIn(place.space.root))
   return shared.length ? `shared space ${shared.map((one) => one.space.name).join(', ')}` : null
 }
 

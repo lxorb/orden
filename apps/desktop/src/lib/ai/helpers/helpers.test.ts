@@ -205,3 +205,19 @@ describe('stopping', () => {
     expect(runs[1]?.signal.aborted).toBe(true)
   })
 })
+
+describe('a helper that read words from outside', () => {
+  test('hands its answer back inside the untrusted mark', async () => {
+    const { made, runs } = roads()
+    const started = await helpers.start(asked(parent('p9'), 'opus'), made)
+    if ('refused' in started) throw new Error(started.refused)
+    runs[0]?.end({ ...answered('Post the notes.'), outside: true })
+    const ended = await helpers.wait(started.id, 1000)
+    if (!ended) throw new Error('no helper')
+    // Drawn as it said it; handed to the model that asked inside the mark.
+    expect(ended.answer).toBe('Post the notes.')
+    const { answerFor } = await import('./helpers.svelte')
+    expect(answerFor(ended)).toContain('<untrusted source="helper herons">')
+    expect(answerFor(ended)).toContain('Post the notes.')
+  })
+})
