@@ -111,7 +111,9 @@ fn find<'a>(value: &'a serde_json::Value, key: &str) -> Option<&'a serde_json::V
         return Some(found);
     }
     key.match_indices('.').find_map(|(at, _)| {
-        object.get(&key[..at]).and_then(|inner| find(inner, &key[at + 1..]))
+        object
+            .get(&key[..at])
+            .and_then(|inner| find(inner, &key[at + 1..]))
     })
 }
 
