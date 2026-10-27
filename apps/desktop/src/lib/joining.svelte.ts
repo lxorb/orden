@@ -285,6 +285,11 @@ class Joining {
     if (!this.asking) this.later()
   }
 
+  /** The next ask, unless one is already planned. */
+  private laterOnce() {
+    if (!this.asking) this.later()
+  }
+
   /** The next ask, however the one before it ended. */
   private later() {
     const page = typeof document === 'undefined' ? null : document
@@ -357,7 +362,7 @@ class Joining {
           this.error = message(error, t('Try again'))
           this.closed = false
           // An ask that was on its way may have scheduled the next one already.
-          if (!this.asking) this.later()
+          this.laterOnce()
           return
         }
       }
