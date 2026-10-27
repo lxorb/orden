@@ -218,12 +218,17 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  fixes, so each of them need not raise it. Measured 5,700,028 with main as of this
  *  raise.
  *
+ *  Raised on 2026-10-27, to 5,732,000, for #781: what a canvas holds that Orden does not
+ *  read is fingerprinted and counted in generations, so a merge keeps the version another
+ *  app changed (canvas-extras.ts, in the plugin through the canvas it opens). Measured
+ *  5,730,560, from 5,728,470 at d6bbe05c4.
+ *
  *  The catalogues' raised on 2026-10-24, from 850,000 to 950,000, for #768: every
  *  setting the plugin's own Settings shows says what it does behind a `?`, and those
  *  sentences are rows the plugin asks for, in each of the 24 catalogues it ships.
  *  Measured 922,538, from 779,615 at 7a57b7518. */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_730_000,
+  code: 5_732_000,
   catalogues: 950_000,
   styles: 290_000,
   fonts: 260_000,
