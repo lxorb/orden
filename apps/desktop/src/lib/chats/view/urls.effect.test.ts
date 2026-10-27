@@ -10,7 +10,7 @@ import { computed, root, watch } from '../../../../test/effects/runes.svelte'
  *  a closed chat, a row gone, or another account asks nothing more. */
 
 const { useStore } = await import('./source.svelte')
-const { fileUrl, MOST_TRIES } = await import('./urls.svelte')
+const { fileUrl } = await import('./urls.svelte')
 
 type Ask = (chat: string, hash: string) => Promise<string | null>
 
@@ -84,16 +84,64 @@ test('a file no row draws any more is not asked again', async () => {
   expect(vi.getTimerCount()).toBe(0)
 })
 
-test('a file that never lands is asked a bounded number of times, with growing waits', async () => {
+test('a file that never lands is asked with growing waits, then every five minutes while drawn', async () => {
   const ask = vi.fn<Ask>().mockResolvedValue(null)
   useStore(storeOf('user:a', ask))
   const view = row('c1', 'h4')
 
   await wait(10 * 60_000)
-  expect(ask.mock.calls.length).toBeGreaterThan(2)
-  await wait(24 * 60 * 60_000)
-  expect(ask).toHaveBeenCalledTimes(MOST_TRIES)
-  expect(vi.getTimerCount()).toBe(0)
+  const early = ask.mock.calls.length
+  expect(early).toBeGreaterThan(2)
+  expect(early).toBeLessThan(12)
+  await wait(60 * 60_000)
+  // twelve an hour at the longest wait, give or take
+  expect(ask.mock.calls.length - early).toBeGreaterThanOrEqual(11)
+  expect(ask.mock.calls.length - early).toBeLessThanOrEqual(13)
+  view.close()
+})
+
+test('a server down for six minutes: the picture comes back, and a reopened chat draws it', async () => {
+  let up = false
+  const ask = vi.fn<Ask>(() => Promise.resolve(up ? 'blob:ok' : null))
+  useStore(storeOf('user:a', ask))
+  const first = row('c1', 'h9')
+  await wait(6 * 60_000)
+  up = true
+  await wait(6 * 60_000)
+  expect(first.shown()).toBe('blob:ok')
+  first.close()
+  const again = row('c1', 'h9')
+  expect(again.shown()).toBe('blob:ok')
+  again.close()
+})
+
+test('a chat closed during an outage and opened after it asks again', async () => {
+  let up = false
+  const ask = vi.fn<Ask>(() => Promise.resolve(up ? 'blob:ok' : null))
+  useStore(storeOf('user:a', ask))
+  const first = row('c1', 'h10')
+  await wait(30 * 60_000)
+  first.close()
+  up = true
+  await wait(60 * 60_000)
+  const again = row('c1', 'h10')
+  await wait(0)
+  expect(again.shown()).toBe('blob:ok')
+  again.close()
+})
+
+test('online before the network works does not end the retries', async () => {
+  let up = false
+  const ask = vi.fn<Ask>(() => Promise.resolve(up ? 'blob:ok' : null))
+  useStore(storeOf('user:a', ask))
+  const view = row('c1', 'h11')
+  await wait(30 * 60_000)
+  window.dispatchEvent(new Event('online'))
+  await wait(0)
+  up = true
+  // the wait starts over after online: well under the longest wait
+  await wait(10_000)
+  expect(view.shown()).toBe('blob:ok')
   view.close()
 })
 
@@ -138,7 +186,8 @@ test('online while an ask is on its way starts no second chain (review of #990, 
   }
   expect(flaps).toBe(5)
   expect(most).toBe(1)
-  expect(ask.mock.calls.length).toBeLessThanOrEqual(MOST_TRIES + 5)
+  // one chain: the backoff to the longest wait, and one ask per flap
+  expect(ask.mock.calls.length).toBeLessThanOrEqual(8 + 5 + 7)
   view.close()
 })
 
