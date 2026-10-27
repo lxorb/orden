@@ -21,11 +21,15 @@
 
 import type { Core, Holding } from './core'
 import { againstBytes, outgoingBytes } from './records'
-import type { SpaceState } from './places'
+import type { Outboxed, SpaceState } from './places'
 import { put, type Change, type EntryRow } from './store'
 
 /** The largest file that travels: the account's one-request ceiling. */
 const LARGEST = 64 * 1024 * 1024
+
+/** How long a file whose bytes the account refused waits before they go again. A full
+ *  account stays full until somebody deletes something, and every try sends every byte. */
+const REFUSED_WAIT = 5 * 60_000
 
 /** What the account answered a replacement. */
 export type Replaced =
@@ -42,8 +46,9 @@ export interface Blobs {
   write(path: string, bytes: Uint8Array): Promise<void>
   /** The hash a blob is named by. */
   hash(bytes: Uint8Array): Promise<string>
-  /** The bytes, up to the account under their hash. Answers whether it keeps them now. */
-  up(hash: string, bytes: Uint8Array): Promise<boolean | null>
+  /** The bytes, up to the account under their hash. Answers whether it keeps them now,
+   *  or `full` when the account has no room for them. */
+  up(hash: string, bytes: Uint8Array): Promise<boolean | 'full' | null>
   /** A file's bytes, from its space. `gone` for one the account no longer has. */
   down(space: string, id: string): Promise<Uint8Array | 'gone' | null>
   replace(space: string, id: string, hash: string, base: string): Promise<Replaced | null>
@@ -78,17 +83,26 @@ export async function fileMade(
   return { hash: read.hash, size: read.bytes.byteLength }
 }
 
+/** What a pass heard about the account's room for bytes. */
+export interface Room {
+  /** Whether the account said it has no room for a file's bytes. */
+  full: boolean
+}
+
 /** The bytes of every file a waiting `create` names, up before the ops that name them,
  *  since the account makes no entry for bytes it does not have. A file changed since it
- *  was made goes up as it is now, under its new hash. Answers whether everything got an
- *  answer. */
+ *  was made goes up as it is now, under its new hash. Answers the ids of the files whose
+ *  bytes the account would not take - their creates wait, and the rest of the outbox
+ *  goes - or null when a request got no answer. */
 export async function sendMade(
   core: Core,
   space: SpaceState,
   alive: () => boolean,
-): Promise<boolean> {
+  room: Room,
+): Promise<Set<string> | null> {
+  const waiting = new Set<string>()
   const blobs = core.world.blobs
-  if (!blobs) return true
+  if (!blobs) return waiting
   for (const one of space.outbox) {
     if (one.record.t !== 'op' || one.record.sent) continue
     const op = one.record.op
@@ -97,8 +111,18 @@ export async function sendMade(
     if (!entry) continue
     const read = await readBytes(core, space, entry)
     if (!read) continue
+    // Sent without its bytes, the create would be refused `gone` and the file forgotten:
+    // it waits, and the rest of the outbox goes.
+    if (resting(core, op.id, read.hash, room)) {
+      waiting.add(op.id)
+      continue
+    }
     const stored = await blobs.up(read.hash, read.bytes)
-    if (!alive() || stored === null) return false
+    if (!alive() || stored === null) return null
+    if (!(await taken(core, space, entry, read.hash, stored, room))) {
+      waiting.add(op.id)
+      continue
+    }
     if (op.hash !== read.hash) {
       op.hash = read.hash
       entry.written_hash = read.hash
@@ -107,7 +131,7 @@ export async function sendMade(
       await core.commit([put('outbox', one.row), put('entries', { ...entry })])
     }
   }
-  return true
+  return waiting
 }
 
 /** Fetches what the account has that this disk does not, and sends what this disk has
@@ -117,6 +141,7 @@ export async function settleFiles(
   core: Core,
   space: SpaceState,
   alive: () => boolean,
+  room: Room,
 ): Promise<boolean> {
   const blobs = core.world.blobs
   if (!blobs) return true
@@ -147,8 +172,19 @@ export async function settleFiles(
       continue
     }
     if (changedHere) {
+      // Bytes the account refused a moment ago go again once the wait is over.
+      if (resting(core, entry.id, here.hash, room)) {
+        core.touched.add(entry.id)
+        continue
+      }
       const stored = await blobs.up(here.hash, here.bytes)
       if (!alive() || stored === null) return false
+      if (!(await taken(core, space, entry, here.hash, stored, room))) {
+        // Bytes the account would not take, no room for them, say: this file waits, and
+        // the rest of the space settles.
+        core.touched.add(entry.id)
+        continue
+      }
       const answer = await blobs.replace(space.id, entry.id, here.hash, entry.file_key ?? '')
       if (!alive() || answer === null) return false
       if ('ok' in answer) {
@@ -206,6 +242,64 @@ export async function settleFiles(
     }
   }
   return true
+}
+
+/** Whether these bytes of a file were refused too lately to go again yet: bytes changed
+ *  since go at once. Says the account is still full meanwhile, as it last said. */
+function resting(core: Core, id: string, hash: string, room: Room): boolean {
+  const refused = core.refusedBytes.get(id)
+  if (!refused) return false
+  if (refused.hash !== hash) {
+    core.refusedBytes.delete(id)
+    return false
+  }
+  const was = core.world.now() - refused.at
+  if (was >= 0 && was < REFUSED_WAIT) {
+    if (refused.full) room.full = true
+    return true
+  }
+  core.refusedBytes.delete(id)
+  return false
+}
+
+/** Whether the account took a file's bytes, writing down when it did not, and saying
+ *  so in the log the first time it refuses these bytes: a refusal other than for room
+ *  shows no warning, and the file would wait unremarked. */
+async function taken(
+  core: Core,
+  space: SpaceState,
+  entry: EntryRow,
+  hash: string,
+  stored: boolean | 'full',
+  room: Room,
+): Promise<boolean> {
+  const before = core.refusedBytes.get(entry.id)
+  if (stored === true) {
+    core.refusedBytes.delete(entry.id)
+    return true
+  }
+  const full = stored === 'full'
+  core.refusedBytes.set(entry.id, { at: core.world.now(), hash, full })
+  if (full) room.full = true
+  if (before?.hash !== hash || before.full !== full) {
+    const failed = full
+      ? `no room on the account for ${entry.name}`
+      : `the account would not take ${entry.name}`
+    const row = { at: core.world.now(), space: space.id, pulled: null, pushed: null, failed }
+    await core.commit([put('log', row)])
+  }
+  return false
+}
+
+/** Whether an outbox row is an op on a file whose create waits for the account to take
+ *  its bytes: nothing a pass can send now, so nothing to pass again for soon. */
+export function waitsForBytes(core: Core, space: SpaceState, one: Outboxed): boolean {
+  return (
+    one.record.t === 'op' &&
+    !one.record.sent &&
+    core.refusedBytes.has(one.record.op.id) &&
+    waitingCreate(space, one.record.op.id)
+  )
 }
 
 /** Whether a `create` for this entry is still waiting to go up. */

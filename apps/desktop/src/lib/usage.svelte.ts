@@ -14,10 +14,23 @@ class Usage {
   /** Dismissed by hand; the warning stays away until the next session or until
    *  usage climbs again. */
   dismissed = $state(false)
+  /** Whether sync last heard the account say it has no room for a file: the file waits,
+   *  so the warning shows whatever the numbers say. */
+  full = $state(false)
 
   readonly fraction = $derived(this.limit ? this.used / this.limit : 0)
   readonly nearlyFull = $derived(this.limit > 0 && this.fraction >= NEARLY_FULL)
-  readonly warning = $derived(this.nearlyFull && !this.dismissed)
+  readonly warning = $derived((this.nearlyFull || this.full) && !this.dismissed)
+
+  /** What sync heard: a file the account had no room for, or room again. Newly full is
+   *  worth saying again, with the numbers as they are now. */
+  syncFull(full: boolean) {
+    if (full === this.full) return
+    this.full = full
+    if (!full) return
+    this.dismissed = false
+    void this.refresh()
+  }
 
   async refresh() {
     const token = account.accountToken
@@ -50,6 +63,7 @@ account.forgetWithSession(() => {
   usage.used = 0
   usage.limit = 0
   usage.dismissed = false
+  usage.full = false
 })
 
 /** Bytes as something a person reads, in the units they expect from a disk. */

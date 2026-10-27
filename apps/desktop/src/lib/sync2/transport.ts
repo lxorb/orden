@@ -26,6 +26,9 @@ export class Refused extends Error {
 
 const OCTETS = 'application/octet-stream'
 
+/** The account's answer to bytes it has no room for: Insufficient Storage. */
+const FULL = 507
+
 /** Where each route is. */
 function pathOf(route: Route, space: string, body: unknown): string {
   const at = encodeURIComponent(space)
@@ -95,9 +98,12 @@ export function accountOver(reaching: Reaching): Account {
 /** The bytes of files that are not documents, over HTTP (docs/sync-v2.md section 7,
  *  Files): up as a blob under their hash, down through their space, and a replacement
  *  named against the bytes it replaced. No answer is null, as for every route above; a
- *  refusal of the bytes (the account full, say) is `false`, and the file waits. */
+ *  refusal of the bytes is `false`, and `full` when the account has no room for them
+ *  (507), and the file waits. A 507 is an answer, not an account too busy to give one:
+ *  read as none, it stopped every pass of the space at that one file. */
 export function remoteFiles(reaching: Reaching): Pick<Blobs, 'up' | 'down' | 'replace'> {
-  const send = async (path: string, init: RequestInit): Promise<Response | null> => {
+  /** `full` says whether a 507 is the answer it is to this request, rather than none. */
+  const send = async (path: string, init: RequestInit, full = false): Promise<Response | null> => {
     const token = reaching.token()
     if (!token) return null
     const headers = new Headers(init.headers)
@@ -107,6 +113,7 @@ export function remoteFiles(reaching: Reaching): Pick<Blobs, 'up' | 'down' | 're
       const response = await reaching.fetch(
         new Request(`${reaching.base}${path}`, { ...init, headers }),
       )
+      if (full && response.status === FULL) return response
       return response.status === 429 || response.status >= 500 ? null : response
     } catch {
       return null
@@ -115,12 +122,17 @@ export function remoteFiles(reaching: Reaching): Pick<Blobs, 'up' | 'down' | 're
 
   return {
     async up(hash, bytes) {
-      const response = await send(`/v2/blobs/${hash}`, {
-        method: 'PUT',
-        headers: { 'content-type': OCTETS },
-        body: new Uint8Array(bytes),
-      })
-      return response === null ? null : response.ok
+      const response = await send(
+        `/v2/blobs/${hash}`,
+        {
+          method: 'PUT',
+          headers: { 'content-type': OCTETS },
+          body: new Uint8Array(bytes),
+        },
+        true,
+      )
+      if (response === null) return null
+      return response.status === FULL ? 'full' : response.ok
     },
     async down(space, id) {
       const response = await send(
