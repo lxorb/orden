@@ -20,6 +20,7 @@ import {
   type Value,
 } from '@nib/bases'
 import type { RowChange } from '../rows/write'
+import type { Holds, HoldsOf } from './filter-rows'
 import { isLinkValue } from './values'
 
 /** What a cell is edited with. `none` is read-only. */
@@ -117,6 +118,81 @@ function noteKind(key: string, rows: readonly Row[]): Editor {
     return 'text'
   }
   return 'text'
+}
+
+const TASK_OTHER = [
+  'text',
+  'status',
+  'due',
+  'scheduled',
+  'start',
+  'deadline',
+  'time',
+  'tags',
+  'assignee',
+  'section',
+  'recurrence',
+  'completed',
+]
+const FILE_OTHER = [
+  'name',
+  'basename',
+  'path',
+  'folder',
+  'ext',
+  'tags',
+  'links',
+  'embeds',
+  'mtime',
+  'ctime',
+  'space',
+]
+
+/** What the task and file fields hold, for how a filter asks one whether it is empty. */
+const FIELD_HOLDS: Partial<Record<string, Holds>> = Object.fromEntries([
+  ...TASK_OTHER.map((one): [string, Holds] => [`task.${one}`, 'other']),
+  ['task.done', 'truth'],
+  ['task.priority', 'number'],
+  ['task.duration', 'number'],
+  ...FILE_OTHER.map((one): [string, Holds] => [`file.${one}`, 'other']),
+  ['file.size', 'number'],
+] satisfies [string, Holds][])
+
+/** What a note property holds: a number where the base shows it as one, else what its
+ *  values are. Undefined where one is something else (an object). */
+function noteHolds(base: Base, key: string, rows: readonly Row[]): Holds | undefined {
+  const format = base.nib.properties[key]?.format ?? ''
+  if (/^(number|percent|progress|currency)/.test(format)) return 'number'
+  let link = false
+  let other = false
+  for (const row of rows) {
+    const value = row.note[key]
+    if (value === undefined || value === null) continue
+    if (typeof value === 'boolean') return 'truth'
+    if (typeof value === 'number') return 'number'
+    if (isLinkValue(value)) link = true
+    else if (typeof value === 'string' || Array.isArray(value)) other = true
+    else if (typeof value === 'object' && 'kind' in value && value.kind === 'date') other = true
+    else return undefined
+  }
+  return link && !other ? 'link' : 'other'
+}
+
+/** What each property of a view holds, as its filter builder asks (filter-rows.ts):
+ *  a task's or a file's field by what it is, a note's by the base and the rows. */
+export function holdsOf(base: Base, rows: readonly Row[]): HoldsOf {
+  const known = new Map<string, Holds | undefined>()
+  return (property) => {
+    if (known.has(property)) return known.get(property)
+    const holds =
+      property.startsWith('task.') || property.startsWith('file.')
+        ? FIELD_HOLDS[property]
+        : isNoteProperty(property)
+          ? noteHolds(base, bare(property), rows)
+          : undefined
+    known.set(property, holds)
+    return holds
+  }
 }
 
 /** Whether a note property's column holds lists, read off the first row that has it. */

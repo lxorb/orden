@@ -80,7 +80,7 @@
   import { priorityTone } from '../quick-add/labels'
   import { rowKey } from './row-keys'
   import { runKey } from './task-actions'
-  import { dayHead, groupLabel, propertyName, summaryName } from './words'
+  import { dayHead, groupLabel, noteNames, propertyName, summaryName } from './words'
   import {
     addSection,
     projectOf,
@@ -180,6 +180,9 @@
 
   /** The swimlanes: every sub-group key any column has, in the order they first come. */
   const lanes = $derived(sub === undefined ? [] : laneKeys(shownGroups))
+  /** The columns' and the lanes' note names, for what each is called. */
+  const noteCounts = $derived(noteNames(groups.map((one) => one.key)))
+  const laneNames = $derived(noteNames(lanes))
   /** The lanes the keyboard walks: a board without them is one lane of no key. */
   const walked = $derived<(Value | undefined)[]>(lanes.length ? lanes : [undefined])
   /** Whether the lane property holds lists, so a new card holds a list of its lane's one. */
@@ -230,12 +233,7 @@
     if (project && sectionOf(group) === null) return t('None')
     if (days) return dayHead(group.key, live.today)
     if (group.key === null || group.key === '') return nothing
-    return groupLabel(
-      property,
-      group.key,
-      live.today,
-      groups.map((one) => one.key),
-    )
+    return groupLabel(property, group.key, live.today, noteCounts)
   }
 
   /** The tone a column's head wears: its option's, a task's box's or its priority's. */
@@ -932,7 +930,7 @@
         {/each}
       </div>
       {#each lanes as lane (groupName(lane))}
-        <p class="nib-section lane">{groupLabel(sub, lane, live.today, lanes)}</p>
+        <p class="nib-section lane">{groupLabel(sub, lane, live.today, laneNames)}</p>
         <div class="row">
           {#each shownGroups as group (groupName(group.key))}
             {@render column(group, lane, rowsOf(group, lane))}

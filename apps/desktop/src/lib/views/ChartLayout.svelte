@@ -21,7 +21,7 @@
   import { setNibOption } from './edit'
   import type { Kit } from './kit'
   import { dayWords } from '@nib/editor/task-days'
-  import { chartName, groupLabel, measureName, propertyName } from './words'
+  import { chartName, groupLabel, measureName, noteNames, propertyName } from './words'
 
   const { kit }: { kit: Kit } = $props()
 
@@ -61,8 +61,8 @@
     return own ?? TONES[at % TONES.length] ?? 'var(--accent)'
   }
 
-  const keys = $derived(points.map((point) => point.key))
-  const label = (at: number) => groupLabel(property, points[at]?.key ?? null, live.today, keys)
+  const names = $derived(noteNames(points.map((point) => point.key)))
+  const label = (at: number) => groupLabel(property, points[at]?.key ?? null, live.today, names)
   const said = (at: number) => {
     const one = points[at]
     if (!one) return ''

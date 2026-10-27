@@ -9,7 +9,7 @@
   import { i18n, t } from '../i18n.svelte'
   import Cross from '../Cross.svelte'
   import Select from '../Select.svelte'
-  import { displayName, knownProperties } from './columns'
+  import { displayName, holdsOf, knownProperties } from './columns'
   import { setFilter, setShowCompleted } from './edit'
   import {
     type FilterRow,
@@ -27,7 +27,9 @@
 
   const live = $derived(kit.live)
   const view = $derived(live.view)
-  const rows = $derived(rowsOf(view?.filters))
+  /** What each property holds, for how a row asks it whether it is empty. */
+  const holds = $derived(live.base ? holdsOf(live.base, live.rows) : undefined)
+  const rows = $derived(rowsOf(view?.filters, holds))
   const kinds = $derived(view?.nib.rows ?? 'notes')
   const properties = $derived(live.base ? knownProperties(live.base, kinds, live.rows) : [])
 
@@ -49,7 +51,7 @@
   }
 
   function write(next: FilterRows) {
-    kit.change((base, at) => setFilter(base, at, filterOf(next)))
+    kit.change((base, at) => setFilter(base, at, filterOf(next, holds)))
   }
 
   function changeRow(at: number, row: FilterRow) {

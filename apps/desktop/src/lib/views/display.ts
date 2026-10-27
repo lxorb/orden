@@ -8,7 +8,7 @@
  *  Pure. `displayed` is what the engine is asked with: the view's own filters and the
  *  narrowing together. */
 
-import type { Base, Filter, Row, View } from '@nib/bases'
+import type { Base, Row, View } from '@nib/bases'
 
 export type Grouping = 'default' | 'none' | 'note' | 'section' | 'date' | 'deadline' | 'priority'
 export type Sorting = 'default' | 'manual' | 'name' | 'date' | 'deadline' | 'priority' | 'note'
@@ -205,12 +205,18 @@ const narrowed = new WeakMap<Base, Map<number, Base>>()
 export function displayed(base: Base, at: number): Base {
   const view = base.views[at]
   const extra = view ? onlyFilter(onlyOf(view)) : null
-  if (!view || extra === null) return base
+  // A view grouped by note name before notes were grouped by path: two notes of one
+  // name in two folders are two groups, as the Display menu's "note" now groups them.
+  const byName = view?.groupBy?.property === 'file.basename' ? view.groupBy : null
+  if (!view || (extra === null && !byName)) return base
   let kept = narrowed.get(base)
   const known = kept?.get(at)
   if (known) return known
-  const filters: Filter = view.filters ? { and: [view.filters, extra] } : extra
-  const made = withView(base, at, (one) => ({ ...one, filters }))
+  const made = withView(base, at, (one) => ({
+    ...one,
+    ...(extra === null ? {} : { filters: view.filters ? { and: [view.filters, extra] } : extra }),
+    ...(byName ? { groupBy: { ...byName, property: GROUP_BY.note ?? 'file.path' } } : {}),
+  }))
   if (!kept) narrowed.set(base, (kept = new Map<number, Base>()))
   kept.set(at, made)
   return made

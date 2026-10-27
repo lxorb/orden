@@ -17,12 +17,14 @@
   import { notePath, type Kit } from './kit'
   import TaskBox from './TaskBox.svelte'
   import { isLinkValue } from './values'
-  import { groupLabel, propertyName } from './words'
+  import { groupLabel, noteNames, propertyName } from './words'
 
   const { kit }: { kit: Kit } = $props()
 
   const live = $derived(kit.live)
   const view = $derived(live.view)
+  /** The groups' note names, for what each group is called. */
+  const names = $derived(noteNames((live.answer?.groups ?? []).map((group) => group.key)))
   const property = $derived(view?.groupBy?.property)
   const image = $derived(typeof view?.options.image === 'string' ? view.options.image : null)
   const fit = $derived(view?.options.imageFit === 'contain' ? 'contain' : 'cover')
@@ -64,7 +66,7 @@
   {#each live.answer?.groups ?? [] as group (groupName(group.key))}
     {#if property !== undefined}
       <p class="nib-section" use:droppable={(row) => kit.drop(row, group.key)}>
-        {groupLabel(property, group.key, live.today)}<span>{group.rows.length}</span>
+        {groupLabel(property, group.key, live.today, names)}<span>{group.rows.length}</span>
       </p>
     {/if}
     <div
