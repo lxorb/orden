@@ -16,6 +16,7 @@
  *
  *  Fetched with the panel, never in the first paint; see surfaces.svelte.ts. */
 
+import { answerThreadSpaces } from '../../automation/caller'
 import { message, t } from '../../i18n.svelte'
 import { prompt } from '../../prompt.svelte'
 import { without } from '../../records'
@@ -1248,6 +1249,12 @@ class Chat implements Panel {
 }
 
 export const chat = new Chat()
+
+// A call of a thread's that names no space works in the thread's space, not the one in
+// front (docs/ai-sidebar.md 4.11): its helpers' too, which are threads of their own.
+answerThreadSpaces(
+  (id) => chat.threadOf(id)?.space ?? chat.heads.find((one) => one.id === id)?.space ?? null,
+)
 
 /** The space a thread works in: its own, and the one in front where it names none this
  *  device has. What its message is gathered in and its sources are paths in. */

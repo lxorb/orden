@@ -22,7 +22,7 @@ import { asked } from './asks'
 import { type Call, done, maybe, need, needScope } from './call'
 import { pagesAsked, quadsOver, quoteIn, runsOf } from './pdf-text'
 import { Refused } from './problem'
-import { judged, onDisk, type Place, placeFor } from './spaces'
+import { judged, onDisk, type Place, placeOf } from './spaces'
 import { namedTab } from './tab-target'
 
 /** How much of a PDF one read hands over. */
@@ -36,7 +36,7 @@ function pdfOf(call: Call): { place: Place; relative: string; path: string } {
     return pdfOf({ ...call, args: { ...call.args, tab: null, path: relative } })
   }
 
-  const place = placeFor(call, maybe(call, 'space'))
+  const place = placeOf(call)
   const relative = judged(need(call, 'path'))
   if (!isPdfTarget(relative)) throw new Refused('bad_arguments', `${relative} is not a PDF`)
 

@@ -1581,7 +1581,7 @@ describe('a panel thread works in its own space', () => {
   test('a note named without a space is the thread’s space’s', async () => {
     files.set('/s/Work/Soup.md', '# Work soup\n')
     expect(await call('read_note', { path: 'Soup' }, fromHome())).toMatchObject({
-      result: { content: expect.stringContaining('- [ ] Buy milk') },
+      result: { space: 'home', text: expect.stringContaining('- [ ] Buy milk') },
     })
     await call('write_note', { path: 'Broth', content: '# Broth\n' }, fromHome())
     expect(files.get('/s/Home/Broth.md')).toBe('# Broth\n')
@@ -1624,7 +1624,10 @@ describe('a panel thread works in its own space', () => {
       await call(
         'write_note',
         { path: 'Broth', content: 'x' },
-        callerOf({ id: 'x', name: 'X', scopes: EVERY, spaces: ['Work'], mode: 'unsupervised' }, 'thread-home'),
+        callerOf(
+          { id: 'x', name: 'X', scopes: EVERY, spaces: ['Work'], mode: 'unsupervised' },
+          'thread-home',
+        ),
       ),
     ).toMatchObject({ code: 'no_such_space' })
     expect(files.has('/s/Work/Broth.md')).toBe(false)

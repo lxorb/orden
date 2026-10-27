@@ -871,6 +871,14 @@ after it was last asked, its search by the panel's engine asked of its root, its
 and per-space stores by its root, and a move by the crate's rename with that index's
 rewrite. Only `workspace_tabs` with `workspace.focus` ever brings another space in front.
 
+A call that names no space is about the space in the window, except a call of an AI panel
+thread's (it says its thread, `ai_agent_call` and `nib mcp` alike): that one is about the
+thread's own space, where the thread stays when the reader moves on (docs/ai-sidebar.md
+4.11), so a `/batch`, `/subtask`, `/fork` or `run_agent` helper keeps to the notes it was
+given. Only the verbs about the tabs in the window keep to the space in front, and
+`get_context` for such a thread names the thread's space and, on each tab, the space the
+tab is in (`placeOf` in `lib/agents/workspace/spaces.ts`).
+
 ### 8.7 Canvases, page notes, PDFs
 
 A canvas and a page note are already a Yjs map of objects by id (`packages/rooms/src/

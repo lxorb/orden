@@ -44,6 +44,7 @@ import {
   onDisk,
   type Place,
   placeFor,
+  placeOf,
   sharedSource,
   writableAt,
 } from './spaces'
@@ -152,16 +153,22 @@ async function selectionIn(tab: Tab): Promise<unknown> {
 }
 
 export async function getContext(call: Call): Promise<AgentAnswer> {
-  const place = placeFor(call, null)
+  const front = placeFor(call, null)
+  // The space the caller's calls that name none work in: an AI panel thread's own, which
+  // the tabs in front are not in when the reader has moved on, so each row then says its
+  // space and the model names it to reach the note a tab shows.
+  const place = placeOf(call)
+  const away = place.space.id !== front.space.id
+  const rowOf = (one: Tab) => (away ? { ...tabOf(one), space: front.space.name } : tabOf(one))
   const tab = workspace.active
   const last = tab?.note.live.readerAt ?? null
   const named = namedOutside()
 
   const context = {
     space: place.space.name,
-    selected: tab ? tabOf(tab) : null,
+    selected: tab ? rowOf(tab) : null,
     selection: tab ? await selectionIn(tab) : null,
-    tabs: workspace.tabs.map(tabOf),
+    tabs: workspace.tabs.map(rowOf),
     typing: last !== null && Date.now() - last < TYPING,
   }
 
@@ -169,7 +176,7 @@ export async function getContext(call: Call): Promise<AgentAnswer> {
   // writes in are not the reader's words.
   const outside =
     tab?.kind === 'terminal' ? 'tab titles and terminal output' : named ? 'tab titles' : null
-  return done(context, sharedSource(place) ?? outside)
+  return done(context, sharedSource(place) ?? sharedSource(front) ?? outside)
 }
 
 /** Whether a tab's title is somebody else's words: a page's, or the program a terminal
@@ -276,7 +283,7 @@ async function openSomething(call: Call): Promise<AgentAnswer> {
   if (view === 'settings') return showSettings(call)
   if (view !== null) throw new Refused('bad_arguments', 'view is graph, scratchpad or settings')
 
-  const place = placeFor(call, maybe(call, 'space'))
+  const place = placeOf(call)
   const relative = judged(need(call, 'path'))
   const path = onDisk(place, relative)
   const back = behind(call)

@@ -50,7 +50,15 @@ import { asked } from './asks'
 import { type Call, done, flag, maybe, need, writerOf } from './call'
 import { at, made, noteOf } from './notes'
 import { Refused } from './problem'
-import { judgedForWriting, onDisk, type Place, placeFor, reachable, writableAt } from './spaces'
+import {
+  judgedForWriting,
+  onDisk,
+  type Place,
+  placeFor,
+  placeOf,
+  reachable,
+  writableAt,
+} from './spaces'
 
 /** The rows store, fetched with the first of these verbs: importing it starts it. */
 async function rowsStore() {
@@ -94,7 +102,7 @@ async function baseAt(
   call: Call,
   name = 'path',
 ): Promise<{ place: Place; relative: string; text: string; base: Base }> {
-  const place = placeFor(call, maybe(call, 'space'))
+  const place = placeOf(call)
   const relative = judgedForWriting(need(call, name))
   if (!/\.base$/i.test(relative))
     throw new Refused('bad_arguments', `${relative} is not a .base file`)
@@ -166,7 +174,7 @@ function writableNote(call: Call, path: string) {
 }
 
 export async function addTask(call: Call): Promise<AgentAnswer> {
-  const place = placeFor(call, maybe(call, 'space'))
+  const place = placeOf(call)
   const { rows } = await import('../../rows/rows.svelte')
   // Quick add's grammar over the words, in the reader's language and then every other it
   // reads (`quickWords`), knowing the space's notes for `>Note`.
@@ -208,7 +216,7 @@ export async function addTask(call: Call): Promise<AgentAnswer> {
 }
 
 export async function updateTask(call: Call): Promise<AgentAnswer> {
-  const place = placeFor(call, maybe(call, 'space'))
+  const place = placeOf(call)
   const anchor = (() => {
     try {
       return readAt(call.args.at)
@@ -320,7 +328,7 @@ export async function queryBase(call: Call): Promise<AgentAnswer> {
       ? await baseAt(call)
       : (() => {
           try {
-            return { place: placeFor(call, maybe(call, 'space')), base: readBase(yaml) }
+            return { place: placeOf(call), base: readBase(yaml) }
           } catch (error) {
             throw new Refused('bad_arguments', `the yaml does not read: ${String(error)}`)
           }

@@ -17,7 +17,7 @@ import { asked } from './asks'
 import { type Call, done, maybe, need, writerOf } from './call'
 import { made } from './notes'
 import { Refused } from './problem'
-import { judgedForWriting, onDisk, placeFor, writableAt } from './spaces'
+import { judgedForWriting, onDisk, placeOf, writableAt } from './spaces'
 
 /** One line of the log, as far as a note needs it. */
 interface Line {
@@ -80,7 +80,7 @@ export async function attachAgentLog(call: Call): Promise<AgentAnswer> {
     throw new Refused('bad_arguments', 'session is a day, like 2026-09-30')
   }
 
-  const place = placeFor(call, maybe(call, 'space'))
+  const place = placeOf(call)
   const named = judgedForWriting(need(call, 'note'))
   const relative = notePath(named)
   if (relative === null) throw new Refused('bad_arguments', `${named} is not a markdown note`)

@@ -194,8 +194,9 @@ export function createApiEngine(setup: Setup): Engine {
 
     const switched = lastModel(thread)
     // Where the reader is, said by nib's own verbs for every message, so "this", "the
-    // tab I have open" and "this space" mean what they mean on screen.
-    const context = await tools.context(provider).catch(() => '')
+    // tab I have open" and "this space" mean what they mean on screen; asked for the
+    // thread, whose own space is the one its calls work in.
+    const context = await tools.context(provider, thread.id).catch(() => '')
     const you: Turn = {
       id: fresh(),
       role: 'you',

@@ -38,7 +38,7 @@ import { asked } from './asks'
 import { type Call, done, flag, maybe, need, needScope, writerOf } from './call'
 import { made } from './notes'
 import { Refused } from './problem'
-import { judgedForWriting, onDisk, type Place, placeFor, writableAt } from './spaces'
+import { judgedForWriting, onDisk, type Place, placeFor, placeOf, writableAt } from './spaces'
 import { treeOf } from './tree'
 
 const SHAPES = [...CAPTURE_AS, 'link'] as const
@@ -212,7 +212,7 @@ export async function captureToNote(call: Call): Promise<AgentAnswer> {
   const shape = maybe(call, 'as') ?? 'clip'
   if (!isShape(shape)) throw new Refused('bad_arguments', `as is one of ${SHAPES.join(', ')}`)
 
-  const place = placeFor(call, maybe(call, 'space'))
+  const place = placeOf(call)
   const page = await pageIn(call, need(call, 'tab'), shape)
   if (!page.url) throw new Refused('failed', 'that tab has no page to capture')
 

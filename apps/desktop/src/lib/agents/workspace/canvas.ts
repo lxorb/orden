@@ -34,7 +34,7 @@ import { readablePages } from './pages-ops'
 import { Refused } from './problem'
 import { namedTab, tabsOwnSpace } from './tab-target'
 import { kindsWhere } from '../../workspace/tab-kinds'
-import { judged, judgedForWriting, onDisk, type Place, placeFor, sharedSource } from './spaces'
+import { judged, judgedForWriting, onDisk, type Place, placeOf, sharedSource } from './spaces'
 
 /** A canvas a call names: a `.canvas` or `.pages` file of a space it may reach, by its
  *  path, or by `tab` - which also reaches one drawn in a tab and not saved yet. */
@@ -51,7 +51,7 @@ interface Target {
 function canvasOf(call: Call, writing: boolean): Target {
   if (maybe(call, 'tab') !== null) return canvasInTab(call, writing)
 
-  const place = placeFor(call, maybe(call, 'space'))
+  const place = placeOf(call)
   const asked = need(call, 'path')
   const relative = writing ? judgedForWriting(asked) : judged(asked)
   if (!isCanvasTarget(relative) && !isPagesTarget(relative)) {

@@ -21,7 +21,7 @@ import { asked } from './asks'
 import { type Call, count, done, maybe, need } from './call'
 import { Refused } from './problem'
 import { plainOf, programOf, startsOnlyOne } from './shell-text'
-import { judged, onDisk, placeFor } from './spaces'
+import { judged, onDisk, placeOf } from './spaces'
 
 /** How long a command may run when the agent does not say, and at the most. */
 const WAIT = 60_000
@@ -38,7 +38,7 @@ export async function runTerminal(call: Call): Promise<AgentAnswer> {
   const command = need(call, 'command')
   if (/[\r\n]/.test(command)) throw new Refused('bad_arguments', 'one command line at a time')
 
-  const place = placeFor(call, maybe(call, 'space'))
+  const place = placeOf(call)
   const cwd = maybe(call, 'cwd')
   const folder = cwd === null ? place.space.root : onDisk(place, judged(cwd))
 

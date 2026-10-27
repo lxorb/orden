@@ -34,6 +34,22 @@ interface Agent {
  *  a helper it starts is that thread's (src-tauri/src/mcp/link.rs). */
 export type Caller = { agent: null } | { agent: Agent; thread?: string }
 
+/** The space an AI panel thread works in, by the thread's id: the panel's to say, since it
+ *  holds the threads (ai/sidebar/chat.svelte.ts). Nothing until the panel is loaded. */
+let threadSpaces: (thread: string) => string | null = () => null
+
+/** How the panel says which space each of its threads works in. */
+export function answerThreadSpaces(lookup: (thread: string) => string | null): void {
+  threadSpaces = lookup
+}
+
+/** The space the caller's panel thread works in, by id: where a call of it that names no
+ *  space is about (docs/ai-sidebar.md 4.11). Null for the reader, an outside agent and a
+ *  thread the panel does not hold. */
+export function threadSpaceOf(caller: Caller): string | null {
+  return caller.agent && caller.thread ? threadSpaces(caller.thread) : null
+}
+
 /** The reader's own command line and the crate asking on an agent's behalf. */
 export const READER: Caller = { agent: null }
 
