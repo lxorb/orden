@@ -132,6 +132,11 @@ describe('code and blocks the parser keeps, wherever they sit', () => {
     }
   })
 
+  test('a table in a list item keeps its indent, so it stays in the item', () => {
+    const source = '- x\n\n  |a|b|\n  |-|-|\n'
+    expect(reformat(source)).toBe(source)
+  })
+
   test('a table in prose is still re-aligned, inline code in its cells and all', () => {
     expect(reformat('|a|`b`|\n|-|-|\n')).toBe('| a   | `b` |\n| --- | --- |\n')
   })

@@ -112,13 +112,14 @@ function readFrontMatter(lines: readonly string[]): number | null {
   return null
 }
 
-/** The lines a table starts on, as the parser finds them: at the start of the line,
- *  so not in a quote or a list item, whose markers the serialiser would drop, and not
- *  in code, maths, a comment or an HTML block, where a row of pipes is what it says. */
+/** The lines a table starts on, as the parser finds them: not in code, maths, a
+ *  comment or an HTML block, where a row of pipes is what it says, and not in a quote
+ *  or a list item, whose markers and indent the serialiser would drop. */
 function tableStarts(tree: Tree, lines: readonly string[]): Set<number> {
   const starts = new Set<number>()
   tree.iterate({
     enter(node) {
+      if (node.name === 'Blockquote' || node.name === 'ListItem') return false
       if (node.name !== 'Table') return true
       starts.add(node.from)
       return false
