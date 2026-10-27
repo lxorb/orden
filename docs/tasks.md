@@ -1365,7 +1365,8 @@ the view's head holds under its name (`live.builder`), opened from a column's me
 - **Automations**: `nib.automations`, a list of `when` (`added`, or `{ property, is? }`)
   with `set`, `move` and `notify`, and `off`; `AutomationsBuilder` from the name's menu
   of a base file. `added` is a note new to the base: made, or moved in from outside its
-  filters or from another space; a rename or a move within it is not, and a move under
+  filters or from another space; a rename or a move within it is not, nor an edit that
+  brings a note into the filters (a change, which a property trigger hears), and a move under
   way holds the runner off its new path until it is told (`views/moving.ts`).
   `fired` answers on a change, never a state, so one edit fires once; the
   runner (`runner.svelte.ts` wiring `running.ts`, fetched with the rows)

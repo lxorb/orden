@@ -169,7 +169,14 @@ async function movedAway(place: Place, from: string, to: string, folder: boolean
   // Under way until it is told; see `move` in workspace.svelte.ts.
   await moving(to, async () => {
     await invoke('rename_note', { from, to })
-    await index.retarget(from, to, place.space.root, undefined, { moved: true })
+    // A rewrite that fails leaves the note moved all the same; see `retargetMoved` in
+    // workspace.svelte.ts.
+    await index
+      .retarget(from, to, place.space.root, undefined, { moved: true })
+      .catch(async (error: unknown) => {
+        await workspace.fileMoved(from, to, folder ? 'folder' : 'file')
+        throw error
+      })
     await workspace.fileMoved(from, to, folder ? 'folder' : 'file')
   })
 }

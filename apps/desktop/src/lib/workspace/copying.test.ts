@@ -1,4 +1,5 @@
 import { describe, expect, test, vi } from 'vitest'
+import type { Entry } from '../workspace.svelte'
 
 /** A copied folder drawn as its note: the note inside is renamed after the copy
  *  before anything is told the folder came, so the rows hear one new folder note and
@@ -19,7 +20,7 @@ vi.mock('./write-file', () => ({
 
 const { copyRows } = await import('./copying')
 
-const entry = (path: string, children: ReturnType<typeof entry>[] = []) => ({
+const entry = (path: string, children: Entry[] = []): Entry => ({
   name: path.replace(/^.*\//, ''),
   path,
   is_dir: children.length > 0,

@@ -65,9 +65,14 @@ export function planned(
   for (const held of bases) {
     if (held.space !== after.space || !inBase(held.base, after, context)) continue
     // A note renamed or moved within the base is the row it was; one moved in from
-    // outside it, or from another space, is a row the base has just been given.
+    // outside it, or from another space, is a row the base has just been given. An
+    // edit that brings a note into the base is a change to it, as it always was.
+    const moved =
+      before !== undefined && (before.path !== after.path || before.space !== after.space)
     const was =
-      before?.space === held.space && inBase(held.base, before, context) ? before : undefined
+      moved && !(before.space === held.space && inBase(held.base, before, context))
+        ? undefined
+        : before
 
     const effect = fired(readAutomations(held.base), was, after, filling)
     if (effect) {

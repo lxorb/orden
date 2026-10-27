@@ -39,12 +39,12 @@ export function nextId(rows: readonly Row[], property: string, prefix: string): 
 /** What Windows holds in no name, beside the control characters. */
 const FORBIDDEN = '<>:"\\|?*'
 
-/** A path as every device spells it: each disk writes a name it cannot hold its own
+/** A path's folders and name as every device spells them: each disk writes a name it cannot hold its own
  *  way (a `:` as `_` on a Mac, `<>:"\|?*` and a trailing dot or space as `_` on
  *  Windows; sync2/places.ts `localName`), a Mac may hold it decomposed, and a disk may
  *  fold case. Without its `.md`, so a copy, `Crash copy` or `Crash 2`, comes after the
  *  note it was copied from (`Crash`). */
-function spelledAlike(path: string): string {
+function spelledAlike(path: string): string[] {
   return path
     .replace(/\.md$/i, '')
     .normalize('NFC')
@@ -52,24 +52,36 @@ function spelledAlike(path: string): string {
     .map((name) =>
       Array.from(name, (char) => (char < ' ' || FORBIDDEN.includes(char) ? '_' : char))
         .join('')
-        .replace(/[. ]+$/, (tail) => '_'.repeat(tail.length)),
+        .replace(/[. ]+$/, (tail) => '_'.repeat(tail.length))
+        .toLowerCase(),
     )
-    .join('/')
-    .toLowerCase()
 }
 
-/** By that spelling, compared by code unit rather than by this device's locale, so every
- *  device orders them alike; the path as this disk has it only breaks a tie. */
+/** By code unit rather than by this device's locale, so every device orders alike. */
 const byCode = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0)
-const byPath = (a: Row, b: Row) =>
-  byCode(spelledAlike(a.path), spelledAlike(b.path)) || byCode(a.path, b.path)
+
+/** By that spelling, one folder or name at a time, so a copied folder comes after the
+ *  one it was copied from as a copied name does (`Projects/X` before `Projects copy/X`,
+ *  where the whole path would put the space before the `/`); the path as this disk has
+ *  it only breaks a tie. */
+function byPath(a: Row, b: Row): number {
+  const one = spelledAlike(a.path)
+  const other = spelledAlike(b.path)
+  for (let at = 0; at < Math.min(one.length, other.length); at++) {
+    const order = byCode(one[at] ?? '', other[at] ?? '')
+    if (order) return order
+  }
+  return one.length - other.length || byCode(a.path, b.path)
+}
+
 /** Older first on this disk, for rows only this device numbers. */
 const older = (a: Row, b: Row) => a.file.ctime - b.file.ctime || byPath(a, b)
 
 /** The ids to write so that every row has one and no two share one: of two rows
  *  sharing one the later by path gets the next, in path order, so every device writes
- *  the same; then a row without one gets the next, in the order the rows were made. `missing` false leaves rows without one alone, which is
- *  what looking does; turning ids on gives every row one. */
+ *  the same; then a row without one gets the next, in the order the rows were made.
+ *  `missing` false leaves rows without one alone, which is what looking does; turning
+ *  ids on gives every row one. */
 export function idRepairs(
   rows: readonly Row[],
   property: string,
