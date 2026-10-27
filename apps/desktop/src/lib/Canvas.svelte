@@ -32,6 +32,7 @@
   import CanvasInk from './CanvasInk.svelte'
   import CanvasNode from './CanvasNode.svelte'
   import CanvasPicked from './CanvasPicked.svelte'
+  import CanvasFar from './CanvasFar.svelte'
   import {
     ctrlWheelZoom,
     graphPoint,
@@ -139,6 +140,13 @@
    *  nothing else until the view has really moved somewhere new, which is what
    *  keeps a plane of five hundred cards at sixty frames a second. */
   const QUANTUM = 400
+
+  /** Below this zoom a card's words are a few pixels high and the plane is drawn from
+   *  far away: boxes on one canvas (CanvasFar.svelte, #535). */
+  const FAR_SCALE = 0.35
+  /** And past this many cards in view, whatever the zoom: about what a page of them
+   *  lays out within a frame or two. */
+  const MOST_CARDS = 300
 
   /** How long a pointer has to be still before it means something else: the menu
    *  under a finger, a tidied shape under a pen. */
@@ -487,6 +495,23 @@
   /** The cards on the page: what is in view, in the order the file holds them,
    *  which is the order they stack in. */
   const cards = $derived(shown.nodes.filter((node) => overlaps(boxOf(node), inView)))
+
+  /** Whether the plane is far enough away that its cards are drawn as boxes on one
+   *  canvas rather than as cards (CanvasFar.svelte, #535): zoomed out past reading, or
+   *  more cards in view than a page of elements carries without stalling. The card
+   *  being written in stays a card either way. */
+  const far = $derived(camera.scale < FAR_SCALE || cards.length > MOST_CARDS)
+
+  /** The cards drawn as cards. */
+  const drawnCards = $derived(far ? cards.filter((node) => node.id === store.editing) : cards)
+
+  /** The connectors drawn as connectors: none from far away, and near, only those with
+   *  an end on a card in view - every other one is off the page. */
+  const drawnEdges = $derived.by(() => {
+    if (far) return []
+    const near = new Set(cards.map((node) => node.id))
+    return shown.edges.filter((edge) => near.has(edge.fromNode) || near.has(edge.toNode))
+  })
 
   const picked = $derived(store.pickedSet)
 
@@ -1928,15 +1953,32 @@
       ></div>
     {/each}
 
+    {#if far}
+      <CanvasFar
+        nodes={shown.nodes}
+        edges={shown.edges}
+        {picked}
+        dimmed={narrowed}
+        skip={store.editing}
+        view={inView}
+        {camera}
+        {originX}
+        {originY}
+        width={spanX}
+        height={spanY}
+        {palette}
+      />
+    {/if}
+
     <div class="plane" style:transform="translate({originX}px, {originY}px) scale({camera.scale})">
       <CanvasEdges
-        edges={shown.edges}
+        edges={drawnEdges}
         nodes={shown.nodes}
         picked={store.pickedSet}
         provisional={drawing}
       />
 
-      {#each cards as node (node.id)}
+      {#each drawnCards as node (node.id)}
         <CanvasNode
           {node}
           canvasPath={tab.path}
