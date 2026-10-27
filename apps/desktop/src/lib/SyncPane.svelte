@@ -170,16 +170,25 @@
       // whether more is waiting, because it is bounded in writes per request -
       // and an answer of four hundred used to read as the whole space when it was
       // the first four hundred of twelve.
+      //
+      // One moment for every round, so each asks the same question. A round that
+      // writes nothing while more is left is a note the server cannot put back
+      // (its version is gone, say): asking again would get the same answer, so
+      // the loop stops there and says it did not all go back.
+      const at = moment()
       let put = 0
+      let left = 0
       for (let round = 0; round < ROUNDS; round++) {
-        const done = await api.rollback(token, spaceId, moment())
+        const done = await api.rollback(token, spaceId, at)
         put += done.notes
         rolled = put
+        left = done.partial ? (done.left ?? 0) : 0
 
         if (!done.partial || done.notes === 0) break
       }
 
       asked = null
+      if (left > 0) wrong = t('That did not work.')
       // The notes are on the account; this is what brings them down here.
       sync.nudge()
     } catch (error) {

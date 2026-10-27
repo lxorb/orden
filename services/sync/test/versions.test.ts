@@ -353,7 +353,7 @@ describe('putting a space back to a moment', () => {
   /** Notes under `Big/`, each with a version from before `at` whose body the
    *  account holds. `changed` says which of them have moved on since; the rest
    *  still say what their version says. */
-  async function bigSpace(count: number, changed: (made: number) => boolean): Promise<number> {
+  async function bigSpace(count: number, changed: (made: number) => boolean): Promise<string> {
     const at = Date.now() - 10 * 60 * 1000
     const then = await sha256('then words')
     const now = await sha256('now words')
@@ -423,6 +423,24 @@ describe('putting a space back to a moment', () => {
       n: number
     }
     expect(left.n).toBe(0)
+  }, 60000)
+
+  test('and ends, saying what is left, when a note cannot be put back', async () => {
+    // The first note by path has a version whose body the account no longer
+    // holds, so every round lists it and none can write it.
+    const now = await bigSpace(402, () => true)
+    const gone = await sha256('gone words')
+    env.db.prepare("update note_versions set hash = ? where note_id = 'big-0'").run(gone)
+
+    const answers = await rollAll()
+
+    expect(answers.map((one) => [one.notes, one.left])).toEqual([
+      [399, 3],
+      [2, 1],
+      [0, 1],
+    ])
+    const left = env.db.prepare('select id from notes where hash = ?').all(now)
+    expect(left).toEqual([{ id: 'big-0' }])
   }, 60000)
 
   test('and nothing of the sort when it fits', async () => {
