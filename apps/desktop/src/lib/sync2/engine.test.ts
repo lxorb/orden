@@ -958,6 +958,36 @@ describe('another program’s unreadable canvas', () => {
     expect((await one.engine.core.doc(id))?.text()).toContain('keep me')
   })
 
+  /** Words another program wrote into a canvas - or into a canvas entry renamed to
+   *  `.md`, which is still one - cannot go into its plane. They are not dropped without
+   *  a word: the file is kept as a version on this device, and the reader is told once
+   *  that it is not syncing. */
+  test('keeps words written into it, and says once that they do not sync', async () => {
+    const one = await device()
+    const path = `${ROOT}/Board.canvas`
+    const good = JSON.stringify({
+      nodes: [{ id: 'a', type: 'text', text: 'keep me', x: 0, y: 0, width: 100, height: 50 }],
+      edges: [],
+    })
+    await one.disk.write(path, good)
+    await one.engine.created(path, false, good)
+    const id = one.engine.entryAt(path)?.id ?? ''
+    const told: string[] = []
+    one.engine.on('unsynced', (event) => told.push(event.name))
+
+    for (const prose of ['# Board\n\nprose\n', '# Board\n\nprose\n', '{"title":"x"}']) {
+      await one.disk.write(path, prose)
+      await one.engine.foreign(path)
+    }
+
+    expect(one.disk.kept).toEqual([
+      { path, text: '# Board\n\nprose\n' },
+      { path, text: '{"title":"x"}' },
+    ])
+    expect(told).toEqual(['Board.canvas'])
+    expect((await one.engine.core.doc(id))?.text()).toContain('keep me')
+  })
+
   /** A program that saves by emptying the file before it writes it leaves it with
    *  nothing in it for a moment, and a watcher can hear that moment. */
   test('nor is one emptied for a moment by a save', async () => {

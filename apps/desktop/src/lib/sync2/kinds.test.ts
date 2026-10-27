@@ -3,7 +3,7 @@ import { writeShortcut } from '../web-tab/shortcut'
 import { TEXT } from '@nib/rooms'
 import * as Y from 'yjs'
 import { MINE } from './docs'
-import { joinsAs, judge, turn } from './kinds'
+import { joinsAs, judge, readable, turn } from './kinds'
 
 /** A web note under v2 settles the way v1's does since 2026-10-03: the newer copy
  *  stands and nothing is kept beside it (web-tab/settle.ts). */
@@ -85,5 +85,17 @@ describe('an open tab joining its document', () => {
     expect(joinsAs('canvas', 'note')).toBeNull()
     // `Board.canvas` renamed to `Board.md`: views over a plane.
     expect(joinsAs('note', 'canvas')).toBeNull()
+  })
+})
+
+describe('what a plane reads', () => {
+  test('is a canvas, and not any JSON object', () => {
+    expect(readable('plane', '{"nodes":[],"edges":[]}')).toBe(true)
+    expect(readable('plane', '{"nodes":[]}')).toBe(true)
+    expect(readable('plane', '{"title":"x"}')).toBe(false)
+    expect(readable('plane', '{"nodes":{}}')).toBe(false)
+    expect(readable('plane', 'prose')).toBe(false)
+    expect(readable('plane', '')).toBe(false)
+    expect(readable('words', '{"title":"x"}')).toBe(true)
   })
 })

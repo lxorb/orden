@@ -282,6 +282,22 @@ describe('a canvas renamed to a note, written as prose', () => {
     })
   }
 
+  for (const warm of [false, true]) {
+    const room = warm ? 'warm' : 'cold'
+
+    test(`refuses a stale v1 save of prose to a ${room} room, rather than merging it away`, async () => {
+      const id = await renamedBoard(warm)
+      const put = await call(env, `/v1/notes/${id}`, {
+        method: 'PUT',
+        token,
+        body: { content: '# Board\n\nmy offline prose\n', baseVersion: row(id).version - 1 },
+      })
+      expect(put.status, put.text).toBe(422)
+      await rooms.settle()
+      expect(cards(await body(id))).toEqual(['a card'])
+    })
+  }
+
   test('refuses the connector writing prose into it, and says why', async () => {
     const id = await renamedBoard(false)
     const mcp = await call(env, '/v1/mcp/token', { token, body: { readOnly: false } })
@@ -300,6 +316,63 @@ describe('a canvas renamed to a note, written as prose', () => {
     expect(written.json.result.content[0]?.text).toMatch(/canvas/)
     await rooms.settle()
     expect(cards(await body(id))).toEqual(['a card'])
+  })
+})
+
+describe('a canvas written with something that is not one', () => {
+  test('refuses JSON that is not a canvas, rather than emptying the cards', async () => {
+    const id = await made('Board.canvas', writeCanvas(CARD))
+    await prepare()
+    const put = await call(env, `/v1/notes/${id}`, {
+      method: 'PUT',
+      token,
+      body: { content: '{"title":"x"}', baseVersion: row(id).version },
+    })
+    expect(put.status, put.text).toBe(422)
+    await rooms.settle()
+    expect(readCanvas(await body(id)).nodes).toHaveLength(1)
+  })
+
+  test('the connector says plainly that a canvas takes a canvas', async () => {
+    await made('Board.canvas', writeCanvas(CARD))
+    await prepare()
+    const mcp = await call(env, '/v1/mcp/token', { token, body: { readOnly: false } })
+    const written = await call<RpcView>(env, '/mcp', {
+      token: mcp.json.token,
+      body: {
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'tools/call',
+        params: {
+          name: 'write_note',
+          arguments: { space: 'Kinds', path: 'Board.canvas', content: 'prose\n' },
+        },
+      },
+    })
+    const said = written.json.result.content[0]?.text ?? ''
+    expect(said).toMatch(/canvas/)
+    expect(said).not.toMatch(/name that says words/)
+  })
+
+  test('a rollback that would put words into a canvas says it did not, and counts it apart', async () => {
+    const id = await made('Board.canvas', '')
+    await prepare()
+    const ago = 60 * 60 * 1000
+    env.db.prepare('update note_versions set at = at - ? where note_id = ?').run(ago, id)
+    env.db.prepare('update notes set updated_at = updated_at - ? where id = ?').run(ago, id)
+    const put = await call(env, `/v1/notes/${id}`, {
+      method: 'PUT',
+      token,
+      body: { content: writeCanvas(CARD), baseVersion: row(id).version },
+    })
+    expect(put.status, put.text).toBe(200)
+
+    const rolled = await call(env, `/v1/spaces/${space}/rollback`, {
+      token,
+      body: { at: Date.now() - 30 * 60 * 1000 },
+    })
+    expect(rolled.json).toMatchObject({ notes: 0, refused: 1, partial: false, left: 0 })
+    expect(readCanvas(await body(id)).nodes).toHaveLength(1)
   })
 })
 

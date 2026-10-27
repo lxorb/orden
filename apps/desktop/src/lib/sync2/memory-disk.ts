@@ -33,7 +33,11 @@ export class MemoryDisk implements Disk {
     return Promise.resolve()
   }
 
-  keep(): Promise<void> {
+  /** What was kept as a version on this device, in order. */
+  readonly kept: { path: string; text: string }[] = []
+
+  keep(path: string, text: string): Promise<void> {
+    this.kept.push({ path, text })
     return Promise.resolve()
   }
 
