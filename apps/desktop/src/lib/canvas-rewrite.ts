@@ -21,7 +21,7 @@ import { paperOf } from './pages/held'
 import { folderOf } from './space-paths'
 import type { NoteDoc } from './workspace/documents.svelte'
 import { skim, type Span } from './json-skim'
-import { type Move, retargetLinks } from './link-rewrite'
+import { type Move, type Placed, retargetLinks } from './link-rewrite'
 
 /** The plane with every card that points at `move.from` pointing at `move.to`, or
  *  null where none does, or where the text is not a plane to write over. */
@@ -57,7 +57,7 @@ export function retargetCanvas(
   /** The canvas, relative to the space, where it is now. */
   source: string,
   file: (path: string) => string | null,
-  to: (link: FoundLink) => string | null,
+  to: (link: FoundLink) => string | Placed | null,
   now = Date.now(),
 ): string | null {
   const nodes = nodeStrings(text)
@@ -101,7 +101,7 @@ export function retargetPlane(
   canvas: Canvas,
   source: string,
   file: (path: string) => string | null,
-  to: (link: FoundLink) => string | null,
+  to: (link: FoundLink) => string | Placed | null,
 ): Canvas {
   const nodes = canvas.nodes.map((node) => {
     if (node.type === 'file') {

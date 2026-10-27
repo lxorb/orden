@@ -361,6 +361,14 @@ function folderOf(path: string): string {
   return at === -1 ? '' : path.slice(0, at)
 }
 
+/** A folded target as what it asks for: the path, and whether it was written from
+ *  the top of the space. See `resolveNote`. */
+function targetOf(folded: string): { wanted: string; anchored: boolean } {
+  // One slash: `//Road` is no path from the top, and names nothing, as on a site.
+  const anchored = folded.startsWith('/')
+  return { wanted: anchored ? folded.slice(1) : folded, anchored }
+}
+
 /** Which of several notes a link means: the one beside the note the link was
  *  written in, then the shallowest, then the first by path.
  *
@@ -389,17 +397,24 @@ function nearest(candidates: readonly NoteRef[], from: string | null): NoteRef |
  *  gathered before one is chosen, rather than settling for the first reading that
  *  answers: a space with `Plan.md` and `ideas/Plan.md` in it has two answers to
  *  `[[Plan]]`, and which is meant depends on where it was written - see
- *  `nearest`. */
+ *  `nearest`.
+ *
+ *  A target written with a leading slash is a path from the top of the space and
+ *  means that path alone: `[[/Plan]]` is the `Plan.md` at the top, wherever the
+ *  link is and whichever `Plan.md` is nearer to it. The one spelling that reaches
+ *  a note at the top from beside a namesake, which is what a rename writes there
+ *  (B543). */
 export function resolveNote(index: NoteIndex, target: string): NoteRef | null {
-  const wanted = comparable(target.trim())
+  const { wanted, anchored } = targetOf(comparable(target.trim()))
   if (!wanted) return null
 
   const found = index.notes.filter((note) => {
     const path = comparable(note.path)
-    return path === wanted || path.endsWith(`/${wanted}`)
+    return path === wanted || (!anchored && path.endsWith(`/${wanted}`))
   })
 
   if (found.length) return nearest(found, index.path)
+  if (anchored) return null
 
   // Nothing in the space is called that. A note may still answer to it: an
   // alias is a name a note gave itself in its front matter. Looked at only once
@@ -417,16 +432,28 @@ export function resolveNote(index: NoteIndex, target: string): NoteRef | null {
  *  the only map the editor has. */
 export function resolveRelative(index: NoteIndex, target: string): NoteRef | null {
   const parts = relativeParts(index, target)
-  return parts.length ? resolveNote(index, parts.join('/')) : null
+  if (!parts.length) return null
+  // The path it names first, and only then a note whose path ends with it: read as
+  // the end of a path alone, `../Road.md` in `B/x.md` opened `B/Road.md` rather than
+  // the `Road.md` at the top it names (B543). A path from the top names that path
+  // or nothing: `[About](/about)` is no `C/about.md`.
+  const whole = resolveNote(index, `/${parts.join('/')}`)
+  if (whole || target.replace(/\\/g, '/').startsWith('/')) return whole
+  return resolveNote(index, parts.join('/'))
 }
 
 /** A relative target as the path it points at, from the folder the note it was
  *  written in sits in. Shared by the two things that resolve one: a note, and a
  *  file beside the notes. */
 function relativeParts(index: NoteIndex, target: string): string[] {
-  const parts = index.path === null ? [] : folderOf(index.path).split('/').filter(Boolean)
+  const written = target.replace(/\\/g, '/')
+  // A leading slash starts at the top of the space, as in any markdown reader.
+  const parts =
+    index.path === null || written.startsWith('/')
+      ? []
+      : folderOf(index.path).split('/').filter(Boolean)
 
-  for (const part of target.replace(/\\/g, '/').split('/')) {
+  for (const part of written.split('/')) {
     if (part === '' || part === '.') continue
     if (part === '..') parts.pop()
     else parts.push(part)
@@ -443,16 +470,20 @@ function relativeParts(index: NoteIndex, target: string): string[] {
  *  was written in, and is matched whole. The extension is part of the name here:
  *  a file has nothing else to be told apart by. */
 export function resolveFile(index: NoteIndex, target: string, kind: LinkKind): string | null {
-  const wanted = foldName(
-    kind === 'markdown'
-      ? relativeParts(index, target).join('/')
-      : target.trim().replace(/\\/g, '/'),
+  const { wanted, anchored } = targetOf(
+    foldName(
+      kind === 'markdown'
+        ? relativeParts(index, target).join('/')
+        : target.trim().replace(/\\/g, '/'),
+    ),
   )
   if (!wanted) return null
 
+  // A leading slash is a path from the top of the space; see `resolveNote`.
+  const whole = kind === 'markdown' || anchored
   const found = index.files.filter((path) => {
     const held = foldName(path)
-    return kind === 'markdown' ? held === wanted : held === wanted || held.endsWith(`/${wanted}`)
+    return held === wanted || (!whole && held.endsWith(`/${wanted}`))
   })
 
   // The shallowest, then the first by path: the same stable order `nearest`

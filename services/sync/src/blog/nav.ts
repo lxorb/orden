@@ -212,12 +212,15 @@ function namesOf(page: Listed): string[] {
  *  only, so a private note that links here is not named - which is the whole
  *  point of doing this from the site's own list. */
 export function linkedFrom(pages: readonly Listed[], page: Listed): Listed[] {
-  const names = new Set(namesOf(page))
+  const names = namesOf(page)
+  const known = new Set(names)
+  // A leading slash is a path from the top of the space, and names its whole path
+  // alone (B543).
+  const reaches = (link: string) =>
+    link.startsWith('/') ? link.slice(1) === names[0] : known.has(link)
 
   return ordered(
-    pages.filter(
-      (one) => one.slug !== page.slug && (one.front.links ?? []).some((link) => names.has(link)),
-    ),
+    pages.filter((one) => one.slug !== page.slug && (one.front.links ?? []).some(reaches)),
   )
 }
 

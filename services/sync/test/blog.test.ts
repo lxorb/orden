@@ -421,6 +421,43 @@ describe('links between notes on a published page', () => {
     expect(response.text).toContain('href="/notes/deep-idea"')
   })
 
+  /** A leading slash is a path from the top of the space: what a rename writes
+   *  where nothing shorter reaches the note it renamed (B543). */
+  test('a path from the top of the space finds the note there, and is linked from it', async () => {
+    await addNote('Road.md', '# Road\n')
+    await addNote('B/Road.md', '# Other road\n')
+    await addNote('B/x.md', '# X\n\nsee [[/Road]] and [[/B/Road|the other]]\n')
+    await publish({ subdomain: 'field' })
+
+    const response = await call(env, '/b/x', { host: 'field.nibeditor.com' })
+    expect(response.text).toContain('<a class="wikilink" href="/road">/Road</a>')
+    expect(response.text).toContain('<a class="wikilink" href="/b/road">the other</a>')
+
+    const road = await call(env, '/road', { host: 'field.nibeditor.com' })
+    expect(road.text).toContain('Linked from')
+    expect(road.text).toContain('href="/b/x"')
+  })
+
+  test('and the graph under the page draws it', async () => {
+    await addNote('Road.md', '# Road\n')
+    await addNote('B/Road.md', '# Other road\n')
+    await addNote('B/x.md', '# X\n\nsee [[/Road]]\n')
+    await publish({ subdomain: 'field' })
+
+    const response = await call(env, '/b/x', { host: 'field.nibeditor.com' })
+    const island = /<script type="application\/json">(.*?)<\/script>/s.exec(response.text)?.[1]
+    const graph = JSON.parse(island ?? '{}') as {
+      nodes: { id: string }[]
+      edges: { a: number; b: number }[]
+    }
+    const ids = graph.nodes.map((one) => one.id)
+    expect(ids).toContain('road')
+    expect(graph.edges.map((one) => [ids[one.a], ids[one.b]].sort())).toContainEqual([
+      'b/x',
+      'road',
+    ])
+  })
+
   /** The other half of the same question. A wikilink names a note; a markdown
    *  link names a path, written relative to the note it sits in - and that path
    *  is not where the site serves anything. It used to be published exactly as
@@ -495,6 +532,15 @@ describe('an embed on a published page', () => {
     expect(response.text).toContain('<figure class="embed">')
     expect(response.text).toContain('The words themselves.')
     expect(response.text).toContain('<figcaption>quote</figcaption>')
+  })
+
+  test('a path from the top of the space names that note', async () => {
+    await addNote('quote.md', '# Quote\n\nThe words themselves.\n')
+    await addNote('B/holder.md', '# Holder\n\n![[/quote]]\n')
+    await publish({ subdomain: 'field' })
+
+    const response = await call(env, '/b/holder', { host: 'field.nibeditor.com' })
+    expect(response.text).toContain('The words themselves.')
   })
 
   test('a heading names the section, and only that one', async () => {

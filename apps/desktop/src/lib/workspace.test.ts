@@ -3885,6 +3885,16 @@ describe('following a link to a note the space has not got', () => {
     expect(sent.find((one) => one.command === 'write_note')?.path).toBe('/space/Plan.md')
   })
 
+  test('beside the note the link is in, or at the top for a path from the top', async () => {
+    await workspace.followLink(asked('Road'), 'plain', '/space/B/x.md')
+    expect(sent.find((one) => one.command === 'write_note')?.path).toBe('/space/B/Road.md')
+
+    sent.length = 0
+    workspace.tabs = []
+    await workspace.followLink(asked('/Road'), 'plain', '/space/B/x.md')
+    expect(sent.find((one) => one.command === 'write_note')?.path).toBe('/space/Road.md')
+  })
+
   /** The index misses notes that are there: a dot folder is never scanned, and a note
    *  that is not UTF-8 or too big to read is skipped. A miss is not an absence, and a
    *  note made over one of those would be the end of what it held. */

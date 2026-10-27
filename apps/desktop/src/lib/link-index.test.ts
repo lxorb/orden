@@ -268,6 +268,51 @@ describe('backlinks', () => {
     expect(links.backlinks(at('Plan.md'))).toEqual([])
   })
 
+  /** `/Road.md` is a path from the top of the space, as the reading view follows
+   *  it, and as Obsidian and every markdown reader read one. */
+  test('a markdown link from the top of the space reaches the note there', async () => {
+    await space({
+      'Road.md': '# Road',
+      'B/Road.md': '# Other road',
+      'B/x.md': 'see [r](/Road.md)',
+      'C/y.md': 'see [r](/Road.md)',
+    })
+    expect(links.backlinks(at('Road.md')).map((one) => one.path)).toEqual(['B/x.md', 'C/y.md'])
+    expect(links.backlinks(at('B/Road.md'))).toEqual([])
+  })
+
+  test('a markdown link from the top names that path, not a note elsewhere ending so', async () => {
+    await space({
+      'C/about.md': '# About',
+      'posts/a/index.md': '# Index',
+      'B/x.md': 'see [About](/about) and [i](/index.md)',
+    })
+    expect(links.backlinks(at('C/about.md'))).toEqual([])
+    expect(links.backlinks(at('posts/a/index.md'))).toEqual([])
+
+    await links.retarget(at('C/about.md'), at('C/info.md'), ROOT)
+    await links.retarget(at('posts/a/index.md'), at('posts/a/_index.md'), ROOT)
+    expect(notes['B/x.md']).toBe('see [About](/about) and [i](/index.md)')
+  })
+
+  /** A link that named the path exactly reaches by that path alone: read as the end
+   *  of a path, `../Road.md` left alone would open the `B/Road.md` beside it once the
+   *  `Road.md` it named had moved. */
+  test('a relative markdown link to a note that moves keeps reaching it', async () => {
+    await space({
+      'Road.md': '# Road',
+      'B/Road.md': '# Other road',
+      'B/x.md': 'see [r](../Road.md)',
+    })
+    expect(links.outgoing(at('B/x.md'))[0]?.to).toBe('Road.md')
+
+    await links.retarget(at('Road.md'), at('Z/Road.md'), ROOT, () => null, { moved: true })
+    links.notesMoved(at('Road.md'), at('Z/Road.md'))
+
+    expect(notes['B/x.md']).toBe('see [r](../Z/Road.md)')
+    expect(links.outgoing(at('B/x.md'))[0]?.to).toBe('Z/Road.md')
+  })
+
   test('a path-qualified link reaches past the nearer note', async () => {
     await space({
       'Plan.md': 'the one at the top',
@@ -887,6 +932,126 @@ describe('renaming a note rewrites the links to it', () => {
     links.notesMoved(at('Papers'), at('Archive'))
 
     expect(links.fileNamed('report.pdf')).toBe('Archive/report.pdf')
+  })
+
+  /** A bare `[[Plan]]` rewritten to `[[Road]]` opened another folder's `Road.md`
+   *  once the space held one nearer to the link, or shallower: the rename sent the
+   *  link to a note nobody renamed. Written with as much of the path as it takes to
+   *  reach the renamed note, the way Obsidian writes one (B543). */
+  test('onto a name another folder holds, with as much path as reaches it', async () => {
+    await space({
+      'A/Plan.md': '# Plan',
+      'B/Road.md': '# other road',
+      'B/x.md': 'see [[Plan]], [[Plan#Intro|the plan]], [[Plan#^b1]] and [p](../A/Plan.md)',
+      'A/y.md': 'see [[Plan]]',
+    })
+
+    await links.retarget(at('A/Plan.md'), at('A/Road.md'), ROOT)
+    links.notesMoved(at('A/Plan.md'), at('A/Road.md'))
+
+    expect(notes['B/x.md']).toBe(
+      'see [[A/Road]], [[A/Road#Intro|the plan]], [[A/Road#^b1]] and [p](../A/Road.md)',
+    )
+    // Beside the renamed note, the bare name still reaches it.
+    expect(notes['A/y.md']).toBe('see [[Road]]')
+    expect(links.outgoing(at('B/x.md')).map((one) => one.to)).toEqual([
+      'A/Road.md',
+      'A/Road.md',
+      'A/Road.md',
+      'A/Road.md',
+    ])
+  })
+
+  test('onto a name the top of the space holds', async () => {
+    await space({
+      'Projects/Plan.md': '# Plan',
+      'Road.md': '# root road',
+      'x.md': 'see [[Plan]]',
+      'Deep/Projects/Road.md': '# deeper',
+    })
+
+    await links.retarget(at('Projects/Plan.md'), at('Projects/Road.md'), ROOT)
+    links.notesMoved(at('Projects/Plan.md'), at('Projects/Road.md'))
+
+    expect(notes['x.md']).toBe('see [[Projects/Road]]')
+    expect(links.outgoing(at('x.md'))[0]?.to).toBe('Projects/Road.md')
+  })
+
+  /** No name nor path reaches a note at the top of the space from beside a
+   *  namesake, since a path is read as the end of one: only a path from the top,
+   *  written with a leading slash, does. */
+  test('at the top of the space, onto a name a folder holds', async () => {
+    await space({
+      'Plan.md': '# Plan',
+      'B/Road.md': '# other road',
+      'B/x.md': 'see [[Plan]], [[Plan#Intro|the plan]] and [p](../Plan.md)',
+      'y.md': 'see [[Plan]]',
+    })
+
+    await links.retarget(at('Plan.md'), at('Road.md'), ROOT)
+    links.notesMoved(at('Plan.md'), at('Road.md'))
+
+    expect(notes['B/x.md']).toBe('see [[/Road]], [[/Road#Intro|the plan]] and [p](../Road.md)')
+    expect(notes['y.md']).toBe('see [[Road]]')
+    expect(links.outgoing(at('B/x.md')).map((one) => one.to)).toEqual([
+      'Road.md',
+      'Road.md',
+      'Road.md',
+    ])
+  })
+
+  test('moved to the top of the space and renamed, onto a name a folder holds', async () => {
+    await space({ 'A/Plan.md': '# Plan', 'B/Road.md': '# other road', 'B/x.md': 'see [[Plan]]' })
+
+    await links.retarget(at('A/Plan.md'), at('Road.md'), ROOT, () => null, { moved: true })
+    links.notesMoved(at('A/Plan.md'), at('Road.md'))
+
+    expect(notes['B/x.md']).toBe('see [[/Road]]')
+    expect(links.outgoing(at('B/x.md'))[0]?.to).toBe('Road.md')
+  })
+
+  /** A path written out is read as the end of one too, so it can lose to a deeper
+   *  folder of the same name beside the link. */
+  test('a path written out, onto a name a nested folder beside it holds', async () => {
+    await space({
+      'A/Plan.md': '# Plan',
+      'X/A/Road.md': '# deeper road',
+      'X/A/n.md': 'see [[A/Plan]] and [[Plan]]',
+    })
+
+    await links.retarget(at('A/Plan.md'), at('A/Road.md'), ROOT)
+    links.notesMoved(at('A/Plan.md'), at('A/Road.md'))
+
+    expect(notes['X/A/n.md']).toBe('see [[/A/Road]] and [[/A/Road]]')
+    expect(links.outgoing(at('X/A/n.md')).map((one) => one.to)).toEqual(['A/Road.md', 'A/Road.md'])
+  })
+
+  test('a markdown link written from the top of the space stays written so', async () => {
+    await space({ 'Road.md': '# Road', 'B/x.md': 'see [x](/Road.md)' })
+
+    await links.retarget(at('Road.md'), at('Path.md'), ROOT)
+    links.notesMoved(at('Road.md'), at('Path.md'))
+
+    expect(notes['B/x.md']).toBe('see [x](/Path.md)')
+    expect(links.outgoing(at('B/x.md'))[0]?.to).toBe('Path.md')
+  })
+
+  test('a link written from the top of the space stays written so', async () => {
+    await space({ 'A/Plan.md': '# Plan', 'x.md': 'see [[/A/Plan]]' })
+
+    await links.retarget(at('A/Plan.md'), at('C/Road.md'), ROOT, () => null, { moved: true })
+    links.notesMoved(at('A/Plan.md'), at('C/Road.md'))
+
+    expect(notes['x.md']).toBe('see [[/C/Road]]')
+    expect(links.outgoing(at('x.md'))[0]?.to).toBe('C/Road.md')
+  })
+
+  test('a file onto a name the top of the space holds', async () => {
+    await space({ 'x.md': 'see [[paper.pdf]]' }, ['Papers/paper.pdf', 'notes.pdf'])
+
+    await links.retarget(at('Papers/paper.pdf'), at('Papers/notes.pdf'), ROOT)
+
+    expect(notes['x.md']).toBe('see [[Papers/notes.pdf]]')
   })
 
   test('a note whose name did not change is left alone', async () => {
