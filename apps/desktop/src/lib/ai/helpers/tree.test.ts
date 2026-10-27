@@ -9,11 +9,14 @@ import type { Ended } from '../commands/types'
 import type { Provider } from '../providers'
 
 const written = vi.hoisted(() => [] as string[])
+/** Each thread's helpers as it was written down, by id. */
+const lists = vi.hoisted(() => new Map<string, string[]>())
 
 vi.mock('../chat/threads', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../chat/threads')>()),
   keepThread: (thread: Thread) => {
     written.push(thread.id)
+    lists.set(thread.id, [...((thread as { helpers?: string[] }).helpers ?? [])])
     return Promise.resolve()
   },
 }))
@@ -133,6 +136,7 @@ beforeEach(() => {
   helpers.all = []
   turns.length = 0
   written.length = 0
+  lists.clear()
 })
 
 describe('the review of the top thread', () => {
@@ -234,5 +238,19 @@ describe('a branch', () => {
     thread.helpers = ['h1']
     const copy: Tree = branchThread(thread, 'u1')
     expect(copy.helpers).toBeUndefined()
+  })
+})
+
+describe('what is written down', () => {
+  /** The command writes its parent before the helper starts: a relaunch while the copy
+   *  works, or after it, still finds the copy in the parent's review. */
+  test('after /fork with a prompt holds the copy in the parent’s list', async () => {
+    const thread = top()
+    thread.turns = [{ id: 'u1', role: 'you', at: 1, parts: [] }]
+    fork(host, thread, 'go on alone')
+    const copy = await started(1)
+
+    expect(lists.get(thread.id)).toEqual([copy.id])
+    helpers.stopUnder(thread.id)
   })
 })
