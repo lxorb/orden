@@ -989,15 +989,38 @@ async function toldAgain(
       continue
     }
     // Its file gone from the new name - deleted, or moved into another space - the
-    // note is gone from here, and its delete is sent now, before the push. Dropped
-    // with the entry left at the old name, a new note made there went up as this
-    // one: its words over this note's, with its id and history, and this note's
-    // delete never sent. Moved to the new name for the push to delete, the new note
-    // still went first, and its create was paired with this note, which the account
-    // still holds at that name. Not taken, it is tried again on the next pass, and
-    // until then the push leaves the file at the old name alone.
+    // note is gone from here. Nothing at the old name, or this note's own words
+    // there - put back by a program nothing here hears of - and there is nothing
+    // to tell: the entry is where its file is, or reads as its delete.
+    const at = joinPath(mirror.root, one.from)
     if (!(await present(joinPath(mirror.root, one.to)))) {
-      if (asked.has(id) || !(await deletedOnAccount(token, id))) continue
+      const words = await invoke<string>('read_note', { path: at }).catch(() => null)
+      if (words === null && !(await present(at))) {
+        told(mirror, id)
+        continue
+      }
+      if (words !== null && (await sha256(words)) === mirror.notes[one.from]?.hash) {
+        told(mirror, id)
+        continue
+      }
+      // Other words there are another note, and this one's delete is sent now,
+      // before the push. Dropped with the entry left at the old name, the new note
+      // went up as this one: its words over this note's, with its id and history,
+      // and this note's delete never sent. Moved to the new name for the push to
+      // delete, the new note still went first, and its create was paired with this
+      // note, which the account still holds at that name. Not taken, it is tried
+      // again on the next pass, the push leaving the file at the old name alone
+      // until then, and given up on the way a rename is (see `untoldBy`): the new
+      // note then goes up and meets this one as two copies of one note.
+      if (words === null || asked.has(id)) continue
+      const refused = await api.deleteNote(token, id).then(
+        () => null,
+        (error: unknown) => error,
+      )
+      if (refused !== null && !isGone(refused)) {
+        untoldBy(mirror, id, one.from, one.to, refused)
+        continue
+      }
       mirror.notes = without(mirror.notes, one.from)
       mirror.offered = without(mirror.offered, one.from)
       told(mirror, id)
@@ -1093,7 +1116,7 @@ function untoldBy(mirror: Mirror, id: string, from: string, to: string, error: u
 function letGo(mirror: Mirror, id: string, from: string, to: string, why: string) {
   told(mirror, id)
   if (mirror.notes[from]?.id !== id) return
-  log('warn', `sync: ${to} not renamed on the account, so it goes up as a new note: ${why}`)
+  log('warn', `sync: the rename of ${from} to ${to} is given up on: ${why}`)
   mirror.notes = without(mirror.notes, from)
   mirror.offered = without(mirror.offered, from)
 }
@@ -1382,11 +1405,17 @@ async function deletedOnAccount(token: string, id: string): Promise<boolean> {
     await api.deleteNote(token, id)
     return true
   } catch (error) {
-    if (error instanceof ApiError && (error.status === 403 || error.status === 404)) return true
+    if (isGone(error)) return true
 
     log('warn', `sync: delete of ${id} not taken - ${String(error)}`)
     return false
   }
+}
+
+/** A delete the account answers with a note that is not there, or not this
+ *  device's to delete: either way there is nothing left to send. */
+function isGone(error: unknown): boolean {
+  return error instanceof ApiError && (error.status === 403 || error.status === 404)
 }
 
 /** The PDFs of a space, offered to the account so that a published note linking
