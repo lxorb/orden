@@ -74,6 +74,13 @@ function formOf(blog: Blog | undefined): Form {
   }
 }
 
+/** Whether the account holds a password for the site. A space that was never
+ *  published may come with no site at all. */
+function holdsPassword(blog: Blog | undefined): boolean {
+  const site = blog?.site
+  return !!site?.password
+}
+
 function copyRules(rules: SiteSettings['rules'] | undefined): SiteSettings['rules'] {
   return {
     include: [...(rules?.include ?? [])],
@@ -239,7 +246,7 @@ class Publish {
     this.themeName = keep('themeName') ? now.themeName : next.themeName
     this.confirmed = keep('confirmed') ? now.confirmed : next.confirmed
     // Not the reader's to type: whether the account holds a password.
-    this.hasPassword = !!blog?.site.password
+    this.hasPassword = holdsPassword(blog)
 
     this.filledFrom = from
     this.filledWith = next
@@ -271,7 +278,7 @@ class Publish {
     this.note = next.note
     this.rules = copyRules(next.rules)
     this.description = next.description
-    this.hasPassword = !!blog?.site.password
+    this.hasPassword = holdsPassword(blog)
     this.password = next.password
     this.counter = next.counter
     this.counterDomain = next.counterDomain
