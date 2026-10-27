@@ -32,9 +32,11 @@
   )
 
   /** Escape, the scrim and Close. A wait goes on out of sight, the way a request
-   *  for access does in Google Docs or Slack; anything else is done with. */
+   *  for access does in Google Docs or Slack, and the field keeps what was typed;
+   *  the pill at the foot of the window opens either again (JoinPending.svelte). A
+   *  line that only says something is done with. */
   function close() {
-    if (joining.step === 'waiting') joining.close()
+    if (joining.step === 'waiting' || joining.step === 'asking') joining.close()
     else joining.dismiss()
   }
 
@@ -86,9 +88,9 @@
         <span class="pulse"></span>
         {t('Waiting for {who}', { who })}
       </p>
-      <!-- Slack's pending request: Cancel stops asking, Close leaves it asking. -->
+      <!-- Slack's pending request: Cancel takes it back, Close leaves it asking. -->
       <div class="actions">
-        <button type="button" class="nib-button is-quiet" onclick={() => joining.dismiss()}
+        <button type="button" class="nib-button is-quiet" onclick={() => joining.cancel()}
           >{t('Cancel')}</button
         >
         <button type="button" class="nib-button is-quiet" onclick={() => joining.close()}

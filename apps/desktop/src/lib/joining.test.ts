@@ -510,7 +510,7 @@ describe('waiting on the owner', () => {
   })
 
   test('stays cancelled when an ask was already on its way', async () => {
-    let letGo = () => undefined as void
+    let letGo: () => void = () => undefined
     world.gate = new Promise<void>((done) => (letGo = done))
     const asking = joining.walkThrough()
 

@@ -452,7 +452,7 @@ describe('a wait the reader ends', () => {
     return call(env, `/v1/join/${token}`, { method: 'DELETE', ...(as ? { token: as } : {}) })
   }
 
-  test('takes a guest off the owner\'s list, and Accept finds nobody', async () => {
+  test("takes a guest off the owner's list, and Accept finds nobody", async () => {
     const link = await shareLink('write', 'approval')
     const { json } = await follow(link, { body: { name: 'Ada' } })
     const guest = (await shareView()).json.requests[0]?.guest ?? ''
@@ -465,10 +465,12 @@ describe('a wait the reader ends', () => {
       token: owner,
     })
     expect(accepted.status).toBe(404)
-    expect((await follow(link, { as: json.token, body: { again: true } })).json.space).toBeUndefined()
+    expect(
+      (await follow(link, { as: json.token, body: { again: true } })).json.space,
+    ).toBeUndefined()
   })
 
-  test('takes an account off the owner\'s list, and Accept finds nobody', async () => {
+  test("takes an account off the owner's list, and Accept finds nobody", async () => {
     const link = await shareLink('read', 'approval')
     const stranger = await signIn(env, STRANGER)
     await follow(link, { as: stranger })
@@ -486,7 +488,7 @@ describe('a wait the reader ends', () => {
     )
   })
 
-  test('is nobody\'s to end without a session', async () => {
+  test("is nobody's to end without a session", async () => {
     const link = await shareLink('read', 'approval')
     expect((await withdraw(link)).status).toBe(401)
   })

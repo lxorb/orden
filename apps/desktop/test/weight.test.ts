@@ -884,10 +884,11 @@ function holds(tail: string): boolean {
  *  (`embedNote` in link-index.svelte.ts, `EmbeddedNote` in @nib/markdown). Measured
  *  3,388,683 with main as of this raise.
  *
- *  Raised 2026-10-27, to 3,390,300, for B540: a wait on the owner can be closed and
- *  goes on out of sight (`closed`, `shown` and `close` in joining.svelte.ts).
- *  Measured 3,389,973. */
-const BUDGET = 3_390_300
+ *  Raised 2026-10-27, to 3,393,000, for B540: a wait on the owner can be closed and
+ *  goes on out of sight, slows down, and is withdrawn by Cancel (`closed`, `aside`,
+ *  `later` and `cancel` in joining.svelte.ts, `withdraw` in api/routes.ts, the
+ *  pill's door in surfaces.svelte.ts and App.svelte). Measured 3,392,715. */
+const BUDGET = 3_393_000
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

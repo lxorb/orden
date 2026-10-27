@@ -374,6 +374,7 @@ describe('what hides a web page', () => {
     'lib/RenameNotice.svelte',
     'lib/StorageWarning.svelte',
     'lib/RecordingPill.svelte',
+    'lib/JoinPending.svelte',
   ]
 
   function sources(): string[] {
