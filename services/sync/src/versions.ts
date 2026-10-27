@@ -164,12 +164,16 @@ export function deviceIn(header: string | undefined): string {
  *  minutes clear of the last one kept. So one version every five minutes or so,
  *  and the newest is always what the note last said. A version kept by name
  *  (`held`) is never replaced, and neither is one another device sent: folded,
- *  somebody else's words in between two saves of this one's were on no version. */
+ *  somebody else's words in between two saves of this one's were on no version.
+ *  The device is the one the session proves (`device`, see sync2/device.ts), not
+ *  the name it sends: two Macs send the same name. A save with none never folds,
+ *  and neither does one into a row with none. */
 export async function keepVersion(
   env: Env,
   note: Pick<Note, 'id' | 'hash' | 'size'>,
   content: string,
   by = '',
+  device: string | null = null,
 ): Promise<void> {
   // The bytes before the row, so a row never names a body that is not there. A
   // hash another note already keeps needs neither.
@@ -181,10 +185,10 @@ export async function keepVersion(
   // behind the note.
   for (let tries = 0; tries < 3; tries++) {
     const { results: newest } = await env.DB.prepare(
-      'select at, hash, held, by from note_versions where note_id = ? order by at desc limit 2',
+      'select at, hash, held, device from note_versions where note_id = ? order by at desc limit 2',
     )
       .bind(note.id)
-      .all<{ at: number; hash: string; held: number; by: string }>()
+      .all<{ at: number; hash: string; held: number; device: string | null }>()
     const [last, before] = newest
 
     // Nothing new to say.
@@ -202,17 +206,20 @@ export async function keepVersion(
     const folds =
       last !== undefined &&
       !last.held &&
-      last.by === by &&
+      device !== null &&
+      last.device === device &&
       at - last.at < VERSION_EVERY &&
       before !== undefined &&
       last.at - before.at < VERSION_EVERY
 
     if (folds) {
+      // Or ignore: a version kept meanwhile at the moment this one moves to would
+      // otherwise throw, and the save would be on no version at all.
       const folded = await env.DB.prepare(
-        `update note_versions set at = ?4, hash = ?5, size = ?6, by = ?7
-          where note_id = ?1 and at = ?2 and hash = ?3 and held = 0 and by = ?7`,
+        `update or ignore note_versions set at = ?4, hash = ?5, size = ?6, by = ?7
+          where note_id = ?1 and at = ?2 and hash = ?3 and held = 0 and device = ?8`,
       )
-        .bind(note.id, last.at, last.hash, Math.max(at, last.at), note.hash, note.size, by)
+        .bind(note.id, last.at, last.hash, Math.max(at, last.at), note.hash, note.size, by, device)
         .run()
       if (!folded.meta.changes) continue
 
@@ -221,9 +228,10 @@ export async function keepVersion(
     }
 
     const kept = await env.DB.prepare(
-      'insert or ignore into note_versions (note_id, at, hash, size, by) values (?, ?, ?, ?, ?)',
+      `insert or ignore into note_versions (note_id, at, hash, size, by, device)
+       values (?, ?, ?, ?, ?, ?)`,
     )
-      .bind(note.id, Math.max(at, (last?.at ?? 0) + 1), note.hash, note.size, by)
+      .bind(note.id, Math.max(at, (last?.at ?? 0) + 1), note.hash, note.size, by, device)
       .run()
     if (!kept.meta.changes) continue
 

@@ -6,6 +6,12 @@
 -- answer in sync v2, and the words a rollback writes over.
 alter table note_versions add column held integer not null default 0;
 
+-- And which device sent a version, as the session proves it (src/sync2/device.ts),
+-- for the fold to tell two devices apart: `by` is the name a device gives itself,
+-- which is its kind, so every Mac in a shared space has the same one. Null where
+-- nothing proved it, and a row with none is never folded into.
+alter table note_versions add column device text;
+
 -- The rows from just before this runs are the only ones a fold can reach on its first
 -- saves, and a modal answer's words among them look like any other row. Held, all of
 -- them: a few rows more than the five minute rule would keep, and none of those words

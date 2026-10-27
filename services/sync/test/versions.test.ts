@@ -147,14 +147,15 @@ describe('the account keeps what a note said', () => {
   })
 
   test('but not into the words of another device', async () => {
-    for (const [content, baseVersion, device] of [
-      ['# Mine', 1, 'the laptop'],
-      ['# Bob', 2, 'Bob'],
-      ['# Mine again', 3, 'the laptop'],
+    const bob = await signIn(env, 'a@b.dev')
+    for (const [content, baseVersion, device, who] of [
+      ['# Mine', 1, 'the laptop', token],
+      ['# Bob', 2, 'Bob', bob],
+      ['# Mine again', 3, 'the laptop', token],
     ] as const) {
       await call(env, `/v1/notes/${note}`, {
         method: 'PUT',
-        token,
+        token: who,
         body: { content, baseVersion },
         headers: { 'x-nib-device': device },
       })
@@ -192,7 +193,9 @@ describe('the account keeps what a note said', () => {
     const clock = vi.spyOn(Date, 'now').mockReturnValue(at)
     env.justBefore(/^update or ignore note_versions set at|^update note_versions set at/, () => {
       env.db
-        .prepare("insert into note_versions (note_id, at, hash, size, by) values (?, ?, 'x', 1, '')")
+        .prepare(
+          "insert into note_versions (note_id, at, hash, size, by) values (?, ?, 'x', 1, '')",
+        )
         .run(note, at)
     })
     try {
