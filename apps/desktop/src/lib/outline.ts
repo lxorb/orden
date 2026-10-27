@@ -7,7 +7,7 @@
  *  place: it is the whole text every time it runs, which is why the workspace
  *  only lets it run once the typing has paused. */
 
-import { slugify } from '@nib/markdown/links'
+import { lines, slugify } from '@nib/markdown/links'
 
 export interface Heading {
   level: number
@@ -16,35 +16,23 @@ export interface Heading {
 }
 
 const HEADING = /^(#{1,6})\s+(.*)$/
-const FENCE = /^\s*(```|~~~)/
 
-/** Every ATX heading in `text`, in order, skipping anything inside a fence -
- *  a `# ` in a shell snippet is a comment, not a heading. */
+/** Every ATX heading in `text`, in order, skipping code and the front matter - a
+ *  `# ` in a shell snippet or a YAML block is a comment, not a heading.
+ *
+ *  Which lines are code is `lines` in @nib/markdown/links, the reading the page and
+ *  `[[Note#Heading]]` agree on: a block closes on its own mark only, so a `~~~` in a
+ *  ``` block, or a ``` in a ```` block, is code being shown and not the end of it. */
 export function scanHeadings(text: string): Heading[] {
   const found: Heading[] = []
   if (!text) return found
 
-  let fenced = false
-  let line = 0
-  let from = 0
-
-  // Walked with indexOf rather than split, so a large note is not copied into
-  // an array of lines only to be thrown away again.
-  for (;;) {
-    const end = text.indexOf('\n', from)
-    const row = text.slice(from, end === -1 ? text.length : end)
-
-    if (FENCE.test(row)) fenced = !fenced
-    else if (!fenced) {
-      // Both groups are there whenever the pattern matches at all, so an
-      // empty `hashes` is exactly the no-match case.
-      const [, hashes = '', title = ''] = HEADING.exec(row) ?? []
-      if (hashes) found.push({ level: hashes.length, text: title.trim(), line })
-    }
-
-    if (end === -1) break
-    from = end + 1
-    line++
+  for (const row of lines(text)) {
+    if (row.code || row.matter) continue
+    // Both groups are there whenever the pattern matches at all, so an empty
+    // `hashes` is exactly the no-match case.
+    const [, hashes = '', title = ''] = HEADING.exec(row.text) ?? []
+    if (hashes) found.push({ level: hashes.length, text: title.trim(), line: row.line })
   }
 
   return found

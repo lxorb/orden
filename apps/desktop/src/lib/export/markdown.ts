@@ -9,7 +9,7 @@
  *  Pure. What a wikilink resolves to and where the pictures went are the
  *  caller's answers; this only writes them down. */
 
-import { findLinks, type FoundLink, shownText } from '@nib/markdown/links'
+import { findLinks, type FoundLink, lines, shownText } from '@nib/markdown/links'
 import { encodeTarget } from '../link-rewrite'
 
 /** A stretch of the source, and what goes in its place. */
@@ -28,9 +28,6 @@ export interface MarkdownOptions {
    *  Null leaves the path the note wrote. */
   picture?: (src: string) => string | null
 }
-
-/** A fence line, opening or closing. The same shape links.ts skips by. */
-const FENCE = /^\s*(?:```|~~~)/
 
 /** `![alt](src "title")`, with the parts kept apart so only the source moves. */
 const PICTURE = /!\[([^\]]*)\]\(\s*(<[^>]*>|[^\s)]*)((?:\s+"[^"]*")?)\s*\)/g
@@ -52,27 +49,24 @@ function asSource(path: string, written: string): string {
   return written.startsWith('<') || path.includes(' ') ? `<${path}>` : path
 }
 
-/** Where every picture's source sits in the text, outside code. */
+/** Where every picture's source sits in the text, outside code: code as the links
+ *  are read (`lines` in links.ts), so a block closes on its own mark only and a fence
+ *  in a quote or a list item is code too. */
 function pictureEdits(source: string, rename: (src: string) => string | null): Edit[] {
   const edits: Edit[] = []
-  let fenced = false
-  let at = 0
 
-  for (const line of source.split('\n')) {
-    if (FENCE.test(line)) fenced = !fenced
-    else if (!fenced) {
-      for (const match of line.matchAll(PICTURE)) {
-        const written = match[2] ?? ''
-        const bare = written.startsWith('<') ? written.slice(1, -1) : written
-        const wanted = rename(bare)
-        if (wanted === null || wanted === bare) continue
+  for (const { text: line, from: at, code } of lines(source)) {
+    if (code) continue
 
-        const from = at + match.index + match[0].indexOf(written, match[1]?.length ?? 0)
-        edits.push({ from, to: from + written.length, text: asSource(wanted, written) })
-      }
+    for (const match of line.matchAll(PICTURE)) {
+      const written = match[2] ?? ''
+      const bare = written.startsWith('<') ? written.slice(1, -1) : written
+      const wanted = rename(bare)
+      if (wanted === null || wanted === bare) continue
+
+      const from = at + match.index + match[0].indexOf(written, match[1]?.length ?? 0)
+      edits.push({ from, to: from + written.length, text: asSource(wanted, written) })
     }
-
-    at += line.length + 1
   }
 
   return edits

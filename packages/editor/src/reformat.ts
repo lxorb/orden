@@ -1,3 +1,4 @@
+import type { Tree } from '@lezer/common'
 import type { StateCommand } from '@codemirror/state'
 import { closesFence, fenceMark } from '@nib/markdown/fences'
 import { nibMarkdownParser } from './markdown/extensions'
@@ -14,6 +15,9 @@ import { parseTable, serializeTable } from './table/model'
  *  `tidy` is kept away from the characters these are spelled with. */
 const VERBATIM = new Set([
   'CodeBlock',
+  // A fence in a quote, a callout or a list item: the walk below only sees the ones
+  // at the top of the note.
+  'FencedCode',
   'InlineCode',
   'BlockMath',
   'InlineMath',
@@ -30,7 +34,9 @@ const VERBATIM = new Set([
 export function reformat(source: string): string {
   const lines = source.split('\n')
   const out: string[] = []
-  const kept = verbatim(source, lines)
+  const tree = nibMarkdownParser.parse(source)
+  const kept = verbatim(tree, lines)
+  const tables = tableStarts(tree, lines)
 
   let index = 0
   let blanks = 0
@@ -66,7 +72,7 @@ export function reformat(source: string): string {
       continue
     }
 
-    const table = readTable(lines, index)
+    const table = tables.has(index) ? readTable(lines, index) : null
     if (table) {
       out.push(...table.text.split('\n'))
       index = table.next
@@ -106,6 +112,28 @@ function readFrontMatter(lines: readonly string[]): number | null {
   return null
 }
 
+/** The lines a table starts on, as the parser finds them: at the start of the line,
+ *  so not in a quote or a list item, whose markers the serialiser would drop, and not
+ *  in code, maths, a comment or an HTML block, where a row of pipes is what it says. */
+function tableStarts(tree: Tree, lines: readonly string[]): Set<number> {
+  const starts = new Set<number>()
+  tree.iterate({
+    enter(node) {
+      if (node.name !== 'Table') return true
+      starts.add(node.from)
+      return false
+    },
+  })
+
+  const found = new Set<number>()
+  let start = 0
+  for (const [index, line] of lines.entries()) {
+    if (starts.has(start + line.length - line.trimStart().length)) found.add(index)
+    start += line.length + 1
+  }
+  return found
+}
+
 /** A table starting at `start`, already re-aligned, or null. */
 function readTable(lines: string[], start: number): { text: string; next: number } | null {
   if (!lines[start]?.includes('|')) return null
@@ -127,9 +155,9 @@ function readTable(lines: string[], start: number): { text: string; next: number
 /** For each line, the stretches of it the parser says are `VERBATIM`, from and to
  *  within the line. A blank line inside one, in a comment or between two lines of
  *  code, has one that is empty. */
-function verbatim(source: string, lines: readonly string[]): [number, number][][] {
+function verbatim(tree: Tree, lines: readonly string[]): [number, number][][] {
   const ranges: [number, number][] = []
-  nibMarkdownParser.parse(source).iterate({
+  tree.iterate({
     enter(node) {
       if (!VERBATIM.has(node.name)) return true
       ranges.push([node.from, node.to])

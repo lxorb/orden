@@ -408,6 +408,9 @@ interface Row {
   /** True inside a fence, and on both of its delimiters: neither a link nor a
    *  block name can live in any of those. */
   code: boolean
+  /** True on the front matter's lines, closing fence and all: YAML, which the page
+   *  leaves out, so a `# comment` there is not a heading. */
+  matter: boolean
 }
 
 /** Every line of some markdown, so the walks here do not each carry their own
@@ -439,7 +442,8 @@ export function* lines(text: string): Generator<Row> {
     const end = text.indexOf('\n', at)
     const row = text.slice(at, end === -1 ? text.length : end)
 
-    yield { text: row, from: at, line, code: at >= wordsAt && code.line(row) !== WORDS }
+    const matters = at < wordsAt
+    yield { text: row, from: at, line, code: !matters && code.line(row) !== WORDS, matter: matters }
 
     if (end === -1) break
     at = end + 1
