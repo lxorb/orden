@@ -44,8 +44,10 @@
 #   - with DOWNLOAD=1, a download in a web tab stopped on its way and the same name
 #     downloaded again: the first has to stop and leave nothing, the second has to be a
 #     file of its own (#788, scripts/download-drive.py);
-#   - with EXTENSIONS=1, a web tab's extensions seen in the web bar and in Settings, and
-#     the engine's list and its removal reached (#789, scripts/extensions-drive.py);
+#   - with EXTENSIONS=1, a small extension of the run's own loaded (`--load-extension`):
+#     seen in the web bar and in Settings, removed through the engine and gone from both,
+#     and still gone once Orden is started again without it (#789,
+#     scripts/extensions-drive.py);
 #   - with WATCH=1, a space holding a folder nobody may read and four hundred more: a
 #     note written into it by another program has to be heard, at its top and deep in
 #     it, and again under a lowered limit of watched folders, which the watch has to say
@@ -296,6 +298,30 @@ if [ "${WATCH:-0}" = 1 ]; then
   export NIB_SPACES_DIR
   endpoint
 fi
+# With EXTENSIONS=1, an extension of the run's own, with a button, loaded into the
+# browsing profile as Chromium loads one from the command line (#789).
+ext_name="Orden run extension"
+if [ "${EXTENSIONS:-0}" = 1 ]; then
+  mkdir -p "$out/extension"
+  python3 - "$out/extension" "$ext_name" <<'MAKE'
+import json, struct, sys, zlib
+from pathlib import Path
+folder, name = Path(sys.argv[1]), sys.argv[2]
+def chunk(kind, data):
+    return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data))
+rows = b"".join(b"\x00" + b"\x2b\x8a\x6e\xff" * 16 for _ in range(16))
+icon = (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", 16, 16, 8, 6, 0, 0, 0))
+        + chunk(b"IDAT", zlib.compress(rows)) + chunk(b"IEND", b""))
+(folder / "icon.png").write_bytes(icon)
+(folder / "manifest.json").write_text(json.dumps({
+    "manifest_version": 3, "name": name, "version": "1.0",
+    "icons": {"16": "icon.png"},
+    "action": {"default_title": name, "default_icon": "icon.png"},
+}))
+MAKE
+  NIB_CEF_ARGS="load-extension=$(cd "$out/extension" && pwd)"
+  export NIB_CEF_ARGS
+fi
 # With TEXTSIZE=1, the endpoint and no page: the launch opens on its note (#680).
 [ "${TEXTSIZE:-0}" = 1 ] && endpoint
 # With KILL=1, the endpoint and no page (#961).
@@ -434,7 +460,26 @@ fi
 
 if [ "$status" = 0 ] && [ "${EXTENSIONS:-0}" = 1 ]; then
   sleep 3
-  python3 "$here/extensions-drive.py" "$out" || status=1
+  if python3 "$here/extensions-drive.py" "$out" installed "$ext_name"; then
+    # Started again without it on the command line: what was removed stays removed.
+    unset NIB_CEF_ARGS
+    kill -TERM "$app_pid" 2>/dev/null || true
+    for _ in $(seq 50); do kill -0 "$app_pid" 2>/dev/null || break; sleep 0.2; done
+    kill -KILL "$app_pid" 2>/dev/null || true
+    wait "$app_pid" 2>/dev/null || true
+    endpoint
+    "${command[@]}" > "$out/orden-again.log" 2>&1 &
+    app_pid=$!
+    if wait_for_views 1; then
+      sleep 3
+      python3 "$here/extensions-drive.py" "$out" again "$ext_name" || status=1
+    else
+      echo "::error::no window mapped when started again"
+      status=1
+    fi
+  else
+    status=1
+  fi
 fi
 
 # The space made, then given a folder nobody may read and four hundred more, and the app
