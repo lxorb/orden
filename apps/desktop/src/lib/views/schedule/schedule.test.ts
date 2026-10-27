@@ -92,4 +92,11 @@ describe('the scheduler', () => {
       start: '2026-10-13',
     })
   })
+
+  test('No date on a task with a deadline alone has no day to take, so its repeat stays', () => {
+    const vault = { due: '2026-10-01', recurrence: 'every month', dueReads: 'deadline' as const }
+    expect(changeFor(vault, { due: null })).toEqual({})
+    expect(changeFor(vault, { due: null, time: null })).toEqual({})
+    expect(changeFor({ deadline: '2026-10-01', time: '09:00' }, { due: null })).toEqual({})
+  })
 })

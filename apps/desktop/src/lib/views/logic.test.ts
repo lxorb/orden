@@ -274,6 +274,20 @@ describe('a drop into a group', () => {
     expect(change && changedTask('- [ ] Pay bill 🛫 2026-09-28 📅 2026-10-01', change)).toBe(
       '- [ ] Pay bill 🛫 2026-10-09 📅 2026-10-09',
     )
+    // The same on Upcoming's week strip, the calendar and the agenda, which drop on the
+    // task's date.
+    expect(
+      dropInto('task.date', '2026-10-09', vault('- [ ] Pay bill 📅 2026-10-01'), TODAY),
+    ).toEqual({ change: { task: { due: '2026-10-09' } } })
+    expect(dropInto('task.date', '2026-10-09', started, TODAY)).toEqual({
+      change: { task: { start: '2026-10-09', due: '2026-10-09' } },
+    })
+    // A done task is late no longer, and Completed's days are the days it was done.
+    const paid = vault('- [x] Pay bill 📅 2026-09-01 ✅ 2026-09-03')
+    expect(dropInto('formula.day', day, paid, TODAY)).toBeNull()
+    expect(dropInto('task.date', '2026-10-09', paid, TODAY)).toEqual({
+      change: { task: { start: '2026-10-09' } },
+    })
     // A deadline still to come stays where it is.
     const later = vault('- [ ] Pay bill 🛫 2026-10-02 📅 2026-10-20')
     expect(dropInto('formula.day', day, later, TODAY)).toEqual({
