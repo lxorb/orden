@@ -39,7 +39,7 @@ const KINDS: readonly RoomKind[] = ['words', 'plane']
  *  all: the room keeps its plane, the settle keeps writing it, and nothing is lost
  *  in either direction. See `crossed` in room.ts for what a real crossing costs,
  *  and rooms/kind.ts in the app, which states this same rule for the other end. */
-export function roomKind(path: string): RoomKind {
+function roomKind(path: string): RoomKind {
   return isCanvasTarget(path) || isPagesTarget(path) ? 'plane' : 'words'
 }
 
