@@ -433,6 +433,13 @@ export class RowsStore {
   }
 }
 
+/** The rows a note's words make at `relative` in a space, as a save would make them;
+ *  the read of a task's dates aside, which only the store knows. */
+export function noteRowsOf(space: string, relative: string, content: string): Row[] {
+  const stamp = { size: content.length, mtime: 0, ctime: 0 }
+  return rowsOf(space, readOf({ ...scanNote(relative, content), ...scanRows(content), stamp }))
+}
+
 /** A scanned note as the rows read it. */
 function readOf(note: ScannedNote): NoteRead {
   return {

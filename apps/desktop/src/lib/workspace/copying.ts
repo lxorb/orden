@@ -172,10 +172,9 @@ function notesIn(entry: Entry): Entry[] {
  *  people may have written down. Which of two notes sharing an id is the copy is known
  *  only here; no order of their paths can tell (B552). */
 async function idsLeftBehind(entry: Entry, path: string) {
-  const notes = notesIn(entry)
-  if (!notes.length) return
-  const { withoutIds } = await import('../views/copied')
-  for (const note of notes) {
+  const { numbersAt, withoutIds } = await import('../views/copied')
+  if (!numbersAt(path)) return
+  for (const note of notesIn(entry)) {
     const at = path + note.path.slice(entry.path.length)
     const text = await invoke<string | null>('read_note', { path: at }).catch(() => null)
     const words = text === null ? null : withoutIds(at, text)

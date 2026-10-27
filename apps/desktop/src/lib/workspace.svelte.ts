@@ -4293,14 +4293,14 @@ class Workspace {
 
   /** Every link to a note that has moved pointed at it again; whether any was. A rewrite
    *  that fails leaves the note moved all the same, so the move goes on as one: told, a
-   *  step to undo (which puts back whatever of the rewrite was done), and the tree read
-   *  again. Otherwise the rows would hold it at both paths and take it for a new note. */
+   *  step to undo, and the tree read again; with nothing said to have been rewritten, so
+   *  the undo points no link that was already dangling at the old name. Otherwise the rows would hold it at both paths and take it for a new note. */
   private async retargetMoved(from: string, to: string): Promise<boolean> {
     try {
       return (await this.retarget(from, to, { moved: true })) > 0
     } catch (error) {
       log('error', `links to ${from} not rewritten after its move to ${to} - ${String(error)}`)
-      return true
+      return false
     }
   }
 

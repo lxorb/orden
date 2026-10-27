@@ -2,12 +2,12 @@
  *  looked at once it settles, and the repeating templates. Plain state, kept apart from
  *  the runes that wire it to the app. See runner.svelte.ts for the why. */
 
-import { idNumber, noteValues, readBase, readAutomations, repeatDue, type Row } from '@nib/bases'
+import { idNumber, inBase, readBase, readAutomations, repeatDue, type Row } from '@nib/bases'
 import { withProperties } from '@nib/bases/agent'
 import { insideOnly } from '../automation/inside'
 import { show } from '../reminders/platform'
 import { rows } from '../rows/rows.svelte'
-import type { RowsChange } from '../rows/store'
+import { noteRowsOf, type RowsChange } from '../rows/store'
 import { canWriteAt } from '../sharing.svelte'
 import { insideSpace, within } from '../space-paths'
 import { invoke, joinPath } from '../tauri'
@@ -83,21 +83,35 @@ function rowsOf(space: string, path: string): readonly Row[] {
   return rows.of(space).filter((row) => row.path === path)
 }
 
-/** A copy's words without the ids the bases of the space holding it number their rows
- *  by, or null where it holds none; see `idsLeftBehind` in workspace/copying.ts. */
-function withoutIds(path: string, text: string): string | null {
+/** The space holding a path, and the bases of it that number their rows. */
+function numbering(path: string) {
   const space = workspace.spaces.find((one) => within(one.root, path, one.root) !== null)
-  if (!space) return null
-  const values = noteValues(text)
+  const bases = space
+    ? [...held.values()].filter((one) => one.space === space.name && one.base.nib.id)
+    : []
+  return { space, bases }
+}
+
+/** A copy's words without the ids of the bases it is a row of where it landed, or null
+ *  where it holds none. A copy outside every base keeps its id: nothing reads it as a
+ *  row, and a base without a prefix reads any number as one of its ids. See
+ *  `idsLeftBehind` in workspace/copying.ts. */
+function withoutIds(path: string, text: string): string | null {
+  const { space, bases } = numbering(path)
+  const relative = space && within(space.root, path, space.root)
+  if (!space || !relative || !bases.length) return null
+  const row = noteRowsOf(space.name, relative, text).find((one) => one.kind === 'note')
+  if (!row) return null
+  const context = contextFor({ rows: rows.of(space.name), today: todayHere(), now: nowHere() })
   const gone: Record<string, null> = {}
-  for (const one of held.values()) {
+  for (const one of bases) {
     const id = one.base.nib.id
-    if (one.space === space.name && id && idNumber(values[id.property], id.prefix) !== null)
+    if (id && idNumber(row.note[id.property], id.prefix) !== null && inBase(one.base, row, context))
       gone[id.property] = null
   }
   return Object.keys(gone).length ? withProperties(text, gone) : null
 }
-leaveIdsBy(withoutIds)
+leaveIdsBy({ numbers: (path) => numbering(path).bases.length > 0, without: withoutIds })
 
 /** A base's automations, run on a note of its space that changed. Not in a space
  *  shared with this account to be read: what they write and move would be refused by
