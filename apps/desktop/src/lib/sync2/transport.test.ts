@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { unframe } from '@nib/sync-core/wire'
 import { testDevice } from './test-device'
-import { Refused } from './transport'
+import { Refused, remoteFiles } from './transport'
 
 /** What a pass hears from the network (transport.ts): an answer, no answer - which stops
  *  the pass and keeps what this device made waiting, the light hollow - or a refusal,
@@ -26,7 +26,12 @@ describe('the engine over the network', () => {
   ])('%s is no answer: the pass stops and the new note waits', async (_said, fetch) => {
     const device = await made(fetch)
 
-    expect(await device.engine.pass(SPACE)).toEqual({ pulled: 0, pushed: 0, finished: false })
+    expect(await device.engine.pass(SPACE)).toEqual({
+      pulled: 0,
+      pushed: 0,
+      finished: false,
+      full: false,
+    })
     expect(device.engine.waiting(SPACE)).toBe(true)
     expect(device.store.rows('log')).toEqual([])
     expect(device.disk.files.get(`${device.root}/Plan.md`)).toBe('We ship on Monday.\n')
@@ -63,5 +68,23 @@ describe('the engine over the network', () => {
       ops: { t: string; name: string }[]
     }
     expect(body.ops).toEqual([expect.objectContaining({ t: 'create', name: 'Plan.md' })])
+  })
+})
+
+describe('a file’s bytes over the network', () => {
+  const over = (status: number) =>
+    remoteFiles({
+      base: 'https://sync.test',
+      token: () => 'token-1',
+      device: () => 'one',
+      fetch: () => Promise.resolve(Response.json({ error: 'out of space' }, { status })),
+    })
+
+  test('an account with no room for them is an answer, not none', async () => {
+    expect(await over(507).up('h', new Uint8Array([1]))).toBe('full')
+    expect(await over(413).up('h', new Uint8Array([1]))).toBe(false)
+    expect(await over(503).up('h', new Uint8Array([1]))).toBeNull()
+    // Only the upload says the account is full; anywhere else a 507 is a failing account.
+    expect(await over(507).down('s', 'f')).toBeNull()
   })
 })

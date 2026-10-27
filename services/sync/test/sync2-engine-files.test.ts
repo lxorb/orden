@@ -6,7 +6,7 @@
  *  The devices are the app's own engine (apps/desktop/src/lib/sync2/test-device.ts),
  *  reached by its path for the reason sync2-engine.test.ts gives. */
 
-import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import app from '../src/index'
 import { call, signIn, type TestEnv, testEnv } from './harness'
 import { type Live, live } from './sync2'
@@ -293,6 +293,14 @@ describe('an account too full for a file', () => {
     return { made, state }
   }
 
+  afterEach(() => vi.restoreAllMocks())
+
+  /** The clock, past the wait before refused bytes go again. */
+  function later() {
+    const real = Date.now
+    vi.spyOn(Date, 'now').mockImplementation(() => real() + 10 * 60_000)
+  }
+
   test('keeps a new file back, says so, and the rest of the space still syncs', async () => {
     const { made, state } = await filling({ 'Plan.md': 'one' })
     const phone = await device('phone')
@@ -315,7 +323,10 @@ describe('an account too full for a file', () => {
     // Kept, not dropped: the file goes once there is room.
     expect(made.engine.core.spaces.get(space)?.outbox).toHaveLength(1)
 
+    // Tried again only after a while: every try sends every byte.
     state.full = false
+    expect((await made.engine.pass(space))?.full).toBe(true)
+    later()
     const freed = await made.engine.pass(space)
     expect(freed?.full).toBe(false)
     await rooms.settle()
@@ -342,6 +353,7 @@ describe('an account too full for a file', () => {
     expect(bytesAt(phone, 'photo.png')).toEqual(picture(3))
 
     state.full = false
+    later()
     await passed(made, phone)
     expect(made.engine.held.notes).toHaveLength(0)
     expect(bytesAt(phone, 'photo.png')).toEqual(picture(5))

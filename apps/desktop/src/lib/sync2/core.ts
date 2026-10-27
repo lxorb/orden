@@ -99,6 +99,9 @@ export class Core {
    *  were last read: what the next pass hashes (files.ts). Memory only - the launch
    *  scan says them again. */
   readonly touched = new Set<string>()
+  /** Files whose bytes the account last refused, when, and whether for want of room:
+   *  they wait a while before going again (files.ts). Memory only. */
+  readonly refusedBytes = new Map<string, { at: number; full: boolean }>()
   readonly events: Partial<CoreEvents> = {}
   /** Bumped when the engine stops, so work still in the air can tell it is too late. */
   life = 0
@@ -106,6 +109,8 @@ export class Core {
   /** The last write the store refused, kept for the next one. */
   private refused: Change[] = []
   private counter = 0
+  /** The newest outbox row's `made_at`: each new row is stamped after it (`outgoing`). */
+  private lastMade = 0
 
   private constructor(
     readonly world: World,
@@ -147,6 +152,7 @@ export class Core {
       const mine = entries.filter((entry) => entry.space_id === space.space_id)
       const waiting: Outboxed[] = []
       for (const row of outbox) {
+        core.lastMade = Math.max(core.lastMade, row.made_at)
         if (row.space_id !== space.space_id) continue
         const record = outgoingOf(row.op)
         if (record) waiting.push({ row, record })
@@ -397,14 +403,21 @@ export class Core {
   // -------------------------------------------------------------------------
   // The outbox
 
-  /** One thing waiting to go up, as a row and a place in its space's queue. */
+  /** One thing waiting to go up, as a row and a place in its space's queue.
+   *
+   *  `made_at` is the order the store reads the outbox back in, so it never repeats and
+   *  never goes back: the clock, or one past the newest row when the clock has not moved
+   *  on (a folder's mkdir and the note made in it, in one step) or went back. A tie would
+   *  be broken by op id, which is random, and a note's create read back before its
+   *  folder's mkdir is refused `gone` and made again at the top of the space. */
   outgoing(space: SpaceState, record: Outgoing, seen: number): { one: Outboxed; change: Change } {
+    this.lastMade = Math.max(this.world.now(), this.lastMade + 1)
     const row = {
       op_id: record.t === 'op' ? record.op.op : this.nextId(record.t),
       space_id: space.id,
       op: outgoingBytes(record),
       seen,
-      made_at: this.world.now(),
+      made_at: this.lastMade,
     }
     const one: Outboxed = { row, record }
     return { one, change: put('outbox', row) }

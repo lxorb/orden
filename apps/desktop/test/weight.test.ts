@@ -886,8 +886,12 @@ function holds(tail: string): boolean {
  *
  *  Raised 2026-10-27, to 3,390,900, for B565: the note an agent names is read by one
  *  rule (`notePath` in space-paths.ts), which keeps digits after a dot as words of the
- *  name and refuses another kind of file. Measured 3,390,058. */
-const BUDGET = 3_390_900
+ *  name and refuses another kind of file. Measured 3,390,058.
+ *
+ *  Raised 2026-10-27, to 3,391,700, for B562: sync hearing the account has no room for a
+ *  file shows the storage warning (`full` and `syncFull` in usage.svelte.ts). Measured
+ *  MEASURED. */
+const BUDGET = 3_391_700
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

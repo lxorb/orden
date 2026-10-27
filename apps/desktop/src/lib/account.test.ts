@@ -272,6 +272,7 @@ describe('a code that is accepted', () => {
     usage.used = 900
     usage.limit = 1000
     usage.dismissed = true
+    usage.full = true
 
     await account.signOut()
 
@@ -281,6 +282,26 @@ describe('a code that is accepted', () => {
     // The warning in the corner is drawn from these, so stale numbers are a
     // toast about somebody else's storage sitting over a signed-out app.
     expect(usage.limit).toBe(0)
+    expect(usage.full).toBe(false)
+    expect(usage.warning).toBe(false)
+  })
+})
+
+describe('the storage warning', () => {
+  test('shows while sync hears the account has no room for a file, even dismissed before', () => {
+    usage.used = 100
+    usage.limit = 1000
+    usage.dismissed = true
+    expect(usage.warning).toBe(false)
+
+    usage.syncFull(true)
+    expect(usage.warning).toBe(true)
+    usage.dismissed = true
+    usage.syncFull(true)
+    expect(usage.warning).toBe(false)
+
+    usage.syncFull(false)
+    usage.dismissed = false
     expect(usage.warning).toBe(false)
   })
 })

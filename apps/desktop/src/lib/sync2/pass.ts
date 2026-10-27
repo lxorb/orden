@@ -52,6 +52,9 @@ export interface Passed {
   pushed: number
   /** Whether it got to the end: false when a request went unanswered. */
   finished: boolean
+  /** Whether the account said it has no room for a file's bytes: that file waits, and
+   *  the rest of the pass goes on. */
+  full: boolean
 }
 
 const EMPTY_SV = Y.encodeStateVector(new Y.Doc())
@@ -63,17 +66,18 @@ const ROUNDS = 4
 export async function pass(core: Core, space: SpaceState): Promise<Passed> {
   const life = core.life
   const alive = () => core.life === life
-  const passed: Passed = { pulled: 0, pushed: 0, finished: false }
+  const passed: Passed = { pulled: 0, pushed: 0, finished: false, full: false }
 
   await core.commit(flushAll(core))
   if (!alive()) return passed
   if (!(await sendKeeps(core, space, alive))) return passed
-  if (!(await sendMade(core, space, alive))) return passed
-  if (!(await sendOps(core, space, alive))) return passed
+  const unsent = await sendMade(core, space, alive, passed)
+  if (!unsent) return passed
+  if (!(await sendOps(core, space, alive, unsent))) return passed
   if (!(await readFeed(core, space, alive))) return passed
   await settleDisk(core, space)
   if (!alive()) return passed
-  if (!(await settleFiles(core, space, alive))) return passed
+  if (!(await settleFiles(core, space, alive, passed))) return passed
   for (let round = 0; round < ROUNDS; round += 1) {
     const pulled = await pullDocs(core, space, alive)
     if (pulled === null) return passed
@@ -130,13 +134,23 @@ async function sendKeeps(core: Core, space: SpaceState, alive: () => boolean): P
 // ---------------------------------------------------------------------------
 // 2. The tree
 
-async function sendOps(core: Core, space: SpaceState, alive: () => boolean): Promise<boolean> {
+/** `unsent` is the files whose creates wait for their bytes (`sendMade`): every other op
+ *  goes. */
+async function sendOps(
+  core: Core,
+  space: SpaceState,
+  alive: () => boolean,
+  unsent: ReadonlySet<string>,
+): Promise<boolean> {
+  const going = (one: Outboxed) =>
+    one.record.t === 'op' &&
+    !(one.record.op.t === 'create' && !one.record.sent && unsent.has(one.record.op.id))
   for (let round = 0; round < 1000; round += 1) {
-    const ops = space.outbox.filter((one) => one.record.t === 'op')
-    if (!ops.length) return true
+    if (!space.outbox.some(going)) return true
 
-    // What has not gone yet is folded; what may have gone goes again as it was.
-    const waiting = ops.filter((one) => one.record.t === 'op' && !one.record.sent)
+    // What has not gone yet is folded, a create waiting for its bytes too; what may have
+    // gone goes again as it was.
+    const waiting = space.outbox.filter((one) => one.record.t === 'op' && !one.record.sent)
     const folded = coalesce(
       waiting
         .map((one) => (one.record.t === 'op' ? one.record.op : null))
@@ -176,7 +190,7 @@ async function sendOps(core: Core, space: SpaceState, alive: () => boolean): Pro
     }
     space.outbox = queue
 
-    const batch = space.outbox.filter((one) => one.record.t === 'op').slice(0, OPS_BATCH)
+    const batch = space.outbox.filter(going).slice(0, OPS_BATCH)
     for (const one of batch) {
       if (one.record.t !== 'op') continue
       one.record = { t: 'op', op: one.record.op, sent: true }
