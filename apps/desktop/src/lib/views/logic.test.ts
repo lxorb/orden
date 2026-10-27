@@ -248,6 +248,33 @@ describe('a drop into a group', () => {
     expect(dropInto('file.size', 3, bank, TODAY)).toBeNull()
   })
 
+  test('an overdue task dropped on a day is due that day, so it leaves overdue', () => {
+    const day = { kind: 'date' as const, iso: '2026-10-09' }
+    const vault = (line: string) => {
+      const row = taskRow('Bills.md', line, 1)
+      if (row.task) row.task.dueReads = 'deadline'
+      return row
+    }
+    // Its deadline is what made it late, and that is the day it now shows on.
+    expect(dropInto('formula.day', day, vault('- [ ] Pay bill 📅 2026-10-01'), TODAY)).toEqual({
+      change: { task: { due: '2026-10-09' } },
+    })
+    const nib = taskRow('Bills.md', '- [ ] Pay bill [deadline:: 2026-10-01]', 1)
+    expect(dropInto('formula.day', day, nib, TODAY)).toEqual({
+      change: { task: { deadline: '2026-10-09' } },
+    })
+    // A start date moves with it, so the task is on that day and not before.
+    const started = vault('- [ ] Pay bill 🛫 2026-09-28 📅 2026-10-01')
+    expect(dropInto('formula.day', day, started, TODAY)).toEqual({
+      change: { task: { start: '2026-10-09', due: '2026-10-09' } },
+    })
+    // A deadline still to come stays where it is.
+    const later = vault('- [ ] Pay bill 🛫 2026-10-02 📅 2026-10-20')
+    expect(dropInto('formula.day', day, later, TODAY)).toEqual({
+      change: { task: { start: '2026-10-09' } },
+    })
+  })
+
   test("carries one member of a list from its column to another's, and no other", () => {
     const card = noteRow('Bug.md', 'tags: [iOS, Sync]')
     expect(dropInto('note.tags', 'Mac', card, TODAY, 'iOS')).toEqual({

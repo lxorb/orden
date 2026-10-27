@@ -1,4 +1,5 @@
 import { taskRowsOfText } from '@nib/bases/tasks'
+import { changedTask } from '@nib/markdown/task-edits'
 import { describe, expect, test } from 'vitest'
 import { changeOf, prefillFor } from './task-edit'
 
@@ -100,5 +101,31 @@ describe('a task in quick add’s field and back', () => {
     expect(changeOf(one, { text, fields: { tags: [], remind: [] } }).text).toBe(
       'run `git tag #v2` extra',
     )
+  })
+
+  test('saving a task with a deadline and no start date keeps its repeat and its time', () => {
+    const save = (line: string, reads?: 'deadline') => {
+      const one = task(line)
+      if (reads) one.dueReads = reads
+      return changedTask(line, changeOf(one, { text: 'Pay rent', ...prefillFor(one, null) }))
+    }
+    // A vault's `📅` is a deadline, and the line stays as it was.
+    expect(save('- [ ] Pay rent 🔁 every month 📅 2026-11-01', 'deadline')).toBe(
+      '- [ ] Pay rent 🔁 every month 📅 2026-11-01',
+    )
+    expect(save('- [ ] Pay rent [repeat:: every month] [deadline:: 2026-11-01]')).toBe(
+      '- [ ] Pay rent [repeat:: every month] [deadline:: 2026-11-01]',
+    )
+    expect(save('- [ ] Pay rent [time:: 09:00] [deadline:: 2026-11-01]')).toBe(
+      '- [ ] Pay rent [time:: 09:00] [deadline:: 2026-11-01]',
+    )
+  })
+
+  test('taking the repeat out of a task with no start date takes it away', () => {
+    const one = task('- [ ] Pay rent [repeat:: every month] [deadline:: 2026-11-01]')
+    const { recurrence: _gone, ...fields } = prefillFor(one, null).fields ?? {}
+    const change = changeOf(one, { text: 'Pay rent', fields: { tags: [], remind: [], ...fields } })
+    expect(change.recurrence).toBeNull()
+    expect(change.deadline).toBe('2026-11-01')
   })
 })
