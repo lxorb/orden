@@ -50,7 +50,7 @@ import {
 } from '@nib/markdown/links'
 import { breathe } from './breathe'
 import { buildGraph, type NoteGraph } from './graph'
-import { retargetLinks } from './link-rewrite'
+import { type Placed, retargetLinks } from './link-rewrite'
 import { t } from './i18n.svelte'
 import { shownName } from './note-name'
 import type { Hit } from './search/match'
@@ -1590,7 +1590,15 @@ class Links {
         (source, link) =>
           this.resolveFrom(source, link) ?? fileNamed(this.filesNamed, source, link),
         (note, after) => rescanned.set(note.path, { from: note, after }),
-        { was, now, root, open, how, listed: (path) => this.notesByPath.get(path) },
+        {
+          was,
+          now,
+          root,
+          open,
+          how,
+          files: this.files,
+          listed: (path) => this.notesByPath.get(path),
+        },
       )
       // Told to the index once, after the pass: each note told as it was rewritten
       // threw away what the index had sorted by name, and the next link sorted the
@@ -1637,7 +1645,7 @@ class Links {
       (source, link) =>
         resolvedIn({ ...index, path: source }, link) ?? fileNamed(named, source, link),
       () => undefined,
-      { was, now, root, open, how },
+      { was, now, root, open, how, files: index.files },
     )
     // What this window holds of that space is read again the next time it is asked.
     if (touched && this.others.delete(root)) this.changed()
@@ -1656,12 +1664,14 @@ class Links {
       root: string
       open: (path: string) => NoteDoc | null
       how: Retargeting
+      /** The space's files other than notes, as `notes` lists them: before the move. */
+      files: readonly string[]
       /** The entry the index has for a note now, which is what `rewritten` is
        *  handed: the one in `notes` may have been saved over since the pass began. */
       listed?: (path: string) => ScannedNote | undefined
     },
   ): Promise<number> {
-    const { was, now, root, open, how, listed } = asked
+    const { was, now, root, open, how, files, listed } = asked
     const { moved = false, only, touched: told } = how
 
     // The file's own name and nothing else. A rename rewrites the links that
@@ -1678,6 +1688,34 @@ class Links {
     // held. Spelled as the index spells it, which is how a canvas card spells it too.
     const moving = (path: string) =>
       path === was ? now : path.startsWith(`${was}/`) ? `${now}${path.slice(was.length)}` : null
+    // The space once the move is done, for the one thing a rewrite asks of it: whether
+    // a bare name still reaches what it named, or another of that name now (B543).
+    // Only what is called that, gathered the first time a link asks.
+    // eslint-disable-next-line svelte/prefer-svelte-reactivity -- one pass's answers, thrown away after it
+    const calledAfter = new Map<string, { notes: NoteRef[]; files: string[] }>()
+    const reaching =
+      (source: string, there: string) =>
+      (written: string): boolean => {
+        const key = comparable(nameOf(there))
+        let called = calledAfter.get(key)
+        if (!called) {
+          called = {
+            notes: notes.flatMap((one) => {
+              const path = moving(one.path) ?? one.path
+              return comparable(nameOf(path)) === key ? [{ ...refOf(one), path }] : []
+            }),
+            files: files
+              .map((path) => moving(path) ?? path)
+              .filter((path) => comparable(nameOf(path)) === key),
+          }
+          calledAfter.set(key, called)
+        }
+        const index: NoteIndex = { ...called, path: source, read: nothing }
+        const found = isTabFile(written)
+          ? resolveFile(index, written, 'wikilink')
+          : (resolveNote(index, written)?.path ?? resolveFile(index, written, 'wikilink'))
+        return found === there
+      }
     let touched = 0
     let walked = 0
 
@@ -1701,8 +1739,8 @@ class Links {
       // per target: the same link is asked about to decide whether the note is read
       // and again while it is rewritten.
       // eslint-disable-next-line svelte/prefer-svelte-reactivity -- one note's answers, thrown away after it
-      const answered = new Map<string, string | null>()
-      const to = (link: { kind: LinkKind; target: string }): string | null => {
+      const answered = new Map<string, string | Placed | null>()
+      const to = (link: { kind: LinkKind; target: string }): string | Placed | null => {
         const key = `${link.kind}\0${link.target}`
         const held = answered.get(key)
         if (held !== undefined) return held
@@ -1710,7 +1748,7 @@ class Links {
         answered.set(key, there)
         return there
       }
-      const whereNow = (link: { kind: LinkKind; target: string }): string | null => {
+      const whereNow = (link: { kind: LinkKind; target: string }): string | Placed | null => {
         const found = resolve(note.path, link)
         if (found === null) return null
         // An alias names the note as its writer chose to; see `name` above.
@@ -1719,7 +1757,8 @@ class Links {
         const there = moving(found) ?? found
         if (there === found && !(shifted && link.kind === 'markdown')) return null
         const kept = nameOf(there) === nameOf(found)
-        return stillReaches(source, link, there, !shifted, kept) ? null : there
+        if (stillReaches(source, link, there, !shifted, kept)) return null
+        return link.kind === 'wikilink' ? { path: there, reaches: reaching(source, there) } : there
       }
 
       // Whether this note is worth reading at all, decided from the index; a plane's
