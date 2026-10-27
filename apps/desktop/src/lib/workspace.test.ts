@@ -32,7 +32,8 @@ const pathOf = (args?: Record<string, unknown>) => (typeof args?.path === 'strin
 
 /** Every command the store sent, in order, so a test can say what was written
  *  and what was kept before it. */
-const sent: { command: string; path: string; content: string }[] = []
+const sent: { command: string; path: string; content: string; args?: Record<string, unknown> }[] =
+  []
 
 /** A write held open, for a test about what happens while one is in the air:
  *  writing a file is a round trip, and somebody may type during it. */
@@ -59,6 +60,7 @@ vi.mock('./tauri', async (importOriginal) => ({
       command,
       path: pathOf(args),
       content: typeof args?.content === 'string' ? args.content : '',
+      args,
     })
 
     // The crate's judge: nib opens nothing from outside its spaces but its own two
@@ -2813,7 +2815,8 @@ describe('a new tab', () => {
    *  pages apart. Saved as a new note it stays Separate, with web data of its own: it
    *  used to be written with none, and the page was built again in the shared store.
    *  Never with the source note's id, since a note set back to Global clears its store,
-   *  and that would sign the other note out and delete what it kept. */
+   *  and that would sign the other note out and delete what it kept: in a copy of that
+   *  store, so the page is still signed in where it was. */
   test('a tab with its note’s own web data is saved Separate, under an id of its own', async () => {
     workspace.openWebsite()
     const tab = workspace.active
@@ -2826,6 +2829,20 @@ describe('a new tab', () => {
       const wrote = written()[before]!.content
       expect(wrote).toMatch(/Nib-Data=[0-9a-f]{16}/)
       expect(wrote).not.toContain('Nib-Data=0123456789abcdef')
+      // And the new store is a copy of the one the tab was in, made before the file
+      // that moves the page there is written: the saved tab stays signed in.
+      const own = /Nib-Data=([0-9a-f]{16})/.exec(wrote)![1]!
+      const copy = sent.findIndex((one) => one.command === 'web_copy')
+      const write = sent.findIndex(
+        (one) => one.command === 'write_note' && one.path === '/space/Apart.url',
+      )
+      expect(copy).toBeGreaterThanOrEqual(0)
+      expect(copy).toBeLessThan(write)
+      expect(sent[copy]!.args).toEqual({
+        from: 'note_0123456789abcdef',
+        into: `note_${own}`,
+        origins: ['https://example.org'],
+      })
     } finally {
       delete notes['/space/Apart.url']
     }
