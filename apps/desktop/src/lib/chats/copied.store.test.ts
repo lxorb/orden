@@ -20,7 +20,7 @@ const POINTER = '/space/Plans.chat'
 
 const account = vi.hoisted(() => ({ chats: [] as string[], space: 'space-1', heard: true }))
 const moves = vi.hoisted(() => [] as string[])
-const disk = vi.hoisted(() => ({ pointers: new Map<string, string>() }))
+const disk = vi.hoisted(() => ({ pointers: new Map<string, string>(), unreadable: [] as string[] }))
 
 vi.mock('../sync.svelte', () => ({
   sync: {
@@ -79,9 +79,14 @@ vi.mock('./pointers', async (importOriginal) => ({
   // name inside each, `Plans copy.chat` before `Plans.chat` as the tree sorts them.
   findPointers: async (
     rank: (chat: string, place: { root: string; path: string }) => number = () => 0,
+    unread: (root: string) => void = () => undefined,
   ) => {
     const found = new Map<string, { root: string; path: string }>()
     for (const space of workspace.spaces) {
+      if (disk.unreadable.includes(space.root)) {
+        unread(space.root)
+        continue
+      }
       for (const [path, chat] of [...disk.pointers].sort()) {
         if (!path.startsWith(`${space.root}/`)) continue
         const place = { root: space.root, path }
@@ -97,6 +102,7 @@ vi.mock('./pointers', async (importOriginal) => ({
 const { chats } = await import('./store.svelte')
 const { workspace } = await import('../workspace.svelte')
 const { chatsCarried } = await import('../workspace/chat-leaving')
+const { prompt } = await import('../prompt.svelte')
 
 beforeEach(async () => {
   account.space = 'space-1'
@@ -109,6 +115,7 @@ beforeEach(async () => {
   await chats.forget()
   account.chats = [CHAT]
   disk.pointers = new Map([[POINTER, CHAT]])
+  disk.unreadable = []
   moves.length = 0
   await chats.start('account-1')
 })
@@ -293,19 +300,122 @@ test('a chat the listing had not heard of yet is carried by its pointer', async 
   expect(moves).toEqual([`${CHAT} space-2`])
 })
 
-test('a pointer this device has never placed is not carried, and the move is refused', async () => {
-  // Come by the sync a moment ago, before any scan: nothing says it is the chat's own.
-  const fresh = `c_${'2'.repeat(32)}`
-  account.chats = [CHAT, fresh]
-  disk.pointers.set('/space/Fresh.chat', fresh)
-
-  await expect(chatsCarried('/space/Fresh.chat', '/other')).rejects.toThrow()
-  expect(moves).toEqual([])
-})
-
 test('the account not heard and no move of its own to go by, the move is refused', async () => {
   account.heard = false
 
   await expect(chatsCarried(POINTER, '/other')).rejects.toThrow()
+  expect(moves).toEqual([])
+})
+
+/** Two pointers in the chat's own space and neither kept as its own: a device that was
+ *  not running when the duplicate was made, the kept one renamed away by the sync or
+ *  outside the app. Which is the original is not decided by the tree's order, where
+ *  the copy sorts first: carrying either asks the owner, naming the chat and where it
+ *  would go, and moves the chat only when told to (third review of #991). */
+
+const COPY = '/space/Plans copy.chat'
+
+/** A carry that may ask: the question it put, if any, answered with `answer`. */
+async function carried(path: string, folder: string, answer: string | null) {
+  let asked: string | null = null
+  const done = chatsCarried(path, folder).then(
+    () => true,
+    () => false,
+  )
+  for (let turn = 0; turn < 100 && !prompt.open; turn += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 0))
+  }
+  if (prompt.open) {
+    asked = prompt.title
+    if (answer === null) prompt.dismiss()
+    else prompt.pick(answer)
+  }
+  return { asked, went: await done }
+}
+
+const QUESTION = 'Move the chat Plans to Other?'
+
+/** A device that has never run for this account, with the chat and its duplicate there. */
+async function freshDevice() {
+  await chats.forget()
+  disk.pointers = new Map([
+    [POINTER, CHAT],
+    [COPY, CHAT],
+  ])
+  await chats.start(`account-${Math.random()}`)
+}
+
+test('on a device that never saw the original alone, carrying the duplicate asks, and only the file goes', async () => {
+  await freshDevice()
+  const { asked, went } = await carried(COPY, '/other', 'file')
+
+  expect(asked).toBe('Move the chat Plans copy to Other?')
+  expect(went).toBe(true)
+  expect(moves).toEqual([])
+})
+
+test('the kept pointer renamed away by the sync, carrying the duplicate asks before moving anything', async () => {
+  await came(COPY)
+  disk.pointers.delete(POINTER)
+  disk.pointers.set('/space/Roadmap.chat', CHAT)
+  await rescan()
+  const { asked } = await carried(COPY, '/other', 'file')
+
+  expect(asked).not.toBeNull()
+  expect(moves).toEqual([])
+})
+
+test('another account signed in between, the own pointer is still known and a duplicate moves nothing', async () => {
+  await came(COPY)
+  const saved = new Map(disk.pointers)
+  await chats.forget()
+  disk.pointers = new Map()
+  await chats.start('account-2')
+  await chats.forget()
+  disk.pointers = saved
+  await chats.start('account-1')
+  const { asked } = await carried(COPY, '/other', 'chat')
+
+  expect(asked).toBeNull()
+  expect(moves).toEqual([])
+})
+
+test('the own pointer not known, the owner telling it to, the chat goes with the pointer', async () => {
+  await freshDevice()
+  const { asked } = await carried(POINTER, '/other', 'chat')
+
+  expect(asked).toBe(QUESTION)
+  expect(moves).toEqual([`${CHAT} space-2`])
+  expect(chats.placedAt(CHAT)).not.toBeNull()
+})
+
+test('the own pointer not known and the question put away, nothing moves', async () => {
+  await freshDevice()
+  const { asked, went } = await carried(POINTER, '/other', null)
+
+  expect(asked).toBe(QUESTION)
+  expect(went).toBe(false)
+  expect(moves).toEqual([])
+})
+
+test('a pointer come by the sync before any scan, its chat not placed here, asks', async () => {
+  const fresh = `c_${'2'.repeat(32)}`
+  account.chats = [CHAT, fresh]
+  disk.pointers.set('/space/Fresh.chat', fresh)
+  const { asked } = await carried('/space/Fresh.chat', '/other', 'file')
+
+  expect(asked).toBe('Move the chat Fresh to Other?')
+  expect(moves).toEqual([])
+})
+
+test('a space that would not read for one scan keeps the own pointer found in it before', async () => {
+  disk.unreadable = ['/space']
+  await rescan()
+  disk.unreadable = []
+  await came(COPY)
+  await rescan()
+  const { asked } = await carried(COPY, '/other', 'chat')
+
+  expect(asked).toBeNull()
   expect(moves).toEqual([])
 })
