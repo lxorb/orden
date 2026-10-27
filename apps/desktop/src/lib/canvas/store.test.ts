@@ -641,3 +641,30 @@ describe('a plane with something on it this app does not read', () => {
     expect(written.metadata).toEqual({ version: '1.0-1.0' })
   })
 })
+
+/** #535: what is picked is asked once per card and per edge of a plane that may hold
+ *  thousands while thousands are picked, so it is asked of a set kept beside the list,
+ *  which has to say what the list says after every way of picking. */
+describe('what is picked, asked by id', () => {
+  test('answers what the list says, through every way of picking', () => {
+    const { store } = opened(
+      writeCanvas({
+        ...readCanvas(blankCanvas()),
+        nodes: [card('a'), card('b', 300), card('c', 600)],
+      }),
+    )
+    const answers = () => ['a', 'b', 'c'].filter((id) => store.isPicked(id))
+
+    store.pickAll(['a', 'c'])
+    expect(answers()).toEqual(['a', 'c'])
+    store.pick('b', true)
+    expect(answers()).toEqual(['a', 'b', 'c'])
+    store.pick('a', true)
+    expect(answers()).toEqual(['b', 'c'])
+    store.pick('c')
+    expect(answers()).toEqual(['c'])
+    store.picked = []
+    expect(answers()).toEqual([])
+    expect([...store.pickedSet]).toEqual([])
+  })
+})
