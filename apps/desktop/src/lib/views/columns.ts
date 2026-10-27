@@ -159,7 +159,8 @@ const FIELD_HOLDS: Partial<Record<string, Holds>> = Object.fromEntries([
 ] satisfies [string, Holds][])
 
 /** What a note property holds: a number where the base shows it as one, else what its
- *  values are. Undefined where one is something else (an object). */
+ *  values are. Undefined where one is something else (an object), or where no row has
+ *  a value, which says nothing of what it holds. */
 function noteHolds(base: Base, key: string, rows: readonly Row[]): Holds | undefined {
   const format = base.nib.properties[key]?.format ?? ''
   if (/^(number|percent|progress|currency)/.test(format)) return 'number'
@@ -175,6 +176,7 @@ function noteHolds(base: Base, key: string, rows: readonly Row[]): Holds | undef
     else if (typeof value === 'object' && 'kind' in value && value.kind === 'date') other = true
     else return undefined
   }
+  if (!link && !other) return undefined
   return link && !other ? 'link' : 'other'
 }
 

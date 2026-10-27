@@ -491,19 +491,16 @@ describe('the filter builder on empty values', () => {
       { ...typed, nib: { ...typed.nib, properties: { size: { format: 'percent', kept: {} } } } },
       notes,
     )
-    // Text, a date, a list, a property no note has yet: the old rows mean what new ones do.
+    // Text, a date or a list: the old rows mean what new ones do.
     expect(rowOf('!note.cover', holds)).toEqual({ property: 'note.cover', op: 'empty', value: '' })
     expect(rowOf('note.when', holds)).toEqual({ property: 'note.when', op: 'filled', value: '' })
-    expect(rowOf('note.nothing', holds)).toEqual({
-      property: 'note.nothing',
-      op: 'filled',
-      value: '',
-    })
     expect(rowOf('!task.due', holds)).toEqual({ property: 'task.due', op: 'empty', value: '' })
     // A number or a checkbox, where 0 and false are not true but are there: kept as written.
     expect(rowOf('note.estimate', holds)).toEqual({ kept: 'note.estimate' })
     expect(rowOf('!note.done', holds)).toEqual({ kept: '!note.done' })
     expect(rowOf('note.size', holds)).toEqual({ kept: 'note.size' })
+    // A property no note has a value for may yet hold a number: kept as written.
+    expect(rowOf('note.nothing', holds)).toEqual({ kept: 'note.nothing' })
     expect(rowOf('!task.done', holds)).toEqual({ kept: '!task.done' })
     expect(rowOf('task.priority', holds)).toEqual({ kept: 'task.priority' })
     expect(rowOf('formula.x', holds)).toEqual({ kept: 'formula.x' })
