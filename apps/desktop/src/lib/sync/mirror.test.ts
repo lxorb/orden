@@ -974,8 +974,8 @@ describe('a note renamed on this machine', () => {
 
     expect(fake.remote.get(id)).toMatchObject({ content: HERE, deleted: true })
     expect(fake.calls.filter((one) => /^(deleteNote|createNote|writeNote)/.test(one))).toEqual([
-      'createNote One.md',
       `deleteNote ${id}`,
+      'createNote One.md',
     ])
     expect(mirror.notes['One.md']?.id).not.toBe(id)
     expect(fake.remote.get(mirror.notes['One.md']!.id)).toMatchObject({
@@ -983,6 +983,38 @@ describe('a note renamed on this machine', () => {
       deleted: false,
     })
     expect(mirror.untold).toBeUndefined()
+  })
+
+  test('and a new note at the name, the renamed note deleted, waits for the delete to land', async () => {
+    const { mirror, id } = await paired('One.md', HERE)
+    const writing = fake.api.writeNote
+    fake.api.writeNote = () => Promise.reject(new TypeError('Failed to fetch'))
+    try {
+      renameOnDisk('One.md', 'Meeting.md')
+      await movedHere(mirror, 'token', `${ROOT}/One.md`, `${ROOT}/Meeting.md`)
+      fake.disk.set(`${ROOT}/One.md`, '# Ideas\nnew\n')
+      fake.disk.delete(`${ROOT}/Meeting.md`)
+    } finally {
+      fake.api.writeNote = writing
+    }
+
+    fake.refusing.delete = new TypeError('Failed to fetch')
+    await pull(mirror, 'token', NOBODY)
+    await push(mirror, 'token', NOBODY)
+    expect(fake.remote.get(id)).toMatchObject({ content: HERE, deleted: false })
+    expect(mirror.untold?.[id]).toBeDefined()
+
+    fake.refusing.delete = null
+    fake.calls.length = 0
+    await pull(mirror, 'token', NOBODY)
+    await push(mirror, 'token', NOBODY)
+
+    expect(fake.calls.filter((one) => /^(deleteNote|createNote|writeNote)/.test(one))).toEqual([
+      `deleteNote ${id}`,
+      'createNote One.md',
+    ])
+    expect(fake.remote.get(id)).toMatchObject({ content: HERE, deleted: true })
+    expect(mirror.notes['One.md']?.id).not.toBe(id)
   })
 
   test('and a new note at the name, the renamed note moved to another space before the account heard, is not that note', async () => {

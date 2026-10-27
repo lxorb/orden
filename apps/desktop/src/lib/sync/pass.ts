@@ -969,8 +969,8 @@ export async function movedHere(
  *  mirror.ts. `asked` is the notes waiting on a question now, by id: a rename told
  *  again after the answer carries the file's words, which are the answer.
  *
- *  One whose file has gone since is let go of, and the pass reads what happened off
- *  the folder the way it always has. One another device renamed meanwhile takes the
+ *  One whose file has gone since is a note gone from here, and deleted on the
+ *  account. One another device renamed meanwhile takes the
  *  name the account has: the entry moves to where the file is, and the pull below
  *  moves the file on as it moves any note renamed there. Told from here instead, the
  *  older of the two renames went over the newer, and an entry the pull had moved
@@ -984,7 +984,22 @@ async function toldAgain(
   let done = false
   for (const [id, one] of Object.entries(mirror.untold ?? {})) {
     done = true
-    if (mirror.notes[one.from]?.id !== id || !(await present(joinPath(mirror.root, one.to)))) {
+    if (mirror.notes[one.from]?.id !== id) {
+      told(mirror, id)
+      continue
+    }
+    // Its file gone from the new name - deleted, or moved into another space - the
+    // note is gone from here, and its delete is sent now, before the push. Dropped
+    // with the entry left at the old name, a new note made there went up as this
+    // one: its words over this note's, with its id and history, and this note's
+    // delete never sent. Moved to the new name for the push to delete, the new note
+    // still went first, and its create was paired with this note, which the account
+    // still holds at that name. Not taken, it is tried again on the next pass, and
+    // until then the push leaves the file at the old name alone.
+    if (!(await present(joinPath(mirror.root, one.to)))) {
+      if (asked.has(id) || !(await deletedOnAccount(token, id))) continue
+      mirror.notes = without(mirror.notes, one.from)
+      mirror.offered = without(mirror.offered, one.from)
       told(mirror, id)
       continue
     }
