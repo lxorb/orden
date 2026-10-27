@@ -365,7 +365,10 @@ depends on the file's.
   move: the chat stays in its space and is listed at a pointer in that space, keeping the one
   it is listed at, whatever the order of the spaces, a scan or a deleted original say (B542). Only its
   own pointer carried into another space moves it; a copy renamed, moved on or left alone
-  moves nothing, and reaches the chat only for those who reach its space. Deleting the pointer sends it to Recently deleted; emptying the trash ends the chat:
+  moves nothing, and reaches the chat only for those who reach its space. The device keeps
+  which pointer is a chat's own across launches (`chats/places.ts`) and asks the account
+  where the chat lives before carrying it; where it knows neither, the move is refused, to
+  be tried again, rather than guessed. Deleting the pointer sends it to Recently deleted; emptying the trash ends the chat:
   the account erases its log 30 days later with the other leftovers. While the pointer is in
   Recently deleted the account does not list the chat (`GET /v2/chats` leaves out a chat
   whose `file_id` is a deleted note), and a device takes it off its list the moment the

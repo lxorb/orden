@@ -15,6 +15,8 @@ const CHAT = `c_${'1'.repeat(32)}`
 const disk = vi.hoisted(() => ({ current: null as import('../../../test/disk').Disk | null }))
 const asked = vi.hoisted(() => ({
   moves: [] as [string, string][],
+  /** Where the account has each chat, as its listing says; a move it takes moves it. */
+  spaces: new Map<string, string>(),
   answer: (): Promise<boolean> => Promise.resolve(true),
 }))
 
@@ -30,10 +32,16 @@ vi.mock('../tauri', async (importOriginal) => ({
 
 vi.mock('../chats/http', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../chats/http')>()),
-  moveChat: (chat: string, space: string) => {
+  moveChat: async (chat: string, space: string) => {
     asked.moves.push([chat, space])
-    return asked.answer()
+    const answer = await asked.answer()
+    if (answer) asked.spaces.set(chat, space)
+    return answer
   },
+  listChats: () =>
+    Promise.resolve({
+      chats: [...asked.spaces].map(([id, space]) => ({ id, space }) as never),
+    }),
 }))
 
 const { Disk, memoryStorage } = await import('../../../test/disk')
@@ -46,6 +54,7 @@ const { sync } = await import('../sync.svelte')
 const { ApiError } = await import('../api')
 const { failed } = await import('../views/failed.svelte')
 const { spacesOfPaths } = await import('../tab-strip/to-space')
+const { keepOwnPointers } = await import('../chats/places')
 
 /** The owner's space the reader writes in, another of that owner's, and the reader's
  *  own. */
@@ -82,7 +91,10 @@ beforeEach(async () => {
   const remote: Record<string, string> = { [SHARED]: 'r-team', [OWNERS]: 'r-lab', [MINE]: 'r-mine' }
   vi.spyOn(sync, 'remoteIdFor').mockImplementation((root: string) => remote[root] ?? null)
   asked.moves = []
+  asked.spaces = new Map([[CHAT, 'r-team']])
   asked.answer = () => Promise.resolve(true)
+  // The pointer the chats list this chat at, as the store keeps it (chats/places.ts).
+  keepOwnPointers([[CHAT, POINTER]], true)
   failed.dismiss()
   await workspace.loadTree()
 })
@@ -123,6 +135,7 @@ test('a folder holding a pointer is a pointer carried', async () => {
   disk.current?.folders.add(`${SHARED}/Projects`)
   disk.current?.files.set(`${SHARED}/Projects/Plans.chat`, chatText({ v: 1, chat: CHAT }))
   disk.current?.files.delete(POINTER)
+  keepOwnPointers([[CHAT, `${SHARED}/Projects/Plans.chat`]])
   await workspace.loadTree()
   expect(spacesOfPaths([`${SHARED}/Projects`]).map((one) => one.id)).toEqual(['lab'])
   await workspace.moveMany([`${SHARED}/Projects`], MINE).catch(() => undefined)
@@ -183,6 +196,7 @@ test('a folder’s move between spaces undone moves the chats in it back too', a
   disk.current?.folders.add(`${SHARED}/Proj`)
   disk.current?.files.set(`${SHARED}/Proj/Plans.chat`, chatText({ v: 1, chat: CHAT }))
   disk.current?.files.delete(POINTER)
+  keepOwnPointers([[CHAT, `${SHARED}/Proj/Plans.chat`]])
   await workspace.loadTree()
   await workspace.moveMany([`${SHARED}/Proj`], OWNERS)
   await undoLastFileAction(workspace)
@@ -196,6 +210,8 @@ test('a folder’s move between spaces undone moves the chats in it back too', a
 test('a folder of a space not open moved into another, the chats in it go along', async () => {
   disk.current?.folders.add(`${OWNERS}/Proj`)
   disk.current?.files.set(`${OWNERS}/Proj/Plans.chat`, chatText({ v: 1, chat: CHAT }))
+  asked.spaces.set(CHAT, 'r-lab')
+  keepOwnPointers([[CHAT, `${OWNERS}/Proj/Plans.chat`]])
   await workspace.move(`${OWNERS}/Proj`, SHARED)
   expect(there(`${SHARED}/Proj/Plans.chat`)).toBe(true)
   expect(asked.moves).toEqual([[CHAT, 'r-team']])

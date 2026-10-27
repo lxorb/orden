@@ -46,6 +46,7 @@ import { type ChatCache, MemoryCache } from './cache'
 import { ChatEngine, type Remote } from './engine'
 import * as http from './http'
 import { chatName, findPointers, makePointer, type Place, readPointer } from './pointers'
+import { forgetMoves, keepOwnPointers, ownPointer } from './places'
 import { type Host, View } from './view.svelte'
 
 /** The reader's switch for read receipts, reciprocal (4.10): off, nobody sees theirs and
@@ -184,6 +185,7 @@ class ChatsStore implements Chats {
     this.cache = null
     this.account = null
     this.places = new Map()
+    forgetMoves()
     this.gone.clear()
     this.unread.clear()
     this.countedAt.clear()
@@ -300,13 +302,14 @@ class ChatsStore implements Chats {
   }
 
   /** Which of a chat's pointers it is placed at, highest first: one in the chat's own
-   *  space on the account, then the one it is placed at already, so a copy, wherever it
-   *  lies and whatever it is called, never takes its place (B542). */
+   *  space on the account, then the one it is placed at already or was at the last
+   *  launch (places.ts), so a copy, wherever it lies and whatever it is called, never
+   *  takes its place (B542). */
   private rank(chat: string, place: Place): number {
     const space = this.engine?.chats.get(chat)?.row?.space ?? null
     const home = space !== null && this.remoteOf(place.root) === space ? 2 : 0
-    const held = this.places.get(chat)
-    return home + (held && samePath(held.path, place.path) ? 1 : 0)
+    const held = this.places.get(chat)?.path ?? ownPointer(chat)
+    return home + (held !== null && samePath(held, place.path) ? 1 : 0)
   }
 
   /** A space's id on the account: the same under either sync. */
@@ -348,6 +351,7 @@ class ChatsStore implements Chats {
     for (const chat of went) this.gone.add(chat)
     for (const chat of found.keys()) this.gone.delete(chat)
     this.places = found
+    keepOwnPointers(this.pointerPaths(), true)
     if (went.length) void engine.refresh().catch(() => false)
     // A pointer to a chat the account has not listed here yet: made on another device
     // since the list was asked for, which no poke says until somebody posts in it.
@@ -782,6 +786,7 @@ class ChatsStore implements Chats {
     const chat = await readPointer(place.path)
     // eslint-disable-next-line svelte/prefer-svelte-reactivity -- `list` is what renders
     if (chat) this.places = new Map(this.places).set(chat, place)
+    if (chat) keepOwnPointers([[chat, place.path]])
     await this.engine?.refresh()
     return place.path
   }
@@ -790,13 +795,6 @@ class ChatsStore implements Chats {
    *  Null when it is not placed here yet. */
   placedAt(chat: string): string | null {
     return this.places.get(chat)?.path ?? null
-  }
-
-  /** The chat's space on the account, as listed here: null for a chat the account does
-   *  not list here, undefined while nobody is signed in to ask. */
-  spaceOf(chat: string): string | null | undefined {
-    if (!this.engine) return undefined
-    return this.engine.chats.get(chat)?.row?.space ?? null
   }
 
   chatAt(path: string): Promise<string | null> {
@@ -852,7 +850,13 @@ class ChatsStore implements Chats {
       if (!held || this.rank(chat, place) > this.rank(chat, held)) next.set(chat, place)
     }
     this.places = next
+    keepOwnPointers(this.pointerPaths())
     this.drawList()
+  }
+
+  /** Each chat's pointer as this device lists it, which places.ts keeps as its own. */
+  private pointerPaths(): [string, string][] {
+    return [...this.places].map(([chat, place]) => [chat, place.path])
   }
 }
 

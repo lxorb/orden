@@ -25,15 +25,20 @@ export async function chatsCarried(path: string, folder: string): Promise<() => 
   const pointers = await pointersMoving(path)
   if (!pointers.length) return none
 
-  const [{ moveChat }, { readPointer }, { chats }] = await Promise.all([
+  const [{ listChats, moveChat }, { readPointer }, places] = await Promise.all([
     import('../chats/http'),
     import('../chats/pointers'),
-    import('../chats/store.svelte'),
+    import('../chats/places'),
   ])
   const moved: string[] = []
+  const owned: [string, string][] = []
   const home = sync.remoteIdFor(from.root)
   const back = async () => {
-    if (home) for (const chat of moved) await moveChat(chat, home).catch(() => false)
+    if (!home) return
+    for (const chat of moved) {
+      if (await moveChat(chat, home).catch(() => false)) places.movedHere(chat, home)
+    }
+    places.keepOwnPointers(owned)
   }
   const refuse = async (error: Error): Promise<never> => {
     await back()
@@ -51,17 +56,25 @@ export async function chatsCarried(path: string, folder: string): Promise<() => 
   // any other in it.
   if (!space || space === home) return none
 
+  // Where each chat lives now, asked of the account rather than taken from a listing
+  // that may be from before a move this device has just made (an undo straight after).
+  const listing = await listChats().catch(() => null)
+  const spaces = listing ? new Map(listing.chats.map((one) => [one.id, one.space])) : null
+
   for (const pointer of pointers) {
     const chat = await readPointer(pointer)
     if (!chat) continue
     // Only the chat's own pointer carries it: one in the space the chat lives in on the
-    // account, and the one it is listed at. A copy - in another space, or beside it -
-    // carries nothing, and neither does a pointer to a chat the account does not list
-    // here: the file moves and the chat stays where it lives (B542).
-    const lives = chats.spaceOf(chat)
-    if (lives !== undefined && lives !== home) continue
-    const placed = chats.placedAt(chat)
-    if (placed !== null && !pointers.some((one) => samePath(one, placed))) continue
+    // account, and the one this device lists it at. A copy - in another space, or beside
+    // it - carries nothing, and neither does a pointer to a chat the account does not
+    // list: the file moves and the chat stays where it lives (B542). Where the device
+    // cannot tell, it does not guess: the move is refused, to be tried again.
+    const lives = spaces ? (spaces.get(chat) ?? null) : places.lastMoved(chat)
+    if (lives === null && !spaces) await refuse(new Error('the account could not be reached'))
+    if (lives !== home) continue
+    const own = places.ownPointer(chat)
+    if (own === null) await refuse(new Error('the chat is not listed on this device yet'))
+    if (!pointers.some((one) => samePath(one, own))) continue
     // Not heard is not moved either: the file would be in the new space with its chat
     // still in the old one, which is what this is here to never leave behind.
     const answer = await moveChat(chat, space).catch((error: unknown) =>
@@ -70,6 +83,11 @@ export async function chatsCarried(path: string, folder: string): Promise<() => 
     if (answer instanceof Error) await refuse(answer)
     if (answer === false) await refuse(new Error('the account could not be reached'))
     moved.push(chat)
+    places.movedHere(chat, space)
+    // Its own pointer is where the move puts it, before the file operation is heard, so
+    // an undo straight after carries it back.
+    places.keepOwnPointers([[chat, joinPath(folder, nameOf(path)) + pointer.slice(path.length)]])
+    owned.push([chat, pointer])
   }
   return back
 }

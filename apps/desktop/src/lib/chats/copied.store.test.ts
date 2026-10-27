@@ -282,6 +282,7 @@ test('a move on into a third space before the listing has heard takes the chat a
 
 test('a chat the listing had not heard of yet is carried by its pointer', async () => {
   account.chats = []
+  disk.pointers = new Map()
   await chats.forget()
   await chats.start('account-1')
   disk.pointers.set('/space/New.chat', CHAT)
