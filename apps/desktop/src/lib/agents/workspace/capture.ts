@@ -238,7 +238,10 @@ export async function captureToNote(call: Call): Promise<AgentAnswer> {
   const there = (await workspace.noteText(path)) !== null
   if (!there) {
     await made(place, relative, words, false)
-    return done({ path: relative, source: page.url, created: true }, page.url)
+    return done(
+      { path: relative, space: place.space.id, source: page.url, created: true },
+      page.url,
+    )
   }
 
   const under = maybe(call, 'under')
@@ -248,7 +251,7 @@ export async function captureToNote(call: Call): Promise<AgentAnswer> {
     { at: under === null ? { end: true } : { heading: under }, insert_after: section },
   ])
 
-  return done({ path: relative, source: page.url, created: false }, page.url)
+  return done({ path: relative, space: place.space.id, source: page.url, created: false }, page.url)
 }
 
 /** A picture or a PDF kept beside a note the way a pasted picture is: in the folder the

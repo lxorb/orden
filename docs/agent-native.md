@@ -875,9 +875,13 @@ A call that names no space is about the space in the window, except a call of an
 thread's (it says its thread, `ai_agent_call` and `nib mcp` alike): that one is about the
 thread's own space, where the thread stays when the reader moves on (docs/ai-sidebar.md
 4.11), so a `/batch`, `/subtask`, `/fork` or `run_agent` helper keeps to the notes it was
-given. Only the verbs about the tabs in the window keep to the space in front, and
-`get_context` for such a thread names the thread's space and, on each tab, the space the
-tab is in (`placeOf` in `lib/agents/workspace/spaces.ts`).
+given. Only the verbs about the tabs in the window keep to the space in front; a tab named
+by its id is its own space's file, and `get_context` for such a thread names the thread's
+space and, on each tab, the space the tab is in (`placeOf` in
+`lib/agents/workspace/spaces.ts`). Opening a note of the thread's space by its path from
+there brings that space in front, so it takes `workspace.focus`, as opening any other
+space's note does. A thread whose space is gone from this device is refused rather than
+sent to the front, and a chat named by name is the thread's space's first.
 
 ### 8.7 Canvases, page notes, PDFs
 

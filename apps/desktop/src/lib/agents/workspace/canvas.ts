@@ -74,7 +74,9 @@ const PLANES = kindsWhere((one) => one.plane)
 function canvasInTab(call: Call, writing: boolean): Target {
   const { tab, place, relative } = namedTab(call, PLANES, 'a canvas or page note')
   if (relative !== null) {
-    return canvasOf({ ...call, args: { ...call.args, tab: null, path: relative } }, writing)
+    // The tab's own space, said: one the call names none of is the thread's otherwise.
+    const args = { ...call.args, tab: null, path: relative, space: place.space.id }
+    return canvasOf({ ...call, args }, writing)
   }
   if (tab.path !== null) throw new Refused('by_hand', `tab ${tab.id} is outside every space`)
   if (tab.note.shared !== null) {

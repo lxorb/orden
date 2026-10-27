@@ -31,9 +31,13 @@ const MOST_CHARACTERS = 200_000
 function pdfOf(call: Call): { place: Place; relative: string; path: string } {
   // A PDF's tab is its file, as though the path had been said.
   if (maybe(call, 'tab') !== null) {
-    const { relative } = namedTab(call, ['pdf'], 'a PDF')
+    const { place, relative } = namedTab(call, ['pdf'], 'a PDF')
     if (relative === null) throw new Refused('by_hand', 'that PDF is outside every space')
-    return pdfOf({ ...call, args: { ...call.args, tab: null, path: relative } })
+    // The tab's own space, said: one the call names none of is the thread's otherwise.
+    return pdfOf({
+      ...call,
+      args: { ...call.args, tab: null, path: relative, space: place.space.id },
+    })
   }
 
   const place = placeOf(call)

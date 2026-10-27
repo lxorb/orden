@@ -65,8 +65,13 @@ export function placeOf(call: Call): Place {
   const named = maybe(call, 'space')
   if (named !== null) return placeFor(call, named)
 
-  const home = workspace.spaces.find((one) => one.id === threadSpaceOf(call.caller))
-  if (!home) return placeFor(call, null)
+  const id = threadSpaceOf(call.caller)
+  if (!id) return placeFor(call, null)
+  // A thread's space deleted or left since it started is no reason to write in the one
+  // in front, whose notes of the same name are somebody else's work.
+  const home = workspace.spaces.find((one) => one.id === id)
+  if (!home)
+    throw new Refused('no_such_space', 'the space this thread works in is gone: say which space')
   if (!reaches(call, home)) {
     throw new Refused('no_such_space', 'say which space: list_spaces names the ones you reach')
   }
