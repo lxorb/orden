@@ -59,9 +59,9 @@ async function batched(instruction: string): Promise<string[]> {
       asked.push(/\[\[(.*)\]\]/.exec(text)?.[1] ?? '')
       return Promise.resolve(ended)
     },
-    adopt: () => {},
-    touched: () => {},
-    line: () => {},
+    adopt: vi.fn(),
+    touched: vi.fn(),
+    line: vi.fn(),
   } as unknown as Host
   await batch(host, newThread('space', 'p', 'm'), instruction)
   return asked.sort()

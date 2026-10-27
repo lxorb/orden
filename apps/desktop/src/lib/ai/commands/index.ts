@@ -25,6 +25,7 @@ import { planDay, showTasks } from './todos'
 import type { CommandContext, Panel, PanelCommand } from './types'
 import { explain, review, rewrite, summarize } from './words'
 import { message, t } from '../../i18n.svelte'
+import { FIRST_MODE, noMoreThan } from '../modes'
 
 /** Lane 3's half of `/rewind` and `/diff`, once it is on main: `lib/ai/review/commands.ts`
  *  exporting both, each run with the command's context (6.5). Found by name, so this
@@ -243,12 +244,17 @@ async function guarded(host: Host, context: CommandContext, run: Run | undefined
 
 /** The menu's row for a command written as a note. */
 function noteRow(note: NoteCommand, host: Host): PanelCommand {
-  const once = {
-    ...(note.model ? { model: note.model } : {}),
-    ...(note.effort ? { effort: note.effort } : {}),
-    ...(note.mode ? { mode: note.mode } : {}),
+  // A shared note's mode is weighed against the thread it lands in, which is the one
+  // `sendHere` would open where none is.
+  const onceIn = (thread: Thread | null) => {
+    const held = () => (thread ?? host.panel.ensure?.())?.mode ?? FIRST_MODE
+    const mode = note.mode && note.shared ? noMoreThan(note.mode, held()) : note.mode
+    return {
+      ...(note.model ? { model: note.model } : {}),
+      ...(note.effort ? { effort: note.effort } : {}),
+      ...(mode ? { mode } : {}),
+    }
   }
-  const differs = Object.keys(once).length > 0
   return {
     name: note.name,
     synonyms: [],
@@ -256,8 +262,10 @@ function noteRow(note: NoteCommand, host: Host): PanelCommand {
     ...(note.description ? { description: note.description } : {}),
     source: note.path,
     available: () => true,
-    run: ({ args, thread }) =>
-      sendHere(host, thread, expand(note, args), differs ? once : undefined),
+    run: ({ args, thread }) => {
+      const once = onceIn(thread)
+      sendHere(host, thread, expand(note, args), Object.keys(once).length ? once : undefined)
+    },
   }
 }
 

@@ -209,8 +209,9 @@ export function canWriteIn(
 
 /** Whether the space a note sits in is one somebody else can reach: shared with
  *  anybody, or somebody else's to begin with. A note in no space at all is this
- *  machine's own. */
-function sharedAt(path: string | null): boolean {
+ *  machine's own. What decides that a note's raw HTML is words (below), and that a
+ *  command, profile or style note asks for nothing the reader has not (ai/commands). */
+export function reachedByOthers(path: string | null): boolean {
   if (path === null) return false
 
   const space = workspace.spaces.find((one) => within(one.root, path) !== null)
@@ -231,7 +232,7 @@ export function originOfDocument(note: NoteDoc): Origin {
   return originOf({
     guest: account.guest !== null,
     pasted: note.pasted,
-    shared: note.shared !== null || sharedAt(note.path),
+    shared: note.shared !== null || reachedByOthers(note.path),
     peers: (rooms.present[note.key] ?? 0) > 0,
   })
 }
@@ -259,7 +260,7 @@ export function trustsHtmlAt(path: string | null): boolean {
     originOf({
       guest: account.guest !== null,
       pasted: false,
-      shared: sharedAt(path),
+      shared: reachedByOthers(path),
       peers: false,
     }),
   )

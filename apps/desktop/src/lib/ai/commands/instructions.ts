@@ -5,8 +5,9 @@
  *  The panel's engine setup appends `instructionsFor(thread)` to the space's own
  *  instructions (6.5), so every road gets the same lines: nib's own loop as part of the
  *  system prompt, Claude Code and Codex as the fixed style slot the crate appends.
- *  Nothing here is text from a page: a style or a profile is a note of the reader's,
- *  and the rest is nib's own. Not translated: nobody reads it but the model. */
+ *  Nothing here is text from a page: a style or a profile is a note in the space the
+ *  reader picked by name, and the rest is nib's own. One from a shared space may not
+ *  widen the thread's mode (`noMoreThan`), but its words are still the ones picked. Not translated: nobody reads it but the model. */
 
 import { isBoolean, keep, stored } from '../../stored'
 import type { Thread } from '../chat/types'

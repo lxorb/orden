@@ -6,7 +6,12 @@
  *  a worker in a browser, and then only the notes that answered are read here. Kept per
  *  space until the link index says a note changed, so the menu is a lookup and a command
  *  written on another device is there once it has synced. Nothing outside the space is
- *  read: nib never opens `~/.claude` or `~/.codex`. */
+ *  read: nib never opens `~/.claude` or `~/.codex`.
+ *
+ *  A note in a space somebody else can reach is offered too, marked `shared`: a
+ *  collaborator may have written it, so its words are theirs, the same rule that keeps
+ *  their raw HTML as characters (trust.ts). The commands then let it ask for no more
+ *  than the thread already has; see `noMoreThan` in modes.ts. */
 
 import { links } from '../../link-index.svelte'
 import type { Query } from '../../search/query'
@@ -26,6 +31,7 @@ let asking: Promise<NoteCommand[]> | null = null
 
 async function ask(root: string, version: number): Promise<NoteCommand[]> {
   const { searchSpace } = await import('../../search/space')
+  const { reachedByOthers } = await import('../../sharing.svelte')
   const paths = new Set<string>()
   await searchSpace(
     root,
@@ -40,7 +46,8 @@ async function ask(root: string, version: number): Promise<NoteCommand[]> {
   const read = await Promise.all(
     [...paths].map(async (path) => {
       const text = await workspace.noteText(path).catch(() => null)
-      return text ? rolesOf(path, text) : []
+      const shared = reachedByOthers(path)
+      return text ? rolesOf(path, text).map((one) => ({ ...one, shared })) : []
     }),
   )
   const found = read.flat().sort((a, b) => a.name.localeCompare(b.name))

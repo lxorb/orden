@@ -56,6 +56,17 @@ export function nextMode(mode: Mode): Mode {
   return CYCLE[(CYCLE.indexOf(mode) + 1) % CYCLE.length] ?? FIRST_MODE
 }
 
+/** How much a mode lets happen unasked: Plan only reads and writes its plan, Approve
+ *  asks before each change, Auto before some, Full permissions never. */
+const LATITUDE: Record<Mode, number> = { plan: 0, approve: 1, auto: 2, full: 3 }
+
+/** The mode something not the reader's own asks for, where it lets no more happen
+ *  than `held` does, or null where it would: a command or a profile from a shared
+ *  space may make a thread more careful, never less (docs/agent-native.md 9.6). */
+export function noMoreThan(asked: Mode, held: Mode): Mode | null {
+  return LATITUDE[asked] <= LATITUDE[held] ? asked : null
+}
+
 /** Whether a mode makes changes without the reader's Approve first. */
 export function actsAlone(mode: Mode): boolean {
   return mode === 'auto' || mode === 'full'

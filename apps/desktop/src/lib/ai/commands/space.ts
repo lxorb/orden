@@ -13,6 +13,7 @@ import { found, foundNamed } from './found'
 import { type Host, sendHere } from './host'
 import { type Held, setRemembers, STYLES } from './instructions'
 import { commandName } from './notes'
+import { noMoreThan } from '../modes'
 
 /** The space's instructions, at its root. */
 const AGENTS = 'AGENTS.md'
@@ -111,7 +112,8 @@ export async function agents(host: Host, thread: Thread | null, args: string): P
   held.agent = profile.name
   if (profile.model) host.panel.modelNamed(profile.model)
   if (profile.effort) host.panel.setEffort(profile.effort)
-  if (profile.mode) host.panel.setMode(profile.mode)
+  const mode = profile.mode && profile.shared ? noMoreThan(profile.mode, open.mode) : profile.mode
+  if (mode) host.panel.setMode(mode)
   host.touched(open)
 }
 
