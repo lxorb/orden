@@ -248,7 +248,13 @@ export function dayOf(value: string | number | null | undefined): string | null 
     return dayAt(new Date(millis))
   }
 
-  const compact = /^(\d{4})(\d{2})(\d{2})T\d{6}Z?$/.exec(value)
+  // A stamp that names its zone is an instant, and its day is the reader's, as a
+  // count is: Evernote's `20260102T023000Z` is the evening of the first in Los
+  // Angeles. The digits of it are only the day in UTC, or in the writer's zone.
+  const instant = instantOf(value)
+  if (instant !== null) return dayAt(new Date(instant))
+
+  const compact = /^(\d{4})(\d{2})(\d{2})T\d{6}$/.exec(value)
   if (compact) return dayFrom(Number(compact[1]), Number(compact[2]), Number(compact[3]))
 
   const written = /^(\d{4})[-_/](\d{1,2})[-_/](\d{1,2})/.exec(value)
@@ -257,6 +263,34 @@ export function dayOf(value: string | number | null | undefined): string | null 
   const parsed = Date.parse(value)
   return Number.isNaN(parsed) ? null : dayAt(new Date(parsed))
 }
+
+/** The moment a stamp with a `Z` or an offset says, in milliseconds, or null for
+ *  one that names no zone: a day, or a wall clock, is the day it says wherever it
+ *  is read. ISO and Evernote's compact `20260102T023000Z` both. */
+function instantOf(value: string): number | null {
+  const found = STAMP.exec(value.trim())
+  if (!found) return null
+
+  const [, year, month, day, hour, minute, second = '0', fraction = '0', sign, hours, minutes] =
+    found
+  // A month or a day no calendar has is no instant, rather than one rolled into the next.
+  if (!dayFrom(Number(year), Number(month), Number(day))) return null
+  const east = sign ? (sign === '-' ? -1 : 1) * (Number(hours) * 60 + Number(minutes ?? 0)) : 0
+  const moment = Date.UTC(
+    Number(year),
+    Number(month) - 1,
+    Number(day),
+    Number(hour),
+    Number(minute) - east,
+    Number(second),
+    Math.floor(Number(`0.${fraction}`) * 1000),
+  )
+  return Number.isNaN(moment) ? null : moment
+}
+
+/** A date and a time with its zone: `Z`, or an offset such as `+01:00` or `-0800`. */
+const STAMP =
+  /^(\d{4})-?(\d{2})-?(\d{2})T(\d{2}):?(\d{2})(?::?(\d{2})(?:[.,](\d+))?)?(?:Z|([+-])(\d{2}):?(\d{2})?)$/i
 
 /** The day an instant falls on where the reader is, rather than in UTC. A note
  *  written at eleven at night is that evening's note, and that is the date the

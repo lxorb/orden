@@ -89,7 +89,7 @@ describe('a Bear backup', () => {
   test('a note with properties of its own keeps them in the one block', async () => {
     const plan = await readBear(
       bundle('Trip', '---\ntitle: Trip\nstatus: draft\n---\n# Trip\nwords\n', {
-        creationDate: '2024-01-02T00:00:00Z',
+        creationDate: '2024-01-02T12:00:00Z',
       }),
     )
 
