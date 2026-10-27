@@ -11,6 +11,8 @@ vi.stubGlobal('localStorage', memoryStorage())
 /** The crate's threads, by space and id: the head the list shows and the body. */
 const kept = vi.hoisted(() => new Map<string, Map<string, { head: unknown; body: string }>>())
 const deleted = vi.hoisted(() => [] as string[])
+/** A delete the crate refuses, once. */
+const refusing = vi.hoisted(() => ({ delete: false }))
 
 vi.mock('../../tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../tauri')>()),
@@ -28,6 +30,10 @@ vi.mock('../../tauri', async (importOriginal) => ({
       return Promise.resolve(null)
     }
     if (command === 'ai_thread_delete') {
+      if (refusing.delete) {
+        refusing.delete = false
+        return Promise.reject(new Error('locked'))
+      }
       shelf.delete(String(args.id))
       deleted.push(`${space}/${String(args.id)}`)
       return Promise.resolve(null)
@@ -73,6 +79,8 @@ const engine = vi.hoisted(() => ({
     on({ type: 'done', stop: 'error', error: notice.text })
     return Promise.resolve()
   }),
+  // Takes nothing: words steered before the engine is ready for them.
+  steer: vi.fn(() => Promise.resolve()),
 }))
 vi.mock('./setup', () => ({ engineOf: () => Promise.resolve(engine) }))
 
@@ -94,6 +102,19 @@ vi.mock('../review', () => ({
   lastMessage: () => null,
   openRewind: () => null,
 }))
+
+/** A message's gathering, held until `gathering.gate` opens. */
+const gathering = vi.hoisted(() => ({ gate: Promise.resolve() }))
+vi.mock('./gather', async (importOriginal) => {
+  const real = await importOriginal<typeof import('./gather')>()
+  return {
+    ...real,
+    draftOf: async (...args: Parameters<typeof real.draftOf>) => {
+      await gathering.gate
+      return real.draftOf(...args)
+    },
+  }
+})
 
 vi.mock('../../prompt.svelte', () => ({ prompt: { confirm: () => Promise.resolve(true) } }))
 
@@ -872,5 +893,131 @@ describe('a chat while it answers', () => {
 
     await vi.waitFor(() => expect(chat.trouble).toBe('down'))
     expect(thread.turns.map((one) => one.id)).toEqual(['u1', 'm1'])
+  })
+  /** The next message held while it is gathered, until the returned call. */
+  function held(): () => void {
+    let go: () => void = () => undefined
+    gathering.gate = new Promise<void>((resolve) => (go = resolve))
+    return () => {
+      go()
+      gathering.gate = Promise.resolve()
+    }
+  }
+
+  /** An answer that pushes the reader's turn and ends as stopped where it was. */
+  function stoppable() {
+    engine.send.mockImplementationOnce(
+      (thread: Thread, draft: Draft, on: (event: EngineEvent) => void, signal?: AbortSignal) =>
+        new Promise<void>((resolve) => {
+          thread.turns.push({ id: crypto.randomUUID(), role: 'you', at: 1, parts: [], draft })
+          thread.turns.push({ id: crypto.randomUUID(), role: 'model', at: 1, parts: [] })
+          const end = () => {
+            on({ type: 'done', stop: 'stopped' })
+            resolve()
+          }
+          if (signal?.aborted) end()
+          else signal?.addEventListener('abort', end)
+        }),
+    )
+  }
+
+  const words = (thread: Thread | null) =>
+    (thread?.turns ?? []).filter((one) => one.role === 'you').map((one) => one.draft?.text)
+
+  test('keeps a message stopped while it is gathered', async () => {
+    const chat = await asked()
+    await settled()
+    const go = held()
+    stoppable()
+    chat.text = 'my new question'
+    chat.submit(around)
+    expect(chat.busy).toBe(true)
+
+    chat.stop()
+    go()
+    await vi.waitFor(() => expect(chat.busy).toBe(false))
+    await settled()
+
+    const id = String(chat.thread?.id)
+    expect(words(chat.thread)).toEqual(['old question', 'my new question'])
+    expect(kept.get('work')?.get(id)?.body).toContain('my new question')
+  })
+
+  test('asks nothing of a chat deleted while its message is gathered', async () => {
+    const chat = await asked()
+    const id = String(chat.thread?.id)
+    await settled()
+    const go = held()
+    chat.text = 'my new question'
+    chat.submit(around)
+
+    await chat.remove(id)
+    go()
+    await settled()
+
+    expect(engine.send).not.toHaveBeenCalled()
+    expect(kept.get('work')?.has(id)).toBe(false)
+  })
+
+  test('sends next the words steered in that the answer never took', async () => {
+    const chat = await asked()
+    await settled()
+    let answer: () => void = () => undefined
+    engine.send.mockImplementationOnce(
+      (thread: Thread, draft: Draft, on: (event: EngineEvent) => void) =>
+        new Promise<void>((resolve) => {
+          thread.turns.push({ id: crypto.randomUUID(), role: 'you', at: 1, parts: [], draft })
+          thread.turns.push({ id: crypto.randomUUID(), role: 'model', at: 1, parts: [] })
+          answer = () => {
+            on({ type: 'done', stop: 'end' })
+            resolve()
+          }
+        }),
+    )
+    chat.text = 'first'
+    chat.submit(around)
+    await vi.waitFor(() => expect(engine.send).toHaveBeenCalledTimes(1))
+    chat.text = 'and shorter'
+    chat.steer()
+    expect(chat.text).toBe('')
+
+    answer()
+
+    await vi.waitFor(() => expect(engine.send).toHaveBeenCalledTimes(2))
+    const sent = engine.send.mock.calls as unknown as [unknown, Draft][]
+    expect(sent.map((call) => call[1].text)).toEqual(['first', 'and shorter'])
+  })
+
+  test('follows the reader again once a first message refused before any turn is back', async () => {
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work', 'home'])
+    await settled()
+    const go = held()
+    engine.send.mockImplementationOnce(() => Promise.reject(new Error('down')))
+    chat.text = 'first'
+    chat.submit(around)
+    chat.here('home')
+    go()
+    await vi.waitFor(() => expect(chat.trouble).toBe('down'))
+    await settled()
+
+    expect(chat.thread?.turns).toEqual([])
+    expect(chat.thread?.space).toBe('home')
+  })
+
+  test('keeps writing a chat whose delete was refused', async () => {
+    const chat = await asked()
+    const id = String(chat.thread?.id)
+    await settled()
+    refusing.delete = true
+
+    await chat.remove(id)
+    await chat.openThread(id, false)
+    await chat.rename('Plan, still here', id)
+    await settled()
+
+    expect(chat.heads.map((one) => one.id)).toContain(id)
+    expect(kept.get('work')?.get(id)?.body).toContain('Plan, still here')
   })
 })
