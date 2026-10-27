@@ -29,7 +29,7 @@ export function basesAre(paths: readonly string[]) {
 }
 
 /** Whether any base is worth running at all. */
-export const running = (): boolean => held.size > 0
+const running = (): boolean => held.size > 0
 /** Notes the runner just wrote, whose next change is its own. */
 const ours = new Set<string>()
 /** Notes waiting for their quiet moment, with the rows they had before it. */
