@@ -900,6 +900,31 @@ export function strokesInLasso(
     .map((stroke) => stroke.id)
 }
 
+/** The cards a loop drawn on the plane goes round (#349): whole, every corner inside it;
+ *  or with `partly`, the middle of the card inside it, the way `partly` lets a stroke
+ *  that is only half in the loop be caught. */
+export function cardsInLasso(
+  nodes: readonly { id: string; x: number; y: number; width: number; height: number }[],
+  lasso: readonly Point[],
+  partly = false,
+): string[] {
+  if (lasso.length < 3) return []
+
+  return nodes
+    .filter((node) => {
+      const corners = [
+        { x: node.x, y: node.y },
+        { x: node.x + node.width, y: node.y },
+        { x: node.x, y: node.y + node.height },
+        { x: node.x + node.width, y: node.y + node.height },
+      ]
+      return partly
+        ? insidePolygon(lasso, { x: node.x + node.width / 2, y: node.y + node.height / 2 })
+        : corners.every((corner) => insidePolygon(lasso, corner))
+    })
+    .map((node) => node.id)
+}
+
 /** A stroke moved, scaled and turned in one pass. The whole of a selection goes
  *  through this, so a lasso that is dragged, pulled bigger and spun round is one
  *  arithmetic rather than three. */

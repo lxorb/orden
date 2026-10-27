@@ -209,7 +209,11 @@ export type Effect =
   | { do: 'stroke'; stroke: PendingStroke }
   | { do: 'rub'; at: Point; reach: number }
   | { do: 'cut'; at: Point; reach: number }
-  | { do: 'catch'; lasso: Point[] }
+  /** `cards` where the lasso takes cards as well as ink: one drawn by a held finger,
+   *  which is a finger's way to pick (#349). */
+  | { do: 'catch'; lasso: Point[]; cards?: boolean }
+  /** The menu a held finger opened, put away: the finger moved on instead. */
+  | { do: 'unmenu' }
   | { do: 'ink'; dx: number; dy: number; scale: number; turn: number; about: Point }
   | { do: 'pan'; dx: number; dy: number }
   | { do: 'zoom'; at: Point; by: number }
@@ -230,7 +234,12 @@ export interface PendingStroke {
 }
 
 type Gesture =
-  | { kind: 'pan'; id: number; screen: Point; moved: boolean }
+  /** `bare` where a finger landed on the plane itself, which a hold turns into a
+   *  lasso (#349). */
+  | { kind: 'pan'; id: number; screen: Point; moved: boolean; bare?: boolean }
+  /** A finger held still on the bare plane: the menu is up, and moving on from here
+   *  draws a lasso instead (#349). */
+  | { kind: 'armed'; id: number; at: Point; screen: Point }
   | {
       kind: 'pinch'
       ids: [number, number]
@@ -264,7 +273,7 @@ type Gesture =
   | { kind: 'erase'; whole: boolean; id: number }
   /** A loop drawn by hand, or a box pulled out. Either way it is the ring it
    *  caught things with, so what draws it and what reads it know one shape. */
-  | { kind: 'lasso'; from: Point; points: Point[]; box: boolean }
+  | { kind: 'lasso'; from: Point; points: Point[]; box: boolean; cards?: boolean }
   | { kind: 'ink'; how: 'move' | HandleId | 'turn'; box: Box; from: Point }
 
 /** The pointer a gesture belongs to.
@@ -432,6 +441,8 @@ function begun(gesture: Gesture): boolean {
   switch (gesture.kind) {
     case 'pan':
       return gesture.moved
+    case 'armed':
+      return false
     case 'drag':
     case 'resize':
       return gesture.dx !== 0 || gesture.dy !== 0
@@ -830,12 +841,13 @@ function select(machine: Machine, input: Down, context: Context): Step {
 
   if (!hit.node) {
     // A finger on the plane moves the plane; there is no second button to pan
-    // with and no marquee anybody draws with a thumb.
+    // with and no marquee anybody draws with a thumb. Held still first, it draws a
+    // lasso instead; see `onHeld`.
     if (input.pointer === 'touch') {
       return {
         machine: {
           ...machine,
-          gesture: { kind: 'pan', id: input.id, screen: input.screen, moved: false },
+          gesture: { kind: 'pan', id: input.id, screen: input.screen, moved: false, bare: true },
         },
         effects: [{ do: 'leave' }],
       }
@@ -1029,6 +1041,28 @@ function onMove(machine: Machine, input: Move, context: Context): Step {
         effects: [],
       }
 
+    // The held finger moving on: the menu goes, and the finger draws a lasso from
+    // where it was held, catching cards as well as ink (#349).
+    case 'armed': {
+      if (input.id !== one.id) return { machine, effects: [] }
+      if (Math.hypot(input.screen.x - one.screen.x, input.screen.y - one.screen.y) <= SLOP) {
+        return { machine, effects: [] }
+      }
+      return {
+        machine: {
+          ...machine,
+          gesture: {
+            kind: 'lasso',
+            from: one.at,
+            points: [one.at, input.at],
+            box: false,
+            cards: true,
+          },
+        },
+        effects: [{ do: 'unmenu' }],
+      }
+    }
+
     case 'ink':
       return { machine, effects: [inkEffect(one, input.at)] }
   }
@@ -1200,7 +1234,14 @@ function onUp(machine: Machine, input: Extract<Input, { kind: 'up' }>, context: 
       return { machine: rest, effects: [] }
 
     case 'lasso':
-      return { machine: rest, effects: [{ do: 'catch', lasso: one.points }] }
+      return {
+        machine: rest,
+        effects: [{ do: 'catch', lasso: one.points, ...(one.cards ? { cards: true } : {}) }],
+      }
+
+    // Held and let go where it was: the menu it opened is what it was for.
+    case 'armed':
+      return { machine: rest, effects: [] }
 
     case 'ink':
       return { machine: rest, effects: [] }
@@ -1222,6 +1263,17 @@ function onHeld(machine: Machine, at: Point, context: Context): Step {
   // A finger held on the plane or on a card is the menu, which is the only way
   // to reach one without a second mouse button. Never a pen: a nib resting on the
   // page is a hand thinking, not a hand asking for a list.
+  //
+  // On the bare plane it is a lasso as well, armed (#349): Emil, "holding down with
+  // your finger and then dragging after some short waiting time to get a lasso
+  // instead of a normal select". Let go there, and the menu is what it was for; moved
+  // on, the menu goes and the finger draws the loop.
+  if (one.kind === 'pan' && one.bare && !one.moved && machine.driver?.kind === 'touch') {
+    return {
+      machine: { ...machine, gesture: { kind: 'armed', id: one.id, at, screen: one.screen } },
+      effects: [{ do: 'menu', at }],
+    }
+  }
   if ((one.kind === 'pan' || one.kind === 'drag') && machine.driver?.kind !== 'pen') {
     return { machine: { ...machine, gesture: null }, effects: [{ do: 'menu', at }] }
   }

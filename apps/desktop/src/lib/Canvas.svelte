@@ -1122,7 +1122,10 @@
         run.cut(store, effect.at, effect.reach, `rub:${gestures}`)
         break
       case 'catch':
-        run.lasso(store, effect.lasso, pens.partly)
+        run.lasso(store, effect.lasso, pens.partly, effect.cards ?? false)
+        break
+      case 'unmenu':
+        menu.hide()
         break
       case 'pan':
         store.camera = panned(camera, effect.dx, effect.dy)
