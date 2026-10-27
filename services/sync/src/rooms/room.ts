@@ -52,7 +52,7 @@ import * as Y from 'yjs'
 import { byteLength, sha256 } from '../crypto'
 import { note as noted } from '../failed'
 import { pokeSpace } from '../hub/poke'
-import { MAX_NOTE_BYTES, noteBeside, noteKey, saveNote } from '../notes'
+import { MAX_NOTE_BYTES, noteBeside, noteKey, saveNote, UNREADABLE } from '../notes'
 import { OPEN_HEADER, openAnswer, openIn, sweepOpened } from '../opened'
 import { fits } from '../storage'
 import { revive } from '../sync2/ops'
@@ -67,6 +67,7 @@ import {
   leavesAPlane,
   neverHeld,
   noteKind,
+  readsAs,
   takeInto,
   writesOf,
   type RoomKind,
@@ -1027,6 +1028,8 @@ export class NoteRoom implements DurableObject {
     // Nothing to take from a read that came back empty: a note whose bytes are not
     // there is not a note that says nothing. See `neverHeld` for the same line.
     if (!file) return
+    // Nor from one that does not read as this room's kind: see `readsAs`.
+    if (!readsAs(held.kind, file)) return
 
     if (file !== mine) takeInto(held.kind, this.state.doc, mine, file)
 
@@ -1632,6 +1635,9 @@ export class NoteRoom implements DurableObject {
       .first<Note>()
     if (!row) return { refused: 'gone' }
     if (asked.base !== undefined && row.version !== asked.base) return { conflict: true }
+    // Prose handed to a plane is refused and said to be, never taken for an empty
+    // canvas over every card; see `readsAs`.
+    if (!readsAs(held.kind, asked.text)) return { refused: UNREADABLE }
 
     const current = fileOf(held.kind, this.state.doc)
     const update = ingested(held.kind, this.state.doc, held.noteId, current, asked.text)

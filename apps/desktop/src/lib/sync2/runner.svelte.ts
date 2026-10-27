@@ -818,6 +818,11 @@ class Runner {
       const surface = rooms.planes.get(one.key)
       const entry = engine.entryAt(one.path)
       const joins = entry && joinsAs(note.kind, entry.kind)
+      // A tab whose name and entry disagree about the shape, after a rename across
+      // `.md` and `.canvas`, is left unjoined, and the reader is told once: what is
+      // typed there that the entry's kind cannot hold does not sync.
+      if (entry && engine.core.hasDoc(entry.id) && joins === null)
+        this.mismatched(one.key, one.path)
       const on: On | null =
         joins === 'views' ? { note } : joins === 'surface' && surface ? { surface } : null
       if (on && entry && engine.core.hasDoc(entry.id))
@@ -860,6 +865,16 @@ class Runner {
       this.bound.set(key, { id: one.id, part, plane: typeof joined === 'function' ? null : joined })
       this.enter(engine, key, one.id, one.on)
     }
+  }
+
+  /** Tabs already told that their file syncs as another kind; see `bindNow`. */
+  private readonly told = new Set<string>()
+
+  private mismatched(key: string, path: string) {
+    if (this.told.has(key)) return
+    this.told.add(key)
+    log('warn', `sync2: ${path} is open as another kind than it syncs as`)
+    void import('../unread.svelte').then((one) => one.unread.there(path))
   }
 
   /** Open notes whose documents a room is carrying, by document key. */

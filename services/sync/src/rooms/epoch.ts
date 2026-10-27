@@ -20,7 +20,7 @@ import { TEXT } from '@nib/rooms'
 import { pushPlane } from '@nib/rooms/plane'
 import { hash32, seedPlane, seedUpdate, textops } from '@nib/sync-core'
 import * as Y from 'yjs'
-import type { RoomKind } from './kind'
+import { readsAs, type RoomKind } from './kind'
 
 /** Where the R2 snapshot of a note's document lives: written at every settle, read by
  *  every pull, so a pull never wakes a room. */
@@ -49,7 +49,8 @@ export function ingested(
   from: string,
   to: string,
 ): Uint8Array | null {
-  if (from === to) return null
+  // Nothing taken from a text that is not this kind's: see `readsAs`.
+  if (from === to || !readsAs(kind, to)) return null
 
   const scratch = new Y.Doc()
   // Read in first and named after, so reading in its own operations cannot move it

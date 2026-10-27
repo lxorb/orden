@@ -18,7 +18,7 @@
  *  This file is that difference and nothing more: what fills an empty document, what
  *  the settle writes, and the two questions a settle asks before it writes at all. */
 
-import { readCanvas, writeCanvas } from '@nib/markdown/canvas'
+import { canvasIn, readCanvas, writeCanvas } from '@nib/markdown/canvas'
 import { isCanvasTarget, isPagesTarget } from '@nib/markdown/links'
 import { TEXT } from '@nib/rooms'
 import { fold } from '@nib/rooms/fold'
@@ -56,11 +56,21 @@ function roomKind(path: string): RoomKind {
  *  a room does when the two disagree. */
 export function noteKind(note: {
   path: string
-  kind?: string | null
-  epoch?: number | null
+  kind?: string | null | undefined
+  epoch?: number | null | undefined
 }): RoomKind {
   if ((note.epoch ?? 0) < 1 || !note.kind) return roomKind(note.path)
   return note.kind === 'canvas' || note.kind === 'pages' ? 'plane' : 'words'
+}
+
+/** Whether a whole text says what a room of this kind can hold. Only a plane can fail:
+ *  `readCanvas` reads text that is not a canvas as one with nothing on it, and a plane
+ *  turned to that deletes every card it had. A canvas entry renamed to `.md` is still a
+ *  plane, and prose written into it - by a v1 app, the connector, a version put back -
+ *  is refused rather than taken for an empty canvas. The app asks the same question of
+ *  what it reads off the disk (`readable` in its sync2/kinds.ts). */
+export function readsAs(kind: RoomKind, text: string): boolean {
+  return kind !== 'plane' || (text.trim() !== '' && canvasIn(text) !== null)
 }
 
 /** What a website is doing in neither list: nothing, because no client asks for a
