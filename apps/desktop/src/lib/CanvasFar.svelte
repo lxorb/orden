@@ -81,8 +81,11 @@
   const follows = (..._values: unknown[]) => undefined
 
   // Painted once a frame at most, after whatever changed: the camera, the plane, what
-  // is picked, the theme.
+  // is picked, the theme. Except the first time, which is at once: the layer comes up
+  // in the frame the cards go - zooming out past reading - and a frame with neither
+  // was a blink of an empty plane (#535).
   let frame = 0
+  let painted = false
   $effect(() => {
     follows(
       nodes,
@@ -99,6 +102,11 @@
       palette,
     )
     if (!element) return
+    if (!painted) {
+      painted = true
+      paint()
+      return
+    }
     if (frame) cancelAnimationFrame(frame)
     frame = requestAnimationFrame(() => {
       frame = 0
