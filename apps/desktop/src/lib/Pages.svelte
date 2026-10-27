@@ -57,7 +57,7 @@
   import { freshId, type InkPoint, type InkStroke } from './canvas/format'
   import { Contacts, hovering, penKind, Stylus } from './canvas/contacts'
   import { hand } from './canvas/hand.svelte'
-  import { erased, leadPoint, penFelt, strokesInLasso, tidied } from './canvas/ink'
+  import { cardsInLasso, erased, leadPoint, penFelt, strokesInLasso, tidied } from './canvas/ink'
   import { DEFAULT_INK, readPalette } from './canvas/palette'
   import { pens } from './canvas/pens.svelte'
   import { inks, type Tool } from './canvas/pointer'
@@ -352,7 +352,10 @@
   type Gesture =
     | { kind: 'draw'; id: number; page: string; stroke: InkStroke; began: number }
     | { kind: 'erase'; id: number; run: string }
-    | { kind: 'lasso'; id: number; points: Point[] }
+    | { kind: 'lasso'; id: number; points: Point[]; cards?: boolean }
+    /** A finger held still on the paper: the menu is up, and moving on from here draws
+     *  a lasso instead (#349). */
+    | { kind: 'armed'; id: number; at: Point; screen: Point }
     | {
         kind: 'pan'
         id: number
@@ -735,7 +738,17 @@
   function held(event: MouseEvent) {
     const busy = gesture?.kind
     if (busy === 'draw' || busy === 'erase' || busy === 'lasso') return
-    gesture = null
+    // A finger held still on a page, with nothing under it to carry, is a lasso as well
+    // as the menu, as on the plane (#349): Emil, "holding down with your finger and
+    // then dragging after some short waiting time to get a lasso instead of a normal
+    // select". Let go, and the menu is what it was for; moved on, the menu goes and
+    // the finger draws the loop.
+    const one = gesture
+    const at = planeAt(event)
+    gesture =
+      one?.kind === 'pan' && !one.moved && driver?.touch && writable && pageAt(pages, at)
+        ? { kind: 'armed', id: one.id, at, screen: { x: event.clientX, y: event.clientY } }
+        : null
     showMenu(event)
   }
 
@@ -869,6 +882,14 @@
       return
     }
 
+    if (one.kind === 'armed') {
+      if (event.pointerId !== one.id) return
+      if (Math.hypot(event.clientX - one.screen.x, event.clientY - one.screen.y) <= A_TWITCH) return
+      menu.hide()
+      gesture = { kind: 'lasso', id: one.id, points: [one.at, point], cards: true }
+      return
+    }
+
     const offset = { x: point.x - one.from.x, y: point.y - one.from.y }
     const moved = one.moved || Math.hypot(offset.x, offset.y) * camera.scale > A_TWITCH
     gesture = { ...one, offset, moved }
@@ -949,7 +970,8 @@
     }
 
     if (one.kind === 'lasso') {
-      store.pickAll(strokesInLasso(canvas.ink, one.points))
+      const ink = strokesInLasso(canvas.ink, one.points)
+      store.pickAll(one.cards ? [...cardsInLasso(cards, one.points), ...ink] : ink)
       return
     }
 
