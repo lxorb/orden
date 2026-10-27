@@ -1,5 +1,5 @@
-import { describe, expect, test } from 'vitest'
-import { locate, placesIn, placesOf, type Piece, type Words } from './find'
+import { afterEach, describe, expect, test, vi } from 'vitest'
+import { locate, paint, placesIn, placesOf, type Piece, type Words } from './find'
 
 const text = 'The word, and the word again, and a wordy one.'
 
@@ -24,6 +24,13 @@ describe('every place a word appears', () => {
 
   test('is nothing when the word is not there', () => {
     expect(placesOf(text, 'sentence')).toEqual([])
+  })
+
+  test('stays where the words are after a letter that lowercases into two', () => {
+    // `İ` lowercases into `i` and a combining dot, which moved every match after
+    // one a letter to the right of the word it was found in.
+    expect(placesOf('İstanbul beta', 'beta')).toEqual([9])
+    expect(placesIn({ text: 'İİ beta İ beta', pieces: [] }, 'BETA')).toEqual([3, 10])
   })
 })
 
@@ -72,5 +79,51 @@ describe('which piece of the page an offset falls in', () => {
 
   test('the first piece, for an offset before it - which nothing asks for', () => {
     expect(locate(pieces(5), 2)).toBeNull()
+  })
+})
+
+describe('painting the places found', () => {
+  /** A registry the way the engine keeps one: a name to the highlight under it. */
+  class Highlight {
+    readonly ranges: Range[]
+    constructor(...ranges: Range[]) {
+      this.ranges = ranges
+    }
+  }
+  const highlights = new Map<string, Highlight>()
+  vi.stubGlobal('CSS', { highlights })
+  vi.stubGlobal('Highlight', Highlight)
+
+  afterEach(() => highlights.clear())
+
+  const range = (at: number) => ({ at }) as unknown as Range
+  const painted = (name: string) => highlights.get(name)?.ranges ?? []
+
+  test("one page's paint leaves another page's in place", () => {
+    // Two reading panes paint under the one name the theme styles, and each used
+    // to replace the whole of it.
+    const left = {}
+    const right = {}
+
+    paint(left, 'nib-find', [range(1), range(2)])
+    paint(right, 'nib-find', [range(3)])
+    expect(painted('nib-find')).toEqual([range(1), range(2), range(3)])
+
+    paint(right, 'nib-find', [])
+    expect(painted('nib-find')).toEqual([range(1), range(2)])
+
+    paint(left, 'nib-find', [])
+    expect(highlights.has('nib-find')).toBe(false)
+  })
+
+  test('a page painting again replaces only its own', () => {
+    const left = {}
+    const right = {}
+
+    paint(left, 'nib-find', [range(1)])
+    paint(right, 'nib-find', [range(2)])
+    paint(left, 'nib-find', [range(4)])
+    expect(painted('nib-find')).toHaveLength(2)
+    expect(painted('nib-find')).toEqual(expect.arrayContaining([range(2), range(4)]))
   })
 })
