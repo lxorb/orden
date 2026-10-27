@@ -6,19 +6,20 @@
  *  Loaded with the first view, and before any view a session brings back is drawn. */
 
 import { builtinView, readBase, type View, writeBase } from '@nib/bases'
-import { movedTo, relativeTo, samePath } from '../space-paths'
+import { movedTo, samePath } from '../space-paths'
 import { workspace } from '../workspace.svelte'
-import { keeping } from '../workspace/file-ops'
+import { keeping, moving } from '../workspace/file-ops'
 import { followProjectViews } from './kept-views'
 import { readSpec, writeSpec } from './spec'
 
 const nameOf = (path: string) => path.replace(/^.*\//, '').replace(/\.md$/i, '')
 
-/** A project's view as its tab changed it, about the note at `to` instead of `from`:
- *  the filter and the name nib gave it follow, and whatever the reader changed stays. */
-function followed(yaml: string, space: string, from: string, to: string): string {
+/** A project's view as its tab changed it, about the note at `to` in space `there`
+ *  instead of `from` in `space`: the filter and the name nib gave it follow, and
+ *  whatever the reader changed stays. */
+function followed(yaml: string, space: string, from: string, to: string, there = space): string {
   const was = builtinView('project', { note: { space, path: from } }).views[0]
-  const now = builtinView('project', { note: { space, path: to } }).views[0]
+  const now = builtinView('project', { note: { space: there, path: to } }).views[0]
   const base = readBase(yaml)
   const same = (one: View) => JSON.stringify(one.filters) === JSON.stringify(was?.filters)
   return writeBase({
@@ -31,28 +32,38 @@ function followed(yaml: string, space: string, from: string, to: string): string
   })
 }
 
+const spaceAt = (root: string) => workspace.spaces.find((one) => samePath(one.root, root))
+
 workspace.fileOps.follow(
   keeping({
-    moved(from, to, root) {
-      const space = workspace.spaces.find((one) => root !== null && samePath(one.root, root))
+    moved(from, to, root, into) {
+      const space = root === null ? undefined : spaceAt(root)
       if (!space || root === null) return
-      const was = relativeTo(root, from)
-      const now = relativeTo(root, to)
+      // Into another space, `into`, the project is that space's, as it speaks of the
+      // note; out of every space there is no project to follow.
+      const move = moving(from, to, root, into)
+      const there = move.across ? spaceAt(move.there) : space
+      if (!there || move.now === null) return
+      const now = move.now
+      const { was } = move
       for (const tab of workspace.tabs) {
         if (tab.kind !== 'view' || tab.path !== null) continue
         const spec = readSpec(tab.doc)
         if (spec?.builtin !== 'project' || spec.space !== space.name || !spec.path) continue
         const path = movedTo(spec.path, was, now, root)
-        if (path === null || path === spec.path) continue
+        if (path === null || (path === spec.path && there === space)) continue
         const yaml =
-          spec.yaml === undefined ? {} : { yaml: followed(spec.yaml, space.name, spec.path, path) }
-        tab.note.replace(writeSpec({ ...spec, path, ...yaml }), false)
+          spec.yaml === undefined
+            ? {}
+            : { yaml: followed(spec.yaml, space.name, spec.path, path, there.name) }
+        tab.note.replace(writeSpec({ ...spec, space: there.name, path, ...yaml }), false)
         tab.note.name = nameOf(path)
       }
       followProjectViews(
         space.name,
         (path) => movedTo(path, was, now, root),
-        (words, from, to) => followed(words, space.name, from, to),
+        (words, from, to) => followed(words, space.name, from, to, there.name),
+        there.name,
       )
       workspace.scheduleSession()
     },

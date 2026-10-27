@@ -56,11 +56,13 @@ export function keepProjectView(space: string, path: string, words: string): voi
 }
 
 /** The layouts kept for a space's projects, moved along with their notes: `moved` answers
- *  where a path is now (or null where it did not move), `follow` the words about it there. */
+ *  where a path is now (or null where it did not move), `follow` the words about it there,
+ *  and `into` the space it is in now, for a note moved into another one. */
 export function followProjectViews(
   space: string,
   moved: (path: string) => string | null,
   follow: (words: string, from: string, to: string) => string,
+  into = space,
 ): void {
   const all = read(PROJECTS)
   const out: Record<string, unknown> = {}
@@ -68,11 +70,12 @@ export function followProjectViews(
   for (const [key, words] of Object.entries(all)) {
     const path = key.startsWith(`${space}/`) ? key.slice(space.length + 1) : null
     const now = path === null ? null : moved(path)
-    if (path === null || now === null || now === path || typeof words !== 'string') {
+    const stays = now === path && into === space
+    if (path === null || now === null || stays || typeof words !== 'string') {
       out[key] = words
       continue
     }
-    out[`${space}/${now}`] = follow(words, path, now)
+    out[`${into}/${now}`] = follow(words, path, now)
     changed = true
   }
   if (changed) keep(PROJECTS, JSON.stringify(out))

@@ -37,6 +37,7 @@ import {
   without,
   withOrWithout,
 } from '../records'
+import { carried, type Moving, moving } from './file-ops'
 
 export const STORAGE_KEY = 'nib:folder-icons'
 
@@ -199,13 +200,19 @@ export class FolderIcons {
    *  The one thing a dotfile inside the folder would have got for free, and the
    *  reason every path that changes has to say so: a key nobody rewrote is an
    *  icon that quietly stops being drawn. Said by every file operation that moves
-   *  one; see workspace/file-ops.ts. */
-  moved(from: string, to: string, root = this.root()) {
+   *  one; see workspace/file-ops.ts. Into another space, `into`, the icons go into
+   *  that space's map, as that space speaks of the folders. */
+  moved(from: string, to: string, root = this.root(), into: string | null = root) {
     if (root === null || from === to) return
 
-    const was = relativeTo(root, from)
-    const now = relativeTo(root, to)
+    const move = moving(from, to, root, into)
+    const { was } = move
     if (!was) return
+    if (move.across) {
+      this.carry(move)
+      return
+    }
+    const now = move.now ?? ''
 
     const rekeyed = (held: Record<string, string>) => {
       const next: Record<string, string> = {}
@@ -222,6 +229,32 @@ export class FolderIcons {
 
     const icons = rekeyed(this.of(root))
     if (icons) this.put(root, icons, rekeyed(this.colorsOf(root)) ?? this.colorsOf(root))
+  }
+
+  /** The icons and tints a move into another space took along. */
+  private carry(move: Moving) {
+    const across = (map: Record<string, string>) =>
+      carried(
+        Object.entries(map),
+        move,
+        ([path]) => path,
+        ([, name], path): [string, string] => [path, name],
+      )
+    const icons = across(this.of(move.root))
+    if (icons.left.length === Object.keys(this.of(move.root)).length) return
+    const colors = across(this.colorsOf(move.root))
+
+    this.put(move.root, Object.fromEntries(icons.left), Object.fromEntries(colors.left))
+    if (!icons.went.length) return
+
+    const held = { ...this.of(move.there) }
+    for (const [path, name] of icons.went) {
+      if (Object.keys(held).length >= MOST_FOLDER_ICONS && !(path in held)) break
+      held[path] = name
+    }
+    const tints = { ...this.colorsOf(move.there) }
+    for (const [path, colour] of colors.went) if (path in held) tints[path] = colour
+    this.put(move.there, held, tints)
   }
 
   /** A folder that has gone, with everything under it. */

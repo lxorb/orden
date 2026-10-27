@@ -861,8 +861,13 @@ function holds(tail: string): boolean {
  *  rewrites the links into it, and a note moved to another folder its own relative
  *  links and pictures (`retargetIn`, `stillReaches`, `filesByName`, `fileNamed` and
  *  `notesByPath` in link-index.svelte.ts, `retargetLinks` in link-rewrite.ts).
- *  Measured 3,373,513 on main with #972. */
-const BUDGET = 3_374_300
+ *  Measured 3,373,513 on main with #972.
+ *
+ *  Raised 2026-10-27, to 3,380,900, for B484: what a space keeps by path follows a
+ *  note or folder moved into another space (`moving` and `carried` in
+ *  workspace/file-ops.ts, used by the excluded, folder icons, arranged, bookmarks and
+ *  archive stores). Measured 3,380,079. */
+const BUDGET = 3_380_900
 const MOST_FILES = 382
 
 /** And how much of the first paint's weight is not code at all but a file quoted into a

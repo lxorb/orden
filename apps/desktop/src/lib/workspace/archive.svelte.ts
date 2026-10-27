@@ -6,9 +6,10 @@
  *  archived. A folder stands for everything under it. See archive-map.ts for how two
  *  copies meet, and docs/archive.md. */
 
-import { insideItsSpace, movedTo, relativeTo, samePath, within } from '../space-paths'
+import { insideItsSpace, relativeTo, within } from '../space-paths'
 import { isNumber, isRecord, keep } from '../stored'
 import { filledIn, type Folded, readSpaces, without } from '../records'
+import { carried, moving } from './file-ops'
 
 export const STORAGE_KEY = 'nib:archived'
 
@@ -122,21 +123,25 @@ export class Archive {
   /** A row renamed or moved: archived at the new path, taken back at the old. Into
    *  another space, `into`, the new path goes into that space's map, as that space
    *  speaks of it; a key relative to the old root would be a path nothing holds. */
-  moved(from: string, to: string, root = this.root(), into = root) {
+  moved(from: string, to: string, root = this.root(), into: string | null = root) {
     if (root === null || from === to) return
 
-    const was = relativeTo(root, from)
-    const carried = [...this.keysOf(root)].filter((one) => under(one, was, root))
-    if (!carried.length) return
+    const move = moving(from, to, root, into)
+    const keys = [...this.keysOf(root)]
+    const { left, went } = carried(
+      keys,
+      move,
+      (one) => one,
+      (_, path) => path,
+    )
+    if (left.length === keys.length) return
 
-    const there = into ?? root
-    const now = relativeTo(there, to)
-    const landed = carried.map((one) => movedTo(one, was, now, root) ?? one)
-    if (samePath(there, root)) {
-      void this.change(root, landed, carried)
+    const taken = keys.filter((one) => !left.includes(one))
+    if (move.across) {
+      void this.change(root, [], taken)
+      if (went.length) void this.change(move.there, went, [])
     } else {
-      void this.change(root, [], carried)
-      void this.change(there, landed, [])
+      void this.change(root, went, taken)
     }
   }
 

@@ -16,6 +16,7 @@
  *  workspace.svelte.ts for who follows, and docs/sync-v2.md for the account's part. */
 
 import { log } from '../log'
+import { movedTo, relativeTo, samePath, within } from '../space-paths'
 
 /** What moved or went: a file, a folder with everything in it, or a whole space. */
 export type Kind = 'file' | 'folder' | 'space'
@@ -107,4 +108,53 @@ export function keeping(store: KeptByPath): Follower {
       else store.moved?.(op.from, op.to, op.root, op.into === undefined ? op.root : op.into)
     }
   }
+}
+
+/** A move as a store kept by path hears it: `was` the path that moved, as the space
+ *  it left speaks of it; `now` where it landed, as the space it landed in (`there`)
+ *  speaks of it, or null where no space holds it any more. `across` for a move into
+ *  another space, or out of every one: what a store holds about the path then leaves
+ *  the source space's map, and goes into `there`'s relative to its root. A key
+ *  rewritten relative to the source root would be a path on this disk, which the map
+ *  drops on its next read, after it has been sent to the account. */
+export interface Moving {
+  root: string
+  was: string
+  there: string
+  now: string | null
+  across: boolean
+}
+
+export function moving(from: string, to: string, root: string, into?: string | null): Moving {
+  const there = into ?? root
+  const now = within(there, to, there)
+  return {
+    root,
+    was: relativeTo(root, from),
+    there,
+    now,
+    across: now === null || !samePath(there, root),
+  }
+}
+
+/** A store's entries split by a move `across`: `left` what stays in the source space,
+ *  `went` what moved with it, each rewritten by `at` to its path in the space it
+ *  landed in. Nothing goes anywhere for a move out of every space. `pathOf` names the
+ *  path an entry is about, or null for one about no path. */
+export function carried<T>(
+  held: Iterable<T>,
+  move: Moving,
+  pathOf: (one: T) => string | null,
+  at: (one: T, path: string) => T,
+): { left: T[]; went: T[] } {
+  const left: T[] = []
+  const went: T[] = []
+  for (const one of held) {
+    const path = pathOf(one)
+    const landed =
+      path === null || !move.was ? null : movedTo(path, move.was, move.now ?? '', move.root)
+    if (landed === null) left.push(one)
+    else if (move.now !== null) went.push(at(one, landed))
+  }
+  return { left, went }
 }
