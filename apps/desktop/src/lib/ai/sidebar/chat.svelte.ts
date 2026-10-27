@@ -28,6 +28,7 @@ import {
   branchThread,
   deleteThread,
   isDeleted,
+  staysDeleted,
   keepThread,
   listEveryThread,
   type Listed,
@@ -177,6 +178,9 @@ class Chat implements Panel {
   private live = new Map<string, Thread>()
   private open: Thread | null = null
   private stoppers = new Map<string, AbortController>()
+  /** Fresh threads sent in while on the provider Ask uses, which they follow again
+   *  should the send come to nothing. */
+  private following = new Set<string>()
   /** One timer a thread waiting for its plan to reset. */
   private timers = new Map<string, ReturnType<typeof setTimeout>>()
   /** Which turns changed since the last frame drew the open thread. */
@@ -454,10 +458,8 @@ class Chat implements Panel {
     if (event.type === 'turn') {
       this.changed.add(event.turn.id)
       if (event.turn.role === 'you') {
-        if (event.turn.steered) {
-          const left = (this.steering[thread.id] ?? []).slice(1)
-          this.steering = { ...this.steering, [thread.id]: left }
-        } else this.pending = without(this.pending, thread.id)
+        if (event.turn.steered) this.tookSteered(thread, event.turn.draft?.text ?? '')
+        else this.pending = without(this.pending, thread.id)
       }
     } else if (event.type === 'part') {
       this.changed.add(event.turn)
@@ -721,6 +723,8 @@ class Chat implements Panel {
     // An answer that ends goes on to the queue itself.
     this.owed.delete(thread.id)
     this.stoppers.set(thread.id, stopper)
+    if (!thread.turns.length && thread.provider === this.providerForNew()?.id)
+      this.following.add(thread.id)
     this.running = [...this.running, thread.id]
     if (text !== undefined) this.pending = { ...this.pending, [thread.id]: text }
     return stopper
@@ -735,22 +739,16 @@ class Chat implements Panel {
     // after its last step) are the next message, first in the queue: never lost.
     const untaken = this.steering[thread.id] ?? []
     this.steering = without(this.steering, thread.id)
-    if (untaken.length && !isDeleted(thread.id)) {
-      const sends: Queued[] = untaken.map((text) => ({
-        id: crypto.randomUUID(),
-        text,
-        chips: [],
-        around: { front: null, selection: '' },
-      }))
-      this.queued = { ...this.queued, [thread.id]: [...sends, ...(this.queued[thread.id] ?? [])] }
-    }
+    this.queueFirst(thread, untaken)
+    const followed = this.following.delete(thread.id)
     this.everything = true
     if (thread === this.open) this.redraw()
     if (!thread.turns.length) {
-      // Nothing was sent after all: it follows the reader's space and provider again.
+      // Nothing was sent after all: it follows the reader's space again, and the
+      // provider Ask uses where it did before the send (not one picked for it).
       if (thread === this.open) {
         this.here(this.space)
-        this.follow(this.providerForNew())
+        if (followed) this.follow(this.providerForNew())
       }
       return
     }
@@ -774,8 +772,9 @@ class Chat implements Panel {
     stopper: AbortController,
   ): Promise<Ended> {
     // Deleted while its message was gathered: nothing is asked. A stop is the engine's,
-    // which keeps the message and says it was stopped.
-    if (isDeleted(thread.id)) return { stop: 'stopped', turn: null, usage: null }
+    // which keeps the message and says it was stopped, as does a delete that failed.
+    if (isDeleted(thread.id) && (await staysDeleted(thread.id)))
+      return { stop: 'stopped', turn: null, usage: null }
     const engine = await engineOf(provider.kind)
     const ended: Ended = { stop: 'end', turn: null, usage: null }
     await engine.send(
@@ -830,7 +829,38 @@ class Chat implements Panel {
     const provider = ai.provider(thread.provider)
     if (!provider) return
     this.steering = { ...this.steering, [thread.id]: [...(this.steering[thread.id] ?? []), text] }
-    void engineOf(provider.kind).then((engine) => engine.steer(thread, text))
+    void engineOf(provider.kind)
+      .then((engine) => engine.steer(thread, text))
+      .catch(() => false)
+      .then((took) => {
+        // Not ready for them yet (still gathered, compacted, set up): the next message,
+        // first in the queue, rather than words the answer never hears.
+        if (!took && this.tookSteered(thread, text)) this.queueFirst(thread, [text])
+      })
+  }
+
+  /** Steered words out of those shown waiting: these words, not the first. False
+   *  where they are not there (the answer ended and queued them already). */
+  private tookSteered(thread: Thread, text: string): boolean {
+    const list = this.steering[thread.id] ?? []
+    const at = list.indexOf(text)
+    if (at < 0) return false
+    const left = list.slice()
+    left.splice(at, 1)
+    this.steering = { ...this.steering, [thread.id]: left }
+    return true
+  }
+
+  /** Words sent next in a thread, before what was queued there. */
+  private queueFirst(thread: Thread, texts: readonly string[]): void {
+    if (!texts.length || isDeleted(thread.id)) return
+    const sends: Queued[] = texts.map((text) => ({
+      id: crypto.randomUUID(),
+      text,
+      chips: [],
+      around: { front: null, selection: '' },
+    }))
+    this.queued = { ...this.queued, [thread.id]: [...sends, ...(this.queued[thread.id] ?? [])] }
   }
 
   /** Stops the open thread's turn, and every helper it started; what arrived stays. */
@@ -1193,7 +1223,10 @@ class Chat implements Panel {
     if (!sure) return
     // Marked deleted before its answer is stopped, so a message still being gathered
     // asks nothing.
-    const deleting = deleteThread(this.spaceOf(id), id).catch(() => undefined)
+    const deleting = deleteThread(this.spaceOf(id), id).then(
+      () => true,
+      () => false,
+    )
     this.stoppers.get(id)?.abort()
     void import('../helpers/helpers.svelte').then(({ helpers }) => {
       helpers.stopUnder(id)
@@ -1203,7 +1236,11 @@ class Chat implements Panel {
     for (const one of this.queued[id] ?? [])
       one.settle?.({ stop: 'stopped', turn: null, usage: null })
     this.queued = without(this.queued, id)
-    await deleting
+    // A delete the crate refused leaves the chat as it is, in the list.
+    if (!(await deleting)) {
+      await this.refreshHeads()
+      return
+    }
     this.live.delete(id)
     if (this.open?.id === id) this.newThread()
     await this.refreshHeads()

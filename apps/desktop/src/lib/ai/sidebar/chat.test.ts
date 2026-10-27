@@ -80,7 +80,7 @@ const engine = vi.hoisted(() => ({
     return Promise.resolve()
   }),
   // Takes nothing: words steered before the engine is ready for them.
-  steer: vi.fn(() => Promise.resolve()),
+  steer: vi.fn((_thread: Thread, _text: string) => Promise.resolve(false)),
 }))
 vi.mock('./setup', () => ({ engineOf: () => Promise.resolve(engine) }))
 
@@ -511,7 +511,7 @@ describe('the field while a message is changed', () => {
       }
       thread.turns.push(turn)
       hearing?.({ type: 'turn', turn })
-      return Promise.resolve()
+      return Promise.resolve(true)
     })
     ;(engine as unknown as { steer: unknown }).steer = steer
     const answer = await queuedBehind(chat)
@@ -802,7 +802,7 @@ describe('a chat while it answers', () => {
     localStorage.clear()
     engine.send.mockReset()
     // An engine that takes no steered words, whatever an earlier test made it.
-    engine.steer = vi.fn(() => Promise.resolve())
+    engine.steer = vi.fn((_thread: Thread, _text: string) => Promise.resolve(false))
   })
 
   const around = { front: null, selection: '' }

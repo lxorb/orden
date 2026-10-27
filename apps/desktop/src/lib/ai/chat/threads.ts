@@ -337,17 +337,32 @@ export function isDeleted(id: string): boolean {
   return removed.has(id)
 }
 
+/** Deletes on their way, by thread. */
+const deleting = new Map<string, Promise<void>>()
+
+/** Whether a thread is deleted for good, once a delete on its way is done. */
+export async function staysDeleted(id: string): Promise<boolean> {
+  await deleting.get(id)?.catch(() => undefined)
+  return removed.has(id)
+}
+
 /** Deletes a thread for good (`/delete`), once a write of it on its way is done. A
  *  delete that fails leaves the thread kept, and written again as it changes. */
-export async function deleteThread(space: string, id: string): Promise<void> {
+export function deleteThread(space: string, id: string): Promise<void> {
   removed.add(id)
-  try {
-    await writing.get(id)?.done.catch(() => undefined)
-    await deleted(space, id)
-  } catch (error) {
-    removed.delete(id)
-    throw error
-  }
+  const done = (async () => {
+    try {
+      await writing.get(id)?.done.catch(() => undefined)
+      await deleted(space, id)
+    } catch (error) {
+      removed.delete(id)
+      throw error
+    } finally {
+      deleting.delete(id)
+    }
+  })()
+  deleting.set(id, done)
+  return done
 }
 
 async function deleted(space: string, id: string): Promise<void> {
