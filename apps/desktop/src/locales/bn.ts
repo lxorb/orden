@@ -2414,4 +2414,5 @@ export const bn: Dictionary = {
   Large: 'বড়',
   Both: 'দুটোই',
   'Shown on cards': 'কার্ডে দেখানো',
+  'Trust this space again': 'এই স্পেসে আবার ভরসা করুন',
 }

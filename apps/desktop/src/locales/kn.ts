@@ -2436,4 +2436,5 @@ export const kn: Dictionary = {
   Large: 'ದೊಡ್ಡ',
   Both: 'ಎರಡೂ',
   'Shown on cards': 'ಕಾರ್ಡ್‌ಗಳಲ್ಲಿ ತೋರಿಸಲಾಗಿದೆ',
+  'Trust this space again': 'ಈ ಸ್ಪೇಸ್ ಅನ್ನು ಮತ್ತೆ ನಂಬಿ',
 }

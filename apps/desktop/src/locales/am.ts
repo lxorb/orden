@@ -2388,4 +2388,5 @@ export const am: Dictionary = {
   Large: 'ትልቅ',
   Both: 'ሁለቱም',
   'Shown on cards': 'በካርዶች ላይ የሚታዩ',
+  'Trust this space again': 'ይህን ቦታ እንደገና እመን',
 }

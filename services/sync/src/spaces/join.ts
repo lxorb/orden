@@ -35,7 +35,7 @@ import { machineOf, mayTellTheOwner } from '../limits'
 import { asksForSecond, halfWay } from '../second'
 import type { Env, Guest, Space, User, Variables } from '../types'
 import { EMAIL_LIMIT, itemName, MOST_MEMBERS, personName, presentItem } from './share'
-import { presentSpace, type Given } from './space'
+import { onceShared, presentSpace, type Given } from './space'
 
 /** A link that opens nothing: one nobody issued, one already spent, or one of the
  *  wrong kind for the route it was sent to. The same words for all of them, because
@@ -245,6 +245,7 @@ async function memberNow(
   )
     .bind(space.id, email, item, role, now())
     .run()
+  await onceShared(env, space.id, item)
 
   return (await roleOf())?.role ?? role
 }
@@ -310,23 +311,24 @@ function guestStanding(env: Env, spaceId: string, guestId: string, item: string)
 }
 
 /** A guest in a space, at a role, either in it or waiting to be. */
-function writeGuestMember(
+async function writeGuestMember(
   env: Env,
   spaceId: string,
   guestId: string,
   role: Given,
   waiting: boolean,
   item: string,
-): Promise<unknown> {
+): Promise<void> {
   // A guest arriving twice at once is one row, not a 500: what `guestStanding`
   // read a moment ago is not a lock on it.
-  return env.DB.prepare(
+  await env.DB.prepare(
     `insert into guest_members (space_id, guest_id, item, role, joined_at, created_at)
      values (?, ?, ?, ?, ?, ?)
      on conflict(space_id, guest_id, item) do nothing`,
   )
     .bind(spaceId, guestId, item, role, waiting ? null : now(), now())
     .run()
+  if (!waiting) await onceShared(env, spaceId, item)
 }
 
 /** The owner is told that somebody is waiting, at the same rate anybody is told

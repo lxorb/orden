@@ -2459,4 +2459,5 @@ export const de: Dictionary = {
   Large: 'Groß',
   Both: 'Beides',
   'Shown on cards': 'Auf Karten gezeigt',
+  'Trust this space again': 'Diesem Bereich wieder vertrauen',
 }

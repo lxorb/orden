@@ -2427,4 +2427,5 @@ export const gsw: Dictionary = {
   Large: 'Gross',
   Both: 'Beides',
   'Shown on cards': 'Uf de Charte zeigt',
+  'Trust this space again': 'Däm Bereich wider vertroue',
 }

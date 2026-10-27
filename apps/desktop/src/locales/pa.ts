@@ -2419,4 +2419,5 @@ export const pa: Dictionary = {
   Large: 'ਵੱਡਾ',
   Both: 'ਦੋਵੇਂ',
   'Shown on cards': 'ਕਾਰਡਾਂ ਉੱਤੇ ਦਿਖਾਇਆ',
+  'Trust this space again': 'ਇਸ ਸਪੇਸ ਉੱਤੇ ਮੁੜ ਭਰੋਸਾ ਕਰੋ',
 }

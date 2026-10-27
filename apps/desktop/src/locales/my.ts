@@ -2393,4 +2393,5 @@ export const my: Dictionary = {
   Large: 'ကြီး',
   Both: 'နှစ်ခုလုံး',
   'Shown on cards': 'ကတ်များပေါ်တွင် ပြသ',
+  'Trust this space again': 'ဤနေရာကို ထပ်မံယုံကြည်ရန်',
 }

@@ -2445,4 +2445,5 @@ export const sw: Dictionary = {
   Large: 'Kubwa',
   Both: 'Zote mbili',
   'Shown on cards': 'Inaonyeshwa kwenye kadi',
+  'Trust this space again': 'Amini nafasi hii tena',
 }

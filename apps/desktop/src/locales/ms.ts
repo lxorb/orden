@@ -2403,4 +2403,5 @@ export const ms: Dictionary = {
   Large: 'Besar',
   Both: 'Kedua-duanya',
   'Shown on cards': 'Ditunjukkan pada kad',
+  'Trust this space again': 'Percayai ruang ini semula',
 }

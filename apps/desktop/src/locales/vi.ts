@@ -2387,4 +2387,5 @@ export const vi: Dictionary = {
   Large: 'Lớn',
   Both: 'Cả hai',
   'Shown on cards': 'Hiển thị trên thẻ',
+  'Trust this space again': 'Tin cậy lại không gian này',
 }

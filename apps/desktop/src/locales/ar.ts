@@ -2535,4 +2535,5 @@ export const ar: Dictionary = {
   Large: 'كبير',
   Both: 'كلاهما',
   'Shown on cards': 'معروضة على البطاقات',
+  'Trust this space again': 'الوثوق بهذه المساحة مجددًا',
 }

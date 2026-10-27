@@ -2379,4 +2379,5 @@ export const ko: Dictionary = {
   Large: '크게',
   Both: '둘 다',
   'Shown on cards': '카드에 표시',
+  'Trust this space again': '이 공간을 다시 신뢰',
 }

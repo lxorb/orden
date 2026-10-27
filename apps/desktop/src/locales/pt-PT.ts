@@ -2471,4 +2471,5 @@ export const ptPT: Dictionary = {
   Large: 'Grande',
   Both: 'Ambos',
   'Shown on cards': 'Mostrado nos cartões',
+  'Trust this space again': 'Confiar novamente neste espaço',
 }

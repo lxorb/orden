@@ -2458,4 +2458,5 @@ export const ptBR: Dictionary = {
   Large: 'Grande',
   Both: 'Ambos',
   'Shown on cards': 'Exibido nos cartões',
+  'Trust this space again': 'Confiar neste espaço de novo',
 }

@@ -2411,4 +2411,5 @@ export const hi: Dictionary = {
   Large: 'बड़ा',
   Both: 'दोनों',
   'Shown on cards': 'कार्ड पर दिखाए गए',
+  'Trust this space again': 'इस स्पेस पर फिर से भरोसा करें',
 }

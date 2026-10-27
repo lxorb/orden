@@ -2425,4 +2425,5 @@ export const te: Dictionary = {
   Large: 'పెద్దది',
   Both: 'రెండూ',
   'Shown on cards': 'కార్డులపై చూపబడేవి',
+  'Trust this space again': 'ఈ స్పేస్‌ను మళ్లీ నమ్మండి',
 }

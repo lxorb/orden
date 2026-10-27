@@ -2393,4 +2393,5 @@ export const jv: Dictionary = {
   Large: 'Gedhe',
   Both: 'Loro-lorone',
   'Shown on cards': 'Ditampilake ing kertu',
+  'Trust this space again': 'Pitados papan iki maneh',
 }

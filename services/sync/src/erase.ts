@@ -114,6 +114,7 @@ export const ERASED: readonly (readonly [table: string, sql: string])[] = [
   ['space_links', `delete from space_links where space_id in (${OWNED})`],
   ['space_requests', `delete from space_requests where space_id in (${OWNED}) or email = ?2`],
   ['guest_members', `delete from guest_members where space_id in (${OWNED})`],
+  ['once_shared', `delete from once_shared where space_id in (${OWNED})`],
   // A guest who said it was at this address only said so: it is not the account's to
   // take away, but the address it typed is, and no sign-in there claims it now (#488).
   ['guests', 'update guests set email = null where email = ?2'],

@@ -2354,4 +2354,5 @@ export const zhHans: Dictionary = {
   Large: '大',
   Both: '两者',
   'Shown on cards': '在卡片上显示',
+  'Trust this space again': '再次信任此空间',
 }

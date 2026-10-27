@@ -260,6 +260,7 @@ import {
   originOfDocument,
   othersIn,
   reachedByOthers,
+  reachedAs,
   reachedByOthersIn,
   roleOf,
   share,
@@ -897,7 +898,22 @@ describe('a space somebody has left', () => {
 
     expect(isSharedItem('Home/shared.md')).toBe(false)
     expect(reachedByOthers('Home/shared.md')).toBe(true)
+    expect(reachedAs('Home/shared.md')).toBe('note')
     expect(reachedByOthers('Home/other.md')).toBe(false)
+    expect(reachedByOthersIn('Home')).toBe(true)
+  })
+
+  test('marks the whole space for an answer that names many of its notes', () => {
+    world.mirrors = { Home: 'space-1', Solo: 'space-2' }
+    account.spaces = [
+      { ...remote('space-1', 'owner'), onceShared: true },
+      remote('space-2', 'owner'),
+    ]
+    account.listed = true
+
+    expect(reachedAs('Home/evil.md')).toBe('space')
+    expect(reachedByOthersIn('Home')).toBe(true)
+    expect(reachedByOthersIn('Solo')).toBe(false)
   })
 
   test('stays reached once this device saw it shared, whatever a later listing says', async () => {

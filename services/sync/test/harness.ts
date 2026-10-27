@@ -336,6 +336,10 @@ interface SpaceView {
   shared: boolean
   /** Which of its files are shared on their own, by note id; see 0026. */
   sharedItems: string[]
+  /** Whether anybody besides the owner could once write in it, and which of its files
+   *  were once shared on their own; see 0065. */
+  onceShared?: boolean
+  onceSharedItems?: string[]
   bookmarks: BookmarkView[]
   icons: Record<string, string>
   /** And the colour each of those icons is drawn in, under the same keys. */

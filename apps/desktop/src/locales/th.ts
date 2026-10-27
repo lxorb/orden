@@ -2369,4 +2369,5 @@ export const th: Dictionary = {
   Large: 'ใหญ่',
   Both: 'ทั้งสองแบบ',
   'Shown on cards': 'แสดงบนการ์ด',
+  'Trust this space again': 'เชื่อถือพื้นที่นี้อีกครั้ง',
 }

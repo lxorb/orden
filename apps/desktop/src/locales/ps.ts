@@ -2417,4 +2417,5 @@ export const ps: Dictionary = {
   Large: 'لوی',
   Both: 'دواړه',
   'Shown on cards': 'په کارتونو ښودل شوي',
+  'Trust this space again': 'په دې ځای بیا باور وکړئ',
 }

@@ -2425,4 +2425,5 @@ export const tr: Dictionary = {
   Large: 'Büyük',
   Both: 'İkisi de',
   'Shown on cards': 'Kartlarda gösterilen',
+  'Trust this space again': 'Bu alana yeniden güven',
 }

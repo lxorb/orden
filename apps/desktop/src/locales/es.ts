@@ -2474,4 +2474,5 @@ export const es: Dictionary = {
   Large: 'Grande',
   Both: 'Ambos',
   'Shown on cards': 'Visible en las tarjetas',
+  'Trust this space again': 'Volver a confiar en este espacio',
 }

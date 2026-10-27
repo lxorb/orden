@@ -2397,4 +2397,5 @@ export const ja: Dictionary = {
   Large: '大',
   Both: '両方',
   'Shown on cards': 'カードに表示',
+  'Trust this space again': 'このスペースを再び信頼する',
 }

@@ -2447,4 +2447,5 @@ export const ta: Dictionary = {
   Large: 'பெரியது',
   Both: 'இரண்டும்',
   'Shown on cards': 'அட்டைகளில் காட்டப்படுபவை',
+  'Trust this space again': 'இந்த இடத்தை மீண்டும் நம்பு',
 }

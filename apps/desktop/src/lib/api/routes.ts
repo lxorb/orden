@@ -202,6 +202,11 @@ export interface RemoteSpace {
    *  mark those rows. Empty for a space somebody else owns, and absent from a
    *  build of the service older than this app. */
   sharedItems?: string[]
+  /** Whether anybody besides the owner could once write in it, and which of its files
+   *  were once shared on their own. Kept after they leave, since what they wrote stays,
+   *  until the owner trusts the space again. Absent from an older service. */
+  onceShared?: boolean
+  onceSharedItems?: string[]
   /** How many notes it holds. What a machine bringing the account down for the
    *  first time counts against, since it knows this before the first note has
    *  landed; see arriving.svelte.ts. */
@@ -911,6 +916,11 @@ export const routes = {
    *  cannot be left, only deleted. */
   leaveSpace: (token: string, id: string) =>
     request<{ ok: true }>(`/v1/spaces/${id}/share/me`, { method: 'DELETE', token }),
+
+  /** The owner saying a space somebody once wrote in is theirs again; see
+   *  `onceShared` on RemoteSpace. */
+  trustSpace: (token: string, id: string) =>
+    request<{ ok: true }>(`/v1/spaces/${id}/share/trust`, { method: 'POST', token }),
 
   /** The files somebody shared on their own, which belong to no space this
    *  account can reach: what the switcher's Shared-with-you section is drawn

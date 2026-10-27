@@ -2481,4 +2481,5 @@ export const it: Dictionary = {
   Large: 'Grande',
   Both: 'Entrambi',
   'Shown on cards': 'Mostrato sulle schede',
+  'Trust this space again': 'Fidati di nuovo di questo spazio',
 }

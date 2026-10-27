@@ -2457,4 +2457,5 @@ export const fil: Dictionary = {
   Large: 'Malaki',
   Both: 'Pareho',
   'Shown on cards': 'Ipinapakita sa mga card',
+  'Trust this space again': 'Pagkatiwalaan muli ang space na ito',
 }

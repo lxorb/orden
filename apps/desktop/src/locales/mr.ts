@@ -2417,4 +2417,5 @@ export const mr: Dictionary = {
   Large: 'मोठा',
   Both: 'दोन्ही',
   'Shown on cards': 'कार्डवर दाखवलेले',
+  'Trust this space again': 'या स्पेसवर पुन्हा विश्वास ठेवा',
 }

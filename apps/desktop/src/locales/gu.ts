@@ -2406,4 +2406,5 @@ export const gu: Dictionary = {
   Large: 'મોટું',
   Both: 'બંને',
   'Shown on cards': 'કાર્ડ પર દેખાય છે',
+  'Trust this space again': 'આ સ્પેસ પર ફરી વિશ્વાસ કરો',
 }

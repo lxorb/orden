@@ -2412,4 +2412,5 @@ export const ur: Dictionary = {
   Large: 'بڑا',
   Both: 'دونوں',
   'Shown on cards': 'کارڈز پر دکھائے گئے',
+  'Trust this space again': 'اس اسپیس پر دوبارہ بھروسا کریں',
 }

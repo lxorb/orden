@@ -2445,4 +2445,5 @@ export const ha: Dictionary = {
   Large: 'Babba',
   Both: 'Duka biyu',
   'Shown on cards': 'Ana nunawa a katuna',
+  'Trust this space again': 'Sake amincewa da wannan wuri',
 }

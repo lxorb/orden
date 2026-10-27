@@ -2497,4 +2497,5 @@ export const uk: Dictionary = {
   Large: 'Велике',
   Both: 'Обидва',
   'Shown on cards': 'Показано на картках',
+  'Trust this space again': 'Знову довіряти цьому простору',
 }

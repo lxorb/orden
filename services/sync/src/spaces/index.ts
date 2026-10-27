@@ -31,6 +31,7 @@ import {
   atLeast,
   itemsSharedIn,
   notesAmong,
+  onceSharedAmong,
   presentSpace,
   sharedAmong,
   spaceOf,
@@ -115,6 +116,11 @@ spaces.get('/', async (context) => {
   // who else was given a note of somebody else's space is that owner's to see.
   const items = await itemsSharedIn(context.env, own)
 
+  // And which of them, or which of their files, somebody besides the owner could once
+  // write in. Not the rail's mark, which is about now, but what the app's trust marks
+  // ask: words written by somebody who has since left are still theirs.
+  const once = await onceSharedAmong(context.env, own)
+
   // And up to three faces of the others in each shared space, which the switcher draws
   // beside its mark. An account's alone; a guest has nobody's profile to read.
   const together = results
@@ -150,6 +156,8 @@ spaces.get('/', async (context) => {
           items.get(one.id) ?? [],
         ),
         people: faces.get(one.id) ?? [],
+        onceShared: once.spaces.has(one.id),
+        onceSharedItems: once.items.get(one.id) ?? [],
       }
 
       return asking ? withoutSetup(view) : view

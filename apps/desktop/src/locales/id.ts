@@ -2401,4 +2401,5 @@ export const id: Dictionary = {
   Large: 'Besar',
   Both: 'Keduanya',
   'Shown on cards': 'Ditampilkan di kartu',
+  'Trust this space again': 'Percayai ruang ini lagi',
 }

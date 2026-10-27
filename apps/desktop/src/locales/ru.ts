@@ -2504,4 +2504,5 @@ export const ru: Dictionary = {
   Large: 'Большое',
   Both: 'Оба',
   'Shown on cards': 'Показано на карточках',
+  'Trust this space again': 'Снова доверять этому пространству',
 }

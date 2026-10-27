@@ -2352,4 +2352,5 @@ export const yue: Dictionary = {
   Large: '大',
   Both: '兩樣都要',
   'Shown on cards': '喺卡片上面顯示',
+  'Trust this space again': '再次信任呢個空間',
 }

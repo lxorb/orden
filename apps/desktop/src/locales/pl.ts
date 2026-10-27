@@ -2504,4 +2504,5 @@ export const pl: Dictionary = {
   Large: 'Duże',
   Both: 'Oba',
   'Shown on cards': 'Widoczne na kartach',
+  'Trust this space again': 'Ponownie zaufaj tej przestrzeni',
 }

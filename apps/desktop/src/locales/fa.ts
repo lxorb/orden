@@ -2418,4 +2418,5 @@ export const fa: Dictionary = {
   Large: 'بزرگ',
   Both: 'هر دو',
   'Shown on cards': 'نمایش روی کارت‌ها',
+  'Trust this space again': 'دوباره به این فضا اعتماد کن',
 }

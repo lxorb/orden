@@ -2441,4 +2441,5 @@ export const ml: Dictionary = {
   Large: 'വലുത്',
   Both: 'രണ്ടും',
   'Shown on cards': 'കാർഡുകളിൽ കാണിക്കുന്നവ',
+  'Trust this space again': 'ഈ സ്പേസിനെ വീണ്ടും വിശ്വസിക്കുക',
 }
