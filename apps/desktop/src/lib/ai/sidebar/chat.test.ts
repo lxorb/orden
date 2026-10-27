@@ -12,7 +12,7 @@ vi.stubGlobal('localStorage', memoryStorage())
 const kept = vi.hoisted(() => new Map<string, Map<string, { head: unknown; body: string }>>())
 const deleted = vi.hoisted(() => [] as string[])
 /** A delete the crate refuses, once. */
-const refusing = vi.hoisted(() => ({ delete: false }))
+const refusing = vi.hoisted(() => ({ delete: false, after: Promise.resolve() }))
 
 vi.mock('../../tauri', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../tauri')>()),
@@ -32,7 +32,7 @@ vi.mock('../../tauri', async (importOriginal) => ({
     if (command === 'ai_thread_delete') {
       if (refusing.delete) {
         refusing.delete = false
-        return Promise.reject(new Error('locked'))
+        return refusing.after.then(() => Promise.reject(new Error('locked')))
       }
       shelf.delete(String(args.id))
       deleted.push(`${space}/${String(args.id)}`)
@@ -1038,5 +1038,101 @@ describe('a chat while it answers', () => {
 
     expect(chat.heads.map((one) => one.id)).toContain(id)
     expect(kept.get('work')?.get(id)?.body).toContain('Plan, still here')
+  })
+  test('sends next only the steered words the answer never took, once', async () => {
+    const chat = await asked()
+    await settled()
+    const go = held()
+    let ready = false
+    let hear: (event: EngineEvent) => void = () => undefined
+    let answer: () => void = () => undefined
+    engine.send.mockImplementationOnce(
+      (thread: Thread, draft: Draft, on: (event: EngineEvent) => void) =>
+        new Promise<void>((resolve) => {
+          thread.turns.push({ id: crypto.randomUUID(), role: 'you', at: 1, parts: [], draft })
+          thread.turns.push({ id: crypto.randomUUID(), role: 'model', at: 1, parts: [] })
+          ready = true
+          hear = on
+          answer = () => {
+            on({ type: 'done', stop: 'end' })
+            resolve()
+          }
+        }),
+    )
+    // Takes words only once the answer is ready for them, as both engines do.
+    engine.steer = vi.fn((thread: Thread, text: string) => {
+      if (!ready) return Promise.resolve(false)
+      const turn = {
+        id: crypto.randomUUID(),
+        role: 'you' as const,
+        at: 1,
+        parts: [],
+        steered: true,
+        draft: { text, attachments: [] },
+      }
+      thread.turns.push(turn)
+      hear({ type: 'turn', turn })
+      return Promise.resolve(true)
+    })
+    chat.text = 'first'
+    chat.submit(around)
+    // While the message is gathered: the engine is not ready for these.
+    chat.text = 'A'
+    chat.steer()
+    await settled()
+    go()
+    await vi.waitFor(() => expect(engine.send).toHaveBeenCalledTimes(1))
+    chat.text = 'B'
+    chat.steer()
+    await settled()
+
+    answer()
+
+    await vi.waitFor(() => expect(engine.send).toHaveBeenCalledTimes(2))
+    await settled()
+    const sent = engine.send.mock.calls as unknown as [unknown, Draft][]
+    expect(sent.map((call) => call[1].text)).toEqual(['first', 'A'])
+    expect(words(chat.thread).filter((one) => one === 'B')).toHaveLength(1)
+  })
+
+  test('keeps the provider picked for a fresh chat whose first message is refused', async () => {
+    const chat = await launched()
+    chat.here('work')
+    chat.know(['work'])
+    await settled()
+    chat.setModel('other', 'm2')
+    engine.send.mockImplementationOnce(() => Promise.reject(new Error('down')))
+    chat.text = 'first'
+    chat.submit(around)
+    await vi.waitFor(() => expect(chat.trouble).toBe('down'))
+    await settled()
+
+    expect([chat.thread?.provider, chat.thread?.model]).toEqual(['other', 'm2'])
+  })
+
+  test('keeps the message of a chat whose delete was refused while it was gathered', async () => {
+    const chat = await asked()
+    const id = String(chat.thread?.id)
+    await settled()
+    const go = held()
+    stoppable()
+    let refuse: () => void = () => undefined
+    refusing.delete = true
+    refusing.after = new Promise<void>((resolve) => (refuse = resolve))
+    chat.text = 'my new question'
+    chat.submit(around)
+
+    // The message is gathered before the crate says the delete failed.
+    const removing = chat.remove(id)
+    await settled()
+    go()
+    await settled()
+    refuse()
+    await removing
+    await vi.waitFor(() => expect(chat.busy).toBe(false))
+    await settled()
+
+    expect(chat.heads.map((one) => one.id)).toContain(id)
+    expect(kept.get('work')?.get(id)?.body).toContain('my new question')
   })
 })
