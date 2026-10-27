@@ -12,6 +12,8 @@
  *  and leaves the match ready to copy. Reading it as one string is what lets a
  *  match run across a tag: `the **word**` is two nodes and one phrase. */
 
+import { fold } from '../search/match'
+
 /** Where one text node's words start in the page's words. */
 export interface Piece {
   node: Text
@@ -38,10 +40,13 @@ function scan(haystack: string, needle: string): number[] {
 
 /** Every place `query` appears in `text`, as offsets into it. Case is ignored, the
  *  way every find field in every editor ignores it. Empty for an empty query,
- *  which is a field nobody has typed in yet rather than a search for nothing. */
+ *  which is a field nobody has typed in yet rather than a search for nothing.
+ *
+ *  Folded the way search folds, keeping the length: an offset in the folded text
+ *  has to be the same offset in the page, and `İ` lowercases into two. */
 export function placesOf(text: string, query: string): number[] {
   if (!query) return []
-  return scan(text.toLowerCase(), query.toLowerCase())
+  return scan(fold(text), fold(query))
 }
 
 /** The same over a page that was read once, which is what the reading view has.
@@ -51,7 +56,7 @@ export function placesOf(text: string, query: string): number[] {
  *  per letter typed is the one cost in a find bar that scales with the document. */
 export function placesIn(words: Words, query: string): number[] {
   if (!query) return []
-  return scan((words.folded ??= words.text.toLowerCase()), query.toLowerCase())
+  return scan((words.folded ??= fold(words.text)), fold(query))
 }
 
 /** Which piece an offset falls in, and how far into that piece it is. Null when
@@ -113,6 +118,9 @@ export function rangeOf(words: Words, offset: number, length: number): Range | n
   return range
 }
 
+/** What each page has painted under each of the registry's names. */
+const painted = new Map<string, Map<object, readonly Range[]>>()
+
 /** Paints a set of ranges under one of the registry's names, or takes the name
  *  down when there is nothing to paint.
  *
@@ -120,10 +128,20 @@ export function rangeOf(words: Words, offset: number, length: number): Range | n
  *  and the wrong one: an input holds its caret in the same selection the page
  *  does, so moving it leaves the find field with nowhere to type - the second
  *  letter of a query never arrives. A highlight is the browser's own paint over a
- *  range and touches neither the caret nor what a reader has selected to copy. */
-export function paint(name: string, ranges: readonly Range[]): void {
+ *  range and touches neither the caret nor what a reader has selected to copy.
+ *
+ *  Per `owner`, because the name is the theme's and so one for every pane: two
+ *  pages finding at once each replace only their own share of it. */
+export function paint(owner: object, name: string, ranges: readonly Range[]): void {
+  const owners = painted.get(name) ?? new Map<object, readonly Range[]>()
+  if (ranges.length) owners.set(owner, ranges)
+  else owners.delete(owner)
+  if (owners.size) painted.set(name, owners)
+  else painted.delete(name)
+
+  const all = [...owners.values()].flat()
   try {
-    if (ranges.length) CSS.highlights.set(name, new Highlight(...ranges))
+    if (all.length) CSS.highlights.set(name, new Highlight(...all))
     else CSS.highlights.delete(name)
   } catch {
     // An engine without a highlight registry. The types say there is always one;
