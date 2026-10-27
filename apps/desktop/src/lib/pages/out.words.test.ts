@@ -34,7 +34,12 @@ const emOf = (one: string) =>
  *  single characters overruns the card. */
 const widthOf = (text: string, size: number) => {
   const sum = Array.from(text).reduce((all, one) => all + emOf(one) * size, 0)
-  return Array.from(text).length > 1 && /\p{Script=Hiragana}/u.test(text) ? sum * 1.07 : sum
+  if (Array.from(text).length < 2) return sum
+  if (/\p{Script=Hiragana}/u.test(text)) return sum * 1.07
+  // And Arabic the other way: a letter alone is its wide isolated form, so a run is
+  // narrower whole than its letters one by one, about 0.72 of them in Chromium.
+  if (/\p{Script=Arabic}/u.test(text)) return sum * 0.72
+  return sum
 }
 vi.mock('./raster', () => ({
   svgToPng: (svg: string) => {
@@ -154,6 +159,15 @@ describe('words typed on a page', () => {
     expect(first).toContain(hex('Friday'))
   })
 
+  test('in a colour the theme gives as rgb() print in that colour', async () => {
+    const canvas = note()
+    const card = canvas.nodes.find((node) => node.id === 'w1') as CanvasNode & { color?: string }
+    card.color = 'rgb(255, 0, 0)'
+    const first = await contentOf((await pagesPdf(out(canvas)))!, 0)
+
+    expect(first).toMatch(/^1 0 0 rg$/m)
+  })
+
   test('in a colour of three hex digits print in that colour', async () => {
     const canvas = note()
     const card = canvas.nodes.find((node) => node.id === 'w1') as CanvasNode & { color?: string }
@@ -260,6 +274,23 @@ describe('ink in the pen with no colour of its own (B571)', () => {
   })
 })
 
+/** The lines a browser sets a paragraph in: as many parts as fit, measured whole. */
+function greedy(text: string, between: string, room: number, size: number): string[] {
+  const parts = between ? text.split(between) : Array.from(text)
+  const lines: string[] = []
+  let now = ''
+  for (const part of parts) {
+    const next = now ? `${now}${between}${part}` : part
+    if (!now || widthOf(next, size) <= room) now = next
+    else {
+      lines.push(now)
+      now = part
+    }
+  }
+  lines.push(now)
+  return lines
+}
+
 /** The lines of words a picture sets, and the size they are set at. */
 function setLines(svg: string): { lines: string[]; size: number } {
   const size = Number(/<text[^>]*font-size="([\d.]+)"/.exec(svg)?.[1])
@@ -318,6 +349,64 @@ describe('words set as a picture', () => {
     const { lines, size } = setLines(raster.drawn[0] ?? '')
     for (const line of lines) expect(widthOf(line, size)).toBeLessThanOrEqual(300 - 12)
     expect(lines.join('')).toBe(card.text)
+  })
+
+  test.each([
+    [
+      'Persian, narrower whole',
+      'این یک متن فارسی طولانی است که باید در داخل کارت بپیچد و از مرزهای آن خارج نشود',
+      ' ',
+    ],
+    [
+      'Urdu, narrower whole',
+      'یہ ایک لمبا اردو جملہ ہے جو کارڈ کے اندر لپیٹا جانا چاہیے اور باہر نہیں جانا چاہیے',
+      ' ',
+    ],
+    [
+      'kana, wider whole',
+      'ましたしてもらいましたけれどもそういうことでしたらまたあしたにしましょうね。わかりました。',
+      '',
+    ],
+  ])('take as many lines as the screen does: %s', async (_name, text, between) => {
+    raster.drawn = []
+    const canvas = note()
+    const card = canvas.nodes.find((node) => node.id === 'w1') as CanvasNode & {
+      text: string
+      bare?: boolean
+    }
+    card.bare = false
+    card.text = text
+    card.width = 260
+    card.height = 400
+    await pagesPdf(out(canvas))
+
+    const { lines, size } = setLines(raster.drawn[0] ?? '')
+    expect(lines).toHaveLength(greedy(text, between, 260 - 24, size).length)
+    for (const line of lines) expect(widthOf(line, size)).toBeLessThanOrEqual(260 - 24)
+  })
+
+  test('break Thai between its words, which it writes without spaces', async () => {
+    raster.drawn = []
+    const canvas = note()
+    const card = canvas.nodes.find((node) => node.id === 'w1') as CanvasNode & { text: string }
+    card.text = 'ภาษาไทยเป็นภาษาที่ไม่มีช่องว่างระหว่างคำและต้องตัดคำตามพจนานุกรม'
+    card.width = 120
+    card.height = 400
+    await pagesPdf(out(canvas))
+
+    const { lines } = setLines(raster.drawn[0] ?? '')
+    const ends = new Set(
+      Array.from(
+        new Intl.Segmenter('th', { granularity: 'word' }).segment(card.text),
+        (one) => one.index + one.segment.length,
+      ),
+    )
+    expect(lines.length).toBeGreaterThan(1)
+    let at = 0
+    for (const line of lines.slice(0, -1)) {
+      at += line.length
+      expect(ends.has(at)).toBe(true)
+    }
   })
 
   test('never split an emoji made of several', async () => {
