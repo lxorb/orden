@@ -1491,3 +1491,88 @@ describe('straightening what was drawn', () => {
     expect(verbs(effects)).not.toContain('menu')
   })
 })
+
+/** #349, Emil: "holding down with your finger and then dragging after some short
+ *  waiting time to get a lasso instead of a normal select". A finger held still on the
+ *  bare plane opens the menu as it always has; moved on from there, the menu goes and
+ *  the finger draws a loop from where it was held, which catches cards as well as ink. */
+describe('a finger held on the bare plane, then moved', () => {
+  const at = (x: number, y: number) => ({ x, y })
+  const move = (x: number, y: number): Input => ({
+    kind: 'move',
+    id: 1,
+    at: at(x, y),
+    screen: at(x, y),
+    samples: [],
+    hit: NOTHING,
+  })
+
+  test('puts the menu away and draws a lasso from where it was held', () => {
+    const { machine, effects } = play(
+      [
+        down({ pointer: 'touch', at: at(10, 10), screen: at(10, 10) }),
+        { kind: 'held', at: at(10, 10) },
+        move(40, 10),
+        move(40, 40),
+        move(10, 40),
+      ],
+      context(),
+    )
+    expect(verbs(effects)).toEqual(['leave', 'menu', 'unmenu'])
+    expect(machine.gesture).toMatchObject({
+      kind: 'lasso',
+      cards: true,
+      points: [at(10, 10), at(40, 10), at(40, 40), at(10, 40)],
+    })
+  })
+
+  test('and let go, catches what the loop goes round, cards as well', () => {
+    const { effects } = play(
+      [
+        down({ pointer: 'touch', at: at(10, 10), screen: at(10, 10) }),
+        { kind: 'held', at: at(10, 10) },
+        move(40, 10),
+        move(40, 40),
+        { kind: 'up', id: 1, at: at(10, 40), screen: at(10, 40), hit: NOTHING },
+      ],
+      context(),
+    )
+    expect(effects.at(-1)).toMatchObject({ do: 'catch', cards: true })
+  })
+
+  test('let go where it was held, leaves the menu up and draws nothing', () => {
+    const { machine, effects } = play(
+      [
+        down({ pointer: 'touch', at: at(10, 10), screen: at(10, 10) }),
+        { kind: 'held', at: at(10, 10) },
+        move(11, 10),
+        { kind: 'up', id: 1, at: at(11, 10), screen: at(11, 10), hit: NOTHING },
+      ],
+      context(),
+    )
+    expect(verbs(effects)).toEqual(['leave', 'menu'])
+    expect(machine.gesture).toBeNull()
+  })
+
+  test('a finger that moved at once moves the plane, as it always has', () => {
+    const { effects } = play(
+      [down({ pointer: 'touch', at: at(10, 10), screen: at(10, 10) }), move(60, 10)],
+      context(),
+    )
+    expect(verbs(effects)).toContain('pan')
+  })
+
+  test('a finger held on a card still only asks for the menu', () => {
+    const { machine, effects } = play(
+      [
+        down({ pointer: 'touch', hit: hit({ node: 'a' }) }),
+        { kind: 'held', at: at(7, 8) },
+        move(80, 80),
+      ],
+      context(),
+    )
+    expect(effects).toContainEqual({ do: 'menu', at: at(7, 8) })
+    expect(verbs(effects)).not.toContain('unmenu')
+    expect(machine.gesture?.kind).not.toBe('lasso')
+  })
+})
