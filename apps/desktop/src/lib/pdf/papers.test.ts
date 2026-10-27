@@ -414,3 +414,78 @@ describe('a space read back before the file list has said anything', () => {
     expect(found('ink')).toEqual([])
   })
 })
+
+/** A page note's paper sits beside it as `Lecture.pages.pdf`, and the file list shows
+ *  only the note. A rename, a move or a delete names the note, and the paper goes
+ *  with it on disk (`move_held` in paths.rs), so its words have to go with it here. */
+describe('the paper a page note holds', () => {
+  const NOTE = `${ROOT}/Lecture.pages`
+  const PAPER = `${ROOT}/Lecture.pages.pdf`
+
+  beforeEach(async () => {
+    paperOpened(PAPER, 'h1', 1)
+    paperRead(PAPER, 1, page('entropy of a closed system'))
+    await writePapers()
+  })
+
+  test('follows the note renamed, in memory and in the store', async () => {
+    paperMoved(NOTE, `${ROOT}/Physics.pages`)
+    await writePapers()
+
+    expect(found('entropy').map((hit) => hit.path)).toEqual([`${ROOT}/Physics.pages.pdf`])
+    expect(store.records.has(PAPER)).toBe(false)
+    expect(store.records.has(`${ROOT}/Physics.pages.pdf`)).toBe(true)
+  })
+
+  test('follows the note into another space', async () => {
+    paperMoved(NOTE, '/other/shelf/Lecture.pages')
+
+    expect(found('entropy')).toEqual([])
+    const there = searchPapers('/other', parseQuery('entropy'), 20)
+    expect(there.map((hit) => hit.path)).toEqual(['/other/shelf/Lecture.pages.pdf'])
+  })
+
+  test('goes with the note deleted, in memory and in the store', () => {
+    paperGone(NOTE)
+
+    expect(found('entropy')).toEqual([])
+    expect(store.records.has(PAPER)).toBe(false)
+  })
+
+  test('leaves no record behind a note renamed while its words were only in the store', async () => {
+    forgetPapers()
+    paperMoved(NOTE, `${ROOT}/Physics.pages`)
+    await Promise.resolve()
+
+    expect(store.records.has(PAPER)).toBe(false)
+  })
+
+  test('does not come back under the old name from a walk in the air', async () => {
+    forgetPapers()
+    store.reading = (path) => {
+      if (path === PAPER) paperMoved(NOTE, `${ROOT}/Physics.pages`)
+    }
+    await papersFor(ROOT)
+
+    expect(found('entropy').map((hit) => hit.path)).not.toContain(PAPER)
+  })
+
+  test('left behind by an older build is dropped once the list says its note is gone', async () => {
+    forgetPapers()
+    papersListed(ROOT, new Map(), [])
+    await papersFor(ROOT)
+
+    expect(found('entropy')).toEqual([])
+    await Promise.resolve()
+    expect(store.records.has(PAPER)).toBe(false)
+  })
+
+  test('is kept where the list still has its note', async () => {
+    forgetPapers()
+    papersListed(ROOT, new Map(), [NOTE])
+    await papersFor(ROOT)
+
+    expect(found('entropy').map((hit) => hit.path)).toEqual([PAPER])
+    expect(store.records.has(PAPER)).toBe(true)
+  })
+})
