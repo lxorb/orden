@@ -208,9 +208,13 @@ export function partOf(file: string, catalogue: boolean): Part {
  *  the 8 MiB ceiling is out of every part's reach without a change to this table.
  *
  *  The code raised on 2026-10-24, to 5,700,000, for the second bug burn-down landed
- *  together (#681 to #948). Measured 5,654,763. */
+ *  together (#681 to #948). Measured 5,654,763.
+ *
+ *  Raised on 2026-10-27, to 5,702,000, for B561 and B562: a file the account has no room
+ *  for waits on its own while the rest of the space syncs (sync2/files.ts, pass.ts).
+ *  Measured 5,700,168. */
 export const BUDGETS: Record<Part, number> = {
-  code: 5_700_000,
+  code: 5_702_000,
   catalogues: 850_000,
   styles: 290_000,
   fonts: 260_000,
