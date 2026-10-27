@@ -80,4 +80,20 @@ describe('what a note gives the rows of its space', () => {
     const code = scanRows('- [ ] a\n  ```\n  not words\n  ```\n  words\r\n')
     expect(code.tasks[0]?.description).toBe('words')
   })
+
+  test('a fence closes on its own mark, and code in quotes, items and indents holds no task', () => {
+    const texts = (text: string) => scanRows(text).tasks.map((one) => one.text)
+    expect(texts('```\n~~~\n```\n\n- [ ] call Bob\n')).toEqual(['call Bob'])
+    expect(texts('~~~md\n```js\n- [ ] example\n```\n~~~\n- [ ] real\n')).toEqual(['real'])
+    expect(texts('> ```\n> - [ ] example\n> ```\n\n- [ ] real\n')).toEqual(['real'])
+    expect(texts('Words.\n\n    - [ ] example\n\n- [ ] real\n')).toEqual(['real'])
+    expect(texts('- a\n  ```\n  - [ ] example\n  ```\n- [ ] real\n')).toEqual(['real'])
+  })
+
+  test('a task in a list item, nested or not, is still one', () => {
+    const texts = (text: string) => scanRows(text).tasks.map((one) => one.text)
+    expect(
+      texts('- [ ] one\n    - [ ] two\n\t- [ ] three\n- item\n  - [ ] four\n\n  - [ ] five\n'),
+    ).toEqual(['one', 'two', 'three', 'four', 'five'])
+  })
 })

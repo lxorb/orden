@@ -376,6 +376,22 @@ describe('finding the links in a note', () => {
     expect(findLinks('~~~md\n[[Note]]\n~~~').map((one) => one.target)).toEqual([])
   })
 
+  test('a block in a quote, in a list item or indented is code too', () => {
+    // The twins of the crate's cases in links.rs.
+    const targets = (text: string) => findLinks(text).map((one) => one.target)
+    expect(targets('> ```\n> [[Example]]\n> ```\n\n[[Real]]\n')).toEqual(['Real'])
+    expect(targets('Words.\n\n    [[Example]]\n\n[[Real]]\n')).toEqual(['Real'])
+    expect(targets('- a\n  ```\n  [[Example]]\n  ```\n- [[Real]]\n')).toEqual(['Real'])
+    expect(targets('> see [[Quoted]]\n- and [[Listed]]\n')).toEqual(['Quoted', 'Listed'])
+  })
+
+  test('a shorter fence or one with a backtick in its info string closes nothing', () => {
+    const targets = (text: string) => findLinks(text).map((one) => one.target)
+    expect(targets('````md\n```\n````\n[[Plan]]')).toEqual(['Plan'])
+    expect(targets('```a`b\n[[Plan]]')).toEqual(['Plan'])
+    expect(targets('~~~md\n```js\n[[Example]]\n```\n~~~\n[[Real]]\n')).toEqual(['Real'])
+  })
+
   test('inline code holds no links', () => {
     expect(findLinks('write `[[Note]]` to link').map((one) => one.target)).toEqual([])
     expect(findLinks('`a` [[Note]] `b`').map((one) => one.target)).toEqual(['Note'])
@@ -475,6 +491,15 @@ describe('the headings a note holds', () => {
 
   test('and none from inside a fence', () => {
     expect(headingsOf('```\n# Not one\n```\n# One\n')).toEqual(['One'])
+  })
+
+  test('and none from a fence inside a list item', () => {
+    const note = '- a\n  ```\n  # Not one\n  ```\n\n# One\n\nwords\n'
+    expect(headingsOf(note)).toEqual(['One'])
+    expect(sectionOf(note, { heading: 'Not one', block: null })).toBe(null)
+    expect(sectionOf('# One\n\n- a\n  ```\n  # Two\n  ```\n', { heading: 'One', block: null })).toBe(
+      '# One\n\n- a\n  ```\n  # Two\n  ```',
+    )
   })
 })
 
